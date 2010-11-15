@@ -53,6 +53,8 @@ public abstract class TargetContext extends Context {
 	private PrintStream logfile = System.out;
 	private Map<String, ForwardRef> forwards;
 	public DictEntry stubData;
+	private boolean hideNext;
+	private HostContext hostCtx;
 
 	public TargetContext(boolean littleEndian, int charBits, int cellBits, int memorySize) {
 		this.littleEndian = littleEndian;
@@ -66,6 +68,9 @@ public abstract class TargetContext extends Context {
 		stubData = defineStub("<<data space>>");
 	}
 
+	public void setHostContext(HostContext hostCtx) {
+		this.hostCtx = hostCtx;
+	}
 
 	
 	protected DictEntry defineStub(String name) {
@@ -172,26 +177,39 @@ public abstract class TargetContext extends Context {
 		alignDP();
 		int entryAddr = getDP();
 		int size = 0;
-		if (export) {
+		boolean doExport = export && !hideNext;
+		hideNext = false;
+		if (doExport) {
 			// link, name
 			size = cellSize + align(1 + name.length());
 			
 			alignDP();
 			stubData.use(size);
 			entryAddr = alloc(size);
-	
+			
+			if (hostCtx != null) {
+				ITargetWord word = (ITargetWord) find(">latest");
+				if (word != null) {
+					try {
+						word.getExecutionSemantics().execute(hostCtx, this);
+						writeCell(hostCtx.popData(), entryAddr);
+					} catch (AbortException e) {
+						e.printStackTrace();
+					}
+				}
+			}
 		}
 		symbols.put(entryAddr, name);
 		
 		DictEntry entry = new DictEntry(size, entryAddr, name);
-		entry.setExport(export);
+		entry.setExport(doExport);
 		
 		DictEntry existing = dictEntryMap.get(name.toUpperCase());
 		if (existing != null)
 			logfile.println("*** Redefining " + name);
 		dictEntryMap.put(name.toUpperCase(), entry);
 		
-		if (export) {
+		if (doExport) {
 			if (lastEntry != null)
 				entry.setLink(lastEntry.getAddr());
 			lastEntry = entry;
@@ -397,7 +415,7 @@ public abstract class TargetContext extends Context {
 	 * @throws AbortException 
 	 */
 	public void exportMemory(MemoryDomain console) throws AbortException {
-		for (int i = 0; i < dp; i += cellSize) {
+		for (int i = baseDP; i < dp; i += cellSize) {
 			console.writeWord(i, (short) readCell(i));
 		}
 		for (RelocEntry reloc : relocEntries.values()) {
@@ -405,7 +423,7 @@ public abstract class TargetContext extends Context {
 			console.writeWord(reloc.addr, (short) val);
 		}
 		
-		for (int i = 0; i < dp; i += MemoryDomain.AREASIZE)
+		for (int i = baseDP; i < dp; i += MemoryDomain.AREASIZE)
 			console.getEntryAt(i).clearSymbols();
 		
 		for (Map.Entry<Integer, String> symEntry : symbols.entrySet()) {
@@ -475,17 +493,14 @@ public abstract class TargetContext extends Context {
 
 	abstract public void defineCompilerWords(HostContext hostContext);
 
-	/**
-	 * 
-	 */
 	public void setExport(boolean export) {
 		this.export = export;
 	}
-	/**
-	 * @return the export
-	 */
 	public boolean isExport() {
 		return export;
+	}
+	public void setHideNext() {
+		this.hideNext = true;
 	}
 
 	public interface IMemoryReader {

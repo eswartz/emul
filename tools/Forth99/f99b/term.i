@@ -73,12 +73,12 @@ cell    RamVar vy
     then then 
 ;    target-only
 
-:   cr  13 emit  ;   target-only
-:   space  32 emit  ;    target-only
+:   cr  13 emit  ; 
+:   space  32 emit  ;
 
 :   type ( caddr n -- )
     over + swap do i c@ emit loop     
-;    target-only
+;
 
 EXPORT>
 

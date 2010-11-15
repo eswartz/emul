@@ -33,6 +33,8 @@ import v9t9.forthcomp.words.HostDoubleLiteral;
 import v9t9.forthcomp.words.HostLiteral;
 import v9t9.forthcomp.words.HostVariable;
 import v9t9.forthcomp.words.TargetContext;
+import v9t9.forthcomp.words.TargetUserVariable;
+import v9t9.forthcomp.words.TargetVariable;
 import v9t9.forthcomp.words.TargetContext.IMemoryReader;
 
 /**
@@ -138,7 +140,6 @@ public class ForthComp {
 	private TargetContext targetContext;
 	private TokenStream tokenStream;
 	private HostVariable baseVar;
-	private HostVariable stateVar;
 	private int errors;
 
 	public ForthComp(HostContext hostContext, TargetContext targetContext) {
@@ -153,11 +154,13 @@ public class ForthComp {
 		hostContext.defineHostCompilerWords();
 	 	
 	 	targetContext.defineCompilerWords(hostContext);
+	 	
+	 	targetContext.setHostContext(hostContext);
 	}
 
 	private void defineCompilerWords() {
 		baseVar = (HostVariable) hostContext.define("base", new HostVariable(10));
-		stateVar = (HostVariable) hostContext.define("state", new HostVariable(0));
+		hostContext.define("state", new HostVariable(0));
 	}
 
 	/**
@@ -198,7 +201,9 @@ public class ForthComp {
 	private void parse(String token) throws AbortException {
 		IWord word = null;
 		
-		if (stateVar.getValue() == 0) {
+		int state = hostContext.readVar("state");
+		
+		if (state == 0) {
 			word = hostContext.find(token);
 			if (word == null) {
 				word = targetContext.find(token);
@@ -255,6 +260,10 @@ public class ForthComp {
 		}
 		if (token.startsWith("$")) {
 			radix = 16;
+			token = token.substring(1);
+		}
+		else if (token.startsWith("&")) {
+			radix = 10;
 			token = token.substring(1);
 		}
 		boolean isDouble = false;

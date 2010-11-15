@@ -27,8 +27,8 @@ public class SQuote extends BaseWord {
 				StringBuilder sb = parseString(hostContext);
 
 				Pair<Integer, Integer> addr = targetContext.writeLengthPrefixedString(sb.toString());
-				hostContext.pushData(sb.length());
 				hostContext.pushData(addr.first + 1);
+				hostContext.pushData(sb.length());
 			}
 		});
 		setCompilationSemantics(new ISemantics() {

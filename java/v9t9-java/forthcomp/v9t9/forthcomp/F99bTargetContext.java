@@ -138,6 +138,8 @@ public class F99bTargetContext extends TargetContext {
 		definePrim("i", IatR);
 		defineInlinePrim("j", Irpidx, 2);
 		
+		defineInlinePrim("sp@", IcontextFrom, CTX_SP);
+		defineInlinePrim("sp!", ItoContext, CTX_SP);
 		defineInlinePrim("rp@", IcontextFrom, CTX_RP);
 		defineInlinePrim("rp!", ItoContext, CTX_RP);
 		
@@ -172,14 +174,14 @@ public class F99bTargetContext extends TargetContext {
 		defineInlinePrim("U>", Icmp+CMP_UGT);
 		defineInlinePrim("U>=", Icmp+CMP_UGE);
 
-		defineInlinePrim("0D<", IlitX_d, Icmp+CMP_LT);
-		defineInlinePrim("0D<=", IlitX_d, Icmp+CMP_LE);
-		defineInlinePrim("0D>", IlitX_d, Icmp+CMP_GT);
-		defineInlinePrim("0D>=", IlitX_d, Icmp+CMP_GE);
-		defineInlinePrim("0DU<", IlitX_d, Icmp+CMP_ULT);
-		defineInlinePrim("0DU<=", IlitX_d, Icmp+CMP_ULE);
-		defineInlinePrim("0DU>", IlitX_d, Icmp+CMP_UGT);
-		defineInlinePrim("0DU>=", IlitX_d, Icmp+CMP_UGE);
+		defineInlinePrim("D0<", IlitX_d, Icmp+CMP_LT);
+		defineInlinePrim("D0<=", IlitX_d, Icmp+CMP_LE);
+		defineInlinePrim("D0>", IlitX_d, Icmp+CMP_GT);
+		defineInlinePrim("D0>=", IlitX_d, Icmp+CMP_GE);
+		defineInlinePrim("DU0<", IlitX_d, Icmp+CMP_ULT);
+		defineInlinePrim("DU0<=", IlitX_d, Icmp+CMP_ULE);
+		defineInlinePrim("DU0>", IlitX_d, Icmp+CMP_UGT);
+		defineInlinePrim("DU0>=", IlitX_d, Icmp+CMP_UGE);
 		defineInlinePrim("D<", Icmp_d+CMP_LT);
 		defineInlinePrim("D<=", Icmp_d+CMP_LE);
 		defineInlinePrim("D>", Icmp_d+CMP_GT);
@@ -207,7 +209,7 @@ public class F99bTargetContext extends TargetContext {
 		defineInlinePrim("DCSH", Icsh_d);
 		
 		defineInlinePrim("*", Iumul, Idrop);
-		
+
 		defineInlinePrim("2drop", Idrop_d);
 		defineInlinePrim("d>q", Idup, IlitX, Icmp + CMP_LT, Idup);
 		defineInlinePrim("dum/mod", Iudivmod_d);
@@ -663,6 +665,7 @@ public class F99bTargetContext extends TargetContext {
 				lpUser = defineUser("LP", 1);
 				
 				HostContext subContext = new HostContext(this);
+				hostContext.copyTo(subContext);
 				subContext.getStream().push(
 						"false <export\n"+
 						": (>LOCALS) LP @    	RP@ LP ! ; \\ caller pushes R> \n" +
@@ -672,6 +675,7 @@ public class F99bTargetContext extends TargetContext {
 				comp.parse();
 				if (comp.getErrors() > 0)
 					throw hostContext.abort("Failed to compile support code");
+				hostContext.copyFrom(subContext);
 			}
 		}
 	}

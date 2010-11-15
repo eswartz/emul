@@ -43,11 +43,38 @@ $0400       constant    ROM
 ROM         constant    (COLD)
 ROM 4 +     constant    DP0
 
-$fec0       constant    UP0         \ grows up
-$ff40       constant    SP0         \ grows down
-$ffc0       constant    RP0
+$80         constant    (#RP)
+$80         constant    (#SP)
 
-UP0         constant    RamTop      \ grows down
+$100        constant   (#pad)
+$100        constant   (##-pad)
+$100        constant   (#slit-pad)
+$100        constant   (#tib)
+$C0C        constant   (#blk)      \ block space
+$80         constant   (#up)      \ user space
+
+\ $fec0       constant    UP0         \ grows up
+\ $ff40       constant    SP0         \ grows down
+\ $ffc0       constant    RP0
+\ UP0         constant    RamTop      \ grows down
+
+$ffc0  (#RP) - (#SP) - (#pad) - (##-pad) - (#slit-pad) - (#tib) - (#blk) - (#up) -
+             constant RamTop    \ grows down
+
+| RamTop (#rp) +                constant (rp0)      \ grows down
+| (rp0) (#sp) +                 constant (sp0)      \ grows down
+| (sp0)                         constant (pad0)     \ grows up
+| (pad0) (#pad) (##-pad) + +    constant (#-pad0)       \ grows down
+| (#-pad0)                      constant (slit-pad0)    \ grows up
+| (slit-pad0) (#slit-pad) +     constant (tib0)         \ grows up
+| (tib0) (#tib) +               constant (first)    \ grows up
+| (first) (#blk) +              constant (limit)
+| (limit)                       constant (up0)
+
+
+
+
+
 
 $ffc0       constant    SysCalls    \ ... 0x20
 

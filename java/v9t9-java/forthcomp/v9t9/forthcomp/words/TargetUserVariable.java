@@ -30,6 +30,14 @@ public class TargetUserVariable extends TargetWord {
 				targetContext.compileUser(TargetUserVariable.this);				
 			}
 		});
+		setExecutionSemantics(new ISemantics() {
+			
+			@Override
+			public void execute(HostContext hostContext, TargetContext targetContext)
+					throws AbortException {
+				hostContext.pushData(0xff00 + (TargetUserVariable.this.getIndex()) * targetContext.getCellSize());				
+			}
+		});
 	}
 
 	/**
@@ -38,5 +46,4 @@ public class TargetUserVariable extends TargetWord {
 	public int getIndex() {
 		return index;
 	}
-	
 }

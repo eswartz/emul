@@ -37,7 +37,7 @@ public class ForwardRef extends TargetWord {
 			
 			public void execute(HostContext hostContext, TargetContext targetContext)
 					throws AbortException {
-				throw hostContext.abort("cannot invoke forward referenced word: " + toString());
+				throw hostContext.abort("cannot invoke forward referenced word: " + ForwardRef.this.toString());
 			}
 		});
 	}

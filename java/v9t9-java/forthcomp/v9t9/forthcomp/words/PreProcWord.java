@@ -17,7 +17,7 @@ public abstract class PreProcWord extends BaseStdWord {
 		int levels = 1;
 		while (true) {
 			String word = hostContext.readToken();
-			System.out.println(word);
+			//System.out.println("SKIP: " + word);
 			if ("(".equals(word) || "\\".equals(word)) {
 				IWord realword = hostContext.find(word);
 				realword.getInterpretationSemantics().execute(hostContext, targetContext);

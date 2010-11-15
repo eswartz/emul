@@ -767,6 +767,7 @@ public class F99TargetContext extends TargetContext {
 				lpUser = defineUser("LP", 1);
 				
 				HostContext subContext = new HostContext(this);
+				hostContext.copyTo(subContext);
 				subContext.getStream().push(
 						"false <export\n"+
 						": (>LOCALS) LP @    	RP@ LP ! ; \\ caller pushes R> \n" +
@@ -776,6 +777,7 @@ public class F99TargetContext extends TargetContext {
 				comp.parse();
 				if (comp.getErrors() > 0)
 					throw hostContext.abort("Failed to compile support code");
+				hostContext.copyFrom(subContext);
 			}
 		}
 	}

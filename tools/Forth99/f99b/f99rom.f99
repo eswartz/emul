@@ -21,8 +21,6 @@ $400    dp!
 
 include sysdefs.i
 
-include compile.i
-
 include ram.i
 
 EXPORT>
@@ -30,8 +28,6 @@ EXPORT>
 include sysutils.i
 
 0 <EXPORT
-
-include core.i
 
 include video.i
 
@@ -41,13 +37,40 @@ include kbd.i
 
 include ints.i
 
+EXPORT>
+
+include prims.i
+
+include kernel.i
+
+include blocks.i
+
+include dict.i
+
+include compile.i
+
+include interp.i
+
+
+
 \ -------------------------------
 
+0 <EXPORT
+
 : regs-init
-    SP0 (>CONTEXT) [ CTX_SP field, ]
-    UP0 (>CONTEXT) [ CTX_UP field, ]
+
+    (UP0) (>CONTEXT) [ CTX_UP field, ]
+    
+    (rp0) rp0 !     
+    (sp0) sp0 !
+    (pad0) (pad) !  
+    (#-pad0) (#pad) !
+    (slit-pad0) (spad) !
+
+    sp0 @ sp!
+    
     r>      \ remember return
-    RP0 (>CONTEXT) [ CTX_RP field, ]
+    RP0 @ (>CONTEXT) [ CTX_RP field, ]
     >r
 ;
 
@@ -92,7 +115,7 @@ include ints.i
 
 :   bootup
 
-    $404 @ dp !
+    DP0 @ dp !
     10 base !
     
     regs-init
@@ -102,7 +125,13 @@ include ints.i
     kbd-init
     
     video-init
-    
+ 
+    decimal 
+ 
+    0 blk !
+ 
+    empty-buffers
+       
     cycle
 ;
 

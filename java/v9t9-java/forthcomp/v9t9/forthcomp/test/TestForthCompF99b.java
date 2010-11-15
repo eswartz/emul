@@ -1199,10 +1199,10 @@ public class TestForthCompF99b extends BaseF99bTest {
 		
 		hostCtx.pushData(123);
 		parseString(
-				"[ifndef] 0\n"+
+				"[ifundef] 0\n"+
 				": 0 [ $20 c, ] ; target-only\n"+
 				"[then]\n" +
-				"[ifndef] 0\n"+
+				"[ifundef] 0\n"+
 				": 0 bogus \n"+
 				"[then]" 
 				);
@@ -1257,5 +1257,22 @@ public class TestForthCompF99b extends BaseF99bTest {
 		assertEquals(123, hostCtx.popData());
 		assertEquals(0, hostCtx.getDataStack().size());
 		
+	}
+	@Test
+	public void testPick() throws Exception {
+		parseString(
+				"0           constant    CTX_SP     \n"+
+				": pick ( n -- v )\n" + 
+				"    1+ cells (context>) [ CTX_SP field, ] + @  \n" + 
+				"; target-only\n"+
+				"1 2 3 4   3 \n");
+		interpret("pick");
+		
+		assertEquals(1, hostCtx.popData());
+		
+		assertEquals(4, hostCtx.popData());
+		assertEquals(3, hostCtx.popData());
+		assertEquals(2, hostCtx.popData());
+		assertEquals(1, hostCtx.popData());
 	}
 }

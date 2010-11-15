@@ -187,9 +187,9 @@ public class DiskMemoryEntry extends MemoryEntry {
 			}
             
             // for files too large
-            if (filesize > 0x2000 && (filesize & 0x1fff) != 0) {
+            /*if (filesize > 0x2000 && (filesize & 0x1fff) != 0) {
 				filesize &= ~0x1fff;
-			}
+			}*/
             
         } catch (IOException e) {		// TODO
             if (isStored) {

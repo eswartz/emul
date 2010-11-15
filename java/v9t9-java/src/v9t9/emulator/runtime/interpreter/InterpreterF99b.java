@@ -1,5 +1,8 @@
 package v9t9.emulator.runtime.interpreter;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.util.BitSet;
 import java.util.TreeMap;
 
@@ -12,6 +15,7 @@ import v9t9.emulator.runtime.cpu.CpuF99b;
 import v9t9.emulator.runtime.cpu.CpuStateF99b;
 import v9t9.emulator.runtime.cpu.Executor;
 import v9t9.engine.cpu.InstF99b;
+import static org.junit.Assert.assertEquals;
 import static v9t9.engine.cpu.InstF99b.*;
 import v9t9.engine.cpu.InstructionF99b;
 import v9t9.engine.cpu.InstructionWorkBlockF99b;
@@ -20,6 +24,11 @@ import v9t9.engine.cpu.StatusF99b;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.MemoryDomain.MemoryWriteListener;
+import v9t9.forthcomp.AbortException;
+import v9t9.forthcomp.F99bTargetContext;
+import v9t9.forthcomp.ForthComp;
+import v9t9.forthcomp.HostContext;
+import v9t9.forthcomp.words.TargetContext;
 import v9t9.tools.asm.assembler.IInstructionFactory;
 
 /**
@@ -526,6 +535,12 @@ public class InterpreterF99b implements Interpreter {
         	int len = cpu.pop();
         	int taddr = cpu.pop();
         	int faddr = cpu.pop();
+        	if (tstep < 0) {
+        		taddr -= tstep * (len - 1);
+        	}
+        	if (fstep < 0) {
+        		faddr -= fstep * (len - 1);
+        	}
         	while (len-- > 0) {
         		memory.writeByte(taddr, memory.readByte(faddr));
         		faddr += fstep;
@@ -623,10 +638,56 @@ public class InterpreterF99b implements Interpreter {
 	        			Executor.settingDumpFullInstructions.setBoolean(true);
 	        		break;
 	        	}
+	        	
 	        	case SYSCALL_INTERPRET: {
+	        		int dp = cpu.pop();
 	        		int len = cpu.pop();
 	        		int addr = cpu.pop();
 	        		
+	        		StringBuilder text = new StringBuilder();
+	        		while (len-- > 0) {
+	        			text.append((char) iblock.domain.readByte(addr++));
+	        		}
+	        		
+	        		TargetContext targCtx = new F99bTargetContext(65536);
+	        		HostContext hostCtx = new HostContext(targCtx);
+	        		ForthComp comp = new ForthComp(hostCtx, targCtx);
+	        		ByteArrayOutputStream diag = new ByteArrayOutputStream();
+	        		
+	        		targCtx.setDP(dp);
+	        		
+	        		targCtx.importMemory(iblock.domain);
+	        		
+	        		comp.setLog(new PrintStream(diag));
+	        		
+	        		try {
+						comp.parseString(text.toString());
+					} catch (AbortException e) {
+						e.printStackTrace();
+						try {
+							diag.write(e.toString().getBytes());
+						} catch (IOException e1) {
+							e1.printStackTrace();
+						}
+					}
+	        		comp.finish();
+	        		
+	        		if (comp.getErrors() != 0) {
+	        			System.err.println("Errors during compilation");
+	        		}
+	        		
+	        		try {
+						targCtx.exportMemory(iblock.domain);
+					} catch (AbortException e) {
+						e.printStackTrace();
+						try {
+							diag.write(e.toString().getBytes());
+						} catch (IOException e1) {
+							e1.printStackTrace();
+						}
+					}
+	        		
+	        		cpu.push((short) targCtx.getDP());
 	        		break;
 	        	}
         	}

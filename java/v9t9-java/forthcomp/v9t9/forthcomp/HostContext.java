@@ -18,9 +18,11 @@ import v9t9.forthcomp.ITargetWord;
 import v9t9.forthcomp.IWord;
 import v9t9.forthcomp.TokenStream;
 
+import v9t9.forthcomp.words.AbortQuote;
 import v9t9.forthcomp.words.Again;
 import v9t9.forthcomp.words.Allot;
 import v9t9.forthcomp.words.BackSlash;
+import v9t9.forthcomp.words.BarHideNext;
 import v9t9.forthcomp.words.BaseHostBranch;
 import v9t9.forthcomp.words.BaseWord;
 import v9t9.forthcomp.words.Begin;
@@ -45,6 +47,7 @@ import v9t9.forthcomp.words.Do;
 import v9t9.forthcomp.words.Dot;
 import v9t9.forthcomp.words.DotQuote;
 import v9t9.forthcomp.words.Else;
+import v9t9.forthcomp.words.ErrorQuote;
 import v9t9.forthcomp.words.Exit;
 import v9t9.forthcomp.words.Here;
 import v9t9.forthcomp.words.Host0Branch;
@@ -63,6 +66,7 @@ import v9t9.forthcomp.words.HostHex;
 import v9t9.forthcomp.words.HostOver;
 import v9t9.forthcomp.words.HostPlusStore;
 import v9t9.forthcomp.words.HostReturnRead;
+import v9t9.forthcomp.words.HostRot;
 import v9t9.forthcomp.words.HostStore;
 import v9t9.forthcomp.words.HostSwap;
 import v9t9.forthcomp.words.HostTargetOnly;
@@ -90,6 +94,7 @@ import v9t9.forthcomp.words.SQuote;
 import v9t9.forthcomp.words.SemiColon;
 import v9t9.forthcomp.words.SetDP;
 import v9t9.forthcomp.words.TargetContext;
+import v9t9.forthcomp.words.TestQuote;
 import v9t9.forthcomp.words.Then;
 import v9t9.forthcomp.words.Tick;
 import v9t9.forthcomp.words.To;
@@ -119,6 +124,8 @@ public class HostContext extends Context {
 	private Map<Integer, Integer> fixupMap;
 
 	private int cellSize;
+
+	private final TargetContext targetContext;
 	
 	/**
 	 * @param targetContext 
@@ -126,6 +133,7 @@ public class HostContext extends Context {
 	 */
 	public HostContext(TargetContext targetContext) {
 		super();
+		this.targetContext = targetContext;
 		this.cellSize = targetContext.getCellSize();
 		dataStack = new Stack<Integer>();
 		returnStack = new Stack<Integer>();
@@ -158,13 +166,14 @@ public class HostContext extends Context {
 		
 		define("[if]", new BracketIf());
 		define("[ifdef]", new BracketIfdef());
-		define("[ifndef]", new BracketIfndef());
+		define("[ifundef]", new BracketIfndef());
 		define("[else]", new BracketElse());
 		define("[then]", new BracketThen());
 		define("[endif]", new BracketThen());
 		
 		define("<EXPORT", new PushExportState());
 		define("EXPORT>", new PopExportState());
+		define("|", new BarHideNext());
 		
 		define("create", new Create());
 		define("variable", new Variable());
@@ -235,6 +244,10 @@ public class HostContext extends Context {
 		define("decimal", new HostDecimal());
 		define("hex", new HostHex());
 		
+		define("TEST\"", new TestQuote());
+		define("ERROR\"", new ErrorQuote());
+		define("ABORT\"", new AbortQuote());
+		
 		/////////////////////
 		
 		define("LITERAL", new Literal(true));
@@ -282,7 +295,15 @@ public class HostContext extends Context {
 		define("true", new HostConstant(-1));
 		define("false", new HostConstant(0));
 		
+		define("#char", new HostConstant(1));
+		define("#cell", new HostConstant(cellSize));
 		define("cell", new HostConstant(cellSize));
+		if (cellSize == 1)
+			define("cell<<", new HostConstant(0));
+		else if (cellSize == 2)
+			define("cell<<", new HostConstant(1));
+		else
+			assert false;
 		define("cells", new HostUnaryOp("cells") {
 			public int getResult(int v) { return v * cellSize; } 
 		});
@@ -335,6 +356,7 @@ public class HostContext extends Context {
 		define("SWAP", new HostSwap());
 		define("DROP", new HostDrop());
 		define("OVER", new HostOver());
+		define("ROT", new HostRot());
 		
 	}
 
@@ -409,8 +431,7 @@ public class HostContext extends Context {
 	 * @throws AbortException 
 	 */
 	public boolean isCompiling() throws AbortException {
-		HostVariable state = (HostVariable)require("state");
-		return (state.getValue() != 0);
+		return readVar("state") != 0;
 	}
 	
 	/**
@@ -425,11 +446,10 @@ public class HostContext extends Context {
 	}
 
 	public void setCompiling(boolean b) throws AbortException {
-		HostVariable state = (HostVariable)require("state");
 		int val = b ? 1 : 0;
-		if (state.getValue() == val)
+		if (readVar("state") == val)
 			throw abort("already defining");
-		state.setValue(val);
+		writeVar("state", val);
 		
 	}
 
@@ -439,8 +459,7 @@ public class HostContext extends Context {
 	 */
 	public void stopCompiling() throws AbortException {
 		assertCompiling();
-		HostVariable state = (HostVariable)require("state");
-		state.setValue(0);
+		writeVar("state", 0);
 		
 		compileExit();
 		
@@ -471,13 +490,12 @@ public class HostContext extends Context {
 	}
 
 	public void setCSP() throws AbortException {
-		HostVariable csp = (HostVariable)require("csp");
-		csp.setValue(dataStack.size());
+		writeVar("csp", dataStack.size());
 	}
 	public void assertCSP(TargetContext targetContext) throws AbortException {
-		HostVariable csp = (HostVariable)require("csp");
-		if (csp.getValue() != dataStack.size())
-			throw abort("at " + targetContext.getLatest().getName() + ": mismatched conditionals or other stack damage: was " + csp.getValue()+"; now " + dataStack.size() + " " + stack() );
+		int cspVal = readVar("csp");
+		if (cspVal != dataStack.size())
+			throw abort("at " + targetContext.getLatest().getName() + ": mismatched conditionals or other stack damage: was " + cspVal +"; now " + dataStack.size() + " " + stack() );
 	}
 	
 	public void pushCall(int pc) {
@@ -668,6 +686,53 @@ public class HostContext extends Context {
 	 */
 	public int readVariable(String string, TargetContext targetContext) throws AbortException {
 		return ((HostVariable)require(string)).getValue();
+	}
+
+	/**
+	 * @param string
+	 * @return
+	 * @throws AbortException 
+	 */
+	public int readVar(String string) throws AbortException {
+		IWord var = targetContext.find(string);
+		int val;
+		if (var != null) {
+			var.getExecutionSemantics().execute(this, targetContext);
+			val = targetContext.readCell(popData() & 0xffff);	 //TODO
+		}
+		else {
+			var = find(string);
+			val = ((HostVariable) var).getValue();
+		}
+
+		return val;
+	}
+	public void writeVar(String string,int val) throws AbortException {
+		IWord var = targetContext.find(string);
+		if (var != null) {
+			var.getExecutionSemantics().execute(this, targetContext);
+			targetContext.writeCell(popData() & 0xffff, val);	//TODO
+		}
+		else {
+			var = find(string);
+			((HostVariable) var).setValue(val);
+		}
+	}
+
+	/**
+	 * @param subContext
+	 */
+	public void copyFrom(HostContext subContext) {
+		hostWords = subContext.hostWords;
+		hostPc = subContext.hostPc;
+		hostDp = subContext.hostDp;
+		fixupMap.putAll(subContext.fixupMap);
+	}
+	public void copyTo(HostContext hostContext) {
+		hostContext.hostWords.putAll(hostWords);
+		hostContext.hostPc = hostPc;
+		hostContext.hostDp = hostDp;
+		hostContext.fixupMap.putAll(fixupMap);
 	}
 
 }
