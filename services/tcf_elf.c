@@ -59,13 +59,19 @@ static U4_T listeners_max = 0;
 static int elf_cleanup_posted = 0;
 static ino_t elf_ino_cnt = 0;
 
-static Context *      elf_list_ctx;
-static int            elf_list_pos;
-static ContextAddress elf_list_addr0;
-static ContextAddress elf_list_addr1;
-static MemoryRegion * elf_list_regions;
-static unsigned       elf_list_region_cnt;
+static Context *    elf_list_ctx;
+static unsigned     elf_list_pos;
+static MemoryMap    elf_list;
 
+static MemoryMap    elf_map;
+
+void elf_add_close_listener(ELFCloseListener listener) {
+    if (listeners_cnt >= listeners_max) {
+        listeners_max = listeners_max == 0 ? 16 : listeners_max * 2;
+        listeners = (ELFCloseListener *)loc_realloc(listeners, sizeof(ELFCloseListener) * listeners_max);
+    }
+    listeners[listeners_cnt++] = listener;
+}
 
 static void elf_dispose(ELF_File * file) {
     U4_T n;
@@ -636,83 +642,112 @@ static ELF_File * open_memory_region_file(MemoryRegion * r, int * error) {
     return file;
 }
 
-ELF_File * elf_list_first(Context * ctx, ContextAddress addr0, ContextAddress addr1) {
-    unsigned i;
-    int error = 0;
+static void add_region(MemoryMap * map, MemoryRegion * r) {
+    if (map->region_cnt >= map->region_max) {
+        map->region_max += 8;
+        map->regions = (MemoryRegion *)loc_realloc(map->regions, sizeof(MemoryRegion ) * map->region_max);
+    }
+    map->regions[map->region_cnt++] = *r;
+}
 
-    elf_list_ctx = ctx;
-    elf_list_addr0 = addr0;
-    elf_list_addr1 = addr1;
-    memory_map_get_regions(ctx, &elf_list_regions, &elf_list_region_cnt);
-    if (elf_list_region_cnt == 0) return NULL;
-    for (i = 0; i < elf_list_region_cnt; i++) {
-        MemoryRegion * r = elf_list_regions + i;
-        if (r->addr <= addr1 && r->addr + r->size >= addr0) {
+static void search_regions(MemoryMap * map, ContextAddress addr0, ContextAddress addr1, MemoryMap * res) {
+    unsigned i;
+    for (i = 0; i < map->region_cnt; i++) {
+        MemoryRegion * r = map->regions + i;
+        if (r->file_name == NULL) continue;
+        if (r->addr == 0 && r->size == 0 && r->file_offs == 0 && r->sect_name == NULL) {
+            int error = 0;
             ELF_File * file = open_memory_region_file(r, &error);
             if (file != NULL) {
-                ELF_File * f = files;
-                while (f != NULL) {
-                    f->listed = 0;
-                    f = f->next;
+                unsigned j;
+                for (j = 0; j < file->pheader_cnt; j++) {
+                    ELF_PHeader * p = file->pheaders + j;
+                    if (p->type != PT_LOAD) continue;
+                    if (p->address <= addr1 && p->address + p->mem_size >= addr0) {
+                        MemoryRegion x;
+                        memset(&x, 0, sizeof(x));
+                        x.addr = p->address;
+                        x.size = p->mem_size;
+                        x.dev = file->dev;
+                        x.ino = file->ino;
+                        x.file_name = file->name;
+                        x.file_offs = p->offset;
+                        x.flags = MM_FLAG_R | MM_FLAG_W | MM_FLAG_X;
+                        add_region(res, &x);;
+                    }
                 }
-                file->listed = 1;
-                elf_list_pos = i + 1;
-                return file;
-            }
-            else if (error) {
-                break;
             }
         }
+        else if (r->addr <= addr1 && r->addr + r->size >= addr0) {
+            add_region(res, r);;
+        }
     }
-    errno = error;
+}
+
+static int get_map(Context * ctx, ContextAddress addr0, ContextAddress addr1, MemoryMap * map) {
+    MemoryMap * client_map = NULL;
+    MemoryMap * target_map = NULL;
+
+    map->region_cnt = 0;
+    if (memory_map_get(ctx, &client_map, &target_map) < 0) return -1;
+    search_regions(client_map, addr0, addr1, map);
+    search_regions(target_map, addr0, addr1, map);
+    return 0;
+}
+
+ELF_File * elf_list_first(Context * ctx, ContextAddress addr0, ContextAddress addr1) {
+    elf_list_ctx = ctx;
+    elf_list_pos = 0;
+    if (get_map(ctx, addr0, addr1, &elf_list) < 0) return NULL;
+    if (elf_list.region_cnt > 0) {
+        ELF_File * f = files;
+        while (f != NULL) {
+            f->listed = 0;
+            f = f->next;
+        }
+        return elf_list_next(ctx);
+    }
+    errno = 0;
     return NULL;
 }
 
 ELF_File * elf_list_next(Context * ctx) {
-    unsigned i;
-    int error = 0;
-
     assert(ctx == elf_list_ctx);
-    assert(elf_list_region_cnt > 0);
-
-    for (i = elf_list_pos; i < elf_list_region_cnt; i++) {
-        MemoryRegion * r = elf_list_regions + i;
-        if (r->addr <= elf_list_addr1 && r->addr + r->size >= elf_list_addr0) {
-            ELF_File * file = open_memory_region_file(r, &error);
-            if (file != NULL && !file->listed) {
-                file->listed = 1;
-                elf_list_pos = i + 1;
-                return file;
-            }
-            else if (error) {
-                break;
-            }
+    assert(elf_list.region_cnt > 0);
+    while (elf_list_pos < elf_list.region_cnt) {
+        int error = 0;
+        ELF_File * file = open_memory_region_file(elf_list.regions + elf_list_pos++, &error);
+        if (file != NULL) {
+            if (file->listed) continue;
+            file->listed = 1;
+            return file;
+        }
+        if (error) {
+            errno = error;
+            return NULL;
         }
     }
-    errno = error;
+    errno = 0;
     return NULL;
 }
 
 void elf_list_done(Context * ctx) {
     assert(ctx == elf_list_ctx);
     elf_list_ctx = NULL;
-    elf_list_regions = NULL;
-    elf_list_region_cnt = 0;
+    elf_list_pos = 0;
+    elf_list.region_cnt = 0;
 }
 
-UnitAddressRange * elf_find_unit(Context * ctx, ContextAddress addr_min, ContextAddress addr_max) {
+UnitAddressRange * elf_find_unit(Context * ctx, ContextAddress addr_min, ContextAddress addr_max, ContextAddress * range_rt_addr) {
     unsigned i, j;
-    unsigned region_cnt = 0;
-    MemoryRegion * regions = NULL;
     UnitAddressRange * range = NULL;
     int error = 0;
 
-    memory_map_get_regions(ctx, &regions, &region_cnt);
-    for (i = 0; range == NULL && i < region_cnt; i++) {
+    if (get_map(ctx, addr_min, addr_max, &elf_map) < 0) return NULL;
+    for (i = 0; range == NULL && i < elf_map.region_cnt; i++) {
         ContextAddress link_addr_min, link_addr_max;
-        MemoryRegion * r = regions + i;
+        MemoryRegion * r = elf_map.regions + i;
         ELF_File * file = NULL;
-        if (r->file_name == NULL) continue;
         if (r->addr >= addr_max) continue;
         if (r->addr + r->size <= addr_min) continue;
         file = open_memory_region_file(r, &error);
@@ -744,6 +779,9 @@ UnitAddressRange * elf_find_unit(Context * ctx, ContextAddress addr_min, Context
                         range = find_comp_unit_addr_range(get_dwarf_cache(debug), link_addr_min, link_addr_max);
                     }
                 }
+                if (range != NULL && range_rt_addr != NULL) {
+                    *range_rt_addr = range->mAddr - p->address + p->offset - r->file_offs + r->addr;
+                }
             }
         }
         else {
@@ -756,6 +794,9 @@ UnitAddressRange * elf_find_unit(Context * ctx, ContextAddress addr_min, Context
                     if (link_addr_min < sec->addr) link_addr_min = sec->addr;
                     if (link_addr_max >= sec->addr + sec->size) link_addr_max = sec->addr + sec->size;
                     range = find_comp_unit_addr_range(get_dwarf_cache(file), link_addr_min, link_addr_max);
+                    if (range != NULL && range_rt_addr != NULL) {
+                        *range_rt_addr = range->mAddr - sec->addr + r->addr;
+                    }
                 }
             }
         }
@@ -772,35 +813,26 @@ UnitAddressRange * elf_find_unit(Context * ctx, ContextAddress addr_min, Context
     return range;
 }
 
-void elf_add_close_listener(ELFCloseListener listener) {
-    if (listeners_cnt >= listeners_max) {
-        listeners_max = listeners_max == 0 ? 16 : listeners_max * 2;
-        listeners = (ELFCloseListener *)loc_realloc(listeners, sizeof(ELFCloseListener) * listeners_max);
-    }
-    listeners[listeners_cnt++] = listener;
-}
-
 ContextAddress elf_map_to_run_time_address(Context * ctx, ELF_File * file, ELF_Section * sec, ContextAddress addr) {
-    unsigned i, j;
-    MemoryRegion * regions;
-    unsigned region_cnt;
+    unsigned i;
 
-    memory_map_get_regions(ctx, &regions, &region_cnt);
-    for (i = 0; i < region_cnt; i++) {
-        MemoryRegion * r = regions + i;
+    if (get_map(ctx, addr, addr + 1, &elf_map) < 0) return 0;
+    for (i = 0; i < elf_map.region_cnt; i++) {
+        MemoryRegion * r = elf_map.regions + i;
         ino_t ino = r->ino;
-        if (r->file_name == NULL) continue;
         if (ino == 0 && (ino = elf_ino(r->file_name)) == 0) continue;
         if (file->dev != r->dev || file->ino != ino) {
+            /* Check if the memory map entry has a separate debug info file */
             int error = 0;
             ELF_File * exec = NULL;
             if (!file->debug_info_file) continue;
             exec = open_memory_region_file(r, &error);
             if (exec == NULL) continue;
             if (exec->debug_info_file_name == NULL) continue;
-            if (strcmp(exec->debug_info_file_name, file->name)) continue;
+            if (strcmp(exec->debug_info_file_name, file->name) != 0) continue;
         }
         if (r->sect_name == NULL) {
+            unsigned j;
             if (file->pheader_cnt == 0 && file->type == ET_EXEC) return addr;
             for (j = 0; j < file->pheader_cnt; j++) {
                 U8_T offs;

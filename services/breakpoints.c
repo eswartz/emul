@@ -1831,13 +1831,12 @@ static void safe_skip_breakpoint(void * arg) {
     if (error == 0 && safe_context_single_step(ctx) < 0) error = errno;
     if (error) {
         error = set_errno(error, "Cannot step over breakpoint");
-        send_context_started_event(ctx);
         ctx->signal = 0;
         ctx->stopped = 1;
         ctx->stopped_by_bp = 0;
         ctx->stopped_by_exception = 1;
         ctx->exception_description = loc_strdup(errno_to_str(error));
-        send_context_stopped_event(ctx);
+        send_context_changed_event(ctx);
     }
 }
 
@@ -1986,6 +1985,7 @@ void ini_breakpoints_service(Protocol * proto, TCFBroadcastGroup * bcg) {
         static MemoryMapEventListener listener = {
             event_context_changed,
             event_code_unmapped,
+            event_context_changed
         };
         add_memory_map_event_listener(&listener, NULL);
     }

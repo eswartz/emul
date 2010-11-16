@@ -29,6 +29,7 @@
 #include <sched.h>
 #include <asm/unistd.h>
 #include <sys/ptrace.h>
+#include <linux/kdev_t.h>
 #include <framework/context.h>
 #include <framework/events.h>
 #include <framework/errors.h>
@@ -191,6 +192,7 @@ int context_stop(Context * ctx) {
     trace(LOG_CONTEXT, "context:%s suspending ctx %#lx id %s",
         ctx->pending_intercept ? "" : " temporary", ctx, ctx->id);
     assert(is_dispatch_thread());
+    assert(context_has_state(ctx));
     assert(!ctx->exited);
     assert(!ctx->exiting);
     assert(!ctx->stopped);
@@ -495,6 +497,67 @@ int context_plant_breakpoint(ContextBreakpoint * bp) {
 int context_unplant_breakpoint(ContextBreakpoint * bp) {
     errno = ERR_UNSUPPORTED;
     return -1;
+}
+
+int context_get_memory_map(Context * ctx, MemoryMap * map) {
+    char maps_file_name[FILE_PATH_SIZE];
+    FILE * file = NULL;
+
+    ctx = ctx->mem;
+    assert(!ctx->exited);
+    assert(map->region_cnt == 0);
+
+    snprintf(maps_file_name, sizeof(maps_file_name), "/proc/%d/maps", id2pid(ctx->id, NULL));
+    if ((file = fopen(maps_file_name, "r")) == NULL) return -1;
+    for (;;) {
+        unsigned long addr0 = 0;
+        unsigned long addr1 = 0;
+        unsigned long offset = 0;
+        unsigned long dev_ma = 0;
+        unsigned long dev_mi = 0;
+        unsigned long inode = 0;
+        char permissions[16];
+        char file_name[FILE_PATH_SIZE];
+        MemoryRegion * r = NULL;
+        unsigned i = 0;
+
+        int cnt = fscanf(file, "%lx-%lx %s %lx %lx:%lx %ld",
+            &addr0, &addr1, permissions, &offset, &dev_ma, &dev_mi, &inode);
+        if (cnt == 0 || cnt == EOF) break;
+
+        for (;;) {
+            int ch = fgetc(file);
+            if (ch == '\n' || ch == EOF) break;
+            if (i < FILE_PATH_SIZE - 1 && (ch != ' ' || i > 0)) {
+                file_name[i++] = ch;
+            }
+        }
+        file_name[i++] = 0;
+
+        if (inode != 0 && file_name[0] && file_name[0] != '[') {
+            if (map->region_cnt >= map->region_max) {
+                map->region_max += 8;
+                map->regions = (MemoryRegion *)loc_realloc(map->regions, sizeof(MemoryRegion) * map->region_max);
+            }
+            r = map->regions + map->region_cnt++;
+            memset(r, 0, sizeof(MemoryRegion));
+            r->addr = addr0;
+            r->size = addr1 - addr0;
+            r->file_offs = offset;
+            r->dev = MKDEV(dev_ma, dev_mi);
+            r->ino = (ino_t)inode;
+            r->file_name = loc_strdup(file_name);
+            for (i = 0; permissions[i]; i++) {
+                switch (permissions[i]) {
+                case 'r': r->flags |= MM_FLAG_R; break;
+                case 'w': r->flags |= MM_FLAG_W; break;
+                case 'x': r->flags |= MM_FLAG_X; break;
+                }
+            }
+        }
+    }
+    fclose(file);
+    return 0;
 }
 
 static Context * find_pending(pid_t pid) {

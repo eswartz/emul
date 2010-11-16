@@ -918,13 +918,12 @@ static void sync_run_state() {
             }
             if (n < 0) {
                 int error = errno;
-                send_context_started_event(ctx);
                 ctx->signal = 0;
                 ctx->stopped = 1;
                 ctx->stopped_by_bp = 0;
                 ctx->stopped_by_exception = 1;
                 ctx->exception_description = loc_strdup(errno_to_str(error));
-                send_context_stopped_event(ctx);
+                send_context_changed_event(ctx);
             }
         }
     }

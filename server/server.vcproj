@@ -275,6 +275,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\agent\services\memorymap.c"
+				>
+			</File>
+			<File
 				RelativePath="..\agent\services\memorymap.h"
 				>
 			</File>

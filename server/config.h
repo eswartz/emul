@@ -32,6 +32,9 @@
 #if !defined(SERVICE_PathMap)
 #define SERVICE_PathMap         1
 #endif
+#if !defined(SERVICE_MemoryMap)
+#define SERVICE_MemoryMap       1
+#endif
 #if !defined(SERVICE_StackTrace)
 #define SERVICE_StackTrace      0
 #endif

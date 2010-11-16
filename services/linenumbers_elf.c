@@ -169,10 +169,11 @@ int address_to_line(Context * ctx, ContextAddress addr0, ContextAddress addr1, L
     if (!set_trap(&trap)) return -1;
     if (ctx == NULL) exception(ERR_INV_CONTEXT);
     if (ctx->exited) exception(ERR_ALREADY_EXITED);
-    ctx = ctx->mem;
     while (addr0 < addr1) {
-        UnitAddressRange * range = elf_find_unit(ctx, addr0, addr1);
+        ContextAddress range_rt_addr = 0;
+        UnitAddressRange * range = elf_find_unit(ctx, addr0, addr1, &range_rt_addr);
         if (range == NULL) break;
+        assert(range_rt_addr != 0);
         load_line_numbers(range->mUnit);
         if (range->mUnit->mStatesCnt >= 2) {
             U4_T i;
@@ -181,13 +182,13 @@ int address_to_line(Context * ctx, ContextAddress addr0, ContextAddress addr1, L
                 LineNumbersState * state = unit->mStates + i;
                 LineNumbersState * next = unit->mStates + i + 1;
                 if ((state->mFlags & LINE_EndSequence) == 0) {
-                    ContextAddress state_addr = elf_map_to_run_time_address(ctx, unit->mFile, unit->mTextSection, state->mAddress);
-                    ContextAddress next_addr = elf_map_to_run_time_address(ctx, unit->mFile, unit->mTextSection, next->mAddress);
+                    ContextAddress state_addr = state->mAddress - range->mAddr + range_rt_addr;
+                    ContextAddress next_addr = next->mAddress - range->mAddr + range_rt_addr;
                     if (next_addr > addr0 && state_addr < addr1) call_client(unit, state, next, state_addr, next_addr, client, args);
                 }
             }
         }
-        addr0 = range->mAddr + range->mSize;
+        addr0 = range_rt_addr + range->mSize;
     }
     clear_trap(&trap);
     return 0;

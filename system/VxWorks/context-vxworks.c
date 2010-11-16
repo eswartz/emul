@@ -33,10 +33,12 @@
 #include <framework/waitpid.h>
 #include <framework/signames.h>
 #include <services/breakpoints.h>
+#include <services/memorymap.h>
 #include <system/VxWorks/context-vxworks.h>
 
 /* TODO: VxWorks RTP support */
 
+#include <moduleLib.h>
 #include <taskHookLib.h>
 #include <private/vxdbgLibP.h>
 
@@ -450,6 +452,60 @@ int context_unplant_breakpoint(ContextBreakpoint * bp) {
     info.type = BP_BY_ID_DELETE;
     info.info.id.bpId = bp->id;
     if (vxdbgBpDelete(info) != OK) return -1;
+    return 0;
+}
+
+static void add_map_region(MemoryMap * map, void * addr, int size, unsigned flags, char * file, char * sect) {
+    MemoryRegion * r = NULL;
+    if (map->region_cnt >= map->region_max) {
+        map->region_max += 8;
+        map->regions = (MemoryRegion *)loc_realloc(map->regions, sizeof(MemoryRegion) * map->region_max);
+    }
+    r = map->regions + map->region_cnt++;
+    memset(r, 0, sizeof(MemoryRegion));
+    r->addr = (ContextAddress)addr;
+    r->size = (ContextAddress)size;
+    r->flags = flags;
+    if (file != NULL) r->file_name = loc_strdup(file);
+    if (sect != NULL) r->sect_name = loc_strdup(sect);
+}
+
+static int module_list_proc(MODULE_ID id, int args) {
+    MODULE_INFO info;
+    MemoryMap * map = (MemoryMap *)args;
+
+    memset(&info, 0, sizeof(info));
+    if (moduleInfoGet(id, &info) == OK) {
+        char * file = id->nameWithPath;
+        if (info.segInfo.textAddr != NULL && info.segInfo.textSize > 0) {
+            add_map_region(map, info.segInfo.textAddr, info.segInfo.textSize, MM_FLAG_R | MM_FLAG_X, file, ".text");
+        }
+        if (info.segInfo.dataAddr != NULL && info.segInfo.dataSize > 0) {
+            add_map_region(map, info.segInfo.dataAddr, info.segInfo.dataSize, MM_FLAG_R | MM_FLAG_W, file, ".data");
+        }
+        if (info.segInfo.bssAddr != NULL && info.segInfo.bssSize > 0) {
+            add_map_region(map, info.segInfo.bssAddr, info.segInfo.bssSize, MM_FLAG_R | MM_FLAG_W, file, ".bss");
+        }
+    }
+    return 0;
+}
+
+static void module_create_event(void * args) {
+    memory_map_event_module_loaded(parent_ctx);
+}
+
+static int module_create_func(MODULE_ID  id) {
+    post_event(module_create_event, NULL);
+    return 0;
+}
+
+int context_get_memory_map(Context * ctx, MemoryMap * map) {
+    static int hooks_done = 0;
+    if (!hooks_done) {
+        hooks_done = 1;
+        moduleCreateHookAdd(module_create_func);
+    }
+    moduleEach(module_list_proc, (int)map);
     return 0;
 }
 

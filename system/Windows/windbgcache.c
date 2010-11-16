@@ -19,7 +19,7 @@
 
 #include <config.h>
 
-#if defined(WIN32) && !ENABLE_ELF && (SERVICE_LineNumbers || SERVICE_Symbols || SERVICE_MemoryMap)
+#if defined(WIN32) && !ENABLE_ELF && (SERVICE_LineNumbers || SERVICE_Symbols || (SERVICE_MemoryMap && !ENABLE_ContextProxy))
 
 #include <assert.h>
 #include <stdio.h>
@@ -28,6 +28,7 @@
 #include <system/Windows/context-win32.h>
 #include <framework/trace.h>
 #include <framework/myalloc.h>
+#include <services/memorymap.h>
 
 static HINSTANCE dbghelp_dll = NULL;
 
@@ -78,29 +79,36 @@ static void event_context_exited(Context * ctx, void * client_data) {
     }
 }
 
-static void event_context_changed(Context * ctx, void * client_data) {
-    HANDLE handle = NULL;
-    if (ctx->parent != NULL) return;
-    handle = get_context_handle(ctx);
+static void event_module_loaded(Context * ctx, void * client_data) {
+    HANDLE handle = get_context_handle(ctx);
     assert(handle != NULL);
     assert(ctx->mem == ctx);
-    if (is_context_module_loaded(ctx) && !SymLoadModule64(handle, get_context_module_handle(ctx),
+    if (!SymLoadModule64(handle, get_context_module_handle(ctx),
             NULL, NULL, get_context_module_address(ctx), 0)) {
         set_win32_errno(GetLastError());
         trace(LOG_ALWAYS, "SymLoadModule64() error: %s", errno_to_str(errno));
     }
-    if (is_context_module_unloaded(ctx) && !SymUnloadModule64(handle, get_context_module_address(ctx))) {
+}
+
+static void event_module_unloaded(Context * ctx, void * client_data) {
+    HANDLE handle = get_context_handle(ctx);
+    assert(handle != NULL);
+    assert(ctx->mem == ctx);
+    if (!SymUnloadModule64(handle, get_context_module_address(ctx))) {
         set_win32_errno(GetLastError());
         trace(LOG_ALWAYS, "SymUnloadModule64() error: %s", errno_to_str(errno));
     }
 }
 
-static ContextEventListener listener = {
+static ContextEventListener ctx_listener = {
     event_context_created,
     event_context_exited,
+};
+
+static MemoryMapEventListener map_listener = {
+    event_module_loaded,
     NULL,
-    NULL,
-    event_context_changed
+    event_module_unloaded
 };
 
 static void CheckDLLVersion(void) {
@@ -174,7 +182,8 @@ static FARPROC GetProc(char * name) {
             return NULL;
         }
         CheckDLLVersion();
-        add_context_event_listener(&listener, NULL);
+        add_context_event_listener(&ctx_listener, NULL);
+        add_memory_map_event_listener(&map_listener, NULL);
     }
     return GetProcAddress(dbghelp_dll, name);
 }

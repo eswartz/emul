@@ -32,7 +32,6 @@
 #include <framework/json.h>
 #include <framework/cache.h>
 #include <services/pathmap.h>
-#include <services/memorymap.h>
 #include <services/stacktrace.h>
 #include <services/context-proxy.h>
 
@@ -55,11 +54,11 @@ struct ContextCache {
     LINK id_hash_link;
 
     /* Memory Map */
+    MemoryMap mmap;
     AbstractCache mmap_cache;
     ErrorReport * mmap_error;
-    unsigned mmap_size;
-    MemoryRegion * mmap_regions;
     ReplyHandlerInfo * pending_get_mmap;
+    int mmap_is_valid;
 
     /* Register definitions */
     AbstractCache regs_cache;
@@ -265,7 +264,8 @@ static void free_context_cache(ContextCache * c) {
     release_error_report(c->mmap_error);
     release_error_report(c->reg_error);
     loc_free(c->file);
-    loc_free(c->mmap_regions);
+    context_clear_memory_map(&c->mmap);
+    loc_free(c->mmap.regions);
     loc_free(c->reg_ids);
     loc_free(c->reg_ids_str);
     loc_free(c->reg_defs);
@@ -387,13 +387,10 @@ static void read_context_changed_item(InputStream * inp, void * args) {
         c->can_resume = buf.can_resume;
         c->can_count = buf.can_count;
         c->can_terminate = buf.can_terminate;
-        if (c->mmap_regions != NULL || c->mmap_error != NULL) {
-            release_error_report(c->mmap_error);
-            loc_free(c->mmap_regions);
-            c->mmap_error = NULL;
-            c->mmap_regions = NULL;
-            c->mmap_size = 0;
-        }
+        context_clear_memory_map(&c->mmap);
+        release_error_report(c->mmap_error);
+        c->mmap_is_valid = 0;
+        c->mmap_error = NULL;
         send_context_changed_event(c->ctx);
     }
     else if (p->rc_done) {
@@ -603,6 +600,7 @@ void create_context_proxy(Channel * host, Channel * target) {
     add_event_handler2(target, RUN_CONTROL, "contextResumed", event_context_resumed, p);
     add_event_handler2(target, RUN_CONTROL, "containerSuspended", event_container_suspended, p);
     add_event_handler2(target, RUN_CONTROL, "containerResumed", event_container_resumed, p);
+    /* TODO: add event handler for MemoryMap.changed */
 }
 
 static void validate_peer_cache_context(Channel * c, void * args, int error);
@@ -913,7 +911,14 @@ static void read_memory_region_property(InputStream * inp, const char * name, vo
     else if (strcmp(name, "Flags") == 0) m->flags = json_read_ulong(inp);
     else if (strcmp(name, "FileName") == 0) m->file_name = json_read_alloc_string(inp);
     else if (strcmp(name, "SectionName") == 0) m->sect_name = json_read_alloc_string(inp);
-    else json_skip_object(inp);
+    else if (strcmp(name, "ID")) m->id = json_read_alloc_string(inp);
+    else {
+        MemoryRegionAttribute * x = (MemoryRegionAttribute *)loc_alloc(sizeof(MemoryRegionAttribute));
+        x->name = loc_strdup(name);
+        x->value = json_read_object(inp);
+        x->next = m->attrs;
+        m->attrs = x;
+    }
 }
 
 static void read_memory_map_item(InputStream * inp, void * args) {
@@ -949,18 +954,19 @@ static void validate_memory_map_cache(Channel * c, void * args, int error) {
     Trap trap;
 
     assert(cache->ctx->mem == cache->ctx);
-    assert(cache->mmap_regions == NULL);
+    assert(cache->mmap_is_valid == 0);
     assert(cache->pending_get_mmap != NULL);
     if (set_trap(&trap)) {
         cache->pending_get_mmap = NULL;
-        cache->mmap_error = get_error_report(error);
         if (!error) {
             error = read_errno(&c->inp);
             mem_buf_pos = 0;
             json_read_array(&c->inp, read_memory_map_item, cache->peer->host);
-            cache->mmap_size = mem_buf_pos;
-            cache->mmap_regions = (MemoryRegion *)loc_alloc(sizeof(MemoryRegion) * mem_buf_pos);
-            memcpy(cache->mmap_regions, mem_buf, sizeof(MemoryRegion) * mem_buf_pos);
+            cache->mmap.region_cnt = mem_buf_pos;
+            cache->mmap.region_max = mem_buf_pos;
+            cache->mmap.regions = (MemoryRegion *)loc_alloc(sizeof(MemoryRegion) * mem_buf_pos);
+            memcpy(cache->mmap.regions, mem_buf, sizeof(MemoryRegion) * mem_buf_pos);
+
             if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
             if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
         }
@@ -969,25 +975,26 @@ static void validate_memory_map_cache(Channel * c, void * args, int error) {
     else {
         error = trap.error;
     }
+    cache->mmap_is_valid = 1;
     cache->mmap_error = get_error_report(error);
     cache_notify(&cache->mmap_cache);
     context_unlock(cache->ctx);
     if (trap.error) exception(trap.error);
 }
 
-void memory_map_get_regions(Context * ctx, MemoryRegion ** regions, unsigned * cnt) {
+int context_get_memory_map(Context * ctx, MemoryMap * map) {
     ContextCache * cache = *EXT(ctx);
 
-    if (!cache->peer->rc_done) {
+    if (cache->peer != NULL && !cache->peer->rc_done) {
         cache_wait(&cache->peer->rc_cache);
-        return;
+        return -1;
     }
 
     ctx = ctx->mem;
     cache = *EXT(ctx);
     assert(cache->ctx == ctx);
     if (cache->pending_get_mmap != NULL) cache_wait(&cache->mmap_cache);
-    if (cache->mmap_regions == NULL && cache->mmap_error == NULL && cache->peer != NULL) {
+    if (cache->mmap_is_valid == 0 && cache->peer != NULL) {
         Channel * c = cache->peer->target;
         cache->pending_get_mmap = protocol_send_command(c, "MemoryMap", "get", validate_memory_map_cache, cache);
         json_write_string(&c->out, cache->id);
@@ -996,9 +1003,22 @@ void memory_map_get_regions(Context * ctx, MemoryRegion ** regions, unsigned * c
         context_lock(ctx);
         cache_wait(&cache->mmap_cache);
     }
-    *regions = cache->mmap_regions;
-    *cnt = cache->mmap_size;
-    set_error_report_errno(cache->mmap_error);
+    if (map->region_max < cache->mmap.region_cnt) {
+        map->region_max = cache->mmap.region_cnt;
+        map->regions = (MemoryRegion *)loc_realloc(map->regions, sizeof(MemoryRegion) * map->region_max);
+    }
+    map->region_cnt = cache->mmap.region_cnt;
+    if (map->region_cnt > 0) {
+        memcpy(map->regions, cache->mmap.regions, sizeof(MemoryRegion) * map->region_cnt);
+        memset(cache->mmap.regions, 0, sizeof(MemoryRegion) * map->region_cnt);
+        cache->mmap.region_cnt = 0;
+        cache->mmap_is_valid = 0;
+    }
+    if (cache->mmap_error != NULL) {
+        set_error_report_errno(cache->mmap_error);
+        return -1;
+    }
+    return 0;
 }
 
 static void read_ids_item(InputStream * inp, void * args) {

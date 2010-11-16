@@ -148,6 +148,25 @@ const char * context_state_name(Context * ctx) {
     return "running";
 }
 
+void context_clear_memory_map(MemoryMap * map) {
+    unsigned i;
+    for (i = 0; i < map->region_cnt; i++) {
+        MemoryRegion * r = map->regions + i;
+        loc_free(r->file_name);
+        loc_free(r->sect_name);
+        loc_free(r->id);
+        while (r->attrs != NULL) {
+            MemoryRegionAttribute * x = r->attrs;
+            r->attrs = x->next;
+            loc_free(x->name);
+            loc_free(x->value);
+            loc_free(x);
+        }
+    }
+    memset(map->regions, 0, sizeof(MemoryRegion) * map->region_max);
+    map->region_cnt = 0;
+}
+
 void send_context_created_event(Context * ctx) {
     unsigned i;
     assert(ctx->ref_count > 0);

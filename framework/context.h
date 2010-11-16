@@ -83,6 +83,39 @@ struct Context {
 #define MEM_ACCESS_CACHE        0x0100      /* Context is a cache */
 #define MEM_ACCESS_TLB          0x0200      /* Context is a TLB memory */
 
+typedef struct MemoryMap MemoryMap;
+typedef struct MemoryRegion MemoryRegion;
+typedef struct MemoryRegionAttribute MemoryRegionAttribute;
+
+struct MemoryMap {
+    unsigned region_cnt;
+    unsigned region_max;
+    MemoryRegion * regions;
+};
+
+struct MemoryRegion {
+    ContextAddress addr;            /* Region address in context memory */
+    ContextAddress size;            /* Region size */
+    uint64_t file_offs;             /* File offset of the region */
+    dev_t dev;                      /* Region file device ID */
+    ino_t ino;                      /* Region file inode */
+    char * file_name;               /* Region file name */
+    char * sect_name;               /* Region file section name, can be NULL */
+    unsigned flags;                 /* Region flags, see MM_FLAG* */
+    char * id;                      /* Region ID, not NULL only if the region info is submitted by a client */
+    MemoryRegionAttribute * attrs;  /* Additional memory region attributes */
+};
+
+struct MemoryRegionAttribute {
+    MemoryRegionAttribute * next;
+    char * name;
+    char * value;
+};
+
+#define MM_FLAG_R   1
+#define MM_FLAG_W   2
+#define MM_FLAG_X   4
+
 /*
  * Convert PID to TCF Context ID
  */
@@ -175,6 +208,17 @@ extern int context_continue(Context * ctx);
  * Return -1 and set errno if the context cannot be single stepped.
  */
 extern int context_single_step(Context * ctx);
+
+/*
+ * Retrieve context memory map.
+ * Return -1 and set errno if the map cannot be retrieved.
+ */
+extern int context_get_memory_map(Context * ctx, MemoryMap * map);
+
+/*
+ * Clear a memory map - dispose all entries.
+ */
+extern void context_clear_memory_map(MemoryMap * map);
 
 /*
  * Write context memory.

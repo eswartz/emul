@@ -469,8 +469,9 @@ extern ContextAddress elf_get_debug_structure_address(Context * ctx, ELF_File **
 
 /*
  * Search and return first compilation unit address range in given run-time address range 'addr_min'..'addr_max'.
+ * If 'range_rt_addr' not NULL, *range_rt_addr is assigned run-time address of the range.
  */
-extern struct UnitAddressRange * elf_find_unit(Context * ctx, ContextAddress addr_min, ContextAddress addr_max);
+extern struct UnitAddressRange * elf_find_unit(Context * ctx, ContextAddress addr_min, ContextAddress addr_max, ContextAddress * range_rt_addr);
 
 /*
  * Initialize ELF support module.

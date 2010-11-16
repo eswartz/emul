@@ -31,6 +31,7 @@
 #include <framework/trace.h>
 #include <services/symbols.h>
 #include <services/stacktrace.h>
+#include <services/memorymap.h>
 #include <system/Windows/windbgcache.h>
 #include <system/Windows/context-win32.h>
 #if ENABLE_RCBP_TEST
@@ -991,35 +992,38 @@ static void event_context_exited(Context * ctx, void * client_data) {
     }
 }
 
-static void event_context_changed(Context * ctx, void * client_data) {
+static void event_module_loaded(Context * ctx, void * client_data) {
+    unsigned i;
     HANDLE handle = get_context_handle(ctx);
-    if (is_context_module_loaded(ctx)) {
-        unsigned i;
-        assert(ctx->mem == ctx);
-        assert(handle != NULL);
-        for (i = 0; i < SYMBOL_CACHE_SIZE; i++) {
-            if (symbol_cache[i].process == handle && symbol_cache[i].error) symbol_cache[i].process = NULL;
-        }
+    assert(ctx->mem == ctx);
+    assert(handle != NULL);
+    for (i = 0; i < SYMBOL_CACHE_SIZE; i++) {
+        if (symbol_cache[i].process == handle && symbol_cache[i].error) symbol_cache[i].process = NULL;
     }
-    if (is_context_module_unloaded(ctx)) {
-        unsigned i;
-        assert(ctx->mem == ctx);
-        assert(handle != NULL);
-        for (i = 0; i < SYMBOL_CACHE_SIZE; i++) {
-            if (symbol_cache[i].process == handle) symbol_cache[i].process = NULL;
-        }
+}
+
+static void event_module_unloaded(Context * ctx, void * client_data) {
+    unsigned i;
+    HANDLE handle = get_context_handle(ctx);
+    assert(ctx->mem == ctx);
+    assert(handle != NULL);
+    for (i = 0; i < SYMBOL_CACHE_SIZE; i++) {
+        if (symbol_cache[i].process == handle) symbol_cache[i].process = NULL;
     }
 }
 
 void ini_symbols_lib(void) {
-    static ContextEventListener listener = {
+    static ContextEventListener ctx_listener = {
         NULL,
         event_context_exited,
-        NULL,
-        NULL,
-        event_context_changed
     };
-    add_context_event_listener(&listener, NULL);
+    static MemoryMapEventListener map_listener = {
+        event_module_loaded,
+        NULL,
+        event_module_unloaded
+    };
+    add_context_event_listener(&ctx_listener, NULL);
+    add_memory_map_event_listener(&map_listener, NULL);
     SymSetOptions(SymGetOptions() | SYMOPT_UNDNAME | SYMOPT_DEFERRED_LOADS);
 }
 

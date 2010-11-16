@@ -34,8 +34,10 @@
 #include <framework/waitpid.h>
 #include <framework/signames.h>
 #include <services/breakpoints.h>
+#include <services/memorymap.h>
 #include <system/Windows/context-win32.h>
 #include <system/Windows/regset.h>
+#include <system/Windows/windbgcache.h>
 
 #define MAX_HW_BPS 4
 
@@ -83,8 +85,6 @@ typedef struct DebugState {
     HANDLE              break_thread;
     LPVOID              break_thread_code;
     DWORD               break_thread_id;
-    int                 module_loaded;
-    int                 module_unloaded;
     HANDLE              module_handle;
     DWORD64             module_address;
     ContextAttachCallBack * attach_callback;
@@ -747,24 +747,20 @@ static void debug_event_handler(void * x) {
         break;
     case LOAD_DLL_DEBUG_EVENT:
         assert(prs != NULL);
-        debug_state->module_loaded = 1;
         debug_state->module_handle = win32_event->u.LoadDll.hFile;
         debug_state->module_address = (uintptr_t)win32_event->u.LoadDll.lpBaseOfDll;
-        send_context_changed_event(prs);
+        memory_map_event_module_loaded(prs);
         if (debug_state->module_handle != NULL) {
             log_error("CloseHandle", CloseHandle(debug_state->module_handle));
         }
         debug_state->module_handle = NULL;
         debug_state->module_address = 0;
-        debug_state->module_loaded = 0;
         break;
     case UNLOAD_DLL_DEBUG_EVENT:
         assert(prs != NULL);
-        debug_state->module_unloaded = 1;
         debug_state->module_address = (uintptr_t)win32_event->u.UnloadDll.lpBaseOfDll;
-        send_context_changed_event(prs);
+        memory_map_event_module_unloaded(prs);
         debug_state->module_address = 0;
-        debug_state->module_unloaded = 0;
         break;
     case RIP_EVENT:
         trace(LOG_ALWAYS, "System debugging error: debuggee pid %d, error type %d, error code %d",
@@ -1092,6 +1088,68 @@ int context_unplant_breakpoint(ContextBreakpoint * bp) {
     return 0;
 }
 
+#if defined(_MSC_VER)
+
+static void add_map_region(MemoryMap * map, DWORD64 addr, ULONG size, char * file) {
+    MemoryRegion * r = NULL;
+    if (map->region_cnt >= map->region_max) {
+        map->region_max += 8;
+        map->regions = (MemoryRegion *)loc_realloc(map->regions, sizeof(MemoryRegion) * map->region_max);
+    }
+    r = map->regions + map->region_cnt++;
+    memset(r, 0, sizeof(MemoryRegion));
+    r->addr = (ContextAddress)addr;
+    r->size = (ContextAddress)size;
+    r->file_name = loc_strdup(file);
+}
+
+static BOOL CALLBACK modules_callback(PCWSTR ModuleName, DWORD64 ModuleBase, ULONG ModuleSize, PVOID UserContext) {
+    MemoryMap * map = (MemoryMap *)UserContext;
+    static char * fnm_buf = NULL;
+    static int fnm_max = 0;
+    int fnm_len = 0;
+    int fnm_err = 0;
+
+    if (fnm_buf == NULL) {
+        fnm_max = 256;
+        fnm_buf = (char *)loc_alloc(fnm_max);
+    }
+    for (;;) {
+        fnm_len = WideCharToMultiByte(CP_UTF8, 0, ModuleName, -1, fnm_buf, fnm_max - 1, NULL, NULL);
+        if (fnm_len != 0) break;
+        fnm_err = GetLastError();
+        if (fnm_err != ERROR_INSUFFICIENT_BUFFER) {
+            set_win32_errno(fnm_err);
+            trace(LOG_ALWAYS, "Can't get module name: %s", errno_to_str(errno));
+            return TRUE;
+        }
+        fnm_max *= 2;
+        fnm_buf = (char *)loc_realloc(fnm_buf, fnm_max);
+    }
+    fnm_buf[fnm_len] = 0;
+
+    add_map_region(map, ModuleBase, ModuleSize, fnm_buf);
+
+    return TRUE;
+}
+
+#endif
+
+int context_get_memory_map(Context * ctx, MemoryMap * map) {
+    ctx = ctx->mem;
+    assert(!ctx->exited);
+#if defined(_MSC_VER)
+    {
+        ContextExtensionWin32 * ext = EXT(ctx);
+        if (!EnumerateLoadedModulesW64(ext->handle, modules_callback, map)) {
+            set_win32_errno(GetLastError());
+            return -1;
+        }
+    }
+#endif
+    return 0;
+}
+
 HANDLE get_context_handle(Context * ctx) {
     ContextExtensionWin32 * ext = EXT(ctx);
     return ext->handle;
@@ -1115,16 +1173,6 @@ HANDLE get_context_module_handle(Context * ctx) {
 DWORD64 get_context_module_address(Context * ctx) {
     ContextExtensionWin32 * ext = EXT(ctx);
     return ext->debug_state->module_address;
-}
-
-int is_context_module_loaded(Context * ctx) {
-    ContextExtensionWin32 * ext = EXT(ctx);
-    return ext->debug_state->module_loaded;
-}
-
-int is_context_module_unloaded(Context * ctx) {
-    ContextExtensionWin32 * ext = EXT(ctx);
-    return ext->debug_state->module_unloaded;
 }
 
 void add_context_exception_handler(ContextExceptionHandler * h) {

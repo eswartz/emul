@@ -417,6 +417,12 @@ int context_unplant_breakpoint(ContextBreakpoint * bp) {
     return -1;
 }
 
+int context_get_memory_map(Context * ctx, MemoryMap * map) {
+    ctx = ctx->mem;
+    assert(!ctx->exited);
+    return 0;
+}
+
 static Context * find_pending(pid_t pid) {
     LINK * l = pending_list.next;
     while (l != &pending_list) {

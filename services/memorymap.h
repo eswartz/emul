@@ -22,28 +22,13 @@
 #include <framework/context.h>
 #include <framework/protocol.h>
 
-typedef struct MemoryRegion MemoryRegion;
-
-struct MemoryRegion {
-    ContextAddress addr;        /* Region address in context memory */
-    ContextAddress size;        /* Region size */
-    unsigned long file_offs;    /* File offset of the region */
-    dev_t dev;                  /* Region file device ID */
-    ino_t ino;                  /* Region file inode */
-    char * file_name;           /* Region file name */
-    char * sect_name;           /* Region file section name, can be NULL */
-    unsigned flags;             /* Region flags, see MM_FLAG* */
-};
-
-#define MM_FLAG_R   1
-#define MM_FLAG_W   2
-#define MM_FLAG_X   4
-
 /*
- * Get array of memory regions for given context.
- * Set errno to error code or 0 if no error.
+ * Get memory maps for given context.
+ * 'client_map' returns map entries that are created by the agent clients.
+ * 'target_map' returns map entries that the agent has found on a target.
+ * Return -1 and set errno if the context memory map cannot be retrieved.
  */
-extern void memory_map_get_regions(Context * ctx, MemoryRegion ** regions, unsigned * cnt);
+extern int memory_map_get(Context * ctx, MemoryMap ** client_map, MemoryMap ** target_map);
 
 /*
  * Functions that are used by context implementation to notify memory map services about map changes.

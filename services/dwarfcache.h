@@ -149,11 +149,12 @@ struct CompUnit {
     CompUnit * mBaseTypes;
 };
 
+/* Address range of a compilation unit. A unit can occupy multiple address ranges. */
 struct UnitAddressRange {
-    CompUnit * mUnit;
-    ELF_Section * mSection;
-    ContextAddress mAddr;
-    ContextAddress mSize;
+    CompUnit * mUnit;       /* Compilation unit */
+    ELF_Section * mSection; /* ELF file secdtion that contains the range */
+    ContextAddress mAddr;   /* Link-time start address of the range */
+    ContextAddress mSize;   /* Size of the range */
 };
 
 #define DWARF_CACHE_MAGIC 0x34625490

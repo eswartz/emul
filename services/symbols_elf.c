@@ -216,7 +216,7 @@ static int find_in_object_tree(ObjectInfo * list, const char * name, Symbol ** s
 }
 
 static int find_in_dwarf(const char * name, Symbol ** sym) {
-    UnitAddressRange * range = elf_find_unit(sym_ctx, sym_ip, sym_ip + 1);
+    UnitAddressRange * range = elf_find_unit(sym_ctx, sym_ip, sym_ip + 1, NULL);
     if (range != NULL) {
         CompUnit * unit = range->mUnit;
         if (find_in_object_tree(unit->mObject->mChildren, name, sym)) return 1;
@@ -241,7 +241,7 @@ static int find_in_sym_table(DWARFCache * cache, char * name, Symbol ** res) {
                 ContextAddress addr = 0;
                 if (syminfo2address(sym_ctx->mem, &sym_info, &addr) == 0 && addr != 0) {
                     int found = 0;
-                    UnitAddressRange * range = elf_find_unit(sym_ctx, addr, addr + 1);
+                    UnitAddressRange * range = elf_find_unit(sym_ctx, addr, addr + 1, NULL);
                     if (range != NULL) {
                         ObjectInfo * obj = range->mUnit->mObject->mChildren;
                         while (obj != NULL) {
@@ -448,7 +448,7 @@ int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * call_
     if (frame == STACK_TOP_FRAME && (frame = get_top_frame(ctx)) < 0) exception(errno);
     if (get_sym_context(ctx, frame) < 0) exception(errno);
     if (sym_ip != 0) {
-        UnitAddressRange * range = elf_find_unit(sym_ctx, sym_ip, sym_ip + 1);
+        UnitAddressRange * range = elf_find_unit(sym_ctx, sym_ip, sym_ip + 1, NULL);
         if (range != NULL) enumerate_local_vars(range->mUnit->mObject->mChildren, 0, call_back, args);
     }
     clear_trap(&trap);
