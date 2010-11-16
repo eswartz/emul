@@ -12,12 +12,12 @@
 ;
 
 :   graddr ( -- addr )
-    \ GPLRA c@ 8 lsh  GPLRA c@  or 1-
+    \ GPLRA c@ 8 lshift  GPLRA c@  or 1-
     GPLRA @ 1- 
 ;
 
 :   g@  ( addr -- )
-    gwaddr  GPLRD c@  8 lsh  GPLRD c@  or 
+    gwaddr  GPLRD c@  8 lshift  GPLRD c@  or 
 ;
 
 :   gc@  ( addr -- )
@@ -36,7 +36,7 @@
         dup  1 and  if
             drop i unloop exit
         then
-        1 ursh
+        1 urshift
     loop
     
     drop true

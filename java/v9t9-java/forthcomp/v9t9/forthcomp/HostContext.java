@@ -33,6 +33,7 @@ import v9t9.forthcomp.words.BracketIfdef;
 import v9t9.forthcomp.words.BracketIfndef;
 import v9t9.forthcomp.words.BracketThen;
 import v9t9.forthcomp.words.CR;
+import v9t9.forthcomp.words.Char;
 import v9t9.forthcomp.words.CharComma;
 import v9t9.forthcomp.words.Colon;
 import v9t9.forthcomp.words.ColonColon;
@@ -199,6 +200,7 @@ public class HostContext extends Context {
 		define("::", new ColonColon());
 		define(";", new SemiColon());
 		define("[CHAR]", new BracketChar());
+		define("CHAR", new Char());
 		
 		define("TO", new To());
 		

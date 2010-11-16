@@ -135,7 +135,10 @@ public abstract class TargetContext extends Context {
 	
 	public int alloc(int size) {
 		int old = dp;
-		dp += size;
+		// clear out alloc'd space in case another word wrote temp stuff here
+		while (size-- > 0) {
+			writeChar(dp++, 0);
+		}
 		return old;
 	}
 
@@ -739,7 +742,7 @@ public abstract class TargetContext extends Context {
 		//compile((ITargetWord) parenString);
 		parenString.getCompilationSemantics().execute(hostContext, this);
 		Pair<Integer, Integer> info = writeLengthPrefixedString(string);
-		alloc(info.second);
+		setDP(getDP() + info.second);
 	}
 
 

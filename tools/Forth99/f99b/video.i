@@ -2,7 +2,7 @@
 create  VRegSave      16 allot
 
 :   w>b ( w -- lo hi )
-    dup $ff and swap 8 ursh  
+    dup $ff and swap 8 urshift  
 ;
 
 :   write-vregaddr ( reg -- )

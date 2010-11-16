@@ -27,7 +27,7 @@ else
 then then
 ; immediate target-only
  
-: compile, 1 ursh $8000 OR postpone LITERAL ;
+: compile, 1 urshift $8000 OR postpone LITERAL ;
 
 : s" postpone (s") ; immediate target-only
 
@@ -49,10 +49,6 @@ then then
     -1 -1 (cmove)
 ;
 
-: nip     ( a b -- b )
-    swap drop
-;
-
 : abs     ( n -- p )
     dup 0< if negate then
 ;
@@ -70,7 +66,10 @@ then then
 ;
 
 : m/mod      ( ud un -- un.r ud.q )
-    um/mod
+    >r  s>d dup r>
+    s>d
+    dum/mod
+    2>r drop 2r>
 ;
 
 \   Custom:  set a flag in a word

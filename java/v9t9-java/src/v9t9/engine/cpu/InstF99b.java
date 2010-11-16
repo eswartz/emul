@@ -289,7 +289,7 @@ public class InstF99b {
 		//Inop, 0, 0, 0, 0,
 		
 		Idup, 1, 2, 0, 0,
-		Idup_d, 1, 2, 0, 0,
+		Idup_d, 2, 4, 0, 0,
 		Iqdup, 2, -1, 0, 0,
 		Iqdup_d, 3, -1, 0, 0,
 		

@@ -1,9 +1,9 @@
 
 16          Constant    kbdbufsize
 
-Create      kbdbuf      kbdbufsize allot
+kbdbufsize  RamVar      kbdbuf
 
-Create      kbdstate    10 allot
+10          RamVar      kbdstate
 
 kbdstate     Constant kbdtimer
 
@@ -78,7 +78,7 @@ cell    RamVar    randnoise
 
     graddr >r
          
-        kbdshift c@  3 rsh  grom_kbdlist +      \ get shifted table ptr
+        kbdshift c@  3 rshift  grom_kbdlist +      \ get shifted table ptr
         
         g@      \ get table entry
         +       \ and char offset
@@ -134,7 +134,7 @@ cell    RamVar    randnoise
         i 0= if $07 and then        \ ignore shifts in first row
          
         ?dup if
-            i  3 lsh            \ table row offset
+            i  3 lshift            \ table row offset
             
             swap >bit swap +    \ column
                         
@@ -169,7 +169,7 @@ true <EXPORT
     kbdhead c@  kbdtail c@  = not  
 ;
 
-:   key     ( -- key )
+: (key)     ( -- key | 0 )
     key? if
         kbdhead c@  
         dup  1+ kbdbufsize 1- and kbdhead c!    \ advance
@@ -178,5 +178,14 @@ true <EXPORT
         0
     then
 ;
+
+: key    ( -- key | 0 )
+    begin
+        ints-check
+        key?
+    until
+    (key)
+;
+
 
 EXPORT>

@@ -537,18 +537,33 @@ error" need prim xor"
     d+ 
 ;
 
+:   >digit ( base ch -- n | flag )
+    dup [char] 0 [ [char] 9 1+ literal ] within if
+        [char] 0 -  
+    else dup [char] a [ [char] z 1+ literal ] within if
+        [ char a -10 + literal ] -  
+    else dup [char] A [ [char] Z 1+ literal ] within if
+        [ char A -10 + literal ] -  
+    else
+        true or  
+    then then then
+    
+    swap over  U> 
+    
+;
+
 \   This ignores '+' and '-' and '.' and stops there.
 \   The outer NUMBER interpreter will detect leading signs
 \   and perform an initial 
 \   and then parse the number 
-\   continue parsing, setting 
+\   continue parsing, setting dpl.
 : >NUMBER   \ CORE ( ud1 c-addr1 u1 -- ud2 c-addr2 u2 )
     begin           \ ( ud1 c-addr1 u1 )
         dup         \ chars left?
         if
             over c@     
             base @
-            swap digit      \ legal digit?
+            swap >digit      \ legal digit?
         else
             0
         then        \ ( ud1 c-addr1 u1 # -1 | ud1 c-addr1 u1 0 )
@@ -623,22 +638,6 @@ error" need prim execute"
 \ ;
 [THEN]
 
-0 [IF]
-
-[IFUNDEF] LITERAL
-: DLITERAL
-    state @ if 
-        swap postpone lit , postpone lit ,
-    then
-; immediate target-only
-
-: LITERAL
-    state @ if 
-        postpone lit ,
-    then
-; immediate  target-only
-[THEN]
-
 [IFUNDEF] SLITERAL
 : s,    ( caddr u -- )
     dup c, 
@@ -646,20 +645,26 @@ error" need prim execute"
 ;
 
 : SLITERAL  \ C: ( caddr u --  ) R: ( -- caddr u )
-    state @ if
+   \ state @ if
         postpone (s") s, align
-    else
-        \ copy string to safe place
-        >r (spad) @ r@ cmove
-        (spad) @ r>
-    then
+   \ else
+   \     \ copy string to safe place
+   \     >r (spad) @ r@ cmove
+   \     (spad) @ r>
+   \ then
 ; immediate target-only
 [THEN]
 
 [IFUNDEF] S"
 : S"
     $22 parse
-    postpone sliteral
+    state @ if
+        postpone sliteral
+    else
+       \ copy string to safe place
+       >r (spad) @ r@ cmove
+       (spad) @ r>
+    then
 ; immediate  target-only
 [THEN]
 
@@ -1025,8 +1030,9 @@ User #TIB
 [THEN]
 
 [IFUNDEF] NIP
-\ : NIP
-\ ;
+: NIP    ( a b -- b )
+    swap drop
+;
 [THEN]
 
 [IFUNDEF] PAD

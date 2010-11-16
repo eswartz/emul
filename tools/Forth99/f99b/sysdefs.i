@@ -40,8 +40,10 @@ $00ff       constant    'DBG
 
 $0400       constant    ROM
 
-ROM         constant    (COLD)
+ROM         constant    (BOOT)
+ROM 2 +     constant    (COLD)
 ROM 4 +     constant    DP0
+ROM 6 +     constant    (LATEST)
 
 $80         constant    (#RP)
 $80         constant    (#SP)

@@ -392,7 +392,7 @@ public class TestForthCompF99b extends BaseF99bTest {
 	@Test
 	public void testShifts1Ex() throws Exception {
 		parseString(
-				": outer $8887 12 ursh  $8887 8 rsh $ffff 15 lsh ;");
+				": outer $8887 12 urshift  $8887 8 rshift $ffff 15 lshift ;");
 		
 		interpret("outer");
 		assertEquals((short)0x8000, hostCtx.popData());
@@ -402,7 +402,7 @@ public class TestForthCompF99b extends BaseF99bTest {
 	@Test
 	public void testShifts2Ex() throws Exception {
 		parseString(
-				": outer $8887 12U ursh  $8887 8U rsh $ffff 15U lsh ;");
+				": outer $8887 12U urshift  $8887 8U rshift $ffff 15U lshift ;");
 		
 		interpret("outer");
 		assertEquals((short)0x8000, hostCtx.popData());
@@ -412,7 +412,7 @@ public class TestForthCompF99b extends BaseF99bTest {
 	@Test
 	public void testDoublShifts1Ex() throws Exception {
 		parseString(
-				": outer $8887.7778 16. dursh  $8887.7778 8. drsh ;");
+				": outer $8887.7778 16. durshift  $8887.7778 8. drshift ;");
 		
 		interpret("outer");
 		assertEquals((short)0xff88, hostCtx.popData());
@@ -423,7 +423,7 @@ public class TestForthCompF99b extends BaseF99bTest {
 	@Test
 	public void testDoublShifts2Ex() throws Exception {
 		parseString(
-				": outer $8887.7778 16.U dursh  $8887.7778 8.U drsh ;");
+				": outer $8887.7778 16.U durshift  $8887.7778 8.U drshift ;");
 		
 		interpret("outer");
 		assertEquals((short)0xff88, hostCtx.popData());
@@ -1274,5 +1274,35 @@ public class TestForthCompF99b extends BaseF99bTest {
 		assertEquals(3, hostCtx.popData());
 		assertEquals(2, hostCtx.popData());
 		assertEquals(1, hostCtx.popData());
+	}
+	@Test
+	public void testMaxMin() throws Exception {
+		parseString(
+				": NIP    ( a b -- b )\n" + 
+				"    swap drop\n" + 
+				";\n" + 
+				"\n" + 
+				": MAX\n" + 
+				"    2dup >= if drop else nip then\n" + 
+				";\n" + 
+				": MIN\n" + 
+				"    2dup <= if drop else nip then\n" + 
+				";\n");
+		hostCtx.pushData(100);
+		hostCtx.pushData(200);
+		
+		interpret("max");
+		
+		assertEquals(200, hostCtx.popData());
+		assertTrue(hostCtx.getDataStack().isEmpty());
+		
+		hostCtx.pushData(200);
+		hostCtx.pushData(100);
+		
+		interpret("max");
+		
+		assertEquals(200, hostCtx.popData());
+		assertTrue(hostCtx.getDataStack().isEmpty());
+
 	}
 }

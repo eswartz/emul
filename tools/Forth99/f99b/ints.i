@@ -79,7 +79,7 @@
     dup >r   set-int-vec
 
     \ enable bit
-    'INTS c@  1 r> lsh  or  'INTS c!
+    'INTS c@  1 r> lshift  or  'INTS c!
 
 ;
 

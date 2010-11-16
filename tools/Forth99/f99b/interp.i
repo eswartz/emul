@@ -197,11 +197,10 @@ User dpl
 
 : number    ( addr -- ud )
 \   .s
-[ 0 [if] ]
 
     0 0 rot
     
-[ [endif] ]
+    base @ >r               \ save original base
 
     count 
 
@@ -211,7 +210,6 @@ User dpl
     if (skip) then
 
     \ check for base conversion
-    base @ >r               \ save original base
     over c@ [char] $ = if
         hex (skip)          \ use hex for '$'
     else over c@ [char] & = if
@@ -220,36 +218,12 @@ User dpl
 
     -1 dpl !
 
-[ 0 [if] ]
-
-    ( caddr n )
-    2dup
-    base @ >single-number    ( num f  || caddr n  caddr-bad+1 bad-ch  )
-    ?dup if     \ invalid char?
-        $2E = if    \ did we stop at '.'?
-            dpl !           \ don't store offset... too much work ;)
-            2>r 0 0 2r>     \ insert work number
-            >number         \ full dbl-prec parse
-            (skip)
-            >number         \ again, due to the '.' which we know about
-        else
-            0 0 1
-        then
-        dup if 
-            here huh? 2drop 2drop quit  \ error
-        then
-        2drop
-    else
-       nip nip s>d
-    then
-[ [else] ]
-
     >number
     dup if      \ any invalid chars?
-        over c@ $2E = if    \ did we stop at '.'?
+        drop over c@ [char] . = if    \ did we stop at '.'?
             over dpl !      \ don't store offset... too much work ;)
             (skip)          \ skip '.'
-            >number
+            >number         \ parse rest
         then
         dup if 
             here huh? 2drop 2drop quit  \ error
@@ -257,13 +231,11 @@ User dpl
     then
     2drop
 
-[ [endif] ]
-
+    r>              \ sign flag
+    if dnegate then
 
     r> base !       \ original base
 
-    r>              \ sign flag
-    if dnegate then
 
 \   .s
 ;
@@ -284,16 +256,10 @@ User dpl
             nfa>xt execute
         then
     else
-        \ number dpl @ 1+ if
-        base @  number  ?dup 
-        if
-            0< if 
-                 postpone dliteral
-            else 
-                 postpone literal
-            then
-        else
-             here huh? 2drop 2drop quit  \ error
+        number dpl @ 1+ if
+            state @ if  postpone dliteral  then 
+        else 
+            drop state @ if  postpone literal  then
         then 
     then
 ;

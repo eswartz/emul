@@ -106,8 +106,11 @@ public class F99bTargetContext extends TargetContext {
 		definePrim("dup", Idup);
 		definePrim("drop", Idrop);
 		definePrim("swap", Iswap);
+		definePrim("2swap", Iswap_d);
 		definePrim("over", Iover);
+		definePrim("2over", Iover_d);
 		definePrim("rot", Irot);
+		definePrim("2rot", Irot_d);
 		definePrim("0=", I0equ);
 		definePrim("D0=", I0equ_d);
 		definePrim("=", Iequ);
@@ -196,17 +199,17 @@ public class F99bTargetContext extends TargetContext {
 		defineInlinePrim("2/", I2div);
 		defineInlinePrim("2*", I2times);
 		
-		defineInlinePrim("LSH", Ilsh);
-		defineInlinePrim("RSH", Iash);
-		defineInlinePrim("URSH", Irsh);
-		defineInlinePrim("CSH", Icsh);
+		defineInlinePrim("LSHIFT", Ilsh);
+		defineInlinePrim("RSHIFT", Iash);
+		defineInlinePrim("URSHIFT", Irsh);
+		defineInlinePrim("CSHIFT", Icsh);
 		
 		defineInlinePrim("SWPB", IlitX | 8, Icsh);
 		
-		defineInlinePrim("DLSH", Ilsh_d);
-		defineInlinePrim("DRSH", Iash_d);
-		defineInlinePrim("DURSH", Irsh_d);
-		defineInlinePrim("DCSH", Icsh_d);
+		defineInlinePrim("DLSHIFT", Ilsh_d);
+		defineInlinePrim("DRSHIFT", Iash_d);
+		defineInlinePrim("DURSHIFT", Irsh_d);
+		defineInlinePrim("DCSHIFT", Icsh_d);
 		
 		defineInlinePrim("*", Iumul, Idrop);
 

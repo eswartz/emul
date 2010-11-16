@@ -49,7 +49,7 @@ public class BaseF99bTest extends BaseForthCompTest {
 		": : ; target-only\n"+
 		": ; $70 c, ; immediate target-only \n"+
 
-		": compile, 1 ursh $8000 OR postpone LITERAL ;\n"+
+		": compile, 1 urshift $8000 OR postpone LITERAL ;\n"+
 		"";
 	
 	/* (non-Javadoc)
