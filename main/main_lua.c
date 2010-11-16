@@ -289,7 +289,7 @@ static void lua_read_command_getline(void *client_data)
                 state->line = (char *)loc_realloc(state->line, state->linemax);
             }
         }
-        state->line[state->lineind++] = c;
+        state->line[state->lineind++] = (char)c;
     }
 eol:
     if(state->bufst != bufst_eol_optnl && state->bufst != bufst_eol && !state->eof) {
@@ -1543,7 +1543,7 @@ int main(int argc, char ** argv) {
 #endif
 
     if (script_name != NULL) {
-        if((lua_read_command_state.req.u.fio.fd = open(script_name, 0)) < 0) {
+        if((lua_read_command_state.req.u.fio.fd = open(script_name, O_RDONLY, 0)) < 0) {
             fprintf(stderr, "%s: error: cannot open script: %s\n", progname, script_name);
             exit(1);
         }

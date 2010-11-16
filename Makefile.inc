@@ -26,6 +26,7 @@ ifeq ($(OPSYS),Windows)
   EXTLIB = .lib
   EXTEXE = .exe
   LIBS = shell32.lib advapi32.lib Iphlpapi.lib WS2_32.lib version.lib
+  EXPORT_DYNAMIC =
 endif
 
 ifeq ($(OPSYS),Cygwin)
@@ -111,7 +112,7 @@ ifeq ($(OPSYS),MinGW)
 endif
 
 ifdef LUADIR
-  EXECS += $(BINDIR)/tcflua
+  EXECS += $(BINDIR)/tcflua$(EXTEXE)
   OPTS += -DPATH_LUA="$(LUADIR)" "-I$(LUADIR)/include"
 endif
 

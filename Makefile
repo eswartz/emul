@@ -10,6 +10,11 @@ ifeq ($(CC),g++)
   OPTS += -fno-omit-frame-pointer
 endif
 
+LUALIBS = $(LIBS) $(LUADIR)/lib/liblua$(EXTLIB)
+ifneq ($(OPSYS),Windows)
+  LUALIBS += -lm -ldl
+endif
+
 override CFLAGS += $(OPTS)
 
 all:	$(EXECS)
@@ -26,7 +31,7 @@ $(BINDIR)/client$(EXTEXE): $(BINDIR)/main/main_client$(EXTOBJ) $(BINDIR)/libtcf$
 	$(CC) $(CFLAGS) -o $@ $(BINDIR)/main/main_client$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB) $(LIBS)
 
 $(BINDIR)/tcflua$(EXTEXE): $(BINDIR)/main/main_lua$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB)
-	$(CC) $(CFLAGS) $(EXPORT_DYNAMIC) -o $@ $(BINDIR)/main/main_lua$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB) $(LIBS) $(LUADIR)/lib/liblua$(EXTLIB) -lm -ldl
+	$(CC) $(CFLAGS) $(EXPORT_DYNAMIC) -o $@ $(BINDIR)/main/main_lua$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB) $(LUALIBS)
 
 $(BINDIR)/tcfreg$(EXTEXE): $(BINDIR)/main/main_reg$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB)
 	$(CC) $(CFLAGS) -o $@ $(BINDIR)/main/main_reg$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB) $(LIBS)
