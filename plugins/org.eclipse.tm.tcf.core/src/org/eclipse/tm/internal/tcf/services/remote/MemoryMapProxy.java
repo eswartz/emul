@@ -51,6 +51,10 @@ public class MemoryMapProxy implements IMemoryMap {
             return (String)props.get(PROP_FILE_NAME);
         }
 
+        public String getSectionName() {
+            return (String)props.get(PROP_SECTION_NAME);
+        }
+
         public int getFlags() {
             Number n = (Number)props.get(PROP_FLAGS);
             if (n != null) return n.intValue();

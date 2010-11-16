@@ -72,8 +72,8 @@ class MemoryMapDialog extends Dialog {
         "Address",
         "Size",
         "Flags",
-        "File Offset",
-        "File Name"
+        "File offset/section",
+        "File name"
     };
 
     private static final String PROP_ID = "ID";
@@ -119,6 +119,10 @@ class MemoryMapDialog extends Dialog {
 
         public String getFileName() {
             return (String)props.get(IMemoryMap.PROP_FILE_NAME);
+        }
+
+        public String getSectionName() {
+            return (String)props.get(IMemoryMap.PROP_SECTION_NAME);
         }
 
         public int getFlags() {
@@ -185,13 +189,17 @@ class MemoryMapDialog extends Dialog {
             case 3:
                 {
                     Number n = r.getOffset();
-                    if (n == null) return "";
-                    BigInteger x = n instanceof BigInteger ? (BigInteger)n : new BigInteger(n.toString());
-                    String s = x.toString(16);
-                    int l = 16 - s.length();
-                    if (l < 0) l = 0;
-                    if (l > 16) l = 16;
-                    return "0x0000000000000000".substring(0, 2 + l) + s;
+                    if (n != null) {
+                        BigInteger x = n instanceof BigInteger ? (BigInteger)n : new BigInteger(n.toString());
+                        String s = x.toString(16);
+                        int l = 16 - s.length();
+                        if (l < 0) l = 0;
+                        if (l > 16) l = 16;
+                        return "0x0000000000000000".substring(0, 2 + l) + s;
+                    }
+                    String s = r.getSectionName();
+                    if (s != null) return s;
+                    return "";
                 }
             case 4:
                 return r.getFileName();

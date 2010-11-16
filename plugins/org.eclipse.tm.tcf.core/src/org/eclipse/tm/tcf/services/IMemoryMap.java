@@ -39,7 +39,10 @@ public interface IMemoryMap extends IService {
         PROP_FLAGS = "Flags",
 
         /** String, name of the file */
-        PROP_FILE_NAME = "FileName";
+        PROP_FILE_NAME = "FileName",
+
+        /** String, name of the object file section */
+        PROP_SECTION_NAME = "SectionName";
 
     /**
      * Memory region flags.
@@ -95,6 +98,12 @@ public interface IMemoryMap extends IService {
          * @return file name.
          */
         String getFileName();
+
+        /**
+         * Get memory region section name.
+         * @return section name.
+         */
+        String getSectionName();
     }
 
     /**
