@@ -70,7 +70,7 @@ static int get_sym_context(Context * ctx, int frame) {
     assert(frame != STACK_TOP_FRAME);
 
     if (frame == STACK_NO_FRAME) {
-        ctx = ctx->mem;
+        ctx = context_get_group(ctx, CONTEXT_GROUP_PROCESS);
     }
     else {
         StackFrame * info = NULL;
@@ -167,7 +167,7 @@ static void object2symbol(ObjectInfo * obj, Symbol ** res) {
         sym->sym_class = SYM_CLASS_VALUE;
         break;
     }
-    if (sym->frame == 0) ctx = ctx->mem;
+    if (sym->frame == 0) ctx = context_get_group(ctx, CONTEXT_GROUP_PROCESS);
     sym->ctx = ctx;
     *res = sym;
 }
@@ -239,7 +239,7 @@ static int find_in_sym_table(DWARFCache * cache, char * name, Symbol ** res) {
             unpack_elf_symbol_info(tbl, n, &sym_info);
             if (strcmp(name, sym_info.mName) == 0) {
                 ContextAddress addr = 0;
-                if (syminfo2address(sym_ctx->mem, &sym_info, &addr) == 0 && addr != 0) {
+                if (syminfo2address(context_get_group(sym_ctx, CONTEXT_GROUP_PROCESS), &sym_info, &addr) == 0 && addr != 0) {
                     int found = 0;
                     UnitAddressRange * range = elf_find_unit(sym_ctx, addr, addr + 1, NULL);
                     if (range != NULL) {
@@ -264,7 +264,7 @@ static int find_in_sym_table(DWARFCache * cache, char * name, Symbol ** res) {
                     if (!found) {
                         Symbol * sym = alloc_symbol();
                         assert(sym->frame == 0);
-                        sym->ctx = sym_ctx->mem;
+                        sym->ctx = context_get_group(sym_ctx, CONTEXT_GROUP_PROCESS);
                         sym->tbl = tbl;
                         sym->index = n;
                         switch (sym_info.mType) {
@@ -305,7 +305,7 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** res) {
         }
         else {
             Symbol * sym = alloc_symbol();
-            sym->ctx = ctx->mem;
+            sym->ctx = context_get_group(ctx, CONTEXT_GROUP_PROCESS);
             sym->address = (ContextAddress)ptr;
 
             if (SYM_IS_TEXT(type)) {
@@ -391,7 +391,7 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** res) {
         found = find_test_symbol(ctx, name, &address, &sym_class) >= 0;
         if (found) {
             Symbol * sym = alloc_symbol();
-            sym->ctx = ctx->mem;
+            sym->ctx = context_get_group(ctx, CONTEXT_GROUP_PROCESS);
             sym->address = (ContextAddress)address;
             sym->sym_class = sym_class;
             *res = sym;

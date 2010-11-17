@@ -1957,15 +1957,6 @@ static void channel_close_listener(Channel * c) {
     delete_breakpoint_refs(c);
 }
 
-#if !defined(_WRS_KERNEL)
-static void eventpoint_at_main(Context * ctx, void * args) {
-#if defined(__linux__)
-    send_context_changed_event(ctx->mem);
-#endif
-    suspend_debug_context(ctx);
-}
-#endif
-
 void ini_breakpoints_service(Protocol * proto, TCFBroadcastGroup * bcg) {
     int i;
     broadcast_group = bcg;
@@ -2008,9 +1999,6 @@ void ini_breakpoints_service(Protocol * proto, TCFBroadcastGroup * bcg) {
     add_command_handler(proto, BREAKPOINTS, "getStatus", command_get_status);
     add_command_handler(proto, BREAKPOINTS, "getCapabilities", command_get_capabilities);
     context_extension_offset = context_extension(sizeof(ContextExtensionBP));
-#if !defined(_WRS_KERNEL)
-    create_eventpoint("main", eventpoint_at_main, NULL);
-#endif
 }
 
 #endif /* SERVICE_Breakpoints */

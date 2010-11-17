@@ -144,12 +144,10 @@ static void write_context(OutputStream * out, Context * ctx) {
         json_write_string(out, ctx->creator->id);
     }
 
-    if (ctx->mem != NULL) {
-        write_stream(out, ',');
-        json_write_string(out, "ProcessID");
-        write_stream(out, ':');
-        json_write_string(out, ctx->mem->id);
-    }
+    write_stream(out, ',');
+    json_write_string(out, "ProcessID");
+    write_stream(out, ':');
+    json_write_string(out, context_get_group(ctx, CONTEXT_GROUP_PROCESS)->id);
 
     if (ctx->name != NULL) {
         write_stream(out, ',');

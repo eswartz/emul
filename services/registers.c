@@ -76,7 +76,7 @@ static void write_context(OutputStream * out, char * id,
     write_stream(out, ',');
     json_write_string(out, "ProcessID");
     write_stream(out, ':');
-    json_write_string(out, ctx->mem->id);
+    json_write_string(out, context_get_group(ctx, CONTEXT_GROUP_PROCESS)->id);
 
     write_stream(out, ',');
     json_write_string(out, "Name");

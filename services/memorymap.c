@@ -92,6 +92,7 @@ static void event_context_disposed(Context * ctx, void * args) {
 
 int memory_map_get(Context * ctx, MemoryMap ** client_map, MemoryMap ** target_map) {
     ContextExtensionMM * ext = EXT(ctx);
+    assert(ctx == context_get_group(ctx, CONTEXT_GROUP_PROCESS));
     if (!ext->valid) {
         context_clear_memory_map(&ext->target_map);
         release_error_report(ext->error);
@@ -217,7 +218,9 @@ static void command_get(char * token, Channel * c) {
 
     ctx = id2ctx(id);
     if (ctx == NULL) err = ERR_INV_CONTEXT;
-    else if (memory_map_get(ctx, &client_map, &target_map) < 0) err = errno;
+    else ctx = context_get_group(ctx, CONTEXT_GROUP_PROCESS);
+
+    if (!err && memory_map_get(ctx, &client_map, &target_map) < 0) err = errno;
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
@@ -294,9 +297,11 @@ static void command_set(char * token, Channel * c) {
 
     ctx = id2ctx(id);
     if (ctx == NULL) err = ERR_INV_CONTEXT;
+    else ctx = context_get_group(ctx, CONTEXT_GROUP_PROCESS);
 
     if (!err) {
         EXT(ctx)->client_map = map;
+        event_memory_map_changed(ctx, NULL);
     }
     else {
         context_clear_memory_map(&map);

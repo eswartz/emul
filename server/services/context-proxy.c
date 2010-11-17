@@ -303,12 +303,19 @@ static void on_context_suspended(ContextCache * c) {
     LINK * l;
 
     if (c->peer->rc_done) {
-        ContextCache * p = *EXT(c->ctx->mem);
-        l = p->mem_cache_list.next;
-        while (l != &p->mem_cache_list) {
-            MemoryCache * m = ctx2mem(p->mem_cache_list.next);
-            l = l->next;
-            if (!m->pending) free_memory_cache(m);
+        LINK * x = context_root.next;
+        while (x != &context_root) {
+            Context * ctx = ctxl2ctxp(x);
+            if (ctx->mem == c->ctx->mem) {
+                ContextCache * p = *EXT(ctx);
+                l = p->mem_cache_list.next;
+                while (l != &p->mem_cache_list) {
+                    MemoryCache * m = ctx2mem(p->mem_cache_list.next);
+                    l = l->next;
+                    if (!m->pending) free_memory_cache(m);
+                }
+            }
+            x = x->next;
         }
     }
 
@@ -804,6 +811,14 @@ int context_has_state(Context * ctx) {
     return (*EXT(ctx))->has_state;
 }
 
+Context * context_get_group(Context * ctx, int group) {
+    switch (group) {
+    case CONTEXT_GROUP_INTERCEPT:
+        return ctx;
+    }
+    return ctx->mem;
+}
+
 static void validate_memory_cache(Channel * c, void * args, int error) {
     MemoryCache * m = (MemoryCache *)args;
     Context * ctx = m->ctx->ctx;
@@ -856,7 +871,6 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
         return -1;
     }
 
-    ctx = ctx->mem;
     cache = *EXT(ctx);
 
     for (l = cache->mem_cache_list.next; l != &cache->mem_cache_list; l = l->next) {
@@ -953,7 +967,6 @@ static void validate_memory_map_cache(Channel * c, void * args, int error) {
     ContextCache * cache = (ContextCache *)args;
     Trap trap;
 
-    assert(cache->ctx->mem == cache->ctx);
     assert(cache->mmap_is_valid == 0);
     assert(cache->pending_get_mmap != NULL);
     if (set_trap(&trap)) {
@@ -990,7 +1003,6 @@ int context_get_memory_map(Context * ctx, MemoryMap * map) {
         return -1;
     }
 
-    ctx = ctx->mem;
     cache = *EXT(ctx);
     assert(cache->ctx == ctx);
     if (cache->pending_get_mmap != NULL) cache_wait(&cache->mmap_cache);

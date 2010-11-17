@@ -56,7 +56,7 @@ int is_test_process(Context * ctx) {
 #if defined(_WRS_KERNEL)
     return 1;
 #else
-    return EXT(ctx->mem)->test_process;
+    return EXT(context_get_group(ctx, CONTEXT_GROUP_PROCESS))->test_process;
 #endif
 }
 
@@ -141,7 +141,7 @@ static void run_test_done(int error, Context * ctx, void * arg) {
     Channel * c = data->c;
 
     if (ctx != NULL) {
-        EXT(ctx->mem)->test_process = 1;
+        EXT(context_get_group(ctx, CONTEXT_GROUP_PROCESS))->test_process = 1;
         EXT(ctx)->channel = c;
     }
     if (!is_channel_closed(c)) {

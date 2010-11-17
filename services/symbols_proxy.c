@@ -440,7 +440,7 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** sym) {
     if (!set_trap(&trap)) return -1;
 
     if (frame == STACK_NO_FRAME) {
-        ctx = ctx->mem;
+        ctx = context_get_group(ctx, CONTEXT_GROUP_PROCESS);
     }
     else {
         StackFrame * info = NULL;
@@ -480,7 +480,7 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** sym) {
             }
             f->update_policy = UPDATE_ON_MEMORY_MAP_CHANGES;
             snprintf(bf, sizeof(bf), "TEST.%X.%"PRIX64".%s", sym_class,
-                    (uint64_t)(uintptr_t)address, ctx->mem->id);
+                    (uint64_t)(uintptr_t)address, context_get_group(ctx, CONTEXT_GROUP_PROCESS)->id);
             f->id = loc_strdup(bf);
         }
     }
@@ -567,7 +567,7 @@ int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * func,
     if (!set_trap(&trap)) return -1;
 
     if (frame == STACK_NO_FRAME) {
-        ctx = ctx->mem;
+        ctx = context_get_group(ctx, CONTEXT_GROUP_PROCESS);
     }
     else {
         StackFrame * info = NULL;
@@ -1066,12 +1066,12 @@ int get_next_stack_frame(StackFrame * frame, StackFrame * down) {
         return 0;
     }
 
-    h = hash_frame(ctx->mem);
+    h = hash_frame(context_get_group(ctx, CONTEXT_GROUP_PROCESS));
     syms = get_symbols_cache();
     for (l = syms->link_frame[h].next; l != syms->link_frame + h; l = l->next) {
         StackFrameCache * c = syms2frame(l);
         /* Here we assume that stack tracing info is valid for all threads in same memory space */
-        if (c->ctx == ctx->mem) {
+        if (c->ctx == context_get_group(ctx, CONTEXT_GROUP_PROCESS)) {
             if (c->pending != NULL) {
                 cache_wait(&c->cache);
             }
@@ -1091,7 +1091,7 @@ int get_next_stack_frame(StackFrame * frame, StackFrame * down) {
         Channel * c = get_channel(syms);
         f = (StackFrameCache *)loc_alloc_zero(sizeof(StackFrameCache));
         list_add_first(&f->link_syms, syms->link_frame + h);
-        context_lock(f->ctx = ctx->mem);
+        context_lock(f->ctx = context_get_group(ctx, CONTEXT_GROUP_PROCESS));
         f->address = ip;
         f->size = 1;
         f->pending = protocol_send_command(c, SYMBOLS, "findFrameInfo", validate_frame, f);
@@ -1170,7 +1170,7 @@ static void flush_syms(Context * ctx, int mode) {
                 while (l != syms->link_frame + i) {
                     StackFrameCache * c = syms2frame(l);
                     l = l->next;
-                    if (c->ctx == ctx->mem) free_stack_frame_cache(c);
+                    if (c->ctx == context_get_group(ctx, CONTEXT_GROUP_PROCESS)) free_stack_frame_cache(c);
                 }
             }
         }

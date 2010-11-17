@@ -297,6 +297,12 @@ extern Context * context_get_group(Context * ctx, int group);
  */
 #define CONTEXT_GROUP_INTERCEPT     3
 
+/*
+ * "process" context group - all contexts that share same memory address space,
+ * memory map and symbol files.
+ */
+#define CONTEXT_GROUP_PROCESS       4
+
 
 /*
  * Debug context implementation can support low-level breakpoints.

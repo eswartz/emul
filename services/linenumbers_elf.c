@@ -87,7 +87,6 @@ int line_to_address(Context * ctx, char * file_name, int line, int column, LineN
 
     if (ctx == NULL) err = ERR_INV_CONTEXT;
     else if (ctx->exited) err = ERR_ALREADY_EXITED;
-    else ctx = ctx->mem;
 
     if (err == 0) {
         ELF_File * file = elf_list_first(ctx, 0, ~(ContextAddress)0);

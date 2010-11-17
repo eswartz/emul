@@ -35,6 +35,7 @@
 #include <framework/signames.h>
 #include <services/breakpoints.h>
 #include <services/memorymap.h>
+#include <services/runctrl.h>
 #include <system/Windows/context-win32.h>
 #include <system/Windows/regset.h>
 #include <system/Windows/windbgcache.h>
@@ -1180,12 +1181,17 @@ void add_context_exception_handler(ContextExceptionHandler * h) {
     exception_handlers[exception_handler_cnt++] = h;
 }
 
+static void eventpoint_at_main(Context * ctx, void * args) {
+    suspend_debug_context(ctx);
+}
+
 void init_contexts_sys_dep(void) {
     context_extension_offset = context_extension(sizeof(ContextExtensionWin32));
     ini_context_pid_hash();
     memset(&os_version, 0, sizeof(os_version));
     os_version.dwOSVersionInfoSize = sizeof(os_version);
     GetVersionEx((OSVERSIONINFO *)&os_version);
+    create_eventpoint("main", eventpoint_at_main, NULL);
 }
 
 #endif  /* if ENABLE_DebugContext */

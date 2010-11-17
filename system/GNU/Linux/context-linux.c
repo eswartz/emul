@@ -40,6 +40,7 @@
 #include <services/breakpoints.h>
 #include <services/expressions.h>
 #include <services/memorymap.h>
+#include <services/runctrl.h>
 #include <services/tcf_elf.h>
 #include <system/GNU/Linux/regset.h>
 
@@ -955,6 +956,11 @@ static void eventpoint_at_loader(Context * ctx, void * args) {
 
 #endif /* SERVICE_Expressions && ENABLE_ELF */
 
+static void eventpoint_at_main(Context * ctx, void * args) {
+    send_context_changed_event(ctx->mem);
+    suspend_debug_context(ctx);
+}
+
 void init_contexts_sys_dep(void) {
     list_init(&pending_list);
     context_extension_offset = context_extension(sizeof(ContextExtensionLinux));
@@ -964,6 +970,7 @@ void init_contexts_sys_dep(void) {
     add_identifier_callback(expression_identifier_callback);
     create_eventpoint("$loader_brk", eventpoint_at_loader, NULL);
 #endif /* SERVICE_Expressions && ENABLE_ELF */
+    create_eventpoint("main", eventpoint_at_main, NULL);
 }
 
 #endif  /* if ENABLE_DebugContext */

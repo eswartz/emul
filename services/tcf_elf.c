@@ -689,6 +689,7 @@ static int get_map(Context * ctx, ContextAddress addr0, ContextAddress addr1, Me
     MemoryMap * target_map = NULL;
 
     map->region_cnt = 0;
+    ctx = context_get_group(ctx, CONTEXT_GROUP_PROCESS);
     if (memory_map_get(ctx, &client_map, &target_map) < 0) return -1;
     search_regions(client_map, addr0, addr1, map);
     search_regions(target_map, addr0, addr1, map);

@@ -177,7 +177,7 @@ static void write_context(OutputStream * out, char * id, Context * ctx, int leve
     write_stream(out, ',');
     json_write_string(out, "ProcessID");
     write_stream(out, ':');
-    json_write_string(out, ctx->mem->id);
+    json_write_string(out, context_get_group(ctx, CONTEXT_GROUP_PROCESS)->id);
 
     if (frame->is_top_frame) {
         write_stream(out, ',');
