@@ -161,6 +161,7 @@ public class ForthComp {
 	private void defineCompilerWords() {
 		baseVar = (HostVariable) hostContext.define("base", new HostVariable(10));
 		hostContext.define("state", new HostVariable(0));
+		hostContext.define("(state)", new HostVariable(0));
 	}
 
 	/**

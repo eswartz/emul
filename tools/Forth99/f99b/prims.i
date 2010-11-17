@@ -1,34 +1,4 @@
 
-variable dp
-here    dp !
-
-
-: here dp @ ; 
-: , here ! 2 dp +! ; 
-: c, here c! 1 dp +! ;
- 
-: literal ( n -- ) dup -8 >= over 8 < and  if
-    $f and $20 or c,  else
-dup -128 >= over 128 < and  if
-    $78 c, c,
-else
-    $79 c, ,
-then then
-; immediate target-only
- 
-: dliteral ( d -- ) 
-    $7e c,
-2dup -8. d>= over 8. d< and  if
-    drop $f and $20 or c,  else
-2dup -128. d>= over 128. d< and  if
-    drop $78 c, c,
-else
-    $79 c, , ,
-then then
-; immediate target-only
- 
-: compile, 1 urshift $8000 OR postpone LITERAL ;
-
 : s" postpone (s") ; immediate target-only
 
 : pick ( n -- v )
@@ -58,7 +28,7 @@ then then
 ;
 
 : aligned   ( addr -- addr )
-    #cell +  #cell not and
+    1 +  1 not and   \ TODO: why cell# not here?
 ;
 
 : /STRING    ( addr n delta -- addr+delta n-delta )
@@ -91,16 +61,24 @@ then then
 ;
 
 :: compare     ( addr u addr' u' -- -1/0/1 )
-    0
     u u' min 0 do
-        addr u + c@
-        addr' u' + c@
-        - dup if leave else drop then
+        addr i + c@
+        addr' i + c@
+        - ?dup if unloop exit then
     loop
-    ?dup if
-        \ answer
-    else
-        u u' -  \ length is answer
-    then
+    u u' -  \ length is answer
+;
+
+: tolower ( ch -- ch )
+   dup [char] a [ [char] z 1+ literal ] within $20 and -
+;
+
+:: comparef     ( addr u addr' u' -- -1/0/1 )
+    u u' min 0 do
+        addr i + c@ tolower
+        addr' i + c@ tolower
+        - ?dup if unloop exit then
+    loop
+    u u' -  \ length is answer
 ;
 

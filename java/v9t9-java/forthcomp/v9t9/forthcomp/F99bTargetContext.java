@@ -537,8 +537,10 @@ public class F99bTargetContext extends TargetContext {
 		// Opcode is already compiled as 1-byte branch, so diff is relative to offset
 		
 		// When we jump backward, measure from inst.pc, else from inst.pc + inst.size
-		if (diff < -128 - 1 || diff >= 128)
+		if (diff < -128 - 1 || diff >= 128) {
 			throw hostContext.abort("jump too long: " + diff);
+			//System.err.println("jump too long: " + diff);
+		}
 		
 		if (diff < -8 - 1 || diff >= 8) {
 			stub8BitJump.use();

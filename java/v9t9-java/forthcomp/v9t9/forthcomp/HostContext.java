@@ -95,6 +95,7 @@ import v9t9.forthcomp.words.SQuote;
 import v9t9.forthcomp.words.SemiColon;
 import v9t9.forthcomp.words.SetDP;
 import v9t9.forthcomp.words.TargetContext;
+import v9t9.forthcomp.words.TargetOnlyDoes;
 import v9t9.forthcomp.words.TestQuote;
 import v9t9.forthcomp.words.Then;
 import v9t9.forthcomp.words.Tick;
@@ -231,6 +232,7 @@ public class HostContext extends Context {
 	 	
 	 	define("compile,", new CompileComma());
 	 	define("does>", new HostDoes());
+	 	define("target-does>", new TargetOnlyDoes());
 	 	
 		define("DP!", new SetDP());
 		define("HERE", new Here());
@@ -452,6 +454,7 @@ public class HostContext extends Context {
 		if (readVar("state") == val)
 			throw abort("already defining");
 		writeVar("state", val);
+		writeVar("(state)", val);
 		
 	}
 

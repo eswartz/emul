@@ -163,6 +163,48 @@ User loadline
 ;
 
 
+
+: (find)      ( c-addr lfa -- c-addr 0 | nfa 1 ) 
+    \ find word in dictionary    ( c-addr lfa -- c-addr 0 | nfa 1 ) 
+    \ lfa is nfa-2
+    
+    \ dbg
+
+    swap >r
+    
+    begin
+        dup
+    while
+        r@ over  2+             \ nfa
+        nfa=
+        if
+            rdrop
+            2+
+            1
+            exit
+        else
+            @            
+        then
+    repeat
+    drop r> 0
+    
+    \ dbgf
+;
+    
+: nfa=  ( caddr nfa -- 1 | 0 )
+    dup c@  $80 and if   \ not hidden?
+        2>r
+        r@  1+  r>  c@ $3f and  \ nfa --> caddr n
+        r@  1+  r>  c@          \ caddr -> caddr n
+        comparef  0=
+    else
+        2drop 0
+    then
+    
+;
+    
+
+
 : (lookup)      ( c-addr u -- caddr 0 | nfa 1|-1 )
     here (>c)   \ make counted string + NFA
 \ context @ @ (find) dup 0= if ... 

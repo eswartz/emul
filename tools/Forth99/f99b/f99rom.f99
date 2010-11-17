@@ -26,6 +26,8 @@ include sysdefs.i
 
 include ram.i
 
+include syscomp.i
+
 EXPORT>
 
 include sysutils.i
@@ -143,7 +145,8 @@ include interp.i
  
     empty-buffers
        
-    cycle
+    \ cycle
+    quit
 ;
 
 EXPORT>

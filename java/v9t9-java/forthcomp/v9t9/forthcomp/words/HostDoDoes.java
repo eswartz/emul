@@ -19,9 +19,10 @@ public class HostDoDoes extends BaseStdWord {
 	/**
 	 * @param redirectDp
 	 * @param targetDP 
+	 * @param targetOnly TODO
 	 * 
 	 */
-	public HostDoDoes(int redirectDp, int targetDP) {
+	public HostDoDoes(int redirectDp, int targetDP, boolean targetOnly) {
 		this.redirectDp = redirectDp;
 		this.targetDP = targetDP;
 	}

@@ -101,3 +101,6 @@ $930        constant    grom_font5x6
 4           constant    CTX_UP       
 7           constant    CTX_INT        
 
+
+: dbg    $74 c, $00 c, ; immediate
+: dbgf   $74 c, $01 c, ; immediate
