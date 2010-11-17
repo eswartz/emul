@@ -303,6 +303,11 @@ extern Context * context_get_group(Context * ctx, int group);
  */
 #define CONTEXT_GROUP_PROCESS       4
 
+/*
+ * "CPU" context group - all contexts that belong to same CPU.
+ * On SMP systems, all CPUs (cores) of same type should be members of same group.
+ */
+#define CONTEXT_GROUP_CPU           5
 
 /*
  * Debug context implementation can support low-level breakpoints.

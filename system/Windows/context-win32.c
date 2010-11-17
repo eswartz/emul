@@ -1048,9 +1048,13 @@ int context_get_canonical_addr(Context * ctx, ContextAddress addr,
 }
 
 Context * context_get_group(Context * ctx, int group) {
+    static Context * cpu_group = NULL;
     switch (group) {
     case CONTEXT_GROUP_INTERCEPT:
         return ctx;
+    case CONTEXT_GROUP_CPU:
+        if (cpu_group == NULL) cpu_group = create_context("CPU");
+        return cpu_group;
     }
     return ctx->mem;
 }
