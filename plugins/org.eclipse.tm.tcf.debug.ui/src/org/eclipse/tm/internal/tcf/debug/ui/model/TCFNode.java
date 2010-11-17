@@ -10,7 +10,9 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
+import org.eclipse.core.internal.runtime.AdapterManager;
 import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.PlatformObject;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenCountUpdate;
@@ -133,7 +135,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
         if (adapter.isInstance(model)) return model;
         Object o = model.getAdapter(adapter, TCFNode.this);
         if (o != null) return o;
-        return super.getAdapter(adapter);
+        return Platform.getAdapterManager().loadAdapter(this, adapter.getName());
     }
 
     /**
