@@ -11,8 +11,12 @@ ifeq ($(CC),g++)
 endif
 
 LUALIBS = $(LIBS) $(LUADIR)/lib/liblua$(EXTLIB)
+ifeq ($(OPSYS),Msys)
+  LUALIBS += -lm
+else
 ifneq ($(OPSYS),Windows)
   LUALIBS += -lm -ldl
+endif
 endif
 
 override CFLAGS += $(OPTS)
