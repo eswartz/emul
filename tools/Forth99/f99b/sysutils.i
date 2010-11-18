@@ -24,6 +24,11 @@
     gwaddr  GPLRD c@
 ;
 
+:   vc@  ( addr -- )
+    vwaddr  VDPRD c@
+;
+
+
 :   gvmove ( gaddr vaddr len -- )
     rot gwaddr
     swap  $4000 or  vwaddr

@@ -1310,13 +1310,14 @@ test" d< 10. -10. d< 0="
     dup -&13 = if ." undefined" then    \ long jump!
     dup -&9 = if ." interpret mode only" then
     dup -&10 = if ." loading only" then
-    dup -&8 = if ." block i/o error" else
+    dup -&8 = if ." block i/o error" then
     dup -&14 = if ." compilation only" else
     dup -&16 = if ." empty name" else
     dup -&22 = if ." control nesting" else
     dup -&23 = if ." not a DEFERred word" else
+    dup -&24 = if ." out of range" else
     ." ?" dup .
-    then then then then then 
+    then then then then then
     drop
     cr
 ;

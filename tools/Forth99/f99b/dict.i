@@ -57,7 +57,7 @@ User >latest        \ latest definition
         \ nfa -> xt
 
         dup c@ $1f AND  \ get the length byte
-        + 1+ \ aligned \ not f99b
+        + 1+ aligned
 
         \ [ has? profiling [if] ] cell+ [ [then] ]
     else
@@ -68,7 +68,7 @@ User >latest        \ latest definition
         1-
 
         \ step back over alignment space
-        \ dup c@ $20 = if 1- then \ not f99b
+        dup c@ $20 = if 1- then 
 
         0       ( addr count )
 
@@ -177,7 +177,7 @@ User DP
 
 [IFUNDEF] C,
 : C,
-    here c!  0 char+  dp +!
+    here c!  1  dp +!
 ;
 [THEN]
 

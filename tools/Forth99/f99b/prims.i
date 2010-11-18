@@ -24,11 +24,11 @@
 ;
 
 : dabs     ( nd -- pd )
-    dup d0< if dnegate then
+    dup 0< if dnegate then
 ;
 
 : aligned   ( addr -- addr )
-    1 +  1 not and   \ TODO: why cell# not here?
+    1+  $fffe and   \ TODO: why cell# not here?
 ;
 
 : /STRING    ( addr n delta -- addr+delta n-delta )

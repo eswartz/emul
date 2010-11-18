@@ -15,7 +15,6 @@ import v9t9.emulator.runtime.cpu.CpuF99b;
 import v9t9.emulator.runtime.cpu.CpuStateF99b;
 import v9t9.emulator.runtime.cpu.Executor;
 import v9t9.engine.cpu.InstF99b;
-import static org.junit.Assert.assertEquals;
 import static v9t9.engine.cpu.InstF99b.*;
 import v9t9.engine.cpu.InstructionF99b;
 import v9t9.engine.cpu.InstructionWorkBlockF99b;
@@ -161,7 +160,8 @@ public class InterpreterF99b implements Interpreter {
 				listener.executed(block, iblock);
 			}
 			
-			iblock.showSymbol = (ins.getInst() == Iexit || ins.getInst() == Iexiti || ins.getInst() == Icall);
+			iblock.showSymbol = (ins.getInst() == Iexit || ins.getInst() == Iexiti 
+					|| ins.getInst() == Icall || ins.getInst() == Iexecute);
 		}
 	}
 

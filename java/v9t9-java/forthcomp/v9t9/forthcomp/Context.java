@@ -49,7 +49,21 @@ public class Context implements IContext {
 	 * @return
 	 */
 	public IWord find(String token) {
-		return dictionary.get(token.toLowerCase());
+		IWord word = dictionary.get(token.toLowerCase());
+		if (word != null && word instanceof ITargetWord && ((ITargetWord) word).getEntry().isHidden()) {
+			IWord[] words = (IWord[]) dictionary.values().toArray(new IWord[dictionary.values().size()]);
+			boolean saw = false;
+			for (int idx = words.length; idx-- > 0; ) {
+				if (words[idx] == word) {
+					saw = true;
+				}
+				else if (words[idx].getName().equalsIgnoreCase(token.toLowerCase()) && !saw) {
+					return words[idx];
+				}
+			}
+			return null;
+		}
+		return word;
 	}
 	
 	public IWord require(String token) throws AbortException {

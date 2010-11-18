@@ -101,6 +101,21 @@ $930        constant    grom_font5x6
 4           constant    CTX_UP       
 7           constant    CTX_INT        
 
+\ -----------   opcodes
 
-: dbg    $74 c, $00 c, ; immediate
-: dbgf   $74 c, $01 c, ; immediate
+$0          constant    IbranchX
+$10         constant    I0branchX
+$39         constant    IRfrom
+$66         constant    Iuser
+$67         constant    Iupidx
+$70         constant    Iexit
+$73         constant    Idovar
+$74         constant    Isyscall
+$78         constant    IlitB
+$79         constant    IlitW
+$7a         constant    IbranchB
+$7c         constant    I0branchB
+
+: dbg    Isyscall c, $00 c, ; immediate
+: dbgf   Isyscall c, $01 c, ; immediate
+

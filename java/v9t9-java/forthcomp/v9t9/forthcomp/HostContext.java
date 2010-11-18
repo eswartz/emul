@@ -27,6 +27,7 @@ import v9t9.forthcomp.words.BaseHostBranch;
 import v9t9.forthcomp.words.BaseWord;
 import v9t9.forthcomp.words.Begin;
 import v9t9.forthcomp.words.BracketChar;
+import v9t9.forthcomp.words.BracketCompile;
 import v9t9.forthcomp.words.BracketElse;
 import v9t9.forthcomp.words.BracketIf;
 import v9t9.forthcomp.words.BracketIfdef;
@@ -55,7 +56,6 @@ import v9t9.forthcomp.words.Host0Branch;
 import v9t9.forthcomp.words.HostBehavior;
 import v9t9.forthcomp.words.HostBinOp;
 import v9t9.forthcomp.words.HostBranch;
-import v9t9.forthcomp.words.HostConstant;
 import v9t9.forthcomp.words.HostDecimal;
 import v9t9.forthcomp.words.HostDoes;
 import v9t9.forthcomp.words.HostDrop;
@@ -64,6 +64,7 @@ import v9t9.forthcomp.words.HostEmit;
 import v9t9.forthcomp.words.HostExitWord;
 import v9t9.forthcomp.words.HostFetch;
 import v9t9.forthcomp.words.HostHex;
+import v9t9.forthcomp.words.HostLiteral;
 import v9t9.forthcomp.words.HostOver;
 import v9t9.forthcomp.words.HostPlusStore;
 import v9t9.forthcomp.words.HostReturnRead;
@@ -236,7 +237,9 @@ public class HostContext extends Context {
 	 	
 		define("DP!", new SetDP());
 		define("HERE", new Here());
-		define("LastXt", new LastXt());
+		define("LASTXT", new LastXt());
+		
+		define("[compile]", new BracketCompile());
 		
 		define("S\"", new SQuote());
 		define(".\"", new DotQuote());
@@ -296,16 +299,16 @@ public class HostContext extends Context {
 		define("INVERT", new HostUnaryOp("INVERT") {
 			public int getResult(int v) { return ~v; }
 		});
-		define("true", new HostConstant(-1));
-		define("false", new HostConstant(0));
+		define("true", new HostLiteral(-1, false));
+		define("false", new HostLiteral(0, false));
 		
-		define("#char", new HostConstant(1));
-		define("#cell", new HostConstant(cellSize));
-		define("cell", new HostConstant(cellSize));
+		define("#char", new HostLiteral(1, false));
+		define("#cell", new HostLiteral(cellSize, false));
+		define("cell", new HostLiteral(cellSize, false));
 		if (cellSize == 1)
-			define("cell<<", new HostConstant(0));
+			define("cell<<", new HostLiteral(0, false));
 		else if (cellSize == 2)
-			define("cell<<", new HostConstant(1));
+			define("cell<<", new HostLiteral(1, false));
 		else
 			assert false;
 		define("cells", new HostUnaryOp("cells") {

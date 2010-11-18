@@ -195,6 +195,7 @@ public abstract class TargetContext extends Context {
 				if (word != null) {
 					try {
 						word.getExecutionSemantics().execute(hostCtx, this);
+						//System.out.println("Latest: " + HexUtils.toHex4(entryAddr));
 						writeCell(hostCtx.popData(), entryAddr);
 					} catch (AbortException e) {
 						e.printStackTrace();

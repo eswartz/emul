@@ -10,23 +10,16 @@ import v9t9.forthcomp.HostContext;
  * @author ejs
  *
  */
-public class HostConstant extends BaseStdWord {
-
-	private int val;
-
-	/**
-	 * @param i
-	 */
-	public HostConstant(int i) {
-		this.val = i;
-	}
+public class Char extends BaseStdWord {
 
 	/* (non-Javadoc)
 	 * @see v9t9.forthcomp.IWord#execute(v9t9.forthcomp.HostContext, v9t9.forthcomp.TargetContext)
 	 */
 	public void execute(HostContext hostContext, TargetContext targetContext)
 			throws AbortException {
-		hostContext.pushData(val);
+		String name = hostContext.readToken();
+		
+		hostContext.pushData(name.charAt(0));
 	}
 
 	/* (non-Javadoc)

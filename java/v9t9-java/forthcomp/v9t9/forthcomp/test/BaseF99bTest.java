@@ -44,7 +44,7 @@ public class BaseF99bTest extends BaseForthCompTest {
 	
 	final protected static String compileMeta =
 		"Variable state\n"+
-		"Variable lastxt\n"+
+		"Variable latest\n"+
 		": create ; target-only\n"+
 		": : ; target-only\n"+
 		": ; $70 c, ; immediate target-only \n"+

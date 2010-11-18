@@ -9,11 +9,6 @@ import v9t9.forthcomp.ITargetWord;
  *
  */
 public class LastXt extends BaseStdWord {
-	@Override
-	public String toString() {
-		return "LASTXT";
-	}
-
 	public void execute(HostContext hostContext,
 			TargetContext targetContext) throws AbortException {
 		hostContext.pushData(((ITargetWord) targetContext.getLatest()).getEntry().getContentAddr());

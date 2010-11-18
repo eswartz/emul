@@ -235,7 +235,7 @@ public class TestForthCompBootstrapF99b extends BaseF99bTest {
 				compileMeta+
 				": xt! ( xt addr -- ) $7B ( BRANCHW ) over c! 1+ ! ; \n"+	// BOGUS
 				//": ] true state ! ; immediate host( 0 ) ] \n"+
-				": (does>) r> lastxt xt!  ;  \n"+
+				": (does>) r> latest xt!  ;  \n"+
 				": does> postpone (does>) postpone rdrop ; immediate target-only\n"+
 				": make-adder: ( n -- ) create , does> @ + ;\n "+
 				"here swap\n"+
