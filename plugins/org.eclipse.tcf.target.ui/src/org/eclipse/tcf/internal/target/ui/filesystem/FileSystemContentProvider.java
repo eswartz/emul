@@ -18,18 +18,6 @@ import org.eclipse.tcf.target.core.ITarget;
 public class FileSystemContentProvider implements ITreeContentProvider {
 
 	private TreeViewer viewer;
-	private boolean showFileSystemNode;
-	
-	public FileSystemContentProvider(boolean showFileSystemNode) {
-		this.showFileSystemNode = showFileSystemNode;
-	}
-	
-	/**
-	 * Default constructor invoked for targets view, turn on the file system node by default.
-	 */
-	public FileSystemContentProvider() {
-		this(true);
-	}
 	
 	@Override
 	public void dispose() {
@@ -52,10 +40,8 @@ public class FileSystemContentProvider implements ITreeContentProvider {
 		FileSystemNode fileSystemNode = null;
 		if (parentElement instanceof ITarget) {
 			ITarget target = (ITarget)parentElement;
-			fileSystemNode = (FileSystemNode)target.getAdapter(FileSystemNode.class);
-			
-			if (showFileSystemNode)
-				return new Object[] { fileSystemNode };
+			fileSystemNode = FileSystemNode.createFor(target);
+			return new Object[] { fileSystemNode };
 		}
 
 		if (parentElement instanceof FileSystemNode)

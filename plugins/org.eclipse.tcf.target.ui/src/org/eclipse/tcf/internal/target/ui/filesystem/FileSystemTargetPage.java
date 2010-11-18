@@ -29,7 +29,7 @@ public class FileSystemTargetPage implements ITargetPage {
 		composite.setLayout(layout);
 
 		viewer = new TreeViewer(composite, SWT.BORDER);
-		viewer.setContentProvider(new FileSystemContentProvider(false));
+		viewer.setContentProvider(new FileSystemContentProvider());
 		viewer.setLabelProvider(new FileSystemLabelProvider());		
 		viewer.getControl().setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		viewer.setInput(target);

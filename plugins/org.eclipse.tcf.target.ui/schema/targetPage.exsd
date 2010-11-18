@@ -65,7 +65,7 @@
                   Class that implements the Target Page.
                </documentation>
                <appinfo>
-                  <meta.attribute kind="java" basedOn=":org.eclipse.tm.tcf.ui.ITargetPage"/>
+                  <meta.attribute kind="java" basedOn=":org.eclipse.tcf.target.ui.ITargetPage"/>
                </appinfo>
             </annotation>
          </attribute>
