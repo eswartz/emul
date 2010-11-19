@@ -45,26 +45,26 @@ import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IDisassembly;
 import org.eclipse.tm.tcf.services.IDisassembly.DoneDisassemble;
 import org.eclipse.tm.tcf.services.IDisassembly.IDisassemblyLine;
+import org.eclipse.tm.tcf.services.IExpressions;
 import org.eclipse.tm.tcf.services.IExpressions.DoneCreate;
 import org.eclipse.tm.tcf.services.IExpressions.DoneDispose;
 import org.eclipse.tm.tcf.services.IExpressions.DoneEvaluate;
 import org.eclipse.tm.tcf.services.IExpressions.Expression;
 import org.eclipse.tm.tcf.services.IExpressions.Value;
+import org.eclipse.tm.tcf.services.ILineNumbers;
 import org.eclipse.tm.tcf.services.ILineNumbers.CodeArea;
 import org.eclipse.tm.tcf.services.ILineNumbers.DoneMapToSource;
-import org.eclipse.tm.tcf.services.IRunControl.RunControlContext;
-import org.eclipse.tm.tcf.services.IRunControl.RunControlListener;
-import org.eclipse.tm.tcf.services.IExpressions;
-import org.eclipse.tm.tcf.services.ILineNumbers;
 import org.eclipse.tm.tcf.services.IMemory;
 import org.eclipse.tm.tcf.services.IRunControl;
+import org.eclipse.tm.tcf.services.IRunControl.RunControlContext;
+import org.eclipse.tm.tcf.services.IRunControl.RunControlListener;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 import org.eclipse.tm.tcf.util.TCFTask;
 
 @SuppressWarnings("restriction")
 public class TCFDisassemblyBackend implements IDisassemblyBackend {
 
-    private class AddressRange {
+    private static class AddressRange {
         BigInteger start;
         BigInteger end;
     }
@@ -84,8 +84,9 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
             for (ILaunch launch : launches) {
                 if (launch == fExecContext.getModel().getLaunch()) {
                     if (launch.isTerminated()) {
-                        clearDebugContext();
+                        handleSessionEnded();
                     }
+                    break;
                 }
             }
         }
@@ -97,7 +98,7 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
         }
 
         public void onChannelClosed(Throwable error) {
-            clearDebugContext();
+            handleSessionEnded();
         }
 
         public void congestionLevel(int level) {
@@ -292,6 +293,11 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
         });
     }
 
+    private void handleSessionEnded() {
+        clearDebugContext();
+        fCallback.handleTargetEnded();
+    }
+    
     public void clearDebugContext() {
         if (fExecContext != null) {
             removeListeners(fExecContext);
