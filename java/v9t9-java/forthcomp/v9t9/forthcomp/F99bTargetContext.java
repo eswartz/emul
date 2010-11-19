@@ -236,9 +236,11 @@ public class F99bTargetContext extends TargetContext {
 		defineInlinePrim("(DLITERAL)", IlitD_d);
 		
 		//defineInlinePrim("(s\")", IcontextFrom, CTX_PC, IlitX | 5, Iadd, Idup, I1plus, Iswap, Icload);
-		defineInlinePrim("((s\"))", IatR, Idup, I1plus, Iswap, Icload, Idup, IRfrom, Iadd, I1plus, ItoR);
+		defineInlinePrim("((s\"))", Irdrop, IatR, Idup, I1plus, Iswap, Icload, Idup, IRfrom, Iadd, I1plus, ItoR);
 		
 		define("(S\")", new TargetSQuote(defineEntry("(S\")")));
+		compileCall((ITargetWord) find("((s\"))"));
+		compileOpcode(Iexit);
 		
 		definePrim("(SYSCALL)", Isyscall);
 		
@@ -889,7 +891,7 @@ public class F99bTargetContext extends TargetContext {
 	@Override
 	public void compilePostpone(ITargetWord word) throws AbortException {
 		compileTick(word);
-		compile((ITargetWord) require("LITERAL"));
+		//compile((ITargetWord) require("LITERAL"));
 		compile((ITargetWord) require("compile,"));
 		
 	}

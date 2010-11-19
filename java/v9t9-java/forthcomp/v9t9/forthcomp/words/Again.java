@@ -30,4 +30,5 @@ public class Again extends BaseStdWord {
 	public boolean isImmediate() {
 		return true;
 	}
+	
 }

@@ -120,4 +120,10 @@ public interface IWord {
 	ISemantics getExecutionSemantics();
 	void setExecutionSemantics(ISemantics semantics);
 
+	/** 
+	 * If true, the word is provided by the host specifically for
+	 * compilation.  
+	 * @return
+	 */
+	boolean isCompilerWord();
 }

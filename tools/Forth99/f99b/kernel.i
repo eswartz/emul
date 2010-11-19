@@ -584,32 +584,6 @@ error" need prim xor"
 \ |test : testnum s" 4294967295" ;
 \ test" >number 0. testnum  >number 2drop 2dup d. 1. d+ or 0="
 
-[IFUNDEF] ABORT"
-: (abort")
-    rot if cr ." error: " type cr abort else 2drop then
-;
-
-: ABORT"
-\        Compilation: ( "ccc<quote>" -- )
-\
-\   Parse ccc delimited by a " (double-quote). Append the run-time semantics
-\   given below to the current definition.
-\
-\        Run-time: ( i*x x1 --  | i*x ) ( R: j*x --  | j*x )
-\
-\   Remove x1 from the stack. If any bit of x1 is not zero, display ccc and
-\   perform an implementation-defined abort sequence that includes the
-\   function of ABORT.
-
-    postpone s"
-    state @ if
-        postpone (abort")
-    else
-        (abort")
-    then
-; immediate  target-only
-[THEN]
-
 [IFUNDEF] BASE
 User BASE
 [THEN]
@@ -646,7 +620,7 @@ error" need prim execute"
 
 : SLITERAL  \ C: ( caddr u --  ) R: ( -- caddr u )
    \ state @ if
-        postpone (s") s, align
+        postpone (s") s,   \ align
    \ else
    \     \ copy string to safe place
    \     >r (spad) @ r@ cmove
@@ -672,6 +646,34 @@ error" need prim execute"
 \ : VARIABLE
 \ ;
 [THEN]
+
+
+[IFUNDEF] ABORT"
+: (abort")
+    rot if cr ." error: " type cr abort else 2drop then
+;
+
+: ABORT"
+\        Compilation: ( "ccc<quote>" -- )
+\
+\   Parse ccc delimited by a " (double-quote). Append the run-time semantics
+\   given below to the current definition.
+\
+\        Run-time: ( i*x x1 --  | i*x ) ( R: j*x --  | j*x )
+\
+\   Remove x1 from the stack. If any bit of x1 is not zero, display ccc and
+\   perform an implementation-defined abort sequence that includes the
+\   function of ABORT.
+
+    postpone s"
+    state @ if
+        postpone (abort")
+    else
+        (abort")
+    then
+; immediate  target-only
+[THEN]
+
 
 \   printing words
 

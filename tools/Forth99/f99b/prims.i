@@ -1,5 +1,4 @@
 
-: s" postpone (s") ; immediate target-only
 
 : pick ( n -- v )
     1+ cells (context>) [ CTX_SP field, ] + @  

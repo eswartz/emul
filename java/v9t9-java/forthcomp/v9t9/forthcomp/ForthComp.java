@@ -31,6 +31,7 @@ import v9t9.engine.files.DataFiles;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.forthcomp.words.HostDoubleLiteral;
 import v9t9.forthcomp.words.HostLiteral;
+import v9t9.forthcomp.words.HostUnaryOp;
 import v9t9.forthcomp.words.HostVariable;
 import v9t9.forthcomp.words.TargetContext;
 import v9t9.forthcomp.words.TargetUserVariable;
@@ -222,11 +223,13 @@ public class ForthComp {
 			word.getInterpretationSemantics().execute(hostContext, targetContext);
 		} else {
 			word = targetContext.find(token);
+			boolean isLit = false;
 			if (word == null) {
 				word = hostContext.find(token);
 			}
 			if (word == null) {
 				word = parseLiteral(token);
+				isLit = true;
 			}
 			if (word == null) {
 				word = targetContext.defineForward(token, hostContext.getStream().getLocation());
@@ -241,8 +244,15 @@ public class ForthComp {
 				if (hostWord == null) 
 					hostWord = targetWord;
 			} else {
+				if (word.getCompilationSemantics() == null) {
+					throw hostContext.abort("host word " + token + " used instead of target word");
+				}
 				hostWord = word;
 				targetWord = null;
+				if (!word.isCompilerWord()) {
+					targetWord = (ITargetWord) targetContext.defineForward(token, hostContext.getStream().getLocation());
+					//throw hostContext.abort("host word " + token + " used instead of target word");
+				}
 			}		
 			
 			hostContext.compileWord(targetContext, hostWord, targetWord);

@@ -37,4 +37,9 @@ public class BracketChar extends BaseWord {
 			}
 		});
 	}
+
+	@Override
+	public boolean isCompilerWord() {
+		return true;
+	}
 }

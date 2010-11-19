@@ -150,7 +150,8 @@ public class DictEntry implements Comparable<DictEntry> {
 
 	public void setImmediate(TargetContext targetContext, boolean b) {
 		this.immediate = b;
-		writeEntry(targetContext);
+		if (isExport())
+			writeEntry(targetContext);
 	}
 	
 

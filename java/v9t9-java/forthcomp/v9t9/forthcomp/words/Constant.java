@@ -31,4 +31,9 @@ public class Constant extends BaseStdWord {
 	public boolean isImmediate() {
 		return false;
 	}
+
+	@Override
+	public boolean isCompilerWord() {
+		return true;
+	}
 }

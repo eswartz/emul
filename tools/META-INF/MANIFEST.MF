@@ -1,0 +1,6 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: v9t9_tools
+Bundle-SymbolicName: v9t9_tools
+Bundle-Version: 1.0.0.qualifier
+Require-Bundle: v9t9-java;bundle-version="7.0.0"

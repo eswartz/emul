@@ -49,6 +49,9 @@ public class Context implements IContext {
 	 * @return
 	 */
 	public IWord find(String token) {
+		if (token.toLowerCase().equals("state")) {
+			token = token.toLowerCase();
+		}
 		IWord word = dictionary.get(token.toLowerCase());
 		if (word != null && word instanceof ITargetWord && ((ITargetWord) word).getEntry().isHidden()) {
 			IWord[] words = (IWord[]) dictionary.values().toArray(new IWord[dictionary.values().size()]);

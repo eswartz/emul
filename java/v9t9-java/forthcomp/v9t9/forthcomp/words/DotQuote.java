@@ -43,4 +43,9 @@ public class DotQuote extends BaseWord {
 			}
 		});
 	}
+
+	@Override
+	public boolean isCompilerWord() {
+		return true;
+	}
 }

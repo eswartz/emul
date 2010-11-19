@@ -22,4 +22,9 @@ public class BackSlash extends BaseWord {
 		});
 		setCompilationSemantics(getInterpretationSemantics());
 	}
+
+	@Override
+	public boolean isCompilerWord() {
+		return true;
+	}
 }

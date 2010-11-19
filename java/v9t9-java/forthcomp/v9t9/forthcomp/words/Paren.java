@@ -28,4 +28,9 @@ public class Paren extends BaseWord {
 		setCompilationSemantics(getExecutionSemantics());
 	}
 
+	
+	@Override
+	public boolean isCompilerWord() {
+		return true;
+	}
 }

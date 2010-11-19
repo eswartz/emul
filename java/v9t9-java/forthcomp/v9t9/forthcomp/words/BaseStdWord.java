@@ -51,4 +51,10 @@ public abstract class BaseStdWord extends BaseWord {
 	}
 	abstract public boolean isImmediate();
 	abstract public void execute(HostContext hostContext, TargetContext targetContext) throws AbortException;
+	
+
+	@Override
+	public boolean isCompilerWord() {
+		return isImmediate();
+	}
 }

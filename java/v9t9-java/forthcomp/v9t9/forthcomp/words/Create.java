@@ -29,4 +29,9 @@ public class Create extends BaseStdWord {
 	public boolean isImmediate() {
 		return false;
 	}
+
+	@Override
+	public boolean isCompilerWord() {
+		return true;
+	}
 }

@@ -60,4 +60,9 @@ public class HostLiteral extends BaseWord {
 	public boolean isUnsigned() {
 		return isUnsigned;
 	}
+
+	@Override
+	public boolean isCompilerWord() {
+		return true;
+	}
 }

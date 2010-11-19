@@ -740,8 +740,9 @@ public abstract class TargetContext extends Context {
 
 	public void compileString(HostContext hostContext, String string) throws AbortException {
 		IWord parenString = require("(s\")");
+		compileCall((ITargetWord) parenString);
 		//compile((ITargetWord) parenString);
-		parenString.getCompilationSemantics().execute(hostContext, this);
+		//parenString.getCompilationSemantics().execute(hostContext, this);
 		Pair<Integer, Integer> info = writeLengthPrefixedString(string);
 		setDP(getDP() + info.second);
 	}

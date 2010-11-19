@@ -41,4 +41,8 @@ public class DLiteral extends BaseWord {
 	public String toString() {
 		return "DLITERAL";
 	}
+	@Override
+	public boolean isCompilerWord() {
+		return true;
+	}
 }

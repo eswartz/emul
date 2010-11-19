@@ -677,11 +677,13 @@ public class HostContext extends Context {
 			if (hostWord.getCompilationSemantics() != null) {
 				if (!hadSemantics)
 					hostWord.getCompilationSemantics().execute(this, targetContext);
-				else if (hostWord != targetWord || !targetWord.getEntry().isImmediate())
+				else if (hostWord != targetWord || !targetWord.getEntry().isImmediate()) {
 					compile(hostWord);
+				}
 			}
-			else
+			else {
 				compile(hostWord);
+			}
 		}
 			
 	}

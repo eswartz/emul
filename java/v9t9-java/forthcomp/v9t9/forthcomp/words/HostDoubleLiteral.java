@@ -67,4 +67,8 @@ public class HostDoubleLiteral extends BaseWord {
 	public boolean isUnsigned() {
 		return isUnsigned;
 	}
+	@Override
+	public boolean isCompilerWord() {
+		return true;
+	}
 }

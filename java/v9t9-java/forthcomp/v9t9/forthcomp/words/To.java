@@ -61,4 +61,9 @@ public class To extends BaseWord {
 			}
 		});
 	}
+
+	@Override
+	public boolean isCompilerWord() {
+		return true;
+	}
 }
