@@ -170,6 +170,8 @@ public class Cpu9900 extends CpuBase {
         	
             System.out.println("**** NMI ****");
             contextSwitch(0xfffc);
+
+            idle = false;
             
             addCycles(22);
         } else if ((pins & PIN_RESET) != 0) {
@@ -178,6 +180,9 @@ public class Cpu9900 extends CpuBase {
             state.getStatus().expand((short) 0);
             contextSwitch(0);
             addCycles(26);
+            
+            idle = false;
+            
             machine.getExecutor().interpretOneInstruction();
             //throw new AbortedException();
         } else if ((pins & PIN_INTREQ) != 0 && state.getStatus().getIntMask() >= ic) {	// already checked int mask in status
@@ -188,6 +193,8 @@ public class Cpu9900 extends CpuBase {
         	//interrupts++;
             contextSwitch(0x4 * ic);
             addCycles(22);
+            
+            idle = false;
             
             // no more interrupt until 9901 gives us another
             ic = 0;

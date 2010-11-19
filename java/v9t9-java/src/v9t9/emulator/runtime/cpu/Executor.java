@@ -165,20 +165,34 @@ public class Executor {
      * @throws AbortedException when interrupt or other machine event stops execution
      */
     public void execute() {
-		if (settingCompile.getBoolean()) {
-			executeCompilableCode();
-		} else if (settingSingleStep.getBoolean()){
-			interpretOneInstruction();
-		} else {
-			interruptExecution = Boolean.FALSE;
-			if (Cpu.settingRealTime.getBoolean()) {
-				while (!cpu.isThrottled() && !interruptExecution) {
-					interp.executeChunk(10, this);
-				}
-			} else {
-				interp.executeChunk(1000, this);
+    	if (cpu.isIdle()) {
+    		if (Cpu.settingRealTime.getBoolean() && cpu.isThrottled())
+    			return;
+    		long start = System.currentTimeMillis();
+    		try {
+    			// short sleep
+				Thread.sleep(10);
+			} catch (InterruptedException e) {
 			}
-		}
+			long end = System.currentTimeMillis();
+			cpu.checkAndHandleInterrupts();
+			cpu.addCycles(cpu.getBaseCyclesPerSec() * (int)(end - start) / 1000);
+    	} else {
+			if (settingCompile.getBoolean()) {
+				executeCompilableCode();
+			} else if (settingSingleStep.getBoolean()){
+				interpretOneInstruction();
+			} else {
+				interruptExecution = Boolean.FALSE;
+				if (Cpu.settingRealTime.getBoolean()) {
+					while (!cpu.isThrottled() && !interruptExecution) {
+						interp.executeChunk(10, this);
+					}
+				} else {
+					interp.executeChunk(1000, this);
+				}
+			}
+    	}
     }
     
 

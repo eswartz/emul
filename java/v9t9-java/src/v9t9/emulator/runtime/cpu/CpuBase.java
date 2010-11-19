@@ -57,6 +57,9 @@ public abstract class CpuBase  implements MemoryAccessListener, IPersistable, Cp
 	protected int pins;
 	
 	protected CruAccess cruAccess;
+	
+	protected boolean idle;
+	
 	/**
 	 * Called when hardware triggers another pin.
 	 */
@@ -202,6 +205,23 @@ public abstract class CpuBase  implements MemoryAccessListener, IPersistable, Cp
 	 */
 	public CpuState getState() {
 		return state;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.cpu.Cpu#setIdle(boolean)
+	 */
+	@Override
+	public void setIdle(boolean b) {
+		this.idle = b;
+		getMachine().getExecutor().interruptExecution = true;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.cpu.Cpu#isIdle()
+	 */
+	@Override
+	public boolean isIdle() {
+		return idle;
 	}
 	
 }

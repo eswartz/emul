@@ -542,7 +542,7 @@ public class InterpreterF99b implements Interpreter {
         		faddr -= fstep * (len - 1);
         	}
         	while (len-- > 0) {
-        		memory.writeByte(taddr, memory.readByte(faddr));
+        		memory.writeByte(taddr & 0xffff, memory.readByte(faddr & 0xffff));
         		faddr += fstep;
         		taddr += tstep;
         		cpu.addCycles(3);
@@ -556,7 +556,7 @@ public class InterpreterF99b implements Interpreter {
         	int taddr = cpu.pop();
         	int faddr = cpu.pop();
         	while (len-- > 0) {
-        		memory.writeWord(taddr, memory.readWord(faddr));
+        		memory.writeWord(taddr & 0xffff, memory.readWord(faddr & 0xffff));
         		faddr += fstep*2;
         		taddr += tstep*2;
         		cpu.addCycles(3);
@@ -636,6 +636,27 @@ public class InterpreterF99b implements Interpreter {
 	        		machine.getExecutor().debugCount--;
 	        		if ((oldCount == 0) != (machine.getExecutor().debugCount == 0))
 	        			Executor.settingDumpFullInstructions.setBoolean(true);
+	        		break;
+	        	}
+	        	
+	        	case SYSCALL_IDLE: {
+	        		machine.getCpu().setIdle(true);
+	        		break;
+	        	}
+	        	case SYSCALL_REGISTER_SYMBOL: {
+	        		int xt = cpu.pop();
+	        		int nfa = xt;
+	        		StringBuilder sb = new StringBuilder();
+	        		char ch;
+	        		while (nfa-- > 0) {
+	        			ch = (char) iblock.domain.readByte(nfa);
+	        			if (sb.length() == 0 && (ch == 0x20 || ch == 0))
+	        				continue;
+	        			if ((ch & 0x1f) == sb.length())
+	        				break;
+	        			sb.insert(0, ch);
+	        		}
+	        		iblock.domain.getEntryAt(xt).defineSymbol(xt, sb.toString());
 	        		break;
 	        	}
 	        	

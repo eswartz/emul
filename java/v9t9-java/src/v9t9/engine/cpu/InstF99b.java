@@ -268,14 +268,19 @@ public class InstF99b {
 		"PC",
 	};
 
+	/** Idle until interrupt */
+	public static final int SYSCALL_IDLE = 0;
 	/** Start tracing */
-	public static final int SYSCALL_DEBUG_ON = 0;
+	public static final int SYSCALL_DEBUG_ON = 1;
 	/** Stop tracing */
-	public static final int SYSCALL_DEBUG_OFF = 1;
+	public static final int SYSCALL_DEBUG_OFF = 2;
+	/** Register the given xt in the symbol table */
+	public static final int SYSCALL_REGISTER_SYMBOL = 3;
 	/** Interpret string ( caddr len -- ) */
-	public static final int SYSCALL_INTERPRET = 2;
+	public static final int SYSCALL_INTERPRET = 4;
 	
 	public static final String[] syscallStrings = {
+		"IDLE",
 		"+DBG",
 		"-DBG",
 		"INTERPRET",

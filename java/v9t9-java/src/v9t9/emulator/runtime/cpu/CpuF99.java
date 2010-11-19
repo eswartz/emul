@@ -180,6 +180,9 @@ public class CpuF99 extends CpuBase {
         	// we don't yet have a way to scan instruction execution
         	pins &= ~PIN_LOAD;
         	
+            idle = false;
+            
+
             System.out.println("**** NMI ****");
 
             triggerInterrupt(INT_NMI);
@@ -187,6 +190,9 @@ public class CpuF99 extends CpuBase {
         	pins &= ~PIN_RESET;
             System.out.println("**** RESET ****");
             
+            idle = false;
+            
+
             triggerInterrupt(INT_RESET);
             
             machine.getExecutor().interpretOneInstruction();
@@ -196,6 +202,9 @@ public class CpuF99 extends CpuBase {
         	
         	//System.out.print('=');
             
+            idle = false;
+            
+
         	triggerInterrupt(ic);
             
             // no more interrupt until 9901 gives us another

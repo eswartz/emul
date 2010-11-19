@@ -162,6 +162,9 @@ public class CpuMFP201 extends CpuBase {
         	// we don't yet have a way to scan instruction execution
         	pins &= ~PIN_LOAD;
         	
+            idle = false;
+            
+
             System.out.println("**** NMI ****");
             
             // TODO
@@ -170,7 +173,10 @@ public class CpuMFP201 extends CpuBase {
             System.out.println("**** RESET ****");
             getStatus().expand((short) 0);
             setPC(getConsole().readWord(0xfffe));
+
+            idle = false;
             
+
             // TODO
             
             machine.getExecutor().interpretOneInstruction();
@@ -184,6 +190,9 @@ public class CpuMFP201 extends CpuBase {
             
         	// TODO
             
+            idle = false;
+            
+
             // no more interrupt until 9901 gives us another
             ic = 0;
                 

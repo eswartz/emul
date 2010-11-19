@@ -116,6 +116,15 @@ $79         constant    IlitW
 $7a         constant    IbranchB
 $7c         constant    I0branchB
 
-: dbg    Isyscall c, $00 c, ; immediate
-: dbgf   Isyscall c, $01 c, ; immediate
+\ ----------    syscalls
+
+$00         constant    #idle
+$01         constant    #dbg
+$02         constant    #dbgf
+$03         constant    #regsym
+
+: (dbg)     Isyscall c, #dbg c, ; immediate
+: (dbgf)    Isyscall c, #dbgf c, ; immediate
+: (idle)    Isyscall c, #idle c, ; immediate
+: (register-symbol)    Isyscall c, #regsym c, ; immediate
 

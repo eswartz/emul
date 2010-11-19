@@ -90,4 +90,14 @@ public interface Cpu extends IPersistable, CpuState {
 	CpuState getState();
 
 	int getBaseCyclesPerSec();
+
+	/**
+	 * @param b
+	 */
+	void setIdle(boolean b);
+
+	/**
+	 * @return
+	 */
+	boolean isIdle();
 }

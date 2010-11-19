@@ -155,6 +155,8 @@ User STATE
     c@ width min
     1+ aligned allot
 
+    here (register-symbol)
+    
     \ current @ !       \ !!!
     >latest !
     
@@ -322,15 +324,21 @@ User csp
     - -&22 ?error
 ;
 
-\ is there an official name for this?
-[IFUNDEF] BACK
-: BACK 
-    here -  
-    dup -128 127 within if 
-        c,
+\ target
+: jmpoffs,
+    dup -128 127 within if
+        dup 0< if 2+ else 1- then  
+        swap c!
     else
         true -&24 ?error
     then
+;
+
+\ is there an official name for this?
+[IFUNDEF] BACK
+: BACK 
+    here - 
+    here jmpoffs,
 ; target-only
 [THEN]
 
@@ -354,7 +362,7 @@ User csp
 : THEN
     ?comp 
     2 ?pairs
-    here over - swap !
+    here over - jmpoffs,
 ; immediate target-only
 [THEN]
 
@@ -363,7 +371,7 @@ User csp
     ?comp
     2 ?pairs
     [compile] branch
-    here 0 ,
+    here 0 c,
     swap 2
     postpone then 2
 ; immediate target-only

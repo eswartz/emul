@@ -184,6 +184,8 @@ public class CpuF99b extends CpuBase {
         	
             System.out.println("**** NMI ****");
 
+            idle = false;
+            
             triggerInterrupt(INT_NMI);
         } else if ((pins & PIN_RESET) != 0) {
         	pins &= ~PIN_RESET;
@@ -198,6 +200,9 @@ public class CpuF99b extends CpuBase {
         	
         	//System.out.print('=' + ic);
             
+            idle = false;
+            
+
         	triggerInterrupt(ic);
             
             // no more interrupt until 9901 gives us another
