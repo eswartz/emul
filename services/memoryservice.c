@@ -64,10 +64,24 @@ static void write_context(OutputStream * out, Context * ctx) {
     write_stream(out, ':');
     json_write_string(out, ctx->id);
 
+    if (ctx->parent != NULL) {
+        write_stream(out, ',');
+        json_write_string(out, "ParentID");
+        write_stream(out, ':');
+        json_write_string(out, ctx->parent->id);
+    }
+
     write_stream(out, ',');
     json_write_string(out, "ProcessID");
     write_stream(out, ':');
     json_write_string(out, context_get_group(ctx, CONTEXT_GROUP_PROCESS)->id);
+
+    if (ctx->name != NULL) {
+        write_stream(out, ',');
+        json_write_string(out, "Name");
+        write_stream(out, ':');
+        json_write_string(out, ctx->name);
+    }
 
     write_stream(out, ',');
     json_write_string(out, "BigEndian");
