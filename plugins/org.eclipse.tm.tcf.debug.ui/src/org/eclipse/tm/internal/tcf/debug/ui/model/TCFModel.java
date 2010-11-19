@@ -98,6 +98,7 @@ import org.eclipse.tm.internal.tcf.debug.ui.commands.TerminateCommand;
 import org.eclipse.tm.tcf.core.Command;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IErrorReport;
+import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IDisassembly;
 import org.eclipse.tm.tcf.services.ILineNumbers;
@@ -107,6 +108,7 @@ import org.eclipse.tm.tcf.services.IProcesses;
 import org.eclipse.tm.tcf.services.IRegisters;
 import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.services.ISymbols;
+import org.eclipse.tm.tcf.services.IRunControl.RunControlContext;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 import org.eclipse.tm.tcf.util.TCFTask;
 import org.eclipse.ui.IEditorInput;
@@ -793,42 +795,69 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 @Override
                 protected boolean startDataRetrieval() {
                     TCFNode n = node;
+                    String id = null;
                     Throwable err = null;
-                    TCFNodeExecContext ctx = null;
-                    while (n != null && !n.isDisposed()) {
+                    while (n != null && !n.disposed) {
                         if (n instanceof TCFNodeExecContext) {
-                            TCFNodeExecContext e = (TCFNodeExecContext)n;
-                            TCFDataCache<IMemory.MemoryContext> cache = e.getMemoryContext();
+                            TCFNodeExecContext exe = (TCFNodeExecContext)n;
+                            TCFDataCache<IRunControl.RunControlContext> cache = exe.getRunContext();
                             if (!cache.validate(this)) return false;
-                            if (cache.getError() != null) {
-                                err = cache.getError();
-                                if (err instanceof IErrorReport) {
-                                    IErrorReport r = (IErrorReport)err;
-                                    if (r.getErrorCode() == IErrorReport.TCF_ERROR_INV_CONTEXT) {
-                                        /* Continue search - go to parent node */
-                                        err = null;
-                                    }
-                                }
-                                if (err != null) break;
-                            }
-                            else if (cache.getData() != null) {
-                                ctx = e;
-                                break;
-                            }
+                            err = cache.getError();
+                            if (err != null) break;
+                            IRunControl.RunControlContext ctx = cache.getData();
+                            if (ctx == null) break;
+                            String prs = ctx.getProcessID();
+                            id = prs != null ? prs : n.id;
+                            break;
                         }
                         n = n.parent;
                     }
                     if (err != null) {
                         set(null, err, null);
                     }
-                    else if (ctx == null) {
+                    else if (id == null) {
                         set(null, new Exception("Context does not provide memory access"), null);
                     }
                     else {
-                        set(null, null, ctx);
+                        TCFNodeExecContext exe = (TCFNodeExecContext)id2node.get(id);
+                        if (exe == null) {
+                            // Model does not have a node for our context ID.
+                            // Search parent node and update its children.
+                            final IRunControl rc = launch.getService(IRunControl.class);
+                            if (rc != null) {
+                                final Runnable done = this;
+                                command = rc.getContext(id, new IRunControl.DoneGetContext() {
+                                    public void doneGetContext(IToken token, Exception error, RunControlContext context) {
+                                        if (error != null) {
+                                            set(token, error, null);
+                                        }
+                                        else {
+                                            TCFNode n = getNode(context.getParentID());
+                                            if (n instanceof TCFNodeLaunch && !((TCFNodeLaunch)n).getChildren().validate(done)) return;
+                                            if (n instanceof TCFNodeExecContext && !((TCFNodeExecContext)n).getChildren().validate(done)) return;
+                                            if (n != null) {
+                                                set(token, new Exception("Context does not provide memory access"), null);
+                                                return;
+                                            }
+                                            command = rc.getContext(context.getParentID(), this);
+                                        }
+                                    }
+                                });
+                                return false;
+                            }
+                            set(null, new Exception("Context does not provide memory access"), null);
+                        }
+                        else {
+                            if (!exe.getMemoryContext().validate(this)) return false;
+                            set(null, null, exe);
+                        }
                     }
-                    mem_searches.remove(node.getID());
                     return true;
+                }
+                @Override
+                public void set(IToken token, Throwable error, TCFNodeExecContext data) {
+                    mem_searches.remove(node.getID());
+                    super.set(token, error, data);
                 }
             };
             mem_searches.put(node.getID(), cache);

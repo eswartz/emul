@@ -16,11 +16,8 @@ import org.eclipse.debug.core.model.IExpression;
 
 public class TCFChildrenExpressions extends TCFChildren {
 
-    private final TCFNode node;
-
     TCFChildrenExpressions(TCFNode node) {
-        super(node.channel, 128);
-        this.node = node;
+        super(node, 128);
     }
 
     void onSuspended() {

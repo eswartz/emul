@@ -17,7 +17,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenUpdate;
-import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 
@@ -29,17 +28,21 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
     private final int pool_margin;
     private final Map<String,TCFNode> node_pool = new LinkedHashMap<String,TCFNode>(32, 0.75f, true);
 
+    protected final TCFNode node;
+
     private static final TCFNode[] EMPTY_NODE_ARRAY = new TCFNode[0];
 
     private TCFNode[] array;
 
-    TCFChildren(IChannel channel) {
-        super(channel);
+    TCFChildren(TCFNode node) {
+        super(node.getChannel());
+        this.node = node;
         pool_margin = 0;
     }
 
-    TCFChildren(IChannel channel, int pool_margin) {
-        super(channel);
+    TCFChildren(TCFNode node, int pool_margin) {
+        super(node.getChannel());
+        this.node = node;
         this.pool_margin = pool_margin;
     }
 
@@ -75,6 +78,7 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
         assert !isDisposed();
         for (TCFNode n : data.values()) {
             assert data.get(n.id) == n;
+            assert n.parent == node;
             node_pool.put(n.id, n);
         }
         if (node_pool.size() > data.size() + pool_margin) {
@@ -153,7 +157,9 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
      */
     void add(TCFNode n) {
         assert !isDisposed();
+        assert !n.disposed;
         assert node_pool.get(n.id) == null;
+        assert n.parent == node;
         node_pool.put(n.id, n);
         if (isValid()) {
             array = null;

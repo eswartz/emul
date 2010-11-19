@@ -26,14 +26,12 @@ import org.eclipse.tm.tcf.util.TCFDataCache;
  */
 public class TCFChildrenExecContext extends TCFChildren {
 
-    private final TCFNode node;
     private final TCFChildren mem_children;
     private final TCFChildren run_children;
 
     TCFChildrenExecContext(final TCFNode node) {
-        super(node.channel);
-        this.node = node;
-        mem_children = new TCFChildren(channel) {
+        super(node);
+        mem_children = new TCFChildren(node) {
             @Override
             protected boolean startDataRetrieval() {
                 IMemory mem = node.model.getLaunch().getService(IMemory.class);
@@ -59,7 +57,7 @@ public class TCFChildrenExecContext extends TCFChildren {
                 return false;
             }
         };
-        run_children = new TCFChildren(channel) {
+        run_children = new TCFChildren(node) {
             @Override
             protected boolean startDataRetrieval() {
                 IRunControl run = node.model.getLaunch().getService(IRunControl.class);

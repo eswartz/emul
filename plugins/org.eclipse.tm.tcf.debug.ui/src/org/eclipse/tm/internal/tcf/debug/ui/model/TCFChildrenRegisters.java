@@ -19,11 +19,8 @@ import org.eclipse.tm.tcf.services.IRegisters;
 
 public class TCFChildrenRegisters extends TCFChildren {
 
-    private final TCFNode node;
-
     TCFChildrenRegisters(TCFNode node) {
-        super(node.channel, 128);
-        this.node = node;
+        super(node, 128);
     }
 
     void onSuspended() {

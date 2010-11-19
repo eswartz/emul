@@ -21,7 +21,7 @@ public class TCFChildrenLocalVariables extends TCFChildren {
     private final TCFNodeStackFrame node;
 
     TCFChildrenLocalVariables(TCFNodeStackFrame node) {
-        super(node.channel, 128);
+        super(node, 128);
         this.node = node;
     }
 

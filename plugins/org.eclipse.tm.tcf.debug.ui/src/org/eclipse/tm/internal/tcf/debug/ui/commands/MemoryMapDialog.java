@@ -10,11 +10,13 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.ui.commands;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 import org.eclipse.debug.core.ILaunchConfiguration;
@@ -46,15 +48,16 @@ import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
+import org.eclipse.swt.widgets.Text;
 import org.eclipse.tm.internal.tcf.debug.launch.TCFLaunchDelegate;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
+import org.eclipse.tm.internal.tcf.debug.model.TCFMemoryRegion;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModel;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExecContext;
 import org.eclipse.tm.tcf.protocol.IChannel;
-import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.services.IMemory;
 import org.eclipse.tm.tcf.services.IMemoryMap;
@@ -76,72 +79,22 @@ class MemoryMapDialog extends Dialog {
         "File name"
     };
 
-    private static final String PROP_ID = "ID";
-
     private final TCFModel model;
     private final IChannel channel;
     private final TCFNode selection;
 
+    private Text ctx_text;
     private Table map_table;
     private TableViewer table_viewer;
+    private Button ok_button;
     private Runnable update_map_buttons;
     private IMemoryMap.MemoryRegion[] org_map;
     private IMemoryMap.MemoryRegion[] cur_map;
-
     private TCFNodeExecContext node;
     private IMemory.MemoryContext mem_ctx;
-
-    private static class Region implements MemoryRegion, Comparable<Region> {
-
-        final Map<String,Object> props;
-        final BigInteger addr;
-        final BigInteger size;
-
-        Region(Map<String,Object> props) {
-            this.props = props;
-            Number addr = (Number)props.get(IMemoryMap.PROP_ADDRESS);
-            Number size = (Number)props.get(IMemoryMap.PROP_SIZE);
-            this.addr = addr == null || addr instanceof BigInteger ? (BigInteger)addr : new BigInteger(addr.toString());
-            this.size = size == null || size instanceof BigInteger ? (BigInteger)size : new BigInteger(size.toString());
-        }
-
-        public Number getAddress() {
-            return addr;
-        }
-
-        public Number getSize() {
-            return size;
-        }
-
-        public Number getOffset() {
-            return (Number)props.get(IMemoryMap.PROP_OFFSET);
-        }
-
-        public String getFileName() {
-            return (String)props.get(IMemoryMap.PROP_FILE_NAME);
-        }
-
-        public String getSectionName() {
-            return (String)props.get(IMemoryMap.PROP_SECTION_NAME);
-        }
-
-        public int getFlags() {
-            Number n = (Number)props.get(IMemoryMap.PROP_FLAGS);
-            if (n != null) return n.intValue();
-            return 0;
-        }
-
-        public Map<String,Object> getProperties() {
-            return props;
-        }
-
-        public int compareTo(Region r) {
-            if (addr == null && r.addr == null) return 0;
-            if (addr == null) return -1;
-            if (r.addr == null) return +1;
-            return addr.compareTo(r.addr);
-        }
-    }
+    private ILaunchConfiguration cfg;
+    private final HashSet<String> loaded_files = new HashSet<String>();
+    private String ctx_id;
 
     private final IStructuredContentProvider content_provider = new IStructuredContentProvider() {
 
@@ -163,7 +116,7 @@ class MemoryMapDialog extends Dialog {
         }
 
         public String getColumnText(Object element, int column) {
-            Region r = (Region)element;
+            TCFMemoryRegion r = (TCFMemoryRegion)element;
             switch (column) {
             case 0:
             case 1:
@@ -212,8 +165,8 @@ class MemoryMapDialog extends Dialog {
         }
 
         public Color getForeground(Object element, int columnIndex) {
-            Region r = (Region)element;
-            if (r.getProperties().get(PROP_ID) != null) {
+            TCFMemoryRegion r = (TCFMemoryRegion)element;
+            if (r.getProperties().get(TCFLaunch.PROP_MMAP_ID) != null) {
                 return map_table.getDisplay().getSystemColor(SWT.COLOR_BLUE);
             }
             return map_table.getForeground();
@@ -229,6 +182,7 @@ class MemoryMapDialog extends Dialog {
         model = node.getModel();
         channel = node.getChannel();
         selection = node;
+        setShellStyle(getShellStyle() | SWT.RESIZE);
     }
 
     @Override
@@ -240,31 +194,49 @@ class MemoryMapDialog extends Dialog {
 
     @Override
     protected void createButtonsForButtonBar(Composite parent) {
-        createButton(parent, IDialogConstants.OK_ID, "&OK", true);
+        ok_button = createButton(parent, IDialogConstants.OK_ID, "&OK", true);
+        ok_button.setEnabled(cfg != null);
     }
 
     @Override
     protected Control createDialogArea(Composite parent) {
         Composite composite = (Composite)super.createDialogArea(parent);
 
+        loadData();
+        createContextText(composite);
         createMemoryMapTable(composite);
 
         composite.setSize(composite.computeSize(SWT.DEFAULT, SWT.DEFAULT));
         return composite;
     }
 
+    private void createContextText(Composite parent) {
+        Font font = parent.getFont();
+        Composite composite = new Composite(parent, SWT.NONE);
+        GridLayout layout = new GridLayout(2, false);
+        composite.setFont(font);
+        composite.setLayout(layout);
+        composite.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+
+        Label props_label = new Label(composite, SWT.WRAP);
+        props_label.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_FILL));
+        props_label.setFont(font);
+        props_label.setText("&Debug context:");
+
+        ctx_text = new Text(composite, SWT.SINGLE | SWT.BORDER | SWT.READ_ONLY);
+        ctx_text.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+        ctx_text.setFont(font);
+        if (ctx_id != null) ctx_text.setText(ctx_id);
+    }
+
     private void createMemoryMapTable(Composite parent) {
         Font font = parent.getFont();
-        Label props_label = new Label(parent, SWT.WRAP);
-        props_label.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-        props_label.setFont(font);
-        props_label.setText("&Memory Map:");
 
         Composite composite = new Composite(parent, SWT.NONE);
         GridLayout layout = new GridLayout(2, false);
         composite.setFont(font);
         composite.setLayout(layout);
-        composite.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 2, 1));
+        composite.setLayoutData(new GridData(GridData.FILL_BOTH));
 
         map_table = new Table(composite,
                 SWT.SINGLE | SWT.BORDER | SWT.FULL_SELECTION |
@@ -275,7 +247,7 @@ class MemoryMapDialog extends Dialog {
         data.heightHint = SIZING_TABLE_HEIGHT;
         map_table.setLayoutData(data);
 
-        int w = SIZING_TABLE_WIDTH / (column_names.length + 5);
+        int w = SIZING_TABLE_WIDTH / (column_names.length + 8);
         for (int i = 0; i < column_names.length; i++) {
             final TableColumn column = new TableColumn(map_table, SWT.LEAD, i);
             column.setMoveable(false);
@@ -287,7 +259,7 @@ class MemoryMapDialog extends Dialog {
                 column.setWidth(w * 2);
                 break;
             case 4:
-                column.setWidth(w * 4);
+                column.setWidth(w * 6);
                 break;
             default:
                 column.setWidth(w);
@@ -315,57 +287,6 @@ class MemoryMapDialog extends Dialog {
         table_viewer.setUseHashlookup(true);
         table_viewer.setColumnProperties(column_names);
 
-        cur_map = new TCFTask<IMemoryMap.MemoryRegion[]>(channel) {
-            @SuppressWarnings("unchecked")
-            public void run() {
-                TCFDataCache<TCFNodeExecContext> mem_cache = model.searchMemoryContext(selection);
-                if (!mem_cache.validate(this)) return;
-                if (mem_cache.getError() != null) {
-                    error(mem_cache.getError());
-                    return;
-                }
-                node = mem_cache.getData();
-                mem_ctx = node.getMemoryContext().getData();
-                ArrayList<IMemoryMap.MemoryRegion> lst = new ArrayList<IMemoryMap.MemoryRegion>();
-                if (node != null) {
-                    TCFDataCache<TCFNodeExecContext.MemoryRegion[]> dc = node.getMemoryMap();
-                    if (!dc.validate(this)) return;
-                    if (dc.getError() != null) {
-                        error(dc.getError());
-                        return;
-                    }
-                    if (dc.getData() != null) {
-                        for (TCFNodeExecContext.MemoryRegion m : dc.getData()) {
-                            Map<String,Object> props = m.region.getProperties();
-                            if (props.get(PROP_ID) != null) continue;
-                            lst.add(new Region(props));
-                        }
-                    }
-                }
-                try {
-                    TCFLaunch launch = model.getLaunch();
-                    ILaunchConfiguration cfg = launch.getLaunchConfiguration();
-                    String map = cfg.getAttribute(TCFLaunchDelegate.ATTR_MEMORY_MAP, "");
-                    if (map.length() > 0) {
-                        Object o = JSON.parseOne(map.getBytes("UTF-8"));
-                        if (o != null) {
-                            for (Object x : (Collection<Object>)o) {
-                                Map<String,Object> props = (Map<String,Object>)x;
-                                if (props.get(PROP_ID) == null) continue;
-                                lst.add(new Region(props));
-                            }
-                        }
-                    }
-                }
-                catch (Throwable x) {
-                    Activator.log("Invalid launch cofiguration attribute", x);
-                }
-                done(lst.toArray(new IMemoryMap.MemoryRegion[lst.size()]));
-            }
-        }.getE();
-        Arrays.sort(cur_map);
-        org_map = new IMemoryMap.MemoryRegion[cur_map.length];
-        System.arraycopy(cur_map, 0, org_map, 0, cur_map.length);
         table_viewer.setContentProvider(content_provider);
 
         table_viewer.setLabelProvider(new MapLabelProvider());
@@ -393,10 +314,10 @@ class MemoryMapDialog extends Dialog {
                 Map<String,Object> attrs = new HashMap<String,Object>();
                 Image image = ImageCache.getImage(ImageCache.IMG_MEMORY_MAP);
                 if (new MemoryMapItemDialog(getShell(), image, attrs, true).open() == OK) {
-                    attrs.put(PROP_ID, Long.toString(System.currentTimeMillis()));
+                    if (ctx_id != null) attrs.put(TCFLaunch.PROP_MMAP_ID, ctx_id);
                     IMemoryMap.MemoryRegion[] arr = new IMemoryMap.MemoryRegion[cur_map.length + 1];
                     System.arraycopy(cur_map, 0, arr, 0, cur_map.length);
-                    Region r = new Region(attrs);
+                    TCFMemoryRegion r = new TCFMemoryRegion(attrs);
                     arr[cur_map.length] = r;
                     Arrays.sort(arr);
                     cur_map = arr;
@@ -456,7 +377,7 @@ class MemoryMapDialog extends Dialog {
             public void run() {
                 IMemoryMap.MemoryRegion r = (IMemoryMap.MemoryRegion)((IStructuredSelection)
                         table_viewer.getSelection()).getFirstElement();
-                boolean manual = r != null && r.getProperties().get(PROP_ID) != null;
+                boolean manual = r != null && r.getProperties().get(TCFLaunch.PROP_MMAP_ID) != null;
                 button_edit.setEnabled(r != null);
                 button_remove.setEnabled(manual);
                 item_edit.setEnabled(r != null);
@@ -466,44 +387,103 @@ class MemoryMapDialog extends Dialog {
         update_map_buttons.run();
     }
 
+    private void loadData() {
+        cur_map = new TCFTask<IMemoryMap.MemoryRegion[]>(channel) {
+            @SuppressWarnings("unchecked")
+            public void run() {
+                TCFDataCache<TCFNodeExecContext> mem_cache = model.searchMemoryContext(selection);
+                if (!mem_cache.validate(this)) return;
+                if (mem_cache.getError() != null) {
+                    error(mem_cache.getError());
+                    return;
+                }
+                node = mem_cache.getData();
+                mem_ctx = node.getMemoryContext().getData();
+                ArrayList<IMemoryMap.MemoryRegion> lst = new ArrayList<IMemoryMap.MemoryRegion>();
+                if (node != null) {
+                    TCFDataCache<TCFNodeExecContext.MemoryRegion[]> dc = node.getMemoryMap();
+                    if (!dc.validate(this)) return;
+                    if (dc.getError() != null) {
+                        error(dc.getError());
+                        return;
+                    }
+                    if (dc.getData() != null) {
+                        for (TCFNodeExecContext.MemoryRegion m : dc.getData()) {
+                            Map<String,Object> props = m.region.getProperties();
+                            if (props.get(TCFLaunch.PROP_MMAP_ID) != null) {
+                                String fnm = m.region.getFileName();
+                                if (fnm != null) loaded_files.add(fnm);
+                            }
+                            else {
+                                lst.add(new TCFMemoryRegion(props));
+                            }
+                        }
+                    }
+                }
+                if (mem_ctx != null) {
+                    ctx_id = mem_ctx.getName();
+                    if (ctx_id == null) ctx_id = mem_ctx.getID();
+                    if (ctx_id != null) {
+                        try {
+                            cfg = model.getLaunch().getLaunchConfiguration();
+                            String map = cfg.getAttribute(TCFLaunchDelegate.ATTR_MEMORY_MAP, "");
+                            if (map.length() > 0) {
+                                Object o = JSON.parseOne(map.getBytes("UTF-8"));
+                                if (o != null) {
+                                    for (Object x : (Collection<Object>)o) {
+                                        Map<String,Object> props = (Map<String,Object>)x;
+                                        if (!ctx_id.equals(props.get(TCFLaunch.PROP_MMAP_ID))) continue;
+                                        lst.add(new TCFMemoryRegion(props));
+                                    }
+                                }
+                            }
+                        }
+                        catch (Throwable x) {
+                            Activator.log("Invalid launch cofiguration attribute", x);
+                        }
+                    }
+                }
+                done(lst.toArray(new IMemoryMap.MemoryRegion[lst.size()]));
+            }
+        }.getE();
+        Arrays.sort(cur_map);
+        org_map = new IMemoryMap.MemoryRegion[cur_map.length];
+        System.arraycopy(cur_map, 0, org_map, 0, cur_map.length);
+    }
+
     @Override
     protected void okPressed() {
-        if (!Arrays.equals(org_map, cur_map)) {
+        // TODO: cleanup unused maps that accumulate in ATTR_MEMORY_MAP
+        if (cfg == null) return;
+        boolean loaded_files_ok = true;
+        for (IMemoryMap.MemoryRegion r : cur_map) {
+            if (r.getProperties().get(TCFLaunch.PROP_MMAP_ID) != null) {
+                String fnm = r.getFileName();
+                if (fnm != null && !loaded_files.contains(fnm)) loaded_files_ok = false;
+            }
+        }
+        if (!loaded_files_ok || !Arrays.equals(org_map, cur_map)) {
             try {
                 final ArrayList<IMemoryMap.MemoryRegion> lst = new ArrayList<MemoryRegion>();
                 for (IMemoryMap.MemoryRegion r : cur_map) {
-                    if (r.getProperties().get(PROP_ID) != null) lst.add(r);
+                    if (r.getProperties().get(TCFLaunch.PROP_MMAP_ID) != null) lst.add(r);
                 }
-                new TCFTask<Boolean>(channel) {
-                    public void run() {
-                        IMemoryMap.MemoryRegion[] map = lst.toArray(new IMemoryMap.MemoryRegion[lst.size()]);
-                        try {
-                            TCFLaunch launch = model.getLaunch();
-                            ILaunchConfigurationWorkingCopy cfg = launch.getLaunchConfiguration().getWorkingCopy();
-                            cfg.setAttribute(TCFLaunchDelegate.ATTR_MEMORY_MAP, JSON.toJSON(map));
-                            cfg.doSave();
-                        }
-                        catch (Throwable x) {
-                            error(x);
-                            return;
-                        }
-                        IMemoryMap mm = channel.getRemoteService(IMemoryMap.class);
-                        if (mm == null) {
-                            error(new Exception("Target does not provide Memory Map service"));
-                            return;
-                        }
-                        mm.set(mem_ctx.getID(), map, new IMemoryMap.DoneSet() {
-                            public void doneSet(IToken token, Exception error) {
-                                if (error != null) {
-                                    error(error);
-                                }
-                                else {
-                                    done(null);
-                                }
+                String s = null;
+                if (lst.size() > 0) {
+                    s = new TCFTask<String>() {
+                        public void run() {
+                            try {
+                                done(JSON.toJSON(lst));
                             }
-                        });
-                    }
-                }.getE();
+                            catch (IOException e) {
+                                error(e);
+                            }
+                        }
+                    }.getIO();
+                }
+                ILaunchConfigurationWorkingCopy copy = cfg.getWorkingCopy();
+                copy.setAttribute(TCFLaunchDelegate.ATTR_MEMORY_MAP, s);
+                copy.doSave();
             }
             catch (Throwable x) {
                 MessageBox mb = new MessageBox(getShell(), SWT.ICON_ERROR | SWT.OK);

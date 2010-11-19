@@ -26,7 +26,7 @@ public class TCFChildrenStackTrace extends TCFChildren {
     private String top_frame_id;
 
     TCFChildrenStackTrace(TCFNodeExecContext node) {
-        super(node.channel, 16);
+        super(node, 16);
         this.node = node;
     }
 

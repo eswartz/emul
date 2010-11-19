@@ -35,14 +35,18 @@ import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.IService;
 import org.eclipse.tm.tcf.protocol.IToken;
+import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IFileSystem;
+import org.eclipse.tm.tcf.services.IMemory;
+import org.eclipse.tm.tcf.services.IMemoryMap;
 import org.eclipse.tm.tcf.services.IPathMap;
 import org.eclipse.tm.tcf.services.IProcesses;
 import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.services.IStreams;
 import org.eclipse.tm.tcf.services.IFileSystem.FileSystemException;
 import org.eclipse.tm.tcf.services.IFileSystem.IFileHandle;
+import org.eclipse.tm.tcf.services.IMemory.MemoryContext;
 import org.eclipse.tm.tcf.services.IProcesses.ProcessContext;
 
 
@@ -90,6 +94,8 @@ public class TCFLaunch extends Launch {
         }
     }
 
+    public static final String PROP_MMAP_ID = "ID";
+
     private static final Collection<Listener> listeners = new ArrayList<Listener>();
 
     private IChannel channel;
@@ -100,6 +106,8 @@ public class TCFLaunch extends Launch {
     private boolean disconnected;
     private boolean shutdown;
     private boolean last_context_exited;
+
+    private Runnable update_memory_maps;
 
     private ProcessContext process;
     private Collection<Map<String,Object>> process_signals;
@@ -193,6 +201,15 @@ public class TCFLaunch extends Launch {
             }
 
             if (mode.equals(ILaunchManager.DEBUG_MODE)) {
+                if (cfg != null && channel.getRemoteService(IMemoryMap.class) != null) {
+                    // Send memory maps
+                    final String maps = cfg.getAttribute(TCFLaunchDelegate.ATTR_MEMORY_MAP, "null");
+                    new LaunchStep() {
+                        void start() throws Exception {
+                            downloadMemoryMaps(maps, this);
+                        }
+                    };
+                }
                 // Send breakpoints:
                 new LaunchStep() {
                     @Override
@@ -246,8 +263,131 @@ public class TCFLaunch extends Launch {
         });
     }
 
-    protected void runLaunchSequence(final Runnable done) {
+    protected void runLaunchSequence(Runnable done) {
         done.run();
+    }
+
+    @SuppressWarnings("unchecked")
+    private void readMapsConfiguration(HashMap<String,ArrayList<TCFMemoryRegion>> maps, String cfg) throws Exception {
+        Collection<Map<String,Object>> list = (Collection<Map<String,Object>>)JSON.parseOne(cfg.getBytes("UTF-8"));
+        if (list == null) return;
+        for (Map<String,Object> map : list) {
+            String id = (String)map.get(PROP_MMAP_ID);
+            if (id != null) {
+                ArrayList<TCFMemoryRegion> l = maps.get(id);
+                if (l == null) {
+                    l = new ArrayList<TCFMemoryRegion>();
+                    maps.put(id, l);
+                }
+                l.add(new TCFMemoryRegion(map));
+            }
+        }
+    }
+
+    private void downloadMemoryMaps(String cfg, final Runnable done) throws Exception {
+        final IMemory mem = channel.getRemoteService(IMemory.class);
+        final IMemoryMap mmap = channel.getRemoteService(IMemoryMap.class);
+        if (mem == null || mmap == null) {
+            done.run();
+            return;
+        }
+        final HashSet<String> deleted_maps = new HashSet<String>();
+        final HashMap<String,ArrayList<TCFMemoryRegion>> maps = new HashMap<String,ArrayList<TCFMemoryRegion>>();
+        readMapsConfiguration(maps, cfg);
+        final HashSet<String> mems = new HashSet<String>();
+        final HashSet<IToken> cmds = new HashSet<IToken>();
+        final Runnable done_all = new Runnable() {
+            boolean launch_done;
+            public void run() {
+                mems.clear();
+                deleted_maps.clear();
+                if (launch_done) return;
+                done.run();
+                launch_done = true;
+            }
+        };
+        final IMemoryMap.DoneSet done_set_mmap = new IMemoryMap.DoneSet() {
+            public void doneSet(IToken token, Exception error) {
+                cmds.remove(token);
+                // TODO: report memory map download error
+                if (cmds.isEmpty()) done_all.run();
+            }
+        };
+        final IMemory.DoneGetContext done_get_context = new IMemory.DoneGetContext() {
+            public void doneGetContext(IToken token, Exception error, MemoryContext context) {
+                cmds.remove(token);
+                if (context != null && mems.add(context.getID())) {
+                    String id = context.getName();
+                    if (id == null) id = context.getID();
+                    if (id != null) {
+                        ArrayList<TCFMemoryRegion> map = maps.get(id);
+                        if (map != null) {
+                            TCFMemoryRegion[] arr = map.toArray(new TCFMemoryRegion[map.size()]);
+                            System.out.println("Set map " + id + " on context " + context.getID());
+                            cmds.add(mmap.set(context.getID(), arr, done_set_mmap));
+                        }
+                        else if (deleted_maps.contains(id)) {
+                            System.out.println("Delete map " + id + " on context " + context.getID());
+                            cmds.add(mmap.set(context.getID(), null, done_set_mmap));
+                        }
+                    }
+                }
+                if (cmds.isEmpty()) done_all.run();
+            }
+        };
+        final IMemory.DoneGetChildren done_get_children = new IMemory.DoneGetChildren() {
+            public void doneGetChildren(IToken token, Exception error, String[] ids) {
+                cmds.remove(token);
+                if (ids != null) {
+                    for (String id : ids) {
+                        cmds.add(mem.getChildren(id, this));
+                        cmds.add(mem.getContext(id, done_get_context));
+                    }
+                }
+                if (cmds.isEmpty()) done_all.run();
+            }
+        };
+        cmds.add(mem.getChildren(null, done_get_children));
+        mem.addListener(new IMemory.MemoryListener() {
+            public void memoryChanged(String context_id, Number[] addr, long[] size) {
+            }
+            public void contextRemoved(String[] context_ids) {
+                for (String id : context_ids) mems.remove(id);
+            }
+            public void contextChanged(MemoryContext[] contexts) {
+            }
+            public void contextAdded(MemoryContext[] contexts) {
+                for (MemoryContext context : contexts) {
+                    if (!mems.add(context.getID())) continue;
+                    String id = context.getName();
+                    if (id == null) id = context.getID();
+                    if (id == null) continue;
+                    ArrayList<TCFMemoryRegion> map = maps.get(id);
+                    if (map == null) continue;
+                    TCFMemoryRegion[] arr = map.toArray(new TCFMemoryRegion[map.size()]);
+                    System.out.println("Set map " + id + " on context " + context.getID());
+                    cmds.add(mmap.set(context.getID(), arr, done_set_mmap));
+                }
+            }
+        });
+        update_memory_maps = new Runnable() {
+            public void run() {
+                try {
+                    HashSet<String> ids = new HashSet<String>(maps.keySet());
+                    maps.clear();
+                    mems.clear();
+                    String s = getLaunchConfiguration().getAttribute(TCFLaunchDelegate.ATTR_MEMORY_MAP, "null");
+                    readMapsConfiguration(maps, s);
+                    for (String id : ids) {
+                        if (maps.get(id) == null) deleted_maps.add(id);
+                    }
+                    cmds.add(mem.getChildren(null, done_get_children));
+                }
+                catch (Throwable x) {
+                    channel.terminate(x);
+                }
+            }
+        };
     }
 
     private String[] toArgsArray(String file, String cmd) {
@@ -589,6 +729,13 @@ public class TCFLaunch extends Launch {
     public static void removeListener(Listener listener) {
         assert Protocol.isDispatchThread();
         listeners.remove(listener);
+    }
+
+    public void launchConfigurationChanged(ILaunchConfiguration cfg) {
+        super.launchConfigurationChanged(cfg);
+        if (!cfg.equals(getLaunchConfiguration())) return;
+        if (update_memory_maps != null) Protocol.invokeLater(update_memory_maps);
+        // TODO: update signal masks when launch configuration changes
     }
 
     /** Thread safe method */

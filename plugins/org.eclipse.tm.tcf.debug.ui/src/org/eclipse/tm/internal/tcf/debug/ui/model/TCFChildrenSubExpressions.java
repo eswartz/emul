@@ -19,14 +19,12 @@ import org.eclipse.tm.tcf.util.TCFDataCache;
 
 public class TCFChildrenSubExpressions extends TCFChildren {
 
-    private final TCFNode node;
     private final int par_level;
     private final int par_offs;
     private final int par_size;
 
     TCFChildrenSubExpressions(TCFNode node, int par_level, int par_offs, int par_size) {
-        super(node.channel, 128);
-        this.node = node;
+        super(node, 128);
         this.par_level = par_level;
         this.par_offs = par_offs;
         this.par_size = par_size;

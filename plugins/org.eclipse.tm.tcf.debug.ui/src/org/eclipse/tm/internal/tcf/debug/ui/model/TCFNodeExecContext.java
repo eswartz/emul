@@ -334,6 +334,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
 
     @Override
     void dispose() {
+        assert !disposed;
         run_context.dispose();
         prs_context.dispose();
         mem_context.dispose();
