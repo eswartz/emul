@@ -182,6 +182,7 @@ true <EXPORT
 : key    ( -- key | 0 )
     begin
         ints-on (idle) ints-off
+        \ ints-check
         key?
     until
     (key)

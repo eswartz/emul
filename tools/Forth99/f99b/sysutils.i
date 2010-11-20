@@ -27,6 +27,9 @@
 :   vc@  ( addr -- )
     vwaddr  VDPRD c@
 ;
+:   vc!  ( addr -- )
+    swap vwaddr  VDPWD c!
+;
 
 
 :   gvmove ( gaddr vaddr len -- )

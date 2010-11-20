@@ -7,6 +7,7 @@ import static v9t9.engine.cpu.InstF99b.*;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Stack;
 
 import org.ejs.coffee.core.utils.HexUtils;
@@ -573,7 +574,8 @@ public class F99bTargetContext extends TargetContext {
 				diff-=2;		// for branch inst
 			baseOpcode = baseOpcode == IbranchX ? IbranchW : I0branchW;
 			compileOpcode(baseOpcode);
-			compileCell(diff);
+			int ptr = alloc(cellSize);
+			writeCell(ptr, diff);
 		} else if (diff < -8 + 1 || diff >= 8 + 1) {
 			stub8BitJump.use();
 			if (diff >= 0)

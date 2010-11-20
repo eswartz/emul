@@ -7,6 +7,7 @@ import v9t9.forthcomp.AbortException;
 import v9t9.forthcomp.HostContext;
 import v9t9.forthcomp.ITargetWord;
 import v9t9.forthcomp.IWord;
+import v9t9.forthcomp.RelocEntry.RelocType;
 
 /**
  * @author ejs
@@ -25,6 +26,9 @@ public class Tick extends BaseStdWord {
 		IWord word = targetContext.find(name);
 		if (word == null) {
 			word = targetContext.defineForward(name, hostContext.getStream().getLocation());
+			System.out.println("*** Warning: tick'ing forward word; next word should be ','!");
+			targetContext.addRelocation(targetContext.getDP(), RelocType.RELOC_ABS_ADDR_16, 
+					((ITargetWord)word).getEntry().getContentAddr());
 		}
 		
 		if (!(word instanceof ITargetWord))

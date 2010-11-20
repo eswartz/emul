@@ -35,30 +35,32 @@ create  VRegSave      16 allot
 
 \ ---------------------
 
-48      RamVar  v-mode
+52      RamVar  v-mode
 
 : +field    ( "name" ptr -- ptr' )    dup Constant 2+ ; immediate
 
 v-mode
-    +field  v-screen      \ VDP addr of screen
-    +field  v-screensz    \ VDP size of screen
-    +field  v-patts       \ VDP addr of patterns
-    +field  v-pattsz      \ VDP size of pattern table
-    +field  v-colors      \ VDP addr of colors
-    +field  v-colorsz     \ VDP size of color table
-    +field  v-sprites     \ VDP addr of sprites
-    +field  v-sprcol      \ VDP addr of sprite color table (0 if not sprite 2 mode)
-    +field  v-sprpat      \ VDP addr of sprite patterns
-    +field  v-sprmot      \ VDP addr of sprite motion
-    +field  v-free        \ usable space
-    +field  v-width       \ chars across
-    +field  v-height      \ chars down
+    +field  v-screen       \ VDP addr of screen
+    +field  v-screensz     \ VDP size of screen
+    +field  v-patts        \ VDP addr of patterns
+    +field  v-pattsz       \ VDP size of pattern table
+    +field  v-colors       \ VDP addr of colors
+    +field  v-colorsz      \ VDP size of color table
+    +field  v-sprites      \ VDP addr of sprites
+    +field  v-sprcol       \ VDP addr of sprite color table (0 if not sprite 2 mode)
+    +field  v-sprpat       \ VDP addr of sprite patterns
+    +field  v-sprmot       \ VDP addr of sprite motion
+    +field  v-free         \ usable space
+    +field  v-width        \ chars across
+    +field  v-height       \ chars down
     
-    +field  v-coordaddr   ( x y -- addr bit )
-    +field  v-drawchar    ( ch addr bit -- )
-    +field  v-savechar    ( addr bit buff -- )
-    +field  v-restorechar ( buff addr bit -- )
-    +field  v-drawcursor  ( addr bit -- )
+    +field  v-coordaddr    ( x y -- addr bit )
+    +field  v-drawchar     ( ch addr bit -- )
+    +field  v-savechar     ( addr bit buff -- )
+    +field  v-restorechar  ( buff addr bit -- )
+    +field  v-drawcursor   ( addr bit -- )
+    +field  v-setupmode    ( -- )
+    +field  v-updatecolors ( -- )
 drop
  
 8   RamVar v-curs-under  
@@ -68,7 +70,7 @@ drop
 
 20 Constant v-cursor-blink              \ 30/60 sec
  
-:   write-mode-params   ( table -- )
+:   write-var-list   ( table -- )
     begin
         dup @ 
     while
@@ -78,12 +80,61 @@ drop
     drop
 ;
 
-:   switch-mode
+: (mode)
+    dup  0 last-video-mode within  0= -&24 ?error
+    cells  video-modes +  @ execute
+;
+
+1   RamVar fg
+1   RamVar bg
+
+: color-byte
+    fg c@ 4 lshift  bg c@  or
+;
+
+1 <export
+: fg!
+    fg c!
+    v-updatecolors @  execute
+;
+
+: bg!
+    bg c!
+    v-updatecolors @  execute
+;
+
+: fg@
+    fg c@
+;   
+
+: bg@
+    bg c@
+;
+
+export>
+
+\   Reset video state
+\
+\   -- reset terminal bounds
+\   -- clear memory
+\   -- load font (if needed)
+
+: vreset
     term-reset
     cls    
+
+    v-setupmode @  execute
+    v-updatecolors @  execute
+    
     load-font
     true vid-show
 ;
+
+: vstdpal
+
+;
+
+
 
 :   v-cursor-on ( addr bit -- )
     v-curs c@ not if
@@ -119,63 +170,56 @@ drop
 ;
 
 
-
 \ ---------------------
 
-: txt-coordaddr ( x y -- addr bit )
-    v-width @ *  +
-    v-screen @ + 
-    0
-;
-
-: txt-waddr ( addr bit -- )
-    drop  $4000 OR  vwaddr  
-;
-: txt-raddr ( addr bit -- )
-    drop  vwaddr  VDPRD c@  
-;
-: txt-drawchar ( ch addr bit -- )
-    txt-waddr VDPWD c!
-;
-: txt-savechar ( addr bit buff -- )
-    >r txt-raddr r>  c!
-;
-: txt-restorechar ( buff addr bit -- )
-    txt-waddr  c@  VDPWD c!
-;
-: txt-drawcursor ( addr bit -- )
-    txt-waddr  [CHAR] _  VDPWD c!
-;
-
-
-Create text-mode-params
-    v-screen , 0 ,      v-screensz , 960 ,
-    v-patts , $800 ,    v-pattsz , $800 ,
-    v-colors , $0 ,     v-colorsz , $0 ,
-    v-sprites , $0 ,    
-    v-sprcol , $0 ,
-    v-sprpat , $0 ,     v-sprmot , $0 ,
-    v-free , $1000 ,
-    v-width , 40 ,      v-height , 24 ,
+Create video-modes
+    ' text-mode ,
+    ' gfx-mode ,
+    0 ,
+    0 ,
+    0 ,
+    0 ,
+    0 ,
+    0 ,
+    ' text2-mode ,
+    0 ,
+    0 ,
     
-    v-coordaddr ,       ' txt-coordaddr , 
-    v-drawchar ,        ' txt-drawchar ,
-    v-savechar ,        ' txt-savechar , 
-    v-restorechar ,     ' txt-restorechar ,
-    v-drawcursor ,      ' txt-drawcursor ,
-    0 , 
+1 <export
+$000    constant    text
+$001    constant    gfx
+$002    constant    bitmap      $002    constant    gfx2
+$003    constant    gfx3           
+$004    constant    gfx4
+$005    constant    gfx5
+$006    constant    gfx6
+$007    constant    gfx7
+$008    constant    text2
+$009    constant    mono
+$00A    constant    multi
+export>
+
+$00B    constant    last-video-mode
+
+1 <export
+\ tables for (vtab)
+&0 constant #scr
+&1 constant #ssz
+&2 constant #col
+&3 constant #csz
+&4 constant #pat
+&5 constant #psz
+&6 constant #spt
+&7 constant #spr
+&8 constant #smt
+&9 constant #spc
+&10 constant #fre
+export>
+
+include video_base.i
 
 
-create  TextModeRegs
-    $8000 , $81B0 , $8200 , $8401 , 0 ,
-    
-:   text-mode
-    TextModeRegs write-vregs
-    text-mode-params write-mode-params
-    switch-mode
-;
-
-\ -------------------
+\ ---------------------
 
 : load-font
     grom_font8x8  v-patts @   $800  gvmove
@@ -184,6 +228,11 @@ create  TextModeRegs
 \ -------------------
 
 1 <EXPORT
+
+:   mode ( num -- )
+    (mode) vreset vstdpal
+;
+
 
 :   vfill ( ch addr len -- )
     swap $4000 or vwaddr
@@ -202,7 +251,10 @@ EXPORT>
     VDPRD c@ drop
     0 GPLWD c! 
     
-    text-mode
+    text mode
+
+    $1 fg!
+    $7 bg!
     
     $8717 vwaddr
     
