@@ -6,6 +6,10 @@
     VDPWA !
 ;
 
+:   !vwaddr ( addr -- )
+    $4000 OR  VDPWA !
+;
+
 :   gwaddr ( addr -- )
     \ dup swpb GPLWA c! GPLWA c!
     GPLWA !
@@ -31,10 +35,27 @@
     swap vwaddr  VDPWD c!
 ;
 
+:   (vmbr) ( buff len -- )
+    ( faddr taddr len fstep tstep ) 
+    >r VDPRD swap r> 0 1 (cmove)
+;
 
+:   vmbr ( vaddr buff len -- )
+    rot vwaddr  (vmbr)
+;
+
+
+:   (vmbw) ( buff len -- )
+    ( faddr taddr len fstep tstep )
+    >r VDPWD r>  1 0 (cmove) 
+;
+
+:   vmbw ( vaddr buff len -- )
+    rot !vwaddr  (vmbw)
+;
 :   gvmove ( gaddr vaddr len -- )
     rot gwaddr
-    swap  $4000 or  vwaddr
+    swap  !vwaddr
     \ 0 do  GPLRD c@ VDPWD c! loop
     GPLRD VDPWD rot  0 0 (cmove)
 ;

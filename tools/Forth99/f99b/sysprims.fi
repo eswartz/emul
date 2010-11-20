@@ -33,7 +33,22 @@
     2>r drop 2r>
 ;
 
+: u/mod      ( ud un -- ur uq ) 
+    0 swap
+    [ Iudivmod c, ]
+;
+: u/      ( ud un -- ur uq )
+    0 swap 
+    [ Iudivmod c, ] swap drop
+;
+
+: u*        ( ua ub -- un )
+    [ Iumul c, ] drop
+;
+
+
 : fill  ( addr n ch -- )
     rot rot 1 [ Icfill c, ]
 ;
+
 

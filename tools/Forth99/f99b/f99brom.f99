@@ -115,7 +115,7 @@ include ../ans/interp.fi
 
 \ -------------------------------
 
-
+1 <export
 :   cycle
     \ hex $1F2E3D4C. d.d 10 demit decimal
     \ 256 0 do i .d 10 demit loop
@@ -123,13 +123,13 @@ include ../ans/interp.fi
         42 demit
         256 0 do
             key? if key else i then
-            v-clear
+            chfill
             ints-check
             \ 0 0 do loop
         loop
     again
 ;
-
+export>
 
 :   bootup
 

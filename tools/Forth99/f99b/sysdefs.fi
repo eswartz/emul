@@ -108,6 +108,9 @@ $10         constant    I0branchX
 $39         constant    IRfrom
 $3b         constant    IatR
 $41         constant    Isub
+$46         constant    Iumul
+$47         constant    Iudivmod
+$7e47       constant    Iudivmod_d
 $66         constant    Iuser
 $67         constant    Iupidx
 $68         constant    IloopUp
@@ -129,8 +132,6 @@ $7e3a       constant    Irdrop_d
 
 $3c         constant    Irpidx
 
-$47         constant    Iudivmod
-$7e47       constant    Iudivmod_d
 
 
 \ ----------    syscalls

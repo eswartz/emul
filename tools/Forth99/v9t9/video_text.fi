@@ -1,13 +1,13 @@
 
 
 : txt-coordaddr ( x y -- addr bit )
-    v-width @ *  +
+    v-ccols c@ *  +
     v-screen @ + 
     0
 ;
 
 : txt-waddr ( addr bit -- )
-    drop  $4000 OR  vwaddr  
+    drop  !vwaddr  
 ;
 : txt-raddr ( addr bit -- )
     drop  vwaddr  VDPRD c@  
@@ -32,9 +32,17 @@
     $8700  or write-vregaddr
 ;
 
+: txt-clear
+    v-screen @ v-screensz @ vfill
+;
+
 \ -------------------
 
 : std-setfont   ( addr -- )
+    \ no matter what chars are used, char takes up fixed space on screen
+    v-width @  255 AND 0= if 8 else 6 then  v-chwidth c!   
+    8 v-chheight c!
+    
     v-patts @   $800  gvmove
 ;
 
@@ -42,12 +50,13 @@
 \ -------------------
 
 Create TextFunctions 
-    v-coordaddr ,       ' txt-coordaddr , 
-    v-drawchar ,        ' txt-drawchar ,
-    v-savechar ,        ' txt-savechar , 
-    v-restorechar ,     ' txt-restorechar ,
-    v-drawcursor ,      ' txt-drawcursor ,
-    v-setfont ,         ' std-setfont ,
+    'v-coordaddr ,       ' txt-coordaddr , 
+    'v-drawchar ,        ' txt-drawchar ,
+    'v-savechar ,        ' txt-savechar , 
+    'v-restorechar ,     ' txt-restorechar ,
+    'v-drawcursor ,      ' txt-drawcursor ,
+    'v-setfont ,         ' std-setfont ,
+    'v-clear ,           ' txt-clear ,
     0 , 
 
 
@@ -58,17 +67,17 @@ Create TextFunctions
 \           >1000+= free
 \
 Create TextModeParams
-    v-screen , 0 ,      v-screensz , 960 ,
-    v-patts , $800 ,    v-pattsz , $800 ,
-    v-colors , $0 ,     v-colorsz , $0 ,
-    v-sprites , $0 ,    v-sprcol , $0 ,
-    v-sprpat , $0 ,     v-sprmot , $0 ,
-    v-free , $1000 ,
+    v-screen    , 0 ,       v-screensz  , 960 ,
+    v-patts     , $800 ,    v-pattsz    , $800 ,
+    v-colors    , $0 ,      v-colorsz   , $0 ,
+    v-sprites   , $0 ,      v-sprcol    , $0 ,
+    v-sprpat    , $0 ,      v-sprmot    , $0 ,
+    v-free      , $1000 ,
 
-    v-width , 40 ,      v-height , 24 ,
+    v-width     , 240 ,     v-height    , 192 ,
 
-    v-setupmode ,       ' txt-setupmode ,
-    v-updatecolors ,    ' txt-updatecolors ,
+    'v-setupmode ,           ' txt-setupmode ,
+    'v-updatecolors ,        ' txt-updatecolors ,
     
     0 ,
     
@@ -118,17 +127,17 @@ Create GfxModeRegs
     $8000 , $81A0 , $8200 , $830E , $8401 , $8506 , $8600 , 0 ,
 
 Create GfxModeParams
-    v-screen , 0 ,      v-screensz , 768 ,
-    v-colors , $380 ,   v-colorsz , $20 ,
-    v-patts , $800 ,    v-pattsz , $800 ,
-    v-sprites , $300 ,  v-sprcol , $0 ,
-    v-sprpat , $0 ,     v-sprmot , $3A0 ,
-    v-free , $1000 ,
+    v-screen    , 0 ,       v-screensz  , 768 ,
+    v-colors    , $380 ,    v-colorsz   , $20 ,
+    v-patts     , $800 ,    v-pattsz    , $800 ,
+    v-sprites   , $300 ,    v-sprcol    , $0 ,
+    v-sprpat    , $0 ,      v-sprmot    , $3A0 ,
+    v-free      , $1000 ,
     
-    v-width , 32 ,      v-height , 24 ,
+    v-width     , 256 ,     v-height    , 192 ,
     
-    v-setupmode ,       ' gfx-setupmode ,
-    v-updatecolors ,    ' gfx-updatecolors ,
+    'v-setupmode ,           ' gfx-setupmode ,
+    'v-updatecolors ,        ' gfx-updatecolors ,
     
     0 ,
 
@@ -161,17 +170,17 @@ Create Text2ModeRegs
     $8004 , $81B0 , $8200 , $832F , $8A00 , $8402 , $8D22 , 0 ,
 
 Create Text2ModeParams
-    v-screen , 0 ,      v-screensz , 2160 ,
-    v-colors , $a00 ,   v-colorsz , 2160 8 / ,
-    v-patts , $1000 ,   v-pattsz , $800 ,
-    v-sprites , 0 ,     v-sprcol , 0 ,
-    v-sprpat , 0 ,      v-sprmot , 0 , 
-    v-free , $1800 ,
+    v-screen    , 0 ,       v-screensz  , 2160 ,
+    v-colors    , $a00 ,    v-colorsz   , 2160 8 / ,
+    v-patts     , $1000 ,   v-pattsz    , $800 ,
+    v-sprites   , 0 ,       v-sprcol    , 0 ,
+    v-sprpat    , 0 ,       v-sprmot    , 0 , 
+    v-free      , $1800 ,
      
-    v-width , 80 ,      v-height , 24 ,
+    v-width     , 480 ,     v-height    , 192 ,
     
-    v-setupmode ,       ' txt2-setupmode ,
-    v-updatecolors ,    ' txt-updatecolors ,
+    'v-setupmode ,           ' txt2-setupmode ,
+    'v-updatecolors ,        ' txt-updatecolors ,
 
     0 ,
     

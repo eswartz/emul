@@ -114,8 +114,6 @@ public class Emulator {
 	        Compiler.settingOptimizeStatus.setBoolean(true);
 	        //Compiler.settingCompileOptimizeCallsWithData.setBoolean(true);
 	        //Compiler.settingCompileFunctions.setBoolean(true);
-	        //Executor.settingDumpInstructions.setBoolean(true);
-	        //Executor.settingDumpFullInstructions.setBoolean(true);
     	}
         
         if (false) {

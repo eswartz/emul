@@ -35,9 +35,10 @@ create  VRegSave      16 allot
 
 \ ---------------------
 
-56      RamVar  v-mode
+62      RamVar  v-mode
 
 : +field    ( "name" ptr -- ptr' )    dup Constant 2+ ; immediate
+: +1field   ( "name" ptr -- ptr' )    dup Constant 1+ ; immediate
 
 v-mode
     +field  v-screen       \ VDP addr of screen
@@ -51,21 +52,31 @@ v-mode
     +field  v-sprpat       \ VDP addr of sprite patterns
     +field  v-sprmot       \ VDP addr of sprite motion
     +field  v-free         \ usable space
-    +field  v-width        \ chars across
-    +field  v-height       \ chars down
+    +field  v-width        \ pixels across
+    +field  v-height       \ pixels down
+    +1field v-ccols        \ chars across
+    +1field v-crows        \ chars down
+    +1field v-chwidth      \ character width in pixels
+    +1field v-chheight     \ character height in pixels
     
-    +field  v-coordaddr    ( x y -- addr bit )
-    +field  v-drawchar     ( ch addr bit -- )
-    +field  v-savechar     ( addr bit buff -- )
-    +field  v-restorechar  ( buff addr bit -- )
-    +field  v-drawcursor   ( addr bit -- )
-    +field  v-setupmode    ( -- )
-    +field  v-updatecolors ( byte -- )
-    +field  v-setfont      ( addr -- )
+    +field  'v-coordaddr    ( x y -- addr bit )
+    +field  'v-drawchar     ( ch addr bit -- )
+    +field  'v-savechar     ( addr bit buff -- )
+    +field  'v-restorechar  ( buff addr bit -- )
+    +field  'v-drawcursor   ( addr bit -- )
+    +field  'v-setupmode    ( -- )
+    +field  'v-updatecolors ( byte -- )
+    +field  'v-setfont      ( addr -- )
+    +field  'v-clear        ( ch -- )
 drop
 
 2   RamVar v-font                           \ GROM addr of current font
- 
+
+: >v-fontaddr   ( ch -- )
+    v-chheight c@ u*  v-font @ +
+;
+
+\ Save space for content under the blinking cursor 
 8   RamVar v-curs-under  
 
 1   RamVar v-curs                         \ state of cursor (0=off, 1=on)
@@ -96,7 +107,7 @@ drop
 ;
 
 : v-refresh-colors
-    color-byte v-updatecolors @  execute
+    color-byte 'v-updatecolors @  execute
 ;
 
 1 <export
@@ -127,13 +138,14 @@ export>
 \   -- load font (if needed)
 
 : vreset
-    term-reset
-    cls    
-
-    v-setupmode @  execute
+    'v-setupmode @  execute
+    
     v-refresh-colors
     
-    v-font @  v-setfont @  execute
+    (setfont)
+
+    term-reset
+    cls    
     
     true vid-show
 ;
@@ -147,9 +159,9 @@ export>
 :   v-cursor-on ( addr bit -- )
     v-curs c@ not if
         2dup
-        v-curs-under v-savechar @  execute
+        v-curs-under 'v-savechar @  execute
         
-        v-drawcursor @ execute
+        'v-drawcursor @ execute
         true v-curs c!
     else
         2drop
@@ -157,7 +169,7 @@ export>
 ;
 :   v-cursor-off  ( addr bit -- )
     v-curs c@ if
-        2>r v-curs-under 2r>  v-restorechar @  execute
+        2>r v-curs-under 2r>  'v-restorechar @  execute
         false v-curs c!
     else
         2drop
@@ -183,7 +195,7 @@ export>
 Create video-modes
     ' text-mode ,
     ' gfx-mode ,
-    0 ,
+    ' bit-mode ,
     0 ,
     0 ,
     0 ,
@@ -224,7 +236,8 @@ $00B    constant    last-video-mode
 &10 constant #fre
 export>
 
-include video_base.fi
+include video_text.fi
+include video_bit.fi
 
 
 \ ---------------------
@@ -237,20 +250,18 @@ include video_base.fi
 
 
 :   vfill ( ch addr len -- )
-    swap $4000 or vwaddr
+    swap !vwaddr
     VDPWD swap 0 (cfill) 
 ;
 
-:   v-clear ( ch -- )
-    v-screen @ v-screensz @ vfill
-;
-
 :   (setfont)
-    v-font @  v-setfont @  execute
+    v-font @  'v-setfont @  execute
+    term-refresh
 ;
 
 :   font8x8
     grom_font8x8 v-font !
+    8 v-chwidth c!   8 v-chheight c!
     (setfont)
 ;
 

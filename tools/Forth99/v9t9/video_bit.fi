@@ -1,0 +1,123 @@
+
+Create bit-cursor-8
+    $00 c,  $7c c,  $44 c, $44 c, $44 c,  $7c c, $00 c, $00 c,
+     
+cell    RamVar  bit-cursor
+
+
+\   Figure the address and shift for a pixel on the screen
+: bit-pixaddr ( x y -- addr shift )
+    ( Y -> row offs )
+    dup  5 lshift  OR  $ff07  AND  >R
+    
+    dup  
+    R>  +
+    
+    ( X -> byte offs and shift )
+    swap  7 AND  dup >R  -
+    R>
+;    
+
+: bit-waddr ( addr bit -- )
+    drop  !vwaddr  
+;
+: bit-raddr ( addr bit -- )
+    drop  vwaddr  
+;
+
+
+: bit-setupmode
+    ( set repeating 0-255 in three sections of SIT )
+    v-screen @  !vwaddr
+    768 0 do i  VDPWD c!  loop
+;
+
+\   Figure the address and shift for a character on the screen
+: bit-coordaddr ( x y -- addr shift )
+    v-chheight c@  u*
+    swap  v-chwidth c@ u*
+    swap  bit-pixaddr
+;    
+
+
+
+: bit-drawchar ( ch addr bit -- )
+    \ simple-stupid version 
+    drop
+    swap >v-fontaddr swap  v-chheight c@  gvmove  
+;
+: bit-savechar ( addr bit buff -- )
+    >r bit-raddr r> v-chheight c@  (vmbr)
+;
+: bit-restorechar ( buff addr bit -- )
+    bit-waddr  v-chheight c@  (vmbw)
+;
+: bit-drawcursor ( addr bit -- )
+    bit-waddr  bit-cursor @  v-chheight c@ (vmbw) 
+;
+
+: bit-clear ( ch -- )
+    0  v-patts @ v-pattsz @ vfill
+    color-byte  v-colors @ v-colorsz @ vfill
+;
+
+: bit-updatecolors
+    $8700 OR  write-vregaddr
+;
+
+
+: bit-setfont   ( addr -- )
+    \ TODO: support for non-8-pixel fonts 
+    8 v-chwidth c!
+    bit-cursor-8  bit-cursor ! 
+;
+
+
+Create BitFunctions 
+    'v-coordaddr ,       ' bit-coordaddr , 
+    'v-drawchar ,        ' bit-drawchar ,
+    'v-savechar ,        ' bit-savechar , 
+    'v-restorechar ,     ' bit-restorechar ,
+    'v-drawcursor ,      ' bit-drawcursor ,
+    'v-setfont ,         ' bit-setfont ,
+    'v-clear ,           ' bit-clear ,
+    0 , 
+
+
+
+\       2=bitmap mode (graphics 2 mode)
+\           >0000 = patts
+\           >1800 = screen
+\           >1B00 = sprites
+\           >1B80 = sprite motion
+\           >1C00 = sprite patts    (really >1800)
+\           >2000 = colors
+\           >3800+= free
+\
+Create BitModeRegs
+    $8002 , $81A0 , $8206 , $83FF , $8403 , $8536 , $8603 , 0 ,
+
+Create BitModeParams
+    v-screen    , $1800 ,   v-screensz  , $300 ,
+    v-colors    , $2000 ,   v-colorsz   , $1800 ,   
+    v-patts     , $0000 ,   v-pattsz    , $1800 ,
+    v-sprites   , $1B00 ,   v-sprcol    , 0 ,
+    v-sprpat    , $1800 ,   v-sprmot    , $1B80 ,
+    v-free      , $3800 ,
+
+    v-width     , 256 ,     v-height    , 192 ,
+    
+    'v-setupmode ,           ' bit-setupmode ,
+    'v-updatecolors ,        ' bit-updatecolors ,
+
+    0 ,
+    
+    
+: bit-mode
+    BitFunctions write-var-list
+    BitModeParams write-var-list
+        
+    BitModeRegs write-vregs
+
+;
+

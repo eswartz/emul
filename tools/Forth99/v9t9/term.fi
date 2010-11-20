@@ -7,20 +7,33 @@ cell    RamVar vy
 0 Value win-sx
 0 Value win-sy
 
+: term-refresh
+    v-width @ v-chwidth c@ u/  v-ccols c!
+    v-height @ v-chheight c@ u/  v-crows c!
+;
+
 \   Reset terminal from the current mode
 : term-reset
     0 to win-x
     0 to win-y
-    v-width @  to win-sx
-    v-height @  to win-sy
     
+    term-refresh
+    
+    v-ccols c@  to win-sx
+    v-crows c@  to win-sy
+    
+    home
+;
+
+:   home
     0 vx !
     0 vy !
 ;
 
 :   curs-addr ( -- addr bit )
-    vx @ win-x +  vy @ win-y +  
-    v-coordaddr @  execute
+    vx @ win-x +  
+    vy @ win-y +  
+    'v-coordaddr @  execute
 ;
 
 :   advance-row
@@ -59,7 +72,21 @@ cell    RamVar vy
 
 1 <EXPORT
 
-:   cls  32 v-clear  term-reset ;
+:   chfill  ( ch -- )
+    home
+    v-ccols c@  v-crows c@  u* 0 do  dup (emit)  loop
+    drop
+;
+
+:   cls  
+    'v-clear @  execute  
+    home
+;
+
+:   (emit)
+    curs-addr  'v-drawchar @  execute  
+    advance-cursor
+;
 
 :   emit    ( ch -- )
     cursor-off
@@ -68,8 +95,7 @@ cell    RamVar vy
     else dup 8 = if
         drop bksp
     else
-        curs-addr  v-drawchar @ execute  
-        advance-cursor
+        (emit)
     then then 
 ;    target-only
 
