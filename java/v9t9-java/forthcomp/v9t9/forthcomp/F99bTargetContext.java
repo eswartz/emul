@@ -194,7 +194,7 @@ public class F99bTargetContext extends TargetContext {
 		defineInlinePrim("DU>", Icmp_d+CMP_UGT);
 		defineInlinePrim("DU>=", Icmp_d+CMP_UGE);
 		
-		defineInlinePrim("unloop", Irdrop_d);
+		defineInlinePrim("(unloop)", IRfrom, Irdrop_d, ItoR);
 		defineInlinePrim("2rdrop", Irdrop_d);
 		defineInlinePrim("2/", I2div);
 		defineInlinePrim("2*", I2times);
@@ -248,14 +248,14 @@ public class F99bTargetContext extends TargetContext {
 	
 	private void definePrim(String string, int opcode) {
 		define(string, new F99PrimitiveWord(defineEntry(string), opcode));
-		compileByte(opcode);
+		compileOpcode(opcode);
 		compileByte(Iexit);
 	}
 
 	private void defineInlinePrim(String string, int... opcodes) {
 		define(string, new F99InlineWord(defineEntry(string), opcodes));
 		for (int i : opcodes)
-			compileByte(i);
+			compileOpcode(i);
 		compileByte(Iexit);
 	}
 	
@@ -544,12 +544,9 @@ public class F99bTargetContext extends TargetContext {
 			//System.err.println("jump too long: " + diff);
 		}
 		
-		if (diff < -8 - 1 || diff >= 8) {
+		if (diff < -8  || diff >= 8 ) {
 			stub8BitJump.use();
-			if (diff < 0)
-				diff+=2;		// for branch inst
-			else
-				diff--;
+			diff--;
 			
 			//System.out.println("@writeJumpOffs: " +opAddr + ": " + readChar(opAddr));
 			writeChar(opAddr, (diff & 0xff));
@@ -562,8 +559,6 @@ public class F99bTargetContext extends TargetContext {
 			else if (newOp == I0branchB) newOp = I0branchX;
 			else throw hostContext.abort("suspicious code sequence: " + Integer.toHexString(newOp));
 			
-			if (diff < 0)
-				diff++;	// branch inst
 			writeChar(opAddr - 1, newOp | (diff & 0xf));
 			return 0;
 		}
@@ -575,22 +570,21 @@ public class F99bTargetContext extends TargetContext {
 		if (diff < -130 || diff >= 128) {
 			stub16BitJump.use();
 			if (diff >= 0)
-				diff--;		// for branch inst
+				diff-=2;		// for branch inst
 			baseOpcode = baseOpcode == IbranchX ? IbranchW : I0branchW;
 			compileOpcode(baseOpcode);
 			compileCell(diff);
-		} else if (diff < -8 || diff >= 9) {
+		} else if (diff < -8 + 1 || diff >= 8 + 1) {
 			stub8BitJump.use();
 			if (diff >= 0)
-				diff-=2;
+				diff--;
 			baseOpcode = baseOpcode == IbranchX ? IbranchB : I0branchB;
 			compileOpcode(baseOpcode);
 			compileChar((diff & 0xff));
 		}
 		else {
 			stub4BitJump.use();
-			if (diff >= 0)
-				diff--;	// branch inst
+			diff--;
 			compileOpcode(baseOpcode | (diff & 0xf));
 		}
 	}
@@ -632,9 +626,9 @@ public class F99bTargetContext extends TargetContext {
 		}
 		leaves.clear();
 		
-		ITargetWord unloop = (ITargetWord) require("unloop");
-		
-		unloop.getCompilationSemantics().execute(hostCtx, this);
+		//ITargetWord unloop = (ITargetWord) require("unloop");
+		//unloop.getCompilationSemantics().execute(hostCtx, this);
+		compileOpcode(Irdrop_d);
 		
 	}
 

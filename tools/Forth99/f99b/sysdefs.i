@@ -106,8 +106,14 @@ $930        constant    grom_font5x6
 $0          constant    IbranchX
 $10         constant    I0branchX
 $39         constant    IRfrom
+$3b         constant    IatR
+$41         constant    Isub
 $66         constant    Iuser
 $67         constant    Iupidx
+$68         constant    IloopUp
+$69         constant    IuloopUp
+$6a         constant    IplusLoopUp
+$6b         constant    IuplusLoopUp
 $70         constant    Iexit
 $73         constant    Idovar
 $74         constant    Isyscall
@@ -115,6 +121,11 @@ $78         constant    IlitB
 $79         constant    IlitW
 $7a         constant    IbranchB
 $7c         constant    I0branchB
+$7e30       constant    Idup_d
+$7e38       constant    ItoR_d
+$7e3a       constant    Irdrop_d
+
+$3c         constant    Irpidx
 
 \ ----------    syscalls
 

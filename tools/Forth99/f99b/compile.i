@@ -13,7 +13,6 @@
     lastnfa nfa>xt
 ;
 
-: >call  1 urshift $8000 or  ; 
 : (does>)  r> lastxt swap  >call  swap ! ; 
 : does> postpone (does>) postpone rdrop ; immediate target-only
 
@@ -74,16 +73,6 @@ User STATE
 | : dodefer!    ( cfa -- )
     \ TODO
 ;
-
-\ --------------------------------------------
-
-: ([compile])
-    dup ['] ;s      = if  Iexit c,      drop    else
-    dup ['] branch  = if  IbranchB c,   drop    else
-    dup ['] 0branch = if  I0branchB c,  drop    else
-                          >call ,   then then then 
-;
-
 
 \ --------------------------------------------
 
@@ -325,10 +314,18 @@ User csp
 ;
 
 \ target
-: jmpoffs,
-    dup -128 127 within if
-        dup 0< if 2+ else 1- then  
+| : jmpoffs, ( addr offs -- )
+    dup -129 128 within if
+        1-
         swap c!
+    else
+        true -&24 ?error
+    then
+;
+| : jmpoffsalloc, ( diff opc -- )
+    swap dup -128 127 within if
+        dup 0>= if 1- then  
+        swap c, c,
     else
         true -&24 ?error
     then
@@ -336,9 +333,9 @@ User csp
 
 \ is there an official name for this?
 [IFUNDEF] BACK
-: BACK 
-    here - 
-    here jmpoffs,
+: BACK  ( addr opc -- )
+    >r here - 
+    r> jmpoffsalloc,
 ; target-only
 [THEN]
 
@@ -352,7 +349,7 @@ User csp
 : IF
     ?comp
     [compile] 0branch
-    here 0 ,
+    here 0 c, 
     2
 ; immediate target-only
 [THEN]
@@ -371,7 +368,7 @@ User csp
     ?comp
     2 ?pairs
     [compile] branch
-    here 0 c,
+    here 0 c, 
     swap 2
     postpone then 2
 ; immediate target-only
@@ -379,7 +376,7 @@ User csp
 
 
 | : (leave)
-    here
+    IbranchB c,  here  0 c,
     leave-list @ ,      \ store last fixup addr
     leave-list !        \ store new addr
 ; target-only
@@ -387,14 +384,20 @@ User csp
 [IFUNDEF] DO
 : DO
     ?comp
-    [compile] (do)
-    here 3
+    ItoR_d ,
+    here 
+    0  \ not ?do 
+    3
 ; immediate target-only
 
 : ?DO
     ?comp
-    [compile] (?do) (leave)
-    here 3
+    \ [compile] (?do) (leave)
+    Idup_d , ItoR_d , Isub c, I0branchB c,
+    here 0 c,
+    
+    here -1    \ ?do
+    3
 ; immediate target-only
 
 [THEN]
@@ -409,7 +412,7 @@ User csp
     while
         dup @ swap          \ ( new-pos pos )
         here over -         \ ( new-pos pos jmp )
-        swap !
+        jmpoffs,
     repeat
     leave-list !
 ; target-only
@@ -418,8 +421,17 @@ User csp
 \   normal loop part
 
     swap 3 ?pairs 
-    compile, back
     
+    swap >r  \ ?do
+    
+    \ loop opcode is one byte
+    c,  
+    
+    \ branch follows
+    I0branchB  back
+    
+    \ for ?do, provide jump for exit
+    r> if  here over - jmpoffs, then
 
     leave-resolve
     [compile] unloop
@@ -427,12 +439,22 @@ User csp
 
 : LOOP
     ?comp
-    ['] (loop) loop-compile
+    IloopUp loop-compile
 ; immediate target-only
 
 : +LOOP
     ?comp
-    ['] (+loop) loop-compile
+    IplusLoopUp loop-compile
+; immediate target-only
+
+: ULOOP
+    ?comp
+    IuloopUp loop-compile
+; immediate target-only
+
+: +ULOOP
+    ?comp
+    IuloopUp loop-compile
 ; immediate target-only
 [THEN]
 
@@ -448,7 +470,6 @@ test" unloop 3 >r 2 1 do loop r> 3 ="
 : LEAVE
     ?comp
 
-    [compile] unloop
     [compile] branch
 
     (leave)
@@ -466,8 +487,7 @@ test" unloop 3 >r 2 1 do loop r> 3 ="
 : UNTIL
     ?comp
     1 ?pairs
-    [compile] 0branch
-    back
+    I0branchB back
 ; immediate target-only
 [THEN]
 
@@ -475,8 +495,7 @@ test" unloop 3 >r 2 1 do loop r> 3 ="
 : AGAIN
     ?comp
     1 ?pairs
-    [compile] branch
-    back
+    IbranchB back
 ; immediate target-only
 [THEN]
 

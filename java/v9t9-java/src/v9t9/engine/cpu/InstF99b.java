@@ -19,7 +19,13 @@ public class InstF99b {
 	
 	/*public static final int Inop = 0;*/
 	
+	/** Branch forward (targPC > PC) measures from PC+1 (0 = NOP) 
+	 * backward (targPC <= PC) also measures from PC+1 (0xF = self). 
+	 */
 	public static final int IbranchX = 0;
+	/** Branch forward (targPC > PC) measures from PC+1 (0 = NOP) 
+	 * backward (targPC <= PC) also measures from PC+1 (0xF = self). 
+	 */
 	public static final int I0branchX = 0x10;
 	public static final int IlitX = 0x20;
 	
@@ -148,9 +154,25 @@ public class InstF99b {
 	/** next word is pushed */
 	public static final int IlitW = Iimm_start + 1;
 	
+	/** 
+	 * Branch forward (targPC > PC) measures from PC+2 (0 = NOP) 
+	 * backward (targPC <= PC) measures from PC+1 (0xFF = self). 
+	 */
 	public static final int IbranchB = Iimm_start + 2;
+	/** 
+	 * Branch forward (targPC > PC) measures from PC+3 (0 = NOP) 
+	 * backward (targPC <= PC) measures from PC+1 (0xFFFF = self). 
+	 */
 	public static final int IbranchW = Iimm_start + 3;
+	/** 
+	 * Branch forward (targPC > PC) measures from PC+2 (0 = NOP) 
+	 * backward (targPC <= PC) measures from PC+1 (0xF = self). 
+	 */
 	public static final int I0branchB = Iimm_start + 4;
+	/** 
+	 * Branch forward (targPC > PC) measures from PC+3 (0 = NOP) 
+	 * backward (targPC <= PC) measures from PC+1 (0xFFFF = self). 
+	 */
 	public static final int I0branchW = Iimm_start + 5;
 	
 	public static final int Idouble = Iimm_start + 6;		// double-length the next
@@ -399,14 +421,14 @@ public class InstF99b {
 		Ixor_d, 4, 2, 0, 0,
 		Iinv_d, 2, 2, 0, 0,
 		
-		Ilsh, 1, 1, 0, 0,
-		Ilsh_d, 2, 2, 0, 0,
-		Iash, 1, 1, 0, 0,
-		Iash_d, 1, 1, 0, 0,
-		Irsh, 1, 1, 0, 0,
-		Irsh_d, 1, 1, 0, 0,
-		Icsh, 1, 1, 0, 0,
-		Icsh_d, 1, 1, 0, 0,
+		Ilsh, 2, 1, 0, 0,
+		Ilsh_d, 4, 2, 0, 0,
+		Iash, 2, 1, 0, 0,
+		Iash_d, 4, 1, 0, 0,
+		Irsh, 2, 1, 0, 0,
+		Irsh_d, 4, 1, 0, 0,
+		Icsh, 2, 1, 0, 0,
+		Icsh_d, 4, 1, 0, 0,
 		I0equ, 1, 1, 0, 0,
 		I0equ_d, 2, 1, 0, 0,
 		Iequ, 2, 1, 0, 0,

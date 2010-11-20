@@ -34,8 +34,8 @@ public class BracketCompile extends BaseWord {
 				if (!(word instanceof ITargetWord))
 					throw hostContext.abort("cannot take address of host word " + name);
 				
-				targetContext.compileLiteral(((ITargetWord) word).getEntry().getContentAddr(), false, false);
-				targetContext.compile((ITargetWord) targetContext.require("([compile])"));
+				targetContext.compileTick((ITargetWord) word);
+				targetContext.compile((ITargetWord) targetContext.require("compile,"));
 			}
 		});
 	}

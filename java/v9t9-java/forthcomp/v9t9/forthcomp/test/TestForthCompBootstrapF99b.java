@@ -313,7 +313,7 @@ public class TestForthCompBootstrapF99b extends BaseF99bTest {
 		
 		DictEntry entry = ((ITargetWord) targCtx.require("lala")).getEntry();
 		int dp = entry.getContentAddr();
-		assertEquals(((ITargetWord)targCtx.require("((S\"))")).getEntry().getContentAddr(), targCtx.findReloc(dp)); 
+		assertEquals(((ITargetWord)targCtx.require("(S\")")).getEntry().getContentAddr(), targCtx.findReloc(dp)); 
 		dp+=2;
 		/*
 		assertEquals(InstF99b.IcontextFrom, targCtx.readChar(dp++));

@@ -94,8 +94,6 @@ public class F99bInstructionFactory implements IInstructionFactory {
 		if (opcode >= IbranchX && opcode < I0branchX + 16) {
 			inst.setInst(opcode & 0xf0);
 			int val = (byte)(opcode<<4) >> 4;
-			if (val < 0)
-				val --;
 			inst.setOp1(MachineOperandF99b.createImmediateOperand(
 					val, 
 					MachineOperandF99b.OP_ENC_IMM4));
@@ -143,12 +141,17 @@ public class F99bInstructionFactory implements IInstructionFactory {
 				inst.setOp1(MachineOperandF99b.createImmediateOperand(
 						iblock.nextByte() & 0xff, MachineOperandF99b.OP_ENC_IMM8));
 				break;
-			case IlitW:
 			case I0branchW:
 			case IbranchW:  {
 				int val = (short) iblock.nextWord();
 				if (val < 0)
-					val -= inst.getSize();
+					val -= 3;
+				inst.setOp1(MachineOperandF99b.createImmediateOperand(
+						val, MachineOperandF99b.OP_ENC_IMM16));
+				break;
+			}
+			case IlitW: {
+				int val = (short) iblock.nextWord();
 				inst.setOp1(MachineOperandF99b.createImmediateOperand(
 						val, MachineOperandF99b.OP_ENC_IMM16));
 				break;

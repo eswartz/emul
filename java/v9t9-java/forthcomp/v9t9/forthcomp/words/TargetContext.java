@@ -203,7 +203,6 @@ public abstract class TargetContext extends Context {
 				}
 			}
 		}
-		symbols.put(entryAddr, name);
 		
 		DictEntry entry = new DictEntry(size, entryAddr, name);
 		entry.setExport(doExport);
@@ -220,7 +219,9 @@ public abstract class TargetContext extends Context {
 			
 			entry.writeEntry(this);
 		}
-		
+
+		symbols.put(entry.getContentAddr(), name);
+
 		ForwardRef ref = forwards.get(name.toUpperCase());
 		if (ref != null) {
 			resolveForward(ref, entry);
@@ -696,7 +697,7 @@ public abstract class TargetContext extends Context {
 
 	/**
 	 * @param string
-	 * @return
+	 * @return pair of the address of start, plus the total length
 	 */
 	public Pair<Integer, Integer> writeLengthPrefixedString(String string) throws AbortException {
 		int length = string.length();

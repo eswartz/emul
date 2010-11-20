@@ -273,19 +273,81 @@ public class TestForthCompF99b extends BaseF99bTest {
 	}
 
 	@Test
-	public void testIfBranch0() throws Exception {
-		parseString(": true if -1 else 0 then ;");
+	public void testBeginAgain0() throws Exception {
+		parseString(": true begin again ;");
 
 		TargetColonWord foo = (TargetColonWord) targCtx.require("true");
 		
 		dumpDict();
 		
 		int dp = foo.getEntry().getContentAddr();
+		assertOpcodes(dp, IbranchX|(-1 & 0xf), Iexit);
+		
+		//interpret("true");
+	}
+	@Test
+	public void testBeginAgain1() throws Exception {
+		parseString(": true begin 0 0 0 0 0 0 0 0 0 0 again ;");
+		
+		TargetColonWord foo = (TargetColonWord) targCtx.require("true");
+		
+		dumpDict();
+		
+		int dp = foo.getEntry().getContentAddr();
+		assertOpcodes(dp, 
+				0x20, 0x20, 0x20, 0x20, 0x20, 
+				0x20, 0x20, 0x20, 0x20, 0x20,
+				IbranchB, (-10 & 0xff), 
+				Iexit);
+		
+		//interpret("true");
+	}
+	@Test
+	public void testIfBranch0() throws Exception {
+		parseString(": true if else then ;");
+
+		TargetColonWord foo = (TargetColonWord) targCtx.require("true");
+		
+		dumpDict();
+		
+		int dp = foo.getEntry().getContentAddr();
+		
+		// currently, always assuming byte jump, so 0's are IbranchX|0
+		assertOpcodes(dp, I0branchX | 3, 0, IbranchX | 1, 0, Iexit);
+		
+		hostCtx.pushData(12);
+		hostCtx.pushData(0);
+		interpret("true");
+		assertEquals(12, hostCtx.popData());
+		
+		hostCtx.pushData(12);
+		hostCtx.pushData(1);
+		interpret("true");
+		assertEquals(12, hostCtx.popData());
+	}
+	@Test
+	public void testIfBranch1() throws Exception {
+		parseString(": true if -1 else 0 then ;");
+		
+		TargetColonWord foo = (TargetColonWord) targCtx.require("true");
+		
+		dumpDict();
+		
+		int dp = foo.getEntry().getContentAddr();
 		assertOpcodes(dp, I0branchX | 4, 0, IlitX | (-1&0xf), IbranchX | 2, 0, IlitX, Iexit);
+		
+
+		hostCtx.pushData(12);
+		interpret("true");
+		assertEquals(-1, hostCtx.popData());
+		
+		hostCtx.pushData(0);
+		interpret("true");
+		assertEquals(0, hostCtx.popData());
 	}
 
 	@Test
-	public void testIfBranch0Ex() throws Exception {
+	public void testIfBranch1Ex() throws Exception {
 		parseString(": true if -1 else 0 then ;");
 
 		hostCtx.pushData(5);
@@ -441,8 +503,7 @@ public class TestForthCompF99b extends BaseF99bTest {
 		
 		int dp = foo.getEntry().getContentAddr();
 
-		// back branches should just from the start of the inst
-		assertOpcodes(dp, IlitX, ItoR_d, IatR, IloopUp, I0branchX | 0xe, Irdrop_d, Iexit); 
+		assertOpcodes(dp, IlitX, ItoR_d, IatR, IloopUp, I0branchX | 0xd, Irdrop_d, Iexit); 
 	}
 
 	@Test
@@ -990,9 +1051,9 @@ public class TestForthCompF99b extends BaseF99bTest {
 		int cycles1 = cpu.getCurrentCycleCount();
 		
 		str1 = targCtx.writeLengthPrefixedString("This is first");
-		targCtx.alloc(str1.second);
+		targCtx.setDP(targCtx.getDP()+str1.second);
 		str2 = targCtx.writeLengthPrefixedString("This is second");
-		targCtx.alloc(str2.second);
+		targCtx.setDP(targCtx.getDP()+str2.second);
 		
 		dumpDict();
 		
@@ -1009,9 +1070,9 @@ public class TestForthCompF99b extends BaseF99bTest {
 	
 
 		str1 = targCtx.writeLengthPrefixedString("Yet, bigger.");
-		targCtx.alloc(str1.second);
+		targCtx.setDP(targCtx.getDP()+str1.second);
 		str2 = targCtx.writeLengthPrefixedString("And smaller.");
-		targCtx.alloc(str2.second);
+		targCtx.setDP(targCtx.getDP()+str2.second);
 		
 		dumpDict();
 		
@@ -1026,9 +1087,9 @@ public class TestForthCompF99b extends BaseF99bTest {
 		assertEquals(ret+"", ('Y' - 'A'), ret);
 		
 		str1 = targCtx.writeLengthPrefixedString("Another plain old copy?");
-		targCtx.alloc(str1.second);
+		targCtx.setDP(targCtx.getDP()+str1.second);
 		str2 = targCtx.writeLengthPrefixedString("Another plain old copy?");
-		targCtx.alloc(str2.second);
+		targCtx.setDP(targCtx.getDP()+str2.second);
 
 		dumpDict();
 		

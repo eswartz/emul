@@ -34,7 +34,16 @@ User STATE
     then then
 ; immediate target-only 
  
-: compile, 1 urshift $8000 OR , ;
+: >call  1 urshift $8000 or  ; 
+ 
+: compile,
+  dup ['] ;s      = if  Iexit c,          drop    else
+    dup ['] branch  = if  IbranchB c,     drop    else
+    dup ['] 0branch = if  I0branchB c,    drop    else
+    dup ['] unloop  = if  Irdrop_d ,      drop    else
+    dup ['] i       = if  IatR c,         drop    else
+                          >call ,   then then then then then
+    ;
 
 export>
 

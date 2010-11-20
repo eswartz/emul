@@ -480,7 +480,16 @@ public class InterpreterF99b implements Interpreter {
         	short lim = iblock.getReturnStackEntry(1);
     		cpu.rpop();
     		cpu.rpush(next);
-    		cpu.push((short) (next != lim ? 0 : -1));
+    		cpu.push((short) ((lim != 0 ? next < lim : next >= 1) ? 0 : -1));
+        	break;
+        }
+        case IuloopUp: {
+        	short next = (short) (iblock.getReturnStackEntry(0) + 1);
+        	short lim = iblock.getReturnStackEntry(1);
+        	cpu.rpop();
+        	cpu.rpush(next);
+        	cpu.push((short) ((lim != 0 ? (next & 0xffff) < (lim & 0xffff) 
+        			: (next & 0xffff) >= (1 & 0xffff)) ? 0 : -1));
         	break;
         }
         case IplusLoopUp: {
