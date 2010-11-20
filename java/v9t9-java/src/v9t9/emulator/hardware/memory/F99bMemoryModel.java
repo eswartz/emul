@@ -21,7 +21,7 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 
 	@Override
 	protected void initSettings() {
-		DataFiles.addSearchPath("../../tools/Forth99/f99b");
+		DataFiles.addSearchPath("../../tools/Forth99/bin");
 		DataFiles.addSearchPath("../../tools/Forth99/");
 	}
 
