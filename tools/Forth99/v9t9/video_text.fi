@@ -43,6 +43,23 @@
     r>   rot rot  vfill
 ;
 
+:: (txt-vchar) ( ch len offs lim -- )
+    len 0 do
+        offs  v-screen @ +  !vwaddr  ch VDPWD c!
+        offs  v-ccols c@ +  dup lim >= if
+            lim -  1+  v-ccols c@  umod  
+        then  
+        offs!
+    loop
+;
+  
+: txt-vchar ( ch len addr bit -- )
+    drop
+    v-screen @ -
+    v-screensz @
+    (txt-vchar)
+;
+
 : txt-setupmode
 ;
 
@@ -76,7 +93,7 @@ Create TextFunctions
     'v-setfont ,         ' std-setfont ,
     'v-clear ,           ' txt-clear ,
     'v-hchar ,           ' txt-hchar ,
-    'v-vchar ,           0 ,
+    'v-vchar ,           ' txt-vchar ,
     0 , 
 
 
