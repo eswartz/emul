@@ -53,20 +53,20 @@ cell    RamVar  bit-cursor
     bit-waddr  v-chheight c@  (vmbw)
 ;
 : bit-drawcursor ( addr bit -- )
-    bit-waddr  bit-cursor @  v-chheight c@ (vmbw) 
+    bit-waddr  bit-cursor @  v-chheight c@  (vmbw) 
 ;
 
 : bit-clear ( ch -- )
-    0  v-patts @ v-pattsz @ vfill
-    color-byte  v-colors @ v-colorsz @ vfill
+    0           v-patts @   v-pattsz @   vfill
+    color-byte  v-colors @  v-colorsz @  vfill
 ;
 
 : bit-updatecolors
     $8700 OR  write-vregaddr
 ;
 
-
 : bit-setfont   ( addr -- )
+    drop
     \ TODO: support for non-8-pixel fonts 
     8 v-chwidth c!
     bit-cursor-8  bit-cursor ! 
@@ -81,6 +81,8 @@ Create BitFunctions
     'v-drawcursor ,      ' bit-drawcursor ,
     'v-setfont ,         ' bit-setfont ,
     'v-clear ,           ' bit-clear ,
+    'v-hchar ,           0 ,
+    'v-vchar ,           0 ,
     0 , 
 
 

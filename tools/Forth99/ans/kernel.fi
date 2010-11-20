@@ -1324,7 +1324,6 @@ test" d< 10. -10. d< 0="
     dup -&22 = if ." control nesting" else
     dup -&23 = if ." not a DEFERred word" else
     dup -&24 = if ." out of range" else
-    ." ?" dup .
     then then then then then
     drop
     cr

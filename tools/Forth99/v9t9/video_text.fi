@@ -25,6 +25,24 @@
     txt-waddr  [CHAR] _  VDPWD c!
 ;
 
+( Split a range that wraps around a boundary )
+:: range-wrap ( sz addr start len -- addr1 len1 addr2 len2 )
+    ( portion from addr...min addr+sz,start+len )
+    addr  addr sz +  start len +  min  addr  -
+    
+    ( portion from start...start + sz % len )
+    start  over  sz - negate
+;
+ 
+: txt-hchar ( ch len addr bit -- )
+    drop
+    rot >r
+    v-screen @ v-screensz @  range-wrap
+    
+    r@   rot rot  vfill
+    r>   rot rot  vfill
+;
+
 : txt-setupmode
 ;
 
@@ -33,7 +51,7 @@
 ;
 
 : txt-clear
-    v-screen @ v-screensz @ vfill
+    $20  v-screen @ v-screensz @ vfill
 ;
 
 \ -------------------
@@ -57,6 +75,8 @@ Create TextFunctions
     'v-drawcursor ,      ' txt-drawcursor ,
     'v-setfont ,         ' std-setfont ,
     'v-clear ,           ' txt-clear ,
+    'v-hchar ,           ' txt-hchar ,
+    'v-vchar ,           0 ,
     0 , 
 
 

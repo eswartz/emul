@@ -35,10 +35,10 @@ create  VRegSave      16 allot
 
 \ ---------------------
 
-62      RamVar  v-mode
+0      RamVar  v-mode
 
-: +field    ( "name" ptr -- ptr' )    dup Constant 2+ ; immediate
-: +1field   ( "name" ptr -- ptr' )    dup Constant 1+ ; immediate
+: +field    ( "name" ptr -- ptr' )    2- dup Constant ; immediate
+: +1field   ( "name" ptr -- ptr' )    1- dup Constant ; immediate
 
 v-mode
     +field  v-screen       \ VDP addr of screen
@@ -68,7 +68,10 @@ v-mode
     +field  'v-updatecolors ( byte -- )
     +field  'v-setfont      ( addr -- )
     +field  'v-clear        ( ch -- )
-drop
+    +field  'v-hchar        ( ch len addr bit -- )
+    +field  'v-vchar        ( ch len addr bit -- )
+
+ramptr ! 
 
 2   RamVar v-font                           \ GROM addr of current font
 
@@ -96,7 +99,11 @@ drop
 
 : (mode)
     dup  0 last-video-mode within  0= -&24 ?error
-    cells  video-modes +  @ execute
+    cells  video-modes +  @ 
+    
+    dup 0= -&13 ?error
+    
+    execute
 ;
 
 1   RamVar fg

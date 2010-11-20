@@ -30,6 +30,14 @@ cell    RamVar vy
     0 vy !
 ;
 
+:   xy ( -- vx vy )
+    vx @  vy @
+;
+
+:   xy! ( x y  -- )
+    vy !  vx !
+;
+
 :   curs-addr ( -- addr bit )
     vx @ win-x +  
     vy @ win-y +  
@@ -74,8 +82,31 @@ cell    RamVar vy
 
 :   chfill  ( ch -- )
     home
-    v-ccols c@  v-crows c@  u* 0 do  dup (emit)  loop
+    v-crows c@  0 do
+        dup  v-ccols c@  hchar
+        advance-row 
+    loop
     drop
+;
+
+:   hchar ( ch len -- ) 
+    'v-hchar @  ?dup if
+        >r  curs-addr  r>  execute
+    else
+        xy 2>r
+        0 do  dup  (emit) advance-cursor  loop  drop
+        2r> xy!
+    then
+;
+
+:   vchar ( ch len -- ) 
+    'v-vchar @  ?dup if
+        >r  curs-addr  r>  execute
+    else
+        xy 2>r
+        0 do  dup  (emit) advance-row  loop  drop  
+        2r> xy!
+    then
 ;
 
 :   cls  
@@ -85,7 +116,6 @@ cell    RamVar vy
 
 :   (emit)
     curs-addr  'v-drawchar @  execute  
-    advance-cursor
 ;
 
 :   emit    ( ch -- )
@@ -95,7 +125,7 @@ cell    RamVar vy
     else dup 8 = if
         drop bksp
     else
-        (emit)
+        (emit) advance-cursor
     then then 
 ;    target-only
 

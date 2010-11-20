@@ -41,6 +41,10 @@
     0 swap 
     [ Iudivmod c, ] swap drop
 ;
+: umod      ( ud un -- ur )
+    0 swap 
+    [ Iudivmod c, ] drop
+;
 
 : u*        ( ua ub -- un )
     [ Iumul c, ] drop
