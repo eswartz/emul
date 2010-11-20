@@ -224,7 +224,7 @@ $00B    constant    last-video-mode
 &10 constant #fre
 export>
 
-include video_base.i
+include video_base.fi
 
 
 \ ---------------------

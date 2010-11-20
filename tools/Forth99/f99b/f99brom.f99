@@ -22,39 +22,43 @@ $400    dp!
 
 0 <EXPORT
 
-include sysdefs.i
+include sysdefs.fi
 
-include ram.i
+include ../v9t9/ram.fi
 
-include syscomp.i
+include syscomp.fi
 
 EXPORT>
 
-include sysutils.i
+include ../v9t9/sysutils.fi
 
 0 <EXPORT
 
-include video.i
+include ../v9t9/video.fi
 
-include term.i
+include ../v9t9/term.fi
 
-include kbd.i
+include ../v9t9/kbd.fi
 
-include ints.i
+include ../v9t9/ints.fi
 
 EXPORT>
 
-include prims.i
+include sysprims.fi
 
-include kernel.i
+include ../v9t9/prims.fi
 
-include blocks.i
+include ../ans/kernel.fi
 
-include dict.i
+include ../ans/blocks.fi
 
-include compile.i
+include ../ans/dict.fi
 
-include interp.i
+include f99b.fi
+
+include ../ans/compile.fi
+
+include ../ans/interp.fi
 
 
 

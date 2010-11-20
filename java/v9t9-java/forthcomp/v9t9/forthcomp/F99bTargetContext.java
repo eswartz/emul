@@ -7,7 +7,6 @@ import static v9t9.engine.cpu.InstF99b.*;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Stack;
 
 import org.ejs.coffee.core.utils.HexUtils;
@@ -150,6 +149,7 @@ public class F99bTargetContext extends TargetContext {
 		definePrim("(do)", ItoR_d);
 		defineInlinePrim("(loop)", IloopUp);
 		defineInlinePrim("(+loop)", IplusLoopUp);
+		defineInlinePrim("(uloop)", IuloopUp);
 		defineInlinePrim("(u+loop)", IuplusLoopUp);
 		defineInlinePrim("(?do)", Idup_d, ItoR_d, Isub, I0branchB);
 		

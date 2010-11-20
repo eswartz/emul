@@ -1,0 +1,78 @@
+
+| : docol!  ( cfa -- )
+    drop
+;
+
+
+| : dovar!  ( cfa -- )
+    IbranchX over c!
+    Idovar swap c!
+;
+
+
+| : douser!  ( idx cfa -- )
+    >r
+    over $100 < if  Iupidx r@ c! r> 1+ c!  else
+                    IlitW r@ c! r@ 1+ !  Iuser r> c!  then
+;
+
+| : dodoes,  ( -- )
+    align
+\    here 
+    IRfrom c,
+;
+
+
+| : xt! ( addr cfa -- )
+    !
+;
+
+\ called for creating words to inject :docol code into definition
+: docol,    ( addr -- )
+;
+
+| : dodefer!    ( cfa -- )
+    \ TODO
+;
+
+\ --------------------------------------------
+
+
+[IFUNDEF] (compile)
+\   compile the following word in the IP stream
+\   (needed cross compiler)
+: (compile)
+    r> dup cell+ >r @ , 
+;
+[THEN]
+
+\ target
+| : jmpoffs, ( addr offs -- )
+    dup -129 128 within if
+        1-
+        swap c!
+    else
+        true -&24 ?error
+    then
+;
+| : jmpoffsalloc, ( diff opc -- )
+    swap dup -128 127 within if
+        dup 0>= if 1- then  
+        swap compile, c,
+    else
+        true -&24 ?error
+    then
+;
+
+
+: >fixup
+    here 0 c,
+;
+
+: loop,
+\ loop opcode is one byte
+    c,  
+;
+
+
+    

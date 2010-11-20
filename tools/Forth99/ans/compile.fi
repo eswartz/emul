@@ -38,51 +38,6 @@ User STATE
 
 \ -------------------------------------------
 
-| : docol!  ( cfa -- )
-    drop
-;
-
-
-| : dovar!  ( cfa -- )
-    IbranchX over c!
-    Idovar swap c!
-;
-
-
-| : douser!  ( idx cfa -- )
-    >r
-    over $100 < if  Iupidx r@ c! r> 1+ c!  else
-                    IlitW r@ c! r@ 1+ !  Iuser r> c!  then
-;
-
-| : dodoes,  ( -- )
-    align
-\    here 
-    IRfrom c,
-;
-
-
-| : xt! ( addr cfa -- )
-    !
-;
-
-\ called for creating words to inject :docol code into definition
-: docol,    ( addr -- )
-;
-
-| : dodefer!    ( cfa -- )
-    \ TODO
-;
-
-\ --------------------------------------------
-
-[IFUNDEF] (compile)
-\   compile the following word in the IP stream
-\   (needed cross compiler)
-: (compile)
-    r> dup cell+ >r @ , 
-;
-[THEN]
 
 
 \ \\\\\\\\\\\\\\\\\\\\\\\\
@@ -313,24 +268,6 @@ User csp
     - -&22 ?error
 ;
 
-\ target
-| : jmpoffs, ( addr offs -- )
-    dup -129 128 within if
-        1-
-        swap c!
-    else
-        true -&24 ?error
-    then
-;
-| : jmpoffsalloc, ( diff opc -- )
-    swap dup -128 127 within if
-        dup 0>= if 1- then  
-        swap c, c,
-    else
-        true -&24 ?error
-    then
-;
-
 \ is there an official name for this?
 [IFUNDEF] BACK
 : BACK  ( addr opc -- )
@@ -349,7 +286,8 @@ User csp
 : IF
     ?comp
     [compile] 0branch
-    here 0 c, 
+    >fixup
+     
     2
 ; immediate target-only
 [THEN]
@@ -368,7 +306,7 @@ User csp
     ?comp
     2 ?pairs
     [compile] branch
-    here 0 c, 
+    >fixup
     swap 2
     postpone then 2
 ; immediate target-only
@@ -376,7 +314,8 @@ User csp
 
 
 | : (leave)
-    IbranchB c,  here  0 c,
+    [compile] branch  
+    >fixup
     leave-list @ ,      \ store last fixup addr
     leave-list !        \ store new addr
 ; target-only
@@ -392,9 +331,9 @@ User csp
 
 : ?DO
     ?comp
-    \ [compile] (?do) (leave)
-    Idup_d , ItoR_d , Isub c, I0branchB c,
-    here 0 c,
+    [compile] (?do)
+    
+    >fixup
     
     here -1    \ ?do
     3
@@ -417,18 +356,18 @@ User csp
     leave-list !
 ; target-only
 
-| : loop-compile
+| : loop-compile ( offs opc -- )
 \   normal loop part
 
     swap 3 ?pairs 
     
     swap >r  \ ?do
     
-    \ loop opcode is one byte
-    c,  
+    \ loop op
+    compile,
     
     \ branch follows
-    I0branchB  back
+    ['] 0branch  back
     
     \ for ?do, provide jump for exit
     r> if  here over - jmpoffs, then
@@ -439,22 +378,22 @@ User csp
 
 : LOOP
     ?comp
-    IloopUp loop-compile
+    ['] (loop) loop-compile
 ; immediate target-only
 
 : +LOOP
     ?comp
-    IplusLoopUp loop-compile
+    ['] (+loop) loop-compile
 ; immediate target-only
 
 : ULOOP
     ?comp
-    IuloopUp loop-compile
+    ['] (uloop) loop-compile
 ; immediate target-only
 
-: +ULOOP
+: U+LOOP
     ?comp
-    IuloopUp loop-compile
+    ['] (u+loop) loop-compile
 ; immediate target-only
 [THEN]
 
@@ -487,7 +426,7 @@ test" unloop 3 >r 2 1 do loop r> 3 ="
 : UNTIL
     ?comp
     1 ?pairs
-    I0branchB back
+    ['] 0branch back
 ; immediate target-only
 [THEN]
 
@@ -495,7 +434,7 @@ test" unloop 3 >r 2 1 do loop r> 3 ="
 : AGAIN
     ?comp
     1 ?pairs
-    IbranchB back
+    ['] branch back
 ; immediate target-only
 [THEN]
 
@@ -532,7 +471,7 @@ test" unloop 3 >r 2 1 do loop r> 3 ="
         ?comp
         4 ?pairs
         [compile] (of)
-        here 0 , 
+        >fixup 
         5
     ; immediate target-only
     [THEN]
@@ -544,7 +483,7 @@ test" unloop 3 >r 2 1 do loop r> 3 ="
         ?comp
         5 ?pairs
         [compile] branch
-        here 0 , 
+        >fixup
         swap 2 postpone then
         4
     ; immediate target-only

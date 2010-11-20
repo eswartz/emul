@@ -484,33 +484,33 @@ public class InterpreterF99b implements Interpreter {
         	break;
         }
         case IuloopUp: {
-        	short next = (short) (iblock.getReturnStackEntry(0) + 1);
+        	int next = (iblock.getReturnStackEntry(0) + 1) & 0xffff;
         	short lim = iblock.getReturnStackEntry(1);
         	cpu.rpop();
-        	cpu.rpush(next);
-        	cpu.push((short) ((lim != 0 ? (next & 0xffff) < (lim & 0xffff) 
-        			: (next & 0xffff) >= (1 & 0xffff)) ? 0 : -1));
+        	cpu.rpush((short) next);
+        	cpu.push((short) ((lim != 0 ? next < (lim & 0xffff) 
+        			: next >= (1 & 0xffff)) ? 0 : -1));
         	break;
         }
         case IplusLoopUp: {
         	short change = cpu.pop();
         	short cur = iblock.getReturnStackEntry(0);
-        	short next = (short) (cur + change);
+        	int next = (cur + change);
         	short lim = iblock.getReturnStackEntry(1);
     		cpu.rpop();
-    		cpu.rpush(next);
+    		cpu.rpush((short) next);
     		cpu.push((short) ((lim != 0 ? next < lim : next >= change) ? 0 : -1));
         	break;
         }
         case IuplusLoopUp: {
         	short change = cpu.pop();
         	short cur = iblock.getReturnStackEntry(0);
-        	short next = (short) (cur + change);
+        	int next = (cur & 0xffff) + change;
         	short lim = iblock.getReturnStackEntry(1);
         	cpu.rpop();
-        	cpu.rpush(next);
-        	cpu.push((short) ((lim != 0 ? (next & 0xffff) < (lim & 0xffff) 
-        			: (next & 0xffff) >= (change & 0xffff)) ? 0 : -1));
+        	cpu.rpush((short) next);
+        	cpu.push((short) ((lim != 0 ? next < (lim & 0xffff) 
+        			: next  >= (change & 0xffff)) ? 0 : -1));
         	break;
         }
         

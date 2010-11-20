@@ -114,6 +114,8 @@ $68         constant    IloopUp
 $69         constant    IuloopUp
 $6a         constant    IplusLoopUp
 $6b         constant    IuplusLoopUp
+$6c         constant    Icfill
+$6e         constant    Icmove
 $70         constant    Iexit
 $73         constant    Idovar
 $74         constant    Isyscall
@@ -126,6 +128,10 @@ $7e38       constant    ItoR_d
 $7e3a       constant    Irdrop_d
 
 $3c         constant    Irpidx
+
+$47         constant    Iudivmod
+$7e47       constant    Iudivmod_d
+
 
 \ ----------    syscalls
 

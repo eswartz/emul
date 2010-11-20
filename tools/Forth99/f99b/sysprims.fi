@@ -1,0 +1,39 @@
+
+
+:   ints-on
+    INT_KBD (>context) [ CTX_INT field, ] 
+;
+:   ints-off
+    0 (>context) [ CTX_INT field, ] 
+;
+
+
+: pick ( n -- v )
+    1+ cells (context>) [ CTX_SP field, ] + @  
+;
+
+: rpick ( n -- v )
+    cells (context>) [ CTX_RP field, ] + @  
+;
+
+\ Move memory backward (src -> dst)
+: cmove              ( src dst # -- )  
+    1 1 [ Icmove c, ]
+;
+
+\ Move memory forward (src -> dst)
+: cmove>            ( src dst # -- )
+    -1 -1 [ Icmove c, ]
+;
+
+: m/mod      ( ud un -- un.r ud.q )
+    >r  s>d dup r>
+    s>d
+    [ Iudivmod_d , ]
+    2>r drop 2r>
+;
+
+: fill  ( addr n ch -- )
+    rot rot 1 [ Icfill c, ]
+;
+

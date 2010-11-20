@@ -223,7 +223,7 @@ error" need prim @"
 
 [IFUNDEF] ALIGNED
 : ALIGNED   ( addr -- addr )
-    #cell  1-  swap over +  swap and
+    [ #cell 1- literal ] + [ #cell negate literal ] and
 ;
 [THEN]
 
@@ -263,6 +263,11 @@ error" need prim c@"
 ;
 [THEN]
 
+[IFUNDEF] DABS
+: DABS
+    dup 0< if DNEGATE then
+;
+[THEN]
 
 [IFUNDEF] FILL
 : FILL
@@ -1007,8 +1012,9 @@ User #TIB
 [THEN]
 
 [IFUNDEF] ERASE
-\ : ERASE
-\ ;
+: ERASE
+    0 fill
+;
 [THEN]
 
 [IFUNDEF] EXPECT

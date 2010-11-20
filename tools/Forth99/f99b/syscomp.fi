@@ -37,13 +37,19 @@ User STATE
 : >call  1 urshift $8000 or  ; 
  
 : compile,
-  dup ['] ;s      = if  Iexit c,          drop    else
-    dup ['] branch  = if  IbranchB c,     drop    else
-    dup ['] 0branch = if  I0branchB c,    drop    else
-    dup ['] unloop  = if  Irdrop_d ,      drop    else
-    dup ['] i       = if  IatR c,         drop    else
-                          >call ,   then then then then then
-    ;
+  dup ['] ;s       = if  Iexit c,        drop    exit   then
+  dup ['] branch   = if  IbranchB c,     drop    exit   then
+  dup ['] 0branch  = if  I0branchB c,    drop    exit   then
+  dup ['] unloop   = if  Irdrop_d ,      drop    exit   then
+  dup ['] i        = if  IatR c,         drop    exit   then
+  dup ['] (?do)    = if  Idup_d , ItoR_d , Isub c, I0branchB c,  drop  exit  then
+  dup ['] (loop)   = if  IloopUp c,      drop    exit   then  
+  dup ['] (+loop)  = if  IplusLoopUp c,  drop    exit   then
+  dup ['] (uloop)  = if  IuloopUp c,     drop    exit   then
+  dup ['] (u+loop) = if  IuplusloopUp c, drop    exit   then
+
+  >call ,   
+;
 
 export>
 
