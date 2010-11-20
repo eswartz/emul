@@ -35,7 +35,7 @@ create  VRegSave      16 allot
 
 \ ---------------------
 
-52      RamVar  v-mode
+56      RamVar  v-mode
 
 : +field    ( "name" ptr -- ptr' )    dup Constant 2+ ; immediate
 
@@ -60,8 +60,11 @@ v-mode
     +field  v-restorechar  ( buff addr bit -- )
     +field  v-drawcursor   ( addr bit -- )
     +field  v-setupmode    ( -- )
-    +field  v-updatecolors ( -- )
+    +field  v-updatecolors ( byte -- )
+    +field  v-setfont      ( addr -- )
 drop
+
+2   RamVar v-font                           \ GROM addr of current font
  
 8   RamVar v-curs-under  
 
@@ -92,15 +95,19 @@ drop
     fg c@ 4 lshift  bg c@  or
 ;
 
+: v-refresh-colors
+    color-byte v-updatecolors @  execute
+;
+
 1 <export
 : fg!
     fg c!
-    v-updatecolors @  execute
+    v-refresh-colors
 ;
 
 : bg!
     bg c!
-    v-updatecolors @  execute
+    v-refresh-colors
 ;
 
 : fg@
@@ -124,9 +131,10 @@ export>
     cls    
 
     v-setupmode @  execute
-    v-updatecolors @  execute
+    v-refresh-colors
     
-    load-font
+    v-font @  v-setfont @  execute
+    
     true vid-show
 ;
 
@@ -221,12 +229,6 @@ include video_base.i
 
 \ ---------------------
 
-: load-font
-    grom_font8x8  v-patts @   $800  gvmove
-;
-
-\ -------------------
-
 1 <EXPORT
 
 :   mode ( num -- )
@@ -243,8 +245,17 @@ include video_base.i
     v-screen @ v-screensz @ vfill
 ;
 
+:   (setfont)
+    v-font @  v-setfont @  execute
+;
+
+:   font8x8
+    grom_font8x8 v-font !
+    (setfont)
+;
 
 EXPORT>
+
 
 :   video-init
     \ reset latches
@@ -256,7 +267,7 @@ EXPORT>
     $1 fg!
     $7 bg!
     
-    $8717 vwaddr
+    font8x8    
     
 ;
 

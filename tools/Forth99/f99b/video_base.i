@@ -29,8 +29,15 @@
 ;
 
 : txt-updatecolors
-    color-byte  $8700  or write-vregaddr
+    $8700  or write-vregaddr
 ;
+
+\ -------------------
+
+: std-setfont   ( addr -- )
+    v-patts @   $800  gvmove
+;
+
 
 \ -------------------
 
@@ -40,6 +47,7 @@ Create TextFunctions
     v-savechar ,        ' txt-savechar , 
     v-restorechar ,     ' txt-restorechar ,
     v-drawcursor ,      ' txt-drawcursor ,
+    v-setfont ,         ' std-setfont ,
     0 , 
 
 
@@ -61,6 +69,7 @@ Create TextModeParams
 
     v-setupmode ,       ' txt-setupmode ,
     v-updatecolors ,    ' txt-updatecolors ,
+    
     0 ,
     
 create  TextModeRegs
@@ -104,6 +113,7 @@ create  TextModeRegs
 \           >0420 = sprite patterns (really 0->800)
 \           >0800 = char patts
 \           >1000+= free
+\
 Create GfxModeRegs
     $8000 , $81A0 , $8200 , $830E , $8401 , $8506 , $8600 , 0 ,
 
@@ -127,7 +137,7 @@ Create GfxModeParams
 ;
 
 : gfx-updatecolors
-    color-byte  v-colors @  v-colorsz @  vfill
+    v-colors @  v-colorsz @  vfill
 ;
 
 : gfx-mode
@@ -162,7 +172,7 @@ Create Text2ModeParams
     
     v-setupmode ,       ' txt2-setupmode ,
     v-updatecolors ,    ' txt-updatecolors ,
-    
+
     0 ,
     
 : txt2-setupmode
