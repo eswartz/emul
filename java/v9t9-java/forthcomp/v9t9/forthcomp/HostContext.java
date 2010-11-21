@@ -101,6 +101,7 @@ import v9t9.forthcomp.words.TestQuote;
 import v9t9.forthcomp.words.Then;
 import v9t9.forthcomp.words.Tick;
 import v9t9.forthcomp.words.To;
+import v9t9.forthcomp.words.ToLocal;
 import v9t9.forthcomp.words.UDot;
 import v9t9.forthcomp.words.UPlusLoop;
 import v9t9.forthcomp.words.Until;
@@ -200,6 +201,8 @@ public class HostContext extends Context {
 		
 		define(":", new Colon());
 		define("::", new ColonColon());
+		define(":>", new ToLocal());
+		
 		define(";", new SemiColon());
 		define("[CHAR]", new BracketChar());
 		define("CHAR", new Char());

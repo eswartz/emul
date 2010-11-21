@@ -604,11 +604,13 @@ public abstract class TargetContext extends Context {
 		return dictEntryMap;
 	}
 
+	abstract public boolean isLocalSupportAvailable(HostContext hostContext) throws AbortException;
+	
 	abstract public void ensureLocalSupport(HostContext hostContext) throws AbortException;
 	
 	abstract public void compileSetupLocals(HostContext hostContext) throws AbortException;
 
-	abstract public void compileInitLocals(int count) throws AbortException;
+	abstract public void compileAllocLocals(int count) throws AbortException;
 
 	abstract public void compileLocalAddr(int index);
 
@@ -739,7 +741,7 @@ public abstract class TargetContext extends Context {
 	abstract public void compileDoes(HostContext hostContext, DictEntry dictEntry, int targetDP) throws AbortException;
 
 
-	public void compileString(HostContext hostContext, String string) throws AbortException {
+	public void compileString(@SuppressWarnings("unused") HostContext hostContext, String string) throws AbortException {
 		IWord parenString = require("(s\")");
 		compileCall((ITargetWord) parenString);
 		//compile((ITargetWord) parenString);
@@ -764,4 +766,5 @@ public abstract class TargetContext extends Context {
 	 */
 	abstract public void compileOpcode(int opcode);
 	abstract public void compileUser(TargetUserVariable var);
+
 }

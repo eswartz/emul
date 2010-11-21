@@ -202,7 +202,7 @@ public class DictEntry implements Comparable<DictEntry> {
 		return name.compareTo(o.getName());
 	}
 
-	public void allocateLocals() {
+	public void allocLocals() {
 		if (locals == null) {
 			locals = new LinkedHashMap<String, LocalVariableTriple>();
 		}

@@ -735,6 +735,9 @@ public class F99bTargetContext extends TargetContext {
 	
 	*/
 
+	public boolean isLocalSupportAvailable(HostContext hostContext) throws AbortException {
+		return localSupport;
+	}
 	
 	@Override
 	public void ensureLocalSupport(HostContext hostContext) throws AbortException {
@@ -777,7 +780,7 @@ public class F99bTargetContext extends TargetContext {
 	}
 	
 	@Override
-	public void compileInitLocals(int count) throws AbortException {
+	public void compileAllocLocals(int count) throws AbortException {
 		compileOpcode(Ilalloc);
 		compileChar(count);
 	}

@@ -37,7 +37,7 @@ public class ColonColon extends BaseStdWord {
 		
 		ITargetWord theWord = (ITargetWord) targetContext.getLatest();
 
-		theWord.getEntry().allocateLocals();
+		theWord.getEntry().allocLocals();
 		
 		boolean hitParen = false;
 		while (true) {
@@ -52,7 +52,7 @@ public class ColonColon extends BaseStdWord {
 			theWord.getEntry().defineLocal(name);
 			
 		}
-		targetContext.compileInitLocals(theWord.getEntry().getLocalCount());
+		targetContext.compileAllocLocals(theWord.getEntry().getLocalCount());
 		
 		while (!hitParen) {
 			String tok = hostContext.readToken();

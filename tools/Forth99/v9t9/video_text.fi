@@ -43,21 +43,17 @@
     r>   rot rot  vfill
 ;
 
-:: (txt-vchar) ( ch len offs lim -- )
+:: txt-vchar ( ch len addr bit -- )
+    addr v-screen @ -  :> offs
+    v-screensz @  :> lim
+    
     len 0 do
         offs  v-screen @ +  !vwaddr  ch VDPWD c!
-        offs  v-ccols c@ +  dup lim >= if
-            lim -  1+  v-ccols c@  umod  
+        offs  win-sx +  dup lim >= if
+            lim -  1+  win-sx  umod  
         then  
         offs!
     loop
-;
-  
-: txt-vchar ( ch len addr bit -- )
-    drop
-    v-screen @ -
-    v-screensz @
-    (txt-vchar)
 ;
 
 : txt-setupmode

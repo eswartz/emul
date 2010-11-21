@@ -1136,6 +1136,47 @@ public class TestForthCompF99b extends BaseF99bTest {
 	}
 	
 	@Test
+	public void testLocals4() throws Exception {
+		
+		parseString(
+				":: locals ( addr1 addr2 -- )\n"+
+				" 	addr2 addr1 - :> diff \n"+
+				"   addr1 diff -  addr2 diff -  - :> diff2 \n"+
+				"  diff diff2 \n" +
+				
+				";");
+		
+		hostCtx.pushData(10);
+		hostCtx.pushData(18);
+		
+		interpret("locals");
+		
+		assertEquals(-8, hostCtx.popData());
+		assertEquals(8, hostCtx.popData());
+		
+	}
+	@Test
+	public void testLocals5() throws Exception {
+		
+		parseString(
+				": locals ( addr1 addr2 -- )\n"+
+				"   swap 2dup - :> diff\n"+
+				"   diff -  swap diff -  - :> diff2 \n"+
+				"  diff diff2 \n" +
+				
+				";");
+		
+		hostCtx.pushData(10);
+		hostCtx.pushData(18);
+		
+		interpret("locals");
+		
+		assertEquals(-8, hostCtx.popData());
+		assertEquals(8, hostCtx.popData());
+		
+	}
+	
+	@Test
 	public void testValues() throws Exception {
 
 		parseString(

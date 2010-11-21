@@ -44,6 +44,14 @@ public class Context implements IContext {
 	public IWord getLatest() {
 		return latest;
 	}
+
+	/**
+	 * @param word
+	 */
+	public void setLatest(IWord word) {
+		latest = word;
+		
+	}
 	/**
 	 * @param token
 	 * @return

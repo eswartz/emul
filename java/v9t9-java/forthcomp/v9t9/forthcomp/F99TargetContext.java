@@ -756,6 +756,10 @@ public class F99TargetContext extends TargetContext {
 		compileOpcode(Iuser);
 	}
 	
+	public boolean isLocalSupportAvailable(HostContext hostContext) throws AbortException {
+		return lpUser != null;
+	}
+
 	/* (non-Javadoc)
 	 * @see v9t9.forthcomp.TargetContext#compileCleanupLocals()
 	 */
@@ -800,7 +804,7 @@ public class F99TargetContext extends TargetContext {
 	 * @see v9t9.forthcomp.TargetContext#compileInitLocal(int)
 	 */
 	@Override
-	public void compileInitLocals(int count) throws AbortException {
+	public void compileAllocLocals(int count) throws AbortException {
 		while (count-- > 0)
 			compileOpcode(ItoR);
 	}
