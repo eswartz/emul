@@ -206,14 +206,14 @@ public class F99bTargetContext extends TargetContext {
 		defineInlinePrim("LSHIFT", Ilsh);
 		defineInlinePrim("RSHIFT", Iash);
 		defineInlinePrim("URSHIFT", Irsh);
-		defineInlinePrim("CSHIFT", Icsh);
+		defineInlinePrim("CRSHIFT", Icsh);
 		
 		defineInlinePrim("SWPB", IlitX | 8, Icsh);
 		
 		defineInlinePrim("DLSHIFT", Ilsh_d);
 		defineInlinePrim("DRSHIFT", Iash_d);
 		defineInlinePrim("DURSHIFT", Irsh_d);
-		defineInlinePrim("DCSHIFT", Icsh_d);
+		defineInlinePrim("DCRSHIFT", Icsh_d);
 		
 		defineInlinePrim("*", Iumul, Idrop);
 
@@ -736,27 +736,13 @@ public class F99bTargetContext extends TargetContext {
 	*/
 
 	public boolean isLocalSupportAvailable(HostContext hostContext) throws AbortException {
-		return localSupport;
+		return true;
 	}
 	
 	@Override
 	public void ensureLocalSupport(HostContext hostContext) throws AbortException {
-		if (!localSupport) {
-			HostContext subContext = new HostContext(this);
-			hostContext.copyTo(subContext);
-			subContext.getStream().push(
-					"false <export\n"+
-					": (>LOCALS) LP@  	RP@ LP! ; \\ caller pushes R> \n" +
-					": (LOCALS>) R>  LP@ RP!   R>  LP!  >R ; \n" +
-					"export>\n");
-			ForthComp comp = new ForthComp(subContext, this);
-			comp.parse();
-			if (comp.getErrors() > 0)
-				throw hostContext.abort("Failed to compile support code");
-			hostContext.copyFrom(subContext);
-			
-			localSupport = true;
-		}
+		// ": (>LOCALS) LP@  	RP@ LP! ; \\ caller pushes R> \n" +
+		//			": (LOCALS>) R>  LP@ RP!   R>  LP!  >R ; \n" +
 	}
 	
 	@Override
@@ -766,8 +752,7 @@ public class F99bTargetContext extends TargetContext {
 		if (entry.hasLocals())
 			throw new AbortException("cannot add more locals now");
 		
-		compile((ITargetWord) require("(>LOCALS)"));
-		compileOpcode(ItoR);
+		compileOpcode(ItoLocals);
 		
 	}
 
@@ -775,7 +760,7 @@ public class F99bTargetContext extends TargetContext {
 	public void compileCleanupLocals(HostContext hostContext) throws AbortException {
 		DictEntry entry = ((ITargetWord) getLatest()).getEntry();
 		if (entry.hasLocals()) {
-			compile((ITargetWord) require("(LOCALS>)"));
+			compileOpcode(IfromLocals);
 		}
 	}
 	
@@ -794,8 +779,6 @@ public class F99bTargetContext extends TargetContext {
 	
 	@Override
 	public void compileFromLocal(int index) throws AbortException {
-		//compileLocalAddr(index);
-		//compileByte(Iload);
 		compileOpcode(Ilpidx);
 		compileChar(index);
 	}

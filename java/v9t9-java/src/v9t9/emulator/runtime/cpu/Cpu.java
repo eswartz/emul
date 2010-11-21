@@ -19,12 +19,10 @@ public interface Cpu extends IPersistable, CpuState {
 	 */
 	void setInterruptRequest(byte level);
 
-	static public final String sRealTime = "RealTime";
 	static public final SettingProperty settingRealTime = new SettingProperty(
-			sRealTime, new Boolean(false));
-	static public final String sCyclesPerSecond = "CyclesPerSecond";
+			"RealTime", new Boolean(false));
 	static public final SettingProperty settingCyclesPerSecond = new SettingProperty(
-			sCyclesPerSecond, new Integer(0));
+			"CyclesPerSecond", new Integer(0));
 
 	/**
 	 * @return

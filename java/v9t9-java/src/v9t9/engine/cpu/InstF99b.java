@@ -206,6 +206,9 @@ public class InstF99b {
 	public static final int Irpidx_d = Idstack_start + 12;
 	
 	public static final int Ilocal_d = Idstack_start + 13;
+	
+	public static final int ItoLocals = Idstack_start + 14;
+	public static final int IfromLocals = Idstack_start + 15;
 
 
 	public static final int Idmath_start =  (Idouble << 8) + 0x40;
@@ -363,6 +366,9 @@ public class InstF99b {
 		Irpidx, 0, 1, 0, 0,
 		Ispidx_d, 0, 2, 0, 0,
 		Irpidx_d, 0, 2, 0, 0,
+		
+		ItoLocals, 0, 0, 0, 1,
+		IfromLocals, 0, 0, 1, 0,
 		Ilpidx, 0, 1, 0, 0,
 		Ilocal, 0, 1, 0, 0,
 		Ilocal_d, 0, 2, 0, 0,
@@ -578,6 +584,9 @@ public class InstF99b {
 		instNames.put(IlitX_d, "DLIT4");
 		instNames.put(IlitB_d, "DLIT8");
 		instNames.put(IlitD_d, "DLIT32");
+		
+		instNames.put(ItoLocals, ">LOCALS");
+		instNames.put(IfromLocals, "LOCALS>");
 	}
 
 	public static void main(String[] args) {

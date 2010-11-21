@@ -63,6 +63,7 @@ public class F99bMachineModel implements MachineModel {
 	 * @see v9t9.emulator.hardware.MachineModel#getVdp()
 	 */
 	public VdpHandler createVdp(Machine machine) {
+		//VdpV9938.settingMsxClockDivisor.setInt(1);
 		vdp = new VdpV9938(machine);
 		new Vdp9938Mmio(machine.getMemory(), vdp, 0x20000);
 		return vdp;

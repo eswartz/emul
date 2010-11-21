@@ -525,7 +525,7 @@ public class InterpreterF99b implements Interpreter {
         
         case Icfill: {
         	int step = cpu.pop();
-        	int len = cpu.pop();
+        	int len = cpu.pop() & 0xffff;
         	int addr = cpu.pop();
         	byte ch = (byte) cpu.pop();
         	while (len-- > 0) {
@@ -537,7 +537,7 @@ public class InterpreterF99b implements Interpreter {
         }
         case Ifill: {
         	int step = cpu.pop();
-        	int len = cpu.pop();
+        	int len = cpu.pop() & 0xffff;
         	int addr = cpu.pop();
         	short w = cpu.pop();
         	while (len-- > 0) {
@@ -548,23 +548,7 @@ public class InterpreterF99b implements Interpreter {
         	break;
         }
         case Icmove: {
-        	int tstep = cpu.pop();
-        	int fstep = cpu.pop();
-        	int len = cpu.pop();
-        	int taddr = cpu.pop();
-        	int faddr = cpu.pop();
-        	if (tstep < 0) {
-        		taddr -= tstep * (len - 1);
-        	}
-        	if (fstep < 0) {
-        		faddr -= fstep * (len - 1);
-        	}
-        	while (len-- > 0) {
-        		memory.writeByte(taddr & 0xffff, memory.readByte(faddr & 0xffff));
-        		faddr += fstep;
-        		taddr += tstep;
-        		cpu.addCycles(3);
-        	}
+        	doCmove();
         	break;
         }
         
@@ -749,10 +733,30 @@ public class InterpreterF99b implements Interpreter {
 		return false;
     }
 
+	private void doCmove() {
+		int tstep = cpu.pop();
+		int fstep = cpu.pop();
+		int len = cpu.pop() & 0xffff;
+		int taddr = cpu.pop();
+		int faddr = cpu.pop();
+		if (tstep < 0) {
+			taddr -= tstep * (len - 1);
+		}
+		if (fstep < 0) {
+			faddr -= fstep * (len - 1);
+		}
+		while (len-- > 0) {
+			memory.writeByte(taddr & 0xffff, memory.readByte(faddr & 0xffff));
+			faddr += fstep;
+			taddr += tstep;
+			cpu.addCycles(3);
+		}
+	}
+
 	private void doMove() {
 		int tstep = cpu.pop();
 		int fstep = cpu.pop();
-		int len = cpu.pop();
+		int len = cpu.pop() & 0xffff;
 		int taddr = cpu.pop();
 		int faddr = cpu.pop();
 		if (tstep < 0) {
@@ -921,6 +925,22 @@ public class InterpreterF99b implements Interpreter {
         	cpu.rpop();
         	cpu.rpop();
         	break;
+        	
+        case ItoLocals & 0xff: {
+        	// LP@  	RP@ LP! ; \\ caller pushes R> 
+        	short curLP = iblock.lp;
+        	((CpuStateF99b)cpu.getState()).setLP((short) (iblock.rp - 2));
+        	cpu.rpush(curLP);
+        	break;
+        }
+        case IfromLocals & 0xff: {
+        	//  R>  LP@ RP!   R>  LP!  >R
+        	((CpuStateF99b)cpu.getState()).setRP((short) (iblock.lp));
+        	short oldLP = cpu.rpop();
+        	((CpuStateF99b)cpu.getState()).setLP(oldLP);
+        	break;
+        }
+        	
         default:
         	unsupported(ins);
         }

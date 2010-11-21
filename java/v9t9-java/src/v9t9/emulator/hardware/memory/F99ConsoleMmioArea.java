@@ -15,13 +15,18 @@ import v9t9.engine.memory.*;
  */
 public class F99ConsoleMmioArea extends ConsoleMmioArea  {
 	
+	// The VDP ports are intended to mostly fit in 1-byte IlitX instructions
 	public static final int VDPRD = 0x0;
 	public static final int VDPST = 0x2;
-	public static final int VDPWD = 0x8;
-	public static final int VDPWA = 0xA;
-	public static final int VDPWAL = 0xB;
-	public static final int VDPCL = 0xC;
-	public static final int VDPWI = 0xE;
+	public static final int VDPWD = 0x4;
+	public static final int VDPWA = 0x6;
+	public static final int VDPWAL = 0x7;
+	public static final int VDPCL = 0x8;
+	public static final int VDPWI = 0xA;
+	
+	private static final int[] f99ToVdpPort = { 0, 1, 2, 3, 8, 9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf };
+	
+	
 	public static final int GPLRD = 0x10;
 	public static final int GPLRA = 0x12;
 	public static final int GPLWD = 0x14;
@@ -97,7 +102,7 @@ public class F99ConsoleMmioArea extends ConsoleMmioArea  {
 	    	case VDPCL:
 	    	case VDPWI:
 	    	case VDPWA:
-	    		getTIMemoryModel().getVdpMmio().write(addr, val);
+	    		getTIMemoryModel().getVdpMmio().write(f99ToVdpPort[addr], val);
 	    		break;
 	    	case GPLWA:
 	    	case GPLWD:
