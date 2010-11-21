@@ -3,6 +3,7 @@
  */
 package v9t9.emulator.clients.builtin.video.v9938;
 
+import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.settings.ISettingSection;
 import org.ejs.coffee.core.utils.HexUtils;
 
@@ -92,8 +93,13 @@ public class VdpV9938 extends VdpTMS9918A {
 	
 	// the MSX 2 speed is 21 MHz (21477270 hz)
 	
+	static public final int CLOCK_RATE = 21477270;
+	
 	// cycles for commands execute in 3579545 Hz (from blueMSX)
-	private int targetcycles = 3579545 / 60; // target # cycles to be executed per tick
+	/* 3579545 / 60 target # cycles to be executed per tick */
+    static public final SettingProperty settingMsxClockDivisor = 
+    	new SettingProperty("MsxClockDivisor", new Integer(6));
+
 	private int currentcycles = 0; // current cycles left
 	private int pageOffset;
 	private int pageSize;
@@ -778,10 +784,12 @@ public class VdpV9938 extends VdpTMS9918A {
 			
 		}
 		
+		int targetRate = CLOCK_RATE / settingMsxClockDivisor.getInt() / settingVdpInterruptRate.getInt();
+		
 		if (/*!Cpu.settingRealTime.getBoolean() ||*/ currentcycles < 0)
-			currentcycles += targetcycles;
+			currentcycles += targetRate;
 		else
-			currentcycles = targetcycles;
+			currentcycles = targetRate;
 	}
 	
 	@Override
