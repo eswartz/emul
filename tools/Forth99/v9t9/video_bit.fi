@@ -1,13 +1,4 @@
 
-Create bit-cursor-8
-    $00 c,  $7c c,  $44 c, $44 c, $44 c,  $7c c, $00 c, $00 c,
-     
-cell    RamVar  bit-cursor
-
-: bit-chsize ( ch -- xs ys )
-    drop  v-fntwidth c@  v-fntheight c@
-;
-
 \   Figure the address and shift for a pixel on the screen
 : bit-pixaddr ( x y -- addr shift )
     ( Y -> row offs )
@@ -101,14 +92,10 @@ cell    RamVar  bit-cursor
 
 : bit-setfont   ( addr -- )
     drop
-    \ TODO: support for non-8-pixel fonts 
-    8 v-fntwidth c!
-    bit-cursor-8  bit-cursor ! 
 ;
 
 
 Create BitFunctions
-    'v-chsize ,          ' bit-chsize ,
     'v-drawchar ,        ' bit-drawchar ,
     'v-blinkcursor ,     ' bit-blinkcursor ,
     'v-setfont ,         ' bit-setfont ,

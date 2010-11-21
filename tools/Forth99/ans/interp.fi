@@ -152,12 +152,6 @@ User loadline
     >r
 ;
 
-: (>c)      ( caddr u naddr -- )
-\   make counted string at naddr
-    2dup c!             \ set length byte
-    1+ swap cmove>      \ move data
-;
-
 : ,"
     postpone s" dup >r  here (>c)  r> 1+ aligned allot  
 ;

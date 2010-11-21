@@ -27,6 +27,8 @@ ramptr !
 
 \   Reset terminal from the current mode
 : term-reset
+    cursor-off
+    
     0 win-x !
     0 win-y !
 
@@ -47,6 +49,7 @@ ramptr !
 ;
 
 :   xy! ( x y  -- )
+    cursor-off
     v-y !  v-x !
 ;
 
@@ -63,22 +66,21 @@ export>
 ;
 
 :   ch>xy ( ch -- xs ys )
-    'v-chsize @  execute
+    drop  v-text c@  if  1 1  else  v-fntwidth c@  v-fntheight c@  then
 ;
 :   ch>y ( ch -- ys )
-    ch>xy nip   
+    drop  v-text c@  if  1  else  v-fntheight c@  then   
 ;
 :   ch>x ( ch -- xs )
-    ch>xy drop   
+    drop  v-text c@  if  1  else  v-fntwidth c@  then   
 ;
 
 :   win-chsize ( -- xs ys )
     v-text c@ if
         win-sx @ win-sy @
     else
-        32 ch>xy  
-        win-sy @ swap u/  >r
-        win-sx @ swap u/  r>
+        win-sx @ v-fntwidth c@  u/
+        win-sy @ v-fntheight c@ u/
     then
 ;
 
@@ -104,11 +106,13 @@ export>
 ;
 
 :   crlf
+    cursor-off    
     advance-row
     home-col 
 ;  
 
 :   bksp ( ch -- )
+    cursor-off
     ch>xy  negate :> y  negate :> x   
     x v-x +!
     v-x @ 0< if

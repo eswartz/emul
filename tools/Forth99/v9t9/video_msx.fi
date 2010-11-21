@@ -33,17 +33,9 @@ Create msx-enhregs
     $8F00 write-vregaddr
 ;
 
-: msx-colorbyte ( -- bg|bg )
-    bg c@  dup 4 lshift  OR
-;
-
-: msx-chsize ( ch -- xs ys )
-    drop  v-fntwidth c@  v-fntheight c@
-;
-
 \   Figure the address and shift for a pixel on the screen
 : msx-pixaddr ( x y -- addr shift )
-    msx-stride @ u*  over  msx-shift c@  urshift  +
+    msx-stride @ u*  over  msx-shift @  urshift  +  v-patts @ +
     swap  msx-mask c@  and 
 ;    
 
@@ -99,11 +91,93 @@ Create msx-enhregs
     msx-cmd-word
 ;
 
+
+
+\ Blink a cursor in graphics 4-7 modes
+\
+\ Use LMMV to XOR a rectangle in the cursor shape
+\
+: msx-blinkcursor ( x y -- )
+    msx-setup-cursor-DXDY
+    
+    $1  msx-cmd-word                    \ two cols NX
+    v-fntheight c@ 1-  msx-cmd-word     \ font height NY 
+
+    $FF VDPWI c!                \ CLR    
+
+    $00 VDPWI c!                \ ARG (dix=0, diy=0, mxc=0)
+    
+    $83 msx-setupMMMcommand   \ LMMV + EOR
+
+    $80 v-curs c+!
+    
+    msx-vstatus0
+    \ no need to wait!
+;
+
+\   Index by the number of bits-per-byte in a pattern
+\   to get the byte to write to VDP
+\
+16   RamVar  msx-color-temp
+
+: msx-clear ( ch -- )
+    msx-color-temp c@
+    v-patts @   v-pattsz @   vfill
+;
+
+:: msx-updatecolors ( )
+    color-byte  $8700 OR  write-vregaddr
+    
+    msx-color-temp :> ct
+    fg c@ :> f
+    bg c@ :> b
+      
+    msx-shift @ dup  1 =  if
+        drop
+    
+        f $f and f!
+        b $f and b!         
+        
+        b  dup 4 lshift  OR   ct     c!
+        b  4 lshift  f   OR   ct 1 + c!
+        f  4 lshift  b   OR   ct 2 + c!
+        f  dup 4 lshift  OR   ct 3 + c!
+    else 2 = if
+        f $3 and f!
+        b $3 and b!         
+    
+        16 0 do 
+            \ for each group of 4 bits that may be set...
+            0  
+            4 0 do
+                \ fill fg/bg in 
+                j  i lshift  $8  and 
+                if f else b then
+                6  i 2* -  lshift  OR                                           
+            loop
+            ct i +  c!
+        loop
+    else
+        b  ct  c!
+    then then
+;
+
+: msx-setfont   ( addr -- )
+    drop
+;
+
+\ Eep, our processor can brute-force this faster than MSX can accelerate it...
+\ which makes sense, given that we're doing logic for every pixel anyway!!
+\
+false Constant msx-use-drawchar-accel
+
+msx-use-drawchar-accel [if]
+
 : msx-sendcharpixel ( ch bg|fg -- ch' )
     over  $80 and  0=  8 and  urshift  VDPWI c!  1 lshift
 ;
 
-: msx-drawchar ( ch x y -- )
+: msx-drawchar-accel ( ch x y -- )
     msx-setup-cursor-DXDY
     
     dup  ch>xy  swap
@@ -136,43 +210,91 @@ Create msx-enhregs
     msx-vstatus0    
 ;
 
-\ Blink a cursor in graphics 4-7 modes
-\
-\ Use LMMV to XOR a rectangle in the cursor shape
-\
-: msx-blinkcursor ( x y -- )
-    msx-setup-cursor-DXDY
+[else]
+
+: msx-drawchar-16 ( ch x y -- )
+    msx-pixaddr drop  vsetbank :> addr
     
-    $1  msx-cmd-word                    \ two cols NX
-    v-fntheight c@ 1-  msx-cmd-word     \ font height NY 
-
-    $FF VDPWI c!                \ CLR    
-
-    $00 VDPWI c!                \ ARG (dix=0, diy=0, mxc=0)
+    >v-fontaddr  gwaddr  
     
-    $83 msx-setupMMMcommand   \ LMMV + EOR
-
-    msx-vstatus0
-    \ no need to wait!
+    v-fntwidth c@ :> width
+    
+    msx-color-temp :> ct
+    
+    v-fntheight c@  0 do
+        addr !vwaddr
+        GPLRD c@
+        dup 8 lshift OR  
+        width 0 do
+            \ write <fg|bg>|<fg|bg> for two consecutive bits
+            -2 crshift
+            dup  3 and  ct +  c@  VDPWD c!
+        2 +loop
+        drop 
+        msx-stride @  'addr +!
+    loop
 ;
 
-: msx-clear ( ch -- )
-    msx-colorbyte  v-patts @   v-pattsz @   vfill
+
+: msx-drawchar-4 ( ch x y -- )
+    msx-pixaddr drop  vsetbank :> addr
+    
+    >v-fontaddr  gwaddr  
+    
+    v-fntwidth c@ :> width
+    
+    msx-color-temp :> ct
+    
+    v-fntheight c@  0 do
+        addr !vwaddr
+        GPLRD c@
+        dup 8 lshift OR  
+        
+        \ write four colors for four consecutive bits
+        -4 crshift
+        dup  $f and  ct +  c@  VDPWD c!
+        
+        width 8 = if
+            -4 crshift
+            dup  $f and  ct +  c@  VDPWD c!
+        then
+        
+        drop 
+        msx-stride @  'addr +!
+    loop
 ;
 
-: msx-updatecolors
-    msx-colorbyte  $8700 OR  write-vregaddr
+: msx-drawchar-256 ( ch x y -- )
+    msx-pixaddr drop  vsetbank :> addr
+    
+    >v-fontaddr  gwaddr  
+    
+    v-fntwidth c@ :> width
+    
+    fg c@ :> f
+    bg c@ :> b
+    
+    v-fntheight c@  0 do
+        addr !vwaddr
+        GPLRD c@
+        dup 8 lshift OR  
+        width 0 do
+            \ write one byte
+            -1 crshift
+            dup  1 and  if f else b then  VDPWD c!
+        loop
+        drop 
+        msx-stride @  'addr +!
+    loop  
 ;
 
-: msx-setfont   ( addr -- )
-    drop
-;
-
+[then]
 
 Create MsxFunctions 
-    'v-chsize ,          ' msx-chsize ,
-    'v-drawchar ,        ' msx-drawchar ,
-    'v-blinkcursor ,      ' msx-blinkcursor ,
+msx-use-drawchar-accel [if]
+    'v-drawchar ,        ' msx-drawchar-accel ,
+[then]    
+    'v-blinkcursor ,     ' msx-blinkcursor ,
     'v-setfont ,         ' msx-setfont ,
     'v-clear ,           ' msx-clear ,
     0 , 
@@ -204,6 +326,10 @@ Create Gfx4ModeParams
     'v-setupmode ,           ' msx-setupmode ,
     'v-updatecolors ,        ' msx-updatecolors ,
 
+msx-use-drawchar-accel not [if]
+    'v-drawchar ,            ' msx-drawchar-16 ,
+[then]
+
     0 ,
     
     
@@ -213,3 +339,127 @@ Create Gfx4ModeParams
     Gfx4ModeRegs write-vregs
 ;
 
+
+
+\       6=graphics 6 mode (512x212x16)
+\           >0000 = patts
+\           >D400 = sprite colors
+\           >D600 = sprites (1B0)
+\           >D680 = sprite motion
+\           >D800 = sprite patts (1B)
+\           >E000+= free
+\
+Create Gfx6ModeRegs
+    $800A , $81A0 , $8200 , $85AC , $8B01 , $861B , 0 ,
+
+Create Gfx6ModeParams
+    v-screen    , $0000 ,   v-screensz  , $0 ,
+    v-colors    , $0000 ,   v-colorsz   , $0 ,   
+    v-patts     , $0000 ,   v-pattsz    , $6400 ,
+    v-sprites   , $D600 ,   v-sprcol    , $D400 ,
+    v-sprpat    , $D800 ,   v-sprmot    , $D680 ,
+    v-free      , $E000 ,
+
+    v-width     , 512 ,     v-height    , 212 ,
+    
+    msx-stride  , $100 ,    msx-shift   , 1 ,       msx-mask , $fffe  ,
+    
+    'v-setupmode ,           ' msx-setupmode ,
+    'v-updatecolors ,        ' msx-updatecolors ,
+
+msx-use-drawchar-accel not [if]
+    'v-drawchar ,            ' msx-drawchar-16 ,
+[then]
+
+    0 ,
+    
+    
+: gfx6-mode
+    MsxFunctions write-var-list
+    Gfx6ModeParams write-var-list
+    Gfx6ModeRegs write-vregs
+;
+
+
+
+
+\       5=graphics 5 mode (512x212x4)
+\           >0000 = patts
+\           >7000 = sprite patts
+\           >7800 = sprite colors
+\           >7A00 = sprites
+\           >7A80 = sprite motion
+\           >8000+= free
+\
+Create Gfx5ModeRegs
+    $8008 , $81A0 , $8200 , $85F4 , $8B00 , $860E , $87FF , 0 ,
+
+Create Gfx5ModeParams
+    v-screen    , $0000 ,   v-screensz  , $0 ,
+    v-colors    , $0000 ,   v-colorsz   , $0 ,   
+    v-patts     , $0000 ,   v-pattsz    , $6400 ,
+    v-sprites   , $7A00 ,   v-sprcol    , $7800 ,
+    v-sprpat    , $7000 ,   v-sprmot    , $7A80 ,
+    v-free      , $8000 ,
+
+    v-width     , 512 ,     v-height    , 212 ,
+    
+    msx-stride  , $80 ,     msx-shift   , 2 ,       msx-mask , $fffc  ,
+    
+    'v-setupmode ,           ' msx-setupmode ,
+    'v-updatecolors ,        ' msx-updatecolors ,
+
+msx-use-drawchar-accel not [if]
+    'v-drawchar ,            ' msx-drawchar-4 ,
+[then]
+
+    0 ,
+    
+: gfx5-mode
+    MsxFunctions write-var-list
+    Gfx5ModeParams write-var-list
+    Gfx5ModeRegs write-vregs
+;
+    
+    
+
+\       7=graphics 7 mode (256x212x256)
+\           >0000 = patts
+\           >D400 = sprite colors
+\           >D600 = sprites (1AC)
+\           >D680 = sprite motion
+\           >D800 = sprite patts (1B)
+\           >E000+= free
+\
+Create Gfx7ModeRegs
+    $800E , $81A0 , $8200 , $85AC , $8B01 , $861B , 0 ,
+
+Create Gfx7ModeParams
+    v-screen    , $0000 ,   v-screensz  , $0 ,
+    v-colors    , $0000 ,   v-colorsz   , $0 ,   
+    v-patts     , $0000 ,   v-pattsz    , $D400 ,
+    v-sprites   , $D600 ,   v-sprcol    , $D400 ,
+    v-sprpat    , $D800 ,   v-sprmot    , $D680 ,
+    v-free      , $E000 ,
+
+    v-width     , 256 ,     v-height    , 212 ,
+    
+    msx-stride  , $100 ,    msx-shift   , 0 ,       msx-mask , $ffff  ,
+    
+    'v-setupmode ,           ' msx-setupmode ,
+    'v-updatecolors ,        ' msx-updatecolors ,
+
+msx-use-drawchar-accel not [if]
+    'v-drawchar ,            ' msx-drawchar-256 ,
+[then]
+
+    0 ,
+    
+    
+: gfx7-mode
+    MsxFunctions write-var-list
+    Gfx7ModeParams write-var-list
+    Gfx7ModeRegs write-vregs
+;
+
+    

@@ -39,7 +39,6 @@ v-data
     +1field v-fntheight    \ font height in pixels
 
     
-    +field  'v-chsize       ( ch -- xs ys )
     +field  'v-coordaddr    ( x y -- addr bit )
     +field  'v-drawchar     ( ch x y -- )
     +field  'v-readchar     ( x y -- ch )
@@ -50,8 +49,6 @@ v-data
     +field  'v-clear        ( ch -- )
     +field  'v-hchar        ( ch len x y -- )
     +field  'v-vchar        ( ch len x y -- )
-
-    +field  bit-cursor      \ addr of cursor shape
 
     +field  msx-stride      \ row stride in bytes
     +field  msx-shift       \ shift for pixel >> byte
@@ -220,9 +217,9 @@ Create video-modes
     ' bit-mode ,
     ' gfx3-mode ,
     ' gfx4-mode ,
-    0 ,
-    0 ,
-    0 ,
+    ' gfx5-mode ,
+    ' gfx6-mode ,
+    ' gfx7-mode ,
     ' text2-mode ,
     ' mono-mode ,
     0 ,

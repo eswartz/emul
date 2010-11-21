@@ -20,7 +20,7 @@
 \   It does honor the page offset, though.
 \
 : vsetbank  ( vaddr -- addr-16k )
-    dup 6 urshift 
+    dup 14 urshift 
     \ vpob c@ +
     $8E00 OR  VDPWA !
     $3fff AND

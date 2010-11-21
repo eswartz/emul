@@ -1,8 +1,4 @@
 
-: txt-chsize ( ch -- xs ys )
-    drop 1 1 
-;
-
 : txt-chaddr ( x y -- addr )
     v-width @ U*  +
     v-screen @ + 
@@ -88,7 +84,6 @@
 \ -------------------
 
 Create TextFunctions 
-    'v-chsize ,          ' txt-chsize ,
     'v-drawchar ,        ' txt-drawchar ,
     'v-readchar ,        ' txt-readchar ,
     'v-blinkcursor ,     ' txt-blinkcursor ,
@@ -182,6 +177,7 @@ Create GfxModeParams
 
 : gfx-setupmode
     std-sprite-setup
+    true v-text c!
 ;
 
 : gfx-updatecolors
