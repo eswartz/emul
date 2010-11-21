@@ -54,10 +54,13 @@ v-mode
     +field  v-free         \ usable space
     +field  v-width        \ pixels across
     +field  v-height       \ pixels down
+    
     +1field v-ccols        \ chars across
     +1field v-crows        \ chars down
     +1field v-chwidth      \ character width in pixels
     +1field v-chheight     \ character height in pixels
+    
+    +1field v-mono         \ set if monochrome (colors are global)
     
     +field  'v-coordaddr    ( x y -- addr bit )
     +field  'v-drawchar     ( ch addr bit -- )
@@ -70,6 +73,8 @@ v-mode
     +field  'v-clear        ( ch -- )
     +field  'v-hchar        ( ch len addr bit -- )
     +field  'v-vchar        ( ch len addr bit -- )
+
+dup v-mode - negate  Constant v-mode-size
 
 ramptr ! 
 
@@ -103,6 +108,8 @@ ramptr !
     
     dup 0= -&13 ?error
     
+    0  v-mode v-mode-size -1  (cfill)     \ v-mode is end 
+    
     execute
 ;
 
@@ -110,7 +117,7 @@ ramptr !
 1   RamVar bg
 
 : color-byte
-    fg c@ 4 lshift  bg c@  or
+    fg c@ 4 lshift  bg c@ $f and  or
 ;
 
 : v-refresh-colors
@@ -119,12 +126,12 @@ ramptr !
 
 1 <export
 : fg!
-    fg c!
+    $ff and  fg c!
     v-refresh-colors
 ;
 
 : bg!
-    bg c!
+    $ff and  bg c!
     v-refresh-colors
 ;
 
@@ -209,7 +216,7 @@ Create video-modes
     0 ,
     0 ,
     ' text2-mode ,
-    0 ,
+    ' mono-mode ,
     0 ,
     
 1 <export

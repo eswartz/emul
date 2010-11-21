@@ -43,8 +43,16 @@ cell    RamVar  bit-cursor
 
 : bit-drawchar ( ch addr bit -- )
     \ simple-stupid version 
-    drop
+    drop  dup >r
     swap >v-fontaddr swap  v-chheight c@  gvmove  
+    
+    v-mono c@ 0= if
+        color-byte
+        r> v-patts @ - v-colors @ +
+        v-chheight c@  vfill
+    else
+        rdrop
+    then
 ;
 : bit-savechar ( addr bit buff -- )
     >r bit-raddr r> v-chheight c@  (vmbr)
@@ -63,6 +71,9 @@ cell    RamVar  bit-cursor
 
 : bit-updatecolors
     $8700 OR  write-vregaddr
+    v-mono c@ if
+        color-byte  v-colors @  v-colorsz @  vfill 
+    then
 ;
 
 : bit-setfont   ( addr -- )
@@ -120,6 +131,36 @@ Create BitModeParams
     BitModeParams write-var-list
         
     BitModeRegs write-vregs
-
+    
+    8 v-chheight c!
 ;
 
+
+\      9=monochrome bitmap mode (graphics 2 mode)
+\           >0000 = patts
+\           >1800 = screen
+\           >1B00 = sprites
+\           >1B80 = sprite motion
+\           >1C00 = sprite patts    (really >1800)
+\           >2000 = colors
+\           >2040+= free (seems like 2800)
+\
+Create MonoBitModeRegs
+    $8002 , $81B0 , $8206 , $8380 , $8403 , $8536 , $8603 , 0 ,
+
+    
+: mono-mode
+    BitFunctions write-var-list
+    BitModeParams write-var-list
+    
+    $40 v-colorsz !
+    $2040 v-free !
+    
+    true v-mono c!
+        
+    MonoBitModeRegs write-vregs
+    
+    8 v-chheight c!
+;
+
+    
