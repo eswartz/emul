@@ -20,7 +20,6 @@ public class Until extends BaseStdWord {
 	public void execute(HostContext hostContext, TargetContext targetContext) throws AbortException {
 		hostContext.assertCompiling();
 		hostContext.assertPairs(1);
-		
 		targetContext.compileBack(hostContext, true);
 	}
 	

@@ -60,7 +60,7 @@
 ;
 
 : txt-updatecolors
-    $8700  or write-vregaddr
+    color-byte  $8700  or write-vregaddr
 ;
 
 : txt-clear
@@ -179,7 +179,7 @@ Create GfxModeParams
 ;
 
 : gfx-updatecolors
-    v-colors @  v-colorsz @  vfill
+    color-byte  v-colors @  v-colorsz @  vfill
 ;
 
 : gfx-mode

@@ -349,6 +349,9 @@ public class HostContext extends Context {
 		define("0=", new HostUnaryOp("0=") {
 			public int getResult(int v) { return v==0?-1:0; }
 		});
+		define("NOT", new HostUnaryOp("NOT") {
+			public int getResult(int v) { return v==0?-1:0; }
+		});
 		
 		define("1-", new HostUnaryOp("1-") {
 			public int getResult(int v) { return v-1; }

@@ -806,6 +806,8 @@ public class VdpV9938 extends VdpTMS9918A {
 			statusvec[2] &= ~S2_CE;
 			cmdState.cmd = 0;
 			cmdState.isDataMoveCommand = false;
+			if (settingDumpVdpAccess.getBoolean())
+				log("MSX command done");
 		}
 	}
 

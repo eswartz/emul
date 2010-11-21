@@ -1,0 +1,215 @@
+
+\ Standard V9938 palette
+\ Red|Blue  0|Green
+Create msx-stdpalette
+    $00 c, $00 c, \ 0
+    $00 c, $00 c, \ 1
+    $11 c, $06 c, \ 2
+    $33 c, $07 c, \ 3
+    $17 c, $01 c, \ 4
+    $27 c, $03 c, \ 5
+    $51 c, $01 c, \ 6
+    $27 c, $06 c, \ 7
+    $71 c, $01 c, \ 8
+    $73 c, $03 c, \ 9
+    $61 c, $06 c, \ A
+    $64 c, $06 c, \ B
+    $11 c, $04 c, \ C
+    $65 c, $02 c, \ D
+    $55 c, $05 c, \ E
+    $77 c, $07 c, \ F
+    
+Create msx-enhregs
+    $8808 ,     \ 64k video RAM
+    $8E00 ,     \ set bank 0, page 0, etc
+    $8980 ,     \ 212-line mode, color, etc
+    $8C00 ,     \ turn off alt colors
+    $8D00 ,     \ turn off blink/pageswap
+    $8F00 ,     \ point to sr0
+    0 ,
+             
+\   Reset status register
+: msx-vstatus0
+    $8F00 write-vregaddr
+;
+
+: msx-colorbyte ( -- bg|bg )
+    bg c@  dup 4 lshift  OR
+;
+
+\   Figure the address and shift for a pixel on the screen
+: msx-pixaddr ( x y -- addr shift )
+    msx-stride @ u*  over  msx-shift c@  urshift  +
+    swap  msx-mask c@  and 
+;    
+
+: msx-setupmode
+    msx-enhregs write-vregs
+;
+
+\   Figure the address and shift for a character on the screen
+: msx-coordaddr ( x y -- x y )
+    v-chheight c@  u*
+    swap  v-chwidth c@ u*
+    swap
+;    
+
+
+\   Setup a MSX command
+: msx-cmdsetup ( num -- )
+    $9100 OR  write-vregaddr
+;
+    
+: msx-waitcmdready
+    begin
+        VDPST c@  $01 and  0=
+    until
+;    
+: msx-waittxready
+    begin
+        VDPST c@  $80 and  
+    until
+;    
+
+\   Setup an MSX memory move command that expects its work to 
+\   be done through the CLR port.
+\
+\   -- point to status reg 2
+\   -- wait for ready
+\   -- write command
+\   -- point to CLR register
+\   
+: msx-setupMMMcommand ( cmd -- )
+    $8F02 write-vregaddr    \ set status reg for testing command finished & transfer ready
+    
+    msx-waitcmdready
+
+    \ write the command
+    VDPWI c!
+    
+    \ back to the CLR reg, no autoincrement
+    $91AC write-vregaddr
+;    
+
+: msx-cmd-word ( w -- )
+    w>b  swap  VDPWI c! VDPWI c!
+;
+
+: msx-setup-cursor-DXDY ( x y -- )
+    $24 msx-cmdsetup
+    
+    swap
+    msx-cmd-word 
+    msx-cmd-word
+;
+
+: msx-sendcharpixel ( ch bg|fg -- ch )
+    over  $80 and  0=  8 and  urshift  VDPWI c!  1 lshift
+;
+
+: msx-drawchar ( ch x y -- )
+    msx-setup-cursor-DXDY
+    
+    v-chwidth c@ 1-     msx-cmd-word
+    v-chheight c@ 1-    msx-cmd-word
+    
+    >v-fontaddr  gwaddr  
+    
+    color-word  swpb  :> cw
+    v-chwidth c@ :> width
+    
+    \ send first pixel
+    GPLRD c@  cw  msx-sendcharpixel  ( send first CLR  -- ch )
+    
+    0 VDPWI c!  ( ARG: dix=0, diy=0, mxc=0 )
+    
+    $B8 msx-setupMMMcommand     ( LMMC + TINP )
+
+    \ finish first row
+    width 1-  0 do  msx-waittxready  cw msx-sendcharpixel  loop  drop
+    
+    v-chheight c@ 1-  0 do
+        GPLRD c@
+        width 0 do
+            msx-waittxready  cw msx-sendcharpixel
+        loop
+        drop 
+    loop
+    
+    msx-vstatus0    
+;
+
+: msx-savechar ( addr bit buff -- )
+    2drop drop
+;
+: msx-restorechar ( buff addr bit -- )
+    2drop drop
+;
+: msx-drawcursor ( addr bit -- )
+    2drop  
+;
+
+: msx-clear ( ch -- )
+    msx-colorbyte  v-patts @   v-pattsz @   vfill
+;
+
+: msx-updatecolors
+    msx-colorbyte  $8700 OR  write-vregaddr
+;
+
+: msx-setfont   ( addr -- )
+    drop
+;
+
+
+Create MsxFunctions 
+    'v-coordaddr ,       ' msx-coordaddr , 
+    'v-drawchar ,        ' msx-drawchar ,
+    'v-savechar ,        ' msx-savechar , 
+    'v-restorechar ,     ' msx-restorechar ,
+    'v-drawcursor ,      ' msx-drawcursor ,
+    'v-setfont ,         ' msx-setfont ,
+    'v-clear ,           ' msx-clear ,
+    'v-hchar ,           0 ,
+    'v-vchar ,           0 ,
+    0 , 
+
+
+\       4=graphics 4 mode (256x212x16)
+\           >0000 = patts
+\           >7000 = sprite patts
+\           >7800 = sprite colors
+\           >7A00 = sprites
+\           >7A80 = sprite motion
+\           >8000+= free
+\
+Create Gfx4ModeRegs
+    $8006 , $81A0 , $8200 , $85F4 , $8B00 , $860E , 0 ,
+
+Create Gfx4ModeParams
+    v-screen    , $0000 ,   v-screensz  , $0 ,
+    v-colors    , $0000 ,   v-colorsz   , $0 ,   
+    v-patts     , $0000 ,   v-pattsz    , $6400 ,
+    v-sprites   , $7A00 ,   v-sprcol    , $7800 ,
+    v-sprpat    , $7000 ,   v-sprmot    , $7A80 ,
+    v-free      , $8000 ,
+
+    v-width     , 256 ,     v-height    , 212 ,
+    
+    msx-stride  , $80 ,     msx-shift   , 1 ,       msx-mask , $fffe  ,
+    
+    'v-setupmode ,           ' msx-setupmode ,
+    'v-updatecolors ,        ' msx-updatecolors ,
+
+    0 ,
+    
+    
+: gfx4-mode
+    MsxFunctions write-var-list
+    Gfx4ModeParams write-var-list
+    Gfx4ModeRegs write-vregs
+
+    8 v-chheight c!
+    8 v-chwidth c!
+;
+

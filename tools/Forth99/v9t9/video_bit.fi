@@ -69,10 +69,12 @@ cell    RamVar  bit-cursor
     color-byte  v-colors @  v-colorsz @  vfill
 ;
 
-: bit-updatecolors
-    $8700 OR  write-vregaddr
+: bit-updatecolors ( -- )
+    color-byte dup  $8700 OR  write-vregaddr
     v-mono c@ if
-        color-byte  v-colors @  v-colorsz @  vfill 
+        v-colors @  v-colorsz @  vfill
+    else
+        drop
     then
 ;
 
@@ -163,4 +165,43 @@ Create MonoBitModeRegs
     8 v-chheight c!
 ;
 
+
+\       3=graphics 3 mode (256x192x8+8), sprites 2
+\           >0000 = patts
+\           >1800 = sprite patts
+\           >1900 = sprite colors
+\           >1B00 = sprites
+\           >1B80 = sprite motion
+\           >1C00 = sprite patts ( really >1800)
+\           >2000 = colors
+\           >3800 = screen
+\           >3B00+= free
+\
+Create Gfx3ModeRegs
+    $8004 , $81A0 , $820E , $83FF , $8403 , $8536 , $8B00 , $8603 , 0 ,
     
+Create Gfx3ModeParams
+    v-screen    , $3800 ,   v-screensz  , $300 ,
+    v-colors    , $2000 ,   v-colorsz   , $1800 ,   
+    v-patts     , $0000 ,   v-pattsz    , $1800 ,
+    v-sprites   , $1B00 ,   v-sprcol    , $1900 ,
+    v-sprpat    , $1800 ,   v-sprmot    , $1B80 ,
+    v-free      , $3B00 ,
+
+    v-width     , 256 ,     v-height    , 192 ,
+    
+    'v-setupmode ,           ' bit-setupmode ,
+    'v-updatecolors ,        ' bit-updatecolors ,
+
+    0 ,
+    
+    
+: gfx3-mode
+    BitFunctions write-var-list
+    Gfx3ModeParams write-var-list
+    Gfx3ModeRegs write-vregs
+    
+    8 v-chheight c!
+    8 v-chwidth c!
+;
+
