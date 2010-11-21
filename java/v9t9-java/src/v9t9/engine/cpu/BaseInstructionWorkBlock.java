@@ -31,5 +31,6 @@ public class BaseInstructionWorkBlock  {
     	copy.inst = inst;
     	copy.pc = pc;
     	copy.st = st;
+    	copy.cycles = cycles;
     }
 }

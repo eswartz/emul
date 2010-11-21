@@ -17,7 +17,7 @@ public class CpuStateF99b implements CpuState {
 	private MemoryDomain console;
 	private Status status;
 
-	private short regs[] = new short[6];
+	private short regs[] = new short[7];
 	private short baseUP;
 	private short baseRP;
 	private short baseSP;
@@ -51,7 +51,7 @@ public class CpuStateF99b implements CpuState {
 	@Override
 	public void setRegister(int reg, int val) {
 		// always aligned
-		if (reg == CpuF99b.SP || reg == CpuF99b.RP || reg == CpuF99b.UP)
+		if (reg == CpuF99b.SP || reg == CpuF99b.RP || reg == CpuF99b.UP || reg == CpuF99b.LP)
 			val &= ~1;
 		regs[reg] = (short) val;
 		if (reg == CpuF99b.SR) {
@@ -92,6 +92,15 @@ public class CpuStateF99b implements CpuState {
 		setRegister(CpuF99b.UP, up);
 		
 	}
+	public short getLP() {
+		return (short) getRegister(CpuF99b.LP);
+	}
+	
+	public void setLP(short sp) {
+		setRegister(CpuF99b.LP, sp);
+	}
+	
+	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.cpu.CpuState#getConsole()
 	 */

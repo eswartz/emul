@@ -45,6 +45,10 @@ public class InstF99b {
 	public static final int Irdrop = Istack_start + 10;
 	public static final int IatR = Istack_start + 11;
 	public static final int Irpidx = Istack_start + 12;
+	
+	public static final int Ilpidx = Istack_start + 13;
+	public static final int Ilocal = Istack_start + 14;
+	public static final int Ilalloc = Istack_start + 15;
 
 
 	public static final int Imath_start = 0x40;
@@ -200,6 +204,8 @@ public class InstF99b {
 	public static final int Irdrop_d = Idstack_start + 10;
 	public static final int IatR_d = Idstack_start + 11;
 	public static final int Irpidx_d = Idstack_start + 12;
+	
+	public static final int Ilocal_d = Idstack_start + 13;
 
 
 	public static final int Idmath_start =  (Idouble << 8) + 0x40;
@@ -277,6 +283,7 @@ public class InstF99b {
 	public static final int CTX_RP = 2;
 	public static final int CTX_RP0 = 3;
 	public static final int CTX_UP = 4;
+	public static final int CTX_LP = 5;
 	public static final int CTX_PC = 6;
 	public static final int CTX_INT = 7;
 	
@@ -286,8 +293,9 @@ public class InstF99b {
 		"RP",
 		"RP0",
 		"UP",
-		"UP0",
+		"LP",
 		"PC",
+		"INT",
 	};
 
 	/** Idle until interrupt */
@@ -355,6 +363,10 @@ public class InstF99b {
 		Irpidx, 0, 1, 0, 0,
 		Ispidx_d, 0, 2, 0, 0,
 		Irpidx_d, 0, 2, 0, 0,
+		Ilpidx, 0, 1, 0, 0,
+		Ilocal, 0, 1, 0, 0,
+		Ilocal_d, 0, 2, 0, 0,
+		Ilalloc, -1, -1, -1, -1,
 
 		I0branchX, 1, 0, 0, 0,
 		I0branchB, 1, 0, 0, 0,

@@ -82,8 +82,8 @@ cell    RamVar vy
 
 :   chfill  ( ch -- )
     home
-    v-crows c@  0 do
-        dup  v-ccols c@  hchar
+    win-sy 0 do
+        dup  win-sx  hchar
         advance-row 
     loop
     drop
@@ -104,7 +104,15 @@ cell    RamVar vy
         >r  curs-addr  r>  execute
     else
         xy 2>r
-        0 do  dup  (emit) advance-row  loop  drop  
+        vy @ >r
+        0 do  
+            dup  (emit) 
+            vy @  1+  win-sy  umod  dup vy !  
+            j = if
+                vx @ 1+  win-sx  umod  vx !
+            then   
+        loop  drop
+        rdrop  
         2r> xy!
     then
 ;

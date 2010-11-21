@@ -606,9 +606,9 @@ public abstract class TargetContext extends Context {
 
 	abstract public void ensureLocalSupport(HostContext hostContext) throws AbortException;
 	
-	abstract public void compileSetupLocals() throws AbortException;
+	abstract public void compileSetupLocals(HostContext hostContext) throws AbortException;
 
-	abstract public void compileInitLocal(int index) throws AbortException;
+	abstract public void compileInitLocals(int count) throws AbortException;
 
 	abstract public void compileLocalAddr(int index);
 
@@ -616,7 +616,7 @@ public abstract class TargetContext extends Context {
 
 	abstract public void compileToLocal(int index) throws AbortException;
 	
-	abstract public void compileCleanupLocals() throws AbortException;
+	abstract public void compileCleanupLocals(HostContext hostContext) throws AbortException;
 
 	/* (non-Javadoc)
 	 * @see v9t9.forthcomp.Context#find(java.lang.String)
@@ -643,7 +643,7 @@ public abstract class TargetContext extends Context {
 	 */
 	public void compileExit(HostContext hostContext) throws AbortException {
 		if (((ITargetWord) getLatest()).getEntry().hasLocals())
-			compileCleanupLocals();
+			compileCleanupLocals(hostContext);
 		
 		ITargetWord semiS = (ITargetWord) require(";S");
 		semiS.getCompilationSemantics().execute(hostContext, this);

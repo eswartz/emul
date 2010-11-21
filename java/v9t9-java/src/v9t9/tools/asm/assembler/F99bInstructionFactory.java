@@ -138,6 +138,9 @@ public class F99bInstructionFactory implements IInstructionFactory {
 			case Irpidx:
 			case Ispidx:
 			case Iupidx:
+			case Ilpidx:
+			case Ilocal:
+			case Ilalloc:
 				inst.setOp1(MachineOperandF99b.createImmediateOperand(
 						iblock.nextByte() & 0xff, MachineOperandF99b.OP_ENC_IMM8));
 				break;

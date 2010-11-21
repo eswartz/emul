@@ -14,7 +14,6 @@ import v9t9.forthcomp.AbortException;
 import v9t9.forthcomp.DictEntry;
 import v9t9.forthcomp.F99InlineWord;
 import v9t9.forthcomp.F99PrimitiveWord;
-import v9t9.forthcomp.ForthComp;
 import v9t9.forthcomp.HostContext;
 import v9t9.forthcomp.ITargetWord;
 import v9t9.forthcomp.RelocEntry;
@@ -28,6 +27,7 @@ import v9t9.engine.memory.MemoryEntry;
 import v9t9.forthcomp.RelocEntry.RelocType;
 import v9t9.forthcomp.words.ExitI;
 import v9t9.forthcomp.words.FieldComma;
+import v9t9.forthcomp.words.HostLiteral;
 import v9t9.forthcomp.words.TargetColonWord;
 import v9t9.forthcomp.words.TargetContext;
 import v9t9.forthcomp.words.TargetSQuote;
@@ -41,7 +41,7 @@ import v9t9.forthcomp.words.TargetValue;
 public class F99bTargetContext extends TargetContext {
 
 	private List<Integer> leaves;
-	private TargetUserVariable lpUser;
+	//private TargetUserVariable lpUser;
 	private DictEntry stub4BitLit;
 	private DictEntry stub8BitOpcode;
 	private DictEntry stub16BitOpcode;
@@ -52,6 +52,7 @@ public class F99bTargetContext extends TargetContext {
 	private DictEntry stub16BitJump;
 	private DictEntry stub8BitJump;
 	private DictEntry stub4BitJump;
+	private boolean localSupport;
 	
 
 	/**
@@ -145,6 +146,8 @@ public class F99bTargetContext extends TargetContext {
 		defineInlinePrim("sp!", ItoContext, CTX_SP);
 		defineInlinePrim("rp@", IcontextFrom, CTX_RP);
 		defineInlinePrim("rp!", ItoContext, CTX_RP);
+		defineInlinePrim("lp@", IcontextFrom, CTX_LP);
+		defineInlinePrim("lp!", ItoContext, CTX_LP);
 		
 		definePrim("(do)", ItoR_d);
 		defineInlinePrim("(loop)", IloopUp);
@@ -244,6 +247,7 @@ public class F99bTargetContext extends TargetContext {
 		compileOpcode(Iexit);
 		
 		definePrim("(SYSCALL)", Isyscall);
+		
 		
 	}
 	
@@ -644,6 +648,15 @@ public class F99bTargetContext extends TargetContext {
 		
 		hostContext.define("FIELD,", new FieldComma());
 		hostContext.define("EXITI", new ExitI());
+		
+		hostContext.define("CTX_SP", new HostLiteral(CTX_SP, false));
+		hostContext.define("CTX_SP0", new HostLiteral(CTX_SP0, false));
+		hostContext.define("CTX_RP", new HostLiteral(CTX_RP, false));
+		hostContext.define("CTX_RP0", new HostLiteral(CTX_RP0, false));
+		hostContext.define("CTX_UP", new HostLiteral(CTX_UP, false));
+		hostContext.define("CTX_LP", new HostLiteral(CTX_LP, false));
+		hostContext.define("CTX_PC", new HostLiteral(CTX_PC, false));
+
 	}
 
 	public void compileUser(TargetUserVariable var) {
@@ -656,10 +669,14 @@ public class F99bTargetContext extends TargetContext {
 			compileOpcode(Iuser);
 		}
 	}
-	
-	/* (non-Javadoc)
-	 * @see v9t9.forthcomp.TargetContext#compileCleanupLocals()
-	 */
+
+	/*
+	private int getLocalOffs(int index) {
+		DictEntry entry = ((ITargetWord) getLatest()).getEntry();
+		int offs = entry.getLocalCount() - index;
+		return -offs * 2;
+	}
+
 	@Override
 	public void ensureLocalSupport(HostContext hostContext) throws AbortException {
 		if (lpUser == null) {
@@ -683,9 +700,6 @@ public class F99bTargetContext extends TargetContext {
 		}
 	}
 	
-	/* (non-Javadoc)
-	 * @see v9t9.forthcomp.TargetContext#compileSetupLocals()
-	 */
 	@Override
 	public void compileSetupLocals() throws AbortException {
 
@@ -694,26 +708,23 @@ public class F99bTargetContext extends TargetContext {
 			throw new AbortException("cannot add more locals now");
 		
 		compile((ITargetWord) require("(>LOCALS)"));
-		compileOpcode(ItoR);	// save old LP	
+		compileOpcode(ItoR);	// save old LP
+		
 	}
 
-	/* (non-Javadoc)
-	 * @see v9t9.forthcomp.TargetContext#compileInitLocal(int)
-	 */
+	@Override
+	public void compileCleanupLocals() throws AbortException {
+		DictEntry entry = ((ITargetWord) getLatest()).getEntry();
+		if (entry.hasLocals()) {
+			compile((ITargetWord) require("(LOCALS>)"));
+		}
+	}
+	
 	@Override
 	public void compileInitLocal(int index) throws AbortException {
 		compileOpcode(ItoR);
 	}
 	
-	private int getLocalOffs(int index) {
-		DictEntry entry = ((ITargetWord) getLatest()).getEntry();
-		int offs = entry.getLocalCount() - index;
-		return -offs * 2;
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.forthcomp.TargetContext#compileLocalAddr(int)
-	 */
 	@Override
 	public void compileLocalAddr(int index) {
 		compileUser(lpUser);
@@ -722,33 +733,74 @@ public class F99bTargetContext extends TargetContext {
 		compileOpcode(Iadd);
 	}
 	
-	/* (non-Javadoc)
-	 * @see v9t9.forthcomp.TargetContext#compileLocalAddr(int)
-	 */
-	@Override
-	public void compileFromLocal(int index) throws AbortException {
-		compileLocalAddr(index);
-		compileByte(Iload);
-	}
+	*/
 
-	/* (non-Javadoc)
-	 * @see v9t9.forthcomp.TargetContext#compileToLocal(int)
-	 */
+	
 	@Override
-	public void compileToLocal(int index) throws AbortException {
-		compileLocalAddr(index);
-		compileByte(Istore);
+	public void ensureLocalSupport(HostContext hostContext) throws AbortException {
+		if (!localSupport) {
+			HostContext subContext = new HostContext(this);
+			hostContext.copyTo(subContext);
+			subContext.getStream().push(
+					"false <export\n"+
+					": (>LOCALS) LP@  	RP@ LP! ; \\ caller pushes R> \n" +
+					": (LOCALS>) R>  LP@ RP!   R>  LP!  >R ; \n" +
+					"export>\n");
+			ForthComp comp = new ForthComp(subContext, this);
+			comp.parse();
+			if (comp.getErrors() > 0)
+				throw hostContext.abort("Failed to compile support code");
+			hostContext.copyFrom(subContext);
+			
+			localSupport = true;
+		}
 	}
 	
-	/* (non-Javadoc)
-	 * @see v9t9.forthcomp.TargetContext#compileCleanupLocals()
-	 */
 	@Override
-	public void compileCleanupLocals() throws AbortException {
+	public void compileSetupLocals(HostContext hostContext) throws AbortException {
+
+		DictEntry entry = ((ITargetWord) getLatest()).getEntry();
+		if (entry.hasLocals())
+			throw new AbortException("cannot add more locals now");
+		
+		compile((ITargetWord) require("(>LOCALS)"));
+		compileOpcode(ItoR);
+		
+	}
+
+	@Override
+	public void compileCleanupLocals(HostContext hostContext) throws AbortException {
 		DictEntry entry = ((ITargetWord) getLatest()).getEntry();
 		if (entry.hasLocals()) {
 			compile((ITargetWord) require("(LOCALS>)"));
 		}
+	}
+	
+	@Override
+	public void compileInitLocals(int count) throws AbortException {
+		compileOpcode(Ilalloc);
+		compileChar(count);
+	}
+	
+	@Override
+	public void compileLocalAddr(int index) {
+		compileOpcode(Ilocal);
+		compileChar(index);
+	}
+
+	
+	@Override
+	public void compileFromLocal(int index) throws AbortException {
+		//compileLocalAddr(index);
+		//compileByte(Iload);
+		compileOpcode(Ilpidx);
+		compileChar(index);
+	}
+
+	@Override
+	public void compileToLocal(int index) throws AbortException {
+		compileLocalAddr(index);
+		compileByte(Istore);
 	}
 	
 	/* (non-Javadoc)
@@ -782,12 +834,13 @@ public class F99bTargetContext extends TargetContext {
 
 
 	/**
+	 * @param hostContext TODO
 	 * @throws AbortException 
 	 * 
 	 */
-	public void compileExitI() throws AbortException {
+	public void compileExitI(HostContext hostContext) throws AbortException {
 		if (((ITargetWord) getLatest()).getEntry().hasLocals())
-			compileCleanupLocals();
+			compileCleanupLocals(hostContext);
 
 		compileOpcode(Iexiti);
 	}

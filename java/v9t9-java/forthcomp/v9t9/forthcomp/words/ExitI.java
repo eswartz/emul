@@ -21,9 +21,9 @@ public class ExitI extends BaseStdWord {
 			throws AbortException {
 		hostContext.assertCompiling();
 		if (targetContext instanceof F99TargetContext)
-			((F99TargetContext) targetContext).compileExitI();
+			((F99TargetContext) targetContext).compileExitI(hostContext);
 		else
-			((F99bTargetContext) targetContext).compileExitI();
+			((F99bTargetContext) targetContext).compileExitI(hostContext);
 	}
 
 	/* (non-Javadoc)

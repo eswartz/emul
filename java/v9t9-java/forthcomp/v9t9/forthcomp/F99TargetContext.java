@@ -786,7 +786,7 @@ public class F99TargetContext extends TargetContext {
 	 * @see v9t9.forthcomp.TargetContext#compileSetupLocals()
 	 */
 	@Override
-	public void compileSetupLocals() throws AbortException {
+	public void compileSetupLocals(HostContext hostContext) throws AbortException {
 
 		DictEntry entry = ((ITargetWord) getLatest()).getEntry();
 		if (entry.hasLocals())
@@ -800,8 +800,9 @@ public class F99TargetContext extends TargetContext {
 	 * @see v9t9.forthcomp.TargetContext#compileInitLocal(int)
 	 */
 	@Override
-	public void compileInitLocal(int index) throws AbortException {
-		compileOpcode(ItoR);
+	public void compileInitLocals(int count) throws AbortException {
+		while (count-- > 0)
+			compileOpcode(ItoR);
 	}
 	
 	private int getLocalOffs(int index) {
@@ -843,7 +844,7 @@ public class F99TargetContext extends TargetContext {
 	 * @see v9t9.forthcomp.TargetContext#compileCleanupLocals()
 	 */
 	@Override
-	public void compileCleanupLocals() throws AbortException {
+	public void compileCleanupLocals(HostContext hostContext) throws AbortException {
 		DictEntry entry = ((ITargetWord) getLatest()).getEntry();
 		if (entry.hasLocals()) {
 			compile((ITargetWord) require("(LOCALS>)"));
@@ -871,12 +872,13 @@ public class F99TargetContext extends TargetContext {
 
 
 	/**
+	 * @param hostContext TODO
 	 * @throws AbortException 
 	 * 
 	 */
-	public void compileExitI() throws AbortException {
+	public void compileExitI(HostContext hostContext) throws AbortException {
 		if (((ITargetWord) getLatest()).getEntry().hasLocals())
-			compileCleanupLocals();
+			compileCleanupLocals(hostContext);
 
 		compileOpcode(Iexiti);
 	}

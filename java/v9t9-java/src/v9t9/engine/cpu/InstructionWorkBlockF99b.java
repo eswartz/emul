@@ -11,6 +11,7 @@ public final class InstructionWorkBlockF99b extends BaseInstructionWorkBlock {
     public short sp;
 	public short rp;
 	public short up;
+	public short lp;
 	public boolean showSymbol;
 	
 	public short[] inStack = new short[6];
@@ -25,6 +26,7 @@ public final class InstructionWorkBlockF99b extends BaseInstructionWorkBlock {
     	copy.sp = sp;
     	copy.rp = rp;
     	copy.up = up;
+    	copy.lp = lp;
     	copy.showSymbol = showSymbol;
     	System.arraycopy(inStack, 0, copy.inStack, 0, copy.inStack.length);
     	System.arraycopy(inReturnStack, 0, copy.inReturnStack, 0, copy.inReturnStack.length);
@@ -35,6 +37,9 @@ public final class InstructionWorkBlockF99b extends BaseInstructionWorkBlock {
 	}
 	public short getReturnStackEntry(int i) {
 		return domain.readWord(((CpuStateF99b)cpu).getRP() + i * 2);
+	}
+	public short getLocalStackEntry(int i) {
+		return domain.readWord(((CpuStateF99b)cpu).getLP() - (i + 1) * 2);
 	}
 
 	/**

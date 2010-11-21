@@ -27,7 +27,7 @@ public class ColonColon extends BaseStdWord {
 
 		// set up
 		
-		targetContext.compileSetupLocals();
+		targetContext.compileSetupLocals(hostContext);
 		
 		// now parse locals
 		
@@ -39,24 +39,27 @@ public class ColonColon extends BaseStdWord {
 
 		theWord.getEntry().allocateLocals();
 		
+		boolean hitParen = false;
 		while (true) {
 			String name = hostContext.readToken();
 			if ("--".equals(name)) 
 				break;
-			if (")".equals(name))
-				return;
+			if (")".equals(name)) {
+				hitParen = true;
+				break;
+			}
 
-			int index = theWord.getEntry().defineLocal(name);
+			theWord.getEntry().defineLocal(name);
 			
-			targetContext.compileInitLocal(index);
 		}
+		targetContext.compileInitLocals(theWord.getEntry().getLocalCount());
 		
-		while (true) {
+		while (!hitParen) {
 			String tok = hostContext.readToken();
 			if (tok == null)
 				throw hostContext.abort("expected )");
 			if (")".equals(tok))
-				break;
+				hitParen = true;
 		}
 		
 	}

@@ -28,11 +28,12 @@ public class CpuF99b extends CpuBase {
     public static final int INT_BKPT = 0;
     
     
-	public static final int SP = 0;
-	public static final int RP = 1;
-	public static final int PC = 2;
+    public static final int PC = 0;
+	public static final int SP = 1;
+	public static final int RP = 2;
 	public static final int UP = 3;
-	public static final int SR = 4;
+	public static final int LP = 4;
+	public static final int SR = 5;
 
     /**
 	 * 
