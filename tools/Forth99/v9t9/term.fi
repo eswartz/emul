@@ -49,6 +49,7 @@ ramptr !
 :   xy! ( x y  -- )
     v-y !  v-x !
 ;
+
 export>
 
 :   curs-addr ( -- addr bit )
@@ -71,6 +72,15 @@ export>
     ch>xy drop   
 ;
 
+:   win-chsize ( -- xs ys )
+    v-text c@ if
+        win-sx @ win-sy @
+    else
+        32 ch>xy  
+        win-sy @ swap u/  >r
+        win-sx @ swap u/  r>
+    then
+;
 
 :   advance-row 
     v-y @  32 ch>y  +   
@@ -114,7 +124,7 @@ export>
 
 ::   chfill  ( ch -- )
     home
-    ch ch>xy  v-height @ swap u/ :> rows  v-width @ swap u/ :> cnt
+    win-chsize  :> rows  :> cnt
     rows 0 do
         ch cnt hchar
         advance-row
@@ -131,20 +141,20 @@ export>
     then
 ;
 
-:   vchar ( ch len -- ) 
+::   vchar ( ch len -- ) 
     'v-vchar @  ?dup if
-        >r  xy  r>  execute
+        >r  ch len xy  r>  execute
     else
-        over ch>xy :> ys :> xs
+        ch ch>xy :> ys :> xs
         v-y @ :> origvy
         xy 2>r
-        0 do  
-            dup  (emit) 
+        len 0 do  
+            ch  (emit) 
             v-y @  ys +  win-sy @ umod  dup v-y !  
             origvy = if
                 v-x @ xs +  win-sx @ umod  v-x !
             then   
-        loop  drop
+        loop 
         2r> xy!
     then
 ;

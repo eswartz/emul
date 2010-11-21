@@ -28,6 +28,7 @@ v-data
     +field  v-sprmot       \ VDP addr of sprite motion
     +field  v-free         \ usable space
     
+    +1field v-text         \ set if mode is text-based
     +1field v-mono         \ set if monochrome (colors are global)
     
     +field  v-width        \ units across

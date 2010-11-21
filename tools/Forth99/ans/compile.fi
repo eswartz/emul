@@ -115,7 +115,7 @@ User STATE
 \ \\\\\\\\\\\\\
 
 : per-line
-    win-sx @ 8 - 2 rshift 1- 1 max  aligned
+    win-chsize drop  8 - 2 rshift 1- 1 max  aligned
 ;
 
 : 2u.
