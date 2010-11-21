@@ -1,118 +1,150 @@
 
-cell    RamVar vx
-cell    RamVar vy
+( In the terminal, characters are located by a video-mode-specific
+position in a video-mode-specific window.  I.e. for text modes
+they represent characters, and for graphics modes, they 
+represent pixels.  These are called "units" here.
 
-cell    RamVar win-x
-cell    RamVar win-y
-cell    RamVar win-sx
-cell    RamVar win-sy
+The video mode determines how to advance the cursor based on
+the current font.
+)
 
-: term-refresh
-    v-width @ v-chwidth c@ u/  v-ccols c!
-    v-height @ v-chheight c@ u/  v-crows c!
-;
+0   RamVar  t-data
+
+t-data
+    ( cursor position, in units )
+    +field  v-x             \ cursor x unit
+    +field  v-y             \ cursor y unit
+
+    ( window attributes, in units )
+    +field  win-x
+    +field  win-y
+    +field  win-sx
+    +field  win-sy
+    
+t-data over -  Constant t-data-size
+
+ramptr !
 
 \   Reset terminal from the current mode
 : term-reset
     0 win-x !
     0 win-y !
-    
-    term-refresh
-    
-    v-ccols c@  win-sx  !
-    v-crows c@  win-sy  !
+
+    v-width @   win-sx  !
+    v-height @  win-sy  !
     
     home
 ;
 
+1 <export
 :   home
-    0 vx !
-    0 vy !
+    0 v-x !
+    0 v-y !
 ;
 
-:   xy ( -- vx vy )
-    vx @  vy @
+:   xy ( -- v-x v-y )
+    v-x @  v-y @
 ;
 
 :   xy! ( x y  -- )
-    vy !  vx !
+    v-y !  v-x !
 ;
+export>
 
 :   curs-addr ( -- addr bit )
-    vx @ win-x @ +  
-    vy @ win-y @ +  
+    v-x @ win-x @ +  
+    v-y @ win-y @ +  
     'v-coordaddr @  execute
 ;
 
-:   advance-row
-    0 vx !  1 vy +!  
-    vy @ win-sy @ >= if
-        0 vy !
+:   home-col
+    0 v-x !
+;
+
+:   ch>xy ( ch -- xs ys )
+    'v-chsize @  execute
+;
+:   ch>y ( ch -- ys )
+    ch>xy nip   
+;
+:   ch>x ( ch -- xs )
+    ch>xy drop   
+;
+
+
+:   advance-row 
+    v-y @  32 ch>y  +   
+    dup win-sy @ >= if
+       drop 0
     then
+    v-y !
 ;
 
-:   advance-cursor
-    1 vx +!  
-    vx @ win-sx @ >= if
+:   advance-cursor ( ch -- )
+    ch>x  v-x @  +   
+    dup win-sx @ >= if
+        drop 0
         advance-row 
-    then   
+    then
+    v-x !
 ;
-
 
 :   cursor-off
-    curs-addr v-cursor-off
+    xy v-cursor-off
 ;
 
 :   crlf
-    advance-row 
+    advance-row
+    home-col 
 ;  
 
-:   bksp
-    -1 vx +!
-    vx @ 0< if
-        win-sx @ 1-  vx !
-        -1 vy +!
-        vy @ 0< if
-            win-sy @ 1-  vy !
+:   bksp ( ch -- )
+    ch>xy  negate :> y  negate :> x   
+    x v-x +!
+    v-x @ 0< if
+        win-sx @ x +  v-x !
+        y v-y +!
+        v-y @ 0< if
+            win-sy @ y +  v-y !
         then
     then
 ;
 
 1 <EXPORT
 
-:   chfill  ( ch -- )
+::   chfill  ( ch -- )
     home
-    win-sy @ 0 do
-        dup  win-sx @  hchar
-        advance-row 
+    ch ch>xy  v-height @ swap u/ :> rows  v-width @ swap u/ :> cnt
+    rows 0 do
+        ch cnt hchar
+        advance-row
     loop
-    drop
 ;
 
 :   hchar ( ch len -- ) 
     'v-hchar @  ?dup if
-        >r  curs-addr  r>  execute
+        >r  xy  r>  execute
     else
         xy 2>r
-        0 do  dup  (emit) advance-cursor  loop  drop
+        0 do  dup  (emit) dup  advance-cursor  loop  drop
         2r> xy!
     then
 ;
 
 :   vchar ( ch len -- ) 
     'v-vchar @  ?dup if
-        >r  curs-addr  r>  execute
+        >r  xy  r>  execute
     else
+        over ch>xy :> ys :> xs
+        v-y @ :> origvy
         xy 2>r
-        vy @ >r
         0 do  
             dup  (emit) 
-            vy @  1+  win-sy @  umod  dup vy !  
-            j = if
-                vx @ 1+  win-sx @ umod  vx !
+            v-y @  ys +  win-sy @ umod  dup v-y !  
+            origvy = if
+                v-x @ xs +  win-sx @ umod  v-x !
             then   
         loop  drop
-        rdrop  
         2r> xy!
     then
 ;
@@ -122,8 +154,8 @@ cell    RamVar win-sy
     home
 ;
 
-:   (emit)
-    curs-addr  'v-drawchar @  execute  
+:   (emit)  ( ch -- )
+    xy  'v-drawchar @  execute  
 ;
 
 :   emit    ( ch -- )
@@ -131,11 +163,19 @@ cell    RamVar win-sy
     dup 13 = if
         drop crlf
     else dup 8 = if
-        drop bksp
+        drop 32 bksp
     else
-        (emit) advance-cursor
+        dup  (emit) advance-cursor
     then then 
 ;    target-only
+
+:   getch    ( x y -- ch )
+    'v-readchar @  ?dup if
+        execute
+    else
+        2drop -1
+    then
+;
 
 :   cr  13 emit  ; 
 :   space  32 emit  ;

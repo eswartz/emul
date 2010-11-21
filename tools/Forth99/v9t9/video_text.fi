@@ -1,28 +1,38 @@
 
+: txt-chsize ( ch -- xs ys )
+    drop 1 1 
+;
 
-: txt-coordaddr ( x y -- addr bit )
-    v-ccols c@ *  +
+: txt-chaddr ( x y -- addr )
+    v-width @ U*  +
     v-screen @ + 
-    0
 ;
 
-: txt-waddr ( addr bit -- )
-    drop  !vwaddr  
+: txt-waddr ( x y -- )
+    txt-chaddr !vwaddr
 ;
-: txt-raddr ( addr bit -- )
-    drop  vwaddr  VDPRD c@  
-;
-: txt-drawchar ( ch addr bit -- )
+
+: txt-drawchar ( ch x y -- )
     txt-waddr VDPWD c!
 ;
-: txt-savechar ( addr bit buff -- )
-    >r txt-raddr r>  c!
+: txt-readchar ( x y -- )
+    txt-chaddr vwaddr VDPRD c@
 ;
-: txt-restorechar ( buff addr bit -- )
-    txt-waddr  c@  VDPWD c!
-;
-: txt-drawcursor ( addr bit -- )
-    txt-waddr  [CHAR] _  VDPWD c!
+: txt-blinkcursor ( x y -- )
+    txt-chaddr 
+    
+    $80 v-curs c+!
+    v-curs c@ if  
+        dup vwaddr              \ read char under cursor
+        VDPRD c@  v-curs-under c!
+        
+        !vwaddr
+        [CHAR] _  VDPWD c!      \ draw cursor
+    else
+        !vwaddr
+        v-curs-under c@  
+        VDPWD c!                \ restore char under cursor
+    then
 ;
 
 ( Split a range that wraps around a boundary )
@@ -34,8 +44,8 @@
     start  over  sz - negate
 ;
  
-: txt-hchar ( ch len addr bit -- )
-    drop
+: txt-hchar ( ch len x y -- )
+    txt-chaddr
     rot >r
     v-screen @ v-screensz @  range-wrap
     
@@ -70,10 +80,6 @@
 \ -------------------
 
 : std-setfont   ( addr -- )
-    \ no matter what chars are used, char takes up fixed space on screen
-    v-width @  255 AND 0= if 8 else 6 then  v-chwidth c!   
-    8 v-chheight c!
-    
     v-patts @   $800  gvmove
 ;
 
@@ -81,11 +87,10 @@
 \ -------------------
 
 Create TextFunctions 
-    'v-coordaddr ,       ' txt-coordaddr , 
+    'v-chsize ,          ' txt-chsize ,
     'v-drawchar ,        ' txt-drawchar ,
-    'v-savechar ,        ' txt-savechar , 
-    'v-restorechar ,     ' txt-restorechar ,
-    'v-drawcursor ,      ' txt-drawcursor ,
+    'v-readchar ,        ' txt-readchar ,
+    'v-blinkcursor ,     ' txt-blinkcursor ,
     'v-setfont ,         ' std-setfont ,
     'v-clear ,           ' txt-clear ,
     'v-hchar ,           ' txt-hchar ,
@@ -107,7 +112,7 @@ Create TextModeParams
     v-sprpat    , $0 ,      v-sprmot    , $0 ,
     v-free      , $1000 ,
 
-    v-width     , 240 ,     v-height    , 192 ,
+    v-width     , 40 ,      v-height    , 24 ,
 
     'v-setupmode ,           ' txt-setupmode ,
     'v-updatecolors ,        ' txt-updatecolors ,
@@ -167,7 +172,7 @@ Create GfxModeParams
     v-sprpat    , $0 ,      v-sprmot    , $3A0 ,
     v-free      , $1000 ,
     
-    v-width     , 256 ,     v-height    , 192 ,
+    v-width     , 32 ,      v-height    , 24 ,
     
     'v-setupmode ,           ' gfx-setupmode ,
     'v-updatecolors ,        ' gfx-updatecolors ,
@@ -210,7 +215,7 @@ Create Text2ModeParams
     v-sprpat    , 0 ,       v-sprmot    , 0 , 
     v-free      , $1800 ,
      
-    v-width     , 480 ,     v-height    , 192 ,
+    v-width     , 80 ,      v-height    , 24 ,
     
     'v-setupmode ,           ' txt2-setupmode ,
     'v-updatecolors ,        ' txt-updatecolors ,

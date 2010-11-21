@@ -4,6 +4,9 @@ Create bit-cursor-8
      
 cell    RamVar  bit-cursor
 
+: bit-chsize ( ch -- xs ys )
+    drop  v-fntwidth c@  v-fntheight c@
+;
 
 \   Figure the address and shift for a pixel on the screen
 : bit-pixaddr ( x y -- addr shift )
@@ -18,11 +21,11 @@ cell    RamVar  bit-cursor
     R>
 ;    
 
-: bit-waddr ( addr bit -- )
-    drop  !vwaddr  
+: bit-waddr ( x y -- )
+    bit-pixaddr drop  !vwaddr  
 ;
-: bit-raddr ( addr bit -- )
-    drop  vwaddr  
+: bit-raddr ( x y -- )
+    bit-pixaddr drop  vwaddr  
 ;
 
 
@@ -32,36 +35,54 @@ cell    RamVar  bit-cursor
     768 0 do i  VDPWD c!  loop
 ;
 
-\   Figure the address and shift for a character on the screen
-: bit-coordaddr ( x y -- addr shift )
-    v-chheight c@  u*
-    swap  v-chwidth c@ u*
-    swap  bit-pixaddr
-;    
-
-
-
-: bit-drawchar ( ch addr bit -- )
-    \ simple-stupid version 
-    drop  dup >r
-    swap >v-fontaddr swap  v-chheight c@  gvmove  
+: bit-drawchar ( ch x y -- )
+    \ simple-stupid 8x8 only version 
+    bit-pixaddr drop  :> addr
+    >v-fontaddr  addr v-patts @ +  v-fntheight c@  gvmove  
     
     v-mono c@ 0= if
         color-byte
-        r> v-patts @ - v-colors @ +
-        v-chheight c@  vfill
-    else
-        rdrop
+        addr  v-colors @ +
+        v-fntheight c@  vfill
     then
 ;
-: bit-savechar ( addr bit buff -- )
-    >r bit-raddr r> v-chheight c@  (vmbr)
+
+:: (set-bits) ( bits vaddr baddr -- )
+    vaddr vwaddr  VDPRD c@  
+        dup baddr c!
+    vaddr !vwaddr  
+        bits OR  VDPWD c!
 ;
-: bit-restorechar ( buff addr bit -- )
-    bit-waddr  v-chheight c@  (vmbw)
+: (reset-bits) ( bits vaddr baddr -- )
+    swap  !vwaddr  c@  VDPWD c!  drop
 ;
-: bit-drawcursor ( addr bit -- )
-    bit-waddr  bit-cursor @  v-chheight c@  (vmbw) 
+
+: bit-blinkcursor ( x y -- )
+    bit-pixaddr  :> shift  
+                v-patts @ + :> addr     \ only change patt
+
+    addr vsetbank  addr!
+
+    \ pattern    
+    $c0c0 shift CRSHIFT  :> bits
+    
+    \ based on the cursor mode, we either save + modify or restore the bits under the cursor
+    $80 v-curs c+!
+    v-curs c@ if
+        ['] (set-bits)
+    else
+        ['] (reset-bits)
+    then
+    
+    :> changer
+    
+    v-fntheight c@  0  do
+        bits addr
+        v-curs-under i +  changer execute
+        
+        \ simple-stupid
+        1 'addr +!
+    loop
 ;
 
 : bit-clear ( ch -- )
@@ -81,21 +102,17 @@ cell    RamVar  bit-cursor
 : bit-setfont   ( addr -- )
     drop
     \ TODO: support for non-8-pixel fonts 
-    8 v-chwidth c!
+    8 v-fntwidth c!
     bit-cursor-8  bit-cursor ! 
 ;
 
 
-Create BitFunctions 
-    'v-coordaddr ,       ' bit-coordaddr , 
+Create BitFunctions
+    'v-chsize ,          ' bit-chsize ,
     'v-drawchar ,        ' bit-drawchar ,
-    'v-savechar ,        ' bit-savechar , 
-    'v-restorechar ,     ' bit-restorechar ,
-    'v-drawcursor ,      ' bit-drawcursor ,
+    'v-blinkcursor ,     ' bit-blinkcursor ,
     'v-setfont ,         ' bit-setfont ,
     'v-clear ,           ' bit-clear ,
-    'v-hchar ,           0 ,
-    'v-vchar ,           0 ,
     0 , 
 
 
@@ -133,8 +150,6 @@ Create BitModeParams
     BitModeParams write-var-list
         
     BitModeRegs write-vregs
-    
-    8 v-chheight c!
 ;
 
 
@@ -161,8 +176,6 @@ Create MonoBitModeRegs
     true v-mono c!
         
     MonoBitModeRegs write-vregs
-    
-    8 v-chheight c!
 ;
 
 
@@ -200,8 +213,5 @@ Create Gfx3ModeParams
     BitFunctions write-var-list
     Gfx3ModeParams write-var-list
     Gfx3ModeRegs write-vregs
-    
-    8 v-chheight c!
-    8 v-chwidth c!
 ;
 

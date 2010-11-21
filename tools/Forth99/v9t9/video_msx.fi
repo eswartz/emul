@@ -37,6 +37,10 @@ Create msx-enhregs
     bg c@  dup 4 lshift  OR
 ;
 
+: msx-chsize ( ch -- xs ys )
+    drop  v-fntwidth c@  v-fntheight c@
+;
+
 \   Figure the address and shift for a pixel on the screen
 : msx-pixaddr ( x y -- addr shift )
     msx-stride @ u*  over  msx-shift c@  urshift  +
@@ -46,14 +50,6 @@ Create msx-enhregs
 : msx-setupmode
     msx-enhregs write-vregs
 ;
-
-\   Figure the address and shift for a character on the screen
-: msx-coordaddr ( x y -- x y )
-    v-chheight c@  u*
-    swap  v-chwidth c@ u*
-    swap
-;    
-
 
 \   Setup a MSX command
 : msx-cmdsetup ( num -- )
@@ -103,20 +99,21 @@ Create msx-enhregs
     msx-cmd-word
 ;
 
-: msx-sendcharpixel ( ch bg|fg -- ch )
+: msx-sendcharpixel ( ch bg|fg -- ch' )
     over  $80 and  0=  8 and  urshift  VDPWI c!  1 lshift
 ;
 
 : msx-drawchar ( ch x y -- )
     msx-setup-cursor-DXDY
     
-    v-chwidth c@ 1-     msx-cmd-word
-    v-chheight c@ 1-    msx-cmd-word
+    dup  ch>xy  swap
+    1-    msx-cmd-word
+    1-    msx-cmd-word
     
     >v-fontaddr  gwaddr  
     
     color-word  swpb  :> cw
-    v-chwidth c@ :> width
+    v-fntwidth c@ :> width
     
     \ send first pixel
     GPLRD c@  cw  msx-sendcharpixel  ( send first CLR  -- ch )
@@ -128,7 +125,7 @@ Create msx-enhregs
     \ finish first row
     width 1-  0 do  msx-waittxready  cw msx-sendcharpixel  loop  drop
     
-    v-chheight c@ 1-  0 do
+    v-fntheight c@ 1-  0 do
         GPLRD c@
         width 0 do
             msx-waittxready  cw msx-sendcharpixel
@@ -139,14 +136,24 @@ Create msx-enhregs
     msx-vstatus0    
 ;
 
-: msx-savechar ( addr bit buff -- )
-    2drop drop
-;
-: msx-restorechar ( buff addr bit -- )
-    2drop drop
-;
-: msx-drawcursor ( addr bit -- )
-    2drop  
+\ Blink a cursor in graphics 4-7 modes
+\
+\ Use LMMV to XOR a rectangle in the cursor shape
+\
+: msx-blinkcursor ( x y -- )
+    msx-setup-cursor-DXDY
+    
+    $1  msx-cmd-word                    \ two cols NX
+    v-fntheight c@ 1-  msx-cmd-word     \ font height NY 
+
+    $FF VDPWI c!                \ CLR    
+
+    $00 VDPWI c!                \ ARG (dix=0, diy=0, mxc=0)
+    
+    $83 msx-setupMMMcommand   \ LMMV + EOR
+
+    msx-vstatus0
+    \ no need to wait!
 ;
 
 : msx-clear ( ch -- )
@@ -163,15 +170,11 @@ Create msx-enhregs
 
 
 Create MsxFunctions 
-    'v-coordaddr ,       ' msx-coordaddr , 
+    'v-chsize ,          ' msx-chsize ,
     'v-drawchar ,        ' msx-drawchar ,
-    'v-savechar ,        ' msx-savechar , 
-    'v-restorechar ,     ' msx-restorechar ,
-    'v-drawcursor ,      ' msx-drawcursor ,
+    'v-blinkcursor ,      ' msx-blinkcursor ,
     'v-setfont ,         ' msx-setfont ,
     'v-clear ,           ' msx-clear ,
-    'v-hchar ,           0 ,
-    'v-vchar ,           0 ,
     0 , 
 
 
@@ -208,8 +211,5 @@ Create Gfx4ModeParams
     MsxFunctions write-var-list
     Gfx4ModeParams write-var-list
     Gfx4ModeRegs write-vregs
-
-    8 v-chheight c!
-    8 v-chwidth c!
 ;
 

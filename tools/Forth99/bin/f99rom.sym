@@ -164,9 +164,7 @@
 0A3E v-screen
 0A42 v-size
 0A46 v-patts
-0A4A vx
-0A4E vy
-0A52 v-sx
+0A4A v-x 0A4E v-y 0A52 v-sx
 0A56 win-x
 0A5A win-y
 0A5E win-sx
