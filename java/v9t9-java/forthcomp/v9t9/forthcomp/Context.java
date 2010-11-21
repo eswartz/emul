@@ -38,6 +38,16 @@ public class Context implements IContext {
 		return word;
 	}
 	
+	public void undefine(String string) throws AbortException {
+		IWord word = dictionary.get(string.toLowerCase());
+		if (word != null) {
+			if (word instanceof ITargetWord)
+				throw new AbortException("cannot undefine target words");
+			dictionary.remove(string.toLowerCase());
+		} else {
+			System.out.println("cannot undef unknown word: " + string);
+		}
+	}
 	/**
 	 * @return the latest
 	 */

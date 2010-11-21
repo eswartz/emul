@@ -647,12 +647,6 @@ error" need prim execute"
 ; immediate  target-only
 [THEN]
 
-[IFUNDEF] VARIABLE
-\ : VARIABLE
-\ ;
-[THEN]
-
-
 [IFUNDEF] ABORT"
 : (abort")
     rot if cr ." error: " type cr abort else 2drop then

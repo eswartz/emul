@@ -166,6 +166,19 @@ public class HostContext extends Context {
 			}
 			
 		});
+		define("undef", new BaseWord() {
+			{
+				setInterpretationSemantics(new ISemantics() {
+					
+					public void execute(HostContext hostContext, TargetContext targetContext)
+							throws AbortException {
+						String name = hostContext.readToken();
+						hostContext.undefine(name);
+					}
+				});
+			}
+			
+		});
 		define("include", new Include());
 		
 		define("[if]", new BracketIf());

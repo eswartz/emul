@@ -2,10 +2,10 @@
 cell    RamVar vx
 cell    RamVar vy
 
-0 Value win-x
-0 Value win-y
-0 Value win-sx
-0 Value win-sy
+cell    RamVar win-x
+cell    RamVar win-y
+cell    RamVar win-sx
+cell    RamVar win-sy
 
 : term-refresh
     v-width @ v-chwidth c@ u/  v-ccols c!
@@ -14,13 +14,13 @@ cell    RamVar vy
 
 \   Reset terminal from the current mode
 : term-reset
-    0 to win-x
-    0 to win-y
+    0 win-x !
+    0 win-y !
     
     term-refresh
     
-    v-ccols c@  to win-sx
-    v-crows c@  to win-sy
+    v-ccols c@  win-sx  !
+    v-crows c@  win-sy  !
     
     home
 ;
@@ -39,21 +39,21 @@ cell    RamVar vy
 ;
 
 :   curs-addr ( -- addr bit )
-    vx @ win-x +  
-    vy @ win-y +  
+    vx @ win-x @ +  
+    vy @ win-y @ +  
     'v-coordaddr @  execute
 ;
 
 :   advance-row
     0 vx !  1 vy +!  
-    vy @ win-sy >= if
+    vy @ win-sy @ >= if
         0 vy !
     then
 ;
 
 :   advance-cursor
     1 vx +!  
-    vx @ win-sx >= if
+    vx @ win-sx @ >= if
         advance-row 
     then   
 ;
@@ -70,10 +70,10 @@ cell    RamVar vy
 :   bksp
     -1 vx +!
     vx @ 0< if
-        win-sx 1-  vx !
+        win-sx @ 1-  vx !
         -1 vy +!
         vy @ 0< if
-            win-sy 1-  vy !
+            win-sy @ 1-  vy !
         then
     then
 ;
@@ -82,8 +82,8 @@ cell    RamVar vy
 
 :   chfill  ( ch -- )
     home
-    win-sy 0 do
-        dup  win-sx  hchar
+    win-sy @ 0 do
+        dup  win-sx @  hchar
         advance-row 
     loop
     drop
@@ -107,9 +107,9 @@ cell    RamVar vy
         vy @ >r
         0 do  
             dup  (emit) 
-            vy @  1+  win-sy  umod  dup vy !  
+            vy @  1+  win-sy @  umod  dup vy !  
             j = if
-                vx @ 1+  win-sx  umod  vx !
+                vx @ 1+  win-sx @ umod  vx !
             then   
         loop  drop
         rdrop  

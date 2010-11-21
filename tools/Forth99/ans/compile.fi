@@ -109,13 +109,13 @@ User STATE
     smudge
 
     \ lay down CFA
-    here dovar!
+    dovar,
 ; target-only
 
 \ \\\\\\\\\\\\\
 
 : per-line
-    win-sx 8 - 2 rshift 1- 1 max  aligned
+    win-sx @ 8 - 2 rshift 1- 1 max  aligned
 ;
 
 : 2u.
@@ -236,7 +236,7 @@ User csp
     \ ?exec
     !csp
     create smudge ]
-    lastxt docol!
+    lastxt dp !  docol,
    \ #(:) exec-hook
 ; target-only
 
@@ -554,8 +554,7 @@ test" unloop 3 >r 2 1 do loop r> 3 ="
 
 [IFUNDEF] VARIABLE
 : VARIABLE
-    create 0 ,
-    lastxt dovar!
+    create  0 , 
 ; target-only
 [THEN]
 
@@ -567,7 +566,7 @@ User UDP target-only
 : USER
     create UDP @ 
     2 UDP +!
-    lastxt douser!
+    lastxt dp !  douser,
 ; target-only
 [THEN]
 
@@ -587,7 +586,7 @@ User UDP target-only
     ]
    
     \ CFA
-    here docol,
+    docol,
 
     !csp
 ; target-only

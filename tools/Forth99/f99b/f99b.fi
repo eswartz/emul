@@ -1,19 +1,18 @@
 
 | : docol!  ( cfa -- )
-    drop
+    drop 
 ;
 
 
-| : dovar!  ( cfa -- )
-    IbranchX over c!
-    Idovar swap c!
+| : dovar,  ( -- )
+    IbranchX c,
+    Idovar  c,
 ;
 
 
-| : douser!  ( idx cfa -- )
-    >r
-    over $100 < if  Iupidx r@ c! r> 1+ c!  else
-                    IlitW r@ c! r@ 1+ !  Iuser r> c!  then
+| : douser,  ( idx -- )
+    dup $100 < if  Iupidx c, c,  else
+                    IlitW c,  ,  Iuser c, then
 ;
 
 | : dodoes,  ( -- )
@@ -33,6 +32,7 @@
 
 | : dodefer!    ( cfa -- )
     \ TODO
+    drop
 ;
 
 \ --------------------------------------------

@@ -1,17 +1,8 @@
 
 
-\ variable dp
-\ here    dp !
-
 1 <export
 
 User STATE
-
-
-\ : here dp @ ; 
-\ : , here ! 2 dp +! ; 
-\ : c, here c! 1 dp +! ;
-
 
 : literal ( n -- )  
     dup -8 >= over 8 < and  if
@@ -89,7 +80,4 @@ export>
     ;  
 
 [then]
-
-\ cell   RamVar state
-\ variable state
 

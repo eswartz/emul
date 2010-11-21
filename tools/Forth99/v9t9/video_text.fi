@@ -49,8 +49,8 @@
     
     len 0 do
         offs  v-screen @ +  !vwaddr  ch VDPWD c!
-        offs  win-sx +  dup lim >= if
-            lim -  1+  win-sx  umod  
+        offs  win-sx @ +  dup lim >= if
+            lim -  1+  win-sx @  umod  
         then  
         offs!
     loop
