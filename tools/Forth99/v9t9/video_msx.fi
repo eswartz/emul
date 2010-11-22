@@ -49,14 +49,14 @@ Create msx-enhregs
 ;
     
 : msx-waitcmdready
-    begin
-        VDPST c@  $01 and  0=
-    until
+    0 0 do
+        VDPST c@  $01 and  0= if unloop exit then
+    loop
 ;    
 : msx-waittxready
-    begin
-        VDPST c@  $80 and  
-    until
+    0 0 do
+        VDPST c@  $80 and if unloop exit then  
+    loop 
 ;    
 
 \   Setup an MSX memory move command that expects its work to 
@@ -209,40 +209,43 @@ false Constant msx-use-drawchar-accel
 ;
 
 : msx-drawchar-16 ( ch x y -- )
-    msx-pixaddr drop  vsetbank :> addr
-    
-    >v-fontaddr  gwaddr  
-    
     v-fntwidth c@ :> width
     
-    msx-color-temp :> ct
-    
-    v-fntheight c@  0 do
-        addr !vwaddr
-        GPLRD c@
-        dup 8 lshift OR  
-        width 0 do
-            \ write <fg|bg>|<fg|bg> for two consecutive bits
-            -2 crshift
-            dup  3 and  ct +  c@  VDPWD c!
-        2 +loop
-        drop 
-        msx-stride @  'addr +!
-    loop
+    width 1 and if
+        msx-drawchar-accel
+    else
+        msx-pixaddr drop  vsetbank :> addr
+        
+        >v-fontaddr  gwaddr  
+        
+        
+        msx-color-temp :> ct
+        
+        v-fntheight c@  0 do
+            addr !vwaddr
+            GPLRD c@
+            dup 8 lshift OR  
+            width 0 do
+                \ write <fg|bg>|<fg|bg> for two consecutive bits
+                -2 crshift
+                dup  3 and  ct +  c@  VDPWD c!
+            2 +loop
+            drop 
+            msx-stride @  'addr +!
+        loop
+    then
 ;
 
 
 : msx-drawchar-4 ( ch x y -- )
-    :> y'
+    v-fntwidth c@ :> width
     
-    v-fntwidth c@ 8 = not if
-        y' msx-drawchar-accel  
+    width  8 = not  if
+        msx-drawchar-accel  
     else
-        y' msx-pixaddr  :> sh   vsetbank :> addr
+        msx-pixaddr  :> sh   vsetbank :> addr
         
         >v-fontaddr  gwaddr  
-        
-        v-fntwidth c@ :> width
         
         msx-color-temp :> ct
         
@@ -267,27 +270,32 @@ false Constant msx-use-drawchar-accel
 ;
 
 : msx-drawchar-256 ( ch x y -- )
-    msx-pixaddr drop  vsetbank :> addr
-    
-    >v-fontaddr  gwaddr  
-    
-    v-fntwidth c@ :> width
-    
-    fg c@ :> f
-    bg c@ :> b
-    
-    v-fntheight c@  0 do
-        addr !vwaddr
-        GPLRD c@
-        dup 8 lshift OR  
-        width 0 do
-            \ write one byte
-            -1 crshift
-            dup  1 and  if f else b then  VDPWD c!
+    v-fntheight c@ :> height
+    dup height + 7 and if
+        msx-drawchar-accel
+    else     
+        msx-pixaddr drop  vsetbank :> addr
+        
+        >v-fontaddr  gwaddr  
+        
+        v-fntwidth c@ :> width
+        
+        fg c@ :> f
+        bg c@ :> b
+        
+        v-fntheight c@  0 do
+            addr !vwaddr
+            GPLRD c@
+            dup 8 lshift OR  
+            width 0 do
+                \ write one byte
+                -1 crshift
+                dup  1 and  if f else b then  VDPWD c!
+            loop
+            drop 
+            msx-stride @  'addr +!
         loop
-        drop 
-        msx-stride @  'addr +!
-    loop  
+    then  
 ;
 
 Create MsxFunctions 

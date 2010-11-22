@@ -289,6 +289,11 @@ include video_msx.fi
     6 v-fntwidth c!   8 v-fntheight c!
     (setfont)
 ;
+:   font5x6
+    grom_font5x6 v-font !
+    5 v-fntwidth c!   6 v-fntheight c!
+    (setfont)
+;
 
 EXPORT>
 
