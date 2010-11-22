@@ -363,7 +363,7 @@ Create Gfx6ModeRegs
 Create Gfx6ModeParams
     v-screen    , $0000 ,   v-screensz  , $0 ,
     v-colors    , $0000 ,   v-colorsz   , $0 ,   
-    v-patts     , $0000 ,   v-pattsz    , $6400 ,
+    v-patts     , $0000 ,   v-pattsz    , $D400 ,
     v-sprites   , $D600 ,   v-sprcol    , $D400 ,
     v-sprpat    , $D800 ,   v-sprmot    , $D680 ,
     v-free      , $E000 ,

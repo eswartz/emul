@@ -47,7 +47,7 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
     		reportLoadError(eventNotifier, filename, e);
     	}
     	
-		loadConsoleGrom(eventNotifier, "nforth.grm");
+		loadConsoleGrom(eventNotifier, "forth99.grm");
 		
 	}
 	
