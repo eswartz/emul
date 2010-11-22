@@ -195,7 +195,7 @@ class MemoryMapDialog extends Dialog {
     @Override
     protected void createButtonsForButtonBar(Composite parent) {
         ok_button = createButton(parent, IDialogConstants.OK_ID, "&OK", true);
-        ok_button.setEnabled(cfg != null);
+        ok_button.setEnabled(mem_map_id != null);
     }
 
     @Override
@@ -486,7 +486,7 @@ class MemoryMapDialog extends Dialog {
 
     @Override
     protected void okPressed() {
-        if (cfg == null) return;
+        if (mem_map_id == null) return;
         boolean loaded_files_ok = true;
         for (IMemoryMap.MemoryRegion r : cur_map) {
             if (r.getProperties().get(TCFLaunch.PROP_MMAP_ID) != null) {
