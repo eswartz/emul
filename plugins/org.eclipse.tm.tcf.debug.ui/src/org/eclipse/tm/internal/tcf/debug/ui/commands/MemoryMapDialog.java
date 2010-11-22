@@ -94,7 +94,7 @@ class MemoryMapDialog extends Dialog {
     private IMemory.MemoryContext mem_ctx;
     private ILaunchConfiguration cfg;
     private final HashSet<String> loaded_files = new HashSet<String>();
-    private String ctx_id;
+    private String mem_map_id;
 
     private final IStructuredContentProvider content_provider = new IStructuredContentProvider() {
 
@@ -226,7 +226,7 @@ class MemoryMapDialog extends Dialog {
         ctx_text = new Text(composite, SWT.SINGLE | SWT.BORDER | SWT.READ_ONLY);
         ctx_text.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
         ctx_text.setFont(font);
-        if (ctx_id != null) ctx_text.setText(ctx_id);
+        if (mem_map_id != null) ctx_text.setText(mem_map_id);
     }
 
     private void createMemoryMapTable(Composite parent) {
@@ -314,7 +314,7 @@ class MemoryMapDialog extends Dialog {
                 Map<String,Object> attrs = new HashMap<String,Object>();
                 Image image = ImageCache.getImage(ImageCache.IMG_MEMORY_MAP);
                 if (new MemoryMapItemDialog(getShell(), image, attrs, true).open() == OK) {
-                    if (ctx_id != null) attrs.put(TCFLaunch.PROP_MMAP_ID, ctx_id);
+                    if (mem_map_id != null) attrs.put(TCFLaunch.PROP_MMAP_ID, mem_map_id);
                     IMemoryMap.MemoryRegion[] arr = new IMemoryMap.MemoryRegion[cur_map.length + 1];
                     System.arraycopy(cur_map, 0, arr, 0, cur_map.length);
                     TCFMemoryRegion r = new TCFMemoryRegion(attrs);
@@ -387,9 +387,51 @@ class MemoryMapDialog extends Dialog {
         update_map_buttons.run();
     }
 
+    @SuppressWarnings("unchecked")
+    private void readMemoryMapAttribute(ArrayList<IMemoryMap.MemoryRegion> lst, boolean own) throws Exception {
+        final String map = cfg.getAttribute(TCFLaunchDelegate.ATTR_MEMORY_MAP, "");
+        if (map.length() == 0) return;
+        Collection<Object> c = new TCFTask<Collection<Object>>() {
+            public void run() {
+                try {
+                    done((Collection<Object>)JSON.parseOne(map.getBytes("UTF-8")));
+                }
+                catch (IOException e) {
+                    error(e);
+                }
+            }
+        }.getIO();
+        if (c == null) return;
+        for (Object x : c) {
+            Map<String,Object> props = (Map<String,Object>)x;
+            if (mem_map_id.equals(props.get(TCFLaunch.PROP_MMAP_ID)) != own) continue;
+            lst.add(new TCFMemoryRegion(props));
+        }
+    }
+
+    private void writeMemoryMapAttribute(final ArrayList<IMemoryMap.MemoryRegion> lst) throws Exception {
+        // TODO: cleanup unused maps that accumulate in ATTR_MEMORY_MAP
+        String s = null;
+        if (lst.size() > 0) {
+            s = new TCFTask<String>() {
+                public void run() {
+                    try {
+                        done(JSON.toJSON(lst));
+                    }
+                    catch (IOException e) {
+                        error(e);
+                    }
+                }
+            }.getIO();
+        }
+        ILaunchConfigurationWorkingCopy copy = cfg.getWorkingCopy();
+        copy.setAttribute(TCFLaunchDelegate.ATTR_MEMORY_MAP, s);
+        copy.doSave();
+    }
+
     private void loadData() {
-        cur_map = new TCFTask<IMemoryMap.MemoryRegion[]>(channel) {
-            @SuppressWarnings("unchecked")
+        final ArrayList<IMemoryMap.MemoryRegion> lst = new ArrayList<IMemoryMap.MemoryRegion>();
+        mem_map_id = new TCFTask<String>(channel) {
             public void run() {
                 TCFDataCache<TCFNodeExecContext> mem_cache = model.searchMemoryContext(selection);
                 if (!mem_cache.validate(this)) return;
@@ -398,8 +440,6 @@ class MemoryMapDialog extends Dialog {
                     return;
                 }
                 node = mem_cache.getData();
-                mem_ctx = node.getMemoryContext().getData();
-                ArrayList<IMemoryMap.MemoryRegion> lst = new ArrayList<IMemoryMap.MemoryRegion>();
                 if (node != null) {
                     TCFDataCache<TCFNodeExecContext.MemoryRegion[]> dc = node.getMemoryMap();
                     if (!dc.validate(this)) return;
@@ -420,32 +460,25 @@ class MemoryMapDialog extends Dialog {
                         }
                     }
                 }
+                mem_ctx = node.getMemoryContext().getData();
+                String id = null;
                 if (mem_ctx != null) {
-                    ctx_id = mem_ctx.getName();
-                    if (ctx_id == null) ctx_id = mem_ctx.getID();
-                    if (ctx_id != null) {
-                        try {
-                            cfg = model.getLaunch().getLaunchConfiguration();
-                            String map = cfg.getAttribute(TCFLaunchDelegate.ATTR_MEMORY_MAP, "");
-                            if (map.length() > 0) {
-                                Object o = JSON.parseOne(map.getBytes("UTF-8"));
-                                if (o != null) {
-                                    for (Object x : (Collection<Object>)o) {
-                                        Map<String,Object> props = (Map<String,Object>)x;
-                                        if (!ctx_id.equals(props.get(TCFLaunch.PROP_MMAP_ID))) continue;
-                                        lst.add(new TCFMemoryRegion(props));
-                                    }
-                                }
-                            }
-                        }
-                        catch (Throwable x) {
-                            Activator.log("Invalid launch cofiguration attribute", x);
-                        }
-                    }
+                    id = mem_ctx.getName();
+                    if (id == null) id = mem_ctx.getID();
                 }
-                done(lst.toArray(new IMemoryMap.MemoryRegion[lst.size()]));
+                done(id);
             }
         }.getE();
+        cfg = model.getLaunch().getLaunchConfiguration();
+        if (mem_map_id != null) {
+            try {
+                readMemoryMapAttribute(lst, true);
+            }
+            catch (Throwable x) {
+                Activator.log("Invalid launch cofiguration attribute", x);
+            }
+        }
+        cur_map = lst.toArray(new IMemoryMap.MemoryRegion[lst.size()]);
         Arrays.sort(cur_map);
         org_map = new IMemoryMap.MemoryRegion[cur_map.length];
         System.arraycopy(cur_map, 0, org_map, 0, cur_map.length);
@@ -453,7 +486,6 @@ class MemoryMapDialog extends Dialog {
 
     @Override
     protected void okPressed() {
-        // TODO: cleanup unused maps that accumulate in ATTR_MEMORY_MAP
         if (cfg == null) return;
         boolean loaded_files_ok = true;
         for (IMemoryMap.MemoryRegion r : cur_map) {
@@ -468,26 +500,12 @@ class MemoryMapDialog extends Dialog {
                 for (IMemoryMap.MemoryRegion r : cur_map) {
                     if (r.getProperties().get(TCFLaunch.PROP_MMAP_ID) != null) lst.add(r);
                 }
-                String s = null;
-                if (lst.size() > 0) {
-                    s = new TCFTask<String>() {
-                        public void run() {
-                            try {
-                                done(JSON.toJSON(lst));
-                            }
-                            catch (IOException e) {
-                                error(e);
-                            }
-                        }
-                    }.getIO();
-                }
-                ILaunchConfigurationWorkingCopy copy = cfg.getWorkingCopy();
-                copy.setAttribute(TCFLaunchDelegate.ATTR_MEMORY_MAP, s);
-                copy.doSave();
+                readMemoryMapAttribute(lst, false);
+                writeMemoryMapAttribute(lst);
             }
             catch (Throwable x) {
                 MessageBox mb = new MessageBox(getShell(), SWT.ICON_ERROR | SWT.OK);
-                mb.setText("Cannot update target memory map");
+                mb.setText("Cannot update memory map");
                 mb.setMessage(TCFModel.getErrorMessage(x, true));
                 mb.open();
                 return;
