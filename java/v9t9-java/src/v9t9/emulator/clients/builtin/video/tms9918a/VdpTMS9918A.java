@@ -188,7 +188,7 @@ public class VdpTMS9918A implements VdpHandler {
     	byte old = vdpregs[reg];
     	vdpregs[reg] = val;
     	
-    	if (settingDumpVdpAccess.getBoolean())
+    	if (Executor.settingDumpFullInstructions.getBoolean() && settingDumpVdpAccess.getBoolean())
     		log("register " + reg + " " + HexUtils.toHex2(old) + " -> " + HexUtils.toHex2(val));
     	
     	int         redraw = doWriteVdpReg(reg, old, val);
@@ -671,26 +671,29 @@ public class VdpTMS9918A implements VdpHandler {
 			if (vdpInterruptDelta >= 65536) {
 		
 				vdpInterruptDelta -= 65536;
-				doTick();
-        		if (Machine.settingThrottleInterrupts.getBoolean()) {
-        			if (throttleCount-- < 0) {
-        				throttleCount = 6;
-        			} else {
-        				return;
-        			}
-        		}
-        		
-        		// a real interrupt only occurs if wanted
-        		if ((readVdpReg(1) & VdpTMS9918A.R1_INT) != 0) {
-        			if ((vdpStatus & VDP_INTERRUPT) == 0) {
-        				vdpStatus |= VDP_INTERRUPT;
-        				machine.getExecutor().nVdpInterrupts++;
-        			}
-        			
-        			CruAccess cru = machine.getCpu().getCruAccess();
-					if (cru instanceof BaseCruAccess)
-        				cru.triggerInterrupt(((BaseCruAccess) cru).intVdp);
-        		}
+				
+				if (machine.getExecutor().nVdpInterrupts < settingVdpInterruptRate.getInt()) {
+					doTick();
+	        		if (Machine.settingThrottleInterrupts.getBoolean()) {
+	        			if (throttleCount-- < 0) {
+	        				throttleCount = 6;
+	        			} else {
+	        				return;
+	        			}
+	        		}
+	        		
+	        		// a real interrupt only occurs if wanted
+	        		if ((readVdpReg(1) & VdpTMS9918A.R1_INT) != 0) {
+	        			if ((vdpStatus & VDP_INTERRUPT) == 0) {
+	        				vdpStatus |= VDP_INTERRUPT;
+	        				machine.getExecutor().nVdpInterrupts++;
+	        			}
+	        			
+	        			CruAccess cru = machine.getCpu().getCruAccess();
+						if (cru instanceof BaseCruAccess)
+	        				cru.triggerInterrupt(((BaseCruAccess) cru).intVdp);
+	        		}
+				}
         		//System.out.print('!');
 			}
 		}

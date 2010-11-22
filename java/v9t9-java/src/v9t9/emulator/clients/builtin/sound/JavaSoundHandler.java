@@ -60,10 +60,13 @@ public class JavaSoundHandler implements SoundHandler {
 			return true;
 		}
 		
-		public void generate(float[] soundGeneratorWorkBuffer, int from, int to) {
+		public boolean generate(float[] soundGeneratorWorkBuffer, int from, int to) {
+			if (sample == 0)
+				return false;
 			float delta = sample / 32768.f;
 			while (from < to)
 				soundGeneratorWorkBuffer[from++] += delta;
+			return true;
 		}
 		
 		public void setSample(short sample) {

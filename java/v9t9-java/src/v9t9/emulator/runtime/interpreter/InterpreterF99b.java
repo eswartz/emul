@@ -3,6 +3,7 @@ package v9t9.emulator.runtime.interpreter;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.TreeMap;
 
@@ -22,6 +23,7 @@ import v9t9.engine.cpu.MachineOperandF99b;
 import v9t9.engine.cpu.StatusF99b;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
+import v9t9.engine.memory.MemoryListener;
 import v9t9.engine.memory.MemoryDomain.MemoryWriteListener;
 import v9t9.forthcomp.AbortException;
 import v9t9.forthcomp.F99bTargetContext;
@@ -44,8 +46,10 @@ public class InterpreterF99b implements Interpreter {
 
 	private CpuF99b cpu;
 
-	private TreeMap<Integer, InstructionF99b> cachedInstrs = new TreeMap<Integer, InstructionF99b>();
-	private MemoryWriteListener memoryListener;
+	//private TreeMap<Integer, InstructionF99b> cachedInstrs = new TreeMap<Integer, InstructionF99b>();
+	private InstructionF99b[] cachedInstrs = new InstructionF99b[65536];
+	private int cachedInstrCount;
+	private MemoryWriteListener memoryWriteListener;
 
 	private BitSet instrMap;
 
@@ -62,20 +66,21 @@ public class InterpreterF99b implements Interpreter {
         
         instrMap = new BitSet();
         
-        memoryListener = new MemoryWriteListener() {
+        memoryWriteListener = new MemoryWriteListener() {
 			
 			@Override
 			public void changed(MemoryEntry entry, int addr, boolean isByte) {
 				invalidateInstructionCache(addr);
 			}
 		};
-		memory.addWriteListener(memoryListener);
+		memory.addWriteListener(memoryWriteListener);
      }
 
-    public void dispose() {
-    	cachedInstrs.clear();
+	public void dispose() {
+    	Arrays.fill(cachedInstrs, 0);
+    	cachedInstrCount = 0;
     	instrMap.clear();
-    	memory.removeWriteListener(memoryListener);
+    	memory.removeWriteListener(memoryWriteListener);
     }
     /* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.interpreter.Interpreter#execute(java.lang.Short)
@@ -171,7 +176,7 @@ public class InterpreterF99b implements Interpreter {
 	 * 
 	 */
 	private void refreshCache() {
-		if (cachedInstrs.isEmpty()) {
+		if (cachedInstrCount == 0) {
 			instrMap.clear();
 			return;
 		}
@@ -183,7 +188,11 @@ public class InterpreterF99b implements Interpreter {
 	 * @param addr
 	 */
 	private void invalidateInstructionCache(int addr) {
-		if (cachedInstrs.isEmpty())
+		if (cachedInstrCount == 0)
+			return;
+		
+		// if ROM, no worries
+		if (!memory.getEntryAt(addr).hasWriteAccess())
 			return;
 		
 		// first, see if the map shows that any known instruction
@@ -203,11 +212,12 @@ public class InterpreterF99b implements Interpreter {
 	}
 
 	private boolean doInvalidateInstructionCache(int addr, int target) {
-		InstructionF99b cached = cachedInstrs.get(addr);
+		InstructionF99b cached = cachedInstrs[addr];
 		if (cached != null) {
 			int maxAddr = cached.pc + cached.getSize();
 			if (addr <= target && maxAddr > target) {
-				cachedInstrs.remove(addr);
+				cachedInstrs[addr] = null;
+				cachedInstrCount--;
 				refreshCache();
 				return true;
 			}
@@ -218,10 +228,11 @@ public class InterpreterF99b implements Interpreter {
 
 	private InstructionF99b getInstruction() {
 		int pc = cpu.getPC() & 0xffff;
-		InstructionF99b inst = cachedInstrs.get(pc);
+		InstructionF99b inst = cachedInstrs[pc];
 		if (inst == null) {
 			inst = (InstructionF99b) instructionFactory.decodeInstruction(pc, memory);
-			cachedInstrs.put(pc, inst);
+			cachedInstrs[pc] = inst;
+			cachedInstrCount++;
 			instrMap.set(pc, pc + inst.getSize());
 			//System.out.println(HexUtils.toHex4(pc)+": " + inst+": " + inst.getSize());
 			refreshCache();

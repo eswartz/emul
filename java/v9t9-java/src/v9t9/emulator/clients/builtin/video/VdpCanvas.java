@@ -267,8 +267,10 @@ public abstract class VdpCanvas {
 	}
 	
 	/** Get the 8-bit RGB values from a packed 3-3-2 GRB byte */
-	public byte[] getGRB332(byte grb) {
-		return new byte[] { rgb3to8[(grb >> 2) & 0x7], rgb3to8[(grb >> 5) & 0x7], rgb2to8[grb & 0x3] };
+	public void getGRB332(byte[] rgb, byte grb) {
+		rgb[0] = rgb3to8[(grb >> 2) & 0x7];
+		rgb[1] = rgb3to8[(grb >> 5) & 0x7];
+		rgb[2] = rgb2to8[grb & 0x3];
 	}
 	public byte[] getStockRGB(int i) {
 		return stockPalette[i];

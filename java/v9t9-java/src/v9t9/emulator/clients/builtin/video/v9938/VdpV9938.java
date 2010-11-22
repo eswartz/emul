@@ -11,6 +11,7 @@ import v9t9.emulator.clients.builtin.video.VdpModeInfo;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.memory.mmio.Vdp9938Mmio;
+import v9t9.emulator.runtime.cpu.Executor;
 import v9t9.engine.memory.BankedMemoryEntry;
 
 /**
@@ -573,7 +574,9 @@ public class VdpV9938 extends VdpTMS9918A {
 			vdpCanvas.clearToEvenOddClearColors();
 		} else if (modeNumber == MODE_GRAPHICS7) {
 			// an GRB 332 value is here
-			vdpCanvas.clear(vdpCanvas.getGRB332(vdpregs[7]));
+			byte[] rgb = { 0, 0, 0 };
+			vdpCanvas.getGRB332(rgb, vdpregs[7]);
+			vdpCanvas.clear(rgb);
 		} else {
 			super.setupBackdrop();
 		}
@@ -814,7 +817,7 @@ public class VdpV9938 extends VdpTMS9918A {
 			statusvec[2] &= ~S2_CE;
 			cmdState.cmd = 0;
 			cmdState.isDataMoveCommand = false;
-			if (settingDumpVdpAccess.getBoolean())
+			if (Executor.settingDumpFullInstructions.getBoolean() && settingDumpVdpAccess.getBoolean())
 				log("MSX command done");
 		}
 	}
@@ -836,7 +839,7 @@ public class VdpV9938 extends VdpTMS9918A {
 			// in line mode, X/Y are biased into 16:16
 			int maj = readMaj();
 			int min = readMin();
-			if (settingDumpVdpAccess.getBoolean())
+			if (Executor.settingDumpFullInstructions.getBoolean() && settingDumpVdpAccess.getBoolean())
 				log("Line: x="+cmdState.dx+",y="+cmdState.dy+",dix="+cmdState.dix+",diy="+cmdState.diy
 						+",maj="+maj+",min="+min+",axis="+(vdpregs[45]&R45_MAJ));
 			int frac = maj != 0 ? min * 0x10000 / maj : 0;
@@ -886,7 +889,7 @@ public class VdpV9938 extends VdpTMS9918A {
 		// all clear
 		statusvec[2] = 0;
 		
-		if (settingDumpVdpAccess.getBoolean())
+		if (Executor.settingDumpFullInstructions.getBoolean() && settingDumpVdpAccess.getBoolean())
 			log("MSX command " + HexUtils.toHex2(cmdState.cmd)
 					+ " arg=" + HexUtils.toHex2(cmdState.arg) 
 					+ " op=" + HexUtils.toHex2(cmdState.op)

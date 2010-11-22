@@ -41,9 +41,10 @@ public class NoiseGeneratorVoice extends ClockedSoundVoice
 		dump();
 	}
 
-	public void generate(float[] soundGeneratorWorkBuffer, int from,
+	public boolean generate(float[] soundGeneratorWorkBuffer, int from,
 			int to) {
 		int ratio = 128 + balance;
+		boolean any = false;
 		while (from < to) {
 			updateEffect();
 			
@@ -52,42 +53,46 @@ public class NoiseGeneratorVoice extends ClockedSoundVoice
 			float sampleR = 0;
 			
 			sampleMagnitude = getCurrentMagnitude();
-			sampleL = ((256 - ratio) * sampleMagnitude) / 256.f;
-			sampleR = (ratio * sampleMagnitude) / 256.f;
-			updateAccumulator();
-			
-			if (isWhite) {
-				if ((ns1 & 1) != 0 ) {
-					soundGeneratorWorkBuffer[from] += sampleL;
-					soundGeneratorWorkBuffer[from+1] += sampleR;
-				}
+			if (sampleMagnitude != 0.0f) {
+				any = true;
+				sampleL = ((256 - ratio) * sampleMagnitude) / 256.f;
+				sampleR = (ratio * sampleMagnitude) / 256.f;
+				updateAccumulator();
 				
-				// thanks to John Kortink (http://web.inter.nl.net/users/J.Kortink/home/articles/sn76489/)
-				// for the exact algorithm here!
-				while (accum >= soundClock) {
-					short rx = (short) ((ns1 ^ ((ns1 >>> 1) & 0x7fff) ));
-					rx = (short) (0x4000 & (rx << 14));
-					ns1 = (short) (rx | ((ns1 >>> 1) & 0x7fff) );
-					accum -= soundClock;
-				}
-			} else {
-				// For periodic noise, the generator is "on" 1/15 of the time.
-				// The clock is the hertz / 15.
-				
-				if (ns1 <= 1) {
-					soundGeneratorWorkBuffer[from] -= sampleL * 2;
-					soundGeneratorWorkBuffer[from+1] -= sampleR * 2;
-					ns1 = (short) 0x8000;
-				}
-				if (accum >= soundClock) {
-					ns1 = (short) ((ns1 >>> 1) & 0x7fff);
-					while (accum >= soundClock) 
+				if (isWhite) {
+					if ((ns1 & 1) != 0 ) {
+						soundGeneratorWorkBuffer[from] += sampleL;
+						soundGeneratorWorkBuffer[from+1] += sampleR;
+					}
+					
+					// thanks to John Kortink (http://web.inter.nl.net/users/J.Kortink/home/articles/sn76489/)
+					// for the exact algorithm here!
+					while (accum >= soundClock) {
+						short rx = (short) ((ns1 ^ ((ns1 >>> 1) & 0x7fff) ));
+						rx = (short) (0x4000 & (rx << 14));
+						ns1 = (short) (rx | ((ns1 >>> 1) & 0x7fff) );
 						accum -= soundClock;
+					}
+				} else {
+					// For periodic noise, the generator is "on" 1/15 of the time.
+					// The clock is the hertz / 15.
+					
+					if (ns1 <= 1) {
+						soundGeneratorWorkBuffer[from] -= sampleL * 2;
+						soundGeneratorWorkBuffer[from+1] -= sampleR * 2;
+						ns1 = (short) 0x8000;
+					}
+					if (accum >= soundClock) {
+						ns1 = (short) ((ns1 >>> 1) & 0x7fff);
+						while (accum >= soundClock) 
+							accum -= soundClock;
+					}
 				}
 			}
 			
 			from += 2;
 		}
+		return any;
 	}
 	
 	@Override

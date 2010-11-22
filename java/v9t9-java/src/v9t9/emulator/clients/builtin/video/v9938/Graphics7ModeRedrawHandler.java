@@ -42,6 +42,8 @@ public class Graphics7ModeRedrawHandler extends PackedBitmapGraphicsModeRedrawHa
 
 	/** Backdrop isn't a normal color */
 	public void clear() {
-		vdpCanvas.clear(vdpCanvas.getGRB332((byte) vdpCanvas.getClearColor()));
+		byte [] rgb = { 0, 0, 0 };
+		vdpCanvas.getGRB332(rgb, (byte) vdpCanvas.getClearColor());
+		vdpCanvas.clear(rgb);
 	}
 }

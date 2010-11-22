@@ -255,6 +255,7 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 	public void draw8x8BitmapRGB332ColorBlock(int offs,
 			ByteMemoryAccess access, int rowstride) {
 		int lineStride = getLineStride();
+		byte[] rgb = { 0, 0, 0 };
 		//int offs = getBitmapOffset(offset, r);
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 8; j++) {
@@ -262,7 +263,7 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 				
 				mem = access.memory[access.offset + j];
 
-				byte[] rgb = getGRB332(mem);
+				getGRB332(rgb, mem);
 				imageData.data[offs] = rgb[0];
 				imageData.data[offs + 1] = rgb[1];
 				imageData.data[offs + 2] = rgb[2];

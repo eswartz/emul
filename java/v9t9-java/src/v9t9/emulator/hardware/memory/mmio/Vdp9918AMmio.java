@@ -10,6 +10,7 @@ import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.hardware.memory.VdpRamArea;
+import v9t9.emulator.runtime.cpu.Executor;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
@@ -102,7 +103,9 @@ public class Vdp9918AMmio extends VdpMmio {
 		//byte oldval = videoMemory.flatReadByte(vdpaddr);
 		videoMemory.writeByte(vdpaddr, val);
 		
-		if ((vdpaddr & 0xf) == 0 && VdpTMS9918A.settingDumpVdpAccess.getBoolean()) {
+		if ((vdpaddr & 0xf) == 0 
+				&& Executor.settingDumpFullInstructions.getBoolean()
+				&& VdpTMS9918A.settingDumpVdpAccess.getBoolean()) {
 			VdpTMS9918A.log("Address: " + HexUtils.toHex4(vdpaddr));
 		}
 		
@@ -129,7 +132,8 @@ public class Vdp9918AMmio extends VdpMmio {
 			vdpaddr = (vdpaddr & 0xff00) | (val & 0xff);
 		}
 		if ((vdpaddrflag = !vdpaddrflag) == false) {
-			if (VdpTMS9918A.settingDumpVdpAccess.getBoolean()) {
+			if (Executor.settingDumpFullInstructions.getBoolean()
+					&& VdpTMS9918A.settingDumpVdpAccess.getBoolean()) {
 				VdpTMS9918A.log("Address: " + HexUtils.toHex4(vdpaddr));
 			}
 			if ((vdpaddr & 0x8000) != 0) {

@@ -134,10 +134,10 @@ public class Executor {
         Cpu.settingRealTime.addListener(new IPropertyListener() {
 
 			public void propertyChanged(IProperty setting) {
-				synchronized (lock) {
-					interruptExecution = Boolean.TRUE;
-					lock.notifyAll();
-				}
+				interruptExecution = Boolean.TRUE;
+				//synchronized (lock) {
+				//	lock.notifyAll();
+				// }
 			}
         	
         });
@@ -165,8 +165,8 @@ public class Executor {
      * @throws AbortedException when interrupt or other machine event stops execution
      */
     public void execute() {
-    	if (cpu.isIdle()) {
-    		if (Cpu.settingRealTime.getBoolean() && cpu.isThrottled())
+    	if (cpu.isIdle() && Cpu.settingRealTime.getBoolean()) {
+    		if (cpu.isThrottled())
     			return;
     		long start = System.currentTimeMillis();
     		try {

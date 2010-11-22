@@ -58,9 +58,10 @@ public class ToneGeneratorVoice extends ClockedSoundVoice
 		return sample;
 	}*/
 	
-	public void generate(float[] soundGeneratorWorkBuffer, int from,
+	public boolean generate(float[] soundGeneratorWorkBuffer, int from,
 			int to) {
 		int ratio = 128 + balance;
+		boolean any = false;
 		while (from < to) {
 			updateEffect();
 			updateAccumulator();
@@ -72,25 +73,29 @@ public class ToneGeneratorVoice extends ClockedSoundVoice
 			}
 			
 			float sampleMagnitude = getCurrentMagnitude();
-			
-			float sampleL = ((256 - ratio) * sampleMagnitude) / 256.f;
-			float sampleR = (ratio * sampleMagnitude) / 256.f;
-			
-			soundGeneratorWorkBuffer[from++] += sampleL;
-			soundGeneratorWorkBuffer[from++] += sampleR;
-			
-			/*
-			if (!out) {
+			if (sampleMagnitude != 0.0f) {
+				any = true;
+				float sampleL = ((256 - ratio) * sampleMagnitude) / 256.f;
+				float sampleR = (ratio * sampleMagnitude) / 256.f;
+				
 				soundGeneratorWorkBuffer[from++] += sampleL;
 				soundGeneratorWorkBuffer[from++] += sampleR;
+				
+				/*
+				if (!out) {
+					soundGeneratorWorkBuffer[from++] += sampleL;
+					soundGeneratorWorkBuffer[from++] += sampleR;
+				} else {
+					soundGeneratorWorkBuffer[from++] -= sampleL;
+					soundGeneratorWorkBuffer[from++] -= sampleR;
+				}
+				*/
 			} else {
-				soundGeneratorWorkBuffer[from++] -= sampleL;
-				soundGeneratorWorkBuffer[from++] -= sampleR;
+				from += 2;
 			}
-			*/
-			
 			
 		}
+		return any;
 	}
 	
 	@Override

@@ -185,8 +185,6 @@ public class CpuF99b extends CpuBase {
         	
             System.out.println("**** NMI ****");
 
-            idle = false;
-            
             triggerInterrupt(INT_NMI);
         } else if ((pins & PIN_RESET) != 0) {
         	pins &= ~PIN_RESET;
@@ -200,9 +198,6 @@ public class CpuF99b extends CpuBase {
         	pins &= ~PIN_INTREQ;
         	
         	//System.out.print('=' + ic);
-            
-            idle = false;
-            
 
         	triggerInterrupt(ic);
             
@@ -379,6 +374,7 @@ public class CpuF99b extends CpuBase {
 	 * @param intr
 	 */
 	public void triggerInterrupt(int intr) {
+		idle = false;
 		rpush(((StatusF99b)getStatus()).flatten());
 		((StatusF99b)getStatus()).setIntMask(0);
 		short addr = getIntVecAddr(intr);

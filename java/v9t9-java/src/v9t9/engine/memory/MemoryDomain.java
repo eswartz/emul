@@ -64,7 +64,7 @@ public class MemoryDomain implements MemoryAccess, IPersistable {
     
     
     private MemoryAccessListener accessListener = nullMemoryAccessListener;
-    private List<MemoryWriteListener> writeListeners = null;
+    private MemoryWriteListener[] writeListeners = null;
     
     private MemoryEntry entries[] = new MemoryEntry[NUMAREAS];
     
@@ -238,21 +238,21 @@ public class MemoryDomain implements MemoryAccess, IPersistable {
 	public synchronized void addWriteListener(MemoryWriteListener listener) {
 		List<MemoryWriteListener> newListeners = new ArrayList<MemoryWriteListener>();
 		if (writeListeners != null)
-			newListeners.addAll(writeListeners);
+			newListeners.addAll(Arrays.asList(writeListeners));
 		if (!newListeners.contains(listener))
 			newListeners.add(listener);
-		writeListeners = newListeners;
+		writeListeners = newListeners.toArray(new MemoryWriteListener[newListeners.size()]);
 	}
 	public synchronized void removeWriteListener(MemoryWriteListener listener) {
 		if (writeListeners == null)
 			return;
 		List<MemoryWriteListener> newListeners = new ArrayList<MemoryWriteListener>();
-		newListeners.addAll(writeListeners);
+		newListeners.addAll(Arrays.asList(writeListeners));
 		newListeners.remove(listener);
 		if (newListeners.size() == 0)
 			writeListeners = null;
 		else
-			writeListeners = newListeners;
+			writeListeners = newListeners.toArray(new MemoryWriteListener[newListeners.size()]);
 	}
 	
 	public int getLatency(int addr) {

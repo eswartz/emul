@@ -39,12 +39,15 @@ public class AudioGateVoice extends SoundVoice {
 		return sample;
 	}*/
 	
-	public void generate(float[] soundGeneratorWorkBuffer, int from,
+	public boolean generate(float[] soundGeneratorWorkBuffer, int from,
 			int to) {
 		float sampleDelta = getCurrentMagnitude();
+		if (sampleDelta == 0.0)
+			return false;
 		while (from < to) {
 			soundGeneratorWorkBuffer[from++] += sampleDelta;
 		}
+		return true;
 	}
 	
 	@Override

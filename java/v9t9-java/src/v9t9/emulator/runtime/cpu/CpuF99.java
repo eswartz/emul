@@ -189,9 +189,6 @@ public class CpuF99 extends CpuBase {
         } else if ((pins & PIN_RESET) != 0) {
         	pins &= ~PIN_RESET;
             System.out.println("**** RESET ****");
-            
-            idle = false;
-            
 
             triggerInterrupt(INT_RESET);
             
@@ -201,9 +198,6 @@ public class CpuF99 extends CpuBase {
         	pins &= ~PIN_INTREQ;
         	
         	//System.out.print('=');
-            
-            idle = false;
-            
 
         	triggerInterrupt(ic);
             
@@ -380,6 +374,7 @@ public class CpuF99 extends CpuBase {
 	 * @param intr
 	 */
 	public void triggerInterrupt(int intr) {
+		idle = false;
 		rpush(((StatusF99)getStatus()).flatten());
 		((StatusF99)getStatus()).setIntMask(0);
 		short addr = getIntVecAddr(intr);
