@@ -36,3 +36,6 @@
     u u' -  \ length is answer
 ;
 
+:: align-to ( val scale -- val' )
+    val scale  u/mod  nip scale u*    
+;

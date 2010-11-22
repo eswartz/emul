@@ -276,11 +276,17 @@ include video_msx.fi
 
 :   (setfont)
     v-font @  'v-setfont @  execute
+    term-refresh
 ;
 
 :   font8x8
     grom_font8x8 v-font !
     8 v-fntwidth c!   8 v-fntheight c!
+    (setfont)
+;
+:   font6x8
+    grom_font8x8 v-font !
+    6 v-fntwidth c!   8 v-fntheight c!
     (setfont)
 ;
 

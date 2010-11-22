@@ -25,6 +25,10 @@ public class ToLocal extends BaseStdWord {
 		ITargetWord theWord = (ITargetWord) targetContext.getLatest();
 
 		if (!theWord.getEntry().hasLocals()) {
+			if (hostContext.inCSP()) {
+				throw hostContext.abort("Cannot first add locals inside conditionals");
+			}
+			
 			if (!targetContext.isLocalSupportAvailable(hostContext)) {
 
 				ITargetWord word = (ITargetWord) targetContext.require("branch");

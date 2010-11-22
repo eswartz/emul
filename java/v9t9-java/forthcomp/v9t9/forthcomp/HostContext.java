@@ -515,6 +515,9 @@ public class HostContext extends Context {
 		return dataStack.peek();
 	}
 
+	public boolean inCSP() throws AbortException {
+		return readVar("csp") != dataStack.size();
+	}
 	public void setCSP() throws AbortException {
 		writeVar("csp", dataStack.size());
 	}

@@ -25,6 +25,17 @@ t-data over -  Constant t-data-size
 
 ramptr !
 
+: term-refresh
+    v-text c@ not if
+        v-width @   v-fntwidth c@  align-to  win-sx  !
+        v-height @  v-fntheight c@ align-to  win-sy  !
+    else
+        v-width @   win-sx  !
+        v-height @  win-sy  !
+    then
+;
+
+
 \   Reset terminal from the current mode
 : term-reset
     cursor-off
@@ -32,8 +43,7 @@ ramptr !
     0 win-x !
     0 win-y !
 
-    v-width @   win-sx  !
-    v-height @  win-sy  !
+    term-refresh
     
     home
 ;

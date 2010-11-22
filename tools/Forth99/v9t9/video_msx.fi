@@ -36,7 +36,7 @@ Create msx-enhregs
 \   Figure the address and shift for a pixel on the screen
 : msx-pixaddr ( x y -- addr shift )
     msx-stride @ u*  over  msx-shift @  urshift  +  v-patts @ +
-    swap  msx-mask c@  and 
+    swap  msx-mask @  and 
 ;    
 
 : msx-setupmode
@@ -171,8 +171,6 @@ Create msx-enhregs
 \
 false Constant msx-use-drawchar-accel
 
-msx-use-drawchar-accel [if]
-
 : msx-sendcharpixel ( ch bg|fg -- ch' )
     over  $80 and  0=  8 and  urshift  VDPWI c!  1 lshift
 ;
@@ -210,8 +208,6 @@ msx-use-drawchar-accel [if]
     msx-vstatus0    
 ;
 
-[else]
-
 : msx-drawchar-16 ( ch x y -- )
     msx-pixaddr drop  vsetbank :> addr
     
@@ -237,31 +233,37 @@ msx-use-drawchar-accel [if]
 
 
 : msx-drawchar-4 ( ch x y -- )
-    msx-pixaddr drop  vsetbank :> addr
+    :> y'
     
-    >v-fontaddr  gwaddr  
-    
-    v-fntwidth c@ :> width
-    
-    msx-color-temp :> ct
-    
-    v-fntheight c@  0 do
-        addr !vwaddr
-        GPLRD c@
-        dup 8 lshift OR  
+    v-fntwidth c@ 8 = not if
+        y' msx-drawchar-accel  
+    else
+        y' msx-pixaddr  :> sh   vsetbank :> addr
         
-        \ write four colors for four consecutive bits
-        -4 crshift
-        dup  $f and  ct +  c@  VDPWD c!
+        >v-fontaddr  gwaddr  
         
-        width 8 = if
+        v-fntwidth c@ :> width
+        
+        msx-color-temp :> ct
+        
+        v-fntheight c@  0 do
+            addr !vwaddr
+            GPLRD c@
+            dup 8 lshift OR  
+            
+            \ write four colors for four consecutive bits
             -4 crshift
             dup  $f and  ct +  c@  VDPWD c!
-        then
-        
-        drop 
-        msx-stride @  'addr +!
-    loop
+            
+            width 8 = if
+                -4 crshift
+                dup  $f and  ct +  c@  VDPWD c!
+            then
+            
+            drop 
+            msx-stride @  'addr +!
+        loop
+     then
 ;
 
 : msx-drawchar-256 ( ch x y -- )
@@ -287,8 +289,6 @@ msx-use-drawchar-accel [if]
         msx-stride @  'addr +!
     loop  
 ;
-
-[then]
 
 Create MsxFunctions 
 msx-use-drawchar-accel [if]
@@ -321,7 +321,7 @@ Create Gfx4ModeParams
 
     v-width     , 256 ,     v-height    , 212 ,
     
-    msx-stride  , $80 ,     msx-shift   , 1 ,       msx-mask , $fffe  ,
+    msx-stride  , $80 ,     msx-shift   , 1 ,       msx-mask , $1  ,
     
     'v-setupmode ,           ' msx-setupmode ,
     'v-updatecolors ,        ' msx-updatecolors ,
@@ -362,7 +362,7 @@ Create Gfx6ModeParams
 
     v-width     , 512 ,     v-height    , 212 ,
     
-    msx-stride  , $100 ,    msx-shift   , 1 ,       msx-mask , $fffe  ,
+    msx-stride  , $100 ,    msx-shift   , 1 ,       msx-mask , $1  ,
     
     'v-setupmode ,           ' msx-setupmode ,
     'v-updatecolors ,        ' msx-updatecolors ,
@@ -404,7 +404,7 @@ Create Gfx5ModeParams
 
     v-width     , 512 ,     v-height    , 212 ,
     
-    msx-stride  , $80 ,     msx-shift   , 2 ,       msx-mask , $fffc  ,
+    msx-stride  , $80 ,     msx-shift   , 2 ,       msx-mask , $3  ,
     
     'v-setupmode ,           ' msx-setupmode ,
     'v-updatecolors ,        ' msx-updatecolors ,
@@ -444,7 +444,7 @@ Create Gfx7ModeParams
 
     v-width     , 256 ,     v-height    , 212 ,
     
-    msx-stride  , $100 ,    msx-shift   , 0 ,       msx-mask , $ffff  ,
+    msx-stride  , $100 ,    msx-shift   , 0 ,       msx-mask , $0  ,
     
     'v-setupmode ,           ' msx-setupmode ,
     'v-updatecolors ,        ' msx-updatecolors ,
