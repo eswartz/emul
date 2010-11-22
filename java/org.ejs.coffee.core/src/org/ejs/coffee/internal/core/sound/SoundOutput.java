@@ -28,18 +28,19 @@ public class SoundOutput implements ISoundOutput {
 	// private boolean audioSilence;
 
 	protected volatile int lastUpdatedPos;
+	private boolean anyChanged;
 
 	List<ISoundListener> listeners;
 	// samples * channels
-	private int bufferSize;
+	private final int bufferSize;
 	private ISoundListener[] listenerArray;
 	private AudioFormat format;
 
 	public SoundOutput(AudioFormat format, int tickRate) {
 		this.format = format;
 		listeners = new ArrayList<ISoundListener>();
-		this.bufferSize = (int) (format.getFrameSize() * format.getFrameRate() / tickRate);
-		this.bufferSize = (this.bufferSize + 3) & ~3;
+		int b = (int) (format.getFrameSize() * format.getFrameRate() / tickRate);
+		this.bufferSize = (b + 3) & ~3;
 		soundGeneratorWorkBuffer = new float[bufferSize];
 		soundClock = (int) format.getSampleRate();
 	}
@@ -158,7 +159,7 @@ public class SoundOutput implements ISoundOutput {
 					for (ISoundVoice v : voices) {
 						if (v.isActive()) {
 							//Arrays.fill(soundGeneratorWorkBuffer2, 0);
-							v.generate(soundGeneratorWorkBuffer, lastUpdatedPos, to);
+							anyChanged |= v.generate(soundGeneratorWorkBuffer, lastUpdatedPos, to);
 							active++;
 						}
 					}
@@ -190,16 +191,21 @@ public class SoundOutput implements ISoundOutput {
 			if (soundGeneratorWorkBuffer == null || soundGeneratorWorkBuffer.length == 0 || lastUpdatedPos == 0)
 				return null;
 	
-			if (lastUpdatedPos < soundGeneratorWorkBuffer.length) {
-				float[] buffer = new float[lastUpdatedPos];
-				System.arraycopy(soundGeneratorWorkBuffer, 0, buffer, 0, lastUpdatedPos);
-				chunk = new SoundChunk(buffer, format);
-				Arrays.fill(soundGeneratorWorkBuffer, 0.0f);
+			if (anyChanged) {
+				if (lastUpdatedPos < soundGeneratorWorkBuffer.length) {
+					float[] buffer = new float[lastUpdatedPos];
+					System.arraycopy(soundGeneratorWorkBuffer, 0, buffer, 0, lastUpdatedPos);
+					chunk = new SoundChunk(buffer, format);
+					Arrays.fill(soundGeneratorWorkBuffer, 0.0f);
+				} else  {
+					chunk = new SoundChunk(soundGeneratorWorkBuffer, format);
+					soundGeneratorWorkBuffer = new float[bufferSize];
+				}
 			} else {
-				chunk = new SoundChunk(soundGeneratorWorkBuffer, format);
-				soundGeneratorWorkBuffer = new float[bufferSize];
+				chunk = new SoundChunk(lastUpdatedPos, format);
 			}
 			lastUpdatedPos = 0;
+			anyChanged = false;
 		}
 		return chunk;
 	}
