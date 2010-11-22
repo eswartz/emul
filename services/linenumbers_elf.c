@@ -101,14 +101,14 @@ int line_to_address(Context * ctx, char * file_name, int line, int column, LineN
                     int equ = 0;
                     assert(unit->mFile == file);
                     info = info->mSibling;
-                    if (unit->mDir != NULL && unit->mObject->mName != NULL) {
+                    if (unit->mObject->mName != NULL) {
                         equ = cmp_file(file_name, unit->mDir, unit->mObject->mName);
                     }
                     if (!equ) {
                         U4_T j;
                         for (j = 0; j < unit->mFilesCnt; j++) {
                             FileInfo * f = unit->mFiles + j;
-                            if (f->mDir != NULL && f->mName != NULL) {
+                            if (f->mName != NULL) {
                                 equ = cmp_file(file_name, f->mDir, f->mName);
                                 if (equ) break;
                             }
