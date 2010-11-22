@@ -27,7 +27,7 @@ public class AudioChunk {
 		this.soundData = new byte[format.getSampleSizeInBits() * chunk.soundDataLength / 8];
 		if (chunk.soundData != null) {
 			if (format.getSampleSizeInBits() == 16) {
-				for (int i = 0; i < chunk.soundData.length; i++) {
+				for (int i = 0; i < chunk.soundDataLength; i++) {
 					float s = chunk.soundData[i];
 					if (s < -1.0f) s = -1.0f; else if (s > 1.0f) s = 1.0f;
 					short samp = (short) (s * volume * 32767);

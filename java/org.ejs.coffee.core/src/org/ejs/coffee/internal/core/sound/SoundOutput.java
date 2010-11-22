@@ -193,10 +193,8 @@ public class SoundOutput implements ISoundOutput {
 	
 			if (anyChanged) {
 				if (lastUpdatedPos < soundGeneratorWorkBuffer.length) {
-					float[] buffer = new float[lastUpdatedPos];
-					System.arraycopy(soundGeneratorWorkBuffer, 0, buffer, 0, lastUpdatedPos);
-					chunk = new SoundChunk(buffer, format);
-					Arrays.fill(soundGeneratorWorkBuffer, 0.0f);
+					chunk = new SoundChunk(soundGeneratorWorkBuffer, lastUpdatedPos, format);
+					soundGeneratorWorkBuffer = new float[bufferSize];
 				} else  {
 					chunk = new SoundChunk(soundGeneratorWorkBuffer, format);
 					soundGeneratorWorkBuffer = new float[bufferSize];

@@ -772,4 +772,8 @@
 3736 'quit
 374A abort
 376A cycle
-378A bootup
+3790 snd
+37A8 delay
+37BA blast0
+37E2 blast1
+3800 bootup

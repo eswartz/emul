@@ -106,8 +106,9 @@ public class JavaSoundHandler implements SoundHandler {
 		sound = machine.getSound();
 
 		// frames in ALSA means samples per channel, but raw freq in javax
-		soundFramesPerTick = (int) ((soundFormat.getFrameRate() * soundFormat.getChannels() 
-				+ machine.getCpuTicksPerSec() - 1) / machine.getCpuTicksPerSec());
+		//soundFramesPerTick = (int) ((soundFormat.getFrameRate()
+		//		+ machine.getCpuTicksPerSec() - 1) / machine.getCpuTicksPerSec());
+		soundFramesPerTick = output.getSamples((1000 + machine.getCpuTicksPerSec() - 1) / machine.getCpuTicksPerSec());
 		
 		settingPlaySound.addListener(new IPropertyListener() {
 

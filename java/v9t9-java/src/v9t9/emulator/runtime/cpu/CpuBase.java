@@ -214,6 +214,7 @@ public abstract class CpuBase  implements MemoryAccessListener, IPersistable, Cp
 	public void setIdle(boolean b) {
 		this.idle = b;
 		getMachine().getExecutor().interruptExecution = true;
+		tick();
 	}
 	
 	/* (non-Javadoc)

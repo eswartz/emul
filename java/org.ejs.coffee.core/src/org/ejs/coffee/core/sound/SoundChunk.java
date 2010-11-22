@@ -24,6 +24,13 @@ public class SoundChunk {
 		this.soundDataLength = soundToWrite.length;
 		this.format = format;
 	}
+	public SoundChunk(float[] soundToWrite, int length, AudioFormat format) {
+		if (soundToWrite == null)
+			throw new NullPointerException();
+		this.soundData = soundToWrite;
+		this.soundDataLength = length;
+		this.format = format;
+	}
 	public SoundChunk(int silentSamples, AudioFormat format) {
 		this.soundData = null;
 		this.soundDataLength = silentSamples;

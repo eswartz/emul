@@ -11,8 +11,11 @@ import v9t9.forthcomp.ITargetWord;
  * @author ejs
  *
  */
-public class UPlusLoop extends BaseStdWord {
-	public UPlusLoop() {
+public class LoopCompile extends BaseStdWord {
+	private final String wordName;
+
+	public LoopCompile(String word) {
+		this.wordName = word;
 	}
 
 	/* (non-Javadoc)
@@ -24,7 +27,8 @@ public class UPlusLoop extends BaseStdWord {
 		
 		targetContext.markHostExecutionUnsupported();
 		
-		ITargetWord word = (ITargetWord) targetContext.require("(u+loop)");
+		ITargetWord word = (ITargetWord) targetContext.require(wordName);
+		
 		targetContext.loopCompile(hostContext, word);
 	}
 	

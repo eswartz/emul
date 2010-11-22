@@ -134,6 +134,28 @@ include ../ans/interp.fi
         loop
     again
 ;
+
+
+: snd ( i -- ) 
+    dup  swpb dup  9 crshift  XOR swap  $7 and $40 + c! 
+;
+: delay 0 do uloop ;
+
+: blast0
+0 0 do 
+    0 0 do 
+        j i xor snd $10 delay 
+    loop
+loop
+;
+: blast1
+0 0 do 
+    0 0 do 
+        j i + snd $10 delay 
+    loop
+loop
+;
+
 export>
 
 :   bootup
@@ -157,8 +179,7 @@ export>
     \ cycle
     quit
 ;
-
-EXPORT>
+ 
 
 \ -------------------------------------------------
 
