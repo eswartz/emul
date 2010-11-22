@@ -327,7 +327,8 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             if (node instanceof TCFNodeExecContext) {
                 ((TCFNodeExecContext)node).onContextSuspended(pc, reason, params);
             }
-            runSuspendTrigger(node);
+            setDebugViewSelection(context);
+            if (node != null) runSuspendTrigger(node);
             finished_actions.remove(context);
         }
 
@@ -385,7 +386,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 exe.onContextSuspended(pc, reason, params);
             }
             setDebugViewSelection(context);
-            runSuspendTrigger(node);
+            if (node != null) runSuspendTrigger(node);
             finished_actions.remove(context);
         }
     };
