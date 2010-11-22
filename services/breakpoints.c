@@ -143,6 +143,8 @@ struct ContextExtensionBP {
     BreakInstruction *  stepping_over_bp;   /* if not NULL, the context is stepping over a breakpoint instruction */
     char **             bp_ids;             /* if stopped by breakpoint, contains NULL-terminated list of breakpoint IDs */
     EvaluationRequest * req;
+    Context *           bp_grp;
+    int                 empty_bp_grp;
 };
 
 static const char * BREAKPOINTS = "Breakpoints";
@@ -614,8 +616,30 @@ static EvaluationRequest * post_evaluation_request(EvaluationRequest * req) {
 }
 
 static void post_location_evaluation_request(Context * ctx) {
+    ContextExtensionBP * ext = EXT(ctx);
     Context * grp = context_get_group(ctx, CONTEXT_GROUP_BREAKPOINT);
-    if (grp != NULL) post_evaluation_request(create_evaluation_request(grp, 0))->location = 1;
+    if (ext->bp_grp != NULL && ext->bp_grp != grp && !ext->bp_grp->exited) {
+        /* The context has migrated into another breakpoint group.
+         * If the old group became empty, we need to remove breakpoints in it.
+         */
+        int cnt = 0;
+        LINK * l = context_root.next;
+        while (l != &context_root) {
+            Context * c = ctxl2ctxp(l);
+            l = l->next;
+            if (c->exited) continue;
+            if (context_get_group(c, CONTEXT_GROUP_BREAKPOINT) == ext->bp_grp) cnt++;
+        }
+        if (cnt == 0) {
+            EXT(ext->bp_grp)->empty_bp_grp = 1;
+            post_evaluation_request(create_evaluation_request(ext->bp_grp, 0))->location = 1;
+        }
+    }
+    ext->bp_grp = grp;
+    if (grp != NULL) {
+        EXT(grp)->empty_bp_grp = 0;
+        post_evaluation_request(create_evaluation_request(grp, 0))->location = 1;
+    }
 }
 
 static void expr_cache_enter(CacheClient * client, BreakpointInfo * bp, Context * ctx) {
@@ -946,7 +970,7 @@ static void event_replant_breakpoints(void * arg) {
             LINK * l = breakpoints.next;
             req->location = 0;
             clear_instruction_refs(ctx);
-            if (!ctx->exiting && !ctx->exited) {
+            if (!ctx->exiting && !ctx->exited && !EXT(ctx)->empty_bp_grp) {
                 context_lock(ctx);
                 while (l != &breakpoints) {
                     BreakpointInfo * bp = link_all2bp(l);
