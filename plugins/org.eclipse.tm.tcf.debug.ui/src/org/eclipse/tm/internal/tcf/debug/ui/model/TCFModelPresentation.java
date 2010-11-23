@@ -10,12 +10,17 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
+import java.net.URI;
 import java.util.Collection;
 import java.util.HashSet;
 
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.URIUtil;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
+import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.debug.core.model.ILineBreakpoint;
 import org.eclipse.debug.core.model.IValue;
 import org.eclipse.debug.ui.IDebugModelPresentation;
@@ -30,6 +35,7 @@ import org.eclipse.ui.IEditorDescriptor;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorRegistry;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.ide.FileStoreEditorInput;
 import org.eclipse.ui.part.FileEditorInput;
 
 
@@ -113,7 +119,18 @@ public class TCFModelPresentation implements IDebugModelPresentation {
         if (element instanceof IFile) {
             return new FileEditorInput((IFile)element);
         }
-        // TODO: files outside workspace (e.g. LocalFileStorage)
+        if (element instanceof IStorage) {
+            IPath fullPath = ((IStorage)element).getFullPath();
+            URI uri = URIUtil.toURI(fullPath);
+            if (uri != null) {
+                try {
+                    return new FileStoreEditorInput(EFS.getStore(uri));
+                }
+                catch (CoreException e) {
+                    Activator.log(e);
+                }
+            }
+        }
         return null;
     }
 }
