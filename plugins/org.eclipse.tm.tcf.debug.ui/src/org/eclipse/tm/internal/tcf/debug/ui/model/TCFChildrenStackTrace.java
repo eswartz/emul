@@ -84,6 +84,7 @@ public class TCFChildrenStackTrace extends TCFChildren {
         top_frame_id = node.id + "-TF";
         TCFNodeStackFrame n = (TCFNodeStackFrame)node.model.getNode(top_frame_id);
         if (n == null) n = new TCFNodeStackFrame(node, top_frame_id, true);
+        n.setFrameNo(0);
         data.put(n.id, n);
     }
 
