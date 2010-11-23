@@ -13,8 +13,7 @@ package org.eclipse.tm.internal.tcf.debug.ui.commands;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.debug.core.commands.IDebugCommandRequest;
-import org.eclipse.debug.core.commands.IStepIntoHandler;
-import org.eclipse.tm.internal.tcf.debug.actions.TCFActionStepInto;
+import org.eclipse.tm.internal.tcf.debug.actions.TCFActionStepOver;
 import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
 import org.eclipse.tm.internal.tcf.debug.model.TCFSourceRef;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
@@ -22,13 +21,14 @@ import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModel;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExecContext;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeStackFrame;
 import org.eclipse.tm.tcf.protocol.IChannel;
+import org.eclipse.tm.tcf.services.IBreakpoints;
 import org.eclipse.tm.tcf.services.IRunControl;
+import org.eclipse.tm.tcf.services.IStackTrace.StackTraceContext;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 
+public class BackOverCommand extends StepCommand {
 
-public class StepIntoCommand extends StepCommand implements IStepIntoHandler {
-
-    private static class StepStateMachine extends TCFActionStepInto {
+    private static class StepStateMachine extends TCFActionStepOver {
 
         private final IDebugCommandRequest monitor;
         private final Runnable done;
@@ -36,8 +36,9 @@ public class StepIntoCommand extends StepCommand implements IStepIntoHandler {
         private TCFNodeStackFrame frame;
 
         StepStateMachine(TCFModel model, IDebugCommandRequest monitor,
-                IRunControl.RunControlContext ctx, boolean src_step, Runnable done) {
-            super(model.getLaunch(), ctx, src_step, false);
+                IRunControl.RunControlContext ctx,
+                boolean src_step, Runnable done) {
+            super(model.getLaunch(), ctx, src_step, true);
             this.monitor = monitor;
             this.done = done;
             node = (TCFNodeExecContext)model.getNode(context_id);
@@ -54,6 +55,13 @@ public class StepIntoCommand extends StepCommand implements IStepIntoHandler {
             if (frame == null) frame = node.getStackTrace().getTopFrame();
             if (frame == null) return null;
             return frame.getLineInfo();
+        }
+
+        @Override
+        protected TCFDataCache<StackTraceContext> getStackFrame() {
+            if (frame == null) frame = node.getStackTrace().getTopFrame();
+            if (frame == null) return null;
+            return frame.getStackTraceContext();
         }
 
         @Override
@@ -80,15 +88,16 @@ public class StepIntoCommand extends StepCommand implements IStepIntoHandler {
         }
     }
 
-    public StepIntoCommand(TCFModel model) {
+    public BackOverCommand(TCFModel model) {
         super(model);
     }
 
     @Override
     protected boolean canExecute(IRunControl.RunControlContext ctx) {
         if (ctx == null) return false;
-        if (ctx.canResume(IRunControl.RM_STEP_INTO_LINE)) return true;
-        if (ctx.canResume(IRunControl.RM_STEP_INTO)) return true;
+        if (ctx.canResume(IRunControl.RM_STEP_OVER_LINE)) return true;
+        if (ctx.canResume(IRunControl.RM_STEP_OVER)) return true;
+        if (ctx.canResume(IRunControl.RM_STEP_INTO) && model.getLaunch().getService(IBreakpoints.class) != null) return true;
         return false;
     }
 

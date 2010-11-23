@@ -96,7 +96,7 @@ public class TerminateCommand implements ITerminateHandler {
                             cmds.remove(token);
                             if (error != null) {
                                 monitor.setStatus(new Status(IStatus.ERROR,
-                                        Activator.PLUGIN_ID, IStatus.OK, "Cannot resume", error));
+                                        Activator.PLUGIN_ID, IStatus.OK, "Cannot resume: " + error.getLocalizedMessage(), error));
                             }
                             if (cmds.isEmpty()) done();
                         }

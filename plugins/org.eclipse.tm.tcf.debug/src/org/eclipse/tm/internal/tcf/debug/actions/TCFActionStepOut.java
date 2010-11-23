@@ -25,6 +25,7 @@ import org.eclipse.tm.tcf.util.TCFDataCache;
 
 public abstract class TCFActionStepOut extends TCFAction implements IRunControl.RunControlListener {
 
+    private final boolean step_back;
     private final IRunControl rc = launch.getService(IRunControl.class);
     private final IBreakpoints bps = launch.getService(IBreakpoints.class);
 
@@ -35,9 +36,10 @@ public abstract class TCFActionStepOut extends TCFAction implements IRunControl.
 
     protected boolean exited;
 
-    public TCFActionStepOut(TCFLaunch launch, IRunControl.RunControlContext ctx) {
+    public TCFActionStepOut(TCFLaunch launch, IRunControl.RunControlContext ctx, boolean step_back) {
         super(launch, ctx.getID());
         this.ctx = ctx;
+        this.step_back = step_back;
     }
 
     protected abstract TCFDataCache<TCFContextState> getContextState();
@@ -69,12 +71,12 @@ public abstract class TCFActionStepOut extends TCFAction implements IRunControl.
             exit(new Exception("Context is not suspended"));
             return;
         }
-        if (ctx.canResume(IRunControl.RM_STEP_OUT)) {
+        if (ctx.canResume(step_back ? IRunControl.RM_REVERSE_STEP_OUT : IRunControl.RM_STEP_OUT)) {
             if (step_cnt > 0) {
                 exit(null);
                 return;
             }
-            ctx.resume(IRunControl.RM_STEP_OUT, 1, new IRunControl.DoneCommand() {
+            ctx.resume(step_back ? IRunControl.RM_REVERSE_STEP_OUT : IRunControl.RM_STEP_OUT, 1, new IRunControl.DoneCommand() {
                 public void doneCommand(IToken token, Exception error) {
                     if (error != null) exit(error);
                 }
@@ -88,7 +90,7 @@ public abstract class TCFActionStepOut extends TCFAction implements IRunControl.
             // Stepped out of selected function
             exit(null);
         }
-        else if (bps != null && ctx.canResume(IRunControl.RM_RESUME)) {
+        else if (bps != null && ctx.canResume(step_back ? IRunControl.RM_REVERSE_RESUME : IRunControl.RM_RESUME)) {
             if (bp == null) {
                 TCFDataCache<IStackTrace.StackTraceContext> frame = getStackFrame();
                 if (!frame.validate(this)) return;
@@ -110,7 +112,7 @@ public abstract class TCFActionStepOut extends TCFAction implements IRunControl.
                     }
                 });
             }
-            ctx.resume(IRunControl.RM_RESUME, 1, new IRunControl.DoneCommand() {
+            ctx.resume(step_back ? IRunControl.RM_REVERSE_RESUME : IRunControl.RM_RESUME, 1, new IRunControl.DoneCommand() {
                 public void doneCommand(IToken token, Exception error) {
                     if (error != null) exit(error);
                 }

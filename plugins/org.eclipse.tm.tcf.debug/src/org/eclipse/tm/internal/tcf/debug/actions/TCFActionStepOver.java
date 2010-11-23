@@ -28,7 +28,8 @@ import org.eclipse.tm.tcf.util.TCFDataCache;
 
 public abstract class TCFActionStepOver extends TCFAction implements IRunControl.RunControlListener {
 
-    private final boolean src_step;
+    private boolean step_line;
+    private final boolean step_back;
     private final IRunControl rc = launch.getService(IRunControl.class);
     private final IBreakpoints bps = launch.getService(IBreakpoints.class);
 
@@ -43,10 +44,11 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
 
     protected boolean exited;
 
-    public TCFActionStepOver(TCFLaunch launch, IRunControl.RunControlContext ctx, boolean src_step) {
+    public TCFActionStepOver(TCFLaunch launch, IRunControl.RunControlContext ctx, boolean step_line, boolean step_back) {
         super(launch, ctx.getID());
         this.ctx = ctx;
-        this.src_step = src_step;
+        this.step_line = step_line;
+        this.step_back = step_back;
     }
 
     protected abstract TCFDataCache<TCFContextState> getContextState();
@@ -79,12 +81,15 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
             exit(new Exception("Context is not suspended"));
             return;
         }
-        if (ctx.canResume(src_step ? IRunControl.RM_STEP_OVER_LINE : IRunControl.RM_STEP_OVER)) {
+        int mode = 0;
+        if (!step_line) mode = step_back ? IRunControl.RM_REVERSE_STEP_OVER : IRunControl.RM_STEP_OVER;
+        else mode = step_back ? IRunControl.RM_REVERSE_STEP_OVER_LINE : IRunControl.RM_STEP_OVER_LINE;
+        if (ctx.canResume(mode)) {
             if (step_cnt > 0) {
                 exit(null);
                 return;
             }
-            ctx.resume(src_step ? IRunControl.RM_STEP_OVER_LINE : IRunControl.RM_STEP_OVER, 1, new IRunControl.DoneCommand() {
+            ctx.resume(mode, 1, new IRunControl.DoneCommand() {
                 public void doneCommand(IToken token, Exception error) {
                     if (error != null) exit(error);
                 }
@@ -94,12 +99,13 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
         }
         TCFDataCache<?> stack_trace = getStackTrace();
         if (!stack_trace.validate(this)) return;
-        if (src_step && source_ref == null) {
+        if (step_line && source_ref == null) {
             line_info = getLineInfo();
             if (!line_info.validate(this)) return;
             source_ref = line_info.getData();
             if (source_ref == null) {
-                exit(new Exception("Line info not available"));
+                step_line = false;
+                Protocol.invokeLater(this);
                 return;
             }
             if (source_ref.error != null) {
@@ -116,14 +122,17 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
         }
         int fno = getStackFrameIndex();
         if (fno > 0) {
-            if (ctx.canResume(IRunControl.RM_STEP_OUT)) {
-                ctx.resume(IRunControl.RM_STEP_OUT, 1, new IRunControl.DoneCommand() {
+            mode = step_back ? IRunControl.RM_REVERSE_STEP_OUT : IRunControl.RM_STEP_OUT;
+            if (ctx.canResume(mode)) {
+                ctx.resume(mode, 1, new IRunControl.DoneCommand() {
                     public void doneCommand(IToken token, Exception error) {
                         if (error != null) exit(error);
                     }
                 });
+                return;
             }
-            else if (bps != null && ctx.canResume(IRunControl.RM_RESUME)) {
+            mode = step_back ? IRunControl.RM_REVERSE_RESUME : IRunControl.RM_RESUME;
+            if (bps != null && ctx.canResume(mode)) {
                 if (bp == null) {
                     TCFDataCache<IStackTrace.StackTraceContext> frame = getStackFrame();
                     if (!frame.validate(this)) return;
@@ -144,16 +153,15 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
                         }
                     });
                 }
-                ctx.resume(IRunControl.RM_RESUME, 1, new IRunControl.DoneCommand() {
+                ctx.resume(mode, 1, new IRunControl.DoneCommand() {
                     public void doneCommand(IToken token, Exception error) {
                         if (error != null) exit(error);
                     }
                 });
                 step_cnt++;
+                return;
             }
-            else {
-                exit(new Exception("Step over is not supported"));
-            }
+            exit(new Exception("Step over is not supported"));
             return;
         }
         if (bp != null) {
@@ -170,7 +178,7 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
                 exit(null);
                 return;
             }
-            assert src_step;
+            assert step_line;
             if (pc.compareTo(pc0) < 0 || pc.compareTo(pc1) >= 0) {
                 if (!line_info.validate(this)) return;
                 TCFSourceRef ref = line_info.getData();
@@ -196,35 +204,39 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
             }
         }
         step_cnt++;
-        if (ctx.canResume(IRunControl.RM_STEP_OVER)) {
-            ctx.resume(IRunControl.RM_STEP_OVER, 1, new IRunControl.DoneCommand() {
+        mode = step_back ? IRunControl.RM_REVERSE_STEP_OVER : IRunControl.RM_STEP_OVER;
+        if (ctx.canResume(mode)) {
+            ctx.resume(mode, 1, new IRunControl.DoneCommand() {
                 public void doneCommand(IToken token, Exception error) {
                     if (error != null) exit(error);
                 }
             });
+            return;
         }
-        else if (ctx.canResume(IRunControl.RM_STEP_INTO_RANGE) &&
+        mode = step_back ? IRunControl.RM_REVERSE_STEP_INTO_RANGE : IRunControl.RM_STEP_INTO_RANGE;
+        if (ctx.canResume(mode) &&
                 pc != null && pc0 != null && pc1 != null &&
                 pc.compareTo(pc0) >= 0 && pc.compareTo(pc1) < 0) {
             HashMap<String,Object> args = new HashMap<String,Object>();
             args.put(IRunControl.RP_RANGE_START, pc0);
             args.put(IRunControl.RP_RANGE_END, pc1);
-            ctx.resume(IRunControl.RM_STEP_INTO_RANGE, 1, args, new IRunControl.DoneCommand() {
+            ctx.resume(mode, 1, args, new IRunControl.DoneCommand() {
                 public void doneCommand(IToken token, Exception error) {
                     if (error != null) exit(error);
                 }
             });
+            return;
         }
-        else if (ctx.canResume(IRunControl.RM_STEP_INTO)) {
-            ctx.resume(IRunControl.RM_STEP_INTO, 1, new IRunControl.DoneCommand() {
+        mode = step_back ? IRunControl.RM_REVERSE_STEP_INTO : IRunControl.RM_STEP_INTO;
+        if (ctx.canResume(mode)) {
+            ctx.resume(mode, 1, new IRunControl.DoneCommand() {
                 public void doneCommand(IToken token, Exception error) {
                     if (error != null) exit(error);
                 }
             });
+            return;
         }
-        else {
-            exit(new Exception("Step over is not supported"));
-        }
+        exit(new Exception("Step over is not supported"));
     }
 
     protected void exit(Throwable error) {

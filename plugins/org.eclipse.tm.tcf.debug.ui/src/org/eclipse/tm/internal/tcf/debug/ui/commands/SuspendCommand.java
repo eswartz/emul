@@ -114,7 +114,7 @@ public class SuspendCommand implements ISuspendHandler {
                             cmds.remove(token);
                             if (error != null) {
                                 monitor.setStatus(new Status(IStatus.ERROR,
-                                        Activator.PLUGIN_ID, IStatus.OK, "Cannot suspend", error));
+                                        Activator.PLUGIN_ID, IStatus.OK, "Cannot suspend: " + error.getLocalizedMessage(), error));
                             }
                             if (cmds.isEmpty()) done();
                         }

@@ -13,7 +13,6 @@ package org.eclipse.tm.internal.tcf.debug.ui.commands;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.debug.core.commands.IDebugCommandRequest;
-import org.eclipse.debug.core.commands.IStepIntoHandler;
 import org.eclipse.tm.internal.tcf.debug.actions.TCFActionStepInto;
 import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
 import org.eclipse.tm.internal.tcf.debug.model.TCFSourceRef;
@@ -25,8 +24,7 @@ import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 
-
-public class StepIntoCommand extends StepCommand implements IStepIntoHandler {
+public class BackIntoCommand extends StepCommand {
 
     private static class StepStateMachine extends TCFActionStepInto {
 
@@ -37,7 +35,7 @@ public class StepIntoCommand extends StepCommand implements IStepIntoHandler {
 
         StepStateMachine(TCFModel model, IDebugCommandRequest monitor,
                 IRunControl.RunControlContext ctx, boolean src_step, Runnable done) {
-            super(model.getLaunch(), ctx, src_step, false);
+            super(model.getLaunch(), ctx, src_step, true);
             this.monitor = monitor;
             this.done = done;
             node = (TCFNodeExecContext)model.getNode(context_id);
@@ -80,15 +78,15 @@ public class StepIntoCommand extends StepCommand implements IStepIntoHandler {
         }
     }
 
-    public StepIntoCommand(TCFModel model) {
+    public BackIntoCommand(TCFModel model) {
         super(model);
     }
 
     @Override
     protected boolean canExecute(IRunControl.RunControlContext ctx) {
         if (ctx == null) return false;
-        if (ctx.canResume(IRunControl.RM_STEP_INTO_LINE)) return true;
-        if (ctx.canResume(IRunControl.RM_STEP_INTO)) return true;
+        if (ctx.canResume(IRunControl.RM_REVERSE_STEP_INTO_LINE)) return true;
+        if (ctx.canResume(IRunControl.RM_REVERSE_STEP_INTO)) return true;
         return false;
     }
 

@@ -41,7 +41,7 @@ public class StepOverCommand extends StepCommand implements IStepOverHandler {
         StepStateMachine(TCFModel model, IDebugCommandRequest monitor,
                 IRunControl.RunControlContext ctx,
                 boolean src_step, Runnable done) {
-            super(model.getLaunch(), ctx, src_step);
+            super(model.getLaunch(), ctx, src_step, false);
             this.monitor = monitor;
             this.done = done;
             node = (TCFNodeExecContext)model.getNode(context_id);

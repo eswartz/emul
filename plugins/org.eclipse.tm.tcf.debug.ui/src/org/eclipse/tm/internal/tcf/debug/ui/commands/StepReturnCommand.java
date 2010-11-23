@@ -38,7 +38,7 @@ public class StepReturnCommand extends StepCommand implements IStepReturnHandler
 
         StepStateMachine(TCFModel model, IDebugCommandRequest monitor,
                 IRunControl.RunControlContext ctx, Runnable done) {
-            super(model.getLaunch(), ctx);
+            super(model.getLaunch(), ctx, false);
             this.monitor = monitor;
             this.done = done;
             node = (TCFNodeExecContext)model.getNode(context_id);

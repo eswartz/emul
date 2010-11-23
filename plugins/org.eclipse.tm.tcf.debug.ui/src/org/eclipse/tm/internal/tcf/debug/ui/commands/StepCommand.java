@@ -13,18 +13,17 @@ package org.eclipse.tm.internal.tcf.debug.ui.commands;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.debug.core.commands.IDebugCommandHandler;
 import org.eclipse.debug.core.commands.IDebugCommandRequest;
 import org.eclipse.debug.core.commands.IEnabledStateRequest;
-import org.eclipse.jface.text.source.Annotation;
 import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModel;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExecContext;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFRunnable;
-import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 
@@ -104,7 +103,15 @@ abstract class StepCommand implements IDebugCommandHandler {
                         }
                     }
                 }
-                execute(monitor, this, set);
+                if (set.size() == 0) {
+                    Exception error = new Exception("Not supported by selected context");
+                    monitor.setStatus(new Status(IStatus.ERROR,
+                            Activator.PLUGIN_ID, 0, "Cannot step: " + error.getLocalizedMessage(), error));
+                    monitor.done();
+                }
+                else {
+                    execute(monitor, this, set);
+                }
             }
         };
         return true;
@@ -112,33 +119,16 @@ abstract class StepCommand implements IDebugCommandHandler {
 
     private void execute(final IDebugCommandRequest monitor, final TCFRunnable request,
             final Set<IRunControl.RunControlContext> set) {
-        int i = 0;
-        final String[] ids = new String[set.size()];
-        for (IRunControl.RunControlContext ctx : set) ids[i++] = ctx.getID();
-        model.getDisplay().asyncExec(new Runnable() {
-            public void run() {
-                boolean src = false;
-                for (String id : ids) {
-                    Annotation a = Activator.getAnnotationManager().findAnnotation(model, id);
-                    if (a != null) src = true;
+        final Set<Runnable> wait_list = new HashSet<Runnable>();
+        for (IRunControl.RunControlContext ctx : set) {
+            Runnable done = new Runnable() {
+                public void run() {
+                    wait_list.remove(this);
+                    if (wait_list.isEmpty()) request.done();
                 }
-                final boolean src_step = src;
-                Protocol.invokeLater(new Runnable() {
-                    public void run() {
-                        final Set<Runnable> wait_list = new HashSet<Runnable>();
-                        for (IRunControl.RunControlContext ctx : set) {
-                            Runnable done = new Runnable() {
-                                public void run() {
-                                    wait_list.remove(this);
-                                    if (wait_list.isEmpty()) request.done();
-                                }
-                            };
-                            wait_list.add(done);
-                            execute(monitor, ctx, src_step, done);
-                        }
-                    }
-                });
-            }
-        });
+            };
+            wait_list.add(done);
+            execute(monitor, ctx, true, done);
+        }
     }
 }
