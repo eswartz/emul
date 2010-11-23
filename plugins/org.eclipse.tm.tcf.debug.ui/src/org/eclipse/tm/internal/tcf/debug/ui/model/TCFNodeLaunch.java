@@ -40,7 +40,7 @@ public class TCFNodeLaunch extends TCFNode implements ISymbolOwner {
                 if (done) return;
                 ArrayList<TCFNode> nodes = new ArrayList<TCFNode>();
                 if (!searchSuspendedThreads(children, nodes, this)) return;
-                for (TCFNode n : nodes) model.setDebugViewSelection(n.id);
+                for (TCFNode n : nodes) model.setDebugViewSelection(n.id, IRunControl.REASON_CONTAINER);
                 done = true;
             }
         });

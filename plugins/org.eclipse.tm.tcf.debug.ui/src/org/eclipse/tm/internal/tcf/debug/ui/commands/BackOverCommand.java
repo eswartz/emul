@@ -41,7 +41,7 @@ public class BackOverCommand extends StepCommand {
             super(model.getLaunch(), ctx, src_step, true);
             this.monitor = monitor;
             this.done = done;
-            node = (TCFNodeExecContext)model.getNode(context_id);
+            node = (TCFNodeExecContext)model.getNode(ctx.getID());
         }
 
         @Override

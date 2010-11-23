@@ -192,16 +192,24 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
     }
 
     /**
+     * Request node to be expanded in the view.
+     * @param node - a model node that will become expanded.
+     */
+    void expand(TCFNode node) {
+        while (node != null) {
+            addDelta(node, IModelDelta.EXPAND);
+            node = node.parent;
+        }
+        post();
+    }
+
+    /**
      * Request view selection to be set to given node.
      * @param node - a model node that will become new selection.
      */
     void setSelection(TCFNode node) {
         selection.add(node);
-        while (node.parent != null) {
-            node = node.parent;
-            addDelta(node, IModelDelta.EXPAND);
-        }
-        post();
+        expand(node.parent);
     }
 
     /**
@@ -348,12 +356,7 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
                     TCFContextState state = cache.getData();
                     if (state != null) s = state.suspend_reason;
                 }
-                if (s != null && !s.equals(IRunControl.REASON_USER_REQUEST) && !s.equals(IRunControl.REASON_CONTAINER)) {
-                    node2flags.put(node, IModelDelta.SELECT | IModelDelta.EXPAND);
-                }
-                else {
-                    node2flags.put(node, IModelDelta.SELECT);
-                }
+                node2flags.put(node, IModelDelta.SELECT);
                 root = new ModelDelta(input, IModelDelta.NO_CHANGE);
                 makeDelta(root, node, true);
                 node2delta.clear();

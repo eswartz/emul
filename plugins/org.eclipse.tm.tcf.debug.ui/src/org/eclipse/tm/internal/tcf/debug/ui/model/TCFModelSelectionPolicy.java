@@ -93,7 +93,6 @@ class TCFModelSelectionPolicy implements IModelSelectionPolicy {
                         TCFNodeExecContext next = (TCFNodeExecContext)el_candidate;
                         if (curr.parent == next) return true;
                     }
-                    //System.out.println(el_candidate.toString());
                     String s1 = getSuspendReason((TCFNode)el_existing);
                     if (s1 == null) return true;
                     String s2 = getSuspendReason((TCFNode)el_candidate);

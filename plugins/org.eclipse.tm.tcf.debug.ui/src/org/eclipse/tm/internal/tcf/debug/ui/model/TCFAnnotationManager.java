@@ -142,17 +142,20 @@ public class TCFAnnotationManager {
             updateActiveLaunch();
         }
 
-        public void onContextActionsDone(TCFLaunch launch, String id, String result) {
-        }
-
-        public void onContextActionsStart(TCFLaunch launch, String id) {
-        }
-
         public void onProcessOutput(TCFLaunch launch, String process_id, int stream_id, byte[] data) {
         }
 
         public void onProcessStreamError(TCFLaunch launch, String process_id,
                 int stream_id, Exception error, int lost_size) {
+        }
+
+        public void onContextActionsStart(TCFLaunch launch) {
+        }
+
+        public void onContextActionResult(TCFLaunch launch, String id, String result) {
+        }
+
+        public void onContextActionsDone(TCFLaunch launch) {
         }
     };
 

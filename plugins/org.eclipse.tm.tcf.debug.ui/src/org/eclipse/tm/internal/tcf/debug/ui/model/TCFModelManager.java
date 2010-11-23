@@ -46,18 +46,6 @@ public class TCFModelManager {
             if (model != null) model.onDisconnected();
         }
 
-        public void onContextActionsDone(TCFLaunch launch, String id, String result) {
-            assert Protocol.isDispatchThread();
-            TCFModel model = models.get(launch);
-            if (model != null) model.onContextActionsDone(id, result);
-        }
-
-        public void onContextActionsStart(TCFLaunch launch, String id) {
-            assert Protocol.isDispatchThread();
-            TCFModel model = models.get(launch);
-            if (model != null) model.onContextActionsStart(id);
-        }
-
         public void onProcessOutput(TCFLaunch launch, String process_id, int stream_id, byte[] data) {
             assert Protocol.isDispatchThread();
             TCFModel model = models.get(launch);
@@ -69,6 +57,24 @@ public class TCFModelManager {
             assert Protocol.isDispatchThread();
             TCFModel model = models.get(launch);
             if (model != null) model.onProcessStreamError(process_id, stream_id, error, lost_size);
+        }
+
+        public void onContextActionsStart(TCFLaunch launch) {
+            assert Protocol.isDispatchThread();
+            TCFModel model = models.get(launch);
+            if (model != null) model.onContextActionsStart();
+        }
+
+        public void onContextActionResult(TCFLaunch launch, String id, String result) {
+            assert Protocol.isDispatchThread();
+            TCFModel model = models.get(launch);
+            if (model != null) model.onContextActionResult(id, result);
+        }
+
+        public void onContextActionsDone(TCFLaunch launch) {
+            assert Protocol.isDispatchThread();
+            TCFModel model = models.get(launch);
+            if (model != null) model.onContextActionsDone();
         }
     };
 

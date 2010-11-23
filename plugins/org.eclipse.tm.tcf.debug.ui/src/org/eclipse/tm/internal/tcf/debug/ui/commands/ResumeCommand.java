@@ -11,7 +11,6 @@
 package org.eclipse.tm.internal.tcf.debug.ui.commands;
 
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 import org.eclipse.core.runtime.IStatus;
@@ -19,6 +18,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.debug.core.commands.IDebugCommandRequest;
 import org.eclipse.debug.core.commands.IEnabledStateRequest;
 import org.eclipse.debug.core.commands.IResumeHandler;
+import org.eclipse.tm.internal.tcf.debug.actions.TCFAction;
 import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModel;
@@ -105,20 +105,51 @@ public class ResumeCommand implements IResumeHandler {
                         }
                     }
                 }
-                final Set<IToken> cmds = new HashSet<IToken>();
-                for (Iterator<IRunControl.RunControlContext> i = set.iterator(); i.hasNext();) {
-                    IRunControl.RunControlContext ctx = i.next();
-                    cmds.add(ctx.resume(IRunControl.RM_RESUME, 1, new IRunControl.DoneCommand() {
-                        public void doneCommand(IToken token, Exception error) {
-                            assert cmds.contains(token);
-                            cmds.remove(token);
-                            if (error != null && model.getChannel().getState() == IChannel.STATE_OPEN) {
-                                monitor.setStatus(new Status(IStatus.ERROR,
-                                        Activator.PLUGIN_ID, IStatus.OK, "Cannot resume: " + error.getLocalizedMessage(), error));
+                if (set.size() == 0) {
+                    monitor.setStatus(Status.OK_STATUS);
+                    monitor.done();
+                }
+                else {
+                    final Set<TCFAction> wait_list = new HashSet<TCFAction>();
+                    for (final IRunControl.RunControlContext ctx : set) {
+                        TCFAction done = new TCFAction(model.getLaunch()) {
+                            public void run() {
+                                TCFNodeExecContext node = (TCFNodeExecContext)model.getNode(ctx.getID());
+                                if (node == null || node.isDisposed()) {
+                                    done();
+                                    return;
+                                }
+                                TCFDataCache<TCFContextState> state = node.getState();
+                                if (!state.validate(this)) return;
+                                if (state.getData() == null || !state.getData().is_suspended) {
+                                    Throwable error = state.getError();
+                                    if (error != null) {
+                                        monitor.setStatus(new Status(IStatus.ERROR,
+                                                Activator.PLUGIN_ID, IStatus.OK, "Cannot resume: " + error.getLocalizedMessage(), error));
+                                    }
+                                    done();
+                                    return;
+                                }
+                                final TCFAction done = this;
+                                ctx.resume(IRunControl.RM_RESUME, 1, new IRunControl.DoneCommand() {
+                                    public void doneCommand(IToken token, Exception error) {
+                                        if (error != null && model.getChannel().getState() == IChannel.STATE_OPEN) {
+                                            monitor.setStatus(new Status(IStatus.ERROR,
+                                                    Activator.PLUGIN_ID, IStatus.OK, "Cannot resume: " + error.getLocalizedMessage(), error));
+                                        }
+                                        done.done();
+                                    }
+                                });
                             }
-                            if (cmds.isEmpty()) done();
-                        }
-                    }));
+                            @Override
+                            public void done() {
+                                super.done();
+                                wait_list.remove(this);
+                                if (wait_list.isEmpty()) monitor.done();
+                            }
+                        };
+                        wait_list.add(done);
+                    }
                 }
             }
         };

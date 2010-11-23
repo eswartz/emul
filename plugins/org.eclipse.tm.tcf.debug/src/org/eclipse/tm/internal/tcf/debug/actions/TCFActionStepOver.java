@@ -45,7 +45,7 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
     protected boolean exited;
 
     public TCFActionStepOver(TCFLaunch launch, IRunControl.RunControlContext ctx, boolean step_line, boolean step_back) {
-        super(launch, ctx.getID());
+        super(launch);
         this.ctx = ctx;
         this.step_line = step_line;
         this.step_back = step_back;
@@ -78,8 +78,26 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
         }
         if (!state.validate(this)) return;
         if (state.getData() == null || !state.getData().is_suspended) {
-            exit(new Exception("Context is not suspended"));
+            Throwable error = state.getError();
+            if (error == null) error = new Exception("Context is not suspended");
+            exit(error);
             return;
+        }
+        if (step_cnt > 0) {
+            boolean ok = false;
+            String pc = state.getData().suspend_pc;
+            String reason = state.getData().suspend_reason;
+            if (IRunControl.REASON_STEP.equals(reason) || isMyBreakpoint(pc, reason)) {
+                ok = true;
+            }
+            else if (IRunControl.REASON_BREAKPOINT.equals(reason) && pc0 != null && pc1 != null) {
+                BigInteger x = new BigInteger(pc);
+                ok = x.compareTo(pc0) >= 0 && x.compareTo(pc1) < 0;
+            }
+            if (!ok) {
+                exit(null, reason);
+                return;
+            }
         }
         int mode = 0;
         if (!step_line) mode = step_back ? IRunControl.RM_REVERSE_STEP_OVER : IRunControl.RM_STEP_OVER;
@@ -253,7 +271,8 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
         }
         rc.removeListener(this);
         exited = true;
-        done(reason);
+        setActionResult(ctx.getID(), reason);
+        done();
     }
 
     public void containerResumed(String[] context_ids) {
@@ -292,18 +311,7 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
 
     public void contextSuspended(String context, String pc, String reason, Map<String, Object> params) {
         if (!context.equals(ctx.getID())) return;
-        if (IRunControl.REASON_STEP.equals(reason) || isMyBreakpoint(pc, reason)) {
-            Protocol.invokeLater(this);
-            return;
-        }
-        if (IRunControl.REASON_BREAKPOINT.equals(reason) && pc0 != null && pc1 != null) {
-            BigInteger x = new BigInteger(pc);
-            if (x.compareTo(pc0) >= 0 && x.compareTo(pc1) < 0) {
-                Protocol.invokeLater(this);
-                return;
-            }
-        }
-        exit(null, reason);
+        Protocol.invokeLater(this);
     }
 
     private boolean isSameLine(ILineNumbers.CodeArea x, ILineNumbers.CodeArea y) {

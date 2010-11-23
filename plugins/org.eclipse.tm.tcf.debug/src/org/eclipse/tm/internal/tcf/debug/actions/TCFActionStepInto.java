@@ -41,7 +41,7 @@ public abstract class TCFActionStepInto extends TCFAction implements IRunControl
     protected boolean exited;
 
     public TCFActionStepInto(TCFLaunch launch, IRunControl.RunControlContext ctx, boolean step_line, boolean back_step) {
-        super(launch, ctx.getID());
+        super(launch);
         this.ctx = ctx;
         this.step_line = step_line;
         this.step_back = back_step;
@@ -73,8 +73,17 @@ public abstract class TCFActionStepInto extends TCFAction implements IRunControl
         }
         if (!state.validate(this)) return;
         if (state.getData() == null || !state.getData().is_suspended) {
-            exit(new Exception("Context is not suspended"));
+            Throwable error = state.getError();
+            if (error == null) error = new Exception("Context is not suspended");
+            exit(error);
             return;
+        }
+        if (step_cnt > 0) {
+            String reason = state.getData().suspend_reason;
+            if (!IRunControl.REASON_STEP.equals(reason)) {
+                exit(null, reason);
+                return;
+            }
         }
         int mode = 0;
         if (!step_line) mode = step_back ? IRunControl.RM_REVERSE_STEP_INTO : IRunControl.RM_STEP_INTO;
@@ -197,7 +206,8 @@ public abstract class TCFActionStepInto extends TCFAction implements IRunControl
         if (exited) return;
         rc.removeListener(this);
         exited = true;
-        done(reason);
+        setActionResult(ctx.getID(), reason);
+        done();
     }
 
     public void containerResumed(String[] context_ids) {
@@ -236,11 +246,6 @@ public abstract class TCFActionStepInto extends TCFAction implements IRunControl
 
     public void contextSuspended(String context, String pc, String reason, Map<String,Object> params) {
         if (!context.equals(ctx.getID())) return;
-        if (IRunControl.REASON_STEP.equals(reason)) {
-            Protocol.invokeLater(this);
-        }
-        else {
-            exit(null, reason);
-        }
+        Protocol.invokeLater(this);
     }
 }

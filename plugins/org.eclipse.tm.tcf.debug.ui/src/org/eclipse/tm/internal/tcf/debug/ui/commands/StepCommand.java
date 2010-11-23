@@ -57,7 +57,7 @@ abstract class StepCommand implements IDebugCommandHandler {
                     node = node.getParent();
                 }
                 else {
-                    int cnt = model.getLaunch().getContextActionsCount(ctx.getID());
+                    int cnt = model.getLaunch().getContextActionsCount();
                     if (cnt == 0) {
                         TCFDataCache<TCFContextState> state_cache = ((TCFNodeExecContext)node).getState();
                         if (!state_cache.validate(done)) return false;
@@ -98,25 +98,20 @@ abstract class StepCommand implements IDebugCommandHandler {
                     monitor.done();
                 }
                 else {
-                    execute(monitor, this, set);
+                    final Set<Runnable> wait_list = new HashSet<Runnable>();
+                    for (IRunControl.RunControlContext ctx : set) {
+                        Runnable done = new Runnable() {
+                            public void run() {
+                                wait_list.remove(this);
+                                if (wait_list.isEmpty()) monitor.done();
+                            }
+                        };
+                        wait_list.add(done);
+                        execute(monitor, ctx, true, done);
+                    }
                 }
             }
         };
         return true;
-    }
-
-    private void execute(final IDebugCommandRequest monitor, final TCFRunnable request,
-            final Set<IRunControl.RunControlContext> set) {
-        final Set<Runnable> wait_list = new HashSet<Runnable>();
-        for (IRunControl.RunControlContext ctx : set) {
-            Runnable done = new Runnable() {
-                public void run() {
-                    wait_list.remove(this);
-                    if (wait_list.isEmpty()) request.done();
-                }
-            };
-            wait_list.add(done);
-            execute(monitor, ctx, true, done);
-        }
     }
 }

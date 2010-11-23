@@ -41,7 +41,7 @@ public class StepReturnCommand extends StepCommand implements IStepReturnHandler
             super(model.getLaunch(), ctx, false);
             this.monitor = monitor;
             this.done = done;
-            node = (TCFNodeExecContext)model.getNode(context_id);
+            node = (TCFNodeExecContext)model.getNode(ctx.getID());
         }
 
         @Override

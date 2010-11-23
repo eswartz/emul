@@ -17,6 +17,7 @@ import java.util.Map;
 import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
 import org.eclipse.tm.tcf.protocol.IToken;
+import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IBreakpoints;
 import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.services.IStackTrace;
@@ -37,7 +38,7 @@ public abstract class TCFActionStepOut extends TCFAction implements IRunControl.
     protected boolean exited;
 
     public TCFActionStepOut(TCFLaunch launch, IRunControl.RunControlContext ctx, boolean step_back) {
-        super(launch, ctx.getID());
+        super(launch);
         this.ctx = ctx;
         this.step_back = step_back;
     }
@@ -68,14 +69,19 @@ public abstract class TCFActionStepOut extends TCFAction implements IRunControl.
         }
         if (!state.validate(this)) return;
         if (state.getData() == null || !state.getData().is_suspended) {
-            exit(new Exception("Context is not suspended"));
+            Throwable error = state.getError();
+            if (error == null) error = new Exception("Context is not suspended");
+            exit(error);
+            return;
+        }
+        if (step_cnt > 0) {
+            String pc = state.getData().suspend_pc;
+            String reason = state.getData().suspend_reason;
+            if (isMyBreakpoint(pc, reason)) exit(null);
+            else exit(null, reason);
             return;
         }
         if (ctx.canResume(step_back ? IRunControl.RM_REVERSE_STEP_OUT : IRunControl.RM_STEP_OUT)) {
-            if (step_cnt > 0) {
-                exit(null);
-                return;
-            }
             ctx.resume(step_back ? IRunControl.RM_REVERSE_STEP_OUT : IRunControl.RM_STEP_OUT, 1, new IRunControl.DoneCommand() {
                 public void doneCommand(IToken token, Exception error) {
                     if (error != null) exit(error);
@@ -137,7 +143,8 @@ public abstract class TCFActionStepOut extends TCFAction implements IRunControl.
         }
         rc.removeListener(this);
         exited = true;
-        done(reason);
+        setActionResult(ctx.getID(), reason);
+        done();
     }
 
     public void containerResumed(String[] context_ids) {
@@ -176,12 +183,7 @@ public abstract class TCFActionStepOut extends TCFAction implements IRunControl.
 
     public void contextSuspended(String context, String pc, String reason, Map<String,Object> params) {
         if (!context.equals(ctx.getID())) return;
-        if (isMyBreakpoint(pc, reason)) {
-            exit(null);
-        }
-        else {
-            exit(null, reason);
-        }
+        Protocol.invokeLater(this);
     }
 
     private boolean isMyBreakpoint(String pc, String reason) {

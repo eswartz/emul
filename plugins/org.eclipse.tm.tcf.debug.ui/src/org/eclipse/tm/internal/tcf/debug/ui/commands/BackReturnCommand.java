@@ -39,7 +39,7 @@ public class BackReturnCommand extends StepCommand {
             super(model.getLaunch(), ctx, true);
             this.monitor = monitor;
             this.done = done;
-            node = (TCFNodeExecContext)model.getNode(context_id);
+            node = (TCFNodeExecContext)model.getNode(ctx.getID());
         }
 
         @Override

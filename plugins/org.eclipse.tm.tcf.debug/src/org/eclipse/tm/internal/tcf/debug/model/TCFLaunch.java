@@ -60,9 +60,11 @@ public class TCFLaunch extends Launch {
 
         public void onDisconnected(TCFLaunch launch);
 
-        public void onContextActionsStart(TCFLaunch launch, String ctx_id);
+        public void onContextActionsStart(TCFLaunch launch);
 
-        public void onContextActionsDone(TCFLaunch launch, String ctx_id, String result);
+        public void onContextActionResult(TCFLaunch launch, String id, String result);
+
+        public void onContextActionsDone(TCFLaunch launch);
 
         public void onProcessOutput(TCFLaunch launch, String process_id, int stream_id, byte[] data);
 
@@ -116,7 +118,7 @@ public class TCFLaunch extends Launch {
     private int process_exit_code;
     private final HashMap<String,String> process_env = new HashMap<String,String>();
 
-    private final HashMap<String,LinkedList<Runnable>> context_action_queue = new HashMap<String,LinkedList<Runnable>>();
+    private final LinkedList<TCFAction> context_action_queue = new LinkedList<TCFAction>();
     private final HashMap<String,String> stream_ids = new HashMap<String,String>();
     private final LinkedList<LaunchStep> launch_steps = new LinkedList<LaunchStep>();
     private final LinkedList<String> redirection_path = new LinkedList<String>();
@@ -894,45 +896,40 @@ public class TCFLaunch extends Launch {
         }
     }
 
-    public void addContextAction(TCFAction action, String context_id) {
+    public void addContextAction(TCFAction action) {
         assert Protocol.isDispatchThread();
-        LinkedList<Runnable> list = context_action_queue.get(context_id);
-        if (list == null) {
-            list = new LinkedList<Runnable>();
-            context_action_queue.put(context_id, list);
-        }
-        list.add(action);
-        if (list.getFirst() == action) {
+        context_action_queue.add(action);
+        if (context_action_queue.getFirst() == action) {
             Protocol.invokeLater(action);
-            for (Listener l : listeners) l.onContextActionsStart(this, context_id);
+            for (Listener l : listeners) l.onContextActionsStart(this);
         }
     }
 
-    public void removeContextAction(TCFAction action, String context_id, String result) {
+    public void setContextActionResult(String id, String result) {
         assert Protocol.isDispatchThread();
-        LinkedList<Runnable> list = context_action_queue.get(context_id);
-        if (list == null) return;
-        assert list.getFirst() == action;
-        list.removeFirst();
-        if (!list.isEmpty()) {
-            Protocol.invokeLater(list.getFirst());
+        for (Listener l : listeners) l.onContextActionResult(this, id, result);
+    }
+
+    public void removeContextAction(TCFAction action) {
+        assert Protocol.isDispatchThread();
+        assert context_action_queue.getFirst() == action;
+        context_action_queue.removeFirst();
+        if (!context_action_queue.isEmpty()) {
+            Protocol.invokeLater(context_action_queue.getFirst());
         }
         else {
-            for (Listener l : listeners) l.onContextActionsDone(this, context_id, result);
+            for (Listener l : listeners) l.onContextActionsDone(this);
         }
     }
 
-    public void removeContextActions(String context_id, String result) {
+    public void removeContextActions() {
         assert Protocol.isDispatchThread();
-        LinkedList<Runnable> list = context_action_queue.remove(context_id);
-        if (list != null && list.size() > 0) {
-            for (Listener l : listeners) l.onContextActionsDone(this, context_id, result);
-        }
+        context_action_queue.clear();
+        for (Listener l : listeners) l.onContextActionsDone(this);
     }
 
-    public int getContextActionsCount(String context_id) {
+    public int getContextActionsCount() {
         assert Protocol.isDispatchThread();
-        LinkedList<Runnable> list = context_action_queue.get(context_id);
-        return list == null ? 0 : list.size();
+        return context_action_queue.size();
     }
 }

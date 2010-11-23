@@ -107,7 +107,7 @@ public class SuspendCommand implements ISuspendHandler {
                 final Set<IToken> cmds = new HashSet<IToken>();
                 for (Iterator<IRunControl.RunControlContext> i = set.iterator(); i.hasNext();) {
                     IRunControl.RunControlContext ctx = i.next();
-                    model.getLaunch().removeContextActions(ctx.getID(), "Suspended");
+                    model.getLaunch().removeContextActions();
                     cmds.add(ctx.suspend(new IRunControl.DoneCommand() {
                         public void doneCommand(IToken token, Exception error) {
                             assert cmds.contains(token);
