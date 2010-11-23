@@ -37,7 +37,7 @@ import org.eclipse.tm.tcf.util.TCFDataCache;
  */
 public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Runnable {
 
-    private static final long MIN_IDLE_TIME = 250;
+    private static final long MIN_IDLE_TIME = 50;
 
     private static final TCFNode[] EMPTY_NODE_ARRAY = new TCFNode[0];
 
@@ -57,8 +57,11 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
         public void run() {
             posted = false;
             long idle_time = System.currentTimeMillis() - last_update_time;
-            if (idle_time < MIN_IDLE_TIME - 50) {
-                Protocol.invokeLater(MIN_IDLE_TIME - idle_time, this);
+            long min_idle_time = MIN_IDLE_TIME;
+            int congestion = Protocol.getCongestionLevel() + 50;
+            if (congestion > 0) min_idle_time += congestion * 10;
+            if (idle_time < min_idle_time - 10) {
+                Protocol.invokeLater(min_idle_time - idle_time, this);
                 posted = true;
             }
             else {
@@ -209,7 +212,7 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
         return getViewer().getInput();
     }
 
-    private void post() {
+    public void post() {
         assert Protocol.isDispatchThread();
         if (!posted) {
             long idle_time = System.currentTimeMillis() - last_update_time;
@@ -291,6 +294,7 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
     }
 
     private void postDelta(final ModelDelta root) {
+        assert pending_node == null;
         model.getDisplay().asyncExec(new Runnable() {
             public void run() {
                 fireModelChanged(root);

@@ -13,13 +13,11 @@ package org.eclipse.tm.internal.tcf.debug.ui.commands;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.debug.core.commands.IDebugCommandHandler;
 import org.eclipse.debug.core.commands.IDebugCommandRequest;
 import org.eclipse.debug.core.commands.IEnabledStateRequest;
 import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
-import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModel;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExecContext;
@@ -29,6 +27,8 @@ import org.eclipse.tm.tcf.util.TCFDataCache;
 
 // TODO: implement Instruction Stepping Mode user action
 abstract class StepCommand implements IDebugCommandHandler {
+
+    private static final int MAX_ACTION_CNT = 8;
 
     protected final TCFModel model;
 
@@ -41,36 +41,46 @@ abstract class StepCommand implements IDebugCommandHandler {
     protected abstract void execute(IDebugCommandRequest monitor,
             IRunControl.RunControlContext ctx, boolean src_step, Runnable done);
 
+    private boolean getContextSet(Object[] elements, Set<IRunControl.RunControlContext> set, Runnable done) {
+        for (int i = 0; i < elements.length; i++) {
+            TCFNode node = null;
+            if (elements[i] instanceof TCFNode) node = (TCFNode)elements[i];
+            else node = model.getRootNode();
+            while (node != null && !node.isDisposed()) {
+                IRunControl.RunControlContext ctx = null;
+                if (node instanceof TCFNodeExecContext) {
+                    TCFDataCache<IRunControl.RunControlContext> cache = ((TCFNodeExecContext)node).getRunContext();
+                    if (!cache.validate(done)) return false;
+                    ctx = cache.getData();
+                }
+                if (ctx == null || !canExecute(ctx)) {
+                    node = node.getParent();
+                }
+                else {
+                    int cnt = model.getLaunch().getContextActionsCount(ctx.getID());
+                    if (cnt == 0) {
+                        TCFDataCache<TCFContextState> state_cache = ((TCFNodeExecContext)node).getState();
+                        if (!state_cache.validate(done)) return false;
+                        TCFContextState state_data = state_cache.getData();
+                        if (state_data != null && state_data.is_suspended) set.add(ctx);
+                    }
+                    else if (cnt < MAX_ACTION_CNT) {
+                        set.add(ctx);
+                    }
+                    break;
+                }
+            }
+        }
+        return true;
+    }
+
     public final void canExecute(final IEnabledStateRequest monitor) {
         new TCFRunnable(monitor) {
             public void run() {
                 if (done) return;
-                Object[] elements = monitor.getElements();
-                boolean res = false;
-                for (int i = 0; i < elements.length; i++) {
-                    TCFNode node = null;
-                    if (elements[i] instanceof TCFNode) node = (TCFNode)elements[i];
-                    else node = model.getRootNode();
-                    while (node != null && !node.isDisposed()) {
-                        IRunControl.RunControlContext ctx = null;
-                        if (node instanceof TCFNodeExecContext) {
-                            TCFDataCache<IRunControl.RunControlContext> cache = ((TCFNodeExecContext)node).getRunContext();
-                            if (!cache.validate(this)) return;
-                            ctx = cache.getData();
-                        }
-                        if (ctx == null || !canExecute(ctx)) {
-                            node = node.getParent();
-                        }
-                        else {
-                            TCFDataCache<TCFContextState> state_cache = ((TCFNodeExecContext)node).getState();
-                            if (!state_cache.validate(this)) return;
-                            TCFContextState state_data = state_cache.getData();
-                            if (state_data != null && state_data.is_suspended) res = true;
-                            break;
-                        }
-                    }
-                }
-                monitor.setEnabled(res);
+                Set<IRunControl.RunControlContext> set = new HashSet<IRunControl.RunControlContext>();
+                if (!getContextSet(monitor.getElements(), set, this)) return;
+                monitor.setEnabled(set.size() > 0);
                 monitor.setStatus(Status.OK_STATUS);
                 done();
             }
@@ -81,32 +91,10 @@ abstract class StepCommand implements IDebugCommandHandler {
         new TCFRunnable(monitor) {
             public void run() {
                 if (done) return;
-                Object[] elements = monitor.getElements();
-                final Set<IRunControl.RunControlContext> set = new HashSet<IRunControl.RunControlContext>();
-                for (int i = 0; i < elements.length; i++) {
-                    TCFNode node = null;
-                    if (elements[i] instanceof TCFNode) node = (TCFNode)elements[i];
-                    else node = model.getRootNode();
-                    while (node != null && !node.isDisposed()) {
-                        IRunControl.RunControlContext ctx = null;
-                        if (node instanceof TCFNodeExecContext) {
-                            TCFDataCache<IRunControl.RunControlContext> cache = ((TCFNodeExecContext)node).getRunContext();
-                            if (!cache.validate(this)) return;
-                            ctx = cache.getData();
-                        }
-                        if (ctx == null || !canExecute(ctx)) {
-                            node = node.getParent();
-                        }
-                        else {
-                            set.add(ctx);
-                            break;
-                        }
-                    }
-                }
+                Set<IRunControl.RunControlContext> set = new HashSet<IRunControl.RunControlContext>();
+                if (!getContextSet(monitor.getElements(), set, this)) return;
                 if (set.size() == 0) {
-                    Exception error = new Exception("Not supported by selected context");
-                    monitor.setStatus(new Status(IStatus.ERROR,
-                            Activator.PLUGIN_ID, 0, "Cannot step: " + error.getLocalizedMessage(), error));
+                    monitor.setStatus(Status.OK_STATUS);
                     monitor.done();
                 }
                 else {

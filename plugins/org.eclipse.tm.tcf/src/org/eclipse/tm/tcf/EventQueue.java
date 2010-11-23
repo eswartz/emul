@@ -39,7 +39,6 @@ class EventQueue implements IEventQueue, Runnable {
         Job.getJobManager().addJobChangeListener(new IJobChangeListener() {
 
             public void aboutToRun(IJobChangeEvent event) {
-                job_cnt++;
             }
 
             public void awake(IJobChangeEvent event) {
@@ -54,6 +53,7 @@ class EventQueue implements IEventQueue, Runnable {
             }
 
             public void scheduled(IJobChangeEvent event) {
+                job_cnt++;
             }
 
             public void sleeping(IJobChangeEvent event) {

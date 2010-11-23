@@ -134,7 +134,8 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
      * A dummy editor input to open the disassembly view as editor.
      */
     public static class DisassemblyEditorInput implements IEditorInput {
-        static DisassemblyEditorInput INSTANCE = new DisassemblyEditorInput();
+        final static String EDITOR_ID = "org.eclipse.cdt.dsf.ui.disassembly";
+        final static DisassemblyEditorInput INSTANCE = new DisassemblyEditorInput();
 
         public Object getAdapter(Class adapter) {
             return null;
@@ -322,6 +323,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 if (node instanceof TCFNodeExecContext) {
                     ((TCFNodeExecContext)node).onContainerSuspended();
                 }
+                finished_actions.remove(suspended_ids[i]);
             }
             TCFNode node = getNode(context);
             if (node instanceof TCFNodeExecContext) {
@@ -374,7 +376,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             }
             display.asyncExec(new Runnable() {
                 public void run() {
-                    Activator.getAnnotationManager().onContextResumed(TCFModel.this, context);
+                    Activator.getAnnotationManager().removeStackFrameAnnotation(TCFModel.this, context);
                 }
             });
         }
@@ -399,6 +401,16 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 TCFNodeExecContext exe = (TCFNodeExecContext)node;
                 exe.onMemoryMapChanged();
             }
+            display.asyncExec(new Runnable() {
+                public void run() {
+                    if (PlatformUI.isWorkbenchRunning()) {
+                        for (IWorkbenchWindow window : PlatformUI.getWorkbench().getWorkbenchWindows()) {
+                            IWorkbenchPage page = window.getActivePage();
+                            if (page != null) displaySource(null, page, true);
+                        }
+                    }
+                }
+            });
         }
     };
 
@@ -624,7 +636,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     void onContextActionsDone(String id, String result) {
         running_actions.remove(id);
-        for (TCFModelProxy p : model_proxies) p.run();
+        for (TCFModelProxy p : model_proxies) p.post();
         finished_actions.put(id, result);
         setDebugViewSelection(id);
     }
@@ -664,7 +676,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         display.asyncExec(new Runnable() {
             public void run() {
                 for (String id : context_ids) {
-                    Activator.getAnnotationManager().onContextRemoved(TCFModel.this, id);
+                    Activator.getAnnotationManager().removeStackFrameAnnotation(TCFModel.this, id);
                 }
             }
         });
@@ -1003,7 +1015,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             ISelection context = DebugUITools.getDebugContextManager().getContextService(page.getWorkbenchWindow()).getActiveContext();
             if (context instanceof IStructuredSelection) {
                 IStructuredSelection selection = (IStructuredSelection)context;
-                if (!selection.isEmpty()) model_element = selection.getFirstElement();
+                model_element = selection.isEmpty() ? null : selection.getFirstElement();
             }
         }
         final Object element = model_element;
@@ -1033,12 +1045,13 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                             TCFDataCache<TCFContextState> state_cache = exec_ctx.getState();
                             if (!state_cache.validate(this)) return;
                             TCFContextState state_data = state_cache.getData();
-                            if (state_data != null && state_data.is_suspended) {
-                                stack_frame = f;
-                            }
+                            if (state_data != null && state_data.is_suspended) stack_frame = f;
                         }
                     }
                 }
+                String ctx_id = null;
+                boolean top_frame = false;
+                ILineNumbers.CodeArea area = null;
                 if (stack_frame != null) {
                     TCFDataCache<TCFSourceRef> line_info = stack_frame.getLineInfo();
                     if (!line_info.validate(this)) return;
@@ -1046,36 +1059,18 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                     TCFSourceRef src_ref = line_info.getData();
                     if (error == null && src_ref != null) error = src_ref.error;
                     if (error != null) Activator.log("Error retrieving source mapping for a stack frame", error);
-                    ILineNumbers.CodeArea area = src_ref == null ? null : src_ref.area;
-                    if (area == null && getChannel().getRemoteService(IDisassembly.class) != null) {
-                        displayDisassembly(cnt, page);
-                    }
-                    else {
-                        displaySource(cnt, page, stack_frame.parent.id, stack_frame.getFrameNo() == 0, area);
-                    }
+                    if (src_ref != null) area = src_ref.area;
+                    top_frame = stack_frame.getFrameNo() == 0;
+                    ctx_id = stack_frame.parent.id;
                 }
-                else {
-                    displaySource(cnt, page, null, false, null);
-                }
+                displaySource(cnt, page, ctx_id, top_frame, area);
             }
         });
     }
 
-    private void displayDisassembly(final int cnt, final IWorkbenchPage page) {
-        final IEditorInput editor_input = DisassemblyEditorInput.INSTANCE;
-        final String editor_id = "org.eclipse.cdt.dsf.ui.disassembly";
-        if (PlatformUI.getWorkbench().getEditorRegistry().findEditor(editor_id) != null) {
-            display.asyncExec(new Runnable() {
-                public void run() {
-                    if (cnt != display_source_cnt) return;
-                    openEditor(editor_input, editor_id, page);
-                }
-            });
-        }
-    }
-
     private void displaySource(final int cnt, final IWorkbenchPage page,
             final String exe_id, final boolean top_frame, final ILineNumbers.CodeArea area) {
+        final boolean disassembly_available = channel.getRemoteService(IDisassembly.class) != null;
         display.asyncExec(new Runnable() {
             public void run() {
                 if (cnt != display_source_cnt) return;
@@ -1098,7 +1093,13 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                         }
                         line = area.start_line;
                     }
-                    if (cnt != display_source_cnt) return;
+                }
+                if (disassembly_available &&
+                        (editor_input == null || editor_id == null) &&
+                        PlatformUI.getWorkbench().getEditorRegistry().findEditor(
+                                DisassemblyEditorInput.EDITOR_ID) != null) {
+                    editor_id = DisassemblyEditorInput.EDITOR_ID;
+                    editor_input = DisassemblyEditorInput.INSTANCE;
                 }
                 if (area != null && (editor_input == null || editor_id == null)) {
                     ILaunchConfiguration cfg = launch.getLaunchConfiguration();
@@ -1109,9 +1110,9 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                         editor_not_found.put(cfg, editor_input);
                     }
                 }
+                if (cnt != display_source_cnt) return;
                 ITextEditor text_editor = null;
-                IRegion region = null;
-                if (editor_input != null && editor_id != null && page != null) {
+                if (page != null && editor_input != null && editor_id != null) {
                     IEditorPart editor = openEditor(editor_input, editor_id, page);
                     if (editor instanceof ITextEditor) {
                         text_editor = (ITextEditor)editor;
@@ -1120,6 +1121,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                         text_editor = (ITextEditor)editor.getAdapter(ITextEditor.class);
                     }
                 }
+                IRegion region = null;
                 if (text_editor != null) {
                     region = getLineInformation(text_editor, line);
                     if (region != null) text_editor.selectAndReveal(region.getOffset(), 0);

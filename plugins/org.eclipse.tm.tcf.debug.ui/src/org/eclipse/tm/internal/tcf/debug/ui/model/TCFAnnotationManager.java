@@ -364,35 +364,7 @@ public class TCFAnnotationManager {
         }
     }
 
-    public Annotation findAnnotation(TCFModel model, String id) {
-        if (disposed) return null;
-        assert Thread.currentThread() == display.getThread();
-        for (WorkbenchWindowInfo info : windows.values()) {
-            for (Iterator<TCFAnnotation> i = info.annotations.iterator(); i.hasNext();) {
-                TCFAnnotation a = i.next();
-                if (a.model == model && a.exe_id.equals(id)) {
-                    return a;
-                }
-            }
-        }
-        return null;
-    }
-
-    void onContextResumed(TCFModel model, String id) {
-        if (disposed) return;
-        assert Thread.currentThread() == display.getThread();
-        for (WorkbenchWindowInfo info : windows.values()) {
-            for (Iterator<TCFAnnotation> i = info.annotations.iterator(); i.hasNext();) {
-                TCFAnnotation a = i.next();
-                if (a.model == model && a.exe_id.equals(id)) {
-                    i.remove();
-                    a.dispose();
-                }
-            }
-        }
-    }
-
-    void onContextRemoved(TCFModel model, String id) {
+    void removeStackFrameAnnotation(TCFModel model, String id) {
         if (disposed) return;
         assert Thread.currentThread() == display.getThread();
         for (WorkbenchWindowInfo info : windows.values()) {

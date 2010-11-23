@@ -323,11 +323,9 @@ public class TCFLaunch extends Launch {
                         ArrayList<TCFMemoryRegion> map = maps.get(id);
                         if (map != null) {
                             TCFMemoryRegion[] arr = map.toArray(new TCFMemoryRegion[map.size()]);
-                            System.out.println("Set map " + id + " on context " + context.getID());
                             cmds.add(mmap.set(context.getID(), arr, done_set_mmap));
                         }
                         else if (deleted_maps.contains(id)) {
-                            System.out.println("Delete map " + id + " on context " + context.getID());
                             cmds.add(mmap.set(context.getID(), null, done_set_mmap));
                         }
                     }
@@ -365,7 +363,6 @@ public class TCFLaunch extends Launch {
                     ArrayList<TCFMemoryRegion> map = maps.get(id);
                     if (map == null) continue;
                     TCFMemoryRegion[] arr = map.toArray(new TCFMemoryRegion[map.size()]);
-                    System.out.println("Set map " + id + " on context " + context.getID());
                     cmds.add(mmap.set(context.getID(), arr, done_set_mmap));
                 }
             }
@@ -931,5 +928,11 @@ public class TCFLaunch extends Launch {
         if (list != null && list.size() > 0) {
             for (Listener l : listeners) l.onContextActionsDone(this, context_id, result);
         }
+    }
+
+    public int getContextActionsCount(String context_id) {
+        assert Protocol.isDispatchThread();
+        LinkedList<Runnable> list = context_action_queue.get(context_id);
+        return list == null ? 0 : list.size();
     }
 }
