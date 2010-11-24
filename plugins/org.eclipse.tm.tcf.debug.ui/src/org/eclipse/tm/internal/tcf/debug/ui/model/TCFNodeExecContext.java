@@ -631,32 +631,42 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     }
 
     void postAllChangedDelta() {
-        for (TCFModelProxy p : model.getModelProxies()) {
-            p.addDelta(this, IModelDelta.STATE | IModelDelta.CONTENT);
-        }
+        postContentChangedDelta();
+        postStateChangedDelta();
     }
 
     void postContextAddedDelta() {
         for (TCFModelProxy p : model.getModelProxies()) {
-            p.addDelta(this, IModelDelta.ADDED);
+            if (IDebugUIConstants.ID_DEBUG_VIEW.equals(p.getPresentationContext().getId())) {
+                p.addDelta(this, IModelDelta.ADDED);
+            }
         }
     }
 
     private void postContextRemovedDelta() {
         for (TCFModelProxy p : model.getModelProxies()) {
-            p.addDelta(this, IModelDelta.REMOVED);
+            if (IDebugUIConstants.ID_DEBUG_VIEW.equals(p.getPresentationContext().getId())) {
+                p.addDelta(this, IModelDelta.REMOVED);
+            }
         }
     }
 
     private void postContentChangedDelta() {
         for (TCFModelProxy p : model.getModelProxies()) {
-            p.addDelta(this, IModelDelta.CONTENT);
+            String id = p.getPresentationContext().getId();
+            if (IDebugUIConstants.ID_DEBUG_VIEW.equals(id) ||
+                    IDebugUIConstants.ID_REGISTER_VIEW.equals(id) ||
+                    IDebugUIConstants.ID_EXPRESSION_VIEW.equals(id)) {
+                p.addDelta(this, IModelDelta.CONTENT);
+            }
         }
     }
 
     private void postStateChangedDelta() {
         for (TCFModelProxy p : model.getModelProxies()) {
-            p.addDelta(this, IModelDelta.STATE);
+            if (IDebugUIConstants.ID_DEBUG_VIEW.equals(p.getPresentationContext().getId())) {
+                p.addDelta(this, IModelDelta.STATE);
+            }
         }
     }
 
@@ -715,12 +725,8 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         if (run_context.isValid()) {
             IRunControl.RunControlContext ctx = run_context.getData();
             if (ctx != null && !ctx.hasState()) return;
-            onContextResumed();
         }
-        else {
-            state.reset();
-            postAllChangedDelta();
-        }
+        onContextResumed();
     }
 
     void onContextSuspended(String pc, String reason, Map<String,Object> params) {
@@ -753,7 +759,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         postStateChangedDelta();
         final int cnt = ++resumed_cnt;
         resume_pending = true;
-        Protocol.invokeLater(250, new Runnable() {
+        Protocol.invokeLater(400, new Runnable() {
             public void run() {
                 if (cnt != resumed_cnt) return;
                 if (disposed) return;

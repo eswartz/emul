@@ -25,10 +25,7 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IViewerUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.ModelDelta;
 import org.eclipse.jface.viewers.TreePath;
 import org.eclipse.jface.viewers.Viewer;
-import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
 import org.eclipse.tm.tcf.protocol.Protocol;
-import org.eclipse.tm.tcf.services.IRunControl;
-import org.eclipse.tm.tcf.util.TCFDataCache;
 
 /**
  * A model proxy represents a model for a specific presentation context and
@@ -348,14 +345,6 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
             last_update_time = System.currentTimeMillis();
             while (!selection.isEmpty()) {
                 TCFNode node = selection.getFirst();
-                String s = null;
-                if (node instanceof TCFNodeExecContext) {
-                    TCFNodeExecContext exe = (TCFNodeExecContext)node;
-                    TCFDataCache<TCFContextState> cache = exe.getState();
-                    if (!cache.validate(this)) return;
-                    TCFContextState state = cache.getData();
-                    if (state != null) s = state.suspend_reason;
-                }
                 node2flags.put(node, IModelDelta.SELECT);
                 root = new ModelDelta(input, IModelDelta.NO_CHANGE);
                 makeDelta(root, node, true);
