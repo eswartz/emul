@@ -218,14 +218,14 @@
             objectClass="org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode">
          <action
             id="org.eclipse.tm.tcf.debug.ui.actions.Signals"
-            class="org.eclipse.tm.internal.tcf.debug.ui.commands.Signals"
+            class="org.eclipse.tm.internal.tcf.debug.ui.commands.SignalsCommand"
             icon="icons/signals.gif"
             label="%Signals.label"
             menubarPath="additions">
          </action>
          <action
             id="org.eclipse.tm.tcf.debug.ui.actions.MemoryMap"
-            class="org.eclipse.tm.internal.tcf.debug.ui.commands.MemoryMap"
+            class="org.eclipse.tm.internal.tcf.debug.ui.commands.MemoryMapCommand"
             icon="icons/memory-map.gif"
             label="%MemoryMap.label"
             menubarPath="additions">
