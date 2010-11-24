@@ -33,6 +33,8 @@ import org.eclipse.tm.tcf.util.TCFDataCache;
 
 public class ResumeCommand implements IResumeHandler {
 
+    private static final int MAX_ACTION_CNT = 4;
+
     private final TCFModel model;
 
     public ResumeCommand(TCFModel model) {
@@ -45,30 +47,32 @@ public class ResumeCommand implements IResumeHandler {
                 if (done) return;
                 Object[] elements = monitor.getElements();
                 boolean res = false;
-                for (int i = 0; i < elements.length; i++) {
-                    TCFNode node = null;
-                    if (elements[i] instanceof TCFNode) node = (TCFNode)elements[i];
-                    else node = model.getRootNode();
-                    while (node != null && !node.isDisposed()) {
-                        IRunControl.RunControlContext ctx = null;
-                        if (node instanceof TCFNodeExecContext) {
-                            TCFDataCache<IRunControl.RunControlContext> cache = ((TCFNodeExecContext)node).getRunContext();
-                            if (!cache.validate(this)) return;
-                            ctx = cache.getData();
-                        }
-                        if (ctx == null) {
-                            node = node.getParent();
-                        }
-                        else if (ctx.isContainer()) {
-                            if (ctx.canResume(IRunControl.RM_RESUME)) res = true;
-                            break;
-                        }
-                        else {
-                            TCFDataCache<TCFContextState> state_cache = ((TCFNodeExecContext)node).getState();
-                            if (!state_cache.validate(this)) return;
-                            TCFContextState state_data = state_cache.getData();
-                            if (state_data != null && state_data.is_suspended && ctx.canResume(IRunControl.RM_RESUME)) res = true;
-                            break;
+                if (model.getLaunch().getContextActionsCount() < MAX_ACTION_CNT) {
+                    for (int i = 0; i < elements.length; i++) {
+                        TCFNode node = null;
+                        if (elements[i] instanceof TCFNode) node = (TCFNode)elements[i];
+                        else node = model.getRootNode();
+                        while (node != null && !node.isDisposed()) {
+                            IRunControl.RunControlContext ctx = null;
+                            if (node instanceof TCFNodeExecContext) {
+                                TCFDataCache<IRunControl.RunControlContext> cache = ((TCFNodeExecContext)node).getRunContext();
+                                if (!cache.validate(this)) return;
+                                ctx = cache.getData();
+                            }
+                            if (ctx == null) {
+                                node = node.getParent();
+                            }
+                            else if (ctx.isContainer()) {
+                                if (ctx.canResume(IRunControl.RM_RESUME)) res = true;
+                                break;
+                            }
+                            else {
+                                TCFDataCache<TCFContextState> state_cache = ((TCFNodeExecContext)node).getState();
+                                if (!state_cache.validate(this)) return;
+                                TCFContextState state_data = state_cache.getData();
+                                if (state_data != null && state_data.is_suspended && ctx.canResume(IRunControl.RM_RESUME)) res = true;
+                                break;
+                            }
                         }
                     }
                 }
@@ -85,23 +89,25 @@ public class ResumeCommand implements IResumeHandler {
                 if (done) return;
                 Object[] elements = monitor.getElements();
                 Set<IRunControl.RunControlContext> set = new HashSet<IRunControl.RunControlContext>();
-                for (int i = 0; i < elements.length; i++) {
-                    TCFNode node = null;
-                    if (elements[i] instanceof TCFNode) node = (TCFNode)elements[i];
-                    else node = model.getRootNode();
-                    while (node != null && !node.isDisposed()) {
-                        IRunControl.RunControlContext ctx = null;
-                        if (node instanceof TCFNodeExecContext) {
-                            TCFDataCache<IRunControl.RunControlContext> cache = ((TCFNodeExecContext)node).getRunContext();
-                            if (!cache.validate(this)) return;
-                            ctx = cache.getData();
-                        }
-                        if (ctx == null) {
-                            node = node.getParent();
-                        }
-                        else {
-                            set.add(ctx);
-                            break;
+                if (model.getLaunch().getContextActionsCount() < MAX_ACTION_CNT) {
+                    for (int i = 0; i < elements.length; i++) {
+                        TCFNode node = null;
+                        if (elements[i] instanceof TCFNode) node = (TCFNode)elements[i];
+                        else node = model.getRootNode();
+                        while (node != null && !node.isDisposed()) {
+                            IRunControl.RunControlContext ctx = null;
+                            if (node instanceof TCFNodeExecContext) {
+                                TCFDataCache<IRunControl.RunControlContext> cache = ((TCFNodeExecContext)node).getRunContext();
+                                if (!cache.validate(this)) return;
+                                ctx = cache.getData();
+                            }
+                            if (ctx == null) {
+                                node = node.getParent();
+                            }
+                            else {
+                                set.add(ctx);
+                                break;
+                            }
                         }
                     }
                 }
