@@ -205,7 +205,7 @@
             objectClass="org.eclipse.tm.internal.tcf.debug.model.TCFLaunch">
          <action
             id="org.eclipse.tm.tcf.debug.ui.actions.Signals"
-            class="org.eclipse.tm.internal.tcf.debug.ui.commands.Signals"
+            class="org.eclipse.tm.internal.tcf.debug.ui.commands.SignalsCommand"
             icon="icons/signals.gif"
             label="%Signals.label"
             menubarPath="additions">
@@ -240,7 +240,7 @@
                label="%RestoreDefaultType.label"
                helpContextId="restore_default_type_action_context"
                tooltip="%RestoreDefaultType.tooltip"
-               class="org.eclipse.tm.internal.tcf.debug.ui.commands.RestoreDefaultType"
+               class="org.eclipse.tm.internal.tcf.debug.ui.commands.RestoreDefaultTypeCommand"
                menubarPath="variableGroup"
                enablesFor="1"
                id="org.eclipse.tm.tcf.debug.ui.commands.RestoreDefaultType">
@@ -256,7 +256,7 @@
                icon="icons/casttotype_co.gif"
                helpContextId="cast_to_type_action_context"
                tooltip="%CastToType.tooltip"
-               class="org.eclipse.tm.internal.tcf.debug.ui.commands.CastToType"
+               class="org.eclipse.tm.internal.tcf.debug.ui.commands.CastToTypeCommand"
                menubarPath="variableGroup"
                enablesFor="1"
                id="org.eclipse.tm.tcf.debug.ui.commands.CastToType">
@@ -272,7 +272,7 @@
                icon="icons/showasarray_co.gif"
                helpContextId="cast_to_array_action_context"
                tooltip="%CastToArray.tooltip"
-               class="org.eclipse.tm.internal.tcf.debug.ui.commands.CastToArray"
+               class="org.eclipse.tm.internal.tcf.debug.ui.commands.CastToArrayCommand"
                menubarPath="variableGroup"
                enablesFor="1"
                id="org.eclipse.tm.tcf.debug.ui.commands.CastToArray">
