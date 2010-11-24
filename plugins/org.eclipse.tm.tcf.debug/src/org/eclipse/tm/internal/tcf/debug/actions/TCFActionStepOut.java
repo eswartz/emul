@@ -123,6 +123,7 @@ public abstract class TCFActionStepOut extends TCFAction implements IRunControl.
                     if (error != null) exit(error);
                 }
             });
+            step_cnt++;
         }
         else {
             exit(new Exception("Step out is not supported"));
