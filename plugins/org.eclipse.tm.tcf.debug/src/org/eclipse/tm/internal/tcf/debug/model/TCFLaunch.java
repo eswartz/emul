@@ -108,6 +108,8 @@ public class TCFLaunch extends Launch {
     private boolean disconnected;
     private boolean shutdown;
     private boolean last_context_exited;
+    private long actions_timestamp;
+    private long actions_interval = 200;
 
     private Runnable update_memory_maps;
 
@@ -896,11 +898,19 @@ public class TCFLaunch extends Launch {
         }
     }
 
+    /****************************************************************************************************************/
+
+    public void setContextActionsInterval(long interval) {
+        actions_interval = interval;
+    }
+
     public void addContextAction(TCFAction action) {
         assert Protocol.isDispatchThread();
         context_action_queue.add(action);
         if (context_action_queue.getFirst() == action) {
-            Protocol.invokeLater(action);
+            long time = System.currentTimeMillis();
+            Protocol.invokeLater(actions_timestamp + actions_interval - time, action);
+            actions_timestamp = time;
             for (Listener l : listeners) l.onContextActionsStart(this);
         }
     }
@@ -915,7 +925,9 @@ public class TCFLaunch extends Launch {
         assert context_action_queue.getFirst() == action;
         context_action_queue.removeFirst();
         if (!context_action_queue.isEmpty()) {
-            Protocol.invokeLater(context_action_queue.getFirst());
+            long time = System.currentTimeMillis();
+            Protocol.invokeLater(actions_timestamp + actions_interval - time, context_action_queue.getFirst());
+            actions_timestamp = time;
         }
         else {
             for (Listener l : listeners) l.onContextActionsDone(this);
