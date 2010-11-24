@@ -28,7 +28,7 @@ import org.eclipse.tm.tcf.util.TCFDataCache;
 // TODO: implement Instruction Stepping Mode user action
 abstract class StepCommand implements IDebugCommandHandler {
 
-    private static final int MAX_ACTION_CNT = 8;
+    private static final int MAX_ACTION_CNT = 4;
 
     protected final TCFModel model;
 
@@ -42,6 +42,8 @@ abstract class StepCommand implements IDebugCommandHandler {
             IRunControl.RunControlContext ctx, boolean src_step, Runnable done);
 
     private boolean getContextSet(Object[] elements, Set<IRunControl.RunControlContext> set, Runnable done) {
+        int action_cnt = model.getLaunch().getContextActionsCount();
+        if (action_cnt >= MAX_ACTION_CNT) return true;
         for (int i = 0; i < elements.length; i++) {
             TCFNode node = null;
             if (elements[i] instanceof TCFNode) node = (TCFNode)elements[i];
@@ -57,14 +59,13 @@ abstract class StepCommand implements IDebugCommandHandler {
                     node = node.getParent();
                 }
                 else {
-                    int cnt = model.getLaunch().getContextActionsCount();
-                    if (cnt == 0) {
+                    if (action_cnt == 0) {
                         TCFDataCache<TCFContextState> state_cache = ((TCFNodeExecContext)node).getState();
                         if (!state_cache.validate(done)) return false;
                         TCFContextState state_data = state_cache.getData();
                         if (state_data != null && state_data.is_suspended) set.add(ctx);
                     }
-                    else if (cnt < MAX_ACTION_CNT) {
+                    else {
                         set.add(ctx);
                     }
                     break;

@@ -10,155 +10,49 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.ui.commands;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.debug.core.commands.IDebugCommandRequest;
-import org.eclipse.debug.core.commands.IEnabledStateRequest;
 import org.eclipse.debug.core.commands.IResumeHandler;
-import org.eclipse.tm.internal.tcf.debug.actions.TCFAction;
-import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModel;
-import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode;
-import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExecContext;
-import org.eclipse.tm.internal.tcf.debug.ui.model.TCFRunnable;
 import org.eclipse.tm.tcf.protocol.IChannel;
+import org.eclipse.tm.tcf.protocol.IErrorReport;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.services.IRunControl;
-import org.eclipse.tm.tcf.util.TCFDataCache;
 
 
-public class ResumeCommand implements IResumeHandler {
-
-    private static final int MAX_ACTION_CNT = 4;
-
-    private final TCFModel model;
+public class ResumeCommand extends StepCommand implements IResumeHandler {
 
     public ResumeCommand(TCFModel model) {
-        this.model = model;
+        super(model);
     }
 
-    public void canExecute(final IEnabledStateRequest monitor) {
-        new TCFRunnable(monitor) {
-            public void run() {
-                if (done) return;
-                Object[] elements = monitor.getElements();
-                boolean res = false;
-                if (model.getLaunch().getContextActionsCount() < MAX_ACTION_CNT) {
-                    for (int i = 0; i < elements.length; i++) {
-                        TCFNode node = null;
-                        if (elements[i] instanceof TCFNode) node = (TCFNode)elements[i];
-                        else node = model.getRootNode();
-                        while (node != null && !node.isDisposed()) {
-                            IRunControl.RunControlContext ctx = null;
-                            if (node instanceof TCFNodeExecContext) {
-                                TCFDataCache<IRunControl.RunControlContext> cache = ((TCFNodeExecContext)node).getRunContext();
-                                if (!cache.validate(this)) return;
-                                ctx = cache.getData();
-                            }
-                            if (ctx == null) {
-                                node = node.getParent();
-                            }
-                            else if (ctx.isContainer()) {
-                                if (ctx.canResume(IRunControl.RM_RESUME)) res = true;
-                                break;
-                            }
-                            else {
-                                TCFDataCache<TCFContextState> state_cache = ((TCFNodeExecContext)node).getState();
-                                if (!state_cache.validate(this)) return;
-                                TCFContextState state_data = state_cache.getData();
-                                if (state_data != null && state_data.is_suspended && ctx.canResume(IRunControl.RM_RESUME)) res = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-                monitor.setEnabled(res);
-                monitor.setStatus(Status.OK_STATUS);
-                done();
-            }
-        };
+    @Override
+    protected boolean canExecute(IRunControl.RunControlContext ctx) {
+        if (ctx == null) return false;
+        if (ctx.canResume(IRunControl.RM_RESUME)) return true;
+        return false;
     }
 
-    public boolean execute(final IDebugCommandRequest monitor) {
-        new TCFRunnable(monitor) {
-            public void run() {
-                if (done) return;
-                Object[] elements = monitor.getElements();
-                Set<IRunControl.RunControlContext> set = new HashSet<IRunControl.RunControlContext>();
-                if (model.getLaunch().getContextActionsCount() < MAX_ACTION_CNT) {
-                    for (int i = 0; i < elements.length; i++) {
-                        TCFNode node = null;
-                        if (elements[i] instanceof TCFNode) node = (TCFNode)elements[i];
-                        else node = model.getRootNode();
-                        while (node != null && !node.isDisposed()) {
-                            IRunControl.RunControlContext ctx = null;
-                            if (node instanceof TCFNodeExecContext) {
-                                TCFDataCache<IRunControl.RunControlContext> cache = ((TCFNodeExecContext)node).getRunContext();
-                                if (!cache.validate(this)) return;
-                                ctx = cache.getData();
-                            }
-                            if (ctx == null) {
-                                node = node.getParent();
-                            }
-                            else {
-                                set.add(ctx);
-                                break;
-                            }
+    @Override
+    protected void execute(final IDebugCommandRequest monitor,
+            IRunControl.RunControlContext ctx, boolean src_step, final Runnable done) {
+        ctx.resume(IRunControl.RM_RESUME, 1, new IRunControl.DoneCommand() {
+            public void doneCommand(IToken token, Exception error) {
+                if (error != null && model.getChannel().getState() == IChannel.STATE_OPEN) {
+                    if (error instanceof IErrorReport) {
+                        IErrorReport r = (IErrorReport)error;
+                        if (r.getErrorCode() == IErrorReport.TCF_ERROR_ALREADY_RUNNING) {
+                            done.run();
+                            return;
                         }
                     }
+                    monitor.setStatus(new Status(IStatus.ERROR,
+                            Activator.PLUGIN_ID, IStatus.OK, "Cannot resume: " + error.getLocalizedMessage(), error));
                 }
-                if (set.size() == 0) {
-                    monitor.setStatus(Status.OK_STATUS);
-                    monitor.done();
-                }
-                else {
-                    final Set<TCFAction> wait_list = new HashSet<TCFAction>();
-                    for (final IRunControl.RunControlContext ctx : set) {
-                        TCFAction done = new TCFAction(model.getLaunch()) {
-                            public void run() {
-                                TCFNodeExecContext node = (TCFNodeExecContext)model.getNode(ctx.getID());
-                                if (node == null || node.isDisposed()) {
-                                    done();
-                                    return;
-                                }
-                                TCFDataCache<TCFContextState> state = node.getState();
-                                if (!state.validate(this)) return;
-                                if (state.getData() == null || !state.getData().is_suspended) {
-                                    Throwable error = state.getError();
-                                    if (error != null) {
-                                        monitor.setStatus(new Status(IStatus.ERROR,
-                                                Activator.PLUGIN_ID, IStatus.OK, "Cannot resume: " + error.getLocalizedMessage(), error));
-                                    }
-                                    done();
-                                    return;
-                                }
-                                final TCFAction done = this;
-                                ctx.resume(IRunControl.RM_RESUME, 1, new IRunControl.DoneCommand() {
-                                    public void doneCommand(IToken token, Exception error) {
-                                        if (error != null && model.getChannel().getState() == IChannel.STATE_OPEN) {
-                                            monitor.setStatus(new Status(IStatus.ERROR,
-                                                    Activator.PLUGIN_ID, IStatus.OK, "Cannot resume: " + error.getLocalizedMessage(), error));
-                                        }
-                                        done.done();
-                                    }
-                                });
-                            }
-                            @Override
-                            public void done() {
-                                super.done();
-                                wait_list.remove(this);
-                                if (wait_list.isEmpty()) monitor.done();
-                            }
-                        };
-                        wait_list.add(done);
-                    }
-                }
+                done.run();
             }
-        };
-        return true;
+        });
     }
 }

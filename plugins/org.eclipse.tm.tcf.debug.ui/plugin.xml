@@ -205,9 +205,9 @@
             objectClass="org.eclipse.tm.internal.tcf.debug.model.TCFLaunch">
          <action
             id="org.eclipse.tm.tcf.debug.ui.actions.Signals"
-            class="org.eclipse.tm.internal.tcf.debug.ui.commands.SignalsCommand"
+            class="org.eclipse.tm.internal.tcf.debug.ui.commands.Signals"
             icon="icons/signals.gif"
-            label="%SignalsCommand.label"
+            label="%Signals.label"
             menubarPath="additions">
          </action>
       </objectContribution>
@@ -218,16 +218,16 @@
             objectClass="org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode">
          <action
             id="org.eclipse.tm.tcf.debug.ui.actions.Signals"
-            class="org.eclipse.tm.internal.tcf.debug.ui.commands.SignalsCommand"
+            class="org.eclipse.tm.internal.tcf.debug.ui.commands.Signals"
             icon="icons/signals.gif"
-            label="%SignalsCommand.label"
+            label="%Signals.label"
             menubarPath="additions">
          </action>
          <action
             id="org.eclipse.tm.tcf.debug.ui.actions.MemoryMap"
-            class="org.eclipse.tm.internal.tcf.debug.ui.commands.MemoryMapCommand"
+            class="org.eclipse.tm.internal.tcf.debug.ui.commands.MemoryMap"
             icon="icons/memory-map.gif"
-            label="%MemoryMapCommand.label"
+            label="%MemoryMap.label"
             menubarPath="additions">
          </action>
       </objectContribution>
@@ -237,10 +237,10 @@
             id="org.eclipse.tm.tcf.debug.ui.CastToType"
             objectClass="org.eclipse.tm.internal.tcf.debug.ui.model.ICastToType">
          <action
-               label="%RestoreDefaultTypeAction.label"
+               label="%RestoreDefaultType.label"
                helpContextId="restore_default_type_action_context"
-               tooltip="%RestoreDefaultTypeAction.tooltip"
-               class="org.eclipse.tm.internal.tcf.debug.ui.commands.RestoreDefaultTypeCommand"
+               tooltip="%RestoreDefaultType.tooltip"
+               class="org.eclipse.tm.internal.tcf.debug.ui.commands.RestoreDefaultType"
                menubarPath="variableGroup"
                enablesFor="1"
                id="org.eclipse.tm.tcf.debug.ui.commands.RestoreDefaultType">
@@ -252,11 +252,11 @@
             </enablement>
          </action>
          <action
-               label="%CastToTypeAction.label"
+               label="%CastToType.label"
                icon="icons/casttotype_co.gif"
                helpContextId="cast_to_type_action_context"
-               tooltip="%CastToTypeAction.tooltip"
-               class="org.eclipse.tm.internal.tcf.debug.ui.commands.CastToTypeCommand"
+               tooltip="%CastToType.tooltip"
+               class="org.eclipse.tm.internal.tcf.debug.ui.commands.CastToType"
                menubarPath="variableGroup"
                enablesFor="1"
                id="org.eclipse.tm.tcf.debug.ui.commands.CastToType">
@@ -268,11 +268,11 @@
             </enablement>
          </action>
          <action
-               label="%CastToArrayAction.label"
+               label="%CastToArray.label"
                icon="icons/showasarray_co.gif"
                helpContextId="cast_to_array_action_context"
-               tooltip="%CastToArrayAction.tooltip"
-               class="org.eclipse.tm.internal.tcf.debug.ui.commands.CastToArrayCommand"
+               tooltip="%CastToArray.tooltip"
+               class="org.eclipse.tm.internal.tcf.debug.ui.commands.CastToArray"
                menubarPath="variableGroup"
                enablesFor="1"
                id="org.eclipse.tm.tcf.debug.ui.commands.CastToArray">
@@ -284,8 +284,172 @@
             </enablement>
          </action>
       </objectContribution>
+      
+      <!-- Reverse run control popup menu contributions -->
+      <objectContribution
+            id="org.eclipse.tm.tcf.debug.ui.TCFNode"
+            objectClass="org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode">
+         <action
+            id="org.eclipse.tm.tcf.debug.ui.actions.BackInto"
+            definitionId="org.eclipse.tm.tcf.debug.ui.commands.BackInto"
+            class="org.eclipse.tm.internal.tcf.debug.ui.commands.BackIntoActionDelegate"
+            icon="icons/e16/back_into.gif"
+            label="%BackInto.label"
+            menubarPath="stepIntoGroup">
+         </action>
+         <action
+            id="org.eclipse.tm.tcf.debug.ui.actions.BackOver"
+            definitionId="org.eclipse.tm.tcf.debug.ui.commands.BackOver"
+            class="org.eclipse.tm.internal.tcf.debug.ui.commands.BackOverActionDelegate"
+            icon="icons/e16/back_over.gif"
+            label="%BackOver.label"
+            menubarPath="stepOverGroup">
+         </action>
+         <action
+            id="org.eclipse.tm.tcf.debug.ui.actions.BackReturn"
+            definitionId="org.eclipse.tm.tcf.debug.ui.commands.BackReturn"
+            class="org.eclipse.tm.internal.tcf.debug.ui.commands.BackReturnActionDelegate"
+            icon="icons/e16/back_out.gif"
+            label="%BackReturn.label"
+            menubarPath="stepReturnGroup">
+         </action>
+         <action
+            id="org.eclipse.tm.tcf.debug.ui.actions.BackResume"
+            definitionId="org.eclipse.tm.tcf.debug.ui.commands.BackResume"
+            class="org.eclipse.tm.internal.tcf.debug.ui.commands.BackResumeActionDelegate"
+            icon="icons/e16/back_run.gif"
+            label="%BackResume.label"
+            menubarPath="threadGroup">
+         </action>
+      </objectContribution>
    </extension>
    
+   <!-- TODO: Reverse run control UI contributions need to be placed in a shared plugin -->
+   <!-- Reverse run control actions --> 
+   <extension
+         point="org.eclipse.ui.viewActions">
+      <viewContribution
+            targetID="org.eclipse.debug.ui.DebugView"
+            id="org.eclipse.tm.tcf.debug.ui.DebugView">
+         <action
+               id="org.eclipse.tm.tcf.debug.ui.actions.BackInto"
+               definitionId="org.eclipse.tm.tcf.debug.ui.commands.BackInto"
+               class="org.eclipse.tm.internal.tcf.debug.ui.commands.BackIntoActionDelegate"
+               icon="icons/e16/back_into.gif"
+               disabledIcon="icons/d16/back_into.gif"
+               toolbarPath="stepIntoGroup"
+               label="%BackInto.label"
+               tooltip="%BackInto.tooltip"
+               enablesFor="+"
+               >
+               <selection
+                   class="org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode">
+               </selection>
+         </action>
+         <action
+               id="org.eclipse.tm.tcf.debug.ui.actions.BackOver"
+               definitionId="org.eclipse.tm.tcf.debug.ui.commands.BackOver"
+               class="org.eclipse.tm.internal.tcf.debug.ui.commands.BackOverActionDelegate"
+               icon="icons/e16/back_over.gif"
+               disabledIcon="icons/d16/back_over.gif"
+               toolbarPath="stepOverGroup"
+               label="%BackOver.label"
+               tooltip="%BackOver.tooltip"
+               enablesFor="+"
+               >
+               <selection
+                   class="org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode">
+               </selection>
+         </action>
+         <action
+               id="org.eclipse.tm.tcf.debug.ui.actions.BackReturn"
+               definitionId="org.eclipse.tm.tcf.debug.ui.commands.BackReturn"
+               class="org.eclipse.tm.internal.tcf.debug.ui.commands.BackReturnActionDelegate"
+               icon="icons/e16/back_out.gif"
+               disabledIcon="icons/d16/back_out.gif"
+               toolbarPath="stepReturnGroup"
+               label="%BackReturn.label"
+               tooltip="%BackReturn.tooltip"
+               enablesFor="+"
+               >
+               <selection
+                   class="org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode">
+               </selection>
+         </action>
+         <action
+               id="org.eclipse.tm.tcf.debug.ui.actions.BackResume"
+               definitionId="org.eclipse.tm.tcf.debug.ui.commands.BackResume"
+               class="org.eclipse.tm.internal.tcf.debug.ui.commands.BackResumeActionDelegate"
+               icon="icons/e16/back_run.gif"
+               disabledIcon="icons/d16/back_run.gif"
+               toolbarPath="threadGroup"
+               label="%BackResume.label"
+               tooltip="%BackResume.tooltip"
+               enablesFor="+"
+               >
+               <selection
+                   class="org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode">
+               </selection>
+         </action>
+      </viewContribution>
+   </extension>
+   
+   <extension
+         point="org.eclipse.ui.commands">
+      <category
+            name="%ReverseExecutionCategory.name"
+            description="%ReverseExecutionCategory.description"
+            id="org.eclipse.tm.tcf.debug.ui.ReverseExecution">
+      </category>
+      <command
+            name="%BackInto.label"
+            categoryId="org.eclipse.tm.tcf.debug.ui.ReverseExecution"
+            description="%BackInto.description"
+            id="org.eclipse.tm.tcf.debug.ui.commands.BackInto">
+      </command>
+      <command
+            name="%BackOver.label"
+            categoryId="org.eclipse.tm.tcf.debug.ui.ReverseExecution"
+            description="%BackOver.description"
+            id="org.eclipse.tm.tcf.debug.ui.commands.BackOver">
+      </command>
+      <command
+            name="%BackReturn.label"
+            categoryId="org.eclipse.tm.tcf.debug.ui.ReverseExecution"
+            description="%BackReturn.description"
+            id="org.eclipse.tm.tcf.debug.ui.commands.BackReturn">
+      </command>
+      <command
+            name="%BackResume.label"
+            categoryId="org.eclipse.tm.tcf.debug.ui.ReverseExecution"
+            description="%BackResume.description"
+            id="org.eclipse.tm.tcf.debug.ui.commands.BackResume">
+      </command>
+   </extension>
+     
+   <extension point="org.eclipse.ui.bindings">
+      <key
+            sequence="M2+F5"
+            contextId="org.eclipse.debug.ui.debugging"
+            commandId="org.eclipse.tm.tcf.debug.ui.commands.BackInto"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"/>
+      <key
+            sequence="M2+F6"
+            contextId="org.eclipse.debug.ui.debugging"
+            commandId="org.eclipse.tm.tcf.debug.ui.commands.BackOver"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"/>
+      <key
+            sequence="M2+F7"
+            contextId="org.eclipse.debug.ui.debugging"
+            commandId="org.eclipse.tm.tcf.debug.ui.commands.BackReturn"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"/>
+      <key
+            sequence="M2+F8"
+            contextId="org.eclipse.debug.ui.debugging"
+            commandId="org.eclipse.tm.tcf.debug.ui.commands.BackResume"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"/>
+   </extension>
+
    <extension
          point="org.eclipse.debug.ui.memoryRenderings">
       <renderingBindings
