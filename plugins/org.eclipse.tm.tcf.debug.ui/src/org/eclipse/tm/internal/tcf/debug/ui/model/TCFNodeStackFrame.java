@@ -282,48 +282,51 @@ public class TCFNodeStackFrame extends TCFNode {
         }
         else {
             TCFDataCache<TCFContextState> state_cache = ((TCFNodeExecContext)parent).getState();
-            if (!state_cache.validate(done)) return false;
+            TCFDataCache<?> pending = null;
+            if (!state_cache.validate()) pending = state_cache;
+            if (!stack_trace_context.validate()) pending = stack_trace_context;
+            if (!address.validate()) pending = address;
+            if (!line_info.validate()) pending = line_info;
+            if (pending != null) {
+                pending.wait(done);
+                return false;
+            }
             Throwable error = state_cache.getError();
             if (error == null) error = stack_trace_cache.getError();
-            if (error == null) {
-                TCFDataCache<?> pending = null;
-                if (!stack_trace_context.validate()) pending = stack_trace_context;
-                if (!line_info.validate()) pending = line_info;
-                if (pending != null) {
-                    pending.wait(done);
-                    return false;
-                }
-                if (error == null) error = stack_trace_context.getError();
-                if (error == null) error = line_info.getError();
+            if (error == null) error = stack_trace_context.getError();
+            if (error == null) error = address.getError();
+            if (error == null) error = line_info.getError();
+            BigInteger addr = address.getData();
+            TCFSourceRef sref = line_info.getData();
+            TCFContextState state = state_cache.getData();
+            String module = getModuleName(addr, done);
+            if (module == null) return false;
+            StringBuffer bf = new StringBuffer();
+            if (addr != null && sref != null && sref.context != null) {
+                bf.append(makeHexAddrString(sref.context, addr));
             }
-            TCFContextState state_data = state_cache.getData();
-            String image_name =  state_data != null && state_data.is_suspended ?
+            bf.append(module);
+            if (sref != null && sref.area != null && sref.area.file != null) {
+                bf.append(": ");
+                bf.append(sref.area.file);
+                bf.append(", line ");
+                bf.append(sref.area.start_line);
+            }
+            if (error != null) {
+                if (state == null || state.is_suspended) {
+                    result.setForeground(new RGB(255, 0, 0), 0);
+                    if (bf.length() > 0) bf.append(": ");
+                    bf.append(TCFModel.getErrorMessage(error, false));
+                }
+                else {
+                    result.setLabel("...", 0);
+                }
+            }
+            if (bf.length() == 0) bf.append("...");
+            result.setLabel(bf.toString(), 0);
+            String image_name =  state != null && state.is_suspended ?
                     ImageCache.IMG_STACK_FRAME_SUSPENDED :
                     ImageCache.IMG_STACK_FRAME_RUNNING;
-            if (error != null) {
-                if (state_data == null || state_data.is_suspended) {
-                    result.setForeground(new RGB(255, 0, 0), 0);
-                    result.setLabel(TCFModel.getErrorMessage(error, false), 0);
-                }
-                else {
-                    result.setLabel("...", 0);
-                }
-            }
-            else {
-                TCFSourceRef l = line_info.getData();
-                if (l == null) {
-                    result.setLabel("...", 0);
-                }
-                else {
-                    String module = getModuleName(l.address, done);
-                    if (module == null) return false;
-                    String label = makeHexAddrString(l.context, l.address) + module;
-                    if (l.area != null && l.area.file != null) {
-                        label += ": " + l.area.file + ", line " + l.area.start_line;
-                    }
-                    result.setLabel(label, 0);
-                }
-            }
             result.setImageDescriptor(ImageCache.getImageDescriptor(image_name), 0);
         }
         return true;
@@ -349,6 +352,7 @@ public class TCFNodeStackFrame extends TCFNode {
     }
 
     private String getModuleName(BigInteger pc, Runnable done) {
+        if (pc == null) return "";
         TCFDataCache<IRunControl.RunControlContext> parent_dc = ((TCFNodeExecContext)parent).getRunContext();
         if (!parent_dc.validate(done)) return null;
         IRunControl.RunControlContext parent_ctx = parent_dc.getData();
