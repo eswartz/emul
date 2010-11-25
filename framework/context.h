@@ -116,6 +116,24 @@ struct MemoryRegionAttribute {
 #define MM_FLAG_W   2
 #define MM_FLAG_X   4
 
+/* Context resume modes */
+#define RM_RESUME                   0 /* Resume normal execution of the context */
+#define RM_STEP_OVER                1 /* Step over a single instruction */
+#define RM_STEP_INTO                2 /* Step a single instruction */
+#define RM_STEP_OVER_LINE           3 /* Step over a single source code line */
+#define RM_STEP_INTO_LINE           4 /* Step a single source code line */
+#define RM_STEP_OUT                 5 /* Run until control returns from current function */
+#define RM_REVERSE_RESUME           6 /* Start running backwards */
+#define RM_REVERSE_STEP_OVER        7 /* Reverse of RM_STEP_OVER - run backwards over a single instruction */
+#define RM_REVERSE_STEP_INTO        8 /* Reverse of RM_STEP_INTO: "un-execute" the previous instruction */
+#define RM_REVERSE_STEP_OVER_LINE   9 /* Reverse of RM_STEP_OVER_LINE */
+#define RM_REVERSE_STEP_INTO_LINE  10 /* Reverse of RM_STEP_INTO_LINE */
+#define RM_REVERSE_STEP_OUT        11 /* Reverse of RM_STEP_OUT */
+#define RM_STEP_OVER_RANGE         12 /* Step over instructions until PC is outside the specified range */
+#define RM_STEP_INTO_RANGE         13 /* Step instruction until PC is outside the specified range for any reason */
+#define RM_REVERSE_STEP_OVER_RANGE 14 /* Reverse of RM_STEP_OVER_RANGE */
+#define RM_REVERSE_STEP_INTO_RANGE 15 /* Reverse of RM_STEP_INTO_RANGE */
+
 /*
  * Convert PID to TCF Context ID
  */
@@ -198,7 +216,21 @@ extern int context_has_state(Context * ctx);
 extern int context_stop(Context * ctx);
 
 /*
- * Resume execution of the context.
+ * Resume execution of the context using give execution mode.
+ * See RM_* for mode definitions.
+ * Return -1 and set errno if the context cannot be resumed.
+ */
+extern int context_resume(Context * ctx, int mode, ContextAddress range_start, ContextAddress range_end);
+
+/*
+ * Check if given resume mode is supported.
+ * See RM_* for mode definitions.
+ * Return 0 if not supported, 1 if supported.
+ */
+extern int context_can_resume(Context * ctx, int mode);
+
+/*
+ * Resume normal execution of the context.
  * Return -1 and set errno if the context cannot be resumed.
  */
 extern int context_continue(Context * ctx);

@@ -340,6 +340,26 @@ int context_single_step(Context * ctx) {
     return 0;
 }
 
+int context_resume(Context * ctx, int mode, ContextAddress range_start, ContextAddress range_end) {
+    switch (mode) {
+    case RM_RESUME:
+        return context_continue(ctx);
+    case RM_STEP_INTO:
+        return context_single_step(ctx);
+    }
+    errno = ERR_UNSUPPORTED;
+    return -1;
+}
+
+int context_can_resume(Context * ctx, int mode) {
+    switch (mode) {
+    case RM_RESUME:
+    case RM_STEP_INTO:
+        return 1;
+    }
+    return 0;
+}
+
 int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t size) {
     if (address < 0x100) {
         /* TODO: need proper handling of Access Violation exception in VxWorks version of context_read_mem() */
