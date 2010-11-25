@@ -95,9 +95,9 @@ public class BackOverCommand extends StepCommand {
     @Override
     protected boolean canExecute(IRunControl.RunControlContext ctx) {
         if (ctx == null) return false;
-        if (ctx.canResume(IRunControl.RM_STEP_OVER_LINE)) return true;
-        if (ctx.canResume(IRunControl.RM_STEP_OVER)) return true;
-        if (ctx.canResume(IRunControl.RM_STEP_INTO) && model.getLaunch().getService(IBreakpoints.class) != null) return true;
+        if (ctx.canResume(IRunControl.RM_REVERSE_STEP_OVER_LINE)) return true;
+        if (ctx.canResume(IRunControl.RM_REVERSE_STEP_OVER)) return true;
+        if (ctx.canResume(IRunControl.RM_REVERSE_STEP_INTO) && model.getLaunch().getService(IBreakpoints.class) != null) return true;
         return false;
     }
 

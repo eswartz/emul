@@ -14,6 +14,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.debug.core.commands.IDebugCommandRequest;
 import org.eclipse.debug.core.commands.IResumeHandler;
+import org.eclipse.tm.internal.tcf.debug.actions.TCFAction;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModel;
 import org.eclipse.tm.tcf.protocol.IChannel;
@@ -37,22 +38,31 @@ public class ResumeCommand extends StepCommand implements IResumeHandler {
 
     @Override
     protected void execute(final IDebugCommandRequest monitor,
-            IRunControl.RunControlContext ctx, boolean src_step, final Runnable done) {
-        ctx.resume(IRunControl.RM_RESUME, 1, new IRunControl.DoneCommand() {
-            public void doneCommand(IToken token, Exception error) {
-                if (error != null && model.getChannel().getState() == IChannel.STATE_OPEN) {
-                    if (error instanceof IErrorReport) {
-                        IErrorReport r = (IErrorReport)error;
-                        if (r.getErrorCode() == IErrorReport.TCF_ERROR_ALREADY_RUNNING) {
-                            done.run();
-                            return;
+            final IRunControl.RunControlContext ctx, boolean src_step, final Runnable done) {
+        new TCFAction(model.getLaunch()) {
+            public void run() {
+                ctx.resume(IRunControl.RM_RESUME, 1, new IRunControl.DoneCommand() {
+                    public void doneCommand(IToken token, Exception error) {
+                        if (error != null && model.getChannel().getState() == IChannel.STATE_OPEN) {
+                            if (error instanceof IErrorReport) {
+                                IErrorReport r = (IErrorReport)error;
+                                if (r.getErrorCode() == IErrorReport.TCF_ERROR_ALREADY_RUNNING) {
+                                    done();
+                                    return;
+                                }
+                            }
+                            monitor.setStatus(new Status(IStatus.ERROR,
+                                    Activator.PLUGIN_ID, IStatus.OK, "Cannot resume: " + error.getLocalizedMessage(), error));
                         }
+                        done();
                     }
-                    monitor.setStatus(new Status(IStatus.ERROR,
-                            Activator.PLUGIN_ID, IStatus.OK, "Cannot resume: " + error.getLocalizedMessage(), error));
-                }
+                });
+            }
+            public void done() {
+                super.done();
+                setActionResult(ctx.getID(), null);
                 done.run();
             }
-        });
+        };
     }
 }

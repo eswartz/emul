@@ -88,6 +88,10 @@ import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
 import org.eclipse.tm.internal.tcf.debug.model.TCFSourceRef;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
+import org.eclipse.tm.internal.tcf.debug.ui.commands.BackIntoCommand;
+import org.eclipse.tm.internal.tcf.debug.ui.commands.BackOverCommand;
+import org.eclipse.tm.internal.tcf.debug.ui.commands.BackResumeCommand;
+import org.eclipse.tm.internal.tcf.debug.ui.commands.BackReturnCommand;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.DisconnectCommand;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.ResumeCommand;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.StepIntoCommand;
@@ -169,6 +173,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     private final List<ISuspendTriggerListener> suspend_trigger_listeners =
         new LinkedList<ISuspendTriggerListener>();
 
+    private static int display_source_generation;
     private int suspend_trigger_generation;
 
     private final Map<String,String> finished_actions = new HashMap<String,String>();
@@ -263,8 +268,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     private IChannel channel;
     private TCFNodeLaunch launch_node;
     private boolean disposed;
-
-    private static int display_source_cnt;
 
     private final IMemory.MemoryListener mem_listener = new IMemory.MemoryListener() {
 
@@ -492,11 +495,15 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         adapters.put(IDebugModelProvider.class, debug_model_provider);
         adapters.put(ISuspendHandler.class, new SuspendCommand(this));
         adapters.put(IResumeHandler.class, new ResumeCommand(this));
+        adapters.put(BackResumeCommand.class, new BackResumeCommand(this));
         adapters.put(ITerminateHandler.class, new TerminateCommand(this));
         adapters.put(IDisconnectHandler.class, new DisconnectCommand(this));
         adapters.put(IStepIntoHandler.class, new StepIntoCommand(this));
         adapters.put(IStepOverHandler.class, new StepOverCommand(this));
         adapters.put(IStepReturnHandler.class, new StepReturnCommand(this));
+        adapters.put(BackIntoCommand.class, new BackIntoCommand(this));
+        adapters.put(BackOverCommand.class, new BackOverCommand(this));
+        adapters.put(BackReturnCommand.class, new BackReturnCommand(this));
         expr_manager = DebugPlugin.getDefault().getExpressionManager();
         expr_manager.addExpressionListener(expressions_listener);
     }
@@ -633,7 +640,8 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     }
 
     void onContextActionResult(String id, String reason) {
-        finished_actions.put(id, reason);
+        if (reason == null) finished_actions.remove(id);
+        else finished_actions.put(id, reason);
     }
 
     void onContextActionsDone() {
@@ -1010,7 +1018,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
      * The method is normally called from SourceLookupService.
      */
     public void displaySource(Object model_element, final IWorkbenchPage page, boolean forceSourceLookup) {
-        final int cnt = ++display_source_cnt;
+        final int cnt = ++display_source_generation;
         /* Because of racing in Eclipse Debug infrastructure, 'model_element' value can be invalid.
          * As a workaround, get current debug view selection.
          */
@@ -1024,10 +1032,11 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         final Object element = model_element;
         Protocol.invokeLater(new Runnable() {
             public void run() {
-                if (cnt != display_source_cnt) return;
+                if (cnt != display_source_generation) return;
                 TCFNodeExecContext exec_ctx = null;
                 TCFNodeStackFrame stack_frame = null;
                 if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
+                    // TODO: to reduce flicker, delay displaySource() requests for a context that has active run control action
                     if (element instanceof TCFNodeExecContext) {
                         exec_ctx = (TCFNodeExecContext)element;
                         if (!exec_ctx.disposed) {
@@ -1076,7 +1085,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         final boolean disassembly_available = channel.getRemoteService(IDisassembly.class) != null;
         display.asyncExec(new Runnable() {
             public void run() {
-                if (cnt != display_source_cnt) return;
+                if (cnt != display_source_generation) return;
                 String editor_id = null;
                 IEditorInput editor_input = null;
                 int line = 0;
@@ -1113,7 +1122,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                         editor_not_found.put(cfg, editor_input);
                     }
                 }
-                if (cnt != display_source_cnt) return;
+                if (cnt != display_source_generation) return;
                 ITextEditor text_editor = null;
                 if (page != null && editor_input != null && editor_id != null) {
                     IEditorPart editor = openEditor(editor_input, editor_id, page);
