@@ -1,4 +1,13 @@
 
+: >call  1 urshift $8000 or  ; 
+ 
+:: inlineable ( opc -- f )
+    opc $20 >= 
+    opc $7a $7f within not
+    opc Idovar = not  
+    and and
+;
+
 
 1 <export
 
@@ -25,28 +34,50 @@ User STATE
     then then
 ; immediate target-only 
  
-: >call  1 urshift $8000 or  ; 
- 
 : compile,
-  dup ['] ;s       = if  Iexit c,        drop    exit   then
-  dup ['] branch   = if  IbranchB c,     drop    exit   then
-  dup ['] 0branch  = if  I0branchB c,    drop    exit   then
-  dup ['] unloop   = if  Irdrop_d ,      drop    exit   then
-  dup ['] i        = if  IatR c,         drop    exit   then
-  dup ['] rdrop    = if  IRdrop c,       drop    exit   then
-  dup ['] (?do)    = if  Idup_d , ItoR_d , Isub c, I0branchB c,  drop  exit  then
-  dup ['] (loop)   = if  IloopUp c,      drop    exit   then  
-  dup ['] (+loop)  = if  IplusLoopUp c,  drop    exit   then
-  dup ['] (uloop)  = if  IuloopUp c,     drop    exit   then
-  dup ['] (u+loop) = if  IuplusloopUp c, drop    exit   then
-  
-  \ just for efficiency
-  dup ['] @        = if  Iload c,        drop    exit   then
-  dup ['] c@       = if  Icload c,       drop    exit   then
-  dup ['] !        = if  Istore c,       drop    exit   then
-  dup ['] c!       = if  Icstore c,      drop    exit   then
+    :> addr
+    
+    \ ;s
+    addr ['] ;s       = if  Iexit c,        exit   then
 
-  >call ,   
+    \ ones we must directly detect
+    addr ['] branch   = if  IbranchB c,     exit   then
+    addr ['] 0branch  = if  I0branchB c,    exit   then
+
+    \ empty prims or words
+    addr c@ $70 = if
+        exit
+    then    
+        
+    \ 1 byte prims
+    addr 1+ c@ $70 = if
+        addr c@  dup  inlineable  if
+            c,
+        else
+            drop
+            addr >call ,
+        then
+        exit
+    then
+    
+    \ 2 byte prims
+    addr 2+ c@ $70 = if
+        addr c@  dup  inlineable 
+        addr 1+ c@  dup  inlineable
+        and if
+            swap c, c,
+        else
+            2drop
+            addr >call ,   
+        then
+        exit
+    then        
+    
+    \ special case of prim that uses r-stack and must be inlined    
+    addr ['] (?do)    = if  Idup_d , ItoR_d , Isub c, I0branchB c,  exit  then
+
+    \ all other cases
+    addr >call ,   
 ;
 
 export>
