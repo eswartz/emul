@@ -33,11 +33,18 @@ User STATE
   dup ['] 0branch  = if  I0branchB c,    drop    exit   then
   dup ['] unloop   = if  Irdrop_d ,      drop    exit   then
   dup ['] i        = if  IatR c,         drop    exit   then
+  dup ['] rdrop    = if  IRdrop c,       drop    exit   then
   dup ['] (?do)    = if  Idup_d , ItoR_d , Isub c, I0branchB c,  drop  exit  then
   dup ['] (loop)   = if  IloopUp c,      drop    exit   then  
   dup ['] (+loop)  = if  IplusLoopUp c,  drop    exit   then
   dup ['] (uloop)  = if  IuloopUp c,     drop    exit   then
   dup ['] (u+loop) = if  IuplusloopUp c, drop    exit   then
+  
+  \ just for efficiency
+  dup ['] @        = if  Iload c,        drop    exit   then
+  dup ['] c@       = if  Icload c,       drop    exit   then
+  dup ['] !        = if  Istore c,       drop    exit   then
+  dup ['] c!       = if  Icstore c,      drop    exit   then
 
   >call ,   
 ;

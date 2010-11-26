@@ -75,4 +75,22 @@
 ;
 
 
+( when creating a does> word )
+: (does>)  
+    r> lastxt              ( where dovar, was ) 
+    swap  >call swap !    ( call instead of dovar, )  
+; target-only
+
+
+( when compiling a creator word )
+: does> 
+    here 1 and  if 0 c, then    \ need aligned addr for CALL
+    postpone (does>) 
+    \ created word is here:  need to fetch PC now
+    IRfrom c,
+    \ ... and don't return to data of created word!
+    \ postpone rdrop 
+; immediate target-only
+
+
     

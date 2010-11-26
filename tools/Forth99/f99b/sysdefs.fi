@@ -106,11 +106,16 @@ $930        constant    grom_font5x6
 $0          constant    IbranchX
 $10         constant    I0branchX
 $39         constant    IRfrom
+$3a         constant    IRdrop
 $3b         constant    IatR
 $41         constant    Isub
 $46         constant    Iumul
 $47         constant    Iudivmod
 $7e47       constant    Iudivmod_d
+$60         constant    Iload
+$61         constant    Icload
+$62         constant    Istore
+$63         constant    Icstore
 $66         constant    Iuser
 $67         constant    Iupidx
 $68         constant    IloopUp

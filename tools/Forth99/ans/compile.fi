@@ -13,10 +13,6 @@
     lastnfa nfa>xt
 ;
 
-: (does>)  r> lastxt swap  >call  swap ! ; 
-: does> postpone (does>) postpone rdrop ; immediate target-only
-
-
 [IFUNDEF] STATE
 User STATE
 [THEN]
