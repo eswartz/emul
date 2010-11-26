@@ -77,7 +77,7 @@ import v9t9.emulator.common.Machine;
  */
 @SuppressWarnings("unused")
 public class KeyboardState {
-	public static boolean DEBUG = true;
+	public static boolean DEBUG = false;
 	
     /* Masks, corresponding to column 0 */
     public static final byte SHIFT = 0x20;
