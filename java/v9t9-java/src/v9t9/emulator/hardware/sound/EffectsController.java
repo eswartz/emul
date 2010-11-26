@@ -301,9 +301,9 @@ public class EffectsController {
 			//int quarter = (voice.period / 4);
 			
 			int ang = (int) ((long)voice.clock * sines.length / voice.period16);
-			if (ang < 0) ang += sines.length; else if (ang >= sines.length) ang -= sines.length;
+			if (ang < 0) ang += sines.length; else if (ang >= sines.length) ang %= sines.length;
 			int wang = (int) ((long)voice.clock * WAVELENGTH / voice.period16);
-			if (wang < 0) wang += WAVELENGTH; else if (wang >= WAVELENGTH) wang -= WAVELENGTH;
+			if (wang < 0) wang += WAVELENGTH; else if (wang >= WAVELENGTH) wang %= WAVELENGTH;
 			
 			switch (waveform) {
 			case 0:

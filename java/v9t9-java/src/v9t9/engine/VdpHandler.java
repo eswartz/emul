@@ -69,8 +69,9 @@ public interface VdpHandler extends IPersistable{
 
 	/** This is called regularly from the CPU and should trigger the VDP
 	 * interrupt according to the desired frequency. 
-	 * @param machine TODO*/
+	 * @param machine */
 	void syncVdpInterrupt(Machine machine);
 
+	/** Inform the VDP of the given number of cycles invoked on CPU side. */
 	void addCpuCycles(int cycles);
 }

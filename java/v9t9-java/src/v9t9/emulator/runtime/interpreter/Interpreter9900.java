@@ -114,7 +114,8 @@ public class Interpreter9900 implements Interpreter {
         /* save any operands */
         flushOperands(ins);
         
-        cpu.addCycles(ins.getInfo().cycles + mop1.cycles + mop2.cycles);
+        int cycles = ins.getInfo().cycles + mop1.cycles + mop2.cycles;
+		cpu.addCycles(cycles);
 	}
     
     /* (non-Javadoc)

@@ -751,9 +751,12 @@ public class VdpV9938 extends VdpTMS9918A {
 		return ((((vdpregs[10] & 0x7) << 8) | (vdpregs[3] & 0xff)) << 6) & getModeAddressMask();
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A#doTick()
+	 */
 	@Override
-	public synchronized void tick() {
-		super.tick();
+	protected void doTick() {
+		super.doTick();
 		
 		// The "blink" controls either the r7/r12 selection for text mode
 		// or the page selection for graphics 4-7 modes.

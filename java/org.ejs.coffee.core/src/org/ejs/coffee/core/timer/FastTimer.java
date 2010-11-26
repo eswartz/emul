@@ -5,20 +5,24 @@ package org.ejs.coffee.core.timer;
 
 import java.util.ArrayList;
 
+import org.eclipse.core.runtime.ListenerList;
+
 import com.vladium.utils.timing.HRTimer;
 import com.vladium.utils.timing.ITimer;
 import com.vladium.utils.timing.TimerFactory;
 
 
 /**
- * Java's system timer sucks on Windows and there's no way to work around it.
- * We'll provide a specific implementation here to use for the CPU and VDP only.
+ * This is a timer thread which makes use of a high-resolution system timer
+ * to provide predictable numbers of interrupts for a given task.  
+ * In a consistently loaded system, the timing should be predictable as
+ * well. 
  * @author Ed
  *
  */
 public class FastTimer {
 	private ITimer timer;
-	private ArrayList<RunnableInfo> taskinfos;
+	private ListenerList taskinfos;
 	private Object controlLock;
 	private Thread timerThread;
 	private static int gCnt;
@@ -37,7 +41,7 @@ public class FastTimer {
 		long delay;
 	}
 	public FastTimer() {
-		taskinfos = new ArrayList<RunnableInfo>();
+		taskinfos = new ListenerList();
 		timer = TimerFactory.newTimer();
 		controlLock = new Object();
 	}
@@ -81,22 +85,20 @@ public class FastTimer {
 						}
 						synchronized (controlLock) {
 							long now = timer.getTimeNs();
+							//System.out.println(now);
 							//long elapsed = now - prev;
 							//System.out.print(elapsed + ",");
-							
-							RunnableInfo[] infoArray;
-							synchronized (taskinfos) {
-								infoArray = (RunnableInfo[]) taskinfos.toArray(new RunnableInfo[taskinfos
-										.size()]);
-							}
 	
-							for (RunnableInfo info : infoArray) {
+							for (Object o : taskinfos.getListeners()) {
+								RunnableInfo info = (RunnableInfo) o;
 								try {
 									if (now >= info.deadline) {
 										//System.out.println("moving from " + info.deadline + " by " + info.delay + " to " + (info.delay + info.deadline));
 										 
-										info.deadline += info.delay;
-										info.task.run();
+										while (now >= info.deadline) {
+											info.deadline += info.delay;
+											info.task.run();
+										}
 									}
 									else if ((now ^ info.deadline) < 0) {
 										// clock overflowed
@@ -118,7 +120,7 @@ public class FastTimer {
 				}
 			}
 		};
-		//timerThread.setPriority(Thread.MAX_PRIORITY);
+		timerThread.setPriority(Thread.MAX_PRIORITY);
 		timerThread.start();		
 	}
 	

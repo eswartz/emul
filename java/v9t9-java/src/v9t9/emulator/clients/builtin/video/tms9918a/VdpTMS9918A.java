@@ -105,8 +105,11 @@ public class VdpTMS9918A implements VdpHandler {
 	private int vdpInterruptFrac;
 	/** The number of CPU cycles corresponding to 1/60 second */
 	private int vdpInterruptLimit;
+	private int vdpInterruptDelta;
+
 	private int throttleCount;
 	private final Machine machine;
+	private int fixedTimeVdpInterruptDelta;
 
 	public VdpTMS9918A(Machine machine) {
 		this.machine = machine;
@@ -149,7 +152,8 @@ public class VdpTMS9918A implements VdpHandler {
 	protected void recalcInterruptTiming() {
         vdpInterruptLimit = Cpu.settingCyclesPerSecond.getInt() / settingVdpInterruptRate.getInt();
         vdpInterruptFrac = 0;
-        System.out.println("VDP interrupt target: " + vdpInterruptLimit);		
+        fixedTimeVdpInterruptDelta = (int) ((long) settingVdpInterruptRate.getInt() * 65536 / machine.getCpuTicksPerSec());
+        System.out.println("VDP interrupt target: " + Cpu.settingCyclesPerSecond.getInt() + " /  " + settingVdpInterruptRate.getInt() + " = " + vdpInterruptLimit);		
 	}
 
 	public static void log(String msg) {
@@ -655,58 +659,72 @@ public class VdpTMS9918A implements VdpHandler {
 		return vdpCanvas;
 	}
 
-	private int vdpInterruptDelta;
-	final int vdpInterruptsPerSec = 60;
 	public void tick() {
-
-		// In Win32, the timer is not nearly as accurate as 1/100 second,
-		// so we get a lot of interrupts at the same time.
-		
-		// Synchronize VDP interrupts along with the CPU in the same task
-		// so we don't succumb to misscheduling between different timers
-		// OR timer tasks.
-		if (machine.isExecuting() && !VdpTMS9918A.settingCpuSynchedVdpInterrupt.getBoolean()) {
-			vdpInterruptDelta += vdpInterruptsPerSec * 65536 / machine.getCpuTicksPerSec();
+		 if (VdpTMS9918A.settingCpuSynchedVdpInterrupt.getBoolean())
+			 return;
+		 
+		 // in this model, we use the system clock to ensure reliable VDP
+		 // interrupts, because the CPU speed is unbounded and unreliable.
+		 
+		if (machine.isExecuting()) {
+			vdpInterruptDelta += fixedTimeVdpInterruptDelta;
 			//System.out.print("[VDP delt:" + vdpInterruptDelta + "]");
 			if (vdpInterruptDelta >= 65536) {
 		
 				vdpInterruptDelta -= 65536;
 				
-				if (machine.getExecutor().nVdpInterrupts < settingVdpInterruptRate.getInt()) {
-					doTick();
-	        		if (Machine.settingThrottleInterrupts.getBoolean()) {
-	        			if (throttleCount-- < 0) {
-	        				throttleCount = 6;
-	        			} else {
-	        				return;
-	        			}
-	        		}
-	        		
-	        		// a real interrupt only occurs if wanted
-	        		if ((readVdpReg(1) & VdpTMS9918A.R1_INT) != 0) {
-	        			if ((vdpStatus & VDP_INTERRUPT) == 0) {
-	        				vdpStatus |= VDP_INTERRUPT;
-	        				machine.getExecutor().nVdpInterrupts++;
-	        			}
-	        			
-	        			CruAccess cru = machine.getCpu().getCruAccess();
-						if (cru instanceof BaseCruAccess)
-	        				cru.triggerInterrupt(((BaseCruAccess) cru).intVdp);
-	        		}
-				}
-        		//System.out.print('!');
+				doTick();
 			}
 		}
 		
-		
-		
-		doTick();
-	}
-
-	protected void doTick() {
-		
 	}
 	
+
+	public void syncVdpInterrupt(Machine machine) {
+		if (!settingCpuSynchedVdpInterrupt.getBoolean())
+			return;
+
+		// in this model, the CPU is running at a fixed rate,
+		// so we can trigger VDP interrupts in lockstep
+		// with the CPU.
+		
+		if (vdpInterruptFrac >= vdpInterruptLimit) {
+			vdpInterruptFrac -= vdpInterruptLimit;
+			
+			doTick();
+		}
+	}
+	/**
+	 * 
+	 */
+	protected void doTick() {
+		if (true || machine.getExecutor().nVdpInterrupts < settingVdpInterruptRate.getInt()) {
+    		if (Machine.settingThrottleInterrupts.getBoolean()) {
+    			if (throttleCount-- < 0) {
+    				throttleCount = 6;
+    			} else {
+    				return;
+    			}
+    		}
+    		
+    		// a real interrupt only occurs if wanted
+    		if ((readVdpReg(1) & VdpTMS9918A.R1_INT) != 0) {
+    			if ((vdpStatus & VDP_INTERRUPT) == 0) {
+    				vdpStatus |= VDP_INTERRUPT;
+    				machine.getExecutor().nVdpInterrupts++;
+    			}
+    			
+    			CruAccess cru = machine.getCpu().getCruAccess();
+				if (cru instanceof BaseCruAccess)
+    				cru.triggerInterrupt(((BaseCruAccess) cru).intVdp);
+				
+				machine.getCpu().setIdle(false);
+    		}
+		}
+		//System.out.print('!');
+		
+	}
+
 	public boolean isThrottled() {
 		return true;
 	}
@@ -765,47 +783,6 @@ public class VdpTMS9918A implements VdpHandler {
 		writeVdpReg(num, val);
 	}
 
-	public void syncVdpInterrupt(Machine machine) {
-		if (!settingCpuSynchedVdpInterrupt.getBoolean())
-			return;
-		
-		// In Win32, the timer is not nearly as accurate as 1/100 second,
-		// so we get a lot of interrupts at the same time.
-		
-		// Synchronize VDP interrupts along with the CPU in the same task
-		// so we don't succumb to misscheduling between different timers
-		// OR timer tasks.
-		//System.out.print("[VDP delt:" + vdpInterruptFrac + "]");
-		if (vdpInterruptFrac >= vdpInterruptLimit) {
-	
-			vdpInterruptFrac -= vdpInterruptLimit;
-			
-			if (machine.getExecutor().nVdpInterrupts < settingVdpInterruptRate.getInt()) {
-	    		if (Machine.settingThrottleInterrupts.getBoolean()) {
-	    			if (throttleCount-- < 0) {
-	    				throttleCount = 6;
-	    			} else {
-	    				return;
-	    			}
-	    		}
-	    		
-	    		tick();
-	    		
-	    		// a real VDP interrupt only occurs if desired
-	    		if ((vdpregs[1] & R1_INT) != 0) {
-        			if ((vdpStatus & VDP_INTERRUPT) == 0) {
-        				vdpStatus |= VDP_INTERRUPT;
-        				machine.getExecutor().nVdpInterrupts++;
-        			}
-
-        			CruAccess cru = machine.getCpu().getCruAccess();
-					if (cru instanceof BaseCruAccess)
-        				cru.triggerInterrupt(((BaseCruAccess) cru).intVdp);
-	    		}
-	    		//System.out.print('!');
-			}
-		}
-	}
 	
 	public void addCpuCycles(int cycles) {
 		vdpInterruptFrac += cycles;

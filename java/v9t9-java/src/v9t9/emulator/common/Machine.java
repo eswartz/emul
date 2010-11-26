@@ -18,6 +18,7 @@ import org.ejs.coffee.core.properties.IProperty;
 import org.ejs.coffee.core.properties.IPropertyListener;
 import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.settings.ISettingSection;
+import org.ejs.coffee.core.timer.FastTimer;
 
 import v9t9.emulator.clients.builtin.NotifyException;
 import v9t9.emulator.clients.builtin.SoundProvider;
@@ -38,8 +39,6 @@ import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryModel;
 import v9t9.engine.modules.IModule;
 import v9t9.engine.modules.ModuleLoader;
-import v9t9.engine.timer.FastTimer;
-import v9t9.engine.timer.FastTimerTask;
 import v9t9.keyboard.KeyboardState;
 import v9t9.tools.asm.assembler.IInstructionFactory;
 
@@ -54,9 +53,9 @@ abstract public class Machine {
     protected Client client;
     protected  volatile boolean bAlive;
     protected Timer timer;
-    protected FastTimer cpuTimer;
+    protected FastTimer fastTimer;
     //Timer cpuTimer;
-    protected Timer videoTimer;
+    //protected Timer videoTimer;
 	private VdpHandler vdp;
 	protected DsrManager dsrManager;
 
@@ -68,10 +67,10 @@ abstract public class Machine {
     protected final int clientTick = 1000 / 100;
     protected final int videoUpdateTick = 1000 / 30;
     protected final int cpuTicksPerSec = 100;
-    protected long now;
+    //protected long now;
     //private TimerTask vdpInterruptTask;
     protected  TimerTask clientTask;
-    protected  FastTimerTask cpuTimingTask;
+    protected  Runnable cpuTimingTask;
 	protected MemoryModel memoryModel;
 	protected  TimerTask videoUpdateTask;
 	protected  Thread machineRunner;
@@ -97,6 +96,7 @@ abstract public class Machine {
 	private IInstructionFactory instructionFactory;
 	private final MachineModel machineModel;
 	private IPropertyListener pauseListener;
+	private Runnable soundTimingTask;
 
 	
     public Machine(MachineModel machineModel) {
@@ -225,11 +225,11 @@ abstract public class Machine {
     	allowInterrupts = true;
     	
     	timer = new Timer();
-    	cpuTimer = new FastTimer();
-    	videoTimer = new Timer();
+    	fastTimer = new FastTimer();
+    	//videoTimer = new Timer();
 
         // the CPU emulation task (a fast timer because 100 Hz is a little too much for Windows) 
-        cpuTimingTask = new FastTimerTask() {
+        cpuTimingTask = new Runnable() {
 
 			@Override
         	public void run() {
@@ -237,8 +237,8 @@ abstract public class Machine {
 					if (!bExecuting)
 						return;
 				
-	    			now = System.currentTimeMillis();
-	    			//System.out.print(now);
+	    			long now = System.currentTimeMillis();
+	    			//System.out.println(now);
 	    			
 	    	
 	    			//System.out.print(now);
@@ -251,15 +251,27 @@ abstract public class Machine {
 	    				//vdpInterruptDelta = 0;
 	    			}
 	    			
-	    			sound.tick();
+	    			//sound.tick();
 	    			cpu.tick();
 	
 	    			vdp.tick();
 				}    			
         	}
         };
-        cpuTimer.scheduleTask(cpuTimingTask, cpuTicksPerSec);
+        fastTimer.scheduleTask(cpuTimingTask, cpuTicksPerSec);
         
+        soundTimingTask = new Runnable() {
+
+			@Override
+        	public void run() {
+				if (!bExecuting)
+					return;
+			
+    			sound.tick();
+        	}
+        };
+        fastTimer.scheduleTask(soundTimingTask, cpuTicksPerSec);
+
         
         videoRunner = new Thread("Video Runner") {
         	@Override
@@ -290,7 +302,8 @@ abstract public class Machine {
             	if (client != null) client.updateVideo();
             }
         };
-        videoTimer.schedule(videoUpdateTask, 0, videoUpdateTick);
+        //videoTimer.schedule(videoUpdateTask, 0, videoUpdateTick);
+        timer.schedule(videoUpdateTask, 0, videoUpdateTick);
         
         // the client's interrupt task, which lets it monitor
         // other less expensive devices like the keyboard, sound,
@@ -335,7 +348,7 @@ abstract public class Machine {
     					if (cpu.isThrottled() && cpu.getMachine().bAlive) {
     						// Just sleep.  Another timer thread will reset the throttle.
     						try {
-    							Thread.sleep(100);
+    							Thread.sleep(1000 / 200);		// expected clock: 100Hz
     							continue;
     						} catch (InterruptedException e) {
     							return;
@@ -349,10 +362,12 @@ abstract public class Machine {
 	            			if (!bExecuting && bAlive) {
 	            				executionLock.wait(100);
 	            			}
-	            			if (bExecuting) {
+	            			if (bExecuting && !cpu.isIdle()) {
 	            				executor.execute();
 	            			}
 	            		}
+	            		if (cpu.isIdle())
+	            			executor.execute();
     	            } catch (AbortedException e) {
     	            } catch (InterruptedException e) {
       	              	break;
@@ -392,8 +407,8 @@ abstract public class Machine {
 		machineRunner.interrupt();
 		videoRunner.interrupt();
 		timer.cancel();
-        cpuTimer.cancel();
-        videoTimer.cancel();
+        fastTimer.cancel();
+        //videoTimer.cancel();
 		try {
 			videoRunner.join();
 		} catch (InterruptedException e) {

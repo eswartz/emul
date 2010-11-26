@@ -8,6 +8,7 @@ import java.io.PrintWriter;
 
 import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.settings.Logging;
+import org.ejs.coffee.core.timer.FastTimer;
 import org.ejs.coffee.core.utils.BinaryUtils;
 import org.ejs.coffee.core.utils.HexUtils;
 
@@ -16,8 +17,6 @@ import v9t9.emulator.hardware.speech.LPCSpeech.Fetcher;
 import v9t9.emulator.hardware.speech.LPCSpeech.Sender;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.MemoryDomain;
-import v9t9.engine.timer.FastTimer;
-import v9t9.engine.timer.FastTimerTask;
 
 /**
  * @author ejs
@@ -70,7 +69,7 @@ public class TMS5220 implements Fetcher, Sender {
 
 	private FastTimer speechTimer;
 
-	private FastTimerTask speechTimerTask;
+	private Runnable speechTimerTask;
 
 	private LPCSpeech lpc;
 	
@@ -369,7 +368,7 @@ public class TMS5220 implements Fetcher, Sender {
 			speechTimer = new FastTimer();
 
 			hz = speech_hertz / speech_length;
-			speechTimerTask = new FastTimerTask() {
+			speechTimerTask = new Runnable() {
 	
 				@Override
 				public void run() {

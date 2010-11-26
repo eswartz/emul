@@ -5,7 +5,8 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.BitSet;
-import java.util.TreeMap;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.ejs.coffee.core.utils.HexUtils;
 import org.ejs.coffee.core.utils.Pair;
@@ -23,7 +24,6 @@ import v9t9.engine.cpu.MachineOperandF99b;
 import v9t9.engine.cpu.StatusF99b;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
-import v9t9.engine.memory.MemoryListener;
 import v9t9.engine.memory.MemoryDomain.MemoryWriteListener;
 import v9t9.forthcomp.AbortException;
 import v9t9.forthcomp.F99bTargetContext;
@@ -99,7 +99,7 @@ public class InterpreterF99b implements Interpreter {
 			execute();
 			executor.nInstructions++;
 			cpu.checkAndHandleInterrupts();
-			if (executor.interruptExecution)
+			if (executor.interruptExecution || cpu.isIdle())
 				break;
 		}
 	}
@@ -971,8 +971,12 @@ public class InterpreterF99b implements Interpreter {
 	/**
 	 * @param ins
 	 */
+    private Set<Integer> unsupportedOpcodes = new HashSet<Integer>();
 	private void unsupported(InstructionF99b ins) {
-		System.out.println("Unsupported: " + HexUtils.toHex4(ins.getPc()) +" opcode = "+ ins.getInst() +": "+ ins);
+		if (!unsupportedOpcodes.contains(ins.getInst())) {
+			unsupportedOpcodes.add(ins.getInst());
+			System.out.println("Unsupported: " + HexUtils.toHex4(ins.getPc()) +" opcode = "+ ins.getInst() +": "+ ins);
+		}
 	}
 
 	private final int binOp(short l, short r, int immed) {

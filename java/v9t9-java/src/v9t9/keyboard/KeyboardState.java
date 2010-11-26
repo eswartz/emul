@@ -77,7 +77,7 @@ import v9t9.emulator.common.Machine;
  */
 @SuppressWarnings("unused")
 public class KeyboardState {
-	public static boolean DEBUG = false;
+	public static boolean DEBUG = true;
 	
     /* Masks, corresponding to column 0 */
     public static final byte SHIFT = 0x20;
@@ -347,7 +347,7 @@ public class KeyboardState {
 		
 		// force the CPU to notice
 		if (machine.getCpu().isThrottled()) {
-			machine.getCpu().addAllowedCycles(3000);
+			//machine.getCpu().addAllowedCycles(3000);
 			//cpu.getCruAccess().triggerInterrupt(InternalCru9901.INT_VDP);
 		}
     	return true;
@@ -493,7 +493,14 @@ public class KeyboardState {
 					return false;
 				}
 				else if (delta.key == key && (delta.onoff != onoff)) {
-					return false;
+					/*
+					if (!onoff && delta.time + 50 > time)
+						return false;	// repeating
+					if (onoff && delta.time + 50 < time)
+						return false;	// distinct keys
+						*/
+					if (!onoff)
+						return false;
 				}
 				if (DEBUG) System.out.println("... keeping " + delta + " with " + this);
 			}

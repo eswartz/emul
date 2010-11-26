@@ -48,7 +48,7 @@ public abstract class CpuBase  implements MemoryAccessListener, IPersistable, Cp
 	/**  total # target cycles expected throughout execution */
 	protected long totaltargetcycles;
 	/** current cycles per tick */
-	private int currentcycles = 0;
+	private volatile int currentcycles = 0;
 	/** total # current cycles executed */
 	protected long totalcurrentcycles;
 	protected int interruptTick;
@@ -58,7 +58,7 @@ public abstract class CpuBase  implements MemoryAccessListener, IPersistable, Cp
 	
 	protected CruAccess cruAccess;
 	
-	protected boolean idle;
+	protected volatile boolean idle;
 	
 	/**
 	 * Called when hardware triggers another pin.
@@ -138,10 +138,17 @@ public abstract class CpuBase  implements MemoryAccessListener, IPersistable, Cp
 		
 		// if we went over, aim for fewer this time
 		currenttargetcycles = (int) (totaltargetcycles - totalcurrentcycles);
-		if (currenttargetcycles > settingCyclesPerSecond.getInt() * 2) {
+		
+		// If really fast speeds are demanded, and/or the system is otherwise busy,
+		// we can fall behind the target.  But if we fall too far behind,
+		// we'll never catch up.
+		if (currenttargetcycles > settingCyclesPerSecond.getInt() / 10) {
 			// something really threw us off -- just start over
 			totalcurrentcycles = totaltargetcycles;
+			currenttargetcycles = targetcycles;
 		}
+		//System.out.println(System.currentTimeMillis()+": " + currentcycles + " -> " + currenttargetcycles);
+		
 		currentcycles = 0;
 		
 		totaltargetcycles += targetcycles;
@@ -157,15 +164,15 @@ public abstract class CpuBase  implements MemoryAccessListener, IPersistable, Cp
 		addCycles(entry.getLatency());
 	}
 
-	public synchronized int getCurrentCycleCount() {
+	public int getCurrentCycleCount() {
 		return currentcycles;
 	}
 
-	public synchronized int getCurrentTargetCycleCount() {
+	public int getCurrentTargetCycleCount() {
 		return currenttargetcycles;
 	}
 
-	public synchronized long getTotalCycleCount() {
+	public long getTotalCycleCount() {
 		return totalcurrentcycles;
 	}
 
@@ -173,7 +180,7 @@ public abstract class CpuBase  implements MemoryAccessListener, IPersistable, Cp
 		return totalcurrentcycles + currentcycles;
 	}
 
-	public synchronized int getTickCount() {
+	public int getTickCount() {
 		return ticks;
 	}
 
@@ -212,9 +219,11 @@ public abstract class CpuBase  implements MemoryAccessListener, IPersistable, Cp
 	 */
 	@Override
 	public void setIdle(boolean b) {
-		this.idle = b;
-		getMachine().getExecutor().interruptExecution = true;
-		tick();
+		if (this.idle != b) {
+			this.idle = b;
+			getMachine().getExecutor().interruptExecution = true;
+			tick();
+		}
 	}
 	
 	/* (non-Javadoc)

@@ -177,7 +177,7 @@ public class Executor {
 			long end = System.currentTimeMillis();
 			cpu.checkAndHandleInterrupts();
 			// add more cycles than we guess, so sound can run smoothly
-			cpu.addCycles(cpu.getBaseCyclesPerSec() * (int)(end - start) / 100);
+			cpu.addCycles(cpu.getBaseCyclesPerSec() * (int)(end - start) / 1000);
     	} else {
 			if (settingCompile.getBoolean()) {
 				executeCompilableCode();
@@ -190,7 +190,7 @@ public class Executor {
 						interp.executeChunk(10, this);
 					}
 				} else {
-					interp.executeChunk(1000, this);
+					interp.executeChunk(100, this);
 				}
 			}
     	}
