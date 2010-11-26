@@ -264,18 +264,11 @@ User csp
     - -&22 ?error
 ;
 
-\ is there an official name for this?
 [IFUNDEF] BACK
 : BACK  ( addr opc -- )
     >r here - 
     r> jmpoffsalloc,
 ; target-only
-[THEN]
-
-[IFUNDEF] BEGIN
-: BEGIN
-    ?comp here 1 
-; immediate target-only
 [THEN]
 
 [IFUNDEF] IF

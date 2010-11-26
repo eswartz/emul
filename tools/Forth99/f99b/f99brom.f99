@@ -156,6 +156,14 @@ loop
 loop
 ;
 
+: square
+    begin 
+        $80 'GATE c!
+        [ $00 c, ]
+        $00 'GATE c!
+    again
+;
+
 export>
 
 :   bootup

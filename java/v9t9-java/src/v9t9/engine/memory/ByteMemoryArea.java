@@ -81,7 +81,10 @@ public class ByteMemoryArea extends MemoryArea {
 
     @Override
 	public short readWord(MemoryEntry entry, int addr) {
-    	return (short) ((readByte(entry, addr) << 8) | (readByte(entry, (addr + 1) & 0xffff) & 0xff));
+		if (addr + 1 - entry.addr < entry.size)
+			return (short) ((readByte(entry, addr) << 8) | (readByte(entry, (addr + 1) & 0xffff) & 0xff));
+		else
+			return (short) ((readByte(entry, addr) << 8));
     }
 
     @Override
@@ -96,7 +99,8 @@ public class ByteMemoryArea extends MemoryArea {
     @Override
 	public void writeWord(MemoryEntry entry, int addr, short val) {
     	writeByte(entry, addr, (byte) (val >> 8));
-    	writeByte(entry, addr + 1, (byte) (val & 0xff));
+    	if (addr + 1 - entry.addr < entry.size)
+    		writeByte(entry, addr + 1, (byte) (val & 0xff));
     }
 
     @Override

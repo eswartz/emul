@@ -116,7 +116,7 @@ public class F99bInstructionFactory implements IInstructionFactory {
 			case I0branchB: {
 				int val = (byte) iblock.nextByte();
 				if (val < 0)
-					val -= 2;
+					val -= 2 - 1;
 				inst.setOp1(MachineOperandF99b.createImmediateOperand(
 						val, MachineOperandF99b.OP_ENC_IMM8));
 				break;
@@ -148,7 +148,7 @@ public class F99bInstructionFactory implements IInstructionFactory {
 			case IbranchW:  {
 				int val = (short) iblock.nextWord();
 				if (val < 0)
-					val -= 3;
+					val -= 3 - 1;
 				inst.setOp1(MachineOperandF99b.createImmediateOperand(
 						val, MachineOperandF99b.OP_ENC_IMM16));
 				break;

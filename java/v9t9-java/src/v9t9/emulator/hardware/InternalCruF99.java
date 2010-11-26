@@ -24,6 +24,8 @@ public class InternalCruF99 extends BaseCruAccess {
 	public final static int KBD = CRU_BASE + 2;
 	/** keyboard alpha */
 	public final static int KBDA = CRU_BASE + 3;
+	/** audio gate */
+	public final static int GATE = CRU_BASE + 4;
 	
 	/**
 	 * @param machine
@@ -60,6 +62,10 @@ public class InternalCruF99 extends BaseCruAccess {
 			
 		case KBDA:
 			alphaLockMask = (val & 0x80) != 0;
+			break;
+			
+		case GATE:
+			machine.getSound().setAudioGate(addr, val != 0);
 			break;
 		}
 	}

@@ -52,7 +52,7 @@ public class F99bTargetContext extends TargetContext {
 	private DictEntry stub16BitJump;
 	private DictEntry stub8BitJump;
 	private DictEntry stub4BitJump;
-	private boolean localSupport;
+	//private boolean localSupport;
 	
 
 	/**
@@ -574,15 +574,19 @@ public class F99bTargetContext extends TargetContext {
 			throws AbortException {
 		if (diff < -130 || diff >= 128) {
 			stub16BitJump.use();
-			if (diff >= 0)
-				diff-=2;		// for branch inst
+			if (diff > 0)
+				diff -= 3;
+			else
+				diff -= 2;
 			baseOpcode = baseOpcode == IbranchX ? IbranchW : I0branchW;
 			compileOpcode(baseOpcode);
 			int ptr = alloc(cellSize);
 			writeCell(ptr, diff);
 		} else if (diff < -8 + 1 || diff >= 8 + 1) {
 			stub8BitJump.use();
-			if (diff >= 0)
+			if (diff > 0)
+				diff -= 2;
+			else
 				diff--;
 			baseOpcode = baseOpcode == IbranchX ? IbranchB : I0branchB;
 			compileOpcode(baseOpcode);

@@ -77,7 +77,7 @@ public class InterpreterF99b implements Interpreter {
      }
 
 	public void dispose() {
-    	Arrays.fill(cachedInstrs, 0);
+    	Arrays.fill(cachedInstrs, null);
     	cachedInstrCount = 0;
     	instrMap.clear();
     	memory.removeWriteListener(memoryWriteListener);

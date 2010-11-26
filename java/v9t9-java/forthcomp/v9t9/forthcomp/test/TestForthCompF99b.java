@@ -297,7 +297,7 @@ public class TestForthCompF99b extends BaseF99bTest {
 		assertOpcodes(dp, 
 				0x20, 0x20, 0x20, 0x20, 0x20, 
 				0x20, 0x20, 0x20, 0x20, 0x20,
-				IbranchB, (-10 & 0xff), 
+				IbranchB, (-11 & 0xff), 		// 0:next, -1: branch, -2...-11 
 				Iexit);
 		
 		//interpret("true");
