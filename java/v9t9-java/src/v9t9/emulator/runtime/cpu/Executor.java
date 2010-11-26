@@ -171,12 +171,11 @@ public class Executor {
     		long start = System.currentTimeMillis();
     		try {
     			// short sleep
-				Thread.sleep(10);
+				Thread.sleep(1);
 			} catch (InterruptedException e) {
 			}
 			long end = System.currentTimeMillis();
 			cpu.checkAndHandleInterrupts();
-			// add more cycles than we guess, so sound can run smoothly
 			cpu.addCycles(cpu.getBaseCyclesPerSec() * (int)(end - start) / 1000);
     	} else {
 			if (settingCompile.getBoolean()) {

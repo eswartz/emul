@@ -366,7 +366,7 @@ abstract public class Machine {
 	            				executor.execute();
 	            			}
 	            		}
-	            		if (cpu.isIdle())
+	            		if (bExecuting && cpu.isIdle())
 	            			executor.execute();
     	            } catch (AbortedException e) {
     	            } catch (InterruptedException e) {
