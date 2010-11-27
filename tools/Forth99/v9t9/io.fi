@@ -1,0 +1,47 @@
+
+( the routine that handles RWBLK )
+| User >rwblk
+
+0 <export
+
+: disk-rwblk    ( addr  block# r/w -- err )
+    drop drop drop -1
+;
+
+$2000 Constant GRAMBASE
+$E000 chars/block U/  Constant #GRAM
+
+: gram-rwblk    ( addr  block# r/w -- err )
+    >r
+    dup  0  #GRAM 1-  within if 
+        chars/block U*  GRAMBASE +  
+        r>  if  
+            swap  chars/block  gcmove  
+        else  
+            chars/block        cgmove  
+        then
+        0
+    else
+        drop 2drop rdrop -1
+    then
+;
+
+export>
+
+: DSK1 ( -- )
+    ['] disk-rwblk  >rwblk  !
+;
+
+: GRAM ( -- )
+    ['] gram-rwblk  >rwblk  !
+;
+
+
+\ read or write:  r/w == TRUE means read, FALSE means write
+: RWBLK    ( addr  block# r/w -- err )
+    >rwblk @  execute
+;
+
+| : io-init
+    GRAM    
+; 

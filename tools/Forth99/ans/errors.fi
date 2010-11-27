@@ -1,0 +1,41 @@
+
+0 <export
+
+create  errptrs     10 2* allot
+
+: error:"  ( ptr "..." -- ptr' )
+    here  >r
+    postpone s"  s,
+    \ postpone s"  1+ allot drop   
+    errptrs over - 2/  Constant      \ negative
+    r>  over  !
+    2+
+;
+
+errptrs
+    error:" "                       err-none
+    error:" undefined"              err-undefined
+    error:" interpret mode only"    err-interpret-only
+    error:" loading only"           err-loading-only
+    error:" block i/o error"        err-block-i/o
+    error:" compilation only"       err-compile-only
+    error:" empty name"             err-empty-name
+    error:" control nesting"        err-control-nesting
+    error:" not a DEFERed word"     err-not-deferred
+    error:" out of range"           err-out-of-range
+    error:" file I/O error"         err-file-i/o
+
+errptrs - 2/  constant num-errptrs
+
+
+: message     (  # -- )
+    negate  
+    dup  0 num-errptrs 1-  within  if    
+        2* errptrs + @  count type
+        cr
+    else
+        ." ???" . cr
+    then
+;
+
+export>
