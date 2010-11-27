@@ -70,6 +70,12 @@
 :   +vc!  ( val addr -- )
     +!vwaddr  VDPWD c!
 ;
+
+:   vfill ( ch addr len -- )
+    swap +!vwaddr
+    VDPWD swap 0 (cfill) 
+;
+
 ( GPL to VDP move )
 :   gvmove ( gaddr vaddr len -- )
     rot gwaddr

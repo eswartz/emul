@@ -123,7 +123,7 @@ public class GplMmio implements ConsoleMmioReader, ConsoleMmioWriter, IPersistab
     	    /* >9C00, data write */
     		gromraddrflag = gromwaddrflag = false;
 
-    		domain.writeByte(gromaddr, val);
+    		domain.writeByte(gromaddr - 1, val);
     		gromaddr = getNextAddr(gromaddr);
     	}    
     }

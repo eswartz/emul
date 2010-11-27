@@ -25,6 +25,14 @@ t-data
     +field  win-sx
     +field  win-sy
 
+    ( stock character sizes, in units )
+    +1field win-chxs
+    +1field win-chys
+    
+    ( size of window, in characters )
+    +1field win-cx
+    +1field win-cy
+
 dup constant t-data0
     
 t-data over -  Constant t-data-size
@@ -33,11 +41,13 @@ ramptr !
 
 : term-refresh
     v-text  c@ not  if
-        v-width @   v-fntwidth c@  align-to  win-mx  !
-        v-height @  v-fntheight c@ align-to  win-my  !
+        v-width @   v-fntwidth c@   dup win-chxs c!  align-to  win-mx  !
+        v-height @  v-fntheight c@  dup win-chys c!  align-to  win-my  !
     else
         v-width @   win-mx  !
         v-height @  win-my  !
+        1 win-chxs c!
+        1 win-chys c!
     then
 ;
 
@@ -58,37 +68,67 @@ ramptr !
     0 v-y !
 ;
 
-:   xy ( -- v-x v-y )
+( units )
+:   .xy ( -- v-x v-y )
     v-x @  v-y @
 ;
 
-:   at-xy ( x y  -- )
+( units )
+:   .at-xy ( x y  -- )
     cursor-off
     v-y !  v-x !
 ;
 
-( in units )
-::   win! ( w h x y -- )
+( character units )
+::   xy ( -- v-x v-y )
+    .xy 
+    win-chys c@  U/  
+    swap win-chxs c@  U/  
+    swap
+;
+
+( character units )
+:   at-xy ( x y  -- )
+    swap  win-chxs c@ U*  swap win-chys c@ U*
+    .at-xy
+;
+
+
+( units )
+::   .win! ( w h x y -- )
     w  win-mx @  umin  x +  win-mx @  umin  :> x2
     h  win-my @  umin  y +  win-my @  umin  :> y2
     0 x max  dup  win-x !  x2  swap -  win-sx !
     0 y max  dup  win-y !  y2  swap -  win-sy !
+    
+    win-sx @  win-chxs c@  U/  win-cx c!
+    win-sy @  win-chys c@  U/  win-cy c!
+;
+
+( character units )
+::   win! ( w h x y -- )
+    w  win-chxs c@  U*
+    h  win-chys c@  U*
+    x  win-chxs c@  U*
+    y  win-chxs c@  U*
+    .win!
 ;
 
 ( set full window )
 : full!
-    -1 -1 0 0  win!
+    -1 -1 0 0  .win!
 ;
 
 export>
 
-( screen, vs. window, x y ) 
+( screen, vs. window, x y, units ) 
 :   $xy ( -- x y )
     v-x @ win-x @ +
     v-y @ win-y @ +
 ;
 
 
+( for text modes, screen address of character in window )
 :   txt-xy>addr ( x y -- addr )
     win-y @ +  v-width @  U*  
     swap  win-x @ +  +
@@ -109,28 +149,24 @@ export>
     drop  v-text c@  if  1  else  v-fntwidth c@  then   
 ;
 
-:   win-chsize ( -- xs ys )
-    v-text c@ if
-        win-sx @ win-sy @
-    else
-        win-sx @ v-fntwidth c@  u/
-        win-sy @ v-fntheight c@ u/
-    then
-;
-
 :   advance-row 
-    v-y @  32 ch>y  +   
+    v-y @  win-chys c@  +   
     dup win-sy @ >= if
        drop 0
     then
     v-y !
 ;
 
+:   new-line
+    home-col
+    advance-row
+    32  win-cx c@  hchar  
+;
+
 :   advance-cursor ( ch -- )
     ch>x  v-x @  +   
     dup win-sx @ >= if
         drop 0
-        advance-row 
     then
     v-x !
 ;
@@ -141,8 +177,7 @@ export>
 
 :   crlf
     cursor-off    
-    advance-row
-    home-col 
+    new-line
 ;  
 
 :   bksp ( ch -- )
@@ -160,11 +195,10 @@ export>
 
 1 <EXPORT
 
-::   chfill  ( ch -- )
+:   chfill  ( ch -- )
     home
-    win-chsize  :> rows  :> cnt
-    rows 0 do
-        ch cnt hchar
+    win-cy c@ 0 do
+        dup  win-cx c@  hchar
         advance-row
     loop
 ;
@@ -174,7 +208,7 @@ export>
         >r  $xy  r>  execute
     else
         xy 2>r
-        0 do  dup  (emit) dup  advance-cursor  loop  drop
+        0 ?do  dup  (emit) dup  advance-cursor  loop  drop
         2r> at-xy
     then
 ;
@@ -186,7 +220,7 @@ export>
         ch ch>xy :> ys :> xs
         v-y @ :> origvy
         xy 2>r
-        len 0 do  
+        len 0 ?do  
             ch  (emit) 
             v-y @  ys +  win-sy @ umod  dup v-y !  
             origvy = if
@@ -199,7 +233,10 @@ export>
 
 :   cls  
     \ 'v-clear @  execute
-    32  win-sx @ win-sy @ U*  hchar   
+    win-cy c@ 0 do
+        0  i at-xy
+        32  win-cx c@  hchar
+    loop 
     home
 ;
 
@@ -215,6 +252,7 @@ export>
         drop 32 bksp
     else
         dup  (emit) advance-cursor
+        v-x @ 0=  if new-line  then
     then then 
 ;    target-only
 

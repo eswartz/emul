@@ -103,6 +103,9 @@ public class InstF99b {
 	public static final int I0equ = Ilog_start + 4;
 	public static final int Iequ = Ilog_start + 5;
 	
+	/** ( mask val -- val&~mask ) */
+	public static final int Inand = Ilog_start + 6;
+
 	public static final int Icmp = Ilog_start + 8;	// ... 15
 	
 	public static final int Imem_start = 0x60;
@@ -246,6 +249,8 @@ public class InstF99b {
 	
 	public static final int I0equ_d = Idlog_start + 4;
 	public static final int Iequ_d = Idlog_start + 5;
+	
+	public static final int Inand_d = Idlog_start + 6;
 	
 	public static final int Icmp_d = Idlog_start + 8;	// ... 15
 	
@@ -433,10 +438,13 @@ public class InstF99b {
 		Iand, 2, 1, 0, 0,
 		Ior, 2, 1, 0, 0,
 		Ixor, 2, 1, 0, 0,
+		Inand, 2, 1, 0, 0,
+		
 		Iinv, 1, 1, 0, 0,
 		Iand_d, 4, 2, 0, 0,
 		Ior_d, 4, 2, 0, 0,
 		Ixor_d, 4, 2, 0, 0,
+		Inand_d, 4, 2, 0, 0,
 		Iinv_d, 2, 2, 0, 0,
 		
 		Ilsh, 2, 1, 0, 0,

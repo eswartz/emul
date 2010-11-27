@@ -548,14 +548,14 @@ User 'lastcol
 \   Create the interpretation window
 : intp.window
     -1 -1  0  #y-menu 1+   win!
-    1 v-blink c!
+    1 vblink!
 ;
 
 \   Set up the window for the editor
 : edit.window
     full!
         
-    0 v-blink c!    
+    0 vblink!    
 ;
 
 \ Draw the overarching static UI
@@ -574,7 +574,7 @@ User 'lastcol
     cls
 
     \ clear out editor window
-    1 v-blink c!
+    1 vblink!
     c/l l/blk  #x-border #y-border  win!
     cls
     
@@ -626,7 +626,7 @@ User 'lastcol
 \   Draw status 
 
 : edit.drawstatus
-    0 v-blink c!
+    0 vblink!
     #statuscol [ #y-border 1+ ] literal     at-xy  scr @    3 u.r   
                                                     dirty? [char] * and emit 
     #statuscol [ #y-border 3 + ] literal    at-xy  'line @  3 u.r 
@@ -636,7 +636,7 @@ User 'lastcol
     
     \ set cursor
     'col @ #x-border +  'line @ #y-border +  at-xy
-    1 v-blink c!    
+    1 vblink!    
 ;
 
 \   Draw the given line of the block

@@ -11,7 +11,7 @@
 
 \   Custom:  reset a flag in a word
 : &!        ( mask addr -- )
-    swap NOT over @ AND swap !     
+    dup >r @  NAND  r> !
 ;
 
 :: compare     ( addr u addr' u' -- -1/0/1 )

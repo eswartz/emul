@@ -132,6 +132,7 @@ public class F99bTargetContext extends TargetContext {
 		definePrim("or", Ior);
 		definePrim("and", Iand);
 		definePrim("xor", Ixor);
+		definePrim("nand", Inand);
 		
 		definePrim(">r", ItoR);
 		definePrim("2>r", ItoR_d);

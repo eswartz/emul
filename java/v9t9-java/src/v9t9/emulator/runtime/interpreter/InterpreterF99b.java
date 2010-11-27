@@ -451,6 +451,12 @@ public class InterpreterF99b implements Interpreter {
 		case Inot:
 			cpu.push((short) (cpu.pop() != 0 ? 0 : -1));
 			break;
+		case Inand: {
+			short v = cpu.pop();
+			short m = cpu.pop();
+			cpu.push((short) (v & ~m));
+			break;
+		}
 
         case Icall:
         	cpu.rpush(iblock.pc);
@@ -926,6 +932,13 @@ public class InterpreterF99b implements Interpreter {
 		case Inot:
 			cpu.pushd((cpu.popd() != 0 ? 0 : -1));
 			break;
+		case Inand: {
+			int v = cpu.popd();
+			int m = cpu.popd();
+			cpu.pushd(v & ~m);
+			break;
+		}
+			
         case ItoR:
         	cpu.rpush(iblock.getStackEntry(1));
         	cpu.rpush(iblock.getStackEntry(0));

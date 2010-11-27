@@ -1,18 +1,22 @@
 
-: txt-chaddr ( x y -- addr )
+: txt-choffs ( x y -- addr )
     v-width @ U*  +
+;
+
+: txt-chaddr ( x y -- addr )
+    txt-choffs
     v-screen @ + 
 ;
 
 : txt-waddr ( x y -- )
-    txt-chaddr !vwaddr
+    txt-chaddr +!vwaddr
 ;
 
 : txt-drawchar ( ch x y -- )
-    txt-waddr VDPWD c!   
+    txt-waddr  VDPWD c!   
 ;
 : txt-readchar ( x y -- )
-    txt-chaddr vwaddr VDPRD c@
+    txt-chaddr +vwaddr  VDPRD c@
 ;
 : txt-blinkcursor ( x y -- )
     txt-chaddr 
@@ -31,7 +35,6 @@
     then
 ;
 
-0 [IF]
 ( Split a range that wraps around a boundary )
 :: range-wrap ( sz addr start len -- addr1 len1 addr2 len2 )
     ( portion from addr...min addr+sz,start+len )
@@ -41,8 +44,8 @@
     start  over  sz - negate
 ;
  
-: txt-hchar ( ch len x y -- )
-    txt-chaddr
+: (txt-hchar) ( ch len offs -- )
+    v-screen @ +
     rot >r
     v-screen @ v-screensz @  range-wrap
     
@@ -50,19 +53,22 @@
     r>   rot rot  vfill
 ;
 
+: txt-hchar ( ch len x y -- )
+    txt-choffs
+    (txt-hchar)
+;
+
 :: txt-vchar ( ch len x y -- )
-    x y txt-chaddr  v-screen @ -  :> offs
+    x y txt-choffs  :> offs
     v-screensz @  :> lim
     
     len 0 do
-        offs  v-screen @ +  !vwaddr  ch VDPWD c!
-        offs  win-sx @ +  dup lim >= if
-            lim -  1+  win-sx @  umod  
-        then  
+        ch  offs  v-screen @ +  vc!
+        v-width @  offs +  
+        dup lim >= if  lim -  then
         offs!
     loop
 ;
-[THEN]
 
 : txt-setupmode
     true v-text c!
@@ -91,8 +97,8 @@ Create TextFunctions
     'v-blinkcursor ,     ' txt-blinkcursor ,
     'v-setfont ,         ' std-setfont ,
     'v-clear ,           ' txt-clear ,
-    \ 'v-hchar ,           ' txt-hchar ,
-    \ 'v-vchar ,           ' txt-vchar ,
+    'v-hchar ,           ' txt-hchar ,
+    'v-vchar ,           ' txt-vchar ,
     0 , 
 
 
@@ -196,26 +202,70 @@ Create GfxModeParams
 
 \ -------------------
 
+: >txt2-coloraddr ( offs -- mask addr )
+    $80   over   7 and  urshift  ( taddr mask )
+    swap  3 urshift  v-colors @ +  ( mask caddr )
+    
+;
+
 :: txt2-drawchar ( ch x y -- )
     ch x y  txt-drawchar
     
     \ reset or set blink bit
-    x y  v-width @ U*  +  
-    dup  7 and  $80 swap urshift  :> mask
-    3 urshift  v-colors @ +  :> addr
+    x y  txt-choffs  >txt2-coloraddr  
     
     \ assume bank is still valid
-    addr  vc@
-    mask  v-blink c@  if  OR  else  INVERT AND  then  
-    addr  vc!
+    dup >r  vc@
+    v-blink c@  if  OR  else  NAND  then  
+    r>  vc!
 ;
 
 : txt2-clear
     txt-clear
     
     \ clear colors (blinks)
-    v-blink c@  not not
+    v-blink c@
     v-colors @  v-colorsz @  vfill
+;
+
+:: txt2-hchar ( ch len x y -- )
+    x y  txt-choffs  :> offs
+    
+    ch len offs (txt-hchar)  
+    
+    offs  >txt2-coloraddr  
+            :> caddr   
+            dup 8 lshift OR  :> mask
+
+    v-blink c@  if ['] OR else ['] NAND then :> func
+    
+    caddr !vwaddr
+    
+    len 0 ?do
+        mask $8080 =  i' i - 8 >=  and  if
+            \ blast 8 at once
+            v-blink c@  VDPWD c!
+            caddr 1+  caddr!
+            8
+        else
+            \ just one bit at a time
+            mask  caddr vc@  func execute  caddr vc!
+            mask  1 crshift  dup  $8080 =  if caddr 1+  caddr!  then  
+            mask!
+            1
+        then
+    +loop
+;
+
+:: txt2-vchar ( ch len x y -- )
+    ch len x y  txt-vchar  
+
+    len 0 do
+        x y  txt-choffs  >txt2-coloraddr
+        dup >r  vc@
+        v-blink c@  if OR else NAND then
+        r> vc!
+    loop
 ;
 
 \       8=text 2 mode
@@ -229,7 +279,9 @@ Create Text2ModeRegs
 
 Create Text2Functions
     'v-drawchar ,       ' txt2-drawchar  ,      
-    'v-clear ,          ' txt2-clear     ,      
+    'v-clear ,          ' txt2-clear     ,
+    'v-hchar ,          ' txt2-hchar     ,      
+    'v-vchar ,          ' txt2-vchar     ,      
     0 ,
 
 Create Text2ModeParams
