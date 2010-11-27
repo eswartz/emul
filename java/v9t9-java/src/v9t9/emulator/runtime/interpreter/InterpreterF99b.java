@@ -106,6 +106,12 @@ public class InterpreterF99b implements Interpreter {
 
 	private final void executeAndListen(InstructionListener[] instructionListeners) {
 		iblock.pc = cpu.getPC();
+		
+		if ((iblock.pc & 0xffff) < 0x400) {
+			cpu.fault();
+			return;
+		}
+		
 		iblock.cycles = 0;
 		iblock.st = cpu.getST();
 		

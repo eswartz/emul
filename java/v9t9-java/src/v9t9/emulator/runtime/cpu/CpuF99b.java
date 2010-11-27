@@ -17,12 +17,18 @@ import v9t9.engine.cpu.StatusF99b;
  * @author ejs
  */
 public class CpuF99b extends CpuBase {
-    public static final int PIN_INTREQ = 1 << 31;
+    /**
+	 * 
+	 */
+	public static final int MAX_STACK = 0x1000;
+	
+	public static final int PIN_INTREQ = 1 << 31;
     public static final int PIN_LOAD = 1 << 3;
     public static final int PIN_RESET = 1 << 5;
     
     public static final int INT_RESET = 15;
     public static final int INT_NMI = 14;
+    public static final int INT_FAULT = 13;
     public static final int INT_KBD = 3;
     public static final int INT_VDP = 2;
     public static final int INT_BKPT = 0;
@@ -30,10 +36,13 @@ public class CpuF99b extends CpuBase {
     
     public static final int PC = 0;
 	public static final int SP = 1;
-	public static final int RP = 2;
-	public static final int UP = 3;
-	public static final int LP = 4;
-	public static final int SR = 5;
+	public static final int SP0 = 2;
+	public static final int RP = 3;
+	public static final int RP0 = 4;
+	public static final int UP = 5;
+	public static final int UP0 = 6;
+	public static final int LP = 7;
+	public static final int SR = 8;
 
     /**
 	 * 
@@ -280,6 +289,31 @@ public class CpuF99b extends CpuBase {
 		contextSwitch((short) 0x400);
 	}
 
+	/**
+	 *	Issue a fault:  this places RP and SP on the stack under the
+	 *	pushed status and PC, on a new stack. 
+	 */
+	public void fault() {
+    	PrintWriter dumpfull = Executor.getDumpfull();
+		if (dumpfull != null) {
+    		dumpfull.println("*** FAULT");
+		}
+		
+		short oldrp = getState().getRP();
+		short oldsp = getState().getSP();
+		
+		getState().setSP((short) 0xffe0);
+		getState().setRP((short) 0xffd0);
+		
+		push(oldrp);
+		push(oldsp);
+		
+		triggerInterrupt(INT_FAULT);
+		
+		throw new AbortedException();
+	}
+
+
 	public CpuStateF99b getState() {
 		return (CpuStateF99b) state;
 	}
@@ -317,9 +351,9 @@ public class CpuF99b extends CpuBase {
 		state.getConsole().writeWord(newSp, val);
 		stateF99b.setSP(newSp);
 		
-		if (newSp == 0) {
-			reset();
-		}
+		if (newSp < stateF99b.getSP() - MAX_STACK) {
+			fault();
+		}	
 	}
 	
 	public short peek() {
@@ -330,6 +364,9 @@ public class CpuF99b extends CpuBase {
 		short val = stateF99b.getConsole().readWord(stateF99b.getSP());
 		short newSp = (short) ((stateF99b.getSP() + 2));
 		stateF99b.setSP(newSp);
+		if (newSp > stateF99b.getBaseSP()) {
+			fault();
+		}
 		return val;
 	}
 
@@ -337,10 +374,10 @@ public class CpuF99b extends CpuBase {
 		short newRp = (short) ((stateF99b.getRP() - 2));
 		stateF99b.getConsole().writeWord(newRp, val);
 		stateF99b.setRP(newRp);
+		if (newRp < stateF99b.getRP() - MAX_STACK) {
+			fault();
+		}	
 		
-		if (newRp == 0) {
-			reset();
-		}
 	}
 
 	public short rpeek() {
@@ -350,6 +387,10 @@ public class CpuF99b extends CpuBase {
 		short val = stateF99b.getConsole().readWord(stateF99b.getRP());
 		short newRp = (short) ((stateF99b.getRP() + 2));
 		stateF99b.setRP(newRp);
+		if (newRp > stateF99b.getBaseRP()) {
+			fault();
+		}
+
 		return val;
 	}
 

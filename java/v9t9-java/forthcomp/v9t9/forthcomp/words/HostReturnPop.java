@@ -10,25 +10,20 @@ import v9t9.forthcomp.HostContext;
  * @author ejs
  *
  */
-public class HostReturnRead extends BaseStdWord {
+public class HostReturnPop extends BaseStdWord {
 
 	/**
 	 * 
 	 */
-	public HostReturnRead() {
+	public HostReturnPop() {
 	}
 	
-	@Override
-	public String toString() {
-		return "R>";
-	}
-
 	/* (non-Javadoc)
 	 * @see v9t9.forthcomp.IWord#execute(v9t9.forthcomp.HostContext, v9t9.forthcomp.words.TargetContext)
 	 */
 	public void execute(HostContext hostContext, TargetContext targetContext)
 			throws AbortException {
-		hostContext.pushData(hostContext.popCall());
+		hostContext.pushData(hostContext.popReturn());
 	}
 
 	/* (non-Javadoc)

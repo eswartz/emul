@@ -140,7 +140,9 @@ public class F99bTargetContext extends TargetContext {
 		definePrim("rdrop", Irdrop);
 		definePrim("r@", IatR);
 		definePrim("i", IatR);
+		defineInlinePrim("i'", Irpidx, 1);
 		defineInlinePrim("j", Irpidx, 2);
+		defineInlinePrim("j'", Irpidx, 3);
 		
 		defineInlinePrim("sp@", IcontextFrom, CTX_SP);
 		defineInlinePrim("sp!", ItoContext, CTX_SP);

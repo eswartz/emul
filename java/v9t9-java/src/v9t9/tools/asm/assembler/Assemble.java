@@ -36,16 +36,24 @@ public class Assemble {
             case '?':
                 help();
                 break;
-            case 'r':
+            case 'r': {
+            	String file = getopt.getOptarg();
+            	int size = romSize;
+            	int idx = file.lastIndexOf('#');
+            	if (idx >= 0) {
+            		size = Integer.parseInt(file.substring(idx+1));
+            		file = file.substring(0, idx);
+            	}
             	assembler.addMemoryEntry(
             			DiskMemoryEntry.newWordMemoryFromFile(
-            					romStart, romSize, "CPU ROM",
+            					romStart, size, "CPU ROM",
             					assembler.getWritableConsole(),
-            					getopt.getOptarg(),
+            					file,
             					0x0,
             					true));
             	break;
-            case 'e':
+            }
+            case 'e': {
             	assembler.addMemoryEntry(
             			DiskMemoryEntry.newWordMemoryFromFile(
             					romStart, romSize * 2, "CPU ROM",
@@ -54,7 +62,8 @@ public class Assemble {
             					0x0,
             					true));
             	break;
-            case 'm':
+            }
+            case 'm': {
             	assembler.addMemoryEntry(
             			DiskMemoryEntry.newWordMemoryFromFile(
             					0x6000, 0x2000, "Module ROM", 
@@ -63,7 +72,8 @@ public class Assemble {
             					0x0,
             					true));
             	break;
-            case 'd':
+            }
+            case 'd': {
             	assembler.addMemoryEntry(
             			DiskMemoryEntry.newWordMemoryFromFile(
             					0x4000, 0x2000, "DSR ROM", 
@@ -71,16 +81,25 @@ public class Assemble {
             					getopt.getOptarg(),
             					0x0,
             					true));
-            	break;         
-            case 'g':
+            	break;  
+            }
+            case 'g': {
+            	String file = getopt.getOptarg();
+            	int size = 0x6000;
+            	int idx = file.lastIndexOf('#');
+            	if (idx >= 0) {
+            		size = Integer.parseInt(file.substring(idx+1));
+            		file = file.substring(0, idx);
+            	}
             	assembler.addMemoryEntry(
             			DiskMemoryEntry.newWordMemoryFromFile(
-            					0x0000, 0x6000, "GROM", 
+            					0x0000, size, "GROM", 
             					assembler.getWritableConsole(),
-            					getopt.getOptarg(),
+            					file,
             					0x0,
             					true));
-            	break;            	
+            	break; 
+            }
             case 'l':
             	String name = getopt.getOptarg();
             	if (name.equals("-"))
@@ -147,14 +166,13 @@ public class Assemble {
                         + "tiasm 9900 Assembler v2.0\n"
                         + "\n" 
                         +
-                        PROGNAME + " <input file> [-r|e <console ROM output>] [-m <module ROM output>]\n" +
-           			 "[-d <DSR ROM output>] [-g <console GROM output>] [-Dequ=val] [-l<list file>]\n" +
+                        PROGNAME + " <input file> [-r|e <console ROM output>[#size]] [-m <module ROM output>]\n" +
+           			 "[-d <DSR ROM output>] [-g <console GROM output>[#size]] [-Dequ=val] [-l<list file>]\n" +
            			 "\n"+
-           			 "-r saves the 8k memory block at >0000.\n" +
+           			 "-r|e saves the default 8k/16k memory block at >0000.\n" +
            			 "-m saves the 8k memory block at >6000.\n" +
            			 "-d saves the 8k memory block at >4000.\n" +
-           			 "-e saves the 16k memory block at >0000.\n" +
-           			 "-g saves the 24k memory block at >0000.  This can only be used with -m.\n"+
+           			 "-g saves the default 24k memory block at >0000.\n"+
            			 "-l sends a listing to the given file (- for stdout)");
 
     }

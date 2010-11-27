@@ -26,8 +26,9 @@ public class TestQuote extends BaseWord {
 					throws AbortException {
 
 				new SQuote().getInterpretationSemantics().execute(hostContext, targetContext);
-				
 				// TODO
+				hostContext.popData();
+				hostContext.popData();
 			}
 		});
 		

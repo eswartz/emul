@@ -117,6 +117,18 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 		}
 	}
 
+	public void register(SettingProperty setting, String custom) {
+		if (!trackedSettings.contains(setting)) {
+			trackedSettings.add(setting);
+			setting.addListener(trackedSettingListener);
+			if (isLoaded) {
+				setting.loadState(section);
+			}
+		}
+		if (custom != null && setting.isDefault() && setting.getValue() instanceof String)
+			setting.setString(custom);
+	}
+	
 	public void clearConfigVar(String configVar) {
 		section.put(configVar, (String) null);
 	}

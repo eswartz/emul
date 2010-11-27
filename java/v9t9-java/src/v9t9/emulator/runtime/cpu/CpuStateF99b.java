@@ -5,6 +5,7 @@ package v9t9.emulator.runtime.cpu;
 
 import org.ejs.coffee.core.utils.HexUtils;
 
+import v9t9.emulator.hardware.memory.F99ConsoleMmioArea;
 import v9t9.engine.cpu.*;
 import v9t9.engine.memory.MemoryDomain;
 
@@ -14,13 +15,18 @@ import v9t9.engine.memory.MemoryDomain;
  */
 public class CpuStateF99b implements CpuState {
 
+	/**
+	 * 
+	 */
+	private static final int ALIGNED_REGMASK = ((1 << CpuF99b.SP) | (1 << CpuF99b.SP0) 
+							| (1 << CpuF99b.RP) | (1 << CpuF99b.RP0)
+							| (1 << CpuF99b.UP) | (1 << CpuF99b.UP0)
+							| (1 << CpuF99b.LP));
+	
 	private MemoryDomain console;
 	private Status status;
 
-	private short regs[] = new short[7];
-	private short baseUP;
-	private short baseRP;
-	private short baseSP;
+	private short regs[] = new short[16];
 	
 	public CpuStateF99b(MemoryDomain console) {
 		this.console = console;
@@ -51,8 +57,9 @@ public class CpuStateF99b implements CpuState {
 	@Override
 	public void setRegister(int reg, int val) {
 		// always aligned
-		if (reg == CpuF99b.SP || reg == CpuF99b.RP || reg == CpuF99b.UP || reg == CpuF99b.LP)
+		if (((1 << reg) & ALIGNED_REGMASK) != 0) {	
 			val &= ~1;
+		}
 		regs[reg] = (short) val;
 		if (reg == CpuF99b.SR) {
 			getStatus().expand(regs[reg]);
@@ -140,47 +147,30 @@ public class CpuStateF99b implements CpuState {
 		getStatus().expand(st);
 	}
 
-	/**
-	 * @param int1
-	 */
+	public short getBaseSP() {
+		return (short) getRegister(CpuF99b.SP0);
+	}
+	
 	public void setBaseSP(short v) {
-		this.baseSP = v;
+		setRegister(CpuF99b.SP0, v);
 	}
 
-	/**
-	 * @param int1
-	 */
+	public short getBaseRP() {
+		return (short) getRegister(CpuF99b.RP0);
+	}
+	
 	public void setBaseRP(short v) {
-		this.baseRP = v;
+		setRegister(CpuF99b.RP0, v);
 		
 	}
 
-	/**
-	 * @param int1
-	 */
-	public void setBaseUP(short v) {
-		this.baseUP = v;
-	}
-
-	/**
-	 * @return
-	 */
-	public short getBaseSP() {
-		return baseSP;
-	}
-
-	/**
-	 * @return
-	 */
-	public short getBaseRP() {
-		return baseRP;
-	}
-
-	/**
-	 * @return
-	 */
 	public short getBaseUP() {
-		return baseUP;
+		return (short) getRegister(CpuF99b.UP0);
 	}
+	
+	public void setBaseUP(short v) {
+		setRegister(CpuF99b.UP0, v);
+	}
+
 
 }

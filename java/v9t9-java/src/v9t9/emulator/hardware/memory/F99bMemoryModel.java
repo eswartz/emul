@@ -34,7 +34,7 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 		String filename = "f99brom.bin";
     	try {
 			cpuRomEntry = DiskMemoryEntry.newByteMemoryFromFile(
-	    			0x400, 0x4000 - 0x400, "CPU ROM",
+	    			0x400, 0x4800 - 0x400, "CPU ROM",
 	        		CPU,
 	                filename, 0x400, false);
 			cpuRomEntry.load();
@@ -49,10 +49,20 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
     	
 		loadConsoleGrom(eventNotifier, "forth99.grm");
 		
+		DiskMemoryEntry entry;
+		try {
+			entry = DiskMemoryEntry.newByteMemoryFromFile(
+	    			0x2000, 0xE000, "GRAM", 
+	    			GRAPHICS,
+	    			"f99bgram.bin", 0x0, true);
+			memory.addAndMap(entry);
+		} catch (IOException e) {
+			reportLoadError(eventNotifier, filename, e);
+		}
 	}
 	
 	protected void defineConsoleMemory(Machine machine) {
-		MemoryEntry entry = new MemoryEntry("48K RAM", CPU, 
+		MemoryEntry entry = new MemoryEntry("64K RAM", CPU, 
 				0x0400, 0xFC00, new EnhancedRamByteArea(0x4000, 0xFC00));
 		entry.getArea().setLatency(0);
 		memory.addAndMap(entry);

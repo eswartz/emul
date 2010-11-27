@@ -21,7 +21,7 @@ public class Allot extends BaseStdWord {
 		
 		int size = hostContext.popData();
 		targetContext.stubData.use(size);
-		targetContext.alloc(size);
+		targetContext.setDP(targetContext.getDP() + size);
 	}
 	
 	/* (non-Javadoc)

@@ -49,6 +49,8 @@ public class SQuote extends BaseWord {
 			char ch = hostContext.getStream().readChar();
 			if (ch == 0)
 				break;
+			if (ch == '"')
+				return sb;
 			if (!Character.isWhitespace(ch)) {
 				sb.append(ch);
 				break;

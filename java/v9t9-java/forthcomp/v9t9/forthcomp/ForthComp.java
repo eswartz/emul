@@ -31,11 +31,8 @@ import v9t9.engine.files.DataFiles;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.forthcomp.words.HostDoubleLiteral;
 import v9t9.forthcomp.words.HostLiteral;
-import v9t9.forthcomp.words.HostUnaryOp;
 import v9t9.forthcomp.words.HostVariable;
 import v9t9.forthcomp.words.TargetContext;
-import v9t9.forthcomp.words.TargetUserVariable;
-import v9t9.forthcomp.words.TargetVariable;
 import v9t9.forthcomp.words.TargetContext.IMemoryReader;
 
 /**

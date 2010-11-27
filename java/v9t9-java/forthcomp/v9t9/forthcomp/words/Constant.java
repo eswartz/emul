@@ -22,6 +22,7 @@ public class Constant extends BaseStdWord {
 		
 		String name = hostContext.readToken();
 
+		System.out.println("CONSTANT " + name +" = " + val);
 		targetContext.defineConstant(name, val, 1);
 	}
 	

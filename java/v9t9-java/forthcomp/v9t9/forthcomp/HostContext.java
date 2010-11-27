@@ -36,6 +36,7 @@ import v9t9.forthcomp.words.BracketThen;
 import v9t9.forthcomp.words.CR;
 import v9t9.forthcomp.words.Char;
 import v9t9.forthcomp.words.CharComma;
+import v9t9.forthcomp.words.Cmove;
 import v9t9.forthcomp.words.Colon;
 import v9t9.forthcomp.words.ColonColon;
 import v9t9.forthcomp.words.Comma;
@@ -53,6 +54,7 @@ import v9t9.forthcomp.words.ErrorQuote;
 import v9t9.forthcomp.words.Exit;
 import v9t9.forthcomp.words.Here;
 import v9t9.forthcomp.words.Host0Branch;
+import v9t9.forthcomp.words.Host2Dup;
 import v9t9.forthcomp.words.HostBehavior;
 import v9t9.forthcomp.words.HostBinOp;
 import v9t9.forthcomp.words.HostBranch;
@@ -67,7 +69,8 @@ import v9t9.forthcomp.words.HostHex;
 import v9t9.forthcomp.words.HostLiteral;
 import v9t9.forthcomp.words.HostOver;
 import v9t9.forthcomp.words.HostPlusStore;
-import v9t9.forthcomp.words.HostReturnRead;
+import v9t9.forthcomp.words.HostPushReturn;
+import v9t9.forthcomp.words.HostReturnPop;
 import v9t9.forthcomp.words.HostRot;
 import v9t9.forthcomp.words.HostStore;
 import v9t9.forthcomp.words.HostSwap;
@@ -254,6 +257,8 @@ public class HostContext extends Context {
 		define("HERE", new Here());
 		define("LASTXT", new LastXt());
 		
+		define("CMOVE", new Cmove());
+		
 		define("[compile]", new BracketCompile());
 		
 		define("S\"", new SQuote());
@@ -282,7 +287,8 @@ public class HostContext extends Context {
 		define("branch", new HostBranch());
 		
 		define("+!", new HostPlusStore());
-		define("r>", new HostReturnRead());
+		define("r>", new HostReturnPop());
+		define(">r", new HostPushReturn());
 		
 		define("target-only", new HostTargetOnly());
 		
@@ -296,8 +302,14 @@ public class HostContext extends Context {
 		define("*", new HostBinOp("*") {
 			public int getResult(int l, int r) { return l*r; }
 		});
+		define("U*", new HostBinOp("U*") {
+			public int getResult(int l, int r) { return l*r; }
+		});
 		define("/", new HostBinOp("/") {
 			public int getResult(int l, int r) { return l/r; }
+		});
+		define("U/", new HostBinOp("U/") {
+			public int getResult(int l, int r) { return unsigned(l)/unsigned(r); }
 		});
 		define("OR", new HostBinOp("OR") {
 			public int getResult(int l, int r) { return l|r; }
@@ -342,6 +354,20 @@ public class HostContext extends Context {
 		define("<=", new HostBinOp("<=") {
 			public int getResult(int l, int r) { return (l<=r)?-1:0; }
 		});
+		
+		define("U>", new HostBinOp("U>") {
+			public int getResult(int l, int r) { return (unsigned(l)>unsigned(r))?-1:0; }
+		});
+		define("U>=", new HostBinOp("U>=") {
+			public int getResult(int l, int r) { return (unsigned(l)>=unsigned(r))?-1:0; }
+		});
+		define("U<", new HostBinOp("U<") {
+			public int getResult(int l, int r) { return (unsigned(l)<unsigned(r))?-1:0; }
+		});
+		define("U<=", new HostBinOp("U<=") {
+			public int getResult(int l, int r) { return (unsigned(l)<=unsigned(r))?-1:0; }
+		});
+		
 		define("=", new HostBinOp("=") {
 			public int getResult(int l, int r) { return (l==r)?-1:0; }
 		});
@@ -377,12 +403,27 @@ public class HostContext extends Context {
 		define("2+", new HostUnaryOp("2+") {
 			public int getResult(int v) { return v+2; }
 		});
+		define("2*", new HostUnaryOp("2*") {
+			public int getResult(int v) { return v*2; }
+		});
+		define("2/", new HostUnaryOp("2/") {
+			public int getResult(int v) { return v/2; }
+		});
 		define("DUP", new HostDup());
+		define("2DUP", new Host2Dup());
 		define("SWAP", new HostSwap());
 		define("DROP", new HostDrop());
 		define("OVER", new HostOver());
 		define("ROT", new HostRot());
 		
+	}
+
+	/**
+	 * @param r
+	 * @return
+	 */
+	protected int unsigned(int r) {
+		return cellSize == 2 ? (r & 0xffff): r;
 	}
 
 	/* (non-Javadoc)

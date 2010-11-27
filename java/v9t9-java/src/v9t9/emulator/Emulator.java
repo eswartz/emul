@@ -159,8 +159,11 @@ public class Emulator {
     		System.err.println("Setting up new configuration");
     	}
     	
-		EmulatorSettings.INSTANCE.register(DataFiles.settingBootRomsPath);
-		EmulatorSettings.INSTANCE.register(DataFiles.settingStoredRamPath);
+		EmulatorSettings.INSTANCE.register(DataFiles.settingBootRomsPath,
+				EmulatorSettings.INSTANCE.getConfigDirectory() + "roms");
+		EmulatorSettings.INSTANCE.register(DataFiles.settingStoredRamPath,
+				EmulatorSettings.INSTANCE.getConfigDirectory() + "module_ram");
+		DataFiles.addSearchPath(DataFiles.settingStoredRamPath.getString());
     	
         Machine machine;
         

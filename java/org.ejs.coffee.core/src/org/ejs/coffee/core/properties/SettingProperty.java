@@ -83,5 +83,11 @@ public class SettingProperty extends AbstractProperty {
 		}
 		setValue(obj);
 	}
+	/**
+	 * @return
+	 */
+	public boolean isDefault() {
+		return value == null || value.equals(defaultValue);
+	}
 
 }
