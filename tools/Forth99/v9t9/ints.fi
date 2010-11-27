@@ -28,11 +28,16 @@
         
         kbd-scan
         
+        \ do other (expensive) things if interrupts allow
+        v-intflags c@ 
+        dup  v-int-nocursor and  0= if
+            update-cursor
+        then
+        
+        drop
+        
         \ acknowledge interrupt
         \ 'INTS c@  [ M_INT_KBD invert literal ]  and  'INTSP c!
-        
-        
-        update-cursor
     else
         drop
     then
@@ -63,6 +68,11 @@
     exiti       \ NOTREACHED
 ;
 
+:   fault-int-handler   ( rp sp st pc -- )
+    s" FAULT" v-screen @  swap  cvmove
+    begin (idle) again
+    exiti
+;
 
 :   >int-vec ( num -- )
     2*  IntVecs +
@@ -87,9 +97,10 @@
 
 :   ints-init
     ints-off
- \   ['] kbd-int-handler  INT_KBD     enable-int
-    ['] vdp-int-handler  INT_VDP     enable-int
-    ['] nmi-int-handler  INT_NMI     set-int-vec
-    ['] bootup           INT_RESET   set-int-vec
+ \   ['] kbd-int-handler     INT_KBD     enable-int
+    ['] fault-int-handler   INT_FAULT  set-int-vec
+    ['] bootup              INT_RESET   set-int-vec
+    ['] nmi-int-handler     INT_NMI     set-int-vec
+    ['] vdp-int-handler     INT_VDP     enable-int
 ;
 

@@ -30,7 +30,7 @@ Create msx-enhregs
              
 \   Reset status register
 : msx-vstatus0
-    $8F00 write-vregaddr
+    $8F00 v-regaddr
 ;
 
 \   Figure the address and shift for a pixel on the screen
@@ -45,7 +45,7 @@ Create msx-enhregs
 
 \   Setup a MSX command
 : msx-cmdsetup ( num -- )
-    $9100 OR  write-vregaddr
+    $9100 OR  v-regaddr
 ;
     
 : msx-waitcmdready
@@ -68,7 +68,7 @@ Create msx-enhregs
 \   -- point to CLR register
 \   
 : msx-setupMMMcommand ( cmd -- )
-    $8F02 write-vregaddr    \ set status reg for testing command finished & transfer ready
+    $8F02 v-regaddr    \ set status reg for testing command finished & transfer ready
     
     msx-waitcmdready
 
@@ -76,7 +76,7 @@ Create msx-enhregs
     VDPWI c!
     
     \ back to the CLR reg, no autoincrement
-    $91AC write-vregaddr
+    $91AC v-regaddr
 ;    
 
 : msx-cmd-word ( w -- )
@@ -126,7 +126,7 @@ Create msx-enhregs
 ;
 
 :: msx-updatecolors ( )
-    color-byte  $8700 OR  write-vregaddr
+    color-byte  $8700 OR  v-regaddr
     
     msx-color-temp :> ct
     fg c@ :> f

@@ -2,57 +2,57 @@
 
 :   ints-on
     INT_KBD (>context) [ CTX_INT field, ] 
-;
+;   target-only
 :   ints-off
     0 (>context) [ CTX_INT field, ] 
-;
+;   target-only
 
 
 : pick ( n -- v )
     1+ cells (context>) [ CTX_SP field, ] + @  
-;
+;   target-only
 
 : rpick ( n -- v )
     cells (context>) [ CTX_RP field, ] + @  
-;
+;   target-only
 
 \ Move memory backward (src -> dst)
 : cmove              ( src dst # -- )  
     1 1 [ Icmove c, ]
-;
+;   target-only
 
 \ Move memory forward (src -> dst)
 : cmove>            ( src dst # -- )
     -1 -1 [ Icmove c, ]
-;
+;   target-only
 
 : m/mod      ( ud un -- un.r ud.q )
     >r  s>d dup r>
     s>d
     [ Iudivmod_d , ]
     2>r drop 2r>
-;
+;   target-only
 
 : u/mod      ( ud un -- ur uq ) 
     0 swap
     [ Iudivmod c, ]
-;
+;   target-only
 : u/      ( ud un -- ur uq )
     0 swap 
     [ Iudivmod c, ] swap drop
-;
+;   target-only
 : umod      ( ud un -- ur )
     0 swap 
     [ Iudivmod c, ] drop
-;
+;   target-only
 
 : u*        ( ua ub -- un )
     [ Iumul c, ] drop
-;
+;   target-only
 
 
 : fill  ( addr n ch -- )
     rot rot 1 [ Icfill c, ]
-;
+;   target-only
 
 

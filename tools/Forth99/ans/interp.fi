@@ -1,5 +1,8 @@
 
 
+| User >source
+| User #source
+
 [IFUNDEF] (
 : (
     $29 parse 2drop
@@ -39,37 +42,23 @@ user >IN
 \    otherwise false.
  
     blk @ ?dup if
-               1 blk +!
-               block >tib !  chars/block #tib !
-               0 >in !
-               true
+        1 blk +!
+        block >source !  chars/block #source !
+        0 >in !
+        true
     
     else
         source-id
         dup -1 = if         \ evaluate string
             drop false      \ end.
         else ?dup 0= if         \ user input device
-            (tib0) $100 accept #tib !
-            (tib0) >tib !
+            (tib0) (#tib)  accept  #source !  (tib0) >source !
             0 >in ! 
             bl emit
             true
         else 
             ( fileid )
-\ TODO            
-\            (tib0) $100 rot (rdln) 0=
-\            if
-\    
-\    \  ." [" (tib0) over type ." ]" cr
-\    
-\                #tib !
-\                (tib0) >tib !
-\                0 >in !
-\                true
-\            else
-\    \           ." end of file" cr
-\                \ drop false
-\            then
+            err-file-i/o ?error
         then then
     then
 ;
@@ -85,7 +74,7 @@ user >IN
     6 <> abort" invalid restore-input"
     >in !
     blk !
-    #tib ! >tib !
+    #source !  >source !
     loadline ! loadfile !
 ;
 [THEN]
@@ -93,7 +82,7 @@ user >IN
 [IFUNDEF] SAVE-INPUT
 : SAVE-INPUT    ( -- xn ... x1 n )
     loadfile @ loadline @
-    >tib @ #tib @
+    >source @ #source @
     blk @
     >in @
     6
@@ -110,14 +99,6 @@ user >IN
 ;
 [THEN]
 
-[IFUNDEF] TIB
-User >tib
-: TIB
-    >tib @
-;
-[THEN]
-
-
 [IFUNDEF] INTERPRET
 
 \   INTERPRETER
@@ -127,7 +108,7 @@ User >tib
 \   If blk=0, 'source-id' is 0 for keyboard, -1 for evaluate string, >0 for text file.
 \   else blk=blk # for source.
 \   For non-block stuff, we use loadfile/loadline to keep track of file source,
-\   and >tib/#tib for all input strings.
+\   and >source/#source for all input strings.
 \   loadfile=0 for user input, loadline<0 for evaluate string.
 
 User loadfile
@@ -137,7 +118,8 @@ User loadline
 : <input        ( xn ... x1 n -- R: xn ... x1 n )
     r>
     loadfile @ >r loadline @ >r
-    >tib @ >r   #tib @ >r
+    >source @ >r
+    #source @ >r
     blk @ >r    
     >in @ >r
     >r  
@@ -147,7 +129,8 @@ User loadline
     r>
     r> >in !
     r> blk !
-    r> #tib !   r> >tib !
+    r> #source !
+    r> >source !
     r> loadline ! r> loadfile !
     >r
 ;
@@ -261,7 +244,7 @@ User dpl
     -1 loadline !
     0 loadfile !
     0 blk !
-    #tib !  >tib !  
+    #source !  >source !  
     0 >in !
     interpret
     input>
@@ -302,9 +285,9 @@ User dpl
 [IFUNDEF] SOURCE
 : SOURCE    ( -- caddr u )
     blk @ ?dup if
-        block chars/block
+        block  chars/block
     else
-        >tib @ #tib @
+        >source @  #source @
     then
 ;
 [THEN]

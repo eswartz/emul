@@ -38,8 +38,9 @@ v-data
     +1field v-fntwidth     \ font width in pixels
     +1field v-fntheight    \ font height in pixels
 
+    +1field  v-intflags    \ video interrupt flags
+    +1field  v-blink       \ if set, set blink flag for text2 chars 
     
-    +field  'v-coordaddr    ( x y -- addr bit )
     +field  'v-drawchar     ( ch x y -- )
     +field  'v-readchar     ( x y -- ch )
     +field  'v-blinkcursor   ( x y -- )
@@ -56,24 +57,36 @@ v-data
 
     16 +Nfield v-regsave    \ saved registers
 
+dup constant v-data0
+
 dup v-data - negate  Constant v-data-size
 
 ramptr ! 
 
+$80 constant    v-int-nosprmot
+$40 constant    v-int-nocursor
 
 \ -------------------------------------------------------------------------
 
-:   w>b ( w -- lo hi )
-    dup $ff and swap 8 urshift  
+:   >vr         ( val reg -- )
+    dup 16 <  if  v-regsave + c!  else 2drop then    
 ;
 
-:   write-vregaddr ( reg -- )
+:   (vr!)       ( val reg -- )
+    2dup >vr
+    
+    \ write VDP addr
+    2dup  8 lshift $8000 OR  OR  vwaddr
+;
+
+
+:   v-regaddr ( reg -- )
     dup  
     vwaddr
-    $7fff and w>b   dup 16 <  if  v-regsave + c!  else 2drop then
+    $7fff and w>b   >vr
 ;
 
-:   get-vreg ( reg# -- val )
+:   (vr@) ( reg# -- val )
     v-regsave + c@
 ;
 
@@ -83,7 +96,7 @@ ramptr !
     begin 
         reglist @ dup
     while
-        write-vregaddr
+        v-regaddr
         2 'reglist +!
     repeat   
     drop
@@ -91,8 +104,8 @@ ramptr !
 
 : vid-show ( f -- )
     $40 and 
-    1 get-vreg  or
-    $8100 or  write-vregaddr
+    1 (vr@)  or
+    $8100 or  v-regaddr
 ;
 
 \ ---------------------
@@ -120,10 +133,10 @@ ramptr !
 ;
 
 : (mode)
-    dup  0 last-video-mode within  0= -&24 ?error
+    dup  0 last-video-mode within  0= err-out-of-range ?error
     cells  video-modes +  @ 
     
-    dup 0= -&13 ?error
+    dup 0= err-undefined ?error
     
     v-font @  v-fntwidth c@  v-fntheight c@
     0  v-data v-data-size -1  (cfill)     \ v-data is end 
@@ -181,7 +194,7 @@ export>
     (setfont)
 
     term-reset
-    cls    
+    'v-clear @ execute    
     
     true vid-show
 ;
@@ -203,7 +216,7 @@ export>
     1 v-cursor-timer c+!
     v-cursor-timer c@  v-cursor-blink >= if
         0 v-cursor-timer c!
-        xy
+        $xy
         'v-blinkcursor @ execute
     then
 ;
@@ -295,14 +308,54 @@ include video_msx.fi
     (setfont)
 ;
 
+: <video    ( -- flags )
+    cursor-off
+    v-intflags c@
+    [ v-int-nosprmot v-int-nocursor or literal ] v-intflags c! 
+;
+
+: video>  ( oldflags -- )
+    v-intflags c!
+;
+
+( get size of save area )
+:   #vrs ( -- n )
+    v-data-size t-data-size +
+;
+
+( save video state: needs buffer of v-data-size size )
+:: vsave  ( buff -- )
+    v-data0  buff                 v-data-size  cmove 
+    t-data0  buff  v-data-size +  t-data-size  cmove 
+;
+
+( restore video state: needs buffer of v-data-size size )
+:: vrestore  ( buff -- )
+    buff  v-data0                 v-data-size  cmove 
+    buff  v-data-size +  t-data0  t-data-size  cmove
+    
+    16 0 do
+        v-regsave i + c@  $8000  i 12 lshift  OR  OR  vwaddr
+    loop 
+;
+
+: vblink!  ( flag -- )
+    v-blink c!
+;
+
 EXPORT>
+
+\ TODO
+: vpage drop ;
 
 
 :   video-init
     \ reset latches
     VDPRD c@ drop
     0 GPLWD c! 
-    
+
+    0 v-intflags c!
+        
     text mode
 
     $1 fg!

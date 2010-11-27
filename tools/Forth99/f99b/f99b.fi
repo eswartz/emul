@@ -53,7 +53,7 @@
         1-
         swap c!
     else
-        true -&24 ?error
+        true err-out-of-range ?error
     then
 ;
 | : jmpoffsalloc, ( diff opc -- )
@@ -61,7 +61,7 @@
         dup 0> if 2- else 1- then       \ allocating now
         swap compile, c,
     else
-        true -&24 ?error
+        true err-out-of-range ?error
     then
 ;
 

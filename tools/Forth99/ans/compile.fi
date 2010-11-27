@@ -38,12 +38,8 @@ User STATE
 
 \ \\\\\\\\\\\\\\\\\\\\\\\\
 
-\ : ?exec
-\   state @ -14 ?error
-\ ;
-
 : ?comp
-    state @ 0= -&14 ?error
+    state @ 0= err-compile-only ?error
 ;
 
 \   Differs from old version:
@@ -62,7 +58,7 @@ User STATE
 
     (skip-spaces) bl parse ( caddr u )
     ?dup 0= if
-        -&16 message quit
+        err-empty-name message quit
     then
 
     (lookup)
@@ -215,7 +211,7 @@ User csp
 ; target-only
 
 : ?csp
-    sp@ csp @ - -&22 ?error
+    sp@ csp @ - err-control-nesting ?error
 ; target-only
 
 \ Optionally add behavior at a colon definition
@@ -261,7 +257,7 @@ User csp
 [then]
 
 : ?pairs    ( i*x tag tag' -- )
-    - -&22 ?error
+    - err-control-nesting ?error
 ;
 
 [IFUNDEF] BACK
@@ -520,7 +516,7 @@ test" unloop 3 >r 2 1 do loop r> 3 ="
     | : is-check
         ' dup
         @ $6a0
-         <> -&23 ?error 
+         <> err-not-deferred ?error 
         cell+ 
     ; target-only
     

@@ -45,8 +45,6 @@ include ../v9t9/term.fi
 
 include ../v9t9/kbd.fi
 
-include ../v9t9/ints.fi
-
 EXPORT>
 
 include sysprims.fi
@@ -54,6 +52,8 @@ include sysprims.fi
 include ../v9t9/prims.fi
 
 include ../ans/kernel.fi
+
+include ../ans/errors.fi
 
 include ../ans/blocks.fi
 
@@ -65,7 +65,9 @@ include ../ans/compile.fi
 
 include ../ans/interp.fi
 
+include ../v9t9/io.fi
 
+include ../v9t9/editor.fi
 
 \ -------------------------------
 
@@ -92,7 +94,8 @@ include ../ans/interp.fi
 : cold-init
     DP0 @       dp !
     (LATEST) @  >latest !
-    
+    GRAM
+        
     ." Forth99 (c) 2010" cr
 ;
 
@@ -181,20 +184,24 @@ export>
     decimal 
  
     0 blk !
+    0 state !
  
     empty-buffers
+    init-editor
        
     \ cycle
     quit
 ;
  
 
+include ../v9t9/ints.fi
+
 \ -------------------------------------------------
 
 ' bootup (BOOT)     !
 ' abort  (COLD)     !
 \ here     DP0        !
-$4000    DP0        !
+$4800    DP0        !
 latest   (LATEST)   !
 
 hex

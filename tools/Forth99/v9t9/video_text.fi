@@ -9,7 +9,7 @@
 ;
 
 : txt-drawchar ( ch x y -- )
-    txt-waddr VDPWD c!
+    txt-waddr VDPWD c!   
 ;
 : txt-readchar ( x y -- )
     txt-chaddr vwaddr VDPRD c@
@@ -31,6 +31,7 @@
     then
 ;
 
+0 [IF]
 ( Split a range that wraps around a boundary )
 :: range-wrap ( sz addr start len -- addr1 len1 addr2 len2 )
     ( portion from addr...min addr+sz,start+len )
@@ -61,13 +62,14 @@
         offs!
     loop
 ;
+[THEN]
 
 : txt-setupmode
     true v-text c!
 ;
 
 : txt-updatecolors
-    color-byte  $8700  or write-vregaddr
+    color-byte  $8700  or v-regaddr
 ;
 
 : txt-clear
@@ -89,8 +91,8 @@ Create TextFunctions
     'v-blinkcursor ,     ' txt-blinkcursor ,
     'v-setfont ,         ' std-setfont ,
     'v-clear ,           ' txt-clear ,
-    'v-hchar ,           ' txt-hchar ,
-    'v-vchar ,           ' txt-vchar ,
+    \ 'v-hchar ,           ' txt-hchar ,
+    \ 'v-vchar ,           ' txt-vchar ,
     0 , 
 
 
@@ -136,12 +138,12 @@ create  TextModeRegs
 
 : std-sprite-setup
     (sprite-setup)
-    $D0  v-sprites @ vc!
+    $D0  v-sprites @ +vc!
 ;
 
 : v9938-sprite-setup
     (sprite-setup)
-    $D8  v-sprites @ vc!
+    $D8  v-sprites @ +vc!
     $00  v-sprcol @  $200  vfill
 ;
 
@@ -194,6 +196,27 @@ Create GfxModeParams
 
 \ -------------------
 
+:: txt2-drawchar ( ch x y -- )
+    ch x y  txt-drawchar
+    
+    \ reset or set blink bit
+    x y  v-width @ U*  +  
+    dup  7 and  $80 swap urshift  :> mask
+    3 urshift  v-colors @ +  :> addr
+    
+    \ assume bank is still valid
+    addr  vc@
+    mask  v-blink c@  if  OR  else  INVERT AND  then  
+    addr  vc!
+;
+
+: txt2-clear
+    txt-clear
+    
+    \ clear colors (blinks)
+    v-blink c@  not not
+    v-colors @  v-colorsz @  vfill
+;
 
 \       8=text 2 mode
 \           >0000 = screen (to >870 for 212-line mode)
@@ -204,6 +227,11 @@ Create GfxModeParams
 Create Text2ModeRegs
     $8004 , $81B0 , $8200 , $832F , $8A00 , $8402 , $8D22 , 0 ,
 
+Create Text2Functions
+    'v-drawchar ,       ' txt2-drawchar  ,      
+    'v-clear ,          ' txt2-clear     ,      
+    0 ,
+
 Create Text2ModeParams
     v-screen    , 0 ,       v-screensz  , 2160 ,
     v-colors    , $a00 ,    v-colorsz   , 2160 8 / ,
@@ -212,7 +240,7 @@ Create Text2ModeParams
     v-sprpat    , 0 ,       v-sprmot    , 0 , 
     v-free      , $1800 ,
      
-    v-width     , 80 ,      v-height    , 24 ,
+    v-width     , 80 ,      v-height    , 27 ,
     
     'v-setupmode ,           ' txt2-setupmode ,
     'v-updatecolors ,        ' txt-updatecolors ,
@@ -221,11 +249,15 @@ Create Text2ModeParams
     
 : txt2-setupmode
     txt-setupmode
-    $00  v-colors @ v-colorsz @  vfill
+\    $00  v-colors @ v-colorsz @  vfill
+    \ set blink to inverse colors
+    bg@  4 lshift  fg@  OR  $8C00 OR  v-regaddr  
+
 ;
     
 : text2-mode
     TextFunctions write-var-list
+    Text2Functions write-var-list
     Text2ModeParams write-var-list
         
     Text2ModeRegs write-vregs

@@ -11,39 +11,43 @@ the current font.
 0   RamVar  t-data
 
 t-data
-    ( cursor position, in units )
+    ( cursor position, in units, offset from window )
     +field  v-x             \ cursor x unit
     +field  v-y             \ cursor y unit
+    
+    ( maximum window size, in units )
+    +field  win-mx  
+    +field  win-my  
 
     ( window attributes, in units )
     +field  win-x
     +field  win-y
     +field  win-sx
     +field  win-sy
+
+dup constant t-data0
     
 t-data over -  Constant t-data-size
 
 ramptr !
 
 : term-refresh
-    v-text c@ not if
-        v-width @   v-fntwidth c@  align-to  win-sx  !
-        v-height @  v-fntheight c@ align-to  win-sy  !
+    v-text  c@ not  if
+        v-width @   v-fntwidth c@  align-to  win-mx  !
+        v-height @  v-fntheight c@ align-to  win-my  !
     else
-        v-width @   win-sx  !
-        v-height @  win-sy  !
+        v-width @   win-mx  !
+        v-height @  win-my  !
     then
 ;
-
 
 \   Reset terminal from the current mode
 : term-reset
     cursor-off
     
-    0 win-x !
-    0 win-y !
-
     term-refresh
+
+    full!
     
     home
 ;
@@ -58,17 +62,37 @@ ramptr !
     v-x @  v-y @
 ;
 
-:   xy! ( x y  -- )
+:   at-xy ( x y  -- )
     cursor-off
     v-y !  v-x !
 ;
 
+( in units )
+::   win! ( w h x y -- )
+    w  win-mx @  umin  x +  win-mx @  umin  :> x2
+    h  win-my @  umin  y +  win-my @  umin  :> y2
+    0 x max  dup  win-x !  x2  swap -  win-sx !
+    0 y max  dup  win-y !  y2  swap -  win-sy !
+;
+
+( set full window )
+: full!
+    -1 -1 0 0  win!
+;
+
 export>
 
-:   curs-addr ( -- addr bit )
-    v-x @ win-x @ +  
-    v-y @ win-y @ +  
-    'v-coordaddr @  execute
+( screen, vs. window, x y ) 
+:   $xy ( -- x y )
+    v-x @ win-x @ +
+    v-y @ win-y @ +
+;
+
+
+:   txt-xy>addr ( x y -- addr )
+    win-y @ +  v-width @  U*  
+    swap  win-x @ +  +
+    v-screen @ +
 ;
 
 :   home-col
@@ -112,7 +136,7 @@ export>
 ;
 
 :   cursor-off
-    xy v-cursor-off
+    $xy v-cursor-off
 ;
 
 :   crlf
@@ -147,17 +171,17 @@ export>
 
 :   hchar ( ch len -- ) 
     'v-hchar @  ?dup if
-        >r  xy  r>  execute
+        >r  $xy  r>  execute
     else
         xy 2>r
         0 do  dup  (emit) dup  advance-cursor  loop  drop
-        2r> xy!
+        2r> at-xy
     then
 ;
 
 ::   vchar ( ch len -- ) 
     'v-vchar @  ?dup if
-        >r  ch len xy  r>  execute
+        >r  ch len $xy  r>  execute
     else
         ch ch>xy :> ys :> xs
         v-y @ :> origvy
@@ -169,17 +193,18 @@ export>
                 v-x @ xs +  win-sx @ umod  v-x !
             then   
         loop 
-        2r> xy!
+        2r> at-xy
     then
 ;
 
 :   cls  
-    'v-clear @  execute  
+    \ 'v-clear @  execute
+    32  win-sx @ win-sy @ U*  hchar   
     home
 ;
 
 :   (emit)  ( ch -- )
-    xy  'v-drawchar @  execute  
+    $xy  'v-drawchar @  execute  
 ;
 
 :   emit    ( ch -- )

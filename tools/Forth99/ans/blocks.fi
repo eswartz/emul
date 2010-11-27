@@ -54,13 +54,8 @@ User SCR
 
 $404  constant  (b/blk)
 
-\ read or write:  r/w == TRUE means read, FALSE means write
-: RWBLK    ( addr  block# r/w -- err )
-    drop drop drop 6
-;
-
 : R/W ( addr block# r/w -- )
-    RWBLK -8 ?ERROR
+    RWBLK err-block-i/o ?ERROR
 ;
 
 \ Distance to the next buffer relative to the previous.
@@ -180,17 +175,16 @@ $404  constant  (b/blk)
 \
 \ An ambiguous condition exists if u is zero or is not a valid block number. 
 : load  ( i*x u -- j*x )
-    ?dup 0= if -9 ?error then
+    dup 0= err-out-of-range ?error
     <input
     0 >in !
     blk !
-    blk @ block >tib !  chars/block #tib !
     interpret
     input>
 ;
 
 :   ?loading
-    blk @ 0= -&10 ?error 
+    blk @ 0= err-loading-only ?error 
 ;
 
 : -->
@@ -212,7 +206,7 @@ $404  constant  (b/blk)
 : .line ( line# baddr label# )
     0 u.r  [char] : emit  space 
     (line) 
-    \ TODO: win@ drop s>b drop 6 - min
+    win-sx  6 -  min
     type cr
 ;
 

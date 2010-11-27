@@ -82,7 +82,7 @@
 ;
 
 : bit-updatecolors ( -- )
-    color-byte dup  $8700 OR  write-vregaddr
+    color-byte dup  $8700 OR  v-regaddr
     v-mono c@ if
         v-colors @  v-colorsz @  vfill
     else

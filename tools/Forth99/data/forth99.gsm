@@ -1,7 +1,7 @@
 
 ;	nforth.gsm					-- FORTH GROM data
 ;
-;	(c) 1996-2001 Edward Swartz
+;	(c) 1996-2010 Edward Swartz
 ;
 ;	This program is free software; you can redistribute it and/or modify
 ;	it under the terms of the GNU General Public License as
@@ -387,5 +387,5 @@ font5x6
 
 remain	equ	$ - start
 
-	bss	24576 - remain
+	bss	>2000 - remain
 

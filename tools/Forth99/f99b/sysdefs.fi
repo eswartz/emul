@@ -47,6 +47,19 @@ ROM 2 +     constant    (COLD)
 ROM 4 +     constant    DP0
 ROM 6 +     constant    (LATEST)
 
+
+$ffc0       constant    FaultStacks \ ... 0x20
+
+$ffe0       constant    IntVecs     \ ... 0x20
+
+    15      constant    INT_RESET
+    14      constant    INT_NMI
+    13      constant    INT_FAULT
+    3       constant    INT_KBD
+    2       constant    INT_VDP
+    0       constant    INT_BKPT
+
+
 $80         constant    (#RP)
 $80         constant    (#SP)
 
@@ -55,14 +68,10 @@ $100        constant   (##-pad)
 $100        constant   (#slit-pad)
 $100        constant   (#tib)
 $C0C        constant   (#blk)      \ block space
-$80         constant   (#up)      \ user space
+$100        constant   (#up)      \ user space
 
-\ $fec0       constant    UP0         \ grows up
-\ $ff40       constant    SP0         \ grows down
-\ $ffc0       constant    RP0
-\ UP0         constant    RamTop      \ grows down
 
-$ffc0  (#RP) - (#SP) - (#pad) - (##-pad) - (#slit-pad) - (#tib) - (#blk) - (#up) -
+FaultStacks  (#RP) - (#SP) - (#pad) - (##-pad) - (#slit-pad) - (#tib) - (#blk) - (#up) -
              constant RamTop    \ grows down
 
 | RamTop (#rp) +                constant (rp0)      \ grows down
@@ -75,20 +84,6 @@ $ffc0  (#RP) - (#SP) - (#pad) - (##-pad) - (#slit-pad) - (#tib) - (#blk) - (#up)
 | (first) (#blk) +              constant (limit)
 | (limit)                       constant (up0)
 
-
-
-
-
-
-$ffc0       constant    SysCalls    \ ... 0x20
-
-$ffe0       constant    IntVecs     \ ... 0x20
-
-    15      constant    INT_RESET
-    14      constant    INT_NMI
-    3       constant    INT_KBD
-    2       constant    INT_VDP
-    0       constant    INT_BKPT
 
 \ -----------   GROM addresses
 
@@ -138,7 +133,6 @@ $7e38       constant    ItoR_d
 $7e3a       constant    Irdrop_d
 
 $3c         constant    Irpidx
-
 
 
 \ ----------    syscalls
