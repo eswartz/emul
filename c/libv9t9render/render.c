@@ -4,7 +4,7 @@
  *
  * The Java code manages an ImageData struct with RGB data.  We take that,
  * manipulate it to make it look like a monitor, then return that
- * for SDL to render.
+ * for AWT to render.
  */
 
 #include <stdio.h>
