@@ -261,10 +261,14 @@ public class SwtWindow extends BaseEmulatorWindow {
 		EmulatorSettings.INSTANCE.register(JavaSoundHandler.settingPlaySound);
 
 		String boundsPref = EmulatorSettings.INSTANCE.getSettings().get(EMULATOR_WINDOW_BOUNDS);
-		Rectangle rect = PrefUtils.readBoundsString(boundsPref);
+		final Rectangle rect = PrefUtils.readBoundsString(boundsPref);
 		if (rect != null) {
-			adjustRectVisibility(shell, rect);
-			shell.setBounds(rect);
+			Display.getDefault().asyncExec(new Runnable() {
+				public void run() {
+					adjustRectVisibility(shell, rect);
+					shell.setBounds(rect);
+				}
+			});
 		}
 		
 		shell.open();

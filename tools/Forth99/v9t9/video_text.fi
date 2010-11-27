@@ -225,7 +225,7 @@ Create GfxModeParams
 \           >1800+= free
 \
 Create Text2ModeRegs
-    $8004 , $81B0 , $8200 , $832F , $8A00 , $8402 , $8D22 , 0 ,
+    $8004 , $81B0 , $8200 , $832F , $8A00 , $8402 , $8D22 , $8980 , 0 ,
 
 Create Text2Functions
     'v-drawchar ,       ' txt2-drawchar  ,      
@@ -240,7 +240,7 @@ Create Text2ModeParams
     v-sprpat    , 0 ,       v-sprmot    , 0 , 
     v-free      , $1800 ,
      
-    v-width     , 80 ,      v-height    , 27 ,
+    v-width     , 80 ,      v-height    , 26 ,
     
     'v-setupmode ,           ' txt2-setupmode ,
     'v-updatecolors ,        ' txt-updatecolors ,

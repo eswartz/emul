@@ -335,7 +335,7 @@ include video_msx.fi
     buff  v-data-size +  t-data0  t-data-size  cmove
     
     16 0 do
-        v-regsave i + c@  $8000  i 12 lshift  OR  OR  vwaddr
+        v-regsave i + c@  $8000  i 8 lshift  OR  OR  vwaddr
     loop 
 ;
 
