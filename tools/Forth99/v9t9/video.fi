@@ -1,18 +1,4 @@
 
-(
-To deal uniformly with text and graphics modes, the video
-mode data uses this data for the attributes and methods 
-associated with each mode.
- 
-For use by the terminal, characters are located by a video-mode-specific
-position in a video-mode-specific window.  I.e. for text modes
-they represent characters, and for graphics modes, they 
-represent pixels.  These are called "units" here.
-
-The video mode determines how to advance the cursor based on
-the current font.
-)
-
 0      RamVar  v-data
 
 v-data
@@ -26,7 +12,8 @@ v-data
     +field  v-sprcol       \ VDP addr of sprite color table (0 if not sprite 2 mode)
     +field  v-sprpat       \ VDP addr of sprite patterns
     +field  v-sprmot       \ VDP addr of sprite motion
-    +field  v-free         \ usable space
+    +field  v-free         \ usable space (if no pages)
+    +field  v-pagesize     \ size of a page
     
     +1field v-text         \ set if mode is text-based
     +1field v-mono         \ set if monochrome (colors are global)
@@ -42,6 +29,16 @@ v-data
     +1field  v-intflags    \ video interrupt flags
     +1field  v-blink       \ if set, set blink flag for text2 chars 
     
+    +field  v-allocinfo    \ list of memory allocations for page 0
+    
+    +1field v-rwpage       \ current r/w page
+    +1field v-vispage      \ current visible page
+    +1field v-pob          \ page offset bank -- for >64K access
+    +1field v-unused
+    
+  4 +Nfield v-initpages    \ bitmask of pages that have been initialized for this mode
+    
+    +field  'v-setupregs    ( -- )
     +field  'v-drawchar     ( ch x y -- )
     +field  'v-readchar     ( x y -- ch )
     +field  'v-blinkcursor   ( x y -- )
@@ -55,7 +52,7 @@ v-data
     +field  msx-stride      \ row stride in bytes
     +field  msx-shift       \ shift for pixel >> byte
     +field  msx-mask        \ mask for pixel of byte
-    
+
     +field  msx-rowsperbankmask  \ mask for detecting bank crossings  
     
     16 +Nfield v-regsave    \ saved registers
@@ -79,7 +76,7 @@ $40 constant    v-int-nocursor
     2dup >vr
     
     \ write VDP addr
-    2dup  8 lshift $8000 OR  OR  vwaddr
+    8 lshift $8000 OR  OR  vwaddr
 ;
 
 
@@ -117,6 +114,43 @@ $40 constant    v-int-nocursor
 
 \ ---------------------
 
+: std-set-screen-reg
+    v-screen @  10 URSHIFT
+    v-pob c@  4 LSHIFT OR  
+    2  (vr!) 
+;
+
+: std-set-color-reg
+    v-colors @  6 URSHIFT   w>b
+    v-pob c@  OR
+    $7 and  10 (vr!)
+            3  (vr!)
+;
+
+: std-set-patt-reg
+    v-patts @  11 URSHIFT   
+    v-pob c@  3 LSHIFT OR
+    4 (vr!)
+;
+
+: std-set-sprite-reg
+    v-sprites @  7 URSHIFT   w>b
+    
+    v-pob c@  1 URSHIFT OR
+    11 (vr!)
+    
+    5  (vr!)
+;
+
+: std-set-sprpat-reg
+    v-sprpat @  11 URSHIFT   
+    v-pob c@  3 LSHIFT OR
+    6 (vr!)
+;
+
+
+\ ---------------------
+
 : >v-fontaddr   ( ch -- )
     v-fntheight c@ u*  v-font @ +
 ;
@@ -139,6 +173,11 @@ $40 constant    v-int-nocursor
     drop
 ;
 
+:   v-set-alloc-list ( table -- )
+    dup write-var-list
+    v-allocinfo !
+;
+
 : (mode)
     dup  0 last-video-mode within  0= err-out-of-range ?error
     cells  video-modes +  @ 
@@ -148,8 +187,12 @@ $40 constant    v-int-nocursor
     v-font @  v-fntwidth c@  v-fntheight c@
     0  v-data v-data-size -1  (cfill)     \ v-data is end 
     v-fntheight c!  v-fntwidth c!  v-font !
-    
+
     execute
+    
+    0.0 v-initpages D!
+    
+    0 vpage    
 ;
 
 1   RamVar fg
@@ -193,17 +236,34 @@ export>
 \   -- clear memory
 \   -- load font (if needed)
 
-: vreset
+Create msx-enhregs
+    $8808 ,     \ 64k video RAM
+    $8E00 ,     \ set bank 0, page 0, etc
+    $8980 ,     \ 212-line mode, color, etc
+    $8C00 ,     \ turn off alt colors
+    $8D00 ,     \ turn off blink/pageswap
+    $8F00 ,     \ point to sr0
+    0 ,
+
+: (vreset)
     'v-setupmode @  execute
     
     v-refresh-colors
     
     (setfont)
 
-    term-reset
     v-width @ v-height @  0 0  'v-clear @  execute    
-    
+
     true vid-show
+;             
+
+: vreset
+    \ the chip itself is always enhanced
+    msx-enhregs write-vregs
+    
+    (vreset)
+
+    term-reset
 ;
 
 : vstdpal
@@ -365,17 +425,84 @@ include video_msx.fi
     0= invert  v-blink c!
 ;
 
+( set the page where data is read/written:
+    update v-pob and all the table addresses
+    to match
+)
+:: vrwpage    ( pg -- )
+    cursor-off
+    
+    \ write base values 
+    v-allocinfo @  write-var-list
+
+    \ reduce page to valid range    
+    pg  
+    $2.0000  v-pagesize @  ?dup if  UM/MOD  drop  else  nip  then  
+    UMOD
+    dup  v-rwpage c!
+    
+    \ get page offset
+    ( pg ) v-pagesize @ ?dup if  UM*  ( lo hi )  else  0 swap  then  
+    
+    \ bits A15-A14 are set via vsetbank, et al, into R14 automatically
+    \ bit A16 is set in R14 via v-pob.  This is also applied when
+    \ setting registers.
+    $1 and  2 lshift  v-pob c!
+    
+    :> offs
+    
+    offs    v-screen +!
+    offs    v-patts +!
+    offs    v-colors +!
+    offs    v-sprites +!
+    offs    v-sprmot +!
+    offs    v-sprpat +!
+    offs    v-sprcol +!
+    
+    \ init page if not yet set up
+    1.  v-rwpage c@  s>d  dlshift  :> pmaskH :> pmaskL
+    pmaskL pmaskH  v-initpages d@  DAND  D0=  if
+        (vreset)
+        pmaskL  v-initpages  |!
+        pmaskH  v-initpages 2+  |!
+    then
+;
+
+( set the visible page:
+    for each table address for the given page,
+    update video regs to match. 
+)
+:: vvispage  ( pg -- )
+    \ save current values...
+    v-screen @  v-patts @  v-colors @  
+    v-sprites @  v-sprmot @  v-sprpat @  v-sprcol @
+    v-pob c@  v-rwpage c@  
+    
+    pg  vpage 
+        
+    \ restore original values...
+    v-rwpage c!  v-pob c!
+    v-sprcol !  v-sprpat !  v-sprmot !  v-sprites !
+    v-colors !  v-patts !  v-screen !
+;
+
+( set the visible and read/write page )
+: vpage ( pg -- )
+    vrwpage
+    
+    v-rwpage c@  v-vispage c!
+    
+    'v-setupregs @  execute
+;
+
 EXPORT>
-
-\ TODO
-: vpage drop ;
-
 
 :   video-init
     \ reset latches
     VDPRD c@ drop
     0 GPLWD c! 
 
+    0 v-pob c!
     0 v-intflags c!
         
     text mode

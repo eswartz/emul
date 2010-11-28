@@ -21,7 +21,7 @@
 \
 : vsetbank  ( vaddr -- addr-16k )
     dup 14 urshift 
-    \ vpob c@ +
+    v-pob c@  +
     $8E00 OR  VDPWA !
     $3fff AND
 ;
@@ -81,7 +81,7 @@
 ;
 
 ( GPL to VDP move )
-:   gvmove ( gaddr vaddr len -- )
+:   +gvmove ( gaddr vaddr len -- )
     rot gwaddr
     swap  +!vwaddr
     GPLRD VDPWD rot  0 0 (cmove)

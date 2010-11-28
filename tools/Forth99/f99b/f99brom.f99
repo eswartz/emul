@@ -201,7 +201,7 @@ include ../v9t9/ints.fi
 ' bootup (BOOT)     !
 ' abort  (COLD)     !
 \ here     DP0        !
-$4800    DP0        !
+here $3ff +  $3ff INVERT and  DP0        !
 latest   (LATEST)   !
 
 hex

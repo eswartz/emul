@@ -555,7 +555,7 @@ User 'lastcol
 \
 : edit.drawui
 
-    text2 (mode)  &15 vpage  vreset
+    text2 (mode)   &15 vpage  (vreset)
     font6x8
 
     $87A1 v-regaddr      \ yellow-on-black border

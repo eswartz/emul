@@ -17,8 +17,6 @@ public abstract class PreProcWord extends BaseStdWord {
 	 */
 	public PreProcWord() {
 		super();
-		setInterpretationSemantics(getCompilationSemantics());
-
 	}
 
 	protected void falseBranch(HostContext hostContext, TargetContext targetContext) throws AbortException {
@@ -50,6 +48,6 @@ public abstract class PreProcWord extends BaseStdWord {
 	 * @see v9t9.forthcomp.IWord#isImmediate()
 	 */
 	public boolean isImmediate() {
-		return true;
+		return false;
 	}
 }

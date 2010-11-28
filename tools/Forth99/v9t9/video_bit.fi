@@ -21,30 +21,30 @@
     std-sprite-setup
     
     ( set repeating 0-255 in three sections of SIT )
-    v-screen @  !vwaddr
+    v-screen @  +!vwaddr
     768 0 do i  VDPWD c!  loop
 ;
 
 : bit-drawchar ( ch x y -- )
     \ simple-stupid 8x8 only version 
     bit-chaddr  :> addr
-    >v-fontaddr  addr v-patts @ +  v-fntheight c@  gvmove  
+    >v-fontaddr  addr v-patts @ +  v-fntheight c@  +gvmove  
     
     v-mono c@ 0= if
         color-byte
         addr  v-colors @ +
-        v-fntheight c@  vfill
+        v-fntheight c@  +vfill
     then
 ;
 
 :: (set-bits) ( bits vaddr baddr -- )
-    vaddr vwaddr  VDPRD c@  
+    vaddr +vwaddr  VDPRD c@  
         dup baddr c!
     vaddr !vwaddr  
         bits OR  VDPWD c!
 ;
 : (reset-bits) ( bits vaddr baddr -- )
-    swap  !vwaddr  c@  VDPWD c!  drop
+    swap  +!vwaddr  c@  VDPWD c!  drop
 ;
 
 : bit-blinkcursor ( x y -- )
@@ -80,10 +80,10 @@
     x y  bit-pixaddr  drop  :> addr 
     
     ( # bytes = w/8 * 8 )
-    0  addr  v-patts @ +   w  vfill 
+    0  addr  v-patts @ +   w  +vfill 
     
     v-mono c@ 0= if
-        color-byte   addr  v-colors @ +   w  vfill
+        color-byte   addr  v-colors @ +   w  +vfill
     then
 ;
 
@@ -93,7 +93,7 @@
     w 7 + -8 and w!
     h 7 + -8 and h!
 
-[ 0 ] [if]
+[ 0 [if] ]
     \ clear unaligned rows before aligned Y
     y  7 and  ?dup
     if
@@ -115,11 +115,11 @@
     h ?dup if 
         w swap  x y  bit-clear-rows 
     then
-[else]
+[ [else] ]
     y h +  y  ?do
         w x i  bit-clear-rows
     8 +loop
-[then]
+[ [then] ]
     
 \    0           v-patts @   v-pattsz @   vfill
 \    color-byte  v-colors @  v-colorsz @  vfill
@@ -128,7 +128,7 @@
 : bit-updatecolors ( -- )
     color-byte dup  $8700 OR  v-regaddr
     v-mono c@ if
-        v-colors @  v-colorsz @  vfill
+        v-colors @  v-colorsz @  +vfill
     else
         drop
     then
@@ -136,6 +136,31 @@
 
 : bit-setfont   ( addr -- )
     drop
+;
+
+
+: bit-set-patt-reg
+    v-patts @  11 URSHIFT   3 OR
+    v-pob c@  3 lshift OR  
+    4 (vr!)
+;
+
+: bit-set-color-reg
+    v-colors @  6   URSHIFT   w>b
+    v-pob c@  OR
+    10 (vr!)
+    v-mono c@  0= if  $7f OR  then
+    3 (vr!)
+;
+
+
+
+: bit-setupregs
+    std-set-screen-reg
+    bit-set-patt-reg
+    bit-set-color-reg
+    std-set-sprite-reg
+    std-set-sprpat-reg
 ;
 
 
@@ -158,7 +183,7 @@ Create BitFunctions
 \           >3800+= free
 \
 Create BitModeRegs
-    $8002 , $81A0 , $8206 , $83FF , $8403 , $8536 , $8603 , 0 ,
+    $8002 , $81A0 , 0 ,
 
 Create BitModeParams
     v-screen    , $1800 ,   v-screensz  , $300 ,
@@ -166,10 +191,11 @@ Create BitModeParams
     v-patts     , $0000 ,   v-pattsz    , $1800 ,
     v-sprites   , $1B00 ,   v-sprcol    , 0 ,
     v-sprpat    , $1800 ,   v-sprmot    , $1B80 ,
-    v-free      , $3800 ,
+    v-free      , $3800 ,   v-pagesize  , $4000 ,
 
     v-width     , 256 ,     v-height    , 192 ,
     
+    'v-setupregs ,           ' bit-setupregs ,
     'v-setupmode ,           ' bit-setupmode ,
     'v-updatecolors ,        ' bit-updatecolors ,
 
@@ -178,7 +204,7 @@ Create BitModeParams
     
 : bit-mode
     BitFunctions write-var-list
-    BitModeParams write-var-list
+    BitModeParams v-set-alloc-list
         
     BitModeRegs write-vregs
 ;
@@ -194,17 +220,30 @@ Create BitModeParams
 \           >2040+= free (seems like 2800)
 \
 Create MonoBitModeRegs
-    $8002 , $81B0 , $8206 , $8380 , $8403 , $8536 , $8603 , 0 ,
+    $8002 , $81B0 , 0 ,
 
+
+Create MonoModeParams
+    v-screen    , $1800 ,   v-screensz  , $300 ,
+    v-colors    , $2000 ,   v-colorsz   , $40 ,   
+    v-patts     , $0000 ,   v-pattsz    , $1800 ,
+    v-sprites   , $1B00 ,   v-sprcol    , 0 ,
+    v-sprpat    , $1800 ,   v-sprmot    , $1B80 ,
+    v-free      , $2040 ,   v-pagesize  , $4000 ,
+
+    v-width     , 256 ,     v-height    , 192 ,
+    
+    'v-setupregs ,           ' bit-setupregs ,
+    'v-setupmode ,           ' bit-setupmode ,
+    'v-updatecolors ,        ' bit-updatecolors ,
+
+    0 ,    
     
 : mono-mode
-    BitFunctions write-var-list
-    BitModeParams write-var-list
-    
-    $40 v-colorsz !
-    $2040 v-free !
-    
     true v-mono c!
+    
+    BitFunctions write-var-list
+    MonoModeParams v-set-alloc-list
         
     MonoBitModeRegs write-vregs
 ;
@@ -222,7 +261,7 @@ Create MonoBitModeRegs
 \           >3B00+= free
 \
 Create Gfx3ModeRegs
-    $8004 , $81A0 , $820E , $83FF , $8403 , $8536 , $8B00 , $8603 , 0 ,
+    $8004 , $81A0 , 0 ,
     
 Create Gfx3ModeParams
     v-screen    , $3800 ,   v-screensz  , $300 ,
@@ -230,19 +269,25 @@ Create Gfx3ModeParams
     v-patts     , $0000 ,   v-pattsz    , $1800 ,
     v-sprites   , $1B00 ,   v-sprcol    , $1900 ,
     v-sprpat    , $1800 ,   v-sprmot    , $1B80 ,
-    v-free      , $3B00 ,
+    v-free      , $3B00 ,   v-pagesize  , $4000 ,
 
     v-width     , 256 ,     v-height    , 192 ,
     
+    'v-setupregs ,           ' gfx3-setupregs ,
     'v-setupmode ,           ' bit-setupmode ,
     'v-updatecolors ,        ' bit-updatecolors ,
 
     0 ,
-    
+
+: gfx3-setupregs
+    bit-setupregs
+    msx-set-sprite-reg
+    std-set-sprpat-reg
+;
     
 : gfx3-mode
     BitFunctions write-var-list
-    Gfx3ModeParams write-var-list
+    Gfx3ModeParams v-set-alloc-list
     Gfx3ModeRegs write-vregs
 ;
 

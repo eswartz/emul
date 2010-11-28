@@ -586,6 +586,17 @@ public class VdpV9938 extends VdpTMS9918A {
 		return 80 * 27;
 	}
 	
+	protected VdpModeInfo createBitmapModeInfo() {
+		VdpModeInfo vdpModeInfo = super.createBitmapModeInfo(); 
+		int ramsize = getModeAddressMask();
+
+		vdpModeInfo.color.base = (vdpModeInfo.color.base | ((vdpregs[10] & 0x7) * 0x4000)) & ramsize;
+		vdpModeInfo.patt.base = (vdpModeInfo.patt.base | ((vdpregs[4] & 0x38) * 0x800)) & ramsize;
+		
+		return vdpModeInfo;
+	}
+
+	
 	protected void setText2Mode() {
 		vdpCanvas.setSize(512, getVideoHeight());
 		vdpModeInfo = createText2ModeInfo();
@@ -736,10 +747,10 @@ public class VdpV9938 extends VdpTMS9918A {
 	 * old masking applies. */
 	@Override
 	protected int getModeAddressMask() {
-		if (isEnhancedMode())
-			return 0x1ffff;
-		else
-			return 0x3fff;
+		//if (isEnhancedMode())
+		return 0x1ffff;
+		//else
+		//return 0x3fff;
 	}
 	@Override
 	protected int getSpriteTableBase() {

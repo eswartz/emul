@@ -19,15 +19,6 @@ Create msx-stdpalette
     $55 c, $05 c, \ E
     $77 c, $07 c, \ F
     
-Create msx-enhregs
-    $8808 ,     \ 64k video RAM
-    $8E00 ,     \ set bank 0, page 0, etc
-    $8980 ,     \ 212-line mode, color, etc
-    $8C00 ,     \ turn off alt colors
-    $8D00 ,     \ turn off blink/pageswap
-    $8F00 ,     \ point to sr0
-    0 ,
-             
 \   Reset status register
 : msx-vstatus0
     $8F00 v-regaddr
@@ -41,7 +32,7 @@ Create msx-enhregs
 
 : msx-setupmode
     v9938-sprite-setup
-    msx-enhregs write-vregs
+    \ msx-enhregs write-vregs
     
     $4000. msx-stride @  UM/MOD drop  NEGATE  msx-rowsperbankmask !
 ;
@@ -91,6 +82,8 @@ Create msx-enhregs
     
     swap
     msx-cmd-word 
+    
+    v-rwpage c@ 8 lshift +
     msx-cmd-word
 ;
 
@@ -347,6 +340,23 @@ false Constant msx-use-drawchar-accel
     then  
 ;
 
+: msx-set-patt-reg
+    v-rwpage c@  5 lshift  2 (vr!)   \ actually screen reg
+;
+
+: msx-set-sprite-reg
+    v-sprites @  7 URSHIFT   w>b
+    $3 and  11 (vr!)
+    $7 or    5  (vr!)
+;
+
+: msx-setupregs
+    msx-set-patt-reg
+    msx-set-sprite-reg
+    std-set-sprpat-reg
+;
+    
+
 Create MsxFunctions 
 msx-use-drawchar-accel [if]
     'v-drawchar ,        ' msx-drawchar-accel ,
@@ -366,7 +376,7 @@ msx-use-drawchar-accel [if]
 \           >8000+= free
 \
 Create Gfx4ModeRegs
-    $8006 , $81A0 , $8200 , $85F4 , $8B00 , $860E , 0 ,
+    $8006 , $81A0 , 0 ,
 
 Create Gfx4ModeParams
     v-screen    , $0000 ,   v-screensz  , $0 ,
@@ -374,12 +384,13 @@ Create Gfx4ModeParams
     v-patts     , $0000 ,   v-pattsz    , $6400 ,
     v-sprites   , $7A00 ,   v-sprcol    , $7800 ,
     v-sprpat    , $7000 ,   v-sprmot    , $7A80 ,
-    v-free      , $8000 ,
+    v-free      , $8000 ,   v-pagesize  , $8000 ,
 
     v-width     , 256 ,     v-height    , 212 ,
     
     msx-stride  , $80 ,     msx-shift   , 1 ,       msx-mask , $1  ,
     
+    'v-setupregs ,           ' msx-setupregs ,
     'v-setupmode ,           ' msx-setupmode ,
     'v-updatecolors ,        ' msx-updatecolors ,
 
@@ -392,7 +403,7 @@ msx-use-drawchar-accel not [if]
     
 : gfx4-mode
     MsxFunctions write-var-list
-    Gfx4ModeParams write-var-list
+    Gfx4ModeParams v-set-alloc-list
     Gfx4ModeRegs write-vregs
 ;
 
@@ -407,7 +418,7 @@ msx-use-drawchar-accel not [if]
 \           >E000+= free
 \
 Create Gfx6ModeRegs
-    $800A , $81A0 , $8200 , $85AC , $8B01 , $861B , 0 ,
+    $800A , $81A0 , 0 ,
 
 Create Gfx6ModeParams
     v-screen    , $0000 ,   v-screensz  , $0 ,
@@ -415,12 +426,13 @@ Create Gfx6ModeParams
     v-patts     , $0000 ,   v-pattsz    , $D400 ,
     v-sprites   , $D600 ,   v-sprcol    , $D400 ,
     v-sprpat    , $D800 ,   v-sprmot    , $D680 ,
-    v-free      , $E000 ,
+    v-free      , $E000 ,   v-pagesize  , $0000 ,
 
     v-width     , 512 ,     v-height    , 212 ,
     
     msx-stride  , $100 ,    msx-shift   , 1 ,       msx-mask , $1  ,
     
+    'v-setupregs ,           ' msx-setupregs ,
     'v-setupmode ,           ' msx-setupmode ,
     'v-updatecolors ,        ' msx-updatecolors ,
 
@@ -433,7 +445,7 @@ msx-use-drawchar-accel not [if]
     
 : gfx6-mode
     MsxFunctions write-var-list
-    Gfx6ModeParams write-var-list
+    Gfx6ModeParams v-set-alloc-list
     Gfx6ModeRegs write-vregs
 ;
 
@@ -449,7 +461,7 @@ msx-use-drawchar-accel not [if]
 \           >8000+= free
 \
 Create Gfx5ModeRegs
-    $8008 , $81A0 , $8200 , $85F4 , $8B00 , $860E , $87FF , 0 ,
+    $8008 , $81A0 , $87FF , 0 ,
 
 Create Gfx5ModeParams
     v-screen    , $0000 ,   v-screensz  , $0 ,
@@ -457,12 +469,13 @@ Create Gfx5ModeParams
     v-patts     , $0000 ,   v-pattsz    , $6400 ,
     v-sprites   , $7A00 ,   v-sprcol    , $7800 ,
     v-sprpat    , $7000 ,   v-sprmot    , $7A80 ,
-    v-free      , $8000 ,
+    v-free      , $8000 ,   v-pagesize  , $8000 ,
 
     v-width     , 512 ,     v-height    , 212 ,
     
     msx-stride  , $80 ,     msx-shift   , 2 ,       msx-mask , $3  ,
     
+    'v-setupregs ,           ' msx-setupregs ,
     'v-setupmode ,           ' msx-setupmode ,
     'v-updatecolors ,        ' msx-updatecolors ,
 
@@ -474,7 +487,7 @@ msx-use-drawchar-accel not [if]
     
 : gfx5-mode
     MsxFunctions write-var-list
-    Gfx5ModeParams write-var-list
+    Gfx5ModeParams v-set-alloc-list
     Gfx5ModeRegs write-vregs
 ;
     
@@ -489,7 +502,7 @@ msx-use-drawchar-accel not [if]
 \           >E000+= free
 \
 Create Gfx7ModeRegs
-    $800E , $81A0 , $8200 , $85AC , $8B01 , $861B , 0 ,
+    $800E , $81A0 , 0 ,
 
 Create Gfx7ModeParams
     v-screen    , $0000 ,   v-screensz  , $0 ,
@@ -497,12 +510,13 @@ Create Gfx7ModeParams
     v-patts     , $0000 ,   v-pattsz    , $D400 ,
     v-sprites   , $D600 ,   v-sprcol    , $D400 ,
     v-sprpat    , $D800 ,   v-sprmot    , $D680 ,
-    v-free      , $E000 ,
+    v-free      , $E000 ,   v-pagesize  , $0000 ,
 
     v-width     , 256 ,     v-height    , 212 ,
     
     msx-stride  , $100 ,    msx-shift   , 0 ,       msx-mask , $0  ,
     
+    'v-setupregs ,           ' msx-setupregs ,
     'v-setupmode ,           ' msx-setupmode ,
     'v-updatecolors ,        ' msx-updatecolors ,
 
@@ -515,7 +529,7 @@ msx-use-drawchar-accel not [if]
     
 : gfx7-mode
     MsxFunctions write-var-list
-    Gfx7ModeParams write-var-list
+    Gfx7ModeParams v-set-alloc-list
     Gfx7ModeRegs write-vregs
 ;
 

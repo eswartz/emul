@@ -23,13 +23,13 @@
     
     $80 v-curs c+!
     v-curs c@ if  
-        dup vwaddr              \ read char under cursor
+        dup +vwaddr              \ read char under cursor
         VDPRD c@  v-curs-under c!
         
-        !vwaddr
+        +!vwaddr
         [CHAR] _  VDPWD c!      \ draw cursor
     else
-        !vwaddr
+        +!vwaddr
         v-curs-under c@  
         VDPWD c!                \ restore char under cursor
     then
@@ -49,8 +49,8 @@
     rot >r
     v-screen @ v-screensz @  range-wrap
     
-    r@   rot rot  vfill
-    r>   rot rot  vfill
+    r@   rot rot  +vfill
+    r>   rot rot  +vfill
 ;
 
 : txt-hchar ( ch len x y -- )
@@ -63,7 +63,7 @@
     v-screen @ v-screensz @ + :> lim
     
     len 0 ?do
-        ch addr vc!
+        ch addr +vc!
         v-width @  addr +  
         dup lim >= if  v-screensz @ -  then
         addr!
@@ -91,18 +91,17 @@
 :: std-setfont   ( addr -- )
     v-fntheight c@ :> h
     h 8 = if
-        addr  v-patts @   $800  gvmove
+        addr  v-patts @   $800  +gvmove
     else
         v-patts @  :> vpaddr
         256 0 do
-            addr vpaddr h  gvmove
+            addr vpaddr h  +gvmove
             addr h +  addr!  
             vpaddr 8 +  vpaddr!  
-            $00  vpaddr h +  8 h -  vfill 
+            $00  vpaddr h +  8 h -  +vfill 
         loop
     then
 ;
-
 
 \ -------------------
 
@@ -129,21 +128,27 @@ Create TextModeParams
     v-colors    , $0 ,      v-colorsz   , $0 ,
     v-sprites   , $0 ,      v-sprcol    , $0 ,
     v-sprpat    , $0 ,      v-sprmot    , $0 ,
-    v-free      , $1000 ,
+    v-free      , $1000 ,   v-pagesize  , $1000 ,
 
     v-width     , 40 ,      v-height    , 24 ,
     
+    'v-setupregs ,           ' txt-setupregs ,
     'v-setupmode ,           ' txt-setupmode ,
     'v-updatecolors ,        ' txt-updatecolors ,
     
     0 ,
     
 create  TextModeRegs
-    $8000 , $81B0 , $8200 , $8401 , 0 ,
+    $8000 , $81B0 , 0 ,
+
+: txt-setupregs
+    std-set-screen-reg
+    std-set-patt-reg
+;
     
 : text-mode
     TextFunctions write-var-list
-    TextModeParams write-var-list
+    TextModeParams v-set-alloc-list
         
     TextModeRegs write-vregs
 ;
@@ -160,7 +165,7 @@ create  TextModeRegs
 \           >1000+= free
 \
 Create GfxModeRegs
-    $8000 , $81A0 , $8200 , $830E , $8401 , $8506 , $8600 , 0 ,
+    $8000 , $81A0 , 0 ,
 
 Create GfxModeParams
     v-screen    , 0 ,       v-screensz  , 768 ,
@@ -168,14 +173,23 @@ Create GfxModeParams
     v-patts     , $800 ,    v-pattsz    , $800 ,
     v-sprites   , $300 ,    v-sprcol    , $0 ,
     v-sprpat    , $0 ,      v-sprmot    , $3A0 ,
-    v-free      , $1000 ,
+    v-free      , $1000 ,   v-pagesize  , $1000 ,
     
     v-width     , 32 ,      v-height    , 24 ,
     
+    'v-setupregs ,           ' gfx-setupregs ,
     'v-setupmode ,           ' gfx-setupmode ,
     'v-updatecolors ,        ' gfx-updatecolors ,
     
     0 ,
+
+
+: gfx-setupregs
+    txt-setupregs
+    std-set-color-reg
+    std-set-sprite-reg
+    std-set-sprpat-reg
+;
 
 : gfx-setupmode
     std-sprite-setup
@@ -183,12 +197,12 @@ Create GfxModeParams
 ;
 
 : gfx-updatecolors
-    color-byte  v-colors @  v-colorsz @  vfill
+    color-byte  v-colors @  v-colorsz @  +vfill
 ;
 
 : gfx-mode
     TextFunctions write-var-list
-    GfxModeParams write-var-list
+    GfxModeParams v-set-alloc-list
       
     GfxModeRegs write-vregs
 ;
@@ -208,10 +222,9 @@ Create GfxModeParams
     \ reset or set blink bit
     x y  txt-choffs  >txt2-coloraddr  
     
-    \ assume bank is still valid
-    dup >r  vc@
+    dup >r  +vc@
     v-blink c@  if  OR  else  NAND  then  
-    r>  vc!
+    r>  +vc!
 ;
 
 :: txt2-clear ( w h x y -- )
@@ -239,7 +252,7 @@ Create GfxModeParams
 
     v-blink c@  if ['] OR else ['] NAND then :> func
     
-    caddr !vwaddr
+    caddr +!vwaddr
     
     len 0 ?do
         mask $8080 =  i' i - 8 >=  and  if
@@ -249,7 +262,7 @@ Create GfxModeParams
             8
         else
             \ just one bit at a time
-            mask  caddr vc@  func execute  caddr vc!
+            mask  caddr +vc@  func execute  caddr +vc!
             mask  1 crshift  dup  $8080 =  if  caddr 1+  caddr!  then  
             mask!
             1
@@ -262,10 +275,15 @@ Create GfxModeParams
 
     len 0 ?do
         x y  txt-choffs  >txt2-coloraddr
-        dup >r  vc@
+        dup >r  +vc@
         v-blink c@  if OR else NAND then
-        r> vc!
+        r> +vc!
     loop
+;
+
+:   txt2-setupregs
+    txt-setupregs
+    std-set-color-reg
 ;
 
 \       8=text 2 mode
@@ -275,7 +293,7 @@ Create GfxModeParams
 \           >1800+= free
 \
 Create Text2ModeRegs
-    $8004 , $81B0 , $8200 , $832F , $8A00 , $8402 , $8D22 , $8980 , 0 ,
+    $8004 , $81B0 , $8D22 , 0 ,
 
 Create Text2Functions
     'v-drawchar ,       ' txt2-drawchar  ,      
@@ -285,15 +303,16 @@ Create Text2Functions
     0 ,
 
 Create Text2ModeParams
-    v-screen    , 0 ,       v-screensz  , 2160 ,
-    v-colors    , $a00 ,    v-colorsz   , 2160 8 / ,
+    v-screen    , 0 ,       v-screensz  , $870 ,
+    v-colors    , $a00 ,    v-colorsz   , $870 8 / ,
     v-patts     , $1000 ,   v-pattsz    , $800 ,
     v-sprites   , 0 ,       v-sprcol    , 0 ,
     v-sprpat    , 0 ,       v-sprmot    , 0 , 
-    v-free      , $1800 ,
+    v-free      , $1800 ,   v-pagesize  , $2000 ,
      
     v-width     , 80 ,      v-height    , 26 ,
     
+    'v-setupregs ,           ' txt2-setupregs ,
     'v-setupmode ,           ' txt2-setupmode ,
     'v-updatecolors ,        ' txt-updatecolors ,
 
@@ -302,7 +321,6 @@ Create Text2ModeParams
 : txt2-setupmode
     txt-setupmode
     msx-setupmode
-\    $00  v-colors @ v-colorsz @  vfill
     \ set blink to inverse colors
     bg@  4 lshift  fg@  OR  $8C00 OR  v-regaddr  
 
@@ -311,7 +329,7 @@ Create Text2ModeParams
 : text2-mode
     TextFunctions write-var-list
     Text2Functions write-var-list
-    Text2ModeParams write-var-list
+    Text2ModeParams v-set-alloc-list
         
     Text2ModeRegs write-vregs
 
