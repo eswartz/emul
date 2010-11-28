@@ -538,13 +538,6 @@ User 'lastcol
 &1 constant #y-border
 #y-border l/blk + 1+  constant #y-menu
 
-\ Emit 'n' copies of a character
-: emits ( n ch -- )
-    swap 0 do 
-        dup emit
-    loop drop
-;
-
 \   Create the interpretation window
 : intp.window
     -1 -1  0  #y-menu 1+   win!
@@ -563,6 +556,7 @@ User 'lastcol
 : edit.drawui
 
     text2 (mode)  &15 vpage  vreset
+    font6x8
 
     $87A1 v-regaddr      \ yellow-on-black border
     $8CF5 v-regaddr      \ white-on-blue text
@@ -596,23 +590,22 @@ User 'lastcol
     
     
     \ draw border around editor 
-    [ #x-border 1- ] literal 
-    [ #y-border 1- ] literal   at-xy
-    &250 emit  c/l &243 emits  &249 emit
+    [ #x-border 1- ] literal       
+    [ #y-border 1- ] literal      at-xy
+    &250 emit  &243 c/l hchar  
+    [ #x-border c/l + ] literal       
+    [ #y-border 1- ] literal      at-xy
+    &249 emit
     
-    l/blk 0 do
-        i #y-border +            
-        [ #x-border 1- ] literal
-        over at-xy
-        &252 emit
-        [ #x-border c/l + ] literal
-        swap at-xy
-        &252 emit
-    loop
+    [ #x-border 1- ] literal     #y-border  at-xy   &252  l/blk  vchar
+    [ #x-border c/l + ] literal  #y-border  at-xy   &252  l/blk  vchar
 
-    [ #x-border 1- ] literal 
+    [ #x-border 1- ] literal      dup
     [ #y-border l/blk + ] literal   at-xy
-    &246 emit  c/l &243 emits  &245 emit
+    &246 emit  &243 c/l hchar  
+    [ #x-border c/l + ] literal       
+    [ #y-border l/blk + ] literal   at-xy
+    &245 emit
 
 
     \ draw menu

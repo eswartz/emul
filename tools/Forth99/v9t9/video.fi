@@ -35,6 +35,7 @@ v-data
     +field  v-height       \ units down
     
     +field  v-font         \ GROM addr of current font
+    
     +1field v-fntwidth     \ font width in pixels
     +1field v-fntheight    \ font height in pixels
 
@@ -47,14 +48,16 @@ v-data
     +field  'v-setupmode    ( -- )
     +field  'v-updatecolors ( -- )
     +field  'v-setfont      ( addr -- )
-    +field  'v-clear        ( ch -- )
+    +field  'v-clear        ( w h x y -- )
     +field  'v-hchar        ( ch len x y -- )
     +field  'v-vchar        ( ch len x y -- )
 
     +field  msx-stride      \ row stride in bytes
     +field  msx-shift       \ shift for pixel >> byte
     +field  msx-mask        \ mask for pixel of byte
-
+    
+    +field  msx-rowsperbankmask  \ mask for detecting bank crossings  
+    
     16 +Nfield v-regsave    \ saved registers
 
 dup constant v-data0
@@ -83,7 +86,11 @@ $40 constant    v-int-nocursor
 :   v-regaddr ( reg -- )
     dup  
     vwaddr
-    $7fff and w>b   >vr
+    dup $9000 < if
+        $7fff and w>b   >vr
+    else
+        drop
+    then
 ;
 
 :   (vr@) ( reg# -- val )
@@ -194,7 +201,7 @@ export>
     (setfont)
 
     term-reset
-    'v-clear @ execute    
+    v-width @ v-height @  0 0  'v-clear @  execute    
     
     true vid-show
 ;
@@ -267,6 +274,26 @@ $00B    constant    last-video-mode
 &9 constant #spc
 &10 constant #fre
 export>
+
+
+
+: (sprite-setup)
+    $00  v-sprites @  $80  +vfill
+    $00  v-sprpat @   $800 +vfill
+    $00  v-sprmot @   $80  +vfill
+;
+
+: std-sprite-setup
+    (sprite-setup)
+    $D0  v-sprites @ +vc!
+;
+
+: v9938-sprite-setup
+    (sprite-setup)
+    $D8  v-sprites @ +vc!
+    $00  v-sprcol @  $200  +vfill
+;
+
 
 include video_text.fi
 include video_bit.fi

@@ -125,7 +125,7 @@ public class F99bTargetContext extends TargetContext {
 		definePrim("-", Isub);
 		definePrim("d-", Isub_d);
 		definePrim("um*", Iumul);
-		definePrim("um/mod", Iudivmod);
+		defineInlinePrim("um/mod", Iudivmod);
 		
 		definePrim("invert", Iinv);
 		definePrim("not", Inot);

@@ -59,14 +59,14 @@
 ;
 
 :: txt-vchar ( ch len x y -- )
-    x y txt-choffs  :> offs
-    v-screensz @  :> lim
+    x y txt-chaddr  :> addr
+    v-screen @ v-screensz @ + :> lim
     
-    len 0 do
-        ch  offs  v-screen @ +  vc!
-        v-width @  offs +  
-        dup lim >= if  lim -  then
-        offs!
+    len 0 ?do
+        ch addr vc!
+        v-width @  addr +  
+        dup lim >= if  v-screensz @ -  then
+        addr!
     loop
 ;
 
@@ -78,14 +78,29 @@
     color-byte  $8700  or v-regaddr
 ;
 
-: txt-clear
-    $20  v-screen @ v-screensz @ vfill
+:: txt-clear ( w h x y -- )
+    x y  txt-chaddr  vsetbank  :>  addr
+    h 0 ?do
+        $20 addr w  vfill
+        v-width @  addr +  addr!
+    loop
 ;
 
 \ -------------------
 
-: std-setfont   ( addr -- )
-    v-patts @   $800  gvmove
+:: std-setfont   ( addr -- )
+    v-fntheight c@ :> h
+    h 8 = if
+        addr  v-patts @   $800  gvmove
+    else
+        v-patts @  :> vpaddr
+        256 0 do
+            addr vpaddr h  gvmove
+            addr h +  addr!  
+            vpaddr 8 +  vpaddr!  
+            $00  vpaddr h +  8 h -  vfill 
+        loop
+    then
 ;
 
 
@@ -132,27 +147,6 @@ create  TextModeRegs
         
     TextModeRegs write-vregs
 ;
-
-\ -------------------
-
-: (sprite-setup)
-    $00  v-sprites @  $80  vfill
-    $00  v-sprpat @   $800 vfill
-    $00  v-sprmot @   $80 vfill
-;
-
-
-: std-sprite-setup
-    (sprite-setup)
-    $D0  v-sprites @ +vc!
-;
-
-: v9938-sprite-setup
-    (sprite-setup)
-    $D8  v-sprites @ +vc!
-    $00  v-sprcol @  $200  vfill
-;
-
 
 \ -------------------
 
@@ -220,12 +214,14 @@ Create GfxModeParams
     r>  vc!
 ;
 
-: txt2-clear
-    txt-clear
+:: txt2-clear ( w h x y -- )
+    w h x y  txt-clear
     
-    \ clear colors (blinks)
-    v-blink c@
-    v-colors @  v-colorsz @  vfill
+    h  0  ?do
+        w
+        x  y i +  txt-choffs  
+        (txt2-hchar-colors)
+    loop
 ;
 
 :: txt2-hchar ( ch len x y -- )
@@ -233,7 +229,11 @@ Create GfxModeParams
     
     ch len offs (txt-hchar)  
     
-    offs  >txt2-coloraddr  
+    len offs  (txt2-hchar-colors) 
+;
+
+:: (txt2-hchar-colors) ( len offs -- )    
+     offs >txt2-coloraddr  
             :> caddr   
             dup 8 lshift OR  :> mask
 
@@ -250,7 +250,7 @@ Create GfxModeParams
         else
             \ just one bit at a time
             mask  caddr vc@  func execute  caddr vc!
-            mask  1 crshift  dup  $8080 =  if caddr 1+  caddr!  then  
+            mask  1 crshift  dup  $8080 =  if  caddr 1+  caddr!  then  
             mask!
             1
         then
@@ -260,7 +260,7 @@ Create GfxModeParams
 :: txt2-vchar ( ch len x y -- )
     ch len x y  txt-vchar  
 
-    len 0 do
+    len 0 ?do
         x y  txt-choffs  >txt2-coloraddr
         dup >r  vc@
         v-blink c@  if OR else NAND then
@@ -301,6 +301,7 @@ Create Text2ModeParams
     
 : txt2-setupmode
     txt-setupmode
+    msx-setupmode
 \    $00  v-colors @ v-colorsz @  vfill
     \ set blink to inverse colors
     bg@  4 lshift  fg@  OR  $8C00 OR  v-regaddr  

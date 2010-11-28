@@ -40,7 +40,10 @@ Create msx-enhregs
 ;    
 
 : msx-setupmode
+    v9938-sprite-setup
     msx-enhregs write-vregs
+    
+    $4000. msx-stride @  UM/MOD drop  NEGATE  msx-rowsperbankmask !
 ;
 
 \   Setup a MSX command
@@ -103,7 +106,7 @@ Create msx-enhregs
     $1  msx-cmd-word                    \ two cols NX
     v-fntheight c@ 1-  msx-cmd-word     \ font height NY 
 
-    $FF VDPWI c!                \ CLR    
+    $AA VDPWI c!                \ CLR    
 
     $00 VDPWI c!                \ ARG (dix=0, diy=0, mxc=0)
     
@@ -119,11 +122,6 @@ Create msx-enhregs
 \   to get the byte to write to VDP
 \
 16   RamVar  msx-color-temp
-
-: msx-clear ( ch -- )
-    msx-color-temp c@
-    v-patts @   v-pattsz @   vfill
-;
 
 :: msx-updatecolors ( )
     color-byte  $8700 OR  v-regaddr
@@ -165,6 +163,39 @@ Create msx-enhregs
 : msx-setfont   ( addr -- )
     drop
 ;
+
+
+:: msx-clear ( w h x y -- )
+
+    x w  or 7 and 0= :> aligned
+    
+    x y   msx-setup-cursor-DXDY
+    
+    w 1-   msx-cmd-word  \ NX
+    h 1-   msx-cmd-word  \ NY
+    
+    aligned if 
+        msx-color-temp c@  
+    else
+        bg c@
+    then
+    VDPWI c!     ( CLR: color )
+    
+    0 VDPWI c!  ( ARG: dix=0, diy=0, mxc=0 )
+    
+    aligned if
+        $c0      ( HMMV )
+    else
+        $80      ( LMMV )
+    then
+    
+    msx-setupMMMcommand
+    
+    \ no need to wait
+    msx-vstatus0    
+
+;
+
 
 \ Eep, our processor can brute-force this faster than MSX can accelerate it...
 \ which makes sense, given that we're doing logic for every pixel anyway!!
@@ -208,15 +239,25 @@ false Constant msx-use-drawchar-accel
     msx-vstatus0    
 ;
 
-: msx-drawchar-16 ( ch x y -- )
+: msx-crosses-bank ( y -- f )
+    dup msx-rowsperbankmask @ and
+    swap v-fntheight c@ + 1-  msx-rowsperbankmask @ and
+    = not
+;
+
+:: msx-drawchar-16 ( ch x y -- )
     v-fntwidth c@ :> width
     
-    width 1 and if
-        msx-drawchar-accel
+    x 1 and 
+    y  msx-crosses-bank  
+    width 1 and  
+    or  or 
+    if
+        ch x y  msx-drawchar-accel
     else
-        msx-pixaddr drop  vsetbank :> addr
+        x y  msx-pixaddr drop  vsetbank :> addr
         
-        >v-fontaddr  gwaddr  
+        ch  >v-fontaddr  gwaddr  
         
         
         msx-color-temp :> ct
@@ -237,15 +278,19 @@ false Constant msx-use-drawchar-accel
 ;
 
 
-: msx-drawchar-4 ( ch x y -- )
+:: msx-drawchar-4 ( ch x y -- )
     v-fntwidth c@ :> width
     
-    width  8 = not  if
-        msx-drawchar-accel  
+    x 3 and
+    y msx-crosses-bank  
+    width  8 = not  
+    or or 
+    if
+        ch x y  msx-drawchar-accel  
     else
-        msx-pixaddr  :> sh   vsetbank :> addr
+        x y  msx-pixaddr  :> sh   vsetbank :> addr
         
-        >v-fontaddr  gwaddr  
+        ch   >v-fontaddr  gwaddr  
         
         msx-color-temp :> ct
         
@@ -271,7 +316,11 @@ false Constant msx-use-drawchar-accel
 
 : msx-drawchar-256 ( ch x y -- )
     v-fntheight c@ :> height
-    dup height + 7 and if
+
+    dup msx-crosses-bank   
+    over height + 7 and 
+    and
+    if
         msx-drawchar-accel
     else     
         msx-pixaddr drop  vsetbank :> addr

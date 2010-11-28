@@ -49,6 +49,7 @@ ramptr !
         1 win-chxs c!
         1 win-chys c!
     then
+    (win-update)
 ;
 
 \   Reset terminal from the current mode
@@ -64,8 +65,7 @@ ramptr !
 
 1 <export
 :   home
-    0 v-x !
-    0 v-y !
+    0 0 .at-xy
 ;
 
 ( units )
@@ -76,33 +76,45 @@ ramptr !
 ( units )
 :   .at-xy ( x y  -- )
     cursor-off
-    v-y !  v-x !
+    win-sy @ UMOD  v-y !  
+    win-sx @ UMOD  v-x !
 ;
 
 ( character units )
 ::   xy ( -- v-x v-y )
     .xy 
-    win-chys c@  U/  
-    swap win-chxs c@  U/  
-    swap
+    v-text c@ 0= if 
+        win-chys c@  U/  
+        swap win-chxs c@  U/  
+        swap
+    then
 ;
 
 ( character units )
 :   at-xy ( x y  -- )
-    swap  win-chxs c@ U*  swap win-chys c@ U*
+    v-text c@ 0= if 
+        swap  win-chxs c@ U*  swap win-chys c@ U*
+    then
     .at-xy
 ;
 
+: (win-update)
+    win-sx @  win-chxs c@  U/  win-cx c!
+    win-sy @  win-chys c@  U/  win-cy c!
+;
 
 ( units )
 ::   .win! ( w h x y -- )
-    w  win-mx @  umin  x +  win-mx @  umin  :> x2
-    h  win-my @  umin  y +  win-my @  umin  :> y2
-    0 x max  dup  win-x !  x2  swap -  win-sx !
-    0 y max  dup  win-y !  y2  swap -  win-sy !
+    cursor-off
+    win-mx @ :> mx
+    win-my @ :> my
+    w  mx  umin  x +  mx  umin  :> x2
+    h  my  umin  y +  my  umin  :> y2
+    0 x max  mx  umin  dup  win-x !  x2  swap -  win-sx !
+    0 y max  my  umin  dup  win-y !  y2  swap -  win-sy !
     
-    win-sx @  win-chxs c@  U/  win-cx c!
-    win-sy @  win-chys c@  U/  win-cy c!
+    (win-update)    
+    home
 ;
 
 ( character units )
@@ -160,7 +172,11 @@ export>
 :   new-line
     home-col
     advance-row
-    32  win-cx c@  hchar  
+    'v-clear @ ?dup if
+        >r win-sx @  win-chys c@  v-x @ win-x @ +  v-y @ win-y @ +  r>  execute
+    else  
+        32  win-cx c@  hchar
+    then
 ;
 
 :   advance-cursor ( ch -- )
@@ -172,7 +188,9 @@ export>
 ;
 
 :   cursor-off
-    $xy v-cursor-off
+    v-curs c@ if
+        $xy v-cursor-off
+    then
 ;
 
 :   crlf
@@ -197,10 +215,11 @@ export>
 
 :   chfill  ( ch -- )
     home
-    win-cy c@ 0 do
+    win-cy c@  0 ?do
         dup  win-cx c@  hchar
         advance-row
     loop
+    drop
 ;
 
 :   hchar ( ch len -- ) 
@@ -231,12 +250,15 @@ export>
     then
 ;
 
-:   cls  
-    \ 'v-clear @  execute
-    win-cy c@ 0 do
-        0  i at-xy
-        32  win-cx c@  hchar
-    loop 
+:   cls
+    'v-clear @ ?dup if
+        >r  win-sx @  win-sy @  win-x @  win-y @  r>  execute
+    else
+        win-cy c@ 0 do
+           0  i at-xy
+           32  win-cx c@  hchar
+        loop
+    then 
     home
 ;
 

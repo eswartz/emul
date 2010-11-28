@@ -12,15 +12,14 @@
     R>
 ;    
 
-: bit-waddr ( x y -- )
-    bit-pixaddr drop  !vwaddr  
+: bit-chaddr ( x y -- addr )
+    -8 and  swap  -8 and  swap
+    bit-pixaddr  drop
 ;
-: bit-raddr ( x y -- )
-    bit-pixaddr drop  vwaddr  
-;
-
 
 : bit-setupmode
+    std-sprite-setup
+    
     ( set repeating 0-255 in three sections of SIT )
     v-screen @  !vwaddr
     768 0 do i  VDPWD c!  loop
@@ -28,7 +27,7 @@
 
 : bit-drawchar ( ch x y -- )
     \ simple-stupid 8x8 only version 
-    bit-pixaddr drop  :> addr
+    bit-chaddr  :> addr
     >v-fontaddr  addr v-patts @ +  v-fntheight c@  gvmove  
     
     v-mono c@ 0= if
@@ -49,7 +48,7 @@
 ;
 
 : bit-blinkcursor ( x y -- )
-    bit-pixaddr  :> shift  
+    bit-chaddr  0 :> shift  
                 v-patts @ + :> addr     \ only change patt
 
     addr vsetbank  addr!
@@ -76,9 +75,54 @@
     loop
 ;
 
-: bit-clear ( ch -- )
-    0           v-patts @   v-pattsz @   vfill
-    color-byte  v-colors @  v-colorsz @  vfill
+( clear rows where h==8 )
+:: bit-clear-rows ( w x y -- )
+    x y  bit-pixaddr  drop  :> addr 
+    
+    ( # bytes = w/8 * 8 )
+    0  addr  v-patts @ +   w  vfill 
+    
+    v-mono c@ 0= if
+        color-byte   addr  v-colors @ +   w  vfill
+    then
+;
+
+:: bit-clear ( w h x y -- )
+    x  -8 and  x!
+    y  -8 and  y!
+    w 7 + -8 and w!
+    h 7 + -8 and h!
+
+[ 0 ] [if]
+    \ clear unaligned rows before aligned Y
+    y  7 and  ?dup
+    if
+        h  over -  h!
+        w swap  x y  bit-clear-rows
+        7  y 7 + nand  y!
+    then
+
+    \ clear aligned wx8 rows; y and h are updated
+    h 8 >= if
+        y h +  y  do
+            w 8 x i  bit-clear-rows
+        8 +loop
+        7  h      nand  y +  y!
+        7  h      and   h!
+    then
+    
+    \ clear remaining unaligned rows after Y
+    h ?dup if 
+        w swap  x y  bit-clear-rows 
+    then
+[else]
+    y h +  y  ?do
+        w x i  bit-clear-rows
+    8 +loop
+[then]
+    
+\    0           v-patts @   v-pattsz @   vfill
+\    color-byte  v-colors @  v-colorsz @  vfill
 ;
 
 : bit-updatecolors ( -- )

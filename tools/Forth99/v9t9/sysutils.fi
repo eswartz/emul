@@ -72,6 +72,10 @@
 ;
 
 :   vfill ( ch addr len -- )
+    swap !vwaddr
+    VDPWD swap 0 (cfill) 
+;
+:   +vfill ( ch addr len -- )
     swap +!vwaddr
     VDPWD swap 0 (cfill) 
 ;
