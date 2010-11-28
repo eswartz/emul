@@ -591,11 +591,11 @@ public class KeyboardState {
 		long now = System.currentTimeMillis();
 		if (queuedKeys.isEmpty()) {
 			if (lastChangeTime + TIMEOUT < now)
-				Arrays.fill(crukeyboardmap, (byte) 0);
+				Arrays.fill(crukeyboardmap, 0, 6, (byte) 0);
 			else
 				return;
 		} else {
-			Arrays.fill(crukeyboardmap, (byte) 0);
+			Arrays.fill(crukeyboardmap, 0, 6, (byte) 0);
 			if (DEBUG) System.out.println("===========");
 			List<KeyDelta> group = queuedKeys.remove();
 			byte shift = 0;
@@ -876,6 +876,8 @@ public class KeyboardState {
     	changeJoyMatrix(joy, 0, false);
     	changeJoyMatrix(joy, 1, false);
     	changeJoyMatrix(joy, 2, false);
+    	
+    	fireListeners();
     }
     
 	public synchronized void setAlpha(boolean on) {
