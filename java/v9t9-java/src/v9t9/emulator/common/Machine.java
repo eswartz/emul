@@ -153,17 +153,29 @@ abstract public class Machine {
     
     public List<IModule> getModules() {
     	if (modules == null) {
-    		String dbName = settingModuleList.getString();
-    		if (dbName.length() > 0) {
-	    		try {
-					modules = ModuleLoader.loadModuleList(dbName);
-	    		} catch (NotifyException e) {
-	    			notifyEvent(e.getEvent());
-	    			notifyEvent(IEventNotifier.Level.ERROR,
-	    					"Be sure your " + DataFiles.settingBootRomsPath.getName() + " setting is established in "
-							+ WorkspaceSettings.CURRENT.getConfigFilePath());
-	    			modules = Collections.emptyList();
-				}
+    		String dbNameList = settingModuleList.getString();
+    		if (dbNameList.length() > 0) {
+    			boolean anyErrors = false;
+    			String[] dbNames = dbNameList.split(";");
+    			for (String dbName : dbNames) {
+		    		try {
+						List<IModule> modList = ModuleLoader.loadModuleList(dbName);
+						if (modules == null)
+							modules = modList;
+						else
+							modules.addAll(modList);
+		    		} catch (NotifyException e) {
+		    			notifyEvent(e.getEvent());
+					}
+		    		if (anyErrors) {
+		    			notifyEvent(IEventNotifier.Level.ERROR,
+		    					"Be sure your " + DataFiles.settingBootRomsPath.getName() + " setting is established in "
+								+ WorkspaceSettings.CURRENT.getConfigFilePath());
+		    			if (modules == null) {
+		    				modules = Collections.emptyList();
+		    			}
+		    		}
+    			}
     		}
     	}
     	return modules;
