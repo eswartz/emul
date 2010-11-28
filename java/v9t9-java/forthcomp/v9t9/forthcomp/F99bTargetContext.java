@@ -242,7 +242,6 @@ public class F99bTargetContext extends TargetContext {
 		
 		defineInlinePrim("(fill)", Ifill);
 		defineInlinePrim("(cfill)", Icfill);
-		defineInlinePrim("(move)", Imove);
 		defineInlinePrim("(cmove)", Icmove);
 		
 		defineInlinePrim("(LITERAL)", IlitW);

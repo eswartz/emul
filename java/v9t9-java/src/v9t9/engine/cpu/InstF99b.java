@@ -137,7 +137,7 @@ public class InstF99b {
 	/** ( faddr taddr len fstep tstep ) */ 
 	public static final int Icmove = Iloop_start + 6;
 	/** ( faddr taddr len fstep tstep ) */ 
-	public static final int Imove = Iloop_start + 7;
+	//public static final int Icompare = Iloop_start + 7;
 	
 	
 	public static final int Imisc_start = 0x70;
@@ -314,14 +314,11 @@ public class InstF99b {
 	public static final int SYSCALL_DEBUG_OFF = 2;
 	/** Register the given xt in the symbol table */
 	public static final int SYSCALL_REGISTER_SYMBOL = 3;
-	/** Interpret string ( caddr len -- ) */
-	public static final int SYSCALL_INTERPRET = 4;
 	
 	public static final String[] syscallStrings = {
 		"IDLE",
 		"+DBG",
 		"-DBG",
-		"INTERPRET",
 	};
 	
 	/** for each inst:  SP read, SP left
@@ -398,7 +395,6 @@ public class InstF99b {
 		Icfill, 4, 0, 0, 0,
 		Ifill, 4, 0, 0, 0,
 		Icmove, 5, 0, 0, 0,
-		Imove, 5, 0, 0, 0,
 		
 		Iexit, 0, 0, 1, 0,
 		Iexiti, 0, 0, 2, 0,
