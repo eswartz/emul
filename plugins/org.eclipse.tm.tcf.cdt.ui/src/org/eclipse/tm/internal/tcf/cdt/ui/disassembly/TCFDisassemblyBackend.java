@@ -28,6 +28,8 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchesListener;
+import org.eclipse.debug.core.model.ISourceLocator;
+import org.eclipse.debug.core.sourcelookup.ISourceLookupDirector;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Position;
@@ -784,7 +786,13 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
     }
 
     public Object insertSource(Position pos, BigInteger address, String file, int lineNumber) {
-        // TODO map disassembly to source
+        TCFNodeExecContext execContext = fExecContext;
+        if (execContext != null) {
+            ISourceLocator locator = fExecContext.getModel().getLaunch().getSourceLocator();
+            if (locator instanceof ISourceLookupDirector) {
+                return ((ISourceLookupDirector)locator).getSourceElement(file);
+            }
+        }
         return null;
     }
 
