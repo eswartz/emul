@@ -13,7 +13,7 @@
             category="org.eclipse.tcf.target.category"
             class="org.eclipse.ui.navigator.CommonNavigator"
             id="org.eclipse.tcf.target.targetsView"
-            name="Target Systems"
+            name="Target Explorer"
             restorable="true">
       </view>
    </extension>
