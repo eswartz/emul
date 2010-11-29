@@ -246,6 +246,9 @@ Create msx-enhregs
     0 ,
 
 : (vreset)
+    \ the chip itself is always enhanced
+    msx-enhregs write-vregs
+
     'v-setupmode @  execute
     
     v-refresh-colors
@@ -258,9 +261,6 @@ Create msx-enhregs
 ;             
 
 : vreset
-    \ the chip itself is always enhanced
-    msx-enhregs write-vregs
-    
     (vreset)
 
     term-reset
