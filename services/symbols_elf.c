@@ -51,7 +51,7 @@ struct Symbol {
     ContextAddress address;
     int sym_class;
     Context * ctx;
-    unsigned frame;
+    int frame;
     unsigned index;
     unsigned dimension;
     ContextAddress size;
@@ -65,22 +65,22 @@ static int sym_frame;
 static ContextAddress sym_ip;
 
 static int get_sym_context(Context * ctx, int frame) {
-    U8_T ip = 0;
-
-    assert(frame != STACK_TOP_FRAME);
-
     if (frame == STACK_NO_FRAME) {
         ctx = context_get_group(ctx, CONTEXT_GROUP_PROCESS);
+        sym_ip = 0;
+    }
+    else if (frame == STACK_TOP_FRAME) {
+        sym_ip = get_regs_PC(ctx);
     }
     else {
+        U8_T ip = 0;
         StackFrame * info = NULL;
         if (get_frame_info(ctx, frame, &info) < 0) return -1;
         if (read_reg_value(info, get_PC_definition(ctx), &ip) < 0) return -1;
+        sym_ip = (ContextAddress)ip;
     }
     sym_ctx = ctx;
     sym_frame = frame;
-    sym_ip = (ContextAddress)ip;
-
     return 0;
 }
 
@@ -117,6 +117,7 @@ static void object2symbol(ObjectInfo * obj, Symbol ** res) {
     Context * ctx = sym_ctx;
     Symbol * sym = alloc_symbol();
     sym->obj = obj;
+    sym->frame = STACK_NO_FRAME;
     switch (obj->mTag) {
     case TAG_global_subroutine:
     case TAG_subroutine:
@@ -158,16 +159,15 @@ static void object2symbol(ObjectInfo * obj, Symbol ** res) {
     case TAG_formal_parameter:
     case TAG_local_variable:
     case TAG_variable:
-        assert(sym_frame >= 0 || sym_frame == STACK_NO_FRAME);
         sym->sym_class = SYM_CLASS_REFERENCE;
-        sym->frame = sym_frame - STACK_NO_FRAME;
+        sym->frame = sym_frame;
         break;
     case TAG_constant:
     case TAG_enumerator:
         sym->sym_class = SYM_CLASS_VALUE;
         break;
     }
-    if (sym->frame == 0) ctx = context_get_group(ctx, CONTEXT_GROUP_PROCESS);
+    if (sym->frame == STACK_NO_FRAME) ctx = context_get_group(ctx, CONTEXT_GROUP_PROCESS);
     sym->ctx = ctx;
     *res = sym;
 }
@@ -263,7 +263,7 @@ static int find_in_sym_table(DWARFCache * cache, char * name, Symbol ** res) {
                     }
                     if (!found) {
                         Symbol * sym = alloc_symbol();
-                        assert(sym->frame == 0);
+                        sym->frame = STACK_NO_FRAME;
                         sym->ctx = context_get_group(sym_ctx, CONTEXT_GROUP_PROCESS);
                         sym->tbl = tbl;
                         sym->index = n;
@@ -319,10 +319,8 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** res) {
         }
     }
 #endif
-    if (error == 0 && !found) {
-        if (frame == STACK_TOP_FRAME && (frame = get_top_frame(ctx)) < 0) error = errno;
-        if (error == 0 && get_sym_context(ctx, frame) < 0) error = errno;
-    }
+
+    if (error == 0 && !found && get_sym_context(ctx, frame) < 0) error = errno;
 
     if (error == 0 && !found && sym_ip != 0) {
         Trap trap;
@@ -470,17 +468,19 @@ const char * symbol2id(const Symbol * sym) {
         ELF_File * file = NULL;
         uint64_t obj_index = 0;
         unsigned tbl_index = 0;
+        int frame = sym->frame;
         if (sym->obj != NULL) file = sym->obj->mCompUnit->mFile;
         if (sym->tbl != NULL) file = sym->tbl->mFile;
         if (sym->obj != NULL) obj_index = sym->obj->mID;
         if (sym->tbl != NULL) tbl_index = sym->tbl->mIndex + 1;
-        snprintf(id, sizeof(id), "SYM%X.%lX.%lX.%"PRIX64".%"PRIX64".%X.%X.%X.%X.%"PRIX64".%s",
+        if (frame == STACK_TOP_FRAME) frame = get_top_frame(sym->ctx);
+        snprintf(id, sizeof(id), "SYM%X.%lX.%lX.%"PRIX64".%"PRIX64".%X.%d.%X.%X.%"PRIX64".%s",
             sym->sym_class,
             file ? (unsigned long)file->dev : 0ul,
             file ? (unsigned long)file->ino : 0ul,
             file ? file->mtime : (int64_t)0,
             obj_index, tbl_index,
-            sym->frame, sym->index,
+            frame, sym->index,
             sym->dimension, (uint64_t)sym->size,
             sym->ctx->id);
     }
@@ -498,6 +498,23 @@ static uint64_t read_hex(const char ** s) {
     }
     *s = p;
     return res;
+}
+
+static int read_int(const char ** s) {
+    int neg = 0;
+    int res = 0;
+    const char * p = *s;
+    if (*p == '-') {
+        neg = 1;
+        p++;
+    }
+    for (;;) {
+        if (*p >= '0' && *p <= '9') res = res * 10 + (*p - '0');
+        else break;
+        p++;
+    }
+    *s = p;
+    return neg ? -res : res;
 }
 
 int id2symbol(const char * id, Symbol ** res) {
@@ -535,7 +552,7 @@ int id2symbol(const char * id, Symbol ** res) {
         if (*p == '.') p++;
         tbl_index = (unsigned)read_hex(&p);
         if (*p == '.') p++;
-        sym->frame = (unsigned)read_hex(&p);
+        sym->frame = read_int(&p);
         if (*p == '.') p++;
         sym->index = (unsigned)read_hex(&p);
         if (*p == '.') p++;
@@ -548,7 +565,7 @@ int id2symbol(const char * id, Symbol ** res) {
             errno = ERR_INV_CONTEXT;
             return -1;
         }
-        if (get_sym_context(sym->ctx, sym->frame + STACK_NO_FRAME) < 0) return -1;
+        if (get_sym_context(sym->ctx, sym->frame) < 0) return -1;
         if (dev == 0 && ino == 0 && mtime == 0) return 0;
         file = elf_list_first(sym_ctx, 0, ~(ContextAddress)0);
         if (file == NULL) return -1;
@@ -689,7 +706,7 @@ static SymbolInfo * sym_info;
 static int unpack(const Symbol * sym) {
     assert(sym->base == NULL);
     assert(sym->size == 0);
-    if (get_sym_context(sym->ctx, sym->frame + STACK_NO_FRAME) < 0) return -1;
+    if (get_sym_context(sym->ctx, sym->frame) < 0) return -1;
     file = NULL;
     cache = NULL;
     obj = sym->obj;
