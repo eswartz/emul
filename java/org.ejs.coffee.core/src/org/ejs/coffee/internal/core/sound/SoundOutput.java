@@ -1,7 +1,6 @@
 package org.ejs.coffee.internal.core.sound;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.sound.sampled.AudioFormat;
