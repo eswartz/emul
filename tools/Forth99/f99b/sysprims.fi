@@ -39,11 +39,11 @@
 ;   target-only
 : u/      ( ud un -- uq )
     0 swap 
-    [ Iudivmod c, ] drop
+    [ Iudivmod c, ] swap drop
 ;   target-only
 : umod      ( ud un -- ur )
     0 swap 
-    [ Iudivmod c, ] swap drop
+    [ Iudivmod c, ] drop
 ;   target-only
 
 : u*        ( ua ub -- un )

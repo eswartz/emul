@@ -437,7 +437,7 @@ include video_msx.fi
 
     \ reduce page to valid range    
     pg  
-    $2.0000  v-pagesize @  ?dup if  UM/MOD  drop  else  nip  then  
+    $2.0000  v-pagesize @  ?dup if  UM/MOD  then  nip  
     UMOD
     dup  v-rwpage c!
     

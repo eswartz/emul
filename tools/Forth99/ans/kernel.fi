@@ -300,8 +300,8 @@ error" need prim c@"
 ;
 [THEN]
 
-[IFUNDEF] */MOD
-: */MOD ( n1 n2 n3 -- n4 n5 ) \ core    star-slash-mod
+[IFUNDEF] */MOD 
+: */MOD ( n1 n2 n3 -- n4-r n5-q ) \ core    star-slash-mod
     >r m* r> sm/rem 
 ;
 [THEN]
@@ -324,7 +324,7 @@ error" need prim +"
 ;
 [THEN]
 
-[IFUNDEF] /MOD
+[IFUNDEF] /MOD ( n1 n2 -- r q )
 : /MOD
     >r s>d r> sm/rem
 ;
@@ -395,7 +395,7 @@ error" need prim +"
 [THEN]
 
 [IFUNDEF] FM/MOD
-: FM/MOD        \ d1 n1 -- n2 n3          core            f_m_slash_mod
+: FM/MOD        \ d1 n1 -- n2-r n3-q          core            f_m_slash_mod
 \   floored division: d1 = n3*n1+n2, 0<=n2<n1 or n1<n2<=0
 
     dup >r dup 0< IF  negate >r dnegate r>  THEN
@@ -484,7 +484,7 @@ test" s>d 45 s>d 0= swap 45 = and"
 
 
 [IFUNDEF] SM/REM
-: SM/REM    ( d1 n1 -- n2 n3 )
+: SM/REM    ( d1 n1 -- n2-r n3-q )
 \ symmetric division: d1 = n3*n1+n2, sign(n2)=sign(d1) or 0
     over >r 
     dup >r abs 

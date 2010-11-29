@@ -37,7 +37,7 @@
 ;
 
 :: align-to ( val scale -- val' )
-    val scale  u/mod  drop scale u*    
+    val scale  u/mod  nip scale u*    
 ;
 
 :   w>b ( w -- lo hi )

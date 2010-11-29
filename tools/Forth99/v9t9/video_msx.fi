@@ -34,7 +34,7 @@ Create msx-stdpalette
     v9938-sprite-setup
     \ msx-enhregs write-vregs
     
-    $4000. msx-stride @  UM/MOD drop  NEGATE  msx-rowsperbankmask !
+    $4000. msx-stride @  UM/MOD nip  NEGATE  msx-rowsperbankmask !
 ;
 
 \   Setup a MSX command

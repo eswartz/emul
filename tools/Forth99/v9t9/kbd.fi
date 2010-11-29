@@ -166,7 +166,8 @@ cell    RamVar    randnoise
 true <EXPORT
 
 :   key?    ( -- f )
-    ints-check  kbdhead c@  kbdtail c@  = not  
+    ints-on (idle) ints-off 
+    kbdhead c@  kbdtail c@  = not  
 ;
 
 : (key)     ( -- key | 0 )
