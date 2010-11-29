@@ -433,8 +433,8 @@ public class InterpreterF99b implements Interpreter {
         			cpu.push((short) -1);
                 	cpu.push((short) 0);
         		} else {
+        			cpu.push((short) rem);
                 	cpu.push((short) quot);
-                	cpu.push((short) rem);
         		}
         	}
         	break;
