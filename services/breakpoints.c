@@ -1765,7 +1765,7 @@ void evaluate_breakpoint(Context * ctx) {
     assert(context_has_state(ctx));
     assert(ctx->stopped);
     assert(ctx->stopped_by_bp);
-    assert(ctx->exiting == 0);
+    assert(ctx->exited == 0);
     assert(EXT(ctx)->bp_ids == NULL);
 
     if (context_get_canonical_addr(ctx, get_regs_PC(ctx), &mem, &mem_addr, NULL, NULL) < 0) return;
