@@ -689,6 +689,31 @@ public class InterpreterF99b implements Interpreter {
 	        		break;
 	        	}
 	        	
+	        	case SYSCALL_FIND: {
+	        		// ( caddr lfa -- caddr 0 | nfa 1 )
+	        		int lfa = cpu.pop();
+	        		int caddr = cpu.pop();
+
+	        		boolean found = false;
+	        		while (lfa != 0) {
+	        			cpu.addCycles(3);
+	        			short nfa = (short) (lfa + 2);
+	        			if (entryMatches(caddr, nfa)) {
+	        				cpu.push(nfa);
+	        				cpu.push((short) 1);
+	        				found = true;
+	        				break;
+	        			} else {
+	        				lfa = iblock.domain.readWord(lfa);
+	        			}
+	        		}
+	        		
+	        		if (!found) {
+	        			cpu.push((short) caddr);
+	        			cpu.push((short) 0);
+	        		}
+	        		break;
+	        	}
 	        	/*
 	        	case SYSCALL_INTERPRET: {
 	        		int dp = cpu.pop();
@@ -751,6 +776,31 @@ public class InterpreterF99b implements Interpreter {
 
 		return false;
     }
+
+	/**
+	 * @param caddr
+	 * @param nfa
+	 * @return
+	 */
+	private boolean entryMatches(int caddr, short nfa) {
+		cpu.addCycles(10);
+		byte clen = iblock.domain.readByte(caddr++);
+		byte nlen = iblock.domain.readByte(nfa++);
+		if ((nlen & 0x80) == 0) /* hidden */
+			return false;
+		nlen &= 0x1f;
+		if (clen != nlen)
+			return false;
+		
+		cpu.addCycles(clen * 5);
+		while (clen-- > 0) {
+			char c = (char) iblock.domain.readByte(caddr++);
+			char n = (char) iblock.domain.readByte(nfa++);
+			if (Character.toLowerCase(c) != Character.toLowerCase(n))
+				return false;
+		}
+		return true;
+	}
 
 	private void doCmove() {
 		int tstep = cpu.pop();

@@ -184,7 +184,7 @@ User DP
 [IFUNDEF] FIND
 
 
-
+0 [if]
 : (find)      ( c-addr lfa -- c-addr 0 | nfa 1 ) 
     \ find word in dictionary    ( c-addr lfa -- c-addr 0 | nfa 1 ) 
     \ lfa is nfa-2
@@ -223,7 +223,17 @@ User DP
     then
     
 ;
+
+[else]
+
+: (find)      ( c-addr lfa -- c-addr 0 | nfa 1 ) 
+    \ find word in dictionary    ( c-addr lfa -- c-addr 0 | nfa 1 ) 
+    \ lfa is nfa-2
+
+    [ Isyscall c, 4 c, ]    
+;
     
+[then]
 
 
 : (lookup)      ( c-addr u -- caddr 0 | nfa 1|-1 )

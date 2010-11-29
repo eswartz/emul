@@ -314,11 +314,14 @@ public class InstF99b {
 	public static final int SYSCALL_DEBUG_OFF = 2;
 	/** Register the given xt in the symbol table */
 	public static final int SYSCALL_REGISTER_SYMBOL = 3;
+	/** Lookup the given string in the dictionary */
+	public static final int SYSCALL_FIND = 4;
 	
 	public static final String[] syscallStrings = {
 		"IDLE",
 		"+DBG",
 		"-DBG",
+		"FIND",
 	};
 	
 	/** for each inst:  SP read, SP left

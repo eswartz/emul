@@ -180,6 +180,9 @@ public class Cpu9900 extends CpuBase {
             contextSwitch(0);
             addCycles(26);
             
+            pins = 0;
+            ic = 0;
+            
             machine.getExecutor().interpretOneInstruction();
             //throw new AbortedException();
         } else if ((pins & PIN_INTREQ) != 0 && state.getStatus().getIntMask() >= ic) {	// already checked int mask in status
