@@ -499,7 +499,7 @@ static void command_resume(char * token, Channel * c) {
         else if (count != 1) {
             err = EINVAL;
         }
-        else if (context_has_state(ctx) && mode == RM_STEP_INTO) {
+        else if (context_has_state(ctx) && (mode == RM_STEP_INTO || mode == RM_REVERSE_STEP_INTO)) {
             ext->step_range_start = get_regs_PC(ctx);
             ext->step_range_end = ext->step_range_start + 1;
             ext->stepping_in_range = 1;
