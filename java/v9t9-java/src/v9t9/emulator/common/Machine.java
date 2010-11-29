@@ -8,7 +8,6 @@ package v9t9.emulator.common;
 
 import java.io.IOException;
 import java.text.MessageFormat;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Timer;
@@ -20,7 +19,6 @@ import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.settings.ISettingSection;
 import org.ejs.coffee.core.timer.FastTimer;
 
-import v9t9.emulator.clients.builtin.NotifyException;
 import v9t9.emulator.clients.builtin.SoundProvider;
 import v9t9.emulator.common.IEventNotifier.Level;
 import v9t9.emulator.hardware.MachineModel;
@@ -37,8 +35,6 @@ import v9t9.engine.files.DataFiles;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryModel;
-import v9t9.engine.modules.IModule;
-import v9t9.engine.modules.ModuleLoader;
 import v9t9.keyboard.KeyboardState;
 import v9t9.tools.asm.assembler.IInstructionFactory;
 
@@ -90,7 +86,6 @@ abstract public class Machine {
 	
 	protected  TimerTask memorySaverTask;
 	protected  ModuleManager moduleManager;
-	protected  List<IModule> modules;
 	
 	protected  RecordingEventNotifier recordingNotifier = new RecordingEventNotifier();
 	private IInstructionFactory instructionFactory;
@@ -100,8 +95,6 @@ abstract public class Machine {
 
 	
     public Machine(MachineModel machineModel) {
-    	WorkspaceSettings.CURRENT.register(settingModuleList);
-    	
     	pauseListener = new IPropertyListener() {
     		
     		public void propertyChanged(IProperty setting) {
@@ -140,9 +133,9 @@ abstract public class Machine {
     	this.vdp = machineModel.createVdp(this);
     	memoryModel.initMemory(this);
     	
-    	List<IModule> modules = getModules();
-    	if (modules != null)
-    		moduleManager = new ModuleManager(this, modules);
+    	if (!settingModuleList.getString().isEmpty()) {
+    		moduleManager = new ModuleManager(this);
+    	}
     	
     	cpu = machineModel.createCPU(this); 
 		keyboardState = new KeyboardState(this);
@@ -150,37 +143,6 @@ abstract public class Machine {
     	this.instructionFactory = machineModel.getInstructionFactory();
 	}
     
-    
-    public List<IModule> getModules() {
-    	if (modules == null) {
-    		String dbNameList = settingModuleList.getString();
-    		if (dbNameList.length() > 0) {
-    			boolean anyErrors = false;
-    			String[] dbNames = dbNameList.split(";");
-    			for (String dbName : dbNames) {
-		    		try {
-						List<IModule> modList = ModuleLoader.loadModuleList(dbName);
-						if (modules == null)
-							modules = modList;
-						else
-							modules.addAll(modList);
-		    		} catch (NotifyException e) {
-		    			notifyEvent(e.getEvent());
-					}
-		    		if (anyErrors) {
-		    			notifyEvent(IEventNotifier.Level.ERROR,
-		    					"Be sure your " + DataFiles.settingBootRomsPath.getName() + " setting is established in "
-								+ WorkspaceSettings.CURRENT.getConfigFilePath());
-		    			if (modules == null) {
-		    				modules = Collections.emptyList();
-		    			}
-		    		}
-    			}
-    		}
-    	}
-    	return modules;
-    }
-
 	public void notifyEvent(IEventNotifier.Level level, String string) {
 		if (client != null)
 			client.getEventNotifier().notifyEvent(this, level, string);

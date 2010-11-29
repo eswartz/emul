@@ -4,6 +4,7 @@
 package v9t9.emulator.common;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.ejs.coffee.core.properties.IPersistable;
@@ -11,11 +12,13 @@ import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.settings.ISettingSection;
 
 import v9t9.emulator.clients.builtin.NotifyException;
+import v9t9.engine.files.DataFiles;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.modules.IModule;
 import v9t9.engine.modules.MemoryEntryInfo;
+import v9t9.engine.modules.ModuleLoader;
 
 /**
  * @author ejs
@@ -29,11 +32,38 @@ public class ModuleManager implements IPersistable {
 	
 	public static SettingProperty settingLastLoadedModule = new SettingProperty("LastLoadedModule", "");
 	
-	public ModuleManager(Machine machine, List<IModule> modules) {
+	public ModuleManager(Machine machine) {
 		this.machine = machine;
-		this.modules = modules;
+		this.modules = Collections.emptyList();
 	}
 	
+
+    public void loadModules(String[] files, IEventNotifier notifier) {
+    	if (modules.isEmpty()) {
+
+			for (String dbName : files) {
+				boolean anyErrors = false;
+	    		try {
+					List<IModule> modList = ModuleLoader.loadModuleList(dbName);
+					if (modules == null || modules.isEmpty())
+						modules = modList;
+					else
+						modules.addAll(modList);
+	    		} catch (NotifyException e) {
+	    			notifier.notifyEvent(e.getEvent());
+				}
+	    		if (anyErrors) {
+	    			notifier.notifyEvent(this, IEventNotifier.Level.ERROR,
+	    					"Be sure your " + DataFiles.settingBootRomsPath.getName() + " setting is established in "
+							+ WorkspaceSettings.CURRENT.getConfigFilePath());
+	    			if (modules == null) {
+	    				modules = Collections.emptyList();
+	    			}
+	    		}
+    		}
+    	}
+    }
+
 	public IModule[] getModules() {
 		return (IModule[]) modules.toArray(new IModule[modules.size()]);
 	}

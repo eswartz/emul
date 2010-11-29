@@ -93,14 +93,15 @@ public class Emulator {
     }
     
 	protected void setupDefaults() {
+    	WorkspaceSettings.CURRENT.register(Machine.settingModuleList);
+		WorkspaceSettings.CURRENT.register(Cpu.settingCyclesPerSecond);
+		WorkspaceSettings.CURRENT.register(Cpu.settingRealTime);
 		
 		try {
+			WorkspaceSettings.CURRENT.setDirty(false);
 			WorkspaceSettings.loadFrom("workspace." + machine.getModel().getIdentifier());
 		} catch (IOException e) {
 		}
-		
-		WorkspaceSettings.CURRENT.register(Cpu.settingCyclesPerSecond);
-		WorkspaceSettings.CURRENT.register(Cpu.settingRealTime);
 		
     	Cpu.settingRealTime.setBoolean(true);
     	
@@ -131,8 +132,12 @@ public class Emulator {
 		memoryModel.loadMemory(client.getEventNotifier());
 		
 		if (machine.getModuleManager() != null) {
-			WorkspaceSettings.CURRENT.register(ModuleManager.settingLastLoadedModule);
 			try {
+	    		String dbNameList = Machine.settingModuleList.getString();
+	    		if (dbNameList.length() > 0) {
+	    			String[] dbNames = dbNameList.split(";");
+	    			machine.getModuleManager().loadModules(dbNames, client.getEventNotifier());
+	    		}
 	        	if (ModuleManager.settingLastLoadedModule.getString().length() > 0)
 	        		machine.getModuleManager().switchModule(ModuleManager.settingLastLoadedModule.getString());
 	        	
@@ -153,6 +158,9 @@ public class Emulator {
     public static void main(String args[]) throws IOException {
     	
     	EmulatorSettings.INSTANCE.load();
+
+		WorkspaceSettings.CURRENT.register(ModuleManager.settingLastLoadedModule);
+
     	try {
     		WorkspaceSettings.loadFrom(WorkspaceSettings.currentWorkspace.getString());
     	} catch (IOException e) {
@@ -187,7 +195,7 @@ public class Emulator {
         assert (model != null);
         
         machine = model.createMachine();
-        
+
         Client client = createClient(args, machine);
         
         Emulator.createAndRun(machine, client);

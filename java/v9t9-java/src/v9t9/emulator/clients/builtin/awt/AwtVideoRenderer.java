@@ -140,10 +140,10 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	}
 	private void doResizeToFit()  {
 		
-		if (desiredWidth == 0 || desiredHeight == 0) {
+		//if (desiredWidth == 0 || desiredHeight == 0) {
 			desiredWidth = (int) (vdpCanvas.getVisibleWidth() * zoomx);
 			desiredHeight = (int) (vdpCanvas.getVisibleHeight() * zoomy);
-		}
+		//}
 		
 		Dimension preferredSize = new Dimension(desiredWidth, desiredHeight);
 		if (!canvas.isPreferredSizeSet() || !canvas.getPreferredSize().equals(preferredSize)) {

@@ -73,4 +73,11 @@ public class WorkspaceSettings extends BaseStoredSettings {
 		CURRENT.trackedSettings.addAll(props);
 		CURRENT.load();
 	}
+
+	/**
+	 * @param b
+	 */
+	public void setDirty(boolean b) {
+		needsSave = b;
+	}
 }

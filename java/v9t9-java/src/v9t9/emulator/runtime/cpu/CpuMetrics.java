@@ -104,10 +104,13 @@ public class CpuMetrics {
         
         //System.out.println(entry.toSummary());
         
-        if (entries.size() >= 1024)
-        	entries = new ArrayList<MetricEntry>(entries.subList(entries.size() - 512, entries.size()));
-        
-		entries.add(entry);
+        synchronized (entries) {
+	        if (entries.size() >= 1024) 
+	        	entries.subList(0, entries.size() - 512).clear();
+	        	//entries = new ArrayList<MetricEntry>(entries.subList(entries.size() - 512, entries.size()));
+	        
+			entries.add(entry);
+        }
 		
         nLastCycleCount = totalCycles;
         
@@ -121,7 +124,7 @@ public class CpuMetrics {
 		}
 	}
 
-	public MetricEntry[] getLastEntries(int x) {
+	public synchronized MetricEntry[] getLastEntries(int x) {
 		int idx = Math.max(0, entries.size() - x);
 		List<MetricEntry> subList = entries.subList(idx, entries.size());
 		return (MetricEntry[]) subList.toArray(new MetricEntry[subList.size()]);
