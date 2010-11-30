@@ -108,7 +108,7 @@ abstract class StepCommand implements IDebugCommandHandler {
                             }
                         };
                         wait_list.add(done);
-                        execute(monitor, ctx, true, done);
+                        execute(monitor, ctx, !model.isInstructionSteppingEnabled(), done);
                     }
                 }
             }

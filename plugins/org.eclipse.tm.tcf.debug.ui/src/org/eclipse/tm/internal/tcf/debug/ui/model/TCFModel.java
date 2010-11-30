@@ -57,14 +57,6 @@ import org.eclipse.debug.ui.DebugUITools;
 import org.eclipse.debug.ui.IDebugUIConstants;
 import org.eclipse.debug.ui.IDebugView;
 import org.eclipse.debug.ui.ISourcePresentation;
-import org.eclipse.ui.console.ConsolePlugin;
-import org.eclipse.ui.console.IConsole;
-import org.eclipse.ui.console.IConsoleConstants;
-import org.eclipse.ui.console.IConsoleManager;
-import org.eclipse.ui.console.IConsoleView;
-import org.eclipse.ui.console.IOConsole;
-import org.eclipse.ui.console.IOConsoleInputStream;
-import org.eclipse.ui.console.IOConsoleOutputStream;
 import org.eclipse.debug.ui.contexts.ISuspendTrigger;
 import org.eclipse.debug.ui.contexts.ISuspendTriggerListener;
 import org.eclipse.debug.ui.sourcelookup.CommonSourceNotFoundEditorInput;
@@ -78,10 +70,10 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.BusyIndicator;
+import org.eclipse.swt.graphics.Device;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.graphics.Device;
 import org.eclipse.tm.internal.tcf.debug.model.ITCFConstants;
 import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
@@ -111,8 +103,8 @@ import org.eclipse.tm.tcf.services.IMemoryMap;
 import org.eclipse.tm.tcf.services.IProcesses;
 import org.eclipse.tm.tcf.services.IRegisters;
 import org.eclipse.tm.tcf.services.IRunControl;
-import org.eclipse.tm.tcf.services.ISymbols;
 import org.eclipse.tm.tcf.services.IRunControl.RunControlContext;
+import org.eclipse.tm.tcf.services.ISymbols;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 import org.eclipse.tm.tcf.util.TCFTask;
 import org.eclipse.ui.IEditorInput;
@@ -122,6 +114,14 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.console.ConsolePlugin;
+import org.eclipse.ui.console.IConsole;
+import org.eclipse.ui.console.IConsoleConstants;
+import org.eclipse.ui.console.IConsoleManager;
+import org.eclipse.ui.console.IConsoleView;
+import org.eclipse.ui.console.IOConsole;
+import org.eclipse.ui.console.IOConsoleInputStream;
+import org.eclipse.ui.console.IOConsoleOutputStream;
 import org.eclipse.ui.texteditor.IDocumentProvider;
 import org.eclipse.ui.texteditor.ITextEditor;
 
@@ -141,6 +141,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         final static String EDITOR_ID = "org.eclipse.cdt.dsf.ui.disassembly";
         final static DisassemblyEditorInput INSTANCE = new DisassemblyEditorInput();
 
+        @SuppressWarnings("rawtypes")
         public Object getAdapter(Class adapter) {
             return null;
         }
@@ -485,6 +486,8 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         }
     };
 
+    private volatile boolean instruction_stepping_enabled;
+
     TCFModel(TCFLaunch launch) {
         this.launch = launch;
         display = PlatformUI.getWorkbench().getDisplay();
@@ -506,6 +509,19 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         adapters.put(BackReturnCommand.class, new BackReturnCommand(this));
         expr_manager = DebugPlugin.getDefault().getExpressionManager();
         expr_manager.addExpressionListener(expressions_listener);
+    }
+
+    /**
+     * Add an adapter for given type.
+     *
+     * @param adapterType  the type the adapter implements
+     * @param adapter  the adapter implementing <code>adapterType</code>
+     */
+    public void setAdapter(Class<?> adapterType, Object adapter) {
+        synchronized (adapters) {
+            assert adapterType.isInstance(adapter);
+            adapters.put(adapterType, adapter);
+        }
     }
 
     @SuppressWarnings("rawtypes")
@@ -1107,7 +1123,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                     }
                 }
                 if (disassembly_available &&
-                        (editor_input == null || editor_id == null) &&
+                        (editor_input == null || editor_id == null || instruction_stepping_enabled) &&
                         PlatformUI.getWorkbench().getEditorRegistry().findEditor(
                                 DisassemblyEditorInput.EDITOR_ID) != null) {
                     editor_id = DisassemblyEditorInput.EDITOR_ID;
@@ -1313,5 +1329,21 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 }
             }
         });
+    }
+
+    /**
+     * Set whether instruction stepping mode should be enabled or not.
+     *
+     * @param enabled
+     */
+    public void setInstructionSteppingEnabled(boolean enabled) {
+        instruction_stepping_enabled = enabled;
+    }
+
+    /**
+     * @return whether instruction stepping is enabled
+     */
+    public boolean isInstructionSteppingEnabled() {
+        return instruction_stepping_enabled;
     }
 }

@@ -15,7 +15,8 @@
   	<extension point="org.eclipse.tm.tcf.debug.ui.launch_context">
    		<class name="org.eclipse.tm.internal.tcf.cdt.ui.TCFLaunchContext" />
    	</extension>
-   <extension
+   	
+    <extension
          point="org.eclipse.core.runtime.adapters">
       <factory
             adaptableType="org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode"
@@ -24,6 +25,13 @@
                type="org.eclipse.cdt.debug.internal.ui.disassembly.dsf.IDisassemblyBackend">
          </adapter>
       </factory>
-   </extension>
+      <factory
+            adaptableType="org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode"
+            class="org.eclipse.tm.internal.tcf.cdt.ui.TCFNodeAdapterFactory">
+         <adapter
+               type="org.eclipse.cdt.debug.core.model.ISteppingModeTarget">
+         </adapter>
+      </factory>
+    </extension>
 
 </plugin>

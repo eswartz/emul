@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
-import org.eclipse.core.internal.runtime.AdapterManager;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.PlatformObject;
