@@ -145,6 +145,7 @@ public class TraceView extends ViewPart implements Protocol.ChannelOpenListener 
                 String service, String name, byte[] data) {
             try {
                 if ("Locator".equals(service) && "peerHeartBeat".equals(name)) return;
+                appendTime(bf);
                 bf.append("Inp: ");
                 bf.append(type);
                 if (token != null) {
@@ -174,6 +175,7 @@ public class TraceView extends ViewPart implements Protocol.ChannelOpenListener 
                 String service, String name, byte[] data) {
             try {
                 if ("Locator".equals(service) && "peerHeartBeat".equals(name)) return;
+                appendTime(bf);
                 bf.append("Out: ");
                 bf.append(type);
                 if (token != null) {
@@ -267,6 +269,20 @@ public class TraceView extends ViewPart implements Protocol.ChannelOpenListener 
                 p.text.setBackground(parent.getDisplay().getSystemColor(SWT.COLOR_WHITE));
             }
         });
+    }
+
+    private void appendTime(StringBuffer bf) {
+        String s = Long.toString(System.currentTimeMillis());
+        int l = s.length();
+        if (l < 6) return;
+        bf.append(s.charAt(l - 6));
+        bf.append(s.charAt(l - 5));
+        bf.append(s.charAt(l - 4));
+        bf.append('.');
+        bf.append(s.charAt(l - 3));
+        bf.append(s.charAt(l - 2));
+        bf.append(s.charAt(l - 1));
+        bf.append(' ');
     }
 
     private void appendData(StringBuffer bf, byte[] data) throws UnsupportedEncodingException {
