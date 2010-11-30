@@ -52,7 +52,6 @@ struct RegisterDefinition {
     size_t          size;          /* register size in bytes */
     int16_t         dwarf_id;      /* ID of the register in DWARF sections, or -1 */
     int16_t         eh_frame_id;   /* ID of the register in .eh_frame section, or -1 */
-    uint8_t         traceable;     /* register value can be traced using .eh_frame of .debug_frame */
     uint8_t         big_endian;    /* 0 - little endian, 1 -  big endian */
     uint8_t         fp_value;      /* true if the register value is a floating-point value */
     uint8_t         no_read;       /* true if context value can not be read */

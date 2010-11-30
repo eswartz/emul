@@ -672,10 +672,10 @@ int get_next_stack_frame(StackFrame * frame, StackFrame * down) {
         Trap trap;
         if (set_trap(&trap)) {
             int i;
-            frame->fp = (ContextAddress)evaluate_stack_trace_commands(ctx, frame, dwarf_stack_trace_fp);
-            for (i = 0; i < dwarf_stack_trace_regs_cnt; i++) {
-                uint64_t v = evaluate_stack_trace_commands(ctx, frame, dwarf_stack_trace_regs[i]);
-                if (write_reg_value(down, dwarf_stack_trace_regs[i]->reg, v) < 0) exception(errno);
+            frame->fp = (ContextAddress)evaluate_stack_trace_commands(ctx, frame, info->fp);
+            for (i = 0; i < info->reg_cnt; i++) {
+                uint64_t v = evaluate_stack_trace_commands(ctx, frame, info->regs[i]);
+                if (write_reg_value(down, info->regs[i]->reg, v) < 0) exception(errno);
             }
             clear_trap(&trap);
         }

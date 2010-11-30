@@ -127,9 +127,16 @@ static RegisterRules * get_reg(StackFrameRegisters * regs, int reg) {
         int n = regs->regs_cnt++;
         memset(regs->regs + n, 0, sizeof(RegisterRules));
         reg_def = get_reg_by_id(rules.ctx, n, rules.eh_frame ? REGNUM_EH_FRAME : REGNUM_DWARF);
-        if (reg_def != NULL && reg_def->traceable) {
-            /* It looks like GCC assumes that an unspecified register implies "same value" */
-            regs->regs[n].rule = RULE_SAME_VALUE;
+        if (reg_def == NULL) continue;
+        /* It looks like GCC assumes that an unspecified BP register implies "same value" */
+        switch (rules.section->file->machine) {
+        case 3: /* i386 */
+        case 6: /* i486 */
+            if (n == 5) regs->regs[n].rule = RULE_SAME_VALUE;
+            break;
+        case 62: /* X86 64 */
+            if (n == 6) regs->regs[n].rule = RULE_SAME_VALUE;
+            break;
         }
     }
     return regs->regs + reg;

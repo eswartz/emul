@@ -1061,7 +1061,6 @@ static void read_register_property(InputStream * inp, const char * name, void * 
     else if (strcmp(name, "Size") == 0) p->def.size = (uint16_t)json_read_long(inp);
     else if (strcmp(name, "DwarfID") == 0) p->def.dwarf_id = (int16_t)json_read_long(inp);
     else if (strcmp(name, "EhFrameID") == 0) p->def.eh_frame_id = (int16_t)json_read_long(inp);
-    else if (strcmp(name, "Traceable") == 0) p->def.traceable = (uint8_t)json_read_boolean(inp);
     else if (strcmp(name, "BigEndian") == 0) p->def.big_endian = (uint8_t)json_read_boolean(inp);
     else json_skip_object(inp);
 }

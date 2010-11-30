@@ -102,7 +102,6 @@ static void write_context(OutputStream * out, char * id,
         json_write_long(out, reg_def->eh_frame_id);
     }
 
-    write_boolean_member(out, "Traceable", reg_def->traceable);
     write_boolean_member(out, "BigEndian", reg_def->big_endian);
     write_boolean_member(out, "Float", reg_def->fp_value);
     write_boolean_member(out, "Readable", !reg_def->no_read);
