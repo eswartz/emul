@@ -778,6 +778,31 @@ static void add_state(CompUnit * Unit, LineNumbersState * state) {
     Unit->mStates[Unit->mStatesCnt++] = *state;
 }
 
+static int state_text_pos_comparator(const void * x1, const void * x2) {
+    LineNumbersState * s1 = *(LineNumbersState **)x1;
+    LineNumbersState * s2 = *(LineNumbersState **)x2;
+    if (s1->mFile < s2->mFile) return -1;
+    if (s1->mFile > s2->mFile) return +1;
+    if (s1->mLine < s2->mLine) return -1;
+    if (s1->mLine > s2->mLine) return +1;
+    if (s1->mColumn < s2->mColumn) return -1;
+    if (s1->mColumn > s2->mColumn) return +1;
+    return 0;
+}
+
+static void compute_reverse_lookup_indices(CompUnit * Unit) {
+    U4_T i;
+    LineNumbersState ** arr = (LineNumbersState **)loc_alloc(sizeof(LineNumbersState *) * Unit->mStatesCnt);
+    for (i = 0; i < Unit->mStatesCnt; i++) arr[i] = Unit->mStates + i;
+    qsort(arr, Unit->mStatesCnt, sizeof(LineNumbersState *), state_text_pos_comparator);
+    for (i = 0; i < Unit->mStatesCnt - 1; i++) {
+        LineNumbersState * s = arr[i];
+        LineNumbersState * n = arr[i + 1];
+        s->mNext = n - Unit->mStates;
+    }
+    loc_free(arr);
+}
+
 void load_line_numbers(CompUnit * Unit) {
     Trap trap;
     DWARFCache * Cache = (DWARFCache *)Unit->mFile->dwarf_dt_cache;
@@ -939,6 +964,7 @@ void load_line_numbers(CompUnit * Unit) {
             }
         }
         dio_ExitSection();
+        compute_reverse_lookup_indices(Unit);
         clear_trap(&trap);
     }
     else {

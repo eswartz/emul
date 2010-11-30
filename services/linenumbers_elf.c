@@ -55,16 +55,15 @@ static int cmp_file(char * file, char * dir, char * name) {
     return 0;
 }
 
-static void call_client(CompUnit * unit, LineNumbersState * state, LineNumbersState * next,
-                        ContextAddress state_addr, ContextAddress next_addr,
-                        LineNumbersCallBack * client, void * args) {
+static void call_client(CompUnit * unit, LineNumbersState * state,
+                        ContextAddress state_addr, LineNumbersCallBack * client, void * args) {
     CodeArea area;
     FileInfo * state_file = NULL;
     memset(&area, 0, sizeof(area));
     area.start_line = state->mLine;
     area.start_column = state->mColumn;
-    area.end_line = next->mLine;
-    area.end_column = next->mColumn;
+    area.end_line = (unit->mStates + state->mNext)->mLine;
+    area.end_column = (unit->mStates + state->mNext)->mColumn;
     if (state->mFile >= 1 && state->mFile <= unit->mFilesCnt) {
         state_file = unit->mFiles + (state->mFile - 1);
     }
@@ -73,7 +72,7 @@ static void call_client(CompUnit * unit, LineNumbersState * state, LineNumbersSt
         area.directory = state_file->mDir;
     }
     area.start_address = state_addr;
-    area.end_address = next_addr;
+    area.end_address = (state + 1)->mAddress - state->mAddress + state_addr;
     area.isa = state->mISA;
     area.is_statement = (state->mFlags & LINE_IsStmt) != 0;
     area.basic_block = (state->mFlags & LINE_BasicBlock) != 0;
@@ -120,25 +119,23 @@ int line_to_address(Context * ctx, char * file_name, int line, int column, LineN
                             U4_T j;
                             for (j = 0; j < unit->mStatesCnt - 1; j++) {
                                 LineNumbersState * state = unit->mStates + j;
-                                LineNumbersState * next = unit->mStates + j + 1;
-                                char * state_dir = unit->mDir;
-                                char * state_file = unit->mObject->mName;
-                                ContextAddress addr = 0;
-                                ContextAddress next_addr = 0;
-                                if (state->mFlags & LINE_EndSequence) continue;
-                                if ((unsigned)line < state->mLine) continue;
-                                if ((unsigned)line >= next->mLine) continue;
-                                if (state->mFile >= 1 && state->mFile <= unit->mFilesCnt) {
-                                    FileInfo * f = unit->mFiles + (state->mFile - 1);
-                                    state_dir = f->mDir;
-                                    state_file = f->mName;
+                                LineNumbersState * next = unit->mStates + state->mNext;
+                                if ((state->mFlags & LINE_EndSequence) == 0 && state->mFile == next->mFile) {
+                                    char * state_dir = unit->mDir;
+                                    char * state_file = unit->mObject->mName;
+                                    ContextAddress addr = 0;
+                                    if ((unsigned)line < state->mLine) continue;
+                                    if ((unsigned)line >= next->mLine) continue;
+                                    if (state->mFile >= 1 && state->mFile <= unit->mFilesCnt) {
+                                        FileInfo * f = unit->mFiles + (state->mFile - 1);
+                                        state_dir = f->mDir;
+                                        state_file = f->mName;
+                                    }
+                                    if (!cmp_file(file_name, state_dir, state_file)) continue;
+                                    addr = elf_map_to_run_time_address(ctx, file, unit->mTextSection, state->mAddress);
+                                    if (addr == 0) continue;
+                                    call_client(unit, state, addr, client, args);
                                 }
-                                if (!cmp_file(file_name, state_dir, state_file)) continue;
-                                addr = elf_map_to_run_time_address(ctx, file, unit->mTextSection, state->mAddress);
-                                if (addr == 0) continue;
-                                next_addr = elf_map_to_run_time_address(ctx, file, unit->mTextSection, next->mAddress);
-                                if (next_addr == 0) continue;
-                                call_client(unit, state, next, addr, next_addr, client, args);
                             }
                         }
                     }
@@ -180,10 +177,10 @@ int address_to_line(Context * ctx, ContextAddress addr0, ContextAddress addr1, L
             for (i = 0; i < unit->mStatesCnt - 1; i++) {
                 LineNumbersState * state = unit->mStates + i;
                 LineNumbersState * next = unit->mStates + i + 1;
-                if ((state->mFlags & LINE_EndSequence) == 0) {
+                if ((state->mFlags & LINE_EndSequence) == 0 && state->mFile == next->mFile) {
                     ContextAddress state_addr = state->mAddress - range->mAddr + range_rt_addr;
                     ContextAddress next_addr = next->mAddress - range->mAddr + range_rt_addr;
-                    if (next_addr > addr0 && state_addr < addr1) call_client(unit, state, next, state_addr, next_addr, client, args);
+                    if (next_addr > addr0 && state_addr < addr1) call_client(unit, state, state_addr, client, args);
                 }
             }
         }
