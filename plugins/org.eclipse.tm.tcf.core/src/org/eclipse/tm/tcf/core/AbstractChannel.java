@@ -261,7 +261,7 @@ public abstract class AbstractChannel implements IChannel {
                     }
                     Protocol.invokeLater(new Runnable() {
                         public void run() {
-                            if (out_tokens.isEmpty() && eos_err_report == null) {
+                            if (out_tokens.isEmpty() && eos_err_report == null && state != STATE_OPENING) {
                                 close();
                             }
                             else {
