@@ -476,12 +476,12 @@ static TerminalOutput * read_terminal_output(Terminal * prs, int fd, char * id, 
     async_req_post(&out->req);
     return out;
 }
+
 /*
  * Set the environment variable "name" to the value "value". If the variable
  * exists already, override it or just skip.
  */
-static void envp_add(char ***envp, int *env_len, const char *name, const char *value, int override)
-{
+static void envp_add(char ***envp, int *env_len, const char *name, const char *value, int override) {
     char **env;
     size_t len;
     int i;
@@ -490,87 +490,75 @@ static void envp_add(char ***envp, int *env_len, const char *name, const char *v
     assert(name);
     assert(value);
 
-    if(*envp==NULL && *env_len==0) {
-        *envp=(char **)loc_alloc(sizeof(char *));
-        *envp[0]=NULL;
-        *env_len=1;
+    if (*envp == NULL && *env_len == 0) {
+        *envp = (char **)loc_alloc(sizeof(char *));
+        *envp[0] = NULL;
+        *env_len = 1;
     }
 
-    for(env=*envp,i=0,len=strlen(name);env[i];i++)
-        if(strncmp(env[i], name, len) == 0 && env[i][len] == '=')
-            break;
-    if(env[i]) {
+    for (env = *envp, i = 0, len = strlen(name); env[i]; i++)
+        if (strncmp(env[i], name, len) == 0 && env[i][len] == '=') break;
+    if (env[i]) {
         //override
-        if(override)
-            loc_free(env[i]);
-        else
-            return;
-    }else {
+        if (override) loc_free(env[i]);
+        else return;
+    }
+    else {
         //new variable
-        if(i >= *env_len -1) {
+        if (i >= *env_len - 1) {
             *env_len += 10;
             env = *envp = (char **)loc_realloc(env, *env_len * sizeof(char *));
         }
-        env[i + 1]=NULL;
+        env[i + 1] = NULL;
     }
-    env[i]=(char *)loc_alloc_zero(len+1+strlen(value)+1);
-    snprintf(env[i],len+1+strlen(value)+1,"%s=%s",name,value);
+    env[i] = (char *)loc_alloc_zero(len + 1 + strlen(value) + 1);
+    snprintf(env[i], len + 1 + strlen(value) + 1, "%s=%s", name, value);
 }
 
-static void set_terminal_env(char ***envp, int *env_len, const char *pty_type, const char *encoding, const char * exe)
-{
+static void set_terminal_env(char ***envp, int *env_len, const char *pty_type,
+        const char *encoding, const char * exe) {
 #if TERMINALS_NO_LOGIN
     char *value;
-    const char *env_array [] = {
-            "USER",
-            "LOGNAME",
-            "HOME",
-            "PATH",
-            NULL
-    };
+    const char *env_array[] = { "USER", "LOGNAME", "HOME", "PATH", NULL };
 #endif
-    int i=0;
-    char **new_envp=NULL;
+    int i = 0;
+    char **new_envp = NULL;
 
     //convert the envp memory layout
-    new_envp=(char **)loc_alloc((*env_len + 1) * sizeof(char *));
-    for(i=0;i<*env_len;i++) {
-        new_envp[i]=(char *)loc_alloc(strlen((*envp)[i])+1);
-        memcpy(new_envp[i],(*envp)[i],strlen((*envp)[i])+1);
+    new_envp = (char **)loc_alloc((*env_len + 1) * sizeof(char *));
+    for (i = 0; i < *env_len; i++) {
+        new_envp[i] = (char *)loc_alloc(strlen((*envp)[i]) + 1);
+        memcpy(new_envp[i], (*envp)[i], strlen((*envp)[i]) + 1);
     }
-    new_envp[i]=NULL;
+    new_envp[i] = NULL;
     loc_free(*envp);
 
-    *envp=new_envp;
-    *env_len= i + 1;
+    *envp = new_envp;
+    *env_len = i + 1;
 
-    if(*pty_type)
-        envp_add(envp,env_len,"TERM",pty_type,1);
-    if(*encoding)
-        envp_add(envp,env_len,"LANG",encoding,1);
-    envp_add(envp,env_len,"SHELL",exe,1);
+    if (*pty_type) envp_add(envp, env_len, "TERM", pty_type, 1);
+    if (*encoding) envp_add(envp, env_len, "LANG", encoding, 1);
+    envp_add(envp, env_len, "SHELL", exe, 1);
 
 #if TERMINALS_NO_LOGIN
-    i=0;
-    while(env_array[i]) {
-        value=getenv(env_array[i]);
-        if(value)
-            envp_add(envp,env_len,env_array[i],value,0);
+    i = 0;
+    while (env_array[i]) {
+        value = getenv(env_array[i]);
+        if (value) envp_add(envp, env_len, env_array[i], value, 0);
         ++i;
     }
 #endif
 }
 
-static void env_free (char **envp, int envp_len)
-{
+static void env_free(char **envp, int envp_len) {
     int i;
-    if(envp)
-    {
-        for(i=0;i<envp_len && envp[i];i++)
+    if (envp) {
+        for (i = 0; i < envp_len && envp[i]; i++)
             loc_free(envp[i]);
         loc_free(envp);
     }
 }
+
 static int start_terminal(Channel * c, const char * pty_type, const char * encoding, char ** envp,
         int envp_len, const char * exe, const char ** args, int * pid, Terminal ** prs) {
     int err = 0;
@@ -586,7 +574,10 @@ static int start_terminal(Channel * c, const char * pty_type, const char * encod
         if (tty_slave_name == NULL) err = EINVAL;
     }
 
-    if (ioctl(fd_tty_master, TIOCGWINSZ, (char *) &size) < 0) err = errno;
+    if (ioctl(fd_tty_master, TIOCGWINSZ, &size) < 0 || size.ws_col <= 0 || size.ws_row <= 0) {
+        size.ws_col = 80;
+        size.ws_row = 24;
+    }
 
     if (!err && fd_tty_master < 3) {
         int fd0 = fd_tty_master;
@@ -609,7 +600,7 @@ static int start_terminal(Channel * c, const char * pty_type, const char * encod
             if (!err && (fd = sysconf(_SC_OPEN_MAX)) < 0) err = errno;
             if (!err && (fd_tty_slave = open(tty_slave_name, O_RDWR)) < 0) err = errno;
 #if defined(TIOCSCTTY)
-            if (!err && (ioctl(fd_tty_slave, TIOCSCTTY, (char *) 0)) < 0) err = errno;
+            if (!err && (ioctl(fd_tty_slave, TIOCSCTTY, NULL)) < 0) err = errno;
 #endif
             if (!err && dup2(fd_tty_slave, 0) < 0) err = errno;
             if (!err && dup2(fd_tty_slave, 1) < 0) err = errno;
