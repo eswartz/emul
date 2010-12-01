@@ -183,7 +183,13 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
                     for (int i = 0; i < arr.length; i++) {
                         if (arr[i].id.equals(id)) {
                             if (arr[i].children_error != null) {
-                                loadChildren(arr[i]);
+                                TreeItem item = findItem(arr[i]);
+                                boolean visible = item != null;
+                                while (visible && item != null) {
+                                    if (!item.getExpanded()) visible = false;
+                                    item = item.getParentItem();
+                                }
+                                if (visible) loadChildren(arr[i]);
                             }
                             break;
                         }
@@ -596,7 +602,6 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
         if (info.children != null) {
             for (PeerInfo p : info.children) disconnectPeer(p);
         }
-        assert !info.children_pending || info == peer_info || info.channel != null;
         if (info.listener != null) {
             info.locator.removeListener(info.listener);
             info.listener = null;
@@ -615,12 +620,12 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
         assert Thread.currentThread() == display.getThread();
         if (parent.children_pending) return;
         assert parent.children == null;
-        assert parent.listener == null;
-        assert parent.channel == null;
         parent.children_pending = true;
         parent.children_error = null;
         Protocol.invokeAndWait(new Runnable() {
             public void run() {
+                assert parent.listener == null;
+                assert parent.channel == null;
                 if (!canHaveChildren(parent)) {
                     doneLoadChildren(parent, null, new PeerInfo[0]);
                 }
@@ -662,7 +667,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
                         public void onChannelOpened() {
                             assert !opened;
                             assert !closed;
-                            assert parent.children_pending;
+                            if (parent.channel != channel) return;
                             opened = true;
                             parent.locator = parent.channel.getRemoteService(ILocator.class);
                             if (parent.locator == null) {
