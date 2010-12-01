@@ -31,9 +31,12 @@ public class RunControlProxy implements IRunControl {
     private class RunContext implements IRunControl.RunControlContext {
 
         private final Map<String, Object> props;
+        private final boolean has_state;
 
         RunContext(Map<String, Object> props) {
             this.props = props;
+            Boolean b = (Boolean)props.get(PROP_HAS_STATE);
+            has_state = b != null && b.booleanValue();
         }
 
         public Map<String, Object> getProperties() {
@@ -66,8 +69,7 @@ public class RunControlProxy implements IRunControl {
         }
 
         public boolean hasState() {
-            Boolean b = (Boolean)props.get(PROP_HAS_STATE);
-            return b != null && b.booleanValue();
+            return has_state;
         }
 
         public boolean canResume(int mode) {

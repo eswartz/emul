@@ -55,10 +55,16 @@ public class TCFNodeLaunch extends TCFNode implements ISymbolOwner {
     }
 
     private boolean searchSuspendedThreads(TCFNodeExecContext n, ArrayList<TCFNode> nodes, Runnable r) {
-        TCFDataCache<TCFContextState> state = n.getState();
-        if (!state.validate(r)) return false;
-        TCFContextState s = state.getData();
-        if (s != null && s.is_suspended) nodes.add(n);
+        TCFDataCache<IRunControl.RunControlContext> run_context = n.getRunContext();
+        if (!run_context.validate(r)) return false;
+        IRunControl.RunControlContext ctx = run_context.getData();
+        if (ctx != null && ctx.hasState()) {
+            TCFDataCache<TCFContextState> state = n.getState();
+            if (!state.validate(r)) return false;
+            TCFContextState s = state.getData();
+            if (s != null && s.is_suspended) nodes.add(n);
+            return true;
+        }
         return searchSuspendedThreads(n.getChildren(), nodes, r);
     }
 

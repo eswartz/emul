@@ -103,7 +103,6 @@ import org.eclipse.tm.tcf.services.IMemoryMap;
 import org.eclipse.tm.tcf.services.IProcesses;
 import org.eclipse.tm.tcf.services.IRegisters;
 import org.eclipse.tm.tcf.services.IRunControl;
-import org.eclipse.tm.tcf.services.IRunControl.RunControlContext;
 import org.eclipse.tm.tcf.services.ISymbols;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 import org.eclipse.tm.tcf.util.TCFTask;
@@ -862,7 +861,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                             if (rc != null) {
                                 final Runnable done = this;
                                 command = rc.getContext(id, new IRunControl.DoneGetContext() {
-                                    public void doneGetContext(IToken token, Exception error, RunControlContext context) {
+                                    public void doneGetContext(IToken token, Exception error, IRunControl.RunControlContext context) {
                                         if (error != null) {
                                             set(token, error, null);
                                         }

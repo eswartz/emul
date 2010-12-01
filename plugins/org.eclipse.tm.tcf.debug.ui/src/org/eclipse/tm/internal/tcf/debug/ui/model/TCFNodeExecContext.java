@@ -812,17 +812,16 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
             TCFNodeExecContext e = (TCFNodeExecContext)n;
             if (!e.run_context.validate(done)) return null;
             IRunControl.RunControlContext ctx = e.run_context.getData();
-            if (ctx == null) continue;
-            if (ctx.hasState()) {
+            if (ctx != null && ctx.hasState()) {
                 TCFDataCache<TCFContextState> state_cache = e.getState();
                 if (!state_cache.validate(done)) return null;
                 TCFContextState state_data = state_cache.getData();
                 if (state_data != null && state_data.is_suspended) return true;
             }
-            if (ctx.isContainer()) {
+            else {
                 Boolean b = e.hasSuspendedChildren(done);
                 if (b == null) return null;
-                if (b.booleanValue()) return true;
+                if (b) return true;
             }
         }
         return false;

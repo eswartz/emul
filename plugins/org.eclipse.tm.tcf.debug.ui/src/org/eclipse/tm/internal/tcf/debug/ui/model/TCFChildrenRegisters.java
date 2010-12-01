@@ -25,7 +25,6 @@ public class TCFChildrenRegisters extends TCFChildren {
 
     void onSuspended() {
         for (TCFNode n : getNodes()) ((TCFNodeRegister)n).onSuspended();
-        reset();
     }
 
     void onRegistersChanged() {

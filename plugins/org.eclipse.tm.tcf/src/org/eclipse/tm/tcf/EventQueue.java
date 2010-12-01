@@ -46,7 +46,6 @@ class EventQueue implements IEventQueue, Runnable {
 
             public void done(IJobChangeEvent event) {
                 job_cnt--;
-                if (Job.getJobManager().isIdle()) job_cnt = 0;
             }
 
             public void running(IJobChangeEvent event) {
@@ -120,6 +119,7 @@ class EventQueue implements IEventQueue, Runnable {
     }
 
     public synchronized int getCongestion() {
+        if (Job.getJobManager().isIdle()) job_cnt = 0;
         int l0 = job_cnt / 10 - 100;
         int l1 = queue.size() / 10 - 100;
         if (l1 > l0) l0 = l1;
