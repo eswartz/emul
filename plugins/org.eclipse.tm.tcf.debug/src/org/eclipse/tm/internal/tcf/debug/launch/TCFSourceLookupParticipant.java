@@ -20,8 +20,8 @@ import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.debug.core.sourcelookup.AbstractSourceLookupParticipant;
+import org.eclipse.debug.core.sourcelookup.containers.LocalFileStorage;
 import org.eclipse.tm.tcf.services.ILineNumbers;
 
 /**
@@ -53,11 +53,12 @@ public class TCFSourceLookupParticipant extends AbstractSourceLookupParticipant 
     public Object[] findSourceElements(Object object) throws CoreException {
         String name = getSourceName(object);
         if (name != null) {
-            IPath path = new Path(name);
-            if (path.isAbsolute()) {
-                URI uri = URIUtil.toURI(path);
+            File file = new File(name);
+            if (file.isAbsolute() && file.exists() && file.isFile()) {
+                URI uri = URIUtil.toURI(name);
                 IFile[] arr = ResourcesPlugin.getWorkspace().getRoot().findFilesForLocationURI(uri);
                 if (arr != null && arr.length > 0) return arr;
+                return new Object[]{ new LocalFileStorage(file) };
             }
         }
         Object[] res = super.findSourceElements(name);
