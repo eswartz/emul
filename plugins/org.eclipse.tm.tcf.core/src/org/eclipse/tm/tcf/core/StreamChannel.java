@@ -31,6 +31,10 @@ public abstract class StreamChannel extends AbstractChannel {
 
     private int bin_data_size;
 
+    private final byte[] buf = new byte[0x1000];
+    private int buf_pos;
+    private int buf_len;
+
     public StreamChannel(IPeer remote_peer) {
         super(remote_peer);
     }
@@ -42,6 +46,20 @@ public abstract class StreamChannel extends AbstractChannel {
     protected abstract int get() throws IOException;
     protected abstract void put(int n) throws IOException;
 
+    protected int get(byte[] buf) throws IOException {
+        int i = 0;
+        while (i < buf.length) {
+            int b = get();
+            if (b < 0) {
+                if (i == 0) return -1;
+                break;
+            }
+            buf[i++] = (byte)b;
+            if (i >= bin_data_size) break;
+        }
+        return i;
+    }
+
     protected void put(byte[] buf) throws IOException {
         for (byte b : buf) put(b & 0xff);
     }
@@ -49,24 +67,37 @@ public abstract class StreamChannel extends AbstractChannel {
     @Override
     protected final int read() throws IOException {
         for (;;) {
-            int res = get();
-            if (res < 0) return EOS;
-            assert res >= 0 && res <= 0xff;
+            while (buf_pos >= buf_len) {
+                buf_len = get(buf);
+                buf_pos = 0;
+                if (buf_len < 0) return EOS;
+            }
+            int res = buf[buf_pos++] & 0xff;
             if (bin_data_size > 0) {
                 bin_data_size--;
                 return res;
             }
             if (res != ESC) return res;
-            int n = get();
+            while (buf_pos >= buf_len) {
+                buf_len = get(buf);
+                buf_pos = 0;
+                if (buf_len < 0) return EOS;
+            }
+            int n = buf[buf_pos++] & 0xff;
             switch (n) {
             case 0: return ESC;
             case 1: return EOM;
             case 2: return EOS;
             case 3:
                 for (int i = 0;; i += 7) {
-                    res = get();
-                    bin_data_size |= (res & 0x7f) << i;
-                    if ((res & 0x80) == 0) break;
+                    while (buf_pos >= buf_len) {
+                        buf_len = get(buf);
+                        buf_pos = 0;
+                        if (buf_len < 0) return EOS;
+                    }
+                    int m = buf[buf_pos++] & 0xff;
+                    bin_data_size |= (m & 0x7f) << i;
+                    if ((m & 0x80) == 0) break;
                 }
                 break;
             default:
