@@ -505,6 +505,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                                     exit(new Exception("Invalid suspend reason of main thread after test start: " + reason + " " + pc));
                                     return;
                                 }
+                                assert !done_get_state;
                                 suspended.put(id, new SuspendedContext(id, pc, reason, params));
                             }
                             if (get_state_cmds.isEmpty()) doneContextState();
@@ -540,7 +541,10 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                     }
                 }
             }));
-            if (sc.pc == null) continue;
+            if (sc.pc == null) {
+                disassembly_lines.put(id, new IDisassemblyLine[0]);
+                continue;
+            }
             BigInteger pc = new BigInteger(sc.pc);
             get_state_cmds.add(ds.disassemble(id, pc, 1, null, new IDisassembly.DoneDisassemble() {
                 public void doneDisassemble(IToken token, Throwable error, IDisassemblyLine[] arr) {
@@ -561,6 +565,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     private void doneDisassembly() {
         assert !done_disassembly;
         assert get_state_cmds.isEmpty();
+        if (!test_suite.isActive(TestRCBP1.this)) return;
         assert suspended.size() == disassembly_lines.size();
         done_disassembly = true;
         runTest();
@@ -863,6 +868,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
         }
         else {
             sc = new SuspendedContext(id, pc, reason, params);
+            assert !done_get_state || done_disassembly || ds == null;
             suspended.put(id, sc);
         }
         ctx.getState(new IRunControl.DoneGetState() {
@@ -878,6 +884,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                     SuspendedContext sc = suspended.get(id);
                     if (sc.pc == null || sc.reason == null) {
                         sc = new SuspendedContext(id, pc, reason, params);
+                        assert !done_get_state || done_disassembly || ds == null;
                         suspended.put(id, sc);
                     }
                     else if (!sc.pc.equals(pc) || !sc.reason.equals(reason)) {
