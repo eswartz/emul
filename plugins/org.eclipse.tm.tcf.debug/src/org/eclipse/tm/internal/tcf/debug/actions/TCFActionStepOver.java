@@ -201,8 +201,8 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
                 if (!line_info.validate(this)) return;
                 TCFSourceRef ref = line_info.getData();
                 if (ref == null || ref.area == null) {
-                    if (fno < 0) {
-                        exit(null);
+                    if (fno < 0 && (stack_trace.getError() == null || step_cnt >= 10)) {
+                        exit(stack_trace.getError());
                         return;
                     }
                     // No line info for current PC, continue stepping
