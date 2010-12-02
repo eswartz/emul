@@ -33,7 +33,6 @@ public class StepIntoCommand extends StepCommand implements IStepIntoHandler {
         private final IDebugCommandRequest monitor;
         private final Runnable done;
         private final TCFNodeExecContext node;
-        private TCFNodeStackFrame frame;
 
         StepStateMachine(TCFModel model, IDebugCommandRequest monitor,
                 IRunControl.RunControlContext ctx, boolean src_step, Runnable done) {
@@ -51,16 +50,9 @@ public class StepIntoCommand extends StepCommand implements IStepIntoHandler {
 
         @Override
         protected TCFDataCache<TCFSourceRef> getLineInfo() {
-            if (frame == null) frame = node.getStackTrace().getTopFrame();
+            TCFNodeStackFrame frame = node.getStackTrace().getTopFrame();
             if (frame == null) return null;
             return frame.getLineInfo();
-        }
-
-        @Override
-        protected int getStackFrameIndex() {
-            if (frame == null) frame = node.getStackTrace().getTopFrame();
-            if (frame == null) return 0;
-            return frame.getFrameNo();
         }
 
         @Override

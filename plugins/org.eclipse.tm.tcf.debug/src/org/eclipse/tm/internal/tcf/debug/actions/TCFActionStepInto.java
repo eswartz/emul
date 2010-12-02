@@ -27,16 +27,17 @@ import org.eclipse.tm.tcf.util.TCFDataCache;
 public abstract class TCFActionStepInto extends TCFAction implements IRunControl.RunControlListener {
 
     private boolean step_line;
-    private final boolean step_back;
+    private boolean step_back;
     private final IRunControl rc = launch.getService(IRunControl.class);
 
     private IRunControl.RunControlContext ctx;
     private TCFDataCache<TCFContextState> state;
-    private TCFDataCache<TCFSourceRef> line_info;
     private TCFSourceRef source_ref;
     private BigInteger pc0;
     private BigInteger pc1;
     private int step_cnt;
+    private boolean second_step_back;
+    private boolean final_step;
 
     protected boolean exited;
 
@@ -50,7 +51,6 @@ public abstract class TCFActionStepInto extends TCFAction implements IRunControl
     protected abstract TCFDataCache<TCFContextState> getContextState();
     protected abstract TCFDataCache<TCFSourceRef> getLineInfo();
     protected abstract TCFDataCache<?> getStackTrace();
-    protected abstract int getStackFrameIndex();
 
     public void run() {
         if (exited) return;
@@ -60,6 +60,21 @@ public abstract class TCFActionStepInto extends TCFAction implements IRunControl
         catch (Throwable x) {
             exit(x);
         }
+    }
+
+    private void setSourceRef(TCFSourceRef ref) {
+        ILineNumbers.CodeArea area = ref.area;
+        if (area != null) {
+            if (area.start_address instanceof BigInteger) pc0 = (BigInteger)area.start_address;
+            else if (area.start_address != null) pc0 = new BigInteger(area.start_address.toString());
+            if (area.end_address instanceof BigInteger) pc1 = (BigInteger)area.end_address;
+            else if (area.end_address != null) pc1 = new BigInteger(area.end_address.toString());
+        }
+        else {
+            pc0 = null;
+            pc1 = null;
+        }
+        source_ref = ref;
     }
 
     private void runAction() {
@@ -112,30 +127,19 @@ public abstract class TCFActionStepInto extends TCFAction implements IRunControl
             return;
         }
         if (source_ref == null) {
-            line_info = getLineInfo();
+            TCFDataCache<TCFSourceRef> line_info = getLineInfo();
             if (!line_info.validate(this)) return;
-            source_ref = line_info.getData();
-            if (source_ref == null) {
+            TCFSourceRef ref = line_info.getData();
+            if (ref == null) {
                 step_line = false;
                 Protocol.invokeLater(this);
                 return;
             }
-            if (source_ref.error != null) {
-                exit(source_ref.error);
+            if (ref.error != null) {
+                exit(ref.error);
                 return;
             }
-            ILineNumbers.CodeArea area = source_ref.area;
-            if (area != null) {
-                if (area.start_address instanceof BigInteger) pc0 = (BigInteger)area.start_address;
-                else if (area.start_address != null) pc0 = new BigInteger(area.start_address.toString());
-                if (area.end_address instanceof BigInteger) pc1 = (BigInteger)area.end_address;
-                else if (area.end_address != null) pc1 = new BigInteger(area.end_address.toString());
-            }
-        }
-        if (getStackFrameIndex() != 0) {
-            // Stepped out of selected function
-            exit(null);
-            return;
+            setSourceRef(ref);
         }
         BigInteger pc = new BigInteger(state.getData().suspend_pc);
         if (step_cnt > 0) {
@@ -144,18 +148,27 @@ public abstract class TCFActionStepInto extends TCFAction implements IRunControl
                 return;
             }
             if (pc.compareTo(pc0) < 0 || pc.compareTo(pc1) >= 0) {
+                TCFDataCache<TCFSourceRef> line_info = getLineInfo();
                 if (!line_info.validate(this)) return;
                 TCFSourceRef ref = line_info.getData();
                 if (ref == null || ref.area == null) {
                     // No line info for current PC, continue stepping
                 }
                 else if (isSameLine(source_ref.area, ref.area)) {
-                    source_ref = ref;
-                    ILineNumbers.CodeArea area = source_ref.area;
-                    if (area.start_address instanceof BigInteger) pc0 = (BigInteger)area.start_address;
-                    else if (area.start_address != null) pc0 = new BigInteger(area.start_address.toString());
-                    if (area.end_address instanceof BigInteger) pc1 = (BigInteger)area.end_address;
-                    else if (area.end_address != null) pc1 = new BigInteger(area.end_address.toString());
+                    setSourceRef(ref);
+                }
+                else if (step_back && !second_step_back) {
+                    // After step back we stop at last instruction of previous line.
+                    // Do second step back into line to skip that line.
+                    second_step_back = true;
+                    setSourceRef(ref);
+                }
+                else if (step_back && !final_step) {
+                    // After second step back we have stepped one instruction more then needed.
+                    // Do final step forward to correct that.
+                    final_step = true;
+                    step_back = false;
+                    setSourceRef(ref);
                 }
                 else {
                     exit(null);
