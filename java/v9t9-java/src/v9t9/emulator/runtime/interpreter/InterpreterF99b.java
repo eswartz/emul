@@ -1,8 +1,5 @@
 package v9t9.emulator.runtime.interpreter;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.HashSet;
@@ -25,11 +22,6 @@ import v9t9.engine.cpu.StatusF99b;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.MemoryDomain.MemoryWriteListener;
-import v9t9.forthcomp.AbortException;
-import v9t9.forthcomp.F99bTargetContext;
-import v9t9.forthcomp.ForthComp;
-import v9t9.forthcomp.HostContext;
-import v9t9.forthcomp.words.TargetContext;
 import v9t9.tools.asm.assembler.IInstructionFactory;
 
 /**
@@ -501,10 +493,10 @@ public class InterpreterF99b implements Interpreter {
         	break;
         	
         case Iupidx:
-        	cpu.push((short) (iblock.up + (mop1.val & 0xff) * 2));
+        	cpu.push((short) (iblock.up + (mop1.val & 0xff)));
         	break;
         case Iuser:
-        	cpu.push((short) (iblock.up + (cpu.pop() * 2)));
+        	cpu.push((short) (iblock.up + cpu.pop()));
         	break;
         	
         case IloopUp: {

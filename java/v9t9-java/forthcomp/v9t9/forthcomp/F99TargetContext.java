@@ -768,7 +768,7 @@ public class F99TargetContext extends TargetContext {
 		if (lpUser == null) {
 			lpUser = (TargetUserVariable) find("LP");
 			if (lpUser == null) {
-				lpUser = defineUser("LP", 1);
+				lpUser = defineUser("LP", getCellSize());
 				
 				HostContext subContext = new HostContext(this);
 				hostContext.copyTo(subContext);

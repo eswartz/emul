@@ -37,7 +37,7 @@ public class HostDoDoes extends BaseStdWord {
 		hostContext.compile(new HostBranch(redirectDp));
 		
 		ITargetWord lastWord = (ITargetWord) targetContext.getLatest();
-		targetContext.getDictionary().put(lastWord.getName(), new TargetDoesWord(lastWord, redirectDp));
+		targetContext.redefine(lastWord, new TargetDoesWord(lastWord, redirectDp));
 		
 		lastWord.getEntry().setDoesWord(true);
 

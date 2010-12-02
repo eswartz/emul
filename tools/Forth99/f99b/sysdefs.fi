@@ -47,7 +47,6 @@ ROM 2 +     constant    (COLD)
 ROM 4 +     constant    DP0
 ROM 6 +     constant    (LATEST)
 
-
 $ffc0       constant    FaultStacks \ ... 0x20
 
 $ffe0       constant    IntVecs     \ ... 0x20

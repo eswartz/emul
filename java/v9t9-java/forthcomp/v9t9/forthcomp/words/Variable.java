@@ -20,7 +20,7 @@ public class Variable extends BaseStdWord {
 	public void execute(HostContext hostContext, TargetContext targetContext) throws AbortException {
 		String name = hostContext.readToken();
 
-		targetContext.create(name, 1);
+		targetContext.create(name, targetContext.getCellSize());
 	}
 	
 	/* (non-Javadoc)

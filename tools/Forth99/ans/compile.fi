@@ -544,7 +544,7 @@ test" unloop 3 >r 2 1 do loop r> 3 ="
 [THEN]
 
 [IFUNDEF] UDP
-User UDP target-only
+2 RamVar UDP   target-only    
 [THEN]
 
 [IFUNDEF] USER

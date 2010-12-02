@@ -38,6 +38,12 @@ public class Context implements IContext {
 		return word;
 	}
 	
+
+	public void redefine(IWord word, IWord newWord) {
+		getDictionary().put(word.getName().toLowerCase(), newWord);
+	}
+
+	
 	public void undefine(String string) throws AbortException {
 		IWord word = dictionary.get(string.toLowerCase());
 		if (word != null) {

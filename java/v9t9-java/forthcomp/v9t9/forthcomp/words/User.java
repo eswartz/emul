@@ -20,7 +20,7 @@ public class User extends BaseStdWord {
 	public void execute(HostContext hostContext, TargetContext targetContext) throws AbortException {
 		String name = hostContext.readToken();
 
-		targetContext.defineUser(name, 1);
+		targetContext.defineUser(name, targetContext.getCellSize());
 	}
 	
 	/* (non-Javadoc)

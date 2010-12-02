@@ -93,6 +93,8 @@ include ../v9t9/editor.fi
 
 : cold-init
     DP0 @       dp !
+\    UP0 @       [ ' UDP compile, ( UDP ) ]  !
+    UP0 @       UDP !
     (LATEST) @  >latest !
     GRAM
         
@@ -200,10 +202,10 @@ include ../v9t9/ints.fi
 
 ' bootup (BOOT)     !
 ' abort  (COLD)     !
-\ here     DP0        !
+\ here   DP0        !
 here $3ff +  $3ff INVERT and  DP0        !
 latest   (LATEST)   !
-
+ 
 hex
 here ." HERE = " u. cr
 ramptr @ ." RAMTOP = " u. cr

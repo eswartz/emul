@@ -13,6 +13,7 @@
 | : douser,  ( idx -- )
     dup $100 < if  Iupidx c, c,  else
                     IlitW c,  ,  Iuser c, then
+    Iexit c,                    
 ;
 
 | : dodoes,  ( -- )

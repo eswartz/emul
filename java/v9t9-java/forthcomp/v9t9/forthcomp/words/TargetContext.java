@@ -306,13 +306,13 @@ public abstract class TargetContext extends Context {
 		return memory[addr];
 	}
 
-	public TargetVariable create(String name, int cells) {
+	public TargetVariable create(String name, int bytes) {
 		DictEntry entry = defineEntry(name);
 		int dp = entry.getContentAddr();
 		initCode();
 		compileDoVar();
-		stubData.use(cells * cellSize);
-		int loc = alloc(cells * cellSize);
+		stubData.use(bytes);
+		int loc = alloc(bytes);
 		entry.setCodeSize(loc - dp);
 		final TargetVariable var = (TargetVariable) define(name, new TargetVariable(entry));
 		
@@ -381,11 +381,12 @@ public abstract class TargetContext extends Context {
 	 */
 	abstract public void compileDoUser(int index) throws AbortException;
 
-	public TargetUserVariable defineUser(String name, int cells) throws AbortException {
+	public TargetUserVariable defineUser(String name, int bytes) throws AbortException {
 		
-		TargetVariable up = findOrCreateVariable("UP");
+		// the "variable" will be frozen in ROM, a count of bytes
+		TargetVariable up = findOrCreateVariable("UP0");
 		int index = readCell(up.getEntry().getParamAddr());
-		writeCell(up.getEntry().getParamAddr(), index + cells);
+		writeCell(up.getEntry().getParamAddr(), index + bytes);
 
 		DictEntry entry = defineEntry(name);
 		logfile.println(name);
@@ -399,7 +400,7 @@ public abstract class TargetContext extends Context {
 	protected TargetVariable findOrCreateVariable(String name) {
 		TargetVariable var = (TargetVariable) find(name);
 		if (var == null) {
-			var = create(name, 1);
+			var = create(name, getCellSize());
 		}
 		return var;
 	}
@@ -766,5 +767,4 @@ public abstract class TargetContext extends Context {
 	 */
 	abstract public void compileOpcode(int opcode);
 	abstract public void compileUser(TargetUserVariable var);
-
 }
