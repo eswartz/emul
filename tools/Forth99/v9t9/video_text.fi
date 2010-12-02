@@ -320,7 +320,6 @@ Create Text2ModeParams
     
 : txt2-setupmode
     txt-setupmode
-    msx-setupmode
     \ set blink to inverse colors
     bg@  4 lshift  fg@  OR  $8C00 OR  v-regaddr  
 

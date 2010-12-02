@@ -179,6 +179,8 @@ $40 constant    v-int-nocursor
 ;
 
 : (mode)
+    cursor-off
+
     dup  0 last-video-mode within  0= err-out-of-range ?error
     cells  video-modes +  @ 
     
@@ -188,7 +190,7 @@ $40 constant    v-int-nocursor
     0  v-data v-data-size -1  (cfill)     \ v-data is end 
     v-fntheight c!  v-fntwidth c!  v-font !
 
-    execute
+    ( mode ) execute
     
     0.0 v-initpages D!
     
@@ -250,18 +252,18 @@ Create msx-enhregs
     msx-enhregs write-vregs
 
     'v-setupmode @  execute
-    
-    v-refresh-colors
-    
-    (setfont)
-
-    v-width @ v-height @  0 0  'v-clear @  execute    
 
     true vid-show
 ;             
 
 : vreset
     (vreset)
+
+    v-refresh-colors
+    
+    (setfont)
+
+    v-width @ v-height @  0 0  'v-clear @  execute    
 
     term-reset
 ;

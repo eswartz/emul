@@ -554,8 +554,11 @@ User 'lastcol
 \ Draw the overarching static UI
 \
 : edit.drawui
-
-    text2 (mode)   &15 vpage  (vreset)
+    \ switch mode regs without clearing
+    text2 (mode)   
+    
+    &15 vpage  (vreset)
+    
     font6x8
 
     $87A1 v-regaddr      \ yellow-on-black border
