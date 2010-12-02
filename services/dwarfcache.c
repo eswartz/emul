@@ -688,7 +688,9 @@ static void free_unit_cache(CompUnit * Unit) {
     Unit->mStatesCnt = 0;
     Unit->mStatesMax = 0;
     loc_free(Unit->mStates);
+    loc_free(Unit->mStatesIndex);
     Unit->mStates = NULL;
+    Unit->mStatesIndex = NULL;
 }
 
 static void free_dwarf_cache(ELF_File * file) {
@@ -778,6 +780,14 @@ static void add_state(CompUnit * Unit, LineNumbersState * state) {
     Unit->mStates[Unit->mStatesCnt++] = *state;
 }
 
+static int state_address_comparator(const void * x1, const void * x2) {
+    LineNumbersState * s1 = (LineNumbersState *)x1;
+    LineNumbersState * s2 = (LineNumbersState *)x2;
+    if (s1->mAddress < s2->mAddress) return -1;
+    if (s1->mAddress > s2->mAddress) return +1;
+    return 0;
+}
+
 static int state_text_pos_comparator(const void * x1, const void * x2) {
     LineNumbersState * s1 = *(LineNumbersState **)x1;
     LineNumbersState * s2 = *(LineNumbersState **)x2;
@@ -787,20 +797,22 @@ static int state_text_pos_comparator(const void * x1, const void * x2) {
     if (s1->mLine > s2->mLine) return +1;
     if (s1->mColumn < s2->mColumn) return -1;
     if (s1->mColumn > s2->mColumn) return +1;
+    if (s1->mAddress < s2->mAddress) return -1;
+    if (s1->mAddress > s2->mAddress) return +1;
     return 0;
 }
 
 static void compute_reverse_lookup_indices(CompUnit * Unit) {
     U4_T i;
-    LineNumbersState ** arr = (LineNumbersState **)loc_alloc(sizeof(LineNumbersState *) * Unit->mStatesCnt);
-    for (i = 0; i < Unit->mStatesCnt; i++) arr[i] = Unit->mStates + i;
-    qsort(arr, Unit->mStatesCnt, sizeof(LineNumbersState *), state_text_pos_comparator);
+    qsort(Unit->mStates, Unit->mStatesCnt, sizeof(LineNumbersState), state_address_comparator);
+    Unit->mStatesIndex = (LineNumbersState **)loc_alloc(sizeof(LineNumbersState *) * Unit->mStatesCnt);
+    for (i = 0; i < Unit->mStatesCnt; i++) Unit->mStatesIndex[i] = Unit->mStates + i;
+    qsort(Unit->mStatesIndex, Unit->mStatesCnt, sizeof(LineNumbersState *), state_text_pos_comparator);
     for (i = 0; i < Unit->mStatesCnt - 1; i++) {
-        LineNumbersState * s = arr[i];
-        LineNumbersState * n = arr[i + 1];
+        LineNumbersState * s = Unit->mStatesIndex[i];
+        LineNumbersState * n = Unit->mStatesIndex[i + 1];
         s->mNext = n - Unit->mStates;
     }
-    loc_free(arr);
 }
 
 void load_line_numbers(CompUnit * Unit) {

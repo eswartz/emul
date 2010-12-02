@@ -146,6 +146,7 @@ struct CompUnit {
     U4_T mStatesCnt;
     U4_T mStatesMax;
     LineNumbersState * mStates;
+    LineNumbersState ** mStatesIndex;
 
     CompUnit * mBaseTypes;
 };

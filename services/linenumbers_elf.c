@@ -40,36 +40,115 @@
 #include <services/dwarfcache.h>
 #include <services/stacktrace.h>
 
-static int cmp_file(char * file, char * dir, char * name) {
-    int i;
+static int is_absolute_path(char * fnm) {
+    if (fnm[0] == '/') return 1;
+    if (fnm[0] == '\\') return 1;
+    if (fnm[0] != 0 && fnm[1] == ':') {
+        if (fnm[2] == '/') return 1;
+        if (fnm[2] == '\\') return 1;
+    }
+    return 0;
+}
+
+static void canonic_path(char * fnm, char * buf, size_t buf_size) {
+    unsigned i = 0;
+    while (i < buf_size - 1) {
+        char ch = *fnm++;
+        if (ch == 0) break;
+        if (ch == '\\') ch = '/';
+        if (ch == '/' && i >= 2 && buf[i - 1] == '/') continue;
+        if (ch == '.' && (i == 0 || buf[i - 1] == '/')) {
+            if (*fnm == '/' || *fnm == '\\') {
+                fnm++;
+                continue;
+            }
+            if (i > 0 && *fnm == '.' && (fnm[1] == '/' || fnm[1] == '\\')) {
+                unsigned j = i - 1;
+                if (j > 0 && buf[j - 1] != '/') {
+                    while (j > 0 && buf[j - 1] != '/') j--;
+                    i = j;
+                    fnm += 2;
+                    continue;
+                }
+            }
+        }
+        buf[i++] = ch;
+    }
+    buf[i++] = 0;
+}
+
+static int compare_path(char * file, char * pwd, char * dir, char * name) {
+    int i, j;
+    char buf[FILE_PATH_SIZE];
+
     if (file == NULL) return 0;
     if (name == NULL) return 0;
-    if (strcmp(file, name) == 0) return 1;
-    i = strlen(name);
-    while (i > 0 && name[i - 1] != '/' && name[i - 1] != '\\') i--;
-    if (strcmp(file, name + i) == 0) return 1;
-    if (dir == NULL) return 0;
-    i = strlen(dir);
-    if (strncmp(dir, file, i) == 0 && (file[i] == '/' || file[i] == '\\') &&
-            strcmp(file + i + 1, name) == 0) return 1;
+
+    if (is_absolute_path(name)) {
+        canonic_path(name, buf, sizeof(buf));
+    }
+    else if (dir != NULL && is_absolute_path(dir)) {
+        snprintf(buf, sizeof(buf), "%s/%s", dir, name);
+        canonic_path(buf, buf, sizeof(buf));
+    }
+    else if (dir != NULL && pwd != NULL) {
+        snprintf(buf, sizeof(buf), "%s/%s/%s", pwd, dir, name);
+        canonic_path(buf, buf, sizeof(buf));
+    }
+    else if (pwd != NULL) {
+        snprintf(buf, sizeof(buf), "%s/%s", pwd, name);
+        canonic_path(buf, buf, sizeof(buf));
+    }
+    else {
+        canonic_path(name, buf, sizeof(buf));
+    }
+
+    i = strlen(file);
+    j = strlen(buf);
+    if (i <= j && strcmp(file, buf + j - i) == 0) return 1;
     return 0;
+}
+
+static LineNumbersState * get_next_in_text(CompUnit * unit, LineNumbersState * state) {
+    LineNumbersState * next = unit->mStates + state->mNext;
+    if (state->mNext == 0) return NULL;
+    if (state->mFlags & LINE_EndSequence) return NULL;
+    while (next->mLine == state->mLine && next->mColumn == state->mColumn) {
+        if (next->mNext == 0) return NULL;
+        next = unit->mStates + next->mNext;
+    }
+    if (state->mFile != next->mFile) return NULL;
+    return next;
 }
 
 static void call_client(CompUnit * unit, LineNumbersState * state,
                         ContextAddress state_addr, LineNumbersCallBack * client, void * args) {
     CodeArea area;
     FileInfo * state_file = NULL;
+    LineNumbersState * next = get_next_in_text(unit, state);
+    if (next == NULL) return;
+    if (state->mAddress >= (state + 1)->mAddress) return;
     memset(&area, 0, sizeof(area));
     area.start_line = state->mLine;
     area.start_column = state->mColumn;
-    area.end_line = (unit->mStates + state->mNext)->mLine;
-    area.end_column = (unit->mStates + state->mNext)->mColumn;
+    area.end_line = next->mLine;
+    area.end_column = next->mColumn;
+    area.directory = unit->mDir;
     if (state->mFile >= 1 && state->mFile <= unit->mFilesCnt) {
         state_file = unit->mFiles + (state->mFile - 1);
     }
     if (state_file != NULL) {
-        area.file = state_file->mName;
-        area.directory = state_file->mDir;
+        if (is_absolute_path(state_file->mName) || state_file->mDir == NULL) {
+            area.file = state_file->mName;
+        }
+        else {
+            static char buf[FILE_PATH_SIZE];
+            snprintf(buf, sizeof(buf), "%s/%s", state_file->mDir, state_file->mName);
+            area.file = buf;
+        }
+    }
+    else {
+        area.file = unit->mObject->mName;
     }
     area.start_address = state_addr;
     area.end_address = (state + 1)->mAddress - state->mAddress + state_addr;
@@ -81,6 +160,49 @@ static void call_client(CompUnit * unit, LineNumbersState * state,
     client(&area, args);
 }
 
+static void unit_line_to_address(Context * ctx, CompUnit * unit, unsigned file, unsigned line, unsigned column,
+                                 LineNumbersCallBack * client, void * args) {
+    load_line_numbers(unit);
+    if (unit->mStatesCnt >= 2) {
+        unsigned l = 0;
+        unsigned h = unit->mStatesCnt - 1;
+        while (l < h) {
+            unsigned k = (h + l) / 2;
+            LineNumbersState * state = unit->mStatesIndex[k];
+            if (state->mFile < file) {
+                l = k + 1;
+            }
+            else if (state->mFile > file || state->mLine > line) {
+                h = k;
+            }
+            else {
+                LineNumbersState * next = get_next_in_text(unit, state);
+                if (next == NULL) break;
+                if (next->mLine < line) {
+                    l = k + 1;
+                }
+                else {
+                    unsigned i = k;
+                    while (i > 0) {
+                        LineNumbersState * prev = unit->mStatesIndex[i - 1];
+                        if (prev->mFile != state->mFile) break;
+                        if (prev->mLine != state->mLine) break;
+                        if (prev->mColumn != state->mColumn) break;
+                        state = prev;
+                        i--;
+                    }
+                    while (i <= k) {
+                        ContextAddress addr = elf_map_to_run_time_address(ctx, unit->mFile, unit->mTextSection, state->mAddress);
+                        if (addr != 0) call_client(unit, state, addr, client, args);
+                        i++;
+                    }
+                    break;
+                }
+            }
+        }
+    }
+}
+
 int line_to_address(Context * ctx, char * file_name, int line, int column, LineNumbersCallBack * client, void * args) {
     int err = 0;
 
@@ -88,57 +210,29 @@ int line_to_address(Context * ctx, char * file_name, int line, int column, LineN
     else if (ctx->exited) err = ERR_ALREADY_EXITED;
 
     if (err == 0) {
+        char fnm[FILE_PATH_SIZE];
         ELF_File * file = elf_list_first(ctx, 0, ~(ContextAddress)0);
         if (file == NULL) err = errno;
+        else canonic_path(file_name, fnm, sizeof(fnm));
         while (file != NULL) {
             Trap trap;
             if (set_trap(&trap)) {
                 DWARFCache * cache = get_dwarf_cache(file);
                 ObjectInfo * info = cache->mCompUnits;
                 while (info != NULL) {
+                    unsigned j;
                     CompUnit * unit = info->mCompUnit;
-                    int equ = 0;
                     assert(unit->mFile == file);
+                    if (compare_path(fnm, unit->mDir, NULL, unit->mObject->mName)) {
+                        unit_line_to_address(ctx, unit, 0, line, column, client, args);
+                    }
+                    for (j = 0; j < unit->mFilesCnt; j++) {
+                        FileInfo * f = unit->mFiles + j;
+                        if (compare_path(fnm, unit->mDir, f->mDir, f->mName)) {
+                            unit_line_to_address(ctx, unit, j + 1, line, column, client, args);
+                        }
+                    }
                     info = info->mSibling;
-                    if (unit->mObject->mName != NULL) {
-                        equ = cmp_file(file_name, unit->mDir, unit->mObject->mName);
-                    }
-                    if (!equ) {
-                        U4_T j;
-                        for (j = 0; j < unit->mFilesCnt; j++) {
-                            FileInfo * f = unit->mFiles + j;
-                            if (f->mName != NULL) {
-                                equ = cmp_file(file_name, f->mDir, f->mName);
-                                if (equ) break;
-                            }
-                        }
-                    }
-                    if (equ) {
-                        load_line_numbers(unit);
-                        if (unit->mStatesCnt >= 2) {
-                            U4_T j;
-                            for (j = 0; j < unit->mStatesCnt - 1; j++) {
-                                LineNumbersState * state = unit->mStates + j;
-                                LineNumbersState * next = unit->mStates + state->mNext;
-                                if ((state->mFlags & LINE_EndSequence) == 0 && state->mFile == next->mFile) {
-                                    char * state_dir = unit->mDir;
-                                    char * state_file = unit->mObject->mName;
-                                    ContextAddress addr = 0;
-                                    if ((unsigned)line < state->mLine) continue;
-                                    if ((unsigned)line >= next->mLine) continue;
-                                    if (state->mFile >= 1 && state->mFile <= unit->mFilesCnt) {
-                                        FileInfo * f = unit->mFiles + (state->mFile - 1);
-                                        state_dir = f->mDir;
-                                        state_file = f->mName;
-                                    }
-                                    if (!cmp_file(file_name, state_dir, state_file)) continue;
-                                    addr = elf_map_to_run_time_address(ctx, file, unit->mTextSection, state->mAddress);
-                                    if (addr == 0) continue;
-                                    call_client(unit, state, addr, client, args);
-                                }
-                            }
-                        }
-                    }
                 }
                 clear_trap(&trap);
             }
@@ -172,16 +266,31 @@ int address_to_line(Context * ctx, ContextAddress addr0, ContextAddress addr1, L
         assert(range_rt_addr != 0);
         load_line_numbers(range->mUnit);
         if (range->mUnit->mStatesCnt >= 2) {
-            U4_T i;
             CompUnit * unit = range->mUnit;
-            for (i = 0; i < unit->mStatesCnt - 1; i++) {
-                LineNumbersState * state = unit->mStates + i;
-                LineNumbersState * next = unit->mStates + i + 1;
-                if ((state->mFlags & LINE_EndSequence) == 0 && state->mFile == next->mFile) {
-                    ContextAddress state_addr = state->mAddress - range->mAddr + range_rt_addr;
-                    ContextAddress next_addr = next->mAddress - range->mAddr + range_rt_addr;
-                    if (next_addr > addr0 && state_addr < addr1) call_client(unit, state, state_addr, client, args);
+            unsigned l = 0;
+            unsigned h = unit->mStatesCnt - 1;
+            while (l < h) {
+                unsigned k = (h + l) / 2;
+                LineNumbersState * state = unit->mStates + k;
+                LineNumbersState * next = state + 1;
+                ContextAddress state_addr = state->mAddress - range->mAddr + range_rt_addr;
+                ContextAddress next_addr = next->mAddress - range->mAddr + range_rt_addr;
+                assert(next_addr >= state_addr);
+                if (next_addr > addr0 && state_addr < addr1) {
+                    for (;;) {
+                        call_client(unit, state, state_addr, client, args);
+                        k++;
+                        if (k >= unit->mStatesCnt - 1) break;
+                        state = unit->mStates + k;
+                        state_addr = state->mAddress - range->mAddr + range_rt_addr;
+                        if (state_addr >= addr1) break;
+                        next = state + 1;
+                        next_addr = next->mAddress - range->mAddr + range_rt_addr;
+                    }
+                    break;
                 }
+                if (state_addr >= addr0) h = k;
+                else l = k + 1;
             }
         }
         addr0 = range_rt_addr + range->mSize;
