@@ -3,6 +3,10 @@
     drop 
 ;
 
+| : docon, ( num -- )
+    postpone literal
+    Iexit c,
+;
 
 | : dovar,  ( -- )
     IbranchX c,

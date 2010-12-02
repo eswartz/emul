@@ -432,7 +432,7 @@ User ovr        ( insert/overwrite flag )
 \       $4: redraw block
 \       $8: move cursor to upper-left
 
-| create edittab 
+create edittab 
     &3   ( ctrl-c copy line )               $0 c, c,  ' !copy-line ,
     &4   ( ctrl-d delete line, no copy )    $5 c, c,  ' !del-line ,
     &8   ( bksp )                           $3 c, c,  ' !bksp ,
@@ -463,7 +463,7 @@ User ovr        ( insert/overwrite flag )
     &212 ( fctn-d right )                   $2 c, c,  ' !right ,
     &213 ( fctn-x down )                    $2 c, c,  ' !down ,
     &222 ( shift-tab )                      $3 c, c,  ' !untab ,
-| here edittab - constant editsz
+here  edittab -  Constant  editsz
 
 \              01234567890123456789012345678901234567890123456789012345678901234567890123456789
 : menubar s"  C-Save C-F-Revert C-Load C-F4-next C-F6-prev F8-dup C-Del              F9-exit" ;
@@ -506,9 +506,9 @@ User ovr        ( insert/overwrite flag )
 \
 
 \ buffer for saved video state
-| User orig-video
-| User edit-video
-| User in-editor
+User orig-video
+User edit-video
+User in-editor
 
 : init-editor
     0 orig-video !

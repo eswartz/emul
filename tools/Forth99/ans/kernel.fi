@@ -40,12 +40,6 @@ User    #ptr
 
 \ -----------------------------------------
 
-( BOGUS -- just for defining words at host time )
-:   constant    ;
-
-
-
-
 \   kernel.fs                   -- FORTH kernel
 \
 \   (c) 1996-2009 Edward Swartz

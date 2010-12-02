@@ -532,8 +532,8 @@ test" unloop 3 >r 2 1 do loop r> 3 ="
 [IFUNDEF] CONSTANT
 : CONSTANT
     create 
-    lastxt 
-    literal
+    lastxt dp !
+    docon,
 ; target-only
 [THEN]
 
