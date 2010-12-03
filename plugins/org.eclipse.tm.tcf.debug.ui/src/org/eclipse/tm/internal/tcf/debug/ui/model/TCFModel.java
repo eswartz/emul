@@ -11,12 +11,12 @@
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.DebugPlugin;
@@ -74,6 +74,7 @@ import org.eclipse.swt.graphics.Device;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.tm.internal.tcf.debug.actions.TCFAction;
 import org.eclipse.tm.internal.tcf.debug.model.ITCFConstants;
 import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
@@ -176,9 +177,13 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     private static int display_source_generation;
     private int suspend_trigger_generation;
 
-    private final Map<String,String> finished_actions = new HashMap<String,String>();
+    private final Map<String,String> action_results = new HashMap<String,String>();
+    private final Map<IPresentationContext,Map<TCFNode,Integer>> action_deltas =
+        new HashMap<IPresentationContext,Map<TCFNode,Integer>>();
+    private final HashMap<String,TCFAction> active_actions = new HashMap<String,TCFAction>();
 
-    private final Set<TCFModelProxy> model_proxies = new HashSet<TCFModelProxy>();
+    private final Map<IPresentationContext,TCFModelProxy> model_proxies =
+        new HashMap<IPresentationContext,TCFModelProxy>();
 
     private final Map<String,TCFNode> id2node = new HashMap<String,TCFNode>();
 
@@ -272,25 +277,25 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     private final IMemory.MemoryListener mem_listener = new IMemory.MemoryListener() {
 
         public void contextAdded(IMemory.MemoryContext[] contexts) {
-            for (int i = 0; i < contexts.length; i++) {
-                String id = contexts[i].getParentID();
+            for (IMemory.MemoryContext ctx : contexts) {
+                String id = ctx.getParentID();
                 if (id == null) {
-                    launch_node.onContextAdded(contexts[i]);
+                    launch_node.onContextAdded(ctx);
                 }
                 else {
                     TCFNode node = getNode(id);
                     if (node instanceof TCFNodeExecContext) {
-                        ((TCFNodeExecContext)node).onContextAdded(contexts[i]);
+                        ((TCFNodeExecContext)node).onContextAdded(ctx);
                     }
                 }
             }
         }
 
         public void contextChanged(IMemory.MemoryContext[] contexts) {
-            for (int i = 0; i < contexts.length; i++) {
-                TCFNode node = getNode(contexts[i].getID());
+            for (IMemory.MemoryContext ctx : contexts) {
+                TCFNode node = getNode(ctx.getID());
                 if (node instanceof TCFNodeExecContext) {
-                    ((TCFNodeExecContext)node).onContextChanged(contexts[i]);
+                    ((TCFNodeExecContext)node).onContextChanged(ctx);
                 }
             }
         }
@@ -310,8 +315,8 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     private final IRunControl.RunControlListener run_listener = new IRunControl.RunControlListener() {
 
         public void containerResumed(String[] context_ids) {
-            for (int i = 0; i < context_ids.length; i++) {
-                TCFNode node = getNode(context_ids[i]);
+            for (String id : context_ids) {
+                TCFNode node = getNode(id);
                 if (node instanceof TCFNodeExecContext) {
                     ((TCFNodeExecContext)node).onContainerResumed();
                 }
@@ -320,44 +325,50 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
         public void containerSuspended(String context, String pc, String reason,
                 Map<String,Object> params, String[] suspended_ids) {
-            for (int i = 0; i < suspended_ids.length; i++) {
-                TCFNode node = getNode(suspended_ids[i]);
+            int action_cnt = 0;
+            for (String id : suspended_ids) {
+                TCFNode node = getNode(id);
+                action_results.remove(id);
+                if (active_actions.get(id) != null) {
+                    setDebugViewSelection(node, reason);
+                    action_cnt++;
+                }
                 if (node instanceof TCFNodeExecContext) {
                     ((TCFNodeExecContext)node).onContainerSuspended();
                 }
-                finished_actions.remove(suspended_ids[i]);
             }
             TCFNode node = getNode(context);
             if (node instanceof TCFNodeExecContext) {
                 ((TCFNodeExecContext)node).onContextSuspended(pc, reason, params);
             }
-            setDebugViewSelection(context, reason);
-            if (node != null) runSuspendTrigger(node);
-            finished_actions.remove(context);
+            launch_node.onAnyContextSuspendedOrChanged();
+            if (action_cnt == 0) setDebugViewSelection(node, reason);
+            action_results.remove(context);
         }
 
         public void contextAdded(IRunControl.RunControlContext[] contexts) {
-            for (int i = 0; i < contexts.length; i++) {
-                String id = contexts[i].getParentID();
+            for (IRunControl.RunControlContext ctx : contexts) {
+                String id = ctx.getParentID();
                 if (id == null) {
-                    launch_node.onContextAdded(contexts[i]);
+                    launch_node.onContextAdded(ctx);
                 }
                 else {
                     TCFNode node = getNode(id);
                     if (node instanceof TCFNodeExecContext) {
-                        ((TCFNodeExecContext)node).onContextAdded(contexts[i]);
+                        ((TCFNodeExecContext)node).onContextAdded(ctx);
                     }
                 }
             }
         }
 
         public void contextChanged(IRunControl.RunControlContext[] contexts) {
-            for (int i = 0; i < contexts.length; i++) {
-                TCFNode node = getNode(contexts[i].getID());
+            for (IRunControl.RunControlContext ctx : contexts) {
+                TCFNode node = getNode(ctx.getID());
                 if (node instanceof TCFNodeExecContext) {
-                    ((TCFNodeExecContext)node).onContextChanged(contexts[i]);
+                    ((TCFNodeExecContext)node).onContextChanged(ctx);
                 }
             }
+            launch_node.onAnyContextSuspendedOrChanged();
         }
 
         public void contextException(String context, String msg) {
@@ -385,13 +396,13 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
         public void contextSuspended(final String context, String pc, String reason, Map<String,Object> params) {
             TCFNode node = getNode(context);
+            action_results.remove(context);
             if (node instanceof TCFNodeExecContext) {
                 TCFNodeExecContext exe = (TCFNodeExecContext)node;
                 exe.onContextSuspended(pc, reason, params);
             }
-            setDebugViewSelection(context, reason);
-            if (node != null) runSuspendTrigger(node);
-            finished_actions.remove(context);
+            launch_node.onAnyContextSuspendedOrChanged();
+            setDebugViewSelection(node, reason);
         }
     };
 
@@ -464,7 +475,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                             ((TCFNodeExecContext)n).onExpressionAddedOrRemoved();
                         }
                     }
-                    for (TCFModelProxy p : model_proxies) {
+                    for (TCFModelProxy p : model_proxies.values()) {
                         String id = p.getPresentationContext().getId();
                         if (IDebugUIConstants.ID_EXPRESSION_VIEW.equals(id)) {
                             Object o = p.getInput();
@@ -476,6 +487,38 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                     }
                 }
             });
+        }
+    };
+
+    private final TCFLaunch.ActionsListener actions_listener = new TCFLaunch.ActionsListener() {
+
+        public void onContextActionStart(TCFAction action) {
+            active_actions.put(action.getContextID(), action);
+        }
+
+        public void onContextActionResult(String id, String reason) {
+            if (reason == null) action_results.remove(id);
+            else action_results.put(id, reason);
+            TCFNode node = id2node.get(id);
+            if (node != null) {
+                for (IPresentationContext ctx : model_proxies.keySet()) {
+                    addActionsDoneDelta(node, ctx, IModelDelta.STATE);
+                }
+            }
+        }
+
+        public void onContextActionDone(TCFAction action) {
+            active_actions.remove(action.getContextID());
+            for (IPresentationContext ctx : action_deltas.keySet()) {
+                Map<TCFNode,Integer> deltas = action_deltas.get(ctx);
+                TCFModelProxy proxy = model_proxies.get(ctx);
+                if (proxy == null) continue;
+                for (TCFNode node : deltas.keySet()) {
+                    proxy.addDelta(node, deltas.get(node));
+                }
+            }
+            action_deltas.clear();
+            for (TCFModelProxy p : model_proxies.values()) p.post();
         }
     };
 
@@ -508,6 +551,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         adapters.put(BackReturnCommand.class, new BackReturnCommand(this));
         expr_manager = DebugPlugin.getDefault().getExpressionManager();
         expr_manager.addExpressionListener(expressions_listener);
+        launch.addActionsListener(actions_listener);
     }
 
     /**
@@ -651,33 +695,34 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         Activator.log(bf.toString(), x);
     }
 
-    void onContextActionsStart() {
+    TCFAction getActiveAction(String id) {
+        return active_actions.get(id);
     }
 
-    void onContextActionResult(String id, String reason) {
-        if (reason == null) finished_actions.remove(id);
-        else finished_actions.put(id, reason);
-    }
-
-    void onContextActionsDone() {
-        for (TCFModelProxy p : model_proxies) p.post();
+    void addActionsDoneDelta(TCFNode node, IPresentationContext ctx, int flags) {
+        Map<TCFNode,Integer> deltas = action_deltas.get(ctx);
+        if (deltas == null) action_deltas.put(ctx, deltas = new HashMap<TCFNode,Integer>());
+        Integer delta = deltas.get(node);
+        if (delta != null) {
+            deltas.put(node, delta.intValue() | flags);
+        }
+        else {
+            deltas.put(node, flags);
+        }
     }
 
     String getContextActionResult(String id) {
-        return finished_actions.get(id);
-    }
-
-    boolean isContextActionResultAvailable(String id) {
-        return finished_actions.containsKey(id);
+        return action_results.get(id);
     }
 
     void onProxyInstalled(TCFModelProxy mp) {
-        model_proxies.add(mp);
+        model_proxies.put(mp.getPresentationContext(), mp);
     }
 
     void onProxyDisposed(TCFModelProxy mp) {
-        assert model_proxies.contains(mp);
-        model_proxies.remove(mp);
+        IPresentationContext ctx = mp.getPresentationContext();
+        assert model_proxies.get(ctx) == mp;
+        model_proxies.remove(ctx);
     }
 
     private void onContextRemoved(final String[] context_ids) {
@@ -688,7 +733,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 ((TCFNodeExecContext)node).onContextRemoved();
                 if (node.parent == launch_node) close_channel = true;
             }
-            finished_actions.remove(id);
+            action_results.remove(id);
         }
         if (close_channel) {
             // Close debug session if the last context is removed:
@@ -718,7 +763,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     void launchChanged() {
         if (launch_node != null) {
-            for (TCFModelProxy p : model_proxies) {
+            for (TCFModelProxy p : model_proxies.values()) {
                 String id = p.getPresentationContext().getId();
                 if (IDebugUIConstants.ID_DEBUG_VIEW.equals(id)) {
                     p.addDelta(launch_node, IModelDelta.STATE | IModelDelta.CONTENT);
@@ -730,11 +775,12 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         }
     }
 
-    Set<TCFModelProxy> getModelProxies() {
-        return model_proxies;
+    Collection<TCFModelProxy> getModelProxies() {
+        return model_proxies.values();
     }
 
     void dispose() {
+        launch.removeActionsListener(actions_listener);
         expr_manager.removeExpressionListener(expressions_listener);
         if (console != null) {
             display.asyncExec(new Runnable() {
@@ -1005,26 +1051,21 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         return null;
     }
 
-    public void setDebugViewSelection(final String node_id, final String reason) {
+    public void setDebugViewSelection(TCFNode node, String reason) {
         assert Protocol.isDispatchThread();
+        if (node == null) return;
+        if (node.disposed) return;
+        runSuspendTrigger(node);
         if (reason == null) return;
         if (reason.equals(IRunControl.REASON_USER_REQUEST)) return;
-        Protocol.invokeLater(new Runnable() {
-            public void run() {
-                TCFNode node = getNode(node_id);
-                if (node == null) return;
-                if (node.disposed) return;
-                if (launch.getContextActionsCount() > 0) return;
-                for (TCFModelProxy proxy : model_proxies) {
-                    if (proxy.getPresentationContext().getId().equals(IDebugUIConstants.ID_DEBUG_VIEW)) {
-                        proxy.setSelection(node);
-                        if (reason.equals(IRunControl.REASON_STEP)) continue;
-                        if (reason.equals(IRunControl.REASON_CONTAINER)) continue;
-                        proxy.expand(node);
-                    }
-                }
+        for (TCFModelProxy proxy : model_proxies.values()) {
+            if (proxy.getPresentationContext().getId().equals(IDebugUIConstants.ID_DEBUG_VIEW)) {
+                proxy.setSelection(node);
+                if (reason.equals(IRunControl.REASON_STEP)) continue;
+                if (reason.equals(IRunControl.REASON_CONTAINER)) continue;
+                proxy.expand(node);
             }
-        });
+        }
     }
 
     /**
@@ -1121,7 +1162,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                         line = area.start_line;
                     }
                 }
-                if (disassembly_available &&
+                if (exe_id != null && disassembly_available &&
                         (editor_input == null || editor_id == null || instruction_stepping_enabled) &&
                         PlatformUI.getWorkbench().getEditorRegistry().findEditor(
                                 DisassemblyEditorInput.EDITOR_ID) != null) {

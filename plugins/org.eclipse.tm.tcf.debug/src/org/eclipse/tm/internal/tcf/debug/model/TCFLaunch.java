@@ -52,7 +52,7 @@ import org.eclipse.tm.tcf.services.IProcesses.ProcessContext;
 
 public class TCFLaunch extends Launch {
 
-    public interface Listener {
+    public interface LaunchListener {
 
         public void onCreated(TCFLaunch launch);
 
@@ -60,17 +60,20 @@ public class TCFLaunch extends Launch {
 
         public void onDisconnected(TCFLaunch launch);
 
-        public void onContextActionsStart(TCFLaunch launch);
-
-        public void onContextActionResult(TCFLaunch launch, String id, String result);
-
-        public void onContextActionsDone(TCFLaunch launch);
-
         public void onProcessOutput(TCFLaunch launch, String process_id, int stream_id, byte[] data);
 
         public void onProcessStreamError(
                 TCFLaunch launch, String process_id, int stream_id,
                 Exception error, int lost_size);
+    }
+
+    public interface ActionsListener {
+
+        public void onContextActionStart(TCFAction action);
+
+        public void onContextActionResult(String id, String result);
+
+        public void onContextActionDone(TCFAction action);
     }
 
     private abstract class LaunchStep implements Runnable {
@@ -98,7 +101,9 @@ public class TCFLaunch extends Launch {
 
     public static final String PROP_MMAP_ID = "ID";
 
-    private static final Collection<Listener> listeners = new ArrayList<Listener>();
+    private static final Collection<LaunchListener> listeners = new ArrayList<LaunchListener>();
+
+    private final Collection<ActionsListener> action_listeners = new ArrayList<ActionsListener>();
 
     private IChannel channel;
     private Throwable error;
@@ -120,7 +125,8 @@ public class TCFLaunch extends Launch {
     private int process_exit_code;
     private final HashMap<String,String> process_env = new HashMap<String,String>();
 
-    private final LinkedList<TCFAction> context_action_queue = new LinkedList<TCFAction>();
+    private final HashMap<String,TCFAction> active_actions = new HashMap<String,TCFAction>();
+    private final HashMap<String,LinkedList<TCFAction>> context_action_queue = new HashMap<String,LinkedList<TCFAction>>();
     private final HashMap<String,String> stream_ids = new HashMap<String,String>();
     private final LinkedList<LaunchStep> launch_steps = new LinkedList<LaunchStep>();
     private final LinkedList<String> redirection_path = new LinkedList<String>();
@@ -150,7 +156,7 @@ public class TCFLaunch extends Launch {
 
     public TCFLaunch(ILaunchConfiguration launchConfiguration, String mode) {
         super(launchConfiguration, mode, null);
-        for (Listener l : listeners) l.onCreated(TCFLaunch.this);
+        for (LaunchListener l : listeners) l.onCreated(TCFLaunch.this);
     }
 
     private void onConnected() throws Exception {
@@ -240,7 +246,7 @@ public class TCFLaunch extends Launch {
                 @Override
                 void start() {
                     connecting = false;
-                    for (Listener l : listeners) l.onConnected(TCFLaunch.this);
+                    for (LaunchListener l : listeners) l.onConnected(TCFLaunch.this);
                     fireChanged();
                 }
             };
@@ -257,7 +263,7 @@ public class TCFLaunch extends Launch {
         breakpoints_status = null;
         connecting = false;
         disconnected = true;
-        for (Listener l : listeners) l.onDisconnected(this);
+        for (LaunchListener l : listeners) l.onDisconnected(this);
         if (DebugPlugin.getDefault() != null) fireChanged();
         runShutdownSequence(new Runnable() {
             public void run() {
@@ -661,13 +667,13 @@ public class TCFLaunch extends Launch {
                 if (stream_ids.get(id) == null) return;
                 if (lost_size > 0) {
                     Exception x = new IOException("Process output data lost due buffer overflow");
-                    for (Listener l : listeners) l.onProcessStreamError(TCFLaunch.this, peocess_id, no, x, lost_size);
+                    for (LaunchListener l : listeners) l.onProcessStreamError(TCFLaunch.this, peocess_id, no, x, lost_size);
                 }
                 if (data != null && data.length > 0) {
-                    for (Listener l : listeners) l.onProcessOutput(TCFLaunch.this, peocess_id, no, data);
+                    for (LaunchListener l : listeners) l.onProcessOutput(TCFLaunch.this, peocess_id, no, data);
                 }
                 if (error != null) {
-                    for (Listener l : listeners) l.onProcessStreamError(TCFLaunch.this, peocess_id, no, error, 0);
+                    for (LaunchListener l : listeners) l.onProcessStreamError(TCFLaunch.this, peocess_id, no, error, 0);
                 }
                 if (eos || error != null) {
                     disconnectStream(id);
@@ -722,12 +728,12 @@ public class TCFLaunch extends Launch {
         return breakpoints_status;
     }
 
-    public static void addListener(Listener listener) {
+    public static void addListener(LaunchListener listener) {
         assert Protocol.isDispatchThread();
         listeners.add(listener);
     }
 
-    public static void removeListener(Listener listener) {
+    public static void removeListener(LaunchListener listener) {
         assert Protocol.isDispatchThread();
         listeners.remove(listener);
     }
@@ -761,7 +767,7 @@ public class TCFLaunch extends Launch {
             public void doneWrite(IToken token, Exception error) {
                 if (error == null) return;
                 if (stream_ids.get(id) == null) return;
-                for (Listener l : listeners) l.onProcessStreamError(TCFLaunch.this, prs, 0, error, len);
+                for (LaunchListener l : listeners) l.onProcessStreamError(TCFLaunch.this, prs, 0, error, len);
                 disconnectStream(id);
             }
         });
@@ -900,48 +906,68 @@ public class TCFLaunch extends Launch {
 
     /****************************************************************************************************************/
 
+    private void startAction(String id) {
+        if (active_actions.get(id) != null) return;
+        LinkedList<TCFAction> list = context_action_queue.get(id);
+        if (list == null || list.size() == 0) return;
+        final TCFAction action = list.removeFirst();
+        if (list.size() == 0) context_action_queue.remove(id);
+        active_actions.put(id, action);
+        long time = System.currentTimeMillis();
+        Protocol.invokeLater(actions_timestamp + actions_interval - time, new Runnable() {
+            public void run() {
+                actions_timestamp = System.currentTimeMillis();
+                for (ActionsListener l : action_listeners) l.onContextActionStart(action);
+                action.run();
+            }
+        });
+    }
+
     public void setContextActionsInterval(long interval) {
         actions_interval = interval;
     }
 
     public void addContextAction(TCFAction action) {
         assert Protocol.isDispatchThread();
-        context_action_queue.add(action);
-        if (context_action_queue.getFirst() == action) {
-            long time = System.currentTimeMillis();
-            Protocol.invokeLater(actions_timestamp + actions_interval - time, action);
-            actions_timestamp = time;
-            for (Listener l : listeners) l.onContextActionsStart(this);
-        }
+        String id = action.getContextID();
+        LinkedList<TCFAction> list = context_action_queue.get(id);
+        if (list == null) context_action_queue.put(id, list = new LinkedList<TCFAction>());
+        list.add(action);
+        startAction(id);
     }
 
     public void setContextActionResult(String id, String result) {
         assert Protocol.isDispatchThread();
-        for (Listener l : listeners) l.onContextActionResult(this, id, result);
+        for (ActionsListener l : action_listeners) l.onContextActionResult(id, result);
     }
 
     public void removeContextAction(TCFAction action) {
         assert Protocol.isDispatchThread();
-        assert context_action_queue.getFirst() == action;
-        context_action_queue.removeFirst();
-        if (!context_action_queue.isEmpty()) {
-            long time = System.currentTimeMillis();
-            Protocol.invokeLater(actions_timestamp + actions_interval - time, context_action_queue.getFirst());
-            actions_timestamp = time;
-        }
-        else {
-            for (Listener l : listeners) l.onContextActionsDone(this);
-        }
+        String id = action.getContextID();
+        assert active_actions.get(id) == action;
+        for (ActionsListener l : action_listeners) l.onContextActionDone(action);
+        active_actions.remove(id);
+        startAction(id);
     }
 
-    public void removeContextActions() {
+    public void removeContextActions(String id) {
         assert Protocol.isDispatchThread();
-        context_action_queue.clear();
-        for (Listener l : listeners) l.onContextActionsDone(this);
+        context_action_queue.remove(id);
     }
 
-    public int getContextActionsCount() {
+    public int getContextActionsCount(String id) {
         assert Protocol.isDispatchThread();
-        return context_action_queue.size();
+        LinkedList<TCFAction> list = context_action_queue.get(id);
+        int n = list == null ? 0 : list.size();
+        if (active_actions.get(id) != null) n++;
+        return n;
+    }
+
+    public void addActionsListener(ActionsListener l) {
+        action_listeners.add(l);
+    }
+
+    public void removeActionsListener(ActionsListener l) {
+        action_listeners.remove(l);
     }
 }

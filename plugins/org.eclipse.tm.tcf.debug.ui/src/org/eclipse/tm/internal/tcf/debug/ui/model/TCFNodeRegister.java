@@ -360,13 +360,13 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
     void onSuspended() {
         prev_value = next_value;
         value.reset();
-        postStateChangedDelta();
+        // No need to post delta: parent posted CONTENT
     }
 
     void onRegistersChanged() {
         context.reset();
         value.reset();
-        postStateChangedDelta();
+        // No need to post delta: parent posted CONTENT
     }
 
     public CellEditor getCellEditor(IPresentationContext context, String column_id, Object element, Composite parent) {

@@ -91,7 +91,7 @@ public class TCFAnnotationManager {
     private final HashMap<IWorkbenchWindow,WorkbenchWindowInfo> windows =
         new HashMap<IWorkbenchWindow,WorkbenchWindowInfo>();
 
-    private final TCFLaunch.Listener launch_listener = new TCFLaunch.Listener() {
+    private final TCFLaunch.LaunchListener launch_listener = new TCFLaunch.LaunchListener() {
 
         public void onCreated(TCFLaunch launch) {
         }
@@ -147,15 +147,6 @@ public class TCFAnnotationManager {
 
         public void onProcessStreamError(TCFLaunch launch, String process_id,
                 int stream_id, Exception error, int lost_size) {
-        }
-
-        public void onContextActionsStart(TCFLaunch launch) {
-        }
-
-        public void onContextActionResult(TCFLaunch launch, String id, String result) {
-        }
-
-        public void onContextActionsDone(TCFLaunch launch) {
         }
     };
 

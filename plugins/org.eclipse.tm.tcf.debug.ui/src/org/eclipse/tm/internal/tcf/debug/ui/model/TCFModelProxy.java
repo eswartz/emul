@@ -261,10 +261,11 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
     }
 
     private ModelDelta makeDelta(ModelDelta root, TCFNode node, TCFNode selection) {
-        Integer flags_obj = node2flags.get(node);
+        int flags = 0;
         ModelDelta delta = node2delta.get(node);
-        int flags = flags_obj != null ? flags_obj.intValue() : 0;
         if (delta == null) {
+            Integer flags_obj = node2flags.get(node);
+            if (flags_obj != null) flags = flags_obj.intValue();
             TCFNode parent = node.parent;
             if (parent == null) {
                 if (root.getElement() instanceof TCFNode) return null;
@@ -291,6 +292,9 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
                 delta = up.addNode(node, index, flags, children);
             }
             node2delta.put(node, delta);
+        }
+        else {
+            flags = delta.getFlags();
         }
         if ((flags & IModelDelta.REMOVED) != 0) return null;
         if ((flags & IModelDelta.CONTENT) != 0) return null;

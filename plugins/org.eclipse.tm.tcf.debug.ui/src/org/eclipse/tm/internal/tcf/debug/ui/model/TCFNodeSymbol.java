@@ -11,6 +11,7 @@
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
 import org.eclipse.tm.tcf.protocol.IToken;
+import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.ISymbols;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 
@@ -25,9 +26,10 @@ public class TCFNodeSymbol extends TCFNode {
     private TCFNodeSymbol prev;
     private TCFNodeSymbol next;
 
-    private static final int MAX_SYMBOL_COUNT = 1000;
+    private static final int MAX_SYMBOL_COUNT = 64;
     private static TCFNodeSymbol sym_list;
     private static int sym_count;
+    private static boolean gc_posted;
 
     protected TCFNodeSymbol(final TCFNode parent, final String id) {
         super(parent, id);
@@ -75,10 +77,29 @@ public class TCFNodeSymbol extends TCFNode {
             prev.next = next.prev = this;
         }
         sym_list = this;
-        sym_count++;
-        if (sym_count > MAX_SYMBOL_COUNT) {
-            sym_list.next.dispose();
+        if (!gc_posted) {
+            // Garbage collection: dispose unused symbols
+            gc_posted = true;
+            Protocol.invokeLater(5000, new Runnable() {
+                public void run() {
+                    gc_posted = false;
+                    int cnt = sym_count / 16;
+                    while (sym_count > MAX_SYMBOL_COUNT) {
+                        TCFNodeSymbol s = sym_list.next;
+                        if (s.context.isPending()) break;
+                        if (s.children.isPending()) break;
+                        s.dispose();
+                        if (cnt == 0) break;
+                        cnt--;
+                    }
+                    if (sym_count > 0) {
+                        gc_posted = true;
+                        Protocol.invokeLater(5000, this);
+                    }
+                }
+            });
         }
+        sym_count++;
     }
 
     @Override

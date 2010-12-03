@@ -308,7 +308,14 @@ public class TCFNodeStackFrame extends TCFNode {
             bf.append(module);
             if (sref != null && sref.area != null && sref.area.file != null) {
                 bf.append(": ");
-                bf.append(sref.area.file);
+                int l = sref.area.file.length();
+                if (l > 32) {
+                    bf.append("...");
+                    bf.append(sref.area.file.substring(l - 32));
+                }
+                else {
+                    bf.append(sref.area.file);
+                }
                 bf.append(", line ");
                 bf.append(sref.area.start_line);
             }
@@ -391,7 +398,9 @@ public class TCFNodeStackFrame extends TCFNode {
             String id = p.getPresentationContext().getId();
             if (IDebugUIConstants.ID_DEBUG_VIEW.equals(id)) flags |= IModelDelta.STATE;
             if (getChildren(p.getPresentationContext()) != null && p.getInput() == this) flags |= IModelDelta.CONTENT;
-            if (flags != 0) p.addDelta(this, flags);
+            if (flags == 0) continue;
+            if (model.getActiveAction(parent.id) == null) p.addDelta(this, flags);
+            else model.addActionsDoneDelta(this, p.getPresentationContext(), flags);
         }
     }
 
@@ -418,6 +427,7 @@ public class TCFNodeStackFrame extends TCFNode {
         line_info.cancel();
         address.cancel();
         children_regs.onSuspended();
+        children_regs.reset(); // Unlike thread registers, stack frame registers must be retrieved on every suspend
         children_vars.onSuspended();
         children_exps.onSuspended();
         postAllChangedDelta();

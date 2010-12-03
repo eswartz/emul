@@ -42,8 +42,6 @@ abstract class StepCommand implements IDebugCommandHandler {
             IRunControl.RunControlContext ctx, boolean src_step, Runnable done);
 
     private boolean getContextSet(Object[] elements, Set<IRunControl.RunControlContext> set, Runnable done) {
-        int action_cnt = model.getLaunch().getContextActionsCount();
-        if (action_cnt >= MAX_ACTION_CNT) return true;
         for (int i = 0; i < elements.length; i++) {
             TCFNode node = null;
             if (elements[i] instanceof TCFNode) node = (TCFNode)elements[i];
@@ -59,7 +57,9 @@ abstract class StepCommand implements IDebugCommandHandler {
                     node = node.getParent();
                 }
                 else {
-                    if (action_cnt == 0) {
+                    int action_cnt = model.getLaunch().getContextActionsCount(ctx.getID());
+                    if (action_cnt >= MAX_ACTION_CNT) break;
+                    if (action_cnt == 0 && !ctx.isContainer()) {
                         TCFDataCache<TCFContextState> state_cache = ((TCFNodeExecContext)node).getState();
                         if (!state_cache.validate(done)) return false;
                         TCFContextState state_data = state_cache.getData();

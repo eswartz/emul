@@ -31,7 +31,6 @@ public class ResumeCommand extends StepCommand implements IResumeHandler {
 
     @Override
     protected boolean canExecute(IRunControl.RunControlContext ctx) {
-        if (ctx == null) return false;
         if (ctx.canResume(IRunControl.RM_RESUME)) return true;
         return false;
     }
@@ -39,7 +38,7 @@ public class ResumeCommand extends StepCommand implements IResumeHandler {
     @Override
     protected void execute(final IDebugCommandRequest monitor,
             final IRunControl.RunControlContext ctx, boolean src_step, final Runnable done) {
-        new TCFAction(model.getLaunch()) {
+        new TCFAction(model.getLaunch(), ctx.getID()) {
             public void run() {
                 ctx.resume(IRunControl.RM_RESUME, 1, new IRunControl.DoneCommand() {
                     public void doneCommand(IToken token, Exception error) {
@@ -51,6 +50,7 @@ public class ResumeCommand extends StepCommand implements IResumeHandler {
                                     return;
                                 }
                             }
+                            launch.removeContextActions(getContextID());
                             monitor.setStatus(new Status(IStatus.ERROR,
                                     Activator.PLUGIN_ID, IStatus.OK, "Cannot resume: " + error.getLocalizedMessage(), error));
                         }
@@ -60,7 +60,6 @@ public class ResumeCommand extends StepCommand implements IResumeHandler {
             }
             public void done() {
                 super.done();
-                setActionResult(ctx.getID(), null);
                 done.run();
             }
         };

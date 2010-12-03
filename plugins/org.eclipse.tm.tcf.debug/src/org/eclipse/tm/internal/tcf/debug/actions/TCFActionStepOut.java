@@ -38,7 +38,7 @@ public abstract class TCFActionStepOut extends TCFAction implements IRunControl.
     protected boolean exited;
 
     public TCFActionStepOut(TCFLaunch launch, IRunControl.RunControlContext ctx, boolean step_back) {
-        super(launch);
+        super(launch, ctx.getID());
         this.ctx = ctx;
         this.step_back = step_back;
     }
@@ -144,7 +144,8 @@ public abstract class TCFActionStepOut extends TCFAction implements IRunControl.
         }
         rc.removeListener(this);
         exited = true;
-        setActionResult(ctx.getID(), reason);
+        if (error == null) setActionResult(getContextID(), reason);
+        else launch.removeContextActions(getContextID());
         done();
     }
 

@@ -28,11 +28,17 @@ import org.eclipse.tm.tcf.protocol.Protocol;
 public abstract class TCFAction implements Runnable {
 
     protected final TCFLaunch launch;
+    protected final String ctx_id;
 
-    public TCFAction(TCFLaunch launch) {
+    public TCFAction(TCFLaunch launch, String ctx_id) {
         assert Protocol.isDispatchThread();
         this.launch = launch;
+        this.ctx_id = ctx_id;
         launch.addContextAction(this);
+    }
+
+    public String getContextID() {
+        return ctx_id;
     }
 
     public void setActionResult(String id, String result) {

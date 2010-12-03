@@ -25,7 +25,7 @@ public class TCFModelManager {
 
     private final Map<TCFLaunch,TCFModel> models = new HashMap<TCFLaunch,TCFModel>();
 
-    private final TCFLaunch.Listener tcf_launch_listener = new TCFLaunch.Listener() {
+    private final TCFLaunch.LaunchListener tcf_launch_listener = new TCFLaunch.LaunchListener() {
 
         public void onCreated(TCFLaunch launch) {
             assert Protocol.isDispatchThread();
@@ -57,24 +57,6 @@ public class TCFModelManager {
             assert Protocol.isDispatchThread();
             TCFModel model = models.get(launch);
             if (model != null) model.onProcessStreamError(process_id, stream_id, error, lost_size);
-        }
-
-        public void onContextActionsStart(TCFLaunch launch) {
-            assert Protocol.isDispatchThread();
-            TCFModel model = models.get(launch);
-            if (model != null) model.onContextActionsStart();
-        }
-
-        public void onContextActionResult(TCFLaunch launch, String id, String result) {
-            assert Protocol.isDispatchThread();
-            TCFModel model = models.get(launch);
-            if (model != null) model.onContextActionResult(id, result);
-        }
-
-        public void onContextActionsDone(TCFLaunch launch) {
-            assert Protocol.isDispatchThread();
-            TCFModel model = models.get(launch);
-            if (model != null) model.onContextActionsDone();
         }
     };
 

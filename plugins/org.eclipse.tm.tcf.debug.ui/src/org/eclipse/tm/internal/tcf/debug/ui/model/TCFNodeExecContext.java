@@ -36,7 +36,6 @@ import org.eclipse.tm.tcf.services.IProcesses;
 import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 
-
 @SuppressWarnings("serial")
 public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
 
@@ -62,7 +61,9 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
 
     private int resumed_cnt;
     private boolean resume_pending;
+    private boolean resumed_by_action;
     private TCFNode[] last_stack_trace;
+    private String last_label;
 
     private static int seq_cnt;
 
@@ -511,8 +512,8 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
             if (!run_context.validate(done)) return false;
             IRunControl.RunControlContext ctx = run_context.getData();
             if (ctx != null && ctx.hasState()) {
-                if (resume_pending && last_stack_trace != null) {
-                    result.setHasChilren(last_stack_trace.length > 0);
+                if (resume_pending) {
+                    result.setHasChilren(true);
                     return true;
                 }
                 if (!state.validate(done)) return false;
@@ -570,32 +571,40 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                 label.append(nm != null ? nm : id);
                 if (ctx.hasState()) {
                     // Thread
-                    if (!state.validate(done)) return false;
-                    TCFContextState state_data = state.getData();
-                    if (state_data != null && state_data.is_terminated) image_name = ImageCache.IMG_THREAD_TERMINATED;
-                    else if (state_data != null && state_data.is_suspended) image_name = ImageCache.IMG_THREAD_SUSPENDED;
-                    else image_name = ImageCache.IMG_THREAD_RUNNNIG;
-                    if (state_data != null) {
-                        if (!state_data.is_suspended) {
-                            label.append(" (Running)");
-                        }
-                        else {
-                            String r = state_data.suspend_reason;
-                            if (model.isContextActionResultAvailable(id)) {
-                                r = model.getContextActionResult(id);
+                    if (model.getActiveAction(id) != null) {
+                        model.addActionsDoneDelta(this, result.getPresentationContext(), IModelDelta.STATE);
+                        image_name = ImageCache.IMG_THREAD_RUNNNIG;
+                        label.append(" (Running)");
+                    }
+                    else if (resume_pending && !resumed_by_action && last_label != null) {
+                        result.setImageDescriptor(ImageCache.getImageDescriptor(ImageCache.IMG_THREAD_SUSPENDED), 0);
+                        result.setLabel(last_label, 0);
+                        return true;
+                    }
+                    else {
+                        if (!state.validate(done)) return false;
+                        TCFContextState state_data = state.getData();
+                        if (state_data != null && state_data.is_terminated) image_name = ImageCache.IMG_THREAD_TERMINATED;
+                        else if (state_data != null && state_data.is_suspended) image_name = ImageCache.IMG_THREAD_SUSPENDED;
+                        else image_name = ImageCache.IMG_THREAD_RUNNNIG;
+                        if (state_data != null) {
+                            if (!state_data.is_suspended) {
+                                label.append(" (Running)");
                             }
-                            else if (state_data.suspend_params != null) {
-                                String s = (String)state_data.suspend_params.get(IRunControl.STATE_SIGNAL_DESCRIPTION);
-                                if (s == null) s = (String)state_data.suspend_params.get(IRunControl.STATE_SIGNAL_NAME);
-                                if (s != null) r += ": " + s;
-                            }
-                            if (r != null) {
+                            else {
+                                String r = model.getContextActionResult(id);
+                                if (r == null) {
+                                    r = state_data.suspend_reason;
+                                    if (state_data.suspend_params != null) {
+                                        String s = (String)state_data.suspend_params.get(IRunControl.STATE_SIGNAL_DESCRIPTION);
+                                        if (s == null) s = (String)state_data.suspend_params.get(IRunControl.STATE_SIGNAL_NAME);
+                                        if (s != null) r += ": " + s;
+                                    }
+                                }
+                                if (r == null) r = "Suspended";
                                 label.append(" (");
                                 label.append(r);
                                 label.append(")");
-                            }
-                            else {
-                                label.append(" (Suspended)");
                             }
                         }
                     }
@@ -615,7 +624,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
             }
         }
         result.setImageDescriptor(ImageCache.getImageDescriptor(image_name), 0);
-        result.setLabel(label.toString(), 0);
+        result.setLabel(last_label = label.toString(), 0);
         return true;
     }
 
@@ -653,12 +662,15 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
 
     private void postContentChangedDelta() {
         for (TCFModelProxy p : model.getModelProxies()) {
+            int flags = 0;
             String id = p.getPresentationContext().getId();
-            if (IDebugUIConstants.ID_DEBUG_VIEW.equals(id) ||
-                    IDebugUIConstants.ID_REGISTER_VIEW.equals(id) ||
-                    IDebugUIConstants.ID_EXPRESSION_VIEW.equals(id)) {
-                p.addDelta(this, IModelDelta.CONTENT);
+            if (IDebugUIConstants.ID_DEBUG_VIEW.equals(id)) flags |= IModelDelta.CONTENT;
+            if (IDebugUIConstants.ID_REGISTER_VIEW.equals(id) || IDebugUIConstants.ID_EXPRESSION_VIEW.equals(id)) {
+                if (p.getInput() == this) flags |= IModelDelta.CONTENT;
             }
+            if (flags == 0) continue;
+            if (model.getActiveAction(id) == null) p.addDelta(this, flags);
+            else model.addActionsDoneDelta(this, p.getPresentationContext(), flags);
         }
     }
 
@@ -702,6 +714,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         assert !disposed;
         resumed_cnt++;
         resume_pending = false;
+        resumed_by_action = false;
         dispose();
         postContextRemovedDelta();
     }
@@ -746,6 +759,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         signal_mask.reset();
         resumed_cnt++;
         resume_pending = false;
+        resumed_by_action = false;
         children_stack.onSuspended();
         children_regs.onSuspended();
         children_exps.onSuspended();
@@ -756,14 +770,16 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     void onContextResumed() {
         assert !disposed;
         state.reset(new TCFContextState());
-        postStateChangedDelta();
         final int cnt = ++resumed_cnt;
         resume_pending = true;
+        resumed_by_action = model.getActiveAction(id) != null;
+        if (resumed_by_action) postStateChangedDelta();
         Protocol.invokeLater(400, new Runnable() {
             public void run() {
                 if (cnt != resumed_cnt) return;
                 if (disposed) return;
                 resume_pending = false;
+                resumed_by_action = false;
                 children_stack.onResumed();
                 postContentChangedDelta();
                 TCFNode n = parent;

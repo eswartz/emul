@@ -38,15 +38,18 @@ public class TCFNodeLaunch extends TCFNode implements ISymbolOwner {
             boolean done;
             public void run() {
                 if (done) return;
-                ArrayList<TCFNode> nodes = new ArrayList<TCFNode>();
+                ArrayList<TCFNodeExecContext> nodes = new ArrayList<TCFNodeExecContext>();
                 if (!searchSuspendedThreads(children, nodes, this)) return;
-                for (TCFNode n : nodes) model.setDebugViewSelection(n.id, IRunControl.REASON_CONTAINER);
+                for (TCFNodeExecContext n : nodes) {
+                    String reason = n.getState().getData().suspend_reason;
+                    model.setDebugViewSelection(n, reason);
+                }
                 done = true;
             }
         });
     }
 
-    private boolean searchSuspendedThreads(TCFChildrenExecContext c, ArrayList<TCFNode> nodes, Runnable r) {
+    private boolean searchSuspendedThreads(TCFChildrenExecContext c, ArrayList<TCFNodeExecContext> nodes, Runnable r) {
         if (!c.validate(r)) return false;
         for (TCFNode n : c.toArray()) {
             if (!searchSuspendedThreads((TCFNodeExecContext)n, nodes, r)) return false;
@@ -54,7 +57,7 @@ public class TCFNodeLaunch extends TCFNode implements ISymbolOwner {
         return true;
     }
 
-    private boolean searchSuspendedThreads(TCFNodeExecContext n, ArrayList<TCFNode> nodes, Runnable r) {
+    private boolean searchSuspendedThreads(TCFNodeExecContext n, ArrayList<TCFNodeExecContext> nodes, Runnable r) {
         TCFDataCache<IRunControl.RunControlContext> run_context = n.getRunContext();
         if (!run_context.validate(r)) return false;
         IRunControl.RunControlContext ctx = run_context.getData();
@@ -120,6 +123,10 @@ public class TCFNodeLaunch extends TCFNode implements ISymbolOwner {
 
     void onContextAdded(IMemory.MemoryContext context) {
         children.onContextAdded(context);
+    }
+
+    void onAnyContextSuspendedOrChanged() {
+        for (TCFNodeSymbol s : symbols.values()) s.onMemoryMapChanged();
     }
 
     public void addSymbol(TCFNodeSymbol s) {

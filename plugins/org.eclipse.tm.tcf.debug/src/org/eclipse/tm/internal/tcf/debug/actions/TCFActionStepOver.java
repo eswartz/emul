@@ -47,7 +47,7 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
     protected boolean exited;
 
     public TCFActionStepOver(TCFLaunch launch, IRunControl.RunControlContext ctx, boolean step_line, boolean step_back) {
-        super(launch);
+        super(launch, ctx.getID());
         this.ctx = ctx;
         this.step_line = step_line;
         this.step_back = step_back;
@@ -290,7 +290,8 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
         }
         rc.removeListener(this);
         exited = true;
-        setActionResult(ctx.getID(), reason);
+        if (error == null) setActionResult(getContextID(), reason);
+        else launch.removeContextActions(getContextID());
         done();
     }
 

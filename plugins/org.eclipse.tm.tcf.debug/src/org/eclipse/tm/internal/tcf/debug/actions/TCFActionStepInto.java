@@ -42,7 +42,7 @@ public abstract class TCFActionStepInto extends TCFAction implements IRunControl
     protected boolean exited;
 
     public TCFActionStepInto(TCFLaunch launch, IRunControl.RunControlContext ctx, boolean step_line, boolean back_step) {
-        super(launch);
+        super(launch, ctx.getID());
         this.ctx = ctx;
         this.step_line = step_line;
         this.step_back = back_step;
@@ -219,7 +219,8 @@ public abstract class TCFActionStepInto extends TCFAction implements IRunControl
         if (exited) return;
         rc.removeListener(this);
         exited = true;
-        if (error == null) setActionResult(ctx.getID(), reason);
+        if (error == null) setActionResult(getContextID(), reason);
+        else launch.removeContextActions(getContextID());
         done();
     }
 

@@ -455,7 +455,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         type_name.reset();
         string.reset();
         children.onSuspended();
-        postAllChangedDelta();
+        // No need to post delta: parent posted CONTENT
     }
 
     void onValueChanged() {
