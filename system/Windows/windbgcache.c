@@ -270,6 +270,16 @@ BOOL SymFromIndex(HANDLE hProcess, ULONG64 BaseOfDll, DWORD Index, PSYMBOL_INFO 
     return proc(hProcess, BaseOfDll, Index, Symbol);
 }
 
+BOOL SymFromAddr(HANDLE hProcess, DWORD64 Address, PDWORD64 Displacement, PSYMBOL_INFO Symbol) {
+    typedef BOOL (FAR WINAPI * ProcType)(HANDLE, DWORD64, PDWORD64, PSYMBOL_INFO);
+    static ProcType proc = NULL;
+    if (proc == NULL) {
+        proc = (ProcType)GetProc("SymFromAddr");
+        if (proc == NULL) return 0;
+    }
+    return proc(hProcess, Address, Displacement, Symbol);
+}
+
 BOOL SymSetContext(HANDLE hProcess, PIMAGEHLP_STACK_FRAME StackFrame, PIMAGEHLP_CONTEXT Context) {
     typedef BOOL (FAR WINAPI * ProcType)(HANDLE, PIMAGEHLP_STACK_FRAME, PIMAGEHLP_CONTEXT);
     static ProcType proc = NULL;

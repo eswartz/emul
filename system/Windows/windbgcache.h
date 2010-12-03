@@ -210,6 +210,7 @@ enum DataKind {
 #define SymGetLineNext LocSymGetLineNext
 #define SymGetTypeInfo LocSymGetTypeInfo
 #define SymFromIndex LocSymFromIndex
+#define SymFromAddr LocSymFromAddr
 #define SymSetContext LocSymSetContext
 #define SymFromName LocSymFromName
 #define SymEnumSymbols LocSymEnumSymbols
@@ -229,6 +230,7 @@ extern BOOL SymGetLineFromAddr(HANDLE hProcess, DWORD dwAddr, PDWORD pdwDisplace
 extern BOOL SymGetLineNext(HANDLE hProcess, PIMAGEHLP_LINE Line);
 extern BOOL SymGetTypeInfo(HANDLE hProcess, DWORD64 ModBase, ULONG TypeId, IMAGEHLP_SYMBOL_TYPE_INFO GetType, PVOID pInfo);
 extern BOOL SymFromIndex(HANDLE hProcess, ULONG64 BaseOfDll, DWORD Index, PSYMBOL_INFO Symbol);
+extern BOOL SymFromAddr(HANDLE hProcess, DWORD64 Address, PDWORD64 Displacement, PSYMBOL_INFO Symbol);
 extern BOOL SymSetContext(HANDLE hProcess, PIMAGEHLP_STACK_FRAME StackFrame, PIMAGEHLP_CONTEXT Context);
 extern BOOL SymFromName(HANDLE hProcess, PCSTR Name, PSYMBOL_INFO Symbol);
 extern BOOL SymEnumSymbols(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Mask, PSYM_ENUMERATESYMBOLS_CALLBACK EnumSymbolsCallback, PVOID UserContext);

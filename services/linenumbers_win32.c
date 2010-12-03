@@ -154,7 +154,21 @@ int address_to_line(Context * ctx, ContextAddress addr0, ContextAddress addr1, L
     }
     memcpy(&next, &line, sizeof(next));
     if (err == 0 && !not_found && !SymGetLineNext(get_context_handle(ctx), &next)) {
-        err = set_win32_errno(GetLastError());
+        DWORD w = GetLastError();
+        if (w == ERROR_NOT_FOUND) {
+            /* Last line in the source file */
+            ULONG64 buffer[(sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR) + sizeof(ULONG64) - 1) / sizeof(ULONG64)];
+            SYMBOL_INFO * info = (SYMBOL_INFO *)buffer;
+            info->SizeOfStruct = sizeof(SYMBOL_INFO);
+            info->MaxNameLen = MAX_SYM_NAME;
+            if (SymFromAddr(get_context_handle(ctx), next.Address, NULL, info)) {
+                next.Address = (ULONG_PTR)info->Address + info->Size;
+                next.LineNumber++;
+            }
+        }
+        else {
+            err = set_win32_errno(GetLastError());
+        }
     }
 
     if (err == 0 && !not_found) {
