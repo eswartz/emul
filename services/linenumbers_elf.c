@@ -266,12 +266,12 @@ int address_to_line(Context * ctx, ContextAddress addr0, ContextAddress addr1, L
         load_line_numbers(range->mUnit);
         if (range->mUnit->mStatesCnt >= 2) {
             CompUnit * unit = range->mUnit;
+            unsigned l = 0;
+            unsigned h = unit->mStatesCnt - 1;
             ContextAddress addr_min = addr0 - range_rt_addr + range->mAddr;
             ContextAddress addr_max = addr1 - range_rt_addr + range->mAddr;
             if (addr_min < range->mAddr) addr_min = range->mAddr;
             if (addr_max > range->mAddr + range->mSize) addr_max = range->mAddr + range->mSize;
-            unsigned l = 0;
-            unsigned h = unit->mStatesCnt - 1;
             while (l < h) {
                 unsigned k = (h + l) / 2;
                 LineNumbersState * state = unit->mStates + k;
