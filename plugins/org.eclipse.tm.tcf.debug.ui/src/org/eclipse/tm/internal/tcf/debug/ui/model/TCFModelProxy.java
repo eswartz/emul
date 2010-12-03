@@ -344,7 +344,8 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
             last_update_time = System.currentTimeMillis();
             while (!selection.isEmpty()) {
                 TCFNode node = selection.getFirst();
-                node2flags.put(node, IModelDelta.SELECT);
+                // Bug in Eclipse 3.6.1: SELECT delta has no effect without STATE
+                node2flags.put(node, IModelDelta.SELECT | IModelDelta.STATE);
                 root = new ModelDelta(input, IModelDelta.NO_CHANGE);
                 makeDelta(root, node, node);
                 node2delta.clear();
