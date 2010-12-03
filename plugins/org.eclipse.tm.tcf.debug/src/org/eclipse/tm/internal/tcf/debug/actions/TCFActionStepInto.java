@@ -152,7 +152,7 @@ public abstract class TCFActionStepInto extends TCFAction implements IRunControl
                 if (!line_info.validate(this)) return;
                 TCFSourceRef ref = line_info.getData();
                 if (ref == null || ref.area == null) {
-                    // No line info for current PC, continue stepping
+                    exit(null);
                 }
                 else if (isSameLine(source_ref.area, ref.area)) {
                     setSourceRef(ref);
@@ -219,7 +219,7 @@ public abstract class TCFActionStepInto extends TCFAction implements IRunControl
         if (exited) return;
         rc.removeListener(this);
         exited = true;
-        setActionResult(ctx.getID(), reason);
+        if (error == null) setActionResult(ctx.getID(), reason);
         done();
     }
 
