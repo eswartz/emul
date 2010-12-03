@@ -205,6 +205,25 @@ static ELF_File * find_open_file(dev_t dev, ino_t ino, int64_t mtime) {
     return NULL;
 }
 
+static ELF_File * find_open_file_by_name(char * name) {
+    ELF_File * prev = NULL;
+    ELF_File * file = files;
+    while (file != NULL) {
+        if (strcmp(name, file->name) == 0) {
+            if (prev != NULL) {
+                prev->next = file->next;
+                file->next = files;
+                files = file;
+            }
+            file->age = 0;
+            return file;
+        }
+        prev = file;
+        file = file->next;
+    }
+    return NULL;
+}
+
 void swap_bytes(void * buf, size_t size) {
     size_t i, j, n;
     char * p = (char *)buf;
@@ -657,7 +676,8 @@ static void search_regions(MemoryMap * map, ContextAddress addr0, ContextAddress
         if (r->file_name == NULL) continue;
         if (r->addr == 0 && r->size == 0 && r->file_offs == 0 && r->sect_name == NULL) {
             int error = 0;
-            ELF_File * file = open_memory_region_file(r, &error);
+            ELF_File * file = find_open_file_by_name(r->file_name);
+            if (file == NULL) file = open_memory_region_file(r, &error);
             if (file != NULL) {
                 unsigned j;
                 for (j = 0; j < file->pheader_cnt; j++) {
