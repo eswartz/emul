@@ -121,6 +121,7 @@ $6b         constant    IuplusLoopUp
 $6c         constant    Icfill
 $6e         constant    Icmove
 $70         constant    Iexit
+$72         constant    Iexecute
 $73         constant    Idovar
 $74         constant    Isyscall
 $78         constant    IlitB

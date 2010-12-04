@@ -1,5 +1,6 @@
 
 : >call  1 urshift $8000 or  ; 
+: call>  1 lshift  ; 
  
 :: inlineable ( opc -- f )
     opc $20 >= 

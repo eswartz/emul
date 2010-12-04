@@ -506,28 +506,20 @@ test" unloop 3 >r 2 1 do loop r> 3 ="
 
 [IFUNDEF] DEFER
 : DEFER
-    create lastxt dodefer!
-    ['] noop ,
+    create 
+    lastxt dp !  dodefer,
+    \ ['] noop ,
 ; target-only
 [THEN]
 
-0 [if]
-    [IFUNDEF] IS
-    | : is-check
-        ' dup
-        @ $6a0
-         <> err-not-deferred ?error 
-        cell+ 
-    ; target-only
-    
-    : IS ( xt "deferred" -- )
-        is-check (IS)
-    ; target-only
-    : IS? ( "deferred" -- xt )
-        is-check (IS?)
-    ; target-only
-    [THEN]
-[then]
+[IFUNDEF] IS
+: IS ( xt "deferred" -- )
+    is-check  is,
+; target-only
+: IS? ( "deferred" -- xt )
+    is-check  is?,
+; target-only
+[THEN]
 
 [IFUNDEF] CONSTANT
 : CONSTANT

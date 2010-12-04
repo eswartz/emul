@@ -98,5 +98,27 @@
     \ postpone rdrop 
 ; immediate target-only
 
+: noop 
+    ." undefined word"
+;
 
-    
+: dodefer, ( -- )
+    ['] noop  >call  ,
+    Iexit c,
+;
+
+: is-check ( "..." -- is-addr ) 
+    '  :> copy 
+    copy  @  $8000  >=
+    copy cell+ c@  Iexit  =
+    and not  err-not-deferred ?error 
+    copy 
+; target-only
+
+: is,  ( xt-addr is-addr -- )
+  >r  >call  r>   !  
+;
+
+: is?,  ( is-addr -- )
+    @  call>
+;
