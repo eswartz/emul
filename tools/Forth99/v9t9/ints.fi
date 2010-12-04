@@ -8,6 +8,7 @@
 
 \   Timer
 2 cells RamVar vdp-ticks 
+cell    RamVar    vdp-timeout
 
 :   vdp-int-handler 
     'INTS c@  
@@ -20,6 +21,12 @@
         
         \ timer
         1. vdp-ticks d+!
+
+        \ timeout
+        1 vdp-timeout +!
+        vdp-timeout @ 0= if
+            false vid-show
+        then  
         
         \ keyboard timer
         kbdtimer c@ 1+ kbdtimer c!    

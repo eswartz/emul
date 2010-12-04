@@ -72,14 +72,6 @@ $40 constant    v-int-nocursor
     dup 16 <  if  v-regsave + c!  else 2drop then    
 ;
 
-:   (vr!)       ( val reg -- )
-    2dup >vr
-    
-    \ write VDP addr
-    8 lshift $8000 OR  OR  vwaddr
-;
-
-
 :   v-regaddr ( reg -- )
     dup  
     vwaddr
@@ -90,9 +82,21 @@ $40 constant    v-int-nocursor
     then
 ;
 
+1 <export
+
+:   (vr!)       ( val reg -- )
+    2dup >vr
+    
+    \ write VDP addr
+    8 lshift $8000 OR  OR  vwaddr
+;
+
+
 :   (vr@) ( reg# -- val )
     v-regsave + c@
 ;
+
+export>
 
 \   (Not a good reason for locals, since they're much slower, but just have something for now)
 
@@ -107,8 +111,7 @@ $40 constant    v-int-nocursor
 ;
 
 : vid-show ( f -- )
-    $40 and 
-    1 (vr@)  or
+    $40  1 (vr@)  rot  if OR else NAND then
     $8100 or  v-regaddr
 ;
 

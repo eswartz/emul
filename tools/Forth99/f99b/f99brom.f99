@@ -169,6 +169,11 @@ loop
     again
 ;
 
+: hang
+    ints-off (idle)
+; 
+
+
 export>
 
 :   bootup
@@ -194,7 +199,6 @@ export>
     \ cycle
     quit
 ;
- 
 
 include ../v9t9/ints.fi
 

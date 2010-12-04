@@ -19,7 +19,6 @@ kbdstate 6 + Constant kbdflag
 kbdstate 7 + Constant kbdtail
 kbdstate 8 + Constant kbdhead
 
-cell    RamVar    timeout
 cell    RamVar    randnoise
 
 :   read-row  ( col -- bits )
@@ -46,6 +45,17 @@ cell    RamVar    randnoise
     then 
 ;
 
+
+\   Actions when a new key is detected
+:   key-actions
+    vdp-timeout @ randnoise +!
+    kbdscan c@ randnoise +!
+     
+    0 vdp-timeout !
+    
+    true vid-show
+;
+
 :   repeat-key  ( ch -- )
     \ remember the key
     dup kbdscan c!
@@ -65,7 +75,8 @@ cell    RamVar    randnoise
         then
     else
         \ new key: reset repeat flag
-        0 kbdflag c! 
+        0 kbdflag c!
+        key-actions 
     then
 
     \ remember the key
@@ -105,16 +116,6 @@ cell    RamVar    randnoise
     ?dup if  repeat-key  then 
 ;
 
-\   Actions when any key is detected
-:   key-actions
-    timeout @ randnoise +!
-    kbdscan c@ randnoise +!
-     
-    0 timeout !
-    
-    true vid-show
-;
-
 :   kbd-scan
     \ clear alpha lock line and read break-able bits
     $0 'KBDA c!
@@ -146,8 +147,6 @@ cell    RamVar    randnoise
         \ no key!
         kbd-no-key exit 
     then
-    
-    key-actions
     
 ;
 
