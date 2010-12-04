@@ -91,7 +91,7 @@ public class F99bMachine extends Machine {
 			if (cru instanceof BaseCruAccess) {
 				cru.triggerInterrupt(CpuF99b.INT_KBD);
 			}
-			getCpu().setIdle(false);
+			//getCpu().setIdle(false);
 		}
 	}
 

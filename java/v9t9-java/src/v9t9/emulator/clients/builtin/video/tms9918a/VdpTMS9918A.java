@@ -718,7 +718,7 @@ public class VdpTMS9918A implements VdpHandler {
 				if (cru instanceof BaseCruAccess)
     				cru.triggerInterrupt(((BaseCruAccess) cru).intVdp);
 				
-				machine.getCpu().setIdle(false);
+				//machine.getCpu().setIdle(false);
     		}
 		}
 		//System.out.print('!');

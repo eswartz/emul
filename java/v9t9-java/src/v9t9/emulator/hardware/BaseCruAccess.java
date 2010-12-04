@@ -139,6 +139,7 @@ public class BaseCruAccess implements CruAccess {
 		if ((enabledIntMask & (1 << level)) != 0) {
 			if ((currentints & (1 << level)) == 0) {
 				currentints |= 1 << level;
+				machine.getCpu().setIdle(false);
 				//System.out.println(
 				//		"Hardware triggered interrupt... "+level+"/"+currentints+"/"+int9901);
 			}

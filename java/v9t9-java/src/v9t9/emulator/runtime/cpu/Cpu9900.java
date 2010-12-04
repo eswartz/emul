@@ -91,7 +91,7 @@ public class Cpu9900 extends CpuBase {
    }
 
     public void contextSwitch(int addr) {
-    	idle = false;
+    	//idle = false;
         contextSwitch(state.getConsole().readWord(addr), state.getConsole().readWord(addr+2));
         if (addr == 0) {
             /*
