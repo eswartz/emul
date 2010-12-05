@@ -148,6 +148,7 @@ cell    RamVar    randnoise
         kbd-no-key exit 
     then
     
+    'INTSP c@  [ M_INT_KBD invert literal ] and  'INTSP c!
 ;
 
 :   kbd-no-key

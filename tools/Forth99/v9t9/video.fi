@@ -2,17 +2,18 @@
 0      RamVar  v-data
 
 v-data
-    +field  v-screen       \ VDP addr of screen
-    +field  v-screensz     \ VDP size of screen
-    +field  v-patts        \ VDP addr of patterns
-    +field  v-pattsz       \ VDP size of pattern table
-    +field  v-colors       \ VDP addr of colors
-    +field  v-colorsz      \ VDP size of color table
-    +field  v-sprites      \ VDP addr of sprites
-    +field  v-sprcol       \ VDP addr of sprite color table (0 if not sprite 2 mode)
-    +field  v-sprpat       \ VDP addr of sprite patterns
-    +field  v-sprmot       \ VDP addr of sprite motion
-    +field  v-free         \ usable space (if no pages)
+
+|+    +field  v-screen       \ VDP addr of screen
+|+    +field  v-screensz     \ VDP size of screen
+|+    +field  v-patts        \ VDP addr of patterns
+|+    +field  v-pattsz       \ VDP size of pattern table
+|+    +field  v-colors       \ VDP addr of colors
+|+    +field  v-colorsz      \ VDP size of color table
+|+    +field  v-sprites      \ VDP addr of sprites
+|+    +field  v-sprcol       \ VDP addr of sprite color table (0 if not sprite 2 mode)
+|+    +field  v-sprpat       \ VDP addr of sprite patterns
+|+    +field  v-sprmot       \ VDP addr of sprite motion
+|+    +field  v-free         \ usable space (if no pages)
     +field  v-pagesize     \ size of a page
     
     +1field v-text         \ set if mode is text-based

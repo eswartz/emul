@@ -549,16 +549,16 @@ test" unloop 3 >r 2 1 do loop r> 3 ="
 
 [IFUNDEF] :NONAME
 : :NONAME
-    align
-
+    here
+    
     \ LFA
-    here latest ,
+    \  here latest ,
 
     \ NFA
-    $0000 ,
+    \ $0000 ,
 
     \ link
-    >latest !
+    \ dup  >latest !
 
     ]
    
