@@ -219,6 +219,8 @@ public abstract class VdpCanvas {
 
 	private boolean useAltSpritePalette;
 
+	private boolean isGreyscale;
+
 	/** Get the RGB triple for the palette entry. */
 	public byte[] getRGB(int idx) {
 		if (idx == 0 && !clearFromPalette)
@@ -271,6 +273,14 @@ public abstract class VdpCanvas {
 		rgb[0] = rgb3to8[(grb >> 2) & 0x7];
 		rgb[1] = rgb3to8[(grb >> 5) & 0x7];
 		rgb[2] = rgb2to8[grb & 0x3];
+		if (isGreyscale) {
+			// (299 * rgb[0] + 587 * rgb[1] + 114 * rgb[2]) * 256 / 1000;
+			
+			int l = ((rgb[0] & 0xff) * 299 + (rgb[1] & 0xff) * 587 + (rgb[2] & 0xff) * 114) / 1000;
+			rgb[0] = (byte) l;
+			rgb[1] = (byte) l;
+			rgb[2] = (byte) l;
+		}
 	}
 	public byte[] getStockRGB(int i) {
 		return stockPalette[i];
@@ -462,6 +472,7 @@ public abstract class VdpCanvas {
 	}
 
 	public void setGreyscale(boolean b) {
+		this.isGreyscale = b;
 		thePalette = b ? greyPalette : colorPalette;
 	}
 
