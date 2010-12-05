@@ -34,7 +34,7 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 		String filename = "f99brom.bin";
     	try {
 			cpuRomEntry = DiskMemoryEntry.newByteMemoryFromFile(
-	    			0x400, 0x4C00 - 0x400, "CPU ROM",
+	    			0x400, 0, "CPU ROM",
 	        		CPU,
 	                filename, 0x400, false);
 			cpuRomEntry.load();

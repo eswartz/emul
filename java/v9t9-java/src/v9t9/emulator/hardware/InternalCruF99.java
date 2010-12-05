@@ -47,13 +47,16 @@ public class InternalCruF99 extends BaseCruAccess {
 			break;
 			
 		case INTSP:
-			for (int i = 0; i < 8; i++)
-				if (((currentints | val) & (1 << i)) != 0) {
-					acknowledgeInterrupt(i);
-					if ((val & (1 << CpuF99b.INT_KBD)) == 0) {
+			for (int i = 0; i < 8; i++) {
+				int mask = (1 << i);
+				if ((val & mask) == 0) {
+					if ((currentints & mask) != 0)
+						acknowledgeInterrupt(i);
+					if (mask == (1 << CpuF99b.INT_KBD)) {
 						keyboardState.resetProbe();
 					}
 				}
+			}
 			break;
 			
 		case KBD:

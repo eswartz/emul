@@ -53,7 +53,8 @@ public abstract class TargetContext extends Context {
 	private PrintStream logfile = System.out;
 	private Map<String, ForwardRef> forwards;
 	public DictEntry stubData;
-	private boolean hideNext;
+	private boolean exportFlagNext;
+	private boolean exportFlag;
 	private HostContext hostCtx;
 
 	public TargetContext(boolean littleEndian, int charBits, int cellBits, int memorySize) {
@@ -180,8 +181,10 @@ public abstract class TargetContext extends Context {
 		alignDP();
 		int entryAddr = getDP();
 		int size = 0;
-		boolean doExport = export && !hideNext;
-		hideNext = false;
+		boolean doExport = export;
+		if (exportFlagNext)
+			doExport = exportFlag;
+		exportFlagNext = false;
 		if (doExport) {
 			// link, name
 			size = cellSize + align(1 + name.length());
@@ -505,8 +508,9 @@ public abstract class TargetContext extends Context {
 	public boolean isExport() {
 		return export;
 	}
-	public void setHideNext() {
-		this.hideNext = true;
+	public void setExportNext(boolean export) {
+		this.exportFlag = export;
+		this.exportFlagNext = true;
 	}
 
 	public interface IMemoryReader {

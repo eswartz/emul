@@ -22,6 +22,7 @@ import v9t9.forthcomp.words.AbortQuote;
 import v9t9.forthcomp.words.Again;
 import v9t9.forthcomp.words.Allot;
 import v9t9.forthcomp.words.BackSlash;
+import v9t9.forthcomp.words.BarExportNext;
 import v9t9.forthcomp.words.BarHideNext;
 import v9t9.forthcomp.words.BaseHostBranch;
 import v9t9.forthcomp.words.BaseWord;
@@ -192,6 +193,7 @@ public class HostContext extends Context {
 		define("<EXPORT", new PushExportState());
 		define("EXPORT>", new PopExportState());
 		define("|", new BarHideNext());
+		define("|+", new BarExportNext());
 		
 		define("create", new Create());
 		define("variable", new Variable());

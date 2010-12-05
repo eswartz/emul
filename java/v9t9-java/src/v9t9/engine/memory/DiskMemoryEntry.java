@@ -200,7 +200,7 @@ public class DiskMemoryEntry extends MemoryEntry {
         }
         
         if (size == 0)
-        	size = filesize;
+        	size = filesize - fileoffs;
         
         DiskMemoryEntry entry = new DiskMemoryEntry(area, addr, size, name, domain, filepath, fileoffs, filesize, isStored);
         

@@ -10,16 +10,16 @@ import v9t9.forthcomp.HostContext;
  * @author ejs
  *
  */
-public class BarHideNext extends BaseStdWord {
+public class BarExportNext extends BaseStdWord {
 
-	public BarHideNext() {
+	public BarExportNext() {
 	}
 
 	/* (non-Javadoc)
 	 * @see v9t9.forthcomp.IWord#execute(v9t9.forthcomp.IContext)
 	 */
 	public void execute(HostContext hostContext, TargetContext targetContext) throws AbortException {
-		targetContext.setExportNext(false);
+		targetContext.setExportNext(true);
 	}
 	
 	/* (non-Javadoc)
