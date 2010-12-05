@@ -182,7 +182,7 @@ export>
     v-allocinfo !
 ;
 
-: (mode)
+|+ : (mode)
     cursor-off
 
     dup  0 last-video-mode within  0= err-out-of-range ?error
@@ -251,16 +251,18 @@ Create msx-enhregs
     $8F00 ,     \ point to sr0
     0 ,
 
-: (vreset)
+|+ : (vreset)
     \ the chip itself is always enhanced
     msx-enhregs write-vregs
 
     'v-setupmode @  execute
 
+    term-reset
+    
     true vid-show
 ;             
 
-: vreset
+|+ : vreset
     (vreset)
 
     v-refresh-colors
@@ -272,7 +274,7 @@ Create msx-enhregs
     term-reset
 ;
 
-: vstdpal
+|+ : vstdpal
 
 ;
 
