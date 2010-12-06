@@ -56,6 +56,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     private final Map<String,Map<String,Object>[]> disassembly_capabilities = new HashMap<String,Map<String,Object>[]>();
     private final Set<String> running = new HashSet<String>();
     private final Set<IToken> get_state_cmds = new HashSet<IToken>();
+    private final HashMap<String,IToken> resume_cmds = new HashMap<String,IToken>();
     private final Map<String,Map<String,IRegisters.RegistersContext>> regs =
         new HashMap<String,Map<String,IRegisters.RegistersContext>>();
     private final Map<String,Map<String,Object>> bp_list = new HashMap<String,Map<String,Object>>();
@@ -175,7 +176,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     }
 
     private void runTest() {
-        if (!test_suite.isActive(TestRCBP1.this)) return;
+        if (!test_suite.isActive(this)) return;
         if (test_list == null) {
             getTestList();
             return;
@@ -225,6 +226,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                 changeBreakpoints();
                 return;
             }
+            assert resume_cnt == 0;
             for (SuspendedContext s : suspended.values()) resume(s.id);
             return;
         }
@@ -742,6 +744,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     }
 
     public void contextResumed(String id) {
+        resume_cmds.remove(id);
         IRunControl.RunControlContext ctx = threads.get(id);
         if (ctx == null) return;
         if (!ctx.hasState()) {
@@ -871,6 +874,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
             assert !done_get_state || done_disassembly || ds == null;
             suspended.put(id, sc);
         }
+        if (!bp_sync_done) return;
         ctx.getState(new IRunControl.DoneGetState() {
             public void doneGetState(IToken token, Exception error, boolean susp,
                     String pc, String reason, Map<String, Object> params) {
@@ -899,14 +903,15 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
 
     private void resume(final String id) {
         assert done_get_state || resume_cnt == 0;
-        if (!bp_sync_done) return;
+        assert resume_cmds.get(id) == null;
+        assert bp_sync_done;
         resume_cnt++;
         final SuspendedContext sc = suspended.get(id);
         IRunControl.RunControlContext ctx = threads.get(id);
         if (ctx != null && sc != null) {
             int rm = rnd.nextInt(6);
             if (!ctx.canResume(rm)) rm = IRunControl.RM_RESUME;
-            ctx.resume(rm, 1, new HashMap<String,Object>(), new IRunControl.DoneCommand() {
+            resume_cmds.put(id, ctx.resume(rm, 1, new HashMap<String,Object>(), new IRunControl.DoneCommand() {
                 public void doneCommand(IToken token, Exception error) {
                     if (test_suite.cancel) return;
                     if (!test_suite.isActive(TestRCBP1.this)) return;
@@ -915,12 +920,12 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                         exit(error);
                         return;
                     }
-                    if (suspended.get(id) == sc) {
+                    if (suspended.get(id) == sc || resume_cmds.get(id) == token) {
                         exit(new Exception("Missing contextResumed event after resume command"));
                         return;
                     }
                 }
-            });
+            }));
         }
     }
 
