@@ -166,15 +166,19 @@ U1_T dio_ReadU1(void) {
 #define dio_ReadU1() (sDataPos < sDataLen ? sData[sDataPos++] : dio_ReadU1F())
 
 U2_T dio_ReadU2(void) {
-    U1_T x0 = dio_ReadU1();
-    U1_T x1 = dio_ReadU1();
+    U2_T x0 = dio_ReadU1();
+    U2_T x1 = dio_ReadU1();
     return sBigEndian ? (x0 << 8) | x1 : x0 | (x1 << 8);
 }
 
 U4_T dio_ReadU4(void) {
-    U2_T x0 = dio_ReadU2();
-    U2_T x1 = dio_ReadU2();
-    return sBigEndian ? (x0 << 16) | x1 : x0 | (x1 << 16);
+    U4_T x0 = dio_ReadU1();
+    U4_T x1 = dio_ReadU1();
+    U4_T x2 = dio_ReadU1();
+    U4_T x3 = dio_ReadU1();
+    return sBigEndian ?
+        (x0 << 24) | (x1 << 16) | (x2 << 8) | x3:
+        x0 | (x1 << 8) | (x2 << 16) | (x3 << 24);
 }
 
 U8_T dio_ReadU8(void) {
