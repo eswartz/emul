@@ -302,10 +302,10 @@ static void tcp_bin_block_end(ChannelTCP * c) {
 #if BUF_SIZE > 0x4000
     *(c->out_bin_block - 3) = (len & 0x7fu) | 0x80u;
     *(c->out_bin_block - 2) = ((len >> 7) & 0x7fu) | 0x80u;
-    *(c->out_bin_block - 1) = len >> 14;
+    *(c->out_bin_block - 1) = (unsigned char)(len >> 14);
 #else
     *(c->out_bin_block - 2) = (len & 0x7fu) | 0x80u;
-    *(c->out_bin_block - 1) = len >> 7;
+    *(c->out_bin_block - 1) = (unsigned char)(len >> 7);
 #endif
     c->out_bin_block = NULL;
 }
