@@ -860,10 +860,14 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
         if (info == null) return null;
         assert info.parent != null;
         if (info.parent == peer_info) {
+            int n = peer_tree.getItemCount();
+            if (info.index >= n) return null;
             return peer_tree.getItem(info.index);
         }
         TreeItem i = findItem(info.parent);
         if (i == null) return null;
+        int n = i.getItemCount();
+        if (info.index >= n) return null;
         return i.getItem(info.index);
     }
 
