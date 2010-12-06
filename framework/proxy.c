@@ -126,31 +126,31 @@ static void log_str(const char * s) {
     }
 }
 
-static void log_byte(int i) {
-    if (log_mode & LOG_TCFLOG) {
-        if (i > ' ' && i < 127) {
-            /* Printable ASCII  */
-            log_chr(i);
-        }
-        else if (i == 0) {
-            log_chr(' ');
-        }
-        else if (i > 0) {
-            char buf[16];
-            snprintf(buf, sizeof buf, "\\x%02x", i);
-            log_str(buf);
-        }
-        else if (i == MARKER_EOM) {
-            log_str("<eom>");
-        }
-        else if (i == MARKER_EOS) {
-            log_str("<eom>");
-        }
-        else {
-            log_str("<?>");
-        }
+static void log_byte_func(int i) {
+    if (i > ' ' && i < 127) {
+        /* Printable ASCII  */
+        log_chr(i);
+    }
+    else if (i == 0) {
+        log_chr(' ');
+    }
+    else if (i > 0) {
+        char buf[16];
+        snprintf(buf, sizeof buf, "\\x%02x", i);
+        log_str(buf);
+    }
+    else if (i == MARKER_EOM) {
+        log_str("<eom>");
+    }
+    else if (i == MARKER_EOS) {
+        log_str("<eom>");
+    }
+    else {
+        log_str("<?>");
     }
 }
+
+#define log_byte(b) { if (log_mode & LOG_TCFLOG) log_byte_func(b); }
 
 static void log_start(Proxy * proxy, char ** argv, int argc) {
     int i;

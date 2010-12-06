@@ -170,17 +170,10 @@ static void pipe_flush_event(void * x) {
     ChannelPIPE * c = (ChannelPIPE *)x;
     assert(c->magic == CHANNEL_MAGIC);
     if (--c->out_flush_cnt == 0) {
+        int congestion_level = c->chan.congestion_level;
+        if (congestion_level > 0) usleep(congestion_level * 2500);
         pipe_flush(c);
         pipe_unlock(&c->chan);
-    }
-}
-
-static void pipe_flush_stream(OutputStream * out) {
-    ChannelPIPE * c = channel2pipe(out2channel(out));
-    assert(c->magic == CHANNEL_MAGIC);
-    if (c->out_flush_cnt < 8) {
-        if (c->out_flush_cnt++ == 0) pipe_lock(&c->chan);
-        post_event(pipe_flush_event, c);
     }
 }
 
@@ -201,10 +194,9 @@ static void pipe_write_stream(OutputStream * out, int byte) {
         if (c->out_errno) return;
         if (c->chan.out.cur == c->chan.out.end) pipe_flush(c);
         *c->chan.out.cur++ = esc;
-        if (byte == MARKER_EOM) {
-            int congestion_level = out2channel(out)->congestion_level;
-            pipe_flush_stream(out);
-            if (congestion_level > 0) usleep(congestion_level * 2500);
+        if (byte == MARKER_EOM && c->out_flush_cnt < 8) {
+            if (c->out_flush_cnt++ == 0) pipe_lock(&c->chan);
+            post_event(pipe_flush_event, c);
         }
         return;
     }
@@ -461,7 +453,6 @@ static ChannelPIPE * create_channel(int fd_inp, int fd_out, ServerInstance * ser
     c->chan.out.cur = c->obuf;
     c->chan.out.end = c->obuf + sizeof(c->obuf);
     c->chan.out.write = pipe_write_stream;
-    c->chan.out.flush = pipe_flush_stream;
     c->chan.out.write_block = pipe_write_block_stream;
     c->chan.out.splice_block = pipe_splice_block_stream;
     c->chan.state = ChannelStateStartWait;

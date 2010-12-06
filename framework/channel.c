@@ -45,22 +45,8 @@
 static ChannelCloseListener close_listeners[16];
 static int close_listeners_cnt = 0;
 
-#define isBoardcastOkay(c) ((c)->state == ChannelStateConnected || \
-                            (c)->state == ChannelStateRedirectSent || \
-                            (c)->state == ChannelStateRedirectReceived)
-
-static void flush_all(OutputStream * out) {
-    TCFBroadcastGroup * bcg = out2bcast(out);
-    LINK * l = bcg->channels.next;
-
-    assert(is_dispatch_thread());
-    assert(bcg->magic == BCAST_MAGIC);
-    while (l != &bcg->channels) {
-        Channel * c = bclink2channel(l);
-        if (isBoardcastOkay(c)) flush_stream(&c->out);
-        l = l->next;
-    }
-}
+static const int BROADCAST_OK_STATES = (1 << ChannelStateConnected) | (1 << ChannelStateRedirectSent) | (1 << ChannelStateRedirectReceived);
+#define isBoardcastOkay(c) ((1 << (c)->state) & BROADCAST_OK_STATES)
 
 static void write_all(OutputStream * out, int byte) {
     TCFBroadcastGroup * bcg = out2bcast(out);
@@ -70,7 +56,7 @@ static void write_all(OutputStream * out, int byte) {
     assert(bcg->magic == BCAST_MAGIC);
     while (l != &bcg->channels) {
         Channel * c = bclink2channel(l);
-        if (isBoardcastOkay(c)) c->out.write(&c->out, byte);
+        if (isBoardcastOkay(c)) write_stream(&c->out, byte);
         l = l->next;
     }
 }
@@ -123,7 +109,6 @@ TCFBroadcastGroup * broadcast_group_alloc(void) {
     list_init(&p->channels);
     p->magic = BCAST_MAGIC;
     p->out.write = write_all;
-    p->out.flush = flush_all;
     p->out.write_block = write_block_all;
     p->out.splice_block = splice_block_all;
     return p;

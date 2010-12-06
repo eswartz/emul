@@ -87,4 +87,8 @@
 #  endif
 #endif
 
+#if !defined(ENABLE_STREAM_MACROS)
+#define ENABLE_STREAM_MACROS    1
+#endif
+
 #endif /* D_config */

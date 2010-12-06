@@ -88,6 +88,7 @@ struct ChannelTCP {
     unsigned char obuf[BUF_SIZE];
     int out_errno;
     int out_flush_cnt;
+    unsigned char * out_bin_block;
 
     /* Async read request */
     AsyncReqInfo rdreq;
@@ -219,6 +220,7 @@ static void tcp_flush_with_flags(ChannelTCP * c, int flags) {
     assert(is_dispatch_thread());
     assert(c->magic == CHANNEL_MAGIC);
     assert(c->chan.out.end == p + sizeof(c->obuf));
+    assert(c->out_bin_block == NULL);
     if (c->chan.out.cur == p) return;
     assert(c->chan.out.cur >= p && c->chan.out.cur <= p + sizeof(c->obuf));
     if (c->chan.state == ChannelStateDisconnected || c->out_errno) {
@@ -277,87 +279,71 @@ static void tcp_flush_event(void * x) {
     ChannelTCP * c = (ChannelTCP *)x;
     assert(c->magic == CHANNEL_MAGIC);
     if (--c->out_flush_cnt == 0) {
+        int congestion_level = c->chan.congestion_level;
+        if (congestion_level > 0) usleep(congestion_level * 2500);
         tcp_flush_with_flags(c, 0);
         tcp_unlock(&c->chan);
     }
 }
 
-static void tcp_flush_stream(OutputStream * out) {
-    ChannelTCP * c = channel2tcp(out2channel(out));
-    assert(c->magic == CHANNEL_MAGIC);
-    if (c->out_flush_cnt < 8) {
-        if (c->out_flush_cnt++ == 0) tcp_lock(&c->chan);
-        post_event(tcp_flush_event, c);
-    }
+static void tcp_bin_block_start(ChannelTCP * c) {
+    *c->chan.out.cur++ = ESC;
+    *c->chan.out.cur++ = 3;
+#if BUF_SIZE > 0x4000
+    *c->chan.out.cur++ = 0;
+#endif
+    *c->chan.out.cur++ = 0;
+    *c->chan.out.cur++ = 0;
+    c->out_bin_block = c->chan.out.cur;
+}
+
+static void tcp_bin_block_end(ChannelTCP * c) {
+    unsigned len = c->chan.out.cur - c->out_bin_block;
+#if BUF_SIZE > 0x4000
+    *(c->out_bin_block - 3) = (len & 0x7fu) | 0x80u;
+    *(c->out_bin_block - 2) = ((len >> 7) & 0x7fu) | 0x80u;
+    *(c->out_bin_block - 1) = len >> 14;
+#else
+    *(c->out_bin_block - 2) = (len & 0x7fu) | 0x80u;
+    *(c->out_bin_block - 1) = len >> 7;
+#endif
+    c->out_bin_block = NULL;
 }
 
 static void tcp_write_stream(OutputStream * out, int byte) {
     ChannelTCP * c = channel2tcp(out2channel(out));
     assert(c->magic == CHANNEL_MAGIC);
-    if (c->chan.state == ChannelStateDisconnected) return;
-    if (c->out_errno) return;
-    if (c->chan.out.cur == c->chan.out.end) tcp_flush_with_flags(c, MSG_MORE);
-    if (byte < 0 || byte == ESC) {
-        char esc = 0;
-        *c->chan.out.cur++ = ESC;
-        if (byte == ESC) esc = 0;
-        else if (byte == MARKER_EOM) esc = 1;
-        else if (byte == MARKER_EOS) esc = 2;
-        else assert(0);
-        if (c->chan.state == ChannelStateDisconnected) return;
+    if (!c->chan.out.supports_zero_copy || c->chan.out.cur >= c->chan.out.end - 32 || byte < 0) {
         if (c->out_errno) return;
+        if (c->chan.state == ChannelStateDisconnected) return;
+        if (c->out_bin_block != NULL) tcp_bin_block_end(c);
         if (c->chan.out.cur == c->chan.out.end) tcp_flush_with_flags(c, MSG_MORE);
-        *c->chan.out.cur++ = esc;
-        if (byte == MARKER_EOM) {
-            int congestion_level = out2channel(out)->congestion_level;
-            tcp_flush_stream(out);
-            if (congestion_level > 0) usleep(congestion_level * 2500);
+        if (byte < 0 || byte == ESC) {
+            char esc = 0;
+            *c->chan.out.cur++ = ESC;
+            if (byte == ESC) esc = 0;
+            else if (byte == MARKER_EOM) esc = 1;
+            else if (byte == MARKER_EOS) esc = 2;
+            else assert(0);
+            if (c->out_errno) return;
+            if (c->chan.state == ChannelStateDisconnected) return;
+            if (c->chan.out.cur == c->chan.out.end) tcp_flush_with_flags(c, MSG_MORE);
+            *c->chan.out.cur++ = esc;
+            if (byte == MARKER_EOM && c->out_flush_cnt < 4) {
+                if (c->out_flush_cnt++ == 0) tcp_lock(&c->chan);
+                post_event(tcp_flush_event, c);
+            }
+            return;
         }
-        return;
+    }
+    else if (c->out_bin_block == NULL) {
+        tcp_bin_block_start(c);
     }
     *c->chan.out.cur++ = (char)byte;
 }
 
 static void tcp_write_block_stream(OutputStream * out, const char * bytes, size_t size) {
     size_t cnt = 0;
-
-#if ENABLE_ZeroCopy
-    ChannelTCP * c = channel2tcp(out2channel(out));
-
-    if (!c->ssl && out->supports_zero_copy && size > 32) {
-        /* Send the binary data escape seq */
-        size_t n = size;
-        if (c->chan.out.cur >= c->chan.out.end - 8) tcp_flush_with_flags(c, MSG_MORE);
-        *c->chan.out.cur++ = ESC;
-        *c->chan.out.cur++ = 3;
-        for (;;) {
-            if (n <= 0x7fu) {
-                *c->chan.out.cur++ = (char)n;
-                break;
-            }
-            *c->chan.out.cur++ = (n & 0x7fu) | 0x80u;
-            n = n >> 7;
-        }
-        /* We need to flush the buffer then send our data */
-        tcp_flush_with_flags(c, MSG_MORE);
-
-        if (c->chan.state == ChannelStateDisconnected) return;
-        if (c->out_errno) return;
-
-        while (cnt < size) {
-            int wr = send(c->socket, bytes + cnt, size - cnt, MSG_MORE);
-            if (wr < 0) {
-                int err = errno;
-                trace(LOG_PROTOCOL, "Can't send() on channel %#lx: %d %s", c, err, errno_to_str(err));
-                c->out_errno = err;
-                return;
-            }
-            cnt += wr;
-        }
-        return;
-    }
-#endif /* ENABLE_ZeroCopy */
-
     while (cnt < size) write_stream(out, (unsigned char)bytes[cnt++]);
 }
 
@@ -372,6 +358,7 @@ static int tcp_splice_block_stream(OutputStream * out, int fd, size_t size, off_
             if (rd > 0) {
                 /* Send the binary data escape seq */
                 unsigned n = rd;
+                if (c->out_bin_block != NULL) tcp_bin_block_end(c);
                 if (c->chan.out.cur >= c->chan.out.end - 8) tcp_flush_with_flags(c, MSG_MORE);
                 *c->chan.out.cur++ = ESC;
                 *c->chan.out.cur++ = 3;
@@ -723,7 +710,6 @@ static ChannelTCP * create_channel(int sock, int en_ssl, int server) {
     c->chan.out.cur = c->obuf;
     c->chan.out.end = c->obuf + sizeof(c->obuf);
     c->chan.out.write = tcp_write_stream;
-    c->chan.out.flush = tcp_flush_stream;
     c->chan.out.write_block = tcp_write_block_stream;
     c->chan.out.splice_block = tcp_splice_block_stream;
     c->chan.state = ChannelStateStartWait;

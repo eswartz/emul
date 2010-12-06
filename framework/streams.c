@@ -42,10 +42,6 @@ int (splice_block_stream)(OutputStream * out, int fd, size_t size, off_t * offse
     return out->splice_block(out, fd, size, offset);
 }
 
-void (flush_stream)(OutputStream * out) {
-    out->flush(out);
-}
-
 void write_string(OutputStream * out, const char * str) {
     while (*str) write_stream(out, (*str++) & 0xff);
 }
@@ -77,14 +73,10 @@ static void write_block_byte_array_output_stream(OutputStream * out, const char 
     while (pos < size) write_byte_array_output_stream(out, ((const uint8_t *)bytes)[pos++]);
 }
 
-static void flush_byte_array_output_stream(OutputStream * stream) {
-}
-
 OutputStream * create_byte_array_output_stream(ByteArrayOutputStream * buf) {
     memset(buf, 0, sizeof(ByteArrayOutputStream));
     buf->out.write_block = write_block_byte_array_output_stream;
     buf->out.write = write_byte_array_output_stream;
-    buf->out.flush = flush_byte_array_output_stream;
     return &buf->out;
 }
 

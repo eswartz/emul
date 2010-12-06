@@ -41,7 +41,6 @@ struct OutputStream {
     void (*write)(OutputStream * stream, int byte);
     void (*write_block)(OutputStream * stream, const char * bytes, size_t size);
     int (*splice_block)(OutputStream * stream, int fd, size_t size, off_t * offset);
-    void (*flush)(OutputStream * stream);
 };
 
 typedef struct InputStream InputStream;
@@ -62,7 +61,6 @@ struct InputStream {
     if (_x_ > ESC && _s_->cur < _s_->end) *_s_->cur++ = (unsigned char)_x_; else _s_->write(_s_, _x_); }
 #define write_block_stream(out, b, size) (out)->write_block((out), (b), (size))
 #define splice_block_stream(out, fd, size, offset) (out)->splice_block((out), (fd), (size), (offset))
-#define flush_stream(out) (out)->flush((out))
 
 #endif
 
@@ -71,7 +69,6 @@ extern int (peek_stream)(InputStream * inp);
 extern void (write_stream)(OutputStream * out, int b);
 extern void (write_block_stream)(OutputStream * out, const char * bytes, size_t size);
 extern int (splice_block_stream)(OutputStream * out, int fd, size_t size, off_t * offset);
-extern void (flush_stream)(OutputStream * out);
 
 extern void write_string(OutputStream * out, const char * str);
 extern void write_stringz(OutputStream * out, const char * str);
