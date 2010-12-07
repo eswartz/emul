@@ -90,9 +90,9 @@ struct Symbol {
     unsigned frame;
     int sym_class;
     ULONG64 module;
-    ULONG index;
-    const TypeInfo * info;
-    const Symbol * base;
+    ULONG index;            /* The symbol index in debug info section */
+    const TypeInfo * info;  /* If not NULL, the symbol is basic type */
+    const Symbol * base;    /* If not NULL, the symbol is array or pointer with this base type */
     size_t length;
     ContextAddress address;
 };
@@ -489,8 +489,15 @@ int get_symbol_size(const Symbol * sym, ContextAddress * size) {
         *size = sym->info->size;
         return 0;
     }
-    if (get_type_tag(&type, &tag)) return -1;
-    if (get_type_info(&type, TI_GET_LENGTH, &res) < 0) return -1;
+    if (sym->sym_class == SYM_CLASS_REFERENCE || sym->sym_class == SYM_CLASS_FUNCTION) {
+        SYMBOL_INFO * info = NULL;
+        if (get_sym_info(sym, sym->index, &info) < 0) return -1;
+        res = info->Size;
+    }
+    else {
+        if (get_type_tag(&type, &tag)) return -1;
+        if (get_type_info(&type, TI_GET_LENGTH, &res) < 0) return -1;
+    }
 
     *size = (ContextAddress)res;
     return 0;

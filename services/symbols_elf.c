@@ -1143,41 +1143,48 @@ int get_symbol_size(const Symbol * sym, ContextAddress * size) {
 
         if (!set_trap(&trap)) return -1;
         if (dimension == 0) ok = get_num_prop(obj, AT_byte_size, &sz);
-        if (!ok && sym->sym_class == SYM_CLASS_REFERENCE && obj->mType != NULL) {
-            obj = obj->mType;
-            if (dimension == 0) ok = get_num_prop(obj, AT_byte_size, &sz);
+        if (!ok && sym->sym_class == SYM_CLASS_FUNCTION) {
+            U8_T l, h;
+            ok = get_num_prop(obj, AT_low_pc, &l) && get_num_prop(obj, AT_high_pc, &h);
+            if (ok) sz = h - l;
         }
-        while (!ok && obj->mType != NULL) {
-            if (!is_modified_type(obj) && obj->mTag != TAG_enumeration_type) break;
-            obj = obj->mType;
-            if (dimension == 0) ok = get_num_prop(obj, AT_byte_size, &sz);
-        }
-        if (!ok && obj->mTag == TAG_array_type) {
-            U8_T length = 1;
-            int i = dimension;
-            ObjectInfo * idx = obj->mChildren;
-            while (i > 0 && idx != NULL) {
-                idx = idx->mSibling;
-                i--;
+        else {
+            if (!ok && sym->sym_class == SYM_CLASS_REFERENCE && obj->mType != NULL) {
+                obj = obj->mType;
+                if (dimension == 0) ok = get_num_prop(obj, AT_byte_size, &sz);
             }
-            if (idx == NULL) exception(ERR_INV_CONTEXT);
-            while (idx != NULL) {
-                length *= get_object_length(idx);
-                idx = idx->mSibling;
-            }
-            if (obj->mType == NULL) exception(ERR_INV_CONTEXT);
-            obj = obj->mType;
-            ok = get_num_prop(obj, AT_byte_size, &sz);
             while (!ok && obj->mType != NULL) {
                 if (!is_modified_type(obj) && obj->mTag != TAG_enumeration_type) break;
                 obj = obj->mType;
-                ok = get_num_prop(obj, AT_byte_size, &sz);
+                if (dimension == 0) ok = get_num_prop(obj, AT_byte_size, &sz);
             }
-            if (ok) sz *= length;
-        }
-        if (!ok && obj->mTag == TAG_pointer_type) {
-            sz = obj->mCompUnit->mDesc.mAddressSize;
-            ok = sz > 0;
+            if (!ok && obj->mTag == TAG_array_type) {
+                U8_T length = 1;
+                int i = dimension;
+                ObjectInfo * idx = obj->mChildren;
+                while (i > 0 && idx != NULL) {
+                    idx = idx->mSibling;
+                    i--;
+                }
+                if (idx == NULL) exception(ERR_INV_CONTEXT);
+                while (idx != NULL) {
+                    length *= get_object_length(idx);
+                    idx = idx->mSibling;
+                }
+                if (obj->mType == NULL) exception(ERR_INV_CONTEXT);
+                obj = obj->mType;
+                ok = get_num_prop(obj, AT_byte_size, &sz);
+                while (!ok && obj->mType != NULL) {
+                    if (!is_modified_type(obj) && obj->mTag != TAG_enumeration_type) break;
+                    obj = obj->mType;
+                    ok = get_num_prop(obj, AT_byte_size, &sz);
+                }
+                if (ok) sz *= length;
+            }
+            if (!ok && obj->mTag == TAG_pointer_type) {
+                sz = obj->mCompUnit->mDesc.mAddressSize;
+                ok = sz > 0;
+            }
         }
         if (!ok) str_exception(ERR_INV_DWARF, "Object has no size attribute");
         *size = (ContextAddress)sz;
