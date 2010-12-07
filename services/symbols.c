@@ -268,14 +268,14 @@ static void command_get_children(char * token, Channel * c) {
     cache_enter(command_get_children_cache_client, c, &args, sizeof(args));
 }
 
-typedef struct CommandFindArgs {
+typedef struct CommandFindByNameArgs {
     char token[256];
     char id[256];
     char * name;
-} CommandFindArgs;
+} CommandFindByNameArgs;
 
-static void command_find_cache_client(void * x) {
-    CommandFindArgs * args = (CommandFindArgs *)x;
+static void command_find_by_name_cache_client(void * x) {
+    CommandFindByNameArgs * args = (CommandFindByNameArgs *)x;
     Channel * c = cache_channel();
     Context * ctx = NULL;
     int frame = STACK_NO_FRAME;
@@ -286,7 +286,7 @@ static void command_find_cache_client(void * x) {
     if (ctx == NULL) err = set_errno(ERR_INV_CONTEXT, args->id);
     else if (ctx->exited) err = ERR_ALREADY_EXITED;
 
-    if (err == 0 && find_symbol(ctx, frame, args->name, &sym) < 0) err = errno;
+    if (err == 0 && find_symbol_by_name(ctx, frame, args->name, &sym) < 0) err = errno;
 
     cache_exit();
 
@@ -306,8 +306,8 @@ static void command_find_cache_client(void * x) {
     loc_free(args->name);
 }
 
-static void command_find(char * token, Channel * c) {
-    CommandFindArgs args;
+static void command_find_by_name(char * token, Channel * c) {
+    CommandFindByNameArgs args;
 
     json_read_string(&c->inp, args.id, sizeof(args.id));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
@@ -316,7 +316,57 @@ static void command_find(char * token, Channel * c) {
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     strlcpy(args.token, token, sizeof(args.token));
-    cache_enter(command_find_cache_client, c, &args, sizeof(args));
+    cache_enter(command_find_by_name_cache_client, c, &args, sizeof(args));
+}
+
+typedef struct CommandFindByAddrArgs {
+    char token[256];
+    char id[256];
+    ContextAddress addr;
+} CommandFindByAddrArgs;
+
+static void command_find_by_addr_cache_client(void * x) {
+    CommandFindByAddrArgs * args = (CommandFindByAddrArgs *)x;
+    Channel * c = cache_channel();
+    Context * ctx = NULL;
+    int frame = STACK_NO_FRAME;
+    Symbol * sym = NULL;
+    int err = 0;
+
+    if (id2frame(args->id, &ctx, &frame) < 0) ctx = id2ctx(args->id);
+    if (ctx == NULL) err = set_errno(ERR_INV_CONTEXT, args->id);
+    else if (ctx->exited) err = ERR_ALREADY_EXITED;
+
+    if (err == 0 && find_symbol_by_addr(ctx, frame, args->addr, &sym) < 0) err = errno;
+
+    cache_exit();
+
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, args->token);
+    write_errno(&c->out, err);
+
+    if (err == 0) {
+        json_write_string(&c->out, symbol2id(sym));
+        write_stream(&c->out, 0);
+    }
+    else {
+        write_stringz(&c->out, "null");
+    }
+
+    write_stream(&c->out, MARKER_EOM);
+}
+
+static void command_find_by_addr(char * token, Channel * c) {
+    CommandFindByAddrArgs args;
+
+    json_read_string(&c->inp, args.id, sizeof(args.id));
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    args.addr = (ContextAddress)json_read_uint64(&c->inp);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+    strlcpy(args.token, token, sizeof(args.token));
+    cache_enter(command_find_by_addr_cache_client, c, &args, sizeof(args));
 }
 
 typedef struct CommandListArgs {
@@ -534,7 +584,8 @@ void ini_symbols_service(Protocol * proto) {
     }
     add_command_handler(proto, SYMBOLS, "getContext", command_get_context);
     add_command_handler(proto, SYMBOLS, "getChildren", command_get_children);
-    add_command_handler(proto, SYMBOLS, "find", command_find);
+    add_command_handler(proto, SYMBOLS, "find", command_find_by_name);
+    add_command_handler(proto, SYMBOLS, "findByAddr", command_find_by_addr);
     add_command_handler(proto, SYMBOLS, "list", command_list);
     add_command_handler(proto, SYMBOLS, "getArrayType", command_get_array_type);
     add_command_handler(proto, SYMBOLS, "findFrameInfo", command_find_frame_info);

@@ -429,7 +429,7 @@ static void validate_find(Channel * c, void * args, int error) {
     if (trap.error) exception(trap.error);
 }
 
-int find_symbol(Context * ctx, int frame, char * name, Symbol ** sym) {
+int find_symbol_by_name(Context * ctx, int frame, char * name, Symbol ** sym) {
     uint64_t ip = 0;
     LINK * l = NULL;
     SymbolsCache * syms = NULL;
@@ -520,6 +520,11 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** sym) {
     }
     clear_trap(&trap);
     return 0;
+}
+
+int find_symbol_by_addr(Context * ctx, int frame, ContextAddress addr, Symbol ** sym) {
+    errno = ERR_UNSUPPORTED;
+    return -1;
 }
 
 static void read_sym_list_item(InputStream * inp, void * args) {

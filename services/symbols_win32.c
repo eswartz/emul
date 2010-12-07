@@ -800,28 +800,18 @@ static void add_cache_symbol(HANDLE process, ULONG64 pc, PCSTR name, Symbol * sy
     }
 }
 
-static int find_pe_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
-    ULONG64 buffer[(sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR) + sizeof(ULONG64) - 1) / sizeof(ULONG64)];
-    SYMBOL_INFO * info = (SYMBOL_INFO *)buffer;
-    IMAGEHLP_STACK_FRAME stack_frame;
-    HANDLE process = get_context_handle(ctx->parent == NULL ? ctx : ctx->parent);
-    DWORD err;
+static int set_pe_context(Context * ctx, int frame, HANDLE process, IMAGEHLP_STACK_FRAME * stack_frame) {
+    if (get_stack_frame(ctx, frame, stack_frame) < 0) return -1;
 
-    if (get_stack_frame(ctx, frame, &stack_frame) < 0) return -1;
-
-    memset(info, 0, sizeof(SYMBOL_INFO));
-    info->SizeOfStruct = sizeof(SYMBOL_INFO);
-    info->MaxNameLen = MAX_SYM_NAME;
-
-    if (!SymSetContext(process, &stack_frame, NULL)) {
-        err = GetLastError();
+    if (!SymSetContext(process, stack_frame, NULL)) {
+        DWORD err = GetLastError();
         if (err == ERROR_SUCCESS) {
             /* Don't know why Windows do that */
         }
         else if (err == ERROR_MOD_NOT_FOUND && frame != STACK_NO_FRAME) {
             /* No local symbols data, search global scope */
-            if (get_stack_frame(ctx, STACK_NO_FRAME, &stack_frame) < 0) return -1;
-            if (!SymSetContext(process, &stack_frame, NULL)) {
+            if (get_stack_frame(ctx, STACK_NO_FRAME, stack_frame) < 0) return -1;
+            if (!SymSetContext(process, stack_frame, NULL)) {
                 err = GetLastError();
                 if (err != ERROR_SUCCESS) {
                     set_win32_errno(err);
@@ -839,6 +829,21 @@ static int find_pe_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
             return -1;
         }
     }
+    return 0;
+}
+
+static int find_pe_symbol_by_name(Context * ctx, int frame, char * name, Symbol * sym) {
+    HANDLE process = get_context_handle(ctx->parent == NULL ? ctx : ctx->parent);
+    ULONG64 buffer[(sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR) + sizeof(ULONG64) - 1) / sizeof(ULONG64)];
+    SYMBOL_INFO * info = (SYMBOL_INFO *)buffer;
+    IMAGEHLP_STACK_FRAME stack_frame;
+    DWORD err;
+
+    if (set_pe_context(ctx, frame, process, &stack_frame) < 0) return -1;
+
+    memset(info, 0, sizeof(SYMBOL_INFO));
+    info->SizeOfStruct = sizeof(SYMBOL_INFO);
+    info->MaxNameLen = MAX_SYM_NAME;
 
     if (find_cache_symbol(ctx, frame, process, stack_frame.InstructionOffset, name, sym)) return errno ? -1 : 0;
 
@@ -863,6 +868,31 @@ static int find_pe_symbol(Context * ctx, int frame, char * name, Symbol * sym) {
     return -1;
 }
 
+static int find_pe_symbol_by_addr(Context * ctx, int frame, ContextAddress addr, Symbol * sym) {
+    HANDLE process = get_context_handle(ctx->parent == NULL ? ctx : ctx->parent);
+    ULONG64 buffer[(sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR) + sizeof(ULONG64) - 1) / sizeof(ULONG64)];
+    SYMBOL_INFO * info = (SYMBOL_INFO *)buffer;
+    IMAGEHLP_STACK_FRAME stack_frame;
+    DWORD err;
+
+    if (set_pe_context(ctx, frame, process, &stack_frame) < 0) return -1;
+
+    memset(info, 0, sizeof(SYMBOL_INFO));
+    info->SizeOfStruct = sizeof(SYMBOL_INFO);
+    info->MaxNameLen = MAX_SYM_NAME;
+
+    if (SymFromAddr(process, addr, NULL, info)) {
+        syminfo2symbol(ctx, frame, info, sym);
+        return 0;
+    }
+
+    set_win32_errno(err = GetLastError());
+    if (err == 0 || err == ERROR_MOD_NOT_FOUND) {
+        errno = ERR_SYM_NOT_FOUND;
+    }
+    return -1;
+}
+
 static int find_basic_type_symbol(Context * ctx, char * name, Symbol * sym) {
     const TypeInfo * p = basic_type_info;
     while (p->name != NULL) {
@@ -878,13 +908,12 @@ static int find_basic_type_symbol(Context * ctx, char * name, Symbol * sym) {
     return -1;
 }
 
-int find_symbol(Context * ctx, int frame, char * name, Symbol ** sym) {
+int find_symbol_by_name(Context * ctx, int frame, char * name, Symbol ** sym) {
     int found = 0;
     *sym = alloc_symbol();
     (*sym)->ctx = ctx;
-    if (frame == STACK_TOP_FRAME) frame = get_top_frame(ctx);
-    if (frame == STACK_TOP_FRAME) return -1;
-    if (find_pe_symbol(ctx, frame, name, *sym) >= 0) found = 1;
+    if (frame == STACK_TOP_FRAME && (frame = get_top_frame(ctx)) < 0) return -1;
+    if (find_pe_symbol_by_name(ctx, frame, name, *sym) >= 0) found = 1;
     else if (get_error_code(errno) != ERR_SYM_NOT_FOUND) return -1;
 #if ENABLE_RCBP_TEST
     if (!found) {
@@ -907,6 +936,17 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** sym) {
         errno = ERR_SYM_NOT_FOUND;
         return -1;
     }
+    assert(frame >= 0 || (*sym)->ctx == ctx->mem);
+    assert((*sym)->ctx == ((*sym)->frame ? ctx : ctx->mem));
+    assert((*sym)->frame == ((*sym)->ctx == (*sym)->ctx->mem ? 0u : frame - STACK_NO_FRAME));
+    return 0;
+}
+
+int find_symbol_by_addr(Context * ctx, int frame, ContextAddress addr, Symbol ** sym) {
+    *sym = alloc_symbol();
+    (*sym)->ctx = ctx;
+    if (frame == STACK_TOP_FRAME && (frame = get_top_frame(ctx)) < 0) return -1;
+    if (find_pe_symbol_by_addr(ctx, frame, addr, *sym) < 0) return -1;
     assert(frame >= 0 || (*sym)->ctx == ctx->mem);
     assert((*sym)->ctx == ((*sym)->frame ? ctx : ctx->mem));
     assert((*sym)->frame == ((*sym)->ctx == (*sym)->ctx->mem ? 0u : frame - STACK_NO_FRAME));

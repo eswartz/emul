@@ -59,7 +59,14 @@ typedef void EnumerateSymbolsCallBack(void *, Symbol *);
  * On error, returns -1 and sets errno.
  * On success returns 0.
  */
-extern int find_symbol(Context * ctx, int frame, char * name, Symbol ** sym);
+extern int find_symbol_by_name(Context * ctx, int frame, char * name, Symbol ** sym);
+
+/*
+ * Find symbol information for given address in given context.
+ * On error, returns -1 and sets errno.
+ * On success returns 0.
+ */
+extern int find_symbol_by_addr(Context * ctx, int frame, ContextAddress addr, Symbol ** sym);
 
 /*
  * Enumerate symbols in given context.

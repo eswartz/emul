@@ -546,7 +546,7 @@ static int identifier(char * name, Value * v) {
 #if ENABLE_Symbols
     {
         Symbol * sym = NULL;
-        if (find_symbol(expression_context, expression_frame, name, &sym) < 0) {
+        if (find_symbol_by_name(expression_context, expression_frame, name, &sym) < 0) {
             if (get_error_code(errno) != ERR_SYM_NOT_FOUND) error(errno, "Cannot read symbol data");
         }
         else {

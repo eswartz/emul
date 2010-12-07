@@ -86,28 +86,30 @@ static int get_sym_context(Context * ctx, int frame) {
 
 /* Map ELF symbol table entry value to run-time address in given context address space */
 static int syminfo2address(Context * ctx, SymbolInfo * info, ContextAddress * address) {
-    U8_T value = info->mValue;
-    ELF_File * file = info->mSection->file;
-    ELF_Section * sec = NULL;
     switch (info->mType) {
     case STT_OBJECT:
     case STT_FUNC:
-        if (file->type != ET_EXEC) {
-            switch (info->mSectionIndex) {
-            case SHN_ABS:
-                break;
-            case SHN_COMMON:
-            case SHN_UNDEF:
-                errno = ERR_INV_ADDRESS;
-                return -1;
-            default:
-                sec = info->mSection;
-                value += sec->addr;
-                break;
+        {
+            U8_T value = info->mValue;
+            ELF_File * file = info->mSymSection->mFile;
+            ELF_Section * sec = NULL;
+            if (file->type != ET_EXEC) {
+                switch (info->mSectionIndex) {
+                case SHN_ABS:
+                    break;
+                case SHN_COMMON:
+                case SHN_UNDEF:
+                    errno = ERR_INV_ADDRESS;
+                    return -1;
+                default:
+                    sec = info->mSection;
+                    value += sec->addr;
+                    break;
+                }
             }
+            *address = elf_map_to_run_time_address(ctx, file, sec, (ContextAddress)value);
+            return 0;
         }
-        *address = elf_map_to_run_time_address(ctx, file, sec, (ContextAddress)value);
-        return 0;
     }
     errno = ERR_INV_ADDRESS;
     return -1;
@@ -227,10 +229,11 @@ static int find_in_dwarf(const char * name, Symbol ** sym) {
     return 0;
 }
 
-static int find_in_sym_table(DWARFCache * cache, char * name, Symbol ** res) {
+static int find_by_name_in_sym_table(DWARFCache * cache, char * name, Symbol ** res) {
     unsigned m = 0;
     unsigned h = calc_symbol_name_hash(name);
     unsigned cnt = 0;
+    Context * prs = context_get_group(sym_ctx, CONTEXT_GROUP_PROCESS);
     while (m < cache->mSymSectionsCnt) {
         SymbolSection * tbl = cache->mSymSections[m];
         unsigned n = tbl->mSymbolHash[h];
@@ -239,7 +242,7 @@ static int find_in_sym_table(DWARFCache * cache, char * name, Symbol ** res) {
             unpack_elf_symbol_info(tbl, n, &sym_info);
             if (strcmp(name, sym_info.mName) == 0) {
                 ContextAddress addr = 0;
-                if (syminfo2address(context_get_group(sym_ctx, CONTEXT_GROUP_PROCESS), &sym_info, &addr) == 0 && addr != 0) {
+                if (syminfo2address(prs, &sym_info, &addr) == 0 && addr != 0) {
                     int found = 0;
                     UnitAddressRange * range = elf_find_unit(sym_ctx, addr, addr + 1, NULL);
                     if (range != NULL) {
@@ -264,7 +267,7 @@ static int find_in_sym_table(DWARFCache * cache, char * name, Symbol ** res) {
                     if (!found) {
                         Symbol * sym = alloc_symbol();
                         sym->frame = STACK_NO_FRAME;
-                        sym->ctx = context_get_group(sym_ctx, CONTEXT_GROUP_PROCESS);
+                        sym->ctx = prs;
                         sym->tbl = tbl;
                         sym->index = n;
                         switch (sym_info.mType) {
@@ -287,7 +290,7 @@ static int find_in_sym_table(DWARFCache * cache, char * name, Symbol ** res) {
     return cnt == 1;
 }
 
-int find_symbol(Context * ctx, int frame, char * name, Symbol ** res) {
+int find_symbol_by_name(Context * ctx, int frame, char * name, Symbol ** res) {
     int error = 0;
     int found = 0;
 
@@ -340,7 +343,7 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** res) {
             Trap trap;
             if (set_trap(&trap)) {
                 DWARFCache * cache = get_dwarf_cache(file);
-                found = find_in_sym_table(cache, name, res);
+                found = find_by_name_in_sym_table(cache, name, res);
                 clear_trap(&trap);
             }
             else {
@@ -405,6 +408,131 @@ int find_symbol(Context * ctx, int frame, char * name, Symbol ** res) {
         errno = error;
         return -1;
     }
+    return 0;
+}
+
+static int find_by_addr_in_sym_table(DWARFCache * cache, ContextAddress addr, Symbol ** res) {
+    /* TODO: need faster symbol by address search */
+    unsigned m = 0;
+    unsigned cnt = 0;
+    Context * prs = context_get_group(sym_ctx, CONTEXT_GROUP_PROCESS);
+    while (m < cache->mSymSectionsCnt) {
+        SymbolSection * tbl = cache->mSymSections[m];
+        unsigned n = 1;
+        while (n < tbl->mSymCount) {
+            ContextAddress sym_addr = 0;
+            SymbolInfo sym_info;
+            unpack_elf_symbol_info(tbl, n, &sym_info);
+            if (syminfo2address(prs, &sym_info, &sym_addr) == 0 &&
+                    sym_addr <= addr && sym_addr + (ContextAddress)sym_info.mSize > addr) {
+                Symbol * sym = alloc_symbol();
+                sym->frame = STACK_NO_FRAME;
+                sym->ctx = prs;
+                sym->tbl = tbl;
+                sym->index = n;
+                switch (sym_info.mType) {
+                case STT_FUNC:
+                    sym->sym_class = SYM_CLASS_FUNCTION;
+                    break;
+                case STT_OBJECT:
+                    sym->sym_class = SYM_CLASS_REFERENCE;
+                    break;
+                }
+                *res = sym;
+                cnt++;
+            }
+            n++;
+        }
+        m++;
+    }
+    return cnt == 1;
+}
+
+static int find_by_addr_in_unit(ObjectInfo * obj, int level, ContextAddress addr, Symbol ** res) {
+    while (obj != NULL) {
+        switch (obj->mTag) {
+        case TAG_global_subroutine:
+        case TAG_subroutine:
+        case TAG_subprogram:
+        case TAG_entry_point:
+        case TAG_lexical_block:
+            {
+                U8_T LowPC, HighPC;
+                if (get_num_prop(obj, AT_low_pc, &LowPC) && get_num_prop(obj, AT_high_pc, &HighPC)) {
+                    if (LowPC <= addr && HighPC > addr) {
+                        object2symbol(obj, res);
+                        return 0;
+                    }
+                    if (LowPC <= sym_ip && HighPC > sym_ip) {
+                        return find_by_addr_in_unit(obj->mChildren, level + 1, addr, res);
+                    }
+                }
+            }
+            break;
+        case TAG_formal_parameter:
+        case TAG_local_variable:
+        case TAG_variable:
+            {
+                U8_T lc = 0;
+                U8_T sz = 0;
+                if (!get_num_prop(obj, AT_location, &lc)) return -1;
+                if (!get_num_prop(obj, AT_byte_size, &sz)) return -1;
+                if (lc <= addr && lc + sz > addr) {
+                    object2symbol(obj, res);
+                    return 0;
+                }
+            }
+            break;
+        }
+        obj = obj->mSibling;
+    }
+    errno = ERR_SYM_NOT_FOUND;
+    return -1;
+}
+
+int find_symbol_by_addr(Context * ctx, int frame, ContextAddress addr, Symbol ** res) {
+    Trap trap;
+    UnitAddressRange * range = NULL;
+    if (!set_trap(&trap)) return -1;
+    if (frame == STACK_TOP_FRAME && (frame = get_top_frame(ctx)) < 0) exception(errno);
+    if (get_sym_context(ctx, frame) < 0) exception(errno);
+    range = elf_find_unit(sym_ctx, addr, addr + 1, NULL);
+    if (range != NULL) {
+        /* The address points into .text section of a compilation unit */
+        if (find_by_addr_in_unit(range->mUnit->mObject->mChildren, 0, addr, res) < 0) exception(errno);
+    }
+    else {
+        /* Search symbol tables */
+        int error = 0;
+        int found = 0;
+        ELF_File * file = elf_list_first(sym_ctx, addr, addr + 1);
+        if (file == NULL) error = errno;
+        while (error == 0 && file != NULL) {
+            Trap trap;
+            if (set_trap(&trap)) {
+                DWARFCache * cache = get_dwarf_cache(file);
+                found = find_by_addr_in_sym_table(cache, addr, res);
+                clear_trap(&trap);
+            }
+            else {
+                error = trap.error;
+                break;
+            }
+            if (found) break;
+            file = elf_list_next(sym_ctx);
+            if (file == NULL) error = errno;
+        }
+        elf_list_done(sym_ctx);
+        if (error) exception(error);
+        if (!found) {
+            /* Search in compilation unit that contains stack frame PC */
+            if (sym_ip == 0) exception(ERR_SYM_NOT_FOUND);
+            range = elf_find_unit(sym_ctx, sym_ip, sym_ip + 1, NULL);
+            if (range == NULL) exception(ERR_SYM_NOT_FOUND);
+            if (find_by_addr_in_unit(range->mUnit->mObject->mChildren, 0, addr, res) < 0) exception(errno);
+        }
+    }
+    clear_trap(&trap);
     return 0;
 }
 
