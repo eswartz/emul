@@ -21,6 +21,7 @@ import java.util.Random;
 import java.util.Set;
 
 import org.eclipse.tm.tcf.protocol.IChannel;
+import org.eclipse.tm.tcf.protocol.IErrorReport;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IBreakpoints;
@@ -30,6 +31,7 @@ import org.eclipse.tm.tcf.services.ILineNumbers;
 import org.eclipse.tm.tcf.services.IMemory;
 import org.eclipse.tm.tcf.services.IRegisters;
 import org.eclipse.tm.tcf.services.IRunControl;
+import org.eclipse.tm.tcf.services.ISymbols;
 import org.eclipse.tm.tcf.services.IDiagnostics.ISymbol;
 import org.eclipse.tm.tcf.services.IDisassembly.IDisassemblyLine;
 import org.eclipse.tm.tcf.services.ILineNumbers.CodeArea;
@@ -37,12 +39,14 @@ import org.eclipse.tm.tcf.services.IMemory.MemoryContext;
 import org.eclipse.tm.tcf.services.IMemory.MemoryError;
 import org.eclipse.tm.tcf.services.IRegisters.RegistersContext;
 import org.eclipse.tm.tcf.services.IRunControl.RunControlContext;
+import org.eclipse.tm.tcf.services.ISymbols.Symbol;
 
 class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
 
     private final TCFTestSuite test_suite;
     private final int channel_id;
     private final IDiagnostics diag;
+    private final ISymbols syms;
     private final IMemory mm;
     private final IRunControl rc;
     private final IRegisters rg;
@@ -157,6 +161,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
         this.test_suite = test_suite;
         this.channel_id = channel_id;
         diag = channel.getRemoteService(IDiagnostics.class);
+        syms = channel.getRemoteService(ISymbols.class);
         mm = channel.getRemoteService(IMemory.class);
         rc = channel.getRemoteService(IRunControl.class);
         rg = channel.getRemoteService(IRegisters.class);
@@ -816,31 +821,27 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
             }
         }
         if (!test_suite.isActive(this)) return;
-        final SuspendedContext sc0 = sc;
-        ILineNumbers.DoneMapToSource ln_done = new ILineNumbers.DoneMapToSource() {
-            public void doneMapToSource(IToken token, Exception error, CodeArea[] areas) {
-                if (error != null) {
-                    exit(error);
-                    return;
-                }
-                runMemoryTest(sc0, new Runnable() {
-                    public void run() {
-                        runRegistersTest(sc0, new Runnable() {
-                            public void run() {
-                                resume(sc.id);
-                            }
-                        });
-                    }
-                });
+        Runnable done = new Runnable() {
+            public void run() {
+                resume(sc.id);
             }
         };
-        if (ln != null && sc.pc != null) {
-            BigInteger x = new BigInteger(sc.pc);
-            BigInteger y = x.add(BigInteger.valueOf(1));
-            ln.mapToSource(sc.id, x, y, ln_done);
-        }
-        else {
-            ln_done.doneMapToSource(null, null, null);
+        switch (rnd.nextInt(5)) {
+        case 0:
+            runMemoryTest(sc, done);
+            break;
+        case 1:
+            runRegistersTest(sc, done);
+            break;
+        case 2:
+            runLineNumbersTest(sc, done);
+            break;
+        case 3:
+            runSymbolsTest(sc, done);
+            break;
+        default:
+            done.run();
+            break;
         }
     }
 
@@ -1198,6 +1199,89 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
             }));
         }
         if (cmds.isEmpty()) {
+            done.run();
+        }
+    }
+
+    private void runLineNumbersTest(SuspendedContext sc, final Runnable done) {
+        if (ln != null && sc.pc != null) {
+            BigInteger x = new BigInteger(sc.pc);
+            BigInteger y = x.add(BigInteger.valueOf(1));
+            ln.mapToSource(sc.id, x, y, new ILineNumbers.DoneMapToSource() {
+                public void doneMapToSource(IToken token, Exception error, CodeArea[] areas) {
+                    if (error != null) {
+                        exit(error);
+                        return;
+                    }
+                    done.run();
+                }
+            });
+        }
+        else {
+            done.run();
+        }
+    }
+
+    private void runSymbolsTest(final SuspendedContext sc, final Runnable done) {
+        if (syms != null && sc.pc != null) {
+            final BigInteger x = new BigInteger(sc.pc);
+            syms.findByAddr(sc.id, x, new ISymbols.DoneFind() {
+                public void doneFind(IToken token, Exception error, String symbol_id) {
+                    if (error != null) {
+                        int code = IErrorReport.TCF_ERROR_OTHER;
+                        if (error instanceof IErrorReport) code = ((IErrorReport)error).getErrorCode();
+                        switch (code) {
+                        case IErrorReport.TCF_ERROR_INV_COMMAND:
+                        case IErrorReport.TCF_ERROR_SYM_NOT_FOUND:
+                            done.run();
+                            return;
+                        default:
+                            exit(error);
+                            return;
+                        }
+                    }
+                    syms.getContext(symbol_id, new ISymbols.DoneGetContext() {
+                        public void doneGetContext(IToken token, Exception error, Symbol context) {
+                            if (error != null) {
+                                exit(error);
+                                return;
+                            }
+                            Number addr = context.getAddress();
+                            int size = context.getSize();
+                            if (addr == null) {
+                                exit(new Exception("Missing symbol address attribute"));
+                                return;
+                            }
+                            if (size <= 0) {
+                                exit(new Exception("Invalid symbol size attribute"));
+                                return;
+                            }
+                            BigInteger y = new BigInteger(addr.toString());
+                            BigInteger z = y.add(BigInteger.valueOf(size));
+                            if (x.compareTo(y) < 0 || x.compareTo(z) >= 0) {
+                                exit(new Exception("Invalid symbol address attribute"));
+                                return;
+                            }
+                            String name = context.getName();
+                            if (name == null) {
+                                done.run();
+                                return;
+                            }
+                            syms.find(sc.id, name, new ISymbols.DoneFind() {
+                                public void doneFind(IToken token, Exception error, String symbol_id) {
+                                    if (error != null) {
+                                        exit(error);
+                                        return;
+                                    }
+                                    done.run();
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        }
+        else {
             done.run();
         }
     }
