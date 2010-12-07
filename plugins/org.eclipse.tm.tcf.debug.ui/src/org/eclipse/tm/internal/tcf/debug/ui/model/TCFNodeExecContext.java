@@ -26,14 +26,17 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IViewerInputUpdat
 import org.eclipse.debug.ui.IDebugUIConstants;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
+import org.eclipse.tm.internal.tcf.debug.model.TCFFunctionRef;
 import org.eclipse.tm.internal.tcf.debug.model.TCFSourceRef;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
+import org.eclipse.tm.tcf.services.ILineNumbers;
 import org.eclipse.tm.tcf.services.IMemory;
 import org.eclipse.tm.tcf.services.IMemoryMap;
 import org.eclipse.tm.tcf.services.IProcesses;
 import org.eclipse.tm.tcf.services.IRunControl;
+import org.eclipse.tm.tcf.services.ISymbols;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 
 @SuppressWarnings("serial")
@@ -54,8 +57,10 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     private final TCFDataCache<BigInteger> address; // Current PC as BigInteger
     private final TCFDataCache<Collection<Map<String,Object>>> signal_list;
     private final TCFDataCache<SignalMask[]> signal_mask;
+    private final TCFDataCache<TCFNodeExecContext> memory_node;
 
-    private final Map<BigInteger,TCFSourceRef> line_info_cache;
+    private Map<BigInteger,TCFDataCache<TCFSourceRef>> line_info_cache;
+    private Map<BigInteger,TCFDataCache<TCFFunctionRef>> func_info_cache;
 
     private final Map<String,TCFNodeSymbol> symbols = new HashMap<String,TCFNodeSymbol>();
 
@@ -162,11 +167,6 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         };
         children_regs = new TCFChildrenRegisters(this);
         children_exps = new TCFChildrenExpressions(this);
-        line_info_cache = new LinkedHashMap<BigInteger,TCFSourceRef>() {
-            protected boolean removeEldestEntry(Map.Entry<BigInteger,TCFSourceRef> eldest) {
-                return size() > 256;
-            }
-        };
         mem_context = new TCFDataCache<IMemory.MemoryContext>(channel) {
             @Override
             protected boolean startDataRetrieval() {
@@ -331,6 +331,70 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                 return false;
             }
         };
+        memory_node = new TCFDataCache<TCFNodeExecContext>(channel) {
+            @Override
+            protected boolean startDataRetrieval() {
+                TCFNode n = TCFNodeExecContext.this;
+                String id = null;
+                Throwable err = null;
+                while (n != null && !n.disposed) {
+                    if (n instanceof TCFNodeExecContext) {
+                        TCFNodeExecContext exe = (TCFNodeExecContext)n;
+                        TCFDataCache<IRunControl.RunControlContext> cache = exe.getRunContext();
+                        if (!cache.validate(this)) return false;
+                        err = cache.getError();
+                        if (err != null) break;
+                        IRunControl.RunControlContext ctx = cache.getData();
+                        if (ctx == null) break;
+                        String prs = ctx.getProcessID();
+                        id = prs != null ? prs : n.id;
+                        break;
+                    }
+                    n = n.parent;
+                }
+                if (err != null) {
+                    set(null, err, null);
+                }
+                else if (id == null) {
+                    set(null, new Exception("Context does not provide memory access"), null);
+                }
+                else {
+                    TCFNodeExecContext exe = (TCFNodeExecContext)model.getNode(id);
+                    if (exe == null) {
+                        // Model does not have a node for our context ID.
+                        // Search parent node and update its children.
+                        final IRunControl rc = channel.getRemoteService(IRunControl.class);
+                        if (rc != null) {
+                            final Runnable done = this;
+                            command = rc.getContext(id, new IRunControl.DoneGetContext() {
+                                public void doneGetContext(IToken token, Exception error, IRunControl.RunControlContext context) {
+                                    if (error != null) {
+                                        set(token, error, null);
+                                    }
+                                    else {
+                                        TCFNode n = model.getNode(context.getParentID());
+                                        if (n instanceof TCFNodeLaunch && !((TCFNodeLaunch)n).getChildren().validate(done)) return;
+                                        if (n instanceof TCFNodeExecContext && !((TCFNodeExecContext)n).getChildren().validate(done)) return;
+                                        if (n != null) {
+                                            set(token, new Exception("Context does not provide memory access"), null);
+                                            return;
+                                        }
+                                        command = rc.getContext(context.getParentID(), this);
+                                    }
+                                }
+                            });
+                            return false;
+                        }
+                        set(null, new Exception("Context does not provide memory access"), null);
+                    }
+                    else {
+                        if (!exe.getMemoryContext().validate(this)) return false;
+                        set(null, null, exe);
+                    }
+                }
+                return true;
+            }
+        };
     }
 
     @Override
@@ -340,6 +404,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         prs_context.dispose();
         mem_context.dispose();
         memory_map.dispose();
+        memory_node.dispose();
         state.dispose();
         address.dispose();
         signal_list.dispose();
@@ -374,6 +439,10 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         mem_context.reset(ctx);
     }
 
+    public TCFDataCache<TCFNodeExecContext> getMemoryNode() {
+        return memory_node;
+    }
+
     public TCFDataCache<MemoryRegion[]> getMemoryMap() {
         return memory_map;
     }
@@ -386,8 +455,120 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         return signal_mask;
     }
 
-    public Map<BigInteger,TCFSourceRef> getLineInfoCache() {
-        return line_info_cache;
+    private BigInteger toBigInteger(Number n) {
+        if (n == null) return null;
+        if (n instanceof BigInteger) return (BigInteger)n;
+        return new BigInteger(n.toString());
+    }
+
+    public TCFDataCache<TCFSourceRef> getLineInfo(final BigInteger addr) {
+        TCFDataCache<TCFSourceRef> ref_cache;
+        if (line_info_cache != null) {
+            ref_cache = line_info_cache.get(addr);
+            if (ref_cache != null) return ref_cache;
+        }
+        final ILineNumbers ln = model.getLaunch().getService(ILineNumbers.class);
+        if (ln == null) return null;
+        final BigInteger n0 = addr;
+        final BigInteger n1 = n0.add(BigInteger.valueOf(1));
+        if (line_info_cache == null) {
+            line_info_cache = new LinkedHashMap<BigInteger,TCFDataCache<TCFSourceRef>>(11, 0.75f, true) {
+                protected boolean removeEldestEntry(Map.Entry<BigInteger,TCFDataCache<TCFSourceRef>> eldest) {
+                    return size() > 50;
+                }
+            };
+        }
+        line_info_cache.put(addr, ref_cache = new TCFDataCache<TCFSourceRef>(channel) {
+            @Override
+            protected boolean startDataRetrieval() {
+                if (!memory_node.validate(this)) return false;
+                IMemory.MemoryContext mem_data = null;
+                TCFNodeExecContext mem = memory_node.getData();
+                if (mem != null) {
+                    TCFDataCache<IMemory.MemoryContext> mem_cache = mem.getMemoryContext();
+                    if (!mem_cache.validate(this)) return false;
+                    mem_data = mem_cache.getData();
+                }
+                final TCFSourceRef ref_data = new TCFSourceRef();
+                if (mem_data != null) {
+                    ref_data.context_id = mem_data.getID();
+                    ref_data.address_size = mem_data.getAddressSize();
+                }
+                command = ln.mapToSource(id, n0, n1, new ILineNumbers.DoneMapToSource() {
+                    public void doneMapToSource(IToken token, Exception error, ILineNumbers.CodeArea[] areas) {
+                        ref_data.address = addr;
+                        if (error == null && areas != null && areas.length > 0) {
+                            for (ILineNumbers.CodeArea area : areas) {
+                                BigInteger a0 = toBigInteger(area.start_address);
+                                BigInteger a1 = toBigInteger(area.end_address);
+                                if (n0.compareTo(a0) >= 0 && n0.compareTo(a1) < 0) {
+                                    if (ref_data.area == null || area.start_line < ref_data.area.start_line) {
+                                        if (area.start_address != a0 || area.end_address != a1) {
+                                            area = new ILineNumbers.CodeArea(area.directory, area.file,
+                                                    area.start_line, area.start_column,
+                                                    area.end_line, area.end_column,
+                                                    a0, a1, area.isa,
+                                                    area.is_statement, area.basic_block,
+                                                    area.prologue_end, area.epilogue_begin);
+                                        }
+                                        ref_data.area = area;
+                                    }
+                                }
+                            }
+                        }
+                        ref_data.error = error;
+                        set(token, null, ref_data);
+                    }
+                });
+                return false;
+            }
+        });
+        return ref_cache;
+    }
+
+    public TCFDataCache<TCFFunctionRef> getFuncInfo(final BigInteger addr) {
+        TCFDataCache<TCFFunctionRef> ref_cache;
+        if (func_info_cache != null) {
+            ref_cache = func_info_cache.get(addr);
+            if (ref_cache != null) return ref_cache;
+        }
+        final ISymbols syms = model.getLaunch().getService(ISymbols.class);
+        if (syms == null) return null;
+        if (func_info_cache == null) {
+            func_info_cache = new LinkedHashMap<BigInteger,TCFDataCache<TCFFunctionRef>>(11, 0.75f, true) {
+                protected boolean removeEldestEntry(Map.Entry<BigInteger,TCFDataCache<TCFFunctionRef>> eldest) {
+                    return size() > 50;
+                }
+            };
+        }
+        func_info_cache.put(addr, ref_cache = new TCFDataCache<TCFFunctionRef>(channel) {
+            @Override
+            protected boolean startDataRetrieval() {
+                if (!memory_node.validate(this)) return false;
+                IMemory.MemoryContext mem_data = null;
+                TCFNodeExecContext mem = memory_node.getData();
+                if (mem != null) {
+                    TCFDataCache<IMemory.MemoryContext> mem_cache = mem.getMemoryContext();
+                    if (!mem_cache.validate(this)) return false;
+                    mem_data = mem_cache.getData();
+                }
+                final TCFFunctionRef ref_data = new TCFFunctionRef();
+                if (mem_data != null) {
+                    ref_data.context_id = mem_data.getID();
+                    ref_data.address_size = mem_data.getAddressSize();
+                }
+                command = syms.findByAddr(id, addr, new ISymbols.DoneFind() {
+                    public void doneFind(IToken token, Exception error, String symbol_id) {
+                        ref_data.address = addr;
+                        ref_data.error = error;
+                        ref_data.symbol_id = symbol_id;
+                        set(token, null, ref_data);
+                    }
+                });
+                return false;
+            }
+        });
+        return ref_cache;
     }
 
     public TCFDataCache<IRunControl.RunControlContext> getRunContext() {
@@ -689,6 +870,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     void onContextChanged(IRunControl.RunControlContext context) {
         assert !disposed;
         run_context.reset(context);
+        memory_node.reset();
         signal_mask.reset();
         state.reset();
         children_stack.reset();
@@ -704,7 +886,8 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
 
     void onContextChanged(IMemory.MemoryContext context) {
         assert !disposed;
-        line_info_cache.clear();
+        if (line_info_cache != null) line_info_cache.clear();
+        if (func_info_cache != null) func_info_cache.clear();
         mem_context.reset(context);
         for (TCFNodeSymbol s : symbols.values()) s.onMemoryMapChanged();
         postAllChangedDelta();
@@ -799,7 +982,8 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     }
 
     void onMemoryMapChanged() {
-        line_info_cache.clear();
+        if (line_info_cache != null) line_info_cache.clear();
+        if (func_info_cache != null) func_info_cache.clear();
         memory_map.reset();
         children_exec.onMemoryMapChanged();
         children_stack.onMemoryMapChanged();

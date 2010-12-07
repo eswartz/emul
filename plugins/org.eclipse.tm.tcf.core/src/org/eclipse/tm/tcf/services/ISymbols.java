@@ -272,6 +272,17 @@ public interface ISymbols extends IService {
     IToken find(String context_id, String name, DoneFind done);
 
     /**
+     * Search symbol with given address in given context.
+     * The context can be memory space, process, thread or stack frame.
+     *
+     * @param context_id – a search scope.
+     * @param addr – symbol address.
+     * @param done - call back interface called when operation is completed.
+     * @return - pending command handle.
+     */
+    IToken findByAddr(String context_id, Number addr, DoneFind done);
+
+    /**
      * Client call back interface for find().
      */
     interface DoneFind {

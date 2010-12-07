@@ -294,32 +294,45 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
             int offs;
             @Override
             protected boolean startDataRetrieval() {
-                if (addr != null && size == 0) {
-                    // data is ASCII string
-                    if (buf == null) buf = new byte[256];
-                    if (offs >= buf.length) {
-                        byte[] tmp = new byte[buf.length * 2];
-                        System.arraycopy(buf, 0, tmp, 0, buf.length);
-                        buf = tmp;
-                    }
-                    command = mem.get(addr.add(BigInteger.valueOf(offs)), 1, buf, offs, 1, 0, new IMemory.DoneMemory() {
-                        public void doneMemory(IToken token, MemoryError error) {
-                            if (error != null) {
-                                set(command, error, null);
-                            }
-                            else if (buf[offs] == 0 || offs >= 2048) {
-                                set(command, null, toASCIIString(buf, 0, offs));
-                            }
-                            else if (command == token) {
-                                command = null;
-                                offs++;
-                                run();
-                            }
-                        }
-                    });
-                    return false;
-                }
                 if (addr != null) {
+                    if (mem == null) {
+                        TCFDataCache<TCFNodeExecContext> mem_cache = model.searchMemoryContext(parent);
+                        if (mem_cache == null) {
+                            set(null, new Exception("Context does not provide memory access"), null);
+                            return true;
+                        }
+                        if (!mem_cache.validate(this)) return false;
+                        if (mem_cache.getError() != null) {
+                            set(null, mem_cache.getError(), null);
+                            return true;
+                        }
+                        mem = mem_cache.getData().getMemoryContext().getData();
+                    }
+                    if (size == 0) {
+                        // data is ASCII string
+                        if (buf == null) buf = new byte[256];
+                        if (offs >= buf.length) {
+                            byte[] tmp = new byte[buf.length * 2];
+                            System.arraycopy(buf, 0, tmp, 0, buf.length);
+                            buf = tmp;
+                        }
+                        command = mem.get(addr.add(BigInteger.valueOf(offs)), 1, buf, offs, 1, 0, new IMemory.DoneMemory() {
+                            public void doneMemory(IToken token, MemoryError error) {
+                                if (error != null) {
+                                    set(command, error, null);
+                                }
+                                else if (buf[offs] == 0 || offs >= 2048) {
+                                    set(command, null, toASCIIString(buf, 0, offs));
+                                }
+                                else if (command == token) {
+                                    command = null;
+                                    offs++;
+                                    run();
+                                }
+                            }
+                        });
+                        return false;
+                    }
                     // data is a struct
                     if (offs != size) {
                         if (buf == null || buf.length < size) buf = new byte[size];
@@ -342,13 +355,6 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                     set(null, null, bf.toString());
                     return true;
                 }
-                TCFDataCache<TCFNodeExecContext> mem_cache = model.searchMemoryContext(parent);
-                if (!mem_cache.validate(this)) return false;
-                if (mem_cache.getError() != null) {
-                    set(null, mem_cache.getError(), null);
-                    return true;
-                }
-                mem = mem_cache.getData().getMemoryContext().getData();
                 if (!type.validate(this)) return false;
                 ISymbols.Symbol type_data = type.getData();
                 if (type_data != null) {
@@ -398,6 +404,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
             @Override
             public void reset() {
                 super.reset();
+                mem = null;
                 addr = null;
             }
         };

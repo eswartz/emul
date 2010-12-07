@@ -11,7 +11,6 @@
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
 import java.math.BigInteger;
-import java.util.Map;
 
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenCountUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenUpdate;
@@ -23,14 +22,13 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IViewerInputUpdat
 import org.eclipse.debug.ui.IDebugUIConstants;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
+import org.eclipse.tm.internal.tcf.debug.model.TCFFunctionRef;
 import org.eclipse.tm.internal.tcf.debug.model.TCFSourceRef;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
-import org.eclipse.tm.tcf.services.ILineNumbers;
-import org.eclipse.tm.tcf.services.IMemory;
-import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.services.IStackTrace;
+import org.eclipse.tm.tcf.services.ISymbols;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 
 public class TCFNodeStackFrame extends TCFNode {
@@ -42,6 +40,7 @@ public class TCFNodeStackFrame extends TCFNode {
     private final TCFChildrenExpressions children_exps;
     private final TCFDataCache<IStackTrace.StackTraceContext> stack_trace_context;
     private final TCFDataCache<TCFSourceRef> line_info;
+    private final TCFDataCache<TCFFunctionRef> func_info;
     private final TCFDataCache<BigInteger> address;
 
     TCFNodeStackFrame(final TCFNodeExecContext parent, final String id, final boolean emulated) {
@@ -96,61 +95,45 @@ public class TCFNodeStackFrame extends TCFNode {
                     return true;
                 }
                 if (frame_no > 0) n = n.subtract(BigInteger.valueOf(1));
-                TCFDataCache<TCFNodeExecContext> mem_cache = model.searchMemoryContext(parent);
+                TCFDataCache<TCFNodeExecContext> mem_cache = ((TCFNodeExecContext)parent).getMemoryNode();
                 if (!mem_cache.validate(this)) return false;
-                if (mem_cache.getError() != null) {
+                if (mem_cache.getError() != null || mem_cache.getData() == null) {
                     set(null, mem_cache.getError(), null);
                     return true;
                 }
-                TCFNodeExecContext mem_node = mem_cache.getData();
-                final IMemory.MemoryContext mem_ctx = mem_node.getMemoryContext().getData();
-                final Map<BigInteger,TCFSourceRef> line_info_cache = mem_node.getLineInfoCache();
-                TCFSourceRef l = line_info_cache.get(n);
-                if (l != null) {
-                    l.context = mem_ctx;
-                    set(null, null, l);
+                TCFDataCache<TCFSourceRef> info_cache = mem_cache.getData().getLineInfo(n);
+                if (info_cache == null) {
+                    set(null, null, null);
                     return true;
                 }
-                ILineNumbers ln = model.getLaunch().getService(ILineNumbers.class);
-                if (ln == null) {
-                    l = new TCFSourceRef();
-                    l.context = mem_ctx;
-                    l.address = n;
-                    set(null, null, l);
+                if (!info_cache.validate(this)) return false;
+                set(null, info_cache.getError(), info_cache.getData());
+                return true;
+            }
+        };
+        func_info = new TCFDataCache<TCFFunctionRef>(channel) {
+            @Override
+            protected boolean startDataRetrieval() {
+                if (!address.validate(this)) return false;
+                BigInteger n = address.getData();
+                if (n == null) {
+                    set(null, address.getError(), null);
                     return true;
                 }
-                final BigInteger n0 = n;
-                final BigInteger n1 = n0.add(BigInteger.valueOf(1));
-                command = ln.mapToSource(mem_node.id, n0, n1, new ILineNumbers.DoneMapToSource() {
-                    public void doneMapToSource(IToken token, Exception error, ILineNumbers.CodeArea[] areas) {
-                        TCFSourceRef l = new TCFSourceRef();
-                        l.context = mem_ctx;
-                        l.address = n0;
-                        if (error == null && areas != null && areas.length > 0) {
-                            for (ILineNumbers.CodeArea area : areas) {
-                                BigInteger a0 = toBigInteger(area.start_address);
-                                BigInteger a1 = toBigInteger(area.end_address);
-                                if (n0.compareTo(a0) >= 0 && n0.compareTo(a1) < 0) {
-                                    if (l.area == null || area.start_line < l.area.start_line) {
-                                        if (area.start_address != a0 || area.end_address != a1) {
-                                            area = new ILineNumbers.CodeArea(area.directory, area.file,
-                                                    area.start_line, area.start_column,
-                                                    area.end_line, area.end_column,
-                                                    a0, a1, area.isa,
-                                                    area.is_statement, area.basic_block,
-                                                    area.prologue_end, area.epilogue_begin);
-                                        }
-                                        l.area = area;
-                                    }
-                                }
-                            }
-                        }
-                        l.error = error;
-                        set(token, null, l);
-                        if (error == null) line_info_cache.put(l.address, l);
-                    }
-                });
-                return false;
+                TCFDataCache<TCFNodeExecContext> mem_cache = ((TCFNodeExecContext)parent).getMemoryNode();
+                if (!mem_cache.validate(this)) return false;
+                if (mem_cache.getError() != null || mem_cache.getData() == null) {
+                    set(null, mem_cache.getError(), null);
+                    return true;
+                }
+                TCFDataCache<TCFFunctionRef> info_cache = mem_cache.getData().getFuncInfo(n);
+                if (info_cache == null) {
+                    set(null, null, null);
+                    return true;
+                }
+                if (!info_cache.validate(this)) return false;
+                set(null, info_cache.getError(), info_cache.getData());
+                return true;
             }
         };
         address = new TCFDataCache<BigInteger>(channel) {
@@ -194,6 +177,7 @@ public class TCFNodeStackFrame extends TCFNode {
     void dispose() {
         stack_trace_context.dispose();
         line_info.dispose();
+        func_info.dispose();
         address.dispose();
         children_regs.dispose();
         children_vars.dispose();
@@ -282,11 +266,14 @@ public class TCFNodeStackFrame extends TCFNode {
         }
         else {
             TCFDataCache<TCFContextState> state_cache = ((TCFNodeExecContext)parent).getState();
+            TCFDataCache<TCFNodeExecContext> mem_cache = ((TCFNodeExecContext)parent).getMemoryNode();
             TCFDataCache<?> pending = null;
             if (!state_cache.validate()) pending = state_cache;
+            if (!mem_cache.validate()) pending = mem_cache;
             if (!stack_trace_context.validate()) pending = stack_trace_context;
             if (!address.validate()) pending = address;
             if (!line_info.validate()) pending = line_info;
+            if (!func_info.validate()) pending = func_info;
             if (pending != null) {
                 pending.wait(done);
                 return false;
@@ -299,13 +286,41 @@ public class TCFNodeStackFrame extends TCFNode {
             BigInteger addr = address.getData();
             TCFSourceRef sref = line_info.getData();
             TCFContextState state = state_cache.getData();
-            String module = getModuleName(addr, done);
-            if (module == null) return false;
             StringBuffer bf = new StringBuffer();
-            if (addr != null && sref != null && sref.context != null) {
-                bf.append(makeHexAddrString(sref.context, addr));
+            if (addr != null) {
+                bf.append(makeHexAddrString(sref != null ? sref.address_size : 0, addr));
+                TCFNodeExecContext mem_node = mem_cache.getData();
+                if (mem_node != null) {
+                    TCFDataCache<TCFNodeExecContext.MemoryRegion[]> map_dc = mem_node.getMemoryMap();
+                    if (!map_dc.validate(done)) return false;
+                    TCFNodeExecContext.MemoryRegion[] map = map_dc.getData();
+                    if (map != null) {
+                        for (TCFNodeExecContext.MemoryRegion r : map) {
+                            String fnm = r.region.getFileName();
+                            if (fnm != null && r.contains(addr)) {
+                                fnm = fnm.replace('\\', '/');
+                                int x = fnm.lastIndexOf('/');
+                                if (x >= 0) fnm = fnm.substring(x + 1);
+                                bf.append(" [");
+                                bf.append(fnm);
+                                bf.append("]");
+                                break;
+                            }
+                        }
+                    }
+                }
             }
-            bf.append(module);
+            TCFFunctionRef ref = func_info.getData();
+            if (ref != null && ref.symbol_id != null) {
+                TCFDataCache<ISymbols.Symbol> sym_cache = model.getSymbolInfoCache(ref.symbol_id);
+                if (!sym_cache.validate(done)) return false;
+                ISymbols.Symbol sym_data = sym_cache.getData();
+                if (sym_data != null && sym_data.getName() != null) {
+                    bf.append(" ");
+                    bf.append(sym_data.getName());
+                    bf.append("()");
+                }
+            }
             if (sref != null && sref.area != null && sref.area.file != null) {
                 bf.append(": ");
                 int l = sref.area.file.length();
@@ -358,34 +373,9 @@ public class TCFNodeStackFrame extends TCFNode {
         return new BigInteger(n.toString());
     }
 
-    private String getModuleName(BigInteger pc, Runnable done) {
-        if (pc == null) return "";
-        TCFDataCache<IRunControl.RunControlContext> parent_dc = ((TCFNodeExecContext)parent).getRunContext();
-        if (!parent_dc.validate(done)) return null;
-        IRunControl.RunControlContext parent_ctx = parent_dc.getData();
-        if (parent_ctx == null) return "";
-        String prs_id = parent_ctx.getProcessID();
-        if (prs_id == null) return "";
-        TCFNodeExecContext prs_node = (TCFNodeExecContext)model.getNode(prs_id);
-        TCFDataCache<TCFNodeExecContext.MemoryRegion[]> map_dc = prs_node.getMemoryMap();
-        if (!map_dc.validate(done)) return null;
-        TCFNodeExecContext.MemoryRegion[] map = map_dc.getData();
-        if (map == null) return "";
-        for (TCFNodeExecContext.MemoryRegion r : map) {
-            String fnm = r.region.getFileName();
-            if (fnm != null && r.contains(pc)) {
-                fnm = fnm.replace('\\', '/');
-                int x = fnm.lastIndexOf('/');
-                if (x >= 0) fnm = fnm.substring(x + 1);
-                return " [" + fnm + "]";
-            }
-        }
-        return "";
-    }
-
-    private String makeHexAddrString(IMemory.MemoryContext m, BigInteger n) {
+    private String makeHexAddrString(int addr_size, BigInteger n) {
         String s = n.toString(16);
-        int sz = (m != null ? m.getAddressSize() : 4) * 2;
+        int sz = (addr_size != 0 ? addr_size : 4) * 2;
         int l = sz - s.length();
         if (l < 0) l = 0;
         if (l > 16) l = 16;
@@ -425,6 +415,7 @@ public class TCFNodeStackFrame extends TCFNode {
     void onSuspended() {
         stack_trace_context.cancel();
         line_info.cancel();
+        func_info.cancel();
         address.cancel();
         children_regs.onSuspended();
         children_regs.reset(); // Unlike thread registers, stack frame registers must be retrieved on every suspend
@@ -435,6 +426,7 @@ public class TCFNodeStackFrame extends TCFNode {
 
     void onMemoryMapChanged() {
         line_info.reset();
+        func_info.reset();
         postStateChangedDelta();
     }
 
@@ -446,6 +438,7 @@ public class TCFNodeStackFrame extends TCFNode {
     void onRegisterValueChanged() {
         stack_trace_context.cancel();
         line_info.cancel();
+        func_info.cancel();
         address.cancel();
         postStateChangedDelta();
     }

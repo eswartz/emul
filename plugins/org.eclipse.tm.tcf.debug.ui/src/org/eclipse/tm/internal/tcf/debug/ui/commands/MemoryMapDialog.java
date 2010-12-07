@@ -434,6 +434,10 @@ class MemoryMapDialog extends Dialog {
         mem_map_id = new TCFTask<String>(channel) {
             public void run() {
                 TCFDataCache<TCFNodeExecContext> mem_cache = model.searchMemoryContext(selection);
+                if (mem_cache == null) {
+                    error(new Exception("Context does not provide memory access"));
+                    return;
+                }
                 if (!mem_cache.validate(this)) return;
                 if (mem_cache.getError() != null) {
                     error(mem_cache.getError());
