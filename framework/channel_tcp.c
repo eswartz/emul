@@ -314,9 +314,9 @@ static void tcp_write_stream(OutputStream * out, int byte) {
     ChannelTCP * c = channel2tcp(out2channel(out));
     assert(c->magic == CHANNEL_MAGIC);
     if (!c->chan.out.supports_zero_copy || c->chan.out.cur >= c->chan.out.end - 32 || byte < 0) {
+        if (c->out_bin_block != NULL) tcp_bin_block_end(c);
         if (c->out_errno) return;
         if (c->chan.state == ChannelStateDisconnected) return;
-        if (c->out_bin_block != NULL) tcp_bin_block_end(c);
         if (c->chan.out.cur == c->chan.out.end) tcp_flush_with_flags(c, MSG_MORE);
         if (byte < 0 || byte == ESC) {
             char esc = 0;
@@ -520,6 +520,7 @@ static void handle_channel_msg(void * x) {
         }
         else {
             handle_protocol_message(&c->chan);
+            assert(c->out_bin_block == NULL);
         }
         clear_trap(&trap);
     }
