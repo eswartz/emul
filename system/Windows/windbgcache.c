@@ -71,7 +71,7 @@ static void event_context_exited(Context * ctx, void * client_data) {
     assert(ctx->mem == ctx);
     if (!SymUnloadModule64(handle, get_context_base_address(ctx))) {
         set_win32_errno(GetLastError());
-        trace(LOG_ALWAYS, "SymUnloadModule64(0x%Ix,0xI64x%) (context exit) error: %s",
+        trace(LOG_ALWAYS, "SymUnloadModule64(0x%Ix,0x%I64x) (context exit) error: %s",
             handle, get_context_base_address(ctx), errno_to_str(errno));
     }
     if (!SymCleanup(handle)) {
@@ -97,7 +97,7 @@ static void event_module_unloaded(Context * ctx, void * client_data) {
     assert(ctx->mem == ctx);
     if (!SymUnloadModule64(handle, get_context_module_address(ctx))) {
         set_win32_errno(GetLastError());
-        trace(LOG_ALWAYS, "SymUnloadModule64(0x%Ix,0xI64x%) (unload DLL) error: %s",
+        trace(LOG_ALWAYS, "SymUnloadModule64(0x%Ix,0x%I64x) (unload DLL) error: %s",
             handle, get_context_module_address(ctx), errno_to_str(errno));
     }
 }
