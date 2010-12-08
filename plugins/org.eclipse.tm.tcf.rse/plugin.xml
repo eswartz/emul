@@ -7,7 +7,8 @@
     http://www.eclipse.org/legal/epl-v10.html
    
     Contributors:
-        Wind River Systems - initial API and implementation
+        Wind River Systems      - initial API and implementation
+        Liping Ke (Intel Corp.) - Add terminal/shell services
  -->
 
 <plugin>
@@ -37,6 +38,21 @@
             vendor="Wind River">
       </configuration>
       </extension>
+	<extension
+		point="org.eclipse.rse.core.subsystemConfigurations">
+		<configuration
+        category="shells"
+        class="org.eclipse.tm.internal.tcf.rse.shells.TCFShellSubSystemConfiguration"
+        description="Shells"
+        icon="icons/systemshell.gif"
+        iconlive="icons/systemshelllive.gif"
+        id="org.eclipse.tm.tcf.rse.Shells"
+        name="Shells"
+        priority="200"
+        systemTypeIds="org.eclipse.tm.tcf.rse.systemType"
+        vendor="Eclipse.org">
+		</configuration>
+	</extension>
    <extension
          point="org.eclipse.rse.core.subsystemConfigurations">
       <configuration
@@ -52,6 +68,19 @@
             vendor="Wind River">
       </configuration>
    </extension>
+    <extension
+        point="org.eclipse.rse.core.subsystemConfigurations">
+        <configuration
+        category="terminals"
+        class="org.eclipse.tm.internal.tcf.rse.terminals.TCFTerminalServiceSubSystemConfiguration"
+        description="TCF Terminal Service Description"
+        id="org.eclipse.tm.tcf.rse.Terminals"
+        name="Terminals"
+        priority="200"
+        systemTypeIds="org.eclipse.tm.tcf.rse.systemType"
+        vendor="Eclipse.org">
+        </configuration>
+    </extension>   
    <extension point="org.eclipse.core.runtime.adapters">
       <factory 
             class="org.eclipse.tm.internal.tcf.rse.processes.TCFSystemViewProcessAdapterFactory" 

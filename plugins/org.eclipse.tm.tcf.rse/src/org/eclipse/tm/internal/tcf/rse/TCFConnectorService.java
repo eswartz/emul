@@ -10,10 +10,11 @@
  *     Martin Oberhuber (Wind River) - [269682] Get port from RSE Property
  *     Uwe Stieber      (Wind River) - [271227] Fix compiler warnings in org.eclipse.tm.tcf.rse
  *     Anna Dushistova  (MontaVista) - [285373] TCFConnectorService should send CommunicationsEvent.BEFORE_CONNECT and CommunicationsEvent.BEFORE_DISCONNECT
- *     Intel Corp.                   - [326490] Add authentication to the TCF Connector Service
+ *     Liping Ke        (Intel Corp.)- [326490] Add authentication to the TCF Connector Service and attach stream subs/unsubs method
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.rse;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -23,19 +24,25 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.rse.core.model.IHost;
 import org.eclipse.rse.core.model.IPropertySet;
 import org.eclipse.rse.core.model.PropertyType;
+import org.eclipse.rse.core.model.SystemSignonInformation;
 import org.eclipse.rse.core.subsystems.CommunicationsEvent;
+import org.eclipse.rse.services.files.RemoteFileException;
 import org.eclipse.rse.ui.subsystems.StandardConnectorService;
 import org.eclipse.tm.tcf.core.AbstractPeer;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.IService;
+import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IFileSystem;
 import org.eclipse.tm.tcf.services.ILocator;
+import org.eclipse.tm.tcf.services.IStreams;
 import org.eclipse.tm.tcf.services.ISysMonitor;
+import org.eclipse.tm.tcf.services.ITerminals;
+import org.eclipse.tm.tcf.util.TCFTask;
 
 
-public class TCFConnectorService extends StandardConnectorService {
+public class TCFConnectorService extends StandardConnectorService implements ITCFSessionProvider{
 
     public static final String PROPERTY_SET_NAME = "TCF Connection Settings"; //$NON-NLS-1$
     public static final String PROPERTY_LOGIN_REQUIRED = "Login.Required"; //$NON-NLS-1$
@@ -50,6 +57,26 @@ public class TCFConnectorService extends StandardConnectorService {
 
     private boolean poll_timer_started;
 
+    private boolean bSubscribed = false;
+
+    /* subscribe the stream service on this TCP connection */
+    private IStreams.StreamsListener streamListener = new IStreams.StreamsListener() {
+        public void created(String stream_type, String stream_id,
+                String context_id) {
+        }
+        /**
+         * Called when a stream is disposed.
+         * 
+         * @param stream_type
+         *            - source type of the stream.
+         * @param stream_id
+         *            - ID of the stream.
+         */
+        public void disposed(String stream_type, String stream_id) {
+        }
+    };
+
+    
     public TCFConnectorService(IHost host, int port) {
         super(Messages.TCFConnectorService_Name,
                 Messages.TCFConnectorService_Description, host,
@@ -62,7 +89,7 @@ public class TCFConnectorService extends StandardConnectorService {
         if (tcfSet == null) {
             tcfSet = createPropertySet(PROPERTY_SET_NAME, Messages.PropertySet_Description);
             //add default values if not set
-            tcfSet.addProperty(PROPERTY_LOGIN_REQUIRED, "true", PropertyType.getEnumPropertyType(new String[] {"true", "false"}));  //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$
+            tcfSet.addProperty(PROPERTY_LOGIN_REQUIRED, "false", PropertyType.getEnumPropertyType(new String[] {"true", "false"}));  //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$
             tcfSet.addProperty(PROPERTY_PWD_REQUIRED, "false", PropertyType.getEnumPropertyType(new String[] {"true", "false"}));  //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$
             tcfSet.addProperty(PROPERTY_LOGIN_PROMPT, "ogin: ", PropertyType.getStringPropertyType()); //$NON-NLS-1$
             tcfSet.addProperty(PROPERTY_PASSWORD_PROMPT, "assword: ", PropertyType.getStringPropertyType()); //$NON-NLS-1$
@@ -89,32 +116,47 @@ public class TCFConnectorService extends StandardConnectorService {
         synchronized (res) {
             Protocol.invokeLater(new Runnable() {
                 public void run() {
-                    if (!connectTCFChannel(res, monitor)) add_to_wait_list(this);
+                    if (!connectTCFChannel(res, monitor))
+                        add_to_wait_list(this);
                 }
             });
             res.wait();
         }
-        monitor.done();
         if (res[0] != null) throw res[0];
+        monitor.done();
     }
 
     @Override
-    protected void internalDisconnect(final IProgressMonitor monitor) throws Exception {
+    protected void internalDisconnect(final IProgressMonitor monitor)
+            throws Exception {
         assert !Protocol.isDispatchThread();
         final Exception[] res = new Exception[1];
         // Fire comm event to signal state about to change
         fireCommunicationsEvent(CommunicationsEvent.BEFORE_DISCONNECT);
         monitor.beginTask("Disconnecting " + getHostName(), 1); //$NON-NLS-1$
-        synchronized (res) {
-            Protocol.invokeLater(new Runnable() {
-                public void run() {
-                    if (!disconnectTCFChannel(res, monitor)) add_to_wait_list(this);
-                }
-            });
-            res.wait();
+        try {
+            /* First UnSubscribe TCP channel */
+            unsubscribe();
+            /* Disconnecting TCP channel */
+            synchronized (res) {
+                Protocol.invokeLater(new Runnable() {
+                    public void run() {
+                        if (!disconnectTCFChannel(res, monitor))
+                            add_to_wait_list(this);
+                    }
+                });
+                res.wait();
+            }
+            if (res[0] != null) throw res[0];
+
         }
-        monitor.done();
-        if (res[0] != null) throw res[0];
+        catch (Exception e) {
+            e.printStackTrace();//$NON-NLS-1$
+            throw new RemoteFileException("Error creating Terminal", e); //$NON-NLS-1$
+        }
+        finally {
+            monitor.done();
+        }
     }
 
     public boolean isConnected() {
@@ -217,6 +259,7 @@ public class TCFConnectorService extends StandardConnectorService {
                     else {
                         run_wait_list();
                     }
+                    bSubscribed = false;
                     channel = null;
                     channel_error = null;
                 }
@@ -260,4 +303,86 @@ public class TCFConnectorService extends StandardConnectorService {
     public IFileSystem getFileSystemService() {
         return getService(IFileSystem.class);
     }
+
+    public IChannel getChannel() {
+        return channel;
+    }
+
+    public String getSessionHostName() {
+        String hostName = "";
+        IHost host = getHost();
+        if (host != null) hostName = host.getHostName();
+        return hostName;
+    }
+
+    public String getSessionUserId() {
+        return getUserId();
+    }
+
+    public String getSessionPassword() {
+        String password = "";
+        SystemSignonInformation ssi = getSignonInformation();
+        if (ssi != null) {
+            password = ssi.getPassword();
+        }
+        return password;
+    }
+
+    public boolean isSubscribed() {
+        return bSubscribed;
+    }
+
+    public void unsubscribe() throws IOException {
+        if (bSubscribed) {
+            new TCFTask<Object>() {
+                public void run() {
+                    IStreams streams = getService(IStreams.class);
+                    streams.unsubscribe(ITerminals.NAME, streamListener,
+                            new IStreams.DoneUnsubscribe() {
+                                public void doneUnsubscribe(IToken token,
+                                        Exception error) {
+                                    done(this);
+                                }
+                            });
+                }
+            }.getIO();
+            bSubscribed = false;
+        }
+
+    }
+
+    public void subscribe() throws RemoteFileException {
+        try {
+            new TCFTask<Object>() {
+                public void run() {
+                    if (bSubscribed) {
+                        done(this);   
+                    }
+                    else {
+                        bSubscribed = true;
+                        IStreams streams = getService(IStreams.class);
+                        streams.subscribe(ITerminals.NAME, streamListener,
+                                new IStreams.DoneSubscribe() {
+                            public void doneSubscribe(IToken token,
+                                    Exception error) {
+                                if (error != null) {
+                                    bSubscribed = false;
+                                    error(error);
+                                }
+                                else
+                                    done(this);
+                            }
+
+                        });
+                    }}
+            }.getIO();
+
+        }
+        catch (Exception e) {
+            e.printStackTrace();//$NON-NLS-1$
+            throw new RemoteFileException(
+                    "Error When Subscribe Terminal streams!", e); //$NON-NLS-1$
+        }
+
+    } 
 }

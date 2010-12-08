@@ -14,8 +14,15 @@ Require-Bundle: org.eclipse.ui,
  org.eclipse.ui.views,
  org.eclipse.rse.subsystems.files.core,
  org.eclipse.rse.subsystems.processes.core,
- org.eclipse.rse.processes.ui
+ org.eclipse.rse.processes.ui,
+ org.eclipse.rse.subsystems.terminals.core,
+ org.eclipse.tm.tcf;bundle-version="0.3.0",
+ org.eclipse.rse.subsystems.shells.core;bundle-version="3.1.100",
+ org.eclipse.core.resources;bundle-version="3.6.0",
+ org.eclipse.tm.tcf.core;bundle-version="0.3.0"
 Import-Package: org.eclipse.tm.tcf.core;version="0.3.0",
+ org.eclipse.rse.core.filters,
+ org.eclipse.rse.core.model,
  org.eclipse.tm.tcf.protocol;version="0.3.0",
  org.eclipse.tm.tcf.services;version="0.3.0",
  org.eclipse.tm.tcf.util;version="0.3.0"

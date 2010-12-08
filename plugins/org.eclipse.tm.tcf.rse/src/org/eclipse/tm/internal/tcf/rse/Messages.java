@@ -6,8 +6,9 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     Wind River Systems - initial API and implementation
- *     Intel Corp.        - Add TCF Connection Descriptions and File System Style
+ *     Wind River Systems     - initial API and implementation
+ *     Intel Corp.            - Add TCF Connection Descriptions and File System Style
+ *     Liping Ke(Intel Corp.) - Add TCF Terminal/Shell Services Descriptions
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.rse;
 
@@ -131,6 +132,12 @@ public class Messages extends NLS {
     public static String TCFFileService_UserDeleteCancellation;
     public static String TCFFileService_UserDeleteCancellation1;
     public static String PropertySet_Description;
+
+    public static String TCFPlugin_Unexpected_Exception;    
+    public static String TCFTerminalService_Description;
+    public static String TCFTerminalService_Name;
+    public static String TCFShellService_Description;
+    public static String TCFShellService_Name;    
 
     static {
         // initialize resource bundle
