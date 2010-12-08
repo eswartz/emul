@@ -82,7 +82,6 @@ typedef struct DebugState {
     HANDLE              main_thread_handle;
     int                 process_suspended;
     int                 break_posted;
-    HANDLE              break_process;
     HANDLE              break_thread;
     LPVOID              break_thread_code;
     DWORD               break_thread_id;
@@ -421,22 +420,21 @@ static void break_process_event(void * args) {
                 int error = 0;
 
                 trace(LOG_CONTEXT, "context: creating remote thread in process %#lx, id %s", ctx, ctx->id);
-                debug_state->break_process = ext->handle;
-                debug_state->break_thread_code = VirtualAllocEx(debug_state->break_process,
-                    NULL, buf_size, MEM_COMMIT, PAGE_EXECUTE);
-                error = log_error("VirtualAllocEx", debug_state->break_thread_code != NULL);
+                if (debug_state->break_thread_code == NULL) {
+                    debug_state->break_thread_code = VirtualAllocEx(ext->handle,
+                        NULL, buf_size, MEM_COMMIT, PAGE_EXECUTE);
+                    error = log_error("VirtualAllocEx", debug_state->break_thread_code != NULL);
+                }
 
-                if (!error) error = log_error("WriteProcessMemory", WriteProcessMemory(debug_state->break_process,
+                if (!error) error = log_error("WriteProcessMemory", WriteProcessMemory(ext->handle,
                     debug_state->break_thread_code, (LPCVOID)remote_thread_func, buf_size, &size) && size == buf_size);
 
-                if (!error) error = log_error("CreateRemoteThread", (debug_state->break_thread = CreateRemoteThread(debug_state->break_process,
+                if (!error) error = log_error("CreateRemoteThread", (debug_state->break_thread = CreateRemoteThread(ext->handle,
                     0, 0, (DWORD (WINAPI*)(LPVOID))debug_state->break_thread_code, NULL, 0, &debug_state->break_thread_id)) != NULL);
 
-                if (error && debug_state->break_thread_code != NULL) {
-                    VirtualFreeEx(debug_state->break_process, debug_state->break_thread_code, 0, MEM_RELEASE);
-                    debug_state->break_thread_code = NULL;
+                if (error) {
                     debug_state->break_thread = NULL;
-                    debug_state->break_process = NULL;
+                    debug_state->break_thread_id = 0;
                 }
             }
         }
@@ -726,12 +724,10 @@ static void debug_event_handler(void * x) {
             debug_state->ini_thread_handle = NULL;
         }
         else if (debug_state->break_thread_id == win32_event->dwThreadId) {
+            ext = EXT(prs);
             log_error("CloseHandle", CloseHandle(debug_state->break_thread));
-            log_error("VirtualFreeEx", VirtualFreeEx(debug_state->break_process, debug_state->break_thread_code, 0, MEM_RELEASE));
             debug_state->break_thread = NULL;
             debug_state->break_thread_id = 0;
-            debug_state->break_thread_code = NULL;
-            debug_state->break_process = NULL;
         }
         break;
     case EXIT_PROCESS_DEBUG_EVENT:
