@@ -24,6 +24,10 @@
 #include <errno.h>
 #include <assert.h>
 #include <sys/stat.h>
+#include <ctype.h>
+#if ENABLE_Unix_Domain
+#include <sys/un.h>
+#endif
 #if ENABLE_SSL
 #  include <openssl/ssl.h>
 #  include <openssl/rand.h>
@@ -71,6 +75,7 @@ struct ChannelTCP {
     int socket;             /* Socket file descriptor */
     struct sockaddr addr;   /* Socket remote address */
     SSL * ssl;
+    int unix_domain;            /* if set, this is a UNIX domain socket, not Internet socket */
     int lock_cnt;           /* Stream lock count, when > 0 channel cannot be deleted */
     int read_pending;       /* Read request is pending */
     unsigned char * read_buf;
@@ -631,25 +636,27 @@ static void start_channel(Channel * channel) {
     ibuf_trigger_read(&c->ibuf);
 }
 
-static ChannelTCP * create_channel(int sock, int en_ssl, int server) {
+static ChannelTCP * create_channel(int sock, int en_ssl, int server, int unix_domain) {
     const int i = 1;
     ChannelTCP * c = NULL;
     SSL * ssl = NULL;
 
     assert(sock >= 0);
-    if (setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char *)&i, sizeof(i)) < 0) {
-        int error = errno;
-        trace(LOG_ALWAYS, "Can't set TCP_NODELAY option on a socket: %s", errno_to_str(error));
-        closesocket(sock);
-        errno = error;
-        return NULL;
-    }
-    if (setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (char *)&i, sizeof(i)) < 0) {
-        int error = errno;
-        trace(LOG_ALWAYS, "Can't set SO_KEEPALIVE option on a socket: %s", errno_to_str(error));
-        closesocket(sock);
-        errno = error;
-        return NULL;
+    if (!unix_domain) {
+        if (setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char *)&i, sizeof(i)) < 0) {
+            int error = errno;
+            trace(LOG_ALWAYS, "Can't set TCP_NODELAY option on a socket: %s", errno_to_str(error));
+            closesocket(sock);
+            errno = error;
+            return NULL;
+        }
+        if (setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (char *)&i, sizeof(i)) < 0) {
+            int error = errno;
+            trace(LOG_ALWAYS, "Can't set SO_KEEPALIVE option on a socket: %s", errno_to_str(error));
+            closesocket(sock);
+            errno = error;
+            return NULL;
+        }
     }
 
     if (en_ssl) {
@@ -706,6 +713,7 @@ static ChannelTCP * create_channel(int sock, int en_ssl, int server) {
 #endif /* ENABLE_Splice */
     c->magic = CHANNEL_MAGIC;
     c->ssl = ssl;
+    c->unix_domain = unix_domain;
     c->chan.inp.read = tcp_read_stream;
     c->chan.inp.peek = tcp_peek_stream;
     c->chan.out.cur = c->obuf;
@@ -808,12 +816,20 @@ static void refresh_all_peer_server(void * x) {
 static void set_peer_addr(ChannelTCP * c, struct sockaddr * addr) {
     /* Create a human readable channel name that uniquely identifies remote peer */
     char name[128];
-    char * fmt = (char *)(c->ssl != NULL ? "SSL:%s:%d" : "TCP:%s:%d");
-    char nbuf[128];
+#if ENABLE_Unix_Domain
+    if (c->unix_domain) {
+        snprintf(name, sizeof(name), "UNIX:%s", ((struct sockaddr_un *)addr)->sun_path);
+    }
+    else
+#endif
+    {
+        char * fmt = (char *)(c->ssl != NULL ? "SSL:%s:%d" : "TCP:%s:%d");
+        char nbuf[128];
+        snprintf(name, sizeof(name), fmt,
+                inet_ntop(addr->sa_family, &((struct sockaddr_in *)addr)->sin_addr, nbuf, sizeof(nbuf)),
+                ntohs(((struct sockaddr_in *)addr)->sin_port));
+    }
     c->addr = *addr;
-    snprintf(name, sizeof(name), fmt,
-        inet_ntop(addr->sa_family, &((struct sockaddr_in *)addr)->sin_addr, nbuf, sizeof(nbuf)),
-        ntohs(((struct sockaddr_in *)addr)->sin_port));
     c->chan.peer_name = loc_strdup(name);
 }
 
@@ -837,7 +853,8 @@ static void tcp_server_accept_done(void * x) {
     sock = req->u.acc.rval;
     peer_addr = si->addr;
     async_req_post(req);
-    c = create_channel(sock, strcmp(peer_server_getprop(si->ps, "TransportName", ""), "SSL") == 0, 1);
+    c = create_channel(sock, strcmp(peer_server_getprop(si->ps, "TransportName", ""), "SSL") == 0, 1,
+                peer_addr.sa_family == AF_UNIX);
     if (c == NULL) return;
     set_peer_addr(c, &peer_addr);
     si->serv.new_conn(&si->serv, &c->chan);
@@ -862,6 +879,116 @@ static void set_socket_buffer_sizes(int sock) {
     setsockopt(sock, SOL_SOCKET, SO_RCVBUF, (char *)&rcv_buf, sizeof(rcv_buf));
 }
 
+static ChannelServer * channel_server_create(PeerServer * ps, int sock) {
+    ServerTCP * si;
+
+    si = (ServerTCP *)loc_alloc_zero(sizeof *si);
+    si->serv.close = server_close;
+    si->sock = sock;
+    si->ps = ps;
+    if (server_list.next == NULL) list_init(&server_list);
+    if (list_is_empty(&server_list)) {
+        post_event_with_delay(refresh_all_peer_server, NULL, PEER_DATA_REFRESH_PERIOD * 1000000);
+    }
+    list_add_last(&si->servlink, &server_list);
+    refresh_peer_server(sock, ps);
+
+    si->accreq.done = tcp_server_accept_done;
+    si->accreq.client_data = si;
+    si->accreq.type = AsyncReqAccept;
+    si->accreq.u.acc.sock = sock;
+    si->accreq.u.acc.addr = &si->addr;
+    si->accreq.u.acc.addrlen = sizeof(si->addr);
+    async_req_post(&si->accreq);
+    return &si->serv;
+}
+
+#if ENABLE_Unix_Domain
+
+static int setup_unix_sockaddr(PeerServer * ps, struct sockaddr_un * localhost) {
+    const char * host = peer_server_getprop(ps, "Host", NULL);
+    if (host == NULL) {
+        return ERR_UNKNOWN_PEER;
+    }
+
+    memset(localhost, 0, sizeof(struct sockaddr_un));
+
+    if (strlen(host) >= sizeof(localhost->sun_path)) {
+        trace(LOG_ALWAYS, "Socket file path is too long (%d > %d)", strlen(host), sizeof(localhost->sun_path) - 1);
+        return E2BIG;
+    }
+
+    localhost->sun_family = AF_UNIX;
+    // length checked above
+    strncpy(localhost->sun_path, host, sizeof(localhost->sun_path));
+
+#if defined _WIN32 || defined __SYMBIAN32__
+    // For Windows and Symbian, the path needs to be in Unix format
+    // (the ':' will otherwise delineate the unused port), so convert that back
+    // to an actual host filename
+    if (host[0] == '/' && isalpha(host[1]) && host[2] == '/') {
+        localhost->sun_path[0] = localhost->sun_path[1];
+        localhost->sun_path[1] = ':';
+    }
+#endif
+
+    return 0;
+}
+
+ChannelServer * channel_unix_server(PeerServer * ps) {
+    int sock;
+    int error;
+    const char* reason = 0;
+    struct sockaddr_un localhost;
+
+    error = setup_unix_sockaddr(ps, &localhost);
+    if (error) {
+        errno = error;
+        return NULL;
+    }
+
+    assert(is_dispatch_thread());
+
+    trace(LOG_ALWAYS, "Configuring Unix domain socket on %s for local connection", localhost.sun_path);
+
+    sock = socket(PF_UNIX, SOCK_STREAM, 0);
+    if (sock < 0) {
+        error = errno;
+        trace(LOG_ALWAYS, "Socket create error on %s: %s", reason, localhost.sun_path, errno_to_str(error));
+        return NULL;
+    }
+
+    set_socket_buffer_sizes(sock);
+
+    if (bind(sock, (struct sockaddr *)&localhost, SUN_LEN(&localhost))) {
+        error = errno;
+        reason = "bind";
+        closesocket(sock);
+        sock = -1;
+    }
+
+    if (!error && listen(sock, 16)) {
+        error = errno;
+        reason = "listen";
+        closesocket(sock);
+        sock = -1;
+    }
+
+    if (sock < 0) {
+        trace(LOG_ALWAYS, "Socket %s error on %s: %s", reason, localhost.sun_path, errno_to_str(error));
+        errno = error;
+        return NULL;
+    }
+
+    return channel_server_create(ps, sock);
+}
+#else
+ChannelServer * channel_unix_server(PeerServer * ps) {
+    errno = ERR_UNSUPPORTED;
+    return NULL;
+}
+#endif
+
 ChannelServer * channel_tcp_server(PeerServer * ps) {
     int sock;
     int error;
@@ -869,7 +996,6 @@ ChannelServer * channel_tcp_server(PeerServer * ps) {
     struct addrinfo hints;
     struct addrinfo * reslist = NULL;
     struct addrinfo * res = NULL;
-    ServerTCP * si;
     const char * host = peer_server_getprop(ps, "Host", NULL);
     const char * port = peer_server_getprop(ps, "Port", NULL);
     int def_port = 0;
@@ -954,25 +1080,8 @@ ChannelServer * channel_tcp_server(PeerServer * ps) {
         errno = error;
         return NULL;
     }
-    si = (ServerTCP *)loc_alloc_zero(sizeof *si);
-    si->serv.close = server_close;
-    si->sock = sock;
-    si->ps = ps;
-    if (server_list.next == NULL) list_init(&server_list);
-    if (list_is_empty(&server_list)) {
-        post_event_with_delay(refresh_all_peer_server, NULL, PEER_DATA_REFRESH_PERIOD * 1000000);
-    }
-    list_add_last(&si->servlink, &server_list);
-    refresh_peer_server(sock, ps);
 
-    si->accreq.done = tcp_server_accept_done;
-    si->accreq.client_data = si;
-    si->accreq.type = AsyncReqAccept;
-    si->accreq.u.acc.sock = sock;
-    si->accreq.u.acc.addr = &si->addr;
-    si->accreq.u.acc.addrlen = sizeof(si->addr);
-    async_req_post(&si->accreq);
-    return &si->serv;
+    return channel_server_create(ps, sock);
 }
 
 typedef struct ChannelConnectInfo {
@@ -992,7 +1101,7 @@ static void channel_tcp_connect_done(void * args) {
         closesocket(info->sock);
     }
     else {
-        ChannelTCP * c = create_channel(info->sock, info->ssl, 0);
+        ChannelTCP * c = create_channel(info->sock, info->ssl, 0, info->peer_addr.sa_family == AF_UNIX);
         if (c == NULL) {
             info->callback(info->callback_args, errno, NULL);
             closesocket(info->sock);
@@ -1064,6 +1173,42 @@ void channel_tcp_connect(PeerServer * ps, ChannelConnectCallBack callback, void 
         async_req_post(&info->req);
     }
 }
+
+#if ENABLE_Unix_Domain
+void channel_unix_connect(PeerServer * ps, ChannelConnectCallBack callback, void * callback_args) {
+    int error = 0;
+    ChannelConnectInfo * info = NULL;
+
+    info = (ChannelConnectInfo *)loc_alloc_zero(sizeof(ChannelConnectInfo));
+    error = setup_unix_sockaddr(ps, (struct sockaddr_un *)&info->peer_addr);
+    if (!error) set_socket_buffer_sizes(info->sock);
+
+    if (error) {
+        if (info != NULL) {
+            if (info->sock >= 0) closesocket(info->sock);
+            loc_free(info);
+        }
+        callback(callback_args, error, NULL);
+    }
+    else {
+        info->callback = callback;
+        info->callback_args = callback_args;
+        info->ssl = 0;
+        info->req.client_data = info;
+        info->req.done = channel_tcp_connect_done;
+        info->req.type = AsyncReqConnect;
+        info->req.u.con.sock = info->sock;
+        info->req.u.con.addr = &info->peer_addr;
+        info->req.u.con.addrlen = info->peer_addr_len;
+        async_req_post(&info->req);
+    }
+}
+
+#else
+void channel_unix_connect(PeerServer * ps, ChannelConnectCallBack callback, void * callback_args) {
+    callback(callback_args, ERR_INV_TRANSPORT, NULL);
+}
+#endif
 
 void generate_ssl_certificate(void) {
 #if ENABLE_SSL

@@ -22,16 +22,29 @@
 #include <framework/channel.h>
 
 /*
- * Start TCP channel listener.
+ * Start TCP (Internet) channel listener.
  * On error returns NULL and sets errno.
  */
 extern ChannelServer * channel_tcp_server(PeerServer * server);
 
 /*
- * Connect client side over TCP.
+ * Start TCP (Unix domain) channel listener.
+ * On error returns NULL and sets errno.
+ */
+extern ChannelServer * channel_unix_server(PeerServer * server);
+
+/*
+ * Connect client side over TCP (Internet domain).
+ *
  * On error returns NULL and sets errno.
  */
 extern void channel_tcp_connect(PeerServer * server, ChannelConnectCallBack callback, void * callback_args);
+
+/*
+ * Connect client side over TCP (Unix domain).
+ * On error returns NULL and sets errno.
+ */
+extern void channel_unix_connect(PeerServer * server, ChannelConnectCallBack callback, void * callback_args);
 
 /*
  * Generate SSL certificate to be used with SSL channels.

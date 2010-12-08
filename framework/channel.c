@@ -220,6 +220,9 @@ ChannelServer * channel_server(PeerServer * ps) {
     else if (strcmp(transportname, "PIPE") == 0) {
         return channel_pipe_server(ps);
     }
+    else if (strcmp(transportname, "UNIX") == 0) {
+        return channel_unix_server(ps);
+    }
     else {
         errno = ERR_INV_TRANSPORT;
         return NULL;
@@ -237,6 +240,9 @@ void channel_connect(PeerServer * ps, ChannelConnectCallBack callback, void * ca
     }
     else if (strcmp(transportname, "PIPE") == 0) {
         channel_pipe_connect(ps, callback, callback_args);
+    }
+    else if (strcmp(transportname, "UNIX") == 0) {
+        channel_unix_connect(ps, callback, callback_args);
     }
     else {
         callback(callback_args, ERR_INV_TRANSPORT, NULL);

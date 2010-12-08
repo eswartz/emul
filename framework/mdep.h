@@ -367,6 +367,7 @@ extern const char * loc_gai_strerror(int ecode);
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/un.h>
 #include <socket.h>
 #include <in.h>
 #include <netdb.h>
@@ -430,6 +431,7 @@ extern struct ip_ifc_info * get_ip_ifc(void);
 #include <pthread.h>
 #include <netdb.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <sys/select.h>
 #include <sys/time.h>
 #include <sys/ioctl.h>
