@@ -78,11 +78,13 @@ struct BreakpointInfo {
     int instruction_cnt;
     ErrorReport * error;
     char * address;
+    char * type;
     char * condition;
     char ** context_ids;
     char ** context_ids_prev;
     char ** stop_group;
     char * file;
+    int access_mode;
     int line;
     int column;
     int ignore_count;
@@ -208,8 +210,10 @@ static void plant_instruction(BreakInstruction * bi) {
     assert(!bi->cb.ctx->exited);
     if (bi->cb.address == 0) return;
     assert(is_all_stopped(bi->cb.ctx));
-    bi->cb.access_types = CTX_BP_ACCESS_INSTRUCTION;
+
+    if (bi->cb.access_types == 0) bi->cb.access_types = CTX_BP_ACCESS_INSTRUCTION;
     bi->cb.length = 1;
+
     bi->saved_size = 0;
     if (context_plant_breakpoint(&bi->cb) < 0) {
         if (get_error_code(errno) == ERR_UNSUPPORTED) {
@@ -514,6 +518,17 @@ static InstructionRef * link_breakpoint_instruction(BreakpointInfo * bp, Context
     bi = find_instruction(mem, mem_addr);
     if (bi == NULL) {
         bi = add_instruction(mem, mem_addr);
+        if (bp->access_mode & 0x1) {
+                bi->cb.access_types |= CTX_BP_ACCESS_DATA_READ;
+        }
+        if (bp->access_mode & 0x2) {
+                bi->cb.access_types |= CTX_BP_ACCESS_DATA_WRITE;
+        }
+        if (bp->access_mode & 0x4) {
+                bi->cb.access_types |= CTX_BP_ACCESS_INSTRUCTION;
+        }
+
+        /* TODO: parse type (soft|hw) */
     }
     else {
         int i = 0;
@@ -674,6 +689,7 @@ static void free_bp(BreakpointInfo * bp) {
     if (*bp->id) list_remove(&bp->link_id);
     release_error_report(bp->error);
     loc_free(bp->address);
+    loc_free(bp->type);
     loc_free(bp->context_ids);
     loc_free(bp->stop_group);
     loc_free(bp->file);
@@ -1075,6 +1091,21 @@ static int copy_breakpoint_info(BreakpointInfo * dst, BreakpointInfo * src) {
     }
     src->address = NULL;
 
+    if (!str_equ(dst->type, src->type)) {
+        loc_free(dst->type);
+        dst->type = src->type;
+        res = 1;
+    }
+    else {
+        loc_free(src->type);
+    }
+    src->type = NULL;
+
+    if (dst->access_mode != src->access_mode) {
+        dst->access_mode = src->access_mode;
+        res = 1;
+    }
+
     if (!str_equ(dst->condition, src->condition)) {
         loc_free(dst->condition);
         dst->condition = src->condition;
@@ -1195,6 +1226,12 @@ static void read_breakpoint_properties(InputStream * inp, BreakpointInfo * bp) {
             else if (strcmp(name, "Location") == 0) {
                 bp->address = json_read_alloc_string(inp);
             }
+            else if (strcmp(name, "Type") == 0) {
+                bp->type = json_read_alloc_string(inp);
+            }
+            else if (strcmp(name, "AccessMode") == 0) {
+                bp->access_mode = json_read_long(inp);
+            }
             else if (strcmp(name, "Condition") == 0) {
                 bp->condition = json_read_alloc_string(inp);
             }
@@ -1249,6 +1286,20 @@ static void write_breakpoint_properties(OutputStream * out, BreakpointInfo * bp)
         json_write_string(out, "Location");
         write_stream(out, ':');
         json_write_string(out, bp->address);
+    }
+
+    if (bp->type != NULL) {
+        write_stream(out, ',');
+        json_write_string(out, "Type");
+        write_stream(out, ':');
+        json_write_string(out, bp->type);
+    }
+
+    if (bp->access_mode != 0) {
+        write_stream(out, ',');
+        json_write_string(out, "AccessMode");
+        write_stream(out, ':');
+        json_write_long(out, bp->access_mode);
     }
 
     if (bp->condition != NULL) {
