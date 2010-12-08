@@ -75,8 +75,8 @@
 
 <p>Today almost every device software development tool on the market has its own method
 of communication with target system. Communication methods often require individual setup,
-configuration and maintenance, impose unnecessary limitations.
-Target Communication Framework goal is to establish common ground in
+configuration and maintenance, and impose unnecessary limitations.
+The goal of the Target Communication Framework is to establish a common ground in
 the area of communication protocols between development tools and embedded devices.</p>
 
 <p>The goal is a single protocol used to communicate between all tools and targets:</p>
@@ -85,46 +85,46 @@ the area of communication protocols between development tools and embedded devic
 <h2><a name='Goals'>Goals</a></h2>
 
 <ul type='disc'>
-    <li>Universal, simple, lightweight, vendor agnostic framework for tools and targets
-    to communicate for purpose of debugging, profiling, code patching and other device
+    <li>A universal, simple, lightweight, vendor agnostic framework for tools and targets
+    to communicate for the purpose of debugging, profiling, code patching and other device
     software development needs.
 
-    <li>Single configuration per target (not per tool per target as today in most cases),
+    <li>A single configuration per target (not per tool per target as today in most cases),
     or no configuration when possible.
 
-    <li>Minimal overhead and footprint on target side.
+    <li>Minimal overhead and footprint on the target side.
 </ul>
 
 <h2><a name='Definitions'>Definitions</a></h2>
 
 <dl>
-<dt><b>Peer:</b> <dd>communication endpoint. Both hosts and targets are called peers. A
-peer can act as a client or a server depending on services it implements.
+<dt><b>Peer:</b> <dd>a communication endpoint. Both hosts and targets are called peers. A
+peer can act as a client or a server depending on the services it implements.
 
-<dt><b>Service:</b> <dd>group of related commands, events and semantic define a service.
-A service can be discovered, added or removed as a group at communication endpoint.
+<dt><b>Service:</b> <dd>a group of related commands, events and their semantics define a service.
+A service can be discovered, added or removed as a group at a communication endpoint.
 
-<dt><b>Message:</b> <dd>a packet of data, formatted according to framework specification
-and transmitted over communication channel.
+<dt><b>Message:</b> <dd>a packet of data, formatted according to the framework specification
+and transmitted over a communication channel.
 
-<dt><b>Channel:</b> <dd>communication link connecting two endpoints (peers).  A single
+<dt><b>Channel:</b> <dd>a communication link connecting two endpoints (peers).  A single
 channel may be used to communicate with multiple services.  Multiple channels may
 be used to connect the same peers, however no command or event ordering is guaranteed
 across channels.
 
-<dt><b>Command:</b> <dd>command is a message sent to remote peer in order to request some
+<dt><b>Command:</b> <dd>a message sent to a remote peer in order to request some
 predefined action there.
 
-<dt><b>Result:</b> <dd>result is a message sent as a response to a command.
+<dt><b>Result:</b> <dd>a message sent as a response to a command.
 
-<dt><b>Event:</b> <dd>event is a message sent to all interested parties in order to notify
+<dt><b>Event:</b> <dd>a message sent to all interested parties in order to notify
 them about state changes.
 </dl>
 
 <h2><a name='Requirements'>Requirements</a></h2>
 
 <ul type='disc'>
-    <li>Simple and extensible protocol.
+    <li>A simple and extensible protocol.
 
     <li>Small footprint on the target.
 
@@ -139,11 +139,11 @@ them about state changes.
     </ul>
 
     <li>Full duplex, symmetric communication: both host and target should be able to send
-    commands and events at same time, though ability to establish communication channel
+    commands and events at same time, though ability to establish a communication channel
     can be limited to host only.
 
     <li>For each communication channel between two peers, the framework should preserve
-    order of commands, results and events.
+    the order of commands, results and events.
 
     <li>Support for slow and high latency connections.
 
@@ -152,7 +152,7 @@ them about state changes.
 
     <li>The framework should support multiplexing, that is, single target device shared
     between multiple tools at same time. To reduce footprint on the target, multiplexing
-    can be implemented on host if needed.
+    can be implemented on the host if needed.
 
     <li>Dynamic discovery of participating targets and hosts. No configuration when possible.
 
@@ -161,13 +161,13 @@ them about state changes.
 
     <li>Services can be added and removed dynamically.
 
-    <li>Framework should define a set of common high level interfaces (services).  For
+    <li>The framework should define a set of common high level interfaces (services).  For
     example: flow control, memory access, registers access, up-load mechanism, kernel
     awareness, run control, target file system, console, flash programming. Implementation
     of these interfaces is optional, but if provided it will support much wider compatibility
     with various tools.
 
-    <li>Framework should be layered in such a way so it is possible to use different transport
+    <li>The framework should be layered in such a way so it is possible to use different transport
     medias (e.g. TCP/IP, RS232, USB, etc) without any changes to individual services.
     In other words, transport implementation should be services agnostic, and services
     implementation should be transport agnostic.
@@ -175,15 +175,15 @@ them about state changes.
     <li>Each service defines how marshalling is done for command, result and event arguments.
     This allows existing target agents to remain unchanged.
 
-    <li>Framework should define a preferred marshalling mechanism that new services can
+    <li>The framework should define a preferred marshalling mechanism that new services can
     use.
 
     <li>The definition of services (groups of related commands and events) is separate
     from the definition of the framework itself.  The framework provides unified communication
     mechanism, while services use it to communicate with its clients.
 
-    <li>Anybody (including 3rd parties) can add services without having to modify communication
-    protocol or framework software.
+    <li>Anybody (including 3rd parties) can add services without having to modify the
+    communication protocol or framework software.
 
     <li>The framework should support tunneling through a proxy. Proxy may be used, for
     example:
@@ -203,7 +203,7 @@ them about state changes.
     this functionality, proxy services would typically use low-level target services,
     like memory access.
 
-    <li>Supports of concurrent requests. Maximum number of concurrent requests (window
+    <li>Support of concurrent requests. Maximum number of concurrent requests (window
     size) can be limited on target side. Simple agents only have to support window size
     of 1. Framework should maintain a queue of additional requests, so tools don't need
     to know the window size. This may only be relevant for certain transport protocols
@@ -211,21 +211,21 @@ them about state changes.
 
     <li>Events can be broadcasted at any time, i.e. no polling should be required.
 
-    <li>Protocol should support a standard mechanism of sending data larger than MTU.
+    <li>The protocol should support a standard mechanism of sending data larger than MTU.
 </ul>
 
 <h2><a name='Syntax'>Syntax Rules Notation</a></h2>
 
-<p>Format of the protocol messages is defined by syntax rules. Syntax is described
+<p>The protocol message format is defined by syntax rules. The syntax is described
 using a simple variant of Backus-Naur Form. In particular:</p>
 
 <ul type='disc'>
     <li>Italic lower case words in a courier font, enclosed into angular brackets, are
     used to denote syntactic categories, for example: <b><i><font face="Courier New" size=2 color=#333399>&lt;token&gt;.
-    </font></i></b>Category name can be followed by colon and a text, which explains semantics
+    </font></i></b>Category name can be followed by colon and a text, which explains the semantics
     of the category, for example: <b><i><font face="Courier New" size=2 color=#333399>&lt;int:
     error code&gt;</font></i></b> has same meaning as <b><i><font face="Courier New" size=2 color=#333399>&lt;int&gt;</font></i></b>,
-    but denotes that the integer number used to indicate an &ldquo;error code&rdquo;.
+    but denotes that the integer number is used to indicate an &ldquo;error code&rdquo;.
 
     <li>A syntax rule consists of a category designation followed by one or more syntax
     definitions for the category. The category name and each definition are placed on
@@ -239,7 +239,7 @@ using a simple variant of Backus-Naur Form. In particular:</p>
     <li>Spaces are added for readability only and they are not part of the syntax.
 
     <li>All text in the category definition, other then categories and spaces, is UTF-8
-    based representation of a message bytes.
+    based representation of message bytes.
 
     <li>The symbol &lsquo;&bull;&rsquo; designates a zero byte.
 </ul>
@@ -252,7 +252,7 @@ most common case &ndash; target connected over TCP or UDP on a local network. Fo
 setup, framework should have easily accessible and user friendly GUI with all relevant
 configuration options.</p>
 
-<p>Framework should use a dynamic discovery protocol to locate targets and other hosts
+<p>The framework should use a dynamic discovery protocol to locate targets and other hosts
 running instances of the framework when possible, and maintain a dynamic list of available
 communication endpoints, as well as lists of services available at each endpoint.
 Host discovery is needed to locate hosts able to proxy communications for targets,
@@ -262,8 +262,8 @@ Development tools will access this data through the Locator Service API and use 
 for example, to present a user a list of available targets that have capabilities
 needed by a particular tool.</p>
 
-<p>Framework should provide software libraries to be used by tools and target agents
-developers. The libraries should be available at least for ANSI C and Java. On host
+<p>The framework should provide software libraries to be used by tools and target agents
+developers. The libraries should be available at least for ANSI C and Java. On the host
 side, at least Windows, Solaris and Linux must be supported. Libraries will provide
 APIs for low-level communication protocol, Locator Service, preferred marshaling and
 predefined common services.</p>
@@ -317,7 +317,7 @@ no code, except for reentrant libraries, is executed by multiple threads. Each c
 has a message queue and other threads communicate with the compartment thread by posting
 messages to the queue.</p>
 
-<p>Framework APIs are designed to be compatible with the compartment threading model.
+<p>The framework APIs are designed to be compatible with the compartment threading model.
 Hence the API functions do not contain any thread synchronization primitives to protect
 against multiple threads using the functions. All framework APIs belong to a single
 compartment and should be used by a single thread. The same thread is used to dispatch
@@ -334,7 +334,7 @@ the job is done. This approach is commonly known as asynchronous<b>, </b>event-d
 by the user will often be called from within the framework itself, rather than from
 the user's application code. The framework often plays the role of the main program
 in coordinating and sequencing application activity. This phenomenon is called Inversion
-of Control (also known as the Hollywood Principle - "Don't call us, we'll call you").</p>
+of Control (also known as the Hollywood Principle - &ldquo;Don't call us, we'll call you&rdquo;).</p>
 
 <h2><a name='Reflection'>Reflection</a></h2>
 
@@ -346,7 +346,7 @@ data changes or by listening to events (event is communication message that is s
 asynchronously by a peer to notify others about state change). Reflection is correct
 if it represents a state that actually did happen on remote peer.</p>
 
-<p>Reflection is coherent if it is exactly equal to subset of peer state at a single
+<p>Reflection is coherent if it is exactly equal to a subset of the peer state at a single
 moment of time and that moment of time is not too far in the past. Non-coherent reflection
 can have parts of data representing peer state at different moments of time. Coherent
 reflection is more valuable for a user, because non-coherent reflection can have logically
@@ -363,11 +363,11 @@ target agent, communication software and debugger itself.</p>
 only if:</p>
 
 <ul type='disc'>
-    <li>Observed subset of state is properly selected and dynamically re-selected. Observing
+    <li>The observed subset of state is properly selected and dynamically re-selected. Observing
     too much can overflow communication channel. Observing too little has little value
     for a user.
 
-    <li>Observer is listening to all relevant events.
+    <li>The observer is listening to all relevant events.
 
     <li>Events are coming in exactly same order as corresponding changes happen.
 
@@ -386,7 +386,7 @@ only if:</p>
 
 <h2><a name='Ordering'>Message ordering</a></h2>
 
-<p>The transmission order of commands, results and events is important, it coveys
+<p>The transmission order of commands, results and events is important, it conveys
 valuable information about target state transitions and it should be preserved when
 possible. Consider an example:</p>
 
@@ -406,12 +406,12 @@ value 3.</p>
     Result X=2
 </pre>
 
-<p>Now client has to show value of X to a user. If the order of messages is preserved,
+<p>Now the client has to show the value of X to a user. If the order of messages is preserved,
 the client will know that command was executed <i>after</i> X was assigned 3, the
-last message contains last known value of X and 2 is the correct value to show. If
+last message contains the last known value of X and 2 is the correct value to show. If
 the target is allowed to transmit events and results in arbitrary order, the client
 will have no clue what to show &ndash; 2 or 3. In fact, the client will have to make a tough
-decision about each message it receives: either trust message data as correct last
+decision about each message it receives: either trust the message data as the correct last
 known target state, or assume the message came in out-of-order and ignore it, or re-request
 the information from the target.</p>
 
@@ -440,7 +440,7 @@ reason a target agent cannot preserve message order, the result will be that cli
 of the service can receive messages in the wrong order. When this is the case it should
 be well documented, so tools developers are aware and can make the best of the situation.
 In most cases it will not cause any trouble, but there is no perfect way to restore
-actual sequence of events and maintain data coherency after ordering was lost, and
+the actual sequence of events and maintain data coherency after ordering was lost, and
 in some cases it can severely impact tool functionality and user experience.</p>
 
 <h1><a name='Transport'>Transport Layer</a></h1>
@@ -452,19 +452,19 @@ a collection of transport protocol handlers. Each handler is designed to provide
 
 <ul type='disc'>
     <li>Enumeration of available peers, including both automatically discovered and manually
-    configured peers. Handler fires notification events when peers are added or removed.
+    configured peers. The handler fires notification events when peers are added or removed.
     Enumeration can be implemented by scanning JTAG chain, by broadcasting special UDP
     packet and waiting for responses, by communicating with ICE hardware, or by any other
     suitable means.
 
-    <li>Bidirectional point-to-point communication of data packets. Packets are arrays
-    of bytes of arbitrary size.
-    Transport handler and underlying protocol are responsible for adding all necessary
+    <li>Bidirectional point-to-point communication of data packets. Packets are byte arrays
+    of arbitrary size.
+    The transport handler and the underlying protocol are responsible for adding all necessary
     control data, headers, error checking bits, addresses, fragmentation/defragmentation,
     flow control, transmission retries and whatever necessary to ensure lossless, order-preserving
     delivery of packets.
 
-    <li>Configuration UI should allow user to inspect and modify properties of both manually
+    <li>Thr configuration UI should allow user to inspect and modify properties of both manually
     configured and automatically discovered peers, setup new peers, view connections status
     and statistics.
 </ul>
@@ -486,25 +486,25 @@ example:</p>
     <li>Bluetooth Service Discovery Protocol (SDP).
 </ul>
 
-<p>Service discovery protocols, as well as transport protocols will be supported by
-framework plug-ins, they are not part of framework code itself, and they can be developed
+<p>Service discovery protocols, as well as transport protocols, will be supported by
+framework plug-ins, they are not part of the framework code itself, and they can be developed
 by 3rd parties. Note that existing discovery protocols define term &ldquo;service&rdquo; differently
 - as an independent communication endpoint (usually a TCP/IP port). In this document
 it is called &ldquo;peer&rdquo; (host, target, communication endpoint), and a peer can provide
 multiple services over single communication channel.</p>
 
-<p>Using of standard discovery protocols should be optional, because it can potentially
+<p>Use of standard discovery protocols should be optional, because it can potentially
 cause conflict or interference between development tools and application being developed
-over a use of same standard protocol &ndash; devices software often includes implementation
-of service discovery protocols as part of application code to support their main functions.
+over a use of same standard protocol &ndash; device software often includes implementation
+of service discovery protocols as part of the application code to support their main functions.
 </p>
 
 <h1><a name='Protocol'>Communication Protocol</a></h1>
 
-<p>The communication protocol defines data packets properties and roles common for
-all services. The communication protocol API provides functions for opening and /closing
-of the communication channel for a particular peer, and for sending and receiving
-data packets. The protocol define contents of a part of a packet, the rest of the
+<p>The communication protocol defines data packet properties and roles common for
+all services. The communication protocol API provides functions for opening and closing
+the communication channel for a particular peer, and for sending and receiving
+data packets. The protocol defines contents of a part of a packet, the rest of the
 packet is treated as array of bytes at this level. The communication protocol implementation
 also provides:</p>
 
@@ -514,11 +514,11 @@ also provides:</p>
     <li>Proxy &ndash; packet forwarding in behalf of other hosts.
 </ul>
 
-<p>Protocol defines three packet types: commands (requests), results (responses),
+<p>The protocol defines three packet types: commands (requests), results (responses),
 and events. Each packet consists of several protocol defined control fields followed
-by byte array of data. Binary representation of control fields is a sequence of zero
-terminated ASCII strings. Format of data array depends on a service. We recommend
-using framework preferred marshaling for data formatting.</p>
+by a byte array of data. Binary representation of control fields is a sequence of
+zero-terminated ASCII strings. The format of the data depends on the service. We recommend
+using the framework preferred marshaling for data formatting.</p>
 
 <p>Syntax:</p>
 <pre><b><font face="Courier New" size=2 color=#333399>
@@ -536,14 +536,14 @@ using framework preferred marshaling for data formatting.</p>
     &rArr; C &bull; <i>&lt;token&gt; </i>&bull; <i>&lt;service name&gt; </i>&bull; <i>&lt;command name&gt; </i>&bull; <i>&lt;byte array: arguments&gt;</i>
 </font></b></pre>
 
-<p>Command packets start with string &ldquo;C&rdquo;.</p>
+<p>Command packets start with the string &ldquo;C&rdquo;.</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
 <i>&lt;token&gt;</i>
     &rArr; <i>&lt;chars&gt;</i>
 </font></b></pre>
 
-<p>Token is unique string generated by framework for each command. It is used to match
+<p>A token is a unique string generated by the framework for each command. It is used to match
 results to commands.</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
@@ -551,24 +551,24 @@ results to commands.</p>
     &rArr; <i>&lt;chars&gt;</i>
 </font></b></pre>
 
-<p>Service name is used to identify a service that handles the command, it is same
-string as returned by Service.getName().</p>
+<p>A service name is used to identify a service that handles the command. It is the same
+string as that returned by Service.getName().</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
 <i>&lt;command name&gt;</i>
     &rArr; <i>&lt;chars&gt;</i>
 </font></b></pre>
 
-<p>Command name interpretation depends on a service.</p>
+<p>The interpretation of the command name depends on the service.</p>
 
-<p>A command should always be answered with result packed. Result does not have to
+<p>A command should always be answered with result packed. The result does not have to
 be positive &ndash; it can include an error code, or it can be special "N" result that indicates that command was not recognized,
-but there always must be one. Since client
-cannot detect that a response is missing, if for some reasons peer is not able to
+but there always must be one. Since the client
+cannot detect that a response is missing, if for some reason the peer is not able to
 answer a command, it should consider such situation a fatal communication error and
-it must shutdown the communication channel. It is not necessary to wait for result
-before sending next command. In fact, sending multiple commands in a burst can greatly
-improve performance, especially when connection has high latency. At the same time,
+it must shutdown the communication channel. It is not necessary to wait for a result
+before sending the next command. In fact, sending multiple commands in a burst can greatly
+improve performance, especially when the connection has a high latency. At the same time,
 clients should be carefully designed to avoid flooding the communication channel with
 unlimited number of requests, since this will use resources in forms of memory to
 store the requests and time to process them.</p>
@@ -582,8 +582,8 @@ store the requests and time to process them.</p>
     &rArr; P &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;byte array: progress data&gt;</i>
 </font></b></pre>
 
-<p>Result packets start with string &ldquo;P&rdquo; for intermediate result, &ldquo;R&rdquo; for final
-result, and &ldquo;N&rdquo; if command is not recognized. Receiving of &ldquo;R&rdquo; or &ldquo;N&rdquo; result concludes execution of corresponding command.
+<p>Result packets start with the string &ldquo;P&rdquo; for intermediate result, &ldquo;R&rdquo; for final
+result, and &ldquo;N&rdquo; if the command is not recognized. Receiving a &ldquo;R&rdquo; or &ldquo;N&rdquo; result concludes execution of corresponding command.
 There should be exactly one &ldquo;R&rdquo; or &ldquo;N&rdquo; result for each command. In addition, command execution can produce any number of
 intermediate &ldquo;P&rdquo; results. &ldquo;P&rdquo; results can be sent before &ldquo;R&rdquo;, and it can serve, for
 example, as command execution progress report when execution takes long time.</p>
@@ -593,7 +593,7 @@ example, as command execution progress report when execution takes long time.</p
     &rArr; <i>&lt;chars&gt;</i>
 </font></b></pre>
 
-<p>Token should match token field of one of the pending commands that produced the result.</p>
+<p>The token should match the token field of one of the pending commands that produced the result.</p>
 
 <h2><a name='ProtocolEvents'>Events</a></h2>
 
@@ -609,29 +609,29 @@ example, as command execution progress report when execution takes long time.</p
     &rArr; <i>&lt;chars&gt;</i>
 </font></b></pre>
 
-<p>Service name identifies a service that fired event, same string as returned by
-Service.getName().</p>
+<p>The service name identifies the service that fired the event. It is the same
+string as that returned by Service.getName().</p>
 
 <pre><b><font face="Courier New" size=2 color=#333399>
 <i>&lt;event name&gt;</i>
     &rArr; <i>&lt;chars&gt;</i>
 </font></b></pre>
 
-<p>Event name meaning depends on a service.</p>
+<p>The interpretation of the event name depends on the service.</p>
 
 <p>Events are used to notify clients about changes in peer state. Services should
 provide sufficient variety of events for clients to track remote peer state without
 too much of polling. Clients, interested in a particular aspect of the target state,
 should have a &ldquo;reflection&rdquo; (or &ldquo;model&rdquo;) of that state and update the reflection by
 listening for relevant events. If a service implements a command that changes a particular
-aspect of peers state, then, normally, it should also generate notifications event
+aspect of peers state, then, normally, it should also generate notification events
 when that same part of the state changes and it should provide a command to retrieve
-current value of the state &ndash; to be used by clients to initialize the reflection. Service
+the current value of the state &ndash; to be used by clients to initialize the reflection. Service
 events are defined statically, together with commands. The framework does not do any
 event processing besides delivering them to clients, however a service can define
-additional event related functionality if necessary, for example, commands for event
+additional event-related functionality if necessary, for example commands for event
 filtering, enabling, disabling, registration, etc. Care should be taken when designing
-events for a service - if events are sent too frequently, they will cause flooding
+events for a service &ndash; if events are sent too frequently, they will cause flooding
 of the communication channels and degrade performance. However, too few events will
 force clients to poll for changes and can also degrade performance. A balanced approach
 is the best.</p>
@@ -640,7 +640,7 @@ is the best.</p>
 
 <p>It often happens that one side of communication channel produces messages faster
 then they can be transmitted over the channel or can be consumed by another side.
-This will cause channel traffic congestion (flooding). Framework will deal with the
+This will cause channel traffic congestion (flooding). The framework will deal with the
 problem and slow down transmitting side by blocking execution inside sendEvent(),
 sendCommand() and sendResult() functions when message buffers are full. However, in
 many cases, it is not the best way to handle congestion. For example, it can make
@@ -654,15 +654,15 @@ to less detailed messages, etc.</p>
     &rArr; F &bull; <i>&lt;int: traffic congestion level&gt;</i> &bull;
 </font></b></pre>
 
-<p>Traffic congestion level value is in range &ndash;100..100, where &ndash;100 means no pending
+<p>The traffic congestion level value is in the range -100..100, where -100 means no pending
 messages (no traffic), 0 means optimal load, and positive numbers
 indicate level of congestion. When a peer receives flow control message with congestion level > 0
 it should try to reduce its transmition speed.</p>
 
 <h2><a name='ProtocolExamples'>Message Examples</a></h2>
 
-<p>Examples use simplified command arguments and result data. See service description
-for actual data formats.</p>
+<p>These examples use simplified command arguments and result data. See the service description
+for the actual data formats.</p>
 
 <p>Executing <b><i>suspend</i></b> command from <b><i>RunControl</i></b> service:</p>
 
@@ -1106,10 +1106,10 @@ Receive:      R 3 &ldquo;Already suspended&rdquo;
 
 <h1><a name='JSON'>Preferred Marshaling</a></h1>
 
-<p>TCF messages data format is service specific. Since services specifications are
-separate from protocol specification, a service designer can choose any data format that
+<p>The TCF message data format is service specific. Since service specifications are
+separate from the protocol specification, a service designer can choose any data format that
 suits the service requirements best. However, to promote better compatibility and to
-simplify service design and implementation, we recommend to use <b>JSON</b> for data formatting.</p>
+simplify service design and implementation, we recommend using <b>JSON</b> for data formatting.</p>
 
 <p><b>JSON</b> (pronounced like the
 English given name <i>Jason</i>), which stands for "<b>J</b>ava<b>S</b>cript <b>O</b>bject
@@ -1254,8 +1254,8 @@ using UTF-8 encoding.</p>
 
 <h1><a name='Locator'>Locator Service</a></h1>
 
-<p>Locator Service uses transport layer to search for peers and to collect data about
-peer's attributes and capabilities (services).  Discovery mechanism depends on transport
+<p>The Locator service uses the transport layer to search for peers and to collect data about
+the peer's attributes and capabilities (services).  The discovery mechanism depends on the transport
 protocol and is part of that protocol handler. Targets, known by other hosts, are
 added to local list of peers. <font color=red>Security? </font>Automatically discovered
 targets require no further configuration. Additional targets can be configured manually.</p>
@@ -1302,10 +1302,10 @@ Predefined attributes are:</p>
     - peer port number, if transport is TCP or UDP.
 </ul>
 
-<p>Most clients dont need to know peer attributes other then ID and Name. Clients are expected to call IPeer.openChannel()
-method and let the framework to check peers attributes and create appropriate communication cahnnel that is best suited for
-communication with the peer. After a channel is established, a client can learn peer capabilities by looking
-at services it implements (use IChannel.getRemoteServices() method to get a map of services).</p>
+<p>Most clients do not need to know any peer attributes other than ID and Name. Clients are expected to call the IPeer.openChannel()
+method and let the framework check peer attributes and create appropriate communication channel that is best suited for
+communication with the peer. After a channel is established, a client can learn the peer capabilities by looking
+at what services it implements (use IChannel.getRemoteServices() method to get a map of services).</p>
 
 <h2><a name='LocatorCommands'>Locator Service Commands</a></h2>
 
@@ -1319,8 +1319,8 @@ C &bull; <i>&lt;token&gt;</i> &bull; Locator &bull; redirect &bull; <i>&lt;peer&
     &rArr; <i>&lt;object: peer data&gt;</i>
 </font></b></pre>
 
-<p>The command redirects the channel to become connected to given peer.
-Locator service starts acting as a proxy.</p>
+<p>The command redirects the channel to become connected to the given peer.
+The Locator service starts acting as a proxy.</p>
 
 <p>Reply:</p>
 
@@ -1334,7 +1334,7 @@ R &bull; <i>&lt;token&gt;</i> &bull; <i>&lt;error report&gt;</i> &bull;
 C &bull; <i>&lt;token&gt;</i> &bull; Locator &bull; sync &bull;
 </font></b></pre>
 
-<p>Sync command does nothing and simply returns back an empty result. The command is used for
+<p>The sync command does nothing and simply returns back an empty result. The command is used for
 cross channel synchronization. Since commands are executed in order they were issued, by waiting
 for sync result a client makes sure that all commands, that were issued before sync, are fully processed.</p>
 
@@ -1357,9 +1357,9 @@ E &bull; Locator &bull; peerHeartBeat &bull; <i>&lt;string: peer ID&gt;</i> &bul
 <dl>
     <dt><b>Hello</b>
         <dd>is the first message sent by the framework after establishing a communication channel.
-        The message lets other side of the channel to know capabilities of this peer.
+        The message lets other side of the channel know capabilities of this peer.
         Message data consists of an array of service names that are provided by the peer.
-        Service names list is a complete and unambiguous declaration of peer's capabilities.
+        The service name list is a complete and unambiguous declaration of peer's capabilities.
         To avoid ambiguity, different services (even slightly different, like versions of same service)
         must have different names. Framework delays all other communications between peers until exchange
         of Hello messages is complete.
@@ -1497,7 +1497,7 @@ E &bull; Locator &bull; peerHeartBeat &bull; <i>&lt;string: peer ID&gt;</i> &bul
 
 <font color=#3F5FBF>/**
  * ILocator service uses transport layer to search for peers and to collect data about
- * peer’s attributes and capabilities (services). Discovery mechanism depends on transport protocol
+ * peers attributes and capabilities (services). Discovery mechanism depends on transport protocol
  * and is part of that protocol handler. Targets, known to other hosts, can be found through
  * remote instances of ILocator service. Automatically discovered targets require no further
  * configuration. Additional targets can be configured manually.
