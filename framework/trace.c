@@ -58,7 +58,7 @@ int print_trace(int mode, const char * fmt, ...) {
             exit(1);
         }
 
-        if (pthread_mutex_lock(&mutex) != 0) {
+        if ((errno = pthread_mutex_lock(&mutex)) != 0) {
             perror("pthread_mutex_lock");
             exit(1);
         }
@@ -71,7 +71,7 @@ int print_trace(int mode, const char * fmt, ...) {
         fprintf(log_file, "\n");
         fflush(log_file);
 
-        if (pthread_mutex_unlock(&mutex) != 0) {
+        if ((errno = pthread_mutex_unlock(&mutex)) != 0) {
             perror("pthread_mutex_unlock");
             exit(1);
         }
@@ -99,7 +99,7 @@ void open_log_file(const char * log_name) {
 
 void ini_trace(void) {
 #if ENABLE_Trace
-    if (pthread_mutex_init(&mutex, NULL) != 0) {
+    if ((errno = pthread_mutex_init(&mutex, NULL)) != 0) {
         perror("pthread_mutex_init");
         exit(1);
     }

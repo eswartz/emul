@@ -34,6 +34,8 @@
     Washington University, St. Louis, Missouri
 **********************************************************************/
 
+/* TODO: POSIX pthread functions don't set errno */
+
 typedef struct {
     int waiters_count;
     CRITICAL_SECTION waiters_count_lock;
