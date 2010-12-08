@@ -287,11 +287,12 @@ function build_and_test_agent()
   echo >>logs/$LOGFILE
   if $SSH "cd $TRUNK/agent; $MAKE `get_make_options` clean all" >>logs/$LOGFILE 2>&1
   then
-    local AGENT_LFILE=$BUILD/logs/agent-$HOST.txt
     if [ $OPSYS = Windows ] ; then
-      local AGENT_LFILE=`$SSH "cygpath -m $AGENT_LFILE"`
+      local AGENT_L_OPT=-L`$SSH "cygpath -m $BUILD/logs/agent-$HOST.txt"`
+    else
+      local AGENT_L_OPT=-L$BUILD/logs/agent-$HOST.txt
     fi
-    $SSH "$TRUNK/agent/obj/$OPSYS/$MACHINE/$CONF/agent -s TCP::1534 -L$AGENT_LFILE -l0" >>logs/$LOGFILE 2>&1 &
+    $SSH "$TRUNK/agent/obj/$OPSYS/$MACHINE/$CONF/agent -s TCP::1534 $AGENT_L_OPT -l0" >>logs/$LOGFILE 2>&1 &
     sleep 15
     TESTURL1=ID=Test-Agent-$HOST-$SEQ:TransportName=TCP:Host=$HOST:Port=1534
     TESTURL2=ID=Test-Proxy-$HOST-$SEQ:TransportName=TCP:Host=$HOST:Port=1535
@@ -303,6 +304,29 @@ function build_and_test_agent()
       $TESTURL1 \
       >>logs/$LOGFILE 2>&1
     then
+      if [ -z "$CFLAGS" ] ; then
+        # Test different channel implementations
+        $SSH "killall agent" >>logs/$LOGFILE 2>&1
+        if [ -r logs/agent-$HOST.txt ] ; then
+          echo >>logs/$LOGFILE
+          echo "Agent log:" >>logs/$LOGFILE
+          cat logs/agent-$HOST.txt >>logs/$LOGFILE
+          rm logs/agent-$HOST.txt
+          echo "End of agent log" >>logs/$LOGFILE
+        fi
+        if [ "$OPSYS" = Windows ] ; then
+          local AGENT_S_OPT=PIPE:
+          TESTURL1=ID=Test-Agent-$HOST-$SEQ:TransportName=PIPE:
+        elif [ "$OPSYS" = GNU/Linux ] ; then
+          local AGENT_S_OPT=UNIX:/tmp/TCFTest
+          TESTURL1=ID=Test-Agent-$HOST-$SEQ:TransportName=UNIX:Host=/tmp/TCFTest
+        else
+          local AGENT_S_OPT=TCP::1534
+          TESTURL1=ID=Test-Agent-$HOST-$SEQ:TransportName=TCP:Host=localhost:Port=1534
+        fi
+        $SSH "$TRUNK/agent/obj/$OPSYS/$MACHINE/$CONF/agent -s $AGENT_S_OPT $AGENT_L_OPT -l0" >>logs/$LOGFILE 2>&1 &
+        sleep 15
+      fi
       if [ "$OPSYS" = Windows -a ! -z "$CFLAGS" ] ; then
         # TCF server does not support PE object files
         if [ -s logs/agent-$HOST.txt ]
