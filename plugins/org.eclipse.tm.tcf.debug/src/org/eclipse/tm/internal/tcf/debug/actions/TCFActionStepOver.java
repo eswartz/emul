@@ -170,6 +170,10 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
                         exit(new Exception("Unknown PC address"));
                         return;
                     }
+                    if (step_back) {
+                        BigInteger n = new BigInteger(addr.toString());
+                        addr = n.subtract(BigInteger.valueOf(1));
+                    }
                     String id = "Step." + ctx.getID();
                     bp = new HashMap<String,Object>();
                     bp.put(IBreakpoints.PROP_ID, id);
