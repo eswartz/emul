@@ -326,7 +326,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 TCFNode node = getNode(id);
                 action_results.remove(id);
                 if (active_actions.get(id) != null) {
-                    setDebugViewSelection(node, reason);
+                    setDebugViewSelection(node, "Action");
                     action_cnt++;
                 }
                 if (node instanceof TCFNodeExecContext) {
