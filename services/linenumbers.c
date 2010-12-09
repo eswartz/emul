@@ -35,6 +35,8 @@
 #include <framework/trace.h>
 #include <services/linenumbers.h>
 
+#define MAX_AREA_CNT 256
+
 typedef struct MapToSourceArgs {
     char token[256];
     char id[256];
@@ -140,13 +142,12 @@ static void write_line_info(OutputStream * out, int cnt) {
 }
 
 static void add_code_area(CodeArea * area, void * args) {
-    CodeArea * buf = NULL;
     if (code_area_cnt >= code_area_max) {
+        if (code_area_max >= MAX_AREA_CNT) exception(ERR_BUFFER_OVERFLOW);
         code_area_max += 8;
         code_area_buf = (CodeArea *)loc_realloc(code_area_buf, sizeof(CodeArea) * code_area_max);
     }
-    buf = code_area_buf + code_area_cnt++;
-    memcpy(buf, area, sizeof(CodeArea));
+    code_area_buf[code_area_cnt++] = *area;
 }
 
 static void map_to_source_cache_client(void * x) {
