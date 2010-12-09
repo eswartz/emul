@@ -112,6 +112,7 @@ struct PropertyValue {
 
 struct LineNumbersState {
     ContextAddress mAddress;
+    char * mFileName;
     U4_T mNext;
     U4_T mFile;
     U4_T mLine;

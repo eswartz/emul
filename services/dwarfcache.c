@@ -685,11 +685,13 @@ static void free_unit_cache(CompUnit * Unit) {
     loc_free(Unit->mDirs);
     Unit->mDirs = NULL;
 
-    Unit->mStatesCnt = 0;
-    Unit->mStatesMax = 0;
+    while (Unit->mStatesCnt > 0) {
+        loc_free(Unit->mStates[--Unit->mStatesCnt].mFileName);
+    }
     loc_free(Unit->mStates);
     loc_free(Unit->mStatesIndex);
     Unit->mStates = NULL;
+    Unit->mStatesMax = 0;
     Unit->mStatesIndex = NULL;
 }
 

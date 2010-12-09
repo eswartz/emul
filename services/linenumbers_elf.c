@@ -123,7 +123,6 @@ static LineNumbersState * get_next_in_text(CompUnit * unit, LineNumbersState * s
 static void call_client(CompUnit * unit, LineNumbersState * state,
                         ContextAddress state_addr, LineNumbersCallBack * client, void * args) {
     CodeArea area;
-    FileInfo * state_file = NULL;
     LineNumbersState * next = get_next_in_text(unit, state);
     if (next == NULL) return;
     if (state->mAddress >= (state + 1)->mAddress) return;
@@ -132,23 +131,30 @@ static void call_client(CompUnit * unit, LineNumbersState * state,
     area.start_column = state->mColumn;
     area.end_line = next->mLine;
     area.end_column = next->mColumn;
+
     area.directory = unit->mDir;
-    if (state->mFile >= 1 && state->mFile <= unit->mFilesCnt) {
-        state_file = unit->mFiles + (state->mFile - 1);
+    if (state->mFileName != NULL) {
+        area.file = state->mFileName;
     }
-    if (state_file != NULL) {
-        if (is_absolute_path(state_file->mName) || state_file->mDir == NULL) {
-            area.file = state_file->mName;
+    else if (state->mFile >= 1 && state->mFile <= unit->mFilesCnt) {
+        FileInfo * file_info = unit->mFiles + (state->mFile - 1);
+        if (is_absolute_path(file_info->mName) || file_info->mDir == NULL) {
+            area.file = file_info->mName;
+        }
+        else if (is_absolute_path(file_info->mDir)) {
+            area.directory = file_info->mDir;
+            area.file = file_info->mName;
         }
         else {
-            static char buf[FILE_PATH_SIZE];
-            snprintf(buf, sizeof(buf), "%s/%s", state_file->mDir, state_file->mName);
-            area.file = buf;
+            char buf[FILE_PATH_SIZE];
+            snprintf(buf, sizeof(buf), "%s/%s", file_info->mDir, file_info->mName);
+            area.file = state->mFileName = loc_strdup(buf);
         }
     }
     else {
         area.file = unit->mObject->mName;
     }
+
     area.start_address = state_addr;
     area.end_address = (state + 1)->mAddress - state->mAddress + state_addr;
     area.isa = state->mISA;
