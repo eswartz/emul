@@ -21,7 +21,7 @@ import org.eclipse.tm.internal.tcf.rse.Messages;
 import org.eclipse.tm.internal.tcf.rse.shells.TCFTerminalShell;
 
 public class TCFTerminalService extends AbstractTerminalService implements ITCFService{
-    private final ITCFSessionProvider fSessionProvider;    
+    private final ITCFSessionProvider fSessionProvider;
 
     /**
      * Return the TCF property set, and fill it with default values if it has

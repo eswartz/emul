@@ -133,11 +133,11 @@ public class Messages extends NLS {
     public static String TCFFileService_UserDeleteCancellation1;
     public static String PropertySet_Description;
 
-    public static String TCFPlugin_Unexpected_Exception;    
+    public static String TCFPlugin_Unexpected_Exception;
     public static String TCFTerminalService_Description;
     public static String TCFTerminalService_Name;
     public static String TCFShellService_Description;
-    public static String TCFShellService_Name;    
+    public static String TCFShellService_Name;
 
     static {
         // initialize resource bundle

@@ -5,7 +5,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
 
- 
+
  * Contributors:
  *    Liping Ke        (Intel Corp.) - initial API and implementation
  *    Sheldon D'souza  (Celunite)    - LoginThread and readUntil implementation
@@ -103,7 +103,7 @@ public class TCFTerminalShell extends AbstractTerminalShell {
             /* Before Login service is implemented, we only support non-login mode. After Login service
              * is available, below assignment should be removed */
             login_required = String.valueOf(false);
-            
+
             if (Boolean.valueOf(login_required).booleanValue()) {
                 status = ITCFSessionProvider.SUCCESS_CODE;
                 if (login_prompt != null && login_prompt.length() > 0) {
@@ -115,7 +115,7 @@ public class TCFTerminalShell extends AbstractTerminalShell {
                         status = readUntil(password_prompt,fInputStream);
                         write(password + "\n");
                     }
-                }                    
+                }
                 if (status == ITCFSessionProvider.SUCCESS_CODE && command_prompt != null && command_prompt.length() > 0) {
                     status = readUntil(command_prompt,fInputStream);
                     write("\n");
@@ -148,14 +148,14 @@ public class TCFTerminalShell extends AbstractTerminalShell {
                         }
                     }
                     ch = in.read();
-                } 
+                }
             }
             catch (Exception e) {
                 e.printStackTrace();
                 SystemBasePlugin.logError(e.getMessage() == null ?      e.getClass().getName() : e.getMessage(), e);
             }
             return ITCFSessionProvider.CONNECT_CLOSED;
-        }        
+        }
 
         public int getLoginStatus() {
             return this.status;
@@ -169,7 +169,7 @@ public class TCFTerminalShell extends AbstractTerminalShell {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }    
+    }
 
     private int login(String username, String password) throws InterruptedException
     {
@@ -230,7 +230,7 @@ public class TCFTerminalShell extends AbstractTerminalShell {
                                 ITerminals.TerminalContext terminal) {
 
                             terminalContext = terminal;
-                            if (error != null) 
+                            if (error != null)
                                 error(error);
                             else done(terminal);
                         }
@@ -330,7 +330,7 @@ public class TCFTerminalShell extends AbstractTerminalShell {
                     msg.makeSubstitution(((TCFConnectorService)fSessionProvider).getHost().getAliasName());
                 }
                 throw new SystemMessageException(msg);//$NON-NLS-1$
-            }                
+            }
         }
 
     }
@@ -366,7 +366,7 @@ public class TCFTerminalShell extends AbstractTerminalShell {
                     terminalContext.exit(new ITerminals.DoneCommand(){
                         public void doneCommand(IToken token,
                                 Exception error) {
-                            if (error != null) 
+                            if (error != null)
                                 error(error);
                             else {
                                 done(this);
@@ -415,14 +415,14 @@ public class TCFTerminalShell extends AbstractTerminalShell {
                         terminal.setWinSize(fContextID, fWidth, fHeight, new ITerminals.DoneCommand(){
 
                             public void doneCommand(IToken token, Exception error) {
-                                if (error != null) 
+                                if (error != null)
                                     error(error);
                                 else
                                     done(this);
 
                             }});
 
-                    }   
+                    }
                 }}.getS(null, Messages.TCFShellService_Name);
         }
         catch (SystemMessageException e) {

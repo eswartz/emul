@@ -25,7 +25,7 @@ public class TCFTerminalInputStream extends InputStream {
     private boolean bEof = false;;
 
     public TCFTerminalInputStream(final IStreams streams, final String is_id) throws IOException{
-        if (streams == null) 
+        if (streams == null)
             throw new IOException("TCP streams is null");//$NON-NLS-1$
         this.streams = streams;
         this.is_id = is_id;
@@ -33,15 +33,15 @@ public class TCFTerminalInputStream extends InputStream {
 
     /* read must be synchronized */
     @Override
-    public synchronized int read() throws IOException {       
-        if (!connected) 
+    public synchronized int read() throws IOException {
+        if (!connected)
             throw new IOException("istream is not connected");//$NON-NLS-1$
-        if (bEof) 
+        if (bEof)
             return -1;
         try {
             new TCFTask<Object>() {
                 public void run() {
-                    streams.read(is_id, 1, new IStreams.DoneRead() {                    
+                    streams.read(is_id, 1, new IStreams.DoneRead() {
                         public void doneRead(IToken token, Exception error, int lostSize,
                                 byte[] data, boolean eos) {
                             if (error != null) {
@@ -77,9 +77,9 @@ public class TCFTerminalInputStream extends InputStream {
     public synchronized int read(byte b[], final int off, final int len) throws IOException {
 
 
-        if (!connected) 
+        if (!connected)
             throw new IOException("istream is not connected");//$NON-NLS-1$
-        if (bEof) return -1;        
+        if (bEof) return -1;
         if (b == null) {
             throw new NullPointerException();
         } else if (off < 0 || len < 0 || len > b.length - off) {
@@ -90,18 +90,18 @@ public class TCFTerminalInputStream extends InputStream {
         try {
             new TCFTask<Buffer>() {
                 public void run() {
-                    streams.read(is_id, len, new IStreams.DoneRead() {                    
+                    streams.read(is_id, len, new IStreams.DoneRead() {
                         public void doneRead(IToken token, Exception error, int lostSize,
                                 byte[] data, boolean eos) {
                             if (error != null) {
                                 error(error);
                                 return;
                             }
-                            bEof = eos; 
+                            bEof = eos;
                             if (data != null) {
                                 buffer = new Buffer();
                                 buffer.buf = data;
-                                
+
                             }
                             done(buffer);
                         }
@@ -114,7 +114,7 @@ public class TCFTerminalInputStream extends InputStream {
                 System.arraycopy(buffer.buf, 0, b, off, length);
                 return length;
             }
-            else if (bEof) 
+            else if (bEof)
                 return -1;
             else return 0;
         } catch (Exception ee) {
@@ -133,7 +133,7 @@ public class TCFTerminalInputStream extends InputStream {
                     }
                 });
             }
-        }.getIO();        
+        }.getIO();
         connected = false;
     }
 

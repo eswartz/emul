@@ -102,9 +102,9 @@ public class TCFServiceCommandShell extends ServiceCommandShell {
             if (!gotCommand && line.equals(_curCommand)) {
                 gotCommand = true;
                 continue; //ignore remote command echo
-            } else 
+            } else
             {
-                try 
+                try
                 {
                     // Bug 160202: Remote shell dies.
                     if ((_curCommand == null) || (!_curCommand.trim().equals("ls"))) { //$NON-NLS-1$
@@ -176,7 +176,7 @@ public class TCFServiceCommandShell extends ServiceCommandShell {
         }
 
         IRemoteOutput[] remoteOutputs = outputs.toArray(new IRemoteOutput[outputs.size()]);
-        notifyOutputChanged(remoteOutputs, false);  
+        notifyOutputChanged(remoteOutputs, false);
     }
 
     /**

@@ -4,18 +4,18 @@
  *  are made available under the terms of the Eclipse Public License v1.0
  *  which accompanies this distribution, and is available at
  *  http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  *  Initial Contributors:
  *  The following IBM employees contributed to the Remote System Explorer
- *  component that contains this file: David McKnight, Kushal Munir, 
- *  Michael Berger, David Dykstal, Phil Coulthard, Don Yantzi, Eric Simpson, 
+ *  component that contains this file: David McKnight, Kushal Munir,
+ *  Michael Berger, David Dykstal, Phil Coulthard, Don Yantzi, Eric Simpson,
  *  Emily Bruner, Mazen Faraj, Adrian Storisteanu, Li Ding, and Kent Hawley.
- * 
+ *
  *  Contributors:
  *  Martin Oberhuber (Wind River) - Adapted template for ssh service.
  *  Anna Dushistova  (MontaVista) - [259414][api] refactor the "SSH Shell" to use the generic Terminal->IHostShell converter
  *  Liping Ke        (Intel Corp.)- Adapted from org.eclipse.rse.subsystems.shells.ssh.SshShellSubSystemConfiguration
- *  Liping Ke        (Intel Corp.)- [246987] Implement TCF Shell/terminal services 
+ *  Liping Ke        (Intel Corp.)- [246987] Implement TCF Shell/terminal services
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.rse.shells;
 
@@ -40,17 +40,17 @@ public class TCFShellSubSystemConfiguration extends
     }
 
     /**
-     * Instantiate and return an instance of OUR subsystem. 
+     * Instantiate and return an instance of OUR subsystem.
      * Do not populate it yet though!
      * @see org.eclipse.rse.core.subsystems.SubSystemConfiguration#createSubSystemInternal(IHost)
      */
-    public ISubSystem createSubSystemInternal(IHost host) 
+    public ISubSystem createSubSystemInternal(IHost host)
     {
             TCFConnectorService connectorService = (TCFConnectorService)getConnectorService(host);
             ISubSystem subsys = new ShellServiceSubSystem(host, connectorService, createShellService(host));
             return subsys;
     }
-    
+
     public IConnectorService getConnectorService(IHost host) {
         return TCFConnectorServiceManager.getInstance().getConnectorService(host, getServiceImplType());
 }
@@ -64,14 +64,14 @@ public class TCFShellSubSystemConfiguration extends
     {
             return ITCFService.class;
     }
-    
-    public IServiceCommandShell createRemoteCommandShell(IRemoteCmdSubSystem cmdSS, IHostShell hostShell) {         
+
+    public IServiceCommandShell createRemoteCommandShell(IRemoteCmdSubSystem cmdSS, IHostShell hostShell) {
         return new TCFServiceCommandShell(cmdSS, hostShell);
     }
 
     public IShellService createShellService(IHost host) {
         TCFConnectorService cserv = (TCFConnectorService)getConnectorService(host);
-        
+
         return (IShellService) (new TCFTerminalService(cserv)).getAdapter(IShellService.class);
     }
 

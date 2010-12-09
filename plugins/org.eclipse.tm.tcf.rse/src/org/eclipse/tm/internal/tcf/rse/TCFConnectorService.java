@@ -66,7 +66,7 @@ public class TCFConnectorService extends StandardConnectorService implements ITC
         }
         /**
          * Called when a stream is disposed.
-         * 
+         *
          * @param stream_type
          *            - source type of the stream.
          * @param stream_id
@@ -76,7 +76,7 @@ public class TCFConnectorService extends StandardConnectorService implements ITC
         }
     };
 
-    
+
     public TCFConnectorService(IHost host, int port) {
         super(Messages.TCFConnectorService_Name,
                 Messages.TCFConnectorService_Description, host,
@@ -356,7 +356,7 @@ public class TCFConnectorService extends StandardConnectorService implements ITC
             new TCFTask<Object>() {
                 public void run() {
                     if (bSubscribed) {
-                        done(this);   
+                        done(this);
                     }
                     else {
                         bSubscribed = true;
@@ -384,5 +384,5 @@ public class TCFConnectorService extends StandardConnectorService implements ITC
                     "Error When Subscribe Terminal streams!", e); //$NON-NLS-1$
         }
 
-    } 
+    }
 }
