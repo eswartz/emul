@@ -809,12 +809,15 @@ static void send_event_context_exception(Context * ctx) {
     if (ctx->exception_description) {
         json_write_string(out, ctx->exception_description);
     }
-    else {
+    else if (ctx->signal > 0) {
         char buf[128];
         const char * desc = signal_description(ctx->signal);
         if (desc == NULL) desc = signal_name(ctx->signal);
         snprintf(buf, sizeof(buf), desc == NULL ? "Signal %d" : "Signal %d: %s", ctx->signal, desc);
         json_write_string(out, buf);
+    }
+    else {
+        json_write_string(out, context_suspend_reason(ctx));
     }
     write_stream(out, 0);
 
