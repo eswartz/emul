@@ -124,6 +124,8 @@ $70         constant    Iexit
 $72         constant    Iexecute
 $73         constant    Idovar
 $74         constant    Isyscall
+$76         constant    IcontextFrom
+$77         constant    ItoContext
 $78         constant    IlitB
 $79         constant    IlitW
 $7a         constant    IbranchB

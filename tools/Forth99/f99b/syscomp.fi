@@ -9,6 +9,15 @@
     and and
 ;
 
+:: inlineable-imm ( opc -- f )
+    opc Isyscall =
+    opc IcontextFrom =
+    opc ItoContext =
+    opc IlitB =
+    opc $36 =
+    opc $3c $40 within
+    or or or or or
+;
 
 1 <export
 
@@ -63,9 +72,10 @@ User STATE
     
     \ 2 byte prims
     addr 2+ c@ $70 = if
-        addr c@  dup  inlineable 
-        addr 1+ c@  dup  inlineable
-        and if
+        addr c@  dup  inlineable-imm  :> ii
+            dup inlineable :> 'i 
+            addr 1+  c@  dup  inlineable  'i and ii or
+        if
             swap c, c,
         else
             2drop

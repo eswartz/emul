@@ -87,15 +87,15 @@ public abstract class VdpCanvas {
 		for (int i = 0; i < 8; i++) {
 			byte val = (byte) i;
 			byte val8 = (byte) (val << 5);
-			if (val > 4)
-				val8 |= 0x1f;
+			//if (val > 4)
+			//	val8 |= 0x1f;
+			val8 |= i * 0x1f / 7; 
 			rgb3to8[i] = val8;
 		}
 		for (int i = 0; i < 4; i++) {
 			byte val = (byte) i;
 			byte val8 = (byte) (val << 6);
-			if (val > 2)
-				val8 |= 0x3f;
+			val8 |= i * 0x3f / 7;
 			rgb2to8[i] = val8;
 		}
 	}

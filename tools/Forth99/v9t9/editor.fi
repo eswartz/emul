@@ -713,18 +713,9 @@ User 'lastcol
     edit.drawblock
     
     begin
-        \ handle key buffer, allowing a lot of changes
-        \ whilst furiously typing
-        key? if
-            begin
-                key?
-            while
-                key  scr @ block  onkey
-                edit.fixblock
-            repeat
-    
-            edit.update
-        then
+        key  scr @ block  onkey
+        edit.fixblock
+        edit.update
     again
 ;
 

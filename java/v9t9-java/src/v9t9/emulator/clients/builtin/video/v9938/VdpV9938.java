@@ -373,16 +373,11 @@ public class VdpV9938 extends VdpTMS9918A {
 			indreg = val & 0x3f;
 			indinc = (val & 0x80) == 0;
 			break;
-		case 18:
+		case 18: {
 			// display adjust register (pg 6) / pan
-			int xoffs = (byte)(val << 4) >> 4;
-			int yoffs = (val & 0xf0) >> 4;
-			vdpCanvas.setOffset(xoffs, yoffs);
-			// V9990 reference says:
-			// (P1 and B1 by 1 pixel unit, P2, B2 and B3 by 2-pixel unit, B4, B5 and B6 by 4-pixel unit) 
-			dirtyAll();
+			updateOffset();
 			break;
-			
+		}
 		case 19:
 			// set to the line # on which to generate an interrupt (?)
 			// R0 bit 4 enables
@@ -393,10 +388,10 @@ public class VdpV9938 extends VdpTMS9918A {
 		case 22:
 			// color burst registers
 			break;
-		case 23:
-			// vertical scroll?
+		case 23: {
+			updateOffset();
 			break;
-			
+		}
 		case 32: // sx lo
 		case 33: // sx hi (2)
 		case 34: // sx lo	   or sy lo
@@ -433,6 +428,19 @@ public class VdpV9938 extends VdpTMS9918A {
 			break;
 		}
 		return redraw;
+	}
+
+	/**
+	 * 
+	 */
+	private void updateOffset() {
+		int xoffs = (byte)(vdpregs[18] << 4) >> 4;
+		int yoffs = ((vdpregs[18] & 0xf0) >> 4) + (vdpregs[23]);
+		vdpCanvas.setOffset(xoffs, yoffs);
+		// V9990 reference says:
+		// (P1 and B1 by 1 pixel unit, P2, B2 and B3 by 2-pixel unit, B4, B5 and B6 by 4-pixel unit) 
+		dirtyAll();
+		
 	}
 
 	protected void loadVdpReg(int num, byte val) {
