@@ -87,6 +87,11 @@
 #  endif
 #endif
 
+#if !defined(ENABLE_Unix_Domain)
+/* Using UNIX:/path/to/socket for local TCP communication */
+#  define ENABLE_Unix_Domain    (TARGET_UNIX || TARGET_SYMBIAN)
+#endif
+
 #if !defined(ENABLE_STREAM_MACROS)
 #define ENABLE_STREAM_MACROS    1
 #endif
