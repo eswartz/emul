@@ -99,6 +99,14 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
         super.dispose();
     }
 
+    public TCFDataCache<IRegisters.RegistersContext> getContext() {
+        return context;
+    }
+
+    public TCFDataCache<byte[]> getValue() {
+        return value;
+    }
+
     void setIndex(int index) {
         this.index = index;
     }

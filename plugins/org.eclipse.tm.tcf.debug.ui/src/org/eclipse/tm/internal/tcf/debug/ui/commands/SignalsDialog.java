@@ -43,7 +43,7 @@ import org.eclipse.tm.internal.tcf.debug.launch.TCFLaunchDelegate;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
-import org.eclipse.tm.internal.tcf.debug.ui.model.TCFChildrenExecContext;
+import org.eclipse.tm.internal.tcf.debug.ui.model.TCFChildren;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModel;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExecContext;
@@ -389,7 +389,7 @@ class SignalsDialog extends Dialog {
                             }
                         }
                     }
-                    private void addNodes(TCFChildrenExecContext children) {
+                    private void addNodes(TCFChildren children) {
                         if (!children.validate()) {
                             pending = children;
                         }

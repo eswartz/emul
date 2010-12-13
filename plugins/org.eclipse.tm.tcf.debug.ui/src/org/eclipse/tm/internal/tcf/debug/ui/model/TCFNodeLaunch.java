@@ -49,7 +49,7 @@ public class TCFNodeLaunch extends TCFNode implements ISymbolOwner {
         });
     }
 
-    private boolean searchSuspendedThreads(TCFChildrenExecContext c, ArrayList<TCFNodeExecContext> nodes, Runnable r) {
+    private boolean searchSuspendedThreads(TCFChildren c, ArrayList<TCFNodeExecContext> nodes, Runnable r) {
         if (!c.validate(r)) return false;
         for (TCFNode n : c.toArray()) {
             if (!searchSuspendedThreads((TCFNodeExecContext)n, nodes, r)) return false;

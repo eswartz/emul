@@ -595,7 +595,11 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         return children_stack;
     }
 
-    public TCFChildrenExecContext getChildren() {
+    public TCFChildren getRegisters() {
+        return children_regs;
+    }
+
+    public TCFChildren getChildren() {
         return children_exec;
     }
 
