@@ -359,6 +359,7 @@ static int send_packet(ip_ifc_info * ifc, struct sockaddr_in * addr) {
 static int udp_send_peer_info(PeerServer * ps, void * arg) {
     struct sockaddr_in * addr = (struct sockaddr_in *)arg;
     const char * host = NULL;
+    const char * prot = NULL;
     struct in_addr peer_addr;
     int n;
 
@@ -366,8 +367,11 @@ static int udp_send_peer_info(PeerServer * ps, void * arg) {
     if ((ps->flags & PS_FLAG_DISCOVERABLE) == 0) return 0;
 
     memset(&peer_addr, 0, sizeof(peer_addr));
-    host = peer_server_getprop(ps, "Host", NULL);
-    if (host != NULL && inet_pton(AF_INET, host, &peer_addr) <= 0) return 0;
+    prot = peer_server_getprop(ps, "TransportName", NULL);
+    if (prot != NULL && (strcmp(prot, "TCP") == 0 || strcmp(prot, "SSL") == 0)) {
+        host = peer_server_getprop(ps, "Host", NULL);
+        if (host == NULL || inet_pton(AF_INET, host, &peer_addr) <= 0) return 0;
+    }
 
     send_size = 8;
 
