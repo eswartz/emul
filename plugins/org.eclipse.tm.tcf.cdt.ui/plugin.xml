@@ -31,6 +31,9 @@
          <adapter
                type="org.eclipse.cdt.debug.core.model.ISteppingModeTarget">
          </adapter>
+         <adapter
+               type="org.eclipse.debug.core.model.ISuspendResume">
+         </adapter>
       </factory>
     </extension>
 
