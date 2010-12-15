@@ -673,6 +673,9 @@ static void send_event_context_changed(Context * ctx) {
 
 static void send_event_context_removed(Context * ctx) {
     OutputStream * out = &broadcast_group->out;
+    ContextExtensionRC * ext = EXT(ctx);
+
+    ext->intercepted = 0;
 
     write_stringz(out, "E");
     write_stringz(out, RUN_CONTROL);
@@ -1137,11 +1140,9 @@ static void event_context_started(Context * ctx, void * client_data) {
 
 static void event_context_exited(Context * ctx, void * client_data) {
     ContextExtensionRC * ext = EXT(ctx);
-    assert(!ctx->stopped);
-    assert(!ext->intercepted);
     ext->safe_single_step = 0;
-    if (ext->pending_safe_event) check_safe_events(ctx);
     send_event_context_removed(ctx);
+    if (ext->pending_safe_event) check_safe_events(ctx);
 }
 
 void ini_run_ctrl_service(Protocol * proto, TCFBroadcastGroup * bcg) {
