@@ -73,9 +73,10 @@ struct ChannelTCP {
     Channel chan;           /* Public channel information - must be first */
     int magic;              /* Magic number */
     int socket;             /* Socket file descriptor */
-    struct sockaddr addr;   /* Socket remote address */
+    struct sockaddr * addr_buf; /* Socket remote address */
+    int addr_len;
     SSL * ssl;
-    int unix_domain;            /* if set, this is a UNIX domain socket, not Internet socket */
+    int unix_domain;        /* if set, this is a UNIX domain socket, not Internet socket */
     int lock_cnt;           /* Stream lock count, when > 0 channel cannot be deleted */
     int read_pending;       /* Read request is pending */
     unsigned char * read_buf;
@@ -104,7 +105,8 @@ typedef struct ServerTCP ServerTCP;
 struct ServerTCP {
     ChannelServer serv;
     int sock;
-    struct sockaddr addr;
+    struct sockaddr * addr_buf;
+    int addr_len;
     PeerServer * ps;
     LINK servlink;
     AsyncReqInfo accreq;
@@ -122,7 +124,6 @@ static void tcp_channel_read_done(void * x);
 static void handle_channel_msg(void * x);
 
 #if ENABLE_SSL
-#define ERR_SSL (STD_ERR_BASE + 200)
 static const char * issuer_name = "TCF";
 static const char * tcf_dir = "/etc/tcf";
 static SSL_CTX * ssl_ctx = NULL;
@@ -143,6 +144,11 @@ static void ini_ssl(void) {
     inited = 1;
 }
 
+static int set_ssl_errno(void) {
+    const char * msg = ERR_error_string(ERR_get_error(), NULL);
+    return set_errno(ERR_OTHER, msg);
+}
+
 static int certificate_verify_callback(int preverify_ok, X509_STORE_CTX * ctx) {
     char fnm[FILE_PATH_SIZE];
     DIR * dir = NULL;
@@ -161,13 +167,13 @@ static int certificate_verify_callback(int preverify_ok, X509_STORE_CTX * ctx) {
         if (l < 5 || strcmp(ent->d_name + l -5 , ".cert") != 0) continue;
         snprintf(fnm, sizeof(fnm), "%s/ssl/%s", tcf_dir, ent->d_name);
         if (!err && (fp = fopen(fnm, "r")) == NULL) err = errno;
-        if (!err && (cert = PEM_read_X509(fp, NULL, NULL, NULL)) == NULL) err = ERR_SSL;
+        if (!err && (cert = PEM_read_X509(fp, NULL, NULL, NULL)) == NULL) err = set_ssl_errno();
         if (!err && fclose(fp) != 0) err = errno;
         if (!err && X509_cmp(X509_STORE_CTX_get_current_cert(ctx), cert) == 0) found = 1;
     }
     if (dir != NULL && closedir(dir) < 0 && !err) err = errno;
-    if (err) trace(LOG_ALWAYS, "Cannot read certificate: %s",
-        err == ERR_SSL ? ERR_error_string(ERR_get_error(), NULL) : errno_to_str(err));
+    if (err) trace(LOG_ALWAYS, "Cannot read certificate %s: %s", fnm, errno_to_str(err));
+    else if (!found) trace(LOG_ALWAYS, "Authentication failure: invalid certificate");
     return err == 0 && found;
 }
 #endif /* ENABLE_SSL */
@@ -190,6 +196,7 @@ static void delete_channel(ChannelTCP * c) {
 #endif /* ENABLE_Splice */
     loc_free(c->ibuf.buf);
     loc_free(c->chan.peer_name);
+    loc_free(c->addr_buf);
     loc_free(c);
 }
 
@@ -587,8 +594,10 @@ static void tcp_channel_read_done(void * x) {
                     tcp_post_read(&c->ibuf, c->read_buf, c->read_buf_size);
                     return;
                 }
-                trace(LOG_ALWAYS, "Can't SSL_read() on channel %#lx: %s", c,
-                    ERR_error_string(ERR_get_error(), NULL));
+                if (c->chan.state != ChannelStateDisconnected) {
+                    trace(LOG_ALWAYS, "Can't SSL_read() on channel %#lx: %s", c,
+                        ERR_error_string(ERR_get_error(), NULL));
+                }
                 len = 0;
             }
         }
@@ -675,16 +684,15 @@ static ChannelTCP * create_channel(int sock, int en_ssl, int server, int unix_do
             FILE * fp = NULL;
             snprintf(fnm, sizeof(fnm), "%s/ssl/local.priv", tcf_dir);
             if (!err && (fp = fopen(fnm, "r")) == NULL) err = errno;
-            if (!err && (rsa_key = PEM_read_RSAPrivateKey(fp, NULL, NULL, NULL)) == NULL) err = ERR_SSL;
+            if (!err && (rsa_key = PEM_read_RSAPrivateKey(fp, NULL, NULL, NULL)) == NULL) err = set_ssl_errno();
             if (!err && fclose(fp) != 0) err = errno;
             snprintf(fnm, sizeof(fnm), "%s/ssl/local.cert", tcf_dir);
             if (!err && (fp = fopen(fnm, "r")) == NULL) err = errno;
-            if (!err && (ssl_cert = PEM_read_X509(fp, NULL, NULL, NULL)) == NULL) err = ERR_SSL;
+            if (!err && (ssl_cert = PEM_read_X509(fp, NULL, NULL, NULL)) == NULL) err = set_ssl_errno();
             if (!err && fclose(fp) != 0) err = errno;
             if (err) {
-                trace(LOG_ALWAYS, "Cannot read server certificate: %s",
-                    err == ERR_SSL ? ERR_error_string(ERR_get_error(), NULL) : errno_to_str(err));
-                errno = ERR_SSL ? EINVAL : err;
+                trace(LOG_ALWAYS, "Cannot read SSL certificate %s: %s", fnm, errno_to_str(err));
+                set_errno(err, "Cannot read SSL certificate");
                 return NULL;
             }
         }
@@ -755,69 +763,82 @@ static ChannelTCP * create_channel(int sock, int en_ssl, int server, int unix_do
 
 static void refresh_peer_server(int sock, PeerServer * ps) {
     int i;
-    PeerServer * ps2;
-    struct sockaddr_in sin;
-#if defined(_WRS_KERNEL)
-    int sinlen;
-#else
-    socklen_t sinlen;
-#endif
-    char str_port[32];
-    char str_host[64];
-    char str_id[64];
-    int ifcind;
-    struct in_addr src_addr;
-    ip_ifc_info ifclist[MAX_IFC];
-
-    sinlen = sizeof sin;
-    if (getsockname(sock, (struct sockaddr *)&sin, &sinlen) != 0) {
-        trace(LOG_ALWAYS, "refresh_peer_server: getsockname error: %s", errno_to_str(errno));
-        return;
-    }
-    ifcind = build_ifclist(sock, MAX_IFC, ifclist);
-    while (ifcind-- > 0) {
-        const char * transport;
-        if (sin.sin_addr.s_addr != INADDR_ANY &&
-            (ifclist[ifcind].addr & ifclist[ifcind].mask) !=
-            (sin.sin_addr.s_addr & ifclist[ifcind].mask)) {
-            continue;
-        }
-        src_addr.s_addr = ifclist[ifcind].addr;
-        ps2 = peer_server_alloc();
+    const char * transport = peer_server_getprop(ps, "TransportName", NULL);
+    assert(transport != NULL);
+    if (strcmp(transport, "UNIX") == 0) {
+        char str_id[64];
+        PeerServer * ps2 = peer_server_alloc();
         ps2->flags = ps->flags | PS_FLAG_LOCAL | PS_FLAG_DISCOVERABLE;
         for (i = 0; i < ps->ind; i++) {
             peer_server_addprop(ps2, loc_strdup(ps->list[i].name), loc_strdup(ps->list[i].value));
         }
-        transport = peer_server_getprop(ps2, "TransportName", NULL);
-        assert(transport != NULL);
-        snprintf(str_port, sizeof(str_port), "%d", ntohs(sin.sin_port));
-        inet_ntop(AF_INET, &src_addr, str_host, sizeof(str_host));
-        snprintf(str_id, sizeof(str_id), "%s:%s:%s", transport, str_host, str_port);
+        snprintf(str_id, sizeof(str_id), "%s:%s", transport, peer_server_getprop(ps, "Host", ""));
+        for (i = 0; str_id[i]; i++) {
+            /* Character '/' is prohibited in a peer ID string */
+            if (str_id[i] == '/') str_id[i] = '|';
+        }
         peer_server_addprop(ps2, loc_strdup("ID"), loc_strdup(str_id));
-        peer_server_addprop(ps2, loc_strdup("Host"), loc_strdup(str_host));
-        peer_server_addprop(ps2, loc_strdup("Port"), loc_strdup(str_port));
         peer_server_add(ps2, PEER_DATA_RETENTION_PERIOD * 2);
+    }
+    else {
+        struct sockaddr_in sin;
+#if defined(_WRS_KERNEL)
+        int sinlen;
+#else
+        socklen_t sinlen;
+#endif
+        int ifcind;
+        struct in_addr src_addr;
+        ip_ifc_info ifclist[MAX_IFC];
+        sinlen = sizeof sin;
+        if (getsockname(sock, (struct sockaddr *)&sin, &sinlen) != 0) {
+            trace(LOG_ALWAYS, "refresh_peer_server: getsockname error: %s", errno_to_str(errno));
+            return;
+        }
+        ifcind = build_ifclist(sock, MAX_IFC, ifclist);
+        while (ifcind-- > 0) {
+            char str_port[32];
+            char str_host[64];
+            char str_id[64];
+            PeerServer * ps2;
+            if (sin.sin_addr.s_addr != INADDR_ANY &&
+                (ifclist[ifcind].addr & ifclist[ifcind].mask) !=
+                (sin.sin_addr.s_addr & ifclist[ifcind].mask)) {
+                continue;
+            }
+            src_addr.s_addr = ifclist[ifcind].addr;
+            ps2 = peer_server_alloc();
+            ps2->flags = ps->flags | PS_FLAG_LOCAL | PS_FLAG_DISCOVERABLE;
+            for (i = 0; i < ps->ind; i++) {
+                peer_server_addprop(ps2, loc_strdup(ps->list[i].name), loc_strdup(ps->list[i].value));
+            }
+            snprintf(str_port, sizeof(str_port), "%d", ntohs(sin.sin_port));
+            inet_ntop(AF_INET, &src_addr, str_host, sizeof(str_host));
+            snprintf(str_id, sizeof(str_id), "%s:%s:%s", transport, str_host, str_port);
+            peer_server_addprop(ps2, loc_strdup("ID"), loc_strdup(str_id));
+            peer_server_addprop(ps2, loc_strdup("Host"), loc_strdup(str_host));
+            peer_server_addprop(ps2, loc_strdup("Port"), loc_strdup(str_port));
+            peer_server_add(ps2, PEER_DATA_RETENTION_PERIOD * 2);
+        }
     }
 }
 
-static void refresh_all_peer_server(void * x) {
-    LINK * l;
-
-    if (list_is_empty(&server_list)) return;
-    l = server_list.next;
+static void refresh_all_peer_servers(void * x) {
+    LINK * l = server_list.next;
     while (l != &server_list) {
         ServerTCP * si = servlink2tcp(l);
         refresh_peer_server(si->sock, si->ps);
         l = l->next;
     }
-    post_event_with_delay(refresh_all_peer_server, NULL, PEER_DATA_REFRESH_PERIOD * 1000000);
+    post_event_with_delay(refresh_all_peer_servers, NULL, PEER_DATA_REFRESH_PERIOD * 1000000);
 }
 
-static void set_peer_addr(ChannelTCP * c, struct sockaddr * addr) {
+static void set_peer_addr(ChannelTCP * c, struct sockaddr * addr, int addr_len) {
     /* Create a human readable channel name that uniquely identifies remote peer */
     char name[128];
 #if ENABLE_Unix_Domain
     if (c->unix_domain) {
+        assert(addr->sa_family == AF_UNIX);
         snprintf(name, sizeof(name), "UNIX:%s", ((struct sockaddr_un *)addr)->sun_path);
     }
     else
@@ -825,11 +846,14 @@ static void set_peer_addr(ChannelTCP * c, struct sockaddr * addr) {
     {
         char * fmt = (char *)(c->ssl != NULL ? "SSL:%s:%d" : "TCP:%s:%d");
         char nbuf[128];
+        assert(addr->sa_family == AF_INET);
         snprintf(name, sizeof(name), fmt,
                 inet_ntop(addr->sa_family, &((struct sockaddr_in *)addr)->sin_addr, nbuf, sizeof(nbuf)),
                 ntohs(((struct sockaddr_in *)addr)->sin_port));
     }
-    c->addr = *addr;
+    c->addr_len = addr_len;
+    c->addr_buf = (struct sockaddr *)loc_alloc(addr_len);
+    memcpy(c->addr_buf, addr, addr_len);
     c->chan.peer_name = loc_strdup(name);
 }
 
@@ -837,8 +861,6 @@ static void tcp_server_accept_done(void * x) {
     AsyncReqInfo * req = (AsyncReqInfo *)x;
     ServerTCP * si = (ServerTCP *)req->client_data;
     ChannelTCP * c = NULL;
-    int sock;
-    struct sockaddr peer_addr;
 
     if (si->sock < 0) {
         /* Server closed. */
@@ -847,17 +869,18 @@ static void tcp_server_accept_done(void * x) {
     }
     if (req->error) {
         trace(LOG_ALWAYS, "socket accept failed: %d %s", req->error, errno_to_str(req->error));
+        si->accreq.u.acc.addrlen = si->addr_len;
         async_req_post(req);
         return;
     }
-    sock = req->u.acc.rval;
-    peer_addr = si->addr;
+    c = create_channel(req->u.acc.rval, strcmp(peer_server_getprop(si->ps, "TransportName", ""), "SSL") == 0, 1,
+        si->addr_buf->sa_family == AF_UNIX);
+    if (c != NULL) {
+        set_peer_addr(c, si->addr_buf, si->addr_len);
+        si->serv.new_conn(&si->serv, &c->chan);
+    }
+    si->accreq.u.acc.addrlen = si->addr_len;
     async_req_post(req);
-    c = create_channel(sock, strcmp(peer_server_getprop(si->ps, "TransportName", ""), "SSL") == 0, 1,
-                peer_addr.sa_family == AF_UNIX);
-    if (c == NULL) return;
-    set_peer_addr(c, &peer_addr);
-    si->serv.new_conn(&si->serv, &c->chan);
 }
 
 static void server_close(ChannelServer * serv) {
@@ -869,6 +892,7 @@ static void server_close(ChannelServer * serv) {
     peer_server_free(s->ps);
     closesocket(s->sock);
     s->sock = -1;
+    /* TODO: free server struct */
 }
 
 static void set_socket_buffer_sizes(int sock) {
@@ -880,15 +904,15 @@ static void set_socket_buffer_sizes(int sock) {
 }
 
 static ChannelServer * channel_server_create(PeerServer * ps, int sock) {
-    ServerTCP * si;
-
-    si = (ServerTCP *)loc_alloc_zero(sizeof *si);
+    ServerTCP * si = (ServerTCP *)loc_alloc_zero(sizeof *si);
+    si->addr_len = 0x1000;
+    si->addr_buf = (struct sockaddr *)loc_alloc(si->addr_len);
     si->serv.close = server_close;
     si->sock = sock;
     si->ps = ps;
-    if (server_list.next == NULL) list_init(&server_list);
-    if (list_is_empty(&server_list)) {
-        post_event_with_delay(refresh_all_peer_server, NULL, PEER_DATA_REFRESH_PERIOD * 1000000);
+    if (server_list.next == NULL) {
+        list_init(&server_list);
+        post_event_with_delay(refresh_all_peer_servers, NULL, PEER_DATA_REFRESH_PERIOD * 1000000);
     }
     list_add_last(&si->servlink, &server_list);
     refresh_peer_server(sock, ps);
@@ -897,8 +921,8 @@ static ChannelServer * channel_server_create(PeerServer * ps, int sock) {
     si->accreq.client_data = si;
     si->accreq.type = AsyncReqAccept;
     si->accreq.u.acc.sock = sock;
-    si->accreq.u.acc.addr = &si->addr;
-    si->accreq.u.acc.addrlen = sizeof(si->addr);
+    si->accreq.u.acc.addr = si->addr_buf;
+    si->accreq.u.acc.addrlen = si->addr_len;
     async_req_post(&si->accreq);
     return &si->serv;
 }
@@ -907,9 +931,7 @@ static ChannelServer * channel_server_create(PeerServer * ps, int sock) {
 
 static int setup_unix_sockaddr(PeerServer * ps, struct sockaddr_un * localhost) {
     const char * host = peer_server_getprop(ps, "Host", NULL);
-    if (host == NULL) {
-        return ERR_UNKNOWN_PEER;
-    }
+    if (host == NULL) return ERR_UNKNOWN_PEER;
 
     memset(localhost, 0, sizeof(struct sockaddr_un));
 
@@ -936,45 +958,35 @@ static int setup_unix_sockaddr(PeerServer * ps, struct sockaddr_un * localhost) 
 }
 
 ChannelServer * channel_unix_server(PeerServer * ps) {
-    int sock;
-    int error;
-    const char* reason = 0;
+    int sock = -1;
+    int error = 0;
+    const char * reason = NULL;
     struct sockaddr_un localhost;
-
-    error = setup_unix_sockaddr(ps, &localhost);
-    if (error) {
-        errno = error;
-        return NULL;
-    }
+    struct stat st;
 
     assert(is_dispatch_thread());
 
-    trace(LOG_ALWAYS, "Configuring Unix domain socket on %s for local connection", localhost.sun_path);
-
-    sock = socket(PF_UNIX, SOCK_STREAM, 0);
-    if (sock < 0) {
-        error = errno;
-        trace(LOG_ALWAYS, "Socket create error on %s: %s", reason, localhost.sun_path, errno_to_str(error));
-        return NULL;
+    if ((error = setup_unix_sockaddr(ps, &localhost)) != 0) {
+        reason = "address setup";
     }
-
-    set_socket_buffer_sizes(sock);
-
-    if (bind(sock, (struct sockaddr *)&localhost, SUN_LEN(&localhost))) {
+    if (!error && stat(localhost.sun_path, &st) == 0 && S_ISSOCK(st.st_mode) && remove(localhost.sun_path) < 0) {
+        error = errno;
+        reason = "remove";
+    }
+    if (!error && (sock = socket(PF_UNIX, SOCK_STREAM, 0)) < 0) {
+        error = errno;
+        reason = "create";
+    }
+    if (!error && bind(sock, (struct sockaddr *)&localhost, SUN_LEN(&localhost))) {
         error = errno;
         reason = "bind";
-        closesocket(sock);
-        sock = -1;
     }
-
     if (!error && listen(sock, 16)) {
         error = errno;
         reason = "listen";
-        closesocket(sock);
-        sock = -1;
     }
-
-    if (sock < 0) {
+    if (error) {
+        if (sock >= 0) closesocket(sock);
         trace(LOG_ALWAYS, "Socket %s error on %s: %s", reason, localhost.sun_path, errno_to_str(error));
         errno = error;
         return NULL;
@@ -1039,7 +1051,6 @@ ChannelServer * channel_tcp_server(PeerServer * ps) {
             }
         }
 #endif
-        set_socket_buffer_sizes(sock);
         if (bind(sock, res->ai_addr, res->ai_addrlen)) {
             error = errno;
             if (def_port && res->ai_addr->sa_family == AF_INET) {
@@ -1088,8 +1099,8 @@ typedef struct ChannelConnectInfo {
     ChannelConnectCallBack callback;
     void * callback_args;
     int ssl;
-    struct sockaddr peer_addr;
-    size_t peer_addr_len;
+    struct sockaddr * addr_buf;
+    int addr_len;
     int sock;
     AsyncReqInfo req;
 } ChannelConnectInfo;
@@ -1101,16 +1112,17 @@ static void channel_tcp_connect_done(void * args) {
         closesocket(info->sock);
     }
     else {
-        ChannelTCP * c = create_channel(info->sock, info->ssl, 0, info->peer_addr.sa_family == AF_UNIX);
+        ChannelTCP * c = create_channel(info->sock, info->ssl, 0, info->addr_buf->sa_family == AF_UNIX);
         if (c == NULL) {
             info->callback(info->callback_args, errno, NULL);
             closesocket(info->sock);
         }
         else {
-            set_peer_addr(c, &info->peer_addr);
+            set_peer_addr(c, info->addr_buf, info->addr_len);
             info->callback(info->callback_args, 0, &c->chan);
         }
     }
+    loc_free(info->addr_buf);
     loc_free(info);
 }
 
@@ -1136,10 +1148,11 @@ void channel_tcp_connect(PeerServer * ps, ChannelConnectCallBack callback, void 
     if (error) error = set_gai_errno(error);
     if (!error) {
         info = (ChannelConnectInfo *)loc_alloc_zero(sizeof(ChannelConnectInfo));
+        info->sock = -1;
         for (res = reslist; res != NULL; res = res->ai_next) {
-            assert(sizeof(info->peer_addr) >= res->ai_addrlen);
-            memcpy(&info->peer_addr, res->ai_addr, res->ai_addrlen);
-            info->peer_addr_len = res->ai_addrlen;
+            info->addr_len = res->ai_addrlen;
+            info->addr_buf = (struct sockaddr *)loc_alloc(res->ai_addrlen);
+            memcpy(info->addr_buf, res->ai_addr, res->ai_addrlen);
             info->sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
             if (info->sock < 0) {
                 error = errno;
@@ -1152,10 +1165,11 @@ void channel_tcp_connect(PeerServer * ps, ChannelConnectCallBack callback, void 
         }
         loc_freeaddrinfo(reslist);
     }
-    if (!error && info->peer_addr_len == 0) error = ENOENT;
+    if (!error && info->addr_buf == NULL) error = ENOENT;
     if (error) {
         if (info != NULL) {
             if (info->sock >= 0) closesocket(info->sock);
+            loc_free(info->addr_buf);
             loc_free(info);
         }
         callback(callback_args, error, NULL);
@@ -1168,8 +1182,8 @@ void channel_tcp_connect(PeerServer * ps, ChannelConnectCallBack callback, void 
         info->req.done = channel_tcp_connect_done;
         info->req.type = AsyncReqConnect;
         info->req.u.con.sock = info->sock;
-        info->req.u.con.addr = &info->peer_addr;
-        info->req.u.con.addrlen = info->peer_addr_len;
+        info->req.u.con.addr = info->addr_buf;
+        info->req.u.con.addrlen = info->addr_len;
         async_req_post(&info->req);
     }
 }
@@ -1177,15 +1191,19 @@ void channel_tcp_connect(PeerServer * ps, ChannelConnectCallBack callback, void 
 #if ENABLE_Unix_Domain
 void channel_unix_connect(PeerServer * ps, ChannelConnectCallBack callback, void * callback_args) {
     int error = 0;
-    ChannelConnectInfo * info = NULL;
+    ChannelConnectInfo * info = (ChannelConnectInfo *)loc_alloc_zero(sizeof(ChannelConnectInfo));
 
-    info = (ChannelConnectInfo *)loc_alloc_zero(sizeof(ChannelConnectInfo));
-    error = setup_unix_sockaddr(ps, (struct sockaddr_un *)&info->peer_addr);
+    info->sock = -1;
+    info->addr_len = sizeof(struct sockaddr_un);
+    info->addr_buf = (struct sockaddr *)loc_alloc(sizeof(struct sockaddr_un));
+    error = setup_unix_sockaddr(ps, (struct sockaddr_un *)info->addr_buf);
+    if (!error && (info->sock = socket(PF_UNIX, SOCK_STREAM, 0)) < 0) error = errno;
     if (!error) set_socket_buffer_sizes(info->sock);
 
     if (error) {
         if (info != NULL) {
             if (info->sock >= 0) closesocket(info->sock);
+            loc_free(info->addr_buf);
             loc_free(info);
         }
         callback(callback_args, error, NULL);
@@ -1198,8 +1216,8 @@ void channel_unix_connect(PeerServer * ps, ChannelConnectCallBack callback, void
         info->req.done = channel_tcp_connect_done;
         info->req.type = AsyncReqConnect;
         info->req.u.con.sock = info->sock;
-        info->req.u.con.addr = &info->peer_addr;
-        info->req.u.con.addrlen = info->peer_addr_len;
+        info->req.u.con.addr = info->addr_buf;
+        info->req.u.con.addrlen = info->addr_len;
         async_req_post(&info->req);
     }
 }
@@ -1224,8 +1242,8 @@ void generate_ssl_certificate(void) {
     FILE * fp = NULL;
 
     ini_ssl();
-    if (!err && (rsa = RSA_generate_key(2048, 3, NULL, (void *)"RSA")) == NULL) err = ERR_SSL;
-    if (!err && !RSA_check_key(rsa)) err = ERR_SSL;
+    if (!err && (rsa = RSA_generate_key(2048, 3, NULL, (void *)"RSA")) == NULL) err = set_ssl_errno();
+    if (!err && !RSA_check_key(rsa)) err = set_ssl_errno();
     if (!err && gethostname(subject_name, sizeof(subject_name)) != 0) err = errno;
     if (!err) {
         rsa_key = EVP_PKEY_new();
@@ -1245,25 +1263,24 @@ void generate_ssl_certificate(void) {
         X509_NAME_add_entry_by_txt(name, "commonName", MBSTRING_ASC,
             (unsigned char *)issuer_name, strlen(issuer_name), -1, 0);
     }
-    if (!err && !X509_set_pubkey(cert, rsa_key)) err = ERR_SSL;
+    if (!err && !X509_set_pubkey(cert, rsa_key)) err = set_ssl_errno();
     if (!err) X509_sign(cert, rsa_key, EVP_md5());
-    if (!err && !X509_verify(cert, rsa_key)) err = ERR_SSL;
+    if (!err && !X509_verify(cert, rsa_key)) err = set_ssl_errno();
     if (stat(tcf_dir, &st) != 0 && mkdir(tcf_dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0) err = errno;
     snprintf(fnm, sizeof(fnm), "%s/ssl", tcf_dir);
     if (stat(fnm, &st) != 0 && mkdir(fnm, S_IRWXU) != 0) err = errno;
     snprintf(fnm, sizeof(fnm), "%s/ssl/local.priv", tcf_dir);
     if (!err && (fp = fopen(fnm, "w")) == NULL) err = errno;
-    if (!err && !PEM_write_PKCS8PrivateKey(fp, rsa_key, NULL, NULL, 0, NULL, NULL)) err = ERR_SSL;
+    if (!err && !PEM_write_PKCS8PrivateKey(fp, rsa_key, NULL, NULL, 0, NULL, NULL)) err = set_ssl_errno();
     if (!err && fclose(fp) != 0) err = errno;
     if (!err && chmod(fnm, S_IRWXU) != 0) err = errno;
     snprintf(fnm, sizeof(fnm), "%s/ssl/local.cert", tcf_dir);
     if (!err && (fp = fopen(fnm, "w")) == NULL) err = errno;
-    if (!err && !PEM_write_X509(fp, cert)) err = ERR_SSL;
+    if (!err && !PEM_write_X509(fp, cert)) err = set_ssl_errno();
     if (!err && fclose(fp) != 0) err = errno;
     if (!err && chmod(fnm, S_IRWXU) != 0) err = errno;
     if (err) {
-        fprintf(stderr, "Cannot create server certificate: %s\n",
-            err == ERR_SSL ? ERR_error_string(ERR_get_error(), NULL) : errno_to_str(err));
+        fprintf(stderr, "Cannot create SSL certificate: %s\n", errno_to_str(err));
     }
     if (cert != NULL) X509_free(cert);
     if (rsa != NULL) RSA_free(rsa);
