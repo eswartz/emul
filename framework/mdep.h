@@ -334,7 +334,11 @@ typedef unsigned long uintptr_t;
 typedef unsigned long useconds_t;
 
 #define FILE_PATH_SIZE PATH_MAX
-#define MEM_USAGE_FACTOR 2
+
+#ifndef MEM_USAGE_FACTOR
+#  define MEM_USAGE_FACTOR 2
+#endif
+
 #define O_BINARY 0
 #define O_LARGEFILE 0
 #define lstat stat
@@ -392,7 +396,10 @@ extern const char * loc_gai_strerror(int ecode);
 
 #define MAX_PATH _POSIX_PATH_MAX
 #define FILE_PATH_SIZE _POSIX_PATH_MAX
-#define MEM_USAGE_FACTOR 2
+
+#ifndef MEM_USAGE_FACTOR
+#  define MEM_USAGE_FACTOR 2
+#endif
 
 #define closesocket close
 #define SIGKILL 1
@@ -486,7 +493,7 @@ extern int tkill(pid_t pid, int signal);
 #endif
 
 #ifndef MEM_USAGE_FACTOR
-#define MEM_USAGE_FACTOR 32
+#  define MEM_USAGE_FACTOR 32
 #endif
 
 #if !defined(__FreeBSD__) && !defined(__NetBSD__) && !defined(__APPLE__) && !defined(__VXWORKS__)
