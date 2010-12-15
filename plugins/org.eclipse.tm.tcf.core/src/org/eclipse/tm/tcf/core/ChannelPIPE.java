@@ -83,6 +83,18 @@ public class ChannelPIPE extends StreamChannel {
     }
 
     @Override
+    protected int get(byte[] buf) throws IOException {
+        try {
+            if (closed) return -1;
+            return inp.read(buf);
+        }
+        catch (IOException x) {
+            if (closed) return -1;
+            throw x;
+        }
+    }
+
+    @Override
     protected void put(int b) throws IOException {
         assert b >= 0 && b <= 0xff;
         if (closed) return;
