@@ -89,7 +89,11 @@
 
 #if !defined(ENABLE_Unix_Domain)
 /* Using UNIX:/path/to/socket for local TCP communication */
-#  define ENABLE_Unix_Domain    (TARGET_UNIX || TARGET_SYMBIAN)
+#  if defined(__linux__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__APPLE__)
+#    define ENABLE_Unix_Domain    1
+#  else
+#    define ENABLE_Unix_Domain    0
+#  endif
 #endif
 
 #if !defined(ENABLE_STREAM_MACROS)
