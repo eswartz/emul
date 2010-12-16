@@ -38,10 +38,13 @@ public class TCFNodeStackFrame extends TCFNode {
     private final TCFChildrenRegisters children_regs;
     private final TCFChildrenLocalVariables children_vars;
     private final TCFChildrenExpressions children_exps;
+    private final TCFChildrenHoverExpressions children_hover_exps;
     private final TCFDataCache<IStackTrace.StackTraceContext> stack_trace_context;
     private final TCFDataCache<TCFSourceRef> line_info;
     private final TCFDataCache<TCFFunctionRef> func_info;
     private final TCFDataCache<BigInteger> address;
+
+    private String hover_expression;
 
     TCFNodeStackFrame(final TCFNodeExecContext parent, final String id, final boolean emulated) {
         super(parent, id);
@@ -49,6 +52,7 @@ public class TCFNodeStackFrame extends TCFNode {
         children_regs = new TCFChildrenRegisters(this);
         children_vars = new TCFChildrenLocalVariables(this);
         children_exps = new TCFChildrenExpressions(this);
+        children_hover_exps = new TCFChildrenHoverExpressions(this);
         stack_trace_context = new TCFDataCache<IStackTrace.StackTraceContext>(channel) {
             @Override
             protected boolean startDataRetrieval() {
@@ -182,6 +186,7 @@ public class TCFNodeStackFrame extends TCFNode {
         children_regs.dispose();
         children_vars.dispose();
         children_exps.dispose();
+        children_hover_exps.dispose();
         super.dispose();
     }
 
@@ -190,6 +195,19 @@ public class TCFNodeStackFrame extends TCFNode {
         children_regs.dispose(id);
         children_vars.dispose(id);
         children_exps.dispose(id);
+        children_hover_exps.dispose(id);
+    }
+
+    TCFChildren getHoverExpressionCache(String expression) {
+        if (expression != hover_expression && (expression == null || !expression.equals(hover_expression))) {
+            hover_expression = expression;
+            children_hover_exps.cancel();
+        }
+        return children_hover_exps;
+    }
+
+    String getHoverExpression() {
+        return hover_expression;
     }
 
     public TCFDataCache<TCFSourceRef> getLineInfo() {
@@ -221,6 +239,7 @@ public class TCFNodeStackFrame extends TCFNode {
         if (IDebugUIConstants.ID_REGISTER_VIEW.equals(id)) return children_regs;
         if (IDebugUIConstants.ID_VARIABLE_VIEW.equals(id)) return children_vars;
         if (IDebugUIConstants.ID_EXPRESSION_VIEW.equals(id)) return children_exps;
+        if (TCFModel.ID_EXPRESSION_HOVER.equals(id)) return children_hover_exps;
         return null;
     }
 
@@ -404,7 +423,7 @@ public class TCFNodeStackFrame extends TCFNode {
     }
 
     void onExpressionAddedOrRemoved() {
-        children_exps.reset();
+        children_exps.cancel();
     }
 
     void onSourceMappingChange() {
@@ -421,6 +440,7 @@ public class TCFNodeStackFrame extends TCFNode {
         children_regs.reset(); // Unlike thread registers, stack frame registers must be retrieved on every suspend
         children_vars.onSuspended();
         children_exps.onSuspended();
+        children_hover_exps.onSuspended();
         postAllChangedDelta();
     }
 

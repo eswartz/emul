@@ -133,6 +133,9 @@ import org.eclipse.ui.texteditor.ITextEditor;
 public class TCFModel implements IElementContentProvider, IElementLabelProvider, IViewerInputProvider,
         IModelProxyFactory, IColumnPresentationFactory, ISourceDisplay, ISuspendTrigger {
 
+    /** The id of the expression hover presentation context */
+    public static final String ID_EXPRESSION_HOVER = Activator.PLUGIN_ID + ".expression_hover";
+
     /**
      * A dummy editor input to open the disassembly view as editor.
      */
@@ -826,6 +829,29 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         return launch_node;
     }
 
+    /**
+     * Set current hover expression for a given model node,
+     * and return a cache of expression nodes that represents given expression.
+     * The model allows only one current hover expression per node at any time,
+     * however it will cache results of recent expression evaluations,
+     * and it will re-use cached results when current hover expression changes.
+     * The cache getData() method should not return more then 1 node,
+     * and it can return an empty collection.
+     * @param parent - a thread or stack frame where the expression should be evaluated.
+     * @param expression - the expression text, can be null.
+     * @return a cache of expression nodes.
+     */
+    public TCFChildren getHoverExpressionCache(TCFNode parent, String expression) {
+        assert Protocol.isDispatchThread();
+        if (parent instanceof TCFNodeStackFrame) {
+            return ((TCFNodeStackFrame)parent).getHoverExpressionCache(expression);
+        }
+        if (parent instanceof TCFNodeExecContext) {
+            return ((TCFNodeExecContext)parent).getHoverExpressionCache(expression);
+        }
+        return null;
+    }
+
     public TCFNode getNode(String id) {
         if (id == null) return null;
         if (id.equals("")) return launch_node;
@@ -975,6 +1001,9 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             return TCFColumnPresentationExpression.PRESENTATION_ID;
         }
         if (IDebugUIConstants.ID_EXPRESSION_VIEW.equals(context.getId())) {
+            return TCFColumnPresentationExpression.PRESENTATION_ID;
+        }
+        if (ID_EXPRESSION_HOVER.equals(context.getId())) {
             return TCFColumnPresentationExpression.PRESENTATION_ID;
         }
         return null;

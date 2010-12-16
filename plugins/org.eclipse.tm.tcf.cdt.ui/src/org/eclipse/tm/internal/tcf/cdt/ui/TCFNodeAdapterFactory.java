@@ -11,8 +11,10 @@
 package org.eclipse.tm.internal.tcf.cdt.ui;
 
 import org.eclipse.cdt.debug.core.model.ISteppingModeTarget;
+import org.eclipse.cdt.ui.text.c.hover.ICEditorTextHover;
 import org.eclipse.core.runtime.IAdapterFactory;
 import org.eclipse.debug.core.model.ISuspendResume;
+import org.eclipse.tm.internal.tcf.cdt.ui.hover.TCFDebugTextHover;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModel;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExecContext;
@@ -24,14 +26,15 @@ public class TCFNodeAdapterFactory implements IAdapterFactory {
 
     private static final Class<?>[] CLASSES = { 
         ISteppingModeTarget.class,
-        ISuspendResume.class
+        ISuspendResume.class,
+        ICEditorTextHover.class
     };
 
     public Object getAdapter(Object adaptableObject, Class adapterType) {
         if (adaptableObject instanceof TCFNode) {
             final TCFNode node = (TCFNode) adaptableObject;
+            TCFModel model = node.getModel();
             if (ISteppingModeTarget.class == adapterType) {
-                TCFModel model = node.getModel();
                 ISteppingModeTarget target = (ISteppingModeTarget) model.getAdapter(adapterType, node);
                 if (target == null) {
                     model.setAdapter(adapterType, target = new TCFSteppingModeTarget(model));
@@ -55,6 +58,12 @@ public class TCFNodeAdapterFactory implements IAdapterFactory {
                 if (execCtx != null) {
                     return new TCFSuspendResumeAdapter(execCtx);
                 }
+            } else if (ICEditorTextHover.class == adapterType) {
+                ICEditorTextHover hover = (ICEditorTextHover) model.getAdapter(adapterType, node);
+                if (hover == null) {
+                    model.setAdapter(adapterType, hover = new TCFDebugTextHover());
+                }
+                return hover;
             }
         }
         return null;

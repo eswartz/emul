@@ -48,6 +48,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     private final TCFChildrenStackTrace children_stack;
     private final TCFChildrenRegisters children_regs;
     private final TCFChildrenExpressions children_exps;
+    private final TCFChildrenHoverExpressions children_hover_exps;
 
     private final TCFDataCache<IMemory.MemoryContext> mem_context;
     private final TCFDataCache<IRunControl.RunControlContext> run_context;
@@ -69,6 +70,8 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     private boolean resumed_by_action;
     private TCFNode[] last_stack_trace;
     private String last_label;
+
+    private String hover_expression;
 
     private static int seq_cnt;
 
@@ -167,6 +170,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         };
         children_regs = new TCFChildrenRegisters(this);
         children_exps = new TCFChildrenExpressions(this);
+        children_hover_exps = new TCFChildrenHoverExpressions(this);
         mem_context = new TCFDataCache<IMemory.MemoryContext>(channel) {
             @Override
             protected boolean startDataRetrieval() {
@@ -413,6 +417,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         children_stack.dispose();
         children_regs.dispose();
         children_exps.dispose();
+        children_hover_exps.dispose();
         ArrayList<TCFNodeSymbol> l = new ArrayList<TCFNodeSymbol>(symbols.values());
         for (TCFNodeSymbol s : l) s.dispose();
         assert symbols.size() == 0;
@@ -425,6 +430,19 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         children_stack.dispose(id);
         children_regs.dispose(id);
         children_exps.dispose(id);
+        children_hover_exps.dispose(id);
+    }
+
+    TCFChildren getHoverExpressionCache(String expression) {
+        if (expression != hover_expression && (expression == null || !expression.equals(hover_expression))) {
+            hover_expression = expression;
+            children_hover_exps.cancel();
+        }
+        return children_hover_exps;
+    }
+
+    String getHoverExpression() {
+        return hover_expression;
     }
 
     void setRunContext(IRunControl.RunControlContext ctx) {
@@ -640,6 +658,11 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
             IRunControl.RunControlContext ctx = run_context.getData();
             if (ctx != null && ctx.hasState()) children = children_exps;
         }
+        else if (TCFModel.ID_EXPRESSION_HOVER.equals(result.getPresentationContext().getId())) {
+            if (!run_context.validate(done)) return false;
+            IRunControl.RunControlContext ctx = run_context.getData();
+            if (ctx != null && ctx.hasState()) children = children_hover_exps;
+        }
         if (children != null) {
             if (!children.validate(done)) return false;
             result.setChildCount(children.size());
@@ -686,6 +709,11 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
             IRunControl.RunControlContext ctx = run_context.getData();
             if (ctx != null && ctx.hasState()) children = children_exps;
         }
+        else if (TCFModel.ID_EXPRESSION_HOVER.equals(result.getPresentationContext().getId())) {
+            if (!run_context.validate(done)) return false;
+            IRunControl.RunControlContext ctx = run_context.getData();
+            if (ctx != null && ctx.hasState()) children = children_hover_exps;
+        }
         if (children == null) return true;
         return children.getData(result, done);
     }
@@ -723,6 +751,11 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
             if (!run_context.validate(done)) return false;
             IRunControl.RunControlContext ctx = run_context.getData();
             if (ctx != null && ctx.hasState()) children = children_exps;
+        }
+        else if (TCFModel.ID_EXPRESSION_HOVER.equals(result.getPresentationContext().getId())) {
+            if (!run_context.validate(done)) return false;
+            IRunControl.RunControlContext ctx = run_context.getData();
+            if (ctx != null && ctx.hasState()) children = children_hover_exps;
         }
         if (children != null) {
             if (!children.validate(done)) return false;
@@ -850,7 +883,9 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
             int flags = 0;
             String id = p.getPresentationContext().getId();
             if (IDebugUIConstants.ID_DEBUG_VIEW.equals(id)) flags |= IModelDelta.CONTENT;
-            if (IDebugUIConstants.ID_REGISTER_VIEW.equals(id) || IDebugUIConstants.ID_EXPRESSION_VIEW.equals(id)) {
+            if (IDebugUIConstants.ID_REGISTER_VIEW.equals(id) ||
+                    IDebugUIConstants.ID_EXPRESSION_VIEW.equals(id) ||
+                    TCFModel.ID_EXPRESSION_HOVER.equals(id)) {
                 if (p.getInput() == this) flags |= IModelDelta.CONTENT;
             }
             if (flags == 0) continue;
@@ -907,7 +942,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     }
 
     void onExpressionAddedOrRemoved() {
-        children_exps.reset();
+        children_exps.cancel();
         children_stack.onExpressionAddedOrRemoved();
     }
 
@@ -950,6 +985,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         children_stack.onSuspended();
         children_regs.onSuspended();
         children_exps.onSuspended();
+        children_hover_exps.onSuspended();
         for (TCFNodeSymbol s : symbols.values()) s.onExeStateChange();
         postAllChangedDelta();
     }

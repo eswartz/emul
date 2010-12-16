@@ -36,8 +36,8 @@ import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IExpressions;
 import org.eclipse.tm.tcf.services.IMemory;
-import org.eclipse.tm.tcf.services.ISymbols;
 import org.eclipse.tm.tcf.services.IMemory.MemoryError;
+import org.eclipse.tm.tcf.services.ISymbols;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 import org.eclipse.tm.tcf.util.TCFTask;
 
@@ -448,6 +448,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         for (TCFModelProxy p : model.getModelProxies()) {
             String id = p.getPresentationContext().getId();
             if (IDebugUIConstants.ID_EXPRESSION_VIEW.equals(id) && n.script != null ||
+                        TCFModel.ID_EXPRESSION_HOVER.equals(id) && n.script != null ||
                     IDebugUIConstants.ID_VARIABLE_VIEW.equals(id) && n.script == null) {
                 p.addDelta(this, IModelDelta.STATE | IModelDelta.CONTENT);
             }
@@ -508,7 +509,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         return text;
     }
 
-    TCFDataCache<IExpressions.Value> getValue() {
+    public TCFDataCache<IExpressions.Value> getValue() {
         return value;
     }
 
