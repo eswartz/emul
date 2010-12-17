@@ -156,7 +156,7 @@ public class ChannelTCP extends StreamChannel {
     }
 
     @Override
-    protected int get(byte[] buf) throws IOException {
+    protected final int get(byte[] buf) throws IOException {
         try {
             if (closed) return -1;
             return inp.read(buf);
