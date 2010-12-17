@@ -32,18 +32,18 @@ below are steps to create and populate Eclipse workspace with TCF projects:</p>
    <li>Install JDK 1.5.0 or later, recommended 1.6.0
    <li>Install <b>Eclipse SDK 3.6</b>, last tested with 3.6.1, recommended 3.6.1<br>
        <a href='http://download.eclipse.org/eclipse/downloads/'>http://download.eclipse.org/eclipse/downloads/</a>
-   <li>Install <b>TM RSE SDK 3.2</b> or later, last tested with 3.2.1, recommended 3.2.1<br>
-       <a href='http://download.eclipse.org/dsdp/tm/downloads/'>http://download.eclipse.org/dsdp/tm/downloads/</a>
-   <li><b>Optional</b> dependencies for TCF/CDT integration: these are not required by
-       TCF itself, and not needed for RSE integration or for TCF based debugger.
+   <li><b>Optional</b> dependencies for TCF/CDT and TCF/RSE integration: these are not required by
+       TCF itself or TCF based debugger.
        <ul>
-       <li><b>CDT (Eclipse C/C++ Development Tools SDK) 7.0</b> or later, last tested with 7.0.0, recommended 7.0.0<br>
+       <li><b>CDT (C/C++ Development Tools) SDK 7.0</b> or later, last tested with 7.0.0, recommended 7.0.0<br>
        <a href='http://www.eclipse.org/cdt/downloads.php'>http://www.eclipse.org/cdt/downloads.php</a>
+       <li><b>RSE (Remote System Explorer) SDK 3.2</b> or later, last tested with 3.2.1, recommended 3.2.1<br>
+       <a href='http://download.eclipse.org/dsdp/tm/downloads/'>http://download.eclipse.org/dsdp/tm/downloads/</a>
        </ul>
    <li>Checkout TCF code from <a href='http://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk'>Eclipse SVN repository</a>:
-       <pre>svn co svn://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk</pre>
+       <pre>svn co svn://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk tcf</pre>
    <li>Run Eclipse:
-      <pre>eclipse.exe -vm &lt;JDK path&gt;\bin\javaw.exe -data &lt;Workspace path&gt; -vmargs -Xmx200M</pre>
+      <pre>eclipse.exe -vm &lt;JDK path&gt;/bin/javaw.exe -data &lt;Workspace path&gt; -vmargs -Xmx400M</pre>
    <li>Open "Java" perspective.
    <li>In "Package Explorer" view: do right click and then select "Import...".
    <li>Select "General/Existing Projects into Workspace" and click "Next".
@@ -75,18 +75,18 @@ below are steps to create and populate Eclipse workspace with TCF projects:</p>
         The Java code in the fragment does not have any Eclipse dependencies and can be used outside Eclipse.
         <p>
     <dt><b>org.eclipse.tm.tcf.debug, org.eclipse.tm.tcf.debug.ui</b>
-    <dd>This is a prototype code that connects Eclipse Debug Framework and Target Communication Framework.
+    <dd>This code connects Eclipse Debug Framework and Target Communication Framework.
     It allows to launch Eclipse debug session by connecting to a target running TCF agent,
     and then perform basic debugging tasks, like resuming, suspending, single-stepping, setting/removing breakpoints, etc.
     The code can be used as a reference for developing new TCF clients.
     <p>
     <dt><b>org.eclipse.tm.tcf.rse</b>
-    <dd>This plugin allows Remote System Explorer (RSE) to connect to remote machines using TCF as communication protocol.
+    <dd>This optional plugin allows Remote System Explorer (RSE) to connect to remote machines using TCF as communication protocol.
     It includes implementation of RSE services as TCF clients.
     <p>
     <dt><b>org.eclipse.tm.tcf.cdt.ui</b>
-    <dd>This optional plugin improves integration between CDT and TCF debugger prototype.
-        It helps to search for CDT projects and executable files when creating TCF launch configuration.
+    <dd>This optional plugin improves integration between CDT and TCF debugger.
+    It helps to search for CDT projects and executable files when creating TCF launch configuration.
     <p>
     <dt><b>org.eclipse.tm.tcf.examples.daytime</b>
     <dd>This is an example plugin.
@@ -359,7 +359,7 @@ by connecting to a machine runnning TCF agent.
 </ul>
 
 <p>In TCF debug session "Debug", "Breakpoints", "Registers", "Variables" and "Expressions" views are populated.
-Source level debugging is fully supported if the source code can be found in a CDT project in current workspace.
+Source level debugging is fully supported.
 </p>
 
 </body>
