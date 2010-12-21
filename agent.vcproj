@@ -336,6 +336,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\framework\outputbuf.c"
+				>
+			</File>
+			<File
+				RelativePath=".\framework\outputbuf.h"
+				>
+			</File>
+			<File
 				RelativePath=".\framework\peer.c"
 				>
 			</File>

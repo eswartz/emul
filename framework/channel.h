@@ -23,7 +23,11 @@
 #include <framework/link.h>
 #include <framework/peer.h>
 
+struct Protocol;
 typedef struct TCFBroadcastGroup TCFBroadcastGroup;
+typedef struct ChannelServer ChannelServer;
+typedef struct Channel Channel;
+
 struct TCFBroadcastGroup {
     int magic;
     OutputStream out;                   /* Broadcast stream */
@@ -40,9 +44,6 @@ enum {
     ChannelStateRedirectReceived,
     ChannelStateDisconnected
 };
-
-struct Protocol;
-typedef struct Channel Channel;
 
 struct Channel {
     InputStream inp;                    /* Input stream */
@@ -74,8 +75,6 @@ struct Channel {
     void (*receive)(Channel *);         /* Called when messages has been received */
     void (*disconnected)(Channel *);    /* Called when channel is disconnected */
 };
-
-typedef struct ChannelServer ChannelServer;
 
 struct ChannelServer {
     void * client_data;                 /* Client data */

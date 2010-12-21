@@ -467,6 +467,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\agent\framework\outputbuf.c"
+				>
+			</File>
+			<File
+				RelativePath="..\agent\framework\outputbuf.h"
+				>
+			</File>
+			<File
 				RelativePath="..\agent\framework\peer.c"
 				>
 			</File>

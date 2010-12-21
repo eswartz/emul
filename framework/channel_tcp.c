@@ -52,6 +52,7 @@
 #include <framework/ip_ifc.h>
 #include <framework/asyncreq.h>
 #include <framework/inputbuf.h>
+#include <framework/outputbuf.h>
 #include <services/discovery.h>
 
 #ifndef MSG_MORE
@@ -66,6 +67,14 @@
 #endif
 #define CHANNEL_MAGIC 0x27208956
 #define MAX_IFC 10
+
+#if !defined(ENABLE_OutputQueue)
+#  if ENABLE_SSL || ENABLE_ContextProxy || defined(WIN32)
+#    define ENABLE_OutputQueue 1
+#  else
+#    define ENABLE_OutputQueue 0
+#  endif
+#endif
 
 typedef struct ChannelTCP ChannelTCP;
 
@@ -91,13 +100,17 @@ struct ChannelTCP {
     InputBuf ibuf;
 
     /* Output stream state */
+    unsigned char * out_bin_block;
     unsigned char obuf[BUF_SIZE];
     int out_errno;
     int out_flush_cnt;
-    unsigned char * out_bin_block;
+#if ENABLE_OutputQueue
+    OutputQueue out_queue;
+    AsyncReqInfo wr_req;
+#endif /* ENABLE_OutputQueue */
 
     /* Async read request */
-    AsyncReqInfo rdreq;
+    AsyncReqInfo rd_req;
 };
 
 typedef struct ServerTCP ServerTCP;
@@ -118,6 +131,7 @@ struct ServerTCP {
 #define server2tcp(A)   ((ServerTCP *)((char *)(A) - offsetof(ServerTCP, serv)))
 #define servlink2tcp(A) ((ServerTCP *)((char *)(A) - offsetof(ServerTCP, servlink)))
 #define ibuf2tcp(A)     ((ChannelTCP *)((char *)(A) - offsetof(ChannelTCP, ibuf)))
+#define obuf2tcp(A)     ((ChannelTCP *)((char *)(A) - offsetof(ChannelTCP, out_queue)))
 
 static LINK server_list;
 static void tcp_channel_read_done(void * x);
@@ -187,6 +201,9 @@ static void delete_channel(ChannelTCP * c) {
     assert(c->ibuf.handling_msg != HandleMsgTriggered);
     channel_clear_broadcast_group(&c->chan);
     c->magic = 0;
+#if ENABLE_OutputQueue
+    output_queue_clear(&c->out_queue);
+#endif /* ENABLE_OutputQueue */
 #if ENABLE_SSL
     if (c->ssl) SSL_free(c->ssl);
 #endif /* ENABLE_SSL */
@@ -227,63 +244,104 @@ static int tcp_is_closed(Channel * channel) {
     return c->chan.state == ChannelStateDisconnected;
 }
 
+#if ENABLE_OutputQueue
+static void done_write_request(void * args) {
+    ChannelTCP * c = (ChannelTCP *)((AsyncReqInfo *)args)->client_data;
+    int size = 0;
+    int error = 0;
+
+    assert(args == &c->wr_req);
+    if (c->wr_req.u.sio.rval < 0) error = c->wr_req.error;
+    else if (c->wr_req.type == AsyncReqSend) size = c->wr_req.u.sio.rval;
+    output_queue_done(&c->out_queue, error, size);
+    if (error) c->out_errno = error;
+    if (output_queue_is_empty(&c->out_queue) &&
+        c->chan.state == ChannelStateDisconnected) shutdown(c->socket, SHUT_WR);
+    tcp_unlock(&c->chan);
+}
+
+static void post_write_request(OutputBuffer * bf) {
+    ChannelTCP * c = obuf2tcp(bf->queue);
+    c->wr_req.client_data = c;
+    c->wr_req.done = done_write_request;
+#if ENABLE_SSL
+    if (c->ssl) {
+        int wr = SSL_write(c->ssl, bf->buf + bf->buf_pos, bf->buf_len - bf->buf_pos);
+        if (wr <= 0) {
+            int err = SSL_get_error(c->ssl, wr);
+            if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE) {
+                c->wr_req.type = AsyncReqSelect;
+                c->wr_req.u.select.nfds = c->socket + 1;
+                FD_ZERO(&c->wr_req.u.select.readfds);
+                FD_ZERO(&c->wr_req.u.select.writefds);
+                FD_ZERO(&c->wr_req.u.select.errorfds);
+                if (err == SSL_ERROR_WANT_WRITE) FD_SET(c->socket, &c->wr_req.u.select.writefds);
+                if (err == SSL_ERROR_WANT_READ) FD_SET(c->socket, &c->wr_req.u.select.readfds);
+                FD_SET(c->socket, &c->wr_req.u.select.errorfds);
+                c->wr_req.u.select.timeout.tv_sec = 10;
+                async_req_post(&c->wr_req);
+            }
+            else {
+                int error = set_ssl_errno();
+                c->chan.out.cur = c->obuf;
+                trace(LOG_PROTOCOL, "Can't SSL_write() on channel %#lx: %s", c, errno_to_str(error));
+                c->wr_req.type = AsyncReqSend;
+                c->wr_req.error = error;
+                c->wr_req.u.sio.rval = -1;
+                post_event(done_write_request, &c->wr_req);
+            }
+        }
+        else {
+            c->wr_req.type = AsyncReqSend;
+            c->wr_req.error = 0;
+            c->wr_req.u.sio.rval = wr;
+            post_event(done_write_request, &c->wr_req);
+        }
+    }
+    else
+#endif
+    {
+        c->wr_req.type = AsyncReqSend;
+        c->wr_req.u.sio.sock = c->socket;
+        c->wr_req.u.sio.bufp = bf->buf + bf->buf_pos;
+        c->wr_req.u.sio.bufsz = bf->buf_len - bf->buf_pos;
+        c->wr_req.u.sio.flags = c->out_queue.queue.next == c->out_queue.queue.prev ? 0 : MSG_MORE;
+        async_req_post(&c->wr_req);
+    }
+    tcp_lock(&c->chan);
+}
+#endif /* ENABLE_OutputQueue */
+
 static void tcp_flush_with_flags(ChannelTCP * c, int flags) {
     unsigned char * p = c->obuf;
     assert(is_dispatch_thread());
     assert(c->magic == CHANNEL_MAGIC);
     assert(c->chan.out.end == p + sizeof(c->obuf));
     assert(c->out_bin_block == NULL);
+    assert(c->chan.out.cur >= p);
+    assert(c->chan.out.cur <= p + sizeof(c->obuf));
     if (c->chan.out.cur == p) return;
-    assert(c->chan.out.cur >= p && c->chan.out.cur <= p + sizeof(c->obuf));
-    if (c->chan.state == ChannelStateDisconnected || c->out_errno) {
-        c->chan.out.cur = p;
-        return;
-    }
-    while (p < c->chan.out.cur) {
-        int wr = 0;
-        if (c->ssl) {
-#if ENABLE_SSL
-            wr = SSL_write(c->ssl, p, c->chan.out.cur - p);
-            if (wr <= 0) {
-                int err = SSL_get_error(c->ssl, wr);
-                if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE) {
-                    struct timeval tv;
-                    fd_set readfds;
-                    fd_set writefds;
-                    fd_set errorfds;
-                    FD_ZERO(&readfds);
-                    FD_ZERO(&writefds);
-                    FD_ZERO(&errorfds);
-                    if (err == SSL_ERROR_WANT_READ) FD_SET(c->socket, &readfds);
-                    if (err == SSL_ERROR_WANT_WRITE) FD_SET(c->socket, &writefds);
-                    FD_SET(c->socket, &errorfds);
-                    tv.tv_sec = 10L;
-                    tv.tv_usec = 0;
-                    if (select(c->socket + 1, &readfds, &writefds, &errorfds, &tv) >= 0) continue;
-                }
-                trace(LOG_PROTOCOL, "Can't SSL_write() on channel %#lx: %s", c,
-                    ERR_error_string(ERR_get_error(), NULL));
-                c->out_errno = EIO;
-                c->chan.out.cur = c->obuf;
-                return;
-            }
+    if (c->chan.state != ChannelStateDisconnected && c->out_errno == 0) {
+#if ENABLE_OutputQueue
+        c->out_queue.post_io_request = post_write_request;
+        output_queue_add(&c->out_queue, p, c->chan.out.cur - p);
 #else
-            assert(0);
-#endif
-        }
-        else {
-            wr = send(c->socket, p, c->chan.out.cur - p, flags);
+        assert(c->ssl == NULL);
+        while (p < c->chan.out.cur) {
+            int sz = c->chan.out.cur - p;
+            int wr = send(c->socket, p, sz, flags);
             if (wr < 0) {
                 int err = errno;
-                trace(LOG_PROTOCOL, "Can't send() on channel %#lx: %d %s", c, err, errno_to_str(err));
+                trace(LOG_PROTOCOL, "Can't send() on channel %#lx: %s", c, errno_to_str(err));
                 c->out_errno = err;
                 c->chan.out.cur = c->obuf;
                 return;
             }
+            p += wr;
         }
-        p += wr;
+        assert(p == c->chan.out.cur);
+#endif
     }
-    assert(p == c->chan.out.cur);
     c->chan.out.cur = c->obuf;
 }
 
@@ -327,8 +385,6 @@ static void tcp_write_stream(OutputStream * out, int byte) {
     assert(c->magic == CHANNEL_MAGIC);
     if (!c->chan.out.supports_zero_copy || c->chan.out.cur >= c->chan.out.end - 32 || byte < 0) {
         if (c->out_bin_block != NULL) tcp_bin_block_end(c);
-        if (c->out_errno) return;
-        if (c->chan.state == ChannelStateDisconnected) return;
         if (c->chan.out.cur == c->chan.out.end) tcp_flush_with_flags(c, MSG_MORE);
         if (byte < 0 || byte == ESC) {
             char esc = 0;
@@ -337,8 +393,6 @@ static void tcp_write_stream(OutputStream * out, int byte) {
             else if (byte == MARKER_EOM) esc = 1;
             else if (byte == MARKER_EOS) esc = 2;
             else assert(0);
-            if (c->out_errno) return;
-            if (c->chan.state == ChannelStateDisconnected) return;
             if (c->chan.out.cur == c->chan.out.end) tcp_flush_with_flags(c, MSG_MORE);
             *c->chan.out.cur++ = esc;
             if (byte == MARKER_EOM && c->out_flush_cnt < 4) {
@@ -385,6 +439,13 @@ static int tcp_splice_block_stream(OutputStream * out, int fd, size_t size, off_
                 /* We need to flush the buffer then send our data */
                 tcp_flush_with_flags(c, MSG_MORE);
 
+#if ENABLE_OutputQueue
+                while (!output_queue_is_empty(&c->out_queue)) {
+                    cancel_event(done_write_request, &c->wr_req, 1);
+                    done_write_request(&c->wr_req);
+                }
+#endif
+
                 if (c->chan.state == ChannelStateDisconnected) return rd;
                 if (c->out_errno) return rd;
 
@@ -394,7 +455,7 @@ static int tcp_splice_block_stream(OutputStream * out, int fd, size_t size, off_
 
                     if (wr < 0) {
                         c->out_errno = errno;
-                        trace(LOG_PROTOCOL, "Error in socket splice: %d %s", errno, errno_to_str(errno));
+                        trace(LOG_PROTOCOL, "Error in socket splice: %s", errno_to_str(errno));
                         break;
                     }
                     n -= wr;
@@ -430,26 +491,39 @@ static void tcp_post_read(InputBuf * ibuf, unsigned char * buf, int size) {
     if (c->ssl) {
 #if ENABLE_SSL
         c->read_done = SSL_read(c->ssl, c->read_buf, c->read_buf_size);
-        if (c->read_done > 0) {
-            post_event(c->rdreq.done, &c->rdreq);
-            return;
+        if (c->read_done <= 0) {
+            int err = SSL_get_error(c->ssl, c->read_done);
+            if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE) {
+                FD_ZERO(&c->rd_req.u.select.readfds);
+                FD_ZERO(&c->rd_req.u.select.writefds);
+                FD_ZERO(&c->rd_req.u.select.errorfds);
+                if (err == SSL_ERROR_WANT_WRITE) FD_SET(c->socket, &c->rd_req.u.select.writefds);
+                if (err == SSL_ERROR_WANT_READ) FD_SET(c->socket, &c->rd_req.u.select.readfds);
+                FD_SET(c->socket, &c->rd_req.u.select.errorfds);
+                c->rd_req.u.select.timeout.tv_sec = 10;
+                c->read_done = -1;
+                async_req_post(&c->rd_req);
+            }
+            else {
+                if (c->chan.state != ChannelStateDisconnected) {
+                    trace(LOG_ALWAYS, "Can't SSL_read() on channel %#lx: %s", c, errno_to_str(set_ssl_errno()));
+                }
+                c->read_done = 0;
+                post_event(c->rd_req.done, &c->rd_req);
+            }
         }
-        FD_ZERO(&c->rdreq.u.select.readfds);
-        FD_ZERO(&c->rdreq.u.select.writefds);
-        FD_ZERO(&c->rdreq.u.select.errorfds);
-        FD_SET(c->socket, &c->rdreq.u.select.readfds);
-        FD_SET(c->socket, &c->rdreq.u.select.errorfds);
-        c->rdreq.u.select.timeout.tv_sec = 10;
+        else {
+            post_event(c->rd_req.done, &c->rd_req);
+        }
 #else
         assert(0);
 #endif
     }
     else {
-        c->read_done = 0;
-        c->rdreq.u.sio.bufp = buf;
-        c->rdreq.u.sio.bufsz = size;
+        c->rd_req.u.sio.bufp = buf;
+        c->rd_req.u.sio.bufsz = size;
+        async_req_post(&c->rd_req);
     }
-    async_req_post(&c->rdreq);
 }
 
 static void tcp_wait_read(InputBuf * ibuf) {
@@ -458,8 +532,8 @@ static void tcp_wait_read(InputBuf * ibuf) {
     /* Wait for read to complete */
     assert(c->lock_cnt > 0);
     assert(c->read_pending != 0);
-    cancel_event(tcp_channel_read_done, &c->rdreq, 1);
-    tcp_channel_read_done(&c->rdreq);
+    cancel_event(tcp_channel_read_done, &c->rd_req, 1);
+    tcp_channel_read_done(&c->rd_req);
 }
 
 static int tcp_read_stream(InputStream * inp) {
@@ -495,6 +569,9 @@ static void send_eof_and_close(Channel * channel, int err) {
     write_errno(&c->chan.out, err);
     write_stream(&c->chan.out, MARKER_EOM);
     tcp_flush_with_flags(c, 0);
+#if ENABLE_OutputQueue
+    if (output_queue_is_empty(&c->out_queue))
+#endif
     shutdown(c->socket, SHUT_WR);
     c->chan.state = ChannelStateDisconnected;
     tcp_post_read(&c->ibuf, c->obuf, sizeof(c->obuf));
@@ -537,8 +614,7 @@ static void handle_channel_msg(void * x) {
         clear_trap(&trap);
     }
     else {
-        trace(LOG_ALWAYS, "Exception in message handler: %d %s",
-              trap.error, errno_to_str(trap.error));
+        trace(LOG_ALWAYS, "Exception in message handler: %s", errno_to_str(trap.error));
         send_eof_and_close(&c->chan, trap.error);
     }
 }
@@ -583,32 +659,19 @@ static void tcp_channel_read_done(void * x) {
     c->read_pending = 0;
     if (c->ssl) {
 #if ENABLE_SSL
-        if (c->read_done > 0) {
-            len = c->read_done;
+        if (c->read_done < 0) {
+            tcp_post_read(&c->ibuf, c->read_buf, c->read_buf_size);
+            return;
         }
-        else {
-            len = SSL_read(c->ssl, c->read_buf, c->read_buf_size);
-            if (len <= 0) {
-                int err = SSL_get_error(c->ssl, len);
-                if (err == SSL_ERROR_WANT_READ) {
-                    tcp_post_read(&c->ibuf, c->read_buf, c->read_buf_size);
-                    return;
-                }
-                if (c->chan.state != ChannelStateDisconnected) {
-                    trace(LOG_ALWAYS, "Can't SSL_read() on channel %#lx: %s", c,
-                        ERR_error_string(ERR_get_error(), NULL));
-                }
-                len = 0;
-            }
-        }
+        len = c->read_done;
 #else
         assert(0);
 #endif
     }
     else {
-        assert(c->read_buf == c->rdreq.u.sio.bufp);
-        assert((size_t)c->read_buf_size == c->rdreq.u.sio.bufsz);
-        len = c->rdreq.u.sio.rval;
+        assert(c->read_buf == c->rd_req.u.sio.bufp);
+        assert((size_t)c->read_buf_size == c->rd_req.u.sio.bufsz);
+        len = c->rd_req.u.sio.rval;
         if (req->error) {
             if (c->chan.state != ChannelStateDisconnected) {
                 trace(LOG_ALWAYS, "Can't read from socket: %s", errno_to_str(req->error));
@@ -655,14 +718,12 @@ static ChannelTCP * create_channel(int sock, int en_ssl, int server, int unix_do
         if (setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char *)&i, sizeof(i)) < 0) {
             int error = errno;
             trace(LOG_ALWAYS, "Can't set TCP_NODELAY option on a socket: %s", errno_to_str(error));
-            closesocket(sock);
             errno = error;
             return NULL;
         }
         if (setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (char *)&i, sizeof(i)) < 0) {
             int error = errno;
             trace(LOG_ALWAYS, "Can't set SO_KEEPALIVE option on a socket: %s", errno_to_str(error));
-            closesocket(sock);
             errno = error;
             return NULL;
         }
@@ -686,10 +747,12 @@ static ChannelTCP * create_channel(int sock, int en_ssl, int server, int unix_do
             if (!err && (fp = fopen(fnm, "r")) == NULL) err = errno;
             if (!err && (rsa_key = PEM_read_RSAPrivateKey(fp, NULL, NULL, NULL)) == NULL) err = set_ssl_errno();
             if (!err && fclose(fp) != 0) err = errno;
-            snprintf(fnm, sizeof(fnm), "%s/ssl/local.cert", tcf_dir);
-            if (!err && (fp = fopen(fnm, "r")) == NULL) err = errno;
-            if (!err && (ssl_cert = PEM_read_X509(fp, NULL, NULL, NULL)) == NULL) err = set_ssl_errno();
-            if (!err && fclose(fp) != 0) err = errno;
+            if (!err) {
+                snprintf(fnm, sizeof(fnm), "%s/ssl/local.cert", tcf_dir);
+                if (!err && (fp = fopen(fnm, "r")) == NULL) err = errno;
+                if (!err && (ssl_cert = PEM_read_X509(fp, NULL, NULL, NULL)) == NULL) err = set_ssl_errno();
+                if (!err && fclose(fp) != 0) err = errno;
+            }
             if (err) {
                 trace(LOG_ALWAYS, "Cannot read SSL certificate %s: %s", fnm, errno_to_str(err));
                 set_errno(err, "Cannot read SSL certificate");
@@ -743,21 +806,24 @@ static ChannelTCP * create_channel(int sock, int en_ssl, int server, int unix_do
     c->ibuf.trigger_message = tcp_trigger_message;
     c->socket = sock;
     c->lock_cnt = 1;
-    c->rdreq.done = tcp_channel_read_done;
-    c->rdreq.client_data = c;
+    c->rd_req.done = tcp_channel_read_done;
+    c->rd_req.client_data = c;
     if (c->ssl) {
 #if ENABLE_SSL
-        c->rdreq.type = AsyncReqSelect;
-        c->rdreq.u.select.nfds = c->socket + 1;
+        c->rd_req.type = AsyncReqSelect;
+        c->rd_req.u.select.nfds = c->socket + 1;
 #else
         assert(0);
 #endif
     }
     else {
-        c->rdreq.type = AsyncReqRecv;
-        c->rdreq.u.sio.sock = c->socket;
-        c->rdreq.u.sio.flags = 0;
+        c->rd_req.type = AsyncReqRecv;
+        c->rd_req.u.sio.sock = c->socket;
+        c->rd_req.u.sio.flags = 0;
     }
+#if ENABLE_OutputQueue
+    output_queue_ini(&c->out_queue);
+#endif
     return c;
 }
 
@@ -860,7 +926,6 @@ static void set_peer_addr(ChannelTCP * c, struct sockaddr * addr, int addr_len) 
 static void tcp_server_accept_done(void * x) {
     AsyncReqInfo * req = (AsyncReqInfo *)x;
     ServerTCP * si = (ServerTCP *)req->client_data;
-    ChannelTCP * c = NULL;
 
     if (si->sock < 0) {
         /* Server closed. */
@@ -868,16 +933,20 @@ static void tcp_server_accept_done(void * x) {
         return;
     }
     if (req->error) {
-        trace(LOG_ALWAYS, "socket accept failed: %d %s", req->error, errno_to_str(req->error));
-        si->accreq.u.acc.addrlen = si->addr_len;
-        async_req_post(req);
-        return;
+        trace(LOG_ALWAYS, "Socket accept failed: %s", errno_to_str(req->error));
     }
-    c = create_channel(req->u.acc.rval, strcmp(peer_server_getprop(si->ps, "TransportName", ""), "SSL") == 0, 1,
-        si->addr_buf->sa_family == AF_UNIX);
-    if (c != NULL) {
-        set_peer_addr(c, si->addr_buf, si->addr_len);
-        si->serv.new_conn(&si->serv, &c->chan);
+    else {
+        int ssl = strcmp(peer_server_getprop(si->ps, "TransportName", ""), "SSL") == 0;
+        int unix_domain = si->addr_buf->sa_family == AF_UNIX;
+        ChannelTCP * c = create_channel(req->u.acc.rval, ssl, 1, unix_domain);
+        if (c == NULL) {
+            trace(LOG_ALWAYS, "Cannot create channel for accepted connection: %s", errno_to_str(errno));
+            closesocket(req->u.acc.rval);
+        }
+        else {
+            set_peer_addr(c, si->addr_buf, si->addr_len);
+            si->serv.new_conn(&si->serv, &c->chan);
+        }
     }
     si->accreq.u.acc.addrlen = si->addr_len;
     async_req_post(req);
