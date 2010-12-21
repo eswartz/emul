@@ -52,38 +52,9 @@ fi
 rm -rf logs || exit 1
 mkdir logs || exit 1
 
-CFLAGS1="\
- -DSERVICE_RunControl=0 \
- -DSERVICE_Breakpoints=0 \
- -DSERVICE_Memory=0 \
- -DSERVICE_Registers=0 \
- -DSERVICE_MemoryMap=0 \
- -DSERVICE_StackTrace=0 \
- -DSERVICE_Symbols=0 \
- -DSERVICE_LineNumbers=0 \
- -DSERVICE_Expressions=0"
-
-CFLAGS2="\
- -DENABLE_SymbolsProxy=1 \
- -DENABLE_LineNumbersProxy=1"
-
-CFLAGS3="\
-  -DENABLE_DebugContext=0\
-  -DENABLE_ELF=0\
-  -DSERVICE_StackTrace=0\
-  -DSERVICE_Breakpoints=0\
-  -DSERVICE_Memory=0\
-  -DSERVICE_Registers=0\
-  -DSERVICE_RunControl=0\
-  -DSERVICE_LineNumbers=0\
-  -DSERVICE_Processes=0\
-  -DSERVICE_Expressions=0\
-  -DSERVICE_MemoryMap=0"
-
-
 VMS_ALL=`VBoxManage --nologo list vms | sed -e "s/.*{\\(.*\\)}/\\1/"`
 
-HTML=logs/index.tmp
+HTML=logs/index.html
 echo "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 Transitional//EN\">" >$HTML
 echo "<html>" >>$HTML
 echo "<head><title>TCF Nightly Build Status</title></head>" >>$HTML
@@ -200,36 +171,22 @@ function stop_vm()
 
 function get_make_options()
 {
+  # Currently we cannot test login feature of Terminals service
   case $CC in
   gcc)
-    if [ -z "$CFLAGS" ] ; then
-      echo "OPSYS=$OPSYS CONF=$CONF CFLAGS=-Werror"
-    else
-      echo "OPSYS=$OPSYS CONF=$CONF 'CFLAGS=-Werror $CFLAGS'"
-    fi
+    OPTS="CC=gcc 'CFLAGS=-Werror -DTERMINALS_NO_LOGIN=1 $CFLAGS'"
     ;;
   g++)
-    if [ -z "$CFLAGS" ] ; then
-      echo "OPSYS=$OPSYS CONF=$CONF CC=g++ CFLAGS=-Werror"
-    else
-      echo "OPSYS=$OPSYS CONF=$CONF CC=g++ 'CFLAGS=-Werror $CFLAGS'"
-    fi
+    OPTS="CC=g++ 'CFLAGS=-Werror -DTERMINALS_NO_LOGIN=1 $CFLAGS'"
     ;;
   msvc++)
-    if [ -z "$CFLAGS" ] ; then
-      echo "OPSYS=$OPSYS CONF=$CONF 'CFLAGS=-x c++'"
-    else
-      echo "OPSYS=$OPSYS CONF=$CONF 'CFLAGS=-x c++ $CFLAGS'"
-    fi
+    OPTS="'CFLAGS=-x c++ $CFLAGS'"
     ;;
   *)
-    if [ -z "$CFLAGS" ] ; then
-      echo "OPSYS=$OPSYS CONF=$CONF"
-    else
-      echo "OPSYS=$OPSYS CONF=$CONF 'CFLAGS=$CFLAGS'"
-    fi
+    OPTS="'CFLAGS=$CFLAGS'"
     ;;
   esac
+  echo "OPSYS=$OPSYS CONF=$CONF $OPTS"
 }
 
 function build_and_start_server()
@@ -271,22 +228,20 @@ function stop_server()
 
 function build_and_test_agent()
 {
-  # Currently we cannot test login feature of Terminals service
-  if [ -z "$CFLAGS" ] ; then
-    CFLAGS=-DTERMINALS_NO_LOGIN=1
-  else
-    CFLAGS="-DTERMINALS_NO_LOGIN=1 $CFLAGS"
-  fi
-
   local LOGFILE=$HOST-$CONF-$CC-Agent-$SEQ.txt
-  echo "<a href=\"$LOGFILE\">" >>$HTML
   date >logs/$LOGFILE
-  echo "$CONF build on $HOST $VM $VMNAME" >>logs/$LOGFILE
+  echo "Build on $HOST $VM $VMNAME" >>logs/$LOGFILE
   echo "Compiler: $CC" >>logs/$LOGFILE
   echo "Options: `get_make_options`" >>logs/$LOGFILE
   echo >>logs/$LOGFILE
-  if $SSH "cd $TRUNK/agent; $MAKE `get_make_options` clean all" >>logs/$LOGFILE 2>&1
+  local BUILD_ERROR=
+  local TEST_ERROR=
+  local TEST_WARNING=
+  if $SSH "cd $TRUNK/agent; time -p $MAKE `get_make_options` clean all" >>logs/$LOGFILE 2>&1
   then
+    if [ $SEQ = 1 ] ; then
+      $SSH "$TRUNK/agent/obj/$OPSYS/$MACHINE/$CONF/agent -c" >>logs/$LOGFILE 2>&1
+    fi
     if [ $OPSYS = Windows ] ; then
       local AGENT_L_OPT=-L`$SSH "cygpath -m $BUILD/logs/agent-$HOST.txt"`
     else
@@ -296,6 +251,7 @@ function build_and_test_agent()
     sleep 15
     TESTURL1=ID=Test-Agent-$HOST-$SEQ:TransportName=TCP:Host=$HOST:Port=1534
     TESTURL2=ID=Test-Proxy-$HOST-$SEQ:TransportName=TCP:Host=$HOST:Port=1535
+
     echo >>logs/$LOGFILE
     echo "Starting tests, target: $TESTURL1" >>logs/$LOGFILE
     if time -p java -ea \
@@ -304,58 +260,11 @@ function build_and_test_agent()
       $TESTURL1 \
       >>logs/$LOGFILE 2>&1
     then
-      if [ -z "$CFLAGS" ] ; then
-        # Test different channel implementations
-        $SSH "killall agent" >>logs/$LOGFILE 2>&1
-        if [ -r logs/agent-$HOST.txt ] ; then
-          echo >>logs/$LOGFILE
-          echo "Agent log:" >>logs/$LOGFILE
-          cat logs/agent-$HOST.txt >>logs/$LOGFILE
-          rm logs/agent-$HOST.txt
-          echo "End of agent log" >>logs/$LOGFILE
-        fi
-        if [ "$OPSYS" = Windows ] ; then
-          local AGENT_S_OPT=PIPE:
-          TESTURL1=ID=Test-Agent-$HOST-$SEQ:TransportName=PIPE:
-        elif [ "$OPSYS" = GNU/Linux ] ; then
-          local AGENT_S_OPT=UNIX:/tmp/TCFTest
-          TESTURL1=ID=Test-Agent-$HOST-$SEQ:TransportName=UNIX:Host=/tmp/TCFTest
-        else
-          local AGENT_S_OPT=TCP::1534
-          TESTURL1=ID=Test-Agent-$HOST-$SEQ:TransportName=TCP:Host=localhost:Port=1534
-        fi
-        $SSH "$TRUNK/agent/obj/$OPSYS/$MACHINE/$CONF/agent -s $AGENT_S_OPT $AGENT_L_OPT -l0" >>logs/$LOGFILE 2>&1 &
-        sleep 15
-      fi
-      if [ "$OPSYS" = Windows -a ! -z "$CFLAGS" ] ; then
-        # TCF server does not support PE object files
-        if [ -s logs/agent-$HOST.txt ]
-        then
-          echo "<img src=\"../icons/error.png\" title=\"Agent log is not empty\"/>" >>$HTML
-        else
-          echo "<img src=\"../icons/accept.png\" title=\"Agent OK\"/>" >>$HTML
-        fi
-      else
-        echo >>logs/$LOGFILE
-        echo "Starting tests, target: $TESTURL2 $TESTURL1" >>logs/$LOGFILE
-        if time -p java -ea \
-          -classpath java-bin \
-          org.eclipse.tm.internal.tcf.debug.tests.Main \
-          $TESTURL2 $TESTURL1 \
-          >>logs/$LOGFILE 2>&1
-        then
-          if [ -s logs/agent-$HOST.txt ]
-          then
-            echo "<img src=\"../icons/error.png\" title=\"Agent log is not empty\"/>" >>$HTML
-          else
-            echo "<img src=\"../icons/accept.png\" title=\"Agent OK\"/>" >>$HTML
-          fi
-        else
-          echo "<img src=\"../icons/cancel.png\" title=\"Agent/Server test failed\"/>" >>$HTML
-        fi
+      if [ -s logs/agent-$HOST.txt ] ; then
+        TEST_WARNING=1
       fi
     else
-      echo "<img src=\"../icons/cancel.png\" title=\"Agent test failed\"/>" >>$HTML
+      TEST_ERROR=1
     fi
     $SSH "killall agent" >>logs/$LOGFILE 2>&1
     if [ -r logs/agent-$HOST.txt ] ; then
@@ -365,12 +274,150 @@ function build_and_test_agent()
       rm logs/agent-$HOST.txt
       echo "End of agent log" >>logs/$LOGFILE
     fi
+
+    if [ "$OPSYS" = Windows -a $SEQ != 1 ] ; then
+      # TCF server does not support PE object files
+      echo "Skipping server tests." >>logs/$LOGFILE
+    else
+      # Test server with different channel trasports
+      for PROTO in TCP SSL PIPE UNIX
+      do
+        case $PROTO in
+        PIPE)
+          if [ "$OPSYS" != Windows ] ; then
+            continue
+          fi
+          local AGENT_S_OPT=PIPE:
+          TESTURL1=ID=Test-Agent-$HOST-$SEQ:TransportName=PIPE:
+          ;;
+        UNIX)
+          if [ "$OPSYS" != GNU/Linux ] ; then
+            continue;
+          fi
+          local AGENT_S_OPT=UNIX:/tmp/tcf
+          TESTURL1=ID=Test-Agent-$HOST-$SEQ:TransportName=UNIX:Host=/tmp/tcf
+          ;;
+        SSL)
+          if [ "$OPSYS" != GNU/Linux ] ; then
+            continue;
+          fi
+          local AGENT_S_OPT=SSL::1534
+          TESTURL1=ID=Test-Agent-$HOST-$SEQ:TransportName=SSL:Host=localhost:Port=1534
+          ;;
+        *)
+          local AGENT_S_OPT=TCP::1534
+          TESTURL1=ID=Test-Agent-$HOST-$SEQ:TransportName=TCP:Host=localhost:Port=1534
+          ;;
+        esac
+        $SSH "$TRUNK/agent/obj/$OPSYS/$MACHINE/$CONF/agent -s $AGENT_S_OPT $AGENT_L_OPT -l0" >>logs/$LOGFILE 2>&1 &
+        sleep 5
+        echo >>logs/$LOGFILE
+        echo "Starting tests, target: $TESTURL2 $TESTURL1" >>logs/$LOGFILE
+        if time -p java -ea \
+          -classpath java-bin \
+          org.eclipse.tm.internal.tcf.debug.tests.Main \
+          $TESTURL2 $TESTURL1 \
+          >>logs/$LOGFILE 2>&1
+        then
+          if [ -s logs/agent-$HOST.txt ] ; then
+            TEST_WARNING=1
+          fi
+        else
+          TEST_ERROR=1
+        fi
+        $SSH "killall agent" >>logs/$LOGFILE 2>&1
+        if [ -r logs/agent-$HOST.txt ] ; then
+          echo >>logs/$LOGFILE
+          echo "Agent log:" >>logs/$LOGFILE
+          cat logs/agent-$HOST.txt >>logs/$LOGFILE
+          rm logs/agent-$HOST.txt
+          echo "End of agent log" >>logs/$LOGFILE
+        fi
+      done
+    fi
+
   else
-    echo "<img src=\"../icons/cross.png\" title=\"Agent build failed\"/>" >>$HTML
+    BUILD_ERROR=1
+  fi
+
+  echo "<a href=\"$LOGFILE\">" >>$HTML
+  if [ ! -z "$BUILD_ERROR" ] ; then
+    echo "<img src=\"../icons/cross.png\" title=\"Build failed\"/>" >>$HTML
+  elif [ ! -z "$TEST_ERROR" ] ; then
+    echo "<img src=\"../icons/cancel.png\" title=\"Test failed\"/>" >>$HTML
+  elif [ ! -z "$TEST_WARNING" ] ; then
+    echo "<img src=\"../icons/error.png\" title=\"Agent log is not empty\"/>" >>$HTML
+  else
+    echo "<img src=\"../icons/accept.png\" title=\"OK\"/>" >>$HTML
   fi
   echo "</a>" >>$HTML
+
   sleep 5
   $SSH "cd $TRUNK/agent; rm -rf obj" >>logs/$LOGFILE 2>&1
+}
+
+function test_one_conf()
+{
+  CFLAGS=
+  build_and_start_server
+
+  local CFLAGS1="\
+    -DMEM_USAGE_FACTOR=1"
+
+  local CFLAGS2="\
+   -DENABLE_SymbolsProxy=1 \
+   -DENABLE_LineNumbersProxy=1"
+
+  local CFLAGS3="\
+   -DSERVICE_RunControl=0 \
+   -DSERVICE_Breakpoints=0 \
+   -DSERVICE_Memory=0 \
+   -DSERVICE_Registers=0 \
+   -DSERVICE_MemoryMap=0 \
+   -DSERVICE_StackTrace=0 \
+   -DSERVICE_Symbols=0 \
+   -DSERVICE_LineNumbers=0 \
+   -DSERVICE_Expressions=0"
+
+  local CFLAGS4="\
+    -DENABLE_DebugContext=0 \
+    -DENABLE_ELF=0 \
+    -DSERVICE_StackTrace=0 \
+    -DSERVICE_Breakpoints=0 \
+    -DSERVICE_Memory=0 \
+    -DSERVICE_Registers=0 \
+    -DSERVICE_RunControl=0 \
+    -DSERVICE_LineNumbers=0 \
+    -DSERVICE_Processes=0 \
+    -DSERVICE_Expressions=0 \
+    -DSERVICE_MemoryMap=0"
+
+  SEQ=1
+  for CFLAGS in "" "$CFLAGS1" "$CFLAGS2" "$CFLAGS3" "$CFLAGS4"
+  do
+    build_and_test_agent
+    SEQ=`expr $SEQ + 1`
+  done
+
+  stop_server
+
+  sleep 5
+}
+
+function test_one_opsys()
+{
+  echo "<td>" >>$HTML
+  echo "$OPSYS" >>$HTML
+  echo "<td>" >>$HTML
+  echo "$MACHINE" >>$HTML
+
+  for CONF in Debug Release
+  do
+    for CC in $CC_LIST
+    do
+      test_one_conf
+    done
+  done
 }
 
 function build_rpm()
@@ -452,67 +499,23 @@ do
 
     OPSYS=`$SSH "uname $OPSYS_FLAG"` || exit 1
     MACHINE=`$SSH "uname -m"` || exit 1
+    CC_LIST="gcc g++"
+
     $SSH "killall server" >/dev/null 2>&1
     $SSH "killall agent" >/dev/null 2>&1
 
     if [ "$OPSYS" = Cygwin ] ; then
+      if false # cygwin tests are disabled for now
+      then
+        test_one_opsys
+        echo "<tr>" >>$HTML
+        echo "<td colspan=\"4\">" >>$HTML
+      fi
       OPSYS=Windows
-      echo "<td>" >>$HTML
-      echo "$OPSYS" >>$HTML
-      echo "<td>" >>$HTML
-      echo "$MACHINE" >>$HTML
-
-      for CONF in Debug Release
-      do
-        for CC in msvc msvc++
-        do
-
-          CFLAGS=
-          build_and_start_server
-
-          SEQ=1
-          for CFLAGS in "" "$CFLAGS1" "$CFLAGS2" "$CFLAGS3"
-          do
-            build_and_test_agent
-            SEQ=`expr $SEQ + 1`
-          done
-
-          stop_server
-
-          sleep 5
-        done
-      done
-
-      OPSYS=Cygwin
-      echo "<tr>" >>$HTML
-      echo "<td colspan=\"4\">" >>$HTML
+      CC_LIST="msvc msvc++"
     fi
 
-    echo "<td>" >>$HTML
-    echo "$OPSYS" >>$HTML
-    echo "<td>" >>$HTML
-    echo "$MACHINE" >>$HTML
-
-    for CONF in Debug Release
-    do
-      for CC in gcc g++
-      do
-
-        CFLAGS=
-        build_and_start_server
-
-        SEQ=1
-        for CFLAGS in "" "$CFLAGS1" "$CFLAGS2" "$CFLAGS3"
-        do
-          build_and_test_agent
-          SEQ=`expr $SEQ + 1`
-        done
-
-        stop_server
-
-        sleep 5
-      done
-    done
+    test_one_opsys
 
     build_rpm
 
@@ -535,5 +538,3 @@ echo "</table>" >>$HTML
 echo "<p>Finished at: `date`</p>" >>$HTML
 echo "</body>" >>$HTML
 echo "</html>" >>$HTML
-
-mv $HTML logs/index.html || exit 1
