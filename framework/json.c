@@ -125,7 +125,16 @@ void json_write_string(OutputStream * out, const char * str) {
     }
     else {
         write_stream(out, '"');
-        while (*str) json_write_char(out, *str++);
+        for (;;) {
+            unsigned char ch = (unsigned char)*str++;
+            while (ch >= ' ') {
+                if (ch == '"' || ch == '\\') write_stream(out, '\\');
+                write_stream(out, ch);
+                ch = (unsigned char)*str++;
+            }
+            if (ch == 0) break;
+            json_write_char(out, ch);
+        }
         write_stream(out, '"');
     }
 }
