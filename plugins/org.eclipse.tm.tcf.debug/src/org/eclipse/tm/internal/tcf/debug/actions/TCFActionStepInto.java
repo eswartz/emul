@@ -78,6 +78,10 @@ public abstract class TCFActionStepInto extends TCFAction implements IRunControl
     }
 
     private void runAction() {
+        if (aborted) {
+            exit(null);
+            return;
+        }
         if (state == null) {
             rc.addListener(this);
             state = getContextState();

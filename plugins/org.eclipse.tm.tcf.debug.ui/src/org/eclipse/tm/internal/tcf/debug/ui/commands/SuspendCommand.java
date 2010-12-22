@@ -19,6 +19,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.debug.core.commands.IDebugCommandRequest;
 import org.eclipse.debug.core.commands.IEnabledStateRequest;
 import org.eclipse.debug.core.commands.ISuspendHandler;
+import org.eclipse.tm.internal.tcf.debug.actions.TCFAction;
 import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModel;
@@ -57,6 +58,10 @@ public class SuspendCommand implements ISuspendHandler {
                         }
                         if (ctx == null) {
                             node = node.getParent();
+                        }
+                        else if (model.getActiveAction(ctx.getID()) != null) {
+                            res = true;
+                            break;
                         }
                         else if (ctx.isContainer()) {
                             if (ctx.canSuspend()) res = true;
@@ -108,11 +113,13 @@ public class SuspendCommand implements ISuspendHandler {
                 for (Iterator<IRunControl.RunControlContext> i = set.iterator(); i.hasNext();) {
                     IRunControl.RunControlContext ctx = i.next();
                     model.getLaunch().removeContextActions(ctx.getID());
+                    final TCFAction action = model.getActiveAction(ctx.getID());
+                    if (action != null) action.abort();
                     cmds.add(ctx.suspend(new IRunControl.DoneCommand() {
                         public void doneCommand(IToken token, Exception error) {
                             assert cmds.contains(token);
                             cmds.remove(token);
-                            if (error != null) {
+                            if (error != null && action == null) {
                                 monitor.setStatus(new Status(IStatus.ERROR,
                                         Activator.PLUGIN_ID, IStatus.OK, "Cannot suspend: " + error.getLocalizedMessage(), error));
                             }

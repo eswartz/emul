@@ -30,11 +30,17 @@ public abstract class TCFAction implements Runnable {
     protected final TCFLaunch launch;
     protected final String ctx_id;
 
+    protected boolean aborted;
+
     public TCFAction(TCFLaunch launch, String ctx_id) {
         assert Protocol.isDispatchThread();
         this.launch = launch;
         this.ctx_id = ctx_id;
         launch.addContextAction(this);
+    }
+
+    public void abort() {
+        aborted = true;
     }
 
     public String getContextID() {
