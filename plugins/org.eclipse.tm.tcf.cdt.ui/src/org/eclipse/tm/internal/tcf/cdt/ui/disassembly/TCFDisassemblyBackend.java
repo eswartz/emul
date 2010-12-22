@@ -1,8 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2010 Wind River Systems, Inc. and others. All rights reserved.
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License v1.0 which accompanies this distribution,
- * and is available at http://www.eclipse.org/legal/epl-v10.html
+ * Copyright (c) 2010 Wind River Systems, Inc. and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
  * 
  * Contributors:
  *     Wind River Systems - initial API and implementation
@@ -12,6 +13,7 @@ package org.eclipse.tm.internal.tcf.cdt.ui.disassembly;
 import static org.eclipse.cdt.debug.internal.ui.disassembly.dsf.DisassemblyUtils.DEBUG;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -61,6 +63,7 @@ import org.eclipse.tm.tcf.services.IMemory;
 import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.services.IRunControl.RunControlContext;
 import org.eclipse.tm.tcf.services.IRunControl.RunControlListener;
+import org.eclipse.tm.tcf.services.ISymbols;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 import org.eclipse.tm.tcf.util.TCFTask;
 
@@ -71,7 +74,28 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
         BigInteger start;
         BigInteger end;
     }
-
+    private static class FunctionOffset {
+        static final FunctionOffset NONE = new FunctionOffset(null, null);
+        String name;
+        BigInteger offset;
+        FunctionOffset(String name, BigInteger offset) {
+            this.name = name;
+            this.offset = offset;
+        }
+        @Override
+        public String toString() {
+            if (name == null || name.length() == 0) {
+                return "";
+            }
+            if (isZeroOffset()) {
+                return name;
+            }
+            return name + '+' + offset.toString();
+        }
+        boolean isZeroOffset() {
+            return offset == null || offset.compareTo(BigInteger.ZERO) == 0;
+        }
+    }
     private class TCFLaunchListener implements ILaunchesListener {
 
         public void launchesRemoved(ILaunch[] launches) {
@@ -474,7 +498,7 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
 
     public void retrieveDisassembly(final BigInteger startAddress,
             BigInteger endAddress, String file, int lineNumber, int lines,
-            final boolean mixed, boolean showSymbols, boolean showDisassembly,
+            final boolean mixed, final boolean showSymbols, boolean showDisassembly,
             final int linesHint) {
         final TCFNodeExecContext execContext = fExecContext;
         if (execContext == null || execContext.isDisposed()) {
@@ -494,77 +518,129 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
                 }
                 final IChannel channel = execContext.getChannel();
                 IDisassembly disass = channel.getRemoteService(IDisassembly.class);
-                if (disass != null) {
-                    TCFDataCache<IMemory.MemoryContext> cache = execContext.getMemoryContext();
-                    if (!cache.validate(this)) return;
-                    final IMemory.MemoryContext mem = cache.getData();
-                    if (mem == null) {
-                        fCallback.setUpdatePending(false);
-                        return;
-                    }
-                    final String contextId = mem.getID();
-                    Map<String, Object> params = new HashMap<String, Object>();
-                    disass.disassemble(contextId, startAddress, linesHint*4, params, new DoneDisassemble() {
-                        public void doneDisassemble(IToken token, final Throwable error,
-                                final IDisassemblyLine[] disassembly) {
-                            if (execContext != fExecContext) {
-                                return;
-                            }
-                            if (error != null) {
-                                fCallback.asyncExec(new Runnable() {
-                                    public void run() {
-                                        if (modCount == getModCount()) {
-                                            fCallback.insertError(startAddress, error.toString());
-                                            fCallback.setUpdatePending(false);
-                                        }
-                                    }
-                                });
-                            } else {
-                                ILineNumbers lineNumbers = null;
-                                if (mixed) {
-                                    lineNumbers = channel.getRemoteService(ILineNumbers.class);
-                                }
-                                if (lineNumbers == null) {
-                                    fCallback.asyncExec(new Runnable() {
-                                        public void run() {
-                                            insertDisassembly(modCount, startAddress, disassembly, null);
-                                        }
-                                    });
-                                } else {
-                                    AddressRange range = getAddressRange(disassembly);
-                                    lineNumbers.mapToSource(contextId, range.start, range.end, new DoneMapToSource() {
-                                        public void doneMapToSource(IToken token, Exception error, final CodeArea[] areas) {
-                                            if (error != null) {
-                                                Activator.log(error);
-                                                fCallback.asyncExec(new Runnable() {
-                                                    public void run() {
-                                                        insertDisassembly(modCount, startAddress, disassembly, null);
-                                                    }
-                                                });
-                                            } else {
-                                                fCallback.asyncExec(new Runnable() {
-                                                    public void run() {
-                                                        insertDisassembly(modCount, startAddress, disassembly, areas);
-                                                    }
-                                                });
-                                            }
-                                        }
-                                    });
-                                }
-                            }
-                        }
-
-                        private AddressRange getAddressRange(IDisassemblyLine[] lines) {
-                            AddressRange range = new AddressRange();
-                            range.start = toBigInteger(lines[0].getAddress());
-                            IDisassemblyLine lastLine = lines[lines.length-1];
-                            range.end = toBigInteger(lastLine.getAddress()).add(BigInteger.valueOf(lastLine.getSize()));
-                            return range;
-                        }
-                    });
-                } else {
+                if (disass == null) {
                     fCallback.setUpdatePending(false);
+                    return;
                 }
+                TCFDataCache<IMemory.MemoryContext> cache = execContext.getMemoryContext();
+                if (!cache.validate(this)) return;
+                final IMemory.MemoryContext mem = cache.getData();
+                if (mem == null) {
+                    fCallback.setUpdatePending(false);
+                    return;
+                }
+                final String contextId = mem.getID();
+                Map<String, Object> params = new HashMap<String, Object>();
+                disass.disassemble(contextId, startAddress, linesHint*4, params, new DoneDisassemble() {
+                    public void doneDisassemble(IToken token, final Throwable error,
+                            final IDisassemblyLine[] disassembly) {
+                        if (execContext != fExecContext) {
+                            return;
+                        }
+                        if (error != null) {
+                            fCallback.asyncExec(new Runnable() {
+                                public void run() {
+                                    if (modCount == getModCount()) {
+                                        fCallback.insertError(startAddress, error.toString());
+                                        fCallback.setUpdatePending(false);
+                                    }
+                                }
+                            });
+                            return;
+                        }
+                        doneGetDisassembly(disassembly);
+                    }
+
+                    private void doneGetDisassembly(final IDisassemblyLine[] disassembly) {
+                        if (!showSymbols) {
+                            doneGetSymbols(disassembly, null);
+                            return;
+                        }
+                        final ISymbols symbols = channel.getRemoteService(ISymbols.class);
+                        if (symbols == null) {
+                            doneGetSymbols(disassembly, null);
+                            return;
+                        }
+                        final ArrayList<ISymbols.Symbol> symbolList = new ArrayList<ISymbols.Symbol>();
+                        final int[] idx = { 0 };
+                        IDisassemblyLine line = disassembly[idx[0]];
+                        Number address = line.getAddress();
+                        symbols.findByAddr(contextId, address, new ISymbols.DoneFind() {
+                            ISymbols.DoneFind doneFind = this;
+                            public void doneFind(IToken token, Exception error, String symbol_id) {
+                                if (error == null && symbol_id != null) {
+                                    symbols.getContext(symbol_id, new ISymbols.DoneGetContext() {
+                                        public void doneGetContext(IToken token, Exception error, ISymbols.Symbol context) {
+                                            BigInteger nextAddress = null;
+                                            if (error == null && context != null) {
+                                                if (context.getTypeClass().equals(ISymbols.TypeClass.function)) {
+                                                    symbolList.add(context);
+                                                    nextAddress = toBigInteger(context.getAddress()).add(BigInteger.valueOf(context.getSize()));
+                                                }
+                                            }
+                                            findNextSymbol(nextAddress);
+                                        }
+                                    });
+                                    return;
+                                }
+                                findNextSymbol(null);
+                            }
+                            private void findNextSymbol(BigInteger nextAddress) {
+                                while (++idx[0] < disassembly.length) {
+                                    BigInteger instrAddress = toBigInteger(disassembly[idx[0]].getAddress());
+                                    if (nextAddress == null) {
+                                        nextAddress = instrAddress;
+                                    } else if (instrAddress.compareTo(nextAddress) < 0) {
+                                        continue;
+                                    }
+                                    symbols.findByAddr(contextId, instrAddress, doneFind);
+                                    return;
+                                }
+                                ISymbols.Symbol[] functionSymbols = 
+                                    (ISymbols.Symbol[]) symbolList.toArray(new ISymbols.Symbol[symbolList.size()]);
+                                doneGetSymbols(disassembly, functionSymbols);
+                            }
+                        });
+                    }
+                    
+                    private void doneGetSymbols(final IDisassemblyLine[] disassembly, final ISymbols.Symbol[] symbols) {
+                        ILineNumbers lineNumbers = null;
+                        if (mixed) {
+                            lineNumbers = channel.getRemoteService(ILineNumbers.class);
+                        }
+                        if (lineNumbers == null) {
+                            doneGetLineNumbers(disassembly, symbols, null);
+                        } else {
+                            AddressRange range = getAddressRange(disassembly);
+                            lineNumbers.mapToSource(contextId, range.start, range.end, new DoneMapToSource() {
+                                public void doneMapToSource(IToken token, Exception error, final CodeArea[] areas) {
+                                    if (error != null) {
+                                        Activator.log(error);
+                                        doneGetLineNumbers(disassembly, symbols, null);
+                                    } else {
+                                        doneGetLineNumbers(disassembly, symbols, areas);
+                                    }
+                                }
+                            });
+                        }
+                    }
+                    
+                    private void doneGetLineNumbers( final IDisassemblyLine[] disassembly, final ISymbols.Symbol[] symbols, final CodeArea[] areas) {
+                        fCallback.asyncExec(new Runnable() {
+                            public void run() {
+                                insertDisassembly(modCount, startAddress, disassembly, symbols, areas);
+                            }
+                        });
+                    }
+
+                    private AddressRange getAddressRange(IDisassemblyLine[] lines) {
+                        AddressRange range = new AddressRange();
+                        range.start = toBigInteger(lines[0].getAddress());
+                        IDisassemblyLine lastLine = lines[lines.length-1];
+                        range.end = toBigInteger(lastLine.getAddress()).add(BigInteger.valueOf(lastLine.getSize()));
+                        return range;
+                    }
+                });
             }
         });
     }
@@ -573,7 +649,7 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
         return ((IDocumentExtension4) fCallback.getDocument()).getModificationStamp();
     }
 
-    protected final void insertDisassembly(long modCount, BigInteger startAddress, IDisassemblyLine[] instructions, CodeArea[] codeAreas) {
+    protected final void insertDisassembly(long modCount, BigInteger startAddress, IDisassemblyLine[] instructions, ISymbols.Symbol[] symbols, CodeArea[] codeAreas) {
         if (!fCallback.hasViewer() || fExecContext == null) {
             return;
         }
@@ -623,11 +699,8 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
                         continue;
 //                    }
                 }
-                // determine instruction byte length
-                int instrLength= instruction.getSize();
-                Map<String, Object>[] instrAttrs = instruction.getInstruction();
-                String instr = formatInstruction(instrAttrs);
-                
+
+                // insert source
                 String sourceFile = null;
                 int sourceLine = -1;
                 CodeArea area = findCodeArea(address, codeAreas);
@@ -645,7 +718,18 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
                     p = fCallback.insertSource(p, address, sourceFile, sourceLine);
                 }
 
-                p = fCallback.getDocument().insertDisassemblyLine(p, address, instrLength, "", instr, sourceFile, sourceLine);
+                // insert symbol label
+                FunctionOffset functionOffset = getFunctionOffset(address, symbols);
+                if (functionOffset.name != null && functionOffset.isZeroOffset()) {
+                    p = fCallback.getDocument().insertLabel(p, address, functionOffset.name, true);
+                }
+
+                // insert instruction
+                int instrLength= instruction.getSize();
+                Map<String, Object>[] instrAttrs = instruction.getInstruction();
+                String instr = formatInstruction(instrAttrs);
+                
+                p = fCallback.getDocument().insertDisassemblyLine(p, address, instrLength, functionOffset.toString(), instr, sourceFile, sourceLine);
                 if (p == null) {
                     break;
                 }
@@ -666,6 +750,27 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
             }
         }
         return;
+    }
+
+    private FunctionOffset getFunctionOffset(BigInteger address, ISymbols.Symbol[] symbols) {
+        if (symbols != null) {
+            for (ISymbols.Symbol symbol : symbols) {
+                BigInteger symbolAddress = toBigInteger(symbol.getAddress());
+                BigInteger offset = address.subtract(symbolAddress);
+                switch (offset.compareTo(BigInteger.ZERO)) {
+                case 0:
+                    return new FunctionOffset(symbol.getName(), BigInteger.ZERO);
+                case 1:
+                    if (offset.compareTo(BigInteger.valueOf(symbol.getSize())) < 0) {
+                        return new FunctionOffset(symbol.getName(), offset);
+                    }
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
+        return FunctionOffset.NONE;
     }
 
     private CodeArea findCodeArea(BigInteger address, CodeArea[] codeAreas) {
