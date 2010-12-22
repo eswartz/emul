@@ -35,6 +35,7 @@
 #include <framework/peer.h>
 #include <framework/asyncreq.h>
 #include <framework/inputbuf.h>
+#include <framework/outputbuf.h>
 
 #define BUF_SIZE (128 * MEM_USAGE_FACTOR)
 #define CHANNEL_MAGIC 0x52376532
@@ -56,18 +57,19 @@ struct ChannelPIPE {
     int fd_inp;
     int fd_out;
     ServerInstance * server;
-    int read_pending;       /* Read request is pending */
 
     /* Input stream buffer */
     InputBuf ibuf;
 
     /* Output stream state */
-    unsigned char obuf[BUF_SIZE];
-    int out_errno;
     int out_flush_cnt;
+    unsigned char obuf[BUF_SIZE];
+    OutputQueue out_queue;
+    AsyncReqInfo out_req;
 
     /* Async read request */
-    AsyncReqInfo rdreq;
+    AsyncReqInfo rd_req;
+    int read_pending;
 };
 
 struct ServerInstance {
@@ -94,10 +96,14 @@ struct ServerPIPE {
 #define server2pipe(A)      ((ServerPIPE *)((char *)(A) - offsetof(ServerPIPE, serv)))
 #define servlink2pipe(A)    ((ServerPIPE *)((char *)(A) - offsetof(ServerPIPE, servlink)))
 #define ibuf2pipe(A)        ((ChannelPIPE *)((char *)(A) - offsetof(ChannelPIPE, ibuf)))
+#define obuf2pipe(A)        ((ChannelPIPE *)((char *)(A) - offsetof(ChannelPIPE, out_queue)))
 
 static LINK server_list;
 static void pipe_read_done(void * x);
 static void handle_channel_msg(void * x);
+
+static void close_input_pipe(ChannelPIPE * c);
+static void close_output_pipe(ChannelPIPE * c);
 
 static void delete_channel(ChannelPIPE * c) {
     trace(LOG_PROTOCOL, "Deleting channel %#lx", c);
@@ -106,7 +112,10 @@ static void delete_channel(ChannelPIPE * c) {
     assert(c->magic == CHANNEL_MAGIC);
     assert(c->read_pending == 0);
     assert(c->ibuf.handling_msg != HandleMsgTriggered);
+    assert(output_queue_is_empty(&c->out_queue));
+    output_queue_clear(&c->out_queue);
     channel_clear_broadcast_group(&c->chan);
+    close_input_pipe(c);
     c->magic = 0;
     loc_free(c->ibuf.buf);
     loc_free(c->chan.peer_name);
@@ -140,30 +149,50 @@ static int pipe_is_closed(Channel * channel) {
     return c->chan.state == ChannelStateDisconnected;
 }
 
+static void done_write_request(void * args) {
+    ChannelPIPE * c = (ChannelPIPE *)((AsyncReqInfo *)args)->client_data;
+    int size = 0;
+    int error = 0;
+
+    assert(args == &c->out_req);
+    if (c->out_req.u.fio.rval < 0) error = c->out_req.error;
+    else size = c->out_req.u.fio.rval;
+    output_queue_done(&c->out_queue, error, size);
+
+    if (output_queue_is_empty(&c->out_queue) &&
+        c->chan.state == ChannelStateDisconnected) close_output_pipe(c);
+
+    pipe_unlock(&c->chan);
+}
+
+static void post_write_request(OutputBuffer * bf) {
+    ChannelPIPE * c = obuf2pipe(bf->queue);
+    c->out_req.client_data = c;
+    c->out_req.done = done_write_request;
+    c->out_req.type = AsyncReqWrite;
+    c->out_req.u.fio.fd = c->fd_out;
+    c->out_req.u.fio.bufp = bf->buf + bf->buf_pos;
+    c->out_req.u.fio.bufsz = bf->buf_len - bf->buf_pos;
+    async_req_post(&c->out_req);
+    pipe_lock(&c->chan);
+}
+
+static void create_write_request(ChannelPIPE * c, const void * buf, size_t size) {
+    if (c->chan.state == ChannelStateDisconnected) return;
+    c->out_queue.post_io_request = post_write_request;
+    output_queue_add(&c->out_queue, buf, size);
+}
+
 static void pipe_flush(ChannelPIPE * c) {
     unsigned char * p = c->obuf;
+    unsigned char * e = c->chan.out.cur;
     assert(is_dispatch_thread());
     assert(c->magic == CHANNEL_MAGIC);
     assert(c->chan.out.end == p + sizeof(c->obuf));
-    if (c->chan.out.cur == p) return;
-    assert(c->chan.out.cur >= p && c->chan.out.cur <= p + sizeof(c->obuf));
-    if (c->chan.state == ChannelStateDisconnected || c->out_errno) {
-        c->chan.out.cur = p;
-        return;
-    }
-    while (p < c->chan.out.cur) {
-        int wr = write(c->fd_out, p, c->chan.out.cur - p);
-        if (wr < 0) {
-            int err = errno;
-            trace(LOG_PROTOCOL, "Can't send() on channel %#lx: %d %s", c, err, errno_to_str(err));
-            c->out_errno = err;
-            c->chan.out.cur = c->obuf;
-            return;
-        }
-        p += wr;
-    }
-    assert(p == c->chan.out.cur);
-    c->chan.out.cur = c->obuf;
+    if (e == p) return;
+    assert(e >= p && e <= p + sizeof(c->obuf));
+    create_write_request(c, p, e - p);
+    c->chan.out.cur = p;
 }
 
 static void pipe_flush_event(void * x) {
@@ -181,7 +210,6 @@ static void pipe_write_stream(OutputStream * out, int byte) {
     ChannelPIPE * c = channel2pipe(out2channel(out));
     assert(c->magic == CHANNEL_MAGIC);
     if (c->chan.state == ChannelStateDisconnected) return;
-    if (c->out_errno) return;
     if (c->chan.out.cur == c->chan.out.end) pipe_flush(c);
     if (byte < 0 || byte == ESC) {
         char esc = 0;
@@ -191,7 +219,6 @@ static void pipe_write_stream(OutputStream * out, int byte) {
         else if (byte == MARKER_EOS) esc = 2;
         else assert(0);
         if (c->chan.state == ChannelStateDisconnected) return;
-        if (c->out_errno) return;
         if (c->chan.out.cur == c->chan.out.end) pipe_flush(c);
         *c->chan.out.cur++ = esc;
         if (byte == MARKER_EOM && c->out_flush_cnt < 8) {
@@ -205,8 +232,6 @@ static void pipe_write_stream(OutputStream * out, int byte) {
 
 static void pipe_write_block_stream(OutputStream * out, const char * bytes, size_t size) {
     size_t cnt = 0;
-
-#if ENABLE_ZeroCopy
     ChannelPIPE * c = channel2pipe(out2channel(out));
 
     if (out->supports_zero_copy && size > 32) {
@@ -226,22 +251,9 @@ static void pipe_write_block_stream(OutputStream * out, const char * bytes, size
         /* We need to flush the buffer then send our data */
         pipe_flush(c);
 
-        if (c->chan.state == ChannelStateDisconnected) return;
-        if (c->out_errno) return;
-
-        while (cnt < size) {
-            int wr = write(c->fd_out, bytes + cnt, size - cnt);
-            if (wr < 0) {
-                int err = errno;
-                trace(LOG_PROTOCOL, "Can't send() on channel %#lx: %d %s", c, err, errno_to_str(err));
-                c->out_errno = err;
-                return;
-            }
-            cnt += wr;
-        }
+        create_write_request(c, bytes, size);
         return;
     }
-#endif /* ENABLE_ZeroCopy */
 
     while (cnt < size) write_stream(out, (unsigned char)bytes[cnt++]);
 }
@@ -268,9 +280,9 @@ static void pipe_post_read(InputBuf * ibuf, unsigned char * buf, int size) {
 
     if (c->read_pending) return;
     c->read_pending = 1;
-    c->rdreq.u.fio.bufp = buf;
-    c->rdreq.u.fio.bufsz = size;
-    async_req_post(&c->rdreq);
+    c->rd_req.u.fio.bufp = buf;
+    c->rd_req.u.fio.bufsz = size;
+    async_req_post(&c->rd_req);
 }
 
 static void pipe_wait_read(InputBuf * ibuf) {
@@ -279,8 +291,8 @@ static void pipe_wait_read(InputBuf * ibuf) {
     /* Wait for read to complete */
     assert(c->lock_cnt > 0);
     assert(c->read_pending != 0);
-    cancel_event(pipe_read_done, &c->rdreq, 1);
-    pipe_read_done(&c->rdreq);
+    cancel_event(pipe_read_done, &c->rd_req, 1);
+    pipe_read_done(&c->rd_req);
 }
 
 static int pipe_read_stream(InputStream * inp) {
@@ -316,8 +328,9 @@ static void send_eof_and_close(Channel * channel, int err) {
     write_errno(&c->chan.out, err);
     write_stream(&c->chan.out, MARKER_EOM);
     pipe_flush(c);
-    c->chan.state = ChannelStateDisconnected;
     pipe_post_read(&c->ibuf, c->obuf, sizeof(c->obuf));
+    c->chan.state = ChannelStateDisconnected;
+    if (output_queue_is_empty(&c->out_queue)) close_output_pipe(c);
     notify_channel_closed(channel);
     if (channel->disconnected) {
         channel->disconnected(channel);
@@ -342,7 +355,7 @@ static void handle_channel_msg(void * x) {
     has_msg = ibuf_start_message(&c->ibuf);
     if (has_msg <= 0) {
         if (has_msg < 0 && c->chan.state != ChannelStateDisconnected) {
-            trace(LOG_PROTOCOL, "Socket is shutdown by remote peer, channel %#lx %s", c, c->chan.peer_name);
+            trace(LOG_PROTOCOL, "Pipe is close by remote peer, channel %#lx %s", c, c->chan.peer_name);
             channel_close(&c->chan);
         }
     }
@@ -390,8 +403,6 @@ static int channel_get_message_count(Channel * channel) {
     return c->ibuf.message_count;
 }
 
-static void pipe_closed(ChannelPIPE * c);
-
 static void pipe_read_done(void * x) {
     AsyncReqInfo * req = (AsyncReqInfo *)x;
     ChannelPIPE * c = (ChannelPIPE *)req->client_data;
@@ -402,7 +413,7 @@ static void pipe_read_done(void * x) {
     assert(c->read_pending != 0);
     assert(c->lock_cnt > 0);
     c->read_pending = 0;
-    len = c->rdreq.u.fio.rval;
+    len = c->rd_req.u.fio.rval;
     if (req->error) {
         if (c->chan.state != ChannelStateDisconnected) {
             trace(LOG_ALWAYS, "Can't read from pipe: %s", errno_to_str(req->error));
@@ -416,9 +427,6 @@ static void pipe_read_done(void * x) {
         pipe_post_read(&c->ibuf, c->obuf, sizeof(c->obuf));
     }
     else {
-        pipe_closed(c);
-        c->fd_out = -1;
-        c->fd_inp = -1;
         pipe_unlock(&c->chan);
     }
 }
@@ -471,10 +479,11 @@ static ChannelPIPE * create_channel(int fd_inp, int fd_out, ServerInstance * ser
     c->fd_out = fd_out;
     c->lock_cnt = 1;
     c->server = server;
-    c->rdreq.done = pipe_read_done;
-    c->rdreq.client_data = c;
-    c->rdreq.type = AsyncReqRead;
-    c->rdreq.u.fio.fd = fd_inp;
+    c->rd_req.done = pipe_read_done;
+    c->rd_req.client_data = c;
+    c->rd_req.type = AsyncReqRead;
+    c->rd_req.u.fio.fd = fd_inp;
+    output_queue_ini(&c->out_queue);
     return c;
 }
 
@@ -618,10 +627,11 @@ static void pipe_client_connected(void * args) {
     }
 }
 
-static void pipe_closed(ChannelPIPE * c) {
+static void close_input_pipe(ChannelPIPE * c) {
+    assert(c->fd_out < 0);
+    assert(c->fd_inp > 0);
     if (c->server != NULL) {
         ServerInstance * ins = c->server;
-        check_error_win32(DisconnectNamedPipe(ins->pipe));
         close(ins->fd_inp);
         ins->fd_inp = -1;
         async_req_post(&ins->req);
@@ -629,8 +639,21 @@ static void pipe_closed(ChannelPIPE * c) {
     }
     else {
         close(c->fd_inp);
+    }
+    c->fd_inp = -1;
+}
+
+static void close_output_pipe(ChannelPIPE * c) {
+    assert(c->fd_out > 0);
+    assert(c->fd_inp > 0);
+    if (c->server != NULL) {
+        ServerInstance * ins = c->server;
+        check_error_win32(DisconnectNamedPipe(ins->pipe));
+    }
+    else {
         close(c->fd_out);
     }
+    c->fd_out = -1;
 }
 
 static void register_server(ServerPIPE * s) {
@@ -649,6 +672,7 @@ static void register_server(ServerPIPE * s) {
     if (strncmp(path, DEFAULT_PIPE_DIR, i) != 0) i = 0;
     snprintf(id, sizeof(id), "%s:%s", transport, path + i);
     for (i = 0; id[i]; i++) {
+        /* Character '/' is prohibited in a peer ID string */
         if (id[i] == '/') id[i] = '|';
     }
     peer_server_addprop(ps2, loc_strdup("ID"), loc_strdup(id));
@@ -658,7 +682,10 @@ static void register_server(ServerPIPE * s) {
 
 #else
 
-static void pipe_closed(ChannelPIPE * c) {
+static void close_output_pipe(ChannelPIPE * c) {
+}
+
+static void close_input_pipe(ChannelPIPE * c) {
 }
 
 #endif
