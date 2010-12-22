@@ -328,10 +328,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             for (String id : suspended_ids) {
                 TCFNode node = getNode(id);
                 action_results.remove(id);
-                if (active_actions.get(id) != null) {
-                    setDebugViewSelection(node, "Action");
-                    action_cnt++;
-                }
+                if (active_actions.get(id) != null) action_cnt++;
                 if (node instanceof TCFNodeExecContext) {
                     ((TCFNodeExecContext)node).onContainerSuspended();
                 }
@@ -401,7 +398,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 exe.onContextSuspended(pc, reason, params);
             }
             launch_node.onAnyContextSuspendedOrChanged();
-            setDebugViewSelection(node, reason);
+            if (active_actions.get(context) == null) setDebugViewSelection(node, reason);
         }
     };
 
@@ -507,7 +504,9 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         }
 
         public void onContextActionDone(TCFAction action) {
-            active_actions.remove(action.getContextID());
+            String id = action.getContextID();
+            active_actions.remove(id);
+            setDebugViewSelection(id2node.get(id), "Action");
             for (IPresentationContext ctx : action_deltas.keySet()) {
                 Map<TCFNode,Integer> deltas = action_deltas.get(ctx);
                 TCFModelProxy proxy = model_proxies.get(ctx);
@@ -696,7 +695,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         Activator.log(bf.toString(), x);
     }
 
-    TCFAction getActiveAction(String id) {
+    public TCFAction getActiveAction(String id) {
         return active_actions.get(id);
     }
 
@@ -1047,13 +1046,11 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         Protocol.invokeLater(new Runnable() {
             public void run() {
                 if (cnt != display_source_generation) return;
-                TCFNodeExecContext exec_ctx = null;
                 TCFNodeStackFrame stack_frame = null;
                 if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
-                    // TODO: to reduce flicker, delay displaySource() requests for a context that has active run control action
                     if (element instanceof TCFNodeExecContext) {
-                        exec_ctx = (TCFNodeExecContext)element;
-                        if (!exec_ctx.disposed) {
+                        TCFNodeExecContext exec_ctx = (TCFNodeExecContext)element;
+                        if (!exec_ctx.disposed && active_actions.get(exec_ctx.id) == null) {
                             TCFDataCache<TCFContextState> state_cache = exec_ctx.getState();
                             if (!state_cache.validate(this)) return;
                             TCFContextState state_data = state_cache.getData();
@@ -1066,8 +1063,8 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                     }
                     else if (element instanceof TCFNodeStackFrame) {
                         TCFNodeStackFrame f = (TCFNodeStackFrame)element;
-                        exec_ctx = (TCFNodeExecContext)f.parent;
-                        if (!f.disposed && !exec_ctx.disposed) {
+                        TCFNodeExecContext exec_ctx = (TCFNodeExecContext)f.parent;
+                        if (!f.disposed && !exec_ctx.disposed && active_actions.get(exec_ctx.id) == null) {
                             TCFDataCache<TCFContextState> state_cache = exec_ctx.getState();
                             if (!state_cache.validate(this)) return;
                             TCFContextState state_data = state_cache.getData();
