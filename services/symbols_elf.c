@@ -424,7 +424,7 @@ static int find_by_addr_in_sym_table(DWARFCache * cache, ContextAddress addr, Sy
             SymbolInfo sym_info;
             unpack_elf_symbol_info(tbl, n, &sym_info);
             if (syminfo2address(prs, &sym_info, &sym_addr) == 0 &&
-                    sym_addr <= addr && sym_addr + (ContextAddress)sym_info.mSize > addr) {
+                    (sym_addr == addr || sym_addr <= addr && sym_addr + (ContextAddress)sym_info.mSize > addr)) {
                 Symbol * sym = alloc_symbol();
                 sym->frame = STACK_NO_FRAME;
                 sym->ctx = prs;
@@ -461,7 +461,7 @@ static int find_by_addr_in_unit(ObjectInfo * obj, int level, ContextAddress addr
                 if (get_num_prop(obj, AT_low_pc, &LowPC) && get_num_prop(obj, AT_high_pc, &HighPC)) {
                     if (LowPC <= addr && HighPC > addr) {
                         object2symbol(obj, res);
-                        return 0;
+                        return 1;
                     }
                     if (LowPC <= sym_ip && HighPC > sym_ip) {
                         return find_by_addr_in_unit(obj->mChildren, level + 1, addr, res);
@@ -475,63 +475,61 @@ static int find_by_addr_in_unit(ObjectInfo * obj, int level, ContextAddress addr
             {
                 U8_T lc = 0;
                 U8_T sz = 0;
-                if (!get_num_prop(obj, AT_location, &lc)) return -1;
-                if (!get_num_prop(obj, AT_byte_size, &sz)) return -1;
+                if (!get_num_prop(obj, AT_location, &lc)) exception(errno);
+                if (!get_num_prop(obj, AT_byte_size, &sz)) exception(errno);
                 if (lc <= addr && lc + sz > addr) {
                     object2symbol(obj, res);
-                    return 0;
+                    return 1;
                 }
             }
             break;
         }
         obj = obj->mSibling;
     }
-    errno = ERR_SYM_NOT_FOUND;
-    return -1;
+    return 0;
+}
+
+static int find_by_addr_in_sym_tables(ContextAddress addr, Symbol ** res) {
+    int error = 0;
+    int found = 0;
+    ELF_File * file = elf_list_first(sym_ctx, addr, addr + 1);
+    if (file == NULL) error = errno;
+    while (error == 0 && file != NULL) {
+        Trap trap;
+        if (set_trap(&trap)) {
+            DWARFCache * cache = get_dwarf_cache(file);
+            found = find_by_addr_in_sym_table(cache, addr, res);
+            clear_trap(&trap);
+        }
+        else {
+            error = trap.error;
+            break;
+        }
+        if (found) break;
+        file = elf_list_next(sym_ctx);
+        if (file == NULL) error = errno;
+    }
+    elf_list_done(sym_ctx);
+    if (error) exception(error);
+    return found;
 }
 
 int find_symbol_by_addr(Context * ctx, int frame, ContextAddress addr, Symbol ** res) {
     Trap trap;
+    int found = 0;
     UnitAddressRange * range = NULL;
     if (!set_trap(&trap)) return -1;
     if (frame == STACK_TOP_FRAME && (frame = get_top_frame(ctx)) < 0) exception(errno);
     if (get_sym_context(ctx, frame) < 0) exception(errno);
     range = elf_find_unit(sym_ctx, addr, addr + 1, NULL);
-    if (range != NULL) {
-        /* The address points into .text section of a compilation unit */
-        if (find_by_addr_in_unit(range->mUnit->mObject->mChildren, 0, addr, res) < 0) exception(errno);
+    if (range != NULL) found = find_by_addr_in_unit(range->mUnit->mObject->mChildren, 0, addr, res);
+    if (!found) found = find_by_addr_in_sym_tables(addr, res);
+    if (!found && sym_ip != 0) {
+        /* Search in compilation unit that contains stack frame PC */
+        range = elf_find_unit(sym_ctx, sym_ip, sym_ip + 1, NULL);
+        if (range != NULL) found = find_by_addr_in_unit(range->mUnit->mObject->mChildren, 0, addr, res);
     }
-    else {
-        /* Search symbol tables */
-        int error = 0;
-        int found = 0;
-        ELF_File * file = elf_list_first(sym_ctx, addr, addr + 1);
-        if (file == NULL) error = errno;
-        while (error == 0 && file != NULL) {
-            Trap trap;
-            if (set_trap(&trap)) {
-                DWARFCache * cache = get_dwarf_cache(file);
-                found = find_by_addr_in_sym_table(cache, addr, res);
-                clear_trap(&trap);
-            }
-            else {
-                error = trap.error;
-                break;
-            }
-            if (found) break;
-            file = elf_list_next(sym_ctx);
-            if (file == NULL) error = errno;
-        }
-        elf_list_done(sym_ctx);
-        if (error) exception(error);
-        if (!found) {
-            /* Search in compilation unit that contains stack frame PC */
-            if (sym_ip == 0) exception(ERR_SYM_NOT_FOUND);
-            range = elf_find_unit(sym_ctx, sym_ip, sym_ip + 1, NULL);
-            if (range == NULL) exception(ERR_SYM_NOT_FOUND);
-            if (find_by_addr_in_unit(range->mUnit->mObject->mChildren, 0, addr, res) < 0) exception(errno);
-        }
-    }
+    if (!found) exception(ERR_SYM_NOT_FOUND);
     clear_trap(&trap);
     return 0;
 }
@@ -1084,6 +1082,10 @@ int get_symbol_type_class(const Symbol * sym, int * type_class) {
             obj = NULL;
             break;
         }
+    }
+    if (sym_info != NULL && sym_info->mType == STT_FUNC) {
+        *type_class = TYPE_CLASS_FUNCTION;
+        return 0;
     }
     *type_class = TYPE_CLASS_UNKNOWN;
     return 0;
