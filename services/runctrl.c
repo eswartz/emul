@@ -224,6 +224,7 @@ static void write_context_state(OutputStream * out, Context * ctx) {
     /* String: Reason */
     if (ext->intercepted_by_bp == 1) bp_ids = get_context_breakpoint_ids(ctx);
     if (bp_ids != NULL) reason = "Breakpoint";
+    else if (ctx->exception_description != NULL) reason = ctx->exception_description;
     else reason = context_suspend_reason(ctx);
     json_write_string(out, reason);
     write_stream(out, 0);
@@ -915,7 +916,7 @@ static void sync_run_state() {
                 list_add_last(&ext->link, &p);
             }
             else if (context_resume(ctx, ext->resume_mode, 0, 0) < 0) {
-                int error = errno;
+                int error = set_errno(errno, "Cannot resume");
                 ctx->signal = 0;
                 ctx->stopped = 1;
                 ctx->stopped_by_bp = 0;
@@ -933,7 +934,7 @@ static void sync_run_state() {
         ContextExtensionRC * ext = EXT(ctx);
         l = l->next;
         if (context_resume(ctx, ext->resume_mode, ext->step_range_start, ext->step_range_end) < 0) {
-            int error = errno;
+            int error = set_errno(errno, "Cannot resume");
             ctx->signal = 0;
             ctx->stopped = 1;
             ctx->stopped_by_bp = 0;
