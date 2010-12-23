@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.debug.core.ILaunch;
@@ -358,13 +359,13 @@ public class TCFAnnotationManager {
         }
     }
 
-    void removeStackFrameAnnotation(TCFModel model, String id) {
+    void removeStackFrameAnnotation(TCFModel model, Set<String> ids) {
         if (disposed) return;
         assert Thread.currentThread() == display.getThread();
         for (WorkbenchWindowInfo info : windows.values()) {
             for (Iterator<TCFAnnotation> i = info.annotations.iterator(); i.hasNext();) {
                 TCFAnnotation a = i.next();
-                if (a.model == model && a.exe_id.equals(id)) {
+                if (a.model == model && ids.contains(a.exe_id)) {
                     i.remove();
                     a.dispose();
                 }
