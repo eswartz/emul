@@ -151,6 +151,12 @@ public class TCFLocalAgent {
     }
 
     private static boolean isLocalAgent(IPeer p) {
+        String prot = p.getTransportName();
+        if (prot.equals("PIPE")) return true;
+        if (prot.equals("UNIX")) {
+            String port = p.getAttributes().get(IPeer.ATTR_IP_PORT);
+            return AGENT_PORT.equals(port);
+        }
         String host = p.getAttributes().get(IPeer.ATTR_IP_HOST);
         String port = p.getAttributes().get(IPeer.ATTR_IP_PORT);
         return AGENT_HOST.equals(host) && AGENT_PORT.equals(port);
