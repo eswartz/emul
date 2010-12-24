@@ -366,6 +366,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
         if (enabled != null && enabled.booleanValue() && bp_manager.isEnabled()) {
             m.put(IBreakpoints.PROP_ENABLED, enabled);
         }
+        if (file == null) file = (String)p.get("org.eclipse.cdt.debug.core.sourceHandle");
         if (file != null) {
             // Map file path to remote file system
             int i = file.lastIndexOf('/');
