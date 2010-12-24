@@ -273,11 +273,16 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     private final HashSet<String> removed_annotations = new HashSet<String>();
     private boolean removed_annotations_posted;
     private final Runnable removed_annotations_runnable = new Runnable() {
-        public synchronized void run() {
-            assert removed_annotations_posted;
-            annotation_manager.removeStackFrameAnnotation(TCFModel.this, removed_annotations);
-            removed_annotations.clear();
-            removed_annotations_posted = false;
+        public void run() {
+            HashSet<String> set = null;
+            synchronized (removed_annotations) {
+                assert removed_annotations_posted;
+                removed_annotations_posted = false;
+                if (removed_annotations.size() == 0) return;
+                set = new HashSet<String>(removed_annotations);
+                removed_annotations.clear();
+            }
+            annotation_manager.removeStackFrameAnnotation(TCFModel.this, set);
         }
     };
 
@@ -1163,7 +1168,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     /* Remove editor annotations for given executable context ID */
     private void removeAnnotation(String id) {
-        synchronized (removed_annotations_runnable) {
+        synchronized (removed_annotations) {
             removed_annotations.add(id);
             if (!removed_annotations_posted) {
                 display.asyncExec(removed_annotations_runnable);
