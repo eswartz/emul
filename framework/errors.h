@@ -120,6 +120,11 @@ extern int get_error_code(int no);
 extern ErrorReport * get_error_report(int no);
 
 /*
+ * Compare two error reports and return 1 if equal, return 0 if not.
+ */
+extern int compare_error_reports(ErrorReport * x, ErrorReport * y);
+
+/*
  * Create new instance of TCF error report.
  * Clients should call release_error_report() when done using it.
  */

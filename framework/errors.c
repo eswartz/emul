@@ -551,6 +551,40 @@ void release_error_report(ErrorReport * r) {
     }
 }
 
+int compare_error_reports(ErrorReport * x, ErrorReport * y) {
+    int i;
+    if (x == y) return 1;
+    if (x == NULL || y == NULL) return 0;
+    if (x->code != y->code) return 0;
+    if (x->format != y->format) {
+        if (x->format == NULL || y->format == NULL) return 0;
+        if (strcmp(x->format, y->format)) return 0;
+    }
+    if (x->param_cnt != y->param_cnt) return 0;
+    for (i = 0; i < x->param_cnt; i++) {
+        char * px = x->params[i];
+        char * py = y->params[i];
+        if (px != py) {
+            if (px == NULL || py == NULL) return 0;
+            if (strcmp(px, py)) return 0;
+        }
+    }
+    if (x->props != y->props) {
+        ErrorReportItem * px = x->props;
+        ErrorReportItem * py = x->props;
+        while (px != NULL || py  != NULL) {
+            if (px != py) {
+                if (px == NULL || py == NULL) return 0;
+                if (strcmp(px->name, py->name)) return 0;
+                if (strcmp(px->value, py->value)) return 0;
+            }
+            px = px->next;
+            py = py->next;
+        }
+    }
+    return 1;
+}
+
 #ifdef NDEBUG
 
 void check_error(int error) {
