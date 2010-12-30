@@ -163,10 +163,8 @@ RegisterDefinition regs_index[] = {
 #endif
 #define GRP5        0xff
 #define JMPN        0x25
-#define MOV_ESP00   0x89
-#define MOV_ESP01   0xe5
-#define MOV_ESP10   0x8b
-#define MOV_ESP11   0xec
+#define MOVE_mr     0x89
+#define MOVE_rm     0x8b
 #define REXW        0x48
 
 static int read_stack(Context * ctx, ContextAddress addr, void * buf, size_t size) {
@@ -230,8 +228,7 @@ static ContextAddress trace_jump(Context * ctx, ContextAddress addr) {
             dest = addr + 2 + disp08;
         }
         else if (instr == JMPD32) {
-            int disp32;
-            assert(sizeof(disp32) == 4);
+            int32_t disp32 = 0;
             if (context_read_mem(ctx, addr + 1, &disp32, 4) < 0) break;
             dest = addr + 5 + disp32;
         }
@@ -241,6 +238,16 @@ static ContextAddress trace_jump(Context * ctx, ContextAddress addr) {
             if (instr != JMPN) break;
             if (context_read_mem(ctx, addr + 2, &ptr, sizeof(ptr)) < 0) break;
             if (context_read_mem(ctx, ptr, &dest, sizeof(dest)) < 0) break;
+        }
+        else if (instr == MOVE_rm) {
+            unsigned char modrm = 0;
+            if (context_read_mem(ctx, addr + 1, &modrm, 1) < 0) break;
+            if (modrm == 0xff) {
+                dest = addr + 2;
+            }
+            else {
+                break;
+            }
         }
         else {
             break;
@@ -256,8 +263,8 @@ static int func_entry(unsigned char * code) {
     if (*code != PUSH_EBP) return 0;
     code++;
     if (*code == REXW) code++;
-    if (code[0] == MOV_ESP00 && code[1] == MOV_ESP01) return 1;
-    if (code[0] == MOV_ESP10 && code[1] == MOV_ESP11) return 1;
+    if (code[0] == MOVE_mr && code[1] == 0xe5) return 1;
+    if (code[0] == MOVE_rm && code[1] == 0xec) return 1;
     return 0;
 }
 
