@@ -52,11 +52,11 @@ static void event_context_created(Context * ctx, void * client_data) {
     handle = get_context_handle(ctx);
     assert(handle != NULL);
     assert(ctx->mem == ctx);
-    if (!SymInitialize(get_context_handle(ctx), SYM_SEARCH_PATH, FALSE)) {
+    if (!SymInitialize(handle, SYM_SEARCH_PATH, FALSE)) {
         set_win32_errno(GetLastError());
         trace(LOG_ALWAYS, "SymInitialize() error: %s", errno_to_str(errno));
     }
-    if (!SymLoadModule64(get_context_handle(ctx), get_context_file_handle(ctx),
+    if (!SymLoadModule64(handle, get_context_file_handle(ctx),
             NULL, NULL, get_context_base_address(ctx), 0)) {
         set_win32_errno(GetLastError());
         trace(LOG_ALWAYS, "SymLoadModule64() error: %s", errno_to_str(errno));
@@ -96,9 +96,16 @@ static void event_module_unloaded(Context * ctx, void * client_data) {
     assert(handle != NULL);
     assert(ctx->mem == ctx);
     if (!SymUnloadModule64(handle, get_context_module_address(ctx))) {
-        set_win32_errno(GetLastError());
-        trace(LOG_ALWAYS, "SymUnloadModule64(0x%Ix,0x%I64x) (unload DLL) error: %s",
-            handle, get_context_module_address(ctx), errno_to_str(errno));
+        DWORD err = GetLastError();
+        /* Workaround:
+         * On Windows 7 first few UNLOAD_DLL_DEBUG_EVENT come without matching LOAD_DLL_DEBUG_EVENT,
+         * SymUnloadModule64() returns error 0x57 "The parameter is incorrect" for such events.
+         * No proper fix is found for this issue. */
+        if (err != 0x57) {
+            int n = set_win32_errno(err);
+            trace(LOG_ALWAYS, "SymUnloadModule64(0x%Ix,0x%I64x) (unload DLL) error: %s",
+                handle, get_context_module_address(ctx), errno_to_str(n));
+        }
     }
 }
 
