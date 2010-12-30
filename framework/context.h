@@ -356,7 +356,7 @@ typedef struct ContextBreakpoint {
                                  * context_get_group(..., CONTEXT_GROUP_BREAKPOINT) */
     ContextAddress address;     /* breakpoint address */
     ContextAddress length;      /* length of the breakpoint address range */
-    unsigned access_types;      /* memory access type, one of CTX_BP_ACCESS_* */
+    unsigned access_types;      /* memory access type, bit set of CTX_BP_ACCESS_* */
     unsigned id;                /* to be used by debug context inmplementation */
 } ContextBreakpoint;
 

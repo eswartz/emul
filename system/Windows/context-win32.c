@@ -45,8 +45,6 @@
 typedef struct ContextExtensionWin32 {
     pid_t               pid;
     HANDLE              handle;
-    HANDLE              file_handle;
-    DWORD64             base_address;
     EXCEPTION_DEBUG_INFO suspend_reason;
     int                 stop_pending;
     REG_SET *           regs;               /* copy of context registers, updated when context stops */
@@ -85,6 +83,8 @@ typedef struct DebugState {
     HANDLE              break_thread;
     LPVOID              break_thread_code;
     DWORD               break_thread_id;
+    HANDLE              file_handle;
+    DWORD64             base_address;
     HANDLE              module_handle;
     DWORD64             module_address;
     ContextAttachCallBack * attach_callback;
@@ -243,23 +243,20 @@ static DWORD event_win32_context_stopped(Context * ctx) {
             get_registers(ctx);
             if (!ext->regs_error) {
                 if (ext->regs->Eip != ext->skip_hw_bp_addr) ext->skip_hw_bp_addr = 0;
-                if (ext->skip_hw_bp_addr == 0) {
+                if (ext->regs->Dr6 & 0xfu) {
                     int i;
                     for (i = 0; i < MAX_HW_BPS; i++) {
-                        ContextBreakpoint * bp = EXT(ctx->mem)->hw_bps[i];
-                        if (bp != NULL && bp->address == ext->regs->Eip && bp->access_types == CTX_BP_ACCESS_INSTRUCTION) {
-                            ctx->stopped_by_bp = 1;
-                            ext->skip_hw_bp_addr = ext->regs->Eip;
-                            break;
+                        if ((ext->regs->Dr7 & (3u << i * 2)) && (ext->regs->Dr6 & (1u << i))) {
+                            ContextBreakpoint * bp = EXT(ctx->mem)->hw_bps[i];
+                            if (bp != NULL && bp->address == ext->regs->Eip && (bp->access_types == CTX_BP_ACCESS_INSTRUCTION)) {
+                                ctx->stopped_by_bp = 1;
+                                ext->skip_hw_bp_addr = ext->regs->Eip;
+                                break;
+                            }
                         }
                     }
                 }
-            }
-            if (!ctx->stopped_by_bp) {
-                if (ext->step_opcodes_len == 0 || ext->regs_error) {
-                    continue_status = DBG_EXCEPTION_NOT_HANDLED;
-                }
-                else if (ext->step_opcodes[0] == 0x9c) {
+                if (ext->step_opcodes_len > 0 && ext->step_opcodes[0] == 0x9c && ext->step_opcodes_addr != ext->regs->Eip) {
                     /* PUSHF instruction: need to clear trace flag from top of the stack */
                     SIZE_T bcnt = 0;
                     ContextAddress buf = 0;
@@ -276,6 +273,9 @@ static DWORD event_win32_context_stopped(Context * ctx) {
                         }
                     }
                 }
+            }
+            if (!ctx->stopped_by_bp && ext->step_opcodes_len == 0 || ext->regs_error) {
+                continue_status = DBG_EXCEPTION_NOT_HANDLED;
             }
             ext->step_opcodes_len = 0;
             ext->step_opcodes_addr = 0;
@@ -349,7 +349,6 @@ static void event_win32_context_exited(Context * ctx) {
     context_lock(ctx);
     ctx->exiting = 1;
     ext->stop_pending = 0;
-    ext->debug_state = NULL;
     if (ctx->stopped) send_context_started_event(ctx);
     l = ctx->children.next;
     while (l != &ctx->children) {
@@ -373,10 +372,11 @@ static void event_win32_context_exited(Context * ctx) {
         }
         ext->handle = NULL;
     }
-    if (ext->file_handle != NULL) {
-        log_error("CloseHandle", CloseHandle(ext->file_handle));
-        ext->file_handle = NULL;
+    if (ext->debug_state != NULL && ext->debug_state->file_handle != NULL) {
+        log_error("CloseHandle", CloseHandle(ext->debug_state->file_handle));
+        ext->debug_state->file_handle = NULL;
     }
+    ext->debug_state = NULL;
     context_unlock(ctx);
 }
 
@@ -636,6 +636,8 @@ static void debug_event_handler(void * x) {
             debug_state->state = DEBUG_STATE_PRS_CREATED;
             debug_state->main_thread_id = win32_event->dwThreadId;
             debug_state->main_thread_handle = win32_event->u.CreateProcessInfo.hThread;
+            debug_state->file_handle = win32_event->u.CreateProcessInfo.hFile;
+            debug_state->base_address = (uintptr_t)win32_event->u.CreateProcessInfo.lpBaseOfImage;
             assert(prs == NULL);
             assert(ctx == NULL);
             ext = EXT(prs = create_context(pid2id(win32_event->dwProcessId, 0)));
@@ -646,8 +648,6 @@ static void debug_event_handler(void * x) {
             prs->big_endian = is_big_endian();
             ext->pid = win32_event->dwProcessId;
             ext->handle = win32_event->u.CreateProcessInfo.hProcess;
-            ext->file_handle = win32_event->u.CreateProcessInfo.hFile;
-            ext->base_address = (uintptr_t)win32_event->u.CreateProcessInfo.lpBaseOfImage;
             ext->debug_state = debug_state;
             assert(ext->handle != NULL);
             link_context(prs);
@@ -1178,12 +1178,12 @@ HANDLE get_context_handle(Context * ctx) {
 
 HANDLE get_context_file_handle(Context * ctx) {
     ContextExtensionWin32 * ext = EXT(ctx);
-    return ext->file_handle;
+    return ext->debug_state->file_handle;
 }
 
 DWORD64 get_context_base_address(Context * ctx) {
     ContextExtensionWin32 * ext = EXT(ctx);
-    return ext->base_address;
+    return ext->debug_state->base_address;
 }
 
 HANDLE get_context_module_handle(Context * ctx) {

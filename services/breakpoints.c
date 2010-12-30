@@ -116,6 +116,7 @@ struct BreakInstruction {
     InstructionRef * refs;
     int ref_size;
     int ref_cnt;
+    int valid;
     int planted;
 };
 
@@ -201,17 +202,40 @@ static unsigned id2bp_hash(char * id) {
     return hash % ID2BP_HASH_SIZE;
 }
 
+static unsigned get_bi_access_types(BreakInstruction * bi) {
+    int i;
+    unsigned t = 0;
+    for (i = 0; i < bi->ref_cnt; i++) {
+        if (bi->refs[i].cnt) {
+            int md = bi->refs[i].bp->access_mode;
+            if (md == 0) {
+                t |= CTX_BP_ACCESS_INSTRUCTION;
+            }
+            else {
+                if (md & 0x1) t |= CTX_BP_ACCESS_DATA_READ;
+                if (md & 0x2) t |= CTX_BP_ACCESS_DATA_WRITE;
+                if (md & 0x4) t |= CTX_BP_ACCESS_INSTRUCTION;
+            }
+            /* TODO: parse type (soft|hw) */
+        }
+    }
+    return t;
+}
+
 static void plant_instruction(BreakInstruction * bi) {
     int i;
     int error = 0;
+    size_t saved_size = bi->saved_size;
     ErrorReport * rp = NULL;
+
     assert(!bi->stepping_over_bp);
     assert(!bi->planted);
     assert(!bi->cb.ctx->exited);
+    assert(bi->valid);
     if (bi->cb.address == 0) return;
     assert(is_all_stopped(bi->cb.ctx));
 
-    if (bi->cb.access_types == 0) bi->cb.access_types = CTX_BP_ACCESS_INSTRUCTION;
+    bi->cb.access_types = get_bi_access_types(bi);
     bi->cb.length = 1;
 
     bi->saved_size = 0;
@@ -233,7 +257,7 @@ static void plant_instruction(BreakInstruction * bi) {
         }
     }
     rp = get_error_report(error);
-    if (bi->planting_error != rp) {
+    if (saved_size != bi->saved_size || !compare_error_reports(bi->planting_error, rp)) {
         release_error_report(bi->planting_error);
         bi->planting_error = rp;
         for (i = 0; i < bi->ref_cnt; i++) {
@@ -305,7 +329,10 @@ static void clear_instruction_refs(Context * ctx) {
         int i;
         BreakInstruction * bi = link_all2bi(l);
         for (i = 0; i < bi->ref_cnt; i++) {
-            if (bi->refs[i].ctx == ctx) bi->refs[i].cnt = 0;
+            if (bi->refs[i].ctx == ctx) {
+                bi->refs[i].cnt = 0;
+                bi->valid = 0;
+            }
         }
         l = l->next;
     }
@@ -317,6 +344,7 @@ static void flush_instructions(void) {
         int i = 0;
         BreakInstruction * bi = link_all2bi(l);
         l = l->next;
+        if (bi->valid) continue;
         while (i < bi->ref_cnt) {
             if (bi->refs[i].cnt == 0) {
                 bi->refs[i].bp->instruction_cnt--;
@@ -330,6 +358,7 @@ static void flush_instructions(void) {
                 i++;
             }
         }
+        bi->valid = 1;
         if (!bi->stepping_over_bp) {
             if (bi->ref_cnt == 0) {
                 if (bi->planted) remove_instruction(bi);
@@ -341,6 +370,10 @@ static void flush_instructions(void) {
                 loc_free(bi);
             }
             else if (!bi->planted) {
+                plant_instruction(bi);
+            }
+            else if (bi->cb.access_types != get_bi_access_types(bi)) {
+                remove_instruction(bi);
                 plant_instruction(bi);
             }
         }
@@ -518,22 +551,12 @@ static InstructionRef * link_breakpoint_instruction(BreakpointInfo * bp, Context
     bi = find_instruction(mem, mem_addr);
     if (bi == NULL) {
         bi = add_instruction(mem, mem_addr);
-        if (bp->access_mode & 0x1) {
-                bi->cb.access_types |= CTX_BP_ACCESS_DATA_READ;
-        }
-        if (bp->access_mode & 0x2) {
-                bi->cb.access_types |= CTX_BP_ACCESS_DATA_WRITE;
-        }
-        if (bp->access_mode & 0x4) {
-                bi->cb.access_types |= CTX_BP_ACCESS_INSTRUCTION;
-        }
-
-        /* TODO: parse type (soft|hw) */
     }
     else {
         int i = 0;
         while (i < bi->ref_cnt) {
             if (bi->refs[i].bp == bp && bi->refs[i].ctx == ctx) {
+                assert(!bi->valid);
                 bi->refs[i].addr = ctx_addr;
                 bi->refs[i].cnt++;
                 return bi->refs + i;
@@ -551,6 +574,7 @@ static InstructionRef * link_breakpoint_instruction(BreakpointInfo * bp, Context
     bi->refs[bi->ref_cnt].ctx = ctx;
     bi->refs[bi->ref_cnt].addr = ctx_addr;
     bi->refs[bi->ref_cnt].cnt = 1;
+    bi->valid = 0;
     bp->instruction_cnt++;
     bp->status_changed = 1;
     return bi->refs + bi->ref_cnt++;
@@ -565,7 +589,7 @@ static void address_expression_error(Context * ctx, BreakpointInfo * bp, int err
     assert(rp != NULL);
     if (ctx != NULL) {
         InstructionRef * rf = link_breakpoint_instruction(bp, ctx, 0, ctx, 0);
-        if (rp != rf->address_error) {
+        if (!compare_error_reports(rp, rf->address_error)) {
             release_error_report(rf->address_error);
             rf->address_error = rp;
             bp->status_changed = 1;
@@ -573,9 +597,8 @@ static void address_expression_error(Context * ctx, BreakpointInfo * bp, int err
         else {
             release_error_report(rp);
         }
-        return;
     }
-    if (rp != bp->error) {
+    else if (!compare_error_reports(rp, bp->error)) {
         release_error_report(bp->error);
         bp->error = rp;
         bp->status_changed = 1;
@@ -719,6 +742,7 @@ static void notify_breakpoints_status(void) {
             for (m = instructions.next; m != &instructions; m = m->next) {
                 int i;
                 BreakInstruction * bi = link_all2bi(m);
+                assert(bi->valid);
                 assert(bi->ref_cnt <= bi->ref_size);
                 assert(bi->cb.ctx->ref_count > 0);
                 for (i = 0; i < bi->ref_cnt; i++) {
@@ -1823,6 +1847,7 @@ void evaluate_breakpoint(Context * ctx) {
     bi = find_instruction(mem, mem_addr);
     if (bi == NULL || !bi->planted || bi->ref_cnt == 0) return;
 
+    assert(bi->valid);
     bp_cnt = bi->ref_cnt;
     req = create_evaluation_request(ctx, bp_cnt);
     for (i = 0; i < bp_cnt; i++) {
@@ -1876,9 +1901,13 @@ static void safe_restore_breakpoint(void * arg) {
     ext->stepping_over_bp = NULL;
     ext->step_over_bp_cnt = 0;
     bi->stepping_over_bp--;
-    if (!ctx->exited && generation_done == generation_posted &&
-            bi->stepping_over_bp == 0 && bi->ref_cnt > 0 && !bi->planted) {
-        plant_instruction(bi);
+    if (bi->stepping_over_bp == 0) {
+        if (generation_done != generation_posted) {
+            bi->valid = 0;
+        }
+        else if (!ctx->exited && bi->ref_cnt > 0 && !bi->planted) {
+            plant_instruction(bi);
+        }
     }
     context_unlock(ctx);
 }
