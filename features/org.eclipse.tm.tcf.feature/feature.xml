@@ -16,7 +16,7 @@
       version="0.3.0.qualifier"
       provider-name="%providerName">
 
-   <description url="http://wiki.eclipse.org/DSDP/TCF">
+   <description url="http://wiki.eclipse.org/TCF">
       %description
    </description>
 
