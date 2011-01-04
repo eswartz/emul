@@ -249,8 +249,8 @@ function build_and_test_agent()
     fi
     $SSH "$TRUNK/agent/obj/$OPSYS/$MACHINE/$CONF/agent -s TCP::1534 $AGENT_L_OPT -l0" >>logs/$LOGFILE 2>&1 &
     sleep 15
-    TESTURL1=ID=Test-Agent-$HOST-$SEQ:TransportName=TCP:Host=$HOST:Port=1534
-    TESTURL2=ID=Test-Proxy-$HOST-$SEQ:TransportName=TCP:Host=$HOST:Port=1535
+    TESTURL1=TransportName=TCP:Host=$HOST:Port=1534
+    TESTURL2=TransportName=TCP:Host=$HOST:Port=1535
 
     echo >>logs/$LOGFILE
     echo "Starting tests, target: $TESTURL1" >>logs/$LOGFILE
@@ -288,25 +288,25 @@ function build_and_test_agent()
             continue
           fi
           local AGENT_S_OPT=PIPE:
-          TESTURL1=ID=Test-Agent-$HOST-$SEQ-$PROTO:TransportName=PIPE
+          TESTURL1=TransportName=PIPE
           ;;
         UNIX)
           if [ "$OPSYS" != GNU/Linux ] ; then
             continue;
           fi
           local AGENT_S_OPT=UNIX:/tmp/tcf
-          TESTURL1=ID=Test-Agent-$HOST-$SEQ-$PROTO:TransportName=UNIX:Host=/tmp/tcf
+          TESTURL1=TransportName=UNIX:Host=/tmp/tcf
           ;;
         SSL)
           if [ "$OPSYS" != GNU/Linux ] ; then
             continue;
           fi
           local AGENT_S_OPT=SSL::1534
-          TESTURL1=ID=Test-Agent-$HOST-$SEQ-$PROTO:TransportName=SSL:Host=localhost:Port=1534
+          TESTURL1=TransportName=SSL:Host=localhost:Port=1534
           ;;
         *)
           local AGENT_S_OPT=TCP::1534
-          TESTURL1=ID=Test-Agent-$HOST-$SEQ-$PROTO:TransportName=TCP:Host=localhost:Port=1534
+          TESTURL1=TransportName=TCP:Host=localhost:Port=1534
           ;;
         esac
         $SSH "$TRUNK/agent/obj/$OPSYS/$MACHINE/$CONF/agent -s $AGENT_S_OPT $AGENT_L_OPT -l0" >>logs/$LOGFILE 2>&1 &

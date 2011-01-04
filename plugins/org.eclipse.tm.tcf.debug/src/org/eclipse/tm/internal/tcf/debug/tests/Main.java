@@ -16,7 +16,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
-import org.eclipse.tm.tcf.core.AbstractPeer;
+import org.eclipse.tm.tcf.core.TransientPeer;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IEventQueue;
 import org.eclipse.tm.tcf.protocol.IPeer;
@@ -69,7 +69,7 @@ public class Main {
         }
     }
 
-    private static class RemotePeer extends AbstractPeer {
+    private static class RemotePeer extends TransientPeer {
 
         private final ArrayList<Map<String,String>> attrs;
 
@@ -107,10 +107,6 @@ public class Main {
             }
             l.add(map);
         }
-        String id = l.get(0).get(IPeer.ATTR_ID);
-        if (id == null) throw new Error("Invalid peer info: no ID");
-        IPeer peer = Protocol.getLocator().getPeers().get(id);
-        if (peer != null) throw new Error("Invalid peer info: ID is not unique");
         return new RemotePeer(l);
     }
 
