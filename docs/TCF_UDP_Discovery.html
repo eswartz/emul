@@ -590,7 +590,7 @@ An example:<br>
 <br>
 This indicates knowledge of a TCF slave agent running at suki.acme.com, listening on port 1940, and that a packet was last received from it on Thu Jun 24 2010 18:29:14 GMT-0500 (Central Daylight Time).<br>
 <br>
-Multiple such descriptions can appear in a CONF_SLAVES_INFO packet. Agents should take care to not send excessively large UDP packets, though. The DSDP reference implementation keeps packets under 1500 bytes. Agents should split large tables across multiple UDP packets.<br>
+Multiple such descriptions can appear in a CONF_SLAVES_INFO packet. Agents should take care to not send excessively large UDP packets, though. The TCF reference implementation keeps packets under 1500 bytes. Agents should split large tables across multiple UDP packets.<br>
 <br>
 <br>
 <font size=3><b>Timing</b></font><br>
@@ -630,7 +630,7 @@ Basically, slaves should be engaged less often than masters, and remote masters 
 <br>
 1. Because a master agent not only responds to peer requests (on port 1354) but broadcasts them (to port 1354), it will receive its own requests. An agent should check and ignore any packets it has sent.<br>
 <br>
-2. The DSDP/TM C implementation of the locator service uses slightly different symbolic names for the packet types:<br>
+2. The TCF C implementation of the locator service uses slightly different symbolic names for the packet types:<br>
 <br>
 <table border=1 bordercolor=#000000 cellpadding=3 cellspacing=0 height=117 id=tfq3 width=317>
   <tbody>
