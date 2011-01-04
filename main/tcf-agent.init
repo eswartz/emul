@@ -34,7 +34,7 @@ else
     if [ -f /etc/SuSE-release ]; then
         system=suse
     else
-        echo "$0: Unknown system, please port and contact dsdp-tcf-dev@eclipse.org" 1>&2
+        echo "$0: Unknown system, please port and contact tcf-dev@eclipse.org" 1>&2
         exit 1
     fi
 fi

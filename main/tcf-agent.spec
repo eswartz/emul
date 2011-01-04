@@ -9,7 +9,7 @@ Version: %{version}
 Release: %{release}
 Vendor: eclipse.org
 Source: http://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/srpms/%{name}-%{version}.tar.bz2
-URL: http://wiki.eclipse.org/DSDP/TM/TCF_FAQ
+URL: http://wiki.eclipse.org/TCF
 Group: Development/Tools/Other
 BuildRoot: %{_tmppath}/%{name}-buildroot
 License: EPL
