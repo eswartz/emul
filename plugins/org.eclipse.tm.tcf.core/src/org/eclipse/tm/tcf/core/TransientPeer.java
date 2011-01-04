@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.tm.internal.tcf.core.TransportManager;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.Protocol;
@@ -64,6 +65,6 @@ public class TransientPeer implements IPeer {
     }
 
     public IChannel openChannel() {
-        throw new Error("Cannot open channel for transient peer");
+        return TransportManager.openChannel(this);
     }
 }

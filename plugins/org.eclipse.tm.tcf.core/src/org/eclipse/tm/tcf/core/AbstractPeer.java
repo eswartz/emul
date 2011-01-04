@@ -15,9 +15,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.eclipse.tm.internal.tcf.core.RemotePeer;
-import org.eclipse.tm.internal.tcf.core.TransportManager;
 import org.eclipse.tm.internal.tcf.services.local.LocatorService;
-import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.protocol.Protocol;
@@ -157,9 +155,5 @@ public class AbstractPeer extends TransientPeer {
         catch (IOException x) {
             Protocol.log("Locator: failed to send 'peerRemoved' event", x);
         }
-    }
-
-    public IChannel openChannel() {
-        return TransportManager.openChannel(this);
     }
 }
