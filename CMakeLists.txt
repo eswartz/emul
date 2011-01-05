@@ -28,6 +28,7 @@ add_library(tcf STATIC
     framework/json.c
     framework/mdep.c
     framework/myalloc.c
+    framework/outputbuf.c
     framework/peer.c
     framework/plugins.c
     framework/protocol.c
