@@ -1,13 +1,15 @@
 cmake_minimum_required(VERSION 2.8)
 
-if (MSVC)
+set(CMAKE_COLOR_MAKEFILE OFF)
+
+if (WIN32)
 include_directories(system/Windows)
 include_directories(machine/x86_64)
 set(PLAT_SOURCES
     system/Windows/context-win32.c
     system/Windows/pthreads-win32.c
     system/Windows/windbgcache.c)
-endif (MSVC)
+endif (WIN32)
 
 include_directories(.)
 
@@ -78,9 +80,13 @@ add_executable(agent main/main.c)
 
 target_link_libraries(agent tcf)
 
+if(WIN32)
 if(MSVC)
 target_link_libraries(agent shell32.lib advapi32.lib Iphlpapi.lib WS2_32.lib version.lib)
+else(MSVC) # MinGW
+target_link_libraries(agent WS2_32 Iphlpapi)
 endif(MSVC)
+endif(WIN32)
 
 #./main/main_client.c
 #./main/main_log.c
