@@ -35,7 +35,7 @@
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.cleanBuildTarget</key>
-					<value>-c &quot;./build-gcc-release.sh clean&quot;</value>
+					<value>-c &quot;./build-gcc-debug.sh clean&quot;</value>
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.contents</key>
@@ -55,7 +55,7 @@
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.fullBuildTarget</key>
-					<value>-c &quot;./build-gcc-release.sh all&quot;</value>
+					<value>-c &quot;./build-gcc-debug.sh all&quot;</value>
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.stopOnError</key>
