@@ -505,20 +505,22 @@ int get_symbol_size(const Symbol * sym, ContextAddress * size) {
 
 int get_symbol_type(const Symbol * sym, Symbol ** type) {
     DWORD tag = 0;
+    Symbol * res = alloc_symbol();
 
     assert(sym->magic == SYMBOL_MAGIC);
-    *type = alloc_symbol();
-    **type = *sym;
-    if (!(*type)->base && !(*type)->info) {
-        if (get_type_tag(*type, &tag)) return -1;
+    *res = *sym;
+    if (!res->base && !res->info) {
+        if (get_type_tag(res, &tag)) return -1;
     }
-    assert((*type)->sym_class == SYM_CLASS_TYPE);
+    assert(res->sym_class == SYM_CLASS_TYPE);
+    *type = res;
     return 0;
 }
 
 int get_symbol_base_type(const Symbol * sym, Symbol ** type) {
     DWORD tag = 0;
     DWORD index = 0;
+    Symbol * res = NULL;
 
     assert(sym->magic == SYMBOL_MAGIC);
     if (sym->base) {
@@ -529,40 +531,40 @@ int get_symbol_base_type(const Symbol * sym, Symbol ** type) {
         errno = ERR_INV_CONTEXT;
         return -1;
     }
-    *type = alloc_symbol();
-    **type = *sym;
-    if (get_type_tag(*type, &tag)) return -1;
-    if (get_type_info(*type, TI_GET_TYPE, &index) < 0) return -1;
-    (*type)->index = index;
-
+    res = alloc_symbol();
+    *res = *sym;
+    if (get_type_tag(res, &tag)) return -1;
+    if (get_type_info(res, TI_GET_TYPE, &index) < 0) return -1;
+    res->index = index;
+    *type = res;
     return 0;
 }
 
 int get_symbol_index_type(const Symbol * sym, Symbol ** type) {
     DWORD tag = 0;
     DWORD index = 0;
+    Symbol * res = alloc_symbol();
 
     assert(sym->magic == SYMBOL_MAGIC);
     if (sym->base) {
-        *type = alloc_symbol();
-        (*type)->ctx = sym->ctx;
-        (*type)->sym_class = SYM_CLASS_TYPE;
-        (*type)->info = basic_type_info + BST_UNSIGNED;
-        assert((*type)->info->size == sizeof(int));
-        assert((*type)->info->sign == 0);
-        assert((*type)->info->real == 0);
+        res->ctx = sym->ctx;
+        res->sym_class = SYM_CLASS_TYPE;
+        res->info = basic_type_info + BST_UNSIGNED;
+        assert(res->info->size == sizeof(int));
+        assert(res->info->sign == 0);
+        assert(res->info->real == 0);
+        *type = res;
         return 0;
     }
     if (sym->info) {
         errno = ERR_INV_CONTEXT;
         return -1;
     }
-    *type = alloc_symbol();
-    **type = *sym;
-    if (get_type_tag(*type, &tag)) return -1;
-    if (get_type_info(*type, TI_GET_ARRAYINDEXTYPEID, &index) < 0) return -1;
-    (*type)->index = index;
-
+    *res = *sym;
+    if (get_type_tag(res, &tag)) return -1;
+    if (get_type_info(res, TI_GET_ARRAYINDEXTYPEID, &index) < 0) return -1;
+    res->index = index;
+    *type = res;
     return 0;
 }
 
