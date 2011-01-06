@@ -422,7 +422,7 @@ static void dio_ReadAttribute(U2_T Attr, U2_T Form) {
     }
 }
 
-void dio_ReadEntry(DIO_EntryCallBack CallBack) {
+int dio_ReadEntry(DIO_EntryCallBack CallBack) {
     DIO_Abbreviation * Abbr = NULL;
     U2_T Tag = 0;
     U4_T AttrPos = 0;
@@ -432,7 +432,7 @@ void dio_ReadEntry(DIO_EntryCallBack CallBack) {
     dio_gEntryPos = dio_GetPos();
     if (sUnit->mVersion >= 2) {
         U4_T AbbrCode = dio_ReadULEB128();
-        if (AbbrCode == 0) return;
+        if (AbbrCode == 0) return 0;
         if (AbbrCode >= sUnit->mAbbrevTableSize || sUnit->mAbbrevTable[AbbrCode] == NULL) {
             str_exception(ERR_INV_DWARF, "invalid abbreviation code");
         }
@@ -446,7 +446,7 @@ void dio_ReadEntry(DIO_EntryCallBack CallBack) {
                 dio_ReadU1();
                 EntrySize--;
             }
-            return;
+            return 0;
         }
         Tag = dio_ReadU2();
     }
@@ -454,7 +454,8 @@ void dio_ReadEntry(DIO_EntryCallBack CallBack) {
         U2_T Attr = 0;
         U2_T Form = 0;
         if (Init) {
-            Form = 1;
+            Form = DWARF_ENTRY_NO_CHILDREN;
+            if (Abbr != NULL && Abbr->mChildren) Form = DWARF_ENTRY_HAS_CHILDREN;
             Init = 0;
         }
         else if (Abbr != NULL) {
@@ -487,6 +488,7 @@ void dio_ReadEntry(DIO_EntryCallBack CallBack) {
         CallBack(Tag, Attr, Form);
         if (Attr == 0 && Form == 0) break;
     }
+    return 1;
 }
 
 static void dio_FindAbbrevTable(void);

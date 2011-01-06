@@ -210,6 +210,7 @@ static void read_mod_user_def_type(U2_T Form, ObjectInfo ** Type) {
 static void read_object_info(U2_T Tag, U2_T Attr, U2_T Form) {
     static ObjectInfo * Info;
     static U8_T Sibling;
+    static int HasChildren;
 
     switch (Attr) {
     case 0:
@@ -230,6 +231,7 @@ static void read_object_info(U2_T Tag, U2_T Attr, U2_T Form) {
             Info->mTag = Tag;
             Info->mParent = sParentObject;
             Sibling = 0;
+            HasChildren = Form == DWARF_ENTRY_HAS_CHILDREN;
         }
         else {
             if (Tag == TAG_compile_unit && Sibling == 0) Sibling = sUnitDesc.mUnitOffs + sUnitDesc.mUnitSize;
@@ -238,13 +240,17 @@ static void read_object_info(U2_T Tag, U2_T Attr, U2_T Form) {
             else if (sParentObject != NULL) sParentObject->mChildren = Info;
             else sCache->mCompUnits = Info;
             sPrevSibling = Info;
-            if (Sibling != 0) {
+            if (Sibling != 0 || HasChildren) {
                 U8_T SiblingPos = Sibling;
                 ObjectInfo * Parent = sParentObject;
                 ObjectInfo * PrevSibling = sPrevSibling;
                 sParentObject = Info;
                 sPrevSibling = NULL;
-                while (dio_GetPos() < SiblingPos) dio_ReadEntry(read_object_info);
+                for (;;) {
+                    if (SiblingPos > 0 && dio_GetPos() >= SiblingPos) break;
+                    if (!dio_ReadEntry(read_object_info)) break;
+                }
+                if (SiblingPos > dio_GetPos()) dio_Skip(SiblingPos - dio_GetPos());
                 sParentObject = Parent;
                 sPrevSibling = PrevSibling;
             }
