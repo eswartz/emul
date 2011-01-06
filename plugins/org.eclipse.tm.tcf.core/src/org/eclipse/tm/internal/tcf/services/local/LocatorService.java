@@ -64,7 +64,7 @@ public class LocatorService implements ILocator {
     private static LocatorService locator;
     private static final Map<String,IPeer> peers = new HashMap<String,IPeer>();
     private static final ArrayList<LocatorListener> listeners = new ArrayList<LocatorListener>();
-    private static final HashMap<String,Throwable> error_log = new HashMap<String,Throwable>();
+    private static final HashSet<String> error_log = new HashSet<String>();
 
     private final HashSet<SubNet> subnets = new HashSet<SubNet>();
     private final ArrayList<Slave> slaves = new ArrayList<Slave>();
@@ -437,10 +437,11 @@ public class LocatorService implements ILocator {
 
     private void log(String msg, Throwable x) {
         // Don't report same error multiple times to avoid filling up the log file.
-        if (error_log.get(msg) == null) {
-            error_log.put(msg, x);
-            Protocol.log(msg, x);
+        synchronized (error_log) {
+            if (error_log.contains(msg)) return;
+            error_log.add(msg);
         }
+        Protocol.log(msg, x);
     }
 
     private InetAddress getInetAddress(String host) {
