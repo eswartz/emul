@@ -1,537 +1,156 @@
-
-
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-
 <html>
 
-
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-
-<base target="_top">
-<style type="text/css">
-
-
-/* default css */
-
-table {
-  font-size: 1em;
-  line-height: inherit;
-  border-collapse: collapse;
-}
-
-
-tr {
-
-  text-align: left;
-
-}
-
-
-div, address, ol, ul, li, option, select {
-  margin-top: 0px;
-  margin-bottom: 0px;
-}
-
-p {
-  margin: 0px;
-}
-
-
-pre {
-  font-family: Courier New;
-  white-space: pre-wrap;
-  margin:0;
-}
-
-body {
-  margin: 6px;
-  padding: 0px;
-  font-family: Verdana, sans-serif;
-  font-size: 10pt;
-  background-color: #ffffff;
-  color: #000;
-}
-
-
-img {
-  -moz-force-broken-image-icon: 1;
-}
-
-@media screen {
-  html.pageview {
-    background-color: #f3f3f3 !important;
-    overflow-x: hidden;
-    overflow-y: scroll;
-  }
-
-
-
-  body {
-    min-height: 1100px;
-
-    counter-reset: __goog_page__;
-  }
-
-  * html body {
-    height: 1100px;
-  }
-  /* Prevent repaint errors when scrolling in Safari. This "Star-7" css hack
-     targets Safari 3.1, but not WebKit nightlies and presumably Safari 4.
-     That's OK because this bug is fixed in WebKit nightlies/Safari 4 :-). */
-  html*#wys_frame::before {
-    content: '\A0';
-    position: fixed;
-    overflow: hidden;
-    width: 0;
-    height: 0;
-    top: 0;
-    left: 0;
-  }
-
-  .pageview body {
-    border-top: 1px solid #ccc;
-    border-left: 1px solid #ccc;
-    border-right: 2px solid #bbb;
-    border-bottom: 2px solid #bbb;
-    width: 648px !important;
-    margin: 15px auto 25px;
-    padding: 40px 50px;
-  }
-  /* IE6 */
-  * html {
-    overflow-y: scroll;
-  }
-  * html.pageview body {
-    overflow-x: auto;
-  }
-
-
-
-
-    .writely-callout-data {
-      display: none;
-    }
-
-
-    .writely-footnote-marker {
-      background-image: url('MISSING');
-      background-color: transparent;
-      background-repeat: no-repeat;
-      width: 7px;
-      overflow: hidden;
-      height: 16px;
-      vertical-align: top;
-
-
-      -moz-user-select: none;
-    }
-    .editor .writely-footnote-marker {
-      cursor: move;
-    }
-    .writely-footnote-marker-highlight {
-      background-position: -15px 0;
-      -moz-user-select: text;
-    }
-    .writely-footnote-hide-selection ::-moz-selection, .writely-footnote-hide-selection::-moz-selection {
-      background: transparent;
-    }
-    .writely-footnote-hide-selection ::selection, .writely-footnote-hide-selection::selection {
-      background: transparent;
-    }
-    .writely-footnote-hide-selection {
-      cursor: move;
-    }
-
-    /* Comments */
-    .writely-comment-yellow {
-      background-color: #ffffd7;
-    }
-    .writely-comment-orange {
-      background-color: #ffe3c0;
-    }
-    .writely-comment-pink {
-      background-color: #ffd7ff;
-    }
-    .writely-comment-green {
-      background-color: #d7ffd7;
-    }
-    .writely-comment-blue {
-      background-color: #d7ffff;
-    }
-    .writely-comment-purple {
-      background-color: #eed7ff;
-    }
-
-
-
-
-
-  .br_fix span+br:not(:-moz-last-node) {
-
-    position:relative;
-
-    left: -1ex
-
-  }
-
-
-  #cb-p-tgt {
-    font-size: 8pt;
-    padding: .4em;
-    background-color: #ddd;
-    color: #333;
-  }
-  #cb-p-tgt-can {
-    text-decoration: underline;
-    color: #36c;
-    font-weight: bold;
-    margin-left: 2em;
-  }
-  #cb-p-tgt .spin {
-    width: 16px;
-    height: 16px;
-    background: url(//ssl.gstatic.com/docs/clipboard/spin_16o.gif) no-repeat;
-  }
-}
-
-h6 { font-size: 8pt }
-h5 { font-size: 8pt }
-h4 { font-size: 10pt }
-h3 { font-size: 12pt }
-h2 { font-size: 14pt }
-h1 { font-size: 18pt }
-
-blockquote {padding: 10px; border: 1px #DDD dashed }
-
-.webkit-indent-blockquote { border: none; }
-
-a img {border: 0}
-
-.pb {
-  border-width: 0;
-  page-break-after: always;
-  /* We don't want this to be resizeable, so enforce a width and height
-     using !important */
-  height: 1px !important;
-  width: 100% !important;
-}
-
-.editor .pb {
-  border-top: 1px dashed #C0C0C0;
-  border-bottom: 1px dashed #C0C0C0;
-}
-
-div.google_header, div.google_footer {
-  position: relative;
-  margin-top: 1em;
-  margin-bottom: 1em;
-}
-
-
-/* Table of contents */
-.editor div.writely-toc {
-  background-color: #f3f3f3;
-  border: 1px solid #ccc;
-}
-.writely-toc > ol {
-  padding-left: 3em;
-  font-weight: bold;
-}
-ol.writely-toc-subheading {
-  padding-left: 1em;
-  font-weight: normal;
-}
-/* IE6 only */
-* html writely-toc ol {
-  list-style-position: inside;
-}
-.writely-toc-none {
-  list-style-type: none;
-}
-.writely-toc-decimal {
-  list-style-type: decimal;
-}
-.writely-toc-upper-alpha {
-  list-style-type: upper-alpha;
-}
-.writely-toc-lower-alpha {
-  list-style-type: lower-alpha;
-}
-.writely-toc-upper-roman {
-  list-style-type: upper-roman;
-}
-.writely-toc-lower-roman {
-  list-style-type: lower-roman;
-}
-.writely-toc-disc {
-  list-style-type: disc;
-}
-
-/* Ordered lists converted to numbered lists can preserve ordered types, and
-   vice versa. This is confusing, so disallow it */
-ul[type="i"], ul[type="I"], ul[type="1"], ul[type="a"], ul[type="A"] {
-  list-style-type: disc;
-}
-
-ol[type="disc"], ol[type="circle"], ol[type="square"] {
-  list-style-type: decimal;
-}
-
-/* end default css */
-
-
-  /* default print css */
-  @media print {
-    body {
-      padding: 0;
-      margin: 0;
-    }
-
-    div.google_header, div.google_footer {
-      display: block;
-      min-height: 0;
-      border: none;
-    }
-
-    div.google_header {
-      flow: static(header);
-    }
-
-    /* used to insert page numbers */
-    div.google_header::before, div.google_footer::before {
-      position: absolute;
-      top: 0;
-    }
-
-    div.google_footer {
-      flow: static(footer);
-    }
-
-    /* always consider this element at the start of the doc */
-    div#google_footer {
-      flow: static(footer, start);
-    }
-
-    span.google_pagenumber {
-      content: counter(page);
-    }
-
-    span.google_pagecount {
-      content: counter(pages);
-    }
-
-    .endnotes {
-      page: endnote;
-    }
-
-    /* MLA specifies that endnotes title should be 1" margin from the top of the page. */
-    @page endnote {
-      margin-top: 1in;
-    }
-
-    callout.google_footnote {
-
-      display: prince-footnote;
-      footnote-style-position: inside;
-      /* These styles keep the footnote from taking on the style of the text
-         surrounding the footnote marker. They can be overridden in the
-         document CSS. */
-      color: #000;
-      font-family: Verdana;
-      font-size: 10.0pt;
-      font-weight: normal;
-    }
-
-    /* Table of contents */
-    #WritelyTableOfContents a::after {
-      content: leader('.') target-counter(attr(href), page);
-    }
-
-    #WritelyTableOfContents a {
-      text-decoration: none;
-      color: black;
-    }
-
-    /* Comments */
-    .writely-comment-yellow {
-      background-color: #ffffd7;
-    }
-    .writely-comment-orange {
-      background-color: #ffe3c0;
-    }
-    .writely-comment-pink {
-      background-color: #ffd7ff;
-    }
-    .writely-comment-green {
-      background-color: #d7ffd7;
-    }
-    .writely-comment-blue {
-      background-color: #d7ffff;
-    }
-    .writely-comment-purple {
-      background-color: #eed7ff;
-    }
-  }
-
-  @page {
-    @top {
-      content: flow(header);
-    }
-    @bottom {
-      content: flow(footer);
-    }
-    @footnotes {
-      border-top: solid black thin;
-      padding-top: 8pt;
-    }
-  }
-  /* end default print css */
-
-
-/* custom css */
-
-
-/* end custom css */
-
-/* ui edited css */
-
-body {
-  font-family: Verdana;
-
-  font-size: 10.0pt;
-  line-height: normal;
-  background-color: #ffffff;
-}
-/* end ui edited css */
-
-
-/* editor CSS */
-.editor a:visited {color: #551A8B}
-.editor table.zeroBorder {border: 1px dotted gray}
-.editor table.zeroBorder td {border: 1px dotted gray}
-.editor table.zeroBorder th {border: 1px dotted gray}
-
-
-.editor div.google_header, .editor div.google_footer {
-  border: 2px #DDDDDD dashed;
-  position: static;
-  width: 100%;
-  min-height: 2em;
-}
-
-.editor .misspell {background-color: yellow}
-
-.editor .writely-comment {
-  font-size: 9pt;
-  line-height: 1.4;
-  padding: 1px;
-  border: 1px dashed #C0C0C0
-}
-
-
-/* end editor CSS */
-
-</style>
-
-
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <title>Discovery / Autoconf</title>
-
 </head>
 
-<body
+<body>
 
-    >
+<h2>TCF UDP Discovery</h2>
 
-
-
-<font size=5><b>TCF UDP Discovery</b></font><br>
+<p>
 <br>
 Designed by Eugene Tarassov (eugene.tarassov@windriver.com)<br>
 Documented by John Cortell (john.cortell@freescale.com)<br>
 <br>
 Created on: December 5, 2009<br>
 Last modified on: June 24, 2010<br>
-<br>
-<font size=3><b>Overview</b></font><br>
-TCF Discovery for agents connected to a network is done via UDP. By default, a static, well-known (to TCF agents) port is used: 1534. However, we will see that agents on a machine can participate in discovery even if that port is unavailable; all that is required is that at least <i>one</i> agent on the network is listening on the well-known port.<br>
-<br>
-Fundamentally, TCF discovery is based on agents advertising their peers by sending UDP packets to other agents, both proactively and reactively. This concept is simple enough when thinking in terms of one agent per machine. However, there can be multiple agents per machine and that significantly complicates the discovery mechanism as there can only be one process listening on a given port for a given protocol (UDP or TCP). That means only one agent per machine (NIC, actually) can service discovery requests on the well known port. How do other agents running on that machine get in the game? The TCF discovery mechanism addresses this using the notion of master/slave. Basically, the first agent to acquire the well-known port (1354) becomes the master. All other agents on that machine become slaves.<br>
-<br>
-The master/slave relationship in TCF discovery is not what one might intuitively think, though. Masters and slaves are not all that different from each other. A slave is not exclusively reliant on the master on its machine. It can rely on any master on the network (subnet, actually; more on this later). Moreover, a slave's reliance on masters is limited. Ultimately a slave agent ends up establishing a <i>direct </i>relationship with every other slave on the network, and of course has access to the masters through UDP broadcasting (to port 1354). The role of the master is simply to make it possible for a new-comer slave to initially meet other slaves. Ultimately, every slave meets every other slave, and they all directly deal with each other thereafter.<br>
-<br>
-This approach may seem a bit strange. A simpler and more intuitive approach would be to have the master on a machine be the representative for the slaves on that machine. A slave would just communicate locally with its master through UDP unicasting, and the masters would communicate among themselves through UDP broadcasting, proliferating information about themselves and their slaves. However, such an approach would make vendors too vulnerable because the master agent is simply the first agent that is able to grab the well-known TCF discovery port. There are no guarantees that the agent will turn out to be a well-behaved one. What if its discovery logic is buggy? What if it hangs? What if it supports only version X of the discovery protocol but other agents on that machine rely on version Y? Any of these scenarios could render other vendors' agents useless on a machine. Since the TCF discovery mechanism does not employ dedicated reliable masters but rather relies on every agent volunteering for the role, then the mechanism must be robust enough to overcome poorly-behaved volunteers. That is accomplished by limiting the role of the master and having all slaves know about, and deal with, all other slaves directly. Slaves do not need to keep track of masters explicitly; an agent can reach any and all masters by broadcasting to the well-known port (1354). The end result is that a single master agent can make discovery possible for the entire network.<br>
-<br>
-<br>
-<font size=3><b>Scope</b></font><br>
-TCF UDP Discovery is limited to IP subnet scope by design. What that means is that an agent will discover only the peers available on the subnet(s) its machine is on. If an agent is running on a machine with two NICs, each on a seperate subnet, then that agent will discover peers on both subnets. However, such an agent will not act as a bridge for discovery across the two subnets. That is, if machine A is on subnet X only, machine B is on subnets X and Y, and machine C is on subnet Y only, agents on B will know the available peers on subnets X and Y, but agents on A will not know about peers on Y and agents on C will not know about peers on X.<br>
-<br>
-For simplicity, further discussion on TCF discovery will just refer to agents "on the network", but keep in mind that subnet scoping is implied.<br>
-<br>
-<br>
-<font size=3><b>Rules of Engagement</b></font><br>
-Fundamental to the discovery mechanism is the notion that agents must work together to keep each other in sync regarding available agents and peers. More specifically, agents must be <i>inquisitive, responsive </i>and <i>proactive</i> in sharing its knowledge of peers and agents. An agent is <i>inquisitive</i> by asking other agents for their tables. It is <i>responsive</i> by providing their own tables when asked. Finally, it is <i>proactive </i>by volunteering that information even when not asked. This last element is necessary in order to quickly proliferate new information, without requiring constant polling by agents.<br>
-<br>
-Of course, all this activity back and forth between many agents could easily get out of hand without having well designed <i>rules of engagement</i>. A reasonable balance of all three activities must occur. Too much interaction will lead to excessive network traffic and agent load. Too little will prolong stale/inaccurate information. The rules of engagement will be discussed shortly.<br>
-<br>
-The final element of discovery is validation. As there are no notifications in TCF discovery for a peer or agent going away, agents must regularly validate their tables for accuracy and prune accordingly. This is also covered in the rules of engagement.<br>
-<br>
-The following are the TCF UDP Discovey <i>Rules of Engagement. </i>Unless explicitly qualified, "agent" refers to both masters and slaves:<br>
-<br>
+
+<h3>Overview</h3>
+
+<p>
+TCF Discovery for agents connected to a network is done via UDP. By default, a static, well-known (to TCF agents) port is used: 1534.
+However, we will see that agents on a machine can participate in discovery even if that port is unavailable; all that is required is
+that at least <i>one</i> agent on the network is listening on the well-known port.
+<p>
+Fundamentally, TCF discovery is based on agents advertising their peers by sending UDP packets to other agents, both proactively and reactively.
+This concept is simple enough when thinking in terms of one agent per machine. However, there can be multiple agents per machine and that
+significantly complicates the discovery mechanism as there can only be one process listening on a given port for a given protocol (UDP or TCP).
+That means only one agent per machine (NIC, actually) can service discovery requests on the well known port. How do other agents running on that
+machine get in the game? The TCF discovery mechanism addresses this using the notion of master/slave. Basically, the first agent to acquire
+the well-known port (1354) becomes the master. All other agents on that machine become slaves.
+<p>
+The master/slave relationship in TCF discovery is not what one might intuitively think, though. Masters and slaves are not all that different
+from each other. A slave is not exclusively reliant on the master on its machine. It can rely on any master on the network (subnet, actually;
+more on this later). Moreover, a slave's reliance on masters is limited. Ultimately a slave agent ends up establishing a <i>direct</i> relationship
+with every other slave on the network, and of course has access to the masters through UDP broadcasting (to port 1354). The role of the master is
+simply to make it possible for a new-comer slave to initially meet other slaves. Ultimately, every slave meets every other slave, and they all
+directly deal with each other thereafter.
+<p>
+This approach may seem a bit strange. A simpler and more intuitive approach would be to have the master on a machine be the representative
+for the slaves on that machine. A slave would just communicate locally with its master through UDP unicasting, and the masters would
+communicate among themselves through UDP broadcasting, proliferating information about themselves and their slaves. However, such an approach
+would make vendors too vulnerable because the master agent is simply the first agent that is able to grab the well-known TCF discovery port.
+There are no guarantees that the agent will turn out to be a well-behaved one. What if its discovery logic is buggy? What if it hangs?
+What if it supports only version X of the discovery protocol but other agents on that machine rely on version Y?
+Any of these scenarios could render other vendors' agents useless on a machine. Since the TCF discovery mechanism does not employ dedicated
+reliable masters but rather relies on every agent volunteering for the role, then the mechanism must be robust enough to overcome
+poorly-behaved volunteers. That is accomplished by limiting the role of the master and having all slaves know about, and deal with,
+all other slaves directly. Slaves do not need to keep track of masters explicitly; an agent can reach any and all masters by broadcasting
+to the well-known port (1354). The end result is that a single master agent can make discovery possible for the entire network.
+
+<h3>Scope</b></h3>
+
+<p>
+TCF UDP Discovery is limited to IP subnet scope by design. What that means is that an agent will discover only the peers available on
+the subnet(s) its machine is on. If an agent is running on a machine with two NICs, each on a seperate subnet, then that agent will discover
+peers on both subnets. However, such an agent will not act as a bridge for discovery across the two subnets. That is, if machine A is on subnet X only,
+machine B is on subnets X and Y, and machine C is on subnet Y only, agents on B will know the available peers on subnets X and Y,
+but agents on A will not know about peers on Y and agents on C will not know about peers on X.
+<p>
+For simplicity, further discussion on TCF discovery will just refer to agents "on the network", but keep in mind that subnet scoping is implied.
+
+<h3>Rules of Engagement</h3>
+
+<p>
+Fundamental to the discovery mechanism is the notion that agents must work together to keep each other in sync regarding available agents and peers.
+More specifically, agents must be <i>inquisitive, responsive </i>and <i>proactive</i> in sharing its knowledge of peers and agents.
+An agent is <i>inquisitive</i> by asking other agents for their tables. It is <i>responsive</i> by providing their own tables when asked.
+Finally, it is <i>proactive </i>by volunteering that information even when not asked. This last element is necessary in order to quickly proliferate
+new information, without requiring constant polling by agents.
+<p>
+Of course, all this activity back and forth between many agents could easily get out of hand without having well designed <i>rules of engagement</i>.
+A reasonable balance of all three activities must occur. Too much interaction will lead to excessive network traffic and agent load.
+Too little will prolong stale/inaccurate information. The rules of engagement will be discussed shortly.
+<p>
+The final element of discovery is validation. As there are no notifications in TCF discovery for a peer or agent going away, agents must regularly
+validate their tables for accuracy and prune accordingly. This is also covered in the rules of engagement.
+<p>
+The following are the TCF UDP Discovey <i>Rules of Engagement. </i>Unless explicitly qualified, "agent" refers to both masters and slaves:
 <ol>
   <li>
+    <p>
     Agents should, on launch:
   </li>
   <ul>
     <li>
-      broadcast a request for peers to all master agents<br>
+      broadcast a request for peers to all master agents
     </li>
     <li>
-      broadcast descriptions of its peers to all master agents<br>
-      <br>
+      broadcast descriptions of its peers to all master agents
     </li>
   </ul>
   <li>
-    Upon receiving a packet (any) from an agent, the receiving agent should ask the sender for its slave table, but should make such a request only occasionally for any given subnet. In other words, an agent should periodically ask another agent (any agent) for its slaves.<br>
-    <br>
+    <p>
+    Upon receiving a packet (any) from an agent, the receiving agent should ask the sender for its slave table, but should make such a request
+        only occasionally for any given subnet. In other words, an agent should periodically ask another agent (any agent) for its slaves.
   </li>
   <li>
-    Once an agent receives a CONF_REQ_SLAVES from a slave, for duration of X seconds (retention period, see rule 5), the agent should thereafter provide that slave its slave table with every subsequent CONF_REQ_INFO it receives from that slave, and it should also proactively provide that slave info about all new discovered slaves during that time.&nbsp; Essentially, by sending CONF_REQ_SLAVES (rule #2), a slave creates a temporary coupling between it and that agent (usually a master), where the agent (master) proactively updates the slave's slave table.<br>
-    <br>
+    <p>
+    Once an agent receives a CONF_REQ_SLAVES from a slave, for duration of X seconds (retention period, see rule 5), the agent should thereafter
+        provide that slave its slave table with every subsequent CONF_REQ_INFO it receives from that slave, and it should also proactively provide that
+        slave info about all new discovered slaves during that time.&nbsp; Essentially, by sending CONF_REQ_SLAVES (rule #2), a slave creates
+        a temporary coupling between it and that agent (usually a master), where the agent (master) proactively updates the slave's slave table.
   </li>
   <li>
-    An agent should perpetually and periodically notify all known agents with the collection of peers it makes available. Master agents should additionally, but selectively, advertise peers from other agents. A master should advertise peers from local slaves to all known agents. A master should advertise peers from remote agents to local slaves via the loopback address. The main purpose of these additional responsibilities is for discovery to work in the presence of a firewall, as long as the firewall permits traffic through the well-known port (1354). A good interval for the notifications is 1/4 the <i>retention </i>period (see rule 5). At each interval, an agent should ensure that it has sent at least one UDP packet. If it has nothing to advertise, it should send a CONF_SLAVES_INFO with no data (just the header). Failure to regularly send something may result in the agent being forgotten by the other agents. A TCF agent can have nothing to contribute, but still be a consumer of discovery data. A slave agent will receive updated discovery data only if it sends something. A master agent must actively be involved in discovery; it needs to make its presence known to slaves, but slaves will see it only if it sends something.<br>
-    <br>
+    <p>
+    An agent should perpetually and periodically notify all known agents with the collection of peers it makes available. Master agents should additionally,
+        but selectively, advertise peers from other agents. A master should advertise peers from local slaves to all known agents. A master should advertise
+        peers from remote agents to local slaves via the loopback address. The main purpose of these additional responsibilities is for discovery to work in
+        the presence of a firewall, as long as the firewall permits traffic through the well-known port (1354). A good interval for the notifications is 1/4
+        the <i>retention </i>period (see rule 5). At each interval, an agent should ensure that it has sent at least one UDP packet. If it has nothing to advertise,
+        it should send a CONF_SLAVES_INFO with no data (just the header). Failure to regularly send something may result in the agent being forgotten by the other agents.
+        A TCF agent can have nothing to contribute, but still be a consumer of discovery data. A slave agent will receive updated discovery data only if it sends something.
+        A master agent must actively be involved in discovery; it needs to make its presence known to slaves, but slaves will see it only if it sends something.
   </li>
   <li>
-    Agents should have short term memory when it comes to its knowledge of other slaves and and peers. If it hasn't received a UDP packet from a slave in X amount of time, it should forget that slave. X is called the <i>retention period. </i>60 seconds is a good, default value. Similarly, if it hasn't received a CONF_PEER_INFO packet for a peer in X amount of time, and it doesn't have an open channel to that peer (not actively using it), then it should dispose and forget that peer.<br>
-    <br>
+    <p>
+    Agents should have short term memory when it comes to its knowledge of other slaves and and peers. If it hasn't received a UDP packet from a slave in
+        X amount of time, it should forget that slave. X is called the <i>retention period. </i>60 seconds is a good, default value. Similarly, if it hasn't
+        received a CONF_PEER_INFO packet for a peer in X amount of time, and it doesn't have an open channel to that peer (not actively using it),
+        then it should dispose and forget that peer.
   </li>
   <li>
-    If a slave agent has not received a packet from the local master in a while, then it should attempt to become the master by opening the well-known port (1534). By definition, successfully opening that port makes that agent the master on that machine.<br>
-    <br>
+    <p>
+    If a slave agent has not received a packet from the local master in a while, then it should attempt to become the master by opening the well-known
+        port (1534). By definition, successfully opening that port makes that agent the master on that machine.
   </li>
   <li>
-    An agent is introduced to other slaves either by receiving another agent's slave table (CONF_SLAVES_INFO) or by receiving a packet directly from the slave. When an agent becomes aware of a new slave, it should immediately:<br>
+    <p>
+    An agent is introduced to other slaves either by receiving another agent's slave table (CONF_SLAVES_INFO) or by receiving a packet directly from the slave.
+        When an agent becomes aware of a new slave, it should immediately:
   </li>
   <ul>
     <li>
       ask the new slave for its peers
     </li>
     <li>
-      tell the new slave about all known peers and slaves<br>
+      tell the new slave about all known peers and slaves
     </li>
   </ul>
   <ul>
     <li>
-      advertise the new slave to all slaves that have sent CONF_REQ_SLAVES to this agent within the last X seconds (retention period)<br>
-      <br>
+      advertise the new slave to all slaves that have sent CONF_REQ_SLAVES to this agent within the last X seconds (retention period)
     </li>
   </ul>
 </ol>
-<br>
-<font size=3><b>UDP Packets</b></font><br>
-All TCF discovery UDP packets have an eight byte header:<br>
+
+<h3>UDP Packets</h3>
+
+<p>
+All TCF discovery UDP packets have an eight byte header:
 <ul>
   <li>
     bytes 0, 1 and 2 are 'T', 'C', and 'F', respectively
@@ -540,7 +159,7 @@ All TCF discovery UDP packets have an eight byte header:<br>
     byte 3 is the discovery protocol version, currently 2, in ASCII
   </li>
   <li>
-    byte 4 is the packet type<br>
+    byte 4 is the packet type
   </li>
   <ul>
     <li>
@@ -560,58 +179,72 @@ All TCF discovery UDP packets have an eight byte header:<br>
     bytes 5-7 are reserved for future use<br>
   </li>
 </ul>
+<p>
+All additional data is packet-type specific. All strings in that data are UTF-8 encoded.
+<dt>
+CONF_REQ_INFO
+<dd>
+This is a request for peers info. A recipient of this request should respond by sending back (to whomever sent the request) a CONF_PEER_INFO for every peer
+it wishes to advertise. This packet has no additional bytes besides the header.
+<dt>
+CONF_PEER_INFO
+<dd>
+This is a packet which advertises a peer. An agent will send this reactively in response to a CONF_REQ_INFO request or proactively as dictated by the rules
+of engagement. Following the eight-byte header, this packet contains data that describes one and only one peer. The description is simply the attributes of
+the peer (IPeer.getAttributes()), in the format <i>key</i>=<i>value</i>, with each attribute terminated by a zero byte.
+<dt>
+CONF_REQ_SLAVES
+<dd>
+This is a request for slaves info. A recipient of this request should respond by sending back (to whomever sent the request) one or more CONF_SLAVES_INFO
+packets to relay the recipient's slave table. This packet has no additional bytes besides the header.
+<dt>
+CONF_SLAVES_INFO
+<dd>
+This is a packet which advertises one or more slaves. An agent will send this reactively in response to a CONF_REQ_SLAVES request or proactively as dictated
+by the rules of engagement. Following the eight-byte header, this packet contains data that describes one or more agents. The format of an agent description is:
 <br>
-All additional data is packet-type specific. All strings in that data are UTF-8 encoded.<br>
+&nbsp;&nbsp; &lt;ttl&gt;:&lt;port&gt;:&lt;host&gt;&lt;zero-byte&gt;<br>
 <br>
-<i>CONF_REQ_INFO</i><br>
-This is a request for peers info. A recipient of this request should respond by sending back (to whomever sent the request) a CONF_PEER_INFO for every peer it wishes to advertise. This packet has no additional bytes besides the header.<br>
-<br>
-<i>CONF_PEER_INFO</i><br>
-This is a packet which advertises a peer. An agent will send this reactively in response to a CONF_REQ_INFO request or proactively as dictated by the rules of engagement. Following the eight-byte header, this packet contains data that describes one and only one peer. The description is simply the attributes of the peer (IPeer.getAttributes()), in the format <i>key</i>=<i>value</i>, with each attribute terminated by a zero byte.<br>
-<br>
-<i>CONF_REQ_SLAVES</i><br>
-This is a request for slaves info. A recipient of this request should respond by sending back (to whomever sent the request) one or more CONF_SLAVES_INFO packets to relay the recipient's slave table. This packet has no additional bytes besides the header.<br>
-<br>
-<i>CONF_SLAVES_INFO</i><br>
-This is a packet which advertises one or more slaves. An agent will send this reactively in response to a CONF_REQ_SLAVES request or proactively as dictated by the rules of engagement. Following the eight-byte header, this packet contains data that describes one or more agents. The format of an agent description is:<br>
-<br>
-&nbsp;&nbsp; &lt;timestamp&gt;:&lt;port&gt;:&lt;host&gt;&lt;zero-byte&gt;<br>
-<br>
-Where<br>
-<br>
-&nbsp;&nbsp; timestamp = indicates when a packet from this agent was last received, described as milliseconds elapsed since 1-1-1970. This number must be in decimal format.<br>
-&nbsp;&nbsp; port = the port the agent is listening on (for TCF discovery). This number must be in decimal format.<br>
-&nbsp;&nbsp; host = the IP address or host name the agent is listening on<br>
-&nbsp;&nbsp; zero-byte = single byte with value 0<br>
+Where:<br>
+&nbsp;&nbsp; <i>ttl</i> - time to live - indicates milliseconds until the data expiration time. This number must be in decimal format.<br>
+&nbsp;&nbsp; <i>port</i> - the port the agent is listening on (for TCF discovery). This number must be in decimal format.<br>
+&nbsp;&nbsp; <i>host</i> - the IP address or host name the agent is listening on.<br>
+&nbsp;&nbsp; <i>zero-byte</i> - single byte with value 0.<br>
 <br>
 An example:<br>
+&nbsp;&nbsp; 30000:1940:192.168.0.1<br>
 <br>
-&nbsp;&nbsp; 1277422154078:1940:suki.acme.com<br>
+This indicates knowledge of a TCF slave agent running at 192.168.0.1, listening on port 1940, and that the data should be cached for no more then 30 seconds.<br>
 <br>
-This indicates knowledge of a TCF slave agent running at suki.acme.com, listening on port 1940, and that a packet was last received from it on Thu Jun 24 2010 18:29:14 GMT-0500 (Central Daylight Time).<br>
-<br>
-Multiple such descriptions can appear in a CONF_SLAVES_INFO packet. Agents should take care to not send excessively large UDP packets, though. The TCF reference implementation keeps packets under 1500 bytes. Agents should split large tables across multiple UDP packets.<br>
-<br>
-<br>
-<font size=3><b>Timing</b></font><br>
-Frequency of discovery activity is just as important as the rules of engagement but are harder to define. The sweet spot for any particular proactive operation is subject to agent and network factors. We will here list values used by the Java TCF reference implementation hosted in the DSDP/TM project.<br>
-<br>
+Multiple such descriptions can appear in a CONF_SLAVES_INFO packet. Agents should take care to not send excessively large UDP packets, though.
+The TCF reference implementation keeps packets under 1500 bytes. Agents should split large tables across multiple UDP packets.
+</dd>
+
+<h3>Timing</h3>
+
+<p>
+Frequency of discovery activity is just as important as the rules of engagement but are harder to define. The sweet spot for any particular proactive
+operation is subject to agent and network factors. We will here list values used by the Java TCF reference implementation hosted in the DSDP/TM project.
+<p>
 <i>Retention Period</i><br>
 This is the maximum amount of time an external peer and slave should be remembered barring additional confirmation of existence.&nbsp; 60 seconds.<br>
-<br>
+<p>
 <i>Temporary Master-Slave Coupling</i><br>
-<div>
-  By sending CONF_REQ_SLAVES (rule #2), a slave S creates a <i>temporary</i> coupling between it and the receiving agent A (usually a master), where A becomes responsible for proactively updating S's slave table. This temporary coupling lasts X seconds, where X = retention period (60 seconds)<br>
-</div>
-<br>
+By sending CONF_REQ_SLAVES (rule #2), a slave S creates a <i>temporary</i> coupling between it and the receiving agent A (usually a master),
+where A becomes responsible for proactively updating S's slave table. This temporary coupling lasts X seconds, where X = retention period (60 seconds)<br>
+<p>
 <i>Periodic Activity</i><br>
-Agents should proactively send peer info packets (see rules of engagement 4). It should do so periodically, and regardless of incoming activity (as opposed to being triggered by incoming packets). It should at the same time update its subnet list, as users on a machine can enable/disable/reconfigure NICs on the fly. Finally, it should perform housekeeping on its peer and slave table. 1/4 retention period (15 seconds).<br>
-<br>
+Agents should proactively send peer info packets (see rules of engagement 4). It should do so periodically, and regardless of incoming activity
+(as opposed to being triggered by incoming packets). It should at the same time update its subnet list, as users on a machine can
+enable/disable/reconfigure NICs on the fly. Finally, it should perform housekeeping on its peer and slave table. 1/4 retention period (15 seconds).<br>
+<p>
 <i>Master Volunteering</i><br>
-An agent that has not received a packet from the local master agent for more than 1/2 retention period (30 seconds) should attempt to open the well-known port and become the master. It should do this check during its <i>periodic activity.</i><br>
-<br>
+An agent that has not received a packet from the local master agent for more than 1/2 retention period (30 seconds) should attempt
+to open the well-known port and become the master. It should do this check during its <i>periodic activity.</i><br>
+<p>
 <i>Slave Table Requests</i><br>
-An agent should occasionally take an incoming packet as an opportunity to ask <i>any</i> other agent on the network for its slave table (see rule of engagement 2). The minimum wait time on making such a request depends on the nature of the agent who's packet was just received:<br>
+An agent should occasionally take an incoming packet as an opportunity to ask <i>any</i> other agent on the network for its slave table
+(see rule of engagement 2). The minimum wait time on making such a request depends on the nature of the agent who's packet was just received:<br>
 <ul>
   <li>
     agent is a slave (on this or another machine): 2/3 retention period (40 seconds)&nbsp;&nbsp; &nbsp;
@@ -624,59 +257,59 @@ An agent should occasionally take an incoming packet as an opportunity to ask <i
   </li>
 </ul>
 Basically, slaves should be engaged less often than masters, and remote masters less than local masters.<br>
-<br>
-<br>
-<font size=3><b>Miscellaneous Implementation Considerations</b></font><br>
-<br>
-1. Because a master agent not only responds to peer requests (on port 1354) but broadcasts them (to port 1354), it will receive its own requests. An agent should check and ignore any packets it has sent.<br>
-<br>
-2. The TCF C implementation of the locator service uses slightly different symbolic names for the packet types:<br>
+
+<h3>Miscellaneous Implementation Considerations</h3>
+
+<p>
+1. Because a master agent not only responds to peer requests (on port 1354) but broadcasts them (to port 1354), it will receive its own requests.
+An agent should check and ignore any packets it has sent.
+<p>
+2. The TCF C implementation of the locator service uses slightly different symbolic names for the packet types:
 <br>
 <table border=1 bordercolor=#000000 cellpadding=3 cellspacing=0 height=117 id=tfq3 width=317>
   <tbody>
   <tr>
-    <td style=TEXT-ALIGN:center width=50%>
-      <b>Java</b><br>
+    <th style=TEXT-ALIGN:center width=50%>
+      Java
+    </th>
+    <th style=TEXT-ALIGN:center width=50%>
+      C
+    </th>
+  </tr>
+  <tr>
+    <td width=50%>
+      CONF_PEER_INFO
     </td>
-    <td style=TEXT-ALIGN:center width=50%>
-      <b>C</b><br>
+    <td width=50%>
+      UDP_ACK_INFO
     </td>
   </tr>
   <tr>
     <td width=50%>
-      CONF_PEER_INFO<br>
+      CONF_REQ_INFO
     </td>
     <td width=50%>
-      UDP_ACK_INFO<br>
-    </td>
-  </tr>
-  <tr>
-    <td width=50%>
-      CONF_REQ_INFO<br>
-    </td>
-    <td width=50%>
-      UDP_REQ_INFO<br>
+      UDP_REQ_INFO
     </td>
   </tr>
   <tr>
     <td width=50%>
-      CONF_SLAVES_INFO<br>
+      CONF_SLAVES_INFO
     </td>
     <td width=50%>
-      UDP_ACK_SLAVES<br>
+      UDP_ACK_SLAVES
     </td>
   </tr>
   <tr>
     <td width=50%>
-      CONF_REQ_SLAVES<br>
+      CONF_REQ_SLAVES
     </td>
     <td width=50%>
-      UDP_REQ_SLAVES<br>
+      UDP_REQ_SLAVES
     </td>
   </tr>
   </tbody>
 </table>
-<br>
-<br>
-<br></body>
+
+</body>
 </html>
