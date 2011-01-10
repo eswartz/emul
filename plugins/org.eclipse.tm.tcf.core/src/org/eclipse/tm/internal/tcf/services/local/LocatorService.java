@@ -872,11 +872,14 @@ public class LocatorService implements ILocator {
     }
 
     private void sendSlaveInfo(Slave x, long time) {
+        int ttl = (int)(x.last_packet_time + DATA_RETENTION_PERIOD - time);
+        if (ttl <= 0) return;
+        assert ttl <= DATA_RETENTION_PERIOD;
         out_buf[4] = CONF_SLAVES_INFO;
         for (SubNet subnet : subnets) {
             if (!subnet.contains(x.address)) continue;
             int i = 8;
-            String s = x.last_packet_time + ":" + x.port + ":" + x.address.getHostAddress();
+            String s = ttl + ":" + x.port + ":" + x.address.getHostAddress();
             byte[] bt = getUTF8Bytes(s);
             System.arraycopy(bt, 0, out_buf, i, bt.length);
             i += bt.length;
@@ -895,7 +898,9 @@ public class LocatorService implements ILocator {
             if (!subnet.contains(addr)) continue;
             int i = 8;
             for (Slave x : slaves) {
-                if (x.last_packet_time + DATA_RETENTION_PERIOD < time) continue;
+                int ttl = (int)(x.last_packet_time + DATA_RETENTION_PERIOD - time);
+                if (ttl <= 0) continue;
+                assert ttl <= DATA_RETENTION_PERIOD;
                 if (x.port == port && x.address.equals(addr)) continue;
                 if (!subnet.address.equals(loopback_addr)) {
                     if (!subnet.contains(x.address)) continue;
