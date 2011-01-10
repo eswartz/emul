@@ -452,6 +452,10 @@ static void udp_send_req_slaves(ip_ifc_info * ifc, struct sockaddr_in * addr) {
 static void udp_send_ack_slaves_one(SlaveInfo * s) {
     ip_ifc_info * ifc;
     time_t timenow = time(NULL);
+    int ttl = (int)(s->last_packet_time + PEER_DATA_RETENTION_PERIOD - timenow) * 1000;
+
+    if (ttl <= 0) return;
+    assert(ttl <= PEER_DATA_RETENTION_PERIOD * 1000);
 
     for (ifc = ifc_list; ifc < &ifc_list[ifc_cnt]; ifc++) {
         int n = 0;
@@ -460,8 +464,7 @@ static void udp_send_ack_slaves_one(SlaveInfo * s) {
 
         send_size = 8;
         send_buf[4] = UDP_ACK_SLAVES;
-        snprintf(str, sizeof(str), "%" PRId64 ":%u:%s", (int64_t)s->last_packet_time * 1000,
-            ntohs(s->addr.sin_port), inet_ntoa(s->addr.sin_addr));
+        snprintf(str, sizeof(str), "%u:%u:%s", ttl, ntohs(s->addr.sin_port), inet_ntoa(s->addr.sin_addr));
         app_strz(str);
 
         while (n < slave_cnt) {
@@ -487,7 +490,9 @@ static void udp_send_ack_slaves_all(struct sockaddr_in * addr, time_t timenow) {
         while (n < slave_cnt) {
             char str[256];
             SlaveInfo * s = slave_info + n++;
-            if (s->last_packet_time + PEER_DATA_RETENTION_PERIOD < timenow) continue;
+            int ttl = (int)(s->last_packet_time + PEER_DATA_RETENTION_PERIOD - timenow) * 1000;
+            if (ttl <= 0) continue;
+            assert(ttl <= PEER_DATA_RETENTION_PERIOD * 1000);
             if (addr->sin_addr.s_addr == s->addr.sin_addr.s_addr && addr->sin_port == s->addr.sin_port) continue;
             if (ifc->addr != htonl(INADDR_LOOPBACK)) {
                 if ((ifc->addr & ifc->mask) != (s->addr.sin_addr.s_addr & ifc->mask)) {
@@ -495,8 +500,7 @@ static void udp_send_ack_slaves_all(struct sockaddr_in * addr, time_t timenow) {
                     continue;
                 }
             }
-            snprintf(str, sizeof(str), "%"PRId64":%u:%s", (int64_t)s->last_packet_time * 1000,
-                ntohs(s->addr.sin_port), inet_ntoa(s->addr.sin_addr));
+            snprintf(str, sizeof(str), "%u:%u:%s", ttl, ntohs(s->addr.sin_port), inet_ntoa(s->addr.sin_addr));
             if (send_size + strlen(str) >= PREF_PACKET_SIZE) {
                 send_packet(ifc, addr);
                 send_size = 8;
