@@ -455,7 +455,6 @@ static void udp_send_ack_slaves_one(SlaveInfo * s) {
     int ttl = (int)(s->last_packet_time + PEER_DATA_RETENTION_PERIOD - timenow) * 1000;
 
     if (ttl <= 0) return;
-    assert(ttl <= PEER_DATA_RETENTION_PERIOD * 1000);
 
     for (ifc = ifc_list; ifc < &ifc_list[ifc_cnt]; ifc++) {
         int n = 0;
@@ -492,7 +491,6 @@ static void udp_send_ack_slaves_all(struct sockaddr_in * addr, time_t timenow) {
             SlaveInfo * s = slave_info + n++;
             int ttl = (int)(s->last_packet_time + PEER_DATA_RETENTION_PERIOD - timenow) * 1000;
             if (ttl <= 0) continue;
-            assert(ttl <= PEER_DATA_RETENTION_PERIOD * 1000);
             if (addr->sin_addr.s_addr == s->addr.sin_addr.s_addr && addr->sin_port == s->addr.sin_port) continue;
             if (ifc->addr != htonl(INADDR_LOOPBACK)) {
                 if ((ifc->addr & ifc->mask) != (s->addr.sin_addr.s_addr & ifc->mask)) {
