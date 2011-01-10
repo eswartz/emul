@@ -874,7 +874,6 @@ public class LocatorService implements ILocator {
     private void sendSlaveInfo(Slave x, long time) {
         int ttl = (int)(x.last_packet_time + DATA_RETENTION_PERIOD - time);
         if (ttl <= 0) return;
-        assert ttl <= DATA_RETENTION_PERIOD;
         out_buf[4] = CONF_SLAVES_INFO;
         for (SubNet subnet : subnets) {
             if (!subnet.contains(x.address)) continue;
@@ -900,7 +899,6 @@ public class LocatorService implements ILocator {
             for (Slave x : slaves) {
                 int ttl = (int)(x.last_packet_time + DATA_RETENTION_PERIOD - time);
                 if (ttl <= 0) continue;
-                assert ttl <= DATA_RETENTION_PERIOD;
                 if (x.port == port && x.address.equals(addr)) continue;
                 if (!subnet.address.equals(loopback_addr)) {
                     if (!subnet.contains(x.address)) continue;
