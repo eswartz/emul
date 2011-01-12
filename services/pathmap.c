@@ -22,6 +22,7 @@
 #if SERVICE_PathMap
 
 #include <stdio.h>
+#include <sys/stat.h>
 #include <framework/json.h>
 #include <framework/events.h>
 #include <framework/exceptions.h>
@@ -78,12 +79,9 @@ static int is_my_host(char * host) {
     return strcasecmp(host, host_name) == 0;
 }
 
-char * path_map_to_local(Channel * c, char * fnm) {
+static char * map_to_local(PathMap * m, char * fnm) {
     unsigned i, j, k;
-    PathMap * m = find_map(c);
     static char buf[FILE_PATH_SIZE];
-
-    if (m == NULL) return NULL;
 
     for (i = 0; i < m->rules_cnt; i++) {
         PathMapRule * r = m->rules + i;
@@ -91,6 +89,7 @@ char * path_map_to_local(Channel * c, char * fnm) {
         char * dst = NULL;
         char * host = NULL;
         char * prot = NULL;
+        struct stat st;
         for (j = 0; j < r->attrs_cnt; j++) {
             char * nm = r->attrs[j].name;
             if (strcmp(nm, "Source") == 0) src = r->attrs[j].value;
@@ -108,9 +107,27 @@ char * path_map_to_local(Channel * c, char * fnm) {
         j = strlen(dst) - 1;
         if (fnm[k] != 0 && (dst[j] == '/' || dst[j] == '\\')) k++;
         snprintf(buf, sizeof(buf), "%s%s", dst, fnm + k);
-        return buf;
+        if (stat(buf, &st) == 0) return buf;
     }
 
+    return NULL;
+}
+
+char * path_map_to_local(Channel * c, char * fnm) {
+    if (c == NULL) {
+        LINK * l = maps.next;
+        while (l != &maps) {
+            PathMap * m = maps2map(l);
+            char * lnm = map_to_local(m, fnm);
+            if (lnm != NULL) return lnm;
+            l = l->next;
+        }
+    }
+    else {
+        PathMap * m = find_map(c);
+        if (m == NULL) return NULL;
+        return map_to_local(m, fnm);
+    }
     return NULL;
 }
 
@@ -160,6 +177,32 @@ static void read_rule(InputStream * inp, void * args) {
     if (json_read_struct(inp, read_rule_attrs, r)) m->rules_cnt++;
 }
 
+void set_path_map(Channel * c, InputStream * inp) {
+    PathMap * m = find_map(c);
+
+    if (m == NULL) {
+        m = (PathMap *)loc_alloc_zero(sizeof(PathMap));
+        m->channel = c;
+        list_add_first(&m->maps, &maps);
+    }
+    else {
+        unsigned i, j;
+        for (i = 0; i < m->rules_cnt; i++) {
+            PathMapRule * r = m->rules + i;
+            for (j = 0; j < r->attrs_cnt; j++) {
+                loc_free(r->attrs[j].name);
+                loc_free(r->attrs[j].value);
+                loc_free(r->attrs[j].json);
+            }
+            loc_free(r->attrs);
+            r->attrs_cnt = 0;
+            r->attrs_max = 0;
+        }
+        m->rules_cnt = 0;
+    }
+    json_read_array(inp, read_rule, m);
+}
+
 static void command_get(char * token, Channel * c) {
     PathMap * m = (PathMap *)find_map(c);
 
@@ -186,30 +229,8 @@ static void command_get(char * token, Channel * c) {
 }
 
 static void command_set(char * token, Channel * c) {
-    PathMap * m = find_map(c);
+    set_path_map(c, &c->inp);
 
-    if (m == NULL) {
-        m = (PathMap *)loc_alloc_zero(sizeof(PathMap));
-        m->channel = c;
-        list_add_first(&m->maps, &maps);
-    }
-    else {
-        unsigned i, j;
-        for (i = 0; i < m->rules_cnt; i++) {
-            PathMapRule * r = m->rules + i;
-            for (j = 0; j < r->attrs_cnt; j++) {
-                loc_free(r->attrs[j].name);
-                loc_free(r->attrs[j].value);
-                loc_free(r->attrs[j].json);
-            }
-            loc_free(r->attrs);
-            r->attrs_cnt = 0;
-            r->attrs_max = 0;
-        }
-        m->rules_cnt = 0;
-    }
-
-    json_read_array(&c->inp, read_rule, m);
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 

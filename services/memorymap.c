@@ -46,7 +46,7 @@ static size_t context_extension_offset = 0;
 
 #define EXT(ctx) ((ContextExtensionMM *)((char *)(ctx) + context_extension_offset))
 
-static const char * MEMORYMAP = "MemoryMap";
+static const char MEMORY_MAP[] = "MemoryMap";
 
 static Listener * listeners = NULL;
 static unsigned listener_cnt = 0;
@@ -62,10 +62,11 @@ static void event_memory_map_changed(Context * ctx, void * args) {
     if (!ext->valid) return;
     ext->valid = 0;
 
+    if (ctx->exited) return;
     out = &broadcast_group->out;
 
     write_stringz(out, "E");
-    write_stringz(out, MEMORYMAP);
+    write_stringz(out, MEMORY_MAP);
     write_stringz(out, "changed");
 
     json_write_string(out, ctx->id);
@@ -98,8 +99,10 @@ int memory_map_get(Context * ctx, MemoryMap ** client_map, MemoryMap ** target_m
         release_error_report(ext->error);
         if (context_get_memory_map(ctx, &ext->target_map) < 0) {
             ext->error = get_error_report(errno);
+            ext->valid = get_error_code(errno) != ERR_CACHE_MISS;
         }
         else {
+            ext->error = NULL;
             ext->valid = 1;
         }
     }
@@ -317,7 +320,7 @@ static void command_set(char * token, Channel * c) {
 void ini_memory_map_service(Protocol * proto, TCFBroadcastGroup * bcg) {
     static ContextEventListener listener = {
         NULL,
-        event_memory_map_changed,
+        NULL,
         NULL,
         NULL,
         event_memory_map_changed,
@@ -325,8 +328,8 @@ void ini_memory_map_service(Protocol * proto, TCFBroadcastGroup * bcg) {
     };
     broadcast_group = bcg;
     add_context_event_listener(&listener, NULL);
-    add_command_handler(proto, MEMORYMAP, "get", command_get);
-    add_command_handler(proto, MEMORYMAP, "set", command_set);
+    add_command_handler(proto, MEMORY_MAP, "get", command_get);
+    add_command_handler(proto, MEMORY_MAP, "set", command_set);
     context_extension_offset = context_extension(sizeof(ContextExtensionMM));
 }
 

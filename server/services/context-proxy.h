@@ -27,6 +27,6 @@ struct RegisterData {
     uint8_t * mask;
 };
 
-extern void create_context_proxy(Channel * host, Channel * target);
+extern void create_context_proxy(Channel * host, Channel * target, int forward_pm);
 
 #endif /* D_context_proxy */

@@ -49,6 +49,7 @@ static void channel_redirection_listener(Channel * host, Channel * target) {
         int service_mm = 0;
         int service_pm = 0;
         int service_sm = 0;
+        int forward_pm = 0;
         for (i = 0; i < target->peer_service_cnt; i++) {
             char * nm = target->peer_service_list[i];
             if (strcmp(nm, "LineNumbers") == 0) service_ln = 1;
@@ -56,13 +57,14 @@ static void channel_redirection_listener(Channel * host, Channel * target) {
             if (strcmp(nm, "MemoryMap") == 0) service_mm = 1;
             if (strcmp(nm, "PathMap") == 0) service_pm = 1;
         }
-        if (!service_pm) {
+        if (!service_pm || !service_ln || !service_sm) {
             ini_path_map_service(host->protocol);
+            if (service_pm) forward_pm = 1;
         }
         if (service_mm) {
             if (!service_ln) ini_line_numbers_service(host->protocol);
             if (!service_sm) ini_symbols_service(host->protocol);
-            create_context_proxy(host, target);
+            create_context_proxy(host, target, forward_pm);
         }
     }
 }

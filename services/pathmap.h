@@ -30,6 +30,11 @@
  */
 extern char * path_map_to_local(Channel * channel, char * file_name);
 
+/*
+ * Read new path map from the given input stream.
+ */
+extern void set_path_map(Channel * c, InputStream * inp);
+
 extern void ini_path_map_service(Protocol * proto);
 
 #endif /* D_pathmap */
