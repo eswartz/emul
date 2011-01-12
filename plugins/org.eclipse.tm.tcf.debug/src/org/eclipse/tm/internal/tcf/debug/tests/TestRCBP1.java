@@ -84,12 +84,14 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     private boolean bp_change_done;
     private boolean bp_sync_done;
 
-    private class SuspendedContext {
+    private static class SuspendedContext {
         final String id;
         final String pc;
         final String reason;
         @SuppressWarnings("unused")
         final Map<String,Object> params;
+
+        boolean get_state_pending;
 
         SuspendedContext(String id, String pc, String reason, Map<String,Object> params) {
             this.id = id;
@@ -757,6 +759,10 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
             return;
         }
         SuspendedContext sc = suspended.remove(id);
+        if (sc == null || sc.get_state_pending) {
+            exit(new Exception("Unexpected contextResumed event: " + id));
+            return;
+        }
         if (isMyBreakpoint(sc)) suspended_prev.put(id, sc);
         running.add(id);
     }
@@ -821,6 +827,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
             }
         }
         if (!test_suite.isActive(this)) return;
+        assert resume_cmds.get(sc.id) == null;
         Runnable done = new Runnable() {
             public void run() {
                 resume(sc.id);
@@ -876,6 +883,9 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
             suspended.put(id, sc);
         }
         if (!bp_sync_done) return;
+        assert resume_cmds.get(id) == null;
+        assert !sc.get_state_pending;
+        sc.get_state_pending = true;
         ctx.getState(new IRunControl.DoneGetState() {
             public void doneGetState(IToken token, Exception error, boolean susp,
                     String pc, String reason, Map<String, Object> params) {
@@ -887,6 +897,8 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                 }
                 else if (test_suite.isActive(TestRCBP1.this)) {
                     SuspendedContext sc = suspended.get(id);
+                    assert sc.get_state_pending;
+                    sc.get_state_pending = false;
                     if (sc.pc == null || sc.reason == null) {
                         sc = new SuspendedContext(id, pc, reason, params);
                         assert !done_get_state || done_disassembly || ds == null;
@@ -910,8 +922,12 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
         final SuspendedContext sc = suspended.get(id);
         IRunControl.RunControlContext ctx = threads.get(id);
         if (ctx != null && sc != null) {
-            int rm = rnd.nextInt(6);
-            if (!ctx.canResume(rm)) rm = IRunControl.RM_RESUME;
+            assert !sc.get_state_pending;
+            int rm = IRunControl.RM_RESUME;
+            if (isMyBreakpoint(sc)) {
+                rm = rnd.nextInt(6);
+                if (!ctx.canResume(rm)) rm = IRunControl.RM_RESUME;
+            }
             resume_cmds.put(id, ctx.resume(rm, 1, new HashMap<String,Object>(), new IRunControl.DoneCommand() {
                 public void doneCommand(IToken token, Exception error) {
                     if (test_suite.cancel) return;
@@ -1134,6 +1150,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                         exit(error);
                         return;
                     }
+                    assert resume_cmds.get(sc.id) == null;
                     cmds.add(ctx.set(value, new IRegisters.DoneSet() {
                         public void doneSet(IToken token, Exception error) {
                             cmds.remove(token);
