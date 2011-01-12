@@ -90,8 +90,8 @@ static pthread_t events_thread;
 static Context * parent_ctx = NULL;
 
 const char * context_suspend_reason(Context * ctx) {
-    if (EXT(ctx)->event == TRACE_EVENT_STEP) return "Step";
-    return "Suspended";
+    if (EXT(ctx)->event == TRACE_EVENT_STEP) return REASON_STEP;
+    return REASON_USER_REQUEST;
 }
 
 static struct event_info * event_info_alloc(int event) {

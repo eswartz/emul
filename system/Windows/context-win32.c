@@ -122,9 +122,9 @@ const char * context_suspend_reason(Context * ctx) {
     DWORD exception_code = ext->suspend_reason.ExceptionRecord.ExceptionCode;
     static char buf[64];
 
-    if (exception_code == 0) return "Suspended";
+    if (exception_code == 0) return REASON_USER_REQUEST;
     if (ext->suspend_reason.dwFirstChance) {
-        if (exception_code == EXCEPTION_SINGLE_STEP) return "Step";
+        if (exception_code == EXCEPTION_SINGLE_STEP) return REASON_STEP;
         if (exception_code == EXCEPTION_BREAKPOINT) return "Eventpoint";
         snprintf(buf, sizeof(buf), "Exception %#lx", exception_code);
     }

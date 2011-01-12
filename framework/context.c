@@ -33,6 +33,16 @@ static unsigned listener_max = 0;
 
 LINK context_root = { NULL, NULL };
 
+const char * REASON_USER_REQUEST = "Suspended";
+const char * REASON_STEP = "Step";
+const char * REASON_BREAKPOINT = "Breakpoint";
+const char * REASON_EXCEPTION = "Exception";
+const char * REASON_CONTAINER = "Container";
+const char * REASON_WATCHPOINT = "Watchpoint";
+const char * REASON_SIGNAL = "Signal";
+const char * REASON_SHAREDLIB = "Shared Library";
+const char * REASON_ERROR = "Error";
+
 char * pid2id(pid_t pid, pid_t parent) {
     static char s[64];
     char * p = s + sizeof(s);

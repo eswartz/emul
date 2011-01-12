@@ -66,6 +66,7 @@ typedef struct ContextExtensionRC {
     BreakpointInfo * step_bp_info;
     CodeArea * step_code_area;
     ErrorReport * step_error;
+    const char * step_done;
     Channel * step_channel;
     int step_continue_mode;
     int safe_single_step;   /* not zero if the context is performing a "safe" single instruction step */
@@ -190,6 +191,7 @@ static void write_context(OutputStream * out, Context * ctx) {
 #if EN_STEP_OVER
             modes |= (1 << RM_STEP_OVER);
             modes |= (1 << RM_STEP_OVER_RANGE);
+            modes |= (1 << RM_STEP_OUT);
 #endif
 #if EN_STEP_LINE
             modes |= (1 << RM_STEP_INTO_LINE);
@@ -203,6 +205,7 @@ static void write_context(OutputStream * out, Context * ctx) {
 #if EN_STEP_OVER
             modes |= (1 << RM_REVERSE_STEP_OVER);
             modes |= (1 << RM_REVERSE_STEP_OVER_RANGE);
+            modes |= (1 << RM_REVERSE_STEP_OUT);
 #endif
 #if EN_STEP_LINE
             modes |= (1 << RM_REVERSE_STEP_INTO_LINE);
@@ -261,16 +264,17 @@ static void write_context_state(OutputStream * out, Context * ctx) {
 
     /* String: Reason */
     if (ext->intercepted_by_bp == 1) bp_ids = get_context_breakpoint_ids(ctx);
-    if (bp_ids != NULL) reason = "Breakpoint";
+    if (bp_ids != NULL) reason = REASON_BREAKPOINT;
     else if (ctx->exception_description != NULL) reason = ctx->exception_description;
     else if (ext->step_error != NULL) reason = errno_to_str(set_error_report_errno(ext->step_error));
+    else if (ext->step_done != NULL) reason = ext->step_done;
     else reason = context_suspend_reason(ctx);
     json_write_string(out, reason);
     write_stream(out, 0);
 
     /* Object: Additional context state info */
     write_stream(out, '{');
-    if (ctx->signal) {
+    if (ext->step_error == NULL && ext->step_done == NULL && ctx->signal) {
         const char * name = signal_name(ctx->signal);
         const char * desc = signal_description(ctx->signal);
         json_write_string(out, "Signal");
@@ -539,6 +543,7 @@ static void start_step_mode(Context * ctx, Channel * c, int mode, ContextAddress
         ext->step_error = NULL;
     }
     channel_lock(ext->step_channel = c);
+    ext->step_done = NULL;
     ext->step_mode = mode;
     ext->step_range_start = range_start;
     ext->step_range_end = range_end;
@@ -928,8 +933,10 @@ static void update_step_machine_code_area(CodeArea * area, void * args) {
 }
 #endif
 
+#if EN_STEP_OVER
 static void step_machine_breakpoint(Context * ctx, void * args) {
 }
+#endif
 
 static int update_step_machine_state(Context * ctx) {
     ContextExtensionRC * ext = EXT(ctx);
@@ -963,6 +970,7 @@ static int update_step_machine_state(Context * ctx) {
             else if (addr < ext->step_range_start || addr >= ext->step_range_end) {
                 StackFrame * info = NULL;
                 int n = get_top_frame(ctx);
+                if (n < 0) return -1;
                 if (get_frame_info(ctx, n, &info) < 0) return -1;
                 if (ext->step_frame != info->fp) {
                     while (n > 0) {
@@ -976,6 +984,32 @@ static int update_step_machine_state(Context * ctx) {
                     }
                 }
             }
+            break;
+        case RM_STEP_OUT:
+        case RM_REVERSE_STEP_OUT:
+            {
+                StackFrame * info = NULL;
+                int n = get_top_frame(ctx);
+                if (n < 0) return -1;
+                if (ext->step_cnt == 0) {
+                    if (n == 0) {
+                        set_errno(ERR_INV_COMMAND, "No parent stack frame");
+                        return -1;
+                    }
+                    if (get_frame_info(ctx, n - 1, &info) < 0) return -1;
+                    ext->step_frame = info->fp;
+                }
+                while (n > 0) {
+                    if (get_frame_info(ctx, --n, &info) < 0) return -1;
+                    if (ext->step_frame == info->fp) {
+                        uint64_t pc = 0;
+                        if (read_reg_value(info, get_PC_definition(ctx), &pc) < 0) return -1;
+                        step_bp_addr = (ContextAddress)pc;
+                        break;
+                    }
+                }
+            }
+            break;
         }
 
         if (step_bp_addr) {
@@ -983,11 +1017,13 @@ static int update_step_machine_state(Context * ctx) {
             case RM_STEP_OVER:
             case RM_STEP_OVER_RANGE:
             case RM_STEP_OVER_LINE:
+            case RM_STEP_OUT:
                 ext->step_continue_mode = RM_RESUME;
                 break;
             case RM_REVERSE_STEP_OVER:
             case RM_REVERSE_STEP_OVER_RANGE:
             case RM_REVERSE_STEP_OVER_LINE:
+            case RM_REVERSE_STEP_OUT:
                 step_bp_addr--;
                 ext->step_continue_mode = RM_REVERSE_RESUME;
                 break;
@@ -1035,6 +1071,7 @@ static int update_step_machine_state(Context * ctx) {
     case RM_REVERSE_STEP_OVER_RANGE:
         if (ext->step_cnt > 0 && (addr < ext->step_range_start || addr >= ext->step_range_end)) {
             ctx->pending_intercept = 1;
+            ext->step_done = REASON_STEP;
             return 0;
         }
         break;
@@ -1061,6 +1098,7 @@ static int update_step_machine_state(Context * ctx) {
             CodeArea * area = ext->step_code_area;
             if (area == NULL) {
                 ctx->pending_intercept = 1;
+                ext->step_done = REASON_STEP;
                 return 0;
             }
             ext->step_code_area = NULL;
@@ -1071,6 +1109,7 @@ static int update_step_machine_state(Context * ctx) {
             if (ext->step_code_area == NULL) {
                 free_code_area(area);
                 ctx->pending_intercept = 1;
+                ext->step_done = REASON_STEP;
                 return 0;
             }
             same_line = is_same_line(ext->step_code_area, area);
@@ -1083,6 +1122,7 @@ static int update_step_machine_state(Context * ctx) {
                 }
                 else {
                     ctx->pending_intercept = 1;
+                    ext->step_done = REASON_STEP;
                     return 0;
                 }
             }
@@ -1091,6 +1131,11 @@ static int update_step_machine_state(Context * ctx) {
         }
         break;
 #endif
+    case RM_STEP_OUT:
+    case RM_REVERSE_STEP_OUT:
+        ctx->pending_intercept = 1;
+        ext->step_done = REASON_STEP;
+        return 0;
     default:
         errno = ERR_UNSUPPORTED;
         return -1;
@@ -1439,7 +1484,16 @@ static void event_context_stopped(Context * ctx, void * client_data) {
     assert(!ctx->exited);
     assert(!ext->intercepted);
     ext->safe_single_step = 0;
-    if (ext->step_mode) ext->step_cnt++;
+    if (ext->step_mode) {
+        ext->step_cnt++;
+    }
+    else {
+        if (ext->step_error != NULL) {
+            release_error_report(ext->step_error);
+            ext->step_error = NULL;
+        }
+        ext->step_done = NULL;
+    }
     if (ctx->stopped_by_bp) evaluate_breakpoint(ctx);
     if (ext->pending_safe_event) check_safe_events(ctx);
     if (ctx->stopped_by_exception) send_event_context_exception(ctx);

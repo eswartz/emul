@@ -131,7 +131,7 @@ static const char * event_name(int event) {
 const char * context_suspend_reason(Context * ctx) {
     static char reason[128];
 
-    if (EXT(ctx)->end_of_step) return "Step";
+    if (EXT(ctx)->end_of_step) return REASON_STEP;
     if (EXT(ctx)->ptrace_event != 0) {
         assert(ctx->signal == SIGTRAP);
         snprintf(reason, sizeof(reason), "Event: %s", event_name(EXT(ctx)->ptrace_event));
@@ -139,7 +139,7 @@ const char * context_suspend_reason(Context * ctx) {
     }
     if (EXT(ctx)->syscall_enter) return "System Call";
     if (EXT(ctx)->syscall_exit) return "System Return";
-    if (ctx->signal == SIGSTOP || ctx->signal == SIGTRAP) return "Suspended";
+    if (ctx->signal == SIGSTOP || ctx->signal == SIGTRAP) return REASON_USER_REQUEST;
     snprintf(reason, sizeof(reason), "Signal %d", ctx->signal);
     return reason;
 }

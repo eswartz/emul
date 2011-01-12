@@ -64,6 +64,19 @@ struct Context {
 };
 
 /*
+ * Debug context suspend reason.
+ */
+extern const char * REASON_USER_REQUEST;
+extern const char * REASON_STEP;
+extern const char * REASON_BREAKPOINT;
+extern const char * REASON_EXCEPTION;
+extern const char * REASON_CONTAINER;
+extern const char * REASON_WATCHPOINT;
+extern const char * REASON_SIGNAL;
+extern const char * REASON_SHAREDLIB;
+extern const char * REASON_ERROR;
+
+/*
  * Values of "mem_access".
  * Target system can support multiple different memory access types, like instruction and data access.
  * Different access types can use different logic for address translation and memory mapping, so they can

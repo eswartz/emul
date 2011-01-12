@@ -77,10 +77,10 @@ static int is_big_endian(void) {
 const char * context_suspend_reason(Context * ctx) {
     static char reason[128];
 
-    if (EXT(ctx)->end_of_step) return "Step";
+    if (EXT(ctx)->end_of_step) return REASON_STEP;
     if (EXT(ctx)->syscall_enter) return "System Call";
     if (EXT(ctx)->syscall_exit) return "System Return";
-    if (ctx->signal == SIGSTOP || ctx->signal == SIGTRAP) return "Suspended";
+    if (ctx->signal == SIGSTOP || ctx->signal == SIGTRAP) return REASON_USER_REQUEST;
     snprintf(reason, sizeof(reason), "Signal %d", ctx->signal);
     return reason;
 }
