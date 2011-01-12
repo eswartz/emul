@@ -11,6 +11,7 @@
 package org.eclipse.tm.internal.tcf.debug.actions;
 
 import java.math.BigInteger;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -106,17 +107,16 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
         }
         if (step_cnt > 0) {
             boolean ok = false;
-            String pc = state.getData().suspend_pc;
-            String reason = state.getData().suspend_reason;
-            if (IRunControl.REASON_STEP.equals(reason) || isMyBreakpoint(pc, reason)) {
+            TCFContextState state_data = state.getData();
+            if (IRunControl.REASON_STEP.equals(state_data.suspend_reason) || isMyBreakpoint(state_data)) {
                 ok = true;
             }
-            else if (IRunControl.REASON_BREAKPOINT.equals(reason) && pc0 != null && pc1 != null) {
-                BigInteger x = new BigInteger(pc);
+            else if (IRunControl.REASON_BREAKPOINT.equals(state_data.suspend_reason) && pc0 != null && pc1 != null) {
+                BigInteger x = new BigInteger(state_data.suspend_pc);
                 ok = x.compareTo(pc0) >= 0 && x.compareTo(pc1) < 0;
             }
             if (!ok) {
-                exit(null, reason);
+                exit(null, state_data.suspend_reason);
                 return;
             }
         }
@@ -350,11 +350,17 @@ public abstract class TCFActionStepOver extends TCFAction implements IRunControl
         return true;
     }
 
-    private boolean isMyBreakpoint(String pc, String reason) {
+    private boolean isMyBreakpoint(TCFContextState state_data) {
         if (bp == null) return false;
-        if (pc == null) return false;
-        if (!IRunControl.REASON_BREAKPOINT.equals(reason)) return false;
-        BigInteger x = new BigInteger(pc);
+        if (state_data.suspend_pc == null) return false;
+        if (!IRunControl.REASON_BREAKPOINT.equals(state_data.suspend_reason)) return false;
+        Object ids = state_data.suspend_params.get(IRunControl.STATE_BREAKPOINT_IDS);
+        if (ids != null) {
+            @SuppressWarnings("unchecked")
+            Collection<String> c = (Collection<String>)ids;
+            if (c.contains(bp.get(IBreakpoints.PROP_ID))) return true;
+        }
+        BigInteger x = new BigInteger(state_data.suspend_pc);
         BigInteger y = new BigInteger((String)bp.get(IBreakpoints.PROP_LOCATION));
         return x.equals(y);
     }

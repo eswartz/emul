@@ -11,6 +11,7 @@
 package org.eclipse.tm.internal.tcf.debug.actions;
 
 import java.math.BigInteger;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -79,10 +80,9 @@ public abstract class TCFActionStepOut extends TCFAction implements IRunControl.
             return;
         }
         if (step_cnt > 0) {
-            String pc = state.getData().suspend_pc;
-            String reason = state.getData().suspend_reason;
-            if (isMyBreakpoint(pc, reason)) exit(null);
-            else exit(null, reason);
+            TCFContextState state_data = state.getData();
+            if (isMyBreakpoint(state_data)) exit(null);
+            else exit(null, state_data.suspend_reason);
             return;
         }
         if (ctx.canResume(step_back ? IRunControl.RM_REVERSE_STEP_OUT : IRunControl.RM_STEP_OUT)) {
@@ -196,11 +196,17 @@ public abstract class TCFActionStepOut extends TCFAction implements IRunControl.
         Protocol.invokeLater(this);
     }
 
-    private boolean isMyBreakpoint(String pc, String reason) {
+    private boolean isMyBreakpoint(TCFContextState state_data) {
         if (bp == null) return false;
-        if (pc == null) return false;
-        if (!IRunControl.REASON_BREAKPOINT.equals(reason)) return false;
-        BigInteger x = new BigInteger(pc);
+        if (state_data.suspend_pc == null) return false;
+        if (!IRunControl.REASON_BREAKPOINT.equals(state_data.suspend_reason)) return false;
+        Object ids = state_data.suspend_params.get(IRunControl.STATE_BREAKPOINT_IDS);
+        if (ids != null) {
+            @SuppressWarnings("unchecked")
+            Collection<String> c = (Collection<String>)ids;
+            if (c.contains(bp.get(IBreakpoints.PROP_ID))) return true;
+        }
+        BigInteger x = new BigInteger(state_data.suspend_pc);
         BigInteger y = new BigInteger((String)bp.get(IBreakpoints.PROP_LOCATION));
         return x.equals(y);
     }
