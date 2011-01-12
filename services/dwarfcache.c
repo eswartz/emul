@@ -816,9 +816,9 @@ static void compute_reverse_lookup_indices(CompUnit * Unit) {
     Unit->mStatesIndex = (LineNumbersState **)loc_alloc(sizeof(LineNumbersState *) * Unit->mStatesCnt);
     for (i = 0; i < Unit->mStatesCnt; i++) Unit->mStatesIndex[i] = Unit->mStates + i;
     qsort(Unit->mStatesIndex, Unit->mStatesCnt, sizeof(LineNumbersState *), state_text_pos_comparator);
-    for (i = 0; i < Unit->mStatesCnt - 1; i++) {
-        LineNumbersState * s = Unit->mStatesIndex[i];
-        LineNumbersState * n = Unit->mStatesIndex[i + 1];
+    for (i = 1; i < Unit->mStatesCnt; i++) {
+        LineNumbersState * s = Unit->mStatesIndex[i - 1];
+        LineNumbersState * n = Unit->mStatesIndex[i];
         s->mNext = n - Unit->mStates;
     }
 }
