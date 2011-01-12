@@ -590,7 +590,6 @@ static int win32_resume(Context * ctx, int step) {
         for (l = prs->children.next; l != &prs->children; l = l->next) {
             Context * c = cldl2ctxp(l);
             c->exiting = 1;
-            if (c->stopped) event_win32_context_started(c);
         }
     }
     else {
@@ -615,8 +614,8 @@ static int win32_resume(Context * ctx, int step) {
             }
             if (cnt <= 1) break;
         }
-        event_win32_context_started(ctx);
     }
+    event_win32_context_started(ctx);
     return 0;
 }
 
@@ -769,7 +768,7 @@ static void debug_event_handler(void * x) {
 static void continue_debug_event(void * args) {
     DebugState * debug_state = (DebugState *)args;
 
-    suspend_threads(debug_state->process_id);
+    if (debug_state->break_thread != NULL) suspend_threads(debug_state->process_id);
     debug_state->process_suspended = 0;
 
     trace(LOG_WAITPID, "continue debug event, process id %u", debug_state->process_id);

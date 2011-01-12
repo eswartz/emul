@@ -34,6 +34,7 @@
 #include <services/tcf_elf.h>
 #include <services/memorymap.h>
 #include <services/dwarfcache.h>
+#include <services/pathmap.h>
 
 #if defined(_WRS_KERNEL)
 #elif defined(WIN32)
@@ -93,6 +94,7 @@ static void elf_dispose(ELF_File * file) {
         }
         loc_free(file->sections);
     }
+    release_error_report(file->error);
     loc_free(file->pheaders);
     loc_free(file->str_pool);
     loc_free(file->debug_info_file_name);
@@ -147,7 +149,7 @@ static void elf_cleanup_event(void * arg) {
     }
 }
 
-static ino_t add_ino(char * fnm, ino_t ino) {
+static ino_t add_ino(const char * fnm, ino_t ino) {
     FileINode * n = (FileINode *)loc_alloc_zero(sizeof(*n));
     n->next = inodes;
     n->name = loc_strdup(fnm);
@@ -156,7 +158,7 @@ static ino_t add_ino(char * fnm, ino_t ino) {
     return ino;
 }
 
-static ino_t elf_ino(char * fnm) {
+static ino_t elf_ino(const char * fnm) {
     /*
      * Number of the information node (the inode) for the file is used as file ID.
      * Since some file systems don't support inodes, this function is used in such cases
@@ -185,7 +187,7 @@ static ino_t elf_ino(char * fnm) {
     return elf_ino_cnt++;
 }
 
-static ELF_File * find_open_file(dev_t dev, ino_t ino, int64_t mtime) {
+static ELF_File * find_open_file_by_inode(dev_t dev, ino_t ino, int64_t mtime) {
     ELF_File * prev = NULL;
     ELF_File * file = files;
     while (file != NULL) {
@@ -205,7 +207,7 @@ static ELF_File * find_open_file(dev_t dev, ino_t ino, int64_t mtime) {
     return NULL;
 }
 
-static ELF_File * find_open_file_by_name(char * name) {
+static ELF_File * find_open_file_by_name(const char * name) {
     ELF_File * prev = NULL;
     ELF_File * file = files;
     while (file != NULL) {
@@ -235,37 +237,118 @@ void swap_bytes(void * buf, size_t size) {
     }
 }
 
-ELF_File * elf_open(char * file_name) {
-    int error = 0;
+static char * get_debug_info_file_name(ELF_File * file, int * error) {
+    unsigned idx;
+
+    for (idx = 1; idx < file->section_cnt; idx++) {
+        ELF_Section * sec = file->sections + idx;
+        if (sec->size == 0) continue;
+        if (sec->type == SHT_NOTE && sec->flags == SHF_ALLOC) {
+            unsigned offs = 0;
+            if (elf_load(sec) < 0) {
+                *error = errno;
+                return NULL;
+            }
+            while (offs < sec->size) {
+                U4_T name_sz = *(U4_T *)((U1_T *)sec->data + offs);
+                U4_T desc_sz = *(U4_T *)((U1_T *)sec->data + offs + 4);
+                U4_T type = *(U4_T *)((U1_T *)sec->data + offs + 8);
+                char * name = NULL;
+                offs += 12;
+                if (file->byte_swap) {
+                    SWAP(name_sz);
+                    SWAP(desc_sz);
+                    SWAP(type);
+                }
+                name = (char *)((U1_T *)sec->data + offs);
+                offs += name_sz;
+                while (offs % 4 != 0) offs++;
+                if (type == 3 && strcmp(name, "GNU") == 0) {
+                    char * lnm = NULL;
+                    char fnm[FILE_PATH_SIZE];
+                    struct stat buf;
+                    char id[64];
+                    size_t id_size = 0;
+                    U1_T * desc = (U1_T *)sec->data + offs;
+                    U4_T i = 0;
+                    while (i < desc_sz) {
+                        U1_T j = (desc[i] >> 4) & 0xf;
+                        U1_T k = desc[i++] & 0xf;
+                        id[id_size++] = j < 10 ? '0' + j : 'a' + j - 10;
+                        id[id_size++] = k < 10 ? '0' + k : 'a' + k - 10;
+                    }
+                    id[id_size++] = 0;
+                    trace(LOG_ELF, "Found GNU build ID %s", id);
+                    snprintf(fnm, sizeof(fnm), "/usr/lib/debug/.build-id/%.2s/%s.debug", id, id + 2);
+                    if (stat(fnm, &buf) == 0) return loc_strdup(fnm);
+                    if ((lnm = path_map_to_local(NULL, fnm)) != NULL) return loc_strdup(lnm);
+                    return NULL;
+                }
+                offs += desc_sz;
+                while (offs % 4 != 0) offs++;
+            }
+        }
+        else if (sec->name != NULL && strcmp(sec->name, ".gnu_debuglink") == 0) {
+            if (elf_load(sec) < 0) {
+                *error = errno;
+                return NULL;
+            }
+            else {
+                /* TODO: check debug info CRC */
+                char * lnm = NULL;
+                char fnm[FILE_PATH_SIZE];
+                struct stat buf;
+                char * name = (char *)sec->data;
+                int l = strlen(file->name);
+                while (l > 0 && file->name[l - 1] != '/' && file->name[l - 1] != '\\') l--;
+                if (strcmp(file->name + l, name) != 0) {
+                    snprintf(fnm, sizeof(fnm), "%.*s%s", l, file->name, name);
+                    if (stat(fnm, &buf) == 0) return loc_strdup(fnm);
+                }
+                snprintf(fnm, sizeof(fnm), "%.*s.debug/%s", l, file->name, name);
+                if (stat(fnm, &buf) == 0) return loc_strdup(fnm);
+                snprintf(fnm, sizeof(fnm), "/usr/lib/debug%.*s%s", l, file->name, name);
+                if (stat(fnm, &buf) == 0) return loc_strdup(fnm);
+                if ((lnm = path_map_to_local(NULL, fnm)) != NULL) return loc_strdup(lnm);
+                return NULL;
+            }
+        }
+    }
+    return NULL;
+}
+
+static ELF_File * create_elf_cache(const char * file_name) {
     struct stat st;
+    int error = 0;
     ELF_File * file = NULL;
     unsigned str_index = 0;
-
-    if (!elf_cleanup_posted) {
-        post_event_with_delay(elf_cleanup_event, NULL, 1000000);
-        elf_cleanup_posted = 1;
-    }
-
-    if (stat(file_name, &st) < 0) return NULL;
-    if (st.st_ino == 0 && (st.st_ino = elf_ino(file_name)) == 0) return NULL;
-
-    file = find_open_file(st.st_dev, st.st_ino, st.st_mtime);
-    if (file != NULL) return file;
 
     trace(LOG_ELF, "Create ELF file cache %s", file_name);
 
     file = (ELF_File *)loc_alloc_zero(sizeof(ELF_File));
     file->name = loc_strdup(file_name);
+
+    if (stat(file_name, &st) < 0) {
+        error = errno;
+        memset(&st, 0, sizeof(st));
+    }
+    else if (st.st_ino == 0) {
+        st.st_ino = elf_ino(file_name);
+    }
+
     file->dev = st.st_dev;
     file->ino = st.st_ino;
     file->mtime = st.st_mtime;
-    if ((file->fd = open(file->name, O_RDONLY | O_BINARY, 0)) < 0) error = errno;
+
+    if (error == 0 && (file->fd = open(file->name, O_RDONLY | O_BINARY, 0)) < 0) error = errno;
 
     if (error == 0) {
         Elf32_Ehdr hdr;
         memset(&hdr, 0, sizeof(hdr));
         if (read(file->fd, (char *)&hdr, sizeof(hdr)) < 0) error = errno;
-        if (error == 0 && strncmp((char *)hdr.e_ident, ELFMAG, SELFMAG) != 0) error = ERR_INV_FORMAT;
+        if (error == 0 && strncmp((char *)hdr.e_ident, ELFMAG, SELFMAG) != 0) {
+            error = set_errno(ERR_INV_FORMAT, "Unsupported ELF identification code");
+        }
         if (error == 0) {
             if (hdr.e_ident[EI_DATA] == ELFDATA2LSB) {
                 file->big_endian = 0;
@@ -274,7 +357,7 @@ ELF_File * elf_open(char * file_name) {
                 file->big_endian = 1;
             }
             else {
-                error = ERR_INV_FORMAT;
+                error = set_errno(ERR_INV_FORMAT, "Invalid ELF data encoding ID");
             }
             file->byte_swap = 1;
             if ((*(char *)&file->byte_swap != 1) == file->big_endian) file->byte_swap = 0;
@@ -300,9 +383,15 @@ ELF_File * elf_open(char * file_name) {
             }
             file->type = hdr.e_type;
             file->machine = hdr.e_machine;
-            if (error == 0 && hdr.e_type != ET_EXEC && hdr.e_type != ET_DYN && hdr.e_type != ET_REL) error = ERR_INV_FORMAT;
-            if (error == 0 && hdr.e_version != EV_CURRENT) error = ERR_INV_FORMAT;
-            if (error == 0 && hdr.e_shoff == 0) error = ERR_INV_FORMAT;
+            if (error == 0 && hdr.e_type != ET_EXEC && hdr.e_type != ET_DYN && hdr.e_type != ET_REL) {
+                error = set_errno(ERR_INV_FORMAT, "Invalid ELF type ID");
+            }
+            if (error == 0 && hdr.e_version != EV_CURRENT) {
+                error = set_errno(ERR_INV_FORMAT, "Unsupported ELF version");
+            }
+            if (error == 0 && hdr.e_shoff == 0) {
+                error = set_errno(ERR_INV_FORMAT, "Invalid section header table's file offset");
+            }
             if (error == 0 && lseek(file->fd, hdr.e_shoff, SEEK_SET) == (off_t)-1) error = errno;
             if (error == 0) {
                 unsigned cnt = 0;
@@ -404,9 +493,15 @@ ELF_File * elf_open(char * file_name) {
             }
             file->type = hdr.e_type;
             file->machine = hdr.e_machine;
-            if (error == 0 && hdr.e_type != ET_EXEC && hdr.e_type != ET_DYN && hdr.e_type != ET_REL) error = ERR_INV_FORMAT;
-            if (error == 0 && hdr.e_version != EV_CURRENT) error = ERR_INV_FORMAT;
-            if (error == 0 && hdr.e_shoff == 0) error = ERR_INV_FORMAT;
+            if (error == 0 && hdr.e_type != ET_EXEC && hdr.e_type != ET_DYN && hdr.e_type != ET_REL) {
+                error = set_errno(ERR_INV_FORMAT, "Invalid ELF type ID");
+            }
+            if (error == 0 && hdr.e_version != EV_CURRENT) {
+                error = set_errno(ERR_INV_FORMAT, "Unsupported ELF version");
+            }
+            if (error == 0 && hdr.e_shoff == 0) {
+                error = set_errno(ERR_INV_FORMAT, "Invalid section header table's file offset");
+            }
             if (error == 0 && lseek(file->fd, hdr.e_shoff, SEEK_SET) == (off_t)-1) error = errno;
             if (error == 0) {
                 unsigned cnt = 0;
@@ -486,16 +581,16 @@ ELF_File * elf_open(char * file_name) {
             str_index = hdr.e_shstrndx;
         }
         else {
-            error = ERR_INV_FORMAT;
+            error = set_errno(ERR_INV_FORMAT, "Invalid ELF class ID");
         }
         if (error == 0 && str_index != 0 && str_index < file->section_cnt) {
             int rd = 0;
             ELF_Section * str = file->sections + str_index;
             file->str_pool = (char *)loc_alloc((size_t)str->size);
-            if (str->offset == 0 || str->size == 0) error = ERR_INV_FORMAT;
+            if (str->offset == 0 || str->size == 0) error = set_errno(ERR_INV_FORMAT, "Invalid ELF string pool offset or size");
             if (error == 0 && lseek(file->fd, str->offset, SEEK_SET) == (off_t)-1) error = errno;
             if (error == 0 && (rd = read(file->fd, file->str_pool, (size_t)str->size)) < 0) error = errno;
-            if (error == 0 && rd != (int)str->size) error = ERR_INV_FORMAT;
+            if (error == 0 && rd != (int)str->size) error = set_errno(ERR_INV_FORMAT, "Cannot read ELF string pool");
             if (error == 0) {
                 unsigned i;
                 for (i = 1; i < file->section_cnt; i++) {
@@ -505,14 +600,28 @@ ELF_File * elf_open(char * file_name) {
             }
         }
     }
+    if (error == 0) {
+        file->debug_info_file_name = get_debug_info_file_name(file, &error);
+        if (file->debug_info_file_name) trace(LOG_ELF, "Debug info file found %s", file->debug_info_file_name);
+    }
     if (error != 0) {
         trace(LOG_ELF, "Error openning ELF file: %d %s", error, errno_to_str(error));
-        elf_dispose(file);
-        errno = error;
-        return NULL;
+        file->error = get_error_report(error);
+    }
+    if (!elf_cleanup_posted) {
+        post_event_with_delay(elf_cleanup_event, NULL, 1000000);
+        elf_cleanup_posted = 1;
     }
     file->next = files;
     return files = file;
+}
+
+ELF_File * elf_open(const char * file_name) {
+    ELF_File * file = find_open_file_by_name(file_name);
+    if (file == NULL) file = create_elf_cache(file_name);
+    if (file->error == NULL) return file;
+    set_error_report_errno(file->error);
+    return NULL;
 }
 
 int elf_load(ELF_Section * s) {
@@ -568,97 +677,24 @@ int elf_load(ELF_Section * s) {
     return 0;
 }
 
-static char * get_debug_info_file_name(ELF_File * file, int * error) {
-    unsigned idx;
-
-    for (idx = 1; idx < file->section_cnt; idx++) {
-        ELF_Section * sec = file->sections + idx;
-        if (sec->size == 0) continue;
-        if (sec->type == SHT_NOTE && sec->flags == SHF_ALLOC) {
-            unsigned offs = 0;
-            if (elf_load(sec) < 0) {
-                *error = errno;
-                return NULL;
-            }
-            while (offs < sec->size) {
-                U4_T name_sz = *(U4_T *)((U1_T *)sec->data + offs);
-                U4_T desc_sz = *(U4_T *)((U1_T *)sec->data + offs + 4);
-                U4_T type = *(U4_T *)((U1_T *)sec->data + offs + 8);
-                char * name = NULL;
-                offs += 12;
-                if (file->byte_swap) {
-                    SWAP(name_sz);
-                    SWAP(desc_sz);
-                    SWAP(type);
-                }
-                name = (char *)((U1_T *)sec->data + offs);
-                offs += name_sz;
-                while (offs % 4 != 0) offs++;
-                if (type == 3 && strcmp(name, "GNU") == 0) {
-                    char fnm[FILE_PATH_SIZE];
-                    struct stat buf;
-                    char id[64];
-                    size_t id_size = 0;
-                    U1_T * desc = (U1_T *)sec->data + offs;
-                    U4_T i = 0;
-                    while (i < desc_sz) {
-                        U1_T j = (desc[i] >> 4) & 0xf;
-                        U1_T k = desc[i++] & 0xf;
-                        id[id_size++] = j < 10 ? '0' + j : 'a' + j - 10;
-                        id[id_size++] = k < 10 ? '0' + k : 'a' + k - 10;
-                    }
-                    id[id_size++] = 0;
-                    trace(LOG_ELF, "Found GNU build ID %s", id);
-                    snprintf(fnm, sizeof(fnm), "/usr/lib/debug/.build-id/%.2s/%s.debug", id, id + 2);
-                    if (stat(fnm, &buf) == 0) return loc_strdup(fnm);
-                    return NULL;
-                }
-                offs += desc_sz;
-                while (offs % 4 != 0) offs++;
-            }
-        }
-        else if (sec->name != NULL && strcmp(sec->name, ".gnu_debuglink") == 0) {
-            if (elf_load(sec) < 0) {
-                *error = errno;
-                return NULL;
-            }
-            else {
-                /* TODO: check debug info CRC */
-                char fnm[FILE_PATH_SIZE];
-                struct stat buf;
-                char * name = (char *)sec->data;
-                int l = strlen(file->name);
-                while (l > 0 && file->name[l - 1] != '/' && file->name[l - 1] != '\\') l--;
-                if (strcmp(file->name + l, name) != 0) {
-                    snprintf(fnm, sizeof(fnm), "%.*s%s", l, file->name, name);
-                    if (stat(fnm, &buf) == 0) return loc_strdup(fnm);
-                }
-                snprintf(fnm, sizeof(fnm), "%.*s.debug/%s", l, file->name, name);
-                if (stat(fnm, &buf) == 0) return loc_strdup(fnm);
-                snprintf(fnm, sizeof(fnm), "/usr/lib/debug%.*s%s", l, file->name, name);
-                if (stat(fnm, &buf) == 0) return loc_strdup(fnm);
-                return NULL;
-            }
-        }
-    }
-    return NULL;
-}
-
 static ELF_File * open_memory_region_file(MemoryRegion * r, int * error) {
     ELF_File * file = NULL;
+    ino_t ino = r->ino;
+    dev_t dev = r->dev;
 
     if (r->file_name == NULL) return NULL;
-    file = find_open_file(r->dev, r->ino ? r->ino : elf_ino(r->file_name), 0);
-    if (file == NULL) {
-        file = elf_open(r->file_name);
-        if (file == NULL && *error == 0) *error = errno;
-        if (file == NULL) return NULL;
-        if (r->dev != 0 && file->dev != r->dev) return NULL;
-        if (r->ino != 0 && file->ino != r->ino) return NULL;
-        file->debug_info_file_name = get_debug_info_file_name(file, error);
-        if (file->debug_info_file_name) trace(LOG_ELF, "Debug info file found %s", file->debug_info_file_name);
+    if (ino == 0) ino = elf_ino(r->file_name);
+    if (dev != 0 && ino != 0) file = find_open_file_by_inode(dev, ino, 0);
+    if (file == NULL) file = find_open_file_by_name(r->file_name);
+    if (file == NULL) file = create_elf_cache(r->file_name);
+    if (r->dev != 0 && file->dev != r->dev) return NULL;
+    if (r->ino != 0 && file->ino != r->ino) return NULL;
+    if (file->error == NULL) return file;
+    if (*error == 0) {
+        int no = set_error_report_errno(file->error);
+        if (get_error_code(no) != ERR_INV_FORMAT) *error = no;
     }
-    return file;
+    return NULL;
 }
 
 static void add_region(MemoryMap * map, MemoryRegion * r) {
@@ -676,8 +712,7 @@ static void search_regions(MemoryMap * map, ContextAddress addr0, ContextAddress
         if (r->file_name == NULL) continue;
         if (r->addr == 0 && r->size == 0 && r->file_offs == 0 && r->sect_name == NULL) {
             int error = 0;
-            ELF_File * file = find_open_file_by_name(r->file_name);
-            if (file == NULL) file = open_memory_region_file(r, &error);
+            ELF_File * file = open_memory_region_file(r, &error);
             if (file != NULL) {
                 unsigned j;
                 for (j = 0; j < file->pheader_cnt; j++) {
@@ -714,6 +749,35 @@ static int get_map(Context * ctx, ContextAddress addr0, ContextAddress addr1, Me
     search_regions(client_map, addr0, addr1, map);
     search_regions(target_map, addr0, addr1, map);
     return 0;
+}
+
+ELF_File * elf_open_inode(Context * ctx, dev_t dev, ino_t ino, int64_t mtime) {
+    unsigned i;
+    int error = 0;
+    ELF_File * file = find_open_file_by_inode(dev, ino, mtime);
+    if (file != NULL) {
+        if (file->error == NULL) return file;
+        set_error_report_errno(file->error);
+        return NULL;
+    }
+    if (get_map(ctx, 0, ~(ContextAddress)0, &elf_map) < 0) return NULL;
+    for (i = 0; i < elf_map.region_cnt; i++) {
+        MemoryRegion * r = elf_map.regions + i;
+        file = open_memory_region_file(r, &error);
+        if (file == NULL) continue;
+        if (file->dev == dev && file->ino == ino && file->mtime == mtime) return file;
+        if (file->debug_info_file_name == NULL) continue;
+        assert(!file->debug_info_file);
+        file = elf_open(file->debug_info_file_name);
+        if (file == NULL) {
+            error = errno;
+            continue;
+        }
+        if (file->dev == dev && file->ino == ino && file->mtime == mtime) return file;
+    }
+    if (error == 0) error = ENOENT;
+    errno = error;
+    return NULL;
 }
 
 ELF_File * elf_list_first(Context * ctx, ContextAddress addr0, ContextAddress addr1) {
@@ -837,7 +901,8 @@ UnitAddressRange * elf_find_unit(Context * ctx, ContextAddress addr_min, Context
 ContextAddress elf_map_to_run_time_address(Context * ctx, ELF_File * file, ELF_Section * sec, ContextAddress addr) {
     unsigned i;
 
-    if (get_map(ctx, addr, addr + 1, &elf_map) < 0) return 0;
+    /* Note: 'addr' is link-time address - it cannot be used as get_map() argument */
+    if (get_map(ctx, 0, ~(ContextAddress)0, &elf_map) < 0) return 0;
     for (i = 0; i < elf_map.region_cnt; i++) {
         MemoryRegion * r = elf_map.regions + i;
         ino_t ino = r->ino;

@@ -221,6 +221,7 @@ int line_to_address(Context * ctx, char * file_name, int line, int column, LineN
         else canonic_path(file_name, fnm, sizeof(fnm));
         while (file != NULL) {
             Trap trap;
+            /* TODO: support for separate debug info files */
             if (set_trap(&trap)) {
                 DWARFCache * cache = get_dwarf_cache(file);
                 ObjectInfo * info = cache->mCompUnits;

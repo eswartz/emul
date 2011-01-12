@@ -349,6 +349,7 @@ struct ELF_File {
     ino_t ino;
     int64_t mtime;
     int mtime_changed;
+    ErrorReport * error;
     int fd;
 
     int big_endian; /* 0 - least significant first, 1 - most significat first */
@@ -417,7 +418,15 @@ extern void swap_bytes(void * buf, size_t size);
  * Returns the file descriptior on success. If error, returns NULL and sets errno.
  * The file descriptor is valid only during single dispatch cycle.
  */
-extern ELF_File * elf_open(char * file_name);
+extern ELF_File * elf_open(const char * file_name);
+
+/*
+ * Open ELF file for reading for given device and inode.
+ * Same file can be opened mutiple times.
+ * Returns the file descriptior on success. If error, returns NULL and sets errno.
+ * The file descriptor is valid only during single dispatch cycle.
+ */
+extern ELF_File * elf_open_inode(Context * ctx, dev_t dev, ino_t ino, int64_t mtime);
 
 /*
  * Iterate context ELF files that are mapped in context memory in given address range (inclusive).

@@ -79,7 +79,7 @@ static void relocate(void * r) {
         }
     }
     else {
-        exception(ERR_INV_FORMAT);
+        str_exception(ERR_INV_FORMAT, "Unsupported ELF relocation type");
     }
     func = elf_relocate_funcs;
     while (func->machine != section->file->machine) {
@@ -123,7 +123,7 @@ void drl_relocate(ELF_Section * s, U8_T offset, void * buf, size_t size, ELF_Sec
                 if (r->file->elf64) {
                     U8_T offs = *(U8_T *)x;
                     if (r->file->byte_swap) SWAP(offs);
-                    if (s->file->type == ET_EXEC) offs -= s->addr;
+                    if (s->file->type != ET_REL) offs -= s->addr;
                     if (offset > offs) {
                         p = x + r->entsize;
                         continue;
@@ -136,7 +136,7 @@ void drl_relocate(ELF_Section * s, U8_T offset, void * buf, size_t size, ELF_Sec
                 else {
                     U4_T offs = *(U4_T *)x;
                     if (r->file->byte_swap) SWAP(offs);
-                    if (s->file->type == ET_EXEC) offs -= (U4_T)s->addr;
+                    if (s->file->type != ET_REL) offs -= (U4_T)s->addr;
                     if (offset > offs) {
                         p = x + r->entsize;
                         continue;

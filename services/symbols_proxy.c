@@ -136,6 +136,7 @@ typedef struct StackFrameCache {
     ReplyHandlerInfo * pending;
     ErrorReport * error;
     Context * ctx;
+    ContextAddress ip;
     uint64_t address;
     uint64_t size;
 
@@ -1020,7 +1021,13 @@ static void validate_frame(Channel * c, void * args, int error) {
             if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
             size = json_read_uint64(&c->inp);
             if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-            if (!error && addr != 0 && size != 0) {
+            if (error || size == 0) {
+                f->address = f->ip & ~(ContextAddress)3;
+                f->size = 4;
+            }
+            else {
+                assert(addr <= f->ip);
+                assert(addr + size > f->ip);
                 f->address = addr;
                 f->size = size;
             }
@@ -1060,6 +1067,8 @@ int get_next_stack_frame(StackFrame * frame, StackFrame * down) {
     LINK * l;
     uint64_t ip = 0;
     Context * ctx = frame->ctx;
+    /* Here we assume that stack tracing info is valid for all threads in same memory space */
+    Context * prs = context_get_group(ctx, CONTEXT_GROUP_PROCESS);
     SymbolsCache * syms = NULL;
     StackFrameCache * f = NULL;
 
@@ -1071,12 +1080,11 @@ int get_next_stack_frame(StackFrame * frame, StackFrame * down) {
         return 0;
     }
 
-    h = hash_frame(context_get_group(ctx, CONTEXT_GROUP_PROCESS));
+    h = hash_frame(prs);
     syms = get_symbols_cache();
     for (l = syms->link_frame[h].next; l != syms->link_frame + h; l = l->next) {
         StackFrameCache * c = syms2frame(l);
-        /* Here we assume that stack tracing info is valid for all threads in same memory space */
-        if (c->ctx == context_get_group(ctx, CONTEXT_GROUP_PROCESS)) {
+        if (c->ctx == prs) {
             if (c->pending != NULL) {
                 cache_wait(&c->cache);
             }
@@ -1096,9 +1104,8 @@ int get_next_stack_frame(StackFrame * frame, StackFrame * down) {
         Channel * c = get_channel(syms);
         f = (StackFrameCache *)loc_alloc_zero(sizeof(StackFrameCache));
         list_add_first(&f->link_syms, syms->link_frame + h);
-        context_lock(f->ctx = context_get_group(ctx, CONTEXT_GROUP_PROCESS));
-        f->address = ip;
-        f->size = 1;
+        context_lock(f->ctx = prs);
+        f->ip = ip;
         f->pending = protocol_send_command(c, SYMBOLS, "findFrameInfo", validate_frame, f);
         json_write_string(&c->out, f->ctx->id);
         write_stream(&c->out, 0);
@@ -1171,11 +1178,12 @@ static void flush_syms(Context * ctx, int mode) {
                 }
             }
             if (mode & (1 << UPDATE_ON_MEMORY_MAP_CHANGES)) {
+                Context * prs = context_get_group(ctx, CONTEXT_GROUP_PROCESS);
                 l = syms->link_frame[i].next;
                 while (l != syms->link_frame + i) {
                     StackFrameCache * c = syms2frame(l);
                     l = l->next;
-                    if (c->ctx == context_get_group(ctx, CONTEXT_GROUP_PROCESS)) free_stack_frame_cache(c);
+                    if (c->ctx == prs) free_stack_frame_cache(c);
                 }
             }
         }

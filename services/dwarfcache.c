@@ -56,7 +56,7 @@ unsigned calc_symbol_name_hash(const char * s) {
 
 void unpack_elf_symbol_info(SymbolSection * section, U4_T index, SymbolInfo * info) {
     memset(info, 0, sizeof(SymbolInfo));
-    if (index >= section->mSymCount) exception(ERR_INV_FORMAT);
+    if (index >= section->mSymCount) str_exception(ERR_INV_FORMAT, "Invalid ELF symbol index");
     info->mSymSection = section;
     if (section->mFile->elf64) {
         Elf64_Sym s = ((Elf64_Sym *)section->mSymPool)[index];
@@ -71,7 +71,7 @@ void unpack_elf_symbol_info(SymbolSection * section, U4_T index, SymbolInfo * in
             info->mSection = section->mFile->sections + s.st_shndx;
         }
         if (s.st_name > 0) {
-            if (s.st_name >= section->mStrPoolSize) exception(ERR_INV_FORMAT);
+            if (s.st_name >= section->mStrPoolSize) str_exception(ERR_INV_FORMAT, "Invalid ELF string pool index");
             info->mName = section->mStrPool + s.st_name;
         }
         info->mBind = ELF64_ST_BIND(s.st_info);
@@ -92,7 +92,7 @@ void unpack_elf_symbol_info(SymbolSection * section, U4_T index, SymbolInfo * in
             info->mSection = section->mFile->sections + s.st_shndx;
         }
         if (s.st_name > 0) {
-            if (s.st_name >= section->mStrPoolSize) exception(ERR_INV_FORMAT);
+            if (s.st_name >= section->mStrPoolSize) str_exception(ERR_INV_FORMAT, "Invalid ELF string pool index");
             info->mName = section->mStrPool + s.st_name;
         }
         info->mBind = ELF32_ST_BIND(s.st_info);
@@ -349,7 +349,7 @@ static void load_symbol_tables(void) {
             for (i = 0; i < tbl->mSymCount; i++) {
                 SymbolInfo sym;
                 unpack_elf_symbol_info(tbl, i, &sym);
-                if (sym.mName == NULL) {
+                if (sym.mName == NULL || sym.mSectionIndex == SHN_UNDEF) {
                     tbl->mHashNext[i] = 0;
                 }
                 else {
@@ -547,7 +547,7 @@ U8_T get_numeric_property_value(PropertyValue * Value) {
     U8_T Res = 0;
 
     if (Value->mAccessFunc != NULL) {
-        if (Value->mAccessFunc(Value, 0, &Res) < 0) exception(errno);
+        str_exception(ERR_INV_CONTEXT, "register variable");
     }
     else if (Value->mAddr != NULL) {
         size_t i;

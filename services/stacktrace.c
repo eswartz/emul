@@ -386,6 +386,10 @@ int get_frame_info(Context * ctx, int frame, StackFrame ** info) {
     }
 
     if (frame == STACK_TOP_FRAME) {
+        if (stack->frame_cnt == 0) {
+            errno = set_errno(ERR_INV_CONTEXT, "No such stack frame");
+            return -1;
+        }
         frame = stack->frame_cnt - 1;
     }
     else if (frame < 0 || frame >= stack->frame_cnt) {

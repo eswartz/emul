@@ -323,7 +323,7 @@ const char * errno_to_str(int err) {
     case ERR_ALREADY_RUNNING:   return "Already running";
     case ERR_JSON_SYNTAX:       return "JSON syntax error";
     case ERR_PROTOCOL:          return "Protocol format error";
-    case ERR_INV_CONTEXT:       return "Invalid context ID";
+    case ERR_INV_CONTEXT:       return "Invalid context";
     case ERR_INV_ADDRESS:       return "Invalid address";
     case ERR_EOF:               return "End of file";
     case ERR_BASE64:            return "Invalid BASE64 string";
@@ -338,7 +338,7 @@ const char * errno_to_str(int err) {
     case ERR_UNSUPPORTED:       return "Unsupported command";
     case ERR_CHANNEL_CLOSED:    return "Channel closed";
     case ERR_COMMAND_CANCELLED: return "Command canceled";
-    case ERR_UNKNOWN_PEER:      return "Unknown peer ID";
+    case ERR_UNKNOWN_PEER:      return "Unknown peer";
     case ERR_INV_DATA_SIZE:     return "Invalid data size";
     case ERR_INV_DATA_TYPE:     return "Invalid data type";
     case ERR_INV_COMMAND:       return "Command is not recognized";
@@ -352,10 +352,10 @@ const char * errno_to_str(int err) {
                     return format_error_report_message(m->report->pub.format, m->report->pub.params, m->report->pub.param_cnt);
                 }
                 switch (m->source) {
-    #ifdef WIN32
+#ifdef WIN32
                 case SRC_SYSTEM:
                     return system_strerror(m->error);
-    #endif
+#endif
                 case SRC_GAI:
                     return loc_gai_strerror(m->error);
                 case SRC_MESSAGE:

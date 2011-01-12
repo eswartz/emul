@@ -574,18 +574,31 @@ static int identifier(char * name, Value * v) {
                         v->value = alloc_str(v->size);
                         memcpy(v->value, value, size);
                     }
-                    else {
-                        v->value = NULL;
-                    }
                 }
                 break;
             case SYM_CLASS_REFERENCE:
-                v->remote = 1;
-                if (get_symbol_size(sym, &v->size) < 0) {
-                    error(errno, "Cannot retrieve symbol size");
-                }
                 if (get_symbol_address(sym, &v->address) < 0) {
-                    error(errno, "Cannot retrieve symbol address");
+                    if (get_error_code(errno) != ERR_INV_CONTEXT) {
+                        error(errno, "Cannot retrieve symbol address");
+                    }
+                    else {
+                        size_t size = 0;
+                        void * value = NULL;
+                        if (get_symbol_value(sym, &value, &size) < 0) {
+                            error(errno, "Cannot retrieve symbol value");
+                        }
+                        v->size = size;
+                        if (value != NULL) {
+                            v->value = alloc_str(v->size);
+                            memcpy(v->value, value, size);
+                        }
+                    }
+                }
+                else {
+                    if (get_symbol_size(sym, &v->size) < 0) {
+                        error(errno, "Cannot retrieve symbol size");
+                    }
+                    v->remote = 1;
                 }
                 break;
             case SYM_CLASS_FUNCTION:

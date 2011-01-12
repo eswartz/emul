@@ -93,7 +93,11 @@ static int syminfo2address(Context * ctx, SymbolInfo * info, ContextAddress * ad
             U8_T value = info->mValue;
             ELF_File * file = info->mSymSection->mFile;
             ELF_Section * sec = NULL;
-            if (file->type != ET_EXEC) {
+            if (info->mSectionIndex == SHN_UNDEF) {
+                errno = ERR_INV_ADDRESS;
+                return -1;
+            }
+            if (file->type == ET_REL) {
                 switch (info->mSectionIndex) {
                 case SHN_ABS:
                     break;
@@ -336,8 +340,29 @@ int find_symbol_by_name(Context * ctx, int frame, char * name, Symbol ** res) {
         }
     }
 
+    if (error == 0 && !found && sym_ip != 0) {
+        ELF_File * file = elf_list_first(sym_ctx, sym_ip, sym_ip);
+        if (file == NULL) error = errno;
+        while (error == 0 && file != NULL) {
+            Trap trap;
+            if (set_trap(&trap)) {
+                DWARFCache * cache = get_dwarf_cache(file);
+                found = find_by_name_in_sym_table(cache, name, res);
+                clear_trap(&trap);
+            }
+            else {
+                error = trap.error;
+                break;
+            }
+            if (found) break;
+            file = elf_list_next(sym_ctx);
+            if (file == NULL) error = errno;
+        }
+        elf_list_done(sym_ctx);
+    }
+
     if (error == 0 && !found) {
-        ELF_File * file = elf_list_first(sym_ctx, sym_ip, sym_ip == 0 ? ~(ContextAddress)0 : sym_ip + 1);
+        ELF_File * file = elf_list_first(sym_ctx, 0, ~(ContextAddress)0);
         if (file == NULL) error = errno;
         while (error == 0 && file != NULL) {
             Trap trap;
@@ -471,6 +496,7 @@ static int find_by_addr_in_unit(ObjectInfo * obj, int level, ContextAddress addr
             break;
         case TAG_formal_parameter:
         case TAG_local_variable:
+            if (sym_frame == STACK_NO_FRAME) break;
         case TAG_variable:
             {
                 U8_T lc = 0;
@@ -492,7 +518,7 @@ static int find_by_addr_in_unit(ObjectInfo * obj, int level, ContextAddress addr
 static int find_by_addr_in_sym_tables(ContextAddress addr, Symbol ** res) {
     int error = 0;
     int found = 0;
-    ELF_File * file = elf_list_first(sym_ctx, addr, addr + 1);
+    ELF_File * file = elf_list_first(sym_ctx, addr, addr);
     if (file == NULL) error = errno;
     while (error == 0 && file != NULL) {
         Trap trap;
@@ -693,17 +719,8 @@ int id2symbol(const char * id, Symbol ** res) {
         }
         if (get_sym_context(sym->ctx, sym->frame) < 0) return -1;
         if (dev == 0 && ino == 0 && mtime == 0) return 0;
-        file = elf_list_first(sym_ctx, 0, ~(ContextAddress)0);
+        file = elf_open_inode(sym_ctx, dev, ino, mtime);
         if (file == NULL) return -1;
-        while (file->dev != dev || file->ino != ino || file->mtime != mtime) {
-            file = elf_list_next(sym_ctx);
-            if (file == NULL) break;
-        }
-        elf_list_done(sym_ctx);
-        if (file == NULL) {
-            errno = ERR_INV_CONTEXT;
-            return -1;
-        }
         if (set_trap(&trap)) {
             DWARFCache * cache = get_dwarf_cache(file);
             if (obj_index) {
@@ -726,7 +743,7 @@ int id2symbol(const char * id, Symbol ** res) {
 
 ContextAddress is_plt_section(Context * ctx, ContextAddress addr) {
     ContextAddress res = 0;
-    ELF_File * file = elf_list_first(ctx, addr, addr + 1);
+    ELF_File * file = elf_list_first(ctx, addr, addr);
     while (file != NULL) {
         unsigned idx;
         for (idx = 1; idx < file->section_cnt; idx++) {
@@ -747,7 +764,8 @@ ContextAddress is_plt_section(Context * ctx, ContextAddress addr) {
 
 int get_stack_tracing_info(Context * ctx, ContextAddress addr, StackTracingInfo ** info) {
     /* TODO: no debug info exists for linux-gate.so, need to read stack tracing information from the kernel  */
-    ELF_File * file = elf_list_first(ctx, addr, addr + 1);
+    /* TODO: support for separate debug info files */
+    ELF_File * file = elf_list_first(ctx, addr, addr);
     int error = 0;
 
     *info = NULL;
@@ -1453,25 +1471,53 @@ int get_symbol_value(const Symbol * sym, void ** value, size_t * size) {
     if (obj != NULL) {
         PropertyValue v;
         Trap trap;
-        if (!set_trap(&trap)) return -1;
-        read_and_evaluate_dwarf_object_property(sym_ctx, sym_frame, 0, obj, AT_const_value, &v);
-        clear_trap(&trap);
-        if (v.mAddr != NULL) {
-            *size = v.mSize;
-            *value = v.mAddr;
-        }
-        else {
-            static U1_T bf[sizeof(v.mValue)];
-            U8_T n = v.mValue;
-            size_t i = 0;
-            for (i = 0; i < sizeof(bf); i++) {
-                bf[v.mBigEndian ? sizeof(bf) - i - 1 : i] = n & 0xffu;
-                n = n >> 8;
+        if (set_trap(&trap)) {
+            read_and_evaluate_dwarf_object_property(sym_ctx, sym_frame, 0, obj, AT_const_value, &v);
+            if (v.mAddr != NULL) {
+                *size = v.mSize;
+                *value = v.mAddr;
             }
-            *size = sizeof(bf);
-            *value = bf;
+            else {
+                static U1_T bf[sizeof(v.mValue)];
+                U8_T n = v.mValue;
+                size_t i = 0;
+                if (v.mAccessFunc != NULL) exception(ERR_INV_CONTEXT);
+                for (i = 0; i < sizeof(bf); i++) {
+                    bf[v.mBigEndian ? sizeof(bf) - i - 1 : i] = n & 0xffu;
+                    n = n >> 8;
+                }
+                *size = sizeof(bf);
+                *value = bf;
+            }
+            clear_trap(&trap);
+            return 0;
         }
-        return 0;
+        else if (trap.error != ERR_SYM_NOT_FOUND) {
+            return -1;
+        }
+        if (set_trap(&trap)) {
+            read_and_evaluate_dwarf_object_property(sym_ctx, sym_frame, 0, obj, AT_location, &v);
+            if (v.mAccessFunc == NULL) {
+                exception(ERR_INV_CONTEXT);
+            }
+            else {
+                static U1_T bf[sizeof(v.mValue)];
+                U8_T n = 0;
+                size_t i = 0;
+                if (v.mAccessFunc(&v, 0, &n)) exception(errno);
+                for (i = 0; i < sizeof(bf); i++) {
+                    bf[v.mBigEndian ? sizeof(bf) - i - 1 : i] = n & 0xffu;
+                    n = n >> 8;
+                }
+                *size = sizeof(bf);
+                *value = bf;
+            }
+            clear_trap(&trap);
+            return 0;
+        }
+        else if (trap.error != ERR_SYM_NOT_FOUND) {
+            return -1;
+        }
     }
     errno = ERR_INV_CONTEXT;
     return -1;
