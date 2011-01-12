@@ -124,13 +124,12 @@ static void call_client(CompUnit * unit, LineNumbersState * state,
                         ContextAddress state_addr, LineNumbersCallBack * client, void * args) {
     CodeArea area;
     LineNumbersState * next = get_next_in_text(unit, state);
-    if (next == NULL) return;
     if (state->mAddress >= (state + 1)->mAddress) return;
     memset(&area, 0, sizeof(area));
     area.start_line = state->mLine;
     area.start_column = state->mColumn;
-    area.end_line = next->mLine;
-    area.end_column = next->mColumn;
+    area.end_line = next ? next->mLine : state->mLine;
+    area.end_column = next ? next->mColumn : 0;
 
     area.directory = unit->mDir;
     if (state->mFileName != NULL) {
