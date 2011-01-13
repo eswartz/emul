@@ -87,6 +87,7 @@ public class BackReturnCommand extends StepCommand {
     protected boolean canExecute(IRunControl.RunControlContext ctx) {
         if (ctx == null) return false;
         if (ctx.canResume(IRunControl.RM_REVERSE_STEP_OUT)) return true;
+        if (!ctx.hasState()) return false;
         if (ctx.canResume(IRunControl.RM_REVERSE_RESUME) && model.getLaunch().getService(IBreakpoints.class) != null) return true;
         return false;
     }

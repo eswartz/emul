@@ -37,7 +37,45 @@
          <adapter
                type="org.eclipse.cdt.ui.text.c.hover.ICEditorTextHover">
          </adapter>
+         <adapter
+               type="org.eclipse.cdt.debug.core.model.IReverseToggleHandler">
+         </adapter>
+         <adapter
+               type="org.eclipse.cdt.debug.core.model.IReverseStepIntoHandler">
+         </adapter>
+         <adapter
+               type="org.eclipse.cdt.debug.core.model.IReverseStepOverHandler">
+         </adapter>
+         <adapter
+               type="org.eclipse.cdt.debug.core.model.IReverseResumeHandler">
+         </adapter>
+         <adapter
+               type="org.eclipse.cdt.debug.core.model.IUncallHandler">
+         </adapter>
       </factory>
+    </extension>
+    
+    <extension
+          point="org.eclipse.core.expressions.propertyTesters">
+       <propertyTester
+             class="org.eclipse.tm.internal.tcf.cdt.ui.commands.TCFReverseDebuggingPropertyTester"
+             id="org.eclipse.tcf.cdt.ui.ReverseDebuggingTester"
+             namespace="org.eclipse.cdt.debug.ui"
+             properties="isReverseDebuggingEnabled"
+             type="org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode">
+       </propertyTester>
+    </extension>
+    
+    <extension
+          point="org.eclipse.debug.ui.debugModelContextBindings">
+       <modelContextBinding
+             contextId="org.eclipse.cdt.debug.ui.debugging"
+             debugModelId="org.eclipse.tm.tcf.debug">
+       </modelContextBinding>
+       <modelContextBinding
+             contextId="org.eclipse.cdt.debug.ui.reverseDebuggingActionSet"
+             debugModelId="org.eclipse.tm.tcf.debug">
+       </modelContextBinding>
     </extension>
 
 </plugin>

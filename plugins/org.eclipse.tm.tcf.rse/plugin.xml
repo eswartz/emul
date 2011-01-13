@@ -5,7 +5,7 @@
     are made available under the terms of the Eclipse Public License v1.0
     which accompanies this distribution, and is available at
     http://www.eclipse.org/legal/epl-v10.html
-   
+
     Contributors:
         Wind River Systems      - initial API and implementation
         Liping Ke (Intel Corp.) - Add terminal/shell services
@@ -80,10 +80,10 @@
         systemTypeIds="org.eclipse.tm.tcf.rse.systemType"
         vendor="Eclipse.org">
         </configuration>
-    </extension>   
+    </extension>
    <extension point="org.eclipse.core.runtime.adapters">
-      <factory 
-            class="org.eclipse.tm.internal.tcf.rse.processes.TCFSystemViewProcessAdapterFactory" 
+      <factory
+            class="org.eclipse.tm.internal.tcf.rse.processes.TCFSystemViewProcessAdapterFactory"
             adaptableType="org.eclipse.tm.internal.tcf.rse.processes.TCFRemoteProcess">
             <adapter type="org.eclipse.rse.ui.view.ISystemViewElementAdapter"/>
             <adapter type="org.eclipse.rse.core.subsystems.ISystemDragDropAdapter"/>
@@ -93,6 +93,6 @@
             <adapter type="org.eclipse.ui.IActionFilter"/>
             <adapter type="org.eclipse.ui.progress.IDeferredWorkbenchAdapter"/>
             <adapter type="org.eclipse.rse.core.subsystems.IRemoteObjectIdentifier"/>
-      </factory> 
+      </factory>
    </extension>
 </plugin>

@@ -10,10 +10,20 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.cdt.ui;
 
+import org.eclipse.cdt.debug.core.model.IReverseResumeHandler;
+import org.eclipse.cdt.debug.core.model.IReverseStepIntoHandler;
+import org.eclipse.cdt.debug.core.model.IReverseStepOverHandler;
+import org.eclipse.cdt.debug.core.model.IReverseToggleHandler;
 import org.eclipse.cdt.debug.core.model.ISteppingModeTarget;
+import org.eclipse.cdt.debug.core.model.IUncallHandler;
 import org.eclipse.cdt.ui.text.c.hover.ICEditorTextHover;
 import org.eclipse.core.runtime.IAdapterFactory;
 import org.eclipse.debug.core.model.ISuspendResume;
+import org.eclipse.tm.internal.tcf.cdt.ui.commands.TCFReverseResumeCommand;
+import org.eclipse.tm.internal.tcf.cdt.ui.commands.TCFReverseStepIntoCommand;
+import org.eclipse.tm.internal.tcf.cdt.ui.commands.TCFReverseStepOverCommand;
+import org.eclipse.tm.internal.tcf.cdt.ui.commands.TCFReverseStepReturnCommand;
+import org.eclipse.tm.internal.tcf.cdt.ui.commands.TCFReverseToggleCommand;
 import org.eclipse.tm.internal.tcf.cdt.ui.hover.TCFDebugTextHover;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModel;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode;
@@ -27,7 +37,12 @@ public class TCFNodeAdapterFactory implements IAdapterFactory {
     private static final Class<?>[] CLASSES = { 
         ISteppingModeTarget.class,
         ISuspendResume.class,
-        ICEditorTextHover.class
+        ICEditorTextHover.class,
+        IReverseToggleHandler.class,
+        IReverseStepIntoHandler.class,
+        IReverseStepOverHandler.class,
+        IReverseResumeHandler.class,
+        IUncallHandler.class
     };
 
     public Object getAdapter(Object adaptableObject, Class adapterType) {
@@ -64,6 +79,36 @@ public class TCFNodeAdapterFactory implements IAdapterFactory {
                     model.setAdapter(adapterType, hover = new TCFDebugTextHover());
                 }
                 return hover;
+            } else if (IReverseToggleHandler.class == adapterType) {
+                IReverseToggleHandler handler = (IReverseToggleHandler) model.getAdapter(adapterType, node);
+                if (handler == null) {
+                    model.setAdapter(adapterType, handler = new TCFReverseToggleCommand());
+                }
+                return handler;
+            } else if (IReverseStepIntoHandler.class == adapterType) {
+                IReverseStepIntoHandler handler = (IReverseStepIntoHandler) model.getAdapter(adapterType, node);
+                if (handler == null) {
+                    model.setAdapter(adapterType, handler = new TCFReverseStepIntoCommand(model));
+                }
+                return handler;
+            } else if (IReverseStepOverHandler.class == adapterType) {
+                IReverseStepOverHandler handler = (IReverseStepOverHandler) model.getAdapter(adapterType, node);
+                if (handler == null) {
+                    model.setAdapter(adapterType, handler = new TCFReverseStepOverCommand(model));
+                }
+                return handler;
+            } else if (IUncallHandler.class == adapterType) {
+                IUncallHandler handler = (IUncallHandler) model.getAdapter(adapterType, node);
+                if (handler == null) {
+                    model.setAdapter(adapterType, handler = new TCFReverseStepReturnCommand(model));
+                }
+                return handler;
+            } else if (IReverseResumeHandler.class == adapterType) {
+                IReverseResumeHandler handler = (IReverseResumeHandler) model.getAdapter(adapterType, node);
+                if (handler == null) {
+                    model.setAdapter(adapterType, handler = new TCFReverseResumeCommand(model));
+                }
+                return handler;
             }
         }
         return null;

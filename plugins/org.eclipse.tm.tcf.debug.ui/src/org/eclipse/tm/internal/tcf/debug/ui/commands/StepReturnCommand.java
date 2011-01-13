@@ -89,6 +89,7 @@ public class StepReturnCommand extends StepCommand implements IStepReturnHandler
     protected boolean canExecute(IRunControl.RunControlContext ctx) {
         if (ctx == null) return false;
         if (ctx.canResume(IRunControl.RM_STEP_OUT)) return true;
+        if (!ctx.hasState()) return false;
         if (ctx.canResume(IRunControl.RM_RESUME) && model.getLaunch().getService(IBreakpoints.class) != null) return true;
         return false;
     }
