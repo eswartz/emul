@@ -1024,8 +1024,13 @@ static int update_step_machine_state(Context * ctx) {
             case RM_REVERSE_STEP_OVER_RANGE:
             case RM_REVERSE_STEP_OVER_LINE:
             case RM_REVERSE_STEP_OUT:
-                step_bp_addr--;
-                ext->step_continue_mode = RM_REVERSE_RESUME;
+                if (ext->step_line_cnt > 1) {
+                    ext->step_continue_mode = RM_RESUME;
+                }
+                else {
+                    step_bp_addr--;
+                    ext->step_continue_mode = RM_REVERSE_RESUME;
+                }
                 break;
             default:
                 errno = ERR_UNSUPPORTED;
