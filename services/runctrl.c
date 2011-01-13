@@ -39,6 +39,7 @@
 #include <services/breakpoints.h>
 #include <services/linenumbers.h>
 #include <services/stacktrace.h>
+#include <services/symbols.h>
 #include <main/cmdline.h>
 
 #define EN_STEP_OVER (SERVICE_Breakpoints && SERVICE_StackTrace)
@@ -530,6 +531,8 @@ static void cancel_step_mode(Context * ctx) {
     ext->step_line_cnt = 0;
     ext->step_range_start = 0;
     ext->step_range_end = 0;
+    ext->step_frame = 0;
+    ext->step_bp_addr = 0;
     ext->step_continue_mode = RM_RESUME;
     ext->step_mode = 0;
 }
@@ -942,7 +945,7 @@ static int update_step_machine_state(Context * ctx) {
     ContextExtensionRC * ext = EXT(ctx);
     ContextAddress addr = get_regs_PC(ctx);
 
-    if (!context_has_state(ctx) || ctx->pending_intercept) {
+    if (!context_has_state(ctx) || ctx->pending_intercept || addr == 0) {
         cancel_step_mode(ctx);
         return 0;
     }
@@ -981,6 +984,33 @@ static int update_step_machine_state(Context * ctx) {
                             step_bp_addr = (ContextAddress)pc;
                             break;
                         }
+                    }
+                }
+                else {
+                    switch (ext->step_mode) {
+                    case RM_REVERSE_STEP_OVER:
+                    case RM_REVERSE_STEP_OVER_RANGE:
+                    case RM_REVERSE_STEP_OVER_LINE:
+                        {
+                            /* Workaround for GCC debug information that contains
+                             * invalid stack frame information for function epilogues */
+                            Symbol * sym_org = NULL;
+                            Symbol * sym_now = NULL;
+                            ContextAddress sym_org_addr = ext->step_range_start;
+                            ContextAddress sym_now_addr = addr;
+                            int anomaly =
+                                    find_symbol_by_addr(ctx, n, sym_now_addr, &sym_now) >= 0 &&
+                                    find_symbol_by_addr(ctx, n, sym_org_addr, &sym_org) >= 0 &&
+                                    get_symbol_address(sym_now, &sym_now_addr) >= 0 &&
+                                    get_symbol_address(sym_org, &sym_org_addr) >= 0 &&
+                                    sym_now_addr != sym_org_addr;
+                            if (anomaly) {
+                                /* Step over the anomaly */
+                                ext->step_continue_mode = RM_REVERSE_STEP_INTO;
+                                return 0;
+                            }
+                        }
+                        break;
                     }
                 }
             }
@@ -1120,16 +1150,16 @@ static int update_step_machine_state(Context * ctx) {
             same_line = is_same_line(ext->step_code_area, area);
             free_code_area(area);
             if (!same_line) {
-                if ((ext->step_mode == RM_REVERSE_STEP_INTO_LINE ||
-                    ext->step_mode == RM_REVERSE_STEP_OVER_LINE) &&
-                    ext->step_line_cnt < 2) {
-                    ext->step_line_cnt++;
-                }
-                else {
+                if (ext->step_mode != RM_REVERSE_STEP_INTO_LINE && ext->step_mode != RM_REVERSE_STEP_OVER_LINE ||
+                        ext->step_line_cnt == 0 && addr == ext->step_code_area->start_address ||
+                        ext->step_line_cnt >= 2) {
                     ctx->pending_intercept = 1;
                     ext->step_done = REASON_STEP;
                     return 0;
                 }
+                /* Current IP is in the middle of a source line.
+                 * Continue stepping to get to the beginning of the line */
+                ext->step_line_cnt++;
             }
             ext->step_range_start = ext->step_code_area->start_address;
             ext->step_range_end = ext->step_code_area->end_address;
