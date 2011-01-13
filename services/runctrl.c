@@ -1141,8 +1141,14 @@ static int update_step_machine_state(Context * ctx) {
         return -1;
     }
 
-    ext->step_continue_mode = ext->step_mode;
-    if (context_can_resume(ctx, ext->step_continue_mode)) return 0;
+    if (ext->step_line_cnt > 1) {
+        if (ext->step_mode == RM_REVERSE_STEP_INTO_LINE) ext->step_continue_mode = RM_STEP_INTO_LINE;
+        if (ext->step_mode == RM_REVERSE_STEP_OVER_LINE) ext->step_continue_mode = RM_STEP_OVER_LINE;
+    }
+    else {
+        ext->step_continue_mode = ext->step_mode;
+        if (ext->step_line_cnt == 0 && context_can_resume(ctx, ext->step_continue_mode)) return 0;
+    }
 
     switch (ext->step_continue_mode) {
     case RM_STEP_INTO_LINE:
