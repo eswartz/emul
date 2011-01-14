@@ -79,14 +79,21 @@ public abstract class TCFActionStepOut extends TCFAction implements IRunControl.
             exit(error);
             return;
         }
+        TCFDataCache<?> stack_trace = getStackTrace();
+        if (!stack_trace.validate(this)) return;
+        int frame_index = getStackFrameIndex();
         if (step_cnt > 0) {
             TCFContextState state_data = state.getData();
-            if (isMyBreakpoint(state_data)) exit(null);
-            else exit(null, state_data.suspend_reason);
-            return;
+            boolean ok = isMyBreakpoint(state_data) || IRunControl.REASON_STEP.equals(state_data.suspend_reason);
+            if (!ok) exit(null, state_data.suspend_reason);
+            else if (frame_index < 0) exit(null);
+            if (exited) return;
         }
-        if (ctx.canResume(step_back ? IRunControl.RM_REVERSE_STEP_OUT : IRunControl.RM_STEP_OUT)) {
-            ctx.resume(step_back ? IRunControl.RM_REVERSE_STEP_OUT : IRunControl.RM_STEP_OUT, 1, new IRunControl.DoneCommand() {
+        int mode = step_back ? IRunControl.RM_REVERSE_STEP_OUT : IRunControl.RM_STEP_OUT;
+        if (ctx.canResume(mode)) {
+            int cnt = 1;
+            if (ctx.canCount(mode)) cnt += frame_index;
+            ctx.resume(mode, cnt, new IRunControl.DoneCommand() {
                 public void doneCommand(IToken token, Exception error) {
                     if (error != null) exit(error);
                 }
@@ -94,13 +101,7 @@ public abstract class TCFActionStepOut extends TCFAction implements IRunControl.
             step_cnt++;
             return;
         }
-        TCFDataCache<?> stack_trace = getStackTrace();
-        if (!stack_trace.validate(this)) return;
-        if (getStackFrameIndex() < 0) {
-            // Stepped out of selected function
-            exit(null);
-        }
-        else if (bps != null && ctx.canResume(step_back ? IRunControl.RM_REVERSE_RESUME : IRunControl.RM_RESUME)) {
+        if (bps != null && ctx.canResume(step_back ? IRunControl.RM_REVERSE_RESUME : IRunControl.RM_RESUME)) {
             if (bp == null) {
                 TCFDataCache<IStackTrace.StackTraceContext> frame = getStackFrame();
                 if (!frame.validate(this)) return;
@@ -132,10 +133,9 @@ public abstract class TCFActionStepOut extends TCFAction implements IRunControl.
                 }
             });
             step_cnt++;
+            return;
         }
-        else {
-            exit(new Exception("Step out is not supported"));
-        }
+        exit(new Exception("Step out is not supported"));
     }
 
     protected void exit(Throwable error) {

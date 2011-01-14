@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -25,6 +25,7 @@ import org.eclipse.debug.core.IExpressionsListener;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.commands.IDisconnectHandler;
+import org.eclipse.debug.core.commands.IDropToFrameHandler;
 import org.eclipse.debug.core.commands.IResumeHandler;
 import org.eclipse.debug.core.commands.IStepIntoHandler;
 import org.eclipse.debug.core.commands.IStepOverHandler;
@@ -86,6 +87,7 @@ import org.eclipse.tm.internal.tcf.debug.ui.commands.BackOverCommand;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.BackResumeCommand;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.BackReturnCommand;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.DisconnectCommand;
+import org.eclipse.tm.internal.tcf.debug.ui.commands.DropToFrameCommand;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.ResumeCommand;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.StepIntoCommand;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.StepOverCommand;
@@ -563,6 +565,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         adapters.put(BackIntoCommand.class, new BackIntoCommand(this));
         adapters.put(BackOverCommand.class, new BackOverCommand(this));
         adapters.put(BackReturnCommand.class, new BackReturnCommand(this));
+        adapters.put(IDropToFrameHandler.class, new DropToFrameCommand(this));
         expr_manager = DebugPlugin.getDefault().getExpressionManager();
         expr_manager.addExpressionListener(expressions_listener);
         annotation_manager = Activator.getAnnotationManager();
