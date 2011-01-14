@@ -309,7 +309,7 @@ int crawl_stack_frame(StackFrame * frame, StackFrame * down) {
         /*
          * we don't have a stack frame in a few restricted but useful cases:
          *  1) we are at a PUSH %EBP MOV %ESP %EBP or RET or ENTER instruction,
-         *  2) we are the first instruction of a subroutine (this may NOT be
+         *  2) we are at the first instruction of a subroutine (this may NOT be
          *     a PUSH %EBP MOV %ESP %EBP instruction with some compilers)
          *  3) we are inside PLT entry
          */
