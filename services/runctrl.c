@@ -42,7 +42,7 @@
 #include <services/symbols.h>
 #include <main/cmdline.h>
 
-#define EN_STEP_OVER (SERVICE_Breakpoints && SERVICE_StackTrace)
+#define EN_STEP_OVER (SERVICE_Breakpoints && SERVICE_StackTrace && ENABLE_Symbols)
 #define EN_STEP_LINE (SERVICE_LineNumbers)
 
 #define STOP_ALL_TIMEOUT 1000000
