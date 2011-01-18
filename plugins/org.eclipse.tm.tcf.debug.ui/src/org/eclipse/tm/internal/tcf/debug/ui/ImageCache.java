@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2008, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -41,8 +41,10 @@ public class ImageCache {
 
         IMG_REGISTER = "icons/full/obj16/genericregister_obj.gif",
 
-        IMG_VARIABLE = "icons/full/obj16/genericvariable_obj.gif",
-
+        IMG_VARIABLE = "icons/var_simple.gif",
+        IMG_VARIABLE_POINTER = "icons/var_pointer.gif",
+        IMG_VARIABLE_AGGREGATE = "icons/var_aggr.gif",
+        
         IMG_SIGNALS = "icons/signals.gif",
         IMG_MEMORY_MAP = "icons/memory-map.gif",
 

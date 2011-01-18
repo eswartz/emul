@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2008, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -846,7 +846,22 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                 }
             }
         }
-        result.setImageDescriptor(ImageCache.getImageDescriptor(ImageCache.IMG_VARIABLE), 0);
+        ISymbols.TypeClass type_class = ISymbols.TypeClass.unknown;
+        ISymbols.Symbol type_symbol = type.getData();
+        if (type_symbol != null) {
+            type_class = type_symbol.getTypeClass();
+        }
+        switch (type_class) {
+        case pointer:
+            result.setImageDescriptor(ImageCache.getImageDescriptor(ImageCache.IMG_VARIABLE_POINTER), 0);
+            break;
+        case composite:
+        case array:
+            result.setImageDescriptor(ImageCache.getImageDescriptor(ImageCache.IMG_VARIABLE_AGGREGATE), 0);
+            break;
+        default:
+            result.setImageDescriptor(ImageCache.getImageDescriptor(ImageCache.IMG_VARIABLE), 0);
+        }
         return true;
     }
 
