@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2008, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -91,6 +91,11 @@ public class TCFDetailPane implements IDetailPane {
             }
             else if (n instanceof TCFNodeRegister) {
                 String s = ((TCFNodeRegister)n).getDetailText(done);
+                if (s == null) return null;
+                bf.append(s);
+            }
+            else if (n instanceof TCFNodeModule) {
+                String s = ((TCFNodeModule)n).getDetailText(done);
                 if (s == null) return null;
                 bf.append(s);
             }

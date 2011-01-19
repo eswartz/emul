@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -382,6 +382,13 @@ public class TCFNodeStackFrame extends TCFNode {
             TCFChildrenStackTrace stack_trace_cache = exe.getStackTrace();
             if (!stack_trace_cache.validate(done)) return false;
             if (stack_trace_cache.getTopFrame() == this) result.setInputElement(exe);
+        }
+        else if (IDebugUIConstants.ID_MODULE_VIEW.equals(id)) {
+            TCFDataCache<TCFNodeExecContext> mem = model.searchMemoryContext(this);
+            if (mem == null) return true;
+            if (!mem.validate(done)) return false;
+            if (mem.getData() == null) return true;
+            result.setInputElement(mem.getData());
         }
         return true;
     }

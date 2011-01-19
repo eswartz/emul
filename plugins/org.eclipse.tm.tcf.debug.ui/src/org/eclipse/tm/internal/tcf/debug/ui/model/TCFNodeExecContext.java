@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -49,6 +49,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     private final TCFChildrenRegisters children_regs;
     private final TCFChildrenExpressions children_exps;
     private final TCFChildrenHoverExpressions children_hover_exps;
+    private final TCFChildrenModules children_modules;
 
     private final TCFDataCache<IMemory.MemoryContext> mem_context;
     private final TCFDataCache<IRunControl.RunControlContext> run_context;
@@ -171,6 +172,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         children_regs = new TCFChildrenRegisters(this);
         children_exps = new TCFChildrenExpressions(this);
         children_hover_exps = new TCFChildrenHoverExpressions(this);
+        children_modules = new TCFChildrenModules(this);
         mem_context = new TCFDataCache<IMemory.MemoryContext>(channel) {
             @Override
             protected boolean startDataRetrieval() {
@@ -418,6 +420,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         children_regs.dispose();
         children_exps.dispose();
         children_hover_exps.dispose();
+        children_modules.dispose();
         ArrayList<TCFNodeSymbol> l = new ArrayList<TCFNodeSymbol>(symbols.values());
         for (TCFNodeSymbol s : l) s.dispose();
         assert symbols.size() == 0;
@@ -431,6 +434,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         children_regs.dispose(id);
         children_exps.dispose(id);
         children_hover_exps.dispose(id);
+        children_modules.dispose(id);
     }
 
     TCFChildren getHoverExpressionCache(String expression) {
@@ -617,6 +621,10 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         return children_regs;
     }
 
+    public TCFChildren getModules() {
+        return children_modules;
+    }
+
     public TCFChildren getChildren() {
         return children_exec;
     }
@@ -662,6 +670,11 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
             if (!run_context.validate(done)) return false;
             IRunControl.RunControlContext ctx = run_context.getData();
             if (ctx != null && ctx.hasState()) children = children_hover_exps;
+        }
+        else if (IDebugUIConstants.ID_MODULE_VIEW.equals(result.getPresentationContext().getId())) {
+            if (!mem_context.validate(done)) return false;
+            IMemory.MemoryContext ctx = mem_context.getData();
+            if (ctx != null) children = children_modules;
         }
         if (children != null) {
             if (!children.validate(done)) return false;
@@ -714,6 +727,11 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
             IRunControl.RunControlContext ctx = run_context.getData();
             if (ctx != null && ctx.hasState()) children = children_hover_exps;
         }
+        else if (IDebugUIConstants.ID_MODULE_VIEW.equals(result.getPresentationContext().getId())) {
+            if (!mem_context.validate(done)) return false;
+            IMemory.MemoryContext ctx = mem_context.getData();
+            if (ctx != null) children = children_modules;
+        }
         if (children == null) return true;
         return children.getData(result, done);
     }
@@ -756,6 +774,11 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
             if (!run_context.validate(done)) return false;
             IRunControl.RunControlContext ctx = run_context.getData();
             if (ctx != null && ctx.hasState()) children = children_hover_exps;
+        }
+        else if (IDebugUIConstants.ID_MODULE_VIEW.equals(result.getPresentationContext().getId())) {
+            if (!mem_context.validate(done)) return false;
+            IMemory.MemoryContext ctx = mem_context.getData();
+            if (ctx != null) children = children_modules;
         }
         if (children != null) {
             if (!children.validate(done)) return false;
@@ -849,10 +872,18 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     @Override
     protected boolean getData(IViewerInputUpdate result, Runnable done) {
         result.setInputElement(result.getElement());
-        if (IDebugUIConstants.ID_VARIABLE_VIEW.equals(result.getPresentationContext().getId())) {
+        String id = result.getPresentationContext().getId();
+        if (IDebugUIConstants.ID_VARIABLE_VIEW.equals(id)) {
             if (!children_stack.validate(done)) return false;
             TCFNodeStackFrame frame = children_stack.getTopFrame();
             if (frame != null) result.setInputElement(frame);
+        }
+        else if (IDebugUIConstants.ID_MODULE_VIEW.equals(id)) {
+            TCFDataCache<TCFNodeExecContext> mem = model.searchMemoryContext(this);
+            if (mem == null) return true;
+            if (!mem.validate(done)) return false;
+            if (mem.getData() == null) return true;
+            result.setInputElement(mem.getData());
         }
         return true;
     }
@@ -898,6 +929,14 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         for (TCFModelProxy p : model.getModelProxies()) {
             if (IDebugUIConstants.ID_DEBUG_VIEW.equals(p.getPresentationContext().getId())) {
                 p.addDelta(this, IModelDelta.STATE);
+            }
+        }
+    }
+
+    private void postModulesChangedDelta() {
+        for (TCFModelProxy p : model.getModelProxies()) {
+            if (IDebugUIConstants.ID_MODULE_VIEW.equals(p.getPresentationContext().getId())) {
+                p.addDelta(this, IModelDelta.CONTENT);
             }
         }
     }
@@ -1027,6 +1066,8 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         memory_map.reset();
         children_exec.onMemoryMapChanged();
         children_stack.onMemoryMapChanged();
+        children_modules.onMemoryMapChanged();
+        postModulesChangedDelta();
     }
 
     void onRegistersChanged() {

@@ -1003,6 +1003,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         if (id == null) return null;
         if (id.equals(TCFColumnPresentationRegister.PRESENTATION_ID)) return new TCFColumnPresentationRegister();
         if (id.equals(TCFColumnPresentationExpression.PRESENTATION_ID)) return new TCFColumnPresentationExpression();
+        if (id.equals(TCFColumnPresentationModules.PRESENTATION_ID)) return new TCFColumnPresentationModules();
         return null;
     }
 
@@ -1018,6 +1019,9 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         }
         if (ID_EXPRESSION_HOVER.equals(context.getId())) {
             return TCFColumnPresentationExpression.PRESENTATION_ID;
+        }
+        if (IDebugUIConstants.ID_MODULE_VIEW.equals(context.getId())) {
+            return TCFColumnPresentationModules.PRESENTATION_ID;
         }
         return null;
     }
