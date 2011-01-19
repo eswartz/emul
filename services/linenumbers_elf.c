@@ -78,11 +78,24 @@ static void canonic_path(char * fnm, char * buf, size_t buf_size) {
 }
 
 static int compare_path(char * file, char * pwd, char * dir, char * name) {
-    int i, j;
+    int i, j, k;
     char buf[FILE_PATH_SIZE];
 
     if (file == NULL) return 0;
     if (name == NULL) return 0;
+
+    /* First, compare file names excluding path, and return 0 if don't match */
+    i = strlen(file);
+    j = strlen(name);
+    for (k = 1; k <= i && k <= j; k++) {
+        char x = file[i - k];
+        char y = name[j - k];
+        if (x == '/' || x == '\\') break;
+        if (y == '/' || y == '\\') break;
+        if (x != y) return 0;
+    }
+
+    /* Names matches, compare path */
 
     if (is_absolute_path(name)) {
         canonic_path(name, buf, sizeof(buf));
@@ -103,10 +116,8 @@ static int compare_path(char * file, char * pwd, char * dir, char * name) {
         canonic_path(name, buf, sizeof(buf));
     }
 
-    i = strlen(file);
     j = strlen(buf);
-    if (i <= j && strcmp(file, buf + j - i) == 0) return 1;
-    return 0;
+    return i <= j && strcmp(file, buf + j - i) == 0;
 }
 
 static LineNumbersState * get_next_in_text(CompUnit * unit, LineNumbersState * state) {

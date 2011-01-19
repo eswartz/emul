@@ -34,6 +34,7 @@
 typedef struct FileInfo FileInfo;
 typedef struct LocationInfo LocationInfo;
 typedef struct ObjectInfo ObjectInfo;
+typedef struct ObjectArray ObjectArray;
 typedef struct SymbolInfo SymbolInfo;
 typedef struct PropertyValue PropertyValue;
 typedef struct LineNumbersState LineNumbersState;
@@ -89,6 +90,13 @@ struct ObjectInfo {
     ObjectInfo * mType;
     CompUnit * mCompUnit;
     char * mName;
+};
+
+#define OBJECT_ARRAY_SIZE 128
+
+struct ObjectArray {
+    ObjectArray * mNext;
+    ObjectInfo mArray[OBJECT_ARRAY_SIZE];
 };
 
 struct PropertyValue {
@@ -175,6 +183,9 @@ struct DWARFCache {
     unsigned mSymSectionsCnt;
     unsigned mSymSectionsMax;
     ObjectInfo ** mObjectHash;
+    unsigned mObjectHashSize;
+    ObjectArray * mObjectList;
+    unsigned mObjectArrayPos;
     UnitAddressRange * mAddrRanges;
     unsigned mAddrRangesCnt;
     unsigned mAddrRangesMax;

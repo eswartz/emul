@@ -30,8 +30,7 @@
 #include <services/dwarfcache.h>
 #include <services/dwarfexpr.h>
 
-#define OBJ_HASH_SIZE           (256 * MEM_USAGE_FACTOR - 1)
-#define OBJ_HASH(ID)            (((U4_T)(ID) + ((U4_T)(ID) >> 8)) % OBJ_HASH_SIZE)
+#define OBJ_HASH(Cache,ID)            (((U4_T)(ID) + ((U4_T)(ID) >> 8)) % Cache->mObjectHashSize)
 
 static DWARFCache * sCache;
 static ELF_Section * sDebugSection;
@@ -104,8 +103,7 @@ void unpack_elf_symbol_info(SymbolSection * section, U4_T index, SymbolInfo * in
 
 ObjectInfo * find_object(DWARFCache * Cache, U8_T ID) {
     if (Cache->mObjectHash != NULL) {
-        U4_T Hash = OBJ_HASH(ID);
-        ObjectInfo * Info = Cache->mObjectHash[Hash];
+        ObjectInfo * Info = Cache->mObjectHash[OBJ_HASH(Cache, ID)];
 
         while (Info != NULL) {
             if (Info->mID == ID) return Info;
@@ -118,11 +116,22 @@ ObjectInfo * find_object(DWARFCache * Cache, U8_T ID) {
 static ObjectInfo * add_object_info(U8_T ID) {
     ObjectInfo * Info = find_object(sCache, ID);
     if (Info == NULL) {
-        U4_T Hash = OBJ_HASH(ID);
+        U4_T Hash;
         if (ID < sDebugSection->addr + dio_gEntryPos) str_exception(ERR_INV_DWARF, "Invalid entry reference");
         if (ID > sDebugSection->addr + sDebugSection->size) str_exception(ERR_INV_DWARF, "Invalid entry reference");
-        if (sCache->mObjectHash == NULL) sCache->mObjectHash = (ObjectInfo **)loc_alloc_zero(sizeof(ObjectInfo *) * OBJ_HASH_SIZE);
-        Info = (ObjectInfo *)loc_alloc_zero(sizeof(ObjectInfo));
+        if (sCache->mObjectHash == NULL) {
+            sCache->mObjectHashSize = (unsigned)(sDebugSection->size / 251);
+            if (sCache->mObjectHashSize < 101) sCache->mObjectHashSize = 101;
+            sCache->mObjectHash = (ObjectInfo **)loc_alloc_zero(sizeof(ObjectInfo *) * sCache->mObjectHashSize);
+        }
+        Hash = OBJ_HASH(sCache, ID);
+        if (sCache->mObjectArrayPos >= OBJECT_ARRAY_SIZE) {
+            ObjectArray * Buf = (ObjectArray *)loc_alloc_zero(sizeof(ObjectArray));
+            Buf->mNext = sCache->mObjectList;
+            sCache->mObjectList = Buf;
+            sCache->mObjectArrayPos = 0;
+        }
+        Info = sCache->mObjectList->mArray + sCache->mObjectArrayPos++;
         Info->mHashNext = sCache->mObjectHash[Hash];
         sCache->mObjectHash[Hash] = Info;
         Info->mID = ID;
@@ -450,7 +459,7 @@ static void load_addr_ranges() {
             ContextAddress base = unit->mLowPC;
             ContextAddress size = unit->mHighPC - unit->mLowPC;
             info = info->mSibling;
-            if (base == 0 || size == 0) continue;
+            if (size == 0) continue;
             if (unit->mDebugRangesOffs != ~(U8_T)0 && debug_ranges != NULL) {
                 dio_EnterSection(&unit->mDesc, debug_ranges, unit->mDebugRangesOffs);
                 for (;;) {
@@ -509,6 +518,9 @@ static void load_debug_sections(void) {
             sCompUnit = NULL;
             sDebugSection = NULL;
             if (trap.error) break;
+        }
+        else if (strcmp(sec->name, ".line") == 0) {
+            sCache->mDebugLine = sec;
         }
         else if (strcmp(sec->name, ".debug_line") == 0) {
             sCache->mDebugLine = sec;
@@ -718,17 +730,12 @@ static void free_dwarf_cache(ELF_File * file) {
             loc_free(tbl->mHashNext);
             loc_free(tbl);
         }
-        if (Cache->mObjectHash != NULL) {
-            for (i = 0; i < OBJ_HASH_SIZE; i++) {
-                ObjectInfo ** list = Cache->mObjectHash + i;
-                while (*list != NULL) {
-                    ObjectInfo * Info = *list;
-                    *list = Info->mHashNext;
-                    loc_free(Info);
-                }
-            }
-            loc_free(Cache->mObjectHash);
+        while (Cache->mObjectList != NULL) {
+            ObjectArray * Buf = Cache->mObjectList;
+            Cache->mObjectList = Buf->mNext;
+            loc_free(Buf);
         }
+        loc_free(Cache->mObjectHash);
         loc_free(Cache->mSymSections);
         loc_free(Cache->mAddrRanges);
         loc_free(Cache);
@@ -747,6 +754,7 @@ DWARFCache * get_dwarf_cache(ELF_File * file) {
         sCache = Cache = (DWARFCache *)(file->dwarf_dt_cache = loc_alloc_zero(sizeof(DWARFCache)));
         sCache->magic = DWARF_CACHE_MAGIC;
         sCache->mFile = file;
+        sCache->mObjectArrayPos = OBJECT_ARRAY_SIZE;
         if (set_trap(&trap)) {
             dio_LoadAbbrevTable(file);
             load_symbol_tables();
@@ -823,165 +831,195 @@ static void compute_reverse_lookup_indices(CompUnit * Unit) {
     }
 }
 
+static void load_line_numbers_v1(CompUnit * Unit, U4_T unit_size) {
+    LineNumbersState state;
+    ELF_Section * s = NULL;
+
+    memset(&state, 0, sizeof(state));
+    state.mAddress = (ContextAddress)dio_ReadAddress(&s);
+    while (dio_GetPos() < Unit->mLineInfoOffs + unit_size) {
+        state.mLine = dio_ReadU4();
+        state.mColumn = dio_ReadU2();
+        if (state.mColumn == 0xffffu) state.mColumn = 0;
+        add_state(Unit, &state);
+        state.mAddress += dio_ReadU4();
+    }
+    state.mLine++;
+    state.mColumn = 0;
+    add_state(Unit, &state);
+}
+
+static void load_line_numbers_v2(CompUnit * Unit, U8_T unit_size, int dwarf64) {
+    U8_T header_pos = 0;
+    U1_T opcode_base = 0;
+    U1_T opcode_size[256];
+    U8_T header_size = 0;
+    U1_T min_instruction_length = 0;
+    U1_T is_stmt_default = 0;
+    I1_T line_base = 0;
+    U1_T line_range = 0;
+    LineNumbersState state;
+
+    dio_ReadU2(); /* line info version */
+    header_size = dwarf64 ? dio_ReadU8() : (U8_T)dio_ReadU4();
+    header_pos = dio_GetPos();
+    min_instruction_length = dio_ReadU1();
+    is_stmt_default = dio_ReadU1() != 0;
+    line_base = (I1_T)dio_ReadU1();
+    line_range = dio_ReadU1();
+    opcode_base = dio_ReadU1();
+    memset(opcode_size, 0, sizeof(opcode_size));
+    dio_Read(opcode_size + 1, opcode_base - 1);
+
+    /* Read directory names */
+    for (;;) {
+        char * Name = dio_ReadString();
+        if (Name == NULL) break;
+        add_dir(Unit, Name);
+    }
+
+    /* Read source files info */
+    for (;;) {
+        U4_T dir = 0;
+        FileInfo file;
+        memset(&file, 0, sizeof(file));
+        file.mName = dio_ReadString();
+        if (file.mName == NULL) break;
+        dir = dio_ReadULEB128();
+        if (dir > 0 && dir <= Unit->mDirsCnt) file.mDir = Unit->mDirs[dir - 1];
+        file.mModTime = dio_ReadULEB128();
+        file.mSize = dio_ReadULEB128();
+        add_file(Unit, &file);
+    }
+
+    /* Run the program */
+    if (header_pos + header_size != dio_GetPos())
+        str_exception(ERR_INV_DWARF, "Invalid line info header");
+    memset(&state, 0, sizeof(state));
+    state.mFile = 1;
+    state.mLine = 1;
+    if (is_stmt_default) state.mFlags |= LINE_IsStmt;
+    while (dio_GetPos() < Unit->mLineInfoOffs + unit_size) {
+        U1_T opcode = dio_ReadU1();
+        if (opcode >= opcode_base) {
+            state.mLine += (unsigned)((int)((opcode - opcode_base) % line_range) + line_base);
+            state.mAddress += (opcode - opcode_base) / line_range * min_instruction_length;
+            add_state(Unit, &state);
+            state.mFlags &= ~(LINE_BasicBlock | LINE_PrologueEnd | LINE_EpilogueBegin);
+        }
+        else if (opcode == 0) {
+            U4_T op_size = dio_ReadULEB128();
+            U8_T op_pos = dio_GetPos();
+            switch (dio_ReadU1()) {
+            case DW_LNE_define_file: {
+                U4_T dir = 0;
+                FileInfo file;
+                memset(&file, 0, sizeof(file));
+                file.mName = dio_ReadString();
+                dir = dio_ReadULEB128();
+                if (dir > 0 && dir <= Unit->mDirsCnt) file.mDir = Unit->mDirs[dir - 1];
+                file.mModTime = dio_ReadULEB128();
+                file.mSize = dio_ReadULEB128();
+                add_file(Unit, &file);
+                break;
+            }
+            case DW_LNE_end_sequence:
+                state.mFlags |= LINE_EndSequence;
+                add_state(Unit, &state);
+                memset(&state, 0, sizeof(state));
+                state.mFile = 1;
+                state.mLine = 1;
+                if (is_stmt_default) state.mFlags |= LINE_IsStmt;
+                else state.mFlags &= ~LINE_IsStmt;
+                break;
+            case DW_LNE_set_address:
+                {
+                    ELF_Section * s = NULL;
+                    state.mAddress = (ContextAddress)dio_ReadAddress(&s);
+                    if (s != Unit->mTextSection) state.mAddress = 0;
+                }
+                break;
+            default:
+                dio_Skip(op_size - 1);
+                break;
+            }
+            if (dio_GetPos() != op_pos + op_size)
+                str_exception(ERR_INV_DWARF, "Invalid line info op size");
+        }
+        else {
+            switch (opcode) {
+            case DW_LNS_copy:
+                add_state(Unit, &state);
+                state.mFlags &= ~(LINE_BasicBlock | LINE_PrologueEnd | LINE_EpilogueBegin);
+                break;
+            case DW_LNS_advance_pc:
+                state.mAddress += (ContextAddress)(dio_ReadU8LEB128() * min_instruction_length);
+                break;
+            case DW_LNS_advance_line:
+                state.mLine += dio_ReadSLEB128();
+                break;
+            case DW_LNS_set_file:
+                state.mFile = dio_ReadULEB128();
+                break;
+            case DW_LNS_set_column:
+                state.mColumn = (U2_T)dio_ReadULEB128();
+                break;
+            case DW_LNS_negate_stmt:
+                state.mFlags ^= LINE_IsStmt;
+                break;
+            case DW_LNS_set_basic_block:
+                state.mFlags |= LINE_BasicBlock;
+                break;
+            case DW_LNS_const_add_pc:
+                state.mAddress += (255 - opcode_base) / line_range * min_instruction_length;
+                break;
+            case DW_LNS_fixed_advance_pc:
+                state.mAddress += dio_ReadU2();
+                break;
+            case DW_LNS_set_prologue_end:
+                state.mFlags |= LINE_PrologueEnd;
+                break;
+            case DW_LNS_set_epilogue_begin:
+                state.mFlags |= LINE_EpilogueBegin;
+                break;
+            case DW_LNS_set_isa:
+                state.mISA = (U1_T)dio_ReadULEB128();
+                break;
+            default:
+                str_exception(ERR_INV_DWARF, "Invalid line info op code");
+                break;
+            }
+        }
+    }
+}
+
 void load_line_numbers(CompUnit * Unit) {
     Trap trap;
     DWARFCache * Cache = (DWARFCache *)Unit->mFile->dwarf_dt_cache;
-    if (Unit->mFiles != NULL || Unit->mDirs != NULL) return;
+    if (Cache->mDebugLine == NULL) return;
+    if (Unit->mStates != NULL || Unit->mFiles != NULL || Unit->mDirs != NULL) return;
     if (elf_load(Cache->mDebugLine)) exception(errno);
     dio_EnterSection(&Unit->mDesc, Cache->mDebugLine, Unit->mLineInfoOffs);
     if (set_trap(&trap)) {
-        U8_T header_pos = 0;
-        U1_T opcode_base = 0;
-        U1_T opcode_size[256];
-        U8_T header_size = 0;
-        U1_T min_instruction_length = 0;
-        U1_T is_stmt_default = 0;
-        I1_T line_base = 0;
-        U1_T line_range = 0;
         U8_T unit_size = 0;
-        int dwarf64 = 0;
-        LineNumbersState state;
-
         /* Read header */
         unit_size = dio_ReadU4();
-        if (unit_size == 0xffffffffu) {
-            unit_size = dio_ReadU8();
-            unit_size += 12;
-            dwarf64 = 1;
+        if (strcmp(Cache->mDebugLine->name, ".line") == 0) {
+            /* DWARF 1.1 */
+            load_line_numbers_v1(Unit, (U4_T)unit_size);
         }
         else {
-            unit_size += 4;
-        }
-        dio_ReadU2(); /* line info version */
-        header_size = dwarf64 ? dio_ReadU8() : (U8_T)dio_ReadU4();
-        header_pos = dio_GetPos();
-        min_instruction_length = dio_ReadU1();
-        is_stmt_default = dio_ReadU1() != 0;
-        line_base = (I1_T)dio_ReadU1();
-        line_range = dio_ReadU1();
-        opcode_base = dio_ReadU1();
-        memset(opcode_size, 0, sizeof(opcode_size));
-        dio_Read(opcode_size + 1, opcode_base - 1);
-
-        /* Read directory names */
-        for (;;) {
-            char * Name = dio_ReadString();
-            if (Name == NULL) break;
-            add_dir(Unit, Name);
-        }
-
-        /* Read source files info */
-        for (;;) {
-            U4_T dir = 0;
-            FileInfo file;
-            memset(&file, 0, sizeof(file));
-            file.mName = dio_ReadString();
-            if (file.mName == NULL) break;
-            dir = dio_ReadULEB128();
-            if (dir > 0 && dir <= Unit->mDirsCnt) file.mDir = Unit->mDirs[dir - 1];
-            file.mModTime = dio_ReadULEB128();
-            file.mSize = dio_ReadULEB128();
-            add_file(Unit, &file);
-        }
-
-        /* Run the program */
-        if (header_pos + header_size != dio_GetPos())
-            str_exception(ERR_INV_DWARF, "Invalid line info header");
-        memset(&state, 0, sizeof(state));
-        state.mFile = 1;
-        state.mLine = 1;
-        if (is_stmt_default) state.mFlags |= LINE_IsStmt;
-        while (dio_GetPos() < Unit->mLineInfoOffs + unit_size) {
-            U1_T opcode = dio_ReadU1();
-            if (opcode >= opcode_base) {
-                state.mLine += (unsigned)((int)((opcode - opcode_base) % line_range) + line_base);
-                state.mAddress += (opcode - opcode_base) / line_range * min_instruction_length;
-                add_state(Unit, &state);
-                state.mFlags &= ~(LINE_BasicBlock | LINE_PrologueEnd | LINE_EpilogueBegin);
-            }
-            else if (opcode == 0) {
-                U4_T op_size = dio_ReadULEB128();
-                U8_T op_pos = dio_GetPos();
-                switch (dio_ReadU1()) {
-                case DW_LNE_define_file: {
-                    U4_T dir = 0;
-                    FileInfo file;
-                    memset(&file, 0, sizeof(file));
-                    file.mName = dio_ReadString();
-                    dir = dio_ReadULEB128();
-                    if (dir > 0 && dir <= Unit->mDirsCnt) file.mDir = Unit->mDirs[dir - 1];
-                    file.mModTime = dio_ReadULEB128();
-                    file.mSize = dio_ReadULEB128();
-                    add_file(Unit, &file);
-                    break;
-                }
-                case DW_LNE_end_sequence:
-                    state.mFlags |= LINE_EndSequence;
-                    add_state(Unit, &state);
-                    memset(&state, 0, sizeof(state));
-                    state.mFile = 1;
-                    state.mLine = 1;
-                    if (is_stmt_default) state.mFlags |= LINE_IsStmt;
-                    else state.mFlags &= ~LINE_IsStmt;
-                    break;
-                case DW_LNE_set_address:
-                    {
-                        ELF_Section * s = NULL;
-                        state.mAddress = (ContextAddress)dio_ReadAddress(&s);
-                        if (s != Unit->mTextSection) state.mAddress = 0;
-                    }
-                    break;
-                default:
-                    dio_Skip(op_size - 1);
-                    break;
-                }
-                if (dio_GetPos() != op_pos + op_size)
-                    str_exception(ERR_INV_DWARF, "Invalid line info op size");
+            /* DWARF 2+ */
+            int dwarf64 = 0;
+            if (unit_size == 0xffffffffu) {
+                unit_size = dio_ReadU8();
+                unit_size += 12;
+                dwarf64 = 1;
             }
             else {
-                switch (opcode) {
-                case DW_LNS_copy:
-                    add_state(Unit, &state);
-                    state.mFlags &= ~(LINE_BasicBlock | LINE_PrologueEnd | LINE_EpilogueBegin);
-                    break;
-                case DW_LNS_advance_pc:
-                    state.mAddress += (ContextAddress)(dio_ReadU8LEB128() * min_instruction_length);
-                    break;
-                case DW_LNS_advance_line:
-                    state.mLine += dio_ReadSLEB128();
-                    break;
-                case DW_LNS_set_file:
-                    state.mFile = dio_ReadULEB128();
-                    break;
-                case DW_LNS_set_column:
-                    state.mColumn = (U2_T)dio_ReadULEB128();
-                    break;
-                case DW_LNS_negate_stmt:
-                    state.mFlags ^= LINE_IsStmt;
-                    break;
-                case DW_LNS_set_basic_block:
-                    state.mFlags |= LINE_BasicBlock;
-                    break;
-                case DW_LNS_const_add_pc:
-                    state.mAddress += (255 - opcode_base) / line_range * min_instruction_length;
-                    break;
-                case DW_LNS_fixed_advance_pc:
-                    state.mAddress += dio_ReadU2();
-                    break;
-                case DW_LNS_set_prologue_end:
-                    state.mFlags |= LINE_PrologueEnd;
-                    break;
-                case DW_LNS_set_epilogue_begin:
-                    state.mFlags |= LINE_EpilogueBegin;
-                    break;
-                case DW_LNS_set_isa:
-                    state.mISA = (U1_T)dio_ReadULEB128();
-                    break;
-                default:
-                    str_exception(ERR_INV_DWARF, "Invalid line info op code");
-                    break;
-                }
+                unit_size += 4;
             }
+            load_line_numbers_v2(Unit, unit_size, dwarf64);
         }
         dio_ExitSection();
         compute_reverse_lookup_indices(Unit);

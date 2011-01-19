@@ -264,7 +264,6 @@ static char * get_debug_info_file_name(ELF_File * file, int * error) {
                 offs += name_sz;
                 while (offs % 4 != 0) offs++;
                 if (type == 3 && strcmp(name, "GNU") == 0) {
-                    char * lnm = NULL;
                     char fnm[FILE_PATH_SIZE];
                     struct stat buf;
                     char id[64];
@@ -281,7 +280,12 @@ static char * get_debug_info_file_name(ELF_File * file, int * error) {
                     trace(LOG_ELF, "Found GNU build ID %s", id);
                     snprintf(fnm, sizeof(fnm), "/usr/lib/debug/.build-id/%.2s/%s.debug", id, id + 2);
                     if (stat(fnm, &buf) == 0) return loc_strdup(fnm);
-                    if ((lnm = path_map_to_local(NULL, fnm)) != NULL) return loc_strdup(lnm);
+#if SERVICE_PathMap
+                    {
+                        char * lnm = path_map_to_local(NULL, fnm);
+                        if (lnm != NULL) return loc_strdup(lnm);
+                    }
+#endif
                     return NULL;
                 }
                 offs += desc_sz;
@@ -295,7 +299,6 @@ static char * get_debug_info_file_name(ELF_File * file, int * error) {
             }
             else {
                 /* TODO: check debug info CRC */
-                char * lnm = NULL;
                 char fnm[FILE_PATH_SIZE];
                 struct stat buf;
                 char * name = (char *)sec->data;
@@ -309,7 +312,12 @@ static char * get_debug_info_file_name(ELF_File * file, int * error) {
                 if (stat(fnm, &buf) == 0) return loc_strdup(fnm);
                 snprintf(fnm, sizeof(fnm), "/usr/lib/debug%.*s%s", l, file->name, name);
                 if (stat(fnm, &buf) == 0) return loc_strdup(fnm);
-                if ((lnm = path_map_to_local(NULL, fnm)) != NULL) return loc_strdup(lnm);
+#if SERVICE_PathMap
+                {
+                    char * lnm = path_map_to_local(NULL, fnm);
+                    if (lnm != NULL) return loc_strdup(lnm);
+                }
+#endif
                 return NULL;
             }
         }
@@ -683,8 +691,10 @@ static ELF_File * open_memory_region_file(MemoryRegion * r, int * error) {
     dev_t dev = r->dev;
 
     if (r->file_name == NULL) return NULL;
-    if (ino == 0) ino = elf_ino(r->file_name);
-    if (dev != 0 && ino != 0) file = find_open_file_by_inode(dev, ino, 0);
+    if (dev != 0) {
+        if (ino == 0) ino = elf_ino(r->file_name);
+        if (ino != 0) file = find_open_file_by_inode(dev, ino, 0);
+    }
     if (file == NULL) file = find_open_file_by_name(r->file_name);
     if (file == NULL) file = create_elf_cache(r->file_name);
     if (r->dev != 0 && file->dev != r->dev) return NULL;

@@ -429,7 +429,7 @@ int dio_ReadEntry(DIO_EntryCallBack CallBack) {
     U4_T EntrySize = 0;
     int Init = 1;
 
-    dio_gEntryPos = dio_GetPos();
+    dio_gEntryPos = sDataPos;
     if (sUnit->mVersion >= 2) {
         U4_T AbbrCode = dio_ReadULEB128();
         if (AbbrCode == 0) return 0;
@@ -465,12 +465,17 @@ int dio_ReadEntry(DIO_EntryCallBack CallBack) {
                 if (Form == FORM_INDIRECT) Form = (U2_T)dio_ReadULEB128();
             }
         }
-        else {
-            if (dio_GetPos() < dio_gEntryPos + EntrySize) {
-                Attr = dio_ReadU2();
-                Form = Attr & 0xF;
-                Attr = (Attr & 0xfff0) >> 4;
+        else if (sDataPos <= dio_gEntryPos + EntrySize - 2) {
+            if (sBigEndian) {
+                Attr = (U2_T)sData[sDataPos++] << 8;
+                Attr |= (U2_T)sData[sDataPos++];
             }
+            else {
+                Attr = (U2_T)sData[sDataPos++];
+                Attr |= (U2_T)sData[sDataPos++] << 8;
+            }
+            Form = Attr & 0xF;
+            Attr = (Attr & 0xfff0) >> 4;
         }
         if (Attr != 0 && Form != 0) dio_ReadAttribute(Attr, Form);
         if (Tag == TAG_compile_unit) {
@@ -478,8 +483,8 @@ int dio_ReadEntry(DIO_EntryCallBack CallBack) {
                 dio_ChkRef(Form);
                 assert(sUnit->mVersion == 1);
                 sUnit->mUnitSize = (U4_T)(dio_gFormData - sSection->addr - sUnit->mUnitOffs);
-                assert(sUnit->mUnitOffs < dio_GetPos());
-                assert(sUnit->mUnitOffs + sUnit->mUnitSize >= dio_GetPos());
+                assert(sUnit->mUnitOffs < sDataPos);
+                assert(sUnit->mUnitOffs + sUnit->mUnitSize >= sDataPos);
             }
             else if (Attr == 0 && Form == 0) {
                 if (sUnit->mUnitSize == 0) str_exception(ERR_INV_DWARF, "missing compilation unit sibling attribute");
@@ -498,7 +503,7 @@ void dio_ReadUnit(DIO_UnitDescriptor * Unit, DIO_EntryCallBack CallBack) {
     sUnit = Unit;
     sUnit->mFile = sSection->file;
     sUnit->mSection = sSection;
-    sUnit->mUnitOffs = dio_GetPos();
+    sUnit->mUnitOffs = sDataPos;
     sUnit->m64bit = 0;
     if (strcmp(sSection->name, ".debug") != 0) {
         ELF_Section * Sect = NULL;
@@ -520,7 +525,7 @@ void dio_ReadUnit(DIO_UnitDescriptor * Unit, DIO_EntryCallBack CallBack) {
         sUnit->mVersion = 1;
         sUnit->mAddressSize = 4;
     }
-    while (sUnit->mUnitSize == 0 || dio_GetPos() < sUnit->mUnitOffs + sUnit->mUnitSize) {
+    while (sUnit->mUnitSize == 0 || sDataPos < sUnit->mUnitOffs + sUnit->mUnitSize) {
         dio_ReadEntry(CallBack);
     }
     sUnit = NULL;
@@ -569,8 +574,8 @@ void dio_LoadAbbrevTable(ELF_File * File) {
             memcpy(AbbrevSet->mTable, AbbrevBuf, sizeof(DIO_Abbreviation *) * AbbrevBufPos);
             memset(AbbrevBuf, 0, sizeof(DIO_Abbreviation *) * AbbrevBufPos);
             AbbrevBufPos = 0;
-            if (dio_GetPos() >= Section->size) break;
-            TableOffset = dio_GetPos();
+            if (sDataPos >= Section->size) break;
+            TableOffset = sDataPos;
             continue;
         }
         if (ID >= 0x1000000) str_exception(ERR_INV_DWARF, "invalid abbreviation table");

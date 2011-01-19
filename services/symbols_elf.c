@@ -190,16 +190,11 @@ static int get_num_prop(ObjectInfo * obj, int at, U8_T * res) {
 }
 
 static int find_in_object_tree(ObjectInfo * list, const char * name, Symbol ** sym) {
-    int found = 0;
     ObjectInfo * obj = list;
     while (obj != NULL) {
-        if (obj->mName != NULL && strcmp(obj->mName, name) == 0) {
-            object2symbol(obj, sym);
-            found = 1;
-        }
         switch (obj->mTag) {
         case TAG_enumeration_type:
-            if (find_in_object_tree(obj->mChildren, name, sym)) found = 1;
+            if (find_in_object_tree(obj->mChildren, name, sym)) return 1;
             break;
         case TAG_global_subroutine:
         case TAG_subroutine:
@@ -208,17 +203,24 @@ static int find_in_object_tree(ObjectInfo * list, const char * name, Symbol ** s
         case TAG_lexical_block:
             {
                 U8_T LowPC, HighPC;
-                if (get_num_prop(obj, AT_low_pc, &LowPC) && get_num_prop(obj, AT_high_pc, &HighPC)) {
-                    if (LowPC <= sym_ip && HighPC > sym_ip) {
-                        if (find_in_object_tree(obj->mChildren, name, sym)) return 1;
-                    }
+                if (get_num_prop(obj, AT_low_pc, &LowPC) && LowPC <= sym_ip &&
+                    get_num_prop(obj, AT_high_pc, &HighPC) && HighPC > sym_ip) {
+                    if (find_in_object_tree(obj->mChildren, name, sym)) return 1;
                 }
             }
             break;
         }
         obj = obj->mSibling;
     }
-    return found;
+    obj = list;
+    while (obj != NULL) {
+        if (obj->mName != NULL && strcmp(obj->mName, name) == 0) {
+            object2symbol(obj, sym);
+            return 1;
+        }
+        obj = obj->mSibling;
+    }
+    return 0;
 }
 
 static int find_in_dwarf(const char * name, Symbol ** sym) {
