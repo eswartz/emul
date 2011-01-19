@@ -154,7 +154,7 @@ static void write_ranges(OutputStream * out, ContextAddress addr, int size, int 
 
         json_write_string(out, "addr");
         write_stream(out, ':');
-        json_write_ulong(out, addr);
+        json_write_uint64(out, addr);
         write_stream(out, ',');
 
         json_write_string(out, "size");
@@ -175,7 +175,7 @@ static void write_ranges(OutputStream * out, ContextAddress addr, int size, int 
 
         json_write_string(out, "addr");
         write_stream(out, ':');
-        json_write_ulong(out, addr + offs);
+        json_write_uint64(out, addr + offs);
         write_stream(out, ',');
 
         json_write_string(out, "size");
@@ -338,7 +338,7 @@ static void send_event_memory_changed(OutputStream * out, Context * ctx, Context
 
     json_write_string(out, "addr");
     write_stream(out, ':');
-    json_write_ulong(out, addr);
+    json_write_uint64(out, addr);
 
     write_stream(out, ',');
 
@@ -397,7 +397,7 @@ static void safe_memory_set(void * parm) {
                 write_stringz(out, "null");
             }
             else {
-                write_ranges(out, addr0, size, addr - addr0, BYTE_INVALID | BYTE_CANNOT_WRITE, err);
+                write_ranges(out, addr0, size, (int)(addr - addr0), BYTE_INVALID | BYTE_CANNOT_WRITE, err);
             }
             write_stream(out, MARKER_EOM);
             clear_trap(&trap);
@@ -464,7 +464,7 @@ static void safe_memory_get(void * parm) {
                 write_stringz(out, "null");
             }
             else {
-                write_ranges(out, addr0, size, addr - addr0, BYTE_INVALID | BYTE_CANNOT_READ, err);
+                write_ranges(out, addr0, size, (int)(addr - addr0), BYTE_INVALID | BYTE_CANNOT_READ, err);
             }
             write_stream(out, MARKER_EOM);
             clear_trap(&trap);
@@ -540,7 +540,7 @@ static void safe_memory_fill(void * parm) {
 
             while (err == 0 && addr < addr0 + size) {
                 char tmp[sizeof(buf)];
-                int wr = addr0 + size - addr;
+                int wr = (int)(addr0 + size - addr);
                 if (wr > buf_pos) wr = buf_pos;
                 /* TODO: word size, mode */
                 memcpy(tmp, buf, wr);
@@ -557,7 +557,7 @@ static void safe_memory_fill(void * parm) {
                 write_stringz(out, "null");
             }
             else {
-                write_ranges(out, addr0, size, addr - addr0, BYTE_INVALID | BYTE_CANNOT_WRITE, err);
+                write_ranges(out, addr0, size, (int)(addr - addr0), BYTE_INVALID | BYTE_CANNOT_WRITE, err);
             }
             write_stream(out, MARKER_EOM);
             clear_trap(&trap);

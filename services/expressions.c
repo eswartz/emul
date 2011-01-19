@@ -91,7 +91,7 @@ static int expression_frame = STACK_NO_FRAME;
 static ExpressionIdentifierCallBack * id_callbacks[MAX_ID_CALLBACKS];
 static int id_callback_cnt = 0;
 
-static void * alloc_str(int size) {
+static void * alloc_str(size_t size) {
     if (str_pool_cnt + size <= STR_POOL_SIZE) {
         char * s = str_pool + str_pool_cnt;
         str_pool_cnt += size;
@@ -109,14 +109,14 @@ void set_value(Value * v, void * data, size_t size) {
     v->remote = 0;
     v->address = 0;
     v->size = size;
-    v->value = alloc_str(v->size);
-    if (data == NULL) memset(v->value, 0, v->size);
-    else memcpy(v->value, data, v->size);
+    v->value = alloc_str(size);
+    if (data == NULL) memset(v->value, 0, size);
+    else memcpy(v->value, data, size);
 }
 
 static void set_int_value(Value * v, uint64_t n) {
     v->remote = 0;
-    v->value = alloc_str(v->size);
+    v->value = alloc_str((size_t)v->size);
     switch (v->size) {
     case 1: *(uint8_t *)v->value = (uint8_t)n; break;
     case 2: *(uint16_t *)v->value = (uint16_t)n; break;
@@ -136,9 +136,10 @@ static void string_value(Value * v, char * str) {
     memset(v, 0, sizeof(Value));
     v->type_class = TYPE_CLASS_ARRAY;
     if (str != NULL) {
-        v->size = strlen(str) + 1;
-        v->value = alloc_str(v->size);
-        memcpy(v->value, str, v->size);
+        size_t size = strlen(str) + 1;
+        v->size = size;
+        v->value = alloc_str(size);
+        memcpy(v->value, str, size);
     }
 }
 
@@ -407,10 +408,10 @@ static void next_sy(void) {
         case '\'':
             memset(&text_val, 0, sizeof(text_val));
             text_val.type_class = TYPE_CLASS_INTEGER;
-            text_val.size = sizeof(int);
-            text_val.value = alloc_str(text_val.size);
+            text_val.size = sizeof(uint16_t);
+            text_val.value = alloc_str(sizeof(uint16_t));
             text_val.constant = 1;
-            *(int *)text_val.value = next_char_val();
+            *(uint16_t *)text_val.value = (uint16_t)next_char_val();
             if (text_ch != '\'') error(ERR_INV_EXPRESSION, "Missing 'single quote'");
             next_ch();
             text_sy = SY_VAL;
@@ -427,7 +428,7 @@ static void next_sy(void) {
                 memset(&text_val, 0, sizeof(text_val));
                 text_val.type_class = TYPE_CLASS_ARRAY;
                 text_val.size = len + 1;
-                text_val.value = alloc_str(text_val.size);
+                text_val.value = alloc_str((size_t)text_val.size);
                 text_val.constant = 1;
                 text_pos = pos - 1;
                 next_ch();
@@ -447,7 +448,7 @@ static void next_sy(void) {
                 memset(&text_val, 0, sizeof(text_val));
                 text_val.type_class = TYPE_CLASS_CARDINAL;
                 text_val.size = sizeof(uint64_t);
-                text_val.value = alloc_str(text_val.size);
+                text_val.value = alloc_str((size_t)text_val.size);
                 text_val.constant = 1;
                 while (text_ch >= '0' && text_ch <= '9' ||
                         text_ch >= 'A' && text_ch <= 'F' ||
@@ -461,7 +462,7 @@ static void next_sy(void) {
                 memset(&text_val, 0, sizeof(text_val));
                 text_val.type_class = TYPE_CLASS_INTEGER;
                 text_val.size = sizeof(int64_t);
-                text_val.value = alloc_str(text_val.size);
+                text_val.value = alloc_str((size_t)text_val.size);
                 text_val.constant = 1;
                 while (text_ch >= '0' && text_ch <= '7') {
                     value = (value << 3) | next_oct();
@@ -485,13 +486,13 @@ static void next_sy(void) {
                     next_ch();
                     text_val.type_class = TYPE_CLASS_REAL;
                     text_val.size = sizeof(double);
-                    text_val.value = alloc_str(text_val.size);
+                    text_val.value = alloc_str((size_t)text_val.size);
                     *(double *)text_val.value = x;
                 }
                 else {
                     text_val.type_class = TYPE_CLASS_INTEGER;
                     text_val.size = sizeof(int64_t);
-                    text_val.value = alloc_str(text_val.size);
+                    text_val.value = alloc_str((size_t)text_val.size);
                     *(int64_t *)text_val.value = value;
                 }
                 text_val.constant = 1;
@@ -509,7 +510,7 @@ static void next_sy(void) {
                 memset(&text_val, 0, sizeof(text_val));
                 text_val.type_class = TYPE_CLASS_ARRAY;
                 text_val.size = len + 1;
-                text_val.value = alloc_str(text_val.size);
+                text_val.value = alloc_str((size_t)text_val.size);
                 text_val.constant = 1;
                 text_pos = pos - 1;
                 next_ch();
@@ -571,7 +572,7 @@ static int identifier(char * name, Value * v) {
                     v->constant = 1;
                     v->size = size;
                     if (value != NULL) {
-                        v->value = alloc_str(v->size);
+                        v->value = alloc_str((size_t)v->size);
                         memcpy(v->value, value, size);
                     }
                 }
@@ -589,7 +590,7 @@ static int identifier(char * name, Value * v) {
                         }
                         v->size = size;
                         if (value != NULL) {
-                            v->value = alloc_str(v->size);
+                            v->value = alloc_str((size_t)v->size);
                             memcpy(v->value, value, size);
                         }
                     }
@@ -725,8 +726,8 @@ static void load_value(Value * v) {
 
     if (!v->remote) return;
     assert(!v->constant);
-    value = alloc_str(v->size);
-    if (context_read_mem(expression_context, v->address, value, v->size) < 0) {
+    value = alloc_str((size_t)v->size);
+    if (context_read_mem(expression_context, v->address, value, (size_t)v->size) < 0) {
         error(errno, "Can't read variable value");
     }
     v->value = value;
@@ -757,7 +758,7 @@ static int is_whole_number(Value * v) {
 static int64_t to_int(int mode, Value * v) {
     if (mode != MODE_NORMAL) {
         if (v->remote) {
-            v->value = alloc_str(v->size);
+            v->value = alloc_str((size_t)v->size);
             v->remote = 0;
         }
         return 0;
@@ -806,7 +807,7 @@ static int64_t to_int(int mode, Value * v) {
 static uint64_t to_uns(int mode, Value * v) {
     if (mode != MODE_NORMAL) {
         if (v->remote) {
-            v->value = alloc_str(v->size);
+            v->value = alloc_str((size_t)v->size);
             v->remote = 0;
         }
         return 0;
@@ -858,7 +859,7 @@ static uint64_t to_uns(int mode, Value * v) {
 static double to_double(int mode, Value * v) {
     if (mode != MODE_NORMAL) {
         if (v->remote) {
-            v->value = alloc_str(v->size);
+            v->value = alloc_str((size_t)v->size);
             v->remote = 0;
         }
         return 0;
@@ -1329,7 +1330,7 @@ static void cast_expression(int mode, Value * v) {
                 v->type_class = type_class;
                 v->size = type_size;
                 v->remote = 0;
-                v->value = alloc_str(v->size);
+                v->value = alloc_str((size_t)v->size);
                 switch (v->size) {
                 case 4: *(float *)v->value = (float)value; break;
                 case 8: *(double *)v->value = value; break;
@@ -1432,14 +1433,14 @@ static void additive_expression(int mode, Value * v) {
             if (sy == '+' && v->type_class == TYPE_CLASS_ARRAY && x.type_class == TYPE_CLASS_ARRAY) {
                 if (mode == MODE_TYPE) {
                     v->size = 0;
-                    v->value = alloc_str(v->size);
+                    v->value = alloc_str((size_t)v->size);
                 }
                 else {
                     char * value;
                     load_value(v);
                     load_value(&x);
                     v->size = strlen((char *)v->value) + strlen((char *)x.value) + 1;
-                    value = (char *)alloc_str(v->size);
+                    value = (char *)alloc_str((size_t)v->size);
                     strcpy(value, (const char *)(v->value));
                     strcat(value, (const char *)(x.value));
                     v->value = value;
@@ -1870,7 +1871,7 @@ typedef struct Expression {
     Channel * channel;
     char * script;
     int can_assign;
-    size_t size;
+    ContextAddress size;
     int type_class;
     char type[256];
 } Expression;
@@ -2039,7 +2040,7 @@ static void write_context(OutputStream * out, Expression * expr) {
 
     json_write_string(out, "Size");
     write_stream(out, ':');
-    json_write_long(out, expr->size);
+    json_write_uint64(out, expr->size);
 
     write_stream(out, '}');
 }
@@ -2273,15 +2274,15 @@ static void command_evaluate_cache_client(void * x) {
         JsonWriteBinaryState state;
 
         value_ok = 1;
-        json_write_binary_start(&state, &c->out, value.size);
+        json_write_binary_start(&state, &c->out, (size_t)value.size);
         if (!value.remote) {
-            json_write_binary_data(&state, value.value, value.size);
+            json_write_binary_data(&state, value.value, (size_t)value.size);
         }
         else {
             char buf[256];
             size_t offs = 0;
-            while (offs < value.size) {
-                int size = value.size - offs;
+            while (offs < (size_t)value.size) {
+                int size = (size_t)value.size - offs;
                 if (size > (int)sizeof(buf)) size = (int)sizeof(buf);
                 if (!err && context_read_mem(ctx, value.address + offs, buf, size) < 0) err = errno;
                 json_write_binary_data(&state, buf, size);
