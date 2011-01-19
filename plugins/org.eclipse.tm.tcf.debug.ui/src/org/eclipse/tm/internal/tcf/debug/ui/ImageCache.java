@@ -44,7 +44,7 @@ public class ImageCache {
         IMG_VARIABLE = "icons/var_simple.gif",
         IMG_VARIABLE_POINTER = "icons/var_pointer.gif",
         IMG_VARIABLE_AGGREGATE = "icons/var_aggr.gif",
-        
+
         IMG_SIGNALS = "icons/signals.gif",
         IMG_MEMORY_MAP = "icons/memory-map.gif",
 
