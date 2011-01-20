@@ -78,24 +78,11 @@ static void canonic_path(char * fnm, char * buf, size_t buf_size) {
 }
 
 static int compare_path(char * file, char * pwd, char * dir, char * name) {
-    int i, j, k;
+    int i, j;
     char buf[FILE_PATH_SIZE];
 
     if (file == NULL) return 0;
     if (name == NULL) return 0;
-
-    /* First, compare file names excluding path, and return 0 if don't match */
-    i = strlen(file);
-    j = strlen(name);
-    for (k = 1; k <= i && k <= j; k++) {
-        char x = file[i - k];
-        char y = name[j - k];
-        if (x == '/' || x == '\\') break;
-        if (y == '/' || y == '\\') break;
-        if (x != y) return 0;
-    }
-
-    /* Names matches, compare path */
 
     if (is_absolute_path(name)) {
         canonic_path(name, buf, sizeof(buf));
@@ -116,6 +103,7 @@ static int compare_path(char * file, char * pwd, char * dir, char * name) {
         canonic_path(name, buf, sizeof(buf));
     }
 
+    i = strlen(file);
     j = strlen(buf);
     return i <= j && strcmp(file, buf + j - i) == 0;
 }
@@ -135,6 +123,8 @@ static void call_client(CompUnit * unit, LineNumbersState * state,
                         ContextAddress state_addr, LineNumbersCallBack * client, void * args) {
     CodeArea area;
     LineNumbersState * next = get_next_in_text(unit, state);
+    FileInfo * file_info = unit->mFiles + state->mFile;
+
     if (state->mAddress >= (state + 1)->mAddress) return;
     memset(&area, 0, sizeof(area));
     area.start_line = state->mLine;
@@ -146,25 +136,21 @@ static void call_client(CompUnit * unit, LineNumbersState * state,
     if (state->mFileName != NULL) {
         area.file = state->mFileName;
     }
-    else if (state->mFile >= 1 && state->mFile <= unit->mFilesCnt) {
-        FileInfo * file_info = unit->mFiles + (state->mFile - 1);
-        if (is_absolute_path(file_info->mName) || file_info->mDir == NULL) {
-            area.file = file_info->mName;
-        }
-        else if (is_absolute_path(file_info->mDir)) {
-            area.directory = file_info->mDir;
-            area.file = file_info->mName;
-        }
-        else {
-            char buf[FILE_PATH_SIZE];
-            snprintf(buf, sizeof(buf), "%s/%s", file_info->mDir, file_info->mName);
-            area.file = state->mFileName = loc_strdup(buf);
-        }
+    else if (is_absolute_path(file_info->mName) || file_info->mDir == NULL) {
+        area.file = file_info->mName;
+    }
+    else if (is_absolute_path(file_info->mDir)) {
+        area.directory = file_info->mDir;
+        area.file = file_info->mName;
     }
     else {
-        area.file = unit->mObject->mName;
+        char buf[FILE_PATH_SIZE];
+        snprintf(buf, sizeof(buf), "%s/%s", file_info->mDir, file_info->mName);
+        area.file = state->mFileName = loc_strdup(buf);
     }
 
+    area.file_mtime = file_info->mModTime;
+    area.file_size = file_info->mSize;
     area.start_address = state_addr;
     area.end_address = (state + 1)->mAddress - state->mAddress + state_addr;
     area.isa = state->mISA;
@@ -177,7 +163,6 @@ static void call_client(CompUnit * unit, LineNumbersState * state,
 
 static void unit_line_to_address(Context * ctx, CompUnit * unit, unsigned file, unsigned line, unsigned column,
                                  LineNumbersCallBack * client, void * args) {
-    load_line_numbers(unit);
     if (unit->mStatesCnt >= 2) {
         unsigned l = 0;
         unsigned h = unit->mStatesCnt - 1;
@@ -225,39 +210,41 @@ int line_to_address(Context * ctx, char * file_name, int line, int column, LineN
     else if (ctx->exited) err = ERR_ALREADY_EXITED;
 
     if (err == 0) {
-        char fnm[FILE_PATH_SIZE];
         ELF_File * file = elf_list_first(ctx, 0, ~(ContextAddress)0);
         if (file == NULL) err = errno;
-        else canonic_path(file_name, fnm, sizeof(fnm));
-        while (file != NULL) {
-            Trap trap;
-            /* TODO: support for separate debug info files */
-            if (set_trap(&trap)) {
-                DWARFCache * cache = get_dwarf_cache(file);
-                ObjectInfo * info = cache->mCompUnits;
-                while (info != NULL) {
-                    unsigned j;
-                    CompUnit * unit = info->mCompUnit;
-                    assert(unit->mFile == file);
-                    if (compare_path(fnm, unit->mDir, NULL, unit->mObject->mName)) {
-                        unit_line_to_address(ctx, unit, 0, line, column, client, args);
-                    }
-                    for (j = 0; j < unit->mFilesCnt; j++) {
-                        FileInfo * f = unit->mFiles + j;
-                        if (compare_path(fnm, unit->mDir, f->mDir, f->mName)) {
-                            unit_line_to_address(ctx, unit, j + 1, line, column, client, args);
+        if (err == 0) {
+            unsigned h;
+            char fnm[FILE_PATH_SIZE];
+            canonic_path(file_name, fnm, sizeof(fnm));
+            h = calc_file_name_hash(fnm);
+            while (file != NULL) {
+                Trap trap;
+                /* TODO: support for separate debug info files */
+                if (set_trap(&trap)) {
+                    DWARFCache * cache = get_dwarf_cache(file);
+                    ObjectInfo * info = cache->mCompUnits;
+                    while (info != NULL) {
+                        unsigned j;
+                        CompUnit * unit = info->mCompUnit;
+                        assert(unit->mFile == file);
+                        load_line_numbers(unit);
+                        for (j = 0; j < unit->mFilesCnt; j++) {
+                            FileInfo * f = unit->mFiles + j;
+                            if (f->mNameHash != h) continue;
+                            if (!compare_path(fnm, unit->mDir, f->mDir, f->mName)) continue;
+                            unit_line_to_address(ctx, unit, j, line, column, client, args);
                         }
+                        info = info->mSibling;
                     }
-                    info = info->mSibling;
+                    clear_trap(&trap);
                 }
-                clear_trap(&trap);
+                else {
+                    err = trap.error;
+                    break;
+                }
+                file = elf_list_next(ctx);
+                if (file == NULL) err = errno;
             }
-            else {
-                err = trap.error;
-                break;
-            }
-            file = elf_list_next(ctx);
-            if (file == NULL) err = errno;
         }
         elf_list_done(ctx);
     }

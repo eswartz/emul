@@ -27,6 +27,8 @@
 typedef struct CodeArea {
     char * directory;
     char * file;
+    uint32_t file_mtime;
+    uint32_t file_size;
     ContextAddress start_address;
     int start_line;
     int start_column;

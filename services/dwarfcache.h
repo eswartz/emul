@@ -48,6 +48,7 @@ struct FileInfo {
     char * mDir;
     U4_T mModTime;
     U4_T mSize;
+    unsigned mNameHash;
 };
 
 #define SYM_HASH_SIZE (32 * MEM_USAGE_FACTOR - 1)
@@ -196,6 +197,9 @@ extern DWARFCache * get_dwarf_cache(ELF_File * file);
 
 /* Return symbol name hash. The hash is used to build mSymbolHash table. */
 extern unsigned calc_symbol_name_hash(const char * s);
+
+/* Return file name hash. The hash is used to search FileInfo. */
+extern unsigned calc_file_name_hash(const char * s);
 
 /* Load line number information for given compilation unit, throw an exception if error */
 extern void load_line_numbers(CompUnit * unit);

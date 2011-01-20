@@ -45,12 +45,28 @@ unsigned calc_symbol_name_hash(const char * s) {
     unsigned h = 0;
     while (*s) {
         unsigned g;
-        h = (h << 4) + *s++;
+        h = (h << 4) + (unsigned char)*s++;
         g = h & 0xf0000000;
         if (g) h ^= g >> 24;
         h &= ~g;
     }
     return h % SYM_HASH_SIZE;
+}
+
+unsigned calc_file_name_hash(const char * s) {
+    unsigned l = strlen(s);
+    unsigned h = 0;
+    while (l > 0) {
+        unsigned g;
+        unsigned char ch = s[--l];
+        if (ch == '/') break;
+        if (ch == '\\') break;
+        h = (h << 4) + ch;
+        g = h & 0xf0000000;
+        if (g) h ^= g >> 24;
+        h &= ~g;
+    }
+    return h;
 }
 
 void unpack_elf_symbol_info(SymbolSection * section, U4_T index, SymbolInfo * info) {
@@ -780,6 +796,7 @@ static void add_dir(CompUnit * Unit, char * Name) {
 }
 
 static void add_file(CompUnit * Unit, FileInfo * file) {
+    file->mNameHash = calc_file_name_hash(file->mName);
     if (Unit->mFilesCnt >= Unit->mFilesMax) {
         Unit->mFilesMax = Unit->mFilesMax == 0 ? 16 : Unit->mFilesMax * 2;
         Unit->mFiles = (FileInfo *)loc_realloc(Unit->mFiles, sizeof(FileInfo) * Unit->mFilesMax);
@@ -834,19 +851,23 @@ static void compute_reverse_lookup_indices(CompUnit * Unit) {
 static void load_line_numbers_v1(CompUnit * Unit, U4_T unit_size) {
     LineNumbersState state;
     ELF_Section * s = NULL;
+    ContextAddress addr = 0;
+    U4_T line = 0;
 
     memset(&state, 0, sizeof(state));
-    state.mAddress = (ContextAddress)dio_ReadAddress(&s);
+    addr = (ContextAddress)dio_ReadAddress(&s);
     while (dio_GetPos() < Unit->mLineInfoOffs + unit_size) {
         state.mLine = dio_ReadU4();
         state.mColumn = dio_ReadU2();
         if (state.mColumn == 0xffffu) state.mColumn = 0;
+        state.mAddress = addr + dio_ReadU4();
+        if (state.mLine == 0) {
+            state.mLine = line + 1;
+            state.mColumn = 0;
+        }
         add_state(Unit, &state);
-        state.mAddress += dio_ReadU4();
+        line = state.mLine;
     }
-    state.mLine++;
-    state.mColumn = 0;
-    add_state(Unit, &state);
 }
 
 static void load_line_numbers_v2(CompUnit * Unit, U8_T unit_size, int dwarf64) {
@@ -1002,6 +1023,11 @@ void load_line_numbers(CompUnit * Unit) {
     dio_EnterSection(&Unit->mDesc, Cache->mDebugLine, Unit->mLineInfoOffs);
     if (set_trap(&trap)) {
         U8_T unit_size = 0;
+        FileInfo file;
+        memset(&file, 0, sizeof(file));
+        file.mDir = Unit->mDir;
+        file.mName = Unit->mObject->mName;
+        add_file(Unit, &file);
         /* Read header */
         unit_size = dio_ReadU4();
         if (strcmp(Cache->mDebugLine->name, ".line") == 0) {
