@@ -62,7 +62,8 @@ below are steps to create and populate Eclipse workspace with TCF projects:</p>
 
 <h2><a name='Plugins'>TCF Plugins</a></h2>
 
-<p>TCF plugins source code is stored in <code>&lt;TCF Root&gt;\plugins</code> directory.
+<p>TCF plugins source code is stored in <code>&lt;TCF Root&gt;\plugins</code> directory.<br>
+Examples source code is stored in <code>&lt;TCF Root&gt;\examples</code> directory.
 
 <dl>
     <dt><b>org.eclipse.tm.tcf</b>
@@ -103,7 +104,7 @@ CDT .project file is located in <code>&lt;TCF Root&gt;/agent</code> directory.
 
 <p><b>Linux</b>: To build the agent:
 <ul>
-   <li>Check that packages libssl-dev and uuid-dev are installed.
+   <li>Check that SSL and UUID libraries are installed. Fedora package names are: openssl, openssl-devel, libuuid, libuuid-devel.
    <li>Run <code>make</code> command in <code>&lt;TCF Root&gt;/agent</code> directory.
    <li>Start agent: <pre>obj/GNU/Linux/i686/Debug/agent -L- -l0</pre>
        Use other -l option values to increase agent log details level.
