@@ -98,6 +98,19 @@ extern int is_all_stopped(Context * mem);
 extern int terminate_debug_context(Context * ctx);
 
 /*
+ * Resume debug context.
+ * If "ctx" is a process, resume all children.
+ * 'c' - channel to access symbols info, can be NULL if the info is provided locally.
+ * 'mode' - of context resume modes defined in context.h
+ * 'count' - number of steps if 'mode' is stepping mode.
+ * 'range_start', range_end' - istruction address range if 'mode' is stepping in a range.
+ * Returns 0 if no errors, otherwise returns -1 and sets errno.
+ * Note: this function is asynchronous, it returns before contexts are resumed.
+ */
+extern int continue_debug_context(Context * ctx, Channel * c,
+        int mode, int count, ContextAddress range_start, ContextAddress range_end);
+
+/*
  * Suspend (stop and intercept) debug context - thread or process.
  * If "ctx" is a process, suspend all children.
  * RunControl.suspended event is sent if it was not sent before.

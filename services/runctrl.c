@@ -483,7 +483,7 @@ static void resume_params_callback(InputStream * inp, const char * name, void * 
     }
 }
 
-static int continue_debug_context(Context * ctx) {
+static int resume_context_tree(Context * ctx) {
     if (context_has_state(ctx)) {
         Context * grp = context_get_group(ctx, CONTEXT_GROUP_INTERCEPT);
         assert(EXT(ctx)->intercepted);
@@ -500,7 +500,7 @@ static int continue_debug_context(Context * ctx) {
             Context * x = cldl2ctxp(l);
             ContextExtensionRC * y = EXT(x);
             if (x->exited || context_has_state(x) && !y->intercepted) continue;
-            continue_debug_context(x);
+            resume_context_tree(x);
         }
     }
     return 0;
@@ -545,11 +545,47 @@ static void start_step_mode(Context * ctx, Channel * c, int mode, ContextAddress
         release_error_report(ext->step_error);
         ext->step_error = NULL;
     }
-    channel_lock(ext->step_channel = c);
+    if (c != NULL) {
+        ext->step_channel = c;
+        channel_lock(ext->step_channel);
+    }
+    else if (ext->step_channel != NULL) {
+        channel_unlock(ext->step_channel);
+        ext->step_channel = NULL;
+    }
     ext->step_done = NULL;
     ext->step_mode = mode;
     ext->step_range_start = range_start;
     ext->step_range_end = range_end;
+}
+
+int continue_debug_context(Context * ctx, Channel * c,
+                           int mode, int count, ContextAddress range_start, ContextAddress range_end) {
+    ContextExtensionRC * ext = EXT(ctx);
+    int err = 0;
+
+    start_step_mode(ctx, c, mode, range_start, range_end);
+
+    if (ctx->exited) {
+        err = ERR_ALREADY_EXITED;
+    }
+    else if (context_has_state(ctx) && !ext->intercepted) {
+        err = ERR_ALREADY_RUNNING;
+    }
+    else if (count != 1) {
+        err = EINVAL;
+    }
+    else if (resume_context_tree(ctx) < 0) {
+        err = errno;
+    }
+
+    assert(err || !ext->intercepted);
+    if (err) {
+        cancel_step_mode(ctx);
+        return -1;
+    }
+
+    return 0;
 }
 
 static void command_resume(char * token, Channel * c) {
@@ -575,28 +611,7 @@ static void command_resume(char * token, Channel * c) {
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     if (err == 0 && (ctx = id2ctx(id)) == NULL) err = ERR_INV_CONTEXT;
-
-    if (err == 0) {
-        ContextExtensionRC * ext = EXT(ctx);
-
-        start_step_mode(ctx, c, mode, args.range_start, args.range_end);
-
-        if (ctx->exited) {
-            err = ERR_ALREADY_EXITED;
-        }
-        else if (context_has_state(ctx) && !ext->intercepted) {
-            err = ERR_ALREADY_RUNNING;
-        }
-        else if (count != 1) {
-            err = EINVAL;
-        }
-        else if (continue_debug_context(ctx) < 0) {
-            err = errno;
-        }
-
-        assert(err || !ext->intercepted);
-        if (err) cancel_step_mode(ctx);
-    }
+    if (err == 0 && continue_debug_context(ctx, c, mode, count, args.range_start, args.range_end) < 0) err = errno;
     send_simple_result(c, token, err);
 }
 
@@ -671,7 +686,7 @@ static void event_terminate(void * args) {
         if (!x->exited) {
             if (y->intercepted) {
                 ext->step_continue_mode = RM_RESUME;
-                continue_debug_context(x);
+                resume_context_tree(x);
             }
             x->pending_intercept = 0;
             x->pending_signals |= 1 << SIGKILL;
@@ -680,7 +695,7 @@ static void event_terminate(void * args) {
     }
     if (ext->intercepted) {
         ext->step_continue_mode = RM_RESUME;
-        continue_debug_context(ctx);
+        resume_context_tree(ctx);
     }
     ctx->pending_intercept = 0;
     ctx->pending_signals |= 1 << SIGKILL;
@@ -1288,7 +1303,14 @@ static void sync_run_state() {
             continue;
         }
         if (ext->step_mode) {
-            if (is_channel_closed(ext->step_channel)) {
+            if (ext->step_channel == NULL) {
+                if (update_step_machine_state(ctx) < 0) {
+                    ext->step_error = get_error_report(errno);
+                    cancel_step_mode(ctx);
+                    ctx->pending_intercept = 1;
+                }
+            }
+            else if (is_channel_closed(ext->step_channel)) {
                 cancel_step_mode(ctx);
             }
             else {
@@ -1548,7 +1570,7 @@ static void event_context_stopped(Context * ctx, void * client_data) {
 static void event_context_started(Context * ctx, void * client_data) {
     ContextExtensionRC * ext = EXT(ctx);
     assert(!ctx->stopped);
-    if (ext->intercepted) continue_debug_context(ctx);
+    if (ext->intercepted) resume_context_tree(ctx);
     ext->intercepted_by_bp = 0;
     if (safe_event_list) {
         if (!ext->safe_single_step && !ctx->exiting) {
