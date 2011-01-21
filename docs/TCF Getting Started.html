@@ -103,8 +103,9 @@ CDT .project file is located in <code>&lt;TCF Root&gt;/agent</code> directory.
 
 <p><b>Linux</b>: To build the agent:
 <ul>
+   <li>Check that packages libssl-dev and uuid-dev are installed.
    <li>Run <code>make</code> command in <code>&lt;TCF Root&gt;/agent</code> directory.
-   <li>Start agent: <pre>GNU/Linux/i686/Debug/agent -L- -l0</pre>
+   <li>Start agent: <pre>obj/GNU/Linux/i686/Debug/agent -L- -l0</pre>
        Use other -l option values to increase agent log details level.
 </ul>
 
