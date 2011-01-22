@@ -582,6 +582,7 @@ int continue_debug_context(Context * ctx, Channel * c,
     assert(err || !ext->intercepted);
     if (err) {
         cancel_step_mode(ctx);
+        errno = err;
         return -1;
     }
 
