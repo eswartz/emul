@@ -461,6 +461,10 @@ Context * context_get_group(Context * ctx, int group) {
     return parent_ctx;
 }
 
+int context_get_supported_bp_access_types(Context * ctx) {
+    return 0;
+}
+
 int context_plant_breakpoint(ContextBreakpoint * bp) {
     VXDBG_CTX vxdbg_ctx;
     VXDBG_BP_ID bp_id = 0;

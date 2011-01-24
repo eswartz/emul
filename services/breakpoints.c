@@ -212,9 +212,7 @@ static unsigned get_bi_access_types(BreakInstruction * bi) {
                 t |= CTX_BP_ACCESS_INSTRUCTION;
             }
             else {
-                if (md & 0x1) t |= CTX_BP_ACCESS_DATA_READ;
-                if (md & 0x2) t |= CTX_BP_ACCESS_DATA_WRITE;
-                if (md & 0x4) t |= CTX_BP_ACCESS_INSTRUCTION;
+                t |= md;
             }
             /* TODO: parse type (soft|hw) */
         }
@@ -240,7 +238,7 @@ static void plant_instruction(BreakInstruction * bi) {
 
     bi->saved_size = 0;
     if (context_plant_breakpoint(&bi->cb) < 0) {
-        if (get_error_code(errno) == ERR_UNSUPPORTED) {
+        if (bi->cb.access_types == CTX_BP_ACCESS_INSTRUCTION && get_error_code(errno) == ERR_UNSUPPORTED) {
             uint8_t * break_inst = get_break_instruction(bi->cb.ctx, &bi->saved_size);
             assert(sizeof(bi->saved_code) >= bi->saved_size);
             planting_instruction = 1;
@@ -635,9 +633,8 @@ static EvaluationRequest * create_evaluation_request(Context * ctx, int bp_cnt) 
         req->bp_arr = (ConditionEvaluationRequest *)loc_realloc(req->bp_arr, sizeof(ConditionEvaluationRequest) * req->bp_max);
     }
     assert(req->ctx == ctx);
+    assert(req->bp_cnt == 0);
     if (bp_cnt > 0) {
-        assert(req->bp_cnt == 0);
-        assert(req->bp_max >= bp_cnt);
         memset(req->bp_arr, 0, sizeof(ConditionEvaluationRequest) * bp_cnt);
         req->bp_cnt = bp_cnt;
     }
@@ -842,7 +839,7 @@ static void done_all_evaluations(void) {
         EvaluationRequest * req = link_active2erl(l);
         l = l->next;
         if (req->bp_cnt) {
-            assert(req->ctx->stopped_by_bp);
+            assert(req->ctx->stopped_by_bp || req->ctx->stopped_by_cb);
             done_condition_evaluation(req);
         }
     }
@@ -958,7 +955,7 @@ static void evaluate_condition(void * x) {
     assert(req != NULL);
     assert(req->bp_cnt > 0);
     assert(ctx->stopped);
-    assert(ctx->stopped_by_bp);
+    assert(ctx->stopped_by_bp || ctx->stopped_by_cb);
     assert(cache_enter_cnt > 0);
 
     for (i = 0; i < req->bp_cnt; i++) {
@@ -1806,6 +1803,10 @@ static void command_get_capabilities(char * token, Channel * c) {
     write_stream(&c->out, ':');
     json_write_boolean(&c->out, 1);
     write_stream(&c->out, ',');
+    json_write_string(&c->out, "AccessMode");
+    write_stream(&c->out, ':');
+    json_write_long(&c->out, context_get_supported_bp_access_types(id2ctx(id)));
+    write_stream(&c->out, ',');
     json_write_string(&c->out, "ContextIds");
     write_stream(&c->out, ':');
     json_write_boolean(&c->out, 1);
@@ -1839,32 +1840,75 @@ void evaluate_breakpoint(Context * ctx) {
 
     assert(context_has_state(ctx));
     assert(ctx->stopped);
-    assert(ctx->stopped_by_bp);
+    assert(ctx->stopped_by_bp || ctx->stopped_by_cb);
     assert(ctx->exited == 0);
     assert(EXT(ctx)->bp_ids == NULL);
 
-    if (context_get_canonical_addr(ctx, get_regs_PC(ctx), &mem, &mem_addr, NULL, NULL) < 0) return;
-    bi = find_instruction(mem, mem_addr);
-    if (bi == NULL || !bi->planted || bi->ref_cnt == 0) return;
+    if (ctx->stopped_by_bp) {
+        if (context_get_canonical_addr(ctx, get_regs_PC(ctx), &mem, &mem_addr, NULL, NULL) < 0) return;
+        bi = find_instruction(mem, mem_addr);
+        if (bi == NULL || !bi->planted || bi->ref_cnt == 0) return;
 
-    assert(bi->valid);
-    bp_cnt = bi->ref_cnt;
-    req = create_evaluation_request(ctx, bp_cnt);
-    for (i = 0; i < bp_cnt; i++) {
-        BreakpointInfo * bp = bi->refs[i].bp;
-        assert(bp->instruction_cnt);
-        assert(bp->unsupported == NULL);
-        assert(bp->error == NULL);
-        req->bp_arr[i].bp = bp;
+        assert(bi->valid);
+        bp_cnt = bi->ref_cnt;
+        req = create_evaluation_request(ctx, bp_cnt);
+        for (i = 0; i < bp_cnt; i++) {
+            BreakpointInfo * bp = bi->refs[i].bp;
+            assert(bp->instruction_cnt);
+            assert(bp->unsupported == NULL);
+            assert(bp->error == NULL);
+            req->bp_arr[i].bp = bp;
 
-        if (need_to_post) continue;
-        if (is_disabled(bp)) continue;
-        if (bp->condition != NULL || bp->stop_group != NULL) {
-            need_to_post = 1;
-            continue;
+            if (need_to_post) continue;
+            if (is_disabled(bp)) continue;
+            if (bp->condition != NULL || bp->stop_group != NULL) {
+                need_to_post = 1;
+                continue;
+            }
+            if (!check_context_ids(bp, ctx)) continue;
+            req->bp_arr[i].condition_ok = 1;
         }
-        if (!check_context_ids(bp, ctx)) continue;
-        req->bp_arr[i].condition_ok = 1;
+    }
+    if (ctx->stopped_by_cb) {
+        int j;
+        assert(ctx->stopped_by_cb[0] != NULL);
+        for (j = 0; ctx->stopped_by_cb[j]; j++) {
+            int k = 0;
+            bi = (BreakInstruction *)((char *)ctx->stopped_by_cb[j] - offsetof(BreakInstruction, cb));
+            assert(bi->planted);
+            bp_cnt += bi->ref_cnt;
+            if (req == NULL) {
+                req = create_evaluation_request(ctx, bp_cnt);
+            }
+            else {
+                k = req->bp_cnt;
+                if (req->bp_max < bp_cnt) {
+                    req->bp_max = bp_cnt;
+                    req->bp_arr = (ConditionEvaluationRequest *)loc_realloc(req->bp_arr, sizeof(ConditionEvaluationRequest) * req->bp_max);
+                }
+                if (bp_cnt > k) {
+                    memset(req->bp_arr + k, 0, sizeof(ConditionEvaluationRequest) * bp_cnt - k);
+                    req->bp_cnt = bp_cnt;
+                }
+            }
+            for (i = 0; i < bp_cnt; i++) {
+                BreakpointInfo * bp = bi->refs[i].bp;
+                assert(bp->instruction_cnt);
+                assert(bp->unsupported == NULL);
+                assert(bp->error == NULL);
+
+                req->bp_arr[k + i].bp = bp;
+
+                if (need_to_post) continue;
+                if (is_disabled(bp)) continue;
+                if (bp->condition != NULL || bp->stop_group != NULL) {
+                    need_to_post = 1;
+                    continue;
+                }
+                if (!check_context_ids(bp, ctx)) continue;
+                req->bp_arr[k + i].condition_ok = 1;
+            }
+        }
     }
 
     if (need_to_post) {
@@ -1891,7 +1935,6 @@ static void safe_restore_breakpoint(void * arg) {
     assert(find_instruction(bi->cb.ctx, bi->cb.address) == bi);
     if (!ctx->exiting && ctx->stopped && !ctx->stopped_by_exception && get_regs_PC(ctx) == bi->cb.address) {
         if (ext->step_over_bp_cnt < 100) {
-            ctx->stopped_by_bp = 1;
             ext->step_over_bp_cnt++;
             safe_skip_breakpoint(arg);
             return;
@@ -1927,7 +1970,6 @@ static void safe_skip_breakpoint(void * arg) {
     if (ctx->exited || ctx->exiting) return;
 
     assert(ctx->stopped);
-    assert(ctx->stopped_by_bp);
     assert(bi->cb.address == get_regs_PC(ctx));
 
     if (bi->planted) remove_instruction(bi);
@@ -1938,6 +1980,7 @@ static void safe_skip_breakpoint(void * arg) {
         ctx->signal = 0;
         ctx->stopped = 1;
         ctx->stopped_by_bp = 0;
+        ctx->stopped_by_cb = NULL;
         ctx->stopped_by_exception = 1;
         ctx->exception_description = loc_strdup(errno_to_str(error));
         send_context_changed_event(ctx);

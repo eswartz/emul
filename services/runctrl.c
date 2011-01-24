@@ -1355,6 +1355,7 @@ static void sync_run_state() {
                 ctx->signal = 0;
                 ctx->stopped = 1;
                 ctx->stopped_by_bp = 0;
+                ctx->stopped_by_cb = NULL;
                 ctx->stopped_by_exception = 1;
                 ctx->exception_description = loc_strdup(errno_to_str(error));
                 send_context_changed_event(ctx);
@@ -1373,6 +1374,7 @@ static void sync_run_state() {
             ctx->signal = 0;
             ctx->stopped = 1;
             ctx->stopped_by_bp = 0;
+            ctx->stopped_by_cb = NULL;
             ctx->stopped_by_exception = 1;
             ctx->exception_description = loc_strdup(errno_to_str(error));
             send_context_changed_event(ctx);
@@ -1558,7 +1560,7 @@ static void event_context_stopped(Context * ctx, void * client_data) {
         }
         ext->step_done = NULL;
     }
-    if (ctx->stopped_by_bp) evaluate_breakpoint(ctx);
+    if (ctx->stopped_by_bp || ctx->stopped_by_cb) evaluate_breakpoint(ctx);
     if (ext->pending_safe_event) check_safe_events(ctx);
     if (ctx->stopped_by_exception) send_event_context_exception(ctx);
     if (run_ctrl_lock_cnt == 0 && run_safe_events_posted < 4) {

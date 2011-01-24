@@ -57,6 +57,7 @@ typedef struct ContextExtensionWin32 {
     struct DebugState * debug_state;
     int                 ok_to_use_hw_bp;    /* NtContinue() changes Dr6 and Dr7, so HW breakpoints should be disabled until NtContinue() is done */
     ContextBreakpoint * hw_bps[MAX_HW_BPS];
+    ContextBreakpoint * triggered_hw_bps[MAX_HW_BPS + 1];
     unsigned            hw_bps_generation;
     DWORD               skip_hw_bp_addr;
 } ContextExtensionWin32;
@@ -233,6 +234,7 @@ static DWORD event_win32_context_stopped(Context * ctx) {
     ctx->pending_signals = 0;
     ctx->stopped = 1;
     ctx->stopped_by_bp = 0;
+    ctx->stopped_by_cb = NULL;
     if (exception_code == 0) {
         ctx->stopped_by_exception = 0;
     }
@@ -244,15 +246,17 @@ static DWORD event_win32_context_stopped(Context * ctx) {
             if (!ext->regs_error) {
                 if (ext->regs->Eip != ext->skip_hw_bp_addr) ext->skip_hw_bp_addr = 0;
                 if (ext->regs->Dr6 & 0xfu) {
-                    int i;
+                    int i, j = 0;
                     for (i = 0; i < MAX_HW_BPS; i++) {
-                        if ((ext->regs->Dr7 & (3u << i * 2)) && (ext->regs->Dr6 & (1u << i))) {
+                        if (ext->regs->Dr6 & (1u << i)) {
                             ContextBreakpoint * bp = EXT(ctx->mem)->hw_bps[i];
-                            if (bp != NULL && bp->address == ext->regs->Eip && (bp->access_types == CTX_BP_ACCESS_INSTRUCTION)) {
-                                ctx->stopped_by_bp = 1;
+                            if (bp == NULL) continue;
+                            if (bp->address == ext->regs->Eip && (bp->access_types & CTX_BP_ACCESS_INSTRUCTION)) {
                                 ext->skip_hw_bp_addr = ext->regs->Eip;
-                                break;
                             }
+                            ctx->stopped_by_cb = ext->triggered_hw_bps;
+                            ctx->stopped_by_cb[j++] = bp;
+                            ctx->stopped_by_cb[j] = NULL;
                         }
                     }
                 }
@@ -274,7 +278,7 @@ static DWORD event_win32_context_stopped(Context * ctx) {
                     }
                 }
             }
-            if (!ctx->stopped_by_bp && ext->step_opcodes_len == 0 || ext->regs_error) {
+            if (!ctx->stopped_by_bp && !ctx->stopped_by_cb && ext->step_opcodes_len == 0 || ext->regs_error) {
                 continue_status = DBG_EXCEPTION_NOT_HANDLED;
             }
             ext->step_opcodes_len = 0;
@@ -287,7 +291,10 @@ static DWORD event_win32_context_stopped(Context * ctx) {
                 ext->regs->Eip -= break_size;
                 ext->regs_dirty = 1;
                 ctx->stopped_by_bp = 1;
-                EXT(ctx->mem)->ok_to_use_hw_bp = 1;
+                if (!EXT(ctx->mem)->ok_to_use_hw_bp) {
+                    EXT(ctx->mem)->ok_to_use_hw_bp = 1;
+                    send_context_changed_event(ctx->mem);
+                }
             }
             else {
                 continue_status = DBG_EXCEPTION_NOT_HANDLED;
@@ -1074,12 +1081,37 @@ Context * context_get_group(Context * ctx, int group) {
     return ctx->mem;
 }
 
+int context_get_supported_bp_access_types(Context * ctx) {
+    if (ctx->mem != ctx) return 0;
+    return CTX_BP_ACCESS_DATA_READ | CTX_BP_ACCESS_DATA_WRITE | CTX_BP_ACCESS_INSTRUCTION;
+}
+
 int context_plant_breakpoint(ContextBreakpoint * bp) {
     int i;
     Context * ctx = bp->ctx;
+    assert(bp->access_types);
     if (ctx->mem == ctx) {
         ContextExtensionWin32 * ext = EXT(ctx);
         if (ext->ok_to_use_hw_bp) {
+            if (bp->access_types == CTX_BP_ACCESS_INSTRUCTION) {
+                /* Don't use more then 2 HW slots for regular instruction breakpoints */
+                int cnt = 0;
+                for (i = 0; i < MAX_HW_BPS; i++) {
+                    assert(ext->hw_bps[i] != bp);
+                    if (ext->hw_bps[i] == NULL) continue;
+                    if (ext->hw_bps[i]->access_types != CTX_BP_ACCESS_INSTRUCTION) continue;
+                    cnt++;
+                }
+                if (cnt >= MAX_HW_BPS / 2) {
+                    errno = ERR_UNSUPPORTED;
+                    return -1;
+                }
+            }
+            else if (bp->access_types != CTX_BP_ACCESS_DATA_WRITE &&
+                        bp->access_types != (CTX_BP_ACCESS_DATA_READ | CTX_BP_ACCESS_DATA_WRITE)) {
+                errno = ERR_UNSUPPORTED;
+                return -1;
+            }
             for (i = 0; i < MAX_HW_BPS; i++) {
                 if (ext->hw_bps[i] == NULL || ext->hw_bps[i] == bp) {
                     ext->hw_bps[i] = bp;

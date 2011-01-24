@@ -432,6 +432,10 @@ Context * context_get_group(Context * ctx, int group) {
     return ctx->mem;
 }
 
+int context_get_supported_bp_access_types(Context * ctx) {
+    return 0;
+}
+
 int context_plant_breakpoint(ContextBreakpoint * bp) {
     errno = ERR_UNSUPPORTED;
     return -1;

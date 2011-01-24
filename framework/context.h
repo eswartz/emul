@@ -31,6 +31,8 @@ extern LINK context_root;
 
 typedef void ContextAttachCallBack(int, Context *, void *);
 
+typedef struct ContextBreakpoint ContextBreakpoint;
+
 /*
  * A context corresponds to an execution thread, process, address space, etc.
  * A context can belong to a parent context. Contexts hierarchy can be simple
@@ -50,7 +52,8 @@ struct Context {
     unsigned int        mem_access;         /* bit set of memory access types represented by this context */
     unsigned int        ref_count;          /* reference count, see context_lock() and context_unlock() */
     int                 stopped;            /* OS kernel has stopped this context */
-    int                 stopped_by_bp;      /* stopped by breakpoint */
+    int                 stopped_by_bp;      /* stopped by breakpoint instruction */
+    ContextBreakpoint** stopped_by_cb;      /* stopped by ContextBreakpoint - NULL terminated list of triggered ContextBreakpoint's */
     int                 stopped_by_exception;/* stopped by runtime exception (like SIGSEGV, etc.) */
     char *              exception_description;/* description of exception if stopped by runtime exception */
     int                 exiting;            /* context is about to exit */
@@ -257,6 +260,10 @@ extern int context_single_step(Context * ctx);
 /*
  * Retrieve context memory map.
  * Return -1 and set errno if the map cannot be retrieved.
+ * Note: the caller owns MemoryMap object and all its contents, it can call loc_free() on it at any time.
+ * 'map' is empty (region_cnt == 0) when context_get_memory_map() is called,
+ * and the function adds memory region descriptions into is, doing loc_strdup() for things like file names.
+ * The function implementation should not retain references to 'map' or its contents.
  */
 extern int context_get_memory_map(Context * ctx, MemoryMap * map);
 
@@ -364,18 +371,23 @@ extern Context * context_get_group(Context * ctx, int group);
  * debug context implementation. The implementation needs to handle only small subset of
  * breakpoint properties, the rest is handles by generic code in Breakpoints service.
  */
-typedef struct ContextBreakpoint {
+struct ContextBreakpoint {
     Context * ctx;              /* breakpoint context, one of returned by
                                  * context_get_group(..., CONTEXT_GROUP_BREAKPOINT) */
     ContextAddress address;     /* breakpoint address */
     ContextAddress length;      /* length of the breakpoint address range */
     unsigned access_types;      /* memory access type, bit set of CTX_BP_ACCESS_* */
     unsigned id;                /* to be used by debug context inmplementation */
-} ContextBreakpoint;
+};
 
-#define CTX_BP_ACCESS_INSTRUCTION    0x01
-#define CTX_BP_ACCESS_DATA_READ      0x02
-#define CTX_BP_ACCESS_DATA_WRITE     0x04
+#define CTX_BP_ACCESS_DATA_READ      0x01
+#define CTX_BP_ACCESS_DATA_WRITE     0x02
+#define CTX_BP_ACCESS_INSTRUCTION    0x04
+
+/*
+ * Return bitmask of supported CTX_BP_ACCESS_* values.
+ */
+extern int context_get_supported_bp_access_types(Context * ctx);
 
 /*
  * Plant a breakpoint.

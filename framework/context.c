@@ -225,6 +225,7 @@ void send_context_started_event(Context * ctx) {
     assert(context_has_state(ctx));
     ctx->stopped = 0;
     ctx->stopped_by_bp = 0;
+    ctx->stopped_by_cb = NULL;
     ctx->stopped_by_exception = 0;
     if (ctx->exception_description) {
         loc_free(ctx->exception_description);

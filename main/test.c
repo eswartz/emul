@@ -71,6 +71,7 @@ short tcf_test_short = 0;
 long tcf_test_long = 0;
 
 void tcf_test_func3(void) {
+    tcf_test_char++;
     usleep(1000);
 }
 
@@ -79,12 +80,14 @@ void tcf_test_func2(void) {
     int func2_local2 = 2;
     test_struct func2_local3 = { enum_val3, 153, NULL, 3.14f, 2.71 };
     func2_local3.f_struct = &func2_local3;
+    tcf_test_short++;
     tcf_test_func3();
     func2_local1++;
     func2_local2 = func2_local1;
 }
 
 void tcf_test_func1(void) {
+    tcf_test_long++;
     tcf_test_func2();
 }
 
