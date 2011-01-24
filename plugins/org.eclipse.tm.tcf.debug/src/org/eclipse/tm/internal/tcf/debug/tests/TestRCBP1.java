@@ -74,7 +74,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     private String main_thread_id;
     private Map<String,Object> bp_capabilities;
     private Runnable pending_cancel;
-    private int bp_cnt = 0;
+    private int bp_cnt;
     private boolean done_get_state;
     private boolean done_disassembly;
     private int resume_cnt = 0;
@@ -83,12 +83,13 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     private boolean bp_set_done;
     private boolean bp_change_done;
     private boolean bp_sync_done;
+    private String data_bp_id;
+    private int data_bp_cnt;
 
     private static class SuspendedContext {
         final String id;
         final String pc;
         final String reason;
-        @SuppressWarnings("unused")
         final Map<String,Object> params;
 
         boolean get_state_pending;
@@ -116,7 +117,10 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                     if (test_context.getProcessID().equals(ctx) && map.get(IBreakpoints.INSTANCE_ERROR) != null)
                         err = (String)map.get(IBreakpoints.INSTANCE_ERROR);
                 }
-                if (err != null) exit(new Exception("Invalid BP status: " + err));
+                if (err != null) {
+                    if (!bp_change_done && id.equals(data_bp_id)) return;
+                    exit(new Exception("Invalid BP status: " + err));
+                }
             }
         }
 
@@ -399,7 +403,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     private void iniBreakpoints() {
         assert !bp_set_done;
         assert bp_list.isEmpty();
-        Map<String,Object> m[] = new Map[7];
+        Map<String,Object> m[] = new Map[8];
         for (int i = 0; i < m.length; i++) {
             m[i] = new HashMap<String,Object>();
             m[i].put(IBreakpoints.PROP_ID, "TcfTestBP" + i + "" + channel_id);
@@ -437,6 +441,18 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                 break;
             case 6:
                 m[i].put(IBreakpoints.PROP_LOCATION, "tcf_test_func3");
+                break;
+            case 7:
+                // Data breakpoint
+                m[i].put(IBreakpoints.PROP_LOCATION, "&tcf_test_char");
+                m[i].put(IBreakpoints.PROP_ACCESSMODE, IBreakpoints.ACCESSMODE_WRITE);
+                Number ca = (Number)bp_capabilities.get(IBreakpoints.CAPABILITY_ACCESSMODE);
+                if (ca != null && (ca.intValue() & (1 << IBreakpoints.ACCESSMODE_WRITE)) != 0) {
+                    data_bp_id = (String)m[i].get(IBreakpoints.PROP_ID);
+                }
+                else {
+                    m[i].put(IBreakpoints.PROP_ENABLED, Boolean.FALSE);
+                }
                 break;
             }
             bp_list.put((String)m[i].get(IBreakpoints.PROP_ID), m[i]);
@@ -738,6 +754,9 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                 if (bp_cnt != 40) {
                     exit(new Exception("Test main thread breakpoint count = " + bp_cnt + ", expected 40"));
                 }
+                if (data_bp_id != null && data_bp_cnt != 10) {
+                    exit(new Exception("Test main thread data breakpoint count = " + data_bp_cnt + ", expected 10"));
+                }
                 rc.removeListener(this);
                 // Reset breakpoint list
                 bp_list.clear();
@@ -786,10 +805,28 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                     sc.id + " '" + toSymName(pc) + "' " + sc.pc + " " + sc.reason +
                     ", expected breakpoint at '" + sym + "' " + ss));
         }
+        String bp_id = null;
+        if (sc.params != null) {
+            Object ids = sc.params.get(IRunControl.STATE_BREAKPOINT_IDS);
+            if (ids != null) {
+                @SuppressWarnings("unchecked")
+                Collection<String> c = (Collection<String>)ids;
+                for (String id : c) {
+                    if (bp_list.get(id) != null) {
+                        bp_id = id;
+                        break;
+                    }
+                }
+                if (bp_id == null) {
+                    exit(new Exception("Invalid value of 'BPs' attribute in a context state"));
+                }
+            }
+        }
     }
 
     private void checkSuspendedContext(final SuspendedContext sc) {
-        if (main_thread_id == null && isMyBreakpoint(sc)) {
+        boolean my_breakpoint = isMyBreakpoint(sc);
+        if (main_thread_id == null && my_breakpoint) {
             // Process main thread should be the first to hit a breakpoint in the test
             if (!done_get_state) {
                 exit(new Exception("Unexpeceted breakpoint hit"));
@@ -801,7 +838,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
             resume(sc.id);
             return;
         }
-        if (isMyBreakpoint(sc)) {
+        if (my_breakpoint) {
             if (sc.id.equals(main_thread_id)) bp_cnt++;
             SuspendedContext sp = suspended_prev.get(sc.id);
             String sp_sym = sp == null ? null : toSymName(Long.parseLong(sp.pc));
@@ -826,6 +863,9 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                 checkSuspendedContext(sc, "tcf_test_func0");
             }
         }
+        else if (isMyDataBreakpoint(sc)) {
+            if (sc.id.equals(main_thread_id)) data_bp_cnt++;
+        }
         if (!test_suite.isActive(this)) return;
         assert resume_cmds.get(sc.id) == null;
         Runnable done = new Runnable() {
@@ -833,22 +873,27 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                 resume(sc.id);
             }
         };
-        switch (rnd.nextInt(5)) {
-        case 0:
-            runMemoryTest(sc, done);
-            break;
-        case 1:
-            runRegistersTest(sc, done);
-            break;
-        case 2:
-            runLineNumbersTest(sc, done);
-            break;
-        case 3:
-            runSymbolsTest(sc, done);
-            break;
-        default:
+        if (my_breakpoint) {
+            switch (rnd.nextInt(5)) {
+            case 0:
+                runMemoryTest(sc, done);
+                break;
+            case 1:
+                runRegistersTest(sc, done);
+                break;
+            case 2:
+                runLineNumbersTest(sc, done);
+                break;
+            case 3:
+                runSymbolsTest(sc, done);
+                break;
+            default:
+                done.run();
+                break;
+            }
+        }
+        else {
             done.run();
-            break;
         }
     }
 
@@ -858,6 +903,20 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
         long pc =  Long.parseLong(sc.pc);
         for (IDiagnostics.ISymbol sym : sym_list.values()) {
             if (pc == sym.getValue().longValue()) return true;
+        }
+        return false;
+    }
+
+    private boolean isMyDataBreakpoint(SuspendedContext sc) {
+        // Check if the context is suspended by our data breakpoints
+        if (data_bp_id == null) return false;
+        if (!"Breakpoint".equals(sc.reason)) return false;
+        if (sc.params == null) return false;
+        Object ids = sc.params.get(IRunControl.STATE_BREAKPOINT_IDS);
+        if (ids != null) {
+            @SuppressWarnings("unchecked")
+            Collection<String> c = (Collection<String>)ids;
+            if (c.contains(data_bp_id)) return true;
         }
         return false;
     }

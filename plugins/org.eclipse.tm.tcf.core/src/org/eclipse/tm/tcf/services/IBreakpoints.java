@@ -123,7 +123,8 @@ public interface IBreakpoints extends IService {
         CAPABILITY_FILE_LINE = "FileLine",              // Boolean
         CAPABILITY_CONTEXTIDS = "ContextIds",           // Boolean
         CAPABILITY_STOP_GROUP = "StopGroup",            // Boolean
-        CAPABILITY_IGNORECOUNT = "IgnoreCount";         // Boolean
+        CAPABILITY_IGNORECOUNT = "IgnoreCount",         // Boolean
+        CAPABILITY_ACCESSMODE = "AccessMode";           // Number
 
     /**
      * Call back interface for breakpoint service commands.
