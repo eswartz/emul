@@ -118,7 +118,7 @@ int memory_map_get(Context * ctx, MemoryMap ** client_map, MemoryMap ** target_m
 void memory_map_event_module_loaded(Context * ctx) {
     unsigned i;
     assert(ctx->ref_count > 0);
-    assert(ctx->parent == NULL);
+    assert(ctx == context_get_group(ctx, CONTEXT_GROUP_PROCESS));
     event_memory_map_changed(ctx, NULL);
     for (i = 0; i < listener_cnt; i++) {
         Listener * l = listeners + i;
@@ -130,7 +130,7 @@ void memory_map_event_module_loaded(Context * ctx) {
 void memory_map_event_code_section_ummapped(Context * ctx, ContextAddress addr, ContextAddress size) {
     unsigned i;
     assert(ctx->ref_count > 0);
-    assert(ctx->parent == NULL);
+    assert(ctx == context_get_group(ctx, CONTEXT_GROUP_PROCESS));
     for (i = 0; i < listener_cnt; i++) {
         Listener * l = listeners + i;
         if (l->listener->code_section_ummapped == NULL) continue;
@@ -141,6 +141,7 @@ void memory_map_event_code_section_ummapped(Context * ctx, ContextAddress addr, 
 void memory_map_event_module_unloaded(Context * ctx) {
     unsigned i;
     assert(ctx->ref_count > 0);
+    assert(ctx == context_get_group(ctx, CONTEXT_GROUP_PROCESS));
     event_memory_map_changed(ctx, NULL);
     for (i = 0; i < listener_cnt; i++) {
         Listener * l = listeners + i;
