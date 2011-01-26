@@ -48,6 +48,7 @@ import org.eclipse.tm.tcf.services.IFileSystem.FileSystemException;
 import org.eclipse.tm.tcf.services.IFileSystem.IFileHandle;
 import org.eclipse.tm.tcf.services.IMemory.MemoryContext;
 import org.eclipse.tm.tcf.services.IProcesses.ProcessContext;
+import org.eclipse.tm.tcf.util.TCFTask;
 
 
 public class TCFLaunch extends Launch {
@@ -110,7 +111,9 @@ public class TCFLaunch extends Launch {
     private TCFBreakpointsStatus breakpoints_status;
     private String mode;
     private boolean connecting;
+    private boolean disconnecting;
     private boolean disconnected;
+    private boolean terminated;
     private boolean shutdown;
     private boolean last_context_exited;
     private long actions_timestamp;
@@ -582,56 +585,58 @@ public class TCFLaunch extends Launch {
                     });
                 }
             };
-            // Get process signal list
-            new LaunchStep() {
-                @Override
-                void start() {
-                    ps.getSignalList(process.getID(), new IProcesses.DoneGetSignalList() {
-                        public void doneGetSignalList(IToken token, Exception error, Collection<Map<String,Object>> list) {
-                            if (error != null) Activator.log("Can't get process signal list", error);
-                            process_signals = list;
-                            done();
-                        }
-                    });
-                }
-            };
-            // Set process signal masks
-            String dont_stop = cfg.getAttribute(TCFLaunchDelegate.ATTR_SIGNALS_DONT_STOP, "");
-            String dont_pass = cfg.getAttribute(TCFLaunchDelegate.ATTR_SIGNALS_DONT_PASS, "");
-            final int no_stop = dont_stop.length() > 0 ? Integer.parseInt(dont_stop, 16) : 0;
-            final int no_pass = dont_pass.length() > 0 ? Integer.parseInt(dont_pass, 16) : 0;
-            if (no_stop != 0 || no_pass != 0) {
+            if (mode.equals(ILaunchManager.DEBUG_MODE)) {
+                // Get process signal list
                 new LaunchStep() {
                     @Override
                     void start() {
-                        final HashSet<IToken> cmds = new HashSet<IToken>();
-                        final IProcesses.DoneCommand done_set_mask = new IProcesses.DoneCommand() {
-                            public void doneCommand(IToken token, Exception error) {
-                                cmds.remove(token);
-                                if (error != null) channel.terminate(error);
-                                else if (cmds.size() == 0) done();
+                        ps.getSignalList(process.getID(), new IProcesses.DoneGetSignalList() {
+                            public void doneGetSignalList(IToken token, Exception error, Collection<Map<String,Object>> list) {
+                                if (error != null) Activator.log("Can't get process signal list", error);
+                                process_signals = list;
+                                done();
                             }
-                        };
-                        cmds.add(ps.setSignalMask(process.getID(), no_stop, no_pass, done_set_mask));
-                        final IRunControl rc = channel.getRemoteService(IRunControl.class);
-                        if (rc != null) {
-                            final IRunControl.DoneGetChildren done_get_children = new IRunControl.DoneGetChildren() {
-                                public void doneGetChildren(IToken token, Exception error, String[] context_ids) {
-                                    if (context_ids != null) {
-                                        for (String id : context_ids) {
-                                            cmds.add(ps.setSignalMask(id, no_stop, no_pass, done_set_mask));
-                                            cmds.add(rc.getChildren(id, this));
-                                        }
-                                    }
+                        });
+                    }
+                };
+                // Set process signal masks
+                String dont_stop = cfg.getAttribute(TCFLaunchDelegate.ATTR_SIGNALS_DONT_STOP, "");
+                String dont_pass = cfg.getAttribute(TCFLaunchDelegate.ATTR_SIGNALS_DONT_PASS, "");
+                final int no_stop = dont_stop.length() > 0 ? Integer.parseInt(dont_stop, 16) : 0;
+                final int no_pass = dont_pass.length() > 0 ? Integer.parseInt(dont_pass, 16) : 0;
+                if (no_stop != 0 || no_pass != 0) {
+                    new LaunchStep() {
+                        @Override
+                        void start() {
+                            final HashSet<IToken> cmds = new HashSet<IToken>();
+                            final IProcesses.DoneCommand done_set_mask = new IProcesses.DoneCommand() {
+                                public void doneCommand(IToken token, Exception error) {
                                     cmds.remove(token);
                                     if (error != null) channel.terminate(error);
                                     else if (cmds.size() == 0) done();
                                 }
                             };
-                            cmds.add(rc.getChildren(process.getID(), done_get_children));
+                            cmds.add(ps.setSignalMask(process.getID(), no_stop, no_pass, done_set_mask));
+                            final IRunControl rc = channel.getRemoteService(IRunControl.class);
+                            if (rc != null) {
+                                final IRunControl.DoneGetChildren done_get_children = new IRunControl.DoneGetChildren() {
+                                    public void doneGetChildren(IToken token, Exception error, String[] context_ids) {
+                                        if (context_ids != null) {
+                                            for (String id : context_ids) {
+                                                cmds.add(ps.setSignalMask(id, no_stop, no_pass, done_set_mask));
+                                                cmds.add(rc.getChildren(id, this));
+                                            }
+                                        }
+                                        cmds.remove(token);
+                                        if (error != null) channel.terminate(error);
+                                        else if (cmds.size() == 0) done();
+                                    }
+                                };
+                                cmds.add(rc.getChildren(process.getID(), done_get_children));
+                            }
                         }
-                    }
-                };
+                    };
+                }
             }
         }
     }
@@ -786,6 +791,8 @@ public class TCFLaunch extends Launch {
         assert Protocol.isDispatchThread();
         if (channel == null) return;
         if (channel.getState() == IChannel.STATE_CLOSED) return;
+        if (disconnecting) return;
+        disconnecting = true;
         IStreams streams = getService(IStreams.class);
         final Set<IToken> cmds = new HashSet<IToken>();
         for (String id : stream_ids.keySet()) {
@@ -823,19 +830,20 @@ public class TCFLaunch extends Launch {
 
     public void disconnect() throws DebugException {
         try {
-            Protocol.invokeLater(new Runnable() {
+            new TCFTask<Boolean>() {
                 public void run() {
                     closeChannel();
+                    done(true);
                 }
-            });
+            }.get();
         }
-        catch (IllegalStateException x) {
-            disconnected = true;
+        catch (Exception x) {
+            throw new TCFError(x);
         }
     }
 
     public boolean canTerminate() {
-        return false;
+        return !disconnected;
     }
 
     public boolean isTerminated() {
@@ -843,6 +851,32 @@ public class TCFLaunch extends Launch {
     }
 
     public void terminate() throws DebugException {
+        try {
+            new TCFTask<Boolean>() {
+                public void run() {
+                    if (process != null && !terminated) {
+                        final Runnable done = this;
+                        process.terminate(new IProcesses.DoneCommand() {
+                            public void doneCommand(IToken token, Exception e) {
+                                if (e != null) {
+                                    error(e);
+                                }
+                                else {
+                                    terminated = true;
+                                    Protocol.invokeLater(done);
+                                }
+                            }
+                        });
+                        return;
+                    }
+                    closeChannel();
+                    done(true);
+                }
+            }.get();
+        }
+        catch (Exception x) {
+            throw new TCFError(x);
+        }
     }
 
     public boolean isExited() {
