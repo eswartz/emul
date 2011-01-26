@@ -162,19 +162,8 @@ public class TCFLocalAgent {
         return AGENT_HOST.equals(host) && AGENT_PORT.equals(port);
     }
 
-    public static synchronized String getLocalAgentID() {
-        return new TCFTask<String>() {
-            public void run() {
-                final ILocator locator = Protocol.getLocator();
-                for (IPeer p : locator.getPeers().values()) {
-                    if (isLocalAgent(p)) {
-                        done(p.getID());
-                        return;
-                    }
-                }
-                done(null);
-            }
-        }.getE();
+    public static String getLocalAgentID() {
+        return waitAgentReady().getE();
     }
 
     private static TCFTask<String> waitAgentReady() {
