@@ -11,10 +11,10 @@
 package org.eclipse.tm.internal.tcf.debug.ui.commands;
 
 import org.eclipse.core.runtime.Status;
-import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.commands.IDebugCommandRequest;
 import org.eclipse.debug.core.commands.IDisconnectHandler;
 import org.eclipse.debug.core.commands.IEnabledStateRequest;
+import org.eclipse.tm.internal.tcf.debug.model.TCFError;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModel;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFRunnable;
 
@@ -41,11 +41,11 @@ public class DisconnectCommand implements IDisconnectHandler {
         new TCFRunnable(monitor) {
             public void run() {
                 try {
-                    model.getLaunch().disconnect();
+                    model.getLaunch().closeChannel();
                     monitor.setStatus(Status.OK_STATUS);
                 }
-                catch (DebugException x) {
-                    monitor.setStatus(x.getStatus());
+                catch (Throwable x) {
+                    monitor.setStatus(new TCFError(x).getStatus());
                 }
                 done();
             }
