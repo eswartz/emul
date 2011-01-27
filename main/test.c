@@ -141,6 +141,10 @@ int find_test_symbol(Context * ctx, char * name, void ** addr, int * sym_class) 
             *sym_class = SYM_CLASS_REFERENCE;
             *addr = &tcf_test_array;
         }
+        else if (strcmp(name, "tcf_test_char") == 0) {
+            *sym_class = SYM_CLASS_REFERENCE;
+            *addr = &tcf_test_char;
+        }
         else {
             *sym_class = SYM_CLASS_FUNCTION;
             if (strcmp(name, "tcf_test_func0") == 0) *addr = (void *)&tcf_test_func0;

@@ -40,13 +40,20 @@
 #include <system/Windows/regset.h>
 #include <system/Windows/windbgcache.h>
 
-#define MAX_HW_BPS 4
+#if !defined(USE_HW_BPS)
+#  define USE_HW_BPS 1
+#endif
+#if USE_HW_BPS
+#  define MAX_HW_BPS 4
+#endif
 
 typedef struct ContextExtensionWin32 {
     pid_t               pid;
     HANDLE              handle;
+    DEBUG_EVENT         debug_event;
     EXCEPTION_DEBUG_INFO suspend_reason;
     int                 stop_pending;
+    int                 start_pending;
     REG_SET *           regs;               /* copy of context registers, updated when context stops */
     ErrorReport *       regs_error;         /* if not NULL, 'regs' is invalid */
     int                 regs_dirty;         /* if not 0, 'regs' is modified and needs to be saved before context is continued */
@@ -55,11 +62,11 @@ typedef struct ContextExtensionWin32 {
     SIZE_T              step_opcodes_len;
     ContextAddress      step_opcodes_addr;
     struct DebugState * debug_state;
-    int                 ok_to_use_hw_bp;    /* NtContinue() changes Dr6 and Dr7, so HW breakpoints should be disabled until NtContinue() is done */
-    ContextBreakpoint * hw_bps[MAX_HW_BPS];
+#if USE_HW_BPS
     ContextBreakpoint * triggered_hw_bps[MAX_HW_BPS + 1];
-    unsigned            hw_bps_generation;
+    unsigned            hw_bps_regs_generation;
     DWORD               skip_hw_bp_addr;
+#endif
 } ContextExtensionWin32;
 
 static size_t context_extension_offset = 0;
@@ -79,7 +86,7 @@ typedef struct DebugState {
     HANDLE              ini_thread_handle;
     DWORD               main_thread_id;
     HANDLE              main_thread_handle;
-    int                 process_suspended;
+    int                 reporting_debug_event;
     int                 break_posted;
     HANDLE              break_thread;
     LPVOID              break_thread_code;
@@ -90,6 +97,11 @@ typedef struct DebugState {
     DWORD64             module_address;
     ContextAttachCallBack * attach_callback;
     void *              attach_data;
+#if USE_HW_BPS
+    int                 ok_to_use_hw_bp;    /* NtContinue() changes Dr6 and Dr7, so HW breakpoints should be disabled until NtContinue() is done */
+    ContextBreakpoint * hw_bps[MAX_HW_BPS];
+    unsigned            hw_bps_generation;
+#endif
 } DebugState;
 
 #define DEBUG_STATE_INIT            0
@@ -126,7 +138,7 @@ const char * context_suspend_reason(Context * ctx) {
     if (exception_code == 0) return REASON_USER_REQUEST;
     if (ext->suspend_reason.dwFirstChance) {
         if (exception_code == EXCEPTION_SINGLE_STEP) return REASON_STEP;
-        if (exception_code == EXCEPTION_BREAKPOINT) return "Eventpoint";
+        if (exception_code == EXCEPTION_BREAKPOINT) return "Break Instruction";
         snprintf(buf, sizeof(buf), "Exception %#lx", exception_code);
     }
     else {
@@ -185,7 +197,10 @@ static void get_registers(Context * ctx) {
     assert(context_has_state(ctx));
     assert(ctx->stopped);
 
-    ext->regs->ContextFlags = CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_DEBUG_REGISTERS;
+    ext->regs->ContextFlags = CONTEXT_CONTROL | CONTEXT_INTEGER;
+#if USE_HW_BPS
+    ext->regs->ContextFlags |= CONTEXT_DEBUG_REGISTERS;
+#endif
     if (GetThreadContext(ext->handle, ext->regs) == 0) {
         ext->regs_error = get_error_report(log_error("GetThreadContext", 0));
     }
@@ -198,9 +213,10 @@ static void get_registers(Context * ctx) {
 
 static DWORD event_win32_context_stopped(Context * ctx) {
     ContextExtensionWin32 * ext = EXT(ctx);
+    DebugState * debug_state = EXT(ctx->mem)->debug_state;
+    ContextAddress exception_addr = (ContextAddress)ext->suspend_reason.ExceptionRecord.ExceptionAddress;
     DWORD exception_code = ext->suspend_reason.ExceptionRecord.ExceptionCode;
     DWORD continue_status = DBG_CONTINUE;
-    size_t break_size = 0;
 
     assert(is_dispatch_thread());
     assert(!ctx->exited);
@@ -209,6 +225,7 @@ static DWORD event_win32_context_stopped(Context * ctx) {
     assert(ctx->parent != NULL);
 
     ext->stop_pending = 0;
+    ext->start_pending = 0;
 
     trace(LOG_CONTEXT, "context: stopped: ctx %#lx, id %s, exception %#lx",
         ctx, ctx->id, exception_code);
@@ -244,12 +261,13 @@ static DWORD event_win32_context_stopped(Context * ctx) {
         case EXCEPTION_SINGLE_STEP:
             get_registers(ctx);
             if (!ext->regs_error) {
+#if USE_HW_BPS
                 if (ext->regs->Eip != ext->skip_hw_bp_addr) ext->skip_hw_bp_addr = 0;
                 if (ext->regs->Dr6 & 0xfu) {
                     int i, j = 0;
                     for (i = 0; i < MAX_HW_BPS; i++) {
                         if (ext->regs->Dr6 & (1u << i)) {
-                            ContextBreakpoint * bp = EXT(ctx->mem)->hw_bps[i];
+                            ContextBreakpoint * bp = debug_state->hw_bps[i];
                             if (bp == NULL) continue;
                             if (bp->address == ext->regs->Eip && (bp->access_types & CTX_BP_ACCESS_INSTRUCTION)) {
                                 ext->skip_hw_bp_addr = ext->regs->Eip;
@@ -260,6 +278,7 @@ static DWORD event_win32_context_stopped(Context * ctx) {
                         }
                     }
                 }
+#endif
                 if (ext->step_opcodes_len > 0 && ext->step_opcodes[0] == 0x9c && ext->step_opcodes_addr != ext->regs->Eip) {
                     /* PUSHF instruction: need to clear trace flag from top of the stack */
                     SIZE_T bcnt = 0;
@@ -278,22 +297,29 @@ static DWORD event_win32_context_stopped(Context * ctx) {
                     }
                 }
             }
-            if (!ctx->stopped_by_bp && !ctx->stopped_by_cb && ext->step_opcodes_len == 0 || ext->regs_error) {
+            if (!ctx->stopped_by_cb && ext->step_opcodes_len == 0 || ext->regs_error) {
                 continue_status = DBG_EXCEPTION_NOT_HANDLED;
             }
             ext->step_opcodes_len = 0;
             ext->step_opcodes_addr = 0;
             break;
         case EXCEPTION_BREAKPOINT:
-            get_break_instruction(ctx, &break_size);
             get_registers(ctx);
-            if (!ext->regs_error && is_breakpoint_address(ctx, ext->regs->Eip - break_size)) {
-                ext->regs->Eip -= break_size;
-                ext->regs_dirty = 1;
-                ctx->stopped_by_bp = 1;
-                if (!EXT(ctx->mem)->ok_to_use_hw_bp) {
-                    EXT(ctx->mem)->ok_to_use_hw_bp = 1;
-                    send_context_changed_event(ctx->mem);
+            if (!ext->regs_error) {
+                if (is_breakpoint_address(ctx, exception_addr)) {
+                    ext->regs->Eip = exception_addr;
+                    ext->regs_dirty = 1;
+                    ctx->stopped_by_bp = 1;
+#if USE_HW_BPS
+                    if (!debug_state->ok_to_use_hw_bp) {
+                        debug_state->ok_to_use_hw_bp = 1;
+                        send_context_changed_event(ctx->mem);
+                    }
+#endif
+                }
+                else {
+                    ext->regs->Eip = exception_addr;
+                    ext->regs_dirty = 1;
                 }
             }
             else {
@@ -387,22 +413,6 @@ static void event_win32_context_exited(Context * ctx) {
     context_unlock(ctx);
 }
 
-static void suspend_threads(DWORD prs_id) {
-    LINK * l;
-    Context * prs = context_find_from_pid(prs_id, 0);
-
-    if (prs == NULL || prs->exited) return;
-    assert(EXT(prs)->debug_state->process_suspended);
-    for (l = prs->children.next; l != &prs->children; l = l->next) {
-        Context * ctx = cldl2ctxp(l);
-        ContextExtensionWin32 * ext = EXT(ctx);
-        if (!ctx->stopped && !ctx->exiting && !ctx->exited) {
-            memset(&ext->suspend_reason, 0, sizeof(ext->suspend_reason));
-            event_win32_context_stopped(ctx);
-        }
-    }
-}
-
 static DWORD WINAPI remote_thread_func(LPVOID args) {
     return 0;
 }
@@ -451,15 +461,24 @@ static void break_process_event(void * args) {
 }
 
 static int win32_resume(Context * ctx, int step) {
+    Context * prs = ctx->parent;
     ContextExtensionWin32 * ext = EXT(ctx);
+    ContextExtensionWin32 * prs_ext = EXT(prs);
+    DebugState * debug_state = prs_ext->debug_state;
 
     assert(ctx->stopped);
     assert(!ctx->exited);
 
+    if (debug_state->reporting_debug_event) {
+        debug_state->reporting_debug_event++;
+    }
+
+#if USE_HW_BPS
+
     if (ext->skip_hw_bp_addr == 0 && skip_breakpoint(ctx, step)) return 0;
 
     /* Update debug registers */
-    if (ext->skip_hw_bp_addr != 0 || ext->hw_bps_generation != EXT(ctx->mem)->hw_bps_generation) {
+    if (ext->skip_hw_bp_addr != 0 || ext->hw_bps_regs_generation != debug_state->hw_bps_generation) {
         int i;
         DWORD Dr7 = 0;
         int step_over_hw_bp = 0;
@@ -471,7 +490,7 @@ static int win32_resume(Context * ctx, int step) {
         }
         Dr7 = ext->regs->Dr7;
         for (i = 0; i < MAX_HW_BPS; i++) {
-            ContextBreakpoint * bp = EXT(ctx->mem)->hw_bps[i];
+            ContextBreakpoint * bp = debug_state->hw_bps[i];
             if (bp != NULL &&
                     ext->skip_hw_bp_addr == bp->address &&
                     bp->access_types == CTX_BP_ACCESS_INSTRUCTION) {
@@ -546,15 +565,21 @@ static int win32_resume(Context * ctx, int step) {
             ext->regs->Dr7 = Dr7;
             ext->regs_dirty = 1;
         }
-        ext->hw_bps_generation = EXT(ctx->mem)->hw_bps_generation;
+        ext->hw_bps_regs_generation = debug_state->hw_bps_generation;
         if (step_over_hw_bp) {
             step = 1;
-            ext->hw_bps_generation--;
+            ext->hw_bps_regs_generation--;
         }
         else {
             ext->skip_hw_bp_addr = 0;
         }
     }
+
+#else
+
+    if (skip_breakpoint(ctx, step)) return 0;
+
+#endif
 
     /* Update CPU trace flag */
     if (!step && ext->trace_flag) {
@@ -586,9 +611,8 @@ static int win32_resume(Context * ctx, int step) {
 
     if (ctx->parent->pending_signals & (1 << SIGKILL)) {
         LINK * l;
-        Context * prs = ctx->parent;
         trace(LOG_CONTEXT, "context: terminating process %#lx, id %s", prs, prs->id);
-        if (!prs->exiting && !TerminateProcess(EXT(ctx->parent)->handle, 1)) {
+        if (!prs->exiting && !TerminateProcess(prs_ext->handle, 1)) {
             errno = log_error("TerminateProcess", 0);
             return -1;
         }
@@ -607,27 +631,31 @@ static int win32_resume(Context * ctx, int step) {
                 return -1;
             }
             ext->step_opcodes_addr = ext->regs->Eip;
-            if (!ReadProcessMemory(EXT(ctx->mem)->handle, (LPCVOID)ext->regs->Eip, &ext->step_opcodes,
+            if (!ReadProcessMemory(prs_ext->handle, (LPCVOID)ext->regs->Eip, &ext->step_opcodes,
                     sizeof(ext->step_opcodes), &ext->step_opcodes_len) || ext->step_opcodes_len == 0) {
                 errno = log_error("ReadProcessMemory", 0);
                 return -1;
             }
         }
-        for (;;) {
-            DWORD cnt = ResumeThread(ext->handle);
-            if (cnt == (DWORD)-1) {
-                errno = log_error("ResumeThread", 0);
-                return -1;
+        if (debug_state->reporting_debug_event) {
+            ext->start_pending = 1;
+        }
+        else {
+            for (;;) {
+                DWORD cnt = ResumeThread(ext->handle);
+                if (cnt == (DWORD)-1) {
+                    errno = log_error("ResumeThread", 0);
+                    return -1;
+                }
+                if (cnt <= 1) break;
             }
-            if (cnt <= 1) break;
         }
     }
     event_win32_context_started(ctx);
     return 0;
 }
 
-static void debug_event_handler(void * x) {
-    DebugEvent * debug_event = (DebugEvent *)x;
+static void debug_event_handler(DebugEvent * debug_event) {
     DebugState * debug_state = debug_event->debug_state;
     DEBUG_EVENT * win32_event = &debug_event->win32_event;
     Context * prs = context_find_from_pid(win32_event->dwProcessId, 0);
@@ -688,6 +716,7 @@ static void debug_event_handler(void * x) {
         link_context(ctx);
         send_context_created_event(ctx);
         debug_event->continue_status = event_win32_context_stopped(ctx);
+        ext->debug_event = *win32_event;
         break;
     case EXCEPTION_DEBUG_EVENT:
         if (debug_state->state == DEBUG_STATE_PRS_CREATED && win32_event->u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT) {
@@ -709,17 +738,20 @@ static void debug_event_handler(void * x) {
             send_context_created_event(ctx);
             ctx->pending_intercept = 1;
             debug_event->continue_status = event_win32_context_stopped(ctx);
+            ext->debug_event = *win32_event;
         }
         else if (ctx == NULL || ctx->exiting) {
-            debug_event->continue_status = DBG_EXCEPTION_NOT_HANDLED;
+            /* Does not work as expected: debug_event->continue_status = DBG_EXCEPTION_NOT_HANDLED; */
         }
         else {
             assert(prs != NULL);
             assert(!ctx->exited);
-            if (ctx->stopped) send_context_started_event(ctx);
+            if (ctx->stopped)
+                send_context_started_event(ctx);
             ext = EXT(ctx);
             memcpy(&ext->suspend_reason, &win32_event->u.Exception, sizeof(EXCEPTION_DEBUG_INFO));
             debug_event->continue_status = event_win32_context_stopped(ctx);
+            ext->debug_event = *win32_event;
         }
         break;
     case EXIT_THREAD_DEBUG_EVENT:
@@ -773,14 +805,65 @@ static void debug_event_handler(void * x) {
 }
 
 static void continue_debug_event(void * args) {
-    DebugState * debug_state = (DebugState *)args;
+    DebugEvent * debug_event = (DebugEvent *)args;
+    DebugState * debug_state = debug_event->debug_state;
+    Context * prs = context_find_from_pid(debug_state->process_id, 0);
 
-    if (debug_state->break_thread != NULL) suspend_threads(debug_state->process_id);
-    debug_state->process_suspended = 0;
+    assert(debug_state->reporting_debug_event);
+    if (debug_state->reporting_debug_event > 1) {
+        debug_state->reporting_debug_event = 1;
+        post_event(continue_debug_event, debug_event);
+        return;
+    }
+
+    trace(LOG_WAITPID, "continue debug event 1, process id %u", debug_state->process_id);
+
+    if (prs != NULL && !prs->exited) {
+        LINK * l;
+        for (l = prs->children.next; l != &prs->children; l = l->next) {
+            Context * ctx = cldl2ctxp(l);
+            ContextExtensionWin32 * ext = EXT(ctx);
+            if (ctx->stopped || ctx->exited) {
+                ext->stop_pending = 0;
+                ext->start_pending = 0;
+                continue;
+            }
+            if (ext->stop_pending) {
+                memset(&ext->suspend_reason, 0, sizeof(ext->suspend_reason));
+                event_win32_context_stopped(ctx);
+                ext->debug_event = debug_event->win32_event;
+            }
+            if (ext->start_pending) {
+                for (;;) {
+                    DWORD cnt = ResumeThread(ext->handle);
+                    if (cnt <= 1) break;
+                }
+                ext->start_pending = 0;
+            }
+        }
+    }
 
     trace(LOG_WAITPID, "continue debug event, process id %u", debug_state->process_id);
     log_error("ReleaseSemaphore", SetEvent(debug_state->debug_event_inp));
     log_error("WaitForSingleObject", WaitForSingleObject(debug_state->debug_event_out, INFINITE) != WAIT_FAILED);
+    debug_state->reporting_debug_event = 0;
+
+    if (prs != NULL && !prs->exited) {
+        LINK * l;
+        for (l = prs->children.next; l != &prs->children; l = l->next) {
+            Context * ctx = cldl2ctxp(l);
+            ContextExtensionWin32 * ext = EXT(ctx);
+            if (ext->start_pending) {
+                for (;;) {
+                    DWORD cnt = ResumeThread(ext->handle);
+                    if (cnt <= 1) break;
+                }
+                ext->start_pending = 0;
+            }
+        }
+    }
+
+    log_error("ReleaseSemaphore", SetEvent(debug_state->debug_event_inp));
 }
 
 static void early_debug_event_handler(void * x) {
@@ -800,9 +883,9 @@ static void early_debug_event_handler(void * x) {
             win32_event->dwProcessId, win32_event->dwThreadId);
     }
 
-    debug_state->process_suspended = 1;
+    debug_state->reporting_debug_event = 1;
     debug_event_handler(debug_event);
-    post_event(continue_debug_event, debug_state);
+    post_event(continue_debug_event, debug_event);
 }
 
 static void debugger_exit_handler(void * x) {
@@ -858,6 +941,7 @@ static DWORD WINAPI debugger_thread_func(LPVOID x) {
                 win32_event->dwProcessId, win32_event->dwThreadId, GetLastError());
         }
         SetEvent(debug_state->debug_event_out);
+        WaitForSingleObject(debug_state->debug_event_inp, INFINITE);
 
         if (win32_event->dwDebugEventCode == EXIT_PROCESS_DEBUG_EVENT) break;
         if (win32_event->dwDebugEventCode == RIP_EVENT) break;
@@ -929,17 +1013,20 @@ int context_has_state(Context * ctx) {
 
 int context_stop(Context * ctx) {
     ContextExtensionWin32 * ext = EXT(ctx);
-    ContextExtensionWin32 * prs = EXT(ctx->parent);
+    DebugState * debug_state = EXT(ctx->parent)->debug_state;
 
     trace(LOG_CONTEXT, "context:%s suspending ctx %#lx id %s",
         ctx->pending_intercept ? "" : " temporary", ctx, ctx->id);
     assert(context_has_state(ctx));
     assert(!ctx->stopped);
     assert(!ctx->exited);
-    if (!prs->debug_state->process_suspended && !prs->debug_state->break_posted) {
+    if (debug_state->reporting_debug_event) {
+        debug_state->reporting_debug_event++;
+    }
+    else if (!debug_state->break_posted) {
         context_lock(ctx->parent);
         post_event_with_delay(break_process_event, ctx->parent, 10000);
-        prs->debug_state->break_posted = 1;
+        debug_state->break_posted = 1;
     }
     ext->stop_pending = 1;
     return 0;
@@ -1082,24 +1169,31 @@ Context * context_get_group(Context * ctx, int group) {
 }
 
 int context_get_supported_bp_access_types(Context * ctx) {
-    if (ctx->mem != ctx) return 0;
-    return CTX_BP_ACCESS_DATA_READ | CTX_BP_ACCESS_DATA_WRITE | CTX_BP_ACCESS_INSTRUCTION;
+#if USE_HW_BPS
+    if (ctx->mem == ctx) return
+        CTX_BP_ACCESS_DATA_READ |
+        CTX_BP_ACCESS_DATA_WRITE |
+        CTX_BP_ACCESS_INSTRUCTION;
+#endif
+    return 0;
 }
 
 int context_plant_breakpoint(ContextBreakpoint * bp) {
+#if USE_HW_BPS
     int i;
     Context * ctx = bp->ctx;
     assert(bp->access_types);
     if (ctx->mem == ctx) {
         ContextExtensionWin32 * ext = EXT(ctx);
-        if (ext->ok_to_use_hw_bp) {
+        DebugState * debug_state = ext->debug_state;
+        if (debug_state->ok_to_use_hw_bp) {
             if (bp->access_types == CTX_BP_ACCESS_INSTRUCTION) {
                 /* Don't use more then 2 HW slots for regular instruction breakpoints */
                 int cnt = 0;
                 for (i = 0; i < MAX_HW_BPS; i++) {
-                    assert(ext->hw_bps[i] != bp);
-                    if (ext->hw_bps[i] == NULL) continue;
-                    if (ext->hw_bps[i]->access_types != CTX_BP_ACCESS_INSTRUCTION) continue;
+                    assert(debug_state->hw_bps[i] != bp);
+                    if (debug_state->hw_bps[i] == NULL) continue;
+                    if (debug_state->hw_bps[i]->access_types != CTX_BP_ACCESS_INSTRUCTION) continue;
                     cnt++;
                 }
                 if (cnt >= MAX_HW_BPS / 2) {
@@ -1113,30 +1207,34 @@ int context_plant_breakpoint(ContextBreakpoint * bp) {
                 return -1;
             }
             for (i = 0; i < MAX_HW_BPS; i++) {
-                if (ext->hw_bps[i] == NULL || ext->hw_bps[i] == bp) {
-                    ext->hw_bps[i] = bp;
-                    ext->hw_bps_generation++;
+                if (debug_state->hw_bps[i] == NULL || debug_state->hw_bps[i] == bp) {
+                    debug_state->hw_bps[i] = bp;
+                    debug_state->hw_bps_generation++;
                     return 0;
                 }
             }
         }
     }
+#endif
     errno = ERR_UNSUPPORTED;
     return -1;
 }
 
 int context_unplant_breakpoint(ContextBreakpoint * bp) {
+#if USE_HW_BPS
     int i;
     Context * ctx = bp->ctx;
     if (ctx->mem == ctx) {
         ContextExtensionWin32 * ext = EXT(ctx);
+        DebugState * debug_state = ext->debug_state;
         for (i = 0; i < MAX_HW_BPS; i++) {
-            if (ext->hw_bps[i] == bp) {
-                ext->hw_bps[i] = NULL;
-                ext->hw_bps_generation++;
+            if (debug_state->hw_bps[i] == bp) {
+                debug_state->hw_bps[i] = NULL;
+                debug_state->hw_bps_generation++;
             }
         }
     }
+#endif
     return 0;
 }
 
