@@ -99,7 +99,7 @@ static void evaluate_expression(U8_T BaseAddress, PropertyValue * Value, ELF_Sec
                 Data = dio_ReadAddress(&section);
                 sExprStack[sExprStackLen] = elf_map_to_run_time_address(
                     Value->mContext, Unit->mFile, section, (ContextAddress)Data);
-                if (sExprStack[sExprStackLen] == 0) str_exception(ERR_INV_DWARF, "object has no RT address");
+                if (sExprStack[sExprStackLen] == 0) str_exception(ERR_INV_ADDRESS, "object has no RT address");
                 sExprStackLen++;
             }
             break;

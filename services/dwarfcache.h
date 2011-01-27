@@ -34,6 +34,8 @@
 typedef struct FileInfo FileInfo;
 typedef struct LocationInfo LocationInfo;
 typedef struct ObjectInfo ObjectInfo;
+typedef struct PubNamesInfo PubNamesInfo;
+typedef struct PubNamesTable PubNamesTable;
 typedef struct ObjectArray ObjectArray;
 typedef struct SymbolInfo SymbolInfo;
 typedef struct PropertyValue PropertyValue;
@@ -61,8 +63,8 @@ struct SymbolSection {
     unsigned mSymCount;
     ElfX_Sym * mSymPool;    /* pointer to ELF section data: array of Elf32_Sym or Elf64_Sym */
     size_t mSymPoolSize;
-    unsigned mSymbolHash[SYM_HASH_SIZE];
-    unsigned * mHashNext;
+    unsigned * mSymNamesHash;
+    unsigned * mSymNamesNext;
 };
 
 struct SymbolInfo {
@@ -98,6 +100,18 @@ struct ObjectInfo {
 struct ObjectArray {
     ObjectArray * mNext;
     ObjectInfo mArray[OBJECT_ARRAY_SIZE];
+};
+
+struct PubNamesInfo {
+    unsigned mNext;
+    U8_T mID;
+};
+
+struct PubNamesTable {
+    unsigned * mHash;
+    PubNamesInfo * mNext;
+    unsigned mCnt;
+    unsigned mMax;
 };
 
 struct PropertyValue {
@@ -190,12 +204,14 @@ struct DWARFCache {
     UnitAddressRange * mAddrRanges;
     unsigned mAddrRangesCnt;
     unsigned mAddrRangesMax;
+    PubNamesTable mPubNames;
+    PubNamesTable mPubTypes;
 };
 
 /* Return DWARF cache for given file, create and populate the cache if needed, throw an exception if error */
 extern DWARFCache * get_dwarf_cache(ELF_File * file);
 
-/* Return symbol name hash. The hash is used to build mSymbolHash table. */
+/* Return symbol name hash. The hash is used to build mSymNamesHash table. */
 extern unsigned calc_symbol_name_hash(const char * s);
 
 /* Return file name hash. The hash is used to search FileInfo. */

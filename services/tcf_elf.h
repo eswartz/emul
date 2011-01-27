@@ -339,6 +339,7 @@ typedef int64_t  I8_T;
 
 typedef struct ELF_File ELF_File;
 typedef struct ELF_Section ELF_Section;
+typedef struct ELF_SecSymbol ELF_SecSymbol;
 typedef struct ELF_PHeader ELF_PHeader;
 
 struct ELF_File {
@@ -374,6 +375,12 @@ struct ELF_File {
     char * debug_info_file_name;
 };
 
+struct ELF_SecSymbol {
+    void * parent;
+    unsigned index;
+    U8_T address;
+};
+
 struct ELF_Section {
     ELF_File * file;
     U4_T index;
@@ -393,6 +400,10 @@ struct ELF_Section {
     size_t mmap_size;
 
     int relocate;
+
+    ELF_SecSymbol * symbols;
+    unsigned symbols_cnt;
+    unsigned symbols_max;
 };
 
 struct ELF_PHeader {

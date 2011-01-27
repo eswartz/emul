@@ -234,6 +234,8 @@ static void read_mod_user_def_type(U2_T Form, ObjectInfo ** Type) {
 
 static void read_object_info(U2_T Tag, U2_T Attr, U2_T Form) {
     static ObjectInfo * Info;
+    static ObjectInfo * Spec;
+    static ObjectInfo * AOrg;
     static U8_T Sibling;
     static int HasChildren;
 
@@ -255,10 +257,20 @@ static void read_object_info(U2_T Tag, U2_T Attr, U2_T Form) {
             assert(Info->mTag == 0);
             Info->mTag = Tag;
             Info->mParent = sParentObject;
-            Sibling = 0;
             HasChildren = Form == DWARF_ENTRY_HAS_CHILDREN;
+            Sibling = 0;
+            Spec = NULL;
+            AOrg = NULL;
         }
         else {
+            if (Spec != NULL) {
+                if (Info->mName == NULL) Info->mName = Spec->mName;
+                if (Info->mType == NULL) Info->mType = Spec->mType;
+            }
+            if (AOrg != NULL) {
+                if (Info->mName == NULL) Info->mName = AOrg->mName;
+                if (Info->mType == NULL) Info->mType = AOrg->mType;
+            }
             if (Tag == TAG_compile_unit && Sibling == 0) Sibling = sUnitDesc.mUnitOffs + sUnitDesc.mUnitSize;
             if (Tag == TAG_enumerator && Info->mType == NULL) Info->mType = sParentObject;
             if (sPrevSibling != NULL) sPrevSibling->mSibling = Info;
@@ -310,6 +322,14 @@ static void read_object_info(U2_T Tag, U2_T Attr, U2_T Form) {
         dio_ChkString(Form);
         Info->mName = (char *)dio_gFormDataAddr;
         break;
+    case AT_specification_v2:
+        dio_ChkRef(Form);
+        Spec = add_object_info(dio_gFormData);
+        break;
+    case AT_abstract_origin:
+        dio_ChkRef(Form);
+        AOrg = add_object_info(dio_gFormData);
+        break;
     }
     if (Tag == TAG_compile_unit) {
         CompUnit * Unit = Info->mCompUnit;
@@ -351,7 +371,6 @@ static void load_symbol_tables(void) {
         ELF_Section * sym_sec = file->sections + idx;
         if (sym_sec->size == 0) continue;
         if (sym_sec->type == SHT_SYMTAB) {
-            unsigned i;
             ELF_Section * str_sec;
             SymbolSection * tbl = (SymbolSection *)loc_alloc_zero(sizeof(SymbolSection));
             if (sCache->mSymSectionsCnt >= sCache->mSymSectionsMax) {
@@ -370,19 +389,6 @@ static void load_symbol_tables(void) {
             tbl->mSymPool = (ElfX_Sym *)sym_sec->data;
             tbl->mSymPoolSize = (size_t)sym_sec->size;
             tbl->mSymCount = (unsigned)(sym_sec->size / sym_size);
-            tbl->mHashNext = (unsigned *)loc_alloc(tbl->mSymCount * sizeof(unsigned));
-            for (i = 0; i < tbl->mSymCount; i++) {
-                SymbolInfo sym;
-                unpack_elf_symbol_info(tbl, i, &sym);
-                if (sym.mName == NULL || sym.mSectionIndex == SHN_UNDEF) {
-                    tbl->mHashNext[i] = 0;
-                }
-                else {
-                    unsigned h = calc_symbol_name_hash(sym.mName);
-                    tbl->mHashNext[i] = tbl->mSymbolHash[h];
-                    tbl->mSymbolHash[h] = i;
-                }
-            }
         }
     }
 }
@@ -428,11 +434,11 @@ static void load_addr_ranges() {
             dio_EnterSection(NULL, sec, 0);
             if (set_trap(&trap)) {
                 while (dio_GetPos() < sec->size) {
-                    int f64bit = 0;
+                    int dwarf64 = 0;
                     U8_T size = dio_ReadU4();
                     U8_T next = 0;
                     if (size == 0xffffffffu) {
-                        f64bit = 1;
+                        dwarf64 = 1;
                         size = dio_ReadU8();
                     }
                     next = dio_GetPos() + size;
@@ -440,7 +446,7 @@ static void load_addr_ranges() {
                         dio_Skip(next - dio_GetPos());
                     }
                     else {
-                        U8_T offs = f64bit ? dio_ReadU8() : (U8_T)dio_ReadU4();
+                        U8_T offs = dwarf64 ? dio_ReadU8() : (U8_T)dio_ReadU4();
                         U1_T addr_size = dio_ReadU1();
                         U1_T segm_size = dio_ReadU1();
                         if (segm_size != 0) str_exception(ERR_INV_DWARF, "segment descriptors are not supported");
@@ -505,9 +511,52 @@ static void load_addr_ranges() {
     }
 }
 
+static void load_pub_names(ELF_Section * sec, PubNamesTable * tbl) {
+    tbl->mMax = (unsigned)(sec->size / 16) + 16;
+    tbl->mHash = (unsigned *)loc_alloc_zero(sizeof(unsigned) * SYM_HASH_SIZE);
+    tbl->mNext = (PubNamesInfo *)loc_alloc(sizeof(PubNamesInfo) * tbl->mMax);
+    memset(tbl->mNext + tbl->mCnt++, 0, sizeof(PubNamesInfo));
+    dio_EnterSection(NULL, sec, 0);
+    while (dio_GetPos() < sec->size) {
+        int dwarf64 = 0;
+        U8_T size = dio_ReadU4();
+        U8_T next = 0;
+        U8_T unit_offs = 0;
+        U8_T unit_size = 0;
+        if (size == 0xffffffffu) {
+            dwarf64 = 1;
+            size = dio_ReadU8();
+        }
+        next = dio_GetPos() + size;
+        dio_ReadU2(); /* version */
+        unit_offs = dwarf64 ? dio_ReadU8() : (U8_T)dio_ReadU4();
+        unit_size = dwarf64 ? dio_ReadU8() : (U8_T)dio_ReadU4();
+        for (;;) {
+            unsigned h;
+            PubNamesInfo * info = NULL;
+            U8_T obj_offs = dwarf64 ? dio_ReadU8() : (U8_T)dio_ReadU4();
+            if (obj_offs == 0) break;
+            if (tbl->mCnt >= tbl->mMax) {
+                tbl->mMax = tbl->mMax * 3 / 2;
+                tbl->mNext = (PubNamesInfo *)loc_realloc(tbl->mNext, sizeof(PubNamesInfo) * tbl->mMax);
+            }
+            info = tbl->mNext + tbl->mCnt;
+            h = calc_symbol_name_hash(dio_ReadString());
+            info->mID = sec->addr + unit_offs + obj_offs;
+            info->mNext = tbl->mHash[h];
+            tbl->mHash[h] = tbl->mCnt++;
+        }
+        assert(next >= dio_GetPos());
+        dio_Skip(next - dio_GetPos());
+    }
+    dio_ExitSection();
+}
+
 static void load_debug_sections(void) {
     Trap trap;
     unsigned idx;
+    ELF_Section * pub_names = NULL;
+    ELF_Section * pub_types = NULL;
     ELF_File * file = sCache->mFile;
 
     memset(&trap, 0, sizeof(trap));
@@ -550,7 +599,16 @@ static void load_debug_sections(void) {
         else if (strcmp(sec->name, ".eh_frame") == 0) {
             sCache->mEHFrame = sec;
         }
+        else if (strcmp(sec->name, ".debug_pubnames") == 0) {
+            pub_names = sec;
+        }
+        else if (strcmp(sec->name, ".debug_pubtypes") == 0) {
+            pub_types = sec;
+        }
     }
+
+    if (pub_names) load_pub_names(pub_names, &sCache->mPubNames);
+    if (pub_types) load_pub_names(pub_types, &sCache->mPubTypes);
 
     if (trap.error) exception(trap.error);
 }
@@ -561,8 +619,12 @@ static U8_T gop_gFormData = 0;
 static size_t gop_gFormDataSize = 0;
 static void * gop_gFormDataAddr = NULL;
 static ELF_Section * gop_gFormSection = NULL;
+static U8_T gop_gSpecification = 0;
+static U8_T gop_gAbstractOrigin = 0;
 
 static void get_object_property_callback(U2_T Tag, U2_T Attr, U2_T Form) {
+    if (Attr == AT_specification_v2) gop_gSpecification = dio_gFormData;
+    if (Attr == AT_abstract_origin) gop_gAbstractOrigin = dio_gFormData;
     if (Attr != gop_gAttr) return;
     gop_gForm = Form;
     gop_gFormData = dio_gFormData;
@@ -607,10 +669,18 @@ static void read_dwarf_object_property(Context * Ctx, int Frame, ObjectInfo * Ob
     sCache = (DWARFCache *)sCompUnit->mFile->dwarf_dt_cache;
     sDebugSection = sCompUnit->mDesc.mSection;
     dio_EnterSection(&sCompUnit->mDesc, sDebugSection, Obj->mID - sDebugSection->addr);
-    gop_gAttr = (U2_T)Attr;
-    gop_gForm = 0;
-    dio_ReadEntry(get_object_property_callback);
-    dio_ExitSection();
+    for (;;) {
+        gop_gAttr = (U2_T)Attr;
+        gop_gForm = 0;
+        gop_gSpecification = 0;
+        gop_gAbstractOrigin = 0;
+        dio_ReadEntry(get_object_property_callback);
+        dio_ExitSection();
+        if (gop_gForm != 0) break;
+        if (gop_gSpecification != 0) dio_EnterSection(&sCompUnit->mDesc, sDebugSection, gop_gSpecification - sDebugSection->addr);
+        else if (gop_gAbstractOrigin != 0) dio_EnterSection(&sCompUnit->mDesc, sDebugSection, gop_gAbstractOrigin - sDebugSection->addr);
+        else break;
+    }
     sCompUnit = NULL;
     sCache = NULL;
     sDebugSection = NULL;
@@ -743,7 +813,8 @@ static void free_dwarf_cache(ELF_File * file) {
         }
         for (i = 0; i < Cache->mSymSectionsCnt; i++) {
             SymbolSection * tbl = Cache->mSymSections[i];
-            loc_free(tbl->mHashNext);
+            loc_free(tbl->mSymNamesHash);
+            loc_free(tbl->mSymNamesNext);
             loc_free(tbl);
         }
         while (Cache->mObjectList != NULL) {
@@ -754,6 +825,10 @@ static void free_dwarf_cache(ELF_File * file) {
         loc_free(Cache->mObjectHash);
         loc_free(Cache->mSymSections);
         loc_free(Cache->mAddrRanges);
+        loc_free(Cache->mPubNames.mHash);
+        loc_free(Cache->mPubNames.mNext);
+        loc_free(Cache->mPubTypes.mHash);
+        loc_free(Cache->mPubTypes.mNext);
         loc_free(Cache);
         file->dwarf_dt_cache = NULL;
     }

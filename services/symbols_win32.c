@@ -168,9 +168,6 @@ static void tag2symclass(Symbol * sym, int tag) {
         }
         sym->sym_class = SYM_CLASS_REFERENCE;
         break;
-    case SymTagPublicSymbol:
-        sym->sym_class = SYM_CLASS_FUNCTION;
-        break;
     case SymTagUDT:
     case SymTagEnum:
     case SymTagFunctionType:
@@ -856,7 +853,8 @@ static int find_pe_symbol_by_name(Context * ctx, int frame, char * name, Symbol 
 
     if (find_cache_symbol(ctx, frame, process, stack_frame.InstructionOffset, name, sym)) return errno ? -1 : 0;
 
-    if (SymFromName(process, name, info)) {
+    /* TODO: SymFromName() searches only main executable, need to serach DLLs too */
+    if (SymFromName(process, name, info) && info->Tag != SymTagPublicSymbol) {
         syminfo2symbol(ctx, frame, info, sym);
         add_cache_symbol(process, stack_frame.InstructionOffset, name, sym, 0);
         return 0;

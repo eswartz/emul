@@ -235,14 +235,46 @@ static int find_in_dwarf(const char * name, Symbol ** sym) {
     return 0;
 }
 
+static int find_by_name_in_pub_names(DWARFCache * cache, PubNamesTable * tbl, char * name, Symbol ** sym) {
+    unsigned n = tbl->mHash[calc_symbol_name_hash(name)];
+    while (n != 0) {
+        U8_T id = tbl->mNext[n].mID;
+        ObjectInfo * obj = find_object(cache, id);
+        if (obj == NULL || obj->mName == NULL) str_exception(ERR_INV_DWARF, "Invalid .debug_pubnames section");
+        if (strcmp(obj->mName, name) == 0) {
+            object2symbol(obj, sym);
+            return 1;
+        }
+        n = tbl->mNext[n].mNext;
+    }
+    return 0;
+}
+
+static void create_symbol_names_hash(SymbolSection * tbl) {
+    unsigned i;
+    tbl->mSymNamesHash = (unsigned *)loc_alloc_zero(SYM_HASH_SIZE * sizeof(unsigned));
+    tbl->mSymNamesNext = (unsigned *)loc_alloc_zero(tbl->mSymCount * sizeof(unsigned));
+    for (i = 0; i < tbl->mSymCount; i++) {
+        SymbolInfo sym;
+        unpack_elf_symbol_info(tbl, i, &sym);
+        if (sym.mBind == STB_GLOBAL && sym.mName != NULL && sym.mSectionIndex != SHN_UNDEF) {
+            unsigned h = calc_symbol_name_hash(sym.mName);
+            tbl->mSymNamesNext[i] = tbl->mSymNamesHash[h];
+            tbl->mSymNamesHash[h] = i;
+        }
+    }
+}
+
 static int find_by_name_in_sym_table(DWARFCache * cache, char * name, Symbol ** res) {
     unsigned m = 0;
     unsigned h = calc_symbol_name_hash(name);
     unsigned cnt = 0;
     Context * prs = context_get_group(sym_ctx, CONTEXT_GROUP_PROCESS);
     while (m < cache->mSymSectionsCnt) {
+        unsigned n;
         SymbolSection * tbl = cache->mSymSections[m];
-        unsigned n = tbl->mSymbolHash[h];
+        if (tbl->mSymNamesHash == NULL) create_symbol_names_hash(tbl);
+        n = tbl->mSymNamesHash[h];
         while (n) {
             SymbolInfo sym_info;
             unpack_elf_symbol_info(tbl, n, &sym_info);
@@ -289,7 +321,7 @@ static int find_by_name_in_sym_table(DWARFCache * cache, char * name, Symbol ** 
                     }
                 }
             }
-            n = tbl->mHashNext[n];
+            n = tbl->mSymNamesNext[n];
         }
         m++;
     }
@@ -342,27 +374,6 @@ int find_symbol_by_name(Context * ctx, int frame, char * name, Symbol ** res) {
         }
     }
 
-    if (error == 0 && !found && sym_ip != 0) {
-        ELF_File * file = elf_list_first(sym_ctx, sym_ip, sym_ip);
-        if (file == NULL) error = errno;
-        while (error == 0 && file != NULL) {
-            Trap trap;
-            if (set_trap(&trap)) {
-                DWARFCache * cache = get_dwarf_cache(file);
-                found = find_by_name_in_sym_table(cache, name, res);
-                clear_trap(&trap);
-            }
-            else {
-                error = trap.error;
-                break;
-            }
-            if (found) break;
-            file = elf_list_next(sym_ctx);
-            if (file == NULL) error = errno;
-        }
-        elf_list_done(sym_ctx);
-    }
-
     if (error == 0 && !found) {
         ELF_File * file = elf_list_first(sym_ctx, 0, ~(ContextAddress)0);
         if (file == NULL) error = errno;
@@ -370,7 +381,15 @@ int find_symbol_by_name(Context * ctx, int frame, char * name, Symbol ** res) {
             Trap trap;
             if (set_trap(&trap)) {
                 DWARFCache * cache = get_dwarf_cache(file);
-                found = find_by_name_in_sym_table(cache, name, res);
+                if (cache->mPubNames.mHash != NULL) {
+                    found = find_by_name_in_pub_names(cache, &cache->mPubNames, name, res);
+                    if (!found && cache->mPubTypes.mHash != NULL) {
+                        found = find_by_name_in_pub_names(cache, &cache->mPubTypes, name, res);
+                    }
+                }
+                else {
+                    found = find_by_name_in_sym_table(cache, name, res);
+                }
                 clear_trap(&trap);
             }
             else {
@@ -438,11 +457,135 @@ int find_symbol_by_name(Context * ctx, int frame, char * name, Symbol ** res) {
     return 0;
 }
 
-static int find_by_addr_in_sym_table(DWARFCache * cache, ContextAddress addr, Symbol ** res) {
-    /* TODO: need faster symbol by address search */
+static int section_symbol_comparator(const void * x, const void * y) {
+    ELF_SecSymbol * rx = (ELF_SecSymbol *)x;
+    ELF_SecSymbol * ry = (ELF_SecSymbol *)y;
+    if (rx->address < ry->address) return -1;
+    if (rx->address > ry->address) return +1;
+    return 0;
+}
+
+static void create_symbol_addr_search_index(DWARFCache * cache, ELF_Section * sec) {
+    int elf64 = cache->mFile->elf64;
+    int swap = cache->mFile->byte_swap;
+    int rel = cache->mFile->type == ET_REL;
     unsigned m = 0;
+
+    sec->symbols_max = (unsigned)(sec->size / 16) + 16;
+    sec->symbols = (ELF_SecSymbol *)loc_alloc(sec->symbols_max * sizeof(ELF_SecSymbol));
+
+    while (m < cache->mSymSectionsCnt) {
+        SymbolSection * tbl = cache->mSymSections[m];
+        unsigned n = 1;
+        while (n < tbl->mSymCount) {
+            U8_T addr = 0;
+            if (elf64) {
+                Elf64_Sym s = ((Elf64_Sym *)tbl->mSymPool)[n];
+                if (swap) SWAP(s.st_shndx);
+                if (s.st_shndx == sec->index) {
+                    switch (ELF64_ST_TYPE(s.st_info)) {
+                    case STT_OBJECT:
+                    case STT_FUNC:
+                        if (swap) SWAP(s.st_value);
+                        addr = s.st_value;
+                        if (rel) addr += sec->addr;
+                        break;
+                    }
+                }
+            }
+            else {
+                Elf32_Sym s = ((Elf32_Sym *)tbl->mSymPool)[n];
+                if (swap) SWAP(s.st_shndx);
+                if (s.st_shndx == sec->index) {
+                    switch (ELF32_ST_TYPE(s.st_info)) {
+                    case STT_OBJECT:
+                    case STT_FUNC:
+                        if (swap) SWAP(s.st_value);
+                        addr = s.st_value;
+                        if (rel) addr += sec->addr;
+                        break;
+                    }
+                }
+            }
+            if (addr != 0) {
+                ELF_SecSymbol * s = NULL;
+                if (sec->symbols_cnt >= sec->symbols_max) {
+                    sec->symbols_max = sec->symbols_max * 3 / 2;
+                    sec->symbols = (ELF_SecSymbol *)loc_realloc(sec->symbols, sec->symbols_max * sizeof(ELF_SecSymbol));
+                }
+                s = sec->symbols + sec->symbols_cnt++;
+                s->address = addr;
+                s->parent = tbl;
+                s->index = n;
+            }
+            n++;
+        }
+        m++;
+    }
+
+    qsort(sec->symbols, sec->symbols_cnt, sizeof(ELF_SecSymbol), section_symbol_comparator);
+}
+
+static int find_by_addr_in_sym_table(DWARFCache * cache, ContextAddress addr, Symbol ** res) {
+    unsigned m;
     unsigned cnt = 0;
     Context * prs = context_get_group(sym_ctx, CONTEXT_GROUP_PROCESS);
+    ELF_File * file = cache->mFile;
+
+    for (m = 1; m < file->section_cnt; m++) {
+        ContextAddress sec_rt_addr;
+        ContextAddress sym_lt_addr;
+        ELF_Section * sec = file->sections + m;
+        if (sec->size == 0) continue;
+        if ((sec->flags & SHF_ALLOC) == 0) continue;
+        if (sec->type != SHT_PROGBITS && sec->type != SHT_NOBITS) continue;
+        sec_rt_addr = elf_map_to_run_time_address(prs, file, file->type == ET_REL ? sec : NULL, sec->addr);
+        if (addr >= sec_rt_addr && addr < sec_rt_addr + sec->size) {
+            unsigned l, h;
+            if (sec->symbols == NULL) create_symbol_addr_search_index(cache, sec);
+            sym_lt_addr = addr - sec_rt_addr + sec->addr;
+            l = 0;
+            h = sec->symbols_cnt;
+            while (l < h) {
+                unsigned k = (h + l) / 2;
+                ELF_SecSymbol * info = sec->symbols + k;
+                if (info->address > sym_lt_addr) {
+                    h = k;
+                }
+                else {
+                    ContextAddress next = k < sec->symbols_cnt - 1 ?
+                        (info + 1)->address : sec->addr + sec->size;
+                    assert(next >= info->address);
+                    if (next <= sym_lt_addr) {
+                        l = k + 1;
+                    }
+                    else {
+                        SymbolInfo sym_info;
+                        Symbol * sym = alloc_symbol();
+                        SymbolSection * tbl = (SymbolSection *)info->parent;
+                        unpack_elf_symbol_info(tbl, info->index, &sym_info);
+                        sym->frame = STACK_NO_FRAME;
+                        sym->ctx = prs;
+                        sym->tbl = tbl;
+                        sym->index = info->index;
+                        switch (sym_info.mType) {
+                        case STT_FUNC:
+                            sym->sym_class = SYM_CLASS_FUNCTION;
+                            break;
+                        case STT_OBJECT:
+                            sym->sym_class = SYM_CLASS_REFERENCE;
+                            break;
+                        }
+                        *res = sym;
+                        cnt++;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+#if 0
     while (m < cache->mSymSectionsCnt) {
         SymbolSection * tbl = cache->mSymSections[m];
         unsigned n = 1;
@@ -472,6 +615,7 @@ static int find_by_addr_in_sym_table(DWARFCache * cache, ContextAddress addr, Sy
         }
         m++;
     }
+#endif
     return cnt == 1;
 }
 
@@ -502,12 +646,15 @@ static int find_by_addr_in_unit(ObjectInfo * obj, int level, ContextAddress addr
         case TAG_variable:
             {
                 U8_T lc = 0;
-                U8_T sz = 0;
-                if (!get_num_prop(obj, AT_location, &lc)) exception(errno);
-                if (!get_num_prop(obj, AT_byte_size, &sz)) exception(errno);
-                if (lc <= addr && lc + sz > addr) {
-                    object2symbol(obj, res);
-                    return 1;
+                /* Ignore location evaluation errors. For example, the error can be caused by
+                 * the object not being mapped into the context memory */
+                if (get_num_prop(obj, AT_location, &lc)) {
+                    U8_T sz = 0;
+                    if (!get_num_prop(obj, AT_byte_size, &sz)) exception(errno);
+                    if (lc <= addr && lc + sz > addr) {
+                        object2symbol(obj, res);
+                        return 1;
+                    }
                 }
             }
             break;
