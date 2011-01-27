@@ -838,6 +838,10 @@ public class TCFLaunch extends Launch {
                 }
             }.get();
         }
+        catch (IllegalStateException x) {
+            // Don't report this exception - it means Eclipse is being shut down
+            disconnected = true;
+        }
         catch (Exception x) {
             throw new TCFError(x);
         }
