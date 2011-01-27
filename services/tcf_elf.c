@@ -91,6 +91,7 @@ static void elf_dispose(ELF_File * file) {
             }
 #endif
             loc_free(s->data);
+            loc_free(s->symbols);
         }
         loc_free(file->sections);
     }
