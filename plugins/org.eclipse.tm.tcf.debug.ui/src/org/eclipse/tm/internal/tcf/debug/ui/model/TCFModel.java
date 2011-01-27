@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -81,7 +80,6 @@ import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
 import org.eclipse.tm.internal.tcf.debug.model.TCFSourceRef;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
-import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.BackIntoCommand;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.BackOverCommand;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.BackResumeCommand;
@@ -115,14 +113,6 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.console.ConsolePlugin;
-import org.eclipse.ui.console.IConsole;
-import org.eclipse.ui.console.IConsoleConstants;
-import org.eclipse.ui.console.IConsoleManager;
-import org.eclipse.ui.console.IConsoleView;
-import org.eclipse.ui.console.IOConsole;
-import org.eclipse.ui.console.IOConsoleInputStream;
-import org.eclipse.ui.console.IOConsoleOutputStream;
 import org.eclipse.ui.texteditor.IDocumentProvider;
 import org.eclipse.ui.texteditor.ITextEditor;
 
@@ -200,64 +190,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     private final Map<String,String> cast_to_type_map =
         new HashMap<String,String>();
 
-    private class Console {
-        final IOConsole console;
-        final Map<Integer,IOConsoleOutputStream> out;
-
-        Console(final IOConsole console) {
-            this.console = console;
-            out = new HashMap<Integer,IOConsoleOutputStream>();
-            Thread t = new Thread() {
-                public void run() {
-                    try {
-                        IOConsoleInputStream inp = console.getInputStream();
-                        final byte[] buf = new byte[0x100];
-                        for (;;) {
-                            int len = inp.read(buf);
-                            if (len < 0) break;
-                            // TODO: Eclipse Console view has a bad habit of replacing CR with CR/LF
-                            if (len == 2 && buf[0] == '\r' && buf[1] == '\n') len = 1;
-                            final int n = len;
-                            Protocol.invokeAndWait(new Runnable() {
-                                public void run() {
-                                    try {
-                                        launch.writeProcessInputStream(buf, 0, n);
-                                    }
-                                    catch (Exception x) {
-                                        onProcessStreamError(null, 0, x, 0);
-                                    }
-                                }
-                            });
-                        }
-                    }
-                    catch (Throwable x) {
-                        Activator.log("Cannot read console input", x);
-                    }
-                }
-            };
-            t.setName("TCF Launch Console Input");
-            t.start();
-        }
-
-        void close() {
-            for (IOConsoleOutputStream stream : out.values()) {
-                try {
-                    stream.close();
-                }
-                catch (IOException x) {
-                    Activator.log("Cannot close console stream", x);
-                }
-            }
-            try {
-                console.getInputStream().close();
-            }
-            catch (IOException x) {
-                Activator.log("Cannot close console stream", x);
-            }
-        }
-    }
-
-    private Console console;
+    private TCFConsole console;
 
     private static final Map<ILaunchConfiguration,IEditorInput> editor_not_found =
         new HashMap<ILaunchConfiguration,IEditorInput>();
@@ -645,57 +578,10 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     }
 
     void onProcessOutput(String process_id, final int stream_id, byte[] data) {
-        try {
-            IProcesses.ProcessContext prs = launch.getProcessContext();
-            if (prs == null || !process_id.equals(prs.getID())) return;
-            if (console == null) {
-                final IOConsole c = new IOConsole("TCF " + process_id, null,
-                        ImageCache.getImageDescriptor(ImageCache.IMG_TCF), "UTF-8", true);
-                display.asyncExec(new Runnable() {
-                    public void run() {
-                        try {
-                            IConsoleManager manager = ConsolePlugin.getDefault().getConsoleManager();
-                            manager.addConsoles(new IConsole[]{ c });
-                            IWorkbenchWindow w = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-                            if (w == null) return;
-                            IWorkbenchPage page = w.getActivePage();
-                            if (page == null) return;
-                            IConsoleView view = (IConsoleView)page.showView(IConsoleConstants.ID_CONSOLE_VIEW);
-                            view.display(c);
-                        }
-                        catch (Throwable x) {
-                            Activator.log("Cannot open console view", x);
-                        }
-                    }
-                });
-                console = new Console(c);
-            }
-            IOConsoleOutputStream stream = console.out.get(stream_id);
-            if (stream == null) {
-                final IOConsoleOutputStream s = stream = console.console.newOutputStream();
-                display.asyncExec(new Runnable() {
-                    public void run() {
-                        try {
-                            int color_id = SWT.COLOR_BLACK;
-                            switch (stream_id) {
-                            case 1: color_id = SWT.COLOR_RED; break;
-                            case 2: color_id = SWT.COLOR_BLUE; break;
-                            case 3: color_id = SWT.COLOR_GREEN; break;
-                            }
-                            s.setColor(display.getSystemColor(color_id));
-                        }
-                        catch (Throwable x) {
-                            Activator.log("Cannot open console view", x);
-                        }
-                    }
-                });
-                console.out.put(stream_id, stream);
-            }
-            stream.write(data, 0, data.length);
-        }
-        catch (Throwable x) {
-            Activator.log("Cannot write to console", x);
-        }
+        IProcesses.ProcessContext prs = launch.getProcessContext();
+        if (prs == null || !process_id.equals(prs.getID())) return;
+        if (console == null) console = new TCFConsole(this, process_id);
+        console.write(stream_id, data);
     }
 
     void onProcessStreamError(String process_id, int stream_id, Exception x, int lost_size) {
@@ -796,15 +682,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     void dispose() {
         launch.removeActionsListener(actions_listener);
         expr_manager.removeExpressionListener(expressions_listener);
-        if (console != null) {
-            display.asyncExec(new Runnable() {
-                public void run() {
-                    console.close();
-                    IConsoleManager manager = ConsolePlugin.getDefault().getConsoleManager();
-                    manager.removeConsoles(new IOConsole[]{ console.console });
-                }
-            });
-        }
+        if (console != null) console.close();
     }
 
     void addNode(String id, TCFNode node) {
