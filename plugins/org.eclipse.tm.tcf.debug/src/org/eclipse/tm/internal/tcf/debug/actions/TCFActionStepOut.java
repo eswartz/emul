@@ -198,14 +198,16 @@ public abstract class TCFActionStepOut extends TCFAction implements IRunControl.
 
     private boolean isMyBreakpoint(TCFContextState state_data) {
         if (bp == null) return false;
-        if (state_data.suspend_pc == null) return false;
         if (!IRunControl.REASON_BREAKPOINT.equals(state_data.suspend_reason)) return false;
-        Object ids = state_data.suspend_params.get(IRunControl.STATE_BREAKPOINT_IDS);
-        if (ids != null) {
-            @SuppressWarnings("unchecked")
-            Collection<String> c = (Collection<String>)ids;
-            if (c.contains(bp.get(IBreakpoints.PROP_ID))) return true;
+        if (state_data.suspend_params != null) {
+            Object ids = state_data.suspend_params.get(IRunControl.STATE_BREAKPOINT_IDS);
+            if (ids != null) {
+                @SuppressWarnings("unchecked")
+                Collection<String> c = (Collection<String>)ids;
+                if (c.contains(bp.get(IBreakpoints.PROP_ID))) return true;
+            }
         }
+        if (state_data.suspend_pc == null) return false;
         BigInteger x = new BigInteger(state_data.suspend_pc);
         BigInteger y = new BigInteger((String)bp.get(IBreakpoints.PROP_LOCATION));
         return x.equals(y);
