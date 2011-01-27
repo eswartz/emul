@@ -118,7 +118,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                         err = (String)map.get(IBreakpoints.INSTANCE_ERROR);
                 }
                 if (err != null) {
-                    if (!bp_change_done && id.equals(data_bp_id)) return;
+                    if (bp_cnt == 0 && id.equals(data_bp_id)) return;
                     exit(new Exception("Invalid BP status: " + err));
                 }
             }
