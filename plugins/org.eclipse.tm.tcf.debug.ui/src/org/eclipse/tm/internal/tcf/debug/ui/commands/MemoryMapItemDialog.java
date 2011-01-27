@@ -36,7 +36,7 @@ import org.eclipse.tm.tcf.services.IMemoryMap;
 
 class MemoryMapItemDialog extends Dialog {
 
-    private final Map<String,Object> attrs;
+    private final Map<String,Object> props;
     private final boolean enable_editing;
     private final Image image;
 
@@ -48,10 +48,10 @@ class MemoryMapItemDialog extends Dialog {
     private Button wr_button;
     private Button ex_button;
 
-    MemoryMapItemDialog(Shell parent, Image image, Map<String,Object> attrs, boolean enable_editing) {
+    MemoryMapItemDialog(Shell parent, Image image, Map<String,Object> props, boolean enable_editing) {
         super(parent);
         this.image = image;
-        this.attrs = attrs;
+        this.props = props;
         this.enable_editing = enable_editing;
     }
 
@@ -216,12 +216,12 @@ class MemoryMapItemDialog extends Dialog {
     }
 
     private void setData() {
-        setText(addr_text, toHex((Number)attrs.get(IMemoryMap.PROP_ADDRESS)));
-        setText(size_text, toHex((Number)attrs.get(IMemoryMap.PROP_SIZE)));
-        setText(offset_text, toHex((Number)attrs.get(IMemoryMap.PROP_OFFSET)));
-        setText(file_text, (String)attrs.get(IMemoryMap.PROP_FILE_NAME));
+        setText(addr_text, toHex((Number)props.get(IMemoryMap.PROP_ADDRESS)));
+        setText(size_text, toHex((Number)props.get(IMemoryMap.PROP_SIZE)));
+        setText(offset_text, toHex((Number)props.get(IMemoryMap.PROP_OFFSET)));
+        setText(file_text, (String)props.get(IMemoryMap.PROP_FILE_NAME));
         int flags = 0;
-        Number n = (Number)attrs.get(IMemoryMap.PROP_FLAGS);
+        Number n = (Number)props.get(IMemoryMap.PROP_FLAGS);
         if (n != null) flags = n.intValue();
         rd_button.setSelection((flags & IMemoryMap.FLAG_READ) != 0);
         wr_button.setSelection((flags & IMemoryMap.FLAG_WRITE) != 0);
@@ -232,23 +232,23 @@ class MemoryMapItemDialog extends Dialog {
     private void getNumber(Text text, String key) {
         String s = text.getText().trim();
         if (s == null || s.length() == 0) {
-            attrs.remove(key);
+            props.remove(key);
         }
         else if (s.startsWith("0x")) {
-            attrs.put(key, new BigInteger(s.substring(2), 16));
+            props.put(key, new BigInteger(s.substring(2), 16));
         }
         else {
-            attrs.put(key, new BigInteger(s));
+            props.put(key, new BigInteger(s));
         }
     }
 
     private void getText(Text text, String key) {
         String s = text.getText().trim();
         if (s == null || s.length() == 0) {
-            attrs.remove(key);
+            props.remove(key);
         }
         else {
-            attrs.put(key, s);
+            props.put(key, s);
         }
     }
 
@@ -261,7 +261,7 @@ class MemoryMapItemDialog extends Dialog {
         if (rd_button.getSelection()) flags |= IMemoryMap.FLAG_READ;
         if (wr_button.getSelection()) flags |= IMemoryMap.FLAG_WRITE;
         if (ex_button.getSelection()) flags |= IMemoryMap.FLAG_EXECUTE;
-        attrs.put(IMemoryMap.PROP_FLAGS, flags);
+        props.put(IMemoryMap.PROP_FLAGS, flags);
     }
 
     private void updateButtons() {
@@ -271,7 +271,7 @@ class MemoryMapItemDialog extends Dialog {
 
     @Override
     protected void okPressed() {
-        getData();
+        if (enable_editing) getData();
         super.okPressed();
     }
 }

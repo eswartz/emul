@@ -311,16 +311,15 @@ class MemoryMapDialog extends Dialog {
         button_add.addSelectionListener(sel_adapter = new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
-                Map<String,Object> attrs = new HashMap<String,Object>();
+                Map<String,Object> props = new HashMap<String,Object>();
                 Image image = ImageCache.getImage(ImageCache.IMG_MEMORY_MAP);
-                if (new MemoryMapItemDialog(getShell(), image, attrs, true).open() == OK) {
-                    if (mem_map_id != null) attrs.put(TCFLaunch.PROP_MMAP_ID, mem_map_id);
+                if (new MemoryMapItemDialog(getShell(), image, props, true).open() == OK) {
+                    if (mem_map_id != null) props.put(TCFLaunch.PROP_MMAP_ID, mem_map_id);
                     IMemoryMap.MemoryRegion[] arr = new IMemoryMap.MemoryRegion[cur_map.length + 1];
                     System.arraycopy(cur_map, 0, arr, 0, cur_map.length);
-                    TCFMemoryRegion r = new TCFMemoryRegion(attrs);
+                    TCFMemoryRegion r = new TCFMemoryRegion(props);
                     arr[cur_map.length] = r;
-                    Arrays.sort(arr);
-                    cur_map = arr;
+                    Arrays.sort(cur_map = arr);
                     table_viewer.refresh();
                 }
             }
@@ -338,8 +337,17 @@ class MemoryMapDialog extends Dialog {
                 IMemoryMap.MemoryRegion r = (IMemoryMap.MemoryRegion)((IStructuredSelection)
                         table_viewer.getSelection()).getFirstElement();
                 if (r == null) return;
+                Map<String,Object> props = r.getProperties();
+                boolean enable_editing = props.get(TCFLaunch.PROP_MMAP_ID) != null;
+                if (enable_editing) props = new HashMap<String,Object>(props);
                 Image image = ImageCache.getImage(ImageCache.IMG_MEMORY_MAP);
-                new MemoryMapItemDialog(getShell(), image, r.getProperties(), false).open();
+                if (new MemoryMapItemDialog(getShell(), image, props, enable_editing).open() == OK && enable_editing) {
+                    int i = 0;
+                    while (cur_map[i] != r) i++;
+                    cur_map[i] = new TCFMemoryRegion(props);
+                    Arrays.sort(cur_map);
+                    table_viewer.refresh();
+                }
             }
         });
         final MenuItem item_edit = new MenuItem(menu, SWT.PUSH);

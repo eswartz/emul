@@ -100,6 +100,7 @@ public class TCFLaunch extends Launch {
         }
     }
 
+    /** Memory map attribute: memory context ID */
     public static final String PROP_MMAP_ID = "ID";
 
     private static final Collection<LaunchListener> listeners = new ArrayList<LaunchListener>();
