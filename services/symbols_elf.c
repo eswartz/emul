@@ -648,10 +648,14 @@ static int find_by_addr_in_unit(ObjectInfo * obj, int level, ContextAddress addr
                 U8_T lc = 0;
                 /* Ignore location evaluation errors. For example, the error can be caused by
                  * the object not being mapped into the context memory */
-                if (get_num_prop(obj, AT_location, &lc)) {
+                if (get_num_prop(obj, AT_location, &lc) && lc <= addr) {
                     U8_T sz = 0;
-                    if (!get_num_prop(obj, AT_byte_size, &sz)) exception(errno);
-                    if (lc <= addr && lc + sz > addr) {
+                    if (!get_num_prop(obj, AT_byte_size, &sz)) {
+                        /* If object size unknown, continue search */
+                        if (get_error_code(errno) == ERR_SYM_NOT_FOUND) break;
+                        exception(errno);
+                    }
+                    if (lc + sz > addr) {
                         object2symbol(obj, res);
                         return 1;
                     }

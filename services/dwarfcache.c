@@ -734,7 +734,7 @@ static void read_dwarf_object_property(Context * Ctx, int Frame, ObjectInfo * Ob
     case FORM_UDATA     :
         Value->mValue = gop_gFormData;
         break;
-    case FORM_ADDR:
+    case FORM_ADDR      :
         Value->mValue = elf_map_to_run_time_address(Ctx, Obj->mCompUnit->mFile, gop_gFormSection, (ContextAddress)gop_gFormData);
         break;
     default:
