@@ -1039,7 +1039,7 @@ static int update_step_machine_state(Context * ctx) {
                 if (n < 0) return -1;
                 if (ext->step_cnt == 0) {
                     if (n == 0) {
-                        set_errno(ERR_INV_COMMAND, "No parent stack frame");
+                        set_errno(ERR_OTHER, "Cannot step out: no parent stack frame");
                         return -1;
                     }
                     if (get_frame_info(ctx, n - 1, &info) < 0) return -1;

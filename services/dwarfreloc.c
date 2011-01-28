@@ -29,12 +29,13 @@
 static ELF_Section * section = NULL;
 static ELF_Section * relocs = NULL;
 static ELF_Section * symbols = NULL;
-static ELF_Section ** destination = NULL;
+static ELF_Section ** destination_section = NULL;
 
 static U8_T reloc_offset = 0;
 static U4_T reloc_type = 0;
-static U4_T reloc_addend = 0;
+static U8_T reloc_addend = 0;
 static U4_T sym_index = 0;
+static U8_T sym_value = 0;
 
 static void * data_buf = NULL;
 static size_t data_size = 0;
@@ -77,10 +78,95 @@ static void relocate(void * r) {
             reloc_type = ELF32_R_TYPE(bf.r_info);
             reloc_addend = bf.r_addend;
         }
+        if (sym_index != STN_UNDEF) {
+            Elf32_Sym bf = ((Elf32_Sym *)symbols->data)[sym_index];
+            if (symbols->file->byte_swap) {
+                SWAP(bf.st_name);
+                SWAP(bf.st_value);
+                SWAP(bf.st_size);
+                SWAP(bf.st_info);
+                SWAP(bf.st_other);
+                SWAP(bf.st_shndx);
+            }
+            if (symbols->file->type != ET_EXEC) {
+                switch (bf.st_shndx) {
+                case SHN_ABS:
+                    sym_value = bf.st_value;
+                    break;
+                case SHN_COMMON:
+                case SHN_UNDEF:
+                    str_exception(ERR_INV_FORMAT, "Invalid relocation record");
+                    break;
+                default:
+                    if (bf.st_shndx >= symbols->file->section_cnt) str_exception(ERR_INV_FORMAT, "Invalid relocation record");
+                    sym_value = (symbols->file->sections + bf.st_shndx)->addr + bf.st_value;
+                    *destination_section = symbols->file->sections + bf.st_shndx;
+                    break;
+                }
+            }
+            else {
+                sym_value = bf.st_value;
+            }
+        }
     }
     else {
-        str_exception(ERR_INV_FORMAT, "Unsupported ELF relocation type");
+        if (relocs->type == SHT_REL) {
+            Elf64_Rel bf = *(Elf64_Rel *)r;
+            if (relocs->file->byte_swap) {
+                SWAP(bf.r_offset);
+                SWAP(bf.r_info);
+            }
+            sym_index = ELF64_R_SYM(bf.r_info);
+            reloc_type = ELF64_R_TYPE(bf.r_info);
+            reloc_addend = 0;
+        }
+        else {
+            Elf64_Rela bf = *(Elf64_Rela *)r;
+            if (relocs->file->byte_swap) {
+                SWAP(bf.r_offset);
+                SWAP(bf.r_info);
+                SWAP(bf.r_addend);
+            }
+            sym_index = ELF64_R_SYM(bf.r_info);
+            reloc_type = ELF64_R_TYPE(bf.r_info);
+            reloc_addend = bf.r_addend;
+        }
+        if (sym_index != STN_UNDEF) {
+            Elf64_Sym bf = ((Elf64_Sym *)symbols->data)[sym_index];
+            if (symbols->file->byte_swap) {
+                SWAP(bf.st_name);
+                SWAP(bf.st_value);
+                SWAP(bf.st_size);
+                SWAP(bf.st_info);
+                SWAP(bf.st_other);
+                SWAP(bf.st_shndx);
+            }
+            if (symbols->file->type != ET_EXEC) {
+                switch (bf.st_shndx) {
+                case SHN_ABS:
+                    sym_value = bf.st_value;
+                    break;
+                case SHN_COMMON:
+                case SHN_UNDEF:
+                    str_exception(ERR_INV_FORMAT, "Invalid relocation record");
+                    break;
+                default:
+                    if (bf.st_shndx >= symbols->file->section_cnt) str_exception(ERR_INV_FORMAT, "Invalid relocation record");
+                    sym_value = (symbols->file->sections + bf.st_shndx)->addr + bf.st_value;
+                    *destination_section = symbols->file->sections + bf.st_shndx;
+                    break;
+                }
+            }
+            else {
+                sym_value = bf.st_value;
+            }
+        }
     }
+
+    /* For executable file we don't need to apply the relocation,
+     * all we need is destination_section */
+    if (section->file->type != ET_REL) return;
+
     func = elf_relocate_funcs;
     while (func->machine != section->file->machine) {
         if (func->func == NULL) str_exception(ERR_INV_FORMAT, "Unsupported ELF machine code");
@@ -98,7 +184,7 @@ void drl_relocate(ELF_Section * s, U8_T offset, void * buf, size_t size, ELF_Sec
     if (!s->relocate) return;
 
     section = s;
-    destination = dst;
+    destination_section = dst;
     reloc_offset = offset;
     data_buf = buf;
     data_size = size;

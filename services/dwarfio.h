@@ -65,6 +65,12 @@ extern U8_T dio_ReadU8LEB128(void);
 extern I8_T dio_ReadS8LEB128(void);
 
 extern U8_T dio_ReadUX(int Size);
+
+/*
+ * Read link-time address value.
+ * Relocation tables are used if necessary to compute the address value.
+ * For a file that can be relotated at run-time, 's' is assigned a section that the address points to.
+ */
 extern U8_T dio_ReadAddressX(ELF_Section ** s, int Size);
 extern U8_T dio_ReadAddress(ELF_Section ** s);
 

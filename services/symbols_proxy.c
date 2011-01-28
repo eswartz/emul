@@ -136,7 +136,7 @@ typedef struct StackFrameCache {
     ReplyHandlerInfo * pending;
     ErrorReport * error;
     Context * ctx;
-    ContextAddress ip;
+    uint64_t ip;
     uint64_t address;
     uint64_t size;
 
@@ -1022,7 +1022,7 @@ static void validate_frame(Channel * c, void * args, int error) {
             size = json_read_uint64(&c->inp);
             if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
             if (error || size == 0) {
-                f->address = f->ip & ~(ContextAddress)3;
+                f->address = f->ip & ~(uint64_t)3;
                 f->size = 4;
             }
             else {

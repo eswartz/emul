@@ -916,9 +916,16 @@ ContextAddress elf_map_to_run_time_address(Context * ctx, ELF_File * file, ELF_S
     if (get_map(ctx, 0, ~(ContextAddress)0, &elf_map) < 0) return 0;
     for (i = 0; i < elf_map.region_cnt; i++) {
         MemoryRegion * r = elf_map.regions + i;
-        ino_t ino = r->ino;
-        if (ino == 0 && (ino = elf_ino(r->file_name)) == 0) continue;
-        if (file->dev != r->dev || file->ino != ino) {
+        int same_file = 0;
+        if (r->dev == 0) {
+            same_file = strcmp(file->name, r->file_name) == 0;
+        }
+        else {
+           ino_t ino = r->ino;
+           if (ino == 0) ino = elf_ino(r->file_name);
+           same_file = file->ino == ino && file->dev == r->dev;
+        }
+        if (!same_file) {
             /* Check if the memory map entry has a separate debug info file */
             int error = 0;
             ELF_File * exec = NULL;

@@ -232,8 +232,8 @@ typedef struct {
     Elf32_Sword r_addend;
 } Elf32_Rela;
 
-#define ELF32_R_SYM(i)  ((i)>>8)
-#define ELF32_R_TYPE(i) ((unsigned char)(i))
+#define ELF32_R_SYM(i)  ((i) >> 8)
+#define ELF32_R_TYPE(i) ((uint8_t)(i))
 
 typedef struct {
     Elf32_Sword d_tag;
@@ -299,6 +299,20 @@ typedef struct {
 
 #define ELF64_ST_BIND(info)             ((info) >> 4)
 #define ELF64_ST_TYPE(info)             ((info) & 0xf)
+
+typedef struct {
+    Elf64_Addr    r_offset;
+    Elf64_Xword   r_info;
+} Elf64_Rel;
+
+typedef struct {
+    Elf64_Addr    r_offset;
+    Elf64_Xword   r_info;
+    Elf64_Sxword  r_addend;
+} Elf64_Rela;
+
+#define ELF64_R_SYM(i)  ((uint32_t)((i) >> 32))
+#define ELF64_R_TYPE(i) ((uint32_t)(i))
 
 typedef struct {
     Elf64_Sxword d_tag;
