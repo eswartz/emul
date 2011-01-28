@@ -40,9 +40,15 @@ public class TCFNodeLaunch extends TCFNode implements ISymbolOwner {
                 if (done) return;
                 ArrayList<TCFNodeExecContext> nodes = new ArrayList<TCFNodeExecContext>();
                 if (!searchSuspendedThreads(children, nodes, this)) return;
-                for (TCFNodeExecContext n : nodes) {
-                    String reason = n.getState().getData().suspend_reason;
-                    model.setDebugViewSelection(n, reason);
+                if (nodes.size() == 1) {
+                    TCFNodeExecContext n = nodes.get(0);
+                    model.setDebugViewSelection(n, "Launch");
+                }
+                else {
+                    for (TCFNodeExecContext n : nodes) {
+                        String reason = n.getState().getData().suspend_reason;
+                        model.setDebugViewSelection(n, reason);
+                    }
                 }
                 done = true;
             }
