@@ -16,6 +16,7 @@ import java.util.LinkedList;
 import java.util.Map;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.SWTException;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
@@ -127,12 +128,18 @@ class TCFConsole {
             catch (IOException x) {
                 Activator.log("Cannot close console stream", x);
             }
-            display.syncExec(new Runnable() {
-                public void run() {
-                    IConsoleManager manager = ConsolePlugin.getDefault().getConsoleManager();
-                    manager.removeConsoles(new IOConsole[]{ console });
-                }
-            });
+            try {
+                display.syncExec(new Runnable() {
+                    public void run() {
+                        IConsoleManager manager = ConsolePlugin.getDefault().getConsoleManager();
+                        manager.removeConsoles(new IOConsole[]{ console });
+                    }
+                });
+            }
+            catch (SWTException x) {
+                if (x.code == SWT.ERROR_DEVICE_DISPOSED) return;
+                Activator.log("Cannot remove console", x);
+            }
         }
     };
 
