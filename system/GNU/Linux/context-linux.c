@@ -73,19 +73,16 @@ static const int PTRACE_FLAGS =
 #if USE_PTRACE_SYSCALL
       PTRACE_O_TRACESYSGOOD |
 #endif
-      PTRACE_O_TRACEFORK |
-      PTRACE_O_TRACEVFORK |
       PTRACE_O_TRACECLONE |
       PTRACE_O_TRACEEXEC |
       PTRACE_O_TRACEVFORKDONE |
       PTRACE_O_TRACEEXIT;
 
-/* TODO: when inferior forks, the new process inherits breakpoints - need to account for that in BP service */
-
 typedef struct ContextExtensionLinux {
     pid_t                   pid;
     ContextAttachCallBack * attach_callback;
     void *                  attach_data;
+    int                     attach_children;
     int                     ptrace_flags;
     int                     ptrace_event;
     int                     syscall_enter;
@@ -155,13 +152,13 @@ int context_attach_self(void) {
     return 0;
 }
 
-int context_attach(pid_t pid, ContextAttachCallBack * done, void * data, int selfattach) {
+int context_attach(pid_t pid, ContextAttachCallBack * done, void * data, int mode) {
     Context * ctx = NULL;
     ContextExtensionLinux * ext = NULL;
 
     assert(done != NULL);
     trace(LOG_CONTEXT, "context: attaching pid %d", pid);
-    if (!selfattach && ptrace(PTRACE_ATTACH, pid, 0, 0) < 0) {
+    if ((mode & CONTEXT_ATTACH_SELF) == 0 && ptrace(PTRACE_ATTACH, pid, 0, 0) < 0) {
         int err = errno;
         trace(LOG_ALWAYS, "error: ptrace(PTRACE_ATTACH) failed: pid %d, error %d %s",
             pid, err, errno_to_str(err));
@@ -179,6 +176,7 @@ int context_attach(pid_t pid, ContextAttachCallBack * done, void * data, int sel
     ext->pid = pid;
     ext->attach_callback = done;
     ext->attach_data = data;
+    ext->attach_children = (mode & CONTEXT_ATTACH_CHILDREN) != 0;
     list_add_first(&ctx->ctxl, &pending_list);
     /* TODO: context_attach works only for main task in a process */
     return 0;
@@ -529,6 +527,7 @@ int context_unplant_breakpoint(ContextBreakpoint * bp) {
 }
 
 int context_get_memory_map(Context * ctx, MemoryMap * map) {
+    MemoryRegion * prev = NULL;
     char maps_file_name[FILE_PATH_SIZE];
     FILE * file = NULL;
 
@@ -547,8 +546,8 @@ int context_get_memory_map(Context * ctx, MemoryMap * map) {
         unsigned long inode = 0;
         char permissions[16];
         char file_name[FILE_PATH_SIZE];
-        MemoryRegion * r = NULL;
         unsigned i = 0;
+        int flags = 0;
 
         int cnt = fscanf(file, "%lx-%lx %s %lx %lx:%lx %ld",
             &addr0, &addr1, permissions, &offset, &dev_ma, &dev_mi, &inode);
@@ -563,26 +562,43 @@ int context_get_memory_map(Context * ctx, MemoryMap * map) {
         }
         file_name[i++] = 0;
 
-        if (inode != 0 && file_name[0] && file_name[0] != '[') {
-            if (map->region_cnt >= map->region_max) {
-                map->region_max += 8;
-                map->regions = (MemoryRegion *)loc_realloc(map->regions, sizeof(MemoryRegion) * map->region_max);
+        if (map->region_cnt >= map->region_max) {
+            map->region_max += 8;
+            map->regions = (MemoryRegion *)loc_realloc(map->regions, sizeof(MemoryRegion) * map->region_max);
+        }
+
+        for (i = 0; permissions[i]; i++) {
+            switch (permissions[i]) {
+            case 'r': flags |= MM_FLAG_R; break;
+            case 'w': flags |= MM_FLAG_W; break;
+            case 'x': flags |= MM_FLAG_X; break;
             }
-            r = map->regions + map->region_cnt++;
+        }
+
+        if (inode != 0 && file_name[0] && file_name[0] != '[') {
+            MemoryRegion * r = map->regions + map->region_cnt++;
             memset(r, 0, sizeof(MemoryRegion));
             r->addr = addr0;
             r->size = addr1 - addr0;
+            r->flags = flags;
             r->file_offs = offset;
             r->dev = MKDEV(dev_ma, dev_mi);
             r->ino = (ino_t)inode;
             r->file_name = loc_strdup(file_name);
-            for (i = 0; permissions[i]; i++) {
-                switch (permissions[i]) {
-                case 'r': r->flags |= MM_FLAG_R; break;
-                case 'w': r->flags |= MM_FLAG_W; break;
-                case 'x': r->flags |= MM_FLAG_X; break;
-                }
-            }
+            prev = r;
+        }
+        else if (file_name[0] == 0 && prev != NULL && prev->addr + prev->size == addr0) {
+            MemoryRegion * r = map->regions + map->region_cnt++;
+            memset(r, 0, sizeof(MemoryRegion));
+            r->bss = 1;
+            r->addr = addr0;
+            r->size = addr1 - addr0;
+            r->flags = flags;
+            r->file_offs = prev->file_offs + prev->size;
+            r->dev = prev->dev;
+            r->ino = prev->ino;
+            r->file_name = loc_strdup(prev->file_name);
+            prev = r;
         }
     }
     fclose(file);
@@ -692,6 +708,7 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
             ctx->pending_intercept = 1;
             ctx->mem = prs;
             ctx->big_endian = prs->big_endian;
+            EXT(ctx)->attach_children = EXT(prs)->attach_children;
             (ctx->parent = prs)->ref_count++;
             list_add_first(&ctx->cldl, &prs->children);
             link_context(prs);
@@ -711,14 +728,19 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
     ext = EXT(ctx);
     assert(!ctx->exited);
     assert(!ext->attach_callback);
-    if (ext->ptrace_flags != PTRACE_FLAGS) {
-        if (ptrace((enum __ptrace_request)PTRACE_SETOPTIONS, ext->pid, 0, PTRACE_FLAGS) < 0) {
-                int err = errno;
+    if (ext->ptrace_flags == 0) {
+        int flags = PTRACE_FLAGS;
+        if (ext->attach_children) {
+            flags |= PTRACE_O_TRACEFORK;
+            flags |= PTRACE_O_TRACEVFORK;
+        }
+        if (ptrace((enum __ptrace_request)PTRACE_SETOPTIONS, ext->pid, 0, flags) < 0) {
+            int err = errno;
             trace(LOG_ALWAYS, "error: ptrace(PTRACE_SETOPTIONS) failed: pid %d, error %d %s",
                 ext->pid, err, errno_to_str(err));
         }
         else {
-            ext->ptrace_flags = PTRACE_FLAGS;
+            ext->ptrace_flags = flags;
         }
     }
 
@@ -744,20 +766,23 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
             else {
                 prs2 = create_context(pid2id(msg, 0));
                 EXT(prs2)->pid = msg;
+                EXT(prs2)->attach_children = ext->attach_children;
                 prs2->mem = prs2;
                 prs2->mem_access |= MEM_ACCESS_INSTRUCTION;
                 prs2->mem_access |= MEM_ACCESS_DATA;
                 prs2->mem_access |= MEM_ACCESS_USER;
-                prs2->big_endian = is_big_endian();
+                prs2->big_endian = ctx->parent->big_endian;
                 (prs2->creator = ctx)->ref_count++;
                 prs2->sig_dont_stop = ctx->sig_dont_stop;
                 prs2->sig_dont_pass = ctx->sig_dont_pass;
                 link_context(prs2);
                 send_context_created_event(prs2);
+                clone_breakpoints_on_process_fork(ctx, prs2);
             }
 
             ctx2 = create_context(pid2id(msg, EXT(prs2)->pid));
             EXT(ctx2)->pid = msg;
+            EXT(ctx2)->attach_children = EXT(prs2)->attach_children;
             EXT(ctx2)->regs = (REG_SET *)loc_alloc(sizeof(REG_SET));
             ctx2->mem = prs2;
             ctx2->big_endian = prs2->big_endian;

@@ -951,12 +951,12 @@ static DWORD WINAPI debugger_thread_func(LPVOID x) {
     return 0;
 }
 
-int context_attach(pid_t pid, ContextAttachCallBack * done, void * data, int selfattach) {
+int context_attach(pid_t pid, ContextAttachCallBack * done, void * data, int mode) {
     int error = 0;
     DebugState * debug_state = (DebugState *)loc_alloc_zero(sizeof(DebugState));
 
     assert(done != NULL);
-    assert(!selfattach);
+    assert((mode & CONTEXT_ATTACH_SELF) == 0);
     debug_state->process_id = pid;
     debug_state->attach_callback = done;
     debug_state->attach_data = data;

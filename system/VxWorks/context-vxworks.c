@@ -178,11 +178,11 @@ static void event_attach_done(void * x) {
     loc_free(x);
 }
 
-int context_attach(pid_t pid, ContextAttachCallBack * done, void * data, int selfattach) {
+int context_attach(pid_t pid, ContextAttachCallBack * done, void * data, int mode) {
     AttachDoneArgs * args = (AttachDoneArgs *)loc_alloc(sizeof(AttachDoneArgs));
 
     assert(done != NULL);
-    assert(!selfattach);
+    assert((mode & CONTEXT_ATTACH_SELF) == 0);
     args->pid = pid;
     args->done = done;
     args->data = data;

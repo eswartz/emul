@@ -96,12 +96,12 @@ int context_attach_self(void) {
     return 0;
 }
 
-int context_attach(pid_t pid, ContextAttachCallBack * done, void * data, int selfattach) {
+int context_attach(pid_t pid, ContextAttachCallBack * done, void * data, int mode) {
     Context * ctx = NULL;
 
     assert(done != NULL);
     trace(LOG_CONTEXT, "context: attaching pid %d", pid);
-    if (!selfattach && ptrace(PT_ATTACH, pid, 0, 0) < 0) {
+    if ((mode & CONTEXT_ATTACH_SELF) == 0 && ptrace(PT_ATTACH, pid, 0, 0) < 0) {
         int err = errno;
         trace(LOG_ALWAYS, "error: ptrace(PT_ATTACH) failed: pid %d, error %d %s",
             pid, err, errno_to_str(err));

@@ -113,6 +113,7 @@ struct MemoryRegion {
     ContextAddress addr;            /* Region address in context memory */
     ContextAddress size;            /* Region size */
     uint64_t file_offs;             /* File offset of the region */
+    int bss;                        /* 1 if the region is BSS segment */
     dev_t dev;                      /* Region file device ID */
     ino_t ino;                      /* Region file inode */
     char * file_name;               /* Region file name */
@@ -149,6 +150,10 @@ struct MemoryRegionAttribute {
 #define RM_STEP_INTO_RANGE         13 /* Step instruction until PC is outside the specified range for any reason */
 #define RM_REVERSE_STEP_OVER_RANGE 14 /* Reverse of RM_STEP_OVER_RANGE */
 #define RM_REVERSE_STEP_INTO_RANGE 15 /* Reverse of RM_STEP_INTO_RANGE */
+
+/* Mode flags for context_attach() */
+#define CONTEXT_ATTACH_SELF      0x01 /* The process is forked child - it will attach itself */
+#define CONTEXT_ATTACH_CHILDREN  0x02 /* Enabel auto-attaching of children of the process*/
 
 /*
  * Convert PID to TCF Context ID
@@ -204,8 +209,9 @@ extern int context_attach_self(void);
  * Start tracing of a process.
  * Client provides a call-back function that will be called when context is attached.
  * The callback function args are error code, the context and client data.
+ * 'mode' - attach mode flags, see CONTEXT_ATTACH_*.
  */
-extern int context_attach(pid_t pid, ContextAttachCallBack * done, void * client_data, int selfattach);
+extern int context_attach(pid_t pid, ContextAttachCallBack * done, void * client_data, int mode);
 
 /*
  * Increment reference counter of Context object.

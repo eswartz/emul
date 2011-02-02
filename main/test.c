@@ -228,7 +228,7 @@ int run_test_process(ContextAttachCallBack * done, void * data) {
         test_proc();
         exit(0);
     }
-    return context_attach(pid, done, data, 1);
+    return context_attach(pid, done, data, CONTEXT_ATTACH_SELF);
 #endif
 }
 

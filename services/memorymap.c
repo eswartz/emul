@@ -192,6 +192,12 @@ static void write_map_region(OutputStream * out, MemoryRegion * m) {
             write_stream(out, ':');
             json_write_uint64(out, m->file_offs);
         }
+        if (m->bss) {
+            write_stream(out, ',');
+            json_write_string(out, "BSS");
+            write_stream(out, ':');
+            json_write_boolean(out, m->bss);
+        }
     }
     if (m->id != NULL) {
         write_stream(out, ',');
@@ -257,7 +263,8 @@ static void read_map_attribute(InputStream * inp, const char * name, void * args
     MemoryRegion * r = (MemoryRegion *)args;
     if (strcmp(name, "Addr") == 0) r->addr = (ContextAddress)json_read_uint64(inp);
     else if (strcmp(name, "Size") == 0) r->size = (ContextAddress)json_read_uint64(inp);
-    else if (strcmp(name, "Offset") == 0) r->file_offs = json_read_uint64(inp);
+    else if (strcmp(name, "Offs") == 0) r->file_offs = json_read_uint64(inp);
+    else if (strcmp(name, "BSS") == 0) r->bss = json_read_boolean(inp);
     else if (strcmp(name, "Flags") == 0) r->flags = (unsigned)json_read_long(inp);
     else if (strcmp(name, "FileName") == 0) r->file_name = json_read_alloc_string(inp);
     else if (strcmp(name, "SectionName") == 0) r->sect_name = json_read_alloc_string(inp);

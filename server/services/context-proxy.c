@@ -968,6 +968,7 @@ static void read_memory_region_property(InputStream * inp, const char * name, vo
     if (strcmp(name, "Addr") == 0) m->addr = (ContextAddress)json_read_uint64(inp);
     else if (strcmp(name, "Size") == 0) m->size = json_read_ulong(inp);
     else if (strcmp(name, "Offs") == 0) m->file_offs = json_read_ulong(inp);
+    else if (strcmp(name, "BSS") == 0) m->bss = json_read_boolean(inp);
     else if (strcmp(name, "Flags") == 0) m->flags = json_read_ulong(inp);
     else if (strcmp(name, "FileName") == 0) m->file_name = json_read_alloc_string(inp);
     else if (strcmp(name, "SectionName") == 0) m->sect_name = json_read_alloc_string(inp);
