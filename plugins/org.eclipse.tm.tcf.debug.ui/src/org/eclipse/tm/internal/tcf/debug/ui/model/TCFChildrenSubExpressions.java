@@ -52,11 +52,11 @@ public class TCFChildrenSubExpressions extends TCFChildren {
         for (int i = 0; i < a.length; i++) a[i].dispose();
     }
 
-    private TCFNodeExpression findField(TCFDataCache<ISymbols.Symbol> field, boolean deref) {
-        assert field != null;
+    private TCFNodeExpression findField(String field_id, boolean deref) {
+        assert field_id != null;
         for (TCFNode n : getNodes()) {
             TCFNodeExpression e = (TCFNodeExpression)n;
-            if (field == e.getField() && e.isDeref() == deref) return e;
+            if (field_id.equals(e.getFieldID()) && e.isDeref() == deref) return e;
         }
         return null;
     }
@@ -65,9 +65,8 @@ public class TCFChildrenSubExpressions extends TCFChildren {
         int cnt = 0;
         HashMap<String,TCFNode> data = new HashMap<String,TCFNode>();
         for (String id : children) {
-            TCFDataCache<ISymbols.Symbol> field = node.getModel().getSymbolInfoCache(id);
-            TCFNodeExpression n = findField(field, deref);
-            if (n == null) n = new TCFNodeExpression(node, null, field, null, -1, deref);
+            TCFNodeExpression n = findField(id, deref);
+            if (n == null) n = new TCFNodeExpression(node, null, id, null, -1, deref);
             n.setSortPosition(cnt++);
             data.put(n.id, n);
         }

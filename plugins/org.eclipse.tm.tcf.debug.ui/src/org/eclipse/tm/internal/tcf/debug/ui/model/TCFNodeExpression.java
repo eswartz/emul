@@ -49,7 +49,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
     private final String script;
     private final int index;
     private final boolean deref;
-    private final TCFDataCache<ISymbols.Symbol> field;
+    private final String field_id;
     private final TCFDataCache<IExpressions.Expression> var_expression;
     private final TCFDataCache<String> text;
     private final TCFDataCache<Expression> expression;
@@ -91,12 +91,12 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
     }
 
     TCFNodeExpression(final TCFNode parent, final String script,
-            final TCFDataCache<ISymbols.Symbol> field, final String var_id,
+            final String field_id, final String var_id,
             final int index, final boolean deref) {
         super(parent, var_id != null ? var_id : "Expr" + expr_cnt++);
-        assert script != null || field != null || var_id != null || index >= 0;
+        assert script != null || field_id != null || var_id != null || index >= 0;
         this.script = script;
-        this.field = field;
+        this.field_id = field_id;
         this.index = index;
         this.deref = deref;
         var_expression = new TCFDataCache<IExpressions.Expression>(channel) {
@@ -147,7 +147,8 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                 }
                 String cast = model.getCastToType(n.id);
                 if (cast != null) e = "(" + cast + ")(" + e + ")";
-                if (field != null) {
+                if (field_id != null) {
+                    TCFDataCache<ISymbols.Symbol> field = model.getSymbolInfoCache(field_id);
                     if (!field.validate(this)) return false;
                     if (field.getData() == null) {
                         set(null, field.getError(), null);
@@ -489,8 +490,8 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         return script;
     }
 
-    TCFDataCache<ISymbols.Symbol> getField() {
-        return field;
+    String getFieldID() {
+        return field_id;
     }
 
     int getIndex() {
@@ -764,6 +765,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
 
     @Override
     protected boolean getData(ILabelUpdate result, Runnable done) {
+        TCFDataCache<ISymbols.Symbol> field = model.getSymbolInfoCache(field_id);
         TCFDataCache<?> pending = null;
         if (field != null && !field.validate()) pending = field;
         if (!text.validate()) pending = text;
@@ -1036,9 +1038,11 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
             IExpressions.Value v = value.getData();
             if (v != null) {
                 byte[] data = v.getValue();
-                boolean big_endian = v.isBigEndian();
-                if (!appendValueText(bf, 0, v.getTypeID(),
-                        data, 0, data.length, big_endian, done)) return null;
+                if (data != null) {
+                    boolean big_endian = v.isBigEndian();
+                    if (!appendValueText(bf, 0, v.getTypeID(),
+                            data, 0, data.length, big_endian, done)) return null;
+                }
             }
         }
         return bf.toString();
