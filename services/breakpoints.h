@@ -54,6 +54,9 @@ extern int skip_breakpoint(Context * ctx, int single_step);
 /* Return 1 if break instruction is planted at given address in the context memory */
 extern int is_breakpoint_address(Context * ctx, ContextAddress address);
 
+/* Clone all planted breakpoints when a process forks */
+extern void clone_breakpoints_on_process_fork(Context * parent, Context * child);
+
 /*
  * Check if memory data buffer contans planted break instructions and remove them.
  * Return -1 and set errno if the check cannot be done.
@@ -81,6 +84,7 @@ extern void destroy_eventpoint(BreakpointInfo * eventpoint);
 #define evaluate_breakpoint(ctx)
 #define skip_breakpoint(ctx, single_step) 0
 #define is_breakpoint_address(ctx, address) 0
+#define clone_breakpoints_on_process_fork(parent, child) 0
 #define check_breakpoints_on_memory_read(ctx, address, buf, size) 0
 #define check_breakpoints_on_memory_write(ctx, address, buf, size) 0
 #define create_eventpoint(location, callback, callback_args) 0

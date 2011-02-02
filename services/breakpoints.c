@@ -23,8 +23,6 @@
 
 #if SERVICE_Breakpoints
 
-/* TODO: breakpoints service should be aware that planting breakpoint in a memory space can affect other memory spaces */
-
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
@@ -375,6 +373,38 @@ static void flush_instructions(void) {
                 plant_instruction(bi);
             }
         }
+    }
+}
+
+void clone_breakpoints_on_process_fork(Context * parent, Context * child) {
+    Context * mem = context_get_group(parent, CONTEXT_GROUP_PROCESS);
+    LINK * l = instructions.next;
+    while (l != &instructions) {
+        int i;
+        BreakInstruction * ci = NULL;
+        BreakInstruction * bi = link_all2bi(l);
+        l = l->next;
+        if (!bi->planted) continue;
+        if (!bi->saved_size) continue;
+        if (bi->cb.ctx != mem) continue;
+        ci = add_instruction(child, bi->cb.address);
+        ci->cb.length = bi->cb.length;
+        ci->cb.access_types = bi->cb.access_types;
+        memcpy(ci->saved_code, bi->saved_code, bi->saved_size);
+        ci->saved_size = bi->saved_size;
+        ci->ref_size = bi->ref_size;
+        ci->ref_cnt = bi->ref_cnt;
+        ci->refs = (InstructionRef *)loc_alloc_zero(sizeof(InstructionRef) * ci->ref_size);
+        for (i = 0; i < bi->ref_cnt; i++) {
+            BreakpointInfo * bp = bi->refs[i].bp;
+            ci->refs[i] = bi->refs[i];
+            ci->refs[i].ctx = child;
+            context_lock(child);
+            bp->instruction_cnt++;
+            bp->status_changed = 1;
+        }
+        ci->valid = 1;
+        ci->planted = 1;
     }
 }
 
