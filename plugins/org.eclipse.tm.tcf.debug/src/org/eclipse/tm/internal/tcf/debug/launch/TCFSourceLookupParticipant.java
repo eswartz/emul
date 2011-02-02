@@ -92,6 +92,7 @@ public class TCFSourceLookupParticipant extends AbstractSourceLookupParticipant 
                 String dst = r.getDestination();
                 if (dst == null || dst.length() == 0) continue;
                 int l = src.length();
+                if (dst.endsWith("/") && l < fnm.length() && fnm.charAt(l) == '/') l++;
                 return dst + fnm.substring(l);
             }
             if (fnm.startsWith("/cygdrive/")) {

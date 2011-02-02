@@ -50,6 +50,7 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
     private Text remote_program_text;
     private Text working_dir_text;
     private Button default_dir_button;
+    private Button attach_children_button;
     private Button terminal_button;
     private Exception init_error;
 
@@ -223,9 +224,17 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
         gd.horizontalSpan = colSpan;
         terminal_comp.setLayoutData(gd);
 
-        terminal_button = createCheckButton(terminal_comp, "Use Terminal");
-        terminal_button.addSelectionListener(new SelectionAdapter() {
+        attach_children_button = createCheckButton(terminal_comp, "Auto-attach process children");
+        attach_children_button.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent evt) {
+                updateLaunchConfigurationDialog();
+            }
+        });
+        attach_children_button.setEnabled(true);
 
+        terminal_button = createCheckButton(terminal_comp, "Use pseudo-terminal for process standard I/O");
+        terminal_button.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent evt) {
                 updateLaunchConfigurationDialog();
@@ -243,6 +252,7 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
             remote_program_text.setText(config.getAttribute(TCFLaunchDelegate.ATTR_REMOTE_PROGRAM_FILE, ""));
             working_dir_text.setText(config.getAttribute(TCFLaunchDelegate.ATTR_WORKING_DIRECTORY, ""));
             default_dir_button.setSelection(!config.hasAttribute(TCFLaunchDelegate.ATTR_WORKING_DIRECTORY));
+            attach_children_button.setSelection(config.getAttribute(TCFLaunchDelegate.ATTR_ATTACH_CHILDREN, true));
             terminal_button.setSelection(config.getAttribute(TCFLaunchDelegate.ATTR_USE_TERMINAL, true));
             working_dir_text.setEnabled(!default_dir_button.getSelection());
         }
@@ -269,6 +279,7 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
         else {
             config.setAttribute(TCFLaunchDelegate.ATTR_WORKING_DIRECTORY, working_dir_text.getText());
         }
+        config.setAttribute(TCFLaunchDelegate.ATTR_ATTACH_CHILDREN, attach_children_button.getSelection());
         config.setAttribute(TCFLaunchDelegate.ATTR_USE_TERMINAL, terminal_button.getSelection());
     }
 
@@ -434,6 +445,7 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
 
     public void setDefaults(ILaunchConfigurationWorkingCopy config) {
         config.setAttribute(TCFLaunchDelegate.ATTR_PROJECT_NAME, "");
+        config.setAttribute(TCFLaunchDelegate.ATTR_ATTACH_CHILDREN, true);
         config.setAttribute(TCFLaunchDelegate.ATTR_USE_TERMINAL, true);
         config.setAttribute(TCFLaunchDelegate.ATTR_WORKING_DIRECTORY, (String)null);
         ITCFLaunchContext launch_context = TCFLaunchContext.getLaunchContext(null);

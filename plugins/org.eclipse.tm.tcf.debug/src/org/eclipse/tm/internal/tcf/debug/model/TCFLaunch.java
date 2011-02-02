@@ -552,6 +552,8 @@ public class TCFLaunch extends Launch {
             final String dir = cfg.getAttribute(TCFLaunchDelegate.ATTR_WORKING_DIRECTORY, "");
             final String args = cfg.getAttribute(TCFLaunchDelegate.ATTR_PROGRAM_ARGUMENTS, "");
             final Map<String,String> env = cfg.getAttribute(ILaunchManager.ATTR_ENVIRONMENT_VARIABLES, (Map<String,String>)null);
+            final boolean attach_children = cfg.getAttribute(TCFLaunchDelegate.ATTR_ATTACH_CHILDREN, true);
+            final boolean use_terminal = cfg.getAttribute(TCFLaunchDelegate.ATTR_USE_TERMINAL, true);
             // Start the process
             new LaunchStep() {
                 @Override
@@ -563,9 +565,14 @@ public class TCFLaunch extends Launch {
                         channel.terminate(new Exception("Program file does not exist"));
                         return;
                     }
-                    boolean attach = mode.equals(ILaunchManager.DEBUG_MODE);
+                    Map<String,Object> params = new HashMap<String,Object>();
+                    if (mode.equals(ILaunchManager.DEBUG_MODE)) {
+                        params.put(IProcesses.START_ATTACH, true);
+                        if (attach_children) params.put(IProcesses.START_ATTACH_CHILDREN, true);
+                    }
+                    if (use_terminal) params.put(IProcesses.START_USE_TERMINAL, true);
                     process_start_command = ps.start(dir, file, toArgsArray(file, args),
-                            process_env, attach, new IProcesses.DoneStart() {
+                            process_env, params, new IProcesses.DoneStart() {
                         public void doneStart(IToken token, final Exception error, ProcessContext process) {
                             process_start_command = null;
                             if (error != null) {

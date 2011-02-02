@@ -297,7 +297,7 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
             flags = delta.getFlags();
         }
         if ((flags & IModelDelta.REMOVED) != 0) return null;
-        if ((flags & IModelDelta.CONTENT) != 0) return null;
+        if ((flags & IModelDelta.CONTENT) != 0 && (flags & IModelDelta.EXPAND) == 0) return null;
         return delta;
     }
 

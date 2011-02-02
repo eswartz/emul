@@ -213,6 +213,26 @@ public class ProcessesProxy implements IProcesses {
         }.token;
     }
 
+    public IToken start(String directory, String file,
+            String[] command_line, Map<String,String> environment,
+            Map<String,Object> params, final DoneStart done) {
+        return new Command(channel, this,
+                "start", new Object[]{ directory, file, command_line,
+                toEnvStringArray(environment), params }) {
+            @SuppressWarnings("unchecked")
+            @Override
+            public void done(Exception error, Object[] args) {
+                ProcessContext ctx = null;
+                if (error == null) {
+                    assert args.length == 2;
+                    error = toError(args[0]);
+                    if (args[1] != null) ctx = new ProcessContext((Map<String,Object>)args[1]);
+                }
+                done.doneStart(token, error, ctx);
+            }
+        }.token;
+    }
+
     public IToken getSignalList(String context_id, final DoneGetSignalList done) {
         return new Command(channel, ProcessesProxy.this,
                 "getSignalList", new Object[]{ context_id }) {

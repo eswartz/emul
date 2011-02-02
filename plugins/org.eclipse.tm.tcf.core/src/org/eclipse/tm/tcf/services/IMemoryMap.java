@@ -35,7 +35,10 @@ public interface IMemoryMap extends IService {
         /** Number, region offset in the file */
         PROP_OFFSET = "Offs",
 
-        /** Number, region flags, see FLAG_* */
+        /** Boolean, true if the region represents BSS */
+        PROP_BSS = "BSS",
+
+        /** Number, region memory protection flags, see FLAG_* */
         PROP_FLAGS = "Flags",
 
         /** String, name of the file */
