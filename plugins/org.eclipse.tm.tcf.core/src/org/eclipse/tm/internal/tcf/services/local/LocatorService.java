@@ -984,13 +984,16 @@ public class LocatorService implements ILocator {
             String id = map.get(IPeer.ATTR_ID);
             if (id == null) throw new Exception("Invalid peer info: no ID");
             boolean ok = true;
-            InetAddress peer_addr = getInetAddress(map.get(IPeer.ATTR_IP_HOST));
-            if (peer_addr != null) {
+            String host = map.get(IPeer.ATTR_IP_HOST);
+            if (host != null) {
                 ok = false;
-                for (SubNet subnet : subnets) {
-                    if (subnet.contains(peer_addr)) {
-                        ok = true;
-                        break;
+                InetAddress peer_addr = getInetAddress(host);
+                if (peer_addr != null) {
+                    for (SubNet subnet : subnets) {
+                        if (subnet.contains(peer_addr)) {
+                            ok = true;
+                            break;
+                        }
                     }
                 }
             }
