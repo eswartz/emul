@@ -180,7 +180,7 @@ public class TCFTestSuite {
     }
 
     private void openChannels(IPeer peer) {
-        listener.progress("Openning communication channels...", count_done, count_total);
+        listener.progress("Opening communication channels...", count_done, count_total);
         for (int i = 0; i < channels.length; i++) {
             final IChannel channel = channels[i] = peer.openChannel();
             channel.addChannelListener(new IChannel.IChannelListener() {
