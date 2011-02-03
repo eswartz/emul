@@ -614,7 +614,7 @@ static ELF_File * create_elf_cache(const char * file_name) {
         if (file->debug_info_file_name) trace(LOG_ELF, "Debug info file found %s", file->debug_info_file_name);
     }
     if (error != 0) {
-        trace(LOG_ELF, "Error openning ELF file: %d %s", error, errno_to_str(error));
+        trace(LOG_ELF, "Error opening ELF file: %d %s", error, errno_to_str(error));
         file->error = get_error_report(error);
     }
     if (!elf_cleanup_posted) {
