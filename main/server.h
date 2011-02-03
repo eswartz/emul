@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -22,6 +22,10 @@
 #include <config.h>
 #include <framework/protocol.h>
 
-extern void ini_server(const char * url, Protocol * proto, TCFBroadcastGroup * bcg);
+/*
+ * Create and start TCF server listening on the port that is described by 'url'.
+ * Return 0 on success, return -1 and set errno if error.
+ */
+extern int ini_server(const char * url, Protocol * proto, TCFBroadcastGroup * bcg);
 
 #endif /* D_server */

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -18,9 +18,8 @@
 
 #include <config.h>
 
-#include <stdio.h>
-#include <framework/errors.h>
 #include <framework/myalloc.h>
+#include <framework/exceptions.h>
 #include <framework/proxy.h>
 #include <services/linenumbers.h>
 #include <services/symbols.h>
@@ -69,23 +68,30 @@ static void channel_redirection_listener(Channel * host, Channel * target) {
     }
 }
 
-void ini_server(const char * url, Protocol * p, TCFBroadcastGroup * b) {
+int ini_server(const char * url, Protocol * p, TCFBroadcastGroup * b) {
     ChannelServer * serv = NULL;
-    PeerServer * ps = channel_peer_from_url(url);
+    PeerServer * ps = NULL;
+    Trap trap;
 
-    if (ps == NULL) {
-        fprintf(stderr, "Invalid server URL (-s option value): %s\n", url);
-        exit(1);
+    if (!set_trap(&trap)) {
+        bcg = NULL;
+        proto = NULL;
+        if (ps != NULL) peer_server_free(ps);
+        errno = trap.error;
+        return -1;
     }
+
+    bcg = b;
+    proto = p;
+    ps = channel_peer_from_url(url);
+    if (ps == NULL) str_exception(ERR_OTHER, "Invalid server URL");
     peer_server_addprop(ps, loc_strdup("Name"), loc_strdup("TCF Proxy"));
     peer_server_addprop(ps, loc_strdup("Proxy"), loc_strdup(""));
-    proto = p;
-    bcg = b;
     serv = channel_server(ps);
-    if (serv == NULL) {
-        fprintf(stderr, "Cannot create TCF server: %s\n", errno_to_str(errno));
-        exit(1);
-    }
+    if (serv == NULL) exception(errno);
     serv->new_conn = channel_new_connection;
+
+    clear_trap(&trap);
     add_channel_redirection_listener(channel_redirection_listener);
+    return 0;
 }
