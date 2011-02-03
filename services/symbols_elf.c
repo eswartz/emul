@@ -58,6 +58,8 @@ struct Symbol {
     Symbol * base;
 };
 
+#define is_cardinal_type_pseudo_symbol(s) (s->sym_class == SYM_CLASS_TYPE && s->obj == NULL && s->base == NULL)
+
 #include <services/symbols_alloc.h>
 
 static Context * sym_ctx;
@@ -347,6 +349,7 @@ int find_symbol_by_name(Context * ctx, int frame, char * name, Symbol ** res) {
         else {
             Symbol * sym = alloc_symbol();
             sym->ctx = context_get_group(ctx, CONTEXT_GROUP_PROCESS);
+            sym->frame = STACK_NO_FRAME;
             sym->address = (ContextAddress)ptr;
 
             if (SYM_IS_TEXT(type)) {
@@ -439,6 +442,7 @@ int find_symbol_by_name(Context * ctx, int frame, char * name, Symbol ** res) {
         if (found) {
             Symbol * sym = alloc_symbol();
             sym->ctx = context_get_group(ctx, CONTEXT_GROUP_PROCESS);
+            sym->frame = STACK_NO_FRAME;
             sym->address = (ContextAddress)address;
             sym->sym_class = sym_class;
             *res = sym;
@@ -585,37 +589,6 @@ static int find_by_addr_in_sym_table(DWARFCache * cache, ContextAddress addr, Sy
         }
     }
 
-#if 0
-    while (m < cache->mSymSectionsCnt) {
-        SymbolSection * tbl = cache->mSymSections[m];
-        unsigned n = 1;
-        while (n < tbl->mSymCount) {
-            ContextAddress sym_addr = 0;
-            SymbolInfo sym_info;
-            unpack_elf_symbol_info(tbl, n, &sym_info);
-            if (syminfo2address(prs, &sym_info, &sym_addr) == 0 &&
-                    (sym_addr == addr || sym_addr <= addr && sym_addr + (ContextAddress)sym_info.mSize > addr)) {
-                Symbol * sym = alloc_symbol();
-                sym->frame = STACK_NO_FRAME;
-                sym->ctx = prs;
-                sym->tbl = tbl;
-                sym->index = n;
-                switch (sym_info.mType) {
-                case STT_FUNC:
-                    sym->sym_class = SYM_CLASS_FUNCTION;
-                    break;
-                case STT_OBJECT:
-                    sym->sym_class = SYM_CLASS_REFERENCE;
-                    break;
-                }
-                *res = sym;
-                cnt++;
-            }
-            n++;
-        }
-        m++;
-    }
-#endif
     return cnt == 1;
 }
 
@@ -765,6 +738,7 @@ const char * symbol2id(const Symbol * sym) {
     if (sym->base) {
         char base[256];
         assert(sym->ctx == sym->base->ctx);
+        assert(sym->frame == STACK_NO_FRAME);
         assert(sym->sym_class == SYM_CLASS_TYPE);
         strcpy(base, symbol2id(sym->base));
         snprintf(id, sizeof(id), "PTR%"PRIX64".%s", (uint64_t)sym->size, base);
@@ -840,6 +814,7 @@ int id2symbol(const char * id, Symbol ** res) {
         if (*p == '.') p++;
         if (id2symbol(p, &sym->base)) return -1;
         sym->ctx = sym->base->ctx;
+        sym->frame = STACK_NO_FRAME;
         sym->sym_class = SYM_CLASS_TYPE;
         return 0;
     }
@@ -1003,6 +978,7 @@ static SymbolInfo * sym_info;
 static int unpack(const Symbol * sym) {
     assert(sym->base == NULL);
     assert(sym->size == 0);
+    assert(!is_cardinal_type_pseudo_symbol(sym));
     if (get_sym_context(sym->ctx, sym->frame) < 0) return -1;
     file = NULL;
     cache = NULL;
@@ -1093,6 +1069,14 @@ static U8_T get_object_length(ObjectInfo * obj) {
     return 0;
 }
 
+static void alloc_cardinal_type_pseudo_symbol(Context * ctx, ContextAddress size, Symbol ** type) {
+    *type = alloc_symbol();
+    (*type)->ctx = context_get_group(ctx, CONTEXT_GROUP_PROCESS);
+    (*type)->frame = STACK_NO_FRAME;
+    (*type)->sym_class = SYM_CLASS_TYPE;
+    (*type)->size = size;
+}
+
 int get_symbol_class(const Symbol * sym, int * sym_class) {
     assert(sym->magic == SYMBOL_MAGIC);
     *sym_class = sym->sym_class;
@@ -1101,13 +1085,14 @@ int get_symbol_class(const Symbol * sym, int * sym_class) {
 
 int get_symbol_type(const Symbol * sym, Symbol ** type) {
     assert(sym->magic == SYMBOL_MAGIC);
-    if (sym->base || sym->size) {
+    if (sym->base || is_cardinal_type_pseudo_symbol(sym)) {
         *type = (Symbol *)sym;
         return 0;
     }
     if (sym->sym_class == SYM_CLASS_FUNCTION) {
         *type = alloc_symbol();
         (*type)->ctx = sym->ctx;
+        (*type)->frame = STACK_NO_FRAME;
         (*type)->sym_class = SYM_CLASS_TYPE;
         (*type)->base = (Symbol *)sym;
         return 0;
@@ -1136,7 +1121,7 @@ int get_symbol_type_class(const Symbol * sym, int * type_class) {
         else *type_class = TYPE_CLASS_POINTER;
         return 0;
     }
-    if (sym->size) {
+    if (is_cardinal_type_pseudo_symbol(sym)) {
         *type_class = TYPE_CLASS_CARDINAL;
         return 0;
     }
@@ -1271,7 +1256,7 @@ int get_symbol_update_policy(const Symbol * sym, char ** id, int * policy) {
 
 int get_symbol_name(const Symbol * sym, char ** name) {
     assert(sym->magic == SYMBOL_MAGIC);
-    if (sym->base || sym->size) {
+    if (sym->base || is_cardinal_type_pseudo_symbol(sym)) {
         *name = NULL;
         return 0;
     }
@@ -1303,7 +1288,7 @@ int get_symbol_size(const Symbol * sym, ContextAddress * size) {
         }
         return 0;
     }
-    if (sym->size) {
+    if (is_cardinal_type_pseudo_symbol(sym)) {
         *size = sym->size;
         return 0;
     }
@@ -1379,16 +1364,14 @@ int get_symbol_base_type(const Symbol * sym, Symbol ** base_type) {
             }
             else {
                 /* Function return type is 'void' */
-                *base_type = alloc_symbol();
-                (*base_type)->ctx = sym->ctx;
-                (*base_type)->sym_class = SYM_CLASS_TYPE;
+                alloc_cardinal_type_pseudo_symbol(sym->ctx, 0, base_type);
             }
             return 0;
         }
         *base_type = sym->base;
         return 0;
     }
-    if (sym->size) {
+    if (is_cardinal_type_pseudo_symbol(sym)) {
         errno = ERR_INV_CONTEXT;
         return -1;
     }
@@ -1409,6 +1392,11 @@ int get_symbol_base_type(const Symbol * sym, Symbol ** base_type) {
                 return 0;
             }
         }
+        if (obj->mTag == TAG_pointer_type && obj->mType == NULL) {
+            /* pointer to void */
+            alloc_cardinal_type_pseudo_symbol(sym->ctx, 0, base_type);
+            return 0;
+        }
         obj = obj->mType;
         if (obj != NULL) {
             object2symbol(obj, base_type);
@@ -1426,13 +1414,10 @@ int get_symbol_index_type(const Symbol * sym, Symbol ** index_type) {
             errno = ERR_INV_CONTEXT;
             return -1;
         }
-        *index_type = alloc_symbol();
-        (*index_type)->ctx = sym->ctx;
-        (*index_type)->sym_class = SYM_CLASS_TYPE;
-        (*index_type)->size = context_word_size(sym->ctx);
+        alloc_cardinal_type_pseudo_symbol(sym->ctx, context_word_size(sym->ctx), index_type);
         return 0;
     }
-    if (sym->size) {
+    if (is_cardinal_type_pseudo_symbol(sym)) {
         errno = ERR_INV_CONTEXT;
         return -1;
     }
@@ -1464,7 +1449,7 @@ int get_symbol_length(const Symbol * sym, ContextAddress * length) {
         *length = sym->size == 0 ? 1 : sym->size;
         return 0;
     }
-    if (sym->size) {
+    if (is_cardinal_type_pseudo_symbol(sym)) {
         errno = ERR_INV_CONTEXT;
         return -1;
     }
@@ -1499,7 +1484,7 @@ int get_symbol_lower_bound(const Symbol * sym, int64_t * value) {
         *value = 0;
         return 0;
     }
-    if (sym->size) {
+    if (is_cardinal_type_pseudo_symbol(sym)) {
         errno = ERR_INV_CONTEXT;
         return -1;
     }
@@ -1566,7 +1551,7 @@ int get_symbol_children(const Symbol * sym, Symbol *** children, int * count) {
         *count = 0;
         return 0;
     }
-    if (sym->size) {
+    if (is_cardinal_type_pseudo_symbol(sym)) {
         *children = NULL;
         *count = 0;
         return 0;
@@ -1599,7 +1584,7 @@ int get_symbol_children(const Symbol * sym, Symbol *** children, int * count) {
 
 int get_symbol_offset(const Symbol * sym, ContextAddress * offset) {
     assert(sym->magic == SYMBOL_MAGIC);
-    if (sym->base || sym->size) {
+    if (sym->base || is_cardinal_type_pseudo_symbol(sym)) {
         errno = ERR_INV_CONTEXT;
         return -1;
     }
@@ -1616,7 +1601,7 @@ int get_symbol_offset(const Symbol * sym, ContextAddress * offset) {
 
 int get_symbol_value(const Symbol * sym, void ** value, size_t * size) {
     assert(sym->magic == SYMBOL_MAGIC);
-    if (sym->base || sym->size) {
+    if (sym->base || is_cardinal_type_pseudo_symbol(sym)) {
         errno = ERR_INV_CONTEXT;
         return -1;
     }
@@ -1678,7 +1663,7 @@ int get_symbol_value(const Symbol * sym, void ** value, size_t * size) {
 
 int get_symbol_address(const Symbol * sym, ContextAddress * address) {
     assert(sym->magic == SYMBOL_MAGIC);
-    if (sym->base || sym->size) {
+    if (sym->base || is_cardinal_type_pseudo_symbol(sym)) {
         errno = ERR_INV_CONTEXT;
         return -1;
     }
@@ -1710,8 +1695,12 @@ int get_symbol_address(const Symbol * sym, ContextAddress * address) {
 
 int get_array_symbol(const Symbol * sym, ContextAddress length, Symbol ** ptr) {
     assert(sym->magic == SYMBOL_MAGIC);
+    assert(sym->sym_class == SYM_CLASS_TYPE);
+    assert(sym->frame == STACK_NO_FRAME);
+    assert(sym->ctx == context_get_group(sym->ctx, CONTEXT_GROUP_PROCESS));
     *ptr = alloc_symbol();
     (*ptr)->ctx = sym->ctx;
+    (*ptr)->frame = STACK_NO_FRAME;
     (*ptr)->sym_class = SYM_CLASS_TYPE;
     (*ptr)->base = (Symbol *)sym;
     (*ptr)->size = length;
