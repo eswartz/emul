@@ -387,7 +387,7 @@ int find_symbol_by_name(Context * ctx, int frame, char * name, Symbol ** res) {
                         found = find_by_name_in_pub_names(cache, &cache->mPubTypes, name, res);
                     }
                 }
-                else {
+                if (!found) {
                     found = find_by_name_in_sym_table(cache, name, res);
                 }
                 clear_trap(&trap);
