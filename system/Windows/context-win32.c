@@ -528,32 +528,32 @@ static int win32_resume(Context * ctx, int step) {
                 }
                 Dr7 |= 1u << (i * 2);
                 if (bp->access_types == CTX_BP_ACCESS_INSTRUCTION) {
-                    Dr7 &= ~(3u << (i * 2 + 16));
+                    Dr7 &= ~(3u << (i * 4 + 16));
                 }
                 else if (bp->access_types == CTX_BP_ACCESS_DATA_WRITE) {
-                    Dr7 &= ~(3u << (i * 2 + 16));
-                    Dr7 |= 1u << (i * 2 + 16);
+                    Dr7 &= ~(3u << (i * 4 + 16));
+                    Dr7 |= 1u << (i * 4 + 16);
                 }
                 else if (bp->access_types == (CTX_BP_ACCESS_DATA_READ | CTX_BP_ACCESS_DATA_WRITE)) {
-                    Dr7 |= 3u << (i * 2 + 16);
+                    Dr7 |= 3u << (i * 4 + 16);
                 }
                 else {
                     errno = set_errno(ERR_UNSUPPORTED, "Invalid hardware breakpoint: unsupported access mode");
                     return -1;
                 }
                 if (bp->length == 1) {
-                    Dr7 &= ~(3u << (i * 2 + 24));
+                    Dr7 &= ~(3u << (i * 4 + 18));
                 }
                 else if (bp->length == 2) {
-                    Dr7 &= ~(3u << (i * 2 + 24));
-                    Dr7 |= 1u << (i * 2 + 24);
+                    Dr7 &= ~(3u << (i * 4 + 18));
+                    Dr7 |= 1u << (i * 4 + 18);
                 }
                 else if (bp->length == 4) {
-                    Dr7 &= ~(3u << (i * 2 + 24));
-                    Dr7 |= 2u << (i * 2 + 24);
+                    Dr7 |= 3u << (i * 4 + 18);
                 }
                 else if (bp->length == 8) {
-                    Dr7 |= 3u << (i * 2 + 24);
+                    Dr7 &= ~(3u << (i * 4 + 18));
+                    Dr7 |= 2u << (i * 4 + 18);
                 }
                 else {
                     errno = set_errno(ERR_UNSUPPORTED, "Invalid hardware breakpoint: unsupported length");
@@ -1186,7 +1186,7 @@ int context_plant_breakpoint(ContextBreakpoint * bp) {
     if (ctx->mem == ctx) {
         ContextExtensionWin32 * ext = EXT(ctx);
         DebugState * debug_state = ext->debug_state;
-        if (debug_state->ok_to_use_hw_bp) {
+        if (debug_state->ok_to_use_hw_bp && bp->length <= 8 && ((1u << bp->length) & 0x116u)) {
             if (bp->access_types == CTX_BP_ACCESS_INSTRUCTION) {
                 /* Don't use more then 2 HW slots for regular instruction breakpoints */
                 int cnt = 0;

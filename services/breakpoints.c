@@ -99,6 +99,7 @@ struct InstructionRef {
     BreakpointInfo * bp;
     Context * ctx;
     ContextAddress addr;
+    ContextAddress size;
     ErrorReport * address_error;
     int cnt;
 };
@@ -200,9 +201,10 @@ static unsigned id2bp_hash(char * id) {
     return hash % ID2BP_HASH_SIZE;
 }
 
-static unsigned get_bi_access_types(BreakInstruction * bi) {
+static void get_bi_access_types(BreakInstruction * bi, unsigned * access_types, ContextAddress * access_size) {
     int i;
     unsigned t = 0;
+    ContextAddress sz = 0;
     for (i = 0; i < bi->ref_cnt; i++) {
         if (bi->refs[i].cnt) {
             int md = bi->refs[i].bp->access_mode;
@@ -212,10 +214,12 @@ static unsigned get_bi_access_types(BreakInstruction * bi) {
             else {
                 t |= md;
             }
+            if (sz < bi->refs[i].size) sz = bi->refs[i].size;
             /* TODO: parse type (soft|hw) */
         }
     }
-    return t;
+    *access_types = t;
+    *access_size = sz;
 }
 
 static void plant_instruction(BreakInstruction * bi) {
@@ -231,8 +235,7 @@ static void plant_instruction(BreakInstruction * bi) {
     if (bi->cb.address == 0) return;
     assert(is_all_stopped(bi->cb.ctx));
 
-    bi->cb.access_types = get_bi_access_types(bi);
-    bi->cb.length = 1;
+    get_bi_access_types(bi, &bi->cb.access_types, &bi->cb.length);
 
     bi->saved_size = 0;
     if (context_plant_breakpoint(&bi->cb) < 0) {
@@ -326,6 +329,7 @@ static void clear_instruction_refs(Context * ctx) {
         BreakInstruction * bi = link_all2bi(l);
         for (i = 0; i < bi->ref_cnt; i++) {
             if (bi->refs[i].ctx == ctx) {
+                bi->refs[i].size = 0;
                 bi->refs[i].cnt = 0;
                 bi->valid = 0;
             }
@@ -368,9 +372,14 @@ static void flush_instructions(void) {
             else if (!bi->planted) {
                 plant_instruction(bi);
             }
-            else if (bi->cb.access_types != get_bi_access_types(bi)) {
-                remove_instruction(bi);
-                plant_instruction(bi);
+            else {
+                unsigned type = 0;
+                ContextAddress size = 0;
+                get_bi_access_types(bi, &type, &size);
+                if (bi->cb.access_types != type || bi->cb.length != size) {
+                    remove_instruction(bi);
+                    plant_instruction(bi);
+                }
             }
         }
     }
@@ -533,6 +542,10 @@ static void write_breakpoint_status(OutputStream * out, BreakpointInfo * bp) {
                     json_write_string(out, "Address");
                     write_stream(out, ':');
                     json_write_uint64(out, bi->refs[i].addr);
+                    write_stream(out, ',');
+                    json_write_string(out, "Size");
+                    write_stream(out, ':');
+                    json_write_uint64(out, bi->refs[i].size);
                     if (bi->planting_error != NULL) {
                         write_stream(out, ',');
                         json_write_string(out, "Error");
@@ -574,8 +587,10 @@ static void send_event_breakpoint_status(OutputStream * out, BreakpointInfo * bp
     write_stream(out, MARKER_EOM);
 }
 
-static InstructionRef * link_breakpoint_instruction(BreakpointInfo * bp, Context * ctx, ContextAddress ctx_addr, Context * mem, ContextAddress mem_addr) {
+static InstructionRef * link_breakpoint_instruction(BreakpointInfo * bp, Context * ctx,
+        ContextAddress ctx_addr, ContextAddress size, Context * mem, ContextAddress mem_addr) {
     BreakInstruction * bi = NULL;
+    InstructionRef * ref = NULL;
     bi = find_instruction(mem, mem_addr);
     if (bi == NULL) {
         bi = add_instruction(mem, mem_addr);
@@ -583,11 +598,13 @@ static InstructionRef * link_breakpoint_instruction(BreakpointInfo * bp, Context
     else {
         int i = 0;
         while (i < bi->ref_cnt) {
-            if (bi->refs[i].bp == bp && bi->refs[i].ctx == ctx) {
+            ref = bi->refs + i;
+            if (ref->bp == bp && ref->ctx == ctx) {
                 assert(!bi->valid);
-                bi->refs[i].addr = ctx_addr;
-                bi->refs[i].cnt++;
-                return bi->refs + i;
+                if (ref->size < size) ref->size = size;
+                ref->addr = ctx_addr;
+                ref->cnt++;
+                return ref;
             }
             i++;
         }
@@ -596,16 +613,18 @@ static InstructionRef * link_breakpoint_instruction(BreakpointInfo * bp, Context
         bi->ref_size = bi->ref_size == 0 ? 8 : bi->ref_size * 2;
         bi->refs = (InstructionRef *)loc_realloc(bi->refs, sizeof(InstructionRef) * bi->ref_size);
     }
+    ref = bi->refs + bi->ref_cnt++;
     context_lock(ctx);
-    memset(bi->refs + bi->ref_cnt, 0, sizeof(InstructionRef));
-    bi->refs[bi->ref_cnt].bp = bp;
-    bi->refs[bi->ref_cnt].ctx = ctx;
-    bi->refs[bi->ref_cnt].addr = ctx_addr;
-    bi->refs[bi->ref_cnt].cnt = 1;
+    memset(ref, 0, sizeof(InstructionRef));
+    ref->bp = bp;
+    ref->ctx = ctx;
+    ref->addr = ctx_addr;
+    ref->size = size;
+    ref->cnt = 1;
     bi->valid = 0;
     bp->instruction_cnt++;
     bp->status_changed = 1;
-    return bi->refs + bi->ref_cnt++;
+    return ref;
 }
 
 static void address_expression_error(Context * ctx, BreakpointInfo * bp, int error) {
@@ -616,10 +635,10 @@ static void address_expression_error(Context * ctx, BreakpointInfo * bp, int err
     rp = get_error_report(error);
     assert(rp != NULL);
     if (ctx != NULL) {
-        InstructionRef * rf = link_breakpoint_instruction(bp, ctx, 0, ctx, 0);
-        if (!compare_error_reports(rp, rf->address_error)) {
-            release_error_report(rf->address_error);
-            rf->address_error = rp;
+        InstructionRef * ref = link_breakpoint_instruction(bp, ctx, 0, 0, ctx, 0);
+        if (!compare_error_reports(rp, ref->address_error)) {
+            release_error_report(ref->address_error);
+            ref->address_error = rp;
             bp->status_changed = 1;
         }
         else {
@@ -636,14 +655,14 @@ static void address_expression_error(Context * ctx, BreakpointInfo * bp, int err
     }
 }
 
-static void plant_breakpoint(Context * ctx, BreakpointInfo * bp, ContextAddress addr) {
+static void plant_breakpoint(Context * ctx, BreakpointInfo * bp, ContextAddress addr, ContextAddress size) {
     Context * mem = NULL;
     ContextAddress mem_addr;
     if (context_get_canonical_addr(ctx, addr, &mem, &mem_addr, NULL, NULL) < 0) {
         address_expression_error(ctx, bp, errno);
     }
     else {
-        link_breakpoint_instruction(bp, ctx, addr, mem, mem_addr);
+        link_breakpoint_instruction(bp, ctx, addr, size, mem, mem_addr);
     }
 }
 
@@ -929,17 +948,30 @@ static void expr_cache_exit(EvaluationArgs * args) {
 static void evaluate_address_expression(void * x) {
     EvaluationArgs * args = (EvaluationArgs *)x;
     BreakpointInfo * bp = args->bp;
-    ContextAddress a = 0;
+    ContextAddress addr = 0;
+    ContextAddress size = 1;
+    int error = 0;
     Value v;
 
     assert(cache_enter_cnt > 0);
-    if (evaluate_expression(args->ctx, STACK_NO_FRAME, bp->address, 1, &v) < 0 ||
-            value_to_address(&v, &a) < 0) {
-        address_expression_error(args->ctx, bp, errno);
+    if (evaluate_expression(args->ctx, STACK_NO_FRAME, bp->address, 1, &v) < 0) error = errno;
+    if (!error && value_to_address(&v, &addr) < 0) error = errno;
+    if (bp->access_mode & (CTX_BP_ACCESS_DATA_READ | CTX_BP_ACCESS_DATA_WRITE)) {
+        Symbol * type = v.type;
+        if (type != NULL) {
+            int type_class = 0;
+            Symbol * base_type = NULL;
+            if (!error && get_symbol_type_class(type, &type_class) < 0) error = errno;
+            if (!error && type_class != TYPE_CLASS_POINTER) error = set_errno(ERR_INV_DATA_TYPE, "Pointer expected");
+            if (!error && get_symbol_base_type(type, &base_type) < 0) error = errno;
+            if (!error && base_type != NULL && get_symbol_size(base_type, &size) < 0) error = errno;
+        }
+        else {
+            size = context_word_size(args->ctx);
+        }
     }
-    else {
-        plant_breakpoint(args->ctx, bp, a);
-    }
+    if (error) address_expression_error(args->ctx, bp, error);
+    else plant_breakpoint(args->ctx, bp, addr, size);
     expr_cache_exit(args);
 }
 
@@ -947,7 +979,7 @@ static void evaluate_address_expression(void * x) {
 static void plant_breakpoint_address_iterator(CodeArea * area, void * x) {
     EvaluationArgs * args = (EvaluationArgs *)x;
     BreakpointInfo * bp = args->bp;
-    plant_breakpoint(args->ctx, bp, area->start_address);
+    plant_breakpoint(args->ctx, bp, area->start_address, 1);
 }
 
 static void evaluate_text_location(void * x) {
