@@ -1101,6 +1101,8 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                     }
                     if (!node.expression.validate(this)) return;
                     if (node.expression.getData() != null && node.expression.getData().expression.canAssign()) {
+                        if (!node.value.validate(this)) return;
+                        if (!node.type.validate(this)) return;
                         if (TCFColumnPresentationExpression.COL_HEX_VALUE.equals(property)) {
                             done(TCFNumberFormat.isValidHexNumber(node.toNumberString(16)) == null);
                             return;

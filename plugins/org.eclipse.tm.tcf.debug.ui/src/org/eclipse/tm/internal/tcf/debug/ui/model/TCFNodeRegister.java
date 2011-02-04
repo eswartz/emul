@@ -396,6 +396,7 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
                 public void run() {
                     if (!node.context.validate(this)) return;
                     if (node.context.getData() != null && node.context.getData().isWriteable()) {
+                        if (!node.value.validate(this)) return;
                         if (TCFColumnPresentationRegister.COL_HEX_VALUE.equals(property)) {
                             done(TCFNumberFormat.isValidHexNumber(node.toNumberString(16)) == null);
                             return;
