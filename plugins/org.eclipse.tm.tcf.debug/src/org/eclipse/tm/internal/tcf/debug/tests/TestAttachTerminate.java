@@ -61,7 +61,7 @@ class TestAttachTerminate implements ITCFTest, IRunControl.RunControlListener {
                                     public void run() {
                                         if (!test_suite.isActive(TestAttachTerminate.this)) return;
                                         cnt++;
-                                        if (cnt < 10) {
+                                        if (cnt < 30) {
                                             Protocol.invokeLater(1000, this);
                                         }
                                         else if (test_suite.cancel) {
