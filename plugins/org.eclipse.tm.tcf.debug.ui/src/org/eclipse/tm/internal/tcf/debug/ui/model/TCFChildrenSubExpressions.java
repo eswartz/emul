@@ -160,7 +160,7 @@ public class TCFChildrenSubExpressions extends TCFChildren {
                 if (base_type_cache != null) {
                     if (!base_type_cache.validate(this)) return false;
                     ISymbols.Symbol base_type_data = base_type_cache.getData();
-                    if (base_type_data == null || base_type_data.getSize() != 0) {
+                    if (base_type_data != null && base_type_data.getSize() > 0) {
                         if (base_type_data.getTypeClass() == ISymbols.TypeClass.composite) {
                             TCFDataCache<String[]> children_cache = node.model.getSymbolChildrenCache(base_type_data.getID());
                             if (children_cache != null) {
