@@ -1803,10 +1803,13 @@ static void command_bp_remove(char * token, Channel * c) {
 
 static void command_get_capabilities(char * token, Channel * c) {
     char id[256];
+    Context * ctx;
 
     json_read_string(&c->inp, id, sizeof(id));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+    ctx = id2ctx(id);
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
@@ -1832,10 +1835,12 @@ static void command_get_capabilities(char * token, Channel * c) {
     json_write_string(&c->out, "Condition");
     write_stream(&c->out, ':');
     json_write_boolean(&c->out, 1);
-    write_stream(&c->out, ',');
-    json_write_string(&c->out, "AccessMode");
-    write_stream(&c->out, ':');
-    json_write_long(&c->out, context_get_supported_bp_access_types(id2ctx(id)));
+    if (ctx != NULL) {
+        write_stream(&c->out, ',');
+        json_write_string(&c->out, "AccessMode");
+        write_stream(&c->out, ':');
+        json_write_long(&c->out, context_get_supported_bp_access_types(ctx));
+    }
     write_stream(&c->out, ',');
     json_write_string(&c->out, "ContextIds");
     write_stream(&c->out, ':');
