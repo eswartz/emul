@@ -25,6 +25,9 @@ public class DictEntry implements Comparable<DictEntry> {
 
 	private int link;
 	private int addr;
+	private int endAddr;
+
+	
 	private String name;
 	private int headerSize;
 	private int codeSize;
@@ -41,6 +44,7 @@ public class DictEntry implements Comparable<DictEntry> {
 	private boolean targetOnly;
 	
 	
+	
 	/**
 	 * @param name 
 	 * 
@@ -51,6 +55,23 @@ public class DictEntry implements Comparable<DictEntry> {
 		this.name = name;
 	}
 	
+	
+	public int getEndAddr() {
+		return endAddr;
+	}
+
+
+	public void setEndAddr(int endAddr) {
+		this.endAddr = endAddr;
+	}
+
+	public int getSize(TargetContext context) {
+		if (endAddr != 0)
+			return endAddr - addr;
+		else
+			return context.getDP() - addr;
+	}
+
 	/* (non-Javadoc)
 	 * @see v9t9.forthcomp.ITargetWord#getHeaderSize()
 	 */

@@ -50,11 +50,10 @@ public class ForthComp {
 		TargetContext targetContext = null;
 		
 		String consoleOutFile = null;
-		String gromOutFile = null;
 		PrintStream logfile = System.out;
 		boolean doHistogram = false;
 		
-        Getopt getopt = new Getopt(PROGNAME, args, "?c:g:l:bh");
+        Getopt getopt = new Getopt(PROGNAME, args, "?c:l:bh");
         int opt;
         while ((opt = getopt.getopt()) != -1) {
             switch (opt) {
@@ -63,9 +62,6 @@ public class ForthComp {
                 break;
             case 'c':
             	consoleOutFile = getopt.getOptarg();
-            	break;
-            case 'g':
-            	gromOutFile = getopt.getOptarg();
             	break;
             case 'l':
 				logfile = new PrintStream(new File(getopt.getOptarg()));
@@ -83,7 +79,7 @@ public class ForthComp {
         if (targetContext == null)
         	targetContext = new F99TargetContext(65536);
         HostContext hostContext = new HostContext(targetContext);
-        ForthComp comp = new ForthComp(hostContext, targetContext);
+        final ForthComp comp = new ForthComp(hostContext, targetContext);
         
         comp.setLog(logfile);
         
@@ -113,7 +109,7 @@ public class ForthComp {
     	}
         
     	comp.getTargetContext().alignDP();
-    	comp.saveMemory(consoleOutFile, gromOutFile);
+    	comp.saveMemory(consoleOutFile);
     	
     	if (doHistogram) {
 	    	List<DictEntry> sortedDict = new ArrayList<DictEntry>(comp.getTargetContext().getTargetDictionary().values());
@@ -129,6 +125,26 @@ public class ForthComp {
 	    		logfile.println("\t" + entry.getUses() +"\t" + entry.getName() );
 	    		
 	    	}
+	    	
+	    	
+	    	logfile.println("Word sizes:");
+			
+	    	Collections.sort(sortedDict, new Comparator<DictEntry>() {
+					public int compare(DictEntry o1, DictEntry o2) {
+						return o1.getSize(comp.getTargetContext()) - o2.getSize(comp.getTargetContext());
+					}
+				}
+	    	);
+	    	
+	    	int realSize = 0;
+	    	int ifAlignedSize = 0;
+	    	for (DictEntry entry : sortedDict) {
+	    		int size = entry.getSize(comp.getTargetContext());
+				logfile.println("\t" + entry.getName() + "\t" + size );
+	    		realSize += size;
+	    		ifAlignedSize += (size + 3) / 4 * 4;
+	    	}
+	    	//System.out.println("real size = " + realSize + "; if aligned = " + ifAlignedSize);
     	}
 	}
 
@@ -220,13 +236,11 @@ public class ForthComp {
 			word.getInterpretationSemantics().execute(hostContext, targetContext);
 		} else {
 			word = targetContext.find(token);
-			boolean isLit = false;
 			if (word == null) {
 				word = hostContext.find(token);
 			}
 			if (word == null) {
 				word = parseLiteral(token);
-				isLit = true;
 			}
 			if (word == null) {
 				word = targetContext.defineForward(token, hostContext.getStream().getLocation());
@@ -325,7 +339,7 @@ public class ForthComp {
 	 * @throws AbortException 
 	 * 
 	 */
-	private void saveMemory(String consoleOutFile, String gromOutFile) throws FileNotFoundException, IOException, AbortException {
+	private void saveMemory(String consoleOutFile) throws FileNotFoundException, IOException, AbortException {
 	
 		final MemoryDomain console = targetContext.createMemory();
 		targetContext.exportMemory(console);

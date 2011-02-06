@@ -46,6 +46,7 @@ public abstract class TargetContext extends Context {
 	private Map<String, DictEntry> dictEntryMap = new LinkedHashMap<String, DictEntry>();
 	
 	private DictEntry lastEntry;
+	private DictEntry lastExportedEntry;
 	/** in bytes */
 	protected int cellSize;
 	private boolean export;
@@ -215,12 +216,17 @@ public abstract class TargetContext extends Context {
 			logfile.println("*** Redefining " + name);
 		dictEntryMap.put(name.toUpperCase(), entry);
 		
+		if (lastEntry != null) 
+			lastEntry.setEndAddr(entryAddr);
+		lastEntry = entry;
+		
 		if (doExport) {
-			if (lastEntry != null)
-				entry.setLink(lastEntry.getAddr());
-			lastEntry = entry;
+			if (lastExportedEntry != null) {
+				entry.setLink(lastExportedEntry.getAddr());
+			}
 			
 			entry.writeEntry(this);
+			lastExportedEntry = entry;
 		}
 
 		symbols.put(entry.getContentAddr(), name);
@@ -485,6 +491,7 @@ public abstract class TargetContext extends Context {
 		relocs.clear();
 		relocEntries.clear();
 		lastEntry = null;
+		lastExportedEntry = null;
 		Arrays.fill(memory, (byte) 0);
 	}
 
