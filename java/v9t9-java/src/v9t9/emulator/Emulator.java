@@ -116,15 +116,6 @@ public class Emulator {
 	        //Compiler.settingCompileOptimizeCallsWithData.setBoolean(true);
 	        //Compiler.settingCompileFunctions.setBoolean(true);
     	}
-        
-        if (false) {
-        	//Executor.settingDumpInstructions.setBoolean(true);
-        	//Compiler.settingDebugInstructions.setBoolean(true);
-        	Executor.settingDumpFullInstructions.setBoolean(true);
-        }
-        
-        VdpTMS9918A.settingDumpVdpAccess.setBoolean(true);
-        GplMmio.settingDumpGplAccess.setBoolean(true);
     }
     
 	protected void loadState() {
@@ -197,6 +188,15 @@ public class Emulator {
         machine = model.createMachine();
 
         Client client = createClient(args, machine);
+        
+        if (findArgument(args, "--dump")) {
+        	//Executor.settingDumpInstructions.setBoolean(true);
+        	//Compiler.settingDebugInstructions.setBoolean(true);
+        	Executor.settingDumpFullInstructions.setBoolean(true);
+        	VdpTMS9918A.settingDumpVdpAccess.setBoolean(true);
+        	GplMmio.settingDumpGplAccess.setBoolean(true);
+        }
+        
         
         Emulator.createAndRun(machine, client);
     }
