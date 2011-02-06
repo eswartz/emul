@@ -502,6 +502,9 @@ public class KeyboardState {
 					if (!onoff)
 						return false;
 				}
+				else if (delta.key == key && oldestTime + (1000 / 30) <= time && onoff) {
+					return false;
+				}
 				if (DEBUG) System.out.println("... keeping " + delta + " with " + this);
 			}
 			return true;
