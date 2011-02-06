@@ -156,7 +156,7 @@ public class SoundOutput implements ISoundOutput {
 				
 					int active = 0;
 					for (ISoundVoice v : voices) {
-						if (v.isActive()) {
+						if (v != null && v.isActive()) {
 							//Arrays.fill(soundGeneratorWorkBuffer2, 0);
 							anyChanged |= v.generate(soundGeneratorWorkBuffer, lastUpdatedPos, to);
 							active++;
