@@ -176,7 +176,7 @@ public class Executor {
 			}
 			long end = System.currentTimeMillis();
 			cpu.checkAndHandleInterrupts();
-			cpu.addCycles(cpu.getBaseCyclesPerSec() * (int)(end - start) / 1000);
+			cpu.addCycles(cpu.getBaseCyclesPerSec() * (int)(end - start + 500) / 1000);
     	} else {
 			if (settingCompile.getBoolean()) {
 				executeCompilableCode();
