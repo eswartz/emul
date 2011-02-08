@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -945,41 +945,50 @@ static void expr_cache_exit(EvaluationArgs * args) {
     run_ctrl_unlock();
 }
 
-static void evaluate_address_expression(void * x) {
-    EvaluationArgs * args = (EvaluationArgs *)x;
-    BreakpointInfo * bp = args->bp;
+static void plant_at_address_expression(Context * ctx, ContextAddress ip, BreakpointInfo * bp) {
     ContextAddress addr = 0;
     ContextAddress size = 1;
     int error = 0;
     Value v;
 
-    assert(cache_enter_cnt > 0);
-    if (evaluate_expression(args->ctx, STACK_NO_FRAME, bp->address, 1, &v) < 0) error = errno;
+    if (evaluate_expression(ctx, STACK_NO_FRAME, ip, bp->address, 1, &v) < 0) error = errno;
     if (!error && value_to_address(&v, &addr) < 0) error = errno;
     if (bp->access_mode & (CTX_BP_ACCESS_DATA_READ | CTX_BP_ACCESS_DATA_WRITE)) {
-        Symbol * type = v.type;
-        if (type != NULL) {
-            int type_class = 0;
-            Symbol * base_type = NULL;
-            if (!error && get_symbol_type_class(type, &type_class) < 0) error = errno;
-            if (!error && type_class != TYPE_CLASS_POINTER) error = set_errno(ERR_INV_DATA_TYPE, "Pointer expected");
-            if (!error && get_symbol_base_type(type, &base_type) < 0) error = errno;
-            if (!error && base_type != NULL && get_symbol_size(base_type, &size) < 0) error = errno;
+        size = context_word_size(ctx);
+#if ENABLE_Symbols
+        {
+            Symbol * type = v.type;
+            if (type != NULL) {
+                int type_class = 0;
+                Symbol * base_type = NULL;
+                if (!error && get_symbol_type_class(type, &type_class) < 0) error = errno;
+                if (!error && type_class != TYPE_CLASS_POINTER) error = set_errno(ERR_INV_DATA_TYPE, "Pointer expected");
+                if (!error && get_symbol_base_type(type, &base_type) < 0) error = errno;
+                if (!error && base_type != NULL && get_symbol_size(base_type, &size) < 0) error = errno;
+            }
         }
-        else {
-            size = context_word_size(args->ctx);
-        }
+#endif
     }
-    if (error) address_expression_error(args->ctx, bp, error);
-    else plant_breakpoint(args->ctx, bp, addr, size);
+    if (error) address_expression_error(ctx, bp, error);
+    else plant_breakpoint(ctx, bp, addr, size);
+}
+
+static void evaluate_address_expression(void * x) {
+    EvaluationArgs * args = (EvaluationArgs *)x;
+    assert(cache_enter_cnt > 0);
+    plant_at_address_expression(args->ctx, 0, args->bp);
     expr_cache_exit(args);
 }
 
 #if ENABLE_LineNumbers
 static void plant_breakpoint_address_iterator(CodeArea * area, void * x) {
     EvaluationArgs * args = (EvaluationArgs *)x;
-    BreakpointInfo * bp = args->bp;
-    plant_breakpoint(args->ctx, bp, area->start_address, 1);
+    if (args->bp->address == NULL) {
+        plant_breakpoint(args->ctx, args->bp, area->start_address, 1);
+    }
+    else {
+        plant_at_address_expression(args->ctx, area->start_address, args->bp);
+    }
 }
 
 static void evaluate_text_location(void * x) {
@@ -1029,7 +1038,7 @@ static void evaluate_condition(void * x) {
         if (bp->condition != NULL) {
             Value v;
             int b = 0;
-            if (evaluate_expression(ctx, STACK_TOP_FRAME, bp->condition, 1, &v) < 0 || value_to_boolean(&v, &b) < 0) {
+            if (evaluate_expression(ctx, STACK_TOP_FRAME, 0, bp->condition, 1, &v) < 0 || value_to_boolean(&v, &b) < 0) {
                 int no = get_error_code(errno);
                 if (no == ERR_CACHE_MISS) continue;
                 if (no == ERR_CHANNEL_CLOSED) continue;
@@ -1076,16 +1085,16 @@ static void event_replant_breakpoints(void * arg) {
                     l = l->next;
                     if (is_disabled(bp)) continue;
                     if (!check_context_ids(bp, ctx)) continue;
-                    if (bp->address != NULL) {
-                        expr_cache_enter(evaluate_address_expression, bp, ctx);
-                    }
-                    else if (bp->file != NULL) {
+                    if (bp->file != NULL) {
 #if ENABLE_LineNumbers
                         expr_cache_enter(evaluate_text_location, bp, ctx);
 #else
                         set_errno(ERR_UNSUPPORTED, "LineNumbers service not available");
                         address_expression_error(NULL, bp, errno);
 #endif
+                    }
+                    else if (bp->address != NULL) {
+                        expr_cache_enter(evaluate_address_expression, bp, ctx);
                     }
                     else {
                         address_expression_error(NULL, bp, ERR_INV_EXPRESSION);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -271,6 +271,7 @@ static void command_get_children(char * token, Channel * c) {
 typedef struct CommandFindByNameArgs {
     char token[256];
     char id[256];
+    ContextAddress ip;
     char * name;
 } CommandFindByNameArgs;
 
@@ -286,7 +287,7 @@ static void command_find_by_name_cache_client(void * x) {
     if (ctx == NULL) err = set_errno(ERR_INV_CONTEXT, args->id);
     else if (ctx->exited) err = ERR_ALREADY_EXITED;
 
-    if (err == 0 && find_symbol_by_name(ctx, frame, args->name, &sym) < 0) err = errno;
+    if (err == 0 && find_symbol_by_name(ctx, frame, args->ip, args->name, &sym) < 0) err = errno;
 
     cache_exit();
 
@@ -311,6 +312,10 @@ static void command_find_by_name(char * token, Channel * c) {
 
     json_read_string(&c->inp, args.id, sizeof(args.id));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (peek_stream(&c->inp) != '"' && peek_stream(&c->inp) != 'n') {
+        args.ip = (ContextAddress)json_read_uint64(&c->inp);
+        if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    }
     args.name = json_read_alloc_string(&c->inp);
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);

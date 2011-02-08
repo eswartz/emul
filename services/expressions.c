@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -86,6 +86,7 @@ static StringValue * str_alloc_list = NULL;
 
 static Context * expression_context = NULL;
 static int expression_frame = STACK_NO_FRAME;
+static ContextAddress expression_addr = 0;
 
 #define MAX_ID_CALLBACKS 8
 static ExpressionIdentifierCallBack * id_callbacks[MAX_ID_CALLBACKS];
@@ -547,7 +548,7 @@ static int identifier(char * name, Value * v) {
 #if ENABLE_Symbols
     {
         Symbol * sym = NULL;
-        if (find_symbol_by_name(expression_context, expression_frame, name, &sym) < 0) {
+        if (find_symbol_by_name(expression_context, expression_frame, expression_addr, name, &sym) < 0) {
             if (get_error_code(errno) != ERR_SYM_NOT_FOUND) error(errno, "Cannot read symbol data");
         }
         else {
@@ -1777,11 +1778,12 @@ static void expression(int mode, Value * v) {
     conditional_expression(mode, v);
 }
 
-static int evaluate_type(Context * ctx, int frame, char * s, Value * v) {
+static int evaluate_type(Context * ctx, int frame, ContextAddress addr, char * s, Value * v) {
     Trap trap;
 
     expression_context = ctx;
     expression_frame = frame;
+    expression_addr = addr;
     if (!set_trap(&trap)) return -1;
     str_pool_cnt = 0;
     while (str_alloc_list != NULL) {
@@ -1800,11 +1802,12 @@ static int evaluate_type(Context * ctx, int frame, char * s, Value * v) {
     return 0;
 }
 
-int evaluate_expression(Context * ctx, int frame, char * s, int load, Value * v) {
+int evaluate_expression(Context * ctx, int frame, ContextAddress addr, char * s, int load, Value * v) {
     Trap trap;
 
     expression_context = ctx;
     expression_frame = frame;
+    expression_addr = addr;
     if (!set_trap(&trap)) return -1;
     if (s == NULL || *s == 0) str_exception(ERR_INV_EXPRESSION, "Empty expression");
     str_pool_cnt = 0;
@@ -2201,7 +2204,7 @@ static void command_create_cache_client(void * x) {
         else if (id2frame(e->parent, &ctx, &frame) < 0) {
             err = errno;
         }
-        if (!err && evaluate_type(ctx, frame, e->script, &value) < 0) err = errno;
+        if (!err && evaluate_type(ctx, frame, 0, e->script, &value) < 0) err = errno;
         if (!err) {
             e->can_assign = value.remote;
             e->type_class = value.type_class;
@@ -2260,7 +2263,7 @@ static void command_evaluate_cache_client(void * x) {
     memset(&value, 0, sizeof(value));
     if (expression_context_id(args->id, &ctx, &frame, &expr) < 0) err = errno;
     if (!err && frame != STACK_NO_FRAME && !ctx->stopped) err = ERR_IS_RUNNING;
-    if (!err && evaluate_expression(ctx, frame, expr->script, 0, &value) < 0) err = errno;
+    if (!err && evaluate_expression(ctx, frame, 0, expr->script, 0, &value) < 0) err = errno;
     if (value.size >= 0x100000) err = ERR_BUFFER_OVERFLOW;
 
     cache_exit();
@@ -2346,7 +2349,7 @@ static void command_assign_cache_client(void * x) {
     memset(&value, 0, sizeof(value));
     if (expression_context_id(args->id, &ctx, &frame, &expr) < 0) err = errno;
     if (!err && frame != STACK_NO_FRAME && !ctx->stopped) err = ERR_IS_RUNNING;
-    if (!err && evaluate_expression(ctx, frame, expr->script, 0, &value) < 0) err = errno;
+    if (!err && evaluate_expression(ctx, frame, 0, expr->script, 0, &value) < 0) err = errno;
     if (!err && !value.remote) err = ERR_INV_EXPRESSION;
     if (!err && context_write_mem(ctx, value.address, args->value_buf, args->value_size) < 0) err = errno;
 

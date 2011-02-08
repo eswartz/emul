@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -430,7 +430,7 @@ static void validate_find(Channel * c, void * args, int error) {
     if (trap.error) exception(trap.error);
 }
 
-int find_symbol_by_name(Context * ctx, int frame, char * name, Symbol ** sym) {
+int find_symbol_by_name(Context * ctx, int frame, ContextAddress addr,  char * name, Symbol ** sym) {
     uint64_t ip = 0;
     LINK * l = NULL;
     SymbolsCache * syms = NULL;
@@ -442,6 +442,7 @@ int find_symbol_by_name(Context * ctx, int frame, char * name, Symbol ** sym) {
 
     if (frame == STACK_NO_FRAME) {
         ctx = context_get_group(ctx, CONTEXT_GROUP_PROCESS);
+        ip = addr;
     }
     else {
         StackFrame * info = NULL;
@@ -502,6 +503,8 @@ int find_symbol_by_name(Context * ctx, int frame, char * name, Symbol ** sym) {
         else {
             json_write_string(&c->out, ctx->id);
         }
+        write_stream(&c->out, 0);
+        json_write_uint64(&c->out, ip);
         write_stream(&c->out, 0);
         json_write_string(&c->out, name);
         write_stream(&c->out, 0);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -116,9 +116,12 @@ static SymbolCacheEntry symbol_cache[SYMBOL_CACHE_SIZE];
 static char * tmp_buf = NULL;
 static int tmp_buf_size = 0;
 
-static int get_stack_frame(Context * ctx, int frame, IMAGEHLP_STACK_FRAME * stack_frame) {
+static int get_stack_frame(Context * ctx, int frame, ContextAddress ip, IMAGEHLP_STACK_FRAME * stack_frame) {
     memset(stack_frame, 0, sizeof(IMAGEHLP_STACK_FRAME));
-    if (frame != STACK_NO_FRAME && ctx->parent != NULL) {
+    if (frame == STACK_NO_FRAME) {
+        stack_frame->InstructionOffset = ip;
+    }
+    else if (ctx->parent != NULL) {
         uint64_t v = 0;
         StackFrame * frame_info;
         if (get_frame_info(ctx, frame, &frame_info) < 0) return -1;
@@ -806,8 +809,8 @@ static void add_cache_symbol(HANDLE process, ULONG64 pc, PCSTR name, Symbol * sy
     }
 }
 
-static int set_pe_context(Context * ctx, int frame, HANDLE process, IMAGEHLP_STACK_FRAME * stack_frame) {
-    if (get_stack_frame(ctx, frame, stack_frame) < 0) return -1;
+static int set_pe_context(Context * ctx, int frame, ContextAddress ip, HANDLE process, IMAGEHLP_STACK_FRAME * stack_frame) {
+    if (get_stack_frame(ctx, frame, ip, stack_frame) < 0) return -1;
 
     if (!SymSetContext(process, stack_frame, NULL)) {
         DWORD err = GetLastError();
@@ -816,7 +819,7 @@ static int set_pe_context(Context * ctx, int frame, HANDLE process, IMAGEHLP_STA
         }
         else if (err == ERROR_MOD_NOT_FOUND && frame != STACK_NO_FRAME) {
             /* No local symbols data, search global scope */
-            if (get_stack_frame(ctx, STACK_NO_FRAME, stack_frame) < 0) return -1;
+            if (get_stack_frame(ctx, STACK_NO_FRAME, 0, stack_frame) < 0) return -1;
             if (!SymSetContext(process, stack_frame, NULL)) {
                 err = GetLastError();
                 if (err != ERROR_SUCCESS) {
@@ -838,14 +841,14 @@ static int set_pe_context(Context * ctx, int frame, HANDLE process, IMAGEHLP_STA
     return 0;
 }
 
-static int find_pe_symbol_by_name(Context * ctx, int frame, char * name, Symbol * sym) {
+static int find_pe_symbol_by_name(Context * ctx, int frame, ContextAddress ip, char * name, Symbol * sym) {
     HANDLE process = get_context_handle(ctx->parent == NULL ? ctx : ctx->parent);
     ULONG64 buffer[(sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR) + sizeof(ULONG64) - 1) / sizeof(ULONG64)];
     SYMBOL_INFO * info = (SYMBOL_INFO *)buffer;
     IMAGEHLP_STACK_FRAME stack_frame;
     DWORD err;
 
-    if (set_pe_context(ctx, frame, process, &stack_frame) < 0) return -1;
+    if (set_pe_context(ctx, frame, ip, process, &stack_frame) < 0) return -1;
 
     memset(info, 0, sizeof(SYMBOL_INFO));
     info->SizeOfStruct = sizeof(SYMBOL_INFO);
@@ -882,7 +885,7 @@ static int find_pe_symbol_by_addr(Context * ctx, int frame, ContextAddress addr,
     IMAGEHLP_STACK_FRAME stack_frame;
     DWORD err;
 
-    if (set_pe_context(ctx, frame, process, &stack_frame) < 0) return -1;
+    if (set_pe_context(ctx, frame, 0, process, &stack_frame) < 0) return -1;
 
     memset(info, 0, sizeof(SYMBOL_INFO));
     info->SizeOfStruct = sizeof(SYMBOL_INFO);
@@ -915,12 +918,12 @@ static int find_basic_type_symbol(Context * ctx, char * name, Symbol * sym) {
     return -1;
 }
 
-int find_symbol_by_name(Context * ctx, int frame, char * name, Symbol ** sym) {
+int find_symbol_by_name(Context * ctx, int frame, ContextAddress ip, char * name, Symbol ** sym) {
     int found = 0;
     *sym = alloc_symbol();
     (*sym)->ctx = ctx;
     if (frame == STACK_TOP_FRAME && (frame = get_top_frame(ctx)) < 0) return -1;
-    if (find_pe_symbol_by_name(ctx, frame, name, *sym) >= 0) found = 1;
+    if (find_pe_symbol_by_name(ctx, frame, ip, name, *sym) >= 0) found = 1;
     else if (get_error_code(errno) != ERR_SYM_NOT_FOUND) return -1;
 #if ENABLE_RCBP_TEST
     if (!found) {
@@ -987,7 +990,7 @@ int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * call_
 
     if (frame == STACK_TOP_FRAME) frame = get_top_frame(ctx);
     if (frame == STACK_TOP_FRAME) return -1;
-    if (get_stack_frame(ctx, frame, &stack_frame) < 0) return -1;
+    if (get_stack_frame(ctx, frame, 0, &stack_frame) < 0) return -1;
 
     if (!SymSetContext(process, &stack_frame, NULL)) {
         DWORD err = GetLastError();

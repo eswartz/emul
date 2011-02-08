@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -47,10 +47,15 @@ typedef int ExpressionIdentifierCallBack(Context *, int /*frame*/, char * /*name
 
 /*
  * Evaluate given expression in given context.
- * If load != 0 then result value is always loaded into a local buffer.
+ * 'ctx' - debug context to use for memory access and symbols lookup.
+ * 'frame' - stack frame to use for registers and local variables values.
+ * 'addr' - instruction address for symbols lookup, ignored if frame != STACK_NO_FRAME.
+ * 's' - the expression text.
+ * If load != 0 then result value is always loaded into a local buffer,
+ * otherwise 'v' can point to a value in the target memory.
  * Return 0 if no errors, otherwise return -1 and sets errno.
  */
-extern int evaluate_expression(Context * ctx, int frame, char * s, int load, Value * v);
+extern int evaluate_expression(Context * ctx, int frame, ContextAddress addr, char * s, int load, Value * v);
 
 /*
  * Cast a Value to a boolean - 0 or 1.

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -251,7 +251,7 @@ static void get_symbol_cache_client(void * x) {
     if (ctx->exited) {
         error = ERR_ALREADY_EXITED;
     }
-    else if (find_symbol_by_name(ctx, STACK_NO_FRAME, args->name, &sym) < 0) {
+    else if (find_symbol_by_name(ctx, STACK_NO_FRAME, 0, args->name, &sym) < 0) {
         error = errno;
     }
     else if (get_symbol_address(sym, &addr) < 0) {
