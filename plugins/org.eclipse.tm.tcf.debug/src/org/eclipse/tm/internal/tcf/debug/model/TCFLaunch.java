@@ -135,6 +135,8 @@ public class TCFLaunch extends Launch {
     private final LinkedList<LaunchStep> launch_steps = new LinkedList<LaunchStep>();
     private final LinkedList<String> redirection_path = new LinkedList<String>();
 
+    private ArrayList<PathMapRule> filepath_map;
+
     private final IStreams.StreamsListener streams_listener = new IStreams.StreamsListener() {
 
         public void created(String stream_type, String stream_id, String context_id) {
@@ -169,14 +171,14 @@ public class TCFLaunch extends Launch {
         final ILaunchConfiguration cfg = getLaunchConfiguration();
         if (cfg != null) {
             // Send file path map:
-            final String path_map = cfg.getAttribute(TCFLaunchDelegate.ATTR_PATH_MAP, "");
             final IPathMap path_map_service = getService(IPathMap.class);
-            if (path_map.length() != 0 && path_map_service != null) {
+            if (path_map_service != null) {
                 new LaunchStep() {
                     @Override
                     void start() throws Exception {
-                        ArrayList<PathMapRule> map = TCFLaunchDelegate.parsePathMapAttribute(path_map);
-                        path_map_service.set(map.toArray(new IPathMap.PathMapRule[map.size()]), new IPathMap.DoneSet() {
+                        String s = cfg.getAttribute(TCFLaunchDelegate.ATTR_PATH_MAP, "");
+                        filepath_map = TCFLaunchDelegate.parsePathMapAttribute(s);
+                        path_map_service.set(filepath_map.toArray(new IPathMap.PathMapRule[filepath_map.size()]), new IPathMap.DoneSet() {
                             public void doneSet(IToken token, Exception error) {
                                 if (error != null) channel.terminate(error);
                                 else done();
@@ -751,10 +753,34 @@ public class TCFLaunch extends Launch {
         listeners.remove(listener);
     }
 
-    public void launchConfigurationChanged(ILaunchConfiguration cfg) {
+    public void launchConfigurationChanged(final ILaunchConfiguration cfg) {
         super.launchConfigurationChanged(cfg);
         if (!cfg.equals(getLaunchConfiguration())) return;
-        if (update_memory_maps != null) Protocol.invokeLater(update_memory_maps);
+        new TCFTask<Boolean>() {
+            public void run() {
+                try {
+                    if (update_memory_maps != null) update_memory_maps.run();
+                    if (filepath_map != null) {
+                        String s = cfg.getAttribute(TCFLaunchDelegate.ATTR_PATH_MAP, "");
+                        filepath_map = TCFLaunchDelegate.parsePathMapAttribute(s);
+                        final IPathMap path_map_service = getService(IPathMap.class);
+                        path_map_service.set(filepath_map.toArray(new IPathMap.PathMapRule[filepath_map.size()]), new IPathMap.DoneSet() {
+                            public void doneSet(IToken token, Exception error) {
+                                if (error != null) channel.terminate(error);
+                                done(false);
+                            }
+                        });
+                    }
+                    else {
+                        done(true);
+                    }
+                }
+                catch (Throwable x) {
+                    channel.terminate(x);
+                    done(false);
+                }
+            }
+        }.getE();
         // TODO: update signal masks when launch configuration changes
     }
 
@@ -901,6 +927,11 @@ public class TCFLaunch extends Launch {
 
     public Collection<Map<String,Object>> getSignalList() {
         return process_signals;
+    }
+
+    public ArrayList<PathMapRule> getFilePathMap() {
+        assert Protocol.isDispatchThread();
+        return filepath_map;
     }
 
     public void launchTCF(String mode, String id) {
