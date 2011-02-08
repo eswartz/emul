@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2008, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -265,11 +265,12 @@ public interface ISymbols extends IService {
      * The context can be memory space, process, thread or stack frame.
      *
      * @param context_id – a search scope.
+     * @param ip - instruction pointer - ignored if context_id is a stack frame ID
      * @param name – symbol name.
      * @param done - call back interface called when operation is completed.
      * @return - pending command handle.
      */
-    IToken find(String context_id, String name, DoneFind done);
+    IToken find(String context_id, Number ip, String name, DoneFind done);
 
     /**
      * Search symbol with given address in given context.

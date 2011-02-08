@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2008, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -1343,7 +1343,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                                 done.run();
                                 return;
                             }
-                            syms.find(sc.id, name, new ISymbols.DoneFind() {
+                            syms.find(sc.id, 0, name, new ISymbols.DoneFind() {
                                 public void doneFind(IToken token, Exception error, String symbol_id) {
                                     if (error != null) {
                                         exit(error);

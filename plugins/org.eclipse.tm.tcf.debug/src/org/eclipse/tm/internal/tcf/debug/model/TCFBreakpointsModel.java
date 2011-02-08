@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -107,7 +107,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
                     if (id == null) continue;
                     IMarker marker = arr[i].getMarker();
                     String file = getFilePath(marker.getResource());
-                    bps[i] = toBreakpointAttributes(id, file, marker.getAttributes());
+                    bps[i] = toBreakpointAttributes(id, file, marker.getType(), marker.getAttributes());
                 }
                 service.set(bps, new IBreakpoints.DoneCommand() {
                     public void doneCommand(IToken token, Exception error) {
@@ -182,6 +182,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
         private final IBreakpoint breakpoint;
         private final Map<String,Object> marker_attrs;
         private final String marker_file;
+        private final String marker_type;
         private final String marker_id;
 
         IBreakpoints service;
@@ -193,6 +194,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
             this.breakpoint = breakpoint;
             marker_attrs = new HashMap<String,Object>(breakpoint.getMarker().getAttributes());
             marker_file = getFilePath(breakpoint.getMarker().getResource());
+            marker_type = breakpoint.getMarker().getType();
             marker_id = getBreakpointID(breakpoint);
         }
 
@@ -206,7 +208,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
 
         public void run() {
             if (disposed) return;
-            tcf_attrs = toBreakpointAttributes(marker_id, marker_file, marker_attrs);
+            tcf_attrs = toBreakpointAttributes(marker_id, marker_file, marker_type, marker_attrs);
             for (final IChannel channel : channels) {
                 service = channel.getRemoteService(IBreakpoints.class);
                 if (!isSupported(channel, breakpoint)) continue;
@@ -350,7 +352,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
         return m;
     }
 
-    public Map<String,Object> toBreakpointAttributes(String id, String file, Map<String,Object> p) {
+    public Map<String,Object> toBreakpointAttributes(String id, String file, String type, Map<String,Object> p) {
         assert !disposed;
         assert Protocol.isDispatchThread();
         Map<String,Object> m = new HashMap<String,Object>();
@@ -382,7 +384,19 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
                 if (column != null) m.put(IBreakpoints.PROP_COLUMN, column);
             }
         }
-        else {
+        if ("org.eclipse.cdt.debug.core.cWatchpointMarker".equals(type)) {
+            String expr = (String)p.get("org.eclipse.cdt.debug.core.expression");
+            if (expr != null && expr.length() != 0) {
+                boolean writeAccess = Boolean.TRUE.equals(p.get("org.eclipse.cdt.debug.core.write"));
+                boolean readAccess = Boolean.TRUE.equals(p.get("org.eclipse.cdt.debug.core.read"));
+                int accessMode = 0;
+                if (readAccess) accessMode |= IBreakpoints.ACCESSMODE_READ;
+                if (writeAccess) accessMode |= IBreakpoints.ACCESSMODE_WRITE;
+                m.put(IBreakpoints.PROP_ACCESSMODE, Integer.valueOf(accessMode));
+                m.put(IBreakpoints.PROP_LOCATION, "&(" + expr + ')');
+            }
+        }
+        else if (file == null) {
             String address = (String)p.get("org.eclipse.cdt.debug.core.address");
             if (address != null && address.length() > 0) m.put(IBreakpoints.PROP_LOCATION, address);
         }
