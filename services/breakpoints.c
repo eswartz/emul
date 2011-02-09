@@ -1529,7 +1529,7 @@ static void add_breakpoint(Channel * c, BreakpointInfo * bp) {
         list_add_last(&p->link_id, id2bp + hash);
     }
     chng = copy_breakpoint_info(p, bp);
-    if (list_is_empty(&bp->link_clients)) added = 1;
+    if (list_is_empty(&p->link_clients)) added = 1;
     else r = find_breakpoint_ref(p, c);
     if (r == NULL) {
         unsigned inp_hash = (unsigned)(uintptr_t)c / 16 % INP2BR_HASH_SIZE;
