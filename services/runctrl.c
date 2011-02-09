@@ -989,7 +989,8 @@ static int update_step_machine_state(Context * ctx) {
         case RM_REVERSE_STEP_OVER_LINE:
             if (ext->step_cnt == 0) {
                 StackFrame * info = NULL;
-                if (get_frame_info(ctx, STACK_TOP_FRAME, &info) < 0) return -1;
+                ext->step_frame = 0;
+                if (get_frame_info(ctx, STACK_TOP_FRAME, &info) < 0) break;
                 ext->step_frame = info->fp;
             }
             else if (addr < ext->step_range_start || addr >= ext->step_range_end) {
