@@ -17,8 +17,12 @@ import java.util.Map;
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.jface.resource.CompositeImageDescriptor;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.ImageData;
+import org.eclipse.swt.graphics.Point;
+import org.eclipse.ui.PlatformUI;
 import org.osgi.framework.Bundle;
 
 public class ImageCache {
@@ -54,10 +58,15 @@ public class ImageCache {
         IMG_STACK_FRAME_RUNNING = "icons/full/obj16/stckframe_running_obj.gif",
 
         IMG_BREAKPOINT_ENABLED = "icons/full/obj16/brkp_obj.gif",
-        IMG_BREAKPOINT_DISABLED = "icons/full/obj16/brkpd_obj.gif";
+        IMG_BREAKPOINT_DISABLED = "icons/full/obj16/brkpd_obj.gif",
+        IMG_BREAKPOINT_INSTALLED = "icons/ovr16/installed_ovr.gif",
+        IMG_BREAKPOINT_CONDITIONAL = "icons/ovr16/conditional_ovr.gif",
+        IMG_BREAKPOINT_WARNING = "icons/ovr16/warning_ovr.gif";
 
     private static final Map<String,ImageDescriptor> desc_cache = new HashMap<String,ImageDescriptor>();
     private static final Map<ImageDescriptor,Image> image_cache = new HashMap<ImageDescriptor,Image>();
+    private static final Map<String,Map<ImageDescriptor,ImageDescriptor>> overlay_cache =
+        new HashMap<String,Map<ImageDescriptor,ImageDescriptor>>();
 
     public static synchronized ImageDescriptor getImageDescriptor(String name) {
         if (name == null) return null;
@@ -76,11 +85,44 @@ public class ImageCache {
                 }
             }
             if (descriptor == null) {
+                bundle = Platform.getBundle("org.eclipse.cdt.debug.ui");
+                if (bundle != null){
+                    URL url = FileLocator.find(bundle, new Path(name), null);
+                    if (url != null) descriptor = ImageDescriptor.createFromURL(url);
+                }
+            }
+            if (descriptor == null) {
+                descriptor = PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(name);
+            }
+            if (descriptor == null) {
                 descriptor = ImageDescriptor.getMissingImageDescriptor();
             }
             desc_cache.put(name, descriptor);
         }
         return descriptor;
+    }
+
+    public static synchronized ImageDescriptor addOverlay(ImageDescriptor descriptor, String name) {
+        if (descriptor == null || name == null) return descriptor;
+        Map<ImageDescriptor,ImageDescriptor> map = overlay_cache.get(name);
+        if (map == null) overlay_cache.put(name, map = new HashMap<ImageDescriptor,ImageDescriptor>());
+        ImageDescriptor res = map.get(descriptor);
+        if (res != null) return res;
+        final ImageData base = descriptor.getImageData();
+        final ImageData overlay = getImageDescriptor(name).getImageData();
+        res = new CompositeImageDescriptor() {
+            @Override
+            protected void drawCompositeImage(int width, int height) {
+                drawImage(base, 0, 0);
+                drawImage(overlay, 0, 0);
+            }
+            @Override
+            protected Point getSize() {
+                return new Point(base.width, base.height);
+            }
+        };
+        map.put(descriptor, res);
+        return res;
     }
 
     public static synchronized Image getImage(ImageDescriptor desc) {

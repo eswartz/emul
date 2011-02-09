@@ -20,7 +20,6 @@ import java.util.Set;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IMarkerDelta;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -45,6 +44,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
 
     private final IBreakpointManager bp_manager = DebugPlugin.getDefault().getBreakpointManager();
     private final HashSet<IChannel> channels = new HashSet<IChannel>();
+    private final HashMap<String,IBreakpoint> id2bp = new HashMap<String,IBreakpoint>();
 
     private boolean disposed;
 
@@ -64,6 +64,12 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
         return true;
     }
 
+    /**
+     * Get TCF ID of a breakpoint.
+     * @param bp - IBreakpoint object.
+     * @return TCF ID of the breakpoint.
+     * @throws CoreException
+     */
     public String getBreakpointID(IBreakpoint bp) throws CoreException {
         IMarker marker = bp.getMarker();
         String id = (String)marker.getAttributes().get(ITCFConstants.ID_TCF_DEBUG_MODEL + '.' + IBreakpoints.PROP_ID);
@@ -71,6 +77,18 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
         id = marker.getResource().getLocationURI().toString();
         if (id == null) return null;
         return id + ':' + marker.getId();
+    }
+
+    /**
+     * Get IBreakpoint for given TCF breakpoint ID.
+     * The mapping works only for breakpoints that were sent to a debug target.
+     * It can be used to map target responses to IBreakpoint objects.
+     * @param id - TCF breakpoint ID.
+     * @return IBreakpoint object associated with the ID, or null.
+     */
+    public IBreakpoint getBreakpoint(String id) {
+        assert Protocol.isDispatchThread();
+        return id2bp.get(id);
     }
 
     @SuppressWarnings("unchecked")
@@ -93,6 +111,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
                     if (channels.isEmpty()) {
                         bp_manager.removeBreakpointListener(TCFBreakpointsModel.this);
                         bp_manager.removeBreakpointManagerListener(TCFBreakpointsModel.this);
+                        id2bp.clear();
                     }
                 }
                 public void onChannelOpened() {
@@ -108,6 +127,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
                     IMarker marker = arr[i].getMarker();
                     String file = getFilePath(marker.getResource());
                     bps[i] = toBreakpointAttributes(id, file, marker.getType(), marker.getAttributes());
+                    id2bp.put(id, arr[i]);
                 }
                 service.set(bps, new IBreakpoints.DoneCommand() {
                     public void doneCommand(IToken token, Exception error) {
@@ -238,12 +258,13 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
         return p.toFile().getCanonicalPath();
     }
 
-    public void breakpointAdded(IBreakpoint breakpoint) {
+    public void breakpointAdded(final IBreakpoint breakpoint) {
         try {
             new BreakpointUpdate(breakpoint) {
                 @Override
                 void update() {
                     service.add(tcf_attrs, done);
+                    id2bp.put((String)tcf_attrs.get(IBreakpoints.PROP_ID), breakpoint);
                 }
             }.exec();
         }
@@ -256,7 +277,6 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
     private Set<String> calcMarkerDeltaKeys(IMarker marker, IMarkerDelta delta) throws CoreException {
         Set<String> keys = new HashSet<String>();
         if (delta == null) return keys;
-        assert delta.getKind() == IResourceDelta.CHANGED;
         Map<String,Object> m0 = delta.getAttributes();
         Map<String,Object> m1 = marker.getAttributes();
         if (m0 != null) keys.addAll(m0.keySet());
@@ -273,28 +293,31 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
             if (v0 != null && !v0.equals(v1)) continue;
             i.remove();
         }
+        keys.remove("org.eclipse.cdt.debug.core.installCount");
         return keys;
     }
 
-    public void breakpointChanged(IBreakpoint breakpoint, IMarkerDelta delta) {
+    public void breakpointChanged(final IBreakpoint breakpoint, IMarkerDelta delta) {
         try {
             final Set<String> s = calcMarkerDeltaKeys(breakpoint.getMarker(), delta);
             if (s.isEmpty()) return;
             new BreakpointUpdate(breakpoint) {
                 @Override
                 void update() {
+                    String id = (String)tcf_attrs.get(IBreakpoints.PROP_ID);
                     if (s.size() == 1 && s.contains(IBreakpoint.ENABLED)) {
                         Boolean enabled = (Boolean)tcf_attrs.get(IBreakpoints.PROP_ENABLED);
                         if (enabled == null || !enabled.booleanValue()) {
-                            service.disable(new String[]{ (String)tcf_attrs.get(IBreakpoints.PROP_ID) }, done);
+                            service.disable(new String[]{ id }, done);
                         }
                         else {
-                            service.enable(new String[]{ (String)tcf_attrs.get(IBreakpoints.PROP_ID) }, done);
+                            service.enable(new String[]{ id }, done);
                         }
                     }
                     else {
                         service.change(tcf_attrs, done);
                     }
+                    id2bp.put(id, breakpoint);
                 }
             }.exec();
         }
@@ -308,7 +331,9 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
             new BreakpointUpdate(breakpoint) {
                 @Override
                 void update() {
-                    service.remove(new String[]{ (String)tcf_attrs.get(IBreakpoints.PROP_ID) }, done);
+                    String id = (String)tcf_attrs.get(IBreakpoints.PROP_ID);
+                    service.remove(new String[]{ id }, done);
+                    id2bp.remove(id);
                 }
             }.exec();
         }

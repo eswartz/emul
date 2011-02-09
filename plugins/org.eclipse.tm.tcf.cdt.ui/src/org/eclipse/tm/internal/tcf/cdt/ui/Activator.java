@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2008, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -14,6 +14,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
@@ -26,14 +27,28 @@ public class Activator extends AbstractUIPlugin {
 
     public static final String PLUGIN_ID = "org.eclipse.tm.tcf.cdt.ui";
     private static Activator plugin;
+    private static TCFBreakpointStatusListener bp_status_listener;
 
     public void start(BundleContext context) throws Exception {
         super.start(context);
         plugin = this;
+        Protocol.invokeLater(new Runnable() {
+            public void run() {
+                if (bp_status_listener == null) bp_status_listener = new TCFBreakpointStatusListener();
+            }
+        });
         EvaluationContextManager.startup();
     }
 
     public void stop(BundleContext context) throws Exception {
+        Protocol.invokeAndWait(new Runnable() {
+            public void run() {
+                if (bp_status_listener != null) {
+                    bp_status_listener.dispose();
+                    bp_status_listener = null;
+                }
+            }
+        });
         plugin = null;
         super.stop(context);
     }

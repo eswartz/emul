@@ -20,4 +20,4 @@ Eclipse-LazyStart: true
 Export-Package: org.eclipse.tm.internal.tcf.debug.launch;x-friends:="org.eclipse.tm.tcf.debug.ui,org.eclipse.tm.tcf.cdt.ui",
  org.eclipse.tm.internal.tcf.debug.actions;x-friends:="org.eclipse.tm.tcf.debug.ui",
  org.eclipse.tm.internal.tcf.debug.tests;x-friends:="org.eclipse.tm.tcf.debug.ui",
- org.eclipse.tm.internal.tcf.debug.model;x-friends:="org.eclipse.tm.tcf.debug.ui"
+ org.eclipse.tm.internal.tcf.debug.model;x-friends:="org.eclipse.tm.tcf.debug.ui,org.eclipse.tm.tcf.cdt.ui"

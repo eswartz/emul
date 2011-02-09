@@ -48,7 +48,6 @@ import org.eclipse.swt.widgets.Layout;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.tm.internal.tcf.cdt.ui.Activator;
-import org.eclipse.tm.internal.tcf.cdt.ui.hover.ExpressionInformationControlCreator.ExpressionInformationControl;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModel;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPartSite;

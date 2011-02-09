@@ -75,6 +75,10 @@ public class TCFBreakpointsStatus {
         }
     }
 
+    public Set<String> getStatusIDs() {
+        return status.keySet();
+    }
+
     public Map<String,Object> getStatus(String id) {
         assert id != null;
         assert Protocol.isDispatchThread();
