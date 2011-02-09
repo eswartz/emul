@@ -72,6 +72,14 @@ static int get_sym_context(Context * ctx, int frame) {
         sym_ip = 0;
     }
     else if (frame == STACK_TOP_FRAME) {
+        if (!ctx->stopped) {
+            errno = ERR_IS_RUNNING;
+            return -1;
+        }
+        if (ctx->exited) {
+            errno = ERR_ALREADY_EXITED;
+            return -1;
+        }
         sym_ip = get_regs_PC(ctx);
     }
     else {

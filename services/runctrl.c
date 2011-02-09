@@ -959,9 +959,15 @@ static void step_machine_breakpoint(Context * ctx, void * args) {
 
 static int update_step_machine_state(Context * ctx) {
     ContextExtensionRC * ext = EXT(ctx);
-    ContextAddress addr = get_regs_PC(ctx);
+    ContextAddress addr = 0;
 
-    if (!context_has_state(ctx) || ctx->pending_intercept || addr == 0) {
+    if (!context_has_state(ctx) || ctx->exited || ctx->pending_intercept) {
+        cancel_step_mode(ctx);
+        return 0;
+    }
+
+    addr = get_regs_PC(ctx);
+    if (addr == 0) {
         cancel_step_mode(ctx);
         return 0;
     }
