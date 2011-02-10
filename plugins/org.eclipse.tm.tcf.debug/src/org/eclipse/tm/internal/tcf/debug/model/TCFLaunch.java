@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -38,16 +38,16 @@ import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IFileSystem;
+import org.eclipse.tm.tcf.services.IFileSystem.FileSystemException;
+import org.eclipse.tm.tcf.services.IFileSystem.IFileHandle;
 import org.eclipse.tm.tcf.services.IMemory;
+import org.eclipse.tm.tcf.services.IMemory.MemoryContext;
 import org.eclipse.tm.tcf.services.IMemoryMap;
 import org.eclipse.tm.tcf.services.IPathMap;
 import org.eclipse.tm.tcf.services.IProcesses;
+import org.eclipse.tm.tcf.services.IProcesses.ProcessContext;
 import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.services.IStreams;
-import org.eclipse.tm.tcf.services.IFileSystem.FileSystemException;
-import org.eclipse.tm.tcf.services.IFileSystem.IFileHandle;
-import org.eclipse.tm.tcf.services.IMemory.MemoryContext;
-import org.eclipse.tm.tcf.services.IProcesses.ProcessContext;
 import org.eclipse.tm.tcf.util.TCFTask;
 
 
@@ -118,7 +118,7 @@ public class TCFLaunch extends Launch {
     private boolean shutdown;
     private boolean last_context_exited;
     private long actions_timestamp;
-    private long actions_interval = 200;
+    private long actions_interval = 125;
 
     private Runnable update_memory_maps;
 
@@ -136,6 +136,8 @@ public class TCFLaunch extends Launch {
     private final LinkedList<String> redirection_path = new LinkedList<String>();
 
     private ArrayList<PathMapRule> filepath_map;
+
+    private Set<String> context_filter;
 
     private final IStreams.StreamsListener streams_listener = new IStreams.StreamsListener() {
 
@@ -217,6 +219,11 @@ public class TCFLaunch extends Launch {
             }
 
             if (mode.equals(ILaunchManager.DEBUG_MODE)) {
+                String attach_to_context = getAttribute("attach_to_context");
+                if (attach_to_context != null) {
+                    context_filter = new HashSet<String>();
+                    context_filter.add(attach_to_context);
+                }
                 if (cfg != null && channel.getRemoteService(IMemoryMap.class) != null) {
                     // Send memory maps
                     final String maps = cfg.getAttribute(TCFLaunchDelegate.ATTR_MEMORY_MAP, "null");
@@ -1046,5 +1053,9 @@ public class TCFLaunch extends Launch {
 
     public void removeActionsListener(ActionsListener l) {
         action_listeners.remove(l);
+    }
+
+    public Set<String> getContextFilter() {
+        return context_filter;
     }
 }

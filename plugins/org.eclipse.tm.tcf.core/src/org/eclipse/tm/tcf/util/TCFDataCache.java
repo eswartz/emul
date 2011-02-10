@@ -143,7 +143,7 @@ public abstract class TCFDataCache<V> implements Runnable {
         assert Protocol.isDispatchThread();
         assert !disposed;
         assert !valid;
-        if (cb != null && !is_waiting(cb)) {
+        if (cb != null && !isWaiting(cb)) {
             if (waiting_list == null) waiting_list = new Runnable[8];
             if (waiting_cnt >= waiting_list.length) {
                 Runnable[] tmp = new Runnable[waiting_cnt * 2];
@@ -159,7 +159,7 @@ public abstract class TCFDataCache<V> implements Runnable {
      * @param cb - a call-back object.
      * @return true if 'cb' is in the wait list.
      */
-    public boolean is_waiting(Runnable cb) {
+    public boolean isWaiting(Runnable cb) {
         if (waiting_list == null) return false;
         for (int i = 0; i < waiting_cnt; i++) {
             if (waiting_list[i] == cb) return true;
@@ -208,16 +208,43 @@ public abstract class TCFDataCache<V> implements Runnable {
     }
 
     /**
-     * End cache pending state.
-     * @param token - pending command handle.
+     * Start cache pending state.
+     * Pending state is when the cache is waiting for a TCF command to return results.
+     * @param command - TCF command handle.
+     */
+    public void start(IToken command) {
+        assert !valid;
+        assert command != null;
+        assert this.command == null;
+        this.command = command;
+    }
+
+    /**
+     * End cache pending state, but not mark the cache as valid.
+     * @param command - TCF command handle.
+     */
+    public void done(IToken command) {
+        if (this.command != command) return;
+        assert !valid;
+        this.command = null;
+        post();
+    }
+
+    /**
+     * End cache pending state and mark the cache as valid.
+     * If 'token' != null, the data represent results from a completed command.
+     * The data should be ignored if current cache pending command is not same as 'token'.
+     * It can happen if the cache was reset or canceled during data retrieval.
+     * @param token - pending command handle or null.
      * @param error - data retrieval error or null
      * @param data - up-to-date data object
      */
     public void set(IToken token, Throwable error, V data) {
         assert Protocol.isDispatchThread();
-        if (command != token) return;
+        if (token != null && command != token) return;
         command = null;
         if (!disposed) {
+            assert !valid;
             if (channel.getState() != IChannel.STATE_OPEN) {
                 error = null;
                 data = null;

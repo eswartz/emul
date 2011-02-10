@@ -18,6 +18,7 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenCountUpd
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IHasChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.ILabelUpdate;
+import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IViewerInputUpdate;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.Protocol;
@@ -142,6 +143,16 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
      * @return parent node or null if the node is a root
      */
     public final TCFNode getParent() {
+        assert Protocol.isDispatchThread();
+        return parent;
+    }
+
+    /**
+     * Get parent node in given presentation context.
+     * @param ctx - presentation context.
+     * @return parent node or null if the node is a root
+     */
+    public TCFNode getParent(IPresentationContext ctx) {
         assert Protocol.isDispatchThread();
         return parent;
     }

@@ -16,12 +16,14 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenCountUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IHasChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.ILabelUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
+import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IViewerInputUpdate;
 import org.eclipse.debug.ui.IDebugUIConstants;
 import org.eclipse.swt.graphics.RGB;
@@ -365,35 +367,9 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                     set(null, new Exception("Context does not provide memory access"), null);
                 }
                 else {
-                    TCFNodeExecContext exe = (TCFNodeExecContext)model.getNode(id);
-                    if (exe == null) {
-                        // Model does not have a node for our context ID.
-                        // Search parent node and update its children.
-                        final IRunControl rc = channel.getRemoteService(IRunControl.class);
-                        if (rc != null) {
-                            final Runnable done = this;
-                            command = rc.getContext(id, new IRunControl.DoneGetContext() {
-                                public void doneGetContext(IToken token, Exception error, IRunControl.RunControlContext context) {
-                                    if (error != null) {
-                                        set(token, error, null);
-                                    }
-                                    else {
-                                        TCFNode n = model.getNode(context.getParentID());
-                                        if (n instanceof TCFNodeLaunch && !((TCFNodeLaunch)n).getChildren().validate(done)) return;
-                                        if (n instanceof TCFNodeExecContext && !((TCFNodeExecContext)n).getChildren().validate(done)) return;
-                                        if (n != null) {
-                                            set(token, new Exception("Context does not provide memory access"), null);
-                                            return;
-                                        }
-                                        command = rc.getContext(context.getParentID(), this);
-                                    }
-                                }
-                            });
-                            return false;
-                        }
-                        set(null, new Exception("Context does not provide memory access"), null);
-                    }
-                    else {
+                    if (!model.createNode(id, this)) return false;
+                    if (!isValid()) {
+                        TCFNodeExecContext exe = (TCFNodeExecContext)model.getNode(id);
                         if (!exe.getMemoryContext().validate(this)) return false;
                         set(null, null, exe);
                     }
@@ -591,6 +567,19 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
             }
         });
         return ref_cache;
+    }
+
+    @Override
+    public TCFNode getParent(IPresentationContext ctx) {
+        assert Protocol.isDispatchThread();
+        if (IDebugUIConstants.ID_DEBUG_VIEW.equals(ctx.getId())) {
+            Set<String> ids = model.getLaunch().getContextFilter();
+            if (ids != null) {
+                if (ids.contains(id)) return model.getRootNode();
+                if (parent instanceof TCFNodeLaunch) return null;
+            }
+        }
+        return parent;
     }
 
     public TCFDataCache<IRunControl.RunControlContext> getRunContext() {

@@ -95,6 +95,7 @@ import org.eclipse.tm.internal.tcf.debug.ui.commands.TerminateCommand;
 import org.eclipse.tm.tcf.core.Command;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IErrorReport;
+import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IDisassembly;
 import org.eclipse.tm.tcf.services.ILineNumbers;
@@ -104,6 +105,7 @@ import org.eclipse.tm.tcf.services.IProcesses;
 import org.eclipse.tm.tcf.services.IRegisters;
 import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.services.ISymbols;
+import org.eclipse.tm.tcf.services.IRunControl.RunControlContext;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 import org.eclipse.tm.tcf.util.TCFTask;
 import org.eclipse.ui.IEditorInput;
@@ -189,6 +191,9 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     private final Map<String,String> cast_to_type_map =
         new HashMap<String,String>();
+
+    private final Map<String,Object> context_map =
+        new HashMap<String,Object>();
 
     private TCFConsole console;
 
@@ -307,12 +312,15 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                         ((TCFNodeExecContext)node).onContextAdded(ctx);
                     }
                 }
+                context_map.put(ctx.getID(), ctx);
             }
         }
 
         public void contextChanged(IRunControl.RunControlContext[] contexts) {
             for (IRunControl.RunControlContext ctx : contexts) {
-                TCFNode node = getNode(ctx.getID());
+                String id = ctx.getID();
+                context_map.put(id, ctx);
+                TCFNode node = getNode(id);
                 if (node instanceof TCFNodeExecContext) {
                     ((TCFNodeExecContext)node).onContextChanged(ctx);
                 }
@@ -640,6 +648,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 if (node.parent == launch_node) close_channel = true;
             }
             action_results.remove(id);
+            context_map.remove(id);
         }
         if (close_channel) {
             // Close debug session if the last context is removed:
@@ -789,6 +798,62 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             n = n.parent;
         }
         return null;
+    }
+
+    /**
+     * Asynchronously create model node for given ID.
+     * Only nodes for IDs recognized by Run Control service can be created this way.
+     * If 'cache' is valid after the method returns, the node cannot be created, and
+     * the cache will contain an error report.
+     * @param id - Run Control service context ID.
+     * @param cache - data cache object that need the node for validation.
+     * @return - true if all done, false if 'cache' is waiting for remote data.
+     */
+    public boolean createNode(String id, final TCFDataCache<?> cache) {
+        TCFNode parent = getNode(id);
+        if (parent != null) return true;
+        LinkedList<IRunControl.RunControlContext> path = null;
+        for (;;) {
+            Object obj = context_map.get(id);
+            if (obj == null) {
+                final String command_id = id;
+                IRunControl rc = channel.getRemoteService(IRunControl.class);
+                if (rc == null) {
+                    cache.set(null, new Exception("Target does not provide Run Control service"), null);
+                    return true;
+                }
+                cache.start(rc.getContext(command_id, new IRunControl.DoneGetContext() {
+                    public void doneGetContext(IToken token, Exception error, RunControlContext context) {
+                        if (error == null && context == null) {
+                            error = new Exception("Invalid context ID");
+                        }
+                        context_map.put(command_id, error != null ? error : context);
+                        cache.done(token);
+                    }
+                }));
+                return false;
+            }
+            if (obj instanceof Throwable) {
+                cache.set(null, (Throwable)obj, null);
+                return true;
+            }
+            IRunControl.RunControlContext ctx = (IRunControl.RunControlContext)obj;
+            if (path == null) path = new LinkedList<IRunControl.RunControlContext>();
+            path.add(ctx);
+            String parent_id = ctx.getParentID();
+            parent = parent_id == null ? launch_node : getNode(parent_id);
+            if (parent != null) break;
+            id = parent_id;
+        }
+        while (path.size() > 0) {
+            IRunControl.RunControlContext ctx = path.removeLast();
+            TCFNodeExecContext n = new TCFNodeExecContext(parent, ctx.getID());
+            if (parent instanceof TCFNodeLaunch) ((TCFNodeLaunch)parent).getChildren().add(n);
+            else ((TCFNodeExecContext)parent).getChildren().add(n);
+            n.setRunContext(ctx);
+            parent = n;
+        }
+        return true;
     }
 
     public void update(IChildrenCountUpdate[] updates) {

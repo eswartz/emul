@@ -177,6 +177,8 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
      * @param flags - flags that describe the change, see IModelDelta
      */
     void addDelta(TCFNode node, int flags) {
+        assert Protocol.isDispatchThread();
+        assert installed && !disposed;
         if (flags == 0) return;
         Integer delta = node2flags.get(node);
         if (delta != null) {
@@ -193,9 +195,11 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
      * @param node - a model node that will become expanded.
      */
     void expand(TCFNode node) {
-        while (node != null) {
+        Object input = getInput();
+        IPresentationContext ctx = getPresentationContext();
+        while (node != null && node != input) {
             addDelta(node, IModelDelta.EXPAND);
-            node = node.parent;
+            node = node.getParent(ctx);
         }
         post();
     }
@@ -206,7 +210,7 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
      */
     void setSelection(TCFNode node) {
         selection.add(node);
-        expand(node.parent);
+        expand(node.getParent(getPresentationContext()));
     }
 
     /**
@@ -219,6 +223,7 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
 
     public void post() {
         assert Protocol.isDispatchThread();
+        assert installed && !disposed;
         if (!posted) {
             long idle_time = System.currentTimeMillis() - last_update_time;
             Protocol.invokeLater(MIN_IDLE_TIME - idle_time, timer);
@@ -253,7 +258,9 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
     }
 
     private int getNodeIndex(TCFNode node) {
-        TCFNode[] arr = getNodeChildren(node.parent);
+        TCFNode p = node.getParent(getPresentationContext());
+        if (p == null) return -1;
+        TCFNode[] arr = getNodeChildren(p);
         for (int i = 0; i < arr.length; i++) {
             if (arr[i] == node) return i;
         }
@@ -261,41 +268,43 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
     }
 
     private ModelDelta makeDelta(ModelDelta root, TCFNode node, TCFNode selection) {
-        int flags = 0;
         ModelDelta delta = node2delta.get(node);
         if (delta == null) {
-            Integer flags_obj = node2flags.get(node);
-            if (flags_obj != null) flags = flags_obj.intValue();
-            TCFNode parent = node.parent;
-            if (parent == null) {
-                if (root.getElement() instanceof TCFNode) return null;
-                int children = -1;
-                if (selection != null && selection != node || (flags & IModelDelta.EXPAND) != 0) {
-                    children = getNodeChildren(node).length;
-                }
-                delta = root.addNode(model.getLaunch(), -1, flags, children);
-            }
-            else if (node == root.getElement()) {
+            if (node == root.getElement()) {
                 delta = root;
             }
             else {
-                ModelDelta up = makeDelta(root, parent, selection);
-                if (up == null) return null;
-                int index = -1;
-                int children = -1;
-                if (selection != null || (flags & IModelDelta.INSERTED) != 0 || (flags & IModelDelta.EXPAND) != 0) {
-                    index = getNodeIndex(node);
+                int flags = 0;
+                Integer flags_obj = node2flags.get(node);
+                if (flags_obj != null) flags = flags_obj.intValue();
+                if (node.parent == null) {
+                    // The node is TCF launch node
+                    if (root.getElement() instanceof TCFNode) return null;
+                    int children = -1;
+                    if (selection != null && selection != node || (flags & IModelDelta.EXPAND) != 0) {
+                        children = getNodeChildren(node).length;
+                    }
+                    delta = root.addNode(model.getLaunch(), -1, flags, children);
                 }
-                if (selection != null && selection != node || (flags & IModelDelta.EXPAND) != 0) {
-                    children = getNodeChildren(node).length;
+                else {
+                    TCFNode parent = node.getParent(getPresentationContext());
+                    if (parent == null) return null;
+                    ModelDelta up = makeDelta(root, parent, selection);
+                    if (up == null) return null;
+                    int index = -1;
+                    int children = -1;
+                    if (selection != null || (flags & IModelDelta.INSERTED) != 0 || (flags & IModelDelta.EXPAND) != 0) {
+                        index = getNodeIndex(node);
+                    }
+                    if (selection != null && selection != node || (flags & IModelDelta.EXPAND) != 0) {
+                        children = getNodeChildren(node).length;
+                    }
+                    delta = up.addNode(node, index, flags, children);
                 }
-                delta = up.addNode(node, index, flags, children);
+                node2delta.put(node, delta);
             }
-            node2delta.put(node, delta);
         }
-        else {
-            flags = delta.getFlags();
-        }
+        int flags = delta.getFlags();
         if ((flags & IModelDelta.REMOVED) != 0) return null;
         if ((flags & IModelDelta.CONTENT) != 0 && (flags & IModelDelta.EXPAND) == 0) return null;
         return delta;
