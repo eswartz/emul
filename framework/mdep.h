@@ -119,7 +119,7 @@ struct timespec {
 #define SIGKILL 1
 
 #ifndef ETIMEDOUT
-#define ETIMEDOUT 100
+#define ETIMEDOUT 10060 /* Value from winsock.h. */
 #endif
 
 #if defined(__MINGW32__)
