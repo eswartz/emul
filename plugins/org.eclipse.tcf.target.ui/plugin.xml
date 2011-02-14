@@ -12,6 +12,7 @@
             allowMultiple="false"
             category="org.eclipse.tcf.target.category"
             class="org.eclipse.ui.navigator.CommonNavigator"
+            icon="icons/system_view.gif"
             id="org.eclipse.tcf.target.targetsView"
             name="Target Explorer"
             restorable="true">
@@ -101,6 +102,14 @@
                   property="org.eclipse.tcf.target.targetService">
             </test>
          </enablement>
+      </targetPage>
+      <targetPage
+            class="org.eclipse.tcf.internal.target.ui.processes.ProcessesTargetPage">
+         <enablement>
+            <test
+                  args="Processes"
+                  property="org.eclipse.tcf.target.targetService">
+            </test></enablement>
       </targetPage>
    </extension>
    <extension
