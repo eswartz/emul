@@ -62,7 +62,8 @@ public class FileSystemContentProvider implements ITreeContentProvider {
 
 	@Override
 	public Object[] getChildren(Object parentElement) {
-		if (parentElement == target) {
+		if (parentElement instanceof ITarget) {
+			target = (ITarget)parentElement;
 			if (showRootNode)
 				return new Object[] { rootNode };
 			else
@@ -132,9 +133,12 @@ public class FileSystemContentProvider implements ITreeContentProvider {
 	public boolean hasChildren(Object element) {
 		if (element instanceof ITarget)
 			return true;
-		if (element instanceof FileSystemNode)
+		else if (element instanceof FileSystemNode)
 			return true;
-		return false;
+		else if (element == rootNode)
+			return true;
+		else
+			return false;
 	}
 
 }

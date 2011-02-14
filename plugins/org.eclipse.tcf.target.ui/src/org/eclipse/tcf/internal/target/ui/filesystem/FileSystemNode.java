@@ -72,6 +72,10 @@ public class FileSystemNode {
 		});
 	}
 	
+	public boolean hasChildren() {
+		return children == null || children.length > 0;
+	}
+	
 	public Object[] getChildren(final TreeViewer viewer, final ITarget target) {
 		if (children != null)
 			return children;
