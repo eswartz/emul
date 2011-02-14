@@ -245,7 +245,7 @@ static void command_get_children(char * token, Channel * c) {
             Context * ctx = ctxl2ctxp(qp);
             if (ctx->parent != NULL) continue;
             if (ctx->exited) continue;
-            if (ctx->mem_access == 0) continue;
+            if (ctx->mem_access == 0 && list_is_empty(&ctx->children)) continue;
             if (cnt > 0) write_stream(&c->out, ',');
             json_write_string(&c->out, ctx->id);
             cnt++;
@@ -260,7 +260,7 @@ static void command_get_children(char * token, Channel * c) {
                 Context * ctx = cldl2ctxp(l);
                 assert(ctx->parent == parent);
                 if (ctx->exited) continue;
-                if (ctx->mem_access == 0) continue;
+                if (ctx->mem_access == 0 && list_is_empty(&ctx->children)) continue;
                 if (cnt > 0) write_stream(&c->out, ',');
                 json_write_string(&c->out, ctx->id);
                 cnt++;
