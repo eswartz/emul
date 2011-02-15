@@ -234,7 +234,7 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
     private TCFNode[] getNodeChildren(TCFNode node) {
         TCFNode[] res = node2children.get(node);
         if (res == null) {
-            if (node.disposed) {
+            if (node.isDisposed()) {
                 res = EMPTY_NODE_ARRAY;
             }
             else if (!node.getData(children_count_update, null)) {

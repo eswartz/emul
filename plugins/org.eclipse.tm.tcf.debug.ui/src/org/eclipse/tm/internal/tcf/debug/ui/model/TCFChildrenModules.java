@@ -37,12 +37,12 @@ public class TCFChildrenModules extends TCFChildren {
             set(null, null, null);
             return true;
         }
-        command = mmap.get(node.getID(), new IMemoryMap.DoneGet() {
+        command = mmap.get(node.id, new IMemoryMap.DoneGet() {
             public void doneGet(IToken token, Exception error, IMemoryMap.MemoryRegion[] map) {
                 Map<String, TCFNode> data = new HashMap<String, TCFNode>();
                 if (map != null) {
                     for (IMemoryMap.MemoryRegion region : map) {
-                        String id = node.getID() + ".Module-" + region.getFileName() + '@' + region.getAddress();
+                        String id = node.id + ".Module-" + region.getFileName() + '@' + region.getAddress();
                         TCFNodeModule module = (TCFNodeModule) node.model.getNode(id);
                         if (module == null) {
                             module = new TCFNodeModule(node, id, region);

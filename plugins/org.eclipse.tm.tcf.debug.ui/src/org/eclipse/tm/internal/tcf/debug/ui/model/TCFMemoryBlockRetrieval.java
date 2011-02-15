@@ -54,7 +54,7 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
 
         MemoryBlock(final String expression) {
             this.expression = expression;
-            final TCFLaunch launch = exec_ctx.getModel().getLaunch();
+            final TCFLaunch launch = exec_ctx.model.getLaunch();
             final IChannel channel = launch.getChannel();
             remote_expression = new TCFDataCache<IExpressions.Expression>(channel) {
                 @Override
@@ -110,7 +110,7 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
                         set(null, expression_value.getError(), null);
                         return true;
                     }
-                    TCFDataCache<ISymbols.Symbol> type_cache = exec_ctx.getModel().getSymbolInfoCache(val.getTypeID());
+                    TCFDataCache<ISymbols.Symbol> type_cache = exec_ctx.model.getSymbolInfoCache(val.getTypeID());
                     if (type_cache == null) {
                         set(null, null, null);
                         return true;
@@ -357,7 +357,7 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
         }
 
         public ILaunch getLaunch() {
-            return exec_ctx.getModel().getLaunch();
+            return exec_ctx.model.getLaunch();
         }
 
         public String getModelIdentifier() {

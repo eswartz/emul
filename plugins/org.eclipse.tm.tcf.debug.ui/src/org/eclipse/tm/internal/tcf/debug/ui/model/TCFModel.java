@@ -541,10 +541,10 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                         if (!cache.validate(this)) return;
                         if (cache.getData() != null) {
                             TCFNodeExecContext ctx = cache.getData();
-                            o = mem_retrieval.get(ctx.getID());
+                            o = mem_retrieval.get(ctx.id);
                             if (o == null) {
                                 TCFMemoryBlockRetrieval m = new TCFMemoryBlockRetrieval(ctx);
-                                mem_retrieval.put(ctx.getID(), m);
+                                mem_retrieval.put(ctx.id, m);
                                 o = m;
                             }
                         }
@@ -793,7 +793,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
      */
     public TCFDataCache<TCFNodeExecContext> searchMemoryContext(final TCFNode node) {
         TCFNode n = node;
-        while (n != null && !n.disposed) {
+        while (n != null && !n.isDisposed()) {
             if (n instanceof TCFNodeExecContext) return ((TCFNodeExecContext)n).getMemoryNode();
             n = n.parent;
         }
@@ -972,7 +972,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     public void setDebugViewSelection(TCFNode node, String reason) {
         assert Protocol.isDispatchThread();
         if (node == null) return;
-        if (node.disposed) return;
+        if (node.isDisposed()) return;
         runSuspendTrigger(node);
         if (reason == null) return;
         if (reason.equals(IRunControl.REASON_USER_REQUEST)) return;
@@ -1011,7 +1011,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
                     if (element instanceof TCFNodeExecContext) {
                         TCFNodeExecContext exec_ctx = (TCFNodeExecContext)element;
-                        if (!exec_ctx.disposed && active_actions.get(exec_ctx.id) == null) {
+                        if (!exec_ctx.isDisposed() && active_actions.get(exec_ctx.id) == null) {
                             TCFDataCache<TCFContextState> state_cache = exec_ctx.getState();
                             if (!state_cache.validate(this)) return;
                             TCFContextState state_data = state_cache.getData();
@@ -1025,7 +1025,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                     else if (element instanceof TCFNodeStackFrame) {
                         TCFNodeStackFrame f = (TCFNodeStackFrame)element;
                         TCFNodeExecContext exec_ctx = (TCFNodeExecContext)f.parent;
-                        if (!f.disposed && !exec_ctx.disposed && active_actions.get(exec_ctx.id) == null) {
+                        if (!f.isDisposed() && !exec_ctx.isDisposed() && active_actions.get(exec_ctx.id) == null) {
                             TCFDataCache<TCFContextState> state_cache = exec_ctx.getState();
                             if (!state_cache.validate(this)) return;
                             TCFContextState state_data = state_cache.getData();

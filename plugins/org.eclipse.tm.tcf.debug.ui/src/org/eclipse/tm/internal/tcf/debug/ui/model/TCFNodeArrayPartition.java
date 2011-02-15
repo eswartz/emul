@@ -29,17 +29,6 @@ public class TCFNodeArrayPartition extends TCFNode {
         children = new TCFChildrenSubExpressions(this, level, offs, size);
     }
 
-    @Override
-    void dispose() {
-        children.dispose();
-        super.dispose();
-    }
-
-    @Override
-    void dispose(String id) {
-        children.dispose(id);
-    }
-
     int getOffset() {
         return offs;
     }

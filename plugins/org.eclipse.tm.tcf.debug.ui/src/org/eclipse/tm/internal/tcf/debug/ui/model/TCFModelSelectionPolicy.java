@@ -34,7 +34,7 @@ class TCFModelSelectionPolicy implements IModelSelectionPolicy {
             Object e = ss.getFirstElement();
             if (e instanceof TCFNode) {
                 TCFNode n = (TCFNode)e;
-                return !n.isDisposed() && n.getModel() == model;
+                return !n.isDisposed() && n.model == model;
             }
         }
         return false;

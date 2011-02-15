@@ -33,7 +33,8 @@ public class TCFNodeModule extends TCFNode {
         String[] col_ids = update.getColumnIds();
         if (col_ids == null) {
             update.setLabel(region.getFileName(), 0);
-        } else {
+        }
+        else {
             for (int i=0; i < col_ids.length; ++i) {
                 String col_id = col_ids[i];
                 if (TCFColumnPresentationModules.COL_NAME.equals(col_id)) {
@@ -76,8 +77,9 @@ public class TCFNodeModule extends TCFNode {
     private String toHexString(Number address) {
         BigInteger addr;
         if (address instanceof BigInteger) {
-            addr = (BigInteger) address;
-        } else {
+            addr = (BigInteger)address;
+        }
+        else {
             addr = new BigInteger(address.toString());
         }
         String s = addr.toString(16);

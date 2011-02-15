@@ -53,15 +53,15 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     private final TCFChildrenHoverExpressions children_hover_exps;
     private final TCFChildrenModules children_modules;
 
-    private final TCFDataCache<IMemory.MemoryContext> mem_context;
-    private final TCFDataCache<IRunControl.RunControlContext> run_context;
-    private final TCFDataCache<MemoryRegion[]> memory_map;
-    private final TCFDataCache<IProcesses.ProcessContext> prs_context;
-    private final TCFDataCache<TCFContextState> state;
-    private final TCFDataCache<BigInteger> address; // Current PC as BigInteger
-    private final TCFDataCache<Collection<Map<String,Object>>> signal_list;
-    private final TCFDataCache<SignalMask[]> signal_mask;
-    private final TCFDataCache<TCFNodeExecContext> memory_node;
+    private final TCFData<IMemory.MemoryContext> mem_context;
+    private final TCFData<IRunControl.RunControlContext> run_context;
+    private final TCFData<MemoryRegion[]> memory_map;
+    private final TCFData<IProcesses.ProcessContext> prs_context;
+    private final TCFData<TCFContextState> state;
+    private final TCFData<BigInteger> address; // Current PC as BigInteger
+    private final TCFData<Collection<Map<String,Object>>> signal_list;
+    private final TCFData<SignalMask[]> signal_mask;
+    private final TCFData<TCFNodeExecContext> memory_node;
 
     private Map<BigInteger,TCFDataCache<TCFSourceRef>> line_info_cache;
     private Map<BigInteger,TCFDataCache<TCFFunctionRef>> func_info_cache;
@@ -175,7 +175,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         children_exps = new TCFChildrenExpressions(this);
         children_hover_exps = new TCFChildrenHoverExpressions(this);
         children_modules = new TCFChildrenModules(this);
-        mem_context = new TCFDataCache<IMemory.MemoryContext>(channel) {
+        mem_context = new TCFData<IMemory.MemoryContext>(channel) {
             @Override
             protected boolean startDataRetrieval() {
                 assert command == null;
@@ -192,7 +192,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                 return false;
             }
         };
-        run_context = new TCFDataCache<IRunControl.RunControlContext>(channel) {
+        run_context = new TCFData<IRunControl.RunControlContext>(channel) {
             @Override
             protected boolean startDataRetrieval() {
                 assert command == null;
@@ -209,7 +209,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                 return false;
             }
         };
-        prs_context = new TCFDataCache<IProcesses.ProcessContext>(channel) {
+        prs_context = new TCFData<IProcesses.ProcessContext>(channel) {
             @Override
             protected boolean startDataRetrieval() {
                 assert command == null;
@@ -226,7 +226,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                 return false;
             }
         };
-        memory_map = new TCFDataCache<MemoryRegion[]>(channel) {
+        memory_map = new TCFData<MemoryRegion[]>(channel) {
             @Override
             protected boolean startDataRetrieval() {
                 assert command == null;
@@ -249,7 +249,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                 return false;
             }
         };
-        state = new TCFDataCache<TCFContextState>(channel) {
+        state = new TCFData<TCFContextState>(channel) {
             @Override
             protected boolean startDataRetrieval() {
                 assert command == null;
@@ -272,7 +272,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                 return false;
             }
         };
-        address = new TCFDataCache<BigInteger>(channel) {
+        address = new TCFData<BigInteger>(channel) {
             @Override
             protected boolean startDataRetrieval() {
                 if (!run_context.validate(this)) return false;
@@ -295,7 +295,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                 return true;
             }
         };
-        signal_list = new TCFDataCache<Collection<Map<String,Object>>>(channel) {
+        signal_list = new TCFData<Collection<Map<String,Object>>>(channel) {
             @Override
             protected boolean startDataRetrieval() {
                 IProcesses prs = channel.getRemoteService(IProcesses.class);
@@ -311,7 +311,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                 return false;
             }
         };
-        signal_mask = new TCFDataCache<SignalMask[]>(channel) {
+        signal_mask = new TCFData<SignalMask[]>(channel) {
             @Override
             protected boolean startDataRetrieval() {
                 if (!signal_list.validate(this)) return false;
@@ -339,13 +339,13 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                 return false;
             }
         };
-        memory_node = new TCFDataCache<TCFNodeExecContext>(channel) {
+        memory_node = new TCFData<TCFNodeExecContext>(channel) {
             @Override
             protected boolean startDataRetrieval() {
                 TCFNode n = TCFNodeExecContext.this;
                 String id = null;
                 Throwable err = null;
-                while (n != null && !n.disposed) {
+                while (n != null && !n.isDisposed()) {
                     if (n instanceof TCFNodeExecContext) {
                         TCFNodeExecContext exe = (TCFNodeExecContext)n;
                         TCFDataCache<IRunControl.RunControlContext> cache = exe.getRunContext();
@@ -381,36 +381,11 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
 
     @Override
     void dispose() {
-        assert !disposed;
-        run_context.dispose();
-        prs_context.dispose();
-        mem_context.dispose();
-        memory_map.dispose();
-        memory_node.dispose();
-        state.dispose();
-        address.dispose();
-        signal_list.dispose();
-        signal_mask.dispose();
-        children_exec.dispose();
-        children_stack.dispose();
-        children_regs.dispose();
-        children_exps.dispose();
-        children_hover_exps.dispose();
-        children_modules.dispose();
+        assert !isDisposed();
         ArrayList<TCFNodeSymbol> l = new ArrayList<TCFNodeSymbol>(symbols.values());
         for (TCFNodeSymbol s : l) s.dispose();
         assert symbols.size() == 0;
         super.dispose();
-    }
-
-    @Override
-    void dispose(String id) {
-        children_exec.dispose(id);
-        children_stack.dispose(id);
-        children_regs.dispose(id);
-        children_exps.dispose(id);
-        children_hover_exps.dispose(id);
-        children_modules.dispose(id);
     }
 
     TCFChildren getHoverExpressionCache(String expression) {
@@ -935,7 +910,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     }
 
     void onContextChanged(IRunControl.RunControlContext context) {
-        assert !disposed;
+        assert !isDisposed();
         run_context.reset(context);
         memory_node.reset();
         signal_mask.reset();
@@ -952,7 +927,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     }
 
     void onContextChanged(IMemory.MemoryContext context) {
-        assert !disposed;
+        assert !isDisposed();
         if (line_info_cache != null) line_info_cache.clear();
         if (func_info_cache != null) func_info_cache.clear();
         mem_context.reset(context);
@@ -961,7 +936,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     }
 
     void onContextRemoved() {
-        assert !disposed;
+        assert !isDisposed();
         resumed_cnt++;
         resume_pending = false;
         resumed_by_action = false;
@@ -975,7 +950,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     }
 
     void onContainerSuspended() {
-        assert !disposed;
+        assert !isDisposed();
         if (run_context.isValid()) {
             IRunControl.RunControlContext ctx = run_context.getData();
             if (ctx != null && !ctx.hasState()) return;
@@ -984,7 +959,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     }
 
     void onContainerResumed() {
-        assert !disposed;
+        assert !isDisposed();
         if (run_context.isValid()) {
             IRunControl.RunControlContext ctx = run_context.getData();
             if (ctx != null && !ctx.hasState()) return;
@@ -993,7 +968,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     }
 
     void onContextSuspended(String pc, String reason, Map<String,Object> params) {
-        assert !disposed;
+        assert !isDisposed();
         if (pc != null) {
             TCFContextState s = new TCFContextState();
             s.is_suspended = true;
@@ -1019,7 +994,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     }
 
     void onContextResumed() {
-        assert !disposed;
+        assert !isDisposed();
         state.reset(new TCFContextState());
         final int cnt = ++resumed_cnt;
         resume_pending = true;
@@ -1028,7 +1003,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         Protocol.invokeLater(400, new Runnable() {
             public void run() {
                 if (cnt != resumed_cnt) return;
-                if (disposed) return;
+                if (isDisposed()) return;
                 resume_pending = false;
                 resumed_by_action = false;
                 children_stack.onResumed();
@@ -1046,7 +1021,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     }
 
     void onMemoryChanged(Number[] addr, long[] size) {
-        assert !disposed;
+        assert !isDisposed();
     }
 
     void onMemoryMapChanged() {

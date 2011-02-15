@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
+import java.util.ArrayList;
+
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.PlatformObject;
@@ -22,6 +24,7 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationCont
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IViewerInputUpdate;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.Protocol;
+import org.eclipse.tm.tcf.util.TCFDataCache;
 
 
 /**
@@ -34,7 +37,26 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
     protected final TCFModel model;
     protected final IChannel channel;
 
-    protected boolean disposed;
+    private boolean disposed;
+
+    /**
+     * An extension of TCFDataCache class that is automatically disposed when the parent node is disposed.
+     */
+    protected abstract class TCFData<V> extends TCFDataCache<V> {
+
+        TCFData(IChannel channel) {
+            super(channel);
+            addDataCache(this);
+        }
+
+        @Override
+        public void dispose() {
+            removeDataCache(this);
+            super.dispose();
+        }
+    }
+
+    private ArrayList<TCFDataCache<?>> caches;
 
     /**
      * Constructor for a root node. There should be exactly one root in the model.
@@ -65,27 +87,40 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
     }
 
     /**
-     * Dispose this node. The node is removed from the model.
-     * Subclasses should override the method to dispose children nodes, if any.
+     * Register a data cache object that caches data for this node.
+     * @param c - a TCFData object.
+     */
+    final void addDataCache(TCFDataCache<?> c) {
+        if (caches == null) caches = new ArrayList<TCFDataCache<?>>();
+        caches.add(c);
+    }
+
+    /**
+     * Unregister a data cache object that caches children for this node.
+     * @param c - a TCFData object.
+     */
+    final void removeDataCache(TCFDataCache<?> c) {
+        if (caches != null) caches.remove(c);
+    }
+
+    /**
+     * Dispose this node and its children. The node is removed from the model.
      */
     void dispose() {
         assert !disposed;
-        if (parent != null) parent.dispose(id);
+        ArrayList<TCFDataCache<?>> l = caches;
+        caches = null;
+        for (TCFDataCache<?> c : l) c.dispose();
+        if (parent != null && parent.caches != null) {
+            for (TCFDataCache<?> c : parent.caches) {
+                if (c instanceof TCFChildren) ((TCFChildren)c).onNodeDisposed(id);
+            }
+        }
         if (id != null) {
             assert model.getNode(id) == this;
             model.removeNode(id);
         }
         disposed = true;
-    }
-
-    /**
-     * A child node is being disposed.
-     * The child should be removed from this node children lists.
-     * Base node class does not support any children, so the method is empty.
-     * Subclasses should override the method if they can have children.
-     * @param id - ID of a node being disposed.
-     */
-    void dispose(String id) {
     }
 
     /**

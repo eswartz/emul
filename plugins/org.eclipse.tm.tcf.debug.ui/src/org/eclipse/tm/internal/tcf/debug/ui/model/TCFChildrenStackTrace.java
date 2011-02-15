@@ -30,14 +30,6 @@ public class TCFChildrenStackTrace extends TCFChildren {
         this.node = node;
     }
 
-    void dispose(String id) {
-        super.dispose(id);
-        // Register nodes are special case:
-        // they have executable node as parent,
-        // but they are referenced as children of stack frame
-        for (TCFNode n : getNodes()) n.dispose(id);
-    }
-
     void onSourceMappingChange() {
         for (TCFNode n : getNodes()) ((TCFNodeStackFrame)n).onSourceMappingChange();
     }

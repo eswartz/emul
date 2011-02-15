@@ -33,6 +33,19 @@ public class TCFChildrenRegisters extends TCFChildren {
     }
 
     @Override
+    void onNodeDisposed(String id) {
+        super.onNodeDisposed(id);
+        if (node instanceof TCFNodeExecContext) {
+            // CPU register nodes are special case:
+            // they have executable node as parent,
+            // but they are also referenced as children of stack frames
+            for (TCFNode n : ((TCFNodeExecContext)node).getStackTrace().getNodes()) {
+                ((TCFNodeStackFrame)n).getRegisters().onNodeDisposed(id);
+            }
+        }
+    }
+
+    @Override
     protected boolean startDataRetrieval() {
         IRegisters regs = node.model.getLaunch().getService(IRegisters.class);
         if (regs == null) {

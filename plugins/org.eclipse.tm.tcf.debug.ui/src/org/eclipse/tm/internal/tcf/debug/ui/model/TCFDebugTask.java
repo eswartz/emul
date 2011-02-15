@@ -17,6 +17,9 @@ import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.util.TCFTask;
 
+/**
+ * An extension of TCFTask class that adds support for throwing DebugException.
+ */
 public abstract class TCFDebugTask<V> extends TCFTask<V> {
 
     public synchronized V getD() throws DebugException {

@@ -50,14 +50,14 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
     private final int index;
     private final boolean deref;
     private final String field_id;
-    private final TCFDataCache<IExpressions.Expression> var_expression;
-    private final TCFDataCache<String> text;
-    private final TCFDataCache<Expression> expression;
-    private final TCFDataCache<IExpressions.Value> value;
-    private final TCFDataCache<ISymbols.Symbol> type;
+    private final TCFData<IExpressions.Expression> var_expression;
+    private final TCFData<String> text;
+    private final TCFData<Expression> expression;
+    private final TCFData<IExpressions.Value> value;
+    private final TCFData<ISymbols.Symbol> type;
+    private final TCFData<String> type_name;
+    private final TCFData<String> string;
     private final TCFChildrenSubExpressions children;
-    private final TCFDataCache<String> type_name;
-    private final TCFDataCache<String> string;
     private int sort_pos;
     private IExpressions.Value prev_value;
     private IExpressions.Value next_value;
@@ -99,7 +99,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         this.field_id = field_id;
         this.index = index;
         this.deref = deref;
-        var_expression = new TCFDataCache<IExpressions.Expression>(channel) {
+        var_expression = new TCFData<IExpressions.Expression>(channel) {
             @Override
             protected boolean startDataRetrieval() {
                 IExpressions exps = model.getLaunch().getService(IExpressions.class);
@@ -115,7 +115,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                 return false;
             }
         };
-        text = new TCFDataCache<String>(channel) {
+        text = new TCFData<String>(channel) {
             @Override
             protected boolean startDataRetrieval() {
                 if (script != null) {
@@ -176,7 +176,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                 return true;
             }
         };
-        expression = new TCFDataCache<Expression>(channel) {
+        expression = new TCFData<Expression>(channel) {
             @Override
             protected boolean startDataRetrieval() {
                 IExpressions exps = model.getLaunch().getService(IExpressions.class);
@@ -225,7 +225,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                 super.dispose();
             }
         };
-        value = new TCFDataCache<IExpressions.Value>(channel) {
+        value = new TCFData<IExpressions.Value>(channel) {
             @Override
             protected boolean startDataRetrieval() {
                 Boolean b = usePrevValue(this);
@@ -259,7 +259,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                 super.reset();
             }
         };
-        type = new TCFDataCache<ISymbols.Symbol>(channel) {
+        type = new TCFData<ISymbols.Symbol>(channel) {
             @Override
             protected boolean startDataRetrieval() {
                 String type_id = null;
@@ -285,7 +285,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                 return true;
             }
         };
-        string = new TCFDataCache<String>(channel) {
+        string = new TCFData<String>(channel) {
             IMemory.MemoryContext mem;
             ISymbols.Symbol base_type_data;
             boolean big_endian;
@@ -409,7 +409,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                 addr = null;
             }
         };
-        type_name = new TCFDataCache<String>(channel) {
+        type_name = new TCFData<String>(channel) {
             @Override
             protected boolean startDataRetrieval() {
                 StringBuffer bf = new StringBuffer();
@@ -419,23 +419,6 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
             }
         };
         children = new TCFChildrenSubExpressions(this, 0, 0, 0);
-    }
-
-    @Override
-    void dispose() {
-        var_expression.dispose();
-        value.dispose();
-        type.dispose();
-        type_name.dispose();
-        string.dispose();
-        children.dispose();
-        expression.dispose();
-        super.dispose();
-    }
-
-    @Override
-    void dispose(String id) {
-        children.dispose(id);
     }
 
     private TCFNodeExpression getRootExpression() {

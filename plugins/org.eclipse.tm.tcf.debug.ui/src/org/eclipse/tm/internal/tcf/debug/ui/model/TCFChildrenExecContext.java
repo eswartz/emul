@@ -87,17 +87,10 @@ public class TCFChildrenExecContext extends TCFChildren {
     }
 
     @Override
-    public void dispose() {
-        super.dispose();
-        mem_children.dispose();
-        run_children.dispose();
-    }
-
-    @Override
-    void dispose(String id) {
-        super.dispose(id);
-        mem_children.dispose(id);
-        run_children.dispose(id);
+    void onNodeDisposed(String id) {
+        super.onNodeDisposed(id);
+        mem_children.onNodeDisposed(id);
+        run_children.onNodeDisposed(id);
     }
 
     @Override
@@ -109,12 +102,13 @@ public class TCFChildrenExecContext extends TCFChildren {
             pending.wait(this);
             return false;
         }
-        Throwable error = null;
+        Throwable error = mem_children.getError();
+        if (error == null) error = run_children.getError();
         Map<String,TCFNode> data = new HashMap<String,TCFNode>();
-        if (mem_children.getError() == null) data.putAll(mem_children.getData());
-        else error = mem_children.getError();
-        if (run_children.getError() == null) data.putAll(run_children.getData());
-        else error = run_children.getError();
+        Map<String,TCFNode> m1 = mem_children.getData();
+        Map<String,TCFNode> m2 = run_children.getData();
+        if (m1 != null) data.putAll(m1);
+        if (m2 != null) data.putAll(m2);
         set(null, error, data);
         return true;
     }
@@ -135,7 +129,7 @@ public class TCFChildrenExecContext extends TCFChildren {
     }
 
     void onContextAdded(IMemory.MemoryContext context) {
-        assert !node.disposed;
+        assert !node.isDisposed();
         String id = context.getID();
         TCFNodeExecContext n = (TCFNodeExecContext)node.model.getNode(id);
         if (n == null) {

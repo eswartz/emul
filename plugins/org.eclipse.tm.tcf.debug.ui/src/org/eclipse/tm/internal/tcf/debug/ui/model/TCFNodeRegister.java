@@ -38,8 +38,8 @@ import org.eclipse.tm.tcf.util.TCFTask;
 public class TCFNodeRegister extends TCFNode implements IElementEditor {
 
     private final TCFChildrenRegisters children;
-    private final TCFDataCache<IRegisters.RegistersContext> context;
-    private final TCFDataCache<byte[]> value;
+    private final TCFData<IRegisters.RegistersContext> context;
+    private final TCFData<byte[]> value;
 
     private byte[] prev_value;
     private byte[] next_value;
@@ -53,7 +53,7 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
     TCFNodeRegister(TCFNode parent, final String id) {
         super(parent, id);
         children = new TCFChildrenRegisters(this);
-        context = new TCFDataCache<IRegisters.RegistersContext>(channel) {
+        context = new TCFData<IRegisters.RegistersContext>(channel) {
             @Override
             protected boolean startDataRetrieval() {
                 IRegisters regs = model.getLaunch().getService(IRegisters.class);
@@ -65,7 +65,7 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
                 return false;
             }
         };
-        value = new TCFDataCache<byte[]>(channel) {
+        value = new TCFData<byte[]>(channel) {
             @Override
             protected boolean startDataRetrieval() {
                 Boolean b = usePrevValue(this);
@@ -95,19 +95,6 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
                 return false;
             }
         };
-    }
-
-    @Override
-    public void dispose() {
-        children.dispose();
-        context.dispose();
-        value.dispose();
-        super.dispose();
-    }
-
-    @Override
-    public void dispose(String id) {
-        children.dispose(id);
     }
 
     public TCFDataCache<IRegisters.RegistersContext> getContext() {

@@ -35,15 +35,17 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
     private TCFNode[] array;
 
     TCFChildren(TCFNode node) {
-        super(node.getChannel());
+        super(node.channel);
         this.node = node;
         pool_margin = 0;
+        node.addDataCache(this);
     }
 
     TCFChildren(TCFNode node, int pool_margin) {
-        super(node.getChannel());
+        super(node.channel);
         this.node = node;
         this.pool_margin = pool_margin;
+        node.addDataCache(this);
     }
 
     /**
@@ -52,11 +54,9 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
     @Override
     public void dispose() {
         assert !isDisposed();
-        if (!node_pool.isEmpty()) {
-            TCFNode a[] = node_pool.values().toArray(new TCFNode[node_pool.size()]);
-            for (int i = 0; i < a.length; i++) a[i].dispose();
-            assert node_pool.isEmpty();
-        }
+        node.removeDataCache(this);
+        for (TCFNode n : node_pool.values()) n.dispose();
+        node_pool.clear();
         super.dispose();
     }
 
@@ -65,7 +65,7 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
      * The method is called every time a node is disposed.
      * @param id - node ID
      */
-    void dispose(String id) {
+    void onNodeDisposed(String id) {
         node_pool.remove(id);
         if (isValid()) {
             array = null;
@@ -157,7 +157,7 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
      */
     void add(TCFNode n) {
         assert !isDisposed();
-        assert !n.disposed;
+        assert !n.isDisposed();
         assert node_pool.get(n.id) == null;
         assert n.parent == node;
         node_pool.put(n.id, n);

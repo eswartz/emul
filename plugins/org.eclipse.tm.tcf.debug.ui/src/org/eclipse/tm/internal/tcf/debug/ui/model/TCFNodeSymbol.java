@@ -17,8 +17,8 @@ import org.eclipse.tm.tcf.util.TCFDataCache;
 
 public class TCFNodeSymbol extends TCFNode {
 
-    private final TCFDataCache<ISymbols.Symbol> context;
-    private final TCFDataCache<String[]> children;
+    private final TCFData<ISymbols.Symbol> context;
+    private final TCFData<String[]> children;
 
     private int update_policy;
     private ISymbolOwner owner;
@@ -33,7 +33,7 @@ public class TCFNodeSymbol extends TCFNode {
 
     protected TCFNodeSymbol(final TCFNode parent, final String id) {
         super(parent, id);
-        context = new TCFDataCache<ISymbols.Symbol>(channel) {
+        context = new TCFData<ISymbols.Symbol>(channel) {
             @Override
             protected boolean startDataRetrieval() {
                 ISymbols syms = model.getLaunch().getService(ISymbols.class);
@@ -51,7 +51,7 @@ public class TCFNodeSymbol extends TCFNode {
                 return false;
             }
         };
-        children = new TCFDataCache<String[]>(channel) {
+        children = new TCFData<String[]>(channel) {
             @Override
             protected boolean startDataRetrieval() {
                 ISymbols syms = model.getLaunch().getService(ISymbols.class);
@@ -104,13 +104,11 @@ public class TCFNodeSymbol extends TCFNode {
 
     @Override
     public void dispose() {
-        assert !disposed;
+        assert !isDisposed();
         if (owner != null) {
             owner.removeSymbol(this);
             owner = null;
         }
-        context.dispose();
-        children.dispose();
         if (sym_list == this) sym_list = prev;
         if (sym_list == this) {
             sym_list = null;
@@ -151,7 +149,7 @@ public class TCFNodeSymbol extends TCFNode {
 
     private void setUpdatePolicy(String id, int policy) {
         update_policy = policy;
-        if (!disposed) {
+        if (!isDisposed()) {
             TCFNode n = model.getNode(id);
             if (!(n instanceof ISymbolOwner)) n = parent;
             if (n != owner) {

@@ -31,13 +31,13 @@ import org.eclipse.tm.tcf.util.TCFDataCache;
 public class TCFNodeLaunch extends TCFNode implements ISymbolOwner {
 
     private final TCFChildrenExecContext children;
-    private final TCFDataCache<TCFNode[]> filtered_children;
+    private final TCFData<TCFNode[]> filtered_children;
     private final Map<String,TCFNodeSymbol> symbols = new HashMap<String,TCFNodeSymbol>();
 
     TCFNodeLaunch(final TCFModel model) {
         super(model);
         children = new TCFChildrenExecContext(this);
-        filtered_children = new TCFDataCache<TCFNode[]>(channel) {
+        filtered_children = new TCFData<TCFNode[]>(channel) {
             @Override
             protected boolean startDataRetrieval() {
                 Set<String> filter = model.getLaunch().getContextFilter();
@@ -119,16 +119,10 @@ public class TCFNodeLaunch extends TCFNode implements ISymbolOwner {
 
     @Override
     void dispose() {
-        children.dispose();
         ArrayList<TCFNodeSymbol> l = new ArrayList<TCFNodeSymbol>(symbols.values());
         for (TCFNodeSymbol s : l) s.dispose();
         assert symbols.size() == 0;
         super.dispose();
-    }
-
-    @Override
-    void dispose(String id) {
-        children.dispose(id);
     }
 
     private boolean validateFilteredChildren(Runnable done) {
@@ -136,7 +130,7 @@ public class TCFNodeLaunch extends TCFNode implements ISymbolOwner {
             TCFNode[] arr = filtered_children.getData();
             if (arr != null) {
                 for (TCFNode n : arr) {
-                    if (n.disposed) {
+                    if (n.isDisposed()) {
                         filtered_children.reset();
                         break;
                     }

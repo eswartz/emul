@@ -39,10 +39,10 @@ public class TCFNodeStackFrame extends TCFNode {
     private final TCFChildrenLocalVariables children_vars;
     private final TCFChildrenExpressions children_exps;
     private final TCFChildrenHoverExpressions children_hover_exps;
-    private final TCFDataCache<IStackTrace.StackTraceContext> stack_trace_context;
-    private final TCFDataCache<TCFSourceRef> line_info;
-    private final TCFDataCache<TCFFunctionRef> func_info;
-    private final TCFDataCache<BigInteger> address;
+    private final TCFData<IStackTrace.StackTraceContext> stack_trace_context;
+    private final TCFData<TCFSourceRef> line_info;
+    private final TCFData<TCFFunctionRef> func_info;
+    private final TCFData<BigInteger> address;
 
     private String hover_expression;
 
@@ -53,7 +53,7 @@ public class TCFNodeStackFrame extends TCFNode {
         children_vars = new TCFChildrenLocalVariables(this);
         children_exps = new TCFChildrenExpressions(this);
         children_hover_exps = new TCFChildrenHoverExpressions(this);
-        stack_trace_context = new TCFDataCache<IStackTrace.StackTraceContext>(channel) {
+        stack_trace_context = new TCFData<IStackTrace.StackTraceContext>(channel) {
             @Override
             protected boolean startDataRetrieval() {
                 assert command == null;
@@ -88,7 +88,7 @@ public class TCFNodeStackFrame extends TCFNode {
                 return false;
             }
         };
-        line_info = new TCFDataCache<TCFSourceRef>(channel) {
+        line_info = new TCFData<TCFSourceRef>(channel) {
             @Override
             protected boolean startDataRetrieval() {
                 if (!stack_trace_context.validate(this)) return false;
@@ -115,7 +115,7 @@ public class TCFNodeStackFrame extends TCFNode {
                 return true;
             }
         };
-        func_info = new TCFDataCache<TCFFunctionRef>(channel) {
+        func_info = new TCFData<TCFFunctionRef>(channel) {
             @Override
             protected boolean startDataRetrieval() {
                 if (!address.validate(this)) return false;
@@ -140,7 +140,7 @@ public class TCFNodeStackFrame extends TCFNode {
                 return true;
             }
         };
-        address = new TCFDataCache<BigInteger>(channel) {
+        address = new TCFData<BigInteger>(channel) {
             @Override
             protected boolean startDataRetrieval() {
                 if (!stack_trace_context.validate(this)) return false;
@@ -177,27 +177,6 @@ public class TCFNodeStackFrame extends TCFNode {
         this.frame_no = frame_no;
     }
 
-    @Override
-    void dispose() {
-        stack_trace_context.dispose();
-        line_info.dispose();
-        func_info.dispose();
-        address.dispose();
-        children_regs.dispose();
-        children_vars.dispose();
-        children_exps.dispose();
-        children_hover_exps.dispose();
-        super.dispose();
-    }
-
-    @Override
-    void dispose(String id) {
-        children_regs.dispose(id);
-        children_vars.dispose(id);
-        children_exps.dispose(id);
-        children_hover_exps.dispose(id);
-    }
-
     TCFChildren getHoverExpressionCache(String expression) {
         if (expression != hover_expression && (expression == null || !expression.equals(hover_expression))) {
             hover_expression = expression;
@@ -220,6 +199,10 @@ public class TCFNodeStackFrame extends TCFNode {
 
     public TCFDataCache<BigInteger> getAddress() {
         return address;
+    }
+
+    TCFChildren getRegisters() {
+        return children_regs;
     }
 
     public BigInteger getReturnAddress() {
