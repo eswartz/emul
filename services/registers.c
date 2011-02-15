@@ -248,10 +248,14 @@ static void command_get_children_cache_client(void * x) {
     int frame = STACK_NO_FRAME;
     StackFrame * frame_info = NULL;
     RegisterDefinition * defs = NULL;
+    RegisterDefinition * parent = NULL;
     Trap trap;
 
     if (set_trap(&trap)) {
-        if (id2frame(args->id, &ctx, &frame) == 0) {
+        if (id2register(args->id, &ctx, &frame, &parent) == 0) {
+            if (frame != STACK_TOP_FRAME && get_frame_info(ctx, frame, &frame_info) < 0) exception(errno);
+        }
+        else if (id2frame(args->id, &ctx, &frame) == 0) {
             if (get_frame_info(ctx, frame, &frame_info) < 0) exception(errno);
         }
         else {
@@ -274,6 +278,7 @@ static void command_get_children_cache_client(void * x) {
         int cnt = 0;
         RegisterDefinition * reg_def;
         for (reg_def = defs; reg_def->name != NULL; reg_def++) {
+            if (reg_def->parent != parent) continue;
             if (frame == STACK_TOP_FRAME || read_reg_value(frame_info, reg_def, NULL) == 0) {
                 if (cnt > 0) write_stream(&c->out, ',');
                 json_write_string(&c->out, register2id(ctx, frame, reg_def));
