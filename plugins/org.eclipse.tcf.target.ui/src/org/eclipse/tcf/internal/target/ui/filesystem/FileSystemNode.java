@@ -30,16 +30,18 @@ import org.eclipse.tm.tcf.services.IFileSystem.IFileHandle;
 public class FileSystemNode {
 
 	private final FileSystemNode parent;
+	private final ITarget target;
 	private final IFileSystem.DirEntry dirEntry;
 	
 	private FileSystemNode[] children;
 	private boolean fetching;
 
-	public FileSystemNode(IFileSystem.DirEntry dirEntry) {
-		this(null, dirEntry);
+	public FileSystemNode(ITarget target, IFileSystem.DirEntry dirEntry) {
+		this(target, null, dirEntry);
 	}
 	
-	public FileSystemNode(FileSystemNode parent, IFileSystem.DirEntry dirEntry) {
+	public FileSystemNode(ITarget target, FileSystemNode parent, IFileSystem.DirEntry dirEntry) {
+		this.target = target;
 		this.parent = parent;
 		this.dirEntry = dirEntry;
 	}
@@ -73,10 +75,14 @@ public class FileSystemNode {
 	}
 	
 	public boolean hasChildren() {
-		return children == null || children.length > 0;
+		return dirEntry.attrs.isDirectory();
 	}
 	
-	public Object[] getChildren(final TreeViewer viewer, final ITarget target) {
+	public Object getParent() {
+		return parent != null ? parent : target;
+	}
+	
+	public Object[] getChildren(final TreeViewer viewer) {
 		if (children != null)
 			return children;
 		
@@ -122,7 +128,7 @@ public class FileSystemNode {
 													Activator.log(IStatus.ERROR, error);
 												} else if (entries != null) {
 													for (IFileSystem.DirEntry entry : entries)
-														_children.add(new FileSystemNode(FileSystemNode.this, entry));
+														_children.add(new FileSystemNode(target, FileSystemNode.this, entry));
 													
 													// Loop until we get an eof
 													if (eof)
@@ -164,6 +170,6 @@ public class FileSystemNode {
 			});
 		}
 		
-		return Activator.PENDING_NODES;
+		return new Object[] { FileSystemContentProvider.pending };
 	}
 }

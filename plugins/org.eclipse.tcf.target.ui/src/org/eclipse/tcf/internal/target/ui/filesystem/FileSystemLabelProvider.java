@@ -44,8 +44,10 @@ public class FileSystemLabelProvider implements ILabelProvider {
 	public String getText(Object element) {
 		if (element instanceof FileSystemNode)
 			return ((FileSystemNode)element).getDirEntry().filename;
-		else if (element == FileSystemContentProvider.rootNode)
-			return FileSystemContentProvider.rootNode;
+		else if (element instanceof FileSystemContentProvider.RootNode)
+			return "File System";
+		else if (element == FileSystemContentProvider.pending)
+			return element.toString();
 		else
 			return null;
 	}

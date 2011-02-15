@@ -25,12 +25,20 @@ import org.eclipse.tm.tcf.services.IFileSystem;
 public class FileSystemContentProvider implements ITreeContentProvider {
 
 	private TreeViewer viewer;
-	private ITarget target;
-	private FileSystemNode[] roots;
 	private boolean showRootNode;
 	private boolean fetching;
-
-	final static String rootNode = "File System";
+	
+	static final String pending = "pending...";
+	
+	static class RootNode {
+		private static final String propertyName = "fileSystemRoot";
+		private final ITarget target;
+		private FileSystemNode[] roots;
+		
+		public RootNode(ITarget target) {
+			this.target = target;
+		}
+	}
 	
 	public FileSystemContentProvider() {
 		this(true);
@@ -46,11 +54,6 @@ public class FileSystemContentProvider implements ITreeContentProvider {
 
 	@Override
 	public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
-		if (newInput instanceof ITarget) {
-			target = (ITarget)newInput;
-			roots = null;
-		}
-		
 		if (viewer instanceof TreeViewer)
 			this.viewer = (TreeViewer)viewer;
 	}
@@ -63,15 +66,20 @@ public class FileSystemContentProvider implements ITreeContentProvider {
 	@Override
 	public Object[] getChildren(Object parentElement) {
 		if (parentElement instanceof ITarget) {
-			target = (ITarget)parentElement;
-			if (showRootNode)
-				return new Object[] { rootNode };
-			else
-				return getRoots(parentElement);
-		} else if (parentElement == rootNode) {
-			return getRoots(parentElement);
+			ITarget target = (ITarget)parentElement;
+			if (showRootNode) {
+				RootNode root = (RootNode)target.getLocalProperties().get(RootNode.propertyName);
+				if (root == null) {
+					root = new RootNode(target);
+					target.getLocalProperties().put(RootNode.propertyName, root);
+				}
+				return new Object[] { root };
+			} else
+				return getRoots((ITarget)parentElement);
+		} else if (parentElement instanceof RootNode) {
+			return getRoots(((RootNode)parentElement).target);
 		} else if (parentElement instanceof FileSystemNode) {
-			return ((FileSystemNode)parentElement).getChildren(viewer, target);
+			return ((FileSystemNode)parentElement).getChildren(viewer);
 		} else {
 			return new Object[0];
 		}
@@ -86,9 +94,13 @@ public class FileSystemContentProvider implements ITreeContentProvider {
 		});
 	}
 
-	private Object[] getRoots(final Object parentElement) {
-		if (roots != null)
-			return roots;
+	private Object[] getRoots(final ITarget target) {
+		final RootNode root = (RootNode)target.getLocalProperties().get(RootNode.propertyName);
+		if (root == null)
+			return new Object[0];
+		
+		if (root.roots != null)
+			return root.roots;
 		
 		if (!fetching) {
 			fetching = true;
@@ -103,11 +115,11 @@ public class FileSystemContentProvider implements ITreeContentProvider {
 							fileSystem.roots(new IFileSystem.DoneRoots() {
 								@Override
 								public void doneRoots(IToken token, IFileSystem.FileSystemException error, IFileSystem.DirEntry[] entries) {
-									roots = new FileSystemNode[entries.length];
+									root.roots = new FileSystemNode[entries.length];
 									for (int i = 0; i < entries.length; ++i)
-										roots[i] = new FileSystemNode(entries[i]);
+										root.roots[i] = new FileSystemNode(target, entries[i]);
 									fetching = false;
-									refresh(viewer, parentElement);
+									refresh(viewer, target);
 								}
 							});
 						}
@@ -121,12 +133,17 @@ public class FileSystemContentProvider implements ITreeContentProvider {
 			});
 		}
 		
-		return Activator.PENDING_NODES;
+		return new Object[] { pending };
 	}
 	
 	@Override
 	public Object getParent(Object element) {
-		return null;
+		if (element instanceof RootNode)
+			return ((RootNode)element).target;
+		else if (element instanceof FileSystemNode)
+			return ((FileSystemNode)element).getParent();
+		else
+			return null;
 	}
 
 	@Override
@@ -134,8 +151,8 @@ public class FileSystemContentProvider implements ITreeContentProvider {
 		if (element instanceof ITarget)
 			return true;
 		else if (element instanceof FileSystemNode)
-			return true;
-		else if (element == rootNode)
+			return ((FileSystemNode)element).hasChildren();
+		else if (element instanceof RootNode)
 			return true;
 		else
 			return false;
