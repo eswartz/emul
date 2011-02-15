@@ -13,7 +13,10 @@ package org.eclipse.tm.internal.tcf.debug.ui.model;
 import java.math.BigInteger;
 import java.util.Arrays;
 
+import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenCountUpdate;
+import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IElementEditor;
+import org.eclipse.debug.internal.ui.viewers.model.provisional.IHasChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.ILabelUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
@@ -34,6 +37,7 @@ import org.eclipse.tm.tcf.util.TCFTask;
 //TODO: hierarchical registers
 public class TCFNodeRegister extends TCFNode implements IElementEditor {
 
+    private final TCFChildrenRegisters children;
     private final TCFDataCache<IRegisters.RegistersContext> context;
     private final TCFDataCache<byte[]> value;
 
@@ -48,6 +52,7 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
 
     TCFNodeRegister(TCFNode parent, final String id) {
         super(parent, id);
+        children = new TCFChildrenRegisters(this);
         context = new TCFDataCache<IRegisters.RegistersContext>(channel) {
             @Override
             protected boolean startDataRetrieval() {
@@ -71,7 +76,7 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
                 }
                 if (!context.validate(this)) return false;
                 IRegisters.RegistersContext ctx = context.getData();
-                if (ctx == null) {
+                if (ctx == null || ctx.getSize() <= 0) {
                     set(null, null, null);
                     return true;
                 }
@@ -94,9 +99,15 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
 
     @Override
     public void dispose() {
+        children.dispose();
         context.dispose();
         value.dispose();
         super.dispose();
+    }
+
+    @Override
+    public void dispose(String id) {
+        children.dispose(id);
     }
 
     public TCFDataCache<IRegisters.RegistersContext> getContext() {
@@ -197,6 +208,25 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
     }
 
     @Override
+    protected boolean getData(IHasChildrenUpdate result, Runnable done) {
+        if (!children.validate(done)) return false;
+        result.setHasChilren(children.size() > 0);
+        return true;
+    }
+
+    @Override
+    protected boolean getData(IChildrenCountUpdate result, Runnable done) {
+        if (!children.validate(done)) return false;
+        result.setChildCount(children.size());
+        return true;
+    }
+
+    @Override
+    protected boolean getData(IChildrenUpdate result, Runnable done) {
+        return children.getData(result, done);
+    }
+
+    @Override
     protected boolean getData(ILabelUpdate result, Runnable done) {
         TCFDataCache<?> pending = null;
         if (!context.validate()) pending = context;
@@ -284,7 +314,7 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
         Throwable error = context.getError();
         if (error == null) error = value.getError();
         byte[] data = value.getData();
-        if (error != null || ctx == null || data == null) {
+        if (error != null || ctx == null) {
             result.setForeground(rgb_error, col);
             result.setLabel("N/A", col);
         }
@@ -368,10 +398,12 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
     void onSuspended() {
         prev_value = next_value;
         value.reset();
+        children.onSuspended();
         // No need to post delta: parent posted CONTENT
     }
 
     void onRegistersChanged() {
+        children.onRegistersChanged();
         context.reset();
         value.reset();
         // No need to post delta: parent posted CONTENT
