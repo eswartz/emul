@@ -155,15 +155,16 @@ static int is_attached(pid_t pid) {
 static char * get_executable(pid_t pid) {
     static char s[FILE_PATH_SIZE + 1];
     char tmpbuf[100];
-    int sz;
 
-    snprintf(tmpbuf, sizeof(tmpbuf), "/proc/%d/exe", pid);
-    if ((sz = readlink(tmpbuf, s, FILE_PATH_SIZE)) < 0) {
-        trace(LOG_ALWAYS, "error: readlink() failed; pid %d, error %d %s",
+    snprintf(tmpbuf, sizeof(tmpbuf), "/proc/%d/cmdline", pid);
+    FILE * file = fopen(tmpbuf, "r");
+    if (!file) {
+        trace(LOG_ALWAYS, "error: reading cmdline failed; pid %d, error %d %s",
             pid, errno, errno_to_str(errno));
         return NULL;
     }
-    s[sz] = 0;
+    fread(s, FILE_PATH_SIZE, 1, file);
+    fclose(file);
     return s;
 }
 #endif
