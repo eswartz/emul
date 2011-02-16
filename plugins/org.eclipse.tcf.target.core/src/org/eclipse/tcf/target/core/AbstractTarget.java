@@ -10,8 +10,10 @@
  *******************************************************************************/
 package org.eclipse.tcf.target.core;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.PlatformObject;
@@ -26,12 +28,18 @@ public abstract class AbstractTarget extends PlatformObject implements ITarget {
 	protected LinkedList<IPeer> peers = new LinkedList<IPeer>();
 	protected LinkedList<ITargetListener> listeners = new LinkedList<ITargetListener>();
 	protected LinkedList<ITargetRequest> outstandingRequests = new LinkedList<ITargetRequest>();
+	private Map<String, Object> localProperties = new HashMap<String, Object>();
 	
 	private IChannel channel;
 
 	@Override
 	public boolean isRunning() {
 		return !peers.isEmpty();
+	}
+	
+	@Override
+	public Map<String, Object> getLocalProperties() {
+		return localProperties;
 	}
 	
 	@Override

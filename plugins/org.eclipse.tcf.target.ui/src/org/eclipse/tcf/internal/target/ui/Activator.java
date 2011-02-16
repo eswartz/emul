@@ -26,9 +26,6 @@ public class Activator extends AbstractUIPlugin {
 	// The plug-in ID
 	public static final String PLUGIN_ID = "org.eclipse.tcf.target.ui"; //$NON-NLS-1$
 	
-	// Reusable pending string nodes
-	public static final String[] PENDING_NODES = new String[] { "pending..." };
-
 	// The shared instance
 	private static Activator plugin;
 	

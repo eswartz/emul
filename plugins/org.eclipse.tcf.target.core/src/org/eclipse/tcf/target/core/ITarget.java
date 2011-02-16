@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.tcf.target.core;
 
+import java.util.Map;
+
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.tm.tcf.protocol.IChannel;
@@ -100,5 +102,12 @@ public interface ITarget extends IAdaptable {
 	 * @return no more peers
 	 */
 	boolean handleRemovePeer(String id);
+	
+	/**
+	 * Get properties associated with this target by local tooling.
+	 * 
+	 * @return local properties
+	 */
+	Map<String, Object> getLocalProperties();
 
 }

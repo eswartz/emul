@@ -22,8 +22,6 @@ public class FileSystemLabelProvider implements ILabelProvider {
 
 	@Override
 	public void dispose() {
-		// TODO Auto-generated method stub
-
 	}
 
 	@Override
@@ -42,10 +40,10 @@ public class FileSystemLabelProvider implements ILabelProvider {
 
 	@Override
 	public String getText(Object element) {
-		if (element instanceof FileSystemNode)
-			return ((FileSystemNode)element).getDirEntry().filename;
-		else if (element instanceof FileSystemContentProvider.RootNode)
+		if (element instanceof FileSystemContentProvider.RootNode)
 			return "File System";
+		else if (element instanceof FileSystemNode)
+			return ((FileSystemNode)element).getDirEntry().filename;
 		else if (element == FileSystemContentProvider.pending)
 			return element.toString();
 		else

@@ -22,26 +22,19 @@ public class ProcessesLabelProvider implements ILabelProvider {
 	
 	@Override
 	public void addListener(ILabelProviderListener listener) {
-		// TODO Auto-generated method stub
-		
 	}
 	
 	@Override
 	public void dispose() {
-		// TODO Auto-generated method stub
-		
 	}
 	
 	@Override
 	public boolean isLabelProperty(Object element, String property) {
-		// TODO Auto-generated method stub
 		return false;
 	}
 	
 	@Override
 	public void removeListener(ILabelProviderListener listener) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
@@ -52,8 +45,14 @@ public class ProcessesLabelProvider implements ILabelProvider {
 	
 	@Override
 	public String getText(Object element) {
-		// TODO Auto-generated method stub
-		return "Processes";
+		if (element instanceof ProcessesContentProvider.RootNode)
+			return "Processes";
+		else if (element instanceof ProcessesNode)
+			return ((ProcessesNode)element).getName();
+		else if (element == ProcessesContentProvider.pending)
+			return element.toString();
+		else
+			return null;
 	}
 	
 }

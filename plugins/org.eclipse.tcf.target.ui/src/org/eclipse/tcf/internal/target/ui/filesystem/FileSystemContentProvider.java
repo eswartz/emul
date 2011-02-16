@@ -150,10 +150,10 @@ public class FileSystemContentProvider implements ITreeContentProvider {
 	public boolean hasChildren(Object element) {
 		if (element instanceof ITarget)
 			return true;
-		else if (element instanceof FileSystemNode)
-			return ((FileSystemNode)element).hasChildren();
 		else if (element instanceof RootNode)
 			return true;
+		else if (element instanceof FileSystemNode)
+			return ((FileSystemNode)element).hasChildren();
 		else
 			return false;
 	}
