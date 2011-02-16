@@ -29,7 +29,7 @@ public class ProcessesTargetPage implements ITargetPage {
 		composite.setLayout(new GridLayout(2, false));
 		
 		viewer = new TreeViewer(composite, SWT.BORDER);
-		viewer.setContentProvider(new ProcessesContentProvider());
+		viewer.setContentProvider(new ProcessesContentProvider(false));
 		viewer.setLabelProvider(new ProcessesLabelProvider());
 		viewer.getControl().setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		viewer.setInput(target);

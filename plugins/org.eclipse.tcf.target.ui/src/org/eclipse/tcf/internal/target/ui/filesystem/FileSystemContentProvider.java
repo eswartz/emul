@@ -67,12 +67,12 @@ public class FileSystemContentProvider implements ITreeContentProvider {
 	public Object[] getChildren(Object parentElement) {
 		if (parentElement instanceof ITarget) {
 			ITarget target = (ITarget)parentElement;
+			RootNode root = (RootNode)target.getLocalProperties().get(RootNode.propertyName);
+			if (root == null) {
+				root = new RootNode(target);
+				target.getLocalProperties().put(RootNode.propertyName, root);
+			}
 			if (showRootNode) {
-				RootNode root = (RootNode)target.getLocalProperties().get(RootNode.propertyName);
-				if (root == null) {
-					root = new RootNode(target);
-					target.getLocalProperties().put(RootNode.propertyName, root);
-				}
 				return new Object[] { root };
 			} else
 				return getRoots((ITarget)parentElement);

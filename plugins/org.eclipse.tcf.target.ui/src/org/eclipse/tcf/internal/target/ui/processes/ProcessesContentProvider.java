@@ -22,7 +22,6 @@ import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IProcesses;
-import org.eclipse.tm.tcf.services.IRunControl;
 
 /**
  * @author dschaefer
@@ -73,12 +72,12 @@ public class ProcessesContentProvider implements ITreeContentProvider {
 	public Object[] getChildren(Object parentElement) {
 		if (parentElement instanceof ITarget) {
 			ITarget target = (ITarget)parentElement;
+			RootNode root = (RootNode)target.getLocalProperties().get(RootNode.propertyName);
+			if (root == null) {
+				root = new RootNode(target);
+				target.getLocalProperties().put(RootNode.propertyName, root);
+			}
 			if (showRootNode) {
-				RootNode root = (RootNode)target.getLocalProperties().get(RootNode.propertyName);
-				if (root == null) {
-					root = new RootNode(target);
-					target.getLocalProperties().put(RootNode.propertyName, root);
-				}
 				return new Object[] { root };
 			} else
 				return getProcesses((ITarget)parentElement);
@@ -114,7 +113,6 @@ public class ProcessesContentProvider implements ITreeContentProvider {
 				public void run() {
 					target.handleTargetRequest(new TargetRequestSequence() {
 						IProcesses processes;
-						IRunControl runControl;
 						int i = 0;
 						
 						@Override
@@ -124,18 +122,14 @@ public class ProcessesContentProvider implements ITreeContentProvider {
 									@Override
 									public void run(IChannel channel) {
 										processes = channel.getRemoteService(IProcesses.class);
-										runControl = channel.getRemoteService(IRunControl.class);
-										
-										runControl.getChildren(null, new IRunControl.DoneGetChildren() {
+										processes.getChildren(null, false, new IProcesses.DoneGetChildren() {
 											@Override
 											public void doneGetChildren(IToken token, Exception error, String[] context_ids) {
 												root.processes = new ProcessesNode[context_ids.length];
 												for (int i = 0; i < context_ids.length; ++i)
 													root.processes[i] = new ProcessesNode(target, context_ids[i]);
-												if (context_ids.length > 0)
-													nextStep();
-												else
-													refresh(viewer, target);
+												refresh(viewer, target);
+												nextStep();
 											}
 										});										
 									}
@@ -143,15 +137,15 @@ public class ProcessesContentProvider implements ITreeContentProvider {
 								new Step() {
 									@Override
 									public void run(IChannel channel) {
-										runControl.getContext(root.processes[i].getContextId(), new IRunControl.DoneGetContext() {
+										processes.getContext(root.processes[i].getContextId(), new IProcesses.DoneGetContext() {
 											@Override
-											public void doneGetContext(IToken token, Exception error, IRunControl.RunControlContext context) {
+											public void doneGetContext(IToken token, Exception error, IProcesses.ProcessContext context) {
 												if (error != null) {
 													Activator.log(IStatus.ERROR, error);
 												} else {
 													root.processes[i].setContext(context);
 													if (++i < root.processes.length)
-														runControl.getContext(root.processes[i].getContextId(), this);
+														processes.getContext(root.processes[i].getContextId(), this);
 													else {
 														refresh(viewer, target);
 														fetching = false;

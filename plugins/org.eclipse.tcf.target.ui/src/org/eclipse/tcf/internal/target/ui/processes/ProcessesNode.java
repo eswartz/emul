@@ -3,14 +3,13 @@ package org.eclipse.tcf.internal.target.ui.processes;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.tcf.target.core.ITarget;
 import org.eclipse.tm.tcf.services.IProcesses;
-import org.eclipse.tm.tcf.services.IRunControl;
 
 public class ProcessesNode {
 
 	private final ITarget target;
 	private final ProcessesNode parent;
 	private final String contextId;
-	private IRunControl.RunControlContext context;
+	private IProcesses.ProcessContext context;
 	
 	public ProcessesNode(ITarget target, String contextId) {
 		this(target, null, contextId);
@@ -24,7 +23,7 @@ public class ProcessesNode {
 	
 	public String getName() {
 		if (context != null)
-			return context.getName();
+			return context.getName() + " (" + contextId + ")";
 		else
 			return contextId;
 	}
@@ -33,11 +32,11 @@ public class ProcessesNode {
 		return contextId;
 	}
 	
-	public void setContext(IRunControl.RunControlContext context) {
+	public void setContext(IProcesses.ProcessContext context) {
 		this.context = context;
 	}
 	
-	public IRunControl.RunControlContext getContext() {
+	public IProcesses.ProcessContext getContext() {
 		return context;
 	}
 	
