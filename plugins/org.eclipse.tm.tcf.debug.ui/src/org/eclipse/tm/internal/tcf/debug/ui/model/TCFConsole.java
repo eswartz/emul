@@ -151,18 +151,23 @@ class TCFConsole {
                 ImageCache.getImageDescriptor(ImageCache.IMG_TCF), "UTF-8", true);
         display.asyncExec(new Runnable() {
             public void run() {
-                try {
-                    IConsoleManager manager = ConsolePlugin.getDefault().getConsoleManager();
-                    manager.addConsoles(new IConsole[]{ console });
-                    IWorkbenchWindow w = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-                    if (w == null) return;
-                    IWorkbenchPage page = w.getActivePage();
-                    if (page == null) return;
-                    IConsoleView view = (IConsoleView)page.showView(IConsoleConstants.ID_CONSOLE_VIEW);
-                    view.display(console);
+                if (!PlatformUI.isWorkbenchRunning() || PlatformUI.getWorkbench().isStarting()) {
+                    display.timerExec(200, this);
                 }
-                catch (Throwable x) {
-                    Activator.log("Cannot open console view", x);
+                else if (!PlatformUI.getWorkbench().isClosing()) {
+                    try {
+                        IConsoleManager manager = ConsolePlugin.getDefault().getConsoleManager();
+                        manager.addConsoles(new IConsole[]{ console });
+                        IWorkbenchWindow w = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+                        if (w == null) return;
+                        IWorkbenchPage page = w.getActivePage();
+                        if (page == null) return;
+                        IConsoleView view = (IConsoleView)page.showView(IConsoleConstants.ID_CONSOLE_VIEW);
+                        view.display(console);
+                    }
+                    catch (Throwable x) {
+                        Activator.log("Cannot open console view", x);
+                    }
                 }
             }
         });

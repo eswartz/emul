@@ -185,9 +185,10 @@ public class TCFAnnotationManager {
         }
     };
 
-    private final Display display = PlatformUI.getWorkbench().getDisplay();
+    private final Display display = Display.getDefault();
     private int refresh_breakpoint_view_cnt = 0;
     private int update_active_launch_cnt = 0;
+    private boolean started;
     private boolean disposed;
 
     public TCFAnnotationManager() {
@@ -195,14 +196,18 @@ public class TCFAnnotationManager {
         TCFLaunch.addListener(launch_listener);
         displayExec(new Runnable() {
             public void run() {
-                if (PlatformUI.isWorkbenchRunning()) {
+                if (!PlatformUI.isWorkbenchRunning() || PlatformUI.getWorkbench().isStarting()) {
+                    display.timerExec(200, this);
+                }
+                else if (!PlatformUI.getWorkbench().isClosing()) {
+                    started = true;
+                    PlatformUI.getWorkbench().addWindowListener(window_listener);
                     for (IWorkbenchWindow window : PlatformUI.getWorkbench().getWorkbenchWindows()) {
                         window_listener.windowOpened(window);
                     }
+                    IWorkbenchWindow w = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+                    if (w != null) window_listener.windowActivated(w);
                 }
-                PlatformUI.getWorkbench().addWindowListener(window_listener);
-                IWorkbenchWindow w = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-                if (w != null) window_listener.windowActivated(w);
             }
         });
     }
@@ -214,6 +219,7 @@ public class TCFAnnotationManager {
         TCFLaunch.removeListener(launch_listener);
         displayExec(new Runnable() {
             public void run() {
+                if (!started) return;
                 PlatformUI.getWorkbench().removeWindowListener(window_listener);
                 for (IWorkbenchWindow window : windows.keySet()) {
                     window.getSelectionService().removeSelectionListener(
@@ -269,7 +275,7 @@ public class TCFAnnotationManager {
         displayExec(new Runnable() {
             public void run() {
                 if (cnt != refresh_breakpoint_view_cnt) return;
-                for (IWorkbenchWindow window : PlatformUI.getWorkbench().getWorkbenchWindows()) {
+                for (IWorkbenchWindow window : windows.keySet()) {
                     IDebugView view = (IDebugView)window.getActivePage().findView(IDebugUIConstants.ID_BREAKPOINT_VIEW);
                     if (view != null) view.getViewer().refresh();
                 }
@@ -338,23 +344,25 @@ public class TCFAnnotationManager {
 
         if (page != null) {
             WorkbenchWindowInfo info = windows.get(page.getWorkbenchWindow());
-            if (annotation != null && info.annotations.size() == 1) {
-                for (TCFAnnotation a : info.annotations) {
-                    if (a.model != annotation.model) continue;
-                    if (a.editor != annotation.editor) continue;
-                    if (a.image != annotation.image) continue;
-                    if (!a.exe_id.equals(annotation.exe_id)) continue;
-                    if (!a.position.equals(annotation.position)) continue;
-                    if (!a.getType().equals(annotation.getType())) continue;
-                    if (!a.getText().equals(annotation.getText())) continue;
-                    return;
+            if (info != null) {
+                if (annotation != null && info.annotations.size() == 1) {
+                    for (TCFAnnotation a : info.annotations) {
+                        if (a.model != annotation.model) continue;
+                        if (a.editor != annotation.editor) continue;
+                        if (a.image != annotation.image) continue;
+                        if (!a.exe_id.equals(annotation.exe_id)) continue;
+                        if (!a.position.equals(annotation.position)) continue;
+                        if (!a.getType().equals(annotation.getType())) continue;
+                        if (!a.getText().equals(annotation.getText())) continue;
+                        return;
+                    }
                 }
-            }
-            for (TCFAnnotation a : info.annotations) a.dispose();
-            info.annotations.clear();
-            if (annotation != null) {
-                ann_model.addAnnotation(annotation, annotation.position);
-                info.annotations.add(annotation);
+                for (TCFAnnotation a : info.annotations) a.dispose();
+                info.annotations.clear();
+                if (annotation != null) {
+                    ann_model.addAnnotation(annotation, annotation.position);
+                    info.annotations.add(annotation);
+                }
             }
         }
     }
