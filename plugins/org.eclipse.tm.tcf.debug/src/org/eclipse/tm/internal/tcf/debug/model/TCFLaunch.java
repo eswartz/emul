@@ -899,22 +899,24 @@ public class TCFLaunch extends Launch {
         try {
             new TCFTask<Boolean>() {
                 public void run() {
-                    if (process != null && !terminated) {
-                        final Runnable done = this;
-                        process.terminate(new IProcesses.DoneCommand() {
-                            public void doneCommand(IToken token, Exception e) {
-                                if (e != null) {
-                                    error(e);
+                    if (channel != null && channel.getState() == IChannel.STATE_OPEN) {
+                        if (process != null && !terminated) {
+                            final Runnable done = this;
+                            process.terminate(new IProcesses.DoneCommand() {
+                                public void doneCommand(IToken token, Exception e) {
+                                    if (e != null) {
+                                        error(e);
+                                    }
+                                    else {
+                                        terminated = true;
+                                        Protocol.invokeLater(done);
+                                    }
                                 }
-                                else {
-                                    terminated = true;
-                                    Protocol.invokeLater(done);
-                                }
-                            }
-                        });
-                        return;
+                            });
+                            return;
+                        }
+                        closeChannel();
                     }
-                    closeChannel();
                     done(true);
                 }
             }.get();
