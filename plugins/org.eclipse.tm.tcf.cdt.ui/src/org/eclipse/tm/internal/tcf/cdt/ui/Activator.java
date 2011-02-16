@@ -32,12 +32,12 @@ public class Activator extends AbstractUIPlugin {
     public void start(BundleContext context) throws Exception {
         super.start(context);
         plugin = this;
+        EvaluationContextManager.startup();
         Protocol.invokeLater(new Runnable() {
             public void run() {
                 if (bp_status_listener == null) bp_status_listener = new TCFBreakpointStatusListener();
             }
         });
-        EvaluationContextManager.startup();
     }
 
     public void stop(BundleContext context) throws Exception {
