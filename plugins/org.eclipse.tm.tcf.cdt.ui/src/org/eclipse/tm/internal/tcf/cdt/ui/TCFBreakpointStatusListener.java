@@ -17,6 +17,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.cdt.debug.core.model.ICBreakpoint;
+import org.eclipse.debug.core.DebugPlugin;
+import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.model.IBreakpoint;
 import org.eclipse.swt.graphics.Device;
 import org.eclipse.swt.widgets.Display;
@@ -141,6 +143,15 @@ class TCFBreakpointStatusListener {
         model_manager = TCFModelManager.getModelManager();
         model_manager.addListener(launch_listener);
         bp_listeners = new HashMap<TCFLaunch,BreakpointListener>();
+        // handle already connected launches
+        for (ILaunch launch : DebugPlugin.getDefault().getLaunchManager().getLaunches()) {
+            if (launch instanceof TCFLaunch) {
+                TCFLaunch tcfLaunch = (TCFLaunch) launch;
+                if (!tcfLaunch.isDisconnected() && !tcfLaunch.isConnecting()) {
+                    launch_listener.onConnected(tcfLaunch, model_manager.getModel(tcfLaunch));
+                }
+            }
+        }
     }
     
     void dispose() {
