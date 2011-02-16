@@ -151,6 +151,23 @@ static int is_attached(pid_t pid) {
 #endif
 }
 
+#if defined(__linux__)
+static char * get_executable(pid_t pid) {
+    static char s[FILE_PATH_SIZE + 1];
+    char tmpbuf[100];
+    int sz;
+
+    snprintf(tmpbuf, sizeof(tmpbuf), "/proc/%d/exe", pid);
+    if ((sz = readlink(tmpbuf, s, FILE_PATH_SIZE)) < 0) {
+        trace(LOG_ALWAYS, "error: readlink() failed; pid %d, error %d %s",
+            pid, errno, errno_to_str(errno));
+        return NULL;
+    }
+    s[sz] = 0;
+    return s;
+}
+#endif
+
 static void write_context(OutputStream * out, int pid) {
     ChildProcess * prs = find_process(pid);
 
@@ -158,7 +175,16 @@ static void write_context(OutputStream * out, int pid) {
 
     json_write_string(out, "Name");
     write_stream(out, ':');
-    json_write_string(out, prs ? prs->name : pid2id(pid, 0));
+    const char * name = NULL;
+    if (prs)
+        name = prs->name;
+#if defined(__linux__)
+    else
+        name = get_executable(pid);
+#endif
+    if (!name)
+        name = pid2id(pid, 0);
+    json_write_string(out, name);
     write_stream(out, ',');
 
     json_write_string(out, "CanTerminate");
