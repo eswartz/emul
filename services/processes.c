@@ -155,9 +155,10 @@ static int is_attached(pid_t pid) {
 static char * get_executable(pid_t pid) {
     static char s[FILE_PATH_SIZE + 1];
     char tmpbuf[100];
+    FILE * file;
 
     snprintf(tmpbuf, sizeof(tmpbuf), "/proc/%d/cmdline", pid);
-    FILE * file = fopen(tmpbuf, "r");
+    file = fopen(tmpbuf, "r");
     if (!file) {
         trace(LOG_ALWAYS, "error: reading cmdline failed; pid %d, error %d %s",
             pid, errno, errno_to_str(errno));
@@ -171,20 +172,19 @@ static char * get_executable(pid_t pid) {
 
 static void write_context(OutputStream * out, int pid) {
     ChildProcess * prs = find_process(pid);
+    const char * name = NULL;
 
     write_stream(out, '{');
 
     json_write_string(out, "Name");
     write_stream(out, ':');
-    const char * name = NULL;
     if (prs)
         name = prs->name;
 #if defined(__linux__)
     else
         name = get_executable(pid);
 #endif
-    if (!name)
-        name = pid2id(pid, 0);
+    if (!name) name = pid2id(pid, 0);
     json_write_string(out, name);
     write_stream(out, ',');
 
