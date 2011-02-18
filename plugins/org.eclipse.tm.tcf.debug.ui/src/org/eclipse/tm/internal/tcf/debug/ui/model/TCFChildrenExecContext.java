@@ -87,13 +87,6 @@ public class TCFChildrenExecContext extends TCFChildren {
     }
 
     @Override
-    void onNodeDisposed(String id) {
-        super.onNodeDisposed(id);
-        mem_children.onNodeDisposed(id);
-        run_children.onNodeDisposed(id);
-    }
-
-    @Override
     protected boolean startDataRetrieval() {
         TCFDataCache<?> pending = null;
         if (!mem_children.validate()) pending = mem_children;

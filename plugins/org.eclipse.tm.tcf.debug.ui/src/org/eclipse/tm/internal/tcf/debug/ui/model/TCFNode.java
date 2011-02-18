@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
 
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.Platform;
@@ -56,7 +56,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
         }
     }
 
-    private ArrayList<TCFDataCache<?>> caches;
+    private LinkedList<TCFDataCache<?>> caches;
 
     /**
      * Constructor for a root node. There should be exactly one root in the model.
@@ -91,7 +91,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
      * @param c - a TCFData object.
      */
     final void addDataCache(TCFDataCache<?> c) {
-        if (caches == null) caches = new ArrayList<TCFDataCache<?>>();
+        if (caches == null) caches = new LinkedList<TCFDataCache<?>>();
         caches.add(c);
     }
 
@@ -108,9 +108,9 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
      */
     void dispose() {
         assert !disposed;
-        ArrayList<TCFDataCache<?>> l = caches;
-        caches = null;
-        for (TCFDataCache<?> c : l) c.dispose();
+        while (caches != null && caches.size() > 0) {
+            caches.getLast().dispose();
+        }
         if (parent != null && parent.caches != null) {
             for (TCFDataCache<?> c : parent.caches) {
                 if (c instanceof TCFChildren) ((TCFChildren)c).onNodeDisposed(id);
