@@ -128,14 +128,30 @@ static RegisterRules * get_reg(StackFrameRegisters * regs, int reg) {
         memset(regs->regs + n, 0, sizeof(RegisterRules));
         reg_def = get_reg_by_id(rules.ctx, n, rules.eh_frame ? REGNUM_EH_FRAME : REGNUM_DWARF);
         if (reg_def == NULL) continue;
-        /* It looks like GCC assumes that an unspecified BP register implies "same value" */
+        /* Architecture specific implied rules */
         switch (rules.section->file->machine) {
         case 3: /* i386 */
         case 6: /* i486 */
-            if (n == 5) regs->regs[n].rule = RULE_SAME_VALUE;
+            switch (n) {
+            case 4: /* SP */
+                regs->regs[n].rule = RULE_VAL_OFFSET;
+                break;
+            case 5: /* BP */
+            case 6: /* SI */
+            case 7: /* DI */
+                regs->regs[n].rule = RULE_SAME_VALUE;
+                break;
+            }
             break;
         case 62: /* X86 64 */
-            if (n == 6) regs->regs[n].rule = RULE_SAME_VALUE;
+            switch (n) {
+            case 6: /* BP */
+                regs->regs[n].rule = RULE_SAME_VALUE;
+                break;
+            case 7: /* SP */
+                regs->regs[n].rule = RULE_VAL_OFFSET;
+                break;
+            }
             break;
         }
     }

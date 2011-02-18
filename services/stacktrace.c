@@ -72,6 +72,15 @@ static void invalidate_stack_trace(StackTrace * stack) {
     stack->valid = 0;
 }
 
+static int has_registers(StackFrame * frame) {
+    uint64_t v;
+    RegisterDefinition * r;
+    for (r = get_reg_definitions(frame->ctx); r->name != NULL; r++) {
+        if (read_reg_value(frame, r, &v) == 0) return 1;
+    }
+    return 0;
+}
+
 static void trace_stack(Context * ctx, StackTrace * stack) {
     int i;
     int error = 0;
@@ -129,7 +138,8 @@ static void trace_stack(Context * ctx, StackTrace * stack) {
         frame = down;
     }
 
-    loc_free(frame.regs);
+    if (!frame.is_top_frame && has_registers(&frame)) add_frame(stack, &frame);
+    else loc_free(frame.regs);
 
     if (get_error_code(error) == ERR_CACHE_MISS) {
         invalidate_stack_trace(stack);
