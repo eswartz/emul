@@ -143,6 +143,7 @@ static void trace_stack(Context * ctx, StackTrace * stack) {
 
     if (get_error_code(error) == ERR_CACHE_MISS) {
         invalidate_stack_trace(stack);
+        stack->error = get_error_report(ERR_CACHE_MISS);
     }
     else if (error && stack->frame_cnt == 0) {
         stack->error = get_error_report(error);
@@ -157,7 +158,9 @@ static void trace_stack(Context * ctx, StackTrace * stack) {
 static StackTrace * create_stack_trace(Context * ctx) {
     StackTrace * stack = EXT(ctx);
     if (!stack->valid) {
-        stack->frame_cnt = 0;
+        assert(stack->frame_cnt == 0);
+        release_error_report(stack->error);
+        stack->error = NULL;
         stack->valid = 1;
         trace_stack(ctx, stack);
     }
@@ -373,6 +376,7 @@ int get_top_frame(Context * ctx) {
         return STACK_TOP_FRAME;
     }
 
+    assert(stack->frame_cnt > 0);
     return stack->frame_cnt - 1;
 }
 
