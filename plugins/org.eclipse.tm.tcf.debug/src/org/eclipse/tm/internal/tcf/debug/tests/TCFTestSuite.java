@@ -130,7 +130,7 @@ public class TCFTestSuite {
                 int i = 0;
                 listener.progress("Running Run Control Test...", ++count_done, count_total);
                 for (IChannel channel : channels) {
-                    active_tests.put(new TestRCBP1(TCFTestSuite.this, channel, i++), channel);
+                    active_tests.put(new TestRCBP1(TCFTestSuite.this, channel, i++, path_map), channel);
                 }
             }
         });
@@ -151,7 +151,7 @@ public class TCFTestSuite {
                     switch (i % 4) {
                     case 0: test = new TestEcho(TCFTestSuite.this, channels[i]); break;
                     case 1: test = new TestAttachTerminate(TCFTestSuite.this, channels[i]); break;
-                    case 2: test = new TestRCBP1(TCFTestSuite.this, channels[i], i); break;
+                    case 2: test = new TestRCBP1(TCFTestSuite.this, channels[i], i, path_map); break;
                     case 3: test = new TestFileSystem(TCFTestSuite.this, channels[i], i); break;
                     }
                     active_tests.put(test, channels[i]);

@@ -29,6 +29,7 @@ import org.eclipse.tm.tcf.services.IDiagnostics;
 import org.eclipse.tm.tcf.services.IDisassembly;
 import org.eclipse.tm.tcf.services.ILineNumbers;
 import org.eclipse.tm.tcf.services.IMemory;
+import org.eclipse.tm.tcf.services.IPathMap;
 import org.eclipse.tm.tcf.services.IRegisters;
 import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.services.ISymbols;
@@ -37,6 +38,7 @@ import org.eclipse.tm.tcf.services.IDisassembly.IDisassemblyLine;
 import org.eclipse.tm.tcf.services.ILineNumbers.CodeArea;
 import org.eclipse.tm.tcf.services.IMemory.MemoryContext;
 import org.eclipse.tm.tcf.services.IMemory.MemoryError;
+import org.eclipse.tm.tcf.services.IPathMap.PathMapRule;
 import org.eclipse.tm.tcf.services.IRegisters.RegistersContext;
 import org.eclipse.tm.tcf.services.IRunControl.RunControlContext;
 import org.eclipse.tm.tcf.services.ISymbols.Symbol;
@@ -45,6 +47,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
 
     private final TCFTestSuite test_suite;
     private final int channel_id;
+    private final List<PathMapRule> path_map;
     private final IDiagnostics diag;
     private final ISymbols syms;
     private final IMemory mm;
@@ -53,6 +56,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     private final IBreakpoints bp;
     private final ILineNumbers ln;
     private final IDisassembly ds;
+    private final IPathMap pm;
     private final Map<String,IRunControl.RunControlContext> threads = new HashMap<String,IRunControl.RunControlContext>();
     private final Map<String,SuspendedContext> suspended = new HashMap<String,SuspendedContext>();
     private final Map<String,SuspendedContext> suspended_prev = new HashMap<String,SuspendedContext>();
@@ -69,6 +73,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
 
     private String[] test_list;
     private boolean rcbp1_found;
+    private boolean path_map_done;
     private String test_ctx_id; // Test context ID
     private IRunControl.RunControlContext test_context;
     private String main_thread_id;
@@ -163,9 +168,10 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
         }
     };
 
-    TestRCBP1(TCFTestSuite test_suite, IChannel channel, int channel_id) {
+    TestRCBP1(TCFTestSuite test_suite, IChannel channel, int channel_id, List<PathMapRule> path_map) {
         this.test_suite = test_suite;
         this.channel_id = channel_id;
+        this.path_map = path_map;
         diag = channel.getRemoteService(IDiagnostics.class);
         syms = channel.getRemoteService(ISymbols.class);
         mm = channel.getRemoteService(IMemory.class);
@@ -174,6 +180,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
         bp = channel.getRemoteService(IBreakpoints.class);
         ln = channel.getRemoteService(ILineNumbers.class);
         ds = channel.getRemoteService(IDisassembly.class);
+        pm = channel.getRemoteService(IPathMap.class);
     }
 
     public void start() {
@@ -190,6 +197,10 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
         if (!test_suite.isActive(this)) return;
         if (test_list == null) {
             getTestList();
+            return;
+        }
+        if (!path_map_done) {
+            setPathMap();
             return;
         }
         if (!bp_reset_done) {
@@ -273,6 +284,25 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                     for (String s : test_list) {
                         if (s.equals("RCBP1")) rcbp1_found = true;
                     }
+                    runTest();
+                }
+            }
+        });
+    }
+
+    private void setPathMap() {
+        if (pm == null || path_map == null) {
+            path_map_done = true;
+            runTest();
+            return;
+        }
+        pm.set(path_map.toArray(new PathMapRule[path_map.size()]), new IPathMap.DoneSet() {
+            public void doneSet(IToken token, Exception error) {
+                if (error != null) {
+                    exit(error);
+                }
+                else {
+                    path_map_done = true;
                     runTest();
                 }
             }
