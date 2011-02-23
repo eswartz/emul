@@ -45,7 +45,7 @@
 #include <services/streamsservice.h>
 #include <services/processes.h>
 
-static const char * PROCESSES = "Processes";
+static const char * PROCESSES[2] = { "Processes", "ProcessesV1" };
 
 #if defined(WIN32)
 #  include <tlhelp32.h>
@@ -229,17 +229,20 @@ static void write_context(OutputStream * out, int pid) {
 }
 
 static void send_event_process_exited(OutputStream * out, ChildProcess * prs) {
-    write_stringz(out, "E");
-    write_stringz(out, PROCESSES);
-    write_stringz(out, "exited");
+    int v;
+    for (v = 0; v < 2; v++) {
+        write_stringz(out, "E");
+        write_stringz(out, PROCESSES[v]);
+        write_stringz(out, "exited");
 
-    json_write_string(out, pid2id(prs->pid, 0));
-    write_stream(out, 0);
+        json_write_string(out, pid2id(prs->pid, 0));
+        write_stream(out, 0);
 
-    json_write_long(out, prs->exit_code);
-    write_stream(out, 0);
+        json_write_long(out, prs->exit_code);
+        write_stream(out, 0);
 
-    write_stream(out, MARKER_EOM);
+        write_stream(out, MARKER_EOM);
+    }
 }
 
 static void command_get_context(char * token, Channel * c) {
@@ -757,7 +760,7 @@ static void write_process_input(ChildProcess * prs) {
     inp->req.done = write_process_input_done;
     inp->req.type = AsyncReqWrite;
     inp->req.u.fio.fd = prs->inp;
-    virtual_stream_create(PROCESSES, pid2id(prs->pid, 0), 0x1000, VS_ENABLE_REMOTE_WRITE,
+    virtual_stream_create(PROCESSES[0], pid2id(prs->pid, 0), 0x1000, VS_ENABLE_REMOTE_WRITE,
         process_input_streams_callback, inp, &inp->vstream);
     virtual_stream_get_id(inp->vstream, prs->inp_id, sizeof(prs->inp_id));
 }
@@ -831,7 +834,7 @@ static ProcessOutput * read_process_output(ChildProcess * prs, int fd, char * id
     out->req.u.fio.bufp = out->buf;
     out->req.u.fio.bufsz = sizeof(out->buf);
     out->req.u.fio.fd = fd;
-    virtual_stream_create(PROCESSES, pid2id(prs->pid, 0), 0x1000, VS_ENABLE_REMOTE_READ,
+    virtual_stream_create(PROCESSES[0], pid2id(prs->pid, 0), 0x1000, VS_ENABLE_REMOTE_READ,
         process_output_streams_callback, out, &out->vstream);
     virtual_stream_get_id(out->vstream, id, id_size);
     out->req_posted = 1;
@@ -1220,9 +1223,10 @@ static void read_start_params(InputStream * inp, const char * nm, void * arg) {
     else json_skip_object(inp);
 }
 
-static void command_start(char * token, Channel * c) {
+static void command_start(char * token, Channel * c, void * x) {
     int pid = 0;
     int err = 0;
+    int version = *(int *)x;
     char dir[FILE_PATH_SIZE];
     char exe[FILE_PATH_SIZE];
     char ** args = NULL;
@@ -1245,7 +1249,7 @@ static void command_start(char * token, Channel * c) {
         if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
         envp = json_read_alloc_string_array(&c->inp, &envp_len);
         if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-        if (peek_stream(&c->inp) == '{'|| peek_stream(&c->inp) == 'n') {
+        if (version > 0 && (peek_stream(&c->inp) == '{'|| peek_stream(&c->inp) == 'n')) {
             json_read_struct(&c->inp, read_start_params, &params);
         }
         else {
@@ -1317,6 +1321,8 @@ static void waitpid_listener(int pid, int exited, int exit_code, int signal, int
 }
 
 void ini_processes_service(Protocol * proto) {
+    int v;
+    int vs[] = { 0, 1 };
 #if defined(_WRS_KERNEL)
     prs_list_lock = semMCreate(SEM_Q_PRIORITY);
     if (prs_list_lock == NULL) check_error(errno);
@@ -1325,19 +1331,21 @@ void ini_processes_service(Protocol * proto) {
 #endif
     list_init(&prs_list);
     add_waitpid_listener(waitpid_listener, NULL);
-    add_command_handler(proto, PROCESSES, "getContext", command_get_context);
-    add_command_handler(proto, PROCESSES, "getChildren", command_get_children);
-    add_command_handler(proto, PROCESSES, "terminate", command_terminate);
-    add_command_handler(proto, PROCESSES, "signal", command_signal);
-    add_command_handler(proto, PROCESSES, "getSignalList", command_get_signal_list);
-    add_command_handler(proto, PROCESSES, "getEnvironment", command_get_environment);
-    add_command_handler(proto, PROCESSES, "start", command_start);
+    for (v = 0; v < 2; v++) {
+        add_command_handler(proto, PROCESSES[v], "getContext", command_get_context);
+        add_command_handler(proto, PROCESSES[v], "getChildren", command_get_children);
+        add_command_handler(proto, PROCESSES[v], "terminate", command_terminate);
+        add_command_handler(proto, PROCESSES[v], "signal", command_signal);
+        add_command_handler(proto, PROCESSES[v], "getSignalList", command_get_signal_list);
+        add_command_handler(proto, PROCESSES[v], "getEnvironment", command_get_environment);
+        add_command_handler2(proto, PROCESSES[v], "start", command_start, vs + v);
 #if ENABLE_DebugContext
-    add_command_handler(proto, PROCESSES, "attach", command_attach);
-    add_command_handler(proto, PROCESSES, "detach", command_detach);
-    add_command_handler(proto, PROCESSES, "getSignalMask", command_get_signal_mask);
-    add_command_handler(proto, PROCESSES, "setSignalMask", command_set_signal_mask);
+        add_command_handler(proto, PROCESSES[v], "attach", command_attach);
+        add_command_handler(proto, PROCESSES[v], "detach", command_detach);
+        add_command_handler(proto, PROCESSES[v], "getSignalMask", command_get_signal_mask);
+        add_command_handler(proto, PROCESSES[v], "setSignalMask", command_set_signal_mask);
 #endif /* ENABLE_DebugContext */
+    }
 }
 
 #endif
