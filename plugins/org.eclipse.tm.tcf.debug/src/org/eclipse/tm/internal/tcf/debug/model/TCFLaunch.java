@@ -46,6 +46,7 @@ import org.eclipse.tm.tcf.services.IMemoryMap;
 import org.eclipse.tm.tcf.services.IPathMap;
 import org.eclipse.tm.tcf.services.IProcesses;
 import org.eclipse.tm.tcf.services.IProcesses.ProcessContext;
+import org.eclipse.tm.tcf.services.IProcessesV1;
 import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.services.IStreams;
 import org.eclipse.tm.tcf.util.TCFTask;
@@ -574,14 +575,7 @@ public class TCFLaunch extends Launch {
                         channel.terminate(new Exception("Program file does not exist"));
                         return;
                     }
-                    Map<String,Object> params = new HashMap<String,Object>();
-                    if (mode.equals(ILaunchManager.DEBUG_MODE)) {
-                        params.put(IProcesses.START_ATTACH, true);
-                        if (attach_children) params.put(IProcesses.START_ATTACH_CHILDREN, true);
-                    }
-                    if (use_terminal) params.put(IProcesses.START_USE_TERMINAL, true);
-                    process_start_command = ps.start(dir, file, toArgsArray(file, args),
-                            process_env, params, new IProcesses.DoneStart() {
+                    IProcesses.DoneStart done = new IProcesses.DoneStart() {
                         public void doneStart(IToken token, final Exception error, ProcessContext process) {
                             process_start_command = null;
                             if (error != null) {
@@ -599,7 +593,22 @@ public class TCFLaunch extends Launch {
                                 done();
                             }
                         }
-                    });
+                    };
+                    String[] args_arr = toArgsArray(file, args);
+                    IProcessesV1 ps_v2 = channel.getRemoteService(IProcessesV1.class);
+                    if (ps_v2 != null) {
+                        Map<String,Object> params = new HashMap<String,Object>();
+                        if (mode.equals(ILaunchManager.DEBUG_MODE)) {
+                            params.put(IProcessesV1.START_ATTACH, true);
+                            if (attach_children) params.put(IProcessesV1.START_ATTACH_CHILDREN, true);
+                        }
+                        if (use_terminal) params.put(IProcessesV1.START_USE_TERMINAL, true);
+                        process_start_command = ps_v2.start(dir, file, args_arr, process_env, params, done);
+                    }
+                    else {
+                        boolean attach = mode.equals(ILaunchManager.DEBUG_MODE);
+                        process_start_command = ps.start(dir, file, args_arr, process_env, attach, done);
+                    }
                 }
             };
             if (mode.equals(ILaunchManager.DEBUG_MODE)) {

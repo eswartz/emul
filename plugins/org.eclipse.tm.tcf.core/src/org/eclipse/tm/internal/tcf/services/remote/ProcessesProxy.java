@@ -24,15 +24,15 @@ import org.eclipse.tm.tcf.services.IProcesses;
 
 public class ProcessesProxy implements IProcesses {
 
-    private final IChannel channel;
+    protected final IChannel channel;
     private final Map<ProcessesListener,IChannel.IEventListener> listeners =
         new HashMap<ProcessesListener,IChannel.IEventListener>();
 
-    private class ProcessContext implements IProcesses.ProcessContext {
+    protected class ProcessContextInfo implements IProcesses.ProcessContext {
 
         private final Map<String,Object> props;
 
-        ProcessContext(Map<String,Object> props) {
+        ProcessContextInfo(Map<String,Object> props) {
             this.props = props;
         }
 
@@ -171,7 +171,7 @@ public class ProcessesProxy implements IProcesses {
                 if (error == null) {
                     assert args.length == 2;
                     error = toError(args[0]);
-                    if (args[1] != null) ctx = new ProcessContext((Map<String, Object>)args[1]);
+                    if (args[1] != null) ctx = new ProcessContextInfo((Map<String, Object>)args[1]);
                 }
                 done.doneGetContext(token, error, ctx);
             }
@@ -206,27 +206,7 @@ public class ProcessesProxy implements IProcesses {
                 if (error == null) {
                     assert args.length == 2;
                     error = toError(args[0]);
-                    if (args[1] != null) ctx = new ProcessContext((Map<String,Object>)args[1]);
-                }
-                done.doneStart(token, error, ctx);
-            }
-        }.token;
-    }
-
-    public IToken start(String directory, String file,
-            String[] command_line, Map<String,String> environment,
-            Map<String,Object> params, final DoneStart done) {
-        return new Command(channel, this,
-                "start", new Object[]{ directory, file, command_line,
-                toEnvStringArray(environment), params }) {
-            @SuppressWarnings("unchecked")
-            @Override
-            public void done(Exception error, Object[] args) {
-                ProcessContext ctx = null;
-                if (error == null) {
-                    assert args.length == 2;
-                    error = toError(args[0]);
-                    if (args[1] != null) ctx = new ProcessContext((Map<String,Object>)args[1]);
+                    if (args[1] != null) ctx = new ProcessContextInfo((Map<String,Object>)args[1]);
                 }
                 done.doneStart(token, error, ctx);
             }
@@ -304,7 +284,7 @@ public class ProcessesProxy implements IProcesses {
         return (String[])c.toArray(new String[c.size()]);
     }
 
-    private static String[] toEnvStringArray(Map<String,String> m) {
+    protected static String[] toEnvStringArray(Map<String,String> m) {
         if (m == null) return new String[0];
         int n = 0;
         String[] arr = new String[m.size()];
