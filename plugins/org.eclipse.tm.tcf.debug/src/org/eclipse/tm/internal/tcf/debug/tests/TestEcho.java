@@ -39,7 +39,8 @@ class TestEcho implements ITCFTest, IDiagnostics.DoneEcho {
 
                 public void doneNotImplementedCommand(IToken token, Throwable error) {
                     if (!(error instanceof IErrorReport)) {
-                        test_suite.done(TestEcho.this, new Exception("Invalid responce to unimplemented command"));
+                        Throwable x = new Exception("Invalid responce to unimplemented command", error);
+                        test_suite.done(TestEcho.this, x);
                         return;
                     }
                     if (((IErrorReport)error).getErrorCode() != IErrorReport.TCF_ERROR_INV_COMMAND) {
