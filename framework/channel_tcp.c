@@ -200,6 +200,10 @@ static void delete_channel(ChannelTCP * c) {
     assert(c->read_pending == 0);
     assert(c->ibuf.handling_msg != HandleMsgTriggered);
     channel_clear_broadcast_group(&c->chan);
+    if (c->socket >= 0) {
+        closesocket(c->socket);
+        c->socket = -1;
+    }
     c->magic = 0;
 #if ENABLE_OutputQueue
     output_queue_clear(&c->out_queue);
@@ -251,6 +255,8 @@ static void done_write_request(void * args) {
     int error = 0;
 
     assert(args == &c->wr_req);
+    assert(c->socket >= 0);
+
     if (c->wr_req.u.sio.rval < 0) error = c->wr_req.error;
     else if (c->wr_req.type == AsyncReqSend) size = c->wr_req.u.sio.rval;
     output_queue_done(&c->out_queue, error, size);
@@ -262,6 +268,9 @@ static void done_write_request(void * args) {
 
 static void post_write_request(OutputBuffer * bf) {
     ChannelTCP * c = obuf2tcp(bf->queue);
+
+    assert(c->socket >= 0);
+
     c->wr_req.client_data = c;
     c->wr_req.done = done_write_request;
 #if ENABLE_SSL
@@ -686,8 +695,6 @@ static void tcp_channel_read_done(void * x) {
         tcp_post_read(&c->ibuf, c->obuf, sizeof(c->obuf));
     }
     else {
-        closesocket(c->socket);
-        c->socket = -1;
         tcp_unlock(&c->chan);
     }
 }
