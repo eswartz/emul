@@ -41,6 +41,8 @@ include ../v9t9/sysutils.fi
 
 include ../v9t9/video.fi
 
+include ../v9t9/sound.fi
+
 include ../v9t9/term.fi
 
 include ../v9t9/kbd.fi
@@ -185,6 +187,8 @@ export>
     kbd-init
     
     video-init
+    
+    sound-init
  
     cold-init
 
