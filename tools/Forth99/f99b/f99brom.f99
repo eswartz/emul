@@ -100,7 +100,7 @@ include ../v9t9/editor.fi
     (LATEST) @  >latest !
     GRAM
         
-    ." Forth99 (c) 2010" cr
+    ." Forth99 (c) 2011" cr
 ;
 
 

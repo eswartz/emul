@@ -85,7 +85,7 @@
     </target>
     <target name="ForthComp">
         <java classname="v9t9.forthcomp.ForthComp" failonerror="true" fork="yes">
-            <arg line="-b f99b/f99rom.f99 -c f99b/f99brom.bin"/>
+            <arg line="-b f99b/f99brom.f99 -c f99b/f99brom.bin"/>
             <classpath refid="v9t9.forthcomp.classpath"/>
         </java>
     </target>
