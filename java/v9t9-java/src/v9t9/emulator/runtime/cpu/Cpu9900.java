@@ -141,14 +141,6 @@ public class Cpu9900 extends CpuBase {
     }
     
     /* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.Cpu#checkInterrupts()
-	 */
-    public final void checkInterrupts() {
-    	if (doCheckInterrupts())
-    		throw new AbortedException();
-    }
-    
-    /* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.Cpu#handleInterrupts()
 	 */
     public final void handleInterrupts() {
@@ -202,13 +194,6 @@ public class Cpu9900 extends CpuBase {
         }
     }
 
-    /* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.Cpu#checkAndHandleInterrupts()
-	 */
-    public final void checkAndHandleInterrupts() {
-    	if (doCheckInterrupts())
-    		handleInterrupts();
-    }
 	public void setCruAccess(CruAccess access) {
 		this.cruAccess = access;
 	}

@@ -141,24 +141,6 @@ public class CpuF99 extends CpuBase {
     }
     
     /* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.Cpu#checkInterrupts()
-	 */
-    @Override
-	public final void checkInterrupts() {
-    	if (doCheckInterrupts())
-    		throw new AbortedException();
-    }
-    
-    /* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.Cpu#checkAndHandleInterrupts()
-	 */
-    @Override
-	public final void checkAndHandleInterrupts() {
-    	if (doCheckInterrupts())
-    		handleInterrupts();
-    }
-    
-    /* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.Cpu#handleInterrupts()
 	 */
     @Override

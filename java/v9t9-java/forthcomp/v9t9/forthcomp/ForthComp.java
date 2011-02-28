@@ -144,7 +144,7 @@ public class ForthComp {
 	    		realSize += size;
 	    		ifAlignedSize += (size + 3) / 4 * 4;
 	    	}
-	    	//System.out.println("real size = " + realSize + "; if aligned = " + ifAlignedSize);
+	    	System.out.println("real size = " + realSize + "; if aligned = " + ifAlignedSize);
     	}
 	}
 

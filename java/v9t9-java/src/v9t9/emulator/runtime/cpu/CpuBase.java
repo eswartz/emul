@@ -1,5 +1,8 @@
 package v9t9.emulator.runtime.cpu;
 
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.locks.Condition;
+
 import org.ejs.coffee.core.properties.IPersistable;
 import org.ejs.coffee.core.properties.IProperty;
 import org.ejs.coffee.core.properties.IPropertyListener;
@@ -59,6 +62,7 @@ public abstract class CpuBase  implements MemoryAccessListener, IPersistable, Cp
 	protected CruAccess cruAccess;
 	
 	protected volatile boolean idle;
+	protected Semaphore interruptWaiting;
 	
 	/**
 	 * Called when hardware triggers another pin.
@@ -80,6 +84,7 @@ public abstract class CpuBase  implements MemoryAccessListener, IPersistable, Cp
         this.state.getConsole().setAccessListener(this);
         this.interruptTick = interruptTick;
         
+        interruptWaiting = new Semaphore(0);
         settingCyclesPerSecond.addListener(new IPropertyListener() {
 
 			public void propertyChanged(IProperty setting) {
@@ -154,6 +159,9 @@ public abstract class CpuBase  implements MemoryAccessListener, IPersistable, Cp
 		totaltargetcycles += targetcycles;
 	
 		ticks++;
+		
+		if (isIdle())
+			interruptWaiting.release();
 	}
 
 	public synchronized boolean isThrottled() {
@@ -223,6 +231,11 @@ public abstract class CpuBase  implements MemoryAccessListener, IPersistable, Cp
 			this.idle = b;
 			getMachine().getExecutor().interruptExecution = true;
 			tick();
+			/*
+			if (b && interruptWaiting.tryAcquire()) {
+				// ignore idle, since interrupts waiting
+				//interruptWaiting.release();
+			}*/
 		}
 	}
 	
@@ -234,4 +247,23 @@ public abstract class CpuBase  implements MemoryAccessListener, IPersistable, Cp
 		return idle;
 	}
 	
+    /* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.Cpu#checkInterrupts()
+	 */
+    public final void checkInterrupts() {
+    	if (doCheckInterrupts()) {
+    		//interruptWaiting.release();
+    		throw new AbortedException();
+    	}
+    }
+    
+    /* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.Cpu#checkAndHandleInterrupts()
+	 */
+	public final void checkAndHandleInterrupts() {
+    	if (doCheckInterrupts()) {
+    		//interruptWaiting.release();
+    		handleInterrupts();
+    	}
+    }
 }

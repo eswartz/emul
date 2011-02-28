@@ -19,6 +19,7 @@ import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.settings.Logging;
 import org.ejs.coffee.core.utils.HexUtils;
 
+import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.runtime.InstructionListener;
 import v9t9.emulator.runtime.compiler.ICompiledCode;
@@ -168,6 +169,7 @@ public class Executor {
     	if (cpu.isIdle() && Cpu.settingRealTime.getBoolean()) {
     		if (cpu.isThrottled())
     			return;
+    		/*
     		long start = System.currentTimeMillis();
     		try {
     			// short sleep
@@ -175,8 +177,23 @@ public class Executor {
 			} catch (InterruptedException e) {
 			}
 			long end = System.currentTimeMillis();
-			cpu.checkAndHandleInterrupts();
+			//System.out.print((end - start) + " ");
 			cpu.addCycles(cpu.getBaseCyclesPerSec() * (int)(end - start + 500) / 1000);
+    		cpu.checkAndHandleInterrupts();
+			*/
+    		while (!cpu.isThrottled() && nVdpInterrupts < VdpTMS9918A.settingVdpInterruptRate.getInt()) {
+    			try {
+    				long start = System.currentTimeMillis();
+    				Thread.yield();
+    				
+    				long end = System.currentTimeMillis();
+    				cpu.addCycles(1);
+    				cpu.checkInterrupts();
+    			} catch (AbortedException e) {
+    				cpu.handleInterrupts();
+    				break;
+    			}
+    		}
     	} else {
 			if (settingCompile.getBoolean()) {
 				executeCompilableCode();
