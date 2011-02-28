@@ -39,9 +39,9 @@ public class AllTests {
 		//$JUnit-BEGIN$
 		suite.addTestSuite(TestAssembler.class);
 		suite.addTestSuite(TestAssembler9900.class);
-		suite.addTestSuite(TestAssemblerMFP201Operands.class);
-		suite.addTestSuite(TestAssemblerMFP201Insts.class);
-		suite.addTestSuite(TestDisassemblerMFP201.class);
+		//suite.addTestSuite(TestAssemblerMFP201Operands.class);
+		//suite.addTestSuite(TestAssemblerMFP201Insts.class);
+		//suite.addTestSuite(TestDisassemblerMFP201.class);
 		suite.addTestSuite(TestAssemblerMacros.class);
 		suite.addTestSuite(TestAssemblerOptimizer.class);
 		suite.addTestSuite(TestAssemblerJumpRanges.class);
