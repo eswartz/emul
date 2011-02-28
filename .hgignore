@@ -19,3 +19,18 @@ java/v9t9-java/tmp
 music.raw
 *~
 jar-in-jar-loader.zip
+
+syntax: regexp
+^tools/\.classpath$
+syntax: regexp
+^tools/\.project$
+syntax: regexp
+^tools/config\.status$
+syntax: regexp
+^tools/Makefile$
+syntax: regexp
+^tools/FileUtils/Makefile$
+syntax: regexp
+^tools/DSRs/Makefile$
+syntax: regexp
+^tools/TIAsm/Makefile$
