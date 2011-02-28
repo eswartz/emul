@@ -165,9 +165,11 @@ Create msx-stdpalette
     
     \ b  msx-adjust-cursor-color
     
-    f b xor $55 xor  
+    b $55 xor  
     msx-colmask @ and
-    dup 0= if $a5 + then  msx-cursor-color c!
+    dup 0 =  over f =  or 
+    if $5a + then  
+    msx-cursor-color c!
     
 ;
 
