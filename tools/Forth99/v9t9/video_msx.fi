@@ -31,6 +31,8 @@ Create msx-stdpalette
 ;    
 
 : msx-setupmode
+    $AA msx-cursor-color c!
+
     v9938-sprite-setup
     \ msx-enhregs write-vregs
     
@@ -93,13 +95,22 @@ Create msx-stdpalette
 \
 \ Use LMMV to XOR a rectangle in the cursor shape
 \
+1 RamVar msx-cursor-color
+
+: msx-adjust-cursor-color ( b -- )
+    \ msx-cursor-color c@  msx-colmask @  and =  if
+    \    $7 msx-cursor-color c+!
+    \ then
+             
+;
+
 : msx-blinkcursor ( x y -- )
     msx-setup-cursor-DXDY
     
     $1  msx-cmd-word                    \ two cols NX
     v-fntheight c@ 1-  msx-cmd-word     \ font height NY 
 
-    $AA VDPWI c!                \ CLR    
+    msx-cursor-color c@  VDPWI c!                \ CLR    
 
     $00 VDPWI c!                \ ARG (dix=0, diy=0, mxc=0)
     
@@ -122,12 +133,12 @@ Create msx-stdpalette
     msx-color-temp :> ct
     fg c@ :> f
     bg c@ :> b
-      
+    
     msx-shift @ dup  1 =  if
         drop
     
         f $f and f!
-        b $f and b!         
+        b $f and b!
         
         b  dup 4 lshift  OR   ct     c!
         b  4 lshift  f   OR   ct 1 + c!
@@ -151,6 +162,13 @@ Create msx-stdpalette
     else
         b  ct  c!
     then then
+    
+    \ b  msx-adjust-cursor-color
+    
+    f b xor $55 xor  
+    msx-colmask @ and
+    dup 0= if $a5 + then  msx-cursor-color c!
+    
 ;
 
 : msx-setfont   ( addr -- )
@@ -388,7 +406,7 @@ Create Gfx4ModeParams
 
     v-width     , 256 ,     v-height    , 212 ,
     
-    msx-stride  , $80 ,     msx-shift   , 1 ,       msx-mask , $1  ,
+    msx-stride  , $80 ,     msx-shift   , 1 ,       msx-mask , $1  ,    msx-colmask , $f ,
     
     'v-setupregs ,           ' msx-setupregs ,
     'v-setupmode ,           ' msx-setupmode ,
@@ -430,7 +448,7 @@ Create Gfx6ModeParams
 
     v-width     , 512 ,     v-height    , 212 ,
     
-    msx-stride  , $100 ,    msx-shift   , 1 ,       msx-mask , $1  ,
+    msx-stride  , $100 ,    msx-shift   , 1 ,       msx-mask , $1  ,    msx-colmask , $f ,
     
     'v-setupregs ,           ' msx-setupregs ,
     'v-setupmode ,           ' msx-setupmode ,
@@ -473,7 +491,7 @@ Create Gfx5ModeParams
 
     v-width     , 512 ,     v-height    , 212 ,
     
-    msx-stride  , $80 ,     msx-shift   , 2 ,       msx-mask , $3  ,
+    msx-stride  , $80 ,     msx-shift   , 2 ,       msx-mask , $3  ,    msx-colmask , $3 , 
     
     'v-setupregs ,           ' msx-setupregs ,
     'v-setupmode ,           ' msx-setupmode ,
@@ -514,7 +532,7 @@ Create Gfx7ModeParams
 
     v-width     , 256 ,     v-height    , 212 ,
     
-    msx-stride  , $100 ,    msx-shift   , 0 ,       msx-mask , $0  ,
+    msx-stride  , $100 ,    msx-shift   , 0 ,       msx-mask , $0  ,    msx-colmask , $ff , 
     
     'v-setupregs ,           ' msx-setupregs ,
     'v-setupmode ,           ' msx-setupmode ,

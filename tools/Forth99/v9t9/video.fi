@@ -53,6 +53,7 @@ v-data
     +field  msx-stride      \ row stride in bytes
     +field  msx-shift       \ shift for pixel >> byte
     +field  msx-mask        \ mask for pixel of byte
+    +field  msx-colmask     \ mask for available colors
 
     +field  msx-rowsperbankmask  \ mask for detecting bank crossings  
     
