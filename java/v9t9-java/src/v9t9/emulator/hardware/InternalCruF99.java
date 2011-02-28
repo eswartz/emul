@@ -83,8 +83,8 @@ public class InternalCruF99 extends BaseCruAccess {
 		case KBD: {
 			int alphamask = 0;
 			
-			if (!alphaLockMask)
-				alphamask = keyboardState.getAlpha() ? 0x10 : 0x0;
+			//if (!alphaLockMask)
+			//	alphamask = keyboardState.getAlpha() ? 0x10 : 0x0;
 			
 			int col = keyboardState.getKeyboardRow(crukeyboardcol);
 			return (byte) (col | alphamask);
