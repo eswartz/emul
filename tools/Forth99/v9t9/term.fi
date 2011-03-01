@@ -63,6 +63,12 @@ ramptr !
     home
 ;
 
+: (win-update)
+    win-sx @  win-chxs c@  U/  win-cx c!
+    win-sy @  win-chys c@  U/  win-cy c!
+;
+
+
 1 <export
 :   home
     0 0 .at-xy
@@ -98,18 +104,14 @@ ramptr !
     .at-xy
 ;
 
-: (win-update)
-    win-sx @  win-chxs c@  U/  win-cx c!
-    win-sy @  win-chys c@  U/  win-cy c!
-;
-
 ( units )
 ::   .win! ( w h x y -- )
     cursor-off
     win-mx @ :> mx
     win-my @ :> my
     w  mx  umin  x +  mx  umin  :> x2
-    h  my  umin  y +  my  umin  :> y2
+    h  
+    my  umin  y +  my  umin  :> y2
     0 x max  mx  umin  dup  win-x !  x2  swap -  win-sx !
     0 y max  my  umin  dup  win-y !  y2  swap -  win-sy !
     
@@ -129,6 +131,20 @@ ramptr !
 ( set full window )
 : full!
     -1 -1 0 0  .win!
+;
+
+( get window params, units )
+: .win@ ( -- w h x y )
+	win-sx @  win-sy @
+	win-x @ 
+	win-y @ 
+;
+
+( get window params, characters )
+: win@ ( -- w h x y )
+	win-cx c@  win-cy c@
+	win-x @ win-chxs c@ u/ 
+	win-y @ win-chys c@ u/ 
 ;
 
 export>
