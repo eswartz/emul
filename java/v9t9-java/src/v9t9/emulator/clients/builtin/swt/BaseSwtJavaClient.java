@@ -160,7 +160,7 @@ public abstract class BaseSwtJavaClient implements Client {
 
 	public void updateVideo() {
 		//long start = System.currentTimeMillis();
-		if (videoRenderer.isIdle()) { 
+		if (videoRenderer.isIdle() && videoRenderer.isVisible()) { 
 			try {
 				if (!video.update())
 					return;

@@ -22,4 +22,6 @@ public interface ISwtVideoRenderer extends VideoRenderer {
 
 	void addMouseEventListener(MouseListener listener);
 	void addMouseMotionListener(MouseMoveListener listener);
+
+	boolean isVisible();
 }

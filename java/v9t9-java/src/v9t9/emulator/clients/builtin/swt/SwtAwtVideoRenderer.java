@@ -289,4 +289,19 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 		getAwtCanvas().requestFocus();
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.swt.ISwtVideoRenderer#isVisible()
+	 */
+	@Override
+	public boolean isVisible() {
+		if (Display.getDefault().isDisposed())
+			return false;
+		final boolean[] visible = { false };
+		Display.getDefault().syncExec(new Runnable() {
+			public void run() {
+				visible[0] = !shell.isDisposed() && shell.isVisible() && !shell.getMinimized();
+			}
+		});
+		return visible[0];
+	}
 }
