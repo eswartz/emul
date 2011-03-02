@@ -126,11 +126,12 @@ class TCFBreakpointStatusListener {
 
         public void onConnected(TCFLaunch launch, TCFModel model) {
             assert bp_listeners.get(launch) == null;
-            new BreakpointListener(launch);
+            if (launch.getBreakpointsStatus() != null) new BreakpointListener(launch);
         }
 
         public void onDisconnected(TCFLaunch launch, TCFModel model) {
-            bp_listeners.remove(launch).dispose();
+            BreakpointListener l = bp_listeners.remove(launch);
+            if (l != null) l.dispose();
         }
     };
     
