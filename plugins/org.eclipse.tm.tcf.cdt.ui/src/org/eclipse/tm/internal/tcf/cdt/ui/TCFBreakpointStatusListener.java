@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2010, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -147,7 +147,7 @@ class TCFBreakpointStatusListener {
         for (ILaunch launch : DebugPlugin.getDefault().getLaunchManager().getLaunches()) {
             if (launch instanceof TCFLaunch) {
                 TCFLaunch tcfLaunch = (TCFLaunch) launch;
-                if (!tcfLaunch.isDisconnected() && !tcfLaunch.isConnecting()) {
+                if (!tcfLaunch.isDisconnected() && !tcfLaunch.isConnecting() && tcfLaunch.getBreakpointsStatus() != null) {
                     launch_listener.onConnected(tcfLaunch, model_manager.getModel(tcfLaunch));
                 }
             }
