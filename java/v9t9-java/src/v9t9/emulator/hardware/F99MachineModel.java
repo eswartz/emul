@@ -3,9 +3,13 @@
  */
 package v9t9.emulator.hardware;
 
+import java.util.Collections;
+import java.util.List;
+
 import v9t9.emulator.clients.builtin.SoundProvider;
 import v9t9.emulator.clients.builtin.video.v9938.VdpV9938;
 import v9t9.emulator.common.Machine;
+import v9t9.emulator.hardware.dsrs.DsrSettings;
 import v9t9.emulator.hardware.memory.F99MemoryModel;
 import v9t9.emulator.hardware.memory.mmio.Vdp9938Mmio;
 import v9t9.emulator.hardware.sound.MultiSoundTMS9919B;
@@ -86,7 +90,13 @@ public class F99MachineModel implements MachineModel {
 		*/
 	}
 
-
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.hardware.MachineModel#getDsrSettings(v9t9.emulator.common.Machine)
+	 */
+	@Override
+	public List<DsrSettings> getDsrSettings(Machine machine) {
+		return Collections.emptyList();
+	}
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.MachineModel#getCPU()
 	 */

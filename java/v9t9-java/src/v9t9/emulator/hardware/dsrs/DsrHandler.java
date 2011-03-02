@@ -4,11 +4,8 @@
 package v9t9.emulator.hardware.dsrs;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Map;
 
 import org.ejs.coffee.core.properties.IPersistable;
-import org.ejs.coffee.core.properties.SettingProperty;
 
 import v9t9.engine.memory.MemoryDomain;
 
@@ -17,7 +14,7 @@ import v9t9.engine.memory.MemoryDomain;
  * @author ejs
  *
  */
-public interface DsrHandler extends IPersistable {
+public interface DsrHandler extends IPersistable, DsrSettings {
 
 	String GROUP_DSR_SELECTION = "Device Selection";
 	String GROUP_DISK_CONFIGURATION = "Disk Configuration";
@@ -41,9 +38,4 @@ public interface DsrHandler extends IPersistable {
 
 	String getName();
 	
-	/**
-	 * Get editable settings
-	 * @return map of group label to settings
-	 */
-	Map<String, Collection<SettingProperty>> getEditableSettingGroups();
 }

@@ -3,14 +3,9 @@ package v9t9.emulator.hardware.dsrs;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.ejs.coffee.core.properties.IPersistable;
 import org.ejs.coffee.core.settings.ISettingSection;
-import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.common.Machine;
-import v9t9.emulator.hardware.TI99Machine;
-import v9t9.engine.cpu.InstructionWorkBlock;
-import v9t9.engine.cpu.MachineOperand9900;
 
 public abstract class DsrManager implements IDsrManager {
 

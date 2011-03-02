@@ -10,9 +10,6 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
-import v9t9.emulator.hardware.dsrs.realdisk.DiskImageDsr.FDCStatus;
-import v9t9.emulator.hardware.dsrs.realdisk.DiskImageDsr.IdMarker;
-import v9t9.emulator.hardware.dsrs.realdisk.DiskImageDsr.StatusBit;
 
 public class SectorDiskImage extends BaseDiskImage  {
 	public SectorDiskImage(String name, File file) {
@@ -72,7 +69,7 @@ public class SectorDiskImage extends BaseDiskImage  {
 	
 		trackFetched = false;
 		
-		DiskImageDsr.info(
+		StandardDiskImageDsr.info(
 			"Opened sector-image disk ''{1}'' {2},\n#tracks={3}, tracksize={4}, sides={5}",
 			spec, name, hdr.tracks, hdr.tracksize, hdr.sides);
 	}
@@ -134,9 +131,9 @@ public class SectorDiskImage extends BaseDiskImage  {
 			}
 		}
 
-		if (hdr.tracksize > DiskImageDsr.DSKbuffersize) {
+		if (hdr.tracksize > StandardDiskImageDsr.DSKbuffersize) {
 			throw new IOException(MessageFormat.format("Disk image has too large track size ({0} > {1})",
-						  hdr.tracksize, DiskImageDsr.DSKbuffersize));
+						  hdr.tracksize, StandardDiskImageDsr.DSKbuffersize));
 		}
 	}
 	
@@ -144,7 +141,7 @@ public class SectorDiskImage extends BaseDiskImage  {
 	 * @see v9t9.emulator.hardware.dsrs.realdisk.BaseDiskImage#getHeaderSize()
 	 */
 	@Override
-	protected int getHeaderSize() {
+	public int getHeaderSize() {
 		return 0;
 	}
 	
@@ -170,7 +167,7 @@ public class SectorDiskImage extends BaseDiskImage  {
 		System.arraycopy(rwBuffer, 0, trackBuffer, marker.dataoffset + 1, buflen);
 		
 		// dump contents
-		DiskImageDsr.dumpBuffer(rwBuffer, start, buflen);
+		StandardDiskImageDsr.dumpBuffer(rwBuffer, start, buflen);
 		
 	}
 
@@ -191,7 +188,7 @@ public class SectorDiskImage extends BaseDiskImage  {
 		formatSectorTrack(rwBuffer, i, buflen, status);
 
 		// dump contents
-		DiskImageDsr.dumpBuffer(rwBuffer, i, buflen);
+		StandardDiskImageDsr.dumpBuffer(rwBuffer, i, buflen);
 	}
 	
 
@@ -212,11 +209,11 @@ public class SectorDiskImage extends BaseDiskImage  {
 				// ID marker
 				is++;
 
-				crc = DiskImageDsr.calc_crc(crc, 0xfe);
-				track = buffer[is++]; crc = DiskImageDsr.calc_crc(crc, track);
-				side = buffer[is++]; crc = DiskImageDsr.calc_crc(crc, side);
-				sector = buffer[is++]; crc = DiskImageDsr.calc_crc(crc, sector);
-				size = buffer[is++]; crc = DiskImageDsr.calc_crc(crc, size);
+				crc = StandardDiskImageDsr.calc_crc(crc, 0xfe);
+				track = buffer[is++]; crc = StandardDiskImageDsr.calc_crc(crc, track);
+				side = buffer[is++]; crc = StandardDiskImageDsr.calc_crc(crc, side);
+				sector = buffer[is++]; crc = StandardDiskImageDsr.calc_crc(crc, sector);
+				size = buffer[is++]; crc = StandardDiskImageDsr.calc_crc(crc, size);
 				crcid = (short) (buffer[is++]<<8); crcid += buffer[is++]&0xff;
 
 				if (crcid == (short) 0xf7ff) crcid = crc;
@@ -227,12 +224,12 @@ public class SectorDiskImage extends BaseDiskImage  {
 					goto retry;
 				}*/
 
-				DiskImageDsr.info("Formatting sector track:{0}, side:{1}, sector:{2}, size:{3}, crc={4}", track, side, sector, size, crc);
+				StandardDiskImageDsr.info("Formatting sector track:{0}, side:{1}, sector:{2}, size:{3}, crc={4}", track, side, sector, size, crc);
 
 				sz = 128 << size;
 				offs = sector * sz;
 				if (offs >= hdr.tracksize) {
-					DiskImageDsr.error("Program is formatting track on ''{0}'' with non-ordinary sectors; " +
+					StandardDiskImageDsr.error("Program is formatting track on ''{0}'' with non-ordinary sectors; " +
 									"this does not work with sector-image disks", spec);
 					offs = 0;
 				}
@@ -242,10 +239,10 @@ public class SectorDiskImage extends BaseDiskImage  {
 				crc = (short) 0xffff;
 
 				if (is + sz + 2 < length) {
-					crc = DiskImageDsr.calc_crc(crc, 0xfb);
+					crc = StandardDiskImageDsr.calc_crc(crc, 0xfb);
 					int cnt = 0;
 					for (cnt=0; cnt < sz; cnt++) {
-						crc = DiskImageDsr.calc_crc(crc, buffer[cnt + is]);
+						crc = StandardDiskImageDsr.calc_crc(crc, buffer[cnt + is]);
 					}
 					crcid = (short) (buffer[cnt++]<<8); crcid += buffer[cnt++]&0xff;
 					if (crcid == (short) 0xf7ff) crcid = crc;
@@ -262,7 +259,7 @@ public class SectorDiskImage extends BaseDiskImage  {
 					
 					is += sz + 2; // + crc
 				} else {
-					DiskImageDsr.error("Lost sector data in format of sector-image disk ''{0}''", spec);
+					StandardDiskImageDsr.error("Lost sector data in format of sector-image disk ''{0}''", spec);
 					break;
 				}
 			}
@@ -280,7 +277,7 @@ public class SectorDiskImage extends BaseDiskImage  {
 		try {
 			readCurrentTrackData();
 		} catch (IOException e) {
-			DiskImageDsr.error(e.getMessage());
+			StandardDiskImageDsr.error(e.getMessage());
 			return markers;
 		}
 		
@@ -315,7 +312,7 @@ public class SectorDiskImage extends BaseDiskImage  {
 	public void readSectorData(IdMarker currentMarker, byte[] rwBuffer,
 			int i, int buflen) {
 		System.arraycopy(trackBuffer, currentMarker.dataoffset + 1, rwBuffer, 0, buflen);
-		DiskImageDsr.dumpBuffer(rwBuffer, 0, 256);
+		StandardDiskImageDsr.dumpBuffer(rwBuffer, 0, 256);
 		
 	}
 }

@@ -35,6 +35,7 @@ import v9t9.emulator.clients.builtin.NotifyException;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.runtime.cpu.Cpu9900;
 import v9t9.engine.modules.IModule;
+import v9t9.engine.modules.MemoryEntryInfo;
 
 /**
  * @author ejs
@@ -48,6 +49,7 @@ public class ModuleSelector extends Composite {
 	private Composite buttonBar;
 	private final Machine machine;
 	private Button switchButton;
+	private TableColumn fileColumn;
 
 	/**
 	 * 
@@ -76,6 +78,9 @@ public class ModuleSelector extends Composite {
 		
 		nameColumn = new TableColumn(table, SWT.LEFT);
 		nameColumn.setText("Name");
+
+		fileColumn = new TableColumn(table, SWT.LEFT);
+		fileColumn.setText("File");
 
 		viewer.setContentProvider(new ArrayContentProvider());
 		viewer.setLabelProvider(new ModuleTableLabelProvider());
@@ -146,6 +151,7 @@ public class ModuleSelector extends Composite {
 		}
 
 		nameColumn.pack();
+		fileColumn.pack();
 	}
 
 	/** 
@@ -202,6 +208,13 @@ public class ModuleSelector extends Composite {
 			IModule module = (IModule) element;
 			switch (columnIndex) {
 			case 0: return module.getName();
+			case 1: {
+				for (MemoryEntryInfo info : module.getMemoryEntryInfos()) {
+					Object v = info.getProperties().get(MemoryEntryInfo.FILENAME);
+					if (v != null)
+						return v.toString();
+				}
+			}
 			}
 			return null;
 		}

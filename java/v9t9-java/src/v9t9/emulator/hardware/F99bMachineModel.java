@@ -3,9 +3,14 @@
  */
 package v9t9.emulator.hardware;
 
+import java.util.Collections;
+import java.util.List;
+
 import v9t9.emulator.clients.builtin.SoundProvider;
 import v9t9.emulator.clients.builtin.video.v9938.VdpV9938;
 import v9t9.emulator.common.Machine;
+import v9t9.emulator.hardware.dsrs.DsrSettings;
+import v9t9.emulator.hardware.dsrs.realdisk.MemoryDiskImageDsr;
 import v9t9.emulator.hardware.memory.F99bMemoryModel;
 import v9t9.emulator.hardware.memory.mmio.Vdp9938Mmio;
 import v9t9.emulator.hardware.sound.MultiSoundTMS9919B;
@@ -33,6 +38,8 @@ public class F99bMachineModel implements MachineModel {
 	
 	private F99bMemoryModel memoryModel;
 	private VdpV9938 vdp;
+
+	private MemoryDiskImageDsr memoryDiskDsr;
 	
 	public F99bMachineModel() {
 		memoryModel = new F99bMemoryModel();
@@ -75,6 +82,9 @@ public class F99bMachineModel implements MachineModel {
 	
 	public void defineDevices(final Machine machine_) {
 		machine_.getCpu().setCruAccess(new InternalCruF99(machine_, machine_.getKeyboardState()));
+		
+		memoryDiskDsr = new MemoryDiskImageDsr(machine_);
+		//machine_.getDsrManager().registerDsr(dsr);
 		/*
 		if (machine_ instanceof TI99Machine) {
 			TI99Machine machine = (TI99Machine) machine_;
@@ -88,6 +98,13 @@ public class F99bMachineModel implements MachineModel {
 		*/
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.hardware.MachineModel#getDsrSettings()
+	 */
+	@Override
+	public List<DsrSettings> getDsrSettings(Machine machine) {
+		return Collections.singletonList((DsrSettings) memoryDiskDsr);
+	}
 
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.MachineModel#getCPU()

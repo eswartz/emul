@@ -3,7 +3,12 @@
  */
 package v9t9.emulator.hardware;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import v9t9.emulator.common.Machine;
+import v9t9.emulator.hardware.dsrs.DsrHandler;
+import v9t9.emulator.hardware.dsrs.DsrSettings;
 import v9t9.emulator.runtime.compiler.CodeBlockCompilerStrategy;
 import v9t9.emulator.runtime.cpu.*;
 import v9t9.emulator.runtime.interpreter.Interpreter9900;
@@ -39,6 +44,21 @@ public abstract class BaseTI99MachineModel implements MachineModel {
 				new CodeBlockCompilerStrategy(),
 				new DumpFullReporter9900((Cpu9900) cpu),
 				new DumpReporter9900((Cpu9900) cpu));
+	}
+
+
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.hardware.MachineModel#getDsrSettings()
+	 */
+	@Override
+	public List<DsrSettings> getDsrSettings(Machine machine) {
+		List<DsrSettings> settings = new ArrayList<DsrSettings>();
+		if (machine.getDsrManager() != null)  {
+			for (DsrHandler handler : machine.getDsrManager().getDsrs()) {
+				settings.add(handler);
+			}
+		}
+		return settings;
 	}
 
 }

@@ -24,7 +24,7 @@ import v9t9.emulator.hardware.dsrs.MemoryTransfer;
 import v9t9.emulator.hardware.dsrs.PabConstants;
 import v9t9.emulator.hardware.dsrs.emudisk.DiskDirectoryMapper.EmuDiskSetting;
 import v9t9.emulator.hardware.dsrs.emudisk.EmuDiskPabHandler.PabInfoBlock;
-import v9t9.emulator.hardware.dsrs.realdisk.DiskImageDsr;
+import v9t9.emulator.hardware.dsrs.realdisk.StandardDiskImageDsr;
 import v9t9.emulator.runtime.cpu.Executor;
 import v9t9.engine.files.FDR;
 import v9t9.engine.files.V9t9FDR;
@@ -159,7 +159,7 @@ public class EmuDiskDsr implements DsrHandler9900 {
 			if (handler.devname.equals("DSK1")
 					|| handler.devname.equals("DSK2")
 					|| (handler.devname.equals("DSK") && handler.mapper.getLocalFile(handler.devname, handler.fname) == null)) {
-				if (DiskImageDsr.diskImageDsrEnabled.getBoolean())
+				if (StandardDiskImageDsr.diskImageDsrEnabled.getBoolean())
 					return false;
 			}
 			
@@ -223,7 +223,7 @@ public class EmuDiskDsr implements DsrHandler9900 {
 		{
 			DirectDiskHandler handler = new DirectDiskHandler(getCruBase(), xfer, mapper, code);
 	
-			if (handler.dev <= 2 && DiskImageDsr.diskImageDsrEnabled.getBoolean()) {
+			if (handler.dev <= 2 && StandardDiskImageDsr.diskImageDsrEnabled.getBoolean()) {
 				Executor.settingDumpFullInstructions.setBoolean(true);
 				return false;
 			}

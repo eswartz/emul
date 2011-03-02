@@ -41,7 +41,7 @@ public class RawTrackDiskImage extends BaseTrackDiskImage  {
 	 * @see v9t9.emulator.hardware.dsrs.realdisk.BaseDiskImage#getHeaderSize()
 	 */
 	@Override
-	protected int getHeaderSize() {
+	public int getHeaderSize() {
 		return 0;
 	}
 	
@@ -73,9 +73,9 @@ public class RawTrackDiskImage extends BaseTrackDiskImage  {
 					  spec, hdr.tracksize));
 		}
 
-		if (hdr.tracksize > DiskImageDsr.DSKbuffersize) {
+		if (hdr.tracksize > StandardDiskImageDsr.DSKbuffersize) {
 			throw new IOException(MessageFormat.format("RawTrackDiskImage: disk image ''{0}'' has too large track size ({1} > {2})",
-					spec, hdr.tracksize, DiskImageDsr.DSKbuffersize));
+					spec, hdr.tracksize, StandardDiskImageDsr.DSKbuffersize));
 		}
 	}
 	

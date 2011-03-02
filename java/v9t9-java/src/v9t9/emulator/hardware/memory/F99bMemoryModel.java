@@ -38,8 +38,6 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 	        		CPU,
 	                filename, 0x400, false);
 			cpuRomEntry.load();
-			//for (int i = 0; i < cpuRomEntry.size; i++)
-			//	CPU.writeByte(i, cpuRomEntry.readByte(i));
 			memory.addAndMap(cpuRomEntry);
 			cpuRomEntry.copySymbols(CPU);
 			

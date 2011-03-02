@@ -34,3 +34,5 @@ syntax: regexp
 ^tools/DSRs/Makefile$
 syntax: regexp
 ^tools/TIAsm/Makefile$
+syntax: regexp
+^.*/hs_err.*\.log$

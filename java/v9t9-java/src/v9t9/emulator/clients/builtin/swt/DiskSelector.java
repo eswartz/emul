@@ -52,8 +52,7 @@ import org.ejs.coffee.core.properties.SettingProperty;
 
 import v9t9.emulator.clients.builtin.ISettingDecorator;
 import v9t9.emulator.common.EmulatorSettings;
-import v9t9.emulator.hardware.dsrs.DsrHandler;
-import v9t9.emulator.hardware.dsrs.IDsrManager;
+import v9t9.emulator.hardware.dsrs.DsrSettings;
 import v9t9.emulator.hardware.dsrs.realdisk.BaseDiskImage;
 import v9t9.emulator.hardware.dsrs.realdisk.CatalogEntry;
 import v9t9.emulator.hardware.dsrs.realdisk.DiskImageFactory;
@@ -390,7 +389,7 @@ public class DiskSelector extends Composite {
 	/**
 	 * 
 	 */
-	public DiskSelector(Shell shell, IDsrManager dsrManager) {
+	public DiskSelector(Shell shell, List<DsrSettings> list) {
 		
 		super(shell, SWT.NONE);
 		
@@ -402,8 +401,8 @@ public class DiskSelector extends Composite {
 		Map<String, List<SettingProperty>> allSettings = new LinkedHashMap<String, List<SettingProperty>>();
 		
 
-		for (DsrHandler handler : dsrManager.getDsrs()) {
-			Map<String, Collection<SettingProperty>> settings = handler.getEditableSettingGroups();
+		for (DsrSettings setting : list) {
+			Map<String, Collection<SettingProperty>> settings = setting.getEditableSettingGroups();
 			for (Map.Entry<String, Collection<SettingProperty>> entry : settings.entrySet()) {
 				List<SettingProperty> groupSettings = allSettings.get(entry.getKey());
 				if (groupSettings == null) {

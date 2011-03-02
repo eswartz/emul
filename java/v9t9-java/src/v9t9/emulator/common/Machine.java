@@ -602,6 +602,7 @@ abstract public class Machine {
 	/** Called when keyboardState changes */
 	public void keyStateChanged() {
 	}
+
 }
 
 

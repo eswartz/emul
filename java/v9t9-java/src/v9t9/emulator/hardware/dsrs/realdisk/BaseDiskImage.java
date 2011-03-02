@@ -13,10 +13,6 @@ import java.util.List;
 import org.ejs.coffee.core.properties.IPersistable;
 import org.ejs.coffee.core.settings.ISettingSection;
 
-import v9t9.emulator.hardware.dsrs.realdisk.DiskImageDsr.DSKheader;
-import v9t9.emulator.hardware.dsrs.realdisk.DiskImageDsr.FDCStatus;
-import v9t9.emulator.hardware.dsrs.realdisk.DiskImageDsr.IdMarker;
-import v9t9.emulator.hardware.dsrs.realdisk.DiskImageDsr.StatusBit;
 import v9t9.engine.files.IFDRFlags;
 import v9t9.engine.files.V9t9FDR;
 
@@ -25,30 +21,33 @@ import v9t9.engine.files.V9t9FDR;
  * @author ejs
  *
  */
-public abstract class BaseDiskImage implements IPersistable {
+public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 
-	public abstract String getDiskType();
-	
-	public abstract List<IdMarker> getTrackMarkers();
-
-	public abstract void writeTrackData(byte[] rwBuffer, int i,
-			int buflen, FDCStatus status);
-
-	public abstract void writeSectorData(byte[] rwBuffer, int start,
-			int buflen, IdMarker marker, FDCStatus status);
-
-	protected abstract void readImageHeader() throws IOException;
-
-	protected abstract void writeImageHeader() throws IOException;
-
-	protected abstract int getHeaderSize();
+	static class DSKheader
+	{
+		/** tracks per side */
+		byte			tracks;		
+		/** 1 or 2 */
+		byte			sides;		
+		byte			unused;
+		/** bytes per track */
+		short			tracksize;	
+		/** offset for track 0 data */
+		int				track0offs;	
+		public long getImageSize() {
+			return (tracksize & 0xffff) * (tracks & 0xff) * sides;
+		}
+		public int getTrackSize(int num) {
+			return num * (tracksize & 0xffff);
+		}
+	};
 	
 	protected String name;
 	protected File spec;
 	protected RandomAccessFile handle;
 	
 	protected boolean trackFetched;
-	protected byte trackBuffer[] = new byte[DiskImageDsr.DSKbuffersize];
+	protected byte trackBuffer[] = new byte[StandardDiskImageDsr.DSKbuffersize];
 	protected DSKheader hdr = new DSKheader();
 	protected boolean readonly;
 	int trackoffset;
@@ -91,7 +90,7 @@ public abstract class BaseDiskImage implements IPersistable {
 		}			
 	}
 
-	protected void growImageForContent() throws IOException {
+	public void growImageForContent() throws IOException {
 		long      sz, len;
 	
 		if (spec == null || handle == null) 
@@ -145,7 +144,7 @@ public abstract class BaseDiskImage implements IPersistable {
 	
 		trackFetched = false;
 		
-		DiskImageDsr.info("Opened {0} disk ''{1}'' {2},\n#tracks={3}, tracksize={4}, sides={5}",
+		StandardDiskImageDsr.info("Opened {0} disk ''{1}'' {2},\n#tracks={3}, tracksize={4}, sides={5}",
 					  getDiskType(),
 					  spec,
 			 name, hdr.tracks, hdr.tracksize, hdr.sides);
@@ -154,7 +153,7 @@ public abstract class BaseDiskImage implements IPersistable {
 
 	public void createDiskImage() throws IOException
 	{
-		DiskImageDsr.info("Creating new {2} disk image at {0} ({1})", name, spec, getDiskType());
+		StandardDiskImageDsr.info("Creating new {2} disk image at {0} ({1})", name, spec, getDiskType());
 
 		/* defaults */
 		hdr.tracks = 40;
@@ -179,7 +178,7 @@ public abstract class BaseDiskImage implements IPersistable {
 		if (!trackFetched) {
 			long diskoffs = getTrackDiskOffset();
 			
-			DiskImageDsr.info("Reading {0} bytes of data on track {1}, trackoffset = {2}, offset = >{3}", 
+			StandardDiskImageDsr.info("Reading {0} bytes of data on track {1}, trackoffset = {2}, offset = >{3}", 
 					hdr.tracksize, seektrack, trackoffset, Long.toHexString(diskoffs));
 	
 			handle.seek(getTrackDiskOffset());
@@ -197,7 +196,7 @@ public abstract class BaseDiskImage implements IPersistable {
 	/**
 	 * @return
 	 */
-	private long getTrackDiskOffset() {
+	public long getTrackDiskOffset() {
 		long offset = trackoffset;
 		if (sideReg != 0) {
 			// goes in reverse order on side 2
@@ -271,7 +270,7 @@ public abstract class BaseDiskImage implements IPersistable {
 		int size = getTrackSize();
 		long diskoffs = getTrackDiskOffset();
 	
-		DiskImageDsr.info("Writing {0} bytes of data on track {1}, trackoffset = {2}, offset = >{3}", 
+		StandardDiskImageDsr.info("Writing {0} bytes of data on track {1}, trackoffset = {2}, offset = >{3}", 
 				size, seektrack, trackoffset, Long.toHexString(diskoffs));
 	
 	
@@ -307,7 +306,7 @@ public abstract class BaseDiskImage implements IPersistable {
 	}
 
 	public void loadState(ISettingSection section) {
-		spec = DiskImageDsr.getDefaultDiskImage(name);
+		spec = StandardDiskImageDsr.getDefaultDiskImage(name);
 		if (section == null)
 			return;
 		String path = section.get("FilePath");
@@ -342,7 +341,7 @@ public abstract class BaseDiskImage implements IPersistable {
 			} catch (ArrayIndexOutOfBoundsException e) {
 				System.err.println("Possible bogus sector size: " + buflen);
 			}
-			DiskImageDsr.dumpBuffer(rwBuffer, 0, 256);
+			StandardDiskImageDsr.dumpBuffer(rwBuffer, 0, 256);
 		}
 	}
 

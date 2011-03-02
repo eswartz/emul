@@ -438,21 +438,19 @@ public class SwtWindow extends BaseEmulatorWindow {
 			);
 		}
 		
-		if (machine.getDsrManager() != null) {
-			createButton(buttonBar,
-				5, "Setup disks", 
-				new SelectionAdapter() {
-					@Override
-					public void widgetSelected(SelectionEvent e) {
-						toggleToolShell(DISK_SELECTOR_TOOL_ID, "DiskWindowBounds", true, true, new IToolShellFactory() {
-							public Control createContents(Shell shell) {
-								return new DiskSelector(shell, machine.getDsrManager());
-							}
-						});
-					}
+		createButton(buttonBar,
+			5, "Setup disks", 
+			new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					toggleToolShell(DISK_SELECTOR_TOOL_ID, "DiskWindowBounds", true, true, new IToolShellFactory() {
+						public Control createContents(Shell shell) {
+							return new DiskSelector(shell, machine.getModel().getDsrSettings(machine));
+						}
+					});
 				}
-			);
-		}
+			}
+		);
 		/*
 		createButton(buttonBar,
 				0, 
