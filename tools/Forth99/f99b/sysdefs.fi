@@ -36,6 +36,20 @@ $0083       constant    'KBDA
 
 $0084       constant    'GATE
 
+$0088       constant    'DSK 
+\   0: write: cmd; read: status
+  'DSK 0 +  constant    'DSKST
+\   1: write/read: track addr
+  'DSK 1 +  constant    'DSKTRK
+\  2: write/read: sector addr
+  'DSK 2 +  constant    'DSKSEC
+\  3: write/read: data
+  'DSK 3 +  constant    'DSKDAT
+\  4: write/read: [0 | 0 | 0 | 0 | motor | hold | head | side ] 
+  'DSK 4 +  constant    'DSKFLG
+\  5: write/read: [0 | 0 | 0 | 0 | 0 | D2 | D1 | D0] 
+  'DSK 5 +  constant    'DSKNUM
+
 $00ff       constant    'DBG
 
 \   -----------------------    

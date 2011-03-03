@@ -9,6 +9,8 @@ package v9t9.emulator.hardware.dsrs;
  */
 public interface IMemoryIOHandler {
 
-	void writeData(int offset, byte val);
-	byte readData(int offset);
+	void writeData(int addr, byte val);
+	byte readData(int addr);
+	
+	boolean handlesAddress(int addr);
 }

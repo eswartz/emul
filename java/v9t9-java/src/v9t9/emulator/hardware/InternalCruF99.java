@@ -31,7 +31,7 @@ public class InternalCruF99 extends BaseCruAccess {
 	/** audio gate */
 	public final static int GATE = CRU_BASE + 4;
 	/** floppy controller */
-	public static final int DISK_BASE = CRU_BASE + 5;	// 5,6,7,8,9
+	public static final int DISK_BASE = CRU_BASE + 8;	// 8, 9, 10, 11, 12, 13
 	
 	protected List<IMemoryIOHandler> ioHandlers = new ArrayList<IMemoryIOHandler>();
 	
@@ -81,7 +81,10 @@ public class InternalCruF99 extends BaseCruAccess {
 			
 		default:
 			for (IMemoryIOHandler handler : ioHandlers) {
-				handler.writeData(addr, val);
+				if (handler.handlesAddress(addr)) {
+					handler.writeData(addr, val);
+					break;
+				}
 			}
 			break;
 		}
@@ -109,9 +112,9 @@ public class InternalCruF99 extends BaseCruAccess {
 			return (byte) (keyboardState.getAlpha() ? 1 : 0);
 		default:
 			for (IMemoryIOHandler handler : ioHandlers) {
-				byte val = handler.readData(addr);
-				if (val != 0)
-					return val;
+				if (handler.handlesAddress(addr)) {
+					return handler.readData(addr);
+				}
 			}
 			break;
 		}

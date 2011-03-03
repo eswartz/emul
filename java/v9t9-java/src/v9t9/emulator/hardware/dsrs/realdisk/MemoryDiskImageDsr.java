@@ -53,42 +53,39 @@ public class MemoryDiskImageDsr extends BaseDiskImageDsr implements IMemoryIOHan
 	 */
 	@Override
 	public void writeData(int offset, byte val) {
-		if (offset >= baseAddr && offset < baseAddr + 5) {
-			switch (offset - baseAddr) {
-			case COMMAND:
-				writeCommand(val);
-				break;
-			case TRACK:
-				writeTrackAddr(val);
-				break;
-			case SECTOR:
-				writeSectorAddr(val);
-				break;
-			case DATA:
-				writeData(val);
-				break;
-			case DSK:
-				if (val == 0)
-					selectDisk(0, false);
-				else
-					selectDisk(val, true);
-				break;
-			case FLAGS: {
-				byte oldflags = flags;
-				flags = val;
-				if (((flags ^ oldflags) & FL_SIDE) != 0) {
-					setDiskSide((flags & FL_SIDE) != 0 ? 1 : 0);
-				}
-				if (((flags ^ oldflags) & FL_MOTOR) != 0) {
-					setDiskMotor((flags & FL_MOTOR) != 0);
-				}
-				if (((flags ^ oldflags) & FL_HEAD) != 0) {
-					setDiskHeads((flags & FL_HEAD) != 0);
-				}
-				if (((flags ^ oldflags) & FL_HOLD) != 0) {
-					setDiskHold((flags & FL_HOLD) != 0);
-				}
-				
+		switch (offset - baseAddr) {
+		case COMMAND:
+			writeCommand(val);
+			break;
+		case TRACK:
+			writeTrackAddr(val);
+			break;
+		case SECTOR:
+			writeSectorAddr(val);
+			break;
+		case DATA:
+			writeData(val);
+			break;
+		case DSK:
+			if (val == 0)
+				selectDisk(0, false);
+			else
+				selectDisk(val, true);
+			break;
+		case FLAGS: {
+			byte oldflags = flags;
+			flags = val;
+			if (((flags ^ oldflags) & FL_SIDE) != 0) {
+				setDiskSide((flags & FL_SIDE) != 0 ? 1 : 0);
+			}
+			if (((flags ^ oldflags) & FL_MOTOR) != 0) {
+				setDiskMotor((flags & FL_MOTOR) != 0);
+			}
+			if (((flags ^ oldflags) & FL_HEAD) != 0) {
+				setDiskHeads((flags & FL_HEAD) != 0);
+			}
+			if (((flags ^ oldflags) & FL_HOLD) != 0) {
+				setDiskHold((flags & FL_HOLD) != 0);
 			}
 			}
 		}
@@ -99,27 +96,33 @@ public class MemoryDiskImageDsr extends BaseDiskImageDsr implements IMemoryIOHan
 	 */
 	@Override
 	public byte readData(int offset) {
-		if (offset >= baseAddr && offset < baseAddr + 5) {
-			switch (offset - baseAddr) {
-			case COMMAND:
-				return readStatus();
-			case TRACK:
-				return readTrackAddr();
-			case SECTOR:
-				return readSectorAddr();
-			case DATA:
-				return readData();
-			case DSK:
-				return (byte) getSelectedDisk();
-			case FLAGS:
-				flags = (byte) ((getSide() != 0 ? FL_SIDE : 0) 
-					| (isMotorRunning() ? FL_MOTOR : 0)
-					| (isDiskHeads() ? FL_HEAD : 0)
-					| (isDiskHold() ? FL_HOLD : 0));
-				return flags;
-			}
+		switch (offset - baseAddr) {
+		case COMMAND:
+			return readStatus();
+		case TRACK:
+			return readTrackAddr();
+		case SECTOR:
+			return readSectorAddr();
+		case DATA:
+			return readData();
+		case DSK:
+			return (byte) getSelectedDisk();
+		case FLAGS:
+			flags = (byte) ((getSide() != 0 ? FL_SIDE : 0) 
+				| (isMotorRunning() ? FL_MOTOR : 0)
+				| (isDiskHeads() ? FL_HEAD : 0)
+				| (isDiskHold() ? FL_HOLD : 0));
+			return flags;
 		}
 		return 0;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.hardware.dsrs.IMemoryIOHandler#handlesAddress(int)
+	 */
+	@Override
+	public boolean handlesAddress(int addr) {
+		return addr >= baseAddr && addr <= baseAddr + FLAGS;
 	}
 
 }

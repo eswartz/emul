@@ -403,7 +403,7 @@ public class FDC1771 implements IPersistable {
 			
 		bufpos = 0;
 		
-		if (image.readonly)
+		if (image != null && image.readonly)
 			status.set(StatusBit.WRITE_PROTECT);
 	}
 
