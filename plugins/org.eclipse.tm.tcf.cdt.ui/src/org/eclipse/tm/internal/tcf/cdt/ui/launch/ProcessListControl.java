@@ -380,7 +380,7 @@ public class ProcessListControl {
                                     final int idx = i++;
                                     pending.add(proc.getContext(id, new IProcesses.DoneGetContext() {
                                         public void doneGetContext(IToken token, Exception error, ProcessContext context) {
-                                            if (error == null) {
+                                            if (context != null) {
                                                 ProcessInfo info = new ProcessInfo();
                                                 info.parent = parent;
                                                 info.id = context.getID();
