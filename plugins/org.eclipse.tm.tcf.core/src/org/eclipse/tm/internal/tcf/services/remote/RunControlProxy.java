@@ -98,6 +98,10 @@ public class RunControlProxy implements IRunControl {
             return b != null && b.booleanValue();
         }
 
+        public String getRCGroup() {
+            return (String)props.get(PROP_RC_GROUP);
+        }
+
         public IToken getState(final DoneGetState done) {
             return new Command(channel, RunControlProxy.this, "getState", new Object[]{ getID() }) {
                 @SuppressWarnings("unchecked")

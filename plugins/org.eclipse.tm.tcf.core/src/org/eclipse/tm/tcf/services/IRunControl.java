@@ -55,7 +55,12 @@ public interface IRunControl extends IService {
         PROP_CAN_SUSPEND = "CanSuspend",
 
         /** true if terminate command is supported by the context */
-        PROP_CAN_TERMINATE = "CanTerminate";
+        PROP_CAN_TERMINATE = "CanTerminate",
+
+        /** Context ID of a run control group that contains the context.
+         * Members of same group are always suspended and resumed together:
+         * resuming/suspending a context resumes/suspends all members of the group */
+        PROP_RC_GROUP = "RCGroup";
 
     /**
      * Context resume modes.
@@ -337,6 +342,15 @@ public interface IRunControl extends IService {
          * @return value of PROP_CAN_SUSPEND.
          */
         boolean canTerminate();
+
+        /**
+         * Utility method to read context property PROP_RC_GROUP -
+         * context ID of a run control group that contains the context.
+         * Members of same group are always suspended and resumed together:
+         * resuming/suspending a context resumes/suspends all members of the group.
+         * @return value of PROP_RC_GROUP.
+         */
+        String getRCGroup();
 
         /**
          * Send a command to retrieve current state of a context.
