@@ -375,9 +375,7 @@ public class ProcessListControl {
                             } else if (context_ids.length > 0){
                                 final List<ProcessInfo> contextInfos = new ArrayList<ProcessInfo>(context_ids.length);
                                 final Set<IToken> pending = new HashSet<IToken>();
-                                int i = 0;
                                 for (String id : context_ids) {
-                                    final int idx = i++;
                                     pending.add(proc.getContext(id, new IProcesses.DoneGetContext() {
                                         public void doneGetContext(IToken token, Exception error, ProcessContext context) {
                                             if (context != null) {
@@ -392,7 +390,7 @@ public class ProcessListControl {
                                                 }
                                                 info.isContainer = false;
                                                 info.isAttached = context.isAttached();
-                                                info.index = idx;
+                                                info.index = contextInfos.size();
                                                 contextInfos.add(info);
                                             }
                                             pending.remove(token);
