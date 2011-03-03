@@ -123,6 +123,7 @@ static char * get_executable(pid_t pid) {
 
 static void write_context(OutputStream * out, Context * ctx) {
     int md, modes;
+    Context * grp = context_get_group(ctx, CONTEXT_GROUP_INTERCEPT);
 
     assert(!ctx->exited);
 
@@ -239,6 +240,13 @@ static void write_context(OutputStream * out, Context * ctx) {
         json_write_string(out, "CanTerminate");
         write_stream(out, ':');
         json_write_boolean(out, 1);
+    }
+
+    if (grp != ctx) {
+        write_stream(out, ',');
+        json_write_string(out, "RCGroup");
+        write_stream(out, ':');
+        json_write_string(out, grp->id);
     }
 
     write_stream(out, '}');
@@ -499,7 +507,7 @@ static int resume_context_tree(Context * ctx) {
         for (l = ctx->children.next; l != &ctx->children; l = l->next) {
             Context * x = cldl2ctxp(l);
             ContextExtensionRC * y = EXT(x);
-            if (x->exited || context_has_state(x) && !y->intercepted) continue;
+            if (x->exited || (context_has_state(x) && !y->intercepted)) continue;
             resume_context_tree(x);
         }
     }
@@ -1173,8 +1181,8 @@ static int update_step_machine_state(Context * ctx) {
             same_line = is_same_line(ext->step_code_area, area);
             free_code_area(area);
             if (!same_line) {
-                if (ext->step_mode != RM_REVERSE_STEP_INTO_LINE && ext->step_mode != RM_REVERSE_STEP_OVER_LINE ||
-                        ext->step_line_cnt == 0 && addr == ext->step_code_area->start_address ||
+                if ((ext->step_mode != RM_REVERSE_STEP_INTO_LINE && ext->step_mode != RM_REVERSE_STEP_OVER_LINE) ||
+                        (ext->step_line_cnt == 0 && addr == ext->step_code_area->start_address) ||
                         ext->step_line_cnt >= 2) {
                     ctx->pending_intercept = 1;
                     ext->step_done = REASON_STEP;
