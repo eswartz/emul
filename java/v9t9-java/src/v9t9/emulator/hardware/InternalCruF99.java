@@ -9,7 +9,6 @@ import java.util.List;
 
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.dsrs.IMemoryIOHandler;
-import v9t9.emulator.hardware.dsrs.realdisk.MemoryDiskImageDsr;
 import v9t9.emulator.runtime.cpu.CpuF99b;
 import v9t9.keyboard.KeyboardState;
 

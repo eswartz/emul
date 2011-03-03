@@ -552,6 +552,9 @@ public abstract class BaseDiskImageDsr implements FDC1771Constants, DsrSettings 
 		}
 	}
 	
+	/**
+	 * @param xfer  
+	 */
 	public boolean handleDSR(MemoryTransfer xfer, short code) {
 		info("RealDiskDSR: ignoring code = " + code);
 		return false;
