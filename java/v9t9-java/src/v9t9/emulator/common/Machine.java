@@ -116,6 +116,10 @@ abstract public class Machine {
     	this.memory = memoryModel.createMemory();
     	this.console = memoryModel.getConsole();
     	
+    	timer = new Timer();
+    	fastTimer = new FastTimer();
+
+    	
     	init(machineModel);
 
     	machineModel.defineDevices(this);
@@ -198,8 +202,6 @@ abstract public class Machine {
     public void start() {
     	allowInterrupts = true;
     	
-    	timer = new Timer();
-    	fastTimer = new FastTimer();
     	//videoTimer = new Timer();
 
         // the CPU emulation task (a fast timer because 100 Hz is a little too much for Windows) 
@@ -603,6 +605,9 @@ abstract public class Machine {
 	public void keyStateChanged() {
 	}
 
+	public Timer getMachineTimer() {
+		return timer;
+	}
 }
 
 

@@ -24,6 +24,18 @@ import v9t9.engine.memory.MemoryEntry;
 public class StandardDiskImageDsr extends BaseDiskImageDsr implements DsrHandler9900 {
 	private DiskMemoryEntry romMemoryEntry;
 	
+
+	static final int 
+		R_RDSTAT = 0,
+		R_RTADDR = 1,
+		R_RSADDR = 2,
+		R_RDDATA = 3,
+		W_WTCMD = 4,
+		W_WTADDR = 5,
+		W_WSADDR = 6,
+		W_WTDATA = 7
+	;
+	
 	private CruWriter cruwRealDiskMotor = new CruWriter() {
 		public int write(int addr, int data, int num) {
 			//module_logger(&realDiskDSR, _L|L_1, _("CRU Motor %s\n"), data ? "on" : "off");
@@ -58,7 +70,7 @@ public class StandardDiskImageDsr extends BaseDiskImageDsr implements DsrHandler
 		public int write(int addr, int data, int num) {
 			byte newnum = (byte) (((addr - 0x1108) >> 1) + 1);
 	
-			selectDisk(newnum, data);
+			selectDisk(newnum, data != 0);
 			
 			return 0;
 		}
@@ -109,7 +121,7 @@ public class StandardDiskImageDsr extends BaseDiskImageDsr implements DsrHandler
 	
 	
 	public StandardDiskImageDsr(TI99Machine machine, short base) {
-		super();
+		super(machine);
 		this.base = base;
 		
 		CruManager cruManager = machine.getCruManager();
@@ -192,35 +204,30 @@ public class StandardDiskImageDsr extends BaseDiskImageDsr implements DsrHandler
 
 			val = (byte) ~val;
 
-			try {
-				switch ((addr - 0x5ff0) >> 1) {
-				case R_RDSTAT:
-				case R_RTADDR:
-				case R_RSADDR:
-				case R_RDDATA:
-					//module_logger(&realDiskDSR, _L|L_1, _("FDC write read xxx >%04X, >%02X\n"), addr, val);
-					break;
-	
-				case W_WTCMD:
-					writeCommand(val);
-					break;
-	
-				case W_WTADDR:
-					writeTrackAddr(val);
-					break;
-	
-				case W_WSADDR:
-					writeSectorAddr(val);
-					break;
-	
-				case W_WTDATA:
-					writeData(val);
-				}
-			} catch (IOException e) {
-				error(e.getMessage());
-			}  catch(Throwable t) {
-				error(t.getMessage());
+			switch ((addr - 0x5ff0) >> 1) {
+			case R_RDSTAT:
+			case R_RTADDR:
+			case R_RSADDR:
+			case R_RDDATA:
+				//module_logger(&realDiskDSR, _L|L_1, _("FDC write read xxx >%04X, >%02X\n"), addr, val);
+				break;
+
+			case W_WTCMD:
+				writeCommand(val);
+				break;
+
+			case W_WTADDR:
+				writeTrackAddr(val);
+				break;
+
+			case W_WSADDR:
+				writeSectorAddr(val);
+				break;
+
+			case W_WTDATA:
+				writeData(val);
 			}
+		
 			
 		}
 		

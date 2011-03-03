@@ -81,9 +81,12 @@ public class F99bMachineModel implements MachineModel {
 	}
 	
 	public void defineDevices(final Machine machine_) {
-		machine_.getCpu().setCruAccess(new InternalCruF99(machine_, machine_.getKeyboardState()));
-		
-		memoryDiskDsr = new MemoryDiskImageDsr(machine_);
+		memoryDiskDsr = new MemoryDiskImageDsr(machine_, InternalCruF99.DISK_BASE);
+
+		InternalCruF99 cruAccess = new InternalCruF99(machine_, machine_.getKeyboardState());
+		cruAccess.addIOHandler(memoryDiskDsr);
+
+		machine_.getCpu().setCruAccess(cruAccess);
 		//machine_.getDsrManager().registerDsr(dsr);
 		/*
 		if (machine_ instanceof TI99Machine) {

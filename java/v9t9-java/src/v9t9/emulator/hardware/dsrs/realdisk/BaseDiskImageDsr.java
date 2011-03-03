@@ -13,7 +13,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.Timer;
 import java.util.TimerTask;
 
 import org.ejs.coffee.core.properties.IProperty;
@@ -24,6 +23,7 @@ import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.Emulator;
 import v9t9.emulator.clients.builtin.IconSetting;
+import v9t9.emulator.common.Machine;
 import v9t9.emulator.common.WorkspaceSettings;
 import v9t9.emulator.hardware.dsrs.DsrHandler;
 import v9t9.emulator.hardware.dsrs.DsrSettings;
@@ -49,17 +49,6 @@ public abstract class BaseDiskImageDsr implements FDC1771Constants, DsrSettings 
 	
 	/** setting name (DSKImage1) to setting */
 	private Map<String, SettingProperty> diskSettingsMap = new LinkedHashMap<String, SettingProperty>();
-	
-	static final int 
-		R_RDSTAT = 0,
-		R_RTADDR = 1,
-		R_RSADDR = 2,
-		R_RDDATA = 3,
-		W_WTCMD = 4,
-		W_WTADDR = 5,
-		W_WSADDR = 6,
-		W_WTDATA = 7
-	;
 	
 	static void dumpBuffer(byte[] buffer, int offs, int len)
 	{
@@ -103,7 +92,10 @@ public abstract class BaseDiskImageDsr implements FDC1771Constants, DsrSettings 
 	}
 	private Map<String, BaseDiskImage> disks = new LinkedHashMap<String, BaseDiskImage>();
 	
-	BaseDiskImage getSelectedDisk() {
+	protected int getSelectedDisk() {
+		return selectedDisk;
+	}
+	BaseDiskImage getSelectedDiskImage() {
 		if (selectedDisk == 0)
 			return null;
 		return getDiskInfo(selectedDisk);
@@ -127,7 +119,6 @@ public abstract class BaseDiskImageDsr implements FDC1771Constants, DsrSettings 
 	 * @see v9t9.emulator.hardware.dsrs.DsrHandler#dispose()
 	 */
 	public void dispose() {
-		motorTimer.cancel();		
 	}
 
 
@@ -188,13 +179,11 @@ public abstract class BaseDiskImageDsr implements FDC1771Constants, DsrSettings 
 
 	
 	private TimerTask motorTickTask;
-
-	private Timer motorTimer;
 	
 	private static File defaultDiskRootDir;
 
 	
-	public BaseDiskImageDsr() {
+	public BaseDiskImageDsr(Machine machine) {
 		//diskImageDsrEnabled.setBoolean(true);
 		WorkspaceSettings.CURRENT.register(diskImageDsrEnabled);
 		
@@ -236,17 +225,12 @@ public abstract class BaseDiskImageDsr implements FDC1771Constants, DsrSettings 
 			}
 		};
 		
-		motorTimer = new Timer();
-		
-		motorTimer.scheduleAtFixedRate(motorTickTask, 0, 100);
+		machine.getMachineTimer().scheduleAtFixedRate(motorTickTask, 0, 100);
 	}
 	
-	/**
-	 * @param i
-	 */
-	protected void setDiskSide(int data) {
+	public void setDiskSide(int side_) {
 		// the side is global to all disks
-		side = (byte) (data & 1);
+		side = (byte) side_;
 		
 		try {
 			fdc.setSide(side);
@@ -261,14 +245,11 @@ public abstract class BaseDiskImageDsr implements FDC1771Constants, DsrSettings 
 	}
 
 
-	/**
-	 * @param newnum
-	 */
-	protected void selectDisk(int newnum, int data) {
+	public void selectDisk(int newnum, boolean on) {
 		//module_logger(&realDiskDSR, _L|L_1, _("CRU disk select, #%d\n"), newnum);
 		
-		if (data != 0) {
-			BaseDiskImage oldInfo = getSelectedDisk();
+		if (on) {
+			BaseDiskImage oldInfo = getSelectedDiskImage();
 			
 			selectedDisk = (byte) newnum;
 			
@@ -299,7 +280,7 @@ public abstract class BaseDiskImageDsr implements FDC1771Constants, DsrSettings 
 			}
 
 		} else {
-			BaseDiskImage oldInfo = getSelectedDisk();
+			BaseDiskImage oldInfo = getSelectedDiskImage();
 			
 			if (selectedDisk == newnum) {
 				selectedDisk = 0;
@@ -316,11 +297,12 @@ public abstract class BaseDiskImageDsr implements FDC1771Constants, DsrSettings 
 		}
 				
 	}
-	/**
-	 * @param data
-	 */
-	protected void setDiskMotor(boolean on) {
-		BaseDiskImage info = getSelectedDisk();
+	
+	public int getDiskNumber() {
+		return selectedDisk;
+	}
+	public void setDiskMotor(boolean on) {
+		BaseDiskImage info = getSelectedDiskImage();
 		if (info != null) {
 			// strobe the motor (this doesn't turn it off, which happens via timeout)
 			if (on) {
@@ -336,38 +318,24 @@ public abstract class BaseDiskImageDsr implements FDC1771Constants, DsrSettings 
 		
 	}
 
-	/**
-	 * @return
-	 */
-	protected boolean isMotorRunning() {
-		BaseDiskImage info = getSelectedDisk();
+	public boolean isMotorRunning() {
+		BaseDiskImage info = getSelectedDiskImage();
 		if (info != null)
 			return info.motorRunning;
 		else
 			return false;
 	}
 
-	/**
-	 * @param newnum
-	 * @return
-	 */
-	protected boolean isPolledDisk(int newnum) {
+	public boolean isPolledDisk(int newnum) {
 
 		return selectedDisk == newnum;
 	}
 
-	/**
-	 * @param b
-	 */
-	protected void setDiskHeads(boolean b) {
-		// TODO
-		
+	public void setDiskHeads(boolean b) {
+		fdc.heads = b;
 	}
 
-	/**
-	 * @param b
-	 */
-	protected void setDiskHold(boolean b) {
+	public void setDiskHold(boolean b) {
 		try {
 			fdc.FDChold(b);
 		} catch (IOException e) {
@@ -376,17 +344,17 @@ public abstract class BaseDiskImageDsr implements FDC1771Constants, DsrSettings 
 		fdc.hold = b;
 		
 	}
-	/**
-	 * @return
-	 */
-	protected int getSide() {
+	public int getSide() {
 		return side;
 	}
 
+	public boolean isDiskHeads() {
+		return fdc.heads;
+	}
+	public boolean isDiskHold() {
+		return fdc.hold;
+	}
 	
-	/**
-	 * @return
-	 */
 	public byte readStatus() {
 		StringBuilder status = new StringBuilder();
 		byte ret = fdc.status.calculate(fdc.command, status);
@@ -396,9 +364,6 @@ public abstract class BaseDiskImageDsr implements FDC1771Constants, DsrSettings 
 	}
 
 
-	/**
-	 * @param val
-	 */
 	public void writeTrackAddr(byte val) {
 		fdc.trackReg = val;
 		//DSK.status &= ~fdc_LOSTDATA;
@@ -485,7 +450,7 @@ public abstract class BaseDiskImageDsr implements FDC1771Constants, DsrSettings 
 		return (short) crc;
 	}
 	
-	protected void writeData(byte val) {
+	public void writeData(byte val) {
 		if (!fdc.hold)
 			info("FDC write data ("+fdc.bufpos+") >"+HexUtils.toHex2(val)); 
 		//			   (u8) val);
@@ -523,61 +488,67 @@ public abstract class BaseDiskImageDsr implements FDC1771Constants, DsrSettings 
 		}
 	}
 	
-	protected void writeCommand(byte val) throws IOException {
-		fdc.FDCflush();
-		fdc.buflen = fdc.bufpos = 0;
+	public void writeCommand(byte val)  {
+		try {
+			fdc.FDCflush();
+			fdc.buflen = fdc.bufpos = 0;
+			
+			info("FDC command >" + HexUtils.toHex2(val));
+			//module_logger(&realDiskDSR, _L|L_1, _("FDC command >%02X\n"), val);
+			
+			fdc.command = val & 0xF0;
+			
+			// standardize commands
+			if (fdc.command == 0x30 || fdc.command == 0x50 || fdc.command == 0x70
+					|| fdc.command == (byte)0x90 || fdc.command == (byte)0xA0)
+				fdc.command &= ~0x10;
+			
+			fdc.flags = (byte) (val & 0x1F);
 		
-		info("FDC command >" + HexUtils.toHex2(val));
-		//module_logger(&realDiskDSR, _L|L_1, _("FDC command >%02X\n"), val);
-		
-		fdc.command = val & 0xF0;
-		
-		// standardize commands
-		if (fdc.command == 0x30 || fdc.command == 0x50 || fdc.command == 0x70
-				|| fdc.command == (byte)0x90 || fdc.command == (byte)0xA0)
-			fdc.command &= ~0x10;
-		
-		fdc.flags = (byte) (val & 0x1F);
-		
-		switch (fdc.command) {
-		case FDC_restore:
-			fdc.FDCrestore();
-			break;
-		case FDC_seek:
-			fdc.FDCseek();
-			break;
-		case FDC_step:
-			fdc.FDCstep();
-			break;
-		case FDC_stepin:
-			fdc.stepout = false;
-			fdc.FDCstep();
-			break;
-		case FDC_stepout:
-			fdc.stepout = true;
-			fdc.FDCstep();
-			break;
-		case FDC_readsector:
-			fdc.FDCreadsector();
-			break;
-		case FDC_writesector:
-			fdc.FDCwritesector();
-			break;
-		case FDC_readIDmarker:
-			fdc.FDCreadIDmarker();
-			break;
-		case FDC_interrupt:
-			fdc.FDCinterrupt();
-			break;
-		case FDC_writetrack:
-			fdc.FDCwritetrack();
-			break;
-		case FDC_readtrack:
-			fdc.FDCreadtrack();
-			break;
-		default:
-			//module_logger(&realDiskDSR, _L|L_1, _("unknown FDC command >%02X\n"), val);
-			info("Unknown FDC command >" + HexUtils.toHex2(val));
+			switch (fdc.command) {
+			case FDC_restore:
+				fdc.FDCrestore();
+				break;
+			case FDC_seek:
+				fdc.FDCseek();
+				break;
+			case FDC_step:
+				fdc.FDCstep();
+				break;
+			case FDC_stepin:
+				fdc.stepout = false;
+				fdc.FDCstep();
+				break;
+			case FDC_stepout:
+				fdc.stepout = true;
+				fdc.FDCstep();
+				break;
+			case FDC_readsector:
+				fdc.FDCreadsector();
+				break;
+			case FDC_writesector:
+				fdc.FDCwritesector();
+				break;
+			case FDC_readIDmarker:
+				fdc.FDCreadIDmarker();
+				break;
+			case FDC_interrupt:
+				fdc.FDCinterrupt();
+				break;
+			case FDC_writetrack:
+				fdc.FDCwritetrack();
+				break;
+			case FDC_readtrack:
+				fdc.FDCreadtrack();
+				break;
+			default:
+				//module_logger(&realDiskDSR, _L|L_1, _("unknown FDC command >%02X\n"), val);
+				info("Unknown FDC command >" + HexUtils.toHex2(val));
+			}
+		} catch (IOException e) {
+			error(e.getMessage());
+		}  catch(Throwable t) {
+			error(t.getMessage());
 		}
 	}
 	

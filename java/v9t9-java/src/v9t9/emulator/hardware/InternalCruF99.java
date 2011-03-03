@@ -4,7 +4,12 @@
  */
 package v9t9.emulator.hardware;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import v9t9.emulator.common.Machine;
+import v9t9.emulator.hardware.dsrs.IMemoryIOHandler;
+import v9t9.emulator.hardware.dsrs.realdisk.MemoryDiskImageDsr;
 import v9t9.emulator.runtime.cpu.CpuF99b;
 import v9t9.keyboard.KeyboardState;
 
@@ -26,6 +31,10 @@ public class InternalCruF99 extends BaseCruAccess {
 	public final static int KBDA = CRU_BASE + 3;
 	/** audio gate */
 	public final static int GATE = CRU_BASE + 4;
+	/** floppy controller */
+	public static final int DISK_BASE = CRU_BASE + 5;	// 5,6,7,8,9
+	
+	protected List<IMemoryIOHandler> ioHandlers = new ArrayList<IMemoryIOHandler>();
 	
 	/**
 	 * @param machine
@@ -70,6 +79,12 @@ public class InternalCruF99 extends BaseCruAccess {
 		case GATE:
 			machine.getSound().setAudioGate(addr, val != 0);
 			break;
+			
+		default:
+			for (IMemoryIOHandler handler : ioHandlers) {
+				handler.writeData(addr, val);
+			}
+			break;
 		}
 	}
 	
@@ -93,8 +108,22 @@ public class InternalCruF99 extends BaseCruAccess {
 		case KBDA:
 			keyboardState.setProbe();
 			return (byte) (keyboardState.getAlpha() ? 1 : 0);
+		default:
+			for (IMemoryIOHandler handler : ioHandlers) {
+				byte val = handler.readData(addr);
+				if (val != 0)
+					return val;
+			}
+			break;
 		}
 		
 		return 0;
+	}
+
+	/**
+	 * @param memoryDiskDsr
+	 */
+	public void addIOHandler(IMemoryIOHandler ioHandler) {
+		ioHandlers.add(ioHandler);
 	}
 }

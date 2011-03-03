@@ -41,6 +41,7 @@ public class FDC1771 implements IPersistable {
 	private List<IdMarker> trackMarkers;
 	private Iterator<IdMarker> trackMarkerIter;
 	private IdMarker currentMarker;
+	public boolean heads;
 	
 	/**
 	 * 
