@@ -122,6 +122,10 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 				keyboardState.setKey(realKey, pressed, synthetic, shift, '\r', when);
 				break;
 				
+			case KeyEvent.VK_ESCAPE:
+				keyboardState.setKey(realKey, pressed, synthetic, KeyboardState.FCTN, '9', when);
+				break;
+				
 			case KeyEvent.VK_CAPS_LOCK:
 				if (pressed) {
 					boolean on;

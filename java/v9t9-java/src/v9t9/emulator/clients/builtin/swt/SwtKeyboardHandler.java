@@ -179,6 +179,11 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler {
 				if (pressed)
 					System.exit(0);
 				break;
+				
+			case SWT.ESC:
+				keyboardState.setKey(realKey, pressed, false, KeyboardState.FCTN, '9', when);
+				break;
+
 			case SWT.F1:
 			case SWT.F2:
 			case SWT.F3:
