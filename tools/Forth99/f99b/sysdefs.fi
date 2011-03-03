@@ -89,6 +89,7 @@ FaultStacks  (#RP) - (#SP) - (#pad) - (##-pad) - (#slit-pad) - (#tib) - (#blk) -
 $0          constant    grom_kbdlist
 $130        constant    grom_font8x8
 $930        constant    grom_font5x6
+$C30        constant    grom_editorhelp
 
 \ -----------   constants
 

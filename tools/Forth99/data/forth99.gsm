@@ -384,6 +384,25 @@ font5x6
 	db >40, >a8, >10, >0, >0, >0
 	db >0, >0, >0, >0, >0, >0
 
+editorhelp
+      ; 0         1         2         3         4         5         6
+      ; 0123456789012345678901234567890123456789012345678901234567890123
+    db "Forth-99 Block Editor                                   EJS 2011"  ; 1
+    db "                                                                "
+    db "Ctrl-C          Copy Line       Ctrl-V          Paste Line      "  
+    db "Ctrl-H          Backspace       [Shift-]Ctrl-I  [Un]indent      "
+    db "Ctrl-J          Join            Ctrl-K          Clear to EOL    "   ; 5
+    db "Ctrl-L          Parse Block     Ctrl-S          Save Block      "
+    db "Ctrl-Fctn-R     Revert Block    Ctrl-Fctn-L     Clear Block     "
+    db "Fctn-0          End             Fctn-5          Home            "
+    db "Fctn-1          Delete Char     Fctn-7          Help            "
+    db "Fctn-2          Ins/Ovr Mode    Fctn-3          Erase Line      "
+    db "Fctn-4          Bottom Line     Fctn-6          Top Line        "   ; 10
+    db "Fctn-8          Dup Line        Ctrl-D          Delete Line     "
+    db "Fctn-9          Exit            Ctrl-Fctn-9     Interpret       "
+    db "Ctrl-Fctn-4     Next Block      Ctrl-Fctn-6     Prev Block      "
+    db "Ctrl-Fctn-5     Redraw                                          "   ; 14
+    
 
 remain	equ	$ - start
 

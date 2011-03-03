@@ -273,8 +273,8 @@ Create GfxModeParams
 :: txt2-vchar ( ch len x y -- )
     ch len x y  txt-vchar  
 
-    len 0 ?do
-        x y  txt-choffs  >txt2-coloraddr
+    y len +  y  ?do
+        x i  txt-choffs  >txt2-coloraddr
         dup >r  +vc@
         v-blink c@  if OR else NAND then
         r> +vc!

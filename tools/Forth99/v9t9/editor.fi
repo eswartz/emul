@@ -421,7 +421,60 @@ User ovr        ( insert/overwrite flag )
 : !exit drop editor.exit ;                     
 : !interpret drop intp.window &11 emit quit ;
 
+
+:: draw-window ( x y sx sy -- )
+    full!
+    
+    \ draw border around editor 
+    x 1-  y 1-      at-xy       
+    &250 emit  &243 sx hchar  
+    x sx +  y 1-    at-xy
+    &249 emit
+
+    x 1-    y  at-xy   &252  sy  vchar
+    x sx +  y  at-xy   &252  sy  vchar
+
+    x 1-    dup
+    y sy +          at-xy
+    &246 emit  &243 sx hchar
+    x sx +   
+    y sy +          at-xy
+    &245 emit
+
+    sx sy  x y  win!
+;
+
 : !refresh drop edit.drawui ;
+
+: !help
+    <video
+    
+    0 vblink!
+    
+    cls
+    $8CFC v-regaddr      \ white-on-dark green text
+    
+    1 vblink!
+    
+    6 6  68 14  draw-window
+    
+    cls
+    
+    graddr >r
+
+    14 0 do
+        i 64 U*  grom_editorhelp +  2 i  txt-xy>addr  64  +gvmove 
+    loop
+    
+    r> gwaddr    
+ 
+    key drop
+    
+    video>
+    
+    edit.drawui
+    
+;
 
 \ 221=shift bksp
 \ 222=shift tab
@@ -447,9 +500,10 @@ create edittab
     &153 ( fctn-1 delete char )             $3 c, c,  ' !del ,
     &154 ( fctn-2 insert/overwrite mode )   $2 c, c,  ' !ins/ovr ,
     &155 ( fctn-3 erase line )              $3 c, c,  ' !erase ,   
-    &156 ( fctn-6 to end line )             $2 c, c,  ' !end-line ,
+    &156 ( fctn-4 to end line )             $2 c, c,  ' !end-line ,
     &157 ( fctn-5 home )                    $2 c, c,  ' !home  ,
-    &158 ( fctn-4 to first line )           $A c, c,  ' !home-line ,
+    &158 ( fctn-6 to first line )           $A c, c,  ' !home-line ,
+    &159 ( fctn-7 help          )           $6 c, c,  ' !help ,
     &160 ( fctn-8 dup; down )               $7 c, c,  ' !dup-line ,
     &161 ( fctn-9 exit )                    $0 c, c,  ' !exit ,
     &178 ( ctrl-fctn-l clear )              $7 c, c,  ' !clear ,
@@ -576,7 +630,7 @@ User 'lastcol
     cls
     
     \ clear out interpret window
-    intp.window cls 
+    intp.window cls
     
     \ work in full window normally though
     edit.window
@@ -591,26 +645,30 @@ User 'lastcol
         0 i #y-border + at-xy  i #x-border 2- u.r    
     loop
     
+    #x-border #y-border c/l l/blk
+    draw-window
     
     \ draw border around editor 
-    [ #x-border 1- ] literal       
-    [ #y-border 1- ] literal      at-xy
-    &250 emit  &243 c/l hchar  
-    [ #x-border c/l + ] literal       
-    [ #y-border 1- ] literal      at-xy
-    &249 emit
+\    [ #x-border 1- ] literal       
+\    [ #y-border 1- ] literal      at-xy
+\    &250 emit  &243 c/l hchar  
+\    [ #x-border c/l + ] literal       
+\    [ #y-border 1- ] literal      at-xy
+\    &249 emit
+\    
+\    [ #x-border 1- ] literal     #y-border  at-xy   &252  l/blk  vchar
+\    [ #x-border c/l + ] literal  #y-border  at-xy   &252  l/blk  vchar
+\
+\    [ #x-border 1- ] literal      dup
+\    [ #y-border l/blk + ] literal   at-xy
+\    &246 emit  &243 c/l hchar  
+\    [ #x-border c/l + ] literal       
+\    [ #y-border l/blk + ] literal   at-xy
+\    &245 emit
+
+
+    edit.window
     
-    [ #x-border 1- ] literal     #y-border  at-xy   &252  l/blk  vchar
-    [ #x-border c/l + ] literal  #y-border  at-xy   &252  l/blk  vchar
-
-    [ #x-border 1- ] literal      dup
-    [ #y-border l/blk + ] literal   at-xy
-    &246 emit  &243 c/l hchar  
-    [ #x-border c/l + ] literal       
-    [ #y-border l/blk + ] literal   at-xy
-    &245 emit
-
-
     \ draw menu
     0 #y-menu  at-xy  menubar type
     
