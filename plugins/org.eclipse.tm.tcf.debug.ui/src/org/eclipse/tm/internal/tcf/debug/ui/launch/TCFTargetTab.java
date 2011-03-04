@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -58,9 +58,9 @@ import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.tm.internal.tcf.debug.ui.launch.setup.SetupWizardDialog;
 import org.eclipse.tm.tcf.protocol.IChannel;
+import org.eclipse.tm.tcf.protocol.IChannel.IChannelListener;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.Protocol;
-import org.eclipse.tm.tcf.protocol.IChannel.IChannelListener;
 import org.eclipse.tm.tcf.services.ILocator;
 import org.eclipse.tm.tcf.services.IPathMap.PathMapRule;
 import org.eclipse.tm.tcf.util.TCFTask;
@@ -71,6 +71,8 @@ import org.eclipse.tm.tcf.util.TCFTask;
  * configuration.
  */
 public class TCFTargetTab extends AbstractLaunchConfigurationTab {
+
+    private static final String TAB_ID = "org.eclipse.tm.tcf.launch.targetTab";
 
     private Button run_local_agent_button;
     private Button use_local_agent_button;
@@ -549,6 +551,11 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
     @Override
     public Image getImage() {
         return ImageCache.getImage(ImageCache.IMG_TARGET_TAB);
+    }
+
+    @Override
+    public String getId() {
+        return TAB_ID;
     }
 
     public void initializeFrom(ILaunchConfiguration configuration) {

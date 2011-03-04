@@ -536,7 +536,43 @@ public class TCFLaunch extends Launch {
                 }
             };
         }
-        if (local_file.length() != 0 || remote_file.length() != 0) {
+        final String attach_to_process = getAttribute("attach_to_process");
+        if (attach_to_process != null) {
+            final IProcesses ps = channel.getRemoteService(IProcesses.class);
+            if (ps == null) throw new Exception("Target does not provide Processes service");
+            // Attach the process
+            new LaunchStep() {
+                @Override
+                void start() {
+                    IProcesses.DoneGetContext done = new IProcesses.DoneGetContext() {
+                        public void doneGetContext(IToken token, final Exception error, final ProcessContext process) {
+                            if (error != null) {
+                                channel.terminate(error);
+                            }
+                            else {
+                                process.attach(new IProcesses.DoneCommand() {
+                                    public void doneCommand(IToken token, final Exception error) {
+                                        if (error != null) {
+                                            channel.terminate(error);
+                                        }
+                                        else {
+                                            context_filter = new HashSet<String>();
+                                            context_filter.add(process.getID());
+                                            TCFLaunch.this.process = process;
+                                            ps.addListener(prs_listener);
+                                            connectProcessStreams();
+                                            done();
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                    };
+                    ps.getContext(attach_to_process, done);
+                }
+            };
+        }
+        else if (local_file.length() != 0 || remote_file.length() != 0) {
             final IProcesses ps = channel.getRemoteService(IProcesses.class);
             if (ps == null) throw new Exception("Target does not provide Processes service");
             final boolean append = cfg.getAttribute(ILaunchManager.ATTR_APPEND_ENVIRONMENT_VARIABLES, true);
@@ -587,6 +623,8 @@ public class TCFLaunch extends Launch {
                                 });
                             }
                             else {
+                                context_filter = new HashSet<String>();
+                                context_filter.add(process.getID());
                                 TCFLaunch.this.process = process;
                                 ps.addListener(prs_listener);
                                 connectProcessStreams();

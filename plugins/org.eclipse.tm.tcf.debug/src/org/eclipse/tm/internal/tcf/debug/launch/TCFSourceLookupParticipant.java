@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -56,15 +56,19 @@ public class TCFSourceLookupParticipant extends AbstractSourceLookupParticipant 
         }
         if (object instanceof ILineNumbers.CodeArea) {
             ILineNumbers.CodeArea area = (ILineNumbers.CodeArea)object;
-            if (area.directory != null && area.file != null && !isAbsolutePath(area.file)) {
-                return area.directory + "/" + area.file;
-            }
-            return area.file;
+            return toFileName(area);
         }
         return null;
     }
 
-    private boolean isAbsolutePath(String fnm) {
+    public static String toFileName(ILineNumbers.CodeArea area) {
+        if (area.directory != null && area.file != null && !isAbsolutePath(area.file)) {
+            return area.directory + "/" + area.file;
+        }
+        return area.file;
+    }
+
+    private static boolean isAbsolutePath(String fnm) {
         if (fnm.length() == 0) return false;
         char ch = fnm.charAt(0);
         if (ch == '/' || ch == '\\') return true;

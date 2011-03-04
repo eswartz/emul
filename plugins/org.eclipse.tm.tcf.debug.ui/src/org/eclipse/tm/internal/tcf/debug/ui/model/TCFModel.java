@@ -75,6 +75,8 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.tm.internal.tcf.debug.actions.TCFAction;
+import org.eclipse.tm.internal.tcf.debug.launch.TCFSourceLookupDirector;
+import org.eclipse.tm.internal.tcf.debug.launch.TCFSourceLookupParticipant;
 import org.eclipse.tm.internal.tcf.debug.model.ITCFConstants;
 import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
@@ -104,8 +106,8 @@ import org.eclipse.tm.tcf.services.IMemoryMap;
 import org.eclipse.tm.tcf.services.IProcesses;
 import org.eclipse.tm.tcf.services.IRegisters;
 import org.eclipse.tm.tcf.services.IRunControl;
-import org.eclipse.tm.tcf.services.ISymbols;
 import org.eclipse.tm.tcf.services.IRunControl.RunControlContext;
+import org.eclipse.tm.tcf.services.ISymbols;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 import org.eclipse.tm.tcf.util.TCFTask;
 import org.eclipse.ui.IEditorInput;
@@ -1064,8 +1066,18 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 if (area != null) {
                     ISourceLocator locator = getLaunch().getSourceLocator();
                     Object source_element = null;
-                    if (locator instanceof ISourceLookupDirector) {
-                        source_element = ((ISourceLookupDirector)locator).getSourceElement(area);
+                    if (locator instanceof TCFSourceLookupDirector) {
+                        source_element = ((TCFSourceLookupDirector)locator).getSourceElement(area);
+                    } else if (locator instanceof ISourceLookupDirector) {
+                        // support for foreign (CDT) source locator
+                        String filename = TCFSourceLookupParticipant.toFileName(area);
+                        if (filename != null) {
+                            source_element = ((ISourceLookupDirector)locator).getSourceElement(filename);
+                            if (source_element == null && !filename.equals(area.file)) {
+                                // retry with relative path
+                                source_element = ((ISourceLookupDirector)locator).getSourceElement(area.file);
+                            }
+                        }
                     }
                     if (source_element != null) {
                         ISourcePresentation presentation = TCFModelPresentation.getDefault();

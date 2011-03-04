@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2009, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -64,6 +64,8 @@ public class TCFPathMapTab extends AbstractLaunchConfigurationTab {
         IPathMap.PROP_DESTINATION,
     };
 
+    private static final String TAB_ID = "org.eclipse.tm.tcf.launch.pathMapTab";
+
     private ArrayList<PathMapRule> map;
 
     private class FileMapContentProvider implements IStructuredContentProvider  {
@@ -127,6 +129,11 @@ public class TCFPathMapTab extends AbstractLaunchConfigurationTab {
     @Override
     public Image getImage() {
         return ImageCache.getImage(ImageCache.IMG_PATH);
+    }
+
+    @Override
+    public String getId() {
+        return TAB_ID;
     }
 
     public void createControl(Composite parent) {
