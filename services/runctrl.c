@@ -1604,20 +1604,13 @@ static void event_context_started(Context * ctx, void * client_data) {
 static void event_context_exited(Context * ctx, void * client_data) {
     ContextExtensionRC * ext = EXT(ctx);
     ext->safe_single_step = 0;
+    cancel_step_mode(ctx);
     send_event_context_removed(ctx);
     if (ext->pending_safe_event) check_safe_events(ctx);
 }
 
 static void event_context_disposed(Context * ctx, void * client_data) {
-    ContextExtensionRC * ext = EXT(ctx);
-    if (ext->step_code_area != NULL) {
-        free_code_area(ext->step_code_area);
-        ext->step_code_area = NULL;
-    }
-    if (ext->step_bp_info != NULL) {
-        destroy_eventpoint(ext->step_bp_info);
-        ext->step_bp_info = NULL;
-    }
+    cancel_step_mode(ctx);
 }
 
 void ini_run_ctrl_service(Protocol * proto, TCFBroadcastGroup * bcg) {
