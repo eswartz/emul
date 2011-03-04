@@ -160,9 +160,9 @@ extern void channel_unlock(Channel *);
  */
 extern int is_channel_closed(Channel *);
 
-/* Depricated function names are kept for backward compatibility */
+/* Deprecated function names are kept for backward compatibility */
 #define stream_lock(channel) channel_lock(channel)
-#define stream_unlock(channel) channel_lock(channel)
+#define stream_unlock(channel) channel_unlock(channel)
 #define is_stream_closed(channel) is_channel_closed(channel)
 
 /*
