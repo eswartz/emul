@@ -29,7 +29,7 @@ public class ClientFactory {
 		try {
 			return klass.getConstructor(Machine.class).newInstance(machine);
 		} catch (Exception e) {
-			assert false : e.getMessage();
+			assert false : e.getCause().getMessage();
 		}
 		return null;
 	}

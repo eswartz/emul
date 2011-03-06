@@ -44,8 +44,9 @@ public class CpuMetricsCanvas extends Canvas {
 		super(parent, style | SWT.NO_BACKGROUND);
 		this.cpuMetrics = cpuMetrics;
 		GridDataFactory.swtDefaults().align(SWT.RIGHT, SWT.CENTER).grab(false, false)
-			.indent(2, 2).exclude(true).applyTo(this);
+			.indent(2, 2)./*exclude(true).*/applyTo(this);
 		
+		setVisible(true);
 		updateTooltip(null);
 		
 		bgcolor = getDisplay().getSystemColor(SWT.COLOR_BLACK);

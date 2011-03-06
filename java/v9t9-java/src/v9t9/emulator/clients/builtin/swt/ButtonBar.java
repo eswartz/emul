@@ -39,7 +39,7 @@ class ButtonBar extends Composite implements ButtonParentDrawer {
 		this.smoothResize = smoothResize;
 		this.isHorizontal = (style & SWT.HORIZONTAL) != 0;
 		
-		GridLayout mainLayout = new GridLayout(1, false);
+		GridLayout mainLayout = new GridLayout(2, false);
 		mainLayout.marginHeight = mainLayout.marginWidth = 0;
 		setLayout(mainLayout);
 

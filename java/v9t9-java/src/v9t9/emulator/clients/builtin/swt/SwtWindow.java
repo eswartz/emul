@@ -135,6 +135,13 @@ public class SwtWindow extends BaseEmulatorWindow {
 		GridLayoutFactory.fillDefaults().applyTo(topComposite);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(topComposite);
 		
+
+		focusRestorer = new IFocusRestorer() {
+			public void restoreFocus() {
+				videoRenderer.setFocus();
+			}
+		};
+		
 		createButtons(mainComposite);
 		
 		cpuMetricsCanvas = new CpuMetricsCanvas(buttonBar, SWT.BORDER, machine.getCpuMetrics());
@@ -238,12 +245,6 @@ public class SwtWindow extends BaseEmulatorWindow {
 			}
 
 		});
-		
-		focusRestorer = new IFocusRestorer() {
-			public void restoreFocus() {
-				videoRenderer.setFocus();
-			}
-		};
 		
 		shell.addControlListener(new ControlAdapter() {
 			@Override
