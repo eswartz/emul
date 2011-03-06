@@ -2,7 +2,13 @@
 OS=$(shell /bin/uname -o)
 
 ifeq "$(OS)" "Cygwin"
+WIN=1
+endif
+ifeq "$(OS)" "Msys"
+WIN=1
+endif
 
+ifeq "$(WIN)" "1"
 # For Windows builds, we expect Cygwin to launch 'make' and MinGW to build the library.
 
 #GCCPATH=c:/cygwin/bin
@@ -10,8 +16,9 @@ ifeq "$(PROCESSOR_ARCHITEW6432)" "AMD64"
 GCCPATH=c:/mingw_w64/bin
 CC=$(GCCPATH)/x86_64-w64-mingw32-gcc
 else
-GCCPATH=c:/mingw/bin
-CC=$(GCCPATH)/mingw32-gcc
+#GCCPATH=c:/mingw/bin
+#CC=$(GCCPATH)/mingw32-gcc
+CC=gcc
 endif
 CFLAGS=-g  -I. $(JAVAINC) -O6 #-mno-cygwin 
 LDFLAGS=-shared #-mno-cygwin -Wl,--no-allow-shlib-undefined -Wl,--kill-at -shared 

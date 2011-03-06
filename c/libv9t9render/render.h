@@ -29,54 +29,39 @@ struct AnalogTV {
 
 typedef struct AnalogTV AnalogTV;
 
-
 #ifdef _WIN32
-__declspec(dllexport) __stdcall
+#define _EXPORT __declspec(dllexport) __cdecl
+#else
+#define _EXPORT
 #endif
-struct AnalogTV* allocateAnalogTv(int width, int height);
-
-#ifdef _WIN32
-__declspec(dllexport) __stdcall
-#endif
-void freeAnalogTv(struct AnalogTV* );
 
 
-#ifdef _WIN32
-__declspec(dllexport) __stdcall
-#endif
-struct analogtv_s* getAnalogTvData(AnalogTV *analog);
+_EXPORT struct AnalogTV* allocateAnalogTv(int width, int height);
 
-#ifdef _WIN32
-__declspec(dllexport) __stdcall
-#endif
-void 		analogizeImageData(
+_EXPORT void freeAnalogTv(struct AnalogTV* );
+
+
+_EXPORT struct analogtv_s* getAnalogTvData(AnalogTV *analog);
+
+_EXPORT void 		analogizeImageData(
 		AnalogTV* analog,
 		char* byteArray, int srcoffset, int width, int height, int rowstride);
 
-#ifdef _WIN32
-__declspec(dllexport) __stdcall
-#endif
-void        scaleImage(
+_EXPORT void        scaleImage(
 		char* dest,
         const char* from, int offset,
         int width, int height, int rowstride,
         int destWidth, int destHeight, int destRowstride,
         int upx, int upy, int upwidth, int upheight);
 
-#ifdef _WIN32
-__declspec(dllexport) __stdcall
-#endif
-void        scaleImageToRGBA(
+_EXPORT void        scaleImageToRGBA(
 		int* dest,
         const char* from, int offset,
         int width, int height, int rowstride,
         int destWidth, int destHeight, int destRowstride,
         int upx, int upy, int upwidth, int upheight);
 
-#ifdef _WIN32
-__declspec(dllexport) __stdcall
-#endif
-void        scaleImageAndAddNoiseToRGBA(
+_EXPORT void        scaleImageAndAddNoiseToRGBA(
 		int* dest,
         const char* from, int offset,
         int width, int height, int rowstride,

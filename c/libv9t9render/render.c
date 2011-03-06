@@ -447,10 +447,7 @@ static void iterRow_8(unsigned char *destptr, const unsigned char* srcptr, int d
 	}
 }
 
-
-#ifdef _WIN32
-__declspec(dllexport) __stdcall
-#endif
+_EXPORT
 void        scaleImage(
 		char* dest,
         const char* src, int offset,

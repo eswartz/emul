@@ -12,6 +12,7 @@
 #include "render.h"
 #include "analogtv.h"
 
+_EXPORT
 struct AnalogTV* allocateAnalogTv(int width, int height) {
 	AnalogTV* tv = (AnalogTV*) calloc(sizeof(AnalogTV), 1);
 	tv->tv = analogtv_allocate(width, height);
@@ -28,16 +29,21 @@ struct AnalogTV* allocateAnalogTv(int width, int height) {
 	tv->rec->input = tv->input;
 	return tv;
 }
+
+_EXPORT
 void freeAnalogTv(struct AnalogTV* tv) {
 	analogtv_release(tv->tv);
 	free(tv->rec);
 	free(tv->input);
 }
 
+_EXPORT
 struct analogtv_s* getAnalogTvData(struct AnalogTV *analog) {
 	return analog->tv;
 }
 
+
+_EXPORT
 void 		analogizeImageData(
 		AnalogTV* analog,
 		char* byteArray, int srcoffset, int width, int height, int rowstride) {
