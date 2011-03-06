@@ -145,7 +145,7 @@ User STATE
         i per-line 
         j (dmpln)
         (pause?) if leave else per-line then
-    +loop
+    u+loop
     rdrop
 ;
 

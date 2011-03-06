@@ -1,0 +1,50 @@
+
+0 <EXPORT
+
+: regs-init
+
+    \ set user area first, before setting user vars
+    (UP0) (>CONTEXT) [ CTX_UP field, ]
+    
+    (rp0) rp0 !     
+    (sp0) sp0 !
+    (pad0) (pad) !  
+    (#-pad0) (#pad) !
+    (slit-pad0) (spad) !
+
+    sp0 @ sp!
+    
+    r>      \ remember return address before moving return stack
+    RP0 @ (>CONTEXT) [ CTX_RP field, ]
+    >r
+;
+
+: cold-init
+    DP0 @       dp !
+\    UP0 @       [ ' UDP compile, ( UDP ) ]  !
+    UP0 @       UDP !
+    (LATEST) @  >latest !
+    GRAM
+        
+    ." Forth99 (c) 2011" cr
+;
+
+:   'quit
+    10 base !
+    
+    begin
+        key? if key emit 
+        else ints-check
+        then
+    again
+;
+
+:   abort
+
+    regs-init   ints-init   kbd-init
+    
+    ."  aborted" cr
+    
+    quit
+;
+
