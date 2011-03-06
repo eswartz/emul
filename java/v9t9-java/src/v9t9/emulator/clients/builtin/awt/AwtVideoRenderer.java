@@ -281,7 +281,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	 * The size the user sees depends on the current X and Y resolutions; 
 	 * factor that in when determining the nearest zoom.
 	 */
-	protected synchronized void updateWidgetOnResize(int width, int height) {
+	protected void updateWidgetOnResize(int width, int height) {
 		if (width <= 0 || height <= 0)
 			return;
 		
