@@ -94,7 +94,9 @@ public class RawTrackDiskImage extends BaseTrackDiskImage  {
 			&& handle.read() == 0	// ...
 			&& handle.read() == 0)	// sector 
 			{
-				while ((ch = handle.read()) != 0xfb) /* */ ;
+				while ((ch = handle.read()) != 0xfb && ch >= 0) /* */ ;
+				if (ch < 0)
+					continue;
 				
 				byte[] sector = new byte[256];
 				handle.read(sector);

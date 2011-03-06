@@ -37,7 +37,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		public long getImageSize() {
 			return (tracksize & 0xffff) * (tracks & 0xff) * sides;
 		}
-		public int getTrackSize(int num) {
+		public int getTrackOffset(int num) {
 			return num * (tracksize & 0xffff);
 		}
 	};
@@ -181,7 +181,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 			StandardDiskImageDsr.info("Reading {0} bytes of data on track {1}, trackoffset = {2}, offset = >{3}", 
 					hdr.tracksize, seektrack, trackoffset, Long.toHexString(diskoffs));
 	
-			handle.seek(getTrackDiskOffset());
+			handle.seek(diskoffs);
 			try {
 				handle.read(trackBuffer, 0, hdr.tracksize);
 			} catch (IndexOutOfBoundsException e) {
@@ -191,18 +191,6 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		}
 		
 		return trackBuffer;
-	}
-
-	/**
-	 * @return
-	 */
-	public long getTrackDiskOffset() {
-		long offset = trackoffset;
-		if (sideReg != 0) {
-			// goes in reverse order on side 2
-			offset = hdr.track0offs + hdr.getTrackSize(hdr.tracks) * 2 - hdr.getTrackSize(hdr.tracks - seektrack);
-		}
-		return offset;
 	}
 
 	/**
@@ -230,7 +218,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 			writeImageHeader();
 		}
 	
-		offs = hdr.track0offs + hdr.getTrackSize(seektrack);
+		offs = hdr.track0offs + hdr.getTrackOffset(seektrack);
 	
 		// side is handled dynamically
 		
@@ -241,6 +229,19 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		//readCurrentTrackData();
 		
 		return true;
+	}
+
+
+	/**
+	 * @return
+	 */
+	public long getTrackDiskOffset() {
+		long offset = trackoffset;
+		if (sideReg != 0) {
+			// goes in reverse order on side 2
+			offset = hdr.track0offs + hdr.getTrackOffset(hdr.tracks) * 2 - hdr.getTrackOffset(seektrack + 1);
+		}
+		return offset;
 	}
 
 	/**

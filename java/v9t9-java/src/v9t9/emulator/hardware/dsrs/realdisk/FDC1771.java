@@ -221,10 +221,20 @@ public class FDC1771 implements IPersistable {
 
 	public void FDCseek() throws IOException {
 		StandardDiskImageDsr.info("FDC seek, T{0} s{1}", lastbyte, sideReg);
-		
+
+		while (trackReg < lastbyte) {
+			trackReg++;
+			updateSeek(trackReg, sideReg);
+		}
+		while (trackReg > lastbyte) {
+			trackReg--;
+			updateSeek(trackReg, sideReg);
+		}
+		/*
 		trackReg = lastbyte;
 		updateSeek(trackReg, sideReg);
-
+		 */
+		
 		status.reset(StatusBit.SEEK_ERROR);
 		status.reset(StatusBit.TRACK_0);
 		if (trackReg == 0)
@@ -295,14 +305,20 @@ public class FDC1771 implements IPersistable {
 		status.reset(StatusBit.DRQ_PIN);
 		
 		if (image == null) {
-			status.reset(StatusBit.REC_NOT_FOUND);
+			status.set(StatusBit.REC_NOT_FOUND);
 			return;
 		}
 
-		if (!FDCmatchIDmarker())
+		if (!FDCmatchIDmarker()) {
+			status.set(StatusBit.REC_NOT_FOUND);
 			return;
+		}
 		
-		buflen = 128 << currentMarker.sizeid;
+		buflen = 128 << (currentMarker.sizeid & 0xff);
+		if (buflen > image.getTrackSize()) {
+			status.set(StatusBit.REC_NOT_FOUND);
+			return;
+		}
 		bufpos = 0;
 		
 		image.readSectorData(currentMarker, rwBuffer, 0, buflen);
@@ -323,7 +339,7 @@ public class FDC1771 implements IPersistable {
 		status.reset(StatusBit.DRQ_PIN);
 		
 		if (image == null) {
-			status.reset(StatusBit.REC_NOT_FOUND);
+			status.set(StatusBit.REC_NOT_FOUND);
 			return;
 		}
 
@@ -349,9 +365,6 @@ public class FDC1771 implements IPersistable {
 	 * 
 	 */
 	public void FDCreadIDmarker() {
-		/* since we can't tell what's a valid ID field,
-		   always go to the beginning of the track to search. */
-
 		status.reset(StatusBit.LOST_DATA);
 		
 		if (!FDCfindIDmarker()) {

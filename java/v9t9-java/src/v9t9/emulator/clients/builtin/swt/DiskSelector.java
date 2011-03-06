@@ -209,9 +209,11 @@ public class DiskSelector extends Composite {
 					if (isDiskImage()) {
 						FileDialog dialog =  new FileDialog(parent.getShell(), SWT.OPEN);
 						dialog.setText("Select image for " + setting.getName());
-						dialog.setFilterPath(new File(setting.getString()).getParent());
-						dialog.setFileName(new File(setting.getString()).getName());
-						String filename = dialog.open();
+						String dir = new File(setting.getString()).getParent();
+						String filename = new File(setting.getString()).getName();
+						dialog.setFilterPath(dir);
+						dialog.setFileName(filename);
+						filename = dialog.open();
 						if (filename != null) {
 							switchPath(combo, filename);
 							combo.setText(filename);
