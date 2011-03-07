@@ -344,6 +344,7 @@ const char * errno_to_str(int err) {
     case ERR_INV_COMMAND:       return "Command is not recognized";
     case ERR_INV_TRANSPORT:     return "Invalid transport name";
     case ERR_CACHE_MISS:        return "Invalid data cache state";
+    case ERR_NOT_ACTIVE:        return "Context is not active";
     default:
         if (err >= ERR_MESSAGE_MIN && err <= ERR_MESSAGE_MAX) {
             if (is_dispatch_thread()) {

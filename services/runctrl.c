@@ -257,6 +257,8 @@ static void write_context_state(OutputStream * out, Context * ctx) {
     const char * reason = NULL;
     char ** bp_ids = NULL;
     ContextExtensionRC * ext = EXT(ctx);
+    ContextAddress pc = 0;
+    int pc_error = 0;
 
     assert(!ctx->exited);
 
@@ -268,7 +270,27 @@ static void write_context_state(OutputStream * out, Context * ctx) {
     }
 
     /* Number: PC */
-    json_write_ulong(out, get_regs_PC(ctx));
+    {
+        RegisterDefinition * def = get_PC_definition(ctx);
+        if (def == NULL) {
+            pc_error = set_errno(ERR_OTHER, "Program counter register not found");
+        }
+        else {
+            uint8_t buf[8];
+            assert(def->size <= sizeof(buf));
+            if (context_read_reg(ctx, def, 0, def->size, buf) < 0) {
+                pc_error = errno;
+            }
+            else {
+                size_t i;
+                for (i = 0; i < def->size; i++) {
+                    pc = pc << 8;
+                    pc |= buf[def->big_endian ? i : def->size - i - 1];
+                }
+            }
+        }
+    }
+    json_write_ulong(out, pc);
     write_stream(out, 0);
 
     /* String: Reason */
@@ -314,6 +336,13 @@ static void write_context_state(OutputStream * out, Context * ctx) {
             json_write_string(out, bp_ids[i++]);
         }
         write_stream(out, ']');
+        fst = 0;
+    }
+    if (pc_error) {
+        if (!fst) write_stream(out, ',');
+        json_write_string(out, "PCError");
+        write_stream(out, ':');
+        write_error_object(out, pc_error);
         fst = 0;
     }
     write_stream(out, '}');

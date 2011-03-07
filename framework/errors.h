@@ -50,6 +50,7 @@
 #define ERR_INV_COMMAND         (STD_ERR_BASE + 25)
 #define ERR_INV_TRANSPORT       (STD_ERR_BASE + 26)
 #define ERR_CACHE_MISS          (STD_ERR_BASE + 27)
+#define ERR_NOT_ACTIVE          (STD_ERR_BASE + 28)
 
 typedef struct ErrorReportItem {
     char * name;
