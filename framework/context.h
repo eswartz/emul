@@ -150,6 +150,8 @@ struct MemoryRegionAttribute {
 #define RM_STEP_INTO_RANGE         13 /* Step instruction until PC is outside the specified range for any reason */
 #define RM_REVERSE_STEP_OVER_RANGE 14 /* Reverse of RM_STEP_OVER_RANGE */
 #define RM_REVERSE_STEP_INTO_RANGE 15 /* Reverse of RM_STEP_INTO_RANGE */
+#define RM_UNTIL_ACTIVE            16 /* Run until the context becomes active - scheduled to run on a target CPU */
+#define RM_REVERSE_UNTIL_ACTIVE    17 /* Run reverse until the context becomes active */
 
 /* Mode flags for context_attach() */
 #define CONTEXT_ATTACH_SELF      0x01 /* The process is forked child - it will attach itself */

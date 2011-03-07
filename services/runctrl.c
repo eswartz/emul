@@ -252,6 +252,25 @@ static void write_context(OutputStream * out, Context * ctx) {
     write_stream(out, '}');
 }
 
+static int get_current_pc(Context * ctx, ContextAddress * res) {
+    size_t i;
+    uint8_t buf[8];
+    ContextAddress pc = 0;
+    RegisterDefinition * def = get_PC_definition(ctx);
+    if (def == NULL) {
+        set_errno(ERR_OTHER, "Program counter register not found");
+        return -1;
+    }
+    assert(def->size <= sizeof(buf));
+    if (context_read_reg(ctx, def, 0, def->size, buf) < 0) return -1;
+    for (i = 0; i < def->size; i++) {
+        pc = pc << 8;
+        pc |= buf[def->big_endian ? i : def->size - i - 1];
+    }
+    *res = pc;
+    return 0;
+}
+
 static void write_context_state(OutputStream * out, Context * ctx) {
     int fst = 1;
     const char * reason = NULL;
@@ -270,26 +289,7 @@ static void write_context_state(OutputStream * out, Context * ctx) {
     }
 
     /* Number: PC */
-    {
-        RegisterDefinition * def = get_PC_definition(ctx);
-        if (def == NULL) {
-            pc_error = set_errno(ERR_OTHER, "Program counter register not found");
-        }
-        else {
-            uint8_t buf[8];
-            assert(def->size <= sizeof(buf));
-            if (context_read_reg(ctx, def, 0, def->size, buf) < 0) {
-                pc_error = errno;
-            }
-            else {
-                size_t i;
-                for (i = 0; i < def->size; i++) {
-                    pc = pc << 8;
-                    pc |= buf[def->big_endian ? i : def->size - i - 1];
-                }
-            }
-        }
-    }
+    if (get_current_pc(ctx, &pc) < 0) pc_error = errno;
     json_write_ulong(out, pc);
     write_stream(out, 0);
 
@@ -1003,10 +1003,32 @@ static int update_step_machine_state(Context * ctx) {
         return 0;
     }
 
-    addr = get_regs_PC(ctx);
-    if (addr == 0) {
-        cancel_step_mode(ctx);
-        return 0;
+    if (get_current_pc(ctx, &addr) < 0) {
+        int n = errno;
+        if (ctx->stopped && get_error_code(n) == ERR_NOT_ACTIVE) {
+            switch (ext->step_mode) {
+            case RM_STEP_OVER:
+            case RM_STEP_INTO:
+            case RM_STEP_OVER_LINE:
+            case RM_STEP_INTO_LINE:
+            case RM_STEP_OUT:
+            case RM_STEP_OVER_RANGE:
+            case RM_STEP_INTO_RANGE:
+                if (context_can_resume(ctx, ext->step_continue_mode = RM_UNTIL_ACTIVE)) return 0;
+                break;
+            case RM_REVERSE_STEP_OVER:
+            case RM_REVERSE_STEP_INTO:
+            case RM_REVERSE_STEP_OVER_LINE:
+            case RM_REVERSE_STEP_INTO_LINE:
+            case RM_REVERSE_STEP_OUT:
+            case RM_REVERSE_STEP_OVER_RANGE:
+            case RM_REVERSE_STEP_INTO_RANGE:
+                if (context_can_resume(ctx, ext->step_continue_mode = RM_REVERSE_UNTIL_ACTIVE)) return 0;
+                break;
+            }
+        }
+        errno = n;
+        return -1;
     }
 
     assert(ctx->stopped);
