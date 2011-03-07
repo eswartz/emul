@@ -183,6 +183,9 @@ public class CpuF99b extends CpuBase {
             
             triggerInterrupt(INT_RESET);
             
+            // ensure the startup code has enough time to clear memory
+            noIntCount = 10000;
+            
             machine.getExecutor().interpretOneInstruction();
         } else if ((pins & PIN_INTREQ) != 0 && getStatus().getIntMask() >= ic) {	// already checked int mask in status
             // maskable

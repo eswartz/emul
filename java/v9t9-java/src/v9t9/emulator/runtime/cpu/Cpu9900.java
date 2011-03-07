@@ -175,6 +175,9 @@ public class Cpu9900 extends CpuBase {
             pins = 0;
             ic = 0;
             
+            // ensure the startup code has enough time to clear memory
+            noIntCount = 10000;
+            
             machine.getExecutor().interpretOneInstruction();
             //throw new AbortedException();
         } else if ((pins & PIN_INTREQ) != 0 && state.getStatus().getIntMask() >= ic) {	// already checked int mask in status
