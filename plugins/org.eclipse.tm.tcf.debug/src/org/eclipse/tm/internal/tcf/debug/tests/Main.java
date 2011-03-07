@@ -130,7 +130,7 @@ public class Main {
 
         };
         try {
-            new TCFTestSuite(peer, listener, null);
+            new TCFTestSuite(peer, listener, null, null);
         }
         catch (Throwable x) {
             System.err.println("Cannot start test suite:");

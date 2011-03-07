@@ -53,6 +53,8 @@ import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.tm.internal.tcf.debug.launch.TCFLaunchDelegate;
 import org.eclipse.tm.internal.tcf.debug.launch.TCFLocalAgent;
 import org.eclipse.tm.internal.tcf.debug.launch.TCFUserDefPeer;
+import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
+import org.eclipse.tm.internal.tcf.debug.model.TCFMemoryRegion;
 import org.eclipse.tm.internal.tcf.debug.tests.TCFTestSuite;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
@@ -60,6 +62,7 @@ import org.eclipse.tm.internal.tcf.debug.ui.launch.setup.SetupWizardDialog;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IChannel.IChannelListener;
 import org.eclipse.tm.tcf.protocol.IPeer;
+import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.ILocator;
 import org.eclipse.tm.tcf.services.IPathMap.PathMapRule;
@@ -82,6 +85,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
     private final PeerInfo peer_info = new PeerInfo();
     private Display display;
     private Exception init_error;
+    private String mem_map_cfg;
 
     private static class PeerInfo {
         PeerInfo parent;
@@ -568,6 +572,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
             peer_id_text.setText(id);
             run_local_agent_button.setSelection(configuration.getAttribute(TCFLaunchDelegate.ATTR_RUN_LOCAL_AGENT, true));
             use_local_agent_button.setSelection(configuration.getAttribute(TCFLaunchDelegate.ATTR_USE_LOCAL_AGENT, true));
+            mem_map_cfg = configuration.getAttribute(TCFLaunchDelegate.ATTR_MEMORY_MAP, "null");
         }
         catch (CoreException e) {
             init_error = e;
@@ -988,11 +993,30 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
         Protocol.invokeLater(new Runnable() {
             public void run() {
                 try {
-                    List<PathMapRule> map = null;
+                    List<PathMapRule> path_map = null;
                     for (ILaunchConfigurationTab t : getLaunchConfigurationDialog().getTabs()) {
-                        if (t instanceof TCFPathMapTab) map = ((TCFPathMapTab)t).getPathMap();
+                        if (t instanceof TCFPathMapTab) path_map = ((TCFPathMapTab)t).getPathMap();
                     }
-                    test[0] = new TCFTestSuite(peer, done, map);
+                    HashMap<String,ArrayList<TCFMemoryRegion>> mem_map = null;
+                    if (mem_map_cfg != null) {
+                        @SuppressWarnings("unchecked")
+                        Collection<Map<String,Object>> list = (Collection<Map<String,Object>>)JSON.parseOne(mem_map_cfg.getBytes("UTF-8"));
+                        if (list != null) {
+                            mem_map = new HashMap<String,ArrayList<TCFMemoryRegion>>();
+                            for (Map<String,Object> m : list) {
+                                String id = (String)m.get(TCFLaunch.PROP_MMAP_ID);
+                                if (id != null) {
+                                    ArrayList<TCFMemoryRegion> l = mem_map.get(id);
+                                    if (l == null) {
+                                        l = new ArrayList<TCFMemoryRegion>();
+                                        mem_map.put(id, l);
+                                    }
+                                    l.add(new TCFMemoryRegion(m));
+                                }
+                            }
+                        }
+                    }
+                    test[0] = new TCFTestSuite(peer, done, path_map, mem_map);
                 }
                 catch (Throwable x) {
                     ArrayList<Throwable> errors = new ArrayList<Throwable>();

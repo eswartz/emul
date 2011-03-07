@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
+import org.eclipse.tm.internal.tcf.debug.model.TCFMemoryRegion;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IErrorReport;
 import org.eclipse.tm.tcf.protocol.IToken;
@@ -29,6 +30,7 @@ import org.eclipse.tm.tcf.services.IDiagnostics;
 import org.eclipse.tm.tcf.services.IDisassembly;
 import org.eclipse.tm.tcf.services.ILineNumbers;
 import org.eclipse.tm.tcf.services.IMemory;
+import org.eclipse.tm.tcf.services.IMemoryMap;
 import org.eclipse.tm.tcf.services.IPathMap;
 import org.eclipse.tm.tcf.services.IRegisters;
 import org.eclipse.tm.tcf.services.IRunControl;
@@ -48,15 +50,17 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     private final TCFTestSuite test_suite;
     private final int channel_id;
     private final List<PathMapRule> path_map;
-    private final IDiagnostics diag;
-    private final ISymbols syms;
-    private final IMemory mm;
-    private final IRunControl rc;
-    private final IRegisters rg;
-    private final IBreakpoints bp;
-    private final ILineNumbers ln;
-    private final IDisassembly ds;
-    private final IPathMap pm;
+    private final Map<String,ArrayList<TCFMemoryRegion>> mem_map;
+    private final IDiagnostics srv_diag;
+    private final ISymbols srv_syms;
+    private final IMemory srv_memory;
+    private final IRunControl srv_run_ctrl;
+    private final IRegisters srv_registers;
+    private final IBreakpoints srv_breakpoints;
+    private final ILineNumbers srv_line_numbers;
+    private final IDisassembly srv_disassembly;
+    private final IPathMap srv_path_map;
+    private final IMemoryMap srv_memory_map;
     private final Map<String,IRunControl.RunControlContext> threads = new HashMap<String,IRunControl.RunControlContext>();
     private final Map<String,SuspendedContext> suspended = new HashMap<String,SuspendedContext>();
     private final Map<String,SuspendedContext> suspended_prev = new HashMap<String,SuspendedContext>();
@@ -72,8 +76,9 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     private final Random rnd = new Random();
 
     private String[] test_list;
-    private boolean rcbp1_found;
+    private String test_id;
     private boolean path_map_done;
+    private boolean mem_map_done;
     private String test_ctx_id; // Test context ID
     private IRunControl.RunControlContext test_context;
     private String main_thread_id;
@@ -98,6 +103,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
         final Map<String,Object> params;
 
         boolean get_state_pending;
+        boolean resume_pending;
 
         SuspendedContext(String id, String pc, String reason, Map<String,Object> params) {
             this.id = id;
@@ -168,46 +174,53 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
         }
     };
 
-    TestRCBP1(TCFTestSuite test_suite, IChannel channel, int channel_id, List<PathMapRule> path_map) {
+    TestRCBP1(TCFTestSuite test_suite, IChannel channel, int channel_id,
+            List<PathMapRule> path_map, Map<String,ArrayList<TCFMemoryRegion>> mem_map) {
         this.test_suite = test_suite;
         this.channel_id = channel_id;
         this.path_map = path_map;
-        diag = channel.getRemoteService(IDiagnostics.class);
-        syms = channel.getRemoteService(ISymbols.class);
-        mm = channel.getRemoteService(IMemory.class);
-        rc = channel.getRemoteService(IRunControl.class);
-        rg = channel.getRemoteService(IRegisters.class);
-        bp = channel.getRemoteService(IBreakpoints.class);
-        ln = channel.getRemoteService(ILineNumbers.class);
-        ds = channel.getRemoteService(IDisassembly.class);
-        pm = channel.getRemoteService(IPathMap.class);
+        this.mem_map = mem_map;
+        srv_diag = channel.getRemoteService(IDiagnostics.class);
+        srv_syms = channel.getRemoteService(ISymbols.class);
+        srv_memory = channel.getRemoteService(IMemory.class);
+        srv_run_ctrl = channel.getRemoteService(IRunControl.class);
+        srv_registers = channel.getRemoteService(IRegisters.class);
+        srv_breakpoints = channel.getRemoteService(IBreakpoints.class);
+        srv_line_numbers = channel.getRemoteService(ILineNumbers.class);
+        srv_disassembly = channel.getRemoteService(IDisassembly.class);
+        srv_path_map = channel.getRemoteService(IPathMap.class);
+        srv_memory_map = channel.getRemoteService(IMemoryMap.class);
     }
 
     public void start() {
-        if (rc == null) {
+        if (srv_run_ctrl == null) {
             test_suite.done(this, null);
         }
         else {
-            if (bp != null) bp.addListener(bp_listener);
+            if (srv_breakpoints != null) srv_breakpoints.addListener(bp_listener);
             runTest();
         }
     }
 
     private void runTest() {
         if (!test_suite.isActive(this)) return;
-        if (test_list == null) {
-            getTestList();
-            return;
-        }
         if (!path_map_done) {
             setPathMap();
+            return;
+        }
+        if (!mem_map_done) {
+            setMemMap();
+            return;
+        }
+        if (test_list == null) {
+            getTestList();
             return;
         }
         if (!bp_reset_done) {
             resetBreakpoints();
             return;
         }
-        if (rcbp1_found) {
+        if (test_id != null) {
             if (test_ctx_id == null) {
                 startTestContext();
                 return;
@@ -237,20 +250,19 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
             getContextState(test_ctx_id);
             return;
         }
-        if (ds != null && !done_disassembly) {
+        if (srv_disassembly != null && !done_disassembly) {
             assert get_state_cmds.isEmpty();
             assert disassembly_lines.isEmpty();
             getDisassemlyLines();
             return;
         }
-        if (rcbp1_found) {
+        if (test_id != null) {
             if (!bp_change_done) {
                 changeBreakpoints();
                 return;
             }
             assert resume_cnt == 0;
             for (SuspendedContext s : suspended.values()) resume(s.id);
-            return;
         }
         else if (suspended.size() > 0) {
             final int test_cnt = suspended.size();
@@ -265,24 +277,30 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
             };
             for (SuspendedContext sc : suspended.values()) runRegistersTest(sc, done);
         }
-        exit(null);
+        else {
+            exit(null);
+        }
     }
 
     private void getTestList() {
-        if (diag == null) {
+        if (srv_diag == null) {
             test_list = new String[0];
             runTest();
             return;
         }
-        diag.getTestList(new IDiagnostics.DoneGetTestList() {
+        srv_diag.getTestList(new IDiagnostics.DoneGetTestList() {
             public void doneGetTestList(IToken token, Throwable error, String[] list) {
                 if (error != null) {
                     exit(error);
                 }
                 else {
+                    if (list == null) list = new String[0];
                     test_list = list;
-                    for (String s : test_list) {
-                        if (s.equals("RCBP1")) rcbp1_found = true;
+                    for (String s : list) {
+                        if (s.equals("RCBP1")) test_id = s;
+                    }
+                    if (test_id == null && list.length > 0) {
+                        test_id = list[rnd.nextInt(list.length)];
                     }
                     runTest();
                 }
@@ -291,12 +309,12 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     }
 
     private void setPathMap() {
-        if (pm == null || path_map == null) {
+        if (srv_path_map == null || path_map == null) {
             path_map_done = true;
             runTest();
             return;
         }
-        pm.set(path_map.toArray(new PathMapRule[path_map.size()]), new IPathMap.DoneSet() {
+        srv_path_map.set(path_map.toArray(new PathMapRule[path_map.size()]), new IPathMap.DoneSet() {
             public void doneSet(IToken token, Exception error) {
                 if (error != null) {
                     exit(error);
@@ -309,14 +327,43 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
         });
     }
 
+    private void setMemMap() {
+        if (srv_path_map == null || mem_map == null || mem_map.size() == 0) {
+            mem_map_done = true;
+            runTest();
+            return;
+        }
+        final Set<IToken> cmds = new HashSet<IToken>();
+        for (String id : mem_map.keySet()) {
+            ArrayList<TCFMemoryRegion> l = mem_map.get(id);
+            cmds.add(srv_memory_map.set(id, l.toArray(new TCFMemoryRegion[l.size()]), new IMemoryMap.DoneSet() {
+                public void doneSet(IToken token, Exception error) {
+                    cmds.remove(token);
+                    if (error instanceof IErrorReport) {
+                        IErrorReport e = (IErrorReport)error;
+                        if (e.getErrorCode() == IErrorReport.TCF_ERROR_INV_CONTEXT) error = null;
+                    }
+                    if (error != null) {
+                        exit(error);
+                    }
+                    else if (cmds.size() == 0) {
+                        mem_map_done = true;
+                        runTest();
+                    }
+                }
+            }));
+        }
+        assert cmds.size() > 0;
+    }
+
     private void resetBreakpoints() {
-        if (bp == null) {
+        if (srv_breakpoints == null) {
             bp_reset_done = true;
             runTest();
             return;
         }
         // Reset breakpoint list (previous tests might left breakpoints)
-        bp.set(null, new IBreakpoints.DoneCommand() {
+        srv_breakpoints.set(null, new IBreakpoints.DoneCommand() {
             public void doneCommand(IToken token, Exception error) {
                 if (error != null) {
                     exit(error);
@@ -329,12 +376,12 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     }
 
     private void getBreakpointCapabilities() {
-        if (bp == null) {
+        if (srv_breakpoints == null) {
             bp_capabilities = new HashMap<String,Object>();
             runTest();
             return;
         }
-        bp.getCapabilities(test_ctx_id, new IBreakpoints.DoneGetCapabilities() {
+        srv_breakpoints.getCapabilities(test_ctx_id, new IBreakpoints.DoneGetCapabilities() {
             public void doneGetCapabilities(IToken token, Exception error, Map<String,Object> capabilities) {
                 if (error != null) {
                     exit(error);
@@ -357,7 +404,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     }
 
     private void startTestContext() {
-        diag.runTest("RCBP1", new IDiagnostics.DoneRunTest() {
+        srv_diag.runTest(test_id, new IDiagnostics.DoneRunTest() {
             public void doneRunTest(IToken token, Throwable error, String context_id) {
                 if (error != null) {
                     exit(error);
@@ -377,7 +424,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     }
 
     private void getTestContext() {
-        rc.getContext(test_ctx_id, new IRunControl.DoneGetContext() {
+        srv_run_ctrl.getContext(test_ctx_id, new IRunControl.DoneGetContext() {
             public void doneGetContext(IToken token, Exception error, RunControlContext context) {
                 if (test_suite.cancel) return;
                 if (error != null) {
@@ -386,7 +433,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                 }
                 test_context = context;
                 assert test_ctx_id.equals(context.getID());
-                rc.addListener(TestRCBP1.this);
+                srv_run_ctrl.addListener(TestRCBP1.this);
                 runTest();
             }
         });
@@ -426,7 +473,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                 "tcf_test_array"
         };
         String prs = test_context.getProcessID();
-        for (String name : syms) cmds.put(diag.getSymbol(prs, name, done), name);
+        for (String name : syms) cmds.put(srv_diag.getSymbol(prs, name, done), name);
     }
 
     @SuppressWarnings("unchecked")
@@ -487,7 +534,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
             }
             bp_list.put((String)m[i].get(IBreakpoints.PROP_ID), m[i]);
         }
-        bp.set(m, new IBreakpoints.DoneCommand() {
+        srv_breakpoints.set(m, new IBreakpoints.DoneCommand() {
             public void doneCommand(IToken token, Exception error) {
                 assert !bp_set_done;
                 bp_set_done = true;
@@ -501,7 +548,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     }
 
     private void getContextState(final String id) {
-        get_state_cmds.add(rc.getChildren(id, new IRunControl.DoneGetChildren() {
+        get_state_cmds.add(srv_run_ctrl.getChildren(id, new IRunControl.DoneGetChildren() {
             public void doneGetChildren(IToken token, Exception error, String[] contexts) {
                 get_state_cmds.remove(token);
                 if (test_suite.cancel) return;
@@ -514,7 +561,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
             }
         }));
         if (id == null) return;
-        get_state_cmds.add(rc.getContext(id, new IRunControl.DoneGetContext() {
+        get_state_cmds.add(srv_run_ctrl.getContext(id, new IRunControl.DoneGetContext() {
             public void doneGetContext(IToken token, Exception error, RunControlContext context) {
                 get_state_cmds.remove(token);
                 if (test_suite.cancel) return;
@@ -556,7 +603,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                                     exit(new Exception("Invalid result of getState command: invalid suspend reason"));
                                     return;
                                 }
-                                if (rcbp1_found && "Breakpoint".equals(reason)) {
+                                if (test_id != null && "Breakpoint".equals(reason)) {
                                     exit(new Exception("Invalid suspend reason of main thread after test start: " + reason + " " + pc));
                                     return;
                                 }
@@ -584,7 +631,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     private void getDisassemlyLines() {
         for (final String id : suspended.keySet()) {
             SuspendedContext sc = suspended.get(id);
-            get_state_cmds.add(ds.getCapabilities(id, new IDisassembly.DoneGetCapabilities() {
+            get_state_cmds.add(srv_disassembly.getCapabilities(id, new IDisassembly.DoneGetCapabilities() {
                 public void doneGetCapabilities(IToken token, Throwable error, Map<String,Object>[] arr) {
                     get_state_cmds.remove(token);
                     if (error != null) {
@@ -601,7 +648,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                 continue;
             }
             BigInteger pc = new BigInteger(sc.pc);
-            get_state_cmds.add(ds.disassemble(id, pc, 1, null, new IDisassembly.DoneDisassemble() {
+            get_state_cmds.add(srv_disassembly.disassemble(id, pc, 1, null, new IDisassembly.DoneDisassemble() {
                 public void doneDisassemble(IToken token, Throwable error, IDisassemblyLine[] arr) {
                     get_state_cmds.remove(token);
                     if (error != null) {
@@ -645,13 +692,13 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
         }
         m.put(IBreakpoints.PROP_CONDITION, bf.toString());
         bp_list.put(bp_id, m);
-        bp.change(m, new IBreakpoints.DoneCommand() {
+        srv_breakpoints.change(m, new IBreakpoints.DoneCommand() {
             public void doneCommand(IToken token, Exception error) {
                 bp_change_done = true;
                 if (error != null) exit(error);
             }
         });
-        bp.getIDs(new IBreakpoints.DoneGetIDs() {
+        srv_breakpoints.getIDs(new IBreakpoints.DoneGetIDs() {
             public void doneGetIDs(IToken token, Exception error, String[] ids) {
                 if (error != null) {
                     exit(error);
@@ -676,7 +723,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
             }
         });
         for (final String id : bp_list.keySet()) {
-            bp.getProperties(id, new IBreakpoints.DoneGetProperties() {
+            srv_breakpoints.getProperties(id, new IBreakpoints.DoneGetProperties() {
                 public void doneGetProperties(IToken token, Exception error, Map<String,Object> properties) {
                     if (error != null) {
                         exit(error);
@@ -692,7 +739,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                     }
                 }
             });
-            bp.getStatus(id, new IBreakpoints.DoneGetStatus() {
+            srv_breakpoints.getStatus(id, new IBreakpoints.DoneGetStatus() {
                 public void doneGetStatus(IToken token, Exception error, Map<String,Object> status) {
                     if (error != null) {
                         exit(error);
@@ -709,7 +756,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                     return;
                 }
                 m.put(IBreakpoints.PROP_ENABLED, Boolean.TRUE);
-                bp.enable(new String[]{ bp_id }, new IBreakpoints.DoneCommand() {
+                srv_breakpoints.enable(new String[]{ bp_id }, new IBreakpoints.DoneCommand() {
                     public void doneCommand(IToken token, Exception error) {
                         if (error != null) exit(error);
                     }
@@ -787,10 +834,10 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                 if (data_bp_id != null && data_bp_cnt != 10) {
                     exit(new Exception("Test main thread data breakpoint count = " + data_bp_cnt + ", expected 10"));
                 }
-                rc.removeListener(this);
+                srv_run_ctrl.removeListener(this);
                 // Reset breakpoint list
                 bp_list.clear();
-                bp.set(null, new IBreakpoints.DoneCommand() {
+                srv_breakpoints.set(null, new IBreakpoints.DoneCommand() {
                     public void doneCommand(IToken token, Exception error) {
                         exit(error);
                     }
@@ -930,7 +977,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     private boolean isMyBreakpoint(SuspendedContext sc) {
         // Check if the context is suspended by one of our breakpoints
         if (!"Breakpoint".equals(sc.reason)) return false;
-        long pc =  Long.parseLong(sc.pc);
+        long pc = Long.parseLong(sc.pc);
         for (IDiagnostics.ISymbol sym : sym_list.values()) {
             if (pc == sym.getValue().longValue()) return true;
         }
@@ -968,7 +1015,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
         }
         else {
             sc = new SuspendedContext(id, pc, reason, params);
-            assert !done_get_state || done_disassembly || ds == null;
+            assert !done_get_state || done_disassembly || srv_disassembly == null;
             suspended.put(id, sc);
         }
         if (!bp_sync_done) return;
@@ -984,13 +1031,16 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                 else if (!susp) {
                     exit(new Exception("Invalid RunControl.getState result"));
                 }
+                else if (pc == null || pc.equals("0")) {
+                    exit(new Exception("Invalid PC returned by RunControl.getState"));
+                }
                 else if (test_suite.isActive(TestRCBP1.this)) {
                     SuspendedContext sc = suspended.get(id);
                     assert sc.get_state_pending;
                     sc.get_state_pending = false;
                     if (sc.pc == null || sc.reason == null) {
                         sc = new SuspendedContext(id, pc, reason, params);
-                        assert !done_get_state || done_disassembly || ds == null;
+                        assert !done_get_state || done_disassembly || srv_disassembly == null;
                         suspended.put(id, sc);
                     }
                     else if (!sc.pc.equals(pc) || !sc.reason.equals(reason)) {
@@ -1012,6 +1062,21 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
         IRunControl.RunControlContext ctx = threads.get(id);
         if (ctx != null && sc != null) {
             assert !sc.get_state_pending;
+            assert !sc.resume_pending;
+            String grp = ctx.getRCGroup();
+            sc.resume_pending = true;
+            if (grp != null) {
+                for (IRunControl.RunControlContext x : threads.values()) {
+                    if (grp.equals(x.getRCGroup())) {
+                        SuspendedContext sx = suspended.get(x.getID());
+                        if (sx == null) {
+                            exit(new Exception("Invalid value of run control group ID"));
+                            return;
+                        }
+                        if (!sx.resume_pending) return;
+                    }
+                }
+            }
             int rm = IRunControl.RM_RESUME;
             if (isMyBreakpoint(sc)) {
                 rm = rnd.nextInt(6);
@@ -1036,12 +1101,12 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     }
 
     private void runMemoryTest(final SuspendedContext sc, final Runnable done) {
-        if (mm == null || test_suite.target_lock) {
+        if (srv_memory == null || test_suite.target_lock) {
             Protocol.invokeLater(done);
             return;
         }
         test_suite.target_lock = true;
-        mm.getContext(test_context.getProcessID(), new IMemory.DoneGetContext() {
+        srv_memory.getContext(test_context.getProcessID(), new IMemory.DoneGetContext() {
             public void doneGetContext(IToken token, Exception error, final MemoryContext mem_ctx) {
                 if (suspended.get(sc.id) != sc) {
                     test_suite.target_lock = false;
@@ -1172,16 +1237,16 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     }
 
     private void runRegistersTest(final SuspendedContext sc, final Runnable done) {
-        if (rg == null) {
+        if (srv_registers == null) {
             Protocol.invokeLater(done);
             return;
         }
         if (regs.get(sc.id) == null) {
             final Map<String,IRegisters.RegistersContext> reg_map =
                 new HashMap<String,IRegisters.RegistersContext>();
-            final Set<IToken> cmds = new HashSet<IToken>();
             regs.put(sc.id, reg_map);
-            cmds.add(rg.getChildren(sc.id, new IRegisters.DoneGetChildren() {
+            final Set<IToken> cmds = new HashSet<IToken>();
+            cmds.add(srv_registers.getChildren(sc.id, new IRegisters.DoneGetChildren() {
                 public void doneGetChildren(IToken token, Exception error, String[] context_ids) {
                     cmds.remove(token);
                     if (suspended.get(sc.id) != sc) {
@@ -1189,23 +1254,19 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                         return;
                     }
                     if (error != null) {
-                        for (IToken t : cmds) t.cancel();
                         exit(error);
                         return;
                     }
                     for (final String id : context_ids) {
-                        cmds.add(rg.getChildren(id, this));
-                        cmds.add(rg.getContext(id, new IRegisters.DoneGetContext() {
-                            public void doneGetContext(IToken token,
-                                    Exception error,
-                                    RegistersContext context) {
+                        cmds.add(srv_registers.getChildren(id, this));
+                        cmds.add(srv_registers.getContext(id, new IRegisters.DoneGetContext() {
+                            public void doneGetContext(IToken token, Exception error, RegistersContext context) {
                                 cmds.remove(token);
                                 if (suspended.get(sc.id) != sc) {
                                     regs.remove(sc.id);
                                     return;
                                 }
                                 if (error != null) {
-                                    for (IToken t : cmds) t.cancel();
                                     exit(error);
                                     return;
                                 }
@@ -1225,35 +1286,58 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     }
 
     private void testGetSetRegisterCommands(final SuspendedContext sc, final Runnable done) {
-        final Set<IToken> cmds = new HashSet<IToken>();
         Map<String,IRegisters.RegistersContext> reg_map = regs.get(sc.id);
+        final Set<IToken> cmds = new HashSet<IToken>();
         for (final IRegisters.RegistersContext ctx : reg_map.values()) {
             if (!ctx.isReadable()) continue;
             if (ctx.isReadOnce()) continue;
             cmds.add(ctx.get(new IRegisters.DoneGet() {
-                public void doneGet(IToken token, Exception error, byte[] value) {
+                public void doneGet(IToken token, Exception error, final byte[] value) {
                     cmds.remove(token);
                     if (suspended.get(sc.id) != sc) return;
                     if (error != null) {
-                        for (IToken t : cmds) t.cancel();
                         exit(error);
                         return;
                     }
                     assert resume_cmds.get(sc.id) == null;
-                    cmds.add(ctx.set(value, new IRegisters.DoneSet() {
-                        public void doneSet(IToken token, Exception error) {
-                            cmds.remove(token);
-                            if (suspended.get(sc.id) != sc) return;
-                            if (error != null) {
-                                for (IToken t : cmds) t.cancel();
-                                exit(error);
-                                return;
+                    if (ctx.getSize() != value.length) {
+                        exit(new Exception("Invalid register value size"));
+                        return;
+                    }
+                    if (ctx.isWriteable() && !ctx.isWriteOnce()) {
+                        cmds.add(ctx.set(value, new IRegisters.DoneSet() {
+                            public void doneSet(IToken token, Exception error) {
+                                cmds.remove(token);
+                                if (suspended.get(sc.id) != sc) return;
+                                if (error != null) {
+                                    exit(error);
+                                    return;
+                                }
+                                cmds.add(ctx.get(new IRegisters.DoneGet() {
+                                    public void doneGet(IToken token, Exception error, byte[] value1) {
+                                        cmds.remove(token);
+                                        if (suspended.get(sc.id) != sc) return;
+                                        if (error != null) {
+                                            exit(error);
+                                            return;
+                                        }
+                                        for (int i = 0; i < value.length; i++) {
+                                            if (value[i] != value1[i]) {
+                                                exit(new Exception("Invalid register value"));
+                                                return;
+                                            }
+                                        }
+                                        if (cmds.isEmpty()) {
+                                            done.run();
+                                        }
+                                    }
+                                }));
                             }
-                            if (cmds.isEmpty()) {
-                                done.run();
-                            }
-                        }
-                    }));
+                        }));
+                    }
+                    if (cmds.isEmpty()) {
+                        done.run();
+                    }
                 }
             }));
         }
@@ -1275,7 +1359,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
             }
             final int total_size = data_size;
             final IRegisters.Location[] loc_arr = locs.toArray(new IRegisters.Location[locs.size()]);
-            cmds.add(rg.getm(loc_arr, new IRegisters.DoneGet() {
+            cmds.add(srv_registers.getm(loc_arr, new IRegisters.DoneGet() {
                 public void doneGet(IToken token, Exception error, byte[] value) {
                     cmds.remove(token);
                     if (suspended.get(sc.id) != sc) return;
@@ -1283,16 +1367,14 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                         error = new Exception("Invalid data size in Registers.getm reply");
                     }
                     if (error != null) {
-                        for (IToken t : cmds) t.cancel();
                         exit(error);
                         return;
                     }
-                    cmds.add(rg.setm(loc_arr, value, new IRegisters.DoneSet() {
+                    cmds.add(srv_registers.setm(loc_arr, value, new IRegisters.DoneSet() {
                         public void doneSet(IToken token, Exception error) {
                             cmds.remove(token);
                             if (suspended.get(sc.id) != sc) return;
                             if (error != null) {
-                                for (IToken t : cmds) t.cancel();
                                 exit(error);
                                 return;
                             }
@@ -1310,10 +1392,10 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     }
 
     private void runLineNumbersTest(SuspendedContext sc, final Runnable done) {
-        if (ln != null && sc.pc != null) {
+        if (srv_line_numbers != null && sc.pc != null) {
             BigInteger x = new BigInteger(sc.pc);
             BigInteger y = x.add(BigInteger.valueOf(1));
-            ln.mapToSource(sc.id, x, y, new ILineNumbers.DoneMapToSource() {
+            srv_line_numbers.mapToSource(sc.id, x, y, new ILineNumbers.DoneMapToSource() {
                 public void doneMapToSource(IToken token, Exception error, CodeArea[] areas) {
                     if (error != null) {
                         exit(error);
@@ -1329,9 +1411,9 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     }
 
     private void runSymbolsTest(final SuspendedContext sc, final Runnable done) {
-        if (syms != null && sc.pc != null) {
+        if (srv_syms != null && sc.pc != null) {
             final BigInteger x = new BigInteger(sc.pc);
-            syms.findByAddr(sc.id, x, new ISymbols.DoneFind() {
+            srv_syms.findByAddr(sc.id, x, new ISymbols.DoneFind() {
                 public void doneFind(IToken token, Exception error, String symbol_id) {
                     if (error != null) {
                         int code = IErrorReport.TCF_ERROR_OTHER;
@@ -1346,7 +1428,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                             return;
                         }
                     }
-                    syms.getContext(symbol_id, new ISymbols.DoneGetContext() {
+                    srv_syms.getContext(symbol_id, new ISymbols.DoneGetContext() {
                         public void doneGetContext(IToken token, Exception error, Symbol context) {
                             if (error != null) {
                                 exit(error);
@@ -1373,7 +1455,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                                 done.run();
                                 return;
                             }
-                            syms.find(sc.id, 0, name, new ISymbols.DoneFind() {
+                            srv_syms.find(sc.id, 0, name, new ISymbols.DoneFind() {
                                 public void doneFind(IToken token, Exception error, String symbol_id) {
                                     if (error != null) {
                                         exit(error);
@@ -1393,7 +1475,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     }
 
     void cancel(final Runnable done) {
-        if (rc != null) rc.removeListener(this);
+        if (srv_run_ctrl != null) srv_run_ctrl.removeListener(this);
         if (test_ctx_id == null) {
             if (pending_cancel != null) {
                 exit(null);
@@ -1403,7 +1485,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
             }
         }
         else if (cancel_test_cmd == null) {
-            cancel_test_cmd = diag.cancelTest(test_ctx_id, new IDiagnostics.DoneCancelTest() {
+            cancel_test_cmd = srv_diag.cancelTest(test_ctx_id, new IDiagnostics.DoneCancelTest() {
                 public void doneCancelTest(IToken token, Throwable error) {
                     cancel_test_cmd = null;
                     exit(error);
@@ -1424,9 +1506,9 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
             pending_cancel = null;
         }
         else {
-            if (rc != null) rc.removeListener(this);
+            if (srv_run_ctrl != null) srv_run_ctrl.removeListener(this);
         }
-        if (bp != null) bp.removeListener(bp_listener);
+        if (srv_breakpoints != null) srv_breakpoints.removeListener(bp_listener);
         test_suite.done(this, x);
     }
 }

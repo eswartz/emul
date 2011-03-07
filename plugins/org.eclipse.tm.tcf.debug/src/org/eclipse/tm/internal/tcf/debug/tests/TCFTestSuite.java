@@ -19,6 +19,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.tm.internal.tcf.debug.model.TCFMemoryRegion;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.Protocol;
@@ -51,7 +52,8 @@ public class TCFTestSuite {
         public void done(Collection<Throwable> errors);
     }
 
-    public TCFTestSuite(final IPeer peer, final TestListener listener, final List<PathMapRule> path_map) throws IOException {
+    public TCFTestSuite(final IPeer peer, final TestListener listener,
+            final List<PathMapRule> path_map, final Map<String,ArrayList<TCFMemoryRegion>> mem_map) throws IOException {
         this.listener = listener;
         pending_tests.add(new Runnable() {
             public void run() {
@@ -130,7 +132,7 @@ public class TCFTestSuite {
                 int i = 0;
                 listener.progress("Running Run Control Test...", ++count_done, count_total);
                 for (IChannel channel : channels) {
-                    active_tests.put(new TestRCBP1(TCFTestSuite.this, channel, i++, path_map), channel);
+                    active_tests.put(new TestRCBP1(TCFTestSuite.this, channel, i++, path_map, mem_map), channel);
                 }
             }
         });
@@ -151,7 +153,7 @@ public class TCFTestSuite {
                     switch (i % 4) {
                     case 0: test = new TestEcho(TCFTestSuite.this, channels[i]); break;
                     case 1: test = new TestAttachTerminate(TCFTestSuite.this, channels[i]); break;
-                    case 2: test = new TestRCBP1(TCFTestSuite.this, channels[i], i, path_map); break;
+                    case 2: test = new TestRCBP1(TCFTestSuite.this, channels[i], i, path_map, mem_map); break;
                     case 3: test = new TestFileSystem(TCFTestSuite.this, channels[i], i); break;
                     }
                     active_tests.put(test, channels[i]);
