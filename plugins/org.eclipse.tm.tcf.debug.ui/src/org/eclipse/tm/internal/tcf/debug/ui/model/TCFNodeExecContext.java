@@ -31,6 +31,7 @@ import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
 import org.eclipse.tm.internal.tcf.debug.model.TCFFunctionRef;
 import org.eclipse.tm.internal.tcf.debug.model.TCFSourceRef;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
+import org.eclipse.tm.tcf.protocol.IErrorReport;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.ILineNumbers;
@@ -603,6 +604,25 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         symbols.remove(s.id);
     }
 
+    /**
+     * Return true if this context cannot be accessed because it is not active.
+     * Not active means the target is suspended but this context is not one that is
+     * currently scheduled to run on a target CPU.
+     * Some debuggers don't support access to register values and other properties of such contexts.
+     */
+    public boolean isNotActive() {
+        TCFContextState state_data = state.getData();
+        if (state_data != null && state_data.suspend_params != null) {
+            @SuppressWarnings("unchecked")
+            Map<String,Object> attrs = (Map<String,Object>)state_data.suspend_params.get(IRunControl.STATE_PC_ERROR);
+            if (attrs != null) {
+                Number n = (Number)attrs.get(IErrorReport.ERROR_CODE);
+                if (n != null) return n.intValue() == IErrorReport.TCF_ERROR_NOT_ACTIVE;
+            }
+        }
+        return false;
+    }
+
     @Override
     protected boolean getData(IChildrenCountUpdate result, Runnable done) {
         TCFChildren children = null;
@@ -612,6 +632,17 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
             if (ctx != null && ctx.hasState()) {
                 if (resume_pending && last_stack_trace != null) {
                     result.setChildCount(last_stack_trace.length);
+                    return true;
+                }
+                if (!state.validate(done)) return false;
+                if (isNotActive()) {
+                    last_stack_trace = new TCFNode[0];
+                    result.setChildCount(0);
+                    return true;
+                }
+                TCFContextState state_data = state.getData();
+                if (state_data != null && !state_data.is_suspended) {
+                    result.setChildCount(0);
                     return true;
                 }
                 children = children_stack;
@@ -670,6 +701,15 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                     }
                     return true;
                 }
+                if (!state.validate(done)) return false;
+                if (isNotActive()) {
+                    last_stack_trace = new TCFNode[0];
+                    return true;
+                }
+                TCFContextState state_data = state.getData();
+                if (state_data != null && !state_data.is_suspended) {
+                    return true;
+                }
                 children = children_stack;
             }
             else {
@@ -712,9 +752,13 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                     return true;
                 }
                 if (!state.validate(done)) return false;
-                Throwable state_error = state.getError();
+                if (isNotActive()) {
+                    last_stack_trace = new TCFNode[0];
+                    result.setHasChilren(false);
+                    return true;
+                }
                 TCFContextState state_data = state.getData();
-                if (state_error == null && state_data != null) {
+                if (state_data != null) {
                     result.setHasChilren(state_data.is_suspended);
                     return true;
                 }
@@ -788,28 +832,34 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                     }
                     else {
                         if (!state.validate(done)) return false;
-                        TCFContextState state_data = state.getData();
-                        if (state_data != null && state_data.is_terminated) image_name = ImageCache.IMG_THREAD_TERMINATED;
-                        else if (state_data != null && state_data.is_suspended) image_name = ImageCache.IMG_THREAD_SUSPENDED;
-                        else image_name = ImageCache.IMG_THREAD_RUNNNIG;
-                        if (state_data != null) {
-                            if (!state_data.is_suspended) {
-                                label.append(" (Running)");
-                            }
-                            else {
-                                String r = model.getContextActionResult(id);
-                                if (r == null) {
-                                    r = state_data.suspend_reason;
-                                    if (state_data.suspend_params != null) {
-                                        String s = (String)state_data.suspend_params.get(IRunControl.STATE_SIGNAL_DESCRIPTION);
-                                        if (s == null) s = (String)state_data.suspend_params.get(IRunControl.STATE_SIGNAL_NAME);
-                                        if (s != null) r += ": " + s;
-                                    }
+                        if (isNotActive()) {
+                            image_name = ImageCache.IMG_THREAD_NOT_ACTIVE;
+                            label.append(" (Not active)");
+                        }
+                        else {
+                            TCFContextState state_data = state.getData();
+                            if (state_data != null && state_data.is_terminated) image_name = ImageCache.IMG_THREAD_TERMINATED;
+                            else if (state_data != null && state_data.is_suspended) image_name = ImageCache.IMG_THREAD_SUSPENDED;
+                            else image_name = ImageCache.IMG_THREAD_RUNNNIG;
+                            if (state_data != null) {
+                                if (!state_data.is_suspended) {
+                                    label.append(" (Running)");
                                 }
-                                if (r == null) r = "Suspended";
-                                label.append(" (");
-                                label.append(r);
-                                label.append(")");
+                                else {
+                                    String r = model.getContextActionResult(id);
+                                    if (r == null) {
+                                        r = state_data.suspend_reason;
+                                        if (state_data.suspend_params != null) {
+                                            String s = (String)state_data.suspend_params.get(IRunControl.STATE_SIGNAL_DESCRIPTION);
+                                            if (s == null) s = (String)state_data.suspend_params.get(IRunControl.STATE_SIGNAL_NAME);
+                                            if (s != null) r += ": " + s;
+                                        }
+                                    }
+                                    if (r == null) r = "Suspended";
+                                    label.append(" (");
+                                    label.append(r);
+                                    label.append(")");
+                                }
                             }
                         }
                     }

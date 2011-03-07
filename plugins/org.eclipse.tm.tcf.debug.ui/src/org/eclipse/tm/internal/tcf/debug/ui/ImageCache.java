@@ -38,6 +38,7 @@ public class ImageCache {
         IMG_THREAD_TERMINATED = "icons/full/obj16/threadt_obj.gif",
         IMG_THREAD_SUSPENDED = "icons/full/obj16/threads_obj.gif",
         IMG_THREAD_RUNNNIG = "icons/full/obj16/thread_obj.gif",
+        IMG_THREAD_NOT_ACTIVE = "icons/thread_not_active.gif",
 
         IMG_PROCESS_TERMINATED = "icons/full/obj16/debugtt_obj.gif",
         IMG_PROCESS_SUSPENDED = "icons/full/obj16/debugts_obj.gif",

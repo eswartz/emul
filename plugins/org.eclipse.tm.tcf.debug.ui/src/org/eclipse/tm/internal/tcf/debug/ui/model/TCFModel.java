@@ -1016,11 +1016,13 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                         if (!exec_ctx.isDisposed() && active_actions.get(exec_ctx.id) == null) {
                             TCFDataCache<TCFContextState> state_cache = exec_ctx.getState();
                             if (!state_cache.validate(this)) return;
-                            TCFContextState state_data = state_cache.getData();
-                            if (state_data != null && state_data.is_suspended) {
-                                TCFChildrenStackTrace stack_trace = exec_ctx.getStackTrace();
-                                if (!stack_trace.validate(this)) return;
-                                stack_frame = stack_trace.getTopFrame();
+                            if (!exec_ctx.isNotActive()) {
+                                TCFContextState state_data = state_cache.getData();
+                                if (state_data != null && state_data.is_suspended) {
+                                    TCFChildrenStackTrace stack_trace = exec_ctx.getStackTrace();
+                                    if (!stack_trace.validate(this)) return;
+                                    stack_frame = stack_trace.getTopFrame();
+                                }
                             }
                         }
                     }
@@ -1030,8 +1032,10 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                         if (!f.isDisposed() && !exec_ctx.isDisposed() && active_actions.get(exec_ctx.id) == null) {
                             TCFDataCache<TCFContextState> state_cache = exec_ctx.getState();
                             if (!state_cache.validate(this)) return;
-                            TCFContextState state_data = state_cache.getData();
-                            if (state_data != null && state_data.is_suspended) stack_frame = f;
+                            if (!exec_ctx.isNotActive()) {
+                                TCFContextState state_data = state_cache.getData();
+                                if (state_data != null && state_data.is_suspended) stack_frame = f;
+                            }
                         }
                     }
                 }
@@ -1068,7 +1072,8 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                     Object source_element = null;
                     if (locator instanceof TCFSourceLookupDirector) {
                         source_element = ((TCFSourceLookupDirector)locator).getSourceElement(area);
-                    } else if (locator instanceof ISourceLookupDirector) {
+                    }
+                    else if (locator instanceof ISourceLookupDirector) {
                         // support for foreign (CDT) source locator
                         String filename = TCFSourceLookupParticipant.toFileName(area);
                         if (filename != null) {

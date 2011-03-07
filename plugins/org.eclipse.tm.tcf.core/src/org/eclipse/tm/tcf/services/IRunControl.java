@@ -184,7 +184,8 @@ public interface IRunControl extends IService {
         STATE_SIGNAL = "Signal",
         STATE_SIGNAL_NAME = "SignalName",
         STATE_SIGNAL_DESCRIPTION = "SignalDescription",
-        STATE_BREAKPOINT_IDS = "BPs";
+        STATE_BREAKPOINT_IDS = "BPs",
+        STATE_PC_ERROR = "PCError";
 
     /**
      * Optional parameters of resume command.
