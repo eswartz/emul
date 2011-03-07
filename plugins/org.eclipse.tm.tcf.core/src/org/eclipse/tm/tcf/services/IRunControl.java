@@ -159,7 +159,17 @@ public interface IRunControl extends IService {
         /**
          * Reverse of RM_STEP_INTO_RANGE
          */
-        RM_REVERSE_STEP_INTO_RANGE = 15;
+        RM_REVERSE_STEP_INTO_RANGE = 15,
+
+        /**
+         * Run until the context becomes active - scheduled to run on a target CPU
+         */
+        RM_UNTIL_ACTIVE = 16,
+
+        /**
+         * Run reverse until the context becomes active
+         */
+        RM_REVERSE_UNTIL_ACTIVE = 17;
 
     /**
      * State change reason of a context.
