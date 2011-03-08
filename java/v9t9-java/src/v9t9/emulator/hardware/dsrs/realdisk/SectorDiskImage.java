@@ -70,7 +70,7 @@ public class SectorDiskImage extends BaseDiskImage  {
 		trackFetched = false;
 		
 		StandardDiskImageDsr.info(
-			"Opened sector-image disk ''{1}'' {2},\n#tracks={3}, tracksize={4}, sides={5}",
+			"Opened sector-image disk ''{0}'' {1},\n#tracks={2}, tracksize={3}, sides={4}",
 			spec, name, hdr.tracks, hdr.tracksize, hdr.sides);
 	}
 
