@@ -14,7 +14,6 @@ import java.util.Map;
 
 public class TCFContextState {
     public boolean is_suspended;
-    public boolean is_terminated;
 
     public String suspend_pc;
     public String suspend_reason;
