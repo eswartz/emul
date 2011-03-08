@@ -38,6 +38,8 @@ $0084       constant    'GATE
 
 $0088       constant    'DSK 
 \   0: write: cmd; read: status
+  'DSK 0 +  constant    'DSKCMD
+\   0: write: cmd; read: status
   'DSK 0 +  constant    'DSKST
 \   1: write/read: track addr
   'DSK 1 +  constant    'DSKTRK

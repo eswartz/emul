@@ -4,8 +4,157 @@
 
 0 <export
 
-: disk-rwblk    ( addr  block# r/w -- err )
-    drop drop drop -1
+\ mini-exception handler
+User exclink
+
+: toss ( err -- )
+    exclink @  rp!
+    exclink !  \ store return here for now
+    r>  sp!
+    r>  
+    exclink @  \ retrieve return    
+    swap exclink !
+    0   
+    \ exit...
+;
+
+
+: unguard ( -- )
+    exclink @   rp!
+    rdrop
+    r> exclink !
+;
+
+
+: ?toss ( 0|err -- )
+    ?dup if toss then
+;
+
+: guard ( -- -1 | err 0 )
+    r@
+    exclink @  >r
+    sp@ >r
+    rp@  exclink !
+    -1  swap >r
+    
+;
+
+( execute 'xt' for up to 'ms' mseconds until it returns 0; return -1 if timeout )
+:: wait-while ( ms xt -- 0 | -1 )
+
+    \ ms 60 1000 */  
+    \ vdp-ticks d@  d+  :> h-limit :> l-limit
+    
+    ms 0 do
+        xt execute
+        0=  if  unloop 0  exit  then
+    loop
+    -1
+;
+
+: fdc-not-ready ( -- 0|$80 )
+    'DSKST c@  $80 and
+;
+
+: fdc-wait-ready ( ms -- ! )
+    ['] fdc-not-ready  wait-while  ?toss 
+;
+
+: fdc-command ( cmd-byte -- ! )
+    1000 fdc-wait-ready
+    
+    'DSKCMD c!
+    
+    1000 fdc-wait-ready
+;
+
+
+:: dsk-flg! ( on? mask -- )
+    mask  'DSKFLG c@  on?  if OR else NAND then   
+    'DSKFLG c!
+;
+
+: dsk-flg? ( mask -- )
+    'DSKFLG c@  AND
+;
+
+: motor ( on? -- 0|err )
+    $01 dsk-flg!
+;
+
+
+: seek-command ( cmd -- )
+    $E0 OR      ( load head, verify, step, 10ms )
+    fdc-command 
+;
+
+:: seek-track ( trk side -- )
+    true motor
+    
+    side 1 U>=  ?toss
+     
+    \ set side
+    side $01  dsk-flg!
+
+    \ STUPID for now
+    $00 seek-command    ( restore )
+    
+    trk 'DSKTRK c!
+    $01 seek-command 
+;
+
+
+\ ---------
+
+40 constant tracks-per-side
+9 constant secs-per-track
+256 constant bytes-per-sector
+
+: sec>attrs ( sec# -- sec trk side )
+    secs-per-track /MOD
+    tracks-per-side /MOD
+;
+
+: block>sec ( block -- sec )
+    [ chars/block bytes-per-sector u/  literal ] U*
+;
+
+: disk-seek-block ( block# -- )
+    block>sec  sec>attrs
+    seek-track
+    
+    'DSKSEC c!
+;
+
+\ read/write block on current disk 
+: (disk-rwblk)  ( addr  block# r/w -- err )
+    guard if
+        >r
+    
+        disk-seek-block 
+    
+        r>   ( r/w )
+        
+        . .  0
+        
+        unguard
+    else
+        >r   ( error )
+        
+        2drop drop
+        
+        r>    
+    then
+;
+
+\ ---------------
+
+: disk-rwblk    ( addr  block# r/w -- 0|err )
+    1 'DSKNUM c!
+
+    (disk-rwblk)
+    
+    0 'DSKNUM c!
 ;
 
 $2000 Constant GRAMBASE
@@ -44,4 +193,5 @@ export>
 
 | : io-init
     GRAM    
+    0 exclink !
 ; 
