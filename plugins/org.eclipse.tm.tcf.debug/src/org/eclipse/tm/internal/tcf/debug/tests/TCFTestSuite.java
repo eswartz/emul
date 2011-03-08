@@ -251,6 +251,10 @@ public class TCFTestSuite {
         return active_tests.get(test) != null;
     }
 
+    Collection<ITCFTest> getActiveTests() {
+        return active_tests.keySet();
+    }
+
     void done(ITCFTest test, Throwable error) {
         assert active_tests.get(test) != null;
         if (error != null && !canceled) errors.add(error);

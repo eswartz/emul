@@ -103,7 +103,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
         final Map<String,Object> params;
 
         boolean get_state_pending;
-        boolean resume_pending;
+        boolean ok_to_resume;
 
         SuspendedContext(String id, String pc, String reason, Map<String,Object> params) {
             this.id = id;
@@ -855,7 +855,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
             return;
         }
         SuspendedContext sc = suspended.remove(id);
-        if (sc == null || sc.get_state_pending) {
+        if (sc == null || sc.get_state_pending && ctx.getRCGroup() == null) {
             exit(new Exception("Unexpected contextResumed event: " + id));
             return;
         }
@@ -947,7 +947,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
         assert resume_cmds.get(sc.id) == null;
         Runnable done = new Runnable() {
             public void run() {
-                resume(sc.id);
+                if (suspended.get(sc.id) == sc) resume(sc.id);
             }
         };
         if (my_breakpoint) {
@@ -1019,14 +1019,20 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
             suspended.put(id, sc);
         }
         if (!bp_sync_done) return;
+        assert get_state_cmds.size() == 0;
         assert resume_cmds.get(id) == null;
+        assert suspended.get(id) == sc;
         assert !sc.get_state_pending;
         sc.get_state_pending = true;
+        final SuspendedContext sc0 = sc;
         ctx.getState(new IRunControl.DoneGetState() {
             public void doneGetState(IToken token, Exception error, boolean susp,
                     String pc, String reason, Map<String, Object> params) {
                 if (error != null) {
                     exit(error);
+                }
+                else if (suspended.get(id) != sc0) {
+                    exit(new Exception("Context resumed before RunControl.getState result"));
                 }
                 else if (!susp) {
                     exit(new Exception("Invalid RunControl.getState result"));
@@ -1053,30 +1059,40 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
         });
     }
 
+    private boolean canResume(IRunControl.RunControlContext ctx) {
+        String grp = ctx.getRCGroup();
+        if (grp != null) {
+            for (ITCFTest test : test_suite.getActiveTests()) {
+                if (test instanceof TestRCBP1) {
+                    TestRCBP1 rcbp = (TestRCBP1)test;
+                    for (IRunControl.RunControlContext x : rcbp.threads.values()) {
+                        if (!grp.equals(x.getRCGroup())) continue;
+                        SuspendedContext sc = rcbp.suspended.get(x.getID());
+                        if (sc == null) {
+                            if (rcbp != TestRCBP1.this) return false;
+                            exit(new Exception("Invalid value of run control group ID"));
+                            return false;
+                        }
+                        if (!sc.ok_to_resume) return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
     private void resume(final String id) {
         assert done_get_state || resume_cnt == 0;
         assert resume_cmds.get(id) == null;
         assert bp_sync_done;
         resume_cnt++;
         final SuspendedContext sc = suspended.get(id);
-        IRunControl.RunControlContext ctx = threads.get(id);
+        final IRunControl.RunControlContext ctx = threads.get(id);
         if (ctx != null && sc != null) {
             assert !sc.get_state_pending;
-            assert !sc.resume_pending;
-            String grp = ctx.getRCGroup();
-            sc.resume_pending = true;
-            if (grp != null) {
-                for (IRunControl.RunControlContext x : threads.values()) {
-                    if (grp.equals(x.getRCGroup())) {
-                        SuspendedContext sx = suspended.get(x.getID());
-                        if (sx == null) {
-                            exit(new Exception("Invalid value of run control group ID"));
-                            return;
-                        }
-                        if (!sx.resume_pending) return;
-                    }
-                }
-            }
+            assert !sc.ok_to_resume;
+            sc.ok_to_resume = true;
+            if (!canResume(ctx)) return;
             int rm = IRunControl.RM_RESUME;
             if (isMyBreakpoint(sc)) {
                 rm = rnd.nextInt(6);
@@ -1087,6 +1103,11 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                     if (test_suite.cancel) return;
                     if (!test_suite.isActive(TestRCBP1.this)) return;
                     if (threads.get(id) == null) return;
+                    if (error instanceof IErrorReport &&
+                            ((IErrorReport)error).getErrorCode() == IErrorReport.TCF_ERROR_ALREADY_RUNNING &&
+                            ctx.getRCGroup() != null) {
+                        error = null;
+                    }
                     if (error != null) {
                         exit(error);
                         return;
