@@ -140,8 +140,8 @@
     \ STUPID for now
     $00 seek-command    ( restore )
     
-    trk 'DSKTRK c!
-    $01 seek-command 
+    trk 'DSKDAT c!
+    $10 seek-command 
 ;
 
 
@@ -150,6 +150,7 @@
 40 constant tracks-per-side
 9 constant secs-per-track
 256 constant bytes-per-sector
+chars/block bytes-per-sector u/  constant secs-per-block
 
 : sec>attrs ( sec# -- sec trk side )
     secs-per-track U/MOD
@@ -157,27 +158,58 @@
 ;
 
 : block>sec ( block -- sec )
-    [ chars/block bytes-per-sector u/  literal ] U*
+    secs-per-block  U*
 ;
 
-: disk-seek-block ( block# -- )
-    block>sec  sec>attrs
+
+: disk-seek-sec ( sec# -- )
+    sec>attrs
     seek-track
-    
     'DSKSEC c!
 ;
 
+: (dsk-read) ( addr --  )
+    'DSKDAT c@  swap c!  
+;
+    
+: (dsk-write) ( addr -- )
+    c@  'DSKDAT c!   
+;
+    
+: xfer ( addr xt cmd -- addr )
+    fdc-command
+    bytes-per-sector 0 do
+        2dup execute  
+    loop
+    drop
+;
+
 \ read/write block on current disk 
-: (disk-rwblk)  ( addr  block# r/w -- err )
-    guard if
-        >r
-    
-        disk-seek-block 
-    
-        r>   ( r/w )
+:: (disk-rwblk)  ( addr  block# r/w -- err )
+    block#  secs-per-block U*  :> sec
+    secs-per-block 0 do
+        i sec +  disk-seek-sec
         
-        . .  0
-        
+        addr
+        r/w if
+            ['] (dsk-read)  $80
+        else
+            ['] (dsk-write) $A0
+        then
+        xfer
+        addr!
+    loop
+            
+    123
+;
+
+\ ---------------
+
+: disk-rwblk    ( addr  block# r/w -- 0|err )
+    1 'DSKNUM c!
+
+    guard if 
+        (disk-rwblk)
         unguard
     else
         >r   ( error )
@@ -186,15 +218,7 @@
         
         r>    
     then
-;
-
-\ ---------------
-
-: disk-rwblk    ( addr  block# r/w -- 0|err )
-    1 'DSKNUM c!
-
-    (disk-rwblk)
-    
+        
     0 'DSKNUM c!
 ;
 
