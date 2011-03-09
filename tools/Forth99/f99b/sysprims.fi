@@ -33,7 +33,7 @@
     2>r drop 2r>
 ;   target-only
 
-: u/mod      ( ud un -- ur uq ) 
+: u/mod      ( u un -- ur uq ) 
     0 swap
     [ Iudivmod c, ]
 ;   target-only
@@ -41,7 +41,7 @@
     0 swap 
     [ Iudivmod c, ] swap drop
 ;   target-only
-: umod      ( ud un -- ur )
+: umod      ( u un -- ur )
     0 swap 
     [ Iudivmod c, ] drop
 ;   target-only
@@ -50,6 +50,14 @@
     [ Iumul c, ] drop
 ;   target-only
 
+
+: U*/MOD       ( ua ub uc -- ua*b/c ua*b%c )
+    >r  [ Iumul c, ]  r>  [ Iudivmod c, ] swap
+;  target-only
+
+: U*/       ( ua ub uc -- ua*b/c )
+    U*/MOD  drop
+;  target-only
 
 : fill  ( addr n ch -- )
     rot rot 1 [ Icfill c, ]

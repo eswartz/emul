@@ -70,7 +70,7 @@ public class InstF99b {
 	
 	/** um*: s * s -> d */
 	public static final int Iumul = Imath_start + 6;
-	/** um/mod: ud u1 -- div mod */
+	/** um/mod: ud u1 -- mod div */
 	public static final int Iudivmod = Imath_start + 7;
 
 

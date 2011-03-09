@@ -2,10 +2,32 @@
 ( the routine that handles RWBLK )
 | User >rwblk
 
-0 <export
-
 \ mini-exception handler
-User exclink
+| User exclink
+
+
+\
+\  Before:      After (before return):
+\
+\                   exclink -> old RP
+\ 
+\  RP           RP
+\
+\               ret
+\               old SP          <-- new exclink
+\               old exclink
+\  ret          ret
+\          
+: guard ( -- -1 | err 0 )
+    r@   ( ret )
+    exclink @  >r
+    sp@ cell+  >r
+    rp@  exclink !
+    -1  
+    
+    swap ( -1 ret )  >r
+;
+
 
 : toss ( err -- )
     exclink @  rp!
@@ -19,10 +41,24 @@ User exclink
 ;
 
 
+\
+\  Before:                  After (before return):
+\ 
+\   exclink -> old RP @SP
+\
+\  RP                       RP
+\
+\  ret'         
+\  old SP       
+\  old exclink  
+\  ret                      ret'
+\          
 : unguard ( -- )
+    r>      ( ret' )
     exclink @   rp!
-    rdrop
-    r> exclink !
+    r>  drop
+    r>   exclink ! 
+    rdrop  >r      ( R: ret' )
 ;
 
 
@@ -30,34 +66,39 @@ User exclink
     ?dup if toss then
 ;
 
-: guard ( -- -1 | err 0 )
-    r@
-    exclink @  >r
-    sp@ >r
-    rp@  exclink !
-    -1  swap >r
-    
+\ ----------------------------
+
+( execute 'xt' for up to 'ms' mseconds until it returns !0; return 0 if timeout )
+:: wait4 ( ms xt -- 0 | -1 )
+
+    [ 0 [if] ]
+         ms 0 do
+            xt execute
+            ?dup if  unloop exit  then
+        loop
+        -1
+    [ [else] ]
+        ms 60 1000 U*/  s>d
+        vdp-ticks d@  d+  :> h-limit :> l-limit
+        
+        begin
+            xt execute
+            ?dup if exit then
+            ints-check
+            vdp-ticks d@  l-limit h-limit  d>=  if 0 exit then
+        again
+    [ [then] ]         
 ;
 
-( execute 'xt' for up to 'ms' mseconds until it returns 0; return -1 if timeout )
-:: wait-while ( ms xt -- 0 | -1 )
 
-    \ ms 60 1000 */  
-    \ vdp-ticks d@  d+  :> h-limit :> l-limit
-    
-    ms 0 do
-        xt execute
-        0=  if  unloop 0  exit  then
-    loop
-    -1
-;
+0 <export
 
-: fdc-not-ready ( -- 0|$80 )
-    'DSKST c@  $80 and
+: fdc-ready ( -- 0|$80 )
+    'DSKST c@  $80 <
 ;
 
 : fdc-wait-ready ( ms -- ! )
-    ['] fdc-not-ready  wait-while  ?toss 
+    ['] fdc-ready  wait4  0=  ?toss 
 ;
 
 : fdc-command ( cmd-byte -- ! )
@@ -84,7 +125,7 @@ User exclink
 
 
 : seek-command ( cmd -- )
-    $E0 OR      ( load head, verify, step, 10ms )
+    $0E OR      ( load head, verify, step, 10ms )
     fdc-command 
 ;
 
@@ -111,8 +152,8 @@ User exclink
 256 constant bytes-per-sector
 
 : sec>attrs ( sec# -- sec trk side )
-    secs-per-track /MOD
-    tracks-per-side /MOD
+    secs-per-track U/MOD
+    tracks-per-side U/MOD
 ;
 
 : block>sec ( block -- sec )

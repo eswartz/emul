@@ -39,6 +39,8 @@
     again
 ;
 
+EXPORT>
+
 :   abort
 
     regs-init   ints-init   kbd-init

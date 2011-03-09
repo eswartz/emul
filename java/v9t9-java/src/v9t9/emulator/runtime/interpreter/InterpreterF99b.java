@@ -205,7 +205,7 @@ public class InterpreterF99b implements Interpreter {
 			return;
 		
 		int cnt = 6;
-		while (cnt-- > 0 && !doInvalidateInstructionCache(first, addr))
+		while (cnt-- > 0 && !doInvalidateInstructionCache(first & 0xffff, addr))
 			first++;
 	}
 
