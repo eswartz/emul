@@ -17,35 +17,58 @@ import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.cdt.debug.core.model.ICBreakpoint;
+import org.eclipse.cdt.debug.core.model.ICLineBreakpoint;
+import org.eclipse.cdt.debug.internal.core.breakpoints.CAddressBreakpoint;
+import org.eclipse.cdt.debug.internal.core.breakpoints.CFunctionBreakpoint;
+import org.eclipse.cdt.debug.internal.core.breakpoints.CLineBreakpoint;
+import org.eclipse.core.resources.IMarker;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.resources.WorkspaceJob;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.ISchedulingRule;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.model.IBreakpoint;
 import org.eclipse.swt.graphics.Device;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.tm.internal.tcf.debug.model.ITCFBreakpointListener;
+import org.eclipse.tm.internal.tcf.debug.model.ITCFConstants;
 import org.eclipse.tm.internal.tcf.debug.model.TCFBreakpointsModel;
 import org.eclipse.tm.internal.tcf.debug.model.TCFBreakpointsStatus;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModel;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModelManager;
+import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.services.IBreakpoints;
 
 /**
  * This class monitors breakpoints status on TCF debug targets and calls ICBreakpoint.incrementInstallCount() or
  * ICBreakpoint.decrementInstallCount() when breakpoint status changes.
  */
+@SuppressWarnings("restriction")
 class TCFBreakpointStatusListener {
+    
+    /** Ref count attribute for foreign breakpoints */
+    private static final String ATTR_REFCOUNT = "org.eclipse.tm.tcf.cdt.refcount";
     
     private class BreakpointListener implements ITCFBreakpointListener {
         
+        private final TCFLaunch launch;
         private final TCFBreakpointsStatus status;
-        private final Set<ICBreakpoint> installed;
+        private final Set<ICBreakpoint> installed = new HashSet<ICBreakpoint>();
+        private final Set<String> foreign = new HashSet<String>();
+        private final Set<String> deleted = new HashSet<String>();
         
         BreakpointListener(TCFLaunch launch) {
+            this.launch = launch;
             status = launch.getBreakpointsStatus();
             status.addListener(this);
             bp_listeners.put(launch, this);
-            installed = new HashSet<ICBreakpoint>();
             for (String id : status.getStatusIDs()) breakpointStatusChanged(id);
         }
         
@@ -71,6 +94,10 @@ class TCFBreakpointStatusListener {
                     if (installed.remove(cbp)) decrementInstallCount(cbp);
                 }
             }
+            else if (bp == null && foreign.add(id)) {
+                // foreign bp
+                createTransientBreakpoint(id);
+            }
         }
 
         public void breakpointRemoved(String id) {
@@ -79,11 +106,18 @@ class TCFBreakpointStatusListener {
                 ICBreakpoint cbp = (ICBreakpoint)bp;
                 if (installed.remove(cbp)) decrementInstallCount(cbp);
             }
+            if (foreign.remove(id)) {
+                deleteTransientBreakpoint(id);
+            }
         }
-        
+
         void dispose() {
             for (ICBreakpoint cbp : installed) decrementInstallCount(cbp);
             installed.clear();
+            for (String id : foreign) {
+                deleteTransientBreakpoint(id);
+            }
+            foreign.clear();
         }
         
         private void incrementInstallCount(final ICBreakpoint cbp) {
@@ -112,6 +146,117 @@ class TCFBreakpointStatusListener {
             });
         }
         
+        private void createTransientBreakpoint(final String id) {
+            IBreakpoints bkpts = launch.getService(IBreakpoints.class);
+            if (bkpts == null) return;
+            bkpts.getProperties(id, new IBreakpoints.DoneGetProperties() {
+                public void doneGetProperties(IToken token, Exception error, Map<String, Object> properties) {
+                    final Map<String, Object> markerAttrs = new HashMap<String, Object>();
+                    if (properties != null) {
+                        String location = (String) properties.get(IBreakpoints.PROP_LOCATION);
+                        if (location != null && location.length() > 0) {
+                            if (Character.isDigit(location.charAt(0))) {
+                                markerAttrs.put(ICLineBreakpoint.ADDRESS, location);
+                            }
+                            else {
+                                markerAttrs.put(ICLineBreakpoint.FUNCTION, location);
+                            }
+                        }
+                        Object file = properties.get(IBreakpoints.PROP_FILE);
+                        if (file != null) {
+                            markerAttrs.put(ICBreakpoint.SOURCE_HANDLE, file);
+                        }
+                        Object line = properties.get(IBreakpoints.PROP_LINE);
+                        if (line != null) {
+                            markerAttrs.put(IMarker.LINE_NUMBER, line);
+                        }
+                        Object enabled = properties.get(IBreakpoints.PROP_ENABLED);
+                        if (enabled != null) {
+                            markerAttrs.put(IBreakpoint.ENABLED, enabled);
+                        }
+                        markerAttrs.put(IBreakpoint.ID, ITCFConstants.ID_TCF_DEBUG_MODEL);
+                        markerAttrs.put(IBreakpoint.REGISTERED, Boolean.TRUE);
+                        markerAttrs.put(IBreakpoint.PERSISTED, Boolean.FALSE);
+                        markerAttrs.put(IMarker.TRANSIENT, Boolean.TRUE);
+                        markerAttrs.put(ITCFConstants.ID_TCF_DEBUG_MODEL + '.' + IBreakpoints.PROP_ID, id);
+                        markerAttrs.put(ATTR_REFCOUNT, 1);
+                    }
+                    Job job = new WorkspaceJob("Create Breakpoint Marker") {
+                        @Override
+                        public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
+                            if (deleted.remove(id)) return Status.OK_STATUS;
+                            IBreakpoint[] bps = DebugPlugin.getDefault().getBreakpointManager().getBreakpoints();
+                            for (IBreakpoint bp : bps) {
+                                if (bp.isPersisted()) continue;
+                                IMarker marker = bp.getMarker();
+                                if (marker == null) continue;
+                                if (id.equals(marker.getAttribute(ITCFConstants.ID_TCF_DEBUG_MODEL + '.' + IBreakpoints.PROP_ID, null))) {
+                                    int cnt = marker.getAttribute(ATTR_REFCOUNT, 0) + 1;
+                                    marker.setAttribute(ATTR_REFCOUNT, cnt);
+                                    return Status.OK_STATUS;
+                                }
+                            }
+                            IResource resource = ResourcesPlugin.getWorkspace().getRoot();
+                            if (markerAttrs.get(ICBreakpoint.SOURCE_HANDLE) != null &&
+                                    markerAttrs.get(IMarker.LINE_NUMBER) != null) {
+                                new CLineBreakpoint(resource , markerAttrs, true);
+                            } else if (markerAttrs.get(ICLineBreakpoint.ADDRESS) != null) {
+                                new CAddressBreakpoint(resource, markerAttrs, true);
+                            } else if (markerAttrs.get(ICLineBreakpoint.FUNCTION) != null) {
+                                new CFunctionBreakpoint(resource, markerAttrs, true);
+                            }
+                            return Status.OK_STATUS;
+                        }
+                    };
+                    job.setRule(getBreakpointAccessRule());
+                    job.schedule();
+                }
+            });
+        }
+
+        private void deleteTransientBreakpoint(final String id) {
+            Job job = new WorkspaceJob("Destroy Breakpoint Marker") {
+                @Override
+                public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
+                    IBreakpoint[] bps = DebugPlugin.getDefault().getBreakpointManager().getBreakpoints();
+                    for (IBreakpoint bp : bps) {
+                        if (bp.isPersisted()) continue;
+                        IMarker marker = bp.getMarker();
+                        if (marker == null) continue;
+                        if (id.equals(marker.getAttribute(ITCFConstants.ID_TCF_DEBUG_MODEL + '.' + IBreakpoints.PROP_ID, null))) {
+                            int cnt = marker.getAttribute(ATTR_REFCOUNT, 0) - 1;
+                            if (cnt > 0) {
+                                marker.setAttribute(ATTR_REFCOUNT, cnt);
+                            }
+                            else {
+                                bp.delete();
+                            }
+                            return Status.OK_STATUS;
+                        }
+                    }
+                    // Since breakpoint object is created by a another background job after reading data from remote peer,
+                    // this job can be running before the job that creates the object.
+                    // We need to remember ID of the breakpoint that became obsolete before it was fully created.
+                    deleted.add(id);
+                    return Status.OK_STATUS;
+                }
+            };
+            job.setRule(getBreakpointAccessRule());
+            job.schedule();
+        }
+        
+        private ISchedulingRule getBreakpointAccessRule() {
+            IResource resource = ResourcesPlugin.getWorkspace().getRoot();
+            ISchedulingRule rule = ResourcesPlugin.getWorkspace().getRuleFactory().markerRule(resource);
+            if (rule == null) {
+                // In Eclipse 3.6.2, markerRule() always returns null,
+                // causing race condition, a lot of crashes and corrupted data.
+                // Using modifyRule() instead.
+                rule = ResourcesPlugin.getWorkspace().getRuleFactory().modifyRule(resource);
+            }
+            return rule;
+        }
+
         private void asyncExec(Runnable r) {
             synchronized (Device.class) {
                 Display display = Display.getDefault();

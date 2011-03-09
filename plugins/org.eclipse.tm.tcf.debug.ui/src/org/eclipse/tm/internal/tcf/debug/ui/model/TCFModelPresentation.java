@@ -31,6 +31,7 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.tm.internal.tcf.debug.model.TCFBreakpoint;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
+import org.eclipse.tm.tcf.util.TCFTask;
 import org.eclipse.ui.IEditorDescriptor;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorRegistry;
@@ -84,9 +85,13 @@ public class TCFModelPresentation implements IDebugModelPresentation {
     public String getText(Object element) {
         String text = null;
         if (element instanceof TCFBreakpoint) {
-            TCFBreakpoint breakpoint = (TCFBreakpoint)element;
+            final TCFBreakpoint breakpoint = (TCFBreakpoint)element;
             text = breakpoint.getText();
-            String status = Activator.getAnnotationManager().getBreakpointStatus(breakpoint);
+            String status = new TCFTask<String>() {
+                public void run() {
+                    done(Activator.getAnnotationManager().getBreakpointStatus(breakpoint));
+                }
+            }.getE();
             if (status != null) text += " (" + status + ")";
         }
         return text;

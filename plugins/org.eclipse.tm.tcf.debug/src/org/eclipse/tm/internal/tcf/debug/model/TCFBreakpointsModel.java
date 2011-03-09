@@ -11,9 +11,11 @@
 package org.eclipse.tm.internal.tcf.debug.model;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -119,23 +121,27 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
             });
             IBreakpoint[] arr = bp_manager.getBreakpoints();
             if (arr != null && arr.length > 0) {
-                Map<String,Object>[] bps = new Map[arr.length];
+                List<Map<String,Object>> bps = new ArrayList<Map<String,Object>>(arr.length);
                 for (int i = 0; i < arr.length; i++) {
                     if (!isSupported(channel, arr[i])) continue;
                     String id = getBreakpointID(arr[i]);
                     if (id == null) continue;
+                    if (!arr[i].isPersisted()) continue;
                     IMarker marker = arr[i].getMarker();
                     String file = getFilePath(marker.getResource());
-                    bps[i] = toBreakpointAttributes(id, file, marker.getType(), marker.getAttributes());
+                    bps.add(toBreakpointAttributes(id, file, marker.getType(), marker.getAttributes()));
                     id2bp.put(id, arr[i]);
                 }
-                service.set(bps, new IBreakpoints.DoneCommand() {
-                    public void doneCommand(IToken token, Exception error) {
-                        if (error == null) done.run();
-                        else channel.terminate(error);
-                    }
-                });
-                return;
+                if (!bps.isEmpty()) {
+                    Map<String, Object>[] bpArr = (Map<String,Object>[]) bps.toArray(new Map[bps.size()]);
+                    service.set(bpArr, new IBreakpoints.DoneCommand() {
+                        public void doneCommand(IToken token, Exception error) {
+                            if (error == null) done.run();
+                            else channel.terminate(error);
+                        }
+                    });
+                    return;
+                }
             }
         }
         Protocol.invokeLater(done);
@@ -200,7 +206,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
     private abstract class BreakpointUpdate implements Runnable {
 
         private final IBreakpoint breakpoint;
-        private final Map<String,Object> marker_attrs;
+        protected final Map<String,Object> marker_attrs;
         private final String marker_file;
         private final String marker_type;
         private final String marker_id;
@@ -263,7 +269,9 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
             new BreakpointUpdate(breakpoint) {
                 @Override
                 void update() {
-                    service.add(tcf_attrs, done);
+                    if (!Boolean.FALSE.equals(marker_attrs.get(IBreakpoint.PERSISTED))) {
+                        service.add(tcf_attrs, done);
+                    }
                     id2bp.put((String)tcf_attrs.get(IBreakpoints.PROP_ID), breakpoint);
                 }
             }.exec();
@@ -332,7 +340,9 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
                 @Override
                 void update() {
                     String id = (String)tcf_attrs.get(IBreakpoints.PROP_ID);
-                    service.remove(new String[]{ id }, done);
+                    if (!Boolean.FALSE.equals(marker_attrs.get(IBreakpoint.PERSISTED))) {
+                        service.remove(new String[]{ id }, done);
+                    }
                     id2bp.remove(id);
                 }
             }.exec();

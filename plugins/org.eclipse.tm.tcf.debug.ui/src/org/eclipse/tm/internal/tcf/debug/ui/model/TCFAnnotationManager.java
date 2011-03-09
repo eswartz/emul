@@ -284,30 +284,24 @@ public class TCFAnnotationManager {
     }
 
     String getBreakpointStatus(final TCFBreakpoint breakpoint) {
-        if (disposed) return "";
-        assert Thread.currentThread() == display.getThread();
+        assert Protocol.isDispatchThread();
+        if (disposed) return null;
         final TCFLaunch launch = active_launch;
-        final String[] text = new String[1];
-        text[0] = breakpoint.getText();
         if (launch != null && launch.getBreakpointsStatus() != null) {
-            Protocol.invokeAndWait(new Runnable() {
-                public void run() {
-                    TCFBreakpointsStatus bs = launch.getBreakpointsStatus();
-                    if (bs != null) {
-                        Map<String,Object> map = bs.getStatus(breakpoint);
-                        if (map != null) {
-                            String status = null;
-                            String error = (String)map.get(IBreakpoints.STATUS_ERROR);
-                            Object planted = map.get(IBreakpoints.STATUS_INSTANCES);
-                            if (error != null) status = error;
-                            else if (planted != null) status = "Planted";
-                            if (status != null) text[0] += " (" + status + ")";
-                        }
-                    }
+            TCFBreakpointsStatus bs = launch.getBreakpointsStatus();
+            if (bs != null) {
+                Map<String,Object> map = bs.getStatus(breakpoint);
+                if (map != null) {
+                    String status = null;
+                    String error = (String)map.get(IBreakpoints.STATUS_ERROR);
+                    Object planted = map.get(IBreakpoints.STATUS_INSTANCES);
+                    if (error != null) status = error;
+                    else if (planted != null) status = "Planted";
+                    return status;
                 }
-            });
+            }
         }
-        return text[0];
+        return null;
     }
 
     void addStackFrameAnnotation(TCFModel model, String exe_id, boolean top_frame,

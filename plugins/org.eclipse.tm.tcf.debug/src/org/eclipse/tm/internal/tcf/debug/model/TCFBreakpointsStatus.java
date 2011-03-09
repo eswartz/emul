@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -18,6 +18,7 @@ import java.util.Set;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.model.IBreakpoint;
+import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IBreakpoints;
 
@@ -38,7 +39,7 @@ public class TCFBreakpointsStatus {
         assert Protocol.isDispatchThread();
         service = launch.getChannel().getRemoteService(IBreakpoints.class);
         if (service != null) {
-            service.addListener(new IBreakpoints.BreakpointsListener() {
+            final IBreakpoints.BreakpointsListener listener = new IBreakpoints.BreakpointsListener() {
 
                 public void breakpointStatusChanged(String id, Map<String,Object> m) {
                     assert Protocol.isDispatchThread();
@@ -65,10 +66,31 @@ public class TCFBreakpointsStatus {
 
                 public void contextRemoved(String[] ids) {
                     for (String id : ids) {
-                        if (status.remove(id) == null) continue;
+                        if (!status.containsKey(id)) continue;
                         for (Iterator<ITCFBreakpointListener> i = listeners.iterator(); i.hasNext();) {
                             i.next().breakpointRemoved(id);
                         }
+                        status.remove(id);
+                    }
+                }
+            };
+            service.addListener(listener);
+
+            // query foreign breakpoints
+            service.getIDs(new IBreakpoints.DoneGetIDs() {
+                @SuppressWarnings("unchecked")
+                public void doneGetIDs(IToken token, Exception error, String[] ids) {
+                    if (error != null) return;
+                    for (final String id : ids) {
+                        // fake properties - only ID is required for contextAdded
+                        Map<String, Object> bpProps = new HashMap<String, Object>();
+                        bpProps.put(IBreakpoints.PROP_ID, id);
+                        listener.contextAdded((Map<String, Object>[]) new Map[] { bpProps });
+                        service.getStatus(id, new IBreakpoints.DoneGetStatus() {
+                            public void doneGetStatus(IToken token, Exception error, Map<String, Object> status) {
+                                if (error == null) listener.breakpointStatusChanged(id, status);
+                            }
+                        });
                     }
                 }
             });
