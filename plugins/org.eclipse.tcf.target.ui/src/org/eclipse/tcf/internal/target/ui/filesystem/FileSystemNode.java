@@ -75,6 +75,9 @@ public class FileSystemNode {
 	}
 	
 	public boolean hasChildren() {
+		// On Windows, if drive isn't mounted, it's listed but has no attributes.
+		if (dirEntry.attrs == null)
+			return false;
 		return dirEntry.attrs.isDirectory();
 	}
 	
