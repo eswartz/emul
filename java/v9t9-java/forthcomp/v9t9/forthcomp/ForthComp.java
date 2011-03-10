@@ -145,6 +145,16 @@ public class ForthComp {
 	    		ifAlignedSize += (size + 3) / 4 * 4;
 	    	}
 	    	System.out.println("real size = " + realSize + "; if aligned = " + ifAlignedSize);
+	    	
+	    	int headerSizes = 0;
+	    	for (DictEntry entry : sortedDict) {
+	    		if (entry.getHeaderSize() > 0) {
+	    			System.out.println(": " + entry.getName());
+	    			headerSizes += entry.getHeaderSize();
+	    		}
+	    	}
+	    	System.out.println("headers size = " + headerSizes);
+	    	
     	}
 	}
 
