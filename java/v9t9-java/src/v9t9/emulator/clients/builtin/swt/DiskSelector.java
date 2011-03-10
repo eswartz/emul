@@ -51,6 +51,7 @@ import org.ejs.coffee.core.properties.IPropertyListener;
 import org.ejs.coffee.core.properties.SettingProperty;
 
 import v9t9.emulator.clients.builtin.ISettingDecorator;
+import v9t9.emulator.clients.builtin.IconSetting;
 import v9t9.emulator.common.EmulatorSettings;
 import v9t9.emulator.hardware.dsrs.DsrSettings;
 import v9t9.emulator.hardware.dsrs.realdisk.BaseDiskImage;
@@ -433,7 +434,10 @@ public class DiskSelector extends Composite {
 					new Comparator<SettingProperty>() {
 
 						public int compare(SettingProperty o1, SettingProperty o2) {
-							return o1.getLabel().compareTo(o2.getLabel());
+							if (o1 instanceof IconSetting && o2 instanceof IconSetting)
+								return o1.getLabel().compareTo(o2.getLabel());
+							else
+								return 0;
 						}
 				
 			});

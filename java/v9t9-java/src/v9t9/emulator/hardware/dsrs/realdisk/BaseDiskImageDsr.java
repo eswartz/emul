@@ -41,6 +41,10 @@ public abstract class BaseDiskImageDsr implements FDC1771Constants, DsrSettings 
 	private static final String diskImageIconPath = Emulator.getDataFile("icons/disk_image.png").getAbsolutePath();
 
 
+	public static final SettingProperty diskImageDebug = new SettingProperty("DiskImageDebug",
+			"Debug Disk Image Support",
+			"When set, log disk operation information to the console.",
+			Boolean.FALSE);
 	public static final SettingProperty diskImageRealTime = new SettingProperty("DiskImageRealTime",
 			"Real-Time Disk Images",
 			"When set, disk operations on disk images will try to run at a similar speed to the original FDC1771.",
@@ -144,6 +148,7 @@ public abstract class BaseDiskImageDsr implements FDC1771Constants, DsrSettings 
 			addEnablementDependency(EmuDiskDsr.emuDiskDsrEnabled);
 			addEnablementDependency(BaseDiskImageDsr.diskImageDsrEnabled);
 			addEnablementDependency(BaseDiskImageDsr.diskImageRealTime);
+			addEnablementDependency(BaseDiskImageDsr.diskImageDebug);
 		}
 
 		/* (non-Javadoc)
@@ -197,6 +202,7 @@ public abstract class BaseDiskImageDsr implements FDC1771Constants, DsrSettings 
 		//diskImageDsrEnabled.setBoolean(true);
 		WorkspaceSettings.CURRENT.register(diskImageDsrEnabled);
 		WorkspaceSettings.CURRENT.register(diskImageRealTime);
+		WorkspaceSettings.CURRENT.register(diskImageDebug);
 		
     	String diskImageRootPath = WorkspaceSettings.CURRENT.getConfigDirectory() + "disks";
     	defaultDiskRootDir = new File(diskImageRootPath);
@@ -327,11 +333,16 @@ public abstract class BaseDiskImageDsr implements FDC1771Constants, DsrSettings 
 			// strobe the motor (this doesn't turn it off, which happens via timeout)
 			if (on) {
 				if (!info.motorRunning) {
-					info("DSK{0}: motor starting", selectedDisk);
-					info.motorTimeout = System.currentTimeMillis() + 1500;
-					//fdc.status.set(StatusBit.BUSY);
-					//info.motorRunning = true;
-					
+					if (diskImageRealTime.getBoolean()) {
+						info("DSK{0}: motor starting", selectedDisk);
+						info.motorTimeout = System.currentTimeMillis() + 1500;
+						//fdc.status.set(StatusBit.BUSY);
+					} else {
+						info("DSK{0}: motor on", selectedDisk);
+						info.motorTimeout = System.currentTimeMillis();
+						info.motorRunning = true;
+						
+					}
 				} else {
 					info.motorTimeout = System.currentTimeMillis() + 4230;
 				}
@@ -606,7 +617,8 @@ public abstract class BaseDiskImageDsr implements FDC1771Constants, DsrSettings 
 	static void info(String string) {
 		if (Executor.settingDumpFullInstructions.getBoolean())
 			Executor.getDumpfull().println(string);
-		System.out.println(string);
+		if (diskImageDebug.getBoolean())
+			System.out.println(string);
 		
 	}
 	static void info(String fmt, Object... args) {
@@ -635,6 +647,7 @@ public abstract class BaseDiskImageDsr implements FDC1771Constants, DsrSettings 
 		
 		settings = new ArrayList<SettingProperty>(diskSettingsMap.values());
 		settings.add(diskImageRealTime);
+		settings.add(diskImageDebug);
 		map.put(DsrHandler.GROUP_DISK_CONFIGURATION, settings);
 		
 		return map;
