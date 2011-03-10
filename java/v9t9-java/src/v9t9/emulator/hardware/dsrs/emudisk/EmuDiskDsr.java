@@ -224,7 +224,7 @@ public class EmuDiskDsr implements DsrHandler9900 {
 			DirectDiskHandler handler = new DirectDiskHandler(getCruBase(), xfer, mapper, code);
 	
 			if (handler.dev <= 2 && StandardDiskImageDsr.diskImageDsrEnabled.getBoolean()) {
-				Executor.settingDumpFullInstructions.setBoolean(true);
+				//Executor.settingDumpFullInstructions.setBoolean(true);
 				return false;
 			}
 			

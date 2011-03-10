@@ -28,12 +28,12 @@ public class MemoryDiskImageDsr extends BaseDiskImageDsr implements IMemoryIOHan
 	public static final int TRACK = 1; 
 	public static final int SECTOR = 2; 
 	public static final int DATA = 3; 
-	public static final int DSK = 4;
-	public static final int FLAGS = 5;
-	public static final int FL_MOTOR = 0x1;
+	public static final int FLAGS = 4;
+	public static final int DSK = 5;
+	public static final int FL_MOTOR = 0x8;
+	public static final int FL_HOLD = 0x4;
 	public static final int FL_HEAD = 0x2;
-	public static final int FL_SIDE = 0x4;
-	public static final int FL_HOLD = 0x8;
+	public static final int FL_SIDE = 0x1;
 	
 	private final int baseAddr;
 
@@ -78,15 +78,15 @@ public class MemoryDiskImageDsr extends BaseDiskImageDsr implements IMemoryIOHan
 			if (((flags ^ oldflags) & FL_SIDE) != 0) {
 				setDiskSide((flags & FL_SIDE) != 0 ? 1 : 0);
 			}
-			if (((flags ^ oldflags) & FL_MOTOR) != 0) {
-				setDiskMotor((flags & FL_MOTOR) != 0);
-			}
 			if (((flags ^ oldflags) & FL_HEAD) != 0) {
 				setDiskHeads((flags & FL_HEAD) != 0);
 			}
 			if (((flags ^ oldflags) & FL_HOLD) != 0) {
 				setDiskHold((flags & FL_HOLD) != 0);
 			}
+			
+			// always pass on, since setting will keep it going
+			setDiskMotor((flags & FL_MOTOR) != 0);
 			}
 		}
 	}
@@ -122,7 +122,7 @@ public class MemoryDiskImageDsr extends BaseDiskImageDsr implements IMemoryIOHan
 	 */
 	@Override
 	public boolean handlesAddress(int addr) {
-		return addr >= baseAddr && addr <= baseAddr + FLAGS;
+		return addr >= baseAddr && addr <= baseAddr + DSK;
 	}
 
 }

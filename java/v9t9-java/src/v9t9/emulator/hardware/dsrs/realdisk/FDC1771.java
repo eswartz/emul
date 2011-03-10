@@ -42,7 +42,9 @@ public class FDC1771 implements IPersistable {
 	private Iterator<IdMarker> trackMarkerIter;
 	private IdMarker currentMarker;
 	public boolean heads;
-	
+
+	public long commandBusyExpiration;
+
 	/**
 	 * 
 	 */
@@ -85,6 +87,7 @@ public class FDC1771 implements IPersistable {
 	 * 
 	 */
 	public void FDCflush() throws IOException {
+		
 		if (!hold) return;
 
 		if (image == null) {
@@ -161,6 +164,9 @@ public class FDC1771 implements IPersistable {
 		int tries = trackMarkers.size();
 		boolean found = false;
 		while (!found && tries-- > 0) {
+
+			addBusyTime(20);
+			
 			if (!FDCfindIDmarker())
 				break;
 			
@@ -191,6 +197,22 @@ public class FDC1771 implements IPersistable {
 		if (seektrack != track || seekside != side) {
 			// don't change anything until the track changes, 
 			// so we can fetch the hidden sectors with the same id as normal ones
+			
+			int stepTime = 0;
+			switch (flags & FDC1771Constants.fl_step_rate) {
+			case 0x00:
+			case 0x01:
+				stepTime = 6;
+				break;
+			case 0x02:
+				stepTime = 10;
+				break;
+			case 0x03:
+				stepTime = 20;
+				break;
+			}
+			addBusyTime(Math.abs(seektrack - track) * stepTime);
+
 			seektrack = track;
 			seekside = side;
 			
@@ -201,6 +223,17 @@ public class FDC1771 implements IPersistable {
 			if (image != null)
 				image.seekToCurrentTrack(seektrack, seekside);
 		}
+	}
+
+	/**
+	 * @param ms
+	 */
+	public void addBusyTime(int ms) {
+		//status.set(StatusBit.BUSY);
+		if (commandBusyExpiration == 0) {
+			commandBusyExpiration = System.currentTimeMillis();
+		}
+		commandBusyExpiration += ms;
 	}
 
 	public void FDCrestore() throws IOException {
@@ -216,7 +249,8 @@ public class FDC1771 implements IPersistable {
 		
 		if ((flags & StandardDiskImageDsr.fl_verify_track) != 0) {
 			verifyTrack(trackReg);
-		}			
+		}
+		
 	}
 
 	public void FDCseek() throws IOException {
@@ -321,8 +355,9 @@ public class FDC1771 implements IPersistable {
 		}
 		bufpos = 0;
 		
-		image.readSectorData(currentMarker, rwBuffer, 0, buflen);
+		addBusyTime(buflen * 200 / 1000);
 		
+		image.readSectorData(currentMarker, rwBuffer, 0, buflen);
 		
 		status.set(StatusBit.DRQ_PIN);
 	}
@@ -354,6 +389,8 @@ public class FDC1771 implements IPersistable {
 			buflen = currentMarker.sizeid != 0 ? (currentMarker.sizeid & 0xff) * 16 : 4096;
 			
 		bufpos = 0;
+		
+		addBusyTime(buflen * 200 / 1000);
 		
 		status.set(StatusBit.DRQ_PIN);
 		
@@ -400,6 +437,9 @@ public class FDC1771 implements IPersistable {
 	public void FDCinterrupt() throws IOException {
 		StandardDiskImageDsr.info("FDC interrupt");
 		
+		if (image != null)
+			image.motorTimeout = 0;
+		commandBusyExpiration = 0;
 		status.clear();
 		
 		FDCflush();
@@ -416,6 +456,8 @@ public class FDC1771 implements IPersistable {
 			
 		bufpos = 0;
 		
+		addBusyTime(buflen * 10 / 1000);
+		
 		if (image != null && image.readonly)
 			status.set(StatusBit.WRITE_PROTECT);
 	}
@@ -428,11 +470,15 @@ public class FDC1771 implements IPersistable {
 		bufpos = 0;
 		if (image != null) {
 			buflen = image.getTrackSize();
+			if (!image.motorRunning)
+				status.set(StatusBit.BUSY);
 			image.readTrackData(rwBuffer, 0, buflen);
 		} else {
 			buflen = 0;
 		}
 		
+
+		addBusyTime(buflen * 10 / 1000);
 	}
 
 	public void saveState(ISettingSection section) {
@@ -455,7 +501,7 @@ public class FDC1771 implements IPersistable {
 	public byte readByte() {
 		byte ret = 0;
 
-		if (hold && buflen != 0) {
+		if (hold && image != null && image.motorRunning && buflen != 0) {
 			ret = rwBuffer[bufpos++];
 			crc = StandardDiskImageDsr.calc_crc(crc, ret & 0xff);
 			if (bufpos >= buflen) {
@@ -471,7 +517,7 @@ public class FDC1771 implements IPersistable {
 	 * @param val
 	 */
 	public void writeByte(byte val) {
-		if (buflen != 0) {
+		if (buflen != 0 && image != null && image.motorRunning) {
 			/* fill circular buffer */
 			if (bufpos < buflen) {
 				rwBuffer[bufpos++] = val;
