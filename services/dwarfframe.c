@@ -659,13 +659,20 @@ static void generate_commands(void) {
     add_command_sequence(&dwarf_stack_trace_fp, NULL);
 }
 
-static void read_frame_cie(U8_T pos) {
+static void read_frame_cie(U8_T fde_pos, U8_T pos) {
     int cie_dwarf64 = 0;
     U8_T saved_pos = dio_GetPos();
     U8_T cie_length = 0;
     U8_T cie_end = 0;
 
     rules.cie_pos = pos;
+    if (pos >= rules.section->size) {
+        char msg[256];
+        snprintf(msg, sizeof(msg),
+            "Invalid CIE pointer 0x%" PRIX64
+            " in FDE at 0x%" PRIX64, pos, fde_pos);
+        str_exception(ERR_INV_DWARF, msg);
+    }
     dio_Skip(pos - dio_GetPos());
     cie_length = dio_ReadU4();
     if (cie_length == ~(U4_T)0) {
@@ -757,17 +764,26 @@ void get_dwarf_stack_frame_info(Context * ctx, ELF_File * file, U8_T IP) {
         U8_T fde_length = 0;
         U8_T fde_pos = 0;
         U8_T fde_end = 0;
+        U8_T ref_pos = 0;
         U8_T cie_ref = 0;
         int fde_flag = 0;
 
+        fde_pos = dio_GetPos();
         fde_length = dio_ReadU4();
         if (fde_length == 0) continue;
         if (fde_length == ~(U4_T)0) {
             fde_length = dio_ReadU8();
             fde_dwarf64 = 1;
         }
-        fde_pos = dio_GetPos();
-        fde_end = fde_pos + fde_length;
+        ref_pos = dio_GetPos();
+        fde_end = ref_pos + fde_length;
+        if (fde_end > rules.section->size) {
+            char msg[256];
+            snprintf(msg, sizeof(msg),
+                "Invalid length 0x%" PRIX64
+                " in FDE at 0x%" PRIX64, fde_length, fde_pos);
+            str_exception(ERR_INV_DWARF, msg);
+        }
         cie_ref = fde_dwarf64 ? dio_ReadU8() : dio_ReadU4();
         if (rules.eh_frame) fde_flag = cie_ref != 0;
         else if (fde_dwarf64) fde_flag = cie_ref != ~(U8_T)0;
@@ -775,8 +791,8 @@ void get_dwarf_stack_frame_info(Context * ctx, ELF_File * file, U8_T IP) {
         if (fde_flag) {
             U8_T Addr, Range, AddrRT;
             ELF_Section * sec = NULL;
-            if (rules.eh_frame) cie_ref = fde_pos - cie_ref;
-            if (cie_ref != rules.cie_pos) read_frame_cie(cie_ref);
+            if (rules.eh_frame) cie_ref = ref_pos - cie_ref;
+            if (cie_ref != rules.cie_pos) read_frame_cie(fde_pos, cie_ref);
             Addr = read_frame_data_pointer(rules.addr_encoding, &sec);
             Range = read_frame_data_pointer(rules.addr_encoding, NULL);
             AddrRT = elf_map_to_run_time_address(ctx, file, sec, (ContextAddress)Addr);
