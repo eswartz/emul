@@ -84,7 +84,7 @@ typedef void (*DIO_EntryCallBack)(U2_T /* Tag */, U2_T /* Attr */, U2_T /* Form 
  * This sequence is repeated for each entry in the debug info unit.
  */
 extern void dio_ReadUnit(DIO_UnitDescriptor * Unit, DIO_EntryCallBack CallBack);
-extern int dio_ReadEntry(DIO_EntryCallBack CallBack);
+extern int dio_ReadEntry(DIO_EntryCallBack CallBack, U2_T Attr);
 
 /* CallBack 'Form' value on unit entry: */
 #define DWARF_ENTRY_NO_CHILDREN     2

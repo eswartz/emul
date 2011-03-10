@@ -68,6 +68,7 @@ ELF_Section * dio_gFormSection = NULL;
 static ELF_Section * sSection;
 static int sBigEndian;
 static int sAddressSize;
+static int sRefAddressSize;
 static U1_T * sData;
 static U8_T sDataPos;
 static U8_T sDataLen;
@@ -118,9 +119,19 @@ void dio_EnterSection(DIO_UnitDescriptor * Unit, ELF_Section * Section, U8_T Off
     sDataPos = Offset;
     sDataLen = Section->size;
     sBigEndian = Section->file->big_endian;
-    if (Unit != NULL) sAddressSize = Unit->mAddressSize;
-    else if (Section->file->elf64) sAddressSize = 8;
-    else sAddressSize = 4;
+    if (Unit != NULL) {
+        sAddressSize = Unit->mAddressSize;
+        if (Unit->mVersion < 3) sRefAddressSize = Unit->mAddressSize;
+        else sRefAddressSize = Unit->m64bit ? 8 : 4;
+    }
+    else if (Section->file->elf64) {
+        sAddressSize = 8;
+        sRefAddressSize = 8;
+    }
+    else {
+        sAddressSize = 4;
+        sRefAddressSize = 4;
+    }
     sUnit = Unit;
     dio_gEntryPos = 0;
     assert(sData != NULL);
@@ -352,10 +363,8 @@ static void dio_ReadFormRelRef(U8_T Offset) {
 }
 
 static void dio_ReadFormRefAddr(void) {
-    U4_T Size = sUnit->mAddressSize;
-    if (sUnit->mVersion >= 3) Size = sUnit->m64bit ? 8 : 4;
-    dio_gFormData = dio_ReadAddressX(&dio_gFormSection, Size);
-    dio_gFormDataSize = Size;
+    dio_gFormData = dio_ReadAddressX(&dio_gFormSection, sRefAddressSize);
+    dio_gFormDataSize = sRefAddressSize;
 }
 
 static void dio_ReadFormString(void) {
@@ -422,7 +431,7 @@ static void dio_ReadAttribute(U2_T Attr, U2_T Form) {
     }
 }
 
-int dio_ReadEntry(DIO_EntryCallBack CallBack) {
+int dio_ReadEntry(DIO_EntryCallBack CallBack, U2_T TargetAttr) {
     DIO_Abbreviation * Abbr = NULL;
     U2_T Tag = 0;
     U4_T AttrPos = 0;
@@ -477,6 +486,42 @@ int dio_ReadEntry(DIO_EntryCallBack CallBack) {
             Form = Attr & 0xF;
             Attr = (Attr & 0xfff0) >> 4;
         }
+        if (TargetAttr && Attr != TargetAttr) {
+            /* Shortcut for attributes that the caller is not interested in */
+            switch (Attr) {
+            case 0:
+                if (Form != 0) continue;
+                return 1;
+            case AT_specification_v1:
+            case AT_specification_v2:
+            case AT_abstract_origin:
+                break;
+            default:
+                switch (Form) {
+                case FORM_ADDR      : sDataPos += sAddressSize; continue;
+                case FORM_REF       : sDataPos += 4; continue;
+                case FORM_BLOCK1    : sDataPos += dio_ReadU1F(); continue;
+                case FORM_BLOCK2    : sDataPos += dio_ReadU2(); continue;
+                case FORM_BLOCK4    : sDataPos += dio_ReadU4(); continue;
+                case FORM_BLOCK     : sDataPos += dio_ReadULEB128(); continue;
+                case FORM_DATA1     : sDataPos++; continue;
+                case FORM_DATA2     : sDataPos += 2; continue;
+                case FORM_DATA4     : sDataPos += 4; continue;
+                case FORM_DATA8     : sDataPos += 8; continue;
+                case FORM_SDATA     : dio_ReadS8LEB128(); continue;
+                case FORM_UDATA     : dio_ReadU8LEB128(); continue;
+                case FORM_FLAG      : sDataPos++; continue;
+                case FORM_STRING    : dio_ReadFormString(); continue;
+                case FORM_STRP      : sDataPos += (sUnit->m64bit ? 8 : 4); continue;
+                case FORM_REF_ADDR  : sDataPos += sRefAddressSize; continue;
+                case FORM_REF1      : sDataPos++; continue;
+                case FORM_REF2      : sDataPos += 2; continue;
+                case FORM_REF4      : sDataPos += 4; continue;
+                case FORM_REF8      : sDataPos += 8; continue;
+                case FORM_REF_UDATA : dio_ReadULEB128(); continue;
+                }
+            }
+        }
         if (Attr != 0 && Form != 0) dio_ReadAttribute(Attr, Form);
         if (Tag == TAG_compile_unit) {
             if (Attr == AT_sibling && sUnit->mUnitSize == 0) {
@@ -526,7 +571,7 @@ void dio_ReadUnit(DIO_UnitDescriptor * Unit, DIO_EntryCallBack CallBack) {
         sUnit->mAddressSize = 4;
     }
     while (sUnit->mUnitSize == 0 || sDataPos < sUnit->mUnitOffs + sUnit->mUnitSize) {
-        dio_ReadEntry(CallBack);
+        dio_ReadEntry(CallBack, 0);
     }
     sUnit = NULL;
 }

@@ -285,7 +285,7 @@ static void read_object_info(U2_T Tag, U2_T Attr, U2_T Form) {
                 sPrevSibling = NULL;
                 for (;;) {
                     if (SiblingPos > 0 && dio_GetPos() >= SiblingPos) break;
-                    if (!dio_ReadEntry(read_object_info)) break;
+                    if (!dio_ReadEntry(read_object_info, 0)) break;
                 }
                 if (SiblingPos > dio_GetPos()) dio_Skip(SiblingPos - dio_GetPos());
                 sParentObject = Parent;
@@ -674,7 +674,7 @@ static void read_dwarf_object_property(Context * Ctx, int Frame, ObjectInfo * Ob
         gop_gForm = 0;
         gop_gSpecification = 0;
         gop_gAbstractOrigin = 0;
-        dio_ReadEntry(get_object_property_callback);
+        dio_ReadEntry(get_object_property_callback, Attr);
         dio_ExitSection();
         if (gop_gForm != 0) break;
         if (gop_gSpecification != 0) dio_EnterSection(&sCompUnit->mDesc, sDebugSection, gop_gSpecification - sDebugSection->addr);
