@@ -592,12 +592,16 @@ public class KeyboardState {
     
 	public synchronized void pushQueuedKey() {
 		long now = System.currentTimeMillis();
-		if (queuedKeys.isEmpty()) {
+		if (queuedKeys.isEmpty() && currentGroup == null) {
 			if (lastChangeTime + TIMEOUT < now)
 				Arrays.fill(crukeyboardmap, 0, 6, (byte) 0);
 			else
 				return;
 		} else {
+			if (currentGroup != null) {
+				queuedKeys.add(currentGroup);
+				currentGroup = null;
+			}
 			Arrays.fill(crukeyboardmap, 0, 6, (byte) 0);
 			if (DEBUG) System.out.println("===========");
 			List<KeyDelta> group = queuedKeys.remove();
