@@ -47,6 +47,8 @@
 
 typedef void (*InitFunc)(Protocol *, TCFBroadcastGroup *, void *);
 
+const char *plugins_path = QUOTE(PATH_Plugins);
+
 static void ** plugins_handles = NULL;
 static size_t plugins_count = 0;
 static struct function_entry {
@@ -81,16 +83,16 @@ int plugins_load(Protocol * proto, TCFBroadcastGroup * bcg) {
     int file_count = -1;
     int ret = 0;
 
-    file_count = scandir(QUOTE(PATH_Plugins), &files, plugins_filter, plugins_ralphasort);
+    file_count = scandir(plugins_path, &files, plugins_filter, plugins_ralphasort);
     if (file_count < 0) {
-        trace(LOG_PLUGIN, "plugins error: failed opening plugins directory \"" QUOTE(PATH_Plugins) "\"");
+        trace(LOG_PLUGIN, "plugins error: failed opening plugins directory \"%s\"", plugins_path);
         return -1;
     }
 
     while (file_count--) {
         char * cur_plugin_path = NULL;
 
-        if (asprintf(&cur_plugin_path, QUOTE(PATH_Plugins) "/%s", files[file_count]->d_name) == -1) {
+        if (asprintf(&cur_plugin_path, "%s/%s", plugins_path, files[file_count]->d_name) == -1) {
             trace(LOG_PLUGIN, "plugins error: `asprintf' failed for plugin \"%s\"", files[file_count]->d_name);
             ret = -1;
             goto delete_cur_entry;
