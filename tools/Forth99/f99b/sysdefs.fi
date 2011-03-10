@@ -37,18 +37,41 @@ $0083       constant    'KBDA
 $0084       constant    'GATE
 
 $0088       constant    'DSK 
+
 \   0: write: cmd; read: status
   'DSK 0 +  constant    'DSKCMD
+        $00 constant    #dskCmdRestore
+        $10 constant    #dskCmdSeek
+        $80 constant    #dskCmdReadSector
+        $A0 constant    #dskCmdWriteSector
+        $F0 constant    #dskCmdInterrupt
+        
+        $08 constant    #dskCmd'Head
+        $04 constant    #dskCmd'Verify
+        $02 constant    #dskCmd'10ms
+        
 \   0: write: cmd; read: status
   'DSK 0 +  constant    'DSKST
+        $80 constant    #dskStRdy
+        $02 constant    #dskStDrq
+        $01 constant    #dskStBusy
+        
 \   1: write/read: track addr
   'DSK 1 +  constant    'DSKTRK
+  
 \  2: write/read: sector addr
   'DSK 2 +  constant    'DSKSEC
+  
 \  3: write/read: data
   'DSK 3 +  constant    'DSKDAT
+  
 \  4: write/read: [0 | 0 | 0 | 0 | motor | hold | head | side ] 
   'DSK 4 +  constant    'DSKFLG
+        $01 constant    #dskFlgSide
+        $02 constant    #dskFlgHead
+        $04 constant    #dskFlgHold
+        $08 constant    #dskFlgMotor
+  
 \  5: write/read: [0 | 0 | 0 | 0 | 0 | D2 | D1 | D0] 
   'DSK 5 +  constant    'DSKNUM
 
@@ -102,10 +125,12 @@ FaultStacks  (#RP) - (#SP) - (#pad) - (##-pad) - (#slit-pad) - (#tib) - (#blk) -
 
 \ -----------   GROM addresses
 
-$0          constant    grom_kbdlist
-$130        constant    grom_font8x8
-$930        constant    grom_font5x6
-$C30        constant    grom_editorhelp
+$0          constant    >grom_sig
+$2          constant    >grom_kbdlist
+$4          constant    >grom_font8x8
+$6          constant    >grom_font5x6
+$8          constant    >grom_errptrs
+$A          constant    >grom_editorhelp
 
 \ -----------   constants
 
@@ -165,4 +190,12 @@ $03         constant    #regsym
 : (dbgf)    Isyscall c, #dbgf c, ; immediate
 : (idle)    Isyscall c, #idle c, ; immediate
 : (register-symbol)    Isyscall c, #regsym c, ; immediate
+
+\ ---------     interrupt flag bits
+
+$80         constant    v-int-nosprmot
+$40         constant    v-int-nocursor
+$20         constant    v-int-noabort
+
+
 

@@ -642,7 +642,7 @@ error" need prim execute"
 [THEN]
 
 [IFUNDEF] ABORT"
-: (abort")
+| : (abort")
     rot if cr ." error: " type cr abort else 2drop then
 ;
 
@@ -814,7 +814,7 @@ $20 constant BL
 ;
 
 [IFUNDEF] WORD
-: (parse-word)  ( ch -- caddr u )
+| : (parse-word)  ( ch -- caddr u )
     (skip-spaces)
     parse               \ get new word
     \ 2dup type
@@ -1035,7 +1035,7 @@ error" need key"
 [IFUNDEF] (match)       
 
 \   Match 'char' inside [caddr..caddr+u) and return length of word
-: (match)       ( caddr u char -- u )
+| : (match)       ( caddr u char -- u )
 
     over >r         \ save original #chars
     >r              \ store char 

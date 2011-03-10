@@ -253,7 +253,7 @@ User dpl
 
 [IFUNDEF] QUIT
 
-: (clrsrc)
+| : (clrsrc)
     0 blk ! 0 loadfile ! 0 loadline !
 ;
 
@@ -302,7 +302,7 @@ User dpl
 \ User parsed
 \ [[[ $20 tudp @ + tudp !  $20 tup @ + tup ! ]]]
 \ 
-: str= compare 0= ;
+: str=  s<> 0= ;
 \ : toupper dup $61 $7b within if $20 - then ;
 \ 
 \ : upcase ( str -- )
@@ -312,7 +312,7 @@ User dpl
 \     over >r  rot over 1+  r> move c! ;
 \ : bounds ( addr u -- addr+u addr ) 
 \     over + swap ;
-: comment? ( c-addr u -- c-addr u )
+| : comment? ( c-addr u -- c-addr u )
         2dup s" (" str=
         IF    postpone (
         ELSE  2dup s" \" str= IF postpone \ THEN

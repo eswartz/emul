@@ -24,6 +24,18 @@
 
 start	equ	$
 
+; Lookup table
+
+sigoffs         dw  >AA99
+kbdoffs         dw  kbds
+font8x8offs     dw  font0
+font5x6offs     dw  font5x6
+errptrsoffs     dw  errptrs
+editorhelpoffs  dw  errptrs
+
+
+
+
 ;	The order of these tables follows the 3 shift bits:
 ;
 ;   0 = no shifts
@@ -383,6 +395,24 @@ font5x6
 	db >c0, >20, >30, >20, >c0, >0
 	db >40, >a8, >10, >0, >0, >0
 	db >0, >0, >0, >0, >0, >0
+
+errptrs dw errcnt
+    dw err_undefined, err_interpret_only, err_loading_only
+    dw err_block_io, err_compile_only, err_empty_name
+    dw err_control_nesting, err_not_deferred, err_out_of_range
+    dw err_file_io
+errcnt equ ($ - errptrs) / 2
+
+err_undefined       db "undefined",0
+err_interpret_only  db "interpret mode only",0
+err_loading_only    db "loading only",0
+err_block_io        db "block i/o error",0
+err_compile_only    db "compilation only",0
+err_empty_name      db "empty name",0
+err_control_nesting db "control nesting",0
+err_not_deferred    db "not a DEFERed word",0
+err_out_of_range    db "out of range",0
+err_file_io         db "file I/O error",0
 
 editorhelp
       ; 0         1         2         3         4         5         6

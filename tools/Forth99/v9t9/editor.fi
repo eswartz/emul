@@ -463,7 +463,8 @@ User ovr        ( insert/overwrite flag )
     graddr >r
 
     14 0 do
-        i 64 U*  grom_editorhelp +  2 i  txt-xy>addr  64  +gvmove 
+        i 64 U*  >grom_editorhelp g@  +  
+        2 i  txt-xy>addr  64  +gvmove 
     loop
     
     r> gwaddr    

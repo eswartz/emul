@@ -14,20 +14,11 @@
     dup >r @  NAND  r> !
 ;
 
-:: compare     ( addr u addr' u' -- -1/0/1 )
-    u u' min 0 do
-        addr i + c@
-        addr' i + c@
-        - ?dup if unloop exit then
-    loop
-    u u' -  \ length is answer
-;
-
 : tolower ( ch -- ch )
    dup [char] a [ [char] z 1+ literal ] within $20 and -
 ;
 
-:: comparef     ( addr u addr' u' -- -1/0/1 )
+:: s<>     ( addr u addr' u' -- -1/0/1 )
     u u' min 0 do
         addr i + c@ tolower
         addr' i + c@ tolower
@@ -36,7 +27,8 @@
     u u' -  \ length is answer
 ;
 
-:: align-to ( val scale -- val' )
+( align 'val' to 'scale' )
+:: %- ( val scale -- val' )
     val scale  u/mod  nip scale u*    
 ;
 

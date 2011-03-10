@@ -41,8 +41,8 @@ ramptr !
 
 : term-refresh
     v-text  c@ not  if
-        v-width @   v-fntwidth c@   dup win-chxs c!  align-to  win-mx  !
-        v-height @  v-fntheight c@  dup win-chys c!  align-to  win-my  !
+        v-width @   v-fntwidth c@   dup win-chxs c!  %-  win-mx  !
+        v-height @  v-fntheight c@  dup win-chys c!  %-  win-my  !
     else
         v-width @   win-mx  !
         v-height @  win-my  !

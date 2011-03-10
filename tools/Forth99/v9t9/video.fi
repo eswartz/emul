@@ -22,7 +22,7 @@ v-data
     +field  v-width        \ units across
     +field  v-height       \ units down
     
-    +field  v-font         \ GROM addr of current font
+    +field  v-font         \ GROM offs of addr of current font
     
     +1field v-fntwidth     \ font width in pixels
     +1field v-fntheight    \ font height in pixels
@@ -64,9 +64,6 @@ dup constant v-data0
 dup v-data - negate  Constant v-data-size
 
 ramptr ! 
-
-$80 constant    v-int-nosprmot
-$40 constant    v-int-nocursor
 
 \ -------------------------------------------------------------------------
 
@@ -386,18 +383,24 @@ include video_msx.fi
     term-refresh
 ;
 
+:   v-font! ( groffs -- graddr )
+    graddr  >r
+    g@  v-font !
+    r>  gwaddr
+;
+
 :   font8x8
-    grom_font8x8 v-font !
+    >grom_font8x8 v-font!
     8 v-fntwidth c!   8 v-fntheight c!
     (setfont)
 ;
 :   font6x8
-    grom_font8x8 v-font !
+    >grom_font8x8 v-font!
     6 v-fntwidth c!   8 v-fntheight c!
     (setfont)
 ;
 :   font5x6
-    grom_font5x6 v-font !
+    >grom_font5x6 v-font!
     5 v-fntwidth c!   6 v-fntheight c!
     (setfont)
 ;

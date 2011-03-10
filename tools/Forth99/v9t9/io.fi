@@ -94,7 +94,10 @@
 0 <export
 
 : fdc-ready ( -- 0|$80 )
-    'DSKST c@  $80 <
+    'DSKST c@ 
+    dup  #dskStRdy <
+    swap #dskStBusy AND 0=
+    AND
 ;
 
 : fdc-wait-ready ( ms -- ! )
@@ -102,11 +105,11 @@
 ;
 
 : fdc-command ( cmd-byte -- ! )
-    1000 fdc-wait-ready
+    3000 fdc-wait-ready
     
     'DSKCMD c!
     
-    1000 fdc-wait-ready
+    3000 fdc-wait-ready
 ;
 
 
@@ -120,28 +123,33 @@
 ;
 
 : motor ( on? -- 0|err )
-    $01 dsk-flg!
+    #dskFlgMotor dsk-flg!
 ;
 
 
 : seek-command ( cmd -- )
-    $0E OR      ( load head, verify, step, 10ms )
+    [ #dskCmd'Head #dskCmd'Verify #dskCmd'10ms OR OR literal ] OR      
     fdc-command 
 ;
 
 :: seek-track ( trk side -- )
     true motor
+    false #dskFlgHold dsk-flg!
     
     side 1 U>=  ?toss
      
     \ set side
-    side $01  dsk-flg!
+    side #dskFlgSide  dsk-flg!
+    \ load head
+    true #dskFlgHead  dsk-flg!
 
     \ STUPID for now
-    $00 seek-command    ( restore )
+    #dskCmdRestore seek-command   
     
     trk 'DSKDAT c!
-    $10 seek-command 
+    #dskCmdSeek seek-command
+    
+    \ keep motor going in case of xfers 
 ;
 
 
@@ -168,6 +176,10 @@ chars/block bytes-per-sector u/  constant secs-per-block
     'DSKSEC c!
 ;
 
+: drq-ready ( -- 0|$2 )
+    'DSKST c@  #dskStDrq  AND
+;
+
 : (dsk-read) ( addr --  )
     'DSKDAT c@  swap c!  
 ;
@@ -178,10 +190,18 @@ chars/block bytes-per-sector u/  constant secs-per-block
     
 : xfer ( addr xt cmd -- addr )
     fdc-command
+
+    true #dskFlgHold dsk-flg!
+    true motor
+        
+    1 ['] drq-ready  wait4  0= ?toss 
     bytes-per-sector 0 do
-        2dup execute  
+        2dup execute  swap 1+ swap
     loop
     drop
+
+    false #dskFlgHold dsk-flg!
+    \ keep motor going in case of further xfers
 ;
 
 \ read/write block on current disk 
@@ -192,15 +212,15 @@ chars/block bytes-per-sector u/  constant secs-per-block
         
         addr
         r/w if
-            ['] (dsk-read)  $80
+            ['] (dsk-read)  #dskCmdReadSector
         else
-            ['] (dsk-write) $A0
+            ['] (dsk-write) #dskCmdWriteSector
         then
         xfer
         addr!
     loop
             
-    123
+    0
 ;
 
 \ ---------------
@@ -218,7 +238,7 @@ chars/block bytes-per-sector u/  constant secs-per-block
         
         r>    
     then
-        
+    
     0 'DSKNUM c!
 ;
 
@@ -240,14 +260,23 @@ $E000 chars/block U/  Constant #GRAM
     then
 ;
 
+: set-disk  ( xt -- )
+    flush
+    >rwblk  !
+;
+
 export>
 
 : DSK1 ( -- )
-    ['] disk-rwblk  >rwblk  !
+    guard if 
+        #dskCmdInterrupt fdc-command
+        unguard
+    then
+    ['] disk-rwblk  set-disk
 ;
 
 : GRAM ( -- )
-    ['] gram-rwblk  >rwblk  !
+    ['] gram-rwblk  set-disk
 ;
 
 

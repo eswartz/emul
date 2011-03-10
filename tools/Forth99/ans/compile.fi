@@ -119,7 +119,7 @@ User STATE
 ;
 
 \ dump one line
-: (dmpln) ( addr cnt xt -- )
+| : (dmpln) ( addr cnt xt -- )
     >r  \ save xt
     ( addr cnt )
     over 4u. space [char] = emit space
@@ -137,7 +137,7 @@ User STATE
     cr
 ;
 
-: (dmp) ( addr cnt xt -- )
+| : (dmp) ( addr cnt xt -- )
     >r cr
     over +   ( addr addr+cnt )
     swap

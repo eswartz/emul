@@ -76,7 +76,6 @@ cell    RamVar    randnoise
     else
         \ new key: reset repeat flag
         0 kbdflag c!
-        key-actions 
     then
 
     \ remember the key
@@ -89,7 +88,7 @@ cell    RamVar    randnoise
 
     graddr >r
          
-        kbdshift c@  3 rshift  grom_kbdlist +      \ get shifted table ptr
+        kbdshift c@  3 rshift  >grom_kbdlist g@  +      \ get shifted table ptr
         
         g@      \ get table entry
         +       \ and char offset
@@ -100,11 +99,11 @@ cell    RamVar    randnoise
 ;
     
 :   handle-key  ( raw -- )
+
+    key-actions
     
     \ check alpha and uppercase if needed
     $80 'KBDA c!  'KBDA c@  if  toupper  then  $00 'KBDA c!
-    
-    \ dup .d 10 demit
     
     \ Fctn-Shift-S  -->  Ctrl-H
     dup 211 = if  
@@ -112,7 +111,6 @@ cell    RamVar    randnoise
         $30 kbdshift c@ = if  drop $08  then 
     then
 
-    
     ?dup if  repeat-key  then 
 ;
 
@@ -122,22 +120,28 @@ cell    RamVar    randnoise
     
     0 read-row
     
-    dup $72 = if                    \ ctrl+fctn+shift+space (abort)?
-        abort
+    dup if
+        key-actions
+    then
+    
+    v-int-noabort v-intflag-off? if 
+        dup $72 = if               \ ctrl+fctn+shift+space (abort)?
+            abort
+        then
     then
     
     $70 and  kbdshift c!           \ save shift bits
     0 kbdscan c!
     
     6 0 do 
-        i   read-row
+        i read-row
         
-        i 0= if $07 and then        \ ignore shifts in first row
+        i 0=  if  $07 and  then    \ exclude shifts from first row
          
         ?dup if
             i  3 lshift            \ table row offset
             
-            swap >bit swap +    \ column
+            swap >bit swap +       \ column
                         
             lookup-key handle-key leave
         then
@@ -152,6 +156,7 @@ cell    RamVar    randnoise
 ;
 
 :   kbd-no-key
+    \ clear all but shifts
     0 kbdscan c!  0 kbdtimer c!  0 kbdflag c!  0 kbdlast c!
 ;
 
@@ -160,6 +165,7 @@ cell    RamVar    randnoise
     3 kbdrate c!     \ 1/20 s delay between repeat
     0 kbdtail c!
     0 kbdhead c!
+    0 kbdshift c!
     kbd-no-key
 ;
 
@@ -167,7 +173,7 @@ true <EXPORT
 
 :   key?    ( -- f )
     \ ints-on (idle) ints-off 
-    ints-on ints-off 
+    ints-check 
     kbdhead c@  kbdtail c@  = not  
 ;
 

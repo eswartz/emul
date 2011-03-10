@@ -7,8 +7,12 @@
 1       RamVar vdp-status
 
 \   Timer
-2 cells RamVar vdp-ticks 
+2 cells RamVar    vdp-ticks 
 cell    RamVar    vdp-timeout
+
+:   v-intflag-off?  ( mask -- t|f )
+    v-intflags c@  AND  0=
+;
 
 :   vdp-int-handler 
     'INTS c@  
@@ -36,12 +40,9 @@ cell    RamVar    vdp-timeout
         kbd-scan
         
         \ do other (expensive) things if interrupts allow
-        v-intflags c@ 
-        dup  v-int-nocursor and  0= if
+        v-int-nocursor v-intflag-off? if 
             update-cursor
         then
-        
-        drop
         
         \ acknowledge interrupt
         \ 'INTS c@  [ M_INT_KBD invert literal ]  and  'INTSP c!
