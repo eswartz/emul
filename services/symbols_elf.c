@@ -288,7 +288,7 @@ static int find_by_name_in_sym_table(DWARFCache * cache, char * name, Symbol ** 
         while (n) {
             SymbolInfo sym_info;
             unpack_elf_symbol_info(tbl, n, &sym_info);
-            if (strcmp(name, sym_info.mName) == 0) {
+            if (cmp_symbol_names(name, sym_info.mName) == 0) {
                 ContextAddress addr = 0;
                 if (syminfo2address(prs, &sym_info, &addr) == 0 && addr != 0) {
                     int found = 0;
@@ -1085,6 +1085,22 @@ static void alloc_cardinal_type_pseudo_symbol(Context * ctx, ContextAddress size
     (*type)->size = size;
 }
 
+static int map_to_sym_table(ObjectInfo * obj, Symbol ** sym) {
+    U8_T v = 0;
+    int found = 0;
+    if (get_num_prop(obj, AT_external, &v) && v != 0) {
+        Trap trap;
+        if (set_trap(&trap)) {
+            PropertyValue p;
+            DWARFCache * cache = get_dwarf_cache(obj->mCompUnit->mFile);
+            read_and_evaluate_dwarf_object_property(sym_ctx, sym_frame, 0, obj, AT_MIPS_linkage_name, &p);
+            if (p.mAddr != NULL) found = find_by_name_in_sym_table(cache, (char *)p.mAddr, sym);
+            clear_trap(&trap);
+        }
+    }
+    return found;
+}
+
 int get_symbol_class(const Symbol * sym, int * sym_class) {
     assert(sym->magic == SYMBOL_MAGIC);
     *sym_class = sym->sym_class;
@@ -1315,7 +1331,10 @@ int get_symbol_size(const Symbol * sym, ContextAddress * size) {
             if (ok) sz = h - l;
         }
         else {
+            Symbol * s = NULL;
+            ObjectInfo * ref = NULL;
             if (!ok && sym->sym_class == SYM_CLASS_REFERENCE && obj->mType != NULL) {
+                ref = obj;
                 obj = obj->mType;
                 if (dimension == 0) ok = get_num_prop(obj, AT_byte_size, &sz);
             }
@@ -1351,6 +1370,7 @@ int get_symbol_size(const Symbol * sym, ContextAddress * size) {
                 sz = obj->mCompUnit->mDesc.mAddressSize;
                 ok = sz > 0;
             }
+            if (!ok && ref && map_to_sym_table(ref, &s) && get_symbol_size(s, size) == 0) ok = 1;
         }
         if (!ok) str_exception(ERR_INV_DWARF, "Object has no size attribute");
         *size = (ContextAddress)sz;
@@ -1682,6 +1702,7 @@ int get_symbol_address(const Symbol * sym, ContextAddress * address) {
     if (unpack(sym) < 0) return -1;
     if (obj != NULL && obj->mTag != TAG_member) {
         U8_T v;
+        Symbol * s = NULL;
         if (get_num_prop(obj, AT_location, &v)) {
             *address = (ContextAddress)v;
             return 0;
@@ -1692,6 +1713,7 @@ int get_symbol_address(const Symbol * sym, ContextAddress * address) {
             return 0;
         }
         if (get_error_code(errno) != ERR_SYM_NOT_FOUND) return -1;
+        if (map_to_sym_table(obj, &s)) return get_symbol_address(s, address);
     }
     if (sym_info != NULL) {
         if (syminfo2address(sym_ctx, sym_info, address) == 0) return 0;

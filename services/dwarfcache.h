@@ -214,6 +214,9 @@ extern DWARFCache * get_dwarf_cache(ELF_File * file);
 /* Return symbol name hash. The hash is used to build mSymNamesHash table. */
 extern unsigned calc_symbol_name_hash(const char * s);
 
+/* Compare symbol names. */
+extern int cmp_symbol_names(const char * x, const char * y);
+
 /* Return file name hash. The hash is used to search FileInfo. */
 extern unsigned calc_file_name_hash(const char * s);
 

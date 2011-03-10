@@ -45,12 +45,25 @@ unsigned calc_symbol_name_hash(const char * s) {
     unsigned h = 0;
     while (*s) {
         unsigned g;
+        if (s[0] == '@' && s[1] == '@') break;
         h = (h << 4) + (unsigned char)*s++;
         g = h & 0xf0000000;
         if (g) h ^= g >> 24;
         h &= ~g;
     }
     return h % SYM_HASH_SIZE;
+}
+
+int cmp_symbol_names(const char * x, const char * y) {
+    while (*x && *x == *y) {
+        x++;
+        y++;
+    }
+    if (*x == 0 && *y == '@' && y[1] == '@') return 0;
+    if (*y == 0 && *x == '@' && x[1] == '@') return 0;
+    if (*x < *y) return -1;
+    if (*x > *y) return +1;
+    return 0;
 }
 
 unsigned calc_file_name_hash(const char * s) {
@@ -727,6 +740,7 @@ static void read_dwarf_object_property(Context * Ctx, int Frame, ObjectInfo * Ob
     case FORM_BLOCK2    :
     case FORM_BLOCK4    :
     case FORM_BLOCK     :
+    case FORM_STRP      :
         Value->mAddr = (U1_T *)gop_gFormDataAddr;
         Value->mSize = gop_gFormDataSize;
         break;

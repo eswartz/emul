@@ -211,6 +211,7 @@
 #define AT_source_info              0x0810
 #define AT_lo_user_v2               0x2000
 #define AT_wrs_options              0x2001
+#define AT_MIPS_linkage_name        0x2007
 #define AT_hi_user_v2               0x3fff
 
 
