@@ -107,7 +107,7 @@ static int get_slave_addr(char * buf, int * pos, struct sockaddr_in * addr, uint
     char * port = buf + *pos;
     char * stmp = buf + *pos;
     char * host = buf + *pos;
-    int len = strlen(buf + *pos);
+    size_t len = strlen(buf + *pos);
     uint64_t ts = 0;
     int n = 0;
 

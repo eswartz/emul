@@ -778,7 +778,8 @@ char * canonicalize_file_name(const char * name) {
 
 char * canonicalize_file_name(const char * path) {
     char buf[PATH_MAX];
-    int i = 0, j = 0;
+    size_t i = 0;
+    size_t j = 0;
     if (path[0] == '.' && (path[1] == '/' || path[1] == '\\' || path[1] == 0)) {
         getcwd(buf, sizeof(buf));
         j = strlen(buf);

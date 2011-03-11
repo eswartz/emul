@@ -696,7 +696,7 @@ static void command_write(char * token, Channel * c) {
     char id[256];
     OpenFileInfo * h = NULL;
     int64_t offset;
-    unsigned long len = 0;
+    size_t len = 0;
     JsonReadBinaryState state;
 
     static size_t buf_size = 0;
@@ -711,7 +711,7 @@ static void command_write(char * token, Channel * c) {
 
     h = find_open_file_info(id);
     for (;;) {
-        int rd;
+        size_t rd;
         if (buf_size < len + BUF_SIZE) {
             buf_size += BUF_SIZE;
             buf = (char *)loc_realloc(buf, buf_size);
@@ -1117,8 +1117,8 @@ static void command_copy(char * token, Channel * c) {
 
     while (err == 0 && pos < st.st_size) {
         char buf[BUF_SIZE];
-        int wr = 0;
-        int rd = read(fi, buf, sizeof(buf));
+        ssize_t wr = 0;
+        ssize_t rd = read(fi, buf, sizeof(buf));
         if (rd == 0) break;
         if (rd < 0) {
             err = errno;

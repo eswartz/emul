@@ -275,7 +275,7 @@ static int pipe_splice_block_stream(OutputStream * out, int fd, size_t size, off
     return rd;
 }
 
-static void pipe_post_read(InputBuf * ibuf, unsigned char * buf, int size) {
+static void pipe_post_read(InputBuf * ibuf, unsigned char * buf, size_t size) {
     ChannelPIPE * c = ibuf2pipe(ibuf);
 
     if (c->read_pending) return;

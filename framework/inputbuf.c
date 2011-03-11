@@ -39,14 +39,14 @@ static void ibuf_eof(InputBuf * ibuf) {
     }
 }
 
-static int ibuf_free_size(InputBuf * ibuf) {
+static size_t ibuf_free_size(InputBuf * ibuf) {
     if (ibuf->eof) return 0;
     if (ibuf->stream->cur == ibuf->buf + ibuf->buf_size) {
         ibuf->stream->cur = ibuf->stream->end = ibuf->buf;
     }
     assert(ibuf->inp >= ibuf->buf && ibuf->inp < ibuf->buf + ibuf->buf_size);
     if (ibuf->stream->cur <= ibuf->inp) {
-        int size = ibuf->buf + ibuf->buf_size - ibuf->inp;
+        size_t size = ibuf->buf + ibuf->buf_size - ibuf->inp;
         if (ibuf->stream->cur == ibuf->buf) size--;
         return size;
     }
@@ -54,7 +54,7 @@ static int ibuf_free_size(InputBuf * ibuf) {
 }
 
 void ibuf_trigger_read(InputBuf * ibuf) {
-    int size = ibuf_free_size(ibuf);
+    size_t size = ibuf_free_size(ibuf);
     if (size > 0) ibuf->post_read(ibuf, ibuf->inp, size);
 }
 
@@ -99,7 +99,7 @@ int ibuf_get_more(InputBuf * ibuf, int peeking) {
             assert(!ibuf->out_esc);
             inp->cur = out;
             max = out + 1 <= ibuf->inp ? ibuf->inp : ibuf->buf + ibuf->buf_size;
-            if (max - out < ibuf->out_data_size) {
+            if ((size_t)(max - out) < ibuf->out_data_size) {
                 ibuf->out_data_size -= max - out;
                 out = max;
             }
@@ -186,7 +186,7 @@ void ibuf_flush(InputBuf * ibuf) {
 #endif
 }
 
-void ibuf_read_done(InputBuf * ibuf, int len) {
+void ibuf_read_done(InputBuf * ibuf, size_t len) {
     unsigned char * inp;
 
     assert(len >= 0);

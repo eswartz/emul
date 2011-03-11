@@ -57,8 +57,8 @@ static const int char2int[] = {
 
 #define OBF_SIZE 0x100
 
-int write_base64(OutputStream * out, const char * buf0, int len) {
-    int pos = 0;
+size_t write_base64(OutputStream * out, const char * buf0, size_t len) {
+    size_t pos = 0;
     const unsigned char * buf = (const unsigned char *)buf0;
 
     char obf[OBF_SIZE + 8];
@@ -99,8 +99,8 @@ int write_base64(OutputStream * out, const char * buf0, int len) {
     return ((len + 2) / 3) * 4;
 }
 
-int read_base64(InputStream * inp, char * buf, int buf_size) {
-    int pos = 0;
+size_t read_base64(InputStream * inp, char * buf, size_t buf_size) {
+    size_t pos = 0;
     int ch_max = sizeof(char2int) / sizeof(int);
 
     assert(buf_size >= 3);

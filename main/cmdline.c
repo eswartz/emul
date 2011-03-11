@@ -249,7 +249,7 @@ static int cmd_connect(char * s) {
 
 static void event_cmd_line(void * arg) {
     char * s = (char *)arg;
-    int len;
+    size_t len;
     int delayed = 0;
     int error = 0;
     size_t cp;
@@ -313,7 +313,7 @@ static void cmd_done(int error) {
 
 static void * interactive_handler(void * x) {
     int done = 0;
-    int len;
+    size_t len;
     char buf[1000];
 
     check_error(pthread_mutex_lock(&cmdline_mutex));

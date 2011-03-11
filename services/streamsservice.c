@@ -52,9 +52,9 @@ struct VirtualStream {
     LINK clients;
     uint64_t pos;
     char * buf;
-    unsigned buf_len;
-    unsigned buf_inp;
-    unsigned buf_out;
+    size_t buf_len;
+    size_t buf_inp;
+    size_t buf_out;
     unsigned eos_inp;
     unsigned eos_out;
     unsigned data_available_posted;
@@ -246,7 +246,7 @@ static void notify_space_available(void * args) {
 }
 
 static void advance_stream_buffer(VirtualStream * stream) {
-    unsigned len = (stream->buf_inp + stream->buf_len - stream->buf_out) % stream->buf_len;
+    size_t len = (stream->buf_inp + stream->buf_len - stream->buf_out) % stream->buf_len;
     uint64_t min_pos = ~(uint64_t)0;
     uint64_t buf_pos = stream->pos - len;
     LINK * l;
@@ -276,7 +276,7 @@ static void advance_stream_buffer(VirtualStream * stream) {
 }
 
 static StreamClient * create_client(VirtualStream * stream, Channel * channel) {
-    unsigned len = (stream->buf_inp + stream->buf_len - stream->buf_out) % stream->buf_len;
+    size_t len = (stream->buf_inp + stream->buf_len - stream->buf_out) % stream->buf_len;
     StreamClient * client = (StreamClient *)loc_alloc_zero(sizeof(StreamClient));
     list_init(&client->link_hash);
     list_init(&client->link_stream);
@@ -339,14 +339,14 @@ static void delete_subscription(Subscription * s) {
 static void send_read_reply(StreamClient * client, char * token, size_t size) {
     VirtualStream * stream = client->stream;
     Channel * c = client->channel;
-    unsigned lost = 0;
-    unsigned read1 = 0;
-    unsigned read2 = 0;
+    size_t lost = 0;
+    size_t read1 = 0;
+    size_t read2 = 0;
     int eos = 0;
     char * data1 = NULL;
     char * data2 = NULL;
-    unsigned pos = 0;
-    unsigned len = (stream->buf_inp + stream->buf_len - stream->buf_out) % stream->buf_len;
+    size_t pos;
+    size_t len = (stream->buf_inp + stream->buf_len - stream->buf_out) % stream->buf_len;
 
     assert(len > 0 || stream->eos_inp);
     assert(client->pos <= stream->pos);
@@ -451,15 +451,15 @@ int virtual_stream_add_data(VirtualStream * stream, char * buf, size_t buf_size,
     if (stream->eos_inp) err = ERR_EOF;
 
     if (!err) {
-        unsigned len = (stream->buf_out + stream->buf_len - stream->buf_inp - 1) % stream->buf_len;
+        size_t len = (stream->buf_out + stream->buf_len - stream->buf_inp - 1) % stream->buf_len;
         assert(len < stream->buf_len);
         if (buf_size < len) len = buf_size;
         if (stream->buf_inp + len <= stream->buf_len) {
             memcpy(stream->buf + stream->buf_inp, buf, len);
         }
         else {
-            unsigned x = stream->buf_len - stream->buf_inp;
-            unsigned y = len - x;
+            size_t x = stream->buf_len - stream->buf_inp;
+            size_t y = len - x;
             memcpy(stream->buf + stream->buf_inp, buf, x);
             memcpy(stream->buf, buf + x, y);
         }

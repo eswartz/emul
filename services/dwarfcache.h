@@ -236,7 +236,7 @@ extern void unpack_elf_symbol_info(SymbolSection * section, U4_T index, SymbolIn
  * Read and evaluate a property of a DWARF object, perform ELF relocations if any.
  * FORM_ADDR values are mapped to run-time address space.
  */
-extern void read_and_evaluate_dwarf_object_property(Context * ctx, int frame, U8_T base, ObjectInfo * obj, int attr_tag, PropertyValue * value);
+extern void read_and_evaluate_dwarf_object_property(Context * ctx, int frame, U8_T base, ObjectInfo * obj, U2_T attr_tag, PropertyValue * value);
 
 /* Convert PropertyValue to a number */
 extern U8_T get_numeric_property_value(PropertyValue * Value);

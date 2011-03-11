@@ -664,7 +664,7 @@ U8_T get_numeric_property_value(PropertyValue * Value) {
     return Res;
 }
 
-static void read_dwarf_object_property(Context * Ctx, int Frame, ObjectInfo * Obj, int Attr, PropertyValue * Value) {
+static void read_dwarf_object_property(Context * Ctx, int Frame, ObjectInfo * Obj, U2_T Attr, PropertyValue * Value) {
 
     if (Obj->mTag == TAG_fund_type) {
         /* TAG_fund_type is virtual DWARF object that is created by DWARF reader. It has no properties. */
@@ -675,7 +675,7 @@ static void read_dwarf_object_property(Context * Ctx, int Frame, ObjectInfo * Ob
     Value->mContext = Ctx;
     Value->mFrame = Frame;
     Value->mObject = Obj;
-    Value->mAttr = (U2_T)Attr;
+    Value->mAttr = Attr;
     Value->mBigEndian = Obj->mCompUnit->mFile->big_endian;
 
     sCompUnit = Obj->mCompUnit;
@@ -683,7 +683,7 @@ static void read_dwarf_object_property(Context * Ctx, int Frame, ObjectInfo * Ob
     sDebugSection = sCompUnit->mDesc.mSection;
     dio_EnterSection(&sCompUnit->mDesc, sDebugSection, Obj->mID - sDebugSection->addr);
     for (;;) {
-        gop_gAttr = (U2_T)Attr;
+        gop_gAttr = Attr;
         gop_gForm = 0;
         gop_gSpecification = 0;
         gop_gAbstractOrigin = 0;
@@ -761,7 +761,7 @@ static void read_dwarf_object_property(Context * Ctx, int Frame, ObjectInfo * Ob
     }
 }
 
-void read_and_evaluate_dwarf_object_property(Context * Ctx, int Frame, U8_T Base, ObjectInfo * Obj, int Attr, PropertyValue * Value) {
+void read_and_evaluate_dwarf_object_property(Context * Ctx, int Frame, U8_T Base, ObjectInfo * Obj, U2_T Attr, PropertyValue * Value) {
     read_dwarf_object_property(Ctx, Frame, Obj, Attr, Value);
     assert(Value->mContext == Ctx);
     assert(Value->mFrame == Frame);

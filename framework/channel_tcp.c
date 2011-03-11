@@ -89,7 +89,7 @@ struct ChannelTCP {
     int lock_cnt;           /* Stream lock count, when > 0 channel cannot be deleted */
     int read_pending;       /* Read request is pending */
     unsigned char * read_buf;
-    int read_buf_size;
+    size_t read_buf_size;
     int read_done;
 
 #if ENABLE_Splice
@@ -337,8 +337,8 @@ static void tcp_flush_with_flags(ChannelTCP * c, int flags) {
 #else
         assert(c->ssl == NULL);
         while (p < c->chan.out.cur) {
-            int sz = c->chan.out.cur - p;
-            int wr = send(c->socket, p, sz, flags);
+            size_t sz = c->chan.out.cur - p;
+            ssize_t wr = send(c->socket, p, sz, flags);
             if (wr < 0) {
                 int err = errno;
                 trace(LOG_PROTOCOL, "Can't send() on channel %#lx: %s", c, errno_to_str(err));
@@ -377,7 +377,7 @@ static void tcp_bin_block_start(ChannelTCP * c) {
 }
 
 static void tcp_bin_block_end(ChannelTCP * c) {
-    unsigned len = c->chan.out.cur - c->out_bin_block;
+    size_t len = c->chan.out.cur - c->out_bin_block;
 #if BUF_SIZE > 0x4000
     *(c->out_bin_block - 3) = (len & 0x7fu) | 0x80u;
     *(c->out_bin_block - 2) = ((len >> 7) & 0x7fu) | 0x80u;
@@ -490,7 +490,7 @@ static int tcp_splice_block_stream(OutputStream * out, int fd, size_t size, off_
     }
 }
 
-static void tcp_post_read(InputBuf * ibuf, unsigned char * buf, int size) {
+static void tcp_post_read(InputBuf * ibuf, unsigned char * buf, size_t size) {
     ChannelTCP * c = ibuf2tcp(ibuf);
 
     if (c->read_pending) return;
@@ -659,7 +659,7 @@ static int channel_get_message_count(Channel * channel) {
 static void tcp_channel_read_done(void * x) {
     AsyncReqInfo * req = (AsyncReqInfo *)x;
     ChannelTCP * c = (ChannelTCP *)req->client_data;
-    int len = 0;
+    ssize_t len = 0;
 
     assert(is_dispatch_thread());
     assert(c->magic == CHANNEL_MAGIC);

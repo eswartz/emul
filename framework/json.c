@@ -38,8 +38,8 @@
 #define ENCODING_BASE64     1
 
 static char * buf = NULL;
-static unsigned buf_pos = 0;
-static unsigned buf_size = 0;
+static size_t buf_pos = 0;
+static size_t buf_size = 0;
 
 static void realloc_buf(void) {
     if (buf == NULL) {
@@ -445,11 +445,12 @@ char ** json_read_alloc_string_array(InputStream * inp, int * cnt) {
         return NULL;
     }
     else {
-        static unsigned * len_buf = NULL;
+        static size_t * len_buf = NULL;
         static unsigned len_buf_size = 0;
         unsigned len_pos = 0;
 
-        unsigned i, j;
+        unsigned i;
+        size_t j;
         char * str = NULL;
         char ** arr = NULL;
 
@@ -461,10 +462,10 @@ char ** json_read_alloc_string_array(InputStream * inp, int * cnt) {
         else {
             for (;;) {
                 int ch = read_stream(inp);
-                int len = 0;
+                size_t len = 0;
                 if (len_pos >= len_buf_size) {
                     len_buf_size = len_buf_size == 0 ? 0x100 : len_buf_size * 2;
-                    len_buf = (unsigned *)loc_realloc(len_buf, len_buf_size * sizeof(unsigned));
+                    len_buf = (size_t *)loc_realloc(len_buf, len_buf_size * sizeof(size_t));
                 }
                 if (ch == 'n') {
                     if (read_stream(inp) != 'u') exception(ERR_JSON_SYNTAX);
@@ -472,7 +473,7 @@ char ** json_read_alloc_string_array(InputStream * inp, int * cnt) {
                     if (read_stream(inp) != 'l') exception(ERR_JSON_SYNTAX);
                 }
                 else {
-                    int buf_pos0 = buf_pos;
+                    size_t buf_pos0 = buf_pos;
                     if (ch != '"') exception(ERR_JSON_SYNTAX);
                     for (;;) {
                         ch = read_stream(inp);
@@ -595,7 +596,7 @@ size_t json_read_binary_data(JsonReadBinaryState * state, void * buf, size_t len
                 state->rem = 0;
             }
             if (len >= 3) {
-                int i = read_base64(state->inp, (char *)ptr, len);
+                size_t i = read_base64(state->inp, (char *)ptr, len);
                 if (i == 0) break;
                 ptr += i;
                 len -= i;
@@ -621,7 +622,7 @@ void json_read_binary_end(JsonReadBinaryState * state) {
     }
 }
 
-char * json_read_alloc_binary(InputStream * inp, int * size) {
+char * json_read_alloc_binary(InputStream * inp, size_t * size) {
     char * data = NULL;
     int ch = peek_stream(inp);
     *size = 0;
@@ -638,14 +639,14 @@ char * json_read_alloc_binary(InputStream * inp, int * size) {
 
         buf_pos = 0;
         for (;;) {
-            int rd;
+            size_t rd;
             if (buf_pos >= buf_size) realloc_buf();
             rd = json_read_binary_data(&state, buf + buf_pos, buf_size - buf_pos);
             if (rd == 0) break;
             buf_pos += rd;
         }
 
-        assert(state.size_start <= 0 || (int)buf_pos == state.size_start);
+        assert(state.size_start <= 0 || buf_pos == state.size_start);
 
         json_read_binary_end(&state);
         data = (char *)loc_alloc(buf_pos);
@@ -655,7 +656,7 @@ char * json_read_alloc_binary(InputStream * inp, int * size) {
     return data;
 }
 
-void json_write_binary_start(JsonWriteBinaryState * state, OutputStream * out, int size) {
+void json_write_binary_start(JsonWriteBinaryState * state, OutputStream * out, size_t size) {
     state->out = out;
     state->rem = 0;
     state->encoding = out->supports_zero_copy && size > 0 ? ENCODING_BINARY : ENCODING_BASE64;

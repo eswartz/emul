@@ -27,12 +27,12 @@
 /*
  * Write BASE64 encoded array of bytes to output stream.
  */
-extern int write_base64(OutputStream * out, const char * buf, int len);
+extern size_t write_base64(OutputStream * out, const char * buf, size_t len);
 
 /*
  * Read BASE64 encoded array of bytes from input stream.
  * Returns number of decoded bytes.
  */
-extern int read_base64(InputStream * inp, char * buf, int buf_size);
+extern size_t read_base64(InputStream * inp, char * buf, size_t buf_size);
 
 #endif /* D_base64 */

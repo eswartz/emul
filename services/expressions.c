@@ -1862,7 +1862,7 @@ typedef struct CommandAssignArgs {
     char token[256];
     char id[256];
     char * value_buf;
-    int value_size;
+    size_t value_size;
 } CommandAssignArgs;
 
 typedef struct Expression {

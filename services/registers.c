@@ -378,7 +378,7 @@ static void command_get(char * token, Channel * c) {
 typedef struct SetArgs {
     char token[256];
     char id[256];
-    int data_len;
+    size_t data_len;
     uint8_t * data;
 } SetArgs;
 
@@ -547,7 +547,7 @@ typedef struct SetmArgs {
     char token[256];
     unsigned locs_cnt;
     Location * locs;
-    int data_len;
+    size_t data_len;
     uint8_t * data;
 } SetmArgs;
 

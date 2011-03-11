@@ -77,7 +77,7 @@ typedef struct SymInfoCache {
     int64_t lower_bound;
     int64_t upper_bound;
     char * value;
-    int value_size;
+    size_t value_size;
     char ** children_ids;
     int children_count;
     ReplyHandlerInfo * pending_get_context;
