@@ -169,6 +169,7 @@ static void object2symbol(ObjectInfo * obj, Symbol ** res) {
         sym->sym_class = SYM_CLASS_TYPE;
         break;
     case TAG_global_variable:
+    case TAG_inheritance:
     case TAG_member:
         sym->sym_class = SYM_CLASS_REFERENCE;
         break;
@@ -1024,6 +1025,7 @@ static ObjectInfo * get_object_type(ObjectInfo * obj) {
         case TAG_global_variable:
         case TAG_local_variable:
         case TAG_variable:
+        case TAG_inheritance:
         case TAG_member:
         case TAG_constant:
             obj = obj->mType;
@@ -1254,6 +1256,7 @@ int get_symbol_type_class(const Symbol * sym, int * type_class) {
         case TAG_global_variable:
         case TAG_local_variable:
         case TAG_variable:
+        case TAG_inheritance:
         case TAG_member:
         case TAG_constant:
             obj = obj->mType;
@@ -1286,7 +1289,12 @@ int get_symbol_name(const Symbol * sym, char ** name) {
     }
     if (unpack(sym) < 0) return -1;
     if (obj != NULL) {
-        *name = obj->mName;
+        if (obj->mName == NULL && obj->mTag == TAG_inheritance && obj->mType != NULL) {
+            *name = obj->mType->mName;
+        }
+        else {
+            *name = obj->mName;
+        }
     }
     else if (sym_info != NULL) {
         *name = sym_info->mName;
@@ -1617,7 +1625,7 @@ int get_symbol_offset(const Symbol * sym, ContextAddress * offset) {
         return -1;
     }
     if (unpack(sym) < 0) return -1;
-    if (obj != NULL && obj->mTag == TAG_member) {
+    if (obj != NULL && (obj->mTag == TAG_member || obj->mTag == TAG_inheritance)) {
         U8_T v;
         if (!get_num_prop(obj, AT_data_member_location, &v)) return -1;
         *offset = (ContextAddress)v;
@@ -1700,7 +1708,7 @@ int get_symbol_address(const Symbol * sym, ContextAddress * address) {
         return 0;
     }
     if (unpack(sym) < 0) return -1;
-    if (obj != NULL && obj->mTag != TAG_member) {
+    if (obj != NULL && obj->mTag != TAG_member && obj->mTag != TAG_inheritance) {
         U8_T v;
         Symbol * s = NULL;
         if (get_num_prop(obj, AT_location, &v)) {
