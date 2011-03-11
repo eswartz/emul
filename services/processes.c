@@ -225,7 +225,7 @@ static void write_context(OutputStream * out, int pid) {
 #else
     json_write_string(out, "Name");
     write_stream(out, ':');
-    json_write_string(out, prs ? prs->name : pid2id(pid, 0))
+    json_write_string(out, prs ? prs->name : pid2id(pid, 0));
     write_stream(out, ',');
 #endif
 
