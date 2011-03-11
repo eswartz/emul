@@ -140,7 +140,7 @@ static void elf_cleanup_event(void * arg) {
         post_event_with_delay(elf_cleanup_event, NULL, 1000000);
         elf_cleanup_posted = 1;
     }
-    else {
+    else if (list_is_empty(&context_root)) {
         while (inodes != NULL) {
             FileINode * n = inodes;
             inodes = n->next;
