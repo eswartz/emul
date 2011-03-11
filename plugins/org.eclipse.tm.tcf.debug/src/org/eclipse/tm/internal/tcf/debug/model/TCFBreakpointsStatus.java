@@ -62,6 +62,13 @@ public class TCFBreakpointsStatus {
                 }
 
                 public void contextChanged(Map<String,Object>[] bps) {
+                    for (Map<String,Object> bp : bps) {
+                        String id = (String)bp.get(IBreakpoints.PROP_ID);
+                        if (!status.containsKey(id)) continue;
+                        for (Iterator<ITCFBreakpointListener> i = listeners.iterator(); i.hasNext();) {
+                            i.next().breakpointChanged(id);
+                        }
+                    }
                 }
 
                 public void contextRemoved(String[] ids) {

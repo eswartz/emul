@@ -10,17 +10,21 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.cdt.ui;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.cdt.debug.core.model.ICBreakpoint;
 import org.eclipse.cdt.debug.core.model.ICLineBreakpoint;
+import org.eclipse.cdt.debug.core.model.ICWatchpoint;
 import org.eclipse.cdt.debug.internal.core.breakpoints.CAddressBreakpoint;
 import org.eclipse.cdt.debug.internal.core.breakpoints.CFunctionBreakpoint;
 import org.eclipse.cdt.debug.internal.core.breakpoints.CLineBreakpoint;
+import org.eclipse.cdt.debug.internal.core.breakpoints.CWatchpoint;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -55,6 +59,8 @@ class TCFBreakpointStatusListener {
     
     /** Ref count attribute for foreign breakpoints */
     private static final String ATTR_REFCOUNT = "org.eclipse.tm.tcf.cdt.refcount";
+    /** TCF breakpoint ID attribute */
+    private static final String ATTR_TCF_ID = ITCFConstants.ID_TCF_DEBUG_MODEL + '.' + IBreakpoints.PROP_ID;
     
     private class BreakpointListener implements ITCFBreakpointListener {
         
@@ -96,7 +102,7 @@ class TCFBreakpointStatusListener {
             }
             else if (bp == null && foreign.add(id)) {
                 // foreign bp
-                createTransientBreakpoint(id);
+                createOrUpdateBreakpoint(id, true);
             }
         }
 
@@ -109,6 +115,10 @@ class TCFBreakpointStatusListener {
             if (foreign.remove(id)) {
                 deleteTransientBreakpoint(id);
             }
+        }
+
+        public void breakpointChanged(String id) {
+            createOrUpdateBreakpoint(id, false);
         }
 
         void dispose() {
@@ -146,15 +156,84 @@ class TCFBreakpointStatusListener {
             });
         }
         
-        private void createTransientBreakpoint(final String id) {
+        private void createOrUpdateBreakpoint(final String id, final boolean create) {
             IBreakpoints bkpts = launch.getService(IBreakpoints.class);
             if (bkpts == null) return;
             bkpts.getProperties(id, new IBreakpoints.DoneGetProperties() {
                 public void doneGetProperties(IToken token, Exception error, Map<String, Object> properties) {
+                    if (properties == null || error != null) return;
+                    final Map<String, Object> markerAttrs = toMarkerAttributes(properties);
+                    Job job = new WorkspaceJob("Create Breakpoint Marker") {
+                        @Override
+                        public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
+                            if (deleted.remove(id)) return Status.OK_STATUS;
+                            IBreakpoint[] bps = DebugPlugin.getDefault().getBreakpointManager().getBreakpoints();
+                            for (IBreakpoint bp : bps) {
+                                IMarker marker = bp.getMarker();
+                                if (marker == null) continue;
+                                if (id.equals(bp_model.getBreakpointID(bp))) {
+                                    if (create) {
+                                        int cnt = marker.getAttribute(ATTR_REFCOUNT, 0) + 1;
+                                        markerAttrs.put(ATTR_REFCOUNT, cnt);
+                                    } else {
+                                        updateMarkerAttributes(markerAttrs, marker);
+                                    }
+                                    return Status.OK_STATUS;
+                                }
+                            }
+                            if (!create) return Status.OK_STATUS;
+                            markerAttrs.put(IBreakpoint.PERSISTED, Boolean.FALSE);
+                            markerAttrs.put(IMarker.TRANSIENT, Boolean.TRUE);
+                            markerAttrs.put(ATTR_REFCOUNT, 1);
+                            IResource resource = ResourcesPlugin.getWorkspace().getRoot();
+                            if (markerAttrs.get(ICWatchpoint.EXPRESSION) != null) {
+                                new CWatchpoint(resource , markerAttrs, true);
+                            } else if (markerAttrs.get(ICLineBreakpoint.ADDRESS) != null) {
+                                new CAddressBreakpoint(resource, markerAttrs, true);
+                            } else if (markerAttrs.get(ICLineBreakpoint.FUNCTION) != null) {
+                                new CFunctionBreakpoint(resource, markerAttrs, true);
+                            } else if (markerAttrs.get(ICBreakpoint.SOURCE_HANDLE) != null &&
+                                    markerAttrs.get(IMarker.LINE_NUMBER) != null) {
+                                new CLineBreakpoint(resource , markerAttrs, true);
+                            }
+                            return Status.OK_STATUS;
+                        }
+
+                        private void updateMarkerAttributes(Map<String, Object> markerAttrs, IMarker marker) throws CoreException {
+                            List<String> keys = new ArrayList<String>(markerAttrs.size());
+                            List<Object> values = new ArrayList<Object>(markerAttrs.size());
+                            Map<?,?> oldAttrs = marker.getAttributes();
+                            for (Map.Entry<?,?> entry : markerAttrs.entrySet()) {
+                                String key = (String) entry.getKey();
+                                Object newVal = entry.getValue();
+                                Object oldVal = oldAttrs.remove(key);
+                                if (oldVal == null || !oldVal.equals(newVal)) {
+                                    keys.add(key);
+                                    values.add(newVal);
+                                }
+                            }
+                            if (keys.size() != 0) {
+                                String[] keyArr = (String[]) keys.toArray(new String[keys.size()]);
+                                Object[] valueArr = (Object[]) values.toArray(new Object[values.size()]);
+                                marker.setAttributes(keyArr, valueArr);
+                            }
+                        }
+                    };
+                    job.setRule(getBreakpointAccessRule());
+                    job.setSystem(true);
+                    job.schedule();
+                }
+
+                private Map<String, Object> toMarkerAttributes(Map<String, Object> properties) {
                     final Map<String, Object> markerAttrs = new HashMap<String, Object>();
-                    if (properties != null) {
-                        String location = (String) properties.get(IBreakpoints.PROP_LOCATION);
-                        if (location != null && location.length() > 0) {
+                    String location = (String) properties.get(IBreakpoints.PROP_LOCATION);
+                    int accessMode = IBreakpoints.ACCESSMODE_EXECUTE;
+                    Number accessModeVal = (Number) properties.get(IBreakpoints.PROP_ACCESSMODE);
+                    if (accessModeVal != null) {
+                        accessMode = accessModeVal.intValue();
+                    }
+                    if (location != null && location.length() > 0) {
+                        if ((accessMode & IBreakpoints.ACCESSMODE_EXECUTE) != 0) {
                             if (Character.isDigit(location.charAt(0))) {
                                 markerAttrs.put(ICLineBreakpoint.ADDRESS, location);
                             }
@@ -162,54 +241,31 @@ class TCFBreakpointStatusListener {
                                 markerAttrs.put(ICLineBreakpoint.FUNCTION, location);
                             }
                         }
-                        Object file = properties.get(IBreakpoints.PROP_FILE);
-                        if (file != null) {
-                            markerAttrs.put(ICBreakpoint.SOURCE_HANDLE, file);
+                        else {
+                            markerAttrs.put(ICWatchpoint.EXPRESSION, location.replaceFirst("^&\\((.+)\\)$", "$1"));
+                            markerAttrs.put(ICWatchpoint.READ, (accessMode & IBreakpoints.ACCESSMODE_READ) != 0);
+                            markerAttrs.put(ICWatchpoint.WRITE, (accessMode & IBreakpoints.ACCESSMODE_WRITE) != 0);
                         }
-                        Object line = properties.get(IBreakpoints.PROP_LINE);
-                        if (line != null) {
-                            markerAttrs.put(IMarker.LINE_NUMBER, line);
-                        }
-                        Object enabled = properties.get(IBreakpoints.PROP_ENABLED);
-                        if (enabled != null) {
-                            markerAttrs.put(IBreakpoint.ENABLED, enabled);
-                        }
-                        markerAttrs.put(IBreakpoint.ID, ITCFConstants.ID_TCF_DEBUG_MODEL);
-                        markerAttrs.put(IBreakpoint.REGISTERED, Boolean.TRUE);
-                        markerAttrs.put(IBreakpoint.PERSISTED, Boolean.FALSE);
-                        markerAttrs.put(IMarker.TRANSIENT, Boolean.TRUE);
-                        markerAttrs.put(ITCFConstants.ID_TCF_DEBUG_MODEL + '.' + IBreakpoints.PROP_ID, id);
-                        markerAttrs.put(ATTR_REFCOUNT, 1);
                     }
-                    Job job = new WorkspaceJob("Create Breakpoint Marker") {
-                        @Override
-                        public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
-                            if (deleted.remove(id)) return Status.OK_STATUS;
-                            IBreakpoint[] bps = DebugPlugin.getDefault().getBreakpointManager().getBreakpoints();
-                            for (IBreakpoint bp : bps) {
-                                if (bp.isPersisted()) continue;
-                                IMarker marker = bp.getMarker();
-                                if (marker == null) continue;
-                                if (id.equals(marker.getAttribute(ITCFConstants.ID_TCF_DEBUG_MODEL + '.' + IBreakpoints.PROP_ID, null))) {
-                                    int cnt = marker.getAttribute(ATTR_REFCOUNT, 0) + 1;
-                                    marker.setAttribute(ATTR_REFCOUNT, cnt);
-                                    return Status.OK_STATUS;
-                                }
-                            }
-                            IResource resource = ResourcesPlugin.getWorkspace().getRoot();
-                            if (markerAttrs.get(ICBreakpoint.SOURCE_HANDLE) != null &&
-                                    markerAttrs.get(IMarker.LINE_NUMBER) != null) {
-                                new CLineBreakpoint(resource , markerAttrs, true);
-                            } else if (markerAttrs.get(ICLineBreakpoint.ADDRESS) != null) {
-                                new CAddressBreakpoint(resource, markerAttrs, true);
-                            } else if (markerAttrs.get(ICLineBreakpoint.FUNCTION) != null) {
-                                new CFunctionBreakpoint(resource, markerAttrs, true);
-                            }
-                            return Status.OK_STATUS;
-                        }
-                    };
-                    job.setRule(getBreakpointAccessRule());
-                    job.schedule();
+                    Object file = properties.get(IBreakpoints.PROP_FILE);
+                    if (file != null) {
+                        markerAttrs.put(ICBreakpoint.SOURCE_HANDLE, file);
+                    }
+                    Object line = properties.get(IBreakpoints.PROP_LINE);
+                    if (line != null) {
+                        markerAttrs.put(IMarker.LINE_NUMBER, line);
+                    }
+                    Object enabled = properties.get(IBreakpoints.PROP_ENABLED);
+                    if (enabled != null) {
+                        markerAttrs.put(IBreakpoint.ENABLED, enabled);
+                    } else {
+                        markerAttrs.put(IBreakpoint.ENABLED, Boolean.FALSE);
+                    }
+                    markerAttrs.put(IBreakpoint.ID, ITCFConstants.ID_TCF_DEBUG_MODEL);
+                    markerAttrs.put(IBreakpoint.REGISTERED, Boolean.TRUE);
+                    String id = (String) properties.get(IBreakpoints.PROP_ID);
+                    markerAttrs.put(ATTR_TCF_ID, id);
+                    return markerAttrs;
                 }
             });
         }
@@ -223,7 +279,7 @@ class TCFBreakpointStatusListener {
                         if (bp.isPersisted()) continue;
                         IMarker marker = bp.getMarker();
                         if (marker == null) continue;
-                        if (id.equals(marker.getAttribute(ITCFConstants.ID_TCF_DEBUG_MODEL + '.' + IBreakpoints.PROP_ID, null))) {
+                        if (id.equals(marker.getAttribute(ATTR_TCF_ID, null))) {
                             int cnt = marker.getAttribute(ATTR_REFCOUNT, 0) - 1;
                             if (cnt > 0) {
                                 marker.setAttribute(ATTR_REFCOUNT, cnt);
@@ -242,6 +298,7 @@ class TCFBreakpointStatusListener {
                 }
             };
             job.setRule(getBreakpointAccessRule());
+            job.setSystem(true);
             job.schedule();
         }
         
