@@ -262,5 +262,29 @@
             plugin="org.eclipse.tm.tcf.cdt.core">
       </statusHandler>
    </extension>
+   <extension
+         point="org.eclipse.ui.commands">
+      <command
+            categoryId="org.eclipse.debug.ui.category.run"
+            defaultHandler="org.eclipse.tm.internal.tcf.cdt.ui.commands.AddFunctionBreakointHandler"
+            description="Allows to add a new function breakpoint on an arbitrary symbol"
+            id="org.eclipse.tm.tcf.cdt.ui.add_function_breakpoint"
+            name="Add Function Breakpoint">
+      </command>
+   </extension>
+   <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution
+            allPopups="false"
+            locationURI="menu:org.eclipse.debug.ui.BreakpointView?after=additions">
+         <command
+               commandId="org.eclipse.tm.tcf.cdt.ui.add_function_breakpoint"
+               icon="icons/obj16/funbrkp_obj.gif"
+               id="org.eclipse.tm.tcf.cdt.ui.add_function_breakpoint"
+               label="Add Function Breakpoint (C/C++)..."
+               style="push">
+         </command>
+      </menuContribution>
+   </extension>
 
 </plugin>

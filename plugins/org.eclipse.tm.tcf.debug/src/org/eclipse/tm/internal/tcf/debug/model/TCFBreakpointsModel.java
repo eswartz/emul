@@ -431,6 +431,12 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
                 m.put(IBreakpoints.PROP_LOCATION, "&(" + expr + ')');
             }
         }
+        else if ("org.eclipse.cdt.debug.core.cFunctionBreakpointMarker".equals(type)) {
+            String expr = (String)p.get("org.eclipse.cdt.debug.core.function");
+            if (expr != null && expr.length() != 0) {
+                m.put(IBreakpoints.PROP_LOCATION, expr);
+            }
+        }
         else if (file == null) {
             String address = (String)p.get("org.eclipse.cdt.debug.core.address");
             if (address != null && address.length() > 0) m.put(IBreakpoints.PROP_LOCATION, address);
