@@ -65,6 +65,10 @@ public class TCFChildrenSubExpressions extends TCFChildren {
         int cnt = 0;
         HashMap<String,TCFNode> data = new HashMap<String,TCFNode>();
         for (String id : children) {
+            TCFDataCache<ISymbols.Symbol> sym_cache = node.model.getSymbolInfoCache(id);
+            if (!sym_cache.validate(this)) return null;
+            ISymbols.Symbol sym_data = sym_cache.getData();
+            if (sym_data != null && sym_data.getSymbolClass() == ISymbols.SymbolClass.function) continue;
             TCFNodeExpression n = findField(id, deref);
             if (n == null) n = new TCFNodeExpression(node, null, id, null, -1, deref);
             n.setSortPosition(cnt++);
@@ -120,7 +124,10 @@ public class TCFChildrenSubExpressions extends TCFChildren {
             if (!children_cache.validate(this)) return false;
             String[] children_data = children_cache.getData();
             Map<String,TCFNode> data = null;
-            if (children_data != null) data = findFields(type_data, children_data, false);
+            if (children_data != null) {
+                data = findFields(type_data, children_data, false);
+                if (data == null) return false;
+            }
             set(null, children_cache.getError(), data);
             return true;
         }
@@ -160,13 +167,16 @@ public class TCFChildrenSubExpressions extends TCFChildren {
                 if (base_type_cache != null) {
                     if (!base_type_cache.validate(this)) return false;
                     ISymbols.Symbol base_type_data = base_type_cache.getData();
-                    if (base_type_data != null && base_type_data.getSize() > 0) {
+                    if (base_type_data != null && base_type_data.getTypeClass() != ISymbols.TypeClass.function && base_type_data.getSize() > 0) {
                         if (base_type_data.getTypeClass() == ISymbols.TypeClass.composite) {
                             TCFDataCache<String[]> children_cache = node.model.getSymbolChildrenCache(base_type_data.getID());
                             if (children_cache != null) {
                                 if (!children_cache.validate(this)) return false;
                                 String[] children_data = children_cache.getData();
-                                if (children_data != null) data = findFields(type_data, children_data, true);
+                                if (children_data != null) {
+                                    data = findFields(type_data, children_data, true);
+                                    if (data == null) return false;
+                                }
                             }
                         }
                         else {

@@ -159,6 +159,16 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                         set(null, new Exception("Field nas no name"), null);
                         return true;
                     }
+                    int l = name.length();
+                    for (int i = 0; i < l; i++) {
+                        char ch = name.charAt(i);
+                        if (ch >= 'A' && ch <= 'Z') continue;
+                        if (ch >= 'a' && ch <= 'z') continue;
+                        if (ch >= '0' && ch <= '9') continue;
+                        if (ch == '_') continue;
+                        name = "\"" + name + "\"";
+                        break;
+                    }
                     if (deref) {
                         e = "(" + e + ")->" + name;
                     }
@@ -584,6 +594,12 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                                 String[] children = children_cache.getData();
                                 if (children != null) {
                                     StringBuffer args = new StringBuffer();
+                                    if (name != null) {
+                                        args.append('(');
+                                        args.append(name);
+                                        args.append(')');
+                                        name = null;
+                                    }
                                     args.append('(');
                                     for (String id : children) {
                                         if (id != children[0]) args.append(',');
@@ -890,9 +906,9 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
             bf.append("{...}");
             return true;
         }
+        int cnt = 0;
         bf.append('{');
         for (String id : children_data) {
-            if (id != children_data[0]) bf.append(", ");
             TCFDataCache<ISymbols.Symbol> field_cache = model.getSymbolInfoCache(id);
             if (!field_cache.validate(done)) return false;
             ISymbols.Symbol field_data = field_cache.getData();
@@ -900,10 +916,18 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                 bf.append('?');
                 continue;
             }
+            if (field_data.getSymbolClass() == ISymbols.SymbolClass.function) continue;
+            if (cnt > 0) bf.append(", ");
             bf.append(field_data.getName());
             bf.append('=');
-            if (!appendValueText(bf, level + 1, field_data.getTypeID(),
-                    data, offs + field_data.getOffset(), field_data.getSize(), big_endian, done)) return false;
+            if (field_data.getSize() == 0) {
+                bf.append('?');
+            }
+            else {
+                if (!appendValueText(bf, level + 1, field_data.getTypeID(),
+                        data, offs + field_data.getOffset(), field_data.getSize(), big_endian, done)) return false;
+            }
+            cnt++;
         }
         bf.append('}');
         return true;
