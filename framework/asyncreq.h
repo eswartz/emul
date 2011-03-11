@@ -137,8 +137,8 @@ struct AsyncReqInfo {
     int error;                  /* Readable by callback function */
 };
 
-void async_req_post(AsyncReqInfo * req);
+extern void async_req_post(AsyncReqInfo * req);
 
-void ini_asyncreq(void);
+extern void ini_asyncreq(void);
 
 #endif /* D_asyncreq */

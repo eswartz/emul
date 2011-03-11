@@ -31,26 +31,26 @@ extern const char *plugins_path;
  * Loads ALL plugins from the directory PATH_Plugins (from `config.h') in
  * alphabetical order.
  */
-int plugins_load(Protocol *, TCFBroadcastGroup *);
+extern int plugins_load(Protocol *, TCFBroadcastGroup *);
 
 /*
  * Initializes a particular plugin according to its path.
  */
-int plugin_init(const char *, Protocol *, TCFBroadcastGroup *);
+extern int plugin_init(const char *, Protocol *, TCFBroadcastGroup *);
 
 /*
  * Add a new public plugin function for the other plugins to see.
  */
-int plugin_add_function(const char *, void *);
+extern int plugin_add_function(const char *, void *);
 
 /*
  * Get a public function from its name.
  */
-void * plugin_get_function(const char *);
+extern void * plugin_get_function(const char *);
 
 /*
  * Destroys loaded plugins.
  */
-int plugins_destroy(void);
+extern int plugins_destroy(void);
 
 #endif /* D_plugins */
