@@ -43,7 +43,7 @@ public class CpuMetricsCanvas extends Canvas {
 	public CpuMetricsCanvas(final Composite parent, int style, CpuMetrics cpuMetrics) {
 		super(parent, style | SWT.NO_BACKGROUND);
 		this.cpuMetrics = cpuMetrics;
-		GridDataFactory.swtDefaults().align(SWT.RIGHT, SWT.CENTER).grab(false, false)
+		GridDataFactory.swtDefaults().align(SWT.RIGHT, SWT.FILL).grab(false, false).minSize(32, 32)
 			.indent(2, 2)./*exclude(true).*/applyTo(this);
 		
 		setVisible(true);

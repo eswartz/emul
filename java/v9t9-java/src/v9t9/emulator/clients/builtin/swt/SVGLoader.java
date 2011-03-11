@@ -362,4 +362,13 @@ public class SVGLoader {
 		return size;
 	}
 
+
+
+	/**
+	 * @return
+	 */
+	public String getFileName() {
+		return uri;
+	}
+
 }

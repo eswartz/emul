@@ -74,9 +74,11 @@ public class SVGImageProvider extends MultiImageSizeProvider {
 						else
 							scaledSize.x = size.x * svgSize.x / svgSize.y;
 						
-						System.out.println("Loading " + scaledSize);
+						long start = System.currentTimeMillis();
 						
 						scaledImageData = svgIcon.getImageData(scaledSize);
+						long end = System.currentTimeMillis();
+						System.out.println("Loaded " + svgIcon.getFileName() + " @ " + scaledSize + ": " + (end - start) + " ms");
 						svgFailed = false;
 						
 						if (!buttonBar.isDisposed()) {

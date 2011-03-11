@@ -42,6 +42,7 @@ import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.FileDialog;
+import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
@@ -128,13 +129,18 @@ public class SwtWindow extends BaseEmulatorWindow {
 		}
 		
 		Composite mainComposite = shell;
-		GridLayoutFactory.fillDefaults().margins(2, 2).applyTo(mainComposite);
+		GridLayoutFactory.fillDefaults().margins(2, 2).numColumns(2).applyTo(mainComposite);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(mainComposite);
 		
 		topComposite = new Composite(mainComposite, SWT.NONE);
 		GridLayoutFactory.fillDefaults().applyTo(topComposite);
-		GridDataFactory.fillDefaults().grab(true, true).applyTo(topComposite);
-		
+		GridDataFactory.fillDefaults().grab(true, true).span(1, 1).applyTo(topComposite);
+
+		Group sideBar = new Group(mainComposite, SWT.SHADOW_OUT);
+		GridLayoutFactory.swtDefaults().applyTo(sideBar);
+		GridDataFactory.fillDefaults().grab(false, true).span(1, 1).applyTo(sideBar);
+		//sideBar.setBackground(Display.getDefault().getSystemColor(SWT.COLOR_GRAY));
+
 
 		focusRestorer = new IFocusRestorer() {
 			public void restoreFocus() {
@@ -143,8 +149,10 @@ public class SwtWindow extends BaseEmulatorWindow {
 		};
 		
 		createButtons(mainComposite);
+		GridData gd = ((GridData) buttonBar.getLayoutData());
+		gd.horizontalSpan = 2;
 		
-		cpuMetricsCanvas = new CpuMetricsCanvas(buttonBar, SWT.BORDER, machine.getCpuMetrics());
+		cpuMetricsCanvas = new CpuMetricsCanvas(sideBar, SWT.BORDER, machine.getCpuMetrics());
 		
 		eventNotifier = new BaseEventNotifier() {
 
@@ -359,11 +367,13 @@ public class SwtWindow extends BaseEmulatorWindow {
 		
 		buttonBar = new ButtonBar(parent, SWT.HORIZONTAL, focusRestorer, true);
 		
-		GridDataFactory.swtDefaults().align(SWT.FILL, SWT.BOTTOM).applyTo(buttonBar);
+		//GridDataFactory.swtDefaults().align(SWT.FILL, SWT.BOTTOM).grab(true, false).minSize(-1, 16).applyTo(buttonBar);
 
-		//imageProvider = new MultiImageSizeProvider(mainIcons);
-		SVGLoader svgIconLoader = new SVGLoader(Emulator.getDataFile("icons/icons.svg"));
-		imageProvider = new SVGImageProvider(mainIcons, buttonBar, svgIconLoader);
+		imageProvider = new MultiImageSizeProvider(mainIcons);
+		
+		// SLLLOOOOOOWWWW
+		//SVGLoader svgIconLoader = new SVGLoader(Emulator.getDataFile("icons/icons.svg"));
+		//imageProvider = new SVGImageProvider(mainIcons, buttonBar, svgIconLoader);
 		
 		buttonBar.addControlListener(new ControlAdapter() {
 			@Override
