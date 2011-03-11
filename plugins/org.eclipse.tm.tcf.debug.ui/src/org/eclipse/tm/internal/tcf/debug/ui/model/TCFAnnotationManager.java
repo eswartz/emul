@@ -120,7 +120,7 @@ public class TCFAnnotationManager {
                         }
                     });
                 }
-                
+
                 public void breakpointChanged(String id) {
                 }
             });
