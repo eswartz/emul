@@ -36,7 +36,7 @@ public class ProcessesContentProvider implements ITreeContentProvider {
 	static final String pending = "pending...";
 	
 	static class RootNode {
-		private static final String propertyName = "processesRoot";
+		static final String propertyName = "processesRoot";
 		private final ITarget target;
 		private ProcessesNode[] processes;
 		
