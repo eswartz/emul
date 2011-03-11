@@ -164,7 +164,7 @@ static char * get_executable(pid_t pid) {
             pid, errno, errno_to_str(errno));
         return NULL;
     }
-    s[fread(s, FILE_PATH_SIZE, 1, file)] = 0;
+    s[fread(s, 1, FILE_PATH_SIZE, file)] = 0;
     fclose(file);
     return s;
 }
