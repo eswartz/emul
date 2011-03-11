@@ -586,13 +586,13 @@ int getegid(void) {
 }
 
 const char * get_os_name(void) {
-    static char str[256];
 #if _WRS_VXWORKS_MAJOR > 6 || _WRS_VXWORKS_MAJOR == 6 && _WRS_VXWORKS_MINOR >= 7
-    snprintf(str, sizeof(str), "VxWorks %s", vxWorksVersion);
+    return VXWORKS_VERSION;
 #else
+    static char str[256];
     snprintf(str, sizeof(str), "VxWorks %s", kernelVersion());
-#endif
     return str;
+#endif
 }
 
 const char * get_user_home(void) {
