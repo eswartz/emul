@@ -1,0 +1,5 @@
+# ignore various emacs droppings
+*~
+\#*\#
+
+/agent/obj/
