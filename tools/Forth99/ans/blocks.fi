@@ -198,15 +198,15 @@ $404  constant  (b/blk)
 ;
 
 \   get the address of the given line from the block-formatted memory
-: (line)    ( line# baddr -- addr u )
+| : (line)    ( line# baddr -- addr u )
     >r c/l * r>  + c/l 
 ;
 
 \   print the number and the contents of the given line from the block-formatted memory
-: .line ( line# baddr label# )
+| : .line ( line# baddr label# )
     0 u.r  [char] : emit  space 
     (line) 
-    win-sx  6 -  min
+    win-cx c@  6 -  min
     type cr
 ;
 
