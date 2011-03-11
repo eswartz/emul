@@ -151,42 +151,83 @@ static int is_attached(pid_t pid) {
 #endif
 }
 
-#if defined(__linux__)
-static char * get_executable(pid_t pid) {
-    static char s[FILE_PATH_SIZE + 1];
-    char tmpbuf[100];
-    FILE * file;
-
-    snprintf(tmpbuf, sizeof(tmpbuf), "/proc/%d/cmdline", pid);
-    file = fopen(tmpbuf, "r");
-    if (!file) {
-        trace(LOG_ALWAYS, "error: reading cmdline failed; pid %d, error %d %s",
-            pid, errno, errno_to_str(errno));
-        return NULL;
-    }
-    s[fread(s, 1, FILE_PATH_SIZE, file)] = 0;
-    fclose(file);
-    return s;
-}
-#endif
-
 static void write_context(OutputStream * out, int pid) {
     ChildProcess * prs = find_process(pid);
-    const char * name = NULL;
 
     write_stream(out, '{');
 
+    // the process Name
+#if defined(__linux__)
+    // Use the /proc to get the name
+    {
+        char buff[256];
+        char fname[256];
+        FILE * file;
+        const char * name = NULL;
+
+        // clear out buff
+        buff[0] = 0;
+
+        // try cmdline
+        snprintf(fname, sizeof(fname), "/proc/%d/cmdline", pid);
+        file = fopen(fname, "r");
+        if (file) {
+            fgets(buff, sizeof(buff), file);
+            if (buff[0])
+                name = buff;
+            fclose(file);
+        }
+
+        if (!name) {
+            // try status
+            snprintf(fname, sizeof(fname), "/proc/%d/status", pid);
+            file = fopen(fname, "r");
+            if (file) {
+                char * p;
+                fgets(buff, sizeof(buff), file);
+
+                // Find the attribute name
+                for (p = buff; *p; ++p)
+                    if (*p == ':') {
+                        // close off the attr name string
+                        *p++ = 0;
+
+                        // is it our name?
+                        if (!strcmp(buff, "Name")) {
+                            char * n;
+
+                            // change tab to '['
+                            *p = '[';
+
+                            // change trailing new line to ']'
+                            for (n = p; *n; ++n)
+                                if (*n == '\n')
+                                    *n = ']';
+
+                            name = p;
+                            break;
+                        }
+                    }
+
+                fclose(file);
+            }
+        }
+
+        if (!name)
+            name = pid2id(pid, 0);
+
+        // Send it out
+        json_write_string(out, "Name");
+        write_stream(out, ':');
+        json_write_string(out, name);
+        write_stream(out, ',');
+    }
+#else
     json_write_string(out, "Name");
     write_stream(out, ':');
-    if (prs)
-        name = prs->name;
-#if defined(__linux__)
-    else
-        name = get_executable(pid);
-#endif
-    if (!name) name = pid2id(pid, 0);
-    json_write_string(out, name);
+    json_write_string(out, prs ? prs->name : pid2id(pid, 0))
     write_stream(out, ',');
+#endif
 
     json_write_string(out, "CanTerminate");
     write_stream(out, ':');
