@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.List;
 
 import v9t9.emulator.clients.builtin.SoundProvider;
+import v9t9.emulator.clients.builtin.swt.IDeviceIndicatorProvider;
 import v9t9.emulator.clients.builtin.video.v9938.VdpV9938;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.dsrs.DsrSettings;
@@ -109,6 +110,11 @@ public class F99bMachineModel implements MachineModel {
 		return Collections.singletonList((DsrSettings) memoryDiskDsr);
 	}
 
+	@Override
+	public List<IDeviceIndicatorProvider> getDeviceIndicatorProviders() {
+		return memoryDiskDsr.createDeviceIndicatorProviders();
+	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.MachineModel#getCPU()
 	 */

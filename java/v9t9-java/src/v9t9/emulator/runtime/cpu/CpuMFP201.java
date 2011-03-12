@@ -236,6 +236,12 @@ public class CpuMFP201 extends CpuBase {
 	public void reset() {
 		setPC(readIntVec(INT_RESET));
 	}
+	
+	@Override
+	public void nmi() {
+		setPin(PIN_LOAD);		
+	}
+
 
 	public short getSP() {
 		return ((CpuStateMFP201) state).getSP();

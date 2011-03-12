@@ -3,6 +3,11 @@
  */
 package v9t9.emulator.hardware.dsrs.realdisk;
 
+import java.util.List;
+
+import org.ejs.coffee.core.properties.SettingProperty;
+
+import v9t9.emulator.clients.builtin.swt.IDeviceIndicatorProvider;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.dsrs.IMemoryIOHandler;
 

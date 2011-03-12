@@ -6,6 +6,7 @@ package v9t9.emulator.hardware;
 import java.util.List;
 
 import v9t9.emulator.clients.builtin.SoundProvider;
+import v9t9.emulator.clients.builtin.swt.IDeviceIndicatorProvider;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.dsrs.DsrSettings;
 import v9t9.emulator.runtime.cpu.Cpu;
@@ -40,4 +41,6 @@ public interface MachineModel {
 	Cpu createCPU(Machine machine);
 
 	List<DsrSettings> getDsrSettings(Machine machine);
+
+	List<IDeviceIndicatorProvider> getDeviceIndicatorProviders();
 }

@@ -19,7 +19,6 @@ import v9t9.emulator.common.IEventNotifier.Level;
 import v9t9.emulator.hardware.MachineModel;
 import v9t9.emulator.hardware.MachineModelFactory;
 import v9t9.emulator.runtime.TerminatedException;
-import v9t9.emulator.runtime.cpu.Cpu9900;
 import v9t9.engine.Client;
 
 public abstract class BaseEmulatorWindow {
@@ -118,14 +117,7 @@ public abstract class BaseEmulatorWindow {
 			String fileName, boolean isSave, String[] extensions);
 	abstract protected String openDirectorySelectionDialog(String title, String directory);
 
-	protected void sendNMI() {
-		machine.getCpu().setPin(Cpu9900.PIN_LOAD);
-	}
-	
-	protected void sendReset() {
-		machine.getCpu().setPin(Cpu9900.PIN_RESET);
-	}
-	protected void loadMachineState() {
+	public void loadMachineState() {
 		String filename = selectFile(
 				"Select saved machine state", settingMachineStatePath, "saves", 
 				null, false, false, MACHINE_SAVE_FILE_EXTENSIONS);
@@ -180,7 +172,7 @@ public abstract class BaseEmulatorWindow {
 
 	abstract protected void showErrorMessage(String title, String msg);
 
-	protected void saveMachineState() {
+	public void saveMachineState() {
 		
 		// get immediately
 		ISettingSection settings = new SettingsSection();
@@ -201,7 +193,7 @@ public abstract class BaseEmulatorWindow {
 		}
 	}
 
-	protected File screenshot() {
+	public File screenshot() {
 		
 		String filenameBase = selectFile(
 				"Select screenshot file", settingScreenShotsBase, "screenshots", "screen.png", true, true, 
@@ -246,4 +238,5 @@ public abstract class BaseEmulatorWindow {
 			return null;
 		return saveFile;
 	}
+	
 }

@@ -74,7 +74,7 @@ public class CpuF99 extends CpuBase {
     }
 
     public static final int PIN_INTREQ = 1 << 31;
-    public static final int PIN_LOAD = 1 << 3;
+    public static final int PIN_NMI = 1 << 3;
     public static final int PIN_RESET = 1 << 5;
     
 	public static final int INT_RESET = 15;
@@ -132,7 +132,7 @@ public class CpuF99 extends CpuBase {
 	    	} 
 	    }
 	    
-    	if (((pins &  PIN_LOAD + PIN_RESET) != 0)) {
+    	if (((pins &  PIN_NMI + PIN_RESET) != 0)) {
     		System.out.println("Pins set... "+pins);
     		return true;
     	}   
@@ -155,12 +155,12 @@ public class CpuF99 extends CpuBase {
 		}
         
     	// non-maskable
-    	if ((pins & PIN_LOAD) != 0) {
+    	if ((pins & PIN_NMI) != 0) {
             // non-maskable
             
         	// this is ordinarily reset by external hardware, but
         	// we don't yet have a way to scan instruction execution
-        	pins &= ~PIN_LOAD;
+        	pins &= ~PIN_NMI;
         	
             idle = false;
             
@@ -260,6 +260,14 @@ public class CpuF99 extends CpuBase {
 		getState().setUP((short) 0xff00);
 		
 		contextSwitch((short) 0x400);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.cpu.Cpu#nmi()
+	 */
+	@Override
+	public void nmi() {
+		setPin(PIN_NMI);
 	}
 
 	public CpuStateF99 getState() {

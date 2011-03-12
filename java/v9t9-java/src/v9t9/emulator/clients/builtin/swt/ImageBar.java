@@ -16,9 +16,9 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Layout;
 import org.eclipse.swt.widgets.Widget;
 
-import v9t9.emulator.clients.builtin.swt.ImageButton.ButtonParentDrawer;
+import v9t9.emulator.clients.builtin.swt.ImageIconCanvas.IImageBar;
 
-class ButtonBar extends Composite implements ButtonParentDrawer {
+class ImageBar extends Composite implements IImageBar {
 
 	ButtonBarLayout layout;
 	private boolean isHorizontal;
@@ -32,7 +32,7 @@ class ButtonBar extends Composite implements ButtonParentDrawer {
 	 * @param style
 	 * @param videoRenderer
 	 */
-	public ButtonBar(Composite parent, int style, IFocusRestorer focusRestorer, boolean smoothResize) {
+	public ImageBar(Composite parent, int style, IFocusRestorer focusRestorer, boolean smoothResize) {
 		// the bar itself is the full width of the parent
 		super(parent, style & ~(SWT.HORIZONTAL + SWT.VERTICAL) | SWT.NO_RADIO_GROUP | SWT.NO_FOCUS);
 		this.focusRestorer = focusRestorer;
@@ -194,7 +194,7 @@ class ButtonBar extends Composite implements ButtonParentDrawer {
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.swt.ImageButton.ButtonParentDrawer#draw(org.eclipse.swt.graphics.GC, v9t9.emulator.clients.builtin.swt.ImageButton, org.eclipse.swt.graphics.Point, org.eclipse.swt.graphics.Point)
 	 */
-	public void drawBackground(GC gc, ImageButton imageButton, Point offset, Point size) {
+	public void drawBackground(GC gc, ImageIconCanvas imageButton, Point offset, Point size) {
 		paintButtonBar(gc, imageButton, offset, size);
 	}
 
@@ -204,9 +204,6 @@ class ButtonBar extends Composite implements ButtonParentDrawer {
 	 */
 	public Composite getComposite() {
 		return buttonComposite;
-	}
-
-	public void addedButton() {
 	}
 
 	public void setHorizontal(boolean isHorizontal) {

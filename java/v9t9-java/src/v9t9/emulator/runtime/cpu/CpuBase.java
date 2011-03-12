@@ -1,7 +1,6 @@
 package v9t9.emulator.runtime.cpu;
 
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.locks.Condition;
 
 import org.ejs.coffee.core.properties.IPersistable;
 import org.ejs.coffee.core.properties.IProperty;

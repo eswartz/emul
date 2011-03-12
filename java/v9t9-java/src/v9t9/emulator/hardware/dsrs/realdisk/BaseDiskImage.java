@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.ejs.coffee.core.properties.IPersistable;
+import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.settings.ISettingSection;
 
 import v9t9.engine.files.IFDRFlags;
@@ -46,6 +47,8 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	protected File spec;
 	protected RandomAccessFile handle;
 	
+	private SettingProperty inUseSetting;
+	
 	protected boolean trackFetched;
 	protected byte trackBuffer[] = new byte[StandardDiskImageDsr.DSKbuffersize];
 	protected DSKheader hdr = new DSKheader();
@@ -63,8 +66,16 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	public BaseDiskImage(String name, File spec) {
 		this.name = name;
 		this.spec = spec;
+		inUseSetting = new SettingProperty(name, Boolean.FALSE);
 	}
 
+	/**
+	 * @return the inUseSetting
+	 */
+	public SettingProperty getInUseSetting() {
+		return inUseSetting;
+	}
+	
 	/**
 	 * @param file
 	 */
@@ -141,7 +152,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 			}
 			readImageHeader();
 		}
-	
+		
 		trackFetched = false;
 		
 		StandardDiskImageDsr.info("Opened {0} disk ''{1}'' {2},\n#tracks={3}, tracksize={4}, sides={5}",

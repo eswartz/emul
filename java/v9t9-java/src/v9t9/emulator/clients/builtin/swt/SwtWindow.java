@@ -23,18 +23,14 @@ import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.FocusAdapter;
 import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.FocusListener;
-import org.eclipse.swt.events.MenuDetectEvent;
-import org.eclipse.swt.events.MenuDetectListener;
 import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Decorations;
@@ -42,30 +38,22 @@ import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.FileDialog;
-import org.eclipse.swt.widgets.Group;
-import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.ToolTip;
-import org.ejs.coffee.core.properties.IProperty;
-import org.ejs.coffee.core.properties.IPropertyListener;
-import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.utils.PrefUtils;
 
 import v9t9.emulator.Emulator;
 import v9t9.emulator.clients.builtin.BaseEmulatorWindow;
 import v9t9.emulator.clients.builtin.sound.JavaSoundHandler;
-import v9t9.emulator.clients.builtin.swt.ImageButton.ImageProvider;
-import v9t9.emulator.clients.builtin.swt.debugger.DebuggerWindow;
 import v9t9.emulator.common.BaseEventNotifier;
 import v9t9.emulator.common.EmulatorSettings;
 import v9t9.emulator.common.IEventNotifier;
+import v9t9.emulator.common.IEventNotifier.Level;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.common.NotifyEvent;
-import v9t9.emulator.common.IEventNotifier.Level;
 import v9t9.emulator.runtime.cpu.Cpu;
-import v9t9.emulator.runtime.cpu.Executor;
 
 /**
  * Provide the emulator in an SWT window
@@ -75,21 +63,17 @@ import v9t9.emulator.runtime.cpu.Executor;
 public class SwtWindow extends BaseEmulatorWindow {
 	
 	private static final String EMULATOR_WINDOW_BOUNDS = "EmulatorWindowBounds";
-	protected static final String MODULE_SELECTOR_TOOL_ID = "module.selector";
-	protected static final String DISK_SELECTOR_TOOL_ID = "disk.selector";
-	protected static final String DEBUGGER_TOOL_ID = "debugger";
 	protected Shell shell;
 	protected Control videoControl;
-	private ButtonBar buttonBar;
 	private Map<String, ToolShell> toolShells;
 	private Timer toolUiTimer;
-	private TreeMap<Integer, Image> mainIcons;
-	private ImageProvider imageProvider;
-	private Canvas cpuMetricsCanvas;
 	private IFocusRestorer focusRestorer;
 	private final IEventNotifier eventNotifier;
 	private Composite topComposite;
 	private MouseJoystickHandler mouseJoystickHandler;
+	private EmulatorButtonBar buttons;
+	private EmulatorStatusBar statusBar;
+	private MultiImageSizeProvider imageProvider;
 	
 	public SwtWindow(Display display, final Machine machine) {
 		super(machine);
@@ -102,6 +86,14 @@ public class SwtWindow extends BaseEmulatorWindow {
 		
 		File iconFile = Emulator.getDataFile("icons/v9t9.png");
 		Image icon = new Image(shell.getDisplay(), iconFile.getAbsolutePath());
+
+		TreeMap<Integer, Image> mainIcons = new TreeMap<Integer, Image>();
+		for (int size : new int[] { 16, 32, 64, 128 }) {
+			File iconsFile = Emulator.getDataFile("icons/icons_" + size + ".png");
+			mainIcons.put(size, new Image(getShell().getDisplay(), iconsFile.getAbsolutePath()));
+		}
+
+		imageProvider = new MultiImageSizeProvider(mainIcons);
 		
 		shell.setImage(icon);
 		
@@ -129,18 +121,17 @@ public class SwtWindow extends BaseEmulatorWindow {
 		}
 		
 		Composite mainComposite = shell;
-		GridLayoutFactory.fillDefaults().margins(2, 2).numColumns(2).applyTo(mainComposite);
+		GridLayoutFactory.fillDefaults().margins(2, 2).applyTo(mainComposite);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(mainComposite);
+
+		statusBar = new EmulatorStatusBar(this, mainComposite, machine);
+
+		GridData gd = ((GridData) statusBar.getImageBar().getLayoutData());
+		gd.horizontalSpan = 2;
 		
 		topComposite = new Composite(mainComposite, SWT.NONE);
 		GridLayoutFactory.fillDefaults().applyTo(topComposite);
 		GridDataFactory.fillDefaults().grab(true, true).span(1, 1).applyTo(topComposite);
-
-		Group sideBar = new Group(mainComposite, SWT.SHADOW_OUT);
-		GridLayoutFactory.swtDefaults().applyTo(sideBar);
-		GridDataFactory.fillDefaults().grab(false, true).span(1, 1).applyTo(sideBar);
-		//sideBar.setBackground(Display.getDefault().getSystemColor(SWT.COLOR_GRAY));
-
 
 		focusRestorer = new IFocusRestorer() {
 			public void restoreFocus() {
@@ -148,11 +139,10 @@ public class SwtWindow extends BaseEmulatorWindow {
 			}
 		};
 		
-		createButtons(mainComposite);
-		GridData gd = ((GridData) buttonBar.getLayoutData());
-		gd.horizontalSpan = 2;
+		buttons = new EmulatorButtonBar(this, mainComposite, machine);
 		
-		cpuMetricsCanvas = new CpuMetricsCanvas(sideBar, SWT.BORDER, machine.getCpuMetrics());
+		gd = ((GridData) buttons.getButtonBar().getLayoutData());
+		gd.horizontalSpan = 2;
 		
 		eventNotifier = new BaseEventNotifier() {
 
@@ -203,10 +193,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 							tip.setLocation(b.toDisplay(e.x, e.y + b.getSize().y));
 						} else {
 							//Point pt = Display.getDefault().getCursorLocation();
-							Point pt = buttonBar.getParent().toDisplay(buttonBar.getLocation());
-							//System.out.println(pt);
-							pt.y += buttonBar.getSize().y;
-							pt.x += buttonBar.getSize().x * 3 / 4;
+							Point pt = buttons.getTooltipLocation();
 							tip.setLocation(pt);
 						}
 						tip.setVisible(true);
@@ -358,234 +345,6 @@ public class SwtWindow extends BaseEmulatorWindow {
 		
 	}
 
-	private void createButtons(Composite parent) {
-		mainIcons = new TreeMap<Integer, Image>();
-		for (int size : new int[] { 16, 32, 64, 128 }) {
-			File iconsFile = Emulator.getDataFile("icons/icons_" + size + ".png");
-			mainIcons.put(size, new Image(getShell().getDisplay(), iconsFile.getAbsolutePath()));
-		}
-		
-		buttonBar = new ButtonBar(parent, SWT.HORIZONTAL, focusRestorer, true);
-		
-		//GridDataFactory.swtDefaults().align(SWT.FILL, SWT.BOTTOM).grab(true, false).minSize(-1, 16).applyTo(buttonBar);
-
-		imageProvider = new MultiImageSizeProvider(mainIcons);
-		
-		// SLLLOOOOOOWWWW
-		//SVGLoader svgIconLoader = new SVGLoader(Emulator.getDataFile("icons/icons.svg"));
-		//imageProvider = new SVGImageProvider(mainIcons, buttonBar, svgIconLoader);
-		
-		buttonBar.addControlListener(new ControlAdapter() {
-			@Override
-			public void controlMoved(ControlEvent e) {
-				recenterToolShells();
-			}
-			@Override
-			public void controlResized(ControlEvent e) {
-				recenterToolShells();
-			}
-		});
-		
-		buttonBar.getDisplay().addFilter(SWT.MouseUp, new Listener() {
-			
-			public void handleEvent(Event event) {
-				if (!(event.widget instanceof Control))
-					return;
-				if (event.button == 1) {
-					Point pt = ((Control)event.widget).toDisplay(event.x, event.y);
-					handleClickOutsideToolWindow(pt);
-				}
-			}
-		});
-		
-
-		createButton(buttonBar, 1,
-				"Send a NMI interrupt", new SelectionAdapter() {
-					@Override
-					public void widgetSelected(SelectionEvent e) {
-						sendNMI();
-					}
-				});
-
-		createButton(buttonBar, 4,
-				"Reset the computer", new SelectionAdapter() {
-					@Override
-					public void widgetSelected(SelectionEvent e) {
-						sendReset();
-					}
-				});
-
-		createStateButton(buttonBar,
-				Executor.settingDumpFullInstructions, 
-				2, 0, "Toggle CPU logging");
-
-		createButton(buttonBar,
-				7, "Create debugger window", 
-				new SelectionAdapter() {
-					@Override
-					public void widgetSelected(SelectionEvent e) {
-						toggleToolShell(DEBUGGER_TOOL_ID, "DebuggerWindowBounds", false, false, new IToolShellFactory() {
-							public Control createContents(Shell shell) {
-								return new DebuggerWindow(shell, SWT.NONE, machine, toolUiTimer);
-							}
-						});
-					}
-			}
-		);
-		
-		if (machine.getModuleManager() != null) {
-			createButton(buttonBar,
-				16, "Switch module", 
-				new SelectionAdapter() {
-					@Override
-					public void widgetSelected(SelectionEvent e) {
-						toggleToolShell(MODULE_SELECTOR_TOOL_ID, "ModuleWindowBounds", true, true, new IToolShellFactory() {
-							public Control createContents(Shell shell) {
-								return new ModuleSelector(shell, machine);
-							}
-						});
-					}
-				}
-			);
-		}
-		
-		createButton(buttonBar,
-			5, "Setup disks", 
-			new SelectionAdapter() {
-				@Override
-				public void widgetSelected(SelectionEvent e) {
-					toggleToolShell(DISK_SELECTOR_TOOL_ID, "DiskWindowBounds", true, true, new IToolShellFactory() {
-						public Control createContents(Shell shell) {
-							return new DiskSelector(shell, machine.getModel().getDsrSettings(machine));
-						}
-					});
-				}
-			}
-		);
-		/*
-		createButton(buttonBar,
-				0, 
-				"Branch to Condensed BASIC",
-				new SelectionAdapter() {
-					@Override
-					public void widgetSelected(SelectionEvent e) {
-						Cpu cpu = SwtWindow.this.machine.getExecutor().cpu;
-						cpu.setPC((short)0xa000);								
-						cpu.setWP((short)0x83e0);								
-					}
-				});
-		*/
-		
-		createButton(buttonBar, 3,
-				"Paste into keyboard", new SelectionAdapter() {
-					@Override
-					public void widgetSelected(SelectionEvent e) {
-						pasteClipboardToKeyboard();
-					}
-			});
-		
-		createButton(buttonBar, 6,
-				"Load or save machine state", new SelectionAdapter() {
-					@Override
-					public void widgetSelected(SelectionEvent e) {
-						Control button = (Control) e.widget;
-						Point size = button.getSize();
-						showMenu(createFilePopupMenu(button), button, size.x / 2, size.y / 2);
-					}
-
-			});
-		
-		createStateButton(buttonBar, Machine.settingPauseMachine,
-				8, 0,
-				 "Pause machine");
-
-		createStateButton(buttonBar, BaseEmulatorWindow.settingMonitorDrawing,  
-				9, 0, 
-				"Apply monitor effect to video");
-
-		createButton(buttonBar, 10,
-				"Take screenshot", new SelectionAdapter() {
-					@Override
-					public void widgetSelected(SelectionEvent e) {
-						File file = screenshot();
-						if (file != null) {
-							eventNotifier.notifyEvent(e, Level.INFO, "Recorded screenshot to " + file);
-						}
-					}
-			});
-
-		/*
-		createButton(buttonBar, 11,
-				"Zoom the screen", new SelectionAdapter() {
-					@Override
-					public void widgetSelected(SelectionEvent e) {
-						Control button = (Control) e.widget;
-						Point size = button.getSize();
-						showMenu(createZoomMenu(button), button, size.x / 2, size.y / 2);
-					}
-				});
-		*/
-		createButton(buttonBar, 12,
-				"Accelerate execution", new SelectionAdapter() {
-					@Override
-					public void widgetSelected(SelectionEvent e) {
-						Control button = (Control) e.widget;
-						Point size = button.getSize();
-						showMenu(createAccelMenu(button), button, size.x / 2, size.y / 2);
-					}
-				});
-		
-		final BasicButton soundButton = createStateButton(buttonBar, 
-				JavaSoundHandler.settingPlaySound, 
-				true, null,
-				13, 14,
-				"Sound options");
-	/*	soundButton.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				Control button = (Control) e.widget;
-				Point size = button.getSize();
-				showMenu(createSoundMenu(button), button, size.x / 2, size.y / 2);
-			}
-		});*/
-		
-		soundButton.setMenuOverlayBounds(mainIconIndexToBounds(15));
-		soundButton.addMenuDetectListener(new MenuDetectListener() {
-
-			public void menuDetected(MenuDetectEvent e) {
-				Control button = (Control) e.widget;
-				Menu menu = new Menu(button);
-				if (machine.getSound().getSoundHandler() instanceof JavaSoundHandler) {
-					JavaSoundHandler javaSoundHandler = (JavaSoundHandler) machine.getSound().getSoundHandler();
-					javaSoundHandler.getSoundRecordingHelper().populateSoundMenu(menu);
-					javaSoundHandler.getSpeechRecordingHelper().populateSoundMenu(menu);
-				}
-				MenuItem vitem = new MenuItem(menu, SWT.CASCADE);
-				vitem.setText("Volume");
-				
-				final Menu volumeMenu = new Menu(vitem);
-
-				int curVol = JavaSoundHandler.settingSoundVolume.getInt();
-				int[] vols = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-				for (final int vol : vols) {
-					MenuItem item = new MenuItem(volumeMenu, SWT.RADIO);
-					item.setText("" + vol);
-					if (vol == curVol)
-						item.setSelection(true);
-					item.addSelectionListener(new SelectionAdapter() {
-						@Override
-						public void widgetSelected(SelectionEvent e) {
-							JavaSoundHandler.settingSoundVolume.setInt(vol);
-						}
-
-					});
-				}
-				vitem.setMenu(volumeMenu);
-				showMenu(menu, button, e.x, e.y);
-			}
-		});
-	}
-
 	/**
 	 * @param debuggerToolId
 	 * @param iToolShellFactory
@@ -596,13 +355,20 @@ public class SwtWindow extends BaseEmulatorWindow {
 		if (!restoreToolShell(toolId)) {
 			Shell shell = new Shell(getShell(), SWT.RESIZE | SWT.TOOL);
 			final ToolShell toolShell = new ToolShell(shell, focusRestorer, boundsPref, 
-							keepCentered ? buttonBar : null,
+							keepCentered ? buttons.getButtonBar() : null,
 							dismissOnClickOutside);
 			Control tool = toolShellFactory.createContents(shell);
 			toolShell.init(tool);
 			addToolShell(toolId, toolShell);
 		}
 		
+	}
+	
+	/**
+	 * @return the focusRestorer
+	 */
+	public IFocusRestorer getFocusRestorer() {
+		return focusRestorer;
 	}
 
 	/*
@@ -809,7 +575,9 @@ public class SwtWindow extends BaseEmulatorWindow {
 	@Override
 	public void dispose() {
 		
-		cpuMetricsCanvas.dispose();
+		buttons.dispose();
+		
+		statusBar.dispose();
 		
 		toolUiTimer.cancel();
 		
@@ -822,257 +590,9 @@ public class SwtWindow extends BaseEmulatorWindow {
 		super.dispose();
 	}
 
-	protected void showMenu(Menu menu, final Control parent, final int x, final int y) {
-		runMenu(parent, x, y, menu);
-		menu.dispose();		
-	}
-
-	private void runMenu(final Control parent, final int x, final int y,
-			final Menu menu) {
-		if (parent != null) {
-			Point loc = parent.toDisplay(x, y); 
-			menu.setLocation(loc);
-		}
-		System.out.println("position: " + menu.getParent().getLocation());
-		menu.setVisible(true);
-		
-		//System.out.println("Running menu");
-		final Shell menuShell = getShell();
-		Display display = menuShell.getDisplay();
-		while (display.readAndDispatch()) /**/ ;
-
-		while (!menu.isDisposed() && menu.isVisible()) {
-			if (!display.readAndDispatch())
-				display.sleep();
-		}
-		
-	}
-
-	/*
-	private Menu createZoomMenu(final Control parent) {
-		final Menu menu = new Menu(parent);
-		return populateZoomMenu(menu);
-	}
-
-	private Menu populateZoomMenu(final Menu menu) {
-		int curZoom = videoRenderer.getZoom();
-		int[] zooms = { 1, 2, 3, 4, 5, 6, 7, 8 };
-		for (final int zoom : zooms) {
-			MenuItem item = new MenuItem(menu, SWT.RADIO);
-			item.setText("" + zoom);
-			if (zoom == curZoom)
-				item.setSelection(true);
-			item.addSelectionListener(new SelectionAdapter() {
-				@Override
-				public void widgetSelected(SelectionEvent e) {
-					setScreenZoom(zoom);
-					EmulatorSettings.getInstance().getApplicationSettings().put("ZoomLevel", zoom);
-				}
-
-			});
-		}
-		return menu;
-	}
 	
-	protected void setScreenZoom(int zoom) {
-		System.out.println("Set zoom to " + zoom);
-		videoRenderer.setZoom(zoom);
-	}
-	 */
-	private Menu createFilePopupMenu(final Control parent) {
-		final Menu menu = new Menu(parent);
-		return populateFileMenu(menu, false);
-	}
-	
-	private Menu populateFileMenu(final Menu menu, boolean withExit) {
-		MenuItem open = new MenuItem(menu, SWT.NONE);
-		open.setText("&Open machine state");
-		open.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				loadMachineState();
-			}
-		});
-		MenuItem save = new MenuItem(menu, SWT.NONE);
-		save.setText("&Save machine state");
-		save.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				saveMachineState();
-			}
-		});
-
-		if (withExit) {
-			MenuItem exit = new MenuItem(menu, SWT.NONE);
-			exit.setText("E&xit");
-			exit.addSelectionListener(new SelectionAdapter() {
-				@Override
-				public void widgetSelected(SelectionEvent e) {
-					System.exit(0);
-				}
-			});
-		}
-		
-		return menu;
-	}
-	
-	private Menu populateEditMenu(final Menu menu) {
-		MenuItem paste = new MenuItem(menu, SWT.NONE);
-		paste.setText("&Paste into keyboard");
-		paste.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				pasteClipboardToKeyboard();
-			}
-		});
-		
-		return menu;
-	}
-	
-	private Menu createAccelMenu(final Control parent) {
-		final Menu menu = new Menu(parent);
-		return populateAccelMenu(menu);
-	}
-
-	private Menu populateAccelMenu(final Menu menu) {
-		for (int mult = 1; mult <= 10; mult++) {
-			createAccelMenuItem(menu, mult, mult + "x");
-		}
-
-		new MenuItem(menu, SWT.SEPARATOR);
-		
-		MenuItem item = new MenuItem(menu, SWT.CHECK);
-		item.setText("Unbounded");
-		if (!Cpu.settingRealTime.getBoolean()) {
-			item.setSelection(true);
-		}
-		item.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				boolean setting = false;
-				Cpu.settingRealTime.setBoolean(setting);
-			}
-		});
-
-		new MenuItem(menu, SWT.SEPARATOR);
-		
-		for (int div = 2; div <= 5; div++) {
-			createAccelMenuItem(menu, 1.0 / div, "1/" + div);
-		}
-
-		return menu;
-	}
-
-	private void createAccelMenuItem(final Menu menu, double factor, String label) {
-		boolean isRealTime = Cpu.settingRealTime.getBoolean();
-		int curCycles = Cpu.settingCyclesPerSecond.getInt();
-		MenuItem item = new MenuItem(menu, SWT.RADIO);
-		final int cycles = (int) (machine.getCpu().getBaseCyclesPerSec() * factor);
-		item.setText(label + " (" + cycles + ")");
-		if (isRealTime && cycles == curCycles) {
-			item.setSelection(true);
-		}
-		item.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				Cpu.settingRealTime.setBoolean(true);
-				Cpu.settingCyclesPerSecond.setInt(cycles);
-			}
-		});
-	}
-	
-	
-	private BasicButton createButton(ButtonBar buttonBar, int iconIndex, String tooltip, SelectionListener selectionListener) {
-		Rectangle bounds = mainIconIndexToBounds(iconIndex);
-		BasicButton button = new BasicButton(buttonBar, SWT.PUSH, imageProvider, bounds, tooltip);
-		button.addSelectionListener(selectionListener);
-		return button;
-	}
-	
-	private Rectangle mainIconIndexToBounds(int iconIndex) {
-		Rectangle bounds = mainIcons.values().iterator().next().getBounds();
-		int unit = bounds.width;
-		return new Rectangle(0, unit * iconIndex, unit, unit); 
-	}
-
-	private BasicButton createStateButton(ButtonBar buttonBar, final SettingProperty setting, 
-			final boolean inverted, final Point noClickCorner, 
-			int iconIndex, final int overlayIndex, String tooltip) {
-		final BasicButton button = new BasicButton(buttonBar, SWT.PUSH, 
-				imageProvider, 
-				mainIconIndexToBounds(iconIndex), 
-				tooltip);
-		setting.addListener(new IPropertyListener() {
-
-			public void propertyChanged(final IProperty setting) {
-				Display.getDefault().asyncExec(new Runnable() {
-
-					public void run() {
-						if (button.isDisposed())
-							return;
-						if (setting.getBoolean() != inverted) {
-							button.setOverlayBounds(mainIconIndexToBounds(overlayIndex));
-						} else {
-							button.setOverlayBounds(null);
-						}
-						if (setting.getBoolean() != button.getSelection()) {
-							button.setSelection(setting.getBoolean());
-						}
-						button.redraw();
-					}
-					
-				});
-			}
-			
-		});
-		
-		button.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				if (noClickCorner != null) {
-					if (e.x >= noClickCorner.x || e.y >= noClickCorner.y)
-						return;
-				}
-				machine.asyncExec(new Runnable() {
-					public void run() {
-						setting.setBoolean(!setting.getBoolean());
-					}
-				});
-				//getShell().getDisplay().asyncExec(new Runnable() {
-					//public void run() {
-					//}
-				//});
-			}
-		});
-		
-		if (setting.getBoolean() != inverted) {
-			button.setOverlayBounds(mainIconIndexToBounds(overlayIndex));
-			button.setSelection(setting.getBoolean());
-		}
-		return button;
-	}
-	private BasicButton createStateButton(ButtonBar buttonBar, final SettingProperty setting, 
-			int iconIndex, int overlayIndex, String tooltip) {
-		return createStateButton(buttonBar, setting, false, null, iconIndex, overlayIndex, tooltip);
-	}
 	public Shell getShell() {
 		return shell;
-	}
-
-	protected void pasteClipboardToKeyboard() {
-		Clipboard clip = new Clipboard(shell.getDisplay());
-		String contents = (String) clip.getContents(TextTransfer.getInstance());
-		if (contents == null) {
-			contents = (String) clip.getContents(RTFTransfer.getInstance());
-		}
-		if (contents != null) {
-			machine.getKeyboardState().pasteText(contents);
-		} else {
-			showErrorMessage("Paste Error", 
-					"Cannot paste: no text on clipboard");
-		}
-		clip.dispose();
-		
 	}
 
 	@Override
@@ -1129,5 +649,153 @@ public class SwtWindow extends BaseEmulatorWindow {
 		return eventNotifier;
 	}
 
+	public Timer getToolUiTimer() {
+		return toolUiTimer;
+	}
+
+	public void runMenu(final Control parent, final int x, final int y,
+			final Menu menu) {
+		if (parent != null) {
+			Point loc = parent.toDisplay(x, y); 
+			menu.setLocation(loc);
+		}
+		System.out.println("position: " + menu.getParent().getLocation());
+		menu.setVisible(true);
+		
+		//System.out.println("Running menu");
+		final Shell menuShell = getShell();
+		Display display = menuShell.getDisplay();
+		while (display.readAndDispatch()) /**/ ;
+
+		while (!menu.isDisposed() && menu.isVisible()) {
+			if (!display.readAndDispatch())
+				display.sleep();
+		}
+		
+	}
+	
+
+	Menu populateFileMenu(final Menu menu, boolean withExit) {
+		MenuItem open = new MenuItem(menu, SWT.NONE);
+		open.setText("&Open machine state");
+		open.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				loadMachineState();
+			}
+		});
+		MenuItem save = new MenuItem(menu, SWT.NONE);
+		save.setText("&Save machine state");
+		save.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				saveMachineState();
+			}
+		});
+
+		if (withExit) {
+			MenuItem exit = new MenuItem(menu, SWT.NONE);
+			exit.setText("E&xit");
+			exit.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					System.exit(0);
+				}
+			});
+		}
+		
+		return menu;
+	}
+	
+	private Menu populateEditMenu(final Menu menu) {
+		MenuItem paste = new MenuItem(menu, SWT.NONE);
+		paste.setText("&Paste into keyboard");
+		paste.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				pasteClipboardToKeyboard();
+			}
+		});
+		
+		return menu;
+	}
+	
+
+	Menu populateAccelMenu(final Menu menu) {
+		for (int mult = 1; mult <= 10; mult++) {
+			createAccelMenuItem(menu, mult, mult + "x");
+		}
+
+		new MenuItem(menu, SWT.SEPARATOR);
+		
+		MenuItem item = new MenuItem(menu, SWT.CHECK);
+		item.setText("Unbounded");
+		if (!Cpu.settingRealTime.getBoolean()) {
+			item.setSelection(true);
+		}
+		item.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				boolean setting = false;
+				Cpu.settingRealTime.setBoolean(setting);
+			}
+		});
+
+		new MenuItem(menu, SWT.SEPARATOR);
+		
+		for (int div = 2; div <= 5; div++) {
+			createAccelMenuItem(menu, 1.0 / div, "1/" + div);
+		}
+
+		return menu;
+	}
+
+	private void createAccelMenuItem(final Menu menu, double factor, String label) {
+		boolean isRealTime = Cpu.settingRealTime.getBoolean();
+		int curCycles = Cpu.settingCyclesPerSecond.getInt();
+		MenuItem item = new MenuItem(menu, SWT.RADIO);
+		final int cycles = (int) (machine.getCpu().getBaseCyclesPerSec() * factor);
+		item.setText(label + " (" + cycles + ")");
+		if (isRealTime && cycles == curCycles) {
+			item.setSelection(true);
+		}
+		item.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				Cpu.settingRealTime.setBoolean(true);
+				Cpu.settingCyclesPerSecond.setInt(cycles);
+			}
+		});
+	}
+	
+
+	protected void pasteClipboardToKeyboard() {
+		Clipboard clip = new Clipboard(getShell().getDisplay());
+		String contents = (String) clip.getContents(TextTransfer.getInstance());
+		if (contents == null) {
+			contents = (String) clip.getContents(RTFTransfer.getInstance());
+		}
+		if (contents != null) {
+			machine.getKeyboardState().pasteText(contents);
+		} else {
+			showErrorMessage("Paste Error", 
+					"Cannot paste: no text on clipboard");
+		}
+		clip.dispose();
+		
+	}
+	
+
+	public void showMenu(Menu menu, final Control parent, final int x, final int y) {
+		runMenu(parent, x, y, menu);
+		menu.dispose();		
+	}
+
+	/**
+	 * @return
+	 */
+	public ImageProvider getIconImageProvider() {
+		return imageProvider;
+	}
 
 }

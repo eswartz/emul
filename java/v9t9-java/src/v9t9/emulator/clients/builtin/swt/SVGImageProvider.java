@@ -26,13 +26,13 @@ public class SVGImageProvider extends MultiImageSizeProvider {
 	
 	private Point desiredSize;
 	private Image scaledImage;
-	private final ButtonBar buttonBar;
+	private final ImageBar buttonBar;
 	private boolean svgFailed;
 	
 	/**
 	 * @param iconMap
 	 */
-	public SVGImageProvider(TreeMap<Integer, Image> iconMap, ButtonBar buttonBar, SVGLoader svgIcon) {
+	public SVGImageProvider(TreeMap<Integer, Image> iconMap, ImageBar buttonBar, SVGLoader svgIcon) {
 		super(iconMap);
 		this.buttonBar = buttonBar;
 		this.svgIcon = svgIcon;

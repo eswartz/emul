@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.List;
 
 import v9t9.emulator.clients.builtin.SoundProvider;
+import v9t9.emulator.clients.builtin.swt.IDeviceIndicatorProvider;
 import v9t9.emulator.clients.builtin.video.v9938.VdpV9938;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.dsrs.DsrSettings;
@@ -105,7 +106,10 @@ public class MFP201MachineModel implements MachineModel {
 	public List<DsrSettings> getDsrSettings(Machine machine) {
 		return Collections.emptyList();
 	}
-
+	@Override
+	public List<IDeviceIndicatorProvider> getDeviceIndicatorProviders() {
+		return Collections.emptyList();
+	}
 	private void defineCpuVdpBanks(final Machine machine) {
 		
 		cpuBankedVideo = new WindowBankedMemoryEntry(machine.getMemory(),

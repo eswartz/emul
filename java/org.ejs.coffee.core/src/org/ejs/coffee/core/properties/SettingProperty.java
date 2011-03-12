@@ -63,7 +63,7 @@ public class SettingProperty extends AbstractProperty {
 				firePropertyChange();
 			}
 		} else {
-			if (!this.value.equals(defaultValue)) {
+			if (this.value != null && !this.value.equals(defaultValue)) {
 				this.value = defaultValue;
 				firePropertyChange();
 			}

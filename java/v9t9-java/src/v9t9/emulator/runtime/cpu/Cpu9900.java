@@ -239,6 +239,14 @@ public class Cpu9900 extends CpuBase {
 		contextSwitch(0);		
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.cpu.Cpu#nmi()
+	 */
+	@Override
+	public void nmi() {
+		setPin(Cpu9900.PIN_LOAD);		
+	}
+	
 	@Override
 	public boolean shouldDebugCompiledCode(short pc) {
 		return ((pc >= 0x6000 && pc < 0x8000) 

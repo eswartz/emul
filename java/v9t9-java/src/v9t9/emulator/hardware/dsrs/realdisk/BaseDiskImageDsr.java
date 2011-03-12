@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -23,6 +24,7 @@ import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.Emulator;
 import v9t9.emulator.clients.builtin.IconSetting;
+import v9t9.emulator.clients.builtin.swt.IDeviceIndicatorProvider;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.common.WorkspaceSettings;
 import v9t9.emulator.hardware.dsrs.DsrHandler;
@@ -115,6 +117,9 @@ public abstract class BaseDiskImageDsr implements FDC1771Constants, DsrSettings 
 	
 	private BaseDiskImage getDiskInfo(int num) {
 		String name = getDiskImageSetting(num);
+		return getDiskImage(name);
+	}
+	private BaseDiskImage getDiskImage(String name) {
 		BaseDiskImage info = disks.get(name);
 		if (info == null) {
 			SettingProperty setting = diskSettingsMap.get(name);
@@ -243,6 +248,7 @@ public abstract class BaseDiskImageDsr implements FDC1771Constants, DsrSettings 
 								info.motorRunning = false;
 								//fdc.status.set(StatusBit.BUSY);
 								info("{0}: motor off", name);
+								info.getInUseSetting().setBoolean(false);
 							}
 						}
 					}
@@ -288,6 +294,8 @@ public abstract class BaseDiskImageDsr implements FDC1771Constants, DsrSettings 
 					} catch (IOException e) {
 						error(e.getMessage());
 					}
+					
+					oldInfo.getInUseSetting().setBoolean(false);
 					
 					// just in case the image went missing
 					if (info != null)
@@ -343,6 +351,7 @@ public abstract class BaseDiskImageDsr implements FDC1771Constants, DsrSettings 
 						info.motorRunning = true;
 						
 					}
+					info.getInUseSetting().setBoolean(true);
 				} else {
 					info.motorTimeout = System.currentTimeMillis() + 4230;
 				}
@@ -666,4 +675,49 @@ public abstract class BaseDiskImageDsr implements FDC1771Constants, DsrSettings 
 		for (Map.Entry<String, BaseDiskImage> entry : disks.entrySet())
 			entry.getValue().loadState(section.getSection(entry.getKey()));
 	}
+	
+
+	static class DeviceIndicatorProvider implements IDeviceIndicatorProvider {
+
+		private final BaseDiskImage image;
+
+		public DeviceIndicatorProvider(BaseDiskImage image) {
+			this.image = image;
+		}
+
+		@Override
+		public String getToolTip() {
+			return image.name + " activity";
+		}
+		
+		@Override
+		public int getBaseIconIndex() {
+			return 18;
+		}
+		
+		@Override
+		public int getActiveIconIndex() {
+			return 17;
+		}
+		
+		@Override
+		public SettingProperty getActiveProperty() {
+			return image.getInUseSetting();
+		}
+	}
+	/**
+	 * @return
+	 */
+	public List<IDeviceIndicatorProvider> createDeviceIndicatorProviders() {
+
+		ArrayList<IDeviceIndicatorProvider> list = new ArrayList<IDeviceIndicatorProvider>();
+		
+		for (Map.Entry<String, SettingProperty> entry : diskSettingsMap.entrySet()) {
+			BaseDiskImage image = getDiskImage(entry.getValue().getName());
+			DeviceIndicatorProvider provider = new DeviceIndicatorProvider(image);
+			list.add(provider);
+		}
+		return list;
+	}
+
 }

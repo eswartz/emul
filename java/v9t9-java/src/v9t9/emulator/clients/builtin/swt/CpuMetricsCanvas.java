@@ -3,7 +3,6 @@
  */
 package v9t9.emulator.clients.builtin.swt;
 
-import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.ControlListener;
@@ -43,9 +42,7 @@ public class CpuMetricsCanvas extends Canvas {
 	public CpuMetricsCanvas(final Composite parent, int style, CpuMetrics cpuMetrics) {
 		super(parent, style | SWT.NO_BACKGROUND);
 		this.cpuMetrics = cpuMetrics;
-		GridDataFactory.swtDefaults().align(SWT.RIGHT, SWT.FILL).grab(false, false).minSize(32, 32)
-			.indent(2, 2)./*exclude(true).*/applyTo(this);
-		
+	
 		setVisible(true);
 		updateTooltip(null);
 		
@@ -56,7 +53,7 @@ public class CpuMetricsCanvas extends Canvas {
 		
 		realInterruptsColor = getDisplay().getSystemColor(SWT.COLOR_CYAN);
 		idealInterruptsColor = getDisplay().getSystemColor(SWT.COLOR_WHITE);
-		
+
 		parent.addControlListener(new ControlListener() {
 
 			public void controlMoved(ControlEvent e) {
@@ -64,12 +61,14 @@ public class CpuMetricsCanvas extends Canvas {
 
 			public void controlResized(ControlEvent e) {
 				Rectangle bounds = parent.getClientArea();
-				Rectangle metrics = new Rectangle(bounds.x + (bounds.width - bounds.height), bounds.y,
-						bounds.height, bounds.height);
+				int height = bounds.height;
+				Rectangle metrics = new Rectangle(bounds.x + (bounds.width - height), bounds.y,
+						Math.max(height, 64), height);
 				metrics.x += 2;
 				metrics.y += 2;
 				metrics.width -= 4;
 				metrics.height -= 4;
+				System.out.println(metrics);
 				setBounds(metrics);				
 			}
 			
@@ -144,6 +143,7 @@ public class CpuMetricsCanvas extends Canvas {
 		if (isDisposed())
 			return;
 		Rectangle rect = getClientArea();
+		//System.out.println("cpu paint:" +rect);
 		Point size = new Point(rect.width, rect.height);
 		e.gc.setBackground(bgcolor);
 		e.gc.fillRectangle(new Rectangle(0, 0, size.x, size.y));

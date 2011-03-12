@@ -178,16 +178,16 @@ public class AwtWindow extends BaseEmulatorWindow implements
 		};
 
 		createButton(icons, new Rectangle(0, 64, 64, 64),
-				"Send a NMI interrupt", new ButtonPressHandler() {
+				"Send a non-maskable interrupt", new ButtonPressHandler() {
 					public void pressed(BasicButton button) {
-						sendNMI();
+						machine.getCpu().nmi();
 					}
 				});
 
 		createButton(icons, new Rectangle(0, 256, 64, 64),
 				"Reset the computer", new ButtonPressHandler() {
 					public void pressed(BasicButton button) {
-						sendReset();
+						machine.getCpu().reset();
 					}
 				});
 

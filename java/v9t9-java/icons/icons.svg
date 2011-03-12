@@ -14,7 +14,7 @@
    height="1536"
    id="svg2"
    sodipodi:version="0.32"
-   inkscape:version="0.47 r22583"
+   inkscape:version="0.48.0 r9654"
    version="1.0"
    sodipodi:docname="icons.svg"
    inkscape:output_extension="org.inkscape.output.svg.inkscape"
@@ -31,19 +31,19 @@
      objecttolerance="10"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.4142136"
+     inkscape:zoom="2.8284272"
      inkscape:cx="38.183993"
-     inkscape:cy="640.23886"
+     inkscape:cy="329.11188"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
-     showgrid="false"
+     showgrid="true"
      inkscape:window-width="1130"
      inkscape:window-height="936"
      inkscape:window-x="398"
      inkscape:window-y="98"
      showguides="true"
      inkscape:window-maximized="0"
-     inkscape:snap-global="false"
+     inkscape:snap-global="true"
      inkscape:snap-bbox="false"
      inkscape:object-nodes="true"
      inkscape:object-paths="true">
@@ -57,6 +57,17 @@
   </sodipodi:namedview>
   <defs
      id="defs4">
+    <linearGradient
+       id="linearGradient41189">
+      <stop
+         style="stop-color:#fef9e2;stop-opacity:1;"
+         offset="0"
+         id="stop41191" />
+      <stop
+         style="stop-color:#ffc001;stop-opacity:1;"
+         offset="1"
+         id="stop41193" />
+    </linearGradient>
     <linearGradient
        id="linearGradient21993">
       <stop
@@ -85835,6 +85846,17 @@
          stdDeviation="1.0859625"
          id="feGaussianBlur59666" />
     </filter>
+    <radialGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient41189"
+       id="radialGradient41195"
+       cx="32"
+       cy="620"
+       fx="32"
+       fy="620"
+       r="24.779638"
+       gradientTransform="matrix(1.9370743,0,0,0.32284591,-29.986377,419.83554)"
+       gradientUnits="userSpaceOnUse" />
   </defs>
   <metadata
      id="metadata7">
@@ -85844,7 +85866,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -88073,5 +88095,43 @@
          x="3.8057468"
          y="557.53241"
          style="fill:yellow;font-family:Trebuchet MS;-inkscape-font-specification:Trebuchet MS">Command Cartridge</tspan></text>
+    <text
+       sodipodi:linespacing="125%"
+       id="text40397"
+       y="599.73584"
+       x="-66.821587"
+       style="font-size:24px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;opacity:0.99720004;color:black;fill:green;fill-opacity:1;fill-rule:evenodd;stroke:black;stroke-width:0.9375;stroke-linecap:butt;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Arial Black;-inkscape-font-specification:'Arial Black, Bold'"
+       xml:space="preserve"><tspan
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;fill:green;stroke:black;font-family:Monospace;-inkscape-font-specification:Monospace Bold"
+         y="599.73584"
+         x="-66.821587"
+         id="tspan40399"
+         sodipodi:role="line">DISK</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:24px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;opacity:0.99720003999999995;color:black;fill:#786a48;fill-opacity:1;fill-rule:evenodd;stroke:black;stroke-width:0;stroke-linecap:butt;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Arial Black;-inkscape-font-specification:'Arial Black, Bold'"
+       x="2.4748762"
+       y="670.80011"
+       id="text40401"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan40403"
+         x="2.4748762"
+         y="670.80011"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;fill:#786a48;stroke:black;font-family:Monospace;-inkscape-font-specification:Monospace Bold;fill-opacity:1;stroke-width:0;stroke-miterlimit:4;stroke-dasharray:none">DISK</tspan></text>
+    <rect
+       style="opacity:0.99720003999999995;color:black;fill:url(#radialGradient41195);fill-opacity:1;fill-rule:evenodd;stroke:#302e10;stroke-width:1.55927609999999994;stroke-linecap:butt;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+       id="rect40405"
+       width="48"
+       height="8"
+       x="8"
+       y="616" />
+    <rect
+       y="680"
+       x="8"
+       height="8"
+       width="48"
+       id="rect41187"
+       style="opacity:0.99720003999999995;color:black;fill:#908e70;fill-opacity:1;fill-rule:evenodd;stroke:#181808;stroke-width:1.55927609999999994;stroke-linecap:butt;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate" />
   </g>
 </svg>

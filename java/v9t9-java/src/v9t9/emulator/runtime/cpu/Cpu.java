@@ -98,4 +98,9 @@ public interface Cpu extends IPersistable, CpuState {
 	 * @return
 	 */
 	boolean isIdle();
+
+	/**
+	 * 
+	 */
+	void nmi();
 }

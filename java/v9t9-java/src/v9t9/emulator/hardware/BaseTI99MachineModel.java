@@ -4,8 +4,10 @@
 package v9t9.emulator.hardware;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
+import v9t9.emulator.clients.builtin.swt.IDeviceIndicatorProvider;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.dsrs.DsrHandler;
 import v9t9.emulator.hardware.dsrs.DsrSettings;
@@ -59,6 +61,14 @@ public abstract class BaseTI99MachineModel implements MachineModel {
 			}
 		}
 		return settings;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.hardware.MachineModel#getDeviceIndicatorProviders()
+	 */
+	@Override
+	public List<IDeviceIndicatorProvider> getDeviceIndicatorProviders() {
+		return Collections.emptyList();
 	}
 
 }
