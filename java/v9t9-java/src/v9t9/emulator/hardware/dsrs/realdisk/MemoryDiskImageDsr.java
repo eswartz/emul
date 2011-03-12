@@ -3,12 +3,16 @@
  */
 package v9t9.emulator.hardware.dsrs.realdisk;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.ejs.coffee.core.properties.SettingProperty;
 
+import v9t9.emulator.clients.builtin.swt.IDevIcons;
 import v9t9.emulator.clients.builtin.swt.IDeviceIndicatorProvider;
 import v9t9.emulator.common.Machine;
+import v9t9.emulator.hardware.dsrs.DeviceIndicatorProvider;
 import v9t9.emulator.hardware.dsrs.IMemoryIOHandler;
 
 /**
@@ -43,6 +47,7 @@ public class MemoryDiskImageDsr extends BaseDiskImageDsr implements IMemoryIOHan
 	private final int baseAddr;
 
 	private byte flags;
+	private ArrayList<IDeviceIndicatorProvider> memoryDeviceIndicatorProviderList;
 	
 	/**
 	 * 
@@ -128,6 +133,34 @@ public class MemoryDiskImageDsr extends BaseDiskImageDsr implements IMemoryIOHan
 	@Override
 	public boolean handlesAddress(int addr) {
 		return addr >= baseAddr && addr <= baseAddr + DSK;
+	}
+
+	/**
+	 * @return
+	 */
+	public List<IDeviceIndicatorProvider> getDeviceIndicatorProviders() {
+
+		if (memoryDeviceIndicatorProviderList == null) {
+			memoryDeviceIndicatorProviderList = new ArrayList<IDeviceIndicatorProvider>();
+		
+			if (diskSettingsMap.isEmpty())
+				return memoryDeviceIndicatorProviderList;
+			
+			// one inactive icon for DSR
+			DeviceIndicatorProvider deviceIndicatorProvider = new DeviceIndicatorProvider(
+					diskImageDsrEnabled, 
+					"Disk image activity",
+					IDevIcons.DISK_IMAGE, IDevIcons.DISK_IMAGE);
+			memoryDeviceIndicatorProviderList.add(deviceIndicatorProvider);
+
+			
+			for (Map.Entry<String, SettingProperty> entry : diskSettingsMap.entrySet()) {
+				BaseDiskImage image = getDiskImage(entry.getValue().getName());
+				DiskImageDeviceIndicatorProvider provider = new DiskImageDeviceIndicatorProvider(image);
+				memoryDeviceIndicatorProviderList.add(provider);
+			}
+		}
+		return memoryDeviceIndicatorProviderList;
 	}
 
 }

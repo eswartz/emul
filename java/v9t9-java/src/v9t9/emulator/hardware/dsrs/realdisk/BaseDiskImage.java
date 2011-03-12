@@ -67,6 +67,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		this.name = name;
 		this.spec = spec;
 		inUseSetting = new SettingProperty(name, Boolean.FALSE);
+		inUseSetting.addEnablementDependency(BaseDiskImageDsr.diskImageDsrEnabled);
 	}
 
 	/**

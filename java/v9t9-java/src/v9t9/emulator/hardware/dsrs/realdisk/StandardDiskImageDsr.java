@@ -4,11 +4,18 @@
 package v9t9.emulator.hardware.dsrs.realdisk;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
+import org.ejs.coffee.core.properties.SettingProperty;
+
+import v9t9.emulator.clients.builtin.swt.IDevIcons;
+import v9t9.emulator.clients.builtin.swt.IDeviceIndicatorProvider;
 import v9t9.emulator.hardware.CruManager;
 import v9t9.emulator.hardware.CruReader;
 import v9t9.emulator.hardware.CruWriter;
 import v9t9.emulator.hardware.TI99Machine;
+import v9t9.emulator.hardware.dsrs.DeviceIndicatorProvider;
 import v9t9.emulator.hardware.dsrs.DsrHandler9900;
 import v9t9.emulator.hardware.memory.mmio.ConsoleMmioArea;
 import v9t9.engine.memory.DiskMemoryEntry;
@@ -118,11 +125,36 @@ public class StandardDiskImageDsr extends BaseDiskImageDsr implements DsrHandler
 	};
 
 	private short base;
+
+
+	private List<IDeviceIndicatorProvider> deviceIndicatorProviders;
 	
 	
 	public StandardDiskImageDsr(TI99Machine machine, short base) {
 		super(machine);
 		this.base = base;
+
+		deviceIndicatorProviders = new ArrayList<IDeviceIndicatorProvider>();
+		
+		if (!diskSettingsMap.isEmpty()) {
+			
+			// one setting for entire DSR
+			realDiskDsrActiveSetting = new SettingProperty(getName(), Boolean.FALSE);
+			realDiskDsrActiveSetting.addEnablementDependency(BaseDiskImageDsr.diskImageDsrEnabled);
+			DeviceIndicatorProvider deviceIndicatorProvider = new DeviceIndicatorProvider(
+					realDiskDsrActiveSetting, 
+					"Disk image activity",
+					IDevIcons.DSR_DISK_IMAGE, IDevIcons.DSR_LIGHT);
+			deviceIndicatorProviders.add(deviceIndicatorProvider);
+			
+			/*
+			for (Map.Entry<String, SettingProperty> entry : diskSettingsMap.entrySet()) {
+				BaseDiskImage image = getDiskImage(entry.getValue().getName());
+				DiskImageDeviceIndicatorProvider provider = new DiskImageDeviceIndicatorProvider(image);
+				list.add(provider);
+			}
+			*/
+		}
 		
 		CruManager cruManager = machine.getCruManager();
 		cruManager.add(base + 0x2, 1, cruwRealDiskMotor);
@@ -264,6 +296,8 @@ public class StandardDiskImageDsr extends BaseDiskImageDsr implements DsrHandler
 		if (!diskImageDsrEnabled.getBoolean())
 			return;
 		
+		realDiskDsrActiveSetting.setBoolean(true);
+		
 		if (romMemoryEntry == null)
 			this.romMemoryEntry = DiskMemoryEntry.newWordMemoryFromFile(
 					0x4000, 0x2000, "TI Disk DSR ROM", console,
@@ -281,5 +315,15 @@ public class StandardDiskImageDsr extends BaseDiskImageDsr implements DsrHandler
 	public void deactivate(MemoryDomain console) {
 		console.unmapEntry(ioMemoryEntry);
 		console.unmapEntry(romMemoryEntry);
+		
+		realDiskDsrActiveSetting.setBoolean(false);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.hardware.dsrs.DsrHandler#getDeviceIndicatorProviders()
+	 */
+	@Override
+	public List<IDeviceIndicatorProvider> getDeviceIndicatorProviders() {
+		return deviceIndicatorProviders;
 	}
 }

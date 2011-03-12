@@ -6,15 +6,20 @@ package v9t9.emulator.hardware.dsrs.pcode;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.settings.ISettingSection;
 
-import v9t9.emulator.common.EmulatorSettings;
+import v9t9.emulator.Emulator;
+import v9t9.emulator.clients.builtin.IconSetting;
+import v9t9.emulator.clients.builtin.swt.IDevIcons;
+import v9t9.emulator.clients.builtin.swt.IDeviceIndicatorProvider;
 import v9t9.emulator.common.WorkspaceSettings;
 import v9t9.emulator.common.IEventNotifier.Level;
 import v9t9.emulator.hardware.TI99Machine;
+import v9t9.emulator.hardware.dsrs.DeviceIndicatorProvider;
 import v9t9.emulator.hardware.dsrs.DsrHandler9900;
 import v9t9.emulator.hardware.dsrs.MemoryTransfer;
 import v9t9.emulator.hardware.memory.mmio.ConsoleGramWriteArea;
@@ -30,11 +35,13 @@ import v9t9.engine.memory.MemoryEntry;
  *
  */
 public class PCodeDsr implements DsrHandler9900 {
+	private static String pcodeIconPath = Emulator.getDataFile("icons/pcode_system.png").getAbsolutePath();
 
-	static public final SettingProperty settingPCodeCardEnabled = new SettingProperty(
+	static public final IconSetting settingPCodeCardEnabled = new IconSetting(
 			"PCodeCardEnabled", "Enable P-Code Card", 
 			"Enables the UCSD Pascal P-Code card.",
-			new Boolean(false));
+			new Boolean(false),
+			pcodeIconPath);
 	private PCodeDsrRomBankedMemoryEntry dsrMemoryEntry;
 	private TI99Machine machine;
 	private MemoryDomain pcodeDomain;
@@ -42,6 +49,7 @@ public class PCodeDsr implements DsrHandler9900 {
 	private MemoryEntry readMmioEntry;
 	private MemoryEntry writeMmioEntry;
 	private DiskMemoryEntry gromMemoryEntry;
+	private SettingProperty pcodeActive;
 
 	public static final String PCODE = "PCODE";
 	/**
@@ -50,6 +58,8 @@ public class PCodeDsr implements DsrHandler9900 {
 	public PCodeDsr(TI99Machine machine) {
 		WorkspaceSettings.CURRENT.register(settingPCodeCardEnabled);
 		this.machine = machine;
+		pcodeActive = new SettingProperty("pcodeActive", Boolean.FALSE);
+		pcodeActive.addEnablementDependency(settingPCodeCardEnabled);
 	}
 
 	/* (non-Javadoc)
@@ -68,6 +78,8 @@ public class PCodeDsr implements DsrHandler9900 {
 		// DSR ROM
 		if (!settingPCodeCardEnabled.getBoolean())
 			return;
+		
+		pcodeActive.setBoolean(true);
 		
 		Memory memory = console.memory;
 
@@ -141,6 +153,8 @@ public class PCodeDsr implements DsrHandler9900 {
 			memory.removeAndUnmap(readMmioEntry);
 			memory.removeAndUnmap(writeMmioEntry);
 		}
+		
+		pcodeActive.setBoolean(false);
 	}
 
 	/* (non-Javadoc)
@@ -156,8 +170,8 @@ public class PCodeDsr implements DsrHandler9900 {
 	 */
 	@Override
 	public Map<String, Collection<SettingProperty>> getEditableSettingGroups() {
-		return Collections.<String, Collection<SettingProperty>>singletonMap("P-System",
-				Collections.singletonList(settingPCodeCardEnabled));
+		return Collections.<String, Collection<SettingProperty>>singletonMap("UCSD P-System",
+				Collections.<SettingProperty>singletonList(settingPCodeCardEnabled));
 	}
 
 	/* (non-Javadoc)
@@ -206,4 +220,14 @@ public class PCodeDsr implements DsrHandler9900 {
 		settingPCodeCardEnabled.saveState(sub);
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.hardware.dsrs.DsrHandler#getDeviceIndicatorProviders()
+	 */
+	@Override
+	public List<IDeviceIndicatorProvider> getDeviceIndicatorProviders() {
+		IDeviceIndicatorProvider provider= new DeviceIndicatorProvider(
+				pcodeActive, "USCD P-System Activity", 
+				IDevIcons.DSR_USCD, IDevIcons.DSR_LIGHT);
+		return Collections.singletonList(provider);
+	}
 }

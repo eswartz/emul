@@ -355,7 +355,7 @@ public class FDC1771 implements IPersistable {
 		}
 		bufpos = 0;
 		
-		addBusyTime(buflen * 200 / 1000);
+		addBusyTime(buflen * 100 / 1000);
 		
 		image.readSectorData(currentMarker, rwBuffer, 0, buflen);
 		
@@ -390,7 +390,7 @@ public class FDC1771 implements IPersistable {
 			
 		bufpos = 0;
 		
-		addBusyTime(buflen * 200 / 1000);
+		addBusyTime(buflen * 150 / 1000);
 		
 		status.set(StatusBit.DRQ_PIN);
 		

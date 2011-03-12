@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -24,6 +23,7 @@ import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.Emulator;
 import v9t9.emulator.clients.builtin.IconSetting;
+import v9t9.emulator.clients.builtin.swt.IDevIcons;
 import v9t9.emulator.clients.builtin.swt.IDeviceIndicatorProvider;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.common.WorkspaceSettings;
@@ -61,7 +61,7 @@ public abstract class BaseDiskImageDsr implements FDC1771Constants, DsrSettings 
 			Boolean.FALSE, diskImageIconPath);
 	
 	/** setting name (DSKImage1) to setting */
-	private Map<String, SettingProperty> diskSettingsMap = new LinkedHashMap<String, SettingProperty>();
+	protected Map<String, SettingProperty> diskSettingsMap = new LinkedHashMap<String, SettingProperty>();
 	
 	static void dumpBuffer(byte[] buffer, int offs, int len)
 	{
@@ -119,7 +119,7 @@ public abstract class BaseDiskImageDsr implements FDC1771Constants, DsrSettings 
 		String name = getDiskImageSetting(num);
 		return getDiskImage(name);
 	}
-	private BaseDiskImage getDiskImage(String name) {
+	protected BaseDiskImage getDiskImage(String name) {
 		BaseDiskImage info = disks.get(name);
 		if (info == null) {
 			SettingProperty setting = diskSettingsMap.get(name);
@@ -199,6 +199,9 @@ public abstract class BaseDiskImageDsr implements FDC1771Constants, DsrSettings 
 	private TimerTask motorTickTask;
 
 	private byte lastStatus;
+
+
+	protected SettingProperty realDiskDsrActiveSetting;
 
 	private static File defaultDiskRootDir;
 
@@ -677,11 +680,11 @@ public abstract class BaseDiskImageDsr implements FDC1771Constants, DsrSettings 
 	}
 	
 
-	static class DeviceIndicatorProvider implements IDeviceIndicatorProvider {
+	static class DiskImageDeviceIndicatorProvider implements IDeviceIndicatorProvider {
 
 		private final BaseDiskImage image;
 
-		public DeviceIndicatorProvider(BaseDiskImage image) {
+		public DiskImageDeviceIndicatorProvider(BaseDiskImage image) {
 			this.image = image;
 		}
 
@@ -692,32 +695,18 @@ public abstract class BaseDiskImageDsr implements FDC1771Constants, DsrSettings 
 		
 		@Override
 		public int getBaseIconIndex() {
-			return 18;
+			return IDevIcons.LIGHT_OFF;
 		}
 		
 		@Override
 		public int getActiveIconIndex() {
-			return 17;
+			return IDevIcons.LIGHT_ON;
 		}
 		
 		@Override
 		public SettingProperty getActiveProperty() {
 			return image.getInUseSetting();
 		}
-	}
-	/**
-	 * @return
-	 */
-	public List<IDeviceIndicatorProvider> createDeviceIndicatorProviders() {
-
-		ArrayList<IDeviceIndicatorProvider> list = new ArrayList<IDeviceIndicatorProvider>();
-		
-		for (Map.Entry<String, SettingProperty> entry : diskSettingsMap.entrySet()) {
-			BaseDiskImage image = getDiskImage(entry.getValue().getName());
-			DeviceIndicatorProvider provider = new DeviceIndicatorProvider(image);
-			list.add(provider);
-		}
-		return list;
 	}
 
 }

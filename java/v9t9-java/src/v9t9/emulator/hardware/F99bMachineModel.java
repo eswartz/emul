@@ -111,8 +111,8 @@ public class F99bMachineModel implements MachineModel {
 	}
 
 	@Override
-	public List<IDeviceIndicatorProvider> getDeviceIndicatorProviders() {
-		return memoryDiskDsr.createDeviceIndicatorProviders();
+	public List<IDeviceIndicatorProvider> getDeviceIndicatorProviders(Machine machine) {
+		return memoryDiskDsr.getDeviceIndicatorProviders();
 	}
 	
 	/* (non-Javadoc)

@@ -42,5 +42,5 @@ public interface MachineModel {
 
 	List<DsrSettings> getDsrSettings(Machine machine);
 
-	List<IDeviceIndicatorProvider> getDeviceIndicatorProviders();
+	List<IDeviceIndicatorProvider> getDeviceIndicatorProviders(Machine machine);
 }

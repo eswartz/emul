@@ -4,9 +4,11 @@
 package v9t9.emulator.hardware.dsrs;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.ejs.coffee.core.properties.IPersistable;
 
+import v9t9.emulator.clients.builtin.swt.IDeviceIndicatorProvider;
 import v9t9.engine.memory.MemoryDomain;
 
 /**
@@ -38,4 +40,5 @@ public interface DsrHandler extends IPersistable, DsrSettings {
 
 	String getName();
 	
+	List<IDeviceIndicatorProvider> getDeviceIndicatorProviders();
 }

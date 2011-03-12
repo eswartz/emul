@@ -51,11 +51,9 @@ public class MultiImageSizeProvider implements ImageProvider {
 		Pair<Double, Image> iconInfo = getImage(size);
 		ratio = iconInfo.first;
 		Image icon = iconInfo.second;
-		
 		gc.drawImage(icon, (int)(bounds.x * ratio), (int)(bounds.y * ratio), 
 				(int)(bounds.width * ratio), (int) (bounds.height * ratio), 
 				xoffset, yoffset, size.x, size.y);
-		
 	}
 
 	/**

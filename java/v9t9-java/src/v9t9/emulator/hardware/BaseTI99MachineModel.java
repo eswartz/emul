@@ -67,8 +67,14 @@ public abstract class BaseTI99MachineModel implements MachineModel {
 	 * @see v9t9.emulator.hardware.MachineModel#getDeviceIndicatorProviders()
 	 */
 	@Override
-	public List<IDeviceIndicatorProvider> getDeviceIndicatorProviders() {
-		return Collections.emptyList();
+	public List<IDeviceIndicatorProvider> getDeviceIndicatorProviders(Machine machine) {
+		List<IDeviceIndicatorProvider> list = new ArrayList<IDeviceIndicatorProvider>();
+		if (machine.getDsrManager() != null)  {
+			for (DsrHandler handler : machine.getDsrManager().getDsrs()) {
+				list.addAll(handler.getDeviceIndicatorProviders());
+			}
+		}
+		return list;
 	}
 
 }

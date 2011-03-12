@@ -3,8 +3,10 @@
  */
 package v9t9.emulator.clients.builtin.swt;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TreeMap;
 
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.swt.SWT;
@@ -12,11 +14,13 @@ import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 
+import v9t9.emulator.Emulator;
 import v9t9.emulator.common.Machine;
 
 /**
@@ -27,8 +31,8 @@ public class EmulatorStatusBar {
 
 	private Canvas cpuMetricsCanvas;
 	private ImageBar bar;
-	private final SwtWindow swtWindow;
 	private List<ImageDeviceIndicator> indicators;
+	private MultiImageSizeProvider deviceIconImageProvider;
 
 	/**
 	 * @param swtWindow
@@ -36,7 +40,16 @@ public class EmulatorStatusBar {
 	 */
 	public EmulatorStatusBar(SwtWindow swtWindow, Composite mainComposite, Machine machine) {
 		
-		this.swtWindow = swtWindow;
+
+		TreeMap<Integer, Image> mainIcons = new TreeMap<Integer, Image>();
+		for (int size : new int[] { 16, 32, 64, 128 }) {
+			File iconsFile = Emulator.getDataFile("icons/dev_icons_" + size + ".png");
+			mainIcons.put(size, new Image(swtWindow.getShell().getDisplay(), iconsFile.getAbsolutePath()));
+		}
+
+		deviceIconImageProvider = new MultiImageSizeProvider(mainIcons);
+		
+		
 		bar = new ImageBar(mainComposite, SWT.HORIZONTAL, null, true);
 		
 		//GridLayoutFactory.fillDefaults().applyTo(bar);
@@ -52,7 +65,7 @@ public class EmulatorStatusBar {
 		
 		indicators = new ArrayList<ImageDeviceIndicator>();
 		
-		for (IDeviceIndicatorProvider provider : machine.getModel().getDeviceIndicatorProviders())
+		for (IDeviceIndicatorProvider provider : machine.getModel().getDeviceIndicatorProviders(machine))
 			addDeviceIndicatorProvider(provider);
 
 		new BlankIcon(bar, SWT.NONE);
@@ -83,7 +96,7 @@ public class EmulatorStatusBar {
 
 	public void addDeviceIndicatorProvider(IDeviceIndicatorProvider provider) {
 		ImageDeviceIndicator indic = new ImageDeviceIndicator(bar, SWT.NONE, 
-				swtWindow.getIconImageProvider(), provider);
+				deviceIconImageProvider, provider);
 		//GridDataFactory.fillDefaults().align(SWT.LEFT, SWT.FILL).grab(false, false).applyTo(indic);
 		indicators.add(indic);
 	}

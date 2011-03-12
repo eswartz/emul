@@ -76,7 +76,7 @@ public class ImageDeviceIndicator extends ImageIconCanvas {
 		this.parentDrawer.drawBackground(e.gc, this, new Point(0, 0), size);
 		int offset = 0;
 		try {
-			System.out.println(bounds);
+			//System.out.println(bounds);
 			imageProvider.drawImage(e.gc, size, bounds, offset, offset);
 			if (overlayBounds != null && provider.getActiveProperty().getBoolean()) {
 				imageProvider.drawImage(e.gc, size, overlayBounds, offset, offset);

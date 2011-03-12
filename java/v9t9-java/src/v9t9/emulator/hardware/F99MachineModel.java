@@ -99,7 +99,7 @@ public class F99MachineModel implements MachineModel {
 		return Collections.emptyList();
 	}
 	@Override
-	public List<IDeviceIndicatorProvider> getDeviceIndicatorProviders() {
+	public List<IDeviceIndicatorProvider> getDeviceIndicatorProviders(Machine machine) {
 		return Collections.emptyList();
 	}
 	/* (non-Javadoc)
