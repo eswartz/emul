@@ -156,7 +156,7 @@ public abstract class AbstractProperty implements IProperty, Comparable<IPropert
     }
     @SuppressWarnings("unchecked")
 	public <T> List<T> getList() {
-    	return (List)getValue();
+    	return (List<T>)getValue();
     }
     public void setInt(int val) {
         setValue(Integer.valueOf(val));
@@ -268,11 +268,11 @@ public abstract class AbstractProperty implements IProperty, Comparable<IPropert
 		if (obj instanceof Collection) {
 			String[] items = section.getArray(propertyName);
 			if (items != null) {
-				((Collection) obj).clear();
+				((Collection<?>) obj).clear();
 				for (String item : items) {
 					Object value =  PropertyUtils.convertStringToValue(item, type);
 					if (value != null)
-						((Collection) obj).add(value);
+						((Collection<Object>) obj).add(value);
 				}
 			}
 		} else {
@@ -343,7 +343,6 @@ public abstract class AbstractProperty implements IProperty, Comparable<IPropert
 	/* (non-Javadoc)
 	 * @see org.ejs.chiprocksynth.model.IPersistable#saveChildState(org.w3c.dom.Element, java.lang.Object, java.lang.String)
 	 */
-	@SuppressWarnings("unchecked")
 	public void saveChildState(ISettingSection section, Object value, String propertyName) {
 		IPropertySource ps = null;
 		if (value instanceof IPersistable) {
@@ -361,9 +360,9 @@ public abstract class AbstractProperty implements IProperty, Comparable<IPropert
 		
 		if (value != null) {
 			if (value instanceof Collection) {
-				String[] items = new String[((Collection) value).size()];
+				String[] items = new String[((Collection<?>) value).size()];
 				int idx = 0;
-				for (Object obj : ((Collection) value)) {
+				for (Object obj : ((Collection<?>) value)) {
 					items[idx++] = obj.toString();
 				}
 				section.put(propertyName, items);
