@@ -31,7 +31,7 @@ kbdoffs         dw  kbds
 font8x8offs     dw  font0
 font5x6offs     dw  font5x6
 errptrsoffs     dw  errptrs
-editorhelpoffs  dw  errptrs
+editorhelpoffs  dw  editorhelp
 
 
 
