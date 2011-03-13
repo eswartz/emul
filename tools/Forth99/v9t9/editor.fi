@@ -674,7 +674,6 @@ User 'lastcol
     
     \ save editor mode info
     edit-video save-video
-    .s
 ;
 
 \   Draw status 
