@@ -4,13 +4,12 @@
 package v9t9.emulator.clients.builtin.swt;
 
 import org.eclipse.jface.layout.GridDataFactory;
+import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Layout;
@@ -39,30 +38,18 @@ class ImageBar extends Composite implements IImageBar {
 		this.smoothResize = smoothResize;
 		this.isHorizontal = (style & SWT.HORIZONTAL) != 0;
 		
-		GridLayout mainLayout = new GridLayout(1, false);
-		mainLayout.marginHeight = mainLayout.marginWidth = 0;
-		setLayout(mainLayout);
+		GridLayoutFactory.swtDefaults().margins(0, 0).applyTo(this);
 
 		//setLayoutData(new GridData(isHorizontal ? SWT.FILL : SWT.CENTER, isHorizontal ? SWT.CENTER : SWT.FILL, false, false));
-		setLayoutData(new GridData(isHorizontal ? SWT.FILL : SWT.CENTER, isHorizontal ? SWT.CENTER : SWT.FILL, isHorizontal, !isHorizontal));
+		GridDataFactory.swtDefaults().align(isHorizontal ? SWT.FILL : SWT.CENTER, isHorizontal ? SWT.CENTER : SWT.FILL)
+			.grab(isHorizontal, !isHorizontal).indent(0, 0).applyTo(this);
 
 		// the inner composite contains the buttons, tightly packed
 		buttonComposite = new Composite(this, SWT.NO_RADIO_GROUP | SWT.NO_FOCUS | SWT.NO_BACKGROUND);
 		layout = new ButtonBarLayout();
 		buttonComposite.setLayout(layout);
 		
-		// //start off with one horizontal cell; in #addedButton() the columns is increased for horizontal bars
-		//layout = new GridLayout(1, true);
-		//layout.marginHeight = layout.marginWidth = 0;
-		//buttonComposite.setLayout(layout);
-		
-		/*
-		buttonComposite.setLayoutData(GridDataFactory.fillDefaults()
-				.align(isHorizontal ? SWT.CENTER : SWT.FILL, isHorizontal ? SWT.FILL : SWT.CENTER)
-				.grab(isHorizontal, !isHorizontal)
-				.create());
-		*/
-		GridDataFactory.fillDefaults().grab(true, true).applyTo(buttonComposite);
+		GridDataFactory.fillDefaults().grab(true, true).indent(0, 0).applyTo(buttonComposite);
 		addPaintListener(new PaintListener() {
 
 			public void paintControl(PaintEvent e) {

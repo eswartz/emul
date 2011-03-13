@@ -21,14 +21,12 @@ import v9t9.engine.memory.MemoryEntry;
  */
 public class DumpFullReporterF99b implements InstructionListener {
 
-	private final CpuF99b cpu;
 	private final PrintWriter dump;
 
 	/**
 	 * 
 	 */
 	public DumpFullReporterF99b(CpuF99b cpu, PrintWriter dump) {
-		this.cpu = cpu;
 		this.dump = dump;
 	}
 	/* (non-Javadoc)
@@ -145,13 +143,13 @@ public class DumpFullReporterF99b implements InstructionListener {
 		dumpfull.print(sb.toString());
 
 		dumpfull.print(   
-		        " sp=" + Integer.toHexString(((CpuStateF99b)cpu.getState()).getSP() & 0xffff).toUpperCase()
-		        + " rp=" + Integer.toHexString(((CpuStateF99b)cpu.getState()).getRP() & 0xffff).toUpperCase()
+		        " sp=" + Integer.toHexString(block.sp & 0xffff).toUpperCase()
+		        + " rp=" + Integer.toHexString(block.rp & 0xffff).toUpperCase()
 		        + " sr="
-		        + Integer.toHexString(cpu.getStatus().getIntMask()).toUpperCase()        
+		        + Integer.toHexString(block.st).toUpperCase()        
 		);
 		
-		int cycles = cpu.getCurrentCycleCount() - origCycleCount;
+		int cycles = block.cycles - origCycleCount;
 		dumpfull.print(" @ " + cycles);
 		dumpfull.println();
 		dumpfull.flush();

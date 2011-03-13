@@ -121,7 +121,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		}
 		
 		Composite mainComposite = shell;
-		GridLayoutFactory.fillDefaults().margins(2, 2).applyTo(mainComposite);
+		GridLayoutFactory.fillDefaults().margins(0, 0).spacing(0, 0).applyTo(mainComposite);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(mainComposite);
 
 		statusBar = new EmulatorStatusBar(this, mainComposite, machine);
@@ -130,8 +130,9 @@ public class SwtWindow extends BaseEmulatorWindow {
 		gd.horizontalSpan = 2;
 		
 		topComposite = new Composite(mainComposite, SWT.NONE);
-		GridLayoutFactory.fillDefaults().applyTo(topComposite);
-		GridDataFactory.fillDefaults().grab(true, true).span(1, 1).applyTo(topComposite);
+		topComposite.setBackground(topComposite.getDisplay().getSystemColor(SWT.COLOR_WIDGET_DARK_SHADOW));
+		GridLayoutFactory.fillDefaults().margins(0, 0).applyTo(topComposite);
+		GridDataFactory.fillDefaults().grab(true, true).indent(0,0 ).span(1, 1).applyTo(topComposite);
 
 		focusRestorer = new IFocusRestorer() {
 			public void restoreFocus() {

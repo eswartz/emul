@@ -22,6 +22,7 @@ import v9t9.emulator.clients.builtin.video.VdpChanges;
 import v9t9.emulator.clients.builtin.video.VdpModeInfo;
 import v9t9.emulator.clients.builtin.video.VdpModeRedrawHandler;
 import v9t9.emulator.common.Machine;
+import v9t9.emulator.common.WorkspaceSettings;
 import v9t9.emulator.hardware.BaseCruAccess;
 import v9t9.emulator.hardware.CruAccess;
 import v9t9.emulator.hardware.memory.mmio.VdpMmio;
@@ -123,6 +124,8 @@ public class VdpTMS9918A implements VdpHandler {
 			}
 			
 		});
+		
+		WorkspaceSettings.CURRENT.register(settingVdpInterruptRate);
 		
 		Cpu.settingCyclesPerSecond.addListener(new IPropertyListener() {
 

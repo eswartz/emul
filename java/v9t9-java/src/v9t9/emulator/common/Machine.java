@@ -28,6 +28,7 @@ import v9t9.emulator.runtime.TerminatedException;
 import v9t9.emulator.runtime.cpu.AbortedException;
 import v9t9.emulator.runtime.cpu.Cpu;
 import v9t9.emulator.runtime.cpu.CpuMetrics;
+import v9t9.emulator.runtime.cpu.DebugConditionListenerF99b;
 import v9t9.emulator.runtime.cpu.Executor;
 import v9t9.engine.Client;
 import v9t9.engine.VdpHandler;
@@ -128,6 +129,7 @@ abstract public class Machine {
     	executor = machineModel.createExecutor(cpu, cpuMetrics);
     	
     	//executor.addInstructionListener(new DebugConditionListener(cpu));
+    	//executor.addInstructionListener(new DebugConditionListenerF99b(cpu));
 
 	}
 

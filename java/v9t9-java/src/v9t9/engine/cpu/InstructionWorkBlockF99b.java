@@ -3,6 +3,8 @@
  */
 package v9t9.engine.cpu;
 
+import java.util.Arrays;
+
 import v9t9.emulator.runtime.cpu.CpuF99b;
 import v9t9.emulator.runtime.cpu.CpuStateF99b;
 
@@ -28,6 +30,8 @@ public final class InstructionWorkBlockF99b extends BaseInstructionWorkBlock {
     	copy.up = up;
     	copy.lp = lp;
     	copy.showSymbol = showSymbol;
+    	//copy.inStack = Arrays.copyOf(inStack, inStack.length);
+    	//copy.inReturnStack = Arrays.copyOf(inReturnStack, inReturnStack.length);
     	System.arraycopy(inStack, 0, copy.inStack, 0, copy.inStack.length);
     	System.arraycopy(inReturnStack, 0, copy.inReturnStack, 0, copy.inReturnStack.length);
     }

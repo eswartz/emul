@@ -123,6 +123,8 @@ public class InterpreterF99b implements Interpreter {
 		InstructionWorkBlockF99b block = null;
 		
 		if (instructionListeners != null) {
+			//iblock.inStack = new short[iblock.inStack.length];
+			//iblock.inReturnStack = new short[iblock.inReturnStack.length];
 		    Pair<Integer, Integer> fx = InstF99b.getStackEffects(ins.getInst());
 			if (fx != null) {
 				int spused = fx.first;
@@ -619,15 +621,21 @@ public class InterpreterF99b implements Interpreter {
         	case CTX_SP:
         		((CpuStateF99b)cpu.getState()).setSP(cpu.pop());
         		break;
-        	case CTX_SP0:
-        		((CpuStateF99b)cpu.getState()).setBaseSP(cpu.pop());
+        	case CTX_SP0: {
+        		short sp0 = cpu.pop();
+        		((CpuStateF99b)cpu.getState()).setBaseSP(sp0);
+        		((CpuStateF99b)cpu.getState()).setSP(sp0);
         		break;
+        	}
         	case CTX_RP:
         		((CpuStateF99b)cpu.getState()).setRP(cpu.pop());
         		break;
-        	case CTX_RP0:
-        		((CpuStateF99b)cpu.getState()).setBaseRP(cpu.pop());
+        	case CTX_RP0: {
+        		short rp0 = cpu.pop();
+        		((CpuStateF99b)cpu.getState()).setBaseRP(rp0);
+        		((CpuStateF99b)cpu.getState()).setRP(rp0);
         		break;
+        	}
         	case CTX_UP:
         		((CpuStateF99b)cpu.getState()).setUP(cpu.pop());
         		break;
