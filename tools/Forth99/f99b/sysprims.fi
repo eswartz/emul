@@ -63,4 +63,11 @@
     rot rot 1 [ Icfill c, ]
 ;   target-only
 
+: rp0
+    (context>) [ CTX_RP0 field, ] 
+;   target-only
+: sp0
+    (context>) [ CTX_SP0 field, ] 
+;   target-only
+
 

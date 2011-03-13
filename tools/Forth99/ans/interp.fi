@@ -259,8 +259,8 @@ User dpl
 
 : QUIT
     begin
-        sp0 @ sp!
-        rp0 @ rp! 
+        sp0 sp!
+        rp0 rp! 
         (clrsrc)
         postpone [  
         .s cr

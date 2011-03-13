@@ -329,23 +329,6 @@ export>
 
 $00B    constant    last-video-mode
 
-1 <export
-\ tables for (vtab)
-&0 constant #scr
-&1 constant #ssz
-&2 constant #col
-&3 constant #csz
-&4 constant #pat
-&5 constant #psz
-&6 constant #spt
-&7 constant #spr
-&8 constant #smt
-&9 constant #spc
-&10 constant #fre
-export>
-
-
-
 : (sprite-setup)
     $00  v-sprites @  $80  +vfill
     $00  v-sprpat @   $800 +vfill
@@ -389,20 +372,20 @@ include video_msx.fi
     r>  gwaddr
 ;
 
-:   font8x8
-    >grom_font8x8 v-font!
-    8 v-fntwidth c!   8 v-fntheight c!
+| : font! ( groffs w h )
+    v-fntheight c!  v-fntwidth c!
+    v-font!
     (setfont)
+;
+
+:   font8x8
+    >grom_font8x8  8  8 font!
 ;
 :   font6x8
-    >grom_font8x8 v-font!
-    6 v-fntwidth c!   8 v-fntheight c!
-    (setfont)
+    >grom_font8x8  6  8 font!
 ;
 :   font5x6
-    >grom_font5x6 v-font!
-    5 v-fntwidth c!   6 v-fntheight c!
-    (setfont)
+    >grom_font5x6  5  6 font!
 ;
 
 : <video    ( -- flags )
@@ -523,7 +506,7 @@ EXPORT>
     text mode
 
     $1 fg!
-    $7 bg!
+    $A7 bg!     \ works for gfx7 mode
     
     font8x8    
     

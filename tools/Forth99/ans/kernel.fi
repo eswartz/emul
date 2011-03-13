@@ -121,7 +121,7 @@ test" 2over  1. 2. 2over 1. d= "
 [THEN]
 
 : /cells [ cell<< ] literal rshift ;
-: (d) @ - negate /cells ;
+| : (d) - negate /cells ;
 [IFUNDEF] DEPTH
 : DEPTH
     sp@ sp0 (d)

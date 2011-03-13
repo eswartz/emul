@@ -135,7 +135,9 @@ $A          constant    >grom_editorhelp
 \ -----------   constants
 
 0           constant    CTX_SP       
+1           constant    CTX_SP0
 2           constant    CTX_RP       
+3           constant    CTX_RP0       
 4           constant    CTX_UP       
 7           constant    CTX_INT        
 

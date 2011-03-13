@@ -6,17 +6,17 @@
     \ set user area first, before setting user vars
     (UP0) (>CONTEXT) [ CTX_UP field, ]
     
-    (rp0) rp0 !     
-    (sp0) sp0 !
+    r>      \ remember return address before moving return stack
+    (rp0) (>CONTEXT) [ CTX_RP0 field, ]    \ inlined since calling a word changes RP; sets RP0 and RP
+    >r
+    
+    (sp0)  (>CONTEXT) [ CTX_SP0 field, ] \ sets SP0 and SP 
+    
     (pad0) (pad) !  
     (#-pad0) (#pad) !
     (slit-pad0) (spad) !
 
-    sp0 @ sp!
     
-    r>      \ remember return address before moving return stack
-    RP0 @ (>CONTEXT) [ CTX_RP field, ]
-    >r
 ;
 
 : cold-init

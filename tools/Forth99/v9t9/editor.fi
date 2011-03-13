@@ -330,8 +330,8 @@ User ovr        ( insert/overwrite flag )
 : !right drop 1 ^curs ~curs scr +! ;      
 : !down drop 1 ~curs scr +! ;           
 
-: !block-down 1 scr +! ;
-: !block-up -1 scr +! ;
+: !block-down drop  1 scr +! ;
+: !block-up drop  -1 scr +! ;
 
 \   dup; down    
 : !dup-line ~dup scr +! ;               
@@ -434,7 +434,7 @@ User ovr        ( insert/overwrite flag )
     x 1-    y  at-xy   &252  sy  vchar
     x sx +  y  at-xy   &252  sy  vchar
 
-    x 1-    dup
+    x 1-
     y sy +          at-xy
     &246 emit  &243 sx hchar
     x sx +   
@@ -532,23 +532,22 @@ here  edittab -  Constant  editsz
 ;
 
 \ Handle one key for the buffer and update cursor/line/buffer
-: onkey       ( key baddr -- )
+:: onkey       ( key' baddr -- )
     \ if printable, just insert/overwrite
-    over &32 &126 within if  
-        edit.char  
+    key' &32 &126 within if  
+        key' baddr edit.char  
     else
         \ try for function
         edittab editsz over + swap do
-            over  i @ w>b swap     ( key baddr key flags keycode ) 
-            rot = if               ( key baddr flags )
+            i @ w>b swap      ( flags keycode ) 
+            key' = if               ( flags )
                 'fl |!
-                i cell+ @  execute  
-                unloop drop exit
+                baddr  i cell+ @  execute  
+                unloop exit
             else
                 drop
             then
         4 +loop
-        2drop
     then
 ;
 
@@ -613,7 +612,7 @@ User 'lastcol
     text2 (mode)   
     
     &15 vpage  (vreset)
-    
+        
     font6x8
 
     $87A1 v-regaddr      \ yellow-on-black border
@@ -675,7 +674,7 @@ User 'lastcol
     
     \ save editor mode info
     edit-video save-video
-    
+    .s
 ;
 
 \   Draw status 

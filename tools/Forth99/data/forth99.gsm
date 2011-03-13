@@ -26,7 +26,7 @@ start	equ	$
 
 ; Lookup table
 
-sigoffs         dw  >AA99
+signature       dw  >AA99
 kbdoffs         dw  kbds
 font8x8offs     dw  font0
 font5x6offs     dw  font5x6
