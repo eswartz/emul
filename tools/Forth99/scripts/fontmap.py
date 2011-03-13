@@ -4,7 +4,7 @@
 import sys, traceback, time, string
 from gimpfu import *
 
-def produce_char(frgn, xx, yy, charwidth, charheight):
+def produce_char(f, frgn, xx, yy, charwidth, charheight):
 	st = "\tdb "
 	for y in range(yy, yy+charheight):
 		if y - yy >= charheight:
@@ -21,47 +21,66 @@ def produce_char(frgn, xx, yy, charwidth, charheight):
 					byte |= mask
 				mask >>= 1
 			st += ">"+hex(byte)[2:]
-	print st
+	f.write(st+'\n')
 	
-def fontmap(image, drawable, charwidth, charheight):
+
+def fontmap_save(image, drawable, filename, raw_filename, xx, charwidth, charheight):
 	# get the desired data into a new image
+	print image,drawable,filename,raw_filename,charwidth,charheight
 	width = drawable.width
 	height = drawable.height
 
-	print "Table:\n\n"
+        f = open(filename, "w")
+	f.write("Table:\n\n")
 	try:
 		gimp.tile_cache_ntiles(2 * width)
 		frgn = drawable.get_pixel_rgn(0, 0, width, height, False, False)
+		ch = 0
 		for y in range(0, height, charheight):
 			for x in range(0, width, charwidth):
-				produce_char(frgn, x, y, charwidth, charheight)
-
+			        if ch % 8 == 0:
+			                f.write("; char " + str(ch) + "\n")
+				produce_char(f, frgn, x, y, charwidth, charheight)
+				ch += 1
+                f.close()
 	except:
 		print "!!! FAILED !!!"
+		f.close()
 		traceback.print_exc()
 		pdb.gimp_image_undo_group_end(image)
 		return
 
 	return
 
+
+
+def fontmap_query():
+	pdb.gimp_register_save_handler("file_forth99_font_save", "fnt", "")
+
+
+
 # Register with The Gimp
 register(
-	"plug_in_ti_font_map",
-	"TI Font Map",
-	"Create a TI font map from an image.",
+	"file_forth99_font_save",
+	"Forth99 Font Save",
+	"Save a picture to a Forth99 font",
 	"Ed Swartz",
-	"(c) 2008, Ed Swartz",
-	"2006-10-20",
-	"<Image>/Filters/Map/TI Font Map",
-	"INDEXED*",
+	"(c) 2011, Ed Swartz",
+	"2011-03-12",
+	"<Save>/Forth99",
+	"INDEXED",
 		 [
+		  (PF_RADIO, "sizing0", "Image scaling", 0, (("stretch",0),("scale",1)) ),
 			(PF_INT, "charwidth", "Char width", 5 ),
 			(PF_INT, "charheight", "Char height", 6 ),
 		  ],#controls
-		 [],
-			fontmap)  # how
+	[], #output
+	fontmap_save,
+	on_query = fontmap_query)
 
 main()
+
+
 
 
 
