@@ -291,14 +291,16 @@ public class EmuDiskDsr implements DsrHandler9900 {
 			if (handler.getDevice() <= MAXDRIVE) {
 				
 				SettingProperty activity = diskActivitySettings.get(getEmuDiskSetting(handler.dev));
-				activity.setBoolean(true);
+				if (activity != null)
+					activity.setBoolean(true);
 				
 				try {
 					handler.run();
 				} catch (DsrException e) {
 					handler.error(e);
 				} finally {
-					activity.setBoolean(false);
+					if (activity != null)
+						activity.setBoolean(false);
 				}
 				return true;
 			} else {
