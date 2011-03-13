@@ -47,10 +47,10 @@
 : (txt-hchar) ( ch len offs -- )
     v-screen @ +
     rot >r
-    v-screen @ v-screensz @  range-wrap
+    v-screen @ v-screensz @  range-wrap  ( addr1 len1 addr2 len2 )
     
-    r@   rot rot  +vfill
-    r>   rot rot  +vfill
+    r@  +vfill
+    r>  +vfill
 ;
 
 : txt-hchar ( ch len x y -- )
@@ -81,7 +81,7 @@
 :: txt-clear ( w h x y -- )
     x y  txt-chaddr  vsetbank  :>  addr
     h 0 ?do
-        $20 addr w  vfill
+        addr w $20  vfill
         v-width @  addr +  addr!
     loop
 ;
@@ -98,7 +98,7 @@
             addr vpaddr h  +gvmove
             addr h +  addr!  
             vpaddr 8 +  vpaddr!  
-            $00  vpaddr h +  8 h -  +vfill 
+            vpaddr h +  8 h -  $00  +vfill 
         loop
     then
 ;
@@ -197,7 +197,7 @@ Create GfxModeParams
 ;
 
 : gfx-updatecolors
-    color-byte  v-colors @  v-colorsz @  +vfill
+    v-colors @  v-colorsz @  color-byte  +vfill
 ;
 
 : gfx-mode

@@ -542,9 +542,9 @@ public class InterpreterF99b implements Interpreter {
         
         case Icfill: {
         	int step = cpu.pop();
+        	byte ch = (byte) cpu.pop();
         	int len = cpu.pop() & 0xffff;
         	int addr = cpu.pop();
-        	byte ch = (byte) cpu.pop();
         	while (len-- > 0) {
         		memory.writeByte(addr, ch);
         		addr += step;
@@ -554,9 +554,9 @@ public class InterpreterF99b implements Interpreter {
         }
         case Ifill: {
         	int step = cpu.pop();
+        	short w = cpu.pop();
         	int len = cpu.pop() & 0xffff;
         	int addr = cpu.pop();
-        	short w = cpu.pop();
         	while (len-- > 0) {
         		memory.writeWord(addr, w);
         		addr += step*2;

@@ -60,7 +60,7 @@
 ;  target-only
 
 : fill  ( addr n ch -- )
-    rot rot 1 [ Icfill c, ]
+    1 [ Icfill c, ]
 ;   target-only
 
 : rp0

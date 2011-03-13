@@ -260,7 +260,7 @@ public abstract class TargetContext extends Context {
 	 * @param ref
 	 */
 	private void resolveForward(ForwardRef ref, DictEntry entry) {
-		for (RelocEntry rel : relocs.toArray(new RelocEntry[relocs.size()])) {
+		for (RelocEntry rel : relocs) {
 			if (rel.target == ref.getId()) {
 				//System.out.println(rel);
 				rel.target = entry.getContentAddr();

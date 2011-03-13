@@ -31,9 +31,9 @@
     >v-fontaddr  addr v-patts @ +  v-fntheight c@  +gvmove  
     
     v-mono c@ 0= if
-        color-byte
         addr  v-colors @ +
-        v-fntheight c@  +vfill
+        v-fntheight c@  
+        color-byte +vfill
     then
 ;
 
@@ -80,10 +80,10 @@
     x y  bit-pixaddr  drop  :> addr 
     
     ( # bytes = w/8 * 8 )
-    0  addr  v-patts @ +   w  +vfill 
+    addr  v-patts @ +   w  0  +vfill 
     
     v-mono c@ 0= if
-        color-byte   addr  v-colors @ +   w  +vfill
+        addr  v-colors @ +   w  color-byte  +vfill
     then
 ;
 
@@ -121,16 +121,14 @@
     8 +loop
 [ [then] ]
     
-\    0           v-patts @   v-pattsz @   vfill
-\    color-byte  v-colors @  v-colorsz @  vfill
+\    v-patts @   v-pattsz @   0  vfill
+\    v-colors @  v-colorsz @  color-byte vfill
 ;
 
 : bit-updatecolors ( -- )
-    color-byte dup  $8700 OR  v-regaddr
+    color-byte  $8700 OR  v-regaddr
     v-mono c@ if
-        v-colors @  v-colorsz @  +vfill
-    else
-        drop
+        v-colors @  v-colorsz @  color-byte  +vfill
     then
 ;
 

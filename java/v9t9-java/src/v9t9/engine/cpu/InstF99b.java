@@ -130,9 +130,9 @@ public class InstF99b {
 	public static final int IplusLoopUp = Iloop_start + 2;
 	public static final int IuplusLoopUp = Iloop_start + 3;
 	
-	/** ( ch caddr len step ) */ 
+	/** ( caddr len ch step ) */ 
 	public static final int Icfill = Iloop_start + 4;
-	/** ( w caddr len step ) */ 
+	/** ( caddr len ch step ) */ 
 	public static final int Ifill = Iloop_start + 5;
 	/** ( faddr taddr len fstep tstep ) */ 
 	public static final int Icmove = Iloop_start + 6;

@@ -71,13 +71,13 @@
     +!vwaddr  VDPWD c!
 ;
 
-:   vfill ( ch addr len -- )
-    swap !vwaddr
-    VDPWD swap 0 (cfill) 
+:   vfill ( addr len ch -- )
+    2>r !vwaddr
+    VDPWD 2r> 0 (cfill) 
 ;
-:   +vfill ( ch addr len -- )
-    swap +!vwaddr
-    VDPWD swap 0 (cfill) 
+:   +vfill ( addr len ch -- )
+    2>r +!vwaddr
+    VDPWD 2r> 0 (cfill) 
 ;
 
 ( GPL to VDP move )

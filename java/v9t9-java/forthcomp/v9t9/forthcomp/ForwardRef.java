@@ -19,7 +19,6 @@ import v9t9.forthcomp.words.TargetWord;
  */
 public class ForwardRef extends TargetWord {
 
-	private ArrayList<Integer> fwds;
 	private int id;
 	private final String location;
 
@@ -30,7 +29,6 @@ public class ForwardRef extends TargetWord {
 	public ForwardRef(String name, String location, int id) {
 		super(new DictEntry(0, id, name));
 		this.location = location;
-		fwds = new ArrayList<Integer>();
 		this.id = id;
 		
 		setExecutionSemantics(new ISemantics() {
@@ -55,17 +53,4 @@ public class ForwardRef extends TargetWord {
 		return id;
 	}
 	
-	/**
-	 * @param num
-	 */
-	public void add(int num) {
-		fwds.add(num);		
-	}
-
-	/**
-	 * @return the fwds
-	 */
-	public ArrayList<Integer> getFwds() {
-		return fwds;
-	}
 }

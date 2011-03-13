@@ -189,7 +189,7 @@ export>
     dup 0= err-undefined ?error
     
     v-font @  v-fntwidth c@  v-fntheight c@
-    0  v-data v-data-size -1  (cfill)     \ v-data is end 
+    v-data v-data-size 0 -1  (cfill)     \ v-data is end 
     v-fntheight c!  v-fntwidth c!  v-font !
 
     ( mode ) execute
@@ -330,9 +330,9 @@ export>
 $00B    constant    last-video-mode
 
 : (sprite-setup)
-    $00  v-sprites @  $80  +vfill
-    $00  v-sprpat @   $800 +vfill
-    $00  v-sprmot @   $80  +vfill
+    v-sprites @  $80   $00  +vfill
+    v-sprpat @   $800  $00  +vfill
+    v-sprmot @   $80   $00  +vfill
 ;
 
 : std-sprite-setup
@@ -343,7 +343,7 @@ $00B    constant    last-video-mode
 : v9938-sprite-setup
     (sprite-setup)
     $D8  v-sprites @ +vc!
-    $00  v-sprcol @  $200  +vfill
+    v-sprcol @  $200  $00  +vfill
 ;
 
 
