@@ -156,19 +156,19 @@ static void write_context(OutputStream * out, int pid) {
 
     write_stream(out, '{');
 
-    // the process Name
+    /* the process Name */
 #if defined(__linux__)
-    // Use the /proc to get the name
+    /* Use the /proc to get the name */
     {
         char buff[256];
         char fname[256];
         FILE * file;
         const char * name = NULL;
 
-        // clear out buff
+        /* clear out buff */
         buff[0] = 0;
 
-        // try cmdline
+        /* try cmdline */
         snprintf(fname, sizeof(fname), "/proc/%d/cmdline", pid);
         file = fopen(fname, "r");
         if (file) {
@@ -179,27 +179,27 @@ static void write_context(OutputStream * out, int pid) {
         }
 
         if (!name) {
-            // try status
+            /* try status */
             snprintf(fname, sizeof(fname), "/proc/%d/status", pid);
             file = fopen(fname, "r");
             if (file) {
                 char * p;
                 fgets(buff, sizeof(buff), file);
 
-                // Find the attribute name
+                /* Find the attribute name */
                 for (p = buff; *p; ++p)
                     if (*p == ':') {
-                        // close off the attr name string
+                        /* close off the attr name string */
                         *p++ = 0;
 
-                        // is it our name?
+                        /* is it our name? */
                         if (!strcmp(buff, "Name")) {
                             char * n;
 
-                            // change tab to '['
+                            /* change tab to '[' */
                             *p = '[';
 
-                            // change trailing new line to ']'
+                            /* change trailing new line to ']' */
                             for (n = p; *n; ++n)
                                 if (*n == '\n')
                                     *n = ']';
@@ -216,7 +216,7 @@ static void write_context(OutputStream * out, int pid) {
         if (!name)
             name = pid2id(pid, 0);
 
-        // Send it out
+        /* Send it out */
         json_write_string(out, "Name");
         write_stream(out, ':');
         json_write_string(out, name);
