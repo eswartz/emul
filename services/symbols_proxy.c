@@ -462,7 +462,7 @@ int find_symbol_by_name(Context * ctx, int frame, ContextAddress addr,  char * n
     }
 
 #if ENABLE_RCBP_TEST
-    if (f == NULL && !syms->service_available || f != NULL && f->pending == NULL && f->error != NULL) {
+    if ((f == NULL && !syms->service_available) || (f != NULL && f->pending == NULL && f->error != NULL)) {
         void * address = NULL;
         int sym_class = 0;
         if (find_test_symbol(ctx, name, &address, &sym_class) >= 0) {

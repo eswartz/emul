@@ -75,14 +75,14 @@ size_t write_base64(OutputStream * out, const char * buf0, size_t len) {
         }
         else {
             int byte1 = buf[pos++];
-            obf[obf_len++] = int2char[(byte0 << 4) & 0x3f | (byte1 >> 4)];
+            obf[obf_len++] = int2char[((byte0 << 4) & 0x3f) | (byte1 >> 4)];
             if (pos == len) {
                 obf[obf_len++] = int2char[(byte1 << 2) & 0x3f];
                 obf[obf_len++] = '=';
             }
             else {
                 int byte2 = buf[pos++];
-                obf[obf_len++] = int2char[(byte1 << 2) & 0x3f | (byte2 >> 6)];
+                obf[obf_len++] = int2char[((byte1 << 2) & 0x3f) | (byte2 >> 6)];
                 obf[obf_len++] = int2char[byte2 & 0x3f];
             }
         }
