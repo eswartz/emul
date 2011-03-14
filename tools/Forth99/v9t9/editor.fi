@@ -520,9 +520,6 @@ create edittab
     &222 ( shift-tab )                      $3 c, c,  ' !untab ,
 here  edittab -  Constant  editsz
 
-\              01234567890123456789012345678901234567890123456789012345678901234567890123456789
-: menubar s"  C-Save C-F-Revert C-Load C-F4-next C-F6-prev F8-dup C-Del              F9-exit" ;
-
 \ Edit a character (insert or overwrite), moving cursor,
 \ possibly to next line or buffer.
 : edit.char  ( ch baddr -- )
@@ -647,30 +644,12 @@ User 'lastcol
     
     #x-border #y-border c/l l/blk
     draw-window
-    
-    \ draw border around editor 
-\    [ #x-border 1- ] literal       
-\    [ #y-border 1- ] literal      at-xy
-\    &250 emit  &243 c/l hchar  
-\    [ #x-border c/l + ] literal       
-\    [ #y-border 1- ] literal      at-xy
-\    &249 emit
-\    
-\    [ #x-border 1- ] literal     #y-border  at-xy   &252  l/blk  vchar
-\    [ #x-border c/l + ] literal  #y-border  at-xy   &252  l/blk  vchar
-\
-\    [ #x-border 1- ] literal      dup
-\    [ #y-border l/blk + ] literal   at-xy
-\    &246 emit  &243 c/l hchar  
-\    [ #x-border c/l + ] literal       
-\    [ #y-border l/blk + ] literal   at-xy
-\    &245 emit
-
 
     edit.window
     
     \ draw menu
-    0 #y-menu  at-xy  menubar type
+    >grom_menubar g@  
+    0 #y-menu  txt-xy>addr  80  +gvmove 
     
     \ save editor mode info
     edit-video save-video

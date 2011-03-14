@@ -8,6 +8,14 @@
     Iexit c,
 ;
 
+| : dovalue, ( num -- )
+    $79 c, ,
+    Iexit c,
+;
+| : do>to, ( addr -- addr' )
+    1+
+;
+
 | : dovar,  ( -- )
     IbranchX c,
     Idovar  c,

@@ -256,7 +256,6 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 			ByteMemoryAccess access, int rowstride) {
 		int lineStride = getLineStride();
 		byte[] rgb = { 0, 0, 0 };
-		//int offs = getBitmapOffset(offset, r);
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 8; j++) {
 				byte mem;

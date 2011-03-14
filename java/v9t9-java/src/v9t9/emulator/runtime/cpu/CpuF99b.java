@@ -292,7 +292,9 @@ public class CpuF99b extends CpuBase {
 		short oldrp = getState().getRP();
 		short oldsp = getState().getSP();
 		
+		getState().setRegister(SP0, (short) 0xffe0);
 		getState().setSP((short) 0xffe0);
+		getState().setRegister(RP0, (short) 0xffd0);
 		getState().setRP((short) 0xffd0);
 		
 		push(oldrp);

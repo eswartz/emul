@@ -131,6 +131,7 @@ $4          constant    >grom_font8x8
 $6          constant    >grom_font5x6
 $8          constant    >grom_errptrs
 $A          constant    >grom_editorhelp
+$C          constant    >grom_menubar
 
 \ -----------   constants
 

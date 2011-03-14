@@ -194,5 +194,6 @@ true <EXPORT
     (key)
 ;
 
+: kshift  kbdshift c@ ;
 
 EXPORT>

@@ -157,7 +157,7 @@ User STATE
 
 : vdump
     base @ >r hex
-    ['] vc@ (dmp)
+    ['] +vc@ (dmp)
     r> base !
 ;
 
@@ -533,6 +533,27 @@ test" unloop 3 >r 2 1 do loop r> 3 ="
 : VARIABLE
     create  0 , 
 ; target-only
+[THEN]
+
+[IFUNDEF] VALUE
+: VALUE
+    create
+    lastxt dp !
+    dovalue, 
+; target-only
+[THEN]
+
+
+[IFUNDEF] TO
+: TO ( val "name" -- )
+    '
+    do>to,
+    state @ if
+        postpone literal  postpone !
+    else
+        !
+    then
+; immediate target-only
 [THEN]
 
 [IFUNDEF] UDP
