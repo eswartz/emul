@@ -263,7 +263,6 @@ User dpl
         rp0 rp! 
         (clrsrc)
         postpone [  
-        .s cr
         begin   
             ints-check
             refill
@@ -278,6 +277,7 @@ User dpl
                 cr
             then
         repeat
+        .s cr
     again
 ;
 [THEN]

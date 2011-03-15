@@ -9,6 +9,8 @@
 \   Cursor column 
 User 'col       ( 0 - c/l )
 
+User ovr        ( insert/overwrite flag )
+
 \   Return number of columns left on the line
 : #left  ( -- left )
     c/l  'col @ -
@@ -312,8 +314,6 @@ User 'line      ( 0 - l/blk )
 \       $4: redraw block
 \       $8: move cursor to upper-left
 User 'fl
-
-User ovr        ( insert/overwrite flag )
 
 : pause begin key? while key drop repeat  key drop ;
 : trace [char] ( emit r@ u. [char] ) emit space .s cr pause ;

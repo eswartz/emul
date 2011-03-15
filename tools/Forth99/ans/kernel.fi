@@ -897,11 +897,11 @@ error" need emit"
 error" need key"
 [THEN]
 
-: (quit?)
+| : (quit?)
     dup &81 = swap &113 = or
 ;
 
-: (pause?)  ( -- <t|f to quit> )
+| : (pause?)  ( -- <t|f to quit> )
     key? dup if            
         ( t ) 
         key (quit?) 0= if       \ not quit

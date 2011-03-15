@@ -72,6 +72,7 @@ cell    RamVar    vdp-timeout
     \ acknowledge all interrupts
     $00 'INTSP c!
     $00 msx-cmdsetup
+    ."  aborted" cr
     abort
     exiti       \ NOTREACHED
 ;

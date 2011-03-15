@@ -45,7 +45,7 @@ EXPORT>
 
     regs-init   ints-init   kbd-init
     
-    ."  aborted" cr
+    \ ."  aborted" cr
     
     quit
 ;
