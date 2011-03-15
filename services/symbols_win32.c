@@ -920,6 +920,7 @@ static int find_basic_type_symbol(Context * ctx, char * name, Symbol * sym) {
 
 int find_symbol_by_name(Context * ctx, int frame, ContextAddress ip, char * name, Symbol ** sym) {
     int found = 0;
+    if (id2symbol(name, sym) == 0) return 0;
     *sym = alloc_symbol();
     (*sym)->ctx = ctx;
     if (frame == STACK_TOP_FRAME && (frame = get_top_frame(ctx)) < 0) return -1;

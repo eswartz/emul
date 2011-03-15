@@ -200,47 +200,60 @@ static int get_num_prop(ObjectInfo * obj, int at, U8_T * res) {
     return 1;
 }
 
-static int find_in_object_tree(ObjectInfo * list, const char * name, Symbol ** sym) {
+static int find_in_object_tree(ObjectInfo * list, ContextAddress ip, const char * name, Symbol ** sym) {
+    Symbol * sym_imp = NULL;
+    Symbol * sym_enu = NULL;
+    Symbol * sym_cur = NULL;
     ObjectInfo * obj = list;
     while (obj != NULL) {
+        if (obj->mName != NULL && strcmp(obj->mName, name) == 0) {
+            object2symbol(obj, &sym_cur);
+        }
         switch (obj->mTag) {
         case TAG_enumeration_type:
-            if (find_in_object_tree(obj->mChildren, name, sym)) return 1;
+            find_in_object_tree(obj->mChildren, 0, name, &sym_enu);
             break;
         case TAG_global_subroutine:
         case TAG_subroutine:
         case TAG_subprogram:
         case TAG_entry_point:
         case TAG_lexical_block:
-            {
+            if (ip != 0) {
                 U8_T LowPC, HighPC;
-                if (get_num_prop(obj, AT_low_pc, &LowPC) && LowPC <= sym_ip &&
-                    get_num_prop(obj, AT_high_pc, &HighPC) && HighPC > sym_ip) {
-                    if (find_in_object_tree(obj->mChildren, name, sym)) return 1;
+                if (get_num_prop(obj, AT_low_pc, &LowPC) && LowPC <= ip &&
+                    get_num_prop(obj, AT_high_pc, &HighPC) && HighPC > ip) {
+                    if (find_in_object_tree(obj->mChildren, ip, name, sym)) return 1;
                 }
+            }
+            break;
+        case TAG_namespace:
+            break;
+        case TAG_imported_module:
+            {
+                PropertyValue p;
+                ObjectInfo * module;
+                read_and_evaluate_dwarf_object_property(sym_ctx, sym_frame, 0, obj, AT_import, &p);
+                module = find_object(get_dwarf_cache(obj->mCompUnit->mFile), p.mValue);
+                if (module != NULL) find_in_object_tree(module->mChildren, 0, name, &sym_imp);
             }
             break;
         }
         obj = obj->mSibling;
     }
-    obj = list;
-    while (obj != NULL) {
-        if (obj->mName != NULL && strcmp(obj->mName, name) == 0) {
-            object2symbol(obj, sym);
-            return 1;
-        }
-        obj = obj->mSibling;
-    }
-    return 0;
+    if (*sym == NULL) *sym = sym_cur;
+    if (*sym == NULL) *sym = sym_enu;
+    if (*sym == NULL) *sym = sym_imp;
+    return *sym != NULL;
 }
 
 static int find_in_dwarf(const char * name, Symbol ** sym) {
     UnitAddressRange * range = elf_find_unit(sym_ctx, sym_ip, sym_ip + 1, NULL);
+    *sym = NULL;
     if (range != NULL) {
         CompUnit * unit = range->mUnit;
-        if (find_in_object_tree(unit->mObject->mChildren, name, sym)) return 1;
+        if (find_in_object_tree(unit->mObject->mChildren, sym_ip, name, sym)) return 1;
         if (unit->mBaseTypes != NULL) {
-            if (find_in_object_tree(unit->mBaseTypes->mObject->mChildren, name, sym)) return 1;
+            if (find_in_object_tree(unit->mBaseTypes->mObject->mChildren, 0, name, sym)) return 1;
         }
     }
     return 0;
@@ -342,6 +355,8 @@ static int find_by_name_in_sym_table(DWARFCache * cache, char * name, Symbol ** 
 int find_symbol_by_name(Context * ctx, int frame, ContextAddress ip, char * name, Symbol ** res) {
     int error = 0;
     int found = 0;
+
+    if (id2symbol(name, res) == 0) return 0;
 
     assert(ctx != NULL);
 
@@ -1289,12 +1304,7 @@ int get_symbol_name(const Symbol * sym, char ** name) {
     }
     if (unpack(sym) < 0) return -1;
     if (obj != NULL) {
-        if (obj->mName == NULL && obj->mTag == TAG_inheritance && obj->mType != NULL) {
-            *name = obj->mType->mName;
-        }
-        else {
-            *name = obj->mName;
-        }
+        *name = obj->mName;
     }
     else if (sym_info != NULL) {
         *name = sym_info->mName;

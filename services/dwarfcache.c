@@ -694,9 +694,6 @@ static void read_dwarf_object_property(Context * Ctx, int Frame, ObjectInfo * Ob
         else if (gop_gAbstractOrigin != 0) dio_EnterSection(&sCompUnit->mDesc, sDebugSection, gop_gAbstractOrigin - sDebugSection->addr);
         else break;
     }
-    sCompUnit = NULL;
-    sCache = NULL;
-    sDebugSection = NULL;
 
     switch (Value->mForm = gop_gForm) {
     case FORM_REF       :
@@ -706,7 +703,10 @@ static void read_dwarf_object_property(Context * Ctx, int Frame, ObjectInfo * Ob
     case FORM_REF4      :
     case FORM_REF8      :
     case FORM_REF_UDATA :
-        {
+        if (Attr == AT_import) {
+            Value->mValue = gop_gFormData;
+        }
+        else {
             PropertyValue ValueAddr;
             ObjectInfo * RefObj = find_object(sCache, gop_gFormData);
 
@@ -759,6 +759,10 @@ static void read_dwarf_object_property(Context * Ctx, int Frame, ObjectInfo * Ob
         }
         exception(ERR_SYM_NOT_FOUND);
     }
+
+    sCompUnit = NULL;
+    sCache = NULL;
+    sDebugSection = NULL;
 }
 
 void read_and_evaluate_dwarf_object_property(Context * Ctx, int Frame, U8_T Base, ObjectInfo * Obj, U2_T Attr, PropertyValue * Value) {

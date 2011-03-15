@@ -228,6 +228,30 @@ static int next_char_val(void) {
     return n;
 }
 
+static void set_string_text_val(int pos, int len, int in_quotes) {
+    int cnt = 0;
+    memset(&text_val, 0, sizeof(text_val));
+    text_val.type_class = TYPE_CLASS_ARRAY;
+    text_val.size = len + 1;
+    text_val.value = alloc_str((size_t)text_val.size);
+    text_val.constant = 1;
+    text_pos = pos - 1;
+    next_ch();
+    if (in_quotes) {
+        while (cnt < len) {
+            ((char *)text_val.value)[cnt++] = (char)next_char_val();
+        }
+        next_ch();
+    }
+    else {
+        while (cnt < len) {
+            ((char *)text_val.value)[cnt++] = (char)text_ch;
+            next_ch();
+        }
+    }
+    ((char *)text_val.value)[cnt] = 0;
+}
+
 static int is_name_character(int ch) {
     if (ch >= 'A' && ch <= 'Z') return 1;
     if (ch >= 'a' && ch <= 'z') return 1;
@@ -420,25 +444,12 @@ static void next_sy(void) {
         case '"':
             {
                 int len = 0;
-                int cnt = 0;
                 int pos = text_pos;
                 while (text_ch != '"') {
                     next_char_val();
                     len++;
                 }
-                memset(&text_val, 0, sizeof(text_val));
-                text_val.type_class = TYPE_CLASS_ARRAY;
-                text_val.size = len + 1;
-                text_val.value = alloc_str((size_t)text_val.size);
-                text_val.constant = 1;
-                text_pos = pos - 1;
-                next_ch();
-                while (text_ch != '"') {
-                    ((char *)text_val.value)[cnt++] = (char)next_char_val();
-                }
-                assert(cnt == len);
-                ((char *)text_val.value)[cnt] = 0;
-                next_ch();
+                set_string_text_val(pos, len, 1);
                 text_sy = SY_VAL;
             }
             return;
@@ -500,27 +511,26 @@ static void next_sy(void) {
                 text_sy = SY_VAL;
                 return;
             }
+            if (ch == '$' && text_ch == '"') {
+                int len = 0;
+                int pos = text_pos + 1;
+                next_char_val();
+                while (text_ch != '"') {
+                    next_char_val();
+                    len++;
+                }
+                set_string_text_val(pos, len, 1);
+                text_sy = SY_ID;
+                return;
+            }
             if (is_name_character(ch)) {
                 int len = 1;
-                int cnt = 0;
                 int pos = text_pos - 1;
                 while (is_name_character(text_ch)) {
                     len++;
                     next_ch();
                 }
-                memset(&text_val, 0, sizeof(text_val));
-                text_val.type_class = TYPE_CLASS_ARRAY;
-                text_val.size = len + 1;
-                text_val.value = alloc_str((size_t)text_val.size);
-                text_val.constant = 1;
-                text_pos = pos - 1;
-                next_ch();
-                while (is_name_character(text_ch)) {
-                    ((char *)text_val.value)[cnt++] = (char)text_ch;
-                    next_ch();
-                }
-                assert(cnt == len);
-                ((char *)text_val.value)[cnt] = 0;
+                set_string_text_val(pos, len, 0);
                 if (strcmp((const char *)text_val.value, "sizeof") == 0) text_sy = (int)SY_SIZEOF;
                 else text_sy = SY_ID;
                 return;
@@ -580,20 +590,15 @@ static int identifier(char * name, Value * v) {
                 break;
             case SYM_CLASS_REFERENCE:
                 if (get_symbol_address(sym, &v->address) < 0) {
-                    if (get_error_code(errno) != ERR_INV_CONTEXT) {
-                        error(errno, "Cannot retrieve symbol address");
+                    size_t size = 0;
+                    void * value = NULL;
+                    if (get_symbol_value(sym, &value, &size) < 0) {
+                        error(errno, "Cannot retrieve symbol value");
                     }
-                    else {
-                        size_t size = 0;
-                        void * value = NULL;
-                        if (get_symbol_value(sym, &value, &size) < 0) {
-                            error(errno, "Cannot retrieve symbol value");
-                        }
-                        v->size = size;
-                        if (value != NULL) {
-                            v->value = alloc_str((size_t)v->size);
-                            memcpy(v->value, value, size);
-                        }
+                    v->size = size;
+                    if (value != NULL) {
+                        v->value = alloc_str((size_t)v->size);
+                        memcpy(v->value, value, size);
                     }
                 }
                 else {
@@ -607,6 +612,7 @@ static int identifier(char * name, Value * v) {
                 {
                     ContextAddress word = 0;
                     v->type_class = TYPE_CLASS_CARDINAL;
+                    if (v->type != NULL) get_array_symbol(v->type, 0, &v->type);
                     if (get_symbol_address(sym, &word) < 0) {
                         error(errno, "Cannot retrieve symbol address");
                     }
@@ -953,6 +959,43 @@ static void op_deref(int mode, Value * v) {
 #endif
 }
 
+#if ENABLE_Symbols
+static void find_field(Symbol * sym, ContextAddress offs, const char * name, Symbol ** res, ContextAddress * res_offs) {
+    Symbol ** children = NULL;
+    Symbol ** inheritance = NULL;
+    int count = 0;
+    int h = 0;
+    int i;
+
+    if (get_symbol_children(sym, &children, &count) < 0) {
+        error(errno, "Cannot retrieve field list");
+    }
+    for (i = 0; i < count; i++) {
+        char * s = NULL;
+        if (get_symbol_name(children[i], &s) < 0) {
+            error(errno, "Cannot retrieve field name");
+        }
+        if (s == NULL) {
+            if (inheritance == NULL) inheritance = (Symbol **)alloc_str(sizeof(Symbol *) * count);
+            inheritance[h++] = children[i];
+        }
+        else if (strcmp(s, name) == 0) {
+            *res = children[i];
+            *res_offs = offs;
+            return;
+        }
+    }
+    for (i = 0; i < h; i++) {
+        ContextAddress x = 0;
+        if (get_symbol_offset(inheritance[i], &x) < 0) {
+            error(errno, "Cannot retrieve field offset");
+        }
+        find_field(inheritance[i], offs + x, name, res, res_offs);
+        if (*res != NULL) return;
+    }
+}
+#endif
+
 static void op_field(int mode, Value * v) {
 #if ENABLE_Symbols
     char * name = (char *)text_val.value;
@@ -967,22 +1010,9 @@ static void op_field(int mode, Value * v) {
         int sym_class = 0;
         ContextAddress size = 0;
         ContextAddress offs = 0;
-        Symbol ** children = NULL;
-        int count = 0;
-        int i;
 
-        if (get_symbol_children(v->type, &children, &count) < 0) {
-            error(errno, "Cannot retrieve field list");
-        }
-        for (i = 0; i < count; i++) {
-            char * s = NULL;
-            if (get_symbol_name(children[i], &s) < 0) {
-                error(errno, "Cannot retrieve field name");
-            }
-            if (s != NULL && strcmp(s, name) == 0) {
-                sym = children[i];
-                break;
-            }
+        if (id2symbol(name, &sym) < 0) {
+            find_field(v->type, 0, name, &sym, &offs);
         }
         if (sym == NULL) {
             error(ERR_SYM_NOT_FOUND, "Symbol not found");
@@ -990,30 +1020,44 @@ static void op_field(int mode, Value * v) {
         if (get_symbol_class(sym, &sym_class) < 0) {
             error(errno, "Cannot retrieve symbol class");
         }
-        if (sym_class != SYM_CLASS_REFERENCE) {
-            error(ERR_UNSUPPORTED, "Invalid symbol class");
-        }
-        if (get_symbol_size(sym, &size) < 0) {
-            error(errno, "Cannot retrieve field size");
-        }
-        if (get_symbol_offset(sym, &offs) < 0) {
-            error(errno, "Cannot retrieve field offset");
-        }
-        if (offs + size > v->size) {
-            error(ERR_INV_EXPRESSION, "Invalid field offset and/or size");
-        }
-        if (v->remote) {
-            if (mode != MODE_TYPE) v->address += offs;
+        if (sym_class == SYM_CLASS_FUNCTION) {
+            ContextAddress word = 0;
+            v->type_class = TYPE_CLASS_CARDINAL;
+            get_symbol_type(sym, &v->type);
+            if (v->type != NULL) get_array_symbol(v->type, 0, &v->type);
+            if (get_symbol_address(sym, &word) < 0) {
+                error(errno, "Cannot retrieve symbol address");
+            }
+            set_ctx_word_value(v, word);
         }
         else {
-            v->value = (char *)v->value + offs;
-        }
-        v->size = size;
-        if (get_symbol_type(sym, &v->type) < 0) {
-            error(errno, "Cannot retrieve symbol type");
-        }
-        if (get_symbol_type_class(sym, &v->type_class) < 0) {
-            error(errno, "Cannot retrieve symbol type class");
+            ContextAddress x = 0;
+            if (sym_class != SYM_CLASS_REFERENCE) {
+                error(ERR_UNSUPPORTED, "Invalid symbol class");
+            }
+            if (get_symbol_size(sym, &size) < 0) {
+                error(errno, "Cannot retrieve field size");
+            }
+            if (get_symbol_offset(sym, &x) < 0) {
+                error(errno, "Cannot retrieve field offset");
+            }
+            offs += x;
+            if (offs + size > v->size) {
+                error(ERR_INV_EXPRESSION, "Invalid field offset and/or size");
+            }
+            if (v->remote) {
+                if (mode != MODE_TYPE) v->address += offs;
+            }
+            else {
+                v->value = (char *)v->value + offs;
+            }
+            v->size = size;
+            if (get_symbol_type(sym, &v->type) < 0) {
+                error(errno, "Cannot retrieve symbol type");
+            }
+            if (get_symbol_type_class(sym, &v->type_class) < 0) {
+                error(errno, "Cannot retrieve symbol type class");
+            }
         }
     }
 #else
@@ -1869,6 +1913,7 @@ typedef struct Expression {
     LINK link_all;
     LINK link_id;
     char id[256];
+    char var_id[256];
     char parent[256];
     char language[256];
     Channel * channel;
@@ -1907,47 +1952,39 @@ static Expression * find_expression(char * id) {
     return NULL;
 }
 
-static int symbol_to_expression(char * expr_id, char * parent, char * sym_id, Expression * expr) {
+static int symbol_to_expression(char * expr_id, char * parent, char * sym_id, Expression ** res) {
 #if ENABLE_Symbols
     Symbol * sym = NULL;
     Symbol * type = NULL;
-    char * name = NULL;
     int sym_class = 0;
-    int type_class = 0;
-    ContextAddress size = 0;
     static char script[256];
+    static Expression expr;
 
-    memset(expr, 0, sizeof(Expression));
+    memset(&expr, 0, sizeof(Expression));
 
-    strlcpy(expr->id, expr_id, sizeof(expr->id));
-    strlcpy(expr->parent, parent, sizeof(expr->parent));
+    strlcpy(expr.id, expr_id, sizeof(expr.id));
+    strlcpy(expr.var_id, sym_id, sizeof(expr.var_id));
+    strlcpy(expr.parent, parent, sizeof(expr.parent));
 
     if (id2symbol(sym_id, &sym) < 0) return -1;
-    if (get_symbol_name(sym, &name) < 0) return -1;
 
-    if (name != NULL) {
-        strlcpy(script, name, sizeof(script));
-        expr->script = script;
-    }
+    snprintf(script, sizeof(script), "$\"%s\"", sym_id);
+    expr.script = script;
+
+    get_symbol_type_class(sym, &expr.type_class);
+    get_symbol_size(sym, &expr.size);
 
     if (get_symbol_class(sym, &sym_class) == 0) {
-        expr->can_assign = sym_class == SYM_CLASS_REFERENCE;
-    }
-
-    if (get_symbol_type_class(sym, &type_class) == 0) {
-        expr->type_class = type_class;
+        expr.can_assign = sym_class == SYM_CLASS_REFERENCE;
     }
 
     if (get_symbol_type(sym, &type) == 0 && type != NULL) {
-        strlcpy(expr->type, symbol2id(type), sizeof(expr->type));
+        strlcpy(expr.type, symbol2id(type), sizeof(expr.type));
     }
 
-    if (get_symbol_size(sym, &size) == 0) {
-        expr->size = size;
-    }
+    *res = &expr;
     return 0;
 #else
-    memset(expr, 0, sizeof(Expression));
     errno = ERR_UNSUPPORTED;
     return -1;
 #endif
@@ -1958,7 +1995,6 @@ static int expression_context_id(char * id, Context ** ctx, int * frame, Express
     Expression * e = NULL;
 
     if (id[0] == 'S') {
-        static Expression expr_buf;
         char parent[256];
         char * s = id + 1;
         size_t i = 0;
@@ -1974,8 +2010,7 @@ static int expression_context_id(char * id, Context ** ctx, int * frame, Express
             parent[i++] = ch;
         }
         parent[i] = 0;
-        e = &expr_buf;
-        if (symbol_to_expression(id, parent, s, e) < 0) err = errno;
+        if (symbol_to_expression(id, parent, s, &e) < 0) err = errno;
     }
     else if ((e = find_expression(id)) == NULL) {
         err = ERR_INV_CONTEXT;
@@ -2010,6 +2045,14 @@ static void write_context(OutputStream * out, Expression * expr) {
     json_write_string(out, "ParentID");
     write_stream(out, ':');
     json_write_string(out, expr->parent);
+
+    if (expr->var_id[0]) {
+        write_stream(out, ',');
+
+        json_write_string(out, "SymbolID");
+        write_stream(out, ':');
+        json_write_string(out, expr->var_id);
+    }
 
     write_stream(out, ',');
 

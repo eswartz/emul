@@ -56,6 +56,7 @@ typedef void EnumerateSymbolsCallBack(void *, Symbol *);
 
 /*
  * Find symbol information for given symbol name in given context.
+ * A symbol ID can be given as the symbol name.
  * On error, returns -1 and sets errno.
  * On success returns 0.
  */
@@ -136,7 +137,7 @@ extern int get_symbol_length(const Symbol * sym, ContextAddress * length);
 /* Get array index lower bound (index of first element) */
 extern int get_symbol_lower_bound(const Symbol * sym, int64_t * value);
 
-/* Get children type IDs (struct, union, class, function and enum).
+/* Get children IDs of a type (struct, union, class, function and enum).
  * The array returned shall not be modified by the client,
  * and it may be overwritten by a subsequent calls to symbol functions */
 extern int get_symbol_children(const Symbol * sym, Symbol *** children, int * count);
