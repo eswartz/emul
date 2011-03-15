@@ -683,8 +683,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
                             opened = true;
                             parent.locator = parent.channel.getRemoteService(ILocator.class);
                             if (parent.locator == null) {
-                                doneLoadChildren(parent, new Exception("Service not supported: " + ILocator.NAME), null);
-                                parent.channel.close();
+                                parent.channel.terminate(new Exception("Service not supported: " + ILocator.NAME));
                             }
                             else {
                                 doneLoadChildren(parent, null, createLocatorListener(parent));
