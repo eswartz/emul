@@ -228,11 +228,11 @@ const char * symbol2id(const Symbol * sym) {
         assert(sym->ctx == sym->base->ctx);
         assert(sym->sym_class == SYM_CLASS_TYPE);
         strcpy(base, symbol2id(sym->base));
-        snprintf(buf, sizeof(buf), "PTR%"PRIX64".%s", (uint64_t)sym->length, base);
+        snprintf(buf, sizeof(buf), "@P%"PRIX64".%s", (uint64_t)sym->length, base);
     }
     else {
         int i = sym->info ? sym->info - basic_type_info + 1 : 0;
-        snprintf(buf, sizeof(buf), "SYM%"PRIX64".%lX.%X.%X.%s",
+        snprintf(buf, sizeof(buf), "@S%"PRIX64".%lX.%X.%X.%s",
             (uint64_t)sym->module, sym->index, sym->frame, i, sym->ctx->id);
     }
     return buf;
@@ -262,16 +262,16 @@ int id2symbol(const char * id, Symbol ** res) {
     size_t length = 0;
     const char * p;
 
-    if (id != NULL && id[0] == 'P' && id[1] == 'T' && id[2] == 'R') {
-        p = id + 3;
+    if (id != NULL && id[0] == '@' && id[1] == 'P') {
+        p = id + 2;
         length = (size_t)read_hex(&p);
         if (*p == '.') p++;
         if (id2symbol(p, (Symbol **)&base)) return -1;
         ctx = base->ctx;
     }
-    else if (id != NULL && id[0] == 'S' && id[1] == 'Y' && id[2] == 'M') {
+    else if (id != NULL && id[0] == '@' && id[1] == 'S') {
         unsigned idx = 0;
-        p = id + 3;
+        p = id + 2;
         module = (ULONG64)read_hex(&p);
         if (*p == '.') p++;
         index = (ULONG)read_hex(&p);

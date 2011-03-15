@@ -192,6 +192,7 @@ struct DWARFCache {
     ObjectInfo * mCompUnits;
     ELF_Section * mDebugLine;
     ELF_Section * mDebugLoc;
+    ELF_Section * mDebugRanges;
     ELF_Section * mDebugFrame;
     ELF_Section * mEHFrame;
     SymbolSection ** mSymSections;

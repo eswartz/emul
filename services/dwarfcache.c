@@ -606,6 +606,9 @@ static void load_debug_sections(void) {
         else if (strcmp(sec->name, ".debug_loc") == 0) {
             sCache->mDebugLoc = sec;
         }
+        else if (strcmp(sec->name, ".debug_ranges") == 0) {
+            sCache->mDebugRanges = sec;
+        }
         else if (strcmp(sec->name, ".debug_frame") == 0) {
             sCache->mDebugFrame = sec;
         }

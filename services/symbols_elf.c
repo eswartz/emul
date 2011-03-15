@@ -200,6 +200,59 @@ static int get_num_prop(ObjectInfo * obj, int at, U8_T * res) {
     return 1;
 }
 
+/* Check 'addr' belongs to an object address range(s) */
+static int check_in_range(ObjectInfo * obj, ContextAddress addr) {
+    Trap trap;
+
+    if (set_trap(&trap)) {
+        U8_T pc0, pc1;
+        PropertyValue v0, v1;
+        read_and_evaluate_dwarf_object_property(sym_ctx, sym_frame, 0, obj, AT_low_pc, &v0);
+        read_and_evaluate_dwarf_object_property(sym_ctx, sym_frame, 0, obj, AT_high_pc, &v1);
+        pc0 = get_numeric_property_value(&v0);
+        pc1 = get_numeric_property_value(&v1);
+        clear_trap(&trap);
+        return pc0 <= addr && pc1 > addr;
+    }
+    if (set_trap(&trap)) {
+        CompUnit * unit = obj->mCompUnit;
+        DWARFCache * cache = get_dwarf_cache(unit->mFile);
+        ELF_Section * debug_ranges = cache->mDebugRanges;
+        if (debug_ranges != NULL) {
+            ContextAddress base = unit->mLowPC;
+            PropertyValue v;
+            U8_T offs = 0;
+            int res = 0;
+
+            read_and_evaluate_dwarf_object_property(sym_ctx, sym_frame, 0, obj, AT_ranges, &v);
+            offs = get_numeric_property_value(&v);
+            dio_EnterSection(&unit->mDesc, debug_ranges, offs);
+            for (;;) {
+                ELF_Section * sec = NULL;
+                U8_T x = dio_ReadAddress(&sec);
+                U8_T y = dio_ReadAddress(&sec);
+                if (x == 0 && y == 0) break;
+                if (x == ((U8_T)1 << unit->mDesc.mAddressSize * 8) - 1) {
+                    base = (ContextAddress)y;
+                }
+                else {
+                    x = base + x;
+                    y = base + y;
+                    if (x <= addr && addr < y) {
+                        res = 1;
+                        break;
+                    }
+                }
+            }
+            dio_ExitSection();
+            clear_trap(&trap);
+            return res;
+        }
+        clear_trap(&trap);
+    }
+    return 0;
+}
+
 static int find_in_object_tree(ObjectInfo * list, ContextAddress ip, const char * name, Symbol ** sym) {
     Symbol * sym_imp = NULL;
     Symbol * sym_enu = NULL;
@@ -218,12 +271,8 @@ static int find_in_object_tree(ObjectInfo * list, ContextAddress ip, const char 
         case TAG_subprogram:
         case TAG_entry_point:
         case TAG_lexical_block:
-            if (ip != 0) {
-                U8_T LowPC, HighPC;
-                if (get_num_prop(obj, AT_low_pc, &LowPC) && LowPC <= ip &&
-                    get_num_prop(obj, AT_high_pc, &HighPC) && HighPC > ip) {
-                    if (find_in_object_tree(obj->mChildren, ip, name, sym)) return 1;
-                }
+            if (ip != 0 && check_in_range(obj, ip)) {
+                if (find_in_object_tree(obj->mChildren, ip, name, sym)) return 1;
             }
             break;
         case TAG_namespace:
@@ -624,17 +673,12 @@ static int find_by_addr_in_unit(ObjectInfo * obj, int level, ContextAddress addr
         case TAG_subprogram:
         case TAG_entry_point:
         case TAG_lexical_block:
-            {
-                U8_T LowPC, HighPC;
-                if (get_num_prop(obj, AT_low_pc, &LowPC) && get_num_prop(obj, AT_high_pc, &HighPC)) {
-                    if (LowPC <= addr && HighPC > addr) {
-                        object2symbol(obj, res);
-                        return 1;
-                    }
-                    if (LowPC <= sym_ip && HighPC > sym_ip) {
-                        return find_by_addr_in_unit(obj->mChildren, level + 1, addr, res);
-                    }
-                }
+            if (check_in_range(obj, addr)) {
+                object2symbol(obj, res);
+                return 1;
+            }
+            if (check_in_range(obj, sym_ip)) {
+                return find_by_addr_in_unit(obj->mChildren, level + 1, addr, res);
             }
             break;
         case TAG_formal_parameter:
@@ -719,13 +763,8 @@ static void enumerate_local_vars(ObjectInfo * obj, int level,
         case TAG_subprogram:
         case TAG_entry_point:
         case TAG_lexical_block:
-            {
-                U8_T LowPC, HighPC;
-                if (get_num_prop(obj, AT_low_pc, &LowPC) && get_num_prop(obj, AT_high_pc, &HighPC)) {
-                    if (LowPC <= sym_ip && HighPC > sym_ip) {
-                        enumerate_local_vars(obj->mChildren, level + 1, call_back, args);
-                    }
-                }
+            if (check_in_range(obj, sym_ip)) {
+                enumerate_local_vars(obj->mChildren, level + 1, call_back, args);
             }
             break;
         case TAG_formal_parameter:
@@ -765,7 +804,7 @@ const char * symbol2id(const Symbol * sym) {
         assert(sym->frame == STACK_NO_FRAME);
         assert(sym->sym_class == SYM_CLASS_TYPE);
         strcpy(base, symbol2id(sym->base));
-        snprintf(id, sizeof(id), "PTR%"PRIX64".%s", (uint64_t)sym->size, base);
+        snprintf(id, sizeof(id), "@P%"PRIX64".%s", (uint64_t)sym->size, base);
     }
     else {
         ELF_File * file = NULL;
@@ -777,7 +816,7 @@ const char * symbol2id(const Symbol * sym) {
         if (sym->obj != NULL) obj_index = sym->obj->mID;
         if (sym->tbl != NULL) tbl_index = sym->tbl->mIndex + 1;
         if (frame == STACK_TOP_FRAME) frame = get_top_frame(sym->ctx);
-        snprintf(id, sizeof(id), "SYM%X.%lX.%lX.%"PRIX64".%"PRIX64".%X.%d.%X.%X.%"PRIX64".%s",
+        snprintf(id, sizeof(id), "@S%X.%lX.%lX.%"PRIX64".%"PRIX64".%X.%d.%X.%X.%"PRIX64".%s",
             sym->sym_class,
             file ? (unsigned long)file->dev : 0ul,
             file ? (unsigned long)file->ino : 0ul,
@@ -832,8 +871,8 @@ int id2symbol(const char * id, Symbol ** res) {
     Trap trap;
 
     *res = sym;
-    if (id != NULL && id[0] == 'P' && id[1] == 'T' && id[2] == 'R') {
-        p = id + 3;
+    if (id != NULL && id[0] == '@' && id[1] == 'P') {
+        p = id + 2;
         sym->size = (ContextAddress)read_hex(&p);
         if (*p == '.') p++;
         if (id2symbol(p, &sym->base)) return -1;
@@ -842,8 +881,8 @@ int id2symbol(const char * id, Symbol ** res) {
         sym->sym_class = SYM_CLASS_TYPE;
         return 0;
     }
-    else if (id != NULL && id[0] == 'S' && id[1] == 'Y' && id[2] == 'M') {
-        p = id + 3;
+    else if (id != NULL && id[0] == '@' && id[1] == 'S') {
+        p = id + 2;
         sym->sym_class = (int)read_hex(&p);
         if (*p == '.') p++;
         dev = (dev_t)read_hex(&p);

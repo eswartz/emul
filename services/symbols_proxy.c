@@ -641,8 +641,15 @@ const char * symbol2id(const Symbol * sym) {
 int id2symbol(const char * id, Symbol ** sym) {
     LINK * l;
     SymInfoCache * s = NULL;
-    unsigned h = hash_sym_id(id);
-    SymbolsCache * syms = get_symbols_cache();
+    unsigned h = 0;
+    SymbolsCache * syms = NULL;
+    if (id == NULL || id[0] != '@') {
+        /* Cacheable symbol IDs should start with '@' */
+        errno = ERR_INV_CONTEXT;
+        return -1;
+    }
+    h = hash_sym_id(id);
+    syms = get_symbols_cache();
     for (l = syms->link_sym[h].next; l != syms->link_sym + h; l = l->next) {
         SymInfoCache * x = syms2sym(l);
         if (strcmp(x->id, id) == 0) {
