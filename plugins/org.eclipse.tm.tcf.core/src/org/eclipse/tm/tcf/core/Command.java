@@ -222,7 +222,7 @@ public abstract class Command implements IChannel.ICommandListener {
         bf.append('\n');
         if (include_command_text) {
             String cmd = getCommandString();
-            if (cmd.length() > 72) cmd = cmd.substring(0, 72) + "...";
+            if (cmd.length() > 120) cmd = cmd.substring(0, 120) + "...";
             bf.append("Command: ");
             bf.append(cmd);
         }
