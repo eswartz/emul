@@ -95,7 +95,9 @@ class TestExpressions implements ITCFTest,
         "-func2_local2 == -2",
         "(short)(int)(long)((char *)func2_local2 + 1) == 3",
         "((func2_local1 + func2_local2) * 2 - 2) / 2 == 2",
-        "func2_local3.f_struct->f_struct->f_struct == &func2_local3"
+        "func2_local3.f_struct->f_struct->f_struct == &func2_local3",
+        "(char *)func2_local3.f_struct",
+        "(char[4])func2_local3.f_struct",
     };
 
     TestExpressions(TCFTestSuite test_suite, IChannel channel) {
