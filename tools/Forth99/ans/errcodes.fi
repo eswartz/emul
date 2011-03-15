@@ -21,22 +21,4 @@
 
 negate constant num-errptrs
 
-: message     (  # -- )
-    negate  
-    dup  0 num-errptrs 1-  within  if
-        graddr  >r
-        2*  >grom_errptrs g@  +  g@
-        begin
-            dup gc@ dup
-        while
-            emit
-            1+
-        repeat
-        2drop cr
-        r>  gwaddr        
-    else
-        ." ???" . cr
-    then
-;
-
 export>

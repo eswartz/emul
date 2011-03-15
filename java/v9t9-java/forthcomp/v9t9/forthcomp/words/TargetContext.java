@@ -182,9 +182,7 @@ public abstract class TargetContext extends Context {
 		alignDP();
 		int entryAddr = getDP();
 		int size = 0;
-		boolean doExport = export;
-		if (exportFlagNext)
-			doExport = exportFlag;
+		boolean doExport = currentExport();
 		exportFlagNext = false;
 		if (doExport) {
 			// link, name
@@ -238,6 +236,13 @@ public abstract class TargetContext extends Context {
 		}
 		
 		return entry;
+	}
+
+	private boolean currentExport() {
+		boolean doExport = export;
+		if (exportFlagNext)
+			doExport = exportFlag;
+		return doExport;
 	}
 
 
@@ -342,11 +347,21 @@ public abstract class TargetContext extends Context {
 	}
 
 	public TargetConstant defineConstant(String name, int value, int cells) throws AbortException {
-		DictEntry entry = defineEntry(name);
 		logfile.println(name);
-		initCode();
-		compileDoConstant(value, cells);
-		final TargetConstant constant = (TargetConstant) define(name, new TargetConstant(entry, value, 1));
+		
+		boolean mustDefine = currentExport();
+		if (!mustDefine) {
+			if (forwards.get(name.toUpperCase()) != null) {
+				mustDefine = true;
+				System.err.println("*** WARNING: forward reference to : " +name + " forces dictionary definition");
+			}
+		}
+		if (mustDefine) {
+			defineEntry(name);
+			initCode();
+			compileDoConstant(value, cells);
+		}
+		final TargetConstant constant = (TargetConstant) define(name, new TargetConstant(name, value, 1));
 		return constant;
 	}
 

@@ -35,6 +35,8 @@ include syscomp.fi
 
 EXPORT>
 
+include ../ans/errcodes.fi
+
 include ../v9t9/sysutils.fi
 
 0 <EXPORT
@@ -55,7 +57,7 @@ include ../v9t9/prims.fi
 
 include ../ans/kernel.fi
 
-include ../ans/errors.fi
+include ../v9t9/errors.fi
 
 include ../ans/blocks.fi
 

@@ -65,7 +65,51 @@ dup v-data - negate  Constant v-data-size
 
 ramptr ! 
 
+
+Create video-modes
+    ' text-mode ,
+    ' gfx-mode ,
+    ' bit-mode ,
+    ' gfx3-mode ,
+    ' gfx4-mode ,
+    ' gfx5-mode ,
+    ' gfx6-mode ,
+    ' gfx7-mode ,
+    ' text2-mode ,
+    ' mono-mode ,
+    0 ,
+    
+1 <export
+$000    constant    text
+$001    constant    gfx
+$002    constant    bitmap      $002    constant    gfx2
+$003    constant    gfx3           
+$004    constant    gfx4
+$005    constant    gfx5
+$006    constant    gfx6
+$007    constant    gfx7
+$008    constant    text2
+$009    constant    mono
+$00A    constant    multi
+export>
+
+$00B    constant    last-video-mode
+
 \ -------------------------------------------------------------------------
+
+
+\   Set the VDP RAM bank.
+\
+\   This directly sets VR14 without saving it off (unlike vwreg).
+\   It does honor the page offset, though.
+\
+: vsetbank  ( vaddr -- addr-16k )
+    dup 14 urshift 
+    v-pob c@  +
+    $8E00 OR  VDPWA !
+    $3fff AND
+;
+
 
 :   >vr         ( val reg -- )
     dup 16 <  if  v-regsave + c!  else 2drop then    
@@ -300,35 +344,6 @@ Create msx-enhregs
 
 \ ---------------------
 
-Create video-modes
-    ' text-mode ,
-    ' gfx-mode ,
-    ' bit-mode ,
-    ' gfx3-mode ,
-    ' gfx4-mode ,
-    ' gfx5-mode ,
-    ' gfx6-mode ,
-    ' gfx7-mode ,
-    ' text2-mode ,
-    ' mono-mode ,
-    0 ,
-    
-1 <export
-$000    constant    text
-$001    constant    gfx
-$002    constant    bitmap      $002    constant    gfx2
-$003    constant    gfx3           
-$004    constant    gfx4
-$005    constant    gfx5
-$006    constant    gfx6
-$007    constant    gfx7
-$008    constant    text2
-$009    constant    mono
-$00A    constant    multi
-export>
-
-$00B    constant    last-video-mode
-
 : (sprite-setup)
     v-sprites @  $80   $00  +vfill
     v-sprpat @   $800  $00  +vfill
@@ -396,27 +411,6 @@ include video_msx.fi
 
 : video>  ( oldflags -- )
     v-intflags c!
-;
-
-( get size of save area )
-:   #vrs ( -- n )
-    v-data-size t-data-size +
-;
-
-( save video state: needs buffer of v-data-size size )
-:: vsave  ( buff -- )
-    v-data0  buff                 v-data-size  cmove 
-    t-data0  buff  v-data-size +  t-data-size  cmove 
-;
-
-( restore video state: needs buffer of v-data-size size )
-:: vrestore  ( buff -- )
-    buff  v-data0                 v-data-size  cmove 
-    buff  v-data-size +  t-data0  t-data-size  cmove
-    
-    16 0 do
-        v-regsave i + c@  $8000  i 8 lshift  OR  OR  vwaddr
-    loop 
 ;
 
 : vblink!  ( flag -- )

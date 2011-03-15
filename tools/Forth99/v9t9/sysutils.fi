@@ -14,18 +14,6 @@
     $4000 OR  VDPWA !
 ;
 
-\   Set the VDP RAM bank.
-\
-\   This directly sets VR14 without saving it off (unlike vwreg).
-\   It does honor the page offset, though.
-\
-: vsetbank  ( vaddr -- addr-16k )
-    dup 14 urshift 
-    v-pob c@  +
-    $8E00 OR  VDPWA !
-    $3fff AND
-;
-
 \   Write VWADDR and page
 \
 :   +vwaddr ( addr -- )

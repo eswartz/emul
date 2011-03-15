@@ -309,6 +309,28 @@ export>
     over + swap do i c@ emit loop     
 ;
 
+
+( get size of save area )
+:   #vrs ( -- n )
+    v-data-size t-data-size +
+;
+
+( save video state: needs buffer of v-data-size size )
+:: vsave  ( buff -- )
+    v-data0  buff                 v-data-size  cmove 
+    t-data0  buff  v-data-size +  t-data-size  cmove 
+;
+
+( restore video state: needs buffer of v-data-size size )
+:: vrestore  ( buff -- )
+    buff  v-data0                 v-data-size  cmove 
+    buff  v-data-size +  t-data0  t-data-size  cmove
+    
+    16 0 do
+        v-regsave i + c@  $8000  i 8 lshift  OR  OR  vwaddr
+    loop 
+;
+
 EXPORT>
 
 

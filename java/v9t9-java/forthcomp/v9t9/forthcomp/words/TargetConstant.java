@@ -21,8 +21,8 @@ public class TargetConstant extends TargetWord implements ITargetWord {
 	/**
 	 * @param entry
 	 */
-	public TargetConstant(DictEntry entry, int value_, int width_) {
-		super(entry);
+	public TargetConstant(String name, int value_, int width_) {
+		super(new DictEntry(0, 0, name));
 		this.value = value_;
 		this.width = width_;
 		

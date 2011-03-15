@@ -271,7 +271,8 @@ public class ForthComp {
 				hostWord = word;
 				targetWord = null;
 				if (!word.isCompilerWord()) {
-					targetWord = (ITargetWord) targetContext.defineForward(token, hostContext.getStream().getLocation());
+					targetWord = (ITargetWord) targetContext.defineForward(token, 
+							hostContext.getStream().getLocation());
 					//throw hostContext.abort("host word " + token + " used instead of target word");
 				}
 			}		

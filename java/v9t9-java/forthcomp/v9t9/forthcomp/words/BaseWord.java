@@ -77,9 +77,6 @@ public abstract class BaseWord implements IWord {
 			interpretSemantics = executionSemantics;
 	}
 
-	/* (non-Javadoc)
-	 * @see v9t9.forthcomp.IWord#isCompilerWord()
-	 */
 	@Override
 	public boolean isCompilerWord() {
 		return false;
