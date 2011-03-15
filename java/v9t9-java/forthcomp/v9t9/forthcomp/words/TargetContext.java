@@ -360,6 +360,8 @@ public abstract class TargetContext extends Context {
 			defineEntry(name);
 			initCode();
 			compileDoConstant(value, cells);
+		} else {
+			exportFlagNext = false;
 		}
 		final TargetConstant constant = (TargetConstant) define(name, new TargetConstant(name, value, 1));
 		return constant;
@@ -407,18 +409,31 @@ public abstract class TargetContext extends Context {
 
 	public TargetUserVariable defineUser(String name, int bytes) throws AbortException {
 		
+		logfile.println(name);
+		
 		// the "variable" will be frozen in ROM, a count of bytes
 		TargetVariable up = findOrCreateVariable("UP0");
 		int index = readCell(up.getEntry().getParamAddr());
 		writeCell(up.getEntry().getParamAddr(), index + bytes);
 
-		DictEntry entry = defineEntry(name);
-		logfile.println(name);
-		initCode();
+
+		boolean mustDefine = currentExport();
+		if (!mustDefine) {
+			if (forwards.get(name.toUpperCase()) != null) {
+				mustDefine = true;
+				System.err.println("*** WARNING: forward reference to : " +name + " forces dictionary definition");
+			}
+		}
+		if (mustDefine) {
+			defineEntry(name);
+			initCode();
+			
+			compileDoUser(index);
+		} else {
+			exportFlagNext = false;
+		}
 		
-		compileDoUser(index);
-		
-		return (TargetUserVariable) define(name, new TargetUserVariable(entry, index));
+		return (TargetUserVariable) define(name, new TargetUserVariable(name, index));
 	}
 
 	protected TargetVariable findOrCreateVariable(String name) {

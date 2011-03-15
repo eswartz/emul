@@ -19,8 +19,8 @@ public class TargetUserVariable extends TargetWord {
 	 * @param index 
 	 * 
 	 */
-	public TargetUserVariable(DictEntry entry, int index) {
-		super(entry);
+	public TargetUserVariable(String name, int index) {
+		super(new DictEntry(0, 0, name));
 		this.index = index;
 		
 		setCompilationSemantics(new ISemantics() {
