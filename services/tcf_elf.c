@@ -854,6 +854,11 @@ UnitAddressRange * elf_find_unit(Context * ctx, ContextAddress addr_min, Context
                 U8_T offs_max = 0;
                 ELF_PHeader * p = file->pheaders + j;
                 if (p->type != PT_LOAD) continue;
+                if (r->flags) {
+                    if ((p->flags & PF_R) && !(r->flags & MM_FLAG_R)) continue;
+                    if ((p->flags & PF_W) && !(r->flags & MM_FLAG_W)) continue;
+                    if ((p->flags & PF_X) && !(r->flags & MM_FLAG_X)) continue;
+                }
                 offs_min = addr_min - r->addr + r->file_offs;
                 offs_max = addr_max - r->addr + r->file_offs;
                 if (p->offset >= offs_max || p->offset + p->mem_size <= offs_min) continue;
@@ -943,6 +948,11 @@ ContextAddress elf_map_to_run_time_address(Context * ctx, ELF_File * file, ELF_S
                 ELF_PHeader * p = file->pheaders + j;
                 if (p->type != PT_LOAD) continue;
                 if (addr < p->address || addr >= p->address + p->mem_size) continue;
+                if (r->flags) {
+                    if ((p->flags & PF_R) && !(r->flags & MM_FLAG_R)) continue;
+                    if ((p->flags & PF_W) && !(r->flags & MM_FLAG_W)) continue;
+                    if ((p->flags & PF_X) && !(r->flags & MM_FLAG_X)) continue;
+                }
                 offs = addr - p->address + p->offset;
                 if (offs < r->file_offs || offs >= r->file_offs + r->size) continue;
                 return (ContextAddress)(offs - r->file_offs + r->addr);
