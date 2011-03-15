@@ -56,16 +56,16 @@ public class ExpressionsProxy implements IExpressions {
             return (String)props.get(PROP_ID);
         }
 
-        public String getLanguage() {
-            return (String)props.get(PROP_LANGUAGE);
-        }
-
         public String getParentID() {
             return (String)props.get(PROP_PARENT_ID);
         }
 
-        public Map<String, Object> getProperties() {
-            return props;
+        public String getSymbolID() {
+            return (String)props.get(PROP_SYMBOL_ID);
+        }
+
+        public String getLanguage() {
+            return (String)props.get(PROP_LANGUAGE);
         }
 
         public int getSize() {
@@ -76,6 +76,10 @@ public class ExpressionsProxy implements IExpressions {
 
         public String getTypeID() {
             return (String)props.get(PROP_TYPE);
+        }
+
+        public Map<String, Object> getProperties() {
+            return props;
         }
     }
 

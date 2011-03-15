@@ -61,20 +61,36 @@ public class TCFChildrenSubExpressions extends TCFChildren {
         return null;
     }
 
-    private HashMap<String,TCFNode> findFields(ISymbols.Symbol type, String[] children, boolean deref) {
-        int cnt = 0;
-        HashMap<String,TCFNode> data = new HashMap<String,TCFNode>();
+    private boolean findFields(ISymbols.Symbol type, Map<String,TCFNode> map, boolean deref) {
+        TCFDataCache<String[]> children_cache = node.model.getSymbolChildrenCache(type.getID());
+        if (children_cache == null) return true;
+        if (!children_cache.validate(this)) return false;
+        String[] children = children_cache.getData();
+        if (children == null) return true;
+        TCFDataCache<?> pending = null;
         for (String id : children) {
             TCFDataCache<ISymbols.Symbol> sym_cache = node.model.getSymbolInfoCache(id);
-            if (!sym_cache.validate(this)) return null;
-            ISymbols.Symbol sym_data = sym_cache.getData();
-            if (sym_data != null && sym_data.getSymbolClass() == ISymbols.SymbolClass.function) continue;
-            TCFNodeExpression n = findField(id, deref);
-            if (n == null) n = new TCFNodeExpression(node, null, id, null, -1, deref);
-            n.setSortPosition(cnt++);
-            data.put(n.id, n);
+            if (!sym_cache.validate()) {
+                pending = sym_cache;
+            }
+            else {
+                ISymbols.Symbol sym_data = sym_cache.getData();
+                if (sym_data == null) continue;
+                if (sym_data.getSymbolClass() != ISymbols.SymbolClass.reference) continue;
+                if (sym_data.getName() == null) {
+                    if (!findFields(sym_data, map, deref)) return false;
+                }
+                else {
+                    TCFNodeExpression n = findField(id, deref);
+                    if (n == null) add(n = new TCFNodeExpression(node, null, id, null, -1, deref));
+                    n.setSortPosition(map.size());
+                    map.put(n.id, n);
+                }
+            }
         }
-        return data;
+        if (pending == null) return true;
+        pending.wait(this);
+        return false;
     }
 
     private TCFNodeExpression findIndex(int index, boolean deref) {
@@ -111,28 +127,14 @@ public class TCFChildrenSubExpressions extends TCFChildren {
             return true;
         }
         ISymbols.TypeClass type_class = type_data.getTypeClass();
+        Map<String,TCFNode> data = new HashMap<String,TCFNode>();
         if (par_level > 0 && type_class != ISymbols.TypeClass.array) {
-            set(null, null, new HashMap<String,TCFNode>());
-            return true;
+            // Nothing
         }
-        if (type_class == ISymbols.TypeClass.composite) {
-            TCFDataCache<String[]> children_cache = node.model.getSymbolChildrenCache(type_data.getID());
-            if (children_cache == null) {
-                set(null, null, new HashMap<String,TCFNode>());
-                return true;
-            }
-            if (!children_cache.validate(this)) return false;
-            String[] children_data = children_cache.getData();
-            Map<String,TCFNode> data = null;
-            if (children_data != null) {
-                data = findFields(type_data, children_data, false);
-                if (data == null) return false;
-            }
-            set(null, children_cache.getError(), data);
-            return true;
+        else if (type_class == ISymbols.TypeClass.composite) {
+            if (!findFields(type_data, data, false)) return false;
         }
-        if (type_class == ISymbols.TypeClass.array) {
-            Map<String,TCFNode> data = new HashMap<String,TCFNode>();
+        else if (type_class == ISymbols.TypeClass.array) {
             int offs = par_level > 0 ? par_offs : 0;
             int size = par_level > 0 ? par_size : type_data.getLength();
             if (size <= 100) {
@@ -154,11 +156,8 @@ public class TCFChildrenSubExpressions extends TCFChildren {
                     data.put(n.id, n);
                 }
             }
-            set(null, null, data);
-            return true;
         }
-        if (type_class == ISymbols.TypeClass.pointer) {
-            Map<String,TCFNode> data = new HashMap<String,TCFNode>();
+        else if (type_class == ISymbols.TypeClass.pointer) {
             TCFDataCache<IExpressions.Value> value = ((TCFNodeExpression)exp).getValue();
             if (!value.validate(this)) return false;
             IExpressions.Value v = value.getData();
@@ -169,15 +168,7 @@ public class TCFChildrenSubExpressions extends TCFChildren {
                     ISymbols.Symbol base_type_data = base_type_cache.getData();
                     if (base_type_data != null && base_type_data.getTypeClass() != ISymbols.TypeClass.function && base_type_data.getSize() > 0) {
                         if (base_type_data.getTypeClass() == ISymbols.TypeClass.composite) {
-                            TCFDataCache<String[]> children_cache = node.model.getSymbolChildrenCache(base_type_data.getID());
-                            if (children_cache != null) {
-                                if (!children_cache.validate(this)) return false;
-                                String[] children_data = children_cache.getData();
-                                if (children_data != null) {
-                                    data = findFields(type_data, children_data, true);
-                                    if (data == null) return false;
-                                }
-                            }
+                            if (!findFields(base_type_data, data, true)) return false;
                         }
                         else {
                             TCFNodeExpression n = findIndex(0, true);
@@ -188,10 +179,8 @@ public class TCFChildrenSubExpressions extends TCFChildren {
                     }
                 }
             }
-            set(null, null, data);
-            return true;
         }
-        set(null, null, new HashMap<String,TCFNode>());
+        set(null, null, data);
         return true;
     }
 

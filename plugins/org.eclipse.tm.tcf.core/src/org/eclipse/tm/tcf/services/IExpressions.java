@@ -59,6 +59,12 @@ public interface IExpressions extends IService {
         String getExpression();
 
         /**
+         * Return symbol ID if the expression represents a symbol (e.g. local variable).
+         * @return symbol ID
+         */
+        String getSymbolID();
+
+        /**
          * Get size of expression value in bits.
          * Can be 0 if value size is even number of bytes, use getSize() in such case.
          * @return size in bits.
@@ -99,6 +105,7 @@ public interface IExpressions extends IService {
     static final String
         PROP_ID = "ID",
         PROP_PARENT_ID = "ParentID",
+        PROP_SYMBOL_ID = "SymbolID",
         PROP_LANGUAGE = "Language",
         PROP_EXPRESSION = "Expression",
         PROP_BITS = "Bits",
