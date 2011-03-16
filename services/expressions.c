@@ -14,6 +14,12 @@
 
 /*
  * Expression evaluation service.
+ *
+ * Extensions to regular C/C++ syntax:
+ * 1. Special characters in identifiers: $"X"
+ *    where X is object name that can contain any characters.
+ * 2. Symbol IDs in expressions: ${X}
+ *    where X is symbol ID as returned by symbols service.
  */
 
 #include <config.h>
@@ -68,6 +74,7 @@ typedef struct StringValue StringValue;
 #define SY_A_DIV 277
 #define SY_A_MOD 278
 #define SY_SIZEOF 279
+#define SY_NAME  280
 
 #define MODE_NORMAL 0
 #define MODE_TYPE   1
@@ -241,7 +248,6 @@ static void set_string_text_val(int pos, int len, int in_quotes) {
         while (cnt < len) {
             ((char *)text_val.value)[cnt++] = (char)next_char_val();
         }
-        next_ch();
     }
     else {
         while (cnt < len) {
@@ -451,6 +457,7 @@ static void next_sy(void) {
                 }
                 set_string_text_val(pos, len, 1);
                 text_sy = SY_VAL;
+                next_ch();
             }
             return;
         case '0':
@@ -511,28 +518,44 @@ static void next_sy(void) {
                 text_sy = SY_VAL;
                 return;
             }
-            if (ch == '$' && text_ch == '"') {
-                int len = 0;
-                int pos = text_pos + 1;
-                next_char_val();
-                while (text_ch != '"') {
+            if (ch == '$') {
+                if (text_ch == '"') {
+                    int len = 0;
+                    int pos = text_pos + 1;
                     next_char_val();
-                    len++;
+                    while (text_ch != '"') {
+                        next_char_val();
+                        len++;
+                    }
+                    set_string_text_val(pos, len, 1);
+                    text_sy = SY_NAME;
+                    next_ch();
+                    return;
                 }
-                set_string_text_val(pos, len, 1);
-                text_sy = SY_ID;
-                return;
+                if (text_ch == '{') {
+                    int len = 0;
+                    int pos = text_pos + 1;
+                    next_ch();
+                    while (text_ch != '}') {
+                        next_ch();
+                        len++;
+                    }
+                    set_string_text_val(pos, len, 0);
+                    text_sy = SY_ID;
+                    next_ch();
+                    return;
+                }
             }
             if (is_name_character(ch)) {
                 int len = 1;
                 int pos = text_pos - 1;
                 while (is_name_character(text_ch)) {
-                    len++;
                     next_ch();
+                    len++;
                 }
                 set_string_text_val(pos, len, 0);
                 if (strcmp((const char *)text_val.value, "sizeof") == 0) text_sy = (int)SY_SIZEOF;
-                else text_sy = SY_ID;
+                else text_sy = SY_NAME;
                 return;
             }
             error(ERR_INV_EXPRESSION, "Illegal character");
@@ -540,6 +563,76 @@ static void next_sy(void) {
         }
     }
 }
+
+#if ENABLE_Symbols
+static int sym2value(Symbol * sym, Value * v) {
+    int sym_class = 0;
+    if (get_symbol_class(sym, &sym_class) < 0) {
+        error(errno, "Cannot retrieve symbol class");
+    }
+    if (get_symbol_type(sym, &v->type) < 0) {
+        error(errno, "Cannot retrieve symbol type");
+    }
+    if (get_symbol_type_class(sym, &v->type_class) < 0) {
+        error(errno, "Cannot retrieve symbol type class");
+    }
+    switch (sym_class) {
+    case SYM_CLASS_VALUE:
+        {
+            size_t size = 0;
+            void * value = NULL;
+            if (get_symbol_value(sym, &value, &size) < 0) {
+                error(errno, "Cannot retrieve symbol value");
+            }
+            v->constant = 1;
+            v->size = size;
+            if (value != NULL) {
+                v->value = alloc_str((size_t)v->size);
+                memcpy(v->value, value, size);
+            }
+        }
+        break;
+    case SYM_CLASS_REFERENCE:
+        if (get_symbol_address(sym, &v->address) < 0) {
+            size_t size = 0;
+            void * value = NULL;
+            if (get_symbol_value(sym, &value, &size) < 0) {
+                error(errno, "Cannot retrieve symbol value");
+            }
+            v->size = size;
+            if (value != NULL) {
+                v->value = alloc_str((size_t)v->size);
+                memcpy(v->value, value, size);
+            }
+        }
+        else {
+            if (get_symbol_size(sym, &v->size) < 0) {
+                error(errno, "Cannot retrieve symbol size");
+            }
+            v->remote = 1;
+        }
+        break;
+    case SYM_CLASS_FUNCTION:
+        {
+            ContextAddress word = 0;
+            v->type_class = TYPE_CLASS_CARDINAL;
+            if (v->type != NULL) get_array_symbol(v->type, 0, &v->type);
+            if (get_symbol_address(sym, &word) < 0) {
+                error(errno, "Cannot retrieve symbol address");
+            }
+            set_ctx_word_value(v, word);
+        }
+        break;
+    case SYM_CLASS_TYPE:
+        assert(v->size == 0);
+        v->type = sym;
+        break;
+    default:
+        error(ERR_UNSUPPORTED, "Invalid symbol class");
+    }
+    return sym_class;
+}
+#endif
 
 static int identifier(char * name, Value * v) {
     int i;
@@ -562,71 +655,7 @@ static int identifier(char * name, Value * v) {
             if (get_error_code(errno) != ERR_SYM_NOT_FOUND) error(errno, "Cannot read symbol data");
         }
         else {
-            int sym_class = 0;
-            if (get_symbol_class(sym, &sym_class) < 0) {
-                error(errno, "Cannot retrieve symbol class");
-            }
-            if (get_symbol_type(sym, &v->type) < 0) {
-                error(errno, "Cannot retrieve symbol type");
-            }
-            if (get_symbol_type_class(sym, &v->type_class) < 0) {
-                error(errno, "Cannot retrieve symbol type class");
-            }
-            switch (sym_class) {
-            case SYM_CLASS_VALUE:
-                {
-                    size_t size = 0;
-                    void * value = NULL;
-                    if (get_symbol_value(sym, &value, &size) < 0) {
-                        error(errno, "Cannot retrieve symbol value");
-                    }
-                    v->constant = 1;
-                    v->size = size;
-                    if (value != NULL) {
-                        v->value = alloc_str((size_t)v->size);
-                        memcpy(v->value, value, size);
-                    }
-                }
-                break;
-            case SYM_CLASS_REFERENCE:
-                if (get_symbol_address(sym, &v->address) < 0) {
-                    size_t size = 0;
-                    void * value = NULL;
-                    if (get_symbol_value(sym, &value, &size) < 0) {
-                        error(errno, "Cannot retrieve symbol value");
-                    }
-                    v->size = size;
-                    if (value != NULL) {
-                        v->value = alloc_str((size_t)v->size);
-                        memcpy(v->value, value, size);
-                    }
-                }
-                else {
-                    if (get_symbol_size(sym, &v->size) < 0) {
-                        error(errno, "Cannot retrieve symbol size");
-                    }
-                    v->remote = 1;
-                }
-                break;
-            case SYM_CLASS_FUNCTION:
-                {
-                    ContextAddress word = 0;
-                    v->type_class = TYPE_CLASS_CARDINAL;
-                    if (v->type != NULL) get_array_symbol(v->type, 0, &v->type);
-                    if (get_symbol_address(sym, &word) < 0) {
-                        error(errno, "Cannot retrieve symbol address");
-                    }
-                    set_ctx_word_value(v, word);
-                }
-                break;
-            case SYM_CLASS_TYPE:
-                assert(v->size == 0);
-                v->type = sym;
-                break;
-            default:
-                error(ERR_UNSUPPORTED, "Invalid symbol class");
-            }
-            return sym_class;
+            return sym2value(sym, v);
         }
     }
 #elif ENABLE_RCBP_TEST
@@ -690,7 +719,7 @@ static int type_name(int mode, Symbol ** type) {
     int sym_class;
     int name_cnt = 0;
 
-    if (text_sy != SY_ID) return 0;
+    if (text_sy != SY_NAME) return 0;
     name[0] = 0;
     do {
         if (strlen((const char *)(text_val.value)) + strlen(name) >= sizeof(name) - 1) {
@@ -701,7 +730,7 @@ static int type_name(int mode, Symbol ** type) {
         name_cnt++;
         next_sy();
     }
-    while (text_sy == SY_ID);
+    while (text_sy == SY_NAME);
     sym_class = identifier(name, &v);
     if (sym_class != SYM_CLASS_TYPE) return 0;
     expr_len = type_expression(mode, expr_buf);
@@ -920,11 +949,25 @@ static void primary_expression(int mode, Value * v) {
         if (mode != MODE_SKIP) *v = text_val;
         next_sy();
     }
-    else if (text_sy == SY_ID) {
+    else if (text_sy == SY_NAME) {
         if (mode != MODE_SKIP) {
             int sym_class = identifier((char *)text_val.value, v);
             if (sym_class == SYM_CLASS_UNKNOWN) error(errno, "Undefined identifier '%s'", text_val.value);
             if (sym_class == SYM_CLASS_TYPE) error(ERR_INV_EXPRESSION, "Illegal usage of type '%s'", text_val.value);
+        }
+        next_sy();
+    }
+    else if (text_sy == SY_ID) {
+        if (mode != MODE_SKIP) {
+#if ENABLE_Symbols
+            int sym_class = 0;
+            Symbol * sym = NULL;
+            if (id2symbol((char *)text_val.value, &sym) < 0) error(errno, "Invalid symbol ID");
+            sym_class = sym2value(sym, v);
+            if (sym_class == SYM_CLASS_TYPE) error(ERR_INV_EXPRESSION, "Illegal usage of type '%s'", text_val.value);
+#else
+            error(ERR_INV_EXPRESSION, "Invalid usage of symbol ID - symbols service not available");
+#endif
         }
         next_sy();
     }
@@ -998,8 +1041,11 @@ static void find_field(Symbol * sym, ContextAddress offs, const char * name, Sym
 
 static void op_field(int mode, Value * v) {
 #if ENABLE_Symbols
-    char * name = (char *)text_val.value;
-    if (text_sy != SY_ID) error(ERR_INV_EXPRESSION, "Field name expected");
+    char * id = NULL;
+    char * name = NULL;
+    if (text_sy == SY_ID) id = (char *)text_val.value;
+    else if (text_sy == SY_NAME) name = (char *)text_val.value;
+    else error(ERR_INV_EXPRESSION, "Field name expected");
     next_sy();
     if (mode == MODE_SKIP) return;
     if (v->type_class != TYPE_CLASS_COMPOSITE) {
@@ -1011,7 +1057,10 @@ static void op_field(int mode, Value * v) {
         ContextAddress size = 0;
         ContextAddress offs = 0;
 
-        if (id2symbol(name, &sym) < 0) {
+        if (id != NULL) {
+            if (id2symbol(id, &sym) < 0) error(errno, "Invalid field ID");
+        }
+        else {
             find_field(v->type, 0, name, &sym, &offs);
         }
         if (sym == NULL) {
@@ -1968,7 +2017,7 @@ static int symbol_to_expression(char * expr_id, char * parent, char * sym_id, Ex
 
     if (id2symbol(sym_id, &sym) < 0) return -1;
 
-    snprintf(script, sizeof(script), "$\"%s\"", sym_id);
+    snprintf(script, sizeof(script), "${%s}", sym_id);
     expr.script = script;
 
     get_symbol_type_class(sym, &expr.type_class);

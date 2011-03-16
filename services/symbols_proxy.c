@@ -481,7 +481,7 @@ int find_symbol_by_name(Context * ctx, int frame, ContextAddress addr,  char * n
                 f->id = NULL;
             }
             f->update_policy = UPDATE_ON_MEMORY_MAP_CHANGES;
-            snprintf(bf, sizeof(bf), "TEST.%X.%"PRIX64".%s", sym_class,
+            snprintf(bf, sizeof(bf), "@T.%X.%"PRIX64".%s", sym_class,
                     (uint64_t)(uintptr_t)address, context_get_group(ctx, CONTEXT_GROUP_PROCESS)->id);
             f->id = loc_strdup(bf);
         }
@@ -641,15 +641,9 @@ const char * symbol2id(const Symbol * sym) {
 int id2symbol(const char * id, Symbol ** sym) {
     LINK * l;
     SymInfoCache * s = NULL;
-    unsigned h = 0;
-    SymbolsCache * syms = NULL;
-    if (id == NULL || id[0] != '@') {
-        /* Cacheable symbol IDs should start with '@' */
-        errno = ERR_INV_CONTEXT;
-        return -1;
-    }
-    h = hash_sym_id(id);
-    syms = get_symbols_cache();
+    unsigned h = hash_sym_id(id);
+    SymbolsCache * syms = get_symbols_cache();
+
     for (l = syms->link_sym[h].next; l != syms->link_sym + h; l = l->next) {
         SymInfoCache * x = syms2sym(l);
         if (strcmp(x->id, id) == 0) {
@@ -664,11 +658,11 @@ int id2symbol(const char * id, Symbol ** sym) {
         list_add_first(&s->link_syms, syms->link_sym + h);
         list_init(&s->array_syms);
 #if ENABLE_RCBP_TEST
-        if (strncmp(id, "TEST.", 5) == 0) {
+        if (strncmp(id, "@T.", 3) == 0) {
             int sym_class = 0;
             uint64_t address = 0;
             char ctx_id[256];
-            if (sscanf(id, "TEST.%X.%"SCNx64".%255s", &sym_class, &address, ctx_id) == 3) {
+            if (sscanf(id, "@T.%X.%"SCNx64".%255s", &sym_class, &address, ctx_id) == 3) {
                 s->done_context = 1;
                 s->has_address = 1;
                 s->address = (ContextAddress)address;

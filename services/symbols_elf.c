@@ -405,8 +405,6 @@ int find_symbol_by_name(Context * ctx, int frame, ContextAddress ip, char * name
     int error = 0;
     int found = 0;
 
-    if (id2symbol(name, res) == 0) return 0;
-
     assert(ctx != NULL);
 
 #if defined(_WRS_KERNEL)

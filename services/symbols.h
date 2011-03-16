@@ -56,7 +56,6 @@ typedef void EnumerateSymbolsCallBack(void *, Symbol *);
 
 /*
  * Find symbol information for given symbol name in given context.
- * A symbol ID can be given as the symbol name.
  * On error, returns -1 and sets errno.
  * On success returns 0.
  */
