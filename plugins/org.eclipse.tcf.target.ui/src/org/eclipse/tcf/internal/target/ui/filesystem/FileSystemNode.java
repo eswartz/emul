@@ -50,18 +50,25 @@ public class FileSystemNode {
 		return dirEntry;
 	}
 	
-	private void buildPath(StringBuffer path) {
+	private char buildPath(StringBuffer path, boolean last) {
+		String filename = dirEntry.filename;
+		char separator;
 		if (parent != null)
-			parent.buildPath(path);
+			separator = parent.buildPath(path, false);
+		else
+			separator = filename.charAt(filename.length() - 1);
 		
-		path.append(dirEntry.filename);
-		if (parent != null)
-			path.append('/');
+		path.append(filename);
+		if (parent != null && !last)
+			// Only need the separator after non root nodes and not the last one
+			path.append(separator);
+		
+		return separator;
 	}
 	
 	public String getPath() {
 		StringBuffer path = new StringBuffer();
-		buildPath(path);
+		buildPath(path, true);
 		return path.toString();
 	}
 	
