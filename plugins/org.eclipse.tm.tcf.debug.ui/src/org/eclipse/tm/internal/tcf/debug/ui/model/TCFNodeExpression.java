@@ -149,7 +149,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                 String cast = model.getCastToType(n.id);
                 if (cast != null) e = "(" + cast + ")(" + e + ")";
                 if (field_id != null) {
-                    e = "(" + e + ")" + (deref ? "->" : ".") + "$\"" + field_id + "\"";
+                    e = "(" + e + ")" + (deref ? "->" : ".") + "${" + field_id + "}";
                 }
                 else if (index == 0) {
                     e = "*(" + e + ")";
