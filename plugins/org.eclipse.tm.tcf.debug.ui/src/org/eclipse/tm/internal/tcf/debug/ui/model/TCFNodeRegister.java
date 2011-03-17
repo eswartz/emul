@@ -189,6 +189,9 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
                 bf.append("Oct: ");
                 bf.append(toNumberString(8));
                 bf.append('\n');
+                bf.append("Bin: ");
+                bf.append(toNumberString(2));
+                bf.append('\n');
             }
         }
         return bf.toString();
@@ -320,6 +323,23 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
         IRegisters.RegistersContext ctx = context.getData();
         byte[] data = value.getData();
         if (ctx == null || data == null) return "N/A";
+        if (radix == 2) {
+            StringBuffer bf = new StringBuffer();
+            int i = data.length * 8;
+            while (i > 0) {
+                if (i % 4 == 0 && bf.length() > 0) bf.append(',');
+                i--;
+                int j = i / 8;
+                if (ctx.isBigEndian()) j = data.length - j - 1;
+                if ((data[j] & (1 << (i % 8))) != 0) {
+                    bf.append('1');
+                }
+                else {
+                    bf.append('0');
+                }
+            }
+            return bf.toString();
+        }
         byte[] temp = new byte[data.length + 1];
         temp[0] = 0; // Extra byte to avoid sign extension by BigInteger
         if (ctx.isBigEndian()) {
