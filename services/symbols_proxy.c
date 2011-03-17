@@ -43,7 +43,8 @@ typedef struct SymbolsCache {
     Channel * channel;
     LINK link_root;
     LINK link_sym[HASH_SIZE];
-    LINK link_find[HASH_SIZE];
+    LINK link_find_by_name[HASH_SIZE];
+    LINK link_find_in_scope[HASH_SIZE];
     LINK link_list[HASH_SIZE];
     LINK link_frame[HASH_SIZE];
     int service_available;
@@ -110,6 +111,7 @@ typedef struct FindSymCache {
     int update_policy;
     Context * ctx;
     uint64_t ip;
+    char * scope;
     char * name;
     char * id;
     int disposed;
@@ -210,7 +212,8 @@ static SymbolsCache * get_symbols_cache(void) {
         list_add_first(&syms->link_root, &root);
         for (i = 0; i < HASH_SIZE; i++) {
             list_init(syms->link_sym + i);
-            list_init(syms->link_find + i);
+            list_init(syms->link_find_by_name + i);
+            list_init(syms->link_find_in_scope + i);
             list_init(syms->link_list + i);
             list_init(syms->link_frame + i);
         }
@@ -306,8 +309,11 @@ static void free_symbols_cache(SymbolsCache * syms) {
         while (!list_is_empty(syms->link_sym + i)) {
             free_sym_info_cache(syms2sym(syms->link_sym[i].next));
         }
-        while (!list_is_empty(syms->link_find + i)) {
-            free_find_sym_cache(syms2find(syms->link_find[i].next));
+        while (!list_is_empty(syms->link_find_by_name + i)) {
+            free_find_sym_cache(syms2find(syms->link_find_by_name[i].next));
+        }
+        while (!list_is_empty(syms->link_find_in_scope + i)) {
+            free_find_sym_cache(syms2find(syms->link_find_in_scope[i].next));
         }
         while (!list_is_empty(syms->link_list + i)) {
             free_list_sym_cache(syms2list(syms->link_list[i].next));
@@ -453,7 +459,7 @@ int find_symbol_by_name(Context * ctx, int frame, ContextAddress addr,  char * n
 
     h = hash_find(ctx, name, ip);
     syms = get_symbols_cache();
-    for (l = syms->link_find[h].next; l != syms->link_find + h; l = l->next) {
+    for (l = syms->link_find_by_name[h].next; l != syms->link_find_by_name + h; l = l->next) {
         FindSymCache * c = syms2find(l);
         if (c->ctx == ctx && c->ip == ip && strcmp(c->name, name) == 0) {
             f = c;
@@ -469,7 +475,7 @@ int find_symbol_by_name(Context * ctx, int frame, ContextAddress addr,  char * n
             char bf[256];
             if (f == NULL) {
                 f = (FindSymCache *)loc_alloc_zero(sizeof(FindSymCache));
-                list_add_first(&f->link_syms, syms->link_find + h);
+                list_add_first(&f->link_syms, syms->link_find_by_name + h);
                 context_lock(f->ctx = ctx);
                 f->name = loc_strdup(name);
                 f->ip = ip;
@@ -491,7 +497,7 @@ int find_symbol_by_name(Context * ctx, int frame, ContextAddress addr,  char * n
     if (f == NULL) {
         Channel * c = get_channel(syms);
         f = (FindSymCache *)loc_alloc_zero(sizeof(FindSymCache));
-        list_add_first(&f->link_syms, syms->link_find + h);
+        list_add_first(&f->link_syms, syms->link_find_by_name + h);
         context_lock(f->ctx = ctx);
         f->ip = ip;
         f->name = loc_strdup(name);
@@ -505,6 +511,85 @@ int find_symbol_by_name(Context * ctx, int frame, ContextAddress addr,  char * n
         }
         write_stream(&c->out, 0);
         json_write_uint64(&c->out, ip);
+        write_stream(&c->out, 0);
+        json_write_string(&c->out, name);
+        write_stream(&c->out, 0);
+        write_stream(&c->out, MARKER_EOM);
+        cache_wait(&f->cache);
+    }
+    else if (f->pending != NULL) {
+        cache_wait(&f->cache);
+    }
+    else if (f->error != NULL) {
+        char msg[256];
+        snprintf(msg, sizeof(msg), "Symbol '%s' not found", name);
+        exception(set_errno(set_error_report_errno(f->error), msg));
+    }
+    else if (id2symbol(f->id, sym) < 0) {
+        exception(errno);
+    }
+    clear_trap(&trap);
+    return 0;
+}
+
+int find_symbol_in_scope(Context * ctx, int frame, ContextAddress addr, Symbol * scope, char * name, Symbol ** sym) {
+    uint64_t ip = 0;
+    LINK * l = NULL;
+    SymbolsCache * syms = NULL;
+    FindSymCache * f = NULL;
+    unsigned h;
+    Trap trap;
+
+    if (!set_trap(&trap)) return -1;
+
+    if (frame == STACK_NO_FRAME) {
+        ctx = context_get_group(ctx, CONTEXT_GROUP_PROCESS);
+        ip = addr;
+    }
+    else {
+        StackFrame * info = NULL;
+        if (frame == STACK_TOP_FRAME && (frame = get_top_frame(ctx)) < 0) exception(errno);;
+        if (get_frame_info(ctx, frame, &info) < 0) exception(errno);
+        if (read_reg_value(info, get_PC_definition(ctx), &ip) < 0) exception(errno);
+    }
+
+    h = hash_find(ctx, name, ip);
+    syms = get_symbols_cache();
+    for (l = syms->link_find_in_scope[h].next; l != syms->link_find_in_scope + h; l = l->next) {
+        FindSymCache * c = syms2find(l);
+        if (c->ctx == ctx && c->ip == ip && strcmp(c->name, name) == 0) {
+            if (scope == NULL && c->scope == NULL) {
+                f = c;
+                break;
+            }
+            if (scope == NULL || c->scope == NULL) continue;
+            if (strcmp(scope->cache->id, c->scope) == 0) {
+                f = c;
+                break;
+            }
+        }
+    }
+
+    if (f == NULL) {
+        Channel * c = get_channel(syms);
+        f = (FindSymCache *)loc_alloc_zero(sizeof(FindSymCache));
+        list_add_first(&f->link_syms, syms->link_find_in_scope + h);
+        context_lock(f->ctx = ctx);
+        f->ip = ip;
+        if (scope != NULL) f->scope = loc_strdup(scope->cache->id);
+        f->name = loc_strdup(name);
+        f->update_policy = ip ? UPDATE_ON_EXE_STATE_CHANGES : UPDATE_ON_MEMORY_MAP_CHANGES;
+        f->pending = protocol_send_command(c, SYMBOLS, "findInScope", validate_find, f);
+        if (frame != STACK_NO_FRAME) {
+            json_write_string(&c->out, frame2id(ctx, frame));
+        }
+        else {
+            json_write_string(&c->out, ctx->id);
+        }
+        write_stream(&c->out, 0);
+        json_write_uint64(&c->out, ip);
+        write_stream(&c->out, 0);
+        json_write_string(&c->out, scope ? scope->cache->id : NULL);
         write_stream(&c->out, 0);
         json_write_string(&c->out, name);
         write_stream(&c->out, 0);
@@ -1165,8 +1250,16 @@ static void flush_syms(Context * ctx, int mode) {
                     free_sym_info_cache(c);
                 }
             }
-            l = syms->link_find[i].next;
-            while (l != syms->link_find + i) {
+            l = syms->link_find_by_name[i].next;
+            while (l != syms->link_find_by_name + i) {
+                FindSymCache * c = syms2find(l);
+                l = l->next;
+                if ((mode & (1 << c->update_policy)) && c->ctx == ctx) {
+                    free_find_sym_cache(c);
+                }
+            }
+            l = syms->link_find_in_scope[i].next;
+            while (l != syms->link_find_in_scope + i) {
                 FindSymCache * c = syms2find(l);
                 l = l->next;
                 if ((mode & (1 << c->update_policy)) && c->ctx == ctx) {

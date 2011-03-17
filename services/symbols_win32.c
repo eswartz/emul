@@ -856,7 +856,7 @@ static int find_pe_symbol_by_name(Context * ctx, int frame, ContextAddress ip, c
 
     if (find_cache_symbol(ctx, frame, process, stack_frame.InstructionOffset, name, sym)) return errno ? -1 : 0;
 
-    /* TODO: SymFromName() searches only main executable, need to serach DLLs too */
+    /* TODO: SymFromName() searches only main executable, need to search DLLs too */
     if (SymFromName(process, name, info) && info->Tag != SymTagPublicSymbol) {
         syminfo2symbol(ctx, frame, info, sym);
         add_cache_symbol(process, stack_frame.InstructionOffset, name, sym, 0);
@@ -951,6 +951,11 @@ int find_symbol_by_name(Context * ctx, int frame, ContextAddress ip, char * name
     assert((*sym)->ctx == ((*sym)->frame ? ctx : ctx->mem));
     assert((*sym)->frame == ((*sym)->ctx == (*sym)->ctx->mem ? 0u : frame - STACK_NO_FRAME));
     return 0;
+}
+
+int find_symbol_in_scope(Context * ctx, int frame, ContextAddress ip, Symbol * scope, char * name, Symbol ** sym) {
+    errno = ERR_SYM_NOT_FOUND;
+    return -1;
 }
 
 int find_symbol_by_addr(Context * ctx, int frame, ContextAddress addr, Symbol ** sym) {

@@ -66,10 +66,10 @@ static Context * sym_ctx;
 static int sym_frame;
 static ContextAddress sym_ip;
 
-static int get_sym_context(Context * ctx, int frame) {
+static int get_sym_context(Context * ctx, int frame, ContextAddress addr) {
     if (frame == STACK_NO_FRAME) {
         ctx = context_get_group(ctx, CONTEXT_GROUP_PROCESS);
-        sym_ip = 0;
+        sym_ip = addr;
     }
     else if (frame == STACK_TOP_FRAME) {
         if (!ctx->stopped) {
@@ -275,8 +275,6 @@ static int find_in_object_tree(ObjectInfo * list, ContextAddress ip, const char 
                 if (find_in_object_tree(obj->mChildren, ip, name, sym)) return 1;
             }
             break;
-        case TAG_namespace:
-            break;
         case TAG_imported_module:
             {
                 PropertyValue p;
@@ -435,7 +433,7 @@ int find_symbol_by_name(Context * ctx, int frame, ContextAddress ip, char * name
     }
 #endif
 
-    if (error == 0 && !found && get_sym_context(ctx, frame) < 0) error = errno;
+    if (error == 0 && !found && get_sym_context(ctx, frame, ip) < 0) error = errno;
 
     if (error == 0 && !found && sym_ip != 0) {
         Trap trap;
@@ -520,6 +518,61 @@ int find_symbol_by_name(Context * ctx, int frame, ContextAddress ip, char * name
         }
     }
 #endif
+
+    if (error == 0 && !found) error = ERR_SYM_NOT_FOUND;
+
+    assert(error || (*res != NULL && (*res)->ctx != NULL));
+
+    if (error) {
+        errno = error;
+        return -1;
+    }
+    return 0;
+}
+
+int find_symbol_in_scope(Context * ctx, int frame, ContextAddress ip, Symbol * scope, char * name, Symbol ** res) {
+    int error = 0;
+    int found = 0;
+
+    if (get_sym_context(ctx, frame, ip) < 0) error = errno;
+
+    if (!error && scope == NULL && sym_ip != 0) {
+        ELF_File * file = elf_list_first(sym_ctx, sym_ip, sym_ip);
+        if (file == NULL) error = errno;
+        while (error == 0 && file != NULL) {
+            Trap trap;
+            if (set_trap(&trap)) {
+                DWARFCache * cache = get_dwarf_cache(file);
+                UnitAddressRange * range = find_comp_unit_addr_range(cache, sym_ip, sym_ip);
+                if (range != NULL) {
+                    found = find_in_object_tree(range->mUnit->mObject->mChildren, 0, name, res);
+                }
+                if (!found) {
+                    found = find_by_name_in_sym_table(cache, name, res);
+                }
+                clear_trap(&trap);
+            }
+            else {
+                error = trap.error;
+                break;
+            }
+            if (found) break;
+            file = elf_list_next(sym_ctx);
+            if (file == NULL) error = errno;
+        }
+        elf_list_done(sym_ctx);
+    }
+
+    if (!found && !error && scope != NULL && scope->obj != NULL) {
+        Trap trap;
+        if (set_trap(&trap)) {
+            found = find_in_object_tree(scope->obj->mChildren, 0, name, res);
+            clear_trap(&trap);
+        }
+        else {
+            error = trap.error;
+        }
+    }
 
     if (error == 0 && !found) error = ERR_SYM_NOT_FOUND;
 
@@ -738,7 +791,7 @@ int find_symbol_by_addr(Context * ctx, int frame, ContextAddress addr, Symbol **
     UnitAddressRange * range = NULL;
     if (!set_trap(&trap)) return -1;
     if (frame == STACK_TOP_FRAME && (frame = get_top_frame(ctx)) < 0) exception(errno);
-    if (get_sym_context(ctx, frame) < 0) exception(errno);
+    if (get_sym_context(ctx, frame, addr) < 0) exception(errno);
     range = elf_find_unit(sym_ctx, addr, addr + 1, NULL);
     if (range != NULL) found = find_by_addr_in_unit(range->mUnit->mObject->mChildren, 0, addr, res);
     if (!found) found = find_by_addr_in_sym_tables(addr, res);
@@ -783,7 +836,7 @@ int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * call_
     Trap trap;
     if (!set_trap(&trap)) return -1;
     if (frame == STACK_TOP_FRAME && (frame = get_top_frame(ctx)) < 0) exception(errno);
-    if (get_sym_context(ctx, frame) < 0) exception(errno);
+    if (get_sym_context(ctx, frame, 0) < 0) exception(errno);
     if (sym_ip != 0) {
         UnitAddressRange * range = elf_find_unit(sym_ctx, sym_ip, sym_ip + 1, NULL);
         if (range != NULL) enumerate_local_vars(range->mUnit->mObject->mChildren, 0, call_back, args);
@@ -906,7 +959,7 @@ int id2symbol(const char * id, Symbol ** res) {
             errno = ERR_INV_CONTEXT;
             return -1;
         }
-        if (get_sym_context(sym->ctx, sym->frame) < 0) return -1;
+        if (get_sym_context(sym->ctx, sym->frame, 0) < 0) return -1;
         if (dev == 0 && ino == 0 && mtime == 0) return 0;
         file = elf_open_inode(sym_ctx, dev, ino, mtime);
         if (file == NULL) return -1;
@@ -1040,7 +1093,7 @@ static int unpack(const Symbol * sym) {
     assert(sym->base == NULL);
     assert(sym->size == 0);
     assert(!is_cardinal_type_pseudo_symbol(sym));
-    if (get_sym_context(sym->ctx, sym->frame) < 0) return -1;
+    if (get_sym_context(sym->ctx, sym->frame, 0) < 0) return -1;
     file = NULL;
     cache = NULL;
     obj = sym->obj;

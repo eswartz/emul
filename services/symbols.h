@@ -62,6 +62,13 @@ typedef void EnumerateSymbolsCallBack(void *, Symbol *);
 extern int find_symbol_by_name(Context * ctx, int frame, ContextAddress ip, char * name, Symbol ** sym);
 
 /*
+ * Find symbol information for given symbol name in given context and visibility scope.
+ * On error, returns -1 and sets errno.
+ * On success returns 0.
+ */
+extern int find_symbol_in_scope(Context * ctx, int frame, ContextAddress ip, Symbol * scope, char * name, Symbol ** sym);
+
+/*
  * Find symbol information for given address in given context.
  * On error, returns -1 and sets errno.
  * On success returns 0.

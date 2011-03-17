@@ -75,6 +75,7 @@ typedef struct StringValue StringValue;
 #define SY_A_MOD 278
 #define SY_SIZEOF 279
 #define SY_NAME  280
+#define SY_SCOPE 281
 
 #define MODE_NORMAL 0
 #define MODE_TYPE   1
@@ -289,10 +290,17 @@ static void next_sy(void) {
         case '[':
         case ']':
         case ';':
-        case ':':
         case '?':
         case ',':
         case '.':
+            text_sy = ch;
+            return;
+        case ':':
+            if (text_ch == ':') {
+                next_ch();
+                text_sy = SY_SCOPE;
+                return;
+            }
             text_sy = ch;
             return;
         case '-':
@@ -567,6 +575,7 @@ static void next_sy(void) {
 #if ENABLE_Symbols
 static int sym2value(Symbol * sym, Value * v) {
     int sym_class = 0;
+    memset(v, 0, sizeof(Value));
     if (get_symbol_class(sym, &sym_class) < 0) {
         error(errno, "Cannot retrieve symbol class");
     }
@@ -623,35 +632,38 @@ static int sym2value(Symbol * sym, Value * v) {
             set_ctx_word_value(v, word);
         }
         break;
-    case SYM_CLASS_TYPE:
-        assert(v->size == 0);
+    default:
         v->type = sym;
         break;
-    default:
-        error(ERR_UNSUPPORTED, "Invalid symbol class");
     }
     return sym_class;
 }
 #endif
 
-static int identifier(char * name, Value * v) {
+static int identifier(Value * scope, char * name, Value * v) {
     int i;
     memset(v, 0, sizeof(Value));
-    for (i = 0; i < id_callback_cnt; i++) {
-        if (id_callbacks[i](expression_context, expression_frame, name, v)) return SYM_CLASS_VALUE;
-    }
-    if (expression_context == NULL) {
-        exception(ERR_INV_CONTEXT);
-    }
-    if (strcmp(name, "$thread") == 0) {
-        string_value(v, expression_context->id);
-        v->constant = 1;
-        return SYM_CLASS_VALUE;
+    if (scope == NULL) {
+        for (i = 0; i < id_callback_cnt; i++) {
+            if (id_callbacks[i](expression_context, expression_frame, name, v)) return SYM_CLASS_VALUE;
+        }
+        if (expression_context == NULL) {
+            exception(ERR_INV_CONTEXT);
+        }
+        if (strcmp(name, "$thread") == 0) {
+            string_value(v, expression_context->id);
+            v->constant = 1;
+            return SYM_CLASS_VALUE;
+        }
     }
 #if ENABLE_Symbols
     {
         Symbol * sym = NULL;
-        if (find_symbol_by_name(expression_context, expression_frame, expression_addr, name, &sym) < 0) {
+        int n = scope != NULL ?
+            find_symbol_in_scope(expression_context, expression_frame, expression_addr, scope->type, name, &sym) :
+            find_symbol_by_name(expression_context, expression_frame, expression_addr, name, &sym);
+
+        if (n < 0) {
             if (get_error_code(errno) != ERR_SYM_NOT_FOUND) error(errno, "Cannot read symbol data");
         }
         else {
@@ -668,10 +680,8 @@ static int identifier(char * name, Value * v) {
             return cls;
         }
     }
-#else
-    errno = ERR_SYM_NOT_FOUND;
 #endif
-    return SYM_CLASS_UNKNOWN;
+    return -1;
 }
 
 static int64_t to_int(int mode, Value * v);
@@ -731,7 +741,7 @@ static int type_name(int mode, Symbol ** type) {
         next_sy();
     }
     while (text_sy == SY_NAME);
-    sym_class = identifier(name, &v);
+    sym_class = identifier(NULL, name, &v);
     if (sym_class != SYM_CLASS_TYPE) return 0;
     expr_len = type_expression(mode, expr_buf);
     if (mode != MODE_SKIP) {
@@ -938,6 +948,24 @@ static int to_boolean(int mode, Value * v) {
 
 static void expression(int mode, Value * v);
 
+static int qualified_name(int mode, Value * scope, Value * v) {
+    Value x;
+    int sym_class = 0;
+    for (;;) {
+        if (text_sy != SY_NAME) error(ERR_INV_EXPRESSION, "Identifier expected");
+        if (mode != MODE_SKIP) {
+            int sym_class = identifier(scope, (char *)text_val.value, v);
+            if (sym_class < 0) error(ERR_INV_EXPRESSION, "Undefined identifier '%s'", text_val.value);
+        }
+        next_sy();
+        if (text_sy != SY_SCOPE) break;
+        next_sy();
+        scope = &x;
+        x = *v;
+    }
+    return sym_class;
+}
+
 static void primary_expression(int mode, Value * v) {
     if (text_sy == '(') {
         next_sy();
@@ -949,13 +977,16 @@ static void primary_expression(int mode, Value * v) {
         if (mode != MODE_SKIP) *v = text_val;
         next_sy();
     }
-    else if (text_sy == SY_NAME) {
-        if (mode != MODE_SKIP) {
-            int sym_class = identifier((char *)text_val.value, v);
-            if (sym_class == SYM_CLASS_UNKNOWN) error(errno, "Undefined identifier '%s'", text_val.value);
-            if (sym_class == SYM_CLASS_TYPE) error(ERR_INV_EXPRESSION, "Illegal usage of type '%s'", text_val.value);
-        }
+    else if (text_sy == SY_SCOPE) {
+        Value x;
         next_sy();
+        memset(&x, 0, sizeof(x));
+        if (qualified_name(mode, &x, v) == SYM_CLASS_TYPE)
+            error(ERR_INV_EXPRESSION, "Illegal usage of a type in expression");
+    }
+    else if (text_sy == SY_NAME) {
+        if (qualified_name(mode, NULL, v) == SYM_CLASS_TYPE)
+            error(ERR_INV_EXPRESSION, "Illegal usage of a type in expression");
     }
     else if (text_sy == SY_ID) {
         if (mode != MODE_SKIP) {

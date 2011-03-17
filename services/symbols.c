@@ -374,6 +374,65 @@ static void command_find_by_addr(char * token, Channel * c) {
     cache_enter(command_find_by_addr_cache_client, c, &args, sizeof(args));
 }
 
+typedef struct CommandFindInScopeArgs {
+    char token[256];
+    char frame_id[256];
+    char scope_id[256];
+    ContextAddress ip;
+    char * name;
+} CommandFindInScopeArgs;
+
+static void command_find_in_scope_cache_client(void * x) {
+    CommandFindInScopeArgs * args = (CommandFindInScopeArgs *)x;
+    Channel * c = cache_channel();
+    Context * ctx = NULL;
+    int frame = STACK_NO_FRAME;
+    Symbol * scope = NULL;
+    Symbol * sym = NULL;
+    int err = 0;
+
+    if (id2frame(args->frame_id, &ctx, &frame) < 0) ctx = id2ctx(args->frame_id);
+    if (ctx == NULL) err = set_errno(ERR_INV_CONTEXT, args->frame_id);
+    else if (ctx->exited) err = ERR_ALREADY_EXITED;
+
+    if (err == 0 && args->scope_id[0] && id2symbol(args->scope_id, &scope) < 0) err = errno;
+    if (err == 0 && find_symbol_in_scope(ctx, frame, args->ip, scope, args->name, &sym) < 0) err = errno;
+
+    cache_exit();
+
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, args->token);
+    write_errno(&c->out, err);
+
+    if (err == 0) {
+        json_write_string(&c->out, symbol2id(sym));
+        write_stream(&c->out, 0);
+    }
+    else {
+        write_stringz(&c->out, "null");
+    }
+
+    write_stream(&c->out, MARKER_EOM);
+    loc_free(args->name);
+}
+
+static void command_find_in_scope(char * token, Channel * c) {
+    CommandFindInScopeArgs args;
+
+    json_read_string(&c->inp, args.frame_id, sizeof(args.frame_id));
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    args.ip = (ContextAddress)json_read_uint64(&c->inp);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    json_read_string(&c->inp, args.scope_id, sizeof(args.scope_id));
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    args.name = json_read_alloc_string(&c->inp);
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+    strlcpy(args.token, token, sizeof(args.token));
+    cache_enter(command_find_in_scope_cache_client, c, &args, sizeof(args));
+}
+
 typedef struct CommandListArgs {
     char token[256];
     char id[256];
@@ -591,6 +650,7 @@ void ini_symbols_service(Protocol * proto) {
     add_command_handler(proto, SYMBOLS, "getChildren", command_get_children);
     add_command_handler(proto, SYMBOLS, "find", command_find_by_name);
     add_command_handler(proto, SYMBOLS, "findByAddr", command_find_by_addr);
+    add_command_handler(proto, SYMBOLS, "findInScope", command_find_in_scope);
     add_command_handler(proto, SYMBOLS, "list", command_list);
     add_command_handler(proto, SYMBOLS, "getArrayType", command_get_array_type);
     add_command_handler(proto, SYMBOLS, "findFrameInfo", command_find_frame_info);
