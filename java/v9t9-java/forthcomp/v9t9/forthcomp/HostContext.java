@@ -71,6 +71,7 @@ import v9t9.forthcomp.words.HostLiteral;
 import v9t9.forthcomp.words.HostOver;
 import v9t9.forthcomp.words.HostPlusStore;
 import v9t9.forthcomp.words.HostPushReturn;
+import v9t9.forthcomp.words.HostRecurse;
 import v9t9.forthcomp.words.HostReturnPop;
 import v9t9.forthcomp.words.HostRot;
 import v9t9.forthcomp.words.HostStore;
@@ -225,6 +226,8 @@ public class HostContext extends Context {
 		
 		define("TO", new To());
 		
+		define("recurse", new HostRecurse());
+		
 		define("if", new If());
 		define("else", new Else());
 	 	define("then", new Then());
@@ -328,6 +331,10 @@ public class HostContext extends Context {
 		define("INVERT", new HostUnaryOp("INVERT") {
 			public int getResult(int v) { return ~v; }
 		});
+		define("LSHIFT", new HostBinOp("LSHIFT") {
+			public int getResult(int l, int r) { return l << r; }
+		});
+
 		define("true", new HostLiteral(-1, false));
 		define("false", new HostLiteral(0, false));
 		

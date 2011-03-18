@@ -11,8 +11,10 @@ import java.util.Map;
 import v9t9.emulator.clients.builtin.NotifyException;
 import v9t9.emulator.common.EmulatorSettings;
 import v9t9.engine.files.DataFiles;
+import v9t9.engine.memory.BankedMemoryEntry;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.Memory;
+import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 
 /**
@@ -70,7 +72,7 @@ public class MemoryEntryInfo {
 			if (properties.containsKey(FILENAME2)) {
 				try {
 					entry = DiskMemoryEntry.newBankedWordMemoryFromFile(
-							(Class) properties.get(CLASS),
+							(Class<BankedMemoryEntry>) properties.get(CLASS),
 							getInt(ADDRESS),
 							getInt(SIZE),
 							memory,
@@ -88,7 +90,7 @@ public class MemoryEntryInfo {
 							"Failed to load file(s) '" + filename + "' and/or '"+ filename2 + "' for '" + getString(NAME) + "'",
 							e);
 				}
-			} else if ("CPU".equals(properties.get(DOMAIN))) {
+			} else if (MemoryDomain.NAME_CPU.equals(properties.get(DOMAIN))) {
 				entry = DiskMemoryEntry.newWordMemoryFromFile(
 						getInt(ADDRESS),
 						getInt(SIZE),

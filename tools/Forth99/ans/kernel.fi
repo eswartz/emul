@@ -2,9 +2,8 @@
 User    base
 User    dp
 
-User (pad)
-User (#pad)
-User (spad)
+| User (numbuf)
+| User (spad)
 
 : here dp @ ;
 
@@ -674,7 +673,7 @@ user hld            \ address of number pad
 
 [IFUNDEF] -pad
 : -pad
-    (#pad) @
+    (numbuf) @ 1-
 ;
 [THEN]
 
@@ -823,8 +822,8 @@ $20 constant BL
 : WORD  \   ( char "<chars>ccc<char>" -- c-addr )
     (parse-word) 
     2dup + bl swap c!   \ word ends with space
-    -pad (>c)           \ copy to word pad
-    -pad                \ leave addr
+    HERE (>c)           \ copy to word pad
+    HERE                \ leave addr
 ;
 [THEN]
 
@@ -1028,7 +1027,7 @@ error" need key"
 
 [IFUNDEF] PAD
 : PAD
-    (pad) @
+    HERE $100 +
 ;
 [THEN]
 

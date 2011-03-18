@@ -71,7 +71,7 @@ public class MFP201ConsoleMmioArea extends ConsoleMmioArea implements MemoryList
     }
 
     private void findUnderlyingMemory() {
-    	for (MemoryEntry entry : machine.getMemory().getDomain("CPU").getMemoryEntries()) {
+    	for (MemoryEntry entry : machine.getMemory().getDomain(MemoryDomain.NAME_CPU).getMemoryEntries()) {
     		if (entry.addr < MMIO_BASE && entry.addr + entry.size >= 0x200 && entry.getArea() != this) {
     			underlyingMemory = entry;
     		}

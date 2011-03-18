@@ -56,7 +56,7 @@ public abstract class TargetContext extends Context {
 	public DictEntry stubData;
 	private boolean exportFlagNext;
 	private boolean exportFlag;
-	private HostContext hostCtx;
+	protected HostContext hostCtx;
 
 	public TargetContext(boolean littleEndian, int charBits, int cellBits, int memorySize) {
 		this.littleEndian = littleEndian;
@@ -184,30 +184,22 @@ public abstract class TargetContext extends Context {
 		int size = 0;
 		boolean doExport = currentExport();
 		exportFlagNext = false;
-		if (doExport) {
-			// link, name
-			size = cellSize + align(1 + name.length());
-			
-			alignDP();
-			stubData.use(size);
-			entryAddr = alloc(size);
-			
-			if (hostCtx != null) {
-				ITargetWord word = (ITargetWord) find(">latest");
-				if (word != null) {
-					try {
-						word.getExecutionSemantics().execute(hostCtx, this);
-						//System.out.println("Latest: " + HexUtils.toHex4(entryAddr));
-						writeCell(hostCtx.popData(), entryAddr);
-					} catch (AbortException e) {
-						e.printStackTrace();
-					}
+		
+		DictEntry entry = createDictEntry(size, entryAddr, name, doExport);
+		entry.setExport(doExport);
+
+		if (doExport && hostCtx != null) {
+			ITargetWord word = (ITargetWord) find(">latest");
+			if (word != null) {
+				try {
+					word.getExecutionSemantics().execute(hostCtx, this);
+					//System.out.println("Latest: " + HexUtils.toHex4(entryAddr));
+					writeCell(hostCtx.popData(), entry.getAddr());
+				} catch (AbortException e) {
+					e.printStackTrace();
 				}
 			}
 		}
-		
-		DictEntry entry = new DictEntry(size, entryAddr, name);
-		entry.setExport(doExport);
 		
 		DictEntry existing = dictEntryMap.get(name.toUpperCase());
 		if (existing != null)
@@ -215,8 +207,12 @@ public abstract class TargetContext extends Context {
 		dictEntryMap.put(name.toUpperCase(), entry);
 		
 		if (lastEntry != null) 
-			lastEntry.setEndAddr(entryAddr);
+			lastEntry.setEndAddr(entry.getAddr());
 		lastEntry = entry;
+		
+		if (hostCtx != null)
+			hostCtx.setLatest(hostCtx.getDictionary().get(name.toUpperCase()));
+		setLatest(getDictionary().get(name.toUpperCase()));
 		
 		if (doExport) {
 			if (lastExportedEntry != null) {
@@ -234,8 +230,36 @@ public abstract class TargetContext extends Context {
 			resolveForward(ref, entry);
 			forwards.remove(name.toUpperCase());
 		}
-		
+
 		return entry;
+	}
+
+	/**
+	 * @return the lastEntry
+	 */
+	public DictEntry getLastEntry() {
+		return lastEntry;
+	}
+	
+	/**
+	 * @param size
+	 * @param entryAddr
+	 * @param name
+	 * @param doExport TODO
+	 * @return
+	 */
+	protected DictEntry createDictEntry(int size, int entryAddr, String name, boolean doExport) {
+
+		if (doExport) {
+			// link, name
+			size = cellSize + align(1 + name.length());
+			
+			alignDP();
+			stubData.use(size);
+			entryAddr = alloc(size);
+		}
+		
+		return new DictEntry(size, entryAddr, name);
 	}
 
 	private boolean currentExport() {
@@ -288,6 +312,15 @@ public abstract class TargetContext extends Context {
 
 	public int align(int bytes) {
 		return (bytes + cellSize - 1) & ~(cellSize - 1);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.forthcomp.words.TargetContext#convertCell(int)
+	 */
+	public int writeCell(byte[] memory, int offs, int cell) {
+		memory[offs++] = (byte) (cell >> 8);
+		memory[offs++] = (byte) (cell & 0xff);
+		return offs;
 	}
 
 	public void writeCell(int addr, int cell) {
@@ -786,8 +819,6 @@ public abstract class TargetContext extends Context {
 	public void compileString(@SuppressWarnings("unused") HostContext hostContext, String string) throws AbortException {
 		IWord parenString = require("(s\")");
 		compileCall((ITargetWord) parenString);
-		//compile((ITargetWord) parenString);
-		//parenString.getCompilationSemantics().execute(hostContext, this);
 		Pair<Integer, Integer> info = writeLengthPrefixedString(string);
 		setDP(getDP() + info.second);
 	}
@@ -808,4 +839,12 @@ public abstract class TargetContext extends Context {
 	 */
 	abstract public void compileOpcode(int opcode);
 	abstract public void compileUser(TargetUserVariable var);
+
+	/**
+	 * @return
+	 */
+	public int getUP() {
+		TargetVariable up = findOrCreateVariable("UP0");
+		return readCell(up.getEntry().getParamAddr());
+	}
 }

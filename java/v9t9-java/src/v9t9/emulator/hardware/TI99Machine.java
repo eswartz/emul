@@ -83,21 +83,21 @@ public class TI99Machine extends Machine {
 	 * @see v9t9.emulator.hardware.TI99Machine#getGplMemoryDomain()
 	 */
 	public MemoryDomain getGplMemoryDomain() {
-		return memory.getDomain("GRAPHICS");
+		return memory.getDomain(MemoryDomain.NAME_GRAPHICS);
 	}
 
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.TI99Machine#getSpeechMemoryDomain()
 	 */
 	public MemoryDomain getSpeechMemoryDomain() {
-		return memory.getDomain("SPEECH");
+		return memory.getDomain(MemoryDomain.NAME_SPEECH);
 	}
 
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.TI99Machine#getVdpMemoryDomain()
 	 */
 	public MemoryDomain getVdpMemoryDomain() {
-		return memory.getDomain("VIDEO");
+		return memory.getDomain(MemoryDomain.NAME_VIDEO);
 	}
 
 	public CruManager getCruManager() {

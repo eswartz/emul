@@ -314,8 +314,10 @@ public class InstF99b {
 	public static final int SYSCALL_DEBUG_OFF = 2;
 	/** Register the given xt in the symbol table */
 	public static final int SYSCALL_REGISTER_SYMBOL = 3;
-	/** Lookup the given string in the dictionary */
+	/** Lookup the given string in the RAM dictionary */
 	public static final int SYSCALL_FIND = 4;
+	/** Lookup the given string in the GROM dictionary */
+	public static final int SYSCALL_GFIND = 5;
 	
 	public static final String[] syscallStrings = {
 		"IDLE",

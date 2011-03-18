@@ -119,7 +119,7 @@ public class Emulator {
     }
     
 	protected void loadState() {
-		int barrier = client.getEventNotifier().getNotificationCount();
+		int barrier = client.getEventNotifier().getErrorCount();
 		memoryModel.loadMemory(client.getEventNotifier());
 		
 		if (machine.getModuleManager() != null) {
@@ -138,7 +138,7 @@ public class Emulator {
 	        
 		}
 		
-		if (client.getEventNotifier().getNotificationCount() > barrier) {
+		if (client.getEventNotifier().getErrorCount() > barrier) {
 			machine.notifyEvent(IEventNotifier.Level.ERROR,
 					"Failed to load startup ROMs; please edit your " + DataFiles.settingBootRomsPath.getName() + " in the file "
 					+ WorkspaceSettings.CURRENT.getConfigFilePath());

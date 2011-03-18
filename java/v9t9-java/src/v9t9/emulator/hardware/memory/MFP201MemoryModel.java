@@ -32,10 +32,10 @@ public class MFP201MemoryModel implements MemoryModel {
     	this.memory = new Memory(this);
     	
         console = new MemoryDomain("Console", 1);
-        memory.addDomain("CPU", console);
+        memory.addDomain(MemoryDomain.NAME_CPU, console);
         
         video = new MemoryDomain("Video", 1);
-        memory.addDomain("VIDEO", video);
+        memory.addDomain(MemoryDomain.NAME_VIDEO, video);
         
         return memory;
         

@@ -24,9 +24,11 @@
 
 start	equ	$
 
-; Lookup table
+; Lookup table (sync with sysdefs.fi!)
 
 signature       dw  >AA99
+dataendaddr     dw  end_of_data
+gromdictend     dw  0
 kbdoffs         dw  kbds
 font8x8offs     dw  font0
 font5x6offs     dw  font5x6
@@ -568,28 +570,32 @@ err_file_io         db "file I/O error",0
 editorhelp
       ; 0         1         2         3         4         5         6
       ; 0123456789012345678901234567890123456789012345678901234567890123
-    db "Forth-99 Block Editor                                   EJS 2011"  ; 1
-    db "                                                                "
-    db "Ctrl-C          Copy Line       Ctrl-V          Paste Line      "  
-    db "Ctrl-H          Backspace       [Shift-]Ctrl-I  [Un]indent      "
-    db "Ctrl-J          Join            Ctrl-K          Clear to EOL    "   ; 5
-    db "Ctrl-L          Parse Block     Ctrl-S          Save Block      "
-    db "Ctrl-Fctn-R     Revert Block    Ctrl-Fctn-L     Clear Block     "
-    db "Fctn-0          End             Fctn-5          Home            "
-    db "Fctn-1          Delete Char     Fctn-7          Help            "
-    db "Fctn-2          Ins/Ovr Mode    Fctn-3          Erase Line      "
-    db "Fctn-4          Bottom Line     Fctn-6          Top Line        "   ; 10
-    db "Fctn-8          Dup Line        Ctrl-D          Delete Line     "
-    db "Fctn-9          Exit            Ctrl-Fctn-9     Interpret       "
-    db "Ctrl-Fctn-4     Next Block      Ctrl-Fctn-6     Prev Block      "
-    db "Ctrl-Fctn-5     Redraw                                          "   ; 14
+    db "Forth-99 Block Editor",9,       9,      9,      9,   9,"EJS 2011",0  ; 1
+    db "",0
+    db "Ctrl-C",9,      "Copy Line",9,  "Ctrl-V",9,9,"Paste Line",0  
+    db "Ctrl-H",9,      "Backspace",9,  "[Shift-]Ctrl-I",9,"[Un]indent",0
+    db "Ctrl-J",9,      "Join",9,9,     "Ctrl-K",9,9,"Clear to EOL",0   ; 5
+    db "Ctrl-L",9,      "Parse Block",9,"Ctrl-S",9,9,"Save Block",0
+    db "Ctrl-Fctn-R",9, "Revert Block",9,"Ctrl-Fctn-L",9,"Clear Block",0
+    db "Fctn-0",9,      "End",9,9,      "Fctn-5",9,9,"Home",0
+    db "Fctn-1",9,      "Delete Char",9,"Fctn-7",9,9,"Help",0
+    db "Fctn-2",9,      "Ins/Ovr Mode",9,"Fctn-3",9,9,"Erase Line",0
+    db "Fctn-4",9,      "Bottom Line",9,"Fctn-6",9,9,"Top Line",0 ; 10
+    db "Fctn-8",9,      "Dup Line",9,   "Ctrl-D",9,9,"Delete Line",0
+    db "Fctn-9",9,      "Exit",9,9,     "Ctrl-Fctn-9",9,"Interpret",0
+    db "Ctrl-Fctn-4",9, "Next Block",9, "Ctrl-Fctn-6",9,"Prev Block",0
+    db "Ctrl-Fctn-5",9, "Redraw",0   ; 14
 
       ; 0         1         2         3         4         5         6         7
       ; 01234567890123456789012345678901234567890123456789012345678901234567890123456789
 menubar
     db " C-Save C-F-Revert C-Load C-F4-next C-F6-prev F8-dup C-Del    F7-Help   F9-exit "    
 
+    even
+    
 remain	equ	$ - start
+
+end_of_data equ $
 
 	bss	>2000 - remain
 

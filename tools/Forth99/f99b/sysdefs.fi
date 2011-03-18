@@ -98,40 +98,51 @@ $ffe0       constant    IntVecs     \ ... 0x20
     0       constant    INT_BKPT
 
 
+\ sizes of fixed areas
 $80         constant    (#RP)
 $80         constant    (#SP)
 
-$100        constant   (#pad)
-$100        constant   (##-pad)
+\ minimum size is (2*n)+2 where n is cell size
+#cell 3 LSHIFT  2*  2+ 
+            constant   (#numbuf)
 $100        constant   (#slit-pad)
 $100        constant   (#tib)
-$C0C        constant   (#blk)      \ block space
-$100        constant   (#up)      \ user space
+
+$400        \ basic block size 
+    2 +     \ block # field
+    2 +     \ modified flag
+            constant   (#blk)
+(#blk) 3 *  constant   (#blks)    \ total block space
+
+$80        constant   (#up)       \ global user space
 
 
-FaultStacks  (#RP) - (#SP) - (#pad) - (##-pad) - (#slit-pad) - (#tib) - (#blk) - (#up) -
+FaultStacks  (#RP) - (#SP) - (#numbuf) - (#slit-pad) - (#tib) - (#blks) - (#up) -
              constant RamTop    \ grows down
 
 | RamTop (#rp) +                constant (rp0)      \ grows down
 | (rp0) (#sp) +                 constant (sp0)      \ grows down
-| (sp0)                         constant (pad0)     \ grows up
-| (pad0) (#pad) (##-pad) + +    constant (#-pad0)       \ grows down
-| (#-pad0)                      constant (slit-pad0)    \ grows up
+| (sp0)  (#numbuf) +            constant (numbuf0)     \ grows down
+| (numbuf0)                     constant (slit-pad0)    \ grows up
 | (slit-pad0) (#slit-pad) +     constant (tib0)         \ grows up
 | (tib0) (#tib) +               constant (first)    \ grows up
-| (first) (#blk) +              constant (limit)
-| (limit)                       constant (up0)
+| (first) (#blks) +             constant (limit)    \ grows up
+| (limit)                       constant (up0)      \ grows up
 
 
 \ -----------   GROM addresses
 
 $0          constant    >grom_sig
-$2          constant    >grom_kbdlist
-$4          constant    >grom_font8x8
-$6          constant    >grom_font5x6
-$8          constant    >grom_errptrs
-$A          constant    >grom_editorhelp
-$C          constant    >grom_menubar
+$2          constant    >grom_dict
+$4          constant    >grom_dictend
+$6          constant    >grom_kbdlist
+$8          constant    >grom_font8x8
+$A          constant    >grom_font5x6
+$C          constant    >grom_errptrs
+$E          constant    >grom_editorhelp
+$10         constant    >grom_menubar
+
+$2000       Constant    >gram_base
 
 \ -----------   constants
 

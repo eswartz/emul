@@ -143,7 +143,7 @@ public class VdpTMS9918A implements VdpHandler {
 			}
 		});
 		
-		this.vdpMemory = machine.getMemory().getDomain("VIDEO");
+		this.vdpMemory = machine.getMemory().getDomain(MemoryDomain.NAME_VIDEO);
 		this.vdpCanvas = new MemoryCanvas();
 		this.vdpregs = allocVdpRegs();
 		vdpCanvas.setSize(256, 192);

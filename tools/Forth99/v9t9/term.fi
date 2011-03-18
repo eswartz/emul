@@ -282,16 +282,25 @@ export>
     $xy  'v-drawchar @  execute  
 ;
 
+| : (emit+) ( ch -- )
+    dup  (emit) advance-cursor
+    v-x @ 0=  if new-line  then
+;
+
 :   emit    ( ch -- )
     cursor-off
     dup 13 = if
         drop crlf
     else dup 8 = if
         drop 32 bksp
+    else dup 9 = if
+        drop begin
+            32 (emit+)
+            v-x @  7 AND  0=
+        until
     else
-        dup  (emit) advance-cursor
-        v-x @ 0=  if new-line  then
-    then then 
+        (emit+)
+    then then then
 ;    target-only
 
 :   getch    ( x y -- ch )

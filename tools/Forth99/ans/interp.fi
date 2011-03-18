@@ -111,8 +111,8 @@ user >IN
 \   and >source/#source for all input strings.
 \   loadfile=0 for user input, loadline<0 for evaluate string.
 
-User loadfile
-User loadline
+| User loadfile
+| User loadline
 
 \   Push the input state.
 : <input        ( xn ... x1 n -- R: xn ... x1 n )
@@ -157,7 +157,7 @@ User loadline
 \   Interpret counted string as number,
 \   and store decimal point location in DPL.
 
-User dpl
+| User dpl
 
 : number    ( addr -- ud )
 \   .s
@@ -210,14 +210,14 @@ User dpl
 \        ( i*x c-addr u -- j*x )
 \
 \   Interpret one word
-    (lookup)        \ ( caddr 0 | nfa 1 )
-    if
-        dup nfa>imm? 0=
+    (lookup)        \ ( caddr 0 | xt 1=immed | xt -1 )
+    ?dup if
+        -1 =
         state @ and     \ compiling and not immediate?
         if
-            nfa>xt compile,
+            compile,
         else
-            nfa>xt execute
+            execute
         then
     else
         number dpl @ 1+ if
@@ -299,19 +299,8 @@ User dpl
 
 [IFUNDEF] [IF]   ( i.e., should we define the directives? )
 
-\ User parsed
-\ [[[ $20 tudp @ + tudp !  $20 tup @ + tup ! ]]]
-\ 
 : str=  s<> 0= ;
-\ : toupper dup $61 $7b within if $20 - then ;
-\ 
-\ : upcase ( str -- )
-\ count bounds
-\     ?DO I c@ toupper I c! LOOP ;
-\ : place  ( addr len to -- ) \ gforth
-\     over >r  rot over 1+  r> move c! ;
-\ : bounds ( addr u -- addr+u addr ) 
-\     over + swap ;
+
 | : comment? ( c-addr u -- c-addr u )
         2dup s" (" str=
         IF    postpone (

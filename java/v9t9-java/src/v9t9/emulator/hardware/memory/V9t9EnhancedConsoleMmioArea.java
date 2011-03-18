@@ -90,7 +90,7 @@ public class V9t9EnhancedConsoleMmioArea extends ConsoleMmioArea implements Memo
     }
 
     private void findUnderlyingMemory() {
-    	for (MemoryEntry entry : machine.getMemory().getDomain("CPU").getMemoryEntries()) {
+    	for (MemoryEntry entry : machine.getMemory().getDomain(MemoryDomain.NAME_CPU).getMemoryEntries()) {
     		if (entry.addr < MMIO_BASE && entry.addr + entry.size >= 0x10000 && entry.getArea() != this) {
     			underlyingMemory = entry;
     		}

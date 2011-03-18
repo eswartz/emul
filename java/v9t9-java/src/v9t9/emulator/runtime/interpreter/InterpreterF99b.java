@@ -690,17 +690,21 @@ public class InterpreterF99b implements Interpreter {
 	        	}
 	        	
 	        	case SYSCALL_FIND: {
-	        		// ( caddr lfa -- caddr 0 | nfa 1 )
+	        		// ( caddr lfa -- caddr 0 | xt -1=immed | xt 1 )
 	        		int lfa = cpu.pop();
 	        		int caddr = cpu.pop();
 
 	        		boolean found = false;
+	        		int[] after = { 0 }; 
 	        		while (lfa != 0) {
 	        			cpu.addCycles(3);
 	        			short nfa = (short) (lfa + 2);
-	        			if (entryMatches(caddr, nfa)) {
-	        				cpu.push(nfa);
-	        				cpu.push((short) 1);
+	        			if (nameMatches(iblock.domain, caddr, nfa, after)) {
+	        				short xt = (short) after[0];
+	        				if ((xt & 1) != 0)
+	        					xt++;
+	        				cpu.push(xt);
+	        				cpu.push((short) ((iblock.domain.readByte(nfa) & 0x40) != 0 ? 1 : -1));
 	        				found = true;
 	        				break;
 	        			} else {
@@ -714,6 +718,36 @@ public class InterpreterF99b implements Interpreter {
 	        		}
 	        		break;
 	        	}
+
+	        	case SYSCALL_GFIND: {
+	        		// ( caddr gDictEnd gDict -- caddr 0 | xt 1 | xt -1 )
+	        		short gromDictEnd = cpu.pop();
+	        		short gromDict = cpu.pop();
+	        		int caddr = cpu.pop();
+
+	        		boolean found = false;
+	        		int[] after = { 0 }; 
+        		
+        			MemoryDomain grom = cpu.getMachine().getMemory().getDomain(MemoryDomain.NAME_GRAPHICS);
+    				while (gromDict < gromDictEnd) {
+	        			cpu.addCycles(3);
+	        			if (nameMatches(grom, caddr, gromDict, after)) {
+	        				cpu.push(grom.readWord(after[0]));
+	        				cpu.push((short) (((grom.readByte(gromDict) & 0x40) != 0) ? 1 : -1));
+	        				found = true;
+	        				break;
+	        			} else {
+	        				gromDict = (short) (after[0] + 2);
+	        			}
+	        		}
+	        		
+	        		if (!found) {
+	        			cpu.push((short) caddr);
+	        			cpu.push((short) 0);
+	        		}
+	        		break;
+	        	}
+
 	        	/*
 	        	case SYSCALL_INTERPRET: {
 	        		int dp = cpu.pop();
@@ -782,11 +816,16 @@ public class InterpreterF99b implements Interpreter {
 	 * @param nfa
 	 * @return
 	 */
-	private boolean entryMatches(int caddr, short nfa) {
+	private boolean nameMatches(MemoryDomain domain, int caddr_, short nfa_, int[] after) {
 		cpu.addCycles(10);
+		int caddr = caddr_;
+		short nfa = nfa_;
 		byte clen = iblock.domain.readByte(caddr++);
-		byte nlen = iblock.domain.readByte(nfa++);
-		if ((nlen & 0x80) == 0) /* hidden */
+		byte nlen = domain.readByte(nfa++);
+		
+		after[0] = nfa + (nlen & 0x1f);
+		
+		if (clen == 0 || (nlen & 0x80) == 0) /* hidden */
 			return false;
 		nlen &= 0x1f;
 		if (clen != nlen)
@@ -795,13 +834,15 @@ public class InterpreterF99b implements Interpreter {
 		cpu.addCycles(clen * 5);
 		while (clen-- > 0) {
 			char c = (char) iblock.domain.readByte(caddr++);
-			char n = (char) iblock.domain.readByte(nfa++);
+			char n = (char) domain.readByte(nfa++);
 			if (Character.toLowerCase(c) != Character.toLowerCase(n))
 				return false;
 		}
 		return true;
 	}
 
+	
+	
 	private void doCmove() {
 		int tstep = cpu.pop();
 		int fstep = cpu.pop();

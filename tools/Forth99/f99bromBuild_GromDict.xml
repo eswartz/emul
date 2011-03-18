@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- WARNING: Eclipse auto-generated file.
+              Any modifications will be overwritten.
+              To include a user specific buildfile here, simply create one in the same
+              directory with the processing instruction <?eclipse.ant.import?>
+              as the first entry and export the buildfile again. -->
+<project basedir="." default="ForthComp" name="v9t9.forthcomp">
+    <property environment="env"/>
+    <property name="ECLIPSE_HOME" value="../../../../../../usr/local/eclipse-3.5/eclipse"/>
+    <property name="org.ejs.coffee.core.location" value="../../java/org.ejs.coffee.core"/>
+    <property name="project_loc:libv9t9render" value="../../c/libv9t9render"/>
+    <property name="junit.output.dir" value="junit"/>
+    <property name="v9t9-java.location" value="../../java/v9t9-java"/>
+    <property name="debuglevel" value="source,lines,vars"/>
+    <property name="target" value="1.5"/>
+    <property name="source" value="1.5"/>
+    <path id="JUnit 4.libraryclasspath">
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.junit4_4.5.0.v20090824/junit.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.hamcrest.core_1.1.0.v20090501071000.jar"/>
+    </path>
+    <path id="Plug-in Dependencies.libraryclasspath">
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.eclipse.jface_3.5.2.M20100120-0800.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.eclipse.swt_3.5.2.v3557f.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.eclipse.swt.gtk.linux.x86_3.5.2.v3557f.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.eclipse.core.commands_3.5.0.I20090525-2000.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.eclipse.core.runtime_3.5.0.v20090525.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.eclipse.osgi_3.5.2.R35x_v20100126.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.eclipse.equinox.common_3.5.1.R35x_v20090807-1100.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.eclipse.core.jobs_3.4.100.v20090429-1800.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.eclipse.core.runtime.compatibility.registry_3.2.200.v20090429-1800/runtime_registry_compatibility.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.eclipse.equinox.registry_3.4.100.v20090520-1800.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.eclipse.equinox.preferences_3.2.301.R35x_v20091117.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.eclipse.core.contenttype_3.4.1.R35x_v20090826-0451.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.eclipse.equinox.app_1.2.1.R35x_v20091203.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.junit_3.8.2.v20090203-1005/junit.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.junit4_4.5.0.v20090824/junit.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.hamcrest.core_1.1.0.v20090501071000.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.eclipse.draw2d_3.5.2.v20091126-1908.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.eclipse.gef_3.5.1.v20090910-2020.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.eclipse.ui_3.5.2.M20100120-0800.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.eclipse.ui.workbench_3.5.2.M20100113-0800.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/plugins/com.ibm.icu_4.0.1.v20090822.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.eclipse.ui.ide_3.5.2.M20100113-0800.jar"/>
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.eclipse.ui.views_3.4.1.M20090826-0800.jar"/>
+    </path>
+    <path id="org.ejs.coffee.core.classpath">
+        <path refid="Plug-in Dependencies.libraryclasspath"/>
+        <pathelement location="${org.ejs.coffee.core.location}/bin"/>
+        <pathelement location="${org.ejs.coffee.core.location}/libs/jna.jar"/>
+    </path>
+    <path id="v9t9-java.classpath">
+        <pathelement location="${v9t9-java.location}/bin"/>
+        <path refid="Plug-in Dependencies.libraryclasspath"/>
+        <pathelement location="${v9t9-java.location}/libs/bcel-5.2.jar"/>
+        <pathelement location="${v9t9-java.location}/libs/gnu-getopt-1.0.11.jar"/>
+        <pathelement location="${org.ejs.coffee.core.location}/libs/jna.jar"/>
+        <pathelement location="${v9t9-java.location}/libs/antlr-3.2.jar"/>
+        <pathelement location="${v9t9-java.location}/libs/antlr-runtime-3.2.jar"/>
+    </path>
+    <path id="v9t9.forthcomp.classpath">
+        <pathelement location="bin"/>
+        <pathelement location="../org.ejs.coffee.core/libs/jna.jar"/>
+        <pathelement location="../v9t9-java/libs/gnu-getopt-1.0.11.jar"/>
+        <path refid="JUnit 4.libraryclasspath"/>
+        <path refid="org.ejs.coffee.core.classpath"/>
+        <path refid="v9t9-java.classpath"/>
+        <path refid="Plug-in Dependencies.libraryclasspath"/>
+    </path>
+    <target name="init">
+    </target>
+    <target name="clean">
+    </target>
+    <target depends="clean" name="cleanall">
+        <ant antfile="${v9t9-java.location}/f99bromBuild.xml" dir="${v9t9-java.location}" inheritAll="false" target="clean"/>
+    </target>
+    <target depends="build-project" name="build"/>
+    <target depends="init" name="build-project">
+    </target>
+    <target description="Build all projects which reference this project. Useful to propagate changes." name="build-refprojects"/>
+    <target description="copy Eclipse compiler jars to ant lib directory" name="init-eclipse-compiler">
+    </target>
+    <target description="compile project with Eclipse compiler" name="build-eclipse-compiler">
+        <property name="build.compiler" value="org.eclipse.jdt.core.JDTCompilerAdapter"/>
+        <antcall target="build"/>
+    </target>
+    <target name="ForthComp">
+        <java classname="v9t9.forthcomp.ForthComp" failonerror="true" fork="yes">
+            <arg line="-b f99b/f99brom.f99 -c bin/f99brom.bin -g  bin/f99bgromdict.bin"/>
+            <classpath refid="v9t9.forthcomp.classpath"/>
+        </java>
+    </target>
+    <target name="junitreport">
+        <junitreport todir="${junit.output.dir}">
+            <fileset dir="${junit.output.dir}">
+                <include name="TEST-*.xml"/>
+            </fileset>
+            <report format="frames" todir="${junit.output.dir}"/>
+        </junitreport>
+    </target>
+</project>

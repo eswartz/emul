@@ -71,3 +71,20 @@
 ;   target-only
 
 
+
+| : (find)      ( c-addr lfa -- c-addr 0 | xt -1=immed | xt 1 ) 
+    \ find word in dictionary     
+    \ lfa is nfa-2
+
+    [ Isyscall c, 4 c, ]    
+;
+
+
+| : (gfind)      ( c-addr gromdict gromdictEnd -- c-addr 0 | xt -1=immed | xt 1 ) 
+    \ find word in dictionary     
+
+    [ Isyscall c, 5 c, ]    
+;
+
+
+

@@ -242,13 +242,14 @@ chars/block bytes-per-sector u/  constant secs-per-block
     0 'DSKNUM c!
 ;
 
-$2000 Constant GRAMBASE
-$E000 chars/block U/  Constant #GRAM
+| >gram_base negate chars/block U/  
+            Constant    #GRAM
+
 
 : gram-rwblk    ( addr  block# r/w -- err )
     >r
     dup  0  #GRAM 1-  within if 
-        chars/block U*  GRAMBASE +  
+        chars/block U*  >gram_base +  
         r>  if  
             swap  chars/block  gcmove  
         else  

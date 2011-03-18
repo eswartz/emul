@@ -55,10 +55,10 @@ public abstract class BaseTI994AMemoryModel implements TIMemoryModel {
         VIDEO = new MemoryDomain("VDP");
         SPEECH = new MemoryDomain("Speech");
         
-        memory.addDomain("CPU", CPU);
-        memory.addDomain("GRAPHICS", GRAPHICS);
-        memory.addDomain("VIDEO", VIDEO);
-        memory.addDomain("SPEECH", SPEECH);
+        memory.addDomain(MemoryDomain.NAME_CPU, CPU);
+        memory.addDomain(MemoryDomain.NAME_GRAPHICS, GRAPHICS);
+        memory.addDomain(MemoryDomain.NAME_VIDEO, VIDEO);
+        memory.addDomain(MemoryDomain.NAME_SPEECH, SPEECH);
         return memory;
         
     }

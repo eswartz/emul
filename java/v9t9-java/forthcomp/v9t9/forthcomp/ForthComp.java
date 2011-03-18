@@ -15,7 +15,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import org.ejs.coffee.core.utils.HexUtils;
 import v9t9.forthcomp.AbortException;
 import v9t9.forthcomp.DictEntry;
 import v9t9.forthcomp.F99TargetContext;
@@ -28,7 +27,9 @@ import v9t9.forthcomp.IWord;
 import v9t9.forthcomp.TokenStream;
 
 import v9t9.engine.files.DataFiles;
+import v9t9.engine.memory.ByteMemoryArea;
 import v9t9.engine.memory.MemoryDomain;
+import v9t9.engine.memory.MemoryEntry;
 import v9t9.forthcomp.words.HostDoubleLiteral;
 import v9t9.forthcomp.words.HostLiteral;
 import v9t9.forthcomp.words.HostVariable;
@@ -50,10 +51,11 @@ public class ForthComp {
 		TargetContext targetContext = null;
 		
 		String consoleOutFile = null;
+		String gromOutFile = null;
 		PrintStream logfile = System.out;
 		boolean doHistogram = false;
 		
-        Getopt getopt = new Getopt(PROGNAME, args, "?c:l:bh");
+        Getopt getopt = new Getopt(PROGNAME, args, "?c:l:bhg:");
         int opt;
         while ((opt = getopt.getopt()) != -1) {
             switch (opt) {
@@ -62,6 +64,9 @@ public class ForthComp {
                 break;
             case 'c':
             	consoleOutFile = getopt.getOptarg();
+            	break;
+            case 'g':
+            	gromOutFile = getopt.getOptarg();
             	break;
             case 'l':
 				logfile = new PrintStream(new File(getopt.getOptarg()));
@@ -78,6 +83,25 @@ public class ForthComp {
         
         if (targetContext == null)
         	targetContext = new F99TargetContext(65536);
+        
+        if (gromOutFile != null) {
+        	if (targetContext instanceof F99bTargetContext) {
+        		((F99bTargetContext) targetContext).setUseGromDictionary(true);
+        		
+        		MemoryDomain grom = new MemoryDomain("GROM");
+        		ByteMemoryArea memArea = new ByteMemoryArea(0, new byte[0x10000]); 
+        		MemoryEntry bigRamEntry = new MemoryEntry("GRAM", grom, 0, MemoryDomain.PHYSMEMORYSIZE, 
+        				memArea);
+        		grom.mapEntry(bigRamEntry);
+
+        		((F99bTargetContext) targetContext).setGrom(grom);
+        	}
+        	else {
+        		System.err.println("Must use F99b for GROM dictionary");
+        		System.exit(2);
+        	}
+        }
+        
         HostContext hostContext = new HostContext(targetContext);
         final ForthComp comp = new ForthComp(hostContext, targetContext);
         
@@ -98,9 +122,9 @@ public class ForthComp {
         	}
         	idx++;
     	}
-    	logfile.println("DP = " + HexUtils.toHex4(comp.getTargetContext().getDP()));
+//    	logfile.println("DP = " + HexUtils.toHex4(comp.getTargetContext().getDP()));
+//    	logfile.println("UP = " + HexUtils.toHex4(comp.getTargetContext().getUP()));
 	
-
     	comp.finish();
     	
     	if (comp.getErrors() > 0) {
@@ -109,7 +133,7 @@ public class ForthComp {
     	}
         
     	comp.getTargetContext().alignDP();
-    	comp.saveMemory(consoleOutFile);
+    	comp.saveMemory(consoleOutFile, gromOutFile);
     	
     	if (doHistogram) {
 	    	List<DictEntry> sortedDict = new ArrayList<DictEntry>(comp.getTargetContext().getTargetDictionary().values());
@@ -350,7 +374,7 @@ public class ForthComp {
 	 * @throws AbortException 
 	 * 
 	 */
-	private void saveMemory(String consoleOutFile) throws FileNotFoundException, IOException, AbortException {
+	private void saveMemory(String consoleOutFile, String gromOutFile) throws FileNotFoundException, IOException, AbortException {
 	
 		final MemoryDomain console = targetContext.createMemory();
 		targetContext.exportMemory(console);
@@ -362,6 +386,8 @@ public class ForthComp {
 					return console.readWord(addr);
 				}
 		});
+		
+		System.out.println("# words: " + targetContext.getDictionary().size());
 		
 		if (consoleOutFile != null) {
 			System.out.println("Writing " + consoleOutFile);
@@ -381,7 +407,19 @@ public class ForthComp {
 			console.getEntryAt(targetContext.getBaseDP()).writeSymbols(new PrintStream(fos));
 			fos.close();
 		}
-				
+			
+		if (gromOutFile != null) {
+			F99bTargetContext f99bCtx = (F99bTargetContext) targetContext;
+			
+			final MemoryDomain gromMemory = f99bCtx.getGrom();
+			
+			System.out.println("Writing " + gromOutFile);
+			
+			DataFiles.writeMemoryImage(new File(gromOutFile).getAbsolutePath(), 
+					0, f99bCtx.getGP(), 
+					gromMemory);
+
+		}
 	}
 
 	/**

@@ -23,7 +23,7 @@
 \   related to structure of the dictionary.
 \
 
-User >latest        \ latest definition
+| User >latest        \ latest definition
 
 \   Return latest definition's nfa
 : latest
@@ -101,7 +101,7 @@ test" xt>nfa ['] traverse xt>nfa c@ $88 = "
 test" nfa>xt ['] traverse dup xt>nfa nfa>xt = "
 
 
-: nfa>imm?  ( nfa -- t/f )
+| : nfa>imm?  ( nfa -- t/f )
     c@ |immed and 0<>
 ;
 
@@ -183,70 +183,27 @@ User DP
 
 [IFUNDEF] FIND
 
-
-0 [if]
-| : (find)      ( c-addr lfa -- c-addr 0 | nfa 1 ) 
-    \ find word in dictionary    ( c-addr lfa -- c-addr 0 | nfa 1 ) 
-    \ lfa is nfa-2
+| : do-find     ( caddr -- caddr 0 | xt 1 | xt - 1 )
+    dup >r
     
-    \ dbg
-
-    swap >r
-    
-    begin
-        dup
-    while
-        r@ over  2+             \ nfa
-        nfa=
-        if
-            rdrop
-            2+
-            1
-            exit
-        else
-            @            
-        then
-    repeat
-    drop r> 0
-    
-    \ dbgf
-;
-    
-| : nfa=  ( caddr nfa -- 1 | 0 )
-    dup c@  $80 and if   \ not hidden?
-        2>r
-        r@  1+  r>  c@ $3f and  \ nfa --> caddr n
-        r@  1+  r>  c@          \ caddr -> caddr n
-        s<>  0=
-    else
-        2drop 0
-    then
-    
-;
-
-[else]
-
-| : (find)      ( c-addr lfa -- c-addr 0 | nfa 1 ) 
-    \ find word in dictionary    ( c-addr lfa -- c-addr 0 | nfa 1 ) 
-    \ lfa is nfa-2
-
-    [ Isyscall c, 4 c, ]    
-;
-    
-[then]
-
-
-| : (lookup)      ( c-addr u -- caddr 0 | nfa 1|-1 )
-    here (>c)   \ make counted string + NFA
-\ context @ @ (find) dup 0= if ... 
-
-[ 1 [if] ]
-    here latest
+    latest          \ !!! need real wordlist
     (find) 
-[ [else] ]
-    here find dup >r if xt>nfa else drop then r>
     
-[ [then] ]
+    ?dup if
+        rdrop
+    else
+        drop
+        r>  graddr >r  
+        >grom_dict g@  >grom_dictend g@  (gfind)
+        r> gwaddr
+    then
+
+;
+
+| : (lookup)      ( c-addr u -- caddr 0 | xt 1=immed | xt -1 )
+    here (>c)   \ make counted string + NFA
+    here 
+    do-find
 ;
 
 
@@ -256,30 +213,9 @@ User DP
 \   also return one (1); otherwise also return minus-one (-1). For a given string, the values returned by FIND while compiling
 \   may differ from those returned while not compiling.
 
-[ 1 [if] ]
-    latest          \ !!! need real wordlist
-    (find)          \ ( c-addr 0 | nfa 1 )
-
-[ [else] ]
-
-\   Use hash table
-    forth-wordlist  \ !!! need latest wordlist
-    hash>find
-\   over .
-
-[ [then] ]
-
-    if
-        dup nfa>xt 
-        swap c@ 
-        |immed and if 1 else -1 then
-    else
-        0
-    then
+    do-find
 ;
 [THEN]
-\ |test : wordtofind s" _2*" ;
-\ test" find hex 21 wordtofind pad swap cmove pad 2 over c! find 2dup . . if execute 42 = else 0 then decimal "
 
 [IFUNDEF] HERE
 : HERE
@@ -306,7 +242,7 @@ User DP
 [THEN]
 
 [IFUNDEF] WORDS
-: dwalk ( xt root -- )  ( xt: nfa -- 0 | 1 )
+| : dwalk ( xt root -- )  ( xt: nfa -- 0 | 1 )
     swap >r
     begin
         dup lfa>nfa r@ execute   ( lfa flag )

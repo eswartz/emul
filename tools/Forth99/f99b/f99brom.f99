@@ -173,4 +173,8 @@ latest   (LATEST)   !
  
 hex
 here ." HERE = " u. cr
-ramptr @ ." RAMTOP = " u. cr
+up0 @ ." UP0 = " u. cr
+ramptr @ ." RAMPTR = " u. cr
+RamTop ." RAMTOP = " u. cr
+
+

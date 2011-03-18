@@ -31,7 +31,7 @@ public class MemoryEntryTest extends TestCase {
     @Override
 	protected void setUp() throws Exception {
         super.setUp();
-        CPU = new MemoryDomain("CPU");
+        CPU = new MemoryDomain(MemoryDomain.NAME_CPU);
    }
 
     /*

@@ -49,4 +49,11 @@ public interface IEventNotifier {
 	 * @return notification count
 	 */
 	int getNotificationCount();
+	
+
+	/**
+	 * Get monotonically increasing number representing number of errors
+	 * @return notification count
+	 */
+	int getErrorCount();
 }

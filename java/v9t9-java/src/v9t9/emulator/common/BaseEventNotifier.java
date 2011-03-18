@@ -16,6 +16,7 @@ public class BaseEventNotifier implements IEventNotifier {
 
 	protected PriorityBlockingQueue<NotifyEvent> pendingEvents;
 	private Thread displayer;
+	private int errorCount;
 	
 	public BaseEventNotifier() {
 		pendingEvents = new PriorityBlockingQueue<NotifyEvent>();
@@ -31,6 +32,14 @@ public class BaseEventNotifier implements IEventNotifier {
 	@Override
 	public int getNotificationCount() {
 		return NotifyEvent.ORDER;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.IEventNotifier#getNotificationCount()
+	 */
+	@Override
+	public int getErrorCount() {
+		return errorCount;
 	}
 	
 	protected interface IEventConsumer {
@@ -109,6 +118,8 @@ public class BaseEventNotifier implements IEventNotifier {
 	@Override
 	public final void notifyEvent(Object context, Level level, String message) {
 		NotifyEvent event = new NotifyEvent(System.currentTimeMillis(), context, level, message);
+		if (level == Level.ERROR)
+			errorCount++;
 		pendingEvents.put(event);
 	}
 	
@@ -117,6 +128,8 @@ public class BaseEventNotifier implements IEventNotifier {
 	 */
 	@Override
 	public final void notifyEvent(NotifyEvent event) {
+		if (event.level == Level.ERROR)
+			errorCount++;
 		pendingEvents.put(event);
 	}
 	

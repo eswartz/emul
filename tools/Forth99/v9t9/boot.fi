@@ -12,8 +12,7 @@
     
     (sp0)  (>CONTEXT) [ CTX_SP0 field, ] \ sets SP0 and SP 
     
-    (pad0) (pad) !  
-    (#-pad0) (#pad) !
+    (numbuf0) (numbuf) !
     (slit-pad0) (spad) !
 
     

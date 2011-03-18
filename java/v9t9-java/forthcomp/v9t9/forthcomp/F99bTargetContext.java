@@ -40,6 +40,8 @@ import v9t9.forthcomp.words.TargetValue;
  */
 public class F99bTargetContext extends TargetContext {
 
+	private boolean useGromDictionary;
+	
 	private List<Integer> leaves;
 	//private TargetUserVariable lpUser;
 	private DictEntry stub4BitLit;
@@ -52,6 +54,10 @@ public class F99bTargetContext extends TargetContext {
 	private DictEntry stub16BitJump;
 	private DictEntry stub8BitJump;
 	private DictEntry stub4BitJump;
+
+	private int gp;
+
+	private MemoryDomain grom;
 	//private boolean localSupport;
 	
 
@@ -76,6 +82,19 @@ public class F99bTargetContext extends TargetContext {
 		stub16BitJump = defineStub("<<16-bit jump>>");
 		stubCall = defineStub("<<call>>");
 		
+	}
+	
+	/**
+	 * @return the useGromDictionary
+	 */
+	public boolean useGromDictionary() {
+		return useGromDictionary;
+	}
+	/**
+	 * @param useGromDictionary the useGromDictionary to set
+	 */
+	public void setUseGromDictionary(boolean useGromDictionary) {
+		this.useGromDictionary = useGromDictionary;
 	}
 	
 	/* (non-Javadoc)
@@ -993,5 +1012,46 @@ public class F99bTargetContext extends TargetContext {
 				targetDP);
 		//compileCell(reloc);
 	}
+
+	public int getGP() {
+		return gp;
+	}
 	
+	/**
+	 * @param gp the gp to set
+	 */
+	public void setGP(int gp) {
+		this.gp = gp;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.forthcomp.words.TargetContext#createDictEntry(int, int, java.lang.String)
+	 */
+	@Override
+	protected DictEntry createDictEntry(int size, int entryAddr, String name, boolean doExport) {
+		
+		if (useGromDictionary && doExport) {
+
+			// link (=>xt), name
+			int dictSize = cellSize + 1 + name.length();
+			DictEntry entry = new GromDictEntry(dictSize, entryAddr, name, gp);
+			gp += dictSize;
+			return entry;
+		} else {
+			return super.createDictEntry(size, entryAddr, name, doExport);
+		}
+	}
+
+	/**
+	 * @param grom the grom to set
+	 */
+	public void setGrom(MemoryDomain grom) {
+		this.grom = grom;
+	}
+	/**
+	 * @return
+	 */
+	public MemoryDomain getGrom() {
+		return grom;
+	}
 }

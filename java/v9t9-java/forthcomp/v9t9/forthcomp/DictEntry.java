@@ -23,25 +23,25 @@ import v9t9.forthcomp.words.TargetContext;
 public class DictEntry implements Comparable<DictEntry> {
 
 
-	private int link;
-	private int addr;
-	private int endAddr;
+	protected int link;
+	protected int addr;
+	protected int endAddr;
 
 	
-	private String name;
-	private int headerSize;
-	private int codeSize;
-	private boolean hidden;
-	private boolean immediate;
-	private boolean export;
-	private boolean isDoesWord;
+	protected String name;
+	protected int headerSize;
+	protected int codeSize;
+	protected boolean hidden;
+	protected boolean immediate;
+	protected boolean export;
+	protected boolean isDoesWord;
 
-	private int uses;
-	private Map<String, LocalVariableTriple> locals;
-	private Map<String, IWord> localDict;
-	private IWord hostBehavior;
-	private int hostStackCount;
-	private boolean targetOnly;
+	protected int uses;
+	protected Map<String, LocalVariableTriple> locals;
+	protected Map<String, IWord> localDict;
+	protected IWord hostBehavior;
+	protected int hostStackCount;
+	protected boolean targetOnly;
 	
 	
 	
@@ -56,11 +56,6 @@ public class DictEntry implements Comparable<DictEntry> {
 	}
 	
 	
-	public int getEndAddr() {
-		return endAddr;
-	}
-
-
 	public void setEndAddr(int endAddr) {
 		this.endAddr = endAddr;
 	}
@@ -146,19 +141,29 @@ public class DictEntry implements Comparable<DictEntry> {
 	 * @param targetContext
 	 */
 	public void writeEntry(TargetContext targetContext) {
-		int ad = addr;
-		targetContext.writeCell(ad, link);  ad += targetContext.getCellSize();
+		byte[] ent = doWriteEntry(targetContext);
+		
+		for (int i = 0; i < ent.length; i++)
+			targetContext.writeChar(addr + i, ent[i]);
+	}
+
+
+	protected byte[] doWriteEntry(TargetContext targetContext) {
+		byte[] ent = new byte[headerSize];
+		int ad = 0;
+		
+		ad = targetContext.writeCell(ent, ad, link);
 		
 		int flags = (hidden ? 0 : 0x80) | (immediate ? 0x40 : 0);
 		
-		targetContext.writeChar(ad, (name.length() & 0x1f) | flags); ad += 1;
+		ent[ad++] = (byte) ((name.length() & 0x1f) | flags);
 		for (int i = 0; i < name.length(); i++)
-			targetContext.writeChar(ad + i, name.charAt(i));
-		ad += name.length();
+			ent[ad++] = (byte) name.charAt(i);
 		
-		while (ad < addr + headerSize)
-			targetContext.writeChar(ad++, 32);
-			
+		while (ad <  headerSize)
+			ent[ad++] = 32;
+		
+		return ent;
 	}
 
 	/**

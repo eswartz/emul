@@ -34,6 +34,11 @@ public class MemoryDomain implements MemoryAccess, IPersistable {
 	static public final int AREASHIFT = 10;
 
     static final int NUMAREAS = PHYSMEMORYSIZE >> AREASHIFT;
+    
+	public static final String NAME_GRAPHICS = "GRAPHICS";
+	public static final String NAME_SPEECH = "SPEECH";
+	public static final String NAME_VIDEO = "VIDEO";
+	public static final String NAME_CPU = "CPU";
 
     /** Listener for noticing memory accesses. */
     public interface MemoryAccessListener {
@@ -96,7 +101,7 @@ public class MemoryDomain implements MemoryAccess, IPersistable {
      * @return
      */
     public static MemoryDomain newFromArray(short[] data, boolean bWordAccess) {
-        MemoryDomain domain = new MemoryDomain("CPU");
+        MemoryDomain domain = new MemoryDomain(MemoryDomain.NAME_CPU);
         WordMemoryArea area = WordMemoryArea.newDefaultArea();
         area.bWordAccess = bWordAccess;
         area.memory = data;
@@ -110,7 +115,7 @@ public class MemoryDomain implements MemoryAccess, IPersistable {
     }    
 
     public static MemoryDomain newFromArray(byte[] data) {
-        MemoryDomain domain = new MemoryDomain("CPU");
+        MemoryDomain domain = new MemoryDomain(MemoryDomain.NAME_CPU);
         ByteMemoryArea area = new ByteMemoryArea();
         area.memory = data;
         area.read = data;
