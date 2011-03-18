@@ -125,25 +125,10 @@ public class TCFNodeLaunch extends TCFNode implements ISymbolOwner {
         super.dispose();
     }
 
-    private boolean validateFilteredChildren(Runnable done) {
-        if (filtered_children.isValid()) {
-            TCFNode[] arr = filtered_children.getData();
-            if (arr != null) {
-                for (TCFNode n : arr) {
-                    if (n.isDisposed()) {
-                        filtered_children.reset();
-                        break;
-                    }
-                }
-            }
-        }
-        return filtered_children.validate(done);
-    }
-
     @Override
     protected boolean getData(IChildrenCountUpdate result, Runnable done) {
         if (IDebugUIConstants.ID_DEBUG_VIEW.equals(result.getPresentationContext().getId())) {
-            if (!validateFilteredChildren(done)) return false;
+            if (!filtered_children.validate(done)) return false;
             TCFNode[] arr = filtered_children.getData();
             result.setChildCount(arr == null ? 0 : arr.length);
         }
@@ -156,7 +141,7 @@ public class TCFNodeLaunch extends TCFNode implements ISymbolOwner {
     @Override
     protected boolean getData(IChildrenUpdate result, Runnable done) {
         if (IDebugUIConstants.ID_DEBUG_VIEW.equals(result.getPresentationContext().getId())) {
-            if (!validateFilteredChildren(done)) return false;
+            if (!filtered_children.validate(done)) return false;
             TCFNode[] arr = filtered_children.getData();
             if (arr != null) {
                 int offset = 0;
@@ -176,7 +161,7 @@ public class TCFNodeLaunch extends TCFNode implements ISymbolOwner {
     @Override
     protected boolean getData(IHasChildrenUpdate result, Runnable done) {
         if (IDebugUIConstants.ID_DEBUG_VIEW.equals(result.getPresentationContext().getId())) {
-            if (!validateFilteredChildren(done)) return false;
+            if (!filtered_children.validate(done)) return false;
             TCFNode[] arr = filtered_children.getData();
             result.setHasChilren(arr != null && arr.length > 0);
         }
@@ -188,16 +173,18 @@ public class TCFNodeLaunch extends TCFNode implements ISymbolOwner {
 
     void onContextAdded(IRunControl.RunControlContext context) {
         children.onContextAdded(context);
-        filtered_children.reset();
     }
 
     void onContextAdded(IMemory.MemoryContext context) {
         children.onContextAdded(context);
-        filtered_children.reset();
     }
 
     void onAnyContextSuspendedOrChanged() {
         for (TCFNodeSymbol s : symbols.values()) s.onMemoryMapChanged();
+    }
+
+    void onAnyContextAddedOrRemoved() {
+        filtered_children.reset();
     }
 
     public void addSymbol(TCFNodeSymbol s) {
@@ -212,5 +199,9 @@ public class TCFNodeLaunch extends TCFNode implements ISymbolOwner {
 
     public TCFChildrenExecContext getChildren() {
         return children;
+    }
+
+    public TCFData<TCFNode[]> getFilteredChildren() {
+        return filtered_children;
     }
 }

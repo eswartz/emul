@@ -94,6 +94,7 @@ import org.eclipse.tm.internal.tcf.debug.ui.commands.StepOverCommand;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.StepReturnCommand;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.SuspendCommand;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.TerminateCommand;
+import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode.TCFData;
 import org.eclipse.tm.tcf.core.Command;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IErrorReport;
@@ -175,6 +176,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     private static int display_source_generation;
     private int suspend_trigger_generation;
+    private int auto_disconnect_generation;
 
     private final Map<String,String> action_results = new HashMap<String,String>();
     private final Map<IPresentationContext,Map<TCFNode,Integer>> action_deltas =
@@ -247,6 +249,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                     }
                 }
             }
+            launch_node.onAnyContextAddedOrRemoved();
         }
 
         public void contextChanged(IMemory.MemoryContext[] contexts) {
@@ -316,6 +319,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 }
                 context_map.put(ctx.getID(), ctx);
             }
+            launch_node.onAnyContextAddedOrRemoved();
         }
 
         public void contextChanged(IRunControl.RunControlContext[] contexts) {
@@ -404,7 +408,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
         public void exited(String process_id, int exit_code) {
             IProcesses.ProcessContext prs = launch.getProcessContext();
-            if (prs != null && process_id.equals(prs.getID())) onLastContextRemoved();
+            if (prs != null && process_id.equals(prs.getID())) onContextOrProcessRemoved();
         }
     };
 
@@ -642,31 +646,31 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     }
 
     private void onContextRemoved(String[] context_ids) {
-        boolean close_channel = false;
         for (String id : context_ids) {
             TCFNode node = getNode(id);
             if (node instanceof TCFNodeExecContext) {
                 ((TCFNodeExecContext)node).onContextRemoved();
-                if (node.parent == launch_node) close_channel = true;
             }
             action_results.remove(id);
             context_map.remove(id);
         }
-        if (close_channel) {
-            // Close debug session if the last context is removed:
-            onLastContextRemoved();
-        }
+        launch_node.onAnyContextAddedOrRemoved();
+        // Close debug session if the last context is removed:
+        onContextOrProcessRemoved();
         for (String id : context_ids) removeAnnotation(id);
     }
 
-    private void onLastContextRemoved() {
+    private void onContextOrProcessRemoved() {
+        final int generation = ++auto_disconnect_generation;
         Protocol.invokeLater(1000, new Runnable() {
             public void run() {
+                if (generation != auto_disconnect_generation) return;
                 if (launch_node == null) return;
                 if (launch_node.isDisposed()) return;
-                TCFChildrenExecContext children = launch_node.getChildren();
+                TCFData<TCFNode[]> children = launch_node.getFilteredChildren();
                 if (!children.validate(this)) return;
-                if (children.size() != 0) return;
+                TCFNode[] arr = children.getData();
+                if (arr != null && arr.length > 0) return;
                 launch.onLastContextRemoved();
             }
         });
