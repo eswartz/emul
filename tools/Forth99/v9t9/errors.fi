@@ -1,10 +1,10 @@
-0 <export
 
 : message     (  # -- )
     negate  
     dup  0 num-errptrs 1-  within  if
         graddr  >r
         2*  >grom_errptrs g@  +  g@
+        space
         begin
             dup gc@ dup
         while
@@ -14,8 +14,6 @@
         2drop cr
         r>  gwaddr        
     else
-        ." ???" . cr
+        ." ??? " . cr
     then
 ;
-
-export>

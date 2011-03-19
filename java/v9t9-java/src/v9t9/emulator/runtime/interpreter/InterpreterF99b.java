@@ -696,7 +696,8 @@ public class InterpreterF99b implements Interpreter {
 
 	        		boolean found = false;
 	        		int[] after = { 0 }; 
-	        		while (lfa != 0) {
+	        		int count = 65536;
+	        		while (lfa != 0 && count-- > 0) {
 	        			cpu.addCycles(3);
 	        			short nfa = (short) (lfa + 2);
 	        			if (nameMatches(iblock.domain, caddr, nfa, after)) {

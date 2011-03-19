@@ -33,6 +33,7 @@ import v9t9.engine.memory.MemoryEntry;
 import v9t9.forthcomp.words.HostDoubleLiteral;
 import v9t9.forthcomp.words.HostLiteral;
 import v9t9.forthcomp.words.HostVariable;
+import v9t9.forthcomp.words.TargetConstant;
 import v9t9.forthcomp.words.TargetContext;
 import v9t9.forthcomp.words.TargetContext.IMemoryReader;
 
@@ -111,6 +112,10 @@ public class ForthComp {
         	System.err.println(PROGNAME + ": no files specified");
         	System.exit(1);
         } 
+        
+        if (gromOutFile != null) {
+        	targetContext.define("grom-dictionary", new TargetConstant("grom-dictionary", 1, targetContext.getCellSize()));
+        }
         
     	int idx = getopt.getOptind();
     	while (idx < args.length) {

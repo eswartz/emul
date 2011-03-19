@@ -128,6 +128,8 @@ loop
 
 export>
 
+0 <export
+
 :   bootup
 
     regs-init
@@ -157,6 +159,8 @@ export>
     quit
 ;
 
+export>
+
 \ -------------------------------------------------
 
 0 <export
@@ -169,8 +173,13 @@ export>
 ' abort  (COLD)     !
 \ here   DP0        !
 here $3ff +  $3ff INVERT and  DP0        !
+
+[ifdef] grom-dictionary
+$0       (LATEST)   !
+[else]
 latest   (LATEST)   !
- 
+[endif]
+
 hex
 here ." HERE = " u. cr
 up0 @ ." UP0 = " u. cr
