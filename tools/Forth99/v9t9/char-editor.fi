@@ -771,7 +771,7 @@ User 'scry
     #statuscol [ #y-border 9 + ] literal    at-xy  'lines @   4 u.r                            
     #statuscol [ #y-border 11 + ] literal    at-xy  baddr) baddr -  4 u.r
                                 
-    #statuscol [ #y-border 12 + ] literal    at-xy  depth 4 u.r                            
+    \ #statuscol [ #y-border 12 + ] literal    at-xy  depth 4 u.r                            
     
     #statuscol [ #y-border 14 + ] literal    at-xy  ovr @  if ." OVR" else ." INS" then
     
