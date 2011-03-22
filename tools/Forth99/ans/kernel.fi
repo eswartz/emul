@@ -816,7 +816,6 @@ $20 constant BL
 | : (parse-word)  ( ch -- caddr u )
     (skip-spaces)
     parse               \ get new word
-    \ 2dup type
 ;
 
 : WORD  \   ( char "<chars>ccc<char>" -- c-addr )

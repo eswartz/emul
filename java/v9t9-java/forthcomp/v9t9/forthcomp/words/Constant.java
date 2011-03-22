@@ -3,6 +3,8 @@
  */
 package v9t9.forthcomp.words;
 
+import org.ejs.coffee.core.utils.HexUtils;
+
 import v9t9.forthcomp.AbortException;
 import v9t9.forthcomp.HostContext;
 
@@ -22,7 +24,7 @@ public class Constant extends BaseStdWord {
 		
 		String name = hostContext.readToken();
 
-		System.out.println("CONSTANT " + name +" = " + val);
+		System.out.println("CONSTANT " + name +" = " + HexUtils.toHex4(val));
 		targetContext.defineConstant(name, val, 1);
 	}
 	

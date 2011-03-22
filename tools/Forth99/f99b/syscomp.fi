@@ -4,7 +4,7 @@
  
 :: inlineable ( opc -- f )
     opc $20 >= 
-    opc $7a $7f within not
+    opc $7a $7f within not  \ branches
     opc Idovar = not  
     and and
 ;
@@ -14,8 +14,8 @@
     opc IcontextFrom =
     opc ItoContext =
     opc IlitB =
-    opc $36 =
-    opc $3c $40 within
+    opc $36 =   \ Ispidx
+    opc $3c $40 within      \ Irpidx...Ilalloc with imms  
     or or or or or
 ;
 
@@ -72,15 +72,27 @@ User STATE
     
     \ 2 byte prims
     addr 2+ c@ $70 = if
-        addr c@  dup  inlineable-imm  :> ii
-            dup inlineable :> 'i 
-            addr 1+  c@  dup  inlineable  'i and ii or
-        if
-            swap c, c,
-        else
-            2drop
-            addr >call ,   
+        addr c@  :> op1
+        addr 1+ c@  :> op2
+        
+        op1 inlineable-imm  if
+            op1 c, op2 c,
+            exit
+        then   
+        
+        op1 $7e = if
+           op1 c, op2 c,
+           exit
         then
+        
+        op1 inlineable 
+        op2 inlineable 
+        and if
+            op1 c, op2 c,
+            exit
+        then        
+
+        addr >call ,   
         exit
     then        
     

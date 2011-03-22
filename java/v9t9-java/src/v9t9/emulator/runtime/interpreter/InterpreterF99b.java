@@ -525,7 +525,8 @@ public class InterpreterF99b implements Interpreter {
         	short lim = iblock.getReturnStackEntry(1);
     		cpu.rpop();
     		cpu.rpush((short) next);
-    		cpu.push((short) ((lim != 0 ? next < lim : next >= change) ? 0 : -1));
+    		cpu.push((short) ((lim != 0 ? (change < 0 ? next > lim  : next < lim)
+    					: next >= change) ? 0 : -1));
         	break;
         }
         case IuplusLoopUp: {
@@ -535,7 +536,7 @@ public class InterpreterF99b implements Interpreter {
         	short lim = iblock.getReturnStackEntry(1);
         	cpu.rpop();
         	cpu.rpush((short) next);
-        	cpu.push((short) ((lim != 0 ? next < (lim & 0xffff) 
+        	cpu.push((short) ((lim != 0 ? (change < 0 ? next > (lim & 0xffff) : next < (lim & 0xffff)) 
         			: (next & 0xffff)  >= (change & 0xffff)) ? 0 : -1));
         	break;
         }

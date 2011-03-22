@@ -71,7 +71,8 @@ include ../ans/interp.fi
 
 include ../v9t9/io.fi
 
-include ../v9t9/editor.fi
+\ include ../v9t9/editor.fi
+include ../v9t9/char-editor.fi
 
 include ../v9t9/boot.fi
 

@@ -8,10 +8,16 @@ package v9t9.emulator;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
+import java.util.Collections;
 
+import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Platform;
 import org.ejs.coffee.core.properties.IProperty;
 import org.ejs.coffee.core.properties.IPropertyListener;
 import org.ejs.coffee.core.utils.Check;
+import org.osgi.framework.Bundle;
 
 import v9t9.emulator.clients.builtin.ClientFactory;
 import v9t9.emulator.clients.builtin.NotifyException;
@@ -262,15 +268,13 @@ public class Emulator {
 		File file = new File(string);
 		if (file.exists())
 			return file;
-		// HACK
-		return new File("../v9t9-java/" + string);
-		/*
 		Bundle bundle = Platform.getBundle("v9t9-java");
-		URL url = FileLocator.find(bundle, new Path(string), Collections.emptyMap());
-		if (url != null)
-			return new File(url.toExternalForm());
-		return new File(string);
-		*/
+		if (bundle != null) {
+			URL url = FileLocator.find(bundle, new Path(string), Collections.emptyMap());
+			if (url != null)
+				return new File(url.toExternalForm());
+		}
+		return new File("../v9t9-java/" + string);
 	}
 
 }

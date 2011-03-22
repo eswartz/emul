@@ -264,6 +264,8 @@ public class CpuF99b extends CpuBase {
 	
 	@Override
 	public void reset() {
+		noIntCount += 1000;
+		
         getStatus().expand((short) 0);
         
         // ROM should set these!
@@ -344,6 +346,7 @@ public class CpuF99b extends CpuBase {
 		stateF99b.setSP(newSp);
 		
 		if (newSp < stateF99b.getSP() - MAX_STACK) {
+			System.err.println("Stack overflow!");
 			fault();
 		}	
 	}
@@ -357,6 +360,7 @@ public class CpuF99b extends CpuBase {
 		short newSp = (short) ((stateF99b.getSP() + 2));
 		stateF99b.setSP(newSp);
 		if (newSp > stateF99b.getBaseSP()) {
+			System.err.println("Stack underflow!");
 			fault();
 		}
 		return val;
@@ -367,6 +371,7 @@ public class CpuF99b extends CpuBase {
 		stateF99b.getConsole().writeWord(newRp, val);
 		stateF99b.setRP(newRp);
 		if (newRp < stateF99b.getRP() - MAX_STACK) {
+			System.err.println("R-Stack overflow!");
 			fault();
 		}	
 		
@@ -380,6 +385,7 @@ public class CpuF99b extends CpuBase {
 		short newRp = (short) ((stateF99b.getRP() + 2));
 		stateF99b.setRP(newRp);
 		if (newRp > stateF99b.getBaseRP()) {
+			System.err.println("R-Stack underflow!");
 			fault();
 		}
 

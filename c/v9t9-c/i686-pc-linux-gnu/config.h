@@ -50,12 +50,12 @@
 /* Linux modules */
 #define X_WIN_VIDEO 1
 #define X_WIN_KEYBOARD 1
-/* #undef LINUX_SVGA_VIDEO */
-/* #undef LINUX_SVGA_KEYBOARD */
+#define LINUX_SVGA_VIDEO 1
+#define LINUX_SVGA_KEYBOARD 1
 #define LINUX_SPEAKER_SOUND 1
 #define OSS_SOUND 1
 #define ALSA_SOUND 1
-#define ESD_SOUND 1
+/* #undef ESD_SOUND */
 
 /* Windows modules -- required for any Win32 build! */
 /* #undef WIN32_VIDEO */
@@ -64,7 +64,7 @@
 
 /* GTK+ modules, for Linux or Win32 */
 #define HAVE_GTK 1
-#define HAVE_GNOME 1
+/* #undef HAVE_GNOME */
 #define GTK_KEYBOARD 1
 #define GTK_VIDEO 1
 
@@ -116,7 +116,7 @@
 #define HAVE_ENDIAN_H 1
 
 /* Define to 1 if you have the <esd.h> header file. */
-#define HAVE_ESD_H 1
+/* #undef HAVE_ESD_H */
 
 /* Define to 1 if you have the <fcntl.h> header file. */
 #define HAVE_FCNTL_H 1
