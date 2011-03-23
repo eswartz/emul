@@ -74,6 +74,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     private boolean resumed_by_action;
     private TCFNode[] last_stack_trace;
     private String last_label;
+    private String last_image;
 
     private String hover_expression;
 
@@ -747,8 +748,8 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
             if (!run_context.validate(done)) return false;
             IRunControl.RunControlContext ctx = run_context.getData();
             if (ctx != null && ctx.hasState()) {
-                if (resume_pending) {
-                    result.setHasChilren(true);
+                if (resume_pending && last_stack_trace != null) {
+                    result.setHasChilren(last_stack_trace.length > 0);
                     return true;
                 }
                 if (!state.validate(done)) return false;
@@ -825,8 +826,8 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                         image_name = ImageCache.IMG_THREAD_RUNNNIG;
                         label.append(" (Running)");
                     }
-                    else if (resume_pending && !resumed_by_action && last_label != null) {
-                        result.setImageDescriptor(ImageCache.getImageDescriptor(ImageCache.IMG_THREAD_SUSPENDED), 0);
+                    else if (resume_pending && !resumed_by_action && last_label != null && last_image != null) {
+                        result.setImageDescriptor(ImageCache.getImageDescriptor(last_image), 0);
                         result.setLabel(last_label, 0);
                         return true;
                     }
@@ -878,7 +879,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                 }
             }
         }
-        result.setImageDescriptor(ImageCache.getImageDescriptor(image_name), 0);
+        result.setImageDescriptor(ImageCache.getImageDescriptor(last_image = image_name), 0);
         result.setLabel(last_label = label.toString(), 0);
         return true;
     }
