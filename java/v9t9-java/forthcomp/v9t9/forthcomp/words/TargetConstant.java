@@ -30,12 +30,16 @@ public class TargetConstant extends TargetWord implements ITargetWord {
 			
 			public void execute(HostContext hostContext, TargetContext targetContext)
 					throws AbortException {
-				if (getWidth() == 1)
-					targetContext.compileLiteral(getValue(), false, true);
-				else if (getWidth() == 2 && targetContext.getCellSize() == 2)
-					targetContext.compileDoubleLiteral(getValue() & 0xffff, getValue() >> 16, false, true);
-				else
-					assert false;
+				if (getEntry().canInline()) {
+					if (getWidth() == 1)
+						targetContext.compileLiteral(getValue(), false, true);
+					else if (getWidth() == 2 && targetContext.getCellSize() == 2)
+						targetContext.compileDoubleLiteral(getValue() & 0xffff, getValue() >> 16, false, true);
+					else
+						assert false;
+				} else {
+					targetContext.compile(TargetConstant.this);
+				}
 			}
 		});
 		setExecutionSemantics(new ISemantics() {

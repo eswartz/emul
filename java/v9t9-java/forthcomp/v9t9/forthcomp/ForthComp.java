@@ -150,7 +150,7 @@ public class ForthComp {
 					}
 				}
 	    	);
-	    	for (DictEntry entry : sortedDict.subList(Math.max(0, sortedDict.size() - 32), sortedDict.size())) {
+	    	for (DictEntry entry : sortedDict.subList(Math.max(sortedDict.size() - 32, 32), sortedDict.size())) {
 	    		logfile.println("\t" + entry.getUses() +"\t" + entry.getName() );
 	    		
 	    	}

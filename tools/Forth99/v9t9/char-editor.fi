@@ -167,13 +167,17 @@ User 'lines
 
 \ -----------------------------------------------------
 
+: fl|
+    'fl  |!
+;
 
 \   Move the cursor left or right, indicating whether a line adjustment
 \   is needed when one end or the other is hit.
 : ^curs ( cadj -- ladj )
     'col +! 
     'col @   0< if
-        drop  
+        $7fff 'col !
+        $40 fl| 
         -1
     else
         \ >llen  > if 
@@ -187,7 +191,7 @@ User 'lines
 \   Delete a character at the current spot and add blank at end.
 : ^del  ( -- )
     >curs  
-    dup c@  NL = if  $7 'fl |!  then
+    dup c@  NL = if  $7 fl|  then
     1  delete-range
 ;
 
@@ -310,7 +314,6 @@ User 'lines
 : ~curs ( ladj -- badj )
     'line +!
     'line @  dup  0< if
-        drop 
         \ l/blk 1- 'line !    -1      \ TODO
         0 'line !    
     else
@@ -462,7 +465,7 @@ User 'fl
         nl ^ins drop
         0 'col !
         1 'lines +!
-        $14 'fl |!    \ this flag only set in insert mode
+        $14 fl|    \ this flag only set in insert mode
     then
     1 ~curs
     scr +!
@@ -570,7 +573,8 @@ User 'fl
 \       $4: redraw block
 \       $8: move cursor to upper-left
 \      $10: recalculate line count
-\      $20: recalculate line bounds and column
+\      $20: recalculate line bounds
+\      $40: recalculate column
 
 create edittab 
     &3   ( ctrl-c copy line )               $10 c, c,  ' !copy-line ,
@@ -611,7 +615,7 @@ here  edittab -  Constant  editsz
 : edit.char  ( ch -- )
     ^char ~curs ( badj )
     update  scr +!
-    $3 'fl |!
+    $3 fl|
 ;
 
 \ Handle one key for the buffer and update cursor/line/buffer
@@ -624,7 +628,7 @@ here  edittab -  Constant  editsz
         edittab editsz over + swap do
             i @ w>b swap      ( flags keycode ) 
             key' = if               ( flags )
-                'fl |!
+                fl|
                 i cell+ @  execute  
                 unloop exit
             else
@@ -770,13 +774,16 @@ User 'scry
     #statuscol [ #y-border 7 + ] literal    at-xy  'laddr) @  'laddr @ -  4 u.r                            
     #statuscol [ #y-border 9 + ] literal    at-xy  'lines @   4 u.r                            
     #statuscol [ #y-border 11 + ] literal    at-xy  baddr) baddr -  4 u.r
-                                
+      
+    \ debug                          
     \ #statuscol [ #y-border 12 + ] literal    at-xy  depth 4 u.r                            
     
     #statuscol [ #y-border 14 + ] literal    at-xy  ovr @  if ." OVR" else ." INS" then
     
     \ set cursor
-    'col @ #x-border +  'line @ #y-border +  at-xy
+    'col @ #x-border + 'scrx @ -
+    'line @ #y-border +  'scry @ -  at-xy
+    
     1 vblink!
 ;
 
@@ -792,11 +799,11 @@ User 'scry
     \ then
         
     \ draw content, if any visible
-    lad+x
+    lad+x  
     #x-border  loffs #y-border +   txt-xy>addr  
             
     \ draw content ( even 0, to establish VDPWA )
-    len c/l min  cvmove
+    len  c/l min  cvmove
     
     \ draw blanks at eol
     c/l  len -  0 max  0  ?do
@@ -837,33 +844,42 @@ User 'scry
     drop
 ;
 
+:: surround ( scraddr target page -- new )
+    scraddr @  :> orig
+    target page < if
+        0
+    else
+        target  orig  dup page +  within not if
+            target  dup orig  < if
+                \ up 
+                1-  0 max
+            else
+                \ down
+                page 1-  -  
+            then
+        else
+            orig
+        then 
+    then
+    
+    dup  orig <> if    
+        $4 fl|
+    then
+    scraddr !
+;
+
+: edit.scroll 
+    'scry  'line @   l/blk  surround
+    
+    'scrx  'col @  c/l  surround
+;
+
 \   Remember last time we updated based on the position ... also fix values
 : edit.lastpos!
     scr @ 'lastscr !
     
-    \ update scroll pos if needed
-    'line @  'scry @  l/blk over  + within not if
-        'line @ 'lastline @ > if 
-             \ scrolling down
-             'line @  l/blk - 1+  'scry !
-        else
-             'line @  'scry !
-        then
-    then
-    
-    'line @ 'lastline !
-    
-    \ update scroll pos if needed
-    'col @  'scrx @  c/l over +  within not if
-        'col @ 'lastcol @ > if 
-             \ scrolling right
-             'col @  c/l - 1+  'scrx !
-        else
-             'col @  'scrx !
-        then
-    then
-    
-    'col @ 'lastcol !
+    'line @  'lastline !
+    'col @  'lastcol !
     
 ;
 
@@ -871,8 +887,10 @@ User 'scry
     
     scr @ 'lastscr @ xor
     if  
-        $C 'fl |!  
+        $C fl|
     then
+    
+    edit.scroll
     
     \ did anything change?
     'fl @
@@ -882,8 +900,12 @@ User 'scry
          baddrs!
     else dup $20 and if
          laddrs!
+    then then
+    
+    dup $40 and if
+        >llen  'col @  min  'col !
     then
-    then
+    
     dup 4 and if
         edit.drawblock
     else dup 1 and if
@@ -912,7 +934,7 @@ User 'scry
 
 \ Adjust to viable block first
 : edit.fixblock
-    scr @  0 <= if 1 scr !  $2 'fl |! then 
+    scr @  0 <= if 1 scr !  $2 fl| then 
 ;
 
 \ Main loop of editor.

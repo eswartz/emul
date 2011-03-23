@@ -83,6 +83,7 @@ import v9t9.forthcomp.words.HostVariable;
 import v9t9.forthcomp.words.If;
 import v9t9.forthcomp.words.Immediate;
 import v9t9.forthcomp.words.Include;
+import v9t9.forthcomp.words.Inline;
 import v9t9.forthcomp.words.LastXt;
 import v9t9.forthcomp.words.Lbracket;
 import v9t9.forthcomp.words.Leave;
@@ -223,6 +224,8 @@ public class HostContext extends Context {
 		define(";", new SemiColon());
 		define("[CHAR]", new BracketChar());
 		define("CHAR", new Char());
+		
+		define("INLINE:", new Inline());
 		
 		define("TO", new To());
 		

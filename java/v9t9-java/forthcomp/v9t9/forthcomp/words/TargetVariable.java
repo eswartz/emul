@@ -24,7 +24,10 @@ public class TargetVariable extends TargetWord {
 			
 			public void execute(HostContext hostContext, TargetContext targetContext)
 					throws AbortException {
-				targetContext.compileLiteral(getEntry().getParamAddr(), false, true);
+				if (getEntry().canInline())
+					targetContext.compileLiteral(getEntry().getParamAddr(), false, true);
+				else
+					targetContext.compile(TargetVariable.this);
 			}
 		});
 		setExecutionSemantics(new ISemantics() {

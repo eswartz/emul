@@ -42,6 +42,7 @@ public class DictEntry implements Comparable<DictEntry> {
 	protected IWord hostBehavior;
 	protected int hostStackCount;
 	protected boolean targetOnly;
+	private boolean inline;
 	
 	
 	
@@ -299,5 +300,27 @@ public class DictEntry implements Comparable<DictEntry> {
 		this.isDoesWord = isDoesWord;
 	}
 
+
+	/**
+	 * @param b
+	 */
+	public void setInline(boolean b) {
+		this.inline = b;
+	}
+	
+	/**
+	 * @return the inline
+	 */
+	public boolean isInline() {
+		return inline;
+	}
+
+
+	/**
+	 * @return
+	 */
+	public boolean canInline() {
+		return getAddr() == 0 || isInline();
+	}
 
 }

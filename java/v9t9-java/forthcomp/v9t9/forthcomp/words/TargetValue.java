@@ -27,7 +27,11 @@ public class TargetValue extends TargetWord {
 			
 			public void execute(HostContext hostContext, TargetContext targetContext)
 					throws AbortException {
-				targetContext.compileLiteral(getEntry().getParamAddr(), false, true);
+				if (getEntry().canInline())
+					targetContext.compileLiteral(getEntry().getParamAddr(), false, true);
+				else
+					targetContext.compile(TargetValue.this);
+					
 				targetContext.compileLoad(getCells() * targetContext.getCellSize());
 			}
 		});

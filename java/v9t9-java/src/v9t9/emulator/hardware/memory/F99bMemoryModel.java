@@ -100,7 +100,7 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 	
 	protected void defineConsoleMemory(Machine machine) {
 		MemoryEntry entry = new MemoryEntry("64K RAM", CPU, 
-				0x0400, 0xFC00, new EnhancedRamByteArea(0x4000, 0xFC00));
+				0x0400, 0xFC00, new EnhancedRamByteArea(0, 0xFC00));
 		entry.getArea().setLatency(0);
 		memory.addAndMap(entry);
 	}
