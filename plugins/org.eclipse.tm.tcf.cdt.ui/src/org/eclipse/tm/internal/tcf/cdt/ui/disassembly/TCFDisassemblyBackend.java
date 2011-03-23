@@ -522,7 +522,14 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
                     fCallback.setUpdatePending(false);
                     return;
                 }
-                TCFDataCache<IMemory.MemoryContext> cache = execContext.getMemoryContext();
+                TCFDataCache<TCFNodeExecContext> mem_node_cache = execContext.getModel().searchMemoryContext(execContext);
+                if (!mem_node_cache.validate(this)) return;
+                TCFNodeExecContext memContext = mem_node_cache.getData();
+                if (memContext == null) {
+                    fCallback.setUpdatePending(false);
+                    return;
+                }
+                TCFDataCache<IMemory.MemoryContext> cache = memContext.getMemoryContext();
                 if (!cache.validate(this)) return;
                 final IMemory.MemoryContext mem = cache.getData();
                 if (mem == null) {
@@ -540,6 +547,9 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
                         if (error != null) {
                             fCallback.asyncExec(new Runnable() {
                                 public void run() {
+                                    if (execContext != fExecContext) {
+                                        return;
+                                    }
                                     if (modCount == getModCount()) {
                                         fCallback.insertError(startAddress, error.toString());
                                         fCallback.setUpdatePending(false);
