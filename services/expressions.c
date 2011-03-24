@@ -477,9 +477,9 @@ static void next_sy(void) {
                 text_val.size = sizeof(uint64_t);
                 text_val.value = alloc_str((size_t)text_val.size);
                 text_val.constant = 1;
-                while (text_ch >= '0' && text_ch <= '9' ||
-                        text_ch >= 'A' && text_ch <= 'F' ||
-                        text_ch >= 'a' && text_ch <= 'f') {
+                while ((text_ch >= '0' && text_ch <= '9') ||
+                       (text_ch >= 'A' && text_ch <= 'F') ||
+                       (text_ch >= 'a' && text_ch <= 'f')) {
                     value = (value << 4) | next_hex();
                 }
                 *(uint64_t *)text_val.value = value;

@@ -191,12 +191,12 @@ static unsigned read_esc_char(InputStream * inp, char * utf8) {
     }
     if (ch < 0x800) {
         utf8[0] = (char)((ch >> 6) | 0xc0);
-        utf8[1] = (char)(ch & 0x3f | 0x80);
+        utf8[1] = (char)((ch & 0x3f) | 0x80);
         return 2;
     }
     utf8[0] = (char)((ch >> 12) | 0xe0);
-    utf8[1] = (char)((ch >> 6) & 0x3f | 0x80);
-    utf8[2] = (char)(ch & 0x3f | 0x80);
+    utf8[1] = (char)(((ch >> 6) & 0x3f) | 0x80);
+    utf8[2] = (char)((ch & 0x3f) | 0x80);
     return 3;
 }
 
@@ -804,7 +804,7 @@ static void skip_object(InputStream * inp) {
         }
         return;
     }
-    if (ch == '-' || ch >= '0' && ch <= '9') {
+    if (ch == '-' || (ch >= '0' && ch <= '9')) {
         for (;;) {
             ch = peek_stream(inp);
             if ((ch < '0' || ch > '9') && ch != '.'

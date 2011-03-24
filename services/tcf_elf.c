@@ -111,7 +111,7 @@ static void elf_cleanup_event(void * arg) {
     elf_cleanup_posted = 0;
     while (file != NULL) {
         file->age++;
-        if (file->age > MAX_FILE_AGE || file->age > MIN_FILE_AGE && list_is_empty(&context_root)) {
+        if (file->age > MAX_FILE_AGE || (file->age > MIN_FILE_AGE && list_is_empty(&context_root))) {
             ELF_File * next = file->next;
             elf_dispose(file);
             file = next;
