@@ -108,3 +108,18 @@
     drop true
 ;
 
+\ type null-terminated string (does not preserve graddr) 
+: (gtype) ( gaddr -- gaddr )
+    begin
+        dup gc@ dup
+    while
+        emit
+        1+
+    repeat
+    drop  1+
+;
+
+\ type null-terminated string (does not preserve graddr) 
+: gtype ( gaddr -- gaddr )
+    (gtype) drop
+;

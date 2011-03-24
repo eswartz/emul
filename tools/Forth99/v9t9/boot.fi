@@ -24,8 +24,8 @@
     UP0 @       UDP !
     (LATEST) @  >latest !
     GRAM
-        
-    ." Forth99 (c) 2011" cr
+    
+    >grom_logo g@ gtype cr
 ;
 
 :   'quit
@@ -43,8 +43,6 @@ EXPORT>
 :   abort
 
     regs-init   ints-init   kbd-init
-    
-    \ ."  aborted" cr
     
     quit
 ;

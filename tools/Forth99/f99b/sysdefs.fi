@@ -133,15 +133,20 @@ FaultStacks  (#RP) - (#SP) - (#numbuf) - (#slit-pad) - (#tib) - (#blks) - (#up) 
 
 \ -----------   GROM addresses
 
-$0          constant    >grom_sig
-$2          constant    >grom_dict
-$4          constant    >grom_dictend
-$6          constant    >grom_kbdlist
-$8          constant    >grom_font8x8
-$A          constant    >grom_font5x6
-$C          constant    >grom_errptrs
-$E          constant    >grom_editorhelp
-$10         constant    >grom_menubar
+$0
+
+dup         constant    >grom_sig           2+
+dup         constant    >grom_dict          2+      \ note: build depends on this offset
+dup         constant    >grom_dictend       2+      \ note: build depends on this offset
+dup         constant    >grom_logo          2+
+dup         constant    >grom_kbdlist       2+
+dup         constant    >grom_font8x8       2+
+dup         constant    >grom_font5x6       2+
+dup         constant    >grom_errptrs       2+
+dup         constant    >grom_editorhelp    2+
+dup         constant    >grom_menubar       2+
+
+drop
 
 $2000       Constant    >gram_base
 

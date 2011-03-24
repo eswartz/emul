@@ -35,7 +35,7 @@ include syscomp.fi
 
 EXPORT>
 
-include ../ans/errcodes.fi
+include ../v9t9/errcodes.fi
 
 include ../v9t9/sysutils.fi
 

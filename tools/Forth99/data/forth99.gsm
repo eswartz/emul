@@ -27,17 +27,19 @@ start	equ	$
 ; Lookup table (sync with sysdefs.fi!)
 
 signature       dw  >AA99
-dataendaddr     dw  end_of_data
-gromdictend     dw  0
+gromdict        dw  end_of_data          ; note: build depends on this offset
+gromdictend     dw  0                    ; note: build depends on this offset
+logooffs        dw  logo
 kbdoffs         dw  kbds
-font8x8offs     dw  font0
+font8x8offs     dw  font8x8
 font5x6offs     dw  font5x6
-errptrsoffs     dw  errptrs
+msgptrsoffs     dw  msgptrs
 editorhelpoffs  dw  editorhelp
 menubaroffs     dw  menubar
 
-
-
+logo    db "Forth99 (c) 2011", 0
+    even
+    
 ;	The order of these tables follows the 3 shift bits:
 ;
 ;   0 = no shifts
@@ -123,7 +125,7 @@ tkbdsupr db	0,  255,254,0,0,0,0,0
 ;   8   vert bottom center
 ;
 
-font0	
+font8x8
 
 ; char 0
     db >0, >0, >0, >0, >0, >0, >0, >0
@@ -549,13 +551,18 @@ font5x6
 	db >40, >a8, >10, >0, >0, >0
 	db >0, >0, >0, >0, >0, >0
 
-errptrs dw errcnt
-    dw err_undefined, err_interpret_only, err_loading_only
+;   sync with errocodes.fi !
+msgptrs dw msgcnt   ; for future use; aliases err-none
+    dw msg_fault, msg_aborted
+    dw err_undefined
+    dw err_interpret_only, err_loading_only
     dw err_block_io, err_compile_only, err_empty_name
     dw err_control_nesting, err_not_deferred, err_out_of_range
     dw err_file_io
-errcnt equ ($ - errptrs) / 2
+msgcnt equ ($ - msgptrs) / 2
 
+msg_fault           db "FAULT",0
+msg_aborted         db "aborted",0
 err_undefined       db "undefined",0
 err_interpret_only  db "interpret mode only",0
 err_loading_only    db "loading only",0

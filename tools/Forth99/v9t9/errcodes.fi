@@ -1,0 +1,27 @@
+
+0 <export
+
+: msg:  ( num c"NAME -- num,' )
+    dup Constant
+    1-
+;
+
+\ see forth99.gsm : msgptrs
+0
+    msg:  err-none
+    msg:  err-fault
+    msg:  err-aborted
+    msg:  err-undefined
+    msg:  err-interpret-only
+    msg:  err-loading-only
+    msg:  err-block-i/o
+    msg:  err-compile-only
+    msg:  err-empty-name
+    msg:  err-control-nesting
+    msg:  err-not-deferred
+    msg:  err-out-of-range
+    msg:  err-file-i/o
+
+negate constant num-msgptrs
+
+export>

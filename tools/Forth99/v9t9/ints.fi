@@ -75,13 +75,13 @@ cell    RamVar    vdp-timeout
     0  (>context) [ CTX_SR field, ] 
     
     $00 msx-cmdsetup
-    ."  aborted" cr
+    err-aborted message
     abort
     exiti       \ NOTREACHED
 ;
 
 :   fault-int-handler   ( rp sp st pc -- )
-    s" FAULT" v-screen @  swap  cvmove
+    err-fault >message  v-screen @  5  +gvmove
     begin (idle) again
     exiti
 ;

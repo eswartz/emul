@@ -460,25 +460,16 @@ User 'fl
     
     cls
     
-    >grom_editorhelp g@  :> ghelp
-    
     graddr >r
+    
+    >grom_editorhelp g@
 
     14 0 do
-        \ i 64 U*  >grom_editorhelp g@  +
-        \ 2 i  txt-xy>addr  64  +gvmove
-        
         2 i at-xy
-        begin
-            ghelp dup  gc@
-            swap 1+  ghelp!
-            dup
-        while
-            emit
-        repeat  
-        drop
-         
+        (gtype) 
     loop
+    
+    drop
     
     r> gwaddr    
  

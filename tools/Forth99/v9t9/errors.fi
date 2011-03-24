@@ -1,17 +1,14 @@
 
-: message     (  # -- )
+
+: >message     (  # -- gaddr )
     negate  
-    dup  0 num-errptrs 1-  within  if
+    2*  >grom_errptrs g@  +  g@
+;
+
+: message     (  # -- )
+    dup  [ num-msgptrs 1- negate ] literal 0   within  if
         graddr  >r
-        2*  >grom_errptrs g@  +  g@
-        space
-        begin
-            dup gc@ dup
-        while
-            emit
-            1+
-        repeat
-        2drop cr
+        >message  space gtype cr
         r>  gwaddr        
     else
         ." ??? " . cr
