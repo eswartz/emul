@@ -608,6 +608,9 @@ public class InterpreterF99b implements Interpreter {
         	case CTX_PC:
         		cpu.push(cpu.getPC());
         		break;
+        	case CTX_SR:
+        		cpu.push(cpu.getStatus().flatten());
+        		break;
     		default:
     			cpu.push((short) -1);
     			break;
@@ -646,6 +649,10 @@ public class InterpreterF99b implements Interpreter {
         	case CTX_PC:
         		((CpuStateF99b)cpu.getState()).setPC(cpu.pop());
         		return true;
+        	case CTX_SR:
+        		cpu.getState().setST(cpu.pop());
+        		//((StatusF99b) ((CpuStateF99b)cpu.getState()).getStatus()).expand(cpu.pop());
+        		break;
         	default:
         		cpu.pop();
         		break;

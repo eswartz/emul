@@ -294,6 +294,7 @@ public class InstF99b {
 	public static final int CTX_LP = 5;
 	public static final int CTX_PC = 6;
 	public static final int CTX_INT = 7;
+	public static final int CTX_SR = 8;
 	
 	public static final String[] ctxStrings = {
 		"SP",
@@ -304,6 +305,7 @@ public class InstF99b {
 		"LP",
 		"PC",
 		"INT",
+		"SR"
 	};
 
 	/** Idle until interrupt */

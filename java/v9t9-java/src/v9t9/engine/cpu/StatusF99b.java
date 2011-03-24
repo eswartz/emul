@@ -14,7 +14,8 @@ package v9t9.engine.cpu;
  * @author ejs
  */
 public class StatusF99b implements Status {
-    private static final short ST_INT = 0x7;
+    private static final short ST_INT = 0xF;
+	private static final short ST_CUR = 0xF0;
 	short bits; 
 
     public StatusF99b() {
@@ -29,7 +30,7 @@ public class StatusF99b implements Status {
 	 */
     @Override
     public String toString() {
-    	return "I:" + (bits & StatusF99b.ST_INT);
+    	return "I:" + (bits & StatusF99b.ST_INT) +" C:" + ((bits & StatusF99b.ST_CUR) >> 4);
     }
     /* (non-Javadoc)
 	 * @see v9t9.engine.cpu.Status#copyTo(v9t9.engine.cpu.Status9900)
@@ -61,7 +62,7 @@ public class StatusF99b implements Status {
     }
 
     public void setIntMask(int mask) {
-        bits = (short) (bits & ~0x7 | mask & 0x7);
+        bits = (short) (bits & ~ST_INT | mask & ST_INT);
     }
     /* (non-Javadoc)
 	 * @see v9t9.engine.cpu.Status#isLT()
@@ -130,8 +131,19 @@ public class StatusF99b implements Status {
      * @return
      */
     public int getIntMask() {
-        return (bits & 0x7);
+        return (bits & ST_INT);
     }
+
+	/**
+	 * @param intr
+	 */
+	public void setCurrentInt(int intr) {
+		bits = (short) ((bits & ~ST_CUR) | ((intr & 0xF) << 4));
+	}
+	
+	public int getCurrentInt() {
+		return (bits & ST_CUR) >> 4;
+	}
 
 
     

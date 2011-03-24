@@ -5,7 +5,6 @@ package v9t9.emulator.runtime.cpu;
 
 import org.ejs.coffee.core.utils.HexUtils;
 
-import v9t9.emulator.hardware.memory.F99ConsoleMmioArea;
 import v9t9.engine.cpu.*;
 import v9t9.engine.memory.MemoryDomain;
 
@@ -144,7 +143,7 @@ public class CpuStateF99b implements CpuState {
 	}
 
 	public void setST(short st) {
-		getStatus().expand(st);
+		setRegister(CpuF99b.SR, st);
 	}
 
 	public short getBaseSP() {

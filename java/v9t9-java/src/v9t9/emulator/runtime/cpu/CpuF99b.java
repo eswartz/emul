@@ -181,10 +181,10 @@ public class CpuF99b extends CpuBase {
         	pins &= ~PIN_RESET;
             System.out.println("**** RESET ****");
             
-            triggerInterrupt(INT_RESET);
+            reset();
             
             // ensure the startup code has enough time to clear memory
-            noIntCount = 10000;
+            //noIntCount = 10000;
             
             machine.getExecutor().interpretOneInstruction();
         } else if ((pins & PIN_INTREQ) != 0 && getStatus().getIntMask() >= ic) {	// already checked int mask in status
@@ -270,7 +270,9 @@ public class CpuF99b extends CpuBase {
         
         // ROM should set these!
 		getState().setSP((short) 0xff80);
+		getState().setBaseSP((short) 0xff80);
 		getState().setRP((short) 0xffc0);
+		getState().setBaseRP((short) 0xffc0);
 		getState().setUP((short) 0xff00);
 		
 		contextSwitch((short) 0x400);
@@ -286,19 +288,30 @@ public class CpuF99b extends CpuBase {
 	 *	pushed status and PC, on a new stack. 
 	 */
 	public void fault() {
+		int currentInt = ((StatusF99b) stateF99b.getStatus()).getCurrentInt();
+		boolean doubleFault = currentInt == INT_FAULT || currentInt == INT_NMI;
+		
     	PrintWriter dumpfull = Executor.getDumpfull();
 		if (dumpfull != null) {
-    		dumpfull.println("*** FAULT");
+			dumpfull.println("*** FAULT");
 		}
-		
+
+		if (doubleFault) {
+			if (dumpfull != null) { 
+				dumpfull.println("*** DOUBLE FAULT ==> RESET");
+			}
+			reset();
+			throw new AbortedException();
+		}
+
 		short oldrp = getState().getRP();
 		short oldsp = getState().getSP();
 		
-		getState().setRegister(SP0, (short) 0xffe0);
+		getState().setBaseSP((short) 0xffe0);
 		getState().setSP((short) 0xffe0);
-		getState().setRegister(RP0, (short) 0xffd0);
+		getState().setBaseRP((short) 0xffd0);
 		getState().setRP((short) 0xffd0);
-		
+
 		push(oldrp);
 		push(oldsp);
 		
@@ -414,8 +427,10 @@ public class CpuF99b extends CpuBase {
 	 */
 	public void triggerInterrupt(int intr) {
 		idle = false;
-		rpush(((StatusF99b)getStatus()).flatten());
+		rpush(getST());
 		((StatusF99b)getStatus()).setIntMask(0);
+		((StatusF99b)getStatus()).setCurrentInt(intr);
+		setRegister(SR, getStatus().flatten());		// TODO: why?
 		short addr = getIntVecAddr(intr);
 		contextSwitch(addr);
 	}
