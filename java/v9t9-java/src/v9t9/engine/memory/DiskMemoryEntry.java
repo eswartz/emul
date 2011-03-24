@@ -9,6 +9,7 @@ package v9t9.engine.memory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Arrays;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.ejs.coffee.core.settings.ISettingSection;
@@ -269,7 +270,25 @@ public class DiskMemoryEntry extends MemoryEntry {
         if (bStorable && bDirty) {
             byte[] data = new byte[filesize];
             area.copyToBytes(data);
-            DataFiles.writeMemoryImage(filepath, filesize, data);
+            File old = DataFiles.resolveFile(filepath);
+            File backup = DataFiles.resolveFile(filepath + "~");
+            boolean isNew = true;
+            if (old.exists()) {
+            	if (backup.exists()) {
+            		byte[] origData = new byte[(int) backup.length()];
+            		try {
+            			DataFiles.readMemoryImage(backup.getAbsolutePath(), 0, filesize, origData);
+            			isNew = !Arrays.equals(data, origData);
+            		} catch (IOException e) {
+            			// ignore
+            		}
+            	}
+            }
+            if (isNew) {
+            	backup.delete();
+            	old.renameTo(backup);
+            	DataFiles.writeMemoryImage(filepath, filesize, data);
+            }
             bDirty = false;
         }
         super.save();

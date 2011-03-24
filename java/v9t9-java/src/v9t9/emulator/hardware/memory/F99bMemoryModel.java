@@ -38,7 +38,8 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 			cpuRomEntry = DiskMemoryEntry.newByteMemoryFromFile(
 	    			0x400, 0, "CPU ROM",
 	        		CPU,
-	                filename, 0x400, false);
+	                filename, 
+	                0x400, false);
 			cpuRomEntry.load();
 			memory.addAndMap(cpuRomEntry);
 			cpuRomEntry.copySymbols(CPU);
@@ -91,7 +92,9 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 			DiskMemoryEntry entry = DiskMemoryEntry.newByteMemoryFromFile(
 	    			0x2000, 0xE000, "GRAM", 
 	    			GRAPHICS,
-	    			"f99bgram.bin", 0x0, true);
+	    			// use full path so changes are saved 
+	    			DataFiles.resolveFile("f99bgram.bin").getAbsolutePath(), 
+	    			0x0, true);
 			memory.addAndMap(entry);
 		} catch (IOException e) {
 			reportLoadError(eventNotifier, filename, e);
