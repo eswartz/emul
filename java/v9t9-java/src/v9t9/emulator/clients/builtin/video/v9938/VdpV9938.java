@@ -288,7 +288,7 @@ public class VdpV9938 extends VdpTMS9918A {
 		//System.out.println(Utils.toHex2(reg) + " = " + Utils.toHex2(val));
 		int redraw = super.doWriteVdpReg(reg, old, val);
 		
-		if (reg != 17 && reg < 32 && old == val)
+		if (reg != 16 && reg != 17 && reg < 32 && old == val)
 			return redraw;
 		
 		switch (reg) {
