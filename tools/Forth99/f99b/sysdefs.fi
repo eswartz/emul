@@ -153,6 +153,7 @@ $2000       Constant    >gram_base
 3           constant    CTX_RP0       
 4           constant    CTX_UP       
 7           constant    CTX_INT        
+8           constant    CTX_SR        
 
 \ -----------   opcodes
 

@@ -1155,6 +1155,7 @@ error" need key"
 [THEN]
 
 [IFUNDEF] WITHIN
+\ implementation from ANS FORTH spec that works with both signed and unsigned number ranges
 : WITHIN    ( test low high -- flag )   
     over - >r - r> u<
 ;

@@ -844,6 +844,9 @@ User 'scry
     'fl @  8 and if        \ move cursor
         0 'col !  0 'line !
     then      
+
+    \ scroll once to see if redrawing block for new line/col
+    edit.scroll
     
     \ did anything change?
     'fl @
@@ -859,6 +862,7 @@ User 'scry
         fix-column
     then
 
+    \ scroll again in case column was reverted
     edit.scroll
     
     dup 4 and if

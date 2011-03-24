@@ -71,6 +71,9 @@ cell    RamVar    vdp-timeout
 :   nmi-int-handler
     \ acknowledge all interrupts
     $00 'INTSP c!
+    \ reset mask
+    0  (>context) [ CTX_SR field, ] 
+    
     $00 msx-cmdsetup
     ."  aborted" cr
     abort

@@ -317,7 +317,7 @@ Create msx-enhregs
 ;
 
 |+ : vstdpal
-    0 16 (vr!)
+    $9000 v-regaddr
     32 0 do 
         msx-stdpalette i + c@  VDPCL c!
     loop
