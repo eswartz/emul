@@ -177,7 +177,7 @@ User 'lines
     'col +! 
     'col @   0< if
         $7fff 'col !
-        $40 fl| 
+        $60 fl| 
         -1
     else
         \ >llen  > if 
@@ -263,47 +263,11 @@ User 'lines
 \   (on the same line).  May span past EOL for insertion.
 : +tab ( col dir -- col )
     0> if
-        tab-size + c/l min
+        tab-size + 
     else
         tab-size - 0 max
     then
     tab-size negate and
-;
-
-\   Find a character, matching a given test relative to whitespace.
-\   If the current char matches the test,
-\   that col is returned.  Stops at endcol.
-
-\ test-xt [ chr bl -- t|f ]
-:: >ws?   ( laddr endcol col dir test-xt -- col ) 
-    endcol col ?do
-        laddr i + c@ bl  test-xt  execute
-        if
-            i unloop exit
-        then
-    dir +loop
-    endcol
-;
-
-\   Find the next tab position in the given direction, stopping either
-\   when that position is reached, or the line has a
-\   non-whitespace character following whitespace.
-: >tab ( laddr col dir -- col )
-    \ find where to tab to
-    dup >r
-    over >r       ( r: dir col )
-    +tab          ( laddr tabcol )
-
-    \ skip to whitespace
-    2dup r> r@ ['] <= >ws? ( laddr tabcol wscol )  ( r: dir )  
-    
-    \ if wscol == tabcol, then tabcol is the target
-    2dup = if
-        drop nip rdrop ( col )
-    else
-        \ else, find non-whitespace between here and there
-        r> ['] >  >ws?  ( col )
-    then
 ;
 
 \ -------------------------------------------------------------
@@ -431,17 +395,28 @@ User 'fl
 \   insert/overwrite mode   
 : !ins/ovr $8000 ovr +! ;      
 
+: fix-column
+    >llen  'col @  min  'col !
+;
+
 \   delete one char back
-: !bksp !left  laddrs!  ^del ;
+: !bksp !left  laddrs!  fix-column  ^del ;
+
+\   Figure out how to tab in a given direction
+: (tab)   ( baddr dir -- laddr tabcol col )
+    >r 
+     'laddr @ 'col @  dup r>  +tab  swap 
+;
+
 
 : !tab   
-\   1 (tab)
-\   ?do bl ^char drop loop 
+   1 (tab)
+   ?do bl ^char drop loop 
 ;
 
 : !untab  
-\  -1 (tab)
-\    ?do  ^bksp drop -1 +loop
+  -1 (tab)
+    ?do  !bksp drop -1 +loop
 ;
 
 \   enter: 
@@ -870,8 +845,6 @@ User 'scry
         0 'col !  0 'line !
     then      
     
-    edit.scroll
-    
     \ did anything change?
     'fl @
     
@@ -883,8 +856,10 @@ User 'scry
     then then
     
     dup $40 and if
-        >llen  'col @  min  'col !
+        fix-column
     then
+
+    edit.scroll
     
     dup 4 and if
         edit.drawblock
