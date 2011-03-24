@@ -1041,6 +1041,11 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         children_exps.onSuspended();
         children_hover_exps.onSuspended();
         for (TCFNodeSymbol s : symbols.values()) s.onExeStateChange();
+        TCFNode n = parent;
+        while (n instanceof TCFNodeExecContext) {
+            ((TCFNodeExecContext)n).postStateChangedDelta();
+            n = n.parent;
+        }
         postAllChangedDelta();
     }
 
@@ -1112,7 +1117,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                 TCFDataCache<TCFContextState> state_cache = e.getState();
                 if (!state_cache.validate(done)) return null;
                 TCFContextState state_data = state_cache.getData();
-                if (state_data != null && state_data.is_suspended) return true;
+                if (state_data != null && state_data.is_suspended && !e.isNotActive()) return true;
             }
             else {
                 Boolean b = e.hasSuspendedChildren(done);
