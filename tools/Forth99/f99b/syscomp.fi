@@ -2,9 +2,11 @@
 : >call  1 urshift $8000 or  ; 
 : call>  1 lshift  ; 
  
+: call,  >call , ;
+
 :: inlineable ( opc -- f )
     opc $20 >= 
-    opc $7a $7f within not  \ branches
+    opc $7a $80 within not  \ branches + double + ext
     opc Idovar = not  
     and and
 ;
@@ -65,7 +67,7 @@ User STATE
             c,
         else
             drop
-            addr >call ,
+            addr call,
         then
         exit
     then
@@ -92,7 +94,7 @@ User STATE
             exit
         then        
 
-        addr >call ,   
+        addr call,   
         exit
     then        
     
@@ -100,7 +102,7 @@ User STATE
     addr ['] (?do)    = if  Idup_d , ItoR_d , Isub c, I0branchB c,  exit  then
 
     \ all other cases
-    addr >call ,   
+    addr call,   
 ;
 
 export>

@@ -56,7 +56,7 @@ User STATE
 
 | : parse-name ( c"..."  -- caddr 0 | nfa 1|-1 ) \ "word
 
-    (skip-spaces) bl parse ( caddr u )
+    (parse-name)
     ?dup 0= if
         err-empty-name message quit
     then

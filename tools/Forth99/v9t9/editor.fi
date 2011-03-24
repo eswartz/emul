@@ -544,7 +544,7 @@ here  edittab -  Constant  editsz
 \ Handle one key for the buffer and update cursor/line/buffer
 :: onkey       ( key' baddr -- )
     \ if printable, just insert/overwrite
-    key' &32 &126 within if  
+    key' &32 &127 within if  
         key' baddr edit.char  
     else
         \ try for function

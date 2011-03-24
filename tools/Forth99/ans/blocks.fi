@@ -20,7 +20,7 @@ User BLK
 &1024 constant CHARS/BLOCK
 [THEN]
 
-chars/block c/l /   constant L/BLK
+chars/block c/l U/   constant L/BLK
  
 
 [IFUNDEF] FIRST
@@ -52,15 +52,13 @@ User SCR
 \   block#  if in use, or'ed by 0x8000 if modified
 \   <block memory>
 
-$404  constant  (b/blk)
-
 : R/W ( addr block# r/w -- )
     RWBLK err-block-i/o ?ERROR
 ;
 
 \ Distance to the next buffer relative to the previous.
 : +BUF ( baddr -- next-addr distance )
-    (b/blk) +  dup limit >= if
+    (#blk) +  dup limit >= if
         drop first
     then
     dup prev @ -
@@ -152,7 +150,7 @@ $404  constant  (b/blk)
 : save-buffers
     \ Basically, force out all the buffers by bogusly
     \ asking for lots of buffers for block $7fff.
-    limit first - (b/blk) / 1+ 0 do
+    limit first - (#blk) U/  1+ 0 do
         $7fff buffer drop
     loop
 ;

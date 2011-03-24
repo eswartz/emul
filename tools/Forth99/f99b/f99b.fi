@@ -106,21 +106,17 @@
     \ postpone rdrop 
 ; immediate target-only
 
-: noop 
-    abort
-;
-
 : dodefer, ( -- )
-    ['] noop  >call  ,
+    ['] ;S  >call  ,
     Iexit c,
 ;
 
 : is-check ( "..." -- is-addr ) 
-    '  :> copy 
-    copy  @  $8000  >=
-    copy cell+ c@  Iexit  =
+    '  dup >r
+    @  $8000  >=
+    r@ cell+ c@  Iexit  =
     and not  err-not-deferred ?error 
-    copy 
+    r> 
 ; 
 
 : is,  ( xt-addr is-addr -- )

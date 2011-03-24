@@ -108,7 +108,8 @@ $80         constant    (#SP)
 $100        constant   (#slit-pad)
 $100        constant   (#tib)
 
-$400        \ basic block size 
+|+ $400        constant    CHARS/BLOCK \ basic block size
+CHARS/BLOCK 
     2 +     \ block # field
     2 +     \ modified flag
             constant   (#blk)

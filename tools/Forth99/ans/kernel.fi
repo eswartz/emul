@@ -813,9 +813,10 @@ $20 constant BL
 ;
 
 [IFUNDEF] WORD
-| : (parse-word)  ( ch -- caddr u )
+
+| : (parse-word)  ( -- caddr u )
     (skip-spaces)
-    parse               \ get new word
+    parse
 ;
 
 : WORD  \   ( char "<chars>ccc<char>" -- c-addr )
@@ -1033,32 +1034,22 @@ error" need key"
 [IFUNDEF] (match)       
 
 \   Match 'char' inside [caddr..caddr+u) and return length of word
-| : (match)       ( caddr u char -- u )
+| :: (match)       ( caddr len char xt -- u )
 
-    over >r         \ save original #chars
-    >r              \ store char 
-    begin
-        dup         \ any more chars left?
-        if
-            over c@     \ ( caddr u ch' )
-            r@          \ ( caddr u ch' ch )
-            <>          \ ( caddr u t/f )
-        else
-            0
-        then
-    while
-        1- swap 1+ swap
-    repeat
-    rdrop
+    caddr
+    len 0 ?do
+        dup c@
+        char xt execute   ( caddr u t/f )
+        if  drop i unloop exit then
+        1+
+    loop
 
-    swap drop       ( u' )
-    r>              ( u' u )
-    swap -          ( len )
+    drop len
 ;
 [THEN]
 
 \ : mystr s" 1111123456" ;
-\ test" (match) mystr $32 (match) mystr drop swap type 1"
+\ test" (match) mystr $32 - (match) mystr drop swap type 1"
 
 \   Return bounds of remaining source
 : (src>)        ( -- caddr u )
@@ -1074,14 +1065,21 @@ error" need key"
 ;
 
 
+:: (PARSE)     ( ch xt -- c-addr u )  \ "ccc<char>"
+\   Parse ccc delimited by the delimiter char.  Use xt to interpret 'ch'.
+\   c-addr is the address (within the input buffer) and u is the length of the parsed string. If the parse area was empty, the
+\   resulting string has a zero length.
+    (src>) over :> caddr 
+    ch xt (match)
+    dup (>src)
+    caddr swap
+;
 : PARSE     ( char "ccc<char>" -- c-addr u )
 \   Parse ccc delimited by the delimiter char.
 \   c-addr is the address (within the input buffer) and u is the length of the parsed string. If the parse area was empty, the
 \   resulting string has a zero length.
-    (src>) over >r 
-    rot (match)
-    dup (>src)
-    r> swap
+    dup $20 = if ['] <= else ['] = then
+    (parse)
 ;
 
 [ENDIF]
@@ -1176,7 +1174,8 @@ User BLK
     blk @
     if 
         \ block file
-        >in @ c/l / 1+ c/l * >in ! exit
+        \ >in @ c/l / 1+ c/l * >in ! exit
+        10 parse 2drop 
     else
         \ consume rest of buffer
         source >in ! drop 

@@ -314,12 +314,12 @@ User 'lines
 : ~curs ( ladj -- badj )
     'line +!
     'line @  dup  0< if
-        \ l/blk 1- 'line !    -1      \ TODO
         0 'line !    
+        drop 
     else
         'lines @  >= if !end-line then  
-        0
     then
+    0
 ;
 
 \   Set up a move between the current and next line
@@ -413,13 +413,8 @@ User 'fl
 \   dup; down    
 : !dup-line  ~dup scr +! ;               
 
-: !home  ^home ;                     
-: !end  ^end ;                      
-
-: !home-line  
-    0 'line !
-    0 'col ! 
-;                 
+: !home-line ;
+                 
 : !end-line 'lines @  1-  0 max  'line ! ;  
 
 \   erase line contents (copying what's deleted)
@@ -433,17 +428,11 @@ User 'fl
     >curs  'laddr) @    over -  (erase)
 ;
                 
-\   delete line, no copy
-: !del-line ~del ;
-
 \   insert/overwrite mode   
 : !ins/ovr $8000 ovr +! ;      
 
-\   delete char           
-: !del ^del ;                  
-
 \   delete one char back
-: !bksp !left  laddrs!  !del ;
+: !bksp !left  laddrs!  ^del ;
 
 : !tab   
 \   1 (tab)
@@ -465,7 +454,7 @@ User 'fl
         nl ^ins drop
         0 'col !
         1 'lines +!
-        $14 fl|    \ this flag only set in insert mode
+        $15 fl|    \ this flag only set in insert mode
     then
     1 ~curs
     scr +!
@@ -476,12 +465,6 @@ User 'fl
     'laddr) @  1  delete-range
 ;
         
-\   save
-: !save  flush ;
-
-\   revert
-: !revert  revert ;
-
 : !clear 
     baddr chars/block erase
 ; 
@@ -578,27 +561,27 @@ User 'fl
 
 create edittab 
     &3   ( ctrl-c copy line )               $10 c, c,  ' !copy-line ,
-    &4   ( ctrl-d delete line, no copy )    $35 c, c,  ' !del-line ,
+    &4   ( ctrl-d delete line, no copy )    $35 c, c,  ' ~del ,
     &8   ( bksp )                           $33 c, c,  ' !bksp ,
     &9   ( tab )                            $33 c, c,  ' !tab ,
     &10  ( ctrl-j join lines )              $37 c, c,  ' !join ,   
     &11  ( ctrl-k clear end of line )       $23 c, c,  ' !erase-to ,   
     &12  ( ctrl-l load )                    $02 c, c,  ' !load ,
     &13  ( enter )                          $32 c, c,  ' !enter ,
-    &19  ( ctrl-s save )                    $02 c, c,  ' !save ,
+    &19  ( ctrl-s save )                    $02 c, c,  ' flush ,
     &22  ( ctrl-v paste line )              $31 c, c,  ' !paste ,
-    &152 ( fctn-0 end )                     $02 c, c,  ' !end ,
-    &153 ( fctn-1 delete char )             $33 c, c,  ' !del ,
+    &152 ( fctn-0 end )                     $02 c, c,  ' ^end ,
+    &153 ( fctn-1 delete char )             $33 c, c,  ' ^del ,
     &154 ( fctn-2 insert/overwrite mode )   $02 c, c,  ' !ins/ovr ,
     &155 ( fctn-3 erase line )              $33 c, c,  ' !erase ,   
     &156 ( fctn-4 to end line )             $22 c, c,  ' !end-line ,
-    &157 ( fctn-5 home )                    $22 c, c,  ' !home  ,
+    &157 ( fctn-5 home )                    $22 c, c,  ' ^home  ,
     &158 ( fctn-6 to first line )           $2A c, c,  ' !home-line ,
     &159 ( fctn-7 help          )           $06 c, c,  ' !help ,
     &160 ( fctn-8 dup; down )               $37 c, c,  ' !dup-line ,
     &161 ( fctn-9 exit )                    $00 c, c,  ' !exit ,
     &178 ( ctrl-fctn-l clear )              $3F c, c,  ' !clear ,
-    &184 ( ctrl-fctn-r revert )             $36 c, c,  ' !revert ,
+    &184 ( ctrl-fctn-r revert )             $36 c, c,  ' revert ,
     &197 ( ctrl-fctn-4 block down  )        $3E c, c,  ' !block-down ,
     &198 ( ctrl-fctn-5 refresh )            $36 c, c,  ' !refresh  ,
     &199 ( ctrl-fctn-6 block up  )          $3E c, c,  ' !block-up ,
@@ -621,7 +604,7 @@ here  edittab -  Constant  editsz
 \ Handle one key for the buffer and update cursor/line/buffer
 :: onkey       ( key' -- )
     \ if printable, just insert/overwrite
-    key' &32 &126 within if  
+    key' &32 &127 within if  
         key' edit.char  
     else
         \ try for function
@@ -697,15 +680,15 @@ User 'scry
     0 vblink!    
 ;
 
-: number-rows
-    \ draw row numbers    
-    l/blk 0 do
-        0  i #y-border +  at-xy  
-        
-        i  'scry @ +  #x-border 2-  u.r    
-    loop
-
-;
+\ : number-rows
+\     \ draw row numbers    
+\     l/blk 0 do
+\         0  i #y-border +  at-xy  
+\         
+\         i  'scry @ +  #x-border 2-  u.r    
+\     loop
+\ 
+\ ;
 
 \ Draw the overarching static UI
 \
@@ -745,9 +728,6 @@ User 'scry
     #statuscol [ #y-border 8 + ] literal    at-xy  ." #LN"
     #statuscol [ #y-border 10 + ] literal   at-xy  ." #CH"
 
-    \ draw row numbers    
-    number-rows
-    
     \ draw editor window
     #x-border #y-border c/l l/blk
     draw-window
@@ -766,6 +746,7 @@ User 'scry
 
 : edit.drawstatus
     0 vblink!
+    
     #statuscol [ #y-border 1+ ] literal     at-xy  scr @    4 u.r   
                                                     dirty? [char] * and emit 
     #statuscol [ #y-border 3 + ] literal    at-xy  'line @  4 u.r 
@@ -774,12 +755,12 @@ User 'scry
     #statuscol [ #y-border 7 + ] literal    at-xy  'laddr) @  'laddr @ -  4 u.r                            
     #statuscol [ #y-border 9 + ] literal    at-xy  'lines @   4 u.r                            
     #statuscol [ #y-border 11 + ] literal    at-xy  baddr) baddr -  4 u.r
-      
+
     \ debug                          
     \ #statuscol [ #y-border 12 + ] literal    at-xy  depth 4 u.r                            
     
     #statuscol [ #y-border 14 + ] literal    at-xy  ovr @  if ." OVR" else ." INS" then
-    
+
     \ set cursor
     'col @ #x-border + 'scrx @ -
     'line @ #y-border +  'scry @ -  at-xy
@@ -793,11 +774,6 @@ User 'scry
     lad >lend  :> lad)
     lad)  lad+x -  0 max  :> len
 
-    \ loffs 'scry @ +  'line @  = if
-    \    lad  'laddr  !
-    \    lad) 'laddr) !
-    \ then
-        
     \ draw content, if any visible
     lad+x  
     #x-border  loffs #y-border +   txt-xy>addr  
@@ -889,6 +865,10 @@ User 'scry
     if  
         $C fl|
     then
+
+    'fl @  8 and if        \ move cursor
+        0 'col !  0 'line !
+    then      
     
     edit.scroll
     
@@ -918,10 +898,6 @@ User 'scry
         update
         2 or   
     then
-    
-    dup 8 and if        \ move cursor
-        0 'col !  0 'line !
-    then      
     
     2 and if
         edit.drawstatus      \ cursor loc, block #, etc

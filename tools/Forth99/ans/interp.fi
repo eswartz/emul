@@ -15,7 +15,7 @@ user >IN
 
 [IFUNDEF] CHAR
 : CHAR  ( -- c )
-    bl (parse-word)
+    (parse-word)
     drop c@
 ;
 [THEN]
@@ -228,10 +228,15 @@ user >IN
     then
 ;
 
+| : (parse-name)
+    (skip-spaces)
+    bl parse
+;
+
 : interpret
     begin
         ?stack
-        bl (parse-word) 
+        (parse-name)
         dup
     while
         interpreter

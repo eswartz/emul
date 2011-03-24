@@ -105,11 +105,11 @@
 ;
 
 : fdc-command ( cmd-byte -- ! )
-    3000 fdc-wait-ready
+    3000 dup  fdc-wait-ready
     
     'DSKCMD c!
     
-    3000 fdc-wait-ready
+    fdc-wait-ready
 ;
 
 
@@ -248,7 +248,7 @@ chars/block bytes-per-sector u/  constant secs-per-block
 
 : gram-rwblk    ( addr  block# r/w -- err )
     >r
-    dup  0  #GRAM 1-  within if 
+    dup  0  #GRAM  within if 
         chars/block U*  >gram_base +  
         r>  if  
             swap  chars/block  gcmove  
@@ -283,7 +283,12 @@ export>
 
 \ read or write:  r/w == TRUE means read, FALSE means write
 : RWBLK    ( addr  block# r/w -- err )
-    >rwblk @  execute
+    over $7fff = if
+        \ test
+        2drop drop 0
+    else
+        >rwblk @  execute
+    then
 ;
 
 | : io-init
