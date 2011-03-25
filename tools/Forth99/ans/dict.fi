@@ -35,15 +35,6 @@
 | $40 constant |immed
 | $80 constant |srch
 
-\   Dictionary entry:
-\
-\   [ word: previus entry ]
-\   [ NFA: byte flags + length; name; space terminator to align ]
-\   XT (under direct threading).  For code words, the code directly
-\   lives here.  Colon words contain "BL *DOCOL" (R8).
-\   Does words contain "BL *DODOES" (R7).
-
-
 \   \\\\\\\\\\\\\\
 
 \   Custom dictionary stuff
