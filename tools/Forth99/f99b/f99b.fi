@@ -22,6 +22,12 @@
 ;
 
 
+: >BODY ( xt -- a-addr )
+    \   a-addr is the data-field address corresponding to xt. An ambiguous condition exists if xt is not for a word defined via
+    \   CREATE.
+    2+
+; 
+
 | : douser,  ( idx -- )
     dup $100 < if  Iupidx c, c,  else
                     IlitW c,  ,  Iuser c, then
@@ -94,7 +100,6 @@
     r> lastxt              ( where dovar, was ) 
     swap  >call swap !    ( call instead of dovar, )  
 ; target-only
-
 
 ( when compiling a creator word )
 : does> 

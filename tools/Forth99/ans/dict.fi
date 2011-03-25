@@ -145,12 +145,12 @@ User DP
 [THEN]
 
 [IFUNDEF] >BODY
-: >BODY
-\        ( xt -- a-addr )
-\   a-addr is the data-field address corresponding to xt. An ambiguous condition exists if xt is not for a word defined via
-\   CREATE.
-    2 cells +
-;
+\ : >BODY
+\ \        ( xt -- a-addr )
+\ \   a-addr is the data-field address corresponding to xt. An ambiguous condition exists if xt is not for a word defined via
+\ \   CREATE.
+\ 2 cells +
+\ ;
 [THEN]
 
 [IFUNDEF] ALIGN
