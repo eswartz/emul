@@ -7,9 +7,7 @@
 
 : message     (  # -- )
     dup  [ num-msgptrs 1- negate ] literal 0   within  if
-        graddr  >r
         >message  space gtype cr
-        r>  gwaddr        
     else
         ." ??? " . cr
     then

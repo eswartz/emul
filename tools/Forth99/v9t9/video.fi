@@ -382,9 +382,7 @@ include video_msx.fi
 ;
 
 :   v-font! ( groffs -- graddr )
-    graddr  >r
     g@  v-font !
-    r>  gwaddr
 ;
 
 | : font! ( groffs w h )

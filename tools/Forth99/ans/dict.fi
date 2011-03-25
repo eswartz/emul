@@ -197,9 +197,8 @@ User DP
     else
         \ fall back to GROM dictionary
         drop
-        r>  graddr >r  
+        r>   
         >grom_dict g@  >grom_dictend g@  (gfind)
-        r> gwaddr
     then
 ;
 

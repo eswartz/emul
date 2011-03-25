@@ -108,7 +108,7 @@
     drop true
 ;
 
-\ type null-terminated string (does not preserve graddr) 
+\ type null-terminated string
 : (gtype) ( gaddr -- gaddr )
     begin
         dup gc@ dup
@@ -119,7 +119,7 @@
     drop  1+
 ;
 
-\ type null-terminated string (does not preserve graddr) 
+\ type null-terminated string
 : gtype ( gaddr -- gaddr )
     (gtype) drop
 ;

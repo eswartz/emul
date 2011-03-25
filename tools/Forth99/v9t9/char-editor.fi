@@ -492,8 +492,6 @@ User 'fl
     
     cls
     
-    graddr >r
-    
     >grom_editorhelp g@
 
     14 0 do
@@ -502,8 +500,6 @@ User 'fl
     loop
     
     drop
-    
-    r> gwaddr    
  
     key drop
     
