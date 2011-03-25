@@ -9,7 +9,7 @@
 
 [IFUNDEF] (
 : (
-    $29 parse 2drop
+    [char] )  parse 2drop
 ;   immediate target-only
 [THEN]
 
@@ -19,7 +19,7 @@ user >IN
 
 [IFUNDEF] CHAR
 : CHAR  ( -- c )
-    (parse-word)
+    bl parse
     drop c@
 ;
 [THEN]
@@ -278,7 +278,7 @@ user >IN
             \ print comments only when using user input
             blk @ source-id and 0= if 
                 state @ 0= if
-                    ."  ok" .s
+                    msg-ok message  .s
                 then
                 cr
             then

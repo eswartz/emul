@@ -814,7 +814,7 @@ $20 constant BL
 
 [IFUNDEF] WORD
 
-| : (parse-word)  ( -- caddr u )
+| : (parse-word)  ( ch -- caddr u )
     (skip-spaces)
     parse
 ;
@@ -1074,6 +1074,7 @@ error" need key"
     dup (>src)
     caddr swap
 ;
+
 : PARSE     ( char "ccc<char>" -- c-addr u )
 \   Parse ccc delimited by the delimiter char.
 \   c-addr is the address (within the input buffer) and u is the length of the parsed string. If the parse area was empty, the

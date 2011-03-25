@@ -11,6 +11,7 @@
     msg:  err-none
     msg:  err-fault
     msg:  err-aborted
+    msg:  msg-ok
     msg:  err-undefined
     msg:  err-redefining
     msg:  err-interpret-only
