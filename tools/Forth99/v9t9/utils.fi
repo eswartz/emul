@@ -1,0 +1,57 @@
+
+\ \\\\\\\\\\\\\
+
+: per-line
+    win-cx c@  8 - 2 rshift 1- 1 max  aligned
+;
+
+: 2u.
+    0 <# # # #> type
+;
+
+: 4u.
+    0 <# # # # # #> type
+;
+
+\ dump one line
+| : (dmpln) ( addr cnt xt -- )
+    >r  \ save xt
+    ( addr cnt )
+    over 4u. space [char] = emit space
+    2dup over + swap
+    do 
+        i j execute 2u. space
+    loop    
+    ( addr cnt )
+    per-line over ?do 3 spaces loop
+    ( addr cnt )
+    0 ?do dup i + j execute dup $20 $7f within 0= 
+            if drop [char] . then emit 
+    loop drop
+    rdrop
+    cr
+;
+
+| : (dmp) ( addr cnt xt -- )
+    >r cr
+    over +   ( addr addr+cnt )
+    swap
+    do
+        i per-line 
+        j (dmpln)
+        (pause?) if leave else per-line then
+    u+loop
+    rdrop
+;
+
+: dump
+    base @ >r hex
+    ['] c@ (dmp)
+    r> base !
+;
+
+: vdump
+    base @ >r hex
+    ['] +vc@ (dmp)
+    r> base !
+;

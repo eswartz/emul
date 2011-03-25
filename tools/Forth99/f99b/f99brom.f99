@@ -69,6 +69,8 @@ include ../ans/compile.fi
 
 include ../ans/interp.fi
 
+include ../v9t9/utils.fi
+
 include ../v9t9/io.fi
 
 \ include ../v9t9/editor.fi
