@@ -10,7 +10,7 @@
 
 10 constant nl
 
-4 constant tab-size
+2 constant tab-size
 
 \   Cursor line 
 User 'line      ( 0 - l/blk )
@@ -290,7 +290,7 @@ User 'fl
         0 'line !    
         drop 
     else
-        'lines @  >= if !end-line then  
+        'lines @  >= if !next-page then  
     then
     0
 ;
@@ -378,9 +378,9 @@ User 'fl
 \   dup; down    
 : !dup-line  ~dup scr +! ;               
 
-: !home-line ;
+: !prev-page 0 'line @ l/blk - max  'line ! ;
                  
-: !end-line 'lines @  1-  0 max  'line ! ;  
+: !next-page 'lines @  1-  'line @ l/blk + min  0 max  'line ! ;  
 
 \   erase line contents (copying what's deleted)
 : (erase) ( laddr c -- ) 2dup (~copy)  delete-range ; 
@@ -417,7 +417,7 @@ User 'fl
 
 : !untab  
   -1 (tab)
-    ?do  !bksp drop -1 +loop
+    ?do  !bksp -1 +loop
 ;
 
 \   enter: 
@@ -537,9 +537,9 @@ create edittab
     &153 ( fctn-1 delete char )             $33 c, c,  ' ^del ,
     &154 ( fctn-2 insert/overwrite mode )   $02 c, c,  ' !ins/ovr ,
     &155 ( fctn-3 erase line )              $33 c, c,  ' !erase ,   
-    &156 ( fctn-4 to end line )             $22 c, c,  ' !end-line ,
+    &156 ( fctn-4 to end line )             $22 c, c,  ' !next-page ,
     &157 ( fctn-5 home )                    $22 c, c,  ' ^home  ,
-    &158 ( fctn-6 to first line )           $2A c, c,  ' !home-line ,
+    &158 ( fctn-6 to first line )           $22 c, c,  ' !prev-page ,
     &159 ( fctn-7 help          )           $06 c, c,  ' !help ,
     &160 ( fctn-8 dup; down )               $37 c, c,  ' !dup-line ,
     &161 ( fctn-9 exit )                    $00 c, c,  ' !exit ,
