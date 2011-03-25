@@ -1,10 +1,4 @@
 
-
-\ : create ; target-only
-\ : : ; target-only
-\ : ; $70 c, ; immediate target-only 
-
-
 : lastnfa
     latest lfa>nfa
 ;
@@ -24,17 +18,11 @@ User STATE
 [THEN]
 
 
-\ \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-
 \   Words required by cross-compiler, not in standard.
 
 [IFUNDEF] noop
 : noop ;
 [THEN]
-
-\ -------------------------------------------
-
-
 
 \ \\\\\\\\\\\\\\\\\\\\\\\\
 
@@ -42,12 +30,7 @@ User STATE
     state @ 0= err-compile-only ?error
 ;
 
-\   Differs from old version:
-\   set $80 for visible definition.
-\   Note: this affects xt>nfa, since it stops when
-\   the LFA's length byte has $80.  
-\   If we for some reason to "latest xt>nfa" while compiling
-\   a word, it will fail...  ;)
+\ Hide a word while compiling, to allow redefining a word in terms of the same name
 : smudge
     lastnfa 
     dup c@ |srch xor swap c!
@@ -68,7 +51,7 @@ User STATE
     \ Get name
     parse-def-name
     
-    if ." redefining " drop here
+    if  err-redefining message  drop  here
     then 
 ;
 
@@ -88,7 +71,7 @@ User STATE
     name"
     
     \ Get space for name
-    c@ width min
+    c@ &nmask min
     1+ aligned allot
 
     here (register-symbol)

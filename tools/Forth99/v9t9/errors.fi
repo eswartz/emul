@@ -7,8 +7,8 @@
 
 : message     (  # -- )
     dup  [ num-msgptrs 1- negate ] literal 0   within  if
-        >message  space gtype cr
+        >message  space gtype
     else
-        ." ??? " . cr
+        ." ??? " .
     then
 ;

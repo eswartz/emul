@@ -12,6 +12,7 @@
     msg:  err-fault
     msg:  err-aborted
     msg:  err-undefined
+    msg:  err-redefining
     msg:  err-interpret-only
     msg:  err-loading-only
     msg:  err-block-i/o

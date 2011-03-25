@@ -167,6 +167,15 @@ User 'lines
 
 \ -----------------------------------------------------
 
+
+\   Flags: result of last command(s)
+\
+\       $1: content changed, possibly only current line
+\       $2: cursor moved OR redraw status
+\       $4: redraw block
+\       $8: move cursor to upper-left
+User 'fl
+
 : fl|
     'fl  |!
 ;
@@ -347,14 +356,6 @@ User 'lines
     0
 ;
 
-
-\   Flags: result of last command(s)
-\
-\       $1: content changed, possibly only current line
-\       $2: cursor moved OR redraw status
-\       $4: redraw block
-\       $8: move cursor to upper-left
-User 'fl
 
 : pause begin key? while key drop repeat  key drop ;
 : trace [char] ( emit r@ u. [char] ) emit space .s cr pause ;

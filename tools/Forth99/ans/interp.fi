@@ -3,6 +3,10 @@
 | User >source
 | User #source
 
+| User loadfile
+| User loadline
+
+
 [IFUNDEF] (
 : (
     $29 parse 2drop
@@ -111,9 +115,6 @@ user >IN
 \   and >source/#source for all input strings.
 \   loadfile=0 for user input, loadline<0 for evaluate string.
 
-| User loadfile
-| User loadline
-
 \   Push the input state.
 : <input        ( xn ... x1 n -- R: xn ... x1 n )
     r>
@@ -140,12 +141,12 @@ user >IN
 ;
 
 
-: ?stack
-    depth 0< if
-        ." stack empty!" cr
-        abort
-    then
-;
+\ : ?stack
+\    depth 0< if
+\        ." stack empty!" cr
+\        abort
+\    then
+\ ;
 
 : huh?  ( caddr -- )
     count type space
@@ -235,7 +236,7 @@ user >IN
 
 : interpret
     begin
-        ?stack
+        \ ?stack        \ checked automatically
         (parse-name)
         dup
     while

@@ -31,7 +31,7 @@
 ;
 
 
-\ $1F constant &nmask
+| $1F constant &nmask
 | $40 constant |immed
 | $80 constant |srch
 
@@ -39,46 +39,30 @@
 
 \   Custom dictionary stuff
 
-[IFUNDEF] TRAVERSE
-: traverse  ( xt|nfa dir -- nfa|xt )
-\ traverse from one end of definition to the other
-\ dir < 0 means xt->nfa, dir>0 means nfa->xt
-
-    0> if
-        \ nfa -> xt
-
-        dup c@ $1f AND  \ get the length byte
-        + 1+ aligned
-
-        \ [ has? profiling [if] ] cell+ [ [then] ]
-    else
-        \ xt -> nfa
-        \ [ has? profiling [if] ] #cell - [ [then] ]
-
-        >r
-
-        latest
-        begin
-            dup if 
-                dup  lfa>nfa  nfa>xt  r@  = 
-                if  rdrop  lfa>nfa  exit  then
-                @
-            else
-                rdrop exit
-            then
-        again
-    then
-;
-
-[THEN]
-
-
 : nfa>xt
-    1 traverse
+    dup c@ &nmask AND  \ get the length byte
+    + 1+ aligned
+
+    \ [ has? profiling [if] ] cell+ [ [then] ]
+
 ;
 
 : xt>nfa
-   -1 traverse
+    \ xt -> nfa
+    \ [ has? profiling [if] ] #cell - [ [then] ]
+
+    >r
+
+    latest
+    begin
+        dup if 
+            dup  lfa>nfa  nfa>xt  r@  = 
+            if  rdrop  lfa>nfa  exit  then
+            @
+        else
+            rdrop exit
+        then
+    again
 ;
 
 test" xt>nfa ['] traverse xt>nfa c@ $88 = "
@@ -97,14 +81,12 @@ test" nfa>xt ['] traverse dup xt>nfa nfa>xt = "
 ;
 
 : >id       ( nfa -- caddr u )
-    count $1f and 
+    count &nmask and 
 ;
 
 : id.       ( nfa -- )
     >id type space
 ;
-
-$1F constant width      \ max length of a name
 
 \   \\\\\\\\\\\\\\\\\
 
@@ -122,7 +104,7 @@ User DP
 \   Similarly, the use of ' and ['] with compiling words is unclear if the precise compilation behavior of those words is not
 \   specified, so ANS Forth does not permit a Standard Program to use ' or ['] with compiling words.
     bl word find 
-    0= if  count type  -1 message abort  then      \ !!!
+    0= if  count type  err-undefined message abort  then      \ !!!
 ;
 [THEN]
 
@@ -256,7 +238,7 @@ User DP
 
 [ifundef] FORGET
 : FORGET 
-    '   dup  0=  -1 ?error
+    '   dup  0=  err-undefined ?error
     xt>nfa nfa>lfa      
     dup  @ >latest !   
     dp !
