@@ -84,6 +84,11 @@ public class TCFChildrenStackTrace extends TCFChildren {
     protected boolean startDataRetrieval() {
         TCFDataCache<TCFContextState> state = node.getState();
         if (!state.validate(this)) return false;
+        if (node.isNotActive()) {
+            top_frame_id = null;
+            set(null, null, new HashMap<String,TCFNode>());
+            return true;
+        }
         Throwable state_error = state.getError();
         TCFContextState state_data = state.getData();
         if (state_error != null || state_data == null || !state_data.is_suspended) {
