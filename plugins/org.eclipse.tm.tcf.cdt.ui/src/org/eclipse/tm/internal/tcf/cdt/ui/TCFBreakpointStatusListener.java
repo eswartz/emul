@@ -38,8 +38,6 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.model.IBreakpoint;
-import org.eclipse.swt.graphics.Device;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.tm.internal.tcf.debug.model.ITCFBreakpointListener;
 import org.eclipse.tm.internal.tcf.debug.model.ITCFConstants;
 import org.eclipse.tm.internal.tcf.debug.model.TCFBreakpointsModel;
@@ -66,7 +64,7 @@ class TCFBreakpointStatusListener {
         
         private final TCFLaunch launch;
         private final TCFBreakpointsStatus status;
-        private final Set<ICBreakpoint> installed = new HashSet<ICBreakpoint>();
+        private final Map<String,ICBreakpoint> installed = new HashMap<String,ICBreakpoint>();
         private final Set<String> foreign = new HashSet<String>();
         private final Set<String> deleted = new HashSet<String>();
         
@@ -93,11 +91,13 @@ class TCFBreakpointStatusListener {
                         }
                     }
                 }
-                if (ok) {
-                    if (installed.add(cbp)) incrementInstallCount(cbp);
+                if (ok && installed.get(id) == null) {
+                    installed.put(id, cbp);
+                    incrementInstallCount(cbp);
                 }
-                else {
-                    if (installed.remove(cbp)) decrementInstallCount(cbp);
+                if (!ok && installed.get(id) == cbp) {
+                    installed.remove(id);
+                    decrementInstallCount(cbp);
                 }
             }
             else if (bp == null && foreign.add(id)) {
@@ -107,10 +107,9 @@ class TCFBreakpointStatusListener {
         }
 
         public void breakpointRemoved(String id) {
-            IBreakpoint bp = bp_model.getBreakpoint(id);
-            if (bp instanceof ICBreakpoint) {
-                ICBreakpoint cbp = (ICBreakpoint)bp;
-                if (installed.remove(cbp)) decrementInstallCount(cbp);
+            ICBreakpoint cbp = installed.remove(id);
+            if (cbp != null) {
+                decrementInstallCount(cbp);
             }
             if (foreign.remove(id)) {
                 deleteTransientBreakpoint(id);
@@ -122,7 +121,9 @@ class TCFBreakpointStatusListener {
         }
 
         void dispose() {
-            for (ICBreakpoint cbp : installed) decrementInstallCount(cbp);
+            for (ICBreakpoint cbp : installed.values()) {
+                decrementInstallCount(cbp);
+            }
             installed.clear();
             for (String id : foreign) {
                 deleteTransientBreakpoint(id);
@@ -131,29 +132,39 @@ class TCFBreakpointStatusListener {
         }
         
         private void incrementInstallCount(final ICBreakpoint cbp) {
-            asyncExec(new Runnable() {
-                public void run() {
+            Job job = new WorkspaceJob("Increment Install Count") {
+                @Override
+                public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
                     try {
-                        cbp.incrementInstallCount();
+                    cbp.incrementInstallCount();
+                    } catch (CoreException e) {
+                        // ignore expected race condition with marker deletion
                     }
-                    catch (Exception x) {
-                        Activator.log(x);
-                    }
+                    return Status.OK_STATUS;
                 }
-            });
+            };
+            job.setRule(cbp.getMarker().getResource());
+            job.setPriority(Job.SHORT);
+            job.setSystem(true);
+            job.schedule();
         }
         
         private void decrementInstallCount(final ICBreakpoint cbp) {
-            asyncExec(new Runnable() {
-                public void run() {
+            Job job = new WorkspaceJob("Decrement Install Count") {
+                @Override
+                public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
                     try {
                         cbp.decrementInstallCount();
+                    } catch (CoreException e) {
+                        // ignore expected race condition with marker deletion
                     }
-                    catch (Exception x) {
-                        Activator.log(x);
-                    }
+                    return Status.OK_STATUS;
                 }
-            });
+            };
+            job.setRule(cbp.getMarker().getResource());
+            job.setPriority(Job.SHORT);
+            job.setSystem(true);
+            job.schedule();
         }
         
         private void createOrUpdateBreakpoint(final String id, final boolean create) {
@@ -176,6 +187,8 @@ class TCFBreakpointStatusListener {
                                         int cnt = marker.getAttribute(ATTR_REFCOUNT, 0) + 1;
                                         markerAttrs.put(ATTR_REFCOUNT, cnt);
                                     } else {
+                                        // source handle should not change
+                                        markerAttrs.remove(ICBreakpoint.SOURCE_HANDLE);
                                         updateMarkerAttributes(markerAttrs, marker);
                                     }
                                     return Status.OK_STATUS;
@@ -220,6 +233,7 @@ class TCFBreakpointStatusListener {
                         }
                     };
                     job.setRule(getBreakpointAccessRule());
+                    job.setPriority(Job.SHORT);
                     job.setSystem(true);
                     job.schedule();
                 }
@@ -298,6 +312,7 @@ class TCFBreakpointStatusListener {
                 }
             };
             job.setRule(getBreakpointAccessRule());
+            job.setPriority(Job.SHORT);
             job.setSystem(true);
             job.schedule();
         }
@@ -312,15 +327,6 @@ class TCFBreakpointStatusListener {
                 rule = ResourcesPlugin.getWorkspace().getRuleFactory().modifyRule(resource);
             }
             return rule;
-        }
-
-        private void asyncExec(Runnable r) {
-            synchronized (Device.class) {
-                Display display = Display.getDefault();
-                if (display != null && !display.isDisposed()) {
-                    display.asyncExec(r);
-                }
-            }
         }
     }
     
