@@ -7,6 +7,7 @@ import v9t9.emulator.common.IEventNotifier;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.common.IEventNotifier.Level;
 import v9t9.engine.files.DataFiles;
+import v9t9.engine.memory.ByteMemoryArea;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.MemoryEntry;
 
@@ -60,10 +61,14 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
     		byte[] grom = new byte[(int) gromFile.length()];
     		
 			int gromDictSize = (int) dictFile.length();
-			
+
 			try {
 				DataFiles.readMemoryImage(FORTH_GROM, 0, grom.length, grom);
 				int gromDictBase = (grom[2] << 8) | (grom[3] & 0xff);
+				
+				if (gromDictSize + gromDictBase > 16 * 1024) {
+					reportLoadError(eventNotifier, GROM_DICT, new IOException("GROM dictionary too big!  GROM plus dictionary maxes out at 16k."));
+				}
 				
 				byte[] gromDict = new byte[gromDictSize];
 				DataFiles.readMemoryImage(GROM_DICT, 0, gromDictSize, gromDict);
@@ -86,11 +91,19 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
     	}
     	
     	
+    	// GROM consists of ROM for 16k
 		loadConsoleGrom(eventNotifier, FORTH_GROM);
 		
+		// then 16k of volatile GRAM for new dictionary
+		MemoryEntry gramDictEntry = new MemoryEntry("16K GRAM Dictionary", GRAPHICS, 
+				0x4000, 0x4000, new ByteMemoryArea(0, new byte[0x4000]));
+		gramDictEntry.getArea().setLatency(0);
+		memory.addAndMap(gramDictEntry);
+		
+		// then 32k of GRAM storage
 		try {
 			DiskMemoryEntry entry = DiskMemoryEntry.newByteMemoryFromFile(
-	    			0x2000, 0xE000, "GRAM", 
+	    			0x8000, 0x8000, "GRAM", 
 	    			GRAPHICS,
 	    			// use full path so changes are saved 
 	    			DataFiles.resolveFile("f99bgram.bin").getAbsolutePath(), 
