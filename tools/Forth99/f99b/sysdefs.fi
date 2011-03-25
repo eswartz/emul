@@ -148,7 +148,8 @@ dup         constant    >grom_menubar       2+
 
 drop
 
-$2000       Constant    >gram_base
+$4000       Constant    >gram_dict_base
+$8000       Constant    >gram_disk_base
 
 \ -----------   constants
 

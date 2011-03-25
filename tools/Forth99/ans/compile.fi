@@ -239,23 +239,6 @@ User csp
     smudge postpone [
  ; immediate target-only  
 
-0 [if]
-\   change the cfa of the newly created word to
-\   jump to the code inside the creating word after does>
-: (does>)
-    r> lastxt xt!       \ drops a level, so code following dodoes> 
-                        \ is not executed during create stage
-; target-only
-
-\   at compile time, ensure that the runtime of the creating word
-\   will modify the cfa of the newly created word to point into
-\   the embedded colon definition (docol,)
-: DOES>
-    [compile] (does>)
-    docol,
-; immediate target-only
-[then]
-
 : ?pairs    ( i*x tag tag' -- )
     - err-control-nesting ?error
 ;
@@ -508,7 +491,6 @@ test" unloop 3 >r 2 1 do loop r> 3 ="
 : DEFER
     create 
     lastxt dp !  dodefer,
-    \ ['] noop ,
 ; target-only
 [THEN]
 
@@ -571,15 +553,6 @@ test" unloop 3 >r 2 1 do loop r> 3 ="
 [IFUNDEF] :NONAME
 : :NONAME
     here
-    
-    \ LFA
-    \  here latest ,
-
-    \ NFA
-    \ $0000 ,
-
-    \ link
-    \ dup  >latest !
 
     ]
    
