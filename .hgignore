@@ -36,3 +36,14 @@ syntax: regexp
 ^tools/TIAsm/Makefile$
 syntax: regexp
 ^.*/hs_err.*\.log$
+
+syntax: regexp
+^tools/FileUtils/tidecomp$
+syntax: regexp
+^tools/FileUtils/tidir$
+syntax: regexp
+^tools/FileUtils/tidisasm$
+syntax: regexp
+^tools/FileUtils/tispeak$
+syntax: regexp
+^tools/FileUtils/ti2txt$
