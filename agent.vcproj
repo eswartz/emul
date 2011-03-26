@@ -807,6 +807,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\system\Windows\pthreads-win32.h"
+					>
+				</File>
+				<File
 					RelativePath=".\system\Windows\regset.h"
 					>
 				</File>
