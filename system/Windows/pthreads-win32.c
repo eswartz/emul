@@ -17,8 +17,6 @@
 #if defined(WIN32) && !defined(DISABLE_PTHREADS_WIN32)
 
 #include <assert.h>
-//#include <process.h>
-//#include <fcntl.h>
 #include <framework/myalloc.h>
 #include <framework/errors.h>
 #include <system/Windows/pthreads-win32.h>
