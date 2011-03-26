@@ -1,4 +1,6 @@
 
+User DPS
+
 : lastnfa
     latest lfa>nfa
 ;
@@ -62,6 +64,8 @@ User STATE
 : CREATE
 \    (creat)     
 
+    here >r 
+    
     align
 
     \ Put LFA --> ptr to previous LFA
@@ -75,6 +79,8 @@ User STATE
     1+ aligned allot
 
     here (register-symbol)
+    
+    here r> - DPS +!
     
     \ current @ !       \ !!!
     >latest !
