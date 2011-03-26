@@ -165,17 +165,20 @@ User GDP              \ GROM dictionary pointer
     \ remember caddr
     dup >r
     
+    \ search locals
+    'lfind @ ?dup if
+        execute
+        ?dup if rdrop exit then
+    then
+    
     \ search GRAM dictionary
     >gram_dict_base  GDP @  (gfind)
+    ?dup if rdrop exit then
     
-    ?dup if
-        rdrop
-    else
-        \ fall back to GROM dictionary
-        drop
-        r>   
-        >grom_dict g@  >grom_dictend g@  (gfind)
-    then
+    \ fall back to GROM dictionary
+    drop
+    r>   
+    >grom_dict g@  >grom_dictend g@  (gfind)
 ;
 
 

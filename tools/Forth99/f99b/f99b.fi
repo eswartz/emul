@@ -103,6 +103,8 @@
 
 ( when compiling a creator word )
 : does> 
+    finish-locals
+
     here 1 and  if 0 c, then    \ need aligned addr for CALL
     postpone (does>) 
     \ created word is here:  need to fetch PC now
@@ -149,11 +151,10 @@
 ;
 
 \   Compile local reference:
-\       1: read
-\       2: address
-\       3: write
-: local, ( local# 1|2|3 -- )
-    2-
+\      -1: read
+\       0: address
+\       1: write
+: local, ( local# mode -- )
     dup 0< if
         drop  Ilpidx c,  c,
     else
@@ -162,6 +163,14 @@
             Istore c,        
         then
     then 
+;
+
+: (lfetch) ( num -- )
+    Ilpidx c,  c,
+;
+
+: (laddr) ( num -- )
+    Ilocal c,  c,
 ;
 
 

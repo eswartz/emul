@@ -1,13 +1,15 @@
 
 1 <export
 
-\ Generally, 4-6 chars per name, +1 for length == ~8-10 locals
-64 Constant #localspace 
+\ Generally, 4-6 chars per name, 2 for LFA, 8 for code, TIMES 3 for local! and 'local
+256 Constant #localspace 
 
 \ base of local storage
 User lbase 
 \ current upper limit of allocated locals
 User ldp 
+\ current LFA entry for allocated locals
+User llfa
 \ current # of allocated locals
 User lcount 
 
@@ -15,7 +17,11 @@ User lcount
 : reset-locals
     0 'lfind !
     0 lcount !
-    lbase @  ldp !
+    0 llfa !
+    lbase @
+    
+    0 over !           \ LFA 
+    ldp !
 ;
     
 : init-locals
@@ -23,110 +29,116 @@ User lcount
     reset-locals
 ;
 
+\ Match two counted strings case-sensitively
+\ : c= ( caddr1 caddr2 -- t|f )
+\    dup c@ 1+  ( caddr1 caddr2 len ) 
+\    cmp? ( pos cmp )  
+\    nip  0=
+\ ;
+
+\ Search local dict for name
+: (lfind) ( caddr -- caddr 0 | xt 1 )
+    state @ if 
+        llfa @  (find)
+    else
+        0
+    then
+;
+
+
 : alloc-locals
     lbase @ ?dup 0= if
         here  #localspace allot
     then
     dup  lbase !
           ldp !
+    0 'lfind !
     0 lcount !
 ;
 
-\ Match two counted strings case-sensitively
-: c= ( caddr1 caddr2 -- t|f )
-    dup c@ 1+  ( caddr1 caddr2 len ) 
-    cmp? ( pos cmp )  
-    nip  0=
-;
+\ --------------------------
 
-\   compare "name!" against "name"
-: write= ( caddr local -- t|f )
-    dup c@ >r  ( r: local-length )
-    swap dup  c@  1- r@  =  ( expected-length ) 
-    over r@ +  1+ c@  [char] !  =  ( ends-with-! ) 
-    and if
-        \ see if first local-length chars match 
-        1+ swap 1+   r@  cmp?  nip  0=  
-    else
-        2drop 0
-    then 
-    rdrop
-; 
+\ These routines operate with a relocated DP/HERE
+\ into the local dictionary.  Be careful!
 
-\   compare "'name" against "name"
-: addr= ( caddr local -- t|f )
-    dup c@ >r  ( r: local-length )
-    swap dup  c@  1- r@  =  ( expected-length ) 
-    over 1+ c@  [char] '  =  ( starts-with-' ) 
-    and if
-        \ see if last local-length chars match 
-        2+ swap 1+  r@  cmp?  nip  0=
-    else
-        2drop 0
-    then 
-    rdrop
-; 
-
-: lmatch ( caddr lname -- caddr lname 1|2|3|0 )
-    2dup  c=  if
-        1
-    else
-        2dup  write= if
-            2
-        else
-            2dup  addr=  if
-                3
-            else
-                0 
-            then
-        then
-    then
-
-;
-
-\ Match the counted string against a local,
-\ returning the local if found plus access mode:
-\       1: read
-\       2: address
-\       3: write
-: (lfind) ( caddr -- caddr 0 | local# 1|2|3 )
-    lbase @
+\ Add a NFA for the given counted string in the local dictionary
+: (lname,) ( caddr -- )
     
-    ( caddr lname )
-    lcount @  0 ?do
-        lmatch
-        ?dup if  >r 2drop r>  i swap  -1  unloop exit  then
-        
-        \ skip current name
-        dup c@ 1+ +
-    loop
+    \ link LFA
+    llfa @  ,  
     
-    \ no match
-    drop 0
-;
- 
-\ Add a local name to the local dictionary
-: lname, ( caddr u -- )
-    ldp @ >r
+    count  ( caddr u )
     
     \ length+name
     dup 1+ 
 
-    \ new expected ldp    
-    r@ +  dup  
+    ( caddr len len+1 )
+    here >r 
+    allot  
     
-    \ check space
-    lbase @  #localspace + >  err-out-of-space ?error
-    
-    \ bump it
-    ldp !
-    
-    \ put length
-    dup  r@  c!
+    \ put length + IMMED + SRCH
+    dup  [ |immed |srch OR ] literal OR  r@  c!
     
     \ put word
-    r> 1+  swap  cmove
+    ( caddr len )
+    1+ r@ 1+  swap  cmove
+    
+    r>  2-  llfa !
+;
 
+\ Define a name and XT that will compile a reference to a local
+\ in either read, write, or fetch-address mode.
+
+: (local,)  ( mode caddr -- )
+
+    \ ANTICIPATORY check of local dictionary overflow
+    \ (here because we can't lose the DP when emitting the error)
+    ldp @  over c@  10 + +
+    lbase @  #localspace +  >  err-out-of-space ?error
+
+    \ Reassign DP
+    here >r
+    ldp @  dp !
+    
+    (lname,)
+    
+    align
+    lcount @  postpone literal
+    postpone literal
+    postpone local,
+    [compile] ;S
+    
+    \ Restore DP
+    here ldp !
+    r> dp !
+;
+
+\ -------------------------------
+
+
+\ Add a local to the local dictionary, defining three entries for it:
+\   "name" ( -- value )
+\   "name!" ( value -- )
+\   "'name" ( -- addr )
+: lname, ( caddr u -- )
+    
+    \ make counted string
+    here (>c)
+    
+    \ reader
+    -1 here (local,)
+    
+    \ writer: "name!"
+    1 here c+!
+    [char] *  here dup c@  +   c!
+    1 here (local,)
+    
+    \ address: "'name"
+    here c@  here  1+  dup 1+  rot cmove>
+    [char] '  here 1+  c! 
+    0 here (local,)
+
+    \ new local
     1 lcount +!
 ;
 
@@ -137,8 +149,8 @@ User lcount
 : enter-locals ( -- | local* 7 )
     'lfind @  0= if
         <locals,
-        ['] (lfind) 'lfind !
         0 lcount !
+        ['] (lfind) 'lfind !
         7
     then
 ;
@@ -171,9 +183,7 @@ export>
         postpone THEN
     then
     \ setup on first local
-    lcount @ 0= if
-        enter-locals 
-    then
+    enter-locals 
     
     parse-name
     lname,
@@ -191,12 +201,14 @@ export>
     alloc-locals
     :
    
+    enter-locals
+   
     \ get  '(' 
     
     >in @  >r
     
-    parse-name  
-    2dup  s" (" str= if  
+    parse-name s" (" str= 
+    if  
         rdrop
         
         begin
@@ -204,24 +216,24 @@ export>
             
             \ end of comment: done
             2dup s" )" str= if
-                2drop exit
+                2drop true 
+            else
+                
+                \ -- : end of arguments; skip to ')'
+                2dup s" --" str=   
+                if  
+                    2drop  [char] )  parse  2drop true  
+                else
+                    \ else, local
+                    lname,  0
+                then
             then
-            
-            \ -- : end of arguments; skip to ')'
-            2dup s" --" str=   
-            if  
-                [char] )  parse  2drop exit  
-            then
-            
-            \ else, local
-            lname,  0
         until
     else
         r> >in !
         
     then
 
-    enter-locals
     lcount @  ^locals,
 ; target-only
 

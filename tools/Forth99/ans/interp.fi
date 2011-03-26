@@ -223,20 +223,6 @@ user >IN
             execute
         then
     else
-        \ locals?
-        'lfind @ ?dup if
-            ( caddr ) execute ( caddr 0 | local# -1 )
-            if 
-                state @
-                if
-                    local,
-                else
-                    err-compile-only message
-                then
-                exit            
-            then
-        then
-        
         \ must be a number
         number dpl @ 1+ if
             state @ if  postpone dliteral  then 
