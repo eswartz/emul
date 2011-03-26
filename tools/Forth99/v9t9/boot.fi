@@ -23,9 +23,11 @@
 \    UP0 @       [ ' UDP compile, ( UDP ) ]  !
     UP0 @       UDP !
     (LATEST) @  >latest !
+    >gram_dict_base  GDP !
+    
     GRAM
     
-    >grom_logo g@ gtype cr
+    >grom_logo g@ gtypez cr
 ;
 
 :   'quit

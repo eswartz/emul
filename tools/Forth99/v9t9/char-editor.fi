@@ -497,7 +497,7 @@ User 'fl
 
     14 0 do
         2 i at-xy
-        (gtype) 
+        (gtypez) 
     loop
     
     drop

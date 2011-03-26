@@ -40,9 +40,15 @@
 :   g@  ( addr -- )
     gwaddr  GPLRD c@  8 lshift  GPLRD c@  or 
 ;
+:   g!  ( ch addr -- )
+    gwaddr  dup swpb GPLWD c!  GPLWD c!
+;
 
 :   gc@  ( addr -- )
     gwaddr  GPLRD c@
+;
+:   gc!  ( ch addr -- )
+    gwaddr  GPLWD c!
 ;
 
 :   vc@  ( addr -- )
@@ -109,7 +115,7 @@
 ;
 
 \ type null-terminated string
-: (gtype) ( gaddr -- gaddr )
+: (gtypez) ( gaddr -- gaddr )
     begin
         dup gc@ dup
     while
@@ -120,6 +126,12 @@
 ;
 
 \ type null-terminated string
-: gtype ( gaddr -- gaddr )
-    (gtype) drop
+: gtypez ( gaddr --  )
+    (gtypez) drop
 ;
+
+\ type counted string
+: gtype ( gaddr cnt -- )
+    over + swap ?do i gc@ emit loop 
+;
+

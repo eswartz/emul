@@ -1,11 +1,10 @@
 
-User DPS
-
-: lastnfa
-    latest lfa>nfa
+: lastnfa  ( -- gaddr )
+    latest
 ;
 
-: lastxt
+
+: lastxt    ( -- xt )
     lastnfa nfa>xt
 ;
 
@@ -35,7 +34,7 @@ User STATE
 \ Hide a word while compiling, to allow redefining a word in terms of the same name
 : smudge
     lastnfa 
-    dup c@ |srch xor swap c!
+    dup gc@ |srch xor swap gc!
 ;
 
 
@@ -57,6 +56,23 @@ User STATE
     then 
 ;
 
+: name, ( "name" -- )
+    name"
+    
+    \ Get space for name
+    GDP @  >r 
+    c@ &nmask min    dup here c! 
+    1+  dup  GDP +!
+    
+    \ Lay down name field
+    here r@ rot  cgmove
+    
+    here (register-symbol)
+    
+    \ current @ !       \ !!!
+    r>  >latest !
+;
+
 \ Optionally pre-parse the string in the input stream and manipulate the dictionary
 \ before the definition is started.
 \ DeferROM (creat)  ( c"xxx" -- c"xxx" )
@@ -64,26 +80,13 @@ User STATE
 : CREATE
 \    (creat)     
 
-    here >r 
-    
     align
-
-    \ Put LFA --> ptr to previous LFA
-    here 
-    latest ,
-
-    name"
     
-    \ Get space for name
-    c@ &nmask min
-    1+ aligned allot
-
-    here (register-symbol)
+    name,     
     
-    here r> - DPS +!
-    
-    \ current @ !       \ !!!
-    >latest !
+    \ lay down XT
+    here  GDP @  g!
+    cell GDP +! 
     
     lastnfa id.
     

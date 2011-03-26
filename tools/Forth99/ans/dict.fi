@@ -23,13 +23,12 @@
 \   related to structure of the dictionary.
 \
 
-| User >latest        \ latest definition
+| User >latest        \ latest definition (gaddr)
 
-\   Return latest definition's nfa
+\   Return latest definition's nfa (gaddr)
 : latest
     >latest @
 ;
-
 
 | $1F constant &nmask
 | $40 constant |immed
@@ -39,26 +38,31 @@
 
 \   Custom dictionary stuff
 
-: nfa>xt
-    dup c@ &nmask AND  \ get the length byte
-    + 1+ aligned
+
+| : nfa>xt@ ( gaddr -- xtaddr )
+    dup  gc@ &nmask AND  \ get the length byte
+    + 1+                \ skip length and name
 
     \ [ has? profiling [if] ] cell+ [ [then] ]
 
 ;
+: nfa>xt ( gaddr -- xt )
+    nfa>xt@  g@
+;
 
-: xt>nfa
+: xt>nfa    ( xt -- gaddr )
     \ xt -> nfa
     \ [ has? profiling [if] ] #cell - [ [then] ]
 
     >r
 
-    latest
+    \ latest
+    >gram_dict_base
     begin
-        dup if 
-            dup  lfa>nfa  nfa>xt  r@  = 
-            if  rdrop  lfa>nfa  exit  then
-            @
+        dup GDP @ < if 
+            dup  nfa>xt@  dup g@  r@  = 
+            if  drop rdrop  exit  then
+            nip 2+
         else
             rdrop exit
         then
@@ -69,23 +73,21 @@ test" xt>nfa ['] traverse xt>nfa c@ $88 = "
 test" nfa>xt ['] traverse dup xt>nfa nfa>xt = "
 
 
-| : nfa>imm?  ( nfa -- t/f )
-    c@ |immed and 0<>
+| : nfa>imm?  ( gnfa -- t/f )
+    gc@ |immed and 0<>
 ;
 
-: lfa>nfa
-    2+
-;
-: nfa>lfa
-    2-
+| : GCOUNT
+    dup gc@ swap 1+ swap
 ;
 
-: >id       ( nfa -- caddr u )
-    count &nmask and 
+
+: >id       ( gnfa -- caddr u )
+    gcount &nmask and 
 ;
 
-: id.       ( nfa -- )
-    >id type space
+: id.       ( gnfa -- )
+    >id gtype space
 ;
 
 \   \\\\\\\\\\\\\\\\\
@@ -95,6 +97,8 @@ test" nfa>xt ['] traverse dup xt>nfa nfa>xt = "
 [IFUNDEF] DP
 User DP
 [THEN]
+
+User GDP              \ GROM dictionary pointer
 
 [IFUNDEF] '
 : ' 
@@ -161,9 +165,8 @@ User DP
     \ remember caddr
     dup >r
     
-    \ search RAM dictionary
-    latest          \ !!! need real wordlist
-    (find) 
+    \ search GRAM dictionary
+    >gram_dict_base  GDP @  (gfind)
     
     ?dup if
         rdrop
@@ -199,13 +202,13 @@ User DP
 
 [IFUNDEF] IMMEDIATE
 : IMMEDIATE
-    latest lfa>nfa dup c@ |immed or swap c!
+    latest  dup gc@  |immed or  swap gc!
 ;
 [THEN]
 
 [IFUNDEF] UNUSED
 : UNUSED
-    0 here -
+    RamTop  here  -
 ;
 [THEN]
 
@@ -213,13 +216,16 @@ User DP
 | : dwalk ( root xt -- )  ( xt: nfa -- 0 | 1 )
     >r
     begin
-        dup lfa>nfa r@ execute   ( lfa flag )
+        dup GDP @ <    
+    while
+        \ work on current NFA
+        dup r@ execute   ( nfa flag )
         if 
-            TRUE 
-        else
-            @ dup 0=
-        then
-    until
+            drop rdrop exit
+        then 
+        \ skip NFA and XT
+        nfa>xt@  cell+  
+    repeat
     drop rdrop
 ;
 
@@ -228,7 +234,7 @@ User DP
 ;
 
 : WORDS
-    latest      \ !!! need real wordlist
+    >gram_dict_base      \ !!! need real wordlist
     ?dup if 
         ['] .word 
         dwalk 
@@ -239,9 +245,11 @@ User DP
 [ifundef] FORGET
 : FORGET 
     '   dup  0=  err-undefined ?error
-    xt>nfa nfa>lfa      
-    dup  @ >latest !   
-    dp !
+    dup  dp !
+    
+    xt>nfa      
+    dup  >latest !
+    gdp !
 ;
 
 [endif]

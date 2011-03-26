@@ -325,7 +325,9 @@ public class InstF99b {
 		"IDLE",
 		"+DBG",
 		"-DBG",
+		"REGSYM",
 		"FIND",
+		"GFIND",
 	};
 	
 	/** for each inst:  SP read, SP left
