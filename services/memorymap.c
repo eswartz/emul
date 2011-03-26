@@ -312,7 +312,7 @@ static void command_set(char * token, Channel * c) {
 
     if (!err) {
         EXT(ctx)->client_map = map;
-        event_memory_map_changed(ctx, NULL);
+        send_context_changed_event(ctx);
     }
     else {
         context_clear_memory_map(&map);
