@@ -168,6 +168,11 @@ $10         constant    I0branchX
 $39         constant    IRfrom
 $3a         constant    IRdrop
 $3b         constant    IatR
+$3d         constant    Ilpidx
+$3e         constant    Ilocal
+$7e3e       constant    ItoLocals
+$3f         constant    Ilalloc
+$7e3f       constant    IfromLocals
 $41         constant    Isub
 $46         constant    Iumul
 $47         constant    Iudivmod
@@ -184,6 +189,7 @@ $6a         constant    IplusLoopUp
 $6b         constant    IuplusLoopUp
 $6c         constant    Icfill
 $6e         constant    Icmove
+$6f         constant    Iccompare
 $70         constant    Iexit
 $72         constant    Iexecute
 $73         constant    Idovar

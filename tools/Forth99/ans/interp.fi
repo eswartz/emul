@@ -6,6 +6,8 @@
 | User loadfile
 | User loadline
 
+\ If set, xt of local variable lookup
+| User 'lfind
 
 [IFUNDEF] (
 : (
@@ -221,23 +223,47 @@ user >IN
             execute
         then
     else
+        \ locals?
+        'lfind @ ?dup if
+            ( caddr ) execute ( caddr 0 | local# -1 )
+            if 
+                state @
+                if
+                    local,
+                else
+                    err-compile-only message
+                then
+                exit            
+            then
+        then
+        
+        \ must be a number
         number dpl @ 1+ if
             state @ if  postpone dliteral  then 
         else 
             drop state @ if  postpone literal  then
-        then 
+        then
     then
 ;
 
-| : (parse-name)
-    (skip-spaces)
-    bl parse
+\ Parse word, which may be empty
+| : parse-word  ( -- caddr u )
+    bl (parse-word)
+;
+
+\ Parse name, which must not be empty
+| : parse-name ( c"..."  -- caddr len )
+
+    parse-word
+    ?dup 0= if
+        err-empty-name message quit
+    then
 ;
 
 : interpret
     begin
         \ ?stack        \ checked automatically
-        (parse-name)
+        parse-word
         dup
     while
         interpreter
@@ -261,6 +287,7 @@ user >IN
 
 | : (clrsrc)
     0 blk ! 0 loadfile ! 0 loadline !
+    0 'lfind !
 ;
 
 : QUIT

@@ -1,13 +1,4 @@
 
-: lastnfa  ( -- gaddr )
-    latest
-;
-
-
-: lastxt    ( -- xt )
-    lastnfa nfa>xt
-;
-
 [IFUNDEF] STATE
 User STATE
 [THEN]
@@ -18,6 +9,21 @@ User STATE
 ; immediate target-only
 [THEN]
 
+[IFUNDEF] ]
+: ]
+    -1 state !
+; target-only
+[THEN]
+
+
+: lastnfa  ( -- gaddr )
+    latest
+;
+
+
+: lastxt    ( -- xt )
+    lastnfa nfa>xt
+;
 
 \   Words required by cross-compiler, not in standard.
 
@@ -37,14 +43,8 @@ User STATE
     dup gc@ |srch xor swap gc!
 ;
 
-
 | : parse-def-name ( c"..."  -- caddr 0 | nfa 1|-1 ) \ "word
-
-    (parse-name)
-    ?dup 0= if
-        err-empty-name message quit
-    then
-
+    parse-name
     (lookup)
 ;
 
@@ -67,7 +67,7 @@ User STATE
     \ Lay down name field
     here r@ rot  cgmove
     
-    here (register-symbol)
+    here dup (register-symbol)
     
     \ current @ !       \ !!!
     r>  >latest !
@@ -97,17 +97,6 @@ User STATE
 ; target-only
 
 \ \\\\\\\\\\\\\\\\\\\\\\
-
-[IFUNDEF] STATE
-User STATE
-[THEN]
-
-[IFUNDEF] [
-: [
-    0 state !
-; immediate target-only
-[THEN]
-
 
 [IFUNDEF] [COMPILE]
 : [COMPILE]
@@ -164,11 +153,13 @@ User csp
     !csp
     create smudge ]
     lastxt dp !  docol,
+    reset-locals
    \ #(:) exec-hook
 ; target-only
 
 : ;
    \ #(;) exec-hook
+    finish-locals
     ?csp
     [compile] ;s
     smudge postpone [
@@ -193,7 +184,16 @@ User csp
      
     2
 ; immediate target-only
+
+: SKIP
+    ?comp
+    [compile] branch
+    >fixup
+     
+    2
+; immediate target-only
 [THEN]
+
 
 
 [IFUNDEF] THEN
@@ -418,6 +418,7 @@ test" unloop 3 >r 2 1 do loop r> 3 ="
 [IFUNDEF] EXIT
 : EXIT
     ?comp
+    exit-locals
     [compile] ;s
 ; immediate target-only
 [THEN]
@@ -510,7 +511,7 @@ test" unloop 3 >r 2 1 do loop r> 3 ="
 ;
 
 : has?
-    (parse-name)
+    parse-def-name
     if 
         nfa>xt execute
     else

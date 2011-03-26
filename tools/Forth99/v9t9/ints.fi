@@ -109,9 +109,9 @@ cell    RamVar    vdp-timeout
 
 :   ints-init
     ints-off
- \   ['] kbd-int-handler     INT_KBD     enable-int
-    ['] fault-int-handler   INT_FAULT  set-int-vec
-    ['] bootup              INT_RESET   set-int-vec
+ \   ['] kbd-int-handler     INT_KBD    enable-int
+    ['] fault-int-handler   INT_FAULT   set-int-vec
+    ['] bye                 INT_RESET   set-int-vec
     ['] nmi-int-handler     INT_NMI     set-int-vec
     ['] vdp-int-handler     INT_VDP     enable-int
 ;

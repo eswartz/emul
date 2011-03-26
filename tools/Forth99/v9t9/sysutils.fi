@@ -103,6 +103,12 @@
     addr GPLWD len  1 0 (cmove)
 ;
 
+\ Compare  (src -> dst)
+: cmp?         ( src dst # -- offs cmp )
+    1 1 [ Iccompare c, ]
+;   target-only
+
+
 :   >bit ( mask -- lowest bit# )
     16 0 do
         dup  1 and  if

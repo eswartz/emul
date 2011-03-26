@@ -1,9 +1,5 @@
 
 
-: /STRING    ( addr n delta -- addr+delta n-delta )
-    >r swap r@ + swap r> -
-;
-
 \   Custom:  set a flag in a word
 : |!        ( mask addr -- )
     swap over @ OR swap !     

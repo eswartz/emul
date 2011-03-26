@@ -1,0 +1,228 @@
+
+1 <export
+
+\ Generally, 4-6 chars per name, +1 for length == ~8-10 locals
+64 Constant #localspace 
+
+\ base of local storage
+User lbase 
+\ current upper limit of allocated locals
+User ldp 
+\ current # of allocated locals
+User lcount 
+
+\ Set up a word to the default state: no locals 
+: reset-locals
+    0 'lfind !
+    0 lcount !
+    lbase @  ldp !
+;
+    
+: init-locals
+    0 lbase !
+    reset-locals
+;
+
+: alloc-locals
+    lbase @ ?dup 0= if
+        here  #localspace allot
+    then
+    dup  lbase !
+          ldp !
+    0 lcount !
+;
+
+\ Match two counted strings case-sensitively
+: c= ( caddr1 caddr2 -- t|f )
+    dup c@ 1+  ( caddr1 caddr2 len ) 
+    cmp? ( pos cmp )  
+    nip  0=
+;
+
+\   compare "name!" against "name"
+: write= ( caddr local -- t|f )
+    dup c@ >r  ( r: local-length )
+    swap dup  c@  1- r@  =  ( expected-length ) 
+    over r@ +  1+ c@  [char] !  =  ( ends-with-! ) 
+    and if
+        \ see if first local-length chars match 
+        1+ swap 1+   r@  cmp?  nip  0=  
+    else
+        2drop 0
+    then 
+    rdrop
+; 
+
+\   compare "'name" against "name"
+: addr= ( caddr local -- t|f )
+    dup c@ >r  ( r: local-length )
+    swap dup  c@  1- r@  =  ( expected-length ) 
+    over 1+ c@  [char] '  =  ( starts-with-' ) 
+    and if
+        \ see if last local-length chars match 
+        2+ swap 1+  r@  cmp?  nip  0=
+    else
+        2drop 0
+    then 
+    rdrop
+; 
+
+: lmatch ( caddr lname -- caddr lname 1|2|3|0 )
+    2dup  c=  if
+        1
+    else
+        2dup  write= if
+            2
+        else
+            2dup  addr=  if
+                3
+            else
+                0 
+            then
+        then
+    then
+
+;
+
+\ Match the counted string against a local,
+\ returning the local if found plus access mode:
+\       1: read
+\       2: address
+\       3: write
+: (lfind) ( caddr -- caddr 0 | local# 1|2|3 )
+    lbase @
+    
+    ( caddr lname )
+    lcount @  0 ?do
+        lmatch
+        ?dup if  >r 2drop r>  i swap  -1  unloop exit  then
+        
+        \ skip current name
+        dup c@ 1+ +
+    loop
+    
+    \ no match
+    drop 0
+;
+ 
+\ Add a local name to the local dictionary
+: lname, ( caddr u -- )
+    ldp @ >r
+    
+    \ length+name
+    dup 1+ 
+
+    \ new expected ldp    
+    r@ +  dup  
+    
+    \ check space
+    lbase @  #localspace + >  err-out-of-space ?error
+    
+    \ bump it
+    ldp !
+    
+    \ put length
+    dup  r@  c!
+    
+    \ put word
+    r> 1+  swap  cmove
+
+    1 lcount +!
+;
+
+
+\  Set up a word to use locals.  Can only be done at the 
+\  top-level of a word (not inside control)
+\ 
+: enter-locals ( -- | local* 7 )
+    'lfind @  0= if
+        <locals,
+        ['] (lfind) 'lfind !
+        0 lcount !
+        7
+    then
+;
+
+\ Cleanup locals at exit (if any used)
+: exit-locals ( -- )
+    lcount @  if
+        locals>,
+    then
+;
+
+\ Wrap up locals for a word (if any used) at exit
+: finish-locals ( local* 7 | -- )
+    'lfind @  if
+        7 ?pairs
+        locals>,
+        0 lcount !
+    then
+;
+
+export>
+
+\ Define a new local
+: :>  ( "name" -- )
+    ?comp
+    \ if not yet inited locals, jump around it
+    lbase @  0= if
+        postpone SKIP
+        alloc-locals
+        postpone THEN
+    then
+    \ setup on first local
+    lcount @ 0= if
+        enter-locals 
+    then
+    
+    parse-name
+    lname,
+    
+    1 ^locals,
+    
+; immediate target-only
+
+
+\ Define a word using locals.  The stack effect is parsed and 
+\ the words to the left of -- (if present) are assigned to successive
+\ stack positions.  Each name is entered into a transient local
+\ dictionary.
+: ::
+    alloc-locals
+    :
+   
+    \ get  '(' 
+    
+    >in @  >r
+    
+    parse-name  
+    2dup  s" (" str= if  
+        rdrop
+        
+        begin
+            parse-name
+            
+            \ end of comment: done
+            2dup s" )" str= if
+                2drop exit
+            then
+            
+            \ -- : end of arguments; skip to ')'
+            2dup s" --" str=   
+            if  
+                [char] )  parse  2drop exit  
+            then
+            
+            \ else, local
+            lname,  0
+        until
+    else
+        r> >in !
+        
+    then
+
+    enter-locals
+    lcount @  ^locals,
+; target-only
+
+

@@ -542,6 +542,7 @@ public class InterpreterF99b implements Interpreter {
         }
         
         case Icfill: {
+        	cpu.addCycles(4);
         	int step = cpu.pop();
         	byte ch = (byte) cpu.pop();
         	int len = cpu.pop() & 0xffff;
@@ -554,6 +555,7 @@ public class InterpreterF99b implements Interpreter {
         	break;
         }
         case Ifill: {
+        	cpu.addCycles(3);
         	int step = cpu.pop();
         	short w = cpu.pop();
         	int len = cpu.pop() & 0xffff;
@@ -567,6 +569,10 @@ public class InterpreterF99b implements Interpreter {
         }
         case Icmove: {
         	doCmove();
+        	break;
+        }
+        case Iccompare: {
+        	doCcompare();
         	break;
         }
         
@@ -682,16 +688,12 @@ public class InterpreterF99b implements Interpreter {
 	        	}
 	        	case SYSCALL_REGISTER_SYMBOL: {
 	        		int xt = cpu.pop();
-	        		int nfa = xt;
+	        		int nfa = cpu.pop();
 	        		StringBuilder sb = new StringBuilder();
-	        		char ch;
-	        		while (nfa-- > 0) {
-	        			ch = (char) iblock.domain.readByte(nfa);
-	        			if (sb.length() == 0 && (ch == 0x20 || ch == 0))
-	        				continue;
-	        			if ((ch & 0x1f) == sb.length())
-	        				break;
-	        			sb.insert(0, ch);
+	        		int len = iblock.domain.readByte(nfa++) & 0x1f;
+	        		while (len-- > 0) {
+	        			char ch = (char) iblock.domain.readByte(nfa++);
+	        			sb.append(ch);
 	        		}
 	        		iblock.domain.getEntryAt(xt).defineSymbol(xt, sb.toString());
 	        		break;
@@ -853,6 +855,7 @@ public class InterpreterF99b implements Interpreter {
 	
 	
 	private void doCmove() {
+		cpu.addCycles(4);
 		int tstep = cpu.pop();
 		int fstep = cpu.pop();
 		int len = cpu.pop() & 0xffff;
@@ -870,6 +873,37 @@ public class InterpreterF99b implements Interpreter {
 			taddr += tstep;
 			cpu.addCycles(3);
 		}
+	}
+
+	private void doCcompare() {
+		cpu.addCycles(4);
+		int tstep = cpu.pop();
+		int fstep = cpu.pop();
+		int len = cpu.pop() & 0xffff;
+		int taddr = cpu.pop();
+		int faddr = cpu.pop();
+		if (tstep < 0) {
+			taddr -= tstep * (len - 1);
+		}
+		if (fstep < 0) {
+			faddr -= fstep * (len - 1);
+		}
+		int origfaddr = faddr;
+		while (len-- > 0) {
+			cpu.addCycles(4);
+			byte src = memory.readByte(faddr & 0xffff);
+			byte dst = memory.readByte(taddr & 0xffff);
+			byte cmp = (byte) (src - dst);
+			if (cmp != 0) {
+				cpu.push((short) (faddr - origfaddr));
+				cpu.push(cmp);
+				return;
+			}
+			faddr += fstep;
+			taddr += tstep;
+		}
+		cpu.push((short) (faddr - origfaddr));
+		cpu.push((short) 0);
 	}
 
     private final boolean interpretDouble(InstructionF99b ins) {

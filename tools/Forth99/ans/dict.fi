@@ -107,7 +107,7 @@ User GDP              \ GROM dictionary pointer
 \
 \   Similarly, the use of ' and ['] with compiling words is unclear if the precise compilation behavior of those words is not
 \   specified, so ANS Forth does not permit a Standard Program to use ' or ['] with compiling words.
-    bl word find 
+    parse-def-name 
     0= if  count type  err-undefined message abort  then      \ !!!
 ;
 [THEN]

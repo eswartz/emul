@@ -23,6 +23,7 @@
     msg:  err-not-deferred
     msg:  err-out-of-range
     msg:  err-file-i/o
+    msg:  err-out-of-space
 
 negate constant num-msgptrs
 

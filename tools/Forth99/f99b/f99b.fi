@@ -132,4 +132,36 @@
     @  call>
 ;
 
+\   Push locals
+: <locals,  ( --  )
+    Itolocals ,
+;
+
+\   Allocate num cells of locals
+: ^locals,  ( num --  )
+    Ilalloc c,
+    c,
+;
+
+\   Fixup local allocations
+: locals>,  ( -- )
+    IfromLocals ,
+;
+
+\   Compile local reference:
+\       1: read
+\       2: address
+\       3: write
+: local, ( local# 1|2|3 -- )
+    2-
+    dup 0< if
+        drop  Ilpidx c,  c,
+    else
+        Ilocal c,  swap c,    
+        if
+            Istore c,        
+        then
+    then 
+;
+
 

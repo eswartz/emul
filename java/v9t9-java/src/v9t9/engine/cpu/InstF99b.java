@@ -136,8 +136,8 @@ public class InstF99b {
 	public static final int Ifill = Iloop_start + 5;
 	/** ( faddr taddr len fstep tstep ) */ 
 	public static final int Icmove = Iloop_start + 6;
-	/** ( faddr taddr len fstep tstep ) */ 
-	//public static final int Icompare = Iloop_start + 7;
+	/** ( faddr taddr len fstep tstep -- pos cmp ) */ 
+	public static final int Iccompare = Iloop_start + 7;
 	
 	
 	public static final int Imisc_start = 0x70;
@@ -314,7 +314,7 @@ public class InstF99b {
 	public static final int SYSCALL_DEBUG_ON = 1;
 	/** Stop tracing */
 	public static final int SYSCALL_DEBUG_OFF = 2;
-	/** Register the given xt in the symbol table */
+	/** ( name xt -- ) Register the given xt in the symbol table */
 	public static final int SYSCALL_REGISTER_SYMBOL = 3;
 	/** Lookup the given string in the RAM dictionary */
 	public static final int SYSCALL_FIND = 4;
@@ -404,6 +404,7 @@ public class InstF99b {
 		Icfill, 4, 0, 0, 0,
 		Ifill, 4, 0, 0, 0,
 		Icmove, 5, 0, 0, 0,
+		Iccompare, 5, 2, 0, 0,
 		
 		Iexit, 0, 0, 1, 0,
 		Iexiti, 0, 0, 2, 0,

@@ -594,12 +594,6 @@ error" need prim execute"
 
 \ \\\\\\\\\\\\\\\
 
-[IFUNDEF] ]
-: ]
-    -1 state !
-;
-[THEN]
-
 [IFUNDEF] I
 \ : I
 \ ;
@@ -1203,8 +1197,9 @@ User BLK
 [THEN]
 
 [IFUNDEF] /STRING
-\ : /STRING
-\ ;
+: /STRING    ( addr n delta -- addr+delta n-delta )
+    >r swap r@ + swap r> -
+;
 [THEN]
 
 [IFUNDEF] COMPARE
