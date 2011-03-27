@@ -68,7 +68,7 @@ public class CpuMetricsCanvas extends Canvas {
 				metrics.y += 2;
 				metrics.width -= 4;
 				metrics.height -= 4;
-				System.out.println(metrics);
+				//System.out.println(metrics);
 				setBounds(metrics);				
 			}
 			

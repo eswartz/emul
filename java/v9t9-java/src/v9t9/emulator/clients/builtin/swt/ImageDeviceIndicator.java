@@ -52,7 +52,7 @@ public class ImageDeviceIndicator extends ImageIconCanvas {
 				int height = bounds.height;
 				Rectangle metrics = new Rectangle(bounds.x + (bounds.width - height), bounds.y,
 						height, height);
-				System.out.println(metrics);
+				//System.out.println(metrics);
 				setBounds(metrics);				
 			}
 			
