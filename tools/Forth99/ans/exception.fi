@@ -6,11 +6,13 @@
 
 : catch  ( xt -- exception# | 0 ) \ return addr on stack
     sp@ >r         \ save data stack pointer
+    lp@ >r         \ save local pointer
     handler @ >r   \ and previous handler
     rp@ handler !  \ set current handler
     execute        \ execute returns if no throw
     r> handler !   \ restore previous handler
-    r> drop        \ discard saved stack ptr
+    rdrop          \ discard saved local ptr
+    rdrop          \ discard saved stack ptr
     0              \ normal completion
 ;
 
@@ -20,6 +22,7 @@
         dup if
             rp!            \ restore prev return stack
             r> handler !   \ restore prev handler
+            r>  lp!        \ restore locals
             r> swap >r     \ exc# on return stack
             sp! drop r>    \ restore stack
                 \  return to the caller of catch because return

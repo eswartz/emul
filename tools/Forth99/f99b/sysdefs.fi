@@ -158,6 +158,7 @@ $8000       Constant    >gram_disk_base
 2           constant    CTX_RP       
 3           constant    CTX_RP0       
 4           constant    CTX_UP       
+5           constant    CTX_LP       
 7           constant    CTX_INT        
 8           constant    CTX_SR        
 
