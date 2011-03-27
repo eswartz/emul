@@ -785,20 +785,18 @@ User 'scry
 
 :: surround ( scraddr target page -- new )
     scraddr @  :> orig
-    target page < if
-        0
-    else
-        target  orig  dup page +  within not if
-            target  dup orig  < if
-                \ up 
-                1-  0 max
-            else
-                \ down
-                page 1-  -  
-            then
+    target  orig  dup page +  within not if
+        target orig - :> diff
+        target  diff 0< if
+            \ up 
+            diff  page 2/ negate  max +
+            0 max
         else
-            orig
-        then 
+            \ down
+            diff  page 2/  min +
+        then
+    else
+        orig
     then
     
     dup  orig <> if    

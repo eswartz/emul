@@ -765,22 +765,28 @@ public class InterpreterF99b implements Interpreter {
 		int caddr = cpu.pop();
 
 		boolean found = false;
+		short lastMatch = 0;
 		int[] after = { 0 }; 
     		
+		// we want to find the LAST entry with the name, but cannot search
+		// backwards, because the compressed LFA-less nature of the dictionary
+		// doesn't afford reliable backward scanning.
 		MemoryDomain grom = cpu.getMachine().getMemory().getDomain(MemoryDomain.NAME_GRAPHICS);
 		while (gromDict < gromDictEnd) {
 			cpu.addCycles(3);
 			if (nameMatches(grom, caddr, gromDict, after)) {
-				cpu.push(grom.readWord(after[0]));
-				cpu.push((short) (((grom.readByte(gromDict) & 0x40) != 0) ? 1 : -1));
+				lastMatch = gromDict;
 				found = true;
-				break;
-			} else {
-				gromDict = (short) (after[0] + 2);
-			}
+			} 
+			gromDict = (short) (after[0] + 2);
 		}
 		
-		if (!found) {
+		if (found) {
+			byte descr = grom.readByte(lastMatch);
+			cpu.push(grom.readWord(lastMatch + 1 + (descr & 0x1f)));
+			cpu.push((short) (((descr & 0x40) != 0) ? 1 : -1));
+		}
+		else {
 			cpu.push((short) caddr);
 			cpu.push((short) 0);
 		}

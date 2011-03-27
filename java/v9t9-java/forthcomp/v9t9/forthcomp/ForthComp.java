@@ -15,6 +15,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import org.ejs.coffee.core.utils.HexUtils;
+
 import v9t9.forthcomp.AbortException;
 import v9t9.forthcomp.DictEntry;
 import v9t9.forthcomp.F99TargetContext;
@@ -129,6 +131,8 @@ public class ForthComp {
     	}
 //    	logfile.println("DP = " + HexUtils.toHex4(comp.getTargetContext().getDP()));
 //    	logfile.println("UP = " + HexUtils.toHex4(comp.getTargetContext().getUP()));
+    	if (gromOutFile != null)
+    		logfile.println("GDP = " + HexUtils.toHex4(((F99bTargetContext)comp.getTargetContext()).getGP()));
 	
     	comp.finish();
     	

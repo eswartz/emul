@@ -169,9 +169,8 @@ public class DataFiles {
         
         /* write the chunk */
         FileOutputStream stream = new FileOutputStream(file);
-        for (int i = 0; i < size; i += 2) {
+        for (int i = 0; i < size; i++) {
         	stream.write(memory.readByte(addr + i));
-        	stream.write(memory.readByte(addr + i + 1));
         }
         stream.close();
         
