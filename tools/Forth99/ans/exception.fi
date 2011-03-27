@@ -1,37 +1,41 @@
 
-User handler
+\ catch/throw from ANS specification, with amendment to handle throwing 
+\ when no catch block active.
 
-1 <export
+| User handler
 
 : catch  ( xt -- exception# | 0 ) \ return addr on stack
-    sp@ >r         ( xt ) \ save data stack pointer
-    handler @ >r   ( xt ) \ and previous handler
-    rp@ handler !  ( xt ) \ set current handler
-    execute        ( )    \ execute returns if no throw
-    r> handler !   ( )    \ restore previous handler
-    r> drop        ( )    \ discard saved stack ptr
-    0              ( 0 )  \ normal completion
+    sp@ >r         \ save data stack pointer
+    handler @ >r   \ and previous handler
+    rp@ handler !  \ set current handler
+    execute        \ execute returns if no throw
+    r> handler !   \ restore previous handler
+    r> drop        \ discard saved stack ptr
+    0              \ normal completion
 ;
 
 : throw  ( ??? exception# -- ??? exception# )
     ?dup if          ( exc# ) \ 0 throw is no-op
         handler @      
         dup if
-            rp!            ( exc# ) \ restore prev return stack
-            r> handler !   ( exc# ) \ restore prev handler
-            r> swap >r     ( saved-sp ) \ exc# on return stack
-            sp! drop r>    ( exc# ) \ restore stack
+            rp!            \ restore prev return stack
+            r> handler !   \ restore prev handler
+            r> swap >r     \ exc# on return stack
+            sp! drop r>    \ restore stack
                 \  return to the caller of catch because return
                 \  stack is restored to the state that existed
                 \  when catch began execution
         else
-            quit            \ no handler in place
+            quit           \ no handler in place
         then
     then
 ;
 
-export>
+0 <export
 
 : exc-init 
     0 handler !
 ;
+
+export>
+

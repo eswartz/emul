@@ -39,6 +39,8 @@ include ../v9t9/errcodes.fi
 
 include ../v9t9/sysutils.fi
 
+include ../ans/exception.fi
+ 
 0 <EXPORT
 
 include ../v9t9/video.fi
@@ -59,8 +61,6 @@ include ../ans/kernel.fi
 
 include ../v9t9/errors.fi
 
-include ../ans/exception.fi
- 
 include ../ans/blocks.fi
 
 include ../ans/dict.fi

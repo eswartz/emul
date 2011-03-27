@@ -103,21 +103,27 @@ User SCR
 
 \ At the conclusion of the operation, the block buffer pointed to by a-addr is the 
 \ current block buffer and is assigned to u. 
-: block ( u -- a-addr )
-\ offset @ +
-    >r  prev @  dup @  r@ -
+:: block ( num -- a-addr )
+    prev @  dup @  num  -
     dup +
     if 
         begin
             +buf 0= if
-                drop r@ buffer dup r@ 1 r/w 2- 
+                drop  
+                num buffer  dup :> addr  
+                addr num 1 ['] r/w  catch 
+                ?dup if
+                    >r 0  addr 2-  !     \ clear -- not loaded!
+                    r> throw
+                then
+                2- 
             then
             dup @
-            r@ - dup + 0= 
+            num -  dup +  0= 
         until
         dup prev !
     then
-    r> drop cell+
+    2+
 ;
 
 \   Tell if the current block buffer is dirty
