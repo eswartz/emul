@@ -51,11 +51,11 @@ User 'lines
     swap  do
         i c@  dup  bl >= if
             drop 
-            i  last!
+            i  to last
         else
             nl = if
                 1 'lines +!
-                i last!
+                i to last
             then                 
         then
     loop
@@ -126,7 +126,7 @@ User 'lines
 
 \   Delete the range of characters and clear the end of the block
 :: delete-range ( caddr count -- )
-    caddr count +  baddr)  min  caddr -  count!
+    caddr count +  baddr)  min  caddr -  to count
     
     baddr)  caddr count +  -  :> tomove 
     
@@ -145,7 +145,7 @@ User 'lines
     baddr chars/block + :> bmax
     
     \ sanity
-    bmax  caddr count +  min  caddr -  0 max  count!
+    bmax  caddr count +  min  caddr -  0 max  to count
 
     \ grow now
     count  baddr) +  bmax  min  'baddr) ! 

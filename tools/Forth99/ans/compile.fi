@@ -465,11 +465,15 @@ test" unloop 3 >r 2 1 do loop r> 3 ="
 [IFUNDEF] TO
 : TO ( val "name" -- )
     '
-    do>to,
-    state @ if
-        postpone literal  postpone !
+    dup is-local if
+        to-local    
     else
-        !
+        do>to,
+        state @ if
+            postpone literal  postpone !
+        else
+            !
+        then
     then
 ; immediate target-only
 [THEN]

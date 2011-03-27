@@ -137,16 +137,16 @@ Create msx-stdpalette
     msx-shift @ dup  1 =  if
         drop
     
-        f $f and f!
-        b $f and b!
+        f $f and to f
+        b $f and to b
         
         b  dup 4 lshift  OR   ct     c!
         b  4 lshift  f   OR   ct 1 + c!
         f  4 lshift  b   OR   ct 2 + c!
         f  dup 4 lshift  OR   ct 3 + c!
     else 2 = if
-        f $3 and f!
-        b $3 and b!         
+        f $3 and to f
+        b $3 and to b         
     
         16 0 do 
             \ for each group of 4 bits that may be set...
@@ -275,8 +275,9 @@ false Constant msx-use-drawchar-accel
         
         msx-color-temp :> ct
         
+        addr
         v-fntheight c@  0 do
-            addr !vwaddr
+            dup !vwaddr
             GPLRD c@
             dup 8 lshift OR  
             width 0 do
@@ -285,8 +286,9 @@ false Constant msx-use-drawchar-accel
                 dup  3 and  ct +  c@  VDPWD c!
             2 +loop
             drop 
-            msx-stride @  'addr +!
+            msx-stride @  +
         loop
+        drop
     then
 ;
 
@@ -307,8 +309,9 @@ false Constant msx-use-drawchar-accel
         
         msx-color-temp :> ct
         
+        addr
         v-fntheight c@  0 do
-            addr !vwaddr
+            dup !vwaddr
             GPLRD c@
             dup 8 lshift OR  
             
@@ -322,8 +325,9 @@ false Constant msx-use-drawchar-accel
             then
             
             drop 
-            msx-stride @  'addr +!
+            msx-stride @  +
         loop
+        drop
      then
 ;
 
@@ -345,8 +349,9 @@ false Constant msx-use-drawchar-accel
         fg c@ :> f
         bg c@ :> b
         
+        addr
         v-fntheight c@  0 do
-            addr !vwaddr
+            dup !vwaddr
             GPLRD c@
             dup 8 lshift OR  
             width 0 do
@@ -355,8 +360,9 @@ false Constant msx-use-drawchar-accel
                 dup  1 and  if f else b then  VDPWD c!
             loop
             drop 
-            msx-stride @  'addr +!
+            msx-stride @  +
         loop
+        drop
     then  
 ;
 

@@ -53,14 +53,18 @@ public class TokenStream {
 	 * @throws FileNotFoundException 
 	 */
 	public void push(File file) throws FileNotFoundException {
-		streams.push(new FileLineNumberReader(file));		
+		FileLineNumberReader reader = new FileLineNumberReader(file);
+		reader.setLineNumber(1);
+		streams.push(reader);		
 	}
 	
 	/**
 	 * @param text
 	 */
 	public void push(String text) {
-		streams.push(new LineNumberReader(new StringReader(text)));
+		LineNumberReader reader = new LineNumberReader(new StringReader(text));
+		reader.setLineNumber(1);
+		streams.push(reader);
 	}
 	public void pop() {
 		try {

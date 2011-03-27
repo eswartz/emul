@@ -1,15 +1,45 @@
+\
+\   Forth99 local support.
+\
+\   This is a mix of Factor and ANS Forth.
+\
+\   Locals may be declared with   :> name  
+\   at any time in a word, provided the first occurrence is not
+\   inside control flow.  This removes the top stack item
+\   and assigns it to 'name'.
+\
+\   'name' anywhere after in the word then pushes the
+\   current value onto the stack.
+\
+\   The syntax  TO name
+\   will remove the top stack item and reassign 'name'.   
+\
+\   Also, a word may be declared to take named arguments
+\   by using the '::' syntax.  Here, the stack effect
+\   comment is parsed for argument names on the LHS
+\   of the '--'.  Each name becomes another local,
+\   in the same ordering expected in the comment.
+\   Arguments after '--' (or a missing '--') is ignored.
+\
+\   A word may have an empty or missing stack effect
+\   comment, which allows the first use of  :> name
+\   to occur anywhere.
+\ 
 
-1 <export
+0 <export
 
-\ Generally, 4-6 chars per name, 2 for LFA, 8 for code, TIMES 3 for local! and 'local
-256 Constant #localspace 
+\ Generally, 4-6 chars per name, 2 for LFA, 8 for code
+96 Constant #localspace 
 
 \ base of local storage
 User lbase 
+
 \ current upper limit of allocated locals
 User ldp 
+
 \ current LFA entry for allocated locals
 User llfa
+
 \ current # of allocated locals
 User lcount 
 
@@ -116,28 +146,26 @@ User lcount
 \ -------------------------------
 
 
-\ Add a local to the local dictionary, defining three entries for it:
+: is-local ( xt -- t|f )
+    lbase @  ldp @  within
+;
+
+: to-local ( xt -- ) 
+    ?comp
+    literal@
+    1 local,
+; 
+
+
+\ Add a local to the local dictionary, an entry for it:
 \   "name" ( -- value )
-\   "name!" ( value -- )
-\   "'name" ( -- addr )
 : lname, ( caddr u -- )
     
     \ make counted string
     here (>c)
     
-    \ reader
     -1 here (local,)
     
-    \ writer: "name!"
-    1 here c+!
-    [char] *  here dup c@  +   c!
-    1 here (local,)
-    
-    \ address: "'name"
-    here c@  here  1+  dup 1+  rot cmove>
-    [char] '  here 1+  c! 
-    0 here (local,)
-
     \ new local
     1 lcount +!
 ;
@@ -148,6 +176,8 @@ User lcount
 \ 
 : enter-locals ( -- | local* 7 )
     'lfind @  0= if
+        sp@ csp @ - err-local-init ?error
+    
         <locals,
         0 lcount !
         ['] (lfind) 'lfind !
@@ -191,7 +221,6 @@ export>
     1 ^locals,
     
 ; immediate target-only
-
 
 \ Define a word using locals.  The stack effect is parsed and 
 \ the words to the left of -- (if present) are assigned to successive

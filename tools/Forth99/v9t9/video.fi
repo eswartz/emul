@@ -141,16 +141,14 @@ $00B    constant    last-video-mode
 
 export>
 
-\   (Not a good reason for locals, since they're much slower, but just have something for now)
-
-::   write-vregs ( reglist -- )
+:   write-vregs ( reglist -- )
     begin 
-        reglist @ dup
+        dup @ dup
     while
         v-regaddr
-        2 'reglist +!
+        2+
     repeat   
-    drop
+    2drop
 ;
 
 : vid-show ( f -- )

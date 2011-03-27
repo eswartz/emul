@@ -3,8 +3,6 @@
  */
 package v9t9.forthcomp;
 
-import java.util.ArrayList;
-
 import v9t9.forthcomp.AbortException;
 import v9t9.forthcomp.DictEntry;
 import v9t9.forthcomp.HostContext;

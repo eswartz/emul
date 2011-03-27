@@ -36,7 +36,7 @@ User STATE
 ; immediate target-only
  
 : dliteral ( d -- )  
-        $7e c,
+    $7e c,
     2dup -8. d>= over 8. d< and  if
         drop $f and $20 or c,  else
     2dup -128. d>= over 128. d< and  if
@@ -45,6 +45,26 @@ User STATE
         $79 c, ,
     then then
 ; immediate target-only 
+
+\ Extract a compiled literal from memory
+\
+| : literal@ ( addr -- n )
+    dup    
+    c@
+    dup $20 $30 within 
+    if  
+        drop c@  $20 -  
+        dup 8 >= if  $fff0 or  then   
+    else
+        $78 = if
+            1+  c@
+            dup $80 >= if  $ff00 or  then
+        else
+            $79 <>  err-out-of-range ?error
+            1+  @
+        then
+    then         
+;
  
 : compile,
     :> addr

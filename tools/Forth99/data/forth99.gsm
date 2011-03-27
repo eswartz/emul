@@ -559,7 +559,7 @@ msgptrs dw msgcnt   ; for future use; aliases err-none
     dw err_interpret_only, err_loading_only
     dw err_block_io, err_compile_only, err_empty_name
     dw err_control_nesting, err_not_deferred, err_out_of_range
-    dw err_file_io, err_out_of_space
+    dw err_file_io, err_out_of_space, err_local_init
 msgcnt equ ($ - msgptrs) / 2
 
 msg_fault           db "FAULT",0
@@ -572,11 +572,12 @@ err_loading_only    db "loading only",0
 err_block_io        db "block i/o error",0
 err_compile_only    db "compilation only",0
 err_empty_name      db "empty name",0
-err_control_nesting db "control nesting",0
+err_control_nesting db "control structure mismatch",0
 err_not_deferred    db "not a DEFERed word",0
 err_out_of_range    db "out of range",0
 err_file_io         db "file I/O error",0
 err_out_of_space    db "out of space",0
+err_local_init      db "locals start inside control",0
 
 editorhelp
       ; 0         1         2         3         4         5         6

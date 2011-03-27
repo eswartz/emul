@@ -56,7 +56,7 @@ public abstract class TargetContext extends Context {
 	public DictEntry stubData;
 	private boolean exportFlagNext;
 	private boolean exportFlag;
-	private boolean inlineFlagNext;
+	//private boolean inlineFlagNext;
 	protected HostContext hostCtx;
 
 	public TargetContext(boolean littleEndian, int charBits, int cellBits, int memorySize) {
@@ -184,9 +184,9 @@ public abstract class TargetContext extends Context {
 		int entryAddr = getDP();
 		int size = 0;
 		boolean doExport = currentExport();
-		boolean doInline = inlineFlagNext;
+		//boolean doInline = inlineFlagNext;
 		exportFlagNext = false;
-		inlineFlagNext = false;
+		//inlineFlagNext = false;
 		
 		DictEntry entry = createDictEntry(size, entryAddr, name, doExport);
 		entry.setExport(doExport);

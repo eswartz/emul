@@ -24,6 +24,7 @@
     msg:  err-out-of-range
     msg:  err-file-i/o
     msg:  err-out-of-space
+    msg:  err-local-init
 
 negate constant num-msgptrs
 

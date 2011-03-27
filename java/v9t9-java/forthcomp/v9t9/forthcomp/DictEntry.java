@@ -245,13 +245,13 @@ public class DictEntry implements Comparable<DictEntry> {
 		int index = locals.size();
 		
 		LocalVariable local = new LocalVariable(index);
-		StoreLocalVariable storeLocal = new StoreLocalVariable(index);
-		LocalVariableAddr localAddr = new LocalVariableAddr(index);
+		//StoreLocalVariable storeLocal = new StoreLocalVariable(index);
+		//LocalVariableAddr localAddr = new LocalVariableAddr(index);
 		
-		locals.put(name.toUpperCase(), new LocalVariableTriple(local, storeLocal, localAddr));
+		locals.put(name.toUpperCase(), new LocalVariableTriple(local));
 		
-		localDict.put(name.toUpperCase() + "!", storeLocal);
-		localDict.put("'" + name.toUpperCase(), localAddr);
+		//localDict.put(name.toUpperCase() + "!", storeLocal);
+		//localDict.put("'" + name.toUpperCase(), localAddr);
 		localDict.put(name.toUpperCase(), local);
 
 		return index;

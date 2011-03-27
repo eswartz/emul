@@ -217,7 +217,7 @@ chars/block bytes-per-sector u/  constant secs-per-block
             ['] (dsk-write) #dskCmdWriteSector
         then
         xfer
-        addr!
+        to addr
     loop
             
     0

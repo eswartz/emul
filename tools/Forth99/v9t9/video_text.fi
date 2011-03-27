@@ -66,7 +66,7 @@
         ch addr +vc!
         v-width @  addr +  
         dup lim >= if  v-screensz @ -  then
-        addr!
+        to addr
     loop
 ;
 
@@ -82,7 +82,7 @@
     x y  txt-chaddr  vsetbank  :>  addr
     h 0 ?do
         addr w $20  vfill
-        v-width @  addr +  addr!
+        v-width @  addr +  to addr
     loop
 ;
 
@@ -96,8 +96,8 @@
         v-patts @  :> vpaddr
         256 0 do
             addr vpaddr h  +gvmove
-            addr h +  addr!  
-            vpaddr 8 +  vpaddr!  
+            addr h +  to addr  
+            vpaddr 8 +  to vpaddr  
             vpaddr h +  8 h -  $00  +vfill 
         loop
     then
@@ -258,13 +258,13 @@ Create GfxModeParams
         mask $8080 =  i' i - 8 >=  and  if
             \ blast 8 at once
             v-blink c@  VDPWD c!
-            caddr 1+  caddr!
+            caddr 1+  to caddr
             8
         else
             \ just one bit at a time
             mask  caddr +vc@  func execute  caddr +vc!
-            mask  1 crshift  dup  $8080 =  if  caddr 1+  caddr!  then  
-            mask!
+            mask  1 crshift  dup  $8080 =  if  caddr 1+  to caddr  then  
+            to mask
             1
         then
     +loop

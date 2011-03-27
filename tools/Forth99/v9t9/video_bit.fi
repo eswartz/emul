@@ -51,7 +51,7 @@
     bit-chaddr  0 :> shift  
                 v-patts @ + :> addr     \ only change patt
 
-    addr vsetbank  addr!
+    addr vsetbank  to addr
 
     \ pattern    
     $c0c0 shift CRSHIFT  :> bits
@@ -67,11 +67,11 @@
     :> changer
     
     v-fntheight c@  0  do
-        bits addr
+        bits addr i +
         v-curs-under i +  changer execute
         
         \ simple-stupid
-        1 'addr +!
+        \ 1 'addr +!
     loop
 ;
 
@@ -88,10 +88,10 @@
 ;
 
 :: bit-clear ( w h x y -- )
-    x  -8 and  x!
-    y  -8 and  y!
-    w 7 + -8 and w!
-    h 7 + -8 and h!
+    x  -8 and  to x
+    y  -8 and  to y
+    w 7 + -8 and to w
+    h 7 + -8 and to h
 
 [ 0 [if] ]
     \ clear unaligned rows before aligned Y
