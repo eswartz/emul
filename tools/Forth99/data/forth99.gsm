@@ -1,7 +1,7 @@
 
 ;	nforth.gsm					-- FORTH GROM data
 ;
-;	(c) 1996-2010 Edward Swartz
+;	(c) 1996-2011 Edward Swartz
 ;
 ;	This program is free software; you can redistribute it and/or modify
 ;	it under the terms of the GNU General Public License as
@@ -551,32 +551,43 @@ font5x6
 	db >40, >a8, >10, >0, >0, >0
 	db >0, >0, >0, >0, >0, >0
 
-;   sync with errocodes.fi !
-msgptrs dw msgcnt   ; for future use; aliases err-none
-    dw msg_fault, msg_aborted
-    dw msg_ok
-    dw err_undefined, err_redefining
-    dw err_interpret_only, err_loading_only
-    dw err_block_io, err_compile_only, err_empty_name
-    dw err_control_nesting, err_not_deferred, err_out_of_range
-    dw err_file_io, err_out_of_space, err_local_init
-msgcnt equ ($ - msgptrs) / 2
+;   sync with errcodes.fi !
+msgptrs 
+    dw -1, msg_aborted
+    dw -256, msg_fault
+    dw -257, msg_ok
+    dw -13, err_undefined 
+    dw -258, err_redefining
+    dw -259, err_loading_only
+    dw -33, err_block_read
+    dw -34, err_block_write
+    dw -35, err_block_num
+    dw -14, err_compile_only
+    dw -16, err_empty_name
+    dw -22, err_control_nesting
+    dw -260, err_not_deferred
+    dw -11, err_out_of_range
+    dw -37, err_file_io
+    dw -8, err_dict_overflow
+    dw -261, err_local_init
+    dw 0
 
 msg_fault           db "FAULT",0
 msg_aborted         db "aborted",13,0
 msg_ok              db "ok",0
 err_undefined       db "undefined",0
 err_redefining      db "redefining ",0
-err_interpret_only  db "interpret mode only",0
 err_loading_only    db "loading only",0
-err_block_io        db "block i/o error",0
+err_block_read      db "block read error",0
+err_block_write     db "block write error",0
+err_block_num       db "invalid block number",0
 err_compile_only    db "compilation only",0
 err_empty_name      db "empty name",0
 err_control_nesting db "control structure mismatch",0
 err_not_deferred    db "not a DEFERed word",0
 err_out_of_range    db "out of range",0
 err_file_io         db "file I/O error",0
-err_out_of_space    db "out of space",0
+err_dict_overflow   db "dictionary overflow",0
 err_local_init      db "locals start inside control",0
 
 editorhelp

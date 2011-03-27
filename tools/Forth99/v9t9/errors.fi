@@ -1,14 +1,34 @@
 
 
 : >message     (  # -- gaddr )
-    negate  
-    2*  >grom_errptrs g@  +  g@
+    >r
+    >grom_errptrs g@
+    
+    begin
+        \ code is first, 0 ends table
+        dup  g@  dup
+    while
+        r@  = if
+            \ msg ptr follows code  
+            2+  g@  rdrop exit
+        then
+        \ each entry is 4 bytes
+        4 +    
+    repeat
+    
+    rdrop  2drop 0
 ;
 
 : message     (  # -- )
-    dup  [ num-msgptrs 1- negate ] literal 0   within  if
-        >message  space gtypez
+    dup  >message ?dup if
+        space gtypez
+        drop
     else
         ." ??? " .
     then
 ;
+
+: ?throw ( t|f code -- )
+    AND throw
+;
+

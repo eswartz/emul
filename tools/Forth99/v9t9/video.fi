@@ -225,10 +225,10 @@ export>
 |+ : (mode)
     cursor-off
 
-    dup  0 last-video-mode within  0= err-out-of-range ?error
+    dup  0 last-video-mode within  0= err-out-of-range ?throw
     cells  video-modes +  @ 
     
-    dup 0= err-undefined ?error
+    dup 0= err-undefined ?throw
     
     v-font @  v-fntwidth c@  v-fntheight c@
     v-data v-data-size 0 -1  (cfill)     \ v-data is end 

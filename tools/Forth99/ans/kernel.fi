@@ -634,9 +634,23 @@ error" need prim execute"
 ; immediate  target-only
 [THEN]
 
+[IFUNDEF] ABORT
+
+: abort
+    err-abort throw
+;
+
+[THEN]
+
 [IFUNDEF] ABORT"
 | : (abort")
-    rot if cr ." error: " type cr abort else 2drop then
+    \ rot if cr ." error: " type cr abort else 2drop then
+    rot if 
+        type cr
+        err-abort" throw  
+    else  
+        2drop  
+    then
 ;
 
 : ABORT"
@@ -1381,14 +1395,4 @@ test" d< 10. -10. d< 0="
 [IFUNDEF] ?
 : ? @ . ;
 [THEN]
-
-\ \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-
-: ?error
-    swap if
-        message abort
-    else
-        drop
-    then
-;
 

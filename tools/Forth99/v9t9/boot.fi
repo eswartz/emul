@@ -42,7 +42,7 @@
 
 EXPORT>
 
-:   abort
+:   cold
 
     regs-init   ints-init   kbd-init
     

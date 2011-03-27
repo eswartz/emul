@@ -2,81 +2,17 @@
 ( the routine that handles RWBLK )
 | User >rwblk
 
-\ mini-exception handler
-| User exclink
-
-
-\
-\  Before:      After (before return):
-\
-\                   exclink -> old RP
-\ 
-\  RP           RP
-\
-\               ret
-\               old SP          <-- new exclink
-\               old exclink
-\  ret          ret
-\          
-: guard ( -- -1 | err 0 )
-    r@   ( ret )
-    exclink @  >r
-    sp@ cell+  >r
-    rp@  exclink !
-    -1  
-    
-    swap ( -1 ret )  >r
-;
-
-
-: toss ( err -- )
-    exclink @  rp!
-    exclink !  \ store return here for now
-    r>  sp!
-    r>  
-    exclink @  \ retrieve return    
-    swap exclink !
-    0   
-    \ exit...
-;
-
-
-\
-\  Before:                  After (before return):
-\ 
-\   exclink -> old RP @SP
-\
-\  RP                       RP
-\
-\  ret'         
-\  old SP       
-\  old exclink  
-\  ret                      ret'
-\          
-: unguard ( -- )
-    r>      ( ret' )
-    exclink @   rp!
-    r>  drop
-    r>   exclink ! 
-    rdrop  >r      ( R: ret' )
-;
-
-
-: ?toss ( 0|err -- )
-    ?dup if toss then
-;
-
 \ ----------------------------
 
-( execute 'xt' for up to 'ms' mseconds until it returns !0; return 0 if timeout )
-:: wait4 ( ms xt -- 0 | -1 )
+( execute 'xt' for up to 'ms' mseconds until it returns !0; throw err-file-i/o if timeout )
+:: wait4 ( ms xt -- result )
 
     [ 0 [if] ]
          ms 0 do
             xt execute
             ?dup if  unloop exit  then
         loop
-        -1
+        err-file-i/o throw
     [ [else] ]
         ms 60 1000 U*/  s>d
         vdp-ticks d@  d+  :> h-limit :> l-limit
@@ -85,7 +21,7 @@
             xt execute
             ?dup if exit then
             ints-check
-            vdp-ticks d@  l-limit h-limit  d>=  if 0 exit then
+            vdp-ticks d@  l-limit h-limit  d>=  if  err-file-i/o throw  then
         again
     [ [then] ]         
 ;
@@ -101,7 +37,7 @@
 ;
 
 : fdc-wait-ready ( ms -- ! )
-    ['] fdc-ready  wait4  0=  ?toss 
+    ['] fdc-ready  wait4  drop
 ;
 
 : fdc-command ( cmd-byte -- ! )
@@ -137,7 +73,7 @@
     true motor
     false #dskFlgHold dsk-flg!
     
-    side 1 U>=  ?toss
+    side 1 U>=  err-inv-block-number ?throw
      
     \ set side
     side #dskFlgSide  dsk-flg!
@@ -195,7 +131,7 @@ chars/block bytes-per-sector u/  constant secs-per-block
     true #dskFlgHold dsk-flg!
     true motor
         
-    1 ['] drq-ready  wait4  0= ?toss 
+    1 ['] drq-ready  wait4  drop
     bytes-per-sector 0 do
         2dup execute  swap 1+ swap
     loop
@@ -208,6 +144,7 @@ chars/block bytes-per-sector u/  constant secs-per-block
 \ read/write block on current disk 
 :: (disk-rwblk)  ( addr  block# r/w -- err )
     block#  secs-per-block U*  :> sec
+    
     secs-per-block 0 do
         i sec +  disk-seek-sec
         
@@ -226,28 +163,22 @@ chars/block bytes-per-sector u/  constant secs-per-block
 
 \ ---------------
 
-: disk-rwblk    ( addr  block# r/w -- 0|err )
+: disk-rwblk    ( addr  block# r/w --  )
     1 'DSKNUM c!
 
-    guard if 
-        (disk-rwblk)
-        unguard
-    else
-        >r   ( error )
-        
-        2drop drop
-        
-        r>    
-    then
-    
+    ['] (disk-rwblk) catch
+
+    \ finally...    
+    >r
     0 'DSKNUM c!
+    r> throw
 ;
 
 | >gram_disk_base negate chars/block U/  
             Constant    #GRAM
 
 
-: gram-rwblk    ( addr  block# r/w -- err )
+: gram-rwblk    ( addr  block# r/w --  )
     >r
     1-
     dup  0  #GRAM  within if 
@@ -257,9 +188,8 @@ chars/block bytes-per-sector u/  constant secs-per-block
         else  
             chars/block        cgmove  
         then
-        0
     else
-        drop 2drop rdrop -1
+        drop 2drop  rdrop  err-inv-block-number  throw
     then
 ;
 
@@ -268,13 +198,14 @@ chars/block bytes-per-sector u/  constant secs-per-block
     >rwblk  !
 ;
 
+: fdc-interrupt
+    #dskCmdInterrupt fdc-command
+;
+
 export>
 
 : DSK1 ( -- )
-    guard if 
-        #dskCmdInterrupt fdc-command
-        unguard
-    then
+    ['] fdc-interrupt catch  drop
     ['] disk-rwblk  set-disk
 ;
 
@@ -284,10 +215,10 @@ export>
 
 
 \ read or write:  r/w == TRUE means read, FALSE means write
-: RWBLK    ( addr  block# r/w -- err )
+: R/W ( addr block# r/w -- )
     over $7fff = if
         \ test
-        2drop drop 0
+        2drop drop
     else
         >rwblk @  execute
     then
@@ -295,5 +226,4 @@ export>
 
 | : io-init
     GRAM    
-    0 exclink !
 ; 

@@ -1,31 +1,26 @@
 
 0 <export
 
-: msg:  ( num c"NAME -- num,' )
-    dup Constant
-    1-
-;
-
 \ see forth99.gsm : msgptrs
-0
-    msg:  err-none
-    msg:  err-fault
-    msg:  err-aborted
-    msg:  msg-ok
-    msg:  err-undefined
-    msg:  err-redefining
-    msg:  err-interpret-only
-    msg:  err-loading-only
-    msg:  err-block-i/o
-    msg:  err-compile-only
-    msg:  err-empty-name
-    msg:  err-control-nesting
-    msg:  err-not-deferred
-    msg:  err-out-of-range
-    msg:  err-file-i/o
-    msg:  err-out-of-space
-    msg:  err-local-init
+0    Constant  err-none
+-1   Constant  err-abort
+-2   Constant  err-abort"
+-13  Constant  err-undefined
+-33  Constant  err-block-read
+-34  Constant  err-block-write
+-35  Constant  err-inv-block-number
+-14  Constant  err-compile-only
+-16  Constant  err-empty-name
+-22  Constant  err-control-nesting
+-11  Constant  err-out-of-range
+-37  Constant  err-file-i/o
+-8   Constant  err-dict-overflow
 
-negate constant num-msgptrs
+-256 Constant  err-fault
+-257 Constant  msg-ok
+-258 Constant  msg-redefining
+-259 Constant  err-loading-only
+-260 Constant  err-not-deferred
+-261 Constant  err-local-init
 
 export>

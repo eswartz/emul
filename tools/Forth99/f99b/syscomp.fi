@@ -60,7 +60,7 @@ User STATE
             1+  c@
             dup $80 >= if  $ff00 or  then
         else
-            $79 <>  err-out-of-range ?error
+            $79 <>  err-out-of-range ?throw
             1+  @
         then
     then         

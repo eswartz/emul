@@ -75,7 +75,6 @@ cell    RamVar    vdp-timeout
     0  (>context) [ CTX_SR field, ] 
     
     $00 msx-cmdsetup
-    err-aborted message
     abort
     exiti       \ NOTREACHED
 ;

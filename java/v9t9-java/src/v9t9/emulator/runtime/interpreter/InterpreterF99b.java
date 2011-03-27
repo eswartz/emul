@@ -30,6 +30,8 @@ import v9t9.tools.asm.assembler.IInstructionFactory;
  * @author ejs
  */
 public class InterpreterF99b implements Interpreter {
+	public static boolean DEBUG = false;
+	
 	Machine machine;
 
     MemoryDomain memory;
@@ -767,6 +769,11 @@ public class InterpreterF99b implements Interpreter {
 		boolean found = false;
 		short lastMatch = 0;
 		int[] after = { 0 }; 
+		
+		if (DEBUG) {
+			String name = readCountedString(iblock.domain, caddr);
+			System.out.println("Searching for >>>"+name+"<<<");
+		}
     		
 		// we want to find the LAST entry with the name, but cannot search
 		// backwards, because the compressed LFA-less nature of the dictionary
@@ -790,6 +797,20 @@ public class InterpreterF99b implements Interpreter {
 			cpu.push((short) caddr);
 			cpu.push((short) 0);
 		}
+	}
+
+	/**
+	 * @param domain
+	 * @param caddr
+	 * @return
+	 */
+	private String readCountedString(MemoryDomain domain, int caddr) {
+		StringBuilder sb = new StringBuilder();
+		int len = domain.readByte(caddr++) & 0x1f;
+		while (len-- > 0) { 
+			sb.append((char) domain.readByte(caddr++));
+		}
+		return sb.toString();
 	}
 
 	private void syscallNumber() {
@@ -905,6 +926,11 @@ public class InterpreterF99b implements Interpreter {
 	 * @return
 	 */
 	private boolean nameMatches(MemoryDomain domain, int caddr_, short nfa_, int[] after) {
+		if (DEBUG) {
+			String name = readCountedString(domain, nfa_);
+			System.out.println("... >"+name+"< ?");
+		}
+		
 		cpu.addCycles(10);
 		int caddr = caddr_;
 		short nfa = nfa_;

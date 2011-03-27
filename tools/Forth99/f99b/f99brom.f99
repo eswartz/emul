@@ -59,6 +59,8 @@ include ../ans/kernel.fi
 
 include ../v9t9/errors.fi
 
+include ../ans/exception.fi
+ 
 include ../ans/blocks.fi
 
 include ../ans/dict.fi
@@ -139,7 +141,9 @@ export>
     regs-init
     
     ints-init
-    
+
+    exc-init
+        
     kbd-init
     
     video-init
@@ -178,8 +182,8 @@ include ../v9t9/ints.fi
 
 export>
 
-' bye (BOOT)     !
-' abort  (COLD)     !
+' bye   (BOOT)     !
+' cold  (COLD)     !
 \ here   DP0        !
 here $3ff +  $3ff INVERT and  DP0        !
 

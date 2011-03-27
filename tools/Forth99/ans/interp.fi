@@ -64,7 +64,7 @@ user >IN
             true
         else 
             ( fileid )
-            err-file-i/o ?error
+            err-file-i/o ?throw
         then then
     then
 ;
@@ -74,6 +74,84 @@ user >IN
 \ : QUERY
 \ ;
 [THEN]
+
+[IFUNDEF] (NUMBER)
+
+\   Interpret counted string as number,
+\   and store decimal point location in DPL.
+
+| User dpl
+
+: (number)    ( addr -- ud dpl t | f )
+\   .s
+
+    0 0 rot
+    
+    base @ >r               \ save original base
+
+    count 
+
+    \ see if first char is '-'
+    over c@ [char] - = dup 
+    >r                      \ store sign flag
+    if (skip) then
+
+    \ check for base conversion
+    over c@ [char] $ = if
+        hex (skip)          \ use hex for '$'
+    else over c@ [char] & = if
+        decimal (skip)      \ use decimal for '&'
+    then then
+
+    -1 dpl !
+
+    >number
+    dup if      \ any invalid chars?
+        \ drop 
+        over c@ [char] . = if    \ did we stop at '.'?
+            over dpl !      \ don't store offset... too much work ;)
+            (skip)          \ skip '.'
+            >number         \ parse rest
+        then
+        dup if 
+            2drop 2drop 2rdrop false exit
+            \ here huh? 2drop 2drop quit  \ error
+        then
+    then
+    2drop
+
+    r>              \ sign flag
+    if dnegate then
+
+    r> base !       \ original base
+
+    dpl @ 1+
+    
+    true
+    
+\   .s
+;
+
+[ENDIF]
+
+[IFUNDEF] NUMBER
+
+\ Parse a number and push it or compile it
+: number ( caddr -- n|d|... )
+    (number)
+    if
+        if
+            state @ if  postpone dliteral  then 
+        else 
+            drop state @ if  postpone literal  then
+        then
+    else
+        here huh? quit  \ error
+    then
+;
+
+[ENDIF]
+
 
 [IFUNDEF] RESTORE-INPUT
 : RESTORE-INPUT ( xn ... x1 n -- )
@@ -155,83 +233,6 @@ user >IN
     [char] ? emit cr
 ;
 
-[IFUNDEF] (NUMBER)
-
-\   Interpret counted string as number,
-\   and store decimal point location in DPL.
-
-| User dpl
-
-: (number)    ( addr -- ud dpl t | f )
-\   .s
-
-    0 0 rot
-    
-    base @ >r               \ save original base
-
-    count 
-
-    \ see if first char is '-'
-    over c@ [char] - = dup 
-    >r                      \ store sign flag
-    if (skip) then
-
-    \ check for base conversion
-    over c@ [char] $ = if
-        hex (skip)          \ use hex for '$'
-    else over c@ [char] & = if
-        decimal (skip)      \ use decimal for '&'
-    then then
-
-    -1 dpl !
-
-    >number
-    dup if      \ any invalid chars?
-        \ drop 
-        over c@ [char] . = if    \ did we stop at '.'?
-            over dpl !      \ don't store offset... too much work ;)
-            (skip)          \ skip '.'
-            >number         \ parse rest
-        then
-        dup if 
-            2drop 2drop 2rdrop false exit
-            \ here huh? 2drop 2drop quit  \ error
-        then
-    then
-    2drop
-
-    r>              \ sign flag
-    if dnegate then
-
-    r> base !       \ original base
-
-    dpl @ 1+
-    
-    true
-    
-\   .s
-;
-
-[ENDIF]
-
-[IFUNDEF] NUMBER
-
-\ Parse a number and push it or compile it
-: number ( caddr -- n|d|... )
-    (number)
-    if
-        if
-            state @ if  postpone dliteral  then 
-        else 
-            drop state @ if  postpone literal  then
-        then
-    else
-        here huh? quit  \ error
-    then
-;
-
-[ENDIF]
-
 | : interpreter
 \        ( i*x c-addr u -- j*x )
 \
@@ -295,28 +296,40 @@ user >IN
     0 'lfind !
 ;
 
-: QUIT
-    begin
-        sp0 sp!
-        rp0 rp! 
-        (clrsrc)
-        postpone [  
-        begin   
-            ints-check
-            refill
-        while
-            interpret
+| : ok-prompt?
+    \ print comments only when using user input
+    blk @ source-id and 0= if 
+        state @ 0= if
+            msg-ok message  .s
+        then
+        cr
+    then
+;
 
-            \ print comments only when using user input
-            blk @ source-id and 0= if 
-                state @ 0= if
-                    msg-ok message  .s
-                then
-                cr
-            then
-        repeat
-        .s cr
-    again
+: QUIT
+    sp0 sp!
+    rp0 rp! 
+    (clrsrc)
+    postpone [  
+    begin   
+        ints-check
+        refill
+    while
+[ [IFUNDEF] catch ]        
+        interpret
+        ok-prompt?
+[ [ELSE] ]
+        ['] interpret catch
+        dup 0= if
+            drop  ok-prompt?        
+        else dup err-abort" = if
+            ( abort" )
+        else
+            message cr
+        then then
+[ [ENDIF] ]
+    repeat
+    bye
 ;
 [THEN]
 

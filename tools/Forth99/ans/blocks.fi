@@ -52,10 +52,6 @@ User SCR
 \   block#  if in use, or'ed by 0x8000 if modified
 \   <block memory>
 
-: R/W ( addr block# r/w -- )
-    RWBLK err-block-i/o ?ERROR
-;
-
 \ Distance to the next buffer relative to the previous.
 : +BUF ( baddr -- next-addr distance )
     (#blk) +  dup limit >= if
@@ -173,16 +169,17 @@ User SCR
 \
 \ An ambiguous condition exists if u is zero or is not a valid block number. 
 : load  ( i*x u -- j*x )
-    dup 0= err-out-of-range ?error
+    dup 0=  err-inv-block-number ?throw
     <input
     0 >in !
     blk !
-    interpret
+    ['] interpret catch 
     input>
+    throw
 ;
 
 :   ?loading
-    blk @ 0= err-loading-only ?error 
+    blk @ 0= err-loading-only ?throw 
 ;
 
 : -->

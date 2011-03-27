@@ -34,7 +34,7 @@ User STATE
 \ \\\\\\\\\\\\\\\\\\\\\\\\
 
 : ?comp
-    state @ 0= err-compile-only ?error
+    state @ 0= err-compile-only ?throw
 ;
 
 \ Hide a word while compiling, to allow redefining a word in terms of the same name
@@ -52,7 +52,7 @@ User STATE
     \ Get name
     parse-def-name
     
-    if  err-redefining message  drop  here
+    if  msg-redefining message  drop  here
     then 
 ;
 
@@ -135,7 +135,7 @@ User csp
 ; target-only
 
 : ?csp
-    sp@ csp @ - err-control-nesting ?error
+    sp@ csp @ - err-control-nesting ?throw
 ; target-only
 
 \ Optionally add behavior at a colon definition
@@ -166,7 +166,7 @@ User csp
  ; immediate target-only  
 
 : ?pairs    ( i*x tag tag' -- )
-    - err-control-nesting ?error
+    - err-control-nesting ?throw
 ;
 
 [IFUNDEF] BACK

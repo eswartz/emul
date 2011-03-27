@@ -124,7 +124,7 @@ User lcount
     \ ANTICIPATORY check of local dictionary overflow
     \ (here because we can't lose the DP when emitting the error)
     ldp @  over c@  10 + +
-    lbase @  #localspace +  >  err-out-of-space ?error
+    lbase @  #localspace +  >  err-dict-overflow ?throw
 
     \ Reassign DP
     here >r
@@ -176,7 +176,7 @@ User lcount
 \ 
 : enter-locals ( -- | local* 7 )
     'lfind @  0= if
-        sp@ csp @ - err-local-init ?error
+        sp@ csp @ - err-local-init ?throw
     
         <locals,
         0 lcount !

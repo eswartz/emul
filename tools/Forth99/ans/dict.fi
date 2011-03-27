@@ -247,7 +247,7 @@ User GDP              \ GROM dictionary pointer
 
 [ifundef] FORGET
 : FORGET 
-    '   dup  0=  err-undefined ?error
+    '   dup  0=  err-undefined ?throw
     dup  dp !
     
     xt>nfa      
