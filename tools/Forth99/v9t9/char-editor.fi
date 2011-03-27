@@ -913,6 +913,7 @@ export>
         then
     
         \ init block
+        edit.fixblock
         baddrs!
         
         \ remember last time we updated

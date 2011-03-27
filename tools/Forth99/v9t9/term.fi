@@ -325,15 +325,17 @@ export>
 ;
 
 ( save video state: needs buffer of v-data-size size )
-:: vsave  ( buff -- )
-    v-data0  buff                 v-data-size  cmove 
-    t-data0  buff  v-data-size +  t-data-size  cmove 
+: vsave  ( buff -- )
+    v-data0  over                 v-data-size  cmove 
+    t-data0  swap  v-data-size +  t-data-size  cmove 
 ;
 
 ( restore video state: needs buffer of v-data-size size )
-:: vrestore  ( buff -- )
-    buff  v-data0                 v-data-size  cmove 
-    buff  v-data-size +  t-data0  t-data-size  cmove
+: vrestore  ( buff -- )
+    cursor-off
+    
+    dup   v-data0                 v-data-size  cmove 
+          v-data-size +  t-data0  t-data-size  cmove
     
     16 0 do
         v-regsave i + c@  $8000  i 8 lshift  OR  OR  vwaddr
