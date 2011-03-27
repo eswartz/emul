@@ -446,8 +446,8 @@ public class InterpreterF99b implements Interpreter {
 			cpu.push((short) (cpu.pop() != 0 ? 0 : -1));
 			break;
 		case Inand: {
-			short v = cpu.pop();
 			short m = cpu.pop();
+			short v = cpu.pop();
 			cpu.push((short) (v & ~m));
 			break;
 		}

@@ -20,10 +20,10 @@ t-data
     +field  win-my  
 
     ( window attributes, in units )
-    +field  win-x
-    +field  win-y
-    +field  win-sx
-    +field  win-sy
+|+    +field  win-x
+|+    +field  win-y
+|+    +field  win-sx
+|+    +field  win-sy
 
     ( stock character sizes, in units )
     +1field win-chxs

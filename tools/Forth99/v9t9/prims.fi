@@ -7,7 +7,7 @@
 
 \   Custom:  reset a flag in a word
 : &!        ( mask addr -- )
-    dup >r @  NAND  r> !
+    dup >r @  swap NAND  r> !
 ;
 
 : tolower ( ch -- ch )

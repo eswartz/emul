@@ -26,7 +26,7 @@ cell    RamVar    randnoise
 ;
 
 :   toupper     ( ch -- ch )
-    dup $61 $7B within if $20 swap nand then 
+    dup $61 $7B within if  $20 nand  then 
 ;
 
 :   buffer-key  ( -- )

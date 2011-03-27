@@ -216,15 +216,19 @@ Create GfxModeParams
     
 ;
 
+\ reset or set blink bit
+: txt2-blink! ( fl x y -- )
+    txt-choffs  >txt2-coloraddr 
+    
+    dup >r  +vc@
+    v-blink c@  if  OR  else  swap NAND  then  
+    r> +vc!
+; 
+
 :: txt2-drawchar ( ch x y -- )
     ch x y  txt-drawchar
     
-    \ reset or set blink bit
-    x y  txt-choffs  >txt2-coloraddr  
-    
-    dup >r  +vc@
-    v-blink c@  if  OR  else  NAND  then  
-    r>  +vc!
+    x y  txt2-blink!
 ;
 
 :: txt2-clear ( w h x y -- )
@@ -262,7 +266,7 @@ Create GfxModeParams
             8
         else
             \ just one bit at a time
-            mask  caddr +vc@  func execute  caddr +vc!
+            caddr +vc@  mask  func execute  caddr +vc!
             mask  1 crshift  dup  $8080 =  if  caddr 1+  to caddr  then  
             to mask
             1
@@ -274,10 +278,7 @@ Create GfxModeParams
     ch len x y  txt-vchar  
 
     y len +  y  ?do
-        x i  txt-choffs  >txt2-coloraddr
-        dup >r  +vc@
-        v-blink c@  if OR else NAND then
-        r> +vc!
+        x i  txt2-blink! 
     loop
 ;
 

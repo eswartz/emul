@@ -2,7 +2,8 @@
 \ \\\\\\\\\\\\\
 
 : per-line
-    win-cx c@  8 - 2 rshift 1- 1 max  aligned
+    \ 7 = 4 addr + = + space + NL
+    win-cx c@  7 -  2 urshift   1 nand  1 max
 ;
 
 : 2u.
@@ -17,7 +18,7 @@
 | : (dmpln) ( addr cnt xt -- )
     >r  \ save xt
     ( addr cnt )
-    over 4u. space [char] = emit space
+    over 4u.   [char] = emit  
     2dup over + swap
     do 
         i j execute 2u. space

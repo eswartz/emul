@@ -107,14 +107,15 @@
 : fdc-command ( cmd-byte -- ! )
     3000 dup  fdc-wait-ready
     
-    'DSKCMD c!
+    swap  'DSKCMD c!
     
     fdc-wait-ready
 ;
 
 
-:: dsk-flg! ( on? mask -- )
-    mask  'DSKFLG c@  on?  if OR else NAND then   
+: dsk-flg! ( on? mask -- )
+    'DSKFLG c@  
+    rot if  OR  else  swap NAND  then   
     'DSKFLG c!
 ;
 
@@ -128,7 +129,7 @@
 
 
 : seek-command ( cmd -- )
-    [ #dskCmd'Head #dskCmd'Verify #dskCmd'10ms OR OR literal ] OR      
+    [ #dskCmd'Head #dskCmd'Verify #dskCmd'10ms OR OR ] literal  OR      
     fdc-command 
 ;
 

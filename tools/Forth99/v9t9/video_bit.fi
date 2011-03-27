@@ -99,7 +99,7 @@
     if
         h  over -  h!
         w swap  x y  bit-clear-rows
-        7  y 7 + nand  y!
+        y 7 +  7  nand  y!
     then
 
     \ clear aligned wx8 rows; y and h are updated
@@ -107,8 +107,8 @@
         y h +  y  do
             w 8 x i  bit-clear-rows
         8 +loop
-        7  h      nand  y +  y!
-        7  h      and   h!
+        h 7     nand  y +  y!
+        h 7     and   h!
     then
     
     \ clear remaining unaligned rows after Y
