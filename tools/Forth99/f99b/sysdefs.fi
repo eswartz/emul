@@ -168,6 +168,7 @@ $10         constant    I0branchX
 $39         constant    IRfrom
 $3a         constant    IRdrop
 $3b         constant    IatR
+$3c         constant    Irpidx
 $3d         constant    Ilpidx
 $3e         constant    Ilocal
 $7e3e       constant    ItoLocals
@@ -204,8 +205,6 @@ $7e30       constant    Idup_d
 $7e38       constant    ItoR_d
 $7e3a       constant    Irdrop_d
 
-$3c         constant    Irpidx
-
 
 \ ----------    syscalls
 
@@ -213,11 +212,11 @@ $00         constant    #idle
 $01         constant    #dbg
 $02         constant    #dbgf
 $03         constant    #regsym
+$04         constant    #find
+$05         constant    #gfind
+$06         constant    #number
+$07         constant    #decorated-number
 
-: (dbg)     Isyscall c, #dbg c, ; immediate
-: (dbgf)    Isyscall c, #dbgf c, ; immediate
-: (idle)    Isyscall c, #idle c, ; immediate
-: (register-symbol)    Isyscall c, #regsym c, ; immediate
 
 \ ---------     interrupt flag bits
 

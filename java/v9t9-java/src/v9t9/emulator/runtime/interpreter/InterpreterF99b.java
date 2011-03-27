@@ -700,118 +700,24 @@ public class InterpreterF99b implements Interpreter {
 	        	}
 	        	
 	        	case SYSCALL_FIND: {
-	        		// ( caddr lfa -- caddr 0 | xt -1=immed | xt 1 )
-	        		int lfa = cpu.pop();
-	        		int caddr = cpu.pop();
-
-	        		boolean found = false;
-	        		int[] after = { 0 }; 
-	        		int count = 65536;
-	        		while (lfa != 0 && count-- > 0) {
-	        			cpu.addCycles(3);
-	        			short nfa = (short) (lfa + 2);
-	        			if (nameMatches(iblock.domain, caddr, nfa, after)) {
-	        				short xt = (short) after[0];
-	        				if ((xt & 1) != 0)
-	        					xt++;
-	        				cpu.push(xt);
-	        				cpu.push((short) ((iblock.domain.readByte(nfa) & 0x40) != 0 ? 1 : -1));
-	        				found = true;
-	        				break;
-	        			} else {
-	        				lfa = iblock.domain.readWord(lfa);
-	        			}
-	        		}
-	        		
-	        		if (!found) {
-	        			cpu.push((short) caddr);
-	        			cpu.push((short) 0);
-	        		}
+	        		syscallFind();
 	        		break;
 	        	}
 
 	        	case SYSCALL_GFIND: {
-	        		// ( caddr gDictEnd gDict -- caddr 0 | xt 1 | xt -1 )
-	        		short gromDictEnd = cpu.pop();
-	        		short gromDict = cpu.pop();
-	        		int caddr = cpu.pop();
-
-	        		boolean found = false;
-	        		int[] after = { 0 }; 
-        		
-        			MemoryDomain grom = cpu.getMachine().getMemory().getDomain(MemoryDomain.NAME_GRAPHICS);
-    				while (gromDict < gromDictEnd) {
-	        			cpu.addCycles(3);
-	        			if (nameMatches(grom, caddr, gromDict, after)) {
-	        				cpu.push(grom.readWord(after[0]));
-	        				cpu.push((short) (((grom.readByte(gromDict) & 0x40) != 0) ? 1 : -1));
-	        				found = true;
-	        				break;
-	        			} else {
-	        				gromDict = (short) (after[0] + 2);
-	        			}
-	        		}
-	        		
-	        		if (!found) {
-	        			cpu.push((short) caddr);
-	        			cpu.push((short) 0);
-	        		}
+	        		syscallGfind();
 	        		break;
 	        	}
 
-	        	/*
-	        	case SYSCALL_INTERPRET: {
-	        		int dp = cpu.pop();
-	        		int len = cpu.pop();
-	        		int addr = cpu.pop();
-	        		
-	        		StringBuilder text = new StringBuilder();
-	        		while (len-- > 0) {
-	        			text.append((char) iblock.domain.readByte(addr++));
-	        		}
-	        		
-	        		TargetContext targCtx = new F99bTargetContext(65536);
-	        		HostContext hostCtx = new HostContext(targCtx);
-	        		ForthComp comp = new ForthComp(hostCtx, targCtx);
-	        		ByteArrayOutputStream diag = new ByteArrayOutputStream();
-	        		
-	        		targCtx.setDP(dp);
-	        		
-	        		targCtx.importMemory(iblock.domain);
-	        		
-	        		comp.setLog(new PrintStream(diag));
-	        		
-	        		try {
-						comp.parseString(text.toString());
-					} catch (AbortException e) {
-						e.printStackTrace();
-						try {
-							diag.write(e.toString().getBytes());
-						} catch (IOException e1) {
-							e1.printStackTrace();
-						}
-					}
-	        		comp.finish();
-	        		
-	        		if (comp.getErrors() != 0) {
-	        			System.err.println("Errors during compilation");
-	        		}
-	        		
-	        		try {
-						targCtx.exportMemory(iblock.domain);
-					} catch (AbortException e) {
-						e.printStackTrace();
-						try {
-							diag.write(e.toString().getBytes());
-						} catch (IOException e1) {
-							e1.printStackTrace();
-						}
-					}
-	        		
-	        		cpu.push((short) targCtx.getDP());
+	        	case SYSCALL_NUMBER: {
+	        		syscallNumber();
 	        		break;
 	        	}
-	        	*/
+
+	        	case SYSCALL_DECORATED_NUMBER: {
+	        		syscallDecoratedNumber();
+	        		break;
+	        	}
         	}
         	break;
 
@@ -822,6 +728,171 @@ public class InterpreterF99b implements Interpreter {
 		return false;
     }
 
+	private void syscallFind() {
+		// ( caddr lfa -- caddr 0 | xt -1=immed | xt 1 )
+		int lfa = cpu.pop();
+		int caddr = cpu.pop();
+
+		boolean found = false;
+		int[] after = { 0 }; 
+		int count = 65536;
+		while (lfa != 0 && count-- > 0) {
+			cpu.addCycles(3);
+			short nfa = (short) (lfa + 2);
+			if (nameMatches(iblock.domain, caddr, nfa, after)) {
+				short xt = (short) after[0];
+				if ((xt & 1) != 0)
+					xt++;
+				cpu.push(xt);
+				cpu.push((short) ((iblock.domain.readByte(nfa) & 0x40) != 0 ? 1 : -1));
+				found = true;
+				break;
+			} else {
+				lfa = iblock.domain.readWord(lfa);
+			}
+		}
+		
+		if (!found) {
+			cpu.push((short) caddr);
+			cpu.push((short) 0);
+		}
+	}
+
+	private void syscallGfind() {
+		// ( caddr gDictEnd gDict -- caddr 0 | xt 1 | xt -1 )
+		short gromDictEnd = cpu.pop();
+		short gromDict = cpu.pop();
+		int caddr = cpu.pop();
+
+		boolean found = false;
+		int[] after = { 0 }; 
+    		
+		MemoryDomain grom = cpu.getMachine().getMemory().getDomain(MemoryDomain.NAME_GRAPHICS);
+		while (gromDict < gromDictEnd) {
+			cpu.addCycles(3);
+			if (nameMatches(grom, caddr, gromDict, after)) {
+				cpu.push(grom.readWord(after[0]));
+				cpu.push((short) (((grom.readByte(gromDict) & 0x40) != 0) ? 1 : -1));
+				found = true;
+				break;
+			} else {
+				gromDict = (short) (after[0] + 2);
+			}
+		}
+		
+		if (!found) {
+			cpu.push((short) caddr);
+			cpu.push((short) 0);
+		}
+	}
+
+	private void syscallNumber() {
+		final String BASESTR = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+		
+		// ( ud1 c-addr1 u1 base -- ud2 c-addr2 u2 )
+		int base = cpu.pop();
+		int len = cpu.pop();
+		int caddr = cpu.pop();
+		int val = cpu.popd();
+
+		while (len > 0) {
+			char ch = (char) iblock.domain.readByte(caddr);
+			ch = Character.toUpperCase(ch);
+			int v = BASESTR.indexOf(ch);
+			if (v < 0 || v >= base) {
+				break;
+			}
+			val = (val * base) + v;
+			len--;
+			caddr++;
+			
+			cpu.addCycles(10);
+		}
+		cpu.pushd(val);
+		cpu.push((short) caddr);
+		cpu.push((short) len);
+	}
+
+	private void syscallDecoratedNumber() {
+		// ( addr u base -- ud dpl t | f )
+		
+		int base = cpu.pop();
+		int len = cpu.pop();
+		int caddr = cpu.pop();
+		
+		if (len > 0) {
+
+			cpu.addCycles(50);
+			
+			int val = 0;
+			boolean neg = false;
+			boolean isDouble = false;
+
+			char ch = (char) iblock.domain.readByte(caddr);
+			if (ch == '-') {
+				neg = true;
+				caddr++;
+				len--;
+			}
+			
+			if (len > 0) {
+				ch = (char) iblock.domain.readByte(caddr);
+				if (ch == '$') {
+					base = 16;
+					caddr++;
+					len--;
+				}
+				else if (ch == '&') {
+					base =10;
+					caddr++;
+					len--;
+				}
+			}
+			
+			cpu.pushd(val);
+			cpu.push((short) caddr);
+			cpu.push((short) len);
+			cpu.push((short) base);
+			
+			syscallNumber();
+			
+			len = cpu.pop();
+			caddr = cpu.pop();
+			
+			if (len > 0) {
+				if (iblock.domain.readByte(caddr) == '.') {
+					
+					cpu.addCycles(10);
+					
+					isDouble = true;
+					
+					caddr++;
+					len--;
+
+					cpu.push((short) caddr);
+					cpu.push((short) len);
+					cpu.push((short) base);
+
+					syscallNumber();
+					
+					len = cpu.pop();
+					caddr = cpu.pop();
+				}
+			}
+			
+			val = cpu.popd();
+
+			if (len == 0) {
+				cpu.pushd(neg ? -val : val);
+				cpu.push((short) (isDouble ? -1 : 0));
+				cpu.push((short) -1);
+				return;
+			}
+		} 
+		
+		cpu.push((short) 0);
+	}
+	
 	/**
 	 * @param caddr
 	 * @param nfa

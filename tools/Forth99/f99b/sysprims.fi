@@ -71,19 +71,32 @@
 ;   target-only
 
 
+: (dbg)     Isyscall c, #dbg c, ; immediate
+: (dbgf)    Isyscall c, #dbgf c, ; immediate
+: (idle)    Isyscall c, #idle c, ; immediate
+: (register-symbol)    Isyscall c, #regsym c, ; immediate
 
-| : (find)      ( c-addr lfa -- c-addr 0 | xt -1=immed | xt 1 ) 
+: (gfind)      ( c-addr gromdict gromdictEnd -- c-addr 0 | xt -1=immed | xt 1 ) 
+    [ Isyscall c,  #gfind c, ]    
+; 
+
+: (find)      ( c-addr lfa -- c-addr 0 | xt -1=immed | xt 1 ) 
     \ find word in dictionary     
     \ lfa is nfa-2
 
-    [ Isyscall c, 4 c, ]    
+    [ Isyscall c, #find  c, ]    
+; 
+
+: >NUMBER   ( ud1 c-addr1 u1 -- ud2 c-addr2 u2 )
+    base @  
+    [ Isyscall c, #number c, ]
 ;
 
+: (NUMBER)  ( addr -- ud dpl t | f )
+    count
+    base @  
+    [ Isyscall c, #decorated-number c, ]
 
-| : (gfind)      ( c-addr gromdict gromdictEnd -- c-addr 0 | xt -1=immed | xt 1 ) 
-    \ find word in dictionary     
-
-    [ Isyscall c, 5 c, ]    
 ;
 
 

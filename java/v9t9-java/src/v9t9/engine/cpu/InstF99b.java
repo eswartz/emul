@@ -327,6 +327,18 @@ public class InstF99b {
 	 * ( caddr gDictEnd gDict -- caddr 0 | xt 1 | xt -1 )
 	 */
 	public static final int SYSCALL_GFIND = 5;
+	/**
+	 * Parse a number (>NUMBER), raw digits only
+	 * 
+	 * ( ud1 c-addr1 u1 base -- ud2 c-addr2 u2 )
+	 */
+	public static final int SYSCALL_NUMBER = 6;
+	/**
+	 * Parse a number (NUMBER) with sign, base conversions
+	 * 
+	 * ( c-addr1 u1 base -- ud  dpl t | f )
+	 */
+	public static final int SYSCALL_DECORATED_NUMBER = 7;
 	
 	public static final String[] syscallStrings = {
 		"IDLE",
@@ -335,6 +347,8 @@ public class InstF99b {
 		"REGSYM",
 		"FIND",
 		"GFIND",
+		">NUMBER",
+		"(NUMBER)",
 	};
 	
 	/** for each inst:  SP read, SP left

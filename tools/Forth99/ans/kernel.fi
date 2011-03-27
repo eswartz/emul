@@ -830,6 +830,97 @@ $20 constant BL
     8 emit bl emit 8 emit
 ;
 
+| : clear ( n -- )
+    0 ?do  overstrike  loop
+;
+              
+1 [if]
+
+\ Sexier version with single-line history
+
+:: ACCEPT  ( )
+\   ( c-addr +n1 -- +n2 )        
+\   Receive a string of at most +n1 characters. An ambiguous condition exists if +n1 is zero or greater than 32,767. Display
+\   graphic characters as they are received. A program that depends on the presence or absence of non-graphic characters in
+\   the string has an environmental dependency. The editing functions, if any, that the system performs in order to construct
+\   the string are implementation-defined.
+\
+\   (this one does not automatically abort at n1 chars.)
+
+    :> +n1
+
+    0 :> len
+    
+    \ addr
+    >r
+    
+    0  \ cur position
+    
+    begin
+        key
+        dup  $0d -
+    while
+        dup 8 =  if
+            \ don't go too far
+            drop dup  0> if     
+                overstrike  \ backspace
+                1-
+                $20  over r@ +  c!
+            then
+        else
+            dup &211 ( fctn-s ) = if
+                \ cursor back
+                drop dup  0> if     
+                    8 emit
+                    1-      \ no change in len
+                then
+            else
+                dup &210 ( fctn-e ) = if
+                    \ retrieve previous line
+                    drop
+                    clear
+                    
+                    \ take length from existing buffer
+                    0 begin
+                        r@ over +  c@ ?dup if
+                            emit
+                            1+
+                            false
+                        else
+                            true
+                        then
+                        
+                    until
+                    dup to len
+                else            
+                    >r          \ store key
+                    \ go back if too many chars
+                    dup +n1 >=  if 1-  8 emit  then
+                    \ show key
+                    r@ emit     
+                    \ store code
+                    r>  over r@ +  c! 
+                    1+
+                    len over  max  to len
+                then
+            then
+        then
+    repeat
+    drop        \ key
+    
+    \ move cursor to end of content to avoid overwriting it visually
+    cursor-off
+    len swap ?do  j i +  c@ advance-cursor  loop
+    
+    \ get content length
+    +n1  len  min
+    
+    \ nullify buffer for future Up-Arrow use
+    0  over r> +  c! 
+;
+
+[else]
+
 : ACCEPT
 \        ( c-addr +n1 -- +n2 )
 \   Receive a string of at most +n1 characters. An ambiguous condition exists if +n1 is zero or greater than 32,767. Display
@@ -866,6 +957,8 @@ $20 constant BL
     min         \ lose max #chars
     rdrop
 ;
+
+[then]
 
 \ : prompt ." type stuff> " ;
 \ test" accept prompt pad 5 accept pad swap $2a emit type $2a emit  1"

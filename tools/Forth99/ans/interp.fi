@@ -155,14 +155,14 @@ user >IN
     [char] ? emit cr
 ;
 
-[IFUNDEF] NUMBER
+[IFUNDEF] (NUMBER)
 
 \   Interpret counted string as number,
 \   and store decimal point location in DPL.
 
 | User dpl
 
-: number    ( addr -- ud )
+: (number)    ( addr -- ud dpl t | f )
 \   .s
 
     0 0 rot
@@ -187,13 +187,15 @@ user >IN
 
     >number
     dup if      \ any invalid chars?
-        drop over c@ [char] . = if    \ did we stop at '.'?
+        \ drop 
+        over c@ [char] . = if    \ did we stop at '.'?
             over dpl !      \ don't store offset... too much work ;)
             (skip)          \ skip '.'
             >number         \ parse rest
         then
         dup if 
-            here huh? 2drop 2drop quit  \ error
+            2drop 2drop 2rdrop false exit
+            \ here huh? 2drop 2drop quit  \ error
         then
     then
     2drop
@@ -203,8 +205,29 @@ user >IN
 
     r> base !       \ original base
 
-
+    dpl @ 1+
+    
+    true
+    
 \   .s
+;
+
+[ENDIF]
+
+[IFUNDEF] NUMBER
+
+\ Parse a number and push it or compile it
+: number ( caddr -- n|d|... )
+    (number)
+    if
+        if
+            state @ if  postpone dliteral  then 
+        else 
+            drop state @ if  postpone literal  then
+        then
+    else
+        here huh? quit  \ error
+    then
 ;
 
 [ENDIF]
@@ -224,11 +247,7 @@ user >IN
         then
     else
         \ must be a number
-        number dpl @ 1+ if
-            state @ if  postpone dliteral  then 
-        else 
-            drop state @ if  postpone literal  then
-        then
+        number
     then
 ;
 

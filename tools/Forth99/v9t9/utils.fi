@@ -28,7 +28,7 @@
     ( addr cnt )
     0 ?do dup i + j execute dup $20 $7f within 0= 
             if drop [char] . then emit 
-    loop drop
+    uloop drop
     rdrop
     cr
 ;
