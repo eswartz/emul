@@ -48,6 +48,12 @@ User 'baddr)
 \ effective end of block (last non-blank char)
 User 'lines
 
+\ indicate that the block needs to be refreshed and redrawn
+: redraw-block
+    $3E fl|
+;
+
+\ Fetch the block with cursor turned off as a signal about load time
 : fetch-block
     <video  >r
     
@@ -56,7 +62,7 @@ User 'lines
         edit.message
         
         \ fix the block, assuming it's out of bounds, and redraw
-        'lastscr @  1 max  scr !  $4 fl|   
+        'lastscr @  1 max  scr !  redraw-block   
           
         scr @ block  ( rethrows otherwise )
     then
@@ -106,7 +112,7 @@ User 'lines
 \ (exclusive)
 :: (>lend) ( laddr pend -- laddr-end )
     pend laddr ?do
-        i c@  NL = 
+        i c@  dup  NL =  swap 0=  OR 
         if
             i 1+  unloop exit
         then
@@ -348,24 +354,24 @@ User 'fl
 ;
 
 \   Copy part of a line into TIB
-: (~copy) ( laddr n -- )
-    >r (tib0) r@  cmove
-    nl  (tib0) r> +  c!
+: copy-tib ( laddr n -- )
+    >r TIB r@  cmove
+    nl  TIB r> +  c!
 ;
 
 \   Copy the current line to TIB.
 : !copy-line ( -- )
-    [line)  (~copy)
+    [line)  copy-tib
 ;
 
 \   Paste the current line from TIB.
 : !paste (  -- )
-    (tib0)  dup (#tib) +  (>lend) 1-  (tib0) -          ( dst n -- )
-
+    TIB  dup #TIB +  (>lend) 1-  TIB -
+    
     >r
     
     >curs  dup  r@  insert-range
-    (tib0) swap r@  cmove
+    TIB swap r@  cmove
     
     r> ^curs  drop
 ;
@@ -410,7 +416,7 @@ User 'fl
 : !next-page 'lines @  1-  'line @ l/blk + min  0 max  'line ! ;  
 
 \   erase line contents (copying what's deleted)
-: (erase) ( laddr c -- ) 2dup (~copy)  delete-range ; 
+: (erase) ( laddr c -- ) 2dup copy-tib  delete-range ; 
 : !erase 
     [line)  (erase)
 ;
@@ -941,13 +947,13 @@ User in-editor
 : (edit)
     \ do most UI work with interrupts enabled, so we
     \ don't miss keystrokes
-    edit.window
-    edit.drawstatus
-    edit.drawblock
+    \ edit.window
+    \ edit.drawstatus
+    \ edit.drawblock
     
     begin
-        key  onkey
         edit.update
+        key  onkey
     again
 ;
 
@@ -968,8 +974,10 @@ export>
             edit.drawui
         then
     
+        redraw-block
+        
         \ init block
-        baddrs!
+        \ baddrs!
         
         \ remember last time we updated
         edit.lastpos!
@@ -981,5 +989,5 @@ export>
 ;
 
 : >edit ( block # -- )
-    scr !  edit
+    scr !  redraw-block  edit
 ;

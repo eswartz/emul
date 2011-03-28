@@ -58,7 +58,7 @@ user >IN
         dup -1 = if         \ evaluate string
             drop false      \ end.
         else ?dup 0= if         \ user input device
-            (tib0) (#tib)  accept  #source !  (tib0) >source !
+            TIB #TIB  accept  #source !  TIB >source !
             0 >in ! 
             bl emit
             true

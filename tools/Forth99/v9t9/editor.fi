@@ -245,8 +245,8 @@ User 'line      ( 0 - l/blk )
 
 \   Copy part of a line into TIB
 : (~copy) ( laddr n -- )
-    >r (tib0) r@ cmove
-    (tib0) r@ +  c/l r> -  bl fill
+    >r TIB r@ cmove
+    TIB r@ +  c/l r> -  bl fill
 ;
 
 \   Copy the current line to TIB.
@@ -256,7 +256,7 @@ User 'line      ( 0 - l/blk )
 
 \   Paste the current line from TIB.
 : ~paste ( baddr -- )
-    >laddr (tib0) swap  c/l cmove
+    >laddr TIB swap  c/l cmove
 ;
 
 \   Duplicate the line and move down without affecting clip.

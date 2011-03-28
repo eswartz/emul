@@ -106,7 +106,7 @@ $80         constant    (#SP)
 #cell 3 LSHIFT  2*  2+ 
             constant   (#numbuf)
 $100        constant   (#slit-pad)
-$100        constant   (#tib)
+$100        constant   #TIB
 
 |+ $400        constant    CHARS/BLOCK \ basic block size
 CHARS/BLOCK 
@@ -118,15 +118,15 @@ CHARS/BLOCK
 $80        constant   (#up)       \ global user space
 
 
-FaultStacks  (#RP) - (#SP) - (#numbuf) - (#slit-pad) - (#tib) - (#blks) - (#up) -
+FaultStacks  (#RP) - (#SP) - (#numbuf) - (#slit-pad) - #TIB - (#blks) - (#up) -
              constant RamTop    \ grows down
 
 | RamTop (#rp) +                constant (rp0)      \ grows down
 | (rp0) (#sp) +                 constant (sp0)      \ grows down
 | (sp0)  (#numbuf) +            constant (numbuf0)     \ grows down
 | (numbuf0)                     constant (slit-pad0)    \ grows up
-| (slit-pad0) (#slit-pad) +     constant (tib0)         \ grows up
-| (tib0) (#tib) +               constant (first)    \ grows up
+| (slit-pad0) (#slit-pad) +     constant TIB         \ grows up
+| TIB #TIB +               constant (first)    \ grows up
 | (first) (#blks) +             constant (limit)    \ grows up
 | (limit)                       constant (up0)      \ grows up
 

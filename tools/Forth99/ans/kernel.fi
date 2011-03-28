@@ -1026,6 +1026,14 @@ error" need key"
 \   true tuck u.r u> unused value
 \   within [compile] \ 
 
+[IFUNDEF] TIB
+\ : tib (tib0) ;
+[ENDIF]
+
+[IFUNDEF] #TIB
+\ : #tib (#tib) ;
+[ENDIF]
+
 [IFUNDEF] .(
 \ : .(
 \ ;
