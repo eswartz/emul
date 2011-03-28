@@ -746,7 +746,7 @@ public abstract class AbstractChannel implements IChannel {
     }
 
     public <V extends IService> void setServiceProxy(Class<V> service_interface, IService service_proxy) {
-        if (!notifying_channel_opened) new Error("setServiceProxe() can be called only from channel open call-back");
+        if (!notifying_channel_opened) throw new Error("setServiceProxe() can be called only from channel open call-back");
         if (!(remote_service_by_name.get(service_proxy.getName()) instanceof GenericProxy)) throw new Error("Proxy already set");
         if (remote_service_by_class.get(service_interface) != null) throw new Error("Proxy already set");
         remote_service_by_class.put(service_interface, service_proxy);
