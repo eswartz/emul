@@ -12,6 +12,16 @@
 
 2 constant tab-size
 
+User 'lastscr
+User 'lastline
+User 'lastcol
+
+\ scroll position
+User 'scrx
+User 'scry
+
+
+
 \   Cursor line 
 User 'line      ( 0 - l/blk )
 
@@ -38,9 +48,26 @@ User 'baddr)
 \ effective end of block (last non-blank char)
 User 'lines
 
+: fetch-block
+    <video  >r
+    
+    scr @  ['] block  catch
+    ?dup if
+        edit.message
+        
+        \ fix the block, assuming it's out of bounds, and redraw
+        'lastscr @  1 max  scr !  $4 fl|   
+          
+        scr @ block  ( rethrows otherwise )
+    then
+    
+    r>  video>
+;
+
 \ Get current block bounds -- count spaces so we can type spaces at EOF
 : baddrs!  ( -- )
-    scr @ block
+    fetch-block
+    
     dup 'baddr !
     
     1 'lines !
@@ -446,7 +473,15 @@ User 'fl
 ; 
 
 \   load the buffer
-: !load  intp.window  scr @ load  edit.window ;
+: !load  
+    intp.window  
+    
+    scr @  ['] load catch 
+
+    edit.window 
+
+    edit.message    
+;
 
 : !exit  editor.exit ;                     
 : !interpret intp.window &11 emit quit ;
@@ -474,24 +509,20 @@ User 'fl
     sx sy  x y  win!
 ;
 
+:: draw-centered-window ( sx sy -- )
+    win-mx @  sx -  2/
+    win-my @  sy -  2/
+    sx sy
+    draw-window
+;
+
 : !refresh
     baddrs!
     edit.drawui 
 ;
 
 : !help  
-    <video
-    
-    0 vblink!
-    
-    cls
-    $8CFC v-regaddr      \ white-on-dark green text
-    
-    1 vblink!
-    
-    6 6  68 14  draw-window
-    
-    cls
+    68 14  $C $F  message-window
     
     >grom_editorhelp g@
 
@@ -501,13 +532,8 @@ User 'fl
     loop
     
     drop
- 
-    key drop
-    
-    video>
-    
-    edit.drawui
-    
+
+    dismiss-window 
 ;
 
 \ 221=shift bksp
@@ -602,6 +628,7 @@ User in-editor
     0 orig-video !
     0 edit-video !
     0 in-editor !
+    1 scr !
 ;
 
 : save-video ( ptr -- )
@@ -615,14 +642,6 @@ User in-editor
     0 in-editor !
     quit   
 ;
-
-User 'lastscr
-User 'lastline
-User 'lastcol
-
-\ scroll position
-User 'scrx
-User 'scry
 
 \ column for status
 &74 constant #statuscol
@@ -704,6 +723,49 @@ User 'scry
     \ save editor mode info
     edit-video save-video
 ;
+
+: message-window ( sx sy bg fg -- state )  
+    <video >r
+    
+    0 vblink!
+    
+    cls
+    
+    4 LSHIFT OR   $8C00 OR  v-regaddr 
+    
+    1 vblink!
+    
+    draw-centered-window
+    
+    cls
+    
+    r>
+;
+
+: dismiss-window  ( state -- )
+    key drop    
+         
+    video>
+    
+    $6 fl|  ( redraw )
+    
+    edit.drawui
+;
+
+
+\   Draw an error message
+: edit.message ( msg# -- )
+    ?dup if 
+        >r
+        
+        60  1   $8 $F  message-window
+        
+        r>  message
+        
+        dismiss-window
+        
+    then
+; 
 
 \   Draw status 
 
@@ -840,6 +902,7 @@ User 'scry
     \ redraw changed line/block
     dup $10 and if
          baddrs!
+         drop  'fl @        \ in case of error
     else dup $20 and if
          laddrs!
     then then
@@ -873,24 +936,17 @@ User 'scry
     edit.lastpos!
 ;
 
-\ Adjust to viable block first
-: edit.fixblock
-    scr @  0 <= if 1 scr !  $2 fl| then 
-;
-
 \ Main loop of editor.
 \
 : (edit)
     \ do most UI work with interrupts enabled, so we
     \ don't miss keystrokes
     edit.window
-    edit.fixblock
     edit.drawstatus
     edit.drawblock
     
     begin
         key  onkey
-        edit.fixblock
         edit.update
     again
 ;
@@ -913,7 +969,6 @@ export>
         then
     
         \ init block
-        edit.fixblock
         baddrs!
         
         \ remember last time we updated

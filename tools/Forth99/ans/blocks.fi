@@ -47,9 +47,14 @@ User USE
 User SCR
 [THEN] 
 
+: ?block  ( n -- n )
+    dup 0= err-inv-block-number ?throw
+;
+
+
 \ Block layout:
 \
-\   block#  if in use, or'ed by 0x8000 if modified
+\   block#  if in use, or'ed by 0x8000 if modified  <-- block# 0 cannot be allocated!
 \   <block memory>
 
 \ Distance to the next buffer relative to the previous.
@@ -78,6 +83,8 @@ User SCR
 
 \ This freely reallocates a new buffer, flushing any along the way. 
 : buffer    ( u -- a-addr )
+    ?block
+
     use @  dup >r
     begin +buf until  
     use !
@@ -110,13 +117,13 @@ User SCR
         begin
             +buf 0= if
                 drop  
-                num buffer  dup :> addr  
+                num buffer  :> addr  
                 addr num 1 ['] r/w  catch 
                 ?dup if
                     >r 0  addr 2-  !     \ clear -- not loaded!
                     r> throw
                 then
-                2- 
+                addr 2- 
             then
             dup @
             num -  dup +  0= 
@@ -128,7 +135,7 @@ User SCR
 
 \   Tell if the current block buffer is dirty
 : dirty?    ( a-addr -- t|f )
-    prev @ @ &15 rshift
+    prev @  @  0<
 ;
 
 \   Mark the current block buffer as unmodified. An ambiguous 
@@ -175,7 +182,7 @@ User SCR
 \
 \ An ambiguous condition exists if u is zero or is not a valid block number. 
 : load  ( i*x u -- j*x )
-    dup 0=  err-inv-block-number ?throw
+    ?block
     <input
     0 >in !
     blk !

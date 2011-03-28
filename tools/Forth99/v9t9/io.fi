@@ -142,7 +142,9 @@ chars/block bytes-per-sector u/  constant secs-per-block
 ;
 
 \ read/write block on current disk 
-:: (disk-rwblk)  ( addr  block# r/w -- err )
+:: (disk-rwblk)  ( addr  block# r/w -- )
+    \ note: block 0 is valid
+    
     block#  secs-per-block U*  :> sec
     
     secs-per-block 0 do
@@ -157,8 +159,6 @@ chars/block bytes-per-sector u/  constant secs-per-block
         xfer
         to addr
     loop
-            
-    0
 ;
 
 \ ---------------
@@ -180,16 +180,13 @@ chars/block bytes-per-sector u/  constant secs-per-block
 
 : gram-rwblk    ( addr  block# r/w --  )
     >r
-    1-
-    dup  0  #GRAM  within if 
-        chars/block U*  >gram_disk_base +  
-        r>  if  
-            swap  chars/block  gcmove  
-        else  
-            chars/block        cgmove  
-        then
-    else
-        drop 2drop  rdrop  err-inv-block-number  throw
+    1-  ( block 0 not valid )
+    dup  0  #GRAM  within  not err-inv-block-number ?throw 
+    chars/block U*  >gram_disk_base +  
+    r>  if  
+        swap  chars/block  gcmove  
+    else  
+        chars/block        cgmove  
     then
 ;
 
