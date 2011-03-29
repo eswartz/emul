@@ -318,8 +318,9 @@ public class TCFLaunch extends Launch {
         final HashSet<String> deleted_maps = new HashSet<String>();
         final HashMap<String,ArrayList<TCFMemoryRegion>> maps = new HashMap<String,ArrayList<TCFMemoryRegion>>();
         readMapsConfiguration(maps, cfg);
-        final HashSet<String> mems = new HashSet<String>();
-        final HashSet<IToken> cmds = new HashSet<IToken>();
+        final HashSet<String> mems = new HashSet<String>(); // Already processed memory IDs
+        final HashSet<IToken> cmds = new HashSet<IToken>(); // Pending commands
+        final HashMap<String,String> mem2map = new HashMap<String,String>();
         final Runnable done_all = new Runnable() {
             boolean launch_done;
             public void run() {
@@ -348,9 +349,11 @@ public class TCFLaunch extends Launch {
                         if (map != null) {
                             TCFMemoryRegion[] arr = map.toArray(new TCFMemoryRegion[map.size()]);
                             cmds.add(mmap.set(context.getID(), arr, done_set_mmap));
+                            mem2map.put(context.getID(), id);
                         }
                         else if (deleted_maps.contains(id)) {
                             cmds.add(mmap.set(context.getID(), null, done_set_mmap));
+                            mem2map.remove(context.getID());
                         }
                     }
                 }
@@ -374,9 +377,23 @@ public class TCFLaunch extends Launch {
             public void memoryChanged(String context_id, Number[] addr, long[] size) {
             }
             public void contextRemoved(String[] context_ids) {
-                for (String id : context_ids) mems.remove(id);
+                for (String id : context_ids) {
+                    mems.remove(id);
+                    mem2map.remove(id);
+                }
             }
             public void contextChanged(MemoryContext[] contexts) {
+                for (MemoryContext context : contexts) {
+                    String id = context.getName();
+                    if (id == null) id = context.getID();
+                    if (id == null) continue;
+                    if (id.equals(mem2map.get(context.getID()))) continue;
+                    ArrayList<TCFMemoryRegion> map = maps.get(id);
+                    if (map == null) continue;
+                    TCFMemoryRegion[] arr = map.toArray(new TCFMemoryRegion[map.size()]);
+                    cmds.add(mmap.set(context.getID(), arr, done_set_mmap));
+                    mem2map.put(context.getID(), id);
+                }
             }
             public void contextAdded(MemoryContext[] contexts) {
                 for (MemoryContext context : contexts) {
@@ -388,18 +405,18 @@ public class TCFLaunch extends Launch {
                     if (map == null) continue;
                     TCFMemoryRegion[] arr = map.toArray(new TCFMemoryRegion[map.size()]);
                     cmds.add(mmap.set(context.getID(), arr, done_set_mmap));
+                    mem2map.put(context.getID(), id);
                 }
             }
         });
         update_memory_maps = new Runnable() {
             public void run() {
                 try {
-                    HashSet<String> ids = new HashSet<String>(maps.keySet());
                     maps.clear();
                     mems.clear();
                     String s = getLaunchConfiguration().getAttribute(TCFLaunchDelegate.ATTR_MEMORY_MAP, "null");
                     readMapsConfiguration(maps, s);
-                    for (String id : ids) {
+                    for (String id : mem2map.values()) {
                         if (maps.get(id) == null) deleted_maps.add(id);
                     }
                     cmds.add(mem.getChildren(null, done_get_children));
