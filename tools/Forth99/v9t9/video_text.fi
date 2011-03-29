@@ -131,6 +131,7 @@ Create TextModeParams
     v-free      , $1000 ,   v-pagesize  , $1000 ,
 
     v-width     , 40 ,      v-height    , 24 ,
+    v-stride    , 40 ,
     
     'v-setupregs ,           ' txt-setupregs ,
     'v-setupmode ,           ' txt-setupmode ,
@@ -176,7 +177,8 @@ Create GfxModeParams
     v-free      , $1000 ,   v-pagesize  , $1000 ,
     
     v-width     , 32 ,      v-height    , 24 ,
-    
+    v-stride    , 32 ,
+        
     'v-setupregs ,           ' gfx-setupregs ,
     'v-setupmode ,           ' gfx-setupmode ,
     'v-updatecolors ,        ' gfx-updatecolors ,
@@ -312,6 +314,7 @@ Create Text2ModeParams
     v-free      , $1800 ,   v-pagesize  , $2000 ,
      
     v-width     , 80 ,      v-height    , 26 ,
+    v-stride    , 80 ,
     
     'v-setupregs ,           ' txt2-setupregs ,
     'v-setupmode ,           ' txt2-setupmode ,

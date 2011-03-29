@@ -490,7 +490,11 @@ User 'fl
 ;
 
 : !exit  editor.exit ;                     
-: !interpret intp.window &11 emit quit ;
+: !interpret 
+    intp.window  
+    \ &11 emit  \ vertical tab, clear to EOL -- not implemented
+    \ cr
+    quit ;
 
 
 :: draw-window ( x y sx sy -- )
@@ -947,8 +951,8 @@ User in-editor
 : (edit)
     \ do most UI work with interrupts enabled, so we
     \ don't miss keystrokes
-    \ edit.window
-    \ edit.drawstatus
+    edit.window
+    edit.drawstatus
     \ edit.drawblock
     
     begin

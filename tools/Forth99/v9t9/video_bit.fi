@@ -192,6 +192,7 @@ Create BitModeParams
     v-free      , $3800 ,   v-pagesize  , $4000 ,
 
     v-width     , 256 ,     v-height    , 192 ,
+    v-stride    , 32 ,
     
     'v-setupregs ,           ' bit-setupregs ,
     'v-setupmode ,           ' bit-setupmode ,
@@ -205,45 +206,6 @@ Create BitModeParams
     BitModeParams v-set-alloc-list
         
     BitModeRegs write-vregs
-;
-
-
-\      9=monochrome bitmap mode (graphics 2 mode)
-\           >0000 = patts
-\           >1800 = screen
-\           >1B00 = sprites
-\           >1B80 = sprite motion
-\           >1C00 = sprite patts    (really >1800)
-\           >2000 = colors
-\           >2040+= free (seems like 2800)
-\
-Create MonoBitModeRegs
-    $8002 , $81B0 , 0 ,
-
-
-Create MonoModeParams
-    v-screen    , $1800 ,   v-screensz  , $300 ,
-    v-colors    , $2000 ,   v-colorsz   , $40 ,   
-    v-patts     , $0000 ,   v-pattsz    , $1800 ,
-    v-sprites   , $1B00 ,   v-sprcol    , 0 ,
-    v-sprpat    , $1800 ,   v-sprmot    , $1B80 ,
-    v-free      , $2040 ,   v-pagesize  , $4000 ,
-
-    v-width     , 256 ,     v-height    , 192 ,
-    
-    'v-setupregs ,           ' bit-setupregs ,
-    'v-setupmode ,           ' bit-setupmode ,
-    'v-updatecolors ,        ' bit-updatecolors ,
-
-    0 ,    
-    
-: mono-mode
-    true v-mono c!
-    
-    BitFunctions write-var-list
-    MonoModeParams v-set-alloc-list
-        
-    MonoBitModeRegs write-vregs
 ;
 
 
@@ -261,19 +223,23 @@ Create MonoModeParams
 Create Gfx3ModeRegs
     $8004 , $81A0 , 0 ,
     
-Create Gfx3ModeParams
-    v-screen    , $3800 ,   v-screensz  , $300 ,
-    v-colors    , $2000 ,   v-colorsz   , $1800 ,   
-    v-patts     , $0000 ,   v-pattsz    , $1800 ,
-    v-sprites   , $1B00 ,   v-sprcol    , $1900 ,
-    v-sprpat    , $1800 ,   v-sprmot    , $1B80 ,
-    v-free      , $3B00 ,   v-pagesize  , $4000 ,
+Create Gfx3ModeParamsDiffs
+    v-screen    , $3800 ,   
+    \ v-screensz  , $300 ,
+    \ v-colors    , $2000 ,   v-colorsz   , $1800 ,   
+    \ v-patts     , $0000 ,   v-pattsz    , $1800 ,
+    \ v-sprites   , $1B00 ,   
+    v-sprcol    , $1900 ,
+    \ v-sprpat    , $1800 ,   v-sprmot    , $1B80 ,
+    v-free      , $3B00 ,   
+    \ v-pagesize  , $4000 ,
 
-    v-width     , 256 ,     v-height    , 192 ,
+    \ v-width     , 256 ,     v-height    , 192 ,
+    \ v-stride    , 32 ,
     
     'v-setupregs ,           ' gfx3-setupregs ,
-    'v-setupmode ,           ' bit-setupmode ,
-    'v-updatecolors ,        ' bit-updatecolors ,
+    \ 'v-setupmode ,           ' bit-setupmode ,
+    \ 'v-updatecolors ,        ' bit-updatecolors ,
 
     0 ,
 
@@ -285,7 +251,50 @@ Create Gfx3ModeParams
     
 : gfx3-mode
     BitFunctions write-var-list
-    Gfx3ModeParams v-set-alloc-list
+    BitModeParams v-set-alloc-list
+    Gfx3ModeParamsDiffs v-set-alloc-list
     Gfx3ModeRegs write-vregs
 ;
+
+\      9=monochrome bitmap mode (graphics 2 mode)
+\           >0000 = patts
+\           >1800 = screen
+\           >1B00 = sprites
+\           >1B80 = sprite motion
+\           >1C00 = sprite patts    (really >1800)
+\           >2000 = colors
+\           >2040+= free (seems like 2800)
+\
+Create MonoBitModeRegs
+    $8002 , $81B0 , 0 ,
+
+
+Create MonoModeParamsDiffs
+    \ v-screen    , $1800 ,   v-screensz  , $300 ,
+    v-colors    , $2000 ,   v-colorsz   , $40 ,   
+    v-patts     , $0000 ,   v-pattsz    , $1800 ,
+    \ v-sprites   , $1B00 ,   v-sprcol    , 0 ,
+    \ v-sprpat    , $1800 ,   v-sprmot    , $1B80 ,
+    v-free      , $2040 ,   
+    v-pagesize  , $4000 ,
+
+    \ v-width     , 256 ,     v-height    , 192 ,
+    \ v-stride    , 32 ,
+    
+    \ 'v-setupregs ,           ' bit-setupregs ,
+    \ 'v-setupmode ,           ' bit-setupmode ,
+    \ 'v-updatecolors ,        ' bit-updatecolors ,
+
+    0 ,    
+    
+: mono-mode
+    true v-mono c!
+    
+    BitFunctions write-var-list
+    BitModeParams v-set-alloc-list
+    MonoModeParamsDiffs v-set-alloc-list
+        
+    MonoBitModeRegs write-vregs
+;
+
 

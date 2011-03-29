@@ -14,28 +14,28 @@ v-data
 |+    +field  v-sprpat       \ VDP addr of sprite patterns
 |+    +field  v-sprmot       \ VDP addr of sprite motion
 |+    +field  v-free         \ usable space (if no pages)
-    +field  v-pagesize     \ size of a page
+      +field  v-pagesize     \ size of a page
     
-    +1field v-text         \ set if mode is text-based
-    +1field v-mono         \ set if monochrome (colors are global)
+|+    +1field v-text         \ set if mode is text-based
+|+    +1field v-mono         \ set if monochrome (colors are global)
     
-    +field  v-width        \ units across
-    +field  v-height       \ units down
+|+    +field  v-width        \ units across
+|+    +field  v-height       \ units down
     
-    +field  v-font         \ GROM offs of addr of current font
+      +field  v-font         \ GROM offs of addr of current font
     
-    +1field v-fntwidth     \ font width in pixels
-    +1field v-fntheight    \ font height in pixels
+      +1field v-fntwidth     \ font width in pixels
+      +1field v-fntheight    \ font height in pixels
 
-    +1field  v-intflags    \ video interrupt flags
-    +1field  v-blink       \ if set, set blink flag for text2 chars 
+      +1field  v-intflags    \ video interrupt flags
+      +1field  v-blink       \ if set, set blink flag for text2 chars 
     
-    +field  v-allocinfo    \ list of memory allocations for page 0
+      +field  v-allocinfo    \ list of memory allocations for page 0
     
-    +1field v-rwpage       \ current r/w page
-    +1field v-vispage      \ current visible page
-    +1field v-pob          \ page offset bank -- for >64K access
-    +1field v-unused
+      +1field v-rwpage       \ current r/w page
+      +1field v-vispage      \ current visible page
+      +1field v-pob          \ page offset bank -- for >64K access
+      +1field v-unused
     
   4 +Nfield v-initpages    \ bitmask of pages that have been initialized for this mode
     
@@ -50,7 +50,7 @@ v-data
     +field  'v-hchar        ( ch len x y -- )
     +field  'v-vchar        ( ch len x y -- )
 
-    +field  msx-stride      \ row stride in bytes
+|+  +field  v-stride        \ row stride in bytes
     +field  msx-shift       \ shift for pixel >> byte
     +field  msx-mask        \ mask for pixel of byte
     +field  msx-colmask     \ mask for available colors

@@ -26,8 +26,8 @@ t-data
 |+    +field  win-sy
 
     ( stock character sizes, in units )
-    +1field win-chxs
-    +1field win-chys
+|+    +1field win-chxs
+|+    +1field win-chys
     
     ( size of window, in characters )
     +1field win-cx
@@ -278,6 +278,7 @@ export>
     home
 ;
 
+\ Draw a character without advancing the cursor.
 :   (emit)  ( ch -- )
     $xy  'v-drawchar @  execute  
 ;

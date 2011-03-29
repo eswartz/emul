@@ -141,3 +141,23 @@
     over + swap ?do i gc@ emit loop 
 ;
 
+\ copy VDP to VDP, using an auxiliary buffer
+:: vvmove ( vsrc vdst cnt buf n -- )
+    0 :> use
+    cnt 0 ?do
+        cnt i -  n  min  to use
+        
+        vsrc  dup use + to vsrc 
+        buf
+        use
+        vcmove
+        
+        buf 
+        vdst  dup use + to vdst 
+        use 
+        cvmove
+                
+    use u+loop    
+;
+
+
