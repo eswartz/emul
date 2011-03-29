@@ -399,6 +399,26 @@ Create MsxBaseFunctions
     0 ,
     
 
+create GfxSkinnyModeParams
+    v-screen    , $0000 ,   v-screensz  , $0 ,
+    v-colors    , $0000 ,   v-colorsz   , $0 ,   
+    v-patts     , $0000 ,   v-pattsz    , $6400 ,
+    v-sprites   , $7A00 ,   v-sprcol    , $7800 ,
+    v-sprpat    , $7000 ,   v-sprmot    , $7A80 ,
+    v-free      , $8000 ,   v-pagesize  , $8000 ,
+    
+    0 ,
+
+Create GfxFatModeParams
+    v-screen    , $0000 ,   v-screensz  , $0 ,
+    v-colors    , $0000 ,   v-colorsz   , $0 ,   
+    v-patts     , $0000 ,   v-pattsz    , $D400 ,
+    v-sprites   , $D600 ,   v-sprcol    , $D400 ,
+    v-sprpat    , $D800 ,   v-sprmot    , $D680 ,
+    v-free      , $E000 ,   v-pagesize  , $0000 ,
+
+    0 ,
+    
 
 \       4=graphics 4 mode (256x212x16)
 \           >0000 = patts
@@ -412,13 +432,6 @@ Create Gfx4ModeRegs
     $8006 , $81A0 , 0 ,
 
 Create Gfx4ModeParams
-    v-screen    , $0000 ,   v-screensz  , $0 ,
-    v-colors    , $0000 ,   v-colorsz   , $0 ,   
-    v-patts     , $0000 ,   v-pattsz    , $6400 ,
-    v-sprites   , $7A00 ,   v-sprcol    , $7800 ,
-    v-sprpat    , $7000 ,   v-sprmot    , $7A80 ,
-    v-free      , $8000 ,   v-pagesize  , $8000 ,
-
     v-width     , 256 ,     v-height    , 212 ,
     
     v-stride  , $80 ,     msx-shift   , 1 ,       msx-mask , $1  ,    msx-colmask , $f ,
@@ -433,21 +446,11 @@ msx-use-drawchar-accel not [if]
 : gfx4-mode
     MsxBaseFunctions write-var-list
     MsxFunctions write-var-list
+    GfxSkinnyModeParams v-set-alloc-list
     Gfx4ModeParams v-set-alloc-list
     Gfx4ModeRegs write-vregs
 ;
 
-
-Create GfxFatModeParams
-    v-screen    , $0000 ,   v-screensz  , $0 ,
-    v-colors    , $0000 ,   v-colorsz   , $0 ,   
-    v-patts     , $0000 ,   v-pattsz    , $D400 ,
-    v-sprites   , $D600 ,   v-sprcol    , $D400 ,
-    v-sprpat    , $D800 ,   v-sprmot    , $D680 ,
-    v-free      , $E000 ,   v-pagesize  , $0000 ,
-
-    0 ,
-    
 
 \       6=graphics 6 mode (512x212x16)
 \           >0000 = patts
@@ -495,13 +498,6 @@ Create Gfx5ModeRegs
     $8008 , $81A0 , $87FF , 0 ,
 
 Create Gfx5ModeParams
-    v-screen    , $0000 ,   v-screensz  , $0 ,
-    v-colors    , $0000 ,   v-colorsz   , $0 ,   
-    v-patts     , $0000 ,   v-pattsz    , $6400 ,
-    v-sprites   , $7A00 ,   v-sprcol    , $7800 ,
-    v-sprpat    , $7000 ,   v-sprmot    , $7A80 ,
-    v-free      , $8000 ,   v-pagesize  , $8000 ,
-
     v-width     , 512 ,     v-height    , 212 ,
     
     v-stride  , $80 ,     msx-shift   , 2 ,       msx-mask , $3  ,    msx-colmask , $3 , 
@@ -515,6 +511,7 @@ msx-use-drawchar-accel not [if]
 : gfx5-mode
     MsxBaseFunctions write-var-list
     MsxFunctions write-var-list
+    GfxSkinnyModeParams v-set-alloc-list
     Gfx5ModeParams v-set-alloc-list
     Gfx5ModeRegs write-vregs
 ;

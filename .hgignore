@@ -47,3 +47,11 @@ syntax: regexp
 ^tools/FileUtils/tispeak$
 syntax: regexp
 ^tools/FileUtils/ti2txt$
+syntax: regexp
+^tools/Forth99/bin/f99bgromdict\.bin$
+syntax: regexp
+^tools/Forth99/bin/f99brom\.bin$
+syntax: regexp
+^tools/Forth99/bin/f99brom\.sym$
+syntax: regexp
+^tools/Forth99/bin/forth99\.grm$
