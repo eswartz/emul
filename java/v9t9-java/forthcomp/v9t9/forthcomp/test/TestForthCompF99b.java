@@ -633,8 +633,9 @@ public class TestForthCompF99b extends BaseF99bTest {
 	@Test
 	public void testStackAccessorsEx() throws Exception {
 		parseString(
-				": depth (context>) [ CTX_SP0 field, ] (context>) [ CTX_SP field, ] - 2/ 1- ;\n"+
-				": rdepth (context>) [ CTX_RP0 field, ] (context>) [ CTX_RP field, ] - 2/ 1- ; \n" +	
+				"$76         constant    IcontextFrom\n"+
+				": depth  [ IcontextFrom c,  CTX_SP0 field, ]  [ IcontextFrom c, CTX_SP field, ] - 2/ 1- ;\n"+
+				": rdepth [ IcontextFrom c, CTX_RP0 field, ]  [ IcontextFrom c, CTX_RP field, ] - 2/ 1- ; \n" +	
 			": stack 1 2 4 5 >r depth rdepth rdrop ;");
 
 		interpret("stack");
@@ -1365,8 +1366,9 @@ public class TestForthCompF99b extends BaseF99bTest {
 	@Test
 	public void testPick() throws Exception {
 		parseString(
+				"$76         constant    IcontextFrom \n"+ 
 				": pick ( n -- v )\n" + 
-				"    1+ cells (context>) [ CTX_SP field, ] + @  \n" + 
+				"    1+ cells  [ IcontextFrom c, CTX_SP field, ] + @  \n" + 
 				"; target-only\n"+
 				"1 2 3 4   3 \n");
 		interpret("pick");

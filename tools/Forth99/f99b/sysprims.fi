@@ -1,19 +1,19 @@
 
 
 :   ints-on
-    INT_KBD (>context) [ CTX_INT field, ] 
+    INT_KBD  [ ItoContext c, CTX_INT field, ] 
 ;   target-only
 :   ints-off
-    0 (>context) [ CTX_INT field, ] 
+    0  [ ItoContext c,  CTX_INT field, ] 
 ;   target-only
 
 
 : pick ( n -- v )
-    1+ cells (context>) [ CTX_SP field, ] + @  
+    1+ cells [ IcontextFrom c, CTX_SP field, ] + @  
 ;   target-only
 
 : rpick ( n -- v )
-    cells (context>) [ CTX_RP field, ] + @  
+    cells  [ IcontextFrom c, CTX_RP field, ] + @  
 ;   target-only
 
 \ Move memory backward (src -> dst)
@@ -64,10 +64,10 @@
 ;   target-only
 
 : rp0
-    (context>) [ CTX_RP0 field, ] 
+    [ IcontextFrom c,  CTX_RP0 field, ] 
 ;   target-only
 : sp0
-    (context>) [ CTX_SP0 field, ] 
+    [ IcontextFrom c, CTX_SP0 field, ] 
 ;   target-only
 
 

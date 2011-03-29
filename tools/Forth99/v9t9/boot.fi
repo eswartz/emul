@@ -4,13 +4,13 @@
 : regs-init
 
     \ set user area first, before setting user vars
-    (UP0) (>CONTEXT) [ CTX_UP field, ]
+    (UP0) [ ItoContext c,  CTX_UP field, ]
     
     r>      \ remember return address before moving return stack
-    (rp0) (>CONTEXT) [ CTX_RP0 field, ]    \ inlined since calling a word changes RP; sets RP0 and RP
+    (rp0) [ ItoContext c,  CTX_RP0 field, ]    \ inlined since calling a word changes RP; sets RP0 and RP
     >r
     
-    (sp0)  (>CONTEXT) [ CTX_SP0 field, ] \ sets SP0 and SP 
+    (sp0) [ ItoContext c,  CTX_SP0 field, ] \ sets SP0 and SP 
     
     (numbuf0) (numbuf) !
     (slit-pad0) (spad) !

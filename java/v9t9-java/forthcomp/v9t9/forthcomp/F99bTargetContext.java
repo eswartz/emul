@@ -192,9 +192,9 @@ public class F99bTargetContext extends TargetContext {
 
 		definePrim("?dup", Iqdup);
 		definePrim("2dup", Idup_d);
-		definePrim("(context>)", IcontextFrom);
-		definePrim("(>context)", ItoContext);
-		definePrim("(user)", Iuser);
+		//definePrim("(context>)", IcontextFrom);
+		//definePrim("(>context)", ItoContext);
+		//definePrim("(user)", Iuser);
 
 		defineInlinePrim("0<", IlitX, Icmp+CMP_LT);
 		defineInlinePrim("0<=", IlitX, Icmp+CMP_LE);
