@@ -1035,8 +1035,10 @@ public class TestForthCompF99b extends BaseF99bTest {
 				"begin\n"+
 				"  c1 0= c2 0= and not \n"+
 				"while\n"+
-				"  'addr1  dup @  1 rot +!  -1 'c1 +!  c@\n"+
-				"  'addr2  dup @  1 rot +!  -1 'c2 +!  c@\n"+
+				//"  'addr1  dup @  1 rot +!  -1 'c1 +!  c@\n"+
+				//"  'addr2  dup @  1 rot +!  -1 'c2 +!  c@\n"+
+				"  addr1  dup 1+ to addr1        c1 -1 + to c1  c@\n"+
+				"  addr2  dup 1+ to addr2        c2 -1 + to c2  c@\n"+
 				"  - dup if  exit  else  drop  then\n"+
 				"repeat\n"+
 				"c1 c2 - \\ length dictates winner\n" +

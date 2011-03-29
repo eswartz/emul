@@ -277,9 +277,6 @@ public class F99bTargetContext extends TargetContext {
 		compileCall((ITargetWord) find("((s\"))"));
 		compileOpcode(Iexit);
 		
-		definePrim("(SYSCALL)", Isyscall);
-		
-		
 	}
 	
 	private void definePrim(String string, int opcode) {

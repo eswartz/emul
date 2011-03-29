@@ -32,7 +32,7 @@ public class TargetValue extends TargetWord {
 				else
 					targetContext.compile(TargetValue.this);
 					
-				targetContext.compileLoad(getCells() * targetContext.getCellSize());
+				//targetContext.compileLoad(getCells() * targetContext.getCellSize());
 			}
 		});
 		setExecutionSemantics(new ISemantics() {
