@@ -387,7 +387,7 @@ int set_errno(int no, const char * msg) {
          */
         int err = errno;
         m->error = get_error_code(no);
-        if (m->error == ERR_OTHER) {
+        if (no == ERR_OTHER) {
             m->text = loc_strdup(msg);
         }
         else {
