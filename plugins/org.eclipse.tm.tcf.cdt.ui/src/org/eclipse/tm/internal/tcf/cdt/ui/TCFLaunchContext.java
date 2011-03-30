@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2008, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,14 +11,13 @@
 package org.eclipse.tm.internal.tcf.cdt.ui;
 
 import org.eclipse.cdt.core.CCorePlugin;
-import org.eclipse.cdt.core.IBinaryParser;
-import org.eclipse.cdt.core.ICExtensionReference;
 import org.eclipse.cdt.core.model.CModelException;
 import org.eclipse.cdt.core.model.CoreModel;
+import org.eclipse.cdt.core.model.IBinary;
 import org.eclipse.cdt.core.model.ICElement;
 import org.eclipse.cdt.core.model.ICProject;
-import org.eclipse.cdt.core.model.IBinary;
 import org.eclipse.cdt.core.settings.model.ICProjectDescription;
+import org.eclipse.cdt.launch.LaunchUtils;
 import org.eclipse.cdt.ui.CElementLabelProvider;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -253,22 +252,7 @@ public class TCFLaunchContext implements ITCFLaunchContext {
      * @throws CoreException
      */
     public boolean isBinary(IProject project, IPath path) throws CoreException {
-        ICExtensionReference[] refs = CCorePlugin.getDefault().getBinaryParserExtensions(project);
-        for (int i = 0; i < refs.length; i++) {
-            try {
-                IBinaryParser parser = (IBinaryParser)refs[i].createExtension();
-                if (parser.getBinary(path) != null) return true;
-            }
-            catch (Exception e) {
-            }
-        }
-        IBinaryParser parser = CCorePlugin.getDefault().getDefaultBinaryParser();
-        try {
-            return parser.getBinary(path) != null;
-        }
-        catch (Exception e) {
-        }
-        return false;
+        return LaunchUtils.getBinary(project, path) != null;
     }
 
     public String chooseBinary(Shell shell, IProject project) {
