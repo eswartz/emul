@@ -335,6 +335,16 @@ typedef struct {
 
 #endif
 
+#ifndef EM_X86_64
+#define EM_X86_64 62
+#endif
+#ifndef EM_PPC
+#define EM_PPC 20
+#endif
+#ifndef EM_PPC64
+#define EM_PPC64 21
+#endif
+
 typedef struct ElfX_Sym {
     union {
         Elf32_Sym Elf32;
@@ -367,11 +377,12 @@ struct ELF_File {
     ErrorReport * error;
     int fd;
 
-    int big_endian; /* 0 - least significant first, 1 - most significat first */
-    int byte_swap;  /* > 0 if file endianness not same as the agent endianness */
-    int elf64;
-    int type;
-    int machine;
+    uint8_t big_endian; /* 0 - least significant first, 1 - most significat first */
+    uint8_t byte_swap;  /* > 0 if file endianness not same as the agent endianness */
+    uint8_t elf64;
+    uint16_t type;
+    uint16_t machine;
+    uint8_t os_abi;
 
     unsigned section_cnt;
     ELF_Section * sections;

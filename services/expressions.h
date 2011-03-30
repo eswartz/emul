@@ -32,6 +32,7 @@ struct Value {
     ContextAddress size;        /* Value size in bytes */
     int remote;                 /* 1 if value data is in remote target memory, 0 if loaded into a local buffer */
     int constant;               /* 1 if value is not expected to change during execution of value context */
+    int big_endian;             /* 1 if value is big endian */
 };
 
 typedef struct Value Value;

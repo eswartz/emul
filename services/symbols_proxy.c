@@ -79,6 +79,7 @@ typedef struct SymInfoCache {
     int64_t upper_bound;
     char * value;
     size_t value_size;
+    int big_endian;
     char ** children_ids;
     int children_count;
     ReplyHandlerInfo * pending_get_context;
@@ -351,6 +352,7 @@ static void read_context_data(InputStream * inp, const char * name, void * args)
     else if (strcmp(name, "Offset") == 0) { s->offset = json_read_long(inp); s->has_offset = 1; }
     else if (strcmp(name, "Address") == 0) { s->address = (ContextAddress)json_read_uint64(inp); s->has_address = 1; }
     else if (strcmp(name, "Value") == 0) s->value = json_read_alloc_binary(inp, &s->value_size);
+    else if (strcmp(name, "BigEndian") == 0) s->big_endian = json_read_boolean(inp);
     else json_skip_object(inp);
 }
 
@@ -868,7 +870,7 @@ int get_symbol_offset(const Symbol * sym, ContextAddress * offset) {
     return 0;
 }
 
-int get_symbol_value(const Symbol * sym, void ** value, size_t * size) {
+int get_symbol_value(const Symbol * sym, void ** value, size_t * size, int * big_endian) {
     SymInfoCache * c = get_sym_info_cache(sym);
     if (c == NULL) return -1;
     if (c->sym_class != SYM_CLASS_VALUE) {
@@ -877,6 +879,7 @@ int get_symbol_value(const Symbol * sym, void ** value, size_t * size) {
     }
     *value = c->value;
     *size = c->value_size;
+    *big_endian = c->big_endian;
     return 0;
 }
 

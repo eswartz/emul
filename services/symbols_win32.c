@@ -673,7 +673,7 @@ int get_symbol_offset(const Symbol * sym, ContextAddress * offset) {
     return 0;
 }
 
-int get_symbol_value(const Symbol * sym, void ** value, size_t * size) {
+int get_symbol_value(const Symbol * sym, void ** value, size_t * size, int * big_endian) {
     static VARIANT data;
     VARTYPE vt;
     void * data_addr = &data.bVal;
@@ -721,6 +721,7 @@ int get_symbol_value(const Symbol * sym, void ** value, size_t * size) {
 
     *size = data_size;
     *value = data_addr;
+    *big_endian = 0;
 
     return 0;
 }

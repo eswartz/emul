@@ -1735,7 +1735,7 @@ int get_symbol_offset(const Symbol * sym, ContextAddress * offset) {
     return -1;
 }
 
-int get_symbol_value(const Symbol * sym, void ** value, size_t * size) {
+int get_symbol_value(const Symbol * sym, void ** value, size_t * size, int * big_endian) {
     assert(sym->magic == SYMBOL_MAGIC);
     if (sym->base || is_cardinal_type_pseudo_symbol(sym)) {
         errno = ERR_INV_CONTEXT;
@@ -1763,6 +1763,7 @@ int get_symbol_value(const Symbol * sym, void ** value, size_t * size) {
                 *size = sizeof(bf);
                 *value = bf;
             }
+            *big_endian = v.mBigEndian;
             clear_trap(&trap);
             return 0;
         }
@@ -1775,16 +1776,12 @@ int get_symbol_value(const Symbol * sym, void ** value, size_t * size) {
                 exception(ERR_INV_CONTEXT);
             }
             else {
-                static U1_T bf[sizeof(v.mValue)];
-                U8_T n = 0;
-                size_t i = 0;
-                if (v.mAccessFunc(&v, 0, &n)) exception(errno);
-                for (i = 0; i < sizeof(bf); i++) {
-                    bf[v.mBigEndian ? sizeof(bf) - i - 1 : i] = n & 0xffu;
-                    n = n >> 8;
-                }
-                *size = sizeof(bf);
+                static U1_T bf[32];
+                if (v.mSize > sizeof(bf)) exception(ERR_BUFFER_OVERFLOW);
+                if (v.mAccessFunc(&v, 0, bf) < 0) exception(errno);
+                *size = v.mSize;
                 *value = bf;
+                *big_endian = v.mBigEndian;
             }
             clear_trap(&trap);
             return 0;

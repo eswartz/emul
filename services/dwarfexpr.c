@@ -58,13 +58,12 @@ static ObjectInfo * get_parent_function(ObjectInfo * Info) {
     return NULL;
 }
 
-static int register_access_func(PropertyValue * Value, int write, U8_T * Data) {
-    RegisterDefinition * def;
+static int register_access_func(PropertyValue * Value, int write, U1_T * Data) {
     StackFrame * frame;
+    RegisterDefinition * def = (RegisterDefinition *)Value->mAccessData;
     if (get_frame_info(Value->mContext, Value->mFrame, &frame) < 0) return -1;
-    def = get_reg_by_id(Value->mContext, (unsigned)Value->mValue, REGNUM_DWARF);
-    if (write) return write_reg_value(frame, def, *Data);
-    return read_reg_value(frame, def, Data);
+    if (write) return write_reg_bytes(frame, def, 0, def->size, Data);
+    return read_reg_bytes(frame, def, 0, def->size, Data);
 }
 
 static U8_T read_memory(PropertyValue * Value, U8_T Addr, size_t Size) {
@@ -395,16 +394,26 @@ static void evaluate_expression(U8_T BaseAddress, PropertyValue * Value, ELF_Sec
         case OP_reg31:
             {
                 unsigned n = Op - OP_reg0;
+                RegisterDefinition * def = NULL;
                 if (dio_GetPos() - StartPos < Size) str_exception(ERR_INV_DWARF, "OP_reg must be last instruction");
-                Value->mValue = n;
+                def = get_reg_by_id(Value->mContext, n, &Unit->mRegIdScope);
+                if (def == NULL) exception(errno);
+                Value->mSize = def->size;
+                Value->mBigEndian = def->big_endian;
+                Value->mAccessData = def;
                 Value->mAccessFunc = register_access_func;
             }
             break;
         case OP_regx:
             {
                 unsigned n = dio_ReadULEB128();
+                RegisterDefinition * def = NULL;
                 if (dio_GetPos() - StartPos < Size) str_exception(ERR_INV_DWARF, "OP_regx must be last instruction");
-                Value->mValue = n;
+                def = get_reg_by_id(Value->mContext, n, &Unit->mRegIdScope);
+                if (def == NULL) exception(errno);
+                Value->mSize = def->size;
+                Value->mBigEndian = def->big_endian;
+                Value->mAccessData = def;
                 Value->mAccessFunc = register_access_func;
             }
             break;
@@ -441,7 +450,8 @@ static void evaluate_expression(U8_T BaseAddress, PropertyValue * Value, ELF_Sec
         case OP_breg30:
         case OP_breg31:
             {
-                RegisterDefinition * def = get_reg_by_id(Value->mContext, Op - OP_breg0, REGNUM_DWARF);
+                RegisterDefinition * def = get_reg_by_id(Value->mContext, Op - OP_breg0, &Value->mObject->mCompUnit->mRegIdScope);
+                if (def == NULL) str_exception(errno, "Cannot evaluate DWARF expression");
                 if (read_reg_value(get_stack_frame(Value), def, sExprStack + sExprStackLen) < 0) exception(errno);
                 sExprStack[sExprStackLen++] += dio_ReadS8LEB128();
             }
@@ -471,7 +481,8 @@ static void evaluate_expression(U8_T BaseAddress, PropertyValue * Value, ELF_Sec
             break;
         case OP_bregx:
             {
-                RegisterDefinition * def = get_reg_by_id(Value->mContext, dio_ReadULEB128(), REGNUM_DWARF);
+                RegisterDefinition * def = get_reg_by_id(Value->mContext, dio_ReadULEB128(), &Value->mObject->mCompUnit->mRegIdScope);
+                if (def == NULL) str_exception(errno, "Cannot evaluate DWARF expression");
                 if (read_reg_value(get_stack_frame(Value), def, sExprStack + sExprStackLen) < 0) exception(errno);
                 sExprStack[sExprStackLen++] += dio_ReadS8LEB128();
             }
@@ -544,7 +555,7 @@ static void evaluate_location(U8_T BaseAddresss, PropertyValue * Value) {
         }
     }
     dio_ExitSection();
-    str_exception(ERR_INV_ADDRESS, "No matching entry in .debug_loc for given IP");
+    str_exception(ERR_OTHER, "Object is not available at this location in the code");
 }
 
 void dwarf_evaluate_expression(U8_T BaseAddress, PropertyValue * Value) {
@@ -575,9 +586,9 @@ void dwarf_evaluate_expression(U8_T BaseAddress, PropertyValue * Value) {
     if (Value->mAccessFunc == NULL) {
         assert(sExprStackLen > 0);
         Value->mValue = sExprStack[--sExprStackLen];
+        Value->mSize = 0;
     }
     Value->mAddr = NULL;
-    Value->mSize = 0;
 
     if (Value->mAttr != AT_frame_base) sExprStackLen = 0;
 }

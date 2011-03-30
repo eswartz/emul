@@ -69,12 +69,14 @@ static RegisterDefinition * get_reg_by_eh_frame_id(unsigned id) {
     return id < map_length ? map[id] : NULL;
 }
 
-RegisterDefinition * get_reg_by_id(Context * ctx, unsigned id, unsigned munbering_convention) {
-    switch (munbering_convention) {
-    case REGNUM_DWARF: return get_reg_by_dwarf_id(id);
-    case REGNUM_EH_FRAME: return get_reg_by_eh_frame_id(id);
+RegisterDefinition * get_reg_by_id(Context * ctx, unsigned id, RegisterIdScope * scope) {
+    RegisterDefinition * def = NULL;
+    switch (scope->id_type) {
+    case REGNUM_DWARF: def = get_reg_by_dwarf_id(id); break;
+    case REGNUM_EH_FRAME: def = get_reg_by_eh_frame_id(id); break;
     }
-    return NULL;
+    if (def == NULL) set_errno(ERR_OTHER, "Invalid register ID");
+    return def;
 }
 
 int read_reg_bytes(StackFrame * frame, RegisterDefinition * reg_def, unsigned offs, unsigned size, uint8_t * buf) {

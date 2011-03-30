@@ -154,7 +154,7 @@ extern int get_symbol_offset(const Symbol * sym, ContextAddress * offset);
 /* Get value (constant objects and enums).
  * The array returned shall not be modified by the client,
  * and it may be overwritten by a subsequent calls to symbol functions */
-extern int get_symbol_value(const Symbol * sym, void ** value, size_t * size);
+extern int get_symbol_value(const Symbol * sym, void ** value, size_t * size, int * big_endian);
 
 /* Get address (variables) */
 extern int get_symbol_address(const Symbol * sym, ContextAddress * address);

@@ -260,6 +260,10 @@ static void read_object_info(U2_T Tag, U2_T Attr, U2_T Form) {
                 CompUnit * Unit = add_comp_unit(sDebugSection->addr + dio_gEntryPos);
                 Unit->mFile = sCache->mFile;
                 Unit->mDebugRangesOffs = ~(U8_T)0;
+                Unit->mRegIdScope.big_endian = sCache->mFile->big_endian;
+                Unit->mRegIdScope.machine = sCache->mFile->machine;
+                Unit->mRegIdScope.os_abi = sCache->mFile->os_abi;
+                Unit->mRegIdScope.id_type = REGNUM_DWARF;
                 Info = Unit->mObject;
                 sCompUnit = Unit;
             }
@@ -716,7 +720,11 @@ static void read_dwarf_object_property(Context * Ctx, int Frame, ObjectInfo * Ob
             if (RefObj == NULL) exception(ERR_INV_DWARF);
             read_and_evaluate_dwarf_object_property(Ctx, Frame, 0, RefObj, AT_location, &ValueAddr);
             if (ValueAddr.mAccessFunc != NULL) {
-                ValueAddr.mAccessFunc(&ValueAddr, 0, &Value->mValue);
+                static U1_T Buf[8];
+                if (ValueAddr.mAccessFunc(&ValueAddr, 0, Buf) < 0) exception(errno);
+                Value->mAddr = Buf;
+                Value->mSize = ValueAddr.mSize;
+                Value->mBigEndian = ValueAddr.mBigEndian;
             }
             else {
                 static U1_T Buf[8];

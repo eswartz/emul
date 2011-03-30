@@ -110,20 +110,25 @@ typedef struct StackTracingInfo {
 #define STACK_NO_FRAME      (-1)
 #define STACK_TOP_FRAME     (-2)
 
-typedef struct StackFrame StackFrame;
-
-struct StackFrame {
+typedef struct StackFrame {
     int is_top_frame;
     Context * ctx;
     ContextAddress fp;      /* frame address */
     RegisterData * regs;    /* register values */
-};
+} StackFrame;
+
+typedef struct RegisterIdScope {
+    uint16_t machine;
+    uint8_t os_abi;
+    uint8_t big_endian;
+    uint8_t id_type;
+} RegisterIdScope;
 
 /* Return array of CPU register definitions. Last item in the array has name == NULL */
 extern RegisterDefinition * get_reg_definitions(Context * ctx);
 
 /* Search register definition for given register ID, return NULL if not found */
-extern RegisterDefinition * get_reg_by_id(Context * ctx, unsigned id, unsigned numbering_convention);
+extern RegisterDefinition * get_reg_by_id(Context * ctx, unsigned id, RegisterIdScope * scope);
 
 /* Return register definition of instruction pointer */
 extern RegisterDefinition * get_PC_definition(Context * ctx);

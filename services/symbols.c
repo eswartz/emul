@@ -50,6 +50,7 @@ static void command_get_context_cache_client(void * x) {
     int has_lower_bound = 0;
     int has_offset = 0;
     int has_address = 0;
+    int big_endian = 0;
     ContextAddress size = 0;
     ContextAddress length = 0;
     int64_t lower_bound = 0;
@@ -80,7 +81,7 @@ static void command_get_context_cache_client(void * x) {
             has_address = get_symbol_address(sym, &address) == 0;
         }
         if (sym_class == SYM_CLASS_VALUE) {
-            get_symbol_value(sym, &value, &value_size);
+            get_symbol_value(sym, &value, &value_size, &big_endian);
         }
     }
 
@@ -191,6 +192,13 @@ static void command_get_context_cache_client(void * x) {
             write_stream(&c->out, ':');
             json_write_binary(&c->out, value, value_size);
             write_stream(&c->out, ',');
+
+            if (big_endian) {
+                json_write_string(&c->out, "BigEndian");
+                write_stream(&c->out, ':');
+                json_write_boolean(&c->out, 1);
+                write_stream(&c->out, ',');
+            }
         }
 
         json_write_string(&c->out, "Class");

@@ -14,10 +14,10 @@
 
 #include <services/context-proxy.h>
 
-RegisterDefinition * get_reg_by_id(Context * ctx, unsigned id, unsigned munbering_convention) {
+RegisterDefinition * get_reg_by_id(Context * ctx, unsigned id, RegisterIdScope * scope) {
     RegisterDefinition * defs = get_reg_definitions(ctx);
     while (defs != NULL && defs->name != NULL) {
-        switch (munbering_convention) {
+        switch (scope->id_type) {
         case REGNUM_DWARF:
             if (defs->dwarf_id == (int)id) return defs;
             break;
@@ -27,6 +27,7 @@ RegisterDefinition * get_reg_by_id(Context * ctx, unsigned id, unsigned munberin
         }
         defs++;
     }
+    set_errno(ERR_OTHER, "Invalid register ID");
     return NULL;
 }
 

@@ -124,7 +124,8 @@ struct PropertyValue {
     U1_T * mAddr;
     size_t mSize;
     int mBigEndian;
-    int (*mAccessFunc)(PropertyValue *, int, U8_T *);
+    void * mAccessData;
+    int (*mAccessFunc)(PropertyValue *, int, U1_T *);
 };
 
 #define LINE_IsStmt         0x01
@@ -154,6 +155,7 @@ struct CompUnit {
     ContextAddress mHighPC;
 
     DIO_UnitDescriptor mDesc;
+    RegisterIdScope mRegIdScope;
 
     U8_T mDebugRangesOffs;
     U8_T mLineInfoOffs;

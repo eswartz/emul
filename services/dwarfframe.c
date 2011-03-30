@@ -73,6 +73,7 @@ typedef struct StackFrameRegisters {
 typedef struct StackFrameRules {
     Context * ctx;
     ELF_Section * section;
+    RegisterIdScope reg_id_scope;
     int eh_frame;
     U1_T version;
     U1_T address_size;
@@ -126,12 +127,11 @@ static RegisterRules * get_reg(StackFrameRegisters * regs, int reg) {
         RegisterDefinition * reg_def;
         int n = regs->regs_cnt++;
         memset(regs->regs + n, 0, sizeof(RegisterRules));
-        reg_def = get_reg_by_id(rules.ctx, n, rules.eh_frame ? REGNUM_EH_FRAME : REGNUM_DWARF);
+        reg_def = get_reg_by_id(rules.ctx, n, &rules.reg_id_scope);
         if (reg_def == NULL) continue;
         /* Architecture specific implied rules */
-        switch (rules.section->file->machine) {
-        case 3: /* i386 */
-        case 6: /* i486 */
+        switch (rules.reg_id_scope.machine) {
+        case EM_386:
             switch (n) {
             case 4: /* SP */
                 regs->regs[n].rule = RULE_VAL_OFFSET;
@@ -143,7 +143,7 @@ static RegisterRules * get_reg(StackFrameRegisters * regs, int reg) {
                 break;
             }
             break;
-        case 62: /* X86 64 */
+        case EM_X86_64:
             switch (n) {
             case 6: /* BP */
                 regs->regs[n].rule = RULE_SAME_VALUE;
@@ -554,8 +554,8 @@ static void add_dwarf_expression_commands(U8_T cmds_offs, U4_T cmds_size) {
         case OP_breg31:
             {
                 I8_T offs = dio_ReadS8LEB128();
-                RegisterDefinition * def = get_reg_by_id(rules.ctx, op - OP_breg0, rules.eh_frame ? REGNUM_EH_FRAME : REGNUM_DWARF);
-                if (def == NULL) str_exception(ERR_INV_DWARF, "Invalid register index");
+                RegisterDefinition * def = get_reg_by_id(rules.ctx, op - OP_breg0, &rules.reg_id_scope);
+                if (def == NULL) str_exception(errno, "Cannot read DWARF frame info");
                 add_command(SFT_CMD_REGISTER)->reg = def;
                 if (offs != 0) {
                     add_command(SFT_CMD_NUMBER)->num = offs;
@@ -594,7 +594,7 @@ static void generate_register_commands(RegisterRules * reg, RegisterDefinition *
         break;
     case RULE_REGISTER:
         {
-            RegisterDefinition * src_sef = get_reg_by_id(rules.ctx, reg->offset, rules.eh_frame ? REGNUM_EH_FRAME : REGNUM_DWARF);
+            RegisterDefinition * src_sef = get_reg_by_id(rules.ctx, reg->offset, &rules.reg_id_scope);
             if (src_sef != NULL) add_command(SFT_CMD_REGISTER)->reg = src_sef;
         }
         break;
@@ -633,14 +633,14 @@ static void generate_commands(void) {
         if (i == rules.return_address_register) continue;
         reg = get_reg(&frame_regs, i);
         if (reg->rule == 0) continue;
-        reg_def = get_reg_by_id(rules.ctx, i, rules.eh_frame ? REGNUM_EH_FRAME : REGNUM_DWARF);
+        reg_def = get_reg_by_id(rules.ctx, i, &rules.reg_id_scope);
         generate_register_commands(reg, reg_def);
     }
 
     trace_cmds_cnt = 0;
     switch (rules.cfa_rule) {
     case RULE_OFFSET:
-        reg_def = get_reg_by_id(rules.ctx, rules.cfa_register, rules.eh_frame ? REGNUM_EH_FRAME : REGNUM_DWARF);
+        reg_def = get_reg_by_id(rules.ctx, rules.cfa_register, &rules.reg_id_scope);
         if (reg_def != NULL) {
             add_command(SFT_CMD_REGISTER)->reg = reg_def;
             if (rules.cfa_offset != 0) {
@@ -757,6 +757,10 @@ void get_dwarf_stack_frame_info(Context * ctx, ELF_File * file, U8_T IP) {
     rules.ctx = ctx;
     rules.section = section;
     rules.eh_frame = section == cache->mEHFrame;
+    rules.reg_id_scope.big_endian = file->big_endian;
+    rules.reg_id_scope.machine = file->machine;
+    rules.reg_id_scope.os_abi = file->os_abi;
+    rules.reg_id_scope.id_type = rules.eh_frame ? REGNUM_EH_FRAME : REGNUM_DWARF;
     rules.cie_pos = ~(U8_T)0;
     dio_EnterSection(NULL, section, 0);
     while (dio_GetPos() < section->size) {
