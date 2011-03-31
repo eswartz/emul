@@ -818,6 +818,14 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
             }
             else {
                 String nm = ctx.getName();
+                if (nm == null && !ctx.hasState()) {
+                    String prs = ctx.getProcessID();
+                    if (prs != null) {
+                        if (!prs_context.validate(done)) return false;
+                        IProcesses.ProcessContext pctx = prs_context.getData();
+                        if (pctx != null) nm = pctx.getName();
+                    }
+                }
                 label.append(nm != null ? nm : id);
                 if (ctx.hasState()) {
                     // Thread
@@ -871,11 +879,6 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                     if (b == null) return false;
                     if (b.booleanValue()) image_name = ImageCache.IMG_PROCESS_SUSPENDED;
                     else image_name = ImageCache.IMG_PROCESS_RUNNING;
-                }
-                String file = (String)ctx.getProperties().get("File");
-                if (file != null) {
-                    label.append(" ");
-                    label.append(file);
                 }
             }
         }
