@@ -104,26 +104,10 @@ static TCFBroadcastGroup * broadcast_group = NULL;
 
 static void run_safe_events(void * arg);
 
-#if defined(__linux__)
-static char * get_executable(pid_t pid) {
-    static char s[FILE_PATH_SIZE + 1];
-    char tmpbuf[100];
-    int sz;
-
-    snprintf(tmpbuf, sizeof(tmpbuf), "/proc/%d/exe", pid);
-    if ((sz = readlink(tmpbuf, s, FILE_PATH_SIZE)) < 0) {
-        trace(LOG_ALWAYS, "error: readlink() failed; pid %d, error %d %s",
-            pid, errno, errno_to_str(errno));
-        return NULL;
-    }
-    s[sz] = 0;
-    return s;
-}
-#endif
-
 static void write_context(OutputStream * out, Context * ctx) {
     int md, modes;
     Context * grp = context_get_group(ctx, CONTEXT_GROUP_INTERCEPT);
+    int has_state = context_has_state(ctx);
 
     assert(!ctx->exited);
 
@@ -159,19 +143,6 @@ static void write_context(OutputStream * out, Context * ctx) {
         json_write_string(out, ctx->name);
     }
 
-#if defined(__linux__)
-    if (ctx->parent == NULL) {
-        pid_t pid = id2pid(ctx->id, NULL);
-        Context * x = context_find_from_pid(pid, 1);
-        if (x != NULL && !x->exiting && !x->exited) {
-            write_stream(out, ',');
-            json_write_string(out, "File");
-            write_stream(out, ':');
-            json_write_string(out, get_executable(pid));
-        }
-    }
-#endif
-
     write_stream(out, ',');
     json_write_string(out, "CanSuspend");
     write_stream(out, ':');
@@ -184,7 +155,7 @@ static void write_context(OutputStream * out, Context * ctx) {
     for (md = 0; md < 16; md++) {
         if (context_can_resume(ctx, md)) modes |= 1 << md;
     }
-    if (!context_has_state(ctx)) {
+    if (!has_state) {
         modes &= (1 << RM_RESUME) | (1 << RM_REVERSE_RESUME);
     }
     else {
@@ -219,7 +190,7 @@ static void write_context(OutputStream * out, Context * ctx) {
     }
     json_write_long(out, modes);
 
-    if (context_has_state(ctx)) {
+    if (has_state) {
         write_stream(out, ',');
         json_write_string(out, "HasState");
         write_stream(out, ':');
@@ -232,10 +203,7 @@ static void write_context(OutputStream * out, Context * ctx) {
         json_write_boolean(out, 1);
     }
 
-#ifdef WIN32
-    if (ctx->parent == NULL)
-#endif
-    {
+    if (has_state || ctx->mem_access != 0) {
         write_stream(out, ',');
         json_write_string(out, "CanTerminate");
         write_stream(out, ':');
@@ -349,35 +317,6 @@ static void write_context_state(OutputStream * out, Context * ctx) {
     write_stream(out, 0);
 }
 
-static void event_get_context(void * arg) {
-    GetContextArgs * s = (GetContextArgs *)arg;
-    Channel * c = s->c;
-    Context * ctx = s->ctx;
-
-    if (!is_channel_closed(c)) {
-        int err = 0;
-
-        write_stringz(&c->out, "R");
-        write_stringz(&c->out, s->token);
-
-        if (ctx->exited) err = ERR_ALREADY_EXITED;
-        write_errno(&c->out, err);
-
-        if (err == 0) {
-            write_context(&c->out, ctx);
-            write_stream(&c->out, 0);
-        }
-        else {
-            write_stringz(&c->out, "null");
-        }
-
-        write_stream(&c->out, MARKER_EOM);
-    }
-    channel_unlock(c);
-    context_unlock(ctx);
-    loc_free(s);
-}
-
 static void command_get_context(char * token, Channel * c) {
     int err = 0;
     char id[256];
@@ -392,25 +331,17 @@ static void command_get_context(char * token, Channel * c) {
     if (ctx == NULL) err = ERR_INV_CONTEXT;
     else if (ctx->exited) err = ERR_ALREADY_EXITED;
 
-    if (err) {
-        write_stringz(&c->out, "R");
-        write_stringz(&c->out, token);
-        write_errno(&c->out, err);
-        write_stringz(&c->out, "null");
-        write_stream(&c->out, MARKER_EOM);
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+    write_errno(&c->out, err);
+    if (err == 0) {
+        write_context(&c->out, ctx);
+        write_stream(&c->out, 0);
     }
     else {
-        /* Need to stop everything to access context properties.
-         * In particular, proc FS access can fail when process is running.
-         */
-        GetContextArgs * s = (GetContextArgs *)loc_alloc_zero(sizeof(GetContextArgs));
-        s->c = c;
-        channel_lock(c);
-        strcpy(s->token, token);
-        s->ctx = ctx;
-        context_lock(ctx);
-        post_safe_event(ctx, event_get_context, s);
+        write_stringz(&c->out, "null");
     }
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_get_children(char * token, Channel * c) {

@@ -609,7 +609,7 @@ static int win32_resume(Context * ctx, int step) {
         ext->regs_dirty = 0;
     }
 
-    if (ctx->parent->pending_signals & (1 << SIGKILL)) {
+    if (ctx->pending_signals & (1 << SIGKILL) || prs->pending_signals & (1 << SIGKILL)) {
         LINK * l;
         trace(LOG_CONTEXT, "context: terminating process %#lx, id %s", prs, prs->id);
         if (!prs->exiting && !TerminateProcess(prs_ext->handle, 1)) {
