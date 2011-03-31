@@ -959,9 +959,8 @@ int id2symbol(const char * id, Symbol ** res) {
             errno = ERR_INV_CONTEXT;
             return -1;
         }
-        if (get_sym_context(sym->ctx, sym->frame, 0) < 0) return -1;
         if (dev == 0 && ino == 0 && mtime == 0) return 0;
-        file = elf_open_inode(sym_ctx, dev, ino, mtime);
+        file = elf_open_inode(sym->ctx, dev, ino, mtime);
         if (file == NULL) return -1;
         if (set_trap(&trap)) {
             DWARFCache * cache = get_dwarf_cache(file);
@@ -1390,14 +1389,14 @@ int get_symbol_name(const Symbol * sym, char ** name) {
     assert(sym->magic == SYMBOL_MAGIC);
     if (sym->base || is_cardinal_type_pseudo_symbol(sym)) {
         *name = NULL;
-        return 0;
     }
-    if (unpack(sym) < 0) return -1;
-    if (obj != NULL) {
-        *name = obj->mName;
+    else if (sym->obj != NULL) {
+        *name = sym->obj->mName;
     }
-    else if (sym_info != NULL) {
-        *name = sym_info->mName;
+    else if (sym->tbl != NULL) {
+        static SymbolInfo info;
+        unpack_elf_symbol_info(sym->tbl, sym->index, &info);
+        *name = info.mName;
     }
     else {
         *name = NULL;
