@@ -25,6 +25,10 @@ class TCFChildrenHoverExpressions extends TCFChildren {
         for (TCFNode n : getNodes()) ((TCFNodeExpression)n).onSuspended();
     }
 
+    void onRegisterValueChanged() {
+        for (TCFNode n : getNodes()) ((TCFNodeExpression)n).onRegisterValueChanged();
+    }
+
     private TCFNodeExpression findScript(String text) {
         for (TCFNode n : getNodes()) {
             TCFNodeExpression e = (TCFNodeExpression)n;

@@ -450,6 +450,9 @@ public class TCFNodeStackFrame extends TCFNode {
         line_info.cancel();
         func_info.cancel();
         address.cancel();
+        children_vars.onRegisterValueChanged();
+        children_exps.onRegisterValueChanged();
+        children_hover_exps.onRegisterValueChanged();
         postStateChangedDelta();
     }
 

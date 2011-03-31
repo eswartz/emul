@@ -397,8 +397,22 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
                 ((TCFNodeExecContext)n).onRegisterValueChanged();
                 break;
             }
+            else if (n instanceof TCFNodeRegister) {
+                TCFNodeRegister r = (TCFNodeRegister)n;
+                if (r.value.isValid() && r.value.getData() != null) {
+                    r.value.reset();
+                    r.postStateChangedDelta();
+                }
+            }
             n = n.parent;
         }
+        children.onParentValueChanged();
+        postStateChangedDelta();
+    }
+
+    void onParentValueChanged() {
+        value.reset();
+        children.onParentValueChanged();
         postStateChangedDelta();
     }
 
