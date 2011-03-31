@@ -1,0 +1,58 @@
+# *******************************************************************************
+# * Copyright (c) 2011 Wind River Systems, Inc. and others.
+# * All rights reserved. This program and the accompanying materials
+# * are made available under the terms of the Eclipse Public License v1.0
+# * which accompanies this distribution, and is available at
+# * http://www.eclipse.org/legal/epl-v10.html
+# *
+# * Contributors:
+# *     Wind River Systems - initial API and implementation
+# *******************************************************************************
+
+import code, sys
+import tcf
+from tcf.util import sync, event
+from tcf import protocol, channel
+
+
+class Shell(code.InteractiveConsole, protocol.ChannelOpenListener, channel.ChannelListener):
+    def __init__(self):
+        locals = {
+            "tcf" : tcf,
+            "connect" : tcf.connect
+        }
+        sys.ps1 = "tcf> "
+        protocol.startEventQueue()
+        protocol.invokeAndWait(protocol.addChannelOpenListener, self)
+        code.InteractiveConsole.__init__(self, locals)
+    def interact(self, banner=None):
+        try:
+            super(Shell, self).interact(banner)
+        finally:
+            protocol.removeChannelOpenListener(self)
+    def onChannelOpen(self, channel):
+        wrapper = sync.DispatchWrapper(channel)
+        self.locals["channel"] = wrapper
+        self.locals["disconnect"] = wrapper.close
+        self.locals["cmd"] = sync.CommandControl(channel, interactive=True)
+        self.locals["events"] = event.EventRecorder(channel)
+        protocol.invokeAndWait(protocol.removeChannelOpenListener, self)
+        wrapper.addChannelListener(self)
+    def onChannelClosed(self, error):
+        del self.locals["channel"]
+        del self.locals["cmd"]
+        del self.locals["disconnect"]
+        del self.locals["events"]
+        protocol.addChannelOpenListener(self)
+
+def interact():
+    try:
+        # enable commandline editing if available
+        import readline
+    except ImportError:
+        pass
+    shell = Shell()
+    shell.interact("TCF Shell")
+
+if __name__ == "__main__":
+    interact()

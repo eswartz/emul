@@ -1,0 +1,123 @@
+# *******************************************************************************
+# * Copyright (c) 2011 Wind River Systems, Inc. and others.
+# * All rights reserved. This program and the accompanying materials
+# * are made available under the terms of the Eclipse Public License v1.0
+# * which accompanies this distribution, and is available at
+# * http://www.eclipse.org/legal/epl-v10.html
+# *
+# * Contributors:
+# *     Wind River Systems - initial API and implementation
+# *******************************************************************************
+
+import json, exceptions, cStringIO
+from tcf import protocol, errors, services
+from tcf.channel import Token, toJSONSequence, fromJSONSequence
+
+class Command(object):
+    """
+    This is utility class that helps to implement sending a command and receiving
+    command result over TCF communication channel. The class uses JSON to encode
+    command arguments and to decode result data.
+    
+    The class also provides support for TCF standard error report encoding.
+    
+    Clients are expected to subclass <code>Command</code> and override <code>done</code> method.
+    
+    Note: most clients don't need to handle protocol commands directly and
+    can use service APIs instead. Service API does all command encoding/decoding
+    for a client.
+    
+    Typical usage example:
+    
+    def getContext(self, id, done):
+        class GetContextCommand(Command):
+            def done(self, error, args):
+                ctx = None
+                if not error:
+                    assert len(args) == 2
+                    error = self.toError(args[0])
+                    if args[1]: ctx = Context(args[1])
+                done.doneGetContext(self.token, error, ctx)
+         command = GetContextCommand(self.channel, self, "getContext", [id])
+         return command.token
+    """
+    __done = False
+
+    def __init__(self, channel, service, command, args):
+        if isinstance(service, services.Service):
+            service = service.getName()
+        self.service = service
+        self.command = command
+        self.args = args
+        t = None
+        try:
+            # TODO zero_copy
+            #zero_copy = channel.isZeroCopySupported()
+            t = channel.sendCommand(service, command, toJSONSequence(args), self)
+        except exceptions.Exception as y:
+            t = Token()
+            protocol.invokeLater(self._error, y)
+        self.token = t
+
+    def _error(self, error):
+        assert not self.__done
+        self.__done = True
+        self.done(error, None)
+        
+    def progress(self, token, data):
+        assert self.token is token
+
+    def result(self, token, data):
+        assert self.token is token
+        error = None
+        args = None
+        try:
+            args = fromJSONSequence(data)
+        except exceptions.Exception as e:
+            error = e
+        assert not self.__done
+        self.__done = True
+        self.done(error, args)
+
+    def terminated(self, token, error):
+        assert self.token is token
+        assert not self.__done
+        self.__done = True
+        self.done(error, None)
+
+    def done(self, error, args):
+        raise exceptions.NotImplementedError("Abstract method")
+
+    def getCommandString(self):
+        buf = cStringIO.StringIO()
+        buf.write(self.service)
+        buf.write(" ")
+        buf.write(self.command)
+        if self.args is not None:
+            i = 0
+            for arg in self.args:
+                if i == 0:
+                    buf.write(" ")
+                else:
+                    buf.write(", ")
+                i += 1
+                try:
+                    json.dump(arg, buf)
+                except exceptions.Exception as x:
+                    buf.write("***")
+                    buf.write(x.message)
+                    buf.write("***")
+        return buf.getvalue()
+
+    def toError(self, data, include_command_text=True):
+        if not data: return None
+        map = data
+        bf = cStringIO.StringIO()
+        bf.write("TCF error report:\n")
+        if include_command_text:
+            cmd = self.getCommandString()
+            if len(cmd) > 120: cmd = cmd[:120] + "..."
+            bf.write("Command: ")
+            bf.write(cmd)
+        errors.appendErrorProps(bf, map)
+        return errors.ErrorReport(bf.getvalue(), map)
