@@ -437,9 +437,9 @@ User 'fl
 : !bksp !left  laddrs!  fix-column  ^del ;
 
 \   Figure out how to tab in a given direction
-: (tab)   ( baddr dir -- laddr tabcol col )
+: (tab)   ( baddr dir -- tabcol col )
     >r 
-     'laddr @ 'col @  dup r>  +tab  swap 
+     'col @  dup r>  +tab  swap 
 ;
 
 
@@ -494,7 +494,8 @@ User 'fl
     intp.window  
     \ &11 emit  \ vertical tab, clear to EOL -- not implemented
     \ cr
-    quit ;
+    quit 
+;
 
 
 :: draw-window ( x y sx sy -- )

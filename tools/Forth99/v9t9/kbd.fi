@@ -190,6 +190,7 @@ true <EXPORT
 : key    ( -- key | 0 )
     begin
         key?
+        1000 [ Isyscall c,  #spin c, ]
     until
     (key)
 ;

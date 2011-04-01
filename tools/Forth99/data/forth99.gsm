@@ -577,7 +577,7 @@ msgptrs
 msg_fault           db "FAULT",0
 msg_aborted         db " aborted",13,0
 msg_ok              db "ok",0
-err_undefined       db " undefined",0
+err_undefined       db "undefined",0
 err_redefining      db "redefining ",0
 err_loading_only    db "loading only",0
 err_block_read      db "block read error",0

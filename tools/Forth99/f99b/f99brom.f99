@@ -141,9 +141,9 @@ export>
 
     regs-init
     
-    ints-init
-
     exc-init
+    
+    ints-init
         
     kbd-init
     

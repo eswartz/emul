@@ -637,7 +637,8 @@ error" need prim execute"
 [IFUNDEF] ABORT
 
 : abort
-    err-abort throw
+    regs-init
+    quit
 ;
 
 [THEN]

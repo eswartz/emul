@@ -216,6 +216,7 @@ $04         constant    #find
 $05         constant    #gfind
 $06         constant    #number
 $07         constant    #decorated-number
+$08         constant    #spin
 
 
 \ ---------     interrupt flag bits

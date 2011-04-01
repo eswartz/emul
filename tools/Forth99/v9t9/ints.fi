@@ -75,14 +75,14 @@ cell    RamVar    vdp-timeout
     0  [ ItoContext c,  CTX_SR field, ] 
     
     $00 msx-cmdsetup
-    abort
-    exiti       \ NOTREACHED
+    err-abort throw
+    \ exiti       \ NOTREACHED
 ;
 
 :   fault-int-handler   ( rp sp st pc -- )
     err-fault >message  v-screen @  5  +gvmove
     begin (idle) again
-    exiti
+    \ exiti         \ NOTREACHED
 ;
 
 :   >int-vec ( num -- )

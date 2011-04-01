@@ -77,6 +77,8 @@ user >IN
 \   Interpret counted string as number,
 \   and store decimal point location in DPL.
 
+abort" This definition of (NUMBER) is not ANS compatible -- double numbers may only have '.' at end, not embedded."
+
 | User dpl
 
 : (number)    ( addr -- ud dpl t | f )
@@ -143,7 +145,7 @@ user >IN
             drop state @ if  postpone literal  then
         then
     else
-        here huh? quit  \ error
+        here huh?  \ error
     then
 ;
 
@@ -227,7 +229,8 @@ user >IN
 
 : huh?  ( caddr -- )
     count type space
-    [char] ? emit cr
+    \ [char] ? emit cr
+    err-undefined throw
 ;
 
 | : interpreter
@@ -259,7 +262,7 @@ user >IN
 
     parse-word
     ?dup 0= if
-        err-empty-name message quit
+        err-empty-name throw
     then
 ;
 
@@ -304,8 +307,8 @@ user >IN
 ;
 
 : QUIT
-    sp0 sp!
     rp0 rp! 
+    exc-init
     (clrsrc)
     postpone [  
     begin   
@@ -319,11 +322,15 @@ user >IN
         ['] interpret catch
         dup 0= if
             drop  ok-prompt?        
+        else dup err-abort = if
+            err-abort message
+            abort
         else dup err-abort" = if
             ( abort" )
         else
             message cr
-        then then
+            recurse
+        then then then
 [ [ENDIF] ]
     repeat
     bye
