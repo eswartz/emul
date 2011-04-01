@@ -339,6 +339,12 @@ public class InstF99b {
 	 * ( c-addr1 u1 base -- ud  dpl t | f )
 	 */
 	public static final int SYSCALL_DECORATED_NUMBER = 7;
+	/** 
+	 * Spin for N cycles (cheap idle)
+	 * 
+	 * ( n -- )
+	 */
+	public static final int SYSCALL_SPIN = 8;
 	
 	public static final String[] syscallStrings = {
 		"IDLE",
@@ -349,6 +355,7 @@ public class InstF99b {
 		"GFIND",
 		">NUMBER",
 		"(NUMBER)",
+		"SPIN"
 	};
 	
 	/** for each inst:  SP read, SP left

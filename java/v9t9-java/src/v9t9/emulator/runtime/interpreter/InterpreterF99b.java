@@ -720,6 +720,10 @@ public class InterpreterF99b implements Interpreter {
 	        		syscallDecoratedNumber();
 	        		break;
 	        	}
+	        	
+	        	case SYSCALL_SPIN:
+	        		cpu.addCycles(cpu.pop());
+	        		break;
         	}
         	break;
 
@@ -889,13 +893,14 @@ public class InterpreterF99b implements Interpreter {
 			if (len > 0) {
 				if (iblock.domain.readByte(caddr) == '.') {
 					
-					cpu.addCycles(10);
-					
 					isDouble = true;
 					
 					caddr++;
 					len--;
 
+					// NOTE: when floating point is supported, this is invalid
+					//[[[ RFI 0004
+					cpu.addCycles(10);
 					cpu.push((short) caddr);
 					cpu.push((short) len);
 					cpu.push((short) base);
@@ -904,17 +909,16 @@ public class InterpreterF99b implements Interpreter {
 					
 					len = cpu.pop();
 					caddr = cpu.pop();
+					//]]]
 				}
 			}
 			
 			val = cpu.popd();
 
-			if (len == 0) {
-				cpu.pushd(neg ? -val : val);
-				cpu.push((short) (isDouble ? -1 : 0));
-				cpu.push((short) -1);
-				return;
-			}
+			cpu.pushd(neg ? -val : val);
+			cpu.push((short) (isDouble ? -1 : 0));
+			cpu.push((short) (len == 0 ? -1 : 0));
+			return;
 		} 
 		
 		cpu.push((short) 0);
