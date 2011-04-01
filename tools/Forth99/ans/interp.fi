@@ -77,7 +77,7 @@ user >IN
 \   Interpret counted string as number,
 \   and store decimal point location in DPL.
 
-abort" This definition of (NUMBER) is not ANS compatible -- double numbers may only have '.' at end, not embedded."
+\ NOTE: when floating point is enabled, this definition of (NUMBER) is not ANS compatible -- double numbers may only have '.' at end, not embedded.
 
 | User dpl
 
