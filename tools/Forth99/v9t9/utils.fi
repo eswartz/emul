@@ -56,3 +56,8 @@
     ['] +vc@ (dmp)
     r> base !
 ;
+
+: mfree
+    ram @  here  -  
+;
+    

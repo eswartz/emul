@@ -28,6 +28,8 @@
     GRAM
     
     >grom_logo g@ gtypez cr
+    
+    (RAM0)  RAM !
 ;
 
 :   'quit

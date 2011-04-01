@@ -21,7 +21,7 @@
 
 : message     (  # -- )
     dup  >message ?dup if
-        space gtypez
+        gtypez
         drop
     else
         ." ??? " .

@@ -20,6 +20,7 @@ $400    dp!
 
 (define-prims)
 
+\   Be sure this ROM doesn't try to make variables in the dictionary
 undef Variable
 undef DVariable
 undef Value
@@ -29,13 +30,13 @@ undef DValue
 
 include sysdefs.fi
 
+include ../v9t9/errcodes.fi
+
 include ../v9t9/ram.fi
 
 include syscomp.fi
 
 EXPORT>
-
-include ../v9t9/errcodes.fi
 
 include ../v9t9/sysutils.fi
 
@@ -167,6 +168,8 @@ export>
     init-editor
 [ [endif] ]    
        
+    mfree u.  msg-free message  
+       
     \ cycle
     quit
 ;
@@ -186,6 +189,10 @@ export>
 ' cold  (COLD)     !
 \ here   DP0        !
 here $3ff +  $3ff INVERT and  DP0        !
+
+ramptr @  1- aligned  constant (RAM0)
+
+|+ User RAM
 
 [ifdef] grom-dictionary
 $0       (LATEST)   !

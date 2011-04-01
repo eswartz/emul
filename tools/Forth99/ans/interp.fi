@@ -6,9 +6,6 @@
 | User loadfile
 | User loadline
 
-\ If set, xt of local variable lookup
-| User 'lfind
-
 [IFUNDEF] (
 : (
     [char] )  parse 2drop

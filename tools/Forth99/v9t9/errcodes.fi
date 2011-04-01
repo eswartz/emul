@@ -22,5 +22,7 @@
 -259 Constant  err-loading-only
 -260 Constant  err-not-deferred
 -261 Constant  err-local-init
+-262 Constant  msg-free
+-263 Constant  err-no-memory
 
 export>

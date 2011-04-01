@@ -427,7 +427,7 @@ User 'fl
 ;
                 
 \   insert/overwrite mode   
-: !ins/ovr $8000 ovr +! ;      
+: !ins/ovr  ovr @ not ovr ! ;
 
 : fix-column
     >llen  'col @  min  'col !

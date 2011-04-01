@@ -110,25 +110,24 @@ $100        constant   #TIB
 
 |+ $400        constant    CHARS/BLOCK \ basic block size
 CHARS/BLOCK 
-    2 +     \ block # field
-    2 +     \ modified flag
+    2 +     \ block # field (or 0x8000 for modified)
             constant   (#blk)
 (#blk) 3 *  constant   (#blks)    \ total block space
 
 $80        constant   (#up)       \ global user space
 
-
-FaultStacks  (#RP) - (#SP) - (#numbuf) - (#slit-pad) - #TIB - (#blks) - (#up) -
+|+ FaultStacks  (#RP) - (#SP) - (#numbuf) - (#slit-pad) - #TIB - (#blks) - (#up) -
              constant RamTop    \ grows down
 
-| RamTop (#rp) +                constant (rp0)      \ grows down
-| (rp0) (#sp) +                 constant (sp0)      \ grows down
-| (sp0)  (#numbuf) +            constant (numbuf0)     \ grows down
-| (numbuf0)                     constant (slit-pad0)    \ grows up
-| (slit-pad0) (#slit-pad) +     constant TIB         \ grows up
-| TIB #TIB +               constant (first)    \ grows up
-| (first) (#blks) +             constant (limit)    \ grows up
-| (limit)                       constant (up0)      \ grows up
+\ Arrange memory to minimize problems in case of overflow.
+RamTop                        constant (first)    \ grows up
+(first) (#blks) +             constant (limit)
+(limit)                       constant (up0)      \ grows up 
+(up0) (#up) + (#numbuf) +     constant (numbuf0)     \ grows down
+(numbuf0)                     constant (slit-pad0)    \ grows up
+(slit-pad0) (#slit-pad) +     constant TIB         \ grows up
+TIB #TIB + (#rp) +            constant (rp0)    \ grows down
+(rp0) (#sp) +                 constant (sp0)      \ grows down
 
 
 \ -----------   GROM addresses

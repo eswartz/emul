@@ -25,6 +25,10 @@
 
 | User >latest        \ latest definition (gaddr)
 
+\ If set, xt of local variable lookup
+| User 'lfind
+
+
 \   Return latest definition's nfa (gaddr)
 : latest
     >latest @
