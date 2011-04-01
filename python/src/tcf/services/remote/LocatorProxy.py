@@ -10,7 +10,8 @@
 # *******************************************************************************
 
 import exceptions
-from tcf import protocol, locator, peer, channel
+from tcf import protocol, peer, channel
+from tcf.services import locator
 from tcf.channel.Command import Command
 
 class Peer(peer.TransientPeer):
