@@ -12,6 +12,7 @@ package org.eclipse.tm.internal.tcf.cdt.ui;
 
 import java.math.BigInteger;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 
 import org.eclipse.cdt.core.IAddress;
@@ -413,23 +414,28 @@ public class TCFSuspendResumeAdapter implements ISuspendResume, IRunToLine,
                     return;
                 }
                 
-                TCFChildren regNodesCache = fExecCtx.getRegisters();
-                if (!regNodesCache.validate(this)) return;
-                Map<String,TCFNode> regNodes = regNodesCache.getData();
-                if (regNodes == null || regNodes.size() == 0) {
-                    if (regNodesCache.getError() != null) error(regNodesCache.getError());
-                    else error("Cannot retrive registers info");
-                    return;
-                }
-                
-                for (TCFNode node : regNodes.values()) {
-                    TCFNodeRegister regNode = (TCFNodeRegister)node;
-                    TCFDataCache<IRegisters.RegistersContext> regCtxCache = regNode.getContext();
-                    if (!regCtxCache.validate(this)) return;
-                    IRegisters.RegistersContext context = regCtxCache.getData();
-                    if (context != null && IRegisters.ROLE_PC.equals(context.getRole())) {
-                        fPCReg = context;
-                        break;
+                LinkedList<TCFChildren> queue = new LinkedList<TCFChildren>();
+                queue.add(fExecCtx.getRegisters());
+                while (fPCReg == null && !queue.isEmpty()) {
+                    TCFChildren regNodesCache = queue.removeFirst();
+                    if (!regNodesCache.validate(this)) return;
+                    Map<String,TCFNode> regNodes = regNodesCache.getData();
+                    if (regNodes == null || regNodes.size() == 0) {
+                        if (regNodesCache.getError() != null) error(regNodesCache.getError());
+                        else error("Cannot retrive registers info");
+                        return;
+                    }
+                    
+                    for (TCFNode node : regNodes.values()) {
+                        TCFNodeRegister regNode = (TCFNodeRegister)node;
+                        TCFDataCache<IRegisters.RegistersContext> regCtxCache = regNode.getContext();
+                        if (!regCtxCache.validate(this)) return;
+                        IRegisters.RegistersContext context = regCtxCache.getData();
+                        if (context != null && IRegisters.ROLE_PC.equals(context.getRole())) {
+                            fPCReg = context;
+                            break;
+                        }
+                        queue.add(regNode.getChildren());
                     }
                 }
                 
@@ -535,16 +541,12 @@ public class TCFSuspendResumeAdapter implements ISuspendResume, IRunToLine,
             private byte[] addressToByteArray(Number address, int size, boolean bigEndian) {
                 byte[] bytes = new byte[size];
                 byte[] addrBytes = toBigInteger(address).toByteArray();
-                int delta = bytes.length - addrBytes.length;
-                for (int i=0; i < addrBytes.length; ++i) {
-                    bytes[delta + i] = addrBytes[i];
-                }
-                if (!bigEndian) {
-                    for (int i=0; i < size/2; ++i) {
-                        byte tmp = bytes[size-i-1];
-                        bytes[size-i-1] = bytes[i];
-                        bytes[i] = tmp;
+                for (int i=0; i < bytes.length; ++i) {
+                    byte b = 0; 
+                    if (i < addrBytes.length) {
+                        b = addrBytes[addrBytes.length - i - 1];
                     }
+                    bytes[bigEndian ? size -i - 1 : i] = b;
                 }
                 return bytes;
             }

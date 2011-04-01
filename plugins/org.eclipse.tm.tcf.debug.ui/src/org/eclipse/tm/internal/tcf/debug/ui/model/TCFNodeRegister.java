@@ -105,6 +105,10 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
         return value;
     }
 
+    public TCFChildren getChildren() {
+        return children;
+    }
+
     void setIndex(int index) {
         this.index = index;
     }
