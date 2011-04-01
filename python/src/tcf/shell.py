@@ -14,11 +14,28 @@ import tcf
 from tcf.util import sync, event
 from tcf import protocol, channel
 
+"""
+Simple interactive shell for TCF.  This is basically a Python interpreter with a few
+TCF extensions.
+
+Usage:
+    python tcf/shell.py
+    
+Commands:
+    connect(params)    - Connect to TCF peer, params = "<protocol>:<host>:<port>"
+    cmd.<service>.<command<(args)
+                       - Send command to remote service and return result
+    disconnect         - Disconnect from peer
+    events.record(<service>)
+                       - Start recording events for service
+    events             - Print last recorded events
+    events.stop([<service>])
+                       - Stop recording for service or for all services
+"""
 
 class Shell(code.InteractiveConsole, protocol.ChannelOpenListener, channel.ChannelListener):
     def __init__(self):
         locals = {
-            "tcf" : tcf,
             "connect" : tcf.connect
         }
         sys.ps1 = "tcf> "
@@ -29,7 +46,7 @@ class Shell(code.InteractiveConsole, protocol.ChannelOpenListener, channel.Chann
         try:
             super(Shell, self).interact(banner)
         finally:
-            protocol.removeChannelOpenListener(self)
+            protocol.invokeLater(protocol.removeChannelOpenListener, self)
     def onChannelOpen(self, channel):
         wrapper = sync.DispatchWrapper(channel)
         self.locals["channel"] = wrapper
