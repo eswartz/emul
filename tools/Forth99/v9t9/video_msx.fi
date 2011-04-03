@@ -104,22 +104,34 @@ Create msx-stdpalette
              
 ;
 
-: msx-blinkcursor ( x y -- )
+|+ : msx-rect ( cmd clr nx ny x y -- )
     msx-setup-cursor-DXDY
     
-    $1  msx-cmd-word                    \ two cols NX
-    v-fntheight c@ 1-  msx-cmd-word     \ font height NY 
+    swap
+    1- 0 max  msx-cmd-word     \ NX
+    1- 0 max  msx-cmd-word     \ NY 
 
-    msx-cursor-color c@  VDPWI c!                \ CLR    
+    VDPWI c!            \ CLR    
 
-    $00 VDPWI c!                \ ARG (dix=0, diy=0, mxc=0)
+    $00 VDPWI c!        \ ARG (dix=0, diy=0, mxc=0)
     
-    $83 msx-setupMMMcommand   \ LMMV + EOR
+    msx-setupMMMcommand   \ cmd
 
-    $80 v-curs c+!
-    
     msx-vstatus0
     \ no need to wait!
+;
+
+: msx-blinkcursor ( x y -- )
+    2>r
+    $83 \ LMMV + EOR
+    msx-cursor-color c@    
+    $2  v-fntheight c@  
+
+    2r>
+    msx-rect
+    
+    $80 v-curs c+!
+    
 ;
 
 \   Index by the number of bits-per-byte in a pattern
