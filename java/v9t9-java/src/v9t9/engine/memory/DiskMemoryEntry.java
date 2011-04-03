@@ -287,8 +287,8 @@ public class DiskMemoryEntry extends MemoryEntry {
             if (isNew) {
             	backup.delete();
             	old.renameTo(backup);
-            	DataFiles.writeMemoryImage(filepath, filesize, data);
             }
+            DataFiles.writeMemoryImage(filepath, filesize, data);
             bDirty = false;
         }
         super.save();

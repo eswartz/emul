@@ -48,9 +48,9 @@ User 'baddr)
 \ effective end of block (last non-blank char)
 User 'lines
 
-\ indicate that the block needs to be refreshed and redrawn
+\ indicate that the block needs to be refreshed and redrawn; don't move cursor, though
 : redraw-block
-    $3E fl|
+    $36 fl|
 ;
 
 \ Fetch the block with cursor turned off as a signal about load time

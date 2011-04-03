@@ -488,7 +488,7 @@ EXPORT>
 :   video-init
     \ reset latches
     VDPRD c@ drop
-    0 GPLWD c! 
+    0 0 gc!
 
     0 v-pob c!
     0 v-intflags c!
