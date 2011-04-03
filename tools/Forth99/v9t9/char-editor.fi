@@ -335,6 +335,7 @@ User 'fl
 
 \   Delete the current line, shifting others up.
 : ~del ( -- )
+    ^home
     [line)  delete-range
     0  'col  !
 ;

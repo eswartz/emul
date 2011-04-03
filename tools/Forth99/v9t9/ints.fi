@@ -6,6 +6,8 @@
 \   Last VDP status
 1       RamVar vdp-status
 
+|+ cell RamVar 'vsprmot
+
 \   Timer
 2 cells RamVar    vdp-ticks 
 cell    RamVar    vdp-timeout
@@ -16,38 +18,37 @@ cell    RamVar    vdp-timeout
 
 :   vdp-int-handler 
     'INTS c@  
-    dup M_INT_VDP and if 
-        \ acknowledge interrupt
-        [ M_INT_VDP invert literal ] and  'INTSP c!
-        
-        \ acknowledge VDP
-        VDPST c@  vdp-status c!
-        
-        \ timer
-        1. vdp-ticks d+!
+    dup M_INT_VDP and 0=  if drop exiti  then 
 
-        \ timeout
-        1 vdp-timeout +!
-        vdp-timeout @ 0= if
-            false vid-show
-        then  
-        
-        \ keyboard timer
-        kbdtimer c@ 1+ kbdtimer c!    
-        
-        \ scan keyboard
-        
-        kbd-scan
-        
-        \ do other (expensive) things if interrupts allow
-        v-int-nocursor v-intflag-off? if 
-            update-cursor
-        then
-        
-        \ acknowledge interrupt
-        \ 'INTS c@  [ M_INT_KBD invert literal ]  and  'INTSP c!
-    else
-        drop
+    \ acknowledge interrupt
+    [ M_INT_VDP invert literal ] and  'INTSP c!
+    
+    \ acknowledge VDP
+    VDPST c@  vdp-status c!
+    
+    \ timer
+    1. vdp-ticks d+!
+
+    \ timeout
+    1 vdp-timeout +!
+    vdp-timeout @ 0= if
+        false vid-show
+    then  
+    
+    \ keyboard timer
+    kbdtimer c@ 1+ kbdtimer c!    
+    
+    \ scan keyboard
+    
+    kbd-scan
+    
+    \ do other (expensive) things if interrupts allow
+    v-int-nocursor v-intflag-off? if 
+        update-cursor
+    then
+    
+    v-int-nosprmot v-intflag-off? if 
+        'vsprmot @ ?dup if  execute  then
     then
     
     exiti
@@ -108,6 +109,7 @@ cell    RamVar    vdp-timeout
 
 :   ints-init
     ints-off
+    0 'vsprmot !
  \   ['] kbd-int-handler     INT_KBD    enable-int
     ['] fault-int-handler   INT_FAULT   set-int-vec
     ['] bye                 INT_RESET   set-int-vec

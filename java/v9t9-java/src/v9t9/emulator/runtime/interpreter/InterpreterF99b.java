@@ -962,7 +962,7 @@ public class InterpreterF99b implements Interpreter {
 	
 	
 	private void doCmove() {
-		cpu.addCycles(4);
+		cpu.addCycles(2);
 		int tstep = cpu.pop();
 		int fstep = cpu.pop();
 		int len = cpu.pop() & 0xffff;
@@ -978,7 +978,7 @@ public class InterpreterF99b implements Interpreter {
 			memory.writeByte(taddr & 0xffff, memory.readByte(faddr & 0xffff));
 			faddr += fstep;
 			taddr += tstep;
-			cpu.addCycles(3);
+			cpu.addCycles(2);
 		}
 	}
 

@@ -5,11 +5,6 @@
     swap over @ OR swap !     
 ;
 
-\   Custom:  reset a flag in a word
-: &!        ( mask addr -- )
-    dup >r @  swap NAND  r> !
-;
-
 : tolower ( ch -- ch )
    dup [char] a [ [char] z 1+ literal ] within $20 and -
 ;

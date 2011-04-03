@@ -51,7 +51,7 @@
 
 : dsk-flg! ( on? mask -- )
     'DSKFLG c@  
-    rot if  OR  else  swap NAND  then   
+     bitset
     'DSKFLG c!
 ;
 

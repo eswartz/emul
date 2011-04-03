@@ -70,6 +70,8 @@ include f99b.fi
 
 include ../ans/compile.fi
 
+include ../ans/dualstate.fi
+
 include ../ans/interp.fi
 
 include ../v9t9/utils.fi
@@ -167,9 +169,9 @@ export>
 [ [ifdef] init-editor ]    
     init-editor
 [ [endif] ]    
-       
-    mfree u.  msg-free message  
-       
+      
+    1 load
+     
     \ cycle
     quit
 ;
@@ -192,7 +194,7 @@ here $3ff +  $3ff INVERT and  DP0        !
 
 ramptr @  1- aligned  constant (RAM0)
 
-|+ User RAM
+|+ cell RamVar RAM
 
 [ifdef] grom-dictionary
 $0       (LATEST)   !

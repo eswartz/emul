@@ -2,8 +2,8 @@
 User    base
 User    dp
 
-| User (numbuf)
-| User (spad)
+| cell RamVar (numbuf)
+| cell RamVar (spad)
 
 : here dp @ ;
 
@@ -14,9 +14,6 @@ User    dp
 :   digit ( n -- ch )
     dup 9 > if 55 else 48 then + 
 ;
-
-( addr of buffer )
-User    #ptr
 
 :   demit ( ch -- )
     'DBG c!
@@ -604,35 +601,6 @@ error" need prim execute"
 \ ;
 [THEN]
 
-[IFUNDEF] SLITERAL
-: s,    ( caddr u -- )
-    dup c, 
-    here swap chars dup allot move
-;
-
-: SLITERAL  \ C: ( caddr u --  ) R: ( -- caddr u )
-   \ state @ if
-        postpone (s") s,   \ align
-   \ else
-   \     \ copy string to safe place
-   \     >r (spad) @ r@ cmove
-   \     (spad) @ r>
-   \ then
-; immediate target-only
-[THEN]
-
-[IFUNDEF] S"
-: S"
-    $22 parse
-    state @ if
-        postpone sliteral
-    else
-       \ copy string to safe place
-       >r (spad) @ r@ cmove
-       (spad) @ r>
-    then
-; immediate  target-only
-[THEN]
 
 [IFUNDEF] ABORT
 
@@ -641,38 +609,6 @@ error" need prim execute"
     quit
 ;
 
-[THEN]
-
-[IFUNDEF] ABORT"
-| : (abort")
-    \ rot if cr ." error: " type cr abort else 2drop then
-    rot if 
-        type cr
-        err-abort" throw  
-    else  
-        2drop  
-    then
-;
-
-: ABORT"
-\        Compilation: ( "ccc<quote>" -- )
-\
-\   Parse ccc delimited by a " (double-quote). Append the run-time semantics
-\   given below to the current definition.
-\
-\        Run-time: ( i*x x1 --  | i*x ) ( R: j*x --  | j*x )
-\
-\   Remove x1 from the stack. If any bit of x1 is not zero, display ccc and
-\   perform an implementation-defined abort sequence that includes the
-\   function of ABORT.
-
-    postpone s"
-    state @ if
-        postpone (abort")
-    else
-        (abort")
-    then
-; immediate  target-only
 [THEN]
 
 

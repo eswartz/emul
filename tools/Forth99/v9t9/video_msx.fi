@@ -370,15 +370,9 @@ false Constant msx-use-drawchar-accel
     v-rwpage c@  5 lshift  2 (vr!)   \ actually screen reg
 ;
 
-: msx-set-sprite-reg
-    v-sprites @  7 URSHIFT   w>b
-    $3 and  11 (vr!)
-    $7 or    5  (vr!)
-;
-
 : msx-setupregs
     msx-set-patt-reg
-    msx-set-sprite-reg
+    std-set-sprite-reg
     std-set-sprpat-reg
 ;
     

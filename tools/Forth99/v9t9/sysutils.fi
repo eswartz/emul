@@ -160,4 +160,7 @@
     use u+loop    
 ;
 
-
+: bitset ( on? mask val -- val )
+     rot ( mask val on? )  if  OR  else  swap NAND  then   
+;
+ 

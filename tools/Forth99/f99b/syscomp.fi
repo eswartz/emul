@@ -75,6 +75,7 @@ User STATE
     \ ones we must directly detect
     addr ['] branch   = if  IbranchB c,     exit   then
     addr ['] 0branch  = if  I0branchB c,    exit   then
+    addr ['] (s")     = if  addr call,      exit   then
 
     \ empty prims or words
     addr c@ $70 = if

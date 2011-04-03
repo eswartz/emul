@@ -27,7 +27,7 @@
     
     GRAM
     
-    >grom_logo g@ gtypez cr
+    \ >grom_logo g@ gtypez cr
     
     (RAM0)  RAM !
 ;

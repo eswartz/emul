@@ -570,13 +570,12 @@ msgptrs
     dw -37, err_file_io
     dw -8, err_dict_overflow
     dw -261, err_local_init
-    dw -262, msg_free
-    dw -263, err_no_memory
+    dw -262, err_no_memory
     dw 0
 
 msg_fault           db "FAULT",0
 msg_aborted         db " aborted",13,0
-msg_ok              db "ok",0
+msg_ok              db " ok",0
 err_undefined       db "undefined",0
 err_redefining      db "redefining ",0
 err_loading_only    db "loading only",0
@@ -591,7 +590,6 @@ err_out_of_range    db "out of range",0
 err_file_io         db "file I/O error",0
 err_dict_overflow   db "dictionary overflow",0
 err_local_init      db "locals start inside control",0
-msg_free            db "bytes free",13,0
 err_no_memory       db "out of memory",0
 
 editorhelp

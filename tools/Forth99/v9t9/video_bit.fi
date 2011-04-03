@@ -225,27 +225,16 @@ Create Gfx3ModeRegs
     
 Create Gfx3ModeParamsDiffs
     v-screen    , $3800 ,   
-    \ v-screensz  , $300 ,
-    \ v-colors    , $2000 ,   v-colorsz   , $1800 ,   
-    \ v-patts     , $0000 ,   v-pattsz    , $1800 ,
-    \ v-sprites   , $1B00 ,   
     v-sprcol    , $1900 ,
-    \ v-sprpat    , $1800 ,   v-sprmot    , $1B80 ,
     v-free      , $3B00 ,   
-    \ v-pagesize  , $4000 ,
-
-    \ v-width     , 256 ,     v-height    , 192 ,
-    \ v-stride    , 32 ,
     
     'v-setupregs ,           ' gfx3-setupregs ,
-    \ 'v-setupmode ,           ' bit-setupmode ,
-    \ 'v-updatecolors ,        ' bit-updatecolors ,
 
     0 ,
 
 : gfx3-setupregs
     bit-setupregs
-    msx-set-sprite-reg
+    std-set-sprite-reg
     std-set-sprpat-reg
 ;
     
@@ -270,20 +259,8 @@ Create MonoBitModeRegs
 
 
 Create MonoModeParamsDiffs
-    \ v-screen    , $1800 ,   v-screensz  , $300 ,
-    v-colors    , $2000 ,   v-colorsz   , $40 ,   
-    v-patts     , $0000 ,   v-pattsz    , $1800 ,
-    \ v-sprites   , $1B00 ,   v-sprcol    , 0 ,
-    \ v-sprpat    , $1800 ,   v-sprmot    , $1B80 ,
+    v-colorsz   , $40 ,   
     v-free      , $2040 ,   
-    v-pagesize  , $4000 ,
-
-    \ v-width     , 256 ,     v-height    , 192 ,
-    \ v-stride    , 32 ,
-    
-    \ 'v-setupregs ,           ' bit-setupregs ,
-    \ 'v-setupmode ,           ' bit-setupmode ,
-    \ 'v-updatecolors ,        ' bit-updatecolors ,
 
     0 ,    
     

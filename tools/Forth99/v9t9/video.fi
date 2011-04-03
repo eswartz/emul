@@ -152,7 +152,7 @@ export>
 ;
 
 : vid-show ( f -- )
-    1 (vr@)  $40  rot  if OR else NAND then
+    $40 1 (vr@)  bitset
     $8100 or  v-regaddr
 ;
 

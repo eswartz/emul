@@ -113,6 +113,8 @@
     \ postpone rdrop 
 ; immediate target-only
 
+0 <export
+
 : dodefer, ( -- )
     ['] ;S  >call  ,
     Iexit c,
@@ -172,5 +174,7 @@
 : (laddr) ( num -- )
     Ilocal c,  c,
 ;
+
+export>
 
 
