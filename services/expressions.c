@@ -740,7 +740,20 @@ static int type_name(int mode, Symbol ** type) {
     int expr_len = 0;
     char name[256];
     int sym_class;
+    int is_struct = 0;
+    int is_class = 0;
     int name_cnt = 0;
+
+    if (text_sy == SY_NAME) {
+        if (strcmp((const char *)(text_val.value), "struct") == 0) {
+            is_struct = 1;
+            next_sy();
+        }
+        else if (strcmp((const char *)(text_val.value), "class") == 0) {
+            is_class = 1;
+            next_sy();
+        }
+    }
 
     if (text_sy != SY_NAME) return 0;
     name[0] = 0;
@@ -755,7 +768,12 @@ static int type_name(int mode, Symbol ** type) {
     }
     while (text_sy == SY_NAME);
     sym_class = identifier(NULL, name, &v);
-    if (sym_class != SYM_CLASS_TYPE) return 0;
+    if (sym_class != SYM_CLASS_TYPE) {
+        if (is_struct || is_class) {
+            error(ERR_INV_EXPRESSION, "Type '%s' not found", name);
+        }
+        return 0;
+    }
     expr_len = type_expression(mode, expr_buf);
     if (mode != MODE_SKIP) {
         int i;
