@@ -77,6 +77,32 @@
              debugModelId="org.eclipse.tm.tcf.debug">
        </modelContextBinding>
     </extension>
+    
+    <extension
+          point="org.eclipse.cdt.debug.core.BreakpointExtension">
+       <breakpointExtension
+             class="org.eclipse.tm.internal.tcf.cdt.ui.breakpoints.TCFBreakpointScopeExtension"
+             debugModelId="org.eclipse.tm.tcf.debug"
+             id="org.eclipse.tm.tcf.cdt.ui.breakpointExtension"
+             markerType="org.eclipse.cdt.debug.core.cBreakpointMarker">
+       </breakpointExtension>
+    </extension>
+
+   <extension point="org.eclipse.ui.propertyPages">
+         <page class="org.eclipse.tm.internal.tcf.cdt.ui.breakpoints.TCFBreakpointThreadFilterPage"
+            id="org.eclipse.tm.tcf.breakpoint.filtering"
+            name="%breakpoints.filterPage.name">
+         <filter name="debugModelId" value="org.eclipse.tm.tcf.debug"/>
+         <enabledWhen>
+            <and>
+               <adapt type="org.eclipse.cdt.debug.core.model.ICBreakpoint"/>
+               <not>
+                  <adapt type="org.eclipse.cdt.debug.core.model.ICTracepoint"/>
+               </not>
+            </and>
+         </enabledWhen>
+      </page>
+   </extension>
 
     <!-- Remote Application Launch config type -->
     <!-- TODO: Move to common CDT plugin? -->

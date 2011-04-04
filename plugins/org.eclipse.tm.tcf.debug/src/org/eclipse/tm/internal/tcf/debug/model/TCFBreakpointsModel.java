@@ -397,7 +397,11 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
             String key = e.getKey();
             Object val = e.getValue();
             if (!key.startsWith(ITCFConstants.ID_TCF_DEBUG_MODEL)) continue;
-            m.put(key.substring(ITCFConstants.ID_TCF_DEBUG_MODEL.length() + 1), val);
+            String tcfKey = key.substring(ITCFConstants.ID_TCF_DEBUG_MODEL.length() + 1);
+            if (IBreakpoints.PROP_CONTEXTIDS.equals(tcfKey)) {
+                val = ((String) val).split(",\\s*");
+            }
+            m.put(tcfKey, val);
         }
         Boolean enabled = (Boolean)p.get(IBreakpoint.ENABLED);
         if (enabled != null && enabled.booleanValue() && bp_manager.isEnabled()) {
