@@ -855,7 +855,8 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
             return;
         }
         SuspendedContext sc = suspended.remove(id);
-        if (sc == null || sc.get_state_pending && ctx.getRCGroup() == null) {
+        if (!done_get_state) return;
+        if (sc == null || !sc.ok_to_resume || sc.get_state_pending && ctx.getRCGroup() == null) {
             exit(new Exception("Unexpected contextResumed event: " + id));
             return;
         }
