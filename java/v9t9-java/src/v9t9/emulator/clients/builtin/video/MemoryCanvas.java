@@ -5,6 +5,8 @@ package v9t9.emulator.clients.builtin.video;
 
 import java.util.Arrays;
 
+import org.eclipse.swt.graphics.ImageData;
+
 import v9t9.engine.memory.ByteMemoryAccess;
 
 /**
@@ -22,7 +24,6 @@ public class MemoryCanvas extends VdpCanvas {
     public MemoryCanvas() {
     	setSize(256, 192);
     }
-
 
 	public void doChangeSize() {
 	}

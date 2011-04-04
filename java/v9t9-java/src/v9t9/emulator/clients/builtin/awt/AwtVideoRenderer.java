@@ -78,27 +78,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		setCanvas(new ImageDataCanvas24Bit(0));
 		//desiredWidth = (int)(zoomx * 256);
 		//desiredHeight = (int)(zoomy * 192);
-		this.canvas = new Canvas() {
-
-			private static final long serialVersionUID = 8795221581767897631L;
-			
-			@Override
-			public void paint(Graphics g) {
-				Rectangle clipRect = g.getClipBounds();
-				//System.out.println("Clippy rect: " + clipRect);
-				doRedraw(g, 
-						clipRect.x, clipRect.y, 
-						clipRect.width, clipRect.height);
-					
-			}
-			
-			@Override
-			public void update(Graphics g) {
-				// do not clear background
-				paint(g);
-			}
-			
-		};
+		this.canvas = new AwtCanvas(this);
 		canvas.setFocusTraversalKeysEnabled(false);
 		canvas.setFocusable(true);
 		canvas.addHierarchyBoundsListener(new HierarchyBoundsAdapter() {

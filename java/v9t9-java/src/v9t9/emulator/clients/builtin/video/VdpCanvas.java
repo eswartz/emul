@@ -13,6 +13,15 @@ import v9t9.engine.memory.ByteMemoryAccess;
  *
  */
 public abstract class VdpCanvas {
+	public enum Format {
+		TEXT,
+		COLOR16_8x8,
+		COLOR16_8x1,
+		COLOR16_4x4,
+		COLOR16_1x1,
+		COLOR4_1x1,
+		COLOR256_1x1,
+	}
 	public interface ICanvasListener {
 		void canvasDirtied(VdpCanvas canvas);
 		void canvasResized(VdpCanvas canvas);
@@ -35,6 +44,8 @@ public abstract class VdpCanvas {
 	
 	/** height in pixels */
 	protected int height;
+	
+	protected Format format;
 
 	protected static final byte[][] stockPalette = {
 		/* 0 */ { 0x00, 0x00, 0x00 }, 
@@ -131,6 +142,13 @@ public abstract class VdpCanvas {
     	setSize(256, 192);
     }
 
+	public void setFormat(Format format) {
+		this.format = format;
+	}
+	public Format getFormat() {
+		return format;
+	}
+	
 	private byte[] rgbToGrey(byte[] rgb) {
 		byte[] g = new byte[3];
 		int lum = (299 * rgb[0] + 587 * rgb[1] + 114 * rgb[2]) * 256 / 1000;
@@ -209,7 +227,7 @@ public abstract class VdpCanvas {
 
 	private ICanvasListener listener;
 
-	private byte[][] thePalette;
+	protected byte[][] thePalette;
 
 	private boolean clearFromPalette;
 
@@ -593,6 +611,5 @@ public abstract class VdpCanvas {
 	public boolean isInterlacedEvenOdd() {
 		return isInterlacedEvenOdd;
 	}
-
 
 }

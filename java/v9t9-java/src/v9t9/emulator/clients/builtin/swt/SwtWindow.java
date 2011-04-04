@@ -14,6 +14,7 @@ import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.dnd.Clipboard;
+import org.eclipse.swt.dnd.DragSource;
 import org.eclipse.swt.dnd.RTFTransfer;
 import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.events.ControlAdapter;
@@ -74,6 +75,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 	private EmulatorButtonBar buttons;
 	private EmulatorStatusBar statusBar;
 	private MultiImageSizeProvider imageProvider;
+	private DragSource videoDragSource;
 	
 	public SwtWindow(Display display, final Machine machine) {
 		super(machine);
@@ -255,8 +257,6 @@ public class SwtWindow extends BaseEmulatorWindow {
 		});
 		
 		
-		EmulatorSettings.INSTANCE.register(JavaSoundHandler.settingPlaySound);
-
 		String boundsPref = EmulatorSettings.INSTANCE.getSettings().get(EMULATOR_WINDOW_BOUNDS);
 		final Rectangle rect = PrefUtils.readBoundsString(boundsPref);
 		if (rect != null) {

@@ -7,6 +7,7 @@ import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.settings.ISettingSection;
 import org.ejs.coffee.core.utils.HexUtils;
 
+import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VdpModeInfo;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.common.Machine;
@@ -606,6 +607,7 @@ public class VdpV9938 extends VdpTMS9918A {
 
 	
 	protected void setText2Mode() {
+		vdpCanvas.setFormat(VdpCanvas.Format.TEXT);
 		vdpCanvas.setSize(512, getVideoHeight());
 		vdpModeInfo = createText2ModeInfo();
 		vdpModeRedrawHandler = new Text2ModeRedrawHandler(
@@ -651,6 +653,7 @@ public class VdpV9938 extends VdpTMS9918A {
 	}
 	
 	protected void setGraphics4Mode() {
+		vdpCanvas.setFormat(VdpCanvas.Format.COLOR16_1x1);
 		vdpCanvas.setSize(256, getVideoHeight(), isInterlacedEvenOdd());
 		vdpModeInfo = createGraphics45ModeInfo();
 		vdpModeRedrawHandler = new Graphics4ModeRedrawHandler(
@@ -686,6 +689,7 @@ public class VdpV9938 extends VdpTMS9918A {
 	}
 	
 	protected void setGraphics5Mode() {
+		vdpCanvas.setFormat(VdpCanvas.Format.COLOR4_1x1);
 		vdpCanvas.setSize(512, getVideoHeight(), isInterlacedEvenOdd());
 		vdpModeInfo = createGraphics45ModeInfo();
 		vdpModeRedrawHandler = new Graphics5ModeRedrawHandler(
@@ -700,6 +704,7 @@ public class VdpV9938 extends VdpTMS9918A {
 	}
 
 	protected void setGraphics6Mode() {
+		vdpCanvas.setFormat(VdpCanvas.Format.COLOR16_1x1);
 		vdpCanvas.setSize(512, getVideoHeight(), isInterlacedEvenOdd());
 		vdpModeInfo = createGraphics67ModeInfo();
 		vdpModeRedrawHandler = new Graphics6ModeRedrawHandler(
@@ -735,6 +740,7 @@ public class VdpV9938 extends VdpTMS9918A {
 	}
 	
 	protected void setGraphics7Mode() {
+		vdpCanvas.setFormat(VdpCanvas.Format.COLOR256_1x1);
 		vdpCanvas.setSize(256, getVideoHeight(), isInterlacedEvenOdd());
 		vdpCanvas.setUseAltSpritePalette(true);
 		vdpModeInfo = createGraphics67ModeInfo();
