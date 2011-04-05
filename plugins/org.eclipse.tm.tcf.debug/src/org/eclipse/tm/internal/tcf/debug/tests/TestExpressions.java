@@ -385,7 +385,10 @@ class TestExpressions implements ITCFTest,
             }
         }
         for (final String txt : test_expressions) {
-            if (local_vars.length == 0 && txt.indexOf("local") >= 0) continue;
+            if (local_vars.length == 0) {
+                if (txt.indexOf("local") >= 0) continue;
+                if (txt.indexOf("test_struct") >= 0) continue;
+            }
             if (expr_ctx.get(txt) == null) {
                 expr.create(stack_trace[stack_trace.length - 2], null, txt, new IExpressions.DoneCreate() {
                     public void doneCreate(IToken token, Exception error, IExpressions.Expression ctx) {
