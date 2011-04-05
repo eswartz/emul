@@ -118,7 +118,7 @@ def toJSONSequence(args):
         return None
     buf = cStringIO.StringIO()
     for arg in args:
-        json.dump(arg, buf, separators=(',', ':'))
+        json.dump(arg, buf, separators=(',', ':'), cls=TCFJSONEncoder)
         buf.write('\0')
     return buf.getvalue()
 
@@ -135,11 +135,19 @@ def fromJSONSequence(bytes):
             objects.append(None)
     return objects
 
-_ByteArrayType = type(bytearray())
 def toByteArray(data):
     if data is None: return None
     t = type(data)
-    if t is _ByteArrayType: return data
+    if t is bytearray: return data
     if t is types.StringType:
         return binascii.a2b_base64(data)
-    raise exceptions.Exception()
+    raise exceptions.TypeError(str(t))
+
+class TCFJSONEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, bytearray):
+            return binascii.b2a_base64(o)
+        elif hasattr('__iter__', o):
+            return tuple(o)
+        else:
+            json.JSONEncoder.default(self, o)

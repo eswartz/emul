@@ -78,6 +78,9 @@ class Symbol(object):
     def __init__(self, props):
         self._props = props or {}
 
+    def __str__(self):
+        return "[Symbol Context %s]" % self._props
+        
     def getID(self):
         """
         Get symbol ID.

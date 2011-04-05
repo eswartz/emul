@@ -67,9 +67,6 @@ class RunContext(runcontrol.RunControlContext):
                 done.doneCommand(self.token, error)
         return RCCommand(cmd, args).token
 
-    def __str__(self):
-        return "[Run Control Context %s]" % str(self._props)
-
 
 class ChannelEventListener(channel.EventListener):
     def __init__(self, service, listener):

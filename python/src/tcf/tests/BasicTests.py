@@ -14,6 +14,7 @@ import tcf
 from tcf import protocol, channel
 from tcf.util import sync
 
+__TRACE = False
 class TraceListener(channel.TraceListener):
     def onMessageReceived(self, type, token, service, name, data):
         print "<<<", type, token, service, name, data
@@ -28,7 +29,7 @@ def test():
     protocol.startEventQueue()
     c = tcf.connect("TCP:127.0.0.1:1534")
     assert c.state == channel.STATE_OPEN
-    #protocol.invokeLater(c.addTraceListener, TraceListener())
+    if __TRACE: protocol.invokeLater(c.addTraceListener, TraceListener())
     def r2():
         print "services=", c.getRemoteServices()
     protocol.invokeLater(r2)
@@ -36,6 +37,7 @@ def test():
     testRunControl(c)
     testBreakpoints(c)
     testSymbols(c)
+    testRegisters(c)
     testSyncCommands(c)
     testEvents(c)
     testDataCache(c)
@@ -57,10 +59,7 @@ def testRunControl(c):
                 if error:
                     protocol.log("Error from RunControl.getContext", error)
                 else:
-                    print "ID:          ", context.getID()
-                    print "Name:        ", context.getName()
-                    print "Parent:      ", context.getParentID()
-                    print "IsContainer: ", context.isContainer()
+                    print context
                 class DoneGetState(runcontrol.DoneGetState):
                     def doneGetState(self, token, error, suspended, pc, reason, params):
                         pending.remove(token)
@@ -200,7 +199,7 @@ def testStackTrace(c, ctx_id):
                         return
                     if ctxs:
                         for ctx in ctxs:
-                            print ctx.getProperties()
+                            print ctx
             stack.getContext(ctx_ids, DoneGetContext())
     stack.getChildren(ctx_id, DoneGetChildren())
 
@@ -214,13 +213,11 @@ def testSymbols(c):
                     protocol.log("Error from Symbols.list", error)
                     return
                 class DoneGetContext(symbols.DoneGetContext):
-                    def doneGetContext(self, token, error, ctxs):
+                    def doneGetContext(self, token, error, ctx):
                         if error:
                             protocol.log("Error from Symbols.getContext", error)
                             return
-                        if ctxs:
-                            for ctx in ctxs:
-                                print ctx.getProperties()
+                        print ctx
                 if ctx_ids:
                     for ctx_id in ctx_ids:
                         syms.getContext(ctx_id, DoneGetContext())
@@ -228,6 +225,28 @@ def testSymbols(c):
     for ctx_id in _suspended:
         protocol.invokeLater(symTest, ctx_id)
 
+def testRegisters(c):
+    from tcf.services import registers
+    def regTest(ctx_id):
+        regs = c.getRemoteService(registers.NAME)
+        class DoneGetChildren(registers.DoneGetChildren):
+            def doneGetChildren(self, token, error, ctx_ids):
+                if error:
+                    protocol.log("Error from Registers.getChildren", error)
+                    return
+                class DoneGetContext(registers.DoneGetContext):
+                    def doneGetContext(self, token, error, ctx):
+                        if error:
+                            protocol.log("Error from Registers.getContext", error)
+                            return
+                        print ctx
+                if ctx_ids:
+                    for ctx_id in ctx_ids:
+                        regs.getContext(ctx_id, DoneGetContext())
+        regs.getChildren(ctx_id, DoneGetChildren())
+    for ctx_id in _suspended:
+        protocol.invokeLater(regTest, ctx_id)
+    
 def testSyncCommands(c):
     # simplified command execution
     ctl = sync.CommandControl(c)

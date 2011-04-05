@@ -9,11 +9,6 @@
 # *     Wind River Systems - initial API and implementation
 # *******************************************************************************
 
-import code, sys
-import tcf
-from tcf.util import sync, event
-from tcf import protocol, channel
-
 """
 Simple interactive shell for TCF.  This is basically a Python interpreter with a few
 TCF extensions.
@@ -32,6 +27,11 @@ Commands:
     events.stop([<service>])
                        - Stop recording for service or for all services
 """
+
+import code, sys
+import tcf
+from tcf.util import sync, event
+from tcf import protocol, channel
 
 class Shell(code.InteractiveConsole, protocol.ChannelOpenListener, channel.ChannelListener):
     def __init__(self):

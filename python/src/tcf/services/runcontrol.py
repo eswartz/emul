@@ -248,6 +248,9 @@ class RunControlContext(object):
     """
     def __init__(self, props):
         self._props = props or {}
+
+    def __str__(self):
+        return "[Run Control Context %s]" % self._props
         
     def getProperties(self):
         """

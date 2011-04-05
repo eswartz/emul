@@ -35,8 +35,9 @@ def removeServiceProvider(provider):
 
 def onChannelCreated(channel, services_by_name):
     with _lock:
-        zero_copy = ZeroCopy()
-        services_by_name[zero_copy.getName()] = zero_copy
+        # TODO ZeroCopy support is incomplete
+#        zero_copy = ZeroCopy()
+#        services_by_name[zero_copy.getName()] = zero_copy
         for provider in _providers:
             try:
                 arr = provider.getLocalService(channel)

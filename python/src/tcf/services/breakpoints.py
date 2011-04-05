@@ -9,9 +9,6 @@
 # *     Wind River Systems - initial API and implementation
 # *******************************************************************************
 
-import exceptions
-from tcf import services
-
 """
 Breakpoint is represented by unique identifier and set of properties.
 Breakpoint identifier (String id) needs to be unique across all hosts and targets.
@@ -25,6 +22,9 @@ breakpoint status (Map<String,Object>, see STATUS_*). While breakpoint propertie
 persistent and represent user input, breakpoint status reflects dynamic target agent reports
 about breakpoint current state, like actual addresses where breakpoint is planted or planting errors.
 """
+
+import exceptions
+from tcf import services
 
 # Service name.
 NAME = "Breakpoints"

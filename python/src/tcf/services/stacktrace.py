@@ -92,7 +92,10 @@ class StackTraceContext(object):
     """
     def __init__(self, props):
         self._props = props or {}
-        
+    
+    def __str__(self):
+        return "[Stack Trace Context %s]" % self._props
+
     def getID(self):
         """
         Get Context ID.

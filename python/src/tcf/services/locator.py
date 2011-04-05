@@ -9,9 +9,6 @@
 # *     Wind River Systems - initial API and implementation
 # *******************************************************************************
 
-import exceptions
-from tcf import services, protocol, channel
-
 """
 Locator service uses transport layer to search for peers and to collect data about
 peer's attributes and capabilities (services). Discovery mechanism depends on transport protocol
@@ -22,6 +19,9 @@ configuration. Additional targets can be configured manually.
 Clients should use protocol.getLocator() to obtain local instance of locator,
 then locator.getPeers() can be used to get list of available peers (hosts and targets).
 """
+
+import exceptions
+from tcf import services, protocol, channel
 
 # Peer data retention period in milliseconds.
 DATA_RETENTION_PERIOD = 60 * 1000;
