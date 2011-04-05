@@ -139,15 +139,17 @@ def toByteArray(data):
     if data is None: return None
     t = type(data)
     if t is bytearray: return data
-    if t is types.StringType:
+    elif t is str:
         return binascii.a2b_base64(data)
+    elif t is unicode:
+        return binascii.a2b_base64(str(data))
     raise exceptions.TypeError(str(t))
 
 class TCFJSONEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, bytearray):
-            return binascii.b2a_base64(o)
-        elif hasattr('__iter__', o):
+            return binascii.b2a_base64(o)[:-1]
+        elif hasattr(o, '__iter__'):
             return tuple(o)
         else:
             json.JSONEncoder.default(self, o)

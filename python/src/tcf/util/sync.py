@@ -84,13 +84,13 @@ class CommandControl(object):
                 if not error and args:
                     # error result is usually in args[0]
                     if service == "StackTrace" and command == "getContext":
-                        err = self.toError(args[1])
+                        error = self.toError(args[1])
+                        resultArgs = (args[0],)
+                    elif service == "Diagnostics" and command.startswith("echo"):
                         resultArgs = (args[0],)
                     else:
-                        err = self.toError(args[0])
+                        error = self.toError(args[0])
                         resultArgs = args[1:]
-                    if err:
-                        error = err
                 cmdCtrl._doneCommand(self.token, error, resultArgs)
             def wait(self, timeout=None):
                 cmdCtrl._waitForCommand(self.token, timeout)
@@ -142,7 +142,9 @@ class CommandControl(object):
             if cmd._async: self._complete.append(cmd)
             isDone = self.isDone()
             if isDone: self._lock.notifyAll()
-        if cmd._onDone: cmd._onDone(error, *args)
+        if cmd._onDone:
+            if args is None: args = (None,)
+            cmd._onDone(error, *args)
         if isDone and self._onDone: self._onDone()
     def isDone(self):
         with self._lock:

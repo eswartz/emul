@@ -110,7 +110,7 @@ class Command(object):
         return buf.getvalue()
 
     def toError(self, data, include_command_text=True):
-        if not data: return None
+        if not isinstance(data, dict): return None
         map = data
         bf = cStringIO.StringIO()
         bf.write("TCF error report:\n")

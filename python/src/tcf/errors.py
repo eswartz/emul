@@ -78,7 +78,7 @@ class ErrorReport(exceptions.Exception):
         if type(attrs) is types.IntType:
             attrs = {
                 ERROR_CODE : attrs,
-                ERROR_TIME : time.time(),
+                ERROR_TIME : int(time.time()),
                 ERROR_FORMAT : msg,
                 ERROR_SEVERITY : SEVERITY_ERROR
             }

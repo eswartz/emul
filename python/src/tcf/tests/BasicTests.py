@@ -11,7 +11,7 @@
 
 import sys, time, threading, exceptions
 import tcf
-from tcf import protocol, channel
+from tcf import protocol, channel, errors
 from tcf.util import sync
 
 __TRACE = False
@@ -34,14 +34,18 @@ def test():
         print "services=", c.getRemoteServices()
     protocol.invokeLater(r2)
 
-    testRunControl(c)
-    testBreakpoints(c)
-    testSymbols(c)
-    testRegisters(c)
-    testSyncCommands(c)
-    testEvents(c)
-    testDataCache(c)
-    
+    try:
+        testRunControl(c)
+        testStackTrace(c)
+        testBreakpoints(c)
+        testSymbols(c)
+        testRegisters(c)
+        testSyncCommands(c)
+        testEvents(c)
+        testDataCache(c)
+    except exceptions.Exception as e:
+        protocol.log(e)
+
     if c.state == channel.STATE_OPEN:
         time.sleep(10)
         protocol.invokeLater(c.close)
@@ -72,7 +76,6 @@ def testRunControl(c):
                             print "params:    ", params
                         if suspended:
                             _suspended.append(context.getID())
-                            testStackTrace(c, context.getID())
                         if len(pending) == 0:
                             with lock:
                                 lock.notify()
@@ -184,24 +187,27 @@ def testBreakpoints(c):
         bpsvc.set([bp], DoneSet())
     protocol.invokeLater(r4)
 
-def testStackTrace(c, ctx_id):
+def testStackTrace(c):
     from tcf.services import stacktrace
-    stack = c.getRemoteService(stacktrace.NAME)
-    class DoneGetChildren(stacktrace.DoneGetChildren):
-        def doneGetChildren(self, token, error, ctx_ids):
-            if error:
-                protocol.log("Error from StackTrace.getChildren", error)
-                return
-            class DoneGetContext(stacktrace.DoneGetContext):
-                def doneGetContext(self, token, error, ctxs):
-                    if error:
-                        protocol.log("Error from StackTrace.getContext", error)
-                        return
-                    if ctxs:
-                        for ctx in ctxs:
-                            print ctx
-            stack.getContext(ctx_ids, DoneGetContext())
-    stack.getChildren(ctx_id, DoneGetChildren())
+    def stackTest(ctx_id):
+        stack = c.getRemoteService(stacktrace.NAME)
+        class DoneGetChildren(stacktrace.DoneGetChildren):
+            def doneGetChildren(self, token, error, ctx_ids):
+                if error:
+                    protocol.log("Error from StackTrace.getChildren", error)
+                    return
+                class DoneGetContext(stacktrace.DoneGetContext):
+                    def doneGetContext(self, token, error, ctxs):
+                        if error:
+                            protocol.log("Error from StackTrace.getContext", error)
+                            return
+                        if ctxs:
+                            for ctx in ctxs:
+                                print ctx
+                stack.getContext(ctx_ids, DoneGetContext())
+        stack.getChildren(ctx_id, DoneGetChildren())
+    for ctx_id in _suspended:
+        protocol.invokeLater(stackTest, ctx_id)
 
 def testSymbols(c):
     from tcf.services import symbols
@@ -227,36 +233,85 @@ def testSymbols(c):
 
 def testRegisters(c):
     from tcf.services import registers
+    lock = threading.Condition()
     def regTest(ctx_id):
         regs = c.getRemoteService(registers.NAME)
+        pending = []
+        def onDone():
+            with lock: lock.notify()
         class DoneGetChildren(registers.DoneGetChildren):
             def doneGetChildren(self, token, error, ctx_ids):
+                pending.remove(token)
                 if error:
                     protocol.log("Error from Registers.getChildren", error)
-                    return
+                if not pending:
+                    onDone()
                 class DoneGetContext(registers.DoneGetContext):
                     def doneGetContext(self, token, error, ctx):
+                        pending.remove(token)
                         if error:
                             protocol.log("Error from Registers.getContext", error)
-                            return
-                        print ctx
+                        else:
+                            print ctx
+                            if ctx.isReadable() and not ctx.isReadOnce() and ctx.getSize() >= 2:
+                                locs = []
+                                locs.append(registers.Location(ctx.getID(), 0, 1))
+                                locs.append(registers.Location(ctx.getID(), 1, 1))
+                                class DoneGetM(registers.DoneGet):
+                                    def doneGet(self, token, error, value):
+                                        pending.remove(token)
+                                        if error:
+                                            protocol.log("Error from Registers.getm", error)
+                                        else:
+                                            print "getm", ctx.getID(), map(ord, value)
+                                        if not pending:
+                                            onDone()
+                                pending.append(regs.getm(locs, DoneGetM()))
+                            if ctx.isWriteable() and not ctx.isWriteOnce() and ctx.getSize() >= 2:
+                                locs = []
+                                locs.append(registers.Location(ctx.getID(), 0, 1))
+                                locs.append(registers.Location(ctx.getID(), 1, 1))
+                                class DoneSetM(registers.DoneSet):
+                                    def doneGet(self, token, error):
+                                        pending.remove(token)
+                                        if error:
+                                            protocol.log("Error from Registers.setm", error)
+                                        if not pending:
+                                            onDone()
+                                pending.append(regs.setm(locs, (255, 255), DoneSetM()))
+                        if not pending:
+                            onDone()
                 if ctx_ids:
                     for ctx_id in ctx_ids:
-                        regs.getContext(ctx_id, DoneGetContext())
-        regs.getChildren(ctx_id, DoneGetChildren())
-    for ctx_id in _suspended:
-        protocol.invokeLater(regTest, ctx_id)
-    
+                        pending.append(regs.getContext(ctx_id, DoneGetContext()))
+        pending.append(regs.getChildren(ctx_id, DoneGetChildren()))
+    with lock:
+        for ctx_id in _suspended:
+            protocol.invokeLater(regTest, ctx_id)
+        lock.wait(5000)
+
 def testSyncCommands(c):
     # simplified command execution
     ctl = sync.CommandControl(c)
+    diag = ctl.Diagnostics
+    s = "Hello TCF World"
+    r = diag.echo(s).getE()
+    assert s == r
+    pi = 3.141592654
+    r = diag.echoFP(pi).getE()
+    assert pi == r
+    e = errors.ErrorReport("Test", errors.TCF_ERROR_OTHER)
+    r = diag.echoERR(e.getAttributes()).getE()
+    assert e.getAttributes() == r
+    print "Diagnostic tests:", diag.getTestList().getE()
+
     for ctx_id in _suspended:
-        print ctl.Symbols.list(ctx_id)
+        print "Symbols:", ctl.Symbols.list(ctx_id)
     for ctx_id in _suspended:
         frame_ids = ctl.StackTrace.getChildren(ctx_id).get()
         if frame_ids:
             error, args = ctl.StackTrace.getContext(frame_ids)
-            if not error: print args
+            if not error: print "Stack contexts:", args
     def gotBreakpoints(error, bps):
         print "Got breakpoint list:", bps
     ctl.Breakpoints.getIDs(onDone=gotBreakpoints)
