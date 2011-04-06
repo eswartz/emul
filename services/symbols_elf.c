@@ -1788,6 +1788,8 @@ int get_symbol_value(const Symbol * sym, void ** value, size_t * size, int * big
         else if (trap.error != ERR_SYM_NOT_FOUND) {
             return -1;
         }
+        set_errno(ERR_OTHER, "Object location or value info not available");
+        return -1;
     }
     errno = ERR_INV_CONTEXT;
     return -1;
