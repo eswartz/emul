@@ -335,6 +335,9 @@ typedef struct {
 
 #endif
 
+#ifndef EM_ARM
+#define EM_ARM 40
+#endif
 #ifndef EM_X86_64
 #define EM_X86_64 62
 #endif
