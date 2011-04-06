@@ -27,7 +27,11 @@ _suspended = []
 
 def test():
     protocol.startEventQueue()
-    c = tcf.connect("TCP:127.0.0.1:1534")
+    try:
+        c = tcf.connect("TCP:127.0.0.1:1534")
+    except exceptions.Exception as e:
+        protocol.log(e)
+        sys.exit()
     assert c.state == channel.STATE_OPEN
     if __TRACE: protocol.invokeLater(c.addTraceListener, TraceListener())
     def r2():
@@ -40,6 +44,7 @@ def test():
         testBreakpoints(c)
         testSymbols(c)
         testRegisters(c)
+        testExpressions(c)
         testSyncCommands(c)
         testEvents(c)
         testDataCache(c)
@@ -289,6 +294,17 @@ def testRegisters(c):
         for ctx_id in _suspended:
             protocol.invokeLater(regTest, ctx_id)
         lock.wait(5000)
+
+def testExpressions(c):
+    if not _suspended: return
+    from tcf.services import expressions
+    ctl = sync.CommandControl(c)
+    exprs = ctl.Expressions
+    e = exprs.create(_suspended[0], None, "1+2*(3-4/2)").getE()
+    id = e.get(expressions.PROP_ID)
+    val, cls = exprs.evaluate(id).getE()
+    print e.get(expressions.PROP_EXPRESSION), "=", val
+    exprs.dispose(id)
 
 def testSyncCommands(c):
     # simplified command execution

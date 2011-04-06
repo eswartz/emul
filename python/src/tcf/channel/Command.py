@@ -9,9 +9,9 @@
 # *     Wind River Systems - initial API and implementation
 # *******************************************************************************
 
-import json, exceptions, cStringIO
+import exceptions, cStringIO
 from tcf import protocol, errors, services
-from tcf.channel import Token, toJSONSequence, fromJSONSequence
+from tcf.channel import Token, toJSONSequence, fromJSONSequence, dumpJSONObject
 
 class Command(object):
     """
@@ -102,7 +102,7 @@ class Command(object):
                     buf.write(", ")
                 i += 1
                 try:
-                    json.dump(arg, buf)
+                    dumpJSONObject(arg, buf)
                 except exceptions.Exception as x:
                     buf.write("***")
                     buf.write(x.message)

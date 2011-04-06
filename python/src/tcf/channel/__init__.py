@@ -135,6 +135,9 @@ def fromJSONSequence(bytes):
             objects.append(None)
     return objects
 
+def dumpJSONObject(object, buf):
+        json.dump(object, buf, separators=(',', ':'), cls=TCFJSONEncoder)
+    
 def toByteArray(data):
     if data is None: return None
     t = type(data)

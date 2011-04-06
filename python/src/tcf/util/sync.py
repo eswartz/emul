@@ -82,10 +82,13 @@ class CommandControl(object):
             def done(self, error, args):
                 resultArgs = None
                 if not error and args:
-                    # error result is usually in args[0]
+                    # error result is usually in args[0], but there are exceptions
                     if service == "StackTrace" and command == "getContext":
                         error = self.toError(args[1])
                         resultArgs = (args[0],)
+                    elif service == "Expressions" and command == "evaluate":
+                        error = self.toError(args[1])
+                        resultArgs = (args[0],args[2])
                     elif service == "Diagnostics" and command.startswith("echo"):
                         resultArgs = (args[0],)
                     else:
