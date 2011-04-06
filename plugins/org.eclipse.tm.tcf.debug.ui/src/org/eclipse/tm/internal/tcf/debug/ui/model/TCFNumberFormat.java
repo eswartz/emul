@@ -102,7 +102,7 @@ public class TCFNumberFormat {
             // i == 0 -> least significant byte
             byte b = bf[bf.length - i - 1];
             int j = big_endian ? rs.length - i - 1 : i;
-            if (j < rs.length) rs[j] = b;
+            if (j >= 0 && j < rs.length) rs[j] = b;
         }
         return rs;
     }

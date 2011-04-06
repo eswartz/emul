@@ -273,7 +273,6 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         string = new TCFData<String>(channel) {
             IMemory.MemoryContext mem;
             ISymbols.Symbol base_type_data;
-            boolean big_endian;
             BigInteger addr;
             byte[] buf;
             int size;
@@ -338,7 +337,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                     }
                     StringBuffer bf = new StringBuffer();
                     bf.append('{');
-                    if (!appendCompositeValueText(bf, 1, base_type_data, buf, 0, size, big_endian, this)) return false;
+                    if (!appendCompositeValueText(bf, 1, base_type_data, buf, 0, size, mem.isBigEndian(), this)) return false;
                     bf.append('}');
                     set(null, null, bf.toString());
                     return true;
@@ -373,8 +372,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                                             set(null, null, toASCIIString(data, 0, data.length));
                                             return true;
                                         }
-                                        big_endian = v.isBigEndian();
-                                        BigInteger a = toBigInteger(data, 0, data.length, big_endian, false);
+                                        BigInteger a = toBigInteger(data, 0, data.length, v.isBigEndian(), false);
                                         if (!a.equals(BigInteger.valueOf(0))) {
                                             addr = a;
                                             Protocol.invokeLater(this);
