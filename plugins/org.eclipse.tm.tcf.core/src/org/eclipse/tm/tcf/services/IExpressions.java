@@ -140,6 +140,12 @@ public interface IExpressions extends IService {
         boolean isBigEndian();
 
         /**
+         * Return register ID if the value represents register variable.
+         * @return register ID or null.
+         */
+        String getRegisterID();
+
+        /**
          * Get value as array of bytes.
          * @return value as array of bytes.
          */
@@ -158,7 +164,8 @@ public interface IExpressions extends IService {
     static final String
         VAL_CLASS = "Class",
         VAL_TYPE = "Type",
-        VAL_BIG_ENDIAN = "BigEndian";
+        VAL_BIG_ENDIAN = "BigEndian",
+        VAL_REGISTER = "Register";
 
     /**
      * Retrieve expression context info for given context ID.

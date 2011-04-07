@@ -164,6 +164,12 @@ public interface ISymbols extends IService {
         boolean isBigEndian();
 
         /**
+         * Return register ID if the symbol represents a register variable.
+         * @return register ID or null.
+         */
+        String getRegisterID();
+
+        /**
          * Get complete map of context properties.
          * @return map of context properties.
          */
@@ -190,7 +196,8 @@ public interface ISymbols extends IService {
         PROP_OFFSET = "Offset",
         PROP_ADDRESS = "Address",
         PROP_VALUE = "Value",
-        PROP_BIG_ENDIAN = "BigEndian";
+        PROP_BIG_ENDIAN = "BigEndian",
+        PROP_REGISTER = "Register";
 
     /**
      * Symbol context properties update policies.

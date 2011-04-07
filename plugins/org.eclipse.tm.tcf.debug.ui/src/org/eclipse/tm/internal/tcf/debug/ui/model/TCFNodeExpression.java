@@ -11,6 +11,8 @@
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
 import java.math.BigInteger;
+import java.util.LinkedList;
+import java.util.Map;
 
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.IExpressionManager;
@@ -36,6 +38,7 @@ import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IExpressions;
 import org.eclipse.tm.tcf.services.IMemory;
+import org.eclipse.tm.tcf.services.IRegisters;
 import org.eclipse.tm.tcf.services.IMemory.MemoryError;
 import org.eclipse.tm.tcf.services.ISymbols;
 import org.eclipse.tm.tcf.util.TCFDataCache;
@@ -1047,6 +1050,51 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         return true;
     }
 
+    private String getRegisterName(String reg_id, Runnable done) {
+        String name = reg_id;
+        TCFDataCache<?> pending = null;
+        TCFNodeRegister reg_node = null;
+        LinkedList<TCFChildren> queue = new LinkedList<TCFChildren>();
+        TCFNode n = parent;
+        while (n != null) {
+            if (n instanceof TCFNodeStackFrame) {
+                queue.add(((TCFNodeStackFrame)n).getRegisters());
+            }
+            if (n instanceof TCFNodeExecContext) {
+                queue.add(((TCFNodeExecContext)n).getRegisters());
+                break;
+            }
+            n = n.parent;
+        }
+        while (!queue.isEmpty()) {
+            TCFChildren reg_list = queue.removeFirst();
+            if (!reg_list.validate()) {
+                pending = reg_list;
+            }
+            else {
+                Map<String,TCFNode> reg_map = reg_list.getData();
+                if (reg_map != null) {
+                    reg_node = (TCFNodeRegister)reg_map.get(reg_id);
+                    if (reg_node != null) break;
+                    for (TCFNode node : reg_map.values()) {
+                        queue.add(((TCFNodeRegister)node).getChildren());
+                    }
+                }
+            }
+        }
+        if (pending != null) {
+            pending.wait(done);
+            return null;
+        }
+        if (reg_node != null) {
+            TCFDataCache<IRegisters.RegistersContext> reg_ctx_cache = reg_node.getContext();
+            if (!reg_ctx_cache.validate(done)) return null;
+            IRegisters.RegistersContext reg_ctx_data = reg_ctx_cache.getData();
+            if (reg_ctx_data != null && reg_ctx_data.getName() != null) name = reg_ctx_data.getName();
+        }
+        return name;
+    }
+
     String getDetailText(Runnable done) {
         if (!expression.validate(done)) return null;
         if (!value.validate(done)) return null;
@@ -1061,6 +1109,14 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                     boolean big_endian = v.isBigEndian();
                     if (!appendValueText(bf, 0, v.getTypeID(),
                             data, 0, data.length, big_endian, done)) return null;
+                }
+                String reg_id = v.getRegisterID();
+                if (reg_id != null) {
+                    String nm = getRegisterName(reg_id, done);
+                    if (nm == null) return null;
+                    bf.append("Register: ");
+                    bf.append(nm);
+                    bf.append('\n');
                 }
             }
         }

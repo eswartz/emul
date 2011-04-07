@@ -137,6 +137,10 @@ public class SymbolsProxy implements ISymbols {
             if (b == null) return false;
             return b.booleanValue();
         }
+
+        public String getRegisterID() {
+            return (String)props.get(PROP_REGISTER);
+        }
     }
 
     public SymbolsProxy(IChannel channel) {
