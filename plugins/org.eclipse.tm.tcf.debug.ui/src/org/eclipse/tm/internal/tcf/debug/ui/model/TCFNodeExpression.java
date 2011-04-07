@@ -1118,6 +1118,14 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                     bf.append(nm);
                     bf.append('\n');
                 }
+                Number addr = v.getAddress();
+                if (addr != null) {
+                    BigInteger i = addr instanceof BigInteger ?
+                            (BigInteger)addr : new BigInteger(addr.toString());
+                    bf.append("Address: 0x");
+                    bf.append(i.toString(16));
+                    bf.append('\n');
+                }
             }
         }
         return bf.toString();

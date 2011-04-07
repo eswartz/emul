@@ -146,6 +146,12 @@ public interface IExpressions extends IService {
         String getRegisterID();
 
         /**
+         * Return value memory address, if applicable.
+         * @return address or null.
+         */
+        Number getAddress();
+
+        /**
          * Get value as array of bytes.
          * @return value as array of bytes.
          */
@@ -165,7 +171,8 @@ public interface IExpressions extends IService {
         VAL_CLASS = "Class",
         VAL_TYPE = "Type",
         VAL_BIG_ENDIAN = "BigEndian",
-        VAL_REGISTER = "Register";
+        VAL_REGISTER = "Register",
+        VAL_ADDRESS = "Address";
 
     /**
      * Retrieve expression context info for given context ID.
