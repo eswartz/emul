@@ -2542,6 +2542,14 @@ static void command_evaluate_cache_client(void * x) {
             cnt++;
         }
 
+        if (value.remote) {
+            if (cnt > 0) write_stream(&c->out, ',');
+            json_write_string(&c->out, "Address");
+            write_stream(&c->out, ':');
+            json_write_uint64(&c->out, value.address);
+            cnt++;
+        }
+
         if (value.big_endian) {
             if (cnt > 0) write_stream(&c->out, ',');
             json_write_string(&c->out, "BigEndian");
