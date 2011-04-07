@@ -303,7 +303,7 @@ static void command_get_children(char * token, Channel * c) {
     cache_enter(command_get_children_cache_client, c, &args, sizeof(args));
 }
 
-static void send_event_register_changed(char * id) {
+void send_event_register_changed(const char * id) {
     OutputStream * out = &broadcast_group->out;
     write_stringz(out, "E");
     write_stringz(out, REGISTERS);

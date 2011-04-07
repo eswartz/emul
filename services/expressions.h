@@ -16,18 +16,22 @@
  * Expression evaluation service.
  */
 
-#ifndef D_expression
-#define D_expression
+#ifndef D_expressions
+#define D_expressions
 
+#include <config.h>
 #include <framework/protocol.h>
 #include <framework/context.h>
 #include <services/symbols.h>
+
+#if SERVICE_Expressions
 
 /* Value represents result of expression evaluation */
 struct Value {
     Symbol * type;              /* Value type symbol, can be empty */
     int type_class;             /* See symbols.h for type class definitions */
     void * value;               /* Pointer to value data buffer, or NULL if remote value */
+    RegisterDefinition * reg;   /* Not NULL if the value represents a register variable */
     ContextAddress address;     /* Address of value data in remote target memory */
     ContextAddress size;        /* Value size in bytes */
     int remote;                 /* 1 if value data is in remote target memory, 0 if loaded into a local buffer */
@@ -43,8 +47,6 @@ typedef struct Value Value;
  * otherwise it should return 0.
  */
 typedef int ExpressionIdentifierCallBack(Context *, int /*frame*/, char * /*name*/, Value *);
-
-#if SERVICE_Expressions
 
 /*
  * Evaluate given expression in given context.
@@ -86,4 +88,4 @@ extern void ini_expressions_service(Protocol * proto);
 
 #endif /* SERVICE_Expressions */
 
-#endif /* D_expression */
+#endif /* D_expressions */

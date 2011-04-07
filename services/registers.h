@@ -21,6 +21,12 @@
 
 #include <framework/protocol.h>
 
+
+/*
+ * Notify clients about register value change.
+ */
+extern void send_event_register_changed(const char * id);
+
 /*
  * Initialize registers service.
  */

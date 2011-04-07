@@ -159,6 +159,9 @@ extern int get_symbol_value(const Symbol * sym, void ** value, size_t * size, in
 /* Get address (variables) */
 extern int get_symbol_address(const Symbol * sym, ContextAddress * address);
 
+/* Get register if the symbol is a register variable */
+extern int get_symbol_register(const Symbol * sym, Context ** ctx, int * frame, RegisterDefinition ** reg);
+
 /* Get a type that represents an array of elements of given base type.
  * If 'length' is zero, returned type represents pointer to given type */
 extern int get_array_symbol(const Symbol * sym, ContextAddress length, Symbol ** ptr);

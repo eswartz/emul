@@ -56,6 +56,9 @@ static void command_get_context_cache_client(void * x) {
     int64_t lower_bound = 0;
     ContextAddress offset = 0;
     ContextAddress address = 0;
+    RegisterDefinition * reg = NULL;
+    Context * reg_ctx = NULL;
+    int reg_frame = 0;
     void * value = NULL;
     size_t value_size = 0;
 
@@ -79,6 +82,7 @@ static void command_get_context_cache_client(void * x) {
         }
         if (!has_offset && (sym_class == SYM_CLASS_REFERENCE || sym_class == SYM_CLASS_FUNCTION)) {
             has_address = get_symbol_address(sym, &address) == 0;
+            get_symbol_register(sym, &reg_ctx, &reg_frame, &reg);
         }
         if (sym_class == SYM_CLASS_VALUE) {
             get_symbol_value(sym, &value, &value_size, &big_endian);
@@ -184,6 +188,13 @@ static void command_get_context_cache_client(void * x) {
             json_write_string(&c->out, "Address");
             write_stream(&c->out, ':');
             json_write_uint64(&c->out, address);
+            write_stream(&c->out, ',');
+        }
+
+        if (reg != NULL) {
+            json_write_string(&c->out, "Register");
+            write_stream(&c->out, ':');
+            json_write_string(&c->out, register2id(reg_ctx, reg_frame, reg));
             write_stream(&c->out, ',');
         }
 

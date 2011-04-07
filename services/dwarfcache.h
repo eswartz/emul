@@ -124,8 +124,7 @@ struct PropertyValue {
     U1_T * mAddr;
     size_t mSize;
     int mBigEndian;
-    void * mAccessData;
-    int (*mAccessFunc)(PropertyValue *, int, U1_T *);
+    RegisterDefinition * mRegister;
 };
 
 #define LINE_IsStmt         0x01

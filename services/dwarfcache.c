@@ -29,6 +29,7 @@
 #include <services/dwarfio.h>
 #include <services/dwarfcache.h>
 #include <services/dwarfexpr.h>
+#include <services/stacktrace.h>
 
 #define OBJ_HASH(Cache,ID)            (((U4_T)(ID) + ((U4_T)(ID) >> 8)) % Cache->mObjectHashSize)
 
@@ -656,7 +657,7 @@ static void get_object_property_callback(U2_T Tag, U2_T Attr, U2_T Form) {
 U8_T get_numeric_property_value(PropertyValue * Value) {
     U8_T Res = 0;
 
-    if (Value->mAccessFunc != NULL) {
+    if (Value->mRegister != NULL) {
         str_exception(ERR_INV_CONTEXT, "register variable");
     }
     else if (Value->mAddr != NULL) {
@@ -719,9 +720,11 @@ static void read_dwarf_object_property(Context * Ctx, int Frame, ObjectInfo * Ob
 
             if (RefObj == NULL) exception(ERR_INV_DWARF);
             read_and_evaluate_dwarf_object_property(Ctx, Frame, 0, RefObj, AT_location, &ValueAddr);
-            if (ValueAddr.mAccessFunc != NULL) {
+            if (ValueAddr.mRegister != NULL) {
                 static U1_T Buf[8];
-                if (ValueAddr.mAccessFunc(&ValueAddr, 0, Buf) < 0) exception(errno);
+                StackFrame * Frame = NULL;
+                if (get_frame_info(ValueAddr.mContext, ValueAddr.mFrame, &Frame) < 0) exception(errno);
+                if (read_reg_bytes(Frame, ValueAddr.mRegister, 0, ValueAddr.mRegister->size, Buf) < 0) exception(errno);
                 Value->mAddr = Buf;
                 Value->mSize = ValueAddr.mSize;
                 Value->mBigEndian = ValueAddr.mBigEndian;

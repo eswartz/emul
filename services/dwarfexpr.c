@@ -58,14 +58,6 @@ static ObjectInfo * get_parent_function(ObjectInfo * Info) {
     return NULL;
 }
 
-static int register_access_func(PropertyValue * Value, int write, U1_T * Data) {
-    StackFrame * frame;
-    RegisterDefinition * def = (RegisterDefinition *)Value->mAccessData;
-    if (get_frame_info(Value->mContext, Value->mFrame, &frame) < 0) return -1;
-    if (write) return write_reg_bytes(frame, def, 0, def->size, Data);
-    return read_reg_bytes(frame, def, 0, def->size, Data);
-}
-
 static U8_T read_memory(PropertyValue * Value, U8_T Addr, size_t Size) {
     size_t i;
     U8_T n = 0;
@@ -400,8 +392,7 @@ static void evaluate_expression(U8_T BaseAddress, PropertyValue * Value, ELF_Sec
                 if (def == NULL) exception(errno);
                 Value->mSize = def->size;
                 Value->mBigEndian = def->big_endian;
-                Value->mAccessData = def;
-                Value->mAccessFunc = register_access_func;
+                Value->mRegister = def;
             }
             break;
         case OP_regx:
@@ -413,8 +404,7 @@ static void evaluate_expression(U8_T BaseAddress, PropertyValue * Value, ELF_Sec
                 if (def == NULL) exception(errno);
                 Value->mSize = def->size;
                 Value->mBigEndian = def->big_endian;
-                Value->mAccessData = def;
-                Value->mAccessFunc = register_access_func;
+                Value->mRegister = def;
             }
             break;
         case OP_breg0:
@@ -569,7 +559,7 @@ void dwarf_evaluate_expression(U8_T BaseAddress, PropertyValue * Value) {
     if (Value->mAttr == AT_data_member_location) {
         sExprStack[sExprStackLen++] = BaseAddress;
     }
-    if (Value->mAccessFunc != NULL || Value->mAddr == NULL || Value->mSize == 0) {
+    if (Value->mRegister != NULL || Value->mAddr == NULL || Value->mSize == 0) {
         str_exception(ERR_INV_DWARF, "invalid DWARF expression reference");
     }
     if (Value->mForm == FORM_DATA4 || Value->mForm == FORM_DATA8) {
@@ -579,11 +569,11 @@ void dwarf_evaluate_expression(U8_T BaseAddress, PropertyValue * Value) {
     else {
         evaluate_expression(BaseAddress, Value, Value->mObject->mCompUnit->mDesc.mSection, Value->mAddr, Value->mSize);
     }
-    if (Value->mAttr != AT_frame_base && sExprStackLen != (Value->mAccessFunc == NULL ? 1u : 0u)) {
+    if (Value->mAttr != AT_frame_base && sExprStackLen != (Value->mRegister == NULL ? 1u : 0u)) {
         str_exception(ERR_INV_DWARF, "invalid DWARF expression stack");
     }
 
-    if (Value->mAccessFunc == NULL) {
+    if (Value->mRegister == NULL) {
         assert(sExprStackLen > 0);
         Value->mValue = sExprStack[--sExprStackLen];
         Value->mSize = 0;

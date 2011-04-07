@@ -191,6 +191,10 @@ static int is_frame_relative(SYMBOL_INFO * info) {
     return (info->Flags & SYMFLAG_FRAMEREL) || (info->Flags & SYMFLAG_REGREL);
 }
 
+static int is_register(SYMBOL_INFO * info) {
+    return info->Flags & SYMFLAG_REGISTER;
+}
+
 static void syminfo2symbol(Context * ctx, int frame, SYMBOL_INFO * info, Symbol * sym) {
     sym->module = info->ModBase;
     sym->index = info->Index;
@@ -749,6 +753,25 @@ int get_symbol_address(const Symbol * sym, ContextAddress * addr) {
     }
 
     return 0;
+}
+
+int get_symbol_register(const Symbol * sym, Context ** ctx, int * frame, RegisterDefinition ** reg) {
+    SYMBOL_INFO * info = NULL;
+
+    assert(sym->magic == SYMBOL_MAGIC);
+    if (sym->address != 0 || sym->base || sym->info) {
+        errno = ERR_INV_CONTEXT;
+        return -1;
+    }
+    if (get_sym_info(sym, sym->index, &info) < 0) return -1;
+    if (!is_register(info)) {
+        errno = ERR_INV_CONTEXT;
+        return -1;
+    }
+
+    /* TODO: map info.Register to regditer definition */
+    errno = ERR_UNSUPPORTED;
+    return -1;
 }
 
 int get_array_symbol(const Symbol * sym, ContextAddress length, Symbol ** ptr) {

@@ -59,7 +59,7 @@ typedef struct SymInfoCache {
     char * type_id;
     char * base_type_id;
     char * index_type_id;
-    char * pointer_type_id;
+    char * register_id;
     char * name;
     Context * update_owner;
     int update_policy;
@@ -248,7 +248,7 @@ static void free_sym_info_cache(SymInfoCache * c) {
         loc_free(c->type_id);
         loc_free(c->base_type_id);
         loc_free(c->index_type_id);
-        loc_free(c->pointer_type_id);
+        loc_free(c->register_id);
         loc_free(c->name);
         loc_free(c->value);
         loc_free(c->children_ids);
@@ -351,6 +351,7 @@ static void read_context_data(InputStream * inp, const char * name, void * args)
     else if (strcmp(name, "UpperBound") == 0) { s->upper_bound = json_read_int64(inp); s->has_upper_bound = 1; }
     else if (strcmp(name, "Offset") == 0) { s->offset = json_read_long(inp); s->has_offset = 1; }
     else if (strcmp(name, "Address") == 0) { s->address = (ContextAddress)json_read_uint64(inp); s->has_address = 1; }
+    else if (strcmp(name, "Register") == 0) s->register_id = json_read_alloc_string(inp);
     else if (strcmp(name, "Value") == 0) s->value = json_read_alloc_binary(inp, &s->value_size);
     else if (strcmp(name, "BigEndian") == 0) s->big_endian = json_read_boolean(inp);
     else json_skip_object(inp);
@@ -892,6 +893,16 @@ int get_symbol_address(const Symbol * sym, ContextAddress * address) {
     }
     *address = c->address;
     return 0;
+}
+
+int get_symbol_register(const Symbol * sym, Context ** ctx, int * frame, RegisterDefinition ** reg) {
+    SymInfoCache * c = get_sym_info_cache(sym);
+    if (c == NULL) return -1;
+    if (c->register_id == NULL) {
+        errno = ERR_INV_CONTEXT;
+        return -1;
+    }
+    return id2register(c->register_id, ctx, frame, reg);
 }
 
 static void validate_children(Channel * c, void * args, int error) {

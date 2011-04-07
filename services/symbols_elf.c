@@ -1742,8 +1742,8 @@ int get_symbol_value(const Symbol * sym, void ** value, size_t * size, int * big
     }
     if (unpack(sym) < 0) return -1;
     if (obj != NULL) {
-        PropertyValue v;
         Trap trap;
+        PropertyValue v;
         if (set_trap(&trap)) {
             read_and_evaluate_dwarf_object_property(sym_ctx, sym_frame, 0, obj, AT_const_value, &v);
             if (v.mAddr != NULL) {
@@ -1754,7 +1754,7 @@ int get_symbol_value(const Symbol * sym, void ** value, size_t * size, int * big
                 static U1_T bf[sizeof(v.mValue)];
                 U8_T n = v.mValue;
                 size_t i = 0;
-                if (v.mAccessFunc != NULL) exception(ERR_INV_CONTEXT);
+                if (v.mRegister != NULL) exception(ERR_INV_CONTEXT);
                 for (i = 0; i < sizeof(bf); i++) {
                     bf[v.mBigEndian ? sizeof(bf) - i - 1 : i] = n & 0xffu;
                     n = n >> 8;
@@ -1771,13 +1771,16 @@ int get_symbol_value(const Symbol * sym, void ** value, size_t * size, int * big
         }
         if (set_trap(&trap)) {
             read_and_evaluate_dwarf_object_property(sym_ctx, sym_frame, 0, obj, AT_location, &v);
-            if (v.mAccessFunc == NULL) {
+            if (v.mRegister == NULL) {
                 exception(ERR_INV_CONTEXT);
             }
             else {
                 static U1_T bf[32];
+                StackFrame * frame = NULL;
+                RegisterDefinition * def = v.mRegister;
                 if (v.mSize > sizeof(bf)) exception(ERR_BUFFER_OVERFLOW);
-                if (v.mAccessFunc(&v, 0, bf) < 0) exception(errno);
+                if (get_frame_info(v.mContext, v.mFrame, &frame) < 0) exception(errno);
+                if (read_reg_bytes(frame, def, 0, def->size, bf) < 0) exception(errno);
                 *size = v.mSize;
                 *value = bf;
                 *big_endian = v.mBigEndian;
@@ -1823,6 +1826,30 @@ int get_symbol_address(const Symbol * sym, ContextAddress * address) {
     }
     if (sym_info != NULL) {
         if (syminfo2address(sym_ctx, sym_info, address) == 0) return 0;
+    }
+
+    errno = ERR_INV_CONTEXT;
+    return -1;
+}
+
+int get_symbol_register(const Symbol * sym, Context ** ctx, int * frame, RegisterDefinition ** reg) {
+    assert(sym->magic == SYMBOL_MAGIC);
+    if (sym->base || is_cardinal_type_pseudo_symbol(sym) || sym->address != 0) {
+        errno = ERR_INV_CONTEXT;
+        return -1;
+    }
+    if (unpack(sym) < 0) return -1;
+    if (obj != NULL && obj->mTag != TAG_member && obj->mTag != TAG_inheritance) {
+        Trap trap;
+        PropertyValue v;
+        if (set_trap(&trap)) {
+            read_and_evaluate_dwarf_object_property(sym_ctx, sym_frame, 0, obj, AT_location, &v);
+            *ctx = sym_ctx;
+            *frame = sym_frame;
+            *reg = v.mRegister;
+            clear_trap(&trap);
+            return 0;
+        }
     }
 
     errno = ERR_INV_CONTEXT;

@@ -39,6 +39,7 @@
 #include <services/symbols.h>
 #include <services/stacktrace.h>
 #include <services/expressions.h>
+#include <services/registers.h>
 #include <main/test.h>
 
 #define STR_POOL_SIZE (64 * MEM_USAGE_FACTOR)
@@ -117,6 +118,7 @@ static void * alloc_str(size_t size) {
 }
 
 void set_value(Value * v, void * data, size_t size) {
+    v->reg = NULL;
     v->remote = 0;
     v->address = 0;
     v->size = size;
@@ -126,7 +128,9 @@ void set_value(Value * v, void * data, size_t size) {
 }
 
 static void set_int_value(Value * v, uint64_t n) {
+    v->reg = 0;
     v->remote = 0;
+    v->address = 0;
     v->big_endian = big_endian;
     v->value = alloc_str((size_t)v->size);
     switch (v->size) {
@@ -139,7 +143,6 @@ static void set_int_value(Value * v, uint64_t n) {
 }
 
 static void set_ctx_word_value(Value * v, ContextAddress data) {
-    v->address = 0;
     v->size = context_word_size(expression_context);
     set_int_value(v, data);
 }
@@ -617,8 +620,15 @@ static int sym2value(Symbol * sym, Value * v) {
             int endianness = 0;
             size_t size = 0;
             void * value = NULL;
+            int frame = 0;
+            Context * ctx = NULL;
+            RegisterDefinition * reg = NULL;
             if (get_symbol_value(sym, &value, &size, &endianness) < 0) {
                 error(errno, "Cannot retrieve symbol value");
+            }
+            if (get_symbol_register(sym, &ctx, &frame, &reg) == 0 &&
+                    ctx == expression_context && frame == expression_frame) {
+                v->reg = reg;
             }
             v->big_endian = endianness;
             v->size = size;
@@ -801,6 +811,7 @@ static int type_name(int mode, Symbol ** type) {
 static void load_value(Value * v) {
     void * value;
 
+    v->reg = NULL;
     if (!v->remote) return;
     assert(!v->constant);
     value = alloc_str((size_t)v->size);
@@ -845,11 +856,13 @@ static void to_host_endianness(Value * v) {
         }
         v->value = buf;
         v->big_endian = big_endian;
+        v->reg = NULL;
     }
 }
 
 static int64_t to_int(int mode, Value * v) {
     if (mode != MODE_NORMAL) {
+        v->reg = NULL;
         if (v->remote) {
             v->value = alloc_str((size_t)v->size);
             v->remote = 0;
@@ -901,6 +914,7 @@ static int64_t to_int(int mode, Value * v) {
 
 static uint64_t to_uns(int mode, Value * v) {
     if (mode != MODE_NORMAL) {
+        v->reg = NULL;
         if (v->remote) {
             v->value = alloc_str((size_t)v->size);
             v->remote = 0;
@@ -955,6 +969,7 @@ static uint64_t to_uns(int mode, Value * v) {
 
 static double to_double(int mode, Value * v) {
     if (mode != MODE_NORMAL) {
+        v->reg = NULL;
         if (v->remote) {
             v->value = alloc_str((size_t)v->size);
             v->remote = 0;
@@ -1066,6 +1081,7 @@ static void op_deref(int mode, Value * v) {
         error(ERR_INV_EXPRESSION, "Array or pointer type expected");
     }
     if (v->type_class == TYPE_CLASS_POINTER) {
+        v->reg = NULL;
         v->address = (ContextAddress)to_uns(mode, v);
         v->big_endian = expression_context->big_endian;
         v->remote = 1;
@@ -1183,6 +1199,7 @@ static void op_field(int mode, Value * v) {
             }
             else {
                 v->value = (uint8_t *)v->value + offs;
+                v->reg = NULL;
             }
             v->size = size;
             if (get_symbol_type(sym, &v->type) < 0) {
@@ -1216,6 +1233,7 @@ static void op_index(int mode, Value * v) {
         error(ERR_INV_EXPRESSION, "Value type is unknown");
     }
     if (v->type_class == TYPE_CLASS_POINTER) {
+        v->reg = NULL;
         v->address = (ContextAddress)to_uns(mode, v);
         v->big_endian = expression_context->big_endian;
         v->remote = 1;
@@ -1240,6 +1258,7 @@ static void op_index(int mode, Value * v) {
     }
     else {
         v->value = (char *)v->value + offs;
+        v->reg = NULL;
     }
     v->size = size;
     v->type = type;
@@ -1524,6 +1543,7 @@ static void cast_expression(int mode, Value * v) {
             break;
         case TYPE_CLASS_ARRAY:
             if (v->type_class == TYPE_CLASS_POINTER) {
+                v->reg = NULL;
                 v->address = (ContextAddress)to_uns(mode, v);
                 v->type = type;
                 v->type_class = type_class;
@@ -2514,6 +2534,14 @@ static void command_evaluate_cache_client(void * x) {
             cnt++;
         }
 #endif
+        if (value.reg != NULL) {
+            if (cnt > 0) write_stream(&c->out, ',');
+            json_write_string(&c->out, "Register");
+            write_stream(&c->out, ':');
+            json_write_string(&c->out, register2id(ctx, frame, value.reg));
+            cnt++;
+        }
+
         if (value.big_endian) {
             if (cnt > 0) write_stream(&c->out, ',');
             json_write_string(&c->out, "BigEndian");
@@ -2552,8 +2580,20 @@ static void command_assign_cache_client(void * x) {
     if (expression_context_id(args->id, &ctx, &frame, &expr) < 0) err = errno;
     if (!err && frame != STACK_NO_FRAME && !ctx->stopped) err = ERR_IS_RUNNING;
     if (!err && evaluate_expression(ctx, frame, 0, expr->script, 0, &value) < 0) err = errno;
-    if (!err && !value.remote) err = ERR_INV_EXPRESSION;
-    if (!err && context_write_mem(ctx, value.address, args->value_buf, args->value_size) < 0) err = errno;
+    if (!err) {
+        if (value.reg != NULL) {
+            StackFrame * info = NULL;
+            if (get_frame_info(ctx, frame, &info) < 0) err = errno;
+            if (!err && write_reg_bytes(info, value.reg, 0, args->value_size, (uint8_t *)args->value_buf) < 0) err = errno;
+            if (!err) send_event_register_changed(register2id(ctx, frame, value.reg));
+        }
+        else if (value.remote) {
+            if (context_write_mem(ctx, value.address, args->value_buf, args->value_size) < 0) err = errno;
+        }
+        else {
+            err = ERR_INV_EXPRESSION;
+        }
+    }
 
     cache_exit();
 
