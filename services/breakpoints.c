@@ -2117,8 +2117,26 @@ void destroy_eventpoint(BreakpointInfo * bp) {
     replant_breakpoint(bp);
 }
 
-static void event_context_changed(Context * ctx, void * args) {
+static void event_context_created_or_exited(Context * ctx, void * args) {
     post_location_evaluation_request(ctx);
+}
+
+static void event_context_changed(Context * ctx, void * args) {
+    if (ctx->mem_access && context_get_group(ctx, CONTEXT_GROUP_PROCESS) == ctx) {
+        /* If the context is a memory space, we need to update
+         * breakpoints on all members of the group */
+        LINK * l = context_root.next;
+        while (l != &context_root) {
+            Context * x = ctxl2ctxp(l);
+            l = l->next;
+            if (x->exited) continue;
+            if (context_get_group(x, CONTEXT_GROUP_PROCESS) != ctx) continue;
+            post_location_evaluation_request(x);
+        }
+    }
+    else {
+        post_location_evaluation_request(ctx);
+    }
 }
 
 static void event_context_started(Context * ctx, void * args) {
@@ -2186,8 +2204,8 @@ void ini_breakpoints_service(Protocol * proto, TCFBroadcastGroup * bcg) {
 
     {
         static ContextEventListener listener = {
-            event_context_changed,
-            event_context_changed,
+            event_context_created_or_exited,
+            event_context_created_or_exited,
             NULL,
             event_context_started,
             event_context_changed,
