@@ -21,12 +21,31 @@ import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExpression;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeLaunch;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeModule;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeStackFrame;
+import org.eclipse.tm.tcf.util.TCFDataCache;
+import org.eclipse.tm.tcf.util.TCFTask;
 
 public class MemoryMapCommand extends AbstractActionDelegate {
 
-    private static boolean isValidNode(TCFNode n) {
+    private static boolean isValidNode(final TCFNode n) {
         if (n instanceof TCFNodeLaunch) return true;
-        if (n instanceof TCFNodeExecContext) return true;
+        if (n instanceof TCFNodeExecContext) {
+            return new TCFTask<Boolean>(n.getChannel()) {
+                public void run() {
+                    TCFDataCache<TCFNodeExecContext> mem_cache = n.getModel().searchMemoryContext(n);
+                    if (mem_cache == null) {
+                        done(false);
+                        return;
+                    }
+                    if (!mem_cache.validate(this)) return;
+                    if (mem_cache.getError() != null) {
+                        done(false);
+                        return;
+                    }
+                    TCFNodeExecContext node = mem_cache.getData();
+                    done(node != null && node.getMemoryContext().getData() != null);
+                }
+            }.getE();
+        }
         if (n instanceof TCFNodeStackFrame) return true;
         if (n instanceof TCFNodeExpression) return true;
         if (n instanceof TCFNodeArrayPartition) return true;
@@ -48,7 +67,7 @@ public class MemoryMapCommand extends AbstractActionDelegate {
             }
             catch (Throwable x) {
                 MessageBox mb = new MessageBox(shell, SWT.ICON_ERROR | SWT.OK);
-                mb.setText("Cannot open Memory Map dialog");
+                mb.setText("Cannot open Symbol Files dialog");
                 mb.setMessage(TCFModel.getErrorMessage(x, true));
                 mb.open();
             }

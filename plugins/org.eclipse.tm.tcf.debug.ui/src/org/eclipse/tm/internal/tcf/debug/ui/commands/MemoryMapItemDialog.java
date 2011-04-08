@@ -58,7 +58,7 @@ class MemoryMapItemDialog extends Dialog {
     @Override
     protected void configureShell(Shell shell) {
         super.configureShell(shell);
-        shell.setText("Memory Map Item");
+        shell.setText("Symbol File");
         shell.setImage(image);
     }
 

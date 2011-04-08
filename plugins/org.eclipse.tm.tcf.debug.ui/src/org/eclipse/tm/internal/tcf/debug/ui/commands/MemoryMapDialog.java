@@ -188,7 +188,7 @@ class MemoryMapDialog extends Dialog {
     @Override
     protected void configureShell(Shell shell) {
         super.configureShell(shell);
-        shell.setText("Memory Map");
+        shell.setText("Symbol Files");
         shell.setImage(ImageCache.getImage(ImageCache.IMG_MEMORY_MAP));
     }
 
@@ -375,8 +375,10 @@ class MemoryMapDialog extends Dialog {
                 IMemoryMap.MemoryRegion r = (IMemoryMap.MemoryRegion)((IStructuredSelection)
                         table_viewer.getSelection()).getFirstElement();
                 boolean manual = r != null && r.getProperties().get(TCFLaunch.PROP_MMAP_ID) != null;
+                button_add.setEnabled(mem_map_id != null);
                 button_edit.setEnabled(r != null);
                 button_remove.setEnabled(manual);
+                item_add.setEnabled(mem_map_id != null);
                 item_edit.setEnabled(r != null);
                 item_remove.setEnabled(manual);
             }
@@ -475,11 +477,13 @@ class MemoryMapDialog extends Dialog {
                         }
                     }
                 }
-                mem_ctx = node.getMemoryContext().getData();
                 String id = null;
-                if (mem_ctx != null) {
-                    id = mem_ctx.getName();
-                    if (id == null) id = mem_ctx.getID();
+                if (node != null) {
+                    mem_ctx = node.getMemoryContext().getData();
+                    if (mem_ctx != null) {
+                        id = mem_ctx.getName();
+                        if (id == null) id = mem_ctx.getID();
+                    }
                 }
                 done(id);
             }
