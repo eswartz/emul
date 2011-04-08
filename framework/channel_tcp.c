@@ -981,6 +981,7 @@ static void set_socket_buffer_sizes(int sock) {
 
 static ChannelServer * channel_server_create(PeerServer * ps, int sock) {
     ServerTCP * si = (ServerTCP *)loc_alloc_zero(sizeof *si);
+    /* TODO: need to investigate usage of sizeof(sockaddr_storage) for address buffer size */
     si->addr_len = 0x1000;
     si->addr_buf = (struct sockaddr *)loc_alloc(si->addr_len);
     si->serv.close = server_close;
