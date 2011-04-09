@@ -88,6 +88,11 @@ public abstract class ImageDataCanvas extends VdpCanvas {
 		int g_error = prgb[1] - (rgb[1] & 0xff);
 		int b_error = prgb[2] - (rgb[2] & 0xff);
 		
+		if (limit8) {
+			r_error /= 4;
+			g_error /= 4;
+			b_error /= 4;
+		}
 		if (x + 1 < img.getWidth()) {
 			// x+1, y
 			ditherRGB(img, x + 1, y, prgb, 7, r_error, g_error, b_error);
@@ -115,7 +120,7 @@ public abstract class ImageDataCanvas extends VdpCanvas {
 			int db = ((thePalette[c][2] & 0xff) - prgb[2]);
 			dist = (dr * dr) + (dg * dg) + (db * db);
 
-			if (limit8 && phsv[1] < 0.5) {
+			if (limit8 && phsv[1] < 0.25) {
 				// bias closer saturation more, to avoid too many unrelated colors
 				float[] chsv = rgbToHsv(thePalette[c]);
 				int sd = (int) ((1.0 - (phsv[1] - chsv[1])) * 100); 
