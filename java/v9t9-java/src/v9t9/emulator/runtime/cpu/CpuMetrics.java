@@ -124,17 +124,20 @@ public class CpuMetrics {
 		}
 	}
 
-	public synchronized MetricEntry[] getLastEntries(int x) {
-		int idx = Math.max(0, entries.size() - x);
-		List<MetricEntry> subList = entries.subList(idx, entries.size());
-		return (MetricEntry[]) subList.toArray(new MetricEntry[subList.size()]);
+	public MetricEntry[] getLastEntries(int x) {
+		synchronized (entries) {
+			int idx = Math.max(0, entries.size() - x);
+			List<MetricEntry> subList = entries.subList(idx, entries.size());
+			return (MetricEntry[]) subList.toArray(new MetricEntry[subList.size()]);
+		}
 	}
 
 	public MetricEntry getEntry(int i, int of) {
-		int idx = Math.max(0, entries.size() - of);
-		if (idx + i >= 0  && idx + i < entries.size())
-			return entries.get(idx + i);
-		
+		synchronized (entries) {
+			int idx = Math.max(0, entries.size() - of);
+			if (idx + i >= 0  && idx + i < entries.size())
+				return entries.get(idx + i);
+		}
 		return null;
 	}
 
