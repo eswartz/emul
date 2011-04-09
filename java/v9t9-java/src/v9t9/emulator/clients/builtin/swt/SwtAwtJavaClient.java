@@ -32,7 +32,7 @@ public class SwtAwtJavaClient extends BaseSwtJavaClient implements Client {
 	 * 
 	 */
 	protected void setupRenderer() {
-		videoRenderer = new SwtAwtVideoRenderer();
+		videoRenderer = new SwtAwtVideoRenderer(machine);
 	
 		keyboardHandler = new AwtKeyboardHandler(
     		((SwtAwtVideoRenderer)videoRenderer).getAwtCanvas(),

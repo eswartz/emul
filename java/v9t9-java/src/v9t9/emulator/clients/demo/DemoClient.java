@@ -11,6 +11,7 @@ import java.io.IOException;
 import org.ejs.coffee.core.settings.ISettingSection;
 
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
+import v9t9.emulator.clients.builtin.video.VdpModeRedrawHandler;
 import v9t9.emulator.common.BaseEventNotifier;
 import v9t9.emulator.common.IEventNotifier;
 import v9t9.emulator.common.Machine;
@@ -524,5 +525,14 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
 		// TODO Auto-generated method stub
 		
 	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.engine.VdpHandler#getVdpModeRedrawHandler()
+	 */
+	@Override
+	public VdpModeRedrawHandler getVdpModeRedrawHandler() {
+		return video.getVdpModeRedrawHandler();
+	}
+
 }
 

@@ -42,6 +42,7 @@ import org.eclipse.swt.graphics.ImageData;
 
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
+import v9t9.engine.VdpHandler;
 
 /**
  * @author ejs
@@ -49,12 +50,15 @@ import v9t9.emulator.clients.builtin.video.VdpCanvas;
  */
 public class AwtCanvas extends Canvas implements DragGestureListener,
 		DropTargetListener {
+	private final VdpHandler vdp;
+
 	/**
 	 * @param config
 	 */
-	public AwtCanvas(AwtVideoRenderer renderer) {
+	public AwtCanvas(AwtVideoRenderer renderer, VdpHandler vdp) {
 		super();
 		this.renderer = renderer;
+		this.vdp = vdp;
 
 		DropTarget dt = new DropTarget(this, this);
 		dt.setFlavorMap(SystemFlavorMap.getDefaultFlavorMap());
@@ -279,18 +283,25 @@ public class AwtCanvas extends Canvas implements DragGestureListener,
 			return;
 		}
 		
-		if (realWidth > realHeight) {
-			// 256/realWidth = N/realHeight
+		if (realWidth * targHeight > realHeight * targWidth) {
 			targHeight = targWidth * realHeight / realWidth;
 		} else {
-			// 192/realHeight = N/realWidth
 			targWidth = targHeight * realWidth / realHeight;
 		}
 		
-		BufferedImage scaled = getScaledInstance(image, targWidth, targHeight, RenderingHints.VALUE_INTERPOLATION_BICUBIC, false);
+		BufferedImage scaled = getScaledInstance(image, targWidth, targHeight, 
+				//RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR, 
+				RenderingHints.VALUE_INTERPOLATION_BILINEAR, 
+				false);
 		System.out.println(scaled.getWidth(null) + " x " +scaled.getHeight(null));
 		
 		vc.setImageData(scaled);
+		
+		synchronized (vdp) {
+			vdp.getVdpModeRedrawHandler().importImageData();
+		}
+		
+		//renderer.getAwtCanvas().repaint();
 	}
 
 	/**

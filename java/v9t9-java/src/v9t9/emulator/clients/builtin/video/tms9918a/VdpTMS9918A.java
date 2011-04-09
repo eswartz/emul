@@ -794,4 +794,11 @@ public class VdpTMS9918A implements VdpHandler {
 	public void addCpuCycles(int cycles) {
 		vdpInterruptFrac += cycles;
 	}
+	
+	/**
+	 * @return the vdpModeRedrawHandler
+	 */
+	public VdpModeRedrawHandler getVdpModeRedrawHandler() {
+		return vdpModeRedrawHandler;
+	}
 }

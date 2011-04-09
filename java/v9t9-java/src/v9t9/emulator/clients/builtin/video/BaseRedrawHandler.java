@@ -108,4 +108,11 @@ public abstract class BaseRedrawHandler implements VdpModeRedrawHandler {
 	public void clear() {
 		vdpCanvas.clear(vdpCanvas.getRGB(vdpCanvas.getClearColor()));
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.video.VdpModeRedrawHandler#importImageData()
+	 */
+	public void importImageData() {
+		
+	}
 }

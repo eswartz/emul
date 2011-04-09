@@ -11,6 +11,7 @@ import v9t9.emulator.clients.builtin.video.VdpModeInfo;
 import v9t9.emulator.clients.builtin.video.VdpModeRedrawHandler;
 import v9t9.emulator.clients.builtin.video.VdpTouchHandler;
 import v9t9.engine.VdpHandler;
+import v9t9.engine.memory.ByteMemoryAccess;
 
 /**
  * @author ejs
@@ -115,4 +116,59 @@ public class BitmapModeRedrawHandler extends BaseRedrawHandler implements
 		return count;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.video.BaseRedrawHandler#importImageData()
+	 */
+	@Override
+	public void importImageData() {
+		boolean isMono = bitcolormask != 0x1fff;
+		
+		ByteMemoryAccess screen = vdp.getByteReadMemoryAccess(vdpModeInfo.screen.base);
+		ByteMemoryAccess patt = vdp.getByteReadMemoryAccess(vdpModeInfo.patt.base);
+		ByteMemoryAccess color = vdp.getByteReadMemoryAccess(vdpModeInfo.color.base);
+		
+		for (int y = 0; y < 192; y++) {
+			for (int x = 0; x < 256; x += 8) {
+				byte p = 0, f = 0, b = 0;
+				
+				// for the benefit of mono pictures or mono modes, 
+				// always select the lesser color as foreground.
+				f = vdpCanvas.getPixel(x, y);
+				p = (byte) 0x80;
+				
+				boolean gotBG = false;
+				for (int xo = 1; xo < 8; xo++) {
+					byte c = vdpCanvas.getPixel(x + xo, y);
+					if (c == f) {
+						p |= 0x80 >> xo;
+					} else {
+						if (!gotBG) {
+							gotBG = true;
+							b = c;
+							if (b < f) {
+								b = f;
+								f = c;
+								p ^= 0xff << (8 - xo);
+								p |= 0x80 >> xo;
+							}
+						}
+					}
+				}
+
+				int choffs = ((y >> 6) << 8) + ((y & 0x3f) >> 3) * 32 + (x >> 3);
+				int ch = screen.memory[screen.offset + choffs] & 0xff;
+
+				int poffs = (y >> 6) * 0x800 + (ch << 3) + (y & 7);
+				
+				patt.memory[patt.offset + poffs] = p;
+				touch(patt.offset + poffs);
+				
+				if (!isMono) {
+					color.memory[color.offset + poffs] = (byte) ((f << 4) | (b));
+					touch(color.offset + poffs);
+				}
+			}
+		}
+		
+	}
 }

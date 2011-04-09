@@ -5,8 +5,6 @@ package v9t9.emulator.clients.builtin.video;
 
 import java.util.Arrays;
 
-import org.eclipse.swt.graphics.ImageData;
-
 import v9t9.engine.memory.ByteMemoryAccess;
 
 /**
@@ -261,4 +259,11 @@ public class MemoryCanvas extends VdpCanvas {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.video.VdpCanvas#getPixel(int, int)
+	 */
+	@Override
+	public byte getPixel(int x, int y) {
+		return bitmap[y*UPDATEBLOCK_ROW_STRIDE + x];
+	}
 }

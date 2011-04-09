@@ -32,6 +32,7 @@ import v9t9.emulator.clients.builtin.video.ImageDataCanvas24Bit;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.emulator.clients.builtin.video.VdpCanvas.ICanvasListener;
+import v9t9.engine.VdpHandler;
 
 /**
  * AWT has nice accelerated blit routines, which are superior to SWT on Linux/GTK and Windows.
@@ -70,7 +71,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 
 	private IPropertyListener monitorSettingListener;
 	
-	public AwtVideoRenderer() {
+	public AwtVideoRenderer(VdpHandler vdp) {
 		// init outside locks
 		V9t9Render.INSTANCE.hashCode();
 		
@@ -78,7 +79,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		setCanvas(new ImageDataCanvas24Bit(0));
 		//desiredWidth = (int)(zoomx * 256);
 		//desiredHeight = (int)(zoomy * 192);
-		this.canvas = new AwtCanvas(this);
+		this.canvas = new AwtCanvas(this, vdp);
 		canvas.setFocusTraversalKeysEnabled(false);
 		canvas.setFocusable(true);
 		canvas.addHierarchyBoundsListener(new HierarchyBoundsAdapter() {

@@ -25,6 +25,7 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Shell;
 
 import v9t9.emulator.clients.builtin.awt.AwtVideoRenderer;
+import v9t9.emulator.common.Machine;
 
 /**
  * AWT blitting is much faster than SWT's. 
@@ -42,8 +43,8 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 	private List<org.eclipse.swt.events.MouseMoveListener> mouseMoveListeners = new ArrayList<org.eclipse.swt.events.MouseMoveListener>();
 	private FixedAspectLayout fixedAspectLayout;
 	
-	public SwtAwtVideoRenderer() {
-		super();
+	public SwtAwtVideoRenderer(Machine machine) {
+		super(machine.getVdp());
 	}
 
 	/* (non-Javadoc)

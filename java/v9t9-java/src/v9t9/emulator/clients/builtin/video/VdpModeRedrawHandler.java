@@ -36,4 +36,9 @@ public interface VdpModeRedrawHandler {
 	 */
 	void clear();
 
+	/**
+	 * Import data from the image data into video memory
+	 */
+	void importImageData();
+
 }

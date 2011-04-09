@@ -3,6 +3,8 @@
  */
 package v9t9.emulator.clients.builtin.video;
 
+import java.util.TreeMap;
+
 import org.eclipse.swt.graphics.Rectangle;
 
 import v9t9.engine.memory.ByteMemoryAccess;
@@ -106,7 +108,7 @@ public abstract class VdpCanvas {
 		for (int i = 0; i < 4; i++) {
 			byte val = (byte) i;
 			byte val8 = (byte) (val << 6);
-			val8 |= i * 0x3f / 7;
+			val8 |= i * 0x3f / 3;
 			rgb2to8[i] = val8;
 		}
 	}
@@ -144,6 +146,7 @@ public abstract class VdpCanvas {
 
 	public void setFormat(Format format) {
 		this.format = format;
+		paletteMappingDirty = true;
 	}
 	public Format getFormat() {
 		return format;
@@ -228,6 +231,12 @@ public abstract class VdpCanvas {
 	private ICanvasListener listener;
 
 	protected byte[][] thePalette;
+	
+	/** the RGB-32 pixel for each palette entry */
+	protected int[] palettePixels;
+	/** mapping from RGB-32 pixel to each palette index */
+	protected TreeMap<Integer, Integer> paletteToIndex;
+	protected boolean paletteMappingDirty = true;
 
 	private boolean clearFromPalette;
 
@@ -274,6 +283,8 @@ public abstract class VdpCanvas {
 		colorPalette[idx][2] = rgb[2];
 		
 		greyPalette[idx] = rgbToGrey(rgb);
+		
+		paletteMappingDirty = true;
 	}
 	
 	/** Get the RGB triple for the 3-bit GRB. */
@@ -492,6 +503,7 @@ public abstract class VdpCanvas {
 	public void setGreyscale(boolean b) {
 		this.isGreyscale = b;
 		thePalette = b ? greyPalette : colorPalette;
+		paletteMappingDirty = true;
 	}
 
 	public void setClearFromPalette(boolean b) {
@@ -611,5 +623,50 @@ public abstract class VdpCanvas {
 	public boolean isInterlacedEvenOdd() {
 		return isInterlacedEvenOdd;
 	}
+	
+	/** Get the color index (or 3-3-2 byte) */
+	abstract public byte getPixel(int x, int y);
+	
+	protected int getPixel(byte[] nrgb) {
+		return ((nrgb[0] & 0xff) << 16) | ((nrgb[1] & 0xff) << 8) | (nrgb[2] & 0xff);
+	}
 
+
+	protected void updatePaletteMapping() {
+		if (format == null || format == Format.TEXT || format == Format.COLOR16_8x8) 
+			return;
+			
+		int ncols;
+		if (format == Format.COLOR16_1x1 || format == Format.COLOR16_8x1) {
+			ncols = 16;
+		}
+		else if (format == Format.COLOR4_1x1) {
+			ncols = 4;
+		}
+		else if (format == Format.COLOR256_1x1) {
+			ncols = 256;
+		}
+		else {
+			return;
+		}
+
+		paletteToIndex = new TreeMap<Integer, Integer>();
+		
+		palettePixels = new int[ncols];
+		if (ncols < 256) {
+			for (int c = 0; c < ncols; c++) {
+				palettePixels[c] = getPixel(thePalette[c]);
+				paletteToIndex.put(palettePixels[c], c);
+			}
+		} else {
+			byte[] rgb = { 0, 0, 0};
+			for (int c = 0; c < ncols; c++) {
+				getGRB332(rgb, (byte) c);
+				palettePixels[c] = getPixel(rgb);
+				paletteToIndex.put(palettePixels[c], c);
+			}
+		}
+		
+		paletteMappingDirty = false;
+	}
 }

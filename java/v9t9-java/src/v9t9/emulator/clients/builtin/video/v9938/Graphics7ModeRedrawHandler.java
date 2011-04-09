@@ -8,6 +8,7 @@ import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VdpChanges;
 import v9t9.emulator.clients.builtin.video.VdpModeInfo;
 import v9t9.engine.VdpHandler;
+import v9t9.engine.memory.ByteMemoryAccess;
 
 /**
  * Redraw graphics 7 mode content (256x192x256)
@@ -45,5 +46,25 @@ public class Graphics7ModeRedrawHandler extends PackedBitmapGraphicsModeRedrawHa
 		byte [] rgb = { 0, 0, 0 };
 		vdpCanvas.getGRB332(rgb, (byte) vdpCanvas.getClearColor());
 		vdpCanvas.clear(rgb);
+	}
+	
+
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.video.BaseRedrawHandler#importImageData()
+	 */
+	@Override
+	public void importImageData() {
+		ByteMemoryAccess patt = vdp.getByteReadMemoryAccess(vdpModeInfo.patt.base);
+		
+		int my =  (vdpregs[9] & 0x80) != 0 ? 212 : 192;
+		for (int y = 0; y < my; y++) {
+			for (int x = 0; x < 256; x++) {
+				
+				int poffs = y * rowstride + x; 
+				patt.memory[patt.offset + poffs] = vdpCanvas.getPixel(x, y);
+				touch(patt.offset + poffs);
+			}
+		}
+		
 	}
 }

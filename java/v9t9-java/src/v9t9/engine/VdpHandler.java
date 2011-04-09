@@ -9,6 +9,7 @@ package v9t9.engine;
 import org.ejs.coffee.core.properties.IPersistable;
 
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
+import v9t9.emulator.clients.builtin.video.VdpModeRedrawHandler;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.memory.mmio.VdpMmio;
 import v9t9.engine.memory.ByteMemoryAccess;
@@ -74,4 +75,7 @@ public interface VdpHandler extends IPersistable{
 
 	/** Inform the VDP of the given number of cycles invoked on CPU side. */
 	void addCpuCycles(int cycles);
+	
+	/** Get the handler for video-mode specific handling */
+	VdpModeRedrawHandler getVdpModeRedrawHandler();
 }

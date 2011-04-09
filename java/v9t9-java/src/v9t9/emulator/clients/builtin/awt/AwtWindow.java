@@ -76,7 +76,7 @@ public class AwtWindow extends BaseEmulatorWindow implements
 		GraphicsConfiguration gc = device.getDefaultConfiguration();
 		frame = new Frame(gc);
 
-		AwtVideoRenderer renderer = new AwtVideoRenderer();
+		AwtVideoRenderer renderer = new AwtVideoRenderer(machine.getVdp());
 		setVideoRenderer(renderer);
 
 		// frame.setIgnoreRepaint(true);
