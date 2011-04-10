@@ -131,7 +131,7 @@ Create TextModeParams
     v-free      , $1000 ,   v-pagesize  , $1000 ,
 
     v-width     , 40 ,      v-height    , 24 ,
-    v-stride    , 40 ,
+    \ v-stride    , 40 ,
     
     'v-setupregs ,           ' txt-setupregs ,
     'v-setupmode ,           ' txt-setupmode ,
@@ -139,9 +139,6 @@ Create TextModeParams
     
     0 ,
     
-create  TextModeRegs
-    $8000 , $81B0 , 0 ,
-
 : txt-setupregs
     std-set-screen-reg
     std-set-patt-reg
@@ -151,64 +148,8 @@ create  TextModeRegs
     TextFunctions write-var-list
     TextModeParams v-set-alloc-list
         
-    TextModeRegs write-vregs
+    $00B0 write-vmoderegs
 ;
-
-\ -------------------
-
-\       1=graphics mode
-\           >0000 = screen
-\           >0300 = sprites
-\           >0380 = colors
-\           >03A0 = sprite motion
-\           >0420 = sprite patterns (really 0->800)
-\           >0800 = char patts
-\           >1000+= free
-\
-Create GfxModeRegs
-    $8000 , $81A0 , 0 ,
-
-Create GfxModeParams
-    v-screen    , 0 ,       v-screensz  , 768 ,
-    v-colors    , $380 ,    v-colorsz   , $20 ,
-    v-patts     , $800 ,    v-pattsz    , $800 ,
-    v-sprites   , $300 ,    v-sprcol    , $0 ,
-    v-sprpat    , $0 ,      v-sprmot    , $3A0 ,
-    v-free      , $1000 ,   v-pagesize  , $1000 ,
-    
-    v-width     , 32 ,      v-height    , 24 ,
-    v-stride    , 32 ,
-        
-    'v-setupregs ,           ' gfx-setupregs ,
-    'v-setupmode ,           ' gfx-setupmode ,
-    'v-updatecolors ,        ' gfx-updatecolors ,
-    
-    0 ,
-
-
-: gfx-setupregs
-    txt-setupregs
-    std-set-color-reg
-    std-set-sprite-reg
-    std-set-sprpat-reg
-;
-
-: gfx-setupmode
-    std-sprite-setup
-    true v-text c!
-;
-
-: gfx-updatecolors
-    v-colors @  v-colorsz @  color-byte  +vfill
-;
-
-: gfx-mode
-    TextFunctions write-var-list
-    GfxModeParams v-set-alloc-list
-      
-    GfxModeRegs write-vregs
-;
-
 
 \ -------------------
 
@@ -295,9 +236,6 @@ Create GfxModeParams
 \           >1000 = patts
 \           >1800+= free
 \
-Create Text2ModeRegs
-    $8004 , $81B0 , $8D22 , 0 ,
-
 Create Text2Functions
     'v-drawchar ,       ' txt2-drawchar  ,      
     'v-clear ,          ' txt2-clear     ,
@@ -314,7 +252,7 @@ Create Text2ModeParams
     v-free      , $1800 ,   v-pagesize  , $2000 ,
      
     v-width     , 80 ,      v-height    , 26 ,
-    v-stride    , 80 ,
+    \ v-stride    , 80 ,
     
     'v-setupregs ,           ' txt2-setupregs ,
     'v-setupmode ,           ' txt2-setupmode ,
@@ -334,7 +272,9 @@ Create Text2ModeParams
     Text2Functions write-var-list
     Text2ModeParams v-set-alloc-list
         
-    Text2ModeRegs write-vregs
+    $04B0 write-vmoderegs
+    $8D22 v-regaddr
 
 ;
+    
     

@@ -1,0 +1,115 @@
+
+\ -------------------
+
+\       1=graphics mode
+\           >0000 = screen
+\           >0300 = sprites
+\           >0380 = colors
+\           >03A0 = sprite motion
+\           >0420 = sprite patterns (really 0->800)
+\           >0800 = char patts
+\           >1000+= free
+\
+Create GfxModeParamsCommon
+    v-screen    , 0 ,       v-screensz  , 768 ,
+    v-patts     , $800 ,    v-pattsz    , $800 ,
+    v-sprites   , $300 ,    v-sprcol    , $0 ,
+    v-sprpat    , $0 ,      v-sprmot    , $3A0 ,
+    
+    'v-setupregs ,           ' gfx-setupregs ,
+    'v-setupmode ,           ' gfx-setupmode ,
+
+    0 ,
+
+Create GfxModeParams
+    v-colors    , $380 ,    v-colorsz   , $20 ,
+    v-free      , $1000 ,   v-pagesize  , $1000 ,
+        
+    v-width     , 32 ,      v-height    , 24 ,
+    \ v-stride    , 32 ,
+    
+    'v-updatecolors ,        ' gfx-updatecolors ,
+    
+    0 ,
+
+
+: gfx-setupregs
+    txt-setupregs
+    std-set-color-reg
+    std-set-sprite-reg
+    std-set-sprpat-reg
+;
+
+: gfx-setupmode
+    std-sprite-setup
+    true v-text c!
+;
+
+: gfx-updatecolors
+    v-colors @  v-colorsz @  color-byte  +vfill
+;
+
+: gfx-mode
+    TextFunctions write-var-list
+    GfxModeParamsCommon v-set-alloc-list
+    GfxModeParams v-set-alloc-list
+      
+    $00A0 write-vmoderegs
+;
+
+
+\ -------------------
+
+\       10=multicolor mode
+\           >0000 = screen
+\           >0300 = sprites
+\           >0380 = sprite motion
+\           >0800 = char patts (colors)
+\           >1000 = sprites patts
+\           >1800+= free
+Create MultiModeParams
+    v-colors    , $0 ,      v-colorsz   , $0 ,
+    v-sprpat    , $1000 ,   
+    v-free      , $1800 ,   v-pagesize  , $2000 ,
+ 
+    v-width     , 64 ,      v-height    , 48 ,
+    \ v-stride    , 32 ,
+    
+    'v-setupmode ,       ' multi-setupmode ,        
+    'v-updatecolors ,    ' txt-updatecolors ,
+    'v-drawchar ,        ' multi-drawchar ,
+    'v-setfont ,         ' drop ,
+    'v-blinkcursor ,     ' 2drop ,
+    
+    0 , 
+
+: multi-drawchar  ( ch x y -- )  
+    ( silly example )
+    \  ((y >> 3) << 8) + (y & 7) + ((x >> 1) << 3)
+    8 u/mod  8 LSHIFT  swap  7 AND  +  
+    swap  1 RSHIFT  3 LSHIFT +
+    v-patts @  + 
+    +!vwaddr  VDPWD c!  
+;
+
+: multi-setupmode
+    txt-setupmode
+    
+    ( set up SIT to contain $00-$1F repeated 4 times, $20-$3F, ... $A0-$BF )
+    v-screen @  +!vwaddr
+    $c0 0 do
+        128 0 do
+            i  $1f AND j +  VDPWD c!                
+        loop
+    $20 +loop
+    
+    $800 v-patts @  0 vfill
+;
+
+: multi-mode
+    GfxModeParamsCommon v-set-alloc-list
+    MultiModeParams v-set-alloc-list
+      
+    $00A8 write-vmoderegs
+;
+    

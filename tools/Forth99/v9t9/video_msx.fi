@@ -34,7 +34,6 @@ Create msx-stdpalette
     $AA msx-cursor-color c!
 
     v9938-sprite-setup
-    \ msx-enhregs write-vregs
     
     $4000. v-stride @  UM/MOD nip  NEGATE  msx-rowsperbankmask !
 ;
@@ -434,9 +433,6 @@ Create GfxFatModeParams
 \           >7A80 = sprite motion
 \           >8000+= free
 \
-Create Gfx4ModeRegs
-    $8006 , $81A0 , 0 ,
-
 Create Gfx4ModeParams
     v-width     , 256 ,     v-height    , 212 ,
     
@@ -454,7 +450,7 @@ msx-use-drawchar-accel not [if]
     MsxFunctions write-var-list
     GfxSkinnyModeParams v-set-alloc-list
     Gfx4ModeParams v-set-alloc-list
-    Gfx4ModeRegs write-vregs
+    $06A0 write-vmoderegs
 ;
 
 
@@ -466,9 +462,6 @@ msx-use-drawchar-accel not [if]
 \           >D800 = sprite patts (1B)
 \           >E000+= free
 \
-Create Gfx6ModeRegs
-    $800A , $81A0 , 0 ,
-
 Create Gfx6ModeParams
     v-width     , 512 ,     v-height    , 212 ,
     
@@ -486,7 +479,7 @@ msx-use-drawchar-accel not [if]
     MsxFunctions write-var-list
     GfxFatModeParams v-set-alloc-list
     Gfx6ModeParams v-set-alloc-list
-    Gfx6ModeRegs write-vregs
+    $0AA0 write-vmoderegs
 ;
 
 
@@ -500,9 +493,6 @@ msx-use-drawchar-accel not [if]
 \           >7A80 = sprite motion
 \           >8000+= free
 \
-Create Gfx5ModeRegs
-    $8008 , $81A0 , $87FF , 0 ,
-
 Create Gfx5ModeParams
     v-width     , 512 ,     v-height    , 212 ,
     
@@ -519,7 +509,8 @@ msx-use-drawchar-accel not [if]
     MsxFunctions write-var-list
     GfxSkinnyModeParams v-set-alloc-list
     Gfx5ModeParams v-set-alloc-list
-    Gfx5ModeRegs write-vregs
+    $08A0 write-vmoderegs
+    $87ff v-regaddr
 ;
     
     
@@ -532,9 +523,6 @@ msx-use-drawchar-accel not [if]
 \           >D800 = sprite patts (1B)
 \           >E000+= free
 \
-Create Gfx7ModeRegs
-    $800E , $81A0 , 0 ,
-
 Create Gfx7ModeParams
     v-width     , 256 ,     v-height    , 212 ,
     
@@ -552,7 +540,7 @@ msx-use-drawchar-accel not [if]
     MsxFunctions write-var-list
     GfxFatModeParams v-set-alloc-list
     Gfx7ModeParams v-set-alloc-list
-    Gfx7ModeRegs write-vregs
+    $0EA0 write-vmoderegs
 ;
 
     

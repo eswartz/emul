@@ -180,9 +180,6 @@ Create BitFunctions
 \           >2000 = colors
 \           >3800+= free
 \
-Create BitModeRegs
-    $8002 , $81A0 , 0 ,
-
 Create BitModeParams
     v-screen    , $1800 ,   v-screensz  , $300 ,
     v-colors    , $2000 ,   v-colorsz   , $1800 ,   
@@ -192,7 +189,7 @@ Create BitModeParams
     v-free      , $3800 ,   v-pagesize  , $4000 ,
 
     v-width     , 256 ,     v-height    , 192 ,
-    v-stride    , 32 ,
+    \ v-stride    , 32 ,
     
     'v-setupregs ,           ' bit-setupregs ,
     'v-setupmode ,           ' bit-setupmode ,
@@ -205,7 +202,7 @@ Create BitModeParams
     BitFunctions write-var-list
     BitModeParams v-set-alloc-list
         
-    BitModeRegs write-vregs
+    $02A0 write-vmoderegs
 ;
 
 
@@ -220,9 +217,6 @@ Create BitModeParams
 \           >3800 = screen
 \           >3B00+= free
 \
-Create Gfx3ModeRegs
-    $8004 , $81A0 , 0 ,
-    
 Create Gfx3ModeParamsDiffs
     v-screen    , $3800 ,   
     v-sprcol    , $1900 ,
@@ -242,7 +236,7 @@ Create Gfx3ModeParamsDiffs
     BitFunctions write-var-list
     BitModeParams v-set-alloc-list
     Gfx3ModeParamsDiffs v-set-alloc-list
-    Gfx3ModeRegs write-vregs
+    $04A0 write-vmoderegs
 ;
 
 \      9=monochrome bitmap mode (graphics 2 mode)
@@ -254,10 +248,6 @@ Create Gfx3ModeParamsDiffs
 \           >2000 = colors
 \           >2040+= free (seems like 2800)
 \
-Create MonoBitModeRegs
-    $8002 , $81B0 , 0 ,
-
-
 Create MonoModeParamsDiffs
     v-colorsz   , $40 ,   
     v-free      , $2040 ,   
@@ -271,7 +261,7 @@ Create MonoModeParamsDiffs
     BitModeParams v-set-alloc-list
     MonoModeParamsDiffs v-set-alloc-list
         
-    MonoBitModeRegs write-vregs
+    $02B0 write-vmoderegs
 ;
 
 
