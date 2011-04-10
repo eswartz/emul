@@ -78,7 +78,7 @@ public abstract class ImageDataCanvas extends VdpCanvas {
 			closest = newPixel;
 		}
 		else {
-			closest = getClosestColor(ncols, prgb, limit8);
+			closest = getClosestColor(ncols, prgb, format == Format.COLOR16_8x1);
 			rgb = thePalette[closest];
 			newPixel = palettePixels[closest];
 		}
@@ -173,7 +173,7 @@ public abstract class ImageDataCanvas extends VdpCanvas {
 			return;
 
 		int ncols;
-		if (format == Format.COLOR16_1x1 || format == Format.COLOR16_8x1) {
+		if (format == Format.COLOR16_1x1 || format == Format.COLOR16_8x1 || format == Format.COLOR16_4x4) {
 			ncols = 16;
 		}
 		else if (format == Format.COLOR4_1x1) {
@@ -186,20 +186,29 @@ public abstract class ImageDataCanvas extends VdpCanvas {
 			return;
 		}
 
-		int xo = (imageData.width - img.getWidth()) / 2;
-		int yo = (imageData.height - img.getHeight()) / 2;
+		int xo;
+		int yo;
+		
+		if (format == Format.COLOR16_4x4) {
+			xo = (64 - img.getWidth()) / 2;
+			yo = (48 - img.getHeight()) / 2;
+		} else {
+			xo = (imageData.width - img.getWidth()) / 2;
+			yo = (imageData.height - img.getHeight()) / 2;
+		}
 
 		Arrays.fill(imageData.data, (byte) 0); 
 		
 		updatePaletteMapping();
-		
+
+		boolean limitDither = format == Format.COLOR16_8x1 || format == Format.COLOR16_4x4;
 		for (int y = 0; y < img.getHeight(); y++) {
 			for (int x = 0; x < img.getWidth(); x++) {
-				ditherize(img, x, y, ncols, format == Format.COLOR16_8x1);
+				ditherize(img, x, y, ncols, limitDither);
 			}
 		}
+		
 		if (format == Format.COLOR16_8x1) {
-
 			
 			Map<Integer, Integer> histogram = new HashMap<Integer, Integer>();
 			
@@ -255,7 +264,6 @@ public abstract class ImageDataCanvas extends VdpCanvas {
 							}
 						}
 							
-						//colorMap[(y + yo) * mul + (xd + xo)] = (byte) (newPixel == fpixel ? fidx : bidx);
 						imageData.setPixel(xd + xo, y + yo, newPixel);
 					}
 				}
@@ -266,7 +274,6 @@ public abstract class ImageDataCanvas extends VdpCanvas {
 			for (int y = 0; y < img.getHeight(); y++) {
 				for (int x = 0; x < img.getWidth(); x++) {
 					imageData.setPixel(x + xo, y + yo, img.getRGB(x, y));
-					//colorMap[(y + yo) * mul + (x + xo)] = (byte) (int) paletteToIndex.get(img.getRGB(x, y));
 				}
 			}
 		}
@@ -285,7 +292,6 @@ public abstract class ImageDataCanvas extends VdpCanvas {
 		}
 		int p = imageData.getPixel(x, y) & 0xffffff;
 		Integer c = paletteToIndex.get(p);
-		//return (c != null) ? (byte) (int) c : 0;
 		if (c == null && format == Format.COLOR256_1x1) {
 			// whhyyyy is someone losing precision?!
 			c = paletteToIndex.get(paletteToIndex.ceilingKey(p));

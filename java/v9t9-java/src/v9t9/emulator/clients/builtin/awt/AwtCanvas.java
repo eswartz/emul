@@ -42,6 +42,7 @@ import org.eclipse.swt.graphics.ImageData;
 
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
+import v9t9.emulator.clients.builtin.video.VdpCanvas.Format;
 import v9t9.engine.VdpHandler;
 
 /**
@@ -277,16 +278,22 @@ public class AwtCanvas extends Canvas implements DragGestureListener,
 		
 		int targWidth = vc.getVisibleWidth();
 		int targHeight = vc.getVisibleHeight();
+		float aspect = targWidth * targHeight / 256.f  / 192.f;
+		if (renderer.getCanvas().getFormat() == Format.COLOR16_4x4) {
+			targWidth = 64;
+			targHeight = 48;
+			aspect = 1.0f;
+		}
 		int realWidth = image.getWidth(null);
 		int realHeight = image.getHeight(null);
 		if (realWidth < 0 || realHeight < 0) {
 			return;
 		}
 		
-		if (realWidth * targHeight > realHeight * targWidth) {
-			targHeight = targWidth * realHeight / realWidth;
+		if (realWidth * targHeight * aspect > realHeight * targWidth) {
+			targHeight = (int) (targWidth * realHeight / realWidth / aspect);
 		} else {
-			targWidth = targHeight * realWidth / realHeight;
+			targWidth = (int) (targHeight * realWidth * aspect / realHeight);
 		}
 		
 		BufferedImage scaled = getScaledInstance(image, targWidth, targHeight, 

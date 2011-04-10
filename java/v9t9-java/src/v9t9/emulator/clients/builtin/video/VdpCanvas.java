@@ -16,12 +16,19 @@ import v9t9.engine.memory.ByteMemoryAccess;
  */
 public abstract class VdpCanvas {
 	public enum Format {
+		/** Text mode */
 		TEXT,
+		/** Graphics mode, one color set per 8x8 block */
 		COLOR16_8x8,
+		/** Bitmap mode, one color set per 8x1 block */
 		COLOR16_8x1,
+		/** Multicolor mode, one color set per 4x4 block */
 		COLOR16_4x4,
+		/** V9938 16-color mode */
 		COLOR16_1x1,
+		/** V9938 4-color mode */
 		COLOR4_1x1,
+		/** V9938 256-color mode */
 		COLOR256_1x1,
 	}
 	public interface ICanvasListener {
@@ -49,43 +56,6 @@ public abstract class VdpCanvas {
 	
 	protected Format format;
 
-	protected static final byte[][] stockPalette = {
-		/* 0 */ { 0x00, 0x00, 0x00 }, 
-		/* 1 */ { 0x00, 0x00, 0x00 },
-		/* 2 */ { 0x40, (byte) 0xb0, 0x40 }, 
-		/* 3 */ { 0x60, (byte) 0xc0, 0x60 },
-		/* 4 */ { 0x40, 0x40, (byte) 0xc0 }, 
-		/* 5 */ { 0x60, 0x60, (byte) 0xf0 },
-		/* 6 */ { (byte) 0xc0, 0x40, 0x40 }, 
-		/* 7 */ { 0x40, (byte) 0xf0, (byte) 0xf0 },
-		/* 8 */ { (byte) 0xf0, 0x40, 0x40 }, 
-		/* 9 */ { (byte) 0xff, (byte) 0x80, 0x60 },
-		/* 10 */ { (byte) 0xf0, (byte) 0xc0, 0x40 },
-		/* 11 */ { (byte) 0xff, (byte) 0xe0, 0x60 }, 
-		/* 12 */ { 0x40, (byte) 0x80, 0x40 },
-		/* 13 */ { (byte) 0xc0, 0x40, (byte) 0xc0 },
-		/* 14 */ { (byte) 0xd0, (byte) 0xd0, (byte) 0xd0 },
-		/* 15 */ { (byte) 0xff, (byte) 0xff, (byte) 0xff }, 
-	};
-	
-	protected static final byte[][] altSpritePaletteGBR = {
-		{ 0, 0, 0 },
-		{ 0, 0, 2 },
-		{ 0, 3, 0 },
-		{ 0, 3, 2 },
-		{ 3, 0, 0 },
-		{ 3, 0, 2 },
-		{ 3, 3, 0 },
-		{ 3, 3, 2 },
-		{ 4, 7, 2 },
-		{ 0, 0, 7 },
-		{ 0, 7, 0 },
-		{ 0, 7, 7 },
-		{ 7, 0, 0 },
-		{ 7, 0, 7 },
-		{ 7, 7, 0 },
-		{ 7, 7, 7 }
-	};
 	protected byte colorPalette[][];
 	protected byte greyPalette[][];
 	protected byte altSpritePalette[][];
@@ -116,6 +86,112 @@ public abstract class VdpCanvas {
 	public VdpCanvas() {
 		this(8);
 	}
+	private static byte[] fromRBG(String hex) {
+		int r = Integer.parseInt(hex.substring(0, 1), 16);
+		int b = Integer.parseInt(hex.substring(1, 2), 16);
+		int g = Integer.parseInt(hex.substring(2, 3), 16);
+		return getGRB333(g, r, b);
+	}
+	
+
+	
+	protected static final byte[][] stockPaletteEd = {
+		/* 0 */ { 0x00, 0x00, 0x00 }, 
+		/* 1 */ { 0x00, 0x00, 0x00 },
+		/* 2 */ { 0x40, (byte) 0xb0, 0x40 }, 
+		/* 3 */ { 0x60, (byte) 0xc0, 0x60 },
+		/* 4 */ { 0x40, 0x40, (byte) 0xc0 }, 
+		/* 5 */ { 0x60, 0x60, (byte) 0xf0 },
+		/* 6 */ { (byte) 0xc0, 0x40, 0x40 }, 
+		/* 7 */ { 0x40, (byte) 0xf0, (byte) 0xf0 },
+		/* 8 */ { (byte) 0xf0, 0x40, 0x40 }, 
+		/* 9 */ { (byte) 0xff, (byte) 0x80, 0x60 },
+		/* 10 */ { (byte) 0xf0, (byte) 0xc0, 0x40 },
+		/* 11 */ { (byte) 0xff, (byte) 0xe0, 0x60 }, 
+		/* 12 */ { 0x40, (byte) 0x80, 0x40 },
+		/* 13 */ { (byte) 0xc0, 0x40, (byte) 0xc0 },
+		/* 14 */ { (byte) 0xd0, (byte) 0xd0, (byte) 0xd0 },
+		/* 15 */ { (byte) 0xff, (byte) 0xff, (byte) 0xff }, 
+	};
+	
+	
+	// "ColecoFan1981" http://www.atariage.com/forums/topic/155790-tms-9918a9928a9929a-colors/
+	protected static final byte[][] stockPalette = {
+		/* 0 */ { 0x00, 0x00, 0x00 }, 
+		/* 1 */ { 0x00, 0x00, 0x00 },
+		/* 2 */ { 70, (byte) 183, 62 }, 
+		/* 3 */ { 124, (byte) 208, 108 },
+		/* 4 */ { 99, 91, (byte) 169 }, 
+		/* 5 */ { 127, 113, (byte) 255 },
+		/* 6 */ { (byte) 183, 98, 73 }, 
+		/* 7 */ { 92, (byte) 199, (byte) 239 },
+		/* 8 */ { (byte) 217, 107, 73 }, 
+		/* 9 */ { (byte) 253, (byte) 142, 108 },
+		/* 10 */ { (byte) 195, (byte) 206, 66 },
+		/* 11 */ { (byte) 211, (byte) 219, 117 }, 
+		/* 12 */ { 61, (byte) 160, 47 },
+		/* 13 */ { (byte) 183, 99, (byte) 199 },
+		/* 14 */ { (byte) 204, (byte) 204, (byte) 204 },
+		/* 15 */ { (byte) 0xff, (byte) 0xff, (byte) 0xff }, 
+			
+	};
+	protected static final byte[][] stockPaletteWashed = {
+		/* 0 */ { 0x00, 0x00, 0x00 }, 
+		/* 1 */ { 0x00, 0x00, 0x00 },
+		/* 2 */ { 82, (byte) 190, 71 }, 
+		/* 3 */ { (byte) 134, (byte) 213, 121 },
+		/* 4 */ { 111, 103, (byte) 178 }, 
+		/* 5 */ { (byte) 139, 123, (byte) 255 },
+		/* 6 */ { (byte) 190, 110, 85 }, 
+		/* 7 */ { 105, (byte) 205, (byte) 241 },
+		/* 8 */ { (byte) 221, 118, 85 }, 
+		/* 9 */ { (byte) 253, (byte) 153, 121 },
+		/* 10 */ { (byte) 202, (byte) 212, 77 },
+		/* 11 */ { (byte) 217, (byte) 222, (byte) 128 }, 
+		/* 12 */ { 75, (byte) 171, 61 },
+		/* 13 */ { (byte) 190, 110, (byte) 205 },
+		/* 14 */ { (byte) 210, (byte) 210, (byte) 210 },
+		/* 15 */ { (byte) 0xff, (byte) 0xff, (byte) 0xff }, 
+	};
+
+	// VDP V9938 default
+	protected static final byte[][] stockPaletteV9938 = {
+		fromRBG("000"), // 0
+	    fromRBG("000"),  // 1
+	    fromRBG("116"),  // 2
+	    fromRBG("337"),  // 3
+	    fromRBG("171"),  // 4
+	    fromRBG("273"),  // 5
+	    fromRBG("511"),  // 6
+	    fromRBG("276"),  // 7
+	    fromRBG("711"),  // 8
+	    fromRBG("733"),  // 9
+	    fromRBG("616"),  // A
+	    fromRBG("646"),  // B
+	    fromRBG("114"),  // C
+	    fromRBG("652"),  // D
+	    fromRBG("555"),  // E
+	    fromRBG("777"),  // F
+	};
+
+	protected static final byte[][] altSpritePaletteGBR = {
+		{ 0, 0, 0 },
+		{ 0, 0, 2 },
+		{ 0, 3, 0 },
+		{ 0, 3, 2 },
+		{ 3, 0, 0 },
+		{ 3, 0, 2 },
+		{ 3, 3, 0 },
+		{ 3, 3, 2 },
+		{ 4, 7, 2 },
+		{ 0, 0, 7 },
+		{ 0, 7, 0 },
+		{ 0, 7, 7 },
+		{ 7, 0, 0 },
+		{ 7, 0, 7 },
+		{ 7, 7, 0 },
+		{ 7, 7, 7 }
+	};
 	public VdpCanvas(int extraSpace) {
 		
     	this.extraSpace = extraSpace;
@@ -288,7 +364,7 @@ public abstract class VdpCanvas {
 	}
 	
 	/** Get the RGB triple for the 3-bit GRB. */
-	public byte[] getGRB333(int g, int r, int b) {
+	public static byte[] getGRB333(int g, int r, int b) {
 		return new byte[] { rgb3to8[r&0x7], rgb3to8[g&0x7], rgb3to8[b&0x7] };
 	}
 
@@ -637,7 +713,9 @@ public abstract class VdpCanvas {
 			return;
 			
 		int ncols;
-		if (format == Format.COLOR16_1x1 || format == Format.COLOR16_8x1) {
+		if (format == Format.COLOR16_1x1 
+				|| format == Format.COLOR16_8x1 
+				|| format == Format.COLOR16_4x4) {
 			ncols = 16;
 		}
 		else if (format == Format.COLOR4_1x1) {
