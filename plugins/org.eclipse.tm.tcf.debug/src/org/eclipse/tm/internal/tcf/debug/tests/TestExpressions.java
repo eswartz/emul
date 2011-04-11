@@ -100,6 +100,8 @@ class TestExpressions implements ITCFTest,
         "(char[4])func2_local3.f_struct",
         "&((test_struct *)0)->f_float",
         "&((struct test_struct *)0)->f_float",
+        "tcf_test_func3",
+        "&tcf_test_func3",
     };
 
     TestExpressions(TCFTestSuite test_suite, IChannel channel) {
