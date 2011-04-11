@@ -1308,7 +1308,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         assert element == this;
         return cell_modifier;
     }
-    
+
     @SuppressWarnings("rawtypes")
     @Override
     public Object getAdapter(Class adapter) {
