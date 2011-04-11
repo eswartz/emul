@@ -83,6 +83,7 @@ struct BreakpointInfo {
     char ** stop_group;
     char * file;
     int access_mode;
+    int access_size;
     int line;
     int column;
     int ignore_count;
@@ -954,20 +955,25 @@ static void plant_at_address_expression(Context * ctx, ContextAddress ip, Breakp
     if (evaluate_expression(ctx, STACK_NO_FRAME, ip, bp->address, 1, &v) < 0) error = errno;
     if (!error && value_to_address(&v, &addr) < 0) error = errno;
     if (bp->access_mode & (CTX_BP_ACCESS_DATA_READ | CTX_BP_ACCESS_DATA_WRITE)) {
-        size = context_word_size(ctx);
-#if ENABLE_Symbols
-        {
-            Symbol * type = v.type;
-            if (type != NULL) {
-                int type_class = 0;
-                Symbol * base_type = NULL;
-                if (!error && get_symbol_type_class(type, &type_class) < 0) error = errno;
-                if (!error && type_class != TYPE_CLASS_POINTER) error = set_errno(ERR_INV_DATA_TYPE, "Pointer expected");
-                if (!error && get_symbol_base_type(type, &base_type) < 0) error = errno;
-                if (!error && base_type != NULL && get_symbol_size(base_type, &size) < 0) error = errno;
-            }
+        if (bp->access_size > 0) {
+            size = bp->access_size;
         }
+        else {
+            size = context_word_size(ctx);
+#if ENABLE_Symbols
+            {
+                Symbol * type = v.type;
+                if (type != NULL) {
+                    int type_class = 0;
+                    Symbol * base_type = NULL;
+                    if (!error && get_symbol_type_class(type, &type_class) < 0) error = errno;
+                    if (!error && type_class != TYPE_CLASS_POINTER) error = set_errno(ERR_INV_DATA_TYPE, "Pointer expected");
+                    if (!error && get_symbol_base_type(type, &base_type) < 0) error = errno;
+                    if (!error && base_type != NULL && get_symbol_size(base_type, &size) < 0) error = errno;
+                }
+            }
 #endif
+        }
     }
     if (error) address_expression_error(ctx, bp, error);
     else plant_breakpoint(ctx, bp, addr, size);
@@ -1198,6 +1204,11 @@ static int copy_breakpoint_info(BreakpointInfo * dst, BreakpointInfo * src) {
         res = 1;
     }
 
+    if (dst->access_size != src->access_size) {
+        dst->access_size = src->access_size;
+        res = 1;
+    }
+
     if (!str_equ(dst->condition, src->condition)) {
         loc_free(dst->condition);
         dst->condition = src->condition;
@@ -1324,6 +1335,9 @@ static void read_breakpoint_properties(InputStream * inp, BreakpointInfo * bp) {
             else if (strcmp(name, "AccessMode") == 0) {
                 bp->access_mode = json_read_long(inp);
             }
+            else if (strcmp(name, "Size") == 0) {
+                bp->access_size = json_read_long(inp);
+            }
             else if (strcmp(name, "Condition") == 0) {
                 bp->condition = json_read_alloc_string(inp);
             }
@@ -1392,6 +1406,13 @@ static void write_breakpoint_properties(OutputStream * out, BreakpointInfo * bp)
         json_write_string(out, "AccessMode");
         write_stream(out, ':');
         json_write_long(out, bp->access_mode);
+    }
+
+    if (bp->access_size != 0) {
+        write_stream(out, ',');
+        json_write_string(out, "Size");
+        write_stream(out, ':');
+        json_write_long(out, bp->access_size);
     }
 
     if (bp->condition != NULL) {
