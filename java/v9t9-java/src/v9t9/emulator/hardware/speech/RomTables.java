@@ -4,13 +4,11 @@
 package v9t9.emulator.hardware.speech;
 
 /**
- * This file is adapted from XMAME.
+ * This file is adapted from TMS5220 listings via XMAME
  * @author ejs
  *
  */
 public class RomTables {
-	/* This file borrowed from XMAME. */
-
 	/* TMS5220 ROM Tables */
 
 	/* This is the energy lookup table (4-bits -> 10-bits) */

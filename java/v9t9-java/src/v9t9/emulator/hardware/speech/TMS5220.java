@@ -65,7 +65,7 @@ public class TMS5220 implements Fetcher, Sender {
 	private DiskMemoryEntry speechRom;
 
 	int speech_hertz = 8000;
-	int speech_length = 200;
+	int speech_length = speech_hertz / 40;
 
 	private FastTimer speechTimer;
 
@@ -266,7 +266,7 @@ public class TMS5220 implements Fetcher, Sender {
 		Logging.writeLogLine(3, settingLogSpeech,
 				"FIFO write: "+HexUtils.toHex2(val)+"; len = " +len);
 
-		//logger(_L | L_3, _("FIFO write: %02X  len=%d\n"), val, len);
+		//System.err.println("FIFO write: "+val+"  len="+len);
 		if (len < 16)
 			len++;
 		timeout = SPEECH_TIMEOUT;
@@ -399,7 +399,7 @@ public class TMS5220 implements Fetcher, Sender {
 					status |= SS_TS;		/* whee!  Start talking */
 					do_frame = true;
 				} else {
-					if (timeout-- <= 0) {
+					if (timeout-- < 0) {
 						//speech_wait_complete(1);
 
 						reset();
@@ -413,7 +413,7 @@ public class TMS5220 implements Fetcher, Sender {
 			}
 			else {
 				if ((status & SS_BL) != 0) {
-					if (timeout-- <= 0) {
+					if (timeout-- < 0) {
 						//speech_wait_complete(1);
 
 						reset();
@@ -438,6 +438,7 @@ public class TMS5220 implements Fetcher, Sender {
 
 			//SPEECHPLAY(vms_Speech, speech_data, speech_length, speech_hertz);	
 			if (last) {
+				send((short) 0, speech_length, speech_length);
 				SpeechDone();
 			}
 		}
