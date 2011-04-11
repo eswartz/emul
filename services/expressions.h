@@ -28,15 +28,16 @@
 
 /* Value represents result of expression evaluation */
 struct Value {
-    Symbol * type;              /* Value type symbol, can be empty */
+    Symbol * type;              /* Value type symbol, can be NULL */
     int type_class;             /* See symbols.h for type class definitions */
     void * value;               /* Pointer to value data buffer, or NULL if remote value */
     RegisterDefinition * reg;   /* Not NULL if the value represents a register variable */
     ContextAddress address;     /* Address of value data in remote target memory */
     ContextAddress size;        /* Value size in bytes */
     int remote;                 /* 1 if value data is in remote target memory, 0 if loaded into a local buffer */
-    int constant;               /* 1 if value is not expected to change during execution of value context */
-    int big_endian;             /* 1 if value is big endian */
+    int constant;               /* 1 if the value is not expected to change during execution of value context */
+    int big_endian;             /* 1 if the value is big endian */
+    int function;               /* 1 if the value represents a function */
 };
 
 typedef struct Value Value;
