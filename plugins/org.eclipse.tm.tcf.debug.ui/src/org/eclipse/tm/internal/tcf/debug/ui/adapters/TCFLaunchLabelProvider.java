@@ -27,14 +27,28 @@ class TCFLaunchLabelProvider implements IElementLabelProvider {
     public void update(ILabelUpdate[] updates) {
         for (int i = 0; i < updates.length; i++) {
             ILabelUpdate result = updates[i];
-            TCFLaunch launch = (TCFLaunch)result.getElement();
+            final TCFLaunch launch = (TCFLaunch)result.getElement();
             result.setImageDescriptor(ImageCache.getImageDescriptor(ImageCache.IMG_TCF), 0);
             String status = "";
             if (launch.isConnecting()) {
                 status = "Connecting";
             }
+            else if (launch.isDisconnected()) {
+                status = "Disconnected";
+            }
+            String peer_name = launch.getPeerName();
+            if (peer_name != null) {
+                if (status.length() == 0) status = peer_name;
+                else status = peer_name + ": " + status;
+            }
+            if (status.length() > 0) status = " (" + status + ")";
+            Throwable error = launch.getError();
+            if (error != null) {
+                status += ": " + TCFModel.getErrorMessage(error, false);
+                result.setForeground(new RGB(255, 0, 0), 0);
+            }
             else if (launch.isExited()) {
-                status = "Exited";
+                status += ": Exited";
                 int code = launch.getExitCode();
                 if (code > 0) status += ", exit code " + code;
                 if (code < 0) {
@@ -53,15 +67,6 @@ class TCFLaunchLabelProvider implements IElementLabelProvider {
                     }
                 }
             }
-            else if (launch.isDisconnected()) {
-                status = "Disconnected";
-            }
-            Throwable error = launch.getError();
-            if (error != null) {
-                status += " - " + TCFModel.getErrorMessage(error, false);
-                result.setForeground(new RGB(255, 0, 0), 0);
-            }
-            if (status.length() > 0) status = " (" + status + ")";
             String name = "?";
             ILaunchConfiguration cfg = launch.getLaunchConfiguration();
             if (cfg != null) name = cfg.getName();

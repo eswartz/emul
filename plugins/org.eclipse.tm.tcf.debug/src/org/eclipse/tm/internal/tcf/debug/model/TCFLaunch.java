@@ -121,6 +121,8 @@ public class TCFLaunch extends Launch {
     private long actions_timestamp;
     private long actions_interval = 125;
 
+    private String peer_name;
+
     private Runnable update_memory_maps;
 
     private ProcessContext process;
@@ -920,6 +922,11 @@ public class TCFLaunch extends Launch {
         return channel.getRemotePeer();
     }
 
+    public String getPeerName() {
+        // Safe to call from any thread.
+        return peer_name;
+    }
+
     public <V extends IService> V getService(Class<V> cls) {
         assert Protocol.isDispatchThread();
         return channel.getRemoteService(cls);
@@ -1025,11 +1032,13 @@ public class TCFLaunch extends Launch {
             String id0 = redirection_path.removeFirst();
             IPeer peer = Protocol.getLocator().getPeers().get(id0);
             if (peer == null) throw new Exception("Cannot locate peer " + id0);
+            peer_name = peer.getName();
             channel = peer.openChannel();
             channel.addChannelListener(new IChannel.IChannelListener() {
 
                 public void onChannelOpened() {
                     try {
+                        peer_name = getPeer().getName();
                         onConnected();
                     }
                     catch (Throwable x) {
