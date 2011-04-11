@@ -1363,7 +1363,7 @@ static void waitpid_listener(int pid, int exited, int exit_code, int signal, int
 
 void ini_processes_service(Protocol * proto) {
     int v;
-    int vs[] = { 0, 1 };
+    static int vs[] = { 0, 1 };
 #if defined(_WRS_KERNEL)
     prs_list_lock = semMCreate(SEM_Q_PRIORITY);
     if (prs_list_lock == NULL) check_error(errno);
