@@ -30,8 +30,10 @@ import java.awt.image.ComponentSampleModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
 import java.awt.image.WritableRaster;
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 
@@ -181,7 +183,8 @@ public class AwtCanvas extends Canvas implements DragGestureListener,
 	@Override
 	public void dragOver(DropTargetDragEvent dtde) {
 		if (!dtde.isDataFlavorSupported(DataFlavor.imageFlavor)
-				&& !dtde.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+				&& !dtde.isDataFlavorSupported(DataFlavor.stringFlavor)
+				&& !dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
 			dtde.rejectDrag();
 			return;
 		}
@@ -227,13 +230,17 @@ public class AwtCanvas extends Canvas implements DragGestureListener,
 		 */
 
 		try {
-			if (dtde.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+			if (dtde.isDataFlavorSupported(DataFlavor.stringFlavor)
+					|| dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
 				dtde.acceptDrop(DND.DROP_COPY);
 				URL url = null;
 				for (DataFlavor flavor : flavors) {
 					try {
 						Object data = transferable.getTransferData(flavor);
-						if (data instanceof String) {
+						if (data instanceof List<?>) {
+							url = ((File)((List<?>)data).get(0)).toURI().toURL();
+						}
+						else if (data instanceof String) {
 							String uriStr = data.toString().trim();
 							url = new URL(uriStr);
 							break;
