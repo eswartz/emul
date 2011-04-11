@@ -38,8 +38,8 @@ import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IExpressions;
 import org.eclipse.tm.tcf.services.IMemory;
-import org.eclipse.tm.tcf.services.IRegisters;
 import org.eclipse.tm.tcf.services.IMemory.MemoryError;
+import org.eclipse.tm.tcf.services.IRegisters;
 import org.eclipse.tm.tcf.services.ISymbols;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 import org.eclipse.tm.tcf.util.TCFTask;
@@ -1307,5 +1307,20 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
     public ICellModifier getCellModifier(IPresentationContext context, Object element) {
         assert element == this;
         return cell_modifier;
+    }
+    
+    @SuppressWarnings("rawtypes")
+    @Override
+    public Object getAdapter(Class adapter) {
+        if (adapter == IExpression.class) {
+            final String script = this.script;
+            if (script != null) {
+                IExpressionManager m = DebugPlugin.getDefault().getExpressionManager();
+                for (final IExpression e : m.getExpressions()) {
+                    if (script.equals(e.getExpressionText())) return e;
+                }
+            }
+        }
+        return super.getAdapter(adapter);
     }
 }
