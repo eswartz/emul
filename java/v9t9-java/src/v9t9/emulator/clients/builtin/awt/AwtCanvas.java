@@ -30,10 +30,8 @@ import java.awt.image.ComponentSampleModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
 import java.awt.image.WritableRaster;
-import java.io.File;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.net.URL;
 
 import javax.imageio.ImageIO;
 
@@ -231,31 +229,26 @@ public class AwtCanvas extends Canvas implements DragGestureListener,
 		try {
 			if (dtde.isDataFlavorSupported(DataFlavor.stringFlavor)) {
 				dtde.acceptDrop(DND.DROP_COPY);
-				String filename = null;
+				URL url = null;
 				for (DataFlavor flavor : flavors) {
 					try {
 						Object data = transferable.getTransferData(flavor);
 						if (data instanceof String) {
 							String uriStr = data.toString().trim();
-							try {
-								URI uri = new URI(uriStr);
-								filename = uri.getPath();
-							} catch (URISyntaxException e) {
-								filename = uriStr;
-							}
+							url = new URL(uriStr);
 							break;
 						}
 					} catch (IOException e) {
 						continue;
 					}
 				}
-				if (filename == null) {
+				if (url == null) {
 					System.err.println("Failed to convert string!");
 					return;
 				}
-				image = ImageIO.read(new File(filename));
+				image = ImageIO.read(url.openStream());
 				if (image == null) {
-					System.err.println("Failed to load image from " + filename);
+					System.err.println("Failed to load image from " + url);
 					return;
 				}
 			} else if (dtde.isDataFlavorSupported(DataFlavor.imageFlavor)) {
@@ -271,7 +264,7 @@ public class AwtCanvas extends Canvas implements DragGestureListener,
 			e.printStackTrace();
 			return;
 		}
-		System.out.println(image);
+		//System.out.println(image);
 		
 		// scale aspect-sensitively
 		ImageDataCanvas vc = (ImageDataCanvas) renderer.getCanvas();
@@ -300,7 +293,7 @@ public class AwtCanvas extends Canvas implements DragGestureListener,
 				//RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR, 
 				RenderingHints.VALUE_INTERPOLATION_BILINEAR, 
 				false);
-		System.out.println(scaled.getWidth(null) + " x " +scaled.getHeight(null));
+		//System.out.println(scaled.getWidth(null) + " x " +scaled.getHeight(null));
 		
 		vc.setImageData(scaled);
 		
