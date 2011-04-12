@@ -112,32 +112,37 @@ public class TCFSourceLookupParticipant extends AbstractSourceLookupParticipant 
     private Object[] findSource(String name) throws CoreException {
         name = applyPathMap(name);
         File file = new File(name);
+        Object[] res;
         if (file.isAbsolute() && file.exists() && file.isFile()) {
-            URI uri = URIUtil.toURI(name);
-            IFile[] arr = ResourcesPlugin.getWorkspace().getRoot().findFilesForLocationURI(uri);
-            if (arr != null && arr.length > 0) return arr;
-            return new Object[]{ new LocalFileStorage(file) };
+            res = new Object[]{ new LocalFileStorage(file) };
         }
-        Object[] res = super.findSourceElements(name);
-        if (res == null || res.length == 0) {
-            // Remove file path and search by file base name
-            String base = name;
-            int i = name.lastIndexOf('/');
-            int j = name.lastIndexOf('\\');
-            if (i > j) base = name.substring(i + 1);
-            if (j > i) base = name.substring(j + 1);
-            res = super.findSourceElements(base);
+        else {
+            res = super.findSourceElements(name);
+            if (res == null || res.length == 0) {
+                // Remove file path and search by file base name
+                String base = name;
+                int i = name.lastIndexOf('/');
+                int j = name.lastIndexOf('\\');
+                if (i > j) base = name.substring(i + 1);
+                if (j > i) base = name.substring(j + 1);
+                res = super.findSourceElements(base);
+            }
         }
         ArrayList<Object> list = new ArrayList<Object>();
         for (Object o : res) {
-            if (o instanceof IStorage) {
+            if (o instanceof IStorage && !(o instanceof IFile)) {
                 IPath path = ((IStorage)o).getFullPath();
                 if (path != null) {
                     URI uri = URIUtil.toURI(path);
                     IFile[] arr = ResourcesPlugin.getWorkspace().getRoot().findFilesForLocationURI(uri);
                     if (arr != null && arr.length > 0) {
-                        for (Object x : arr) list.add(x);
-                        continue;
+                        int cnt = list.size();
+                        for (IFile fileResource : arr) {
+                            if (fileResource.isAccessible()) {
+                                list.add(fileResource);
+                            }
+                        }
+                        if (list.size() > cnt) continue;
                     }
                 }
             }
