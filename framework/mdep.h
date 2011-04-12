@@ -108,12 +108,13 @@ extern int __stdcall getaddrinfo(const char *, const char *,
 #include <direct.h>
 #include <errno.h>
 
-#ifndef HAVE_STRUCT_TIMESPEC
+#if !defined(HAVE_STRUCT_TIMESPEC) && !defined(_TIMESPEC_DEFINED)
 struct timespec {
     time_t  tv_sec;         /* seconds */
     long    tv_nsec;        /* nanoseconds */
 };
 #define HAVE_STRUCT_TIMESPEC
+#define _TIMESPEC_DEFINED
 #endif
 
 #define SIGKILL 1
