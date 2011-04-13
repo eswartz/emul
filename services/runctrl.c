@@ -1270,6 +1270,7 @@ static void stop_all_timer(void * args) {
 }
 
 static void sync_run_state() {
+    int err_cnt = 0;
     LINK * l;
     LINK p;
 
@@ -1300,7 +1301,10 @@ static void sync_run_state() {
             EXT(grp)->intercept_group = 1;
             continue;
         }
-        if (ext->step_mode) {
+        if (ext->step_mode == RM_RESUME || ext->step_mode == RM_REVERSE_RESUME) {
+            ext->step_continue_mode = ext->step_mode;
+        }
+        else {
             if (ext->step_channel == NULL) {
                 if (update_step_machine_state(ctx) < 0) {
                     ext->step_error = get_error_report(errno);
@@ -1325,7 +1329,7 @@ static void sync_run_state() {
     /* Stop or continue contexts as needed */
     list_init(&p);
     l = context_root.next;
-    while (run_ctrl_lock_cnt == 0 && l != &context_root) {
+    while (err_cnt == 0 && run_ctrl_lock_cnt == 0 && l != &context_root) {
         Context * ctx = ctxl2ctxp(l);
         Context * grp = context_get_group(ctx, CONTEXT_GROUP_INTERCEPT);
         ContextExtensionRC * ext = EXT(ctx);
@@ -1354,15 +1358,18 @@ static void sync_run_state() {
                 ctx->stopped_by_bp = 0;
                 ctx->stopped_by_cb = NULL;
                 ctx->stopped_by_exception = 1;
+                ctx->pending_intercept = 1;
+                loc_free(ctx->exception_description);
                 ctx->exception_description = loc_strdup(errno_to_str(error));
                 send_context_changed_event(ctx);
+                err_cnt++;
             }
         }
     }
 
     /* Resume contexts with resume mode other then RM_RESUME */
     l = p.next;
-    while (run_ctrl_lock_cnt == 0 && l != &p) {
+    while (err_cnt == 0 && run_ctrl_lock_cnt == 0 && l != &p) {
         Context * ctx = link2ctx(l);
         ContextExtensionRC * ext = EXT(ctx);
         l = l->next;
@@ -1373,12 +1380,22 @@ static void sync_run_state() {
             ctx->stopped_by_bp = 0;
             ctx->stopped_by_cb = NULL;
             ctx->stopped_by_exception = 1;
+            ctx->pending_intercept = 1;
+            loc_free(ctx->exception_description);
             ctx->exception_description = loc_strdup(errno_to_str(error));
             send_context_changed_event(ctx);
+            err_cnt++;
         }
     }
 
     if (safe_event_pid_count > 0 || run_ctrl_lock_cnt > 0) return;
+    if (err_cnt > 0) {
+        if (run_safe_events_posted < 4) {
+            run_safe_events_posted++;
+            post_event(run_safe_events, NULL);
+        }
+        return;
+    }
     send_event_context_suspended();
 }
 

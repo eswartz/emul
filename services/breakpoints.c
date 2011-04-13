@@ -2079,6 +2079,8 @@ static void safe_skip_breakpoint(void * arg) {
         ctx->stopped_by_bp = 0;
         ctx->stopped_by_cb = NULL;
         ctx->stopped_by_exception = 1;
+        ctx->pending_intercept = 1;
+        loc_free(ctx->exception_description);
         ctx->exception_description = loc_strdup(errno_to_str(error));
         send_context_changed_event(ctx);
     }
