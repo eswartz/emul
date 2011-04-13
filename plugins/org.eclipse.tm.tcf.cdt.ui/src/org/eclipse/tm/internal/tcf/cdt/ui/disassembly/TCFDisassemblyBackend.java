@@ -238,7 +238,7 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
         if (context instanceof TCFNodeExecContext) {
             newContext = (TCFNodeExecContext) context;
             final TCFNodeExecContext _execContext = newContext;
-            frame = new TCFTask<TCFNodeStackFrame>() {
+            frame = new TCFTask<TCFNodeStackFrame>(_execContext.getChannel()) {
                 public void run() {
                     TCFChildrenStackTrace stack = _execContext.getStackTrace();
                     if (!stack.validate(this)) {
@@ -252,7 +252,7 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
             }
         } else if (context instanceof TCFNodeStackFrame) {
             final TCFNodeStackFrame _frame = frame = (TCFNodeStackFrame) context;
-            newContext = new TCFTask<TCFNodeExecContext>() {
+            newContext = new TCFTask<TCFNodeExecContext>(_frame.getChannel()) {
                 public void run() {
                     TCFNode parent = _frame.getParent();
                     if (parent instanceof TCFNodeExecContext) {
@@ -351,7 +351,7 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
         } else {
             final int suspendCount = fSuspendCount;
             final TCFChildrenStackTrace stack = execContext.getStackTrace();
-            address = new TCFTask<BigInteger>() {
+            address = new TCFTask<BigInteger>(execContext.getChannel()) {
                 public void run() {
                     if (suspendCount != fSuspendCount || execContext != fExecContext) {
                         done(null);
@@ -416,7 +416,7 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
         if (fExecContext == null) {
             return false;
         }
-        Boolean suspended = new TCFTask<Boolean>() {
+        Boolean suspended = new TCFTask<Boolean>(fExecContext.getChannel()) {
             public void run() {
                 if (fExecContext == null) {
                     done(null);
@@ -446,7 +446,7 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
         if (frame == null) {
             return null;
         }
-        String file = new TCFTask<String>() {
+        String file = new TCFTask<String>(frame.getChannel()) {
             public void run() {
                 if (frame != fActiveFrame) {
                     done(null);
@@ -479,7 +479,7 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
         if (frame == null) {
             return -1;
         }
-        Integer line = new TCFTask<Integer>() {
+        Integer line = new TCFTask<Integer>(frame.getChannel()) {
             public void run() {
                 if (frame != fActiveFrame) {
                     done(null);
@@ -883,7 +883,7 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
         if (activeFrame == null) {
             return null;
         }
-        String value = new TCFTask<String>() {
+        String value = new TCFTask<String>(activeFrame.getChannel()) {
             public void run() {
                 if (activeFrame != fActiveFrame) {
                     done(null);
