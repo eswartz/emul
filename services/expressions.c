@@ -1506,7 +1506,7 @@ static void cast_expression(int mode, Value * v) {
                 uint64_t value = to_uns(mode, v);
                 v->type = type;
                 v->type_class = type_class;
-                set_int_value(v, type_size, value);
+                set_int_value(v, (size_t)type_size, value);
             }
             break;
         case TYPE_CLASS_INTEGER:
@@ -1515,7 +1515,7 @@ static void cast_expression(int mode, Value * v) {
                 int64_t value = to_int(mode, v);
                 v->type = type;
                 v->type_class = type_class;
-                set_int_value(v, type_size, value);
+                set_int_value(v, (size_t)type_size, value);
             }
             break;
         case TYPE_CLASS_REAL:
@@ -1523,7 +1523,7 @@ static void cast_expression(int mode, Value * v) {
                 double value = to_double(mode, v);
                 v->type = type;
                 v->type_class = type_class;
-                set_fp_value(v, type_size, value);
+                set_fp_value(v, (size_t)type_size, value);
             }
             break;
         case TYPE_CLASS_ARRAY:
@@ -1649,7 +1649,7 @@ static void additive_expression(int mode, Value * v) {
                 case '+': value = to_uns(mode, v) + to_uns(mode, &x) * size; break;
                 case '-': value = to_uns(mode, v) - to_uns(mode, &x) * size; break;
                 }
-                set_int_value(v, v->size, value);
+                set_int_value(v, (size_t)v->size, value);
             }
             else if (is_number(v) && x.type_class == TYPE_CLASS_POINTER && sy == '+') {
                 uint64_t value = 0;
@@ -1662,7 +1662,7 @@ static void additive_expression(int mode, Value * v) {
                 value = to_uns(mode, &x) + to_uns(mode, v) * size;
                 v->type = x.type;
                 v->type_class = TYPE_CLASS_POINTER;
-                set_int_value(v, x.size, value);
+                set_int_value(v, (size_t)x.size, value);
             }
 #endif
             else if (!is_number(v) || !is_number(&x)) {
