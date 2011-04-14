@@ -274,17 +274,17 @@ static void remove_instruction(BreakInstruction * bi) {
     assert(bi->planted);
     assert(bi->planting_error == NULL);
     assert(is_all_stopped(bi->cb.ctx));
-    if (!bi->cb.ctx->exited) {
-        if (bi->saved_size) {
+    if (bi->saved_size) {
+        if (!bi->cb.ctx->exited) {
             planting_instruction = 1;
             if (context_write_mem(bi->cb.ctx, bi->cb.address, bi->saved_code, bi->saved_size) < 0) {
                 bi->planting_error = get_error_report(errno);
             }
             planting_instruction = 0;
         }
-        else if (context_unplant_breakpoint(&bi->cb) < 0) {
-            bi->planting_error = get_error_report(errno);
-        }
+    }
+    else if (context_unplant_breakpoint(&bi->cb) < 0) {
+        bi->planting_error = get_error_report(errno);
     }
     bi->planted = 0;
 }

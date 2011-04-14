@@ -1224,7 +1224,7 @@ int context_unplant_breakpoint(ContextBreakpoint * bp) {
 #if USE_HW_BPS
     int i;
     Context * ctx = bp->ctx;
-    if (ctx->mem == ctx) {
+    if (ctx->mem == ctx && !ctx->exited) {
         ContextExtensionWin32 * ext = EXT(ctx);
         DebugState * debug_state = ext->debug_state;
         for (i = 0; i < MAX_HW_BPS; i++) {
