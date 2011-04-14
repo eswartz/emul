@@ -31,7 +31,8 @@ v-data
       +1field  v-blink       \ if set, set blink flag for text2 chars 
     
       +field  v-allocinfo    \ list of memory allocations for page 0
-    
+|+    +field  v-page         \ current page offset
+      
       +1field v-rwpage       \ current r/w page
       +1field v-vispage      \ current visible page
       +1field v-pob          \ page offset bank -- for >64K access
@@ -449,6 +450,7 @@ include video_msx.fi
     
     :> offs
     
+    offs    v-page !
     offs    v-screen +!
     offs    v-patts +!
     offs    v-colors +!

@@ -125,9 +125,6 @@ Create TextFunctions
 Create TextModeParams
     v-screen    , 0 ,       v-screensz  , 960 ,
     v-patts     , $800 ,    v-pattsz    , $800 ,
-    v-colors    , $0 ,      v-colorsz   , $0 ,
-    v-sprites   , $0 ,      v-sprcol    , $0 ,
-    v-sprpat    , $0 ,      v-sprmot    , $0 ,
     v-free      , $1000 ,   v-pagesize  , $1000 ,
 
     v-width     , 40 ,      v-height    , 24 ,
@@ -247,8 +244,6 @@ Create Text2ModeParams
     v-screen    , 0 ,       v-screensz  , $870 ,
     v-colors    , $a00 ,    v-colorsz   , $870 8 / ,
     v-patts     , $1000 ,   v-pattsz    , $800 ,
-    v-sprites   , 0 ,       v-sprcol    , 0 ,
-    v-sprpat    , 0 ,       v-sprmot    , 0 , 
     v-free      , $1800 ,   v-pagesize  , $2000 ,
      
     v-width     , 80 ,      v-height    , 26 ,
