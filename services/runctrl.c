@@ -57,6 +57,7 @@ typedef struct ContextExtensionRC {
     int intercepted;        /* context is reported to a host as suspended */
     int intercepted_by_bp;  /* intercept counter - only first intercept should report "Breakpoint" reason */
     int intercept_group;
+    int reverse_run;
     int step_mode;
     int step_cnt;
     int step_line_cnt;
@@ -502,7 +503,7 @@ static void cancel_step_mode(Context * ctx) {
     ext->step_frame = 0;
     ext->step_bp_addr = 0;
     ext->step_continue_mode = RM_RESUME;
-    ext->step_mode = 0;
+    ext->step_mode = RM_RESUME;
 }
 
 static void start_step_mode(Context * ctx, Channel * c, int mode, ContextAddress range_start, ContextAddress range_end) {
@@ -530,9 +531,25 @@ static void start_step_mode(Context * ctx, Channel * c, int mode, ContextAddress
 int continue_debug_context(Context * ctx, Channel * c,
                            int mode, int count, ContextAddress range_start, ContextAddress range_end) {
     ContextExtensionRC * ext = EXT(ctx);
+    Context * grp = context_get_group(ctx, CONTEXT_GROUP_INTERCEPT);
     int err = 0;
 
-    start_step_mode(ctx, c, mode, range_start, range_end);
+    EXT(grp)->reverse_run = 0;
+    switch (mode) {
+    case RM_REVERSE_RESUME:
+    case RM_REVERSE_STEP_OVER:
+    case RM_REVERSE_STEP_INTO:
+    case RM_REVERSE_STEP_OVER_LINE:
+    case RM_REVERSE_STEP_INTO_LINE:
+    case RM_REVERSE_STEP_OUT:
+    case RM_REVERSE_STEP_OVER_RANGE:
+    case RM_REVERSE_STEP_INTO_RANGE:
+    case RM_REVERSE_UNTIL_ACTIVE:
+        EXT(grp)->reverse_run = 1;
+        break;
+    }
+
+    if (context_has_state(ctx)) start_step_mode(ctx, c, mode, range_start, range_end);
 
     if (ctx->exited) {
         err = ERR_ALREADY_EXITED;
@@ -1351,7 +1368,7 @@ static void sync_run_state() {
             if (ext->step_continue_mode != RM_RESUME) {
                 list_add_last(&ext->link, &p);
             }
-            else if (context_resume(ctx, ext->step_continue_mode, 0, 0) < 0) {
+            else if (context_resume(ctx, EXT(grp)->reverse_run ? RM_REVERSE_RESUME : RM_RESUME, 0, 0) < 0) {
                 int error = set_errno(errno, "Cannot resume");
                 ctx->signal = 0;
                 ctx->stopped = 1;
