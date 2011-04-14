@@ -19,18 +19,32 @@
 #ifndef D_registers
 #define D_registers
 
-#include <framework/protocol.h>
+#include <config.h>
 
+#if SERVICE_Registers
+
+#include <framework/protocol.h>
+#include <framework/cpudefs.h>
 
 /*
  * Notify clients about register value change.
  */
 extern void send_event_register_changed(const char * id);
 
+typedef struct RegistersEventListener {
+    void (*register_changed)(Context * ctx, int frame, RegisterDefinition * def, void * args);
+} RegistersEventListener;
+
+/*
+ * Add a listener for Registers service events.
+ */
+extern void add_registers_event_listener(RegistersEventListener * listener, void * args);
+
 /*
  * Initialize registers service.
  */
 extern void ini_registers_service(Protocol *, TCFBroadcastGroup *);
 
+#endif /* SERVICE_Registers */
 
 #endif /* D_registers */

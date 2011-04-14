@@ -37,6 +37,15 @@ static const char * REGISTERS = "Registers";
 
 static TCFBroadcastGroup * broadcast_group = NULL;
 
+typedef struct Listener {
+    RegistersEventListener * func;
+    void * args;
+} Listener;
+
+static Listener * listeners = NULL;
+static unsigned listener_cnt = 0;
+static unsigned listener_max = 0;
+
 static uint8_t * bbf = NULL;
 static unsigned bbf_pos = 0;
 static unsigned bbf_len = 0;
@@ -304,7 +313,20 @@ static void command_get_children(char * token, Channel * c) {
 }
 
 void send_event_register_changed(const char * id) {
+    unsigned i;
+    Context * ctx = NULL;
+    int frame = STACK_NO_FRAME;
+    RegisterDefinition * def = NULL;
     OutputStream * out = &broadcast_group->out;
+
+    id2register(id, &ctx, &frame, &def);
+
+    for (i = 0; i < listener_cnt; i++) {
+        Listener * l = listeners + i;
+        if (l->func->register_changed == NULL) continue;
+        l->func->register_changed(ctx, frame, def, l->args);
+    }
+
     write_stringz(out, "E");
     write_stringz(out, REGISTERS);
     write_stringz(out, "registerChanged");
@@ -614,6 +636,16 @@ static void command_search(char * token, Channel * c) {
     write_errno(&c->out, ERR_UNSUPPORTED);
     write_stringz(&c->out, "null");
     write_stream(&c->out, MARKER_EOM);
+}
+
+void add_registers_event_listener(RegistersEventListener * listener, void * args) {
+    if (listener_cnt >= listener_max) {
+        listener_max += 8;
+        listeners = (Listener *)loc_realloc(listeners, listener_max * sizeof(Listener));
+    }
+    listeners[listener_cnt].func = listener;
+    listeners[listener_cnt].args = args;
+    listener_cnt++;
 }
 
 void ini_registers_service(Protocol * proto, TCFBroadcastGroup * bcg) {
