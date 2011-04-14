@@ -32,6 +32,7 @@
 #include <framework/json.h>
 #include <framework/cache.h>
 #include <framework/exceptions.h>
+#include <services/registers.h>
 #include <services/stacktrace.h>
 #include <services/symbols.h>
 
@@ -430,6 +431,10 @@ static void flush_stack_trace(Context * ctx, void * args) {
     invalidate_stack_trace(EXT(ctx));
 }
 
+static void flush_on_register_change(Context * ctx, int frame, RegisterDefinition * def, void * args) {
+    invalidate_stack_trace(EXT(ctx));
+}
+
 static void delete_stack_trace(Context * ctx, void * args) {
     invalidate_stack_trace(EXT(ctx));
     loc_free(EXT(ctx)->frames);
@@ -437,7 +442,7 @@ static void delete_stack_trace(Context * ctx, void * args) {
 }
 
 void ini_stack_trace_service(Protocol * proto, TCFBroadcastGroup * bcg) {
-    static ContextEventListener listener = {
+    static ContextEventListener context_listener = {
         NULL,
         flush_stack_trace,
         NULL,
@@ -445,7 +450,11 @@ void ini_stack_trace_service(Protocol * proto, TCFBroadcastGroup * bcg) {
         flush_stack_trace,
         delete_stack_trace
     };
-    add_context_event_listener(&listener, bcg);
+    static RegistersEventListener registers_listener = {
+        flush_on_register_change,
+    };
+    add_context_event_listener(&context_listener, bcg);
+    add_registers_event_listener(&registers_listener, bcg);
     add_command_handler(proto, STACKTRACE, "getContext", command_get_context);
     add_command_handler(proto, STACKTRACE, "getChildren", command_get_children);
     context_extension_offset = context_extension(sizeof(StackTrace));
