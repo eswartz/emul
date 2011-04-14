@@ -153,6 +153,11 @@ static RegisterRules * get_reg(StackFrameRegisters * regs, int reg) {
                 break;
             }
             break;
+        case EM_PPC:
+            if (n == 1 || (n >= 14 && n <= 31) || (n >= 46 && n <= 63)) {
+                regs->regs[n].rule = RULE_SAME_VALUE;
+            }
+            break;
         }
     }
     return regs->regs + reg;
@@ -628,7 +633,11 @@ static void generate_commands(void) {
     RegisterDefinition * reg_def;
 
     reg = get_reg(&frame_regs, rules.return_address_register);
-    if (reg->rule != 0) generate_register_commands(reg, get_PC_definition(rules.ctx));
+    if (reg->rule == 0) {
+        reg->rule = RULE_REGISTER;
+        reg->offset = rules.return_address_register;
+    }
+    generate_register_commands(reg, get_PC_definition(rules.ctx));
     for (i = 0; i < frame_regs.regs_cnt; i++) {
         if (i == rules.return_address_register) continue;
         reg = get_reg(&frame_regs, i);
