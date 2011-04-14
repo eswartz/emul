@@ -53,6 +53,7 @@ PROP_OFFSET = "Offset"
 PROP_ADDRESS = "Address"
 PROP_VALUE = "Value"
 PROP_BIG_ENDIAN = "BigEndian"
+PROP_REGISTER = "Register"
 
 #
 # Symbol context properties update policies.
@@ -215,6 +216,13 @@ class Symbol(object):
         """
         return self._props.get(PROP_BIG_ENDIAN, False)
 
+    def getRegisterID(self):
+        """
+        Return register ID if the symbol represents a register variable.
+        @return register ID or null.
+        """
+        return self._props.get(PROP_REGISTER)
+        
     def getProperties(self):
         """
         Get complete map of context properties.

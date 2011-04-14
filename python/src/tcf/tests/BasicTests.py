@@ -45,9 +45,11 @@ def test():
         testSymbols(c)
         testRegisters(c)
         testExpressions(c)
+        testLineNumbers(c)
         testSyncCommands(c)
         testEvents(c)
         testDataCache(c)
+        testProcesses(c)
     except exceptions.Exception as e:
         protocol.log(e)
 
@@ -237,6 +239,7 @@ def testSymbols(c):
         protocol.invokeLater(symTest, ctx_id)
 
 def testRegisters(c):
+    if not _suspended: return
     from tcf.services import registers
     lock = threading.Condition()
     def regTest(ctx_id):
@@ -305,6 +308,22 @@ def testExpressions(c):
     val, cls = exprs.evaluate(id).getE()
     print e.get(expressions.PROP_EXPRESSION), "=", val
     exprs.dispose(id)
+
+def testLineNumbers(c):
+    if not _suspended: return
+    from tcf.services import linenumbers
+    from tcf.services import stacktrace
+    ctl = sync.CommandControl(c)
+    stack = ctl.StackTrace
+    lineNumbers = ctl.LineNumbers
+    for ctx_id in _suspended:
+        bt = stack.getChildren(ctx_id).get()
+        if bt:
+            bt = stack.getContext(bt).get()
+            for frame in bt:
+                addr = frame.get(stacktrace.PROP_INSTRUCTION_ADDRESS)
+                area = lineNumbers.mapToSource(ctx_id, addr, addr+1).get()
+                print "Frame %d - CodeArea: %s" % (frame.get(stacktrace.PROP_LEVEL), area)
 
 def testSyncCommands(c):
     # simplified command execution
@@ -377,6 +396,21 @@ def testDataCache(c):
     def done():
         print "ContextsCache is valid:", contextsCache.getData()
     protocol.invokeLater(contextsCache.validate, done)
+
+def testProcesses(c):
+    from tcf.services import processes
+    def processTest():
+        proc = c.getRemoteService(processes.NAME)
+        if not proc:
+            return
+        class DoneGetChildren(processes.DoneGetChildren):
+            def doneGetChildren(self, token, error, context_ids):
+                if error:
+                    protocol.log("Error from Processes.GetChildren", error)
+                else:
+                    print "Processes:", context_ids
+        proc.getChildren(None, DoneGetChildren())
+    protocol.invokeLater(processTest)
 
 if __name__ == '__main__':
     test()
