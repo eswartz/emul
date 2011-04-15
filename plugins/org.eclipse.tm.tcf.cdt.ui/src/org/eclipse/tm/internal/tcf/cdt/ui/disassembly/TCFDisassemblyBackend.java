@@ -40,6 +40,7 @@ import org.eclipse.tm.internal.tcf.cdt.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
 import org.eclipse.tm.internal.tcf.debug.model.TCFSourceRef;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFChildrenStackTrace;
+import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModel;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExecContext;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeStackFrame;
@@ -551,7 +552,7 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
                                         return;
                                     }
                                     if (modCount == getModCount()) {
-                                        fCallback.insertError(startAddress, error.toString());
+                                        fCallback.insertError(startAddress, TCFModel.getErrorMessage(error, false));
                                         fCallback.setUpdatePending(false);
                                     }
                                 }
