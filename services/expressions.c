@@ -640,6 +640,7 @@ static int sym2value(Symbol * sym, Value * v) {
             }
         }
         else {
+            v->big_endian = expression_context->big_endian;
             if (get_symbol_size(sym, &v->size) < 0) {
                 error(errno, "Cannot retrieve symbol size");
             }
