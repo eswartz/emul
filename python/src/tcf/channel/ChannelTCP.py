@@ -57,6 +57,11 @@ class ChannelTCP(StreamChannel):
         if self.closed: return -1
         try:
             return self.socket.recv_into(buf)
+        except TypeError:
+            # see http://bugs.python.org/issue7827
+            # use super implementation
+            self.getBuf = super(ChannelTCP, self).getBuf
+            return self.getBuf(buf)
         except socket.error as x:
             if self.closed: return -1
             raise x
