@@ -2030,6 +2030,33 @@ int value_to_address(Value * v, ContextAddress * res) {
     return 0;
 }
 
+int value_to_signed(Value *v, int64_t *res) {
+    Trap trap;
+    if (!set_trap(&trap))
+        return -1;
+    *res = to_int(MODE_NORMAL, v);
+    clear_trap(&trap);
+    return 0;
+}
+
+int value_to_unsigned(Value *v, uint64_t *res) {
+    Trap trap;
+    if (!set_trap(&trap))
+        return -1;
+    *res = to_uns(MODE_NORMAL, v);
+    clear_trap(&trap);
+    return 0;
+}
+
+int value_to_double(Value *v, double *res) {
+    Trap trap;
+    if (!set_trap(&trap))
+        return -1;
+    *res = to_double(MODE_NORMAL, v);
+    clear_trap(&trap);
+    return 0;
+}
+
 /********************** Commands **************************/
 
 typedef struct CommandArgs {
