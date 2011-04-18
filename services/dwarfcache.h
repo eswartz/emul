@@ -174,6 +174,8 @@ struct CompUnit {
     LineNumbersState ** mStatesIndex;
 
     CompUnit * mBaseTypes;
+
+    U1_T mARangesFound;
 };
 
 /* Address range of a compilation unit. A unit can occupy multiple address ranges. */

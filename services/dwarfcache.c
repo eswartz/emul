@@ -474,6 +474,7 @@ static void load_addr_ranges() {
                             while (info != NULL && info->mCompUnit->mDesc.mUnitOffs != offs) info = info->mSibling;
                         }
                         if (info == NULL) str_exception(ERR_INV_DWARF, "invalid .debug_aranges section");
+                        info->mCompUnit->mARangesFound = 1;
                         while (dio_GetPos() % (addr_size * 2) != 0) dio_Skip(1);
                         for (;;) {
                             ELF_Section * range_sec = NULL;
@@ -492,13 +493,14 @@ static void load_addr_ranges() {
         }
     }
     if (trap.error) exception(trap.error);
-    if (sCache->mAddrRangesCnt == 0) {
+    if (sCache->mCompUnits != NULL) {
         ObjectInfo * info = sCache->mCompUnits;
         while (info != NULL) {
             CompUnit * unit = info->mCompUnit;
             ContextAddress base = unit->mLowPC;
             ContextAddress size = unit->mHighPC - unit->mLowPC;
             info = info->mSibling;
+            if (unit->mARangesFound) continue;
             if (size == 0) continue;
             if (unit->mDebugRangesOffs != ~(U8_T)0 && debug_ranges != NULL) {
                 dio_EnterSection(&unit->mDesc, debug_ranges, unit->mDebugRangesOffs);
