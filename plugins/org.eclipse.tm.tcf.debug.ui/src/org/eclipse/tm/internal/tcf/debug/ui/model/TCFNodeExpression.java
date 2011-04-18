@@ -310,7 +310,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                                     set(command, error, null);
                                 }
                                 else if (buf[offs] == 0 || offs >= 2048) {
-                                    set(command, null, toASCIIString(buf, 0, offs));
+                                    set(command, null, toASCIIString(buf, 0, offs, '"'));
                                 }
                                 else if (command == token) {
                                     command = null;
@@ -372,7 +372,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                                     if (v != null) {
                                         byte[] data = v.getValue();
                                         if (type_data.getTypeClass() == ISymbols.TypeClass.array) {
-                                            set(null, null, toASCIIString(data, 0, data.length));
+                                            set(null, null, toASCIIString(data, 0, data.length, '"'));
                                             return true;
                                         }
                                         BigInteger a = toBigInteger(data, 0, data.length, v.isBigEndian(), false);
@@ -385,6 +385,19 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                                 }
                             }
                         }
+                        break;
+                    case integer:
+                    case cardinal:
+                        if (type_data.getSize() == 1) {
+                            if (!value.validate(this)) return false;
+                            IExpressions.Value v = value.getData();
+                            if (v != null) {
+                                byte[] data = v.getValue();
+                                set(null, null, toASCIIString(data, 0, data.length, '\''));
+                                return true;
+                            }
+                        }
+                        break;
                     }
                 }
                 set(null, null, null);
@@ -620,9 +633,9 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         return true;
     }
 
-    private String toASCIIString(byte[] data, int offs, int size) {
+    private String toASCIIString(byte[] data, int offs, int size, char quote_char) {
         StringBuffer bf = new StringBuffer();
-        bf.append('"');
+        bf.append(quote_char);
         for (int i = 0; i < size; i++) {
             int ch = data[offs + i] & 0xff;
             if (ch >= ' ' && ch < 0x7f) {
@@ -643,7 +656,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                 }
             }
         }
-        if (data.length <= offs + size || data[offs + size] == 0) bf.append('"');
+        if (data.length <= offs + size || data[offs + size] == 0) bf.append(quote_char);
         else bf.append("...");
         return bf.toString();
     }
