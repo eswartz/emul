@@ -37,6 +37,8 @@
  * When function returns, dwarf_stack_trace_fp contains commands to calculate frame address,
  * and dwarf_stack_trace_regs contains commands to calculate register values.
  * In case of error reading frame data, the function throws an exception.
+ *
+ * 'ip' is link-time instruction address.
  */
 extern void get_dwarf_stack_frame_info(Context * ctx, ELF_File * file, U8_T ip);
 

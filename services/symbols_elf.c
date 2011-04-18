@@ -294,7 +294,7 @@ static int find_in_object_tree(ObjectInfo * list, ContextAddress ip, const char 
 }
 
 static int find_in_dwarf(const char * name, Symbol ** sym) {
-    UnitAddressRange * range = elf_find_unit(sym_ctx, sym_ip, sym_ip + 1, NULL);
+    UnitAddressRange * range = elf_find_unit(sym_ctx, sym_ip, sym_ip, NULL);
     *sym = NULL;
     if (range != NULL) {
         CompUnit * unit = range->mUnit;
@@ -353,7 +353,7 @@ static int find_by_name_in_sym_table(DWARFCache * cache, char * name, Symbol ** 
                 ContextAddress addr = 0;
                 if (syminfo2address(prs, &sym_info, &addr) == 0 && addr != 0) {
                     int found = 0;
-                    UnitAddressRange * range = elf_find_unit(sym_ctx, addr, addr + 1, NULL);
+                    UnitAddressRange * range = elf_find_unit(sym_ctx, addr, addr, NULL);
                     if (range != NULL) {
                         ObjectInfo * obj = range->mUnit->mObject->mChildren;
                         while (obj != NULL) {
@@ -792,12 +792,12 @@ int find_symbol_by_addr(Context * ctx, int frame, ContextAddress addr, Symbol **
     if (!set_trap(&trap)) return -1;
     if (frame == STACK_TOP_FRAME && (frame = get_top_frame(ctx)) < 0) exception(errno);
     if (get_sym_context(ctx, frame, addr) < 0) exception(errno);
-    range = elf_find_unit(sym_ctx, addr, addr + 1, NULL);
+    range = elf_find_unit(sym_ctx, addr, addr, NULL);
     if (range != NULL) found = find_by_addr_in_unit(range->mUnit->mObject->mChildren, 0, addr, res);
     if (!found) found = find_by_addr_in_sym_tables(addr, res);
     if (!found && sym_ip != 0) {
         /* Search in compilation unit that contains stack frame PC */
-        range = elf_find_unit(sym_ctx, sym_ip, sym_ip + 1, NULL);
+        range = elf_find_unit(sym_ctx, sym_ip, sym_ip, NULL);
         if (range != NULL) found = find_by_addr_in_unit(range->mUnit->mObject->mChildren, 0, addr, res);
     }
     if (!found) exception(ERR_SYM_NOT_FOUND);
@@ -838,7 +838,7 @@ int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * call_
     if (frame == STACK_TOP_FRAME && (frame = get_top_frame(ctx)) < 0) exception(errno);
     if (get_sym_context(ctx, frame, 0) < 0) exception(errno);
     if (sym_ip != 0) {
-        UnitAddressRange * range = elf_find_unit(sym_ctx, sym_ip, sym_ip + 1, NULL);
+        UnitAddressRange * range = elf_find_unit(sym_ctx, sym_ip, sym_ip, NULL);
         if (range != NULL) enumerate_local_vars(range->mUnit->mObject->mChildren, 0, call_back, args);
     }
     clear_trap(&trap);
@@ -1003,21 +1003,25 @@ ContextAddress is_plt_section(Context * ctx, ContextAddress addr) {
     return res;
 }
 
-int get_stack_tracing_info(Context * ctx, ContextAddress addr, StackTracingInfo ** info) {
+int get_stack_tracing_info(Context * ctx, ContextAddress rt_addr, StackTracingInfo ** info) {
     /* TODO: no debug info exists for linux-gate.so, need to read stack tracing information from the kernel  */
     /* TODO: support for separate debug info files */
-    ELF_File * file = elf_list_first(ctx, addr, addr);
+    ELF_File * file = NULL;
+    ELF_Section * sec = NULL;
+    ContextAddress lt_addr = 0;
     int error = 0;
+    Trap trap;
 
     *info = NULL;
 
-    while (error == 0 && file != NULL) {
-        Trap trap;
+    lt_addr = elf_map_to_link_time_address(ctx, rt_addr, &file, &sec);
+    if (file != NULL) {
+        assert(rt_addr == elf_map_to_run_time_address(ctx, file, sec, lt_addr));
         if (set_trap(&trap)) {
-            get_dwarf_stack_frame_info(ctx, file, addr);
+            get_dwarf_stack_frame_info(ctx, file, lt_addr);
             if (dwarf_stack_trace_fp->cmds_cnt > 0) {
                 static StackTracingInfo buf;
-                buf.addr = (ContextAddress)dwarf_stack_trace_addr;
+                buf.addr = (ContextAddress)dwarf_stack_trace_addr - lt_addr + rt_addr;
                 buf.size = (ContextAddress)dwarf_stack_trace_size;
                 buf.fp = dwarf_stack_trace_fp;
                 buf.regs = dwarf_stack_trace_regs;
@@ -1029,11 +1033,8 @@ int get_stack_tracing_info(Context * ctx, ContextAddress addr, StackTracingInfo 
         else {
             error = trap.error;
         }
-        if (error || *info != NULL) break;
-        file = elf_list_next(ctx);
-        if (file == NULL) error = errno;
     }
-    elf_list_done(ctx);
+
     if (error) {
         errno = error;
         return -1;

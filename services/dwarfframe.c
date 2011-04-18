@@ -802,14 +802,13 @@ void get_dwarf_stack_frame_info(Context * ctx, ELF_File * file, U8_T IP) {
         else if (fde_dwarf64) fde_flag = cie_ref != ~(U8_T)0;
         else fde_flag = cie_ref != ~(U4_T)0;
         if (fde_flag) {
-            U8_T Addr, Range, AddrRT;
+            U8_T Addr, Range;
             ELF_Section * sec = NULL;
             if (rules.eh_frame) cie_ref = ref_pos - cie_ref;
             if (cie_ref != rules.cie_pos) read_frame_cie(fde_pos, cie_ref);
             Addr = read_frame_data_pointer(rules.addr_encoding, &sec);
             Range = read_frame_data_pointer(rules.addr_encoding, NULL);
-            AddrRT = elf_map_to_run_time_address(ctx, file, sec, (ContextAddress)Addr);
-            if (AddrRT != 0 && AddrRT <= IP && AddrRT + Range > IP) {
+            if (Addr <= IP && Addr + Range > IP) {
                 U8_T location0 = Addr;
                 if (rules.cie_aug != NULL && rules.cie_aug[0] == 'z') {
                     rules.fde_aug_length = dio_ReadULEB128();
@@ -825,11 +824,11 @@ void get_dwarf_stack_frame_info(Context * ctx, ELF_File * file, U8_T IP) {
                         break;
                     }
                     exec_stack_frame_instruction();
-                    assert(location0 - Addr + AddrRT <= IP);
-                    if (rules.location - Addr + AddrRT > IP) break;
+                    assert(location0 <= IP);
+                    if (rules.location > IP) break;
                     location0 = rules.location;
                 }
-                dwarf_stack_trace_addr = location0 - Addr + AddrRT;
+                dwarf_stack_trace_addr = location0;
                 dwarf_stack_trace_size = rules.location - location0;
                 generate_commands();
                 break;
