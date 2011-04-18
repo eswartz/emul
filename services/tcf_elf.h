@@ -504,6 +504,12 @@ extern void elf_add_close_listener(ELFCloseListener listener);
 extern ContextAddress elf_map_to_run_time_address(Context * ctx, ELF_File * file, ELF_Section * section, ContextAddress addr);
 
 /*
+ * Map run-time address in a context to link time address in an ELF file.
+ * Return 0 if the address is not currently mapped.
+ */
+extern ContextAddress elf_map_to_link_time_address(Context * ctx, ContextAddress addr, ELF_File ** file, ELF_Section ** sec);
+
+/*
  * Read a word from context memory. Word size and endianess are determened by ELF file.
  */
 extern int elf_read_memory_word(Context * ctx, ELF_File * file, ContextAddress addr, ContextAddress * word);
@@ -516,7 +522,7 @@ extern int elf_read_memory_word(Context * ctx, ELF_File * file, ContextAddress a
 extern ContextAddress elf_get_debug_structure_address(Context * ctx, ELF_File ** file);
 
 /*
- * Search and return first compilation unit address range in given run-time address range 'addr_min'..'addr_max'.
+ * Search and return first compilation unit address range in given run-time address range 'addr_min'..'addr_max' (inclusive).
  * If 'range_rt_addr' not NULL, *range_rt_addr is assigned run-time address of the range.
  */
 extern struct UnitAddressRange * elf_find_unit(Context * ctx, ContextAddress addr_min, ContextAddress addr_max, ContextAddress * range_rt_addr);

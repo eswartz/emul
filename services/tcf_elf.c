@@ -731,7 +731,7 @@ static void search_regions(MemoryMap * map, ContextAddress addr0, ContextAddress
                 for (j = 0; j < file->pheader_cnt; j++) {
                     ELF_PHeader * p = file->pheaders + j;
                     if (p->type != PT_LOAD) continue;
-                    if (p->address <= addr1 && p->address + p->mem_size >= addr0) {
+                    if (p->address <= addr1 && p->address + p->mem_size > addr0) {
                         MemoryRegion x;
                         memset(&x, 0, sizeof(x));
                         x.addr = p->address;
@@ -746,7 +746,7 @@ static void search_regions(MemoryMap * map, ContextAddress addr0, ContextAddress
                 }
             }
         }
-        else if (r->addr <= addr1 && r->addr + r->size >= addr0) {
+        else if (r->addr <= addr1 && r->addr + r->size > addr0) {
             add_region(res, r);;
         }
     }
@@ -793,10 +793,10 @@ ELF_File * elf_open_inode(Context * ctx, dev_t dev, ino_t ino, int64_t mtime) {
     return NULL;
 }
 
-ELF_File * elf_list_first(Context * ctx, ContextAddress addr0, ContextAddress addr1) {
+ELF_File * elf_list_first(Context * ctx, ContextAddress addr_min, ContextAddress addr_max) {
     elf_list_ctx = ctx;
     elf_list_pos = 0;
-    if (get_map(ctx, addr0, addr1, &elf_list) < 0) return NULL;
+    if (get_map(ctx, addr_min, addr_max, &elf_list) < 0) return NULL;
     if (elf_list.region_cnt > 0) {
         ELF_File * f = files;
         while (f != NULL) {
@@ -846,8 +846,8 @@ UnitAddressRange * elf_find_unit(Context * ctx, ContextAddress addr_min, Context
         ContextAddress link_addr_min, link_addr_max;
         MemoryRegion * r = elf_map.regions + i;
         ELF_File * file = NULL;
-        if (r->addr >= addr_max) continue;
-        if (r->addr + r->size <= addr_min) continue;
+        assert(r->addr <= addr_max);
+        assert(r->addr + r->size > addr_min);
         file = open_memory_region_file(r, &error);
         if (error) exception(error);
         if (r->sect_name == NULL) {
@@ -962,6 +962,51 @@ ContextAddress elf_map_to_run_time_address(Context * ctx, ELF_File * file, ELF_S
         }
         else if (sec != NULL && strcmp(sec->name, r->sect_name) == 0) {
             return (ContextAddress)(addr - sec->addr + r->addr);
+        }
+    }
+    return 0;
+}
+
+ContextAddress elf_map_to_link_time_address(Context * ctx, ContextAddress addr, ELF_File ** file, ELF_Section ** sec) {
+    unsigned i;
+
+    if (get_map(ctx, addr, addr, &elf_map) < 0) return 0;
+    for (i = 0; i < elf_map.region_cnt; i++) {
+        MemoryRegion * r = elf_map.regions + i;
+        ELF_File * f = NULL;
+        assert(r->addr <= addr);
+        assert(r->addr + r->size > addr);
+        f = *file = open_memory_region_file(r, NULL);
+        if (f == NULL) continue;
+        if (r->sect_name == NULL) {
+            unsigned j;
+            if (f->pheader_cnt == 0 && f->type == ET_EXEC) {
+                *sec = NULL;
+                return addr;
+            }
+            for (j = 0; j < f->pheader_cnt; j++) {
+                U8_T offs = addr - r->addr + r->file_offs;
+                ELF_PHeader * p = f->pheaders + j;
+                if (p->type != PT_LOAD) continue;
+                if (offs < p->offset || offs >= p->offset + p->file_size) continue;
+                if (r->flags) {
+                    if ((p->flags & PF_R) && !(r->flags & MM_FLAG_R)) continue;
+                    if ((p->flags & PF_W) && !(r->flags & MM_FLAG_W)) continue;
+                    if ((p->flags & PF_X) && !(r->flags & MM_FLAG_X)) continue;
+                }
+                *sec = NULL;
+                return (ContextAddress)(offs - p->offset + p->address);
+            }
+        }
+        else {
+            unsigned j;
+            for (j = 1; j < f->section_cnt; j++) {
+                ELF_Section * s = f->sections + j;
+                if (strcmp(s->name, r->sect_name) == 0) {
+                    *sec = s;
+                    return (ContextAddress)(addr - r->addr + s->addr);
+                }
+            }
         }
     }
     return 0;
