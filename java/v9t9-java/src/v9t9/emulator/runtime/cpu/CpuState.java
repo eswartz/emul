@@ -24,8 +24,6 @@ public interface CpuState {
 
 	void setRegister(int reg, int val);
 
-	void setConsole(MemoryDomain console);
-
 	MemoryDomain getConsole();
 
 	Status createStatus();

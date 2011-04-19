@@ -22,7 +22,7 @@ public class CpuStateF99b implements CpuState {
 							| (1 << CpuF99b.UP) | (1 << CpuF99b.UP0)
 							| (1 << CpuF99b.LP));
 	
-	private MemoryDomain console;
+	private final MemoryDomain console;
 	private Status status;
 
 	private short regs[] = new short[16];
@@ -111,7 +111,7 @@ public class CpuStateF99b implements CpuState {
 	 * @see v9t9.emulator.runtime.cpu.CpuState#getConsole()
 	 */
 	@Override
-	public MemoryDomain getConsole() {
+	public final MemoryDomain getConsole() {
 		return console;
 	}
 
@@ -119,7 +119,7 @@ public class CpuStateF99b implements CpuState {
 	 * @see v9t9.emulator.runtime.cpu.CpuState#getStatus()
 	 */
 	@Override
-	public Status getStatus() {
+	public final Status getStatus() {
 		return status;
 	}
 
@@ -127,48 +127,89 @@ public class CpuStateF99b implements CpuState {
 	 * @see v9t9.emulator.runtime.cpu.CpuState#setStatus(v9t9.engine.cpu.Status)
 	 */
 	@Override
-	public void setStatus(Status status) {
+	public final void setStatus(Status status) {
 		this.status = status;
 	}
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.cpu.CpuState#setConsole(v9t9.engine.memory.MemoryDomain)
-	 */
-	@Override
-	public void setConsole(MemoryDomain console) {
-		this.console = console;
-	}
 
-	public short getST() {
+	public final short getST() {
 	    return (short) getRegister(CpuF99b.SR);
 	}
 
-	public void setST(short st) {
+	public final void setST(short st) {
 		setRegister(CpuF99b.SR, st);
 	}
 
-	public short getBaseSP() {
+	public final short getBaseSP() {
 		return (short) getRegister(CpuF99b.SP0);
 	}
 	
-	public void setBaseSP(short v) {
+	public final void setBaseSP(short v) {
 		setRegister(CpuF99b.SP0, v);
 	}
 
-	public short getBaseRP() {
+	public final short getBaseRP() {
 		return (short) getRegister(CpuF99b.RP0);
 	}
 	
-	public void setBaseRP(short v) {
+	public final void setBaseRP(short v) {
 		setRegister(CpuF99b.RP0, v);
 		
 	}
 
-	public short getBaseUP() {
+	public final short getBaseUP() {
 		return (short) getRegister(CpuF99b.UP0);
 	}
 	
-	public void setBaseUP(short v) {
+	public final void setBaseUP(short v) {
 		setRegister(CpuF99b.UP0, v);
+	}
+
+	final short pop(CpuF99b cpu) {
+		short val = console.readWord(regs[CpuF99b.SP]);
+		regs[CpuF99b.SP] += 2;
+		if (regs[CpuF99b.SP] > regs[CpuF99b.SP0]) {
+			System.err.println("Stack underflow!");
+			cpu.fault();
+		}
+		return val;
+	}
+
+	final void push(CpuF99b cpu, short val) {
+		regs[CpuF99b.SP] -= 2;
+		short sp = regs[CpuF99b.SP];
+		console.writeWord(sp, val);
+		
+		if (sp < regs[CpuF99b.SP0] - CpuF99b.MAX_STACK) {
+			System.err.println("Stack overflow!");
+			cpu.fault();
+		}			
+	}
+
+	/**
+	 * @return
+	 */
+	public final short rpeek() {
+		return console.readWord(regs[CpuF99b.RP]);
+	}
+
+	final void rpush(CpuF99b cpu, short val) {
+		regs[CpuF99b.RP] -= 2;
+		short rp = regs[CpuF99b.RP];
+		console.writeWord(rp, val);
+		if (rp < regs[CpuF99b.RP0] - CpuF99b.MAX_STACK) {
+			System.err.println("R-Stack overflow!");
+			cpu.fault();
+		}	
+				
+	}
+	final short rpop(CpuF99b cpu) {
+		short val = console.readWord(regs[CpuF99b.RP]);
+		regs[CpuF99b.RP] += 2;
+		if (regs[CpuF99b.RP] > regs[CpuF99b.RP0]) {
+			System.err.println("R-Stack underflow!");
+			cpu.fault();
+		}
+		return val;
 	}
 
 

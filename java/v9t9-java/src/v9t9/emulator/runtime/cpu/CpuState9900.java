@@ -79,13 +79,6 @@ public class CpuState9900 implements CpuState {
 	public void setStatus(Status status) {
 		this.status = status;
 	}
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.cpu.CpuState#setConsole(v9t9.engine.memory.MemoryDomain)
-	 */
-	@Override
-	public void setConsole(MemoryDomain console) {
-		this.console = console;
-	}
 
 	public short getST() {
 	    return getStatus().flatten();

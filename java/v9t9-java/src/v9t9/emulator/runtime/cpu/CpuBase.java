@@ -112,10 +112,6 @@ public abstract class CpuBase  implements MemoryAccessListener, IPersistable, Cp
 	    return machine;
 	}
 
-	public void setConsole(MemoryDomain console) {
-		state.setConsole(console);
-	}
-
 	public final MemoryDomain getConsole() {
 		return state.getConsole();
 	}

@@ -49,7 +49,7 @@ public class CpuF99b extends CpuBase {
 	 */
 	public static final int INT_BASE = 0xffe0;
 	public static final int BASE_CYCLES_PER_SEC = 1000000;
-	private CpuStateF99b stateF99b;
+	private final CpuStateF99b stateF99b;
 	
 	public CpuF99b(Machine machine, int interruptTick, VdpHandler vdp) {
 		super(machine, new CpuStateF99b(machine.getConsole()), interruptTick, vdp);
@@ -353,56 +353,27 @@ public class CpuF99b extends CpuBase {
 		state.setST(st);
 	}
 
-	public void push(short val) {
-		short newSp = (short) ((stateF99b.getSP() - 2));
-		state.getConsole().writeWord(newSp, val);
-		stateF99b.setSP(newSp);
-		
-		if (newSp < stateF99b.getSP() - MAX_STACK) {
-			System.err.println("Stack overflow!");
-			fault();
-		}	
+	public final void push(short val) {
+		stateF99b.push(this, val);
 	}
 	
-	public short peek() {
+	public final short peek() {
 		return state.getConsole().readWord(stateF99b.getSP());
 	}
 
-	public short pop() {
-		short val = stateF99b.getConsole().readWord(stateF99b.getSP());
-		short newSp = (short) ((stateF99b.getSP() + 2));
-		stateF99b.setSP(newSp);
-		if (newSp > stateF99b.getBaseSP()) {
-			System.err.println("Stack underflow!");
-			fault();
-		}
-		return val;
+	public final short pop() {
+		return stateF99b.pop(this);
 	}
 
-	public void rpush(short val) {
-		short newRp = (short) ((stateF99b.getRP() - 2));
-		stateF99b.getConsole().writeWord(newRp, val);
-		stateF99b.setRP(newRp);
-		if (newRp < stateF99b.getRP() - MAX_STACK) {
-			System.err.println("R-Stack overflow!");
-			fault();
-		}	
-		
+	public final void rpush(short val) {
+		stateF99b.rpush(this, val);
 	}
 
-	public short rpeek() {
-		return stateF99b.getConsole().readWord(stateF99b.getRP());
+	public final short rpeek() {
+		return stateF99b.rpeek();
 	}
-	public short rpop() {
-		short val = stateF99b.getConsole().readWord(stateF99b.getRP());
-		short newRp = (short) ((stateF99b.getRP() + 2));
-		stateF99b.setRP(newRp);
-		if (newRp > stateF99b.getBaseRP()) {
-			System.err.println("R-Stack underflow!");
-			fault();
-		}
-
-		return val;
+	public final short rpop() {
+		return stateF99b.rpop(this);
 	}
 
 	/**
