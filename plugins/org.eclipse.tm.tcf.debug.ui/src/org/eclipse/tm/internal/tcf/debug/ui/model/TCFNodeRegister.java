@@ -40,6 +40,7 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
     private final TCFChildrenRegisters children;
     private final TCFData<IRegisters.RegistersContext> context;
     private final TCFData<byte[]> value;
+    private final boolean is_stack_frame_register;
 
     private byte[] prev_value;
     private byte[] next_value;
@@ -52,6 +53,9 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
 
     TCFNodeRegister(TCFNode parent, final String id) {
         super(parent, id);
+        if (parent instanceof TCFNodeStackFrame) is_stack_frame_register = true;
+        else if (parent instanceof TCFNodeRegister) is_stack_frame_register = ((TCFNodeRegister)parent).is_stack_frame_register;
+        else is_stack_frame_register = false;
         children = new TCFChildrenRegisters(this);
         context = new TCFData<IRegisters.RegistersContext>(channel) {
             @Override
@@ -424,6 +428,8 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
         prev_value = next_value;
         value.reset();
         children.onSuspended();
+        // Unlike thread registers, stack frame register list must be retrieved on every suspend
+        if (is_stack_frame_register) children.reset();
         // No need to post delta: parent posted CONTENT
     }
 

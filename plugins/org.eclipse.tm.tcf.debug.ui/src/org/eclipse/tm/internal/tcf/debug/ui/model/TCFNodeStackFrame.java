@@ -427,7 +427,8 @@ public class TCFNodeStackFrame extends TCFNode {
         func_info.cancel();
         address.cancel();
         children_regs.onSuspended();
-        children_regs.reset(); // Unlike thread registers, stack frame registers must be retrieved on every suspend
+        // Unlike thread registers, stack frame register list must be retrieved on every suspend
+        children_regs.reset();
         children_vars.onSuspended();
         children_exps.onSuspended();
         children_hover_exps.onSuspended();
