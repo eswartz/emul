@@ -458,15 +458,22 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
             return new TCFTask<Boolean>() {
                 public void run() {
                     if (!node.context.validate(this)) return;
-                    if (node.context.getData() != null && node.context.getData().isWriteable()) {
-                        if (!node.value.validate(this)) return;
-                        if (TCFColumnPresentationRegister.COL_HEX_VALUE.equals(property)) {
-                            done(TCFNumberFormat.isValidHexNumber(node.toNumberString(16)) == null);
+                    IRegisters.RegistersContext ctx = node.context.getData();
+                    if (ctx != null && ctx.isWriteable()) {
+                        if (!ctx.isReadable()) {
+                            done(Boolean.TRUE);
                             return;
                         }
-                        if (TCFColumnPresentationRegister.COL_DEC_VALUE.equals(property)) {
-                            done(TCFNumberFormat.isValidDecNumber(true, node.toNumberString(10)) == null);
-                            return;
+                        if (!node.value.validate(this)) return;
+                        if (node.value.getError() == null) {
+                            if (TCFColumnPresentationRegister.COL_HEX_VALUE.equals(property)) {
+                                done(TCFNumberFormat.isValidHexNumber(node.toNumberString(16)) == null);
+                                return;
+                            }
+                            if (TCFColumnPresentationRegister.COL_DEC_VALUE.equals(property)) {
+                                done(TCFNumberFormat.isValidDecNumber(true, node.toNumberString(10)) == null);
+                                return;
+                            }
                         }
                     }
                     done(Boolean.FALSE);
@@ -478,8 +485,14 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
             final TCFNodeRegister node = (TCFNodeRegister)element;
             return new TCFTask<String>() {
                 public void run() {
+                    if (!node.context.validate(this)) return;
+                    IRegisters.RegistersContext ctx = node.context.getData();
+                    if (!ctx.isReadable()) {
+                        done("0");
+                        return;
+                    }
                     if (!node.value.validate(this)) return;
-                    if (node.value.getData() != null) {
+                    if (node.value.getError() == null) {
                         if (TCFColumnPresentationRegister.COL_HEX_VALUE.equals(property)) {
                             done(node.toNumberString(16));
                             return;
