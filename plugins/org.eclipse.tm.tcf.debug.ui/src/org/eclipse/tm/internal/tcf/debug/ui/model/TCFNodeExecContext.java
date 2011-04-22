@@ -42,7 +42,6 @@ import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.services.ISymbols;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 
-@SuppressWarnings("serial")
 public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
 
     private final int seq_no;
@@ -64,8 +63,36 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     private final TCFData<SignalMask[]> signal_mask;
     private final TCFData<TCFNodeExecContext> memory_node;
 
-    private Map<BigInteger,TCFDataCache<TCFSourceRef>> line_info_cache;
-    private Map<BigInteger,TCFDataCache<TCFFunctionRef>> func_info_cache;
+    private LinkedHashMap<BigInteger,TCFDataCache<TCFSourceRef>> line_info_cache;
+    private LinkedHashMap<BigInteger,TCFDataCache<TCFFunctionRef>> func_info_cache;
+    private InfoCacheTimer info_cache_timer;
+
+    private class InfoCacheTimer implements Runnable {
+
+        InfoCacheTimer() {
+            Protocol.invokeLater(2500, this);
+        }
+
+        public void run() {
+            if (isDisposed()) return;
+            if (line_info_cache != null) {
+                BigInteger addr = line_info_cache.keySet().iterator().next();
+                line_info_cache.remove(addr).dispose();
+                if (line_info_cache.size() == 0) line_info_cache = null;
+            }
+            if (func_info_cache != null) {
+                BigInteger addr = func_info_cache.keySet().iterator().next();
+                func_info_cache.remove(addr).dispose();
+                if (func_info_cache.size() == 0) func_info_cache = null;
+            }
+            if (line_info_cache == null && func_info_cache == null) {
+                info_cache_timer = null;
+            }
+            else {
+                Protocol.invokeLater(2500, this);
+            }
+        }
+    }
 
     private final Map<String,TCFNodeSymbol> symbols = new HashMap<String,TCFNodeSymbol>();
 
@@ -437,6 +464,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     }
 
     public TCFDataCache<TCFSourceRef> getLineInfo(final BigInteger addr) {
+        if (isDisposed()) return null;
         TCFDataCache<TCFSourceRef> ref_cache;
         if (line_info_cache != null) {
             ref_cache = line_info_cache.get(addr);
@@ -447,13 +475,10 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         final BigInteger n0 = addr;
         final BigInteger n1 = n0.add(BigInteger.valueOf(1));
         if (line_info_cache == null) {
-            line_info_cache = new LinkedHashMap<BigInteger,TCFDataCache<TCFSourceRef>>(11, 0.75f, true) {
-                protected boolean removeEldestEntry(Map.Entry<BigInteger,TCFDataCache<TCFSourceRef>> eldest) {
-                    return size() > 50;
-                }
-            };
+            line_info_cache = new LinkedHashMap<BigInteger,TCFDataCache<TCFSourceRef>>(11, 0.75f, true);
+            if (info_cache_timer == null) info_cache_timer = new InfoCacheTimer();
         }
-        line_info_cache.put(addr, ref_cache = new TCFDataCache<TCFSourceRef>(channel) {
+        line_info_cache.put(addr, ref_cache = new TCFData<TCFSourceRef>(channel) {
             @Override
             protected boolean startDataRetrieval() {
                 if (!memory_node.validate(this)) return false;
@@ -502,6 +527,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     }
 
     public TCFDataCache<TCFFunctionRef> getFuncInfo(final BigInteger addr) {
+        if (isDisposed()) return null;
         TCFDataCache<TCFFunctionRef> ref_cache;
         if (func_info_cache != null) {
             ref_cache = func_info_cache.get(addr);
@@ -510,13 +536,10 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         final ISymbols syms = model.getLaunch().getService(ISymbols.class);
         if (syms == null) return null;
         if (func_info_cache == null) {
-            func_info_cache = new LinkedHashMap<BigInteger,TCFDataCache<TCFFunctionRef>>(11, 0.75f, true) {
-                protected boolean removeEldestEntry(Map.Entry<BigInteger,TCFDataCache<TCFFunctionRef>> eldest) {
-                    return size() > 50;
-                }
-            };
+            func_info_cache = new LinkedHashMap<BigInteger,TCFDataCache<TCFFunctionRef>>(11, 0.75f, true);
+            if (info_cache_timer == null) info_cache_timer = new InfoCacheTimer();
         }
-        func_info_cache.put(addr, ref_cache = new TCFDataCache<TCFFunctionRef>(channel) {
+        func_info_cache.put(addr, ref_cache = new TCFData<TCFFunctionRef>(channel) {
             @Override
             protected boolean startDataRetrieval() {
                 if (!memory_node.validate(this)) return false;

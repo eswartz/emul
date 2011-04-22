@@ -153,6 +153,7 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
                             });
                         }
                     }
+                    remote_expression.dispose();
                     done(Boolean.TRUE);
                 }
             }.getD();
