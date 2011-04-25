@@ -23,4 +23,20 @@ public class TCFSourceRef {
     public BigInteger address;
     public ILineNumbers.CodeArea area;
     public Throwable error;
+
+    public String toString() {
+        StringBuffer bf = new StringBuffer();
+        bf.append('[');
+        bf.append(context_id);
+        bf.append(',');
+        bf.append(address_size);
+        bf.append(',');
+        bf.append(address);
+        bf.append(',');
+        bf.append(area);
+        bf.append(',');
+        bf.append(error);
+        bf.append(']');
+        return bf.toString();
+    }
 }

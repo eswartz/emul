@@ -21,4 +21,20 @@ public class TCFFunctionRef {
     public BigInteger address;
     public String symbol_id;
     public Throwable error;
+
+    public String toString() {
+        StringBuffer bf = new StringBuffer();
+        bf.append('[');
+        bf.append(context_id);
+        bf.append(',');
+        bf.append(address_size);
+        bf.append(',');
+        bf.append(address);
+        bf.append(',');
+        bf.append(symbol_id);
+        bf.append(',');
+        bf.append(error);
+        bf.append(']');
+        return bf.toString();
+    }
 }
