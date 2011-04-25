@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual C++ Express 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dwarf-test", "dwarf-test.vcproj", "{D08FED31-38A6-4239-8D20-D4276FC2BAFA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D08FED31-38A6-4239-8D20-D4276FC2BAFA}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D08FED31-38A6-4239-8D20-D4276FC2BAFA}.Debug|Win32.Build.0 = Debug|Win32
+		{D08FED31-38A6-4239-8D20-D4276FC2BAFA}.Release|Win32.ActiveCfg = Release|Win32
+		{D08FED31-38A6-4239-8D20-D4276FC2BAFA}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
