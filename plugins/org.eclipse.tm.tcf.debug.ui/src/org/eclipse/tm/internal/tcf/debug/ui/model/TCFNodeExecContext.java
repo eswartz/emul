@@ -14,6 +14,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -63,30 +64,41 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     private final TCFData<SignalMask[]> signal_mask;
     private final TCFData<TCFNodeExecContext> memory_node;
 
-    private LinkedHashMap<BigInteger,TCFDataCache<TCFSourceRef>> line_info_cache;
-    private LinkedHashMap<BigInteger,TCFDataCache<TCFFunctionRef>> func_info_cache;
-    private InfoCacheTimer info_cache_timer;
+    private LinkedHashMap<BigInteger,TCFDataCache<TCFSourceRef>> line_info_lookup_cache;
+    private LinkedHashMap<BigInteger,TCFDataCache<TCFFunctionRef>> func_info_lookup_cache;
+    private LookupCacheTimer lookup_cache_timer;
 
-    private class InfoCacheTimer implements Runnable {
+    /*
+     * LookupCacheTimer is executed periodically to dispose least-recently
+     * accessed entries in line_info_lookup_cache and func_info_lookup_cache.
+     * The timer disposes itself when both caches become empty.
+     */
+    private class LookupCacheTimer implements Runnable {
 
-        InfoCacheTimer() {
-            Protocol.invokeLater(2500, this);
+        LookupCacheTimer() {
+            Protocol.invokeLater(4000, this);
         }
 
         public void run() {
             if (isDisposed()) return;
-            if (line_info_cache != null) {
-                BigInteger addr = line_info_cache.keySet().iterator().next();
-                line_info_cache.remove(addr).dispose();
-                if (line_info_cache.size() == 0) line_info_cache = null;
+            if (line_info_lookup_cache != null) {
+                BigInteger addr = line_info_lookup_cache.keySet().iterator().next();
+                TCFDataCache<TCFSourceRef> cache = line_info_lookup_cache.get(addr);
+                if (!cache.isPending()) {
+                    line_info_lookup_cache.remove(addr).dispose();
+                    if (line_info_lookup_cache.size() == 0) line_info_lookup_cache = null;
+                }
             }
-            if (func_info_cache != null) {
-                BigInteger addr = func_info_cache.keySet().iterator().next();
-                func_info_cache.remove(addr).dispose();
-                if (func_info_cache.size() == 0) func_info_cache = null;
+            if (func_info_lookup_cache != null) {
+                BigInteger addr = func_info_lookup_cache.keySet().iterator().next();
+                TCFDataCache<TCFFunctionRef> cache = func_info_lookup_cache.get(addr);
+                if (!cache.isPending()) {
+                    func_info_lookup_cache.remove(addr).dispose();
+                    if (func_info_lookup_cache.size() == 0) func_info_lookup_cache = null;
+                }
             }
-            if (line_info_cache == null && func_info_cache == null) {
-                info_cache_timer = null;
+            if (line_info_lookup_cache == null && func_info_lookup_cache == null) {
+                lookup_cache_timer = null;
             }
             else {
                 Protocol.invokeLater(2500, this);
@@ -466,19 +478,19 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     public TCFDataCache<TCFSourceRef> getLineInfo(final BigInteger addr) {
         if (isDisposed()) return null;
         TCFDataCache<TCFSourceRef> ref_cache;
-        if (line_info_cache != null) {
-            ref_cache = line_info_cache.get(addr);
+        if (line_info_lookup_cache != null) {
+            ref_cache = line_info_lookup_cache.get(addr);
             if (ref_cache != null) return ref_cache;
         }
         final ILineNumbers ln = model.getLaunch().getService(ILineNumbers.class);
         if (ln == null) return null;
         final BigInteger n0 = addr;
         final BigInteger n1 = n0.add(BigInteger.valueOf(1));
-        if (line_info_cache == null) {
-            line_info_cache = new LinkedHashMap<BigInteger,TCFDataCache<TCFSourceRef>>(11, 0.75f, true);
-            if (info_cache_timer == null) info_cache_timer = new InfoCacheTimer();
+        if (line_info_lookup_cache == null) {
+            line_info_lookup_cache = new LinkedHashMap<BigInteger,TCFDataCache<TCFSourceRef>>(11, 0.75f, true);
+            if (lookup_cache_timer == null) lookup_cache_timer = new LookupCacheTimer();
         }
-        line_info_cache.put(addr, ref_cache = new TCFData<TCFSourceRef>(channel) {
+        line_info_lookup_cache.put(addr, ref_cache = new TCFData<TCFSourceRef>(channel) {
             @Override
             protected boolean startDataRetrieval() {
                 if (!memory_node.validate(this)) return false;
@@ -529,17 +541,17 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     public TCFDataCache<TCFFunctionRef> getFuncInfo(final BigInteger addr) {
         if (isDisposed()) return null;
         TCFDataCache<TCFFunctionRef> ref_cache;
-        if (func_info_cache != null) {
-            ref_cache = func_info_cache.get(addr);
+        if (func_info_lookup_cache != null) {
+            ref_cache = func_info_lookup_cache.get(addr);
             if (ref_cache != null) return ref_cache;
         }
         final ISymbols syms = model.getLaunch().getService(ISymbols.class);
         if (syms == null) return null;
-        if (func_info_cache == null) {
-            func_info_cache = new LinkedHashMap<BigInteger,TCFDataCache<TCFFunctionRef>>(11, 0.75f, true);
-            if (info_cache_timer == null) info_cache_timer = new InfoCacheTimer();
+        if (func_info_lookup_cache == null) {
+            func_info_lookup_cache = new LinkedHashMap<BigInteger,TCFDataCache<TCFFunctionRef>>(11, 0.75f, true);
+            if (lookup_cache_timer == null) lookup_cache_timer = new LookupCacheTimer();
         }
-        func_info_cache.put(addr, ref_cache = new TCFData<TCFFunctionRef>(channel) {
+        func_info_lookup_cache.put(addr, ref_cache = new TCFData<TCFFunctionRef>(channel) {
             @Override
             protected boolean startDataRetrieval() {
                 if (!memory_node.validate(this)) return false;
@@ -567,6 +579,29 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
             }
         });
         return ref_cache;
+    }
+
+    private void clearLookupCaches() {
+        if (line_info_lookup_cache != null) {
+            Iterator<TCFDataCache<TCFSourceRef>> i = line_info_lookup_cache.values().iterator();
+            while (i.hasNext()) {
+                TCFDataCache<TCFSourceRef> cache = i.next();
+                if (cache.isPending()) continue;
+                cache.dispose();
+                i.remove();
+            }
+            if (line_info_lookup_cache.size() == 0) line_info_lookup_cache = null;
+        }
+        if (func_info_lookup_cache != null) {
+            Iterator<TCFDataCache<TCFFunctionRef>> i = func_info_lookup_cache.values().iterator();
+            while (i.hasNext()) {
+                TCFDataCache<TCFFunctionRef> cache = i.next();
+                if (cache.isPending()) continue;
+                cache.dispose();
+                i.remove();
+            }
+            if (func_info_lookup_cache.size() == 0) func_info_lookup_cache = null;
+        }
     }
 
     @Override
@@ -1005,8 +1040,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
 
     void onContextChanged(IMemory.MemoryContext context) {
         assert !isDisposed();
-        if (line_info_cache != null) line_info_cache.clear();
-        if (func_info_cache != null) func_info_cache.clear();
+        clearLookupCaches();
         mem_context.reset(context);
         for (TCFNodeSymbol s : symbols.values()) s.onMemoryMapChanged();
         postAllChangedDelta();
@@ -1107,8 +1141,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     }
 
     void onMemoryMapChanged() {
-        if (line_info_cache != null) line_info_cache.clear();
-        if (func_info_cache != null) func_info_cache.clear();
+        clearLookupCaches();
         memory_map.reset();
         children_exec.onMemoryMapChanged();
         children_stack.onMemoryMapChanged();
