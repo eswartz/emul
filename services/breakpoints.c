@@ -1009,7 +1009,25 @@ static void evaluate_text_location(void * x) {
 }
 #endif
 
-static int check_context_ids(BreakpointInfo * bp, Context * ctx) {
+static int check_context_ids_location(BreakpointInfo * bp, Context * ctx) {
+    /* Check context IDs attribute and return 1 if the breakpoint should be planted in 'ctx' */
+    assert(ctx == context_get_group(ctx, CONTEXT_GROUP_BREAKPOINT));
+    if (bp->context_ids != NULL) {
+        int ok = 0;
+        char ** ids = bp->context_ids;
+        while (!ok && *ids != NULL) {
+            Context * c = id2ctx(*ids++);
+            if (c == NULL) continue;
+            ok = context_get_group(c, CONTEXT_GROUP_BREAKPOINT) == ctx;
+        }
+        return ok;
+    }
+    return 1;
+}
+
+static int check_context_ids_condition(BreakpointInfo * bp, Context * ctx) {
+    /* Check context IDs attribute and return 1 if the breakpoint should be triggered by 'ctx' */
+    assert(context_has_state(ctx));
     if (bp->context_ids != NULL) {
         int ok = 0;
         char ** ids = bp->context_ids;
@@ -1039,7 +1057,7 @@ static void evaluate_condition(void * x) {
         BreakpointInfo * bp = req->bp_arr[i].bp;
 
         if (is_disabled(bp)) continue;
-        if (!check_context_ids(bp, ctx)) continue;
+        if (!check_context_ids_condition(bp, ctx)) continue;
 
         if (bp->condition != NULL) {
             Value v;
@@ -1090,7 +1108,7 @@ static void event_replant_breakpoints(void * arg) {
                     BreakpointInfo * bp = link_all2bp(l);
                     l = l->next;
                     if (is_disabled(bp)) continue;
-                    if (!check_context_ids(bp, ctx)) continue;
+                    if (!check_context_ids_location(bp, ctx)) continue;
                     if (bp->file != NULL) {
 #if ENABLE_LineNumbers
                         expr_cache_enter(evaluate_text_location, bp, ctx);
@@ -1962,7 +1980,7 @@ void evaluate_breakpoint(Context * ctx) {
                 need_to_post = 1;
                 continue;
             }
-            if (!check_context_ids(bp, ctx)) continue;
+            if (!check_context_ids_condition(bp, ctx)) continue;
             req->bp_arr[i].condition_ok = 1;
         }
     }
@@ -2002,7 +2020,7 @@ void evaluate_breakpoint(Context * ctx) {
                     need_to_post = 1;
                     continue;
                 }
-                if (!check_context_ids(bp, ctx)) continue;
+                if (!check_context_ids_condition(bp, ctx)) continue;
                 req->bp_arr[k + i].condition_ok = 1;
             }
         }
