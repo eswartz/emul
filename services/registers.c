@@ -288,7 +288,8 @@ static void command_get_children_cache_client(void * x) {
         RegisterDefinition * reg_def;
         for (reg_def = defs; reg_def->name != NULL; reg_def++) {
             if (reg_def->parent != parent) continue;
-            if (frame == STACK_TOP_FRAME || read_reg_value(frame_info, reg_def, NULL) == 0) {
+            if (frame == STACK_TOP_FRAME || frame_info->is_top_frame ||
+                    reg_def->size == 0 || read_reg_value(frame_info, reg_def, NULL) == 0) {
                 if (cnt > 0) write_stream(&c->out, ',');
                 json_write_string(&c->out, register2id(ctx, frame, reg_def));
                 cnt++;
