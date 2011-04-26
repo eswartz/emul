@@ -75,6 +75,7 @@ public class TCFNodeModule extends TCFNode {
     }
 
     private String toHexString(Number address) {
+        if (address == null) return "";
         BigInteger addr;
         if (address instanceof BigInteger) {
             addr = (BigInteger)address;
