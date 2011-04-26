@@ -976,11 +976,12 @@ ContextAddress elf_map_to_link_time_address(Context * ctx, ContextAddress addr, 
         ELF_File * f = NULL;
         assert(r->addr <= addr);
         assert(r->addr + r->size > addr);
-        f = *file = open_memory_region_file(r, NULL);
+        f = open_memory_region_file(r, NULL);
         if (f == NULL) continue;
         if (r->sect_name == NULL) {
             unsigned j;
             if (f->pheader_cnt == 0 && f->type == ET_EXEC) {
+                *file = f;
                 *sec = NULL;
                 return addr;
             }
@@ -994,6 +995,7 @@ ContextAddress elf_map_to_link_time_address(Context * ctx, ContextAddress addr, 
                     if ((p->flags & PF_W) && !(r->flags & MM_FLAG_W)) continue;
                     if ((p->flags & PF_X) && !(r->flags & MM_FLAG_X)) continue;
                 }
+                *file = f;
                 *sec = NULL;
                 return (ContextAddress)(offs - p->offset + p->address);
             }
@@ -1003,6 +1005,7 @@ ContextAddress elf_map_to_link_time_address(Context * ctx, ContextAddress addr, 
             for (j = 1; j < f->section_cnt; j++) {
                 ELF_Section * s = f->sections + j;
                 if (strcmp(s->name, r->sect_name) == 0) {
+                    *file = f;
                     *sec = s;
                     return (ContextAddress)(addr - r->addr + s->addr);
                 }
