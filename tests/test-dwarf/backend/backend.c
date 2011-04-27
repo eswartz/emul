@@ -310,6 +310,7 @@ static void next_file(void) {
     ELF_File * f = NULL;
     struct stat st;
 
+    if (pass_cnt == files_cnt) exit(0);
     elf_file_name = files[pass_cnt % files_cnt];
 
     printf("File: %s\n", elf_file_name);
@@ -385,7 +386,6 @@ static void next_file(void) {
 
     pc = 0;
     pass_cnt++;
-    if (pass_cnt == files_cnt) exit(0);
 
     test_posted = 1;
     post_event(test, NULL);
