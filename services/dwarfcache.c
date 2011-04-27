@@ -859,6 +859,7 @@ static void free_dwarf_cache(ELF_File * file) {
         loc_free(Cache->mObjectHash);
         loc_free(Cache->mSymSections);
         loc_free(Cache->mAddrRanges);
+        loc_free(Cache->mFrameInfoRanges);
         loc_free(Cache->mPubNames.mHash);
         loc_free(Cache->mPubNames.mNext);
         loc_free(Cache->mPubTypes.mHash);

@@ -43,6 +43,7 @@ typedef struct LineNumbersState LineNumbersState;
 typedef struct CompUnit CompUnit;
 typedef struct SymbolSection SymbolSection;
 typedef struct UnitAddressRange UnitAddressRange;
+typedef struct FrameInfoRange FrameInfoRange;
 typedef struct DWARFCache DWARFCache;
 
 struct FileInfo {
@@ -186,6 +187,12 @@ struct UnitAddressRange {
     ContextAddress mSize;   /* Size of the range */
 };
 
+struct FrameInfoRange {
+    ContextAddress mAddr;
+    ContextAddress mSize;
+    U8_T mOffset;
+};
+
 #define DWARF_CACHE_MAGIC 0x34625490
 
 struct DWARFCache {
@@ -210,6 +217,9 @@ struct DWARFCache {
     unsigned mAddrRangesMax;
     PubNamesTable mPubNames;
     PubNamesTable mPubTypes;
+    FrameInfoRange * mFrameInfoRanges;
+    unsigned mFrameInfoRangesCnt;
+    unsigned mFrameInfoRangesMax;
 };
 
 /* Return DWARF cache for given file, create and populate the cache if needed, throw an exception if error */

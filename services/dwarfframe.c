@@ -374,6 +374,18 @@ static void exec_stack_frame_instruction(void) {
         reg->expression = dio_GetPos();
         dio_Skip(reg->offset);
         break;
+    case 0x2e: /* DW_CFA_GNU_args_size */
+        /* This instruction specifies the total size of the arguments
+         * which have been pushed onto the stack. Not used by the debugger. */
+        dio_ReadULEB128();
+        break;
+    case 0x2f: /* DW_CFA_GNU_negative_offset_extended */
+        /* This instruction is identical to DW_CFA_offset_extended_sf
+         * except that the operand is subtracted to produce the offset. */
+        reg = get_reg(&frame_regs, dio_ReadULEB128());
+        reg->rule = RULE_OFFSET;
+        reg->offset = -dio_ReadSLEB128() * rules.data_alignment;
+        break;
     default:
         switch (op >> 6) {
         case 0:
@@ -745,32 +757,73 @@ static void read_frame_cie(U8_T fde_pos, U8_T pos) {
     dio_Skip(saved_pos - dio_GetPos());
 }
 
-void get_dwarf_stack_frame_info(Context * ctx, ELF_File * file, U8_T IP) {
-    /* TODO: use .eh_frame_hdr section for faster frame data search */
-    DWARFCache * cache = get_dwarf_cache(file);
-    ELF_Section * section = cache->mDebugFrame;
+static void read_frame_fde(ELF_Section * section, U8_T IP, U8_T fde_pos) {
+    int fde_dwarf64 = 0;
+    U8_T fde_length = 0;
+    U8_T fde_end = 0;
+    U8_T ref_pos = 0;
+    U8_T cie_ref = 0;
+    int fde_flag = 0;
 
-    dwarf_stack_trace_regs_cnt = 0;
-    if (dwarf_stack_trace_fp == NULL) {
-        dwarf_stack_trace_fp = (StackTracingCommandSequence *)loc_alloc_zero(sizeof(StackTracingCommandSequence));
-        dwarf_stack_trace_fp->cmds_max = 1;
+    dio_EnterSection(NULL, section, fde_pos);
+    fde_length = dio_ReadU4();
+    assert(fde_length > 0);
+    if (fde_length == ~(U4_T)0) {
+        fde_length = dio_ReadU8();
+        fde_dwarf64 = 1;
     }
-    dwarf_stack_trace_fp->cmds_cnt = 0;
-    dwarf_stack_trace_addr = 0;
-    dwarf_stack_trace_size = 0;
+    ref_pos = dio_GetPos();
+    fde_end = ref_pos + fde_length;
+    cie_ref = fde_dwarf64 ? dio_ReadU8() : dio_ReadU4();
+    if (rules.eh_frame) fde_flag = cie_ref != 0;
+    else if (fde_dwarf64) fde_flag = cie_ref != ~(U8_T)0;
+    else fde_flag = cie_ref != ~(U4_T)0;
+    assert(fde_flag);
+    if (fde_flag) {
+        U8_T Addr, Range;
+        ELF_Section * sec = NULL;
+        if (rules.eh_frame) cie_ref = ref_pos - cie_ref;
+        if (cie_ref != rules.cie_pos) read_frame_cie(fde_pos, cie_ref);
+        Addr = read_frame_data_pointer(rules.addr_encoding, &sec);
+        Range = read_frame_data_pointer(rules.addr_encoding, NULL);
+        assert(Addr <= IP && Addr + Range > IP);
+        if (Addr <= IP && Addr + Range > IP) {
+            U8_T location0 = Addr;
+            if (rules.cie_aug != NULL && rules.cie_aug[0] == 'z') {
+                rules.fde_aug_length = dio_ReadULEB128();
+                rules.fde_aug_data = dio_GetDataPtr();
+                dio_Skip(rules.fde_aug_length);
+            }
+            copy_register_rules(&frame_regs, &cie_regs);
+            rules.location = Addr;
+            regs_stack_pos = 0;
+            for (;;) {
+                if (dio_GetPos() >= fde_end) {
+                    rules.location = Addr + Range;
+                    break;
+                }
+                exec_stack_frame_instruction();
+                assert(location0 <= IP);
+                if (rules.location > IP) break;
+                location0 = rules.location;
+            }
+            dwarf_stack_trace_addr = location0;
+            dwarf_stack_trace_size = rules.location - location0;
+            generate_commands();
+        }
+    }
+    dio_ExitSection();
+}
 
-    if (section == NULL) section = cache->mEHFrame;
-    if (section == NULL) return;
+static int cmp_frame_info_ranges(const void * x, const void * y) {
+    FrameInfoRange * rx = (FrameInfoRange *)x;
+    FrameInfoRange * ry = (FrameInfoRange *)y;
+    if (rx->mAddr < ry->mAddr) return -1;
+    if (rx->mAddr > ry->mAddr) return +1;
+    return 0;
+}
 
-    memset(&rules, 0, sizeof(StackFrameRules));
-    rules.ctx = ctx;
-    rules.section = section;
-    rules.eh_frame = section == cache->mEHFrame;
-    rules.reg_id_scope.big_endian = file->big_endian;
-    rules.reg_id_scope.machine = file->machine;
-    rules.reg_id_scope.os_abi = file->os_abi;
-    rules.reg_id_scope.id_type = rules.eh_frame ? REGNUM_EH_FRAME : REGNUM_DWARF;
-    rules.cie_pos = ~(U8_T)0;
+static void create_search_index(DWARFCache * cache, ELF_Section * section) {
     dio_EnterSection(NULL, section, 0);
     while (dio_GetPos() < section->size) {
         int fde_dwarf64 = 0;
@@ -802,41 +855,71 @@ void get_dwarf_stack_frame_info(Context * ctx, ELF_File * file, U8_T IP) {
         else if (fde_dwarf64) fde_flag = cie_ref != ~(U8_T)0;
         else fde_flag = cie_ref != ~(U4_T)0;
         if (fde_flag) {
-            U8_T Addr, Range;
             ELF_Section * sec = NULL;
+            FrameInfoRange * range = NULL;
             if (rules.eh_frame) cie_ref = ref_pos - cie_ref;
             if (cie_ref != rules.cie_pos) read_frame_cie(fde_pos, cie_ref);
-            Addr = read_frame_data_pointer(rules.addr_encoding, &sec);
-            Range = read_frame_data_pointer(rules.addr_encoding, NULL);
-            if (Addr <= IP && Addr + Range > IP) {
-                U8_T location0 = Addr;
-                if (rules.cie_aug != NULL && rules.cie_aug[0] == 'z') {
-                    rules.fde_aug_length = dio_ReadULEB128();
-                    rules.fde_aug_data = dio_GetDataPtr();
-                    dio_Skip(rules.fde_aug_length);
-                }
-                copy_register_rules(&frame_regs, &cie_regs);
-                rules.location = Addr;
-                regs_stack_pos = 0;
-                for (;;) {
-                    if (dio_GetPos() >= fde_end) {
-                        rules.location = Addr + Range;
-                        break;
-                    }
-                    exec_stack_frame_instruction();
-                    assert(location0 <= IP);
-                    if (rules.location > IP) break;
-                    location0 = rules.location;
-                }
-                dwarf_stack_trace_addr = location0;
-                dwarf_stack_trace_size = rules.location - location0;
-                generate_commands();
-                break;
+            if (cache->mFrameInfoRangesCnt >= cache->mFrameInfoRangesMax) {
+                cache->mFrameInfoRangesMax += 512;
+                if (cache->mFrameInfoRanges == NULL) cache->mFrameInfoRangesMax += (unsigned)(section->size / 32);
+                cache->mFrameInfoRanges = loc_realloc(cache->mFrameInfoRanges, cache->mFrameInfoRangesMax * sizeof(FrameInfoRange));
             }
+            range = cache->mFrameInfoRanges + cache->mFrameInfoRangesCnt++;
+            range->mAddr = (ContextAddress)read_frame_data_pointer(rules.addr_encoding, &sec);
+            range->mSize = (ContextAddress)read_frame_data_pointer(rules.addr_encoding, NULL);
+            range->mOffset = fde_pos;
         }
         dio_Skip(fde_end - dio_GetPos());
     }
     dio_ExitSection();
+    qsort(cache->mFrameInfoRanges, cache->mFrameInfoRangesCnt, sizeof(FrameInfoRange), cmp_frame_info_ranges);
+}
+
+void get_dwarf_stack_frame_info(Context * ctx, ELF_File * file, U8_T IP) {
+    DWARFCache * cache = get_dwarf_cache(file);
+    ELF_Section * section = cache->mDebugFrame;
+    unsigned l, h;
+
+    dwarf_stack_trace_regs_cnt = 0;
+    if (dwarf_stack_trace_fp == NULL) {
+        dwarf_stack_trace_fp = (StackTracingCommandSequence *)loc_alloc_zero(sizeof(StackTracingCommandSequence));
+        dwarf_stack_trace_fp->cmds_max = 1;
+    }
+    dwarf_stack_trace_fp->cmds_cnt = 0;
+    dwarf_stack_trace_addr = 0;
+    dwarf_stack_trace_size = 0;
+
+    if (section == NULL) section = cache->mEHFrame;
+    if (section == NULL) return;
+
+    memset(&rules, 0, sizeof(StackFrameRules));
+    rules.ctx = ctx;
+    rules.section = section;
+    rules.eh_frame = section == cache->mEHFrame;
+    rules.reg_id_scope.big_endian = file->big_endian;
+    rules.reg_id_scope.machine = file->machine;
+    rules.reg_id_scope.os_abi = file->os_abi;
+    rules.reg_id_scope.id_type = rules.eh_frame ? REGNUM_EH_FRAME : REGNUM_DWARF;
+    rules.cie_pos = ~(U8_T)0;
+
+    if (cache->mFrameInfoRanges == NULL) create_search_index(cache, section);
+    l = 0;
+    h = cache->mFrameInfoRangesCnt;
+    while (l < h) {
+        unsigned k = (l + h) / 2;
+        FrameInfoRange * range = cache->mFrameInfoRanges + k;
+        assert(cache->mFrameInfoRanges[l].mAddr <= cache->mFrameInfoRanges[h - 1].mAddr);
+        if (range->mAddr > IP) {
+            h = k;
+        }
+        else if (range->mAddr + range->mSize <= IP) {
+            l = k + 1;
+        }
+        else {
+            read_frame_fde(section, IP, range->mOffset);
+            break;
+        }
+    }
 }
 
 #endif /* ENABLE_ELF */
