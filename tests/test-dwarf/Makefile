@@ -12,19 +12,20 @@ EXECS = $(BINDIR)/dwarf-test$(EXTEXE)
 all:    $(EXECS)
 
 $(BINDIR)/libtcf$(EXTLIB) : $(OFILES)
-        $(AR) -rc $@ $^
-        $(RANLIB)
+	$(AR) -rc $@ $^
+	$(RANLIB)
 
 $(BINDIR)/dwarf-test$(EXTEXE): $(BINDIR)/main/main$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB)
-        $(CC) $(CFLAGS) -o $@ $(BINDIR)/main/main$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB) $(LIBS)
+	$(CC) $(CFLAGS) -o $@ $(BINDIR)/main/main$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB) $(LIBS)
 
 $(BINDIR)/%$(EXTOBJ): %.c $(HFILES) Makefile
-        @$(call MKDIR,$(dir $@))
-        $(CC) $(CFLAGS) -c -o $@ $<
+	@$(call MKDIR,$(dir $@))
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(BINDIR)/%$(EXTOBJ): $(TCF_AGENT_DIR)/%.c $(HFILES) Makefile
-        @$(call MKDIR,$(dir $@))
-        $(CC) $(CFLAGS) -c -o $@ $<
+	@$(call MKDIR,$(dir $@))
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-        $(call RMDIR,$(BINDIR))
+	$(call RMDIR,$(BINDIR))
+

@@ -1,18 +1,44 @@
+/*******************************************************************************
+ * Copyright (c) 2010, 2011 Wind River Systems, Inc. and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * and Eclipse Distribution License v1.0 which accompany this distribution.
+ * The Eclipse Public License is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * and the Eclipse Distribution License is available at
+ * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * Contributors:
+ *     Wind River Systems - initial API and implementation
+ *******************************************************************************/
+
+/* Fake debug context API implementation. It used for testing symbol services. */
+
 #include <config.h>
 
 #include <sys/stat.h>
 #include <assert.h>
+#include <stdio.h>
+#if !defined(WIN32) || defined(__CYGWIN__)
+#  include <dirent.h>
+#endif
 
 #include <framework/context.h>
 #include <framework/events.h>
 #include <framework/myalloc.h>
+#include <framework/exceptions.h>
 
 #include <services/tcf_elf.h>
 #include <services/symbols.h>
 #include <services/linenumbers.h>
 #include <services/memorymap.h>
+#include <services/dwarfframe.h>
 
 #include <backend/backend.h>
+
+#ifndef S_ISDIR
+#define S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
+#endif
 
 static Context * elf_ctx = NULL;
 static MemoryMap mem_map;
@@ -33,6 +59,10 @@ static ContextAddress pc = 0;
 static unsigned pass_cnt = 0;
 static int test_posted = 0;
 static struct timespec time_start;
+
+static char ** files = NULL;
+static unsigned files_max = 0;
+static unsigned files_cnt = 0;
 
 RegisterDefinition * get_reg_definitions(Context * ctx) {
     return reg_defs;
@@ -132,21 +162,6 @@ static void line_numbers_callback(CodeArea * area, void * args) {
     *dst = *area;
 }
 
-static const char * files[] = {
-    "files/hypervisor",
-    "files/vxWorks-1",
-    "files/vxWorks-2",
-    "files/vxWorks-3",
-    //"files/philosophers.vxe.diab",
-    "files/philosophers.vxe.icc",
-    // "files/vxWorks.diab",
-    "files/rule30-threaded.vxe",
-    "files/vxWorks.icc",
-    "files/cbcp-main-ppc.x",
-    "files/cbcp-main-x86",
-    "files/Gilbarco.elf"
-};
-
 static void print_time(struct timespec time_start, int cnt) {
     struct timespec time_now;
     struct timespec time_diff;
@@ -172,7 +187,11 @@ static void test(void * args);
 static void next_pc(void) {
     Symbol * sym = NULL;
     CodeArea area;
+    ContextAddress lt_addr;
+    ELF_File * lt_file;
+    ELF_Section * lt_sec;
     struct timespec time_now;
+    Trap trap;
     int test_cnt = 0;
 
     for (;;) {
@@ -234,6 +253,7 @@ static void next_pc(void) {
                 }
             }
         }
+
         memset(&area, 0, sizeof(area));
         if (address_to_line(elf_ctx, pc, pc + 1, line_numbers_callback, &area) < 0) {
             error("address_to_line");
@@ -245,6 +265,20 @@ static void next_pc(void) {
                 error("line_to_address");
             }
         }
+
+        lt_file = NULL;
+        lt_sec = NULL;
+        lt_addr = elf_map_to_link_time_address(elf_ctx, pc, &lt_file, &lt_sec);
+        assert(lt_file != NULL);
+        assert(pc == elf_map_to_run_time_address(elf_ctx, lt_file, lt_sec, lt_addr));
+        if (set_trap(&trap)) {
+            get_dwarf_stack_frame_info(elf_ctx, lt_file, lt_addr);
+            clear_trap(&trap);
+        }
+        else {
+            error("get_dwarf_stack_frame_info");
+        }
+
         test_cnt++;
         if (elf_headers_pos == 0 && pc == elf_headers[0].address) {
             struct timespec time_diff;
@@ -276,7 +310,7 @@ static void next_file(void) {
     ELF_File * f = NULL;
     struct stat st;
 
-    elf_file_name = files[pass_cnt % (sizeof(files) / sizeof(char *))];
+    elf_file_name = files[pass_cnt % files_cnt];
 
     printf("File: %s\n", elf_file_name);
     fflush(stdout);
@@ -351,6 +385,8 @@ static void next_file(void) {
 
     pc = 0;
     pass_cnt++;
+    if (pass_cnt == files_cnt) exit(0);
+
     test_posted = 1;
     post_event(test, NULL);
 }
@@ -374,6 +410,28 @@ static void on_elf_file_closed(ELF_File * f) {
 }
 
 void init_contexts_sys_dep(void) {
+    const char * dir_name = "files";
+    DIR * dir = opendir(dir_name);
+    if (dir == NULL) {
+        printf("Cannot open '%s' directory\n", dir_name);
+        fflush(stdout);
+        exit(1);
+    }
+    for (;;) {
+        struct dirent * e = readdir(dir);
+        char path[FILE_PATH_SIZE];
+        struct stat st;
+        if (e == NULL) break;
+        snprintf(path, sizeof(path), "%s/%s", dir_name, e->d_name);
+        if (stat(path, &st) == 0 && !S_ISDIR(st.st_mode)) {
+            if (files_cnt >= files_max) {
+                files_max += 8;
+                files = (char **)loc_realloc(files, files_max * sizeof(char *));
+            }
+            files[files_cnt++] = loc_strdup(path);
+        }
+    }
+    closedir(dir);
     elf_add_close_listener(on_elf_file_closed);
     test_posted = 1;
     post_event(test, NULL);
