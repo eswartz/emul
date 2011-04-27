@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+<!-- Common navigator contributions -->
+   <extension point="org.eclipse.ui.navigator.viewer">
+      <viewerContentBinding viewerId="org.eclipse.tm.te.ui.views.TargetExplorer">
+         <includes>
+            <contentExtension
+                  isRoot="false"
+                  pattern="org.eclipse.tm.te.datasource.tcf.filesystem"/>
+         </includes>
+      </viewerContentBinding>
+   </extension>
+   
+   <extension point="org.eclipse.ui.navigator.navigatorContent">
+      <navigatorContent
+            activeByDefault="true"
+            contentProvider="org.eclipse.tm.te.tcf.filesystem.controls.FSTreeContentProvider"
+            icon="icons/obj16/rootdrive.gif"
+            id="org.eclipse.tm.te.datasource.tcf.filesystem"
+            labelProvider="org.eclipse.tm.te.tcf.filesystem.controls.FSTreeLabelProvider"
+            name="Target File System (TCF)"
+            priority="normal">
+            <triggerPoints>
+            	<instanceof value="org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel"/>
+                <test property="org.eclipse.tm.te.tcf.locator.hasRemoteService" value="FileSystem"/>
+            </triggerPoints>
+            <possibleChildren>
+            	<instanceof value="org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel"/>
+            	<instanceof value="org.eclipse.tm.te.tcf.filesystem.controls.FSTreeNode"/>
+            </possibleChildren>
+            <commonSorter
+                  class="org.eclipse.tm.te.tcf.filesystem.controls.FSTreeViewerSorter"
+                  id="org.eclipse.tm.te.tcf.filesystem.navigator.sorter">
+            </commonSorter>
+      </navigatorContent>
+   </extension>
+
+<!-- Target Explorer Details Editor page contributions -->
+   <extension point="org.eclipse.tm.te.ui.views.editorPages">
+      <editorPage
+            class="org.eclipse.tm.te.tcf.filesystem.internal.explorer.FSExplorerEditorPage"
+            name="%FSExplorerEditorPage.name"
+            id="org.eclipse.tm.te.tcf.filesystem.FSExplorerEditorPage">
+      </editorPage>
+   </extension>
+
+<!-- Target Explorer Details Editor page binding contributions -->
+   <extension point="org.eclipse.tm.te.ui.views.editorPageBindings">
+      <editorPageBinding
+            id="org.eclipse.tm.te.tcf.filesystem.binding.FSExplorerEditorPage"
+            pageId="org.eclipse.tm.te.tcf.filesystem.FSExplorerEditorPage">
+         <enablement>
+            <with variable="activeEditorInput">
+               <and>
+                  <adapt type="org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel">
+                     <test property="org.eclipse.tm.te.tcf.locator.hasRemoteService" value="FileSystem"/>
+                  </adapt>
+               </and>
+            </with>
+         </enablement>
+      </editorPageBinding>
+   </extension>
+
+</plugin>

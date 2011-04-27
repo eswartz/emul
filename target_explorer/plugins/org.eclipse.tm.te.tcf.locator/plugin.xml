@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+<!-- Preference contributions -->
+   <extension point="org.eclipse.core.runtime.preferences">
+      <initializer
+            class="org.eclipse.tm.te.tcf.locator.internal.preferences.PreferencesInitializer">
+      </initializer>
+   </extension>
+
+<!-- Eclipse core expressions property tester -->
+   <extension point="org.eclipse.core.expressions.propertyTesters">
+      <propertyTester
+            class="org.eclipse.tm.te.tcf.locator.internal.MyPropertyTester"
+            id="org.eclipse.tm.te.tcf.locator.LocatorModelPropertyTester"
+            namespace="org.eclipse.tm.te.tcf.locator"
+            properties="name,hasLocalService,hasRemoteService"
+            type="org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel">
+      </propertyTester>
+   </extension>
+
+</plugin>

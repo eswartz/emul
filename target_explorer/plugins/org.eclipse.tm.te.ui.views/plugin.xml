@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension-point id="editorPageBindings" name="%ExtensionPoint.editorPageBindings.name" schema="schema/editorPageBindings.exsd"/>
+   <extension-point id="editorPages" name="%ExtensionPoint.editorPages.name" schema="schema/editorPages.exsd"/>
+
+<!-- Common Navigator contributions -->
+   <extension point="org.eclipse.ui.navigator.viewer">
+      <viewer
+            helpContext="org.eclipse.tm.te.ui.views.TargetExplorer"
+            viewerId="org.eclipse.tm.te.ui.views.TargetExplorer">
+            <popupMenu
+                  id="org.eclipse.tm.te.ui.views.TargetExplorer#Popup"
+                  allowsPlatformContributions="true">
+                  <insertionPoint name="group.new" separator="true"/>
+                  <insertionPoint name="group.goto"/>
+                  <insertionPoint name="group.expandto" separator="true"/>
+                  <insertionPoint name="group.expand"/>
+                  <insertionPoint name="group.open" separator="true"/>
+                  <insertionPoint name="group.openWith"/>
+                  <insertionPoint name="group.connect" separator="true"/>
+                  <insertionPoint name="group.symbols" separator="true"/>
+                  <insertionPoint name="group.symbols.rd"/>
+                  <insertionPoint name="group.symbols.loadunload"/>
+                  <insertionPoint name="group.symbols.additions"/>
+                  <insertionPoint name="group.launch" separator="true"/>
+                  <insertionPoint name="group.launch.rundebug"/>
+                  <insertionPoint name="group.launch.modes"/>
+                  <insertionPoint name="group.launch.additions"/>
+                  <insertionPoint name="group.show" separator="true"/>
+                  <insertionPoint name="group.edit" separator="true"/>
+                  <insertionPoint name="group.delete"/>
+                  <insertionPoint name="group.build" separator="true"/>
+                  <insertionPoint name="group.refresh" separator="true"/>
+                  <insertionPoint name="group.reorganize"/>
+                  <insertionPoint name="group.reorder"/>
+                  <insertionPoint name="group.port"/>
+                  <insertionPoint name="group.generate" separator="true"/>
+                  <insertionPoint name="group.search" separator="true"/>
+                  <insertionPoint name="group.connection" separator="true"/>
+                  <insertionPoint name="group.operations" separator="true"/>
+                  <insertionPoint name="group.analysis" separator="true"/>
+                  <insertionPoint name="additions" separator="true"/>
+                  <insertionPoint name="group.properties" separator="true"/>
+            </popupMenu>
+            <options>
+               <property
+                     name="org.eclipse.ui.navigator.hideLinkWithEditorAction"
+                     value="true">
+               </property>
+            </options>
+      </viewer>
+   </extension>
+   
+<!-- View contributions -->
+   <extension point="org.eclipse.ui.views">
+      <category
+            id="org.eclipse.tm.te.ui.views.category"
+            name="%ViewCategory.name">
+      </category>
+      <view
+            category="org.eclipse.tm.te.ui.views.category"
+            class="org.eclipse.tm.te.ui.views.internal.View"
+            icon="icons/eview16/targets_view.gif"
+            id="org.eclipse.tm.te.ui.views.TargetExplorer"
+            name="%TargetExplorer.name"
+            restorable="true">
+      </view>
+   </extension>
+
+<!-- Target Explorer Perspective -->
+   <extension point="org.eclipse.ui.perspectives">
+      <perspective
+            class="org.eclipse.tm.te.ui.views.perspective.PerspectiveFactory"
+            icon="icons/eview16/editor.gif"
+            id="org.eclipse.tm.te.ui.perspective"
+            name="%Perspective.name">
+      </perspective>
+   </extension>
+
+<!-- Perspective contributions -->
+   <extension point="org.eclipse.ui.perspectiveExtensions">
+      <perspectiveExtension targetID="org.eclipse.tm.te.ui.perspective">
+      	 <!-- Run/Debug actions should be available -->
+         <actionSet id="org.eclipse.debug.ui.launchActionSet"/>
+		 <!-- Register the view shortcuts  -->
+         <viewShortcut id="org.eclipse.tm.te.ui.views.TargetExplorer"/>
+      </perspectiveExtension>
+   </extension>
+
+<!-- Editor contributions -->
+   <extension point="org.eclipse.ui.editors">
+      <editor
+            class="org.eclipse.tm.te.ui.views.internal.editor.Editor"
+            default="false"
+            icon="icons/eview16/prop_ps.gif"
+            id="org.eclipse.tm.te.ui.view.Editor"
+            name="%Editor.name">
+      </editor>
+   </extension>
+
+<!-- Target Explorer menu contributions -->
+   <extension point="org.eclipse.ui.menus">
+      <menuContribution locationURI="popup:org.eclipse.tm.te.ui.views.TargetExplorer#Popup?after=group.properties">
+         <command
+               commandId="org.eclipse.ui.file.properties"
+               helpContextId="org.eclipse.tm.te.ui.views.command_Properties"
+               id="properties"
+               label="%PropertiesAction.label"
+               tooltip="%PropertiesAction.tooltip">
+               <visibleWhen>
+                  <with variable="selection">
+                     <count value="1"/>
+                     <iterate operator="and" ifEmpty="false">
+                        <test property="org.eclipse.tm.te.ui.views.hasApplicableEditorBindings" value="true"/>
+                     </iterate>
+                  </with>
+               </visibleWhen>
+         </command>
+      </menuContribution>
+   </extension>
+
+<!-- Handler contributions -->
+   <extension point="org.eclipse.ui.handlers">
+      <handler
+            commandId="org.eclipse.ui.file.properties"
+            class="org.eclipse.tm.te.ui.views.internal.targets.handler.PropertiesCommandHandler">
+         <enabledWhen>
+            <with variable="selection">
+               <count value="1"/>
+            </with>
+         </enabledWhen>
+         <activeWhen>
+            <with variable="activePartId">
+               <equals value="org.eclipse.tm.te.ui.views.TargetExplorer"/>
+            </with>
+         </activeWhen>
+      </handler>      
+   </extension>
+
+<!-- Eclipse core expressions property tester -->
+   <extension point="org.eclipse.core.expressions.propertyTesters">
+      <propertyTester
+            class="org.eclipse.tm.te.ui.views.internal.expressions.EditorPropertyTester"
+            id="org.eclipse.tm.te.ui.views.EditorPropertyTester"
+            namespace="org.eclipse.tm.te.ui.views"
+            properties="hasApplicableEditorBindings"
+            type="java.lang.Object">
+      </propertyTester>
+   </extension>
+
+</plugin>

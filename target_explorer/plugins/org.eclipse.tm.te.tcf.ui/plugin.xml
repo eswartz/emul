@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+<!-- Common navigator contributions -->
+   <extension point="org.eclipse.ui.navigator.viewer">
+      <viewerContentBinding viewerId="org.eclipse.tm.te.ui.views.TargetExplorer">
+         <includes>
+            <contentExtension
+                  isRoot="true"
+                  pattern="org.eclipse.tm.te.datasource.tcf"/>
+         </includes>
+      </viewerContentBinding>
+   </extension>
+   
+   <extension point="org.eclipse.ui.navigator.navigatorContent">
+      <navigatorContent
+            activeByDefault="true"
+            contentProvider="org.eclipse.tm.te.tcf.ui.internal.navigator.ContentProviderDelegate"
+            icon="icons/obj16/rootNode_obj.gif"
+            id="org.eclipse.tm.te.datasource.tcf"
+            labelProvider="org.eclipse.tm.te.tcf.ui.internal.navigator.LabelProvider"
+            name="Dynamic Target Discovery (TCF)"
+            priority="normal">
+            <triggerPoints>
+            	<instanceof value="org.eclipse.tm.te.ui.views.interfaces.IRoot"/>
+            	<instanceof value="org.eclipse.tm.te.tcf.locator.interfaces.nodes.ILocatorModel"/>
+            	<instanceof value="org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel"/>
+            </triggerPoints>
+            <commonSorter
+                  class="org.eclipse.tm.te.tcf.ui.internal.navigator.Sorter"
+                  id="org.eclipse.tm.te.tcf.ui.navigator.sorter"/>
+      </navigatorContent>
+   </extension>
+   
+<!-- Target Explorer Details Editor page contributions -->
+   <extension point="org.eclipse.tm.te.ui.views.editorPages">
+      <editorPage
+            class="org.eclipse.tm.te.tcf.ui.internal.editor.pages.NodePropertiesEditorPage"
+            name="%NodePropertiesEditorPage.name"
+            id="org.eclipse.tm.te.tcf.ui.NodePropertiesEditorPage">
+      </editorPage>
+   </extension>
+
+<!-- Target Explorer Details Editor page binding contributions -->
+   <extension point="org.eclipse.tm.te.ui.views.editorPageBindings">
+      <editorPageBinding
+            id="org.eclipse.tm.te.tcf.ui.binding.NodePropertiesEditorPage"
+            pageId="org.eclipse.tm.te.tcf.ui.NodePropertiesEditorPage"
+            insertBefore="first">
+         <enablement>
+            <with variable="activeEditorInput">
+               <instanceof value="org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel"/>
+            </with>
+         </enablement>
+      </editorPageBinding>
+   </extension>
+
+<!-- Target Explorer menu contributions -->
+   <extension point="org.eclipse.ui.menus">
+      <menuContribution locationURI="popup:org.eclipse.tm.te.ui.views.TargetExplorer#Popup?after=group.new">
+         <command
+               commandId="org.eclipse.tm.te.tcf.ui.command.addPeer"
+               disabledIcon="icons/dtool16/newconnection_wiz.gif"
+               helpContextId="org.eclipse.tm.te.tcf.ui.command_AddPeer"
+               icon="icons/etool16/newconnection_wiz.gif"
+               id="org.eclipse.tm.te.tcf.ui.commands.addPeer"
+               label="%TcfDataSource.command.addPeer.label"
+               style="push"
+               tooltip="%TcfDataSource.command.addPeer.tooltip">
+            <visibleWhen checkEnabled="false">
+               <with variable="selection">
+                  <count value="1"/>
+                  <iterate operator="and" ifEmpty="false">
+                     <instanceof value="org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel"/>
+                  </iterate>
+               </with>
+            </visibleWhen>
+         </command>
+      </menuContribution>
+      
+      <menuContribution locationURI="popup:org.eclipse.tm.te.ui.views.TargetExplorer#Popup?after=group.refresh">
+         <command
+               commandId="org.eclipse.tm.te.tcf.ui.command.refresh"
+               disabledIcon="platform:/plugin/org.eclipse.ui.ide/icons/full/dlcl16/refresh_nav.gif"
+               helpContextId="org.eclipse.tm.te.tcf.ui.command_Refresh"
+               icon="platform:/plugin/org.eclipse.ui.ide/icons/full/elcl16/refresh_nav.gif"
+               id="org.eclipse.tm.te.tcf.ui.commands.refresh"
+               label="%TcfDataSource.command.refresh.label"
+               style="push"
+               tooltip="%TcfDataSource.command.refresh.tooltip">
+            <visibleWhen checkEnabled="false">
+               <with variable="selection">
+                  <count value="1"/>
+                  <iterate operator="and" ifEmpty="false">
+                     <instanceof value="org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel"/>
+                  </iterate>
+               </with>
+            </visibleWhen>
+         </command>
+         <separator name="operationsGroupMarker" visible="true"/>
+      </menuContribution>
+   </extension>
+
+<!-- TCF data source command contributions -->
+   <extension point="org.eclipse.ui.commands">
+      <category
+            id="org.eclipse.tm.te.tcf.ui.commands.category"
+            name="%TcfDataSource.command.category.name">
+      </category>
+      <command
+            categoryId="org.eclipse.tm.te.tcf.ui.commands.category"
+            helpContextId="org.eclipse.tm.te.tcf.ui.command_Refresh"
+            id="org.eclipse.tm.te.tcf.ui.command.refresh"
+            name="%TcfDataSource.command.refresh.name">
+      </command>
+      <command
+            categoryId="org.eclipse.tm.te.tcf.ui.commands.category"
+            helpContextId="org.eclipse.tm.te.tcf.ui.command_AddPeer"
+            id="org.eclipse.tm.te.tcf.ui.command.addPeer"
+            name="%TcfDataSource.command.addPeer.name">
+      </command>
+   </extension>
+
+<!-- TCF data source handler contributions -->
+   <extension point="org.eclipse.ui.handlers">
+      <handler
+            class="org.eclipse.tm.te.tcf.ui.internal.handler.RefreshCommandHandler"
+            commandId="org.eclipse.tm.te.tcf.ui.command.refresh">
+      </handler>
+
+      <handler
+            class="org.eclipse.tm.te.tcf.ui.internal.handler.AddPeerCommandHandler"
+            commandId="org.eclipse.tm.te.tcf.ui.command.addPeer">
+      </handler>
+   </extension>
+</plugin>
