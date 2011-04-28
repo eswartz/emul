@@ -26,18 +26,15 @@ import org.eclipse.tm.te.core.nls.Messages;
 
 /**
  * Target Explorer: Abstract extension point manager implementation.
- * 
- * @since 1.0
  */
 public abstract class AbstractExtensionPointManager<V> {
-    // Flag to mark the extension point manager initialized (extensions loaded).
+	// Flag to mark the extension point manager initialized (extensions loaded).
 	private boolean fInitialized = false;
-    // The map of loaded extension listed by their unique ids
+	// The map of loaded extension listed by their unique ids
 	private Map<String, ExecutableExtensionProxy<V>> fExtensions = new LinkedHashMap<String, ExecutableExtensionProxy<V>>();
 
 	/**
 	 * Constructor.
-	 * @since 1.0
 	 */
 	public AbstractExtensionPointManager() {
 	}
@@ -48,7 +45,6 @@ public abstract class AbstractExtensionPointManager<V> {
 	 * Initialized means that the manager read the extensions for the managed extension point.
 	 *
 	 * @return <code>True</code> if already initialized, <code>false</code> otherwise.
-	 * @since 1.0
 	 */
 	protected boolean isInitialized() {
 		return fInitialized;
@@ -60,7 +56,6 @@ public abstract class AbstractExtensionPointManager<V> {
 	 * Initialized means that the manager has read the extensions for the managed extension point.
 	 *
 	 * @return <code>True</code> to set the extension point manager is initialized, <code>false</code> otherwise.
-	 * @since 1.0
 	 */
 	protected void setInitialized(boolean initialized) {
 		fInitialized = initialized;
@@ -72,7 +67,6 @@ public abstract class AbstractExtensionPointManager<V> {
 	 * extension point.
 	 *
 	 * @return The map of extensions.
-	 * @since 1.0
 	 */
 	protected Map<String, ExecutableExtensionProxy<V>> getExtensions() {
 		// Load and store the extensions thread-safe!
@@ -87,7 +81,6 @@ public abstract class AbstractExtensionPointManager<V> {
 	 * must return never <code>null</code>.
 	 *
 	 * @return The extension point id.
-	 * @since 1.0
 	 */
 	protected abstract String getExtensionPointId();
 
@@ -96,7 +89,6 @@ public abstract class AbstractExtensionPointManager<V> {
 	 * must return never <code>null</code>.
 	 *
 	 * @return The configuration element name.
-	 * @since 1.0
 	 */
 	protected abstract String getConfigurationElementName();
 
@@ -105,9 +97,8 @@ public abstract class AbstractExtensionPointManager<V> {
 	 *
 	 * @param element The configuration element of the extension. Must not be <code>null</code>.
 	 * @return The extension proxy instance.
-     *
-     * @throws CoreException If the extension proxy instantiation failed.
-     * @since 1.0
+	 *
+	 * @throws CoreException If the extension proxy instantiation failed.
 	 */
 	protected ExecutableExtensionProxy<V> doCreateExtensionProxy(IConfigurationElement element) throws CoreException {
 		assert element != null;
@@ -123,7 +114,6 @@ public abstract class AbstractExtensionPointManager<V> {
 	 * @param element The configuration element. Must not be <code>null</code>.
 	 *
 	 * @throws CoreException In case a extension with the same id as the given extension already exist.
-	 * @since 1.0
 	 */
 	protected void doStoreExtensionTo(Map<String, ExecutableExtensionProxy<V>> extensions, ExecutableExtensionProxy<V> candidate, IConfigurationElement element) throws CoreException {
 		assert extensions != null && candidate != null && element != null;
@@ -134,16 +124,15 @@ public abstract class AbstractExtensionPointManager<V> {
 		}
 		else {
 			throw new CoreException(new Status(IStatus.ERROR,
-			                    				CoreBundleActivator.getUniqueIdentifier(),
-			                    				0,
-			                    				NLS.bind(Messages.Extension_error_duplicateExtension, candidate.getId(), element.getContributor().getName()),
-			                    				null));
+					CoreBundleActivator.getUniqueIdentifier(),
+					0,
+					NLS.bind(Messages.Extension_error_duplicateExtension, candidate.getId(), element.getContributor().getName()),
+					null));
 		}
 	}
 
 	/**
 	 * Loads the extensions for the managed extension point.
-	 * @since 1.0
 	 */
 	protected void loadExtensions() {
 		// If already initialized, this method will do nothing.
@@ -164,9 +153,9 @@ public abstract class AbstractExtensionPointManager<V> {
 							} else {
 								throw new CoreException(new Status(IStatus.ERROR,
 										CoreBundleActivator.getUniqueIdentifier(),
-									0,
-									NLS.bind(Messages.Extension_error_missingRequiredAttribute, "id", element.getAttribute("label")), //$NON-NLS-1$ //$NON-NLS-2$
-									null));
+										0,
+										NLS.bind(Messages.Extension_error_missingRequiredAttribute, "id", element.getAttribute("label")), //$NON-NLS-1$ //$NON-NLS-2$
+										null));
 							}
 						} catch (CoreException e) {
 							Platform.getLog(CoreBundleActivator.getContext().getBundle()).log(new Status(IStatus.ERROR,

@@ -36,7 +36,7 @@ public class PreferencesInitializer extends AbstractPreferenceInitializer {
 		// Get the bundles preferences manager
 		IEclipsePreferences prefs = new DefaultScope().getNode(CoreBundleActivator.getUniqueIdentifier());
 		if (prefs != null) {
-			// Filtered by agent id: default on
+			// [Hidden] Filtered by agent id: default on
 			prefs.putBoolean(IPreferenceKeys.PREF_FILTER_BY_AGENT_ID, true);
 		}
 	}

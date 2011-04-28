@@ -11,20 +11,16 @@ package org.eclipse.tm.te.tcf.filesystem.interfaces.preferences;
 
 /**
  * The bundle's preference key identifiers.
- * 
- * @since 1.0
  */
 public interface IPreferenceKeys {
 	/**
 	 * Common prefix for all core preference keys
-	 * @since 1.0
 	 */
 	public final String PREFIX = "tcf.filesystem.core."; //$NON-NLS-1$
 
 	/**
 	 * If set to <code>true</code>, the file system content contribution to the target
 	 * explorer details editor will be activaed and visible to the user.
-	 * @since 1.0
 	 */
 	public final String PREF_FEATURE_ENABLE_EDITOR_CONTENT_CONTRIBUTION = PREFIX + "feature.editor.content.enable"; //$NON-NLS-1$
 }

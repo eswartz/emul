@@ -55,8 +55,8 @@ import org.eclipse.ui.part.EditorInputTransfer;
  * Target Explorer, RCP: Workbench window advisor implementation.
  */
 public class ApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
-    // (boolean) Prompt for exit confirmation when last window closed.
-    public static final String EXIT_PROMPT_ON_CLOSE_LAST_WINDOW = "EXIT_PROMPT_ON_CLOSE_LAST_WINDOW"; //$NON-NLS-1$
+	// (boolean) Prompt for exit confirmation when last window closed.
+	public static final String EXIT_PROMPT_ON_CLOSE_LAST_WINDOW = "EXIT_PROMPT_ON_CLOSE_LAST_WINDOW"; //$NON-NLS-1$
 
 	private ApplicationWorkbenchAdvisor wbAdvisor;
 	private IEditorPart lastActiveEditor = null;
@@ -126,13 +126,12 @@ public class ApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
 	 *
 	 * @param parentShell the parent shell to use for the confirmation dialog
 	 * @return <code>true</code> if OK to exit, <code>false</code> if the user canceled
-	 * @since 3.6
 	 */
 	static boolean promptOnExit(Shell parentShell) {
 		boolean promptOnExit =  Platform.getPreferencesService().getBoolean(UIPlugin.getUniqueIdentifier(),
-		                                                                    EXIT_PROMPT_ON_CLOSE_LAST_WINDOW,
-		                                                                    false,
-		                                                                    null);
+				EXIT_PROMPT_ON_CLOSE_LAST_WINDOW,
+				false,
+				null);
 
 		if (promptOnExit) {
 			String message;
@@ -149,8 +148,8 @@ public class ApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
 			}
 
 			MessageDialogWithToggle dlg = MessageDialogWithToggle.openOkCancelConfirm(	parentShell, Messages.PromptOnExitDialog_shellTitle,
-			                                                                          	message,
-			                                                                          	Messages.PromptOnExitDialog_choice, false, null, null);
+					message,
+					Messages.PromptOnExitDialog_choice, false, null, null);
 			if (dlg.getReturnCode() != IDialogConstants.OK_ID) { return false; }
 			if (dlg.getToggleState()) {
 				new InstanceScope().getNode(UIPlugin.getUniqueIdentifier()).putBoolean(EXIT_PROMPT_ON_CLOSE_LAST_WINDOW, false);

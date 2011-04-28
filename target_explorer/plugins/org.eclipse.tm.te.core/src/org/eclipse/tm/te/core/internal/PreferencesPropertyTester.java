@@ -16,13 +16,11 @@ import org.eclipse.tm.te.core.preferences.ScopedEclipsePreferences;
 
 /**
  * Preferences property tester implementation.
- * @since 1.0
  */
 public class PreferencesPropertyTester extends PropertyTester {
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.core.expressions.IPropertyTester#test(java.lang.Object, java.lang.String, java.lang.Object[], java.lang.Object)
-	 * @since 1.0
 	 */
 	public boolean test(Object receiver, String property, Object[] args, Object expectedValue) {
 		// The preferences property tester is not extending a specific object type.

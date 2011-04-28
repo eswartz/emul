@@ -18,14 +18,11 @@ import org.eclipse.tm.te.tcf.filesystem.interfaces.preferences.IPreferenceKeys;
 
 /**
  * The bundle's preference initializer implementation.
- * 
- * @since 1.0
  */
 public class PreferencesInitializer extends AbstractPreferenceInitializer {
 
 	/**
 	 * Constructor.
-	 * @since 1.0
 	 */
 	public PreferencesInitializer() {
 		super();
@@ -33,7 +30,6 @@ public class PreferencesInitializer extends AbstractPreferenceInitializer {
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.core.runtime.preferences.AbstractPreferenceInitializer#initializeDefaultPreferences()
-	 * @since 1.0
 	 */
 	@Override
 	public void initializeDefaultPreferences() {

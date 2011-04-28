@@ -22,8 +22,6 @@ import org.eclipse.tm.te.core.nls.Messages;
 
 /**
  * Target Explorer: Executable extension implementation.
- * 
- * @since 1.0
  */
 public class ExecutableExtension extends PlatformObject {
 	private String fId;
@@ -32,7 +30,6 @@ public class ExecutableExtension extends PlatformObject {
 
 	/**
 	 * Constructor.
-	 * @since 1.0
 	 */
 	public ExecutableExtension() {
 		super();
@@ -45,7 +42,6 @@ public class ExecutableExtension extends PlatformObject {
 	 * Clone the initialization data to the given executable extension instance.
 	 *
 	 * @param other The destination executable extension instance. Must not be <code>null</code>.
-	 * @since 1.0
 	 */
 	public void cloneInitializationData(ExecutableExtension other) {
 		assert other != null;
@@ -89,7 +85,6 @@ public class ExecutableExtension extends PlatformObject {
 	 * @param extensionId The extension id. Must not be <code>null</code>.
 	 *
 	 * @return The {@link CoreException} instance.
-	 * @since 1.0
 	 */
 	protected CoreException createMissingMandatoryAttributeException(String attributeName, String extensionId) {
 		assert attributeName != null && extensionId != null;
@@ -105,7 +100,6 @@ public class ExecutableExtension extends PlatformObject {
 	 * id must be never <code>null</code> or an empty string.
 	 *
 	 * @return The unique id.
-	 * @since 1.0
 	 */
 	public String getId() {
 		return fId;
@@ -115,7 +109,6 @@ public class ExecutableExtension extends PlatformObject {
 	 * Returns the label of the extension.
 	 *
 	 * @return The label or an empty string.
-	 * @since 1.0
 	 */
 	public String getLabel() {
 		return fLabel != null ? fLabel : ""; //$NON-NLS-1$
@@ -125,7 +118,6 @@ public class ExecutableExtension extends PlatformObject {
 	 * Returns the description of the extension.
 	 *
 	 * @return The description or an empty string.
-	 * @since 1.0
 	 */
 	public String getDescription() {
 		return fDescription != null ? fDescription : ""; //$NON-NLS-1$

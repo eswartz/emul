@@ -14,40 +14,32 @@ import org.eclipse.core.runtime.Platform;
 
 /**
  * Helper class to handle tracing using the platforms debug capabilities.
- * 
- * @since 1.0
  */
 public class TraceHandler {
 	/**
 	 * The bundle identifier.
-	 * @since 1.0
 	 */
 	private final String fIdentifier;
 
 	/**
 	 * The tracer instance.
-	 * @since 1.0
 	 */
 	private Tracer fTracer = null;
 
 	/**
 	 * The tracer is responsible for writing the trace message to the desired
 	 * output media.
-	 * 
-	 * @since 1.0
 	 */
 	protected static class Tracer {
 
 		/**
 		 * The bundle identifier.
-		 * @since 1.0
 		 */
 		private final String fIdentifier;
 
 		/**
 		 * The qualifier for the default &quot;&lt;bundle identifier&gt;/debugmode&quot;
 		 * tracing slot.
-		 * @since 1.0
 		 */
 		private final String fDebugModeQualifier;
 
@@ -55,7 +47,6 @@ public class TraceHandler {
 		 * Constructor.
 		 * 
 		 * @param identifier The bundle identifier. Must not be <code>null</code>.
-		 * @since 1.0
 		 */
 		public Tracer(String identifier) {
 			assert identifier != null;
@@ -71,7 +62,6 @@ public class TraceHandler {
 		 * If not set, or the value is not an {@link Integer}, the method returns <code>0</code>.
 		 * 
 		 * @return The debug mode value.
-		 * @since 1.0
 		 */
 		protected int getDebugMode() {
 			try {
@@ -89,7 +79,6 @@ public class TraceHandler {
 		 * 
 		 * @param slotId The name of the slot.
 		 * @return <code>true</code> if the slot is defined and enabled, <code>false</code> otherwise.
-		 * @since 1.0
 		 */
 		protected boolean isSlotEnabled(String slotId) {
 			return fIdentifier != null ? Boolean.parseBoolean(Platform.getDebugOption(fIdentifier + "/" + slotId)) : false; //$NON-NLS-1$
@@ -102,7 +91,6 @@ public class TraceHandler {
 		 * @param slotId The name of the slot.
 		 * 
 		 * @return <code>true</code> if the debug should be written, <code>false</code> otherwise.
-		 * @since 1.0
 		 */
 		protected final boolean isEnabled(int debugMode, String slotId) {
 			return getDebugMode() < 0 ||
@@ -120,7 +108,6 @@ public class TraceHandler {
 		 * @param clazz The class that calls this tracer.
 		 * 
 		 * @see IStatus
-		 * @since 1.0
 		 */
 		protected String getFormattedDebugMessage(String message, int debugMode, String slotId, int severity, Object clazz) {
 			StringBuffer debug = new StringBuffer();
@@ -156,7 +143,6 @@ public class TraceHandler {
 		 * @param clazz The class that calls this tracer.
 		 * 
 		 * @see IStatus
-		 * @since 1.0
 		 */
 		protected void write(String message, int debugMode, String slotId, int severity, Object clazz) {
 			String formattedMessage = getFormattedDebugMessage(message, debugMode, slotId, severity, clazz);
@@ -178,7 +164,6 @@ public class TraceHandler {
 		 * @param clazz The class that calls this tracer.
 		 * 
 		 * @see IStatus
-		 * @since 1.0
 		 */
 		public final void trace(String message, int debugMode, String slotId, int severity, Object clazz) {
 			if (isEnabled(debugMode, slotId)) {
@@ -193,7 +178,6 @@ public class TraceHandler {
 	 * Initializes the tracing handler with the given bundle indentifier.
 	 * 
 	 * @param identifier The bundle identifier. Must not be <code>null</code>.
-	 * @since 1.0
 	 */
 	public TraceHandler(String identifier) {
 		assert identifier != null;
@@ -202,7 +186,6 @@ public class TraceHandler {
 
 	/**
 	 * Returns the identifier.
-	 * @since 1.0
 	 */
 	protected final String getIdentifier() {
 		return fIdentifier;
@@ -213,7 +196,6 @@ public class TraceHandler {
 	 * on first invokation.
 	 * 
 	 * @return The tracer instance.
-	 * @since 1.0
 	 */
 	protected Tracer getTracer() {
 		if (fTracer == null) {
@@ -229,7 +211,6 @@ public class TraceHandler {
 	 * @param slotId The name of the slot.
 	 * 
 	 * @return <code>true</code> if the slot is enabled, <code>false</code> otherwise.
-	 * @since 1.0
 	 */
 	public final boolean isSlotEnabled(int debugMode, String slotId) {
 		return getTracer().isEnabled(debugMode, slotId);
@@ -243,7 +224,6 @@ public class TraceHandler {
 	 * 
 	 * @param message The message.
 	 * @param clazz The class that calls this tracer or <code>null</code>.
-	 * @since 1.0
 	 */
 	public final void trace(String message, Object clazz) {
 		getTracer().trace(message, 0, null, IStatus.INFO, clazz);
@@ -257,7 +237,6 @@ public class TraceHandler {
 	 * @param message The message.
 	 * @param debugMode The minimum debug mode that has to be set to write out the message.
 	 * @param clazz The class that calls this tracer or <code>null</code>.
-	 * @since 1.0
 	 */
 	public final void trace(String message, int debugMode, Object clazz) {
 		getTracer().trace(message, debugMode, null, IStatus.INFO, clazz);
@@ -272,7 +251,6 @@ public class TraceHandler {
 	 * @param message The message.
 	 * @param slotId The slot that has to be enabled to write out the message.
 	 * @param clazz The class that calls this tracer or <code>null</code>.
-	 * @since 1.0
 	 */
 	public final void trace(String message, String slotId, Object clazz) {
 		getTracer().trace(message, 0, null, IStatus.INFO, clazz);
@@ -288,7 +266,6 @@ public class TraceHandler {
 	 * @param clazz The class that calls this tracer or <code>null</code>.
 	 * 
 	 * @see IStatus
-	 * @since 1.0
 	 */
 	public final void trace(String message, int debugMode, String slotId, int severity, Object clazz) {
 		getTracer().trace(message, debugMode, slotId, severity, clazz);

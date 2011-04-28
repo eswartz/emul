@@ -189,8 +189,6 @@ public final class ApplicationActionBarAdvisor extends ActionBarAdvisor {
 
 	/**
 	 * The coolbar context menu manager.
-	 *
-	 * @since 3.3
 	 */
 	private MenuManager coolbarPopupMenuManager;
 
@@ -1027,73 +1025,73 @@ public final class ApplicationActionBarAdvisor extends ActionBarAdvisor {
 
 	private IContributionItem getCutItem() {
 		return getItem(	ActionFactory.CUT.getId(), ActionFactory.CUT.getCommandId(), ISharedImages.IMG_TOOL_CUT, ISharedImages.IMG_TOOL_CUT_DISABLED,
-		               	WorkbenchMessages.Workbench_cut, WorkbenchMessages.Workbench_cutToolTip, null);
+				WorkbenchMessages.Workbench_cut, WorkbenchMessages.Workbench_cutToolTip, null);
 	}
 
 	private IContributionItem getCopyItem() {
 		return getItem(	ActionFactory.COPY.getId(), ActionFactory.COPY.getCommandId(), ISharedImages.IMG_TOOL_COPY, ISharedImages.IMG_TOOL_COPY_DISABLED,
-		               	WorkbenchMessages.Workbench_copy, WorkbenchMessages.Workbench_copyToolTip, null);
+				WorkbenchMessages.Workbench_copy, WorkbenchMessages.Workbench_copyToolTip, null);
 	}
 
 	private IContributionItem getPasteItem() {
 		return getItem(	ActionFactory.PASTE.getId(), ActionFactory.PASTE.getCommandId(), ISharedImages.IMG_TOOL_PASTE, ISharedImages.IMG_TOOL_PASTE_DISABLED,
-		               	WorkbenchMessages.Workbench_paste, WorkbenchMessages.Workbench_pasteToolTip, null);
+				WorkbenchMessages.Workbench_paste, WorkbenchMessages.Workbench_pasteToolTip, null);
 	}
 
 	private IContributionItem getPrintItem() {
 		return getItem(	ActionFactory.PRINT.getId(), ActionFactory.PRINT.getCommandId(), ISharedImages.IMG_ETOOL_PRINT_EDIT,
-		               	ISharedImages.IMG_ETOOL_PRINT_EDIT_DISABLED, WorkbenchMessages.Workbench_print, WorkbenchMessages.Workbench_printToolTip, null);
+				ISharedImages.IMG_ETOOL_PRINT_EDIT_DISABLED, WorkbenchMessages.Workbench_print, WorkbenchMessages.Workbench_printToolTip, null);
 	}
 
 	private IContributionItem getSelectAllItem() {
 		return getItem(	ActionFactory.SELECT_ALL.getId(), ActionFactory.SELECT_ALL.getCommandId(), null, null, WorkbenchMessages.Workbench_selectAll,
-		               	WorkbenchMessages.Workbench_selectAllToolTip, null);
+				WorkbenchMessages.Workbench_selectAllToolTip, null);
 	}
 
 	private IContributionItem getFindItem() {
 		return getItem(	ActionFactory.FIND.getId(), ActionFactory.FIND.getCommandId(), null, null, WorkbenchMessages.Workbench_findReplace,
-		               	WorkbenchMessages.Workbench_findReplaceToolTip, null);
+				WorkbenchMessages.Workbench_findReplaceToolTip, null);
 	}
 
 	private IContributionItem getBookmarkItem() {
 		return getItem(	IDEActionFactory.BOOKMARK.getId(), IDEActionFactory.BOOKMARK.getCommandId(), null, null, IDEWorkbenchMessages.Workbench_addBookmark,
-		               	IDEWorkbenchMessages.Workbench_addBookmarkToolTip, null);
+				IDEWorkbenchMessages.Workbench_addBookmarkToolTip, null);
 	}
 
 	private IContributionItem getTaskItem() {
 		return getItem(	IDEActionFactory.ADD_TASK.getId(), IDEActionFactory.ADD_TASK.getCommandId(), null, null, IDEWorkbenchMessages.Workbench_addTask,
-		               	IDEWorkbenchMessages.Workbench_addTaskToolTip, null);
+				IDEWorkbenchMessages.Workbench_addTaskToolTip, null);
 	}
 
 	private IContributionItem getDeleteItem() {
 		return getItem(	ActionFactory.DELETE.getId(), ActionFactory.DELETE.getCommandId(), ISharedImages.IMG_TOOL_DELETE,
-		               	ISharedImages.IMG_TOOL_DELETE_DISABLED, WorkbenchMessages.Workbench_delete, WorkbenchMessages.Workbench_deleteToolTip,
-		               	IWorkbenchHelpContextIds.DELETE_RETARGET_ACTION);
+				ISharedImages.IMG_TOOL_DELETE_DISABLED, WorkbenchMessages.Workbench_delete, WorkbenchMessages.Workbench_deleteToolTip,
+				IWorkbenchHelpContextIds.DELETE_RETARGET_ACTION);
 	}
 
 	private IContributionItem getRevertItem() {
 		return getItem(	ActionFactory.REVERT.getId(), ActionFactory.REVERT.getCommandId(), null, null, WorkbenchMessages.Workbench_revert,
-		               	WorkbenchMessages.Workbench_revertToolTip, null);
+				WorkbenchMessages.Workbench_revertToolTip, null);
 	}
 
 	private IContributionItem getRefreshItem() {
 		return getItem(	ActionFactory.REFRESH.getId(), ActionFactory.REFRESH.getCommandId(), null, null, WorkbenchMessages.Workbench_refresh,
-		               	WorkbenchMessages.Workbench_refreshToolTip, null);
+				WorkbenchMessages.Workbench_refreshToolTip, null);
 	}
 
 	private IContributionItem getPropertiesItem() {
 		return getItem(	ActionFactory.PROPERTIES.getId(), ActionFactory.PROPERTIES.getCommandId(), null, null, WorkbenchMessages.Workbench_properties,
-		               	WorkbenchMessages.Workbench_propertiesToolTip, null);
+				WorkbenchMessages.Workbench_propertiesToolTip, null);
 	}
 
 	private IContributionItem getMoveItem() {
 		return getItem(	ActionFactory.MOVE.getId(), ActionFactory.MOVE.getCommandId(), null, null, WorkbenchMessages.Workbench_move,
-		               	WorkbenchMessages.Workbench_moveToolTip, null);
+				WorkbenchMessages.Workbench_moveToolTip, null);
 	}
 
 	private IContributionItem getRenameItem() {
 		return getItem(	ActionFactory.RENAME.getId(), ActionFactory.RENAME.getCommandId(), null, null, WorkbenchMessages.Workbench_rename,
-		               	WorkbenchMessages.Workbench_renameToolTip, null);
+				WorkbenchMessages.Workbench_renameToolTip, null);
 	}
 
 	private IContributionItem getItem(String actionId, String commandId, String image, String disabledImage, String label, String tooltip, String helpContextId) {
@@ -1103,9 +1101,9 @@ public final class ApplicationActionBarAdvisor extends ActionBarAdvisor {
 		acms.map(actionId, commandId);
 
 		CommandContributionItemParameter commandParm = new CommandContributionItemParameter(getWindow(), actionId, commandId, null,
-		                                                                                    sharedImages.getImageDescriptor(image),
-		                                                                                    sharedImages.getImageDescriptor(disabledImage), null, label, null,
-		                                                                                    tooltip, CommandContributionItem.STYLE_PUSH, null, false);
+				sharedImages.getImageDescriptor(image),
+				sharedImages.getImageDescriptor(disabledImage), null, label, null,
+				tooltip, CommandContributionItem.STYLE_PUSH, null, false);
 		return new CommandContributionItem(commandParm);
 	}
 }
