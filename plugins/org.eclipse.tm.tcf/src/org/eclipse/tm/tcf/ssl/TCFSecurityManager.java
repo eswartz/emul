@@ -43,7 +43,15 @@ import org.eclipse.tm.tcf.protocol.Protocol;
 public class TCFSecurityManager {
 
     public static File getCertificatesDirectory() {
-        File certs = Activator.getDefault().getStateLocation().append("certificates").toFile(); //$NON-NLS-1$
+        File certs;
+        try {
+            certs = Activator.getDefault().getStateLocation().append("certificates").toFile(); //$NON-NLS-1$
+        }
+        catch (IllegalStateException e) {
+            // An RCP workspace-less environment (-data @none)
+            certs = new File(System.getProperty("user.home"), ".tcf");
+            certs = new File(certs, "certificates");
+        }
         if (!certs.exists()) certs.mkdirs();
         return certs;
     }
