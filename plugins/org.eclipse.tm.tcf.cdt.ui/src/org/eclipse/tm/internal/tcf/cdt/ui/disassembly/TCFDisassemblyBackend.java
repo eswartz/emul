@@ -713,7 +713,8 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
 
                 // insert source
                 String sourceFile = null;
-                int sourceLine = -1;
+                int firstLine = -1;
+                int lastLine = -1;
                 CodeArea area = findCodeArea(address, codeAreas);
                 if (area != null) {
                     if (area.file != null) {
@@ -722,11 +723,17 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
                             filePath = new Path(area.directory).append(filePath);
                         }
                         sourceFile = filePath.toString();
-                        sourceLine = area.start_line - 1;
+                        firstLine = area.start_line - 1;
+                        lastLine = area.end_line - 2;
                     }
                 }
-                if (sourceFile != null && sourceLine >= 0) {
-                    p = fCallback.insertSource(p, address, sourceFile, sourceLine);
+                if (sourceFile != null && firstLine >= 0) {
+                    try {
+                        p = fCallback.insertSource(p, address, sourceFile, firstLine, lastLine);
+                    } catch (NoSuchMethodError nsme) {
+                        // use fallback
+                        p = fCallback.insertSource(p, address, sourceFile, firstLine);
+                    }
                 }
 
                 // insert symbol label
@@ -740,7 +747,7 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
                 Map<String, Object>[] instrAttrs = instruction.getInstruction();
                 String instr = formatInstruction(instrAttrs);
                 
-                p = fCallback.getDocument().insertDisassemblyLine(p, address, instrLength, functionOffset.toString(), instr, sourceFile, sourceLine);
+                p = fCallback.getDocument().insertDisassemblyLine(p, address, instrLength, functionOffset.toString(), instr, sourceFile, firstLine);
                 if (p == null) {
                     break;
                 }
