@@ -122,6 +122,9 @@ public class FSTreeLabelProvider extends LabelProvider implements ITableLabelPro
 		return super.getImage(element);
 	}
 
+	/**
+	 * Returns the workbench's editor registry.
+	 */
 	private IEditorRegistry getEditorRegistry() {
 		if (fEditorRegistry == null) {
 			IWorkbench workbench = PlatformUI.getWorkbench();
@@ -142,7 +145,7 @@ public class FSTreeLabelProvider extends LabelProvider implements ITableLabelPro
 	 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnText(java.lang.Object, int)
 	 */
 	public String getColumnText(Object element, int columnIndex) {
- 		if (columnIndex == 0) return getText(element);
+		if (columnIndex == 0) return getText(element);
 
 		if (element instanceof PendingOperation) return ""; //$NON-NLS-1$
 
@@ -151,19 +154,19 @@ public class FSTreeLabelProvider extends LabelProvider implements ITableLabelPro
 			if (node.type != null && node.type.startsWith("FS")) { //$NON-NLS-1$
 				boolean isDirNode = node.type.endsWith("DirNode"); //$NON-NLS-1$
 				switch (columnIndex) {
-					case 1:
-						// Directory nodes does not have a size
-						if (!isDirNode) {
-							if (node.attr != null) {
-								return SIZE_FORMAT.format(node.attr.size / 1024) + " KB"; //$NON-NLS-1$
-							}
-						}
-						break;
-					case 2:
+				case 1:
+					// Directory nodes does not have a size
+					if (!isDirNode) {
 						if (node.attr != null) {
-							return DATE_MODIFIED_FORMAT.format(new Date(node.attr.mtime));
+							return SIZE_FORMAT.format(node.attr.size / 1024) + " KB"; //$NON-NLS-1$
 						}
-						break;
+					}
+					break;
+				case 2:
+					if (node.attr != null) {
+						return DATE_MODIFIED_FORMAT.format(new Date(node.attr.mtime));
+					}
+					break;
 				}
 
 			}

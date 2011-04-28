@@ -2,6 +2,11 @@
 <?eclipse version="3.4"?>
 <plugin>
 
+<!-- Preference contributions -->
+   <extension point="org.eclipse.core.runtime.preferences">
+      <initializer class="org.eclipse.tm.te.tcf.filesystem.internal.preferences.PreferencesInitializer"/>
+   </extension>
+
 <!-- Common navigator contributions -->
    <extension point="org.eclipse.ui.navigator.viewer">
       <viewerContentBinding viewerId="org.eclipse.tm.te.ui.views.TargetExplorer">
@@ -15,7 +20,7 @@
    
    <extension point="org.eclipse.ui.navigator.navigatorContent">
       <navigatorContent
-            activeByDefault="true"
+            activeByDefault="false"
             contentProvider="org.eclipse.tm.te.tcf.filesystem.controls.FSTreeContentProvider"
             icon="icons/obj16/rootdrive.gif"
             id="org.eclipse.tm.te.datasource.tcf.filesystem"
@@ -57,6 +62,11 @@
                   <adapt type="org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel">
                      <test property="org.eclipse.tm.te.tcf.locator.hasRemoteService" value="FileSystem"/>
                   </adapt>
+                  <test
+                        property="org.eclipse.tm.te.core.preference"
+                        args="bundleId=org.eclipse.tm.te.tcf.filesystem,key=tcf.filesystem.core.feature.editor.content.enable"
+                        value="true">
+                  </test>
                </and>
             </with>
          </enablement>
