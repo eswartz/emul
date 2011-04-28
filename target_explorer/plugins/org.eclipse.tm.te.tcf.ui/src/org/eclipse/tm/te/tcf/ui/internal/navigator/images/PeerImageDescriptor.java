@@ -58,7 +58,7 @@ public class PeerImageDescriptor extends AbstractImageDescriptor {
 	/**
 	 * Initialize the image descriptor from the peer model.
 	 *
-	 * @param node The peer model. Must be not <code>null</code>.
+	 * @param node The peer model. Must not be <code>null</code>.
 	 */
 	protected void initialize(IPeerModel node) {
 		assert Protocol.isDispatchThread() && node != null;

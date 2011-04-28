@@ -94,7 +94,7 @@ public abstract class AbstractTreeControl extends WorkbenchPartControl {
 	/**
 	 * Creates the tree viewer instance.
 	 *
-	 * @param parent The parent composite. Must be not <code>null</code>.
+	 * @param parent The parent composite. Must not be <code>null</code>.
 	 * @return The tree viewer.
 	 */
 	protected TreeViewer doCreateTreeViewer(Composite parent) {
@@ -105,7 +105,7 @@ public abstract class AbstractTreeControl extends WorkbenchPartControl {
 	/**
 	 * Configure the tree viewer.
 	 *
-	 * @param viewer The tree viewer. Must be not <code>null</code>.
+	 * @param viewer The tree viewer. Must not be <code>null</code>.
 	 */
 	protected void configureTreeViewer(TreeViewer viewer) {
 		assert viewer != null;
@@ -138,7 +138,7 @@ public abstract class AbstractTreeControl extends WorkbenchPartControl {
 	/**
 	 * Creates the tree viewer layout data instance.
 	 *
-	 * @param viewer The tree viewer. Must be not <code>null</code>.
+	 * @param viewer The tree viewer. Must not be <code>null</code>.
 	 * @return The tree viewer layout data instance.
 	 */
 	protected Object doCreateTreeViewerLayoutData(TreeViewer viewer) {
@@ -148,7 +148,7 @@ public abstract class AbstractTreeControl extends WorkbenchPartControl {
 	/**
 	 * Creates the tree viewer label provider instance.
 	 *
-	 * @param viewer The tree viewer. Must be not <code>null</code>.
+	 * @param viewer The tree viewer. Must not be <code>null</code>.
 	 * @return The tree viewer label provider instance.
 	 */
 	protected abstract ILabelProvider doCreateTreeViewerLabelProvider(TreeViewer viewer);
@@ -156,7 +156,7 @@ public abstract class AbstractTreeControl extends WorkbenchPartControl {
 	/**
 	 * Creates the tree viewer content provider instance.
 	 *
-	 * @param viewer The tree viewer. Must be not <code>null</code>.
+	 * @param viewer The tree viewer. Must not be <code>null</code>.
 	 * @return The tree viewer content provider instance.
 	 */
 	protected abstract ITreeContentProvider doCreateTreeViewerContentProvider(TreeViewer viewer);
@@ -164,7 +164,7 @@ public abstract class AbstractTreeControl extends WorkbenchPartControl {
 	/**
 	 * Creates the tree viewer comparator instance.
 	 *
-	 * @param viewer The tree viewer. Must be not <code>null</code>.
+	 * @param viewer The tree viewer. Must not be <code>null</code>.
 	 * @return The tree viewer comparator instance or <code>null</code> to turn of sorting.
 	 */
 	protected ViewerComparator doCreateTreeViewerComparator(TreeViewer viewer) {
@@ -175,7 +175,7 @@ public abstract class AbstractTreeControl extends WorkbenchPartControl {
 	/**
 	 * Creates a new selection changed listener instance.
 	 *
-	 * @param viewer The tree viewer. Must be not <code>null</code>.
+	 * @param viewer The tree viewer. Must not be <code>null</code>.
 	 * @return The selection changed listener instance.
 	 */
 	protected abstract ISelectionChangedListener doCreateTreeViewerSelectionChangedListener(TreeViewer viewer);

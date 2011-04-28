@@ -24,7 +24,7 @@ public interface IScanner {
 	/**
 	 * Set or modify the current scanner configuration.
 	 *
-	 * @param configuration The new scanner configuration. Must be not <code>null</code>.
+	 * @param configuration The new scanner configuration. Must not be <code>null</code>.
 	 */
 	public void setConfiguration(Map<String, Object> configuration);
 

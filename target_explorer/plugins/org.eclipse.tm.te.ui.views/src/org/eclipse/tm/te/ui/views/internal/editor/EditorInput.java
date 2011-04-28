@@ -39,7 +39,7 @@ public class EditorInput implements IEditorInput, IPersistableElement {
 	/**
 	 * Constructor.
 	 *
-	 * @param node The node (selection) the editor is showing. Must be not <code>null</code>.
+	 * @param node The node (selection) the editor is showing. Must not be <code>null</code>.
 	 */
 	public EditorInput(Object node) {
 		this(node, IUIConstants.ID_EDITOR);
@@ -48,7 +48,7 @@ public class EditorInput implements IEditorInput, IPersistableElement {
 	/**
 	 * Constructor.
 	 *
-	 * @param node The node (selection) the editor is showing. Must be not <code>null</code>.
+	 * @param node The node (selection) the editor is showing. Must not be <code>null</code>.
 	 * @param id The parent editor id or <code>null</code>
 	 */
 	public EditorInput(Object node, String id) {

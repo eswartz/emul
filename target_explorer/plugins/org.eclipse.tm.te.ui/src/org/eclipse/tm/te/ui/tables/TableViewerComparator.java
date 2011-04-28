@@ -29,8 +29,8 @@ public class TableViewerComparator extends AbstractViewerComparator {
 	/**
 	 * Constructor.
 	 *
-	 * @param viewer The parent viewer. Must be not <code>null</code>.
-	 * @param labelProvider The table label provider. Must be not <code>null</code>.
+	 * @param viewer The parent viewer. Must not be <code>null</code>.
+	 * @param labelProvider The table label provider. Must not be <code>null</code>.
 	 */
 	public TableViewerComparator(Viewer viewer, ITableLabelProvider labelProvider) {
 		super(viewer);

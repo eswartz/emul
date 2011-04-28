@@ -28,8 +28,8 @@ public final class TableNode extends PlatformObject {
 	/**
 	 * Constructor.
 	 *
-	 * @param name The node name. Must be not <code>null</code>.
-	 * @param value The node value. Must be not <code>null</code>.
+	 * @param name The node name. Must not be <code>null</code>.
+	 * @param value The node value. Must not be <code>null</code>.
 	 */
 	public TableNode(String name, String value) {
 		assert name != null && value != null;

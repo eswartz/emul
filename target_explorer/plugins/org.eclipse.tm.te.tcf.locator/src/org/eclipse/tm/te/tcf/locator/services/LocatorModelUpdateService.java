@@ -28,7 +28,7 @@ public class LocatorModelUpdateService extends AbstractLocatorModelService imple
 	/**
 	 * Constructor.
 	 *
-	 * @param parentModel The parent locator model instance. Must be not <code>null</code>.
+	 * @param parentModel The parent locator model instance. Must not be <code>null</code>.
 	 */
 	public LocatorModelUpdateService(ILocatorModel parentModel) {
 		super(parentModel);
@@ -93,7 +93,7 @@ public class LocatorModelUpdateService extends AbstractLocatorModelService imple
 	/**
 	 * Transform the given collection into a plain string.
 	 *
-	 * @param collection The collection. Must be not <code>null</code>.
+	 * @param collection The collection. Must not be <code>null</code>.
 	 * @return The plain string.
 	 */
 	protected String makeString(Collection<String> collection) {

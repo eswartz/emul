@@ -98,7 +98,7 @@ public class Editor extends FormEditor implements IPersistableEditor {
 	/**
 	 * Returns the index of the page with the given id.
 	 *
-	 * @param pageId The page id. Must be not <code>null</code>.
+	 * @param pageId The page id. Must not be <code>null</code>.
 	 * @return The page index or <code>-1</code> if not found.
 	 */
 	private int getIndexOf(String pageId) {

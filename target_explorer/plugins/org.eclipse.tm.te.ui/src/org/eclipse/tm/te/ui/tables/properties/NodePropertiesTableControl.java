@@ -172,7 +172,7 @@ public abstract class NodePropertiesTableControl extends WorkbenchPartControl {
 	/**
 	 * Creates the table viewer label provider instance.
 	 *
-	 * @param viewer The table viewer. Must be not <code>null</code>.
+	 * @param viewer The table viewer. Must not be <code>null</code>.
 	 * @return The table viewer label provider instance.
 	 */
 	protected abstract ITableLabelProvider doCreateTableViewerLabelProvider(TableViewer viewer);
@@ -180,7 +180,7 @@ public abstract class NodePropertiesTableControl extends WorkbenchPartControl {
 	/**
 	 * Creates the table viewer content provider instance.
 	 *
-	 * @param viewer The table viewer. Must be not <code>null</code>.
+	 * @param viewer The table viewer. Must not be <code>null</code>.
 	 * @return The table viewer content provider instance.
 	 */
 	protected abstract IStructuredContentProvider doCreateTableViewerContentProvider(TableViewer viewer);
@@ -188,7 +188,7 @@ public abstract class NodePropertiesTableControl extends WorkbenchPartControl {
 	/**
 	 * Creates the table viewer comparator instance.
 	 *
-	 * @param viewer The table viewer. Must be not <code>null</code>.
+	 * @param viewer The table viewer. Must not be <code>null</code>.
 	 * @return The table viewer comparator instance or <code>null</code> to turn of sorting.
 	 */
 	protected ViewerComparator doCreateTableViewerComparator(TableViewer viewer) {

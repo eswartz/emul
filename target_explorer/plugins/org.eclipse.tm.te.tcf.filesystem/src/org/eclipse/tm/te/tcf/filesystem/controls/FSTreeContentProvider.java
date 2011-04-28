@@ -261,9 +261,9 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 	/**
 	 * Reads the content of a directory until the file system service signals EOF.
 	 *
-	 * @param service The file system service. Must be not <code>null</code>.
-	 * @param handle The directory handle. Must be not <code>null</code>.
-	 * @param parentNode The parent node receiving the entries. Must be not <code>null</code>.
+	 * @param service The file system service. Must not be <code>null</code>.
+	 * @param handle The directory handle. Must not be <code>null</code>.
+	 * @param parentNode The parent node receiving the entries. Must not be <code>null</code>.
 	 * @param mode The notification mode to set to the parent node once done.
 	 */
 	protected void readdir(final IFileSystem service, final IFileHandle handle, final FSTreeNode parentNode) {
@@ -320,7 +320,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 	/**
 	 * Creates a tree node from the given directory entry.
 	 *
-	 * @param entry The directory entry. Must be not <code>null</code>.
+	 * @param entry The directory entry. Must not be <code>null</code>.
 	 *
 	 * @return The tree node.
 	 */
@@ -353,7 +353,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 	/**
 	 * Returns the absolute name for the given node.
 	 *
-	 * @param node The node. Must be not <code>null</code>.
+	 * @param node The node. Must not be <code>null</code>.
 	 * @return The absolute name.
 	 */
 	public static String getEntryAbsoluteName(FSTreeNode node) {

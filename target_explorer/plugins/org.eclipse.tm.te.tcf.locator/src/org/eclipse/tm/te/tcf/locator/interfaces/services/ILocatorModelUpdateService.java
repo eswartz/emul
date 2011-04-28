@@ -24,14 +24,14 @@ public interface ILocatorModelUpdateService extends ILocatorModelService {
 	 * mapping to a peer model with the same id as the given
 	 * peer model is overwritten.
 	 *
-	 * @param peer The peer model object. Must be not <code>null</code>.
+	 * @param peer The peer model object. Must not be <code>null</code>.
 	 */
 	public void add(IPeerModel peer);
 
 	/**
 	 * Removes the given peer from the list of known peers.
 	 *
-	 * @param peer The peer model object. Must be not <code>null</code.
+	 * @param peer The peer model object. Must not be <code>null</code.
 	 */
 	public void remove(IPeerModel peer);
 
@@ -39,7 +39,7 @@ public interface ILocatorModelUpdateService extends ILocatorModelService {
 	 * Update the service nodes of the given peer node with the new set of
 	 * local and/or remote services.
 	 *
-	 * @param peerNode The peer model instance. Must be not <code>null</code>.
+	 * @param peerNode The peer model instance. Must not be <code>null</code>.
 	 * @param localServices The list of local service names or <code>null</code>.
 	 * @param remoteServices The list of remote service names or <code>null</code>.
 	 */

@@ -24,7 +24,7 @@ public class LocatorModelLookupService extends AbstractLocatorModelService imple
 	/**
 	 * Constructor.
 	 *
-	 * @param parentModel The parent locator model instance. Must be not <code>null</code>.
+	 * @param parentModel The parent locator model instance. Must not be <code>null</code>.
 	 */
 	public LocatorModelLookupService(ILocatorModel parentModel) {
 		super(parentModel);

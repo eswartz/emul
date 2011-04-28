@@ -41,7 +41,7 @@ public class Scanner extends Job implements IScanner {
 	/**
 	 * Constructor.
 	 *
-	 * @param parentModel The parent model instance. Must be not <code>null</code>.
+	 * @param parentModel The parent model instance. Must not be <code>null</code>.
 	 */
 	public Scanner(ILocatorModel parentModel) {
 		super(Scanner.class.getName());

@@ -38,7 +38,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	/**
 	 * Constructor.
 	 *
-	 * @param parent The parent locator model. Must be not <code>null</code>.
+	 * @param parent The parent locator model. Must not be <code>null</code>.
 	 */
 	public PeerModel(ILocatorModel parent) {
 		this(parent, null);
@@ -47,7 +47,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	/**
 	 * Constructor.
 	 *
-	 * @param parent The parent locator model. Must be not <code>null</code>.
+	 * @param parent The parent locator model. Must not be <code>null</code>.
 	 * @param peer The peer or <code>null</code>.
 	 */
 	public PeerModel(ILocatorModel parent, IPeer peer) {

@@ -38,8 +38,8 @@ public interface IChannelManager extends IAdaptable {
 	 * <p>
 	 * The method can be called from any thread context.
 	 *
-	 * @param peer The peer. Must be not <code>null</code>.
-	 * @param done The client callback. Must be not <code>null</code>.
+	 * @param peer The peer. Must not be <code>null</code>.
+	 * @param done The client callback. Must not be <code>null</code>.
 	 */
 	public void openChannel(IPeer peer, DoneOpenChannel done);
 
@@ -49,8 +49,8 @@ public interface IChannelManager extends IAdaptable {
 	 * <p>
 	 * The method can be called from any thread context.
 	 *
-	 * @param peerAttributes The peer attributes. Must be not <code>null</code>.
-	 * @param done The client callback. Must be not <code>null</code>.
+	 * @param peerAttributes The peer attributes. Must not be <code>null</code>.
+	 * @param done The client callback. Must not be <code>null</code>.
 	 */
 	public void openChannel(Map<String, String> peerAttributes, DoneOpenChannel done);
 }

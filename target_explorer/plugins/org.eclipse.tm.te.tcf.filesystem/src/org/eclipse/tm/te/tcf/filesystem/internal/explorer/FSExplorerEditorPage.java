@@ -69,7 +69,7 @@ public class FSExplorerEditorPage extends AbstractEditorPage {
 	/**
 	 * Configure the managed form to be ready for usage.
 	 *
-	 * @param managedForm The managed form. Must be not <code>null</code>.
+	 * @param managedForm The managed form. Must not be <code>null</code>.
 	 */
 	protected void configureManagedForm(IManagedForm managedForm) {
 		assert managedForm != null;
@@ -88,8 +88,8 @@ public class FSExplorerEditorPage extends AbstractEditorPage {
 	/**
 	 * Do create the managed form content.
 	 *
-	 * @param parent The parent composite. Must be not <code>null</code>
-	 * @param toolkit The {@link CustomFormToolkit} instance. Must be not <code>null</code>.
+	 * @param parent The parent composite. Must not be <code>null</code>
+	 * @param toolkit The {@link CustomFormToolkit} instance. Must not be <code>null</code>.
 	 */
 	protected void doCreateFormContent(Composite parent, CustomFormToolkit toolkit) {
 		assert parent != null && toolkit != null;

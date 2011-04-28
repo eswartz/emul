@@ -51,8 +51,8 @@ public final class ChannelManager extends PlatformObject implements IChannelMana
 	 * <p>
 	 * Method must be called within the TCF dispatch thread.
 	 *
-	 * @param peer The peer. Must be not <code>null</code>.
-	 * @param done The client callback. Must be not <code>null</code>.
+	 * @param peer The peer. Must not be <code>null</code>.
+	 * @param done The client callback. Must not be <code>null</code>.
 	 */
 	/* default */ void internalOpenChannel(final IPeer peer, final DoneOpenChannel done) {
 		assert peer != null;
@@ -110,8 +110,8 @@ public final class ChannelManager extends PlatformObject implements IChannelMana
 	 * <p>
 	 * Method must be called within the TCF dispatch thread.
 	 *
-	 * @param peerAttributes The peer attributes. Must be not <code>null</code>.
-	 * @param done The client callback. Must be not <code>null</code>.
+	 * @param peerAttributes The peer attributes. Must not be <code>null</code>.
+	 * @param done The client callback. Must not be <code>null</code>.
 	 */
 	/* default */ void internalOpenChannel(final Map<String, String> peerAttributes, final DoneOpenChannel done) {
 		assert peerAttributes != null;
@@ -126,7 +126,7 @@ public final class ChannelManager extends PlatformObject implements IChannelMana
 	 * <p>
 	 * <b>Note:</b> This method must be invoked at the TCF dispatch thread.
 	 *
-	 * @param peerAttributes The peer attributes. Must be not <code>null</code>.
+	 * @param peerAttributes The peer attributes. Must not be <code>null</code>.
 	 * @return The peer instance.
 	 */
 	private IPeer getOrCreatePeerInstance(final Map<String, String> peerAttributes) {

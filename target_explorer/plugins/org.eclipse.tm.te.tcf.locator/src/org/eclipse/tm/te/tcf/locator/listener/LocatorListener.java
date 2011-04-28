@@ -31,7 +31,7 @@ public class LocatorListener implements ILocator.LocatorListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param model The parent locator model. Must be not <code>null</code>.
+	 * @param model The parent locator model. Must not be <code>null</code>.
 	 */
 	public LocatorListener(ILocatorModel model) {
 		super();

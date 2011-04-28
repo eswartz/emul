@@ -36,7 +36,7 @@ public class LocatorModelRefreshService extends AbstractLocatorModelService impl
 	/**
 	 * Constructor.
 	 *
-	 * @param parentModel The parent locator model instance. Must be not <code>null</code>.
+	 * @param parentModel The parent locator model instance. Must not be <code>null</code>.
 	 */
 	public LocatorModelRefreshService(ILocatorModel parentModel) {
 		super(parentModel);

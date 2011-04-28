@@ -22,7 +22,7 @@ public abstract class AbstractViewerComparator extends ViewerComparator {
 	/**
 	 * Constructor.
 	 *
-	 * @param viewer The parent viewer. Must be not <code>null</code>.
+	 * @param viewer The parent viewer. Must not be <code>null</code>.
 	 */
 	public AbstractViewerComparator(Viewer viewer) {
 		assert viewer != null;

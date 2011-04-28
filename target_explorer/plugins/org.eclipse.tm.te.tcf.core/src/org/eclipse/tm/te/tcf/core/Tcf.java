@@ -65,7 +65,7 @@ public final class Tcf {
 	 * <b>Note:</b> Code which is executed in the TCF protocol dispatch thread
 	 * cannot use any blocking API!
 	 *
-	 * @param runnable The runnable. Must be not <code>null</code>.
+	 * @param runnable The runnable. Must not be <code>null</code>.
 	 */
 	private static final void runSafe(Runnable runnable) {
 		assert runnable != null;
@@ -80,7 +80,7 @@ public final class Tcf {
 	/**
 	 * Adds a listener that will be notified once the TCF framework state changes.
 	 *
-	 * @param listener The listener. Must be not <code>null</code>.
+	 * @param listener The listener. Must not be <code>null</code>.
 	 */
 	public static final void addProtocolStateChangeListener(IProtocolStateChangeListener listener) {
 		assert Protocol.isDispatchThread() && listener != null;
@@ -96,7 +96,7 @@ public final class Tcf {
 	/**
 	 * Removes the specified protocol state change listener.
 	 *
-	 * @param listener The listener. Must be not <code>null</code>.
+	 * @param listener The listener. Must not be <code>null</code>.
 	 */
 	public static final void removeProtocolStateChangeListener(IProtocolStateChangeListener listener) {
 		assert Protocol.isDispatchThread() && listener != null;
@@ -110,7 +110,7 @@ public final class Tcf {
 	/**
 	 * Adds a listener that will be notified once the TCF framework state changes.
 	 *
-	 * @param listener The listener. Must be not <code>null</code>.
+	 * @param listener The listener. Must not be <code>null</code>.
 	 */
 	public static final void addChannelStateChangeListener(IChannelStateChangeListener listener) {
 		assert Protocol.isDispatchThread() && listener != null;
@@ -126,7 +126,7 @@ public final class Tcf {
 	/**
 	 * Removes the specified protocol state change listener.
 	 *
-	 * @param listener The listener. Must be not <code>null</code>.
+	 * @param listener The listener. Must not be <code>null</code>.
 	 */
 	public static final void removeChannelStateChangeListener(IChannelStateChangeListener listener) {
 		assert Protocol.isDispatchThread() && listener != null;
@@ -140,7 +140,7 @@ public final class Tcf {
 	/**
 	 * Fires the channel state change listeners.
 	 *
-	 * @param channel The channel which changed state. Must be not <code>null</code>.
+	 * @param channel The channel which changed state. Must not be <code>null</code>.
 	 * @param state The new state.
 	 */
 	public static final void fireChannelStateChangeListeners(final IChannel channel, final int state) {

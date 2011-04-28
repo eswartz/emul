@@ -48,7 +48,7 @@ public abstract class AbstractImageRegistry extends ImageRegistry {
 	 * an image or image descriptor cannot be found locally. If the image
 	 * registry delegate had been added before, the method will do nothing.
 	 *
-	 * @param registry The image registry. Must be not <code>null</code>.
+	 * @param registry The image registry. Must not be <code>null</code>.
 	 */
 	protected final void addImageRegistryDelegate(ImageRegistry registry) {
 		assert registry != null;
@@ -58,7 +58,7 @@ public abstract class AbstractImageRegistry extends ImageRegistry {
 	/**
 	 * Removes the given image registry from the list of delegates.
 	 *
-	 * @param registry The image registry. Must be not <code>null</code>.
+	 * @param registry The image registry. Must not be <code>null</code>.
 	 */
 	protected final void removeImageRegistryDelegate(ImageRegistry registry) {
 		assert registry != null;

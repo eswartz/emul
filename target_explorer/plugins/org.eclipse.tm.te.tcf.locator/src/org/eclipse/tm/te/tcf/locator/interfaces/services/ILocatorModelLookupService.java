@@ -19,7 +19,7 @@ public interface ILocatorModelLookupService extends ILocatorModelService {
 	/**
 	 * Lookup the peer model for the given peer id.
 	 *
-	 * @param id The peer id. Must be not <code>null</code>.
+	 * @param id The peer id. Must not be <code>null</code>.
 	 * @return The peer model instance, or <code>null</code> if the peer model cannot be found.
 	 */
 	public IPeerModel lkupPeerModelById(String id);
@@ -27,7 +27,7 @@ public interface ILocatorModelLookupService extends ILocatorModelService {
 	/**
 	 * Lookup the peer model for the given peer id.
 	 *
-	 * @param agentId The agent id. Must be not <code>null</code>.
+	 * @param agentId The agent id. Must not be <code>null</code>.
 	 * @return The peer model instance, or <code>null</code> if the peer model cannot be found.
 	 */
 	public IPeerModel lkupPeerModelByAgentId(String agentId);

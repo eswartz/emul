@@ -27,7 +27,7 @@ public class InternalChannelListener implements IChannel.IChannelListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param channel The channel. Must be not <code>null</code>.
+	 * @param channel The channel. Must not be <code>null</code>.
 	 */
 	public InternalChannelListener(IChannel channel) {
 		assert channel != null;

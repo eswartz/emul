@@ -37,14 +37,14 @@ public interface ILocatorModel extends IAdaptable {
 	 * If the same listener has been added before, the listener will
 	 * not be added again.
 	 *
-	 * @param listener The listener. Must be not <code>null</code>.
+	 * @param listener The listener. Must not be <code>null</code>.
 	 */
 	public void addListener(IModelListener listener);
 
 	/**
 	 * Removes the specified listener from the list of model listener.
 	 *
-	 * @param listener The listener. Must be not <code>null</code>.
+	 * @param listener The listener. Must not be <code>null</code>.
 	 */
 	public void removeListener(IModelListener listener);
 
@@ -99,7 +99,7 @@ public interface ILocatorModel extends IAdaptable {
 	 * Returns the locator model service, implementing at least the specified
 	 * service interface.
 	 *
-	 * @param serviceInterface The service interface class. Must be not <code>null</code>.
+	 * @param serviceInterface The service interface class. Must not be <code>null</code>.
 	 * @return The service instance implementing the specified service interface, or <code>null</code>.
 	 */
 	public <V extends ILocatorModelService> V getService(Class<V> serviceInterface);
@@ -108,7 +108,7 @@ public interface ILocatorModel extends IAdaptable {
 	 * Validate the given peer model if or if not it can be added
 	 * to the locator model as new peer node.
 	 *
-	 * @param node The peer model. Must be not <code>null</code>.
+	 * @param node The peer model. Must not be <code>null</code>.
 	 * @return The peer node if it allowed add it to the model, or <code>null</code> if not.
 	 */
 	public IPeerModel validatePeerNodeForAdd(IPeerModel node);

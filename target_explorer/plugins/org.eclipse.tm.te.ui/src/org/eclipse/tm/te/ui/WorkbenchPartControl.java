@@ -92,7 +92,7 @@ public class WorkbenchPartControl extends PlatformObject {
 	 * Creates the controls UI elements.
 	 *
 	 * @param parent The parent composite. Must not be <code>null</code>.
-	 * @param toolkit The {@link CustomFormToolkit} instance. Must be not <code>null</code>.
+	 * @param toolkit The {@link CustomFormToolkit} instance. Must not be <code>null</code>.
 	 */
 	public void setupFormPanel(Composite parent, CustomFormToolkit toolkit) {
 		assert parent != null && toolkit != null;

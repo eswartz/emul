@@ -48,7 +48,7 @@ public interface IPeerModel extends IAdaptable {
 	 * Set the properties from the given map. Calling this method
 	 * will overwrite all previous set properties.
 	 *
-	 * @param properties The map of properties to set. Must be not <code>null</code>.
+	 * @param properties The map of properties to set. Must not be <code>null</code>.
 	 */
 	public void setProperties(Map<String, Object> properties);
 
@@ -62,7 +62,7 @@ public interface IPeerModel extends IAdaptable {
 	 * from the property store.
 	 *
 	 *
-	 * @param key The property key. Must be not <code>null</code>!
+	 * @param key The property key. Must not be <code>null</code>!
 	 * @param value The property value.
 	 * @return <code>true</code> if the property value had been applied to the property store, <code>false</code> otherwise.
 	 */
@@ -73,7 +73,7 @@ public interface IPeerModel extends IAdaptable {
 	 * property value. The given long value is transformed to an <code>Long</code>
 	 * object and stored to the properties store via <code>setProperty(java.lang.String, java.lang.Object)</code>.
 	 *
-	 * @param key The property key. Must be not <code>null</code>!
+	 * @param key The property key. Must not be <code>null</code>!
 	 * @param value The property value.
 	 * @return <code>true</code> if the property value had been applied to the property store, <code>false</code> otherwise.
 	 *
@@ -86,7 +86,7 @@ public interface IPeerModel extends IAdaptable {
 	 * property value. The given integer value is transformed to an <code>Integer</code>
 	 * object and stored to the properties store via <code>setProperty(java.lang.String, java.lang.Object)</code>.
 	 *
-	 * @param key The property key. Must be not <code>null</code>!
+	 * @param key The property key. Must not be <code>null</code>!
 	 * @param value The property value.
 	 * @return <code>true</code> if the property value had been applied to the property store, <code>false</code> otherwise.
 	 *
@@ -99,7 +99,7 @@ public interface IPeerModel extends IAdaptable {
 	 * property value. The given boolean value is transformed to an <code>Boolean</code>
 	 * object and stored to the properties store via <code>setProperty(java.lang.String, java.lang.Object)</code>.
 	 *
-	 * @param key The property key. Must be not <code>null</code>!
+	 * @param key The property key. Must not be <code>null</code>!
 	 * @param value The property value.
 	 * @return <code>true</code> if the property value had been applied to the property store, <code>false</code> otherwise.
 	 *
@@ -112,7 +112,7 @@ public interface IPeerModel extends IAdaptable {
 	 * property value. The given float value is transformed to an <code>Float</code>
 	 * object and stored to the properties store via <code>setProperty(java.lang.String, java.lang.Object)</code>.
 	 *
-	 * @param key The property key. Must be not <code>null</code>!
+	 * @param key The property key. Must not be <code>null</code>!
 	 * @param value The property value.
 	 * @return <code>true</code> if the property value had been applied to the property store, <code>false</code> otherwise.
 	 *
@@ -125,7 +125,7 @@ public interface IPeerModel extends IAdaptable {
 	 * property value. The given double value is transformed to an <code>Double</code>
 	 * object and stored to the properties store via <code>setProperty(java.lang.String, java.lang.Object)</code>.
 	 *
-	 * @param key The property key. Must be not <code>null</code>!
+	 * @param key The property key. Must not be <code>null</code>!
 	 * @param value The property value.
 	 * @return <code>true</code> if the property value had been applied to the property store, <code>false</code> otherwise.
 	 *
@@ -144,7 +144,7 @@ public interface IPeerModel extends IAdaptable {
 	 * Queries the property value stored under the given property key. If the property
 	 * does not exist, <code>null</code> is returned.
 	 *
-	 * @param key The property key. Must be not <code>null</code>!
+	 * @param key The property key. Must not be <code>null</code>!
 	 * @return The stored property value or <code>null</code>.
 	 */
 	public Object getProperty(String key);
@@ -155,7 +155,7 @@ public interface IPeerModel extends IAdaptable {
 	 * <code>java.lang.String</code> is returned. In all other cases, <code>null</code>
 	 * is returned.
 	 *
-	 * @param key The property key. Must be not <code>null</code>!
+	 * @param key The property key. Must not be <code>null</code>!
 	 * @return The stored property value casted <code>java.lang.String</code> or <code>null</code>.
 	 */
 	public String getStringProperty(String key);
@@ -165,7 +165,7 @@ public interface IPeerModel extends IAdaptable {
 	 * exist and is of type <code>java.lang.Long</code>, the property value converted
 	 * to an long value is returned. In all other cases, <code>-1</code> is returned.
 	 *
-	 * @param key The property key. Must be not <code>null</code>!
+	 * @param key The property key. Must not be <code>null</code>!
 	 * @return The stored property value converted to a long value or <code>-1</code>.
 	 */
 	public long getLongProperty(String key);
@@ -175,7 +175,7 @@ public interface IPeerModel extends IAdaptable {
 	 * exist and is of type <code>java.lang.Integer</code>, the property value converted
 	 * to an integer value is returned. In all other cases, <code>-1</code> is returned.
 	 *
-	 * @param key The property key. Must be not <code>null</code>!
+	 * @param key The property key. Must not be <code>null</code>!
 	 * @return The stored property value converted to an integer value or <code>-1</code>.
 	 */
 	public int getIntProperty(String key);
@@ -185,7 +185,7 @@ public interface IPeerModel extends IAdaptable {
 	 * exist and is of type <code>java.lang.Boolean</code>, the property value converted
 	 * to an boolean value is returned. In all other cases, <code>false</code> is returned.
 	 *
-	 * @param key The property key. Must be not <code>null</code>!
+	 * @param key The property key. Must not be <code>null</code>!
 	 * @return The stored property value converted to an boolean value or <code>false</code>.
 	 */
 	public boolean getBooleanProperty(String key);
@@ -195,7 +195,7 @@ public interface IPeerModel extends IAdaptable {
 	 * exist and is of type <code>java.lang.Float</code>, the property value converted
 	 * to an float value is returned. In all other cases, <code>Float.NaN</code> is returned.
 	 *
-	 * @param key The property key. Must be not <code>null</code>!
+	 * @param key The property key. Must not be <code>null</code>!
 	 * @return The stored property value converted to a float value or <code>Float.NaN</code>.
 	 */
 	public float getFloatProperty(String key);
@@ -205,7 +205,7 @@ public interface IPeerModel extends IAdaptable {
 	 * exist and is of type <code>java.lang.Double</code>, the property value converted
 	 * to an double value is returned. In all other cases, <code>Double.NaN</code> is returned.
 	 *
-	 * @param key The property key. Must be not <code>null</code>!
+	 * @param key The property key. Must not be <code>null</code>!
 	 * @return The stored property value converted to a double value or <code>Double.NaN</code>.
 	 */
 	public double getDoubleProperty(String key);
@@ -220,7 +220,7 @@ public interface IPeerModel extends IAdaptable {
 	 * Test if the property value stored under the given property is equal ignoring the case to the given
 	 * expected string value.
 	 *
-	 * @param key The property key. Must be not <code>null</code>.
+	 * @param key The property key. Must not be <code>null</code>.
 	 * @param value The expected property string value.
 	 * @return <code>true</code> if the expected string value is equal ignoring the case to the stored property value, <code>false</code> otherwise.
 	 */
@@ -230,7 +230,7 @@ public interface IPeerModel extends IAdaptable {
 	 * Test if the property value stored under the given property is equal to the given
 	 * expected value.
 	 *
-	 * @param key The property key. Must be not <code>null</code>.
+	 * @param key The property key. Must not be <code>null</code>.
 	 * @param value The expected property value.
 	 * @return <code>true</code> if the expected value is equal to the stored property value, <code>false</code> otherwise.
 	 */
@@ -240,7 +240,7 @@ public interface IPeerModel extends IAdaptable {
 	 * Test if the property value stored under the given property is equal to the given
 	 * expected value.
 	 *
-	 * @param key The property key. Must be not <code>null</code>.
+	 * @param key The property key. Must not be <code>null</code>.
 	 * @param value The expected property value.
 	 * @return <code>true</code> if the expected value is equal to the stored property value, <code>false</code> otherwise.
 	 */
@@ -250,7 +250,7 @@ public interface IPeerModel extends IAdaptable {
 	 * Test if the property value stored under the given property is equal to the given
 	 * expected value.
 	 *
-	 * @param key The property key. Must be not <code>null</code>.
+	 * @param key The property key. Must not be <code>null</code>.
 	 * @param value The expected property value.
 	 * @return <code>true</code> if the expected value is equal to the stored property value, <code>false</code> otherwise.
 	 */
@@ -260,7 +260,7 @@ public interface IPeerModel extends IAdaptable {
 	 * Test if the property value stored under the given property is equal to the given
 	 * expected value.
 	 *
-	 * @param key The property key. Must be not <code>null</code>.
+	 * @param key The property key. Must not be <code>null</code>.
 	 * @param value The expected property value.
 	 * @return <code>true</code> if the expected value is equal to the stored property value, <code>false</code> otherwise.
 	 */
@@ -270,7 +270,7 @@ public interface IPeerModel extends IAdaptable {
 	 * Test if the property value stored under the given property is equal to the given
 	 * expected value.
 	 *
-	 * @param key The property key. Must be not <code>null</code>.
+	 * @param key The property key. Must not be <code>null</code>.
 	 * @param value The expected property value.
 	 * @return <code>true</code> if the expected value is equal to the stored property value, <code>false</code> otherwise.
 	 */
@@ -280,7 +280,7 @@ public interface IPeerModel extends IAdaptable {
 	 * Test if the property value stored under the given property is equal to the given
 	 * expected value.
 	 *
-	 * @param key The property key. Must be not <code>null</code>.
+	 * @param key The property key. Must not be <code>null</code>.
 	 * @param value The expected property value.
 	 * @return <code>true</code> if the expected value is equal to the stored property value, <code>false</code> otherwise.
 	 */

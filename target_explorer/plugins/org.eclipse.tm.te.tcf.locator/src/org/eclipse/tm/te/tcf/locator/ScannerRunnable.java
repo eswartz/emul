@@ -49,7 +49,7 @@ public class ScannerRunnable implements Runnable, IChannel.IChannelListener {
 	 * Constructor.
 	 *
 	 * @param scanner The parent model scanner or <code>null</code> if the runnable is constructed from outside a scanner.
-	 * @param peerNode The peer model instance. Must be not <code>null</code>.
+	 * @param peerNode The peer model instance. Must not be <code>null</code>.
 	 */
 	public ScannerRunnable(IScanner scanner, IPeerModel peerNode) {
 		super();

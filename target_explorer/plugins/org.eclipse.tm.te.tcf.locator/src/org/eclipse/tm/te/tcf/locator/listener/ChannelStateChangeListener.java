@@ -29,7 +29,7 @@ public class ChannelStateChangeListener implements IChannelStateChangeListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param model The parent locator model. Must be not <code>null</code>.
+	 * @param model The parent locator model. Must not be <code>null</code>.
 	 */
 	public ChannelStateChangeListener(ILocatorModel model) {
 		assert model != null;

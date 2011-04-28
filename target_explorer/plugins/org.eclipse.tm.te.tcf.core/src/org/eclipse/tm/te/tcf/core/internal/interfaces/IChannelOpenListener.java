@@ -22,7 +22,7 @@ public interface IChannelOpenListener extends ChannelOpenListener {
 	 * key is the given channel. If the given channel listener is <code>null</code>,
 	 * the channel is removed from the internal map.
 	 *
-	 * @param channel The channel. Must be not <code>null</code>.
+	 * @param channel The channel. Must not be <code>null</code>.
 	 * @param listener The channel listener or <code>null</code>.
 	 */
 	public void setChannelListener(IChannel channel, IChannel.IChannelListener listener);

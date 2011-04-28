@@ -118,8 +118,8 @@ public class LabelProviderDelegate extends LabelProvider implements ILabelDecora
 	 * <p>
 	 * <b>Note:</b> Must be called with the TCF event dispatch thread.
 	 *
-	 * @param builder The string builder to decorate. Must be not <code>null</code>.
-	 * @param peer The peer. Must be not <code>null</code>.
+	 * @param builder The string builder to decorate. Must not be <code>null</code>.
+	 * @param peer The peer. Must not be <code>null</code>.
 	 */
 	/* default */ void doDecorateText(StringBuilder builder, IPeer peer) {
 		assert Protocol.isDispatchThread() && builder != null && peer != null;

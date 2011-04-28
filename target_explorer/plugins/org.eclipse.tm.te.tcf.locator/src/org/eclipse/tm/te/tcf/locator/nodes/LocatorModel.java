@@ -214,7 +214,7 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 	/**
 	 * Creates the locator listener instance.
 	 *
-	 * @param model The parent model. Must be not <code>null</code>.
+	 * @param model The parent model. Must not be <code>null</code>.
 	 * @return The locator listener instance.
 	 */
 	protected ILocator.LocatorListener doCreateLocatorListener(ILocatorModel model) {
