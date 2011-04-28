@@ -862,7 +862,8 @@ static void create_search_index(DWARFCache * cache, ELF_Section * section) {
             if (cache->mFrameInfoRangesCnt >= cache->mFrameInfoRangesMax) {
                 cache->mFrameInfoRangesMax += 512;
                 if (cache->mFrameInfoRanges == NULL) cache->mFrameInfoRangesMax += (unsigned)(section->size / 32);
-                cache->mFrameInfoRanges = loc_realloc(cache->mFrameInfoRanges, cache->mFrameInfoRangesMax * sizeof(FrameInfoRange));
+                cache->mFrameInfoRanges = (FrameInfoRange *)loc_realloc(cache->mFrameInfoRanges,
+                    cache->mFrameInfoRangesMax * sizeof(FrameInfoRange));
             }
             range = cache->mFrameInfoRanges + cache->mFrameInfoRangesCnt++;
             range->mAddr = (ContextAddress)read_frame_data_pointer(rules.addr_encoding, &sec);
