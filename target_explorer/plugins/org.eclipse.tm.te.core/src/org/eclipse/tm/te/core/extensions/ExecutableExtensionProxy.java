@@ -21,6 +21,8 @@ import org.eclipse.tm.te.core.nls.Messages;
 
 /**
  * Target Explorer: Executable extension proxy implementation.
+ * 
+ * @since 1.0
  */
 public class ExecutableExtensionProxy<V> {
 	// The extension instance. Created on first access
@@ -35,6 +37,7 @@ public class ExecutableExtensionProxy<V> {
 	 *
 	 * @param element The configuration element. Must not be <code>null</code>.
 	 * @throws CoreException In case the configuration element attribute <i>id</i> is <code>null</code> or empty.
+	 * @since 1.0
 	 */
 	public ExecutableExtensionProxy(IConfigurationElement element) throws CoreException {
 		assert element != null;
@@ -58,6 +61,7 @@ public class ExecutableExtensionProxy<V> {
 	 *
 	 * @param id The id for this instance.
 	 * @param instance The instance to add to proxy.
+	 * @since 1.0
 	 */
 	public ExecutableExtensionProxy(String id, V instance) {
 		assert id!= null && instance != null;
@@ -70,6 +74,7 @@ public class ExecutableExtensionProxy<V> {
 	 * Returns the extensions unique id.
 	 *
 	 * @return The unique id.
+	 * @since 1.0
 	 */
 	public String getId() {
 		return fId;
@@ -79,6 +84,7 @@ public class ExecutableExtensionProxy<V> {
 	 * Returns the configuration element for this extension.
 	 *
 	 * @return The configuration element.
+	 * @since 1.0
 	 */
 	public IConfigurationElement getConfigurationElement() {
 		return fElement;
@@ -90,6 +96,7 @@ public class ExecutableExtensionProxy<V> {
 	 * method invocation.
 	 *
 	 * @return The current extension instance or <code>null</code> if none.
+	 * @since 1.0
 	 */
 	public V reset() {
 		V oldExtension = fInstance;
@@ -102,6 +109,7 @@ public class ExecutableExtensionProxy<V> {
 	 * plug-in will be activated if not yet activated anyway.
 	 *
 	 * @return The extension class instance or <code>null</code> if the instantiation fails.
+	 * @since 1.0
 	 */
 	public V getInstance() {
 		if (fInstance == null) fInstance = newInstance();
@@ -113,6 +121,7 @@ public class ExecutableExtensionProxy<V> {
 	 * to what {@link #getInstance()} would return.
 	 *
 	 * @return A new extension class instance or <code>null</code> if the instantiation fails.
+	 * @since 1.0
 	 */
 	@SuppressWarnings("unchecked")
 	public V newInstance() {
@@ -134,6 +143,7 @@ public class ExecutableExtensionProxy<V> {
 
 	/* (non-Javadoc)
 	 * @see java.lang.Object#equals(java.lang.Object)
+	 * @since 1.0
 	 */
 	@Override
 	public boolean equals(Object obj) {
@@ -147,6 +157,7 @@ public class ExecutableExtensionProxy<V> {
 
 	/* (non-Javadoc)
 	 * @see java.lang.Object#hashCode()
+	 * @since 1.0
 	 */
 	@Override
 	public int hashCode() {

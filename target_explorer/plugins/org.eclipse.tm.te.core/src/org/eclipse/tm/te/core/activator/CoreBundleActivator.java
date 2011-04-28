@@ -14,6 +14,8 @@ import org.osgi.framework.BundleContext;
 
 /**
  * The activator class controls the plug-in life cycle
+ * 
+ * @since 1.0
  */
 public class CoreBundleActivator implements BundleActivator {
 	// The bundle context
@@ -23,6 +25,7 @@ public class CoreBundleActivator implements BundleActivator {
 	 * Returns the bundle context
 	 *
 	 * @return the bundle context
+	 * @since 1.0
 	 */
 	public static BundleContext getContext() {
 		return context;
@@ -30,6 +33,7 @@ public class CoreBundleActivator implements BundleActivator {
 
 	/**
 	 * Convenience method which returns the unique identifier of this plugin.
+	 * @since 1.0
 	 */
 	public static String getUniqueIdentifier() {
 		if (getContext() != null && getContext().getBundle() != null) {
@@ -40,6 +44,7 @@ public class CoreBundleActivator implements BundleActivator {
 
 	/* (non-Javadoc)
 	 * @see org.osgi.framework.BundleActivator#start(org.osgi.framework.BundleContext)
+	 * @since 1.0
 	 */
 	public void start(BundleContext bundleContext) throws Exception {
 		CoreBundleActivator.context = bundleContext;
@@ -47,6 +52,7 @@ public class CoreBundleActivator implements BundleActivator {
 
 	/* (non-Javadoc)
 	 * @see org.osgi.framework.BundleActivator#stop(org.osgi.framework.BundleContext)
+	 * @since 1.0
 	 */
 	public void stop(BundleContext bundleContext) throws Exception {
 		CoreBundleActivator.context = null;
