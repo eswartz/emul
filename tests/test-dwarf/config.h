@@ -56,7 +56,7 @@
 #endif
 
 #if !defined(ENABLE_Discovery)
-#  define ENABLE_Discovery      1
+#  define ENABLE_Discovery      0
 #endif
 
 #if !defined(ENABLE_ContextProxy)
