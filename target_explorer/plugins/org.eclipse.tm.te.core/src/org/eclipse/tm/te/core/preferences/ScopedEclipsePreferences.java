@@ -1,0 +1,478 @@
+/*******************************************************************************
+ * Copyright (c) 2011 Wind River Systems, Inc. and others. All rights reserved.
+ * This program and the accompanying materials are made available under the terms
+ * of the Eclipse Public License v1.0 which accompanies this distribution, and is
+ * available at http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors:
+ * Uwe Stieber (Wind River) - initial API and implementation
+ *******************************************************************************/
+package org.eclipse.tm.te.core.preferences;
+
+import java.io.OutputStream;
+import java.util.Map;
+
+import org.eclipse.core.runtime.ISafeRunnable;
+import org.eclipse.core.runtime.ListenerList;
+import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.SafeRunner;
+import org.eclipse.core.runtime.preferences.DefaultScope;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences.IPreferenceChangeListener;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences.PreferenceChangeEvent;
+import org.eclipse.core.runtime.preferences.IPreferenceFilter;
+import org.eclipse.core.runtime.preferences.IScopeContext;
+import org.eclipse.core.runtime.preferences.InstanceScope;
+import org.osgi.service.prefs.BackingStoreException;
+
+/**
+ * Helper class to handle scoped Eclipse preferences for plug-in's. Scoped
+ * preferences means a given preference context plus the default preferences
+ * scope.
+ * <p>
+ * On changes a {@link PreferenceChangeEvent} is sent to inform all listeners of the change.
+ * 
+ * @see IEclipsePreferences
+ * @see IEclipsePreferences.PreferenceChangeEvent
+ * @see IEclipsePreferences.IPreferenceChangeListener
+ * @since 1.0
+ */
+public class ScopedEclipsePreferences {
+	/**
+	 * The preferences scope qualifier.
+	 * @since 1.0
+	 */
+	private final String fQualifier;
+
+	/**
+	 * The default scope preference node.
+	 * @since 1.0
+	 */
+	protected final IEclipsePreferences fDefaultPrefs;
+	
+	/**
+	 * The context scope preference node.
+	 * @since 1.0
+	 */
+	protected final IEclipsePreferences fContextScopePrefs;
+	
+	/**
+	 * The registered preference change listeners.
+	 * @since 1.0
+	 */
+	private final ListenerList fListeners = new ListenerList();
+
+	/**
+	 * Constructor.
+	 * <p>
+	 * Initialize the scoped preferences with a new instance scope for the given qualifier. The default
+	 * scope is determined by calling <code>DefaultScope().getNode(qualifier)</code>.
+	 *
+	 * @param qualifier The qualifier for the preferences (in example the unique identifier of a plugin). Must not be <code>null</code>.
+	 * @since 1.0
+	 */
+	public ScopedEclipsePreferences(String qualifier) {
+		this(new InstanceScope(), qualifier);
+	}
+
+	/**
+	 * Constructor.
+	 * <p>
+	 * Initialize the scoped preferences with the given scope. The default scope
+	 * is determined by calling <code>DefaultScope().getNode(qualifier)</code>.
+	 *
+	 * @param context The preference scope context. Must not be <code>null</code>.
+	 * @param qualifier The qualifier for the preferences (in example the unique identifier of a plugin). Must not be <code>null</code>.
+	 * @since 1.0
+	 */
+	public ScopedEclipsePreferences(IScopeContext context, String qualifier) {
+		assert context != null && qualifier != null;
+		fQualifier = qualifier;
+		fDefaultPrefs = new DefaultScope().getNode(getQualifier());
+		fContextScopePrefs = context.getNode(getQualifier());
+	}
+
+	/**
+	 * Returns the qualifier that is used to get the preferences.
+	 * For plugin preferences, this is the unique identifier of the plugin.
+	 * @since 1.0
+	 */
+	protected final String getQualifier() {
+		return fQualifier;
+	}
+
+	/**
+	 * Exports the preferences to the stream.
+	 * <p>
+	 * <b>Note:</b> The stream will be closed after the export.
+	 * 
+	 * @param stream The stream to where preferences and defaults should be exported.
+	 * @since 1.0
+	 */
+	public void exportPreferences(OutputStream stream) {
+		assert stream != null;
+		try {
+			IPreferenceFilter filter = new IPreferenceFilter() {
+				public String[] getScopes() {
+					return new String[] { InstanceScope.SCOPE };
+				}
+
+				@SuppressWarnings("rawtypes")
+				public Map getMapping(String scope) {
+					return null;
+				}
+			};
+
+			Platform.getPreferencesService().exportPreferences(fContextScopePrefs, new IPreferenceFilter[] { filter }, stream);
+			stream.close();
+		}
+		catch (Exception e) {
+		}
+	}
+
+	/**
+	 * Check whether a key is set or not.
+	 * 
+	 * @param key The key to check.
+	 * @return <code>null</code> if the key does not exist.
+	 * @since 1.0
+	 */
+	public boolean containsKey(String key) {
+		return Platform.getPreferencesService().getString(getQualifier(), key, null, null) != null;
+	}
+
+	/**
+	 * Get a String preference value.
+	 * 
+	 * @param key The preference key.
+	 * @return The value of the preference key or the default value if not set.
+	 * @since 1.0
+	 */
+	public final String getString(String key) {
+		return Platform.getPreferencesService().getString(getQualifier(), key, null, null);
+	}
+
+	/**
+	 * Get a boolean preference value.
+	 * 
+	 * @param key The preference key.
+	 * @return The value of the preference key or the default value if not set.
+	 * @since 1.0
+	 */
+	public final boolean getBoolean(String key) {
+		return Platform.getPreferencesService().getBoolean(getQualifier(), key, false, null);
+	}
+
+	/**
+	 * Get an int preference value.
+	 * 
+	 * @param key The preference key.
+	 * @return The value of the preference key or the default value if not set.
+	 * @since 1.0
+	 */
+	public final int getInt(String key) {
+		return Platform.getPreferencesService().getInt(getQualifier(), key, 0, null);
+	}
+
+	/**
+	 * Get a long preference value.
+	 * 
+	 * @param key The preference key.
+	 * @return The value of the preference key or the default value if not set.
+	 * @since 1.0
+	 */
+	public final long getLong(String key) {
+		return Platform.getPreferencesService().getLong(getQualifier(), key, 0, null);
+	}
+
+	/**
+	 * Get a default String preference value.
+	 * 
+	 * @param key The preference key.
+	 * @return The default value of the preference key or <code>null</code>.
+	 * @since 1.0
+	 */
+	public final String getDefaultString(String key) {
+		return fDefaultPrefs.get(key, null);
+	}
+
+	/**
+	 * Get a default boolean preference value.
+	 * 
+	 * @param key The preference key.
+	 * @return The default value of the preference key or <code>null</code>.
+	 * @since 1.0
+	 */
+	public final boolean getDefaultBoolean(String key) {
+		return fDefaultPrefs.getBoolean(key, false);
+	}
+
+	/**
+	 * Get a default int preference value.
+	 * 
+	 * @param key The preference key.
+	 * @return The default value of the preference key or <code>null</code>.
+	 * @since 1.0
+	 */
+	public final int getDefaultInt(String key) {
+		return fDefaultPrefs.getInt(key, 0);
+	}
+
+	/**
+	 * Get a default long preference value.
+	 * 
+	 * @param key The preference key.
+	 * @return The default value of the preference key or <code>null</code>.
+	 * @since 1.0
+	 */
+	public final long getDefaultLong(String key) {
+		return fDefaultPrefs.getLong(key, 0);
+	}
+
+	/**
+	 * Set a String preference value. If the value is <code>null</code> or is equal to
+	 * the default value, the entry will be removed.
+	 * <p>
+	 * A {@link PreferenceChangeEvent} is fired, if the value has changed.
+	 * 
+	 * @param key The preference key.
+	 * @return The value of the preference key.
+	 * @since 1.0
+	 */
+	public void putString(String key, String value) {
+		String defValue = fDefaultPrefs.get(key, null);
+		String instValue = getString(key);
+		if (value == null || value.equals(defValue)) {
+			fContextScopePrefs.remove(key);
+			flushAndNotify(fContextScopePrefs, key, instValue, defValue);
+		}
+		else if (!value.equals(instValue)) {
+			fContextScopePrefs.put(key, value);
+			flushAndNotify(fContextScopePrefs, key, instValue, value);
+		}
+	}
+
+	/**
+	 * Set a boolean preference value. If the value is equal the default value,
+	 * the entry will be removed.
+	 * <p>
+	 * A {@link PreferenceChangeEvent} is fired, if the value has changed.
+	 * 
+	 * @param key The preference key.
+	 * @return The value of the preference key.
+	 * @since 1.0
+	 */
+	public void putBoolean(String key, boolean value) {
+		boolean defValue = fDefaultPrefs.getBoolean(key, false);
+		boolean instValue = getBoolean(key);
+		if (value == defValue) {
+			fContextScopePrefs.remove(key);
+			flushAndNotify(fContextScopePrefs, key, Boolean.toString(instValue), Boolean.toString(defValue));
+		}
+		else if (value != instValue) {
+			fContextScopePrefs.putBoolean(key, value);
+			flushAndNotify(fContextScopePrefs, key, Boolean.toString(instValue), Boolean.toString(value));
+		}
+	}
+
+	/**
+	 * Set an int preference value. If the value is equal to the default value,
+	 * the entry will be removed.
+	 * <p>
+	 * A {@link PreferenceChangeEvent} is fired, if the value has changed. The old
+	 * and new values are string representation in base 10.
+	 * 
+	 * @param key The preference key.
+	 * @return The value of the preference key.
+	 * @since 1.0
+	 */
+	public void putInt(String key, int value) {
+		int defValue = fDefaultPrefs.getInt(key, 0);
+		int instValue = getInt(key);
+		if (value == defValue) {
+			fContextScopePrefs.remove(key);
+			flushAndNotify(fContextScopePrefs, key, Integer.toString(instValue), Integer.toString(defValue));
+		}
+		else if (value != instValue) {
+			fContextScopePrefs.putInt(key, value);
+			flushAndNotify(fContextScopePrefs, key, Integer.toString(instValue), Integer.toString(value));
+		}
+	}
+
+	/**
+	 * Set a long preference value. If the given value is equal to the default
+	 * value, the entry will be removed.
+	 * <p>
+	 * A {@link PreferenceChangeEvent} is fired, if the value has changed. The old
+	 * and new values are string representation in base 10.
+	 * 
+	 * @param key The preference key.
+	 * @return The value of the preference key.
+	 * @since 1.0
+	 */
+	public void putLong(String key, long value) {
+		long defValue = fDefaultPrefs.getLong(key, 0);
+		long instValue = getLong(key);
+		if (value == defValue) {
+			fContextScopePrefs.remove(key);
+			flushAndNotify(fContextScopePrefs, key, Long.toString(instValue), Long.toString(defValue));
+		}
+		else if (value != instValue) {
+			fContextScopePrefs.putLong(key, value);
+			flushAndNotify(fContextScopePrefs, key, Long.toString(instValue), Long.toString(value));
+		}
+	}
+
+	/**
+	 * Set a default String preference value. If the given value is <code>null</code>,
+	 * the entry will be removed.
+	 * <p>
+	 * A {@link PreferenceChangeEvent} is fired, if the value has changed.
+	 * 
+	 * @param key The preference key.
+	 * @return The default value of the preference key.
+	 * @since 1.0
+	 */
+	public void putDefaultString(String key, String value) {
+		String defValue = fDefaultPrefs.get(key, null);
+		if (value == null) {
+			fDefaultPrefs.remove(key);
+			flushAndNotify(fDefaultPrefs, key, defValue, null);
+		}
+		else if (!value.equals(defValue)) {
+			fDefaultPrefs.put(key, value);
+			flushAndNotify(fDefaultPrefs, key, defValue, value);
+		}
+	}
+
+	/**
+	 * Set a default boolean preference value.
+	 * <p>
+	 * A {@link PreferenceChangeEvent} is fired, if the value has changed.
+	 * 
+	 * @param key The preference key.
+	 * @return The default value of the preference key.
+	 * @since 1.0
+	 */
+	public void putDefaultBoolean(String key, boolean value) {
+		boolean defValue = fDefaultPrefs.getBoolean(key, false);
+		if (value != defValue) {
+			fDefaultPrefs.putBoolean(key, value);
+			flushAndNotify(fDefaultPrefs, key, Boolean.toString(defValue), Boolean.toString(value));
+		}
+	}
+
+	/**
+	 * Set a default int preference value.
+	 * <p>
+	 * A {@link PreferenceChangeEvent} is fired, if the value has changed. The old
+	 * and new values are string representation in base 10.
+	 * 
+	 * @param key The preference key.
+	 * @return The default value of the preference key.
+	 * @since 1.0
+	 */
+	public void putDefaultInt(String key, int value) {
+		int defValue = fDefaultPrefs.getInt(key, 0);
+		if (value != defValue) {
+			fDefaultPrefs.putInt(key, value);
+			flushAndNotify(fDefaultPrefs, key, Integer.toString(defValue), Integer.toString(value));
+		}
+	}
+
+	/**
+	 * Set a default long preference value.
+	 * <p>
+	 * A {@link PreferenceChangeEvent} is fired, if the value has changed. The old
+	 * and new values are string representation in base 10.
+	 * 
+	 * @param key The preference key.
+	 * @return The default value of the preference key.
+	 * @since 1.0
+	 */
+	public void putDefaultLong(String key, long value) {
+		long defValue = fDefaultPrefs.getLong(key, 0);
+		if (value != defValue) {
+			fDefaultPrefs.putLong(key, value);
+			flushAndNotify(fDefaultPrefs, key, Long.toString(defValue), Long.toString(value));
+		}
+	}
+
+	/**
+	 * Write back the changes to the store and notify all listeners about the changed key.
+	 * 
+	 * @param node The preference node which has changed. Must not be <code>null</code>. 
+	 * @param key The key of the changed preference. Must not be <code>null</code>.
+	 * @param oldValue The old value as a {@link String}, or <code>null</code>.
+	 * @param newValue The new value as a {@link String}, or <code>null</code>.
+	 * @since 1.0
+	 */
+	protected final void flushAndNotify(IEclipsePreferences node, String key, String oldValue, String newValue) {
+		// Flush the preferences to the persistence store
+		try { node.flush(); } catch (BackingStoreException e) { /* Ignored on purpose */ }
+		
+		// Notify the listeners
+		firePreferenceEvent(node, key, oldValue, newValue);
+	}
+	
+	/**
+	 * Register the given listener to receive notifications of preference changes to this node.
+	 * Calling this method multiple times with the same listener has no effect. The given listener
+	 * argument must not be <code>null</code>.
+	 * 
+	 * @param listener The preference change listener. Must not be <code>null</code>.
+	 * @since 1.0
+	 */
+	public void addPreferenceChangeListener(IPreferenceChangeListener listener) {
+		assert listener != null;
+		fListeners.add(listener);
+	}
+
+	/**
+	 * De-register the given listener from receiving notifications of preference changes
+	 * to this node. Calling this method multiple times with the same listener has no
+	 * effect. The given listener argument must not be <code>null</code>.
+	 * 
+	 * @param listener The preference change listener. Must not be <code>null</code>.
+	 * @since 1.0
+	 */
+	public void removePreferenceChangeListener(IPreferenceChangeListener listener) {
+		assert listener != null;
+		fListeners.remove(listener);
+	}
+
+	/**
+	 * Convenience method for notifying the registered preference change listeners.
+	 * 
+	 * @param node The preference node which has changed. Must not be <code>null</code>. 
+	 * @param key The key of the changed preference. Must not be <code>null</code>.
+	 * @param oldValue The old value as a {@link String}, or <code>null</code>.
+	 * @param newValue The new value as a {@link String}, or <code>null</code>.
+	 * @since 1.0
+	 */
+	protected void firePreferenceEvent(IEclipsePreferences node, String key, String oldValue, String newValue) {
+		assert node != null && key != null;
+		
+		// If no listener is registered, we are done here
+		if (fListeners.isEmpty()) return;
+		
+		// Get the list or currently registered listeners
+		Object[] listeners = fListeners.getListeners();
+		// Create the preference change event
+		final PreferenceChangeEvent event = new PreferenceChangeEvent(node, key, oldValue, newValue);
+		for (int i = 0; i < listeners.length; i++) {
+			final IPreferenceChangeListener listener = (IPreferenceChangeListener) listeners[i];
+			ISafeRunnable job = new ISafeRunnable() {
+				public void handleException(Throwable exception) {
+					// already logged in Platform#run()
+				}
+
+				public void run() throws Exception {
+					listener.preferenceChange(event);
+				}
+			};
+			SafeRunner.run(job);
+		}
+	}
+
+}
