@@ -34,9 +34,9 @@ def test():
         sys.exit()
     assert c.state == channel.STATE_OPEN
     if __TRACE: protocol.invokeLater(c.addTraceListener, TraceListener())
-    def r2():
+    def printServices():
         print "services=", c.getRemoteServices()
-    protocol.invokeLater(r2)
+    protocol.invokeLater(printServices)
 
     try:
         testRunControl(c)
@@ -50,13 +50,14 @@ def test():
         testEvents(c)
         testDataCache(c)
         testProcesses(c)
+        testFileSystem(c)
     except exceptions.Exception as e:
         protocol.log(e)
 
     if c.state == channel.STATE_OPEN:
-        time.sleep(10)
+        time.sleep(5)
         protocol.invokeLater(c.close)
-    time.sleep(5)
+    time.sleep(2)
 
 def testRunControl(c):
     lock = threading.Condition()
@@ -311,7 +312,6 @@ def testExpressions(c):
 
 def testLineNumbers(c):
     if not _suspended: return
-    from tcf.services import linenumbers
     from tcf.services import stacktrace
     ctl = sync.CommandControl(c)
     stack = ctl.StackTrace
@@ -328,7 +328,11 @@ def testLineNumbers(c):
 def testSyncCommands(c):
     # simplified command execution
     ctl = sync.CommandControl(c)
-    diag = ctl.Diagnostics
+    try:
+        diag = ctl.Diagnostics
+    except AttributeError:
+        # no Diagnostics service
+        return
     s = "Hello TCF World"
     r = diag.echo(s).getE()
     assert s == r
@@ -360,8 +364,14 @@ def testEvents(c):
     recorder = event.EventRecorder(c)
     recorder.record("RunControl")
     ctl = sync.CommandControl(c)
-    rc = ctl.RunControl
-    ctx = rc.getChildren(None).get()[0]
+    try:
+        rc = ctl.RunControl
+    except AttributeError:
+        # no RunControl service
+        return
+    ctxs = rc.getChildren(None).get()
+    if not ctxs: return
+    ctx = ctxs[0]
     rc.resume(ctx, 0, 1, None).wait()
     print recorder
     rc.suspend(ctx).wait()
@@ -409,8 +419,20 @@ def testProcesses(c):
                     protocol.log("Error from Processes.GetChildren", error)
                 else:
                     print "Processes:", context_ids
-        proc.getChildren(None, DoneGetChildren())
+        proc.getChildren(None, False, DoneGetChildren())
     protocol.invokeLater(processTest)
 
+def testFileSystem(c):
+    cmd = sync.CommandControl(c)
+    try:
+        fs = cmd.FileSystem
+    except AttributeError:
+        # no FileSystem service
+        return
+    roots = fs.roots().get()
+    print "FileSystem roots:", roots
+    user = fs.user().get()
+    print "User info: ", user
+    
 if __name__ == '__main__':
     test()

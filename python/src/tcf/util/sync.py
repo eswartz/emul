@@ -88,7 +88,10 @@ class CommandControl(object):
                         resultArgs = (args[0],)
                     elif service == "Expressions" and command == "evaluate":
                         error = self.toError(args[1])
-                        resultArgs = (args[0],args[2])
+                        resultArgs = (args[0], args[2])
+                    elif service == "FileSystem" and command in ('read', 'readdir', 'roots'):
+                        error = self.toError(args[1])
+                        resultArgs = (args[0],) + tuple(args[2:])
                     elif service == "Diagnostics" and command.startswith("echo"):
                         resultArgs = (args[0],)
                     else:
