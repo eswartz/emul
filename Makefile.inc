@@ -1,4 +1,4 @@
-CONF = Debug
+CONF ?= Debug
 
 ifndef OPSYS
   OPSYS   := $(shell uname -o 2>/dev/null || uname -s)
