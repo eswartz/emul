@@ -61,6 +61,7 @@ import org.ejs.eulang.ext.CommandLauncher;
 import org.ejs.eulang.llvm.LLBlock;
 import org.ejs.eulang.llvm.LLCodeVisitor;
 import org.ejs.eulang.llvm.LLModule;
+import org.ejs.eulang.llvm.LLVMEnv;
 import org.ejs.eulang.llvm.LLVMGenerator;
 import org.ejs.eulang.llvm.instrs.LLInstr;
 import org.ejs.eulang.llvm.instrs.LLTypedInstr;
@@ -614,7 +615,7 @@ public class BaseTest {
 			System.out.println(lineize(text));
 
 		try {
-			run("llvm-as", llfile.getAbsolutePath(), "-f", "-o", bcFile.getAbsolutePath());
+			run(LLVMEnv.getAs(), llfile.getAbsolutePath(), "-f", "-o", bcFile.getAbsolutePath());
 		} catch (AssertionFailedError e) {
 			if (expectErrors)
 				return;
@@ -640,24 +641,9 @@ public class BaseTest {
 		File llOptFile = new File(file.getAbsolutePath() + ".opt.ll");
 		llOptFile.delete();
 
-		String opts = "-preverify -domtree -verify //-lowersetjmp"
-				//+ "-raiseallocs "
-				+ "-simplifycfg -domtree -domfrontier -mem2reg -globalopt "
-				+ "-globaldce -ipconstprop -deadargelim -instcombine -simplifycfg -basiccg -prune-eh -functionattrs -inline -argpromotion"
-				+ " -simplify-libcalls -instcombine -jump-threading -simplifycfg -domtree -domfrontier -scalarrepl -instcombine "
-				+ "-break-crit-edges "
-				//+ "-condprop "
-				+ "-tailcallelim -simplifycfg -reassociate -domtree -loops -loopsimplify -domfrontier "
-				+ "-lcssa -loop-rotate -licm -lcssa -loop-unswitch -instcombine -scalar-evolution -lcssa -iv-users "
-				//+ "-indvars "  // oops, this introduces 17 bit numbers O.o ... a bit of wizardry which also increases code size
-				+ "-loop-deletion -lcssa -loop-unroll -instcombine -memdep -gvn -memdep -memcpyopt -sccp -instcombine "
-				+ "-break-crit-edges "
-				//+ "-condprop "
-				+ "-domtree -memdep -dse -adce -simplifycfg -strip-dead-prototypes "
-				+ "-print-used-types -deadtypeelim -constmerge -preverify -domtree -verify "
-				+ "-std-link-opts -verify";
+		String opts = LLVMEnv.getStdOpts();
 		
-		run("llvm-as", llfile.getAbsolutePath(), "-f", "-o", bcFile.getAbsolutePath());
+		run(LLVMEnv.getAs(), llfile.getAbsolutePath(), "-f", "-o", bcFile.getAbsolutePath());
 		List<String> optList = new ArrayList<String>();
 		if (opts.length() > 0)
 			optList.addAll(Arrays.asList(opts.split(" ")));
@@ -671,8 +657,8 @@ public class BaseTest {
 		optList.add("-f");
 		optList.add("-o");
 		optList.add(bcOptFile.getAbsolutePath());
-		run("opt", (String[]) optList.toArray(new String[optList.size()]));
-		runAndReturn("llvm-dis", bcOptFile.getAbsolutePath(), "-f", "-o", llOptFile.getAbsolutePath());
+		run(LLVMEnv.getOpt(), (String[]) optList.toArray(new String[optList.size()]));
+		runAndReturn(LLVMEnv.getDis(), bcOptFile.getAbsolutePath(), "-f", "-o", llOptFile.getAbsolutePath());
 		return readFile(llOptFile.getAbsoluteFile());
 	}
 	/**
