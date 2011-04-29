@@ -18,6 +18,7 @@
 
 #include <config.h>
 #include <stddef.h>
+#include <string.h>
 #include <framework/myalloc.h>
 #include <framework/streams.h>
 

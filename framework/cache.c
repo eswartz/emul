@@ -18,6 +18,7 @@
 
 #include <config.h>
 #include <assert.h>
+#include <string.h>
 #include <framework/errors.h>
 #include <framework/exceptions.h>
 #include <framework/myalloc.h>

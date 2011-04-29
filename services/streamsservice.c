@@ -21,6 +21,7 @@
 #if SERVICE_Streams
 
 #include <assert.h>
+#include <string.h>
 #include <framework/channel.h>
 #include <framework/exceptions.h>
 #include <framework/json.h>
@@ -512,8 +513,8 @@ int virtual_stream_get_data(VirtualStream * stream, char * buf, size_t buf_size,
         memcpy(buf, stream->buf + stream->buf_out, len);
     }
     else {
-        unsigned x = stream->buf_len - stream->buf_out;
-        unsigned y = len - x;
+        size_t x = stream->buf_len - stream->buf_out;
+        size_t y = len - x;
         memcpy(buf, stream->buf + stream->buf_out, x);
         memcpy(buf + x, stream->buf, y);
     }
@@ -687,7 +688,7 @@ static void command_write(char * token, Channel * c) {
 
     {
         JsonReadBinaryState state;
-        unsigned data_pos = 0;
+        size_t data_pos = 0;
 
         if (!err && !list_is_empty(&client->write_requests)) data = (char *)loc_alloc(size);
 

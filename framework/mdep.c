@@ -776,6 +776,8 @@ char * canonicalize_file_name(const char * name) {
 
 #elif defined(_WRS_KERNEL)
 
+#include <string.h>
+
 char * canonicalize_file_name(const char * path) {
     char buf[PATH_MAX];
     size_t i = 0;

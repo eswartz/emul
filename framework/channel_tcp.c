@@ -23,6 +23,7 @@
 #include <stddef.h>
 #include <errno.h>
 #include <assert.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <ctype.h>
 #if ENABLE_Unix_Domain
@@ -422,17 +423,17 @@ static void tcp_write_block_stream(OutputStream * out, const char * bytes, size_
     while (cnt < size) write_stream(out, (unsigned char)bytes[cnt++]);
 }
 
-static int tcp_splice_block_stream(OutputStream * out, int fd, size_t size, off_t * offset) {
+static ssize_t tcp_splice_block_stream(OutputStream * out, int fd, size_t size, off_t * offset) {
     assert(is_dispatch_thread());
     if (size == 0) return 0;
 #if ENABLE_Splice
     {
         ChannelTCP * c = channel2tcp(out2channel(out));
         if (!c->ssl && out->supports_zero_copy) {
-            int rd = splice(fd, offset, c->pipefd[1], NULL, size, SPLICE_F_MOVE);
+            ssize_t rd = splice(fd, offset, c->pipefd[1], NULL, size, SPLICE_F_MOVE);
             if (rd > 0) {
                 /* Send the binary data escape seq */
-                unsigned n = rd;
+                size_t n = rd;
                 if (c->out_bin_block != NULL) tcp_bin_block_end(c);
                 if (c->chan.out.cur >= c->chan.out.end - 8) tcp_flush_with_flags(c, MSG_MORE);
                 *c->chan.out.cur++ = ESC;
@@ -460,7 +461,7 @@ static int tcp_splice_block_stream(OutputStream * out, int fd, size_t size, off_
 
                 n = rd;
                 while (n > 0) {
-                    int wr = splice(c->pipefd[0], NULL, c->socket, NULL, n, SPLICE_F_MORE);
+                    ssize_t wr = splice(c->pipefd[0], NULL, c->socket, NULL, n, SPLICE_F_MORE);
 
                     if (wr < 0) {
                         c->out_errno = errno;
@@ -475,7 +476,7 @@ static int tcp_splice_block_stream(OutputStream * out, int fd, size_t size, off_
     }
 #endif /* ENABLE_Splice */
     {
-        int rd = 0;
+        ssize_t rd = 0;
         char buffer[BUF_SIZE];
         if (size > BUF_SIZE) size = BUF_SIZE;
         if (offset != NULL) {

@@ -392,7 +392,7 @@ int set_errno(int no, const char * msg) {
         }
         else {
             const char * text0 = errno_to_str(no);
-            int len = strlen(msg) + strlen(text0) + 4;
+            size_t len = strlen(msg) + strlen(text0) + 4;
             char * text1 = (char *)loc_alloc(len);
             snprintf(text1, len, "%s. %s", msg, text0);
             m->text = text1;

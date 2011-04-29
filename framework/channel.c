@@ -24,6 +24,7 @@
 #include <errno.h>
 #include <assert.h>
 #include <ctype.h>
+#include <string.h>
 #include <framework/tcf.h>
 #include <framework/channel.h>
 #include <framework/channel_tcp.h>
@@ -74,9 +75,9 @@ static void write_block_all(OutputStream * out, const char * bytes, size_t size)
     }
 }
 
-static int splice_block_all(OutputStream * out, int fd, size_t size, off_t * offset) {
+static ssize_t splice_block_all(OutputStream * out, int fd, size_t size, off_t * offset) {
     char buffer[0x400];
-    int rd = 0;
+    ssize_t rd = 0;
 
     assert(is_dispatch_thread());
     if (size > sizeof(buffer)) size = sizeof(buffer);

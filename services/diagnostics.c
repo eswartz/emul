@@ -21,6 +21,7 @@
 #include <signal.h>
 #include <assert.h>
 #include <stdio.h>
+#include <string.h>
 #include <framework/protocol.h>
 #include <framework/json.h>
 #include <framework/exceptions.h>

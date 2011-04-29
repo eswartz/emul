@@ -40,7 +40,7 @@ struct OutputStream {
     unsigned char * end;
     void (*write)(OutputStream * stream, int byte);
     void (*write_block)(OutputStream * stream, const char * bytes, size_t size);
-    int (*splice_block)(OutputStream * stream, int fd, size_t size, off_t * offset);
+    ssize_t (*splice_block)(OutputStream * stream, int fd, size_t size, off_t * offset);
 };
 
 typedef struct InputStream InputStream;

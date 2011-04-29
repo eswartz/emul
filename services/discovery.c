@@ -21,6 +21,7 @@
 #include <stddef.h>
 #include <errno.h>
 #include <assert.h>
+#include <string.h>
 #include <framework/protocol.h>
 #include <framework/channel.h>
 #include <framework/proxy.h>

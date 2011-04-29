@@ -258,8 +258,8 @@ static void pipe_write_block_stream(OutputStream * out, const char * bytes, size
     while (cnt < size) write_stream(out, (unsigned char)bytes[cnt++]);
 }
 
-static int pipe_splice_block_stream(OutputStream * out, int fd, size_t size, off_t * offset) {
-    int rd = 0;
+static ssize_t pipe_splice_block_stream(OutputStream * out, int fd, size_t size, off_t * offset) {
+    ssize_t rd = 0;
     char buffer[BUF_SIZE];
     assert(is_dispatch_thread());
     if (size == 0) return 0;

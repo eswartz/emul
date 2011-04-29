@@ -29,6 +29,7 @@
 
 #include <stdio.h>
 #include <assert.h>
+#include <string.h>
 #include <framework/json.h>
 #include <framework/myalloc.h>
 #include <framework/exceptions.h>

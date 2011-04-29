@@ -23,6 +23,7 @@ int log_mode = LOG_EVENTS | LOG_CHILD | LOG_WAITPID | LOG_CONTEXT | LOG_PROTOCOL
 #include <stdarg.h>
 #include <stdio.h>
 #include <errno.h>
+#include <string.h>
 
 #if defined(WIN32)
 #elif defined(_WRS_KERNEL)

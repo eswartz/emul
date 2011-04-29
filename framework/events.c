@@ -28,6 +28,7 @@
 #include <config.h>
 #include <time.h>
 #include <assert.h>
+#include <string.h>
 #include <framework/myalloc.h>
 #include <framework/errors.h>
 #include <framework/trace.h>

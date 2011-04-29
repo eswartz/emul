@@ -41,6 +41,7 @@
 #include <stddef.h>
 #include <errno.h>
 #include <assert.h>
+#include <string.h>
 #include <framework/tcf.h>
 #include <framework/myalloc.h>
 #include <framework/events.h>
@@ -658,8 +659,8 @@ static void udp_receive_req_slaves(SlaveInfo * s, time_t timenow) {
 }
 
 static void udp_receive_ack_slaves(time_t timenow) {
-    int pos = 8;
-    int len = recvreq.u.sio.rval;
+    ssize_t pos = 8;
+    ssize_t len = recvreq.u.sio.rval;
     while (pos < len) {
         struct sockaddr_in addr;
         uint64_t timestamp;
