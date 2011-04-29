@@ -3,7 +3,7 @@
  * This program and the accompanying materials are made available under the terms
  * of the Eclipse Public License v1.0 which accompanies this distribution, and is
  * available at http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  * Uwe Stieber (Wind River) - initial API and implementation
  *******************************************************************************/
@@ -99,6 +99,9 @@ public final class FSTreeNode extends PlatformObject {
 	 */
 	@Override
 	public String toString() {
-		return name != null ? name : super.toString();
+		StringBuilder buffer = new StringBuilder(getClass().getSimpleName());
+		buffer.append(": name=" + (name != null ? name : super.toString())); //$NON-NLS-1$
+		buffer.append(", UUID=" + fUniqueId.toString()); //$NON-NLS-1$
+		return buffer.toString();
 	}
 }

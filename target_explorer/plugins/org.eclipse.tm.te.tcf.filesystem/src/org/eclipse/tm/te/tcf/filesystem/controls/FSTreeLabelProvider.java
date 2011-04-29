@@ -21,7 +21,6 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.tm.te.tcf.filesystem.activator.UIPlugin;
 import org.eclipse.tm.te.tcf.filesystem.internal.registries.InternalImageRegistry;
 import org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode;
-import org.eclipse.tm.te.ui.nodes.PendingOperation;
 import org.eclipse.tm.te.ui.views.interfaces.IUIConstants;
 import org.eclipse.ui.IEditorRegistry;
 import org.eclipse.ui.ISharedImages;
@@ -148,11 +147,12 @@ public class FSTreeLabelProvider extends LabelProvider implements ITableLabelPro
 	public String getColumnText(Object element, int columnIndex) {
 		if (columnIndex == 0) return getText(element);
 
-		if (element instanceof PendingOperation) return ""; //$NON-NLS-1$
-
 		if (element instanceof FSTreeNode) {
 			FSTreeNode node = (FSTreeNode)element;
 			if (node.type != null && node.type.startsWith("FS")) { //$NON-NLS-1$
+				// Pending nodes does not have column texts at all
+				if (node.type.endsWith("PendingNode")) return ""; //$NON-NLS-1$ //$NON-NLS-2$
+
 				boolean isDirNode = node.type.endsWith("DirNode"); //$NON-NLS-1$
 				switch (columnIndex) {
 				case 1:

@@ -3,11 +3,13 @@
  * This program and the accompanying materials are made available under the terms
  * of the Eclipse Public License v1.0 which accompanies this distribution, and is
  * available at http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  * Uwe Stieber (Wind River) - initial API and implementation
  *******************************************************************************/
 package org.eclipse.tm.te.tcf.filesystem.controls;
+
+import java.util.Iterator;
 
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.StructuredViewer;
@@ -26,7 +28,7 @@ import org.eclipse.tm.te.tcf.filesystem.model.FSModel;
 import org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModelProperties;
-import org.eclipse.tm.te.ui.nodes.PendingOperation;
+import org.eclipse.tm.te.ui.nls.Messages;
 import org.eclipse.ui.PlatformUI;
 
 
@@ -38,11 +40,6 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 	 * Static reference to the return value representing no elements.
 	 */
 	protected final static Object[] NO_ELEMENTS = new Object[0];
-
-	/**
-	 * Static reference to the return value representing a pending child query.
-	 */
-	protected final static Object[] PENDING = new Object[] { new PendingOperation() };
 
 	/**
 	 * The file system model instance associated with this file system
@@ -137,7 +134,21 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 					}
 				});
 				if (peer != null && IPeerModelProperties.STATE_ERROR != state[0] && IPeerModelProperties.STATE_NOT_REACHABLE != state[0]) {
-					children = PENDING;
+					FSTreeNode rootNode = new FSTreeNode();
+					rootNode.type = "FSRootNode"; //$NON-NLS-1$
+					rootNode.peerNode = peerNode;
+					rootNode.childrenQueried = false;
+					rootNode.childrenQueryRunning = true;
+					fModel.putRoot(peerId, rootNode);
+
+					// Add a special "Pending..." node
+					FSTreeNode pendingNode = new FSTreeNode();
+					pendingNode.name = Messages.PendingOperation_label;
+					pendingNode.type ="FSPendingNode"; //$NON-NLS-1$
+					pendingNode.parent = rootNode;
+					rootNode.children.add(pendingNode);
+
+					children = rootNode.children.toArray();
 
 					Tcf.getChannelManager().openChannel(peer, new IChannelManager.DoneOpenChannel() {
 						public void doneOpenChannel(final Throwable error, final IChannel channel) {
@@ -146,12 +157,6 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 							if (channel != null) {
 								final IFileSystem service = channel.getRemoteService(IFileSystem.class);
 								if (service != null) {
-									FSTreeNode rootNode = new FSTreeNode();
-									rootNode.type = "FSRootNode"; //$NON-NLS-1$
-									rootNode.peerNode = peerNode;
-									rootNode.childrenQueried = false;
-									rootNode.childrenQueryRunning = true;
-									fModel.putRoot(peerId, rootNode);
 
 									Protocol.invokeLater(new Runnable() {
 										public void run() {
@@ -169,6 +174,16 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 																node.parent = rootNode;
 																node.peerNode = rootNode.peerNode;
 																rootNode.children.add(node);
+															}
+														}
+
+														// Find the pending node and remove it from the child list
+														Iterator<FSTreeNode> iterator = rootNode.children.iterator();
+														while (iterator.hasNext()) {
+															FSTreeNode candidate = iterator.next();
+															if (Messages.PendingOperation_label.equals(candidate.name)) {
+																iterator.remove();
+																break;
 															}
 														}
 
@@ -205,15 +220,22 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 				children = root[0].children.toArray();
 			}
 		} else if (parentElement instanceof FSTreeNode) {
-			FSTreeNode node = (FSTreeNode)parentElement;
+			final FSTreeNode node = (FSTreeNode)parentElement;
 			// Get possible children
 			children = node.children.toArray();
 			// No children -> check for "childrenQueried" property. If false, trigger the query.
 			if (children.length == 0 && !node.childrenQueried && node.type.endsWith("DirNode")) { //$NON-NLS-1$
-				children = PENDING;
+				// Add a special "Pending..." node
+				FSTreeNode pendingNode = new FSTreeNode();
+				pendingNode.name = Messages.PendingOperation_label;
+				pendingNode.type ="FSPendingNode"; //$NON-NLS-1$
+				pendingNode.parent = node;
+				node.children.add(pendingNode);
+
+				children = node.children.toArray();
 
 				if (!node.childrenQueryRunning && node.peerNode != null) {
-					final FSTreeNode parentNode = node;
+					node.childrenQueryRunning = true;
 					final String absName = getEntryAbsoluteName(node);
 
 					if (absName != null) {
@@ -222,10 +244,9 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 							public void doneOpenChannel(final Throwable error, final IChannel channel) {
 								assert Protocol.isDispatchThread();
 
-								if (channel != null) {
+								if (channel != null && channel.getState() == IChannel.STATE_OPEN) {
 									final IFileSystem service = channel.getRemoteService(IFileSystem.class);
 									if (service != null) {
-										parentNode.childrenQueryRunning = true;
 
 										Protocol.invokeLater(new Runnable() {
 											public void run() {
@@ -233,28 +254,34 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 													public void doneOpen(IToken token, FileSystemException error, final IFileHandle handle) {
 														if (error == null) {
 															// Read the directory content until finished
-															readdir(channel, service, handle, parentNode);
+															readdir(channel, service, handle, node);
 														} else {
 															// In case of an error, we are done here
-															parentNode.childrenQueryRunning = false;
-															parentNode.childrenQueried = true;
+															node.childrenQueryRunning = false;
+															node.childrenQueried = true;
 														}
 													}
 												});
 											}
 										});
+									} else {
+										// No file system service available
+										node.childrenQueryRunning = false;
+										node.childrenQueried = true;
 									}
+								} else {
+									// Channel failed to open
+									node.childrenQueryRunning = false;
+									node.childrenQueried = true;
 								}
 							}
 						});
+					} else {
+						// No absolute name
+						node.childrenQueryRunning = false;
+						node.childrenQueried = true;
 					}
 				}
-
-				PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
-					public void run() {
-						if (fViewer != null) fViewer.refresh();
-					}
-				});
 			}
 		}
 
@@ -300,6 +327,16 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 						}
 
 						if (eof) {
+							// Find the pending node and remove it from the child list
+							Iterator<FSTreeNode> iterator = parentNode.children.iterator();
+							while (iterator.hasNext()) {
+								FSTreeNode candidate = iterator.next();
+								if (Messages.PendingOperation_label.equals(candidate.name)) {
+									iterator.remove();
+									break;
+								}
+							}
+
 							// Reset the children query markers
 							parentNode.childrenQueryRunning = false;
 							parentNode.childrenQueried = true;

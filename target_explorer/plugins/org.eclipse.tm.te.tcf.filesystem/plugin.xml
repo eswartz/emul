@@ -32,7 +32,6 @@
                 <test property="org.eclipse.tm.te.tcf.locator.hasRemoteService" value="FileSystem"/>
             </triggerPoints>
             <possibleChildren>
-            	<instanceof value="org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel"/>
             	<instanceof value="org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode"/>
             </possibleChildren>
             <commonSorter
