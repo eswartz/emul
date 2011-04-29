@@ -22,6 +22,8 @@ import org.eclipse.tm.tcf.services.IFileSystem.FileSystemException;
 import org.eclipse.tm.tcf.services.IFileSystem.IFileHandle;
 import org.eclipse.tm.te.tcf.core.Tcf;
 import org.eclipse.tm.te.tcf.core.interfaces.IChannelManager;
+import org.eclipse.tm.te.tcf.filesystem.model.FSModel;
+import org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModelProperties;
 import org.eclipse.tm.te.ui.nodes.PendingOperation;
@@ -42,12 +44,12 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 	 */
 	protected final static Object[] PENDING = new Object[] { new PendingOperation() };
 
-
-	/* default */ IPeerModel fPeerNode = null;
-	private FSTreeNode fRootNode = null;
-
-	private IChannel fChannel = null;
-	private IFileSystem fService = null;
+	/**
+	 * The file system model instance associated with this file system
+	 * tree content provider instance. Each content provider has it's own
+	 * file system mode instance.
+	 */
+	/* default*/ final FSModel fModel = new FSModel();
 
 	/* default */ Viewer fViewer = null;
 
@@ -56,39 +58,30 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 	 */
 	public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
 		fViewer = viewer;
-		if (oldInput != null && newInput == null) {
-			closeOpenChannel();
-		}
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.IContentProvider#dispose()
 	 */
 	public void dispose() {
-		closeOpenChannel();
+		fModel.dispose();
 	}
 
 	/**
-	 * Close the open communication channel and set back the node references.
+	 * Close the open communication channel.
 	 */
-	protected void closeOpenChannel() {
-		if (fChannel != null) {
-			final IChannel finChannel = fChannel;
+	protected void closeOpenChannel(final IChannel channel) {
+		if (channel != null) {
 			if (Protocol.isDispatchThread()) {
-				finChannel.close();
+				channel.close();
 			} else {
 				Protocol.invokeAndWait(new Runnable() {
 					public void run() {
-						finChannel.close();
+						channel.close();
 					}
 				});
 			}
-			fChannel = null;
-			fService = null;
 		}
-
-		fPeerNode = null;
-		fRootNode = null;
 	}
 
 	/* (non-Javadoc)
@@ -118,69 +111,70 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 
 		// For the file system, we need the peer node
 		if (parentElement instanceof IPeerModel) {
-			// Is it the same peer node we have seen before?
-			if (fPeerNode == null || fPeerNode != null && !fPeerNode.equals(parentElement)) {
-				// Remember the peer node
-				fPeerNode = (IPeerModel)parentElement;
+			final IPeerModel peerNode = (IPeerModel)parentElement;
+			final String peerId = peerNode.getPeer().getID();
 
-				// If we still have a channel open, for now, we just close the old channel
-				if (fChannel != null) {
-					final IChannel finChannel = fChannel;
-					if (Protocol.isDispatchThread()) {
-						finChannel.close();
-					} else {
-						Protocol.invokeAndWait(new Runnable() {
-							public void run() {
-								finChannel.close();
-							}
-						});
+			// Get the file system model root node, if already stored
+			final FSTreeNode[] root = new FSTreeNode[1];
+			if (Protocol.isDispatchThread()) {
+				root[0] = fModel.getRoot(peerId);
+			} else {
+				Protocol.invokeAndWait(new Runnable() {
+					public void run() {
+						root[0] = fModel.getRoot(peerId);
 					}
-					fChannel = null;
-				}
+				});
+			}
 
-				IPeer peer = fPeerNode.getPeer();
+			// If the file system model root node hasn't been created, create
+			// and initialize the root node now.
+			if (root[0] == null) {
+				IPeer peer = peerNode.getPeer();
 				final int[] state = new int[1];
 				Protocol.invokeAndWait(new Runnable() {
 					public void run() {
-						state[0] = fPeerNode.getIntProperty(IPeerModelProperties.PROP_STATE);
+						state[0] = peerNode.getIntProperty(IPeerModelProperties.PROP_STATE);
 					}
 				});
 				if (peer != null && IPeerModelProperties.STATE_ERROR != state[0] && IPeerModelProperties.STATE_NOT_REACHABLE != state[0]) {
 					children = PENDING;
 
 					Tcf.getChannelManager().openChannel(peer, new IChannelManager.DoneOpenChannel() {
-						@SuppressWarnings("synthetic-access")
-						public void doneOpenChannel(Throwable error, IChannel channel) {
+						public void doneOpenChannel(final Throwable error, final IChannel channel) {
 							assert Protocol.isDispatchThread();
 
 							if (channel != null) {
-								fChannel = channel;
-
-								fService = fChannel.getRemoteService(IFileSystem.class);
-								if (fService != null) {
-									fRootNode = new FSTreeNode();
-									fRootNode.type = "FSRootNode"; //$NON-NLS-1$
-									fRootNode.childrenQueried = false;
-									fRootNode.childrenQueryRunning = true;
+								final IFileSystem service = channel.getRemoteService(IFileSystem.class);
+								if (service != null) {
+									FSTreeNode rootNode = new FSTreeNode();
+									rootNode.type = "FSRootNode"; //$NON-NLS-1$
+									rootNode.peerNode = peerNode;
+									rootNode.childrenQueried = false;
+									rootNode.childrenQueryRunning = true;
+									fModel.putRoot(peerId, rootNode);
 
 									Protocol.invokeLater(new Runnable() {
 										public void run() {
-											fService.roots(new IFileSystem.DoneRoots() {
+											service.roots(new IFileSystem.DoneRoots() {
 												public void doneRoots(IToken token, FileSystemException error, DirEntry[] entries) {
+													// Close the channel, not needed anymore
+													closeOpenChannel(channel);
 
-													if (fRootNode != null && error == null) {
+													FSTreeNode rootNode = fModel.getRoot(peerId);
+													if (rootNode != null && error == null) {
 
 														for (DirEntry entry : entries) {
 															FSTreeNode node = createNodeFromDirEntry(entry, true);
 															if (node != null) {
-																node.parent = fRootNode;
-																fRootNode.children.add(node);
+																node.parent = rootNode;
+																node.peerNode = rootNode.peerNode;
+																rootNode.children.add(node);
 															}
 														}
 
 														// Reset the children query markers
-														fRootNode.childrenQueryRunning = false;
-														fRootNode.childrenQueried = true;
+														rootNode.childrenQueryRunning = false;
+														rootNode.childrenQueried = true;
 													}
 
 													PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
@@ -199,16 +193,16 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 										}
 									});
 								} else {
-									// TCF file system service is not available, close the just opened channel
-									closeOpenChannel();
+									// The file system service is not available for this peer.
+									// --> Close the just opened channel
+									closeOpenChannel(channel);
 								}
-
 							}
 						}
 					});
 				}
-			} else if (fRootNode != null && fRootNode.childrenQueried) {
-				children = fRootNode.children.toArray();
+			} else {
+				children = root[0].children.toArray();
 			}
 		} else if (parentElement instanceof FSTreeNode) {
 			FSTreeNode node = (FSTreeNode)parentElement;
@@ -218,30 +212,39 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 			if (children.length == 0 && !node.childrenQueried && node.type.endsWith("DirNode")) { //$NON-NLS-1$
 				children = PENDING;
 
-				if (!node.childrenQueryRunning) {
+				if (!node.childrenQueryRunning && node.peerNode != null) {
 					final FSTreeNode parentNode = node;
-
 					final String absName = getEntryAbsoluteName(node);
-					if (absName != null && fService != null) {
-						parentNode.childrenQueryRunning = true;
 
-						Protocol.invokeLater(new Runnable() {
-							@SuppressWarnings("synthetic-access")
-							public void run() {
-								fService.opendir(absName, new IFileSystem.DoneOpen() {
+					if (absName != null) {
+						// Open a channel to the peer and query the childs
+						Tcf.getChannelManager().openChannel(node.peerNode.getPeer(), new IChannelManager.DoneOpenChannel() {
+							public void doneOpenChannel(final Throwable error, final IChannel channel) {
+								assert Protocol.isDispatchThread();
 
-									public void doneOpen(IToken token, FileSystemException error, final IFileHandle handle) {
+								if (channel != null) {
+									final IFileSystem service = channel.getRemoteService(IFileSystem.class);
+									if (service != null) {
+										parentNode.childrenQueryRunning = true;
 
-										if (error == null && fService != null) {
-											// Read the directory content until finished
-											readdir(fService, handle, parentNode);
-										} else {
-											// In case of an error, we are done here
-											parentNode.childrenQueryRunning = false;
-											parentNode.childrenQueried = true;
-										}
+										Protocol.invokeLater(new Runnable() {
+											public void run() {
+												service.opendir(absName, new IFileSystem.DoneOpen() {
+													public void doneOpen(IToken token, FileSystemException error, final IFileHandle handle) {
+														if (error == null) {
+															// Read the directory content until finished
+															readdir(channel, service, handle, parentNode);
+														} else {
+															// In case of an error, we are done here
+															parentNode.childrenQueryRunning = false;
+															parentNode.childrenQueried = true;
+														}
+													}
+												});
+											}
+										});
 									}
-								});
+								}
 							}
 						});
 					}
@@ -261,48 +264,48 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 	/**
 	 * Reads the content of a directory until the file system service signals EOF.
 	 *
+	 * @param channel The open channel. Must not be <code>null</code>.
 	 * @param service The file system service. Must not be <code>null</code>.
 	 * @param handle The directory handle. Must not be <code>null</code>.
 	 * @param parentNode The parent node receiving the entries. Must not be <code>null</code>.
 	 * @param mode The notification mode to set to the parent node once done.
 	 */
-	protected void readdir(final IFileSystem service, final IFileHandle handle, final FSTreeNode parentNode) {
-		assert service != null && handle != null && parentNode != null;
+	protected void readdir(final IChannel channel, final IFileSystem service, final IFileHandle handle, final FSTreeNode parentNode) {
+		assert channel != null && service != null && handle != null && parentNode != null;
 
 		Protocol.invokeLater(new Runnable() {
-			@SuppressWarnings("synthetic-access")
 			public void run() {
-				fService.readdir(handle, new IFileSystem.DoneReadDir() {
+				service.readdir(handle, new IFileSystem.DoneReadDir() {
 
 					public void doneReadDir(IToken token, FileSystemException error, DirEntry[] entries, boolean eof) {
-						if (fService != null) {
-							// Close the handle if EOF is signaled or an error occurred.
-							if (eof) {
-								fService.close(handle, new IFileSystem.DoneClose() {
-									public void doneClose(IToken token, FileSystemException error) {
-									}
-								});
-							}
+						// Close the handle and channel if EOF is signaled or an error occurred.
+						if (eof) {
+							service.close(handle, new IFileSystem.DoneClose() {
+								public void doneClose(IToken token, FileSystemException error) {
+									closeOpenChannel(channel);
+								}
+							});
+						}
 
-							// Process the returned data
-							if (error == null && entries != null && entries.length > 0) {
-								for (DirEntry entry : entries) {
-									FSTreeNode node = createNodeFromDirEntry(entry, false);
-									if (node != null) {
-										node.parent = parentNode;
-										parentNode.children.add(node);
-									}
+						// Process the returned data
+						if (error == null && entries != null && entries.length > 0) {
+							for (DirEntry entry : entries) {
+								FSTreeNode node = createNodeFromDirEntry(entry, false);
+								if (node != null) {
+									node.parent = parentNode;
+									node.peerNode = parentNode.peerNode;
+									parentNode.children.add(node);
 								}
 							}
+						}
 
-							if (eof) {
-								// Reset the children query markers
-								parentNode.childrenQueryRunning = false;
-								parentNode.childrenQueried = true;
-							} else {
-								// And invoke ourself again
-								readdir(service, handle, parentNode);
-							}
+						if (eof) {
+							// Reset the children query markers
+							parentNode.childrenQueryRunning = false;
+							parentNode.childrenQueried = true;
+						} else {
+							// And invoke ourself again
+							readdir(channel, service, handle, parentNode);
 						}
 
 						PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {

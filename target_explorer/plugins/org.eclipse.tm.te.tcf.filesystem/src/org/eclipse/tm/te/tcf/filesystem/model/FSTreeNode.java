@@ -7,17 +7,22 @@
  * Contributors:
  * Uwe Stieber (Wind River) - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.tcf.filesystem.controls;
+package org.eclipse.tm.te.tcf.filesystem.model;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import org.eclipse.core.runtime.PlatformObject;
+import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IFileSystem;
+import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel;
 
 /**
  * Target Explorer: Representation of a file system tree node.
+ * <p>
+ * <b>Note:</b> Node construction and child list access is limited to
+ * the TCF event dispatch thread.
  */
 public final class FSTreeNode extends PlatformObject {
 	private final UUID fUniqueId = UUID.randomUUID();
@@ -38,6 +43,11 @@ public final class FSTreeNode extends PlatformObject {
 	public IFileSystem.FileAttrs attr = null;
 
 	/**
+	 * The peer node the file system tree node is associated with.
+	 */
+	public IPeerModel peerNode = null;
+
+	/**
 	 * The tree node parent.
 	 */
 	public FSTreeNode parent = null;
@@ -56,6 +66,14 @@ public final class FSTreeNode extends PlatformObject {
 	 * Flag to mark once the children query is running
 	 */
 	public boolean childrenQueryRunning = false;
+
+	/**
+	 * Constructor.
+	 */
+	public FSTreeNode() {
+		super();
+		assert Protocol.isDispatchThread();
+	}
 
 	/* (non-Javadoc)
 	 * @see java.lang.Object#hashCode()

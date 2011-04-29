@@ -20,6 +20,7 @@ import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.tm.te.tcf.filesystem.activator.UIPlugin;
 import org.eclipse.tm.te.tcf.filesystem.internal.registries.InternalImageRegistry;
+import org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode;
 import org.eclipse.tm.te.ui.nodes.PendingOperation;
 import org.eclipse.tm.te.ui.views.interfaces.IUIConstants;
 import org.eclipse.ui.IEditorRegistry;

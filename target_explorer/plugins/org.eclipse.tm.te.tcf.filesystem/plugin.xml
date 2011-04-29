@@ -33,7 +33,7 @@
             </triggerPoints>
             <possibleChildren>
             	<instanceof value="org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel"/>
-            	<instanceof value="org.eclipse.tm.te.tcf.filesystem.controls.FSTreeNode"/>
+            	<instanceof value="org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode"/>
             </possibleChildren>
             <commonSorter
                   class="org.eclipse.tm.te.tcf.filesystem.controls.FSTreeViewerSorter"

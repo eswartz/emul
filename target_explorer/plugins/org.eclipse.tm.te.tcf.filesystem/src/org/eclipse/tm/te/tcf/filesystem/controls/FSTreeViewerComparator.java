@@ -11,6 +11,7 @@ package org.eclipse.tm.te.tcf.filesystem.controls;
 
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode;
 import org.eclipse.tm.te.ui.trees.TreeViewerComparator;
 
 
