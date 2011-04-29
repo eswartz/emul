@@ -115,10 +115,8 @@ class TransientPeer(Peer):
     Objects of this class are not tracked by Locator service.
     See AbstractPeer for IPeer objects that should go into the Locator table.
     """
-    
-    rw_attrs = {}
-
     def __init__(self, attrs):
+        self.rw_attrs = {}
         self.rw_attrs.update(attrs)
         # TODO readonly map
         ro_attrs = {}
