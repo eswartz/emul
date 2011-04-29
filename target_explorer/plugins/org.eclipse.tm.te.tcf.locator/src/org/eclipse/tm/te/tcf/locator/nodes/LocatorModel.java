@@ -3,7 +3,7 @@
  * This program and the accompanying materials are made available under the terms
  * of the Eclipse Public License v1.0 which accompanies this distribution, and is
  * available at http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  * Uwe Stieber (Wind River) - initial API and implementation
  *******************************************************************************/
@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.PlatformObject;
@@ -45,6 +46,8 @@ import org.eclipse.tm.te.tcf.locator.utils.IPAddressUtil;
  * Default locator model implementation.
  */
 public class LocatorModel extends PlatformObject implements ILocatorModel {
+	// The unique model id
+	private final UUID fUniqueId = UUID.randomUUID();
 	// Flag to mark the model disposed
 	private boolean fDisposed;
 
@@ -184,6 +187,17 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 		}
 
 		return super.getAdapter(adapter);
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public final boolean equals(Object obj) {
+		if (obj instanceof LocatorModel) {
+			return fUniqueId.equals(((LocatorModel)obj).fUniqueId);
+		}
+		return super.equals(obj);
 	}
 
 	/* (non-Javadoc)

@@ -3,7 +3,7 @@
  * This program and the accompanying materials are made available under the terms
  * of the Eclipse Public License v1.0 which accompanies this distribution, and is
  * available at http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  * Uwe Stieber (Wind River) - initial API and implementation
  *******************************************************************************/
@@ -47,18 +47,21 @@ public class LocatorListener implements ILocator.LocatorListener {
 		if (fModel != null && peer != null) {
 			// find the corresponding model node to remove (expected to be null)
 			IPeerModel peerNode = fModel.getService(ILocatorModelLookupService.class).lkupPeerModelById(peer.getID());
-			// If found, remove the old node
-			if (peerNode != null) fModel.getService(ILocatorModelUpdateService.class).remove(peerNode);
-			// Create a new peer node instance
-			peerNode = new PeerModel(fModel, peer);
-			// Validate the peer node before adding
-			if (peerNode != null) peerNode = fModel.validatePeerNodeForAdd(peerNode);
-			// Add the peer node to the model
-			if (peerNode != null) {
-				fModel.getService(ILocatorModelUpdateService.class).add(peerNode);
-				// And schedule for immediate status update
-				Runnable runnable = new ScannerRunnable(fModel.getScanner(), peerNode);
-				Protocol.invokeLater(runnable);
+			// If not found, create a new peer node instance
+			if (peerNode == null) {
+				peerNode = new PeerModel(fModel, peer);
+				// Validate the peer node before adding
+				if (peerNode != null) peerNode = fModel.validatePeerNodeForAdd(peerNode);
+				// Add the peer node to the model
+				if (peerNode != null) {
+					fModel.getService(ILocatorModelUpdateService.class).add(peerNode);
+					// And schedule for immediate status update
+					Runnable runnable = new ScannerRunnable(fModel.getScanner(), peerNode);
+					Protocol.invokeLater(runnable);
+				}
+			} else {
+				// Peer node found, update the peer instance
+				if (peerNode != null) peerNode.setProperty(IPeerModelProperties.PROP_INSTANCE, peer);
 			}
 		}
 	}
