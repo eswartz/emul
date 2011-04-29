@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# For Redhat systems
+# For Redhat or Wind River Linux systems
 #
 # chkconfig: 345 29 71
 # processname: /usr/sbin/tcf-agent
@@ -23,6 +23,7 @@
 #
 DAEMON_PATH=/usr/sbin/tcf-agent
 DAEMON_NAME=`basename $DAEMON_PATH`
+DAEMON_ARGS="-d -L- -l0 -s SSL:"
 
 #
 # Determine which kind of configuration we're using
@@ -30,17 +31,29 @@ DAEMON_NAME=`basename $DAEMON_PATH`
 system=unknown
 if [ -f /etc/redhat-release -o -f /etc/fedora-release ]; then
     system=redhat
-else
-    if [ -f /etc/SuSE-release ]; then
-        system=suse
-    else
-        echo "$0: Unknown system, please port and contact tcf-dev@eclipse.org" 1>&2
-        exit 1
-    fi
+fi
+
+if [ -f /etc/wrs-release ]; then
+    system=wrlinux
+fi
+
+if [ -f /etc/SuSE-release ]; then
+    system=suse
+fi
+
+if [ $system = unknown ]; then
+    echo "$0: Unknown system, please port and contact tcf-dev@eclipse.org" 1>&2
+    exit 1
 fi
 
 if [ $system = redhat ]; then
     . /etc/init.d/functions
+fi
+
+if [ $system = wrlinux ]; then
+    . /etc/rc.d/init.d/functions
+    DAEMON_PATH=/usr/bin/tcf-agent
+    DAEMON_ARGS="-d -L- -l0"
 fi
 
 if [ $system = suse ]; then
@@ -64,7 +77,7 @@ function redhat()
 case "$1" in
   start)
     echo -n $"Starting $DAEMON_NAME:"
-    $DAEMON_PATH -d -L- -l0 -s SSL:
+    $DAEMON_PATH $DAEMON_ARGS
     RETVAL=$?
     if [ $RETVAL -eq 0 ] ; then
       success "$DAEMON_NAME startup"
@@ -124,7 +137,7 @@ function suse()
 case "$1" in
     start)
     echo -n "Starting TCF agent "
-    /sbin/startproc -l /var/log/rctcfagent.log $DAEMON_PATH -d -L- -l0 -s SSL:
+    /sbin/startproc -l /var/log/rctcfagent.log $DAEMON_PATH $DAEMON_ARGS
     rc_status -v
     ;;
     stop)
@@ -182,7 +195,7 @@ fi
 
 RETVAL=0
 
-if [ $system = redhat ]; then
+if [ $system = redhat -o $system = wrlinux  ]; then
   redhat "$@"
 fi
 
