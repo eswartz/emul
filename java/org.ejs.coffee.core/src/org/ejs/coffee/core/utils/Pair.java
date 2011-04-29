@@ -3,11 +3,14 @@
  */
 package org.ejs.coffee.core.utils;
 
+import java.io.Serializable;
+
 /**
  * @author ejs
  *
  */
-public class Pair<T, U> implements Comparable<Pair<T, U>>{
+public class Pair<T, U> implements Comparable<Pair<T, U>>, Serializable {
+	private static final long serialVersionUID = -7012934855659835891L;
 	public T first;
 	public U second;
 	public Pair(T first, U second) {
