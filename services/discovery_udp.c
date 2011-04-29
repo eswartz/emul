@@ -104,7 +104,7 @@ static void app_strz(const char * str) {
     app_char(0);
 }
 
-static int get_slave_addr(char * buf, int * pos, struct sockaddr_in * addr, uint64_t * timestamp) {
+static int get_slave_addr(char * buf, ssize_t * pos, struct sockaddr_in * addr, uint64_t * timestamp) {
     char * port = buf + *pos;
     char * stmp = buf + *pos;
     char * host = buf + *pos;
