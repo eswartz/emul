@@ -354,7 +354,7 @@ public class CpuF99b extends CpuBase {
 	}
 
 	public final void push(short val) {
-		stateF99b.push(this, val);
+		stateF99b.push(val);
 	}
 	
 	public final short peek() {
@@ -366,7 +366,7 @@ public class CpuF99b extends CpuBase {
 	}
 
 	public final void rpush(short val) {
-		stateF99b.rpush(this, val);
+		stateF99b.rpush(val);
 	}
 
 	public final short rpeek() {

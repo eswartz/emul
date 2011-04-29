@@ -164,6 +164,18 @@ public class CpuStateF99b implements CpuState {
 		setRegister(CpuF99b.UP0, v);
 	}
 
+	final void push(short val) {
+		regs[CpuF99b.SP] -= 2;
+		short sp = regs[CpuF99b.SP];
+		console.writeWord(sp, val);
+		
+		/*if (sp < regs[CpuF99b.SP0] - CpuF99b.MAX_STACK) {
+			System.err.println("Stack overflow!");
+			cpu.fault();
+		}*/			
+	}
+	
+
 	final short pop(CpuF99b cpu) {
 		short val = console.readWord(regs[CpuF99b.SP]);
 		regs[CpuF99b.SP] += 2;
@@ -174,32 +186,19 @@ public class CpuStateF99b implements CpuState {
 		return val;
 	}
 
-	final void push(CpuF99b cpu, short val) {
-		regs[CpuF99b.SP] -= 2;
-		short sp = regs[CpuF99b.SP];
-		console.writeWord(sp, val);
-		
-		if (sp < regs[CpuF99b.SP0] - CpuF99b.MAX_STACK) {
-			System.err.println("Stack overflow!");
-			cpu.fault();
-		}			
-	}
 
-	/**
-	 * @return
-	 */
 	public final short rpeek() {
 		return console.readWord(regs[CpuF99b.RP]);
 	}
 
-	final void rpush(CpuF99b cpu, short val) {
+	final void rpush(short val) {
 		regs[CpuF99b.RP] -= 2;
 		short rp = regs[CpuF99b.RP];
 		console.writeWord(rp, val);
-		if (rp < regs[CpuF99b.RP0] - CpuF99b.MAX_STACK) {
+		/*if (rp < regs[CpuF99b.RP0] - CpuF99b.MAX_STACK) {
 			System.err.println("R-Stack overflow!");
 			cpu.fault();
-		}	
+		}*/	
 				
 	}
 	final short rpop(CpuF99b cpu) {
