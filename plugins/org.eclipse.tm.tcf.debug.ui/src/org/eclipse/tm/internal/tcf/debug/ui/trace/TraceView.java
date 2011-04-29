@@ -16,6 +16,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.KeyListener;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.widgets.Composite;
@@ -50,12 +54,15 @@ public class TraceView extends ViewPart implements Protocol.ChannelOpenListener 
         private final StringBuffer bf = new StringBuffer();
         private int bf_line_cnt = 0;
         private boolean closed;
+        private boolean scroll_locked;
+        private int key_pressed;
+        private int mouse_button_pressed;
 
         private final Thread update_thread = new Thread() {
             public void run() {
                 synchronized (Page.this) {
                     while (!closed) {
-                        if (bf_line_cnt > 0) {
+                        if (bf_line_cnt > 0 && (!scroll_locked || bf_line_cnt >= 5000)) {
                             Runnable r = new Runnable() {
                                 public void run() {
                                     String str = null;
@@ -101,6 +108,15 @@ public class TraceView extends ViewPart implements Protocol.ChannelOpenListener 
             this.channel = channel;
             update_thread.setName("TCF Trace View");
             update_thread.start();
+        }
+
+        private void updateScrollLock() {
+            if (text == null) {
+                scroll_locked = false;
+            }
+            else {
+                scroll_locked = key_pressed > 0 || mouse_button_pressed > 0 || text.getSelectionCount() > 0;
+            }
         }
 
         public void dispose() {
@@ -267,6 +283,31 @@ public class TraceView extends ViewPart implements Protocol.ChannelOpenListener 
                         SWT.BORDER | SWT.READ_ONLY | SWT.MULTI);
                 p.tab.setControl(p.text);
                 p.text.setBackground(parent.getDisplay().getSystemColor(SWT.COLOR_WHITE));
+                p.text.addKeyListener(new KeyListener() {
+                    public void keyReleased(KeyEvent e) {
+                        p.key_pressed--;
+                        p.updateScrollLock();
+                    }
+                    public void keyPressed(KeyEvent e) {
+                        p.key_pressed++;
+                        p.updateScrollLock();
+                        if (e.character == SWT.ESC) {
+                            p.text.clearSelection();
+                        }
+                    }
+                });
+                p.text.addMouseListener(new MouseListener() {
+                    public void mouseUp(MouseEvent e) {
+                        p.mouse_button_pressed--;
+                        p.updateScrollLock();
+                    }
+                    public void mouseDown(MouseEvent e) {
+                        p.mouse_button_pressed++;
+                        p.updateScrollLock();
+                    }
+                    public void mouseDoubleClick(MouseEvent e) {
+                    }
+                });
             }
         });
     }
