@@ -430,20 +430,35 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.ITreeContentProvider#hasChildren(java.lang.Object)
 	 */
-	public boolean hasChildren(Object element) {
+	public boolean hasChildren(final Object element) {
 		assert element != null;
 
 		boolean hasChildren = false;
 
 		if (element instanceof FSTreeNode) {
 			FSTreeNode node = (FSTreeNode)element;
-			if (node.type != null && node.type.endsWith("DirNode")) { //$NON-NLS-1$
+			if (node.type != null && (node.type.endsWith("DirNode") || node.type.endsWith("RootNode"))) { //$NON-NLS-1$ //$NON-NLS-2$
 				if (!node.childrenQueried || node.childrenQueryRunning) {
 					hasChildren = true;
 				} else if (node.childrenQueried) {
 					hasChildren = node.children.size() > 0;
 				}
 			}
+		}
+		else if (element instanceof IPeerModel) {
+			final String[] peerId = new String[1];
+			if (Protocol.isDispatchThread()) {
+				peerId[0] = ((IPeerModel)element).getPeer().getID();
+			} else {
+				Protocol.invokeAndWait(new Runnable() {
+					public void run() {
+						peerId[0] = ((IPeerModel)element).getPeer().getID();
+					}
+				});
+			}
+
+			FSTreeNode root = peerId[0] != null ? fModel.getRoot(peerId[0]): null;
+			if (root != null) hasChildren = hasChildren(root);
 		}
 
 		return hasChildren;
