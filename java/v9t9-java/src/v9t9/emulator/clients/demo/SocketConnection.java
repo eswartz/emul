@@ -19,7 +19,8 @@ class SocketConnection implements Connection {
         /* make a server */
         server = new ServerSocket(0);
         server.setReuseAddress(true);
-        server.setPerformancePreferences(0, 1, 2);
+        // not in Classpath
+        //server.setPerformancePreferences(0, 1, 2);
 
     }
 

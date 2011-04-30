@@ -56,7 +56,7 @@ public class XMLSettingStorage implements ISettingStorage {
 		} catch (CoreException e) {
 			if (e.getCause() instanceof IOException)
 				throw (IOException) e.getCause();
-			throw new IOException(e);
+			throw (IOException) new IOException().initCause(e);
 		}
 		return root;
 	}
@@ -179,7 +179,7 @@ public class XMLSettingStorage implements ISettingStorage {
 		} catch (CoreException e) {
 			if (e.getCause() instanceof IOException)
 				throw (IOException) e.getCause();
-			throw new IOException(e);
+			throw (IOException) new IOException().initCause(e);
 		}
 	}
 	

@@ -85,7 +85,8 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 				
 				eventNotifier.notifyEvent(null, Level.INFO, "Merged dictionary into GROM, changed " + gromFile);
 			} catch (IOException e) {
-				reportLoadError(eventNotifier, filename, new IOException("Failed to merge dictionary into GROM", e));
+				reportLoadError(eventNotifier, filename, 
+						(IOException) new IOException("Failed to merge dictionary into GROM").initCause(e));
 				
 			}
     	}

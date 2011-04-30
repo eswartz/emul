@@ -335,7 +335,7 @@ public class DiskMemoryEntry extends MemoryEntry {
 					Memory.class, String.class, entries.getClass()).newInstance(
 							memory, name, entries);
 		} catch (Exception e) {
-			throw new IOException(e);
+			throw (IOException) new IOException().initCause(e);
 		}
 		return bankedMemoryEntry;
 	}
