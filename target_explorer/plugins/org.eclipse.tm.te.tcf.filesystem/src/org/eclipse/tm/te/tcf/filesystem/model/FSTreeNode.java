@@ -55,7 +55,7 @@ public final class FSTreeNode extends PlatformObject {
 	/**
 	 * The tree node children.
 	 */
-	public List<FSTreeNode> children = new ArrayList<FSTreeNode>();
+	private List<FSTreeNode> children = new ArrayList<FSTreeNode>();
 
 	/**
 	 * Flag to mark once the children of the node got queried
@@ -81,6 +81,18 @@ public final class FSTreeNode extends PlatformObject {
 	@Override
 	public final int hashCode() {
 		return fUniqueId.hashCode();
+	}
+
+	/**
+	 * Returns the children list storage object.
+	 * <p>
+	 * <b>Note:</b> This method must be called from within the TCF event dispatch thread only!
+	 *
+	 * @return The children list storage object.
+	 */
+	public final List<FSTreeNode> getChildren() {
+		assert Protocol.isDispatchThread();
+		return children;
 	}
 
 	/* (non-Javadoc)

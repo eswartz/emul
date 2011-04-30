@@ -93,7 +93,12 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 	 */
 	public Object getParent(Object element) {
 		if (element instanceof FSTreeNode) {
-			return ((FSTreeNode)element).parent;
+			FSTreeNode parent = ((FSTreeNode)element).parent;
+			// If the parent is a root node, return the associated peer node
+			if (parent != null && parent.type != null && parent.type.endsWith("RootNode")) { //$NON-NLS-1$
+				return parent.peerNode;
+			}
+			return parent;
 		}
 		return null;
 	}
@@ -146,9 +151,10 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 					pendingNode.name = Messages.PendingOperation_label;
 					pendingNode.type ="FSPendingNode"; //$NON-NLS-1$
 					pendingNode.parent = rootNode;
-					rootNode.children.add(pendingNode);
+					pendingNode.peerNode = rootNode.peerNode;
+					rootNode.getChildren().add(pendingNode);
 
-					children = rootNode.children.toArray();
+					children = rootNode.getChildren().toArray();
 
 					Tcf.getChannelManager().openChannel(peer, new IChannelManager.DoneOpenChannel() {
 						public void doneOpenChannel(final Throwable error, final IChannel channel) {
@@ -173,12 +179,12 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 															if (node != null) {
 																node.parent = rootNode;
 																node.peerNode = rootNode.peerNode;
-																rootNode.children.add(node);
+																rootNode.getChildren().add(node);
 															}
 														}
 
 														// Find the pending node and remove it from the child list
-														Iterator<FSTreeNode> iterator = rootNode.children.iterator();
+														Iterator<FSTreeNode> iterator = rootNode.getChildren().iterator();
 														while (iterator.hasNext()) {
 															FSTreeNode candidate = iterator.next();
 															if (Messages.PendingOperation_label.equals(candidate.name)) {
@@ -217,12 +223,12 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 					});
 				}
 			} else {
-				children = root[0].children.toArray();
+				children = root[0].getChildren().toArray();
 			}
 		} else if (parentElement instanceof FSTreeNode) {
 			final FSTreeNode node = (FSTreeNode)parentElement;
 			// Get possible children
-			children = node.children.toArray();
+			children = node.getChildren().toArray();
 			// No children -> check for "childrenQueried" property. If false, trigger the query.
 			if (children.length == 0 && !node.childrenQueried && node.type.endsWith("DirNode")) { //$NON-NLS-1$
 				// Add a special "Pending..." node
@@ -230,16 +236,17 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 				pendingNode.name = Messages.PendingOperation_label;
 				pendingNode.type ="FSPendingNode"; //$NON-NLS-1$
 				pendingNode.parent = node;
-				node.children.add(pendingNode);
+				pendingNode.peerNode = node.peerNode;
+				node.getChildren().add(pendingNode);
 
-				children = node.children.toArray();
+				children = node.getChildren().toArray();
 
 				if (!node.childrenQueryRunning && node.peerNode != null) {
 					node.childrenQueryRunning = true;
 					final String absName = getEntryAbsoluteName(node);
 
 					if (absName != null) {
-						// Open a channel to the peer and query the childs
+						// Open a channel to the peer and query the children
 						Tcf.getChannelManager().openChannel(node.peerNode.getPeer(), new IChannelManager.DoneOpenChannel() {
 							public void doneOpenChannel(final Throwable error, final IChannel channel) {
 								assert Protocol.isDispatchThread();
@@ -321,14 +328,14 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 								if (node != null) {
 									node.parent = parentNode;
 									node.peerNode = parentNode.peerNode;
-									parentNode.children.add(node);
+									parentNode.getChildren().add(node);
 								}
 							}
 						}
 
 						if (eof) {
 							// Find the pending node and remove it from the child list
-							Iterator<FSTreeNode> iterator = parentNode.children.iterator();
+							Iterator<FSTreeNode> iterator = parentNode.getChildren().iterator();
 							while (iterator.hasNext()) {
 								FSTreeNode candidate = iterator.next();
 								if (Messages.PendingOperation_label.equals(candidate.name)) {
@@ -441,7 +448,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 				if (!node.childrenQueried || node.childrenQueryRunning) {
 					hasChildren = true;
 				} else if (node.childrenQueried) {
-					hasChildren = node.children.size() > 0;
+					hasChildren = node.getChildren().size() > 0;
 				}
 			}
 		}
