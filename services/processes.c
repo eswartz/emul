@@ -172,9 +172,9 @@ static void write_context(OutputStream * out, int pid) {
         snprintf(fname, sizeof(fname), "/proc/%d/cmdline", pid);
         file = fopen(fname, "r");
         if (file) {
-            fgets(buff, sizeof(buff), file);
-            if (buff[0])
-                name = buff;
+            if (fgets(buff, sizeof(buff), file) != NULL) {
+                if (buff[0]) name = buff;
+            }
             fclose(file);
         }
 
@@ -183,38 +183,37 @@ static void write_context(OutputStream * out, int pid) {
             snprintf(fname, sizeof(fname), "/proc/%d/status", pid);
             file = fopen(fname, "r");
             if (file) {
-                char * p;
-                fgets(buff, sizeof(buff), file);
+                char * p = fgets(buff, sizeof(buff), file);
+                if (p != NULL) {
+                    /* Find the attribute name */
+                    for (; *p; ++p) {
+                        if (*p == ':') {
+                            /* close off the attr name string */
+                            *p++ = 0;
 
-                /* Find the attribute name */
-                for (p = buff; *p; ++p)
-                    if (*p == ':') {
-                        /* close off the attr name string */
-                        *p++ = 0;
+                            /* is it our name? */
+                            if (!strcmp(buff, "Name")) {
+                                char * n;
 
-                        /* is it our name? */
-                        if (!strcmp(buff, "Name")) {
-                            char * n;
+                                /* change tab to '[' */
+                                *p = '[';
 
-                            /* change tab to '[' */
-                            *p = '[';
+                                /* change trailing new line to ']' */
+                                for (n = p; *n; ++n)
+                                    if (*n == '\n')
+                                        *n = ']';
 
-                            /* change trailing new line to ']' */
-                            for (n = p; *n; ++n)
-                                if (*n == '\n')
-                                    *n = ']';
-
-                            name = p;
-                            break;
+                                name = p;
+                                break;
+                            }
                         }
                     }
-
+                }
                 fclose(file);
             }
         }
 
-        if (!name)
-            name = pid2id(pid, 0);
+        if (!name) name = pid2id(pid, 0);
 
         /* Send it out */
         json_write_string(out, "Name");
