@@ -13,11 +13,12 @@
  *******************************************************************************/
 
 /*
- * Uttility module that implements an abstarct output queue.
+ * Utility module that implements an abstarct output queue.
  */
 
 #include <config.h>
 #include <assert.h>
+#include <string.h>
 #include <framework/outputbuf.h>
 #include <framework/myalloc.h>
 #include <framework/trace.h>

@@ -13,7 +13,7 @@
  *******************************************************************************/
 
 /*
- * Uttility module that implements an abstarct output queue.
+ * Utility module that implements an abstarct output queue.
  */
 
 #ifndef D_outputbuf
