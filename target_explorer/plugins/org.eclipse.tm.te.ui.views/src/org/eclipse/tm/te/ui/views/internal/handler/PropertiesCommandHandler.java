@@ -7,7 +7,7 @@
  * Contributors:
  * Uwe Stieber (Wind River) - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.ui.views.internal.targets.handler;
+package org.eclipse.tm.te.ui.views.internal.handler;
 
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;

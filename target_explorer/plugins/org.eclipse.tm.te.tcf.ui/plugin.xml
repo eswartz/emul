@@ -102,7 +102,7 @@
       </menuContribution>
    </extension>
 
-<!-- TCF data source command contributions -->
+<!-- Target Explorer command contributions -->
    <extension point="org.eclipse.ui.commands">
       <category
             id="org.eclipse.tm.te.tcf.ui.commands.category"
@@ -122,7 +122,7 @@
       </command>
    </extension>
 
-<!-- TCF data source handler contributions -->
+<!-- Target Explorer handler contributions -->
    <extension point="org.eclipse.ui.handlers">
       <handler
             class="org.eclipse.tm.te.tcf.ui.internal.handler.RefreshCommandHandler"
