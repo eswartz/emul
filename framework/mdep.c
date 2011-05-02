@@ -472,6 +472,14 @@ ssize_t pwrite(int fd, const void * buf, size_t size, off_t offset) {
 
 #endif /* defined(WIN32) && !defined(__CYGWIN__) || defined(_WRS_KERNEL) || defined(__SYMBIAN32__) */
 
+#ifndef big_endian_host
+extern int big_endian_host(void) {
+    uint16_t n = 0x0201;
+    uint8_t * p = (uint8_t *)&n;
+    return *p == 0x02;
+}
+#endif
+
 #if defined(WIN32)
 
 #include <shlobj.h>

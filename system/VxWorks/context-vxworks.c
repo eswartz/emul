@@ -123,12 +123,6 @@ static void event_info_post(struct event_info * info) {
     SPIN_LOCK_ISR_GIVE(&events_lock);
 }
 
-static int is_big_endian(void) {
-    short n = 0x0201;
-    char * p = (char *)&n;
-    return *p == 0x02;
-}
-
 typedef struct AttachDoneArgs {
     pid_t pid;
     ContextAttachCallBack * done;
@@ -149,7 +143,7 @@ static void event_attach_done(void * x) {
             parent_ctx->mem = parent_ctx;
             parent_ctx->mem_access |= MEM_ACCESS_INSTRUCTION;
             parent_ctx->mem_access |= MEM_ACCESS_DATA;
-            parent_ctx->big_endian = is_big_endian();
+            parent_ctx->big_endian = big_endian_host();
             link_context(parent_ctx);
             send_context_created_event(parent_ctx);
         }

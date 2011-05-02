@@ -76,12 +76,6 @@ static size_t context_extension_offset = 0;
 
 static LINK pending_list;
 
-static int is_big_endian(void) {
-    short n = 0x0201;
-    char * p = (char *)&n;
-    return *p == 0x02;
-}
-
 static const char * event_name(int event) {
     trace(LOG_ALWAYS, "event_name(): unexpected event code %d", event);
     return "unknown";
@@ -130,7 +124,7 @@ int context_attach(pid_t pid, ContextAttachCallBack * done, void * data, int mod
     ctx->mem_access |= MEM_ACCESS_INSTRUCTION;
     ctx->mem_access |= MEM_ACCESS_DATA;
     ctx->mem_access |= MEM_ACCESS_USER;
-    ctx->big_endian = is_big_endian();
+    ctx->big_endian = big_endian_host();
     EXT(ctx)->pid = pid;
     EXT(ctx)->attach_callback = done;
     EXT(ctx)->attach_data = data;

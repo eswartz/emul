@@ -475,6 +475,12 @@ extern size_t strlcat(char * dst, const char * src, size_t size);
 
 extern pthread_attr_t pthread_create_attr;
 
+#if defined(__i386__) || defined(__x86_64__)
+#  define big_endian_host() (0)
+#else
+   extern int big_endian_host(void);
+#endif
+
 /* Return Operating System name */
 extern const char * get_os_name(void);
 

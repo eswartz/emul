@@ -124,12 +124,6 @@ static unsigned exception_handler_cnt = 0;
 
 #define EXCEPTION_DEBUGGER_IO 0x406D1388
 
-static int is_big_endian(void) {
-    short n = 0x0201;
-    char * p = (char *)&n;
-    return *p == 0x02;
-}
-
 const char * context_suspend_reason(Context * ctx) {
     ContextExtensionWin32 * ext = EXT(ctx);
     DWORD exception_code = ext->suspend_reason.ExceptionRecord.ExceptionCode;
@@ -679,7 +673,7 @@ static void debug_event_handler(DebugEvent * debug_event) {
             prs->mem_access |= MEM_ACCESS_INSTRUCTION;
             prs->mem_access |= MEM_ACCESS_DATA;
             prs->mem_access |= MEM_ACCESS_USER;
-            prs->big_endian = is_big_endian();
+            prs->big_endian = big_endian_host();
             ext->pid = win32_event->dwProcessId;
             ext->handle = win32_event->u.CreateProcessInfo.hProcess;
             ext->debug_state = debug_state;
