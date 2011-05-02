@@ -708,7 +708,7 @@ static int lua_post_event(lua_State *L)
     assert(L == luastate);
 
     if(lua_gettop(L) > 2 || !lua_isfunction(L, 1) ||
-       lua_gettop(L) > 1 && !(lua_isnil(L, 2) || lua_isnumber(L, 2))) {
+       (lua_gettop(L) > 1 && !(lua_isnil(L, 2) || lua_isnumber(L, 2)))) {
         luaL_error(L, "wrong number or type of arguments");
     }
     p = (struct post_event_extra *)lua_newuserdata(L, sizeof *p);
