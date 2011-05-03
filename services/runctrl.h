@@ -119,6 +119,17 @@ extern int continue_debug_context(Context * ctx, Channel * c,
  */
 extern int suspend_debug_context(Context * ctx);
 
+/* RunControl event listener */
+typedef struct RunControlEventListener {
+    void (*context_intercepted)(Context * ctx, void * args);
+    void (*context_released)(Context * ctx, void * args);
+} RunControlEventListener;
+
+/*
+ * Add a listener for RunControl service events.
+ */
+extern void add_run_control_event_listener(RunControlEventListener * listener, void * args);
+
 /*
  * Initialize run control service.
  */

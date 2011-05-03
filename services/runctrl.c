@@ -48,7 +48,14 @@
 #define STOP_ALL_TIMEOUT 1000000
 #define STOP_ALL_MAX_CNT 20
 
-/* TODO: add support for containerSuspended, containerResumed events */
+typedef struct Listener {
+    RunControlEventListener * func;
+    void * args;
+} Listener;
+
+static Listener * listeners = NULL;
+static unsigned listener_cnt = 0;
+static unsigned listener_max = 0;
 
 static const char RUN_CONTROL[] = "RunControl";
 
@@ -720,6 +727,30 @@ static void command_terminate(char * token, Channel * c) {
     send_simple_result(c, token, err);
 }
 
+static void notify_context_intercepted(Context * ctx) {
+    unsigned i;
+    ContextExtensionRC * ext = EXT(ctx);
+    assert(!ext->intercepted);
+    ext->intercepted = 1;
+    for (i = 0; i < listener_cnt; i++) {
+        Listener * l = listeners + i;
+        if (l->func->context_intercepted == NULL) continue;
+        l->func->context_intercepted(ctx, l->args);
+    }
+}
+
+static void notify_context_released(Context * ctx) {
+    unsigned i;
+    ContextExtensionRC * ext = EXT(ctx);
+    assert(ext->intercepted);
+    ext->intercepted = 0;
+    for (i = 0; i < listener_cnt; i++) {
+        Listener * l = listeners + i;
+        if (l->func->context_released == NULL) continue;
+        l->func->context_released(ctx, l->args);
+    }
+}
+
 static void send_event_context_added(Context * ctx) {
     OutputStream * out = &broadcast_group->out;
 
@@ -756,7 +787,7 @@ static void send_event_context_removed(Context * ctx) {
     OutputStream * out = &broadcast_group->out;
     ContextExtensionRC * ext = EXT(ctx);
 
-    ext->intercepted = 0;
+    if (ext->intercepted) notify_context_released(ctx);
 
     write_stringz(out, "E");
     write_stringz(out, RUN_CONTROL);
@@ -785,7 +816,7 @@ static void send_event_context_suspended(void) {
             assert(!e->intercepted);
             assert(!e->safe_single_step);
             cancel_step_mode(x);
-            e->intercepted = 1;
+            notify_context_intercepted(x);
             x->pending_intercept = 0;
             list_add_last(&e->link, &p);
             if (get_context_breakpoint_ids(x) != NULL) e->intercepted_by_bp++;
@@ -840,7 +871,7 @@ static void send_event_context_resumed(Context * grp) {
         if (ext->intercepted && context_get_group(ctx, CONTEXT_GROUP_INTERCEPT) == grp) {
             assert(!ctx->pending_intercept);
             assert(!ext->safe_single_step);
-            ext->intercepted = 0;
+            notify_context_released(ctx);
             list_add_last(&ext->link, &p);
         }
         l = l->next;
@@ -1563,6 +1594,16 @@ void run_ctrl_unlock(void) {
         run_safe_events_posted++;
         post_event(run_safe_events, NULL);
     }
+}
+
+void add_run_control_event_listener(RunControlEventListener * listener, void * args) {
+    if (listener_cnt >= listener_max) {
+        listener_max += 8;
+        listeners = (Listener *)loc_realloc(listeners, listener_max * sizeof(Listener));
+    }
+    listeners[listener_cnt].func = listener;
+    listeners[listener_cnt].args = args;
+    listener_cnt++;
 }
 
 static void event_context_created(Context * ctx, void * client_data) {
