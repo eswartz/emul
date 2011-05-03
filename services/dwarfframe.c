@@ -127,8 +127,6 @@ static RegisterRules * get_reg(StackFrameRegisters * regs, int reg) {
         RegisterDefinition * reg_def;
         int n = regs->regs_cnt++;
         memset(regs->regs + n, 0, sizeof(RegisterRules));
-        reg_def = get_reg_by_id(rules.ctx, n, &rules.reg_id_scope);
-        if (reg_def == NULL) continue;
         /* Architecture specific implied rules */
         switch (rules.reg_id_scope.machine) {
         case EM_386:
@@ -159,7 +157,7 @@ static RegisterRules * get_reg(StackFrameRegisters * regs, int reg) {
             }
             else if (n == rules.return_address_register) {
                 regs->regs[n].rule = RULE_REGISTER;
-                regs->regs[n].offset = n;
+                regs->regs[n].offset = 108;
             }
             break;
         }
