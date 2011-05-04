@@ -124,7 +124,6 @@ static RegisterRules * get_reg(StackFrameRegisters * regs, int reg) {
         regs->regs = (RegisterRules *)loc_realloc(regs->regs, sizeof(RegisterRules) * regs->regs_max);
     }
     while (regs->regs_cnt <= reg) {
-        RegisterDefinition * reg_def;
         int n = regs->regs_cnt++;
         memset(regs->regs + n, 0, sizeof(RegisterRules));
         /* Architecture specific implied rules */
