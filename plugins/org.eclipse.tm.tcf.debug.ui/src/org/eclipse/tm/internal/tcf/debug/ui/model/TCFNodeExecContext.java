@@ -899,12 +899,16 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                     }
                     else {
                         if (!state.validate(done)) return false;
+                        TCFContextState state_data = state.getData();
                         if (isNotActive()) {
                             image_name = ImageCache.IMG_THREAD_NOT_ACTIVE;
                             label.append(" (Not active)");
+                            if (state_data.suspend_reason != null && !state_data.suspend_reason.equals(IRunControl.REASON_USER_REQUEST)) {
+                                label.append(" - ");
+                                label.append(state_data.suspend_reason);
+                            }
                         }
                         else {
-                            TCFContextState state_data = state.getData();
                             if (state_data == null) image_name = ImageCache.IMG_THREAD_UNKNOWN_STATE;
                             else if (state_data.is_suspended) image_name = ImageCache.IMG_THREAD_SUSPENDED;
                             else image_name = ImageCache.IMG_THREAD_RUNNNIG;
