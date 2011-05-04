@@ -291,7 +291,7 @@ static DWORD event_win32_context_stopped(Context * ctx) {
                     }
                 }
             }
-            if (!ctx->stopped_by_cb && ext->step_opcodes_len == 0 || ext->regs_error) {
+            if ((!ctx->stopped_by_cb && ext->step_opcodes_len == 0) || ext->regs_error) {
                 continue_status = DBG_EXCEPTION_NOT_HANDLED;
             }
             ext->step_opcodes_len = 0;
