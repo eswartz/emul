@@ -7,8 +7,8 @@
       <viewerContentBinding viewerId="org.eclipse.tm.te.ui.views.TargetExplorer">
          <includes>
             <contentExtension
-                  isRoot="true"
-                  pattern="org.eclipse.tm.te.datasource.tcf"/>
+                  isRoot="false"
+                  pattern="org.eclipse.tm.te.tcf.ui.navigator.*"/>
          </includes>
       </viewerContentBinding>
    </extension>
@@ -18,18 +18,20 @@
             activeByDefault="true"
             contentProvider="org.eclipse.tm.te.tcf.ui.internal.navigator.ContentProviderDelegate"
             icon="icons/obj16/rootNode_obj.gif"
-            id="org.eclipse.tm.te.datasource.tcf"
+            id="org.eclipse.tm.te.tcf.ui.navigator.content"
             labelProvider="org.eclipse.tm.te.tcf.ui.internal.navigator.LabelProvider"
             name="Dynamic Target Discovery (TCF)"
             priority="normal">
-            <triggerPoints>
-            	<instanceof value="org.eclipse.tm.te.ui.views.interfaces.IRoot"/>
-            	<instanceof value="org.eclipse.tm.te.tcf.locator.interfaces.nodes.ILocatorModel"/>
-            	<instanceof value="org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel"/>
-            </triggerPoints>
             <commonSorter
                   class="org.eclipse.tm.te.tcf.ui.internal.navigator.Sorter"
                   id="org.eclipse.tm.te.tcf.ui.navigator.sorter"/>
+            <enablement>
+               <or>
+            	  <instanceof value="org.eclipse.tm.te.ui.views.interfaces.IRoot"/>
+            	  <instanceof value="org.eclipse.tm.te.tcf.locator.interfaces.nodes.ILocatorModel"/>
+            	  <instanceof value="org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel"/>
+               </or>
+            </enablement>
       </navigatorContent>
    </extension>
    
