@@ -22,9 +22,10 @@
             labelProvider="org.eclipse.tm.te.tcf.ui.internal.navigator.LabelProvider"
             name="Dynamic Target Discovery (TCF)"
             priority="normal">
-            <triggerPoints>
+            <enablement>
                <instanceof value="org.eclipse.tm.te.ui.views.interfaces.IRoot"/>
-            </triggerPoints>
+               <instanceof value="org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel"/>
+            </enablement>
             <commonSorter
                   class="org.eclipse.tm.te.tcf.ui.internal.navigator.Sorter"
                   id="org.eclipse.tm.te.tcf.ui.navigator.sorter"/>
