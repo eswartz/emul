@@ -7,7 +7,7 @@
       <viewerContentBinding viewerId="org.eclipse.tm.te.ui.views.TargetExplorer">
          <includes>
             <contentExtension
-                  isRoot="false"
+                  isRoot="true"
                   pattern="org.eclipse.tm.te.tcf.ui.navigator.*"/>
          </includes>
       </viewerContentBinding>
@@ -22,16 +22,12 @@
             labelProvider="org.eclipse.tm.te.tcf.ui.internal.navigator.LabelProvider"
             name="Dynamic Target Discovery (TCF)"
             priority="normal">
+            <triggerPoints>
+               <instanceof value="org.eclipse.tm.te.ui.views.interfaces.IRoot"/>
+            </triggerPoints>
             <commonSorter
                   class="org.eclipse.tm.te.tcf.ui.internal.navigator.Sorter"
                   id="org.eclipse.tm.te.tcf.ui.navigator.sorter"/>
-            <enablement>
-               <or>
-            	  <instanceof value="org.eclipse.tm.te.ui.views.interfaces.IRoot"/>
-            	  <instanceof value="org.eclipse.tm.te.tcf.locator.interfaces.nodes.ILocatorModel"/>
-            	  <instanceof value="org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel"/>
-               </or>
-            </enablement>
       </navigatorContent>
    </extension>
    
