@@ -60,6 +60,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
     private final TCFData<ISymbols.Symbol> type;
     private final TCFData<String> type_name;
     private final TCFData<String> string;
+    private final TCFData<String> expression_text;
     private final TCFChildrenSubExpressions children;
     private int sort_pos;
     private IExpressions.Value prev_value;
@@ -417,6 +418,62 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                 if (!getTypeName(bf, type, this)) return false;
                 set(null, null, bf.toString());
                 return true;
+            }
+        };
+        expression_text = new TCFData<String>(channel) {
+            @Override
+            protected boolean startDataRetrieval() {
+            	TCFDataCache<ISymbols.Symbol> field = model.getSymbolInfoCache(field_id);
+                TCFDataCache<?> pending = null;
+                if (field != null && !field.validate()) pending = field;
+                if (!var_expression.validate()) pending = var_expression;
+                if (!text.validate()) pending = text;
+                if (pending != null) {
+                    pending.wait(this);
+                    return false;
+                }
+                String parentName = "";
+                if (parent instanceof TCFNodeExpression) {
+                    TCFDataCache<String> parentText = ((TCFNodeExpression) parent).getExpressionText();
+                    if (!parentText.validate(this)) return false;
+                    if (parentText.getData() != null) {
+                    	parentName = parenthesize(parentText.getData());
+                    }
+                }
+                String name = null;
+                if (index >= 0) {
+                    if (index == 0 && deref) {
+                        name = "*" + parentName;
+                    }
+                    else {
+                        name = parentName + "[" + index + "]";
+                    }
+                }
+                if (name == null && field != null && field.getData() != null) {
+                	name = parentName + (deref ? "->" : ".") + field.getData().getName();
+                }
+                if (name == null && var_expression.getData() != null) {
+                    TCFDataCache<ISymbols.Symbol> var = model.getSymbolInfoCache(var_expression.getData().getSymbolID());
+                    if (var != null) {
+                        if (!var.validate(this)) return false;
+                        if (var.getData() != null) name = var.getData().getName();
+                    }
+                }
+                if (name == null && text.getData() != null) name = text.getData();
+                if (name != null) {
+                    String cast = model.getCastToType(id);
+                    if (cast != null) name = "(" + cast + ")(" + name + ")";
+                }
+                set(null, null, name);
+                return true;
+            }
+
+            private String parenthesize(String expr) {
+            	// surround with parentheses if not a simple identifier
+                if (!expr.matches("\\w*")) {
+                	return '(' + expr + ')';
+                }
+                return expr;
             }
         };
         children = new TCFChildrenSubExpressions(this, 0, 0, 0);
@@ -1335,5 +1392,9 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
             }
         }
         return super.getAdapter(adapter);
+    }
+    
+    public TCFDataCache<String> getExpressionText() {
+    	return expression_text;
     }
 }

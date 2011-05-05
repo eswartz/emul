@@ -298,4 +298,10 @@
       </renderingBindings>
    </extension>
 
+   <extension point="org.eclipse.debug.ui.debugModelContextBindings">
+      <modelContextBinding
+            contextId="org.eclipse.tm.tcf.debug.ui.debugging"
+            debugModelId="org.eclipse.tm.tcf.debug"/>
+   </extension>
+
 </plugin>

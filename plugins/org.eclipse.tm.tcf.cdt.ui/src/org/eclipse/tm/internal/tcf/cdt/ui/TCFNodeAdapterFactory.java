@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2010, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -16,9 +16,11 @@ import org.eclipse.cdt.debug.core.model.IReverseStepOverHandler;
 import org.eclipse.cdt.debug.core.model.IReverseToggleHandler;
 import org.eclipse.cdt.debug.core.model.ISteppingModeTarget;
 import org.eclipse.cdt.debug.core.model.IUncallHandler;
+import org.eclipse.cdt.debug.internal.core.ICWatchpointTarget;
 import org.eclipse.cdt.ui.text.c.hover.ICEditorTextHover;
 import org.eclipse.core.runtime.IAdapterFactory;
 import org.eclipse.debug.core.model.ISuspendResume;
+import org.eclipse.tm.internal.tcf.cdt.ui.breakpoints.TCFWatchpointTarget;
 import org.eclipse.tm.internal.tcf.cdt.ui.commands.TCFReverseResumeCommand;
 import org.eclipse.tm.internal.tcf.cdt.ui.commands.TCFReverseStepIntoCommand;
 import org.eclipse.tm.internal.tcf.cdt.ui.commands.TCFReverseStepOverCommand;
@@ -28,10 +30,11 @@ import org.eclipse.tm.internal.tcf.cdt.ui.hover.TCFDebugTextHover;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModel;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExecContext;
+import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExpression;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeStackFrame;
 import org.eclipse.tm.tcf.util.TCFTask;
 
-@SuppressWarnings("rawtypes")
+@SuppressWarnings({ "rawtypes", "restriction" })
 public class TCFNodeAdapterFactory implements IAdapterFactory {
 
     private static final Class<?>[] CLASSES = { 
@@ -42,7 +45,8 @@ public class TCFNodeAdapterFactory implements IAdapterFactory {
         IReverseStepIntoHandler.class,
         IReverseStepOverHandler.class,
         IReverseResumeHandler.class,
-        IUncallHandler.class
+        IUncallHandler.class,
+        ICWatchpointTarget.class
     };
 
     public Object getAdapter(Object adaptableObject, Class adapterType) {
@@ -109,6 +113,10 @@ public class TCFNodeAdapterFactory implements IAdapterFactory {
                     model.setAdapter(adapterType, handler = new TCFReverseResumeCommand(model));
                 }
                 return handler;
+            } else if (ICWatchpointTarget.class == adapterType) {
+                if (node instanceof TCFNodeExpression) {
+                    return new TCFWatchpointTarget((TCFNodeExpression) node);
+                }
             }
         }
         return null;
