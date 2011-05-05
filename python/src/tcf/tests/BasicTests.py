@@ -144,32 +144,29 @@ def testRunControl(c):
 
 def testBreakpoints(c):
     from tcf.services import breakpoints
-    def r3():
+    def testBPQuery():
         bps = c.getRemoteService(breakpoints.NAME)
-        class DoneGetIDs(breakpoints.DoneGetIDs):
-            def doneGetIDs(self, token, error, ids):
+        def doneGetIDs(token, error, ids):
+            if error:
+                protocol.log("Error from Breakpoints.getIDs", error)
+                return
+            print "Breakpoints :", ids
+            def doneGetProperties(token, error, props):
                 if error:
-                    protocol.log("Error from Breakpoints.getIDs", error)
+                    protocol.log("Error from Breakpoints.getProperties", error)
                     return
-                print "Breakpoints :", ids
-                class DoneGetProperties(breakpoints.DoneGetProperties):
-                    def doneGetProperties(self, token, error, props):
-                        if error:
-                            protocol.log("Error from Breakpoints.getProperties", error)
-                            return
-                        print "Breakpoint Properties: ", props
-                class DoneGetStatus(breakpoints.DoneGetStatus):
-                    def doneGetProperties(self, token, error, props):
-                        if error:
-                            protocol.log("Error from Breakpoints.getStatus", error)
-                            return
-                        print "Breakpoint Status: ", props
-                for id in ids:
-                    bps.getProperties(id, DoneGetProperties())
-                    bps.getStatus(id, DoneGetStatus())
-        bps.getIDs(DoneGetIDs())
-    protocol.invokeLater(r3)
-    def r4():
+                print "Breakpoint Properties: ", props
+            def doneGetStatus(token, error, props):
+                if error:
+                    protocol.log("Error from Breakpoints.getStatus", error)
+                    return
+                print "Breakpoint Status: ", props
+            for id in ids:
+                bps.getProperties(id, doneGetProperties)
+                bps.getStatus(id, doneGetStatus)
+        bps.getIDs(doneGetIDs)
+    protocol.invokeLater(testBPQuery)
+    def testBPSet():
         bpsvc = c.getRemoteService(breakpoints.NAME)
         class BPListener(breakpoints.BreakpointsListener):
             def breakpointStatusChanged(self, id, status):
@@ -182,18 +179,17 @@ def testBreakpoints(c):
             def contextRemoved(self, ids):
                 print "breakpointRemoved", ids
         bpsvc.addListener(BPListener())
-        class DoneSet(breakpoints.DoneCommand):
-            def doneCommand(self, token, error):
-                if error:
-                    protocol.log("Error from Breakpoints.set", error)
-                    return
+        def doneSet(token, error):
+            if error:
+                protocol.log("Error from Breakpoints.set", error)
+                return
         bp = {
             breakpoints.PROP_ID : "python:1",
             breakpoints.PROP_ENABLED : True,
             breakpoints.PROP_LOCATION : "sysClkRateGet"
         }
-        bpsvc.set([bp], DoneSet())
-    protocol.invokeLater(r4)
+        bpsvc.set([bp], doneSet)
+    protocol.invokeLater(testBPSet)
 
 def testStackTrace(c):
     from tcf.services import stacktrace

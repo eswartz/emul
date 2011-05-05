@@ -14,38 +14,42 @@ from tcf import channel
 from tcf.services import processes
 from tcf.channel.Command import Command
 
-class ChannelEventListener(channel.EventListener):
-    def __init__(self, service, listener):
+class ProcessContext(processes.ProcessContext):
+    def __init__(self, service, props):
+        super(ProcessContext, self).__init__(props)
         self.service = service
-        self.listener = listener
-    def event(self, name, data):
-        try:
-            args = channel.fromJSONSequence(data)
-            if name == "exited":
-                assert len(args) == 2
-                self.listener.exited(args[0], args[1])
-            else:
-                raise IOError("Processes service: unknown event: " + name);
-        except exceptions.Exception as x:
-            self.service.channel.terminate(x)
+
+    def attach(self, done):
+        return self._command("attach", done)
+
+    def detach(self, done):
+        return self._command("detach", done)
+
+    def terminate(self, done):
+        return self._command("terminate", done)
+
+    def _command(self, command, done):
+        service = self.service
+        done = service._makeCallback(done)
+        id = self.getID()
+        class _Command(Command):
+            def __init__(self):
+                super(_Command, self).__init__(service.channel, service,
+                        command, (id,))
+            def done(self, error, args):
+                if not error:
+                    assert len(args) == 1
+                    error = self.toError(args[0])
+                done.doneCommand(self.token, error)
+        return _Command().token
 
 class ProcessesProxy(processes.ProcessesService):
     def __init__(self, channel):
         self.channel = channel
         self.listeners = {}
 
-    def addListener(self, listener):
-        l = ChannelEventListener(self, listener)
-        self.channel.addEventListener(self, l)
-        self.listeners[listener] = l
-
-    def removeListener(self, listener):
-        l = self.listeners.get(listener)
-        if l:
-            del self.listeners[listener]
-            self.channel.removeEventListener(self, l)
-
     def getChildren(self, parent_context_id, attached_only, done):
+        done = self._makeCallback(done)
         service = self
         class GetChildrenCommand(Command):
             def __init__(self):
@@ -61,6 +65,7 @@ class ProcessesProxy(processes.ProcessesService):
         return GetChildrenCommand().token
 
     def getContext(self, context_id, done):
+        done = self._makeCallback(done)
         service = self
         class GetContextCommand(Command):
             def __init__(self):
@@ -75,6 +80,7 @@ class ProcessesProxy(processes.ProcessesService):
         return GetContextCommand().token
 
     def getEnvironment(self, done):
+        done = self._makeCallback(done)
         service = self
         class GetEnvCommand(Command):
             def __init__(self):
@@ -89,6 +95,7 @@ class ProcessesProxy(processes.ProcessesService):
         return GetEnvCommand().token
 
     def start(self, directory, file, command_line, environment, attach, done):
+        done = self._makeCallback(done)
         service = self
         env = _toEnvStringArray(environment)
         class StartCommand(Command):
@@ -105,6 +112,7 @@ class ProcessesProxy(processes.ProcessesService):
         return StartCommand().token
 
     def getSignalList(self, context_id, done):
+        done = self._makeCallback(done)
         service = self
         class GetSignalsCommand(Command):
             def __init__(self):
@@ -120,6 +128,7 @@ class ProcessesProxy(processes.ProcessesService):
         return GetSignalsCommand().token
 
     def getSignalMask(self, context_id, done):
+        done = self._makeCallback(done)
         service = self
         class GetSignalMaskCommand(Command):
             def __init__(self):
@@ -137,6 +146,7 @@ class ProcessesProxy(processes.ProcessesService):
         return GetSignalMaskCommand().token
 
     def setSignalMask(self, context_id, dont_stop, dont_pass, done):
+        done = self._makeCallback(done)
         service = self
         class SetSignalMaskCommand(Command):
             def __init__(self):
@@ -150,6 +160,7 @@ class ProcessesProxy(processes.ProcessesService):
         return SetSignalMaskCommand().token
 
     def signal(self, context_id, signal, done):
+        done = self._makeCallback(done)
         service = self
         class SignalCommand(Command):
             def __init__(self):
@@ -161,6 +172,32 @@ class ProcessesProxy(processes.ProcessesService):
                     error = self.toError(args[0])
                 done.doneCommand(self.token, error)
         return SignalCommand().token
+
+    def addListener(self, listener):
+        l = ChannelEventListener(self, listener)
+        self.channel.addEventListener(self, l)
+        self.listeners[listener] = l
+
+    def removeListener(self, listener):
+        l = self.listeners.get(listener)
+        if l:
+            del self.listeners[listener]
+            self.channel.removeEventListener(self, l)
+
+class ChannelEventListener(channel.EventListener):
+    def __init__(self, service, listener):
+        self.service = service
+        self.listener = listener
+    def event(self, name, data):
+        try:
+            args = channel.fromJSONSequence(data)
+            if name == "exited":
+                assert len(args) == 2
+                self.listener.exited(args[0], args[1])
+            else:
+                raise IOError("Processes service: unknown event: " + name);
+        except exceptions.Exception as x:
+            self.service.channel.terminate(x)
 
 def _toEnvStringArray(map):
     arr = []
@@ -177,31 +214,3 @@ def _toEnvMap(arr):
         if i >= 0: map[str[:i]] = str[i + 1:]
         else: map[str] = ""
     return map
-
-class ProcessContext(processes.ProcessContext):
-    def __init__(self, service, props):
-        super(ProcessContext, self).__init__(props)
-        self.service = service
-
-    def attach(self, done):
-        return self._command("attach", done)
-
-    def detach(self, done):
-        return self._command("detach", done)
-
-    def terminate(self, done):
-        return self._command("terminate", done)
-
-    def _command(self, command, done):
-        service = self.service
-        id = self.getID()
-        class _Command(Command):
-            def __init__(self):
-                super(_Command, self).__init__(service.channel, service,
-                        command, (id,))
-            def done(self, error, args):
-                if not error:
-                    assert len(args) == 1
-                    error = self.toError(args[0])
-                done.doneCommand(self.token, error)
-        return _Command().token

@@ -19,6 +19,7 @@ class ExpressionsProxy(expressions.ExpressionsService):
         self.channel = channel
 
     def assign(self, id, value, done):
+        done = self._makeCallback(done)
         service = self
         value = bytearray(value)
         class AssignCommand(Command):
@@ -32,6 +33,7 @@ class ExpressionsProxy(expressions.ExpressionsService):
         return AssignCommand().token
 
     def create(self, parent_id, language, expression, done):
+        done = self._makeCallback(done)
         service = self
         class CreateCommand(Command):
             def __init__(self):
@@ -46,6 +48,7 @@ class ExpressionsProxy(expressions.ExpressionsService):
         return CreateCommand().token
 
     def dispose(self, id, done):
+        done = self._makeCallback(done)
         service = self
         class DisposeCommand(Command):
             def __init__(self):
@@ -58,6 +61,7 @@ class ExpressionsProxy(expressions.ExpressionsService):
         return DisposeCommand().token
 
     def evaluate(self, id, done):
+        done = self._makeCallback(done)
         service = self
         class EvalCommand(Command):
             def __init__(self):
@@ -73,6 +77,7 @@ class ExpressionsProxy(expressions.ExpressionsService):
         return EvalCommand().token
 
     def getChildren(self, parent_context_id, done):
+        done = self._makeCallback(done)
         service = self
         class GetChildrenCommand(Command):
             def __init__(self):
@@ -87,6 +92,7 @@ class ExpressionsProxy(expressions.ExpressionsService):
         return GetChildrenCommand().token
 
     def getContext(self, id, done):
+        done = self._makeCallback(done)
         service = self
         class GetContextCommand(Command):
             def __init__(self):

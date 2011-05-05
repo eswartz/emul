@@ -9,7 +9,7 @@
 # *     Wind River Systems - initial API and implementation
 # *******************************************************************************
 
-import threading, exceptions
+import threading, exceptions, collections
 from tcf import protocol
 
 _providers = []
@@ -67,11 +67,22 @@ def getServiceManagerID():
     # so its ID is same as agent ID.
     return protocol.getAgentID()
 
+class GenericCallback(object):
+    def __init__(self, callback):
+        self.callback = callback
+    def __getattr__(self, attr):
+        if attr.startswith("done"):
+            return self.callback
+
 class Service(object):
     def getName(self):
         raise exceptions.NotImplementedError("Abstract method")
     def __str__(self):
         return self.getName()
+    def _makeCallback(self, done):
+        if isinstance(done, collections.Callable):
+            return GenericCallback(done)
+        return done
 
 class ZeroCopy(Service):
     def getName(self):

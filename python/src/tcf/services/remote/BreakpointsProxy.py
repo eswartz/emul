@@ -55,24 +55,31 @@ class BreakpointsProxy(breakpoints.BreakpointsService):
         self.listeners = {}
 
     def set(self, properties, done):
+        done = self._makeCallback(done)
         return BPCommand(self, "set", done, properties).token
 
     def add(self, properties, done):
+        done = self._makeCallback(done)
         return BPCommand(self, "add", done, properties).token
 
     def change(self, properties, done):
+        done = self._makeCallback(done)
         return BPCommand(self, "change", done, properties).token
 
     def disable(self, ids, done):
+        done = self._makeCallback(done)
         return BPCommand(self, "disable", done, ids).token
 
     def enable(self, ids, done):
+        done = self._makeCallback(done)
         return BPCommand(self, "enable", done, ids).token
 
     def remove(self, ids, done):
+        done = self._makeCallback(done)
         return BPCommand(self, "remove", done, ids).token
 
     def getIDs(self, done):
+        done = self._makeCallback(done)
         service = self
         class GetIDsCommand(Command):
             def __init__(self):
@@ -87,6 +94,7 @@ class BreakpointsProxy(breakpoints.BreakpointsService):
         return GetIDsCommand().token
 
     def getProperties(self, id, done):
+        done = self._makeCallback(done)
         service = self
         class GetPropertiesCommand(Command):
             def __init__(self):
@@ -101,6 +109,7 @@ class BreakpointsProxy(breakpoints.BreakpointsService):
         return GetPropertiesCommand().token
 
     def getStatus(self, id, done):
+        done = self._makeCallback(done)
         service = self
         class GetStatusCommand(Command):
             def __init__(self):
@@ -115,6 +124,7 @@ class BreakpointsProxy(breakpoints.BreakpointsService):
         return GetStatusCommand().token
 
     def getCapabilities(self, id, done):
+        done = self._makeCallback(done)
         service = self
         class GetCapabilitiesCommand(Command):
             def __init__(self):

@@ -17,6 +17,7 @@ class StackTraceProxy(stacktrace.StackTraceService):
         self.channel = channel
 
     def getChildren(self, parent_context_id, done):
+        done = self._makeCallback(done)
         service = self
         class GetChildrenCommand(Command):
             def __init__(self):
@@ -31,6 +32,7 @@ class StackTraceProxy(stacktrace.StackTraceService):
         return GetChildrenCommand().token
 
     def getContext(self, ids, done):
+        done = self._makeCallback(done)
         service = self
         class GetContextCommand(Command):
             def __init__(self):

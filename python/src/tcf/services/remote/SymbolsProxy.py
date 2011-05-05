@@ -28,6 +28,7 @@ class SymbolsProxy(symbols.SymbolsService):
         self.channel = channel
 
     def getContext(self, id, done):
+        done = self._makeCallback(done)
         service = self
         class GetContextCommand(Command):
             def __init__(self):
@@ -42,6 +43,7 @@ class SymbolsProxy(symbols.SymbolsService):
         return GetContextCommand().token
 
     def getChildren(self, parent_context_id, done):
+        done = self._makeCallback(done)
         service = self
         class GetChildrenCommand(Command):
             def __init__(self):
@@ -56,6 +58,7 @@ class SymbolsProxy(symbols.SymbolsService):
         return GetChildrenCommand().token
 
     def find(self, context_id, ip, name, done):
+        done = self._makeCallback(done)
         service = self
         class FindCommand(Command):
             def __init__(self):
@@ -70,6 +73,7 @@ class SymbolsProxy(symbols.SymbolsService):
         return FindCommand().token
 
     def findByAddr(self, context_id, addr, done):
+        done = self._makeCallback(done)
         service = self
         class FindByAddrCommand(Command):
             def __init__(self):
@@ -84,6 +88,7 @@ class SymbolsProxy(symbols.SymbolsService):
         return FindByAddrCommand().token
 
     def list(self, context_id, done):
+        done = self._makeCallback(done)
         service = self
         class ListCommand(Command):
             def __init__(self):
@@ -98,6 +103,7 @@ class SymbolsProxy(symbols.SymbolsService):
         return ListCommand().token
 
     def findFrameInfo(self, context_id, address, done):
+        done = self._makeCallback(done)
         service = self
         class FindFrameInfoCommand(Command):
             def __init__(self):
@@ -111,5 +117,5 @@ class SymbolsProxy(symbols.SymbolsService):
                     assert len(args) == 5
                     error = self.toError(args[0])
                     address, size, fp_cmds, reg_cmds = args[1:4]
-                done.doneList(self.token, error, address, size, fp_cmds, reg_cmds)
+                done.doneFindFrameInfo(self.token, error, address, size, fp_cmds, reg_cmds)
         return FindFrameInfoCommand().token

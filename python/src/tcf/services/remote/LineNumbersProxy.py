@@ -18,6 +18,7 @@ class LineNumbersProxy(linenumbers.LineNumbersService):
         self.channel = channel
 
     def mapToSource(self,  context_id, start_address, end_address, done):
+        done = self._makeCallback(done)
         service = self
         class MapCommand(Command):
             def __init__(self):
@@ -33,6 +34,7 @@ class LineNumbersProxy(linenumbers.LineNumbersService):
         return MapCommand().token
 
     def mapToMemory(self, context_id, file, line, column, done):
+        done = self._makeCallback(done)
         service = self
         class MapCommand(Command):
             def __init__(self):

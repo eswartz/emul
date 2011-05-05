@@ -82,12 +82,11 @@ class ChannelEventListener(channel.EventListener):
             self.channel.terminate(x)
 
 class LocatorProxy(locator.LocatorService):
-    peers = {}
-    listeners = []
-    get_peers_done = False
-
     def __init__(self, channel):
         self.channel = channel;
+        self.peers = {}
+        self.listeners = []
+        self.get_peers_done = False
         self.event_listener = ChannelEventListener(self)
         channel.addEventListener(self, self.event_listener)
 
@@ -95,6 +94,7 @@ class LocatorProxy(locator.LocatorService):
         return self.peers
 
     def redirect(self, peer, done):
+        done = self._makeCallback(done)
         service = self
         class RedirectCommand(Command):
             def __init__(self):
@@ -107,6 +107,7 @@ class LocatorProxy(locator.LocatorService):
         return RedirectCommand().token
 
     def sync(self, done):
+        done = self._makeCallback(done)
         service = self
         class SyncCommand(Command):
             def __init__(self):

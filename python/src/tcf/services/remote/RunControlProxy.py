@@ -21,6 +21,7 @@ class RunContext(runcontrol.RunControlContext):
 
     def getState(self, done):
         service = self.service
+        done = service._makeCallback(done)
         id = self.getID()
         class GetStateCommand(Command):
             def __init__(self):
@@ -57,6 +58,7 @@ class RunContext(runcontrol.RunControlContext):
 
     def _command(self, cmd, args, done):
         service = self.service
+        done = service._makeCallback(done)
         class RCCommand(Command):
             def __init__(self, cmd, args):
                 super(RCCommand, self).__init__(service.channel, service, cmd, args)
@@ -121,6 +123,7 @@ class RunControlProxy(runcontrol.RunControlService):
             self.channel.removeEventListener(self, l)
 
     def getContext(self, context_id, done):
+        done = self._makeCallback(done)
         service = self
         class GetContextCommand(Command):
             def __init__(self):
@@ -135,6 +138,7 @@ class RunControlProxy(runcontrol.RunControlService):
         return GetContextCommand().token
 
     def getChildren(self, parent_context_id, done):
+        done = self._makeCallback(done)
         service = self
         class GetChildrenCommand(Command):
             def __init__(self):

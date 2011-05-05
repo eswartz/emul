@@ -25,6 +25,7 @@ class Context(registers.RegistersContext):
 
     def get(self, done):
         service = self.service
+        done = service._makeCallback(done)
         id = self.getID()
         class GetCommand(Command):
             def __init__(self):
@@ -40,6 +41,7 @@ class Context(registers.RegistersContext):
 
     def set(self, value, done):
         service = self.service
+        done = service._makeCallback(done)
         id = self.getID()
         binary = bytearray(value)
         class SetCommand(Command):
@@ -54,6 +56,7 @@ class Context(registers.RegistersContext):
 
     def search(self, filter, done):
         service = self.service
+        done = service._makeCallback(done)
         id = self.getID()
         class SearchCommand(Command):
             def __init__(self):
@@ -73,6 +76,7 @@ class RegistersProxy(registers.RegistersService):
         self.listeners = {}
 
     def getChildren(self, parent_context_id, done):
+        done = self._makeCallback(done)
         service = self
         class GetChildrenCommand(Command):
             def __init__(self):
@@ -87,6 +91,7 @@ class RegistersProxy(registers.RegistersService):
         return GetChildrenCommand().token
 
     def getContext(self, id, done):
+        done = self._makeCallback(done)
         service = self
         class GetContextCommand(Command):
             def __init__(self):
@@ -101,6 +106,7 @@ class RegistersProxy(registers.RegistersService):
         return GetContextCommand().token
 
     def getm(self, locs, done):
+        done = self._makeCallback(done)
         service = self
         class GetMCommand(Command):
             def __init__(self):
@@ -115,6 +121,7 @@ class RegistersProxy(registers.RegistersService):
         return GetMCommand().token
 
     def setm(self, locs, value, done):
+        done = self._makeCallback(done)
         service = self
         binary = bytearray(value)
         class SetMCommand(Command):

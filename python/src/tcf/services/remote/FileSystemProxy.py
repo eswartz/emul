@@ -63,6 +63,7 @@ class FileSystemProxy(filesystem.FileSystemService):
 
     def close(self, handle, done):
         assert handle.getService() is self
+        done = self._makeCallback(done)
         id = handle.id
         service = self
         class CloseCommand(FileSystemCommand):
@@ -79,6 +80,7 @@ class FileSystemProxy(filesystem.FileSystemService):
         return CloseCommand().token
 
     def setstat(self, path, attrs, done):
+        done = self._makeCallback(done)
         dt = _toObject(attrs)
         service = self
         class SetStatCommand(FileSystemCommand):
@@ -95,6 +97,7 @@ class FileSystemProxy(filesystem.FileSystemService):
         return SetStatCommand().token
 
     def fsetstat(self, handle, attrs, done):
+        done = self._makeCallback(done)
         assert handle.getService() is self
         id = handle.id
         dt = _toObject(attrs)
@@ -113,6 +116,7 @@ class FileSystemProxy(filesystem.FileSystemService):
         return FSetStatCommand().token
 
     def stat(self, path, done):
+        done = self._makeCallback(done)
         service = self
         class StatCommand(FileSystemCommand):
             def __init__(self):
@@ -130,6 +134,7 @@ class FileSystemProxy(filesystem.FileSystemService):
         return StatCommand().token
     
     def fstat(self, handle, done):
+        done = self._makeCallback(done)
         assert handle.getService() is self
         id = handle.id
         service = self
@@ -149,6 +154,7 @@ class FileSystemProxy(filesystem.FileSystemService):
         return FStatCommand().token
 
     def lstat(self, path, done):
+        done = self._makeCallback(done)
         service = self
         class LStatCommand(FileSystemCommand):
             def __init__(self):
@@ -166,6 +172,7 @@ class FileSystemProxy(filesystem.FileSystemService):
         return LStatCommand().token
 
     def mkdir(self, path, attrs, done):
+        done = self._makeCallback(done)
         dt = _toObject(attrs)
         service = self
         class MkDirCommand(FileSystemCommand):
@@ -182,6 +189,7 @@ class FileSystemProxy(filesystem.FileSystemService):
         return MkDirCommand().token
 
     def open(self, file_name, flags, attrs, done):
+        done = self._makeCallback(done)
         dt = _toObject(attrs)
         service = self
         class OpenCommand(FileSystemCommand):
@@ -200,6 +208,7 @@ class FileSystemProxy(filesystem.FileSystemService):
         return OpenCommand().token
 
     def opendir(self, path, done):
+        done = self._makeCallback(done)
         service = self
         class OpenDirCommand(FileSystemCommand):
             def __init__(self):
@@ -218,6 +227,7 @@ class FileSystemProxy(filesystem.FileSystemService):
 
     def read(self, handle, offset, len, done):
         assert handle.getService() is self
+        done = self._makeCallback(done)
         id = handle.id
         service = self
         class ReadCommand(FileSystemCommand):
@@ -240,6 +250,7 @@ class FileSystemProxy(filesystem.FileSystemService):
 
     def readdir(self, handle, done):
         assert handle.getService() is self
+        done = self._makeCallback(done)
         id = handle.id
         service = self
         class ReadDirCommand(FileSystemCommand):
@@ -261,6 +272,7 @@ class FileSystemProxy(filesystem.FileSystemService):
         return ReadDirCommand().token
 
     def roots(self, done):
+        done = self._makeCallback(done)
         service = self
         class RootCommand(FileSystemCommand):
             def __init__(self):
@@ -279,6 +291,7 @@ class FileSystemProxy(filesystem.FileSystemService):
         return RootCommand().token
 
     def readlink(self, path, done):
+        done = self._makeCallback(done)
         service = self
         class ReadLinkCommand(FileSystemCommand):
             def __init__(self):
@@ -297,6 +310,7 @@ class FileSystemProxy(filesystem.FileSystemService):
         return ReadLinkCommand().token
 
     def realpath(self, path, done):
+        done = self._makeCallback(done)
         service = self
         class RealPathCommand(FileSystemCommand):
             def __init__(self):
@@ -315,6 +329,7 @@ class FileSystemProxy(filesystem.FileSystemService):
         return RealPathCommand().token
 
     def remove(self, file_name, done):
+        done = self._makeCallback(done)
         service = self
         class RemoveCommand(FileSystemCommand):
             def __init__(self):
@@ -330,6 +345,7 @@ class FileSystemProxy(filesystem.FileSystemService):
         return RemoveCommand().token
 
     def rename(self, old_path, new_path, done):
+        done = self._makeCallback(done)
         service = self
         class RenameCommand(FileSystemCommand):
             def __init__(self):
@@ -345,6 +361,7 @@ class FileSystemProxy(filesystem.FileSystemService):
         return RenameCommand().token
 
     def rmdir(self, path, done):
+        done = self._makeCallback(done)
         service = self
         class RmDirCommand(FileSystemCommand):
             def __init__(self):
@@ -360,6 +377,7 @@ class FileSystemProxy(filesystem.FileSystemService):
         return RmDirCommand().token
 
     def symlink(self, link_path, target_path, done):
+        done = self._makeCallback(done)
         service = self
         class SymLinkCommand(FileSystemCommand):
             def __init__(self):
@@ -376,6 +394,7 @@ class FileSystemProxy(filesystem.FileSystemService):
 
     def write(self, handle, offset, data, data_pos, data_size, done):
         assert handle.getService() is self
+        done = self._makeCallback(done)
         id = handle.id
         binary = bytearray(data[data_pos:data_pos+data_size])
         service = self
@@ -393,6 +412,7 @@ class FileSystemProxy(filesystem.FileSystemService):
         return WriteCommand().token
 
     def copy(self, src_path, dst_path, copy_permissions, copy_uidgid, done):
+        done = self._makeCallback(done)
         service = self
         class CopyCommand(FileSystemCommand):
             def __init__(self):
@@ -409,6 +429,7 @@ class FileSystemProxy(filesystem.FileSystemService):
         return CopyCommand().token
 
     def user(self, done):
+        done = self._makeCallback(done)
         service = self
         class UserCommand(FileSystemCommand):
             def __init__(self):
