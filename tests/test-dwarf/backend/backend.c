@@ -215,14 +215,7 @@ static void next_pc(void) {
 
         set_regs_PC(elf_ctx, pc);
         send_context_changed_event(elf_ctx);
-#if 0
-        switch (pc % 4) {
-        case 0: name = "???"; break;
-        case 1: name = "run_undetached"; break;
-        case 2: name = "set_m_bAbort"; break;
-        case 3: name = "deallocate_buffers"; break;
-        }
-#endif
+
         if (find_symbol_by_addr(elf_ctx, STACK_NO_FRAME, pc, &sym) < 0) {
             if (get_error_code(errno) != ERR_SYM_NOT_FOUND) {
                 error("find_symbol_by_addr");
@@ -236,21 +229,26 @@ static void next_pc(void) {
             }
             if (name != NULL) {
                 strcpy(name_buf, name);
-                if (find_symbol_by_addr(elf_ctx, STACK_TOP_FRAME, pc, &sym) < 0) {
-                    error("find_symbol_by_addr");
-                }
-                if (get_symbol_name(sym, &name) < 0) {
-                    error("get_symbol_name");
-                }
-                if (strcmp(name_buf, name) != 0) {
-                    errno = ERR_OTHER;
-                    error("strcmp(name_buf, name)");
-                }
                 if (find_symbol_by_name(elf_ctx, STACK_TOP_FRAME, 0, name_buf, &sym) < 0) {
                     if (get_error_code(errno) != ERR_SYM_NOT_FOUND) {
                         error("find_symbol_by_name");
                     }
                 }
+                else {
+                    if (get_symbol_name(sym, &name) < 0) {
+                        error("get_symbol_name");
+                    }
+                    if (strcmp(name_buf, name) != 0) {
+                        errno = ERR_OTHER;
+                        error("strcmp(name_buf, name)");
+                    }
+                }
+            }
+        }
+
+        if (find_symbol_by_name(elf_ctx, STACK_TOP_FRAME, 0, "@ non existing name @", &sym) < 0) {
+            if (get_error_code(errno) != ERR_SYM_NOT_FOUND) {
+                error("find_symbol_by_name");
             }
         }
 
