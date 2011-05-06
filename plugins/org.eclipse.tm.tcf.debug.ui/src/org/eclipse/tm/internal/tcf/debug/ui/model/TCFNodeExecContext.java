@@ -45,8 +45,6 @@ import org.eclipse.tm.tcf.util.TCFDataCache;
 
 public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
 
-    private final int seq_no;
-
     private final TCFChildrenExecContext children_exec;
     private final TCFChildrenStackTrace children_stack;
     private final TCFChildrenRegisters children_regs;
@@ -67,6 +65,9 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     private LinkedHashMap<BigInteger,TCFDataCache<TCFSourceRef>> line_info_lookup_cache;
     private LinkedHashMap<BigInteger,TCFDataCache<TCFFunctionRef>> func_info_lookup_cache;
     private LookupCacheTimer lookup_cache_timer;
+
+    private int mem_seq_no;
+    private int exe_seq_no;
 
     /*
      * LookupCacheTimer is executed periodically to dispose least-recently
@@ -116,8 +117,6 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     private String last_image;
 
     private String hover_expression;
-
-    private static int seq_cnt;
 
     /**
      * Wrapper class for IMemoryMap.MemoryRegion.
@@ -204,7 +203,6 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
 
     TCFNodeExecContext(TCFNode parent, final String id) {
         super(parent, id);
-        seq_no = seq_cnt++;
         children_exec = new TCFChildrenExecContext(this);
         children_stack = new TCFChildrenStackTrace(this) {
             @Override
@@ -427,6 +425,14 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         for (TCFNodeSymbol s : l) s.dispose();
         assert symbols.size() == 0;
         super.dispose();
+    }
+
+    void setMemSeqNo(int no) {
+        mem_seq_no = no;
+    }
+
+    void setExeSeqNo(int no) {
+        exe_seq_no = no;
     }
 
     TCFChildren getHoverExpressionCache(String expression) {
@@ -1195,8 +1201,10 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     public int compareTo(TCFNode n) {
         if (n instanceof TCFNodeExecContext) {
             TCFNodeExecContext f = (TCFNodeExecContext)n;
-            if (seq_no < f.seq_no) return -1;
-            if (seq_no > f.seq_no) return +1;
+            if (mem_seq_no < f.mem_seq_no) return -1;
+            if (mem_seq_no > f.mem_seq_no) return +1;
+            if (exe_seq_no < f.exe_seq_no) return -1;
+            if (exe_seq_no > f.exe_seq_no) return +1;
         }
         return id.compareTo(n.id);
     }

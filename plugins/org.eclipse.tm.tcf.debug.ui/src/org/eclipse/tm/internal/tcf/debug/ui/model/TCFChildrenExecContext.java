@@ -44,10 +44,13 @@ public class TCFChildrenExecContext extends TCFChildren {
                     public void doneGetChildren(IToken token, Exception error, String[] contexts) {
                         Map<String,TCFNode> data = null;
                         if (command == token && error == null) {
+                            int cnt = 0;
                             data = new HashMap<String,TCFNode>();
                             for (String id : contexts) {
                                 TCFNode n = node.model.getNode(id);
                                 if (n == null) n = new TCFNodeExecContext(node, id);
+                                ((TCFNodeExecContext)n).setMemSeqNo(cnt++);
+                                assert n.parent == node;
                                 data.put(id, n);
                             }
                         }
@@ -70,10 +73,12 @@ public class TCFChildrenExecContext extends TCFChildren {
                     public void doneGetChildren(IToken token, Exception error, String[] contexts) {
                         Map<String,TCFNode> data = null;
                         if (command == token && error == null) {
+                            int cnt = 0;
                             data = new HashMap<String,TCFNode>();
                             for (String id : contexts) {
                                 TCFNode n = node.model.getNode(id);
                                 if (n == null) n = new TCFNodeExecContext(node, id);
+                                ((TCFNodeExecContext)n).setExeSeqNo(cnt++);
                                 assert n.parent == node;
                                 data.put(id, n);
                             }
@@ -107,6 +112,11 @@ public class TCFChildrenExecContext extends TCFChildren {
     }
 
     void onContextAdded(IRunControl.RunControlContext context) {
+        // To preserve children order need to reset children list.
+        reset();
+        run_children.reset();
+        mem_children.reset();
+        assert !node.isDisposed();
         String id = context.getID();
         TCFNodeExecContext n = (TCFNodeExecContext)node.model.getNode(id);
         if (n == null) {
@@ -122,6 +132,10 @@ public class TCFChildrenExecContext extends TCFChildren {
     }
 
     void onContextAdded(IMemory.MemoryContext context) {
+        // To preserve children order need to reset children list.
+        reset();
+        run_children.reset();
+        mem_children.reset();
         assert !node.isDisposed();
         String id = context.getID();
         TCFNodeExecContext n = (TCFNodeExecContext)node.model.getNode(id);
