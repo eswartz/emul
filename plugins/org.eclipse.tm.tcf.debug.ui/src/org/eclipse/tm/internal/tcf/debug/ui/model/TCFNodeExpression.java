@@ -423,7 +423,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         expression_text = new TCFData<String>(channel) {
             @Override
             protected boolean startDataRetrieval() {
-            	TCFDataCache<ISymbols.Symbol> field = model.getSymbolInfoCache(field_id);
+                TCFDataCache<ISymbols.Symbol> field = model.getSymbolInfoCache(field_id);
                 TCFDataCache<?> pending = null;
                 if (field != null && !field.validate()) pending = field;
                 if (!var_expression.validate()) pending = var_expression;
@@ -437,7 +437,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                     TCFDataCache<String> parentText = ((TCFNodeExpression) parent).getExpressionText();
                     if (!parentText.validate(this)) return false;
                     if (parentText.getData() != null) {
-                    	parentName = parenthesize(parentText.getData());
+                        parentName = parenthesize(parentText.getData());
                     }
                 }
                 String name = null;
@@ -450,7 +450,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                     }
                 }
                 if (name == null && field != null && field.getData() != null) {
-                	name = parentName + (deref ? "->" : ".") + field.getData().getName();
+                    name = parentName + (deref ? "->" : ".") + field.getData().getName();
                 }
                 if (name == null && var_expression.getData() != null) {
                     TCFDataCache<ISymbols.Symbol> var = model.getSymbolInfoCache(var_expression.getData().getSymbolID());
@@ -469,9 +469,9 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
             }
 
             private String parenthesize(String expr) {
-            	// surround with parentheses if not a simple identifier
+                // surround with parentheses if not a simple identifier
                 if (!expr.matches("\\w*")) {
-                	return '(' + expr + ')';
+                    return '(' + expr + ')';
                 }
                 return expr;
             }
@@ -1393,8 +1393,8 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         }
         return super.getAdapter(adapter);
     }
-    
+
     public TCFDataCache<String> getExpressionText() {
-    	return expression_text;
+        return expression_text;
     }
 }
