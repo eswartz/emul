@@ -236,4 +236,8 @@
 #  define ENABLE_Unix_Domain    (TARGET_UNIX || TARGET_SYMBIAN)
 #endif
 
+#if !defined(ENABLE_ContextStateProperties)
+#  define ENABLE_ContextStateProperties 0
+#endif
+
 #endif /* D_config */

@@ -233,6 +233,12 @@ extern void context_unlock(Context * ctx);
 extern int context_has_state(Context * ctx);
 
 /*
+ * Get context state properties.
+ * Return -1 and set errno if cannot access the properties.
+ */
+extern int context_get_state_properties(Context * ctx, const char *** names, const char *** values, int * cnt);
+
+/*
  * Stop execution of the context.
  * Execution can be resumed by calling context_continue()
  * Return -1 and set errno if the context cannot be stopped.

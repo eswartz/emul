@@ -321,6 +321,26 @@ static void write_context_state(OutputStream * out, Context * ctx) {
         write_error_object(out, pc_error);
         fst = 0;
     }
+#if ENABLE_ContextStateProperties
+    {
+        /* Back-end context state properties */
+        int cnt = 0;
+        const char ** names = NULL;
+        const char ** values = NULL;
+        if (context_get_state_properties(ctx, &names, &values, &cnt) == 0) {
+            while (cnt > 0) {
+                if (*values != NULL) {
+                    if (!fst) write_stream(out, ',');
+                    json_write_string(out, *names++);
+                    write_stream(out, ':');
+                    json_write_string(out, *values++);
+                    fst = 0;
+                }
+                cnt--;
+            }
+        }
+    }
+#endif
     write_stream(out, '}');
     write_stream(out, 0);
 }
