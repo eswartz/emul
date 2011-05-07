@@ -935,6 +935,18 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                                     if (r == null) r = "Suspended";
                                     label.append(" (");
                                     label.append(r);
+                                    if (state_data.suspend_params != null) {
+                                        String prs = (String)state_data.suspend_params.get("Context");
+                                        if (prs != null) {
+                                            label.append(", ");
+                                            label.append(prs);
+                                        }
+                                        String cpu = (String)state_data.suspend_params.get("CPU");
+                                        if (cpu != null) {
+                                            label.append(", ");
+                                            label.append(cpu);
+                                        }
+                                    }
                                     label.append(")");
                                 }
                             }
