@@ -464,8 +464,12 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 				});
 			}
 
+			// Get the root node for this peer model object.
+			// If null, true is returned as it means that the file system
+			// model hasn't been created yet and have to treat is as children
+			// not queried yet.
 			FSTreeNode root = peerId[0] != null ? fModel.getRoot(peerId[0]): null;
-			if (root != null) hasChildren = hasChildren(root);
+			hasChildren = root != null ? hasChildren(root) : true;
 		}
 
 		return hasChildren;
