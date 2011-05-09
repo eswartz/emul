@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2008, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -16,6 +16,8 @@ import java.util.Map;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IElementLabelProvider;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.ILabelUpdate;
+import org.eclipse.debug.ui.DebugUITools;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
@@ -28,7 +30,10 @@ class TCFLaunchLabelProvider implements IElementLabelProvider {
         for (int i = 0; i < updates.length; i++) {
             ILabelUpdate result = updates[i];
             final TCFLaunch launch = (TCFLaunch)result.getElement();
-            result.setImageDescriptor(ImageCache.getImageDescriptor(ImageCache.IMG_TCF), 0);
+            ImageDescriptor imageDescriptor = DebugUITools.getDefaultImageDescriptor(launch);
+            if (imageDescriptor == null)
+                imageDescriptor = ImageCache.getImageDescriptor(ImageCache.IMG_TCF);
+            result.setImageDescriptor(imageDescriptor, 0);
             String status = "";
             if (launch.isConnecting()) {
                 status = "Connecting";
