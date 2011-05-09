@@ -21,7 +21,7 @@ Target Explorer (Eclipse.org) Contributions
 	c) Contributions depending either mandatory or optionally on "org.eclipse.core.resources"
 	   should come as separate plug-in's.
 
-6. Avoid sub component cross dependencies where ever possible
+6. Avoid sub component cross dependencies
 	a) The Target Explorer must stay highly modular.
 	b) Product builder shall be able to pick only what they really need.
 	c) If unavoidable, weak dependencies like adapters and extension points are
