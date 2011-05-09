@@ -52,7 +52,14 @@ public class TCFThreadFilterEditor {
         private final boolean fIsContainer;
 
         Context(IRunControl.RunControlContext ctx) {
-            fName = ctx.getName() != null ? ctx.getName() : ctx.getID();
+            this(ctx, null);
+        }
+        Context(IRunControl.RunControlContext ctx, String suffix) {
+            String name = ctx.getName() != null ? ctx.getName() : ctx.getID();
+            if (suffix != null) {
+                name += " - " + suffix;
+            }
+            fName = name;
             fId = ctx.getID();
             fParentId = ctx.getParentID();
             fIsContainer = ctx.isContainer();
@@ -60,7 +67,6 @@ public class TCFThreadFilterEditor {
     }
     
     public class CheckHandler implements ICheckStateListener {
-
         public void checkStateChanged(CheckStateChangedEvent event) {
             Object element = event.getElement();
             if (element instanceof Context) {
@@ -328,6 +334,7 @@ public class TCFThreadFilterEditor {
         if (result != null) {
             return result;
         }
+        final String launchCfgName = launch.getLaunchConfiguration().getName();
         result = new TCFTask<Context[]>() {
             public void run() {
                 List<Context> containers = new ArrayList<Context>();
@@ -341,7 +348,7 @@ public class TCFThreadFilterEditor {
                         TCFDataCache<IRunControl.RunControlContext> runCtxCache = exeCtx.getRunContext();
                         if (!runCtxCache.validate(this)) return;
                         IRunControl.RunControlContext runCtx = runCtxCache.getData();
-                        containers.add(new Context(runCtx));
+                        containers.add(new Context(runCtx, launchCfgName));
                     }
                 }
                 done((Context[]) containers.toArray(new Context[containers.size()]));
