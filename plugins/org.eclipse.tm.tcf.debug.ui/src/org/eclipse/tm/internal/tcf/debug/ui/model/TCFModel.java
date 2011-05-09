@@ -1057,13 +1057,13 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                     top_frame = stack_frame.getFrameNo() == 0;
                     ctx_id = stack_frame.parent.id;
                 }
-                displaySource(cnt, page, ctx_id, top_frame, area);
+                displaySource(cnt, page, element, ctx_id, top_frame, area);
             }
         });
     }
 
     private void displaySource(final int cnt, final IWorkbenchPage page,
-            final String exe_id, final boolean top_frame, final ILineNumbers.CodeArea area) {
+            final Object element, final String exe_id, final boolean top_frame, final ILineNumbers.CodeArea area) {
         final boolean disassembly_available = channel.getRemoteService(IDisassembly.class) != null;
         display.asyncExec(new Runnable() {
             public void run() {
@@ -1099,21 +1099,29 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                         line = area.start_line;
                     }
                 }
+                if (area != null && !instruction_stepping_enabled && (editor_input == null || editor_id == null)) {
+                    ILaunchConfiguration cfg = launch.getLaunchConfiguration();
+                    ISourceNotFoundPresentation presentation = (ISourceNotFoundPresentation) DebugPlugin.getAdapter(element, ISourceNotFoundPresentation.class);
+                    if (presentation != null) {
+                        String filename = TCFSourceLookupParticipant.toFileName(area);
+                        editor_input = presentation.getEditorInput(element, cfg, filename);
+                        editor_id = presentation.getEditorId(editor_input, element);
+                    }
+                    if (editor_id == null || editor_input == null) {
+                        editor_id = IDebugUIConstants.ID_COMMON_SOURCE_NOT_FOUND_EDITOR;
+                        editor_input = editor_not_found.get(cfg);
+                        if (editor_input == null) {
+                            editor_input = new CommonSourceNotFoundEditorInput(cfg);
+                            editor_not_found.put(cfg, editor_input);
+                        }
+                    }
+                }
                 if (exe_id != null && disassembly_available &&
                         (editor_input == null || editor_id == null || instruction_stepping_enabled) &&
                         PlatformUI.getWorkbench().getEditorRegistry().findEditor(
                                 DisassemblyEditorInput.EDITOR_ID) != null) {
                     editor_id = DisassemblyEditorInput.EDITOR_ID;
                     editor_input = DisassemblyEditorInput.INSTANCE;
-                }
-                if (area != null && (editor_input == null || editor_id == null)) {
-                    ILaunchConfiguration cfg = launch.getLaunchConfiguration();
-                    editor_id = IDebugUIConstants.ID_COMMON_SOURCE_NOT_FOUND_EDITOR;
-                    editor_input = editor_not_found.get(cfg);
-                    if (editor_input == null) {
-                        editor_input = new CommonSourceNotFoundEditorInput(cfg);
-                        editor_not_found.put(cfg, editor_input);
-                    }
                 }
                 if (cnt != display_source_generation) return;
                 ITextEditor text_editor = null;

@@ -113,6 +113,35 @@ class CommandServer(object):
         """
         pass
 
+class CommandListener(object):
+    """
+    Command listener interface. Clients implement this interface to
+    receive command results.
+    """
+    def progress(self, token, data):
+        """
+        Called when progress message (intermediate result) is received
+        from remote peer.
+        @param token - command handle
+        @param data - progress message arguments encoded into array of bytes
+        """
+        pass
+    def result(self, token, data):
+        """
+        Called when command result received from remote peer.
+        @param token - command handle
+        @param data - command result message arguments encoded into array of bytes
+        """
+        pass
+    def terminated(self, token, error):
+        """
+        Called when command is terminated because communication channel was closed or
+        command is not recognized by remote peer.
+        @param token - command handle
+        @param error - exception that forced the channel to close
+        """
+        pass
+
 def toJSONSequence(args):
     if args is None:
         return None

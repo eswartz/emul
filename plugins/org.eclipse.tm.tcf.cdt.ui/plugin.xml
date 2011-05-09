@@ -20,14 +20,8 @@
          point="org.eclipse.core.runtime.adapters">
       <factory
             adaptableType="org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode"
-            class="org.eclipse.tm.internal.tcf.cdt.ui.disassembly.TCFDisassemblyBackendFactory">
-         <adapter
-               type="org.eclipse.cdt.debug.internal.ui.disassembly.dsf.IDisassemblyBackend">
-         </adapter>
-      </factory>
-      <factory
-            adaptableType="org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode"
             class="org.eclipse.tm.internal.tcf.cdt.ui.TCFNodeAdapterFactory">
+         <adapter type="org.eclipse.cdt.debug.internal.ui.disassembly.dsf.IDisassemblyBackend"/>
          <adapter type="org.eclipse.cdt.debug.core.model.ISteppingModeTarget"/>
          <adapter type="org.eclipse.debug.core.model.ISuspendResume"/>
          <adapter type="org.eclipse.cdt.ui.text.c.hover.ICEditorTextHover"/>
@@ -37,6 +31,7 @@
          <adapter type="org.eclipse.cdt.debug.core.model.IReverseResumeHandler"/>
          <adapter type="org.eclipse.cdt.debug.core.model.IUncallHandler"/>
          <adapter type="org.eclipse.cdt.debug.internal.core.ICWatchpointTarget"/>
+         <adapter type="org.eclipse.tm.internal.tcf.debug.ui.model.ISourceNotFoundPresentation"/>
       </factory>
     </extension>
     
@@ -337,6 +332,16 @@
                label="%action.addWatchpoint.label"
                menubarPath="additions"/>
       </objectContribution>
+   </extension>
+   <extension
+         point="org.eclipse.ui.editors">
+      <editor
+            class="org.eclipse.tm.internal.tcf.cdt.ui.sourcelookup.TCFCSourceNotFoundEditor"
+            default="false"
+            icon="icons/obj16/c_app.gif"
+            id="org.eclipse.tm.tcf.cdt.ui.source_not_found_editor"
+            name="%editor.sourceNotFound.name">
+      </editor>
    </extension>
 
 </plugin>

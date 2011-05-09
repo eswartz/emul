@@ -17,6 +17,7 @@ import org.eclipse.cdt.debug.core.model.IReverseToggleHandler;
 import org.eclipse.cdt.debug.core.model.ISteppingModeTarget;
 import org.eclipse.cdt.debug.core.model.IUncallHandler;
 import org.eclipse.cdt.debug.internal.core.ICWatchpointTarget;
+import org.eclipse.cdt.debug.internal.ui.disassembly.dsf.IDisassemblyBackend;
 import org.eclipse.cdt.ui.text.c.hover.ICEditorTextHover;
 import org.eclipse.core.runtime.IAdapterFactory;
 import org.eclipse.debug.core.model.ISuspendResume;
@@ -26,7 +27,10 @@ import org.eclipse.tm.internal.tcf.cdt.ui.commands.TCFReverseStepIntoCommand;
 import org.eclipse.tm.internal.tcf.cdt.ui.commands.TCFReverseStepOverCommand;
 import org.eclipse.tm.internal.tcf.cdt.ui.commands.TCFReverseStepReturnCommand;
 import org.eclipse.tm.internal.tcf.cdt.ui.commands.TCFReverseToggleCommand;
+import org.eclipse.tm.internal.tcf.cdt.ui.disassembly.TCFDisassemblyBackend;
 import org.eclipse.tm.internal.tcf.cdt.ui.hover.TCFDebugTextHover;
+import org.eclipse.tm.internal.tcf.cdt.ui.sourcelookup.TCFSourceNotFoundPresentation;
+import org.eclipse.tm.internal.tcf.debug.ui.model.ISourceNotFoundPresentation;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModel;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExecContext;
@@ -37,7 +41,8 @@ import org.eclipse.tm.tcf.util.TCFTask;
 @SuppressWarnings({ "rawtypes", "restriction" })
 public class TCFNodeAdapterFactory implements IAdapterFactory {
 
-    private static final Class<?>[] CLASSES = { 
+    private static final Class<?>[] CLASSES = {
+        IDisassemblyBackend.class,
         ISteppingModeTarget.class,
         ISuspendResume.class,
         ICEditorTextHover.class,
@@ -48,12 +53,19 @@ public class TCFNodeAdapterFactory implements IAdapterFactory {
         IUncallHandler.class,
         ICWatchpointTarget.class
     };
+    
+    private static final TCFSourceNotFoundPresentation fgSourceNotFoundPresentation = new TCFSourceNotFoundPresentation();
 
     public Object getAdapter(Object adaptableObject, Class adapterType) {
         if (adaptableObject instanceof TCFNode) {
             final TCFNode node = (TCFNode) adaptableObject;
             TCFModel model = node.getModel();
-            if (ISteppingModeTarget.class == adapterType) {
+            if (IDisassemblyBackend.class == adapterType) {
+                TCFDisassemblyBackend backend = new TCFDisassemblyBackend();
+                if (backend.supportsDebugContext((TCFNode) adaptableObject)) {
+                    return backend;
+                }
+            } else if (ISteppingModeTarget.class == adapterType) {
                 ISteppingModeTarget target = (ISteppingModeTarget) model.getAdapter(adapterType, node);
                 if (target == null) {
                     model.setAdapter(adapterType, target = new TCFSteppingModeTarget(model));
@@ -117,6 +129,8 @@ public class TCFNodeAdapterFactory implements IAdapterFactory {
                 if (node instanceof TCFNodeExpression) {
                     return new TCFWatchpointTarget((TCFNodeExpression) node);
                 }
+            } else if (ISourceNotFoundPresentation.class == adapterType) {
+                return fgSourceNotFoundPresentation;
             }
         }
         return null;

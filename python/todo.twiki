@@ -1,0 +1,39 @@
+---+ TCF Python Scripting
+
+---++ Features
+   * [done] EventQueue
+   * Transport types
+      * [done] TCP
+      * SSL
+      * PIPE
+      * LOOP
+   * Service proxies:
+      * [done] Breakpoints
+      * [done] Locator
+      * [done] RunControl
+      * [done] StackTrace
+      * [done] Symbols
+      * [done] Registers
+      * [done] Expressions
+      * [done] LineNumbers
+      * [done] Processes
+      * [done] FileSystem
+      * MemoryMap
+      * Memory
+      * PathMap
+      * Diagnostics
+      * Disassembly
+      * Streams
+      * Terminals
+      * SysMonitor
+   * Local services:
+      * [incomplete] ZeroCopy
+      * [started] Locator service (discovery)
+   * Utilities:
+      * [done] ACPM data cache
+      * [done] TCFTask
+      * [done] Event recording
+      * [done] Simplified synchronous command invocation
+      * File object implementation based on FileSystem service
+   * [started] Interactive interpreter
+   * JUnit tests
