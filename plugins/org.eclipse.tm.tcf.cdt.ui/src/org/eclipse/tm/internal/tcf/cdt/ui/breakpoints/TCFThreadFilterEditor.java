@@ -50,16 +50,20 @@ public class TCFThreadFilterEditor {
         private final String fId;
         private final String fParentId;
         private final boolean fIsContainer;
+        private final String fScopeId;
+        private final String fSessionId;
 
-        Context(IRunControl.RunControlContext ctx) {
-            this(ctx, null);
+        Context(IRunControl.RunControlContext ctx, Context parent) {
+            this(ctx, parent.fSessionId);
         }
-        Context(IRunControl.RunControlContext ctx, String suffix) {
+        Context(IRunControl.RunControlContext ctx, String sessionId) {
             String name = ctx.getName() != null ? ctx.getName() : ctx.getID();
-            if (suffix != null) {
-                name += " - " + suffix;
+            if (sessionId != null) {
+                name += " - " + sessionId;
             }
             fName = name;
+            fSessionId = sessionId;
+            fScopeId = sessionId != null ? sessionId + '/' + ctx.getID() : ctx.getID();
             fId = ctx.getID();
             fParentId = ctx.getParentID();
             fIsContainer = ctx.isContainer();
@@ -249,8 +253,9 @@ public class TCFThreadFilterEditor {
         List<Object> targets = new ArrayList<Object>();
         ILaunch[] launches = ((ILaunchManager) input).getLaunches();
         for (int i = 0; i < launches.length; i++) {
-            if (launches[i] instanceof TCFLaunch) {
-                Context[] targetArray = syncGetContainers((TCFLaunch) launches[i]);
+            ILaunch launch = launches[i];
+            if (launch instanceof TCFLaunch && !launch.isTerminated()) {
+                Context[] targetArray = syncGetContainers((TCFLaunch) launch);
                 targets.addAll(Arrays.asList(targetArray));
             }
         }
@@ -282,10 +287,18 @@ public class TCFThreadFilterEditor {
             // expand all to realize tree items
             getThreadViewer().expandAll();
             for (int i = 0; i < ctxIds.length; i++) {
-                Context ctx = getContext(ctxIds[i]);
+                String id = ctxIds[i];
+                Context ctx = getContext(id);
                 if (ctx != null) {
                     fCheckHandler.checkContext(ctx, true);
                     fCheckHandler.updateParentCheckState(ctx);
+                } else if (id.indexOf('/') < 0) {
+                    for (Context context : fContexts) {
+                        if (id.equals(context.fId)) {
+                            fCheckHandler.checkContext(context, true);
+                            fCheckHandler.updateParentCheckState(context);
+                        }
+                    }
                 }
             }
             // expand checked items only
@@ -294,12 +307,13 @@ public class TCFThreadFilterEditor {
     }
 
     private Context getContainer(Context child) {
-        return getContext(child.fParentId);
+        String parentId = child.fSessionId != null ? child.fSessionId + '/' + child.fParentId : child.fParentId;
+        return getContext(parentId);
     }
 
     private Context getContext(String id) {
         for (Context ctx : fContexts) {
-            if (ctx.fId.equals(id))
+            if (ctx.fScopeId.equals(id))
                 return ctx;
         }
         return null;
@@ -316,7 +330,7 @@ public class TCFThreadFilterEditor {
             for (int i = 0; i < elements.length; ++i) {
                 Context ctx = (Context) elements[i];
                 if (!viewer.getGrayed(ctx)) {
-                    checkedIds.add(ctx.fId);
+                    checkedIds.add(ctx.fScopeId);
                 }
             }
             threadIds = (String[]) checkedIds.toArray(new String[checkedIds.size()]);
@@ -335,7 +349,7 @@ public class TCFThreadFilterEditor {
             return result;
         }
         final String launchCfgName = launch.getLaunchConfiguration().getName();
-        result = new TCFTask<Context[]>() {
+        result = new TCFTask<Context[]>(launch.getChannel()) {
             public void run() {
                 List<Context> containers = new ArrayList<Context>();
                 TCFModel model = TCFModelManager.getModelManager().getModel(launch);
@@ -365,7 +379,7 @@ public class TCFThreadFilterEditor {
             return result;
         }
         final TCFLaunch launch = getLaunch(container);
-        result = new TCFTask<Context[]>() {
+        result = new TCFTask<Context[]>(launch.getChannel()) {
             public void run() {
                 List<Context> contexts = new ArrayList<Context>();
                 TCFModel model = TCFModelManager.getModelManager().getModel(launch);
@@ -378,7 +392,7 @@ public class TCFThreadFilterEditor {
                         TCFDataCache<IRunControl.RunControlContext> runCtxCache = exeCtx.getRunContext();
                         if (!runCtxCache.validate(this)) return;
                         IRunControl.RunControlContext runCtx = runCtxCache.getData();
-                        contexts.add(new Context(runCtx));
+                        contexts.add(new Context(runCtx, container));
                     }
                 }
                 done((Context[]) contexts.toArray(new Context[contexts.size()]));
@@ -398,7 +412,7 @@ public class TCFThreadFilterEditor {
         for (TCFLaunch launch : fContainersPerLaunch.keySet()) {
             Context[] containers = fContainersPerLaunch.get(launch);
             for (Context context : containers) {
-                if (context.fId.equals(container.fId)) {
+                if (context.fScopeId.equals(container.fScopeId)) {
                     return launch;
                 }
             }

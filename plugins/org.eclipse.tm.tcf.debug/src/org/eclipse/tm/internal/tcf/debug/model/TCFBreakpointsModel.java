@@ -29,6 +29,8 @@ import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.IBreakpointListener;
 import org.eclipse.debug.core.IBreakpointManager;
 import org.eclipse.debug.core.IBreakpointManagerListener;
+import org.eclipse.debug.core.ILaunch;
+import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.model.IBreakpoint;
 import org.eclipse.tm.internal.tcf.debug.Activator;
 import org.eclipse.tm.tcf.protocol.IChannel;
@@ -129,7 +131,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
                     if (!arr[i].isPersisted()) continue;
                     IMarker marker = arr[i].getMarker();
                     String file = getFilePath(marker.getResource());
-                    bps.add(toBreakpointAttributes(id, file, marker.getType(), marker.getAttributes()));
+                    bps.add(toBreakpointAttributes(channel, id, file, marker.getType(), marker.getAttributes()));
                     id2bp.put(id, arr[i]);
                 }
                 if (!bps.isEmpty()) {
@@ -234,8 +236,8 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
 
         public void run() {
             if (disposed) return;
-            tcf_attrs = toBreakpointAttributes(marker_id, marker_file, marker_type, marker_attrs);
             for (final IChannel channel : channels) {
+                tcf_attrs = toBreakpointAttributes(channel, marker_id, marker_file, marker_type, marker_attrs);
                 service = channel.getRemoteService(IBreakpoints.class);
                 if (!isSupported(channel, breakpoint)) continue;
                 done = new IBreakpoints.DoneCommand() {
@@ -387,7 +389,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
         return m;
     }
 
-    public Map<String,Object> toBreakpointAttributes(String id, String file, String type, Map<String,Object> p) {
+    public Map<String,Object> toBreakpointAttributes(IChannel channel, String id, String file, String type, Map<String,Object> p) {
         assert !disposed;
         assert Protocol.isDispatchThread();
         Map<String,Object> m = new HashMap<String,Object>();
@@ -399,7 +401,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
             if (!key.startsWith(ITCFConstants.ID_TCF_DEBUG_MODEL)) continue;
             String tcfKey = key.substring(ITCFConstants.ID_TCF_DEBUG_MODEL.length() + 1);
             if (IBreakpoints.PROP_CONTEXTIDS.equals(tcfKey)) {
-                val = ((String) val).split(",\\s*");
+                val = filterContextIds(channel, ((String) val).split(",\\s*"));
             }
             m.put(tcfKey, val);
         }
@@ -460,5 +462,40 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
         Integer skip_count = (Integer)p.get("org.eclipse.cdt.debug.core.ignoreCount");
         if (skip_count != null && skip_count.intValue() > 0) m.put(IBreakpoints.PROP_IGNORECOUNT, skip_count);
         return m;
+    }
+
+    /**
+     * Filter given array of scope ids of the form sessionId/contextId
+     * to those applicable to the given channel.
+     */
+    private String[] filterContextIds(IChannel channel, String[] scopeIds) {
+        String sessionId = getSessionId(channel);
+        List<String> contextIds = new ArrayList<String>();
+        for (String scopeId : scopeIds) {
+            if (scopeId.length() == 0) continue;
+            int slash = scopeId.indexOf('/');
+            if (slash < 0) {
+                contextIds.add(scopeId);
+            } else if (sessionId != null && sessionId.equals(scopeId.substring(0, slash))) {
+                contextIds.add(scopeId.substring(slash+1));
+            }
+        }
+        return (String[]) contextIds.toArray(new String[contextIds.size()]);
+    }
+
+    /**
+     * @return launch config name for given channel or <code>null</code>
+     */
+    private String getSessionId(IChannel channel) {
+        ILaunch[] launches = DebugPlugin.getDefault().getLaunchManager().getLaunches();
+        for (ILaunch launch : launches) {
+            if (launch instanceof TCFLaunch) {
+                if (channel == ((TCFLaunch) launch).getChannel()) {
+                    ILaunchConfiguration lc = launch.getLaunchConfiguration();
+                    return lc != null ? lc.getName() : null;
+                }
+            }
+        }
+        return null;
     }
 }

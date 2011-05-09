@@ -20,7 +20,7 @@ import org.eclipse.tm.tcf.services.IBreakpoints;
 
 public class TCFBreakpointScopeExtension implements ICBreakpointExtension {
 
-    private static final String ATTR_CONTEXT_IDS = ITCFConstants.ID_TCF_DEBUG_MODEL + '.' + IBreakpoints.PROP_CONTEXTIDS;
+    static final String ATTR_CONTEXT_IDS = ITCFConstants.ID_TCF_DEBUG_MODEL + '.' + IBreakpoints.PROP_CONTEXTIDS;
 
     private String[] fContextIds;
     private ICBreakpoint fBreakpoint;
