@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -29,7 +29,7 @@ public interface ISourceNotFoundPresentation {
      * @return an editor input, or <code>null</code> if none
      */
     public IEditorInput getEditorInput(Object element, ILaunchConfiguration cfg, String file);
-    
+
     /**
      * Returns the id of the source-not-found editor to use to display the
      * given editor input and object, or <code>null</code> if
