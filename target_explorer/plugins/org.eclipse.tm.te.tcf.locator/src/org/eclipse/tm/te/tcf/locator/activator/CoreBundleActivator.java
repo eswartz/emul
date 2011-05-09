@@ -3,54 +3,56 @@
  * This program and the accompanying materials are made available under the terms
  * of the Eclipse Public License v1.0 which accompanies this distribution, and is
  * available at http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  * Uwe Stieber (Wind River) - initial API and implementation
  *******************************************************************************/
 package org.eclipse.tm.te.tcf.locator.activator;
 
-import org.osgi.framework.BundleActivator;
+import org.eclipse.core.runtime.Plugin;
 import org.osgi.framework.BundleContext;
 
 /**
  * The activator class controls the plug-in life cycle
  */
-public class CoreBundleActivator implements BundleActivator {
-	// The bundle context
-	private static BundleContext context;
+public class CoreBundleActivator extends Plugin {
+	// The shared instance
+	private static CoreBundleActivator plugin;
 
 	/**
-	 * Returns the bundle context
+	 * Returns the shared instance
 	 *
-	 * @return the bundle context
+	 * @return the shared instance
 	 */
-	public static BundleContext getContext() {
-		return context;
+	public static CoreBundleActivator getDefault() {
+		return plugin;
 	}
 
 	/**
 	 * Convenience method which returns the unique identifier of this plugin.
 	 */
 	public static String getUniqueIdentifier() {
-		if (getContext() != null && getContext().getBundle() != null) {
-			return getContext().getBundle().getSymbolicName();
+		if (getDefault() != null && getDefault().getBundle() != null) {
+			return getDefault().getBundle().getSymbolicName();
 		}
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.osgi.framework.BundleActivator#start(org.osgi.framework.BundleContext)
+	/* (non-Javadoc)
+	 * @see org.eclipse.core.runtime.Plugin#start(org.osgi.framework.BundleContext)
 	 */
-	public void start(BundleContext bundleContext) throws Exception {
-		CoreBundleActivator.context = bundleContext;
+	@Override
+	public void start(BundleContext context) throws Exception {
+		super.start(context);
+		plugin = this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.osgi.framework.BundleActivator#stop(org.osgi.framework.BundleContext)
+	/* (non-Javadoc)
+	 * @see org.eclipse.core.runtime.Plugin#stop(org.osgi.framework.BundleContext)
 	 */
-	public void stop(BundleContext bundleContext) throws Exception {
-		CoreBundleActivator.context = null;
+	@Override
+	public void stop(BundleContext context) throws Exception {
+		plugin = null;
+		super.stop(context);
 	}
 }
