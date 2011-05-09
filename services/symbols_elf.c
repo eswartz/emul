@@ -983,24 +983,13 @@ int id2symbol(const char * id, Symbol ** res) {
 }
 
 ContextAddress is_plt_section(Context * ctx, ContextAddress addr) {
-    ContextAddress res = 0;
-    ELF_File * file = elf_list_first(ctx, addr, addr);
-    while (file != NULL) {
-        unsigned idx;
-        for (idx = 1; idx < file->section_cnt; idx++) {
-            ELF_Section * sec = file->sections + idx;
-            if (sec->name == NULL) continue;
-            if (strcmp(sec->name, ".plt") != 0) continue;
-            if (addr >= sec->addr && addr < sec->addr + sec->size) {
-                res = (ContextAddress)sec->addr;
-                break;
-            }
-        }
-        if (res != 0) break;
-        file = elf_list_next(ctx);
-    }
-    elf_list_done(ctx);
-    return res;
+    ELF_File * file = NULL;
+    ELF_Section * sec = NULL;
+    ContextAddress res = elf_map_to_link_time_address(ctx, addr, &file, &sec);
+    if (res == 0 || sec == NULL) return 0;
+    if (sec->name == NULL) return 0;
+    if (strcmp(sec->name, ".plt") != 0) return 0;
+    return sec->addr + (addr - res);
 }
 
 int get_stack_tracing_info(Context * ctx, ContextAddress rt_addr, StackTracingInfo ** info) {
@@ -1018,7 +1007,7 @@ int get_stack_tracing_info(Context * ctx, ContextAddress rt_addr, StackTracingIn
     if (file != NULL) {
         assert(rt_addr == elf_map_to_run_time_address(ctx, file, sec, lt_addr));
         if (set_trap(&trap)) {
-            get_dwarf_stack_frame_info(ctx, file, lt_addr);
+            get_dwarf_stack_frame_info(ctx, file, sec, lt_addr);
             if (dwarf_stack_trace_fp->cmds_cnt > 0) {
                 static StackTracingInfo buf;
                 buf.addr = (ContextAddress)dwarf_stack_trace_addr - lt_addr + rt_addr;

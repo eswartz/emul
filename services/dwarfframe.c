@@ -133,6 +133,7 @@ static RegisterRules * get_reg(StackFrameRegisters * regs, int reg) {
             case 4: /* SP */
                 regs->regs[n].rule = RULE_VAL_OFFSET;
                 break;
+            case 3: /* BX */
             case 5: /* BP */
             case 6: /* SI */
             case 7: /* DI */
@@ -142,7 +143,12 @@ static RegisterRules * get_reg(StackFrameRegisters * regs, int reg) {
             break;
         case EM_X86_64:
             switch (n) {
+            case 3: /* BX */
             case 6: /* BP */
+            case 12: /* R12 */
+            case 13: /* R13 */
+            case 14: /* R14 */
+            case 15: /* R15 */
                 regs->regs[n].rule = RULE_SAME_VALUE;
                 break;
             case 7: /* SP */
@@ -677,6 +683,65 @@ static void generate_commands(void) {
     add_command_sequence(&dwarf_stack_trace_fp, NULL);
 }
 
+static int generate_plt_section_commands(U8_T offs) {
+    RegisterRules * reg = NULL;
+
+    cie_regs.regs_cnt = 0;
+    frame_regs.regs_cnt = 0;
+    switch (rules.reg_id_scope.machine) {
+    case EM_386:
+        rules.cfa_rule = RULE_OFFSET;
+        rules.cfa_register = 4; /* esp */
+        if (offs == 0) {
+            rules.cfa_offset = 8;
+        }
+        else if (offs < 16) {
+            rules.cfa_offset = 12;
+        }
+        else if ((offs - 16) % 16 < 11) {
+            rules.cfa_offset = 4;
+        }
+        else {
+            rules.cfa_offset = 8;
+        }
+        rules.return_address_register = 8; /* eip */
+        reg = get_reg(&frame_regs, rules.return_address_register);
+        reg->rule = RULE_OFFSET;
+        reg->offset = -4;
+        generate_commands();
+        return 1;
+    case EM_X86_64:
+        rules.cfa_rule = RULE_OFFSET;
+        rules.cfa_register = 7; /* rsp */
+        if (offs == 0) {
+            rules.cfa_offset = 16;
+        }
+        else if (offs < 16) {
+            rules.cfa_offset = 24;
+        }
+        else if ((offs - 16) % 16 < 11) {
+            rules.cfa_offset = 8;
+        }
+        else {
+            rules.cfa_offset = 16;
+        }
+        rules.return_address_register = 16; /* rip */
+        reg = get_reg(&frame_regs, rules.return_address_register);
+        reg->rule = RULE_OFFSET;
+        reg->offset = -8;
+        generate_commands();
+        return 1;
+    case EM_PPC:
+        rules.return_address_register = 108; /* LR */
+        rules.cfa_rule = RULE_OFFSET;
+        rules.cfa_register = 1; /* R1 */
+        rules.cfa_offset = 0;
+        generate_commands();
+        return 1;
+    }
+    return 0;
+}
+
 static void read_frame_cie(U8_T fde_pos, U8_T pos) {
     int cie_dwarf64 = 0;
     U8_T saved_pos = dio_GetPos();
@@ -873,7 +938,7 @@ static void create_search_index(DWARFCache * cache, ELF_Section * section) {
     qsort(cache->mFrameInfoRanges, cache->mFrameInfoRangesCnt, sizeof(FrameInfoRange), cmp_frame_info_ranges);
 }
 
-void get_dwarf_stack_frame_info(Context * ctx, ELF_File * file, U8_T IP) {
+void get_dwarf_stack_frame_info(Context * ctx, ELF_File * file, ELF_Section * sec, U8_T IP) {
     DWARFCache * cache = get_dwarf_cache(file);
     ELF_Section * section = cache->mDebugFrame;
     unsigned l, h;
@@ -915,8 +980,13 @@ void get_dwarf_stack_frame_info(Context * ctx, ELF_File * file, U8_T IP) {
         }
         else {
             read_frame_fde(section, IP, range->mOffset);
-            break;
+            return;
         }
+    }
+    if (sec != NULL && sec->name != NULL && strcmp(sec->name, ".plt") == 0) {
+        assert(IP >= sec->addr);
+        assert(IP < sec->addr + sec->size);
+        if (generate_plt_section_commands(IP - sec->addr)) return;
     }
 }
 

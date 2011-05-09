@@ -40,7 +40,7 @@
  *
  * 'ip' is link-time instruction address.
  */
-extern void get_dwarf_stack_frame_info(Context * ctx, ELF_File * file, U8_T ip);
+extern void get_dwarf_stack_frame_info(Context * ctx, ELF_File * file, ELF_Section * sec, U8_T ip);
 
 extern U8_T dwarf_stack_trace_addr;
 extern U8_T dwarf_stack_trace_size;

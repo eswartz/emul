@@ -244,7 +244,7 @@ static char * get_debug_info_file_name(ELF_File * file, int * error) {
     for (idx = 1; idx < file->section_cnt; idx++) {
         ELF_Section * sec = file->sections + idx;
         if (sec->size == 0) continue;
-        if (sec->type == SHT_NOTE && sec->flags == SHF_ALLOC) {
+        if (sec->type == SHT_NOTE && (sec->flags & SHF_ALLOC)) {
             unsigned offs = 0;
             if (elf_load(sec) < 0) {
                 *error = errno;
@@ -368,8 +368,7 @@ static ELF_File * create_elf_cache(const char * file_name) {
             else {
                 error = set_errno(ERR_INV_FORMAT, "Invalid ELF data encoding ID");
             }
-            file->byte_swap = 1;
-            if ((*(char *)&file->byte_swap != 1) == file->big_endian) file->byte_swap = 0;
+            file->byte_swap = file->big_endian != big_endian_host();
         }
         if (error != 0) {
             /* Nothing */
@@ -982,6 +981,14 @@ ContextAddress elf_map_to_link_time_address(Context * ctx, ContextAddress addr, 
             unsigned j;
             if (f->pheader_cnt == 0 && f->type == ET_EXEC) {
                 *file = f;
+                for (j = 1; j < f->section_cnt; j++) {
+                    ELF_Section * s = f->sections + j;
+                    if ((s->flags & SHF_ALLOC) == 0) continue;
+                    if (s->addr <= addr && s->addr + s->size > addr) {
+                        *sec = s;
+                        return addr;
+                    }
+                }
                 *sec = NULL;
                 return addr;
             }
@@ -989,15 +996,26 @@ ContextAddress elf_map_to_link_time_address(Context * ctx, ContextAddress addr, 
                 U8_T offs = addr - r->addr + r->file_offs;
                 ELF_PHeader * p = f->pheaders + j;
                 if (p->type != PT_LOAD) continue;
-                if (offs < p->offset || offs >= p->offset + p->file_size) continue;
+                if (offs < p->offset || offs >= p->offset + p->mem_size) continue;
                 if (r->flags) {
                     if ((p->flags & PF_R) && !(r->flags & MM_FLAG_R)) continue;
                     if ((p->flags & PF_W) && !(r->flags & MM_FLAG_W)) continue;
                     if ((p->flags & PF_X) && !(r->flags & MM_FLAG_X)) continue;
                 }
                 *file = f;
+                addr = (ContextAddress)(offs - p->offset + p->address);
+                for (j = 1; j < f->section_cnt; j++) {
+                    ELF_Section * s = f->sections + j;
+                    if ((s->flags & SHF_ALLOC) == 0) continue;
+                    if (s->addr + s->size <= p->address) continue;
+                    if (s->addr >= p->address + p->mem_size) continue;
+                    if (s->addr <= addr && s->addr + s->size > addr) {
+                        *sec = s;
+                        return addr;
+                    }
+                }
                 *sec = NULL;
-                return (ContextAddress)(offs - p->offset + p->address);
+                return addr;
             }
         }
         else {
