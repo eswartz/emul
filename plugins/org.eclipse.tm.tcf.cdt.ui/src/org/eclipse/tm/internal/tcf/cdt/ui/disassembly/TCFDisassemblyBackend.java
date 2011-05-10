@@ -292,7 +292,7 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
 
     private void addListeners(final TCFNodeExecContext context) {
         assert context != null;
-        Protocol.invokeLater(new Runnable() {
+        Protocol.invokeAndWait(new Runnable() {
             public void run() {
                 IChannel channel = context.getChannel();
                 IRunControl rctl = channel.getRemoteService(IRunControl.class);
@@ -308,7 +308,7 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
     private void removeListeners(final TCFNodeExecContext context) {
         assert context != null;
         DebugPlugin.getDefault().getLaunchManager().removeLaunchListener(fLaunchesListener);
-        Protocol.invokeLater(new Runnable() {
+        Protocol.invokeAndWait(new Runnable() {
             public void run() {
                 IChannel channel = context.getChannel();
                 IRunControl rctl = channel.getRemoteService(IRunControl.class);
