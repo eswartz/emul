@@ -1916,10 +1916,12 @@ static void command_get_capabilities(char * token, Channel * c) {
     write_stream(&c->out, ':');
     json_write_boolean(&c->out, 1);
     if (ctx != NULL) {
+        int md = CTX_BP_ACCESS_INSTRUCTION;
+        md |= context_get_supported_bp_access_types(ctx);
         write_stream(&c->out, ',');
         json_write_string(&c->out, "AccessMode");
         write_stream(&c->out, ':');
-        json_write_long(&c->out, context_get_supported_bp_access_types(ctx));
+        json_write_long(&c->out, md);
     }
     write_stream(&c->out, ',');
     json_write_string(&c->out, "ContextIds");
