@@ -12,7 +12,7 @@
 """
 Locator service uses transport layer to search
 for peers and to collect and maintain up-to-date
-data about peer’s attributes.
+data about peer's attributes.
 """
 
 import threading, time, exceptions, socket, cStringIO
@@ -23,13 +23,14 @@ from tcf.channel.ChannelProxy import ChannelProxy
 from tcf import protocol, services, channel, peer, errors
 
 # Flag indicating whether tracing of the the discovery activity is enabled.
-__TRACE_DISCOVERY = False
+__TRACE_DISCOVERY__ = False
 
 class SubNet(object):
     def __init__(self, prefix_length, address, broadcast):
         self.prefix_length = prefix_length
         self.address = address
         self.broadcast = broadcast
+        self.last_slaves_req_time = 0
     def contains(self, addr):
         if addr is None or self.address is None: return False
         a1 = addr.getAddress()
@@ -84,25 +85,30 @@ class InetAddress(object):
     def __init__(self, host, addr):
         self.host = host
         self.addr = addr
+    def getAddress(self):
+        return socket.inet_aton(self.addr)
     def getHostAddress(self):
         return self.addr
     def __eq__(self, other):
         if not isinstance(other, InetAddress): return False
-        return self.host == other.host and self.addr == other.addr
+        return self.addr == other.addr
+    def __str__(self):
+        return "%s/%s" % (self.host or "", self.addr)
 
 class InputPacket(object):
     "Wrapper for UDP packet data."
-    def __init__(self, data, addr):
+    def __init__(self, data, addr, port):
         self.data = data
         self.addr = addr
+        self.port = port
     def getLength(self):
         return len(self.data)
     def getData(self):
         return self.data
     def getPort(self):
-        return self.addr[1]
+        return self.port
     def getAddress(self):
-        return self.addr[0]
+        return self.addr
     def __str__(self):
         return "[address=%s,port=%d,data=\"%s\"]" % (self.getAddress(), self.getPort(), self.data)
 
@@ -135,7 +141,8 @@ class LocatorService(locator.LocatorService):
         class TimerThread(threading.Thread):
             def __init__(self, callable):
                 self._callable = callable
-            def __call__(self):
+                super(TimerThread, self).__init__()
+            def run(self):
                 while True:
                     try:
                         time.sleep(locator.DATA_RETENTION_PERIOD / 4 / 1000.)
@@ -144,10 +151,10 @@ class LocatorService(locator.LocatorService):
                         # TCF event dispatch is shut down
                         return
                     except exceptions.Exception as x:
-                        service.log("Unhandled exception in TCF discovery timer thread", x)
+                        service._log("Unhandled exception in TCF discovery timer thread", x)
         self.timer_thread = TimerThread(self.__refresh_timer)
         class DNSLookupThread(threading.Thread):
-            def __call__(self):
+            def run(self):
                 while True:
                     try:
                         itemSet = None
@@ -178,41 +185,44 @@ class LocatorService(locator.LocatorService):
                                     a.time_stamp = time
                                     a.used = False
                     except exceptions.BaseException as x:
-                        service.log("Unhandled exception in TCF discovery DNS lookup thread", x)
+                        service._log("Unhandled exception in TCF discovery DNS lookup thread", x)
         self.dns_lookup_thread = DNSLookupThread()
         class InputThread(threading.Thread):
-            def __call__(self):
+            def __init__(self, callable):
+                self._callable = callable
+                super(InputThread, self).__init__()
+            def run(self):
                 try:
                     while True:
                         sock = service.socket
                         try:
                             data, addr = sock.recvfrom(MAX_PACKET_SIZE)
-                            p = InputPacket(data, addr)
+                            p = InputPacket(data, InetAddress(None, addr[0]), addr[1])
                             protocol.invokeAndWait(self._callable, p)
                         except RuntimeError:
                             # TCF event dispatch is shutdown
                             return
-                        except exceptions.Exception as x:
+                        except socket.error as x:
                             if sock != service.socket: continue
                             port = sock.getsockname()[1]
-                            service.log("Cannot read from datagram socket at port %d" % port, x)
+                            service._log("Cannot read from datagram socket at port %d" % port, x)
                             time.sleep(2)
                 except exceptions.BaseException as x:
-                    service.log("Unhandled exception in socket reading thread", x)
-        self.input_thread = InputThread()
+                    service._log("Unhandled exception in socket reading thread", x)
+        self.input_thread = InputThread(self.__handleDatagramPacket)
         try:
-            self.loopback_addr = socket.gethostname()
+            self.loopback_addr = InetAddress(None, "127.0.0.1")
             self.out_buf[0:8] = 'TCF%s\0\0\0\0' % locator.CONF_VERSION
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             try:
                 self.socket.bind(('', DISCOVEY_PORT))
-                if __TRACE_DISCOVERY:
+                if __TRACE_DISCOVERY__:
                     logging.trace("Became the master agent (bound to port %d)" % self.socket.getsockname()[1])
             except socket.error as x:
                 self.socket.bind(('', 0))
-                if __TRACE_DISCOVERY:
-                    logging.trace("Became a slave agent (bound to port %d)" + self.socket.getsockname()[1])
-            self.socket.setsockopt(socket.SOL_UDP, socket.SO_BROADCAST, 1)
+                if __TRACE_DISCOVERY__:
+                    logging.trace("Became a slave agent (bound to port %d)" % self.socket.getsockname()[1])
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
             self.input_thread.setName("TCF Locator Receiver")
             self.timer_thread.setName("TCF Locator Timer")
             self.dns_lookup_thread.setName("TCF Locator DNS Lookup")
@@ -227,12 +237,12 @@ class LocatorService(locator.LocatorService):
                     service._sendPeerInfo(peer, None, 0)
                 def peerChanged(self, peer):
                     service._sendPeerInfo(peer, None, 0)
-            self.listeners.add(LocatorListener())
+            self.listeners.append(LocatorListener())
             self.__refreshSubNetList()
             self.__sendPeersRequest(None, 0)
             self.__sendAll(None, 0, None, int(time.time()))
         except exceptions.Exception as x:
-            self.log("Cannot open UDP socket for TCF discovery protocol", x)
+            self._log("Cannot open UDP socket for TCF discovery protocol", x)
 
     @classmethod
     def getLocalPeer(cls):
@@ -300,7 +310,7 @@ class LocatorService(locator.LocatorService):
                     # socket.gethostbyname() can cause long delay - delegate to background thread
                     LocatorService.addr_request = True
                     self._addr_cache_lock.notify()
-                self.addr_cache.put(host, i)
+                self.addr_cache[host] = i
             i.used = True
             return i.address
 
@@ -312,7 +322,7 @@ class LocatorService(locator.LocatorService):
             while i < len(self.slaves):
                 s = self.slaves[i]
                 if s.last_packet_time + locator.DATA_RETENTION_PERIOD < tm:
-                    del self.slaves
+                    del self.slaves[i]
                 else:
                     i += 1
 
@@ -364,28 +374,29 @@ class LocatorService(locator.LocatorService):
         try:
             self.__getSubNetList(subNetSet)
         except exceptions.BaseException as x:
-            self.log("Cannot get list of network interfaces", x)
-        for s in self.subnets:
+            self._log("Cannot get list of network interfaces", x)
+        for s in tuple(self.subnets):
             if s in subNetSet: continue
             self.subnets.remove(s)
         for s in subNetSet:
             if s in self.subnets: continue
-            self.subnets.append(s)
-        if __TRACE_DISCOVERY:
+            self.subnets.add(s)
+        if __TRACE_DISCOVERY__:
             str = cStringIO.StringIO()
             str.write("Refreshed subnet list:")
             for subnet in self.subnets:
-                str.write("\n\t* address=%s, broadcast=%s" + (subnet.address, subnet.broadcast))
+                str.write("\n\t* address=%s, broadcast=%s" % (subnet.address, subnet.broadcast))
             logging.trace(str.getvalue())
 
     def __getSubNetList(self, set):
-        name, aliases, addresses = socket.gethostbyname_ex(socket.gethostname())
+        hostname = socket.gethostname()
+        _, _, addresses = socket.gethostbyname_ex(hostname)
         for address in addresses:
             rawaddr = socket.inet_aton(address)
             if len(rawaddr) != 4: continue
-            rawaddr = rawaddr[:3] + '\0xFF'
+            rawaddr = rawaddr[:3] + '\xFF'
             broadcast = socket.inet_ntoa(rawaddr)
-            set.append(SubNet(24, address, broadcast))
+            set.add(SubNet(24, InetAddress(hostname, address), InetAddress(None, broadcast)))
 
     def __getUTF8Bytes(self, s):
         return s.encode("UTF-8")
@@ -408,15 +419,15 @@ class LocatorService(locator.LocatorService):
                     self.__sendDatagramPacket(subnet, size, slave.address, slave.port)
             if not subnet.contains(addr): return False
             if port == self.socket.getsockname()[1] and addr == subnet.address: return False
-            self.socket.send(str(self.out_buf[:size]), (addr, port))
+            self.socket.sendto(str(self.out_buf[:size]), (addr.getHostAddress(), port))
 
-            if __TRACE_DISCOVERY:
+            if __TRACE_DISCOVERY__:
                 map = None
                 if self.out_buf[4] == locator.CONF_PEER_INFO:
                     map = self.__parsePeerAttributes(self.out_buf, 8)
                 self.__traceDiscoveryPacket(False, self.packetTypes[self.out_buf[4]], map, addr, port)
         except exceptions.BaseException as x:
-            self.log("Cannot send datagram packet to %s" % addr, x)
+            self._log("Cannot send datagram packet to %s" % addr, x)
             return False
         return True
 
@@ -445,7 +456,7 @@ class LocatorService(locator.LocatorService):
             if i < l and s[i] == '\0': i += 1
             key = s[i0:i1]
             val = s[i2:i3]
-            map.put(key, val)
+            map[key] = val
         return map
 
     def __sendPeersRequest(self, addr, port):
@@ -453,7 +464,7 @@ class LocatorService(locator.LocatorService):
         for subnet in self.subnets:
             self.__sendDatagramPacket(subnet, 8, addr, port)
 
-    def __sendPeerInfo(self, _peer, addr, port):
+    def _sendPeerInfo(self, _peer, addr, port):
         attrs = _peer.getAttributes()
         peer_addr = self.__getInetAddress(attrs.get(peer.ATTR_IP_HOST))
         if peer_addr is None: return
@@ -488,7 +499,7 @@ class LocatorService(locator.LocatorService):
 
     def __sendAll(self, addr, port, sl, tm):
         for subnet in self.subnets: subnet.send_all_ok = False
-        for peer in self.peers.values(): self.__sendPeerInfo(peer, addr, port)
+        for peer in self.peers.values(): self._sendPeerInfo(peer, addr, port)
         if addr is not None and sl is not None and sl.last_req_slaves_time + locator.DATA_RETENTION_PERIOD >= tm:
             self.__sendSlavesInfo(addr, port, tm)
         self.__sendEmptyPacket(addr, port)
@@ -559,16 +570,16 @@ class LocatorService(locator.LocatorService):
             if self.__isRemote(remote_address, remote_port):
                 sl = None
                 if remote_port != DISCOVEY_PORT:
-                    sl = self.__addSlave(remote_address, remote_port, time, time)
-                code = buf[4]
+                    sl = self.__addSlave(remote_address, remote_port, tm, tm)
+                code = ord(buf[4])
                 if code == locator.CONF_PEER_INFO:
                     self.__handlePeerInfoPacket(p)
                 elif code == locator.CONF_REQ_INFO:
-                    self.__handleReqInfoPacket(p, sl, time)
+                    self.__handleReqInfoPacket(p, sl, tm)
                 elif code == locator.CONF_SLAVES_INFO:
-                    self.__handleSlavesInfoPacket(p, time)
+                    self.__handleSlavesInfoPacket(p, tm)
                 elif code == locator.CONF_REQ_SLAVES:
-                    self.__handleReqSlavesPacket(p, sl, time)
+                    self.__handleReqSlavesPacket(p, sl, tm)
                 for subnet in self.subnets:
                     if not subnet.contains(remote_address): continue
                     delay = locator.DATA_RETENTION_PERIOD / 3
@@ -578,14 +589,14 @@ class LocatorService(locator.LocatorService):
                         self.__sendSlavesRequest(subnet, remote_address, remote_port)
                         subnet.last_slaves_req_time = tm
                     if subnet.address == remote_address and remote_port == DISCOVEY_PORT:
-                        self.last_master_packet_time = time
+                        self.last_master_packet_time = tm
         except exceptions.BaseException as x:
-            self.log("Invalid datagram packet received from " + p.getAddress() + "/" + p.getPort(), x)
+            self._log("Invalid datagram packet received from %s/%s" % (p.getAddress(), p.getPort()), x)
 
     def __handlePeerInfoPacket(self, p):
         try:
-            map = self.__parsePeerAtrributes(p.getData(), p.getLength())
-            if __TRACE_DISCOVERY: self.__traceDiscoveryPacket(True, "CONF_PEER_INFO", map, p)
+            map = self.__parsePeerAttributes(p.getData(), p.getLength())
+            if __TRACE_DISCOVERY__: self.__traceDiscoveryPacket(True, "CONF_PEER_INFO", map, p)
             id = map.get(peer.ATTR_ID)
             if id is None: raise exceptions.RuntimeError("Invalid peer info: no ID")
             ok = True
@@ -602,13 +613,13 @@ class LocatorService(locator.LocatorService):
                 _peer = self.peers.get(id)
                 if isinstance(_peer, peer.RemotePeer):
                     _peer.updateAttributes(map)
-                elif peer is None:
+                elif _peer is None:
                     peer.RemotePeer(map)
         except exceptions.BaseException as x:
-            self.log("Invalid datagram packet received from %s/%s" % (p.getAddress(), p.getPort()), x)
+            self._log("Invalid datagram packet received from %s/%s" % (p.getAddress(), p.getPort()), x)
 
     def __handleReqInfoPacket(self, p, sl, tm):
-        if __TRACE_DISCOVERY:
+        if __TRACE_DISCOVERY__:
             self.__traceDiscoveryPacket(True, "CONF_REQ_INFO", None, p)
         self.__sendAll(p.getAddress(), p.getPort(), sl, tm)
 
@@ -616,7 +627,7 @@ class LocatorService(locator.LocatorService):
         try:
             trace_map = None # used for tracing only
             slave_index = 0  # used for tracing only
-            if __TRACE_DISCOVERY:
+            if __TRACE_DISCOVERY__:
                 trace_map = {}
 
             s = p.getData()[8:p.getLength() - 8].decode("UTF-8")
@@ -638,8 +649,8 @@ class LocatorService(locator.LocatorService):
                 port = int(s[port0:port1])
                 timestamp = s[time0:time1]
                 host = s[host0:host1]
-                if __TRACE_DISCOVERY:
-                    trace_map.put("slave[%d]" % slave_index, '%s:%d:%s' % (timestamp, port, host))
+                if __TRACE_DISCOVERY__:
+                    trace_map["slave[%d]" % slave_index] = "%s:%d:%s" % (timestamp, port, host)
                     slave_index += 1
                 if port != DISCOVEY_PORT:
                     addr = self.__getInetAddress(host)
@@ -661,16 +672,16 @@ class LocatorService(locator.LocatorService):
                         if time_val < time_now - delta or time_val > time_now + delta:
                             msg = "Invalid slave info timestamp: %s -> %s" % (
                                     timestamp, time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time_val/1000.)))
-                            self.log("Invalid datagram packet received from %s/%s" % (p.getAddress(), p.getPort()), exceptions.Exception(msg))
+                            self._log("Invalid datagram packet received from %s/%s" % (p.getAddress(), p.getPort()), exceptions.Exception(msg))
                             time_val = time_now - locator.DATA_RETENTION_PERIOD / 2
                         self.__addSlave(addr, port, time_val, time_now)
-            if __TRACE_DISCOVERY:
+            if __TRACE_DISCOVERY__:
                 self.__traceDiscoveryPacket(True, "CONF_SLAVES_INFO", trace_map, p)
         except exceptions.BaseException as x:
-            self.log("Invalid datagram packet received from %s/%s" % (p.getAddress(), p.getPort()), x)
+            self._log("Invalid datagram packet received from %s/%s" % (p.getAddress(), p.getPort()), x)
 
     def __handleReqSlavesPacket(self, p, sl, tm):
-        if __TRACE_DISCOVERY:
+        if __TRACE_DISCOVERY__:
             self.__traceDiscoveryPacket(True, "CONF_REQ_SLAVES", None, p)
         if sl is not None: sl.last_req_slaves_time = tm
         self.__sendSlavesInfo(p.getAddress(), p.getPort(), tm)
@@ -717,11 +728,11 @@ class LocatorService(locator.LocatorService):
         @param port
                    the port the packet is being sent to
         """
-        assert __TRACE_DISCOVERY
+        assert __TRACE_DISCOVERY__
         if port is None:
             # addr is a InputPacket
-            addr = addr.getAddress()
             port = addr.getPort()
+            addr = addr.getAddress()
         str = cStringIO.StringIO()
         str.write(type)
         str.write((" sent to ", " received from ")[received])

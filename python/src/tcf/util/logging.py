@@ -35,7 +35,7 @@ def getDebugTime():
     if seconds < 10: traceBuilder.write('0')
     traceBuilder.write(str(seconds))
     traceBuilder.write(DECIMAL_DELIMITER)
-    millis = time % 1000
+    millis = tm % 1000
     if millis < 100: traceBuilder.write('0')
     if millis < 10: traceBuilder.write('0')
     traceBuilder.write(str(millis))
@@ -51,4 +51,4 @@ def trace(msg):
     
     @param msg  the trace message
     """
-    protocol.log('%s msg' % (getDebugTime(), msg))
+    protocol.log('%s %s' % (getDebugTime(), msg))

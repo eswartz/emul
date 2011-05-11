@@ -33,10 +33,16 @@ import tcf
 from tcf.util import sync, event
 from tcf import protocol, channel
 
+class print_peers:
+    def __repr__(self):
+        peers = tcf.peers()
+        return '\n'.join(peers.keys())
+
 class Shell(code.InteractiveConsole, protocol.ChannelOpenListener, channel.ChannelListener):
     def __init__(self):
         locals = {
-            "connect" : tcf.connect
+            "connect" : tcf.connect,
+            "peers" : print_peers()
         }
         sys.ps1 = "tcf> "
         protocol.startEventQueue()

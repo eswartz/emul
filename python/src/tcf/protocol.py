@@ -28,6 +28,9 @@ def startEventQueue():
     if _event_queue and not _event_queue.isShutdown(): return
     _event_queue = EventQueue()
     _event_queue.start()
+    # initialize LocatorService
+    from services.local.LocatorService import LocatorService
+    _event_queue.invokeLater(LocatorService)
 
 def getEventQueue():
     """
@@ -151,8 +154,13 @@ def log(msg, x=None):
         _logger.log(msg, x)
 
 def getLocator():
-    from services import locator
-    return locator.getLocator()
+    """
+    Get instance of the framework locator service.
+    The service can be used to discover available remote peers.
+    @return instance of LocatorService.
+    """
+    from tcf.services.local.LocatorService import LocatorService
+    return LocatorService.locator
 
 def getOpenChannels():
     """

@@ -163,7 +163,7 @@ class AbstractPeer(TransientPeer):
         assert protocol.isDispatchThread()
         id = self.getID()
         assert id
-        peers = locator.getLocator().getPeers()
+        peers = protocol.getLocator().getPeers()
         if isinstance(peers.get(id), RemotePeer):
             peers.get(id).dispose()
         assert not peers.has_key(id)
@@ -174,7 +174,7 @@ class AbstractPeer(TransientPeer):
         assert protocol.isDispatchThread()
         id = self.getID()
         assert id
-        peers = locator.getLocator().getPeers()
+        peers = protocol.getLocator().getPeers()
         assert peers.get(id) == self
         del peers[id]
         self.sendPeerRemovedEvent()
@@ -199,7 +199,7 @@ class AbstractPeer(TransientPeer):
         if not equ:
             self.rw_attrs.clear()
             self.rw_attrs.update(attrs)
-            for l in locator.getListeners():
+            for l in protocol.getLocator().getListeners():
                 try:
                     l.peerChanged(self)
                 except exceptions.Exception as x:
@@ -211,7 +211,7 @@ class AbstractPeer(TransientPeer):
                 protocol.log("Locator: failed to send 'peerChanged' event", x)
             self.last_heart_beat_time = timeVal
         elif self.last_heart_beat_time + locator.DATA_RETENTION_PERIOD / 4 < timeVal:
-            for l in locator.getListeners():
+            for l in protocol.getLocator().getListeners():
                 try:
                     l.peerHeartBeat(attrs.get(ATTR_ID))
                 except exceptions.Exception as x:
@@ -224,7 +224,7 @@ class AbstractPeer(TransientPeer):
             self.last_heart_beat_time = timeVal
 
     def sendPeerAddedEvent(self):
-        for l in locator.getListeners():
+        for l in protocol.getLocator().getListeners():
             try:
                 l.peerAdded(self)
             except exceptions.Exception as x:
@@ -237,7 +237,7 @@ class AbstractPeer(TransientPeer):
         self.last_heart_beat_time = int(time.time())
 
     def sendPeerRemovedEvent(self):
-        for l in locator.getListeners():
+        for l in protocol.getLocator().getListeners():
             try:
                 l.peerRemoved(self.rw_attrs.get(ATTR_ID))
             except exceptions.Exception as x:

@@ -21,7 +21,7 @@ then locator.getPeers() can be used to get list of available peers (hosts and ta
 """
 
 import exceptions
-from tcf import services, protocol, channel
+from tcf import services
 
 # Peer data retention period in milliseconds.
 DATA_RETENTION_PERIOD = 60 * 1000;
@@ -36,14 +36,6 @@ CONF_REQ_SLAVES = 3
 CONF_SLAVES_INFO = 4
 
 NAME = "Locator"
-
-_locator = None
-def getLocator():
-    global _locator
-    if _locator is None:
-        _locator = LocatorService()
-    services.addServiceProvider(LocatorServiceProvider())
-    return _locator
 
 class LocatorService(services.Service):
     def getName(self):
@@ -78,23 +70,10 @@ class LocatorService(services.Service):
         raise exceptions.NotImplementedError("Abstract method")
     def addListener(self, listener):
         "Add a listener for Locator service events."
-        assert listener
-        assert protocol.isDispatchThread()
-        _listeners.append(listener)
+        raise exceptions.NotImplementedError("Abstract method")
     def removeListener(self, listener):
         "Remove a listener for Locator service events."
-        assert protocol.isDispatchThread()
-        _listeners.remove(listener)
-
-class LocatorServiceProvider(services.ServiceProvider):
-    def getLocalService(self, _channel):
-        class LocatorCommandServer(channel.CommandServer):
-            def command(self, token, name, data):
-                _locator.command(_channel, token, name, data)
-        _channel.addCommandServer(_locator, LocatorCommandServer())
-        return [_locator]
-    def getServiceProxy(self, channel, service_name):
-        return None
+        raise exceptions.NotImplementedError("Abstract method")
 
 class DoneRedirect(object):
     def doneRedirect(self, token, error):
@@ -113,7 +92,3 @@ class LocatorListener(object):
         pass
     def peerHeartBeat(self, id):
         pass
-
-_listeners = []
-def getListeners():
-    return _listeners

@@ -33,6 +33,12 @@ def connect(params, wait=True):
         c = protocol.invokeAndWait(p.openChannel)
     return c
 
+def peers():
+    "Return list of discovered remote peers"
+    locator = protocol.getLocator()
+    if locator:
+        return protocol.invokeAndWait(locator.getPeers)
+
 def _openChannel(p, done=None):
     assert protocol.isDispatchThread()
     c = p.openChannel()
