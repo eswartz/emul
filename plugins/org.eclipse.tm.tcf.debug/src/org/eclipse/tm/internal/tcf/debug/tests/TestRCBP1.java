@@ -524,7 +524,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                 m[i].put(IBreakpoints.PROP_LOCATION, "&tcf_test_char");
                 m[i].put(IBreakpoints.PROP_ACCESSMODE, IBreakpoints.ACCESSMODE_WRITE);
                 Number ca = (Number)bp_capabilities.get(IBreakpoints.CAPABILITY_ACCESSMODE);
-                if (ca != null && (ca.intValue() & (1 << IBreakpoints.ACCESSMODE_WRITE)) != 0) {
+                if (ca != null && (ca.intValue() & IBreakpoints.ACCESSMODE_WRITE) != 0) {
                     data_bp_id = (String)m[i].get(IBreakpoints.PROP_ID);
                 }
                 else {
