@@ -161,12 +161,12 @@ public class LocatorModelRefreshService extends AbstractLocatorModelService impl
 
 							// Validate the id attribute. If not set, generate one.
 							String id = properties.getProperty(IPeer.ATTR_ID);
-							if (id == null || (id != null & "".equals(id.trim()))) { //$NON-NLS-1$
+							if (id == null || (id != null && "".equals(id.trim())) || (id != null && "USR:".equals(id.trim()))) { //$NON-NLS-1$ //$NON-NLS-2$
 								String transport = properties.getProperty(IPeer.ATTR_TRANSPORT_NAME);
 								String host = properties.getProperty(IPeer.ATTR_IP_HOST);
 								String port = properties.getProperty(IPeer.ATTR_IP_PORT);
 
-								if (transport != null && host != null) {
+								if (transport != null && host != null && !(id != null && "USR:".equals(id.trim()))) { //$NON-NLS-1$
 									id = transport.trim() + ":" + host.trim(); //$NON-NLS-1$
 									id += port != null ? ":" + port.trim() : ":1534"; //$NON-NLS-1$ //$NON-NLS-2$
 								} else {
