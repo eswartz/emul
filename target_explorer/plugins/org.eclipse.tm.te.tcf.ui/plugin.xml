@@ -45,7 +45,7 @@
       <wizard
             category="org.eclipse.tm.te.ui.newWizards.category"
             class="org.eclipse.tm.te.tcf.ui.internal.wizards.NewRemoteTargetWizard"
-            icon="icons/etool16/newRemoteTarget_wiz.gif"
+            icon="icons/elcl16/newRemoteTarget_wiz.gif"
             id="org.eclipse.tm.te.tcf.ui.wizards.NewPeerWizard"
             name="%NewPeerWizard.name">
       </wizard>

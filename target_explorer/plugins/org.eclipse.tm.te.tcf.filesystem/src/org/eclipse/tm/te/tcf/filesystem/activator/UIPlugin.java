@@ -3,18 +3,18 @@
  * This program and the accompanying materials are made available under the terms
  * of the Eclipse Public License v1.0 which accompanies this distribution, and is
  * available at http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  * Uwe Stieber (Wind River) - initial API and implementation
  *******************************************************************************/
 package org.eclipse.tm.te.tcf.filesystem.activator;
 
+import java.net.URL;
+
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.resource.ImageRegistry;
 import org.eclipse.swt.graphics.Image;
-import org.eclipse.tm.te.tcf.filesystem.internal.registries.InternalImageRegistry;
-import org.eclipse.tm.te.ui.images.AbstractImageDescriptor;
-import org.eclipse.tm.te.ui.images.AbstractImageRegistry;
+import org.eclipse.tm.te.tcf.filesystem.internal.ImageConsts;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
@@ -74,17 +74,13 @@ public class UIPlugin extends AbstractUIPlugin {
 	 */
 	@Override
 	protected void initializeImageRegistry(ImageRegistry registry) {
-		if (registry instanceof InternalImageRegistry) {
-			((InternalImageRegistry)registry).initialize();
-		}
-	}
+		URL url = UIPlugin.getDefault().getBundle().getEntry(ImageConsts.IMAGE_DIR_ROOT + ImageConsts.IMAGE_DIR_OBJ + "folder.gif"); //$NON-NLS-1$
+		registry.put(ImageConsts.IMAGE_FOLDER, ImageDescriptor.createFromURL(url));
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.ui.plugin.AbstractUIPlugin#createImageRegistry()
-	 */
-	@Override
-	protected ImageRegistry createImageRegistry() {
-		return new InternalImageRegistry(this);
+		url = UIPlugin.getDefault().getBundle().getEntry(ImageConsts.IMAGE_DIR_ROOT + ImageConsts.IMAGE_DIR_OBJ + "rootdrive.gif"); //$NON-NLS-1$
+		registry.put(ImageConsts.IMAGE_ROOT_DRIVE, ImageDescriptor.createFromURL(url));
+		url = UIPlugin.getDefault().getBundle().getEntry(ImageConsts.IMAGE_DIR_ROOT + ImageConsts.IMAGE_DIR_OBJ + "rootdriveopen.gif"); //$NON-NLS-1$
+		registry.put(ImageConsts.IMAGE_ROOT_DRIVE_OPEN, ImageDescriptor.createFromURL(url));
 	}
 
 	/**
@@ -107,18 +103,5 @@ public class UIPlugin extends AbstractUIPlugin {
 	 */
 	public static ImageDescriptor getImageDescriptor(String key) {
 		return getDefault().getImageRegistry().getDescriptor(key);
-	}
-
-	/**
-	 * Loads the image given by the specified image descriptor from the image
-	 * registry. If the image has been loaded ones before already, the cached
-	 * <code>Image</code> object instance is returned. Otherwise, the <code>
-	 * Image</code> object instance will be created and cached before returned.
-	 *
-	 * @param descriptor The image descriptor.
-	 * @return The corresponding <code>Image</code> object instance or <code>null</code>.
-	 */
-	public static Image getSharedImage(AbstractImageDescriptor descriptor) {
-		return ((AbstractImageRegistry)getDefault().getImageRegistry()).getSharedImage(descriptor);
 	}
 }

@@ -16,8 +16,8 @@ import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel;
 import org.eclipse.tm.te.tcf.ui.activator.UIPlugin;
+import org.eclipse.tm.te.tcf.ui.internal.ImageConsts;
 import org.eclipse.tm.te.tcf.ui.internal.navigator.images.PeerImageDescriptor;
-import org.eclipse.tm.te.tcf.ui.internal.registries.InternalImageRegistry;
 import org.eclipse.tm.te.ui.images.AbstractImageDescriptor;
 
 
@@ -62,7 +62,7 @@ public class LabelProviderDelegate extends LabelProvider implements ILabelDecora
 	@Override
 	public Image getImage(Object element) {
 		if (element instanceof IPeerModel) {
-			return UIPlugin.getImage(InternalImageRegistry.OBJ_Target);
+			return UIPlugin.getImage(ImageConsts.IMAGE_TARGET);
 		}
 
 		return super.getImage(element);

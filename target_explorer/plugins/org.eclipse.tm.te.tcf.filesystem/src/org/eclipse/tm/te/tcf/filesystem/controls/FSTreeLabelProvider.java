@@ -3,7 +3,7 @@
  * This program and the accompanying materials are made available under the terms
  * of the Eclipse Public License v1.0 which accompanies this distribution, and is
  * available at http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  * Uwe Stieber (Wind River) - initial API and implementation
  *******************************************************************************/
@@ -19,7 +19,7 @@ import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.tm.te.tcf.filesystem.activator.UIPlugin;
-import org.eclipse.tm.te.tcf.filesystem.internal.registries.InternalImageRegistry;
+import org.eclipse.tm.te.tcf.filesystem.internal.ImageConsts;
 import org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode;
 import org.eclipse.tm.te.ui.views.interfaces.IUIConstants;
 import org.eclipse.ui.IEditorRegistry;
@@ -101,9 +101,9 @@ public class FSTreeLabelProvider extends LabelProvider implements ITableLabelPro
 			if (element instanceof FSTreeNode) {
 				FSTreeNode node = (FSTreeNode)element;
 				if ("FSRootDirNode".equals(node.type)) {//$NON-NLS-1$
-					return isExpanded ? UIPlugin.getImage(InternalImageRegistry.OBJ_RootDriveOpen) : UIPlugin.getImage(InternalImageRegistry.OBJ_RootDrive);
+					return isExpanded ? UIPlugin.getImage(ImageConsts.IMAGE_ROOT_DRIVE_OPEN) : UIPlugin.getImage(ImageConsts.IMAGE_ROOT_DRIVE);
 				} else if ("FSDirNode".equals(node.type)) { //$NON-NLS-1$
-					return isExpanded ? PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_OBJ_FOLDER) : UIPlugin.getImage(InternalImageRegistry.OBJ_Folder);
+					return isExpanded ? PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_OBJ_FOLDER) : UIPlugin.getImage(ImageConsts.IMAGE_FOLDER);
 				} else if ("FSFileNode".equals(node.type)) { //$NON-NLS-1$
 					String key = node.name;
 					Image image = UIPlugin.getImage(key);

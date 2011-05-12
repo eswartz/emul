@@ -15,7 +15,7 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModelProperties;
-import org.eclipse.tm.te.tcf.ui.internal.registries.InternalImageRegistry;
+import org.eclipse.tm.te.tcf.ui.internal.ImageConsts;
 import org.eclipse.tm.te.ui.images.AbstractImageDescriptor;
 
 
@@ -82,19 +82,19 @@ public class PeerImageDescriptor extends AbstractImageDescriptor {
 		drawCentered(fBaseImage, width, height);
 
 		if (fState == IPeerModelProperties.STATE_UNKNOWN) { /* unknown */
-			drawBottomRight(InternalImageRegistry.OVERLAY_Grey);
+			drawBottomRight(ImageConsts.IMAGE_GREY_OVR);
 		}
 		else if (fState == IPeerModelProperties.STATE_REACHABLE) { /* not connected, but reachable */
-			drawBottomRight(InternalImageRegistry.OVERLAY_Gold);
+			drawBottomRight(ImageConsts.IMAGE_GOLD_OVR);
 		}
 		else if (fState == IPeerModelProperties.STATE_CONNECTED) { /* connected */
-			drawBottomRight(InternalImageRegistry.OVERLAY_Green);
+			drawBottomRight(ImageConsts.IMAGE_GREEN_OVR);
 		}
 		else if (fState == IPeerModelProperties.STATE_NOT_REACHABLE) { /* not connected, not reachable */
-			drawBottomRight(InternalImageRegistry.OVERLAY_Red);
+			drawBottomRight(ImageConsts.IMAGE_RED_OVR);
 		}
 		else if (fState == IPeerModelProperties.STATE_ERROR) { /* not connected, error */
-			drawBottomRight(InternalImageRegistry.OVERLAY_RedX);
+			drawBottomRight(ImageConsts.IMAGE_RED_X_OVR);
 		}
 	}
 

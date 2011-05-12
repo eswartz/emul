@@ -9,12 +9,13 @@
  *******************************************************************************/
 package org.eclipse.tm.te.tcf.ui.activator;
 
+import java.net.URL;
+
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.resource.ImageRegistry;
 import org.eclipse.swt.graphics.Image;
-import org.eclipse.tm.te.tcf.ui.internal.registries.InternalImageRegistry;
+import org.eclipse.tm.te.tcf.ui.internal.ImageConsts;
 import org.eclipse.tm.te.ui.images.AbstractImageDescriptor;
-import org.eclipse.tm.te.ui.images.AbstractImageRegistry;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
@@ -74,17 +75,19 @@ public class UIPlugin extends AbstractUIPlugin {
 	 */
 	@Override
 	protected void initializeImageRegistry(ImageRegistry registry) {
-		if (registry instanceof InternalImageRegistry) {
-			((InternalImageRegistry)registry).initialize();
-		}
-	}
+		URL url = UIPlugin.getDefault().getBundle().getEntry(ImageConsts.IMAGE_DIR_ROOT + ImageConsts.IMAGE_DIR_OBJ + "target.gif"); //$NON-NLS-1$
+		registry.put(ImageConsts.IMAGE_TARGET, ImageDescriptor.createFromURL(url));
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.ui.plugin.AbstractUIPlugin#createImageRegistry()
-	 */
-	@Override
-	protected ImageRegistry createImageRegistry() {
-		return new InternalImageRegistry(this);
+		url = UIPlugin.getDefault().getBundle().getEntry(ImageConsts.IMAGE_DIR_ROOT + ImageConsts.IMAGE_DIR_OVR + "gold_ovr.gif"); //$NON-NLS-1$
+		registry.put(ImageConsts.IMAGE_GOLD_OVR, ImageDescriptor.createFromURL(url));
+		url = UIPlugin.getDefault().getBundle().getEntry(ImageConsts.IMAGE_DIR_ROOT + ImageConsts.IMAGE_DIR_OVR + "green_ovr.gif"); //$NON-NLS-1$
+		registry.put(ImageConsts.IMAGE_GREEN_OVR, ImageDescriptor.createFromURL(url));
+		url = UIPlugin.getDefault().getBundle().getEntry(ImageConsts.IMAGE_DIR_ROOT + ImageConsts.IMAGE_DIR_OVR + "grey_ovr.gif"); //$NON-NLS-1$
+		registry.put(ImageConsts.IMAGE_GREY_OVR, ImageDescriptor.createFromURL(url));
+		url = UIPlugin.getDefault().getBundle().getEntry(ImageConsts.IMAGE_DIR_ROOT + ImageConsts.IMAGE_DIR_OVR + "red_ovr.gif"); //$NON-NLS-1$
+		registry.put(ImageConsts.IMAGE_RED_OVR, ImageDescriptor.createFromURL(url));
+		url = UIPlugin.getDefault().getBundle().getEntry(ImageConsts.IMAGE_DIR_ROOT + ImageConsts.IMAGE_DIR_OVR + "redX_ovr.gif"); //$NON-NLS-1$
+		registry.put(ImageConsts.IMAGE_RED_X_OVR, ImageDescriptor.createFromURL(url));
 	}
 
 	/**
@@ -119,6 +122,15 @@ public class UIPlugin extends AbstractUIPlugin {
 	 * @return The corresponding <code>Image</code> object instance or <code>null</code>.
 	 */
 	public static Image getSharedImage(AbstractImageDescriptor descriptor) {
-		return ((AbstractImageRegistry)getDefault().getImageRegistry()).getSharedImage(descriptor);
+		ImageRegistry registry = getDefault().getImageRegistry();
+
+		String imageKey = descriptor.getKey();
+		Image image = registry.get(imageKey);
+		if (image == null) {
+			registry.put(imageKey, descriptor);
+			image = registry.get(imageKey);
+		}
+
+		return image;
 	}
 }
