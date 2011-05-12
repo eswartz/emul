@@ -50,8 +50,26 @@
                </property>
             </options>
       </viewer>
+      
+      <viewerActionBinding
+            viewerId="org.eclipse.tm.te.ui.views.TargetExplorer">
+            <includes>
+               <actionExtension
+                     pattern="org.eclipse.tm.te.ui.views.actions.*">
+               </actionExtension>
+            </includes>
+      </viewerActionBinding>
    </extension>
    
+   <extension point="org.eclipse.ui.navigator.navigatorContent">
+      <actionProvider
+            class="org.eclipse.tm.te.ui.views.internal.actions.NewActionProvider"
+            id="org.eclipse.tm.te.ui.views.actions.NewActionProvider">
+            <enablement>
+            </enablement>
+      </actionProvider>
+   </extension>
+
 <!-- View contributions -->
    <extension point="org.eclipse.ui.views">
       <category

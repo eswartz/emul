@@ -30,4 +30,6 @@ public class Messages extends NLS {
 	// **** Declare externalized string id's down here *****
 
 	public static String PropertiesCommandHandler_error_initPartFailed;
+
+	public static String NewActionProvider_NewMenu_label;
 }

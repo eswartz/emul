@@ -29,7 +29,26 @@
             <commonSorter
                   class="org.eclipse.tm.te.tcf.ui.internal.navigator.Sorter"
                   id="org.eclipse.tm.te.tcf.ui.navigator.sorter"/>
+            <commonWizard
+                  type="new"
+                  wizardId="org.eclipse.tm.te.tcf.ui.wizards.NewPeerWizard">
+               <enablement>
+                  <instanceof value="org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel"/>
+               </enablement>
+            </commonWizard>
       </navigatorContent>
+   </extension>
+
+<!-- New wizard contributions -->
+
+   <extension point="org.eclipse.ui.newWizards">
+      <wizard
+            category="org.eclipse.tm.te.ui.newWizards.category"
+            class="org.eclipse.tm.te.tcf.ui.internal.wizards.NewRemoteTargetWizard"
+            icon="icons/etool16/newRemoteTarget_wiz.gif"
+            id="org.eclipse.tm.te.tcf.ui.wizards.NewPeerWizard"
+            name="%NewPeerWizard.name">
+      </wizard>
    </extension>
    
 <!-- Target Explorer Details Editor page contributions -->
@@ -57,27 +76,6 @@
 
 <!-- Target Explorer menu contributions -->
    <extension point="org.eclipse.ui.menus">
-      <menuContribution locationURI="popup:org.eclipse.tm.te.ui.views.TargetExplorer#Popup?after=group.new">
-         <command
-               commandId="org.eclipse.tm.te.tcf.ui.command.addPeer"
-               disabledIcon="icons/dtool16/newconnection_wiz.gif"
-               helpContextId="org.eclipse.tm.te.tcf.ui.command_AddPeer"
-               icon="icons/etool16/newconnection_wiz.gif"
-               id="org.eclipse.tm.te.tcf.ui.commands.addPeer"
-               label="%TcfDataSource.command.addPeer.label"
-               style="push"
-               tooltip="%TcfDataSource.command.addPeer.tooltip">
-            <visibleWhen checkEnabled="false">
-               <with variable="selection">
-                  <count value="1"/>
-                  <iterate operator="and" ifEmpty="false">
-                     <instanceof value="org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel"/>
-                  </iterate>
-               </with>
-            </visibleWhen>
-         </command>
-      </menuContribution>
-      
       <menuContribution locationURI="popup:org.eclipse.tm.te.ui.views.TargetExplorer#Popup?after=group.refresh">
          <command
                commandId="org.eclipse.tm.te.tcf.ui.command.refresh"
@@ -85,9 +83,9 @@
                helpContextId="org.eclipse.tm.te.tcf.ui.command_Refresh"
                icon="platform:/plugin/org.eclipse.ui.ide/icons/full/elcl16/refresh_nav.gif"
                id="org.eclipse.tm.te.tcf.ui.commands.refresh"
-               label="%TcfDataSource.command.refresh.label"
+               label="%command.refresh.label"
                style="push"
-               tooltip="%TcfDataSource.command.refresh.tooltip">
+               tooltip="%command.refresh.tooltip">
             <visibleWhen checkEnabled="false">
                <with variable="selection">
                   <count value="1"/>
@@ -105,19 +103,13 @@
    <extension point="org.eclipse.ui.commands">
       <category
             id="org.eclipse.tm.te.tcf.ui.commands.category"
-            name="%TcfDataSource.command.category.name">
+            name="%command.category.name">
       </category>
       <command
             categoryId="org.eclipse.tm.te.tcf.ui.commands.category"
             helpContextId="org.eclipse.tm.te.tcf.ui.command_Refresh"
             id="org.eclipse.tm.te.tcf.ui.command.refresh"
-            name="%TcfDataSource.command.refresh.name">
-      </command>
-      <command
-            categoryId="org.eclipse.tm.te.tcf.ui.commands.category"
-            helpContextId="org.eclipse.tm.te.tcf.ui.command_AddPeer"
-            id="org.eclipse.tm.te.tcf.ui.command.addPeer"
-            name="%TcfDataSource.command.addPeer.name">
+            name="%command.refresh.name">
       </command>
    </extension>
 
@@ -126,11 +118,6 @@
       <handler
             class="org.eclipse.tm.te.tcf.ui.internal.handler.RefreshCommandHandler"
             commandId="org.eclipse.tm.te.tcf.ui.command.refresh">
-      </handler>
-
-      <handler
-            class="org.eclipse.tm.te.tcf.ui.internal.handler.AddPeerCommandHandler"
-            commandId="org.eclipse.tm.te.tcf.ui.command.addPeer">
       </handler>
    </extension>
 </plugin>

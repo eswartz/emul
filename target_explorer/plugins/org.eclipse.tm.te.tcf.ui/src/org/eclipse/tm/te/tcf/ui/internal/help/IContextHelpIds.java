@@ -22,9 +22,9 @@ public interface IContextHelpIds {
 	public final static String PREFIX = UIPlugin.getUniqueIdentifier() + "."; //$NON-NLS-1$
 
 	/**
-	 * Add new peer dialog.
+	 * New TCF remote target wizard main page.
 	 */
-	public final static String ADD_PEER_DIALOG = PREFIX + "AddPeerDialog"; //$NON-NLS-1$
+	public final static String NEW_REMOTE_TARGET_WIZARD_PAGE = PREFIX + "NewRemoteTargetWizardPage"; //$NON-NLS-1$
 
 	/**
 	 * Target Explorer details editor page: Node properties

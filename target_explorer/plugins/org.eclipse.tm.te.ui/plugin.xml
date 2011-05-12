@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+<!-- New wizard contributions -->
+
+   <extension point="org.eclipse.ui.newWizards">
+      <category
+            id="org.eclipse.tm.te.ui.newWizards.category"
+            name="%NewWizards.category.name">
+      </category>
+   </extension>
+
+</plugin>
