@@ -596,8 +596,8 @@ static void add_dwarf_expression_commands(U8_T cmds_offs, U4_T cmds_size) {
     }
 }
 
-static void generate_register_commands(RegisterRules * reg, RegisterDefinition * reg_def) {
-    if (reg_def == NULL) return;
+static void generate_register_commands(RegisterRules * reg, RegisterDefinition * dst_reg_def, RegisterDefinition * src_reg_def) {
+    if (dst_reg_def == NULL) return;
     trace_cmds_cnt = 0;
     switch (reg->rule) {
     case RULE_VAL_OFFSET:
@@ -609,12 +609,13 @@ static void generate_register_commands(RegisterRules * reg, RegisterDefinition *
         }
         if (reg->rule == RULE_OFFSET) {
             StackTracingCommand * cmd = add_command(SFT_CMD_DEREF);
-            cmd->size = reg_def->size;
+            cmd->size = dst_reg_def->size;
             cmd->big_endian = rules.section->file->big_endian;
         }
         break;
     case RULE_SAME_VALUE:
-        add_command(SFT_CMD_REGISTER)->reg = reg_def;
+        if (src_reg_def == NULL) return;
+        add_command(SFT_CMD_REGISTER)->reg = src_reg_def;
         break;
     case RULE_REGISTER:
         {
@@ -628,7 +629,7 @@ static void generate_register_commands(RegisterRules * reg, RegisterDefinition *
         add_dwarf_expression_commands(reg->expression, reg->offset);
         if (reg->rule == RULE_EXPRESSION) {
             StackTracingCommand * cmd = add_command(SFT_CMD_DEREF);
-            cmd->size = reg_def->size;
+            cmd->size = dst_reg_def->size;
             cmd->big_endian = rules.section->file->big_endian;
         }
         break;
@@ -643,7 +644,7 @@ static void generate_register_commands(RegisterRules * reg, RegisterDefinition *
         for (i = dwarf_stack_trace_regs_cnt; i < trace_regs_max; i++) dwarf_stack_trace_regs[i] = NULL;
     }
     if (trace_cmds_cnt == 0) return;
-    add_command_sequence(dwarf_stack_trace_regs + dwarf_stack_trace_regs_cnt++, reg_def);
+    add_command_sequence(dwarf_stack_trace_regs + dwarf_stack_trace_regs_cnt++, dst_reg_def);
 }
 
 static void generate_commands(void) {
@@ -652,13 +653,16 @@ static void generate_commands(void) {
     RegisterDefinition * reg_def;
 
     reg = get_reg(&frame_regs, rules.return_address_register);
-    if (reg->rule != 0) generate_register_commands(reg, get_PC_definition(rules.ctx));
+    if (reg->rule != 0) {
+        reg_def = get_reg_by_id(rules.ctx, rules.return_address_register, &rules.reg_id_scope);
+        generate_register_commands(reg, get_PC_definition(rules.ctx), reg_def);
+    }
     for (i = 0; i < frame_regs.regs_cnt; i++) {
         if (i == rules.return_address_register) continue;
         reg = get_reg(&frame_regs, i);
         if (reg->rule == 0) continue;
         reg_def = get_reg_by_id(rules.ctx, i, &rules.reg_id_scope);
-        generate_register_commands(reg, reg_def);
+        generate_register_commands(reg, reg_def, reg_def);
     }
 
     trace_cmds_cnt = 0;
