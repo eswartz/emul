@@ -28,7 +28,7 @@
       * SysMonitor
    * Local services:
       * [incomplete] ZeroCopy
-      * [started] Locator service (discovery)
+      * [done] Locator service (discovery)
    * Utilities:
       * [done] ACPM data cache
       * [done] TCFTask

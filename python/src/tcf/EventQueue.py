@@ -9,7 +9,7 @@
 # *     Wind River Systems - initial API and implementation
 # *******************************************************************************
 
-import threading, exceptions
+import threading
 import protocol
 
 class EventQueue(object):
@@ -33,7 +33,7 @@ class EventQueue(object):
                     self.__is_waiting = False
                     self.__lock.notifyAll()
             self.__thread.join()
-        except exceptions.Exception as e:
+        except BaseException as e:
             protocol.log("Failed to shutdown TCF event dispatch thread", e)
 
     def isShutdown(self):
@@ -53,13 +53,13 @@ class EventQueue(object):
                         self.__lock.wait()
                     r, args, kwargs = self.__queue.pop(0)
                 r(*args, **kwargs)
-            except exceptions.Exception as x:
+            except BaseException as x:
                 self.__error(x)
 
     def invokeLater(self, r, *args, **kwargs):
-        assert r;
+        assert r
         with self.__lock:
-            if self.__is_shutdown: raise exceptions.RuntimeError("TCF event dispatcher has shut down")
+            if self.__is_shutdown: raise RuntimeError("TCF event dispatcher has shut down")
             self.__queue.append((r, args, kwargs))
             if self.__is_waiting:
                 self.__is_waiting = False

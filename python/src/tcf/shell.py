@@ -34,6 +34,8 @@ from tcf.util import sync, event
 from tcf import protocol, channel
 
 class print_peers:
+    def __call__(self):
+        return tcf.peers()
     def __repr__(self):
         peers = tcf.peers()
         return '\n'.join(peers.keys())
@@ -53,6 +55,7 @@ class Shell(code.InteractiveConsole, protocol.ChannelOpenListener, channel.Chann
             super(Shell, self).interact(banner)
         finally:
             protocol.invokeLater(protocol.removeChannelOpenListener, self)
+            protocol.getEventQueue().shutdown()
     def onChannelOpen(self, channel):
         wrapper = sync.DispatchWrapper(channel)
         self.locals["channel"] = wrapper
@@ -71,7 +74,7 @@ class Shell(code.InteractiveConsole, protocol.ChannelOpenListener, channel.Chann
 def interact():
     try:
         # enable commandline editing if available
-        import readline
+        import readline #@UnusedImport
     except ImportError:
         pass
     shell = Shell()
