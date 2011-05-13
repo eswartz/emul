@@ -398,8 +398,7 @@ public class TCFNodeStackFrame extends TCFNode {
             if (IDebugUIConstants.ID_DEBUG_VIEW.equals(id)) flags |= IModelDelta.STATE;
             if (getChildren(p.getPresentationContext()) != null && p.getInput() == this) flags |= IModelDelta.CONTENT;
             if (flags == 0) continue;
-            if (model.getActiveAction(parent.id) == null) p.addDelta(this, flags);
-            else model.addActionsDoneDelta(this, p.getPresentationContext(), flags);
+            p.addDelta(this, flags);
         }
     }
 
@@ -432,6 +431,10 @@ public class TCFNodeStackFrame extends TCFNode {
         children_vars.onSuspended();
         children_exps.onSuspended();
         children_hover_exps.onSuspended();
+        if (model.getActiveAction(parent.id) == null) postAllChangedDelta();
+    }
+
+    void onContextActionDone() {
         postAllChangedDelta();
     }
 

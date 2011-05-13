@@ -179,8 +179,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     private int auto_disconnect_generation;
 
     private final Map<String,String> action_results = new HashMap<String,String>();
-    private final Map<IPresentationContext,Map<TCFNode,Integer>> action_deltas =
-        new HashMap<IPresentationContext,Map<TCFNode,Integer>>();
     private final HashMap<String,TCFAction> active_actions = new HashMap<String,TCFAction>();
 
     private final Map<IPresentationContext,TCFModelProxy> model_proxies =
@@ -460,27 +458,16 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         public void onContextActionResult(String id, String reason) {
             if (reason == null) action_results.remove(id);
             else action_results.put(id, reason);
-            TCFNode node = id2node.get(id);
-            if (node != null) {
-                for (IPresentationContext ctx : model_proxies.keySet()) {
-                    addActionsDoneDelta(node, ctx, IModelDelta.STATE);
-                }
-            }
         }
 
         public void onContextActionDone(TCFAction action) {
             String id = action.getContextID();
             active_actions.remove(id);
-            setDebugViewSelection(id2node.get(id), "Action");
-            for (IPresentationContext ctx : action_deltas.keySet()) {
-                Map<TCFNode,Integer> deltas = action_deltas.get(ctx);
-                TCFModelProxy proxy = model_proxies.get(ctx);
-                if (proxy == null) continue;
-                for (TCFNode node : deltas.keySet()) {
-                    proxy.addDelta(node, deltas.get(node));
-                }
+            TCFNode node = getNode(id);
+            if (node instanceof TCFNodeExecContext) {
+                ((TCFNodeExecContext)node).onContextActionDone();
             }
-            action_deltas.clear();
+            setDebugViewSelection(id2node.get(id), "Action");
             for (TCFModelProxy p : model_proxies.values()) p.post();
         }
     };
@@ -617,18 +604,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     public TCFAction getActiveAction(String id) {
         return active_actions.get(id);
-    }
-
-    void addActionsDoneDelta(TCFNode node, IPresentationContext ctx, int flags) {
-        Map<TCFNode,Integer> deltas = action_deltas.get(ctx);
-        if (deltas == null) action_deltas.put(ctx, deltas = new HashMap<TCFNode,Integer>());
-        Integer delta = deltas.get(node);
-        if (delta != null) {
-            deltas.put(node, delta.intValue() | flags);
-        }
-        else {
-            deltas.put(node, flags);
-        }
     }
 
     String getContextActionResult(String id) {

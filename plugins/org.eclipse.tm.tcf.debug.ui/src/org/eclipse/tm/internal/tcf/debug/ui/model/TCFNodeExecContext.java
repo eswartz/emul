@@ -204,12 +204,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     TCFNodeExecContext(TCFNode parent, final String id) {
         super(parent, id);
         children_exec = new TCFChildrenExecContext(this);
-        children_stack = new TCFChildrenStackTrace(this) {
-            @Override
-            TCFNode[] toArray() {
-                return last_stack_trace = super.toArray();
-            }
-        };
+        children_stack = new TCFChildrenStackTrace(this);
         children_regs = new TCFChildrenRegisters(this);
         children_exps = new TCFChildrenExpressions(this);
         children_hover_exps = new TCFChildrenHoverExpressions(this);
@@ -738,6 +733,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         }
         if (children != null) {
             if (!children.validate(done)) return false;
+            if (children == children_stack) last_stack_trace = children_stack.toArray();
             result.setChildCount(children.size());
         }
         else {
@@ -802,6 +798,8 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
             if (ctx != null) children = children_modules;
         }
         if (children == null) return true;
+        if (!children.validate(done)) return false;
+        if (children == children_stack) last_stack_trace = children_stack.toArray();
         return children.getData(result, done);
     }
 
@@ -855,6 +853,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         }
         if (children != null) {
             if (!children.validate(done)) return false;
+            if (children == children_stack) last_stack_trace = children_stack.toArray();
             result.setHasChilren(children.size() > 0);
         }
         else {
@@ -893,12 +892,16 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                 label.append(nm != null ? nm : id);
                 if (ctx.hasState()) {
                     // Thread
-                    if (model.getActiveAction(id) != null) {
-                        model.addActionsDoneDelta(this, result.getPresentationContext(), IModelDelta.STATE);
+                    if (resumed_by_action || model.getActiveAction(id) != null) {
                         image_name = ImageCache.IMG_THREAD_RUNNNIG;
+                        if (resume_pending && last_label != null) {
+                            result.setImageDescriptor(ImageCache.getImageDescriptor(image_name), 0);
+                            result.setLabel(last_label, 0);
+                            return true;
+                        }
                         label.append(" (Running)");
                     }
-                    else if (resume_pending && !resumed_by_action && last_label != null && last_image != null) {
+                    else if (resume_pending && last_label != null && last_image != null) {
                         result.setImageDescriptor(ImageCache.getImageDescriptor(last_image), 0);
                         result.setLabel(last_label, 0);
                         return true;
@@ -1018,8 +1021,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                 if (p.getInput() == this) flags |= IModelDelta.CONTENT;
             }
             if (flags == 0) continue;
-            if (model.getActiveAction(id) == null) p.addDelta(this, flags);
-            else model.addActionsDoneDelta(this, p.getPresentationContext(), flags);
+            p.addDelta(this, flags);
         }
     }
 
@@ -1115,44 +1117,60 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         }
         address.reset();
         signal_mask.reset();
-        resumed_cnt++;
-        resume_pending = false;
-        resumed_by_action = false;
+        if (resume_pending && model.getActiveAction(id) == null) {
+            resumed_cnt++;
+            resume_pending = false;
+            resumed_by_action = false;
+        }
         children_stack.onSuspended();
         children_regs.onSuspended();
         children_exps.onSuspended();
         children_hover_exps.onSuspended();
         for (TCFNodeSymbol s : symbols.values()) s.onExeStateChange();
-        TCFNode n = parent;
-        while (n instanceof TCFNodeExecContext) {
-            ((TCFNodeExecContext)n).postStateChangedDelta();
-            n = n.parent;
+        if (model.getActiveAction(id) == null) {
+            TCFNode n = this;
+            while (n instanceof TCFNodeExecContext) {
+                ((TCFNodeExecContext)n).postStateChangedDelta();
+                n = n.parent;
+            }
+            postContentChangedDelta();
         }
-        postAllChangedDelta();
     }
 
     void onContextResumed() {
         assert !isDisposed();
         state.reset(new TCFContextState());
-        final int cnt = ++resumed_cnt;
-        resume_pending = true;
-        resumed_by_action = model.getActiveAction(id) != null;
-        if (resumed_by_action) postStateChangedDelta();
-        Protocol.invokeLater(400, new Runnable() {
-            public void run() {
-                if (cnt != resumed_cnt) return;
-                if (isDisposed()) return;
-                resume_pending = false;
-                resumed_by_action = false;
-                children_stack.onResumed();
-                postContentChangedDelta();
-                TCFNode n = parent;
-                while (n instanceof TCFNodeExecContext) {
-                    ((TCFNodeExecContext)n).postStateChangedDelta();
-                    n = n.parent;
+        if (!resume_pending) {
+            final int cnt = ++resumed_cnt;
+            resume_pending = true;
+            resumed_by_action = model.getActiveAction(id) != null;
+            if (resumed_by_action) postAllChangedDelta();
+            Protocol.invokeLater(400, new Runnable() {
+                public void run() {
+                    if (cnt != resumed_cnt) return;
+                    if (isDisposed()) return;
+                    children_stack.onResumed();
+                    resume_pending = false;
+                    resumed_by_action = false;
+                    postContentChangedDelta();
+                    TCFNode n = TCFNodeExecContext.this;
+                    while (n instanceof TCFNodeExecContext) {
+                        ((TCFNodeExecContext)n).postStateChangedDelta();
+                        n = n.parent;
+                    }
                 }
-            }
-        });
+            });
+        }
+    }
+
+    void onContextActionDone() {
+        if (!state.isValid() || state.getData() == null || state.getData().is_suspended) {
+            resumed_cnt++;
+            resume_pending = false;
+            resumed_by_action = false;
+        }
+        postAllChangedDelta();
+        children_stack.onContextActionDone();
     }
 
     void onContextException(String msg) {
