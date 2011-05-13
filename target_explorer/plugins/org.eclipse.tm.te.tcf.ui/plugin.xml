@@ -37,6 +37,13 @@
                </enablement>
             </commonWizard>
       </navigatorContent>
+      <commonFilter
+            activeByDefault="false"
+            class="org.eclipse.tm.te.tcf.ui.internal.filter.UnreachablePeersFilter"
+            id="org.eclipse.tm.te.tcf.ui.navigator.UnreachablePeersFilter"
+            name="%UnreachablePeersFilter.name"
+            visibleInUI="true">
+      </commonFilter>
    </extension>
 
 <!-- New wizard contributions -->
