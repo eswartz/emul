@@ -761,6 +761,7 @@ static void free_bp(BreakpointInfo * bp) {
     loc_free(bp->address);
     loc_free(bp->type);
     loc_free(bp->context_ids);
+    loc_free(bp->context_ids_prev);
     loc_free(bp->stop_group);
     loc_free(bp->file);
     loc_free(bp->condition);
@@ -1136,6 +1137,41 @@ static void event_replant_breakpoints(void * arg) {
     done_evaluation();
 }
 
+static int str_equ(char * x, char * y) {
+    if (x == y) return 1;
+    if (x == NULL) return 0;
+    if (y == NULL) return 0;
+    return strcmp(x, y) == 0;
+}
+
+static char ** str_arr_dup(char ** x) {
+    int n = 0;
+    int l = 0;
+    int i = 0;
+    int offs = 0;
+    char ** y = NULL;
+    if (x == NULL) return NULL;
+    while (x[n] != NULL) l += strlen(x[n++]) + 1;
+    offs = sizeof(char *) * (n + 1);
+    l += offs;
+    y = (char **)loc_alloc_zero(l);
+    while (i < n) {
+        y[i] = strcpy((char *)y + offs, x[i]);
+        offs += strlen(x[i++]) + 1;
+    }
+    assert(offs == l);
+    return y;
+}
+
+static int str_arr_equ(char ** x, char ** y) {
+    if (x == y) return 1;
+    if (x == NULL || y == NULL) return 0;
+    while (*x != NULL && *y != NULL) {
+        if (strcmp(*x++, *y++) != 0) return 0;
+    }
+    return *x == *y;
+}
+
 static void replant_breakpoint(BreakpointInfo * bp) {
     if (list_is_empty(&context_root)) return;
     if (bp->context_ids == NULL || bp->context_ids_prev == NULL) {
@@ -1146,7 +1182,7 @@ static void replant_breakpoint(BreakpointInfo * bp) {
             if (ctx->exited) continue;
             post_location_evaluation_request(ctx);
         }
-        bp->context_ids_prev = bp->context_ids;
+        bp->context_ids_prev = str_arr_dup(bp->context_ids);
     }
     else {
         char ** ids = bp->context_ids;
@@ -1156,7 +1192,7 @@ static void replant_breakpoint(BreakpointInfo * bp) {
             if (ctx->exited) continue;
             post_location_evaluation_request(ctx);
         }
-        if (bp->context_ids != bp->context_ids_prev) {
+        if (!str_arr_equ(bp->context_ids, bp->context_ids_prev)) {
             ids = bp->context_ids_prev;
             while (*ids != NULL) {
                 Context * ctx = id2ctx(*ids++);
@@ -1164,29 +1200,9 @@ static void replant_breakpoint(BreakpointInfo * bp) {
                 if (ctx->exited) continue;
                 post_location_evaluation_request(ctx);
             }
-            bp->context_ids_prev = bp->context_ids;
+            bp->context_ids_prev = str_arr_dup(bp->context_ids);
         }
     }
-}
-
-static int str_equ(char * x, char * y) {
-    if (x == y) return 1;
-    if (x == NULL) return 0;
-    if (y == NULL) return 0;
-    return strcmp(x, y) == 0;
-}
-
-static int str_arr_equ(char ** x, char ** y) {
-    int i = 0;
-    if (x == y) return 1;
-    if (x == NULL) return 0;
-    if (y == NULL) return 0;
-    for (;;) {
-        if (!str_equ(x[i], y[i])) return 0;
-        if (x[i] == NULL) break;
-        i++;
-    }
-    return 1;
 }
 
 static int copy_breakpoint_info(BreakpointInfo * dst, BreakpointInfo * src) {
