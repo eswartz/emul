@@ -69,9 +69,22 @@
     </extension>
 
    <extension point="org.eclipse.ui.propertyPages">
-         <page class="org.eclipse.tm.internal.tcf.cdt.ui.breakpoints.TCFBreakpointThreadFilterPage"
+      <page class="org.eclipse.tm.internal.tcf.cdt.ui.breakpoints.TCFBreakpointThreadFilterPage"
             id="org.eclipse.tm.tcf.breakpoint.filtering"
             name="%breakpoints.filterPage.name">
+         <filter name="debugModelId" value="org.eclipse.tm.tcf.debug"/>
+         <enabledWhen>
+            <and>
+               <adapt type="org.eclipse.cdt.debug.core.model.ICBreakpoint"/>
+               <not>
+                  <adapt type="org.eclipse.cdt.debug.core.model.ICTracepoint"/>
+               </not>
+            </and>
+         </enabledWhen>
+      </page>
+      <page class="org.eclipse.tm.internal.tcf.cdt.ui.breakpoints.TCFBreakpointStatusPage"
+            id="org.eclipse.tm.tcf.breakpoint.status"
+            name="%breakpoints.statusPage.name">
          <filter name="debugModelId" value="org.eclipse.tm.tcf.debug"/>
          <enabledWhen>
             <and>

@@ -30,10 +30,9 @@ class TCFLaunchLabelProvider implements IElementLabelProvider {
         for (int i = 0; i < updates.length; i++) {
             ILabelUpdate result = updates[i];
             final TCFLaunch launch = (TCFLaunch)result.getElement();
-            ImageDescriptor imageDescriptor = DebugUITools.getDefaultImageDescriptor(launch);
-            if (imageDescriptor == null)
-                imageDescriptor = ImageCache.getImageDescriptor(ImageCache.IMG_TCF);
-            result.setImageDescriptor(imageDescriptor, 0);
+            ImageDescriptor image = DebugUITools.getDefaultImageDescriptor(launch);
+            if (image == null) image = ImageCache.getImageDescriptor(ImageCache.IMG_TCF);
+            result.setImageDescriptor(image, 0);
             String status = "";
             if (launch.isConnecting()) {
                 status = "Connecting";
