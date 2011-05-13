@@ -391,7 +391,7 @@ public class TCFNodeStackFrame extends TCFNode {
         return "0x0000000000000000".substring(0, 2 + l) + s;
     }
 
-    private void postAllChangedDelta() {
+    void postAllChangedDelta() {
         for (TCFModelProxy p : model.getModelProxies()) {
             int flags = 0;
             String id = p.getPresentationContext().getId();
@@ -431,11 +431,7 @@ public class TCFNodeStackFrame extends TCFNode {
         children_vars.onSuspended();
         children_exps.onSuspended();
         children_hover_exps.onSuspended();
-        if (model.getActiveAction(parent.id) == null) postAllChangedDelta();
-    }
-
-    void onContextActionDone() {
-        postAllChangedDelta();
+        // delta is posted by the parent node
     }
 
     void onMemoryMapChanged() {

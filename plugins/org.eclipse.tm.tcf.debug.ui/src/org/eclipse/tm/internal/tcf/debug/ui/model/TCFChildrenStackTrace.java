@@ -43,10 +43,6 @@ public class TCFChildrenStackTrace extends TCFChildren {
         reset();
     }
 
-    void onContextActionDone() {
-        for (TCFNode n : getNodes()) ((TCFNodeStackFrame)n).onContextActionDone();
-    }
-
     void onRegistersChanged() {
         for (TCFNode n : getNodes()) ((TCFNodeStackFrame)n).onRegistersChanged();
         reset();
@@ -64,6 +60,10 @@ public class TCFChildrenStackTrace extends TCFChildren {
 
     void onResumed() {
         reset(null);
+    }
+
+    void postAllChangedDelta() {
+        for (TCFNode n : getNodes()) ((TCFNodeStackFrame)n).postAllChangedDelta();
     }
 
     public TCFNodeStackFrame getTopFrame() {

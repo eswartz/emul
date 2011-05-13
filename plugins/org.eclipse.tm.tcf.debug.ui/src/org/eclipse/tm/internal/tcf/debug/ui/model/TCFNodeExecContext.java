@@ -1025,6 +1025,15 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         }
     }
 
+    private void postAllAndParentsChangedDelta() {
+        postContentChangedDelta();
+        TCFNode n = this;
+        while (n instanceof TCFNodeExecContext) {
+            ((TCFNodeExecContext)n).postStateChangedDelta();
+            n = n.parent;
+        }
+    }
+
     private void postStateChangedDelta() {
         for (TCFModelProxy p : model.getModelProxies()) {
             if (IDebugUIConstants.ID_DEBUG_VIEW.equals(p.getPresentationContext().getId())) {
@@ -1117,23 +1126,30 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         }
         address.reset();
         signal_mask.reset();
-        if (resume_pending && model.getActiveAction(id) == null) {
-            resumed_cnt++;
-            resume_pending = false;
-            resumed_by_action = false;
-        }
         children_stack.onSuspended();
         children_regs.onSuspended();
         children_exps.onSuspended();
         children_hover_exps.onSuspended();
         for (TCFNodeSymbol s : symbols.values()) s.onExeStateChange();
         if (model.getActiveAction(id) == null) {
-            TCFNode n = this;
-            while (n instanceof TCFNodeExecContext) {
-                ((TCFNodeExecContext)n).postStateChangedDelta();
-                n = n.parent;
+            resumed_cnt++;
+            resume_pending = false;
+            resumed_by_action = false;
+            if (pc != null) {
+                children_stack.postAllChangedDelta();
+                postAllAndParentsChangedDelta();
             }
-            postContentChangedDelta();
+            else {
+                final int cnt = ++resumed_cnt;
+                Protocol.invokeLater(500, new Runnable() {
+                    public void run() {
+                        if (cnt != resumed_cnt) return;
+                        if (isDisposed()) return;
+                        children_stack.postAllChangedDelta();
+                        postAllAndParentsChangedDelta();
+                    }
+                });
+            }
         }
     }
 
@@ -1152,12 +1168,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                     children_stack.onResumed();
                     resume_pending = false;
                     resumed_by_action = false;
-                    postContentChangedDelta();
-                    TCFNode n = TCFNodeExecContext.this;
-                    while (n instanceof TCFNodeExecContext) {
-                        ((TCFNodeExecContext)n).postStateChangedDelta();
-                        n = n.parent;
-                    }
+                    postAllAndParentsChangedDelta();
                 }
             });
         }
@@ -1170,7 +1181,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
             resumed_by_action = false;
         }
         postAllChangedDelta();
-        children_stack.onContextActionDone();
+        children_stack.postAllChangedDelta();
     }
 
     void onContextException(String msg) {
