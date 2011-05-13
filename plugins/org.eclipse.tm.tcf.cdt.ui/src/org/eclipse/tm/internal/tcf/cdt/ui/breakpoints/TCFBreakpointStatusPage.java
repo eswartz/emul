@@ -299,6 +299,11 @@ public class TCFBreakpointStatusPage extends PropertyPage {
                     if (x != null) roots.add(x);
                 }
                 for (StatusCache cache : caches) cache.dispose();
+                if (roots.size() == 0) {
+                    StatusItem x = new StatusItem();
+                    x.text = "Not planted";
+                    roots.add(x);
+                }
                 done(roots);
             }
         }.getE();
