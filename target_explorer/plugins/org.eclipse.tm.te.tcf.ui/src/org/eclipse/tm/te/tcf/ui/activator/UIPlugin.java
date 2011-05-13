@@ -124,7 +124,7 @@ public class UIPlugin extends AbstractUIPlugin {
 	public static Image getSharedImage(AbstractImageDescriptor descriptor) {
 		ImageRegistry registry = getDefault().getImageRegistry();
 
-		String imageKey = descriptor.getKey();
+		String imageKey = descriptor.getDecriptorKey();
 		Image image = registry.get(imageKey);
 		if (image == null) {
 			registry.put(imageKey, descriptor);

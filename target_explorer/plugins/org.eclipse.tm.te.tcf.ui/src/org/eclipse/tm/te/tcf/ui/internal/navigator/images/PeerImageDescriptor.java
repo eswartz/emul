@@ -71,7 +71,7 @@ public class PeerImageDescriptor extends AbstractImageDescriptor {
 			hashCode + ":" + //$NON-NLS-1$
 			fState;
 
-		setKey(key);
+		setDecriptorKey(key);
 	}
 
 	/* (non-Javadoc)
