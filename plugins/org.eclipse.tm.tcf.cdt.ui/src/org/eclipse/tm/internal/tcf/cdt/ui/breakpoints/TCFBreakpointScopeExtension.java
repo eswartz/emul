@@ -47,11 +47,17 @@ public class TCFBreakpointScopeExtension implements ICBreakpointExtension {
         }
         String contextIdAttr = null;
         if (threadIds != null) {
-            StringBuilder buf = new StringBuilder();
-            for (String id : threadIds) {
-                buf.append(id).append(',');
+            if (threadIds.length == 0) {
+                // empty string is filtered out in TCFBreakpointsModel
+                contextIdAttr = " ";
+            } else {
+                StringBuilder buf = new StringBuilder();
+                for (int i=0; i < threadIds.length - 1; ++i) {
+                    buf.append(threadIds[i]).append(',');
+                }
+                buf.append(threadIds[threadIds.length - 1]);
+                contextIdAttr = buf.toString();
             }
-            contextIdAttr = buf.toString();
         }
         try {
             m.setAttribute(ATTR_CONTEXT_IDS, contextIdAttr);

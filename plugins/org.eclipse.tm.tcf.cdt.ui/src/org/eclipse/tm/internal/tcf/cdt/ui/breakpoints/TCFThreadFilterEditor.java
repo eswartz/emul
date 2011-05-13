@@ -13,6 +13,7 @@ package org.eclipse.tm.internal.tcf.cdt.ui.breakpoints;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -385,8 +386,10 @@ public class TCFThreadFilterEditor {
                 TCFModel model = TCFModelManager.getModelManager().getModel(launch);
                 TCFChildren children = ((TCFNodeExecContext) model.getNode(container.fId)).getChildren();
                 if (!children.validate(this)) return;
-                Map<String, TCFNode> childMap = children.getData();
-                for (TCFNode node : childMap.values()) {
+                Collection<TCFNode> childNodes = children.getData().values();
+                TCFNode[] nodes = childNodes.toArray(new TCFNode[childNodes.size()]);
+                Arrays.sort(nodes);
+                for (TCFNode node : nodes) {
                     if (node instanceof TCFNodeExecContext) {
                         TCFNodeExecContext exeCtx = (TCFNodeExecContext) node;
                         TCFDataCache<IRunControl.RunControlContext> runCtxCache = exeCtx.getRunContext();
