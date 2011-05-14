@@ -9,6 +9,7 @@
  *******************************************************************************/
 package org.eclipse.tm.te.core.extensions;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IStatus;
@@ -18,25 +19,15 @@ import org.eclipse.osgi.util.NLS;
 import org.eclipse.tm.te.core.activator.CoreBundleActivator;
 import org.eclipse.tm.te.core.nls.Messages;
 
-
-
 /**
  * Target Explorer: Executable extension implementation.
  */
 public class ExecutableExtension extends PlatformObject {
-	private String fId;
-	private String fLabel;
-	private String fDescription;
+	// The mandatory id of the extension
+	private String id = null;
 
-	/**
-	 * Constructor.
-	 */
-	public ExecutableExtension() {
-		super();
-		fId = null;
-		fLabel = ""; //$NON-NLS-1$
-		fDescription = ""; //$NON-NLS-1$
-	}
+	// The configuration element
+	private IConfigurationElement configElement = null;
 
 	/**
 	 * Clone the initialization data to the given executable extension instance.
@@ -44,36 +35,23 @@ public class ExecutableExtension extends PlatformObject {
 	 * @param other The destination executable extension instance. Must not be <code>null</code>.
 	 */
 	public void cloneInitializationData(ExecutableExtension other) {
-		assert other != null;
-		other.fId = fId;
-		other.fLabel = fLabel;
-		other.fDescription = fDescription;
+		Assert.isNotNull(other);
+		other.id = id;
+		other.configElement = configElement;
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.core.runtime.IExecutableExtension#setInitializationData(org.eclipse.core.runtime.IConfigurationElement, java.lang.String, java.lang.Object)
 	 */
 	public void setInitializationData(IConfigurationElement config, String propertyName, Object data) throws CoreException {
-		if (config != null) {
-			// Initialize the id field by reading the <id> extension attribute.
-			// Throws an exception if the id is empty or null.
-			fId = config.getAttribute("id"); //$NON-NLS-1$
-			if (fId == null || fId.trim().length() == 0) {
-				throw createMissingMandatoryAttributeException("id", config.getContributor().getName()); //$NON-NLS-1$
-			}
+		// Remember the configuration element
+		configElement = config;
 
-			// Initialize the label field by reading the <label> extension attribute if present.
-			fLabel = config.getAttribute("label"); //$NON-NLS-1$
-			if (fLabel == null || fLabel.trim().length() == 0) fLabel = ""; //$NON-NLS-1$
-
-			// Initialize the description field by reading the "<description>" extension child element if present.
-			IConfigurationElement[] children = config.getChildren("description"); //$NON-NLS-1$
-			// Only one description element is allow. All other will be ignored
-			if (children.length > 0) {
-				IConfigurationElement description = children[0];
-				String value = description.getValue();
-				fDescription = value != null ? value.trim() : ""; //$NON-NLS-1$
-			}
+		// Initialize the id field by reading the <id> extension attribute.
+		// Throws an exception if the id is empty or null.
+		id = configElement != null ? configElement.getAttribute("id") : null; //$NON-NLS-1$
+		if (id == null || (id != null && "".equals(id.trim()))) { //$NON-NLS-1$
+			throw createMissingMandatoryAttributeException("id", config.getContributor().getName()); //$NON-NLS-1$
 		}
 	}
 
@@ -87,7 +65,9 @@ public class ExecutableExtension extends PlatformObject {
 	 * @return The {@link CoreException} instance.
 	 */
 	protected CoreException createMissingMandatoryAttributeException(String attributeName, String extensionId) {
-		assert attributeName != null && extensionId != null;
+		Assert.isNotNull(attributeName);
+		Assert.isNotNull(extensionId);
+
 		return new CoreException(new Status(IStatus.ERROR,
 				CoreBundleActivator.getUniqueIdentifier(),
 				0,
@@ -102,16 +82,33 @@ public class ExecutableExtension extends PlatformObject {
 	 * @return The unique id.
 	 */
 	public String getId() {
-		return fId;
+		return id;
 	}
 
 	/**
-	 * Returns the label of the extension.
+	 * Returns the configuration element of the extension. The method
+	 * does return <code>null</code> if {@link #setInitializationData(IConfigurationElement, String, Object)}
+	 * has not been called yet.
 	 *
-	 * @return The label or an empty string.
+	 * @return The configuration element or <code>null</code> if none.
+	 */
+	protected final IConfigurationElement getConfigElement() {
+		return configElement;
+	}
+
+	/**
+	 * Returns the label or UI name of the extension.
+	 *
+	 * @return The label or UI name. An empty string if not set.
 	 */
 	public String getLabel() {
-		return fLabel != null ? fLabel : ""; //$NON-NLS-1$
+		// Try the "label" attribute first
+		String label = configElement != null ? configElement.getAttribute("label") : null; //$NON-NLS-1$
+		// If "label" is not found or empty, try the "name" attribute as fallback
+		if (label == null || (label != null && "".equals(label.trim()))) { //$NON-NLS-1$
+			label = configElement != null ? configElement.getAttribute("name") : null; //$NON-NLS-1$
+		}
+		return label != null ? label.trim() : ""; //$NON-NLS-1$
 	}
 
 	/**
@@ -120,6 +117,15 @@ public class ExecutableExtension extends PlatformObject {
 	 * @return The description or an empty string.
 	 */
 	public String getDescription() {
-		return fDescription != null ? fDescription : ""; //$NON-NLS-1$
+		// Read the description text from the "<description>" child element
+		IConfigurationElement[] children = configElement != null ? configElement.getChildren("description") : null; //$NON-NLS-1$
+		// Only one description element is allow. All other will be ignored
+		if (children != null && children.length > 0) {
+			IConfigurationElement description = children[0];
+			String value = description.getValue();
+			return value != null ? value.trim() : ""; //$NON-NLS-1$
+		}
+
+		return ""; //$NON-NLS-1$
 	}
 }
