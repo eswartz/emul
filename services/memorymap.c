@@ -42,6 +42,15 @@ typedef struct ContextExtensionMM {
     MemoryMap client_map;
 } ContextExtensionMM;
 
+typedef struct ClientMap {
+    LINK link_list;
+    LINK link_hash;
+    LINK link_ctx;
+    char * id;
+    MemoryMap map;
+    Channel * channel;
+} ClientMap;
+
 static size_t context_extension_offset = 0;
 
 #define EXT(ctx) ((ContextExtensionMM *)((char *)(ctx) + context_extension_offset))
@@ -52,12 +61,126 @@ static Listener * listeners = NULL;
 static unsigned listener_cnt = 0;
 static unsigned listener_max = 0;
 
+#define list2map(A)    ((ClientMap *)((char *)(A) - offsetof(ClientMap, link_list)))
+#define hash2map(A)    ((ClientMap *)((char *)(A) - offsetof(ClientMap, link_hash)))
+#define ctx2map(A)     ((ClientMap *)((char *)(A) - offsetof(ClientMap, link_ctx)))
+
+#define MAP_HASH_SIZE (4 * MEM_USAGE_FACTOR - 1)
+static LINK client_map_list;
+static LINK client_map_hash[MAP_HASH_SIZE];
+
 static TCFBroadcastGroup * broadcast_group = NULL;
+
+static unsigned map_id_hash(const char * id) {
+    int i;
+    unsigned h = 0;
+    for (i = 0; id[i]; i++) h += id[i];
+    return h % MAP_HASH_SIZE;
+}
+
+static MemoryRegion * add_region(MemoryMap * map) {
+    MemoryRegion * r = NULL;
+    if (map->region_cnt >= map->region_max) {
+        map->region_max += 8;
+        map->regions = (MemoryRegion *)loc_realloc(map->regions, sizeof(MemoryRegion) * map->region_max);
+    }
+    r = map->regions + map->region_cnt++;
+    memset(r, 0, sizeof(MemoryRegion));
+    return r;
+}
+
+static int str_equ(char * x, char * y) {
+    if (x == y) return 1;
+    if (x == NULL) return 0;
+    if (y == NULL) return 0;
+    return strcmp(x, y) == 0;
+}
+
+static int update_context_client_map(Context * ctx) {
+    ContextExtensionMM * ext = EXT(ctx);
+    unsigned r_cnt = 0;
+    int equ = 0;
+    unsigned h, i;
+    LINK * l;
+    LINK maps;
+
+    assert(ctx == context_get_group(ctx, CONTEXT_GROUP_PROCESS));
+    list_init(&maps);
+    h = map_id_hash(ctx->id);
+    for (l = client_map_hash[h].next; l != &client_map_hash[h]; l = l->next) {
+        ClientMap * m = hash2map(l);
+        if (strcmp(m->id, ctx->id) == 0) {
+            list_add_last(&m->link_ctx, &maps);
+            r_cnt += m->map.region_cnt;
+        }
+    }
+    if (ctx->name != NULL) {
+        h = map_id_hash(ctx->name);
+        for (l = client_map_hash[h].next; l != &client_map_hash[h]; l = l->next) {
+            ClientMap * m = hash2map(l);
+            if (strcmp(m->id, ctx->name) == 0) {
+                list_add_last(&m->link_ctx, &maps);
+                r_cnt += m->map.region_cnt;
+            }
+        }
+    }
+    equ = ext->client_map.region_cnt == r_cnt;
+    if (equ) {
+        unsigned k = 0;
+        for (l = maps.next; equ && l != &maps; l = l->next) {
+            ClientMap * m = ctx2map(l);
+            for (i = 0; equ && i < m->map.region_cnt; i++) {
+                MemoryRegion * x = m->map.regions + i;
+                MemoryRegion * y = ext->client_map.regions + k++;
+                equ =
+                    y->addr == x->addr &&
+                    y->size == x->size &&
+                    y->file_offs == x->file_offs &&
+                    y->bss == x->bss &&
+                    y->flags == x->flags &&
+                    str_equ(y->file_name, x->file_name) &&
+                    str_equ(y->sect_name, x->sect_name);
+            }
+        }
+    }
+    if (equ) return 0;
+
+    context_clear_memory_map(&ext->client_map);
+    for (l = maps.next; l != &maps; l = l->next) {
+        ClientMap * m = ctx2map(l);
+        for (i = 0; i < m->map.region_cnt; i++) {
+            MemoryRegion * x = m->map.regions + i;
+            MemoryRegion * y = add_region(&ext->client_map);
+            y->addr = x->addr;
+            y->size = x->size;
+            y->file_offs = x->file_offs;
+            y->bss = x->bss;
+            y->flags = x->flags;
+            if (x->file_name) y->file_name = loc_strdup(x->file_name);
+            if (x->sect_name) y->sect_name = loc_strdup(x->sect_name);
+            if (x->id) y->id = loc_strdup(x->id);
+        }
+    }
+
+    return 1;
+}
+
+static void update_all_context_client_maps(void) {
+    LINK * l;
+    for (l = context_root.next; l != &context_root; l = l->next) {
+        Context * ctx = ctxl2ctxp(l);
+        if (ctx->exited) continue;
+        if (ctx != context_get_group(ctx, CONTEXT_GROUP_PROCESS)) continue;
+        if (update_context_client_map(ctx)) send_context_changed_event(ctx);
+    }
+}
 
 static void event_memory_map_changed(Context * ctx, void * args) {
     OutputStream * out;
     ContextExtensionMM * ext = EXT(ctx);
 
+    if (ctx != context_get_group(ctx, CONTEXT_GROUP_PROCESS)) return;
+    update_context_client_map(ctx);
     context_clear_memory_map(&ext->target_map);
     if (!ext->valid) return;
     ext->valid = 0;
@@ -131,6 +254,7 @@ void memory_map_event_code_section_ummapped(Context * ctx, ContextAddress addr, 
     unsigned i;
     assert(ctx->ref_count > 0);
     assert(ctx == context_get_group(ctx, CONTEXT_GROUP_PROCESS));
+    event_memory_map_changed(ctx, NULL);
     for (i = 0; i < listener_cnt; i++) {
         Listener * l = listeners + i;
         if (l->listener->code_section_ummapped == NULL) continue;
@@ -280,22 +404,16 @@ static void read_map_attribute(InputStream * inp, const char * name, void * args
 
 static void read_map_item(InputStream * inp, void * args) {
     MemoryMap * map = (MemoryMap *)args;
-    MemoryRegion * r = NULL;
-
-    if (map->region_cnt >= map->region_max) {
-        map->region_max += 8;
-        map->regions = (MemoryRegion *)loc_realloc(map->regions, sizeof(MemoryRegion) * map->region_max);
-    }
-    r = map->regions + map->region_cnt++;
-    memset(r, 0, sizeof(MemoryRegion));
+    MemoryRegion * r = add_region(map);
 
     json_read_struct(inp, read_map_attribute, r);
 }
 
 static void command_set(char * token, Channel * c) {
     char id[256];
-    int err = 0;
-    Context * ctx = NULL;
+    unsigned h;
+    ClientMap * cm = NULL;
+    LINK * l = NULL;
     MemoryMap map;
 
     memset(&map, 0, sizeof(map));
@@ -306,28 +424,54 @@ static void command_set(char * token, Channel * c) {
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    ctx = id2ctx(id);
-    if (ctx == NULL) err = ERR_INV_CONTEXT;
-    else ctx = context_get_group(ctx, CONTEXT_GROUP_PROCESS);
-
-    if (!err) {
-        EXT(ctx)->client_map = map;
-        send_context_changed_event(ctx);
+    h = map_id_hash(id);
+    for (l = client_map_hash[h].next; l != &client_map_hash[h]; l = l->next) {
+        ClientMap * m = hash2map(l);
+        if (m->channel == c && strcmp(m->id, id) == 0) {
+            context_clear_memory_map(&m->map);
+            loc_free(m->map.regions);
+            cm = m;
+            break;
+        }
     }
-    else {
-        context_clear_memory_map(&map);
-        loc_free(map.regions);
+    if (cm == NULL) {
+        cm = (ClientMap *)loc_alloc_zero(sizeof(ClientMap));
+        cm->id = loc_strdup(id);
+        cm->channel = c;
+        list_add_last(&cm->link_list, &client_map_list);
+        list_add_last(&cm->link_hash, &client_map_hash[h]);
     }
+    cm->map = map;
+    update_all_context_client_maps();
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
-    write_errno(&c->out, err);
+    write_errno(&c->out, 0);
     write_stream(&c->out, MARKER_EOM);
 }
 
+static void channel_close_listener(Channel * c) {
+    int notify = 0;
+    LINK * l = client_map_list.next;
+    while (l != &client_map_list) {
+        ClientMap * m = list2map(l);
+        l = l->next;
+        if (m->channel != c) continue;
+        list_remove(&m->link_list);
+        list_remove(&m->link_hash);
+        context_clear_memory_map(&m->map);
+        loc_free(m->map.regions);
+        loc_free(m->id);
+        loc_free(m);
+        notify = 1;
+    }
+    if (notify) update_all_context_client_maps();
+}
+
 void ini_memory_map_service(Protocol * proto, TCFBroadcastGroup * bcg) {
+    int i;
     static ContextEventListener listener = {
-        NULL,
+        event_memory_map_changed,
         NULL,
         NULL,
         NULL,
@@ -335,6 +479,11 @@ void ini_memory_map_service(Protocol * proto, TCFBroadcastGroup * bcg) {
         event_context_disposed
     };
     broadcast_group = bcg;
+    add_channel_close_listener(channel_close_listener);
+    list_init(&client_map_list);
+    for (i = 0; i < MAP_HASH_SIZE; i++) {
+        list_init(&client_map_hash[i]);
+    }
     add_context_event_listener(&listener, NULL);
     add_command_handler(proto, MEMORY_MAP, "get", command_get);
     add_command_handler(proto, MEMORY_MAP, "set", command_set);
