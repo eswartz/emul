@@ -51,7 +51,6 @@ import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.services.IStreams;
 import org.eclipse.tm.tcf.util.TCFTask;
 
-
 public class TCFLaunch extends Launch {
 
     public interface LaunchListener {
@@ -176,19 +175,11 @@ public class TCFLaunch extends Launch {
         final ILaunchConfiguration cfg = getLaunchConfiguration();
         if (cfg != null) {
             // Send file path map:
-            final IPathMap path_map_service = getService(IPathMap.class);
-            if (path_map_service != null) {
+            if (getService(IPathMap.class) != null) {
                 new LaunchStep() {
                     @Override
                     void start() throws Exception {
-                        String s = cfg.getAttribute(TCFLaunchDelegate.ATTR_PATH_MAP, "");
-                        filepath_map = TCFLaunchDelegate.parsePathMapAttribute(s);
-                        path_map_service.set(filepath_map.toArray(new IPathMap.PathMapRule[filepath_map.size()]), new IPathMap.DoneSet() {
-                            public void doneSet(IToken token, Exception error) {
-                                if (error != null) channel.terminate(error);
-                                else done();
-                            }
-                        });
+                        downloadPathMaps(cfg, this);
                     }
                 };
             }
@@ -227,12 +218,29 @@ public class TCFLaunch extends Launch {
                     context_filter = new HashSet<String>();
                     context_filter.add(attach_to_context);
                 }
-                if (cfg != null && channel.getRemoteService(IMemoryMap.class) != null) {
-                    // Send memory maps
-                    final String maps = cfg.getAttribute(TCFLaunchDelegate.ATTR_MEMORY_MAP, "null");
+                final IMemoryMap mem_map = channel.getRemoteService(IMemoryMap.class);
+                if (mem_map != null) {
+                    // Send manual memory map items:
                     new LaunchStep() {
+                        @Override
                         void start() throws Exception {
-                            downloadMemoryMaps(maps, this);
+                            final Runnable done = this;
+                            mem_map.set("\001", null, new IMemoryMap.DoneSet() {
+                                public void doneSet(IToken token, Exception error) {
+                                    try {
+                                        if (error != null) {
+                                            // Older agents don't support preloading of memory maps.
+                                            updateMemoryMapsOnProcessCreation(cfg, done);
+                                        }
+                                        else {
+                                            downloadMemoryMaps(cfg, done);
+                                        }
+                                    }
+                                    catch (Exception x) {
+                                        channel.terminate(x);
+                                    }
+                                }
+                            });
                         }
                     };
                 }
@@ -310,7 +318,64 @@ public class TCFLaunch extends Launch {
         }
     }
 
-    private void downloadMemoryMaps(String cfg, final Runnable done) throws Exception {
+    private void downloadMemoryMaps(ILaunchConfiguration cfg, final Runnable done) throws Exception {
+        final String maps_cfg = cfg.getAttribute(TCFLaunchDelegate.ATTR_MEMORY_MAP, "null");
+        final IMemoryMap mmap = channel.getRemoteService(IMemoryMap.class);
+        if (mmap == null) {
+            done.run();
+            return;
+        }
+        final HashMap<String,ArrayList<TCFMemoryRegion>> maps = new HashMap<String,ArrayList<TCFMemoryRegion>>();
+        readMapsConfiguration(maps, maps_cfg);
+        final HashSet<IToken> cmds = new HashSet<IToken>(); // Pending commands
+        final Runnable done_all = new Runnable() {
+            boolean launch_done;
+            public void run() {
+                if (launch_done) return;
+                done.run();
+                launch_done = true;
+            }
+        };
+        final IMemoryMap.DoneSet done_set_mmap = new IMemoryMap.DoneSet() {
+            public void doneSet(IToken token, Exception error) {
+                assert cmds.contains(token);
+                cmds.remove(token);
+                if (error != null) Activator.log("Cannot update context memory map", error);
+                if (cmds.isEmpty()) done_all.run();
+            }
+        };
+        for (String id : maps.keySet()) {
+            ArrayList<TCFMemoryRegion> map = maps.get(id);
+            TCFMemoryRegion[] arr = map.toArray(new TCFMemoryRegion[map.size()]);
+            cmds.add(mmap.set(id, arr, done_set_mmap));
+        }
+        update_memory_maps = new Runnable() {
+            public void run() {
+                try {
+                    String cfg = getLaunchConfiguration().getAttribute(TCFLaunchDelegate.ATTR_MEMORY_MAP, "null");
+                    Set<String> set = new HashSet<String>(maps.keySet());
+                    maps.clear();
+                    readMapsConfiguration(maps, cfg);
+                    for (String id : maps.keySet()) {
+                        ArrayList<TCFMemoryRegion> map = maps.get(id);
+                        TCFMemoryRegion[] arr = map.toArray(new TCFMemoryRegion[map.size()]);
+                        cmds.add(mmap.set(id, arr, done_set_mmap));
+                    }
+                    for (String id : set) {
+                        if (maps.get(id) != null) continue;
+                        cmds.add(mmap.set(id, null, done_set_mmap));
+                    }
+                }
+                catch (Throwable x) {
+                    channel.terminate(x);
+                }
+            }
+        };
+        if (cmds.isEmpty()) done_all.run();
+    }
+
+    private void updateMemoryMapsOnProcessCreation(ILaunchConfiguration cfg, final Runnable done) throws Exception {
+        final String maps_cfg = cfg.getAttribute(TCFLaunchDelegate.ATTR_MEMORY_MAP, "null");
         final IMemory mem = channel.getRemoteService(IMemory.class);
         final IMemoryMap mmap = channel.getRemoteService(IMemoryMap.class);
         if (mem == null || mmap == null) {
@@ -319,7 +384,7 @@ public class TCFLaunch extends Launch {
         }
         final HashSet<String> deleted_maps = new HashSet<String>();
         final HashMap<String,ArrayList<TCFMemoryRegion>> maps = new HashMap<String,ArrayList<TCFMemoryRegion>>();
-        readMapsConfiguration(maps, cfg);
+        readMapsConfiguration(maps, maps_cfg);
         final HashSet<String> mems = new HashSet<String>(); // Already processed memory IDs
         final HashSet<IToken> cmds = new HashSet<IToken>(); // Pending commands
         final HashMap<String,String> mem2map = new HashMap<String,String>();
@@ -336,7 +401,7 @@ public class TCFLaunch extends Launch {
         final IMemoryMap.DoneSet done_set_mmap = new IMemoryMap.DoneSet() {
             public void doneSet(IToken token, Exception error) {
                 cmds.remove(token);
-                // TODO: report memory map download error
+                if (error != null) Activator.log("Cannot update context memory map", error);
                 if (cmds.isEmpty()) done_all.run();
             }
         };
@@ -428,6 +493,18 @@ public class TCFLaunch extends Launch {
                 }
             }
         };
+    }
+
+    private void downloadPathMaps(ILaunchConfiguration cfg, final Runnable done) throws Exception {
+        final IPathMap path_map_service = getService(IPathMap.class);
+        String s = cfg.getAttribute(TCFLaunchDelegate.ATTR_PATH_MAP, "");
+        filepath_map = TCFLaunchDelegate.parsePathMapAttribute(s);
+        path_map_service.set(filepath_map.toArray(new IPathMap.PathMapRule[filepath_map.size()]), new IPathMap.DoneSet() {
+            public void doneSet(IToken token, Exception error) {
+                if (error != null) channel.terminate(error);
+                else done.run();
+            }
+        });
     }
 
     private String[] toArgsArray(String file, String cmd) {
