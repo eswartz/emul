@@ -605,7 +605,7 @@ static void load_debug_sections(void) {
             if (trap.error) break;
         }
         else if (strcmp(sec->name, ".line") == 0) {
-            sCache->mDebugLine = sec;
+            sCache->mDebugLineV1 = sec;
         }
         else if (strcmp(sec->name, ".debug_line") == 0) {
             sCache->mDebugLine = sec;
@@ -1127,10 +1127,11 @@ static void load_line_numbers_v2(CompUnit * Unit, U8_T unit_size, int dwarf64) {
 void load_line_numbers(CompUnit * Unit) {
     Trap trap;
     DWARFCache * Cache = (DWARFCache *)Unit->mFile->dwarf_dt_cache;
-    if (Cache->mDebugLine == NULL) return;
+    ELF_Section * LineInfoSection = Unit->mDesc.mVersion <= 1 ? Cache->mDebugLineV1 : Cache->mDebugLine;
+    if (LineInfoSection == NULL) return;
     if (Unit->mStates != NULL || Unit->mFiles != NULL || Unit->mDirs != NULL) return;
-    if (elf_load(Cache->mDebugLine)) exception(errno);
-    dio_EnterSection(&Unit->mDesc, Cache->mDebugLine, Unit->mLineInfoOffs);
+    if (elf_load(LineInfoSection)) exception(errno);
+    dio_EnterSection(&Unit->mDesc, LineInfoSection, Unit->mLineInfoOffs);
     if (set_trap(&trap)) {
         U8_T unit_size = 0;
         FileInfo file;
@@ -1140,7 +1141,7 @@ void load_line_numbers(CompUnit * Unit) {
         add_file(Unit, &file);
         /* Read header */
         unit_size = dio_ReadU4();
-        if (strcmp(Cache->mDebugLine->name, ".line") == 0) {
+        if (Unit->mDesc.mVersion <= 1) {
             /* DWARF 1.1 */
             load_line_numbers_v1(Unit, (U4_T)unit_size);
         }

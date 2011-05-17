@@ -200,6 +200,7 @@ struct DWARFCache {
     ELF_File * mFile;
     ErrorReport * mErrorReport;
     ObjectInfo * mCompUnits;
+    ELF_Section * mDebugLineV1;
     ELF_Section * mDebugLine;
     ELF_Section * mDebugLoc;
     ELF_Section * mDebugRanges;
