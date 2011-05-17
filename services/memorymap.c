@@ -434,15 +434,26 @@ static void command_set(char * token, Channel * c) {
             break;
         }
     }
-    if (cm == NULL) {
-        cm = (ClientMap *)loc_alloc_zero(sizeof(ClientMap));
-        cm->id = loc_strdup(id);
-        cm->channel = c;
-        list_add_last(&cm->link_list, &client_map_list);
-        list_add_last(&cm->link_hash, &client_map_hash[h]);
+    if (map.region_cnt > 0) {
+        if (cm == NULL) {
+            cm = (ClientMap *)loc_alloc_zero(sizeof(ClientMap));
+            cm->id = loc_strdup(id);
+            cm->channel = c;
+            list_add_last(&cm->link_list, &client_map_list);
+            list_add_last(&cm->link_hash, &client_map_hash[h]);
+        }
+        cm->map = map;
+        update_all_context_client_maps();
     }
-    cm->map = map;
-    update_all_context_client_maps();
+    else if (cm != NULL) {
+        list_remove(&cm->link_list);
+        list_remove(&cm->link_hash);
+        context_clear_memory_map(&cm->map);
+        loc_free(cm->map.regions);
+        loc_free(cm->id);
+        loc_free(cm);
+        update_all_context_client_maps();
+    }
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);

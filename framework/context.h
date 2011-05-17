@@ -240,7 +240,7 @@ extern int context_get_state_properties(Context * ctx, const char *** names, con
 
 /*
  * Stop execution of the context.
- * Execution can be resumed by calling context_continue()
+ * Execution can be resumed by calling context_resume()
  * Return -1 and set errno if the context cannot be stopped.
  */
 extern int context_stop(Context * ctx);
