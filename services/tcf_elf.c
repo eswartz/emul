@@ -702,7 +702,7 @@ static ELF_File * open_memory_region_file(MemoryRegion * r, int * error) {
     if (r->dev != 0 && file->dev != r->dev) return NULL;
     if (r->ino != 0 && file->ino != r->ino) return NULL;
     if (file->error == NULL) return file;
-    if (*error == 0) {
+    if (error != NULL && *error == 0) {
         int no = set_error_report_errno(file->error);
         if (get_error_code(no) != ERR_INV_FORMAT) *error = no;
     }
