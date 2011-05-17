@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
+import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
 import org.eclipse.tm.internal.tcf.debug.model.TCFMemoryRegion;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IErrorReport;
@@ -40,6 +41,7 @@ import org.eclipse.tm.tcf.services.IDisassembly.IDisassemblyLine;
 import org.eclipse.tm.tcf.services.ILineNumbers.CodeArea;
 import org.eclipse.tm.tcf.services.IMemory.MemoryContext;
 import org.eclipse.tm.tcf.services.IMemory.MemoryError;
+import org.eclipse.tm.tcf.services.IMemoryMap.MemoryRegion;
 import org.eclipse.tm.tcf.services.IPathMap.PathMapRule;
 import org.eclipse.tm.tcf.services.IRegisters.RegistersContext;
 import org.eclipse.tm.tcf.services.IRunControl.RunControlContext;
@@ -95,6 +97,10 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     private boolean bp_sync_done;
     private String data_bp_id;
     private int data_bp_cnt;
+    private boolean mem_map_test_running;
+    private boolean mem_map_test_done;
+
+    private static int mem_map_region_id = 0;
 
     private static class SuspendedContext {
         final String id;
@@ -117,7 +123,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
 
         @SuppressWarnings("unchecked")
         public void breakpointStatusChanged(String id, Map<String,Object> status) {
-            if (bp_list.get(id) != null && test_context != null && bp_cnt < 40) {
+            if (bp_list.get(id) != null && test_context != null && bp_cnt < 40 && !mem_map_test_running) {
                 String s = (String)status.get(IBreakpoints.STATUS_ERROR);
                 if (s != null) exit(new Exception("Invalid BP status: " + s));
                 Collection<Map<String,Object>> list = (Collection<Map<String,Object>>)status.get(IBreakpoints.STATUS_INSTANCES);
@@ -261,6 +267,10 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                 changeBreakpoints();
                 return;
             }
+            if (!mem_map_test_done) {
+                runMemoryMapTest();
+                return;
+            }
             assert resume_cnt == 0;
             for (SuspendedContext s : suspended.values()) resume(s.id);
         }
@@ -328,7 +338,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     }
 
     private void setMemMap() {
-        if (srv_path_map == null || mem_map == null || mem_map.size() == 0) {
+        if (mem_map == null || mem_map.size() == 0) {
             mem_map_done = true;
             runTest();
             return;
@@ -1494,6 +1504,95 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
         else {
             done.run();
         }
+    }
+
+    private String getRandomString() {
+        int l = rnd.nextInt(512) + 1;
+        StringBuffer bf = new StringBuffer(l);
+        for (int i = 0; i < l; i++) {
+            bf.append((char)(rnd.nextInt(0xffff) + 1));
+        }
+        return bf.toString();
+    }
+
+    private void runMemoryMapTest() {
+        if (srv_memory_map == null || test_context == null || test_context.getProcessID() == null) {
+            mem_map_test_done = true;
+            runTest();
+            return;
+        }
+        mem_map_test_running = true;
+        final String prs_id = test_context.getProcessID();
+        srv_memory_map.get(prs_id, new IMemoryMap.DoneGet() {
+            public void doneGet(IToken token, Exception error, MemoryRegion[] map) {
+                if (error != null) {
+                    exit(error);
+                    return;
+                }
+                final Map<String,Object> props = new HashMap<String,Object>();
+                final String test_id = "TestRCBP1." + mem_map_region_id++;
+                props.put(TCFLaunch.PROP_MMAP_ID, test_id);
+                if (rnd.nextBoolean()) props.put(IMemoryMap.PROP_ADDRESS, rnd.nextInt(0x10000000));
+                if (rnd.nextBoolean()) props.put(IMemoryMap.PROP_SIZE, rnd.nextInt(0x10000000));
+                if (rnd.nextBoolean()) props.put(IMemoryMap.PROP_FLAGS, rnd.nextInt(0x7));
+                if (rnd.nextBoolean()) {
+                    props.put(IMemoryMap.PROP_FILE_NAME, getRandomString());
+                    if (rnd.nextBoolean()) props.put(IMemoryMap.PROP_SECTION_NAME, getRandomString());
+                    else if (rnd.nextBoolean()) props.put(IMemoryMap.PROP_OFFSET, rnd.nextInt(0x10000000));
+                    if (rnd.nextBoolean()) props.put(IMemoryMap.PROP_BSS, true);
+                }
+                List<MemoryRegion> list = new ArrayList<MemoryRegion>();
+                for (MemoryRegion r : map) {
+                    String id = (String)r.getProperties().get(TCFLaunch.PROP_MMAP_ID);
+                    if (id != null) list.add(r);
+                }
+                final List<MemoryRegion> org_list = new ArrayList<MemoryRegion>(list);
+                list.add(new TCFMemoryRegion(props));
+                srv_memory_map.set(prs_id, list.toArray(new MemoryRegion[list.size()]), new IMemoryMap.DoneSet() {
+                    public void doneSet(IToken token, Exception error) {
+                        if (error != null) {
+                            exit(error);
+                            return;
+                        }
+                        srv_memory_map.get(prs_id, new IMemoryMap.DoneGet() {
+                            public void doneGet(IToken token, Exception error, MemoryRegion[] map) {
+                                if (error != null) {
+                                    exit(error);
+                                    return;
+                                }
+                                int cnt = 0;
+                                for (MemoryRegion r : map) {
+                                    String id = (String)r.getProperties().get(TCFLaunch.PROP_MMAP_ID);
+                                    if (!test_id.equals(id)) continue;
+                                    for (String p : props.keySet()) {
+                                        if (!props.get(p).equals(r.getProperties().get(p))) {
+                                            exit(new Error("Invalid value returned for Memory Map region property " + p));
+                                            return;
+                                        }
+                                    }
+                                    cnt++;
+                                }
+                                if (cnt != 1) {
+                                    exit(new Error("Error adding memory map entry with MemoryMap.set command"));
+                                    return;
+                                }
+                                srv_memory_map.set(prs_id, org_list.toArray(new MemoryRegion[org_list.size()]), new IMemoryMap.DoneSet() {
+                                    public void doneSet(IToken token, Exception error) {
+                                        if (error != null) {
+                                            exit(error);
+                                            return;
+                                        }
+                                        mem_map_test_running = false;
+                                        mem_map_test_done = true;
+                                        runTest();
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+        });
     }
 
     void cancel(final Runnable done) {
