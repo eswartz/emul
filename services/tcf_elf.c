@@ -336,6 +336,7 @@ static ELF_File * create_elf_cache(const char * file_name) {
 
     file = (ELF_File *)loc_alloc_zero(sizeof(ELF_File));
     file->name = loc_strdup(file_name);
+    file->fd = -1;
 
     if (stat(file_name, &st) < 0) {
         error = errno;
