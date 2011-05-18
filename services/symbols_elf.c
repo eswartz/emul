@@ -120,6 +120,7 @@ static int syminfo2address(Context * ctx, SymbolInfo * info, ContextAddress * ad
                 value += sec->addr;
             }
             *address = elf_map_to_run_time_address(ctx, file, sec, (ContextAddress)value);
+            if (*address == 0 && file->type == ET_EXEC) *address = (ContextAddress)value;
             return 0;
         }
     }
