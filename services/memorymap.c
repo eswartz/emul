@@ -448,8 +448,6 @@ static void command_set(char * token, Channel * c) {
     else if (cm != NULL) {
         list_remove(&cm->link_list);
         list_remove(&cm->link_hash);
-        context_clear_memory_map(&cm->map);
-        loc_free(cm->map.regions);
         loc_free(cm->id);
         loc_free(cm);
         update_all_context_client_maps();
