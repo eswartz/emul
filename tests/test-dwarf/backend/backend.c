@@ -270,7 +270,7 @@ static void next_pc(void) {
         assert(lt_file != NULL);
         assert(pc == elf_map_to_run_time_address(elf_ctx, lt_file, lt_sec, lt_addr));
         if (set_trap(&trap)) {
-            get_dwarf_stack_frame_info(elf_ctx, lt_file, lt_addr);
+            get_dwarf_stack_frame_info(elf_ctx, lt_file, lt_sec, lt_addr);
             clear_trap(&trap);
         }
         else {
