@@ -1031,9 +1031,11 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                 bf.append("Size: ");
                 bf.append(data.length);
                 bf.append(data.length == 1 ? " byte\n" : " bytes\n");
-                bf.append("Hex: ");
-                bf.append(toNumberString(16, type_data, data, 0, data.length, big_endian));
-                bf.append("\n");
+                if (data.length > 0) {
+                    bf.append("Hex: ");
+                    bf.append(toNumberString(16, type_data, data, 0, data.length, big_endian));
+                    bf.append("\n");
+                }
             }
             else {
                 bf.append(toNumberString(16, type_data, data, 0, data.length, big_endian));
