@@ -892,7 +892,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                 label.append(nm != null ? nm : id);
                 if (ctx.hasState()) {
                     // Thread
-                    if (resumed_by_action || model.getActiveAction(id) != null) {
+                    if (resume_pending && resumed_by_action || model.getActiveAction(id) != null) {
                         image_name = ImageCache.IMG_THREAD_RUNNNIG;
                         if (resume_pending && last_label != null) {
                             result.setImageDescriptor(ImageCache.getImageDescriptor(image_name), 0);
@@ -1132,10 +1132,11 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         children_hover_exps.onSuspended();
         for (TCFNodeSymbol s : symbols.values()) s.onExeStateChange();
         if (model.getActiveAction(id) == null) {
+            boolean update_now = pc != null || resumed_by_action;
             resumed_cnt++;
             resume_pending = false;
             resumed_by_action = false;
-            if (pc != null) {
+            if (update_now) {
                 children_stack.postAllChangedDelta();
                 postAllAndParentsChangedDelta();
             }
@@ -1167,7 +1168,6 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                     if (isDisposed()) return;
                     children_stack.onResumed();
                     resume_pending = false;
-                    resumed_by_action = false;
                     postAllAndParentsChangedDelta();
                 }
             });
