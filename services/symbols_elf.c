@@ -107,19 +107,17 @@ static int syminfo2address(Context * ctx, SymbolInfo * info, ContextAddress * ad
                 errno = ERR_INV_ADDRESS;
                 return -1;
             }
-            if (file->type == ET_REL) {
-                switch (info->mSectionIndex) {
-                case SHN_ABS:
-                    break;
-                case SHN_COMMON:
-                case SHN_UNDEF:
-                    errno = ERR_INV_ADDRESS;
-                    return -1;
-                default:
-                    sec = info->mSection;
-                    value += sec->addr;
-                    break;
-                }
+            if (info->mSectionIndex == SHN_ABS) {
+                *address = (ContextAddress)value;
+                return 0;
+            }
+            if (info->mSectionIndex == SHN_COMMON) {
+                errno = ERR_INV_ADDRESS;
+                return -1;
+            }
+            if (file->type == ET_REL && info->mSection != NULL) {
+                sec = info->mSection;
+                value += sec->addr;
             }
             *address = elf_map_to_run_time_address(ctx, file, sec, (ContextAddress)value);
             return 0;
@@ -351,26 +349,28 @@ static int find_by_name_in_sym_table(DWARFCache * cache, char * name, Symbol ** 
             unpack_elf_symbol_info(tbl, n, &sym_info);
             if (cmp_symbol_names(name, sym_info.mName) == 0) {
                 ContextAddress addr = 0;
-                if (syminfo2address(prs, &sym_info, &addr) == 0 && addr != 0) {
+                if (syminfo2address(prs, &sym_info, &addr) == 0) {
                     int found = 0;
-                    UnitAddressRange * range = elf_find_unit(sym_ctx, addr, addr, NULL);
-                    if (range != NULL) {
-                        ObjectInfo * obj = range->mUnit->mObject->mChildren;
-                        while (obj != NULL) {
-                            switch (obj->mTag) {
-                            case TAG_global_subroutine:
-                            case TAG_global_variable:
-                            case TAG_subroutine:
-                            case TAG_subprogram:
-                            case TAG_variable:
-                                if (obj->mName != NULL && strcmp(obj->mName, name) == 0) {
-                                    object2symbol(obj, res);
-                                    found = 1;
-                                    cnt++;
+                    if (sym_info.mSectionIndex != SHN_ABS) {
+                        UnitAddressRange * range = elf_find_unit(sym_ctx, addr, addr, NULL);
+                        if (range != NULL) {
+                            ObjectInfo * obj = range->mUnit->mObject->mChildren;
+                            while (obj != NULL) {
+                                switch (obj->mTag) {
+                                case TAG_global_subroutine:
+                                case TAG_global_variable:
+                                case TAG_subroutine:
+                                case TAG_subprogram:
+                                case TAG_variable:
+                                    if (obj->mName != NULL && strcmp(obj->mName, name) == 0) {
+                                        object2symbol(obj, res);
+                                        found = 1;
+                                        cnt++;
+                                    }
+                                    break;
                                 }
-                                break;
+                                obj = obj->mSibling;
                             }
-                            obj = obj->mSibling;
                         }
                     }
                     if (!found) {
