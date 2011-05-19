@@ -4,12 +4,11 @@
 # * are made available under the terms of the Eclipse Public License v1.0
 # * which accompanies this distribution, and is available at
 # * http://www.eclipse.org/legal/epl-v10.html
-# * 
+# *
 # * Contributors:
 # *     Wind River Systems - initial API and implementation
 #******************************************************************************
 
-import exceptions
 from tcf import services
 
 # Service name.
@@ -81,7 +80,7 @@ class Symbol(object):
 
     def __str__(self):
         return "[Symbol Context %s]" % self._props
-        
+
     def getID(self):
         """
         Get symbol ID.
@@ -222,7 +221,7 @@ class Symbol(object):
         @return register ID or null.
         """
         return self._props.get(PROP_REGISTER)
-        
+
     def getProperties(self):
         """
         Get complete map of context properties.
@@ -233,17 +232,17 @@ class Symbol(object):
 class SymbolsService(services.Service):
     def getName(self):
         return NAME
-    
+
     def getContext(self, id, done):
         """
         Retrieve symbol context info for given symbol ID.
         @see Symbol
-        
+
         @param id - symbol context ID.
         @param done - call back interface called when operation is completed.
         @return - pending command handle.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def getChildren(self, parent_context_id, done):
         """
@@ -251,48 +250,48 @@ class SymbolsService(services.Service):
         Meaning of the operation depends on parent kind:
         1. struct, union, or class type - get fields
         2. enumeration type - get enumerators
-        
+
         @param parent_context_id - parent symbol context ID.
         @param done - call back interface called when operation is completed.
         @return - pending command handle.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def find(self, context_id, ip, name, done):
         """
         Search symbol with given name in given context.
         The context can be memory space, process, thread or stack frame.
-        
+
         @param context_id - a search scope.
         @param ip - instruction pointer - ignored if context_id is a stack frame ID
         @param name - symbol name.
         @param done - call back interface called when operation is completed.
         @return - pending command handle.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def findByAddr(self, context_id, addr, done):
         """
         Search symbol with given address in given context.
         The context can be memory space, process, thread or stack frame.
-        
+
         @param context_id - a search scope.
         @param addr - symbol address.
         @param done - call back interface called when operation is completed.
         @return - pending command handle.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def list(self, context_id, done):
         """
         List all symbols in given context.
         The context can be a stack frame.
-        
+
         @param context_id - a scope.
         @param done - call back interface called when operation is completed.
         @return - pending command handle.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def findFrameInfo(self, context_id, address, done):
         """
@@ -302,7 +301,7 @@ class SymbolsService(services.Service):
         @param done - call back interface called when operation is completed.
         @return - pending command handle.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
 class DoneGetContext(object):
     """

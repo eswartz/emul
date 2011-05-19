@@ -9,7 +9,6 @@
 # *     Wind River Systems - initial API and implementation
 # *******************************************************************************
 
-import exceptions
 from tcf import services
 
 NAME = "RunControl"
@@ -159,39 +158,39 @@ class RunControlService(services.Service):
     def getContext(self, id, done):
         """
         Retrieve context properties for given context ID.
-        
+
         @param id - context ID.
         @param done - callback interface called when operation is completed.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def getChildren(self, parent_context_id, done):
         """
         Retrieve children of given context.
-        
+
         @param parent_context_id - parent context ID. Can be null -
         to retrieve top level of the hierarchy, or one of context IDs retrieved
         by previous getContext or getChildren commands.
         @param done - callback interface called when operation is completed.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def addListener(self, listener):
         """
         Add run control event listener.
         @param listener - run control event listener to add.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def removeListener(self, listener):
         """
         Remove run control event listener.
         @param listener - run control event listener to remove.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
 
-class RunControlError(exceptions.Exception):
+class RunControlError(Exception):
     pass
 
 class DoneGetState(object):
@@ -251,7 +250,7 @@ class RunControlContext(object):
 
     def __str__(self):
         return "[Run Control Context %s]" % self._props
-        
+
     def getProperties(self):
         """
         Get context properties. See PROP_* definitions for property names.
@@ -375,7 +374,7 @@ class RunControlContext(object):
         @param done - command result call back object.
         @return pending command handle, can be used to cancel the command.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def suspend(self, done):
         """
@@ -384,7 +383,7 @@ class RunControlContext(object):
         @param done - command result call back object.
         @return pending command handle, can be used to cancel the command.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
 #    def resume(self, mode, count, done):
 #        """
@@ -395,7 +394,7 @@ class RunControlContext(object):
 #        @param done - command result call back object.
 #        @return pending command handle, can be used to cancel the command.
 #        """
-#        raise exceptions.NotImplementedError("Abstract method")
+#        raise NotImplementedError("Abstract method")
 
     def resume(self, mode, count, params, done):
         """
@@ -407,7 +406,7 @@ class RunControlContext(object):
         @param done - command result call back object.
         @return pending command handle, can be used to cancel the command.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def terminate(self, done):
         """
@@ -415,7 +414,7 @@ class RunControlContext(object):
         @param done - command result call back object.
         @return pending command handle, can be used to cancel the command.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
 class RunControlListener(object):
     "Service events listener interface."
@@ -456,7 +455,7 @@ class RunControlListener(object):
         """
         Called when target simultaneously suspends multiple threads in a container
         (process, core, etc.).
-        
+
         @param context - ID of a context responsible for the event. It can be container ID or
         any one of container children, for example, it can be thread that hit "suspend all" breakpoint.
         Client expected to move focus (selection) to this context.
@@ -470,7 +469,7 @@ class RunControlListener(object):
         """
         Called when target simultaneously resumes multiple threads in a container (process,
         core, etc.).
-        
+
         @param context_ids - full list of all contexts that were resumed.
         """
         pass

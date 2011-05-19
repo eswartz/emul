@@ -9,7 +9,7 @@
 # *     Wind River Systems - initial API and implementation
 # *******************************************************************************
 
-import cStringIO, json, binascii, types, exceptions
+import cStringIO, json, binascii, types
 
 # channel states
 STATE_OPENING = 0
@@ -166,7 +166,7 @@ def fromJSONSequence(bytes):
 
 def dumpJSONObject(object, buf):
         json.dump(object, buf, separators=(',', ':'), cls=TCFJSONEncoder)
-    
+
 def toByteArray(data):
     if data is None: return None
     t = type(data)
@@ -175,12 +175,14 @@ def toByteArray(data):
         return binascii.a2b_base64(data)
     elif t is unicode:
         return binascii.a2b_base64(str(data))
-    raise exceptions.TypeError(str(t))
+    raise TypeError(str(t))
 
 class TCFJSONEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, bytearray):
             return binascii.b2a_base64(o)[:-1]
+        elif hasattr(o, '__json__'):
+            return o.__json__()
         elif hasattr(o, '__iter__'):
             return tuple(o)
         else:

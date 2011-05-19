@@ -9,7 +9,7 @@
 # *     Wind River Systems - initial API and implementation
 # *******************************************************************************
 
-import exceptions, threading
+import threading
 from tcf import protocol, channel
 
 class DelegatingEventListener(channel.EventListener):
@@ -19,7 +19,7 @@ class DelegatingEventListener(channel.EventListener):
         try:
             args = channel.fromJSONSequence(data)
             self._callable(self.svc_name, name, *args)
-        except exceptions.Exception as x:
+        except Exception as x:
             protocol.log("Error decoding event data", x)
 
 def _print_event(service, name, *args):
@@ -79,7 +79,7 @@ class Event(object):
         self.name = name
         try:
             self.args = channel.fromJSONSequence(data)
-        except exceptions.Exception as x:
+        except Exception as x:
             protocol.log("Error decoding event data", x)
     def __str__(self):
         return "Event: %s.%s%s" % (self.service, self.name, tuple(self.args))

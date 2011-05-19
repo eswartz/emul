@@ -4,12 +4,11 @@
 # * are made available under the terms of the Eclipse Public License v1.0
 # * which accompanies this distribution, and is available at
 # * http://www.eclipse.org/legal/epl-v10.html
-# * 
+# *
 # * Contributors:
 # *     Wind River Systems - initial API and implementation
 #******************************************************************************
 
-import exceptions
 from tcf import services
 
 NAME = "StackTrace"
@@ -32,19 +31,19 @@ PROP_ARGUMENTS_ADDRESS = "ArgsAddr"    # Number, memory address of function argu
 class StackTraceService(services.Service):
     def getName(self):
         return NAME
-    
+
     def getContext(self, ids, done):
         """
         Retrieve context info for given context IDs.
-        
+
         The command will fail if parent thread is not suspended.
         Client can use Run Control service to suspend a thread.
-        
+
         @param ids - array of context IDs.
         @param done - call back interface called when operation is completed.
         """
-        raise exceptions.NotImplementedError("Abstract method")
-        
+        raise NotImplementedError("Abstract method")
+
     def getChildren(self, parent_context_id, done):
         """
         Retrieve stack trace context list.
@@ -52,14 +51,14 @@ class StackTraceService(services.Service):
         Some targets have more then one stack. In such case children of a thread
         are stacks, and stack frames are deeper in the hierarchy - they can be
         retrieved with additional getChildren commands.
-        
+
         The command will fail if parent thread is not suspended.
         Client can use Run Control service to suspend a thread.
-        
+
         @param parent_context_id - parent context ID.
         @param done - call back interface called when operation is completed.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
 class DoneGetContext(object):
     """
@@ -92,7 +91,7 @@ class StackTraceContext(object):
     """
     def __init__(self, props):
         self._props = props or {}
-    
+
     def __str__(self):
         return "[Stack Trace Context %s]" % self._props
 
@@ -102,7 +101,7 @@ class StackTraceContext(object):
         @return context ID.
         """
         return self._props.get(PROP_ID)
-    
+
     def getParentID(self):
         """
         Get parent context ID.

@@ -9,7 +9,7 @@
 # *     Wind River Systems - initial API and implementation
 # *******************************************************************************
 
-import threading, exceptions, collections
+import threading, collections
 from tcf import protocol
 
 _providers = []
@@ -45,7 +45,7 @@ def onChannelCreated(channel, services_by_name):
                 for service in arr:
                     if services_by_name.has_key(service.getName()): continue
                     services_by_name[service.getName()] = service
-            except exceptions.Exception as x:
+            except Exception as x:
                 protocol.log("Error calling TCF service provider", x);
 
 def onChannelOpened(channel, service_names, services_by_name):
@@ -57,7 +57,7 @@ def onChannelOpened(channel, service_names, services_by_name):
                     if not service: continue
                     services_by_name[name] = service
                     break
-                except exceptions.Exception as x:
+                except Exception as x:
                     protocol.log("Error calling TCF service provider", x)
             if services_by_name.has_key(name): continue
             services_by_name[name] = GenericProxy(channel, name)
@@ -76,7 +76,7 @@ class GenericCallback(object):
 
 class Service(object):
     def getName(self):
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
     def __str__(self):
         return self.getName()
     def _makeCallback(self, done):
@@ -118,9 +118,9 @@ class DefaultServiceProvider(ServiceProvider):
             cls = clsModule.__dict__.get(clsName)
             service = cls(channel)
             assert service_name == service.getName()
-        except exceptions.ImportError:
+        except ImportError:
             pass
-        except exceptions.Exception as x:
+        except Exception as x:
             protocol.log("Cannot instantiate service proxy for "+service_name, x)
         return service
 

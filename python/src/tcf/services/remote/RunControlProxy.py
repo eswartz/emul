@@ -9,7 +9,6 @@
 # *     Wind River Systems - initial API and implementation
 # *******************************************************************************
 
-import exceptions
 from tcf import channel
 from tcf.services import runcontrol
 from tcf.channel.Command import Command
@@ -85,10 +84,10 @@ class ChannelEventListener(channel.EventListener):
                 self.listener.contextResumed(args[0])
             elif name == "contextAdded":
                 assert len(args) == 1
-                self.listener.contextAdded(args[0])
+                self.listener.contextAdded(_toContextArray(args[0]))
             elif name == "contextChanged":
                 assert len(args) == 1
-                self.listener.contextChanged(args[0])
+                self.listener.contextChanged(_toContextArray(args[0]))
             elif name == "contextRemoved":
                 assert len(args) == 1
                 self.listener.contextRemoved(args[0])
@@ -103,7 +102,7 @@ class ChannelEventListener(channel.EventListener):
                 self.listener.containerResumed(args[0])
             else:
                 raise IOError("RunControl service: unknown event: " + name);
-        except exceptions.Exception as x:
+        except Exception as x:
             self.service.channel.terminate(x)
 
 class RunControlProxy(runcontrol.RunControlService):
@@ -151,3 +150,9 @@ class RunControlProxy(runcontrol.RunControlService):
                     contexts = args[1]
                 done.doneGetChildren(self.token, error, contexts)
         return GetChildrenCommand().token
+
+def _toContextArray(o):
+    if o is None: return None
+    ctx = []
+    for m in o: ctx.append(RunContext(m))
+    return ctx

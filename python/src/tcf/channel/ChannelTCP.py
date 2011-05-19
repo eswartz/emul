@@ -30,9 +30,9 @@ class ChannelTCP(StreamChannel):
                 channel.socket = sock
                 channel._onSocketConnected(None)
         protocol.invokeLater(CreateSocket())
-        
+
     def _onSocketConnected(self, x):
-        if x: 
+        if x:
             self.terminate(x)
             self.closed = True
         if self.closed:
@@ -44,7 +44,7 @@ class ChannelTCP(StreamChannel):
         else:
             self.started = True
             self.start()
-    
+
     def get(self):
         if self.closed: return -1
         try:

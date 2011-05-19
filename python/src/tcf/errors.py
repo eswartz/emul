@@ -9,7 +9,7 @@
 # *     Wind River Systems - initial API and implementation
 # *******************************************************************************
 
-import exceptions, cStringIO, time, types
+import cStringIO, time, types
 
 # Error report attribute names
 ERROR_CODE = "Code"           # integer
@@ -72,7 +72,7 @@ TCF_ERROR_NOT_ACTIVE          = 28
 
 _timestamp_format = "%Y-%m-%d %H:%M:%S"
 
-class ErrorReport(exceptions.Exception):
+class ErrorReport(Exception):
     def __init__(self, msg, attrs):
         super(ErrorReport, self).__init__(msg)
         if type(attrs) is types.IntType:

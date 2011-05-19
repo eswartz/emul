@@ -17,12 +17,12 @@ ESC = 3
 class StreamChannel(AbstractChannel):
     """
     Abstract channel implementation for stream oriented transport protocols.
-    
+
     StreamChannel implements communication link connecting two end points (peers).
     The channel asynchronously transmits messages: commands, results and events.
-    
+
     StreamChannel uses escape sequences to represent End-Of-Message and End-Of-Stream markers.
-    
+
     Clients can subclass StreamChannel to support particular stream oriented transport (wire) protocol.
     Also, see ChannelTCP for a concrete IChannel implementation that works on top of TCP sockets as a transport.
     """

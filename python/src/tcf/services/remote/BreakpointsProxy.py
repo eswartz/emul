@@ -9,7 +9,6 @@
 # *     Wind River Systems - initial API and implementation
 # *******************************************************************************
 
-import exceptions
 from tcf import channel
 from tcf.services import breakpoints
 from tcf.channel.Command import Command
@@ -46,7 +45,7 @@ class ChannelEventListener(channel.EventListener):
                 self.listener.contextRemoved(args[0])
             else:
                 raise IOError("Breakpoints service: unknown event: " + name);
-        except exceptions.Exception as x:
+        except Exception as x:
             self.service.channel.terminate(x)
 
 class BreakpointsProxy(breakpoints.BreakpointsService):

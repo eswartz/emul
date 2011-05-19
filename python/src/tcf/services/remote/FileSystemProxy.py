@@ -132,7 +132,7 @@ class FileSystemProxy(filesystem.FileSystemService):
                     if not s: a = _toFileAttrs(args[1])
                 done.doneStat(self.token, s, a)
         return StatCommand().token
-    
+
     def fstat(self, handle, done):
         done = self._makeCallback(done)
         assert handle.getService() is self
@@ -416,7 +416,7 @@ class FileSystemProxy(filesystem.FileSystemService):
         service = self
         class CopyCommand(FileSystemCommand):
             def __init__(self):
-                super(CopyCommand, self).__init__(service, "copy", 
+                super(CopyCommand, self).__init__(service, "copy",
                         (id, src_path, dst_path, copy_permissions, copy_uidgid))
             def done(self, error, args):
                 s = None

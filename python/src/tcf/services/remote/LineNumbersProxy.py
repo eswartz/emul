@@ -22,7 +22,7 @@ class LineNumbersProxy(linenumbers.LineNumbersService):
         service = self
         class MapCommand(Command):
             def __init__(self):
-                super(MapCommand, self).__init__(service.channel, service, 
+                super(MapCommand, self).__init__(service.channel, service,
                         "mapToSource", (context_id, start_address, end_address))
             def done(self, error, args):
                 arr = None
@@ -38,7 +38,7 @@ class LineNumbersProxy(linenumbers.LineNumbersService):
         service = self
         class MapCommand(Command):
             def __init__(self):
-                super(MapCommand, self).__init__(service.channel, service, 
+                super(MapCommand, self).__init__(service.channel, service,
                         "mapToMemory", (context_id, file, line, column))
             def done(self, error, args):
                 arr = None

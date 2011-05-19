@@ -14,7 +14,6 @@ Expressions service allows TCF client to perform expression evaluation on remote
 The service can be used to retrieve or modify values of variables or any data structures in remote target memory.
 """
 
-import exceptions
 from tcf import services
 
 # Service name.
@@ -176,17 +175,17 @@ VAL_BIG_ENDIAN = "BigEndian"
 class ExpressionsService(services.Service):
     def getName(self):
         return NAME
-    
+
     def getContext(self, id, done):
         """
         Retrieve expression context info for given context ID.
         @see Expression
-        
+
         @param id - context ID.
         @param done - call back interface called when operation is completed.
         @return - pending command handle.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def getChildren(self, parent_context_id, done):
         """
@@ -198,15 +197,15 @@ class ExpressionsService(services.Service):
         4. stack frame - function arguments and local variables
         5. thread - top stack frame function arguments and local variables
         6. process - global variables
-        
+
         Children list *does not* include IDs of expressions that were created by clients
         using "create" command.
-        
+
         @param parent_context_id - parent context ID.
         @param done - call back interface called when operation is completed.
         @return - pending command handle.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def create(self, parent_id, language, expression, done):
         """
@@ -218,7 +217,7 @@ class ExpressionsService(services.Service):
         @param done - call back interface called when operation is completed.
         @return - pending command handle.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def dispose(self, id, done):
         """
@@ -227,7 +226,7 @@ class ExpressionsService(services.Service):
         @param done - call back interface called when operation is completed.
         @return - pending command handle.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def evaluate(self, id, done):
         """
@@ -236,7 +235,7 @@ class ExpressionsService(services.Service):
         @param done - call back interface called when operation is completed.
         @return - pending command handle.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def assign(self, id, value, done):
         """
@@ -246,21 +245,21 @@ class ExpressionsService(services.Service):
         @param done - call back interface called when operation is completed.
         @return - pending command handle.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def addListener(self, listener):
         """
         Add expressions service event listener.
         @param listener - event listener implementation.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def removeListener(self, listener):
         """
         Remove expressions service event listener.
         @param listener - event listener implementation.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
 class DoneGetContext(object):
     """

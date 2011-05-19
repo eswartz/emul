@@ -9,7 +9,6 @@
 # *     Wind River Systems - initial API and implementation
 # *******************************************************************************
 
-import exceptions
 from tcf import channel
 from tcf.services import processes
 from tcf.channel.Command import Command
@@ -53,7 +52,7 @@ class ProcessesProxy(processes.ProcessesService):
         service = self
         class GetChildrenCommand(Command):
             def __init__(self):
-                super(GetChildrenCommand, self).__init__(service.channel, service, 
+                super(GetChildrenCommand, self).__init__(service.channel, service,
                         "getChildren", (parent_context_id, attached_only))
             def done(self, error, args):
                 contexts = None
@@ -196,7 +195,7 @@ class ChannelEventListener(channel.EventListener):
                 self.listener.exited(args[0], args[1])
             else:
                 raise IOError("Processes service: unknown event: " + name);
-        except exceptions.Exception as x:
+        except Exception as x:
             self.service.channel.terminate(x)
 
 def _toEnvStringArray(map):

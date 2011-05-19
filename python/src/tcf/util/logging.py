@@ -48,7 +48,7 @@ def trace(msg):
     logger implementation may or may not inject its own timestamp. For
     tracing, we definitely need one, so we introduce a minimal, relative-time
     stamp.
-    
+
     @param msg  the trace message
     """
     protocol.log('%s %s' % (getDebugTime(), msg))

@@ -21,7 +21,6 @@ available for client to read/write using Streams service. Stream type of such
 streams is set to "Processes".
 """
 
-import exceptions
 from tcf import services
 
 NAME = "Processes"
@@ -82,23 +81,23 @@ class ProcessesService(services.Service):
         However, 'Processes.getContext' is supposed to return only process specific data,
         If the ID is not a process ID, 'IProcesses.getContext' may not return any
         useful information
-        
+
         @param id - context ID.
         @param done - call back interface called when operation is completed.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def getChildren(self, parent_context_id, attached_only, done):
         """
         Retrieve children of given context.
-        
+
         @param parent_context_id - parent context ID. Can be None -
         to retrieve top level of the hierarchy, or one of context IDs retrieved
         by previous getContext or getChildren commands.
         @param attached_only - if True return only attached process IDs.
         @param done - call back interface called when operation is completed.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def getSignalList(self, context_id, done):
         """
@@ -107,7 +106,7 @@ class ProcessesService(services.Service):
         @param done - call back interface called when operation is completed.
         @return pending command handle, can be used to cancel the command.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def getSignalMask(self, context_id, done):
         """
@@ -118,7 +117,7 @@ class ProcessesService(services.Service):
         @param done - call back interface called when operation is completed.
         @return pending command handle, can be used to cancel the command.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def setSignalMask(self, context_id, dont_stop, dont_pass, done):
         """
@@ -131,7 +130,7 @@ class ProcessesService(services.Service):
         @param done - call back interface called when operation is completed.
         @return pending command handle, can be used to cancel the command.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def signal(self, context_id, signal, done):
         """
@@ -141,7 +140,7 @@ class ProcessesService(services.Service):
         @param done - call back interface called when operation is completed.
         @return pending command handle, can be used to cancel the command.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def getEnvironment(self, done):
         """
@@ -149,7 +148,7 @@ class ProcessesService(services.Service):
         @param done - call back interface called when operation is completed.
         @return pending command handle, can be used to cancel the command.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def start(self, directory, file, command_line, environment, attach, done):
         """
@@ -165,21 +164,21 @@ class ProcessesService(services.Service):
         @param done - call back interface called when operation is completed.
         @return pending command handle, can be used to cancel the command.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def addListener(self, listener):
         """
         Add processes service event listener.
         @param listener - event listener implementation.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def removeListener(self, listener):
         """
         Remove processes service event listener.
         @param listener - event listener implementation.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
 
 class ProcessContext(object):
@@ -188,7 +187,7 @@ class ProcessContext(object):
 
     def __str__(self):
         return "[Processes Context %s]" % self._props
-        
+
     def getProperties(self):
         """
         Get context properties. See PROP_* definitions for property names.
@@ -240,7 +239,7 @@ class ProcessContext(object):
         @param done - call back interface called when operation is completed.
         @return pending command handle, can be used to cancel the command.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def detach(self, done):
         """
@@ -249,7 +248,7 @@ class ProcessContext(object):
         @param done - call back interface called when operation is completed.
         @return pending command handle, can be used to cancel the command.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def terminate(self, done):
         """
@@ -257,7 +256,7 @@ class ProcessContext(object):
         @param done - call back interface called when operation is completed.
         @return pending command handle, can be used to cancel the command.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
 class DoneCommand(object):
     """

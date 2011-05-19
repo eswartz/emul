@@ -9,7 +9,6 @@
 # *     Wind River Systems - initial API and implementation
 # *******************************************************************************
 
-import exceptions
 from tcf import channel
 from tcf.services import expressions
 from tcf.channel.Command import Command
@@ -130,5 +129,5 @@ class ChannelEventListener(channel.EventListener):
                 self.listener.valueChanged(args[0])
             else:
                 raise IOError("Expressions service: unknown event: " + name);
-        except exceptions.Exception as x:
+        except Exception as x:
             self.service.channel.terminate(x)

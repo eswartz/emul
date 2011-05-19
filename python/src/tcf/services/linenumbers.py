@@ -14,7 +14,6 @@ Line numbers service associates locations in the source files with the correspon
 machine instruction addresses in the executable object.
 """
 
-import exceptions
 from tcf import services
 
 NAME = "LineNumbers"
@@ -119,10 +118,10 @@ class LineNumbersService(services.Service):
         return NAME
 
     def mapToSource(self, context_id, start_address, end_address, done):
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def mapToMemory(self, context_id, file, line, column, done):
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
 class DoneMapToSource(object):
     def doneMapToSource(self, token, error, areas):

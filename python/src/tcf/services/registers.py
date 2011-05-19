@@ -13,7 +13,6 @@
 Registers service provides access to target CPU register values and properties.
 """
 
-import exceptions
 from tcf import services
 
 NAME = "Registers"
@@ -63,7 +62,7 @@ class RegistersContext(object):
 
     def __str__(self):
         return "[Registers Context %s]" % self._props
-            
+
     def getProperties(self):
         """
         Get context properties. See PROP_* definitions for property names.
@@ -243,7 +242,7 @@ class RegistersContext(object):
         @param done - call back object.
         @return - pending command handle.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def set(self, value, done):
         """
@@ -252,7 +251,7 @@ class RegistersContext(object):
         @param done - call back object.
         @return - pending command handle.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def search(self, filter, done):
         """
@@ -262,7 +261,7 @@ class RegistersContext(object):
         @param done - call back object.
         @return - pending command handle.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
 
 class RegistersService(services.Service):
@@ -272,11 +271,11 @@ class RegistersService(services.Service):
     def getContext(self, id, done):
         """
         Retrieve context info for given context ID.
-        
+
         @param id - context ID.
         @param done - call back interface called when operation is completed.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def getChildren(self, parent_context_id, done):
         """
@@ -288,13 +287,13 @@ class RegistersService(services.Service):
         all services. In other words, all services access same hierarchy of contexts,
         with same IDs, however, each service accesses its own subset of context's
         attributes and functionality, which is relevant to that service.
-        
+
         @param parent_context_id - parent context ID. Can be None -
         to retrieve top level of the hierarchy, or one of context IDs retrieved
         by previous getChildren commands.
         @param done - call back interface called when operation is completed.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def getm(self, locs, done):
         """
@@ -303,8 +302,8 @@ class RegistersService(services.Service):
         @param done - call back object.
         @return - pending command handle.
         """
-        raise exceptions.NotImplementedError("Abstract method")
-        
+        raise NotImplementedError("Abstract method")
+
     def setm(self, locs, value, done):
         """
         Set values of multiple locations in registers.
@@ -313,21 +312,21 @@ class RegistersService(services.Service):
         @param done - call back object.
         @return - pending command handle.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def addListener(self, listener):
         """
         Add registers service event listener.
         @param listener - event listener implementation.
         """
-        raise exceptions.NotImplementedError("Abstract method")
-        
+        raise NotImplementedError("Abstract method")
+
     def removeListener(self, listener):
         """
         Remove registers service event listener.
         @param listener - event listener implementation.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
 
 class NamedValue(object):

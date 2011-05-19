@@ -9,7 +9,6 @@
 # *     Wind River Systems - initial API and implementation
 # *******************************************************************************
 
-import exceptions
 from tcf import channel
 from tcf.services import registers
 from tcf.channel import toByteArray
@@ -19,7 +18,7 @@ class Context(registers.RegistersContext):
     def __init__(self, service, props):
         super(Context, self).__init__(props)
         self.service = service
-    
+
     def getNamedValues(self):
         return _toValuesArray(self._props.get(registers.PROP_VALUES))
 
@@ -173,5 +172,5 @@ class ChannelEventListener(channel.EventListener):
                 self.listener.registerChanged(args[0])
             else:
                 raise IOError("Registers service: unknown event: " + name);
-        except exceptions.Exception as x:
+        except Exception as x:
             self.service.channel.terminate(x)

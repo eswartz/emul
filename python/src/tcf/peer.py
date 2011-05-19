@@ -24,41 +24,41 @@ service manger would create a peer for every subnet it wants to participate in.
 All peers of particular service manager represent identical sets of services.
 """
 
-import os, exceptions, time, json
+import os, time, json
 from tcf import protocol, transport, services
 from tcf.services import locator
 
-# Peer unique ID 
+# Peer unique ID
 ATTR_ID = "ID"
 
-# Unique ID of service manager that is represented by this peer 
+# Unique ID of service manager that is represented by this peer
 ATTR_SERVICE_MANAGER_ID = "ServiceManagerID"
 
-# Agent unique ID 
+# Agent unique ID
 ATTR_AGENT_ID = "AgentID"
 
-# Peer name 
+# Peer name
 ATTR_NAME = "Name"
 
-# Name of the peer operating system 
+# Name of the peer operating system
 ATTR_OS_NAME = "OSName"
 
-# Transport name, for example TCP, SSL 
+# Transport name, for example TCP, SSL
 ATTR_TRANSPORT_NAME = "TransportName"
 
-# If present, indicates that the peer can forward traffic to other peers 
+# If present, indicates that the peer can forward traffic to other peers
 ATTR_PROXY = "Proxy"
 
-# Host DNS name or IP address 
+# Host DNS name or IP address
 ATTR_IP_HOST = "Host"
 
-# Optional list of host aliases 
+# Optional list of host aliases
 ATTR_IP_ALIASES = "Aliases"
 
-# Optional list of host addresses 
+# Optional list of host addresses
 ATTR_IP_ADDRESSES = "Addresses"
 
-# IP port number, must be decimal number 
+# IP port number, must be decimal number
 ATTR_IP_PORT = "Port"
 
 
@@ -106,7 +106,7 @@ class Peer(object):
                  channel = peer.openChannel()
                  channel.addChannelListener(...)
         """
-        raise exceptions.RuntimeError("Abstract method")
+        raise RuntimeError("Abstract method")
 
 
 class TransientPeer(Peer):
@@ -136,7 +136,7 @@ class LocalPeer(TransientPeer):
     """
     def __init__(self):
         super(LocalPeer, self).__init__(self.createAttributes())
-    
+
     def createAttributes(self):
         attrs = {
             ATTR_ID : "TCFLocal",
@@ -202,24 +202,24 @@ class AbstractPeer(TransientPeer):
             for l in protocol.getLocator().getListeners():
                 try:
                     l.peerChanged(self)
-                except exceptions.Exception as x:
+                except Exception as x:
                     protocol.log("Unhandled exception in Locator listener", x)
             try:
                 args = [self.rw_attrs]
                 protocol.sendEvent(locator.NAME, "peerChanged", json.dumps(args))
-            except exceptions.IOError as x:
+            except IOError as x:
                 protocol.log("Locator: failed to send 'peerChanged' event", x)
             self.last_heart_beat_time = timeVal
         elif self.last_heart_beat_time + locator.DATA_RETENTION_PERIOD / 4 < timeVal:
             for l in protocol.getLocator().getListeners():
                 try:
                     l.peerHeartBeat(attrs.get(ATTR_ID))
-                except exceptions.Exception as x:
+                except Exception as x:
                     protocol.log("Unhandled exception in Locator listener", x)
             try:
                 args = [self.rw_attrs.get(ATTR_ID)]
                 protocol.sendEvent(locator.NAME, "peerHeartBeat", json.dumps(args))
-            except exceptions.IOError as x:
+            except IOError as x:
                 protocol.log("Locator: failed to send 'peerHeartBeat' event", x)
             self.last_heart_beat_time = timeVal
 
@@ -227,12 +227,12 @@ class AbstractPeer(TransientPeer):
         for l in protocol.getLocator().getListeners():
             try:
                 l.peerAdded(self)
-            except exceptions.Exception as x:
+            except Exception as x:
                 protocol.log("Unhandled exception in Locator listener", x)
         try:
             args = [self.rw_attrs]
             protocol.sendEvent(locator.NAME, "peerAdded", json.dumps(args))
-        except exceptions.IOError as x:
+        except IOError as x:
             protocol.log("Locator: failed to send 'peerAdded' event", x)
         self.last_heart_beat_time = int(time.time())
 
@@ -240,12 +240,12 @@ class AbstractPeer(TransientPeer):
         for l in protocol.getLocator().getListeners():
             try:
                 l.peerRemoved(self.rw_attrs.get(ATTR_ID))
-            except exceptions.Exception as x:
+            except Exception as x:
                 protocol.log("Unhandled exception in Locator listener", x)
         try:
             args = [self.rw_attrs.get(ATTR_ID)]
             protocol.sendEvent(locator.NAME, "peerRemoved", json.dumps(args))
-        except exceptions.IOError as x:
+        except IOError as x:
             protocol.log("Locator: failed to send 'peerRemoved' event", x)
 
 

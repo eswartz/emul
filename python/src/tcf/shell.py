@@ -15,7 +15,7 @@ TCF extensions.
 
 Usage:
     python tcf/shell.py
-    
+
 Commands:
     connect(params)    - Connect to TCF peer, params = "<protocol>:<host>:<port>"
     cmd.<service>.<command<(args)

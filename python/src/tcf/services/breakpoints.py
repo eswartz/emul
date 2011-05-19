@@ -23,7 +23,6 @@ persistent and represent user input, breakpoint status reflects dynamic target a
 about breakpoint current state, like actual addresses where breakpoint is planted or planting errors.
 """
 
-import exceptions
 from tcf import services
 
 # Service name.
@@ -98,7 +97,7 @@ CAPABILITY_ACCESSMODE = "AccessMode"           # Number
 class BreakpointsService(services.Service):
     def getName(self):
         return NAME
-    
+
     def set(self, properties, done):
         """
         Download breakpoints data to target agent.
@@ -106,13 +105,13 @@ class BreakpointsService(services.Service):
         when communication channel is open. After that, host should
         notify target about (incremental) changes in breakpoint data by sending
         add, change and remove commands.
-        
+
         @param properties - array of breakpoints.
         @param done - command result call back object.
         @return - pending command handle.
         @see DoneCommand
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def add(self, properties, done):
         """
@@ -122,7 +121,7 @@ class BreakpointsService(services.Service):
         @return - pending command handle.
         @see DoneCommand
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def change(self, properties, done):
         """
@@ -132,7 +131,7 @@ class BreakpointsService(services.Service):
         @return - pending command handle.
         @see DoneCommand
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def enable(self, ids, done):
         """
@@ -142,7 +141,7 @@ class BreakpointsService(services.Service):
         @return - pending command handle.
         @see DoneCommand
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def disable(self, ids, done):
         """
@@ -152,7 +151,7 @@ class BreakpointsService(services.Service):
         @return - pending command handle.
         @see DoneCommand
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def remove(self, ids, done):
         """
@@ -162,7 +161,7 @@ class BreakpointsService(services.Service):
         @return - pending command handle.
         @see DoneCommand
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def getIDs(self, done):
         """
@@ -171,7 +170,7 @@ class BreakpointsService(services.Service):
         @return - pending command handle.
         @see DoneGetIDs
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def getProperties(self, id, done):
         """
@@ -180,7 +179,7 @@ class BreakpointsService(services.Service):
         @param done - command result call back object.
         @see DoneGetProperties
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def getStatus(self, id, done):
         """
@@ -190,7 +189,7 @@ class BreakpointsService(services.Service):
         @return - pending command handle.
         @see DoneGetStatus
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def getCapabilities(self, id, done):
         """
@@ -205,21 +204,21 @@ class BreakpointsService(services.Service):
         @return - pending command handle.
         @see DoneGetCapabilities
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def addListener(self, listener):
         """
         Add breakpoints service event listener.
         @param listener - object that implements BreakpointsListener interface.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def removeListener(self, listener):
         """
         Remove breakpoints service event listener.
         @param listener - object that implements BreakpointsListener interface.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
 
 class DoneCommand(object):

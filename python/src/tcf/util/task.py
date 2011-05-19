@@ -9,7 +9,7 @@
 #     Wind River Systems - initial API and implementation
 #******************************************************************************
 
-import threading, exceptions
+import threading
 from tcf import protocol
 
 class Task(object):
@@ -18,12 +18,12 @@ class Task(object):
     communication over TCF framework.  Methods are provided to check if the communication is
     complete, to wait for its completion, and to retrieve the result of
     the communication.
-    
+
     Task is useful when communication is requested by a thread other then TCF dispatch thread.
     If client has a global state, for example, cached remote data, multithreading should be avoided,
     because it is extremely difficult to ensure absence of racing conditions or deadlocks in such environment.
     Such clients should consider message driven design, see DataCache and its usage as an example.
-    
+
     If a client is extending Task it should implement run() method to perform actual communications.
     The run() method will be execute by TCF dispatch thread, and client code should then call either done() or
     error() to indicate that task computations are complete.
@@ -33,7 +33,7 @@ class Task(object):
     __error = None
     __canceled = False
     __channel = None
-    
+
     def __init__(self, target=None, *args, **kwargs):
         """
         Construct a TCF task object and schedule it for execution.
@@ -42,7 +42,7 @@ class Task(object):
             kwargs["done"] = self.__done
         else:
             target = self.run
-            
+
         self._target = target
         self._args = args
         self._kwargs = kwargs
@@ -89,10 +89,10 @@ class Task(object):
     def __doRun(self):
         try:
             self._target(*self._args, **self._kwargs)
-        except exceptions.Exception as x:
+        except Exception as x:
             if not self.__is_done and self.__error is None:
                 self.error(x)
-    
+
     def __done(self, error, result):
         if error:
             self.error(error)
@@ -100,8 +100,8 @@ class Task(object):
             self.done(result)
 
     def run(self, *args, **kwargs):
-        raise exceptions.NotImplementedError("Abstract method")
-    
+        raise NotImplementedError("Abstract method")
+
     def done(self, result):
         with self._lock:
             assert protocol.isDispatchThread()
@@ -119,7 +119,7 @@ class Task(object):
         """
         Set a __error and notify all threads waiting for the task to complete.
         The method is supposed to be called in response to executing of run() method of this task.
-        
+
         @param __error - computation __error.
         """
         assert protocol.isDispatchThread()
@@ -139,7 +139,7 @@ class Task(object):
         with self._lock:
             if self.isDone(): return False
             self.__canceled = True
-            self.__error = exceptions.Exception("Canceled")
+            self.__error = Exception("Canceled")
             if self.__channel:
                 self.__channel.removeChannelListener(self.channel_listener)
             self._lock.notifyAll()
@@ -149,7 +149,7 @@ class Task(object):
         """
         Waits if necessary for the computation to complete, and then
         retrieves its result.
-        
+
         @return the computed result
         @throws CancellationException if the computation was __canceled
         @throws ExecutionException if the computation threw an
@@ -164,14 +164,14 @@ class Task(object):
                 if timeout and not self.isDone():
                     raise TimeoutException("Timed out")
             if self.__error:
-                raise exceptions.Exception("TCF task aborted", self.__error)
+                raise Exception("TCF task aborted", self.__error)
             return self.__result
 
     def isCancelled(self):
         """
         Returns <tt>true</tt> if this task was __canceled before it completed
         normally.
-        
+
         @return <tt>true</tt> if task was __canceled before it completed
         """
         with self._lock:
@@ -180,11 +180,11 @@ class Task(object):
     def isDone(self):
         """
         Returns <tt>true</tt> if this task completed.
-        
+
         Completion may be due to normal termination, an exception, or
         cancellation -- in all of these cases, this method will return
         <tt>true</tt>.
-        
+
         @return <tt>true</tt> if this task completed.
         """
         with self._lock:
@@ -200,5 +200,5 @@ class Task(object):
     def getResult(self):
         return self.__result
 
-class TimeoutException(exceptions.Exception):
+class TimeoutException(Exception):
     pass

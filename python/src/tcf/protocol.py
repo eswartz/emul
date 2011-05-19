@@ -19,7 +19,7 @@ It also provides utility methods for posting asynchronous events,
 including delayed events (timers).
 """
 
-import sys, uuid, threading, exceptions
+import sys, uuid, threading
 from EventQueue import EventQueue
 
 _event_queue = None
@@ -43,7 +43,7 @@ def isDispatchThread():
     Returns true if the calling thread is the TCF event dispatch thread.
     Use this call to ensure that a given task is being executed (or not being)
     on dispatch thread.
-    
+
     @return true if running on the dispatch thread.
     """
     return _event_queue is not None and _event_queue.isDispatchThread()
@@ -56,9 +56,9 @@ def invokeLater(callable, *args, **kwargs):
     If invokeLater is called from the dispatching thread
     the callable will still be deferred until
     all pending events have been processed.
-    
+
     This method can be invoked from any thread.
-    
+
     @param callable the callable to be executed asynchronously
     """
     _event_queue.invokeLater(callable, *args, **kwargs)
@@ -67,9 +67,9 @@ def invokeLaterWithDelay(delay, callable, *args, **kwargs):
     """
     Causes callable event to called in the dispatch thread of the framework.
     The event is dispatched after given delay.
-    
+
     This method can be invoked from any thread.
-    
+
     @param delay     milliseconds to delay event dispatch.
                      If delay <= 0 the event is posted into the
                      "ready" queue without delay.
@@ -79,7 +79,7 @@ def invokeLaterWithDelay(delay, callable, *args, **kwargs):
         _event_queue.invokeLater(callable, *args, **kwargs)
     else:
         # TODO timer_queue
-        raise exceptions.NotImplementedError("Implement invokeLaterWithDelay")
+        raise NotImplementedError("Implement invokeLaterWithDelay")
 #        synchronized (timer_queue) {
 #            timer_queue.add(new Timer(System.currentTimeMillis() + delay, runnable))
 #            timer_queue.notify()
@@ -90,9 +90,9 @@ def invokeAndWait(callable, *args, **kwargs):
     Calling thread is suspended until the method is executed.
     If invokeAndWait is called from the dispatching thread
     the callable is executed immediately.
-    
+
     This method can be invoked from any thread.
-    
+
     @param runnable  the callable to be executed on dispatch thread.
     """
     if _event_queue.isDispatchThread():
@@ -122,7 +122,7 @@ def setLogger(logger):
     """
     Set framework logger.
     By default sys.stderr is used.
-    
+
     @param logger - an object implementing Logger interface.
     """
     global _logger
@@ -175,7 +175,7 @@ class ChannelOpenListener(object):
     """
     Interface to be implemented by clients willing to be notified when
     new TCF communication channel is opened.
-    
+
     The interface allows a client to get pointers to channel objects
     that were opened by somebody else. If a client open a channel itself, it already has
     the pointer and does not need Protocol.ChannelOpenListener. If a channel is created,
@@ -217,10 +217,10 @@ def sync(done):
     Call back after all TCF messages sent by this host up to this moment are delivered
     to their intended target. This method is intended for synchronization of messages
     across multiple channels.
-    
+
     Note: Cross channel synchronization can reduce performance and throughput.
     Most clients don't need cross channel synchronization and should not call this method.
-    
+
     @param done will be executed by dispatch thread after pending communication
     messages are delivered to corresponding targets.
     """
@@ -245,7 +245,7 @@ class CongestionMonitor(object):
         @return integer value in range -100..100, where -100 means all resources are free,
                 0 means optimal load, and positive numbers indicate level of congestion.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
 _congestion_monitors = []
 def addCongestionMonitor(monitor):
@@ -267,7 +267,7 @@ def removeCongestionMonitor(monitor):
 def getCongestionLevel():
     """
     Get current level of local traffic congestion.
-    
+
     @return integer value in range -100..100, where -100 means no pending
           messages (no traffic), 0 means optimal load, and positive numbers
           indicate level of congestion.

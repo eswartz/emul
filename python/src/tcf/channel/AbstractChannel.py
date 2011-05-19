@@ -10,7 +10,6 @@
 # *******************************************************************************
 
 import sys, threading, time, types
-from exceptions import Exception, IOError
 from tcf import protocol, transport, services, peer, errors
 from tcf.services import locator
 from tcf.channel import STATE_CLOSED, STATE_OPEN, STATE_OPENING
@@ -43,7 +42,7 @@ class ReaderThread(threading.Thread):
         self.buf = bytearray()
         self.eos_err_report = None
         self.daemon = True
-        
+
     def error(self):
         raise IOError("Protocol syntax error")
 
@@ -128,7 +127,7 @@ class AbstractChannel(object):
     """
     AbstractChannel implements communication link connecting two end points (peers).
     The channel asynchronously transmits messages: commands, results and events.
-    
+
     Clients can subclass AbstractChannel to support particular transport (wire) protocol.
     Also, see StreamChannel for stream oriented transport protocols.
     """
@@ -163,7 +162,7 @@ class AbstractChannel(object):
         self.local_congestion_time = 0
         self.local_service_by_class = {}
         self.trace_listeners = []
-        
+
     def __write_output(self):
         try:
             while True:

@@ -14,7 +14,6 @@ ChannelProxy implements forwarding of TCF messages between two channels.
 The class is used to implement Locator service "redirect" command.
 """
 
-import exceptions
 from tcf import channel
 
 class ProxyCommandListener(channel.CommandListener):
@@ -27,7 +26,7 @@ class ProxyCommandListener(channel.CommandListener):
         self.ch.sendResult(self.tokens.pop(token, None), data)
     def terminated(self, token, error):
         self.ch.rejectCommand(self.tokens.pop(token, None))
-    
+
 class ChannelProxy(object):
     def __init__(self, x, y):
         #assert not isinstance(x, ChannelLoop)
@@ -41,7 +40,7 @@ class ChannelProxy(object):
         cmd_listener_x = ProxyCommandListener(self.ch_x, self.tokens_x)
         cmd_listener_y = ProxyCommandListener(self.ch_y, self.tokens_y)
         proxy = self
-        
+
         class ProxyX(channel.Proxy):
             def onChannelClosed(self, error):
                 proxy.closed_x = True
@@ -58,7 +57,7 @@ class ChannelProxy(object):
                 s = proxy.ch_x.getRemoteService(service)
                 if not s: proxy.ch_x.terminate(IOError("Invalid service name"))
                 elif not proxy.closed_y: proxy.ch_y.sendEvent(s, name, data)
-        
+
         class ProxyY(channel.Proxy):
             def onChannelClosed(self, error):
                 proxy.closed_y = True
@@ -84,7 +83,7 @@ class ChannelProxy(object):
             class ChannelListener(channel.ChannelListener):
                 def onChannelClosed(self, error):
                     proxy.ch_y.removeChannelListener(self)
-                    if error is None: error = exceptions.Exception("Channel closed")
+                    if error is None: error = Exception("Channel closed")
                 def onChannelOpened(self):
                     proxy.ch_y.removeChannelListener(self)
                     try:

@@ -18,8 +18,8 @@
       * [done] LineNumbers
       * [done] Processes
       * [done] FileSystem
-      * MemoryMap
-      * Memory
+      * [done] MemoryMap
+      * [done] Memory
       * PathMap
       * Diagnostics
       * Disassembly
@@ -29,6 +29,7 @@
    * Local services:
       * [incomplete] ZeroCopy
       * [done] Locator service (discovery)
+         * iterate over network interfaces
    * Utilities:
       * [done] ACPM data cache
       * [done] TCFTask

@@ -9,7 +9,7 @@
 # *     Wind River Systems - initial API and implementation
 # *******************************************************************************
 
-import sys, time, threading, exceptions
+import sys, time, threading
 import tcf
 from tcf import protocol, channel, errors
 from tcf.util import sync
@@ -24,12 +24,13 @@ class TraceListener(channel.TraceListener):
         print>>sys.stderr, "*** closed ***", error
 
 _suspended = []
+_memory = []
 
 def test():
     protocol.startEventQueue()
     try:
         c = tcf.connect("TCP:127.0.0.1:1534")
-    except exceptions.Exception as e:
+    except Exception as e:
         protocol.log(e)
         sys.exit()
     assert c.state == channel.STATE_OPEN
@@ -51,7 +52,9 @@ def test():
         testDataCache(c)
         testProcesses(c)
         testFileSystem(c)
-    except exceptions.Exception as e:
+        testMemory(c)
+        testMemoryMap(c)
+    except Exception as e:
         protocol.log(e)
 
     if c.state == channel.STATE_OPEN:
@@ -62,7 +65,7 @@ def test():
 def testRunControl(c):
     lock = threading.Condition()
     from tcf.services import runcontrol
-    def r3():
+    def getContexts():
         rctrl = c.getRemoteService(runcontrol.NAME)
         pending = []
         class DoneGetContext(runcontrol.DoneGetContext):
@@ -105,9 +108,9 @@ def testRunControl(c):
                         lock.notify()
         pending.append(rctrl.getChildren(None, DoneGetChildren()))
     with lock:
-        protocol.invokeLater(r3)
+        protocol.invokeLater(getContexts)
         lock.wait(5000)
-    def r4():
+    def listenerTest():
         rc = c.getRemoteService(runcontrol.NAME)
         class RCListener(runcontrol.RunControlListener):
             def contextSuspended(self, *args):
@@ -136,10 +139,10 @@ def testRunControl(c):
                         with lock: lock.notify()
                 context.resume(runcontrol.RM_RESUME, 1, None, DoneResume())
         rc.getContext(_suspended[0], DoneGetContext())
-        
+
     if _suspended:
         with lock:
-            protocol.invokeLater(r4)
+            protocol.invokeLater(listenerTest)
             lock.wait(5000)
 
 def testBreakpoints(c):
@@ -381,7 +384,7 @@ def testDataCache(c):
         def startDataRetrieval(self):
             rc = self._channel.getRemoteService(runcontrol.NAME)
             if not rc:
-                self.set(None, exceptions.Exception("No RunControl service"), None)
+                self.set(None, Exception("No RunControl service"), None)
                 return
             cache = self
             pending = []
@@ -429,6 +432,58 @@ def testFileSystem(c):
     print "FileSystem roots:", roots
     user = fs.user().get()
     print "User info: ", user
-    
+
+def testMemory(c):
+    lock = threading.Condition()
+    from tcf.services import memory
+    def getContexts():
+        mem = c.getRemoteService(memory.NAME)
+        pending = []
+        class DoneGetContext(memory.DoneGetContext):
+            def doneGetContext(self, token, error, context):
+                pending.remove(token)
+                if error:
+                    protocol.log("Error from Memory.getContext", error)
+                else:
+                    print context
+                if len(pending) == 0:
+                    with lock:
+                        lock.notify()
+        class DoneGetChildren(memory.DoneGetChildren):
+            def doneGetChildren(self, token, error, context_ids):
+                pending.remove(token)
+                if error:
+                    protocol.log("Error from Memory.GetChildren", error)
+                else:
+                    for c in context_ids:
+                        _memory.append(c)
+                        pending.append(mem.getContext(c, DoneGetContext()))
+                        pending.append(mem.getChildren(c, self))
+                if len(pending) == 0:
+                    with lock:
+                        lock.notify()
+        pending.append(mem.getChildren(None, DoneGetChildren()))
+    with lock:
+        protocol.invokeLater(getContexts)
+        lock.wait(5000)
+
+def testMemoryMap(c):
+    if not _memory: return
+    from tcf.services import memorymap
+    cmd = sync.CommandControl(c)
+    try:
+        mm = cmd.MemoryMap
+    except AttributeError:
+        # no MemoryMap service
+        return
+    id = _memory[0]
+    map = mm.get(id).get()
+    print "Memory map:", map
+    region = memorymap.MemoryRegion({memorymap.PROP_FILE_NAME : "/tmp/system.elf"})
+    print "Memory map: setting map", [region]
+    mm.set(id, [region]).get()
+    map = mm.get(id).get()
+    print "Memory map:", map
+
 if __name__ == '__main__':
     test()

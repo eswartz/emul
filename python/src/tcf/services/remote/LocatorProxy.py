@@ -9,7 +9,6 @@
 # *     Wind River Systems - initial API and implementation
 # *******************************************************************************
 
-import exceptions
 from tcf import protocol, peer, channel
 from tcf.services import locator
 from tcf.channel.Command import Command
@@ -35,25 +34,25 @@ class ChannelEventListener(channel.EventListener):
                 assert len(args) == 1
                 peer = Peer(self.channel.getRemotePeer(), args[0])
                 if self.proxy.peers.get(peer.getID()):
-                    protocol.log("Invalid peerAdded event", exceptions.Exception())
+                    protocol.log("Invalid peerAdded event", Exception())
                     return
                 self.proxy.peers[peer.getID()] = peer
                 for l in self.proxy.listeners:
                     try:
                         l.peerAdded(peer)
-                    except exceptions.Exception as x:
+                    except Exception as x:
                         protocol.log("Unhandled exception in Locator listener", x)
             elif name == "peerChanged":
                 assert len(args) == 1
                 m = args[0]
-                if not m: raise exceptions.Exception("Locator service: invalid peerChanged event - no peer ID")
+                if not m: raise Exception("Locator service: invalid peerChanged event - no peer ID")
                 peer = self.proxy.peers.get(m.get(peer.ATTR_ID))
                 if not peer: return
                 self.proxy.peers[peer.getID()] = peer
                 for l in self.proxy.listeners:
                     try:
                         l.peerChanged(peer)
-                    except exceptions.Exception as x:
+                    except Exception as x:
                         protocol.log("Unhandled exception in Locator listener", x)
             elif name == "peerRemoved":
                 assert len(args) == 1
@@ -64,7 +63,7 @@ class ChannelEventListener(channel.EventListener):
                 for l in self.proxy.listeners:
                     try:
                         l.peerRemoved(id)
-                    except exceptions.Exception as x:
+                    except Exception as x:
                         protocol.log("Unhandled exception in Locator listener", x)
             elif name == "peerHeartBeat":
                 assert len(args) == 1
@@ -74,11 +73,11 @@ class ChannelEventListener(channel.EventListener):
                 for l in self.proxy.listeners:
                     try:
                         l.peerHeartBeat(id)
-                    except exceptions.Exception as x:
+                    except Exception as x:
                         protocol.log("Unhandled exception in Locator listener", x)
             else:
-                raise exceptions.IOError("Locator service: unknown event: " + name)
-        except exceptions.Exception as x:
+                raise IOError("Locator service: unknown event: " + name)
+        except Exception as x:
             self.channel.terminate(x)
 
 class LocatorProxy(locator.LocatorService):
@@ -141,7 +140,7 @@ class LocatorProxy(locator.LocatorService):
                             for l in service.listeners:
                                 try:
                                     l.peerAdded(peer)
-                                except exceptions.Exception as x:
+                                except Exception as x:
                                     protocol.log("Unhandled exception in Locator listener", x)
             self.get_peers_done = True
 

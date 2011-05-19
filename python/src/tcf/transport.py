@@ -9,7 +9,7 @@
 # *     Wind River Systems - initial API and implementation
 # *******************************************************************************
 
-import threading, exceptions
+import threading
 import protocol, channel
 from tcf.services import locator
 
@@ -22,7 +22,7 @@ class TransportProvider(object):
     """
     TransportProvider represents communication protocol that can be used to open TCF communication channels.
     Examples of transports are: TCP/IP, RS-232, USB.
-    
+
     Client can implement this interface if they want to provide support for a transport that is not
     supported directly by the framework.
     """
@@ -32,8 +32,8 @@ class TransportProvider(object):
         Return transport name. Same as used as peer attribute, @see IPeer.ATTR_TRANSPORT_NAME
         @return transport name.
         """
-        raise exceptions.NotImplementedError("Abstract method")
-    
+        raise NotImplementedError("Abstract method")
+
     def openChannel(self, peer):
         """
         Open channel to communicate with this peer using this transport.
@@ -43,13 +43,13 @@ class TransportProvider(object):
         @param peer - a IPeer object that describes remote end-point of the channel.
         @return TCF communication channel.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
 def addTransportProvider(transport):
     name = transport.getName()
     assert name
     with _lock:
-        if _transports.get(name): raise exceptions.Exception("Already registered: " + name)
+        if _transports.get(name): raise Exception("Already registered: " + name)
         _transports[name] = transport
 
 def removeTransportProvider(transport):
@@ -72,7 +72,7 @@ def channelOpened(channel):
     for l in _listeners:
         try:
             l.onChannelOpen(channel)
-        except exceptions.Exception as x:
+        except Exception as x:
             protocol.log("Exception in channel listener", x)
 
 def channelClosed(channel, error):
@@ -98,23 +98,23 @@ class TCPTransportProvider(TransportProvider):
         attrs = p.getAttributes()
         host = attrs.get(peer.ATTR_IP_HOST)
         port = attrs.get(peer.ATTR_IP_PORT)
-        if not host: raise exceptions.RuntimeError("No host name")
+        if not host: raise RuntimeError("No host name")
         from channel.ChannelTCP import ChannelTCP
         return ChannelTCP(p, host, _parsePort(port))
 
 def _parsePort(port):
-    if not port: raise exceptions.Exception("No port number")
+    if not port: raise Exception("No port number")
     try:
         return int(port)
-    except exceptions.Exception:
-        raise exceptions.RuntimeError(
+    except Exception:
+        raise RuntimeError(
                 "Invalid value of \"Port\" attribute. Must be decimal number.")
 
 def sendEvent(service_name, event_name, data):
     """
     Transmit TCF event message.
     The message is sent to all open communication channels - broadcasted.
-    
+
     This is internal API, TCF clients should use protocol.sendEvent().
     """
     for c in _channels:
@@ -128,13 +128,13 @@ def sync(done):
     Call back after TCF messages sent by this host up to this moment are delivered
     to their intended targets. This method is intended for synchronization of messages
     across multiple channels.
-    
+
     Note: Cross channel synchronization can reduce performance and throughput.
     Most clients don't need cross channel synchronization and should not call this method.
-    
+
     @param done will be executed by dispatch thread after communication
     messages are delivered to corresponding targets.
-    
+
     This is internal API, TCF clients should use protocol.sync().
     """
     set = set()

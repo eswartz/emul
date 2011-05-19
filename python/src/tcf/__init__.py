@@ -13,7 +13,7 @@
 TCF - Target Communication Framework
 """
 
-import types, exceptions
+import types
 import protocol, peer, channel
 from util import task
 
@@ -25,7 +25,7 @@ def connect(params, wait=True):
     if type(params) is types.StringType:
         params = _parse_params(params)
     elif type(params) is not types.DictType:
-        raise exceptions.TypeError("Expected string or dict")
+        raise TypeError("Expected string or dict")
     p = peer.TransientPeer(params)
     if wait:
         c = task.Task(_openChannel, p).get()

@@ -33,7 +33,7 @@ class EventQueue(object):
                     self.__is_waiting = False
                     self.__lock.notifyAll()
             self.__thread.join()
-        except BaseException as e:
+        except Exception as e:
             protocol.log("Failed to shutdown TCF event dispatch thread", e)
 
     def isShutdown(self):
@@ -53,7 +53,7 @@ class EventQueue(object):
                         self.__lock.wait()
                     r, args, kwargs = self.__queue.pop(0)
                 r(*args, **kwargs)
-            except BaseException as x:
+            except Exception as x:
                 self.__error(x)
 
     def invokeLater(self, r, *args, **kwargs):

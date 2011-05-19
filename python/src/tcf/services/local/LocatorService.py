@@ -123,13 +123,13 @@ class LocatorService(locator.LocatorService):
     listeners = [] # list of LocatorListener
     error_log = set() # set of str
     _error_log_lock = threading.RLock()
-    
+
     addr_cache = {} # str->AddressCacheItem
     _addr_cache_lock = threading.Condition()
     addr_request = False
     local_peer = None
     last_master_packet_time = 0
-    
+
     def __init__(self):
         self.subnets = set()
         self.slaves = []
@@ -184,7 +184,7 @@ class LocatorService(locator.LocatorService):
                                         a.address = InetAddress(a.host, addr)
                                     a.time_stamp = time
                                     a.used = False
-                    except BaseException as x:
+                    except Exception as x:
                         service._log("Unhandled exception in TCF discovery DNS lookup thread", x)
         self.dns_lookup_thread = DNSLookupThread()
         class InputThread(threading.Thread):
@@ -204,12 +204,12 @@ class LocatorService(locator.LocatorService):
                             return
                         except socket.error as x:
                             if sock != service.socket: continue
-                            # frequent  error on windows, unknown reason 
+                            # frequent  error on windows, unknown reason
                             if x.errno == 10054: continue
                             port = sock.getsockname()[1]
                             service._log("Cannot read from datagram socket at port %d" % port, x)
                             time.sleep(2)
-                except BaseException as x:
+                except Exception as x:
                     service._log("Unhandled exception in socket reading thread", x)
         self.input_thread = InputThread(self.__handleDatagramPacket)
         try:
@@ -284,7 +284,7 @@ class LocatorService(locator.LocatorService):
                 channel.sendResult(token, toJSONSequence((None, arr)))
             else:
                 channel.rejectCommand(token)
-        except BaseException as x:
+        except Exception as x:
             channel.terminate(x)
 
     def _log(self, msg, x):
@@ -375,7 +375,7 @@ class LocatorService(locator.LocatorService):
         subNetSet = set()
         try:
             self.__getSubNetList(subNetSet)
-        except BaseException as x:
+        except Exception as x:
             self._log("Cannot get list of network interfaces", x)
         for s in tuple(self.subnets):
             if s in subNetSet: continue
@@ -428,7 +428,7 @@ class LocatorService(locator.LocatorService):
                 if self.out_buf[4] == locator.CONF_PEER_INFO:
                     map = self.__parsePeerAttributes(self.out_buf, 8)
                 self.__traceDiscoveryPacket(False, self.packetTypes[self.out_buf[4]], map, addr, port)
-        except BaseException as x:
+        except Exception as x:
             self._log("Cannot send datagram packet to %s" % addr, x)
             return False
         return True
@@ -436,7 +436,7 @@ class LocatorService(locator.LocatorService):
     def __parsePeerAttributes(self, data, size):
         """
         Parse peer attributes in CONF_INFO_PEER packet data
-        
+
         @param data
                    the packet section that contain the peer attributes
         @param size
@@ -592,7 +592,7 @@ class LocatorService(locator.LocatorService):
                         subnet.last_slaves_req_time = tm
                     if subnet.address == remote_address and remote_port == DISCOVEY_PORT:
                         self.last_master_packet_time = tm
-        except BaseException as x:
+        except Exception as x:
             self._log("Invalid datagram packet received from %s/%s" % (p.getAddress(), p.getPort()), x)
 
     def __handlePeerInfoPacket(self, p):
@@ -617,7 +617,7 @@ class LocatorService(locator.LocatorService):
                     _peer.updateAttributes(map)
                 elif _peer is None:
                     peer.RemotePeer(map)
-        except BaseException as x:
+        except Exception as x:
             self._log("Invalid datagram packet received from %s/%s" % (p.getAddress(), p.getPort()), x)
 
     def __handleReqInfoPacket(self, p, sl, tm):
@@ -679,7 +679,7 @@ class LocatorService(locator.LocatorService):
                         self.__addSlave(addr, port, time_val, time_now)
             if __TRACE_DISCOVERY__:
                 self.__traceDiscoveryPacket(True, "CONF_SLAVES_INFO", trace_map, p)
-        except BaseException as x:
+        except Exception as x:
             self._log("Invalid datagram packet received from %s/%s" % (p.getAddress(), p.getPort()), x)
 
     def __handleReqSlavesPacket(self, p, sl, tm):
@@ -717,7 +717,7 @@ class LocatorService(locator.LocatorService):
         Log that a TCF Discovery packet has be sent or received. The trace is
         sent to stdout. This should be called only if the tracing has been turned
         on.
-        
+
         @param received
                    True if the packet was sent, otherwise it was received
         @param type

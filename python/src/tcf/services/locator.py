@@ -20,7 +20,6 @@ Clients should use protocol.getLocator() to obtain local instance of locator,
 then locator.getPeers() can be used to get list of available peers (hosts and targets).
 """
 
-import exceptions
 from tcf import services
 
 # Peer data retention period in milliseconds.
@@ -46,34 +45,34 @@ class LocatorService(services.Service):
         The method return cached (currently known to the framework) list of peers.
         The list is updated according to event received from transport layer
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
     def redirect(self, peer, done):
         """
         Redirect this service channel to given peer using this service as a proxy.
         @param peer - Peer ID or attributes map.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
     def sync(self, done):
         """
         Call back after TCF messages sent to this target up to this moment are delivered.
         This method is intended for synchronization of messages
         across multiple channels.
-        
+
         Note: Cross channel synchronization can reduce performance and throughput.
         Most clients don't need channel synchronization and should not call this method.
-        
+
         @param done will be executed by dispatch thread after communication
         messages are delivered to corresponding targets.
-        
+
         This is internal API, TCF clients should use module 'tcf.protocol'.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
     def addListener(self, listener):
         "Add a listener for Locator service events."
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
     def removeListener(self, listener):
         "Remove a listener for Locator service events."
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
 class DoneRedirect(object):
     def doneRedirect(self, token, error):

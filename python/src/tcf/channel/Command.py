@@ -9,7 +9,7 @@
 # *     Wind River Systems - initial API and implementation
 # *******************************************************************************
 
-import exceptions, cStringIO
+import cStringIO
 from tcf import protocol, errors, services
 from tcf.channel import Token, toJSONSequence, fromJSONSequence, dumpJSONObject
 
@@ -18,17 +18,17 @@ class Command(object):
     This is utility class that helps to implement sending a command and receiving
     command result over TCF communication channel. The class uses JSON to encode
     command arguments and to decode result data.
-    
+
     The class also provides support for TCF standard error report encoding.
-    
+
     Clients are expected to subclass <code>Command</code> and override <code>done</code> method.
-    
+
     Note: most clients don't need to handle protocol commands directly and
     can use service APIs instead. Service API does all command encoding/decoding
     for a client.
-    
+
     Typical usage example:
-    
+
     def getContext(self, id, done):
         class GetContextCommand(Command):
             def done(self, error, args):
@@ -54,7 +54,7 @@ class Command(object):
             # TODO zero_copy
             #zero_copy = channel.isZeroCopySupported()
             t = channel.sendCommand(service, command, toJSONSequence(args), self)
-        except exceptions.Exception as y:
+        except Exception as y:
             t = Token()
             protocol.invokeLater(self._error, y)
         self.token = t
@@ -63,7 +63,7 @@ class Command(object):
         assert not self.__done
         self.__done = True
         self.done(error, None)
-        
+
     def progress(self, token, data):
         assert self.token is token
 
@@ -73,7 +73,7 @@ class Command(object):
         args = None
         try:
             args = fromJSONSequence(data)
-        except exceptions.Exception as e:
+        except Exception as e:
             error = e
         assert not self.__done
         self.__done = True
@@ -86,7 +86,7 @@ class Command(object):
         self.done(error, None)
 
     def done(self, error, args):
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")
 
     def getCommandString(self):
         buf = cStringIO.StringIO()
@@ -103,7 +103,7 @@ class Command(object):
                 i += 1
                 try:
                     dumpJSONObject(arg, buf)
-                except exceptions.Exception as x:
+                except Exception as x:
                     buf.write("***")
                     buf.write(x.message)
                     buf.write("***")

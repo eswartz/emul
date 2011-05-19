@@ -69,7 +69,6 @@ splice path name components returned by readdir() together
 using a slash ('/') as the separator, and that will work as expected.
 """
 
-import exceptions
 from tcf import services
 
 # Service name.
@@ -146,7 +145,7 @@ class FileAttrs(object):
     def isFile(self):
         """
         Determines if the file system object is a file on the remote file system.
-        
+
         @return True if and only if the object on the remote system can be considered to have "contents" that
         have the potential to be read and written as a byte stream.
         """
@@ -156,7 +155,7 @@ class FileAttrs(object):
     def isDirectory(self):
         """
         Determines if the file system object is a directory on the remote file system.
-        
+
         @return True if and only if the object on the remote system is a directory.
         That is, it contains entries that can be interpreted as other files.
         """
@@ -190,7 +189,7 @@ S_IXOTH    = 00001     # others have execute permission
 
 class DirEntry(object):
     """
-    Directory entry.  
+    Directory entry.
     Fields:
     'filename' is a file name being returned. It is a relative name within
     the directory, without any path components
@@ -235,14 +234,14 @@ STATUS_NO_SUCH_FILE = 0x10002
 # permissions to perform the operation.
 STATUS_PERMISSION_DENIED = 0x10003
 
-class FileSystemException(exceptions.IOError):
+class FileSystemException(IOError):
     """
     The class to represent File System error reports.
     """
     def __init__(self, message_or_exception):
         if isinstance(message_or_exception, str):
             super(FileSystemException, self).__init__(message_or_exception)
-        elif isinstance(message_or_exception, exceptions.Exception):
+        elif isinstance(message_or_exception, Exception):
             self.caused_by = message_or_exception
     def getStatus(self):
         """
@@ -250,16 +249,16 @@ class FileSystemException(exceptions.IOError):
         one of service specific codes, see STATUS_*.
         @return error code.
         """
-        raise exceptions.NotImplementedError("Abstract methods")
+        raise NotImplementedError("Abstract methods")
 
 class FileSystemService(services.Service):
     def getName(self):
         return NAME
-    
+
     def open(self, file_name, flags, attrs, done):
         """
         Open or create a file on a remote system.
-        
+
         @param file_name specifies the file name.  See 'File Names' for more information.
         @param flags is a bit mask of TCF_O_* flags.
         @param attrs specifies the initial attributes for the file.
@@ -267,18 +266,18 @@ class FileSystemService(services.Service):
         @param done is call back object.
         @return pending command handle.
         """
-        raise exceptions.NotImplementedError("Abstract methods")
+        raise NotImplementedError("Abstract methods")
 
     def close(self, handle, done):
         """
         Close a file on a remote system.
-        
+
         @param handle is a handle previously returned in the response to
         open() or opendir().
         @param done is call back object.
         @return pending command handle.
         """
-        raise exceptions.NotImplementedError("Abstract methods")
+        raise NotImplementedError("Abstract methods")
 
     def read(self, handle, offset, len, done):
         """
@@ -291,7 +290,7 @@ class FileSystemService(services.Service):
         True in case of EOF. For normal disk files, it is guaranteed
         that this will read the specified number of bytes, or up to end of file
         or error. For e.g. device files this may return fewer bytes than requested.
-        
+
         @param handle is an open file handle returned by open().
         @param offset is the offset (in bytes) relative
         to the beginning of the file from where to start reading.
@@ -300,7 +299,7 @@ class FileSystemService(services.Service):
         @param done is call back object.
         @return pending command handle.
         """
-        raise exceptions.NotImplementedError("Abstract methods")
+        raise NotImplementedError("Abstract methods")
 
     def write(self, handle, offset, data, data_pos, data_size, done):
         """
@@ -309,7 +308,7 @@ class FileSystemService(services.Service):
         It is legal to write way beyond the end of the file the semantics
         are to write zeroes from the end of the file to the specified offset
         and then the data.
-        
+
         @param handle is an open file handle returned by open().
         @param offset is the offset (in bytes) relative
         to the beginning of the file from where to start writing.
@@ -320,40 +319,40 @@ class FileSystemService(services.Service):
         @param done is call back object.
         @return pending command handle.
         """
-        raise exceptions.NotImplementedError("Abstract methods")
+        raise NotImplementedError("Abstract methods")
 
     def stat(self, path, done):
         """
         Retrieve file attributes.
-        
+
         @param path - specifies the file system object for which
         status is to be returned.
         @param done is call back object.
         @return pending command handle.
         """
-        raise exceptions.NotImplementedError("Abstract methods")
+        raise NotImplementedError("Abstract methods")
 
     def lstat(self, path, done):
         """
         Retrieve file attributes.
         Unlike 'stat()', 'lstat()' does not follow symbolic links.
-        
+
         @param path - specifies the file system object for which
         status is to be returned.
         @param done is call back object.
         @return pending command handle.
         """
-        raise exceptions.NotImplementedError("Abstract methods")
+        raise NotImplementedError("Abstract methods")
 
     def fstat(self, handle, done):
         """
         Retrieve file attributes for an open file (identified by the file handle).
-        
+
         @param handle is a file handle returned by 'open()'.
         @param done is call back object.
         @return pending command handle.
         """
-        raise exceptions.NotImplementedError("Abstract methods")
+        raise NotImplementedError("Abstract methods")
 
     def setstat(self, path, attrs, done):
         """
@@ -363,27 +362,27 @@ class FileSystemService(services.Service):
         An error will be returned if the specified file system object does
         not exist or the user does not have sufficient rights to modify the
         specified attributes.
-        
+
         @param path specifies the file system object (e.g. file or directory)
         whose attributes are to be modified.
         @param attrs specifies the modifications to be made to file attributes.
         @param done is call back object.
         @return pending command handle.
         """
-        raise exceptions.NotImplementedError("Abstract methods")
+        raise NotImplementedError("Abstract methods")
 
     def fsetstat(self, handle, attrs, done):
         """
         Set file attributes for an open file (identified by the file handle).
         This request is used for operations such as changing the ownership,
         permissions or access times, as well as for truncating a file.
-        
+
         @param handle is a file handle returned by 'open()'.
         @param attrs specifies the modifications to be made to file attributes.
         @param done is call back object.
         @return pending command handle.
         """
-        raise exceptions.NotImplementedError("Abstract methods")
+        raise NotImplementedError("Abstract methods")
 
     def opendir(self, path, done):
         """
@@ -393,12 +392,12 @@ class FileSystemService(services.Service):
         When the client no longer wishes to read more names from the
         directory, it SHOULD call close() for the handle.  The handle
         should be closed regardless of whether an error has occurred or not.
-        
+
         @param path - name of the directory to be listed (without any trailing slash).
         @param done - result call back object.
         @return pending command handle.
         """
-        raise exceptions.NotImplementedError("Abstract methods")
+        raise NotImplementedError("Abstract methods")
 
     def readdir(self, handle, done):
         """
@@ -415,18 +414,18 @@ class FileSystemService(services.Service):
         @param done - result call back object.
         @return pending command handle.
         """
-        raise exceptions.NotImplementedError("Abstract methods")
+        raise NotImplementedError("Abstract methods")
 
     def mkdir(self, path, attrs, done):
         """
         Create a directory on the server.
-        
+
         @param path - specifies the directory to be created.
         @param attrs - new directory attributes.
         @param done - result call back object.
         @return pending command handle.
         """
-        raise exceptions.NotImplementedError("Abstract methods")
+        raise NotImplementedError("Abstract methods")
 
     def rmdir(self, path, done):
         """
@@ -435,12 +434,12 @@ class FileSystemService(services.Service):
         with the specified path exists, or if the specified directory is not
         empty, or if the path specified a file system object other than a
         directory.
-        
+
         @param path - specifies the directory to be removed.
         @param done - result call back object.
         @return pending command handle.
         """
-        raise exceptions.NotImplementedError("Abstract methods")
+        raise NotImplementedError("Abstract methods")
 
     def roots(self, done):
         """
@@ -451,34 +450,34 @@ class FileSystemService(services.Service):
         the service must use forward slash as directory separator, and must start
         absolute path with "/". Server should implement proper translation of
         protocol file names to OS native names and back.
-        
+
         @param done - result call back object.
         @return pending command handle.
         """
-        raise exceptions.NotImplementedError("Abstract methods")
+        raise NotImplementedError("Abstract methods")
 
     def remove(self, file_name, done):
         """
         Remove a file or symbolic link.
         This request cannot be used to remove directories.
-        
+
         @param file_name is the name of the file to be removed.
         @param done - result call back object.
         @return pending command handle.
         """
-        raise exceptions.NotImplementedError("Abstract methods")
+        raise NotImplementedError("Abstract methods")
 
     def realpath(self, path, done):
         """
         Canonicalize any given path name to an absolute path.
         This is useful for converting path names containing ".." components or
         relative pathnames without a leading slash into absolute paths.
-        
+
         @param path specifies the path name to be canonicalized.
         @param done - result call back object.
         @return pending command handle.
         """
-        raise exceptions.NotImplementedError("Abstract methods")
+        raise NotImplementedError("Abstract methods")
 
     def rename(self, old_path, new_path, done):
         """
@@ -487,39 +486,39 @@ class FileSystemService(services.Service):
         with the name specified by 'new_path'.  The server may also fail rename
         requests in other situations, for example if 'old_path' and 'new_path'
         point to different file systems on the server.
-        
+
         @param old_path is the name of an existing file or directory.
         @param new_path is the new name for the file or directory.
         @param done - result call back object.
         @return pending command handle.
         """
-        raise exceptions.NotImplementedError("Abstract methods")
+        raise NotImplementedError("Abstract methods")
 
     def readlink(self, path, done):
         """
         Read the target of a symbolic link.
-        
+
         @param path specifies the path name of the symbolic link to be read.
         @param done - result call back object.
         @return pending command handle.
         """
-        raise exceptions.NotImplementedError("Abstract methods")
+        raise NotImplementedError("Abstract methods")
 
     def symlink(self, link_path, target_path, done):
         """
         Create a symbolic link on the server.
-        
+
         @param link_path specifies the path name of the symbolic link to be created.
         @param target_path specifies the target of the symbolic link.
         @param done - result call back object.
         @return pending command handle.
         """
-        raise exceptions.NotImplementedError("Abstract methods")
+        raise NotImplementedError("Abstract methods")
 
     def copy(self, src_path, dst_path, copy_permissions, copy_ownership, done):
         """
         Copy a file on remote system.
-        
+
         @param src_path specifies the path name of the file to be copied.
         @param dst_path specifies destination file name.
         @param copy_permissions - if True then copy source file permissions.
@@ -527,17 +526,17 @@ class FileSystemService(services.Service):
         @param done - result call back object.
         @return pending command handle.
         """
-        raise exceptions.NotImplementedError("Abstract methods")
+        raise NotImplementedError("Abstract methods")
 
     def user(self, done):
         """
         Retrieve information about user account, which is used by server
         to access file system on behalf of the client.
-        
+
         @param done - result call back object.
         @return pending command handle.
         """
-        raise exceptions.NotImplementedError("Abstract methods")
+        raise NotImplementedError("Abstract methods")
 
 class DoneOpen(object):
     def doneOpen(self, token, error, handle):

@@ -9,7 +9,7 @@
 # *     Wind River Systems - initial API and implementation
 # *******************************************************************************
 
-import cStringIO, exceptions
+import cStringIO
 from tcf import protocol, channel
 
 class DataCache(object):
@@ -20,22 +20,22 @@ class DataCache(object):
      2. Invalid - cache is out of sync, start data retrieval by calling validate()
      3. Pending - cache is waiting result of a command that was sent to remote peer
      4. Disposed - cache is disposed and cannot be used to store data.
-    
+
     A cache instance can be created on any data type that needs to be cached.
     Examples might be context children list, context properties, context state, memory data,
     register data, symbol, variable, etc.
     Clients of cache items can register for cache changes, but don't need to think about any particular events
     since that is handled by the cache item itself.
-    
+
     A typical cache client should implement Runnable interface.
     The implementation of run() method should:
-    
+
     Validate all cache items required for client task.
     If anything is invalid then client should not alter any shared data structures,
     should discard any intermediate results and register (wait) for changes of invalid cache instance(s) state.
     When cache item state changes, client is invoked again and full validation is restarted.
     Once everything is valid, client completes its task in a single dispatch cycle.
-    
+
     Note: clients should never retain copies of remote data across dispatch cycles!
     Such data would get out of sync and compromise data consistency.
     All remote data and everything derived from remote data should be kept in cache items
@@ -267,4 +267,4 @@ class DataCache(object):
         Sub-classes should override this method to implement actual data retrieval logic.
         @return True is all done, False if retrieval is in progress.
         """
-        raise exceptions.NotImplementedError("Abstract method")
+        raise NotImplementedError("Abstract method")

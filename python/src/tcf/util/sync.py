@@ -9,7 +9,7 @@
 # *     Wind River Systems - initial API and implementation
 # *******************************************************************************
 
-import threading, exceptions, types
+import threading, types
 from tcf import protocol
 from tcf.channel.Command import Command
 
@@ -28,11 +28,11 @@ class DispatchWrapper(object):
 class CommandControl(object):
     """Provides a simple interface to send commands to remote services
     and receive results.
-    
+
     Usage:
     > cmd = CommandControl(channel)
     > cmd.<service>.<command>(<args>)
-    
+
     Examples:
     # send command, but don't wait for result:
     > cmd.RunControl.suspend("system")
@@ -60,7 +60,7 @@ class CommandControl(object):
             return services
         if attr in services:
             return ServiceWrapper(self, attr)
-        raise exceptions.AttributeError("Unknown service: %s. Use one of %s" % (attr, services))
+        raise AttributeError("Unknown service: %s. Use one of %s" % (attr, services))
     def invoke(self, service, command, *args, **kwargs):
         cmd = None
         if not protocol.isDispatchThread():
