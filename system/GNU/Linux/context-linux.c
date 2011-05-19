@@ -926,8 +926,8 @@ static int expression_identifier_callback(Context * ctx, int frame, char * name,
         v->address = elf_get_debug_structure_address(ctx, NULL);
         v->type_class = TYPE_CLASS_POINTER;
         v->size = context_word_size(ctx);
-        v->big_endian = ctx->big_endian;
         if (v->address != 0) {
+            v->big_endian = ctx->big_endian;
             switch (v->size) {
             case 4: v->address += 8; break;
             case 8: v->address += 16; break;
@@ -936,7 +936,7 @@ static int expression_identifier_callback(Context * ctx, int frame, char * name,
             v->remote = 1;
         }
         else {
-            set_value(v, NULL, v->size);
+            set_value(v, NULL, v->size, 0);
         }
         return 1;
     }

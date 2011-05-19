@@ -28,6 +28,7 @@
 
 /* Value represents result of expression evaluation */
 struct Value {
+    Symbol * sym;               /* Value symbol, can be NULL */
     Symbol * type;              /* Value type symbol, can be NULL */
     int type_class;             /* See symbols.h for type class definitions */
     void * value;               /* Pointer to value data buffer, or NULL if remote value */
@@ -75,7 +76,7 @@ int value_to_double(Value *v, double *res);
  * Allocate and fill local data buffer for a value.
  * The buffer is freed automatically at the end of current event dispatch cycle.
  */
-extern void set_value(Value * v, void * data, size_t size);
+extern void set_value(Value * v, void * data, size_t size, int big_endian);
 
 /*
  * Add identifier callback to the list of expression callbacks.

@@ -117,63 +117,48 @@ static void * alloc_str(size_t size) {
     }
 }
 
-void set_value(Value * v, void * data, size_t size) {
+void set_value(Value * v, void * data, size_t size, int big_endian) {
+    v->sym = NULL;
     v->reg = NULL;
     v->remote = 0;
     v->address = 0;
     v->function = 0;
-    v->size = size;
+    v->size = (ContextAddress)size;
+    v->big_endian = big_endian;
     v->value = alloc_str(size);
     if (data == NULL) memset(v->value, 0, size);
     else memcpy(v->value, data, size);
 }
 
 static void set_int_value(Value * v, size_t size, uint64_t n) {
-    v->reg = NULL;
-    v->remote = 0;
-    v->address = 0;
-    v->function = 0;
-    v->big_endian = big_endian;
-    v->value = alloc_str(size);
-    v->size = (ContextAddress)size;
+    uint8_t buf[8];
     switch (size) {
-    case 1: *(uint8_t *)v->value = (uint8_t)n; break;
-    case 2: *(uint16_t *)v->value = (uint16_t)n; break;
-    case 4: *(uint32_t *)v->value = (uint32_t)n; break;
-    case 8: *(uint64_t *)v->value = n; break;
+    case 1: *(uint8_t *)buf = (uint8_t)n; break;
+    case 2: *(uint16_t *)buf = (uint16_t)n; break;
+    case 4: *(uint32_t *)buf = (uint32_t)n; break;
+    case 8: *(uint64_t *)buf = n; break;
     default: assert(0);
     }
+    set_value(v, buf, size, big_endian);
 }
 
 static void set_fp_value(Value * v, size_t size, double n) {
-    v->reg = NULL;
-    v->remote = 0;
-    v->address = 0;
-    v->function = 0;
-    v->big_endian = big_endian;
-    v->value = alloc_str(size);
-    v->size = (ContextAddress)size;
+    uint8_t buf[8];
     switch (size) {
-    case 4: *(float *)v->value = (float)n; break;
-    case 8: *(double *)v->value = n; break;
+    case 4: *(float *)buf = (float)n; break;
+    case 8: *(double *)buf = n; break;
     default: assert(0);
     }
+    set_value(v, buf, size, big_endian);
 }
 
 static void set_ctx_word_value(Value * v, ContextAddress data) {
     set_int_value(v, context_word_size(expression_context), data);
 }
 
-static void string_value(Value * v, char * str) {
-    memset(v, 0, sizeof(Value));
+static void set_string_value(Value * v, char * str) {
     v->type_class = TYPE_CLASS_ARRAY;
-    if (str != NULL) {
-        size_t size = strlen(str) + 1;
-        v->size = size;
-        v->big_endian = expression_context->big_endian;
-        v->value = alloc_str(size);
-        memcpy(v->value, str, size);
-    }
+    if (str != NULL) set_value(v, str, strlen(str) + 1, 0);
 }
 
 static void error(int no, const char * fmt, ...) {
@@ -587,6 +572,7 @@ static void next_sy(void) {
 }
 
 #if ENABLE_Symbols
+/* Note: sym2value() does NOT set v->size if v->sym != NULL */
 static int sym2value(Symbol * sym, Value * v) {
     int sym_class = 0;
     memset(v, 0, sizeof(Value));
@@ -612,7 +598,7 @@ static int sym2value(Symbol * sym, Value * v) {
             v->constant = 1;
             v->size = size;
             if (value != NULL) {
-                v->value = alloc_str((size_t)v->size);
+                v->value = alloc_str(size);
                 memcpy(v->value, value, size);
             }
         }
@@ -635,15 +621,13 @@ static int sym2value(Symbol * sym, Value * v) {
             v->big_endian = endianness;
             v->size = size;
             if (value != NULL) {
-                v->value = alloc_str((size_t)v->size);
+                v->value = alloc_str(size);
                 memcpy(v->value, value, size);
             }
         }
         else {
+            v->sym = sym;
             v->big_endian = expression_context->big_endian;
-            if (get_symbol_size(sym, &v->size) < 0) {
-                error(errno, "Cannot retrieve symbol size");
-            }
             v->remote = 1;
         }
         break;
@@ -678,7 +662,7 @@ static int identifier(Value * scope, char * name, Value * v) {
             exception(ERR_INV_CONTEXT);
         }
         if (strcmp(name, "$thread") == 0) {
-            string_value(v, expression_context->id);
+            set_string_value(v, expression_context->id);
             v->constant = 1;
             return SYM_CLASS_VALUE;
         }
@@ -815,6 +799,7 @@ static int type_name(int mode, Symbol ** type) {
 static void load_value(Value * v) {
     void * value;
 
+    v->sym = NULL;
     v->reg = NULL;
     if (!v->remote) return;
     assert(!v->constant);
@@ -860,12 +845,14 @@ static void to_host_endianness(Value * v) {
         }
         v->value = buf;
         v->big_endian = big_endian;
+        v->sym = NULL;
         v->reg = NULL;
     }
 }
 
 static int64_t to_int(int mode, Value * v) {
     if (mode != MODE_NORMAL) {
+        v->sym = NULL;
         v->reg = NULL;
         if (v->remote) {
             v->value = alloc_str((size_t)v->size);
@@ -918,6 +905,7 @@ static int64_t to_int(int mode, Value * v) {
 
 static uint64_t to_uns(int mode, Value * v) {
     if (mode != MODE_NORMAL) {
+        v->sym = NULL;
         v->reg = NULL;
         if (v->remote) {
             v->value = alloc_str((size_t)v->size);
@@ -973,6 +961,7 @@ static uint64_t to_uns(int mode, Value * v) {
 
 static double to_double(int mode, Value * v) {
     if (mode != MODE_NORMAL) {
+        v->sym = NULL;
         v->reg = NULL;
         if (v->remote) {
             v->value = alloc_str((size_t)v->size);
@@ -1028,6 +1017,9 @@ static int qualified_name(int mode, Value * scope, Value * v) {
             int sym_class = identifier(scope, (char *)text_val.value, v);
             if (sym_class < 0) error(ERR_INV_EXPRESSION, "Undefined identifier '%s'", text_val.value);
         }
+        else {
+            memset(v, 0, sizeof(Value));
+        }
         next_sy();
         if (text_sy != SY_SCOPE) break;
         next_sy();
@@ -1046,6 +1038,7 @@ static void primary_expression(int mode, Value * v) {
     }
     else if (text_sy == SY_VAL) {
         if (mode != MODE_SKIP) *v = text_val;
+        else memset(v, 0, sizeof(Value));
         next_sy();
     }
     else if (text_sy == SY_SCOPE) {
@@ -1085,7 +1078,9 @@ static void op_deref(int mode, Value * v) {
         error(ERR_INV_EXPRESSION, "Array or pointer type expected");
     }
     if (v->type_class == TYPE_CLASS_POINTER) {
-        v->reg = NULL;
+        if (v->sym != NULL && v->size == 0 && get_symbol_size(v->sym, &v->size) < 0) {
+            error(errno, "Cannot retrieve symbol size");
+        }
         v->address = (ContextAddress)to_uns(mode, v);
         v->big_endian = expression_context->big_endian;
         v->remote = 1;
@@ -1196,6 +1191,9 @@ static void op_field(int mode, Value * v) {
                 error(errno, "Cannot retrieve field offset");
             }
             offs += x;
+            if (v->sym != NULL && v->size == 0 && get_symbol_size(v->sym, &v->size) < 0) {
+                error(errno, "Cannot retrieve symbol size");
+            }
             if (offs + size > v->size) {
                 error(ERR_INV_EXPRESSION, "Invalid field offset and/or size");
             }
@@ -1204,8 +1202,9 @@ static void op_field(int mode, Value * v) {
             }
             else {
                 v->value = (uint8_t *)v->value + offs;
-                v->reg = NULL;
             }
+            v->sym = NULL;
+            v->reg = NULL;
             v->size = size;
             if (get_symbol_type(sym, &v->type) < 0) {
                 error(errno, "Cannot retrieve symbol type");
@@ -1238,7 +1237,6 @@ static void op_index(int mode, Value * v) {
         error(ERR_INV_EXPRESSION, "Value type is unknown");
     }
     if (v->type_class == TYPE_CLASS_POINTER) {
-        v->reg = NULL;
         v->address = (ContextAddress)to_uns(mode, v);
         v->big_endian = expression_context->big_endian;
         v->remote = 1;
@@ -1255,6 +1253,9 @@ static void op_index(int mode, Value * v) {
         error(errno, "Cannot get array lower bound");
     }
     offs = (ContextAddress)(to_int(mode, &i) - lower_bound) * size;
+    if (v->sym != NULL && v->size == 0 && get_symbol_size(v->sym, &v->size) < 0) {
+        error(errno, "Cannot retrieve symbol size");
+    }
     if (v->type_class == TYPE_CLASS_ARRAY && offs + size > v->size) {
         error(ERR_INV_EXPRESSION, "Invalid index");
     }
@@ -1263,8 +1264,9 @@ static void op_index(int mode, Value * v) {
     }
     else {
         v->value = (char *)v->value + offs;
-        v->reg = NULL;
     }
+    v->sym = NULL;
+    v->reg = NULL;
     v->size = size;
     v->type = type;
     if (get_symbol_type_class(type, &v->type_class) < 0) {
@@ -1283,9 +1285,9 @@ static void op_addr(int mode, Value * v) {
     }
     else {
         if (!v->remote) error(ERR_INV_EXPRESSION, "Invalid '&': value has no address");
-        assert(!v->constant);
         set_ctx_word_value(v, v->address);
         v->type_class = TYPE_CLASS_POINTER;
+        v->constant = 0;
 #if ENABLE_Symbols
         if (v->type != NULL) {
             if (get_array_symbol(v->type, 0, &v->type)) {
@@ -1366,16 +1368,17 @@ static void postfix_expression(int mode, Value * v) {
     }
 }
 
-static void unary_expression(int mode, Value * v) {
+/* Note: lazy_unary_expression() does not set v->size if v->sym != NULL */
+static void lazy_unary_expression(int mode, Value * v) {
     switch (text_sy) {
     case '*':
         next_sy();
-        unary_expression(mode, v);
+        lazy_unary_expression(mode, v);
         op_deref(mode, v);
         break;
     case '&':
         next_sy();
-        unary_expression(mode, v);
+        lazy_unary_expression(mode, v);
         op_addr(mode, v);
         break;
     case SY_SIZEOF:
@@ -1384,7 +1387,7 @@ static void unary_expression(int mode, Value * v) {
         break;
     case '+':
         next_sy();
-        unary_expression(mode, v);
+        lazy_unary_expression(mode, v);
         break;
     case '-':
         next_sy();
@@ -1440,6 +1443,15 @@ static void unary_expression(int mode, Value * v) {
         postfix_expression(mode, v);
         break;
     }
+}
+
+static void unary_expression(int mode, Value * v) {
+    lazy_unary_expression(mode, v);
+#if ENABLE_Symbols
+    if (mode == MODE_NORMAL && v->sym != NULL && v->size == 0 && get_symbol_size(v->sym, &v->size) < 0) {
+        error(errno, "Cannot retrieve symbol size");
+    }
+#endif
 }
 
 static void cast_expression(int mode, Value * v) {
@@ -1529,8 +1541,9 @@ static void cast_expression(int mode, Value * v) {
             break;
         case TYPE_CLASS_ARRAY:
             if (v->type_class == TYPE_CLASS_POINTER) {
-                v->reg = NULL;
                 v->address = (ContextAddress)to_uns(mode, v);
+                v->sym = NULL;
+                v->reg = NULL;
                 v->type = type;
                 v->type_class = type_class;
                 v->size = type_size;
@@ -1848,14 +1861,15 @@ static void and_expression(int mode, Value * v) {
             if (!is_whole_number(v) || !is_whole_number(&x)) {
                 error(ERR_INV_EXPRESSION, "Integral types expected");
             }
-            value = to_int(mode, v) & to_int(mode, &x);
-            if (mode != MODE_NORMAL) value = 0;
             if (v->type_class == TYPE_CLASS_CARDINAL || x.type_class == TYPE_CLASS_CARDINAL) {
                 v->type_class = TYPE_CLASS_CARDINAL;
+                value = to_uns(mode, v) & to_uns(mode, &x);
             }
             else {
                 v->type_class = TYPE_CLASS_INTEGER;
+                value = to_int(mode, v) & to_int(mode, &x);
             }
+            if (mode != MODE_NORMAL) value = 0;
             v->type = NULL;
             v->constant = v->constant && x.constant;
             set_int_value(v, sizeof(int64_t), value);
@@ -1874,14 +1888,15 @@ static void exclusive_or_expression(int mode, Value * v) {
             if (!is_whole_number(v) || !is_whole_number(&x)) {
                 error(ERR_INV_EXPRESSION, "Integral types expected");
             }
-            value = to_int(mode, v) ^ to_int(mode, &x);
-            if (mode != MODE_NORMAL) value = 0;
             if (v->type_class == TYPE_CLASS_CARDINAL || x.type_class == TYPE_CLASS_CARDINAL) {
                 v->type_class = TYPE_CLASS_CARDINAL;
+                value = to_uns(mode, v) ^ to_uns(mode, &x);
             }
             else {
                 v->type_class = TYPE_CLASS_INTEGER;
+                value = to_int(mode, v) ^ to_int(mode, &x);
             }
+            if (mode != MODE_NORMAL) value = 0;
             v->type = NULL;
             v->constant = v->constant && x.constant;
             set_int_value(v, sizeof(int64_t), value);
@@ -1900,14 +1915,15 @@ static void inclusive_or_expression(int mode, Value * v) {
             if (!is_whole_number(v) || !is_whole_number(&x)) {
                 error(ERR_INV_EXPRESSION, "Integral types expected");
             }
-            value = to_int(mode, v) | to_int(mode, &x);
-            if (mode != MODE_NORMAL) value = 0;
             if (v->type_class == TYPE_CLASS_CARDINAL || x.type_class == TYPE_CLASS_CARDINAL) {
                 v->type_class = TYPE_CLASS_CARDINAL;
+                value = to_uns(mode, v) | to_uns(mode, &x);
             }
             else {
                 v->type_class = TYPE_CLASS_INTEGER;
+                value = to_int(mode, v) | to_int(mode, &x);
             }
+            if (mode != MODE_NORMAL) value = 0;
             v->type = NULL;
             v->constant = v->constant && x.constant;
             set_int_value(v, sizeof(int64_t), value);
@@ -2030,28 +2046,25 @@ int value_to_address(Value * v, ContextAddress * res) {
     return 0;
 }
 
-int value_to_signed(Value *v, int64_t *res) {
+int value_to_signed(Value * v, int64_t *res) {
     Trap trap;
-    if (!set_trap(&trap))
-        return -1;
+    if (!set_trap(&trap)) return -1;
     *res = to_int(MODE_NORMAL, v);
     clear_trap(&trap);
     return 0;
 }
 
-int value_to_unsigned(Value *v, uint64_t *res) {
+int value_to_unsigned(Value * v, uint64_t *res) {
     Trap trap;
-    if (!set_trap(&trap))
-        return -1;
+    if (!set_trap(&trap)) return -1;
     *res = to_uns(MODE_NORMAL, v);
     clear_trap(&trap);
     return 0;
 }
 
-int value_to_double(Value *v, double *res) {
+int value_to_double(Value * v, double *res) {
     Trap trap;
-    if (!set_trap(&trap))
-        return -1;
+    if (!set_trap(&trap)) return -1;
     *res = to_double(MODE_NORMAL, v);
     clear_trap(&trap);
     return 0;
@@ -2667,12 +2680,6 @@ void add_identifier_callback(ExpressionIdentifierCallBack * callback) {
     id_callbacks[id_callback_cnt++] = callback;
 }
 
-static int is_big_endian_host(void) {
-    uint16_t n = 0x0201;
-    uint8_t * p = (uint8_t *)&n;
-    return *p == 0x02;
-}
-
 void ini_expressions_service(Protocol * proto) {
     unsigned i;
     list_init(&expressions);
@@ -2685,7 +2692,7 @@ void ini_expressions_service(Protocol * proto) {
     add_command_handler(proto, EXPRESSIONS, "assign", command_assign);
     add_command_handler(proto, EXPRESSIONS, "dispose", command_dispose);
 
-    big_endian = is_big_endian_host();
+    big_endian = big_endian_host();
 }
 
 #endif  /* if SERVICE_Expressions */
