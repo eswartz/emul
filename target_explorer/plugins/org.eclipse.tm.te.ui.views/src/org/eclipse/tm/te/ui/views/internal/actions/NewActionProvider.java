@@ -10,14 +10,17 @@
 package org.eclipse.tm.te.ui.views.internal.actions;
 
 import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
+import org.eclipse.tm.te.ui.interfaces.IContextHelpIds;
+import org.eclipse.tm.te.ui.interfaces.ImageConsts;
 import org.eclipse.tm.te.ui.views.interfaces.IUIConstants;
 import org.eclipse.tm.te.ui.views.internal.nls.Messages;
+import org.eclipse.tm.te.ui.wizards.newWizard.NewWizardRegistry;
+import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.actions.ActionFactory;
-import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
+import org.eclipse.ui.internal.actions.CommandAction;
 import org.eclipse.ui.navigator.CommonActionProvider;
 import org.eclipse.ui.navigator.ICommonActionExtensionSite;
 import org.eclipse.ui.navigator.ICommonMenuConstants;
@@ -28,9 +31,12 @@ import org.eclipse.ui.navigator.WizardActionGroup;
  * Action provider implementation providing the "New >" content menu
  * content.
  */
+@SuppressWarnings("restriction")
 public class NewActionProvider extends CommonActionProvider {
-	// Reference to the action showing the "Other..." dialog
-	private IWorkbenchAction fOtherDialogAction = null;
+	// Reference to the action showing the "Other..." dialog (context menu)
+	private CommandAction fNewWizardCommandAction = null;
+	// Reference to the action showing the "Other..." dialog (toolbar)
+	private CommandAction fNewWizardCommandActionToolbar = null;
 	// Reference to the action group managing the context sensitive new wizards
 	private WizardActionGroup fNewWizardActionGroup = null;
 
@@ -45,9 +51,22 @@ public class NewActionProvider extends CommonActionProvider {
 			// To initialize the actions, the workbench window instance is required
 			IWorkbenchWindow window = ((ICommonViewerWorkbenchSite)site.getViewSite()).getWorkbenchWindow();
 			// Initialize the actions
-			fOtherDialogAction = ActionFactory.NEW.create(window);
+			fNewWizardCommandAction = new CommandAction(window, "org.eclipse.tm.te.ui.command.newWizards"); //$NON-NLS-1$
+			fNewWizardCommandAction.setImageDescriptor(null);
+			fNewWizardCommandAction.setDisabledImageDescriptor(null);
+			fNewWizardCommandAction.setText(Messages.NewActionProvider_NewWizardCommandAction_label);
+			fNewWizardCommandAction.setToolTipText(Messages.NewActionProvider_NewWizardCommandAction_tooltip);
+            window.getWorkbench().getHelpSystem().setHelp(fNewWizardCommandAction, IContextHelpIds.NEW_TARGET_WIZARD);
+
+			fNewWizardCommandActionToolbar = new CommandAction(window, "org.eclipse.tm.te.ui.command.newWizards"); //$NON-NLS-1$
+			fNewWizardCommandActionToolbar.setImageDescriptor(org.eclipse.tm.te.ui.activator.UIPlugin.getImageDescriptor(ImageConsts.IMAGE_NEW_TARGET_WIZARD_ENABLED));
+			fNewWizardCommandActionToolbar.setDisabledImageDescriptor(org.eclipse.tm.te.ui.activator.UIPlugin.getImageDescriptor(ImageConsts.IMAGE_NEW_TARGET_WIZARD_DISABLED));
+			fNewWizardCommandActionToolbar.setText(Messages.NewActionProvider_NewWizardCommandAction_label);
+			fNewWizardCommandActionToolbar.setToolTipText(Messages.NewActionProvider_NewWizardCommandAction_tooltip);
+            window.getWorkbench().getHelpSystem().setHelp(fNewWizardCommandActionToolbar, IContextHelpIds.NEW_TARGET_WIZARD);
+
 			fNewWizardActionGroup = new WizardActionGroup(window,
-														  PlatformUI.getWorkbench().getNewWizardRegistry(),
+														  NewWizardRegistry.getInstance(),
 														  WizardActionGroup.TYPE_NEW,
 														  site.getContentService());
 		}
@@ -58,9 +77,9 @@ public class NewActionProvider extends CommonActionProvider {
 	 */
 	@Override
 	public void dispose() {
-		if (fOtherDialogAction != null) {
-			fOtherDialogAction.dispose();
-			fOtherDialogAction = null;
+		if (fNewWizardCommandAction != null) {
+			fNewWizardCommandAction.dispose();
+			fNewWizardCommandAction = null;
 		}
 		if (fNewWizardActionGroup != null) {
 			fNewWizardActionGroup.dispose();
@@ -75,12 +94,14 @@ public class NewActionProvider extends CommonActionProvider {
 	@Override
 	public void fillContextMenu(IMenuManager menu) {
 		// If none of the actions got created, there is nothing to do here
-		if (fOtherDialogAction == null && fNewWizardActionGroup == null) {
+		if (fNewWizardCommandAction == null && fNewWizardActionGroup == null) {
 			return;
 		}
 
 		// Create the new sub menu
-		IMenuManager newMenu = new MenuManager(Messages.NewActionProvider_NewMenu_label, IUIConstants.ID_EXPLORER + ".menu.new"); //$NON-NLS-1$
+		IMenuManager newMenu = new MenuManager(Messages.NewActionProvider_NewMenu_label,
+											   org.eclipse.tm.te.ui.activator.UIPlugin.getImageDescriptor(ImageConsts.IMAGE_NEW_TARGET_WIZARD_ENABLED),
+											   IUIConstants.ID_EXPLORER + ".menu.new"); //$NON-NLS-1$
 
 		// Add the context sensitive wizards (commonWizard element)
 		if (fNewWizardActionGroup != null) {
@@ -92,12 +113,25 @@ public class NewActionProvider extends CommonActionProvider {
 		newMenu.add(new Separator(ICommonMenuConstants.GROUP_ADDITIONS));
 
 		// Add the "Other..." dialog action
-		if (fOtherDialogAction != null) {
+		if (fNewWizardCommandAction != null) {
 			newMenu.add(new Separator());
-			newMenu.add(fOtherDialogAction);
+			newMenu.add(fNewWizardCommandAction);
 		}
 
 		// The menu will be appended after the GROUP_NEW group.
 		menu.insertAfter(ICommonMenuConstants.GROUP_NEW, newMenu);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.actions.ActionGroup#fillActionBars(org.eclipse.ui.IActionBars)
+	 */
+	@Override
+	public void fillActionBars(IActionBars actionBars) {
+		if (fNewWizardCommandActionToolbar == null) {
+			return;
+		}
+
+		IToolBarManager toolbar = actionBars.getToolBarManager();
+		toolbar.insertAfter(ICommonMenuConstants.GROUP_NEW, fNewWizardCommandActionToolbar);
 	}
 }

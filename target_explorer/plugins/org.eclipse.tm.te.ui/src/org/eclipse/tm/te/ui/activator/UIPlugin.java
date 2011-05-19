@@ -9,6 +9,12 @@
  *******************************************************************************/
 package org.eclipse.tm.te.ui.activator;
 
+import java.net.URL;
+
+import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.jface.resource.ImageRegistry;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.tm.te.ui.interfaces.ImageConsts;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
@@ -60,5 +66,42 @@ public class UIPlugin extends AbstractUIPlugin {
 	public void stop(BundleContext context) throws Exception {
 		plugin = null;
 		super.stop(context);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.plugin.AbstractUIPlugin#initializeImageRegistry(org.eclipse.jface.resource.ImageRegistry)
+	 */
+	@Override
+	protected void initializeImageRegistry(ImageRegistry registry) {
+		URL url = UIPlugin.getDefault().getBundle().getEntry(ImageConsts.IMAGE_DIR_ROOT + ImageConsts.IMAGE_DIR_WIZBAN + "newtarget_wiz.gif"); //$NON-NLS-1$
+		registry.put(ImageConsts.IMAGE_NEW_TARGET_WIZARD, ImageDescriptor.createFromURL(url));
+
+		url = UIPlugin.getDefault().getBundle().getEntry(ImageConsts.IMAGE_DIR_ROOT + ImageConsts.IMAGE_DIR_DLCL + "newtarget_wiz.gif"); //$NON-NLS-1$
+		registry.put(ImageConsts.IMAGE_NEW_TARGET_WIZARD_DISABLED, ImageDescriptor.createFromURL(url));
+
+		url = UIPlugin.getDefault().getBundle().getEntry(ImageConsts.IMAGE_DIR_ROOT + ImageConsts.IMAGE_DIR_ELCL + "newtarget_wiz.gif"); //$NON-NLS-1$
+		registry.put(ImageConsts.IMAGE_NEW_TARGET_WIZARD_ENABLED, ImageDescriptor.createFromURL(url));
+	}
+
+	/**
+	 * Loads the image registered under the specified key from the image
+	 * registry and returns the <code>Image</code> object instance.
+	 *
+	 * @param key The key the image is registered with.
+	 * @return The <code>Image</code> object instance or <code>null</code>.
+	 */
+	public static Image getImage(String key) {
+		return getDefault().getImageRegistry().get(key);
+	}
+
+	/**
+	 * Loads the image registered under the specified key from the image
+	 * registry and returns the <code>ImageDescriptor</code> object instance.
+	 *
+	 * @param key The key the image is registered with.
+	 * @return The <code>ImageDescriptor</code> object instance or <code>null</code>.
+	 */
+	public static ImageDescriptor getImageDescriptor(String key) {
+		return getDefault().getImageRegistry().getDescriptor(key);
 	}
 }

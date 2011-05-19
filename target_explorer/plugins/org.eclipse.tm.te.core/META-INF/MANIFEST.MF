@@ -10,7 +10,9 @@ Require-Bundle: org.eclipse.core.runtime;bundle-version="3.6.0",
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Bundle-ActivationPolicy: lazy
 Bundle-Localization: plugin
-Export-Package: org.eclipse.tm.te.core.extensions;version="1.0.0",
- org.eclipse.tm.te.core.nls;version="1.0.0",
- org.eclipse.tm.te.core.preferences;version="1.0.0",
- org.eclipse.tm.te.core.tracing;version="1.0.0"
+Export-Package: org.eclipse.tm.te.core.activator;x-internal:=true,
+ org.eclipse.tm.te.core.extensions,
+ org.eclipse.tm.te.core.internal;x-internal:=true,
+ org.eclipse.tm.te.core.nls,
+ org.eclipse.tm.te.core.preferences,
+ org.eclipse.tm.te.core.tracing

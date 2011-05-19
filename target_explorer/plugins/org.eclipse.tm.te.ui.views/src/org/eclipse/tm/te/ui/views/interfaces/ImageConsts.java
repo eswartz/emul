@@ -18,7 +18,7 @@ public interface ImageConsts {
 	 * the bundle directory.
 	 */
     public final static String  IMAGE_DIR_ROOT = "icons/"; //$NON-NLS-1$
-    
+
     /**
      * The directory where to load view related images from, relative to
      * the image root directory.

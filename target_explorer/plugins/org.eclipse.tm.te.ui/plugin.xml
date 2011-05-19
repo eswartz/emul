@@ -1,14 +1,41 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.4"?>
 <plugin>
+   <extension-point id="newWizards" name="New Target Wizards" schema="schema/newWizards.exsd"/>
 
-<!-- New wizard contributions -->
+<!-- New target wizard contributions -->
 
-   <extension point="org.eclipse.ui.newWizards">
+   <extension point="org.eclipse.tm.te.ui.newWizards">
       <category
-            id="org.eclipse.tm.te.ui.newWizards.category"
+            id="org.eclipse.tm.te.ui.newWizards.category.general"
             name="%NewWizards.category.name">
       </category>
+   </extension>
+
+<!-- Command contributions -->
+   <extension point="org.eclipse.ui.commands">
+      <category
+            id="org.eclipse.tm.te.ui.commands.category"
+            name="%Command.category.name">
+      </category>
+
+      <command
+            categoryId="org.eclipse.tm.te.ui.commands.category"
+            defaultHandler="org.eclipse.tm.te.ui.wizards.newWizard.NewWizardCommandHandler"
+            description="%Command.newWizards.description"
+            helpContextId="org.eclipse.tm.te.ui.command.newWizards"
+            id="org.eclipse.tm.te.ui.command.newWizards"
+            name="%Command.newWizards.name">
+      </command>
+   </extension>
+   
+<!-- Command image contributions -->   
+   <extension point="org.eclipse.ui.commandImages">
+      <image
+            commandId="org.eclipse.tm.te.ui.command.newWizards"
+            disabledIcon="icons/dlcl16/newtarget_wiz.gif"
+            icon="icons/elcl16/newtarget_wiz.gif">
+      </image>
    </extension>
 
 </plugin>

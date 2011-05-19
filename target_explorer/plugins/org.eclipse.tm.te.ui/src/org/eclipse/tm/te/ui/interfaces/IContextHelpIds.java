@@ -12,19 +12,17 @@ package org.eclipse.tm.te.ui.interfaces;
 import org.eclipse.tm.te.ui.activator.UIPlugin;
 
 /**
- * Target Explorer: Common UI constants.
- *
- * @author uwe.stieber@windriver.com
+ * Target Explorer: Context help id definitions.
  */
-public interface IUIConstants {
+public interface IContextHelpIds {
 
 	/**
-	 * The Target Explorer common controls context menu id base part.
+	 * UI plug-in common context help id prefix.
 	 */
-	public static final String ID_CONTROL_MENUS_BASE = UIPlugin.getUniqueIdentifier() + ".controls"; //$NON-NLS-1$
+	public final static String PREFIX = UIPlugin.getUniqueIdentifier() + "."; //$NON-NLS-1$
 
 	/**
-	 * The Target Explorer new target wizard selection page context help id.
+	 * New target wizard context help id.
 	 */
-	public static final String HELP_NEW_WIZARD_SELECTION_PAGE = UIPlugin.getUniqueIdentifier() + ".NewWizardSelectionPage"; //$NON-NLS-1$
+	public final static String NEW_TARGET_WIZARD = PREFIX + "NewTargetWizard"; //$NON-NLS-1$
 }

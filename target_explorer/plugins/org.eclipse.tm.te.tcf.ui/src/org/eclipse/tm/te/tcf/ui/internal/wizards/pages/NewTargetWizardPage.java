@@ -34,7 +34,7 @@ import org.eclipse.ui.PlatformUI;
  * Wizard page implementation querying all information needed
  * to create the different TCF peer types.
  */
-public class NewRemoteTargetWizardPage extends AbstractWizardPage {
+public class NewTargetWizardPage extends AbstractWizardPage {
 	private Combo fTransportTypeControl;
 	private Text fAddressControl;
 	private Text fPortControl;
@@ -44,8 +44,8 @@ public class NewRemoteTargetWizardPage extends AbstractWizardPage {
 	/**
 	 * Constructor.
 	 */
-	public NewRemoteTargetWizardPage() {
-		this(NewRemoteTargetWizardPage.class.getName());
+	public NewTargetWizardPage() {
+		this(NewTargetWizardPage.class.getName());
 	}
 
 	/**
@@ -53,7 +53,7 @@ public class NewRemoteTargetWizardPage extends AbstractWizardPage {
 	 *
 	 * @param pageName The page name. Must not be <code>null</code>.
 	 */
-	public NewRemoteTargetWizardPage(String pageName) {
+	public NewTargetWizardPage(String pageName) {
 		super(pageName);
 	}
 
@@ -63,8 +63,8 @@ public class NewRemoteTargetWizardPage extends AbstractWizardPage {
 	 */
 	public void createControl(Composite parent) {
 		// Setup title and description
-		setTitle(Messages.NewRemoteTargetWizardPage_title);
-		setDescription(Messages.NewRemoteTargetWizardPage_description);
+		setTitle(Messages.NewTargetWizardPage_title);
+		setDescription(Messages.NewTargetWizardPage_description);
 
 		// Create the main panel
 		Composite mainPanel = new Composite(parent, SWT.NONE);
@@ -74,7 +74,7 @@ public class NewRemoteTargetWizardPage extends AbstractWizardPage {
 		setControl(mainPanel);
 
 		// Setup the help
-		PlatformUI.getWorkbench().getHelpSystem().setHelp(mainPanel, IContextHelpIds.NEW_REMOTE_TARGET_WIZARD_PAGE);
+		PlatformUI.getWorkbench().getHelpSystem().setHelp(mainPanel, IContextHelpIds.NEW_TARGET_WIZARD_PAGE);
 
 		// Create the main panel sub controls
 		createMainPanelControls(mainPanel);
@@ -99,7 +99,7 @@ public class NewRemoteTargetWizardPage extends AbstractWizardPage {
 
 		// Add the controls
 		Label label = new Label(panel, SWT.NONE);
-		label.setText(Messages.NewRemoteTargetWizardPage_TransportTypeControl_label);
+		label.setText(Messages.NewTargetWizardPage_TransportTypeControl_label);
 
 		fTransportTypeControl = new Combo(panel, SWT.READ_ONLY);
 		fTransportTypeControl.setItems(new String[] { "TCP" }); //$NON-NLS-1$
@@ -108,7 +108,7 @@ public class NewRemoteTargetWizardPage extends AbstractWizardPage {
 		fTransportTypeControl.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
 		label = new Label(panel, SWT.NONE);
-		label.setText(Messages.NewRemoteTargetWizardPage_AgentHostControl_label);
+		label.setText(Messages.NewTargetWizardPage_AgentHostControl_label);
 
 		fAddressControl = new Text(panel, SWT.SINGLE | SWT.BORDER);
 		fAddressControl.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
@@ -119,7 +119,7 @@ public class NewRemoteTargetWizardPage extends AbstractWizardPage {
 		});
 
 		label = new Label(panel, SWT.NONE);
-		label.setText(Messages.NewRemoteTargetWizardPage_AgentPortControl_label);
+		label.setText(Messages.NewTargetWizardPage_AgentPortControl_label);
 
 		fPortControl = new Text(panel, SWT.SINGLE | SWT.BORDER);
 		fPortControl.setText("1534"); //$NON-NLS-1$
@@ -131,13 +131,13 @@ public class NewRemoteTargetWizardPage extends AbstractWizardPage {
 		});
 
 		label = new Label(panel, SWT.NONE);
-		label.setText(Messages.NewRemoteTargetWizardPage_PeerIdControl_label);
+		label.setText(Messages.NewTargetWizardPage_PeerIdControl_label);
 
 		fPeerIdControl = new Text(panel, SWT.SINGLE | SWT.BORDER);
 		fPeerIdControl.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
 		label = new Label(panel, SWT.NONE);
-		label.setText(Messages.NewRemoteTargetWizardPage_PeerNameControl_label);
+		label.setText(Messages.NewTargetWizardPage_PeerNameControl_label);
 
 		fPeerNameControl = new Text(panel, SWT.SINGLE | SWT.BORDER);
 		fPeerNameControl.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));

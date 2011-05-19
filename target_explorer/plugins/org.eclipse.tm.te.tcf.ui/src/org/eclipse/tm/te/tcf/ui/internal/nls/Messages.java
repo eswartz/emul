@@ -83,13 +83,13 @@ public class Messages extends NLS {
 	public static String NodePropertiesLabelProvider_services_local;
 	public static String NodePropertiesLabelProvider_services_remote;
 
-	public static String NewRemoteTargetWizard_windowTitle;
+	public static String NewTargetWizard_windowTitle;
 
-	public static String NewRemoteTargetWizardPage_title;
-	public static String NewRemoteTargetWizardPage_description;
-	public static String NewRemoteTargetWizardPage_TransportTypeControl_label;
-	public static String NewRemoteTargetWizardPage_AgentHostControl_label;
-	public static String NewRemoteTargetWizardPage_AgentPortControl_label;
-	public static String NewRemoteTargetWizardPage_PeerIdControl_label;
-	public static String NewRemoteTargetWizardPage_PeerNameControl_label;
+	public static String NewTargetWizardPage_title;
+	public static String NewTargetWizardPage_description;
+	public static String NewTargetWizardPage_TransportTypeControl_label;
+	public static String NewTargetWizardPage_AgentHostControl_label;
+	public static String NewTargetWizardPage_AgentPortControl_label;
+	public static String NewTargetWizardPage_PeerIdControl_label;
+	public static String NewTargetWizardPage_PeerNameControl_label;
 }

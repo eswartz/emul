@@ -17,4 +17,16 @@ Require-Bundle: org.eclipse.core.runtime;bundle-version="3.6.0",
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Bundle-ActivationPolicy: lazy
 Bundle-Localization: plugin
-Export-Package: org.eclipse.tm.te.tcf.ui.tables;version="1.0.0"
+Export-Package: org.eclipse.tm.te.tcf.ui.activator;x-internal:=true,
+ org.eclipse.tm.te.tcf.ui.internal;x-internal:=true,
+ org.eclipse.tm.te.tcf.ui.internal.editor.pages;x-internal:=true,
+ org.eclipse.tm.te.tcf.ui.internal.filter;x-internal:=true,
+ org.eclipse.tm.te.tcf.ui.internal.handler;x-internal:=true,
+ org.eclipse.tm.te.tcf.ui.internal.help;x-internal:=true,
+ org.eclipse.tm.te.tcf.ui.internal.model;x-internal:=true,
+ org.eclipse.tm.te.tcf.ui.internal.navigator;x-internal:=true,
+ org.eclipse.tm.te.tcf.ui.internal.navigator.images;x-internal:=true,
+ org.eclipse.tm.te.tcf.ui.internal.nls;x-internal:=true,
+ org.eclipse.tm.te.tcf.ui.internal.wizards;x-internal:=true,
+ org.eclipse.tm.te.tcf.ui.internal.wizards.pages;x-internal:=true,
+ org.eclipse.tm.te.tcf.ui.tables

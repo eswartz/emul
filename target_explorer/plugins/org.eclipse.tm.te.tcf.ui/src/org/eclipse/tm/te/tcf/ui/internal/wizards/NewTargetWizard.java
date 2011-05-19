@@ -25,7 +25,7 @@ import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel;
 import org.eclipse.tm.te.tcf.locator.interfaces.services.ILocatorModelLookupService;
 import org.eclipse.tm.te.tcf.ui.internal.model.Model;
 import org.eclipse.tm.te.tcf.ui.internal.nls.Messages;
-import org.eclipse.tm.te.tcf.ui.internal.wizards.pages.NewRemoteTargetWizardPage;
+import org.eclipse.tm.te.tcf.ui.internal.wizards.pages.NewTargetWizardPage;
 import org.eclipse.tm.te.ui.views.interfaces.IUIConstants;
 import org.eclipse.tm.te.ui.wizards.AbstractWizard;
 import org.eclipse.ui.INewWizard;
@@ -35,18 +35,25 @@ import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.PlatformUI;
 
 /**
- * New TCF remote target wizard implementation.
+ * New TCF target wizard implementation.
  */
-public class NewRemoteTargetWizard extends AbstractWizard implements INewWizard {
+public class NewTargetWizard extends AbstractWizard implements INewWizard {
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.IWorkbenchWizard#init(org.eclipse.ui.IWorkbench, org.eclipse.jface.viewers.IStructuredSelection)
 	 */
 	public void init(IWorkbench workbench, IStructuredSelection selection) {
 		// Set the window title
-		setWindowTitle(Messages.NewRemoteTargetWizard_windowTitle);
+		setWindowTitle(Messages.NewTargetWizard_windowTitle);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.jface.wizard.Wizard#addPages()
+	 */
+	@Override
+	public void addPages() {
 		// Create and add the wizard pages
-		addPage(new NewRemoteTargetWizardPage());
+		addPage(new NewTargetWizardPage());
 	}
 
 	/* (non-Javadoc)
@@ -54,12 +61,12 @@ public class NewRemoteTargetWizard extends AbstractWizard implements INewWizard 
 	 */
 	@Override
 	public boolean performFinish() {
-		IWizardPage page = getPage(NewRemoteTargetWizardPage.class.getName());
-		if (page instanceof NewRemoteTargetWizardPage) {
+		IWizardPage page = getPage(NewTargetWizardPage.class.getName());
+		if (page instanceof NewTargetWizardPage) {
 			// Trigger the saving of the widget history
-			((NewRemoteTargetWizardPage)page).saveWidgetValues();
+			((NewTargetWizardPage)page).saveWidgetValues();
 			// Get the peer attributes map from the page
-			Map<String, String> peerAttributes = ((NewRemoteTargetWizardPage)page).getPeerAttributes();
+			Map<String, String> peerAttributes = ((NewTargetWizardPage)page).getPeerAttributes();
 			if (peerAttributes != null) {
 				// Try to connect to the peer
 				IChannel channel = null;

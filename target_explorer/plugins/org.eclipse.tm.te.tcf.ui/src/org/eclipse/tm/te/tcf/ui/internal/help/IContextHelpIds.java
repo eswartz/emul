@@ -22,9 +22,9 @@ public interface IContextHelpIds {
 	public final static String PREFIX = UIPlugin.getUniqueIdentifier() + "."; //$NON-NLS-1$
 
 	/**
-	 * New TCF remote target wizard main page.
+	 * New TCF target wizard main page.
 	 */
-	public final static String NEW_REMOTE_TARGET_WIZARD_PAGE = PREFIX + "NewRemoteTargetWizardPage"; //$NON-NLS-1$
+	public final static String NEW_TARGET_WIZARD_PAGE = PREFIX + "NewTargetWizardPage"; //$NON-NLS-1$
 
 	/**
 	 * Target Explorer details editor page: Node properties

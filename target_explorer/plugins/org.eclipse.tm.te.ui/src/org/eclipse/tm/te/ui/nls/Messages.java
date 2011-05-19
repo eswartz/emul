@@ -29,7 +29,15 @@ public class Messages extends NLS {
 
 	// **** Declare externalized string id's down here *****
 
-	public static String AbstractImageRegistry_error_malformedImage;
+	public static String NewWizard_dialog_title;
+
+	public static String NewWizardSelectionPage_title;
+	public static String NewWizardSelectionPage_description;
+	public static String NewWizardSelectionPage_wizards;
+	public static String NewWizardSelectionPage_createWizardFailed;
+
+	public static String AbstractAction_UnsatisfiedLinkError_title;
+	public static String AbstractAction_UnsatisfiedLinkError_message;
 
 	public static String NodePropertiesTableControl_section_title;
 	public static String NodePropertiesTableControl_section_title_noSelection;

@@ -140,10 +140,6 @@
 
 <!-- Command contributions -->
    <extension point="org.eclipse.ui.commands">
-      <category
-            id="org.eclipse.tm.te.ui.commands.category"
-            name="%Command.category.name">
-      </category>
       <!-- Definition of the Common Navigator global retargetable open
            action id as command.
       --> 
@@ -193,7 +189,6 @@
             </with>
          </activeWhen>
       </handler>      
-
    </extension>
 
 <!-- Eclipse core expressions property tester -->
