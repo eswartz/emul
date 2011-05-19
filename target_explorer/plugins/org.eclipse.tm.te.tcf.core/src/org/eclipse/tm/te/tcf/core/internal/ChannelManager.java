@@ -3,7 +3,7 @@
  * This program and the accompanying materials are made available under the terms
  * of the Eclipse Public License v1.0 which accompanies this distribution, and is
  * available at http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  * Uwe Stieber (Wind River) - initial API and implementation
  *******************************************************************************/
@@ -13,6 +13,7 @@ import java.util.Map;
 
 import org.eclipse.core.runtime.PlatformObject;
 import org.eclipse.tm.tcf.core.AbstractPeer;
+import org.eclipse.tm.tcf.core.TransientPeer;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.Protocol;
@@ -137,11 +138,14 @@ public final class ChannelManager extends PlatformObject implements IChannelMana
 		String peerId = peerAttributes.get(IPeer.ATTR_ID);
 		assert peerId != null;
 
+		// Check if we shall open the peer transient
+		boolean isTransient = peerAttributes.containsKey("transient") ? Boolean.parseBoolean(peerAttributes.remove("transient")) : false; //$NON-NLS-1$ //$NON-NLS-2$
+
 		// Look the peer via the Locator Service.
 		IPeer peer = Protocol.getLocator().getPeers().get(peerId);
 		// If not peer could be found, create a new one
 		if (peer == null) {
-			peer = new AbstractPeer(peerAttributes);
+			peer = isTransient ? new TransientPeer(peerAttributes) : new AbstractPeer(peerAttributes);
 		}
 
 		// Return the peer instance
