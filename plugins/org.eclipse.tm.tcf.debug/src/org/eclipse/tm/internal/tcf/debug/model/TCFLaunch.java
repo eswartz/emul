@@ -100,9 +100,6 @@ public class TCFLaunch extends Launch {
         }
     }
 
-    /** Memory map attribute: memory context ID */
-    public static final String PROP_MMAP_ID = "ID";
-
     private static final Collection<LaunchListener> listeners = new ArrayList<LaunchListener>();
 
     private final Collection<ActionsListener> action_listeners = new ArrayList<ActionsListener>();
@@ -306,7 +303,7 @@ public class TCFLaunch extends Launch {
         Collection<Map<String,Object>> list = (Collection<Map<String,Object>>)JSON.parseOne(cfg.getBytes("UTF-8"));
         if (list == null) return;
         for (Map<String,Object> map : list) {
-            String id = (String)map.get(PROP_MMAP_ID);
+            String id = (String)map.get(IMemoryMap.PROP_ID);
             if (id != null) {
                 ArrayList<TCFMemoryRegion> l = maps.get(id);
                 if (l == null) {

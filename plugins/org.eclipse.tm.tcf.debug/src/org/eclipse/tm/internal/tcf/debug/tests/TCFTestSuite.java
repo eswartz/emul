@@ -19,10 +19,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.eclipse.tm.internal.tcf.debug.model.TCFMemoryRegion;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.Protocol;
+import org.eclipse.tm.tcf.services.IMemoryMap;
 import org.eclipse.tm.tcf.services.IPathMap.PathMapRule;
 
 /**
@@ -53,7 +53,7 @@ public class TCFTestSuite {
     }
 
     public TCFTestSuite(final IPeer peer, final TestListener listener,
-            final List<PathMapRule> path_map, final Map<String,ArrayList<TCFMemoryRegion>> mem_map) throws IOException {
+            final List<PathMapRule> path_map, final Map<String,ArrayList<IMemoryMap.MemoryRegion>> mem_map) throws IOException {
         this.listener = listener;
         pending_tests.add(new Runnable() {
             public void run() {

@@ -53,7 +53,6 @@ import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.tm.internal.tcf.debug.launch.TCFLaunchDelegate;
 import org.eclipse.tm.internal.tcf.debug.launch.TCFLocalAgent;
 import org.eclipse.tm.internal.tcf.debug.launch.TCFUserDefPeer;
-import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
 import org.eclipse.tm.internal.tcf.debug.model.TCFMemoryRegion;
 import org.eclipse.tm.internal.tcf.debug.tests.TCFTestSuite;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
@@ -65,6 +64,7 @@ import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.ILocator;
+import org.eclipse.tm.tcf.services.IMemoryMap;
 import org.eclipse.tm.tcf.services.IPathMap.PathMapRule;
 import org.eclipse.tm.tcf.util.TCFTask;
 
@@ -996,18 +996,18 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
                     for (ILaunchConfigurationTab t : getLaunchConfigurationDialog().getTabs()) {
                         if (t instanceof TCFPathMapTab) path_map = ((TCFPathMapTab)t).getPathMap();
                     }
-                    HashMap<String,ArrayList<TCFMemoryRegion>> mem_map = null;
+                    HashMap<String,ArrayList<IMemoryMap.MemoryRegion>> mem_map = null;
                     if (mem_map_cfg != null) {
                         @SuppressWarnings("unchecked")
                         Collection<Map<String,Object>> list = (Collection<Map<String,Object>>)JSON.parseOne(mem_map_cfg.getBytes("UTF-8"));
                         if (list != null) {
-                            mem_map = new HashMap<String,ArrayList<TCFMemoryRegion>>();
+                            mem_map = new HashMap<String,ArrayList<IMemoryMap.MemoryRegion>>();
                             for (Map<String,Object> m : list) {
-                                String id = (String)m.get(TCFLaunch.PROP_MMAP_ID);
+                                String id = (String)m.get(IMemoryMap.PROP_ID);
                                 if (id != null) {
-                                    ArrayList<TCFMemoryRegion> l = mem_map.get(id);
+                                    ArrayList<IMemoryMap.MemoryRegion> l = mem_map.get(id);
                                     if (l == null) {
-                                        l = new ArrayList<TCFMemoryRegion>();
+                                        l = new ArrayList<IMemoryMap.MemoryRegion>();
                                         mem_map.put(id, l);
                                     }
                                     l.add(new TCFMemoryRegion(m));

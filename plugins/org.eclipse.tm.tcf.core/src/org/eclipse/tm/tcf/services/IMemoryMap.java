@@ -26,6 +26,9 @@ public interface IMemoryMap extends IService {
      * Memory region property names.
      */
     static final String
+        /** String, memory region ID */
+        PROP_ID = "ID",
+
         /** Number, region address in memory */
         PROP_ADDRESS = "Addr",
 

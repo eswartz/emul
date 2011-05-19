@@ -50,7 +50,6 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.tm.internal.tcf.debug.launch.TCFLaunchDelegate;
-import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
 import org.eclipse.tm.internal.tcf.debug.model.TCFMemoryRegion;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
@@ -166,7 +165,7 @@ class MemoryMapDialog extends Dialog {
 
         public Color getForeground(Object element, int columnIndex) {
             TCFMemoryRegion r = (TCFMemoryRegion)element;
-            if (r.getProperties().get(TCFLaunch.PROP_MMAP_ID) != null) {
+            if (r.getProperties().get(IMemoryMap.PROP_ID) != null) {
                 return map_table.getDisplay().getSystemColor(SWT.COLOR_BLUE);
             }
             return map_table.getForeground();
@@ -313,7 +312,7 @@ class MemoryMapDialog extends Dialog {
                 Map<String,Object> props = new HashMap<String,Object>();
                 Image image = ImageCache.getImage(ImageCache.IMG_MEMORY_MAP);
                 if (new MemoryMapItemDialog(getShell(), image, props, true).open() == OK) {
-                    if (mem_map_id != null) props.put(TCFLaunch.PROP_MMAP_ID, mem_map_id);
+                    if (mem_map_id != null) props.put(IMemoryMap.PROP_ID, mem_map_id);
                     IMemoryMap.MemoryRegion[] arr = new IMemoryMap.MemoryRegion[cur_map.length + 1];
                     System.arraycopy(cur_map, 0, arr, 0, cur_map.length);
                     TCFMemoryRegion r = new TCFMemoryRegion(props);
@@ -374,7 +373,7 @@ class MemoryMapDialog extends Dialog {
             public void run() {
                 IMemoryMap.MemoryRegion r = (IMemoryMap.MemoryRegion)((IStructuredSelection)
                         table_viewer.getSelection()).getFirstElement();
-                boolean manual = r != null && r.getProperties().get(TCFLaunch.PROP_MMAP_ID) != null;
+                boolean manual = r != null && r.getProperties().get(IMemoryMap.PROP_ID) != null;
                 button_add.setEnabled(mem_map_id != null);
                 button_edit.setEnabled(r != null);
                 button_remove.setEnabled(manual);
@@ -388,7 +387,7 @@ class MemoryMapDialog extends Dialog {
 
     private void editRegion(MemoryRegion r) {
         Map<String,Object> props = r.getProperties();
-        boolean enable_editing = props.get(TCFLaunch.PROP_MMAP_ID) != null;
+        boolean enable_editing = props.get(IMemoryMap.PROP_ID) != null;
         if (enable_editing) props = new HashMap<String,Object>(props);
         Image image = ImageCache.getImage(ImageCache.IMG_MEMORY_MAP);
         if (new MemoryMapItemDialog(getShell(), image, props, enable_editing).open() == OK && enable_editing) {
@@ -417,7 +416,7 @@ class MemoryMapDialog extends Dialog {
         if (c == null) return;
         for (Object x : c) {
             Map<String,Object> props = (Map<String,Object>)x;
-            if (mem_map_id.equals(props.get(TCFLaunch.PROP_MMAP_ID)) != own) continue;
+            if (mem_map_id.equals(props.get(IMemoryMap.PROP_ID)) != own) continue;
             lst.add(new TCFMemoryRegion(props));
         }
     }
@@ -467,7 +466,7 @@ class MemoryMapDialog extends Dialog {
                     if (dc.getData() != null) {
                         for (TCFNodeExecContext.MemoryRegion m : dc.getData()) {
                             Map<String,Object> props = m.region.getProperties();
-                            if (props.get(TCFLaunch.PROP_MMAP_ID) != null) {
+                            if (props.get(IMemoryMap.PROP_ID) != null) {
                                 String fnm = m.region.getFileName();
                                 if (fnm != null) loaded_files.add(fnm);
                             }
@@ -508,7 +507,7 @@ class MemoryMapDialog extends Dialog {
         if (mem_map_id == null) return;
         boolean loaded_files_ok = true;
         for (IMemoryMap.MemoryRegion r : cur_map) {
-            if (r.getProperties().get(TCFLaunch.PROP_MMAP_ID) != null) {
+            if (r.getProperties().get(IMemoryMap.PROP_ID) != null) {
                 String fnm = r.getFileName();
                 if (fnm != null && !loaded_files.contains(fnm)) loaded_files_ok = false;
             }
@@ -517,7 +516,7 @@ class MemoryMapDialog extends Dialog {
             try {
                 final ArrayList<IMemoryMap.MemoryRegion> lst = new ArrayList<MemoryRegion>();
                 for (IMemoryMap.MemoryRegion r : cur_map) {
-                    if (r.getProperties().get(TCFLaunch.PROP_MMAP_ID) != null) lst.add(r);
+                    if (r.getProperties().get(IMemoryMap.PROP_ID) != null) lst.add(r);
                 }
                 readMemoryMapAttribute(lst, false);
                 writeMemoryMapAttribute(lst);
