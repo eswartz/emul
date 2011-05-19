@@ -1,5 +1,5 @@
 %define name tcf-agent
-%define version 0.3.0
+%define version 0.4.0
 %define release 1.%(bin/get-os-tag)
 %define make_options CONF=Release PATH_Plugins=/etc/tcf/plugins
 
@@ -59,6 +59,8 @@ fi
 %{_includedir}/tcf
 
 %changelog
+* Mon May 16 2011 Eugene Tarassov <eugene.tarassov@windriver.com> 0.4.0
+- Eclipse 3.7.0 release
 * Thu Jun 03 2010 Eugene Tarassov <eugene.tarassov@windriver.com> 0.3.0
 - Eclipse 3.6.0 Helios release
 * Thu Mar 12 2009 Eugene Tarassov <eugene.tarassov@windriver.com> 0.0.1
