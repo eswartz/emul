@@ -56,7 +56,7 @@
       <wizard
             category="org.eclipse.tm.te.tcf.ui.newWizards.category"
             class="org.eclipse.tm.te.tcf.ui.internal.wizards.NewTargetWizard"
-            icon="icons/elcl16/newRemoteTarget_wiz.gif"
+            icon="icons/elcl16/newTarget_wiz.gif"
             id="org.eclipse.tm.te.tcf.ui.wizards.NewTargetWizard"
             name="%NewTargetWizard.name">
       </wizard>
