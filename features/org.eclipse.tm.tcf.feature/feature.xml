@@ -13,7 +13,7 @@
 <feature
       id="org.eclipse.tm.tcf.feature"
       label="%featureName"
-      version="0.3.0.qualifier"
+      version="0.4.0.qualifier"
       provider-name="%providerName">
 
    <description url="http://wiki.eclipse.org/TCF">
@@ -29,7 +29,7 @@
    </license>
 
    <url>
-      <update label="%updateSiteName" url="http://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/releases/0.3.0"/>
+      <update label="%updateSiteName" url="http://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/releases/0.4.0"/>
    </url>
 
    <requires>
