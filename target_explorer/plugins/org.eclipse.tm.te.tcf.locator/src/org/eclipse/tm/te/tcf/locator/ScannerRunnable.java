@@ -3,7 +3,7 @@
  * This program and the accompanying materials are made available under the terms
  * of the Eclipse Public License v1.0 which accompanies this distribution, and is
  * available at http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  * Uwe Stieber (Wind River) - initial API and implementation
  *******************************************************************************/
@@ -39,11 +39,11 @@ public class ScannerRunnable implements Runnable, IChannel.IChannelListener {
 	private static final int DEFAULT_SOCKET_CONNECT_TIMEOUT = 10000;
 
 	// Reference to the parent model scanner
-	private final IScanner fParentScanner;
+	private final IScanner parentScanner;
 	// Reference to the peer model node to update
-	private final IPeerModel fPeerNode;
+	private final IPeerModel peerNode;
 	// Reference to the channel
-	private IChannel fChannel = null;
+	private IChannel channel = null;
 
 	/**
 	 * Constructor.
@@ -54,10 +54,10 @@ public class ScannerRunnable implements Runnable, IChannel.IChannelListener {
 	public ScannerRunnable(IScanner scanner, IPeerModel peerNode) {
 		super();
 
-		fParentScanner = scanner;
+		parentScanner = scanner;
 
 		assert peerNode != null;
-		fPeerNode = peerNode;
+		this.peerNode = peerNode;
 	}
 
 	/**
@@ -66,24 +66,24 @@ public class ScannerRunnable implements Runnable, IChannel.IChannelListener {
 	 * @return The parent scanner instance or <code>null</code>.
 	 */
 	protected final IScanner getParentScanner() {
-		return fParentScanner;
+		return parentScanner;
 	}
 
 	/* (non-Javadoc)
 	 * @see java.lang.Runnable#run()
 	 */
 	public void run() {
-		if (fPeerNode != null && fPeerNode.getPeer() != null) {
+		if (peerNode != null && peerNode.getPeer() != null) {
 			// Open the channel
-			fChannel = fPeerNode.getPeer().openChannel();
+			channel = peerNode.getPeer().openChannel();
 			// Configure the connect timeout
-			if (fChannel instanceof ChannelTCP) {
-				int timeout = fPeerNode.getIntProperty(IPeerModelProperties.PROP_CONNECT_TIMEOUT);
+			if (channel instanceof ChannelTCP) {
+				int timeout = peerNode.getIntProperty(IPeerModelProperties.PROP_CONNECT_TIMEOUT);
 				if (timeout == -1) timeout = DEFAULT_SOCKET_CONNECT_TIMEOUT;
-				((ChannelTCP)fChannel).setConnectTimeout(timeout);
+				((ChannelTCP)channel).setConnectTimeout(timeout);
 			}
 			// Add ourself as channel listener
-			fChannel.addChannelListener(this);
+			channel.addChannelListener(this);
 		}
 	}
 
@@ -92,37 +92,37 @@ public class ScannerRunnable implements Runnable, IChannel.IChannelListener {
 	 */
 	public void onChannelOpened() {
 		// Peer is reachable
-		if (fChannel != null) {
+		if (channel != null) {
 			// Remove ourself as channel listener
-			fChannel.removeChannelListener(this);
+			channel.removeChannelListener(this);
 		}
 
 		// Set the peer state property
-		if (fPeerNode != null) {
-			int counter = fPeerNode.getIntProperty(IPeerModelProperties.PROP_CHANNEL_REF_COUNTER);
-			fPeerNode.setProperty(IPeerModelProperties.PROP_STATE, counter > 0 ? IPeerModelProperties.STATE_CONNECTED : IPeerModelProperties.STATE_REACHABLE);
-			fPeerNode.setProperty(IPeerModelProperties.PROP_LAST_SCANNER_ERROR, null);
+		if (peerNode != null) {
+			int counter = peerNode.getIntProperty(IPeerModelProperties.PROP_CHANNEL_REF_COUNTER);
+			peerNode.setProperty(IPeerModelProperties.PROP_STATE, counter > 0 ? IPeerModelProperties.STATE_CONNECTED : IPeerModelProperties.STATE_REACHABLE);
+			peerNode.setProperty(IPeerModelProperties.PROP_LAST_SCANNER_ERROR, null);
 		}
 
-		if (fChannel != null && fChannel.getState() == IChannel.STATE_OPEN) {
+		if (channel != null && channel.getState() == IChannel.STATE_OPEN) {
 			// Get the parent model from the model mode
-			final ILocatorModel model = (ILocatorModel)fPeerNode.getAdapter(ILocatorModel.class);
+			final ILocatorModel model = (ILocatorModel)peerNode.getAdapter(ILocatorModel.class);
 			if (model != null) {
 				// Get the local service
-				Collection<String> localServices = new ArrayList<String>(fChannel.getLocalServices());
+				Collection<String> localServices = new ArrayList<String>(channel.getLocalServices());
 				// Get the remote services
-				Collection<String> remoteServices = new ArrayList<String>(fChannel.getRemoteServices());
+				Collection<String> remoteServices = new ArrayList<String>(channel.getRemoteServices());
 
 				// Get the update service
 				ILocatorModelUpdateService updateService = model.getService(ILocatorModelUpdateService.class);
 				if (updateService != null) {
 					// Update the services nodes
-					updateService.updatePeerServices(fPeerNode, localServices, remoteServices);
+					updateService.updatePeerServices(peerNode, localServices, remoteServices);
 				}
 
 				// Use the open channel to ask the remote peer what other
 				// peers it knows
-				ILocator locator = fChannel.getRemoteService(ILocator.class);
+				ILocator locator = channel.getRemoteService(ILocator.class);
 				if (locator != null) {
 					final Map<String, IPeer> peers = locator.getPeers();
 					if (peers != null && !peers.isEmpty()) {
@@ -146,7 +146,7 @@ public class ScannerRunnable implements Runnable, IChannel.IChannelListener {
 			}
 
 			// And close the channel
-			fChannel.close();
+			channel.close();
 		}
 	}
 
@@ -156,18 +156,18 @@ public class ScannerRunnable implements Runnable, IChannel.IChannelListener {
 	public void onChannelClosed(Throwable error) {
 		// Peer is not reachable
 
-		if (fChannel != null) {
+		if (channel != null) {
 			// Remove ourself as channel listener
-			fChannel.removeChannelListener(this);
+			channel.removeChannelListener(this);
 		}
 
 		// Set the peer state property, if the scanner the runnable
 		// has been scheduled from is still active.
-		if (fPeerNode != null && (fParentScanner == null || fParentScanner != null && !fParentScanner.isTerminated())) {
-			fPeerNode.setProperty(IPeerModelProperties.PROP_CHANNEL_REF_COUNTER, null);
-			fPeerNode.setProperty(IPeerModelProperties.PROP_STATE,
+		if (peerNode != null && (parentScanner == null || parentScanner != null && !parentScanner.isTerminated())) {
+			peerNode.setProperty(IPeerModelProperties.PROP_CHANNEL_REF_COUNTER, null);
+			peerNode.setProperty(IPeerModelProperties.PROP_STATE,
 			                  error instanceof SocketTimeoutException ? IPeerModelProperties.STATE_NOT_REACHABLE : IPeerModelProperties.STATE_ERROR);
-			fPeerNode.setProperty(IPeerModelProperties.PROP_LAST_SCANNER_ERROR, error instanceof SocketTimeoutException ? null : error);
+			peerNode.setProperty(IPeerModelProperties.PROP_LAST_SCANNER_ERROR, error instanceof SocketTimeoutException ? null : error);
 		}
 	}
 

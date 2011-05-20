@@ -26,7 +26,7 @@ import org.eclipse.swt.widgets.Tree;
  * Target Explorer: Common sorter implementation.
  */
 public class Sorter extends TreePathViewerSorter {
-	private final ILabelProvider fLabelProvider = new LabelProviderDelegate();
+	private final ILabelProvider labelProvider = new LabelProviderDelegate();
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.ViewerComparator#compare(org.eclipse.jface.viewers.Viewer, java.lang.Object, java.lang.Object)
@@ -49,7 +49,7 @@ public class Sorter extends TreePathViewerSorter {
 	 */
 	protected String doGetText(Object node, int index) {
 		if (node != null) {
-			return fLabelProvider.getText(node);
+			return labelProvider.getText(node);
 		}
 		return null;
 	}

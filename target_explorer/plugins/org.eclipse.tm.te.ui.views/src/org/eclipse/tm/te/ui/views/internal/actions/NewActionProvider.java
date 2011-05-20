@@ -34,11 +34,11 @@ import org.eclipse.ui.navigator.WizardActionGroup;
 @SuppressWarnings("restriction")
 public class NewActionProvider extends CommonActionProvider {
 	// Reference to the action showing the "Other..." dialog (context menu)
-	private CommandAction fNewWizardCommandAction = null;
+	private CommandAction newWizardCommandAction = null;
 	// Reference to the action showing the "Other..." dialog (toolbar)
-	private CommandAction fNewWizardCommandActionToolbar = null;
+	private CommandAction newWizardCommandActionToolbar = null;
 	// Reference to the action group managing the context sensitive new wizards
-	private WizardActionGroup fNewWizardActionGroup = null;
+	private WizardActionGroup newWizardActionGroup = null;
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.navigator.CommonActionProvider#init(org.eclipse.ui.navigator.ICommonActionExtensionSite)
@@ -51,21 +51,21 @@ public class NewActionProvider extends CommonActionProvider {
 			// To initialize the actions, the workbench window instance is required
 			IWorkbenchWindow window = ((ICommonViewerWorkbenchSite)site.getViewSite()).getWorkbenchWindow();
 			// Initialize the actions
-			fNewWizardCommandAction = new CommandAction(window, "org.eclipse.tm.te.ui.command.newWizards"); //$NON-NLS-1$
-			fNewWizardCommandAction.setImageDescriptor(null);
-			fNewWizardCommandAction.setDisabledImageDescriptor(null);
-			fNewWizardCommandAction.setText(Messages.NewActionProvider_NewWizardCommandAction_label);
-			fNewWizardCommandAction.setToolTipText(Messages.NewActionProvider_NewWizardCommandAction_tooltip);
-            window.getWorkbench().getHelpSystem().setHelp(fNewWizardCommandAction, IContextHelpIds.NEW_TARGET_WIZARD);
+			newWizardCommandAction = new CommandAction(window, "org.eclipse.tm.te.ui.command.newWizards"); //$NON-NLS-1$
+			newWizardCommandAction.setImageDescriptor(null);
+			newWizardCommandAction.setDisabledImageDescriptor(null);
+			newWizardCommandAction.setText(Messages.NewActionProvider_NewWizardCommandAction_label);
+			newWizardCommandAction.setToolTipText(Messages.NewActionProvider_NewWizardCommandAction_tooltip);
+            window.getWorkbench().getHelpSystem().setHelp(newWizardCommandAction, IContextHelpIds.NEW_TARGET_WIZARD);
 
-			fNewWizardCommandActionToolbar = new CommandAction(window, "org.eclipse.tm.te.ui.command.newWizards"); //$NON-NLS-1$
-			fNewWizardCommandActionToolbar.setImageDescriptor(org.eclipse.tm.te.ui.activator.UIPlugin.getImageDescriptor(ImageConsts.IMAGE_NEW_TARGET_WIZARD_ENABLED));
-			fNewWizardCommandActionToolbar.setDisabledImageDescriptor(org.eclipse.tm.te.ui.activator.UIPlugin.getImageDescriptor(ImageConsts.IMAGE_NEW_TARGET_WIZARD_DISABLED));
-			fNewWizardCommandActionToolbar.setText(Messages.NewActionProvider_NewWizardCommandAction_label);
-			fNewWizardCommandActionToolbar.setToolTipText(Messages.NewActionProvider_NewWizardCommandAction_tooltip);
-            window.getWorkbench().getHelpSystem().setHelp(fNewWizardCommandActionToolbar, IContextHelpIds.NEW_TARGET_WIZARD);
+			newWizardCommandActionToolbar = new CommandAction(window, "org.eclipse.tm.te.ui.command.newWizards"); //$NON-NLS-1$
+			newWizardCommandActionToolbar.setImageDescriptor(org.eclipse.tm.te.ui.activator.UIPlugin.getImageDescriptor(ImageConsts.IMAGE_NEW_TARGET_WIZARD_ENABLED));
+			newWizardCommandActionToolbar.setDisabledImageDescriptor(org.eclipse.tm.te.ui.activator.UIPlugin.getImageDescriptor(ImageConsts.IMAGE_NEW_TARGET_WIZARD_DISABLED));
+			newWizardCommandActionToolbar.setText(Messages.NewActionProvider_NewWizardCommandAction_label);
+			newWizardCommandActionToolbar.setToolTipText(Messages.NewActionProvider_NewWizardCommandAction_tooltip);
+            window.getWorkbench().getHelpSystem().setHelp(newWizardCommandActionToolbar, IContextHelpIds.NEW_TARGET_WIZARD);
 
-			fNewWizardActionGroup = new WizardActionGroup(window,
+			newWizardActionGroup = new WizardActionGroup(window,
 														  NewWizardRegistry.getInstance(),
 														  WizardActionGroup.TYPE_NEW,
 														  site.getContentService());
@@ -77,13 +77,13 @@ public class NewActionProvider extends CommonActionProvider {
 	 */
 	@Override
 	public void dispose() {
-		if (fNewWizardCommandAction != null) {
-			fNewWizardCommandAction.dispose();
-			fNewWizardCommandAction = null;
+		if (newWizardCommandAction != null) {
+			newWizardCommandAction.dispose();
+			newWizardCommandAction = null;
 		}
-		if (fNewWizardActionGroup != null) {
-			fNewWizardActionGroup.dispose();
-			fNewWizardActionGroup = null;
+		if (newWizardActionGroup != null) {
+			newWizardActionGroup.dispose();
+			newWizardActionGroup = null;
 		}
 		super.dispose();
 	}
@@ -94,7 +94,7 @@ public class NewActionProvider extends CommonActionProvider {
 	@Override
 	public void fillContextMenu(IMenuManager menu) {
 		// If none of the actions got created, there is nothing to do here
-		if (fNewWizardCommandAction == null && fNewWizardActionGroup == null) {
+		if (newWizardCommandAction == null && newWizardActionGroup == null) {
 			return;
 		}
 
@@ -104,18 +104,18 @@ public class NewActionProvider extends CommonActionProvider {
 											   IUIConstants.ID_EXPLORER + ".menu.new"); //$NON-NLS-1$
 
 		// Add the context sensitive wizards (commonWizard element)
-		if (fNewWizardActionGroup != null) {
-			fNewWizardActionGroup.setContext(getContext());
-			fNewWizardActionGroup.fillContextMenu(newMenu);
+		if (newWizardActionGroup != null) {
+			newWizardActionGroup.setContext(getContext());
+			newWizardActionGroup.fillContextMenu(newMenu);
 		}
 
 		// Add the standard additions marker
 		newMenu.add(new Separator(ICommonMenuConstants.GROUP_ADDITIONS));
 
 		// Add the "Other..." dialog action
-		if (fNewWizardCommandAction != null) {
+		if (newWizardCommandAction != null) {
 			newMenu.add(new Separator());
-			newMenu.add(fNewWizardCommandAction);
+			newMenu.add(newWizardCommandAction);
 		}
 
 		// The menu will be appended after the GROUP_NEW group.
@@ -127,11 +127,11 @@ public class NewActionProvider extends CommonActionProvider {
 	 */
 	@Override
 	public void fillActionBars(IActionBars actionBars) {
-		if (fNewWizardCommandActionToolbar == null) {
+		if (newWizardCommandActionToolbar == null) {
 			return;
 		}
 
 		IToolBarManager toolbar = actionBars.getToolBarManager();
-		toolbar.insertAfter(ICommonMenuConstants.GROUP_NEW, fNewWizardCommandActionToolbar);
+		toolbar.insertAfter(ICommonMenuConstants.GROUP_NEW, newWizardCommandActionToolbar);
 	}
 }

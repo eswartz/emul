@@ -21,7 +21,7 @@ import org.eclipse.tm.te.ui.activator.UIPlugin;
 public abstract class AbstractWizard extends Wizard {
 	// A marker to remember if the dialog settings got
 	// initialized for this wizard
-	private boolean fDialogSettingsInitialized = false;
+	private boolean dialogSettingsInitialized = false;
 
 	/**
 	 * Initialize the dialog settings and associate them with the wizard.
@@ -38,7 +38,7 @@ public abstract class AbstractWizard extends Wizard {
 		// Push the section to the wizard
 		setDialogSettings(section);
 		// Mark the dialog settings initialized
-		fDialogSettingsInitialized = true;
+		dialogSettingsInitialized = true;
 	}
 
 	/**
@@ -73,7 +73,7 @@ public abstract class AbstractWizard extends Wizard {
 	 */
 	@Override
 	public IDialogSettings getDialogSettings() {
-		if (!fDialogSettingsInitialized) {
+		if (!dialogSettingsInitialized) {
 			initializeDialogSettings();
 		}
 		return super.getDialogSettings();

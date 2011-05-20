@@ -3,7 +3,7 @@
  * This program and the accompanying materials are made available under the terms
  * of the Eclipse Public License v1.0 which accompanies this distribution, and is
  * available at http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  * Uwe Stieber (Wind River) - initial API and implementation
  *******************************************************************************/
@@ -19,12 +19,12 @@ public class TraceHandler {
 	/**
 	 * The bundle identifier.
 	 */
-	private final String fIdentifier;
+	private final String identifier;
 
 	/**
 	 * The tracer instance.
 	 */
-	private Tracer fTracer = null;
+	private Tracer tracer = null;
 
 	/**
 	 * The tracer is responsible for writing the trace message to the desired
@@ -45,7 +45,7 @@ public class TraceHandler {
 
 		/**
 		 * Constructor.
-		 * 
+		 *
 		 * @param identifier The bundle identifier. Must not be <code>null</code>.
 		 */
 		public Tracer(String identifier) {
@@ -60,7 +60,7 @@ public class TraceHandler {
 		 * Returns the value of the debug mode tracing slot.
 		 * <p>
 		 * If not set, or the value is not an {@link Integer}, the method returns <code>0</code>.
-		 * 
+		 *
 		 * @return The debug mode value.
 		 */
 		protected int getDebugMode() {
@@ -76,7 +76,7 @@ public class TraceHandler {
 
 		/**
 		 * Check if the specified trace slot is enabled.
-		 * 
+		 *
 		 * @param slotId The name of the slot.
 		 * @return <code>true</code> if the slot is defined and enabled, <code>false</code> otherwise.
 		 */
@@ -86,10 +86,10 @@ public class TraceHandler {
 
 		/**
 		 * Check if tracing is enabled for given mode and slot.
-		 * 
+		 *
 		 * @param debugMode The debug mode for the current debug.
 		 * @param slotId The name of the slot.
-		 * 
+		 *
 		 * @return <code>true</code> if the debug should be written, <code>false</code> otherwise.
 		 */
 		protected final boolean isEnabled(int debugMode, String slotId) {
@@ -100,13 +100,13 @@ public class TraceHandler {
 
 		/**
 		 * Format the trace message.
-		 * 
+		 *
 		 * @param message The trace message.
 		 * @param debugMode The debug mode.
 		 * @param slotId The name of the slot.
 		 * @param severity The severity. See {@link IStatus} for valid severity values.
 		 * @param clazz The class that calls this tracer.
-		 * 
+		 *
 		 * @see IStatus
 		 */
 		protected String getFormattedDebugMessage(String message, int debugMode, String slotId, int severity, Object clazz) {
@@ -135,13 +135,13 @@ public class TraceHandler {
 
 		/**
 		 * Write the trace message.
-		 * 
+		 *
 		 * @param message The trace message.
 		 * @param debugMode The debug mode.
 		 * @param slotId The name of the slot.
 		 * @param severity The severity. See {@link IStatus} for valid severity values.
 		 * @param clazz The class that calls this tracer.
-		 * 
+		 *
 		 * @see IStatus
 		 */
 		protected void write(String message, int debugMode, String slotId, int severity, Object clazz) {
@@ -156,13 +156,13 @@ public class TraceHandler {
 
 		/**
 		 * Trace the given message with the given debug mode and slot.
-		 * 
+		 *
 		 * @param message The trace message.
 		 * @param debugMode The debug mode.
 		 * @param slotId The name of the slot.
 		 * @param severity The severity. See {@link IStatus} for valid severity values.
 		 * @param clazz The class that calls this tracer.
-		 * 
+		 *
 		 * @see IStatus
 		 */
 		public final void trace(String message, int debugMode, String slotId, int severity, Object clazz) {
@@ -175,41 +175,41 @@ public class TraceHandler {
 	/**
 	 * Constructor.
 	 * <p>
-	 * Initializes the tracing handler with the given bundle indentifier.
-	 * 
+	 * Initializes the tracing handler with the given bundle identifier.
+	 *
 	 * @param identifier The bundle identifier. Must not be <code>null</code>.
 	 */
 	public TraceHandler(String identifier) {
 		assert identifier != null;
-		fIdentifier = identifier;
+		this.identifier = identifier;
 	}
 
 	/**
 	 * Returns the identifier.
 	 */
 	protected final String getIdentifier() {
-		return fIdentifier;
+		return identifier;
 	}
 
 	/**
 	 * Returns the tracer instance. Create a new tracer instance
 	 * on first invokation.
-	 * 
+	 *
 	 * @return The tracer instance.
 	 */
 	protected Tracer getTracer() {
-		if (fTracer == null) {
-			fTracer = new Tracer(fIdentifier);
+		if (tracer == null) {
+			tracer = new Tracer(identifier);
 		}
-		return fTracer;
+		return tracer;
 	}
 
 	/**
-	 * Check wether a trace slot is enabled with the given debug mode.
-	 * 
+	 * Check whether a trace slot is enabled with the given debug mode.
+	 *
 	 * @param debugMode The debug mode
 	 * @param slotId The name of the slot.
-	 * 
+	 *
 	 * @return <code>true</code> if the slot is enabled, <code>false</code> otherwise.
 	 */
 	public final boolean isSlotEnabled(int debugMode, String slotId) {
@@ -221,7 +221,7 @@ public class TraceHandler {
 	 * <p>
 	 * The message severity will be {@link IStatus#INFO} and the message will be
 	 * traced unconditionally.
-	 * 
+	 *
 	 * @param message The message.
 	 * @param clazz The class that calls this tracer or <code>null</code>.
 	 */
@@ -233,7 +233,7 @@ public class TraceHandler {
 	 * Trace the given message.
 	 * <p>
 	 * The message severity will be {@link IStatus#INFO}.
-	 * 
+	 *
 	 * @param message The message.
 	 * @param debugMode The minimum debug mode that has to be set to write out the message.
 	 * @param clazz The class that calls this tracer or <code>null</code>.
@@ -247,7 +247,7 @@ public class TraceHandler {
 	 * <p>
 	 * The message severity will be {@link IStatus#INFO} and the debug mode
 	 * will default to <code>0</code>.
-	 * 
+	 *
 	 * @param message The message.
 	 * @param slotId The slot that has to be enabled to write out the message.
 	 * @param clazz The class that calls this tracer or <code>null</code>.
@@ -258,13 +258,13 @@ public class TraceHandler {
 
 	/**
 	 * Trace the given message.
-	 * 
+	 *
 	 * @param message The message.
 	 * @param debugMode The minimum debug mode that has to be set to write out the message.
 	 * @param slotId The slot that has to be enabled to write out the message.
 	 * @param severity The severity. See {@link IStatus} for valid severity values.
 	 * @param clazz The class that calls this tracer or <code>null</code>.
-	 * 
+	 *
 	 * @see IStatus
 	 */
 	public final void trace(String message, int debugMode, String slotId, int severity, Object clazz) {

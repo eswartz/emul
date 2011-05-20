@@ -46,22 +46,22 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 	 * tree content provider instance. Each content provider has it's own
 	 * file system mode instance.
 	 */
-	/* default*/ final FSModel fModel = new FSModel();
+	/* default*/ final FSModel model = new FSModel();
 
-	/* default */ Viewer fViewer = null;
+	/* default */ Viewer viewer = null;
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.IContentProvider#inputChanged(org.eclipse.jface.viewers.Viewer, java.lang.Object, java.lang.Object)
 	 */
 	public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
-		fViewer = viewer;
+		this.viewer = viewer;
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.IContentProvider#dispose()
 	 */
 	public void dispose() {
-		fModel.dispose();
+		model.dispose();
 	}
 
 	/**
@@ -119,11 +119,11 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 			// Get the file system model root node, if already stored
 			final FSTreeNode[] root = new FSTreeNode[1];
 			if (Protocol.isDispatchThread()) {
-				root[0] = fModel.getRoot(peerId);
+				root[0] = model.getRoot(peerId);
 			} else {
 				Protocol.invokeAndWait(new Runnable() {
 					public void run() {
-						root[0] = fModel.getRoot(peerId);
+						root[0] = model.getRoot(peerId);
 					}
 				});
 			}
@@ -144,7 +144,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 					rootNode.peerNode = peerNode;
 					rootNode.childrenQueried = false;
 					rootNode.childrenQueryRunning = true;
-					fModel.putRoot(peerId, rootNode);
+					model.putRoot(peerId, rootNode);
 
 					// Add a special "Pending..." node
 					FSTreeNode pendingNode = new FSTreeNode();
@@ -171,7 +171,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 													// Close the channel, not needed anymore
 													closeOpenChannel(channel);
 
-													FSTreeNode rootNode = fModel.getRoot(peerId);
+													FSTreeNode rootNode = model.getRoot(peerId);
 													if (rootNode != null && error == null) {
 
 														for (DirEntry entry : entries) {
@@ -200,7 +200,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 
 													PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
 														public void run() {
-															if (fViewer != null) fViewer.refresh();
+															if (viewer != null) viewer.refresh();
 														}
 													});
 												}
@@ -210,7 +210,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 
 									PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
 										public void run() {
-											if (fViewer != null) fViewer.refresh();
+											if (viewer != null) viewer.refresh();
 										}
 									});
 								} else {
@@ -354,7 +354,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 
 						PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
 							public void run() {
-								if (fViewer instanceof StructuredViewer) ((StructuredViewer)fViewer).refresh(parentNode);
+								if (viewer instanceof StructuredViewer) ((StructuredViewer)viewer).refresh(parentNode);
 							}
 						});
 					}
@@ -468,7 +468,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 			// If null, true is returned as it means that the file system
 			// model hasn't been created yet and have to treat is as children
 			// not queried yet.
-			FSTreeNode root = peerId[0] != null ? fModel.getRoot(peerId[0]): null;
+			FSTreeNode root = peerId[0] != null ? model.getRoot(peerId[0]): null;
 			hasChildren = root != null ? hasChildren(root) : true;
 		}
 

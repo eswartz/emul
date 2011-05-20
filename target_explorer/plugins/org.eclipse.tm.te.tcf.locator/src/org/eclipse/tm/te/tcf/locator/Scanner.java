@@ -3,7 +3,7 @@
  * This program and the accompanying materials are made available under the terms
  * of the Eclipse Public License v1.0 which accompanies this distribution, and is
  * available at http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  * Uwe Stieber (Wind River) - initial API and implementation
  *******************************************************************************/
@@ -30,13 +30,13 @@ import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel;
  */
 public class Scanner extends Job implements IScanner {
 	// Reference to the parent model instance.
-	private final ILocatorModel fParentModel;
+	private final ILocatorModel parentModel;
 
 	// Reference to the scanner configuration
-	private final Map<String, Object> fConfiguration = new HashMap<String, Object>();
+	private final Map<String, Object> configuration = new HashMap<String, Object>();
 
 	// Flag to mark if the scanner is terminated
-	private AtomicBoolean fTerminated = new AtomicBoolean(false);
+	private AtomicBoolean terminated = new AtomicBoolean(false);
 
 	/**
 	 * Constructor.
@@ -46,7 +46,7 @@ public class Scanner extends Job implements IScanner {
 	public Scanner(ILocatorModel parentModel) {
 		super(Scanner.class.getName());
 		assert parentModel != null;
-		fParentModel = parentModel;
+		this.parentModel = parentModel;
 	}
 
 	/**
@@ -55,7 +55,7 @@ public class Scanner extends Job implements IScanner {
 	 * @return The parent model instance.
 	 */
 	protected ILocatorModel getParentModel() {
-		return fParentModel;
+		return parentModel;
 	}
 
 	/* (non-Javadoc)
@@ -63,15 +63,15 @@ public class Scanner extends Job implements IScanner {
 	 */
 	public void setConfiguration(Map<String, Object> configuration) {
 		assert configuration != null;
-		fConfiguration.clear();
-		fConfiguration.putAll(configuration);
+		this.configuration.clear();
+		this.configuration.putAll(configuration);
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.IScanner#getConfiguration()
 	 */
 	public Map<String, Object> getConfiguration() {
-		return fConfiguration;
+		return configuration;
 	}
 
 	/* (non-Javadoc)
@@ -123,14 +123,14 @@ public class Scanner extends Job implements IScanner {
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.IScanner#terminate()
 	 */
 	public void terminate() {
-		fTerminated.set(true);
+		terminated.set(true);
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.IScanner#isTerminated()
 	 */
 	public final boolean isTerminated() {
-		return fTerminated.get();
+		return terminated.get();
 	}
 
 	/* (non-Javadoc)

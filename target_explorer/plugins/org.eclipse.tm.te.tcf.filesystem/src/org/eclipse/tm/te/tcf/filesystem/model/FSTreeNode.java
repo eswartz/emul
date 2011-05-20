@@ -25,7 +25,7 @@ import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel;
  * the TCF event dispatch thread.
  */
 public final class FSTreeNode extends PlatformObject {
-	private final UUID fUniqueId = UUID.randomUUID();
+	private final UUID uniqueId = UUID.randomUUID();
 
 	/**
 	 * The tree node name.
@@ -80,7 +80,7 @@ public final class FSTreeNode extends PlatformObject {
 	 */
 	@Override
 	public final int hashCode() {
-		return fUniqueId.hashCode();
+		return uniqueId.hashCode();
 	}
 
 	/**
@@ -101,7 +101,7 @@ public final class FSTreeNode extends PlatformObject {
 	@Override
 	public final boolean equals(Object obj) {
 		if (obj instanceof FSTreeNode) {
-			return fUniqueId.equals(((FSTreeNode)obj).fUniqueId);
+			return uniqueId.equals(((FSTreeNode)obj).uniqueId);
 		}
 		return super.equals(obj);
 	}
@@ -113,7 +113,7 @@ public final class FSTreeNode extends PlatformObject {
 	public String toString() {
 		StringBuilder buffer = new StringBuilder(getClass().getSimpleName());
 		buffer.append(": name=" + (name != null ? name : super.toString())); //$NON-NLS-1$
-		buffer.append(", UUID=" + fUniqueId.toString()); //$NON-NLS-1$
+		buffer.append(", UUID=" + uniqueId.toString()); //$NON-NLS-1$
 		return buffer.toString();
 	}
 }

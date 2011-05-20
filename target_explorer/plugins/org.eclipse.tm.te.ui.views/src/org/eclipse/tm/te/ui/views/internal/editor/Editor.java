@@ -31,7 +31,7 @@ import org.eclipse.ui.forms.editor.IFormPage;
 public class Editor extends FormEditor implements IPersistableEditor {
 
 	// The reference to an memento to restore once the editor got activated
-	private IMemento fMementoToRestore;
+	private IMemento mementoToRestore;
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.forms.editor.FormEditor#addPages()
@@ -83,15 +83,15 @@ public class Editor extends FormEditor implements IPersistableEditor {
 			}
 		}
 
-		if (fMementoToRestore != null) {
+		if (mementoToRestore != null) {
 			// Loop over all registered pages and pass on the editor specific memento
 			// to the pages which implements IPersistableEditor as well
 			for (Object page : pages) {
 				if (page instanceof IPersistableEditor) {
-					((IPersistableEditor)page).restoreState(fMementoToRestore);
+					((IPersistableEditor)page).restoreState(mementoToRestore);
 				}
 			}
-			fMementoToRestore = null;
+			mementoToRestore = null;
 		}
 	}
 
@@ -152,7 +152,7 @@ public class Editor extends FormEditor implements IPersistableEditor {
 	 */
 	public void restoreState(IMemento memento) {
 		// Get the editor specific memento
-		fMementoToRestore = internalGetMemento(memento);
+		mementoToRestore = internalGetMemento(memento);
 	}
 
 	/* (non-Javadoc)

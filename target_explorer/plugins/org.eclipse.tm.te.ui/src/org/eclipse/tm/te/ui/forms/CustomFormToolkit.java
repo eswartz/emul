@@ -35,7 +35,7 @@ import org.eclipse.ui.forms.widgets.Section;
  */
 public class CustomFormToolkit extends PlatformObject {
 	// The reference of the wrapped toolkit
-	private final FormToolkit fToolkit;
+	private final FormToolkit toolkit;
 
 	/**
 	 * Constructor.
@@ -45,7 +45,7 @@ public class CustomFormToolkit extends PlatformObject {
 	public CustomFormToolkit(FormToolkit toolkit) {
 		super();
 		assert toolkit != null;
-		fToolkit = toolkit;
+		this.toolkit = toolkit;
 	}
 
 	/**
@@ -54,14 +54,14 @@ public class CustomFormToolkit extends PlatformObject {
 	 * @return The wrapped {@link FormToolkit} instance.
 	 */
 	public final FormToolkit getFormToolkit() {
-		return fToolkit;
+		return toolkit;
 	}
 
 	/**
 	 * Dispose the form toolkit wrapper.
 	 */
 	public void dispose() {
-		fToolkit.dispose();
+		toolkit.dispose();
 	}
 
 	/* (non-Javadoc)

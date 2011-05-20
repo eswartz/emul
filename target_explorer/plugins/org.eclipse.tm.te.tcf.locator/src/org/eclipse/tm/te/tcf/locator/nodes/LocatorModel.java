@@ -47,40 +47,40 @@ import org.eclipse.tm.te.tcf.locator.utils.IPAddressUtil;
  */
 public class LocatorModel extends PlatformObject implements ILocatorModel {
 	// The unique model id
-	private final UUID fUniqueId = UUID.randomUUID();
+	private final UUID uniqueId = UUID.randomUUID();
 	// Flag to mark the model disposed
-	private boolean fDisposed;
+	private boolean disposed;
 
 	// The list of known peers
-	private final Map<String, IPeerModel> fPeers = new HashMap<String, IPeerModel>();
+	private final Map<String, IPeerModel> peers = new HashMap<String, IPeerModel>();
 
 	// Reference to the scanner
-	private IScanner fScanner = null;
+	private IScanner scanner = null;
 
 	// Reference to the model locator listener
-	private ILocator.LocatorListener fLocatorListener = null;
+	private ILocator.LocatorListener locatorListener = null;
 	// Reference to the model channel state change listener
-	private IChannelStateChangeListener fChannelStateChangeListener = null;
+	private IChannelStateChangeListener channelStateChangeListener = null;
 
 	// The list of registered model listeners
-	private final List<IModelListener> fModelListener = new ArrayList<IModelListener>();
+	private final List<IModelListener> modelListener = new ArrayList<IModelListener>();
 
 	// Reference to the refresh service
-	private final ILocatorModelRefreshService fRefreshService = new LocatorModelRefreshService(this);
+	private final ILocatorModelRefreshService refreshService = new LocatorModelRefreshService(this);
 	// Reference to the lookup service
-	private final ILocatorModelLookupService fLookupService = new LocatorModelLookupService(this);
+	private final ILocatorModelLookupService lookupService = new LocatorModelLookupService(this);
 	// Reference to the update service
-	private final ILocatorModelUpdateService fUpdateService = new LocatorModelUpdateService(this);
+	private final ILocatorModelUpdateService updateService = new LocatorModelUpdateService(this);
 
 	/**
 	 * Constructor.
 	 */
 	public LocatorModel() {
 		super();
-		fDisposed = false;
+		disposed = false;
 
-		fChannelStateChangeListener = new ChannelStateChangeListener(this);
-		Tcf.addChannelStateChangeListener(fChannelStateChangeListener);
+		channelStateChangeListener = new ChannelStateChangeListener(this);
+		Tcf.addChannelStateChangeListener(channelStateChangeListener);
 	}
 
 	/* (non-Javadoc)
@@ -88,7 +88,7 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 	 */
 	public void addListener(IModelListener listener) {
 		assert Protocol.isDispatchThread() && listener != null;
-		if (!fModelListener.contains(listener)) fModelListener.add(listener);
+		if (!modelListener.contains(listener)) modelListener.add(listener);
 	}
 
 	/* (non-Javadoc)
@@ -96,14 +96,14 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 	 */
 	public void removeListener(IModelListener listener) {
 		assert Protocol.isDispatchThread() && listener != null;
-		fModelListener.remove(listener);
+		modelListener.remove(listener);
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.interfaces.nodes.ILocatorModel#getListener()
 	 */
 	public IModelListener[] getListener() {
-		return fModelListener.toArray(new IModelListener[fModelListener.size()]);
+		return modelListener.toArray(new IModelListener[modelListener.size()]);
 	}
 
 	/* (non-Javadoc)
@@ -113,9 +113,9 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 		assert Protocol.isDispatchThread();
 
 		// If already disposed, we are done immediately
-		if (fDisposed) return;
+		if (disposed) return;
 
-		fDisposed = true;
+		disposed = true;
 
 		final IModelListener[] listeners = getListener();
 		if (listeners.length > 0) {
@@ -127,38 +127,38 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 				}
 			});
 		}
-		fModelListener.clear();
+		modelListener.clear();
 
-		if (fLocatorListener != null) {
-			Protocol.getLocator().removeListener(fLocatorListener);
-			fLocatorListener = null;
+		if (locatorListener != null) {
+			Protocol.getLocator().removeListener(locatorListener);
+			locatorListener = null;
 		}
 
-		if (fChannelStateChangeListener != null) {
-			Tcf.removeChannelStateChangeListener(fChannelStateChangeListener);
-			fChannelStateChangeListener = null;
+		if (channelStateChangeListener != null) {
+			Tcf.removeChannelStateChangeListener(channelStateChangeListener);
+			channelStateChangeListener = null;
 		}
 
-		if (fScanner != null) {
+		if (scanner != null) {
 			stopScanner();
-			fScanner = null;
+			scanner = null;
 		}
 
-		fPeers.clear();
+		peers.clear();
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.ILocatorModel#isDisposed()
 	 */
 	public boolean isDisposed() {
-		return fDisposed;
+		return disposed;
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.ILocatorModel#getPeers()
 	 */
 	public IPeerModel[] getPeers() {
-		return fPeers.values().toArray(new IPeerModel[fPeers.values().size()]);
+		return peers.values().toArray(new IPeerModel[peers.values().size()]);
 	}
 
 	/* (non-Javadoc)
@@ -168,22 +168,22 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 	@Override
 	public Object getAdapter(Class adapter) {
 		if (adapter.isAssignableFrom(ILocator.LocatorListener.class)) {
-			return fLocatorListener;
+			return locatorListener;
 		}
 		if (adapter.isAssignableFrom(IScanner.class)) {
-			return fScanner;
+			return scanner;
 		}
 		if (adapter.isAssignableFrom(ILocatorModelRefreshService.class)) {
-			return fRefreshService;
+			return refreshService;
 		}
 		if (adapter.isAssignableFrom(ILocatorModelLookupService.class)) {
-			return fLookupService;
+			return lookupService;
 		}
 		if (adapter.isAssignableFrom(ILocatorModelUpdateService.class)) {
-			return fUpdateService;
+			return updateService;
 		}
 		if (adapter.isAssignableFrom(Map.class)) {
-			return fPeers;
+			return peers;
 		}
 
 		return super.getAdapter(adapter);
@@ -195,7 +195,7 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 	@Override
 	public final boolean equals(Object obj) {
 		if (obj instanceof LocatorModel) {
-			return fUniqueId.equals(((LocatorModel)obj).fUniqueId);
+			return uniqueId.equals(((LocatorModel)obj).uniqueId);
 		}
 		return super.equals(obj);
 	}
@@ -219,9 +219,9 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 		assert Protocol.isDispatchThread();
 		assert Protocol.getLocator() != null;
 
-		if (fLocatorListener == null) {
-			fLocatorListener = doCreateLocatorListener(this);
-			Protocol.getLocator().addListener(fLocatorListener);
+		if (locatorListener == null) {
+			locatorListener = doCreateLocatorListener(this);
+			Protocol.getLocator().addListener(locatorListener);
 		}
 	}
 
@@ -240,8 +240,8 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.ILocatorModel#getScanner()
 	 */
 	public IScanner getScanner() {
-		if (fScanner == null) fScanner = new Scanner(this);
-		return fScanner;
+		if (scanner == null) scanner = new Scanner(this);
+		return scanner;
 	}
 
 	/* (non-Javadoc)
@@ -271,11 +271,11 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.ILocatorModel#stopScanner()
 	 */
 	public void stopScanner() {
-		if (fScanner != null) {
+		if (scanner != null) {
 			// Terminate the scanner
-			fScanner.terminate();
+			scanner.terminate();
 			// Reset the scanner reference
-			fScanner = null;
+			scanner = null;
 		}
 	}
 
@@ -314,12 +314,12 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 					String previousPeerIP = previousPeer.getAttributes().get(IPeer.ATTR_IP_HOST);
 					if (canonical != null && canonical.equals(peerIP) && !canonical.equals(previousPeerIP)) {
 						// Remove the old node and replace it with the new new
-						fPeers.remove(previousNode.getPeer().getID());
+						peers.remove(previousNode.getPeer().getID());
 						fireListener = true;
 					} else if (loopback != null && loopback.equals(peerIP) && !loopback.equals(previousPeerIP)
 							&& (canonical == null || canonical != null && !canonical.equals(previousPeerIP))) {
 						// Remove the old node and replace it with the new new
-						fPeers.remove(previousNode.getPeer().getID());
+						peers.remove(previousNode.getPeer().getID());
 						fireListener = true;
 					} else {
 						// Drop the current node

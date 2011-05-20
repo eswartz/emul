@@ -35,13 +35,13 @@ import org.eclipse.ui.navigator.CommonNavigator;
  * Target Explorer: File system tree control label provider implementation.
  */
 public class FSTreeLabelProvider extends LabelProvider implements ITableLabelProvider {
-	private IEditorRegistry fEditorRegistry = null;
+	private IEditorRegistry editorRegistry = null;
 
 	private static final SimpleDateFormat DATE_MODIFIED_FORMAT = new SimpleDateFormat("dd.MM.yyyy HH:mm"); //$NON-NLS-1$
 	private static final DecimalFormat SIZE_FORMAT = new DecimalFormat();
 
 	// Reference to the parent tree viewer
-	private TreeViewer fParentViewer;
+	private TreeViewer parentViewer;
 
 	/**
 	 * Constructor.
@@ -57,7 +57,7 @@ public class FSTreeLabelProvider extends LabelProvider implements ITableLabelPro
 	 */
 	public FSTreeLabelProvider(TreeViewer viewer) {
 		super();
-		fParentViewer = viewer;
+		parentViewer = viewer;
 	}
 
 	/**
@@ -66,17 +66,17 @@ public class FSTreeLabelProvider extends LabelProvider implements ITableLabelPro
 	 * @return The parent tree viewer or <code>null</code>.
 	 */
 	public final TreeViewer getParentViewer() {
-		if (fParentViewer == null) {
+		if (parentViewer == null) {
 			if (PlatformUI.getWorkbench() != null && PlatformUI.getWorkbench().getActiveWorkbenchWindow() != null
 					&& PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage() != null) {
 				IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
 				IViewPart part = page.findView(IUIConstants.ID_EXPLORER);
 				if (part instanceof CommonNavigator) {
-					fParentViewer = ((CommonNavigator)part).getCommonViewer();
+					parentViewer = ((CommonNavigator)part).getCommonViewer();
 				}
 			}
 		}
-		return fParentViewer;
+		return parentViewer;
 	}
 
 	/* (non-Javadoc)
@@ -126,11 +126,11 @@ public class FSTreeLabelProvider extends LabelProvider implements ITableLabelPro
 	 * Returns the workbench's editor registry.
 	 */
 	private IEditorRegistry getEditorRegistry() {
-		if (fEditorRegistry == null) {
+		if (editorRegistry == null) {
 			IWorkbench workbench = PlatformUI.getWorkbench();
-			if (workbench != null) fEditorRegistry = workbench.getEditorRegistry();
+			if (workbench != null) editorRegistry = workbench.getEditorRegistry();
 		}
-		return fEditorRegistry;
+		return editorRegistry;
 	}
 
 	/* (non-Javadoc)

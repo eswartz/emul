@@ -30,11 +30,11 @@ import org.eclipse.ui.navigator.CommonViewer;
  */
 public class EditorInput implements IEditorInput, IPersistableElement {
 	// The parent editor id
-	private final String fId;
+	private final String id;
 	// The editor input name, once determined
-	private String fName;
+	private String name;
 	// The node (selection) the editor is showing
-	private final Object fNode;
+	private final Object node;
 
 	/**
 	 * Constructor.
@@ -53,9 +53,9 @@ public class EditorInput implements IEditorInput, IPersistableElement {
 	 */
 	public EditorInput(Object node, String id) {
 		super();
-		fId = id;
+		this.id = id;
 		assert node != null;
-		fNode = node;
+		this.node = node;
 	}
 
 	/* (non-Javadoc)
@@ -63,9 +63,9 @@ public class EditorInput implements IEditorInput, IPersistableElement {
 	 */
 	@Override
 	public boolean equals(Object obj) {
-		if (fNode != null && obj instanceof EditorInput) {
-			return fNode.equals(((EditorInput)obj).fNode)
-						&& (fId != null ? fId.equals(((EditorInput)obj).fId) : ((EditorInput)obj).fId == null);
+		if (node != null && obj instanceof EditorInput) {
+			return node.equals(((EditorInput)obj).node)
+						&& (id != null ? id.equals(((EditorInput)obj).id) : ((EditorInput)obj).id == null);
 		}
 		return super.equals(obj);
 	}
@@ -75,14 +75,14 @@ public class EditorInput implements IEditorInput, IPersistableElement {
 	 */
 	@Override
 	public int hashCode() {
-		return fNode != null ? fNode.hashCode() << 16 + (fId != null ? fId.hashCode() : 0) : super.hashCode();
+		return node != null ? node.hashCode() << 16 + (id != null ? id.hashCode() : 0) : super.hashCode();
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.IEditorInput#exists()
 	 */
 	public boolean exists() {
-		return fNode != null;
+		return node != null;
 	}
 
 	/* (non-Javadoc)
@@ -96,12 +96,12 @@ public class EditorInput implements IEditorInput, IPersistableElement {
 	 * @see org.eclipse.ui.IEditorInput#getName()
 	 */
 	public String getName() {
-		if (fName == null && fNode != null) {
+		if (name == null && node != null) {
 			CommonViewer viewer = getViewer();
-			fName = viewer != null && viewer.getLabelProvider() instanceof ILabelProvider ? ((ILabelProvider)viewer.getLabelProvider()).getText(fNode) : fNode.toString();
+			name = viewer != null && viewer.getLabelProvider() instanceof ILabelProvider ? ((ILabelProvider)viewer.getLabelProvider()).getText(node) : node.toString();
 		}
 
-		return fName != null ? fName : ""; //$NON-NLS-1$
+		return name != null ? name : ""; //$NON-NLS-1$
 	}
 
 	/**
@@ -160,7 +160,7 @@ public class EditorInput implements IEditorInput, IPersistableElement {
 		}
 
 		// If the adapter can be applied to the node instance, return the node
-		Object adapted = Platform.getAdapterManager().getAdapter(fNode, adapter);
+		Object adapted = Platform.getAdapterManager().getAdapter(node, adapter);
 		if (adapted != null) return adapted;
 
 		return Platform.getAdapterManager().getAdapter(this, adapter);

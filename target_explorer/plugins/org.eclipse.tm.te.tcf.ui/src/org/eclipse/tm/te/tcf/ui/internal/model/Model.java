@@ -20,7 +20,7 @@ import org.eclipse.tm.te.tcf.ui.internal.navigator.ModelListener;
  */
 public final class Model {
 	// Reference to the locator model
-	/* default */ static ILocatorModel fLocatorModel;
+	/* default */ static ILocatorModel locatorModel;
 
 	/**
 	 * Returns the locator model. If not yet initialized,
@@ -30,7 +30,7 @@ public final class Model {
 	 */
 	public static ILocatorModel getModel() {
 		// Access to the locator model must happen in the TCF dispatch thread
-		if (fLocatorModel == null) {
+		if (locatorModel == null) {
 			if (Protocol.isDispatchThread()) {
 				initialize();
 			} else {
@@ -41,7 +41,7 @@ public final class Model {
 				});
 			}
 		}
-		return fLocatorModel;
+		return locatorModel;
 	}
 
 	/**
@@ -50,31 +50,31 @@ public final class Model {
 	protected static void initialize() {
 		assert Protocol.isDispatchThread();
 
-		fLocatorModel = new LocatorModel();
+		locatorModel = new LocatorModel();
 		// Register the model listener
-		fLocatorModel.addListener(new ModelListener(fLocatorModel));
+		locatorModel.addListener(new ModelListener(locatorModel));
 		// Start the scanner
-		fLocatorModel.startScanner(5000, 120000);
+		locatorModel.startScanner(5000, 120000);
 	}
 
 	/**
 	 * Dispose the root node.
 	 */
 	public static void dispose() {
-		if (fLocatorModel == null) return;
+		if (locatorModel == null) return;
 
 		// Access to the locator model must happen in the TCF dispatch thread
 		if (Protocol.isDispatchThread()) {
-			fLocatorModel.dispose();
+			locatorModel.dispose();
 		} else {
 			Protocol.invokeAndWait(new Runnable() {
 				public void run() {
-					fLocatorModel.dispose();
+					locatorModel.dispose();
 				}
 			});
 		}
 
-		fLocatorModel = null;
+		locatorModel = null;
 	}
 
 }

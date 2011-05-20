@@ -36,7 +36,7 @@ public class EditorPageBindingExtensionPointManager extends AbstractExtensionPoi
 	 * Thread save singleton instance creation.
 	 */
 	private static class LazyInstance {
-		public static EditorPageBindingExtensionPointManager fInstance = new EditorPageBindingExtensionPointManager();
+		public static EditorPageBindingExtensionPointManager instance = new EditorPageBindingExtensionPointManager();
 	}
 
 	/**
@@ -50,7 +50,7 @@ public class EditorPageBindingExtensionPointManager extends AbstractExtensionPoi
 	 * Returns the singleton instance of the extension point manager.
 	 */
 	public static EditorPageBindingExtensionPointManager getInstance() {
-		return LazyInstance.fInstance;
+		return LazyInstance.instance;
 	}
 
 	/* (non-Javadoc)

@@ -17,7 +17,7 @@ import org.eclipse.jface.viewers.ViewerComparator;
  */
 public abstract class AbstractViewerComparator extends ViewerComparator {
 	// Reference to the viewer
-	private final Viewer fViewer;
+	private final Viewer viewer;
 
 	/**
 	 * Constructor.
@@ -26,7 +26,7 @@ public abstract class AbstractViewerComparator extends ViewerComparator {
 	 */
 	public AbstractViewerComparator(Viewer viewer) {
 		assert viewer != null;
-		fViewer = viewer;
+		this.viewer = viewer;
 	}
 
 	/**
@@ -35,7 +35,7 @@ public abstract class AbstractViewerComparator extends ViewerComparator {
 	 * @return The parent viewer instance.
 	 */
 	protected final Viewer getParentViewer() {
-		return fViewer;
+		return viewer;
 	}
 
 	/* (non-Javadoc)

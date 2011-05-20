@@ -29,14 +29,14 @@ import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModelProperties;
  */
 public class PeerModel extends PlatformObject implements IPeerModel {
 	// Reference to the parent locator model
-	private final ILocatorModel fParentModel;
+	private final ILocatorModel parentModel;
 	// The unique node id
-	private final UUID fUniqueId = UUID.randomUUID();
+	private final UUID uniqueId = UUID.randomUUID();
 
 	/**
 	 * The custom properties map. The keys are always strings, the value might be any object.
 	 */
-	private Map<String, Object> fProperties = new LinkedHashMap<String, Object>();
+	private Map<String, Object> properties = new LinkedHashMap<String, Object>();
 
 	/**
 	 * Constructor.
@@ -58,12 +58,12 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 
 		assert Protocol.isDispatchThread() && parent != null;
 
-		fParentModel = parent;
+		parentModel = parent;
 
 		// Write the properties directly to the properties map. The
 		// properties changed listeners should not be called from the
 		// constructor.
-		fProperties.put(IPeerModelProperties.PROP_INSTANCE, peer);
+		properties.put(IPeerModelProperties.PROP_INSTANCE, peer);
 	}
 
 	/* (non-Javadoc)
@@ -115,7 +115,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 		assert Protocol.isDispatchThread();
 
 		if (adapter.isAssignableFrom(ILocatorModel.class)) {
-			return fParentModel;
+			return parentModel;
 		}
 
 		Object peer = getProperty(IPeerModelProperties.PROP_INSTANCE);
@@ -132,7 +132,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	@Override
 	public final boolean equals(Object obj) {
 		if (obj instanceof PeerModel) {
-			return fUniqueId.equals(((PeerModel)obj).fUniqueId);
+			return uniqueId.equals(((PeerModel)obj).uniqueId);
 		}
 		return super.equals(obj);
 	}
@@ -157,7 +157,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 				}
 			});
 		}
-		buffer.append(", UUID=" + fUniqueId.toString()); //$NON-NLS-1$
+		buffer.append(", UUID=" + uniqueId.toString()); //$NON-NLS-1$
 		return buffer.toString();
 	}
 
@@ -167,7 +167,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	 */
 	public Map<String, Object> getProperties() {
 		assert Protocol.isDispatchThread();
-		return Collections.unmodifiableMap(new HashMap<String, Object>(fProperties));
+		return Collections.unmodifiableMap(new HashMap<String, Object>(properties));
 	}
 
 	/* (non-Javadoc)
@@ -176,12 +176,12 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	public Object getProperty(String key) {
 		assert Protocol.isDispatchThread();
 
-		if (!fProperties.containsKey(key)
+		if (!properties.containsKey(key)
 				&& getPeer() != null && getPeer().getAttributes().containsKey(key)) {
 			return getPeer().getAttributes().get(key);
 		}
 
-		return fProperties.get(key);
+		return properties.get(key);
 	}
 
 	/* (non-Javadoc)
@@ -278,16 +278,16 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	public final void setProperties(Map<String, Object> properties) {
 		assert Protocol.isDispatchThread() && properties != null;
 
-		fProperties.clear();
-		fProperties.putAll(properties);
+		this.properties.clear();
+		this.properties.putAll(properties);
 
-		final IModelListener[] listeners = fParentModel.getListener();
+		final IModelListener[] listeners = parentModel.getListener();
 		if (listeners.length > 0) {
 			Protocol.invokeLater(new Runnable() {
 				@SuppressWarnings("synthetic-access")
 				public void run() {
 					for (IModelListener listener : listeners) {
-						listener.peerModelChanged(fParentModel, PeerModel.this);
+						listener.peerModelChanged(parentModel, PeerModel.this);
 					}
 				}
 			});
@@ -355,24 +355,24 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	public boolean setProperty(String key, Object value) {
 		assert Protocol.isDispatchThread() && key != null;
 
-		Object oldValue = fProperties.get(key);
+		Object oldValue = properties.get(key);
 		if ((oldValue == null && value != null) || (oldValue != null && !oldValue.equals(value))) {
 			if (value != null) {
-				fProperties.put(key, value);
+				properties.put(key, value);
 			} else {
-				fProperties.remove(key);
+				properties.remove(key);
 			}
 
 			// Notify registered listeners that the peer changed. Property
 			// changes for property slots ending with ".silent" are suppressed.
 			if (!key.endsWith(".silent")) { //$NON-NLS-1$
-				final IModelListener[] listeners = fParentModel.getListener();
+				final IModelListener[] listeners = parentModel.getListener();
 				if (listeners.length > 0) {
 					Protocol.invokeLater(new Runnable() {
 						@SuppressWarnings("synthetic-access")
 						public void run() {
 							for (IModelListener listener : listeners) {
-								listener.peerModelChanged(fParentModel, PeerModel.this);
+								listener.peerModelChanged(parentModel, PeerModel.this);
 							}
 						}
 					});
@@ -389,7 +389,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	 */
 	public final void clearProperties() {
 		assert Protocol.isDispatchThread();
-		fProperties.clear();
+		properties.clear();
 	}
 
 	/* (non-Javadoc)

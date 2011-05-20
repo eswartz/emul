@@ -27,7 +27,7 @@ import org.eclipse.tm.te.tcf.core.internal.utils.LogUtils;
 public class InternalChannelOpenListener implements IChannelOpenListener {
 	// Static map containing the channel listeners per channel. Access to the
 	// map should happen from the TCF protocol dispatch thread only.
-	private final Map<IChannel, IChannel.IChannelListener> fChannelListeners = new HashMap<IChannel, IChannel.IChannelListener>();
+	private final Map<IChannel, IChannel.IChannelListener> channelListeners = new HashMap<IChannel, IChannel.IChannelListener>();
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.tcf.protocol.Protocol.ChannelOpenListener#onChannelOpen(org.eclipse.tm.tcf.protocol.IChannel)
@@ -39,7 +39,7 @@ public class InternalChannelOpenListener implements IChannelOpenListener {
 		LogUtils.logMessageForChannel(channel, Messages.InternalChannelOpenListener_onChannelOpen_message, "debug/channels", this); //$NON-NLS-1$
 
 		// As the channel has just opened, there should be no channel listener, but better be safe and check.
-		IChannel.IChannelListener channelListener = fChannelListeners.remove(channel);
+		IChannel.IChannelListener channelListener = channelListeners.remove(channel);
 		if (channelListener != null) channel.removeChannelListener(channelListener);
 		// Create a new channel listener instance
 		channelListener = new InternalChannelListener(channel);
@@ -57,7 +57,7 @@ public class InternalChannelOpenListener implements IChannelOpenListener {
 	 */
 	public void setChannelListener(IChannel channel, IChannelListener listener) {
 		assert channel != null;
-		if (listener != null) fChannelListeners.put(channel, listener);
-		else fChannelListeners.remove(channel);
+		if (listener != null) channelListeners.put(channel, listener);
+		else channelListeners.remove(channel);
 	}
 }

@@ -3,7 +3,7 @@
  * This program and the accompanying materials are made available under the terms
  * of the Eclipse Public License v1.0 which accompanies this distribution, and is
  * available at http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  * Uwe Stieber (Wind River) - initial API and implementation
  *******************************************************************************/
@@ -34,10 +34,10 @@ import org.eclipse.ui.forms.widgets.FormToolkit;
  * Target Explorer: File system open file dialog.
  */
 public class FSOpenFileDialog extends CustomTrayDialog {
-	// Reference to the subcontrol
-	private final FSTreeControl fControl;
+	// Reference to the sub control
+	private final FSTreeControl control;
 	// Reference to the current selection within the file system tree
-	private ISelection fSelection;
+	private ISelection selection;
 
 	protected class FSOpenFileTreeControl extends FSTreeControl {
 
@@ -82,7 +82,7 @@ public class FSOpenFileDialog extends CustomTrayDialog {
 		 */
 		@SuppressWarnings("synthetic-access")
 		public void selectionChanged(SelectionChangedEvent event) {
-			fSelection = event.getSelection();
+			selection = event.getSelection();
 			updateButtons();
 		}
 	}
@@ -118,7 +118,7 @@ public class FSOpenFileDialog extends CustomTrayDialog {
 	public FSOpenFileDialog(FormPage parentPage, Shell shell, String contextHelpId) {
 		super(shell, contextHelpId);
 
-		fControl = new FSOpenFileTreeControl(parentPage);
+		control = new FSOpenFileTreeControl(parentPage);
 	}
 
 	/* (non-Javadoc)
@@ -148,12 +148,12 @@ public class FSOpenFileDialog extends CustomTrayDialog {
 		panel.setLayoutData(layoutData);
 
 		CustomFormToolkit toolkit = null;
-		if (fControl.getParentPart() instanceof IFormPage && ((IFormPage)fControl.getParentPart()).getManagedForm() != null) {
-			toolkit = new CustomFormToolkit(((IFormPage)fControl.getParentPart()).getManagedForm().getToolkit());
+		if (control.getParentPart() instanceof IFormPage && ((IFormPage)control.getParentPart()).getManagedForm() != null) {
+			toolkit = new CustomFormToolkit(((IFormPage)control.getParentPart()).getManagedForm().getToolkit());
 		}
 		if (toolkit == null) toolkit = new CustomFormToolkit(new FormToolkit(getShell().getDisplay()));
 
-		fControl.setupFormPanel(panel, toolkit);
+		control.setupFormPanel(panel, toolkit);
 
 		return composite;
 	}
@@ -163,8 +163,8 @@ public class FSOpenFileDialog extends CustomTrayDialog {
 	 */
 	@Override
 	public boolean close() {
-		if (fControl != null) {
-			fControl.dispose();
+		if (control != null) {
+			control.dispose();
 		}
 
 		return super.close();
@@ -185,7 +185,7 @@ public class FSOpenFileDialog extends CustomTrayDialog {
 	 */
 	protected void updateButtons() {
 		Button okButton = getButton(IDialogConstants.OK_ID);
-		if (okButton != null) okButton.setEnabled(fSelection != null && !fSelection.isEmpty());
+		if (okButton != null) okButton.setEnabled(selection != null && !selection.isEmpty());
 	}
 
 	/**
@@ -193,6 +193,6 @@ public class FSOpenFileDialog extends CustomTrayDialog {
 	 * @return
 	 */
 	public ISelection getSelection() {
-		return fSelection;
+		return selection;
 	}
 }

@@ -25,7 +25,7 @@ import org.eclipse.tm.te.ui.AbstractViewerComparator;
  * Target Explorer: Common tree control viewer comparator implementation.
  */
 public class TreeViewerComparator extends AbstractViewerComparator {
-	private final ILabelProvider fLabelProvider;
+	private final ILabelProvider labelProvider;
 
 	/**
 	 * Constructor.
@@ -36,7 +36,7 @@ public class TreeViewerComparator extends AbstractViewerComparator {
 	public TreeViewerComparator(Viewer viewer, ILabelProvider labelProvider) {
 		super(viewer);
 		assert labelProvider != null;
-		fLabelProvider = labelProvider;
+		this.labelProvider = labelProvider;
 	}
 
 	/* (non-Javadoc)
@@ -60,8 +60,8 @@ public class TreeViewerComparator extends AbstractViewerComparator {
 	 */
 	@Override
 	protected String doGetText(Object node, int index) {
-		if (node != null && fLabelProvider != null) {
-			return fLabelProvider.getText(node);
+		if (node != null && labelProvider != null) {
+			return labelProvider.getText(node);
 		}
 		return null;
 	}

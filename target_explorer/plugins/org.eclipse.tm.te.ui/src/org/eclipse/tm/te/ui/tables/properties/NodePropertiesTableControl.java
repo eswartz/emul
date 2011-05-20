@@ -53,15 +53,15 @@ import org.eclipse.ui.forms.widgets.Section;
  */
 public abstract class NodePropertiesTableControl extends WorkbenchPartControl {
 	// Reference to the table viewer
-	private TableViewer fViewer;
+	private TableViewer viewer;
 	// Reference to the selection changed listener
-	private ISelectionChangedListener fEditorSelectionChangedListener;
+	private ISelectionChangedListener editorSelectionChangedListener;
 
 	// We remember the sorting order (ascending vs. descending) for each
 	// column separately. That way we can come up with the sort order switching
 	// correctly if the user changes from one column to the next. If set
 	// to Boolean.FALSE, the sort order for the column is descending (default)
-	private final Map<TableColumn, Boolean> fColumnSortOrder = new LinkedHashMap<TableColumn, Boolean>();
+	private final Map<TableColumn, Boolean> columnSortOrder = new LinkedHashMap<TableColumn, Boolean>();
 
 	/**
 	 * Default node properties table control selection changed listener implementation.
@@ -93,11 +93,11 @@ public abstract class NodePropertiesTableControl extends WorkbenchPartControl {
 	@Override
 	public void dispose() {
 		// Dispose the editor tree control selection changed listener
-		if (fEditorSelectionChangedListener != null) {
+		if (editorSelectionChangedListener != null) {
 			ISelectionProvider selectionProvider = (ISelectionProvider)getParentPart().getAdapter(ISelectionProvider.class);
 			if (selectionProvider != null) {
-				selectionProvider.removeSelectionChangedListener(fEditorSelectionChangedListener);
-				fEditorSelectionChangedListener = null;
+				selectionProvider.removeSelectionChangedListener(editorSelectionChangedListener);
+				editorSelectionChangedListener = null;
 			}
 		}
 
@@ -112,25 +112,25 @@ public abstract class NodePropertiesTableControl extends WorkbenchPartControl {
 		super.setupFormPanel(parent, toolkit);
 
 		// Create the table viewer
-		fViewer = doCreateTableViewer(parent);
+		viewer = doCreateTableViewer(parent);
 		// Configure the table viewer
-		configureTableViewer(fViewer);
+		configureTableViewer(viewer);
 		// Configure the table
-		configureTable(fViewer.getTable(), fViewer.getComparator() != null);
+		configureTable(viewer.getTable(), viewer.getComparator() != null);
 
 		// Register the control as selection listener to the editor control
 		ISelectionProvider selectionProvider = getParentPart() != null ? (ISelectionProvider)getParentPart().getAdapter(ISelectionProvider.class) : null;
 		if (selectionProvider != null) {
 			// Create the selection changed listener instance
-			fEditorSelectionChangedListener = doCreateEditorSelectionChangedListener();
-			selectionProvider.addSelectionChangedListener(fEditorSelectionChangedListener);
+			editorSelectionChangedListener = doCreateEditorSelectionChangedListener();
+			selectionProvider.addSelectionChangedListener(editorSelectionChangedListener);
 		}
 
 		// Prepare popup menu and toolbar
-		createContributionItems(fViewer);
+		createContributionItems(viewer);
 
 		// Set the current selection as input
-		fViewer.setInput(selectionProvider != null ? selectionProvider.getSelection() : null);
+		viewer.setInput(selectionProvider != null ? selectionProvider.getSelection() : null);
 	}
 
 	/**
@@ -224,7 +224,7 @@ public abstract class NodePropertiesTableControl extends WorkbenchPartControl {
 
 		TableColumn column = new TableColumn(table, SWT.LEFT);
 		column.setText(Messages.NodePropertiesTableControl_column_name_label);
-		fColumnSortOrder.put(column, Boolean.TRUE);
+		columnSortOrder.put(column, Boolean.TRUE);
 		if (sorted) column.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
@@ -238,7 +238,7 @@ public abstract class NodePropertiesTableControl extends WorkbenchPartControl {
 
 		column = new TableColumn(table, SWT.LEFT);
 		column.setText(Messages.NodePropertiesTableControl_column_value_label);
-		fColumnSortOrder.put(column, Boolean.FALSE);
+		columnSortOrder.put(column, Boolean.FALSE);
 		if (sorted) column.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
@@ -259,7 +259,7 @@ public abstract class NodePropertiesTableControl extends WorkbenchPartControl {
 		if (sorted) {
 			// set the default sort column
 			table.setSortColumn(sortColumn);
-			table.setSortDirection(fColumnSortOrder.get(sortColumn).booleanValue() ? SWT.UP : SWT.DOWN);
+			table.setSortDirection(columnSortOrder.get(sortColumn).booleanValue() ? SWT.UP : SWT.DOWN);
 		}
 	}
 
@@ -275,12 +275,12 @@ public abstract class NodePropertiesTableControl extends WorkbenchPartControl {
 			return;
 		}
 		// Get the current sorting order for the given column
-		boolean newSortOrder = !fColumnSortOrder.get(column).booleanValue();
+		boolean newSortOrder = !columnSortOrder.get(column).booleanValue();
 		// Set sort column and sort direction
 		table.setSortColumn(column);
 		table.setSortDirection(newSortOrder ? SWT.UP : SWT.DOWN);
 		// And update the remembered sort order in the map
-		fColumnSortOrder.put(column, Boolean.valueOf(newSortOrder));
+		columnSortOrder.put(column, Boolean.valueOf(newSortOrder));
 
 		getViewer().refresh();
 	}
@@ -390,7 +390,7 @@ public abstract class NodePropertiesTableControl extends WorkbenchPartControl {
 	 * @return The viewer instance or <code>null</code>.
 	 */
 	public Viewer getViewer() {
-		return fViewer;
+		return viewer;
 	}
 
 	/* (non-Javadoc)
@@ -408,7 +408,7 @@ public abstract class NodePropertiesTableControl extends WorkbenchPartControl {
 			}
 			return viewer;
 		} else if (ISelectionListener.class.isAssignableFrom(adapter)) {
-			return fEditorSelectionChangedListener;
+			return editorSelectionChangedListener;
 		}
 
 		return super.getAdapter(adapter);

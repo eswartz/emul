@@ -24,7 +24,7 @@ import org.eclipse.ui.navigator.CommonViewer;
  * Target Explorer: TCF locator model listener implementation.
  */
 public class ModelListener extends ModelAdapter {
-	private final ILocatorModel fParentModel;
+	private final ILocatorModel parentModel;
 
 	/**
 	 * Constructor.
@@ -32,7 +32,7 @@ public class ModelListener extends ModelAdapter {
 	 */
 	public ModelListener(ILocatorModel parent) {
 		assert parent != null;
-		fParentModel = parent;
+		parentModel = parent;
 	}
 
 	/* (non-Javadoc)
@@ -40,7 +40,7 @@ public class ModelListener extends ModelAdapter {
 	 */
 	@Override
 	public void locatorModelChanged(final ILocatorModel model) {
-		if (fParentModel.equals(model)) {
+		if (parentModel.equals(model)) {
 			PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
 				public void run() {
 					CommonViewer viewer = getViewer();
@@ -55,7 +55,7 @@ public class ModelListener extends ModelAdapter {
 	 */
 	@Override
 	public void peerModelChanged(final ILocatorModel model, final IPeerModel peer) {
-		if (fParentModel.equals(model)) {
+		if (parentModel.equals(model)) {
 			PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
 				public void run() {
 					CommonViewer viewer = getViewer();

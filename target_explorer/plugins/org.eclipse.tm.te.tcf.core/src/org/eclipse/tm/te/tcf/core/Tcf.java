@@ -30,19 +30,19 @@ import org.eclipse.tm.te.tcf.core.internal.listener.InternalChannelOpenListener;
  * The main entry point to access the TCF framework extensions.
  */
 public final class Tcf {
-	/* default */ IChannelManager fChannelManager;
+	/* default */ IChannelManager channelManager;
 
-	/* default */ ChannelOpenListener fChannelOpenListener;
+	/* default */ ChannelOpenListener channelOpenListener;
 
-	/* default */ final List<IProtocolStateChangeListener> fProtocolStateChangeListeners = new ArrayList<IProtocolStateChangeListener>();
-	/* default */ final List<IChannelStateChangeListener> fChannelStateChangeListeners = new ArrayList<IChannelStateChangeListener>();
+	/* default */ final List<IProtocolStateChangeListener> protocolStateChangeListeners = new ArrayList<IProtocolStateChangeListener>();
+	/* default */ final List<IChannelStateChangeListener> channelStateChangeListeners = new ArrayList<IChannelStateChangeListener>();
 
 
 	/*
 	 * Thread save singleton instance creation.
 	 */
 	private static class LazyInstance {
-		public static Tcf fInstance = new Tcf();
+		public static Tcf instance = new Tcf();
 	}
 
 	/**
@@ -56,7 +56,7 @@ public final class Tcf {
 	 * Returns the singleton instance.
 	 */
 	/* default */ static Tcf getInstance() {
-		return LazyInstance.fInstance;
+		return LazyInstance.instance;
 	}
 
 	/**
@@ -88,8 +88,8 @@ public final class Tcf {
 		Tcf tcf = getInstance();
 		assert tcf != null;
 
-		if (!tcf.fProtocolStateChangeListeners.contains(listener)) {
-			tcf.fProtocolStateChangeListeners.add(listener);
+		if (!tcf.protocolStateChangeListeners.contains(listener)) {
+			tcf.protocolStateChangeListeners.add(listener);
 		}
 	}
 
@@ -104,7 +104,7 @@ public final class Tcf {
 		Tcf tcf = getInstance();
 		assert tcf != null;
 
-		tcf.fProtocolStateChangeListeners.remove(listener);
+		tcf.protocolStateChangeListeners.remove(listener);
 	}
 
 	/**
@@ -118,8 +118,8 @@ public final class Tcf {
 		Tcf tcf = getInstance();
 		assert tcf != null;
 
-		if (!tcf.fChannelStateChangeListeners.contains(listener)) {
-			tcf.fChannelStateChangeListeners.add(listener);
+		if (!tcf.channelStateChangeListeners.contains(listener)) {
+			tcf.channelStateChangeListeners.add(listener);
 		}
 	}
 
@@ -134,7 +134,7 @@ public final class Tcf {
 		Tcf tcf = getInstance();
 		assert tcf != null;
 
-		tcf.fChannelStateChangeListeners.remove(listener);
+		tcf.channelStateChangeListeners.remove(listener);
 	}
 
 	/**
@@ -149,7 +149,7 @@ public final class Tcf {
 		Tcf tcf = getInstance();
 		assert tcf != null;
 
-		final IChannelStateChangeListener[] listeners = tcf.fChannelStateChangeListeners.toArray(new IChannelStateChangeListener[tcf.fChannelStateChangeListeners.size()]);
+		final IChannelStateChangeListener[] listeners = tcf.channelStateChangeListeners.toArray(new IChannelStateChangeListener[tcf.channelStateChangeListeners.size()]);
 		if (listeners.length > 0) {
 			Protocol.invokeLater(new Runnable() {
 				public void run() {
@@ -185,13 +185,13 @@ public final class Tcf {
 		assert tcf != null;
 
 		// Create and register the global channel open listener
-		if (tcf.fChannelOpenListener == null) {
-			tcf.fChannelOpenListener = new InternalChannelOpenListener();
-			Protocol.addChannelOpenListener(tcf.fChannelOpenListener);
+		if (tcf.channelOpenListener == null) {
+			tcf.channelOpenListener = new InternalChannelOpenListener();
+			Protocol.addChannelOpenListener(tcf.channelOpenListener);
 		}
 
 		// Signal to interested listeners that we've started up
-		final IProtocolStateChangeListener[] listeners = tcf.fProtocolStateChangeListeners.toArray(new IProtocolStateChangeListener[tcf.fProtocolStateChangeListeners.size()]);
+		final IProtocolStateChangeListener[] listeners = tcf.protocolStateChangeListeners.toArray(new IProtocolStateChangeListener[tcf.protocolStateChangeListeners.size()]);
 		if (listeners.length > 0) {
 			Protocol.invokeLater(new Runnable() {
 				public void run() {
@@ -218,13 +218,13 @@ public final class Tcf {
 		assert tcf != null;
 
 		// Unregister the channel open listener of created
-		if (tcf.fChannelOpenListener != null) {
-			Protocol.removeChannelOpenListener(tcf.fChannelOpenListener);
-			tcf.fChannelOpenListener = null;
+		if (tcf.channelOpenListener != null) {
+			Protocol.removeChannelOpenListener(tcf.channelOpenListener);
+			tcf.channelOpenListener = null;
 		}
 
 		// Signal to interested listeners that we've just went down
-		final IProtocolStateChangeListener[] listeners = tcf.fProtocolStateChangeListeners.toArray(new IProtocolStateChangeListener[tcf.fProtocolStateChangeListeners.size()]);
+		final IProtocolStateChangeListener[] listeners = tcf.protocolStateChangeListeners.toArray(new IProtocolStateChangeListener[tcf.protocolStateChangeListeners.size()]);
 		if (listeners.length > 0) {
 			Protocol.invokeLater(new Runnable() {
 				public void run() {
@@ -252,14 +252,14 @@ public final class Tcf {
 			public void run() {
 				assert Protocol.isDispatchThread();
 
-				if (tcf.fChannelManager == null) {
+				if (tcf.channelManager == null) {
 					// We have to create the channel manager
-					tcf.fChannelManager = new ChannelManager();
+					tcf.channelManager = new ChannelManager();
 				}
 			}
 		});
 
-		return tcf.fChannelManager;
+		return tcf.channelManager;
 	}
 
 	/**
@@ -279,10 +279,10 @@ public final class Tcf {
 		assert tcf != null;
 
 		if (IChannelManager.class.equals(adapter)) {
-			return tcf.fChannelManager;
+			return tcf.channelManager;
 		}
 		if (IChannelOpenListener.class.equals(adapter)) {
-			return tcf.fChannelOpenListener;
+			return tcf.channelOpenListener;
 		}
 
 		return Platform.getAdapterManager().getAdapter(tcf, adapter);

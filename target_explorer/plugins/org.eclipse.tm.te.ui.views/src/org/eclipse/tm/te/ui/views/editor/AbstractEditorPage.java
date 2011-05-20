@@ -25,7 +25,7 @@ import org.eclipse.ui.forms.editor.FormPage;
  */
 public abstract class AbstractEditorPage extends FormPage implements IEditorPage {
 	// The unique page id
-	private String fId;
+	private String id;
 
 	/**
 	 * Constructor.
@@ -44,8 +44,8 @@ public abstract class AbstractEditorPage extends FormPage implements IEditorPage
 		if (config != null) {
 			// Initialize the id field by reading the <id> extension attribute.
 			// Throws an exception if the id is empty or null.
-			fId = config.getAttribute("id"); //$NON-NLS-1$
-			if (fId == null || fId.trim().length() == 0) {
+			id = config.getAttribute("id"); //$NON-NLS-1$
+			if (id == null || id.trim().length() == 0) {
 				IStatus status = new Status(IStatus.ERROR, UIPlugin.getUniqueIdentifier(),
 				                            NLS.bind(Messages.Extension_error_missingRequiredAttribute, "id", config.getContributor().getName())); //$NON-NLS-1$
 				UIPlugin.getDefault().getLog().log(status);
@@ -58,7 +58,7 @@ public abstract class AbstractEditorPage extends FormPage implements IEditorPage
 	 */
 	@Override
 	public String getId() {
-		return fId;
+		return id;
 	}
 
 	/**

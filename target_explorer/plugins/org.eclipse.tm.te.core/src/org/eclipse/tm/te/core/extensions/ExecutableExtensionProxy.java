@@ -24,11 +24,11 @@ import org.eclipse.tm.te.core.nls.Messages;
  */
 public class ExecutableExtensionProxy<V> {
 	// The extension instance. Created on first access
-	private V fInstance;
+	private V instance;
 	// The configuration element
-	private final IConfigurationElement fElement;
+	private final IConfigurationElement element;
 	// The unique id of the extension.
-	private String fId;
+	private String id;
 
 	/**
 	 * Constructor.
@@ -38,11 +38,11 @@ public class ExecutableExtensionProxy<V> {
 	 */
 	public ExecutableExtensionProxy(IConfigurationElement element) throws CoreException {
 		assert element != null;
-		fElement = element;
+		this.element = element;
 
 		// Extract the extension attributes
-		fId = element.getAttribute("id"); //$NON-NLS-1$
-		if (fId == null || fId.trim().length() == 0) {
+		id = element.getAttribute("id"); //$NON-NLS-1$
+		if (id == null || id.trim().length() == 0) {
 			throw new CoreException(new Status(IStatus.ERROR,
 					CoreBundleActivator.getUniqueIdentifier(),
 					0,
@@ -50,7 +50,7 @@ public class ExecutableExtensionProxy<V> {
 					null));
 		}
 
-		fInstance = null;
+		instance = null;
 	}
 
 	/**
@@ -61,9 +61,9 @@ public class ExecutableExtensionProxy<V> {
 	 */
 	public ExecutableExtensionProxy(String id, V instance) {
 		assert id!= null && instance != null;
-		fId = id;
-		fInstance = instance;
-		fElement = null;
+		this.id = id;
+		this.instance = instance;
+		this.element = null;
 	}
 
 	/**
@@ -72,7 +72,7 @@ public class ExecutableExtensionProxy<V> {
 	 * @return The unique id.
 	 */
 	public String getId() {
-		return fId;
+		return id;
 	}
 
 	/**
@@ -81,7 +81,7 @@ public class ExecutableExtensionProxy<V> {
 	 * @return The configuration element.
 	 */
 	public IConfigurationElement getConfigurationElement() {
-		return fElement;
+		return element;
 	}
 
 	/**
@@ -92,8 +92,8 @@ public class ExecutableExtensionProxy<V> {
 	 * @return The current extension instance or <code>null</code> if none.
 	 */
 	public V reset() {
-		V oldExtension = fInstance;
-		fInstance = null;
+		V oldExtension = instance;
+		instance = null;
 		return oldExtension;
 	}
 
@@ -104,8 +104,8 @@ public class ExecutableExtensionProxy<V> {
 	 * @return The extension class instance or <code>null</code> if the instantiation fails.
 	 */
 	public V getInstance() {
-		if (fInstance == null) fInstance = newInstance();
-		return fInstance;
+		if (instance == null) instance = newInstance();
+		return instance;
 	}
 
 	/**

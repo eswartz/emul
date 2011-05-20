@@ -26,7 +26,7 @@ public class EditorPageExtensionPointManager extends AbstractExtensionPointManag
 	 * Thread save singleton instance creation.
 	 */
 	private static class LazyInstance {
-		public static EditorPageExtensionPointManager fInstance = new EditorPageExtensionPointManager();
+		public static EditorPageExtensionPointManager instance = new EditorPageExtensionPointManager();
 	}
 
 	/**
@@ -40,7 +40,7 @@ public class EditorPageExtensionPointManager extends AbstractExtensionPointManag
 	 * Returns the singleton instance of the extension point manager.
 	 */
 	public static EditorPageExtensionPointManager getInstance() {
-		return LazyInstance.fInstance;
+		return LazyInstance.instance;
 	}
 
 	/* (non-Javadoc)

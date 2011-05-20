@@ -24,17 +24,17 @@ public class WorkbenchPartControl extends PlatformObject {
 	/**
 	 * Reference to the parent workbench part the control might be embedded in.
 	 */
-	private final IWorkbenchPart fParentPart;
+	private final IWorkbenchPart parentPart;
 
 	/**
 	 * Reference to the form toolkit instance provided via {@link #setupFormPanel(Composite, CustomFormToolkit)}.
 	 */
-	private CustomFormToolkit fFormToolkit = null;
+	private CustomFormToolkit formToolkit = null;
 
 	/**
 	 * Reference to the parent control.
 	 */
-	private Composite fParentControl;
+	private Composite parentControl;
 
 	/**
 	 * Constructor.
@@ -50,7 +50,7 @@ public class WorkbenchPartControl extends PlatformObject {
 	 */
 	public WorkbenchPartControl(IWorkbenchPart parentPart) {
 		super();
-		fParentPart = parentPart;
+		this.parentPart = parentPart;
 	}
 
 	/**
@@ -59,7 +59,7 @@ public class WorkbenchPartControl extends PlatformObject {
 	 * @return The parent workbench part or <code>null</code>.
 	 */
 	public final IWorkbenchPart getParentPart() {
-		return fParentPart;
+		return parentPart;
 	}
 
 	/**
@@ -69,7 +69,7 @@ public class WorkbenchPartControl extends PlatformObject {
 	 * @return <code>true</code> if the associated parent control is not <code>null</code>, <code>false</code> otherwise.
 	 */
 	public final boolean isControlCreated() {
-		return (fParentControl != null);
+		return (parentControl != null);
 	}
 
 	/**
@@ -78,14 +78,14 @@ public class WorkbenchPartControl extends PlatformObject {
 	 * @return The parent control or <code>null</code>.
 	 */
 	public final Composite getParentControl() {
-		return fParentControl;
+		return parentControl;
 	}
 
 	/**
 	 * Cleanup all resources the control might have been created.
 	 */
 	public void dispose() {
-		fParentControl = null;
+		parentControl = null;
 	}
 
 	/**
@@ -96,8 +96,8 @@ public class WorkbenchPartControl extends PlatformObject {
 	 */
 	public void setupFormPanel(Composite parent, CustomFormToolkit toolkit) {
 		assert parent != null && toolkit != null;
-		fParentControl = parent;
-		fFormToolkit = toolkit;
+		parentControl = parent;
+		formToolkit = toolkit;
 	}
 
 	/**
@@ -106,7 +106,7 @@ public class WorkbenchPartControl extends PlatformObject {
 	 * @return The form toolkit instance or <code>null</code> if not initialized yet.
 	 */
 	protected final CustomFormToolkit getFormToolkit() {
-		return fFormToolkit;
+		return formToolkit;
 	}
 
 	/**

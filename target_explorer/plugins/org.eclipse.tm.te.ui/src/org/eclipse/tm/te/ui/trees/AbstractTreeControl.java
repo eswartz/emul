@@ -39,9 +39,9 @@ import org.eclipse.ui.forms.widgets.Section;
  */
 public abstract class AbstractTreeControl extends WorkbenchPartControl {
 	// Reference to the tree viewer instance
-	private TreeViewer fViewer;
+	private TreeViewer viewer;
 	// Reference to the selection changed listener
-	private ISelectionChangedListener fSelectionChangedListener;
+	private ISelectionChangedListener selectionChangedListener;
 
 	/**
 	 * Constructor.
@@ -65,11 +65,11 @@ public abstract class AbstractTreeControl extends WorkbenchPartControl {
 	@Override
 	public void dispose() {
 		// Unregister the selection changed listener
-		if (fSelectionChangedListener != null) {
+		if (selectionChangedListener != null) {
 			if (getViewer() != null) {
-				getViewer().removeSelectionChangedListener(fSelectionChangedListener);
+				getViewer().removeSelectionChangedListener(selectionChangedListener);
 			}
-			fSelectionChangedListener = null;
+			selectionChangedListener = null;
 		}
 
 		super.dispose();
@@ -83,12 +83,12 @@ public abstract class AbstractTreeControl extends WorkbenchPartControl {
 		super.setupFormPanel(parent, toolkit);
 
 		// Create the tree viewer
-		fViewer = doCreateTreeViewer(parent);
+		viewer = doCreateTreeViewer(parent);
 		// And configure the tree viewer
-		configureTreeViewer(fViewer);
+		configureTreeViewer(viewer);
 
 		// Prepare popup menu and toolbar
-		createContributionItems(fViewer);
+		createContributionItems(viewer);
 	}
 
 	/**
@@ -119,9 +119,9 @@ public abstract class AbstractTreeControl extends WorkbenchPartControl {
 		viewer.getTree().setLayoutData(doCreateTreeViewerLayoutData(viewer));
 
 		// Attach the selection changed listener
-		fSelectionChangedListener = doCreateTreeViewerSelectionChangedListener(viewer);
-		if (fSelectionChangedListener != null) {
-			viewer.addSelectionChangedListener(fSelectionChangedListener);
+		selectionChangedListener = doCreateTreeViewerSelectionChangedListener(viewer);
+		if (selectionChangedListener != null) {
+			viewer.addSelectionChangedListener(selectionChangedListener);
 		}
 	}
 
@@ -282,7 +282,7 @@ public abstract class AbstractTreeControl extends WorkbenchPartControl {
 	 * @return The viewer instance or <code>null</code>.
 	 */
 	public Viewer getViewer() {
-		return fViewer;
+		return viewer;
 	}
 
 	/* (non-Javadoc)

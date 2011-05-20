@@ -35,11 +35,11 @@ import org.eclipse.ui.PlatformUI;
  * to create the different TCF peer types.
  */
 public class NewTargetWizardPage extends AbstractWizardPage {
-	private Combo fTransportTypeControl;
-	private Text fAddressControl;
-	private Text fPortControl;
-	private Text fPeerIdControl;
-	private Text fPeerNameControl;
+	private Combo transportTypeControl;
+	private Text addressControl;
+	private Text portControl;
+	private Text peerIdControl;
+	private Text peerNameControl;
 
 	/**
 	 * Constructor.
@@ -100,18 +100,18 @@ public class NewTargetWizardPage extends AbstractWizardPage {
 		Label label = new Label(panel, SWT.NONE);
 		label.setText(Messages.NewTargetWizardPage_TransportTypeControl_label);
 
-		fTransportTypeControl = new Combo(panel, SWT.READ_ONLY);
-		fTransportTypeControl.setItems(new String[] { "TCP" }); //$NON-NLS-1$
-		fTransportTypeControl.select(0);
-		fTransportTypeControl.setEnabled(false);
-		fTransportTypeControl.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		transportTypeControl = new Combo(panel, SWT.READ_ONLY);
+		transportTypeControl.setItems(new String[] { "TCP" }); //$NON-NLS-1$
+		transportTypeControl.select(0);
+		transportTypeControl.setEnabled(false);
+		transportTypeControl.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
 		label = new Label(panel, SWT.NONE);
 		label.setText(Messages.NewTargetWizardPage_AgentHostControl_label);
 
-		fAddressControl = new Text(panel, SWT.SINGLE | SWT.BORDER);
-		fAddressControl.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-		fAddressControl.addModifyListener(new ModifyListener() {
+		addressControl = new Text(panel, SWT.SINGLE | SWT.BORDER);
+		addressControl.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		addressControl.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent e) {
 				updatePeerId();
 			}
@@ -120,10 +120,10 @@ public class NewTargetWizardPage extends AbstractWizardPage {
 		label = new Label(panel, SWT.NONE);
 		label.setText(Messages.NewTargetWizardPage_AgentPortControl_label);
 
-		fPortControl = new Text(panel, SWT.SINGLE | SWT.BORDER);
-		fPortControl.setText("1534"); //$NON-NLS-1$
-		fPortControl.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-		fPortControl.addModifyListener(new ModifyListener() {
+		portControl = new Text(panel, SWT.SINGLE | SWT.BORDER);
+		portControl.setText("1534"); //$NON-NLS-1$
+		portControl.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		portControl.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent e) {
 				updatePeerId();
 			}
@@ -132,14 +132,14 @@ public class NewTargetWizardPage extends AbstractWizardPage {
 		label = new Label(panel, SWT.NONE);
 		label.setText(Messages.NewTargetWizardPage_PeerIdControl_label);
 
-		fPeerIdControl = new Text(panel, SWT.SINGLE | SWT.BORDER);
-		fPeerIdControl.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		peerIdControl = new Text(panel, SWT.SINGLE | SWT.BORDER);
+		peerIdControl.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
 		label = new Label(panel, SWT.NONE);
 		label.setText(Messages.NewTargetWizardPage_PeerNameControl_label);
 
-		fPeerNameControl = new Text(panel, SWT.SINGLE | SWT.BORDER);
-		fPeerNameControl.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		peerNameControl = new Text(panel, SWT.SINGLE | SWT.BORDER);
+		peerNameControl.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
 		// Restore the page history and trigger
 		// an update of the peer id
@@ -158,16 +158,16 @@ public class NewTargetWizardPage extends AbstractWizardPage {
 	 * Update peer id control.
 	 */
 	protected void updatePeerId() {
-		String address = fAddressControl.getText();
-		String port = fPortControl.getText();
-		String type = fTransportTypeControl.getText();
+		String address = addressControl.getText();
+		String port = portControl.getText();
+		String type = transportTypeControl.getText();
 
 		if (!"".equals(address) && !"".equals(port)) { //$NON-NLS-1$ //$NON-NLS-2$
-			fPeerIdControl.setText(type + ":" //$NON-NLS-1$
+			peerIdControl.setText(type + ":" //$NON-NLS-1$
 			                        	+ address + ":" //$NON-NLS-1$
 			                        	+ port);
 		} else {
-			fPeerIdControl.setText(""); //$NON-NLS-1$
+			peerIdControl.setText(""); //$NON-NLS-1$
 		}
 
 		validatePage();
@@ -180,7 +180,7 @@ public class NewTargetWizardPage extends AbstractWizardPage {
 	public void validatePage() {
 		boolean valid = true;
 
-		if ("".equals(fAddressControl.getText()) || "".equals(fPortControl)) { //$NON-NLS-1$ //$NON-NLS-2$
+		if ("".equals(addressControl.getText()) || "".equals(portControl)) { //$NON-NLS-1$ //$NON-NLS-2$
 			valid = false;
 		}
 
@@ -195,11 +195,11 @@ public class NewTargetWizardPage extends AbstractWizardPage {
 	protected void updatePeerAttributes(Map<String, String> peerAttributes) {
 		Assert.isNotNull(peerAttributes);
 
-		peerAttributes.put(IPeer.ATTR_IP_HOST, fAddressControl.getText());
-		peerAttributes.put(IPeer.ATTR_IP_PORT, fPortControl.getText());
-		peerAttributes.put(IPeer.ATTR_ID, fPeerIdControl.getText());
-		peerAttributes.put(IPeer.ATTR_NAME, fPeerNameControl.getText());
-		peerAttributes.put(IPeer.ATTR_TRANSPORT_NAME, fTransportTypeControl.getText());
+		peerAttributes.put(IPeer.ATTR_IP_HOST, addressControl.getText());
+		peerAttributes.put(IPeer.ATTR_IP_PORT, portControl.getText());
+		peerAttributes.put(IPeer.ATTR_ID, peerIdControl.getText());
+		peerAttributes.put(IPeer.ATTR_NAME, peerNameControl.getText());
+		peerAttributes.put(IPeer.ATTR_TRANSPORT_NAME, transportTypeControl.getText());
 	}
 
 	/**
@@ -224,10 +224,10 @@ public class NewTargetWizardPage extends AbstractWizardPage {
 		IDialogSettings settings = getDialogSettings();
 		if (settings != null) {
 			// The transport type control is not saved
-			settings.put(IPeer.ATTR_IP_HOST, fAddressControl.getText());
-			settings.put(IPeer.ATTR_IP_PORT, fPortControl.getText());
-			settings.put(IPeer.ATTR_ID, fPeerIdControl.getText());
-			settings.put(IPeer.ATTR_NAME, fPeerNameControl.getText());
+			settings.put(IPeer.ATTR_IP_HOST, addressControl.getText());
+			settings.put(IPeer.ATTR_IP_PORT, portControl.getText());
+			settings.put(IPeer.ATTR_ID, peerIdControl.getText());
+			settings.put(IPeer.ATTR_NAME, peerNameControl.getText());
 		}
 	}
 
@@ -239,10 +239,10 @@ public class NewTargetWizardPage extends AbstractWizardPage {
 		IDialogSettings settings = getDialogSettings();
 		if (settings != null) {
 			// The transport type control is not restored
-			if (settings.get(IPeer.ATTR_IP_HOST) != null) fAddressControl.setText(settings.get(IPeer.ATTR_IP_HOST));
-			if (settings.get(IPeer.ATTR_IP_PORT) != null) fPortControl.setText(settings.get(IPeer.ATTR_IP_PORT));
-			if (settings.get(IPeer.ATTR_ID) != null) fPeerIdControl.setText(settings.get(IPeer.ATTR_ID));
-			if (settings.get(IPeer.ATTR_NAME) != null) fPeerNameControl.setText(settings.get(IPeer.ATTR_NAME));
+			if (settings.get(IPeer.ATTR_IP_HOST) != null) addressControl.setText(settings.get(IPeer.ATTR_IP_HOST));
+			if (settings.get(IPeer.ATTR_IP_PORT) != null) portControl.setText(settings.get(IPeer.ATTR_IP_PORT));
+			if (settings.get(IPeer.ATTR_ID) != null) peerIdControl.setText(settings.get(IPeer.ATTR_ID));
+			if (settings.get(IPeer.ATTR_NAME) != null) peerNameControl.setText(settings.get(IPeer.ATTR_NAME));
 		}
 	}
 }

@@ -26,7 +26,7 @@ import org.eclipse.tm.te.ui.tables.TableNode;
  */
 public class NodePropertiesLabelProvider extends LabelProvider implements ITableLabelProvider, ITableColorProvider {
 	// Reference to the parent table viewer
-	private final TableViewer fParentViewer;
+	private final TableViewer parentViewer;
 
 	/**
 	 * Constructor.
@@ -35,7 +35,7 @@ public class NodePropertiesLabelProvider extends LabelProvider implements ITable
 	 */
 	public NodePropertiesLabelProvider(TableViewer viewer) {
 		super();
-		fParentViewer = viewer;
+		parentViewer = viewer;
 	}
 
 	/**
@@ -44,7 +44,7 @@ public class NodePropertiesLabelProvider extends LabelProvider implements ITable
 	 * @return The parent table viewer or <code>null</code>.
 	 */
 	protected final TableViewer getParentViewer() {
-		return fParentViewer;
+		return parentViewer;
 	}
 
 	/* (non-Javadoc)

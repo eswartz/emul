@@ -21,7 +21,7 @@ import org.eclipse.ui.PlatformUI;
  */
 public abstract class AbstractWizardPage extends WizardPage {
 	// The context help id of the wizard page
-	private String fContextHelpId = null;
+	private String contextHelpId = null;
 
 	/**
 	 * Constructor.
@@ -52,7 +52,7 @@ public abstract class AbstractWizardPage extends WizardPage {
 	 * @param contextHelpId The context help id or <code>null</code> if none.
 	 */
 	protected final void setContextHelpId(String contextHelpId) {
-		fContextHelpId = contextHelpId;
+		this.contextHelpId = contextHelpId;
 	}
 
 	/**
@@ -61,7 +61,7 @@ public abstract class AbstractWizardPage extends WizardPage {
 	 * @return The context help id or <code>null</code> if none.
 	 */
 	protected final String getContextHelpId() {
-		return fContextHelpId;
+		return contextHelpId;
 	}
 
 	/* (non-Javadoc)

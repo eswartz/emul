@@ -25,7 +25,7 @@ public final class FSModel extends PlatformObject {
 	 * The file system model root node cache. The keys
 	 * are the peer id's.
 	 */
-	private final Map<String, FSTreeNode> fRoots = new HashMap<String, FSTreeNode>();
+	private final Map<String, FSTreeNode> roots = new HashMap<String, FSTreeNode>();
 
 	/**
 	 * Returns the file system model root node for the peer identified
@@ -36,7 +36,7 @@ public final class FSModel extends PlatformObject {
 	 */
 	public FSTreeNode getRoot(String peerId) {
 		assert peerId != null;
-		return fRoots.get(peerId);
+		return roots.get(peerId);
 	}
 
 	/**
@@ -49,14 +49,14 @@ public final class FSModel extends PlatformObject {
 	 */
 	public void putRoot(String peerId, FSTreeNode node) {
 		assert peerId != null;
-		if (node != null) fRoots.put(peerId, node);
-		else fRoots.remove(peerId);
+		if (node != null) roots.put(peerId, node);
+		else roots.remove(peerId);
 	}
 
 	/**
 	 * Dispose the file system model instance.
 	 */
 	public void dispose() {
-		fRoots.clear();
+		roots.clear();
 	}
 }

@@ -3,7 +3,7 @@
  * This program and the accompanying materials are made available under the terms
  * of the Eclipse Public License v1.0 which accompanies this distribution, and is
  * available at http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  * Uwe Stieber (Wind River) - initial API and implementation
  *******************************************************************************/
@@ -24,7 +24,7 @@ import org.eclipse.tm.te.tcf.locator.interfaces.services.ILocatorModelLookupServ
  */
 public class ChannelStateChangeListener implements IChannelStateChangeListener {
 	// Reference to the parent model
-	private final ILocatorModel fModel;
+	private final ILocatorModel model;
 
 	/**
 	 * Constructor.
@@ -33,7 +33,7 @@ public class ChannelStateChangeListener implements IChannelStateChangeListener {
 	 */
 	public ChannelStateChangeListener(ILocatorModel model) {
 		assert model != null;
-		fModel = model;
+		this.model = model;
 	}
 
 	/* (non-Javadoc)
@@ -46,7 +46,7 @@ public class ChannelStateChangeListener implements IChannelStateChangeListener {
 			case IChannel.STATE_OPEN:
 				IPeer peer = channel.getRemotePeer();
 				// Find the corresponding model node
-				IPeerModel node = fModel.getService(ILocatorModelLookupService.class).lkupPeerModelById(peer.getID());
+				IPeerModel node = model.getService(ILocatorModelLookupService.class).lkupPeerModelById(peer.getID());
 				if (node != null) {
 					// Increase the channel reference counter by 1
 					int counter = node.getIntProperty(IPeerModelProperties.PROP_CHANNEL_REF_COUNTER);
@@ -59,7 +59,7 @@ public class ChannelStateChangeListener implements IChannelStateChangeListener {
 			case IChannel.STATE_CLOSED:
 				peer = channel.getRemotePeer();
 				// Find the corresponding model node
-				node = fModel.getService(ILocatorModelLookupService.class).lkupPeerModelById(peer.getID());
+				node = model.getService(ILocatorModelLookupService.class).lkupPeerModelById(peer.getID());
 				if (node != null) {
 					// Decrease the channel reference counter by 1
 					int counter = node.getIntProperty(IPeerModelProperties.PROP_CHANNEL_REF_COUNTER);

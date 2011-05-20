@@ -24,7 +24,7 @@ import org.eclipse.tm.te.ui.AbstractViewerComparator;
  * Target Explorer: Common table control viewer comparator implementation.
  */
 public class TableViewerComparator extends AbstractViewerComparator {
-	private final ITableLabelProvider fLabelProvider;
+	private final ITableLabelProvider labelProvider;
 
 	/**
 	 * Constructor.
@@ -35,7 +35,7 @@ public class TableViewerComparator extends AbstractViewerComparator {
 	public TableViewerComparator(Viewer viewer, ITableLabelProvider labelProvider) {
 		super(viewer);
 		assert labelProvider != null;
-		fLabelProvider = labelProvider;
+		this.labelProvider = labelProvider;
 	}
 
 	/* (non-Javadoc)
@@ -59,8 +59,8 @@ public class TableViewerComparator extends AbstractViewerComparator {
 	 */
 	@Override
 	protected String doGetText(Object node, int index) {
-		if (node != null && fLabelProvider != null) {
-			return index != -1 ? fLabelProvider.getColumnText(node, index) : ((ILabelProvider)fLabelProvider).getText(node);
+		if (node != null && labelProvider != null) {
+			return index != -1 ? labelProvider.getColumnText(node, index) : ((ILabelProvider)labelProvider).getText(node);
 		}
 		return null;
 	}

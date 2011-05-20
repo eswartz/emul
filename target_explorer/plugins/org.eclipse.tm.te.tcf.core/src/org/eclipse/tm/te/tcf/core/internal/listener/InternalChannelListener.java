@@ -3,7 +3,7 @@
  * This program and the accompanying materials are made available under the terms
  * of the Eclipse Public License v1.0 which accompanies this distribution, and is
  * available at http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  * Uwe Stieber (Wind River) - initial API and implementation
  *******************************************************************************/
@@ -22,7 +22,7 @@ import org.eclipse.tm.te.tcf.core.internal.utils.LogUtils;
  */
 public class InternalChannelListener implements IChannel.IChannelListener {
 	// The reference to the channel
-	private final IChannel fChannel;
+	private final IChannel channel;
 
 	/**
 	 * Constructor.
@@ -31,7 +31,7 @@ public class InternalChannelListener implements IChannel.IChannelListener {
 	 */
 	public InternalChannelListener(IChannel channel) {
 		assert channel != null;
-		fChannel = channel;
+		this.channel = channel;
 	}
 
 	/**
@@ -40,7 +40,7 @@ public class InternalChannelListener implements IChannel.IChannelListener {
 	 * @return The channel instance.
 	 */
 	protected final IChannel getChannel() {
-		return fChannel;
+		return channel;
 	}
 
 	/* (non-Javadoc)

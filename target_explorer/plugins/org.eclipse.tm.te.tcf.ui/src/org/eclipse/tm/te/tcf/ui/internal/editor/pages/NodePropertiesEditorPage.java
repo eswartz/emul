@@ -37,17 +37,17 @@ import org.eclipse.ui.forms.widgets.TableWrapData;
  */
 public class NodePropertiesEditorPage extends AbstractEditorPage {
 	// The references to the pages subcontrol's (needed for disposal)
-	private NodePropertiesTableControl fNodePropertiesTableControl;
+	private NodePropertiesTableControl nodePropertiesTableControl;
 
 	// Reference to the form toolkit instance
-	private CustomFormToolkit fToolkit = null;
+	private CustomFormToolkit toolkit = null;
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.forms.editor.FormPage#dispose()
 	 */
 	@Override
 	public void dispose() {
-		if (fNodePropertiesTableControl != null) { fNodePropertiesTableControl.dispose(); fNodePropertiesTableControl = null; }
+		if (nodePropertiesTableControl != null) { nodePropertiesTableControl.dispose(); nodePropertiesTableControl = null; }
 		super.dispose();
 	}
 
@@ -63,10 +63,10 @@ public class NodePropertiesEditorPage extends AbstractEditorPage {
 		Composite body = managedForm.getForm().getBody();
 
 		// Create the toolkit instance
-		fToolkit = new CustomFormToolkit(managedForm.getToolkit());
+		toolkit = new CustomFormToolkit(managedForm.getToolkit());
 
 		// Do create the content of the form now
-		doCreateFormContent(body, fToolkit);
+		doCreateFormContent(body, toolkit);
 
 		// Re-arrange the controls
 		managedForm.reflow(true);
@@ -119,12 +119,12 @@ public class NodePropertiesEditorPage extends AbstractEditorPage {
 		section.setClient(client);
 
 		// Setup the node properties table  control
-		fNodePropertiesTableControl = doCreateNodePropertiesTableControl();
-		assert fNodePropertiesTableControl != null;
-		fNodePropertiesTableControl.setupFormPanel((Composite)section.getClient(), toolkit);
+		nodePropertiesTableControl = doCreateNodePropertiesTableControl();
+		assert nodePropertiesTableControl != null;
+		nodePropertiesTableControl.setupFormPanel((Composite)section.getClient(), toolkit);
 
 		// Set the initial input
-		fNodePropertiesTableControl.getViewer().setInput(getEditorInputNode());
+		nodePropertiesTableControl.getViewer().setInput(getEditorInputNode());
 	}
 
 	/**
@@ -164,6 +164,6 @@ public class NodePropertiesEditorPage extends AbstractEditorPage {
 	 * @return The associated node properties table control or <code>null</code>.
 	 */
 	protected final NodePropertiesTableControl getNodePropertiesTableControl() {
-		return fNodePropertiesTableControl;
+		return nodePropertiesTableControl;
 	}
 }

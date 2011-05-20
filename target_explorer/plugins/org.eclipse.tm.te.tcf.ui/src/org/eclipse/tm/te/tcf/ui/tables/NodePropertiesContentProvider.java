@@ -46,7 +46,7 @@ public class NodePropertiesContentProvider implements IStructuredContentProvider
 	};
 
 	// Flag to control if the content provide may update the parent section title
-	private final boolean fUpdateParentSectionTitle;
+	private final boolean updateParentSectionTitle;
 
 	/**
 	 * Constructor.
@@ -55,7 +55,7 @@ public class NodePropertiesContentProvider implements IStructuredContentProvider
 	 *                                 the parent section title, <code>false</code> if no title update is desired.
 	 */
 	public NodePropertiesContentProvider(boolean updateParentSectionTitle) {
-		fUpdateParentSectionTitle = updateParentSectionTitle;
+		this.updateParentSectionTitle = updateParentSectionTitle;
 	}
 
 	/* (non-Javadoc)
@@ -113,7 +113,7 @@ public class NodePropertiesContentProvider implements IStructuredContentProvider
 	 */
 	public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
 		// Do nothing if we shall not update the section title
-		if (!fUpdateParentSectionTitle) return;
+		if (!updateParentSectionTitle) return;
 
 		String sectionTitle = null;
 		Object element = null;

@@ -24,10 +24,10 @@ import org.eclipse.ui.PlatformUI;
  * Target Explorer: Custom tray dialog implementation.
  */
 public class CustomTrayDialog extends TrayDialog {
-	private String fContextHelpId = null;
+	private String contextHelpId = null;
 
 	// the dialog storage
-	private IDialogSettings fDialogSettings;
+	private IDialogSettings dialogSettings;
 
 	/**
 	 * Constructor.
@@ -56,8 +56,8 @@ public class CustomTrayDialog extends TrayDialog {
 	 * @param contextHelpId The context help id or <code>null</code>.
 	 */
 	protected void setContextHelpId(String contextHelpId) {
-		fContextHelpId = contextHelpId;
-		setHelpAvailable(fContextHelpId != null);
+		this.contextHelpId = contextHelpId;
+		setHelpAvailable(contextHelpId != null);
 	}
 
 	/**
@@ -104,10 +104,10 @@ public class CustomTrayDialog extends TrayDialog {
 	public IDialogSettings getDialogSettings() {
 		// The dialog settings may not been initialized here. Initialize first in this case
 		// to be sure that we do have always the correct dialog settings.
-		if (fDialogSettings == null) {
+		if (dialogSettings == null) {
 			initializeDialogSettings();
 		}
-		return fDialogSettings;
+		return dialogSettings;
 	}
 
 	/**
@@ -116,7 +116,7 @@ public class CustomTrayDialog extends TrayDialog {
 	 * @return The dialog settings storage.
 	 */
 	public void setDialogSettings(IDialogSettings dialogSettings) {
-		fDialogSettings = dialogSettings;
+		this.dialogSettings = dialogSettings;
 	}
 
 	/* (non-Javadoc)
@@ -124,8 +124,8 @@ public class CustomTrayDialog extends TrayDialog {
 	 */
 	@Override
 	protected Control createDialogArea(Composite parent) {
-		if (fContextHelpId != null) {
-			PlatformUI.getWorkbench().getHelpSystem().setHelp(parent, fContextHelpId);
+		if (contextHelpId != null) {
+			PlatformUI.getWorkbench().getHelpSystem().setHelp(parent, contextHelpId);
 		}
 
 		// Let the super implementation create the dialog area control
@@ -155,7 +155,7 @@ public class CustomTrayDialog extends TrayDialog {
 	 * Cleanup when dialog is closed.
 	 */
 	protected void dispose() {
-		fDialogSettings = null;
+		dialogSettings = null;
 	}
 
 	/**

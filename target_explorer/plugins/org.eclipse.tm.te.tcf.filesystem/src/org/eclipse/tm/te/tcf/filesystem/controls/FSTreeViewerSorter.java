@@ -16,14 +16,14 @@ import org.eclipse.jface.viewers.Viewer;
  * Target Explorer: File system tree control viewer sorter implementation.
  */
 public class FSTreeViewerSorter extends TreePathViewerSorter {
-	private final FSTreeLabelProvider fLabelProvider = new FSTreeLabelProvider();
-	private final FSTreeViewerComparator fComparator;
+	private final FSTreeLabelProvider labelProvider = new FSTreeLabelProvider();
+	private final FSTreeViewerComparator comparator;
 
 	/**
 	 * Constructor.
 	 */
 	public FSTreeViewerSorter() {
-		fComparator = new FSTreeViewerComparator(fLabelProvider.getParentViewer(), fLabelProvider);
+		comparator = new FSTreeViewerComparator(labelProvider.getParentViewer(), labelProvider);
 	}
 
 	/* (non-Javadoc)
@@ -31,6 +31,6 @@ public class FSTreeViewerSorter extends TreePathViewerSorter {
 	 */
 	@Override
 	public int compare(Viewer viewer, Object e1, Object e2) {
-		return fComparator.compare(viewer, e1, e2);
+		return comparator.compare(viewer, e1, e2);
 	}
 }

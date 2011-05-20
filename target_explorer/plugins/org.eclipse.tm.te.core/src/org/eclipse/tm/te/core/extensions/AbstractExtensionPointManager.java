@@ -29,9 +29,9 @@ import org.eclipse.tm.te.core.nls.Messages;
  */
 public abstract class AbstractExtensionPointManager<V> {
 	// Flag to mark the extension point manager initialized (extensions loaded).
-	private boolean fInitialized = false;
-	// The map of loaded extension listed by their unique ids
-	private Map<String, ExecutableExtensionProxy<V>> fExtensions = new LinkedHashMap<String, ExecutableExtensionProxy<V>>();
+	private boolean initialized = false;
+	// The map of loaded extension listed by their unique id's
+	private Map<String, ExecutableExtensionProxy<V>> extensionsMap = new LinkedHashMap<String, ExecutableExtensionProxy<V>>();
 
 	/**
 	 * Constructor.
@@ -47,7 +47,7 @@ public abstract class AbstractExtensionPointManager<V> {
 	 * @return <code>True</code> if already initialized, <code>false</code> otherwise.
 	 */
 	protected boolean isInitialized() {
-		return fInitialized;
+		return initialized;
 	}
 
 	/**
@@ -58,7 +58,7 @@ public abstract class AbstractExtensionPointManager<V> {
 	 * @return <code>True</code> to set the extension point manager is initialized, <code>false</code> otherwise.
 	 */
 	protected void setInitialized(boolean initialized) {
-		fInitialized = initialized;
+		this.initialized = initialized;
 	}
 
 	/**
@@ -70,10 +70,10 @@ public abstract class AbstractExtensionPointManager<V> {
 	 */
 	protected Map<String, ExecutableExtensionProxy<V>> getExtensions() {
 		// Load and store the extensions thread-safe!
-		synchronized (fExtensions) {
+		synchronized (extensionsMap) {
 			if (!isInitialized()) { loadExtensions(); setInitialized(true); }
 		}
-		return fExtensions;
+		return extensionsMap;
 	}
 
 	/**
@@ -119,8 +119,8 @@ public abstract class AbstractExtensionPointManager<V> {
 		assert extensions != null && candidate != null && element != null;
 
 		// If no extension with this id had been registered before, register now.
-		if (!fExtensions.containsKey(candidate.getId())) {
-			fExtensions.put(candidate.getId(), candidate);
+		if (!extensions.containsKey(candidate.getId())) {
+			extensions.put(candidate.getId(), candidate);
 		}
 		else {
 			throw new CoreException(new Status(IStatus.ERROR,
@@ -149,7 +149,7 @@ public abstract class AbstractExtensionPointManager<V> {
 						try {
 							ExecutableExtensionProxy<V> candidate = doCreateExtensionProxy(element);
 							if (candidate.getId() != null) {
-								doStoreExtensionTo(fExtensions, candidate, element);
+								doStoreExtensionTo(extensionsMap, candidate, element);
 							} else {
 								throw new CoreException(new Status(IStatus.ERROR,
 										CoreBundleActivator.getUniqueIdentifier(),

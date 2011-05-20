@@ -19,7 +19,7 @@ import org.eclipse.tm.te.tcf.locator.interfaces.services.ILocatorModelService;
  */
 public abstract class AbstractLocatorModelService extends PlatformObject implements ILocatorModelService {
 	// Reference to the parent locator model
-	private final ILocatorModel fLocatorModel;
+	private final ILocatorModel locatorModel;
 
 	/**
 	 * Constructor.
@@ -28,13 +28,13 @@ public abstract class AbstractLocatorModelService extends PlatformObject impleme
 	 */
 	public AbstractLocatorModelService(ILocatorModel parentModel) {
 		assert parentModel != null;
-		fLocatorModel = parentModel;
+		locatorModel = parentModel;
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.interfaces.services.ILocatorModelService#getLocatorModel()
 	 */
 	public final ILocatorModel getLocatorModel() {
-		return fLocatorModel;
+		return locatorModel;
 	}
 }

@@ -31,17 +31,17 @@ import org.eclipse.ui.forms.widgets.TableWrapData;
  */
 public class FSExplorerEditorPage extends AbstractEditorPage {
 	// The references to the pages subcontrol's (needed for disposal)
-	private FSTreeControl fFileSystemControl;
+	private FSTreeControl fileSystemControl;
 
 	// Reference to the form toolkit instance
-	private CustomFormToolkit fToolkit = null;
+	private CustomFormToolkit toolkit = null;
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.forms.editor.FormPage#dispose()
 	 */
 	@Override
 	public void dispose() {
-		if (fFileSystemControl != null) { fFileSystemControl.dispose(); fFileSystemControl = null; }
+		if (fileSystemControl != null) { fileSystemControl.dispose(); fileSystemControl = null; }
 		super.dispose();
 	}
 
@@ -57,10 +57,10 @@ public class FSExplorerEditorPage extends AbstractEditorPage {
 		Composite body = managedForm.getForm().getBody();
 
 		// Create the toolkit instance
-		fToolkit = new CustomFormToolkit(managedForm.getToolkit());
+		toolkit = new CustomFormToolkit(managedForm.getToolkit());
 
 		// Do create the content of the form now
-		doCreateFormContent(body, fToolkit);
+		doCreateFormContent(body, toolkit);
 
 		// Re-arrange the controls
 		managedForm.reflow(true);
@@ -113,12 +113,12 @@ public class FSExplorerEditorPage extends AbstractEditorPage {
 		section.setClient(client);
 
 		// Setup the file system tree control
-		fFileSystemControl = doCreateFileSystemTreeControl();
-		assert fFileSystemControl != null;
-		fFileSystemControl.setupFormPanel((Composite)section.getClient(), toolkit);
+		fileSystemControl = doCreateFileSystemTreeControl();
+		assert fileSystemControl != null;
+		fileSystemControl.setupFormPanel((Composite)section.getClient(), toolkit);
 
 		// Set the initial input
-		fFileSystemControl.getViewer().setInput(getEditorInputNode());
+		fileSystemControl.getViewer().setInput(getEditorInputNode());
 	}
 
 	/**
@@ -136,6 +136,6 @@ public class FSExplorerEditorPage extends AbstractEditorPage {
 	 * @return The associated file system tree control or <code>null</code>.
 	 */
 	protected final FSTreeControl getFileSystemTreeControl() {
-		return fFileSystemControl;
+		return fileSystemControl;
 	}
 }

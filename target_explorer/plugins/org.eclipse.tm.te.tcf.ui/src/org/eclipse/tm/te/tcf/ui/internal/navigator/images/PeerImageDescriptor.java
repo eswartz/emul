@@ -24,12 +24,12 @@ import org.eclipse.tm.te.ui.images.AbstractImageDescriptor;
  */
 public class PeerImageDescriptor extends AbstractImageDescriptor {
 	// the base image to decorate with overlays
-	private Image fBaseImage;
+	private Image baseImage;
 	// the image size
-	private Point fImageSize;
+	private Point imageSize;
 
 	// Flags representing the object states to decorate
-	private int fState;
+	private int state;
 
 	/**
 	 * Constructor.
@@ -37,8 +37,8 @@ public class PeerImageDescriptor extends AbstractImageDescriptor {
 	public PeerImageDescriptor(final ImageRegistry registry, final Image baseImage, final IPeerModel node) {
 		super(registry);
 
-		fBaseImage = baseImage;
-		fImageSize = new Point(fBaseImage.getImageData().width, fBaseImage.getImageData().height);
+		this.baseImage = baseImage;
+		imageSize = new Point(baseImage.getImageData().width, baseImage.getImageData().height);
 
 		// Determine the current object state to decorate
 		if (Protocol.isDispatchThread()) {
@@ -52,7 +52,7 @@ public class PeerImageDescriptor extends AbstractImageDescriptor {
 		}
 
 		// build up the key for the image registry
-		defineKey(fBaseImage.hashCode());
+		defineKey(baseImage.hashCode());
 	}
 
 	/**
@@ -63,13 +63,13 @@ public class PeerImageDescriptor extends AbstractImageDescriptor {
 	protected void initialize(IPeerModel node) {
 		assert Protocol.isDispatchThread() && node != null;
 
-		fState = node.getIntProperty(IPeerModelProperties.PROP_STATE);
+		state = node.getIntProperty(IPeerModelProperties.PROP_STATE);
 	}
 
 	protected void defineKey(int hashCode) {
 		String key = "PMID:" +  //$NON-NLS-1$
 			hashCode + ":" + //$NON-NLS-1$
-			fState;
+			state;
 
 		setDecriptorKey(key);
 	}
@@ -79,21 +79,21 @@ public class PeerImageDescriptor extends AbstractImageDescriptor {
 	 */
 	@Override
 	protected void drawCompositeImage(int width, int height) {
-		drawCentered(fBaseImage, width, height);
+		drawCentered(baseImage, width, height);
 
-		if (fState == IPeerModelProperties.STATE_UNKNOWN) { /* unknown */
+		if (state == IPeerModelProperties.STATE_UNKNOWN) { /* unknown */
 			drawBottomRight(ImageConsts.IMAGE_GREY_OVR);
 		}
-		else if (fState == IPeerModelProperties.STATE_REACHABLE) { /* not connected, but reachable */
+		else if (state == IPeerModelProperties.STATE_REACHABLE) { /* not connected, but reachable */
 			drawBottomRight(ImageConsts.IMAGE_GOLD_OVR);
 		}
-		else if (fState == IPeerModelProperties.STATE_CONNECTED) { /* connected */
+		else if (state == IPeerModelProperties.STATE_CONNECTED) { /* connected */
 			drawBottomRight(ImageConsts.IMAGE_GREEN_OVR);
 		}
-		else if (fState == IPeerModelProperties.STATE_NOT_REACHABLE) { /* not connected, not reachable */
+		else if (state == IPeerModelProperties.STATE_NOT_REACHABLE) { /* not connected, not reachable */
 			drawBottomRight(ImageConsts.IMAGE_RED_OVR);
 		}
-		else if (fState == IPeerModelProperties.STATE_ERROR) { /* not connected, error */
+		else if (state == IPeerModelProperties.STATE_ERROR) { /* not connected, error */
 			drawBottomRight(ImageConsts.IMAGE_RED_X_OVR);
 		}
 	}
@@ -103,7 +103,7 @@ public class PeerImageDescriptor extends AbstractImageDescriptor {
 	 */
 	@Override
 	protected Point getSize() {
-		return fImageSize;
+		return imageSize;
 	}
 
 	/* (non-Javadoc)
@@ -111,6 +111,6 @@ public class PeerImageDescriptor extends AbstractImageDescriptor {
 	 */
 	@Override
 	protected Image getBaseImage() {
-		return fBaseImage;
+		return baseImage;
 	}
 }

@@ -26,7 +26,7 @@ import org.eclipse.tm.te.tcf.locator.nodes.PeerModel;
  */
 public class LocatorListener implements ILocator.LocatorListener {
 	// Reference to the parent model
-	private final ILocatorModel fModel;
+	private final ILocatorModel model;
 
 	/**
 	 * Constructor.
@@ -37,26 +37,26 @@ public class LocatorListener implements ILocator.LocatorListener {
 		super();
 
 		assert model != null;
-		fModel = model;
+		this.model = model;
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.tcf.services.ILocator.LocatorListener#peerAdded(org.eclipse.tm.tcf.protocol.IPeer)
 	 */
 	public void peerAdded(IPeer peer) {
-		if (fModel != null && peer != null) {
+		if (model != null && peer != null) {
 			// find the corresponding model node to remove (expected to be null)
-			IPeerModel peerNode = fModel.getService(ILocatorModelLookupService.class).lkupPeerModelById(peer.getID());
+			IPeerModel peerNode = model.getService(ILocatorModelLookupService.class).lkupPeerModelById(peer.getID());
 			// If not found, create a new peer node instance
 			if (peerNode == null) {
-				peerNode = new PeerModel(fModel, peer);
+				peerNode = new PeerModel(model, peer);
 				// Validate the peer node before adding
-				if (peerNode != null) peerNode = fModel.validatePeerNodeForAdd(peerNode);
+				if (peerNode != null) peerNode = model.validatePeerNodeForAdd(peerNode);
 				// Add the peer node to the model
 				if (peerNode != null) {
-					fModel.getService(ILocatorModelUpdateService.class).add(peerNode);
+					model.getService(ILocatorModelUpdateService.class).add(peerNode);
 					// And schedule for immediate status update
-					Runnable runnable = new ScannerRunnable(fModel.getScanner(), peerNode);
+					Runnable runnable = new ScannerRunnable(model.getScanner(), peerNode);
 					Protocol.invokeLater(runnable);
 				}
 			} else {
@@ -70,9 +70,9 @@ public class LocatorListener implements ILocator.LocatorListener {
 	 * @see org.eclipse.tm.tcf.services.ILocator.LocatorListener#peerChanged(org.eclipse.tm.tcf.protocol.IPeer)
 	 */
 	public void peerChanged(IPeer peer) {
-		if (fModel != null && peer != null) {
+		if (model != null && peer != null) {
 			// find the corresponding model node to remove
-			IPeerModel peerNode = fModel.getService(ILocatorModelLookupService.class).lkupPeerModelById(peer.getID());
+			IPeerModel peerNode = model.getService(ILocatorModelLookupService.class).lkupPeerModelById(peer.getID());
 			// Update the peer instance
 			if (peerNode != null) peerNode.setProperty(IPeerModelProperties.PROP_INSTANCE, peer);
 		}
@@ -82,12 +82,12 @@ public class LocatorListener implements ILocator.LocatorListener {
 	 * @see org.eclipse.tm.tcf.services.ILocator.LocatorListener#peerRemoved(java.lang.String)
 	 */
 	public void peerRemoved(String id) {
-		if (fModel != null && id != null) {
+		if (model != null && id != null) {
 			// find the corresponding model node to remove
-			IPeerModel peerNode = fModel.getService(ILocatorModelLookupService.class).lkupPeerModelById(id);
+			IPeerModel peerNode = model.getService(ILocatorModelLookupService.class).lkupPeerModelById(id);
 			if (peerNode != null) {
 				// Remove from the model
-				fModel.getService(ILocatorModelUpdateService.class).remove(peerNode);
+				model.getService(ILocatorModelUpdateService.class).remove(peerNode);
 			}
 		}
 	}
