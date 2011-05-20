@@ -40,7 +40,8 @@ import org.eclipse.ui.navigator.ICommonActionConstants;
  * The view is based on the Eclipse Common Navigator framework.
  */
 public class View extends CommonNavigator {
-	private final IRoot fRoot;
+	// The root object instance associated with this view instance
+	private final IRoot root;
 
 	/**
 	 * Target Explorer root node implementation
@@ -57,7 +58,7 @@ public class View extends CommonNavigator {
 	 * Constructor.
 	 */
 	public View() {
-		fRoot = new Root();
+		root = new Root();
 	}
 
 	/* (non-Javadoc)
@@ -65,7 +66,7 @@ public class View extends CommonNavigator {
 	 */
 	@Override
 	protected Object getInitialInput() {
-		return fRoot;
+		return root;
 	}
 
 	/* (non-Javadoc)

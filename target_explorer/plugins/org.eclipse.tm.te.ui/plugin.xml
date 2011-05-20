@@ -37,5 +37,23 @@
             icon="icons/elcl16/newtarget_wiz.gif">
       </image>
    </extension>
+   
+<!-- Context and binding contributions -->
+   <extension point="org.eclipse.ui.contexts">
+      <context
+            description="%context.targetexplorer.description"
+            id="org.eclipse.tm.te.ui.views.TargetExplorer"
+            name="%context.targetexplorer.name"
+            parentId="org.eclipse.ui.contexts.window">
+      </context>
+   </extension>
 
+   <extension point="org.eclipse.ui.bindings">
+      <key
+            commandId="org.eclipse.tm.te.ui.command.newWizards"
+            contextId="org.eclipse.tm.te.ui.views.TargetExplorer"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="M1+N">
+      </key>
+   </extension>
 </plugin>

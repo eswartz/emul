@@ -1,0 +1,105 @@
+/*******************************************************************************
+ * Copyright (c) 2011 Wind River Systems, Inc. and others. All rights reserved.
+ * This program and the accompanying materials are made available under the terms
+ * of the Eclipse Public License v1.0 which accompanies this distribution, and is
+ * available at http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ * Uwe Stieber (Wind River) - initial API and implementation
+ *******************************************************************************/
+package org.eclipse.tm.te.ui.views.internal.listeners;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.eclipse.tm.te.ui.views.interfaces.IUIConstants;
+import org.eclipse.ui.IPartListener2;
+import org.eclipse.ui.IWorkbenchPart;
+import org.eclipse.ui.IWorkbenchPartReference;
+import org.eclipse.ui.contexts.IContextActivation;
+import org.eclipse.ui.contexts.IContextService;
+
+/**
+ * Target Explorer: The part listener implementation. Takes care of
+ *                  activation and deactivation of key binding contexts.
+ */
+public class WorkbenchPartListener implements IPartListener2 {
+
+	// The context activations per workbench part reference
+	private final Map<IWorkbenchPartReference, IContextActivation> activations = new HashMap<IWorkbenchPartReference, IContextActivation>();
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.IPartListener2#partBroughtToTop(org.eclipse.ui.IWorkbenchPartReference)
+	 */
+	public void partBroughtToTop(IWorkbenchPartReference partRef) {
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.IPartListener2#partOpened(org.eclipse.ui.IWorkbenchPartReference)
+	 */
+	public void partOpened(IWorkbenchPartReference partRef) {
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.IPartListener2#partClosed(org.eclipse.ui.IWorkbenchPartReference)
+	 */
+	public void partClosed(IWorkbenchPartReference partRef) {
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.IPartListener2#partVisible(org.eclipse.ui.IWorkbenchPartReference)
+	 */
+	public void partVisible(IWorkbenchPartReference partRef) {
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.IPartListener2#partHidden(org.eclipse.ui.IWorkbenchPartReference)
+	 */
+	public void partHidden(IWorkbenchPartReference partRef) {
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.IPartListener2#partActivated(org.eclipse.ui.IWorkbenchPartReference)
+	 */
+	public void partActivated(IWorkbenchPartReference partRef) {
+		if (IUIConstants.ID_EXPLORER.equals(partRef.getId())) {
+			IWorkbenchPart part = partRef.getPart(false);
+			if (part != null && part.getSite() != null) {
+				IContextService service = (IContextService)part.getSite().getService(IContextService.class);
+				if (service != null) {
+					IContextActivation activation = service.activateContext(IUIConstants.ID_EXPLORER);
+					if (activation != null) {
+						activations.put(partRef, activation);
+					} else {
+						activations.remove(partRef);
+					}
+				}
+			}
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.IPartListener2#partDeactivated(org.eclipse.ui.IWorkbenchPartReference)
+	 */
+	public void partDeactivated(IWorkbenchPartReference partRef) {
+		if (IUIConstants.ID_EXPLORER.equals(partRef.getId())) {
+			IWorkbenchPart part = partRef.getPart(false);
+			if (part != null && part.getSite() != null) {
+				IContextService service = (IContextService)part.getSite().getService(IContextService.class);
+				if (service != null) {
+					IContextActivation activation = activations.remove(partRef);
+					if (activation != null) {
+						service.deactivateContext(activation);
+					}
+				}
+			}
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.IPartListener2#partInputChanged(org.eclipse.ui.IWorkbenchPartReference)
+	 */
+	public void partInputChanged(IWorkbenchPartReference partRef) {
+	}
+
+}

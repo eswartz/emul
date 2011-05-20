@@ -29,10 +29,6 @@ public class Messages extends NLS {
 
 	// **** Declare externalized string id's down here *****
 
-	public static String NewWizard_dialog_title;
-	public static String NewWizardSelectionPage_title;
-	public static String NewWizardSelectionPage_description;
-
 	public static String NewActionProvider_NewMenu_label;
 	public static String NewActionProvider_NewWizardCommandAction_label;
 	public static String NewActionProvider_NewWizardCommandAction_tooltip;

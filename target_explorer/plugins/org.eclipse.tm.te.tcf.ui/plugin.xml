@@ -31,7 +31,7 @@
                   id="org.eclipse.tm.te.tcf.ui.navigator.sorter"/>
             <commonWizard
                   type="new"
-                  wizardId="org.eclipse.tm.te.tcf.ui.wizards.NewRemoteTargetWizard">
+                  wizardId="org.eclipse.tm.te.tcf.ui.wizards.NewTargetWizard">
                <enablement>
                   <instanceof value="org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel"/>
                </enablement>

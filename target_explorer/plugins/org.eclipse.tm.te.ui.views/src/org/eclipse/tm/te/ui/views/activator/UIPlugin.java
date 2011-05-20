@@ -15,6 +15,9 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.resource.ImageRegistry;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.tm.te.ui.views.interfaces.ImageConsts;
+import org.eclipse.tm.te.ui.views.internal.listeners.WorkbenchWindowListener;
+import org.eclipse.ui.IWindowListener;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
@@ -26,6 +29,9 @@ public class UIPlugin extends AbstractUIPlugin {
 
 	// The shared instance
 	private static UIPlugin plugin;
+
+	// The global window listener instance
+	private IWindowListener windowListener;
 
 	/**
 	 * The constructor
@@ -59,6 +65,11 @@ public class UIPlugin extends AbstractUIPlugin {
 	public void start(BundleContext context) throws Exception {
 		super.start(context);
 		plugin = this;
+
+		if (windowListener == null && PlatformUI.getWorkbench() != null) {
+			windowListener = new WorkbenchWindowListener();
+			PlatformUI.getWorkbench().addWindowListener(windowListener);
+		}
 	}
 
 	/* (non-Javadoc)
@@ -66,6 +77,11 @@ public class UIPlugin extends AbstractUIPlugin {
 	 */
 	@Override
 	public void stop(BundleContext context) throws Exception {
+		if (windowListener != null && PlatformUI.getWorkbench() != null) {
+			PlatformUI.getWorkbench().removeWindowListener(windowListener);
+			windowListener = null;
+		}
+
 		plugin = null;
 		super.stop(context);
 	}
