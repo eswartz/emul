@@ -54,6 +54,7 @@ def test():
         testFileSystem(c)
         testMemory(c)
         testMemoryMap(c)
+        testPathMap(c)
     except Exception as e:
         protocol.log(e)
 
@@ -469,7 +470,6 @@ def testMemory(c):
 
 def testMemoryMap(c):
     if not _memory: return
-    from tcf.services import memorymap
     cmd = sync.CommandControl(c)
     try:
         mm = cmd.MemoryMap
@@ -477,13 +477,75 @@ def testMemoryMap(c):
         # no MemoryMap service
         return
     id = _memory[0]
+    lock = threading.Condition()
+    from tcf.services import memorymap
+    def getMap():
+        mm = c.getRemoteService(memorymap.NAME)
+        class DoneGet(memorymap.DoneGet):
+            def doneGet(self, token, error, map):
+                if error:
+                    protocol.log("Error from MemoryMap.get", error)
+                else:
+                    print map
+                with lock:
+                    lock.notify()
+        mm.get(id, DoneGet())
+    with lock:
+        protocol.invokeLater(getMap)
+        lock.wait(1000)
+    def setMap():
+        mm = c.getRemoteService(memorymap.NAME)
+        class DoneSet(memorymap.DoneSet):
+            def doneSet(self, token, error):
+                if error:
+                    protocol.log("Error from MemoryMap.set", error)
+                with lock:
+                    lock.notify()
+        mm.set(id, {memorymap.PROP_FILE_NAME : "/tmp/system.elf"}, DoneSet())
+    with lock:
+        protocol.invokeLater(setMap)
+        lock.wait(1000)
     map = mm.get(id).get()
     print "Memory map:", map
-    region = memorymap.MemoryRegion({memorymap.PROP_FILE_NAME : "/tmp/system.elf"})
-    print "Memory map: setting map", [region]
-    mm.set(id, [region]).get()
-    map = mm.get(id).get()
-    print "Memory map:", map
+
+def testPathMap(c):
+    cmd = sync.CommandControl(c)
+    try:
+        pm = cmd.PathMap
+    except AttributeError:
+        # no PathMap service
+        return
+    lock = threading.Condition()
+    from tcf.services import pathmap
+    def getMap():
+        pm = c.getRemoteService(pathmap.NAME)
+        class DoneGet(pathmap.DoneGet):
+            def doneGet(self, token, error, map):
+                if error:
+                    protocol.log("Error from PathMap.get", error)
+                else:
+                    print map
+                with lock:
+                    lock.notify()
+        pm.get(DoneGet())
+    with lock:
+        protocol.invokeLater(getMap)
+        lock.wait(1000)
+    def setMap():
+        pm = c.getRemoteService(pathmap.NAME)
+        class DoneSet(pathmap.DoneSet):
+            def doneSet(self, token, error):
+                if error:
+                    protocol.log("Error from PathMap.set", error)
+                with lock:
+                    lock.notify()
+        pm.set({pathmap.PROP_SOURCE : "/tmp",
+                pathmap.PROP_DESTINATION : "/home"}, DoneSet())
+    with lock:
+        protocol.invokeLater(setMap)
+        lock.wait(1000)
+    map = pm.get().get()
+    print "Path map:", map
 
 if __name__ == '__main__':
     test()

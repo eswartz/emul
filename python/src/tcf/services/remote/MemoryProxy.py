@@ -229,21 +229,12 @@ class ChannelEventListener(channel.EventListener):
 
 def _toContextArray(o):
     if o is None: return None
-    ctx = []
-    for m in o: ctx.append(MemContext(m))
-    return ctx
+    return map(MemContext, o)
 
 def _toSizeArray(o):
     if o is None: return None
-    a = []
-    for m in o:
-        sz = m.get("size", 0)
-        a.append(sz)
-    return a
+    return map(lambda m: m.get("size", 0), o)
 
 def _toAddrArray(o):
     if o is None: return None
-    a = []
-    for m in o:
-        a.append(m.get("addr"))
-    return a
+    return map(lambda m: m.get("addr"), o)

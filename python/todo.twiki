@@ -20,7 +20,7 @@
       * [done] FileSystem
       * [done] MemoryMap
       * [done] Memory
-      * PathMap
+      * [done] PathMap
       * Diagnostics
       * Disassembly
       * Streams
@@ -28,7 +28,7 @@
       * SysMonitor
    * Local services:
       * [incomplete] ZeroCopy
-      * [done] Locator service (discovery)
+      * [95%] Locator service (discovery)
          * iterate over network interfaces
    * Utilities:
       * [done] ACPM data cache

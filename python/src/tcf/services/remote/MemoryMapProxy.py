@@ -34,6 +34,8 @@ class MemoryMapProxy(memorymap.MemoryMapService):
         return GetCommand().token
 
     def set(self, id, map, done):
+        if isinstance(map, memorymap.MemoryRegion) or isinstance(map, dict):
+            map = (map,)
         done = self._makeCallback(done)
         service = self
         class SetCommand(Command):
@@ -75,9 +77,7 @@ class ChannelEventListener(channel.EventListener):
 
 def _toMemoryMap(o):
     if o is None: return None
-    map = []
-    for x in o: map.append(_toMemoryRegion(x))
-    return map
+    return map(_toMemoryRegion, o)
 
 def _toMemoryRegion(o):
     if o is None: return None
