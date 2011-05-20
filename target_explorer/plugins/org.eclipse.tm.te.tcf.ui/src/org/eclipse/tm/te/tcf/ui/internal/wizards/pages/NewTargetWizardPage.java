@@ -64,7 +64,6 @@ public class NewTargetWizardPage extends AbstractWizardPage {
 	public void createControl(Composite parent) {
 		// Setup title and description
 		setTitle(Messages.NewTargetWizardPage_title);
-		setDescription(Messages.NewTargetWizardPage_description);
 
 		// Create the main panel
 		Composite mainPanel = new Composite(parent, SWT.NONE);

@@ -86,7 +86,6 @@ public class Messages extends NLS {
 	public static String NewTargetWizard_windowTitle;
 
 	public static String NewTargetWizardPage_title;
-	public static String NewTargetWizardPage_description;
 	public static String NewTargetWizardPage_TransportTypeControl_label;
 	public static String NewTargetWizardPage_AgentHostControl_label;
 	public static String NewTargetWizardPage_AgentPortControl_label;

@@ -59,6 +59,9 @@
             icon="icons/elcl16/newTarget_wiz.gif"
             id="org.eclipse.tm.te.tcf.ui.wizards.NewTargetWizard"
             name="%NewTargetWizard.name">
+            <description>
+               %NewTargetWizard.description
+            </description>
       </wizard>
    </extension>
    
