@@ -112,7 +112,7 @@ public abstract class BaseRedrawHandler implements VdpModeRedrawHandler {
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.video.VdpModeRedrawHandler#importImageData()
 	 */
-	public void importImageData(IVdpPixelAccess access) {
+	public void importImageData(IBitmapPixelAccess access) {
 		
 	}
 }

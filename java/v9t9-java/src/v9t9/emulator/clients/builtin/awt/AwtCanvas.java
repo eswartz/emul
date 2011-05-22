@@ -40,7 +40,7 @@ import javax.imageio.ImageIO;
 import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.graphics.ImageData;
 
-import v9t9.emulator.clients.builtin.video.IVdpPixelAccess;
+import v9t9.emulator.clients.builtin.video.IBitmapPixelAccess;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
 import v9t9.emulator.clients.builtin.video.VdpCanvas.Format;
@@ -219,9 +219,9 @@ public class AwtCanvas extends Canvas implements DragGestureListener,
 	 */
 	@Override
 	public void drop(DropTargetDropEvent dtde) {
-		if (!(renderer.getCanvas() instanceof IVdpPixelAccess))
+		if (!(renderer.getCanvas() instanceof IBitmapPixelAccess))
 			return;
-		IVdpPixelAccess access = (IVdpPixelAccess) renderer.getCanvas();
+		IBitmapPixelAccess access = (IBitmapPixelAccess) renderer.getCanvas();
 		
 		Transferable transferable = dtde.getTransferable();
 		Image image = null;

@@ -9,7 +9,7 @@ import v9t9.engine.memory.ByteMemoryAccess;
  * @author ejs
  *
  */
-public abstract class BitmapVdpCanvas extends VdpCanvas implements IVdpPixelAccess {
+public abstract class BitmapVdpCanvas extends VdpCanvas implements IBitmapPixelAccess {
 
 	public BitmapVdpCanvas() {
 		super();

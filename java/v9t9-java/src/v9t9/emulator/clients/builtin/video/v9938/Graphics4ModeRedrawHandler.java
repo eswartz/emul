@@ -3,7 +3,7 @@
  */
 package v9t9.emulator.clients.builtin.video.v9938;
 
-import v9t9.emulator.clients.builtin.video.IVdpPixelAccess;
+import v9t9.emulator.clients.builtin.video.IBitmapPixelAccess;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.RedrawBlock;
 import v9t9.emulator.clients.builtin.video.VdpChanges;
@@ -49,7 +49,7 @@ public class Graphics4ModeRedrawHandler extends PackedBitmapGraphicsModeRedrawHa
 	 * @see v9t9.emulator.clients.builtin.video.BaseRedrawHandler#importImageData()
 	 */
 	@Override
-	public void importImageData(IVdpPixelAccess access) {
+	public void importImageData(IBitmapPixelAccess access) {
 		ByteMemoryAccess patt = vdp.getByteReadMemoryAccess(vdpModeInfo.patt.base);
 		
 		int my =  (vdpregs[9] & 0x80) != 0 ? 212 : 192;

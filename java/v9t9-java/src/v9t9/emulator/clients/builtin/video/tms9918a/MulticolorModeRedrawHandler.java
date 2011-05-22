@@ -4,7 +4,7 @@
 package v9t9.emulator.clients.builtin.video.tms9918a;
 
 import v9t9.emulator.clients.builtin.video.BaseRedrawHandler;
-import v9t9.emulator.clients.builtin.video.IVdpPixelAccess;
+import v9t9.emulator.clients.builtin.video.IBitmapPixelAccess;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.RedrawBlock;
 import v9t9.emulator.clients.builtin.video.VdpChanges;
@@ -80,7 +80,7 @@ public class MulticolorModeRedrawHandler extends BaseRedrawHandler implements
 	 * @see v9t9.emulator.clients.builtin.video.BaseRedrawHandler#importImageData()
 	 */
 	@Override
-	public void importImageData(IVdpPixelAccess access) {
+	public void importImageData(IBitmapPixelAccess access) {
 		ByteMemoryAccess patt = vdp.getByteReadMemoryAccess(vdpModeInfo.patt.base);
 		
 		for (int y = 0; y < 48; y++) {
