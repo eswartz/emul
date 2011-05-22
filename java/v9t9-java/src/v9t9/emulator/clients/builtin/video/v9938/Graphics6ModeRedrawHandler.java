@@ -4,11 +4,9 @@
 package v9t9.emulator.clients.builtin.video.v9938;
 
 import v9t9.emulator.clients.builtin.video.IBitmapPixelAccess;
-import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.RedrawBlock;
-import v9t9.emulator.clients.builtin.video.VdpChanges;
 import v9t9.emulator.clients.builtin.video.VdpModeInfo;
-import v9t9.engine.VdpHandler;
+import v9t9.emulator.clients.builtin.video.VdpRedrawInfo;
 import v9t9.engine.memory.ByteMemoryAccess;
 
 /**
@@ -22,9 +20,9 @@ import v9t9.engine.memory.ByteMemoryAccess;
 public class Graphics6ModeRedrawHandler extends PackedBitmapGraphicsModeRedrawHandler {
 
 		
-	public Graphics6ModeRedrawHandler(byte[] vdpregs, VdpHandler vdpMemory,
-			VdpChanges changed, VdpCanvas vdpCanvas, VdpModeInfo modeInfo) {
-		super(vdpregs, vdpMemory, changed, vdpCanvas, modeInfo);
+	public Graphics6ModeRedrawHandler(VdpRedrawInfo info, VdpModeInfo modeInfo) {
+		super(info, modeInfo);
+
 	}
 
 	@Override
@@ -32,15 +30,14 @@ public class Graphics6ModeRedrawHandler extends PackedBitmapGraphicsModeRedrawHa
 		rowstride = 256;
 		blockshift = 2;
 		blockstride = 64;
-		blockcount = (vdpregs[9] & 0x80) != 0 ? 64*27 : 1536;		
+		blockcount = (info.vdpregs[9] & 0x80) != 0 ? 64*27 : 1536;		
 	}
 	
-	protected void drawBlock(RedrawBlock block, int pageOffset, int interlaceOffset) {
-		int rowOffs = interlaceOffset / vdpCanvas.getLineStride();			
-		vdpCanvas.draw8x8BitmapTwoColorBlock(
-				block.c, block.r + rowOffs,
-			 vdp.getByteReadMemoryAccess(
-					(vdpModeInfo.patt.base + rowstride * block.r + (block.c >> 1)) ^ pageOffset),
+	protected void drawBlock(RedrawBlock block, int pageOffset, boolean interlaced) {
+		info.canvas.draw8x8BitmapTwoColorBlock(
+				block.c + (interlaced ? 512 : 0), block.r,
+			 info.vdp.getByteReadMemoryAccess(
+					(modeInfo.patt.base + rowstride * block.r + (block.c >> 1)) ^ pageOffset),
 			rowstride);
 	}
 
@@ -50,9 +47,9 @@ public class Graphics6ModeRedrawHandler extends PackedBitmapGraphicsModeRedrawHa
 	 */
 	@Override
 	public void importImageData(IBitmapPixelAccess access) {
-		ByteMemoryAccess patt = vdp.getByteReadMemoryAccess(vdpModeInfo.patt.base);
+		ByteMemoryAccess patt = info.vdp.getByteReadMemoryAccess(modeInfo.patt.base);
 		
-		int my =  (vdpregs[9] & 0x80) != 0 ? 212 : 192;
+		int my =  (info.vdpregs[9] & 0x80) != 0 ? 212 : 192;
 		for (int y = 0; y < my; y++) {
 			for (int x = 0; x < 512; x += 2) {
 				

@@ -5,12 +5,11 @@ package v9t9.emulator.clients.builtin.video.tms9918a;
 
 import v9t9.emulator.clients.builtin.video.BaseRedrawHandler;
 import v9t9.emulator.clients.builtin.video.IBitmapPixelAccess;
-import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.RedrawBlock;
 import v9t9.emulator.clients.builtin.video.VdpChanges;
 import v9t9.emulator.clients.builtin.video.VdpModeInfo;
 import v9t9.emulator.clients.builtin.video.VdpModeRedrawHandler;
-import v9t9.engine.VdpHandler;
+import v9t9.emulator.clients.builtin.video.VdpRedrawInfo;
 import v9t9.engine.memory.ByteMemoryAccess;
 
 /**
@@ -20,13 +19,11 @@ import v9t9.engine.memory.ByteMemoryAccess;
 public class MulticolorModeRedrawHandler extends BaseRedrawHandler implements
 		VdpModeRedrawHandler {
 
-	public MulticolorModeRedrawHandler(byte[] vdpregs, VdpHandler vdpMemory,
-			VdpChanges vdpChanges, VdpCanvas vdpCanvas, VdpModeInfo modeInfo) {
-		super(vdpregs, vdpMemory, vdpChanges, vdpCanvas, modeInfo);
-
-		vdpTouchBlock.screen = modify_screen_default;
-		vdpTouchBlock.color = null;
-		vdpTouchBlock.patt = modify_patt_default;
+	public MulticolorModeRedrawHandler(VdpRedrawInfo info, VdpModeInfo modeInfo) {
+		super(info, modeInfo);
+		info.touch.screen = modify_screen_default;
+		info.touch.color = null;
+		info.touch.patt = modify_patt_default;
 	}
 
 	static final byte stockMultiBlockPattern[] = { 
@@ -42,18 +39,18 @@ public class MulticolorModeRedrawHandler extends BaseRedrawHandler implements
 	}
 
 	/* (non-Javadoc)
-	 * @see v9t9.emulator.clients.builtin.InternalVdp.VdpModeRedrawHandler#updateCanvas(v9t9.emulator.clients.builtin.VdpCanvas, v9t9.emulator.clients.builtin.InternalVdp.RedrawBlock[])
+	 * @see v9t9.emulator.clients.builtin.InternalVdp.VdpModeRedrawHandler#updateCanvas(v9t9.emulator.clients.builtin.info.vdpCanvas, v9t9.emulator.clients.builtin.InternalVdp.RedrawBlock[])
 	 */
 	public int updateCanvas(RedrawBlock[] blocks, boolean force) {
 		/*  Redraw changed chars  */
 
 		int count = 0;
-		int screenBase = vdpModeInfo.screen.base;
-		int pattBase = vdpModeInfo.patt.base;
+		int screenBase = modeInfo.screen.base;
+		int pattBase = modeInfo.patt.base;
 
 		for (int i = 0; i < 768; i++) {
-			if (force || vdpChanges.screen[i] != VdpChanges.SC_UNTOUCHED) {			/* this screen pos updated? */
-				int currchar = vdp.readAbsoluteVdpMemory(screenBase + i) & 0xff;	/* char # to update */
+			if (force || info.changes.screen[i] != VdpChanges.SC_UNTOUCHED) {			/* this screen pos updated? */
+				int currchar = info.vdp.readAbsoluteVdpMemory(screenBase + i) & 0xff;	/* char # to update */
 
 				RedrawBlock block = blocks[count++];
 				
@@ -62,12 +59,12 @@ public class MulticolorModeRedrawHandler extends BaseRedrawHandler implements
 
 				int pattOffs = pattBase + (currchar << 3) + ((i >> 5) & 3) * 2;
 				
-				byte mem1 = (byte) vdp.readAbsoluteVdpMemory(pattOffs);
-				byte mem2 = (byte) vdp.readAbsoluteVdpMemory(pattOffs + 1);
+				byte mem1 = (byte) info.vdp.readAbsoluteVdpMemory(pattOffs);
+				byte mem2 = (byte) info.vdp.readAbsoluteVdpMemory(pattOffs + 1);
 				
 				byte[] colors = { mem1, mem1, mem1, mem1, mem2, mem2, mem2, mem2 }; 
 
-				vdpCanvas.draw8x8MultiColorBlock(block.r, block.c, 
+				info.canvas.draw8x8MultiColorBlock(block.r, block.c, 
 						multiBlockPattern,
 						new ByteMemoryAccess(colors, 0));
 			}
@@ -81,7 +78,7 @@ public class MulticolorModeRedrawHandler extends BaseRedrawHandler implements
 	 */
 	@Override
 	public void importImageData(IBitmapPixelAccess access) {
-		ByteMemoryAccess patt = vdp.getByteReadMemoryAccess(vdpModeInfo.patt.base);
+		ByteMemoryAccess patt = info.vdp.getByteReadMemoryAccess(modeInfo.patt.base);
 		
 		for (int y = 0; y < 48; y++) {
 			for (int x = 0; x < 64; x += 2) {

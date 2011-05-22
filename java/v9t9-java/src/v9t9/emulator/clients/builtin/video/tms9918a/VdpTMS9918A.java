@@ -14,13 +14,14 @@ import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.settings.ISettingSection;
 import org.ejs.coffee.core.utils.HexUtils;
 
-import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.BlankModeRedrawHandler;
 import v9t9.emulator.clients.builtin.video.MemoryCanvas;
 import v9t9.emulator.clients.builtin.video.RedrawBlock;
+import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VdpChanges;
 import v9t9.emulator.clients.builtin.video.VdpModeInfo;
 import v9t9.emulator.clients.builtin.video.VdpModeRedrawHandler;
+import v9t9.emulator.clients.builtin.video.VdpRedrawInfo;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.common.WorkspaceSettings;
 import v9t9.emulator.hardware.BaseCruAccess;
@@ -67,12 +68,14 @@ public class VdpTMS9918A implements VdpHandler {
 	protected VdpCanvas vdpCanvas;
 	protected VdpModeRedrawHandler vdpModeRedrawHandler;
 	protected SpriteRedrawHandler spriteRedrawHandler;
-	protected VdpChanges vdpChanges = new VdpChanges(getMaxRedrawblocks());
+	protected final VdpChanges vdpChanges = new VdpChanges(getMaxRedrawblocks());
 	protected byte vdpStatus;
 	
 	protected VdpMmio vdpMmio;
 	protected BlankModeRedrawHandler blankModeRedrawHandler;
 	protected VdpModeInfo vdpModeInfo;
+	protected VdpRedrawInfo vdpRedrawInfo;
+	
 	protected int modeNumber;
 	public final static int VDP_INTERRUPT = 0x80;
 	public final static int VDP_COINC = 0x40;
@@ -148,8 +151,8 @@ public class VdpTMS9918A implements VdpHandler {
 		this.vdpregs = allocVdpRegs();
 		vdpCanvas.setSize(256, 192);
 		
-		blankModeRedrawHandler = new BlankModeRedrawHandler(
-				vdpregs, this, vdpChanges, vdpCanvas, createBlankModeInfo());
+		vdpRedrawInfo = new VdpRedrawInfo(vdpregs, this, vdpChanges, vdpCanvas);
+		blankModeRedrawHandler = new BlankModeRedrawHandler(vdpRedrawInfo, createBlankModeInfo());
 	}
 	
 	protected void recalcInterruptTiming() {
@@ -387,16 +390,14 @@ public class VdpTMS9918A implements VdpHandler {
 		vdpCanvas.setFormat(VdpCanvas.Format.COLOR16_8x8);
 		vdpCanvas.setSize(256, 192);
 		vdpModeInfo = createGraphicsModeInfo();
-		vdpModeRedrawHandler = new GraphicsModeRedrawHandler(
-				vdpregs, this, vdpChanges, vdpCanvas, vdpModeInfo);
+		vdpModeRedrawHandler = new GraphicsModeRedrawHandler(vdpRedrawInfo, vdpModeInfo);
 		spriteRedrawHandler = createSpriteRedrawHandler();
 		vdpMmio.setMemoryAccessCycles(8);
 		initUpdateBlocks(8);
 	}
 
 	protected SpriteRedrawHandler createSpriteRedrawHandler() {
-		return new SpriteRedrawHandler(
-				vdpregs, this, vdpChanges, vdpCanvas, createSpriteModeInfo());
+		return new SpriteRedrawHandler(vdpRedrawInfo, createSpriteModeInfo());
 	}
 
 	
@@ -428,8 +429,7 @@ public class VdpTMS9918A implements VdpHandler {
 		vdpCanvas.setFormat(VdpCanvas.Format.COLOR16_4x4);
 		vdpCanvas.setSize(256, 192);
 		vdpModeInfo = createMultiModeInfo();
-		vdpModeRedrawHandler = new MulticolorModeRedrawHandler(
-				vdpregs, this, vdpChanges, vdpCanvas, vdpModeInfo);
+		vdpModeRedrawHandler = new MulticolorModeRedrawHandler(vdpRedrawInfo, vdpModeInfo);
 		spriteRedrawHandler = createSpriteRedrawHandler();
 		vdpMmio.setMemoryAccessCycles(2);
 		initUpdateBlocks(8);
@@ -455,8 +455,7 @@ public class VdpTMS9918A implements VdpHandler {
 		vdpCanvas.setFormat(VdpCanvas.Format.TEXT);
 		vdpCanvas.setSize(256, 192);
 		vdpModeInfo = createTextModeInfo();
-		vdpModeRedrawHandler = new TextModeRedrawHandler(
-				vdpregs, this, vdpChanges, vdpCanvas, vdpModeInfo);
+		vdpModeRedrawHandler = new TextModeRedrawHandler(vdpRedrawInfo, vdpModeInfo);
 		spriteRedrawHandler = null;
 		vdpMmio.setMemoryAccessCycles(1);
 		initUpdateBlocks(6);
@@ -483,8 +482,7 @@ public class VdpTMS9918A implements VdpHandler {
 		vdpCanvas.setFormat(VdpCanvas.Format.COLOR16_8x1);
 		vdpCanvas.setSize(256, 192);
 		vdpModeInfo = createBitmapModeInfo();
-		vdpModeRedrawHandler = new BitmapModeRedrawHandler(
-				vdpregs, this, vdpChanges, vdpCanvas, vdpModeInfo);
+		vdpModeRedrawHandler = new BitmapModeRedrawHandler(vdpRedrawInfo, vdpModeInfo);
 		spriteRedrawHandler = createSpriteRedrawHandler();
 		vdpMmio.setMemoryAccessCycles(8);
 		initUpdateBlocks(8);
@@ -743,6 +741,10 @@ public class VdpTMS9918A implements VdpHandler {
 	public void setCanvas(VdpCanvas canvas) {
 		this.vdpCanvas = canvas;
 		canvas.markDirty();
+		
+		vdpRedrawInfo = new VdpRedrawInfo(vdpregs, this, vdpChanges, vdpCanvas);
+		blankModeRedrawHandler = new BlankModeRedrawHandler(vdpRedrawInfo, createBlankModeInfo());
+
 	}
 	
 	protected int getVideoHeight() {

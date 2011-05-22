@@ -3,7 +3,6 @@
  */
 package v9t9.emulator.clients.builtin.video;
 
-import v9t9.engine.VdpHandler;
 
 
 /**
@@ -13,14 +12,13 @@ import v9t9.engine.VdpHandler;
 public class BlankModeRedrawHandler extends BaseRedrawHandler implements
 		VdpModeRedrawHandler {
 
-	public BlankModeRedrawHandler(byte[] vdpregs, VdpHandler vdpMemory,
-			VdpChanges vdpChanges, VdpCanvas vdpCanvas, VdpModeInfo modeInfo) {
-		super(vdpregs, vdpMemory, vdpChanges, vdpCanvas, modeInfo);
+	public BlankModeRedrawHandler(VdpRedrawInfo info, VdpModeInfo modeInfo) {
+		super(info, modeInfo);
 		
-		vdpTouchBlock.patt = null;
-		vdpTouchBlock.sprite = vdpTouchBlock.sprpat = null;
-		vdpTouchBlock.screen = null;
-		vdpTouchBlock.color = null;
+		info.touch.patt = null;
+		info.touch.sprite = info.touch.sprpat = null;
+		info.touch.screen = null;
+		info.touch.color = null;
 	}
 
 	/* (non-Javadoc)

@@ -4,12 +4,11 @@
 package v9t9.emulator.clients.builtin.video.tms9918a;
 
 import v9t9.emulator.clients.builtin.video.BaseRedrawHandler;
-import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.RedrawBlock;
 import v9t9.emulator.clients.builtin.video.VdpChanges;
 import v9t9.emulator.clients.builtin.video.VdpModeInfo;
 import v9t9.emulator.clients.builtin.video.VdpModeRedrawHandler;
-import v9t9.engine.VdpHandler;
+import v9t9.emulator.clients.builtin.video.VdpRedrawInfo;
 
 /**
  * @author ejs
@@ -18,14 +17,13 @@ import v9t9.engine.VdpHandler;
 public class TextModeRedrawHandler extends BaseRedrawHandler implements
 		VdpModeRedrawHandler {
 
-	public TextModeRedrawHandler(byte[] vdpregs, VdpHandler vdpMemory,
-			VdpChanges vdpChanges, VdpCanvas vdpCanvas, VdpModeInfo modeInfo) {
-		super(vdpregs, vdpMemory, vdpChanges, vdpCanvas, modeInfo);
+	public TextModeRedrawHandler(VdpRedrawInfo info, VdpModeInfo modeInfo) {
+		super(info, modeInfo);
 
-		vdpTouchBlock.patt = modify_patt_default;
-		vdpTouchBlock.sprite = vdpTouchBlock.sprpat = null;
-		vdpTouchBlock.screen = modify_screen_default;
-		vdpTouchBlock.color = null;
+		info.touch.patt = modify_patt_default;
+		info.touch.sprite = info.touch.sprpat = null;
+		info.touch.screen = modify_screen_default;
+		info.touch.color = null;
 	}
 
 	public void propagateTouches() {
@@ -39,17 +37,17 @@ public class TextModeRedrawHandler extends BaseRedrawHandler implements
 		/*  Redraw changed chars  */
 
 		int count = 0;
-		int screenBase = vdpModeInfo.screen.base;
-		int pattBase = vdpModeInfo.patt.base;
+		int screenBase = modeInfo.screen.base;
+		int pattBase = modeInfo.patt.base;
 		
 		byte fg, bg;
 		
-		bg = (byte) (vdpregs[7] & 0xf);
-		fg = (byte) ((vdpregs[7] >> 4) & 0xf);
+		bg = (byte) (info.vdpregs[7] & 0xf);
+		fg = (byte) ((info.vdpregs[7] >> 4) & 0xf);
 
 		for (int i = 0; i < 960; i++) {
-			if (force || vdpChanges.screen[i] != VdpChanges.SC_UNTOUCHED) {			/* this screen pos updated? */
-				int currchar = vdp.readAbsoluteVdpMemory(screenBase + i) & 0xff;	/* char # to update */
+			if (force || info.changes.screen[i] != VdpChanges.SC_UNTOUCHED) {			/* this screen pos updated? */
+				int currchar = info.vdp.readAbsoluteVdpMemory(screenBase + i) & 0xff;	/* char # to update */
 
 				RedrawBlock block = blocks[count++];
 				
@@ -57,8 +55,8 @@ public class TextModeRedrawHandler extends BaseRedrawHandler implements
 				block.c = (i % 40) * 6 + (256 - 240) / 2;
 
 				int pattOffs = pattBase + (currchar << 3);
-				vdpCanvas.draw8x6TwoColorBlock(block.r, block.c, 
-						vdp.getByteReadMemoryAccess(pattOffs), fg, bg);
+				info.canvas.draw8x6TwoColorBlock(block.r, block.c, 
+						info.vdp.getByteReadMemoryAccess(pattOffs), fg, bg);
 			}
 		}
 

@@ -5,13 +5,12 @@ package v9t9.emulator.clients.builtin.video.tms9918a;
 
 import v9t9.emulator.clients.builtin.video.BaseRedrawHandler;
 import v9t9.emulator.clients.builtin.video.IBitmapPixelAccess;
-import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.RedrawBlock;
 import v9t9.emulator.clients.builtin.video.VdpChanges;
 import v9t9.emulator.clients.builtin.video.VdpModeInfo;
 import v9t9.emulator.clients.builtin.video.VdpModeRedrawHandler;
+import v9t9.emulator.clients.builtin.video.VdpRedrawInfo;
 import v9t9.emulator.clients.builtin.video.VdpTouchHandler;
-import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.ByteMemoryAccess;
 
 /**
@@ -26,39 +25,37 @@ public class BitmapModeRedrawHandler extends BaseRedrawHandler implements
 	protected VdpTouchHandler modify_color_bitmap = new VdpTouchHandler() {
 	
 		public void modify(int offs) {
-			vdpChanges.color[offs >> 3] = 1;
-			vdpChanges.changed = true;
+			info.changes.color[offs >> 3] = 1;
+			info.changes.changed = true;
 		}
 		
 	};
 	protected VdpTouchHandler modify_patt_bitmap = new VdpTouchHandler() {
 	
 		public void modify(int offs) {
-			vdpChanges.patt[offs >> 3] = 1;
-			vdpChanges.changed = true;
+			info.changes.patt[offs >> 3] = 1;
+			info.changes.changed = true;
 		}
 		
 	};
 
-	public BitmapModeRedrawHandler(byte[] vdpregs, VdpHandler vdpMemory,
-			VdpChanges vdpChanges, VdpCanvas vdpCanvas, VdpModeInfo modeInfo) {
-		super(vdpregs, vdpMemory, vdpChanges, vdpCanvas, modeInfo);
-		
+	public BitmapModeRedrawHandler(VdpRedrawInfo info, VdpModeInfo modeInfo) {
+		super(info, modeInfo);
 
-		vdpTouchBlock.screen = modify_screen_default;
-		vdpTouchBlock.color = modify_color_bitmap;
-		vdpTouchBlock.patt = modify_patt_bitmap;
+		info.touch.screen = modify_screen_default;
+		info.touch.color = modify_color_bitmap;
+		info.touch.patt = modify_patt_bitmap;
 
-		bitcolormask = (short) ((((short) (vdpregs[3] & 0x7f)) << 6) | 0x3f);
+		bitcolormask = (short) ((((short) (info.vdpregs[3] & 0x7f)) << 6) | 0x3f);
 
 		// thanks, Thierry!
 		// in "bitmap text" mode, the full pattern table is always addressed,
 		// otherwise, the color bits are used in the pattern masking
-		if ((vdpregs[1] & 0x10) != 0)
-			bitpattmask = (short) ((((short) (vdpregs[4] & 0x03) << 11)) | 0x7ff);
+		if ((info.vdpregs[1] & 0x10) != 0)
+			bitpattmask = (short) ((((short) (info.vdpregs[4] & 0x03) << 11)) | 0x7ff);
 		else
 			bitpattmask =
-				(short) ((((short) (vdpregs[4] & 0x03) << 11)) | (bitcolormask & 0x7ff));
+				(short) ((((short) (info.vdpregs[4] & 0x03) << 11)) | (bitcolormask & 0x7ff));
 
 	}
 
@@ -72,10 +69,10 @@ public class BitmapModeRedrawHandler extends BaseRedrawHandler implements
 		int bcm = bitcolormask >> 3;
 		for (int i = 0; i < 768; i++) {
 			int sector =  (i & 0x300);
-			int currchar = vdp.readAbsoluteVdpMemory(vdpModeInfo.screen.base + i) & 0xff;	/* char # to update */
-			if (vdpChanges.patt[(currchar + sector) & bpm] != 0
-					|| vdpChanges.color[(currchar + sector) & bcm] != 0) { /* if color or pattern changed */
-				vdpChanges.screen[i] = VdpChanges.SC_BACKGROUND;	/* then this char changed */
+			int currchar = info.vdp.readAbsoluteVdpMemory(modeInfo.screen.base + i) & 0xff;	/* char # to update */
+			if (info.changes.patt[(currchar + sector) & bpm] != 0
+					|| info.changes.color[(currchar + sector) & bcm] != 0) { /* if color or pattern changed */
+				info.changes.screen[i] = VdpChanges.SC_BACKGROUND;	/* then this char changed */
 			}
 		}
 		
@@ -83,19 +80,19 @@ public class BitmapModeRedrawHandler extends BaseRedrawHandler implements
 	}
 
 	/* (non-Javadoc)
-	 * @see v9t9.emulator.clients.builtin.InternalVdp.VdpModeRedrawHandler#updateCanvas(v9t9.emulator.clients.builtin.VdpCanvas, v9t9.emulator.clients.builtin.InternalVdp.RedrawBlock[])
+	 * @see v9t9.emulator.clients.builtin.InternalVdp.VdpModeRedrawHandler#updateCanvas(v9t9.emulator.clients.builtin.info.vdpCanvas, v9t9.emulator.clients.builtin.InternalVdp.RedrawBlock[])
 	 */
 	public int updateCanvas(RedrawBlock[] blocks, boolean force) {
 		/*  Redraw changed chars  */
 
 		int count = 0;
-		int screenBase = vdpModeInfo.screen.base;
-		int pattBase = vdpModeInfo.patt.base;
-		int colorBase = vdpModeInfo.color.base;
+		int screenBase = modeInfo.screen.base;
+		int pattBase = modeInfo.patt.base;
+		int colorBase = modeInfo.color.base;
 
 		for (int i = 0; i < 768; i++) {
-			if (force || vdpChanges.screen[i] != VdpChanges.SC_UNTOUCHED) {			/* this screen pos updated? */
-				int currchar = vdp.readAbsoluteVdpMemory(screenBase + i) & 0xff;	/* char # to update */
+			if (force || info.changes.screen[i] != VdpChanges.SC_UNTOUCHED) {			/* this screen pos updated? */
+				int currchar = info.vdp.readAbsoluteVdpMemory(screenBase + i) & 0xff;	/* char # to update */
 
 				RedrawBlock block = blocks[count++];
 				
@@ -108,9 +105,9 @@ public class BitmapModeRedrawHandler extends BaseRedrawHandler implements
 				pp &= bitpattmask;
 				cp &= bitcolormask;
 				
-				vdpCanvas.draw8x8MultiColorBlock(block.r, block.c, 
-						vdp.getByteReadMemoryAccess(pattBase + pp),
-						vdp.getByteReadMemoryAccess(colorBase + cp));
+				info.canvas.draw8x8MultiColorBlock(block.r, block.c, 
+						info.vdp.getByteReadMemoryAccess(pattBase + pp),
+						info.vdp.getByteReadMemoryAccess(colorBase + cp));
 			}
 		}
 
@@ -124,9 +121,9 @@ public class BitmapModeRedrawHandler extends BaseRedrawHandler implements
 	public void importImageData(IBitmapPixelAccess access) {
 		boolean isMono = bitcolormask != 0x1fff;
 		
-		ByteMemoryAccess screen = vdp.getByteReadMemoryAccess(vdpModeInfo.screen.base);
-		ByteMemoryAccess patt = vdp.getByteReadMemoryAccess(vdpModeInfo.patt.base);
-		ByteMemoryAccess color = vdp.getByteReadMemoryAccess(vdpModeInfo.color.base);
+		ByteMemoryAccess screen = info.vdp.getByteReadMemoryAccess(modeInfo.screen.base);
+		ByteMemoryAccess patt = info.vdp.getByteReadMemoryAccess(modeInfo.patt.base);
+		ByteMemoryAccess color = info.vdp.getByteReadMemoryAccess(modeInfo.color.base);
 		
 		for (int y = 0; y < 192; y++) {
 			for (int x = 0; x < 256; x += 8) {

@@ -3,13 +3,11 @@
  */
 package v9t9.emulator.clients.builtin.video.v9938;
 
-import v9t9.emulator.clients.builtin.video.VdpCanvas;
-import v9t9.emulator.clients.builtin.video.VdpChanges;
 import v9t9.emulator.clients.builtin.video.VdpModeInfo;
+import v9t9.emulator.clients.builtin.video.VdpRedrawInfo;
 import v9t9.emulator.clients.builtin.video.VdpSprite;
 import v9t9.emulator.clients.builtin.video.tms9918a.SpriteRedrawHandler;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
-import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.ByteMemoryAccess;
 
 /**
@@ -25,17 +23,17 @@ import v9t9.engine.memory.ByteMemoryAccess;
  */
 public class Sprite2RedrawHandler extends SpriteRedrawHandler {
 
-	public Sprite2RedrawHandler(byte[] vdpregs, VdpHandler vdpMemory,
-			VdpChanges vdpChanges, VdpCanvas vdpCanvas, VdpModeInfo modeInfo) {
-		super(vdpregs, vdpMemory, vdpChanges, vdpCanvas, modeInfo);
+	public Sprite2RedrawHandler(VdpRedrawInfo info, VdpModeInfo modeInfo) {
+		super(info, modeInfo);
+
 	}
 
 	@Override
 	protected void init() {
-		vdpTouchBlock.sprite = modify_sprite_default;
-		vdpTouchBlock.sprpat = modify_sprpat_default;
+		info.touch.sprite = modify_sprite_default;
+		info.touch.sprpat = modify_sprpat_default;
 		
-		spriteCanvas = new VdpSprite2Canvas(vdpCanvas, 8, (((VdpV9938)vdp).getModeNumber() == VdpV9938.MODE_GRAPHICS5));
+		spriteCanvas = new VdpSprite2Canvas(info.canvas, 8, (((VdpV9938)info.vdp).getModeNumber() == VdpV9938.MODE_GRAPHICS5));
 	}
 
 	@Override
@@ -43,12 +41,12 @@ public class Sprite2RedrawHandler extends SpriteRedrawHandler {
 		boolean visible = false;
 
 		// sprite color table
-		int sprcolbase = (vdpModeInfo.sprite.base - 0x200) & 0x1ffff;
+		int sprcolbase = (modeInfo.sprite.base - 0x200) & 0x1ffff;
 		if (sprcolbase <= addr
-				&& addr < vdpModeInfo.sprite.base) {
+				&& addr < modeInfo.sprite.base) {
 			
-			vdpChanges.sprite |= (1<< ((addr - sprcolbase) >> 4));
-			vdpChanges.changed = true;
+			info.changes.sprite |= (1<< ((addr - sprcolbase) >> 4));
+			info.changes.changed = true;
 			
 			visible = true;
 		}
@@ -88,7 +86,7 @@ public class Sprite2RedrawHandler extends SpriteRedrawHandler {
 		// figure sprite size/mag
 		int size = 8;
 		int numchars = 1;
-		switch (vdpregs[1] & (VdpTMS9918A.R1_SPRMAG + VdpTMS9918A.R1_SPR4)) {
+		switch (info.vdpregs[1] & (VdpTMS9918A.R1_SPRMAG + VdpTMS9918A.R1_SPR4)) {
 		case 0:
 			size = 8;
 			numchars = 1;
@@ -107,11 +105,11 @@ public class Sprite2RedrawHandler extends SpriteRedrawHandler {
 			break;
 		}
 		
-		int sprbase = vdpModeInfo.sprite.base;
-		int sprpatbase = vdpModeInfo.sprpat.base;
+		int sprbase = modeInfo.sprite.base;
+		int sprpatbase = modeInfo.sprpat.base;
 		
-		ByteMemoryAccess access = vdp.getByteReadMemoryAccess(sprbase);
-		ByteMemoryAccess colorAccess = vdp.getByteReadMemoryAccess((sprbase - 0x200) & 0x1ffff);
+		ByteMemoryAccess access = info.vdp.getByteReadMemoryAccess(sprbase);
+		ByteMemoryAccess colorAccess = info.vdp.getByteReadMemoryAccess((sprbase - 0x200) & 0x1ffff);
 		
 		boolean deleted = false;
 		for (int i = 0; i < 32; i++) {
@@ -129,7 +127,7 @@ public class Sprite2RedrawHandler extends SpriteRedrawHandler {
 			} else {
 				sprite.setDeleted(false);
 				sprite.move(x, y);
-				sprite.setPattern(vdp.getByteReadMemoryAccess(sprpatbase + ((ch & 0xfc) << 3)));
+				sprite.setPattern(info.vdp.getByteReadMemoryAccess(sprpatbase + ((ch & 0xfc) << 3)));
 				
 				ByteMemoryAccess colorStripe = new ByteMemoryAccess(colorAccess);
 				sprite.setColorStripe(colorStripe);
@@ -155,7 +153,7 @@ public class Sprite2RedrawHandler extends SpriteRedrawHandler {
 				sprite.setSize(sizeX, sizeY);
 				sprite.setNumchars(numchars);
 				// also check whether the pattern content changed
-				if (vdpChanges.sprpat[ch] != 0)
+				if (info.changes.sprpat[ch] != 0)
 					sprite.setBitmapDirty(true);
 			}
 			
@@ -163,7 +161,7 @@ public class Sprite2RedrawHandler extends SpriteRedrawHandler {
 		}
 
 		// TODO: move the VDP status logic
-		int nth_sprite = spriteCanvas.updateSpriteCoverage(vdpCanvas, vdpChanges.screen, forceRedraw);
+		int nth_sprite = spriteCanvas.updateSpriteCoverage(info.canvas, info.changes.screen, forceRedraw);
 
 		if (nth_sprite != -1) {
 			vdpStatus = (byte) (vdpStatus

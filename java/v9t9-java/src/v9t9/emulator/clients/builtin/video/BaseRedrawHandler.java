@@ -3,7 +3,6 @@
  */
 package v9t9.emulator.clients.builtin.video;
 
-import v9t9.engine.VdpHandler;
 
 
 /**
@@ -21,26 +20,16 @@ import v9t9.engine.VdpHandler;
  *
  */
 public abstract class BaseRedrawHandler implements VdpModeRedrawHandler {
+	
+	protected final VdpRedrawInfo info;
+	protected final VdpModeInfo modeInfo;
 
-	protected final VdpHandler vdp;
-	protected final VdpModeInfo vdpModeInfo;
-	protected final VdpChanges vdpChanges;
-	protected final VdpCanvas vdpCanvas;
-	protected final VdpTouchHandlerBlock vdpTouchBlock;
-	
-	protected final byte[] vdpregs;
-	
-	public BaseRedrawHandler(byte[] vdpregs, VdpHandler vdp, 
-			VdpChanges changed, VdpCanvas vdpCanvas, VdpModeInfo modeInfo) {
-		this.vdpregs = vdpregs;
-		this.vdp = vdp;
-		this.vdpChanges = changed;
-		this.vdpCanvas = vdpCanvas;
-		this.vdpModeInfo = modeInfo;
-		this.vdpTouchBlock = new VdpTouchHandlerBlock();
+	public BaseRedrawHandler(VdpRedrawInfo info, VdpModeInfo vdpModeInfo) {
+		this.info = info;
+		this.modeInfo = vdpModeInfo;
 		if (true && modeInfo.screen.size != 0) {
 			System.out.println("VDP Tables:\n" +
-					"Reg 1: " + Integer.toHexString(vdpregs[1] & 0xff) + "\n"+
+					"Reg 1: " + Integer.toHexString(info.vdpregs[1] & 0xff) + "\n"+
 					"Screen: " + Integer.toHexString(modeInfo.screen.base) + "\n"+
 					"Pattern: " + Integer.toHexString(modeInfo.patt.base) + "\n" +
 					"Color: " + Integer.toHexString(modeInfo.color.base) + "\n" +
@@ -53,16 +42,16 @@ public abstract class BaseRedrawHandler implements VdpModeRedrawHandler {
 	protected VdpTouchHandler modify_screen_default = new VdpTouchHandler() {
 
 		public void modify(int offs) {
-			vdpChanges.screen[offs] = VdpChanges.SC_BACKGROUND;
-			vdpChanges.changed = true;
+			info.changes.screen[offs] = VdpChanges.SC_BACKGROUND;
+			info.changes.changed = true;
 		}
 		
 	};
 	protected VdpTouchHandler modify_patt_default = new VdpTouchHandler() {
 
 		public void modify(int offs) {
-			vdpChanges.patt[offs >> 3] = 1;
-			vdpChanges.changed = true;
+			info.changes.patt[offs >> 3] = 1;
+			info.changes.changed = true;
 		}
 		
 	};
@@ -70,18 +59,18 @@ public abstract class BaseRedrawHandler implements VdpModeRedrawHandler {
 	public boolean touch(int addr) {
     	boolean visible = false;
 
-    	if (vdpModeInfo.screen.base <= addr && addr < vdpModeInfo.screen.base + vdpModeInfo.screen.size) {
-    		vdpTouchBlock.screen.modify(addr - vdpModeInfo.screen.base);
+    	if (modeInfo.screen.base <= addr && addr < modeInfo.screen.base + modeInfo.screen.size) {
+    		info.touch.screen.modify(addr - modeInfo.screen.base);
     		visible = true;
     	}
 
-    	if (vdpModeInfo.patt.base <= addr && addr < vdpModeInfo.patt.base + vdpModeInfo.patt.size) {
-    		vdpTouchBlock.patt.modify(addr - vdpModeInfo.patt.base);
+    	if (modeInfo.patt.base <= addr && addr < modeInfo.patt.base + modeInfo.patt.size) {
+    		info.touch.patt.modify(addr - modeInfo.patt.base);
     		visible = true;
     	}
 
-    	if (vdpModeInfo.color.base <= addr && addr < vdpModeInfo.color.base + vdpModeInfo.color.size) {
-    		vdpTouchBlock.color.modify(addr - vdpModeInfo.color.base);
+    	if (modeInfo.color.base <= addr && addr < modeInfo.color.base + modeInfo.color.size) {
+    		info.touch.color.modify(addr - modeInfo.color.base);
     		visible = true;
     	}
 
@@ -96,17 +85,17 @@ public abstract class BaseRedrawHandler implements VdpModeRedrawHandler {
 	public void propagatePatternTouches() {
 		/*  Set pattern changes in chars */
 		
-		int size = vdpModeInfo.screen.size;
+		int size = modeInfo.screen.size;
 		for (int i = 0; i < size; i++) {
-			int currchar = vdp.readAbsoluteVdpMemory(vdpModeInfo.screen.base + i) & 0xff;	/* char # to update */
-			if (vdpChanges.patt[currchar] != 0)	/* this pattern changed? */
-				vdpChanges.screen[i] = VdpChanges.SC_BACKGROUND;	/* then this char changed */
+			int currchar = info.vdp.readAbsoluteVdpMemory(modeInfo.screen.base + i) & 0xff;	/* char # to update */
+			if (info.changes.patt[currchar] != 0)	/* this pattern changed? */
+				info.changes.screen[i] = VdpChanges.SC_BACKGROUND;	/* then this char changed */
 		}
 		
 	}
 	
 	public void clear() {
-		vdpCanvas.clear(vdpCanvas.getRGB(vdpCanvas.getClearColor()));
+		info.canvas.clear(info.canvas.getRGB(info.canvas.getClearColor()));
 	}
 	
 	/* (non-Javadoc)

@@ -601,8 +601,7 @@ public class VdpV9938 extends VdpTMS9918A {
 		vdpCanvas.setFormat(VdpCanvas.Format.TEXT);
 		vdpCanvas.setSize(512, getVideoHeight());
 		vdpModeInfo = createText2ModeInfo();
-		vdpModeRedrawHandler = new Text2ModeRedrawHandler(
-				vdpregs, this, vdpChanges, vdpCanvas, vdpModeInfo);
+		vdpModeRedrawHandler = new Text2ModeRedrawHandler(vdpRedrawInfo, vdpModeInfo);
 		spriteRedrawHandler = null;
 		vdpMmio.setMemoryAccessCycles(1);
 		initUpdateBlocks(6);
@@ -639,16 +638,15 @@ public class VdpV9938 extends VdpTMS9918A {
 	}
 
 	private Sprite2RedrawHandler createSprite2RedrawHandler(@SuppressWarnings("unused") boolean wide) {
-		return new Sprite2RedrawHandler(
-				vdpregs, this, vdpChanges, vdpCanvas, createSpriteModeInfo());
+		
+		return new Sprite2RedrawHandler(vdpRedrawInfo, createSpriteModeInfo());
 	}
 	
 	protected void setGraphics4Mode() {
 		vdpCanvas.setFormat(VdpCanvas.Format.COLOR16_1x1);
 		vdpCanvas.setSize(256, getVideoHeight(), isInterlacedEvenOdd());
 		vdpModeInfo = createGraphics45ModeInfo();
-		vdpModeRedrawHandler = new Graphics4ModeRedrawHandler(
-				vdpregs, this, vdpChanges, vdpCanvas, vdpModeInfo);
+		vdpModeRedrawHandler = new Graphics4ModeRedrawHandler(vdpRedrawInfo, vdpModeInfo);
 		spriteRedrawHandler = createSprite2RedrawHandler(false);
 		vdpMmio.setMemoryAccessCycles(4);
 		rowstride = 256 / 2;
@@ -683,8 +681,7 @@ public class VdpV9938 extends VdpTMS9918A {
 		vdpCanvas.setFormat(VdpCanvas.Format.COLOR4_1x1);
 		vdpCanvas.setSize(512, getVideoHeight(), isInterlacedEvenOdd());
 		vdpModeInfo = createGraphics45ModeInfo();
-		vdpModeRedrawHandler = new Graphics5ModeRedrawHandler(
-				vdpregs, this, vdpChanges, vdpCanvas, vdpModeInfo);
+		vdpModeRedrawHandler = new Graphics5ModeRedrawHandler(vdpRedrawInfo, vdpModeInfo);
 		spriteRedrawHandler = createSprite2RedrawHandler(true);
 		rowstride = 512 / 4;
 		pixperbyte = 4;
@@ -698,8 +695,7 @@ public class VdpV9938 extends VdpTMS9918A {
 		vdpCanvas.setFormat(VdpCanvas.Format.COLOR16_1x1);
 		vdpCanvas.setSize(512, getVideoHeight(), isInterlacedEvenOdd());
 		vdpModeInfo = createGraphics67ModeInfo();
-		vdpModeRedrawHandler = new Graphics6ModeRedrawHandler(
-				vdpregs, this, vdpChanges, vdpCanvas, vdpModeInfo);
+		vdpModeRedrawHandler = new Graphics6ModeRedrawHandler(vdpRedrawInfo, vdpModeInfo);
 		spriteRedrawHandler = createSprite2RedrawHandler(true);
 		rowstride = 512 / 2;
 		pixperbyte = 2;
@@ -734,8 +730,7 @@ public class VdpV9938 extends VdpTMS9918A {
 		vdpCanvas.setFormat(VdpCanvas.Format.COLOR256_1x1);
 		vdpCanvas.setSize(256, getVideoHeight(), isInterlacedEvenOdd());
 		vdpModeInfo = createGraphics67ModeInfo();
-		vdpModeRedrawHandler = new Graphics7ModeRedrawHandler(
-				vdpregs, this, vdpChanges, vdpCanvas, vdpModeInfo);
+		vdpModeRedrawHandler = new Graphics7ModeRedrawHandler(vdpRedrawInfo, vdpModeInfo);
 		spriteRedrawHandler = createSprite2RedrawHandler(false);
 		rowstride = 256;
 		pixperbyte = 1;

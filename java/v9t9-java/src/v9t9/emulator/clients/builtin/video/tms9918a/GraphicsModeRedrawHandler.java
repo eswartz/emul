@@ -6,13 +6,11 @@ package v9t9.emulator.clients.builtin.video.tms9918a;
 import java.util.Arrays;
 
 import v9t9.emulator.clients.builtin.video.BaseRedrawHandler;
-import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.RedrawBlock;
-import v9t9.emulator.clients.builtin.video.VdpChanges;
 import v9t9.emulator.clients.builtin.video.VdpModeInfo;
 import v9t9.emulator.clients.builtin.video.VdpModeRedrawHandler;
+import v9t9.emulator.clients.builtin.video.VdpRedrawInfo;
 import v9t9.emulator.clients.builtin.video.VdpTouchHandler;
-import v9t9.engine.VdpHandler;
 
 /**
  * Redraw graphics mode content
@@ -25,18 +23,17 @@ public class GraphicsModeRedrawHandler extends BaseRedrawHandler implements VdpM
 	
 		public void modify(int offs) {
 			int ptr = offs << 3;
-			Arrays.fill(vdpChanges.patt, ptr, ptr + 8, (byte)1);
-			vdpChanges.changed = true;			
+			Arrays.fill(info.changes.patt, ptr, ptr + 8, (byte)1);
+			info.changes.changed = true;			
 		}
 		
 	};
 
-	public GraphicsModeRedrawHandler(byte[] vdpregs, VdpHandler vdpMemory, 
-			VdpChanges changed, VdpCanvas vdpCanvas, VdpModeInfo modeInfo) {
-		super(vdpregs, vdpMemory, changed, vdpCanvas, modeInfo);
-		vdpTouchBlock.screen = modify_screen_default;
-		vdpTouchBlock.color = modify_color_graphics;
-		vdpTouchBlock.patt = modify_patt_default;
+	public GraphicsModeRedrawHandler(VdpRedrawInfo info, VdpModeInfo modeInfo) {
+		super(info, modeInfo);
+		info.touch.screen = modify_screen_default;
+		info.touch.color = modify_color_graphics;
+		info.touch.patt = modify_patt_default;
 	}
 		
 	public void propagateTouches() {
@@ -46,12 +43,11 @@ public class GraphicsModeRedrawHandler extends BaseRedrawHandler implements VdpM
 	public int updateCanvas(RedrawBlock[] blocks, boolean force) {
 		/*  Redraw changed chars  */
 		int count = 0;
-		int screenBase = vdpModeInfo.screen.base;
+		int screenBase = modeInfo.screen.base;
 		for (int i = 0; i < 768; i++) {
-			byte changes = vdpChanges.screen[i];
+			byte changes = info.changes.screen[i];
 			if (force || changes != 0) {			/* this screen pos updated? */
-				//logger(_L|L_3, _("redrawing char %d\n"), i);
-				int currchar = vdp.readAbsoluteVdpMemory(screenBase + i) & 0xff;
+				int currchar = info.vdp.readAbsoluteVdpMemory(screenBase + i) & 0xff;
 
 				RedrawBlock block = blocks[count++];
 				
@@ -60,12 +56,8 @@ public class GraphicsModeRedrawHandler extends BaseRedrawHandler implements VdpM
 
 				redraw_graphics_block(
 						block,
-						vdpModeInfo.patt.base + (currchar << 3),
-						(byte) vdp.readAbsoluteVdpMemory(vdpModeInfo.color.base + (currchar >> 3))); 
-
-					/* can't redraw easily */
-				//if (changes == SC_SPRITE_COVERING)
-				//	ull->pattern = ull->colors = NULL;
+						modeInfo.patt.base + (currchar << 3),
+						(byte) info.vdp.readAbsoluteVdpMemory(modeInfo.color.base + (currchar >> 3))); 
 			}
 		}
 		return count;
@@ -77,7 +69,7 @@ public class GraphicsModeRedrawHandler extends BaseRedrawHandler implements VdpM
 		bg = (byte) (color & 0xf);
 		fg = (byte) ((color >> 4) & 0xf);
 		
-		vdpCanvas.draw8x8TwoColorBlock(block.r, block.c, vdp.getByteReadMemoryAccess(pattOffs), fg, bg);
+		info.canvas.draw8x8TwoColorBlock(block.r, block.c, info.vdp.getByteReadMemoryAccess(pattOffs), fg, bg);
 	}
 
 
