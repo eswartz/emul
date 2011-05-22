@@ -14,10 +14,10 @@ import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.settings.ISettingSection;
 import org.ejs.coffee.core.utils.HexUtils;
 
+import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.BlankModeRedrawHandler;
 import v9t9.emulator.clients.builtin.video.MemoryCanvas;
 import v9t9.emulator.clients.builtin.video.RedrawBlock;
-import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VdpChanges;
 import v9t9.emulator.clients.builtin.video.VdpModeInfo;
 import v9t9.emulator.clients.builtin.video.VdpModeRedrawHandler;
@@ -647,10 +647,10 @@ public class VdpTMS9918A implements VdpHandler {
 
 			vdpCanvas.markDirty(blocks, count);
 			
-			Arrays.fill(vdpChanges.screen, 0, vdpChanges.screen.length, (byte) 0);
-			Arrays.fill(vdpChanges.patt, 0, vdpChanges.patt.length, (byte) 0);
-			Arrays.fill(vdpChanges.sprpat, 0, vdpChanges.sprpat.length, (byte) 0);
-			Arrays.fill(vdpChanges.color, 0, vdpChanges.color.length, (byte) 0);
+			Arrays.fill(vdpChanges.screen, (byte) 0);
+			Arrays.fill(vdpChanges.patt, (byte) 0);
+			Arrays.fill(vdpChanges.sprpat, (byte) 0);
+			Arrays.fill(vdpChanges.color, (byte) 0);
 			vdpChanges.sprite = 0;
 			
 			vdpChanges.fullRedraw = false;

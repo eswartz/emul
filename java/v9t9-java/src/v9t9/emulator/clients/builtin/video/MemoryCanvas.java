@@ -14,7 +14,7 @@ import v9t9.engine.memory.ByteMemoryAccess;
  * @author ejs
  *
  */
-public class MemoryCanvas extends VdpCanvas {
+public class MemoryCanvas extends BitmapVdpCanvas {
     final int UPDATEBLOCK_ROW_STRIDE = (256+64);
 	byte[] bitmap = new byte[UPDATEBLOCK_ROW_STRIDE * 256];
     final int UPDPTR(int y,int x) { return ((y)*UPDATEBLOCK_ROW_STRIDE)+(x)+32; }
@@ -158,10 +158,11 @@ public class MemoryCanvas extends VdpCanvas {
 	}
 	
 	@Override
-	public void draw8x8BitmapTwoColorBlock(int offs, ByteMemoryAccess access,
+	public void draw8x8BitmapTwoColorBlock(int x, int y,
+			ByteMemoryAccess access,
 			int rowstride) {
 		int lineStride = getLineStride();
-		//int offs = getBitmapOffset(offs, r);
+		int offs = getBitmapOffset(x, y);
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 4; j++) {
 				byte mem;
@@ -185,10 +186,10 @@ public class MemoryCanvas extends VdpCanvas {
 	}
 	
 	@Override
-	public void draw8x8BitmapFourColorBlock(int offs, ByteMemoryAccess access,
+	public void draw8x8BitmapFourColorBlock(int x, int y, ByteMemoryAccess access,
 			int rowstride) {
 		int lineStride = getLineStride();
-		//int offs = getBitmapOffset(offs, r);
+		int offs = getBitmapOffset(x, y);
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 2; j++) {
 				byte mem;
@@ -218,10 +219,10 @@ public class MemoryCanvas extends VdpCanvas {
 	}
 	
 	@Override
-	public void draw8x8BitmapRGB332ColorBlock(int offs,
+	public void draw8x8BitmapRGB332ColorBlock(int x, int y,
 			ByteMemoryAccess access, int rowstride) {
 		int lineStride = getLineStride();
-		//int offs = getBitmapOffset(offset, r) + offset;
+		int offs = getBitmapOffset(x, y);
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 8; j++) {
 				byte mem;
@@ -243,13 +244,13 @@ public class MemoryCanvas extends VdpCanvas {
 	@Override
 	public void blitSpriteBlock(MemoryCanvas spriteCanvas, int x, int y,
 			int blockMag) {
-		throw new IllegalArgumentException();
+		throw new UnsupportedOperationException();
 	}
 	
 	@Override
 	public void blitFourColorSpriteBlock(MemoryCanvas spriteCanvas, int x,
 			int y, int blockMag) {
-		throw new IllegalArgumentException();
+		throw new UnsupportedOperationException();
 	}
 
 	public void clear8x8Block(int offset) {
@@ -259,11 +260,7 @@ public class MemoryCanvas extends VdpCanvas {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.clients.builtin.video.VdpCanvas#getPixel(int, int)
-	 */
-	@Override
 	public byte getPixel(int x, int y) {
-		return bitmap[y*UPDATEBLOCK_ROW_STRIDE + x];
+		return bitmap[getBitmapOffset(x, y)];
 	}
 }

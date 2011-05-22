@@ -4,8 +4,9 @@
 package v9t9.emulator.clients.builtin.video.tms9918a;
 
 import v9t9.emulator.clients.builtin.video.BaseRedrawHandler;
-import v9t9.emulator.clients.builtin.video.RedrawBlock;
+import v9t9.emulator.clients.builtin.video.IVdpPixelAccess;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
+import v9t9.emulator.clients.builtin.video.RedrawBlock;
 import v9t9.emulator.clients.builtin.video.VdpChanges;
 import v9t9.emulator.clients.builtin.video.VdpModeInfo;
 import v9t9.emulator.clients.builtin.video.VdpModeRedrawHandler;
@@ -79,14 +80,14 @@ public class MulticolorModeRedrawHandler extends BaseRedrawHandler implements
 	 * @see v9t9.emulator.clients.builtin.video.BaseRedrawHandler#importImageData()
 	 */
 	@Override
-	public void importImageData() {
+	public void importImageData(IVdpPixelAccess access) {
 		ByteMemoryAccess patt = vdp.getByteReadMemoryAccess(vdpModeInfo.patt.base);
 		
 		for (int y = 0; y < 48; y++) {
 			for (int x = 0; x < 64; x += 2) {
 				
-				byte f = vdpCanvas.getPixel(x, y);
-				byte b = vdpCanvas.getPixel(x + 1, y);
+				byte f = access.getPixel(x, y);
+				byte b = access.getPixel(x + 1, y);
 				
 				int poffs = ((y >> 3) << 8) + (y & 7) + ((x >> 1) << 3);  
 				System.out.println("("+y+","+x+") = "+ poffs);

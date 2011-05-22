@@ -119,10 +119,10 @@ public class ImageDataCanvasPaletted extends ImageDataCanvas {
 	}
 
 	@Override
-	public void draw8x8BitmapTwoColorBlock(int offs,
+	public void draw8x8BitmapTwoColorBlock(int x, int y,
 			ByteMemoryAccess access, int rowstride) {
 		int lineStride = getLineStride();
-		//int offs = getBitmapOffset(offs, r);
+		int offs = getBitmapOffset(x, y);
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 4; j++) {
 				byte mem;
@@ -146,10 +146,10 @@ public class ImageDataCanvasPaletted extends ImageDataCanvas {
 	}
 	
 	@Override
-	public void draw8x8BitmapFourColorBlock(int offs,
+	public void draw8x8BitmapFourColorBlock(int x, int y,
 			ByteMemoryAccess access, int rowstride) {
 		int lineStride = getLineStride();
-		//int offs = getBitmapOffset(offs, r);
+		int offs = getBitmapOffset(x, y);
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 2; j++) {
 				byte mem;
@@ -179,10 +179,10 @@ public class ImageDataCanvasPaletted extends ImageDataCanvas {
 	}
 	
 	@Override
-	public void draw8x8BitmapRGB332ColorBlock(int offs,
+	public void draw8x8BitmapRGB332ColorBlock(int x, int y,
 			ByteMemoryAccess access, int rowstride) {
 		int lineStride = getLineStride();
-		//int offs = getBitmapOffset(x, y) + offset;
+		int offs = getBitmapOffset(x, y);
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 8; j++) {
 				byte mem;

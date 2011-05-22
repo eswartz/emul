@@ -8,6 +8,7 @@ import org.eclipse.swt.events.MouseMoveListener;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 
+import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VideoRenderer;
 
 /**
@@ -24,4 +25,12 @@ public interface ISwtVideoRenderer extends VideoRenderer {
 	void addMouseMotionListener(MouseMoveListener listener);
 
 	boolean isVisible();
+	
+    /** Get the basic canvas, before rendering */
+	VdpCanvas getCanvas();
+	
+	void setCanvas(VdpCanvas vdpCanvas);
+
+
+	void setFocus();
 }

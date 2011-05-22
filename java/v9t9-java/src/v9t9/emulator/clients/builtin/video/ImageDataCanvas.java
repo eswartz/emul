@@ -8,11 +8,14 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.eclipse.swt.graphics.ImageData;
 import org.ejs.coffee.core.utils.Pair;
 
-public abstract class ImageDataCanvas extends VdpCanvas {
+import v9t9.emulator.clients.builtin.video.VdpCanvas.Format;
+
+public abstract class ImageDataCanvas extends BitmapVdpCanvas {
 
 	protected ImageData imageData;
 	
@@ -280,10 +283,6 @@ public abstract class ImageDataCanvas extends VdpCanvas {
 		
 	}
 	
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.clients.builtin.video.VdpCanvas#getPixel(int, int)
-	 */
-	@Override
 	public byte getPixel(int x, int y) {
 		if (paletteMappingDirty) {
 			updatePaletteMapping();
@@ -299,4 +298,48 @@ public abstract class ImageDataCanvas extends VdpCanvas {
 		return (byte) (int) c;
 	}
 
+	protected int getPixel(byte[] nrgb) {
+		return ((nrgb[0] & 0xff) << 16) | ((nrgb[1] & 0xff) << 8) | (nrgb[2] & 0xff);
+	}
+
+
+	protected void updatePaletteMapping() {
+		if (format == null || format == Format.TEXT || format == Format.COLOR16_8x8) 
+			return;
+			
+		int ncols;
+		if (format == Format.COLOR16_1x1 
+				|| format == Format.COLOR16_8x1 
+				|| format == Format.COLOR16_4x4) {
+			ncols = 16;
+		}
+		else if (format == Format.COLOR4_1x1) {
+			ncols = 4;
+		}
+		else if (format == Format.COLOR256_1x1) {
+			ncols = 256;
+		}
+		else {
+			return;
+		}
+
+		paletteToIndex = new TreeMap<Integer, Integer>();
+		
+		palettePixels = new int[ncols];
+		if (ncols < 256) {
+			for (int c = 0; c < ncols; c++) {
+				palettePixels[c] = getPixel(thePalette[c]);
+				paletteToIndex.put(palettePixels[c], c);
+			}
+		} else {
+			byte[] rgb = { 0, 0, 0};
+			for (int c = 0; c < ncols; c++) {
+				getGRB332(rgb, (byte) c);
+				palettePixels[c] = getPixel(rgb);
+				paletteToIndex.put(palettePixels[c], c);
+			}
+		}
+		
+		paletteMappingDirty = false;
+	}
 }

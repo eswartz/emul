@@ -105,7 +105,6 @@ public class VdpV9938 extends VdpTMS9918A {
 	private int currentcycles = 0; // current cycles left
 	private int pageOffset;
 	private int pageSize;
-	private boolean isInterlacedEvenOdd;
 	
 	/* from mame and blueMSX:
 	 * 
@@ -302,7 +301,6 @@ public class VdpV9938 extends VdpTMS9918A {
 			// page
 			if (CHANGED(old, val, 0x60)) {
 				redraw |= REDRAW_MODE;
-				updateInterlaced();
 			}
 			break;
 		case 8:
@@ -333,7 +331,6 @@ public class VdpV9938 extends VdpTMS9918A {
 			if (CHANGED(old, val, R9_EO + R9_IL)) {
 				redraw |= REDRAW_MODE;
 			}
-			updateInterlaced();
 			break;
 		case 10:
 		case 11:
@@ -453,11 +450,6 @@ public class VdpV9938 extends VdpTMS9918A {
 		}
 	}
 
-	private void updateInterlaced() {
-		isInterlacedEvenOdd = (vdpregs[9] & R9_EO + R9_IL) == R9_EO + R9_IL 
-			&& (vdpregs[2] & 0x20) != 0;
-	}
-
 	private void switchBank() {
 		if (getVdpMmio() instanceof Vdp9938Mmio) {
 			Vdp9938Mmio vdp9938Mmio = (Vdp9938Mmio) getVdpMmio();
@@ -542,7 +534,6 @@ public class VdpV9938 extends VdpTMS9918A {
 	@Override
 	protected void establishVideoMode() {
 		modeNumber = calculateModeNumber();
-		vdpCanvas.setUseAltSpritePalette(false);
 		isEnhancedMode = true;
 		pageSize = 0x8000;
 		switch (modeNumber) {
@@ -742,7 +733,6 @@ public class VdpV9938 extends VdpTMS9918A {
 	protected void setGraphics7Mode() {
 		vdpCanvas.setFormat(VdpCanvas.Format.COLOR256_1x1);
 		vdpCanvas.setSize(256, getVideoHeight(), isInterlacedEvenOdd());
-		vdpCanvas.setUseAltSpritePalette(true);
 		vdpModeInfo = createGraphics67ModeInfo();
 		vdpModeRedrawHandler = new Graphics7ModeRedrawHandler(
 				vdpregs, this, vdpChanges, vdpCanvas, vdpModeInfo);
@@ -1206,8 +1196,20 @@ public class VdpV9938 extends VdpTMS9918A {
 		return pageSize;
 	}
 
+	/**
+	 * Tell whether interlacing is active.
+	 * 
+	 * For use in rendering, we need to know whether raw R9_IL (interlace) bit is set
+	 * and also the R9_EO (even/odd) bit is set, which would provide the page flipping
+	 * required to *see* two pages.  Finally, the "odd" graphics page must be visible
+	 * for the flipping and interlacing to occur.
+	 * @return
+	 */
+	
 	public boolean isInterlacedEvenOdd() {
-		return isInterlacedEvenOdd;
+		return (vdpregs[9] & R9_EO + R9_IL) == R9_EO + R9_IL 
+			&& (vdpregs[2] & 0x20) != 0;
+
 	}
 
 	/* (non-Javadoc)

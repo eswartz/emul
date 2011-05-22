@@ -4,8 +4,9 @@
 package v9t9.emulator.clients.builtin.video.tms9918a;
 
 import v9t9.emulator.clients.builtin.video.BaseRedrawHandler;
-import v9t9.emulator.clients.builtin.video.RedrawBlock;
+import v9t9.emulator.clients.builtin.video.IVdpPixelAccess;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
+import v9t9.emulator.clients.builtin.video.RedrawBlock;
 import v9t9.emulator.clients.builtin.video.VdpChanges;
 import v9t9.emulator.clients.builtin.video.VdpModeInfo;
 import v9t9.emulator.clients.builtin.video.VdpModeRedrawHandler;
@@ -120,7 +121,7 @@ public class BitmapModeRedrawHandler extends BaseRedrawHandler implements
 	 * @see v9t9.emulator.clients.builtin.video.BaseRedrawHandler#importImageData()
 	 */
 	@Override
-	public void importImageData() {
+	public void importImageData(IVdpPixelAccess access) {
 		boolean isMono = bitcolormask != 0x1fff;
 		
 		ByteMemoryAccess screen = vdp.getByteReadMemoryAccess(vdpModeInfo.screen.base);
@@ -133,12 +134,12 @@ public class BitmapModeRedrawHandler extends BaseRedrawHandler implements
 				
 				// for the benefit of mono pictures or mono modes, 
 				// always select the lesser color as foreground.
-				f = vdpCanvas.getPixel(x, y);
+				f = access.getPixel(x, y);
 				p = (byte) 0x80;
 				
 				boolean gotBG = false;
 				for (int xo = 1; xo < 8; xo++) {
-					byte c = vdpCanvas.getPixel(x + xo, y);
+					byte c = access.getPixel(x + xo, y);
 					if (c == f) {
 						p |= 0x80 >> xo;
 					} else {

@@ -5,6 +5,8 @@ package v9t9.tests.video.speed;
 
 import org.eclipse.swt.widgets.Display;
 
+import v9t9.emulator.clients.builtin.swt.ISwtVideoRenderer;
+
 
 /**
  * @author ejs
@@ -18,7 +20,7 @@ public abstract class TestVideoSpeedSwtBase extends TestVideoSpeedBase {
 	protected void setUp() throws Exception {
 		display = new Display();
 		videoRenderer = createVideoRenderer();
-		canvas = videoRenderer.getCanvas();
+		canvas = ((ISwtVideoRenderer) videoRenderer).getCanvas();
 	}
 
 	@Override

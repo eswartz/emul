@@ -38,7 +38,8 @@ public interface VdpModeRedrawHandler {
 
 	/**
 	 * Import data from the image data into video memory
+	 * @param access TODO
 	 */
-	void importImageData();
+	void importImageData(IVdpPixelAccess access);
 
 }

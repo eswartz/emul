@@ -16,21 +16,14 @@ import java.io.IOException;
  *
  */
 public interface VideoRenderer {
-    /** Update screen (or offscreen page) from blocks in list */
-    //void updateList(RedrawBlock[] blocks, int count);
     
-    /** Force redraw of screen from changes above, incorporating any
-     * resolution changes, blank/unblank state, etc. */
+    /** Force redraw of screen from changes from VdpHandler#update, 
+     * incorporating any resolution changes, blank/unblank state, etc. */
     void redraw();
     
     /** Synchronize so that screen updates are visible */
     void sync();
 
-    /** Get the basic canvas, before rendering */
-	VdpCanvas getCanvas();
-	
-	void setCanvas(VdpCanvas vdpCanvas);
-	
 	/** Get the System.currentTimeMillis() when the last window redraw officially finished */
 	long getLastUpdateTime();
 	
@@ -38,8 +31,6 @@ public interface VideoRenderer {
 
 	void setZoom(int zoom);
 	int getZoom();
-	
-	void setFocus();
 
 	void saveScreenShot(File file) throws IOException;
 

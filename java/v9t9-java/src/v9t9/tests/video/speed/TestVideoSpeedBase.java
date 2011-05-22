@@ -7,8 +7,8 @@ import junit.framework.TestCase;
 
 import org.eclipse.swt.graphics.Point;
 
-import v9t9.emulator.clients.builtin.video.RedrawBlock;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
+import v9t9.emulator.clients.builtin.video.RedrawBlock;
 import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.engine.memory.ByteMemoryAccess;
 

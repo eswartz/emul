@@ -138,7 +138,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 
 		focusRestorer = new IFocusRestorer() {
 			public void restoreFocus() {
-				videoRenderer.setFocus();
+				((ISwtVideoRenderer) videoRenderer).setFocus();
 			}
 		};
 		

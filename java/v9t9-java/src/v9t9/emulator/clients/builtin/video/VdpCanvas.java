@@ -44,9 +44,6 @@ public abstract class VdpCanvas {
     protected int clearColor;
     protected int clearColor1;
 
-    /** fundamental block width in pixels, which impacts how dirtyBlocks, dirtyStride are interpreted */
-	private int blockWidth;
-
 	/** width in pixels */
 	protected int width;
 	protected int bytesPerLine;
@@ -216,13 +213,13 @@ public abstract class VdpCanvas {
     		setRGB(i, new byte[] { 0, 0, 0 });
     	}*/
     	
-		setBlockWidth(8);
     	setSize(256, 192);
     }
 
 	public void setFormat(Format format) {
 		this.format = format;
 		paletteMappingDirty = true;
+		useAltSpritePalette = format == Format.COLOR256_1x1;
 	}
 	public Format getFormat() {
 		return format;
@@ -235,17 +232,6 @@ public abstract class VdpCanvas {
 		return g;
 	}
 
-	public void setBlockWidth(int width) {
-		blockWidth = width;
-		updateDirtyBuffer();
-	}
-
-	private void updateDirtyBuffer() {
-		//dirtyStride = width / blockWidth;
-		//dirtyBlocks = new boolean[(height / 8) * dirtyStride];
-		markDirty();
-	}
-
 	public final void setSize(int x, int y) {
 		setSize(x, y, false);
 	}
@@ -255,7 +241,7 @@ public abstract class VdpCanvas {
 			this.isInterlacedEvenOdd = isInterlaced;
 			this.width = visibleToActualWidth(x);
 			this.height = y;
-			updateDirtyBuffer();
+			markDirty();
 			doChangeSize();
 			if (listener != null)
 				listener.canvasResized(this);
@@ -411,17 +397,8 @@ public abstract class VdpCanvas {
 	 * @param fg foreground; use 16 for the vdpreg[7] fg 
 	 * @param bg background; use 0 for the vdpreg[7] bg
 	 */
-	public void draw8x8TwoColorBlock(int r, int c, ByteMemoryAccess pattern,
-			byte fg, byte bg) {
-		int offs = getBitmapOffset(c, r);
-		int bytesPerLine = getLineStride();
-		for (int i = 0; i < 8; i++) {
-			byte mem = pattern.memory[pattern.offset + i];
-			drawEightPixels(offs, mem, fg, bg);
-			offs += bytesPerLine;
-		}
-
-	}
+	abstract public void draw8x8TwoColorBlock(int r, int c, ByteMemoryAccess pattern,
+			byte fg, byte bg);
 
 	/**
 	 * Blit an 8x6 block defined by a pattern and a foreground/background color to the bitmap
@@ -431,16 +408,8 @@ public abstract class VdpCanvas {
 	 * @param fg foreground; use 16 for the vdpreg[7] fg 
 	 * @param bg background; use 0 for the vdpreg[7] bg
 	 */
-	public void draw8x6TwoColorBlock(int r, int c, ByteMemoryAccess pattern,
-			byte fg, byte bg) {
-		int offs = getBitmapOffset(c, r);
-		int bytesPerLine = getLineStride();
-		for (int i = 0; i < 8; i++) {
-			byte mem = pattern.memory[pattern.offset + i];
-			drawSixPixels(offs, mem, fg, bg);
-			offs += bytesPerLine;
-		}
-	}
+	abstract public void draw8x6TwoColorBlock(int r, int c, ByteMemoryAccess pattern,
+			byte fg, byte bg);
 
 	/**
 	 * Blit an 8x8 block defined by a pattern and colors to the bitmap
@@ -449,40 +418,8 @@ public abstract class VdpCanvas {
 	 * @param pattern
 	 * @param colors array of 0x&lt;fg&gt;&lt;bg&gt; pixels; bg may be 0 for vdpreg[7] bg
 	 */
-	public void draw8x8MultiColorBlock(int r, int c,
-			ByteMemoryAccess pattern, ByteMemoryAccess colors) {
-		int offs = getBitmapOffset(c, r);
-		int bytesPerLine = getLineStride();
-		for (int i = 0; i < 8; i++) {
-			byte mem = pattern.memory[pattern.offset + i];
-			byte color = colors.memory[colors.offset + i];
-			byte fg = (byte) ((color >> 4) & 0xf);
-			byte bg = (byte) (color & 0xf);
-			drawEightPixels(offs, mem, fg, bg);
-			offs += bytesPerLine;
-		}
-	}
-
-	/**
-	 * Draw eight pixels in a row, where pixels corresponding to an "on"
-	 * bit in "mem" are painted with the "fg" color, otherwise with the "bg" color.
-	 * @param offs
-	 * @param mem
-	 * @param fg foreground; use 16 for the vdpreg[7] fg 
-	 * @param bg background; use 0 for the vdpreg[7] bg
-	 * @see #getBitmapOffset(int, int)
-	 */
-	abstract protected void drawEightPixels(int offs, byte mem, byte fg, byte bg); 
-	/**
-	 * Draw six pixels in a row, where pixels corresponding to an "on"
-	 * bit in "mem" are painted with the "fg" color, otherwise with the "bg" color.
-	 * @param offs
-	 * @param mem
-	 * @param fg foreground; use 16 for the vdpreg[7] fg 
-	 * @param bg background; use 0 for the vdpreg[7] bg
-	 * @see #getBitmapOffset(int, int)
-	 */
-	abstract protected void drawSixPixels(int offs, byte mem, byte fg, byte bg); 
+	abstract public void draw8x8MultiColorBlock(int r, int c,
+			ByteMemoryAccess pattern, ByteMemoryAccess colors);
 
 	/** Draw eight pixels of an 8x1 row. 
 	 * @param bitmask mask of rows visible from top-down 
@@ -519,7 +456,7 @@ public abstract class VdpCanvas {
 				//dirtyBlocks[idx] = true;
 				if (block.c < dx1) dx1 = block.c;
 				if (block.r < dy1) dy1 = block.r;
-				if (block.c + blockWidth >= dx2) dx2 = block.c + blockWidth;
+				if (block.c + 8 >= dx2) dx2 = block.c + 8;
 				if (block.r + 8 >= dy2) dy2 = block.r + 8;
 			}
 			if (count > 0 && listener != null)
@@ -612,7 +549,7 @@ public abstract class VdpCanvas {
 	 * @param rowstride access stride between rows
 	 */
 	public abstract void draw8x8BitmapTwoColorBlock(
-			int offs,
+			int x, int y,
 			ByteMemoryAccess access,
 			int rowstride);
 
@@ -623,7 +560,7 @@ public abstract class VdpCanvas {
 	 * @param access
 	 * @param rowstride access stride between rows
 	 */
-	public abstract void draw8x8BitmapFourColorBlock(int offs,
+	public abstract void draw8x8BitmapFourColorBlock(int x, int y,
 			ByteMemoryAccess access, int rowstride);
 
 	/**
@@ -633,17 +570,11 @@ public abstract class VdpCanvas {
 	 * @param rowstride access stride between rows
 	 * @param access
 	 */
-	public abstract void draw8x8BitmapRGB332ColorBlock(int offset,
+	public abstract void draw8x8BitmapRGB332ColorBlock(int x, int y,
 			ByteMemoryAccess byteReadMemoryAccess, int rowstride);
 
 
-	public void clearToEvenOddClearColors() {
-		for (int r = 0; r < height; r++) {
-			for (int c = 0; c < width; c += 8) {
-				drawEightPixels(getBitmapOffset(c, r), (byte)0xaa, (byte)clearColor, (byte)clearColor1);
-			}
-		}
-	}
+	abstract public void clearToEvenOddClearColors();
 
 	public int getClearColor() {
 		return clearColor;
@@ -679,19 +610,6 @@ public abstract class VdpCanvas {
 		return clearFromPalette;
 	}
 
-	public boolean isUseAltSpritePalette() {
-		return useAltSpritePalette;
-	}
-
-	public void setUseAltSpritePalette(boolean useAltSpritePalette) {
-		this.useAltSpritePalette = useAltSpritePalette;
-	}
-
-	/** Map the image generated by ImageData to something renderable */
-	public Rectangle mapVisible(Rectangle logical) {
-		return new Rectangle(logical.x, logical.y, logical.width, logical.height);
-	}
-
 	public void setInterlacedEvenOdd(boolean isInterlacedEvenOdd) {
 		this.isInterlacedEvenOdd = isInterlacedEvenOdd;
 	}
@@ -700,51 +618,4 @@ public abstract class VdpCanvas {
 		return isInterlacedEvenOdd;
 	}
 	
-	/** Get the color index (or 3-3-2 byte) */
-	abstract public byte getPixel(int x, int y);
-	
-	protected int getPixel(byte[] nrgb) {
-		return ((nrgb[0] & 0xff) << 16) | ((nrgb[1] & 0xff) << 8) | (nrgb[2] & 0xff);
-	}
-
-
-	protected void updatePaletteMapping() {
-		if (format == null || format == Format.TEXT || format == Format.COLOR16_8x8) 
-			return;
-			
-		int ncols;
-		if (format == Format.COLOR16_1x1 
-				|| format == Format.COLOR16_8x1 
-				|| format == Format.COLOR16_4x4) {
-			ncols = 16;
-		}
-		else if (format == Format.COLOR4_1x1) {
-			ncols = 4;
-		}
-		else if (format == Format.COLOR256_1x1) {
-			ncols = 256;
-		}
-		else {
-			return;
-		}
-
-		paletteToIndex = new TreeMap<Integer, Integer>();
-		
-		palettePixels = new int[ncols];
-		if (ncols < 256) {
-			for (int c = 0; c < ncols; c++) {
-				palettePixels[c] = getPixel(thePalette[c]);
-				paletteToIndex.put(palettePixels[c], c);
-			}
-		} else {
-			byte[] rgb = { 0, 0, 0};
-			for (int c = 0; c < ncols; c++) {
-				getGRB332(rgb, (byte) c);
-				palettePixels[c] = getPixel(rgb);
-				paletteToIndex.put(palettePixels[c], c);
-			}
-		}
-		
-		paletteMappingDirty = false;
-	}
 }

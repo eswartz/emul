@@ -3,8 +3,9 @@
  */
 package v9t9.emulator.clients.builtin.video.v9938;
 
-import v9t9.emulator.clients.builtin.video.RedrawBlock;
+import v9t9.emulator.clients.builtin.video.IVdpPixelAccess;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
+import v9t9.emulator.clients.builtin.video.RedrawBlock;
 import v9t9.emulator.clients.builtin.video.VdpChanges;
 import v9t9.emulator.clients.builtin.video.VdpModeInfo;
 import v9t9.engine.VdpHandler;
@@ -34,8 +35,9 @@ public class Graphics7ModeRedrawHandler extends PackedBitmapGraphicsModeRedrawHa
 	}
 	
 	protected void drawBlock(RedrawBlock block, int pageOffset, int interlaceOffset) {
+		int rowOffs = interlaceOffset / vdpCanvas.getLineStride();
 		vdpCanvas.draw8x8BitmapRGB332ColorBlock(
-			vdpCanvas.getBitmapOffset(block.c, block.r) + interlaceOffset,
+				block.c, block.r + rowOffs,
 			 vdp.getByteReadMemoryAccess(
 					(vdpModeInfo.patt.base + rowstride * block.r + block.c) ^ pageOffset),
 			rowstride);
@@ -53,7 +55,7 @@ public class Graphics7ModeRedrawHandler extends PackedBitmapGraphicsModeRedrawHa
 	 * @see v9t9.emulator.clients.builtin.video.BaseRedrawHandler#importImageData()
 	 */
 	@Override
-	public void importImageData() {
+	public void importImageData(IVdpPixelAccess access) {
 		ByteMemoryAccess patt = vdp.getByteReadMemoryAccess(vdpModeInfo.patt.base);
 		
 		int my =  (vdpregs[9] & 0x80) != 0 ? 212 : 192;
@@ -61,7 +63,7 @@ public class Graphics7ModeRedrawHandler extends PackedBitmapGraphicsModeRedrawHa
 			for (int x = 0; x < 256; x++) {
 				
 				int poffs = y * rowstride + x; 
-				patt.memory[patt.offset + poffs] = vdpCanvas.getPixel(x, y);
+				patt.memory[patt.offset + poffs] = access.getPixel(x, y);
 				touch(patt.offset + poffs);
 			}
 		}
