@@ -13,6 +13,8 @@ import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.ILocator;
 import org.eclipse.tm.te.tcf.locator.ScannerRunnable;
+import org.eclipse.tm.te.tcf.locator.activator.CoreBundleActivator;
+import org.eclipse.tm.te.tcf.locator.interfaces.ITracing;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.ILocatorModel;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModelProperties;
@@ -44,6 +46,10 @@ public class LocatorListener implements ILocator.LocatorListener {
 	 * @see org.eclipse.tm.tcf.services.ILocator.LocatorListener#peerAdded(org.eclipse.tm.tcf.protocol.IPeer)
 	 */
 	public void peerAdded(IPeer peer) {
+		if (CoreBundleActivator.getTraceHandler().isSlotEnabled(0, ITracing.ID_TRACE_LOCATOR_LISTENER)) {
+			CoreBundleActivator.getTraceHandler().trace("LocatorListener.peerAdded( " + (peer != null ? peer.getID() : null) + ")", ITracing.ID_TRACE_LOCATOR_LISTENER, this); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+
 		if (model != null && peer != null) {
 			// find the corresponding model node to remove (expected to be null)
 			IPeerModel peerNode = model.getService(ILocatorModelLookupService.class).lkupPeerModelById(peer.getID());
@@ -70,6 +76,10 @@ public class LocatorListener implements ILocator.LocatorListener {
 	 * @see org.eclipse.tm.tcf.services.ILocator.LocatorListener#peerChanged(org.eclipse.tm.tcf.protocol.IPeer)
 	 */
 	public void peerChanged(IPeer peer) {
+		if (CoreBundleActivator.getTraceHandler().isSlotEnabled(0, ITracing.ID_TRACE_LOCATOR_LISTENER)) {
+			CoreBundleActivator.getTraceHandler().trace("LocatorListener.peerChanged( " + (peer != null ? peer.getID() : null) + ")", ITracing.ID_TRACE_LOCATOR_LISTENER, this); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+
 		if (model != null && peer != null) {
 			// find the corresponding model node to remove
 			IPeerModel peerNode = model.getService(ILocatorModelLookupService.class).lkupPeerModelById(peer.getID());
@@ -82,6 +92,10 @@ public class LocatorListener implements ILocator.LocatorListener {
 	 * @see org.eclipse.tm.tcf.services.ILocator.LocatorListener#peerRemoved(java.lang.String)
 	 */
 	public void peerRemoved(String id) {
+		if (CoreBundleActivator.getTraceHandler().isSlotEnabled(0, ITracing.ID_TRACE_LOCATOR_LISTENER)) {
+			CoreBundleActivator.getTraceHandler().trace("LocatorListener.peerRemoved( " + id + ")", ITracing.ID_TRACE_LOCATOR_LISTENER, this); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+
 		if (model != null && id != null) {
 			// find the corresponding model node to remove
 			IPeerModel peerNode = model.getService(ILocatorModelLookupService.class).lkupPeerModelById(id);
@@ -96,6 +110,9 @@ public class LocatorListener implements ILocator.LocatorListener {
 	 * @see org.eclipse.tm.tcf.services.ILocator.LocatorListener#peerHeartBeat(java.lang.String)
 	 */
 	public void peerHeartBeat(String id) {
+		if (CoreBundleActivator.getTraceHandler().isSlotEnabled(0, ITracing.ID_TRACE_LOCATOR_LISTENER)) {
+			CoreBundleActivator.getTraceHandler().trace("LocatorListener.peerHeartBeat( " + id + ")", ITracing.ID_TRACE_LOCATOR_LISTENER, this); //$NON-NLS-1$ //$NON-NLS-2$
+		}
 	}
 
 }

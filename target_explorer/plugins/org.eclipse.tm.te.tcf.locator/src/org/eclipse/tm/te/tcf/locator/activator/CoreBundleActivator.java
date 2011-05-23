@@ -10,6 +10,7 @@
 package org.eclipse.tm.te.tcf.locator.activator;
 
 import org.eclipse.core.runtime.Plugin;
+import org.eclipse.tm.te.core.tracing.TraceHandler;
 import org.osgi.framework.BundleContext;
 
 /**
@@ -18,6 +19,8 @@ import org.osgi.framework.BundleContext;
 public class CoreBundleActivator extends Plugin {
 	// The shared instance
 	private static CoreBundleActivator plugin;
+	// The trace handler instance
+	private static TraceHandler traceHandler;
 
 	/**
 	 * Returns the shared instance
@@ -36,6 +39,18 @@ public class CoreBundleActivator extends Plugin {
 			return getDefault().getBundle().getSymbolicName();
 		}
 		return null;
+	}
+
+	/**
+	 * Returns the bundles trace handler.
+	 *
+	 * @return The bundles trace handler.
+	 */
+	public static TraceHandler getTraceHandler() {
+		if (traceHandler == null) {
+			traceHandler = new TraceHandler(getUniqueIdentifier());
+		}
+		return traceHandler;
 	}
 
 	/* (non-Javadoc)

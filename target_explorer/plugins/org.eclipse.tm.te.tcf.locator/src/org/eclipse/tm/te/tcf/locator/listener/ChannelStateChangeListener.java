@@ -13,6 +13,8 @@ import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.te.tcf.core.interfaces.listeners.IChannelStateChangeListener;
+import org.eclipse.tm.te.tcf.locator.activator.CoreBundleActivator;
+import org.eclipse.tm.te.tcf.locator.interfaces.ITracing;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.ILocatorModel;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModelProperties;
@@ -41,6 +43,11 @@ public class ChannelStateChangeListener implements IChannelStateChangeListener {
 	 */
 	public void stateChanged(IChannel channel, int state) {
 		assert Protocol.isDispatchThread() && channel != null;
+
+		if (CoreBundleActivator.getTraceHandler().isSlotEnabled(0, ITracing.ID_TRACE_CHANNEL_STATE_CHANGE_LISTENER)) {
+			CoreBundleActivator.getTraceHandler().trace("ChannelStateChangeListener.stateChanged( " + channel + ", " + (state == IChannel.STATE_OPEN ? "OPEN" : "CLOSED") + " )", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
+														ITracing.ID_TRACE_CHANNEL_STATE_CHANGE_LISTENER, this);
+		}
 
 		switch (state) {
 			case IChannel.STATE_OPEN:
@@ -71,5 +78,4 @@ public class ChannelStateChangeListener implements IChannelStateChangeListener {
 				break;
 		}
 	}
-
 }
