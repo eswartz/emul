@@ -32,6 +32,9 @@ import v9t9.emulator.clients.builtin.video.VdpCanvas;
  *
  */
 public class SwtLwjglVideoRenderer extends SwtVideoRenderer {
+	static {
+		//System.out.println(System.getProperty("java.library.path"));
+	}
 	private GLCanvas glCanvas;
 	private GLData glData;
 	// pfft, lwjgl doesn't handle all our modes

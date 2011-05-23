@@ -4,11 +4,6 @@
  */
 package v9t9.emulator.clients.builtin.swt;
 
-import org.eclipse.swt.graphics.GC;
-import org.eclipse.swt.graphics.ImageData;
-import org.eclipse.swt.graphics.Rectangle;
-
-import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
 import v9t9.emulator.common.Machine;
 import v9t9.engine.Client;
 
