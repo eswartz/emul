@@ -127,7 +127,12 @@ public class Sprite2RedrawHandler extends SpriteRedrawHandler {
 			} else {
 				sprite.setDeleted(false);
 				sprite.move(x, y);
-				sprite.setPattern(info.vdp.getByteReadMemoryAccess(sprpatbase + ((ch & 0xfc) << 3)));
+				int patOffs = sprpatbase + (ch << 3);
+				if (sprpatOffsMap[i] != patOffs) {
+					sprite.setPattern(info.vdp.getByteReadMemoryAccess(patOffs));
+					sprpatOffsMap[i] = patOffs;
+				}
+
 				
 				ByteMemoryAccess colorStripe = new ByteMemoryAccess(colorAccess);
 				sprite.setColorStripe(colorStripe);

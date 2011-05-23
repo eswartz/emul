@@ -261,8 +261,7 @@ public class VdpSpriteCanvas {
 			if ((rowbitmap & (1 << yy)) != 0) {
 				byte patt = pattern.memory[pattern.offset + yy];
 				if (patt != 0) {
-					int block = canvas.getBitmapOffset(x, y);
-					canvas.drawEightSpritePixels(block, patt, color, bitmask, false);
+					canvas.drawEightSpritePixels(x, y, patt, color, bitmask, false);
 				}
 			}
 			y = (y + 1) & 0xff;
@@ -298,8 +297,7 @@ public class VdpSpriteCanvas {
 			if ((rowbitmap & (1 << yy)) != 0) {
 				byte patt = pattern.memory[pattern.offset + yy / 2];
 				if (patt != 0) {
-					int block = canvas.getBitmapOffset(x, y);
-					canvas.drawEightMagnifiedSpritePixels(block, patt, color, bitmask, false);
+					canvas.drawEightMagnifiedSpritePixels(x, y, patt, color, bitmask, false);
 				}
 			}
 			y = (y + 1) & 0xff;

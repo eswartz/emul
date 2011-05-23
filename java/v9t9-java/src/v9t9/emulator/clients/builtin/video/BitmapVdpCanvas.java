@@ -40,6 +40,20 @@ public abstract class BitmapVdpCanvas extends VdpCanvas implements IBitmapPixelA
 	 */
 	abstract protected void drawSixPixels(int offs, byte mem, byte fg, byte bg); 
 
+	/** Get an implementation-defined offset into the bitmap */ 
+	public abstract int getBitmapOffset(int x, int y);
+
+	/** Get the delta for one pixel, in terms of the offset. 
+	 * @see #getBitmapOffset(int, int) 
+	 */ 
+	public abstract int getPixelStride();
+	
+	/** Get the delta for one row, in terms of the offset. 
+	 * @see #getBitmapOffset(int, int) 
+	 */ 
+	public abstract int getLineStride();
+
+	
 	/**
 	 * Blit an 8x8 block defined by a pattern and a foreground/background color to the bitmap
 	 * @param r

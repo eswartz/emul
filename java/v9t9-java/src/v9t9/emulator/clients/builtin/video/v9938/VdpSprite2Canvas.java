@@ -137,14 +137,18 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 				if ((rowbitmap & (1 << pixy)) != 0) {
 					patt = pattern.memory[pattern.offset + yy];
 					if (patt != 0) {
-						int block = canvas.getBitmapOffset((x + shift) * (doubleWidth ? 2 : 1), y);
+						int theX = (x + shift) * (doubleWidth ? 2 : 1);
 						if (magnified && doubleWidth)
-							canvas.drawEightDoubleMagnifiedSpritePixels(block, patt, color, bitmask, isLogicalOr);
+							canvas.drawEightDoubleMagnifiedSpritePixels(
+									theX, y,
+									patt, color, bitmask, isLogicalOr);
 						else if (doubleWidth || magnified)
-							canvas.drawEightMagnifiedSpritePixels(block, patt, 
+							canvas.drawEightMagnifiedSpritePixels(theX, y, 
+									patt, 
 									color, bitmask, isLogicalOr);
 						else
-							canvas.drawEightSpritePixels(block, patt, 
+							canvas.drawEightSpritePixels(
+									theX, y, patt, 
 									color, (byte) bitmask, isLogicalOr);
 					}
 				}

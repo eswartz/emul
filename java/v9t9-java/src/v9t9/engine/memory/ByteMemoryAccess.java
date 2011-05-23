@@ -6,7 +6,7 @@ package v9t9.engine.memory;
  *
  */
 public class ByteMemoryAccess {
-	public byte[] memory;
+	public final byte[] memory;
 	public int offset;
 
 	public ByteMemoryAccess(byte[] memory, int offset) {

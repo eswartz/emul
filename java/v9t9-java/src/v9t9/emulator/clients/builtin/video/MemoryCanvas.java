@@ -16,7 +16,7 @@ import v9t9.engine.memory.ByteMemoryAccess;
  */
 public class MemoryCanvas extends BitmapVdpCanvas {
     final int UPDATEBLOCK_ROW_STRIDE = (256+64);
-	byte[] bitmap = new byte[UPDATEBLOCK_ROW_STRIDE * 256];
+	final byte[] bitmap = new byte[UPDATEBLOCK_ROW_STRIDE * 256];
     final int UPDPTR(int y,int x) { return ((y)*UPDATEBLOCK_ROW_STRIDE)+(x)+32; }
 
     public MemoryCanvas() {
@@ -51,7 +51,8 @@ public class MemoryCanvas extends BitmapVdpCanvas {
 		}
 	}
 	
-	public void drawEightSpritePixels(int offs, byte mem, byte fg, byte bitmask, boolean isLogicalOr) {
+	public void drawEightSpritePixels(int x, int y, byte mem, byte fg, byte bitmask, boolean isLogicalOr) {
+		int offs = getBitmapOffset(x, y);
 		if (isLogicalOr) {
 			for (int i = 0; i < 8; i++) {
 				if ((mem & 0x80) != 0) {
@@ -69,7 +70,8 @@ public class MemoryCanvas extends BitmapVdpCanvas {
 		}
 	}
 
-	public void drawEightMagnifiedSpritePixels(int offs, byte mem, byte fg, short bitmask, boolean isLogicalOr) {
+	public void drawEightMagnifiedSpritePixels(int x, int y, byte mem, byte fg, short bitmask, boolean isLogicalOr) {
+		int offs = getBitmapOffset(x, y);
 		for (int i = 0; i < 8; i++) {
 			if ((mem & 0x80) != 0) {
 				if (isLogicalOr) {
@@ -83,7 +85,8 @@ public class MemoryCanvas extends BitmapVdpCanvas {
 			mem <<= 1;
 		}
 	}
-	public void drawEightDoubleMagnifiedSpritePixels(int offs, byte mem, byte fg, short bitmask, boolean isLogicalOr) {
+	public void drawEightDoubleMagnifiedSpritePixels(int x, int y, byte mem, byte fg, short bitmask, boolean isLogicalOr) {
+		int offs = getBitmapOffset(x, y);
 		for (int i = 0; i < 8; i++) {
 			if ((mem & 0x80) != 0) {
 				if (isLogicalOr) {

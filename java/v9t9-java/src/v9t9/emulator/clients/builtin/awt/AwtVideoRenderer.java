@@ -53,8 +53,6 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 
 	private boolean isDirty;
 
-	private boolean isBlank;
-
 	private int desiredWidth;
 
 	private int desiredHeight;
@@ -213,45 +211,30 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 			return;
 		
 		synchronized (vdpCanvas) {
-			boolean becameBlank = vdpCanvas.isBlank() && !isBlank;
-			isBlank = vdpCanvas.isBlank();
-			
 			org.eclipse.swt.graphics.Rectangle dirtyRect = vdpCanvas.getDirtyRect(); 
-			Rectangle redrawRect_ = null;
-			if (dirtyRect != null)
-				redrawRect_ = new Rectangle(dirtyRect.x, dirtyRect.y, dirtyRect.width, dirtyRect.height);
-			if (becameBlank || redrawRect_ == null)
-				redrawRect_ = new Rectangle(0, 0, vdpCanvas.getWidth(), vdpCanvas.getHeight());
+			Rectangle redrawRect_ = new Rectangle(dirtyRect.x, dirtyRect.y, dirtyRect.width, dirtyRect.height);
 			
-			if (vdpCanvas.isInterlacedEvenOdd()) {
-				redrawRect_.y *= 2;
-				redrawRect_.height *= 2;
-			}
+			final Rectangle redrawRect = redrawRect_;
 			
-			if (redrawRect_ != null) {
-				final Rectangle redrawRect = redrawRect_;
-				
-				// if resizing, no point redrawing
-				if (updateWidgetSizeForMode())
-					return;
-				
-				Rectangle redrawPhys = logicalToPhysical(redrawRect);
-				//System.out.println("Adding canvas " + redrawPhys);
-				update(redrawPhys);
-				
-				//System.out.println("Redrawing " + updateRect);
-				
-				canvas.repaint(updateRect.x, updateRect.y, 
-						updateRect.width, updateRect.height);
-				
-				updateRect.width = 0;
-				updateRect.height = 0;
-				updateRect.x = 0;
-				updateRect.y = 0;
-				isDirty = false;
-				vdpCanvas.clearDirty();
-
-			}
+			// if resizing, no point redrawing
+			if (updateWidgetSizeForMode())
+				return;
+			
+			Rectangle redrawPhys = logicalToPhysical(redrawRect);
+			//System.out.println("Adding canvas " + redrawPhys);
+			update(redrawPhys);
+			
+			//System.out.println("Redrawing " + updateRect);
+			
+			canvas.repaint(updateRect.x, updateRect.y, 
+					updateRect.width, updateRect.height);
+			
+			updateRect.width = 0;
+			updateRect.height = 0;
+			updateRect.x = 0;
+			updateRect.y = 0;
+			isDirty = false;
+			vdpCanvas.clearDirty();
 		}
 	}
 

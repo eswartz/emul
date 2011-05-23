@@ -376,19 +376,7 @@ public abstract class VdpCanvas {
 	public byte[] getStockRGB(int i) {
 		return stockPalette[i];
 	}
-	/** Get an implementation-defined offset into the bitmap */ 
-	public abstract int getBitmapOffset(int x, int y);
-
-	/** Get the delta for one pixel, in terms of the offset. 
-	 * @see #getBitmapOffset(int, int) 
-	 */ 
-	public abstract int getPixelStride();
 	
-	/** Get the delta for one row, in terms of the offset. 
-	 * @see #getBitmapOffset(int, int) 
-	 */ 
-	public abstract int getLineStride();
-
 	/**
 	 * Blit an 8x8 block defined by a pattern and a foreground/background color to the bitmap
 	 * @param r
@@ -424,15 +412,15 @@ public abstract class VdpCanvas {
 	/** Draw eight pixels of an 8x1 row. 
 	 * @param bitmask mask of rows visible from top-down 
 	 * @param isLogicalOr */
-	public abstract void drawEightSpritePixels(int offs, byte mem, byte fg, byte bitmask, boolean isLogicalOr); 
+	public abstract void drawEightSpritePixels(int x, int y, byte mem, byte fg, byte bitmask, boolean isLogicalOr); 
 	/** Draw 16 (8 magnified) pixels of an 8x1 row. 
 	 * @param bitmask mask of rows visible from top-down 
 	 * @param isLogicalOr */
-	public abstract void drawEightMagnifiedSpritePixels(int offs, byte mem, byte fg, short bitmask, boolean isLogicalOr);
+	public abstract void drawEightMagnifiedSpritePixels(int x, int y, byte mem, byte fg, short bitmask, boolean isLogicalOr);
 	/** Draw 32 (8 magnified) pixels of an 8x1 row. 
 	 * @param bitmask mask of rows visible from top-down 
 	 * @param isLogicalOr */
-	public abstract void drawEightDoubleMagnifiedSpritePixels(int offs, byte mem, byte fg, short bitmask, boolean isLogicalOr);
+	public abstract void drawEightDoubleMagnifiedSpritePixels(int x, int y, byte mem, byte fg, short bitmask, boolean isLogicalOr);
 	
 	public boolean isBlank() {
 		return isBlank;
@@ -440,13 +428,17 @@ public abstract class VdpCanvas {
 
 
 	public void setBlank(boolean b) {
-		isBlank = b;
+		if (b != isBlank) {
+			isBlank = b;
+			markDirty();
+		}
 	}
 
 
 	public void markDirty(RedrawBlock[] blocks, int count) {
 		if (dx1 == 0 && dy1 == 0 && dx2 == width && dy2 == height) {
 			// already dirty
+			listener.canvasDirtied(this);
 		} else {
 			for (int i = 0; i < count; i++) {
 				RedrawBlock block = blocks[i];
@@ -484,6 +476,10 @@ public abstract class VdpCanvas {
 	public Rectangle getDirtyRect() {
 		if (dx1 >= dx2 || dy1 >= dy2)
 			return null;
+
+		if (isInterlacedEvenOdd()) {
+			return new Rectangle(dx1, dy1 * 2, (dx2 - dx1), (dy2 - dy1) * 2);
+		}
 		return new Rectangle(dx1, dy1, (dx2 - dx1), (dy2 - dy1));
 	}
 	

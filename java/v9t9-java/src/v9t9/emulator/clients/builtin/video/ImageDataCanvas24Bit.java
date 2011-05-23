@@ -100,7 +100,8 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 		}
 	}
 
-	public void drawEightSpritePixels(int offs, byte mem, byte fg, byte bitmask, boolean isLogicalOr) {
+	public void drawEightSpritePixels(int x, int y, byte mem, byte fg, byte bitmask, boolean isLogicalOr) {
+		int offs = getBitmapOffset(x, y);
 		byte[] fgRGB = getRGB(fg);
 		for (int i = 0; i < 8; i++) {
 			if ((mem & bitmask & 0x80) != 0) {
@@ -114,7 +115,8 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 		}
 	}
 
-	public void drawEightMagnifiedSpritePixels(int offs, byte mem_, byte fg, short bitmask, boolean isLogicalOr) {
+	public void drawEightMagnifiedSpritePixels(int x, int y, byte mem_, byte fg, short bitmask, boolean isLogicalOr) {
+		int offs = getBitmapOffset(x, y);
 		byte[] fgRGB = getRGB(fg);
 		short mem = (short) (mem_ << 8);
 		for (int i = 0; i < 8; i++) {
@@ -136,7 +138,8 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 		}
 	}
 
-	public void drawEightDoubleMagnifiedSpritePixels(int offs, byte mem_, byte fg, short bitmask, boolean isLogicalOr) {
+	public void drawEightDoubleMagnifiedSpritePixels(int x, int y, byte mem_, byte fg, short bitmask, boolean isLogicalOr) {
+		int offs = getBitmapOffset(x, y);
 		byte[] fgRGB = getRGB(fg);
 		short mem = (short) (mem_ << 8);
 		for (int i = 0; i < 8; i++) {

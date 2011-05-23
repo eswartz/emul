@@ -46,6 +46,10 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 	};
 
 	protected VdpSpriteCanvas spriteCanvas;
+	protected int[] sprpatOffsMap = new int[32];
+	{
+		Arrays.fill(sprpatOffsMap, -1);
+	}
 
 	public SpriteRedrawHandler(VdpRedrawInfo info, VdpModeInfo modeInfo) {
 		super(info, modeInfo);
@@ -161,7 +165,11 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 				sprite.move(x, y);
 				sprite.setColor(color);
 				sprite.setShift(shift);
-				sprite.setPattern(info.vdp.getByteReadMemoryAccess(sprpatbase + (ch << 3)));
+				int patOffs = sprpatbase + (ch << 3);
+				if (sprpatOffsMap[i] != patOffs) {
+					sprite.setPattern(info.vdp.getByteReadMemoryAccess(patOffs));
+					sprpatOffsMap[i] = patOffs;
+				}
 				sprite.setSize(size);
 				sprite.setNumchars(numchars);
 				

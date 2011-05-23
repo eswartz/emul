@@ -1,6 +1,7 @@
 package v9t9.emulator.clients.builtin.video;
 
 import java.awt.image.BufferedImage;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -12,8 +13,6 @@ import java.util.TreeMap;
 
 import org.eclipse.swt.graphics.ImageData;
 import org.ejs.coffee.core.utils.Pair;
-
-import v9t9.emulator.clients.builtin.video.VdpCanvas.Format;
 
 public abstract class ImageDataCanvas extends BitmapVdpCanvas {
 
@@ -341,5 +340,27 @@ public abstract class ImageDataCanvas extends BitmapVdpCanvas {
 		}
 		
 		paletteMappingDirty = false;
+	}
+
+	/**
+	 * @param buffer
+	 * @return 
+	 */
+	public ByteBuffer copy(ByteBuffer buffer) {
+		if (buffer.capacity() < imageData.bytesPerLine * imageData.height)
+			buffer = ByteBuffer.allocateDirect(imageData.bytesPerLine * imageData.height);
+
+		buffer.rewind();
+		int vw = getVisibleWidth();
+		int vh = getVisibleHeight();
+		int offs = getBitmapOffset(0, 0);
+		int bpp = imageData.bytesPerLine / imageData.width;
+		for (int r = 0; r < vh; r++) {
+			buffer.put(imageData.data, offs, bpp * vw);
+			offs += imageData.bytesPerLine;
+		}
+		buffer.rewind();
+		
+		return buffer;
 	}
 }

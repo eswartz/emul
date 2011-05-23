@@ -45,8 +45,6 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 
 	protected Image image;
 	protected Rectangle updateRect;
-	protected boolean isBlank;
-	protected boolean wasBlank;
 	protected boolean isDirty;
 	protected long lastUpdateTime;
 	protected boolean busy;
@@ -69,9 +67,9 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 	 * @param parent
 	 * @return
 	 */
-	public Control createControl(Composite parent, int flags) {
+	final public Control createControl(Composite parent, int flags) {
 		this.shell = parent.getShell();
-		this.canvas = new Canvas(parent, flags | getStyleBits());
+		this.canvas = createCanvas(parent, flags);
 		
 		fixedAspectLayout = new FixedAspectLayout(256, 192, 3.0, 3.0, 0.5, 5);
 		canvas.setLayout(fixedAspectLayout);	
@@ -114,6 +112,10 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 		
 		setupCanvas();
 		return canvas;
+	}
+
+	protected Canvas createCanvas(Composite parent, int flags) {
+		return new Canvas(parent, flags | getStyleBits());
 	}
 
 	public Control getControl() {
@@ -159,42 +161,32 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 		if (!isDirty)
 			return;
 		
-		boolean becameBlank = vdpCanvas.isBlank() && !isBlank;
-		isBlank = vdpCanvas.isBlank();
+		final Rectangle redrawRect = vdpCanvas.getDirtyRect();
 		
-		Rectangle redrawRect_ = vdpCanvas.getDirtyRect();
-		if (becameBlank)
-			redrawRect_ = new Rectangle(0, 0, vdpCanvas.getWidth(), vdpCanvas.getHeight());
-		
-		if (vdpCanvas.isInterlacedEvenOdd()) {
-			redrawRect_.y *= 2;
-			redrawRect_.height *= 2;
-		}
-		
-		if (redrawRect_ != null) {
-			final Rectangle redrawRect = redrawRect_;
-			
-			Display.getDefault().asyncExec(new Runnable() {
-	
-				public void run() {
-					synchronized (vdpCanvas) {
-						if (canvas.isDisposed())
-							return;
-						
-						updateWidgetSizeForMode();
-						
-						Rectangle redrawPhys = logicalToPhysical(redrawRect);
-						canvas.redraw(redrawPhys.x, redrawPhys.y, 
-								redrawPhys.width, redrawPhys.height, false);
-						
-						isDirty = false;
-					}
+		Display.getDefault().asyncExec(new Runnable() {
+
+			public void run() {
+				synchronized (vdpCanvas) {
+					if (canvas.isDisposed())
+						return;
+					
+					updateWidgetSizeForMode();
+					
+					doTriggerRedraw(redrawRect);
+					
+					isDirty = false;
 				}
-				
-			});
+			}
 			
-		}
+		});
 	}
+	
+	protected void doTriggerRedraw(final Rectangle redrawRect) {
+		Rectangle redrawPhys = logicalToPhysical(redrawRect);
+		canvas.redraw(redrawPhys.x, redrawPhys.y, 
+				redrawPhys.width, redrawPhys.height, false);
+	}
+
 	
 	protected void resizeWidgets() {
 		if (canvas.isDisposed())
@@ -254,7 +246,6 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 		busy = true;
 		long started = System.currentTimeMillis();
 		doRepaint(gc, updateRect);
-		wasBlank = false;
 		lastUpdateTime = System.currentTimeMillis() - started;
 		vdpCanvas.clearDirty();
 		busy = false;
@@ -281,30 +272,21 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 
 	protected void blitImageData(GC gc, ImageData imageData, Rectangle destRect,
 			Rectangle imageRect) {
-		if (true || !isBlank) {
-			if (image != null && !image.isDisposed()) {
-				image.dispose();
-			}
-			
-			//System.out.println(updateRect);
-			synchronized (vdpCanvas) {
-				image = new Image(shell.getDisplay(), imageData);
-			}
-			
-			//System.out.println("imageRect="+imageRect+";destRect="+destRect);
-			gc.drawImage(image, 
-					imageRect.x, imageRect.y, 
-					imageRect.width, imageRect.height, 
-					destRect.x, destRect.y, 
-					destRect.width, destRect.height);
-		} else {
-			if (wasBlank)
-				return;
-			bg = allocColor(bg, vdpCanvas.getClearRGB());
-			gc.setBackground(bg);
-			gc.fillRectangle(updateRect);
-			wasBlank = true;
+		if (image != null && !image.isDisposed()) {
+			image.dispose();
 		}
+		
+		//System.out.println(updateRect);
+		synchronized (vdpCanvas) {
+			image = new Image(shell.getDisplay(), imageData);
+		}
+		
+		//System.out.println("imageRect="+imageRect+";destRect="+destRect);
+		gc.drawImage(image, 
+				imageRect.x, imageRect.y, 
+				imageRect.width, imageRect.height, 
+				destRect.x, destRect.y, 
+				destRect.width, destRect.height);
 	}
 
 	public VdpCanvas getCanvas() {
@@ -394,4 +376,5 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 		});
 		return visible[0];
 	}
+
 }

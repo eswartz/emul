@@ -24,6 +24,7 @@ import v9t9.emulator.clients.builtin.NotifyException;
 import v9t9.emulator.clients.builtin.awt.AwtJavaClient;
 import v9t9.emulator.clients.builtin.swt.SwtAwtJavaClient;
 import v9t9.emulator.clients.builtin.swt.SwtJavaClient;
+import v9t9.emulator.clients.builtin.swt.SwtLwjglJavaClient;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.common.EmulatorSettings;
 import v9t9.emulator.common.IEventNotifier;
@@ -80,6 +81,7 @@ public class Emulator {
 		ClientFactory.register(SwtJavaClient.ID, SwtJavaClient.class);
 		ClientFactory.register(SwtAwtJavaClient.ID, SwtAwtJavaClient.class);
 		ClientFactory.register(AwtJavaClient.ID, AwtJavaClient.class);
+		ClientFactory.register(SwtLwjglJavaClient.ID, SwtLwjglJavaClient.class);
 	}
 	
 	private Memory memory;
@@ -230,6 +232,9 @@ public class Emulator {
 		String clientID;
         if (findArgument(args, "--awt")) {
         	clientID = AwtJavaClient.ID;
+		} 
+        else if (findArgument(args, "--swtgl")) {
+        	clientID = SwtLwjglJavaClient.ID;
 		} 
         else /*if (findArgument(args, "--swtawt"))*/ {
         	boolean awtRenderer = !findArgument(args, "--swt");
