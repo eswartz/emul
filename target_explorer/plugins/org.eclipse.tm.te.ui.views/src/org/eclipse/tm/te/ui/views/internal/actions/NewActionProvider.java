@@ -127,11 +127,22 @@ public class NewActionProvider extends CommonActionProvider {
 	 */
 	@Override
 	public void fillActionBars(IActionBars actionBars) {
+		// If none of the actions got created, there is nothing to do here
 		if (newWizardCommandActionToolbar == null) {
 			return;
 		}
 
+		// Get the toolbar manager
 		IToolBarManager toolbar = actionBars.getToolBarManager();
+
+		// Check for the newWizard action in the toolbar. If found,
+		// drop out immediately to avoid adding the items to the toolbar
+		// again and again
+		if (toolbar.find("org.eclipse.tm.te.ui.command.newWizards") != null) { //$NON-NLS-1$
+			return;
+		}
+
+		// Add the items to the toolbar
 		toolbar.insertAfter(ICommonMenuConstants.GROUP_NEW, newWizardCommandActionToolbar);
 	}
 }
