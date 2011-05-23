@@ -143,8 +143,6 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer {
 
 	
 	protected void doRepaint(GC gc, Rectangle updateRect) {
-		//reblit();
-	
 		reblit();
 	}
 	
@@ -196,11 +194,13 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer {
 		glTexCoord2f(1.0f, 0f);		glVertex2i(1, 0);
 		glEnd();
 		
+		/*
 		glColor3f(0.2f, 0.4f, 0.6f);
 		glBegin(GL_LINES);
 		glVertex2i(0, 0);
 		glVertex2i(vdpCanvas.getVisibleWidth(), vdpCanvas.getVisibleHeight());
 		glEnd();
+		*/
 		
 		glCanvas.swapBuffers();
 	}

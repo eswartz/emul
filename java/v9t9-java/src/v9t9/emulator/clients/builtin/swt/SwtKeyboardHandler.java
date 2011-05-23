@@ -39,7 +39,7 @@ import v9t9.keyboard.KeyboardState;
  * @author ejs
  * 
  */
-public class SwtKeyboardHandler extends BaseKeyboardHandler {
+public class SwtKeyboardHandler extends BaseKeyboardHandler implements ISwtKeyboardHandler {
 
 	
 	static class KeyInfo {

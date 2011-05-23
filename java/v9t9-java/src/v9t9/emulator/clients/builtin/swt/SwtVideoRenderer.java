@@ -330,10 +330,6 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 		return !busy;
 	}
 
-	public Control getWidget() {
-		return canvas;
-	}
-
 	public void setCanvas(VdpCanvas vdpCanvas) {
 		this.vdpCanvas = vdpCanvas;
 		this.vdpCanvas.setListener(this);
@@ -347,8 +343,26 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 
 	public void saveScreenShot(File file) throws IOException {
 		ImageLoader imageLoader = new ImageLoader();
-		imageLoader.data = new ImageData[] { image.getImageData() };
+		ImageData data = getScreenshotImageData();
+		if (data == null)
+			throw new IOException("Sorry, this renderer has no image to save");
+		imageLoader.data = new ImageData[] { data };
 		imageLoader.save(new FileOutputStream(file), SWT.IMAGE_PNG);
+	}
+
+	/**
+	 * @return
+	 */
+	protected ImageData getScreenshotImageData() {
+		if (image == null && vdpCanvas instanceof ImageDataCanvas) {
+			ImageData imageData = ((ImageDataCanvas) vdpCanvas).getImageData();
+			if (imageData != null) {
+				image = new Image(shell.getDisplay(), imageData);
+			}
+		}
+		if (image == null)
+			return null;
+		return image.getImageData();
 	}
 
 	public void addMouseEventListener(MouseListener listener) {

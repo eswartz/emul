@@ -75,8 +75,8 @@ public abstract class BaseSwtJavaClient implements Client {
 		
         machine.getSound().setSoundHandler(new JavaSoundHandler(machine));
         
-        if (keyboardHandler instanceof SwtKeyboardHandler)
-        	((SwtKeyboardHandler) keyboardHandler).init(((SwtVideoRenderer) videoRenderer).getWidget());
+        if (keyboardHandler instanceof ISwtKeyboardHandler)
+        	((ISwtKeyboardHandler) keyboardHandler).init(((ISwtVideoRenderer) videoRenderer).getControl());
 	}
 
 	abstract protected void setupRenderer();
