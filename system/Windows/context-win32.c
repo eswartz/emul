@@ -1358,7 +1358,7 @@ void init_contexts_sys_dep(void) {
     memset(&os_version, 0, sizeof(os_version));
     os_version.dwOSVersionInfoSize = sizeof(os_version);
     GetVersionEx((OSVERSIONINFO *)&os_version);
-    create_eventpoint("main", eventpoint_at_main, NULL);
+    create_eventpoint("main", NULL, eventpoint_at_main, NULL);
 }
 
 #endif  /* if ENABLE_DebugContext */

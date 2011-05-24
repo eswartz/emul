@@ -1020,9 +1020,9 @@ void init_contexts_sys_dep(void) {
     ini_context_pid_hash();
 #if SERVICE_Expressions && ENABLE_ELF
     add_identifier_callback(expression_identifier_callback);
-    create_eventpoint("$loader_brk", eventpoint_at_loader, NULL);
+    create_eventpoint("$loader_brk", NULL, eventpoint_at_loader, NULL);
 #endif /* SERVICE_Expressions && ENABLE_ELF */
-    create_eventpoint("main", eventpoint_at_main, NULL);
+    create_eventpoint("main", NULL, eventpoint_at_main, NULL);
 }
 
 #endif  /* if ENABLE_DebugContext */

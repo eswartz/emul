@@ -74,7 +74,7 @@ typedef void EventPointCallBack(Context *, void *);
 
 /* Create, plant and return eventpoint. Eventpoints are breakpoints that are created by agent to control execution of debugee.
  * Eventpoint are not exposed through "Breakpoints" TCF service, they are handled by agent itself. */
-extern BreakpointInfo * create_eventpoint(const char * location, EventPointCallBack * callback, void * callback_args);
+extern BreakpointInfo * create_eventpoint(const char * location, Context * ctx, EventPointCallBack * callback, void * callback_args);
 
 /* Unplant and destroy eventpoint */
 extern void destroy_eventpoint(BreakpointInfo * eventpoint);
@@ -87,7 +87,7 @@ extern void destroy_eventpoint(BreakpointInfo * eventpoint);
 #define clone_breakpoints_on_process_fork(parent, child) 0
 #define check_breakpoints_on_memory_read(ctx, address, buf, size) 0
 #define check_breakpoints_on_memory_write(ctx, address, buf, size) 0
-#define create_eventpoint(location, callback, callback_args) 0
+#define create_eventpoint(location, ctx, callback, callback_args) 0
 
 #endif /* SERVICE_Breakpoints */
 

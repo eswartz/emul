@@ -1147,7 +1147,7 @@ static int update_step_machine_state(Context * ctx) {
                 char bf[64];
                 snprintf(bf, sizeof(bf), "0x%" PRIX64, (uint64_t)step_bp_addr);
                 if (ext->step_bp_info != NULL) destroy_eventpoint(ext->step_bp_info);
-                ext->step_bp_info = create_eventpoint(bf, step_machine_breakpoint, NULL);
+                ext->step_bp_info = create_eventpoint(bf, ctx, step_machine_breakpoint, NULL);
                 ext->step_bp_addr = step_bp_addr;
             }
             return 0;
