@@ -1086,6 +1086,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         resumed_by_action = false;
         dispose();
         postContextRemovedDelta();
+        model.getLaunch().removeContextActions(id);
     }
 
     void onExpressionAddedOrRemoved() {
