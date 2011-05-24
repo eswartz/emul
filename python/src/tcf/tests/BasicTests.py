@@ -55,6 +55,7 @@ def test():
         testMemory(c)
         testMemoryMap(c)
         testPathMap(c)
+        testSysMonitor(c)
     except Exception as e:
         protocol.log(e)
 
@@ -546,6 +547,52 @@ def testPathMap(c):
         lock.wait(1000)
     map = pm.get().get()
     print "Path map:", map
+
+def testSysMonitor(c):
+    cmd = sync.CommandControl(c)
+    try:
+        sm = cmd.SysMonitor
+    except AttributeError:
+        # no SysMonotor service
+        return
+    lock = threading.Condition()
+    from tcf.services import sysmonitor
+    processes = []
+    def getProcesses():
+        sm = c.getRemoteService(sysmonitor.NAME)
+        pending = []
+        class DoneGetChildren(sysmonitor.DoneGetChildren):
+            def doneGetChildren(self, token, error, context_ids):
+                pending.remove(token)
+                if error:
+                    protocol.log("Error from SysMonitor.getChildren", error)
+                else:
+                    class DoneGetContext(sysmonitor.DoneGetContext):
+                        def doneGetContext(self, token, error, context):
+                            pending.remove(token)
+                            if error:
+                                protocol.log("Error from SysMonitor.getContext", error)
+                            else:
+                                processes.append(context)
+                            if not pending:
+                                with lock:
+                                    lock.notify()
+                    for id in context_ids:
+                        pending.append(sm.getContext(id, DoneGetContext()))
+                if not pending:
+                    with lock:
+                        lock.notify()
+        pending.append(sm.getChildren(None, DoneGetChildren()))
+    with lock:
+        protocol.invokeLater(getProcesses)
+        lock.wait(5000)
+    print "%d processes found:" % len(processes)
+    for p in processes:
+        print p
+        cmdl = sm.getCommandLine(p.getID()).get()
+        if cmdl: print "Command line: ", cmdl
+        envp = sm.getEnvironment(p.getID()).get()
+        print "Environment: ", envp
 
 if __name__ == '__main__':
     test()

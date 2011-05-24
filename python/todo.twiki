@@ -24,8 +24,8 @@
       * [done] Diagnostics
       * Disassembly
       * [done] Streams
-      * Terminals
-      * SysMonitor
+      * [done] Terminals
+      * [done] SysMonitor
    * Local services:
       * [incomplete] ZeroCopy
       * [95%] Locator service (discovery)
