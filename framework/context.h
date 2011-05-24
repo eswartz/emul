@@ -278,8 +278,9 @@ extern int context_single_step(Context * ctx);
  * Retrieve context memory map.
  * Return -1 and set errno if the map cannot be retrieved.
  * Note: the caller owns MemoryMap object and all its contents, it can call loc_free() on it at any time.
- * 'map' is empty (region_cnt == 0) when context_get_memory_map() is called,
- * and the function adds memory region descriptions into is, doing loc_strdup() for things like file names.
+ * When context_get_memory_map() is called, 'map' is empty: region_cnt == 0,
+ * but 'map->regions' can be pre-allocated: 'map->regions' can be not NULL and 'map->region_max' > 0.
+ * The function adds memory region descriptions into it, doing loc_strdup() for things like file names.
  * The function implementation should not retain references to 'map' or its contents.
  */
 extern int context_get_memory_map(Context * ctx, MemoryMap * map);
