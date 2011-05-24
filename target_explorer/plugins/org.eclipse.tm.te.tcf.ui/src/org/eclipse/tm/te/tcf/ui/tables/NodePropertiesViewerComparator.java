@@ -35,27 +35,43 @@ public class NodePropertiesViewerComparator extends TableViewerComparator {
 	 */
 	@Override
 	protected int doCompare(Object node1, Object node2, String sortColumn, int index, int inverter) {
-		if (node1 != null && node2 != null && index == 0) {
+		if (node1 != null && node2 != null) {
 			String t1 = doGetText(node1, index);
 			String t2 = doGetText(node2, index);
 
-			// Special handling for empty text and last error text
-			if ("".equals(t1) || "".equals(t2) //$NON-NLS-1$ //$NON-NLS-2$
-					|| Messages.NodePropertiesLabelProvider_lastScannerError.equals(t1)
-					|| Messages.NodePropertiesLabelProvider_lastScannerError.equals(t2)) {
-				if (("".equals(t1) || Messages.NodePropertiesLabelProvider_lastScannerError.equals(t1)) //$NON-NLS-1$
-						&& !("".equals(t2) || Messages.NodePropertiesLabelProvider_lastScannerError.equals(t2))) { //$NON-NLS-1$
-					return 1;
+			// Name column sorting
+			if (index == 0) {
+				// Special handling for empty text and last error text
+				if ("".equals(t1) || "".equals(t2) //$NON-NLS-1$ //$NON-NLS-2$
+						|| Messages.NodePropertiesLabelProvider_lastScannerError.equals(t1)
+						|| Messages.NodePropertiesLabelProvider_lastScannerError.equals(t2)) {
+					if (("".equals(t1) || Messages.NodePropertiesLabelProvider_lastScannerError.equals(t1)) //$NON-NLS-1$
+							&& !("".equals(t2) || Messages.NodePropertiesLabelProvider_lastScannerError.equals(t2))) { //$NON-NLS-1$
+						return 1;
+					}
+					if (!("".equals(t1) || Messages.NodePropertiesLabelProvider_lastScannerError.equals(t1)) //$NON-NLS-1$
+							&& ("".equals(t2) || Messages.NodePropertiesLabelProvider_lastScannerError.equals(t2))) { //$NON-NLS-1$
+						return -1;
+					}
+					if ("".equals(t1) && Messages.NodePropertiesLabelProvider_lastScannerError.equals(t2)) { //$NON-NLS-1$
+						return -1;
+					}
+					if ("".equals(t2) && Messages.NodePropertiesLabelProvider_lastScannerError.equals(t1)) { //$NON-NLS-1$
+						return 1;
+					}
 				}
-				if (!("".equals(t1) || Messages.NodePropertiesLabelProvider_lastScannerError.equals(t1)) //$NON-NLS-1$
-						&& ("".equals(t2) || Messages.NodePropertiesLabelProvider_lastScannerError.equals(t2))) { //$NON-NLS-1$
-					return -1;
+				// Special handling for "\t"
+				else if ("\t".equals(t1) || "\t".equals(t2)) { //$NON-NLS-1$ //$NON-NLS-2$
+					return 0;
 				}
-				if ("".equals(t1) && Messages.NodePropertiesLabelProvider_lastScannerError.equals(t2)) { //$NON-NLS-1$
-					return -1;
-				}
-				if ("".equals(t2) && Messages.NodePropertiesLabelProvider_lastScannerError.equals(t1)) { //$NON-NLS-1$
-					return 1;
+			}
+			// Value column sorting
+			else if (index == 1) {
+				String t11 = doGetText(node1, 0);
+				String t21 = doGetText(node2, 0);
+				// Special handling for "\t"
+				if ("\t".equals(t11) || "\t".equals(t21)) { //$NON-NLS-1$ //$NON-NLS-2$
+					return 0;
 				}
 			}
 		}

@@ -91,10 +91,50 @@ public class NodePropertiesContentProvider implements IStructuredContentProvider
 			for (String name : properties.keySet()) {
 				// Check if the property is filtered
 				if (name.endsWith(".silent") || Arrays.asList(FILTERED_PROPERTIES).contains(name)) continue; //$NON-NLS-1$
-				// Create the properties node
-				TableNode propertiesNode = new TableNode(name, properties.get(name) != null ? properties.get(name).toString() : ""); //$NON-NLS-1$
-				if (!IPeerModelProperties.PROP_LAST_SCANNER_ERROR.equals(name)) nodes.add(propertiesNode);
-				else lastErrorNode = propertiesNode;
+				// Create the properties node, if not one of the services nodes
+				if (!IPeerModelProperties.PROP_LOCAL_SERVICES.equals(name) && !IPeerModelProperties.PROP_REMOTE_SERVICES.equals(name)) {
+					TableNode propertiesNode = new TableNode(name, properties.get(name) != null ? properties.get(name).toString() : ""); //$NON-NLS-1$
+					if (!IPeerModelProperties.PROP_LAST_SCANNER_ERROR.equals(name)) nodes.add(propertiesNode);
+					else lastErrorNode = propertiesNode;
+				} else {
+					// For the services nodes, additional nodes might be necessary to make
+					// reading all the service names in the table easier
+					String services = properties.get(name) != null ? properties.get(name).toString() : ""; //$NON-NLS-1$
+					if (services.split(",").length > 6) { //$NON-NLS-1$
+						// More than 6 services listed -> generate nodes with 6 service names each
+						String[] serviceNames = services.split(","); //$NON-NLS-1$
+						boolean withName = true;
+						StringBuilder nodeValue = new StringBuilder();
+						int counter = 1;
+						for (String serviceName : serviceNames) {
+							nodeValue.append(serviceName.trim());
+							nodeValue.append(", "); //$NON-NLS-1$
+							if (counter < 6) {
+								counter++;
+							} else {
+								TableNode propertiesNode = new TableNode(withName ? name : "\t", nodeValue.toString()); //$NON-NLS-1$
+								nodes.add(propertiesNode);
+								if (withName) withName = false;
+								counter = 1;
+								nodeValue = new StringBuilder();
+							}
+						}
+						// Anything left in the string builder?
+						if (nodeValue.toString().trim().length() > 0) {
+							String value = nodeValue.toString();
+							if (value.endsWith(", ")) value = value.substring(0, value.length() - 2); //$NON-NLS-1$
+							if (value.trim().length() > 0) {
+								TableNode propertiesNode = new TableNode(withName ? name : "\t", value); //$NON-NLS-1$
+								nodes.add(propertiesNode);
+							}
+						}
+
+					} else {
+						// Less than 6 service names listed -> generate a single node
+						TableNode propertiesNode = new TableNode(name, services);
+						nodes.add(propertiesNode);
+					}
+				}
 			}
 
 			if (lastErrorNode != null) {
