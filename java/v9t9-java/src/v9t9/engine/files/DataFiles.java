@@ -190,5 +190,23 @@ public class DataFiles {
 		settingUserRomsPath.saveState(section);
 		
 	}
-    
+
+	public static String readFileText(File file) throws IOException {
+		FileInputStream stream = null;
+		byte[] result;
+        try {
+        	long size = file.length();
+			stream = new FileInputStream(file);
+	        result = new byte[(int) size];
+	        stream.read(result);
+        } catch (IOException e) {
+        	if (stream != null)
+        		stream.close();
+        	throw e;
+        }
+		return new String(result);
+	}
+
+
+
 }
