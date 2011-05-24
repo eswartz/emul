@@ -835,16 +835,14 @@ static void notify_breakpoints_status(void) {
             }
         }
 #endif
-        if (*bp->id) {
-            if (bp->client_cnt == 0) {
-                assert(list_is_empty(&bp->link_clients));
-                assert(bp->instruction_cnt == 0);
-                free_bp(bp);
-            }
-            else if (bp->status_changed) {
-                send_event_breakpoint_status(&broadcast_group->out, bp);
-                bp->status_changed = 0;
-            }
+        if (bp->client_cnt == 0) {
+            assert(list_is_empty(&bp->link_clients));
+            assert(bp->instruction_cnt == 0);
+            free_bp(bp);
+        }
+        else if (bp->status_changed) {
+            if (*bp->id) send_event_breakpoint_status(&broadcast_group->out, bp);
+            bp->status_changed = 0;
         }
     }
 }
@@ -1204,6 +1202,10 @@ static int str_arr_equ(char ** x, char ** y) {
 }
 
 static void replant_breakpoint(BreakpointInfo * bp) {
+    if (bp->client_cnt == 0 && bp->instruction_cnt == 0) {
+        free_bp(bp);
+        return;
+    }
     if (list_is_empty(&context_root)) return;
     if (bp->ctx != NULL) {
         if (!bp->ctx->exited) post_location_evaluation_request(bp->ctx, bp);
