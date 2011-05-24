@@ -391,8 +391,11 @@ class LocatorService(locator.LocatorService):
             logging.trace(str.getvalue())
 
     def __getSubNetList(self, set):
+        # TODO iterate over network interfaces to get proper broadcast addresses
         hostname = socket.gethostname()
         _, _, addresses = socket.gethostbyname_ex(hostname)
+        if not "127.0.0.1" in addresses:
+            addresses.append("127.0.0.1")
         for address in addresses:
             rawaddr = socket.inet_aton(address)
             if len(rawaddr) != 4: continue
