@@ -152,6 +152,8 @@ struct MemoryRegionAttribute {
 #define RM_REVERSE_STEP_INTO_RANGE 15 /* Reverse of RM_STEP_INTO_RANGE */
 #define RM_UNTIL_ACTIVE            16 /* Run until the context becomes active - scheduled to run on a target CPU */
 #define RM_REVERSE_UNTIL_ACTIVE    17 /* Run reverse until the context becomes active */
+/* RM_TERMINATE must be last */
+#define RM_TERMINATE               18 /* Terminate the context */
 
 /* Mode flags for context_attach() */
 #define CONTEXT_ATTACH_SELF      0x01 /* The process is forked child - it will attach itself */
@@ -262,6 +264,7 @@ extern int context_can_resume(Context * ctx, int mode);
 /*
  * Resume normal execution of the context.
  * Return -1 and set errno if the context cannot be resumed.
+ * Deprecated: use context_resume(ctx, RM_RESUME, 0, 0).
  */
 extern int context_continue(Context * ctx);
 

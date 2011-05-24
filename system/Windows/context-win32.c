@@ -603,49 +603,60 @@ static int win32_resume(Context * ctx, int step) {
         ext->regs_dirty = 0;
     }
 
-    if (ctx->pending_signals & (1 << SIGKILL) || prs->pending_signals & (1 << SIGKILL)) {
-        LINK * l;
-        trace(LOG_CONTEXT, "context: terminating process %#lx, id %s", prs, prs->id);
-        if (!prs->exiting && !TerminateProcess(prs_ext->handle, 1)) {
+    if (ext->trace_flag) {
+        get_registers(ctx);
+        if (ext->regs_error) {
+            set_error_report_errno(ext->regs_error);
+            return -1;
+        }
+        ext->step_opcodes_addr = ext->regs->Eip;
+        if (!ReadProcessMemory(prs_ext->handle, (LPCVOID)ext->regs->Eip, &ext->step_opcodes,
+                sizeof(ext->step_opcodes), &ext->step_opcodes_len) || ext->step_opcodes_len == 0) {
+            errno = log_error("ReadProcessMemory", 0);
+            return -1;
+        }
+    }
+    if (debug_state->reporting_debug_event) {
+        ext->start_pending = 1;
+    }
+    else {
+        for (;;) {
+            DWORD cnt = ResumeThread(ext->handle);
+            if (cnt == (DWORD)-1) {
+                errno = log_error("ResumeThread", 0);
+                return -1;
+            }
+            if (cnt <= 1) break;
+        }
+    }
+
+    event_win32_context_started(ctx);
+    return 0;
+}
+
+static int win32_terminate(Context * ctx) {
+    LINK * l;
+    ContextExtensionWin32 * ext = EXT(ctx);
+    DebugState * debug_state = ext->debug_state;
+
+    if (debug_state->reporting_debug_event) {
+        debug_state->reporting_debug_event++;
+    }
+
+    trace(LOG_CONTEXT, "context: terminating process %#lx, id %s", ctx, ctx->id);
+    if (!ctx->exiting) {
+        if (!TerminateProcess(ext->handle, 1)) {
             errno = log_error("TerminateProcess", 0);
             return -1;
         }
-        prs->pending_signals &= ~(1 << SIGKILL);
-        prs->exiting = 1;
-        for (l = prs->children.next; l != &prs->children; l = l->next) {
+        ctx->exiting = 1;
+        for (l = ctx->children.next; l != &ctx->children; l = l->next) {
             Context * c = cldl2ctxp(l);
+            event_win32_context_started(c);
             c->exiting = 1;
         }
     }
-    else {
-        if (ext->trace_flag) {
-            get_registers(ctx);
-            if (ext->regs_error) {
-                set_error_report_errno(ext->regs_error);
-                return -1;
-            }
-            ext->step_opcodes_addr = ext->regs->Eip;
-            if (!ReadProcessMemory(prs_ext->handle, (LPCVOID)ext->regs->Eip, &ext->step_opcodes,
-                    sizeof(ext->step_opcodes), &ext->step_opcodes_len) || ext->step_opcodes_len == 0) {
-                errno = log_error("ReadProcessMemory", 0);
-                return -1;
-            }
-        }
-        if (debug_state->reporting_debug_event) {
-            ext->start_pending = 1;
-        }
-        else {
-            for (;;) {
-                DWORD cnt = ResumeThread(ext->handle);
-                if (cnt == (DWORD)-1) {
-                    errno = log_error("ResumeThread", 0);
-                    return -1;
-                }
-                if (cnt <= 1) break;
-            }
-        }
-    }
-    event_win32_context_started(ctx);
+
     return 0;
 }
 
@@ -1046,12 +1057,23 @@ int context_single_step(Context * ctx) {
     return win32_resume(ctx, 1);
 }
 
+static int context_terminate(Context * ctx) {
+    assert(is_dispatch_thread());
+    assert(!context_has_state(ctx));
+    assert(!ctx->exited);
+
+    trace(LOG_CONTEXT, "context: terminate ctx %#lx, id %s", ctx, ctx->id);
+    return win32_terminate(ctx);
+}
+
 int context_resume(Context * ctx, int mode, ContextAddress range_start, ContextAddress range_end) {
     switch (mode) {
     case RM_RESUME:
         return context_continue(ctx);
     case RM_STEP_INTO:
         return context_single_step(ctx);
+    case RM_TERMINATE:
+        return context_terminate(ctx);
     }
     errno = ERR_UNSUPPORTED;
     return -1;
@@ -1061,7 +1083,9 @@ int context_can_resume(Context * ctx, int mode) {
     switch (mode) {
     case RM_RESUME:
     case RM_STEP_INTO:
-        return 1;
+        return context_has_state(ctx);
+    case RM_TERMINATE:
+        return ctx != NULL && ctx->parent == NULL;
     }
     return 0;
 }

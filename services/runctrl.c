@@ -160,7 +160,7 @@ static void write_context(OutputStream * out, Context * ctx) {
     json_write_string(out, "CanResume");
     write_stream(out, ':');
     modes = 0;
-    for (md = 0; md < 16; md++) {
+    for (md = 0; md < RM_TERMINATE; md++) {
         if (context_can_resume(ctx, md)) modes |= 1 << md;
     }
     if (!has_state) {
@@ -211,7 +211,7 @@ static void write_context(OutputStream * out, Context * ctx) {
         json_write_boolean(out, 1);
     }
 
-    if (has_state || ctx->mem_access != 0) {
+    if (context_can_resume(ctx, RM_TERMINATE)) {
         write_stream(out, ',');
         json_write_string(out, "CanTerminate");
         write_stream(out, ':');
@@ -480,23 +480,20 @@ static void resume_params_callback(InputStream * inp, const char * name, void * 
 }
 
 static int resume_context_tree(Context * ctx) {
-    if (context_has_state(ctx)) {
+    if (!context_has_state(ctx)) {
+        LINK * l;
+        for (l = ctx->children.next; l != &ctx->children; l = l->next) {
+            Context * x = cldl2ctxp(l);
+            if (!x->exited) resume_context_tree(x);
+        }
+    }
+    else if (EXT(ctx)->intercepted) {
         Context * grp = context_get_group(ctx, CONTEXT_GROUP_INTERCEPT);
-        assert(EXT(ctx)->intercepted);
         send_event_context_resumed(grp);
         assert(!EXT(ctx)->intercepted);
         if (run_ctrl_lock_cnt == 0 && run_safe_events_posted < 4) {
             run_safe_events_posted++;
             post_event(run_safe_events, NULL);
-        }
-    }
-    else {
-        LINK * l;
-        for (l = ctx->children.next; l != &ctx->children; l = l->next) {
-            Context * x = cldl2ctxp(l);
-            ContextExtensionRC * y = EXT(x);
-            if (x->exited || (context_has_state(x) && !y->intercepted)) continue;
-            resume_context_tree(x);
         }
     }
     return 0;
@@ -689,29 +686,28 @@ static void command_suspend(char * token, Channel * c) {
     send_simple_result(c, token, err);
 }
 
-static void event_terminate(void * args) {
-    Context * ctx = (Context *)args;
-    ContextExtensionRC * ext = EXT(ctx);
-    LINK * l = ctx->children.next;
-    while (l != &ctx->children) {
-        Context * x = cldl2ctxp(l);
-        ContextExtensionRC * y = EXT(x);
-        if (!x->exited) {
-            if (y->intercepted) {
-                ext->step_continue_mode = RM_RESUME;
-                resume_context_tree(x);
-            }
-            x->pending_intercept = 0;
-            x->pending_signals |= 1 << SIGKILL;
-        }
-        l = l->next;
-    }
-    if (ext->intercepted) {
-        ext->step_continue_mode = RM_RESUME;
+static void terminate_context_tree(Context * ctx) {
+    if (ctx->exited) return;
+    if (context_can_resume(ctx, RM_TERMINATE)) {
+        ContextExtensionRC * ext = EXT(ctx);
+        cancel_step_mode(ctx);
+        ctx->pending_intercept = 0;
+        ext->step_mode = RM_TERMINATE;
         resume_context_tree(ctx);
     }
-    ctx->pending_intercept = 0;
-    ctx->pending_signals |= 1 << SIGKILL;
+    else {
+        LINK * l = ctx->children.next;
+        while (l != &ctx->children) {
+            Context * x = cldl2ctxp(l);
+            terminate_context_tree(x);
+            l = l->next;
+        }
+    }
+}
+
+static void event_terminate(void * args) {
+    Context * ctx = (Context *)args;
+    terminate_context_tree(ctx);
     context_unlock(ctx);
 }
 
@@ -1350,26 +1346,33 @@ static void sync_run_state() {
     l = context_root.next;
     while (l != &context_root) {
         Context * ctx = ctxl2ctxp(l);
-        Context * grp = context_get_group(ctx, CONTEXT_GROUP_INTERCEPT);
-        EXT(grp)->intercept_group = 0;
-        EXT(ctx)->pending_safe_event = 0;
+        ContextExtensionRC * ext = EXT(ctx);
+        ext->pending_safe_event = 0;
+        if (context_has_state(ctx)) {
+            Context * grp = context_get_group(ctx, CONTEXT_GROUP_INTERCEPT);
+            EXT(grp)->intercept_group = 0;
+        }
+        else if (ext->step_mode == RM_TERMINATE) {
+            context_resume(ctx, RM_TERMINATE, 0, 0);
+        }
         l = l->next;
     }
 
     /* Set intercept group flags */
     l = context_root.next;
     while (l != &context_root) {
+        Context * grp = NULL;
         Context * ctx = ctxl2ctxp(l);
-        Context * grp = context_get_group(ctx, CONTEXT_GROUP_INTERCEPT);
         ContextExtensionRC * ext = EXT(ctx);
         l = l->next;
         if (ctx->exited) continue;
         if (!ctx->stopped) continue;
+        grp = context_get_group(ctx, CONTEXT_GROUP_INTERCEPT);
         if (ext->intercepted) {
             EXT(grp)->intercept_group = 1;
             continue;
         }
-        if (ext->step_mode == RM_RESUME || ext->step_mode == RM_REVERSE_RESUME) {
+        if (ext->step_mode == RM_RESUME || ext->step_mode == RM_REVERSE_RESUME || ext->step_mode == RM_TERMINATE) {
             ext->step_continue_mode = ext->step_mode;
         }
         else {
@@ -1398,13 +1401,14 @@ static void sync_run_state() {
     list_init(&p);
     l = context_root.next;
     while (err_cnt == 0 && run_ctrl_lock_cnt == 0 && l != &context_root) {
+        Context * grp = NULL;
         Context * ctx = ctxl2ctxp(l);
-        Context * grp = context_get_group(ctx, CONTEXT_GROUP_INTERCEPT);
         ContextExtensionRC * ext = EXT(ctx);
         l = l->next;
         if (ctx->exited) continue;
         if (ext->intercepted) continue;
         if (!context_has_state(ctx)) continue;
+        grp = context_get_group(ctx, CONTEXT_GROUP_INTERCEPT);
         if (EXT(grp)->intercept_group) {
             ctx->pending_intercept = 1;
             if (!ctx->stopped && !ctx->exiting) {

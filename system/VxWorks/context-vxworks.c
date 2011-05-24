@@ -246,9 +246,7 @@ static int kill_context(Context * ctx) {
 
     assert(ctx->stopped);
     assert(ctx->parent != NULL);
-    assert(ctx->pending_signals & (1 << SIGKILL));
 
-    ctx->pending_signals &= ~(1 << SIGKILL);
     if (taskDelete(ext->pid) != OK) {
         int error = errno;
         trace(LOG_ALWAYS, "context: can't kill ctx %#lx, id %#x: %s",
@@ -286,10 +284,6 @@ int context_continue(Context * ctx) {
             return -1;
         }
         ext->regs_dirty = 0;
-    }
-
-    if (ctx->pending_signals & (1 << SIGKILL)) {
-        return kill_context(ctx);
     }
 
     vxdbg_ctx.ctxId = ext->pid;
@@ -331,10 +325,6 @@ int context_single_step(Context * ctx) {
         ext->regs_dirty = 0;
     }
 
-    if (ctx->pending_signals & (1 << SIGKILL)) {
-        return kill_context(ctx);
-    }
-
     vxdbg_ctx.ctxId = ext->pid;
     vxdbg_ctx.ctxType = VXDBG_CTX_TASK;
     taskLock();
@@ -350,12 +340,35 @@ int context_single_step(Context * ctx) {
     return 0;
 }
 
+static int context_terminate() {
+    ContextExtensionVxWorks * ext = EXT(ctx);
+    VXDBG_CTX vxdbg_ctx;
+
+    assert(is_dispatch_thread());
+    assert(ctx->parent != NULL);
+    assert(ctx->stopped);
+    assert(!ctx->pending_intercept);
+    assert(!ctx->exited);
+    assert(taskIsStopped(ext->pid));
+
+    trace(LOG_CONTEXT, "context: terminate ctx %#lx, id %#x", ctx, ext->pid);
+
+    if (ext->regs_dirty) {
+        taskRegsSet(ext->pid, ext->regs);
+        ext->regs_dirty = 0;
+    }
+
+    return kill_context(ctx);
+}
+
 int context_resume(Context * ctx, int mode, ContextAddress range_start, ContextAddress range_end) {
     switch (mode) {
     case RM_RESUME:
         return context_continue(ctx);
     case RM_STEP_INTO:
         return context_single_step(ctx);
+    case RM_TERMINATE:
+        return context_terminate(ctx);
     }
     errno = ERR_UNSUPPORTED;
     return -1;
@@ -365,7 +378,8 @@ int context_can_resume(Context * ctx, int mode) {
     switch (mode) {
     case RM_RESUME:
     case RM_STEP_INTO:
-        return 1;
+    case RM_TERMINATE:
+        return context_has_state(ctx);
     }
     return 0;
 }

@@ -271,6 +271,9 @@ int context_resume(Context * ctx, int mode, ContextAddress range_start, ContextA
         return context_continue(ctx);
     case RM_STEP_INTO:
         return context_single_step(ctx);
+    case RM_TERMINATE:
+        ctx->pending_signals |= 1 << SIGKILL;
+        return context_continue(ctx);
     }
     errno = ERR_UNSUPPORTED;
     return -1;
@@ -280,7 +283,8 @@ int context_can_resume(Context * ctx, int mode) {
     switch (mode) {
     case RM_RESUME:
     case RM_STEP_INTO:
-        return 1;
+    case RM_TERMINATE:
+        return context_has_state(ctx);
     }
     return 0;
 }
