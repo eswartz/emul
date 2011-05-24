@@ -20,6 +20,7 @@ import org.eclipse.debug.core.commands.IDebugCommandRequest;
 import org.eclipse.debug.core.commands.IEnabledStateRequest;
 import org.eclipse.debug.core.commands.ITerminateHandler;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
+import org.eclipse.tm.internal.tcf.debug.ui.model.TCFChildren;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModel;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExecContext;
@@ -44,14 +45,26 @@ public class TerminateCommand implements ITerminateHandler {
                     TCFNode node = null;
                     if (elements[i] instanceof TCFNode) node = (TCFNode)elements[i];
                     while (node != null && !node.isDisposed()) {
-                        IRunControl.RunControlContext ctx = null;
                         if (node instanceof TCFNodeExecContext) {
                             TCFDataCache<IRunControl.RunControlContext> cache = ((TCFNodeExecContext)node).getRunContext();
                             if (!cache.validate(this)) return;
-                            ctx = cache.getData();
-                        }
-                        if (ctx != null && ctx.canTerminate()) {
-                            res = true;
+                            IRunControl.RunControlContext ctx = cache.getData();
+                            if (ctx != null && ctx.canTerminate()) {
+                                res = true;
+                            }
+                            else {
+                                TCFChildren children_cache = ((TCFNodeExecContext)node).getChildren();
+                                if (!children_cache.validate(this)) return;
+                                for (TCFNode child : children_cache.toArray()) {
+                                    cache = ((TCFNodeExecContext)child).getRunContext();
+                                    if (!cache.validate(this)) return;
+                                    ctx = cache.getData();
+                                    if (ctx != null && ctx.canTerminate()) {
+                                        res = true;
+                                        break;
+                                    }
+                                }
+                            }
                             break;
                         }
                         node = node.getParent();
@@ -74,14 +87,26 @@ public class TerminateCommand implements ITerminateHandler {
                     TCFNode node = null;
                     if (elements[i] instanceof TCFNode) node = (TCFNode)elements[i];
                     while (node != null && !node.isDisposed()) {
-                        IRunControl.RunControlContext ctx = null;
                         if (node instanceof TCFNodeExecContext) {
                             TCFDataCache<IRunControl.RunControlContext> cache = ((TCFNodeExecContext)node).getRunContext();
                             if (!cache.validate(this)) return;
-                            ctx = cache.getData();
-                        }
-                        if (ctx != null && ctx.canTerminate()) {
-                            set.add(ctx);
+                            IRunControl.RunControlContext ctx = cache.getData();
+                            if (ctx != null && ctx.canTerminate()) {
+                                set.add(ctx);
+                            }
+                            else {
+                                TCFChildren children_cache = ((TCFNodeExecContext)node).getChildren();
+                                if (!children_cache.validate(this)) return;
+                                for (TCFNode child : children_cache.toArray()) {
+                                    cache = ((TCFNodeExecContext)child).getRunContext();
+                                    if (!cache.validate(this)) return;
+                                    IRunControl.RunControlContext child_ctx = cache.getData();
+                                    if (child_ctx != null && child_ctx.canTerminate()) {
+                                        if (ctx != null) set.add(ctx);
+                                        else set.add(child_ctx);
+                                    }
+                                }
+                            }
                             break;
                         }
                         node = node.getParent();

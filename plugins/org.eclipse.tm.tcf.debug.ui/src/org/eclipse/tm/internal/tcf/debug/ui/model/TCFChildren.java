@@ -183,7 +183,7 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
      * The cache must be valid for the method to work.
      * @return number of children.
      */
-    int size() {
+    public int size() {
         assert isValid();
         Map<String,TCFNode> data = getData();
         return data == null ? 0 : data.size();
@@ -193,7 +193,7 @@ public abstract class TCFChildren extends TCFDataCache<Map<String,TCFNode>> {
      * Return current children nodes as a sorted array.
      * @return array of nodes.
      */
-    TCFNode[] toArray() {
+    public TCFNode[] toArray() {
         assert isValid();
         if (array != null) return array;
         Map<String,TCFNode> data = getData();
