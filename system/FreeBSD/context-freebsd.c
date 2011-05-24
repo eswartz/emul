@@ -282,6 +282,7 @@ int context_resume(Context * ctx, int mode, ContextAddress range_start, ContextA
 int context_can_resume(Context * ctx, int mode) {
     switch (mode) {
     case RM_RESUME:
+        return 1;
     case RM_STEP_INTO:
     case RM_TERMINATE:
         return context_has_state(ctx);

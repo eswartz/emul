@@ -652,6 +652,7 @@ static int win32_terminate(Context * ctx) {
         ctx->exiting = 1;
         for (l = ctx->children.next; l != &ctx->children; l = l->next) {
             Context * c = cldl2ctxp(l);
+            if (!c->stopped) continue;
             event_win32_context_started(c);
             c->exiting = 1;
         }
@@ -1082,6 +1083,7 @@ int context_resume(Context * ctx, int mode, ContextAddress range_start, ContextA
 int context_can_resume(Context * ctx, int mode) {
     switch (mode) {
     case RM_RESUME:
+        return 1;
     case RM_STEP_INTO:
         return context_has_state(ctx);
     case RM_TERMINATE:
