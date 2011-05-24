@@ -21,9 +21,9 @@
       * [done] MemoryMap
       * [done] Memory
       * [done] PathMap
-      * Diagnostics
+      * [done] Diagnostics
       * Disassembly
-      * Streams
+      * [done] Streams
       * Terminals
       * SysMonitor
    * Local services:

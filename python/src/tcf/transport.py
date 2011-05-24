@@ -87,7 +87,10 @@ def addChannelOpenListener(listener):
     _listeners.append(listener)
 
 def removeChannelOpenListener(listener):
-    _listeners.remove(listener)
+    try:
+        _listeners.remove(listener)
+    except ValueError:
+        pass # ignore
 
 class TCPTransportProvider(TransportProvider):
     def getName(self):

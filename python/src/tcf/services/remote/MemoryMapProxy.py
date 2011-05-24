@@ -54,10 +54,8 @@ class MemoryMapProxy(memorymap.MemoryMapService):
         self.listeners[listener] = l
 
     def removeListener(self, listener):
-        l = self.listeners.get(listener)
-        if l:
-            del self.listeners[listener]
-            self.channel.removeEventListener(self, l)
+        l = self.listeners.pop(listener, None)
+        if l: self.channel.removeEventListener(self, l)
 
 class ChannelEventListener(channel.EventListener):
     def __init__(self, service, listener):
