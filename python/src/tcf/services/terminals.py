@@ -56,42 +56,42 @@ class TerminalContext(object):
     def getID(self):
         """
         Get context ID.
-        Same as getProperties().get(“ID”)
+        Same as getProperties().get("ID")
         """
         return self._props.get(PROP_ID)
 
     def getProcessID(self):
         """
         Get process ID of the login process of the terminal.
-        Same as getProperties().get(“ProcessID”)
+        Same as getProperties().get("ProcessID")
         """
         return self._props.get(PROP_PROCESS_ID)
 
     def getPtyType(self):
         """
         Get terminal type.
-        Same as getProperties().get(“PtyType”)
+        Same as getProperties().get("PtyType")
         """
         return self._props.get(PROP_PTY_TYPE)
 
     def getEncoding(self):
         """
         Get encoding.
-        Same as getProperties().get(“Encoding”)
+        Same as getProperties().get("Encoding")
         """
         return self._props.get(PROP_ENCODING)
 
     def getWidth(self):
         """
         Get width.
-        Same as getProperties().get(“Width”)
+        Same as getProperties().get("Width")
         """
         return self._props.get(PROP_WIDTH)
 
     def getHeight(self):
         """
         Get height.
-        Same as getProperties().get(“Height”)
+        Same as getProperties().get("Height")
         """
         return self._props.get(PROP_HEIGHT)
 
@@ -109,7 +109,7 @@ class TerminalContext(object):
         @return pending command handle, can be used to cancel the command.
         """
         raise NotImplementedError("Abstract method")
-        
+
 class TerminalsService(services.Service):
     def getName(self):
         return NAME
@@ -124,8 +124,8 @@ class TerminalsService(services.Service):
         However, 'ITerminals.getContext' is supposed to return only terminal specific data,
         If the ID is not a terminal ID, 'ITerminals.getContext' may not return any
         useful information
-        
-        @param id – context ID.
+
+        @param id - context ID.
         @param done - call back interface called when operation is completed.
         """
         raise NotImplementedError("Abstract method")
@@ -183,8 +183,8 @@ class DoneGetContext(object):
     def doneGetContext(self, token, error, context):
         """
         Called when contexts data retrieval is done.
-        @param error – error description if operation failed, null if succeeded.
-        @param context – context data.
+        @param error - error description if operation failed, null if succeeded.
+        @param context - context data.
         """
         pass
 
@@ -216,7 +216,7 @@ class TerminalsListener(object):
         """
         Called when a terminal exits.
         @param terminal_id - terminal context ID
-        @param newWidth – new terminal width
-        @param newHeight – new terminal height
+        @param newWidth - new terminal width
+        @param newHeight - new terminal height
         """
         pass

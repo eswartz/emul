@@ -118,7 +118,7 @@ class StreamsListener(object):
     """
     Clients can implement StreamsListener interface to be notified
     when a stream is created or disposed. The interface is registered with 'subscribe' command.
-    
+
     When new stream is created, client must decide if it is interested in that particular stream instance.
     If not interested, client should send 'disconnect' command to allow remote peer to free resources and bandwidth.
     If not disconnected, client is required to send 'read' commands as necessary to prevent stream buffer overflow.

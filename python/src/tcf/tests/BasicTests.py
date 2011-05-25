@@ -42,6 +42,7 @@ def test():
     try:
         testRunControl(c)
         testStackTrace(c)
+        testDisassembly(c)
         testBreakpoints(c)
         testSymbols(c)
         testRegisters(c)
@@ -217,6 +218,26 @@ def testStackTrace(c):
         stack.getChildren(ctx_id, DoneGetChildren())
     for ctx_id in _suspended:
         protocol.invokeLater(stackTest, ctx_id)
+
+def testDisassembly(c):
+    if not _suspended: return
+    ctl = sync.CommandControl(c)
+    try:
+        dis = ctl.Disassembly
+    except AttributeError:
+        # no Disassembly service
+        return
+    for ctx_id in _suspended:
+        frames = ctl.StackTrace.getChildren(ctx_id).get()
+        if frames:
+            frameData = ctl.StackTrace.getContext(frames).get()
+            if frameData:
+                addr = frameData[0].get("IP")
+                if addr:
+                    print "Disassemble context %s from 0x%x" % (ctx_id, addr)
+                    lines = dis.disassemble(ctx_id, addr, 256, None).get()
+                    for line in lines:
+                        print line
 
 def testSymbols(c):
     from tcf.services import symbols
@@ -409,9 +430,9 @@ def testDataCache(c):
     protocol.invokeLater(contextsCache.validate, done)
 
 def testProcesses(c):
-    from tcf.services import processes
+    from tcf.services import processes, processes_v1
     def processTest():
-        proc = c.getRemoteService(processes.NAME)
+        proc = c.getRemoteService(processes_v1.NAME) or c.getRemoteService(processes.NAME)
         if not proc:
             return
         class DoneGetChildren(processes.DoneGetChildren):

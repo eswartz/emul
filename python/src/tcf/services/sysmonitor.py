@@ -339,7 +339,7 @@ class SysMonitorService(services.Service):
     def getContext(self, id, done):
         """
         Retrieve context info for given context ID.
-        
+
         @param id - context ID.
         @param done - callback interface called when operation is completed.
         """
@@ -348,7 +348,7 @@ class SysMonitorService(services.Service):
     def getChildren(self, parent_context_id, done):
         """
         Retrieve children of given context.
-        
+
         @param parent_context_id - parent context ID. Can be null -
         to retrieve top level of the hierarchy, or one of context IDs retrieved
         by previous getContext or getChildren commands.
