@@ -58,6 +58,9 @@ struct event_node {
 #  define trace if ((log_mode & LOG_EVENTCORE) && log_file) print_trace
 #endif
 
+#define EVENT_BUF_SIZE 0x200
+static event_node event_buf[EVENT_BUF_SIZE];
+
 static pthread_mutex_t event_lock;
 static pthread_cond_t event_cond;
 static pthread_cond_t cancel_cond;
@@ -66,7 +69,6 @@ static event_node * event_queue = NULL;
 static event_node * event_last = NULL;
 static event_node * timer_queue = NULL;
 static event_node * free_queue = NULL;
-static int free_queue_size = 0;
 static EventCallBack * cancel_handler = NULL;
 static void * cancel_arg = NULL;
 static int process_events = 0;
@@ -91,7 +93,7 @@ static void time_add_usec(struct timespec * tv, unsigned long usec) {
     }
 }
 
-void post_event_with_delay(EventCallBack * handler, void * arg, unsigned long delay) {
+static void post_from_bg_thread(EventCallBack * handler, void * arg, unsigned long delay) {
     event_node * ev;
     event_node * next;
     event_node * prev;
@@ -129,19 +131,53 @@ void post_event_with_delay(EventCallBack * handler, void * arg, unsigned long de
     check_error(pthread_mutex_unlock(&event_lock));
 }
 
+void post_event_with_delay(EventCallBack * handler, void * arg, unsigned long delay) {
+    if (is_event_thread) {
+        event_node * ev;
+        event_node * next;
+        event_node * prev;
+
+        ev = free_queue;
+        if (ev != NULL) free_queue = ev->next;
+        else ev = (event_node *)loc_alloc(sizeof(event_node));
+        if (clock_gettime(CLOCK_REALTIME, &ev->runtime)) check_error(errno);
+        time_add_usec(&ev->runtime, delay);
+        ev->handler = handler;
+        ev->arg = arg;
+
+        check_error(pthread_mutex_lock(&event_lock));
+        prev = NULL;
+        next = timer_queue;
+        while (next != NULL && time_cmp(&ev->runtime, &next->runtime) >= 0) {
+            prev = next;
+            next = next->next;
+        }
+        ev->next = next;
+        if (prev == NULL) {
+            timer_queue = ev;
+        }
+        else {
+            prev->next = ev;
+        }
+        check_error(pthread_mutex_unlock(&event_lock));
+
+        trace(LOG_EVENTCORE, "post_event: event %#lx, handler %#lx, arg %#lx, runtime %02d%02d.%03d",
+            ev, ev->handler, ev->arg,
+            ev->runtime.tv_sec / 60 % 60, ev->runtime.tv_sec % 60, ev->runtime.tv_nsec / 1000000);
+    }
+    else {
+        post_from_bg_thread(handler, arg, delay);
+    }
+}
+
 void post_event(EventCallBack * handler, void * arg) {
     if (is_event_thread) {
         event_node * ev = free_queue;
-        if (ev != NULL) {
-            free_queue = ev->next;
-            free_queue_size--;
-        }
-        else {
-            ev = (event_node *)loc_alloc(sizeof(event_node));
-        }
-        memset(ev, 0, sizeof(event_node));
+        if (ev != NULL) free_queue = ev->next;
+        else ev = (event_node *)loc_alloc(sizeof(event_node));
         ev->handler = handler;
         ev->arg = arg;
+        ev->next = NULL;
         if (event_queue == NULL) {
             assert(event_last == NULL);
             event_last = event_queue = ev;
@@ -153,7 +189,7 @@ void post_event(EventCallBack * handler, void * arg) {
         trace(LOG_EVENTCORE, "post_event: event %#lx, handler %#lx, arg %#lx", ev, ev->handler, ev->arg);
     }
     else {
-        post_event_with_delay(handler, arg, 0);
+        post_from_bg_thread(handler, arg, 0);
     }
 }
 
@@ -228,11 +264,17 @@ int is_dispatch_thread(void) {
 }
 
 void ini_events_queue(void) {
+    int i;
     /* Initial thread is event dispatcher. */
     event_thread = current_thread;
     check_error(pthread_mutex_init(&event_lock, NULL));
     check_error(pthread_cond_init(&event_cond, NULL));
     check_error(pthread_cond_init(&cancel_cond, NULL));
+    for (i = 0; i < EVENT_BUF_SIZE; i++) {
+        event_node * ev = event_buf + i;
+        ev->next = free_queue;
+        free_queue = ev;
+    }
 }
 
 void cancel_event_loop(void) {
@@ -286,10 +328,9 @@ void run_event_loop(void) {
         else {
             trace(LOG_EVENTCORE, "run_event_loop: event %#lx, handler %#lx, arg %#lx", ev, ev->handler, ev->arg);
             ev->handler(ev->arg);
-            if (free_queue_size < 500) {
+            if (ev >= event_buf && ev < event_buf + EVENT_BUF_SIZE) {
                 ev->next = free_queue;
                 free_queue = ev;
-                free_queue_size++;
             }
             else {
                 loc_free(ev);
