@@ -6,11 +6,13 @@
  */
 package v9t9.engine.files;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -191,19 +193,35 @@ public class DataFiles {
 		
 	}
 
+	public static String readInputStreamText(InputStream is) throws IOException {
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		byte[] result = new byte[1024];
+        try {
+        	int len;
+        	while ((len = is.read(result)) >= 0) {
+        		bos.write(result, 0, len);
+        	}
+        } catch (IOException e) {
+        	if (is != null)
+        		is.close();
+        	throw e;
+        }
+		return new String(bos.toByteArray());
+	}
+	
 	public static String readFileText(File file) throws IOException {
 		FileInputStream stream = null;
 		byte[] result;
-        try {
-        	long size = file.length();
+		try {
+			long size = file.length();
 			stream = new FileInputStream(file);
-	        result = new byte[(int) size];
-	        stream.read(result);
-        } catch (IOException e) {
-        	if (stream != null)
-        		stream.close();
-        	throw e;
-        }
+			result = new byte[(int) size];
+			stream.read(result);
+		} catch (IOException e) {
+			if (stream != null)
+				stream.close();
+			throw e;
+		}
 		return new String(result);
 	}
 

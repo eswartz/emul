@@ -8,8 +8,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.ControlAdapter;
-import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.MouseMoveListener;
 import org.eclipse.swt.events.PaintEvent;
@@ -69,12 +67,12 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 	 */
 	final public Control createControl(Composite parent, int flags) {
 		this.shell = parent.getShell();
-		this.canvas = createCanvas(parent, flags);
+		this.canvas = createCanvasControl(parent, flags);
 		
-		fixedAspectLayout = new FixedAspectLayout(256, 192, 3.0, 3.0, 0.5, 5);
+		fixedAspectLayout = new FixedAspectLayout(256, 192, 3.0, 3.0, 1., 5);
 		canvas.setLayout(fixedAspectLayout);	
 		
-		setCanvas(createCanvas());
+		setCanvas(createVdpCanvas());
 		this.updateRect = new Rectangle(0, 0, 0, 0);
 		
 		initWidgets();
@@ -102,19 +100,11 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 			
 		});
 		
-		
-		this.canvas.addControlListener(new ControlAdapter() {
-			@Override
-			public void controlResized(ControlEvent e) {
-				resizeWidgets();
-			}
-		});
-		
 		setupCanvas();
 		return canvas;
 	}
 
-	protected Canvas createCanvas(Composite parent, int flags) {
+	protected Canvas createCanvasControl(Composite parent, int flags) {
 		return new Canvas(parent, flags | getStyleBits());
 	}
 
@@ -129,7 +119,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 		return SWT.NO_BACKGROUND;
 	}
 
-	protected VdpCanvas createCanvas() {
+	protected VdpCanvas createVdpCanvas() {
 		return new ImageDataCanvas24Bit(0);
 	}
 
@@ -150,6 +140,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 	protected Rectangle physicalToLogical(Rectangle physical) {
 		double zoomx = fixedAspectLayout.getZoomX();
 		double zoomy = fixedAspectLayout.getZoomY();
+		System.out.printf("zoom: %g x %g%n", zoomx, zoomy);
 		return new Rectangle((int)(physical.x / zoomx) /*+ vdpCanvas.getXOffset()*/, 
 				(int)(physical.y / zoomy), 
 				(int)((physical.width + zoomx - 1) / zoomx), 
@@ -170,7 +161,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 					if (canvas.isDisposed())
 						return;
 					
-					updateWidgetSizeForMode();
+					//updateWidgetSizeForMode();
 					
 					doTriggerRedraw(redrawRect);
 					
@@ -187,11 +178,6 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 				redrawPhys.width, redrawPhys.height, false);
 	}
 
-	
-	protected void resizeWidgets() {
-		if (canvas.isDisposed())
-			return;
-	}
 	
 	/**
 	 * If the X or Y resolutions changed, ensure the widget can show it correctly.
@@ -210,7 +196,6 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 			visibleHeight /= 2;
 		fixedAspectLayout.setAspect((double) visibleWidth / visibleHeight);
 		canvas.getParent().layout(true);
-		
 	}
 
 	protected boolean zoomWithin(int physsize, float zoom, int logSize) {

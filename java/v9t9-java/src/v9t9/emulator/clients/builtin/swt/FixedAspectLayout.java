@@ -35,6 +35,13 @@ public class FixedAspectLayout extends Layout {
 		this.aspect = (double) w / h;
 	}
 	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return String.format("Layout for %d x %d is zoom %g x %g", w, h, zoomx, zoomy);
+	}
 	public int getHeight() {
 		return h;
 	}
@@ -61,6 +68,9 @@ public class FixedAspectLayout extends Layout {
 		return zoomy;
 	}
 	
+	public Point computeSize(Composite composite) {
+		return computeSize(composite, SWT.DEFAULT, SWT.DEFAULT, false);
+	}
 	@Override
 	protected Point computeSize(Composite composite, int wHint, int hHint,
 			boolean flushCache) {

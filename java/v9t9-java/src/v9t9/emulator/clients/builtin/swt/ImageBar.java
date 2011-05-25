@@ -144,6 +144,7 @@ class ImageBar extends Composite implements IImageBar {
 				num = 1;
 			
 			Point curSize = composite.getSize();
+			//Point curSize = computeSize(composite, SWT.DEFAULT, SWT.DEFAULT, false);
 			int size;
 			int x = 0, y = 0;
 			if (isHorizontal) {

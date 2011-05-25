@@ -3,6 +3,7 @@
  */
 package v9t9.emulator.clients.builtin;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,7 +29,15 @@ public class ClientFactory {
 			return null;
 		try {
 			return klass.getConstructor(Machine.class).newInstance(machine);
-		} catch (Exception e) {
+		} catch (SecurityException e) {
+			assert false : e.getCause().getMessage();
+		} catch (InstantiationException e) {
+			assert false : e.getCause().getMessage();
+		} catch (IllegalAccessException e) {
+			assert false : e.getCause().getMessage();
+		} catch (InvocationTargetException e) {
+			assert false : e.getCause().getMessage();
+		} catch (NoSuchMethodException e) {
 			assert false : e.getCause().getMessage();
 		}
 		return null;
