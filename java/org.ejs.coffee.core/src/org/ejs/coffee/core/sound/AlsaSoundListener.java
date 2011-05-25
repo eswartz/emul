@@ -147,7 +147,7 @@ public class AlsaSoundListener implements ISoundListener {
     			handle, pcmFormat, 
     			AlsaLibrary.SND_PCM_ACCESS_RW_INTERLEAVED, 
     			format.getChannels(), rate, 1, 
-    			1000000000);
+    			1000000);
     	if (err < 0) {
     		System.err.println(AlsaLibrary.INSTANCE.snd_strerror(err));
     		System.exit(1);
