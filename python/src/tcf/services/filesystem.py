@@ -286,7 +286,7 @@ class FileSystemService(services.Service):
         can from the file (up to 'len'), and return them in a byte array.
         If an error occurs or EOF is encountered, the server may return
         fewer bytes then requested. Call back method doneRead() argument 'error'
-        will be not null in case of error, and argument 'eof' will be
+        will be not None in case of error, and argument 'eof' will be
         True in case of EOF. For normal disk files, it is guaranteed
         that this will read the specified number of bytes, or up to end of file
         or error. For e.g. device files this may return fewer bytes than requested.

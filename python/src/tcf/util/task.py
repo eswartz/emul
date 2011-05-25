@@ -10,7 +10,7 @@
 #******************************************************************************
 
 import threading
-from tcf import protocol
+from tcf import protocol, channel
 
 class Task(object):
     """
@@ -32,7 +32,7 @@ class Task(object):
     __is_done = False
     __error = None
     __canceled = False
-    __channel = None
+    __channel_listener = None
 
     def __init__(self, target=None, *args, **kwargs):
         """
@@ -47,47 +47,23 @@ class Task(object):
         self._args = args
         self._kwargs = kwargs
         self._lock = threading.Condition()
+        self.__channel = kwargs.pop("channel", None)
         protocol.invokeLater(self.__doRun)
-        timeout = kwargs.get("timeout")
+        timeout = kwargs.pop("timeout", None)
         if timeout:
             protocol.invokeLaterWithDelay(timeout, self.cancel)
 
-#    """
-#    Construct a TCF task object and schedule it for execution.
-#    The task will be __canceled if the given __channel is closed or
-#    terminated while the task is in progress.
-#    @param __channel
-#    """
-#    public Task(final IChannel __channel) {
-#        Protocol.invokeLater(new Runnable() {
-#            public void run() {
-#                try {
-#                    if (__channel.getState() != IChannel.STATE_OPEN) throw new Exception("Channel is closed")
-#                    Task.this.__channel = __channel
-#                    channel_listener = new IChannel.IChannelListener() {
-#
-#                        public void congestionLevel(int level) {
-#                        }
-#
-#                        public void onChannelClosed(final Throwable __error) {
-#                            cancel(true)
-#                        }
-#
-#                        public void onChannelOpened() {
-#                        }
-#                    }
-#                    __channel.addChannelListener(channel_listener)
-#                    Task.this.run()
-#                }
-#                catch (Throwable x) {
-#                    if (!__is_done && __error == null) error(x)
-#                }
-#            }
-#        })
-#    }
-
     def __doRun(self):
         try:
+            if self.__channel:
+                if self.__channel.getState() != channel.STATE_OPEN:
+                    raise Exception("Channel is closed")
+                task = self
+                class CancelOnClose(channel.ChannelListener):
+                    def onChannelClosed(self, error):
+                        task.cancel(True)
+                self.__channel_listener = CancelOnClose()
+                self.__channel.addChannelListener(self.__channel_listener)
             self._target(*self._args, **self._kwargs)
         except Exception as x:
             if not self.__is_done and self.__error is None:
@@ -112,7 +88,7 @@ class Task(object):
             self.__result = result
             self.__is_done = True
             if self.__channel:
-                self.__channel.removeChannelListener(self.channel_listener)
+                self.__channel.removeChannelListener(self.__channel_listener)
             self._lock.notifyAll()
 
     def error(self, error):
@@ -131,7 +107,7 @@ class Task(object):
             assert not self.__is_done
             self.__error = error
             if self.__channel:
-                self.__channel.removeChannelListener(self.channel_listener)
+                self.__channel.removeChannelListener(self.__channel_listener)
             self._lock.notifyAll()
 
     def cancel(self):
@@ -141,7 +117,7 @@ class Task(object):
             self.__canceled = True
             self.__error = Exception("Canceled")
             if self.__channel:
-                self.__channel.removeChannelListener(self.channel_listener)
+                self.__channel.removeChannelListener(self.__channel_listener)
             self._lock.notifyAll()
         return True
 
@@ -193,7 +169,7 @@ class Task(object):
     def getError(self):
         """
         Return task execution __error if any.
-        @return Throwable object or null
+        @return Throwable object or None
         """
         return self.__error
 

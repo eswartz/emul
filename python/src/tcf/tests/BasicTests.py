@@ -28,6 +28,7 @@ _memory = []
 
 def test():
     protocol.startEventQueue()
+    #testTimer()
     try:
         c = tcf.connect("TCP:127.0.0.1:1534")
     except Exception as e:
@@ -49,6 +50,7 @@ def test():
         testExpressions(c)
         testLineNumbers(c)
         testSyncCommands(c)
+        testTasks(c)
         testEvents(c)
         testDataCache(c)
         testProcesses(c)
@@ -64,6 +66,22 @@ def test():
         time.sleep(5)
         protocol.invokeLater(c.close)
     time.sleep(2)
+
+
+def testTimer():
+    cond = threading.Condition()
+    def countdown(left):
+        if left == 0:
+            print "Ignition sequence started!"
+            with cond:
+                cond.notify()
+            return
+        print "%d seconds to go" % left
+        sys.stdout.flush()
+        protocol.invokeLaterWithDelay(1000, countdown, left - 1)
+    with cond:
+        protocol.invokeLaterWithDelay(0, countdown, 10)
+        cond.wait(15)
 
 def testRunControl(c):
     lock = threading.Condition()
@@ -112,7 +130,7 @@ def testRunControl(c):
         pending.append(rctrl.getChildren(None, DoneGetChildren()))
     with lock:
         protocol.invokeLater(getContexts)
-        lock.wait(5000)
+        lock.wait(5)
     def listenerTest():
         rc = c.getRemoteService(runcontrol.NAME)
         class RCListener(runcontrol.RunControlListener):
@@ -146,7 +164,7 @@ def testRunControl(c):
     if _suspended:
         with lock:
             protocol.invokeLater(listenerTest)
-            lock.wait(5000)
+            lock.wait(5)
 
 def testBreakpoints(c):
     from tcf.services import breakpoints
@@ -236,8 +254,9 @@ def testDisassembly(c):
                 if addr:
                     print "Disassemble context %s from 0x%x" % (ctx_id, addr)
                     lines = dis.disassemble(ctx_id, addr, 256, None).get()
-                    for line in lines:
-                        print line
+                    if lines:
+                        for line in lines:
+                            print line
 
 def testSymbols(c):
     from tcf.services import symbols
@@ -319,7 +338,7 @@ def testRegisters(c):
     with lock:
         for ctx_id in _suspended:
             protocol.invokeLater(regTest, ctx_id)
-        lock.wait(5000)
+        lock.wait(5)
 
 def testExpressions(c):
     if not _suspended: return
@@ -380,6 +399,27 @@ def testSyncCommands(c):
         print ctl.Processes.getChildren(None, False)
     except:
         pass # no Processes service
+
+def testTasks(c):
+    if not _suspended: return
+    from tcf.services import expressions
+    from tcf.util import task
+    def compute(expr, done=None):
+        es = c.getRemoteService(expressions.NAME)
+        if not es:
+            done(Exception("No Expressions service"), None)
+            return
+        def doneCreate(token, error, ctx):
+            if error:
+                done(error, None)
+                return
+            def doneEval(token, error, val):
+                done(error, val)
+            es.evaluate(ctx.getID(), doneEval)
+        es.create(_suspended[0], None, expr, doneCreate)
+    t = task.Task(compute, "1+2*(3-4/2)", channel=c)
+    val = t.get()
+    print "Task result:", val
 
 def testEvents(c):
     from tcf.util import event
@@ -488,7 +528,7 @@ def testMemory(c):
         pending.append(mem.getChildren(None, DoneGetChildren()))
     with lock:
         protocol.invokeLater(getContexts)
-        lock.wait(5000)
+        lock.wait(5)
 
 def testMemoryMap(c):
     if not _memory: return
@@ -514,7 +554,7 @@ def testMemoryMap(c):
         mm.get(id, DoneGet())
     with lock:
         protocol.invokeLater(getMap)
-        lock.wait(1000)
+        lock.wait(1)
     def setMap():
         mm = c.getRemoteService(memorymap.NAME)
         class DoneSet(memorymap.DoneSet):
@@ -526,7 +566,7 @@ def testMemoryMap(c):
         mm.set(id, {memorymap.PROP_FILE_NAME : "/tmp/system.elf"}, DoneSet())
     with lock:
         protocol.invokeLater(setMap)
-        lock.wait(1000)
+        lock.wait(1)
     map = mm.get(id).get()
     print "Memory map:", map
 
@@ -552,7 +592,7 @@ def testPathMap(c):
         pm.get(DoneGet())
     with lock:
         protocol.invokeLater(getMap)
-        lock.wait(1000)
+        lock.wait(1)
     def setMap():
         pm = c.getRemoteService(pathmap.NAME)
         class DoneSet(pathmap.DoneSet):
@@ -565,7 +605,7 @@ def testPathMap(c):
                 pathmap.PROP_DESTINATION : "/home"}, DoneSet())
     with lock:
         protocol.invokeLater(setMap)
-        lock.wait(1000)
+        lock.wait(1)
     map = pm.get().get()
     print "Path map:", map
 
@@ -606,7 +646,7 @@ def testSysMonitor(c):
         pending.append(sm.getChildren(None, DoneGetChildren()))
     with lock:
         protocol.invokeLater(getProcesses)
-        lock.wait(5000)
+        lock.wait(5)
     print "%d processes found:" % len(processes)
     for p in processes:
         print p

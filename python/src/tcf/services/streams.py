@@ -129,7 +129,7 @@ class StreamsListener(object):
         Called when a new stream is created.
         @param stream_type - source type of the stream.
         @param stream_id - ID of the stream.
-        @param context_id - a context ID that is associated with the stream, or null.
+        @param context_id - a context ID that is associated with the stream, or None.
         Exact meaning of the context ID depends on stream type.
         Stream types and context IDs are defined by services that use Streams service to transmit data.
         """
@@ -165,7 +165,7 @@ class DoneRead(object):
         """
         Called when 'read' command is done.
         @param token - command handle.
-        @param error - error object or null.
+        @param error - error object or None.
         @param lost_size - number of bytes that were lost because of buffer overflow.
         'lost_size' -1 means unknown number of bytes were lost.
         if both 'lost_size' and 'data.length' are non-zero then lost bytes are considered
@@ -183,7 +183,7 @@ class DoneWrite(object):
         """
         Called when 'write' command is done.
         @param token - command handle.
-        @param error - error object or null.
+        @param error - error object or None.
         """
         pass
 
@@ -195,7 +195,7 @@ class DoneEOS(object):
         """
         Called when 'eos' command is done.
         @param token - command handle.
-        @param error - error object or null.
+        @param error - error object or None.
         """
         pass
 
@@ -207,7 +207,7 @@ class DoneConnect(object):
         """
         Called when 'connect' command is done.
         @param token - command handle.
-        @param error - error object or null.
+        @param error - error object or None.
         """
         pass
 
@@ -219,6 +219,6 @@ class DoneDisconnect(object):
         """
         Called when 'disconnect' command is done.
         @param token - command handle.
-        @param error - error object or null.
+        @param error - error object or None.
         """
         pass

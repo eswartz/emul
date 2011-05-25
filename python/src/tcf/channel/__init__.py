@@ -68,9 +68,9 @@ class ChannelListener(object):
     def onChannelClosed(self, error):
         """
         Called when channel closed. If it is closed because of an error,
-        'error' parameter will describe the error. 'error' is null if channel
+        'error' parameter will describe the error. 'error' is None if channel
         is closed normally by calling Channel.close().
-        @param error - channel exception or null
+        @param error - channel exception or None
         """
         pass
 

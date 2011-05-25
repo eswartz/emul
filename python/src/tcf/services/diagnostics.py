@@ -141,7 +141,7 @@ class DoneEcho(object):
         """
         Called when 'echo' command is done.
         @param token - command handle.
-        @param error - error object or null.
+        @param error - error object or None.
         @param s - same string as the command argument.
         """
         pass
@@ -154,7 +154,7 @@ class DoneEchoFP(object):
         """
         Called when 'echoFP' command is done.
         @param token - command handle.
-        @param error - error object or null.
+        @param error - error object or None.
         @param n - same number as the command argument.
         """
         pass
@@ -167,7 +167,7 @@ class DoneEchoERR(object):
         """
         Called when 'echoERR' command is done.
         @param token - command handle.
-        @param error - communication error report or null.
+        @param error - communication error report or None.
         @param error_obj - error object, should be equal to the command argument.
         @param error_msg - error object converted to a human readable string.
         """
@@ -181,7 +181,7 @@ class DoneGetTestList(object):
         """
         Called when 'getTestList' command is done.
         @param token - command handle.
-        @param error - error object or null.
+        @param error - error object or None.
         @param list - names of tests that are supported by the peer.
         """
         pass
@@ -194,7 +194,7 @@ class DoneRunTest(object):
         """
         Called when 'runTest' command is done.
         @param token - command handle.
-        @param error - error object or null.
+        @param error - error object or None.
         @param context_id - test execution contest ID.
         """
         pass
@@ -207,7 +207,7 @@ class DoneCancelTest(object):
         """
         Called when 'cancelTest' command is done.
         @param token - command handle.
-        @param error - error object or null.
+        @param error - error object or None.
         """
         pass
 
@@ -219,7 +219,7 @@ class DoneGetSymbol(object):
         """
         Called when 'getSymbol' command is done.
         @param token - command handle.
-        @param error - error object or null.
+        @param error - error object or None.
         @param symbol
         """
         pass
@@ -257,7 +257,7 @@ class DoneCreateTestStreams(object):
         """
         Called when 'createTestStreams' command is done.
         @param token - command handle.
-        @param error - error object or null.
+        @param error - error object or None.
         @param inp_id - the input stream ID.
         @param out_id - the output stream ID.
         """
@@ -271,7 +271,7 @@ class DoneDisposeTestStream(object):
         """
         Called when 'createTestStreams' command is done.
         @param token - command handle.
-        @param error - error object or null.
+        @param error - error object or None.
         """
         pass
 

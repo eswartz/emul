@@ -349,7 +349,7 @@ class SysMonitorService(services.Service):
         """
         Retrieve children of given context.
 
-        @param parent_context_id - parent context ID. Can be null -
+        @param parent_context_id - parent context ID. Can be None -
         to retrieve top level of the hierarchy, or one of context IDs retrieved
         by previous getContext or getChildren commands.
         @param done - callback interface called when operation is completed.
@@ -376,7 +376,7 @@ class DoneGetContext(object):
     def doneGetContext(self, token, error, context):
         """
         Called when context data retrieval is done.
-        @param error - error description if operation failed, null if succeeded.
+        @param error - error description if operation failed, None if succeeded.
         @param context - context data.
         """
         pass
@@ -388,7 +388,7 @@ class DoneGetChildren(object):
     def doneGetChildren(self, token, error, context_ids):
         """
         Called when context list retrieval is done.
-        @param error - error description if operation failed, null if succeeded.
+        @param error - error description if operation failed, None if succeeded.
         @param context_ids - array of available context IDs.
         """
         pass

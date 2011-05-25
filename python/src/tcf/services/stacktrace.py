@@ -67,8 +67,8 @@ class DoneGetContext(object):
     def doneGetContext(self, token, error, contexts):
         """
         Called when context data retrieval is done.
-        @param error - error description if operation failed, null if succeeded.
-        @param contexts - array of context data or null if error.
+        @param error - error description if operation failed, None if succeeded.
+        @param contexts - array of context data or None if error.
         """
         pass
 
@@ -79,7 +79,7 @@ class DoneGetChildren(object):
     def doneGetChildren(self, token, error, context_ids):
         """
         Called when context list retrieval is done.
-        @param error - error description if operation failed, null if succeeded.
+        @param error - error description if operation failed, None if succeeded.
         @param context_ids - array of available context IDs.
         Stack frames are ordered from stack bottom to top.
         """
@@ -112,7 +112,7 @@ class StackTraceContext(object):
     def getName(self):
         """
         Get context name - if context represents a stack.
-        @return context name or null.
+        @return context name or None.
         """
         return self._props.get(PROP_NAME)
 
@@ -127,7 +127,7 @@ class StackTraceContext(object):
         """
         Get program counter saved in this stack frame -
         it is address of instruction to be executed when the function returns.
-        @return return address or null if not a stack frame.
+        @return return address or None if not a stack frame.
         """
         return self._props.get(PROP_RETURN_ADDRESS)
 
@@ -136,7 +136,7 @@ class StackTraceContext(object):
         Get address of the next instruction to be executed in this stack frame.
         For top frame it is same as PC register value.
         For other frames it is same as return address of the next frame.
-        @return instruction address or null if not a stack frame.
+        @return instruction address or None if not a stack frame.
         """
         return self._props.get(PROP_INSTRUCTION_ADDRESS)
 
@@ -150,7 +150,7 @@ class StackTraceContext(object):
     def getArgumentsAddress(self):
         """
         Get address of function arguments area in memory.
-        @return function arguments address or null if not available.
+        @return function arguments address or None if not available.
         """
         return self._props.get(PROP_ARGUMENTS_ADDRESS, 0)
 

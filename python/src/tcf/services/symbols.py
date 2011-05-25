@@ -110,7 +110,7 @@ class Symbol(object):
     def getName(self):
         """
         Get symbol name.
-        @return symbol name or null.
+        @return symbol name or None.
         """
         return self._props.get(PROP_NAME)
 
@@ -144,7 +144,7 @@ class Symbol(object):
           array type - return element type
           function type - return function result type
           class type - return base class
-        otherwise return null.
+        otherwise return None.
         @return type ID.
         """
         return self._props.get(PROP_BASE_TYPE_ID)
@@ -154,7 +154,7 @@ class Symbol(object):
         Get index type ID.
         If this symbol is a
           array type - return array index type
-        otherwise return null.
+        otherwise return None.
         @return type ID.
         """
         return self._props.get(PROP_INDEX_TYPE_ID)
@@ -197,7 +197,7 @@ class Symbol(object):
     def getAddress(self):
         """
         Return address of the symbol.
-        @return address or null.
+        @return address or None.
         """
         return self._props.get(PROP_ADDRESS)
 
@@ -218,7 +218,7 @@ class Symbol(object):
     def getRegisterID(self):
         """
         Return register ID if the symbol represents a register variable.
-        @return register ID or null.
+        @return register ID or None.
         """
         return self._props.get(PROP_REGISTER)
 
@@ -311,7 +311,7 @@ class DoneGetContext(object):
         """
         Called when context data retrieval is done.
         @param token - command handle
-        @param error - error description if operation failed, null if succeeded.
+        @param error - error description if operation failed, None if succeeded.
         @param context - context properties.
         """
         pass
@@ -323,7 +323,7 @@ class DoneGetChildren(object):
         """
         Called when context list retrieval is done.
         @param token - command handle
-        @param error - error description if operation failed, null if succeeded.
+        @param error - error description if operation failed, None if succeeded.
         @param context_ids - array of available context IDs.
         """
         pass
@@ -336,7 +336,7 @@ class DoneFind(object):
         """
         Called when symbol search is done.
         @param token - command handle.
-        @param error - error description if operation failed, null if succeeded.
+        @param error - error description if operation failed, None if succeeded.
         @param symbol_id - symbol ID.
         """
         pass
@@ -349,7 +349,7 @@ class DoneList(object):
         """
         Called when symbol list retrieval is done.
         @param token - command handle.
-        @param error - error description if operation failed, null if succeeded.
+        @param error - error description if operation failed, None if succeeded.
         @param symbol_ids - array of symbol IDs.
         """
 
@@ -382,7 +382,7 @@ class DoneFindFrameInfo(object):
         """
         Called when stack tracing information retrieval is done.
         @param token - command handle.
-        @param error - error description if operation failed, null if succeeded.
+        @param error - error description if operation failed, None if succeeded.
         @param address - start of instruction address range
         @param size - size of instruction address range
         @param fp_cmds - commands to calculate stack frame pointer

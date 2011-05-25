@@ -136,7 +136,7 @@ class TerminalsService(services.Service):
         @param type - requested terminal type for the new terminal.
         @param encoding - requested encoding for the new terminal.
         @param environment - Array of environment variable strings.
-        if null then default set of environment variables will be used.
+        if None then default set of environment variables will be used.
         @param done - call back interface called when operation is completed.
         @return pending command handle, can be used to cancel the command.
         """
@@ -183,7 +183,7 @@ class DoneGetContext(object):
     def doneGetContext(self, token, error, context):
         """
         Called when contexts data retrieval is done.
-        @param error - error description if operation failed, null if succeeded.
+        @param error - error description if operation failed, None if succeeded.
         @param context - context data.
         """
         pass

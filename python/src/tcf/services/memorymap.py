@@ -160,7 +160,7 @@ class DoneGet(object):
     def doneGet(self, token, error, map):
         """
         Called when memory map data retrieval is done.
-        @param error - error description if operation failed, null if succeeded.
+        @param error - error description if operation failed, None if succeeded.
         @param map - memory map data.
         """
         pass
@@ -172,7 +172,7 @@ class DoneSet(object):
     def doneSet(self, token, error):
         """
         Called when memory map set command is done.
-        @param error - error description if operation failed, null if succeeded.
+        @param error - error description if operation failed, None if succeeded.
         """
         pass
 

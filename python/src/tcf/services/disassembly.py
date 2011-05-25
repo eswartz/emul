@@ -81,7 +81,7 @@ class DoneGetCapabilities(object):
         """
         Called when capabilities retrieval is done.
         @param token - command handle.
-        @param error - error object or null.
+        @param error - error object or None.
         @param capabilities - array of capabilities, see CAPABILITY_* for contents of each array element.
         """
         pass
@@ -94,7 +94,7 @@ class DoneDisassemble(object):
         """
         Called when disassembling is done.
         @param token - command handle.
-        @param error - error object or null.
+        @param error - error object or None.
         @param disassembly - array of disassembly lines.
         """
         pass

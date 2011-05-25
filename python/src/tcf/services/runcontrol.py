@@ -168,7 +168,7 @@ class RunControlService(services.Service):
         """
         Retrieve children of given context.
 
-        @param parent_context_id - parent context ID. Can be null -
+        @param parent_context_id - parent context ID. Can be None -
         to retrieve top level of the hierarchy, or one of context IDs retrieved
         by previous getContext or getChildren commands.
         @param done - callback interface called when operation is completed.
@@ -198,7 +198,7 @@ class DoneGetState(object):
         """
         Called when getState command execution is complete.
         @param token - pending command handle.
-        @param error - command execution error or null.
+        @param error - command execution error or None.
         @param suspended - true if the context is suspended
         @param pc - program counter of the context (if suspended).
         @param reason - suspend reason (if suspended), see REASON_*.
@@ -211,7 +211,7 @@ class DoneCommand(object):
         """
         Called when run control command execution is complete.
         @param token - pending command handle.
-        @param error - command execution error or null.
+        @param error - command execution error or None.
         """
         pass
 
@@ -220,7 +220,7 @@ class DoneGetContext(object):
     def doneGetContext(self, token, error, context):
         """
         Called when context data retrieval is done.
-        @param error - error description if operation failed, null if succeeded.
+        @param error - error description if operation failed, None if succeeded.
         @param context - context data.
         """
         pass
@@ -230,7 +230,7 @@ class DoneGetChildren(object):
     def doneGetChildren(self, token, error, context_ids):
         """
         Called when context list retrieval is done.
-        @param error - error description if operation failed, null if succeeded.
+        @param error - error description if operation failed, None if succeeded.
         @param context_ids - array of available context IDs.
         """
         pass
@@ -440,7 +440,7 @@ class RunControlListener(object):
         """
         Called when a thread is suspended.
         @param context - ID of a context that was suspended.
-        @param pc - program counter of the context, can be null.
+        @param pc - program counter of the context, can be None.
         @param reason - human readable description of suspend reason.
         @param params - additional, target specific data about suspended context.
         """
