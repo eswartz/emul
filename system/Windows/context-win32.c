@@ -752,8 +752,20 @@ static void debug_event_handler(DebugEvent * debug_event) {
         else {
             assert(prs != NULL);
             assert(!ctx->exited);
-            if (ctx->stopped)
+            if (ctx->stopped) {
+                DWORD exception_code = win32_event->u.Exception.ExceptionRecord.ExceptionCode;
+#if USE_HW_BPS
+                if (exception_code == EXCEPTION_SINGLE_STEP && win32_event->u.Exception.dwFirstChance) {
+                    /* This event appears to be caused by a hardware breakpoint.
+                     * It is safe to ignore the event - the breakpoint will be triggered again 
+                     * when the context resumed. */
+                    debug_event->continue_status = DBG_CONTINUE;
+                    break;
+                }
+#endif
+                trace(LOG_ALWAYS, "context: already stopped, id %s, exception 0x%08x", ctx->id, exception_code);
                 send_context_started_event(ctx);
+            }
             ext = EXT(ctx);
             memcpy(&ext->suspend_reason, &win32_event->u.Exception, sizeof(EXCEPTION_DEBUG_INFO));
             debug_event->continue_status = event_win32_context_stopped(ctx);
