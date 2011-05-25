@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.tm.tcf.core.ChannelTCP;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IPeer;
@@ -56,7 +57,7 @@ public class ScannerRunnable implements Runnable, IChannel.IChannelListener {
 
 		parentScanner = scanner;
 
-		assert peerNode != null;
+		Assert.isNotNull(peerNode);
 		this.peerNode = peerNode;
 	}
 

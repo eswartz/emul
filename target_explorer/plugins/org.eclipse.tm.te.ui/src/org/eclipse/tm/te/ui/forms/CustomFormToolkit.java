@@ -9,6 +9,7 @@
  *******************************************************************************/
 package org.eclipse.tm.te.ui.forms;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.PlatformObject;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
@@ -44,7 +45,7 @@ public class CustomFormToolkit extends PlatformObject {
 	 */
 	public CustomFormToolkit(FormToolkit toolkit) {
 		super();
-		assert toolkit != null;
+		Assert.isNotNull(toolkit);
 		this.toolkit = toolkit;
 	}
 
@@ -110,7 +111,7 @@ public class CustomFormToolkit extends PlatformObject {
 	 * @return The scrollable form instance.
 	 */
 	public ScrolledForm createScrolledForm(Composite parent, String title, boolean overwriteBackground) {
-		assert parent != null;
+		Assert.isNotNull(parent);
 
 		// Create the scrolled form which is the scrollable container for the expandable composite
 		final ScrolledForm scrollableForm = getFormToolkit().createScrolledForm(parent);
@@ -146,7 +147,9 @@ public class CustomFormToolkit extends PlatformObject {
 	public final ExpandableComposite createExpandableComposite(final ScrolledForm scrolledForm,
 	                                                           String title, final int entriesToShow,
 	                                                           boolean expanded, boolean overwriteBackground) {
-		assert scrolledForm != null && title != null && entriesToShow > 0;
+		Assert.isNotNull(scrolledForm);
+		Assert.isNotNull(title);
+		Assert.isTrue(entriesToShow > 0);
 
 		// Create the expandable composite within the scrollable container
 		final ExpandableComposite expandable = getFormToolkit().createExpandableComposite(scrolledForm.getBody(), ExpandableComposite.TWISTIE | ExpandableComposite.CLIENT_INDENT);
@@ -231,7 +234,9 @@ public class CustomFormToolkit extends PlatformObject {
 	public final Section createSection(final ScrolledForm scrolledForm,
 	                                   String title, final int entriesToShow,
 	                                   boolean expanded, boolean overwriteBackground) {
-		assert scrolledForm != null && title != null && entriesToShow > 0;
+		Assert.isNotNull(scrolledForm);
+		Assert.isNotNull(title);
+		Assert.isTrue(entriesToShow > 0);
 
 		// Create the section within the scrollable container
 		final Section section = getFormToolkit().createSection(scrolledForm.getBody(), ExpandableComposite.TITLE_BAR | ExpandableComposite.TWISTIE | ExpandableComposite.CLIENT_INDENT);
@@ -312,7 +317,8 @@ public class CustomFormToolkit extends PlatformObject {
 	 * @return The section.
 	 */
 	public final Section createSection(final ScrolledForm scrolledForm, String title, boolean overwriteBackground) {
-		assert scrolledForm != null && title != null;
+		Assert.isNotNull(scrolledForm);
+		Assert.isNotNull(title);
 
 		// Create the section within the scrollable container
 		final Section section = getFormToolkit().createSection(scrolledForm.getBody(), ExpandableComposite.TITLE_BAR | ExpandableComposite.CLIENT_INDENT);
@@ -357,7 +363,9 @@ public class CustomFormToolkit extends PlatformObject {
      * @return The note composite.
      */
 	public final Composite createNoteComposite(Composite parent, String title, String message, int widthHint, boolean overwriteBackground) {
-		assert parent != null && title != null && message != null;
+		Assert.isNotNull(parent);
+		Assert.isNotNull(title);
+		Assert.isNotNull(message);
 
 		Composite composite = getFormToolkit().createComposite(parent, SWT.NONE);
 		GridLayout layout = new GridLayout(2, false);

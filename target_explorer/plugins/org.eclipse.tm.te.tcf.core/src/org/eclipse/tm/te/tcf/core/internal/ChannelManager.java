@@ -11,6 +11,7 @@ package org.eclipse.tm.te.tcf.core.internal;
 
 import java.util.Map;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.PlatformObject;
 import org.eclipse.tm.tcf.core.AbstractPeer;
 import org.eclipse.tm.tcf.core.TransientPeer;
@@ -56,9 +57,9 @@ public final class ChannelManager extends PlatformObject implements IChannelMana
 	 * @param done The client callback. Must not be <code>null</code>.
 	 */
 	/* default */ void internalOpenChannel(final IPeer peer, final DoneOpenChannel done) {
-		assert peer != null;
-		assert done != null;
-		assert Protocol.isDispatchThread();
+		Assert.isNotNull(peer);
+		Assert.isNotNull(done);
+		Assert.isTrue(Protocol.isDispatchThread());
 
 		// Open the channel
 		final IChannel channel = peer.openChannel();
@@ -115,9 +116,9 @@ public final class ChannelManager extends PlatformObject implements IChannelMana
 	 * @param done The client callback. Must not be <code>null</code>.
 	 */
 	/* default */ void internalOpenChannel(final Map<String, String> peerAttributes, final DoneOpenChannel done) {
-		assert peerAttributes != null;
-		assert done != null;
-		assert Protocol.isDispatchThread();
+		Assert.isNotNull(peerAttributes);
+		Assert.isNotNull(done);
+		Assert.isTrue(Protocol.isDispatchThread());
 		internalOpenChannel(getOrCreatePeerInstance(peerAttributes), done);
 	}
 
@@ -131,12 +132,12 @@ public final class ChannelManager extends PlatformObject implements IChannelMana
 	 * @return The peer instance.
 	 */
 	private IPeer getOrCreatePeerInstance(final Map<String, String> peerAttributes) {
-		assert peerAttributes != null;
-		assert Protocol.isDispatchThread();
+		Assert.isNotNull(peerAttributes);
+		Assert.isTrue(Protocol.isDispatchThread());
 
 		// Get the peer id from the properties
 		String peerId = peerAttributes.get(IPeer.ATTR_ID);
-		assert peerId != null;
+		Assert.isNotNull(peerId);
 
 		// Check if we shall open the peer transient
 		boolean isTransient = peerAttributes.containsKey("transient") ? Boolean.parseBoolean(peerAttributes.remove("transient")) : false; //$NON-NLS-1$ //$NON-NLS-2$

@@ -9,6 +9,7 @@
  *******************************************************************************/
 package org.eclipse.tm.te.ui.tables;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.PlatformObject;
 
 /**
@@ -32,7 +33,9 @@ public final class TableNode extends PlatformObject {
 	 * @param value The node value. Must not be <code>null</code>.
 	 */
 	public TableNode(String name, String value) {
-		assert name != null && value != null;
+		Assert.isNotNull(name);
+		Assert.isNotNull(value);
+
 		this.name = name;
 		this.value = value;
 	}

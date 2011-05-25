@@ -3,7 +3,7 @@
  * This program and the accompanying materials are made available under the terms
  * of the Eclipse Public License v1.0 which accompanies this distribution, and is
  * available at http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  * Uwe Stieber (Wind River) - initial API and implementation
  *******************************************************************************/
@@ -12,6 +12,7 @@ package org.eclipse.tm.te.tcf.core.internal.listener;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IChannel.IChannelListener;
 import org.eclipse.tm.tcf.protocol.Protocol;
@@ -33,7 +34,8 @@ public class InternalChannelOpenListener implements IChannelOpenListener {
 	 * @see org.eclipse.tm.tcf.protocol.Protocol.ChannelOpenListener#onChannelOpen(org.eclipse.tm.tcf.protocol.IChannel)
 	 */
 	public void onChannelOpen(IChannel channel) {
-		assert channel != null && Protocol.isDispatchThread();
+		Assert.isNotNull(channel);
+		Assert.isTrue(Protocol.isDispatchThread());
 
 		// Trace the channel opening
 		LogUtils.logMessageForChannel(channel, Messages.InternalChannelOpenListener_onChannelOpen_message, "debug/channels", this); //$NON-NLS-1$
@@ -56,7 +58,7 @@ public class InternalChannelOpenListener implements IChannelOpenListener {
 	 * @see org.eclipse.tm.te.tcf.core.internal.interfaces.IChannelOpenListener#setChannelListener(org.eclipse.tm.tcf.protocol.IChannel, org.eclipse.tm.tcf.protocol.IChannel.IChannelListener)
 	 */
 	public void setChannelListener(IChannel channel, IChannelListener listener) {
-		assert channel != null;
+		Assert.isNotNull(channel);
 		if (listener != null) channelListeners.put(channel, listener);
 		else channelListeners.remove(channel);
 	}

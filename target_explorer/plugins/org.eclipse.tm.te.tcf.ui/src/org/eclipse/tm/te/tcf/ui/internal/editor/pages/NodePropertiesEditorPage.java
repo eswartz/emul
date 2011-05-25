@@ -9,6 +9,7 @@
  *******************************************************************************/
 package org.eclipse.tm.te.tcf.ui.internal.editor.pages;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.TableViewer;
@@ -78,7 +79,7 @@ public class NodePropertiesEditorPage extends AbstractEditorPage {
 	 * @param managedForm The managed form. Must not be <code>null</code>.
 	 */
 	protected void configureManagedForm(IManagedForm managedForm) {
-		assert managedForm != null;
+		Assert.isNotNull(managedForm);
 
 		// Configure main layout
 		Composite body = managedForm.getForm().getBody();
@@ -98,7 +99,8 @@ public class NodePropertiesEditorPage extends AbstractEditorPage {
 	 * @param toolkit The {@link CustomFormToolkit} instance. Must not be <code>null</code>.
 	 */
 	protected void doCreateFormContent(Composite parent, CustomFormToolkit toolkit) {
-		assert parent != null && toolkit != null;
+		Assert.isNotNull(parent);
+		Assert.isNotNull(toolkit);
 
 		Section section = toolkit.getFormToolkit().createSection(parent, ExpandableComposite.TITLE_BAR);
 		String title = NLS.bind(Messages.NodePropertiesTableControl_section_title, Messages.NodePropertiesTableControl_section_title_noSelection);
@@ -120,7 +122,7 @@ public class NodePropertiesEditorPage extends AbstractEditorPage {
 
 		// Setup the node properties table  control
 		nodePropertiesTableControl = doCreateNodePropertiesTableControl();
-		assert nodePropertiesTableControl != null;
+		Assert.isNotNull(nodePropertiesTableControl);
 		nodePropertiesTableControl.setupFormPanel((Composite)section.getClient(), toolkit);
 
 		// Set the initial input

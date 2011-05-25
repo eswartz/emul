@@ -12,6 +12,7 @@ package org.eclipse.tm.te.core.extensions;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtension;
@@ -101,7 +102,7 @@ public abstract class AbstractExtensionPointManager<V> {
 	 * @throws CoreException If the extension proxy instantiation failed.
 	 */
 	protected ExecutableExtensionProxy<V> doCreateExtensionProxy(IConfigurationElement element) throws CoreException {
-		assert element != null;
+		Assert.isNotNull(element);
 		return new ExecutableExtensionProxy<V>(element);
 	}
 
@@ -116,7 +117,9 @@ public abstract class AbstractExtensionPointManager<V> {
 	 * @throws CoreException In case a extension with the same id as the given extension already exist.
 	 */
 	protected void doStoreExtensionTo(Map<String, ExecutableExtensionProxy<V>> extensions, ExecutableExtensionProxy<V> candidate, IConfigurationElement element) throws CoreException {
-		assert extensions != null && candidate != null && element != null;
+		Assert.isNotNull(extensions);
+		Assert.isNotNull(candidate);
+		Assert.isNotNull(element);
 
 		// If no extension with this id had been registered before, register now.
 		if (!extensions.containsKey(candidate.getId())) {

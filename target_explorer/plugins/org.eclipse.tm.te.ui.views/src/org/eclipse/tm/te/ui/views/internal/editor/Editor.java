@@ -9,6 +9,7 @@
  *******************************************************************************/
 package org.eclipse.tm.te.ui.views.internal.editor;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.tm.te.ui.views.interfaces.IEditorPage;
 import org.eclipse.tm.te.ui.views.internal.extensions.EditorPageBinding;
@@ -102,7 +103,7 @@ public class Editor extends FormEditor implements IPersistableEditor {
 	 * @return The page index or <code>-1</code> if not found.
 	 */
 	private int getIndexOf(String pageId) {
-		assert pageId != null;
+		Assert.isNotNull(pageId);
 		for (int i = 0; i < pages.size(); i++) {
 			Object page = pages.get(i);
 			if (page instanceof IFormPage) {

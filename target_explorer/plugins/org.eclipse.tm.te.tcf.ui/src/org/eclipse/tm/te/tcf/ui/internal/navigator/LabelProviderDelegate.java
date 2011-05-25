@@ -9,6 +9,7 @@
  *******************************************************************************/
 package org.eclipse.tm.te.tcf.ui.internal.navigator;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.viewers.ILabelDecorator;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.swt.graphics.Image;
@@ -122,7 +123,9 @@ public class LabelProviderDelegate extends LabelProvider implements ILabelDecora
 	 * @param peer The peer. Must not be <code>null</code>.
 	 */
 	/* default */ void doDecorateText(StringBuilder builder, IPeer peer) {
-		assert Protocol.isDispatchThread() && builder != null && peer != null;
+		Assert.isNotNull(builder);
+		Assert.isNotNull(peer);
+		Assert.isTrue(Protocol.isDispatchThread());
 
 		String osName = peer.getOSName();
 

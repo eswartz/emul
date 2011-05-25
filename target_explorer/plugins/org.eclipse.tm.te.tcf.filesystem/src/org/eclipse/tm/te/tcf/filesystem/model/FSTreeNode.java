@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.PlatformObject;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IFileSystem;
@@ -72,7 +73,7 @@ public final class FSTreeNode extends PlatformObject {
 	 */
 	public FSTreeNode() {
 		super();
-		assert Protocol.isDispatchThread();
+		Assert.isTrue(Protocol.isDispatchThread());
 	}
 
 	/* (non-Javadoc)
@@ -91,7 +92,7 @@ public final class FSTreeNode extends PlatformObject {
 	 * @return The children list storage object.
 	 */
 	public final List<FSTreeNode> getChildren() {
-		assert Protocol.isDispatchThread();
+		Assert.isTrue(Protocol.isDispatchThread());
 		return children;
 	}
 

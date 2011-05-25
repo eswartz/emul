@@ -12,6 +12,7 @@ package org.eclipse.tm.te.core.preferences;
 import java.io.OutputStream;
 import java.util.Map;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.ISafeRunnable;
 import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.core.runtime.Platform;
@@ -79,7 +80,8 @@ public class ScopedEclipsePreferences {
 	 * @param qualifier The qualifier for the preferences (in example the unique identifier of a plugin). Must not be <code>null</code>.
 	 */
 	public ScopedEclipsePreferences(IScopeContext context, String qualifier) {
-		assert context != null && qualifier != null;
+		Assert.isNotNull(context);
+		Assert.isNotNull(qualifier);
 		this.qualifier = qualifier;
 		defaultPrefs = new DefaultScope().getNode(getQualifier());
 		contextScopePrefs = context.getNode(getQualifier());
@@ -101,7 +103,7 @@ public class ScopedEclipsePreferences {
 	 * @param stream The stream to where preferences and defaults should be exported.
 	 */
 	public void exportPreferences(OutputStream stream) {
-		assert stream != null;
+		Assert.isNotNull(stream);
 		try {
 			IPreferenceFilter filter = new IPreferenceFilter() {
 				public String[] getScopes() {
@@ -396,7 +398,7 @@ public class ScopedEclipsePreferences {
 	 * @param listener The preference change listener. Must not be <code>null</code>.
 	 */
 	public void addPreferenceChangeListener(IPreferenceChangeListener listener) {
-		assert listener != null;
+		Assert.isNotNull(listener);
 		listeners.add(listener);
 	}
 
@@ -408,7 +410,7 @@ public class ScopedEclipsePreferences {
 	 * @param listener The preference change listener. Must not be <code>null</code>.
 	 */
 	public void removePreferenceChangeListener(IPreferenceChangeListener listener) {
-		assert listener != null;
+		Assert.isNotNull(listener);
 		listeners.remove(listener);
 	}
 
@@ -421,7 +423,8 @@ public class ScopedEclipsePreferences {
 	 * @param newValue The new value as a {@link String}, or <code>null</code>.
 	 */
 	protected void firePreferenceEvent(IEclipsePreferences node, String key, String oldValue, String newValue) {
-		assert node != null && key != null;
+		Assert.isNotNull(node);
+		Assert.isNotNull(key);
 
 		// If no listener is registered, we are done here
 		if (listeners.isEmpty()) return;

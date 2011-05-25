@@ -9,6 +9,7 @@
  *******************************************************************************/
 package org.eclipse.tm.te.core.tracing;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 
@@ -49,7 +50,7 @@ public class TraceHandler {
 		 * @param identifier The bundle identifier. Must not be <code>null</code>.
 		 */
 		public Tracer(String identifier) {
-			assert identifier != null;
+			Assert.isNotNull(identifier);
 			fIdentifier = identifier;
 
 			// Initialize the debug mode qualifier
@@ -180,7 +181,7 @@ public class TraceHandler {
 	 * @param identifier The bundle identifier. Must not be <code>null</code>.
 	 */
 	public TraceHandler(String identifier) {
-		assert identifier != null;
+		Assert.isNotNull(identifier);
 		this.identifier = identifier;
 	}
 

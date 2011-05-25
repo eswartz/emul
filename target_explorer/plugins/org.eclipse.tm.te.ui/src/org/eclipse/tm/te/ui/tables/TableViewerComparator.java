@@ -11,6 +11,7 @@ package org.eclipse.tm.te.ui.tables;
 
 import java.util.Arrays;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.TableViewer;
@@ -34,7 +35,7 @@ public class TableViewerComparator extends AbstractViewerComparator {
 	 */
 	public TableViewerComparator(Viewer viewer, ITableLabelProvider labelProvider) {
 		super(viewer);
-		assert labelProvider != null;
+		Assert.isNotNull(labelProvider);
 		this.labelProvider = labelProvider;
 	}
 

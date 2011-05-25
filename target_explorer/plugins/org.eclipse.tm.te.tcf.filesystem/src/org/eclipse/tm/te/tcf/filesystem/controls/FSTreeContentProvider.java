@@ -11,6 +11,7 @@ package org.eclipse.tm.te.tcf.filesystem.controls;
 
 import java.util.Iterator;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.jface.viewers.Viewer;
@@ -107,7 +108,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 	 * @see org.eclipse.jface.viewers.ITreeContentProvider#getChildren(java.lang.Object)
 	 */
 	public Object[] getChildren(Object parentElement) {
-		assert parentElement != null;
+		Assert.isNotNull(parentElement);
 
 		Object[] children = NO_ELEMENTS;
 
@@ -158,7 +159,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 
 					Tcf.getChannelManager().openChannel(peer, new IChannelManager.DoneOpenChannel() {
 						public void doneOpenChannel(final Throwable error, final IChannel channel) {
-							assert Protocol.isDispatchThread();
+							Assert.isTrue(Protocol.isDispatchThread());
 
 							if (channel != null) {
 								final IFileSystem service = channel.getRemoteService(IFileSystem.class);
@@ -249,7 +250,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 						// Open a channel to the peer and query the children
 						Tcf.getChannelManager().openChannel(node.peerNode.getPeer(), new IChannelManager.DoneOpenChannel() {
 							public void doneOpenChannel(final Throwable error, final IChannel channel) {
-								assert Protocol.isDispatchThread();
+								Assert.isTrue(Protocol.isDispatchThread());
 
 								if (channel != null && channel.getState() == IChannel.STATE_OPEN) {
 									final IFileSystem service = channel.getRemoteService(IFileSystem.class);
@@ -305,7 +306,10 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 	 * @param mode The notification mode to set to the parent node once done.
 	 */
 	protected void readdir(final IChannel channel, final IFileSystem service, final IFileHandle handle, final FSTreeNode parentNode) {
-		assert channel != null && service != null && handle != null && parentNode != null;
+		Assert.isNotNull(channel);
+		Assert.isNotNull(service);
+		Assert.isNotNull(handle);
+		Assert.isNotNull(parentNode);
 
 		Protocol.invokeLater(new Runnable() {
 			public void run() {
@@ -372,7 +376,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 	 * @return The tree node.
 	 */
 	protected FSTreeNode createNodeFromDirEntry(DirEntry entry, boolean entryIsRootNode) {
-		assert entry != null;
+		Assert.isNotNull(entry);
 
 		FSTreeNode node = null;
 
@@ -404,7 +408,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 	 * @return The absolute name.
 	 */
 	public static String getEntryAbsoluteName(FSTreeNode node) {
-		assert node != null;
+		Assert.isNotNull(node);
 
 		StringBuilder path = new StringBuilder();
 
@@ -438,7 +442,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 	 * @see org.eclipse.jface.viewers.ITreeContentProvider#hasChildren(java.lang.Object)
 	 */
 	public boolean hasChildren(final Object element) {
-		assert element != null;
+		Assert.isNotNull(element);
 
 		boolean hasChildren = false;
 

@@ -9,6 +9,7 @@
  *******************************************************************************/
 package org.eclipse.tm.te.tcf.core.internal.listener;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.te.tcf.core.Tcf;
@@ -30,7 +31,7 @@ public class InternalChannelListener implements IChannel.IChannelListener {
 	 * @param channel The channel. Must not be <code>null</code>.
 	 */
 	public InternalChannelListener(IChannel channel) {
-		assert channel != null;
+		Assert.isNotNull(channel);
 		this.channel = channel;
 	}
 
@@ -75,7 +76,7 @@ public class InternalChannelListener implements IChannel.IChannelListener {
 	 * @param channel The channel. Must not be <code>null</code>.
 	 */
 	protected void detachListeners(IChannel channel) {
-		assert channel != null;
+		Assert.isNotNull(channel);
 
 		// Cleanly remove all listeners from the channel
 		channel.removeChannelListener(this);

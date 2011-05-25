@@ -9,6 +9,7 @@
  *******************************************************************************/
 package org.eclipse.tm.te.ui.views.internal.editor;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.ILabelProvider;
@@ -54,7 +55,7 @@ public class EditorInput implements IEditorInput, IPersistableElement {
 	public EditorInput(Object node, String id) {
 		super();
 		this.id = id;
-		assert node != null;
+		Assert.isNotNull(node);
 		this.node = node;
 	}
 

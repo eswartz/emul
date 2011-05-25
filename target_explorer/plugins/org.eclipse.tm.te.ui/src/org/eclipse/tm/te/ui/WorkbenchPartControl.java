@@ -9,6 +9,7 @@
  *******************************************************************************/
 package org.eclipse.tm.te.ui;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.PlatformObject;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.tm.te.ui.activator.UIPlugin;
@@ -95,7 +96,9 @@ public class WorkbenchPartControl extends PlatformObject {
 	 * @param toolkit The {@link CustomFormToolkit} instance. Must not be <code>null</code>.
 	 */
 	public void setupFormPanel(Composite parent, CustomFormToolkit toolkit) {
-		assert parent != null && toolkit != null;
+		Assert.isNotNull(parent);
+		Assert.isNotNull(toolkit);
+
 		parentControl = parent;
 		formToolkit = toolkit;
 	}

@@ -9,6 +9,7 @@
  *******************************************************************************/
 package org.eclipse.tm.te.core.extensions;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IStatus;
@@ -37,7 +38,7 @@ public class ExecutableExtensionProxy<V> {
 	 * @throws CoreException In case the configuration element attribute <i>id</i> is <code>null</code> or empty.
 	 */
 	public ExecutableExtensionProxy(IConfigurationElement element) throws CoreException {
-		assert element != null;
+		Assert.isNotNull(element);
 		this.element = element;
 
 		// Extract the extension attributes
@@ -60,7 +61,8 @@ public class ExecutableExtensionProxy<V> {
 	 * @param instance The instance to add to proxy.
 	 */
 	public ExecutableExtensionProxy(String id, V instance) {
-		assert id!= null && instance != null;
+		Assert.isNotNull(id);
+		Assert.isNotNull(instance);
 		this.id = id;
 		this.instance = instance;
 		this.element = null;
@@ -117,7 +119,7 @@ public class ExecutableExtensionProxy<V> {
 	@SuppressWarnings("unchecked")
 	public V newInstance() {
 		IConfigurationElement element = getConfigurationElement();
-		assert element != null;
+		Assert.isNotNull(element);
 		// The "class" to load can be specified either as attribute or as child element
 		if (element != null && (element.getAttribute("class") != null || element.getChildren("class").length > 0)) { //$NON-NLS-1$ //$NON-NLS-2$
 			try {

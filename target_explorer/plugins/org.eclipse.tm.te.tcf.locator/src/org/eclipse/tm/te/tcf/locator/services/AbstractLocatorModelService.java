@@ -3,12 +3,13 @@
  * This program and the accompanying materials are made available under the terms
  * of the Eclipse Public License v1.0 which accompanies this distribution, and is
  * available at http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  * Uwe Stieber (Wind River) - initial API and implementation
  *******************************************************************************/
 package org.eclipse.tm.te.tcf.locator.services;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.PlatformObject;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.ILocatorModel;
 import org.eclipse.tm.te.tcf.locator.interfaces.services.ILocatorModelService;
@@ -27,7 +28,7 @@ public abstract class AbstractLocatorModelService extends PlatformObject impleme
 	 * @param parentModel The parent locator model instance. Must not be <code>null</code>.
 	 */
 	public AbstractLocatorModelService(ILocatorModel parentModel) {
-		assert parentModel != null;
+		Assert.isNotNull(parentModel);
 		locatorModel = parentModel;
 	}
 

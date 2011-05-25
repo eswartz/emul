@@ -3,7 +3,7 @@
  * This program and the accompanying materials are made available under the terms
  * of the Eclipse Public License v1.0 which accompanies this distribution, and is
  * available at http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  * Uwe Stieber (Wind River) - initial API and implementation
  *******************************************************************************/
@@ -17,7 +17,7 @@ import org.eclipse.tm.te.tcf.core.activator.CoreBundleActivator;
 
 
 /**
- * Calls loaded by the TCF core framework when the framework is fired up. The static
+ * Class loaded by the TCF core framework when the framework is fired up. The static
  * constructor of the class will trigger whatever is necessary in this case.
  * <p>
  * <b>Note:</b> This will effectively trigger {@link CoreBundleActivator#start(org.osgi.framework.BundleContext)}

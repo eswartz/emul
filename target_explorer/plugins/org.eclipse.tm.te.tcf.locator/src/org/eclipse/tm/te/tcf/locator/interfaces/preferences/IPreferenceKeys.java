@@ -12,7 +12,7 @@ package org.eclipse.tm.te.tcf.locator.interfaces.preferences;
 import java.io.File;
 
 /**
- * The locator model bundle preference key identifiers..
+ * The locator model bundle preference key identifiers.
  */
 public interface IPreferenceKeys {
 	/**

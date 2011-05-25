@@ -9,6 +9,7 @@
  *******************************************************************************/
 package org.eclipse.tm.te.tcf.locator.listener;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.Protocol;
@@ -34,7 +35,7 @@ public class ChannelStateChangeListener implements IChannelStateChangeListener {
 	 * @param model The parent locator model. Must not be <code>null</code>.
 	 */
 	public ChannelStateChangeListener(ILocatorModel model) {
-		assert model != null;
+		Assert.isNotNull(model);
 		this.model = model;
 	}
 
@@ -42,7 +43,8 @@ public class ChannelStateChangeListener implements IChannelStateChangeListener {
 	 * @see org.eclipse.tm.te.tcf.tcf.core.interfaces.listeners.IChannelStateChangeListener#stateChanged(org.eclipse.tm.tcf.protocol.IChannel, int)
 	 */
 	public void stateChanged(IChannel channel, int state) {
-		assert Protocol.isDispatchThread() && channel != null;
+		Assert.isNotNull(channel);
+		Assert.isTrue(Protocol.isDispatchThread());
 
 		if (CoreBundleActivator.getTraceHandler().isSlotEnabled(0, ITracing.ID_TRACE_CHANNEL_STATE_CHANGE_LISTENER)) {
 			CoreBundleActivator.getTraceHandler().trace("ChannelStateChangeListener.stateChanged( " + channel + ", " + (state == IChannel.STATE_OPEN ? "OPEN" : "CLOSED") + " )", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$

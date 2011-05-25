@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
@@ -35,7 +36,7 @@ public class TreeViewerComparator extends AbstractViewerComparator {
 	 */
 	public TreeViewerComparator(Viewer viewer, ILabelProvider labelProvider) {
 		super(viewer);
-		assert labelProvider != null;
+		Assert.isNotNull(labelProvider);
 		this.labelProvider = labelProvider;
 	}
 

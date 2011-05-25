@@ -9,6 +9,7 @@
  *******************************************************************************/
 package org.eclipse.tm.te.ui.dialogs;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.dialogs.TrayDialog;
 import org.eclipse.swt.layout.GridLayout;
@@ -65,7 +66,7 @@ public class CustomTrayDialog extends TrayDialog {
 	 */
 	protected void initializeDialogSettings() {
 		IDialogSettings settings = doGetDialogSettingsToInitialize();
-		assert settings != null;
+		Assert.isNotNull(settings);
 		IDialogSettings section = settings.getSection(getDialogSettingsSectionName());
 		if (section == null) {
 			section = settings.addNewSection(getDialogSettingsSectionName());
@@ -144,7 +145,7 @@ public class CustomTrayDialog extends TrayDialog {
 	 * @param composite The dialog top control. Must not be <code>null</code>.
 	 */
 	protected void configureDialogAreaControl(Composite composite) {
-		assert composite != null;
+		Assert.isNotNull(composite);
 		Layout layout = composite.getLayout();
 		if (layout == null || layout instanceof GridLayout) {
 			composite.setLayout(new GridLayout());

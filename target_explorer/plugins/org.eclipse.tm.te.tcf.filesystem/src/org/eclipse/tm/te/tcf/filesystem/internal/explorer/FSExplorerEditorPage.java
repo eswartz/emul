@@ -3,12 +3,13 @@
  * This program and the accompanying materials are made available under the terms
  * of the Eclipse Public License v1.0 which accompanies this distribution, and is
  * available at http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  * Uwe Stieber (Wind River) - initial API and implementation
  *******************************************************************************/
 package org.eclipse.tm.te.tcf.filesystem.internal.explorer;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
@@ -72,7 +73,7 @@ public class FSExplorerEditorPage extends AbstractEditorPage {
 	 * @param managedForm The managed form. Must not be <code>null</code>.
 	 */
 	protected void configureManagedForm(IManagedForm managedForm) {
-		assert managedForm != null;
+		Assert.isNotNull(managedForm);
 
 		// Configure main layout
 		Composite body = managedForm.getForm().getBody();
@@ -92,7 +93,8 @@ public class FSExplorerEditorPage extends AbstractEditorPage {
 	 * @param toolkit The {@link CustomFormToolkit} instance. Must not be <code>null</code>.
 	 */
 	protected void doCreateFormContent(Composite parent, CustomFormToolkit toolkit) {
-		assert parent != null && toolkit != null;
+		Assert.isNotNull(parent);
+		Assert.isNotNull(toolkit);
 
 		Section section = toolkit.getFormToolkit().createSection(parent, ExpandableComposite.TITLE_BAR);
 		String title = Messages.FSExplorerTreeControl_section_title;
@@ -114,7 +116,7 @@ public class FSExplorerEditorPage extends AbstractEditorPage {
 
 		// Setup the file system tree control
 		fileSystemControl = doCreateFileSystemTreeControl();
-		assert fileSystemControl != null;
+		Assert.isNotNull(fileSystemControl);
 		fileSystemControl.setupFormPanel((Composite)section.getClient(), toolkit);
 
 		// Set the initial input

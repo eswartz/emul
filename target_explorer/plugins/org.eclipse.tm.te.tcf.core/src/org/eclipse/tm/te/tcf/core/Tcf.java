@@ -3,7 +3,7 @@
  * This program and the accompanying materials are made available under the terms
  * of the Eclipse Public License v1.0 which accompanies this distribution, and is
  * available at http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  * Uwe Stieber (Wind River) - initial API and implementation
  *******************************************************************************/
@@ -12,6 +12,7 @@ package org.eclipse.tm.te.tcf.core;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IAdapterManager;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.tm.tcf.protocol.IChannel;
@@ -68,7 +69,7 @@ public final class Tcf {
 	 * @param runnable The runnable. Must not be <code>null</code>.
 	 */
 	private static final void runSafe(Runnable runnable) {
-		assert runnable != null;
+		Assert.isNotNull(runnable);
 
 		if (Protocol.isDispatchThread()) {
 			runnable.run();
@@ -83,10 +84,11 @@ public final class Tcf {
 	 * @param listener The listener. Must not be <code>null</code>.
 	 */
 	public static final void addProtocolStateChangeListener(IProtocolStateChangeListener listener) {
-		assert Protocol.isDispatchThread() && listener != null;
+		Assert.isTrue(Protocol.isDispatchThread());
+		Assert.isNotNull(listener);
 
 		Tcf tcf = getInstance();
-		assert tcf != null;
+		Assert.isNotNull(tcf);
 
 		if (!tcf.protocolStateChangeListeners.contains(listener)) {
 			tcf.protocolStateChangeListeners.add(listener);
@@ -99,10 +101,11 @@ public final class Tcf {
 	 * @param listener The listener. Must not be <code>null</code>.
 	 */
 	public static final void removeProtocolStateChangeListener(IProtocolStateChangeListener listener) {
-		assert Protocol.isDispatchThread() && listener != null;
+		Assert.isTrue(Protocol.isDispatchThread());
+		Assert.isNotNull(listener);
 
 		Tcf tcf = getInstance();
-		assert tcf != null;
+		Assert.isNotNull(tcf);
 
 		tcf.protocolStateChangeListeners.remove(listener);
 	}
@@ -113,10 +116,11 @@ public final class Tcf {
 	 * @param listener The listener. Must not be <code>null</code>.
 	 */
 	public static final void addChannelStateChangeListener(IChannelStateChangeListener listener) {
-		assert Protocol.isDispatchThread() && listener != null;
+		Assert.isTrue(Protocol.isDispatchThread());
+		Assert.isNotNull(listener);
 
 		Tcf tcf = getInstance();
-		assert tcf != null;
+		Assert.isNotNull(tcf);
 
 		if (!tcf.channelStateChangeListeners.contains(listener)) {
 			tcf.channelStateChangeListeners.add(listener);
@@ -129,10 +133,11 @@ public final class Tcf {
 	 * @param listener The listener. Must not be <code>null</code>.
 	 */
 	public static final void removeChannelStateChangeListener(IChannelStateChangeListener listener) {
-		assert Protocol.isDispatchThread() && listener != null;
+		Assert.isTrue(Protocol.isDispatchThread());
+		Assert.isNotNull(listener);
 
 		Tcf tcf = getInstance();
-		assert tcf != null;
+		Assert.isNotNull(tcf);
 
 		tcf.channelStateChangeListeners.remove(listener);
 	}
@@ -144,10 +149,10 @@ public final class Tcf {
 	 * @param state The new state.
 	 */
 	public static final void fireChannelStateChangeListeners(final IChannel channel, final int state) {
-		assert channel != null;
+		Assert.isNotNull(channel);
 
 		Tcf tcf = getInstance();
-		assert tcf != null;
+		Assert.isNotNull(tcf);
 
 		final IChannelStateChangeListener[] listeners = tcf.channelStateChangeListeners.toArray(new IChannelStateChangeListener[tcf.channelStateChangeListeners.size()]);
 		if (listeners.length > 0) {
@@ -179,10 +184,10 @@ public final class Tcf {
 	 * @see Startup#setStarted(boolean)
 	 */
 	public static void start() {
-		assert Protocol.isDispatchThread();
+		Assert.isTrue(Protocol.isDispatchThread());
 
 		Tcf tcf = getInstance();
-		assert tcf != null;
+		Assert.isNotNull(tcf);
 
 		// Create and register the global channel open listener
 		if (tcf.channelOpenListener == null) {
@@ -212,10 +217,10 @@ public final class Tcf {
 	 * @see Startup#setStarted(boolean)
 	 */
 	public static void stop() {
-		assert Protocol.isDispatchThread();
+		Assert.isTrue(Protocol.isDispatchThread());
 
 		Tcf tcf = getInstance();
-		assert tcf != null;
+		Assert.isNotNull(tcf);
 
 		// Unregister the channel open listener of created
 		if (tcf.channelOpenListener != null) {
@@ -246,11 +251,11 @@ public final class Tcf {
 	 */
 	public static IChannelManager getChannelManager() {
 		final Tcf tcf = getInstance();
-		assert tcf != null;
+		Assert.isNotNull(tcf);
 
 		runSafe(new Runnable() {
 			public void run() {
-				assert Protocol.isDispatchThread();
+				Assert.isTrue(Protocol.isDispatchThread());
 
 				if (tcf.channelManager == null) {
 					// We have to create the channel manager
@@ -273,10 +278,10 @@ public final class Tcf {
 	 * @see IAdapterManager#getAdapter(Object, Class)
 	 */
 	public static Object getAdapter(Class<?> adapter) {
-		assert adapter != null;
+		Assert.isNotNull(adapter);
 
 		Tcf tcf = getInstance();
-		assert tcf != null;
+		Assert.isNotNull(tcf);
 
 		if (IChannelManager.class.equals(adapter)) {
 			return tcf.channelManager;

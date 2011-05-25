@@ -9,6 +9,7 @@
  *******************************************************************************/
 package org.eclipse.tm.te.tcf.ui.internal.navigator.images;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.resource.ImageRegistry;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
@@ -61,7 +62,8 @@ public class PeerImageDescriptor extends AbstractImageDescriptor {
 	 * @param node The peer model. Must not be <code>null</code>.
 	 */
 	protected void initialize(IPeerModel node) {
-		assert Protocol.isDispatchThread() && node != null;
+		Assert.isNotNull(node);
+		Assert.isTrue(Protocol.isDispatchThread());
 
 		state = node.getIntProperty(IPeerModelProperties.PROP_STATE);
 	}

@@ -9,6 +9,7 @@
  *******************************************************************************/
 package org.eclipse.tm.te.tcf.ui.internal.model;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.ILocatorModel;
 import org.eclipse.tm.te.tcf.locator.nodes.LocatorModel;
@@ -48,7 +49,7 @@ public final class Model {
 	 * Initialize the root node. Must be called within the TCF dispatch thread.
 	 */
 	protected static void initialize() {
-		assert Protocol.isDispatchThread();
+		Assert.isTrue(Protocol.isDispatchThread());
 
 		locatorModel = new LocatorModel();
 		// Register the model listener

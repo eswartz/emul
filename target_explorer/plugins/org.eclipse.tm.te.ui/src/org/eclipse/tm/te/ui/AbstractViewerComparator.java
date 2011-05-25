@@ -9,6 +9,7 @@
  *******************************************************************************/
 package org.eclipse.tm.te.ui;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerComparator;
 
@@ -25,7 +26,7 @@ public abstract class AbstractViewerComparator extends ViewerComparator {
 	 * @param viewer The parent viewer. Must not be <code>null</code>.
 	 */
 	public AbstractViewerComparator(Viewer viewer) {
-		assert viewer != null;
+		Assert.isNotNull(viewer);
 		this.viewer = viewer;
 	}
 

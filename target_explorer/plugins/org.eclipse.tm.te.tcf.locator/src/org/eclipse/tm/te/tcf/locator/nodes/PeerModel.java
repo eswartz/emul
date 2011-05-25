@@ -15,6 +15,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.PlatformObject;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.Protocol;
@@ -56,7 +57,8 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	public PeerModel(ILocatorModel parent, IPeer peer) {
 		super();
 
-		assert Protocol.isDispatchThread() && parent != null;
+		Assert.isNotNull(parent);
+		Assert.isTrue(Protocol.isDispatchThread());
 
 		parentModel = parent;
 
@@ -112,7 +114,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	 * @return The adapter or <code>null</code>.
 	 */
 	protected Object doGetAdapter(Class<?> adapter) {
-		assert Protocol.isDispatchThread();
+		Assert.isTrue(Protocol.isDispatchThread());
 
 		if (adapter.isAssignableFrom(ILocatorModel.class)) {
 			return parentModel;
@@ -166,7 +168,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.IPeerModel#getProperties()
 	 */
 	public Map<String, Object> getProperties() {
-		assert Protocol.isDispatchThread();
+		Assert.isTrue(Protocol.isDispatchThread());
 		return Collections.unmodifiableMap(new HashMap<String, Object>(properties));
 	}
 
@@ -174,7 +176,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.IPeerModel#getProperty(java.lang.String)
 	 */
 	public Object getProperty(String key) {
-		assert Protocol.isDispatchThread();
+		Assert.isTrue(Protocol.isDispatchThread());
 
 		if (!properties.containsKey(key)
 				&& getPeer() != null && getPeer().getAttributes().containsKey(key)) {
@@ -276,7 +278,8 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.IPeerModel#setProperties(java.util.Map)
 	 */
 	public final void setProperties(Map<String, Object> properties) {
-		assert Protocol.isDispatchThread() && properties != null;
+		Assert.isNotNull(properties);
+		Assert.isTrue(Protocol.isDispatchThread());
 
 		this.properties.clear();
 		this.properties.putAll(properties);
@@ -353,7 +356,8 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.IPeerModel#setProperty(java.lang.String, java.lang.Object)
 	 */
 	public boolean setProperty(String key, Object value) {
-		assert Protocol.isDispatchThread() && key != null;
+		Assert.isNotNull(key);
+		Assert.isTrue(Protocol.isDispatchThread());
 
 		Object oldValue = properties.get(key);
 		if ((oldValue == null && value != null) || (oldValue != null && !oldValue.equals(value))) {
@@ -388,7 +392,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.IPeerModel#clearProperties()
 	 */
 	public final void clearProperties() {
-		assert Protocol.isDispatchThread();
+		Assert.isTrue(Protocol.isDispatchThread());
 		properties.clear();
 	}
 

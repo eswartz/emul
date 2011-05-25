@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -45,7 +46,7 @@ public class Scanner extends Job implements IScanner {
 	 */
 	public Scanner(ILocatorModel parentModel) {
 		super(Scanner.class.getName());
-		assert parentModel != null;
+		Assert.isNotNull(parentModel);
 		this.parentModel = parentModel;
 	}
 
@@ -62,7 +63,7 @@ public class Scanner extends Job implements IScanner {
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.IScanner#setConfiguration(java.util.Map)
 	 */
 	public void setConfiguration(Map<String, Object> configuration) {
-		assert configuration != null;
+		Assert.isNotNull(configuration);
 		this.configuration.clear();
 		this.configuration.putAll(configuration);
 	}

@@ -12,6 +12,7 @@ package org.eclipse.tm.te.ui.tables.properties;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
@@ -149,7 +150,7 @@ public abstract class NodePropertiesTableControl extends WorkbenchPartControl {
 	 * @return The table viewer.
 	 */
 	protected TableViewer doCreateTableViewer(Composite parent) {
-		assert parent != null;
+		Assert.isNotNull(parent);
 
 		TableViewer tableViewer = new TableViewer(parent, SWT.FULL_SELECTION | SWT.MULTI | SWT.BORDER);
 
@@ -162,7 +163,7 @@ public abstract class NodePropertiesTableControl extends WorkbenchPartControl {
 	 * @param tableViewer The table viewer. Must not be <code>null</code>.
 	 */
 	protected void configureTableViewer(TableViewer tableViewer) {
-		assert tableViewer != null;
+		Assert.isNotNull(tableViewer);
 
 		tableViewer.setLabelProvider(doCreateTableViewerLabelProvider(tableViewer));
 		tableViewer.setContentProvider(doCreateTableViewerContentProvider(tableViewer));
@@ -202,7 +203,7 @@ public abstract class NodePropertiesTableControl extends WorkbenchPartControl {
 	 * @param sorted Specify <code>true</code> if the table shall support sorting, <code>false</code> otherwise.
 	 */
 	protected void configureTable(Table table, boolean sorted) {
-		assert table != null;
+		Assert.isNotNull(table);
 
 		// Create and configure the table columns
 		createTableColumns(table, sorted);
@@ -218,7 +219,7 @@ public abstract class NodePropertiesTableControl extends WorkbenchPartControl {
 	 * @param sorted Specify <code>true</code> if the table shall support sorting, <code>false</code> otherwise.
 	 */
 	protected void createTableColumns(final Table table, boolean sorted) {
-		assert table != null;
+		Assert.isNotNull(table);
 
 		TableColumn sortColumn = null;
 
@@ -291,7 +292,7 @@ public abstract class NodePropertiesTableControl extends WorkbenchPartControl {
 	 * @param viewer The table viewer. Must not be <code>null</code>.
 	 */
 	protected void createContributionItems(TableViewer viewer) {
-		assert viewer != null;
+		Assert.isNotNull(viewer);
 
 		// Create the menu manager
 		MenuManager manager = new MenuManager("#PopupMenu"); //$NON-NLS-1$
@@ -332,7 +333,7 @@ public abstract class NodePropertiesTableControl extends WorkbenchPartControl {
 	 * @param viewer The table viewer. Must not be <code>null</code>.
 	 */
 	protected void createToolbarContributionItem(TableViewer viewer) {
-		assert viewer != null;
+		Assert.isNotNull(viewer);
 
 		// Determine the section parent from the filtered tree
 		Composite parent = viewer.getTable().getParent();
@@ -381,7 +382,7 @@ public abstract class NodePropertiesTableControl extends WorkbenchPartControl {
 	 * @param toolbar The toolbar to add the toolbar items too. Must not be <code>null</code>.
 	 */
 	protected void createToolBarItems(ToolBar toolbar) {
-		assert toolbar != null;
+		Assert.isNotNull(toolbar);
 	}
 
 	/**

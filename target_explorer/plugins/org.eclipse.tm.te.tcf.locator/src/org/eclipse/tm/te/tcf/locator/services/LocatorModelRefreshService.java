@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
@@ -58,7 +59,7 @@ public class LocatorModelRefreshService extends AbstractLocatorModelService impl
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.services.ILocatorModelRefreshService#refresh()
 	 */
 	public void refresh() {
-		assert Protocol.isDispatchThread();
+		Assert.isTrue(Protocol.isDispatchThread());
 
 		// Get the parent locator model
 		ILocatorModel model = getLocatorModel();
@@ -98,7 +99,9 @@ public class LocatorModelRefreshService extends AbstractLocatorModelService impl
 	 * @param model The locator model. Must not be <code>null</code>.
 	 */
 	protected void processPeers(Map<String, IPeer> peers, List<IPeerModel> oldChildren, ILocatorModel model) {
-		assert peers != null && oldChildren != null && model != null;
+		Assert.isNotNull(peers);
+		Assert.isNotNull(oldChildren);
+		Assert.isNotNull(model);
 
 		for (String peerId : peers.keySet()) {
 			// Get the peer instance for the current peer id
@@ -127,7 +130,8 @@ public class LocatorModelRefreshService extends AbstractLocatorModelService impl
 	 * @param model The locator model. Must not be <code>null</code>.
 	 */
 	protected void refreshStaticPeers(List<IPeerModel> oldChildren, ILocatorModel model) {
-		assert oldChildren != null && model != null;
+		Assert.isNotNull(oldChildren);
+		Assert.isNotNull(model);
 
 		// Get the root locations to lookup the static peer definitions
 		File[] roots = getStaticPeerLookupDirectories();

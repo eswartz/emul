@@ -3,13 +3,14 @@
  * This program and the accompanying materials are made available under the terms
  * of the Eclipse Public License v1.0 which accompanies this distribution, and is
  * available at http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  * Uwe Stieber (Wind River) - initial API and implementation
  *******************************************************************************/
 package org.eclipse.tm.te.tcf.locator.internal;
 
 import org.eclipse.core.expressions.PropertyTester;
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModelProperties;
@@ -55,7 +56,8 @@ public class MyPropertyTester extends PropertyTester {
 	 * @return <code>True</code> if the property to test has the expected value, <code>false</code> otherwise.
 	 */
 	protected boolean testPeerModel(IPeerModel node, String property, Object[] args, Object expectedValue) {
-		assert Protocol.isDispatchThread() && node != null;
+		Assert.isNotNull(node);
+		Assert.isTrue(Protocol.isDispatchThread());
 
 		if ("name".equals(property)) { //$NON-NLS-1$
 			if (node.getPeer().getName() != null && node.getPeer().getName().equals(expectedValue)) {

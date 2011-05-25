@@ -10,6 +10,7 @@
 package org.eclipse.tm.te.ui.trees;
 
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
@@ -98,7 +99,7 @@ public abstract class AbstractTreeControl extends WorkbenchPartControl {
 	 * @return The tree viewer.
 	 */
 	protected TreeViewer doCreateTreeViewer(Composite parent) {
-		assert parent != null;
+		Assert.isNotNull(parent);
 		return new TreeViewer(parent, SWT.FULL_SELECTION | SWT.SINGLE);
 	}
 
@@ -108,7 +109,7 @@ public abstract class AbstractTreeControl extends WorkbenchPartControl {
 	 * @param viewer The tree viewer. Must not be <code>null</code>.
 	 */
 	protected void configureTreeViewer(TreeViewer viewer) {
-		assert viewer != null;
+		Assert.isNotNull(viewer);
 
 		viewer.setAutoExpandLevel(getAutoExpandLevel());
 
@@ -168,7 +169,7 @@ public abstract class AbstractTreeControl extends WorkbenchPartControl {
 	 * @return The tree viewer comparator instance or <code>null</code> to turn of sorting.
 	 */
 	protected ViewerComparator doCreateTreeViewerComparator(TreeViewer viewer) {
-		assert viewer != null;
+		Assert.isNotNull(viewer);
 		return null;
 	}
 
@@ -186,7 +187,7 @@ public abstract class AbstractTreeControl extends WorkbenchPartControl {
 	 * @param viewer The tree viewer instance. Must not be <code>null</code>.
 	 */
 	protected void createContributionItems(TreeViewer viewer) {
-		assert viewer != null;
+		Assert.isNotNull(viewer);
 
 		// Create the menu manager
 		MenuManager manager = new MenuManager("#PopupMenu"); //$NON-NLS-1$
@@ -224,7 +225,7 @@ public abstract class AbstractTreeControl extends WorkbenchPartControl {
 	 * @param viewer The tree viewer instance. Must not be <code>null</code>.
 	 */
 	protected void createToolbarContributionItem(TreeViewer viewer) {
-		assert viewer != null;
+		Assert.isNotNull(viewer);
 
 		// Determine the section parent from the tree viewer
 		Composite parent = viewer.getTree().getParent();
@@ -273,7 +274,7 @@ public abstract class AbstractTreeControl extends WorkbenchPartControl {
 	 * @param toolbar The toolbar to add the toolbar items too. Must not be <code>null</code>.
 	 */
 	protected void createToolBarItems(ToolBar toolbar) {
-		assert toolbar != null;
+		Assert.isNotNull(toolbar);
 	}
 
 	/**

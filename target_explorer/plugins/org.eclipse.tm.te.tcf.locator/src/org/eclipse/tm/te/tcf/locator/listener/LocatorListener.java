@@ -9,6 +9,7 @@
  *******************************************************************************/
 package org.eclipse.tm.te.tcf.locator.listener;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.ILocator;
@@ -38,7 +39,7 @@ public class LocatorListener implements ILocator.LocatorListener {
 	public LocatorListener(ILocatorModel model) {
 		super();
 
-		assert model != null;
+		Assert.isNotNull(model);
 		this.model = model;
 	}
 

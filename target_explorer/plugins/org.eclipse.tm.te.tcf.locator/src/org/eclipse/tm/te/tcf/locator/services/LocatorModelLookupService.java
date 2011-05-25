@@ -3,12 +3,13 @@
  * This program and the accompanying materials are made available under the terms
  * of the Eclipse Public License v1.0 which accompanies this distribution, and is
  * available at http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  * Uwe Stieber (Wind River) - initial API and implementation
  *******************************************************************************/
 package org.eclipse.tm.te.tcf.locator.services;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.ILocatorModel;
@@ -34,7 +35,8 @@ public class LocatorModelLookupService extends AbstractLocatorModelService imple
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.services.ILocatorModelLookupService#lkupPeerModelById(java.lang.String)
 	 */
 	public IPeerModel lkupPeerModelById(String id) {
-		assert Protocol.isDispatchThread() && id != null;
+		Assert.isNotNull(id);
+		Assert.isTrue(Protocol.isDispatchThread());
 
 		IPeerModel node = null;
 		for (IPeerModel candidate : getLocatorModel().getPeers()) {
@@ -52,7 +54,8 @@ public class LocatorModelLookupService extends AbstractLocatorModelService imple
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.services.ILocatorModelLookupService#lkupPeerModelByAgentId(java.lang.String)
 	 */
 	public IPeerModel lkupPeerModelByAgentId(String agentId) {
-		assert Protocol.isDispatchThread() && agentId != null;
+		Assert.isNotNull(agentId);
+		Assert.isTrue(Protocol.isDispatchThread());
 
 		IPeerModel node = null;
 		for (IPeerModel candidate : getLocatorModel().getPeers()) {

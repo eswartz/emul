@@ -9,6 +9,7 @@
  *******************************************************************************/
 package org.eclipse.tm.te.tcf.ui.internal.navigator;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.ILocatorModel;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel;
 import org.eclipse.tm.te.tcf.locator.listener.ModelAdapter;
@@ -31,7 +32,7 @@ public class ModelListener extends ModelAdapter {
 	 *
 	 */
 	public ModelListener(ILocatorModel parent) {
-		assert parent != null;
+		Assert.isNotNull(parent);
 		parentModel = parent;
 	}
 

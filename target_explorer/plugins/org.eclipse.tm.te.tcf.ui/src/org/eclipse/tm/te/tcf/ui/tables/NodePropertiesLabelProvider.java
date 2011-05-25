@@ -9,6 +9,7 @@
  *******************************************************************************/
 package org.eclipse.tm.te.tcf.ui.tables;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.viewers.ITableColorProvider;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
@@ -51,7 +52,7 @@ public class NodePropertiesLabelProvider extends LabelProvider implements ITable
 	 * @see org.eclipse.tm.te.tcf.vtl.ui.datasource.controls.tables.TableLabelProvider#getColumnText(org.eclipse.tm.te.tcf.core.runtime.model.interfaces.IModelNode, int)
 	 */
 	public String getColumnText(Object element, int columnIndex) {
-		assert element != null;
+		Assert.isNotNull(element);
 
 		String label = null;
 

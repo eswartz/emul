@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.PlatformObject;
 import org.eclipse.core.runtime.jobs.Job;
@@ -87,7 +88,8 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.ILocatorModel#addListener(org.eclipse.tm.te.tcf.locator.core.interfaces.IModelListener)
 	 */
 	public void addListener(IModelListener listener) {
-		assert Protocol.isDispatchThread() && listener != null;
+		Assert.isNotNull(listener);
+		Assert.isTrue(Protocol.isDispatchThread());
 		if (!modelListener.contains(listener)) modelListener.add(listener);
 	}
 
@@ -95,7 +97,8 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.ILocatorModel#removeListener(org.eclipse.tm.te.tcf.locator.core.interfaces.IModelListener)
 	 */
 	public void removeListener(IModelListener listener) {
-		assert Protocol.isDispatchThread() && listener != null;
+		Assert.isNotNull(listener);
+		Assert.isTrue(Protocol.isDispatchThread());
 		modelListener.remove(listener);
 	}
 
@@ -110,7 +113,7 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.ILocatorModel#dispose()
 	 */
 	public void dispose() {
-		assert Protocol.isDispatchThread();
+		Assert.isTrue(Protocol.isDispatchThread());
 
 		// If already disposed, we are done immediately
 		if (disposed) return;
@@ -205,7 +208,7 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 	 */
 	@SuppressWarnings("unchecked")
 	public <V extends ILocatorModelService> V getService(Class<V> serviceInterface) {
-		assert serviceInterface != null;
+		Assert.isNotNull(serviceInterface);
 		return (V)getAdapter(serviceInterface);
 	}
 
@@ -216,8 +219,8 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 	 * <b>Note:</b> This method is not intended to be call from clients.
 	 */
 	public void checkLocatorListener() {
-		assert Protocol.isDispatchThread();
-		assert Protocol.getLocator() != null;
+		Assert.isTrue(Protocol.isDispatchThread());
+		Assert.isNotNull(Protocol.getLocator());
 
 		if (locatorListener == null) {
 			locatorListener = doCreateLocatorListener(this);
@@ -232,7 +235,7 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 	 * @return The locator listener instance.
 	 */
 	protected ILocator.LocatorListener doCreateLocatorListener(ILocatorModel model) {
-		assert model != null;
+		Assert.isNotNull(model);
 		return new LocatorListener(model);
 	}
 
@@ -283,7 +286,8 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.ILocatorModel#validatePeerNodeForAdd(org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.IPeerModel)
 	 */
 	public IPeerModel validatePeerNodeForAdd(IPeerModel node) {
-		assert Protocol.isDispatchThread() && node != null;
+		Assert.isNotNull(node);
+		Assert.isTrue(Protocol.isDispatchThread());
 
 		// Get the peer from the peer node
 		IPeer peer = node.getPeer();
