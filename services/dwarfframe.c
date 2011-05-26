@@ -157,7 +157,10 @@ static RegisterRules * get_reg(StackFrameRegisters * regs, int reg) {
             }
             break;
         case EM_PPC:
-            if (n == 1 || (n >= 14 && n <= 31) || (n >= 46 && n <= 63)) {
+            if (n == 1) {
+                regs->regs[n].rule = RULE_VAL_OFFSET;
+            }
+            else if ((n >= 14 && n <= 31) || (n >= 46 && n <= 63)) {
                 regs->regs[n].rule = RULE_SAME_VALUE;
             }
             else if (n == rules.return_address_register) {

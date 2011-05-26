@@ -757,7 +757,7 @@ static void debug_event_handler(DebugEvent * debug_event) {
 #if USE_HW_BPS
                 if (exception_code == EXCEPTION_SINGLE_STEP && win32_event->u.Exception.dwFirstChance) {
                     /* This event appears to be caused by a hardware breakpoint.
-                     * It is safe to ignore the event - the breakpoint will be triggered again 
+                     * It is safe to ignore the event - the breakpoint will be triggered again
                      * when the context resumed. */
                     debug_event->continue_status = DBG_CONTINUE;
                     break;
