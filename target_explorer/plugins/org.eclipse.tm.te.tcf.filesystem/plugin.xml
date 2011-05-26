@@ -13,7 +13,7 @@
          <includes>
             <contentExtension
                   isRoot="false"
-                  pattern="org.eclipse.tm.te.datasource.tcf.filesystem"/>
+                  pattern="org.eclipse.tm.te.tcf.filesystem.navigator.*"/>
          </includes>
       </viewerContentBinding>
    </extension>
@@ -23,7 +23,7 @@
             activeByDefault="false"
             contentProvider="org.eclipse.tm.te.tcf.filesystem.controls.FSTreeContentProvider"
             icon="icons/obj16/rootdrive.gif"
-            id="org.eclipse.tm.te.datasource.tcf.filesystem"
+            id="org.eclipse.tm.te.tcf.filesystem.navigator.content"
             labelProvider="org.eclipse.tm.te.tcf.filesystem.controls.FSTreeLabelProvider"
             name="Target File System (TCF)"
             priority="normal">
