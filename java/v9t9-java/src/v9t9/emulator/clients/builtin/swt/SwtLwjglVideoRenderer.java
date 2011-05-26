@@ -5,7 +5,6 @@ package v9t9.emulator.clients.builtin.swt;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.*;
-import static org.lwjgl.opengl.GL20.*;
 
 import java.io.IOException;
 import java.net.URL;
@@ -24,8 +23,11 @@ import org.eclipse.swt.widgets.Listener;
 import org.ejs.coffee.core.properties.IProperty;
 import org.ejs.coffee.core.properties.IPropertyListener;
 import org.lwjgl.LWJGLException;
+import org.lwjgl.opengl.ARBFragmentShader;
+import org.lwjgl.opengl.ARBShaderObjects;
+import org.lwjgl.opengl.ARBVertexShader;
+import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GLContext;
-import org.lwjgl.opengl.OpenGLException;
 import org.lwjgl.util.glu.GLU;
 
 import v9t9.emulator.clients.builtin.BaseEmulatorWindow;
@@ -93,7 +95,6 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		if (!glCanvas.isDisposed()) {
 			Display.getDefault().syncExec(new Runnable() {
 				public void run() {
-
 					glCanvas.setCurrent();
 					try {
 						GLContext.useContext(glCanvas);
@@ -113,6 +114,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	protected Canvas createCanvasControl(Composite parent, int flags) {
 		glData = new GLData();
 		glData.doubleBuffer = true;
+		glData.depthSize = 0;
 		glCanvas = new GLCanvas(parent, flags | getStyleBits(), glData);
 		
 		BaseEmulatorWindow.settingMonitorDrawing.addListener(this);
@@ -122,6 +124,8 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 
 			@Override
 			public void handleEvent(Event event) {
+				
+
 				glCanvas.setCurrent();
 				try {
 					GLContext.useContext(glCanvas);
@@ -134,6 +138,8 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 			
 		};
 		parent.addListener(SWT.Resize, resizeListener);
+
+		
 
 		glCanvas.setCurrent();
 		try {
@@ -150,8 +156,6 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		
 		setupCanvasTexture();
 		setupMonitorTexture();
-		
-		defineShaders();
 		
 		return glCanvas;
 	}
@@ -172,23 +176,6 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		}
 	}
 	
-	private void defineShaders() {
-		if (!supportsShaders) 
-			return;
-		
-		try {
-			fragShader = glCreateShader(GL_FRAGMENT_SHADER);
-			vertexShader = glCreateShader(GL_VERTEX_SHADER);
-			programObject = glCreateProgram();
-		} catch (OpenGLException e) {
-			System.out.println("OpenGL 2.0 shaders not supported");
-			supportsShaders = false;
-			return;
-		}
-		
-		compileLinkShaders();
-	}
-
 	static class GLShaderException extends Exception {
 
 		private static final long serialVersionUID = 3737775043188087342L;
@@ -223,16 +210,19 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 			return;
 		
 		try {
-			String base = "shaders/" + (isMonitorEffectEnabled() ? "crt2" : "std");
-			compileShader(fragShader, base + ".frag");
-			compileShader(vertexShader, base + ".vert");
+			if (programObject == 0)
+				programObject = ARBShaderObjects.glCreateProgramObjectARB();
 			
-			linkShaders(programObject, fragShader, vertexShader);
+			String base = "shaders/" + (isMonitorEffectEnabled() ? "crt2" : "std");
+			vertexShader = compileShader(vertexShader, ARBVertexShader.GL_VERTEX_SHADER_ARB, base + ".vert");
+			fragShader = compileShader(fragShader, ARBFragmentShader.GL_FRAGMENT_SHADER_ARB, base + ".frag");
+			
+			linkShaders(programObject, vertexShader, fragShader);
 
 		} catch (GLShaderException e) {
-			glDeleteProgram(programObject);
-			glDeleteShader(fragShader);
-			glDeleteShader(vertexShader);
+			ARBShaderObjects.glDeleteObjectARB(programObject);
+			ARBShaderObjects.glDeleteObjectARB(fragShader);
+			ARBShaderObjects.glDeleteObjectARB(vertexShader);
 			programObject = fragShader = vertexShader = 0;
 			e.printStackTrace();
 		}
@@ -242,39 +232,50 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		return BaseEmulatorWindow.settingMonitorDrawing.getBoolean();
 	}
 
-	private void compileShader(int shaderObj, String filename) throws GLShaderException {
+	private int compileShader(int shaderObj, int type, String filename) throws GLShaderException {
 		URL url = getClass().getClassLoader().getResource(filename);
-		//System.out.println("Compiling " + file + " to " +shaderObj);
+		if (url == null)
+			throw new GLShaderException(filename, "Not found", null);
+		
+		if (shaderObj == 0)
+			shaderObj = ARBShaderObjects.glCreateShaderObjectARB(type);
+
+		System.out.println("Compiling " + url + " to " +shaderObj);
 		String text;
 		try {
 			text = DataFiles.readInputStreamText(url.openStream());
 		} catch (IOException e) {
 			throw new GLShaderException(filename, "Cannot read file " + url, e);
 		}
-		glShaderSource(shaderObj, text);
-		glCompileShader(shaderObj);
+		ARBShaderObjects.glShaderSourceARB(shaderObj, text);
+		ARBShaderObjects.glCompileShaderARB(shaderObj);
 		
-		int error = glGetShader(shaderObj, GL_COMPILE_STATUS);
-		if (error != GL_TRUE) {
-			throw new GLShaderException(filename, glGetShaderInfoLog(shaderObj, 65536),
+		int error = ARBShaderObjects.glGetObjectParameteriARB(shaderObj, ARBShaderObjects.GL_OBJECT_COMPILE_STATUS_ARB);
+		if (error == GL_FALSE) {
+			int length = ARBShaderObjects.glGetObjectParameteriARB(shaderObj, ARBShaderObjects.GL_OBJECT_INFO_LOG_LENGTH_ARB);
+			String log = ARBShaderObjects.glGetInfoLogARB(shaderObj, length);
+			throw new GLShaderException(filename, 
+					log,
 					null);
 		}
+		return shaderObj;
 	}
 
 
 	private void linkShaders(int programObj, int... shaders) throws GLShaderException {
 		for (int shader : shaders) {
-			//System.out.println("Linking " + shader + " to " + programObj);
-			glDetachShader(programObj, shader);
-			glAttachShader(programObj, shader);
+			System.out.println("Linking " + shader + " to " + programObj);
+			ARBShaderObjects.glAttachObjectARB(programObj, shader);
 		}
 		
-		glLinkProgram(programObj);
+		ARBShaderObjects.glLinkProgramARB(programObj);
 		
-		int error = glGetShader(programObj, GL_LINK_STATUS);
-		if (error != GL_TRUE) {
+		int error = ARBShaderObjects.glGetObjectParameteriARB(programObj, GL20.GL_LINK_STATUS);
+		if (error == GL_FALSE) {
+			int length = ARBShaderObjects.glGetObjectParameteriARB(programObj, ARBShaderObjects.GL_OBJECT_INFO_LOG_LENGTH_ARB);
+			String log = ARBShaderObjects.glGetInfoLogARB(programObj, length);
 			throw new GLShaderException("<<program>>", 
-					glGetShaderInfoLog(programObj, 65536),
+					log,
 					null);
 		}
 	}
@@ -325,15 +326,23 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		
 		if (programObject != 0) {
 			// bind program so we can look up uniforms
-			glUseProgram(programObject);
+			ARBShaderObjects.glUseProgramObjectARB(programObject);
 			
 			System.out.printf("Sending sizes: %s and %s%n", imageRect, glViewportRect);
-			glUniform2i(glGetUniformLocation(programObject, "visible"), imageRect.width, imageRect.height);
-			glUniform2i(glGetUniformLocation(programObject, "viewport"), glViewportRect.width, glViewportRect.height);
+			ARBShaderObjects.glUniform2iARB(
+					ARBShaderObjects.glGetUniformLocationARB(programObject, "visible"), 
+					imageRect.width, imageRect.height);
+			ARBShaderObjects.glUniform2iARB(
+					ARBShaderObjects.glGetUniformLocationARB(programObject, "viewport"), 
+					glViewportRect.width, glViewportRect.height);
 			
-			glUniform1i(glGetUniformLocation(programObject, "canvasTexture"), 0);
-			glUniform1i(glGetUniformLocation(programObject, "pixelTexture"), 1);
-			
+			ARBShaderObjects.glUniform1iARB(
+					ARBShaderObjects.glGetUniformLocationARB(programObject, "canvasTexture"), 
+					0);
+			ARBShaderObjects.glUniform1iARB(
+					ARBShaderObjects.glGetUniformLocationARB(programObject, "pixelTexture"), 
+					1);
+
 			glActiveTexture(GL_TEXTURE1);
 			
 			glMatrixMode(GL_TEXTURE);
@@ -345,7 +354,6 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 			glMatrixMode(GL_MODELVIEW);
 			
 			glActiveTexture(GL_TEXTURE0);
-			
 
 		}
 	}
@@ -363,9 +371,9 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 
 		reblit();
 	}
-
-
+	
 	private void reblit() {
+		
 		glCanvas.setCurrent();
 		try {
 			GLContext.useContext(glCanvas);
@@ -373,11 +381,11 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 			e.printStackTrace(); 
 			return;
 		}
-		
-		if (programObject != 0) {
-			glUseProgram(programObject);
-		}
 
+		if (programObject != 0) {
+			ARBShaderObjects.glUseProgramObjectARB(programObject);
+		}
+		
 		glClear(GL_COLOR_BUFFER_BIT);
 		
 		glEnable(GL_TEXTURE_2D);
@@ -412,7 +420,6 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 				GL_RGB,
 				GL_UNSIGNED_BYTE, 
 				vdpCanvasBuffer);		
-		
 
 		/*
 		 * Second texture: the monitor overlay
@@ -433,23 +440,20 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		}
 		
 		glActiveTexture(GL_TEXTURE0);
-
-		
-		glColor3f(1.0f, 1.0f, 1.0f);
 		
 		glBegin(GL_QUADS);
 		
 		glMultiTexCoord2f(GL_TEXTURE1, 0, 0);
-		glTexCoord2f(0f, 0f);		glVertex2i(0, 0);
+		glTexCoord2f(0f, 0f);		glVertex2f(0, 0);
 		
 		glMultiTexCoord2f(GL_TEXTURE1, 0, 1);
-		glTexCoord2f(0f, 1.0f);		glVertex2i(0, 1);
+		glTexCoord2f(0f, 1.0f);		glVertex2f(0, 1);
 		
 		glMultiTexCoord2f(GL_TEXTURE1, 1, 1);
-		glTexCoord2f(1.0f, 1.0f);	glVertex2i(1, 1);
+		glTexCoord2f(1.0f, 1.0f);	glVertex2f(1, 1);
 		
 		glMultiTexCoord2f(GL_TEXTURE1, 1, 0);
-		glTexCoord2f(1.0f, 0f);		glVertex2i(1, 0);
+		glTexCoord2f(1.0f, 0f);		glVertex2f(1, 0);
 		
 		glEnd();
 		
@@ -464,12 +468,18 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		glDisable(GL_TEXTURE_2D);
 
 		if (programObject != 0) {
-			glUseProgram(0); 
+			ARBShaderObjects.glUseProgramObjectARB(0); 
 		
 		}
 		
 		glCanvas.swapBuffers();
 		
+		// HACK for Intel Mobile Express Graphics --
+		// if shaders are compiled/linked BEFORE an initial render,
+		// the whole ig4icd[32|64].dll DLL crashes and burns
+		if (programObject == 0 && supportsShaders) {
+			compileLinkShaders();
+		}
 	}
 	
 }

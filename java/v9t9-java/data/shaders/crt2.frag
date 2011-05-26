@@ -8,7 +8,8 @@ void main()
     vec4 color = texture2D(canvasTexture, gl_TexCoord[0].st);
     vec4 mon = texture2D(pixelTexture, gl_TexCoord[1].st);
         
-    gl_FragColor = color / 2 + color * mon;
+    gl_FragColor = (color * vec4(.5, .5, .5, 1)) + color * mon;
+    
     //    gl_FragColor = (color + color * mon)  * mon ;
     //gl_FragColor = (color + color * mon) / 2 + mon / 8;
     
