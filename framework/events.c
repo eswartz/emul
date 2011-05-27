@@ -220,7 +220,13 @@ int cancel_event(EventCallBack * handler, void * arg, int wait) {
                     event_last = prev;
                 }
             }
-            loc_free(ev);
+            if (ev >= event_buf && ev < event_buf + EVENT_BUF_SIZE) {
+                ev->next = free_queue;
+                free_queue = ev;
+            }
+            else {
+                loc_free(ev);
+            }
             return 1;
         }
         prev = ev;
@@ -238,7 +244,13 @@ int cancel_event(EventCallBack * handler, void * arg, int wait) {
             else {
                 prev->next = ev->next;
             }
-            loc_free(ev);
+            if (ev >= event_buf && ev < event_buf + EVENT_BUF_SIZE) {
+                ev->next = free_queue;
+                free_queue = ev;
+            }
+            else {
+                loc_free(ev);
+            }
             check_error(pthread_mutex_unlock(&event_lock));
             return 1;
         }
