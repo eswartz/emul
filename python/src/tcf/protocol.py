@@ -86,7 +86,8 @@ def invokeLaterWithDelay(delay, callable, *args, **kwargs):
         _event_queue.invokeLater(callable, *args, **kwargs)
     else:
         with _timer_queue_lock:
-            _timer_queue.append(Timer(time.time() + delay /1000., callable, *args, **kwargs))
+            _timer_queue.append(Timer(time.time() + delay/1000., callable, *args, **kwargs))
+            _timer_queue.sort()
             _timer_queue_lock.notify()
 
 def invokeAndWait(callable, *args, **kwargs):
@@ -98,7 +99,7 @@ def invokeAndWait(callable, *args, **kwargs):
 
     This method can be invoked from any thread.
 
-    @param runnable  the callable to be executed on dispatch thread.
+    @param callable  the callable to be executed on dispatch thread.
     """
     if _event_queue.isDispatchThread():
         return callable(*args, **kwargs)
@@ -183,9 +184,9 @@ class ChannelOpenListener(object):
 
     The interface allows a client to get pointers to channel objects
     that were opened by somebody else. If a client open a channel itself, it already has
-    the pointer and does not need Protocol.ChannelOpenListener. If a channel is created,
+    the pointer and does not need protocol.ChannelOpenListener. If a channel is created,
     for example, by remote peer connecting to the client, the only way to get the pointer
-    is Protocol.ChannelOpenListener.
+    is protocol.ChannelOpenListener.
     """
     def onChannelOpen(self, channel):
         pass
@@ -242,7 +243,7 @@ class CongestionMonitor(object):
     Note: Local (in-bound traffic) congestion is detected by framework and reported to
     remote peer without client needed to be involved. Only clients willing to provide
     additional data about local congestion should implement CongestionMonitor and
-    register it using Protocol.addCongestionMonitor().
+    register it using protocol.addCongestionMonitor().
     """
     def getCongestionLevel(self):
         """

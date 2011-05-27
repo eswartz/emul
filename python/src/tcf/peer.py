@@ -195,7 +195,7 @@ class AbstractPeer(TransientPeer):
             if attrs.get(key) != self.rw_attrs.get(key):
                 equ = False
                 break
-        timeVal = int(time.time())
+        timeVal = int(time.time() * 1000)
         if not equ:
             self.rw_attrs.clear()
             self.rw_attrs.update(attrs)
@@ -234,7 +234,7 @@ class AbstractPeer(TransientPeer):
             protocol.sendEvent(locator.NAME, "peerAdded", json.dumps(args))
         except IOError as x:
             protocol.log("Locator: failed to send 'peerAdded' event", x)
-        self.last_heart_beat_time = int(time.time())
+        self.last_heart_beat_time = int(time.time() * 1000)
 
     def sendPeerRemovedEvent(self):
         for l in protocol.getLocator().getListeners():
@@ -264,11 +264,11 @@ class RemotePeer(AbstractPeer):
 
     def __init__(self, attrs):
         super(RemotePeer, self).__init__(attrs)
-        self.last_update_time = int(time.time())
+        self.last_update_time = int(time.time() * 1000)
 
     def updateAttributes(self, attrs):
         super(RemotePeer, self).updateAttributes(attrs)
-        self.last_update_time = int(time.time())
+        self.last_update_time = int(time.time() * 1000)
 
     def getLastUpdateTime(self):
         return self.last_update_time

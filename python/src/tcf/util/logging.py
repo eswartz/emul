@@ -29,7 +29,7 @@ def getDebugTime():
     traceBuilder = cStringIO.StringIO()
 
     # Record the time
-    tm = int(time.time())
+    tm = int(time.time() * 1000)
     seconds = (tm / 1000) % 1000
     if seconds < 100: traceBuilder.write('0')
     if seconds < 10: traceBuilder.write('0')

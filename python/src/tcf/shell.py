@@ -17,6 +17,7 @@ Usage:
     python tcf/shell.py
 
 Commands:
+    peers              - Print discovered peers
     connect(params)    - Connect to TCF peer, params = "<protocol>:<host>:<port>"
     cmd.<service>.<command<(args)
                        - Send command to remote service and return result
@@ -34,6 +35,7 @@ from tcf.util import sync, event
 from tcf import protocol, channel
 
 class print_peers:
+    "Print list of discovered peers"
     def __call__(self):
         return tcf.peers()
     def __repr__(self):

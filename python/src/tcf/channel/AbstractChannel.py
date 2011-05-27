@@ -681,7 +681,7 @@ class AbstractChannel(object):
         if self.local_congestion_cnt < 8: return
         self.local_congestion_cnt = 0
         if self.state != STATE_OPEN: return
-        timeVal = int(time.time())
+        timeVal = int(time.time() * 1000)
         if timeVal - self.local_congestion_time < 500: return
         assert protocol.isDispatchThread()
         level = protocol.getCongestionLevel()
