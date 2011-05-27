@@ -32,6 +32,7 @@
          adaptableType="org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode">
          <adapter type="org.eclipse.debug.ui.actions.IToggleBreakpointsTarget"/>
          <adapter type="org.eclipse.debug.ui.actions.IToggleBreakpointsTargetExtension"/>
+         <adapter type="org.eclipse.ui.views.properties.IPropertySource"/>
       </factory>
    </extension>
 
@@ -302,6 +303,19 @@
       <modelContextBinding
             contextId="org.eclipse.tm.tcf.debug.ui.debugging"
             debugModelId="org.eclipse.tm.tcf.debug"/>
+   </extension>
+
+   <extension point="org.eclipse.ui.propertyPages">
+      <page class="org.eclipse.tm.internal.tcf.debug.ui.properties.TCFPropertyPage"
+            id="org.eclipse.tcf.debug.node.propertyPage"
+            name="%propertyPage.name">
+         <filter name="debugModelId" value="org.eclipse.tm.tcf.debug"/>
+         <enabledWhen>
+            <instanceof
+                  name="org.eclipse.cdt.debug.core.model.ICBreakpoint"
+                  value="org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode"/>
+         </enabledWhen>
+      </page>
    </extension>
 
 </plugin>

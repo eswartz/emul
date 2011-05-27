@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -15,6 +15,7 @@ import org.eclipse.debug.ui.actions.IToggleBreakpointsTarget;
 import org.eclipse.debug.ui.actions.IToggleBreakpointsTargetExtension;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.BreakpointCommand;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode;
+import org.eclipse.ui.views.properties.IPropertySource;
 
 
 public class TCFNodeAdapterFactory implements IAdapterFactory {
@@ -22,6 +23,7 @@ public class TCFNodeAdapterFactory implements IAdapterFactory {
     private static final Class<?>[] adapter_list = {
         IToggleBreakpointsTarget.class,
         IToggleBreakpointsTargetExtension.class,
+        IPropertySource.class,
     };
 
     private final BreakpointCommand breakpoint_command = new BreakpointCommand();
@@ -31,6 +33,7 @@ public class TCFNodeAdapterFactory implements IAdapterFactory {
         if (obj instanceof TCFNode) {
             if (cls == IToggleBreakpointsTarget.class) return breakpoint_command;
             if (cls == IToggleBreakpointsTargetExtension.class) return breakpoint_command;
+            if (cls == IPropertySource.class) return new TCFNodePropertySource((TCFNode) obj);
         }
         return null;
     }
