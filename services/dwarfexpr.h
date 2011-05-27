@@ -7,6 +7,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  * and the Eclipse Distribution License is available at
  * http://www.eclipse.org/org/documents/edl-v10.php.
+ * You may elect to redistribute this code under either of these licenses.
  *
  * Contributors:
  *     Wind River Systems - initial API and implementation
