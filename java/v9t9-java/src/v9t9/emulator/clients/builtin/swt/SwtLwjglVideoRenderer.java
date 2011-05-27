@@ -42,6 +42,28 @@ import v9t9.engine.files.DataFiles;
  *
  */
 public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IPropertyListener {
+	private enum Effect {
+		STANDARD("shaders/std", null),
+		CRT("shaders/crt", null),
+		CRT1("shaders/crt1", "shaders/monitor.png"),
+		CRT2("shaders/crt2", "shaders/monitorRGB.png");
+		
+		private final String shaderBase;
+		private final String texture;
+
+		Effect(String shaderBase, String texture) {
+			this.shaderBase = shaderBase;
+			this.texture = texture;
+		}
+		
+		public String getShaderBase() {
+			return shaderBase;
+		}
+		public String getTexture() {
+			return texture;
+		}
+	}
+	
 	static {
 		//System.out.println(System.getProperty("java.library.path"));
 	}
@@ -62,7 +84,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	private Rectangle glViewportRect;
 	private Rectangle imageRect;
 	private Listener resizeListener;
-	private Texture monitorTextureData;
+	private TextureLoader textureLoader = new TextureLoader();
 
 	protected VdpCanvas createVdpCanvas() {
 		imageCanvas = new ImageDataCanvas24Bit();
@@ -155,7 +177,6 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		glClearDepth(1.0f);
 		
 		setupCanvasTexture();
-		setupMonitorTexture();
 		
 		return glCanvas;
 	}
@@ -165,15 +186,6 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		vdpCanvasTexture = glGenTextures();
 		
 		// do not read data until blit time
-	}
-	
-	private void setupMonitorTexture() {
-		
-		try {
-			monitorTextureData = new TextureLoader().getTexture("shaders/monitorRGB.png");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 	}
 	
 	static class GLShaderException extends Exception {
@@ -202,6 +214,11 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		}
 		
 	}
+	
+	private Effect getEffect() {
+		return BaseEmulatorWindow.settingMonitorDrawing.getBoolean() ? Effect.CRT2 : Effect.STANDARD;
+	}
+	
 	/**
 	 * 
 	 */
@@ -213,7 +230,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 			if (programObject == 0)
 				programObject = ARBShaderObjects.glCreateProgramObjectARB();
 			
-			String base = "shaders/" + (isMonitorEffectEnabled() ? "crt2" : "std");
+			String base = getEffect().getShaderBase();
 			vertexShader = compileShader(vertexShader, ARBVertexShader.GL_VERTEX_SHADER_ARB, base + ".vert");
 			fragShader = compileShader(fragShader, ARBFragmentShader.GL_FRAGMENT_SHADER_ARB, base + ".frag");
 			
@@ -226,10 +243,6 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 			programObject = fragShader = vertexShader = 0;
 			e.printStackTrace();
 		}
-	}
-
-	private boolean isMonitorEffectEnabled() {
-		return BaseEmulatorWindow.settingMonitorDrawing.getBoolean();
 	}
 
 	private int compileShader(int shaderObj, int type, String filename) throws GLShaderException {
@@ -425,9 +438,13 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		 * Second texture: the monitor overlay
 		 */
 		glActiveTexture(GL_TEXTURE1);
-		if (isMonitorEffectEnabled()) {
-			monitorTextureData.bind();
-
+		Effect effect = getEffect();
+		if (effect.getTexture() != null) {
+			try {
+				textureLoader.getTexture(effect.getTexture()).bind();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
