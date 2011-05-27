@@ -42,6 +42,8 @@ import v9t9.engine.files.DataFiles;
  *
  */
 public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IPropertyListener {
+	private static boolean VERBOSE = false;
+	
 	private enum Effect {
 		STANDARD("shaders/std", null),
 		CRT("shaders/crt", null),
@@ -65,7 +67,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	}
 	
 	static {
-		//System.out.println(System.getProperty("java.library.path"));
+		if (VERBOSE) System.out.println(System.getProperty("java.library.path"));
 	}
 	private GLCanvas glCanvas;
 	private GLData glData;
@@ -253,7 +255,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		if (shaderObj == 0)
 			shaderObj = ARBShaderObjects.glCreateShaderObjectARB(type);
 
-		System.out.println("Compiling " + url + " to " +shaderObj);
+		if (VERBOSE) System.out.println("Compiling " + url + " to " +shaderObj);
 		String text;
 		try {
 			text = DataFiles.readInputStreamText(url.openStream());
@@ -277,7 +279,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 
 	private void linkShaders(int programObj, int... shaders) throws GLShaderException {
 		for (int shader : shaders) {
-			System.out.println("Linking " + shader + " to " + programObj);
+			if (VERBOSE) System.out.println("Linking " + shader + " to " + programObj);
 			ARBShaderObjects.glAttachObjectARB(programObj, shader);
 		}
 		
@@ -314,7 +316,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		super.updateWidgetSizeForMode();
 		
 		Rectangle bounds = glCanvas.getClientArea();
-		//System.out.printf("updateWidgetSizeForMode at %s%n", glCanvas.getParent().getBounds());
+		if (VERBOSE) System.out.printf("updateWidgetSizeForMode at %s%n", glCanvas.getParent().getBounds());
 		
 		Rectangle destRect = new Rectangle(0, 0, 
 				bounds.width, bounds.height);
@@ -324,7 +326,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		//glViewportRect = logicalToPhysical(new Rectangle(0, 0, vdpCanvas.getVisibleWidth(), vdpCanvas.getVisibleHeight()));
 		//imageRect = physicalToLogical(glViewportRect);
 		
-		System.out.printf("Viewport: %d x %d --> %d x %d%n",
+		if (VERBOSE) System.out.printf("Viewport: %d x %d --> %d x %d%n",
 				bounds.width, bounds.height,
 				destRect.width, destRect.height);
 		glViewport(0, 0,
@@ -341,7 +343,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 			// bind program so we can look up uniforms
 			ARBShaderObjects.glUseProgramObjectARB(programObject);
 			
-			System.out.printf("Sending sizes: %s and %s%n", imageRect, glViewportRect);
+			if (VERBOSE) System.out.printf("Sending sizes: %s and %s%n", imageRect, glViewportRect);
 			ARBShaderObjects.glUniform2iARB(
 					ARBShaderObjects.glGetUniformLocationARB(programObject, "visible"), 
 					imageRect.width, imageRect.height);
@@ -420,9 +422,9 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		// copy current bitmap to texture (EXPENSIVE ON SLOW CARDS!)
 		vdpCanvasBuffer = imageCanvas.copy(vdpCanvasBuffer);
 		
-		//System.out.printf("Texture size: %d x %d%n", 
-		//		imageCanvas.getVisibleWidth(),
-		//		imageCanvas.getVisibleHeight());
+		if (VERBOSE) System.out.printf("Texture size: %d x %d%n", 
+						imageCanvas.getVisibleWidth(),
+						imageCanvas.getVisibleHeight());
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 		
 		glTexImage2D(GL_TEXTURE_2D, 0, 

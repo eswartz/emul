@@ -140,7 +140,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 	protected Rectangle physicalToLogical(Rectangle physical) {
 		double zoomx = fixedAspectLayout.getZoomX();
 		double zoomy = fixedAspectLayout.getZoomY();
-		System.out.printf("zoom: %g x %g%n", zoomx, zoomy);
+		//System.out.printf("zoom: %g x %g%n", zoomx, zoomy);
 		return new Rectangle((int)(physical.x / zoomx) /*+ vdpCanvas.getXOffset()*/, 
 				(int)(physical.y / zoomy), 
 				(int)((physical.width + zoomx - 1) / zoomx), 

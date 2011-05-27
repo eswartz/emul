@@ -93,7 +93,7 @@ public class TextureLoader {
             return tex;
         }
         
-        System.out.println("Loading texture: " + resourceName);
+        //System.out.println("Loading texture: " + resourceName);
         
         tex = getTexture(resourceName,
                          GL11.GL_TEXTURE_2D, // target
