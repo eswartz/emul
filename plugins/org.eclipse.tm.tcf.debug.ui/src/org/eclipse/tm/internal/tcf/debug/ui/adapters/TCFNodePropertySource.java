@@ -127,8 +127,9 @@ public class TCFNodePropertySource implements IPropertySource {
                                     if (value instanceof Number) {
                                         value = toHexAddrString((Number) value);
                                     }
-                                    addDescriptor("MemoryRegion["+(idx++)+']', key, value);
+                                    addDescriptor("MemoryRegion["+idx+']', key, value);
                                 }
+                                idx++;
                             }
                         }
                         done(descriptors.toArray(new IPropertyDescriptor[descriptors.size()]));
