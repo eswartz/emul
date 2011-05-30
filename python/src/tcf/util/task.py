@@ -93,10 +93,10 @@ class Task(object):
 
     def error(self, error):
         """
-        Set a __error and notify all threads waiting for the task to complete.
+        Set a error and notify all threads waiting for the task to complete.
         The method is supposed to be called in response to executing of run() method of this task.
 
-        @param __error - computation __error.
+        @param error - computation error.
         """
         assert protocol.isDispatchThread()
         assert error
@@ -127,7 +127,7 @@ class Task(object):
         retrieves its result.
 
         @return the computed result
-        @throws CancellationException if the computation was __canceled
+        @throws CancellationException if the computation was canceled
         @throws ExecutionException if the computation threw an
         exception
         @throws InterruptedException if the current thread was interrupted
@@ -145,10 +145,10 @@ class Task(object):
 
     def isCancelled(self):
         """
-        Returns <tt>true</tt> if this task was __canceled before it completed
+        Returns <tt>true</tt> if this task was canceled before it completed
         normally.
 
-        @return <tt>true</tt> if task was __canceled before it completed
+        @return <tt>true</tt> if task was canceled before it completed
         """
         with self._lock:
             return self.__canceled
@@ -168,8 +168,8 @@ class Task(object):
 
     def getError(self):
         """
-        Return task execution __error if any.
-        @return Throwable object or None
+        Return task execution error if any.
+        @return Exception object or None
         """
         return self.__error
 

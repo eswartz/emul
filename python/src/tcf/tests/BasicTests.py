@@ -9,7 +9,7 @@
 # *     Wind River Systems - initial API and implementation
 # *******************************************************************************
 
-import sys, time, threading
+import sys, time, threading, atexit
 import tcf
 from tcf import protocol, channel, errors
 from tcf.util import sync
@@ -28,6 +28,7 @@ _memory = []
 
 def test():
     protocol.startEventQueue()
+    atexit.register(protocol.getEventQueue().shutdown)
     #testTimer()
     try:
         c = tcf.connect("TCP:127.0.0.1:1534")

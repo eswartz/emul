@@ -23,12 +23,15 @@ class ChannelTCP(StreamChannel):
         channel = self
         class CreateSocket(object):
             def __call__(self):
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.connect((host, port))
-                sock.setsockopt(socket.SOL_TCP, socket.TCP_NODELAY, 1)
-                sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
-                channel.socket = sock
-                channel._onSocketConnected(None)
+                try:
+                    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    sock.connect((host, port))
+                    sock.setsockopt(socket.SOL_TCP, socket.TCP_NODELAY, 1)
+                    sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+                    channel.socket = sock
+                    channel._onSocketConnected(None)
+                except Exception as x:
+                    channel._onSocketConnected(x)
         protocol.invokeLater(CreateSocket())
 
     def _onSocketConnected(self, x):
