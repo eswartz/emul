@@ -52,8 +52,8 @@ public class TCFNodePropertySource implements IPropertySource {
     public IPropertyDescriptor[] getPropertyDescriptors() {
         if (fDescriptors == null) {
             try {
+                final List<IPropertyDescriptor> descriptors = new ArrayList<IPropertyDescriptor>();
                 fDescriptors = new TCFTask<IPropertyDescriptor[]>(fNode.getChannel()) {
-                    final List<IPropertyDescriptor> descriptors = new ArrayList<IPropertyDescriptor>();
                     public void run() {
                         if (fNode instanceof TCFNodeExecContext) {
                             getExecContextDescriptors((TCFNodeExecContext) fNode);
