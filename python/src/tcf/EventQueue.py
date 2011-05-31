@@ -14,11 +14,12 @@ import protocol
 
 class EventQueue(object):
 
-    def __init__(self):
+    def __init__(self, on_shutdown=None):
         self.__thread = threading.Thread(target=self, name="TCF Event Dispatcher")
         self.__thread.daemon = True
         self.__is_waiting = False
         self.__is_shutdown = False
+        self.__on_shutdown = on_shutdown
         self.__lock = threading.Condition()
         self.__queue = []
 
@@ -27,6 +28,8 @@ class EventQueue(object):
 
     def shutdown(self):
         try:
+            if self.__on_shutdown:
+                self.__on_shutdown()
             with self.__lock:
                 self.__is_shutdown = True
                 if self.__is_waiting:

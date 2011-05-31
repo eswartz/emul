@@ -48,15 +48,25 @@ class Shell(code.InteractiveConsole, protocol.ChannelOpenListener, channel.Chann
             "connect" : tcf.connect,
             "peers" : print_peers()
         }
-        sys.ps1 = "tcf> "
         protocol.startEventQueue()
+        protocol.startDiscovery()
         protocol.invokeAndWait(protocol.addChannelOpenListener, self)
         code.InteractiveConsole.__init__(self, locals)
     def interact(self, banner=None):
         try:
+            try:
+                ps1 = sys.ps1 #@UndefinedVariable
+            except AttributeError:
+                ps1 = None
+            sys.ps1 = "tcf> "
             super(Shell, self).interact(banner)
         finally:
+            if ps1:
+                sys.ps1 = ps1
+            else:
+                del sys.ps1
             protocol.invokeLater(protocol.removeChannelOpenListener, self)
+            protocol.shutdownDiscovery()
             protocol.getEventQueue().shutdown()
     def onChannelOpen(self, channel):
         wrapper = sync.DispatchWrapper(channel)

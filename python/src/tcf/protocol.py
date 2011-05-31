@@ -28,7 +28,7 @@ _timer_dispatcher = None
 def startEventQueue():
     global _event_queue, _timer_dispatcher
     if _event_queue and not _event_queue.isShutdown(): return
-    _event_queue = EventQueue()
+    _event_queue = EventQueue(on_shutdown=shutdownDiscovery)
     _event_queue.start()
     # initialize LocatorService
     from services.local.LocatorService import LocatorService
@@ -159,6 +159,19 @@ def log(msg, x=None):
     else:
         _logger.log(msg, x)
 
+def startDiscovery():
+    "Start discovery of remote peers if not running yet"
+    # initialize LocatorService
+    from services.local.LocatorService import LocatorService
+    if LocatorService.locator:
+        invokeAndWait(LocatorService.startup)
+
+def shutdownDiscovery():
+    "Shutdown discovery if running"
+    from tcf.services.local.LocatorService import LocatorService
+    if LocatorService.locator:
+        invokeAndWait(LocatorService.shutdown)
+    
 def getLocator():
     """
     Get instance of the framework locator service.
