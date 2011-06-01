@@ -155,7 +155,7 @@ static void event_attach_done(void * x) {
         ctx->mem = parent_ctx;
         ctx->big_endian = parent_ctx->big_endian;
         (ctx->parent = parent_ctx)->ref_count++;
-        list_add_first(&ctx->cldl, &parent_ctx->children);
+        list_add_last(&ctx->cldl, &parent_ctx->children);
         link_context(ctx);
         trace(LOG_CONTEXT, "context: attached: ctx %#lx, id %#x", ctx, EXT(ctx)->pid);
         send_context_created_event(ctx);
@@ -652,7 +652,7 @@ static void event_handler(void * arg) {
         (stopped_ctx->creator = current_ctx)->ref_count++;
         (stopped_ctx->parent = current_ctx->parent)->ref_count++;
         assert(stopped_ctx->mem == stopped_ctx->parent->mem);
-        list_add_first(&stopped_ctx->cldl, &stopped_ctx->parent->children);
+        list_add_last(&stopped_ctx->cldl, &stopped_ctx->parent->children);
         link_context(stopped_ctx);
         trace(LOG_CONTEXT, "context: created: ctx %#lx, id %#x",
                 stopped_ctx, EXT(stopped_ctx)->pid);

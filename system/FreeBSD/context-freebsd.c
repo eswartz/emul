@@ -547,7 +547,7 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
             ctx->parent = prs;
             ctx->big_endian = prs->big_endian;
             prs->ref_count++;
-            list_add_first(&ctx->cldl, &prs->children);
+            list_add_last(&ctx->cldl, &prs->children);
             link_context(prs);
             link_context(ctx);
             send_context_created_event(prs);

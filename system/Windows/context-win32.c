@@ -719,7 +719,7 @@ static void debug_event_handler(DebugEvent * debug_event) {
         ctx->mem = prs;
         ctx->big_endian = prs->big_endian;
         (ctx->parent = prs)->ref_count++;
-        list_add_first(&ctx->cldl, &prs->children);
+        list_add_last(&ctx->cldl, &prs->children);
         link_context(ctx);
         send_context_created_event(ctx);
         debug_event->continue_status = event_win32_context_stopped(ctx);
@@ -740,7 +740,7 @@ static void debug_event_handler(DebugEvent * debug_event) {
             ctx->mem = prs;
             ctx->big_endian = prs->big_endian;
             (ctx->parent = prs)->ref_count++;
-            list_add_first(&ctx->cldl, &prs->children);
+            list_add_last(&ctx->cldl, &prs->children);
             link_context(ctx);
             send_context_created_event(ctx);
             ctx->pending_intercept = 1;

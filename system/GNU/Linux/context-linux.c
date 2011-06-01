@@ -710,7 +710,7 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
             ctx->big_endian = prs->big_endian;
             EXT(ctx)->attach_children = EXT(prs)->attach_children;
             (ctx->parent = prs)->ref_count++;
-            list_add_first(&ctx->cldl, &prs->children);
+            list_add_last(&ctx->cldl, &prs->children);
             link_context(prs);
             link_context(ctx);
             send_context_created_event(prs);
@@ -790,7 +790,7 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
             ctx2->sig_dont_pass = ctx->sig_dont_pass;
             (ctx2->creator = ctx)->ref_count++;
             (ctx2->parent = prs2)->ref_count++;
-            list_add_first(&ctx2->cldl, &prs2->children);
+            list_add_last(&ctx2->cldl, &prs2->children);
             link_context(ctx2);
             trace(LOG_EVENTS, "event: new context 0x%x, id %s", ctx2, ctx2->id);
             send_context_created_event(ctx2);
