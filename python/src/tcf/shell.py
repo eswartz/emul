@@ -29,8 +29,13 @@ Commands:
                        - Stop recording for service or for all services
 """
 
-import code, sys
-import tcf
+import code, sys, os
+try:
+    import tcf
+except ImportError:
+    # add current dir to path
+    sys.path.insert(0, os.getcwd())
+    import tcf
 from tcf.util import sync, event
 from tcf import protocol, channel
 

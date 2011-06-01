@@ -31,6 +31,7 @@
       * [incomplete] ZeroCopy
       * [95%] Locator service (discovery)
          * iterate over network interfaces
+      * Diagnostics service
    * Utilities:
       * [done] ACPM data cache
       * [done] TCFTask
