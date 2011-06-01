@@ -159,13 +159,6 @@ const char * context_state_name(Context * ctx) {
     return "running";
 }
 
-#if !ENABLE_ContextStateProperties
-int context_get_state_properties(Context * ctx, const char *** names, const char *** values, int * cnt) {
-    *cnt = 0;
-    return 0;
-}
-#endif
-
 void context_clear_memory_map(MemoryMap * map) {
     unsigned i;
     for (i = 0; i < map->region_cnt; i++) {

@@ -239,7 +239,9 @@ extern int context_has_state(Context * ctx);
  * Get context state properties.
  * Return -1 and set errno if cannot access the properties.
  */
+#if ENABLE_ContextStateProperties
 extern int context_get_state_properties(Context * ctx, const char *** names, const char *** values, int * cnt);
+#endif
 
 /*
  * Stop execution of the context.
