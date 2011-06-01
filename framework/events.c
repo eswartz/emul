@@ -207,19 +207,15 @@ int cancel_event(EventCallBack * handler, void * arg, int wait) {
     ev = event_queue;
     while (ev != NULL) {
         if (ev->handler == handler && ev->arg == arg) {
+            if (ev->next == NULL) {
+                assert(event_last == ev);
+                event_last = prev;
+            }
             if (prev == NULL) {
                 event_queue = ev->next;
-                if (event_queue == NULL) {
-                    assert(event_last == ev);
-                    event_last = NULL;
-                }
             }
             else {
                 prev->next = ev->next;
-                if (ev->next == NULL) {
-                    assert(event_last == ev);
-                    event_last = prev;
-                }
             }
             if (ev >= event_buf && ev < event_buf + EVENT_BUF_SIZE) {
                 ev->next = free_queue;
