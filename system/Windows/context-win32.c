@@ -426,7 +426,7 @@ static void break_process_event(void * args) {
         if (!ctx->exited && debug_state->break_thread == NULL) {
             for (l = ctx->children.next; l != &ctx->children; l = l->next) {
                 ContextExtensionWin32 * x = EXT(cldl2ctxp(l));
-                if (x->stop_pending) cnt++;
+                if (x->stop_pending && SuspendThread(x->handle) != (DWORD)-1) cnt++;
             }
             if (cnt > 0) {
                 const SIZE_T buf_size = 0x100;
