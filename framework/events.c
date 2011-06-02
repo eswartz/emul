@@ -301,20 +301,37 @@ void run_event_loop(void) {
 
         if (event_queue == NULL || (event_cnt & 0x3fu) == 0) {
             check_error(pthread_mutex_lock(&event_lock));
-            if (timer_queue != NULL) {
-                struct timespec timenow;
-                if (clock_gettime(CLOCK_REALTIME, &timenow)) {
-                    check_error(errno);
+            for (;;) {
+                if (timer_queue != NULL) {
+                    struct timespec timenow;
+                    if (clock_gettime(CLOCK_REALTIME, &timenow)) {
+                        check_error(errno);
+                    }
+                    if (time_cmp(&timer_queue->runtime, &timenow) <= 0) {
+                        ev = timer_queue;
+                        timer_queue = ev->next;
+                        break;
+                    }
+                    if (event_queue == NULL) {
+                        int error = pthread_cond_timedwait(&event_cond, &event_lock, &timer_queue->runtime);
+                        if (error && error != ETIMEDOUT) check_error(error);
+                    }
+                    else {
+                        break;
+                    }
                 }
-                if (time_cmp(&timer_queue->runtime, &timenow) <= 0) {
-                    ev = timer_queue;
-                    timer_queue = ev->next;
+                else if (event_queue == NULL) {
+                    check_error(pthread_cond_wait(&event_cond, &event_lock));
+                }
+                else {
+                    break;
                 }
             }
             check_error(pthread_mutex_unlock(&event_lock));
         }
 
-        if (ev == NULL && event_queue != NULL) {
+        if (ev == NULL) {
+            assert(event_queue != NULL);
             ev = event_queue;
             event_queue = ev->next;
             if (event_queue == NULL) {
@@ -323,28 +340,15 @@ void run_event_loop(void) {
             }
         }
 
-        if (ev == NULL) {
-            check_error(pthread_mutex_lock(&event_lock));
-            if (timer_queue != NULL) {
-                int error = pthread_cond_timedwait(&event_cond, &event_lock, &timer_queue->runtime);
-                if (error && error != ETIMEDOUT) check_error(error);
-            }
-            else {
-                check_error(pthread_cond_wait(&event_cond, &event_lock));
-            }
-            check_error(pthread_mutex_unlock(&event_lock));
+        trace(LOG_EVENTCORE, "run_event_loop: event %#lx, handler %#lx, arg %#lx", ev, ev->handler, ev->arg);
+        ev->handler(ev->arg);
+        if (ev >= event_buf && ev < event_buf + EVENT_BUF_SIZE) {
+            ev->next = free_queue;
+            free_queue = ev;
         }
         else {
-            trace(LOG_EVENTCORE, "run_event_loop: event %#lx, handler %#lx, arg %#lx", ev, ev->handler, ev->arg);
-            ev->handler(ev->arg);
-            if (ev >= event_buf && ev < event_buf + EVENT_BUF_SIZE) {
-                ev->next = free_queue;
-                free_queue = ev;
-            }
-            else {
-                loc_free(ev);
-            }
-            event_cnt++;
+            loc_free(ev);
         }
+        event_cnt++;
     }
 }
