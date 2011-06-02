@@ -121,6 +121,8 @@ static OSVERSIONINFOEX os_version;
 static ContextExceptionHandler * exception_handlers[MAX_EXCEPTION_HANDLERS];
 static unsigned exception_handler_cnt = 0;
 
+static MemoryErrorInfo mem_err_info;
+
 #include <system/pid-hash.h>
 
 #define EXCEPTION_DEBUGGER_IO 0x406D1388
@@ -1109,11 +1111,41 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
     ContextExtensionWin32 * ext = EXT(ctx = ctx->mem);
     SIZE_T bcnt = 0;
 
-    trace(LOG_CONTEXT, "context: read memory ctx %#lx, id %s, address %#lx, size %d",
+    trace(LOG_CONTEXT,
+        "context: read memory ctx %#lx, id %s, address %#lx, size %d",
         ctx, ctx->id, address, (int)size);
     assert(is_dispatch_thread());
+    mem_err_info.error = 0;
     if (ReadProcessMemory(ext->handle, (LPCVOID)address, buf, size, &bcnt) == 0 || bcnt != size) {
-        errno = log_error("ReadProcessMemory", 0);
+        DWORD error = GetLastError();
+        size_t size_next = size;
+        size_t size_error = 1;
+        /* Check if a smaller block is readable */
+        while (bcnt == 0) {
+            if (size_next <= 1) break;
+            size_next /= 2;
+            ReadProcessMemory(ext->handle, (LPCVOID)address, buf, size_next, &bcnt);
+        }
+        /* Find upper bound of the readable memory */
+        while (bcnt < size) {
+            if (!ReadProcessMemory(ext->handle, (LPCVOID)(address + bcnt),
+                    (char *)buf + bcnt, 1, NULL)) {
+                error = GetLastError();
+                break;
+            }
+            bcnt++;
+        }
+        if (check_breakpoints_on_memory_read(ctx, address, buf, bcnt) < 0) return -1;
+        /* Find number of unreadable bytes */
+        while (size_error < 0x100 && bcnt + size_error < size) {
+            if (ReadProcessMemory(ext->handle, (LPCVOID)(address + bcnt + size_error),
+                    (char *)buf + bcnt + size_error, 1, NULL)) break;
+            if (error != GetLastError()) break;
+            size_error++;
+        }
+        mem_err_info.error = set_win32_errno(error);
+        mem_err_info.size_valid = bcnt;
+        mem_err_info.size_error = size_error;
         return -1;
     }
     return check_breakpoints_on_memory_read(ctx, address, buf, size);
@@ -1123,23 +1155,39 @@ int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t 
     ContextExtensionWin32 * ext = EXT(ctx = ctx->mem);
     SIZE_T bcnt = 0;
 
-    trace(LOG_CONTEXT, "context: write memory ctx %#lx, id %s, address %#lx, size %d",
+    trace(LOG_CONTEXT,
+        "context: write memory ctx %#lx, id %s, address %#lx, size %d",
         ctx, ctx->id, address, (int)size);
     assert(is_dispatch_thread());
-    ctx = ctx->mem;
+    mem_err_info.error = 0;
     if (check_breakpoints_on_memory_write(ctx, address, buf, size) < 0) return -1;
     if (WriteProcessMemory(ext->handle, (LPVOID)address, buf, size, &bcnt) == 0 || bcnt != size) {
-        DWORD err = GetLastError();
-        if (err == ERROR_ACCESS_DENIED) errno = set_win32_errno(err);
-        else errno = log_error("WriteProcessMemory", 0);
+        mem_err_info.error = set_win32_errno(GetLastError());
+        mem_err_info.size_valid = bcnt;
+        mem_err_info.size_error = 1;
+    }
+    if (FlushInstructionCache(ext->handle, (LPCVOID)address, bcnt) == 0) {
+        mem_err_info.error = 0;
+        errno = log_error("FlushInstructionCache", 0);
         return -1;
     }
-    if (FlushInstructionCache(ext->handle, (LPCVOID)address, size) == 0) {
-        errno = log_error("FlushInstructionCache", 0);
+    if (mem_err_info.error) {
+        errno = mem_err_info.error;
         return -1;
     }
     return 0;
 }
+
+#if ENABLE_ExtendedMemoryErrorReports
+int context_get_mem_error_info(MemoryErrorInfo * info) {
+    if (mem_err_info.error == 0) {
+        set_errno(ERR_OTHER, "Extended memory error info not available");
+        return -1;
+    }
+    *info = mem_err_info;
+    return 0;
+}
+#endif
 
 int context_write_reg(Context * ctx, RegisterDefinition * def, unsigned offs, unsigned size, void * buf) {
     ContextExtensionWin32 * ext = EXT(ctx);

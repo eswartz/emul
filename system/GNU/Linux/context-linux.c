@@ -106,6 +106,8 @@ static size_t context_extension_offset = 0;
 
 static LINK pending_list;
 
+static MemoryErrorInfo mem_err_info;
+
 static const char * event_name(int event) {
     switch (event) {
     case 0: return "none";
@@ -372,12 +374,16 @@ int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t 
     ContextAddress word_addr;
     unsigned word_size = context_word_size(ctx);
     ContextExtensionLinux * ext = EXT(ctx);
+    int error = 0;
 
+    assert(word_size <= sizeof(unsigned long));
     assert(is_dispatch_thread());
     assert(!ctx->exited);
-    trace(LOG_CONTEXT, "context: write memory ctx %#lx, id %s, address %#lx, size %zu",
+    trace(LOG_CONTEXT,
+        "context: write memory ctx %#lx, id %s, address %#lx, size %zu",
         ctx, ctx->id, address, size);
-    assert(word_size <= sizeof(unsigned long));
+    mem_err_info.error = 0;
+    if (size == 0) return 0;
     if (check_breakpoints_on_memory_write(ctx, address, buf, size) < 0) return -1;
     for (word_addr = address & ~((ContextAddress)word_size - 1); word_addr < address + size; word_addr += word_size) {
         unsigned long word = 0;
@@ -386,11 +392,11 @@ int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t 
             errno = 0;
             word = ptrace(PTRACE_PEEKDATA, ext->pid, (void *)word_addr, 0);
             if (errno != 0) {
-                int err = errno;
-                trace(LOG_CONTEXT, "error: ptrace(PTRACE_PEEKDATA, ...) failed: ctx %#lx, id %s, addr %#lx, error %d %s",
-                    ctx, ctx->id, word_addr, err, errno_to_str(err));
-                errno = err;
-                return -1;
+                error = errno;
+                trace(LOG_CONTEXT,
+                    "error: ptrace(PTRACE_PEEKDATA, ...) failed: ctx %#lx, id %s, addr %#lx, error %d %s",
+                    ctx, ctx->id, word_addr, error, errno_to_str(error));
+                break;
             }
             for (i = 0; i < word_size; i++) {
                 if (word_addr + i >= address && word_addr + i < address + size) {
@@ -402,12 +408,32 @@ int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t 
             memcpy(&word, (char *)buf + (word_addr - address), word_size);
         }
         if (ptrace(PTRACE_POKEDATA, ext->pid, (void *)word_addr, word) < 0) {
-            int err = errno;
-            trace(LOG_ALWAYS, "error: ptrace(PTRACE_POKEDATA, ...) failed: ctx %#lx, id %s, addr %#lx, error %d %s",
-                ctx, ctx->id, word_addr, err, errno_to_str(err));
-            errno = err;
-            return -1;
+            error = errno;
+            trace(LOG_ALWAYS,
+                "error: ptrace(PTRACE_POKEDATA, ...) failed: ctx %#lx, id %s, addr %#lx, error %d %s",
+                ctx, ctx->id, word_addr, error, errno_to_str(error));
+            break;
         }
+    }
+    if (error) {
+#if ENABLE_ExtendedMemoryErrorReports
+        size_t size_valid = 0;
+        size_t size_error = word_size;
+        if (word_addr > address) size_valid = (size_t)(word_addr - address);
+        /* Find number of invalid bytes */
+        /* Note: cannot write memory here, read instead */
+        while (size_error < 0x1000 && size_valid + size_error < size) {
+            errno = 0;
+            ptrace(PTRACE_PEEKDATA, ext->pid, (void *)(word_addr + size_error), 0);
+            if (errno != error) break;
+            size_error += word_size;
+        }
+        mem_err_info.error = error;
+        mem_err_info.size_valid = size_valid;
+        mem_err_info.size_error = size_error;
+#endif
+        errno = error;
+        return -1;
     }
     return 0;
 }
@@ -416,22 +442,27 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
     ContextAddress word_addr;
     unsigned word_size = context_word_size(ctx);
     ContextExtensionLinux * ext = EXT(ctx);
+    size_t size_valid = 0;
+    int error = 0;
 
+    assert(word_size <= sizeof(unsigned long));
     assert(is_dispatch_thread());
     assert(!ctx->exited);
-    trace(LOG_CONTEXT, "context: read memory ctx %#lx, id %s, address %#lx, size %zu",
+    trace(LOG_CONTEXT,
+        "context: read memory ctx %#lx, id %s, address %#lx, size %zu",
         ctx, ctx->id, address, size);
-    assert(word_size <= sizeof(unsigned long));
+    mem_err_info.error = 0;
+    if (size == 0) return 0;
     for (word_addr = address & ~((ContextAddress)word_size - 1); word_addr < address + size; word_addr += word_size) {
         unsigned long word = 0;
         errno = 0;
         word = ptrace(PTRACE_PEEKDATA, ext->pid, (void *)word_addr, 0);
         if (errno != 0) {
-            int err = errno;
-            trace(LOG_CONTEXT, "error: ptrace(PTRACE_PEEKDATA, ...) failed: ctx %#lx, id %s, addr %#lx, error %d %s",
-                ctx, ctx->id, word_addr, err, errno_to_str(err));
-            errno = err;
-            return -1;
+            error = errno;
+            trace(LOG_CONTEXT,
+                "error: ptrace(PTRACE_PEEKDATA, ...) failed: ctx %#lx, id %s, addr %#lx, error %d %s",
+                ctx, ctx->id, word_addr, error, errno_to_str(error));
+            break;
         }
         if (word_addr < address || word_addr + word_size > address + size) {
             unsigned i = 0;
@@ -445,8 +476,39 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
             memcpy((char *)buf + (word_addr - address), &word, word_size);
         }
     }
-    return check_breakpoints_on_memory_read(ctx, address, buf, size);
+    if (word_addr > address) size_valid = (size_t)(word_addr - address);
+    if (size_valid > size) size_valid = size;
+    if (check_breakpoints_on_memory_read(ctx, address, buf, size_valid) < 0) return -1;
+    if (error) {
+#if ENABLE_ExtendedMemoryErrorReports
+        size_t size_error = word_size;
+        /* Find number of unreadable bytes */
+        while (size_error < 0x1000 && size_valid + size_error < size) {
+            errno = 0;
+            ptrace(PTRACE_PEEKDATA, ext->pid, (void *)(word_addr + size_error), 0);
+            if (errno != error) break;
+            size_error += word_size;
+        }
+        mem_err_info.error = error;
+        mem_err_info.size_valid = size_valid;
+        mem_err_info.size_error = size_error;
+#endif
+        errno = error;
+        return -1;
+    }
+    return 0;
 }
+
+#if ENABLE_ExtendedMemoryErrorReports
+int context_get_mem_error_info(MemoryErrorInfo * info) {
+    if (mem_err_info.error == 0) {
+        set_errno(ERR_OTHER, "Extended memory error info not available");
+        return -1;
+    }
+    *info = mem_err_info;
+    return 0;
+}
+#endif
 
 int context_write_reg(Context * ctx, RegisterDefinition * def, unsigned offs, unsigned size, void * buf) {
     ContextExtensionLinux * ext = EXT(ctx);

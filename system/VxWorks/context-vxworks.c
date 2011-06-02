@@ -89,6 +89,7 @@ static VX_COUNTING_SEMAPHORE(events_signal_mem);
 static SEM_ID events_signal;
 static pthread_t events_thread;
 static Context * parent_ctx = NULL;
+static MemoryErrorInfo mem_err_info;
 
 const char * context_suspend_reason(Context * ctx) {
     if (EXT(ctx)->event == TRACE_EVENT_STEP) return REASON_STEP;
@@ -414,6 +415,17 @@ int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t 
 #endif
     return 0;
 }
+
+#if ENABLE_ExtendedMemoryErrorReports
+int context_get_mem_error_info(MemoryErrorInfo * info) {
+    if (mem_err_info.error == 0) {
+        set_errno(ERR_OTHER, "Extended memory error info not available");
+        return -1;
+    }
+    *info = mem_err_info;
+    return 0;
+}
+#endif
 
 int context_write_reg(Context * ctx, RegisterDefinition * def, unsigned offs, unsigned size, void * buf) {
     ContextExtensionVxWorks * ext = EXT(ctx);

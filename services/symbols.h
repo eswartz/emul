@@ -180,6 +180,7 @@ extern ContextAddress is_plt_section(Context * ctx, ContextAddress addr);
  * compute stack frame location and next frame register values.
  * If frame info is not available, do nothing.
  * Return -1 and set errno in case of an error.
+ * Return 0 on success.
  */
 extern int get_next_stack_frame(StackFrame * frame, StackFrame * down);
 
@@ -187,6 +188,7 @@ extern int get_next_stack_frame(StackFrame * frame, StackFrame * down);
  * For given context and instruction address,
  * search for stack tracing information.
  * Return -1 and set errno in case of an error.
+ * Return 0 on success.
  * Set 'info' to NULL if no stack tracing information found for the address.
  */
 extern int get_stack_tracing_info(Context * ctx, ContextAddress addr, StackTracingInfo ** info);

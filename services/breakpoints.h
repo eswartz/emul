@@ -47,7 +47,7 @@ extern char ** get_context_breakpoint_ids(Context * ctx);
  * the breakpoint temporarily before the context can be resumed.
  * This function function removes break instruction, then does single step
  * over breakpoint location, then restores break intruction.
- * Return: 0 if it is OK to resume context from current state,
+ * Return 0 if it is OK to resume context from current state,
  * return 1 if context needs to step over a breakpoint.
  */
 extern int skip_breakpoint(Context * ctx, int single_step);
@@ -67,6 +67,7 @@ extern int check_breakpoints_on_memory_read(Context * ctx, ContextAddress addres
 /*
  * Check if data is about to be written over planted break instructions and adjust the data and breakpoint backing storage
  * Return -1 and set errno if the check cannot be done.
+ * Return 0 on success.
  */
 extern int check_breakpoints_on_memory_write(Context * ctx, ContextAddress address, void * buf, size_t size);
 

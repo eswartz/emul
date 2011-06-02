@@ -100,6 +100,16 @@ extern const char * REASON_ERROR;
 #define MEM_ACCESS_CACHE        0x0100      /* Context is a cache */
 #define MEM_ACCESS_TLB          0x0200      /* Context is a TLB memory */
 
+/*
+ * MemoryErrorInfo is used to retrieve additional information about memory access error.
+ */
+typedef struct MemoryErrorInfo {
+    int error;                      /* The memory access error code */
+    size_t size_valid;              /* The number of bytes transferred successfully */
+    size_t size_error;              /* The number of bytes that caused the error, starting at 'size_valid' offset */
+} MemoryErrorInfo;
+
+/* Memory map data types */
 typedef struct MemoryMap MemoryMap;
 typedef struct MemoryRegion MemoryRegion;
 typedef struct MemoryRegionAttribute MemoryRegionAttribute;
@@ -238,6 +248,7 @@ extern int context_has_state(Context * ctx);
 /*
  * Get context state properties.
  * Return -1 and set errno if cannot access the properties.
+ * Return 0 on success.
  */
 #if ENABLE_ContextStateProperties
 extern int context_get_state_properties(Context * ctx, const char *** names, const char *** values, int * cnt);
@@ -247,6 +258,7 @@ extern int context_get_state_properties(Context * ctx, const char *** names, con
  * Stop execution of the context.
  * Execution can be resumed by calling context_resume()
  * Return -1 and set errno if the context cannot be stopped.
+ * Return 0 on success.
  */
 extern int context_stop(Context * ctx);
 
@@ -254,6 +266,7 @@ extern int context_stop(Context * ctx);
  * Resume execution of the context using give execution mode.
  * See RM_* for mode definitions.
  * Return -1 and set errno if the context cannot be resumed.
+ * Return 0 on success.
  */
 extern int context_resume(Context * ctx, int mode, ContextAddress range_start, ContextAddress range_end);
 
@@ -267,6 +280,7 @@ extern int context_can_resume(Context * ctx, int mode);
 /*
  * Resume normal execution of the context.
  * Return -1 and set errno if the context cannot be resumed.
+ * Return 0 on success.
  * Deprecated: use context_resume(ctx, RM_RESUME, 0, 0).
  */
 extern int context_continue(Context * ctx);
@@ -274,12 +288,14 @@ extern int context_continue(Context * ctx);
 /*
  * Perform single instruction step on the context.
  * Return -1 and set errno if the context cannot be single stepped.
+ * Return 0 on success.
  */
 extern int context_single_step(Context * ctx);
 
 /*
  * Retrieve context memory map.
  * Return -1 and set errno if the map cannot be retrieved.
+ * Return 0 on success.
  * Note: the caller owns MemoryMap object and all its contents, it can call loc_free() on it at any time.
  * When context_get_memory_map() is called, 'map' is empty: region_cnt == 0,
  * but 'map->regions' can be pre-allocated: 'map->regions' can be not NULL and 'map->region_max' > 0.
@@ -298,6 +314,7 @@ extern void context_clear_memory_map(MemoryMap * map);
  * Implementation calls check_breakpoints_on_memory_write() before writing to context memory,
  * which can change contents of the buffer.
  * Return -1 and set errno if the context memory cannot be written.
+ * Return 0 on success.
  */
 extern int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t size);
 
@@ -305,18 +322,30 @@ extern int context_write_mem(Context * ctx, ContextAddress address, void * buf, 
  * Read context memory.
  * Implementation calls check_breakpoints_on_memory_read() after reading context memory.
  * Return -1 and set errno if the context memory cannot be read.
+ * Return 0 on success.
  */
 extern int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t size);
 
 /*
+ * Retrieve addition information about error reported by last memory access.
+ * Return -1 and set errno if the info cannot be read.
+ * Return 0 on success.
+ */
+#if ENABLE_ExtendedMemoryErrorReports
+extern int context_get_mem_error_info(MemoryErrorInfo * info);
+#endif
+
+/*
  * Write 'size' byte into context register starting at offset 'offs'.
  * Return -1 and set errno if the register cannot be written.
+ * Return 0 on success.
  */
 extern int context_write_reg(Context * ctx, RegisterDefinition * def, unsigned offs, unsigned size, void * buf);
 
 /*
  * Read 'size' bytes from context register starting at offset 'offs'.
  * Return -1 and set errno if the register cannot be read.
+ * Return 0 on success.
  */
 extern int context_read_reg(Context * ctx, RegisterDefinition * def, unsigned offs, unsigned size, void * buf);
 
@@ -333,6 +362,7 @@ extern unsigned context_word_size(Context * ctx);
  * the memory block start address and size. Clients can use this information to map a range of addresses
  * with a single function call.
  * Return -1 and set errno if canonical address cannot be resolved.
+ * Return 0 on success.
  */
 extern int context_get_canonical_addr(Context * ctx, ContextAddress addr,
         Context ** canonical_ctx, ContextAddress * canonical_addr,

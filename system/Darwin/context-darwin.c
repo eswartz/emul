@@ -69,6 +69,8 @@ static size_t context_extension_offset = 0;
 
 static LINK pending_list;
 
+static MemoryErrorInfo mem_err_info;
+
 const char * context_suspend_reason(Context * ctx) {
     static char reason[128];
 
@@ -367,6 +369,17 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
     */
     return 0;
 }
+
+#if ENABLE_ExtendedMemoryErrorReports
+int context_get_mem_error_info(MemoryErrorInfo * info) {
+    if (mem_err_info.error == 0) {
+        set_errno(ERR_OTHER, "Extended memory error info not available");
+        return -1;
+    }
+    *info = mem_err_info;
+    return 0;
+}
+#endif
 
 int context_write_reg(Context * ctx, RegisterDefinition * def, unsigned offs, unsigned size, void * buf) {
     ContextExtensionDarwin * ext = EXT(ctx);

@@ -28,6 +28,7 @@
  * 'client_map' returns map entries that are created by the agent clients.
  * 'target_map' returns map entries that the agent has found on a target.
  * Return -1 and set errno if the context memory map cannot be retrieved.
+ * Return 0 on success.
  */
 extern int memory_map_get(Context * ctx, MemoryMap ** client_map, MemoryMap ** target_map);
 

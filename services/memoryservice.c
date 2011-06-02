@@ -147,10 +147,21 @@ static void write_context(OutputStream * out, Context * ctx) {
     write_stream(out, '}');
 }
 
-static void write_ranges(OutputStream * out, ContextAddress addr, int size, int offs, int status, int err) {
+static void write_ranges(OutputStream * out, ContextAddress addr, int offs, int status, MemoryErrorInfo * err_info) {
     int cnt = 0;
+    size_t size_valid = 0;
+    size_t size_error = 0;
+
+    if (err_info->error) {
+        size_valid = err_info->size_valid + offs;
+        size_error = err_info->size_error;
+    }
+    else {
+        size_valid = offs;
+    }
+
     write_stream(out, '[');
-    if (offs > 0) {
+    if (size_valid > 0) {
         write_stream(out, '{');
 
         json_write_string(out, "addr");
@@ -160,7 +171,7 @@ static void write_ranges(OutputStream * out, ContextAddress addr, int size, int 
 
         json_write_string(out, "size");
         write_stream(out, ':');
-        json_write_ulong(out, offs);
+        json_write_ulong(out, size_valid);
         write_stream(out, ',');
 
         json_write_string(out, "stat");
@@ -170,28 +181,28 @@ static void write_ranges(OutputStream * out, ContextAddress addr, int size, int 
         write_stream(out, '}');
         cnt++;
     }
-    if (offs < size) {
+    if (size_error > 0) {
         if (cnt > 0) write_stream(out, ',');
         write_stream(out, '{');
 
         json_write_string(out, "addr");
         write_stream(out, ':');
-        json_write_uint64(out, addr + offs);
+        json_write_uint64(out, addr + size_valid);
         write_stream(out, ',');
 
         json_write_string(out, "size");
         write_stream(out, ':');
-        json_write_ulong(out, size - offs);
+        json_write_ulong(out, size_error);
         write_stream(out, ',');
 
         json_write_string(out, "stat");
         write_stream(out, ':');
-        json_write_ulong(out, status);
+        json_write_ulong(out, BYTE_INVALID | status);
         write_stream(out, ',');
 
         json_write_string(out, "msg");
         write_stream(out, ':');
-        write_error_object(out, err);
+        write_error_object(out, err_info->error);
 
         write_stream(out, '}');
     }
@@ -370,8 +381,10 @@ static void safe_memory_set(void * parm) {
             unsigned long size = 0;
             char buf[BUF_SIZE];
             int err = 0;
+            MemoryErrorInfo err_info;
             JsonReadBinaryState state;
 
+            memset(&err_info, 0, sizeof(err_info));
             if (ctx->exiting || ctx->exited) err = ERR_ALREADY_EXITED;
 
             json_read_binary_start(&state, inp);
@@ -380,8 +393,15 @@ static void safe_memory_set(void * parm) {
                 if (rd == 0) break;
                 if (err == 0) {
                     /* TODO: word size, mode */
-                    if (context_write_mem(ctx, addr, buf, rd) < 0) err = errno;
-                    else addr += rd;
+                    if (context_write_mem(ctx, addr, buf, rd) < 0) {
+                        err = errno;
+#if ENABLE_ExtendedMemoryErrorReports
+                        context_get_mem_error_info(&err_info);
+#endif
+                    }
+                    else {
+                        addr += rd;
+                    }
                 }
                 size += rd;
             }
@@ -398,7 +418,7 @@ static void safe_memory_set(void * parm) {
                 write_stringz(out, "null");
             }
             else {
-                write_ranges(out, addr0, size, (int)(addr - addr0), BYTE_INVALID | BYTE_CANNOT_WRITE, err);
+                write_ranges(out, addr0, (int)(addr - addr0), BYTE_CANNOT_WRITE, &err_info);
             }
             write_stream(out, MARKER_EOM);
             clear_trap(&trap);
@@ -435,6 +455,7 @@ static void safe_memory_get(void * parm) {
             unsigned long pos = 0;
             char buf[BUF_SIZE];
             int err = 0;
+            MemoryErrorInfo err_info;
             JsonWriteBinaryState state;
 
             if (ctx->exiting || ctx->exited) err = ERR_ALREADY_EXITED;
@@ -448,8 +469,15 @@ static void safe_memory_get(void * parm) {
                 if (rd > BUF_SIZE) rd = BUF_SIZE;
                 /* TODO: word size, mode */
                 if (err == 0) {
-                    if (context_read_mem(ctx, addr, buf, rd) < 0) err = errno;
-                    else addr += rd;
+                    if (context_read_mem(ctx, addr, buf, rd) < 0) {
+                        err = errno;
+#if ENABLE_ExtendedMemoryErrorReports
+                        context_get_mem_error_info(&err_info);
+#endif
+                    }
+                    else {
+                        addr += rd;
+                    }
                 }
                 else {
                     memset(buf, 0, rd);
@@ -465,7 +493,7 @@ static void safe_memory_get(void * parm) {
                 write_stringz(out, "null");
             }
             else {
-                write_ranges(out, addr0, size, (int)(addr - addr0), BYTE_INVALID | BYTE_CANNOT_READ, err);
+                write_ranges(out, addr0, (int)(addr - addr0), BYTE_CANNOT_READ, &err_info);
             }
             write_stream(out, MARKER_EOM);
             clear_trap(&trap);
@@ -500,6 +528,7 @@ static void safe_memory_fill(void * parm) {
             ContextAddress addr0 = args->addr;
             ContextAddress addr = args->addr;
             unsigned long size = args->size;
+            MemoryErrorInfo err_info;
             char buf[0x1000];
             int buf_pos = 0;
             int err = 0;
@@ -545,8 +574,15 @@ static void safe_memory_fill(void * parm) {
                 if (wr > buf_pos) wr = buf_pos;
                 /* TODO: word size, mode */
                 memcpy(tmp, buf, wr);
-                if (context_write_mem(ctx, addr, tmp, wr) < 0) err = errno;
-                else addr += wr;
+                if (context_write_mem(ctx, addr, tmp, wr) < 0) {
+                    err = errno;
+#if ENABLE_ExtendedMemoryErrorReports
+                        context_get_mem_error_info(&err_info);
+#endif
+                }
+                else {
+                    addr += wr;
+                }
             }
 
             send_event_memory_changed(&c->bcg->out, ctx, addr0, size);
@@ -558,7 +594,7 @@ static void safe_memory_fill(void * parm) {
                 write_stringz(out, "null");
             }
             else {
-                write_ranges(out, addr0, size, (int)(addr - addr0), BYTE_INVALID | BYTE_CANNOT_WRITE, err);
+                write_ranges(out, addr0, (int)(addr - addr0), BYTE_CANNOT_WRITE, &err_info);
             }
             write_stream(out, MARKER_EOM);
             clear_trap(&trap);

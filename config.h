@@ -241,4 +241,8 @@
 #  define ENABLE_ContextStateProperties 0
 #endif
 
+#if !defined(ENABLE_ExtendedMemoryErrorReports)
+#  define ENABLE_ExtendedMemoryErrorReports 1
+#endif
+
 #endif /* D_config */
