@@ -20,7 +20,15 @@
 
 #include <config.h>
 
-#if defined(WIN32) && !ENABLE_ELF && (SERVICE_LineNumbers || SERVICE_Symbols || (SERVICE_MemoryMap && !ENABLE_ContextProxy))
+#if defined(WIN32) && !ENABLE_ELF
+#  define ENABLE_PE_Symbols ((SERVICE_LineNumbers && !ENABLE_LineNumbersProxy) || (SERVICE_Symbols && !ENABLE_SymbolsProxy))
+#  define ENABLE_EnumerateModules (SERVICE_MemoryMap && !ENABLE_ContextProxy)
+#else
+#  define ENABLE_PE_Symbols 0
+#  define ENABLE_EnumerateModules 0
+#endif
+
+#if ENABLE_PE_Symbols || ENABLE_EnumerateModules
 
 #include <assert.h>
 #include <stdio.h>
@@ -46,6 +54,8 @@ static wchar_t * pathes[] = {
     L"dbghelp.dll",
     NULL
 };
+
+#if ENABLE_PE_Symbols
 
 static void event_context_created(Context * ctx, void * client_data) {
     HANDLE handle = NULL;
@@ -121,6 +131,8 @@ static MemoryMapEventListener map_listener = {
     event_module_unloaded
 };
 
+#endif
+
 static void CheckDLLVersion(void) {
     DWORD handle = 0;
     WCHAR fnm[_MAX_PATH];
@@ -192,11 +204,17 @@ static FARPROC GetProc(char * name) {
             return NULL;
         }
         CheckDLLVersion();
+#if ENABLE_PE_Symbols
         add_context_event_listener(&ctx_listener, NULL);
         add_memory_map_event_listener(&map_listener, NULL);
+#endif
     }
     return GetProcAddress(dbghelp_dll, name);
 }
+
+#endif
+
+#if ENABLE_PE_Symbols
 
 BOOL SymInitialize(HANDLE hProcess, PCSTR UserSearchPath, BOOL fInvadeProcess) {
     typedef BOOL (FAR WINAPI * ProcType)(HANDLE, PCSTR, BOOL);
@@ -370,6 +388,10 @@ BOOL SymCleanup(HANDLE hProcess) {
     return proc(hProcess);
 }
 
+#endif
+
+#if ENABLE_EnumerateModules
+
 BOOL LocEnumerateLoadedModulesW64(HANDLE hProcess, PENUMLOADED_MODULES_CALLBACKW64 Callback, PVOID UserContext) {
     typedef BOOL (FAR WINAPI * ProcType)(HANDLE, PENUMLOADED_MODULES_CALLBACKW64, PVOID);
     static ProcType proc = NULL;
@@ -380,4 +402,4 @@ BOOL LocEnumerateLoadedModulesW64(HANDLE hProcess, PENUMLOADED_MODULES_CALLBACKW
     return proc(hProcess, Callback, UserContext);
 }
 
-#endif /* defined(WIN32) */
+#endif
