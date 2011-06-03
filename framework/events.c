@@ -274,7 +274,6 @@ int is_dispatch_thread(void) {
 
 void ini_events_queue(void) {
     int i;
-    /* Initial thread is event dispatcher. */
     event_thread = current_thread;
     check_error(pthread_mutex_init(&event_lock, NULL));
     check_error(pthread_cond_init(&event_cond, NULL));
@@ -292,6 +291,8 @@ void cancel_event_loop(void) {
 
 void run_event_loop(void) {
     unsigned event_cnt = 0;
+    /* Allow the event loop to run on a thread other than the initializing thread */
+    event_thread = current_thread;
     assert(is_dispatch_thread());
 
     process_events = 1;

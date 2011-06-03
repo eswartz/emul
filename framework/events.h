@@ -76,7 +76,8 @@ extern int is_dispatch_thread(void);
 
 /*
  * Run TCF event loop.
- * Should be called from main().
+ * Calling thread becomes event dispatch thread.
+ * Event loop runs until it is canceled by cancel_event_loop().
  */
 extern void run_event_loop(void);
 
