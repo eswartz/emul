@@ -352,7 +352,7 @@ class LocatorService(locator.LocatorService):
         stale_peers = None
         for p in self.peers.values():
             if isinstance(p, peer.RemotePeer):
-                if p.getLastUpdateTime() + locator.DATA_RETENTION_PERIOD < time:
+                if p.getLastUpdateTime() + locator.DATA_RETENTION_PERIOD < tm:
                     if stale_peers == None: stale_peers = []
                     stale_peers.append(p)
         if stale_peers is not None:

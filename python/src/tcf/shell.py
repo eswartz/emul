@@ -14,7 +14,7 @@ Simple interactive shell for TCF.  This is basically a Python interpreter with a
 TCF extensions.
 
 Usage:
-    python tcf/shell.py
+    python -m tcf.shell
 
 Commands:
     peers              - Print discovered peers
@@ -45,7 +45,7 @@ class print_peers:
         return tcf.peers()
     def __repr__(self):
         peers = tcf.peers()
-        return '\n'.join(peers.keys())
+        return '\n'.join(map(lambda p: "%s, %s" % (p.getID(), p.getName()), peers.values()))
 
 class Shell(code.InteractiveConsole, protocol.ChannelOpenListener, channel.ChannelListener):
     def __init__(self):

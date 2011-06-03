@@ -39,4 +39,4 @@
       * [done] Simplified synchronous command invocation
       * File object implementation based on FileSystem service
    * [started] Interactive interpreter
-   * JUnit tests
+   * Diagnostic tests
