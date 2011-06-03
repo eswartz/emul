@@ -869,7 +869,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     }
 
     public void contextException(String id, String msg) {
-        if (threads.get(id) != null) exit(new Exception(msg));
+        if (threads.get(id) != null) exit(new Exception("Context exception: " + msg));
     }
 
     public void contextRemoved(String[] contexts) {

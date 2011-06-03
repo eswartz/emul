@@ -18,6 +18,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IPeer;
@@ -148,13 +149,21 @@ public class TCFTestSuite {
         pending_tests.add(new Runnable() {
             public void run() {
                 listener.progress("Running Interability Test...", ++count_done, count_total);
+                Random rnd = new Random();
                 for (int i = 0; i < channels.length; i++) {
                     ITCFTest test = null;
-                    switch (i % 4) {
+                    switch (rnd.nextInt(11)) {
                     case 0: test = new TestEcho(TCFTestSuite.this, channels[i]); break;
-                    case 1: test = new TestAttachTerminate(TCFTestSuite.this, channels[i]); break;
-                    case 2: test = new TestRCBP1(TCFTestSuite.this, channels[i], i, path_map, mem_map); break;
-                    case 3: test = new TestFileSystem(TCFTestSuite.this, channels[i], i); break;
+                    case 1: test = new TestEchoERR(TCFTestSuite.this, channels[i]); break;
+                    case 2: test = new TestEchoFP(TCFTestSuite.this, channels[i]); break;
+                    case 3: test = new TestAttachTerminate(TCFTestSuite.this, channels[i]); break;
+                    case 4: test = new TestExpressions(TCFTestSuite.this, channels[i]); break;
+                    case 5: test = new TestRCBP1(TCFTestSuite.this, channels[i], i, path_map, mem_map); break;
+                    case 6: test = new TestFileSystem(TCFTestSuite.this, channels[i], i); break;
+                    case 7: test = new TestPathMap(TCFTestSuite.this, channels[i], path_map); break;
+                    case 8: test = new TestStreams(TCFTestSuite.this, channels[i]); break;
+                    case 9: test = new TestSysMonitor(TCFTestSuite.this, channels[i]); break;
+                    case 10: test = new TestTerminals(TCFTestSuite.this, channels[i]); break;
                     }
                     active_tests.put(test, channels[i]);
                 }

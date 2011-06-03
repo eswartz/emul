@@ -144,13 +144,6 @@ class TestAttachTerminate implements ITCFTest, IRunControl.RunControlListener {
     }
 
     public void contextException(String context, String msg) {
-        IRunControl.RunControlContext ctx = ctx_map.get(context);
-        if (ctx == null) return;
-        if (process_ids.contains(ctx.getParentID())) {
-            /*
-            exit(new Error("Unexpected 'contextException' event for " + context + ": " + msg));
-            */
-        }
     }
 
     public void contextRemoved(String[] context_ids) {

@@ -546,6 +546,13 @@ class TestExpressions implements ITCFTest,
     }
 
     public void contextException(String context, String msg) {
+        if (test_done) return;
+        IRunControl.RunControlContext ctx = ctx_map.get(context);
+        if (ctx != null) {
+            String p = ctx.getParentID();
+            String c = ctx.getCreatorID();
+            if (!test_ctx_id.equals(c) && !test_ctx_id.equals(p)) return;
+        }
         exit(new Exception("Context exception: " + msg));
     }
 
