@@ -53,7 +53,10 @@ ifeq ($(OPSYS),Darwin)
 endif
 
 ifeq ($(OPSYS),GNU/Linux)
-  LIBS = -lpthread -luuid -lssl -lcrypto -lrt
+  LIBS = -lpthread -lssl -lcrypto -lrt
+  ifeq ($(NO_UUID),)
+    LIBS += -luuid
+  endif
 endif
 
 ifneq ($(OPSYS),Windows)

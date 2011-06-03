@@ -474,6 +474,11 @@ extern size_t strlcpy(char * dst, const char * src, size_t size);
 extern size_t strlcat(char * dst, const char * src, size_t size);
 #endif
 
+#if defined(__UCLIBC__)
+extern char * canonicalize_file_name(const char * path);
+extern int posix_openpt(int flags);
+#endif
+
 extern pthread_attr_t pthread_create_attr;
 
 #if defined(__i386__) || defined(__x86_64__)

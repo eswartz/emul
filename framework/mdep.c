@@ -702,6 +702,14 @@ int clock_gettime(clockid_t clock_id, struct timespec * tp) {
 }
 #endif
 
+#if defined(__UCLIBC__)
+#include <fcntl.h>
+
+int posix_openpt(int flags) {
+    return (open("/dev/ptmx", flags));
+}
+#endif
+
 const char * get_os_name(void) {
     static char str[256];
     struct utsname info;
@@ -845,6 +853,12 @@ char * canonicalize_file_name(const char * path) {
     char * res = realpath(path, buf);
     if (res == NULL) return NULL;
     return strdup(res);
+}
+
+#elif defined(__UCLIBC__)
+
+char * canonicalize_file_name(const char * path) {
+    return realpath(path, NULL);
 }
 
 #endif
@@ -1118,7 +1132,7 @@ size_t strlcat(char * dst, const char * src, size_t size) {
 
 #endif
 
-#if defined(__linux__)
+#if defined(__linux__) && !defined(__UCLIBC__)
 
 #include <uuid/uuid.h>
 
