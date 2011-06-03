@@ -164,13 +164,13 @@ class CommandControl(object):
     def _waitForCommand(self, token, timeout=None):
         assert not protocol.isDispatchThread()
         with self._lock:
-            while self._pending.has_key(token.id):
+            while token.id in self._pending:
                 self._lock.wait(timeout)
                 if timeout: break
             else:
                 if self._queue:
                     self._lock.wait(timeout)
-                    while self._pending.has_key(token.id):
+                    while token.id in self._pending:
                         self._lock.wait(timeout)
                         if timeout: break
     def cancel(self):

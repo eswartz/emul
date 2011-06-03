@@ -639,7 +639,7 @@ class AbstractChannel(object):
                     data = fromJSONSequence(msg.data)[0]
                     services.onChannelOpened(self, data, self.remote_service_by_name)
                     self.__makeServiceByClassMap(self.remote_service_by_name, self.remote_service_by_class)
-                    self.zero_copy = self.remote_service_by_name.has_key("ZeroCopy")
+                    self.zero_copy = "ZeroCopy" in self.remote_service_by_name
                 if self.proxy and self.state == STATE_OPEN:
                     self.proxy.onEvent(msg.service, msg.name, msg.data)
                 elif hello:

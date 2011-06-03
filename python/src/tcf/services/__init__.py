@@ -43,7 +43,7 @@ def onChannelCreated(channel, services_by_name):
                 arr = provider.getLocalService(channel)
                 if not arr: continue
                 for service in arr:
-                    if services_by_name.has_key(service.getName()): continue
+                    if service.getName() in services_by_name: continue
                     services_by_name[service.getName()] = service
             except Exception as x:
                 protocol.log("Error calling TCF service provider", x);
@@ -59,7 +59,7 @@ def onChannelOpened(channel, service_names, services_by_name):
                     break
                 except Exception as x:
                     protocol.log("Error calling TCF service provider", x)
-            if services_by_name.has_key(name): continue
+            if name in services_by_name: continue
             services_by_name[name] = GenericProxy(channel, name)
 
 def getServiceManagerID():

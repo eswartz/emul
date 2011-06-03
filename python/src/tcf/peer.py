@@ -166,7 +166,7 @@ class AbstractPeer(TransientPeer):
         peers = protocol.getLocator().getPeers()
         if isinstance(peers.get(id), RemotePeer):
             peers.get(id).dispose()
-        assert not peers.has_key(id)
+        assert id not in peers
         peers[id] = self
         self.sendPeerAddedEvent()
 
