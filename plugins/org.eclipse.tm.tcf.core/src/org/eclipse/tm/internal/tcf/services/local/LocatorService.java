@@ -289,7 +289,7 @@ public class LocatorService implements ILocator {
                         });
                     }
                     catch (IllegalStateException x) {
-                        // TCF event dispatch is shutdown
+                        // TCF event dispatch is shut down
                         return;
                     }
                     catch (Exception x) {
@@ -747,7 +747,8 @@ public class LocatorService implements ILocator {
             "CONF_REQ_INFO",
             "CONF_PEER_INFO",
             "CONF_REQ_SLAVES",
-            "CONF_SLAVES_INFO"
+            "CONF_SLAVES_INFO",
+            "CONF_PEER_REMOVE"
     };
 
     private boolean sendDatagramPacket(SubNet subnet, int size, InetAddress addr, int port) {
@@ -765,8 +766,10 @@ public class LocatorService implements ILocator {
 
             if (TRACE_DISCOVERY) {
                 Map<String,String> map = null;
-                if (out_buf[4] == CONF_PEER_INFO) {
-                    parsePeerAtrributes(out_buf, 8);
+                switch (out_buf[4]) {
+                case CONF_PEER_INFO: map = parsePeerAtrributes(out_buf, size); break;
+                case CONF_SLAVES_INFO: map = parseIDs(out_buf, size); break;
+                case CONF_PEERS_REMOVED: map = parseIDs(out_buf, size); break;
                 }
                 traceDiscoveryPacket(false, packetTypes[out_buf[4]], map, addr, port);
             }
@@ -779,12 +782,10 @@ public class LocatorService implements ILocator {
     }
 
     /**
-     * Parse peer attributes in CONF_INFO_PEER packet data
+     * Parse peer attributes in CONF_PEER_INFO packet data.
      *
-     * @param data
-     *            the packet section that contain the peer attributes
-     * @param size
-     *            the number of bytes in [data] that contain peer attributes
+     * @param data - the packet data
+     * @param size - the packet size
      * @return a map containing the attributes
      * @throws UnsupportedEncodingException
      */
@@ -805,6 +806,32 @@ public class LocatorService implements ILocator {
             String key = s.substring(i0, i1);
             String val = s.substring(i2, i3);
             map.put(key, val);
+        }
+        return map;
+    }
+
+    /**
+     * Parse list of IDs in CONF_SLAVES_INFO and CONF_PEERS_REMOVED packet data.
+     *
+     * @param data - the packet data
+     * @param size - the packet size
+     * @return a map containing the IDs
+     * @throws UnsupportedEncodingException
+     */
+    private static Map<String,String> parseIDs(byte[] data, int size) throws UnsupportedEncodingException {
+        int cnt = 0;
+        Map<String,String> map = new HashMap<String,String>();
+        String s = new String(data, 8, size - 8, "UTF-8");
+        int l = s.length();
+        int i = 0;
+        while (i < l) {
+            int i0 = i;
+            while (i < l && s.charAt(i) != 0) i++;
+            if (i > i0) {
+                String id = s.substring(i0, i);
+                map.put(Integer.toString(cnt++), id);
+            }
+            while (i < l && s.charAt(i) == 0) i++;
         }
         return map;
     }
@@ -939,35 +966,40 @@ public class LocatorService implements ILocator {
             int remote_port = p.getPort();
             InetAddress remote_address = p.getAddress();
             if (isRemote(remote_address, remote_port)) {
-                Slave sl = null;
-                if (remote_port != DISCOVEY_PORT) {
-                    sl = addSlave(remote_address, remote_port, time, time);
+                if (buf[4] == CONF_PEERS_REMOVED) {
+                    handlePeerRemovedPacket(p);
                 }
-                switch (buf[4]) {
-                case CONF_PEER_INFO:
-                    handlePeerInfoPacket(p);
-                    break;
-                case CONF_REQ_INFO:
-                    handleReqInfoPacket(p, sl, time);
-                    break;
-                case CONF_SLAVES_INFO:
-                    handleSlavesInfoPacket(p, time);
-                    break;
-                case CONF_REQ_SLAVES:
-                    handleReqSlavesPacket(p, sl, time);
-                    break;
-                }
-                for (SubNet subnet : subnets) {
-                    if (!subnet.contains(remote_address)) continue;
-                    long delay = DATA_RETENTION_PERIOD / 3;
-                    if (remote_port != DISCOVEY_PORT) delay = DATA_RETENTION_PERIOD / 3 * 2;
-                    else if (!subnet.address.equals(remote_address)) delay = DATA_RETENTION_PERIOD / 2;
-                    if (subnet.last_slaves_req_time + delay <= time) {
-                        sendSlavesRequest(subnet, remote_address, remote_port);
-                        subnet.last_slaves_req_time = time;
+                else {
+                    Slave sl = null;
+                    if (remote_port != DISCOVEY_PORT) {
+                        sl = addSlave(remote_address, remote_port, time, time);
                     }
-                    if (subnet.address.equals(remote_address) && remote_port == DISCOVEY_PORT) {
-                        last_master_packet_time = time;
+                    switch (buf[4]) {
+                    case CONF_PEER_INFO:
+                        handlePeerInfoPacket(p);
+                        break;
+                    case CONF_REQ_INFO:
+                        handleReqInfoPacket(p, sl, time);
+                        break;
+                    case CONF_SLAVES_INFO:
+                        handleSlavesInfoPacket(p, time);
+                        break;
+                    case CONF_REQ_SLAVES:
+                        handleReqSlavesPacket(p, sl, time);
+                        break;
+                    }
+                    for (SubNet subnet : subnets) {
+                        if (!subnet.contains(remote_address)) continue;
+                        long delay = DATA_RETENTION_PERIOD / 3;
+                        if (remote_port != DISCOVEY_PORT) delay = DATA_RETENTION_PERIOD / 3 * 2;
+                        else if (!subnet.address.equals(remote_address)) delay = DATA_RETENTION_PERIOD / 2;
+                        if (subnet.last_slaves_req_time + delay <= time) {
+                            sendSlavesRequest(subnet, remote_address, remote_port);
+                            subnet.last_slaves_req_time = time;
+                        }
+                        if (subnet.address.equals(remote_address) && remote_port == DISCOVEY_PORT) {
+                            last_master_packet_time = time;
+                        }
                     }
                 }
             }
@@ -1021,16 +1053,11 @@ public class LocatorService implements ILocator {
 
     private void handleSlavesInfoPacket(InputPacket p, long time_now) {
         try {
-            Map<String,String> trace_map = null; // used for tracing only
-            int slave_index = 0;        // used for tracing only
-            if (TRACE_DISCOVERY) {
-                trace_map = new HashMap<String,String>(3);
-            }
-
-            String s = new String(p.getData(), 8, p.getLength() - 8, "UTF-8");
-            int l = s.length();
-            int i = 0;
-            while (i < l) {
+            Map<String,String> map = parseIDs(p.getData(), p.getLength());
+            if (TRACE_DISCOVERY) traceDiscoveryPacket(true, "CONF_SLAVES_INFO", map, p);
+            for (String s : map.values()) {
+                int i = 0;
+                int l = s.length();
                 int time0 = i;
                 while (i < l&& s.charAt(i) != ':' && s.charAt(i) != 0) i++;
                 int time1 = i;
@@ -1042,13 +1069,9 @@ public class LocatorService implements ILocator {
                 int host0 = i;
                 while (i < l && s.charAt(i) != 0) i++;
                 int host1 = i;
-                if (i < l && s.charAt(i) == 0) i++;
                 int port = Integer.parseInt(s.substring(port0, port1));
                 String timestamp = s.substring(time0, time1);
                 String host = s.substring(host0, host1);
-                if (TRACE_DISCOVERY) {
-                    trace_map.put("slave[" + slave_index++ + ']', timestamp + ':' + port + ':' + host);
-                }
                 if (port != DISCOVEY_PORT) {
                     InetAddress addr = getInetAddress(host);
                     if (addr != null) {
@@ -1079,9 +1102,6 @@ public class LocatorService implements ILocator {
                     }
                 }
             }
-            if (TRACE_DISCOVERY) {
-                traceDiscoveryPacket(true, "CONF_SLAVES_INFO", trace_map, p);
-            }
         }
         catch (Exception x) {
             log("Invalid datagram packet received from " + p.getAddress() + "/" + p.getPort(), x);
@@ -1089,11 +1109,23 @@ public class LocatorService implements ILocator {
     }
 
     private void handleReqSlavesPacket(InputPacket p, Slave sl, long time) {
-        if (TRACE_DISCOVERY) {
-            traceDiscoveryPacket(true, "CONF_REQ_SLAVES", null, p);
-        }
+        if (TRACE_DISCOVERY) traceDiscoveryPacket(true, "CONF_REQ_SLAVES", null, p);
         if (sl != null) sl.last_req_slaves_time = time;
         sendSlavesInfo(p.getAddress(), p.getPort(),  time);
+    }
+
+    private void handlePeerRemovedPacket(InputPacket p) {
+        try {
+            Map<String,String> map = parseIDs(p.getData(), p.getLength());
+            if (TRACE_DISCOVERY) traceDiscoveryPacket(true, "CONF_PEERS_REMOVED", map, p);
+            for (String id : map.values()) {
+                IPeer peer = peers.get(id);
+                if (peer instanceof RemotePeer) ((RemotePeer)peer).dispose();
+            }
+        }
+        catch (Exception x) {
+            log("Invalid datagram packet received from " + p.getAddress() + "/" + p.getPort(), x);
+        }
     }
 
     /*----------------------------------------------------------------------------------*/

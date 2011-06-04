@@ -49,7 +49,8 @@ public interface ILocator extends IService {
         CONF_REQ_INFO = 1,
         CONF_PEER_INFO = 2,
         CONF_REQ_SLAVES = 3,
-        CONF_SLAVES_INFO = 4;
+        CONF_SLAVES_INFO = 4,
+        CONF_PEERS_REMOVED = 5;
 
     /**
      * @return Locator service name: "Locator"

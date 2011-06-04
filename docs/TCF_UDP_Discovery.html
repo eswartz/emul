@@ -16,7 +16,7 @@ Designed by Eugene Tarassov (eugene.tarassov@windriver.com)<br>
 Documented by John Cortell (john.cortell@freescale.com)<br>
 <br>
 Created on: December 5, 2009<br>
-Last modified on: June 24, 2010<br>
+Last modified on: June 03, 2011<br>
 
 <h3>Overview</h3>
 
@@ -139,12 +139,14 @@ The following are the TCF UDP Discovey <i>Rules of Engagement. </i>Unless explic
     <li>
       tell the new slave about all known peers and slaves
     </li>
-  </ul>
-  <ul>
     <li>
       advertise the new slave to all slaves that have sent CONF_REQ_SLAVES to this agent within the last X seconds (retention period)
     </li>
   </ul>
+  <li>
+    <p>
+        On shutdown, agent may broadcast CONF_PEERS_REMOVED to all local networks and known slaves.
+  </li>
 </ol>
 
 <h3>UDP Packets</h3>
@@ -173,6 +175,9 @@ All TCF discovery UDP packets have an eight byte header:
     </li>
     <li>
       4 = CONF_SLAVES_INFO<br>
+    </li>
+    <li>
+      5 = CONF_PEERS_REMOVED<br>
     </li>
   </ul>
   <li>
@@ -218,6 +223,12 @@ This indicates knowledge of a TCF slave agent running at 192.168.0.1, listening 
 <br>
 Multiple such descriptions can appear in a CONF_SLAVES_INFO packet. Agents should take care to not send excessively large UDP packets, though.
 The TCF reference implementation keeps packets under 1500 bytes. Agents should split large tables across multiple UDP packets.
+<dt>
+CONF_PEERS_REMOVED
+<dd>
+This is a packet which notifies removal of peers. When an agent is about to exit, it may send the packet to notify others about removing of peers that the agent implements.
+This allows other agents to remove stale peer info right away instead of waiting until the data become expired. Following the eight-byte header, this packet contains
+sequence of zero-terminated peer IDs.
 </dd>
 
 <h3>Timing</h3>
@@ -306,6 +317,14 @@ An agent should check and ignore any packets it has sent.
     </td>
     <td width=50%>
       UDP_REQ_SLAVES
+    </td>
+  </tr>
+  <tr>
+    <td width=50%>
+      CONF_PEERS_REMOVED
+    </td>
+    <td width=50%>
+      UDP_PEERS_REMOVED
     </td>
   </tr>
   </tbody>
