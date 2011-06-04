@@ -31,10 +31,11 @@
 #define PREF_PACKET_SIZE (1500 - 40 - 8)
 
 /* UDP discovery packet types: */
-#define UDP_REQ_INFO    1   /* Peer info request */
-#define UDP_ACK_INFO    2   /* Peer info - contains list of peer attributes */
-#define UDP_REQ_SLAVES  3   /* List of slaves request */
-#define UDP_ACK_SLAVES  4   /* List of slaves - contains list of socket addresses */
+#define UDP_REQ_INFO      1  /* Peer info request */
+#define UDP_ACK_INFO      2  /* Peer info - contains list of peer attributes */
+#define UDP_REQ_SLAVES    3  /* List of slaves request */
+#define UDP_ACK_SLAVES    4  /* List of slaves - contains list of socket addresses */
+#define UDP_PEERS_REMOVED 5  /* List of peers that are removed */
 
 #define UDP_VERSION     '2'
 
@@ -42,5 +43,10 @@
  * Start UDP discovery server
  */
 extern int discovery_start_udp(void);
+
+/*
+ * Stop UDP discovery server
+ */
+extern int discovery_stop_udp(void);
 
 #endif /* D_discovery_udp */

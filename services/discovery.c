@@ -194,3 +194,9 @@ void discovery_start(void) {
     discovery_start_udp();
 #endif
 }
+
+void discovery_stop(void) {
+#if ENABLE_Discovery
+    discovery_stop_udp();
+#endif
+}

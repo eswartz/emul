@@ -28,13 +28,18 @@
 #define DISCOVERY_TCF_PORT      1534
 
 /*
- * Start discovery of remote peers. f no other discovery master exist on the
+ * Start discovery of remote peers. If no other discovery master exist on the
  * local machine, then this instance will become master, otherwise a
  * agent will attempt to connect to the existing master.  If the
  * existing master disappears, then a new attempt will be made to
  * become master or connect as a client.
  */
 extern void discovery_start(void);
+
+/*
+ * Stop discovery of remote peers.
+ */
+extern void discovery_stop(void);
 
 #if SERVICE_Locator
 

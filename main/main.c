@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <assert.h>
+#include <signal.h>
 #include <framework/asyncreq.h>
 #include <framework/events.h>
 #include <framework/errors.h>
@@ -36,6 +37,36 @@
 #include <main/server.h>
 
 static const char * progname;
+
+static void shutdown_event(void * args) {
+    discovery_stop();
+    cancel_event_loop();
+}
+
+static void signal_handler(int sig) {
+    if (is_dispatch_thread()) {
+        discovery_stop();
+        signal(sig, SIG_DFL);
+        raise(sig);
+    }
+    else {
+        post_event(shutdown_event, NULL);
+    }
+}
+
+#if defined(WIN32)
+static BOOL CtrlHandler(DWORD ctrl) {
+    switch(ctrl) {
+    case CTRL_C_EVENT:
+    case CTRL_CLOSE_EVENT:
+    case CTRL_BREAK_EVENT:
+    case CTRL_SHUTDOWN_EVENT:
+        post_event(shutdown_event, NULL);
+        return TRUE;
+    }
+    return FALSE;
+}
+#endif
 
 #if defined(_WRS_KERNEL)
 int tcf(void) {
@@ -162,6 +193,15 @@ int main(int argc, char ** argv) {
         exit(1);
     }
     discovery_start();
+
+    signal(SIGABRT, signal_handler);
+    signal(SIGILL, signal_handler);
+    signal(SIGINT, signal_handler);
+    signal(SIGTERM, signal_handler);
+
+#if defined(WIN32)
+    SetConsoleCtrlHandler((PHANDLER_ROUTINE)CtrlHandler, TRUE);
+#endif
 
     /* Process events - must run on the initial thread since ptrace()
      * returns ECHILD otherwise, thinking we are not the owner. */

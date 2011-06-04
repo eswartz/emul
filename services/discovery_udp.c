@@ -78,6 +78,8 @@ static int send_size;
 
 static time_t last_master_packet_time = 0;
 
+static int discovery_stopped = 0;
+
 typedef struct SlaveInfo {
     struct sockaddr_in addr;
     time_t last_packet_time;        /* Time of last packet from this slave */
@@ -229,8 +231,7 @@ static int create_server_socket(void) {
                 error = 0;
                 if (bind(sock, (struct sockaddr *)&addr, sizeof(addr))) {
                     error = errno;
-                    if (udp_server_socket >= 0 &&
-                            recvreq_error_cnt < MAX_RECV_ERRORS) {
+                    if (udp_server_socket >= 0 && recvreq_error_cnt < MAX_RECV_ERRORS) {
                         loc_freeaddrinfo(reslist);
                         closesocket(sock);
                         return 0;
@@ -341,6 +342,16 @@ static int send_packet(ip_ifc_info * ifc, struct sockaddr_in * addr) {
             break;
         case UDP_REQ_SLAVES:
             pos = strlcpy(buf, "REQ_SLAVES", sizeof(buf));
+            break;
+        case UDP_PEERS_REMOVED:
+            pos = strlcpy(buf, "PEERS_REMOVED", sizeof(buf));
+            i = 8;
+            while (i < send_size) {
+                if (pos < sizeof(buf) - 1) buf[pos++] = ' ';
+                while (i < send_size && (ch = send_buf[i++]) != 0) {
+                    if (pos < sizeof(buf) - 1) buf[pos++] = ch;
+                }
+            }
             break;
         default:
             pos = strlcpy(buf, "???", sizeof(buf));
@@ -513,6 +524,25 @@ static void udp_send_ack_slaves_all(struct sockaddr_in * addr, time_t timenow) {
     }
 }
 
+static int add_peer_id(PeerServer * ps, void * arg) {
+    if ((ps->flags & PS_FLAG_PRIVATE) != 0) return 0;
+    if ((ps->flags & PS_FLAG_DISCOVERABLE) == 0) return 0;
+    if ((ps->flags & PS_FLAG_LOCAL) == 0) return 0;
+    app_strz(ps->id);
+    return 0;
+}
+
+static void udp_send_peer_removed(void) {
+    int n;
+    send_size = 8;
+    send_buf[4] = UDP_PEERS_REMOVED;
+    peer_server_iter(add_peer_id, NULL);
+    for (n = 0; n < ifc_cnt; n++) {
+        ip_ifc_info * ifc = ifc_list + n;
+        send_packet(ifc, NULL);
+    }
+}
+
 static void udp_send_all(struct sockaddr_in * addr, SlaveInfo * s) {
     memset(send_all_ok, 0, sizeof(send_all_ok));
     udp_send_ack_info(addr);
@@ -557,6 +587,8 @@ static SlaveInfo * add_slave(struct sockaddr_in * addr, time_t timestamp) {
 
 static void udp_refresh_timer(void * arg) {
     time_t timenow = time(NULL);
+
+    if (discovery_stopped) return;
 
     if (slave_cnt > 0) {
         /* Cleanup slave table */
@@ -696,9 +728,34 @@ static void udp_receive_ack_slaves(time_t timenow) {
     }
 }
 
+static void udp_receive_peer_removed(void) {
+    char * p = recv_buf + 8;
+    char * e = recv_buf + recvreq.u.sio.rval;
+
+    assert(is_dispatch_thread());
+    while (p < e) {
+        char * id = p;
+        while (p < e && *p != '\0') p++;
+        if (p < e) {
+            PeerServer * peer = peer_server_find(id);
+            if (peer != NULL && (peer->flags & PS_FLAG_LOCAL) == 0) {
+                peer_server_remove(id);
+            }
+            while (p < e && *p == '\0') p++;
+        }
+    }
+}
+
 static void udp_server_recv(void * x) {
     assert(recvreq_pending != 0);
     assert(x == &recvreq);
+    if (discovery_stopped) {
+        if (udp_server_socket >= 0) {
+            closesocket(udp_server_socket);
+            udp_server_socket = -1;
+        }
+        return;
+    }
     recvreq_pending = 0;
     if (recvreq.error != 0) {
         if (recvreq_generation != udp_server_generation) {
@@ -717,40 +774,45 @@ static void udp_server_recv(void * x) {
                 recv_buf[2] == 'F' &&
                 recv_buf[3] == UDP_VERSION &&
                 is_remote(&recvreq_addr)) {
-            int n = 0;
-            time_t timenow = time(NULL);
-            SlaveInfo * s = NULL;
-            if (ntohs(recvreq_addr.sin_port) != DISCOVERY_TCF_PORT) {
-                /* Packet from a slave, save its address */
-                s = add_slave(&recvreq_addr, timenow);
+            if (recv_buf[4] == UDP_PEERS_REMOVED) {
+                udp_receive_peer_removed();
             }
-            switch (recv_buf[4]) {
-            case UDP_REQ_INFO:
-                udp_receive_req_info(s);
-                break;
-            case UDP_ACK_INFO:
-                udp_receive_ack_info();
-                break;
-            case UDP_REQ_SLAVES:
-                udp_receive_req_slaves(s, timenow);
-                break;
-            case UDP_ACK_SLAVES:
-                udp_receive_ack_slaves(timenow);
-                break;
-            }
-            for (n = 0; n < ifc_cnt; n++) {
-                ip_ifc_info * ifc = ifc_list + n;
-                if ((ifc->addr & ifc->mask) == (recvreq_addr.sin_addr.s_addr & ifc->mask)) {
-                    time_t delay = PEER_DATA_RETENTION_PERIOD / 3;
-                    if (ntohs(recvreq_addr.sin_port) != DISCOVERY_TCF_PORT) delay = PEER_DATA_RETENTION_PERIOD / 3 * 2;
-                    else if (recvreq_addr.sin_addr.s_addr != ifc->addr) delay = PEER_DATA_RETENTION_PERIOD / 2;
-                    if (last_req_slaves_time[n] + delay <= timenow) {
-                        udp_send_req_slaves(ifc, &recvreq_addr);
-                        last_req_slaves_time[n] = timenow;
-                    }
-                    /* Remember time only if local host master */
-                    if (ifc->addr == recvreq_addr.sin_addr.s_addr && ntohs(recvreq_addr.sin_port) == DISCOVERY_TCF_PORT) {
-                        last_master_packet_time = timenow;
+            else {
+                int n = 0;
+                time_t timenow = time(NULL);
+                SlaveInfo * s = NULL;
+                if (ntohs(recvreq_addr.sin_port) != DISCOVERY_TCF_PORT) {
+                    /* Packet from a slave, save its address */
+                    s = add_slave(&recvreq_addr, timenow);
+                }
+                switch (recv_buf[4]) {
+                case UDP_REQ_INFO:
+                    udp_receive_req_info(s);
+                    break;
+                case UDP_ACK_INFO:
+                    udp_receive_ack_info();
+                    break;
+                case UDP_REQ_SLAVES:
+                    udp_receive_req_slaves(s, timenow);
+                    break;
+                case UDP_ACK_SLAVES:
+                    udp_receive_ack_slaves(timenow);
+                    break;
+                }
+                for (n = 0; n < ifc_cnt; n++) {
+                    ip_ifc_info * ifc = ifc_list + n;
+                    if ((ifc->addr & ifc->mask) == (recvreq_addr.sin_addr.s_addr & ifc->mask)) {
+                        time_t delay = PEER_DATA_RETENTION_PERIOD / 3;
+                        if (ntohs(recvreq_addr.sin_port) != DISCOVERY_TCF_PORT) delay = PEER_DATA_RETENTION_PERIOD / 3 * 2;
+                        else if (recvreq_addr.sin_addr.s_addr != ifc->addr) delay = PEER_DATA_RETENTION_PERIOD / 2;
+                        if (last_req_slaves_time[n] + delay <= timenow) {
+                            udp_send_req_slaves(ifc, &recvreq_addr);
+                            last_req_slaves_time[n] = timenow;
+                        }
+                        /* Remember time only if local host master */
+                        if (ifc->addr == recvreq_addr.sin_addr.s_addr && ntohs(recvreq_addr.sin_port) == DISCOVERY_TCF_PORT) {
+                            last_master_packet_time = timenow;
+                        }
                     }
                 }
             }
@@ -770,7 +832,9 @@ static void local_peer_changed(PeerServer * ps, int type, void * arg) {
 }
 
 int discovery_start_udp(void) {
-    int error = create_server_socket();
+    int error = 0;
+    assert(!discovery_stopped);
+    error = create_server_socket();
     if (error) return error;
     peer_server_add_listener(local_peer_changed, NULL);
     post_event_with_delay(udp_refresh_timer, NULL, PEER_DATA_REFRESH_PERIOD * 1000000);
@@ -782,6 +846,18 @@ int discovery_start_udp(void) {
     send_buf[3] = UDP_VERSION;
     udp_send_req_info(NULL);
     udp_send_all(NULL, NULL);
+    return 0;
+}
+
+int discovery_stop_udp(void) {
+    assert(!discovery_stopped);
+    udp_send_peer_removed();
+    discovery_stopped = 1;
+    if (slave_info != NULL) {
+        loc_free(slave_info);
+        slave_cnt = 0;
+        slave_max = 0;
+    }
     return 0;
 }
 
