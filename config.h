@@ -107,7 +107,7 @@
 #define SERVICE_PathMap         ENABLE_ELF
 #endif
 #if !defined(SERVICE_Terminals)
-#define SERVICE_Terminals       TARGET_UNIX
+#define SERVICE_Terminals       (TARGET_UNIX || TARGET_WINDOWS)
 #endif
 
 #if !defined(ENABLE_Plugins)

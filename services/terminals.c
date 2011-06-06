@@ -61,7 +61,12 @@ static const char * TERMINALS = "Terminals";
 #  ifndef SystemHandleInformation
 #    define SystemHandleInformation 16
 #  endif
-#  error("unsupported WIN32!")
+#  define TERM_LAUNCH_EXEC "cmd"
+#  define TERM_LAUNCH_ARGS {TERM_LAUNCH_EXEC, NULL}
+    struct winsize {
+        unsigned ws_col;
+        unsigned ws_row;
+    };
 #else
 #  include <termios.h>
 #  ifndef TIOCGWINSZ
@@ -72,7 +77,7 @@ static const char * TERMINALS = "Terminals";
 #  include <dirent.h>
 # if TERMINALS_NO_LOGIN
 #  define TERM_LAUNCH_EXEC "/bin/bash"
-#  define TERM_LAUNCH_ARGS {TERM_LAUNCH_EXEC, "-l",NULL}
+#  define TERM_LAUNCH_ARGS {TERM_LAUNCH_EXEC, "-l", NULL}
 #  define TERM_EXIT_SIGNAL SIGHUP
 # else
 #  define TERM_LAUNCH_EXEC "/bin/login"
@@ -88,26 +93,23 @@ typedef struct Terminal {
     LINK link;
     int pid; /* pid of the login process of the terminal */
     TCFBroadcastGroup * bcg;
-    int inp;
-    int out;
-    int err;
     struct TerminalInput * inp_struct;
     struct TerminalOutput * out_struct;
     struct TerminalOutput * err_struct;
-    char inp_id[256];
-    char out_id[256];
-    char err_id[256];
 
     char pty_type[TERM_PROP_DEF_SIZE];
     char encoding[TERM_PROP_DEF_SIZE];
     unsigned long width;
     unsigned long height;
+    int terminated;
     long exit_code;
 
-    Channel *channel;
+    Channel * channel;
 } Terminal;
 
 typedef struct TerminalOutput {
+    int fd;
+    char id[256];
     Terminal * prs;
     AsyncReqInfo req;
     int req_posted;
@@ -118,6 +120,8 @@ typedef struct TerminalOutput {
 } TerminalOutput;
 
 typedef struct TerminalInput {
+    int fd;
+    char id[256];
     Terminal * prs;
     AsyncReqInfo req;
     int req_posted;
@@ -204,22 +208,22 @@ static void write_context(OutputStream * out, int tid) {
         json_write_ulong(out, prs->height);
         write_stream(out, ',');
 
-        if (*prs->inp_id) {
+        if (prs->inp_struct) {
             json_write_string(out, "StdInID");
             write_stream(out, ':');
-            json_write_string(out, prs->inp_id);
+            json_write_string(out, prs->inp_struct->id);
             write_stream(out, ',');
         }
-        if (*prs->out_id) {
+        if (prs->out_struct) {
             json_write_string(out, "StdOutID");
             write_stream(out, ':');
-            json_write_string(out, prs->out_id);
+            json_write_string(out, prs->out_struct->id);
             write_stream(out, ',');
         }
-        if (*prs->err_id) {
+        if (prs->err_struct) {
             json_write_string(out, "StdErrID");
             write_stream(out, ':');
-            json_write_string(out, prs->err_id);
+            json_write_string(out, prs->err_struct->id);
             write_stream(out, ',');
         }
     }
@@ -262,7 +266,7 @@ static void send_event_terminal_win_size_changed(OutputStream * out, Terminal * 
     write_stream(out, MARKER_EOM);
 }
 
-static int kill_term(Terminal *term) {
+static int kill_term(Terminal * term) {
     int err = 0;
 
 #if defined(WIN32)
@@ -277,6 +281,7 @@ static int kill_term(Terminal *term) {
 #else
     if (kill(term->pid, TERM_EXIT_SIGNAL) < 0) err = errno;
 #endif
+    term->terminated = 1;
     return err;
 }
 
@@ -284,7 +289,7 @@ static void command_exit(char * token, Channel * c) {
     int err = 0;
     char id[256];
     unsigned tid;
-    Terminal *term = NULL;
+    Terminal * term = NULL;
 
     json_read_string(&c->inp, id, sizeof(id));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
@@ -294,17 +299,11 @@ static void command_exit(char * token, Channel * c) {
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
 
-    if (tid == 0) {
+    if (tid == 0 || (term = find_terminal(tid)) == NULL) {
         err = ERR_INV_CONTEXT;
     }
     else {
-        term = find_terminal(tid);
-        if (term == NULL) {
-            err = ERR_INV_CONTEXT;
-        }
-        else {
-            err = kill_term(term);
-        }
+        err = kill_term(term);
     }
 
     write_errno(&c->out, err);
@@ -324,13 +323,11 @@ static void terminal_exited(Terminal * prs) {
     }
 
     list_remove(&prs->link);
-    close(prs->inp);
-    close(prs->out);
-    if (prs->out != prs->err) close(prs->err);
     if (prs->inp_struct) {
         TerminalInput * inp = prs->inp_struct;
         if (!inp->req_posted) {
             virtual_stream_delete(inp->vstream);
+            close(inp->fd);
             loc_free(inp);
         }
         else {
@@ -339,6 +336,7 @@ static void terminal_exited(Terminal * prs) {
     }
     if (prs->out_struct) prs->out_struct->prs = NULL;
     if (prs->err_struct) prs->err_struct->prs = NULL;
+    channel_unlock(prs->channel);
     loc_free(prs);
 }
 
@@ -368,6 +366,7 @@ static void write_terminal_input_done(void * x) {
     if (inp->prs == NULL) {
         /* Process has exited */
         virtual_stream_delete(inp->vstream);
+        close(inp->fd);
         loc_free(inp);
     }
     else {
@@ -386,16 +385,18 @@ static void write_terminal_input_done(void * x) {
     }
 }
 
-static void write_terminal_input(Terminal * prs) {
-    TerminalInput * inp = prs->inp_struct = (TerminalInput *) loc_alloc_zero(sizeof(TerminalInput));
+static TerminalInput * write_terminal_input(Terminal * prs, int fd) {
+    TerminalInput * inp = (TerminalInput *) loc_alloc_zero(sizeof(TerminalInput));
+    inp->fd = fd;
     inp->prs = prs;
     inp->req.client_data = inp;
     inp->req.done = write_terminal_input_done;
     inp->req.type = AsyncReqWrite;
-    inp->req.u.fio.fd = prs->inp;
+    inp->req.u.fio.fd = inp->fd;
     virtual_stream_create(TERMINALS, tid2id(prs->pid), PIPE_SIZE, VS_ENABLE_REMOTE_WRITE,
             terminal_input_streams_callback, inp, &inp->vstream);
-    virtual_stream_get_id(inp->vstream, prs->inp_id, sizeof(prs->inp_id));
+    virtual_stream_get_id(inp->vstream, inp->id, sizeof(inp->id));
+    return inp;
 }
 
 static void terminal_output_streams_callback(VirtualStream * stream, int event_code, void * args) {
@@ -429,8 +430,7 @@ static void terminal_output_streams_callback(VirtualStream * stream, int event_c
 
         if (out->buf_pos < (size_t) buf_len || out->eos != eos) {
             size_t done = 0;
-            virtual_stream_add_data(stream, out->buf + out->buf_pos, buf_len - out->buf_pos, &done,
-                    eos);
+            virtual_stream_add_data(stream, out->buf + out->buf_pos, buf_len - out->buf_pos, &done, eos);
             out->buf_pos += done;
             if (eos) out->eos = 1;
         }
@@ -446,10 +446,11 @@ static void terminal_output_streams_callback(VirtualStream * stream, int event_c
                     if (out == out->prs->err_struct) out->prs->err_struct = NULL;
                 }
                 virtual_stream_delete(stream);
+                close(out->fd);
                 loc_free(out);
             }
         }
-    } // end if(!out->req_posted)
+    }
 }
 
 static void read_terminal_output_done(void * x) {
@@ -461,8 +462,9 @@ static void read_terminal_output_done(void * x) {
     terminal_output_streams_callback(out->vstream, 0, out);
 }
 
-static TerminalOutput * read_terminal_output(Terminal * prs, int fd, char * id, size_t id_size) {
-    TerminalOutput * out = (TerminalOutput *) loc_alloc_zero(sizeof(TerminalOutput));
+static TerminalOutput * read_terminal_output(Terminal * prs, int fd) {
+    TerminalOutput * out = (TerminalOutput *)loc_alloc_zero(sizeof(TerminalOutput));
+    out->fd = fd;
     out->prs = prs;
     out->req.client_data = out;
     out->req.done = read_terminal_output_done;
@@ -472,7 +474,7 @@ static TerminalOutput * read_terminal_output(Terminal * prs, int fd, char * id, 
     out->req.u.fio.fd = fd;
     virtual_stream_create(TERMINALS, tid2id(prs->pid), PIPE_SIZE, VS_ENABLE_REMOTE_READ,
             terminal_output_streams_callback, out, &out->vstream);
-    virtual_stream_get_id(out->vstream, id, id_size);
+    virtual_stream_get_id(out->vstream, out->id, sizeof(out->id));
     out->req_posted = 1;
     async_req_post(&out->req);
     return out;
@@ -482,7 +484,7 @@ static TerminalOutput * read_terminal_output(Terminal * prs, int fd, char * id, 
  * Set the environment variable "name" to the value "value". If the variable
  * exists already, override it or just skip.
  */
-static void envp_add(char ***envp, int *env_len, const char *name, const char *value, int override) {
+static void envp_add(char *** envp, int * env_len, const char * name, const char * value, int env_override) {
     char **env;
     size_t len;
     int i;
@@ -500,12 +502,12 @@ static void envp_add(char ***envp, int *env_len, const char *name, const char *v
     for (env = *envp, i = 0, len = strlen(name); env[i]; i++)
         if (strncmp(env[i], name, len) == 0 && env[i][len] == '=') break;
     if (env[i]) {
-        //override
-        if (override) loc_free(env[i]);
+        /* override */
+        if (env_override) loc_free(env[i]);
         else return;
     }
     else {
-        //new variable
+        /* new variable */
         if (i >= *env_len - 1) {
             *env_len += 10;
             env = *envp = (char **)loc_realloc(env, *env_len * sizeof(char *));
@@ -516,16 +518,16 @@ static void envp_add(char ***envp, int *env_len, const char *name, const char *v
     snprintf(env[i], len + 1 + strlen(value) + 1, "%s=%s", name, value);
 }
 
-static void set_terminal_env(char ***envp, int *env_len, const char *pty_type,
-        const char *encoding, const char * exe) {
+static void set_terminal_env(char *** envp, int * env_len, const char * pty_type,
+        const char * encoding, const char * exe) {
 #if TERMINALS_NO_LOGIN
-    char *value;
+    char * value;
     const char *env_array[] = { "USER", "LOGNAME", "HOME", "PATH", NULL };
 #endif
     int i = 0;
-    char **new_envp = NULL;
+    char ** new_envp = NULL;
 
-    //convert the envp memory layout
+    /* convert the envp memory layout */
     new_envp = (char **)loc_alloc((*env_len + 1) * sizeof(char *));
     for (i = 0; i < *env_len; i++) {
         new_envp[i] = (char *)loc_alloc(strlen((*envp)[i]) + 1);
@@ -551,19 +553,178 @@ static void set_terminal_env(char ***envp, int *env_len, const char *pty_type,
 #endif
 }
 
-static void env_free(char **envp, int envp_len) {
-    int i;
+static void env_free(char ** envp, int envp_len) {
     if (envp) {
-        for (i = 0; i < envp_len && envp[i]; i++)
-            loc_free(envp[i]);
+        int i;
+        for (i = 0; i < envp_len && envp[i]; i++) loc_free(envp[i]);
         loc_free(envp);
     }
 }
+
+#if defined(WIN32)
+
+static int start_terminal(Channel * c, const char * pty_type, const char * encoding, char ** envp,
+        int envp_len, const char * exe, const char ** args, int * pid, Terminal ** prs) {
+    typedef struct _SYSTEM_HANDLE_INFORMATION {
+        ULONG Count;
+        struct HANDLE_INFORMATION {
+            USHORT ProcessId;
+            USHORT CreatorBackTraceIndex;
+            UCHAR ObjectTypeNumber;
+            UCHAR Flags;
+            USHORT Handle;
+            PVOID Object;
+            ACCESS_MASK GrantedAccess;
+        } Handles[1];
+    } SYSTEM_HANDLE_INFORMATION;
+    typedef NTSTATUS (FAR WINAPI * QuerySystemInformationTypedef)(int, PVOID, ULONG, PULONG);
+    QuerySystemInformationTypedef QuerySystemInformationProc = (QuerySystemInformationTypedef)GetProcAddress(
+        GetModuleHandle("NTDLL.DLL"), "NtQuerySystemInformation");
+    DWORD size;
+    NTSTATUS status;
+    SYSTEM_HANDLE_INFORMATION * hi = NULL;
+    int fpipes[3][2];
+    HANDLE hpipes[3][2];
+    char * cmd = NULL;
+    int err = 0;
+    int i;
+
+    if (args != NULL) {
+        int i = 0;
+        int cmd_size = 0;
+        int cmd_pos = 0;
+#           define cmd_append(ch) { \
+            if (!cmd) { \
+                cmd_size = 0x1000; \
+                cmd = (char *)loc_alloc(cmd_size); \
+            } \
+            else if (cmd_pos >= cmd_size) { \
+                char * tmp = (char *)loc_alloc(cmd_size * 2); \
+                memcpy(tmp, cmd, cmd_pos); \
+                loc_free(cmd); \
+                cmd = tmp; \
+                cmd_size *= 2; \
+            }; \
+            cmd[cmd_pos++] = (ch); \
+        }
+        while (args[i] != NULL) {
+            const char * p = args[i++];
+            if (cmd_pos > 0) cmd_append(' ');
+            cmd_append('"');
+            while (*p) {
+                if (*p == '"') cmd_append('\\');
+                cmd_append(*p);
+                p++;
+            }
+            cmd_append('"');
+        }
+        cmd_append(0);
+#       undef cmd_append
+    }
+
+    size = sizeof(SYSTEM_HANDLE_INFORMATION) * 16;
+    hi = (SYSTEM_HANDLE_INFORMATION *)loc_alloc(size);
+    for (;;) {
+        status = QuerySystemInformationProc(SystemHandleInformation, hi, size, &size);
+        if (status != STATUS_INFO_LENGTH_MISMATCH) break;
+        hi = (SYSTEM_HANDLE_INFORMATION *)loc_realloc(hi, size);
+    }
+    if (status == 0) {
+        ULONG i;
+        DWORD id = GetCurrentProcessId();
+        for (i = 0; i < hi->Count; i++) {
+            if (hi->Handles[i].ProcessId != id) continue;
+            SetHandleInformation((HANDLE)(int)hi->Handles[i].Handle, HANDLE_FLAG_INHERIT, FALSE);
+        }
+    }
+    else {
+        err = set_win32_errno(status);
+        trace(LOG_ALWAYS, "Can't start process '%s': %s", exe, errno_to_str(err));
+    }
+    loc_free(hi);
+
+    memset(hpipes, 0, sizeof(hpipes));
+    for (i = 0; i < 3; i++) fpipes[i][0] = fpipes[i][1] = -1;
+    if (!err) {
+#if defined(__CYGWIN__)
+        for (i = 0; i < 3; i++) {
+            if (pipe(fpipes[i]) < 0) {
+                err = errno;
+                break;
+            }
+            hpipes[i][0] = (HANDLE)get_osfhandle(fpipes[i][0]);
+            hpipes[i][1] = (HANDLE)get_osfhandle(fpipes[i][1]);
+        }
+#else
+        for (i = 0; i < 3; i++) {
+            if (!CreatePipe(&hpipes[i][0], &hpipes[i][1], NULL, PIPE_SIZE)) {
+                err = set_win32_errno(GetLastError());
+                break;
+            }
+            fpipes[i][0] = _open_osfhandle((intptr_t)hpipes[i][0], O_TEXT);
+            fpipes[i][1] = _open_osfhandle((intptr_t)hpipes[i][1], O_TEXT);
+        }
+#endif
+    }
+    if (!err) {
+        STARTUPINFO si;
+        PROCESS_INFORMATION prs_info;
+        SetHandleInformation(hpipes[0][0], HANDLE_FLAG_INHERIT, TRUE);
+        SetHandleInformation(hpipes[1][1], HANDLE_FLAG_INHERIT, TRUE);
+        SetHandleInformation(hpipes[2][1], HANDLE_FLAG_INHERIT, TRUE);
+        memset(&si, 0, sizeof(si));
+        memset(&prs_info, 0, sizeof(prs_info));
+        si.cb = sizeof(si);
+        si.dwFlags |= STARTF_USESTDHANDLES;
+        si.hStdInput  = hpipes[0][0];
+        si.hStdOutput = hpipes[1][1];
+        si.hStdError  = hpipes[2][1];
+        if (CreateProcess(NULL, cmd, NULL, NULL, TRUE, 0,
+                (envp ? envp[0] : NULL), NULL, &si, &prs_info) == 0)
+        {
+            err = set_win32_errno(GetLastError());
+        }
+        else {
+            *pid = prs_info.dwProcessId;
+            if (!CloseHandle(prs_info.hThread)) err = set_win32_errno(GetLastError());
+            if (!CloseHandle(prs_info.hProcess)) err = set_win32_errno(GetLastError());
+        }
+    }
+    if (close(fpipes[0][0]) < 0 && !err) err = errno;
+    if (close(fpipes[1][1]) < 0 && !err) err = errno;
+    if (close(fpipes[2][1]) < 0 && !err) err = errno;
+    if (!err) {
+        *prs = (Terminal *)loc_alloc_zero(sizeof(Terminal));
+        (*prs)->pid = *pid;
+        (*prs)->bcg = c->bcg;
+        (*prs)->channel = c;
+        if (*pty_type) snprintf((*prs)->pty_type, sizeof((*prs)->pty_type), "%s", pty_type);
+        if (*encoding) snprintf((*prs)->encoding, sizeof((*prs)->encoding), "%s", encoding);
+        (*prs)->inp_struct = write_terminal_input(*prs, fpipes[0][1]);
+        (*prs)->out_struct = read_terminal_output(*prs, fpipes[1][0]);
+        (*prs)->err_struct = read_terminal_output(*prs, fpipes[2][0]);
+        list_add_first(&(*prs)->link, &terms_list);
+        channel_lock(c);
+    }
+    else {
+        close(fpipes[0][1]);
+        close(fpipes[1][0]);
+        close(fpipes[2][0]);
+    }
+    loc_free(cmd);
+    if (!err) return 0;
+    trace(LOG_ALWAYS, "Can't start process '%s': %s", exe, errno_to_str(err));
+    errno = err;
+    return -1;
+}
+
+#else
 
 static int start_terminal(Channel * c, const char * pty_type, const char * encoding, char ** envp,
         int envp_len, const char * exe, const char ** args, int * pid, Terminal ** prs) {
     int err = 0;
     int fd_tty_master = -1;
+    int fd_tty_out = -1;
     char * tty_slave_name = NULL;
     struct winsize size;
 
@@ -593,7 +754,7 @@ static int start_terminal(Channel * c, const char * pty_type, const char * encod
             int fd_tty_slave = -1;
             char *path;
 
-            set_terminal_env(&envp,&envp_len,pty_type,encoding,exe);
+            set_terminal_env(&envp, &envp_len, pty_type, encoding, exe);
             path=getenv("HOME");
             if (path && chdir(path) < 0) err = errno;
             setsid();
@@ -617,11 +778,10 @@ static int start_terminal(Channel * c, const char * pty_type, const char * encod
         }
     }
 
+    if ((fd_tty_out = dup(fd_tty_master)) < 0) err = errno;
+
     if (!err) {
-        *prs = (Terminal *) loc_alloc_zero(sizeof(Terminal));
-        (*prs)->inp = fd_tty_master;
-        (*prs)->out = fd_tty_master;
-        (*prs)->err = fd_tty_master;
+        *prs = (Terminal *)loc_alloc_zero(sizeof(Terminal));
         (*prs)->pid = *pid;
         (*prs)->bcg = c->bcg;
         (*prs)->channel = c;
@@ -629,13 +789,21 @@ static int start_terminal(Channel * c, const char * pty_type, const char * encod
         if (*encoding) snprintf((*prs)->encoding, sizeof((*prs)->encoding), "%s", encoding);
         (*prs)->width = size.ws_row;
         (*prs)->height = size.ws_col;
+        (*prs)->inp_struct = write_terminal_input(*prs, fd_tty_master);
+        (*prs)->out_struct = read_terminal_output(*prs, fd_tty_out);
         list_add_first(&(*prs)->link, &terms_list);
+        channel_lock(c);
+    }
+    else if (fd_tty_master >= 0) {
+        close(fd_tty_master);
     }
 
     if (!err) return 0;
     errno = err;
     return -1;
 }
+
+#endif
 
 static void command_get_context(char * token, Channel * c) {
     int err = 0;
@@ -651,14 +819,8 @@ static void command_get_context(char * token, Channel * c) {
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
 
-    if (tid == 0) {
+    if (tid == 0 || (term = find_terminal(tid)) == NULL) {
         err = ERR_INV_CONTEXT;
-    }
-    else {
-        term = find_terminal(tid);
-        if (term == NULL) {
-            err = ERR_INV_CONTEXT;
-        }
     }
 
     write_errno(&c->out, err);
@@ -679,8 +841,6 @@ static void command_launch(char * token, Channel * c) {
     char pty_type[TERM_PROP_DEF_SIZE];
     const char * args[] = TERM_LAUNCH_ARGS;
     const char * exec = TERM_LAUNCH_EXEC;
-    char fnm[FILE_PATH_SIZE];
-    struct stat st;
 
     char ** envp = NULL;
     int envp_len = 0;
@@ -697,27 +857,29 @@ static void command_launch(char * token, Channel * c) {
         if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
         if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-        if (err == 0 && stat(exec, &st) != 0) {
-            int n = errno;
-            /* On some systems (e.g. Free DSB) bash is installed under /usr/local */
-            assert(exec[0] == '/');
-            snprintf(fnm, sizeof(fnm), "/usr/local%s", exec);
-            if (stat(fnm, &st) == 0) {
-                args[0] = exec = fnm;
-            }
-            else {
-                err = n;
+#if !defined(WIN32)
+        {
+            char fnm[FILE_PATH_SIZE];
+            struct stat st;
+            if (err == 0 && stat(exec, &st) != 0) {
+                int n = errno;
+                /* On some systems (e.g. Free DSB) bash is installed under /usr/local */
+                assert(exec[0] == '/');
+                snprintf(fnm, sizeof(fnm), "/usr/local%s", exec);
+                if (stat(fnm, &st) == 0) {
+                    args[0] = exec = fnm;
+                }
+                else {
+                    err = n;
+                }
             }
         }
+#endif
 
-        if (err == 0 && start_terminal(c, pty_type, encoding, envp, envp_len, exec,
+        if (err == 0 && start_terminal(
+                c, pty_type, encoding, envp, envp_len, exec,
                 args, &pid, &prs) < 0) err = errno;
-        if (prs != NULL) {
-            write_terminal_input(prs);
-            prs->out_struct = read_terminal_output(prs, prs->out, prs->out_id, sizeof(prs->out_id));
-            if (prs->out != prs->err) prs->err_struct = read_terminal_output(prs, prs->err,
-                    prs->err_id, sizeof(prs->err_id));
-        }
+
         if (!err) add_waitpid_process(pid);
 
         /* write result back */
@@ -745,7 +907,7 @@ static void command_set_win_size(char * token, Channel * c) {
     struct winsize size;
     char id[256];
     unsigned tid;
-    Terminal *term = NULL;
+    Terminal * term = NULL;
 
     json_read_string(&c->inp, id, sizeof(id));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
@@ -761,13 +923,14 @@ static void command_set_win_size(char * token, Channel * c) {
         err = ERR_INV_CONTEXT;
     }
     else if (term->width != size.ws_col || term->height != size.ws_row) {
-        if (ioctl(term->inp, TIOCSWINSZ, &size) < 0) {
-            err = errno;
-        }
+#if defined(WIN32)
+#else
+        if (ioctl(term->inp_struct->fd, TIOCSWINSZ, &size) < 0) err = errno;
+#endif
         if (!err) {
             term->width = size.ws_col;
             term->height = size.ws_row;
-            send_event_terminal_win_size_changed(&term->channel->out, term);
+            send_event_terminal_win_size_changed(&term->bcg->out, term);
         }
     }
 
@@ -796,7 +959,7 @@ static void channel_close_listener(Channel * c) {
     for (l = terms_list.next; l != &terms_list;) {
         Terminal * term = link2term(l);
         l = l->next;
-        if (term->channel == c) {
+        if (term->channel == c && !term->terminated) {
             trace(LOG_ALWAYS, "Terminal is left launched: T%d", term->pid);
             kill_term(term);
         }
