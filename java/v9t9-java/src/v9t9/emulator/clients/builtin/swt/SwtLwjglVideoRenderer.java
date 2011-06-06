@@ -459,22 +459,12 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		}
 		
 		glActiveTexture(GL_TEXTURE0);
-		
-		glBegin(GL_QUADS);
-		
-		glMultiTexCoord2f(GL_TEXTURE1, 0, 0);
-		glTexCoord2f(0f, 0f);		glVertex2f(0, 0);
-		
-		glMultiTexCoord2f(GL_TEXTURE1, 0, 1);
-		glTexCoord2f(0f, 1.0f);		glVertex2f(0, 1);
-		
-		glMultiTexCoord2f(GL_TEXTURE1, 1, 1);
-		glTexCoord2f(1.0f, 1.0f);	glVertex2f(1, 1);
-		
-		glMultiTexCoord2f(GL_TEXTURE1, 1, 0);
-		glTexCoord2f(1.0f, 0f);		glVertex2f(1, 0);
-		
-		glEnd();
+
+		if (effect == Effect.STANDARD) {
+			drawFlatScreen();
+		} else {
+			drawCurvedScreen();
+		}
 		
 		/*
 		glColor3f(0.2f, 0.4f, 0.6f);
@@ -499,6 +489,85 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		if (programObject == 0 && supportsShaders) {
 			compileLinkShaders();
 		}
+	}
+
+	/**
+	 * 
+	 */
+	private void drawCurvedScreen() {
+		glBegin(GL_QUADS);
+
+		// vertically taper the screen
+		drawVerticalCurves(0.5f, 0.5f, 0.5f, 0.5f);
+		drawVerticalCurves(0.5f, -0.5f, 0.5f, -0.5f);
+
+		glEnd();
+	}
+
+	private final static float CVMAJOR = 0.3f;
+	private final static float TVMAJOR = 0.275f;
+	private final static float CHMAJOR = 0.2f;
+	private final static float THMAJOR = 0.19f;
+	
+	private void drawVerticalCurves(float cy, float cdy, float ty, float tdy) {
+		if (Math.abs(cdy) < 0.01f) {
+			drawHorizontalCurves(0.5f, -0.5f, cy, cdy,
+					0.5f, -0.5f, ty, tdy);
+			drawHorizontalCurves(0.5f, 0.5f, cy, cdy,
+					0.5f, 0.5f, ty, tdy);
+			return;
+		}
+		// horizontally taper a curve
+		drawHorizontalCurves(0.5f, -0.5f, cy, cdy * CVMAJOR,
+				0.5f, -0.5f, ty, tdy * TVMAJOR);
+		drawHorizontalCurves(0.5f, 0.5f, cy, cdy * CVMAJOR,
+				0.5f, 0.5f, ty, tdy * TVMAJOR);
+		
+		// inner part
+		drawVerticalCurves(cy + cdy * CVMAJOR, cdy * (1 - CVMAJOR), 
+				ty + tdy * TVMAJOR, tdy * (1 - TVMAJOR));
+	}
+
+	private void drawHorizontalCurves(float cx, float cdx, float cy, float cdy,
+			float tx, float tdx, float ty, float tdy) {
+		if (Math.abs(cdx) < 0.01f) {
+			drawQuad(cx, cy, cx + cdx, cy + cdy, tx, ty, tx + tdx, ty + tdy);
+			return;
+		}
+		// inner half
+		drawHorizontalCurves(cx, cdx * CHMAJOR, cy, cdy, 
+				tx, tdx * THMAJOR, ty, tdy);
+		// outer half
+		drawHorizontalCurves(cx + cdx * CHMAJOR, cdx * (1 - CHMAJOR), cy, cdy, 
+				tx + tdx * THMAJOR, tdx * (1 - THMAJOR), ty, tdy);
+	}
+
+	/**
+	 * 
+	 */
+	private void drawFlatScreen() {
+		glBegin(GL_QUADS);
+		
+		drawQuad(0, 0, 1, 1, 0, 0, 1, 1);
+		
+		glEnd();
+		
+	}
+	
+	private void drawQuad(float cx, float cy, float cx2, float cy2,
+			float tx, float ty, float tx2, float ty2) {
+		glMultiTexCoord2f(GL_TEXTURE1, cx, cy);
+		glTexCoord2f(tx, ty);		
+		glVertex2f(cx, cy);
+		glMultiTexCoord2f(GL_TEXTURE1, cx, cy2);
+		glTexCoord2f(tx, ty2);		
+		glVertex2f(cx, cy2);
+		glMultiTexCoord2f(GL_TEXTURE1, cx2, cy2);
+		glTexCoord2f(tx2, ty2);		
+		glVertex2f(cx2, cy2);
+		glMultiTexCoord2f(GL_TEXTURE1, cx2, cy);
+		glTexCoord2f(tx2, ty);		
+		glVertex2f(cx2, cy);
 	}
 	
 }
