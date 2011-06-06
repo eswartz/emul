@@ -480,6 +480,7 @@ static TerminalOutput * read_terminal_output(Terminal * prs, int fd) {
     return out;
 }
 
+#if !defined(WIN32)
 /*
  * Set the environment variable "name" to the value "value". If the variable
  * exists already, override it or just skip.
@@ -560,6 +561,8 @@ static void env_free(char ** envp, int envp_len) {
         loc_free(envp);
     }
 }
+
+#endif
 
 #if defined(WIN32)
 
