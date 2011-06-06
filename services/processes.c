@@ -85,20 +85,16 @@ typedef struct ChildProcess {
     LINK link;
     int pid;
     TCFBroadcastGroup * bcg;
-    int inp;
-    int out;
-    int err;
     struct ProcessInput * inp_struct;
     struct ProcessOutput * out_struct;
     struct ProcessOutput * err_struct;
-    char inp_id[256];
-    char out_id[256];
-    char err_id[256];
     char name[256];
     long exit_code;
 } ChildProcess;
 
 typedef struct ProcessOutput {
+    int fd;
+    char id[256];
     ChildProcess * prs;
     AsyncReqInfo req;
     int req_posted;
@@ -109,6 +105,8 @@ typedef struct ProcessOutput {
 } ProcessOutput;
 
 typedef struct ProcessInput {
+    int fd;
+    char id[256];
     ChildProcess * prs;
     AsyncReqInfo req;
     int req_posted;
@@ -242,22 +240,22 @@ static void write_context(OutputStream * out, int pid) {
     }
 
     if (prs != NULL) {
-        if (*prs->inp_id) {
+        if (prs->inp_struct) {
             json_write_string(out, "StdInID");
             write_stream(out, ':');
-            json_write_string(out, prs->inp_id);
+            json_write_string(out, prs->inp_struct->id);
             write_stream(out, ',');
         }
-        if (*prs->out_id) {
+        if (prs->out_struct) {
             json_write_string(out, "StdOutID");
             write_stream(out, ':');
-            json_write_string(out, prs->out_id);
+            json_write_string(out, prs->out_struct->id);
             write_stream(out, ',');
         }
-        if (*prs->err_id) {
+        if (prs->err_struct->id) {
             json_write_string(out, "StdErrID");
             write_stream(out, ':');
-            json_write_string(out, prs->err_id);
+            json_write_string(out, prs->err_struct->id);
             write_stream(out, ',');
         }
     }
@@ -729,13 +727,11 @@ static void process_exited(ChildProcess * prs) {
     semTake(prs_list_lock, WAIT_FOREVER);
 #endif
     list_remove(&prs->link);
-    close(prs->inp);
-    close(prs->out);
-    if (prs->out != prs->err) close(prs->err);
     if (prs->inp_struct) {
         ProcessInput * inp = prs->inp_struct;
         if (!inp->req_posted) {
             virtual_stream_delete(inp->vstream);
+            close(inp->fd);
             loc_free(inp);
         }
         else {
@@ -776,6 +772,7 @@ static void write_process_input_done(void * x) {
     if (inp->prs == NULL) {
         /* Process has exited */
         virtual_stream_delete(inp->vstream);
+        close(inp->fd);
         loc_free(inp);
     }
     else {
@@ -794,16 +791,18 @@ static void write_process_input_done(void * x) {
     }
 }
 
-static void write_process_input(ChildProcess * prs) {
-    ProcessInput * inp = prs->inp_struct = (ProcessInput *)loc_alloc_zero(sizeof(ProcessInput));
+static ProcessInput * write_process_input(ChildProcess * prs, int fd) {
+    ProcessInput * inp = (ProcessInput *)loc_alloc_zero(sizeof(ProcessInput));
+    inp->fd = fd;
     inp->prs = prs;
     inp->req.client_data = inp;
     inp->req.done = write_process_input_done;
     inp->req.type = AsyncReqWrite;
-    inp->req.u.fio.fd = prs->inp;
+    inp->req.u.fio.fd = fd;
     virtual_stream_create(PROCESSES[0], pid2id(prs->pid, 0), 0x1000, VS_ENABLE_REMOTE_WRITE,
         process_input_streams_callback, inp, &inp->vstream);
-    virtual_stream_get_id(inp->vstream, prs->inp_id, sizeof(prs->inp_id));
+    virtual_stream_get_id(inp->vstream, inp->id, sizeof(inp->id));
+    return inp;
 }
 
 static void process_output_streams_callback(VirtualStream * stream, int event_code, void * args) {
@@ -851,6 +850,7 @@ static void process_output_streams_callback(VirtualStream * stream, int event_co
                     if (out == out->prs->err_struct) out->prs->err_struct = NULL;
                 }
                 virtual_stream_delete(stream);
+                close(out->fd);
                 loc_free(out);
             }
         }
@@ -866,8 +866,9 @@ static void read_process_output_done(void * x) {
     process_output_streams_callback(out->vstream, 0, out);
 }
 
-static ProcessOutput * read_process_output(ChildProcess * prs, int fd, char * id, size_t id_size) {
+static ProcessOutput * read_process_output(ChildProcess * prs, int fd) {
     ProcessOutput * out = (ProcessOutput *)loc_alloc_zero(sizeof(ProcessOutput));
+    out->fd = fd;
     out->prs = prs;
     out->req.client_data = out;
     out->req.done = read_process_output_done;
@@ -877,7 +878,7 @@ static ProcessOutput * read_process_output(ChildProcess * prs, int fd, char * id
     out->req.u.fio.fd = fd;
     virtual_stream_create(PROCESSES[0], pid2id(prs->pid, 0), 0x1000, VS_ENABLE_REMOTE_READ,
         process_output_streams_callback, out, &out->vstream);
-    virtual_stream_get_id(out->vstream, id, id_size);
+    virtual_stream_get_id(out->vstream, out->id, sizeof(out->id));
     out->req_posted = 1;
     async_req_post(&out->req);
     return out;
@@ -1017,11 +1018,11 @@ static int start_process(Channel * c, char ** envp, char * dir, char * exe, char
     if (close(fpipes[2][1]) < 0 && !err) err = errno;
     if (!err) {
         *prs = (ChildProcess *)loc_alloc_zero(sizeof(ChildProcess));
-        (*prs)->inp = fpipes[0][1];
-        (*prs)->out = fpipes[1][0];
-        (*prs)->err = fpipes[2][0];
         (*prs)->pid = *pid;
         (*prs)->bcg = c->bcg;
+        (*prs)->inp_struct = write_process_input(*prs, fpipes[0][1]);
+        (*prs)->out_struct = read_process_output(*prs, fpipes[1][0]);
+        (*prs)->err_struct = read_process_output(*prs, fpipes[2][0]);
         list_add_first(&(*prs)->link, &prs_list);
     }
     else {
@@ -1109,11 +1110,11 @@ static int start_process(Channel * c, char ** envp, char * dir, char * exe, char
             ioTaskStdSet(*pid, 1, pipes[0][1]);
             ioTaskStdSet(*pid, 2, pipes[1][1]);
             *prs = loc_alloc_zero(sizeof(ChildProcess));
-            (*prs)->inp = pipes[0][0];
-            (*prs)->out = pipes[0][0];
-            (*prs)->err = pipes[1][0];
             (*prs)->pid = *pid;
             (*prs)->bcg = c->bcg;
+            (*prs)->inp_struct = write_process_input(*prs, pipes[0][0]);
+            (*prs)->out_struct = read_process_output(*prs, pipes[0][0]);
+            (*prs)->err_struct = read_process_output(*prs, pipes[1][0]);
             list_add_first(&(*prs)->link, &prs_list);
             if (params->attach) {
                 taskStop(*pid);
@@ -1188,16 +1189,17 @@ static int start_process(Channel * c, char ** envp, char * dir, char * exe, char
         }
         if (!err) {
             *prs = (ChildProcess *)loc_alloc_zero(sizeof(ChildProcess));
-            (*prs)->inp = p_inp[1];
-            (*prs)->out = p_out[0];
-            (*prs)->err = p_err[0];
             (*prs)->pid = *pid;
             (*prs)->bcg = c->bcg;
+            (*prs)->inp_struct = write_process_input(*prs, p_inp[1]);
+            (*prs)->out_struct = read_process_output(*prs, p_out[0]);
+            (*prs)->err_struct = read_process_output(*prs, p_err[0]);
             list_add_first(&(*prs)->link, &prs_list);
         }
     }
     else {
         int fd_tty_master = -1;
+        int fd_tty_out = -1;
         char * tty_slave_name = NULL;
 
         fd_tty_master = posix_openpt(O_RDWR|O_NOCTTY);
@@ -1237,13 +1239,13 @@ static int start_process(Channel * c, char ** envp, char * dir, char * exe, char
                 exit(err);
             }
         }
+        if ((fd_tty_out = dup(fd_tty_master)) < 0) err = errno;
         if (!err) {
             *prs = (ChildProcess *)loc_alloc_zero(sizeof(ChildProcess));
-            (*prs)->inp = fd_tty_master;
-            (*prs)->out = fd_tty_master;
-            (*prs)->err = fd_tty_master;
             (*prs)->pid = *pid;
             (*prs)->bcg = c->bcg;
+            (*prs)->inp_struct = write_process_input(*prs, fd_tty_master);
+            (*prs)->out_struct = read_process_output(*prs, fd_tty_out);
             list_add_first(&(*prs)->link, &prs_list);
         }
     }
@@ -1301,12 +1303,7 @@ static void command_start(char * token, Channel * c, void * x) {
 
         if (dir[0] != 0 && chdir(dir) < 0) err = errno;
         if (err == 0 && start_process(c, envp, dir, exe, args, &params, &pid, &selfattach, &prs) < 0) err = errno;
-        if (prs != NULL) {
-            write_process_input(prs);
-            prs->out_struct = read_process_output(prs, prs->out, prs->out_id, sizeof(prs->out_id));
-            if (prs->out != prs->err) prs->err_struct = read_process_output(prs, prs->err, prs->err_id, sizeof(prs->err_id));
-            strlcpy(prs->name, exe, sizeof(prs->name));
-        }
+        if (prs != NULL) strlcpy(prs->name, exe, sizeof(prs->name));
         if (!err) {
             if (params.attach) {
                 int mode = 0;
