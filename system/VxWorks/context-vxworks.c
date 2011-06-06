@@ -342,7 +342,7 @@ int context_single_step(Context * ctx) {
     return 0;
 }
 
-static int context_terminate() {
+static int context_terminate(Context * ctx) {
     ContextExtensionVxWorks * ext = EXT(ctx);
     VXDBG_CTX vxdbg_ctx;
 
