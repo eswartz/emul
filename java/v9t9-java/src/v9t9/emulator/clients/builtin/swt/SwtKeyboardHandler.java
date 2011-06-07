@@ -8,8 +8,6 @@ import java.util.LinkedList;
 import java.util.Timer;
 
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.KeyEvent;
-import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
@@ -43,18 +41,14 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler implements ISwtKeybo
 
 	
 	static class KeyInfo {
-		public KeyInfo(int keyCode, long timeout, long when) {
+		public KeyInfo(int keyCode, long when) {
 			this.keyCode = keyCode;
-			this.timeout = timeout;
 			this.when = when;
 		}
 		int keyCode;
-		long timeout;
 		public long when;
 	}
 
-	private static final long KEY_LIFE = 1000 / 20;
-	
 	private LinkedList<KeyInfo> pressedKeys = new LinkedList<KeyInfo>();
 	private int pressedStateMask;
 	
@@ -73,8 +67,6 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler implements ISwtKeybo
 	 */
 	private void recordKey(boolean pressed, int stateMask, int keyCode, long now) {
 		//long now = System.currentTimeMillis();
-		boolean found = false;
-		
 		if (pasteTimer != null && pressed && keyCode == SWT.ESC) {
 			cancelPaste();
 			return;
@@ -88,19 +80,14 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler implements ISwtKeybo
 				iter.hasNext(); ) { 
 				KeyInfo info = iter.next();
 				if (info.keyCode == keyCode) {
-					found = true;
 					if (!pressed) {
 						iter.remove();
-					} else {
-						info.timeout = now + KEY_LIFE; 
 					}
-				} else if (info.keyCode != keyCode && info.timeout < now) {
-					iter.remove();
 				}
 			}
 			
-			if (!found && pressed) {
-				pressedKeys.add(new KeyInfo(keyCode, now + KEY_LIFE, now));
+			if (pressed) {
+				pressedKeys.add(new KeyInfo(keyCode, now));
 			}
 			
 			// shift keys are reported sometimes in keycode and sometimes in stateMask
@@ -116,7 +103,7 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler implements ISwtKeybo
 		
 		// immediately record it
 		synchronized (keyboardState) {
-			//updateKey(pressed, stateMask, keyCode);
+			updateKey(pressed, stateMask, keyCode, now);
 		}
 	}
 	
@@ -297,6 +284,8 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler implements ISwtKeybo
 	public void scan(KeyboardState state) {
 		if (pasteTimer != null)
 			return;
+
+		if (true) return;
 		
 		synchronized(state) {
 			state.resetKeyboard();
@@ -319,6 +308,51 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler implements ISwtKeybo
 	}
 	
 	
+	private int lastKeyPressedCode = -1;
+	public void init(Control control) {
+		Shell shell = control.getShell();
+	 	shell.getDisplay().addFilter(SWT.KeyDown, new Listener() {
+
+
+			public void handleEvent(Event event) {
+		        // System.out.println("keyPressed(" + SwtKey.findByCode(event.keyCode) + ")");
+		        if (event.keyCode == lastKeyPressedCode) {
+		            // ignore if this is a repeat event
+		//            return;
+		        }
+
+		        if (lastKeyPressedCode != -1) {
+		            // if this is a different key to the last key that was pressed, then
+		            // add an 'up' even for the previous one - SWT doesn't send an 'up' event for the
+		            // first key in the below scenario:
+		            // 1. key 1 down
+		            // 2. key 2 down
+		            // 3. key 1 up
+		            recordKey(false, event.stateMask, lastKeyPressedCode, System.currentTimeMillis());
+		        }
+
+		        lastKeyPressedCode = event.keyCode;
+
+				recordKey(true, event.stateMask, event.keyCode, System.currentTimeMillis());
+				event.doit = false;
+				
+			}
+			
+		});
+		shell.getDisplay().addFilter(SWT.KeyUp, new Listener() {
+
+			public void handleEvent(Event event) {
+				recordKey(false, event.stateMask, event.keyCode, System.currentTimeMillis());
+				event.doit = false;
+				lastKeyPressedCode = -1;
+			}
+			
+		});
+		
+	}
+
+
+
 	public static void main(String[] args) {
 		Display display = new Display();
 		Shell shell = new Shell(display);
@@ -359,41 +393,4 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler implements ISwtKeybo
 
 	}
 
-	public void init(Control control) {
-		if (true) {
-			Shell shell = control.getShell();
-		 	shell.getDisplay().addFilter(SWT.KeyDown, new Listener() {
-	
-				public void handleEvent(Event event) {
-					recordKey(true, event.stateMask, event.keyCode, System.currentTimeMillis());
-					event.doit = false;
-					
-				}
-				
-			});
-			shell.getDisplay().addFilter(SWT.KeyUp, new Listener() {
-	
-				public void handleEvent(Event event) {
-					recordKey(false, event.stateMask, event.keyCode, System.currentTimeMillis());
-					event.doit = false;
-				}
-				
-			});
-		} else {
-			control.setFocus();
-			control.addKeyListener(new KeyListener() {
-	
-				public void keyPressed(KeyEvent e) {
-					recordKey(true, e.stateMask, e.keyCode, System.currentTimeMillis());
-				}
-	
-	
-				public void keyReleased(KeyEvent e) {
-					recordKey(false, e.stateMask, e.keyCode, System.currentTimeMillis());
-				}
-				
-			});
-		}
-		
-	}
 }

@@ -45,17 +45,21 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	private static boolean VERBOSE = false;
 	
 	private enum Effect {
-		STANDARD("shaders/std", null),
-		CRT("shaders/crt", null),
-		CRT1("shaders/crt1", "shaders/monitor.png"),
-		CRT2("shaders/crt2", "shaders/monitorRGB.png");
+		STANDARD("shaders/std", null, GL_LINEAR, GL_NEAREST),
+		CRT("shaders/crt", null, GL_LINEAR, GL_NEAREST),
+		CRT1("shaders/crt1", "shaders/monitor.png", GL_LINEAR, GL_LINEAR),
+		CRT2("shaders/crt2", "shaders/monitorRGB.png", GL_LINEAR, GL_LINEAR);
 		
 		private final String shaderBase;
 		private final String texture;
+		private final int minFilter;
+		private final int magFilter;
 
-		Effect(String shaderBase, String texture) {
+		Effect(String shaderBase, String texture, int minFilter, int maxFilter) {
 			this.shaderBase = shaderBase;
 			this.texture = texture;
+			this.minFilter = minFilter;
+			this.magFilter = maxFilter;
 		}
 		
 		public String getShaderBase() {
@@ -63,6 +67,12 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		}
 		public String getTexture() {
 			return texture;
+		}
+		public int getMinFilter() {
+			return minFilter;
+		}
+		public int getMagFilter() {
+			return magFilter;
 		}
 	}
 	
@@ -87,6 +97,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	private Rectangle imageRect;
 	private Listener resizeListener;
 	private TextureLoader textureLoader = new TextureLoader();
+	private int curvedList;
 
 	protected VdpCanvas createVdpCanvas() {
 		imageCanvas = new ImageDataCanvas24Bit();
@@ -218,12 +229,10 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	}
 	
 	private Effect getEffect() {
-		return BaseEmulatorWindow.settingMonitorDrawing.getBoolean() ? Effect.CRT2 : Effect.STANDARD;
+		return BaseEmulatorWindow.settingMonitorDrawing.getBoolean() 
+			? Effect.CRT2 : Effect.STANDARD;
 	}
 	
-	/**
-	 * 
-	 */
 	private void compileLinkShaders() {
 		if (!supportsShaders)
 			return;
@@ -410,8 +419,8 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		 */
 		glActiveTexture(GL_TEXTURE0);
 		
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, getEffect().getMagFilter());
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, getEffect().getMinFilter());
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -463,7 +472,13 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		if (effect == Effect.STANDARD) {
 			drawFlatScreen();
 		} else {
-			drawCurvedScreen();
+			if (curvedList == 0) {
+				curvedList = glGenLists(1);
+				glNewList(curvedList, GL_COMPILE);
+				drawCurvedScreen();
+				glEndList();
+			}
+			glCallList(curvedList);
 		}
 		
 		/*
@@ -509,8 +524,10 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	private final static float CHMAJOR = 0.2f;
 	private final static float THMAJOR = 0.19f;
 	
+	private final static float EPSILON = 0.02f;
+	
 	private void drawVerticalCurves(float cy, float cdy, float ty, float tdy) {
-		if (Math.abs(cdy) < 0.01f) {
+		if (Math.abs(cdy) < EPSILON) {
 			drawHorizontalCurves(0.5f, -0.5f, cy, cdy,
 					0.5f, -0.5f, ty, tdy);
 			drawHorizontalCurves(0.5f, 0.5f, cy, cdy,
@@ -530,7 +547,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 
 	private void drawHorizontalCurves(float cx, float cdx, float cy, float cdy,
 			float tx, float tdx, float ty, float tdy) {
-		if (Math.abs(cdx) < 0.01f) {
+		if (Math.abs(cdx) < EPSILON) {
 			drawQuad(cx, cy, cx + cdx, cy + cdy, tx, ty, tx + tdx, ty + tdy);
 			return;
 		}
