@@ -5,11 +5,10 @@ syntax: glob
 syntax: glob
 *.d
 syntax: glob
-*.so
-syntax: glob
 *.lo
 syntax: glob
 *.pyc
+c/libv9t9render/libv9t9render.so
 java/*/bin
 c/v9t9-c/log.unix.txt
 c/libanalogtv/swig
