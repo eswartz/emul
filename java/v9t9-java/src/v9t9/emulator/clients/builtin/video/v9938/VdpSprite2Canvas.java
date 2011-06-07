@@ -46,6 +46,9 @@ import v9t9.engine.memory.ByteMemoryAccess;
  */
 public class VdpSprite2Canvas extends VdpSpriteCanvas {
 
+	public static boolean EARLY = true;
+	public static boolean OR = true;
+	
 	private MemoryCanvas spriteCanvas;
 	/** which screen changes there were, requiring sprite reblits */
 	private byte[] screenSpriteChanges;
@@ -64,7 +67,6 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 	protected void updateSpriteBitmapForScreenChanges(VdpCanvas screenCanvas,
 			byte[] screenChanges) {
 		screenSpriteChanges = screenChanges;
-		
 		// no changes to screen can affect sprites here
 	}
 
@@ -98,8 +100,8 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 	 * @param attr the row attribute table
 	 * @param doubleWidth is the sprite drawn double-wide?
 	 */
-	private void drawSpriteChar(VdpCanvas canvas, int y, int x, int rowbitmap, ByteMemoryAccess pattern,
-			ByteMemoryAccess attr, boolean magnified, boolean doubleWidth) {
+	private void drawUnmagnifiedSpriteChar(VdpCanvas canvas, int y, int x, int rowbitmap, ByteMemoryAccess pattern,
+			ByteMemoryAccess attr, boolean doubleWidth) {
 		
 		int pixy = 0;
 		for (int yy = 0; yy < 8; yy++) {
@@ -107,49 +109,93 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 				continue;
 			
 			byte attrb = attr.memory[attr.offset + yy];
-			int shift = (attrb & 0x80) != 0 ? -32 : 0;
+			int shift = EARLY && (attrb & 0x80) != 0 ? -32 : 0 ;
+			byte color = (byte) (attrb & 0xf);
+			if (color == 0 && !canvas.isClearFromPalette())
+				continue;
+			
+			byte bitmask = -1;
+			/*
+			if (x + shift + 8 <= 0)
+				continue;
+			if (x + shift < 0) {
+				bitmask &= 0xff >> (x + shift);
+			} else if (x + shift + 8 > 256) {
+				bitmask &= 0xff << ((x + shift + 8) - 256);
+			}*/
+			
+			boolean isLogicalOr = OR && (attrb & 0x40) != 0;
+			byte patt = 0;
+			if ((rowbitmap & (1 << pixy)) != 0) {
+				patt = pattern.memory[pattern.offset + yy];
+				if (patt != 0) {
+					int theX = (x + shift) * (doubleWidth ? 2 : 1);
+					if (doubleWidth)
+						canvas.drawEightMagnifiedSpritePixels(
+								theX, y, patt, color,
+								bitmask, isLogicalOr);
+					else
+						canvas.drawEightSpritePixels(
+								theX, y, patt, color, 
+								bitmask, isLogicalOr);
+				}
+				pixy++;
+				y = (y + 1) & 0xff;
+			}
+		}
+	}
+
+
+	/**
+	 * Draws an 8x8 sprite character
+	 * @param y
+	 * @param x
+	 * @param shift the early clock shift (usu. 0 or -32)
+	 * @param rowbitmap a map of the rows which should be drawn, based on sprite priority
+	 * and N-sprites-per-line calculations.  The LSB corresponds to the top row.
+	 * @param pattern the sprite's pattern
+	 * @param attr the row attribute table
+	 * @param doubleWidth is the sprite drawn double-wide?
+	 */
+	private void drawMagnifiedSpriteChar(VdpCanvas canvas, int y, int x, int rowbitmap, ByteMemoryAccess pattern,
+			ByteMemoryAccess attr, boolean doubleWidth) {
+		
+		int pixy = 0;
+		for (int yy = 0; yy < 8; yy++) {
+			if (y >= canvas.getHeight())
+				continue;
+			
+			byte attrb = attr.memory[attr.offset + yy];
+			int shift = EARLY && (attrb & 0x80) != 0 ? -32 : 0;
 			byte color = (byte) (attrb & 0xf);
 			if (color == 0 && !canvas.isClearFromPalette())
 				continue;
 			
 			short bitmask = -1;
-			if (!magnified) {
-				if (x + shift + 8 <= 0)
-					continue;
-				if (x + shift < 0) {
-					bitmask &= 0xff >> (x + shift);
-				} else if (x + shift + 8 > 256) {
-					bitmask &= 0xff << ((x + shift + 8) - 256);
-				}
-			} else {
-				if (x + shift + 16 <= 0)
-					continue;
-				if (x + shift < 0) {
-					bitmask &= 0xffff >> (x + shift);
-				} else if (x + shift + 16 > 256) {
-					bitmask &= 0xffff << ((x + shift + 16) - 256);
-				}
-			}
+			/*
+			if (x + shift + 16 <= 0)
+				continue;
+			if (x + shift < 0) {
+				bitmask &= 0xffff >> (x + shift);
+			} else if (x + shift + 16 > 256) {
+				bitmask &= 0xffff << ((x + shift + 16) - 256);
+			}*/
 			
-			boolean isLogicalOr = (attrb & 0x40) != 0;
+			boolean isLogicalOr = OR && (attrb & 0x40) != 0;
 			byte patt = 0;
-			for (int iy = 0; iy < (magnified ? 2 : 1); iy++) {
+			for (int iy = 0; iy < 2; iy++) {
 				if ((rowbitmap & (1 << pixy)) != 0) {
 					patt = pattern.memory[pattern.offset + yy];
 					if (patt != 0) {
 						int theX = (x + shift) * (doubleWidth ? 2 : 1);
-						if (magnified && doubleWidth)
+						if (doubleWidth)
 							canvas.drawEightDoubleMagnifiedSpritePixels(
-									theX, y,
-									patt, color, bitmask, isLogicalOr);
-						else if (doubleWidth || magnified)
-							canvas.drawEightMagnifiedSpritePixels(theX, y, 
-									patt, 
-									color, bitmask, isLogicalOr);
+									theX, y, patt, color,
+									bitmask, isLogicalOr);
 						else
-							canvas.drawEightSpritePixels(
-									theX, y, patt, 
-									color, (byte) bitmask, isLogicalOr);
+							canvas.drawEightMagnifiedSpritePixels(
+									theX, y, patt, color, 
+									bitmask, isLogicalOr);
 					}
 				}
 				pixy++;
@@ -158,28 +204,29 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 		}
 	}
 
-	protected void drawSprite(VdpCanvas canvas, VdpSprite sprite) {
-		if (sprite.isDeleted())
-			return;
+	protected void drawSprite(VdpCanvas canvas, VdpSprite sprite, int sprrowbitmap) {
+		// sprite color 0 does not imply invisibility since this only
+		// applies to the color 0 in the color stripe
 		
 		boolean doubleWidth = canvas.getVisibleWidth() == 512;
 		
 		int x = sprite.getX();
 		int y = sprite.getY();
-		int sprrowbitmap = sprite.getSprrowbitmap();
 		ByteMemoryAccess tmpPattern = new ByteMemoryAccess(sprite.getPattern());
 		
-		boolean ismag = (sprite.getSizeY() == 16 && sprite.getNumchars() == 1)
-			|| sprite.getSizeY() == 32;
-		int magfac = ismag ? 2  : 1;
-		
-		for (int c = 0; c < sprite.getNumchars(); c++) {
+		for (int c = 0; c < getNumSpriteChars(); c++) {
 			int rowshift = charshifts[c*2];
 			int colshift = charshifts[c*2+1];
 			ByteMemoryAccess colors = new ByteMemoryAccess(sprite.getColorStripe());
 			colors.offset += rowshift;
-			drawSpriteChar(canvas, y + rowshift * magfac, x + colshift * magfac, 
-						sprrowbitmap >> (rowshift * magfac), tmpPattern, colors, ismag, doubleWidth);
+			if (isMagnified())
+				drawMagnifiedSpriteChar(canvas, y + rowshift * 2, x + colshift * 2, 
+						sprrowbitmap >> (rowshift * 2), tmpPattern, colors,
+						doubleWidth);
+			else
+				drawUnmagnifiedSpriteChar(canvas, y + rowshift, x + colshift, 
+					sprrowbitmap >> rowshift, tmpPattern, colors,
+					doubleWidth);
 			tmpPattern.offset += 8;
 		}
 	}
@@ -187,18 +234,19 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 	protected void blitSpriteCanvas(VdpCanvas screenCanvas, boolean fourColorMode) {
 		// where the screen changed, we need to draw our sprite blocks
 		int blockStride = screenCanvas.getVisibleWidth() / 8;
+		// 1 or 2 if 256 or 512 mode
 		int blockMag = blockStride / 32;
-		int blockCount = 32 * screenCanvas.getHeight() / 8;
+		int blockCount = screenCanvas.getHeight() / 8;
 		int screenOffs = 0;
-		for (int i = 0; i < blockCount; i += 32) {
-			for (int j = 0; j < 32; j++) {
-				if (screenSpriteChanges[screenOffs + j * blockMag] != 0 
-					|| (blockMag > 1 && screenSpriteChanges[screenOffs + j * blockMag + 1] != 0)) {
+		for (int yblock = 0; yblock < blockCount; yblock++) {
+			for (int xblock = 0; xblock < 32; xblock++) {
+				if (screenSpriteChanges[screenOffs + xblock * blockMag] != 0 
+					|| (blockMag > 1 && screenSpriteChanges[screenOffs + xblock * blockMag + 1] != 0)) {
 					
 					if (!fourColorMode)
-						screenCanvas.blitSpriteBlock(spriteCanvas, j * 8, i / 32 * 8, blockMag);
+						screenCanvas.blitSpriteBlock(spriteCanvas, xblock * 8, yblock * 8, blockMag);
 					else
-						screenCanvas.blitFourColorSpriteBlock(spriteCanvas, j * 8, i / 32 * 8, blockMag);
+						screenCanvas.blitFourColorSpriteBlock(spriteCanvas, xblock * 8, yblock * 8, blockMag);
 				}
 			}
 			screenOffs += blockStride;

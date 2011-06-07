@@ -49,11 +49,11 @@ public class TestSpriteCanvas extends TestCase {
 	}
 
 	private void setupSprites(int size, int numchars, ByteMemoryAccess pattern) {
+		sprCanvas.setNumSpriteChars(numchars);
 		for (int n = 0; n < 32; n++) {
 			VdpSprite sprite = sprites[n];
 			sprite.setSize(size);
 			sprite.setColor(n & 15);
-			sprite.setNumchars(numchars);
 			sprite.setPattern(pattern);
 			sprite.setDeleted(false);
 			sprite.setShift(0);

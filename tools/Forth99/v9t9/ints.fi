@@ -117,3 +117,22 @@ cell    RamVar    vdp-timeout
     ['] vdp-int-handler     INT_VDP     enable-int
 ;
 
+( execute 'xt' for up to 'ms' mseconds until it returns !0; return 0 if timeout )
+:: (ms) ( msecs xt -- result )
+    msecs 60 1000 U*/  s>d
+    vdp-ticks d@  d+  :> h-limit :> l-limit
+    
+    begin
+        xt execute
+        ?dup if exit then
+        ints-check
+        vdp-ticks d@  l-limit h-limit  d>=  if  false exit  then
+    again
+;
+
+1 <export
+
+: ms  ['] false (ms) drop  ;
+
+export>
+

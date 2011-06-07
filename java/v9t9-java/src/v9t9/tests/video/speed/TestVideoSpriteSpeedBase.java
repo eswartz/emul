@@ -67,6 +67,7 @@ public abstract class TestVideoSpriteSpeedBase extends TestCase {
 	final static ByteMemoryAccess diamondPattern = new ByteMemoryAccess(diamondBytes, 0);
 	private void runSpriteTest(String label, int size, int numchars, final int shift, ByteMemoryAccess pattern, int count) throws Exception {
 		final VdpSpriteCanvas sprCanvas = new VdpSpriteCanvas(canvas, 4);
+		sprCanvas.setNumSpriteChars(numchars);
 		final double[] xs = new double[32]; 
 		final double[] ys = new double[32];
 		final double[] dxs = new double[32];
@@ -81,7 +82,6 @@ public abstract class TestVideoSpriteSpeedBase extends TestCase {
 			sprite.setSize(size);
 			sprite.setShift(shift);
 			sprite.setColor(n & 15);
-			sprite.setNumchars(numchars);
 			sprite.setPattern(pattern);
 		}
 		final byte[] screenChanges = new byte[768];

@@ -146,6 +146,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 			});
 		}
 	}
+	
 	protected Canvas createCanvasControl(Composite parent, int flags) {
 		glData = new GLData();
 		glData.doubleBuffer = true;
@@ -160,7 +161,6 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 			@Override
 			public void handleEvent(Event event) {
 				
-
 				glCanvas.setCurrent();
 				try {
 					GLContext.useContext(glCanvas);
@@ -172,9 +172,8 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 			} 
 			
 		};
-		parent.addListener(SWT.Resize, resizeListener);
 
-		
+		parent.addListener(SWT.Resize, resizeListener);
 
 		glCanvas.setCurrent();
 		try {
@@ -196,6 +195,8 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 
 
 	private void setupCanvasTexture() {
+		if (vdpCanvasTexture != 0)
+			glDeleteTextures(vdpCanvasTexture);
 		vdpCanvasTexture = glGenTextures();
 		
 		// do not read data until blit time
@@ -211,17 +212,11 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 			super(message, cause);
 			this.filename = filename;
 		}
-		/* (non-Javadoc)
-		 * @see java.lang.Throwable#toString()
-		 */
 		@Override
 		public String toString() {
 			return "Shader exception: " + filename + ": " + getMessage() +
 			 (getCause() != null ? "\n("+getCause().toString()+")" : "");
 		}
-		/**
-		 * @return the filename
-		 */
 		public String getFilename() {
 			return filename;
 		}
@@ -238,8 +233,9 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 			return;
 		
 		try {
-			if (programObject == 0)
-				programObject = ARBShaderObjects.glCreateProgramObjectARB();
+			if (programObject != 0)
+				ARBShaderObjects.glDeleteObjectARB(programObject);
+			programObject = ARBShaderObjects.glCreateProgramObjectARB();
 			
 			String base = getEffect().getShaderBase();
 			vertexShader = compileShader(vertexShader, ARBVertexShader.GL_VERTEX_SHADER_ARB, base + ".vert");
@@ -261,8 +257,9 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		if (url == null)
 			throw new GLShaderException(filename, "Not found", null);
 		
-		if (shaderObj == 0)
-			shaderObj = ARBShaderObjects.glCreateShaderObjectARB(type);
+		if (shaderObj != 0)
+			ARBShaderObjects.glDeleteObjectARB(shaderObj);
+		shaderObj = ARBShaderObjects.glCreateShaderObjectARB(type);
 
 		if (VERBOSE) System.out.println("Compiling " + url + " to " +shaderObj);
 		String text;
@@ -380,6 +377,11 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 			glActiveTexture(GL_TEXTURE0);
 
 		}
+		
+		if (VERBOSE) System.out.printf("Texture size: %d x %d%n", 
+				imageCanvas.getVisibleWidth(),
+				imageCanvas.getVisibleHeight());
+
 	}
 
 	
@@ -431,9 +433,6 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		// copy current bitmap to texture (EXPENSIVE ON SLOW CARDS!)
 		vdpCanvasBuffer = imageCanvas.copy(vdpCanvasBuffer);
 		
-		if (VERBOSE) System.out.printf("Texture size: %d x %d%n", 
-						imageCanvas.getVisibleWidth(),
-						imageCanvas.getVisibleHeight());
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 		
 		glTexImage2D(GL_TEXTURE_2D, 0, 

@@ -572,9 +572,6 @@ public class VdpTMS9918A implements VdpHandler {
         return ret;
     }
 
-    /* (non-Javadoc)
-     * @see v9t9.handlers.VdpHandler#writeVdpMemory(short, byte)
-     */
     public synchronized void touchAbsoluteVdpMemory(int vdpaddr, byte val) {
     	try {
     		vdpMemory.writeMemory(vdpaddr & 0x3fff);
@@ -633,7 +630,7 @@ public class VdpTMS9918A implements VdpHandler {
 				}
 				
 				if (!isBlank()) {
-					if (spriteRedrawHandler != null) {
+					if (spriteRedrawHandler != null && drawSprites) {
 						vdpStatus = spriteRedrawHandler.updateSpriteCoverage(vdpStatus, vdpChanges.fullRedraw);
 					}
 					count = vdpModeRedrawHandler.updateCanvas(blocks, vdpChanges.fullRedraw);
@@ -647,9 +644,12 @@ public class VdpTMS9918A implements VdpHandler {
 			
 			Arrays.fill(vdpChanges.screen, (byte) 0);
 			Arrays.fill(vdpChanges.patt, (byte) 0);
-			Arrays.fill(vdpChanges.sprpat, (byte) 0);
 			Arrays.fill(vdpChanges.color, (byte) 0);
-			vdpChanges.sprite = 0;
+			
+			if (drawSprites) {
+				Arrays.fill(vdpChanges.sprpat, (byte) 0);
+				vdpChanges.sprite = 0;
+			}
 			
 			vdpChanges.fullRedraw = false;
 			

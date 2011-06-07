@@ -14,6 +14,21 @@ import v9t9.emulator.clients.builtin.video.VdpTouchHandler;
 import v9t9.engine.memory.ByteMemoryAccess;
 
 /**
+ * This class manages sprite redraws by maintaining a separate transparent
+ * canvas for sprite graphics.  This canvas is blitted on top of the "normal" VDP
+ * canvas ("background") for the current mode to create the full graphics + sprite
+ * appearance of the screen.
+ * 
+ * The advantages of this are efficiency of redrawing.
+ * 
+ * 1) Changes in the background do not affect the sprite redraw -- when such
+ * blocks are changed normally, then the correspoding blocks from the sprite
+ * canvas are merely reblitted on top. 
+ *
+ * 2) Appropriate video renderers can avoid reblitting the background
+ * when sprites change.  Otherwise, changes in sprites require redraws of
+ * blocks in the background before the old sprite blocks and the new
+ * sprite blocks are reblitted.
  * @author ejs
  * 
  */
@@ -46,6 +61,10 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 	};
 
 	protected VdpSpriteCanvas spriteCanvas;
+	
+	/** Cache the offset of each sprite's pattern in memory
+	 * to avoid recreating the VDP memory accessors
+	 */
 	protected int[] sprpatOffsMap = new int[32];
 	{
 		Arrays.fill(sprpatOffsMap, -1);
@@ -114,27 +133,35 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 		VdpSprite[] sprites = spriteCanvas.getSprites();
 		
 		// figure sprite size/mag
+		boolean isMag = false;
 		int size = 8;
 		int numchars = 1;
 		switch (info.vdpregs[1] & (VdpTMS9918A.R1_SPRMAG + VdpTMS9918A.R1_SPR4)) {
 		case 0:
 			size = 8;
 			numchars = 1;
+			isMag = false;
 			break;
 		case VdpTMS9918A.R1_SPRMAG:
 			size = 16;
 			numchars = 1;
+			isMag = true;
 			break;
 		case VdpTMS9918A.R1_SPR4:
 			size = 16;
 			numchars = 4;
+			isMag = false;
 			break;
 		case VdpTMS9918A.R1_SPR4 + VdpTMS9918A.R1_SPRMAG:
 			size = 32;
 			numchars = 4;
+			isMag = true;
 			break;
 		}
-		
+
+		spriteCanvas.setNumSpriteChars(numchars);
+		spriteCanvas.setMagnified(isMag);
+
 		int sprbase = modeInfo.sprite.base;
 		int sprpatbase = modeInfo.sprpat.base;
 		
@@ -171,7 +198,6 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 					sprpatOffsMap[i] = patOffs;
 				}
 				sprite.setSize(size);
-				sprite.setNumchars(numchars);
 				
 				// also check whether the pattern content changed
 				if (info.changes.sprpat[ch] != 0)

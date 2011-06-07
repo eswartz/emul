@@ -515,10 +515,6 @@ public abstract class VdpCanvas {
 		paletteMappingDirty = true;
 	}
 
-	public void setClearFromPalette(boolean b) {
-		clearFromPalette = b;
-	}
-
 	/**
 	 * Set adjustment offset 
 	 * @param i
@@ -602,6 +598,20 @@ public abstract class VdpCanvas {
 	abstract public void blitFourColorSpriteBlock(MemoryCanvas spriteCanvas, int x,
 			int y, int blockMag);
 
+	/**
+	 * Tell whether the color 0 is transparent or a color in the
+	 * palette.
+	 * @param b true: clear (color 0) is a palette color, false: transparent
+	 */
+	public void setClearFromPalette(boolean b) {
+		clearFromPalette = b;
+	}
+
+	/**
+	 * Tell whether the color 0 is transparent or a color in the
+	 * palette.
+	 * @return true: clear (color 0) is a palette color, false: transparent
+	 */
 	public boolean isClearFromPalette() {
 		return clearFromPalette;
 	}

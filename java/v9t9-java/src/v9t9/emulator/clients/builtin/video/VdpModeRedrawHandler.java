@@ -3,6 +3,26 @@
  */
 package v9t9.emulator.clients.builtin.video;
 
+/**
+ * The redraw handler manages the efficient update of the
+ * VDP canvas ("background") given changes made to the VDP
+ * memory.  
+ * 
+ * Any modifying write to VDP memory will be either
+ * to one or more mapped areas (screen image table,
+ * pattern table, sprite table, etc) or will be invisible
+ * (i.e. not mapped to any memory that participates in drawing,
+ * or e.g. in simpler graphics modes, affecting a pattern for 
+ * which no character is in the screen image table).
+ * 
+ * The implementor of this interface then is responsible
+ * for tracking what has changed on screen.  Effectively
+ * this comes down to what screen blocks must be redrawn.
+ * These may be directly obvious or may be propagated through
+ * other changes (e.g. to the pattern table).
+ * @author Ed
+ *
+ */
 public interface VdpModeRedrawHandler {
 	/**
 	 * Record that the VDP memory at addr was changed.
@@ -12,10 +32,8 @@ public interface VdpModeRedrawHandler {
 	boolean touch(int addr);
 	
 	/**
-	 * Update the changed blocks according to relationships
+	 * Update the changed blocks (on the screen) according to relationships
 	 * between the various update areas.
-	 * @param modeInfo
-	 * @param changes incoming and outgoing information 
 	 */
 	void propagateTouches();
 
@@ -25,8 +43,6 @@ public interface VdpModeRedrawHandler {
 	 * and return the number of blocks updated.
 	 * @param blocks array of at most 1024 blocks
 	 * @param force force redraw of everything 
-	 * @param modeInfo
-	 * @param changes
 	 * @return number of blocks changed
 	 */
 	int updateCanvas(RedrawBlock[] blocks, boolean force);
@@ -38,7 +54,7 @@ public interface VdpModeRedrawHandler {
 
 	/**
 	 * Import data from the image data into video memory
-	 * @param access TODO
+	 * @param access 
 	 */
 	void importImageData(IBitmapPixelAccess access);
 

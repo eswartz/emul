@@ -51,6 +51,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 	protected FixedAspectLayout fixedAspectLayout;
 	
 	public SwtVideoRenderer() {
+		fixedAspectLayout = new FixedAspectLayout(256, 192, 3.0, 3.0, 1., 5);
 	}
 
 	/* (non-Javadoc)
@@ -69,7 +70,6 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 		this.shell = parent.getShell();
 		this.canvas = createCanvasControl(parent, flags);
 		
-		fixedAspectLayout = new FixedAspectLayout(256, 192, 3.0, 3.0, 1., 5);
 		canvas.setLayout(fixedAspectLayout);	
 		
 		setCanvas(createVdpCanvas());
@@ -149,7 +149,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 
 
 	public void redraw() {
-		if (!isDirty)
+		if (!isDirty || canvas == null)
 			return;
 		
 		final Rectangle redrawRect = vdpCanvas.getDirtyRect();
@@ -195,7 +195,8 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 		if (vdpCanvas.isInterlacedEvenOdd())
 			visibleHeight /= 2;
 		fixedAspectLayout.setAspect((double) visibleWidth / visibleHeight);
-		canvas.getParent().layout(true);
+		if (canvas != null)
+			canvas.getParent().layout(true);
 	}
 
 	protected boolean zoomWithin(int physsize, float zoom, int logSize) {
@@ -205,6 +206,9 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 	public void canvasResized(VdpCanvas canvas) {
 	}
 	public void sync() {
+		if (canvas == null)
+			return;
+			
 		Display.getDefault().syncExec(new Runnable() {
 
 			public void run() {

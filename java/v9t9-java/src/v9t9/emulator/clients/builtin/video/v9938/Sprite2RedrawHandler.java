@@ -3,6 +3,8 @@
  */
 package v9t9.emulator.clients.builtin.video.v9938;
 
+import java.util.Arrays;
+
 import v9t9.emulator.clients.builtin.video.VdpModeInfo;
 import v9t9.emulator.clients.builtin.video.VdpRedrawInfo;
 import v9t9.emulator.clients.builtin.video.VdpSprite;
@@ -22,6 +24,14 @@ import v9t9.engine.memory.ByteMemoryAccess;
  * 
  */
 public class Sprite2RedrawHandler extends SpriteRedrawHandler {
+	/** Cache the offset of each sprite's color pattern in memory
+	 * to avoid recreating the VDP memory accessors
+	 */
+	protected int[] sprcolOffsMap = new int[32];
+	{
+		Arrays.fill(sprcolOffsMap, -1);
+	}
+
 
 	public Sprite2RedrawHandler(VdpRedrawInfo info, VdpModeInfo modeInfo) {
 		super(info, modeInfo);
@@ -33,7 +43,8 @@ public class Sprite2RedrawHandler extends SpriteRedrawHandler {
 		info.touch.sprite = modify_sprite_default;
 		info.touch.sprpat = modify_sprpat_default;
 		
-		spriteCanvas = new VdpSprite2Canvas(info.canvas, 8, (((VdpV9938)info.vdp).getModeNumber() == VdpV9938.MODE_GRAPHICS5));
+		spriteCanvas = new VdpSprite2Canvas(info.canvas, 8, 
+				(((VdpV9938)info.vdp).getModeNumber() == VdpV9938.MODE_GRAPHICS5));
 	}
 
 	@Override
@@ -71,7 +82,7 @@ public class Sprite2RedrawHandler extends SpriteRedrawHandler {
 	 * 5) Force updates to sprites under changed ones.
 	 * <p>
 	 * 6) Weed out blank sprites.
-	 * <p>
+	 * <p>T
 	 * 7) Set VDP status flags for coincidence and N sprites on a line
 	 * (hackish)
 	 * @param forceRedraw 
@@ -84,24 +95,29 @@ public class Sprite2RedrawHandler extends SpriteRedrawHandler {
 		VdpSprite[] sprites = spriteCanvas.getSprites();
 		
 		// figure sprite size/mag
+		boolean isMag = false;
 		int size = 8;
 		int numchars = 1;
 		switch (info.vdpregs[1] & (VdpTMS9918A.R1_SPRMAG + VdpTMS9918A.R1_SPR4)) {
 		case 0:
 			size = 8;
 			numchars = 1;
+			isMag = false;
 			break;
 		case VdpTMS9918A.R1_SPRMAG:
 			size = 16;
 			numchars = 1;
+			isMag = true;
 			break;
 		case VdpTMS9918A.R1_SPR4:
 			size = 16;
 			numchars = 4;
+			isMag = false;
 			break;
 		case VdpTMS9918A.R1_SPR4 + VdpTMS9918A.R1_SPRMAG:
 			size = 32;
 			numchars = 4;
+			isMag = true;
 			break;
 		}
 		
@@ -110,6 +126,9 @@ public class Sprite2RedrawHandler extends SpriteRedrawHandler {
 		
 		ByteMemoryAccess access = info.vdp.getByteReadMemoryAccess(sprbase);
 		ByteMemoryAccess colorAccess = info.vdp.getByteReadMemoryAccess((sprbase - 0x200) & 0x1ffff);
+		
+		spriteCanvas.setNumSpriteChars(numchars);
+		spriteCanvas.setMagnified(isMag);
 		
 		boolean deleted = false;
 		for (int i = 0; i < 32; i++) {
@@ -133,30 +152,32 @@ public class Sprite2RedrawHandler extends SpriteRedrawHandler {
 					sprpatOffsMap[i] = patOffs;
 				}
 
-				
-				ByteMemoryAccess colorStripe = new ByteMemoryAccess(colorAccess);
-				sprite.setColorStripe(colorStripe);
+				if (sprcolOffsMap[i] != colorAccess.offset) {
+					ByteMemoryAccess colorStripe = new ByteMemoryAccess(colorAccess);
+					sprite.setColorStripe(colorStripe);
+					sprcolOffsMap[i] = colorAccess.offset;
+				}
 				
 				int sizeX = size;
 				int sizeY = size;
 				int origClock = -1;
 				
-				// a sprite counts as double-wide if it has 
+				// a sprite counts as double-wide if it has two
+				// different early clock settings
 				for (int offs = 0; offs < 16; offs++) {
-					byte attr =colorStripe.memory[colorStripe.offset + offs];
-					int clock = (attr & 0x80) != 0 ? -32 : 0;
+					byte attr = colorAccess.memory[colorAccess.offset + offs];
+					int clock = VdpSprite2Canvas.EARLY && (attr & 0x80) != 0 ? -32 : 0;
 					if (origClock == -1)
 						origClock = clock;
 					else if (clock != origClock) {
 						if (clock < origClock)
 							origClock = clock;
-						sizeX *= 2;
+						sizeX += 32;
 						break;
 					}
 				}
 				sprite.setShift(origClock);
 				sprite.setSize(sizeX, sizeY);
-				sprite.setNumchars(numchars);
 				// also check whether the pattern content changed
 				if (info.changes.sprpat[ch] != 0)
 					sprite.setBitmapDirty(true);

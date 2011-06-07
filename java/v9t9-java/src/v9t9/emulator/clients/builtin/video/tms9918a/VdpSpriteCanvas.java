@@ -22,6 +22,11 @@ public class VdpSpriteCanvas {
 	protected int[] rowcount;
 	protected final int maxPerLine;
 	protected int knowndirty;
+	/** map of which rows in a sprite are to be drawn */
+	protected int[] sprrowbitmaps;
+	private int numSpriteChars;
+	private boolean isMagnified;
+
 
 	public VdpSpriteCanvas(VdpCanvas vdpCanvas, int maxPerLine) {
 		this.maxPerLine = maxPerLine;
@@ -33,6 +38,7 @@ public class VdpSpriteCanvas {
 		}
 		this.rowcount = new int[vdpCanvas.getHeight()];
 		this.knowndirty = 0;
+		this.sprrowbitmaps = new int[NUMSPRITES];
 	}
 	
 	public VdpSprite[] getSprites() {
@@ -97,6 +103,7 @@ public class VdpSpriteCanvas {
 	protected void updateSpriteBitmapForScreenChanges(VdpCanvas screenCanvas,
 			byte[] screenChanges) {
 		int blockStride = screenCanvas.getVisibleWidth() / 8;
+		// 512-wide modes draw double-width sprites
 		int blockMag = blockStride / 32;
 		int blockCount = 32 * screenCanvas.getHeight() / 8;
 		int screenOffs = 0;
@@ -130,15 +137,55 @@ public class VdpSpriteCanvas {
 	protected int getSpriteCoverage() {
 		int maximal = -1;
 		
-		Arrays.fill(spritebitmap, 0, spritebitmap.length, 0);
-		Arrays.fill(rowcount, 0, rowcount.length, 0);
+		Arrays.fill(spritebitmap, 0);
+		Arrays.fill(rowcount, 0);
+		Arrays.fill(sprrowbitmaps, 0);
 		
 		for (int n = 0; n < sprites.length; n++) {
 			VdpSprite sprite = sprites[n];
-			sprite.markSpriteCoverage(spritebitmap, 1 << n);
-			if (sprite.updateSpriteRowBitmap(rowcount, maxPerLine)) {
-				if (maximal == -1) {
-					maximal = n;
+			
+			// set the 8x8 blocks touched by the sprite
+			if (!sprite.isDeleted()) {
+				
+				// for sprite mode 2, shift and sizeX are adjusted 
+				int yrows = sprite.getSizeY() + ((sprite.getY() & 7) != 0 ? 1 : 0);
+				//int xcols = (sizeX + (((x + shift) & 7) != 0 ? 8 : 0));
+				int xcols = sprite.getSizeX() + ((sprite.getX() & 7) != 0 ? 1 : 0);
+				
+				for (int oy = 0; oy < yrows; oy += 8) {
+					int bmrowoffs = (((oy+sprite.getY()) & 0xff)/8) * 32;
+					if (bmrowoffs < spritebitmap.length) {
+						for (int ox = 0; ox < xcols; ox += 8) {
+							int bmcol = ((ox+sprite.getX()+sprite.getShift()) & 0xff) /8;
+							spritebitmap[bmrowoffs + bmcol] |= 1 << n;
+						}
+					}
+				}
+				
+				/*
+				 * Update the counts of sprites per row in order to determine
+				 * the bitmap of sprite rows which are visible. 
+				 * @return true if the sprite is partially invisible due to being the maximal sprite
+				 */
+				int sprrowbitmap = 0;
+				
+				boolean isMaximal = false;
+				for (int offs = 0; offs < sprite.getSizeY(); offs++) {
+					int y = (sprite.getY() + offs) & 0xff;
+					if (y < rowcount.length && rowcount[y] < maxPerLine) {
+						rowcount[y]++;
+						sprrowbitmap |= 1 << offs;
+					} else {
+						sprrowbitmap &= ~(1 << offs);
+						isMaximal = true;
+					}
+				}
+				sprrowbitmaps[n] = sprrowbitmap;
+				
+				if (isMaximal) {
+					if (maximal == -1) {
+						maximal = n;
+					}
 				}
 			}
 		}
@@ -199,6 +246,7 @@ public class VdpSpriteCanvas {
 	protected void updateScreenBitmapForSpriteChanges(VdpCanvas screenCanvas,
 			byte[] screenChanges) {
 		int blockStride = screenCanvas.getVisibleWidth() / 8;
+		// 512-wide modes draw double-width sprites
 		int blockMag = blockStride / 32;
 		int blockCount = 32 * screenCanvas.getHeight() / 8;
 		int screenOffs = 0;
@@ -208,7 +256,7 @@ public class VdpSpriteCanvas {
 			for (int j = 0; j < 32; j++) {
 				if (((spritebitmap[i + j] | oldspritebitmap[i + j]) & knowndirty) != 0) {
 					screenChanges[screenOffs + j * blockMag] = 1;
-					if (blockMag != 1)
+					if (blockMag > 1)
 						screenChanges[screenOffs + j * blockMag + 1] = 1;
 					touched++;
 				}
@@ -225,8 +273,8 @@ public class VdpSpriteCanvas {
 	public void drawSprites(VdpCanvas canvas) {
 		for (int n = sprites.length; --n >= 0; ) {
 			VdpSprite sprite = sprites[n];
-			if (sprite.isBitmapDirty()) {
-				drawSprite(canvas, sprite);
+			if (sprite.isBitmapDirty() && !sprite.isDeleted() && sprrowbitmaps[n] != 0) {
+				drawSprite(canvas, sprite, sprrowbitmaps[n]);
 			}
 			sprite.finishDraw();
 		}
@@ -307,12 +355,8 @@ public class VdpSpriteCanvas {
 	/** y,x */
 	protected static final int[] charshifts = { 0, 0, 8, 0, 0, 8, 8, 8 };
 	
-	protected void drawSprite(VdpCanvas canvas, VdpSprite sprite) {
-		if (sprite.isDeleted()) {
-			//System.out.println("sprite is deleted");
-			return;
-		}
-		
+	protected void drawSprite(VdpCanvas canvas, VdpSprite sprite, int sprrowbitmap) {
+		// color 0 is transparent and always invisible
 		if (sprite.getColor() == 0)
 			return;
 		
@@ -320,16 +364,12 @@ public class VdpSpriteCanvas {
 		int y = sprite.getY();
 		int shift = sprite.getShift();
 		byte color = sprite.getColor();
-		int sprrowbitmap = sprite.getSprrowbitmap();
 		ByteMemoryAccess tmpPattern = new ByteMemoryAccess(sprite.getPattern());
 		
-		boolean ismag = (sprite.getSizeY() == 16 && sprite.getNumchars() == 1)
-			|| sprite.getSizeY() == 32;
-		
-		for (int c = 0; c < sprite.getNumchars(); c++) {
+		for (int c = 0; c < numSpriteChars; c++) {
 			int rowshift = charshifts[c*2];
 			int colshift = charshifts[c*2+1];
-			if (!ismag)
+			if (!isMagnified)
 				drawUnmagnifiedSpriteChar(canvas, y + rowshift, x + colshift, 
 						shift, color, sprrowbitmap >> rowshift, tmpPattern);
 			else
@@ -338,4 +378,20 @@ public class VdpSpriteCanvas {
 			tmpPattern.offset += 8;
 		}
 	}
+
+	public int getNumSpriteChars() {
+		return numSpriteChars;
+	}
+
+	public void setNumSpriteChars(int numSpriteChars) {
+		this.numSpriteChars = numSpriteChars;
+	}
+
+	public boolean isMagnified() {
+		return isMagnified;
+	}
+
+	public void setMagnified(boolean isMagnified) {
+		this.isMagnified = isMagnified;
+	}	
 }
