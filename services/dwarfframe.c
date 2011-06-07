@@ -614,6 +614,7 @@ static void generate_register_commands(RegisterRules * reg, RegisterDefinition *
         if (reg->rule == RULE_OFFSET) {
             StackTracingCommand * cmd = add_command(SFT_CMD_DEREF);
             cmd->size = dst_reg_def->size;
+            if (cmd->size > rules.address_size) cmd->size = rules.address_size;
             cmd->big_endian = rules.section->file->big_endian;
         }
         break;
@@ -634,6 +635,7 @@ static void generate_register_commands(RegisterRules * reg, RegisterDefinition *
         if (reg->rule == RULE_EXPRESSION) {
             StackTracingCommand * cmd = add_command(SFT_CMD_DEREF);
             cmd->size = dst_reg_def->size;
+            if (cmd->size > rules.address_size) cmd->size = rules.address_size;
             cmd->big_endian = rules.section->file->big_endian;
         }
         break;
