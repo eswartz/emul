@@ -252,7 +252,7 @@ static void write_context(OutputStream * out, int pid) {
             json_write_string(out, prs->out_struct->id);
             write_stream(out, ',');
         }
-        if (prs->err_struct->id) {
+        if (prs->err_struct) {
             json_write_string(out, "StdErrID");
             write_stream(out, ':');
             json_write_string(out, prs->err_struct->id);
