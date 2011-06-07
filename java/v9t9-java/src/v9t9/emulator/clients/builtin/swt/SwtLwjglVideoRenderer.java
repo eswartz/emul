@@ -322,7 +322,8 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		super.updateWidgetSizeForMode();
 		
 		Rectangle bounds = glCanvas.getClientArea();
-		if (VERBOSE) System.out.printf("updateWidgetSizeForMode at %s%n", glCanvas.getParent().getBounds());
+		if (VERBOSE) System.out.printf("updateWidgetSizeForMode at %s%n", 
+				bounds);
 		
 		Rectangle destRect = new Rectangle(0, 0, 
 				bounds.width, bounds.height);
@@ -330,11 +331,10 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		imageRect = physicalToLogical(destRect);
 		glViewportRect = logicalToPhysical(imageRect);
 		//glViewportRect = logicalToPhysical(new Rectangle(0, 0, vdpCanvas.getVisibleWidth(), vdpCanvas.getVisibleHeight()));
-		//imageRect = physicalToLogical(glViewportRect);
 		
 		if (VERBOSE) System.out.printf("Viewport: %d x %d --> %d x %d%n",
 				bounds.width, bounds.height,
-				destRect.width, destRect.height);
+				glViewportRect.width, glViewportRect.height);
 		glViewport(0, 0,
 				glViewportRect.width, 
 				glViewportRect.height);

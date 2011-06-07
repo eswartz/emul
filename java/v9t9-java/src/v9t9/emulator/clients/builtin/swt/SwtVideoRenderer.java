@@ -143,8 +143,8 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 		//System.out.printf("zoom: %g x %g%n", zoomx, zoomy);
 		return new Rectangle((int)(physical.x / zoomx) /*+ vdpCanvas.getXOffset()*/, 
 				(int)(physical.y / zoomy), 
-				(int)((physical.width + zoomx - 1) / zoomx), 
-				(int)((physical.height + zoomy - 1) / zoomy));
+				(int)((physical.width + zoomx - .1) / zoomx), 
+				(int)((physical.height + zoomy - .1) / zoomy));
 	}
 
 

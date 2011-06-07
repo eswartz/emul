@@ -218,6 +218,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 			.indent(0, 0)
 			.align(SWT.CENTER, SWT.CENTER)
 			.grab(true, true)
+			.minSize(128, 64)
 			.create();
 		videoControl.setLayoutData(rendererLayoutData);
 		

@@ -7,7 +7,9 @@ void main()
 {
     vec4 color = texture2D(canvasTexture, gl_TexCoord[0].st);
     vec4 pixel = texture2D(pixelTexture, gl_TexCoord[1].st);
-        
-    gl_FragColor = color * pixel;
-    
+    if (viewport.x >= visible.x) {
+	    gl_FragColor = color * pixel;
+    } else {
+	    gl_FragColor = color;
+	}    
 }
