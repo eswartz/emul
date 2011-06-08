@@ -9,6 +9,8 @@ import static org.lwjgl.opengl.GL13.*;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.GC;
@@ -31,6 +33,10 @@ import org.lwjgl.opengl.GLContext;
 import org.lwjgl.util.glu.GLU;
 
 import v9t9.emulator.clients.builtin.BaseEmulatorWindow;
+import v9t9.emulator.clients.builtin.swt.gl.MonitorEffect;
+import v9t9.emulator.clients.builtin.swt.gl.MonitorParams;
+import v9t9.emulator.clients.builtin.swt.gl.SimpleCurvedCrtMonitorRender;
+import v9t9.emulator.clients.builtin.swt.gl.StandardMonitorRender;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas24Bit;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
@@ -44,46 +50,32 @@ import v9t9.engine.files.DataFiles;
 public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IPropertyListener {
 	private static boolean VERBOSE = false;
 	
-	private enum Effect {
-		STANDARD("shaders/std", null, GL_LINEAR, GL_NEAREST),
-		CRT("shaders/crt", null, GL_LINEAR, GL_NEAREST),
-		CRT1("shaders/crt1", "shaders/monitor.png", GL_LINEAR, GL_LINEAR),
-		CRT2("shaders/crt2", "shaders/monitorRGB.png", GL_LINEAR, GL_LINEAR);
+	static final MonitorParams paramsSTANDARD = new MonitorParams(
+		"shaders/std", null, GL_LINEAR, GL_NEAREST);
+	static final MonitorParams paramsCRT = new MonitorParams(
+		"shaders/crt", null, GL_LINEAR, GL_NEAREST);
+	static final MonitorParams paramsCRT1 = new MonitorParams(
+		"shaders/crt1", "shaders/monitor.png", GL_LINEAR, GL_LINEAR);
+	static final MonitorParams paramsCRT2 = new MonitorParams(
+		"shaders/crt2", "shaders/monitorRGB.png", GL_LINEAR, GL_LINEAR);
 		
-		private final String shaderBase;
-		private final String texture;
-		private final int minFilter;
-		private final int magFilter;
-
-		Effect(String shaderBase, String texture, int minFilter, int maxFilter) {
-			this.shaderBase = shaderBase;
-			this.texture = texture;
-			this.minFilter = minFilter;
-			this.magFilter = maxFilter;
-		}
-		
-		public String getShaderBase() {
-			return shaderBase;
-		}
-		public String getTexture() {
-			return texture;
-		}
-		public int getMinFilter() {
-			return minFilter;
-		}
-		public int getMagFilter() {
-			return magFilter;
-		}
-	}
+	static final MonitorEffect STANDARD = new MonitorEffect(paramsSTANDARD,
+			StandardMonitorRender.INSTANCE);
+	static final MonitorEffect CRT2 = new MonitorEffect(paramsCRT2,
+			SimpleCurvedCrtMonitorRender.INSTANCE);
 	
 	static {
 		if (VERBOSE) System.out.println(System.getProperty("java.library.path"));
 	}
 	private GLCanvas glCanvas;
 	private GLData glData;
+	
 	// pfft, lwjgl doesn't handle all our modes
 	//private MemoryCanvas memoryCanvas;
 	private ImageDataCanvas imageCanvas;
+	private int imageCanvasFormat;
+	private int imageCanvasType;
+
 	private int vdpCanvasTexture;
 	private ByteBuffer vdpCanvasBuffer;
 	
@@ -97,12 +89,13 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	private Rectangle imageRect;
 	private Listener resizeListener;
 	private TextureLoader textureLoader = new TextureLoader();
-	private int curvedList;
+	private Map<MonitorEffect, Integer> displayListMap = new HashMap<MonitorEffect, Integer>();
 
 	protected VdpCanvas createVdpCanvas() {
 		imageCanvas = new ImageDataCanvas24Bit();
 		vdpCanvasBuffer = ByteBuffer.allocateDirect(imageCanvas.getImageData().bytesPerLine * imageCanvas.getImageData().height);
-
+		imageCanvasFormat = GL_RGB; 
+		imageCanvasType = GL_UNSIGNED_BYTE; 
 		return imageCanvas;
 	}
 
@@ -223,9 +216,9 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		
 	}
 	
-	private Effect getEffect() {
+	private MonitorEffect getEffect() {
 		return BaseEmulatorWindow.settingMonitorDrawing.getBoolean() 
-			? Effect.CRT2 : Effect.STANDARD;
+			? CRT2 : STANDARD;
 	}
 	
 	private void compileLinkShaders() {
@@ -237,7 +230,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 				ARBShaderObjects.glDeleteObjectARB(programObject);
 			programObject = ARBShaderObjects.glCreateProgramObjectARB();
 			
-			String base = getEffect().getShaderBase();
+			String base = getEffect().getParams().getShaderBase();
 			vertexShader = compileShader(vertexShader, ARBVertexShader.GL_VERTEX_SHADER_ARB, base + ".vert");
 			fragShader = compileShader(fragShader, ARBFragmentShader.GL_FRAGMENT_SHADER_ARB, base + ".frag");
 			
@@ -399,6 +392,8 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	}
 	
 	private void reblit() {
+		MonitorEffect effect = getEffect();
+		MonitorParams params = effect.getParams();
 		
 		glCanvas.setCurrent();
 		try {
@@ -421,8 +416,8 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		 */
 		glActiveTexture(GL_TEXTURE0);
 		
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, getEffect().getMagFilter());
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, getEffect().getMinFilter());
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, params.getMagFilter());
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, params.getMinFilter());
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -440,18 +435,17 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 				imageCanvas.getVisibleWidth(),
 				imageCanvas.getVisibleHeight(),
 				0, 
-				GL_RGB,
-				GL_UNSIGNED_BYTE, 
+				imageCanvasFormat,
+				imageCanvasType, 
 				vdpCanvasBuffer);		
 
 		/*
 		 * Second texture: the monitor overlay
 		 */
 		glActiveTexture(GL_TEXTURE1);
-		Effect effect = getEffect();
-		if (effect.getTexture() != null) {
+		if (params.getTexture() != null) {
 			try {
-				textureLoader.getTexture(effect.getTexture()).bind();
+				textureLoader.getTexture(params.getTexture()).bind();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -467,26 +461,18 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		}
 		
 		glActiveTexture(GL_TEXTURE0);
-
-		if (effect == Effect.STANDARD) {
-			drawFlatScreen();
-		} else {
-			if (curvedList == 0) {
-				curvedList = glGenLists(1);
-				glNewList(curvedList, GL_COMPILE);
-				drawCurvedScreen();
-				glEndList();
-			}
-			glCallList(curvedList);
-		}
 		
-		/*
-		glColor3f(0.2f, 0.4f, 0.6f);
-		glBegin(GL_LINES);
-		glVertex2i(0, 0);
-		glVertex2i(vdpCanvas.getVisibleWidth(), vdpCanvas.getVisibleHeight());
-		glEnd();
-		*/
+		Integer displayList = displayListMap.get(effect);
+		if (true || displayList == null) {
+			effect.getRender().init();
+			
+			displayList = glGenLists(1);
+			glNewList(displayList, GL_COMPILE);
+			effect.getRender().render();
+			glEndList();
+			displayListMap.put(effect, displayList);
+		}
+		glCallList(displayList);
 		
 		glDisable(GL_TEXTURE_2D);
 
@@ -505,85 +491,4 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		}
 	}
 
-	/**
-	 * 
-	 */
-	private void drawCurvedScreen() {
-		glBegin(GL_QUADS);
-
-		// vertically taper the screen
-		drawVerticalCurves(0.5f, 0.5f, 0.5f, 0.5f);
-		drawVerticalCurves(0.5f, -0.5f, 0.5f, -0.5f);
-
-		glEnd();
-	}
-
-	private final static float CVMAJOR = 0.3f;
-	private final static float TVMAJOR = 0.275f;
-	private final static float CHMAJOR = 0.2f;
-	private final static float THMAJOR = 0.19f;
-	
-	private final static float EPSILON = 0.02f;
-	
-	private void drawVerticalCurves(float cy, float cdy, float ty, float tdy) {
-		if (Math.abs(cdy) < EPSILON) {
-			drawHorizontalCurves(0.5f, -0.5f, cy, cdy,
-					0.5f, -0.5f, ty, tdy);
-			drawHorizontalCurves(0.5f, 0.5f, cy, cdy,
-					0.5f, 0.5f, ty, tdy);
-			return;
-		}
-		// horizontally taper a curve
-		drawHorizontalCurves(0.5f, -0.5f, cy, cdy * CVMAJOR,
-				0.5f, -0.5f, ty, tdy * TVMAJOR);
-		drawHorizontalCurves(0.5f, 0.5f, cy, cdy * CVMAJOR,
-				0.5f, 0.5f, ty, tdy * TVMAJOR);
-		
-		// inner part
-		drawVerticalCurves(cy + cdy * CVMAJOR, cdy * (1 - CVMAJOR), 
-				ty + tdy * TVMAJOR, tdy * (1 - TVMAJOR));
-	}
-
-	private void drawHorizontalCurves(float cx, float cdx, float cy, float cdy,
-			float tx, float tdx, float ty, float tdy) {
-		if (Math.abs(cdx) < EPSILON) {
-			drawQuad(cx, cy, cx + cdx, cy + cdy, tx, ty, tx + tdx, ty + tdy);
-			return;
-		}
-		// inner half
-		drawHorizontalCurves(cx, cdx * CHMAJOR, cy, cdy, 
-				tx, tdx * THMAJOR, ty, tdy);
-		// outer half
-		drawHorizontalCurves(cx + cdx * CHMAJOR, cdx * (1 - CHMAJOR), cy, cdy, 
-				tx + tdx * THMAJOR, tdx * (1 - THMAJOR), ty, tdy);
-	}
-
-	/**
-	 * 
-	 */
-	private void drawFlatScreen() {
-		glBegin(GL_QUADS);
-		
-		drawQuad(0, 0, 1, 1, 0, 0, 1, 1);
-		
-		glEnd();
-		
-	}
-	
-	private void drawQuad(float cx, float cy, float cx2, float cy2,
-			float tx, float ty, float tx2, float ty2) {
-		glMultiTexCoord2f(GL_TEXTURE1, cx, cy);
-		glTexCoord2f(tx, ty);		
-		glVertex2f(cx, cy);
-		glMultiTexCoord2f(GL_TEXTURE1, cx, cy2);
-		glTexCoord2f(tx, ty2);		
-		glVertex2f(cx, cy2);
-		glMultiTexCoord2f(GL_TEXTURE1, cx2, cy2);
-		glTexCoord2f(tx2, ty2);		
-		glVertex2f(cx2, cy2);
-		glMultiTexCoord2f(GL_TEXTURE1, cx2, cy);
-		glTexCoord2f(tx2, ty);		
-		glVertex2f(cx2, cy);
-	}
-	
 }
