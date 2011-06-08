@@ -41,6 +41,7 @@ public class Win32SoundListener implements ISoundListener {
 	public Win32SoundListener() {
 		// init outside locks
 		WinMMLibrary.INSTANCE.hashCode();
+		volume = 1.0;
 	}
 
 	public void setBlockMode(boolean blocking) {
@@ -174,7 +175,7 @@ public class Win32SoundListener implements ISoundListener {
 							if (hdr != null) {
 								waitForHeader(hdr);
 								
-								if (((Memory) hdr.lpData).getSize() != size) {
+								if (((Memory) hdr.lpData).size() != size) {
 									WinMMLibrary.INSTANCE.waveOutUnprepareHeader(
 											wHandle, hdr, hdr.size());
 									hdr = null;
