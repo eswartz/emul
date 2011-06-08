@@ -3,8 +3,6 @@
  */
 package org.ejs.coffee.core.timer;
 
-import java.util.ArrayList;
-
 import org.eclipse.core.runtime.ListenerList;
 
 import com.vladium.utils.timing.HRTimer;

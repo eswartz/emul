@@ -26,7 +26,10 @@ public class VdpSprite extends SpriteBase {
 	}
 	
 	public void setColorStripe(ByteMemoryAccess colorStripe) {
-		this.colorStripe = colorStripe;
+		if (colorStripe == null || !colorStripe.equals(this.colorStripe)) {
+			this.colorStripe = colorStripe;
+			setBitmapDirty(true);
+		}
 	}
 	public ByteMemoryAccess getColorStripe() {
 		return colorStripe;

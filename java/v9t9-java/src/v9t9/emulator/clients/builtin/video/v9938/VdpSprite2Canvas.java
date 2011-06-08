@@ -38,7 +38,7 @@ import v9t9.engine.memory.ByteMemoryAccess;
  * <p>
  * This approach requires that we modify our interpretation of how dirtying
  * interacts.  Now, when a screen block changes, this doesn't mean the sprite
- * over it is dirty -- but it does mean that sprite's corresponding block
+ * under it is dirty -- but it does mean that sprite's corresponding block
  * must be reblitted.  The other dirtying changes (sprite movement -> screen
  * change) still apply, though.
  * @author ejs
