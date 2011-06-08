@@ -1158,6 +1158,7 @@ int elf_read_memory_word(Context * ctx, ELF_File * file, ContextAddress addr, Co
     size_t i = 0;
     U8_T n = 0;
 
+    if (ctx->mem_access == 0 && ctx->mem != NULL) ctx = ctx->mem;
     if (context_read_mem(ctx, addr, buf, size) < 0) return -1;
     for (i = 0; i < size; i++) {
         n = (n << 8) | buf[file->big_endian ? i : size - i - 1];

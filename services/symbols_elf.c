@@ -48,6 +48,7 @@
 struct Symbol {
     unsigned magic;
     ObjectInfo * obj;
+    ObjectInfo * var; /* 'this' object if the symbol represents implicit 'this' reference */
     SymbolSection * tbl;
     ContextAddress address;
     int sym_class;
@@ -189,6 +190,52 @@ static void object2symbol(ObjectInfo * obj, Symbol ** res) {
     *res = sym;
 }
 
+static ObjectInfo * get_object_type(ObjectInfo * obj) {
+    if (obj != NULL) {
+        switch (obj->mTag) {
+        case TAG_global_subroutine:
+        case TAG_subroutine:
+        case TAG_subprogram:
+        case TAG_entry_point:
+        case TAG_enumerator:
+        case TAG_formal_parameter:
+        case TAG_global_variable:
+        case TAG_local_variable:
+        case TAG_variable:
+        case TAG_inheritance:
+        case TAG_member:
+        case TAG_constant:
+            obj = obj->mType;
+            break;
+        }
+    }
+    return obj;
+}
+
+static int is_modified_type(ObjectInfo * obj) {
+    if (obj != NULL && obj->mType != NULL) {
+        switch (obj->mTag) {
+        case TAG_subrange_type:
+        case TAG_packed_type:
+        case TAG_const_type:
+        case TAG_volatile_type:
+        case TAG_restrict_type:
+        case TAG_shared_type:
+        case TAG_typedef:
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static ObjectInfo * get_original_type(ObjectInfo * obj) {
+    obj = get_object_type(obj);
+    while (is_modified_type(obj)) {
+        obj = obj->mType;
+    }
+    return obj;
+}
+
 static int get_num_prop(ObjectInfo * obj, int at, U8_T * res) {
     Trap trap;
     PropertyValue v;
@@ -254,13 +301,30 @@ static int check_in_range(ObjectInfo * obj, ContextAddress addr) {
 }
 
 static int find_in_object_tree(ObjectInfo * list, ContextAddress ip, const char * name, Symbol ** sym) {
-    Symbol * sym_imp = NULL;
-    Symbol * sym_enu = NULL;
-    Symbol * sym_cur = NULL;
+    Symbol * sym_imp = NULL;  /* Imported from a namespace */
+    Symbol * sym_enu = NULL;  /* Enumeration constant */
+    Symbol * sym_cur = NULL;  /* Found in current scope */
+    Symbol * sym_base = NULL; /* Found in base class (inherited) */
+    Symbol * sym_this = NULL; /* Found in 'this' reference */
     ObjectInfo * obj = list;
     while (obj != NULL) {
-        if (obj->mName != NULL && strcmp(obj->mName, name) == 0) {
-            object2symbol(obj, &sym_cur);
+        if (obj->mName != NULL) {
+            U8_T v = 0;
+            if (strcmp(obj->mName, name) == 0) {
+                object2symbol(obj, &sym_cur);
+            }
+            if (sym_frame >= 0 && strcmp(obj->mName, "this") == 0 && get_num_prop(obj, AT_artificial, &v) && v != 0) {
+                ObjectInfo * type = get_original_type(obj);
+                if (type->mTag == TAG_pointer_type && type->mType != NULL) {
+                    type = get_original_type(type->mType);
+                    find_in_object_tree(type->mChildren, 0, name, &sym_this);
+                    if (sym_this != NULL) {
+                        sym_this->ctx = sym_ctx;
+                        sym_this->frame = sym_frame;
+                        sym_this->var = obj;
+                    }
+                }
+            }
         }
         switch (obj->mTag) {
         case TAG_enumeration_type:
@@ -275,6 +339,9 @@ static int find_in_object_tree(ObjectInfo * list, ContextAddress ip, const char 
                 if (find_in_object_tree(obj->mChildren, ip, name, sym)) return 1;
             }
             break;
+        case TAG_inheritance:
+            find_in_object_tree(obj->mType->mChildren, 0, name, &sym_base);
+            break;
         case TAG_imported_module:
             {
                 PropertyValue p;
@@ -288,6 +355,8 @@ static int find_in_object_tree(ObjectInfo * list, ContextAddress ip, const char 
         obj = obj->mSibling;
     }
     if (*sym == NULL) *sym = sym_cur;
+    if (*sym == NULL) *sym = sym_base;
+    if (*sym == NULL) *sym = sym_this;
     if (*sym == NULL) *sym = sym_enu;
     if (*sym == NULL) *sym = sym_imp;
     return *sym != NULL;
@@ -862,19 +931,22 @@ const char * symbol2id(const Symbol * sym) {
     else {
         ELF_File * file = NULL;
         uint64_t obj_index = 0;
+        uint64_t var_index = 0;
         unsigned tbl_index = 0;
         int frame = sym->frame;
         if (sym->obj != NULL) file = sym->obj->mCompUnit->mFile;
         if (sym->tbl != NULL) file = sym->tbl->mFile;
         if (sym->obj != NULL) obj_index = sym->obj->mID;
+        if (sym->var != NULL) var_index = sym->var->mID;
         if (sym->tbl != NULL) tbl_index = sym->tbl->mIndex + 1;
         if (frame == STACK_TOP_FRAME) frame = get_top_frame(sym->ctx);
-        snprintf(id, sizeof(id), "@S%X.%lX.%lX.%"PRIX64".%"PRIX64".%X.%d.%X.%X.%"PRIX64".%s",
+        assert(sym->var == NULL || sym->var->mCompUnit->mFile == file);
+        snprintf(id, sizeof(id), "@S%X.%lX.%lX.%"PRIX64".%"PRIX64".%"PRIX64".%X.%d.%X.%X.%"PRIX64".%s",
             sym->sym_class,
             file ? (unsigned long)file->dev : 0ul,
             file ? (unsigned long)file->ino : 0ul,
             file ? file->mtime : (int64_t)0,
-            obj_index, tbl_index,
+            obj_index, var_index, tbl_index,
             frame, sym->index,
             sym->dimension, (uint64_t)sym->size,
             sym->ctx->id);
@@ -918,6 +990,7 @@ int id2symbol(const char * id, Symbol ** res) {
     ino_t ino = 0;
     int64_t mtime;
     uint64_t obj_index = 0;
+    uint64_t var_index = 0;
     unsigned tbl_index = 0;
     ELF_File * file = NULL;
     const char * p;
@@ -946,6 +1019,8 @@ int id2symbol(const char * id, Symbol ** res) {
         if (*p == '.') p++;
         obj_index = read_hex(&p);
         if (*p == '.') p++;
+        var_index = read_hex(&p);
+        if (*p == '.') p++;
         tbl_index = (unsigned)read_hex(&p);
         if (*p == '.') p++;
         sym->frame = read_int(&p);
@@ -969,6 +1044,10 @@ int id2symbol(const char * id, Symbol ** res) {
             if (obj_index) {
                 sym->obj = find_object(cache, obj_index);
                 if (sym->obj == NULL) exception(ERR_INV_CONTEXT);
+            }
+            if (var_index) {
+                sym->var = find_object(cache, var_index);
+                if (sym->var == NULL) exception(ERR_INV_CONTEXT);
             }
             if (tbl_index) {
                 if (tbl_index > cache->mSymSectionsCnt) exception(ERR_INV_CONTEXT);
@@ -1107,52 +1186,6 @@ static int unpack(const Symbol * sym) {
         }
     }
     return 0;
-}
-
-static ObjectInfo * get_object_type(ObjectInfo * obj) {
-    if (obj != NULL) {
-        switch (obj->mTag) {
-        case TAG_global_subroutine:
-        case TAG_subroutine:
-        case TAG_subprogram:
-        case TAG_entry_point:
-        case TAG_enumerator:
-        case TAG_formal_parameter:
-        case TAG_global_variable:
-        case TAG_local_variable:
-        case TAG_variable:
-        case TAG_inheritance:
-        case TAG_member:
-        case TAG_constant:
-            obj = obj->mType;
-            break;
-        }
-    }
-    return obj;
-}
-
-static int is_modified_type(ObjectInfo * obj) {
-    if (obj != NULL && obj->mType != NULL) {
-        switch (obj->mTag) {
-        case TAG_subrange_type:
-        case TAG_packed_type:
-        case TAG_const_type:
-        case TAG_volatile_type:
-        case TAG_restrict_type:
-        case TAG_shared_type:
-        case TAG_typedef:
-            return 1;
-        }
-    }
-    return 0;
-}
-
-static ObjectInfo * get_original_type(ObjectInfo * obj) {
-    obj = get_object_type(obj);
-    while (is_modified_type(obj)) {
-        obj = obj->mType;
-    }
-    return obj;
 }
 
 static U8_T get_object_length(ObjectInfo * obj) {
@@ -1728,7 +1761,7 @@ int get_symbol_offset(const Symbol * sym, ContextAddress * offset) {
 
 int get_symbol_value(const Symbol * sym, void ** value, size_t * size, int * big_endian) {
     assert(sym->magic == SYMBOL_MAGIC);
-    if (sym->base || is_cardinal_type_pseudo_symbol(sym)) {
+    if (sym->base || is_cardinal_type_pseudo_symbol(sym) || sym->var) {
         errno = ERR_INV_CONTEXT;
         return -1;
     }
@@ -1790,6 +1823,26 @@ int get_symbol_value(const Symbol * sym, void ** value, size_t * size, int * big
     return -1;
 }
 
+static int calc_member_offset(ObjectInfo * type, ObjectInfo * member, ContextAddress * offs) {
+    PropertyValue v;
+    ObjectInfo * obj = NULL;
+    if (member->mParent == type) {
+        read_and_evaluate_dwarf_object_property(sym_ctx, sym_frame, 0, member, AT_data_member_location, &v);
+        *offs = (ContextAddress)get_numeric_property_value(&v);
+        return 1;
+    }
+    obj = type->mChildren;
+    while (obj != NULL) {
+        if (obj->mTag == TAG_inheritance && calc_member_offset(obj->mType, member, offs)) {
+            read_and_evaluate_dwarf_object_property(sym_ctx, sym_frame, 0, obj, AT_data_member_location, &v);
+            *offs += (ContextAddress)get_numeric_property_value(&v);
+            return 1;
+        }
+        obj = obj->mSibling;
+    }
+    return 0;
+}
+
 int get_symbol_address(const Symbol * sym, ContextAddress * address) {
     assert(sym->magic == SYMBOL_MAGIC);
     if (sym->base || is_cardinal_type_pseudo_symbol(sym)) {
@@ -1801,6 +1854,33 @@ int get_symbol_address(const Symbol * sym, ContextAddress * address) {
         return 0;
     }
     if (unpack(sym) < 0) return -1;
+    if (sym->var != NULL) {
+        /* The symbol represents a member of a class instance */
+        Trap trap;
+        PropertyValue v;
+        ContextAddress base = 0;
+        ContextAddress offs = 0;
+        ObjectInfo * type = get_original_type(sym->var);
+        if (!set_trap(&trap)) return -1;
+        if (type->mTag != TAG_pointer_type || type->mType == NULL) exception(ERR_INV_CONTEXT);
+        read_and_evaluate_dwarf_object_property(sym_ctx, sym_frame, 0, sym->var, AT_location, &v);
+        if (v.mRegister == NULL) {
+            if (elf_read_memory_word(sym_ctx, sym->var->mCompUnit->mFile,
+                (ContextAddress)get_numeric_property_value(&v), &base) < 0) exception(errno);
+        }
+        else {
+            U8_T rv = 0;
+            StackFrame * frame = NULL;
+            if (get_frame_info(v.mContext, v.mFrame, &frame) < 0) exception(errno);
+            if (read_reg_value(frame, v.mRegister, &rv) < 0) exception(errno);
+            base = (ContextAddress)rv;
+        }
+        type = get_original_type(type->mType);
+        if (!calc_member_offset(type, obj, &offs)) exception(ERR_INV_CONTEXT);
+        clear_trap(&trap);
+        *address = base + offs;
+        return 0;
+    }
     if (obj != NULL && obj->mTag != TAG_member && obj->mTag != TAG_inheritance) {
         U8_T v;
         Symbol * s = NULL;

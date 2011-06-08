@@ -81,7 +81,7 @@ static void command_get_context_cache_client(void * x) {
         if (sym_class == SYM_CLASS_REFERENCE) {
             has_offset = get_symbol_offset(sym, &offset) == 0;
         }
-        if (!has_offset && (sym_class == SYM_CLASS_REFERENCE || sym_class == SYM_CLASS_FUNCTION)) {
+        if (sym_class == SYM_CLASS_REFERENCE || sym_class == SYM_CLASS_FUNCTION) {
             has_address = get_symbol_address(sym, &address) == 0;
             get_symbol_register(sym, &reg_ctx, &reg_frame, &reg);
         }

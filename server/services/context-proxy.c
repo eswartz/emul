@@ -917,8 +917,6 @@ int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t s
     if (!set_trap(&trap)) return -1;
     if (!cache->peer->rc_done) cache_wait(&cache->peer->rc_cache);
 
-    cache = *EXT(ctx);
-
     for (l = cache->mem_cache_list.next; l != &cache->mem_cache_list; l = l->next) {
         m = ctx2mem(l);
         if (address >= m->addr && address + size <= m->addr + m->size) {
