@@ -57,29 +57,6 @@ struct FileInfo {
 
 #define SYM_HASH_SIZE (32 * MEM_USAGE_FACTOR - 1)
 
-struct SymbolSection {
-    ELF_File * mFile;
-    unsigned mIndex;
-    char * mStrPool;
-    size_t mStrPoolSize;
-    unsigned mSymCount;
-    ElfX_Sym * mSymPool;    /* pointer to ELF section data: array of Elf32_Sym or Elf64_Sym */
-    size_t mSymPoolSize;
-    unsigned * mSymNamesHash;
-    unsigned * mSymNamesNext;
-};
-
-struct SymbolInfo {
-    SymbolSection * mSymSection;
-    U4_T mSectionIndex;
-    ELF_Section * mSection;
-    char * mName;
-    U1_T mBind;
-    U1_T mType;
-    U8_T mValue;
-    U8_T mSize;
-};
-
 #define TAG_fund_type 0x2000
 
 struct ObjectInfo {
@@ -174,6 +151,7 @@ struct CompUnit {
     U4_T mStatesMax;
     LineNumbersState * mStates;
     LineNumbersState ** mStatesIndex;
+    U1_T mLineInfoLoaded;
 
     CompUnit * mBaseTypes;
 
@@ -207,9 +185,6 @@ struct DWARFCache {
     ELF_Section * mDebugRanges;
     ELF_Section * mDebugFrame;
     ELF_Section * mEHFrame;
-    SymbolSection ** mSymSections;
-    unsigned mSymSectionsCnt;
-    unsigned mSymSectionsMax;
     ObjectInfo ** mObjectHash;
     unsigned mObjectHashSize;
     ObjectArray * mObjectList;
@@ -227,12 +202,6 @@ struct DWARFCache {
 /* Return DWARF cache for given file, create and populate the cache if needed, throw an exception if error */
 extern DWARFCache * get_dwarf_cache(ELF_File * file);
 
-/* Return symbol name hash. The hash is used to build mSymNamesHash table. */
-extern unsigned calc_symbol_name_hash(const char * s);
-
-/* Compare symbol names. */
-extern int cmp_symbol_names(const char * x, const char * y);
-
 /* Return file name hash. The hash is used to search FileInfo. */
 extern unsigned calc_file_name_hash(const char * s);
 
@@ -244,9 +213,6 @@ extern ObjectInfo * find_object(DWARFCache * cache, U8_T ID);
 
 /* Search and return first compilation unit address range in given link-time address range 'addr_min'..'addr_max'. */
 extern UnitAddressRange * find_comp_unit_addr_range(DWARFCache * cache, ContextAddress addr_min, ContextAddress addr_max);
-
-/* Get SymbolInfo */
-extern void unpack_elf_symbol_info(SymbolSection * section, U4_T index, SymbolInfo * info);
 
 /*
  * Read and evaluate a property of a DWARF object, perform ELF relocations if any.

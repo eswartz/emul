@@ -368,6 +368,7 @@ typedef int64_t  I8_T;
 typedef struct ELF_File ELF_File;
 typedef struct ELF_Section ELF_Section;
 typedef struct ELF_SecSymbol ELF_SecSymbol;
+typedef struct ELF_SymbolInfo ELF_SymbolInfo;
 typedef struct ELF_PHeader ELF_PHeader;
 
 struct ELF_File {
@@ -405,9 +406,22 @@ struct ELF_File {
 };
 
 struct ELF_SecSymbol {
-    void * parent;
+    ELF_Section * section;
     unsigned index;
     U8_T address;
+};
+
+struct ELF_SymbolInfo {
+    ELF_Section * sym_section;
+    U4_T sym_index;
+    unsigned addr_index;
+    ELF_Section * section;
+    U4_T section_index;
+    char * name;
+    U1_T bind;
+    U1_T type;
+    U8_T value;
+    U8_T size;
 };
 
 struct ELF_Section {
@@ -430,9 +444,16 @@ struct ELF_Section {
 
     int relocate;
 
-    ELF_SecSymbol * symbols;
-    unsigned symbols_cnt;
-    unsigned symbols_max;
+    unsigned sym_count;
+
+    /* Symbol by address search index */
+    ELF_SecSymbol * sym_addr_table;
+    unsigned sym_addr_cnt;
+    unsigned sym_addr_max;
+
+    /* Symbol by name search index */
+    unsigned * sym_names_hash;
+    unsigned * sym_names_next;
 };
 
 struct ELF_PHeader {
@@ -527,6 +548,34 @@ extern ContextAddress elf_get_debug_structure_address(Context * ctx, ELF_File **
  * If 'range_rt_addr' not NULL, *range_rt_addr is assigned run-time address of the range.
  */
 extern struct UnitAddressRange * elf_find_unit(Context * ctx, ContextAddress addr_min, ContextAddress addr_max, ContextAddress * range_rt_addr);
+
+/* Return symbol name hash. The hash is used to build sym_names_hash table. */
+extern unsigned calc_symbol_name_hash(const char * s);
+
+/* Compare symbol names. */
+extern int cmp_symbol_names(const char * x, const char * y);
+
+/*
+ * Get ELF_SymbolInfo.
+ * Call exception() on error.
+ */
+extern void unpack_elf_symbol_info(ELF_Section * section, U4_T index, ELF_SymbolInfo * info);
+
+/*
+ * Find ELF symbol by link-time address in a section.
+ * Return info for nearest symbol at or before given address.
+ * If not found, set all 'info' fields to zeros.
+ * Call exception() on error.
+ */
+extern void elf_find_symbol_by_address(ELF_Section * section, ContextAddress addr, ELF_SymbolInfo * info);
+
+/*
+ * Get prev/next ELF symbol by link-time address in a section.
+ * If not found, set all 'info' fields to zeros.
+ * Call exception() on error.
+ */
+extern void elf_prev_symbol_by_address(ELF_SymbolInfo * info);
+extern void elf_next_symbol_by_address(ELF_SymbolInfo * info);
 
 /*
  * Initialize ELF support module.

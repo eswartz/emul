@@ -43,31 +43,6 @@ static ObjectInfo * sPrevSibling;
 
 static int sCloseListenerOK = 0;
 
-unsigned calc_symbol_name_hash(const char * s) {
-    unsigned h = 0;
-    while (*s) {
-        unsigned g;
-        if (s[0] == '@' && s[1] == '@') break;
-        h = (h << 4) + (unsigned char)*s++;
-        g = h & 0xf0000000;
-        if (g) h ^= g >> 24;
-        h &= ~g;
-    }
-    return h % SYM_HASH_SIZE;
-}
-
-int cmp_symbol_names(const char * x, const char * y) {
-    while (*x && *x == *y) {
-        x++;
-        y++;
-    }
-    if (*x == 0 && *y == '@' && y[1] == '@') return 0;
-    if (*y == 0 && *x == '@' && x[1] == '@') return 0;
-    if (*x < *y) return -1;
-    if (*x > *y) return +1;
-    return 0;
-}
-
 unsigned calc_file_name_hash(const char * s) {
     unsigned l = strlen(s);
     unsigned h = 0;
@@ -82,54 +57,6 @@ unsigned calc_file_name_hash(const char * s) {
         h &= ~g;
     }
     return h;
-}
-
-void unpack_elf_symbol_info(SymbolSection * section, U4_T index, SymbolInfo * info) {
-    memset(info, 0, sizeof(SymbolInfo));
-    if (index >= section->mSymCount) str_exception(ERR_INV_FORMAT, "Invalid ELF symbol index");
-    info->mSymSection = section;
-    if (section->mFile->elf64) {
-        Elf64_Sym s = ((Elf64_Sym *)section->mSymPool)[index];
-        if (section->mFile->byte_swap) {
-            SWAP(s.st_name);
-            SWAP(s.st_shndx);
-            SWAP(s.st_size);
-            SWAP(s.st_value);
-        }
-        info->mSectionIndex = s.st_shndx;
-        if (s.st_shndx > 0 && s.st_shndx < section->mFile->section_cnt) {
-            info->mSection = section->mFile->sections + s.st_shndx;
-        }
-        if (s.st_name > 0) {
-            if (s.st_name >= section->mStrPoolSize) str_exception(ERR_INV_FORMAT, "Invalid ELF string pool index");
-            info->mName = section->mStrPool + s.st_name;
-        }
-        info->mBind = ELF64_ST_BIND(s.st_info);
-        info->mType = ELF64_ST_TYPE(s.st_info);
-        info->mValue = s.st_value;
-        info->mSize = s.st_size;
-    }
-    else {
-        Elf32_Sym s = ((Elf32_Sym *)section->mSymPool)[index];
-        if (section->mFile->byte_swap) {
-            SWAP(s.st_name);
-            SWAP(s.st_shndx);
-            SWAP(s.st_size);
-            SWAP(s.st_value);
-        }
-        info->mSectionIndex = s.st_shndx;
-        if (s.st_shndx > 0 && s.st_shndx < section->mFile->section_cnt) {
-            info->mSection = section->mFile->sections + s.st_shndx;
-        }
-        if (s.st_name > 0) {
-            if (s.st_name >= section->mStrPoolSize) str_exception(ERR_INV_FORMAT, "Invalid ELF string pool index");
-            info->mName = section->mStrPool + s.st_name;
-        }
-        info->mBind = ELF32_ST_BIND(s.st_info);
-        info->mType = ELF32_ST_TYPE(s.st_info);
-        info->mValue = s.st_value;
-        info->mSize = s.st_size;
-    }
 }
 
 ObjectInfo * find_object(DWARFCache * Cache, U8_T ID) {
@@ -377,37 +304,6 @@ static void read_object_info(U2_T Tag, U2_T Attr, U2_T Form) {
         case AT_base_types:
             Unit->mBaseTypes = add_comp_unit(dio_gFormData);
             break;
-        }
-    }
-}
-
-static void load_symbol_tables(void) {
-    unsigned idx;
-    ELF_File * file = sCache->mFile;
-    unsigned sym_size = file->elf64 ? sizeof(Elf64_Sym) : sizeof(Elf32_Sym);
-
-    for (idx = 1; idx < file->section_cnt; idx++) {
-        ELF_Section * sym_sec = file->sections + idx;
-        if (sym_sec->size == 0) continue;
-        if (sym_sec->type == SHT_SYMTAB) {
-            ELF_Section * str_sec;
-            SymbolSection * tbl = (SymbolSection *)loc_alloc_zero(sizeof(SymbolSection));
-            if (sCache->mSymSectionsCnt >= sCache->mSymSectionsMax) {
-                sCache->mSymSectionsMax = sCache->mSymSectionsMax == 0 ? 16 : sCache->mSymSectionsMax * 2;
-                sCache->mSymSections = (SymbolSection **)loc_realloc(sCache->mSymSections, sizeof(SymbolSection *) * sCache->mSymSectionsMax);
-            }
-            tbl->mIndex = sCache->mSymSectionsCnt++;
-            sCache->mSymSections[tbl->mIndex] = tbl;
-            if (sym_sec->link == 0 || sym_sec->link >= file->section_cnt) exception(EINVAL);
-            str_sec = file->sections + sym_sec->link;
-            if (elf_load(sym_sec) < 0) exception(errno);
-            if (elf_load(str_sec) < 0) exception(errno);
-            tbl->mFile = file;
-            tbl->mStrPool = (char *)str_sec->data;
-            tbl->mStrPoolSize = (size_t)str_sec->size;
-            tbl->mSymPool = (ElfX_Sym *)sym_sec->data;
-            tbl->mSymPoolSize = (size_t)sym_sec->size;
-            tbl->mSymCount = (unsigned)(sym_sec->size / sym_size);
         }
     }
 }
@@ -837,7 +733,6 @@ static void free_unit_cache(CompUnit * Unit) {
 static void free_dwarf_cache(ELF_File * file) {
     DWARFCache * Cache = (DWARFCache *)file->dwarf_dt_cache;
     if (Cache != NULL) {
-        unsigned i;
         assert(Cache->magic == DWARF_CACHE_MAGIC);
         Cache->magic = 0;
         while (Cache->mCompUnits != NULL) {
@@ -846,19 +741,12 @@ static void free_dwarf_cache(ELF_File * file) {
             free_unit_cache(Unit);
             loc_free(Unit);
         }
-        for (i = 0; i < Cache->mSymSectionsCnt; i++) {
-            SymbolSection * tbl = Cache->mSymSections[i];
-            loc_free(tbl->mSymNamesHash);
-            loc_free(tbl->mSymNamesNext);
-            loc_free(tbl);
-        }
         while (Cache->mObjectList != NULL) {
             ObjectArray * Buf = Cache->mObjectList;
             Cache->mObjectList = Buf->mNext;
             loc_free(Buf);
         }
         loc_free(Cache->mObjectHash);
-        loc_free(Cache->mSymSections);
         loc_free(Cache->mAddrRanges);
         loc_free(Cache->mFrameInfoRanges);
         loc_free(Cache->mPubNames.mHash);
@@ -884,7 +772,6 @@ DWARFCache * get_dwarf_cache(ELF_File * file) {
         sCache->mObjectArrayPos = OBJECT_ARRAY_SIZE;
         if (set_trap(&trap)) {
             dio_LoadAbbrevTable(file);
-            load_symbol_tables();
             load_debug_sections();
             load_addr_ranges();
             clear_trap(&trap);
@@ -1130,7 +1017,7 @@ void load_line_numbers(CompUnit * Unit) {
     DWARFCache * Cache = (DWARFCache *)Unit->mFile->dwarf_dt_cache;
     ELF_Section * LineInfoSection = Unit->mDesc.mVersion <= 1 ? Cache->mDebugLineV1 : Cache->mDebugLine;
     if (LineInfoSection == NULL) return;
-    if (Unit->mStates != NULL || Unit->mFiles != NULL || Unit->mDirs != NULL) return;
+    if (Unit->mLineInfoLoaded) return;
     if (elf_load(LineInfoSection)) exception(errno);
     dio_EnterSection(&Unit->mDesc, LineInfoSection, Unit->mLineInfoOffs);
     if (set_trap(&trap)) {
@@ -1161,6 +1048,7 @@ void load_line_numbers(CompUnit * Unit) {
         }
         dio_ExitSection();
         compute_reverse_lookup_indices(Unit);
+        Unit->mLineInfoLoaded = 1;
         clear_trap(&trap);
     }
     else {

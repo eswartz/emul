@@ -228,7 +228,7 @@ int line_to_address(Context * ctx, char * file_name, int line, int column, LineN
                         unsigned j;
                         CompUnit * unit = info->mCompUnit;
                         assert(unit->mFile == file);
-                        load_line_numbers(unit);
+                        if (!unit->mLineInfoLoaded) load_line_numbers(unit);
                         for (j = 0; j < unit->mFilesCnt; j++) {
                             FileInfo * f = unit->mFiles + j;
                             if (f->mNameHash != h) continue;
@@ -268,7 +268,7 @@ int address_to_line(Context * ctx, ContextAddress addr0, ContextAddress addr1, L
         UnitAddressRange * range = elf_find_unit(ctx, addr0, addr1, &range_rt_addr);
         if (range == NULL) break;
         assert(range_rt_addr != 0);
-        load_line_numbers(range->mUnit);
+        if (!range->mUnit->mLineInfoLoaded) load_line_numbers(range->mUnit);
         if (range->mUnit->mStatesCnt >= 2) {
             CompUnit * unit = range->mUnit;
             unsigned l = 0;

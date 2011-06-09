@@ -333,7 +333,7 @@ static U1_T * dio_LoadStringTable(U4_T * StringTableSize) {
 }
 
 static void dio_ReadFormAddr(void) {
-    dio_gFormData = dio_ReadAddress(&dio_gFormSection);
+    dio_gFormData = dio_ReadAddressX(&dio_gFormSection, sAddressSize);
     dio_gFormDataSize = sAddressSize;
 }
 

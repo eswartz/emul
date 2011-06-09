@@ -49,7 +49,7 @@ struct Symbol {
     unsigned magic;
     ObjectInfo * obj;
     ObjectInfo * var; /* 'this' object if the symbol represents implicit 'this' reference */
-    SymbolSection * tbl;
+    ELF_Section * tbl;
     ContextAddress address;
     int sym_class;
     Context * ctx;
@@ -97,28 +97,28 @@ static int get_sym_context(Context * ctx, int frame, ContextAddress addr) {
 }
 
 /* Map ELF symbol table entry value to run-time address in given context address space */
-static int syminfo2address(Context * ctx, SymbolInfo * info, ContextAddress * address) {
-    switch (info->mType) {
+static int syminfo2address(Context * ctx, ELF_SymbolInfo * info, ContextAddress * address) {
+    switch (info->type) {
     case STT_OBJECT:
     case STT_FUNC:
         {
-            U8_T value = info->mValue;
-            ELF_File * file = info->mSymSection->mFile;
+            U8_T value = info->value;
+            ELF_File * file = info->section->file;
             ELF_Section * sec = NULL;
-            if (info->mSectionIndex == SHN_UNDEF) {
+            if (info->section_index == SHN_UNDEF) {
                 errno = ERR_INV_ADDRESS;
                 return -1;
             }
-            if (info->mSectionIndex == SHN_ABS) {
+            if (info->section_index == SHN_ABS) {
                 *address = (ContextAddress)value;
                 return 0;
             }
-            if (info->mSectionIndex == SHN_COMMON) {
+            if (info->section_index == SHN_COMMON) {
                 errno = ERR_INV_ADDRESS;
                 return -1;
             }
-            if (file->type == ET_REL && info->mSection != NULL) {
-                sec = info->mSection;
+            if (file->type == ET_REL && info->section != NULL) {
+                sec = info->section;
                 value += sec->addr;
             }
             *address = elf_map_to_run_time_address(ctx, file, sec, (ContextAddress)value);
@@ -390,17 +390,19 @@ static int find_by_name_in_pub_names(DWARFCache * cache, PubNamesTable * tbl, ch
     return 0;
 }
 
-static void create_symbol_names_hash(SymbolSection * tbl) {
+static void create_symbol_names_hash(ELF_Section * tbl) {
     unsigned i;
-    tbl->mSymNamesHash = (unsigned *)loc_alloc_zero(SYM_HASH_SIZE * sizeof(unsigned));
-    tbl->mSymNamesNext = (unsigned *)loc_alloc_zero(tbl->mSymCount * sizeof(unsigned));
-    for (i = 0; i < tbl->mSymCount; i++) {
-        SymbolInfo sym;
+    unsigned sym_size = tbl->file->elf64 ? sizeof(Elf64_Sym) : sizeof(Elf32_Sym);
+    unsigned sym_cnt = (unsigned)(tbl->size / sym_size);
+    tbl->sym_names_hash = (unsigned *)loc_alloc_zero(SYM_HASH_SIZE * sizeof(unsigned));
+    tbl->sym_names_next = (unsigned *)loc_alloc_zero(sym_cnt * sizeof(unsigned));
+    for (i = 0; i < sym_cnt; i++) {
+        ELF_SymbolInfo sym;
         unpack_elf_symbol_info(tbl, i, &sym);
-        if (sym.mBind == STB_GLOBAL && sym.mName != NULL && sym.mSectionIndex != SHN_UNDEF) {
-            unsigned h = calc_symbol_name_hash(sym.mName);
-            tbl->mSymNamesNext[i] = tbl->mSymNamesHash[h];
-            tbl->mSymNamesHash[h] = i;
+        if (sym.bind == STB_GLOBAL && sym.name != NULL && sym.section_index != SHN_UNDEF) {
+            unsigned h = calc_symbol_name_hash(sym.name);
+            tbl->sym_names_next[i] = tbl->sym_names_hash[h];
+            tbl->sym_names_hash[h] = i;
         }
     }
 }
@@ -410,19 +412,20 @@ static int find_by_name_in_sym_table(DWARFCache * cache, char * name, Symbol ** 
     unsigned h = calc_symbol_name_hash(name);
     unsigned cnt = 0;
     Context * prs = context_get_group(sym_ctx, CONTEXT_GROUP_PROCESS);
-    while (m < cache->mSymSectionsCnt) {
+    for (m = 1; m < cache->mFile->section_cnt; m++) {
         unsigned n;
-        SymbolSection * tbl = cache->mSymSections[m];
-        if (tbl->mSymNamesHash == NULL) create_symbol_names_hash(tbl);
-        n = tbl->mSymNamesHash[h];
+        ELF_Section * tbl = cache->mFile->sections + m;
+        if (tbl->sym_count == 0) continue;
+        if (tbl->sym_names_hash == NULL) create_symbol_names_hash(tbl);
+        n = tbl->sym_names_hash[h];
         while (n) {
-            SymbolInfo sym_info;
+            ELF_SymbolInfo sym_info;
             unpack_elf_symbol_info(tbl, n, &sym_info);
-            if (cmp_symbol_names(name, sym_info.mName) == 0) {
+            if (cmp_symbol_names(name, sym_info.name) == 0) {
                 ContextAddress addr = 0;
                 if (syminfo2address(prs, &sym_info, &addr) == 0) {
                     int found = 0;
-                    if (sym_info.mSectionIndex != SHN_ABS) {
+                    if (sym_info.section_index != SHN_ABS) {
                         UnitAddressRange * range = elf_find_unit(sym_ctx, addr, addr, NULL);
                         if (range != NULL) {
                             ObjectInfo * obj = range->mUnit->mObject->mChildren;
@@ -450,7 +453,7 @@ static int find_by_name_in_sym_table(DWARFCache * cache, char * name, Symbol ** 
                         sym->ctx = prs;
                         sym->tbl = tbl;
                         sym->index = n;
-                        switch (sym_info.mType) {
+                        switch (sym_info.type) {
                         case STT_FUNC:
                             sym->sym_class = SYM_CLASS_FUNCTION;
                             break;
@@ -463,9 +466,8 @@ static int find_by_name_in_sym_table(DWARFCache * cache, char * name, Symbol ** 
                     }
                 }
             }
-            n = tbl->mSymNamesNext[n];
+            n = tbl->sym_names_next[n];
         }
-        m++;
     }
     return cnt == 1;
 }
@@ -656,137 +658,6 @@ int find_symbol_in_scope(Context * ctx, int frame, ContextAddress ip, Symbol * s
     return 0;
 }
 
-static int section_symbol_comparator(const void * x, const void * y) {
-    ELF_SecSymbol * rx = (ELF_SecSymbol *)x;
-    ELF_SecSymbol * ry = (ELF_SecSymbol *)y;
-    if (rx->address < ry->address) return -1;
-    if (rx->address > ry->address) return +1;
-    return 0;
-}
-
-static void create_symbol_addr_search_index(DWARFCache * cache, ELF_Section * sec) {
-    int elf64 = cache->mFile->elf64;
-    int swap = cache->mFile->byte_swap;
-    int rel = cache->mFile->type == ET_REL;
-    unsigned m = 0;
-
-    sec->symbols_max = (unsigned)(sec->size / 16) + 16;
-    sec->symbols = (ELF_SecSymbol *)loc_alloc(sec->symbols_max * sizeof(ELF_SecSymbol));
-
-    while (m < cache->mSymSectionsCnt) {
-        SymbolSection * tbl = cache->mSymSections[m];
-        unsigned n = 1;
-        while (n < tbl->mSymCount) {
-            U8_T addr = 0;
-            if (elf64) {
-                Elf64_Sym s = ((Elf64_Sym *)tbl->mSymPool)[n];
-                if (swap) SWAP(s.st_shndx);
-                if (s.st_shndx == sec->index) {
-                    switch (ELF64_ST_TYPE(s.st_info)) {
-                    case STT_OBJECT:
-                    case STT_FUNC:
-                        if (swap) SWAP(s.st_value);
-                        addr = s.st_value;
-                        if (rel) addr += sec->addr;
-                        break;
-                    }
-                }
-            }
-            else {
-                Elf32_Sym s = ((Elf32_Sym *)tbl->mSymPool)[n];
-                if (swap) SWAP(s.st_shndx);
-                if (s.st_shndx == sec->index) {
-                    switch (ELF32_ST_TYPE(s.st_info)) {
-                    case STT_OBJECT:
-                    case STT_FUNC:
-                        if (swap) SWAP(s.st_value);
-                        addr = s.st_value;
-                        if (rel) addr += sec->addr;
-                        break;
-                    }
-                }
-            }
-            if (addr != 0) {
-                ELF_SecSymbol * s = NULL;
-                if (sec->symbols_cnt >= sec->symbols_max) {
-                    sec->symbols_max = sec->symbols_max * 3 / 2;
-                    sec->symbols = (ELF_SecSymbol *)loc_realloc(sec->symbols, sec->symbols_max * sizeof(ELF_SecSymbol));
-                }
-                s = sec->symbols + sec->symbols_cnt++;
-                s->address = addr;
-                s->parent = tbl;
-                s->index = n;
-            }
-            n++;
-        }
-        m++;
-    }
-
-    qsort(sec->symbols, sec->symbols_cnt, sizeof(ELF_SecSymbol), section_symbol_comparator);
-}
-
-static int find_by_addr_in_sym_table(DWARFCache * cache, ContextAddress addr, Symbol ** res) {
-    unsigned m;
-    unsigned cnt = 0;
-    Context * prs = context_get_group(sym_ctx, CONTEXT_GROUP_PROCESS);
-    ELF_File * file = cache->mFile;
-
-    for (m = 1; m < file->section_cnt; m++) {
-        ContextAddress sec_rt_addr;
-        ContextAddress sym_lt_addr;
-        ELF_Section * sec = file->sections + m;
-        if (sec->size == 0) continue;
-        if ((sec->flags & SHF_ALLOC) == 0) continue;
-        if (sec->type != SHT_PROGBITS && sec->type != SHT_NOBITS) continue;
-        sec_rt_addr = elf_map_to_run_time_address(prs, file, file->type == ET_REL ? sec : NULL, sec->addr);
-        if (addr >= sec_rt_addr && addr < sec_rt_addr + sec->size) {
-            unsigned l, h;
-            if (sec->symbols == NULL) create_symbol_addr_search_index(cache, sec);
-            sym_lt_addr = addr - sec_rt_addr + sec->addr;
-            l = 0;
-            h = sec->symbols_cnt;
-            while (l < h) {
-                unsigned k = (h + l) / 2;
-                ELF_SecSymbol * info = sec->symbols + k;
-                if (info->address > sym_lt_addr) {
-                    h = k;
-                }
-                else {
-                    ContextAddress next = k < sec->symbols_cnt - 1 ?
-                        (info + 1)->address : sec->addr + sec->size;
-                    assert(next >= info->address);
-                    if (next <= sym_lt_addr) {
-                        l = k + 1;
-                    }
-                    else {
-                        SymbolInfo sym_info;
-                        Symbol * sym = alloc_symbol();
-                        SymbolSection * tbl = (SymbolSection *)info->parent;
-                        unpack_elf_symbol_info(tbl, info->index, &sym_info);
-                        sym->frame = STACK_NO_FRAME;
-                        sym->ctx = prs;
-                        sym->tbl = tbl;
-                        sym->index = info->index;
-                        switch (sym_info.mType) {
-                        case STT_FUNC:
-                            sym->sym_class = SYM_CLASS_FUNCTION;
-                            break;
-                        case STT_OBJECT:
-                            sym->sym_class = SYM_CLASS_REFERENCE;
-                            break;
-                        }
-                        *res = sym;
-                        cnt++;
-                        break;
-                    }
-                }
-            }
-        }
-    }
-
-    return cnt == 1;
-}
-
 static int find_by_addr_in_unit(ObjectInfo * obj, int level, ContextAddress addr, Symbol ** res) {
     while (obj != NULL) {
         switch (obj->mTag) {
@@ -832,28 +703,41 @@ static int find_by_addr_in_unit(ObjectInfo * obj, int level, ContextAddress addr
 }
 
 static int find_by_addr_in_sym_tables(ContextAddress addr, Symbol ** res) {
-    int error = 0;
-    int found = 0;
-    ELF_File * file = elf_list_first(sym_ctx, addr, addr);
-    if (file == NULL) error = errno;
-    while (error == 0 && file != NULL) {
-        Trap trap;
-        if (set_trap(&trap)) {
-            DWARFCache * cache = get_dwarf_cache(file);
-            found = find_by_addr_in_sym_table(cache, addr, res);
-            clear_trap(&trap);
-        }
-        else {
-            error = trap.error;
+    ELF_File * file = NULL;
+    ELF_Section * section = NULL;
+    ELF_SymbolInfo sym_info;
+    ContextAddress lt_addr = elf_map_to_link_time_address(sym_ctx, addr, &file, &section);
+    elf_find_symbol_by_address(section, lt_addr, &sym_info);
+    while (sym_info.sym_section != NULL) {
+        int sym_class = SYM_CLASS_UNKNOWN;
+        assert(sym_info.section == section);
+        switch (sym_info.type) {
+        case STT_FUNC:
+            sym_class = SYM_CLASS_FUNCTION;
+            break;
+        case STT_OBJECT:
+            sym_class = SYM_CLASS_REFERENCE;
             break;
         }
-        if (found) break;
-        file = elf_list_next(sym_ctx);
-        if (file == NULL) error = errno;
+        if (sym_class != SYM_CLASS_UNKNOWN) {
+            ContextAddress sym_addr = sym_info.value;
+            if (file->type == ET_REL) sym_addr += section->addr;
+            assert(sym_addr <= lt_addr);
+            if (sym_addr + sym_info.size > lt_addr) {
+                Symbol * sym = alloc_symbol();
+                sym->frame = STACK_NO_FRAME;
+                sym->ctx = context_get_group(sym_ctx, CONTEXT_GROUP_PROCESS);
+                sym->tbl = sym_info.sym_section;
+                sym->index = sym_info.sym_index;
+                sym->sym_class = sym_class;
+                *res = sym;
+                return 1;
+            }
+            return 0;
+        }
+        elf_prev_symbol_by_address(&sym_info);
     }
-    elf_list_done(sym_ctx);
-    if (error) exception(error);
-    return found;
+    return 0;
 }
 
 int find_symbol_by_addr(Context * ctx, int frame, ContextAddress addr, Symbol ** res) {
@@ -935,10 +819,10 @@ const char * symbol2id(const Symbol * sym) {
         unsigned tbl_index = 0;
         int frame = sym->frame;
         if (sym->obj != NULL) file = sym->obj->mCompUnit->mFile;
-        if (sym->tbl != NULL) file = sym->tbl->mFile;
+        if (sym->tbl != NULL) file = sym->tbl->file;
         if (sym->obj != NULL) obj_index = sym->obj->mID;
         if (sym->var != NULL) var_index = sym->var->mID;
-        if (sym->tbl != NULL) tbl_index = sym->tbl->mIndex + 1;
+        if (sym->tbl != NULL) tbl_index = sym->tbl->index;
         if (frame == STACK_TOP_FRAME) frame = get_top_frame(sym->ctx);
         assert(sym->var == NULL || sym->var->mCompUnit->mFile == file);
         snprintf(id, sizeof(id), "@S%X.%lX.%lX.%"PRIX64".%"PRIX64".%"PRIX64".%X.%d.%X.%X.%"PRIX64".%s",
@@ -1050,8 +934,8 @@ int id2symbol(const char * id, Symbol ** res) {
                 if (sym->var == NULL) exception(ERR_INV_CONTEXT);
             }
             if (tbl_index) {
-                if (tbl_index > cache->mSymSectionsCnt) exception(ERR_INV_CONTEXT);
-                sym->tbl = cache->mSymSections[tbl_index - 1];
+                if (tbl_index >= file->section_cnt) exception(ERR_INV_CONTEXT);
+                sym->tbl = file->sections + tbl_index;
             }
             clear_trap(&trap);
             return 0;
@@ -1154,10 +1038,10 @@ void ini_symbols_lib(void) {
 static ELF_File * file;
 static DWARFCache * cache;
 static ObjectInfo * obj;
-static SymbolSection * tbl;
+static ELF_Section * tbl;
 static unsigned sym_index;
 static unsigned dimension;
-static SymbolInfo * sym_info;
+static ELF_SymbolInfo * sym_info;
 
 static int unpack(const Symbol * sym) {
     assert(sym->base == NULL);
@@ -1172,7 +1056,7 @@ static int unpack(const Symbol * sym) {
     dimension = sym->dimension;
     sym_info = NULL;
     if (obj != NULL) file = obj->mCompUnit->mFile;
-    if (tbl != NULL) file = tbl->mFile;
+    if (tbl != NULL) file = tbl->file;
     if (file != NULL) {
         cache = (DWARFCache *)file->dwarf_dt_cache;
         if (cache == NULL || cache->magic != DWARF_CACHE_MAGIC) {
@@ -1180,7 +1064,7 @@ static int unpack(const Symbol * sym) {
             return -1;
         }
         if (tbl != NULL) {
-            static SymbolInfo info;
+            static ELF_SymbolInfo info;
             unpack_elf_symbol_info(tbl, sym_index, &info);
             sym_info = &info;
         }
@@ -1395,7 +1279,7 @@ int get_symbol_type_class(const Symbol * sym, int * type_class) {
             break;
         }
     }
-    if (sym_info != NULL && sym_info->mType == STT_FUNC) {
+    if (sym_info != NULL && sym_info->type == STT_FUNC) {
         *type_class = TYPE_CLASS_FUNCTION;
         return 0;
     }
@@ -1419,9 +1303,9 @@ int get_symbol_name(const Symbol * sym, char ** name) {
         *name = sym->obj->mName;
     }
     else if (sym->tbl != NULL) {
-        static SymbolInfo info;
+        ELF_SymbolInfo info;
         unpack_elf_symbol_info(sym->tbl, sym->index, &info);
-        *name = info.mName;
+        *name = info.name;
     }
     else {
         *name = NULL;
@@ -1509,7 +1393,7 @@ int get_symbol_size(const Symbol * sym, ContextAddress * size) {
         clear_trap(&trap);
     }
     else if (sym_info != NULL) {
-        *size = (ContextAddress)sym_info->mSize;
+        *size = (ContextAddress)sym_info->size;
     }
     return 0;
 }
