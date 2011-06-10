@@ -53,21 +53,21 @@ public class Startup {
 
 		// Start/Stop should be called in the TCF protocol dispatch thread
 		if (Protocol.getEventQueue() != null) {
-			Protocol.invokeLater(new Runnable() {
-				public void run() {
-					// Catch IllegalStateException: TCF event dispatcher has shut down
-					try {
+			// Catch IllegalStateException: TCF event dispatcher has shut down
+			try {
+				Protocol.invokeLater(new Runnable() {
+					public void run() {
 						if (STARTED.get()) Tcf.start(); else Tcf.stop();
-					} catch (IllegalStateException e) {
-						if (!STARTED.get() && "TCF event dispatcher has shut down".equals(e.getLocalizedMessage())) { //$NON-NLS-1$
-							// ignore the exception on shutdown
-						} else {
-							// re-throw in any other case
-							throw e;
-						}
 					}
+				});
+			} catch (IllegalStateException e) {
+				if (!STARTED.get() && "TCF event dispatcher has shut down".equals(e.getLocalizedMessage())) { //$NON-NLS-1$
+					// ignore the exception on shutdown
+				} else {
+					// re-throw in any other case
+					throw e;
 				}
-			});
+			}
 		}
 	}
 
