@@ -9,7 +9,9 @@
  *******************************************************************************/
 package org.eclipse.tm.te.tcf.filesystem.controls;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.viewers.ITreeContentProvider;
@@ -140,22 +142,32 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 					}
 				});
 				if (peer != null && IPeerModelProperties.STATE_ERROR != state[0] && IPeerModelProperties.STATE_NOT_REACHABLE != state[0]) {
-					FSTreeNode rootNode = new FSTreeNode();
-					rootNode.type = "FSRootNode"; //$NON-NLS-1$
-					rootNode.peerNode = peerNode;
-					rootNode.childrenQueried = false;
-					rootNode.childrenQueryRunning = true;
-					model.putRoot(peerId, rootNode);
+					final List<FSTreeNode> candidates = new ArrayList<FSTreeNode>();
+					// Create the root node and the initial pending node.
+					// This must happen in the TCF dispatch thread.
+					Protocol.invokeAndWait(new Runnable() {
+						public void run() {
+							// The root node
+							FSTreeNode rootNode = new FSTreeNode();
+							rootNode.type = "FSRootNode"; //$NON-NLS-1$
+							rootNode.peerNode = peerNode;
+							rootNode.childrenQueried = false;
+							rootNode.childrenQueryRunning = true;
+							model.putRoot(peerId, rootNode);
 
-					// Add a special "Pending..." node
-					FSTreeNode pendingNode = new FSTreeNode();
-					pendingNode.name = Messages.PendingOperation_label;
-					pendingNode.type ="FSPendingNode"; //$NON-NLS-1$
-					pendingNode.parent = rootNode;
-					pendingNode.peerNode = rootNode.peerNode;
-					rootNode.getChildren().add(pendingNode);
+							// Add a special "Pending..." node
+							FSTreeNode pendingNode = new FSTreeNode();
+							pendingNode.name = Messages.PendingOperation_label;
+							pendingNode.type ="FSPendingNode"; //$NON-NLS-1$
+							pendingNode.parent = rootNode;
+							pendingNode.peerNode = rootNode.peerNode;
+							rootNode.getChildren().add(pendingNode);
 
-					children = rootNode.getChildren().toArray();
+							candidates.addAll(rootNode.getChildren());
+						}
+					});
+
+					children = candidates.toArray();
 
 					Tcf.getChannelManager().openChannel(peer, new IChannelManager.DoneOpenChannel() {
 						public void doneOpenChannel(final Throwable error, final IChannel channel) {
@@ -224,23 +236,46 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 					});
 				}
 			} else {
-				children = root[0].getChildren().toArray();
+				// Get possible children
+				// This must happen in the TCF dispatch thread.
+				final List<FSTreeNode> candidates = new ArrayList<FSTreeNode>();
+				Protocol.invokeAndWait(new Runnable() {
+					public void run() {
+						candidates.addAll(root[0].getChildren());
+					}
+				});
+				children = candidates.toArray();
 			}
 		} else if (parentElement instanceof FSTreeNode) {
 			final FSTreeNode node = (FSTreeNode)parentElement;
+
 			// Get possible children
-			children = node.getChildren().toArray();
+			// This must happen in the TCF dispatch thread.
+			final List<FSTreeNode> candidates = new ArrayList<FSTreeNode>();
+			Protocol.invokeAndWait(new Runnable() {
+				public void run() {
+					candidates.addAll(node.getChildren());
+				}
+			});
+			children = candidates.toArray();
 			// No children -> check for "childrenQueried" property. If false, trigger the query.
 			if (children.length == 0 && !node.childrenQueried && node.type.endsWith("DirNode")) { //$NON-NLS-1$
+				candidates.clear();
 				// Add a special "Pending..." node
-				FSTreeNode pendingNode = new FSTreeNode();
-				pendingNode.name = Messages.PendingOperation_label;
-				pendingNode.type ="FSPendingNode"; //$NON-NLS-1$
-				pendingNode.parent = node;
-				pendingNode.peerNode = node.peerNode;
-				node.getChildren().add(pendingNode);
+				// This must happen in the TCF dispatch thread.
+				Protocol.invokeAndWait(new Runnable() {
+					public void run() {
+						FSTreeNode pendingNode = new FSTreeNode();
+						pendingNode.name = Messages.PendingOperation_label;
+						pendingNode.type ="FSPendingNode"; //$NON-NLS-1$
+						pendingNode.parent = node;
+						pendingNode.peerNode = node.peerNode;
+						node.getChildren().add(pendingNode);
 
-				children = node.getChildren().toArray();
+						candidates.addAll(node.getChildren());
+					}
+				});
+				children = candidates.toArray();
 
 				if (!node.childrenQueryRunning && node.peerNode != null) {
 					node.childrenQueryRunning = true;
@@ -447,12 +482,18 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 		boolean hasChildren = false;
 
 		if (element instanceof FSTreeNode) {
-			FSTreeNode node = (FSTreeNode)element;
+			final FSTreeNode node = (FSTreeNode)element;
 			if (node.type != null && (node.type.endsWith("DirNode") || node.type.endsWith("RootNode"))) { //$NON-NLS-1$ //$NON-NLS-2$
 				if (!node.childrenQueried || node.childrenQueryRunning) {
 					hasChildren = true;
 				} else if (node.childrenQueried) {
-					hasChildren = node.getChildren().size() > 0;
+					final boolean[] result = new boolean[1];
+					Protocol.invokeAndWait(new Runnable() {
+						public void run() {
+							result[0] = node.getChildren().size() > 0;
+						}
+					});
+					hasChildren = result[0];
 				}
 			}
 		}
