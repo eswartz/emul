@@ -1,4 +1,4 @@
-package v9t9.emulator.clients.builtin.swt;
+package v9t9.emulator.clients.builtin.swt.gl;
 
 import java.awt.Color;
 import java.awt.Graphics2D;

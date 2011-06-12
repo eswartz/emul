@@ -5,9 +5,9 @@ uniform ivec2 viewport;
 
 void main()
 {
-    vec4 mon = texture2D(pixelTexture, gl_TexCoord[1].st);
     vec4 color = texture2D(canvasTexture, gl_TexCoord[0].st);
-    if (viewport.x >= visible.x) {
+    if (viewport.x >= visible.x * 2) {
+        vec4 mon = texture2D(pixelTexture, gl_TexCoord[1].st);
 	    if (visible.x > 256) {
 	        // 512-pixel mode
 	        float fx = float(visible.x);
@@ -19,13 +19,8 @@ void main()
 	    	gl_FragColor = (color * vec4(.5, .5, .5, 1)) + (color + vec4(.1, .1, .1, 0)) * mon * vec4(0.9, 0.9, 0.9, 1);
 	    }
     } else {
-    	gl_FragColor = color;
+  	   gl_FragColor = color;
     }
-    //    gl_FragColor = (color + color * mon)  * mon ;
-    //gl_FragColor = (color + color * mon) / 2 + mon / 8;
     
-    //vec4 comb = max(color * mon, mon / 2) * mon;
-    
-    //gl_FragColor = comb;
     
 }

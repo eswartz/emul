@@ -37,6 +37,7 @@ import v9t9.emulator.clients.builtin.swt.gl.MonitorEffect;
 import v9t9.emulator.clients.builtin.swt.gl.MonitorParams;
 import v9t9.emulator.clients.builtin.swt.gl.SimpleCurvedCrtMonitorRender;
 import v9t9.emulator.clients.builtin.swt.gl.StandardMonitorRender;
+import v9t9.emulator.clients.builtin.swt.gl.TextureLoader;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas24Bit;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
@@ -53,13 +54,17 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	static final MonitorParams paramsSTANDARD = new MonitorParams(
 		"shaders/std", null, GL_LINEAR, GL_NEAREST);
 	static final MonitorParams paramsCRT = new MonitorParams(
-		"shaders/crt", null, GL_LINEAR, GL_NEAREST);
+		"shaders/crt", null, GL_LINEAR, GL_LINEAR);
 	static final MonitorParams paramsCRT1 = new MonitorParams(
 		"shaders/crt1", "shaders/monitor.png", GL_LINEAR, GL_LINEAR);
 	static final MonitorParams paramsCRT2 = new MonitorParams(
 		"shaders/crt2", "shaders/monitorRGB.png", GL_LINEAR, GL_LINEAR);
 		
 	static final MonitorEffect STANDARD = new MonitorEffect(paramsSTANDARD,
+			StandardMonitorRender.INSTANCE);
+	static final MonitorEffect CRT = new MonitorEffect(paramsCRT,
+			StandardMonitorRender.INSTANCE);
+	static final MonitorEffect CRT1 = new MonitorEffect(paramsCRT1,
 			StandardMonitorRender.INSTANCE);
 	static final MonitorEffect CRT2 = new MonitorEffect(paramsCRT2,
 			SimpleCurvedCrtMonitorRender.INSTANCE);

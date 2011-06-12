@@ -15,7 +15,11 @@ void main()
         lines = min(vec2(1.0, 1.0), center_dist + vec2(0.75, 0.5));
         
         vec4 vvec = vec4(lines.y, lines.y, lines.y, 1.0);
-        vec4 hvec = vec4(lines.x, lines.x, lines.x, 1.0);
+        vec4 hvec;
+        if (viewport.x > 256)
+            hvec = vec4(lines.x, lines.x, lines.x, 1.0);
+        else
+            hvec = vec4(1,1,1,1);
         
         gl_FragColor = color * hvec * vvec;
     } else {
