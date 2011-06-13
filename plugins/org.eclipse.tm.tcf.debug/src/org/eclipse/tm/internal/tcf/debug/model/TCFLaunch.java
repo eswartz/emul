@@ -110,7 +110,6 @@ public class TCFLaunch extends Launch {
     private boolean connecting;
     private boolean disconnecting;
     private boolean disconnected;
-    private boolean terminated;
     private boolean shutdown;
     private boolean last_context_exited;
     private long actions_timestamp;
@@ -124,6 +123,7 @@ public class TCFLaunch extends Launch {
     private Collection<Map<String,Object>> process_signals;
     private IToken process_start_command;
     private String process_input_stream_id;
+    private boolean process_exited;
     private int process_exit_code;
     private final HashMap<String,String> process_env = new HashMap<String,String>();
 
@@ -156,7 +156,10 @@ public class TCFLaunch extends Launch {
     private final IProcesses.ProcessesListener prs_listener = new IProcesses.ProcessesListener() {
 
         public void exited(String process_id, int exit_code) {
-            if (process_id.equals(process.getID())) process_exit_code = exit_code;
+            if (process_id.equals(process.getID())) {
+                process_exit_code = exit_code;
+                process_exited = true;
+            }
         }
     };
 
@@ -953,13 +956,21 @@ public class TCFLaunch extends Launch {
         if (channel.getState() == IChannel.STATE_CLOSED) return;
         if (disconnecting) return;
         disconnecting = true;
-        IStreams streams = getService(IStreams.class);
         final Set<IToken> cmds = new HashSet<IToken>();
+        if (process != null && !process_exited) {
+            cmds.add(process.terminate(new IProcesses.DoneCommand() {
+                public void doneCommand(IToken token, Exception error) {
+                    cmds.remove(token);
+                    if (error != null) channel.terminate(error);
+                    else if (cmds.isEmpty()) channel.close();
+                }
+            }));
+        }
+        IStreams streams = getService(IStreams.class);
         for (String id : stream_ids.keySet()) {
             cmds.add(streams.disconnect(id, new IStreams.DoneDisconnect() {
                 public void doneDisconnect(IToken token, Exception error) {
                     cmds.remove(token);
-                    if (channel.getState() == IChannel.STATE_CLOSED) return;
                     if (error != null) channel.terminate(error);
                     else if (cmds.isEmpty()) channel.close();
                 }
@@ -1012,7 +1023,7 @@ public class TCFLaunch extends Launch {
     }
 
     public boolean canTerminate() {
-        return !disconnected;
+        return false;
     }
 
     public boolean isTerminated() {
@@ -1020,34 +1031,6 @@ public class TCFLaunch extends Launch {
     }
 
     public void terminate() throws DebugException {
-        try {
-            new TCFTask<Boolean>() {
-                public void run() {
-                    if (channel != null && channel.getState() == IChannel.STATE_OPEN) {
-                        if (process != null && !terminated) {
-                            final Runnable done = this;
-                            process.terminate(new IProcesses.DoneCommand() {
-                                public void doneCommand(IToken token, Exception e) {
-                                    if (e != null) {
-                                        error(e);
-                                    }
-                                    else {
-                                        terminated = true;
-                                        Protocol.invokeLater(done);
-                                    }
-                                }
-                            });
-                            return;
-                        }
-                        closeChannel();
-                    }
-                    done(true);
-                }
-            }.get();
-        }
-        catch (Exception x) {
-            throw new TCFError(x);
-        }
     }
 
     public boolean isExited() {
