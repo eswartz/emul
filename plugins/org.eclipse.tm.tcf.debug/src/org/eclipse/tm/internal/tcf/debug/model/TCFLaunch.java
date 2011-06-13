@@ -35,7 +35,6 @@ import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.IService;
 import org.eclipse.tm.tcf.protocol.IToken;
-import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IFileSystem;
 import org.eclipse.tm.tcf.services.IFileSystem.FileSystemException;
@@ -222,6 +221,7 @@ public class TCFLaunch extends Launch {
                         @Override
                         void start() throws Exception {
                             final Runnable done = this;
+                            // Check if preloading is supported
                             mem_map.set("\001", null, new IMemoryMap.DoneSet() {
                                 public void doneSet(IToken token, Exception error) {
                                     try {
@@ -298,32 +298,14 @@ public class TCFLaunch extends Launch {
         done.run();
     }
 
-    @SuppressWarnings("unchecked")
-    private void readMapsConfiguration(HashMap<String,ArrayList<TCFMemoryRegion>> maps, String cfg) throws Exception {
-        Collection<Map<String,Object>> list = (Collection<Map<String,Object>>)JSON.parseOne(cfg.getBytes("UTF-8"));
-        if (list == null) return;
-        for (Map<String,Object> map : list) {
-            String id = (String)map.get(IMemoryMap.PROP_ID);
-            if (id != null) {
-                ArrayList<TCFMemoryRegion> l = maps.get(id);
-                if (l == null) {
-                    l = new ArrayList<TCFMemoryRegion>();
-                    maps.put(id, l);
-                }
-                l.add(new TCFMemoryRegion(map));
-            }
-        }
-    }
-
-    private void downloadMemoryMaps(ILaunchConfiguration cfg, final Runnable done) throws Exception {
-        final String maps_cfg = cfg.getAttribute(TCFLaunchDelegate.ATTR_MEMORY_MAP, "null");
+    private void downloadMemoryMaps(final ILaunchConfiguration cfg, final Runnable done) throws Exception {
         final IMemoryMap mmap = channel.getRemoteService(IMemoryMap.class);
         if (mmap == null) {
             done.run();
             return;
         }
-        final HashMap<String,ArrayList<TCFMemoryRegion>> maps = new HashMap<String,ArrayList<TCFMemoryRegion>>();
-        readMapsConfiguration(maps, maps_cfg);
+        final HashMap<String,ArrayList<IMemoryMap.MemoryRegion>> maps = new HashMap<String,ArrayList<IMemoryMap.MemoryRegion>>();
+        TCFLaunchDelegate.getMemMapsAttribute(maps, cfg);
         final HashSet<IToken> cmds = new HashSet<IToken>(); // Pending commands
         final Runnable done_all = new Runnable() {
             boolean launch_done;
@@ -342,19 +324,18 @@ public class TCFLaunch extends Launch {
             }
         };
         for (String id : maps.keySet()) {
-            ArrayList<TCFMemoryRegion> map = maps.get(id);
+            ArrayList<IMemoryMap.MemoryRegion> map = maps.get(id);
             TCFMemoryRegion[] arr = map.toArray(new TCFMemoryRegion[map.size()]);
             cmds.add(mmap.set(id, arr, done_set_mmap));
         }
         update_memory_maps = new Runnable() {
             public void run() {
                 try {
-                    String cfg = getLaunchConfiguration().getAttribute(TCFLaunchDelegate.ATTR_MEMORY_MAP, "null");
                     Set<String> set = new HashSet<String>(maps.keySet());
                     maps.clear();
-                    readMapsConfiguration(maps, cfg);
+                    TCFLaunchDelegate.getMemMapsAttribute(maps, cfg);
                     for (String id : maps.keySet()) {
-                        ArrayList<TCFMemoryRegion> map = maps.get(id);
+                        ArrayList<IMemoryMap.MemoryRegion> map = maps.get(id);
                         TCFMemoryRegion[] arr = map.toArray(new TCFMemoryRegion[map.size()]);
                         cmds.add(mmap.set(id, arr, done_set_mmap));
                     }
@@ -372,7 +353,6 @@ public class TCFLaunch extends Launch {
     }
 
     private void updateMemoryMapsOnProcessCreation(ILaunchConfiguration cfg, final Runnable done) throws Exception {
-        final String maps_cfg = cfg.getAttribute(TCFLaunchDelegate.ATTR_MEMORY_MAP, "null");
         final IMemory mem = channel.getRemoteService(IMemory.class);
         final IMemoryMap mmap = channel.getRemoteService(IMemoryMap.class);
         if (mem == null || mmap == null) {
@@ -380,8 +360,8 @@ public class TCFLaunch extends Launch {
             return;
         }
         final HashSet<String> deleted_maps = new HashSet<String>();
-        final HashMap<String,ArrayList<TCFMemoryRegion>> maps = new HashMap<String,ArrayList<TCFMemoryRegion>>();
-        readMapsConfiguration(maps, maps_cfg);
+        final HashMap<String,ArrayList<IMemoryMap.MemoryRegion>> maps = new HashMap<String,ArrayList<IMemoryMap.MemoryRegion>>();
+        TCFLaunchDelegate.getMemMapsAttribute(maps, cfg);
         final HashSet<String> mems = new HashSet<String>(); // Already processed memory IDs
         final HashSet<IToken> cmds = new HashSet<IToken>(); // Pending commands
         final HashMap<String,String> mem2map = new HashMap<String,String>();
@@ -409,7 +389,7 @@ public class TCFLaunch extends Launch {
                     String id = context.getName();
                     if (id == null) id = context.getID();
                     if (id != null) {
-                        ArrayList<TCFMemoryRegion> map = maps.get(id);
+                        ArrayList<IMemoryMap.MemoryRegion> map = maps.get(id);
                         if (map != null) {
                             TCFMemoryRegion[] arr = map.toArray(new TCFMemoryRegion[map.size()]);
                             cmds.add(mmap.set(context.getID(), arr, done_set_mmap));
@@ -452,7 +432,7 @@ public class TCFLaunch extends Launch {
                     if (id == null) id = context.getID();
                     if (id == null) continue;
                     if (id.equals(mem2map.get(context.getID()))) continue;
-                    ArrayList<TCFMemoryRegion> map = maps.get(id);
+                    ArrayList<IMemoryMap.MemoryRegion> map = maps.get(id);
                     if (map == null) continue;
                     TCFMemoryRegion[] arr = map.toArray(new TCFMemoryRegion[map.size()]);
                     cmds.add(mmap.set(context.getID(), arr, done_set_mmap));
@@ -465,7 +445,7 @@ public class TCFLaunch extends Launch {
                     String id = context.getName();
                     if (id == null) id = context.getID();
                     if (id == null) continue;
-                    ArrayList<TCFMemoryRegion> map = maps.get(id);
+                    ArrayList<IMemoryMap.MemoryRegion> map = maps.get(id);
                     if (map == null) continue;
                     TCFMemoryRegion[] arr = map.toArray(new TCFMemoryRegion[map.size()]);
                     cmds.add(mmap.set(context.getID(), arr, done_set_mmap));
@@ -478,8 +458,7 @@ public class TCFLaunch extends Launch {
                 try {
                     maps.clear();
                     mems.clear();
-                    String s = getLaunchConfiguration().getAttribute(TCFLaunchDelegate.ATTR_MEMORY_MAP, "null");
-                    readMapsConfiguration(maps, s);
+                    TCFLaunchDelegate.getMemMapsAttribute(maps, getLaunchConfiguration());
                     for (String id : mem2map.values()) {
                         if (maps.get(id) == null) deleted_maps.add(id);
                     }

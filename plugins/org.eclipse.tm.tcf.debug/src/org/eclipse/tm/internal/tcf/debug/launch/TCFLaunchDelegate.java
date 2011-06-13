@@ -12,6 +12,7 @@ package org.eclipse.tm.internal.tcf.debug.launch;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -29,7 +30,10 @@ import org.eclipse.debug.core.model.LaunchConfigurationDelegate;
 import org.eclipse.tm.internal.tcf.debug.Activator;
 import org.eclipse.tm.internal.tcf.debug.model.ITCFConstants;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
+import org.eclipse.tm.internal.tcf.debug.model.TCFMemoryRegion;
+import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.protocol.Protocol;
+import org.eclipse.tm.tcf.services.IMemoryMap;
 import org.eclipse.tm.tcf.services.IPathMap;
 import org.eclipse.tm.tcf.util.TCFTask;
 
@@ -160,6 +164,41 @@ public class TCFLaunchDelegate extends LaunchConfigurationDelegate {
             }
         }
         return map;
+    }
+
+    /**
+     * Given value of ATTR_MEMORY_MAP, add lists of TCFMemoryRegion objects into 'maps'.
+     * @param maps - Map object to fill with memory maps.
+     * @param s - value of ATTR_MEMORY_MAP.
+     */
+    @SuppressWarnings("unchecked")
+    public static void parseMemMapsAttribute(Map<String,ArrayList<IMemoryMap.MemoryRegion>> maps, String s) throws Exception {
+        if (s == null || s.length() == 0) return;
+        Collection<Map<String,Object>> list = (Collection<Map<String,Object>>)JSON.parseOne(s.getBytes("UTF-8"));
+        if (list == null) return;
+        for (Map<String,Object> map : list) {
+            String id = (String)map.get(IMemoryMap.PROP_ID);
+            if (id != null) {
+                ArrayList<IMemoryMap.MemoryRegion> l = maps.get(id);
+                if (l == null) {
+                    l = new ArrayList<IMemoryMap.MemoryRegion>();
+                    maps.put(id, l);
+                }
+                l.add(new TCFMemoryRegion(map));
+            }
+        }
+    }
+
+    /**
+     * Read ATTR_MEMORY_MAP attribute of a launch configuration.
+     * @param maps - Map object to fill with memory maps.
+     * @param cfg - the launch configuration.
+     * @throws Exception
+     */
+    public static void getMemMapsAttribute(Map<String,ArrayList<IMemoryMap.MemoryRegion>> maps,
+            ILaunchConfiguration cfg) throws Exception {
+        String maps_cfg = cfg.getAttribute(ATTR_MEMORY_MAP, (String)null);
+        parseMemMapsAttribute(maps, maps_cfg);
     }
 
     /**

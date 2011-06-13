@@ -137,10 +137,9 @@ public class TCFPathMapTab extends AbstractLaunchConfigurationTab {
     }
 
     public void createControl(Composite parent) {
-        Font font = parent.getFont();
         Composite composite = new Composite(parent, SWT.NONE);
         GridLayout layout = new GridLayout(1, false);
-        composite.setFont(font);
+        composite.setFont(parent.getFont());
         composite.setLayout(layout);
         composite.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 1, 1));
         createTable(composite);

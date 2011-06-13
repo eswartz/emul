@@ -54,23 +54,21 @@ public class MemoryMapCommand extends AbstractActionDelegate {
     }
 
     protected void selectionChanged() {
-        TCFNode n = getSelectedNode();
-        getAction().setEnabled(isValidNode(n));
+        getAction().setEnabled(isValidNode(getSelectedNode()));
     }
 
     protected void run() {
-        TCFNode n = getSelectedNode();
-        if (isValidNode(n)) {
-            Shell shell = getWindow().getShell();
-            try {
-                new MemoryMapDialog(shell, n).open();
-            }
-            catch (Throwable x) {
-                MessageBox mb = new MessageBox(shell, SWT.ICON_ERROR | SWT.OK);
-                mb.setText("Cannot open Symbol Files dialog");
-                mb.setMessage(TCFModel.getErrorMessage(x, true));
-                mb.open();
-            }
+        TCFNode node = getSelectedNode();
+        if (!isValidNode(node)) return;
+        Shell shell = getWindow().getShell();
+        try {
+            new MemoryMapDialog(shell, node).open();
+        }
+        catch (Throwable x) {
+            MessageBox mb = new MessageBox(shell, SWT.ICON_ERROR | SWT.OK);
+            mb.setText("Cannot open Symbol Files dialog");
+            mb.setMessage(TCFModel.getErrorMessage(x, true));
+            mb.open();
         }
     }
 }
