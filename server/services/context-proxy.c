@@ -33,6 +33,7 @@
 #include <framework/json.h>
 #include <framework/cache.h>
 #include <services/pathmap.h>
+#include <services/memorymap.h>
 #include <services/stacktrace.h>
 #include <services/context-proxy.h>
 
@@ -406,7 +407,6 @@ static void read_context_changed_item(InputStream * inp, void * args) {
         c->can_resume = buf.can_resume;
         c->can_count = buf.can_count;
         c->can_terminate = buf.can_terminate;
-        crear_memory_map_data(c);
         send_context_changed_event(c->ctx);
     }
     else if (p->rc_done) {
@@ -609,7 +609,7 @@ static void event_memory_map_changed(Channel * c, void * args) {
     if (ctx != NULL) {
         assert(*EXT(ctx->ctx) == ctx);
         crear_memory_map_data(ctx);
-        send_context_changed_event(ctx->ctx);
+        memory_map_event_mapping_chnaged(ctx->ctx);
     }
     else if (p->rc_done) {
         trace(LOG_ALWAYS, "Invalid ID in 'memory map changed' event: %s", id);
@@ -627,6 +627,8 @@ static void command_path_map_set(char * token, Channel * c, void * args) {
     if (read_stream(p->fwd_inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(p->fwd_inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 }
+
+static void validate_peer_cache_children(Channel * c, void * args, int error);
 
 void create_context_proxy(Channel * host, Channel * target, int forward_pm) {
     int i;
@@ -654,6 +656,11 @@ void create_context_proxy(Channel * host, Channel * target, int forward_pm) {
     add_event_handler2(target, RUN_CONTROL, "containerResumed", event_container_resumed, p);
     add_event_handler2(target, MEMORY_MAP, "changed", event_memory_map_changed, p);
     if (forward_pm) add_command_handler2(host->protocol, PATH_MAP, "set", command_path_map_set, p);
+    /* Retirve initila set of run control contexts */
+    protocol_send_command(p->target, "RunControl", "getChildren", validate_peer_cache_children, p);
+    write_stringz(&p->target->out, "null");
+    write_stream(&p->target->out, MARKER_EOM);
+    p->rc_pending_cnt++;
 }
 
 static void validate_peer_cache_context(Channel * c, void * args, int error);
@@ -838,10 +845,6 @@ Context * id2ctx(const char * id) {
                 set_error_report_errno(p->rc_error);
             }
             else if (!p->rc_done) {
-                protocol_send_command(p->target, "RunControl", "getChildren", validate_peer_cache_children, p);
-                write_stringz(&p->target->out, "null");
-                write_stream(&p->target->out, MARKER_EOM);
-                p->rc_pending_cnt++;
                 cache_wait(&p->rc_cache);
             }
             else {
@@ -858,7 +861,6 @@ int context_has_state(Context * ctx) {
 }
 
 Context * context_get_group(Context * ctx, int group) {
-    /* TODO: context proxy: context_get_group() */
     switch (group) {
     case CONTEXT_GROUP_INTERCEPT:
         return ctx;

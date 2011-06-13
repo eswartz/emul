@@ -97,33 +97,49 @@ static int str_equ(char * x, char * y) {
     return strcmp(x, y) == 0;
 }
 
-static int update_context_client_map(Context * ctx) {
+static size_t get_context_full_name(Context * ctx, char * buf, size_t buf_size) {
+    size_t pos = 0;
+    if (ctx != NULL) {
+        char * name = ctx->name;
+        pos = get_context_full_name(ctx->parent, buf, buf_size);
+        if (pos < buf_size) buf[pos++] = '/';
+        if (name != NULL) {
+            while (pos < buf_size && *name) buf[pos++] = *name++;
+        }
+    }
+    return pos;
+}
+
+static unsigned find_maps(LINK * maps, const char * id) {
+    LINK * l;
+    unsigned cnt = 0;
+    unsigned h = map_id_hash(id);
+    for (l = client_map_hash[h].next; l != &client_map_hash[h]; l = l->next) {
+        ClientMap * m = hash2map(l);
+        if (list_is_empty(&m->link_ctx) && strcmp(m->id, id) == 0) {
+            list_add_last(&m->link_ctx, maps);
+            cnt += m->map.region_cnt;
+        }
+    }
+    return cnt;
+}
+
+static void update_context_client_map(Context * ctx) {
     ContextExtensionMM * ext = EXT(ctx);
     unsigned r_cnt = 0;
     int equ = 0;
-    unsigned h, i;
+    unsigned i;
     LINK * l;
     LINK maps;
 
     assert(ctx == context_get_group(ctx, CONTEXT_GROUP_PROCESS));
     list_init(&maps);
-    h = map_id_hash(ctx->id);
-    for (l = client_map_hash[h].next; l != &client_map_hash[h]; l = l->next) {
-        ClientMap * m = hash2map(l);
-        if (strcmp(m->id, ctx->id) == 0) {
-            list_add_last(&m->link_ctx, &maps);
-            r_cnt += m->map.region_cnt;
-        }
-    }
+    r_cnt += find_maps(&maps, ctx->id);
     if (ctx->name != NULL) {
-        h = map_id_hash(ctx->name);
-        for (l = client_map_hash[h].next; l != &client_map_hash[h]; l = l->next) {
-            ClientMap * m = hash2map(l);
-            if (strcmp(m->id, ctx->name) == 0) {
-                list_add_last(&m->link_ctx, &maps);
-                r_cnt += m->map.region_cnt;
-            }
-        }
+        char buf[1024];
+        r_cnt += find_maps(&maps, ctx->name);
+        buf[get_context_full_name(ctx, buf, sizeof(buf) - 1)] = 0;
+        r_cnt += find_maps(&maps, buf);
     }
     equ = ext->client_map.region_cnt == r_cnt;
     if (equ) {
@@ -143,27 +159,29 @@ static int update_context_client_map(Context * ctx) {
                     str_equ(y->sect_name, x->sect_name);
             }
         }
+        assert(!equ || k == r_cnt);
     }
-    if (equ) return 0;
-
-    context_clear_memory_map(&ext->client_map);
-    for (l = maps.next; l != &maps; l = l->next) {
-        ClientMap * m = ctx2map(l);
-        for (i = 0; i < m->map.region_cnt; i++) {
-            MemoryRegion * x = m->map.regions + i;
-            MemoryRegion * y = add_region(&ext->client_map);
-            y->addr = x->addr;
-            y->size = x->size;
-            y->file_offs = x->file_offs;
-            y->bss = x->bss;
-            y->flags = x->flags;
-            if (x->file_name) y->file_name = loc_strdup(x->file_name);
-            if (x->sect_name) y->sect_name = loc_strdup(x->sect_name);
-            if (x->id) y->id = loc_strdup(x->id);
+    if (!equ) {
+        context_clear_memory_map(&ext->client_map);
+        for (l = maps.next; l != &maps; l = l->next) {
+            ClientMap * m = ctx2map(l);
+            for (i = 0; i < m->map.region_cnt; i++) {
+                MemoryRegion * x = m->map.regions + i;
+                MemoryRegion * y = add_region(&ext->client_map);
+                y->addr = x->addr;
+                y->size = x->size;
+                y->file_offs = x->file_offs;
+                y->bss = x->bss;
+                y->flags = x->flags;
+                if (x->file_name) y->file_name = loc_strdup(x->file_name);
+                if (x->sect_name) y->sect_name = loc_strdup(x->sect_name);
+                if (x->id) y->id = loc_strdup(x->id);
+            }
         }
+        assert(ext->client_map.region_cnt == r_cnt);
     }
-
-    return 1;
+    while (!list_is_empty(&maps)) list_remove(maps.next);
+    if (!equ) memory_map_event_mapping_chnaged(ctx);
 }
 
 static void update_all_context_client_maps(void) {
@@ -172,7 +190,7 @@ static void update_all_context_client_maps(void) {
         Context * ctx = ctxl2ctxp(l);
         if (ctx->exited) continue;
         if (ctx != context_get_group(ctx, CONTEXT_GROUP_PROCESS)) continue;
-        if (update_context_client_map(ctx)) send_context_changed_event(ctx);
+        update_context_client_map(ctx);
     }
 }
 
@@ -180,13 +198,13 @@ static void event_memory_map_changed(Context * ctx, void * args) {
     OutputStream * out;
     ContextExtensionMM * ext = EXT(ctx);
 
-    if (ctx != context_get_group(ctx, CONTEXT_GROUP_PROCESS)) return;
-    update_context_client_map(ctx);
-    context_clear_memory_map(&ext->target_map);
+    if (ctx->exited) return;
     if (!ext->valid) return;
+    if (ctx != context_get_group(ctx, CONTEXT_GROUP_PROCESS)) return;
+
+    context_clear_memory_map(&ext->target_map);
     ext->valid = 0;
 
-    if (ctx->exited) return;
     out = &broadcast_group->out;
 
     write_stringz(out, "E");
@@ -196,6 +214,12 @@ static void event_memory_map_changed(Context * ctx, void * args) {
     json_write_string(out, ctx->id);
     write_stream(out, 0);
     write_stream(out, MARKER_EOM);
+}
+
+static void event_context_changed(Context * ctx, void * args) {
+    if (ctx->exited) return;
+    if (ctx != context_get_group(ctx, CONTEXT_GROUP_PROCESS)) return;
+    update_context_client_map(ctx);
 }
 
 static void event_context_disposed(Context * ctx, void * args) {
@@ -272,6 +296,18 @@ void memory_map_event_module_unloaded(Context * ctx) {
         Listener * l = listeners + i;
         if (l->listener->module_unloaded == NULL) continue;
         l->listener->module_unloaded(ctx, l->args);
+    }
+}
+
+void memory_map_event_mapping_chnaged(Context * ctx) {
+    unsigned i;
+    assert(ctx->ref_count > 0);
+    assert(ctx == context_get_group(ctx, CONTEXT_GROUP_PROCESS));
+    event_memory_map_changed(ctx, NULL);
+    for (i = 0; i < listener_cnt; i++) {
+        Listener * l = listeners + i;
+        if (l->listener->mapping_changed == NULL) continue;
+        l->listener->mapping_changed(ctx, l->args);
     }
 }
 
@@ -481,11 +517,11 @@ static void channel_close_listener(Channel * c) {
 void ini_memory_map_service(Protocol * proto, TCFBroadcastGroup * bcg) {
     int i;
     static ContextEventListener listener = {
-        event_memory_map_changed,
+        event_context_changed,
         NULL,
         NULL,
         NULL,
-        event_memory_map_changed,
+        event_context_changed,
         event_context_disposed
     };
     broadcast_group = bcg;

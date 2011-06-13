@@ -2315,7 +2315,8 @@ void ini_breakpoints_service(Protocol * proto, TCFBroadcastGroup * bcg) {
         static MemoryMapEventListener listener = {
             event_context_changed,
             event_code_unmapped,
-            event_context_changed
+            event_context_changed,
+            event_context_changed,
         };
         add_memory_map_event_listener(&listener, NULL);
     }

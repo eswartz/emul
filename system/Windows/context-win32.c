@@ -311,6 +311,7 @@ static DWORD event_win32_context_stopped(Context * ctx) {
                     if (!debug_state->ok_to_use_hw_bp) {
                         debug_state->ok_to_use_hw_bp = 1;
                         send_context_changed_event(ctx->mem);
+                        memory_map_event_mapping_chnaged(ctx->mem);
                     }
 #endif
                 }

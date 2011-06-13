@@ -38,6 +38,7 @@ extern int memory_map_get(Context * ctx, MemoryMap ** client_map, MemoryMap ** t
 extern void memory_map_event_module_loaded(Context * ctx);
 extern void memory_map_event_code_section_ummapped(Context * ctx, ContextAddress addr, ContextAddress size);
 extern void memory_map_event_module_unloaded(Context * ctx);
+extern void memory_map_event_mapping_chnaged(Context * ctx);
 
 /*
  * Memory map listener.
@@ -46,6 +47,7 @@ typedef struct MemoryMapEventListener {
     void (*module_loaded)(Context * ctx, void * client_data);
     void (*code_section_ummapped)(Context * ctx, ContextAddress addr, ContextAddress size, void * client_data);
     void (*module_unloaded)(Context * ctx, void * client_data);
+    void (*mapping_changed)(Context * ctx, void * client_data);
 } MemoryMapEventListener;
 
 /*
