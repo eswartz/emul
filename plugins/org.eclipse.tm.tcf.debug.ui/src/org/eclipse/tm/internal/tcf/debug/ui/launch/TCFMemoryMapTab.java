@@ -16,13 +16,17 @@ import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 import org.eclipse.debug.ui.AbstractLaunchConfigurationTab;
 import org.eclipse.debug.ui.DebugUITools;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.MemoryMapWidget;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode;
 
 public class TCFMemoryMapTab extends AbstractLaunchConfigurationTab {
+
+    private static final String TAB_ID = "org.eclipse.tm.tcf.launch.memoryMapTab";
 
     private MemoryMapWidget widget;
 
@@ -59,5 +63,15 @@ public class TCFMemoryMapTab extends AbstractLaunchConfigurationTab {
 
     public String getName() {
         return "Symbol Files";
+    }
+
+    @Override
+    public Image getImage() {
+        return ImageCache.getImage(ImageCache.IMG_MEMORY_MAP);
+    }
+
+    @Override
+    public String getId() {
+        return TAB_ID;
     }
 }

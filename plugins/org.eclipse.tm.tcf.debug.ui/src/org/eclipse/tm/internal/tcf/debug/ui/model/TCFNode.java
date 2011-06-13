@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -167,6 +167,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
     @Override
     @SuppressWarnings("rawtypes")
     public Object getAdapter(final Class adapter) {
+        if (adapter.isInstance(this)) return this;
         if (adapter.isInstance(model)) return model;
         Object o = model.getAdapter(adapter, TCFNode.this);
         if (o != null) return o;

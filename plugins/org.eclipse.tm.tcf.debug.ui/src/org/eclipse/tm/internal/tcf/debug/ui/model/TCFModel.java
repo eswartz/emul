@@ -94,7 +94,6 @@ import org.eclipse.tm.internal.tcf.debug.ui.commands.StepOverCommand;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.StepReturnCommand;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.SuspendCommand;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.TerminateCommand;
-import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode.TCFData;
 import org.eclipse.tm.tcf.core.Command;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IErrorReport;
@@ -642,10 +641,9 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 if (generation != auto_disconnect_generation) return;
                 if (launch_node == null) return;
                 if (launch_node.isDisposed()) return;
-                TCFData<TCFNode[]> children = launch_node.getFilteredChildren();
+                TCFChildren children = launch_node.getFilteredChildren();
                 if (!children.validate(this)) return;
-                TCFNode[] arr = children.getData();
-                if (arr != null && arr.length > 0) return;
+                if (children.size() > 0) return;
                 launch.onLastContextRemoved();
             }
         });

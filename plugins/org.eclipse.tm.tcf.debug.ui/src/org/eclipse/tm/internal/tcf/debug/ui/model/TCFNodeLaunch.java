@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,9 +11,7 @@
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -31,22 +29,22 @@ import org.eclipse.tm.tcf.util.TCFDataCache;
 public class TCFNodeLaunch extends TCFNode implements ISymbolOwner {
 
     private final TCFChildrenExecContext children;
-    private final TCFData<TCFNode[]> filtered_children;
+    private final TCFChildren filtered_children;
     private final Map<String,TCFNodeSymbol> symbols = new HashMap<String,TCFNodeSymbol>();
 
     TCFNodeLaunch(final TCFModel model) {
         super(model);
         children = new TCFChildrenExecContext(this);
-        filtered_children = new TCFData<TCFNode[]>(channel) {
+        filtered_children = new TCFChildren(this) {
             @Override
             protected boolean startDataRetrieval() {
                 Set<String> filter = model.getLaunch().getContextFilter();
                 if (filter == null) {
                     if (!children.validate(this)) return false;
-                    set(null, children.getError(), children.toArray());
+                    set(null, children.getError(), children.getData());
                     return true;
                 }
-                Set<TCFNode> nodes = new HashSet<TCFNode>();
+                Map<String,TCFNode> nodes = new HashMap<String,TCFNode>();
                 for (String id : filter) {
                     if (!model.createNode(id, this)) return false;
                     if (isValid()) {
@@ -54,13 +52,16 @@ public class TCFNodeLaunch extends TCFNode implements ISymbolOwner {
                         reset();
                     }
                     else {
-                        nodes.add(model.getNode(id));
+                        nodes.put(id, model.getNode(id));
                     }
                 }
-                TCFNode[] array = nodes.toArray(new TCFNode[nodes.size()]);
-                Arrays.sort(array);
-                set(null, null, array);
+                set(null, null, nodes);
                 return true;
+            }
+            @Override
+            public void dispose() {
+                getNodes().clear();
+                super.dispose();
             }
         };
         // Set initial selection in Debug View
@@ -83,16 +84,6 @@ public class TCFNodeLaunch extends TCFNode implements ISymbolOwner {
                 done = true;
             }
         });
-    }
-
-    private boolean searchSuspendedThreads(TCFDataCache<TCFNode[]> c, ArrayList<TCFNodeExecContext> nodes, Runnable r) {
-        if (!c.validate(r)) return false;
-        TCFNode[] arr = c.getData();
-        if (arr == null) return true;
-        for (TCFNode n : arr) {
-            if (!searchSuspendedThreads((TCFNodeExecContext)n, nodes, r)) return false;
-        }
-        return true;
     }
 
     private boolean searchSuspendedThreads(TCFChildren c, ArrayList<TCFNodeExecContext> nodes, Runnable r) {
@@ -129,8 +120,7 @@ public class TCFNodeLaunch extends TCFNode implements ISymbolOwner {
     protected boolean getData(IChildrenCountUpdate result, Runnable done) {
         if (IDebugUIConstants.ID_DEBUG_VIEW.equals(result.getPresentationContext().getId())) {
             if (!filtered_children.validate(done)) return false;
-            TCFNode[] arr = filtered_children.getData();
-            result.setChildCount(arr == null ? 0 : arr.length);
+            result.setChildCount(filtered_children.size());
         }
         else {
             result.setChildCount(0);
@@ -141,19 +131,7 @@ public class TCFNodeLaunch extends TCFNode implements ISymbolOwner {
     @Override
     protected boolean getData(IChildrenUpdate result, Runnable done) {
         if (IDebugUIConstants.ID_DEBUG_VIEW.equals(result.getPresentationContext().getId())) {
-            if (!filtered_children.validate(done)) return false;
-            TCFNode[] arr = filtered_children.getData();
-            if (arr != null) {
-                int offset = 0;
-                int r_offset = result.getOffset();
-                int r_length = result.getLength();
-                for (TCFNode n : arr) {
-                    if (offset >= r_offset && offset < r_offset + r_length) {
-                        result.setChild(n, offset);
-                    }
-                    offset++;
-                }
-            }
+            return filtered_children.getData(result, done);
         }
         return true;
     }
@@ -162,8 +140,7 @@ public class TCFNodeLaunch extends TCFNode implements ISymbolOwner {
     protected boolean getData(IHasChildrenUpdate result, Runnable done) {
         if (IDebugUIConstants.ID_DEBUG_VIEW.equals(result.getPresentationContext().getId())) {
             if (!filtered_children.validate(done)) return false;
-            TCFNode[] arr = filtered_children.getData();
-            result.setHasChilren(arr != null && arr.length > 0);
+            result.setHasChilren(filtered_children.size() > 0);
         }
         else {
             result.setHasChilren(false);
@@ -197,11 +174,11 @@ public class TCFNodeLaunch extends TCFNode implements ISymbolOwner {
         symbols.remove(s.id);
     }
 
-    public TCFChildrenExecContext getChildren() {
+    public TCFChildren getChildren() {
         return children;
     }
 
-    public TCFData<TCFNode[]> getFilteredChildren() {
+    public TCFChildren getFilteredChildren() {
         return filtered_children;
     }
 }

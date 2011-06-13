@@ -61,6 +61,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     private final TCFData<Collection<Map<String,Object>>> signal_list;
     private final TCFData<SignalMask[]> signal_mask;
     private final TCFData<TCFNodeExecContext> memory_node;
+    private final TCFData<String> full_name;
 
     private LinkedHashMap<BigInteger,TCFDataCache<TCFSourceRef>> line_info_lookup_cache;
     private LinkedHashMap<BigInteger,TCFDataCache<TCFFunctionRef>> func_info_lookup_cache;
@@ -411,6 +412,44 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                 return true;
             }
         };
+        full_name = new TCFData<String>(channel) {
+            @Override
+            protected boolean startDataRetrieval() {
+                if (!run_context.validate(this)) return false;
+                IRunControl.RunControlContext ctx = run_context.getData();
+                String res = null;
+                if (ctx != null) {
+                    res = ctx.getName();
+                    if (res == null) {
+                        res = ctx.getID();
+                    }
+                    else {
+                        // Add ancestor names
+                        TCFNodeExecContext p = TCFNodeExecContext.this;
+                        ArrayList<String> lst = new ArrayList<String>();
+                        lst.add(res);
+                        while (p.parent instanceof TCFNodeExecContext) {
+                            p = (TCFNodeExecContext)p.parent;
+                            TCFDataCache<IRunControl.RunControlContext> run_ctx_cache = p.getRunContext();
+                            if (!run_ctx_cache.validate(this)) return false;
+                            IRunControl.RunControlContext run_ctx_data = run_ctx_cache.getData();
+                            String name = null;
+                            if (run_ctx_data != null) name = run_ctx_data.getName();
+                            if (name == null) name = "";
+                            lst.add(name);
+                        }
+                        StringBuffer bf = new StringBuffer();
+                        for (int i = lst.size(); i > 0; i--) {
+                            bf.append('/');
+                            bf.append(lst.get(i - 1));
+                        }
+                        res = bf.toString();
+                    }
+                }
+                set(null, null, res);
+                return true;
+            }
+        };
     }
 
     @Override
@@ -654,6 +693,15 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         return children_exec;
     }
 
+    /**
+     * Get context full name - including all ancestor names.
+     * Return context ID if the context does not have a name.
+     * @return cache item with the context full name.
+     */
+    public TCFDataCache<String> getFullName() {
+        return full_name;
+    }
+
     public void addSymbol(TCFNodeSymbol s) {
         assert symbols.get(s.id) == null;
         symbols.put(s.id, s);
@@ -798,8 +846,10 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
             if (ctx != null) children = children_modules;
         }
         if (children == null) return true;
-        if (!children.validate(done)) return false;
-        if (children == children_stack) last_stack_trace = children_stack.toArray();
+        if (children == children_stack) {
+            if (!children.validate(done)) return false;
+            last_stack_trace = children_stack.toArray();
+        }
         return children.getData(result, done);
     }
 
@@ -1056,6 +1106,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
 
     void onContextChanged(IRunControl.RunControlContext context) {
         assert !isDisposed();
+        full_name.reset();
         run_context.reset(context);
         memory_node.reset();
         signal_mask.reset();
@@ -1063,8 +1114,13 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         children_stack.reset();
         children_stack.onSourceMappingChange();
         children_regs.reset();
+        children_exec.onAncestorContextChanged();
         for (TCFNodeSymbol s : symbols.values()) s.onMemoryMapChanged();
         postAllChangedDelta();
+    }
+
+    void onAncestorContextChanged() {
+        full_name.reset();
     }
 
     void onContextAdded(IMemory.MemoryContext context) {

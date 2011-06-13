@@ -1,8 +1,19 @@
+/*******************************************************************************
+ * Copyright (c) 2011 Wind River Systems, Inc. and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Wind River Systems - initial API and implementation
+ *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.ui.commands;
 
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -39,14 +50,15 @@ import org.eclipse.tm.internal.tcf.debug.launch.TCFLaunchDelegate;
 import org.eclipse.tm.internal.tcf.debug.model.TCFMemoryRegion;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
+import org.eclipse.tm.internal.tcf.debug.ui.model.TCFChildren;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModel;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExecContext;
+import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeLaunch;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.services.IMemory;
 import org.eclipse.tm.tcf.services.IMemoryMap;
-import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 import org.eclipse.tm.tcf.util.TCFTask;
 
@@ -54,7 +66,7 @@ public class MemoryMapWidget {
 
 
     private static final int
-        SIZING_TABLE_WIDTH = 800,
+        SIZING_TABLE_WIDTH = 700,
         SIZING_TABLE_HEIGHT = 300;
 
     private static final String[] column_names = {
@@ -79,11 +91,13 @@ public class MemoryMapWidget {
         new HashMap<String,ArrayList<IMemoryMap.MemoryRegion>>();
     private final ArrayList<IMemoryMap.MemoryRegion> target_map =
         new ArrayList<IMemoryMap.MemoryRegion>();
-    private TCFNodeExecContext node;
+    private final HashMap<String,TCFNodeExecContext> target_map_nodes =
+        new HashMap<String,TCFNodeExecContext>();
+    private TCFNodeExecContext selected_mem_map_node;
     private IMemory.MemoryContext mem_ctx;
     private ILaunchConfiguration cfg;
     private final HashSet<String> loaded_files = new HashSet<String>();
-    private String mem_map_id;
+    private String selected_mem_map_id;
 
     private final IStructuredContentProvider content_provider = new IStructuredContentProvider() {
 
@@ -187,11 +201,10 @@ public class MemoryMapWidget {
         }
         createContextText(composite);
         createMemoryMapTable(composite);
-        table_viewer.setInput(ctx_text.getText());
     }
 
     public String getMemoryMapID() {
-        return mem_map_id;
+        return selected_mem_map_id;
     }
 
     private void createContextText(Composite parent) {
@@ -212,7 +225,12 @@ public class MemoryMapWidget {
         ctx_text.setFont(font);
         ctx_text.addModifyListener(new ModifyListener() {
             public void modifyText(ModifyEvent e) {
-                table_viewer.setInput(ctx_text.getText());
+                selected_mem_map_id = ctx_text.getText();
+                selected_mem_map_node = target_map_nodes.get(selected_mem_map_id);
+                loadTargetMemoryMap();
+                table_viewer.setInput(selected_mem_map_id);
+                if (selected_mem_map_id.length() == 0) selected_mem_map_id = null;
+                update_map_buttons.run();
             }
         });
     }
@@ -356,10 +374,10 @@ public class MemoryMapWidget {
                 IMemoryMap.MemoryRegion r = (IMemoryMap.MemoryRegion)((IStructuredSelection)
                         table_viewer.getSelection()).getFirstElement();
                 boolean manual = r != null && r.getProperties().get(IMemoryMap.PROP_ID) != null;
-                button_add.setEnabled(mem_map_id != null);
+                button_add.setEnabled(selected_mem_map_id != null);
                 button_edit.setEnabled(r != null);
                 button_remove.setEnabled(manual);
-                item_add.setEnabled(mem_map_id != null);
+                item_add.setEnabled(selected_mem_map_id != null);
                 item_edit.setEnabled(r != null);
                 item_remove.setEnabled(manual);
             }
@@ -386,19 +404,24 @@ public class MemoryMapWidget {
         }
     }
 
-    private void readMemoryMapAttribute() throws Exception {
+    private void readMemoryMapAttribute() {
         cur_maps.clear();
-        new TCFTask<Boolean>() {
-            public void run() {
-                try {
-                    TCFLaunchDelegate.getMemMapsAttribute(cur_maps, cfg);
-                    done(true);
+        try {
+            new TCFTask<Boolean>() {
+                public void run() {
+                    try {
+                        TCFLaunchDelegate.getMemMapsAttribute(cur_maps, cfg);
+                        done(true);
+                    }
+                    catch (Exception e) {
+                        error(e);
+                    }
                 }
-                catch (Exception e) {
-                    error(e);
-                }
-            }
-        }.getE();
+            }.get();
+        }
+        catch (Exception x) {
+            Activator.log("Invalid launch cofiguration attribute", x);
+        }
     }
 
     private void writeMemoryMapAttribute(ILaunchConfigurationWorkingCopy copy) throws Exception {
@@ -424,103 +447,153 @@ public class MemoryMapWidget {
         this.cfg = cfg;
         cur_maps.clear();
         org_maps.clear();
-        target_map.clear();
-        mem_map_id = channel == null ? null : new TCFTask<String>(channel) {
-            public void run() {
-                TCFDataCache<TCFNodeExecContext> mem_cache = model.searchMemoryContext(selection);
-                if (mem_cache == null) {
-                    error(new Exception("Context does not provide memory access"));
-                    return;
-                }
-                if (!mem_cache.validate(this)) return;
-                if (mem_cache.getError() != null) {
-                    error(mem_cache.getError());
-                    return;
-                }
-                node = mem_cache.getData();
-                if (node != null) {
-                    TCFDataCache<TCFNodeExecContext.MemoryRegion[]> dc = node.getMemoryMap();
-                    if (!dc.validate(this)) return;
-                    if (dc.getError() != null) {
-                        error(dc.getError());
-                        return;
-                    }
-                    if (dc.getData() != null) {
-                        for (TCFNodeExecContext.MemoryRegion m : dc.getData()) {
-                            Map<String,Object> props = m.region.getProperties();
-                            if (props.get(IMemoryMap.PROP_ID) != null) {
-                                String fnm = m.region.getFileName();
-                                if (fnm != null) loaded_files.add(fnm);
-                            }
-                            else {
-                                target_map.add(new TCFMemoryRegion(props));
-                            }
-                        }
-                    }
-                }
-                String id = null;
-                if (node != null) {
-                    mem_ctx = node.getMemoryContext().getData();
-                    if (mem_ctx != null) {
-                        id = mem_ctx.getName();
-                        if (id == null) {
-                            id = mem_ctx.getID();
-                        }
-                        else {
-                            // Get full name
-                            TCFNodeExecContext p = node;
-                            ArrayList<String> lst = new ArrayList<String>();
-                            lst.add(id);
-                            while (p.getParent() instanceof TCFNodeExecContext) {
-                                p = (TCFNodeExecContext)p.getParent();
-                                TCFDataCache<IRunControl.RunControlContext> run_ctx_cache = p.getRunContext();
-                                if (!run_ctx_cache.validate(this)) return;
-                                IRunControl.RunControlContext run_ctx_data = run_ctx_cache.getData();
-                                String name = null;
-                                if (run_ctx_data != null) name = run_ctx_data.getName();
-                                if (name == null) name = "";
-                                lst.add(name);
-                            }
-                            StringBuffer bf = new StringBuffer();
-                            for (int i = lst.size(); i > 0; i--) {
-                                bf.append('/');
-                                bf.append(lst.get(i - 1));
-                            }
-                            id = bf.toString();
-                        }
-                    }
-                }
-                done(id);
-            }
-        }.getE();
-        try {
-            readMemoryMapAttribute();
-        }
-        catch (Throwable x) {
-            Activator.log("Invalid launch cofiguration attribute", x);
-        }
+        loadTargetMemoryNodes();
+        readMemoryMapAttribute();
         for (String id : cur_maps.keySet()) {
             org_maps.put(id, new ArrayList<IMemoryMap.MemoryRegion>(cur_maps.get(id)));
         }
         // Update controls
+        String map_id = getSelectedMemoryNode();
+        HashSet<String> ids = new HashSet<String>(target_map_nodes.keySet());
+        if (map_id != null) ids.add(map_id);
+        ids.addAll(cur_maps.keySet());
+        String[] arr = ids.toArray(new String[ids.size()]);
+        Arrays.sort(arr);
         ctx_text.removeAll();
-        if (mem_map_id != null && cur_maps.get(mem_map_id) == null) ctx_text.add(mem_map_id);
-        for (String id : cur_maps.keySet()) ctx_text.add(id);
-        if (mem_map_id != null) ctx_text.setText(mem_map_id);
-        table_viewer.setInput(mem_map_id == null ? "" : mem_map_id);
-        update_map_buttons.run();
+        for (String id : arr) ctx_text.add(id);
+        if (map_id == null && arr.length > 0) map_id = arr[0];
+        if (map_id == null) map_id = "";
+        ctx_text.setText(map_id);
+    }
+
+    private String getSelectedMemoryNode() {
+        if (channel == null) return null;
+        try {
+            return new TCFTask<String>(channel) {
+                public void run() {
+                    TCFDataCache<TCFNodeExecContext> mem_cache = model.searchMemoryContext(selection);
+                    if (mem_cache == null) {
+                        error(new Exception("Context does not provide memory access"));
+                        return;
+                    }
+                    if (!mem_cache.validate(this)) return;
+                    if (mem_cache.getError() != null) {
+                        error(mem_cache.getError());
+                        return;
+                    }
+                    String id = null;
+                    TCFNodeExecContext node = mem_cache.getData();
+                    if (node != null) {
+                        TCFDataCache<String> name_cache = node.getFullName();
+                        if (!name_cache.validate(this)) return;
+                        id = name_cache.getData();
+                    }
+                    done(id);
+                }
+            }.get();
+        }
+        catch (Exception x) {
+            if (channel.getState() != IChannel.STATE_OPEN) return null;
+            Activator.log("Cannot get selected memory node", x);
+            return null;
+        }
+    }
+
+    private void loadTargetMemoryNodes() {
+        target_map_nodes.clear();
+        if (channel == null) return;
+        try {
+            new TCFTask<Boolean>(channel) {
+                public void run() {
+                    TCFNodeLaunch n = model.getRootNode();
+                    if (!collectMemoryNodes(n.getFilteredChildren())) return;
+                    done(true);
+                }
+                private boolean collectMemoryNodes(TCFChildren children) {
+                    if (!children.validate(this)) return false;
+                    Map<String,TCFNode> m = children.getData();
+                    if (m != null) {
+                        for (TCFNode n : m.values()) {
+                            if (n instanceof TCFNodeExecContext) {
+                                TCFNodeExecContext exe = (TCFNodeExecContext)n;
+                                if (!collectMemoryNodes(exe.getChildren())) return false;
+                                TCFDataCache<IMemory.MemoryContext> mem = exe.getMemoryContext();
+                                if (!mem.validate(this)) return false;
+                                if (mem.getData() != null) {
+                                    TCFDataCache<String> nm = exe.getFullName();
+                                    if (!nm.validate(this)) return false;
+                                    String s = nm.getData();
+                                    if (s != null) target_map_nodes.put(s, exe);
+                                }
+                            }
+                        }
+                    }
+                    return true;
+                }
+            }.get();
+        }
+        catch (Exception x) {
+            if (channel.getState() != IChannel.STATE_OPEN) return;
+            Activator.log("Cannot load target memory context info", x);
+        }
+    }
+
+    private void loadTargetMemoryMap() {
+        loaded_files.clear();
+        target_map.clear();
+        mem_ctx = null;
+        if (channel == null) return;
+        try {
+            new TCFTask<Boolean>(channel) {
+                public void run() {
+                    if (selected_mem_map_node != null && !selected_mem_map_node.isDisposed()) {
+                        TCFDataCache<IMemory.MemoryContext> mem_cache = selected_mem_map_node.getMemoryContext();
+                        if (!mem_cache.validate(this)) return;
+                        if (mem_cache.getError() != null) {
+                            error(mem_cache.getError());
+                            return;
+                        }
+                        mem_ctx = mem_cache.getData();
+                        TCFDataCache<TCFNodeExecContext.MemoryRegion[]> map_cache = selected_mem_map_node.getMemoryMap();
+                        if (!map_cache.validate(this)) return;
+                        if (map_cache.getError() != null) {
+                            error(map_cache.getError());
+                            return;
+                        }
+                        if (map_cache.getData() != null) {
+                            for (TCFNodeExecContext.MemoryRegion m : map_cache.getData()) {
+                                Map<String,Object> props = m.region.getProperties();
+                                if (props.get(IMemoryMap.PROP_ID) != null) {
+                                    String fnm = m.region.getFileName();
+                                    if (fnm != null) loaded_files.add(fnm);
+                                }
+                                else {
+                                    target_map.add(new TCFMemoryRegion(props));
+                                }
+                            }
+                        }
+                    }
+                    done(true);
+                }
+            }.get();
+        }
+        catch (Exception x) {
+            if (channel.getState() != IChannel.STATE_OPEN) return;
+            Activator.log("Cannot load target memory map", x);
+        }
     }
 
     public boolean saveData(ILaunchConfigurationWorkingCopy copy) throws Exception {
-        if (mem_map_id == null) return false;
         boolean loaded_files_ok = true;
-        ArrayList<IMemoryMap.MemoryRegion> lst = cur_maps.get(mem_map_id);
-        if (lst != null) {
-            for (IMemoryMap.MemoryRegion r : lst) {
-                String fnm = r.getFileName();
-                if (fnm != null && !loaded_files.contains(fnm)) loaded_files_ok = false;
+        if (selected_mem_map_id != null) {
+            ArrayList<IMemoryMap.MemoryRegion> lst = cur_maps.get(selected_mem_map_id);
+            if (lst != null) {
+                for (IMemoryMap.MemoryRegion r : lst) {
+                    String fnm = r.getFileName();
+                    if (fnm != null && !loaded_files.contains(fnm)) loaded_files_ok = false;
+                }
+                if (lst.size() == 0) cur_maps.remove(selected_mem_map_id);
             }
-            if (lst.size() == 0) cur_maps.remove(mem_map_id);
         }
         if (!loaded_files_ok || !org_maps.equals(cur_maps)) {
             writeMemoryMapAttribute(copy);

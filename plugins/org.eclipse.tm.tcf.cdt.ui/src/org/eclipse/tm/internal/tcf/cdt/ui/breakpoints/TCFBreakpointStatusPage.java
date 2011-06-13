@@ -153,11 +153,13 @@ public class TCFBreakpointStatusPage extends PropertyPage {
         private StatusItem getNodeItem(StatusItem root, TCFNode node) {
             TCFNode parent = node.getParent();
             if (parent == null) return root;
-            if (parent instanceof TCFNodeLaunch) {
-                Set<String> filter = launch.getContextFilter();
-                if (filter != null && !filter.contains(node.getID())) return null;
+            StatusItem x = null; // parent status item
+            Set<String> filter = launch.getContextFilter();
+            if (filter != null) {
+                if (filter.contains(node.getID())) x = root;
+                else if (parent instanceof TCFNodeLaunch) return null;
             }
-            StatusItem x = getNodeItem(root, parent);
+            if (x == null) x = getNodeItem(root, parent);
             if (x == null) return null;
             if (x.children == null) x.children = new ArrayList<StatusItem>();
             for (StatusItem y : x.children) {
