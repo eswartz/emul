@@ -510,7 +510,7 @@ static void reply_setstat(char * token, OutputStream * out, int err) {
     write_stream(out, MARKER_EOM);
 }
 
-static void post_io_requst(OpenFileInfo * handle);
+static void post_io_request(OpenFileInfo * handle);
 
 static void done_io_request(void * arg) {
     int err = 0;
@@ -596,10 +596,10 @@ static void done_io_request(void * arg) {
 
     loc_free(req->info.u.fio.bufp);
     loc_free(req);
-    post_io_requst(handle);
+    post_io_request(handle);
 }
 
-static void post_io_requst(OpenFileInfo * handle) {
+static void post_io_request(OpenFileInfo * handle) {
     while (handle->posted_req == NULL && !list_is_empty(&handle->link_reqs)) {
         LINK * link = handle->link_reqs.next;
         IORequest * req = reqs2req(link);
@@ -693,7 +693,7 @@ static void command_close(char * token, Channel * c) {
         IORequest * req = create_io_request(token, h, REQ_CLOSE);
         req->info.type = AsyncReqClose;
         req->info.u.fio.fd = h->file;
-        post_io_requst(h);
+        post_io_request(h);
         return;
     }
 
@@ -730,7 +730,7 @@ static void command_read(char * token, Channel * c) {
         req->info.u.fio.fd = h->file;
         req->info.u.fio.bufp = loc_alloc(len);
         req->info.u.fio.bufsz = len;
-        post_io_requst(h);
+        post_io_request(h);
     }
 }
 
@@ -782,7 +782,7 @@ static void command_write(char * token, Channel * c) {
         req->info.u.fio.bufp = loc_alloc(len);
         req->info.u.fio.bufsz = len;
         memcpy(req->info.u.fio.bufp, buf, len);
-        post_io_requst(h);
+        post_io_request(h);
     }
 }
 
@@ -830,7 +830,7 @@ static void command_fstat(char * token, Channel * c) {
     }
     else {
         create_io_request(token, h, REQ_FSTAT);
-        post_io_requst(h);
+        post_io_request(h);
     }
 }
 
@@ -898,7 +898,7 @@ static void command_fsetstat(char * token, Channel * c) {
     else {
         IORequest * req = create_io_request(token, h, REQ_FSETSTAT);
         req->attrs = attrs;
-        post_io_requst(h);
+        post_io_request(h);
     }
 }
 
