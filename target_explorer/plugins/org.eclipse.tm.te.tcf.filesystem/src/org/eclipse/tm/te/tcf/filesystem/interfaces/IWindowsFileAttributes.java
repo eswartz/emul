@@ -12,7 +12,7 @@ package org.eclipse.tm.te.tcf.filesystem.interfaces;
 /**
  * Target Explorer: Windows specific file system attribute definitions.
  *
- * @see MSDN library, File Attribute Constants for more details.
+ * @see <nop>Windows File Attribute Constants for more details.
  */
 public interface IWindowsFileAttributes {
 
