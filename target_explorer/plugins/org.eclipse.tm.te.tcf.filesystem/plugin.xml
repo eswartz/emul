@@ -39,6 +39,20 @@
                   id="org.eclipse.tm.te.tcf.filesystem.navigator.sorter">
             </commonSorter>
       </navigatorContent>
+      <commonFilter
+            activeByDefault="true"
+            class="org.eclipse.tm.te.tcf.filesystem.filters.HiddenFilesViewerFilter"
+            id="org.eclipse.tm.te.tcf.filesystem.navigator.filter.hiddenFiles"
+            name="%FSTreeViewerFilter.hiddenFiles"
+            visibleInUI="true">
+      </commonFilter>
+      <commonFilter
+            activeByDefault="true"
+            class="org.eclipse.tm.te.tcf.filesystem.filters.SystemFilesViewerFilter"
+            id="org.eclipse.tm.te.tcf.filesystem.navigator.filter.systemFiles"
+            name="%FSTreeViewerFilter.systemFiles"
+            visibleInUI="true">
+      </commonFilter>
    </extension>
 
 <!-- Target Explorer Details Editor page contributions -->
