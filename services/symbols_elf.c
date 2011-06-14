@@ -1687,12 +1687,19 @@ int get_symbol_value(const Symbol * sym, void ** value, size_t * size, int * big
                 static U1_T bf[32];
                 StackFrame * frame = NULL;
                 RegisterDefinition * def = v.mRegister;
-                if (v.mSize > sizeof(bf)) exception(ERR_BUFFER_OVERFLOW);
+                ContextAddress sym_size = def->size;
+                unsigned val_offs = 0;
+                unsigned val_size = 0;
+
+                if (get_symbol_size(sym, &sym_size) < 0) exception(errno);
+                if (sym_size > sizeof(bf)) exception(ERR_BUFFER_OVERFLOW);
                 if (get_frame_info(v.mContext, v.mFrame, &frame) < 0) exception(errno);
-                if (read_reg_bytes(frame, def, 0, def->size, bf) < 0) exception(errno);
-                *size = v.mSize;
+                val_size = def->size < sym_size ? (unsigned)def->size : (unsigned)sym_size;
+                if (def->big_endian) val_offs = (unsigned)def->size - val_size;
+                if (read_reg_bytes(frame, def, val_offs, val_size, bf) < 0) exception(errno);
                 *value = bf;
-                *big_endian = v.mBigEndian;
+                *size = val_size;
+                *big_endian = def->big_endian;
             }
             clear_trap(&trap);
             return 0;
