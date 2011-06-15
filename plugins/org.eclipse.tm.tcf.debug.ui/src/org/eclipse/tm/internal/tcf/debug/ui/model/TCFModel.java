@@ -1136,8 +1136,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
      */
     private void refreshLaunchView() {
         // TODO: there should be a better way to refresh Launch View
-        final Throwable error = launch.getError();
-        if (error != null) launch.setError(null);
         synchronized (Device.class) {
             if (display.isDisposed()) return;
             display.asyncExec(new Runnable() {
@@ -1150,7 +1148,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                     }
                 }
             });
-            if (error != null) showMessageBox("TCF Launch Error", error);
         }
     }
 
