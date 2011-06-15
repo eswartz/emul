@@ -20,9 +20,11 @@ import java.util.Map;
 
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunch;
+import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.ui.DebugUITools;
 import org.eclipse.debug.ui.IDebugUIConstants;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.CheckStateChangedEvent;
 import org.eclipse.jface.viewers.CheckboxTreeViewer;
 import org.eclipse.jface.viewers.ICheckStateListener;
@@ -34,6 +36,7 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.tm.internal.tcf.cdt.ui.ImageCache;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFChildren;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModel;
@@ -59,9 +62,6 @@ public class TCFThreadFilterEditor {
         }
         Context(IRunControl.RunControlContext ctx, String sessionId) {
             String name = ctx.getName() != null ? ctx.getName() : ctx.getID();
-            if (sessionId != null) {
-                name += " - " + sessionId;
-            }
             fName = name;
             fSessionId = sessionId;
             fScopeId = sessionId != null ? sessionId + '/' + ctx.getID() : ctx.getID();
@@ -70,15 +70,29 @@ public class TCFThreadFilterEditor {
             fIsContainer = ctx.isContainer();
         }
     }
-    
+
     public class CheckHandler implements ICheckStateListener {
         public void checkStateChanged(CheckStateChangedEvent event) {
             Object element = event.getElement();
+            boolean checked = event.getChecked();
+            if (checked) {
+                getThreadViewer().expandToLevel(element, 1);
+            }
             if (element instanceof Context) {
                 Context ctx = (Context) element;
-                getThreadViewer().expandToLevel(ctx, 1);
-                checkContext(ctx, event.getChecked());
+                checkContext(ctx, checked);
                 updateParentCheckState(ctx);
+            } else if (element instanceof ILaunch) {
+                checkLaunch((ILaunch) element, checked);
+            }
+        }
+
+        private void checkLaunch(ILaunch launch, boolean checked) {
+            getThreadViewer().setChecked(launch, checked);
+            getThreadViewer().setGrayed(launch, false);
+            Context[] threads = syncGetContainers((TCFLaunch) launch);
+            for (int i = 0; i < threads.length; i++) {
+                checkContext(threads[i], checked);
             }
         }
 
@@ -87,7 +101,7 @@ public class TCFThreadFilterEditor {
          * is checked, attempt to check all of the containers threads by
          * default. When a container is unchecked, uncheck all its threads.
          */
-        protected void checkContext(Context ctx, boolean checked) {
+        private void checkContext(Context ctx, boolean checked) {
             if (ctx.fIsContainer) {
                 Context[] threads = syncGetThreads(ctx);
                 for (int i = 0; i < threads.length; i++) {
@@ -100,17 +114,21 @@ public class TCFThreadFilterEditor {
         /**
          * Check or uncheck a thread.
          */
-        protected void checkThread(Context thread, boolean checked) {
+        private void checkThread(Context thread, boolean checked) {
             getThreadViewer().setChecked(thread, checked);
             getThreadViewer().setGrayed(thread, false);
         }
 
-        protected void updateParentCheckState(Context thread) {
-            Context parent = getContainer(thread);
+        private void updateParentCheckState(Context thread) {
+            Context[] threads;
+            Object parent = getContainer(thread);
             if (parent == null) {
-                return;
+                parent = getLaunch(thread);
+                if (parent == null) return;
+                threads = syncGetContainers((TCFLaunch) parent);
+            } else {
+                threads = syncGetThreads((Context) parent);
             }
-            Context[] threads = syncGetThreads(parent);
             int checkedNumber = 0;
             int grayedNumber = 0;
             for (int i = 0; i < threads.length; i++) {
@@ -129,7 +147,9 @@ public class TCFThreadFilterEditor {
             } else {
                 getThreadViewer().setGrayChecked(parent, true);
             }
-            updateParentCheckState(parent);
+            if (parent instanceof Context) {
+                updateParentCheckState((Context) parent);
+            }
         }
     }
 
@@ -139,18 +159,11 @@ public class TCFThreadFilterEditor {
             if (parent instanceof Context) {
                 return syncGetThreads((Context) parent);
             }
-
+            if (parent instanceof ILaunch) {
+                return syncGetContainers((TCFLaunch) parent);
+            }
             if (parent instanceof ILaunchManager) {
-                List<Object> children = new ArrayList<Object>();
-                ILaunch[] launches = ((ILaunchManager) parent).getLaunches();
-                Context[] targetArray;
-                for (int i = 0; i < launches.length; i++) {
-                    if (launches[i] instanceof TCFLaunch) {
-                        targetArray = syncGetContainers((TCFLaunch) launches[i]);
-                        children.addAll(Arrays.asList(targetArray));
-                    }
-                }
-                return children.toArray();
+                return getLaunches();
             }
             return new Object[0];
         }
@@ -182,7 +195,7 @@ public class TCFThreadFilterEditor {
     }
 
     public class ThreadFilterLabelProvider extends LabelProvider  {
-        
+
         @Override
         public Image getImage(Object element) {
             if (element instanceof Context) {
@@ -193,20 +206,28 @@ public class TCFThreadFilterEditor {
                     return DebugUITools.getImage(IDebugUIConstants.IMG_OBJS_THREAD_RUNNING);
                 }
             }
+            if (element instanceof ILaunch) {
+                ImageDescriptor desc = DebugUITools.getDefaultImageDescriptor(element);
+                if (desc != null) return ImageCache.getImage(desc);
+            }
             return null;
         }
-        
+
         @Override
         public String getText(Object element) {
             if (element instanceof Context) {
                 Context ctx = (Context) element;
                 return ctx.fName;
             }
+            if (element instanceof ILaunch) {
+                ILaunchConfiguration config = ((ILaunch) element).getLaunchConfiguration();
+                if (config != null) return config.getName();
+            }
             return "?";
         }
     }
 
-    
+
     private TCFBreakpointThreadFilterPage fPage;
     private CheckboxTreeViewer fThreadViewer;
     private final ThreadFilterContentProvider fContentProvider;
@@ -241,6 +262,22 @@ public class TCFThreadFilterEditor {
         fThreadViewer.setLabelProvider(new ThreadFilterLabelProvider());
         fThreadViewer.setInput(DebugPlugin.getDefault().getLaunchManager());
         setInitialCheckedState();
+    }
+
+    protected ILaunch[] getLaunches() {
+        Object input = fThreadViewer.getInput();
+        if (!(input instanceof ILaunchManager)) {
+            return new ILaunch[0];
+        }
+        List<ILaunch> tcfLaunches = new ArrayList<ILaunch>();
+        ILaunch[] launches = ((ILaunchManager) input).getLaunches();
+        for (int i = 0; i < launches.length; i++) {
+            ILaunch launch = launches[i];
+            if (launch instanceof TCFLaunch && !launch.isTerminated()) {
+                tcfLaunches.add(launch);
+            }
+        }
+        return tcfLaunches.toArray(new ILaunch[tcfLaunches.size()]);
     }
 
     /**
@@ -279,14 +316,15 @@ public class TCFThreadFilterEditor {
         }
         String[] ctxIds = filterExtension.getThreadFilters();
 
+        // expand all to realize tree items
+        getThreadViewer().expandAll();
+
         if (ctxIds == null) {
-            Context[] contexts = getRootContexts();
-            for (Context context : contexts) {
-                fCheckHandler.checkContext(context, true);
+            ILaunch[] launches = getLaunches();
+            for (ILaunch launch : launches) {
+                fCheckHandler.checkLaunch(launch, true);
             }
         } else if (ctxIds.length != 0) {
-            // expand all to realize tree items
-            getThreadViewer().expandAll();
             for (int i = 0; i < ctxIds.length; i++) {
                 String id = ctxIds[i];
                 Context ctx = getContext(id);
@@ -302,9 +340,9 @@ public class TCFThreadFilterEditor {
                     }
                 }
             }
-            // expand checked items only
-            getThreadViewer().setExpandedElements(getThreadViewer().getCheckedElements());
         }
+        // expand checked items only
+        getThreadViewer().setExpandedElements(getThreadViewer().getCheckedElements());
     }
 
     private Context getContainer(Context child) {
@@ -324,17 +362,19 @@ public class TCFThreadFilterEditor {
         CheckboxTreeViewer viewer = getThreadViewer();
         Object[] elements = viewer.getCheckedElements();
         String[] threadIds;
-        if (elements.length == fContexts.size()) {
-            threadIds = null;
-        } else {
-            List<String> checkedIds = new ArrayList<String>();
-            for (int i = 0; i < elements.length; ++i) {
+        List<String> checkedIds = new ArrayList<String>();
+        for (int i = 0; i < elements.length; ++i) {
+            if (elements[i] instanceof Context) {
                 Context ctx = (Context) elements[i];
                 if (!viewer.getGrayed(ctx)) {
                     checkedIds.add(ctx.fScopeId);
                 }
             }
-            threadIds = (String[]) checkedIds.toArray(new String[checkedIds.size()]);
+        }
+        if (checkedIds.size() == fContexts.size()) {
+            threadIds = null;
+        } else {
+            threadIds = checkedIds.toArray(new String[checkedIds.size()]);
         }
         TCFBreakpointScopeExtension filterExtension = fPage.getFilterExtension();
         if (filterExtension == null) {
@@ -366,7 +406,7 @@ public class TCFThreadFilterEditor {
                         containers.add(new Context(runCtx, launchCfgName));
                     }
                 }
-                done((Context[]) containers.toArray(new Context[containers.size()]));
+                done(containers.toArray(new Context[containers.size()]));
             }
         }.getE();
         fContexts.addAll(Arrays.asList(result));
@@ -398,7 +438,7 @@ public class TCFThreadFilterEditor {
                         contexts.add(new Context(runCtx, container));
                     }
                 }
-                done((Context[]) contexts.toArray(new Context[contexts.size()]));
+                done(contexts.toArray(new Context[contexts.size()]));
             }
         }.getE();
         fContextsPerContainer.put(container, result);
