@@ -1110,7 +1110,10 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         run_context.reset(context);
         memory_node.reset();
         signal_mask.reset();
-        state.reset();
+        if (state.isValid()) {
+            TCFContextState s = state.getData();
+            if (s == null || s.is_suspended) state.reset();
+        }
         children_stack.reset();
         children_stack.onSourceMappingChange();
         children_regs.reset();
@@ -1263,7 +1266,10 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     }
 
     void onRegisterValueChanged() {
-        state.reset();
+        if (state.isValid()) {
+            TCFContextState s = state.getData();
+            if (s == null || s.is_suspended) state.reset();
+        }
         address.reset();
         children_stack.onRegisterValueChanged();
         postContentChangedDelta();
