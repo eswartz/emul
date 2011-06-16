@@ -27,6 +27,7 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IViewerInputUpdate;
 import org.eclipse.debug.ui.IDebugUIConstants;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
 import org.eclipse.tm.internal.tcf.debug.model.TCFFunctionRef;
@@ -108,6 +109,11 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         }
     }
 
+    private static class SuspendedChildrenInfo {
+        boolean suspended;
+        boolean suspended_by_bp;
+    }
+
     private final Map<String,TCFNodeSymbol> symbols = new HashMap<String,TCFNodeSymbol>();
 
     private int resumed_cnt;
@@ -115,7 +121,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     private boolean resumed_by_action;
     private TCFNode[] last_stack_trace;
     private String last_label;
-    private String last_image;
+    private ImageDescriptor last_image;
 
     private String hover_expression;
 
@@ -916,6 +922,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     protected boolean getData(ILabelUpdate result, Runnable done) {
         if (!run_context.validate(done)) return false;
         String image_name = null;
+        boolean suspended_by_bp = false;
         StringBuffer label = new StringBuffer();
         Throwable error = run_context.getError();
         if (error != null) {
@@ -952,7 +959,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                         label.append(" (Running)");
                     }
                     else if (resume_pending && last_label != null && last_image != null) {
-                        result.setImageDescriptor(ImageCache.getImageDescriptor(last_image), 0);
+                        result.setImageDescriptor(last_image, 0);
                         result.setLabel(last_label, 0);
                         return true;
                     }
@@ -979,6 +986,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                                     String r = model.getContextActionResult(id);
                                     if (r == null) {
                                         r = state_data.suspend_reason;
+                                        suspended_by_bp = IRunControl.REASON_BREAKPOINT.equals(r);
                                         if (state_data.suspend_params != null) {
                                             String s = (String)state_data.suspend_params.get(IRunControl.STATE_SIGNAL_DESCRIPTION);
                                             if (s == null) s = (String)state_data.suspend_params.get(IRunControl.STATE_SIGNAL_NAME);
@@ -1008,14 +1016,17 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                 }
                 else {
                     // Thread container (process)
-                    Boolean b = hasSuspendedChildren(done);
-                    if (b == null) return false;
-                    if (b.booleanValue()) image_name = ImageCache.IMG_PROCESS_SUSPENDED;
+                    SuspendedChildrenInfo i = new SuspendedChildrenInfo();
+                    if (!hasSuspendedChildren(i, done)) return false;
+                    if (i.suspended) image_name = ImageCache.IMG_PROCESS_SUSPENDED;
                     else image_name = ImageCache.IMG_PROCESS_RUNNING;
+                    suspended_by_bp = i.suspended_by_bp;
                 }
             }
         }
-        result.setImageDescriptor(ImageCache.getImageDescriptor(last_image = image_name), 0);
+        last_image = ImageCache.getImageDescriptor(image_name);
+        if (suspended_by_bp) last_image = ImageCache.addOverlay(last_image, ImageCache.IMG_BREAKPOINT_ENABLED);
+        result.setImageDescriptor(last_image, 0);
         result.setLabel(last_label = label.toString(), 0);
         return true;
     }
@@ -1275,30 +1286,35 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         postContentChangedDelta();
     }
 
-    // Return true if at least one child is suspended.
-    // Return null if waiting for a cache element.
-    private Boolean hasSuspendedChildren(Runnable done) {
-        if (!children_exec.validate(done)) return null;
+    private boolean hasSuspendedChildren(SuspendedChildrenInfo info, Runnable done) {
+        if (!children_exec.validate(done)) return false;
         Map<String,TCFNode> m = children_exec.getData();
-        if (m == null) return false;
+        if (m == null) return true;
         for (TCFNode n : m.values()) {
             if (!(n instanceof TCFNodeExecContext)) continue;
             TCFNodeExecContext e = (TCFNodeExecContext)n;
-            if (!e.run_context.validate(done)) return null;
+            if (!e.run_context.validate(done)) return false;
             IRunControl.RunControlContext ctx = e.run_context.getData();
             if (ctx != null && ctx.hasState()) {
                 TCFDataCache<TCFContextState> state_cache = e.getState();
-                if (!state_cache.validate(done)) return null;
+                if (!state_cache.validate(done)) return false;
                 TCFContextState state_data = state_cache.getData();
-                if (state_data != null && state_data.is_suspended && !e.isNotActive()) return true;
+                if (state_data != null && state_data.is_suspended && !e.isNotActive()) {
+                    info.suspended = true;
+                    String r = model.getContextActionResult(e.id);
+                    if (r == null) r = state_data.suspend_reason;
+                    if (IRunControl.REASON_BREAKPOINT.equals(r)) {
+                        info.suspended_by_bp = true;
+                        return true;
+                    }
+                }
             }
             else {
-                Boolean b = e.hasSuspendedChildren(done);
-                if (b == null) return null;
-                if (b) return true;
+                if (!e.hasSuspendedChildren(info, done)) return false;
+                if (info.suspended_by_bp) return true;
             }
         }
-        return false;
+        return true;
     }
 
     @Override
