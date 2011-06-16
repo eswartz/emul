@@ -983,17 +983,18 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                                     label.append(" (Running)");
                                 }
                                 else {
+                                    String s = null;
                                     String r = model.getContextActionResult(id);
                                     if (r == null) {
                                         r = state_data.suspend_reason;
-                                        suspended_by_bp = IRunControl.REASON_BREAKPOINT.equals(r);
                                         if (state_data.suspend_params != null) {
-                                            String s = (String)state_data.suspend_params.get(IRunControl.STATE_SIGNAL_DESCRIPTION);
+                                            s = (String)state_data.suspend_params.get(IRunControl.STATE_SIGNAL_DESCRIPTION);
                                             if (s == null) s = (String)state_data.suspend_params.get(IRunControl.STATE_SIGNAL_NAME);
-                                            if (s != null) r += ": " + s;
                                         }
                                     }
+                                    suspended_by_bp = IRunControl.REASON_BREAKPOINT.equals(r);
                                     if (r == null) r = "Suspended";
+                                    if (s != null) r += ": " + s;
                                     label.append(" (");
                                     label.append(r);
                                     if (state_data.suspend_params != null) {
