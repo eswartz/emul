@@ -23,8 +23,12 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelProxy;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IViewerUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.ModelDelta;
+import org.eclipse.debug.ui.IDebugUIConstants;
 import org.eclipse.jface.viewers.TreePath;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.swt.widgets.Tree;
+import org.eclipse.swt.widgets.TreeItem;
+import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
 import org.eclipse.tm.tcf.protocol.Protocol;
 
 /**
@@ -47,6 +51,7 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
     private boolean posted;
     private boolean installed;
     private boolean disposed;
+    private boolean realized;
     private long last_update_time;
 
     private final Runnable timer = new Runnable() {
@@ -277,6 +282,10 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
                 int flags = 0;
                 Integer flags_obj = node2flags.get(node);
                 if (flags_obj != null) flags = flags_obj.intValue();
+                if (node == selection) {
+                    // Bug in Eclipse 3.6.1: SELECT delta has no effect without STATE
+                    flags |= IModelDelta.REVEAL | IModelDelta.SELECT | IModelDelta.STATE;
+                }
                 if (node.parent == null) {
                     // The node is TCF launch node
                     if (root.getElement() instanceof TCFNode) return null;
@@ -323,6 +332,36 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
         assert Protocol.isDispatchThread();
         if (disposed) return;
         if (node2flags.isEmpty() && selection.isEmpty()) return;
+        if (!realized) {
+            if (getPresentationContext().getId().equals(IDebugUIConstants.ID_DEBUG_VIEW)) {
+                // Wait until launch manager done creating our launch item in the Debug view.
+                // Deltas do NOT work without the launch item.
+                model.getDisplay().asyncExec(new Runnable() {
+                    boolean found;
+                    public void run() {
+                        TCFLaunch launch = model.getLaunch();
+                        Tree tree = (Tree)getViewer().getControl();
+                        for (TreeItem item : tree.getItems()) {
+                            if (item.getData() == launch) {
+                                found = true;
+                                break;
+                            }
+                        }
+                        Protocol.invokeLater(new Runnable() {
+                            public void run() {
+                                if (found) realized = true;
+                                else last_update_time = System.currentTimeMillis();
+                                post();
+                            }
+                        });
+                    }
+                });
+                return;
+            }
+            else {
+                realized = true;
+            }
+        }
         Object input = getInput();
         int flags = 0;
         if (input instanceof TCFNode) {
@@ -357,12 +396,9 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
             last_update_time = System.currentTimeMillis();
             while (!selection.isEmpty()) {
                 TCFNode node = selection.getFirst();
-                // Bug in Eclipse 3.6.1: SELECT delta has no effect without STATE
-                node2flags.put(node, IModelDelta.SELECT | IModelDelta.STATE);
                 root = new ModelDelta(input, IModelDelta.NO_CHANGE);
                 makeDelta(root, node, node);
                 node2delta.clear();
-                node2flags.clear();
                 if (pending_node != null) break;
                 postDelta(root);
                 selection.remove(node);

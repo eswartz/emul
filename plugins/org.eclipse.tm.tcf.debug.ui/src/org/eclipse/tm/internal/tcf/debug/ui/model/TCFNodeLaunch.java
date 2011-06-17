@@ -19,11 +19,8 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenCountUpd
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IHasChildrenUpdate;
 import org.eclipse.debug.ui.IDebugUIConstants;
-import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
-import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IMemory;
 import org.eclipse.tm.tcf.services.IRunControl;
-import org.eclipse.tm.tcf.util.TCFDataCache;
 
 
 public class TCFNodeLaunch extends TCFNode implements ISymbolOwner {
@@ -64,48 +61,6 @@ public class TCFNodeLaunch extends TCFNode implements ISymbolOwner {
                 super.dispose();
             }
         };
-        // Set initial selection in Debug View
-        Protocol.invokeLater(new Runnable() {
-            boolean done;
-            public void run() {
-                if (done) return;
-                ArrayList<TCFNodeExecContext> nodes = new ArrayList<TCFNodeExecContext>();
-                if (!searchSuspendedThreads(filtered_children, nodes, this)) return;
-                if (nodes.size() == 1) {
-                    TCFNodeExecContext n = nodes.get(0);
-                    model.setDebugViewSelection(n, "Launch");
-                }
-                else {
-                    for (TCFNodeExecContext n : nodes) {
-                        String reason = n.getState().getData().suspend_reason;
-                        model.setDebugViewSelection(n, reason);
-                    }
-                }
-                done = true;
-            }
-        });
-    }
-
-    private boolean searchSuspendedThreads(TCFChildren c, ArrayList<TCFNodeExecContext> nodes, Runnable r) {
-        if (!c.validate(r)) return false;
-        for (TCFNode n : c.toArray()) {
-            if (!searchSuspendedThreads((TCFNodeExecContext)n, nodes, r)) return false;
-        }
-        return true;
-    }
-
-    private boolean searchSuspendedThreads(TCFNodeExecContext n, ArrayList<TCFNodeExecContext> nodes, Runnable r) {
-        TCFDataCache<IRunControl.RunControlContext> run_context = n.getRunContext();
-        if (!run_context.validate(r)) return false;
-        IRunControl.RunControlContext ctx = run_context.getData();
-        if (ctx != null && ctx.hasState()) {
-            TCFDataCache<TCFContextState> state = n.getState();
-            if (!state.validate(r)) return false;
-            TCFContextState s = state.getData();
-            if (s != null && s.is_suspended) nodes.add(n);
-            return true;
-        }
-        return searchSuspendedThreads(n.getChildren(), nodes, r);
     }
 
     @Override

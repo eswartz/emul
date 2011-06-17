@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -477,6 +478,49 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         }
     };
 
+    private class InitialSelection implements Runnable {
+        boolean done;
+        public void run() {
+            if (done) return;
+            ArrayList<TCFNodeExecContext> nodes = new ArrayList<TCFNodeExecContext>();
+            if (!searchSuspendedThreads(launch_node.getFilteredChildren(), nodes)) return;
+            if (nodes.size() == 0) {
+                setDebugViewSelection(launch_node, "Launch");
+            }
+            else if (nodes.size() == 1) {
+                TCFNodeExecContext n = nodes.get(0);
+                setDebugViewSelection(n, "Launch");
+            }
+            else {
+                for (TCFNodeExecContext n : nodes) {
+                    String reason = n.getState().getData().suspend_reason;
+                    setDebugViewSelection(n, reason);
+                }
+            }
+            done = true;
+        }
+        private boolean searchSuspendedThreads(TCFChildren c, ArrayList<TCFNodeExecContext> nodes) {
+            if (!c.validate(this)) return false;
+            for (TCFNode n : c.toArray()) {
+                if (!searchSuspendedThreads((TCFNodeExecContext)n, nodes)) return false;
+            }
+            return true;
+        }
+        private boolean searchSuspendedThreads(TCFNodeExecContext n, ArrayList<TCFNodeExecContext> nodes) {
+            TCFDataCache<IRunControl.RunControlContext> run_context = n.getRunContext();
+            if (!run_context.validate(this)) return false;
+            IRunControl.RunControlContext ctx = run_context.getData();
+            if (ctx != null && ctx.hasState()) {
+                TCFDataCache<TCFContextState> state = n.getState();
+                if (!state.validate(this)) return false;
+                TCFContextState s = state.getData();
+                if (s != null && s.is_suspended) nodes.add(n);
+                return true;
+            }
+            return searchSuspendedThreads(n.getChildren(), nodes);
+        }
+    }
+
     private volatile boolean instruction_stepping_enabled;
 
     TCFModel(TCFLaunch launch) {
@@ -565,6 +609,12 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         IProcesses prs = launch.getService(IProcesses.class);
         if (prs != null) prs.addListener(prs_listener);
         launchChanged();
+        for (TCFModelProxy p : model_proxies.values()) {
+            String id = p.getPresentationContext().getId();
+            if (IDebugUIConstants.ID_DEBUG_VIEW.equals(id)) {
+                Protocol.invokeLater(new InitialSelection());
+            }
+        }
     }
 
     void onDisconnected() {
@@ -610,7 +660,11 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     }
 
     void onProxyInstalled(TCFModelProxy mp) {
+        IPresentationContext pc = mp.getPresentationContext();
         model_proxies.put(mp.getPresentationContext(), mp);
+        if (launch_node != null && pc.getId().equals(IDebugUIConstants.ID_DEBUG_VIEW)) {
+            Protocol.invokeLater(new InitialSelection());
+        }
     }
 
     void onProxyDisposed(TCFModelProxy mp) {
