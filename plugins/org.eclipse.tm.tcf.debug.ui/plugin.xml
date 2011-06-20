@@ -231,6 +231,12 @@
             label="%MemoryMap.label"
             menubarPath="additions">
          </action>
+         <action
+            id="org.eclipse.tm.tcf.debug.ui.actions.Refresh"
+            class="org.eclipse.tm.internal.tcf.debug.ui.commands.RefreshCommand"
+            label="%Refresh.label"
+            menubarPath="additions">
+         </action>
       </objectContribution>
 
       <!-- TCFNodeExpression popup menu contributions -->

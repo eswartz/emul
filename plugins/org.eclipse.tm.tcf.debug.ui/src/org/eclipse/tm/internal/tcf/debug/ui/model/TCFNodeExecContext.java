@@ -740,7 +740,8 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     @Override
     protected boolean getData(IChildrenCountUpdate result, Runnable done) {
         TCFChildren children = null;
-        if (IDebugUIConstants.ID_DEBUG_VIEW.equals(result.getPresentationContext().getId())) {
+        String view_id = result.getPresentationContext().getId();
+        if (IDebugUIConstants.ID_DEBUG_VIEW.equals(view_id)) {
             if (!run_context.validate(done)) return false;
             IRunControl.RunControlContext ctx = run_context.getData();
             if (ctx != null && ctx.hasState()) {
@@ -765,22 +766,22 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                 children = children_exec;
             }
         }
-        else if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId())) {
+        else if (IDebugUIConstants.ID_REGISTER_VIEW.equals(view_id)) {
             if (!run_context.validate(done)) return false;
             IRunControl.RunControlContext ctx = run_context.getData();
             if (ctx != null && ctx.hasState()) children = children_regs;
         }
-        else if (IDebugUIConstants.ID_EXPRESSION_VIEW.equals(result.getPresentationContext().getId())) {
+        else if (IDebugUIConstants.ID_EXPRESSION_VIEW.equals(view_id)) {
             if (!run_context.validate(done)) return false;
             IRunControl.RunControlContext ctx = run_context.getData();
             if (ctx != null && ctx.hasState()) children = children_exps;
         }
-        else if (TCFModel.ID_EXPRESSION_HOVER.equals(result.getPresentationContext().getId())) {
+        else if (TCFModel.ID_EXPRESSION_HOVER.equals(view_id)) {
             if (!run_context.validate(done)) return false;
             IRunControl.RunControlContext ctx = run_context.getData();
             if (ctx != null && ctx.hasState()) children = children_hover_exps;
         }
-        else if (IDebugUIConstants.ID_MODULE_VIEW.equals(result.getPresentationContext().getId())) {
+        else if (IDebugUIConstants.ID_MODULE_VIEW.equals(view_id)) {
             if (!mem_context.validate(done)) return false;
             IMemory.MemoryContext ctx = mem_context.getData();
             if (ctx != null) children = children_modules;
@@ -799,7 +800,8 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     @Override
     protected boolean getData(IChildrenUpdate result, Runnable done) {
         TCFChildren children = null;
-        if (IDebugUIConstants.ID_DEBUG_VIEW.equals(result.getPresentationContext().getId())) {
+        String view_id = result.getPresentationContext().getId();
+        if (IDebugUIConstants.ID_DEBUG_VIEW.equals(view_id)) {
             if (!run_context.validate(done)) return false;
             IRunControl.RunControlContext ctx = run_context.getData();
             if (ctx != null && ctx.hasState()) {
@@ -831,22 +833,22 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                 children = children_exec;
             }
         }
-        else if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId())) {
+        else if (IDebugUIConstants.ID_REGISTER_VIEW.equals(view_id)) {
             if (!run_context.validate(done)) return false;
             IRunControl.RunControlContext ctx = run_context.getData();
             if (ctx != null && ctx.hasState()) children = children_regs;
         }
-        else if (IDebugUIConstants.ID_EXPRESSION_VIEW.equals(result.getPresentationContext().getId())) {
+        else if (IDebugUIConstants.ID_EXPRESSION_VIEW.equals(view_id)) {
             if (!run_context.validate(done)) return false;
             IRunControl.RunControlContext ctx = run_context.getData();
             if (ctx != null && ctx.hasState()) children = children_exps;
         }
-        else if (TCFModel.ID_EXPRESSION_HOVER.equals(result.getPresentationContext().getId())) {
+        else if (TCFModel.ID_EXPRESSION_HOVER.equals(view_id)) {
             if (!run_context.validate(done)) return false;
             IRunControl.RunControlContext ctx = run_context.getData();
             if (ctx != null && ctx.hasState()) children = children_hover_exps;
         }
-        else if (IDebugUIConstants.ID_MODULE_VIEW.equals(result.getPresentationContext().getId())) {
+        else if (IDebugUIConstants.ID_MODULE_VIEW.equals(view_id)) {
             if (!mem_context.validate(done)) return false;
             IMemory.MemoryContext ctx = mem_context.getData();
             if (ctx != null) children = children_modules;
@@ -862,7 +864,8 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     @Override
     protected boolean getData(IHasChildrenUpdate result, Runnable done) {
         TCFChildren children = null;
-        if (IDebugUIConstants.ID_DEBUG_VIEW.equals(result.getPresentationContext().getId())) {
+        String view_id = result.getPresentationContext().getId();
+        if (IDebugUIConstants.ID_DEBUG_VIEW.equals(view_id)) {
             if (!run_context.validate(done)) return false;
             IRunControl.RunControlContext ctx = run_context.getData();
             if (ctx != null && ctx.hasState()) {
@@ -887,22 +890,22 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                 children = children_exec;
             }
         }
-        else if (IDebugUIConstants.ID_REGISTER_VIEW.equals(result.getPresentationContext().getId())) {
+        else if (IDebugUIConstants.ID_REGISTER_VIEW.equals(view_id)) {
             if (!run_context.validate(done)) return false;
             IRunControl.RunControlContext ctx = run_context.getData();
             if (ctx != null && ctx.hasState()) children = children_regs;
         }
-        else if (IDebugUIConstants.ID_EXPRESSION_VIEW.equals(result.getPresentationContext().getId())) {
+        else if (IDebugUIConstants.ID_EXPRESSION_VIEW.equals(view_id)) {
             if (!run_context.validate(done)) return false;
             IRunControl.RunControlContext ctx = run_context.getData();
             if (ctx != null && ctx.hasState()) children = children_exps;
         }
-        else if (TCFModel.ID_EXPRESSION_HOVER.equals(result.getPresentationContext().getId())) {
+        else if (TCFModel.ID_EXPRESSION_HOVER.equals(view_id)) {
             if (!run_context.validate(done)) return false;
             IRunControl.RunControlContext ctx = run_context.getData();
             if (ctx != null && ctx.hasState()) children = children_hover_exps;
         }
-        else if (IDebugUIConstants.ID_MODULE_VIEW.equals(result.getPresentationContext().getId())) {
+        else if (IDebugUIConstants.ID_MODULE_VIEW.equals(view_id)) {
             if (!mem_context.validate(done)) return false;
             IMemory.MemoryContext ctx = mem_context.getData();
             if (ctx != null) children = children_modules;
@@ -920,6 +923,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
 
     @Override
     protected boolean getData(ILabelUpdate result, Runnable done) {
+        result.getViewerInput();
         if (!run_context.validate(done)) return false;
         String image_name = null;
         boolean suspended_by_bp = false;
@@ -1035,13 +1039,13 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     @Override
     protected boolean getData(IViewerInputUpdate result, Runnable done) {
         result.setInputElement(result.getElement());
-        String id = result.getPresentationContext().getId();
-        if (IDebugUIConstants.ID_VARIABLE_VIEW.equals(id)) {
+        String view_id = result.getPresentationContext().getId();
+        if (IDebugUIConstants.ID_VARIABLE_VIEW.equals(view_id)) {
             if (!children_stack.validate(done)) return false;
             TCFNodeStackFrame frame = children_stack.getTopFrame();
             if (frame != null) result.setInputElement(frame);
         }
-        else if (IDebugUIConstants.ID_MODULE_VIEW.equals(id)) {
+        else if (IDebugUIConstants.ID_MODULE_VIEW.equals(view_id)) {
             TCFDataCache<TCFNodeExecContext> mem = model.searchMemoryContext(this);
             if (mem == null) return true;
             if (!mem.validate(done)) return false;
@@ -1075,11 +1079,11 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     private void postContentChangedDelta() {
         for (TCFModelProxy p : model.getModelProxies()) {
             int flags = 0;
-            String id = p.getPresentationContext().getId();
-            if (IDebugUIConstants.ID_DEBUG_VIEW.equals(id)) flags |= IModelDelta.CONTENT;
-            if (IDebugUIConstants.ID_REGISTER_VIEW.equals(id) ||
-                    IDebugUIConstants.ID_EXPRESSION_VIEW.equals(id) ||
-                    TCFModel.ID_EXPRESSION_HOVER.equals(id)) {
+            String view_id = p.getPresentationContext().getId();
+            if (IDebugUIConstants.ID_DEBUG_VIEW.equals(view_id)) flags |= IModelDelta.CONTENT;
+            if (IDebugUIConstants.ID_REGISTER_VIEW.equals(view_id) ||
+                    IDebugUIConstants.ID_EXPRESSION_VIEW.equals(view_id) ||
+                    TCFModel.ID_EXPRESSION_HOVER.equals(view_id)) {
                 if (p.getInput() == this) flags |= IModelDelta.CONTENT;
             }
             if (flags == 0) continue;

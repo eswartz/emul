@@ -20,11 +20,13 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenCountUpd
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IHasChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.ILabelUpdate;
+import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IViewerInputUpdate;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.util.TCFDataCache;
+import org.eclipse.ui.IViewPart;
 
 
 /**
@@ -101,6 +103,14 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
      */
     final void removeDataCache(TCFDataCache<?> c) {
         if (caches != null) caches.remove(c);
+    }
+
+    /**
+     * Flush (reset) all node data caches.
+     */
+    void flushAllCaches() {
+        if (caches == null) return;
+        for (TCFDataCache<?> c : caches) c.reset();
     }
 
     /**
@@ -374,6 +384,14 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
 
     /*--------------------------------------------------------------------------------------*/
     /* Misc                                                                                 */
+
+    public void refresh(IViewPart view) {
+        model.flushAllCaches();
+        for (TCFModelProxy p : model.getModelProxies()) {
+            if (p.getPresentationContext().getPart() != view) continue;
+            p.addDelta(this, IModelDelta.STATE | IModelDelta.CONTENT);
+        }
+    }
 
     public int compareTo(TCFNode n) {
         return id.compareTo(n.id);
