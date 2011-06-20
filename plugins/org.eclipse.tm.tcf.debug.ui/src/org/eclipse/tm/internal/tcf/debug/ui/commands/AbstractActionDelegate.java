@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.ui.commands;
 
+import java.util.ArrayList;
+
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -125,6 +127,35 @@ implements IViewActionDelegate, IActionDelegate2, IWorkbenchWindowActionDelegate
             }
         }
         return null;
+    }
+
+    public TCFNode[] getSelectedNodes() {
+        ArrayList<TCFNode> list = new ArrayList<TCFNode>();
+        if (selection instanceof IStructuredSelection) {
+            IStructuredSelection s = (IStructuredSelection)selection;
+            if (s.size() > 0) {
+                for (final Object o : s.toArray()) {
+                    if (o instanceof TCFNode) {
+                        list.add((TCFNode)o);
+                    }
+                    else if (o instanceof TCFLaunch) {
+                        list.add(new TCFTask<TCFNode>() {
+                            public void run() {
+                                TCFLaunch launch = (TCFLaunch)o;
+                                TCFModel model = Activator.getModelManager().getModel(launch);
+                                if (model != null) {
+                                    done(model.getRootNode());
+                                }
+                                else {
+                                    done(null);
+                                }
+                            }
+                        }.getE());
+                    }
+                }
+            }
+        }
+        return list.toArray(new TCFNode[list.size()]);
     }
 
     protected abstract void selectionChanged();

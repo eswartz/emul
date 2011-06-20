@@ -5,7 +5,7 @@
     are made available under the terms of the Eclipse Public License v1.0
     which accompanies this distribution, and is available at
     http://www.eclipse.org/legal/epl-v10.html
-   
+
     Contributors:
         Wind River Systems - initial API and implementation
  -->
@@ -34,7 +34,7 @@
          <adapter type="org.eclipse.tm.internal.tcf.debug.ui.model.ISourceNotFoundPresentation"/>
       </factory>
     </extension>
-    
+
     <extension
           point="org.eclipse.core.expressions.propertyTesters">
        <propertyTester
@@ -45,7 +45,7 @@
              type="org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode">
        </propertyTester>
     </extension>
-    
+
     <extension
           point="org.eclipse.debug.ui.debugModelContextBindings">
        <modelContextBinding
@@ -57,7 +57,7 @@
              debugModelId="org.eclipse.tm.tcf.debug">
        </modelContextBinding>
     </extension>
-    
+
     <extension
           point="org.eclipse.cdt.debug.core.BreakpointExtension">
        <breakpointExtension
@@ -142,7 +142,7 @@
             sourcePathComputerId="org.eclipse.cdt.debug.core.sourcePathComputer">
       </launchDelegate>
    </extension>
-   
+
    <extension
          point="org.eclipse.debug.ui.launchConfigurationTabs">
       <!-- Local application launch tabs-->
@@ -253,7 +253,7 @@
         <placement after="org.eclipse.debug.ui.sourceLookupTab"/>
       </tab>
    </extension>
-   
+
    <extension
          point="org.eclipse.debug.ui.launchConfigurationTabGroups">
       <launchConfigurationTabGroup
@@ -346,6 +346,7 @@
                menubarPath="additions"/>
       </objectContribution>
    </extension>
+
    <extension
          point="org.eclipse.ui.editors">
       <editor
@@ -356,5 +357,4 @@
             name="%editor.sourceNotFound.name">
       </editor>
    </extension>
-
 </plugin>

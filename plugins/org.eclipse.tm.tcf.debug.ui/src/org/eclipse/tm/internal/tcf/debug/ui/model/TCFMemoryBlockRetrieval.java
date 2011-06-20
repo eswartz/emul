@@ -45,6 +45,7 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
     private class MemoryBlock extends PlatformObject implements IMemoryBlockExtension {
 
         private final String expression;
+        private final long length;
         private final Set<Object> connections = new HashSet<Object>();
         private final TCFDataCache<IExpressions.Expression> remote_expression;
         private final TCFDataCache<IExpressions.Value> expression_value;
@@ -52,8 +53,9 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
 
         private boolean disposed;
 
-        MemoryBlock(final String expression) {
+        MemoryBlock(final String expression, long length) {
             this.expression = expression;
+            this.length = length;
             final TCFLaunch launch = exec_ctx.model.getLaunch();
             final IChannel channel = launch.getChannel();
             remote_expression = new TCFDataCache<IExpressions.Expression>(channel) {
@@ -323,7 +325,7 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
         }
 
         public long getLength() {
-            return -1; // Unbounded
+            return length;
         }
 
         public BigInteger getMemoryBlockStartAddress() throws DebugException {
@@ -335,7 +337,7 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
         }
 
         public BigInteger getBigLength() throws DebugException {
-            return BigInteger.valueOf(-1); // Unbounded
+            return BigInteger.valueOf(length);
         }
 
         public void setBaseAddress(BigInteger address) throws DebugException {
@@ -391,13 +393,17 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
     public IMemoryBlockExtension getExtendedMemoryBlock(final String expression, Object context) throws DebugException {
         return new TCFDebugTask<IMemoryBlockExtension>() {
             public void run() {
-                done(new MemoryBlock(expression));
+                done(new MemoryBlock(expression, -1));
             }
         }.getD();
     }
 
-    public IMemoryBlock getMemoryBlock(long address, long length) throws DebugException {
-        return getExtendedMemoryBlock("0x" + Long.toHexString(address), exec_ctx);
+    public IMemoryBlock getMemoryBlock(final long address, final long length) throws DebugException {
+        return new TCFDebugTask<IMemoryBlockExtension>() {
+            public void run() {
+                done(new MemoryBlock("0x" + Long.toHexString(address), length));
+            }
+        }.getD();
     }
 
     public boolean supportsStorageRetrieval() {

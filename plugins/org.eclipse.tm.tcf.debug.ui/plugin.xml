@@ -233,6 +233,18 @@
          </action>
       </objectContribution>
 
+      <!-- TCFNodeExpression popup menu contributions -->
+      <objectContribution
+            id="org.eclipse.tm.tcf.debug.ui.TCFNodeExpression"
+            objectClass="org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExpression">
+         <action
+            id="org.eclipse.tm.tcf.debug.ui.actions.ViewMemory"
+            class="org.eclipse.tm.internal.tcf.debug.ui.commands.ViewMemoryCommand"
+            label="%ViewMemory.label"
+            menubarPath="variableGroup">
+         </action>
+      </objectContribution>
+
       <!-- ICastToType popup menu contributions -->
       <objectContribution
             id="org.eclipse.tm.tcf.debug.ui.CastToType"
