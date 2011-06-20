@@ -44,7 +44,7 @@ import org.eclipse.tm.tcf.services.ISymbols;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 import org.eclipse.tm.tcf.util.TCFTask;
 
-public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastToType {
+public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastToType, IWatchInExpressions {
 
     // TODO: User commands: Add Global Variables, Remove Global Variables
     // TODO: enable Change Value user command
@@ -434,7 +434,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                 }
                 String parentName = "";
                 if (parent instanceof TCFNodeExpression) {
-                    TCFDataCache<String> parentText = ((TCFNodeExpression) parent).getExpressionText();
+                    TCFDataCache<String> parentText = ((TCFNodeExpression)parent).getExpressionText();
                     if (!parentText.validate(this)) return false;
                     if (parentText.getData() != null) {
                         parentName = parenthesize(parentText.getData());

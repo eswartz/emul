@@ -746,7 +746,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         for (TCFNode n : id2node.values()) n.flushAllCaches();
     }
 
-    IExpressionManager getExpressionManager() {
+    public IExpressionManager getExpressionManager() {
         return expr_manager;
     }
 

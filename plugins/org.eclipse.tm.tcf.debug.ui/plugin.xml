@@ -223,6 +223,12 @@
             icon="icons/signals.gif"
             label="%Signals.label"
             menubarPath="additions">
+            <enablement>
+               <pluginState
+                     value="activated"
+                     id="org.eclipse.tm.tcf.debug.ui">
+               </pluginState>
+            </enablement>
          </action>
          <action
             id="org.eclipse.tm.tcf.debug.ui.actions.MemoryMap"
@@ -230,12 +236,24 @@
             icon="icons/memory-map.gif"
             label="%MemoryMap.label"
             menubarPath="additions">
+            <enablement>
+               <pluginState
+                     value="activated"
+                     id="org.eclipse.tm.tcf.debug.ui">
+               </pluginState>
+            </enablement>
          </action>
          <action
             id="org.eclipse.tm.tcf.debug.ui.actions.Refresh"
             class="org.eclipse.tm.internal.tcf.debug.ui.commands.RefreshCommand"
             label="%Refresh.label"
             menubarPath="additions">
+            <enablement>
+               <pluginState
+                     value="activated"
+                     id="org.eclipse.tm.tcf.debug.ui">
+               </pluginState>
+            </enablement>
          </action>
       </objectContribution>
 
@@ -248,6 +266,12 @@
             class="org.eclipse.tm.internal.tcf.debug.ui.commands.ViewMemoryCommand"
             label="%ViewMemory.label"
             menubarPath="variableGroup">
+            <enablement>
+               <pluginState
+                     value="activated"
+                     id="org.eclipse.tm.tcf.debug.ui">
+               </pluginState>
+            </enablement>
          </action>
       </objectContribution>
 
@@ -295,6 +319,24 @@
                menubarPath="variableGroup"
                enablesFor="1"
                id="org.eclipse.tm.tcf.debug.ui.commands.CastToArray">
+            <enablement>
+               <pluginState
+                     value="activated"
+                     id="org.eclipse.tm.tcf.debug.ui">
+               </pluginState>
+            </enablement>
+         </action>
+      </objectContribution>
+
+      <!-- IWatchInExpressions -->
+      <objectContribution
+            id="org.eclipse.tm.tcf.debug.ui.WatchInExpressions"
+            objectClass="org.eclipse.tm.internal.tcf.debug.ui.model.IWatchInExpressions">
+         <action
+            id="org.eclipse.tm.tcf.debug.ui.actions.WatchInExpressions"
+            class="org.eclipse.tm.internal.tcf.debug.ui.commands.WatchInExpressionsCommand"
+            label="%WatchInExpressions.label"
+            menubarPath="additions">
             <enablement>
                <pluginState
                      value="activated"
