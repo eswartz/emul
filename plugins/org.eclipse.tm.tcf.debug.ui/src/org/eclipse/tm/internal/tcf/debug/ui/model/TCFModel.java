@@ -17,6 +17,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.DebugPlugin;
@@ -199,8 +200,59 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     private final Map<Class<?>,Object> adapters = new HashMap<Class<?>,Object>();
 
-    private final Map<String,IMemoryBlockRetrievalExtension> mem_retrieval =
-        new HashMap<String,IMemoryBlockRetrievalExtension>();
+    private class MemoryBlocksUpdate extends TCFDataCache<Map<String,TCFMemoryBlockRetrieval>> {
+
+        private final Set<String> changeset = new HashSet<String>();
+
+        MemoryBlocksUpdate(IChannel channel) {
+            super(channel);
+            Protocol.invokeLater(new Runnable() {
+                public void run() {
+                    if (!validate(this)) return;
+                    Map<String,TCFMemoryBlockRetrieval> map = getData();
+                    for (TCFMemoryBlockRetrieval r : map.values()) r.onMemoryChanged();
+                    launch.removePendingClient(mem_blocks_update);
+                    mem_blocks_update = null;
+                }
+            });
+        }
+
+        void add(String id) {
+            changeset.add(id);
+        }
+
+        public boolean startDataRetrieval() {
+            // Map changed contexts to memory nodes, and then to memory block retrieval objects
+            Map<String,TCFMemoryBlockRetrieval> map = new HashMap<String,TCFMemoryBlockRetrieval>();
+            for (String id : changeset) {
+                if (map.get(id) != null) continue;
+                TCFNode node = id2node.get(id);
+                if (node == null) {
+                    if (!createNode(id, this)) return false;
+                    if (isValid()) {
+                        Activator.log("Cannot create debug model node", getError());
+                        reset();
+                        continue;
+                    }
+                    node = id2node.get(id);
+                }
+                if (node instanceof TCFNodeExecContext) {
+                    TCFDataCache<TCFNodeExecContext> c = ((TCFNodeExecContext)node).getMemoryNode();
+                    if (!c.validate(this)) return false;
+                    node = c.getData();
+                    if (node == null) continue;
+                    if (map.get(node.id) != null) continue;
+                    TCFMemoryBlockRetrieval r = mem_retrieval.get(node.id);
+                    if (r != null) map.put(node.id, r);
+                }
+            }
+            set(null, null, map);
+            return true;
+        }
+    }
+
+    private final Map<String,TCFMemoryBlockRetrieval> mem_retrieval = new HashMap<String,TCFMemoryBlockRetrieval>();
+    private MemoryBlocksUpdate mem_blocks_update;
 
     private final Map<String,String> cast_to_type_map =
         new HashMap<String,String>();
@@ -267,6 +319,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 if (node instanceof TCFNodeExecContext) {
                     ((TCFNodeExecContext)node).onContextChanged(ctx);
                 }
+                onMemoryChanged(ctx.getID());
             }
         }
 
@@ -279,6 +332,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             if (node instanceof TCFNodeExecContext) {
                 ((TCFNodeExecContext)node).onMemoryChanged(addr, size);
             }
+            onMemoryChanged(context_id);
         }
     };
 
@@ -304,6 +358,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 if (node instanceof TCFNodeExecContext) {
                     ((TCFNodeExecContext)node).onContainerSuspended();
                 }
+                onMemoryChanged(id);
             }
             TCFNode node = getNode(context);
             if (node instanceof TCFNodeExecContext) {
@@ -339,6 +394,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 if (node instanceof TCFNodeExecContext) {
                     ((TCFNodeExecContext)node).onContextChanged(ctx);
                 }
+                onMemoryChanged(id);
             }
             launch_node.onAnyContextSuspendedOrChanged();
         }
@@ -371,6 +427,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             }
             launch_node.onAnyContextSuspendedOrChanged();
             if (active_actions.get(id) == null) setDebugViewSelection(node, reason);
+            onMemoryChanged(id);
         }
     };
 
@@ -674,6 +731,17 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             bf.append(lost_size);
         }
         Activator.log(bf.toString(), x);
+    }
+
+    void onMemoryChanged(String id) {
+        if (channel == null) return;
+        if (mem_blocks_update == null) {
+            mem_blocks_update = new MemoryBlocksUpdate(channel);
+            if (wait_for_views_update_after_step) {
+                launch.addPendingClient(mem_blocks_update);
+            }
+        }
+        mem_blocks_update.add(id);
     }
 
     public TCFAction getActiveAction(String id) {

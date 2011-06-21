@@ -155,6 +155,10 @@ public class TCFChildrenExecContext extends TCFChildren {
         for (TCFNode n : getNodes()) ((TCFNodeExecContext)n).onMemoryMapChanged();
     }
 
+    void onMemoryChanged(Number[] addr, long[] size) {
+        for (TCFNode n : getNodes()) ((TCFNodeExecContext)n).onMemoryChanged(addr, size);
+    }
+
     void onAncestorContextChanged() {
         for (TCFNode n : getNodes()) ((TCFNodeExecContext)n).onAncestorContextChanged();
     }

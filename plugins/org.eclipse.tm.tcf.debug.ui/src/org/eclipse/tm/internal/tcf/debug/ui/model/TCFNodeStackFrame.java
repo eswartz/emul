@@ -444,6 +444,17 @@ public class TCFNodeStackFrame extends TCFNode {
         postStateChangedDelta();
     }
 
+    void onMemoryChanged() {
+        stack_trace_context.cancel();
+        line_info.cancel();
+        func_info.cancel();
+        address.cancel();
+        children_vars.onMemoryChanged();
+        children_exps.onMemoryChanged();
+        children_hover_exps.onMemoryChanged();
+        postStateChangedDelta();
+    }
+
     void onRegistersChanged() {
         children_regs.onRegistersChanged();
         postAllChangedDelta();

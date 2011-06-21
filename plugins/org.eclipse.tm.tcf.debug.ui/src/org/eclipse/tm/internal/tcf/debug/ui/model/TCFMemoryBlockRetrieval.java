@@ -11,11 +11,14 @@
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
 import org.eclipse.core.runtime.PlatformObject;
+import org.eclipse.debug.core.DebugEvent;
 import org.eclipse.debug.core.DebugException;
+import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.model.IDebugTarget;
 import org.eclipse.debug.core.model.IMemoryBlock;
@@ -41,6 +44,7 @@ import org.eclipse.tm.tcf.util.TCFDataCache;
 class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
 
     private final TCFNodeExecContext exec_ctx;
+    private final HashSet<MemoryBlock> mem_blocks = new HashSet<MemoryBlock>();
 
     private class MemoryBlock extends PlatformObject implements IMemoryBlockExtension {
 
@@ -56,6 +60,7 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
         MemoryBlock(final String expression, long length) {
             this.expression = expression;
             this.length = length;
+            mem_blocks.add(this);
             final TCFLaunch launch = exec_ctx.model.getLaunch();
             final IChannel channel = launch.getChannel();
             remote_expression = new TCFDataCache<IExpressions.Expression>(channel) {
@@ -137,7 +142,7 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
         }
 
         public void dispose() throws DebugException {
-            new TCFDebugTask<Boolean>() {
+            new TCFDebugTask<Boolean>(exec_ctx.getChannel()) {
                 public void run() {
                     disposed = true;
                     expression_value.dispose();
@@ -156,13 +161,14 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
                         }
                     }
                     remote_expression.dispose();
+                    mem_blocks.remove(MemoryBlock.this);
                     done(Boolean.TRUE);
                 }
             }.getD();
         }
 
         public int getAddressSize() throws DebugException {
-            return new TCFDebugTask<Integer>() {
+            return new TCFDebugTask<Integer>(exec_ctx.getChannel()) {
                 public void run() {
                     if (exec_ctx.isDisposed()) {
                         error("Context is disposed");
@@ -213,7 +219,7 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
         }
 
         public BigInteger getBigBaseAddress() throws DebugException {
-            return new TCFDebugTask<BigInteger>() {
+            return new TCFDebugTask<BigInteger>(exec_ctx.getChannel()) {
                 public void run() {
                     if (!expression_value.validate()) {
                         expression_value.wait(this);
@@ -247,7 +253,7 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
         }
 
         public MemoryByte[] getBytesFromAddress(final BigInteger address, final long units) throws DebugException {
-            return new TCFDebugTask<MemoryByte[]>() {
+            return new TCFDebugTask<MemoryByte[]>(exec_ctx.getChannel()) {
                 int offs = 0;
                 public void run() {
                     if (exec_ctx.isDisposed()) {
@@ -343,7 +349,38 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
         public void setBaseAddress(BigInteger address) throws DebugException {
         }
 
-        public void setValue(BigInteger offset, byte[] bytes) throws DebugException {
+        public void setValue(BigInteger offset, final byte[] bytes) throws DebugException {
+            final BigInteger address = getBigBaseAddress().add(offset);
+            new TCFDebugTask<Object>(exec_ctx.getChannel()) {
+                public void run() {
+                    if (exec_ctx.isDisposed()) {
+                        error("Context is disposed");
+                        return;
+                    }
+                    TCFDataCache<IMemory.MemoryContext> cache = exec_ctx.getMemoryContext();
+                    if (!cache.validate(this)) return;
+                    if (cache.getError() != null) {
+                        error(cache.getError());
+                        return;
+                    }
+                    final IMemory.MemoryContext mem = cache.getData();
+                    if (mem == null) {
+                        error("Context does not provide memory access");
+                        return;
+                    }
+                    final int mode = IMemory.MODE_CONTINUEONERROR | IMemory.MODE_VERIFY;
+                    mem.set(address, 1, bytes, 0, bytes.length, mode, new IMemory.DoneMemory() {
+                        public void doneMemory(IToken token, MemoryError error) {
+                            if (error != null) {
+                                error(error);
+                            }
+                            else {
+                                done(null);
+                            }
+                        }
+                    });
+                }
+            }.getD();
         }
 
         public boolean supportBaseAddressModification() throws DebugException {
@@ -359,10 +396,11 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
         }
 
         public void setValue(long offset, byte[] bytes) throws DebugException {
+            setValue(BigInteger.valueOf(offset), bytes);
         }
 
         public boolean supportsValueModification() {
-            return false;
+            return true;
         }
 
         public IDebugTarget getDebugTarget() {
@@ -408,5 +446,14 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
 
     public boolean supportsStorageRetrieval() {
         return true;
+    }
+
+    void onMemoryChanged() {
+        if (mem_blocks.size() == 0) return;
+        ArrayList<DebugEvent> list = new ArrayList<DebugEvent>();
+        for (MemoryBlock b : mem_blocks) {
+            list.add(new DebugEvent(b, DebugEvent.CHANGE, DebugEvent.CONTENT));
+        }
+        DebugPlugin.getDefault().fireDebugEventSet(list.toArray(new DebugEvent[list.size()]));
     }
 }

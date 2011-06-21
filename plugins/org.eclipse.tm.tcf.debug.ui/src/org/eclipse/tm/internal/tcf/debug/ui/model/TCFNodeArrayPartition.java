@@ -89,6 +89,10 @@ public class TCFNodeArrayPartition extends TCFNode {
         children.onRegisterValueChanged();
     }
 
+    void onMemoryChanged() {
+        children.onMemoryChanged();
+    }
+
     @Override
     public int compareTo(TCFNode n) {
         TCFNodeArrayPartition p = (TCFNodeArrayPartition)n;

@@ -14,6 +14,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
+import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.util.TCFTask;
 
@@ -21,6 +22,13 @@ import org.eclipse.tm.tcf.util.TCFTask;
  * An extension of TCFTask class that adds support for throwing DebugException.
  */
 public abstract class TCFDebugTask<V> extends TCFTask<V> {
+
+    public TCFDebugTask() {
+    }
+
+    public TCFDebugTask(IChannel channel) {
+        super(channel);
+    }
 
     public synchronized V getD() throws DebugException {
         assert !Protocol.isDispatchThread();

@@ -1269,6 +1269,10 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
 
     void onMemoryChanged(Number[] addr, long[] size) {
         assert !isDisposed();
+        children_exec.onMemoryChanged(addr, size);
+        children_stack.onMemoryChanged();
+        children_exps.onMemoryChanged();
+        postContentChangedDelta();
     }
 
     void onMemoryMapChanged() {
@@ -1292,6 +1296,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         }
         address.reset();
         children_stack.onRegisterValueChanged();
+        children_exps.onRegisterValueChanged();
         postContentChangedDelta();
     }
 

@@ -517,6 +517,17 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         postAllChangedDelta();
     }
 
+    void onMemoryChanged() {
+        value.reset();
+        type.reset();
+        type_name.reset();
+        string.reset();
+        children.onMemoryChanged();
+        if (parent instanceof TCFNodeExpression) return;
+        if (parent instanceof TCFNodeArrayPartition) return;
+        postAllChangedDelta();
+    }
+
     void onValueChanged() {
         value.reset();
         type.reset();
@@ -1351,6 +1362,14 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                                     IExpressions exps = node.launch.getService(IExpressions.class);
                                     exps.assign(exp.getID(), bf, new IExpressions.DoneAssign() {
                                         public void doneAssign(IToken token, Exception error) {
+                                            TCFNode exe = node;
+                                            while (exe != null) {
+                                                if (exe instanceof TCFNodeExecContext) {
+                                                    exe.model.onMemoryChanged(exe.id);
+                                                    break;
+                                                }
+                                                exe = exe.parent;
+                                            }
                                             node.getRootExpression().onValueChanged();
                                             if (error != null) {
                                                 node.model.showMessageBox("Cannot modify element value", error);
