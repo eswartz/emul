@@ -11,6 +11,7 @@
  -->
 
 <plugin>
+
    <extension
          point="org.eclipse.debug.core.breakpoints">
       <breakpoint
@@ -20,12 +21,14 @@
             name="TCF Breakpoint">
       </breakpoint>
    </extension>
+
    <extension
          id="org.eclipse.tm.tcf.debug.breakpoint.marker"
          point="org.eclipse.core.resources.markers">
       <super type="org.eclipse.debug.core.breakpointMarker"/>
       <persistent value="true"/>
    </extension>
+
    <extension
          point="org.eclipse.debug.core.launchConfigurationTypes">
       <launchConfigurationType
@@ -37,6 +40,7 @@
             id="org.eclipse.tm.tcf.debug.LaunchConfigurationType">
       </launchConfigurationType>
    </extension>
+
    <extension
          point="org.eclipse.debug.core.sourceLocators">
       <sourceLocator
@@ -45,6 +49,7 @@
             id="org.eclipse.tm.tcf.debug.SourceLocator">
       </sourceLocator>
    </extension>
+
    <extension
          point="org.eclipse.debug.core.sourcePathComputers">
       <sourcePathComputer

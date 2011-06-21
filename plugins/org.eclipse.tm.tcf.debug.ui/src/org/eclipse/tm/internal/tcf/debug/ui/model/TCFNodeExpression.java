@@ -106,7 +106,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         var_expression = new TCFData<IExpressions.Expression>(channel) {
             @Override
             protected boolean startDataRetrieval() {
-                IExpressions exps = model.getLaunch().getService(IExpressions.class);
+                IExpressions exps = launch.getService(IExpressions.class);
                 if (exps == null || var_id == null) {
                     set(null, null, null);
                     return true;
@@ -168,7 +168,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         expression = new TCFData<Expression>(channel) {
             @Override
             protected boolean startDataRetrieval() {
-                IExpressions exps = model.getLaunch().getService(IExpressions.class);
+                IExpressions exps = launch.getService(IExpressions.class);
                 if (exps == null) {
                     set(null, null, null);
                     return true;
@@ -229,7 +229,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                     set(null, expression.getError(), null);
                     return true;
                 }
-                IExpressions exps = model.getLaunch().getService(IExpressions.class);
+                IExpressions exps = launch.getService(IExpressions.class);
                 command = exps.evaluate(exp.expression.getID(), new IExpressions.DoneEvaluate() {
                     public void doneEvaluate(IToken token, Exception error, IExpressions.Value value) {
                         if (error != null) {
@@ -1348,7 +1348,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                                 }
                                 if (error != null) throw new Exception("Invalid value: " + value, new Exception(error));
                                 if (bf != null) {
-                                    IExpressions exps = node.model.getLaunch().getService(IExpressions.class);
+                                    IExpressions exps = node.launch.getService(IExpressions.class);
                                     exps.assign(exp.getID(), bf, new IExpressions.DoneAssign() {
                                         public void doneAssign(IToken token, Exception error) {
                                             node.getRootExpression().onValueChanged();

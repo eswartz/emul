@@ -36,7 +36,7 @@ public class TCFNodeSymbol extends TCFNode {
         context = new TCFData<ISymbols.Symbol>(channel) {
             @Override
             protected boolean startDataRetrieval() {
-                ISymbols syms = model.getLaunch().getService(ISymbols.class);
+                ISymbols syms = launch.getService(ISymbols.class);
                 if (id == null || syms == null) {
                     set(null, null, null);
                     return true;
@@ -54,7 +54,7 @@ public class TCFNodeSymbol extends TCFNode {
         children = new TCFData<String[]>(channel) {
             @Override
             protected boolean startDataRetrieval() {
-                ISymbols syms = model.getLaunch().getService(ISymbols.class);
+                ISymbols syms = launch.getService(ISymbols.class);
                 if (id == null || syms == null) {
                     set(null, null, null);
                     return true;

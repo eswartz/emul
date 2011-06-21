@@ -62,10 +62,13 @@ import org.eclipse.debug.ui.contexts.ISuspendTrigger;
 import org.eclipse.debug.ui.contexts.ISuspendTriggerListener;
 import org.eclipse.debug.ui.sourcelookup.CommonSourceNotFoundEditorInput;
 import org.eclipse.debug.ui.sourcelookup.ISourceDisplay;
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.StructuredViewer;
@@ -95,6 +98,7 @@ import org.eclipse.tm.internal.tcf.debug.ui.commands.StepOverCommand;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.StepReturnCommand;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.SuspendCommand;
 import org.eclipse.tm.internal.tcf.debug.ui.commands.TerminateCommand;
+import org.eclipse.tm.internal.tcf.debug.ui.preferences.TCFPreferences;
 import org.eclipse.tm.tcf.core.Command;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IErrorReport;
@@ -174,9 +178,16 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     private final List<ISuspendTriggerListener> suspend_trigger_listeners =
         new LinkedList<ISuspendTriggerListener>();
 
-    private static int display_source_generation;
+    private int display_source_generation;
     private int suspend_trigger_generation;
     private int auto_disconnect_generation;
+
+    private long min_view_updates_interval;
+    private boolean view_updates_throttle_enabled;
+    private boolean channel_throttle_enabled;
+    private boolean wait_for_pc_update_after_step;
+    private boolean wait_for_views_update_after_step;
+    private boolean delay_stack_update_until_last_step;
 
     private final Map<String,String> action_results = new HashMap<String,String>();
     private final HashMap<String,TCFAction> active_actions = new HashMap<String,TCFAction>();
@@ -523,7 +534,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     private volatile boolean instruction_stepping_enabled;
 
-    TCFModel(TCFLaunch launch) {
+    TCFModel(final TCFLaunch launch) {
         this.launch = launch;
         display = PlatformUI.getWorkbench().getDisplay();
         selection_policy = new TCFModelSelectionPolicy(this);
@@ -547,6 +558,20 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         expr_manager.addExpressionListener(expressions_listener);
         annotation_manager = Activator.getAnnotationManager();
         launch.addActionsListener(actions_listener);
+        final IPreferenceStore prefs = TCFPreferences.getPreferenceStore();
+        IPropertyChangeListener listener = new IPropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent event) {
+                launch.setContextActionsInterval(prefs.getLong(TCFPreferences.PREF_MIN_STEP_INTERVAL));
+                min_view_updates_interval = prefs.getLong(TCFPreferences.PREF_MIN_UPDATE_INTERVAL);
+                view_updates_throttle_enabled = prefs.getBoolean(TCFPreferences.PREF_VIEW_UPDATES_THROTTLE);
+                channel_throttle_enabled = prefs.getBoolean(TCFPreferences.PREF_TARGET_TRAFFIC_THROTTLE);
+                wait_for_pc_update_after_step = prefs.getBoolean(TCFPreferences.PREF_WAIT_FOR_PC_UPDATE_AFTER_STEP);
+                wait_for_views_update_after_step = prefs.getBoolean(TCFPreferences.PREF_WAIT_FOR_VIEWS_UPDATE_AFTER_STEP);
+                delay_stack_update_until_last_step = prefs.getBoolean(TCFPreferences.PREF_DELAY_STACK_UPDATE_UNTIL_LAST_STEP);
+            }
+        };
+        listener.propertyChange(null);
+        prefs.addPropertyChangeListener(listener);
     }
 
     /**
@@ -657,6 +682,26 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     String getContextActionResult(String id) {
         return action_results.get(id);
+    }
+
+    public long getMinViewUpdatesInterval() {
+        return min_view_updates_interval;
+    }
+
+    public boolean getViewUpdatesThrottleEnabled() {
+        return view_updates_throttle_enabled;
+    }
+
+    public boolean getWaitForViewsUpdateAfterStep() {
+        return wait_for_views_update_after_step;
+    }
+
+    public boolean getDelayStackUpdateUtilLastStep() {
+        return delay_stack_update_until_last_step;
+    }
+
+    public boolean getChannelThrottleEnabled() {
+        return channel_throttle_enabled;
     }
 
     void onProxyInstalled(TCFModelProxy mp) {
@@ -1018,6 +1063,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 proxy.setSelection(node);
                 if (reason.equals(IRunControl.REASON_STEP)) continue;
                 if (reason.equals(IRunControl.REASON_CONTAINER)) continue;
+                if (delay_stack_update_until_last_step && launch.getContextActionsCount(node.id) != 0) continue;
                 proxy.expand(node);
             }
         }
@@ -1029,6 +1075,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
      * The method is normally called from SourceLookupService.
      */
     public void displaySource(Object model_element, final IWorkbenchPage page, boolean forceSourceLookup) {
+        if (wait_for_pc_update_after_step) launch.addPendingClient(TCFModel.this);
         final int cnt = ++display_source_generation;
         /* Because of racing in Eclipse Debug infrastructure, 'model_element' value can be invalid.
          * As a workaround, get current debug view selection.
@@ -1098,80 +1145,85 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         final boolean disassembly_available = channel.getRemoteService(IDisassembly.class) != null;
         display.asyncExec(new Runnable() {
             public void run() {
-                if (cnt != display_source_generation) return;
-                String editor_id = null;
-                IEditorInput editor_input = null;
-                int line = 0;
-                if (area != null) {
-                    ISourceLocator locator = getLaunch().getSourceLocator();
-                    Object source_element = null;
-                    if (locator instanceof TCFSourceLookupDirector) {
-                        source_element = ((TCFSourceLookupDirector)locator).getSourceElement(area);
+                try {
+                    if (cnt != display_source_generation) return;
+                    String editor_id = null;
+                    IEditorInput editor_input = null;
+                    int line = 0;
+                    if (area != null) {
+                        ISourceLocator locator = getLaunch().getSourceLocator();
+                        Object source_element = null;
+                        if (locator instanceof TCFSourceLookupDirector) {
+                            source_element = ((TCFSourceLookupDirector)locator).getSourceElement(area);
+                        }
+                        else if (locator instanceof ISourceLookupDirector) {
+                            // support for foreign (CDT) source locator
+                            String filename = TCFSourceLookupParticipant.toFileName(area);
+                            if (filename != null) {
+                                source_element = ((ISourceLookupDirector)locator).getSourceElement(filename);
+                                if (source_element == null && !filename.equals(area.file)) {
+                                    // retry with relative path
+                                    source_element = ((ISourceLookupDirector)locator).getSourceElement(area.file);
+                                }
+                            }
+                        }
+                        if (source_element != null) {
+                            ISourcePresentation presentation = TCFModelPresentation.getDefault();
+                            if (presentation != null) {
+                                editor_input = presentation.getEditorInput(source_element);
+                            }
+                            if (editor_input != null) {
+                                editor_id = presentation.getEditorId(editor_input, source_element);
+                            }
+                            line = area.start_line;
+                        }
                     }
-                    else if (locator instanceof ISourceLookupDirector) {
-                        // support for foreign (CDT) source locator
-                        String filename = TCFSourceLookupParticipant.toFileName(area);
-                        if (filename != null) {
-                            source_element = ((ISourceLookupDirector)locator).getSourceElement(filename);
-                            if (source_element == null && !filename.equals(area.file)) {
-                                // retry with relative path
-                                source_element = ((ISourceLookupDirector)locator).getSourceElement(area.file);
+                    if (area != null && !instruction_stepping_enabled && (editor_input == null || editor_id == null)) {
+                        ILaunchConfiguration cfg = launch.getLaunchConfiguration();
+                        ISourceNotFoundPresentation presentation = (ISourceNotFoundPresentation) DebugPlugin.getAdapter(element, ISourceNotFoundPresentation.class);
+                        if (presentation != null) {
+                            String filename = TCFSourceLookupParticipant.toFileName(area);
+                            editor_input = presentation.getEditorInput(element, cfg, filename);
+                            editor_id = presentation.getEditorId(editor_input, element);
+                        }
+                        if (editor_id == null || editor_input == null) {
+                            editor_id = IDebugUIConstants.ID_COMMON_SOURCE_NOT_FOUND_EDITOR;
+                            editor_input = editor_not_found.get(cfg);
+                            if (editor_input == null) {
+                                editor_input = new CommonSourceNotFoundEditorInput(cfg);
+                                editor_not_found.put(cfg, editor_input);
                             }
                         }
                     }
-                    if (source_element != null) {
-                        ISourcePresentation presentation = TCFModelPresentation.getDefault();
-                        if (presentation != null) {
-                            editor_input = presentation.getEditorInput(source_element);
-                        }
-                        if (editor_input != null) {
-                            editor_id = presentation.getEditorId(editor_input, source_element);
-                        }
-                        line = area.start_line;
+                    if (exe_id != null && disassembly_available &&
+                            (editor_input == null || editor_id == null || instruction_stepping_enabled) &&
+                            PlatformUI.getWorkbench().getEditorRegistry().findEditor(
+                                    DisassemblyEditorInput.EDITOR_ID) != null) {
+                        editor_id = DisassemblyEditorInput.EDITOR_ID;
+                        editor_input = DisassemblyEditorInput.INSTANCE;
                     }
-                }
-                if (area != null && !instruction_stepping_enabled && (editor_input == null || editor_id == null)) {
-                    ILaunchConfiguration cfg = launch.getLaunchConfiguration();
-                    ISourceNotFoundPresentation presentation = (ISourceNotFoundPresentation) DebugPlugin.getAdapter(element, ISourceNotFoundPresentation.class);
-                    if (presentation != null) {
-                        String filename = TCFSourceLookupParticipant.toFileName(area);
-                        editor_input = presentation.getEditorInput(element, cfg, filename);
-                        editor_id = presentation.getEditorId(editor_input, element);
-                    }
-                    if (editor_id == null || editor_input == null) {
-                        editor_id = IDebugUIConstants.ID_COMMON_SOURCE_NOT_FOUND_EDITOR;
-                        editor_input = editor_not_found.get(cfg);
-                        if (editor_input == null) {
-                            editor_input = new CommonSourceNotFoundEditorInput(cfg);
-                            editor_not_found.put(cfg, editor_input);
+                    if (cnt != display_source_generation) return;
+                    ITextEditor text_editor = null;
+                    if (page != null && editor_input != null && editor_id != null) {
+                        IEditorPart editor = openEditor(editor_input, editor_id, page);
+                        if (editor instanceof ITextEditor) {
+                            text_editor = (ITextEditor)editor;
+                        }
+                        else {
+                            text_editor = (ITextEditor)editor.getAdapter(ITextEditor.class);
                         }
                     }
-                }
-                if (exe_id != null && disassembly_available &&
-                        (editor_input == null || editor_id == null || instruction_stepping_enabled) &&
-                        PlatformUI.getWorkbench().getEditorRegistry().findEditor(
-                                DisassemblyEditorInput.EDITOR_ID) != null) {
-                    editor_id = DisassemblyEditorInput.EDITOR_ID;
-                    editor_input = DisassemblyEditorInput.INSTANCE;
-                }
-                if (cnt != display_source_generation) return;
-                ITextEditor text_editor = null;
-                if (page != null && editor_input != null && editor_id != null) {
-                    IEditorPart editor = openEditor(editor_input, editor_id, page);
-                    if (editor instanceof ITextEditor) {
-                        text_editor = (ITextEditor)editor;
+                    IRegion region = null;
+                    if (text_editor != null) {
+                        region = getLineInformation(text_editor, line);
+                        if (region != null) text_editor.selectAndReveal(region.getOffset(), 0);
                     }
-                    else {
-                        text_editor = (ITextEditor)editor.getAdapter(ITextEditor.class);
-                    }
+                    annotation_manager.addStackFrameAnnotation(TCFModel.this,
+                            exe_id, top_frame, page, text_editor, region);
                 }
-                IRegion region = null;
-                if (text_editor != null) {
-                    region = getLineInformation(text_editor, line);
-                    if (region != null) text_editor.selectAndReveal(region.getOffset(), 0);
+                finally {
+                    if (cnt == display_source_generation) launch.removePendingClient(TCFModel.this);
                 }
-                annotation_manager.addStackFrameAnnotation(TCFModel.this,
-                        exe_id, top_frame, page, text_editor, region);
             }
         });
     }
@@ -1334,10 +1386,14 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     }
 
     private synchronized void runSuspendTrigger(final TCFNode node) {
-        final int generation = ++suspend_trigger_generation;
         final ISuspendTriggerListener[] listeners = suspend_trigger_listeners.toArray(
                 new ISuspendTriggerListener[suspend_trigger_listeners.size()]);
         if (listeners.length == 0) return;
+
+        final int generation = ++suspend_trigger_generation;
+        if (wait_for_pc_update_after_step || wait_for_views_update_after_step) {
+            launch.addPendingClient(suspend_trigger_listeners);
+        }
         display.asyncExec(new Runnable() {
             public void run() {
                 synchronized (TCFModel.this) {
@@ -1350,6 +1406,10 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                     catch (Throwable x) {
                         Activator.log(x);
                     }
+                }
+                synchronized (TCFModel.this) {
+                    if (generation != suspend_trigger_generation) return;
+                    launch.removePendingClient(suspend_trigger_listeners);
                 }
             }
         });

@@ -60,7 +60,7 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
         context = new TCFData<IRegisters.RegistersContext>(channel) {
             @Override
             protected boolean startDataRetrieval() {
-                IRegisters regs = model.getLaunch().getService(IRegisters.class);
+                IRegisters regs = launch.getService(IRegisters.class);
                 command = regs.getContext(id, new IRegisters.DoneGetContext() {
                     public void doneGetContext(IToken token, Exception error, IRegisters.RegistersContext context) {
                         set(token, error, context);

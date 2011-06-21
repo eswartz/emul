@@ -23,6 +23,7 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.ILabelUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IViewerInputUpdate;
+import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.util.TCFDataCache;
@@ -37,6 +38,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
     protected final String id;
     protected final TCFNode parent;
     protected final TCFModel model;
+    protected final TCFLaunch launch;
     protected final IChannel channel;
 
     private boolean disposed;
@@ -67,6 +69,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
     protected TCFNode(TCFModel model) {
         id = null;
         parent = null;
+        launch = model.getLaunch();
         channel = model.getChannel();
         this.model = model;
     }
@@ -85,6 +88,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
         this.id = id;
         model = parent.model;
         model.addNode(id, this);
+        launch = model.getLaunch();
         channel = model.getChannel();
     }
 
@@ -255,7 +259,6 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
             public void run() {
                 if (!done) {
                     if (!update.isCanceled()) {
-                        IChannel channel = model.getLaunch().getChannel();
                         if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
                             if (!getData(update, this)) return;
                         }

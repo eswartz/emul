@@ -22,7 +22,9 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelProxy;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IViewerUpdate;
+import org.eclipse.debug.internal.ui.viewers.model.provisional.IViewerUpdateListener;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.ModelDelta;
+import org.eclipse.debug.internal.ui.viewers.model.provisional.TreeModelViewer;
 import org.eclipse.debug.ui.IDebugUIConstants;
 import org.eclipse.jface.viewers.TreePath;
 import org.eclipse.jface.viewers.Viewer;
@@ -38,11 +40,10 @@ import org.eclipse.tm.tcf.protocol.Protocol;
  */
 public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Runnable {
 
-    private static final long MIN_IDLE_TIME = 50;
-
     private static final TCFNode[] EMPTY_NODE_ARRAY = new TCFNode[0];
 
     private final TCFModel model;
+    private final TCFLaunch launch;
     private final Map<TCFNode,Integer> node2flags = new HashMap<TCFNode,Integer>();
     private final Map<TCFNode,TCFNode[]> node2children = new HashMap<TCFNode,TCFNode[]>();
     private final Map<TCFNode,ModelDelta> node2delta = new HashMap<TCFNode,ModelDelta>();
@@ -59,10 +60,16 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
         public void run() {
             posted = false;
             long idle_time = System.currentTimeMillis() - last_update_time;
-            long min_idle_time = MIN_IDLE_TIME;
-            int congestion = Protocol.getCongestionLevel() + 50;
-            if (congestion > 0) min_idle_time += congestion * 10;
-            if (idle_time < min_idle_time - 10) {
+            long min_idle_time = model.getMinViewUpdatesInterval();
+            if (model.getViewUpdatesThrottleEnabled()) {
+                int congestion = Protocol.getCongestionLevel() + 50;
+                if (congestion > 0) min_idle_time += congestion * 10;
+            }
+            if (model.getChannelThrottleEnabled()) {
+                int congestion = model.getChannel().getCongestion() + 50;
+                if (congestion > 0) min_idle_time += congestion * 10;
+            }
+            if (idle_time < min_idle_time - 5) {
                 Protocol.invokeLater(min_idle_time - idle_time, this);
                 posted = true;
             }
@@ -143,6 +150,24 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
         }
     }
 
+    private final IViewerUpdateListener update_listener = new IViewerUpdateListener() {
+
+        public void viewerUpdatesBegin() {
+            if (!model.getWaitForViewsUpdateAfterStep()) return;
+            launch.addPendingClient(this);
+        }
+
+        public void viewerUpdatesComplete() {
+            launch.removePendingClient(this);
+        }
+
+        public void updateStarted(IViewerUpdate update) {
+        }
+
+        public void updateComplete(IViewerUpdate update) {
+        }
+    };
+
     private final ChildrenCountUpdate children_count_update = new ChildrenCountUpdate();
     private final ChildrenUpdate children_update = new ChildrenUpdate();
 
@@ -150,10 +175,12 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
 
     TCFModelProxy(TCFModel model) {
         this.model = model;
+        launch = model.getLaunch();
     }
 
     public void installed(Viewer viewer) {
         super.installed(viewer);
+        ((TreeModelViewer)viewer).addViewerUpdateListener(update_listener);
         Protocol.invokeAndWait(new Runnable() {
             public void run() {
                 assert !installed;
@@ -172,6 +199,8 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
                 disposed = true;
             }
         });
+        ((TreeModelViewer)getViewer()).removeViewerUpdateListener(update_listener);
+        launch.removePendingClient(update_listener);
         super.dispose();
     }
 
@@ -231,7 +260,8 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
         assert installed && !disposed;
         if (!posted) {
             long idle_time = System.currentTimeMillis() - last_update_time;
-            Protocol.invokeLater(MIN_IDLE_TIME - idle_time, timer);
+            Protocol.invokeLater(model.getMinViewUpdatesInterval() - idle_time, timer);
+            if (model.getWaitForViewsUpdateAfterStep()) launch.addPendingClient(this);
             posted = true;
         }
     }
@@ -293,7 +323,7 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
                     if (selection != null && selection != node || (flags & IModelDelta.EXPAND) != 0) {
                         children = getNodeChildren(node).length;
                     }
-                    delta = root.addNode(model.getLaunch(), -1, flags, children);
+                    delta = root.addNode(launch, -1, flags, children);
                 }
                 else {
                     TCFNode parent = node.getParent(getPresentationContext());
@@ -321,6 +351,7 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
 
     private void postDelta(final ModelDelta root) {
         assert pending_node == null;
+        launch.removePendingClient(this);
         model.getDisplay().asyncExec(new Runnable() {
             public void run() {
                 fireModelChanged(root);
@@ -339,7 +370,6 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
                 model.getDisplay().asyncExec(new Runnable() {
                     boolean found;
                     public void run() {
-                        TCFLaunch launch = model.getLaunch();
                         Tree tree = (Tree)getViewer().getControl();
                         for (TreeItem item : tree.getItems()) {
                             if (item.getData() == launch) {

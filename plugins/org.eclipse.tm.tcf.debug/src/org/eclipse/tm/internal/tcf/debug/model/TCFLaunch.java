@@ -112,8 +112,10 @@ public class TCFLaunch extends Launch {
     private boolean disconnected;
     private boolean shutdown;
     private boolean last_context_exited;
-    private long actions_timestamp;
-    private long actions_interval = 125;
+    private long actions_interval;
+
+    private final HashSet<Object> pending_clients = new HashSet<Object>();
+    private long pending_clients_timestamp;
 
     private String peer_name;
 
@@ -129,6 +131,7 @@ public class TCFLaunch extends Launch {
 
     private final HashMap<String,TCFAction> active_actions = new HashMap<String,TCFAction>();
     private final HashMap<String,LinkedList<TCFAction>> context_action_queue = new HashMap<String,LinkedList<TCFAction>>();
+    private final HashMap<String,Long> context_action_timestamps = new HashMap<String,Long>();
     private final HashMap<String,String> stream_ids = new HashMap<String,String>();
     private final LinkedList<LaunchStep> launch_steps = new LinkedList<LaunchStep>();
     private final LinkedList<String> redirection_path = new LinkedList<String>();
@@ -1101,21 +1104,68 @@ public class TCFLaunch extends Launch {
 
     /****************************************************************************************************************/
 
-    private void startAction(String id) {
+    private long getActionTimeStamp(String id) {
+        Long l = context_action_timestamps.get(id);
+        if (l == null) return 0;
+        return l.longValue();
+    }
+
+    private void startAction(final String id) {
         if (active_actions.get(id) != null) return;
         LinkedList<TCFAction> list = context_action_queue.get(id);
         if (list == null || list.size() == 0) return;
         final TCFAction action = list.removeFirst();
         if (list.size() == 0) context_action_queue.remove(id);
         active_actions.put(id, action);
+        final long timestamp = getActionTimeStamp(id);
         long time = System.currentTimeMillis();
-        Protocol.invokeLater(actions_timestamp + actions_interval - time, new Runnable() {
+        Protocol.invokeLater(timestamp + actions_interval - time, new Runnable() {
             public void run() {
-                actions_timestamp = System.currentTimeMillis();
+                long time = System.currentTimeMillis();
+                synchronized (pending_clients) {
+                    if (pending_clients.size() > 0) {
+                        if (time - timestamp < actions_interval + 1000) {
+                            Protocol.invokeLater(50, this);
+                            return;
+                        }
+                        pending_clients.clear();
+                    }
+                    else if (time - pending_clients_timestamp < 10) {
+                        Protocol.invokeLater(time - pending_clients_timestamp, this);
+                        return;
+                    }
+                }
+                context_action_timestamps.put(id, time);
                 for (ActionsListener l : action_listeners) l.onContextActionStart(action);
                 action.run();
             }
         });
+    }
+
+    /**
+     * Add an object to the set of pending clients.
+     * Actions execution will be delayed until the set is empty,
+     * but not longer then 1 second.
+     * @param client
+     */
+    public void addPendingClient(Object client) {
+        synchronized (pending_clients) {
+            pending_clients.add(client);
+            pending_clients_timestamp = System.currentTimeMillis();
+        }
+    }
+
+    /**
+     * Remove an object from the set of pending clients.
+     * Actions execution resumes when the set becomes empty.
+     * @param client
+     */
+    public void removePendingClient(Object client) {
+        synchronized (pending_clients) {
+            if (pending_clients.remove(client) && pending_clients.size() == 0) {
+                pending_clients_timestamp = System.currentTimeMillis();
+            }
+        }
     }
 
     public void setContextActionsInterval(long interval) {
@@ -1140,14 +1190,15 @@ public class TCFLaunch extends Launch {
         assert Protocol.isDispatchThread();
         String id = action.getContextID();
         assert active_actions.get(id) == action;
-        for (ActionsListener l : action_listeners) l.onContextActionDone(action);
         active_actions.remove(id);
+        for (ActionsListener l : action_listeners) l.onContextActionDone(action);
         startAction(id);
     }
 
     public void removeContextActions(String id) {
         assert Protocol.isDispatchThread();
         context_action_queue.remove(id);
+        context_action_timestamps.remove(id);
     }
 
     public int getContextActionsCount(String id) {

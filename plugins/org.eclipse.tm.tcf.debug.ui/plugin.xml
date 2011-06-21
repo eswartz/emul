@@ -378,4 +378,17 @@
       </page>
    </extension>
 
+   <extension
+         point="org.eclipse.ui.preferencePages">
+      <page
+            category="org.eclipse.debug.ui.DebugPreferencePage"
+            class="org.eclipse.tm.internal.tcf.debug.ui.preferences.TCFDebugPreferencePage"
+            id="org.eclipse.tm.internal.tcf.debug.ui.preferences"
+            name="%preferencePage.name">
+      </page>
+   </extension>
+
+   <extension point="org.eclipse.core.runtime.preferences">
+		<initializer class="org.eclipse.tm.internal.tcf.debug.ui.preferences.TCFPreferencesInitializer"/>
+   </extension>
 </plugin>

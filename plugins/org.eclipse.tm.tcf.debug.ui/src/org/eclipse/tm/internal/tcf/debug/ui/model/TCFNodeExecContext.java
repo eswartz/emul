@@ -220,7 +220,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
             @Override
             protected boolean startDataRetrieval() {
                 assert command == null;
-                IMemory mem = model.getLaunch().getService(IMemory.class);
+                IMemory mem = launch.getService(IMemory.class);
                 if (mem == null) {
                     set(null, null, null);
                     return true;
@@ -237,7 +237,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
             @Override
             protected boolean startDataRetrieval() {
                 assert command == null;
-                IRunControl run = model.getLaunch().getService(IRunControl.class);
+                IRunControl run = launch.getService(IRunControl.class);
                 if (run == null) {
                     set(null, null, null);
                     return true;
@@ -254,7 +254,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
             @Override
             protected boolean startDataRetrieval() {
                 assert command == null;
-                IProcesses prs = model.getLaunch().getService(IProcesses.class);
+                IProcesses prs = launch.getService(IProcesses.class);
                 if (prs == null) {
                     set(null, null, null);
                     return true;
@@ -271,7 +271,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
             @Override
             protected boolean startDataRetrieval() {
                 assert command == null;
-                IMemoryMap mmap = model.getLaunch().getService(IMemoryMap.class);
+                IMemoryMap mmap = launch.getService(IMemoryMap.class);
                 if (mmap == null) {
                     set(null, null, null);
                     return true;
@@ -528,7 +528,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
             ref_cache = line_info_lookup_cache.get(addr);
             if (ref_cache != null) return ref_cache;
         }
-        final ILineNumbers ln = model.getLaunch().getService(ILineNumbers.class);
+        final ILineNumbers ln = launch.getService(ILineNumbers.class);
         if (ln == null) return null;
         final BigInteger n0 = addr;
         final BigInteger n1 = n0.add(BigInteger.valueOf(1));
@@ -591,7 +591,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
             ref_cache = func_info_lookup_cache.get(addr);
             if (ref_cache != null) return ref_cache;
         }
-        final ISymbols syms = model.getLaunch().getService(ISymbols.class);
+        final ISymbols syms = launch.getService(ISymbols.class);
         if (syms == null) return null;
         if (func_info_lookup_cache == null) {
             func_info_lookup_cache = new LinkedHashMap<BigInteger,TCFDataCache<TCFFunctionRef>>(11, 0.75f, true);
@@ -654,7 +654,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     public TCFNode getParent(IPresentationContext ctx) {
         assert Protocol.isDispatchThread();
         if (IDebugUIConstants.ID_DEBUG_VIEW.equals(ctx.getId())) {
-            Set<String> ids = model.getLaunch().getContextFilter();
+            Set<String> ids = launch.getContextFilter();
             if (ids != null) {
                 if (ids.contains(id)) return model.getRootNode();
                 if (parent instanceof TCFNodeLaunch) return null;
@@ -1080,7 +1080,11 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         for (TCFModelProxy p : model.getModelProxies()) {
             int flags = 0;
             String view_id = p.getPresentationContext().getId();
-            if (IDebugUIConstants.ID_DEBUG_VIEW.equals(view_id)) flags |= IModelDelta.CONTENT;
+            if (IDebugUIConstants.ID_DEBUG_VIEW.equals(view_id) &&
+                    (launch.getContextActionsCount(id) == 0 ||
+                    !model.getDelayStackUpdateUtilLastStep())) {
+                flags |= IModelDelta.CONTENT;
+            }
             if (IDebugUIConstants.ID_REGISTER_VIEW.equals(view_id) ||
                     IDebugUIConstants.ID_EXPRESSION_VIEW.equals(view_id) ||
                     TCFModel.ID_EXPRESSION_HOVER.equals(view_id)) {
@@ -1161,7 +1165,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         resumed_by_action = false;
         dispose();
         postContextRemovedDelta();
-        model.getLaunch().removeContextActions(id);
+        launch.removeContextActions(id);
     }
 
     void onExpressionAddedOrRemoved() {

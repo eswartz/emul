@@ -35,7 +35,7 @@ public class TCFNodeLaunch extends TCFNode implements ISymbolOwner {
         filtered_children = new TCFChildren(this) {
             @Override
             protected boolean startDataRetrieval() {
-                Set<String> filter = model.getLaunch().getContextFilter();
+                Set<String> filter = launch.getContextFilter();
                 if (filter == null) {
                     if (!children.validate(this)) return false;
                     set(null, children.getError(), children.getData());

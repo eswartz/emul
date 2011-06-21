@@ -74,7 +74,7 @@ public class TCFNodeStackFrame extends TCFNode {
                     set(null, null, null);
                     return true;
                 }
-                IStackTrace st = model.getLaunch().getService(IStackTrace.class);
+                IStackTrace st = launch.getService(IStackTrace.class);
                 if (st == null) {
                     assert frame_no == 0;
                     set(null, null, null);
@@ -394,8 +394,12 @@ public class TCFNodeStackFrame extends TCFNode {
     void postAllChangedDelta() {
         for (TCFModelProxy p : model.getModelProxies()) {
             int flags = 0;
-            String id = p.getPresentationContext().getId();
-            if (IDebugUIConstants.ID_DEBUG_VIEW.equals(id)) flags |= IModelDelta.STATE;
+            String view_id = p.getPresentationContext().getId();
+            if (IDebugUIConstants.ID_DEBUG_VIEW.equals(view_id) &&
+                    (launch.getContextActionsCount(parent.id) == 0 ||
+                    !model.getDelayStackUpdateUtilLastStep())) {
+                flags |= IModelDelta.STATE;
+            }
             if (getChildren(p.getPresentationContext()) != null && p.getInput() == this) flags |= IModelDelta.CONTENT;
             if (flags == 0) continue;
             p.addDelta(this, flags);
