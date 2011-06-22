@@ -202,7 +202,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     private class MemoryBlocksUpdate extends TCFDataCache<Map<String,TCFMemoryBlockRetrieval>> {
 
-        private final Set<String> changeset = new HashSet<String>();
+        final Set<String> changeset = new HashSet<String>();
 
         MemoryBlocksUpdate(IChannel channel) {
             super(channel);
@@ -735,6 +735,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     void onMemoryChanged(String id) {
         if (channel == null) return;
+        if (mem_retrieval.size() == 0) return;
         if (mem_blocks_update == null) {
             mem_blocks_update = new MemoryBlocksUpdate(channel);
             if (wait_for_views_update_after_step) {
@@ -794,6 +795,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             }
             action_results.remove(id);
             context_map.remove(id);
+            if (mem_blocks_update != null) mem_blocks_update.changeset.remove(id);
         }
         launch_node.onAnyContextAddedOrRemoved();
         // Close debug session if the last context is removed:
