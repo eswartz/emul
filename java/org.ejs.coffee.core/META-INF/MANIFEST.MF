@@ -3,9 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Coffee Core Library
 Bundle-SymbolicName: org.ejs.coffee.core;singleton:=true
 Bundle-Version: 1.0.0
-Export-Package: com.sun.jna,
- com.sun.jna.ptr,
- com.sun.jna.win32,
+Export-Package: 
  com.vladium.utils.timing,
  net.iHarder,
  org.ejs.coffee.core.jface,
@@ -23,6 +21,7 @@ Require-Bundle: org.eclipse.jface,
  org.eclipse.ui,
  com.ibm.icu,
  org.eclipse.ui.ide,
- com.sun.jna;bundle-version="3.2.7"
+ com.sun.jna;bundle-version="3.2.7",
+ org.eclipse.swt
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ActivationPolicy: lazy

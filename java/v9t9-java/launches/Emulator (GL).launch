@@ -13,5 +13,5 @@
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="v9t9.emulator.Emulator"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="--swtgl"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="v9t9-java"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Djna.library.path=${project_loc:libv9t9render}  -Djava.library.path=${project_loc:v9t9-java}/libs/lwjgl/native/${target.os}"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Djava.library.path=${project_loc:v9t9-java}/libs/lwjgl/native/${target.os}"/>
 </launchConfiguration>

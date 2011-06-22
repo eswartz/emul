@@ -13,6 +13,6 @@
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="v9t9.emulator.Emulator"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="--f99b --swtgl"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="v9t9-java"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Djna.library.path=${project_loc:libv9t9render} -Djava.library.path=${project_loc:v9t9-java}/libs/lwjgl/native/${target.os} -ea -Xmx256M"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Djava.library.path=${project_loc:v9t9-java}/libs/lwjgl/native/${target.os} -ea -Xmx256M"/>
 <stringAttribute key="yk-options" value="&#13;&#10;additional-options2=onexit\=snapshot&#13;&#10;startup=14&#13;&#10;"/>
 </launchConfiguration>
