@@ -528,6 +528,17 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         postAllChangedDelta();
     }
 
+    void onMemoryMapChanged() {
+        value.reset();
+        type.reset();
+        type_name.reset();
+        string.reset();
+        children.onMemoryMapChanged();
+        if (parent instanceof TCFNodeExpression) return;
+        if (parent instanceof TCFNodeArrayPartition) return;
+        postAllChangedDelta();
+    }
+
     void onValueChanged() {
         value.reset();
         type.reset();

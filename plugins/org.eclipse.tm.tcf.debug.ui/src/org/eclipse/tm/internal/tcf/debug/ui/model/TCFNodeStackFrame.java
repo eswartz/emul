@@ -441,7 +441,9 @@ public class TCFNodeStackFrame extends TCFNode {
     void onMemoryMapChanged() {
         line_info.reset();
         func_info.reset();
-        postStateChangedDelta();
+        children_vars.onMemoryMapChanged();
+        children_exps.onMemoryMapChanged();
+        postAllChangedDelta();
     }
 
     void onMemoryChanged() {

@@ -62,6 +62,14 @@ public class TCFChildrenSubExpressions extends TCFChildren {
         }
     }
 
+    void onMemoryMapChanged() {
+        reset();
+        for (TCFNode n : getNodes()) {
+            if (n instanceof TCFNodeExpression) ((TCFNodeExpression)n).onMemoryMapChanged();
+            if (n instanceof TCFNodeArrayPartition) ((TCFNodeArrayPartition)n).onMemoryMapChanged();
+        }
+    }
+
     void onCastToTypeChanged() {
         cancel();
         TCFNode a[] = getNodes().toArray(new TCFNode[getNodes().size()]);

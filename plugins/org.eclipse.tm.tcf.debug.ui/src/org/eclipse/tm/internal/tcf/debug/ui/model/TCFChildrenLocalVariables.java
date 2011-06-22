@@ -38,6 +38,11 @@ public class TCFChildrenLocalVariables extends TCFChildren {
         for (TCFNode n : getNodes()) ((TCFNodeExpression)n).onMemoryChanged();
     }
 
+    void onMemoryMapChanged() {
+        reset();
+        for (TCFNode n : getNodes()) ((TCFNodeExpression)n).onMemoryMapChanged();
+    }
+
     @Override
     protected boolean startDataRetrieval() {
         IExpressions exps = node.model.getLaunch().getService(IExpressions.class);

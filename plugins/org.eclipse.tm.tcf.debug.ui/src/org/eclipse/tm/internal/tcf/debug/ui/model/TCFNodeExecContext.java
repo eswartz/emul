@@ -1281,6 +1281,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         children_exec.onMemoryMapChanged();
         children_stack.onMemoryMapChanged();
         children_modules.onMemoryMapChanged();
+        children_exps.onMemoryMapChanged();
         postModulesChangedDelta();
     }
 
