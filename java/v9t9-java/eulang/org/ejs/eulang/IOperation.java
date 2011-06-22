@@ -34,9 +34,9 @@ public interface IOperation {
 	IBinaryOperation INDEX = new IndexBinaryOperation("[]");
 
 	
-	IBinaryOperation ADD = new ArithmeticBinaryOperation("+", "add", true);
-	IBinaryOperation SUB = new ArithmeticBinaryOperation("-", "sub", false);
-	IBinaryOperation MUL = new ArithmeticBinaryOperation("*", "mul", true);
+	IBinaryOperation ADD = new ArithmeticBinaryOperation("+", "add", true, "", "f");
+	IBinaryOperation SUB = new ArithmeticBinaryOperation("-", "sub", false, "", "f");
+	IBinaryOperation MUL = new ArithmeticBinaryOperation("*", "mul", true, "", "f");
 	IBinaryOperation DIV = new ArithmeticBinaryOperation("/", "div", false, "s", "f");
 	IBinaryOperation REM = new ArithmeticBinaryOperation("\\", "rem", false, "s", "f");
 	IBinaryOperation UDIV = new ArithmeticBinaryOperation("+/", "udiv", false);

@@ -32,6 +32,8 @@ public class LLVMEnv {
 		File file;
 		if ((file = findOnPath(base)) != null)
 			return file.getAbsolutePath();
+		if ((file = findOnPath(base + "-2.8")) != null)
+			return file.getAbsolutePath();
 		if ((file = findOnPath(base + "-2.7")) != null)
 			return file.getAbsolutePath();
 		return base;
