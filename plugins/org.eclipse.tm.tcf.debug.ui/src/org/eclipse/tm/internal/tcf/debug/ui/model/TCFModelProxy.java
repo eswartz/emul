@@ -28,6 +28,8 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.TreeModelViewer;
 import org.eclipse.debug.ui.IDebugUIConstants;
 import org.eclipse.jface.viewers.TreePath;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.swt.graphics.Device;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
@@ -44,6 +46,7 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
 
     private final TCFModel model;
     private final TCFLaunch launch;
+    private final Display display;
     private final Map<TCFNode,Integer> node2flags = new HashMap<TCFNode,Integer>();
     private final Map<TCFNode,TCFNode[]> node2children = new HashMap<TCFNode,TCFNode[]>();
     private final Map<TCFNode,ModelDelta> node2delta = new HashMap<TCFNode,ModelDelta>();
@@ -176,6 +179,7 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
     TCFModelProxy(TCFModel model) {
         this.model = model;
         launch = model.getLaunch();
+        display = model.getDisplay();
     }
 
     public void installed(Viewer viewer) {
@@ -349,10 +353,18 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
         return delta;
     }
 
+    private void asyncExec(Runnable r) {
+        synchronized (Device.class) {
+            if (!display.isDisposed()) {
+                display.asyncExec(r);
+            }
+        }
+    }
+
     private void postDelta(final ModelDelta root) {
         assert pending_node == null;
         launch.removePendingClient(this);
-        model.getDisplay().asyncExec(new Runnable() {
+        asyncExec(new Runnable() {
             public void run() {
                 fireModelChanged(root);
             }
@@ -367,7 +379,7 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
             if (getPresentationContext().getId().equals(IDebugUIConstants.ID_DEBUG_VIEW)) {
                 // Wait until launch manager done creating our launch item in the Debug view.
                 // Deltas do NOT work without the launch item.
-                model.getDisplay().asyncExec(new Runnable() {
+                asyncExec(new Runnable() {
                     boolean found;
                     public void run() {
                         Tree tree = (Tree)getViewer().getControl();
