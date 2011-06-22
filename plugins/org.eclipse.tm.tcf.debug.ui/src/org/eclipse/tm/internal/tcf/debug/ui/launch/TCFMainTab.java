@@ -51,6 +51,7 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
     private Text working_dir_text;
     private Button default_dir_button;
     private Button attach_children_button;
+    private Button disconnect_on_ctx_exit;
     private Button terminal_button;
     private Exception init_error;
 
@@ -66,7 +67,7 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
         createApplicationGroup(comp);
         createWorkingDirGroup(comp);
         createVerticalSpacer(comp, 1);
-        createTerminalOption(comp, 1);
+        createOptionButtons(comp, 1);
     }
 
     private void createProjectGroup(Composite parent) {
@@ -213,7 +214,7 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
         working_dir_text.setEnabled(!default_dir_button.getSelection());
     }
 
-    private void createTerminalOption(Composite parent, int colSpan) {
+    private void createOptionButtons(Composite parent, int col_span) {
         Composite terminal_comp = new Composite(parent, SWT.NONE);
         GridLayout terminal_layout = new GridLayout();
         terminal_layout.numColumns = 1;
@@ -221,7 +222,7 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
         terminal_layout.marginWidth = 0;
         terminal_comp.setLayout(terminal_layout);
         GridData gd = new GridData(GridData.FILL_HORIZONTAL);
-        gd.horizontalSpan = colSpan;
+        gd.horizontalSpan = col_span;
         terminal_comp.setLayoutData(gd);
 
         attach_children_button = createCheckButton(terminal_comp, "Auto-attach process children");
@@ -232,6 +233,15 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
             }
         });
         attach_children_button.setEnabled(true);
+
+        disconnect_on_ctx_exit = createCheckButton(terminal_comp, "Disconnect when last debug context exits");
+        disconnect_on_ctx_exit.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent evt) {
+                updateLaunchConfigurationDialog();
+            }
+        });
+        disconnect_on_ctx_exit.setEnabled(true);
 
         terminal_button = createCheckButton(terminal_comp, "Use pseudo-terminal for process standard I/O");
         terminal_button.addSelectionListener(new SelectionAdapter() {
@@ -253,6 +263,7 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
             working_dir_text.setText(config.getAttribute(TCFLaunchDelegate.ATTR_WORKING_DIRECTORY, ""));
             default_dir_button.setSelection(!config.hasAttribute(TCFLaunchDelegate.ATTR_WORKING_DIRECTORY));
             attach_children_button.setSelection(config.getAttribute(TCFLaunchDelegate.ATTR_ATTACH_CHILDREN, true));
+            disconnect_on_ctx_exit.setSelection(config.getAttribute(TCFLaunchDelegate.ATTR_DISCONNECT_ON_CTX_EXIT, true));
             terminal_button.setSelection(config.getAttribute(TCFLaunchDelegate.ATTR_USE_TERMINAL, true));
             working_dir_text.setEnabled(!default_dir_button.getSelection());
         }
@@ -280,6 +291,7 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
             config.setAttribute(TCFLaunchDelegate.ATTR_WORKING_DIRECTORY, working_dir_text.getText());
         }
         config.setAttribute(TCFLaunchDelegate.ATTR_ATTACH_CHILDREN, attach_children_button.getSelection());
+        config.setAttribute(TCFLaunchDelegate.ATTR_DISCONNECT_ON_CTX_EXIT, disconnect_on_ctx_exit.getSelection());
         config.setAttribute(TCFLaunchDelegate.ATTR_USE_TERMINAL, terminal_button.getSelection());
     }
 
@@ -446,6 +458,7 @@ public class TCFMainTab extends AbstractLaunchConfigurationTab {
     public void setDefaults(ILaunchConfigurationWorkingCopy config) {
         config.setAttribute(TCFLaunchDelegate.ATTR_PROJECT_NAME, "");
         config.setAttribute(TCFLaunchDelegate.ATTR_ATTACH_CHILDREN, true);
+        config.setAttribute(TCFLaunchDelegate.ATTR_DISCONNECT_ON_CTX_EXIT, true);
         config.setAttribute(TCFLaunchDelegate.ATTR_USE_TERMINAL, true);
         config.setAttribute(TCFLaunchDelegate.ATTR_WORKING_DIRECTORY, (String)null);
         ITCFLaunchContext launch_context = TCFLaunchContext.getLaunchContext(null);

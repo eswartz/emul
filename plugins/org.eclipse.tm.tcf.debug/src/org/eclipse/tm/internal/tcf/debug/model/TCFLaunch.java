@@ -949,8 +949,16 @@ public class TCFLaunch extends Launch {
     }
 
     public void onLastContextRemoved() {
-        last_context_exited = true;
-        closeChannel();
+        ILaunchConfiguration cfg = getLaunchConfiguration();
+        try {
+            if (cfg.getAttribute(TCFLaunchDelegate.ATTR_DISCONNECT_ON_CTX_EXIT, true)) {
+                last_context_exited = true;
+                closeChannel();
+            }
+        }
+        catch (Throwable e) {
+            Activator.log("Cannot access launch configuration", e);
+        }
     }
 
     public void closeChannel() {
