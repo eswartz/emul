@@ -60,7 +60,13 @@ public interface IRunControl extends IService {
         /** Context ID of a run control group that contains the context.
          * Members of same group are always suspended and resumed together:
          * resuming/suspending a context resumes/suspends all members of the group */
-        PROP_RC_GROUP = "RCGroup";
+        PROP_RC_GROUP = "RCGroup",
+
+        /** Context ID of a breakpoints group that contains the context.
+         * Members of same group share same breakpoint instances:
+         * a breakpoint is planted once for the group, no need to plant
+         * the breakpoint for each member of the group */
+        PROP_BP_GROUP = "BPGroup";
 
     /**
      * Context resume modes.
@@ -362,6 +368,16 @@ public interface IRunControl extends IService {
          * @return value of PROP_RC_GROUP.
          */
         String getRCGroup();
+
+        /**
+         * Utility method to read context property PROP_BP_GROUP -
+         * context ID of a breakpoints group that contains the context.
+         * Members of same group share same breakpoint instances:
+         * a breakpoint is planted once for the group, no need to plant
+         * the breakpoint for each member of the group
+         * @return value of PROP_BP_GROUP or null if the context does not support breakpoints.
+         */
+        String getBPGroup();
 
         /**
          * Send a command to retrieve current state of a context.
