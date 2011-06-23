@@ -254,11 +254,11 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     private final Map<String,TCFMemoryBlockRetrieval> mem_retrieval = new HashMap<String,TCFMemoryBlockRetrieval>();
     private MemoryBlocksUpdate mem_blocks_update;
 
-    private final Map<String,String> cast_to_type_map =
-        new HashMap<String,String>();
+    private final Map<String,String> cast_to_type_map = new HashMap<String,String>();
 
-    private final Map<String,Object> context_map =
-        new HashMap<String,Object>();
+    private final Map<String,Object> context_map = new HashMap<String,Object>();
+
+    private final Set<String> expanded_nodes = new HashSet<String>();
 
     private TCFConsole console;
 
@@ -795,6 +795,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             }
             action_results.remove(id);
             context_map.remove(id);
+            expanded_nodes.remove(id);
             if (mem_blocks_update != null) mem_blocks_update.changeset.remove(id);
         }
         launch_node.onAnyContextAddedOrRemoved();
@@ -1134,7 +1135,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 if (reason.equals(IRunControl.REASON_STEP)) continue;
                 if (reason.equals(IRunControl.REASON_CONTAINER)) continue;
                 if (delay_stack_update_until_last_step && launch.getContextActionsCount(node.id) != 0) continue;
-                proxy.expand(node);
+                if (expanded_nodes.add(node.id)) proxy.expand(node);
             }
         }
     }
