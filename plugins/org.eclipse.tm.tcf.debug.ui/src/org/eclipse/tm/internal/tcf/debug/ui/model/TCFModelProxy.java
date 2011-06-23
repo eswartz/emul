@@ -15,7 +15,8 @@ import java.util.LinkedList;
 import java.util.Map;
 
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.debug.internal.ui.viewers.provisional.AbstractModelProxy;
+import org.eclipse.debug.internal.ui.viewers.model.ITreeModelContentProviderTarget;
+import org.eclipse.debug.internal.ui.viewers.model.ITreeModelViewer;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenCountUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
@@ -24,14 +25,12 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationCont
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IViewerUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IViewerUpdateListener;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.ModelDelta;
-import org.eclipse.debug.internal.ui.viewers.model.provisional.TreeModelViewer;
+import org.eclipse.debug.internal.ui.viewers.provisional.AbstractModelProxy;
 import org.eclipse.debug.ui.IDebugUIConstants;
 import org.eclipse.jface.viewers.TreePath;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.graphics.Device;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Tree;
-import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
 import org.eclipse.tm.tcf.protocol.Protocol;
 
@@ -184,7 +183,7 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
 
     public void installed(Viewer viewer) {
         super.installed(viewer);
-        ((TreeModelViewer)viewer).addViewerUpdateListener(update_listener);
+        ((ITreeModelViewer)viewer).addViewerUpdateListener(update_listener);
         Protocol.invokeAndWait(new Runnable() {
             public void run() {
                 assert !installed;
@@ -203,7 +202,7 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
                 disposed = true;
             }
         });
-        ((TreeModelViewer)getViewer()).removeViewerUpdateListener(update_listener);
+        ((ITreeModelViewer)getViewer()).removeViewerUpdateListener(update_listener);
         launch.removePendingClient(update_listener);
         super.dispose();
     }
@@ -219,12 +218,8 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
         assert installed && !disposed;
         if (flags == 0) return;
         Integer delta = node2flags.get(node);
-        if (delta != null) {
-            node2flags.put(node, delta.intValue() | flags);
-        }
-        else {
-            node2flags.put(node, flags);
-        }
+        if (delta != null) flags |= delta.intValue();
+        node2flags.put(node, flags);
         post();
     }
 
@@ -382,13 +377,7 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
                 asyncExec(new Runnable() {
                     boolean found;
                     public void run() {
-                        Tree tree = (Tree)getViewer().getControl();
-                        for (TreeItem item : tree.getItems()) {
-                            if (item.getData() == launch) {
-                                found = true;
-                                break;
-                            }
-                        }
+                        found = ((ITreeModelContentProviderTarget)getViewer()).findElementIndex(TreePath.EMPTY, launch) >= 0;
                         Protocol.invokeLater(new Runnable() {
                             public void run() {
                                 if (found) realized = true;
