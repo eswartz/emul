@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -35,7 +35,7 @@ static unsigned listener_max = 0;
 static size_t extension_size = 0;
 static int context_created = 0;
 
-LINK context_root = { NULL, NULL };
+LINK context_root = TCF_LIST_INIT(context_root);
 
 const char * REASON_USER_REQUEST = "Suspended";
 const char * REASON_STEP = "Step";
@@ -289,7 +289,6 @@ void send_context_exited_event(Context * ctx) {
 }
 
 void ini_contexts(void) {
-    list_init(&context_root);
     init_contexts_sys_dep();
 }
 

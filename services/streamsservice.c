@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2009, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -107,9 +107,9 @@ struct Subscription {
 
 #define HANDLE_HASH_SIZE (4 * MEM_USAGE_FACTOR - 1)
 static LINK handle_hash[HANDLE_HASH_SIZE];
-static LINK clients;
-static LINK streams;
-static LINK subscriptions;
+static LINK clients = TCF_LIST_INIT(clients);
+static LINK streams = TCF_LIST_INIT(streams);
+static LINK subscriptions = TCF_LIST_INIT(subscriptions);
 static unsigned id_cnt = 0;
 
 static unsigned get_client_hash(unsigned id, Channel * c) {
@@ -835,9 +835,6 @@ static void channel_close_listener(Channel * c) {
 void ini_streams_service(Protocol * proto) {
     int i;
 
-    list_init(&clients);
-    list_init(&streams);
-    list_init(&subscriptions);
     for (i = 0; i < HANDLE_HASH_SIZE; i++) {
         list_init(&handle_hash[i]);
     }

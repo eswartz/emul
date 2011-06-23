@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2009, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -44,7 +44,7 @@ static int client_exited = 0;
 static int cache_miss_cnt = 0;
 static WaitingCacheClient * wait_list_buf;
 static unsigned wait_list_max;
-static LINK cache_list;
+static LINK cache_list = TCF_LIST_INIT(cache_list);
 
 static void run_cache_client(void) {
     Trap trap;
@@ -96,7 +96,6 @@ void cache_wait_dbg(const char * file, int line, AbstractCache * cache) {
     assert(is_dispatch_thread());
     assert(client_exited == 0);
     if (current_client.client != NULL && cache_miss_cnt == 0) {
-        if (cache_list.next == NULL) list_init(&cache_list);
         if (cache->wait_list_cnt >= cache->wait_list_max) {
             cache->wait_list_max += 8;
             cache->wait_list_buf = (WaitingCacheClient *)loc_realloc(cache->wait_list_buf, cache->wait_list_max * sizeof(WaitingCacheClient));

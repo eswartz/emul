@@ -105,7 +105,7 @@ typedef struct Terminal {
 
 #define link2term(A)  ((Terminal *)((char *)(A) - offsetof(Terminal, link)))
 
-static LINK terms_list;
+static LINK terms_list = TCF_LIST_INIT(terms_list);
 
 static Terminal * find_terminal(int pid) {
     LINK * qhp = &terms_list;
@@ -571,8 +571,6 @@ static void channel_close_listener(Channel * c) {
 }
 
 void ini_terminals_service(Protocol * proto) {
-    list_init(&terms_list);
-
     add_channel_close_listener(channel_close_listener);
 
     add_command_handler(proto, TERMINALS, "getContext", command_get_context);

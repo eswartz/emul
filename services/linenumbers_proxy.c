@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -65,7 +65,7 @@ typedef struct LineAddressCache {
 #define root2cache(A) ((LineNumbersCache *)((char *)(A) - offsetof(LineNumbersCache, link_root)))
 #define cache2addr(A) ((LineAddressCache *)((char *)(A) - offsetof(LineAddressCache, link_cache)))
 
-static LINK root;
+static LINK root = TCF_LIST_INIT(root);
 
 static int code_area_cnt = 0;
 static int code_area_max = 0;
@@ -308,7 +308,6 @@ void ini_line_numbers_lib(void) {
         NULL,
         event_context_changed
     };
-    list_init(&root);
     add_context_event_listener(&listener, NULL);
     add_channel_close_listener(channel_close_listener);
 }

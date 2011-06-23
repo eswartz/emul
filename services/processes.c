@@ -133,7 +133,7 @@ typedef struct ProcessInput {
 #define link2prs(A)  ((ChildProcess *)((char *)(A) - offsetof(ChildProcess, link)))
 
 static int init_done = 0;
-static LINK prs_list;
+static LINK prs_list = TCF_LIST_INIT(prs_list);
 #if defined(_WRS_KERNEL)
 static SEM_ID prs_list_lock = NULL;
 #endif
@@ -1335,7 +1335,6 @@ static void init(void) {
     if (taskCreateHookAdd((FUNCPTR)task_create_hook) != OK) check_error(errno);
     if (taskDeleteHookAdd((FUNCPTR)task_delete_hook) != OK) check_error(errno);
 #endif /* defined(_WRS_KERNEL) */
-    list_init(&prs_list);
     add_waitpid_listener(waitpid_listener, NULL);
 }
 

@@ -152,7 +152,7 @@ struct PeerCache {
 #define ctx2stk(A)       ((StackFrameCache *)((char *)(A) - offsetof(StackFrameCache, link_ctx)))
 #define idhashl2ctx(A)   ((ContextCache *)((char *)(A) - offsetof(ContextCache, id_hash_link)))
 
-static LINK peers;
+static LINK peers = TCF_LIST_INIT(peers);
 
 static MemoryRegion * mem_buf = NULL;
 static unsigned mem_buf_max = 0;
@@ -1540,7 +1540,6 @@ void init_contexts_sys_dep(void) {
     add_context_event_listener(&listener, NULL);
     add_channel_close_listener(channel_close_listener);
     context_extension_offset = context_extension(sizeof(ContextCache *));
-    list_init(&peers);
 }
 
 #endif /* ENABLE_DebugContext && ENABLE_ContextProxy */

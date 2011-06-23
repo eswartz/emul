@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -132,7 +132,7 @@ static unsigned long handle_cnt = 0;
 
 #define HANDLE_HASH_SIZE (4 * MEM_USAGE_FACTOR - 1)
 static LINK handle_hash[HANDLE_HASH_SIZE];
-static LINK file_info_ring = { NULL, NULL };
+static LINK file_info_ring = TCF_LIST_INIT(file_info_ring);
 
 static OpenFileInfo * create_open_file_info(Channel * ch, char * path, int file, DIR * dir) {
     LINK * list_head = NULL;
@@ -1366,7 +1366,6 @@ void ini_file_system_service(Protocol * proto) {
     int i;
 
     add_channel_close_listener(channel_close_listener);
-    list_init(&file_info_ring);
     for (i = 0; i < HANDLE_HASH_SIZE; i++) {
         list_init(&handle_hash[i]);
     }

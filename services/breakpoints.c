@@ -188,16 +188,16 @@ static unsigned listener_max = 0;
 #define link_active2erl(A)  ((EvaluationRequest *)((char *)(A) - offsetof(EvaluationRequest, link_active)))
 #define link_bcg2chnl(A) ((Channel *)((char *)(A) - offsetof(Channel, bclink)))
 
-static LINK breakpoints;
+static LINK breakpoints = TCF_LIST_INIT(breakpoints);
 static LINK id2bp[ID2BP_HASH_SIZE];
 
-static LINK instructions;
+static LINK instructions = TCF_LIST_INIT(instructions);
 static LINK addr2instr[ADDR2INSTR_HASH_SIZE];
 
 static LINK inp2br[INP2BR_HASH_SIZE];
 
-static LINK evaluations_posted;
-static LINK evaluations_active;
+static LINK evaluations_posted = TCF_LIST_INIT(evaluations_posted);
+static LINK evaluations_active = TCF_LIST_INIT(evaluations_active);
 static uintptr_t generation_posted = 0;
 static uintptr_t generation_active = 0;
 static uintptr_t generation_done = 0;
@@ -2549,10 +2549,6 @@ void ini_breakpoints_service(Protocol * proto, TCFBroadcastGroup * bcg) {
         add_path_map_event_listener(&listener, NULL);
     }
 #endif
-    list_init(&breakpoints);
-    list_init(&instructions);
-    list_init(&evaluations_posted);
-    list_init(&evaluations_active);
     for (i = 0; i < ADDR2INSTR_HASH_SIZE; i++) list_init(addr2instr + i);
     for (i = 0; i < ID2BP_HASH_SIZE; i++) list_init(id2bp + i);
     for (i = 0; i < INP2BR_HASH_SIZE; i++) list_init(inp2br + i);

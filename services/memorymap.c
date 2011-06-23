@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2009, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -67,7 +67,7 @@ static unsigned listener_max = 0;
 #define ctx2map(A)     ((ClientMap *)((char *)(A) - offsetof(ClientMap, link_ctx)))
 
 #define MAP_HASH_SIZE (4 * MEM_USAGE_FACTOR - 1)
-static LINK client_map_list;
+static LINK client_map_list = TCF_LIST_INIT(client_map_list);
 static LINK client_map_hash[MAP_HASH_SIZE];
 
 static TCFBroadcastGroup * broadcast_group = NULL;
@@ -529,7 +529,6 @@ void ini_memory_map_service(Protocol * proto, TCFBroadcastGroup * bcg) {
     };
     broadcast_group = bcg;
     add_channel_close_listener(channel_close_listener);
-    list_init(&client_map_list);
     for (i = 0; i < MAP_HASH_SIZE; i++) {
         list_init(&client_map_hash[i]);
     }

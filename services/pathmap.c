@@ -102,7 +102,7 @@ struct PathMap {
 static const char PATH_MAP[] = "PathMap";
 
 static int ini_done = 0;
-static LINK maps;
+static LINK maps = TCF_LIST_INIT(maps);
 static char host_name[256];
 
 static Listener * listeners = NULL;
@@ -523,7 +523,6 @@ static void channel_close_listener(Channel * c) {
 void ini_path_map_service(Protocol * proto, TCFBroadcastGroup * bcg) {
     if (!ini_done) {
         ini_done = 1;
-        list_init(&maps);
         add_channel_close_listener(channel_close_listener);
     }
     broadcast_group = bcg;

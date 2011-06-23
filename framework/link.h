@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -28,6 +28,9 @@ struct LINK {
     LINK * next;
     LINK * prev;
 };
+
+
+#define TCF_LIST_INIT(list)  {&(list), &(list)}
 
 #define list_init(list) { \
             (list)->next = (list)->prev = (list); \

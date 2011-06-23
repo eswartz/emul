@@ -168,7 +168,7 @@ struct Symbol {
 
 #include <services/symbols_alloc.h>
 
-static LINK root;
+static LINK root = TCF_LIST_INIT(root);
 
 static const char * SYMBOLS = "Symbols";
 
@@ -1348,7 +1348,6 @@ void ini_symbols_lib(void) {
         event_context_started,
         event_context_changed
     };
-    list_init(&root);
     add_context_event_listener(&listener, NULL);
     add_channel_close_listener(channel_close_listener);
 }

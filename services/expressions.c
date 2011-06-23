@@ -2216,7 +2216,7 @@ typedef struct Expression {
 
 #define ID2EXP_HASH_SIZE (32 * MEM_USAGE_FACTOR - 1)
 
-static LINK expressions;
+static LINK expressions = TCF_LIST_INIT(expressions);
 static LINK id2exp[ID2EXP_HASH_SIZE];
 
 #define MAX_SYM_NAME 1024
@@ -2793,7 +2793,6 @@ void add_identifier_callback(ExpressionIdentifierCallBack * callback) {
 
 void ini_expressions_service(Protocol * proto) {
     unsigned i;
-    list_init(&expressions);
     for (i = 0; i < ID2EXP_HASH_SIZE; i++) list_init(id2exp + i);
     add_channel_close_listener(on_channel_close);
     add_command_handler(proto, EXPRESSIONS, "getContext", command_get_context);

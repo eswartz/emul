@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -67,7 +67,7 @@ static size_t context_extension_offset = 0;
 
 #include <system/pid-hash.h>
 
-static LINK pending_list;
+static LINK pending_list = TCF_LIST_INIT(pending_list);
 
 static MemoryErrorInfo mem_err_info;
 
@@ -654,7 +654,6 @@ static void waitpid_listener(int pid, int exited, int exit_code, int signal, int
 }
 
 void init_contexts_sys_dep(void) {
-    list_init(&pending_list);
     context_extension_offset = context_extension(sizeof(ContextExtensionDarwin));
     add_waitpid_listener(waitpid_listener, NULL);
     ini_context_pid_hash();

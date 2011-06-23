@@ -37,7 +37,7 @@
 
 #define MAX_WORKER_THREADS 32
 
-static LINK wtlist;
+static LINK wtlist = TCF_LIST_INIT(wtlist);
 static int wtlist_size = 0;
 static pthread_mutex_t wtlock;
 
@@ -270,7 +270,6 @@ void async_req_post(AsyncReqInfo * req) {
 }
 
 void ini_asyncreq(void) {
-    list_init(&wtlist);
     wtlist_size = 0;
     check_error(pthread_mutex_init(&wtlock, NULL));
 }

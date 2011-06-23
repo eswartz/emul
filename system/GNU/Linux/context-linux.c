@@ -107,8 +107,8 @@ static size_t context_extension_offset = 0;
 
 #include <system/pid-hash.h>
 
-static LINK pending_list;
-static LINK detach_list;
+static LINK pending_list = TCF_LIST_INIT(pending_list);
+static LINK detach_list = TCF_LIST_INIT(detach_list);
 
 static MemoryErrorInfo mem_err_info;
 
@@ -1173,8 +1173,6 @@ static void eventpoint_at_main(Context * ctx, void * args) {
 }
 
 void init_contexts_sys_dep(void) {
-    list_init(&pending_list);
-    list_init(&detach_list);
     context_extension_offset = context_extension(sizeof(ContextExtensionLinux));
     add_waitpid_listener(waitpid_listener, NULL);
     ini_context_pid_hash();

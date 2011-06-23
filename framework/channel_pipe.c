@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2010, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -99,7 +99,7 @@ struct ServerPIPE {
 #define ibuf2pipe(A)        ((ChannelPIPE *)((char *)(A) - offsetof(ChannelPIPE, ibuf)))
 #define obuf2pipe(A)        ((ChannelPIPE *)((char *)(A) - offsetof(ChannelPIPE, out_queue)))
 
-static LINK server_list;
+static LINK server_list = TCF_LIST_INIT(server_list);
 static void pipe_read_done(void * x);
 static void handle_channel_msg(void * x);
 
@@ -712,7 +712,6 @@ static void server_close(ChannelServer * serv) {
 
 ChannelServer * channel_pipe_server(PeerServer * ps) {
     ServerPIPE * s = (ServerPIPE *)loc_alloc_zero(sizeof(ServerPIPE));
-    if (server_list.next == NULL) list_init(&server_list);
 #if defined(WIN32) && !defined(__CYGWIN__)
     {
         int i;
