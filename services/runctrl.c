@@ -115,7 +115,8 @@ static void run_safe_events(void * arg);
 
 static void write_context(OutputStream * out, Context * ctx) {
     int md, modes;
-    Context * grp = context_get_group(ctx, CONTEXT_GROUP_INTERCEPT);
+    Context * rc_grp = context_get_group(ctx, CONTEXT_GROUP_INTERCEPT);
+    Context * bp_grp = context_get_group(ctx, CONTEXT_GROUP_BREAKPOINT);
     int has_state = context_has_state(ctx);
 
     assert(!ctx->exited);
@@ -219,11 +220,18 @@ static void write_context(OutputStream * out, Context * ctx) {
         json_write_boolean(out, 1);
     }
 
-    if (grp != ctx) {
+    if (rc_grp != ctx) {
         write_stream(out, ',');
         json_write_string(out, "RCGroup");
         write_stream(out, ':');
-        json_write_string(out, grp->id);
+        json_write_string(out, rc_grp->id);
+    }
+
+    if (bp_grp != ctx) {
+        write_stream(out, ',');
+        json_write_string(out, "BPGroup");
+        write_stream(out, ':');
+        json_write_string(out, bp_grp->id);
     }
 
     write_stream(out, '}');
