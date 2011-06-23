@@ -140,6 +140,8 @@ public class TCFLaunch extends Launch {
 
     private Set<String> context_filter;
 
+    private boolean supports_memory_map_preloading;
+
     private final IStreams.StreamsListener streams_listener = new IStreams.StreamsListener() {
 
         public void created(String stream_type, String stream_id, String context_id) {
@@ -231,8 +233,9 @@ public class TCFLaunch extends Launch {
                             mem_map.set("\001", null, new IMemoryMap.DoneSet() {
                                 public void doneSet(IToken token, Exception error) {
                                     try {
-                                        if (error != null) {
-                                            // Older agents don't support preloading of memory maps.
+                                        supports_memory_map_preloading = error == null;
+                                        if (!supports_memory_map_preloading) {
+                                            // Older agents (up to ver. 0.4) don't support preloading of memory maps.
                                             updateMemoryMapsOnProcessCreation(cfg, done);
                                         }
                                         else {
@@ -873,6 +876,10 @@ public class TCFLaunch extends Launch {
 
     public TCFBreakpointsStatus getBreakpointsStatus() {
         return breakpoints_status;
+    }
+
+    public boolean isMemoryMapPreloadingSupported()  {
+        return supports_memory_map_preloading;
     }
 
     public static void addListener(LaunchListener listener) {

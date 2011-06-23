@@ -484,9 +484,19 @@ public class MemoryMapWidget {
                     String id = null;
                     TCFNodeExecContext node = mem_cache.getData();
                     if (node != null) {
-                        TCFDataCache<String> name_cache = node.getFullName();
-                        if (!name_cache.validate(this)) return;
-                        id = name_cache.getData();
+                        TCFDataCache<IMemory.MemoryContext> mem_ctx = node.getMemoryContext();
+                        if (!mem_ctx.validate(this)) return;
+                        if (mem_ctx.getData() != null) {
+                            if (node.getModel().getLaunch().isMemoryMapPreloadingSupported()) {
+                                TCFDataCache<String> name_cache = node.getFullName();
+                                if (!name_cache.validate(this)) return;
+                                id = name_cache.getData();
+                            }
+                            else {
+                                id = mem_ctx.getData().getName();
+                            }
+                            if (id == null) id = node.getID();
+                        }
                     }
                     done(id);
                 }
@@ -517,12 +527,19 @@ public class MemoryMapWidget {
                             if (n instanceof TCFNodeExecContext) {
                                 TCFNodeExecContext exe = (TCFNodeExecContext)n;
                                 if (!collectMemoryNodes(exe.getChildren())) return false;
-                                TCFDataCache<IMemory.MemoryContext> mem = exe.getMemoryContext();
-                                if (!mem.validate(this)) return false;
-                                if (mem.getData() != null) {
-                                    TCFDataCache<String> nm = exe.getFullName();
-                                    if (!nm.validate(this)) return false;
-                                    String s = nm.getData();
+                                TCFDataCache<IMemory.MemoryContext> mem_ctx = exe.getMemoryContext();
+                                if (!mem_ctx.validate(this)) return false;
+                                if (mem_ctx.getData() != null) {
+                                    String s = null;
+                                    if (exe.getModel().getLaunch().isMemoryMapPreloadingSupported()) {
+                                        TCFDataCache<String> nm = exe.getFullName();
+                                        if (!nm.validate(this)) return false;
+                                        s = nm.getData();
+                                    }
+                                    else {
+                                        s = mem_ctx.getData().getName();
+                                    }
+                                    if (s == null) s = exe.getID();
                                     if (s != null) target_map_nodes.put(s, exe);
                                 }
                             }
