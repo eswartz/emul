@@ -182,6 +182,7 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
     }
 
     public void installed(Viewer viewer) {
+        if (isDisposed()) return;
         super.installed(viewer);
         ((ITreeModelViewer)viewer).addViewerUpdateListener(update_listener);
         Protocol.invokeAndWait(new Runnable() {
@@ -195,6 +196,7 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
     }
 
     public void dispose() {
+        if (isDisposed()) return;
         Protocol.invokeAndWait(new Runnable() {
             public void run() {
                 assert !disposed;
