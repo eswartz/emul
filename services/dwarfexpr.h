@@ -23,12 +23,12 @@
 
 #include <config.h>
 
-#if ENABLE_ELF
+#if ENABLE_ELF && ENABLE_DebugContext
 
 #include <services/dwarfcache.h>
 
 extern void dwarf_evaluate_expression(U8_T base, PropertyValue * value);
 
-#endif /* ENABLE_ELF */
+#endif /* ENABLE_ELF && ENABLE_DebugContext */
 
 #endif /* D_dwarfexpr */

@@ -760,7 +760,9 @@ static int get_map(Context * ctx, ContextAddress addr0, ContextAddress addr1, Me
     MemoryMap * target_map = NULL;
 
     map->region_cnt = 0;
+#if ENABLE_DebugContext
     ctx = context_get_group(ctx, CONTEXT_GROUP_PROCESS);
+#endif
     if (memory_map_get(ctx, &client_map, &target_map) < 0) return -1;
     search_regions(client_map, addr0, addr1, map);
     search_regions(target_map, addr0, addr1, map);
@@ -839,6 +841,7 @@ void elf_list_done(Context * ctx) {
     elf_list.region_cnt = 0;
 }
 
+#if ENABLE_DebugContext
 UnitAddressRange * elf_find_unit(Context * ctx, ContextAddress addr_min, ContextAddress addr_max, ContextAddress * range_rt_addr) {
     unsigned i, j;
     UnitAddressRange * range = NULL;
@@ -918,6 +921,7 @@ UnitAddressRange * elf_find_unit(Context * ctx, ContextAddress addr_min, Context
 #endif
     return range;
 }
+#endif
 
 ContextAddress elf_map_to_run_time_address(Context * ctx, ELF_File * file, ELF_Section * sec, ContextAddress addr) {
     unsigned i;
@@ -1036,6 +1040,8 @@ ContextAddress elf_map_to_link_time_address(Context * ctx, ContextAddress addr, 
     }
     return 0;
 }
+
+#if ENABLE_DebugContext
 
 static int get_dynamic_tag(Context * ctx, ELF_File * file, int tag, ContextAddress * addr) {
     unsigned i, j;
@@ -1188,6 +1194,8 @@ ContextAddress elf_get_debug_structure_address(Context * ctx, ELF_File ** file_p
 
     return addr;
 }
+
+#endif
 
 /************************ ELF symbol tables *****************************************/
 

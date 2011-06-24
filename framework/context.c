@@ -32,6 +32,9 @@ static Listener * listeners = NULL;
 static unsigned listener_cnt = 0;
 static unsigned listener_max = 0;
 
+static size_t extension_size = 0;
+static int context_created = 0;
+
 LINK context_root = { NULL, NULL };
 
 const char * REASON_USER_REQUEST = "Suspended";
@@ -94,11 +97,6 @@ void add_context_event_listener(ContextEventListener * listener, void * client_d
     listener_cnt++;
 }
 
-#if ENABLE_DebugContext
-
-static size_t extension_size = 0;
-static int context_created = 0;
-
 size_t context_extension(size_t size) {
     size_t offs = 0;
     assert(!context_created);
@@ -116,6 +114,27 @@ Context * create_context(const char * id) {
     context_created = 1;
     return ctx;
 }
+
+void context_clear_memory_map(MemoryMap * map) {
+    unsigned i;
+    for (i = 0; i < map->region_cnt; i++) {
+        MemoryRegion * r = map->regions + i;
+        loc_free(r->file_name);
+        loc_free(r->sect_name);
+        loc_free(r->id);
+        while (r->attrs != NULL) {
+            MemoryRegionAttribute * x = r->attrs;
+            r->attrs = x->next;
+            loc_free(x->name);
+            loc_free(x->value);
+            loc_free(x);
+        }
+    }
+    memset(map->regions, 0, sizeof(MemoryRegion) * map->region_max);
+    map->region_cnt = 0;
+}
+
+#if ENABLE_DebugContext
 
 void context_lock(Context * ctx) {
     assert(ctx->ref_count > 0);
@@ -157,25 +176,6 @@ const char * context_state_name(Context * ctx) {
     if (ctx->exited) return "exited";
     if (ctx->stopped) return "stopped";
     return "running";
-}
-
-void context_clear_memory_map(MemoryMap * map) {
-    unsigned i;
-    for (i = 0; i < map->region_cnt; i++) {
-        MemoryRegion * r = map->regions + i;
-        loc_free(r->file_name);
-        loc_free(r->sect_name);
-        loc_free(r->id);
-        while (r->attrs != NULL) {
-            MemoryRegionAttribute * x = r->attrs;
-            r->attrs = x->next;
-            loc_free(x->name);
-            loc_free(x->value);
-            loc_free(x);
-        }
-    }
-    memset(map->regions, 0, sizeof(MemoryRegion) * map->region_max);
-    map->region_cnt = 0;
 }
 
 void send_context_created_event(Context * ctx) {

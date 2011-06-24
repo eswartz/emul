@@ -19,7 +19,7 @@
 
 #include <config.h>
 
-#if ENABLE_ELF
+#if ENABLE_ELF && ENABLE_DebugContext
 
 #include <assert.h>
 #include <stdio.h>
@@ -584,4 +584,4 @@ void dwarf_evaluate_expression(U8_T BaseAddress, PropertyValue * Value) {
     if (Value->mAttr != AT_frame_base) sExprStackLen = 0;
 }
 
-#endif /* ENABLE_ELF */
+#endif /* ENABLE_ELF && ENABLE_DebugContext */

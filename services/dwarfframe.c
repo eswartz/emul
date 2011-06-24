@@ -21,7 +21,7 @@
 
 #include <config.h>
 
-#if ENABLE_ELF
+#if ENABLE_ELF && ENABLE_DebugContext
 
 #include <assert.h>
 #include <stdio.h>
@@ -1000,4 +1000,4 @@ void get_dwarf_stack_frame_info(Context * ctx, ELF_File * file, ELF_Section * se
     }
 }
 
-#endif /* ENABLE_ELF */
+#endif /* ENABLE_ELF && ENABLE_DebugContext */

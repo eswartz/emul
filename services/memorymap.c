@@ -124,6 +124,13 @@ static unsigned find_maps(LINK * maps, const char * id) {
     return cnt;
 }
 
+static Context * get_mem_context(Context * ctx) {
+#if ENABLE_DebugContext
+    ctx = context_get_group(ctx, CONTEXT_GROUP_PROCESS);
+#endif
+    return ctx;
+}
+
 static void update_context_client_map(Context * ctx) {
     ContextExtensionMM * ext = EXT(ctx);
     unsigned r_cnt = 0;
@@ -132,7 +139,7 @@ static void update_context_client_map(Context * ctx) {
     LINK * l;
     LINK maps;
 
-    assert(ctx == context_get_group(ctx, CONTEXT_GROUP_PROCESS));
+    assert(ctx == get_mem_context(ctx));
     list_init(&maps);
     r_cnt += find_maps(&maps, ctx->id);
     if (ctx->name != NULL) {
@@ -189,7 +196,7 @@ static void update_all_context_client_maps(void) {
     for (l = context_root.next; l != &context_root; l = l->next) {
         Context * ctx = ctxl2ctxp(l);
         if (ctx->exited) continue;
-        if (ctx != context_get_group(ctx, CONTEXT_GROUP_PROCESS)) continue;
+        if (ctx != get_mem_context(ctx)) continue;
         update_context_client_map(ctx);
     }
 }
@@ -200,7 +207,7 @@ static void event_memory_map_changed(Context * ctx, void * args) {
 
     if (ctx->exited) return;
     if (!ext->valid) return;
-    if (ctx != context_get_group(ctx, CONTEXT_GROUP_PROCESS)) return;
+    if (ctx != get_mem_context(ctx)) return;
 
     context_clear_memory_map(&ext->target_map);
     ext->valid = 0;
@@ -218,7 +225,7 @@ static void event_memory_map_changed(Context * ctx, void * args) {
 
 static void event_context_changed(Context * ctx, void * args) {
     if (ctx->exited) return;
-    if (ctx != context_get_group(ctx, CONTEXT_GROUP_PROCESS)) return;
+    if (ctx != get_mem_context(ctx)) return;
     update_context_client_map(ctx);
 }
 
@@ -241,7 +248,8 @@ static void event_context_disposed(Context * ctx, void * args) {
 
 int memory_map_get(Context * ctx, MemoryMap ** client_map, MemoryMap ** target_map) {
     ContextExtensionMM * ext = EXT(ctx);
-    assert(ctx == context_get_group(ctx, CONTEXT_GROUP_PROCESS));
+    assert(ctx == get_mem_context(ctx));
+#if ENABLE_DebugContext
     if (!ext->valid) {
         context_clear_memory_map(&ext->target_map);
         release_error_report(ext->error);
@@ -254,6 +262,7 @@ int memory_map_get(Context * ctx, MemoryMap ** client_map, MemoryMap ** target_m
             ext->valid = 1;
         }
     }
+#endif
     if (ext->error != NULL) {
         set_error_report_errno(ext->error);
         return -1;
@@ -266,7 +275,7 @@ int memory_map_get(Context * ctx, MemoryMap ** client_map, MemoryMap ** target_m
 void memory_map_event_module_loaded(Context * ctx) {
     unsigned i;
     assert(ctx->ref_count > 0);
-    assert(ctx == context_get_group(ctx, CONTEXT_GROUP_PROCESS));
+    assert(ctx == get_mem_context(ctx));
     event_memory_map_changed(ctx, NULL);
     for (i = 0; i < listener_cnt; i++) {
         Listener * l = listeners + i;
@@ -278,7 +287,7 @@ void memory_map_event_module_loaded(Context * ctx) {
 void memory_map_event_code_section_ummapped(Context * ctx, ContextAddress addr, ContextAddress size) {
     unsigned i;
     assert(ctx->ref_count > 0);
-    assert(ctx == context_get_group(ctx, CONTEXT_GROUP_PROCESS));
+    assert(ctx == get_mem_context(ctx));
     event_memory_map_changed(ctx, NULL);
     for (i = 0; i < listener_cnt; i++) {
         Listener * l = listeners + i;
@@ -290,7 +299,7 @@ void memory_map_event_code_section_ummapped(Context * ctx, ContextAddress addr, 
 void memory_map_event_module_unloaded(Context * ctx) {
     unsigned i;
     assert(ctx->ref_count > 0);
-    assert(ctx == context_get_group(ctx, CONTEXT_GROUP_PROCESS));
+    assert(ctx == get_mem_context(ctx));
     event_memory_map_changed(ctx, NULL);
     for (i = 0; i < listener_cnt; i++) {
         Listener * l = listeners + i;
@@ -302,7 +311,7 @@ void memory_map_event_module_unloaded(Context * ctx) {
 void memory_map_event_mapping_chnaged(Context * ctx) {
     unsigned i;
     assert(ctx->ref_count > 0);
-    assert(ctx == context_get_group(ctx, CONTEXT_GROUP_PROCESS));
+    assert(ctx == get_mem_context(ctx));
     event_memory_map_changed(ctx, NULL);
     for (i = 0; i < listener_cnt; i++) {
         Listener * l = listeners + i;
@@ -389,7 +398,7 @@ static void command_get(char * token, Channel * c) {
 
     ctx = id2ctx(id);
     if (ctx == NULL) err = ERR_INV_CONTEXT;
-    else ctx = context_get_group(ctx, CONTEXT_GROUP_PROCESS);
+    else ctx = get_mem_context(ctx);
 
     if (!err && memory_map_get(ctx, &client_map, &target_map) < 0) err = errno;
 

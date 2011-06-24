@@ -26,7 +26,7 @@
 
 #include <config.h>
 
-#if ENABLE_ELF
+#if ENABLE_ELF && ENABLE_DebugContext
 
 #include <services/tcf_elf.h>
 #include <services/dwarfio.h>
@@ -54,8 +54,6 @@ struct FileInfo {
     U4_T mSize;
     unsigned mNameHash;
 };
-
-#define SYM_HASH_SIZE (32 * MEM_USAGE_FACTOR - 1)
 
 #define TAG_fund_type 0x2000
 
@@ -223,6 +221,6 @@ extern void read_and_evaluate_dwarf_object_property(Context * ctx, int frame, U8
 /* Convert PropertyValue to a number */
 extern U8_T get_numeric_property_value(PropertyValue * Value);
 
-#endif /* ENABLE_ELF */
+#endif /* ENABLE_ELF && ENABLE_DebugContext */
 
 #endif /* D_dwarfcache */

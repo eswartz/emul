@@ -466,6 +466,8 @@ struct ELF_PHeader {
     U4_T align;
 };
 
+#define SYM_HASH_SIZE (32 * MEM_USAGE_FACTOR - 1)
+
 /*
  * Swap bytes in a buffer.
  * The function is used when ELF file endianness mismatch agent endianness.
@@ -531,6 +533,8 @@ extern ContextAddress elf_map_to_run_time_address(Context * ctx, ELF_File * file
  */
 extern ContextAddress elf_map_to_link_time_address(Context * ctx, ContextAddress addr, ELF_File ** file, ELF_Section ** sec);
 
+#if ENABLE_DebugContext
+
 /*
  * Read a word from context memory. Word size and endianess are determened by ELF file.
  */
@@ -548,6 +552,8 @@ extern ContextAddress elf_get_debug_structure_address(Context * ctx, ELF_File **
  * If 'range_rt_addr' not NULL, *range_rt_addr is assigned run-time address of the range.
  */
 extern struct UnitAddressRange * elf_find_unit(Context * ctx, ContextAddress addr_min, ContextAddress addr_max, ContextAddress * range_rt_addr);
+
+#endif
 
 /* Return symbol name hash. The hash is used to build sym_names_hash table. */
 extern unsigned calc_symbol_name_hash(const char * s);

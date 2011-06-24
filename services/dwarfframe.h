@@ -24,7 +24,7 @@
 
 #include <config.h>
 
-#if ENABLE_ELF
+#if ENABLE_ELF && ENABLE_DebugContext
 
 #include <framework/context.h>
 #include <services/dwarfcache.h>
@@ -51,6 +51,6 @@ extern StackTracingCommandSequence * dwarf_stack_trace_fp;
 extern int dwarf_stack_trace_regs_cnt;
 extern StackTracingCommandSequence ** dwarf_stack_trace_regs;
 
-#endif /* ENABLE_ELF */
+#endif /* ENABLE_ELF && ENABLE_DebugContext */
 
 #endif /* D_dwarfframe */

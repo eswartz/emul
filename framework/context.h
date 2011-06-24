@@ -185,8 +185,6 @@ extern pid_t id2pid(const char * id, pid_t * parent);
  */
 extern Context * id2ctx(const char * id);
 
-#if ENABLE_DebugContext
-
 /*
  * Register an extension of struct Context.
  * Return offset of extension data area.
@@ -194,6 +192,18 @@ extern Context * id2ctx(const char * id);
  * Client are allowed to call this function only during initialization.
  */
 extern size_t context_extension(size_t size);
+
+/*
+ * Create a Context object.
+ */
+extern Context * create_context(const char * id);
+
+/*
+ * Clear a memory map - dispose all entries.
+ */
+extern void context_clear_memory_map(MemoryMap * map);
+
+#if ENABLE_DebugContext
 
 /*
  * Get human redable name of current state of a context.
@@ -303,11 +313,6 @@ extern int context_single_step(Context * ctx);
  * The function implementation should not retain references to 'map' or its contents.
  */
 extern int context_get_memory_map(Context * ctx, MemoryMap * map);
-
-/*
- * Clear a memory map - dispose all entries.
- */
-extern void context_clear_memory_map(MemoryMap * map);
 
 /*
  * Write context memory.
@@ -464,12 +469,6 @@ extern void send_context_changed_event(Context * ctx);
 extern void send_context_stopped_event(Context * ctx);
 extern void send_context_started_event(Context * ctx);
 extern void send_context_exited_event(Context * ctx);
-
-/*
- * Create a Context object.
- * It is not supposed to be called by clients.
- */
-extern Context * create_context(const char * id);
 
 extern void ini_contexts(void);
 extern void init_contexts_sys_dep(void);

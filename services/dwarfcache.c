@@ -21,7 +21,7 @@
 
 #include <config.h>
 
-#if ENABLE_ELF
+#if ENABLE_ELF && ENABLE_DebugContext
 
 #include <assert.h>
 #include <framework/exceptions.h>
@@ -1078,4 +1078,4 @@ UnitAddressRange * find_comp_unit_addr_range(DWARFCache * cache, ContextAddress 
     return NULL;
 }
 
-#endif /* ENABLE_ELF */
+#endif /* ENABLE_ELF && ENABLE_DebugContext */
