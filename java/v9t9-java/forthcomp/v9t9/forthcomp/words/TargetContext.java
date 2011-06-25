@@ -53,6 +53,7 @@ public abstract class TargetContext extends Context {
 	private int baseDP;
 	private PrintStream logfile = System.out;
 	private Map<String, ForwardRef> forwards;
+	private List<StubWord> stubWords = new ArrayList<StubWord>();
 	public DictEntry stubData;
 	private boolean exportFlagNext;
 	private boolean exportFlag;
@@ -79,6 +80,7 @@ public abstract class TargetContext extends Context {
 	protected DictEntry defineStub(String name) {
 		StubWord stubWord = new StubWord(name);
 		//getDictionary().put(name, stubWord.getEntry());
+		stubWords.add(stubWord);
 		return stubWord.getEntry();
 	}
 	
@@ -849,5 +851,12 @@ public abstract class TargetContext extends Context {
 	public int getUP() {
 		TargetVariable up = findOrCreateVariable("UP0");
 		return readCell(up.getEntry().getParamAddr());
+	}
+
+	public void dumpStubs(PrintStream logfile) {
+		logfile.println("Stub uses:");
+		for (StubWord word : stubWords) {
+			logfile.println("\t"+word.getName() + " = " + word.getEntry().getUses());
+		}
 	}
 }

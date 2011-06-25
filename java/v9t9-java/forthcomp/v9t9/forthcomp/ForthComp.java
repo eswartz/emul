@@ -188,6 +188,7 @@ public class ForthComp {
 	    	}
 	    	System.out.println("headers size = " + headerSizes);
 	    	
+	    	targetContext.dumpStubs(logfile);
     	}
 	}
 

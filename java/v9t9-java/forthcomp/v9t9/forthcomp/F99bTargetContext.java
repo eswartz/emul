@@ -58,7 +58,11 @@ public class F99bTargetContext extends TargetContext {
 	private int gp;
 
 	private MemoryDomain grom;
+
+	private DictEntry stub16BitU8Lit;
 	//private boolean localSupport;
+
+	private DictEntry stub8BitNegLit;
 	
 
 	/**
@@ -77,7 +81,9 @@ public class F99bTargetContext extends TargetContext {
 		stub4BitJump = defineStub("<<4-bit jump>>");
 		stub8BitJump = defineStub("<<8-bit jump>>");
 		stub8BitLit = defineStub("<<8-bit lit>>");
+		stub8BitNegLit = defineStub("<<8-bit neg lit>>");
 		stub16BitLit = defineStub("<<16-bit lit>>");
+		stub16BitU8Lit = defineStub("<<16-bit U8 lit>>");
 		stub16BitAddr = defineStub("<<16-bit addr>>");
 		stub16BitJump = defineStub("<<16-bit jump>>");
 		stubCall = defineStub("<<call>>");
@@ -409,10 +415,15 @@ public class F99bTargetContext extends TargetContext {
 			compileByte(IlitX | (value & 0xf));
 			return stub4BitLit;
 		} else if (optimize && value >= -128 && value < (isUnsigned ? 256 : 128)) {
+			if (value < 0) 
+				stub8BitNegLit.use();
 			compileByte(IlitB);
 			compileByte(value);
 			return stub8BitLit;
 		} else {
+			if ((value & 0xff) == value)
+				stub16BitU8Lit.use();
+
 			compileByte(IlitW);
 			int ptr = alloc(2);
 			writeCell(ptr, value & 0xffff);
