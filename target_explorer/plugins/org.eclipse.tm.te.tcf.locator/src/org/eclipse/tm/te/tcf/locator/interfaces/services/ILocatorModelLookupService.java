@@ -3,7 +3,7 @@
  * This program and the accompanying materials are made available under the terms
  * of the Eclipse Public License v1.0 which accompanies this distribution, and is
  * available at http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  * Uwe Stieber (Wind River) - initial API and implementation
  *******************************************************************************/
@@ -25,10 +25,10 @@ public interface ILocatorModelLookupService extends ILocatorModelService {
 	public IPeerModel lkupPeerModelById(String id);
 
 	/**
-	 * Lookup the peer model for the given peer id.
+	 * Lookup matching peer model instances for the given agent id.
 	 *
 	 * @param agentId The agent id. Must not be <code>null</code>.
-	 * @return The peer model instance, or <code>null</code> if the peer model cannot be found.
+	 * @return The peer model instances, or an empty list if the given agent id could not be matched.
 	 */
-	public IPeerModel lkupPeerModelByAgentId(String agentId);
+	public IPeerModel[] lkupPeerModelByAgentId(String agentId);
 }

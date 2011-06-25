@@ -28,6 +28,7 @@ import org.eclipse.tm.te.tcf.locator.Scanner;
 import org.eclipse.tm.te.tcf.locator.activator.CoreBundleActivator;
 import org.eclipse.tm.te.tcf.locator.interfaces.IModelListener;
 import org.eclipse.tm.te.tcf.locator.interfaces.IScanner;
+import org.eclipse.tm.te.tcf.locator.interfaces.ITracing;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.ILocatorModel;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel;
 import org.eclipse.tm.te.tcf.locator.interfaces.preferences.IPreferenceKeys;
@@ -90,6 +91,11 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 	public void addListener(IModelListener listener) {
 		Assert.isNotNull(listener);
 		Assert.isTrue(Protocol.isDispatchThread());
+
+		if (CoreBundleActivator.getTraceHandler().isSlotEnabled(0, ITracing.ID_TRACE_LOCATOR_MODEL)) {
+			CoreBundleActivator.getTraceHandler().trace("LocatorModel.addListener( " + listener + " )", ITracing.ID_TRACE_LOCATOR_MODEL, this); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+
 		if (!modelListener.contains(listener)) modelListener.add(listener);
 	}
 
@@ -99,6 +105,11 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 	public void removeListener(IModelListener listener) {
 		Assert.isNotNull(listener);
 		Assert.isTrue(Protocol.isDispatchThread());
+
+		if (CoreBundleActivator.getTraceHandler().isSlotEnabled(0, ITracing.ID_TRACE_LOCATOR_MODEL)) {
+			CoreBundleActivator.getTraceHandler().trace("LocatorModel.removeListener( " + listener + " )", ITracing.ID_TRACE_LOCATOR_MODEL, this); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+
 		modelListener.remove(listener);
 	}
 
@@ -114,6 +125,10 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 	 */
 	public void dispose() {
 		Assert.isTrue(Protocol.isDispatchThread());
+
+		if (CoreBundleActivator.getTraceHandler().isSlotEnabled(0, ITracing.ID_TRACE_LOCATOR_MODEL)) {
+			CoreBundleActivator.getTraceHandler().trace("LocatorModel.dispose()", ITracing.ID_TRACE_LOCATOR_MODEL, this); //$NON-NLS-1$
+		}
 
 		// If already disposed, we are done immediately
 		if (disposed) return;
@@ -251,6 +266,10 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.ILocatorModel#startScanner(long, long)
 	 */
 	public void startScanner(long delay, long schedule) {
+		if (CoreBundleActivator.getTraceHandler().isSlotEnabled(0, ITracing.ID_TRACE_LOCATOR_MODEL)) {
+			CoreBundleActivator.getTraceHandler().trace("LocatorModel.startScanner( " + delay + ", " + schedule + " )", ITracing.ID_TRACE_LOCATOR_MODEL, this); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+		}
+
 		IScanner scanner = getScanner();
 
 		if (scanner != null) {
@@ -274,6 +293,10 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.ILocatorModel#stopScanner()
 	 */
 	public void stopScanner() {
+		if (CoreBundleActivator.getTraceHandler().isSlotEnabled(0, ITracing.ID_TRACE_LOCATOR_MODEL)) {
+			CoreBundleActivator.getTraceHandler().trace("LocatorModel.stopScanner()", ITracing.ID_TRACE_LOCATOR_MODEL, this); //$NON-NLS-1$
+		}
+
 		if (scanner != null) {
 			// Terminate the scanner
 			scanner.terminate();
@@ -292,6 +315,10 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 		// Get the peer from the peer node
 		IPeer peer = node.getPeer();
 
+		if (CoreBundleActivator.getTraceHandler().isSlotEnabled(0, ITracing.ID_TRACE_LOCATOR_MODEL)) {
+			CoreBundleActivator.getTraceHandler().trace("LocatorModel.validatePeerNodeForAdd( " + (peer != null ? peer.getID() : null) + " )", ITracing.ID_TRACE_LOCATOR_MODEL, this); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+
 		IPeerModel result = node;
 
 		// Check on the filtered by preference settings what to do
@@ -302,8 +329,17 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 			// Peers are filtered by agent id. Don't add the peer node
 			// if we have another peer node already having the same agent id
 			String agentId = peer.getAgentID();
-			IPeerModel previousNode = agentId != null ? getService(ILocatorModelLookupService.class).lkupPeerModelByAgentId(agentId) : null;
-			if (previousNode != null) {
+			IPeerModel[] previousNodes = agentId != null ? getService(ILocatorModelLookupService.class).lkupPeerModelByAgentId(agentId) : new IPeerModel[0];
+
+			if (CoreBundleActivator.getTraceHandler().isSlotEnabled(0, ITracing.ID_TRACE_LOCATOR_MODEL)) {
+				CoreBundleActivator.getTraceHandler().trace("LocatorModel.validatePeerNodeForAdd: agentId=" + agentId + ", Matching peer nodes " //$NON-NLS-1$ //$NON-NLS-2$
+															+ (previousNodes.length > 0 ? "found (" + previousNodes.length +")" : "not found --> DONE") //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+															, ITracing.ID_TRACE_LOCATOR_MODEL, this);
+			}
+
+			boolean fireListener = false;
+
+			for (IPeerModel previousNode : previousNodes) {
 				// Get the peer for the previous node
 				IPeer previousPeer = previousNode.getPeer();
 				if (previousPeer != null) {
@@ -312,40 +348,75 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 					String loopback = IPAddressUtil.getInstance().getIPv4LoopbackAddress();
 					String canonical = IPAddressUtil.getInstance().getCanonicalAddress();
 
-					boolean fireListener = false;
-
 					String peerIP = peer.getAttributes().get(IPeer.ATTR_IP_HOST);
 					String previousPeerIP = previousPeer.getAttributes().get(IPeer.ATTR_IP_HOST);
-					if (canonical != null && canonical.equals(peerIP) && !canonical.equals(previousPeerIP)) {
-						// Remove the old node and replace it with the new new
-						peers.remove(previousNode.getPeer().getID());
-						fireListener = true;
-					} else if (loopback != null && loopback.equals(peerIP) && !loopback.equals(previousPeerIP)
-							&& (canonical == null || canonical != null && !canonical.equals(previousPeerIP))) {
-						// Remove the old node and replace it with the new new
-						peers.remove(previousNode.getPeer().getID());
-						fireListener = true;
-					} else {
-						// Drop the current node, if the ports are identical
-						String peerPort = peer.getAttributes().get(IPeer.ATTR_IP_PORT);
-						if (peerPort == null || "".equals(peerPort)) peerPort = "1534"; //$NON-NLS-1$ //$NON-NLS-2$
-						String previousPeerPort = previousPeer.getAttributes().get(IPeer.ATTR_IP_PORT);
-						if (previousPeerPort == null || "".equals(previousPeerPort)) previousPeerPort = "1534"; //$NON-NLS-1$ //$NON-NLS-2$
-						if (peerPort.equals(previousPeerPort)) result = null;
+
+					String peerPort = peer.getAttributes().get(IPeer.ATTR_IP_PORT);
+					if (peerPort == null || "".equals(peerPort)) peerPort = "1534"; //$NON-NLS-1$ //$NON-NLS-2$
+					String previousPeerPort = previousPeer.getAttributes().get(IPeer.ATTR_IP_PORT);
+					if (previousPeerPort == null || "".equals(previousPeerPort)) previousPeerPort = "1534"; //$NON-NLS-1$ //$NON-NLS-2$
+
+					if (CoreBundleActivator.getTraceHandler().isSlotEnabled(0, ITracing.ID_TRACE_LOCATOR_MODEL)) {
+						CoreBundleActivator.getTraceHandler().trace("LocatorModel.validatePeerNodeForAdd: loopback=" + loopback + ", canonical=" + canonical //$NON-NLS-1$ //$NON-NLS-2$
+																	+ ", peerIP=" + peerIP + ", previousPeerIP=" + previousPeerIP //$NON-NLS-1$ //$NON-NLS-2$
+																	+ ", peerPort=" + peerPort + ", previousPeerPort=" + previousPeerPort //$NON-NLS-1$ //$NON-NLS-2$
+																	, ITracing.ID_TRACE_LOCATOR_MODEL, this);
 					}
 
-					if (fireListener) {
-						final IModelListener[] listeners = getListener();
-						if (listeners.length > 0) {
-							Protocol.invokeLater(new Runnable() {
-								public void run() {
-									for (IModelListener listener : listeners) {
-										listener.locatorModelChanged(LocatorModel.this);
-									}
-								}
-							});
+					// If the ports of the agent instances are identical,
+					// than try to find the best representation of the agent instance
+					if (peerPort.equals(previousPeerPort))  {
+						if (canonical != null && canonical.equals(peerIP) && !canonical.equals(previousPeerIP)) {
+							// Remove the old node and replace it with the new new
+							peers.remove(previousNode.getPeer().getID());
+							fireListener = true;
+
+							if (CoreBundleActivator.getTraceHandler().isSlotEnabled(0, ITracing.ID_TRACE_LOCATOR_MODEL)) {
+								CoreBundleActivator.getTraceHandler().trace("LocatorModel.validatePeerNodeForAdd: Previous peer node replaced (canonical overwrite)" //$NON-NLS-1$
+																			, ITracing.ID_TRACE_LOCATOR_MODEL, this);
+							}
+						} else if (loopback != null && loopback.equals(peerIP) && !loopback.equals(previousPeerIP)
+								&& (canonical == null || canonical != null && !canonical.equals(previousPeerIP))) {
+							// Remove the old node and replace it with the new new
+							peers.remove(previousNode.getPeer().getID());
+							fireListener = true;
+
+							if (CoreBundleActivator.getTraceHandler().isSlotEnabled(0, ITracing.ID_TRACE_LOCATOR_MODEL)) {
+								CoreBundleActivator.getTraceHandler().trace("LocatorModel.validatePeerNodeForAdd: Previous peer node replaced (loopback overwrite)" //$NON-NLS-1$
+																			, ITracing.ID_TRACE_LOCATOR_MODEL, this);
+							}
+						} else {
+							// Drop the current node
+							result = null;
+
+							if (CoreBundleActivator.getTraceHandler().isSlotEnabled(0, ITracing.ID_TRACE_LOCATOR_MODEL)) {
+								CoreBundleActivator.getTraceHandler().trace("LocatorModel.validatePeerNodeForAdd: Previous peer node kept, new peer node dropped" //$NON-NLS-1$
+																			, ITracing.ID_TRACE_LOCATOR_MODEL, this);
+							}
+
 						}
+
+						// Break the loop if the ports matched
+						break;
 					}
+
+					if (CoreBundleActivator.getTraceHandler().isSlotEnabled(0, ITracing.ID_TRACE_LOCATOR_MODEL)) {
+						CoreBundleActivator.getTraceHandler().trace("LocatorModel.validatePeerNodeForAdd: Previous peer node kept, new peer node added (Port mismatch)" //$NON-NLS-1$
+																	, ITracing.ID_TRACE_LOCATOR_MODEL, this);
+					}
+				}
+			}
+
+			if (fireListener) {
+				final IModelListener[] listeners = getListener();
+				if (listeners.length > 0) {
+					Protocol.invokeLater(new Runnable() {
+						public void run() {
+							for (IModelListener listener : listeners) {
+								listener.locatorModelChanged(LocatorModel.this);
+							}
+						}
+					});
 				}
 			}
 		}

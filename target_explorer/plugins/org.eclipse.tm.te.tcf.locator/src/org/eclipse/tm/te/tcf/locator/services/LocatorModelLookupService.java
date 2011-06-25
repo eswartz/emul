@@ -9,6 +9,9 @@
  *******************************************************************************/
 package org.eclipse.tm.te.tcf.locator.services;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.Protocol;
@@ -51,21 +54,20 @@ public class LocatorModelLookupService extends AbstractLocatorModelService imple
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.services.ILocatorModelLookupService#lkupPeerModelByAgentId(java.lang.String)
+	 * @see org.eclipse.tm.te.tcf.locator.interfaces.services.ILocatorModelLookupService#lkupPeerModelByAgentId(java.lang.String)
 	 */
-	public IPeerModel lkupPeerModelByAgentId(String agentId) {
+	public IPeerModel[] lkupPeerModelByAgentId(String agentId) {
 		Assert.isNotNull(agentId);
 		Assert.isTrue(Protocol.isDispatchThread());
 
-		IPeerModel node = null;
+		List<IPeerModel> nodes = new ArrayList<IPeerModel>();
 		for (IPeerModel candidate : getLocatorModel().getPeers()) {
 			IPeer peer = candidate.getPeer();
 			if (agentId.equals(peer.getAgentID())) {
-				node = candidate;
-				break;
+				nodes.add(candidate);
 			}
 		}
 
-		return node;
+		return nodes.toArray(new IPeerModel[nodes.size()]);
 	}
 }
