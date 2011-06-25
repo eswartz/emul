@@ -223,7 +223,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	
 	private MonitorEffect getEffect() {
 		return BaseEmulatorWindow.settingMonitorDrawing.getBoolean() 
-			? CRT2 : STANDARD;
+			? CRT : STANDARD;
 	}
 	
 	private void compileLinkShaders() {
