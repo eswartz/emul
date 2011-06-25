@@ -118,7 +118,7 @@ public class Win32SoundListener implements ISoundListener {
 		wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign;
 		wfx.cbSize = 0;
 
-		System.out.println("Sound format: " + soundFormat);
+		//System.out.println("Sound format: " + soundFormat);
     	
 		wHandle = 0;
 		

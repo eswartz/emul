@@ -54,7 +54,7 @@ public class FastTimer {
 			RunnableInfo info = new RunnableInfo(task, 1000000000L / perSecond);
 			taskinfos.add(info);
 			
-			System.out.println("Adding task @ " + info.delay + " ns");
+			//System.out.println("Adding task @ " + info.delay + " ns");
 			if (taskinfos.size() > 0) {
 				if (timerThread == null)
 					startTimer();

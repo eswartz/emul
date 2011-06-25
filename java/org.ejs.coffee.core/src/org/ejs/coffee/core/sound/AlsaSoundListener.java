@@ -127,8 +127,9 @@ public class AlsaSoundListener implements ISoundListener {
 		}
 		handle = pcmref.get();
 		
-		System.out.println("Sound format: " + soundFormat);
 
+		//System.out.println("Sound format: " + soundFormat);
+		
 		/*
     	snd_pcm_hw_params_t.Ref hwparamsRef = new snd_pcm_hw_params_t.Ref();
     	AlsaLibrary.INSTANCE.snd_pcm_hw_params_malloc(hwparamsRef);

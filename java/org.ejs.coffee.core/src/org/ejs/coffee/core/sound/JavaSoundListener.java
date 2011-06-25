@@ -83,7 +83,7 @@ public class JavaSoundListener implements ISoundListener {
 			soundGeneratorLine = (SourceDataLine) AudioSystem.getLine(slInfo);
 			soundGeneratorLine.open(soundFormat, soundFramesPerTick * 20 * 4);
 			
-			System.out.println("Sound format: " + soundFormat);
+			//System.out.println("Sound format: " + soundFormat);
 
 		} catch (LineUnavailableException e) {
 			System.err.println("Line not available");

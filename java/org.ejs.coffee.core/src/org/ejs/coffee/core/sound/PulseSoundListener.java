@@ -107,7 +107,7 @@ public class PulseSoundListener implements ISoundListener {
 		}
 		//soundGeneratorLine.open(soundFormat, soundFramesPerTick * 20 * 4);
 		
-		System.out.println("Sound format: " + soundFormat);
+		//System.out.println("Sound format: " + soundFormat);
 
 		soundWritingThread = new Thread(new Runnable() {
 
