@@ -326,8 +326,12 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 						peers.remove(previousNode.getPeer().getID());
 						fireListener = true;
 					} else {
-						// Drop the current node
-						result = null;
+						// Drop the current node, if the ports are identical
+						String peerPort = peer.getAttributes().get(IPeer.ATTR_IP_PORT);
+						if (peerPort == null || "".equals(peerPort)) peerPort = "1534"; //$NON-NLS-1$ //$NON-NLS-2$
+						String previousPeerPort = previousPeer.getAttributes().get(IPeer.ATTR_IP_PORT);
+						if (previousPeerPort == null || "".equals(previousPeerPort)) previousPeerPort = "1534"; //$NON-NLS-1$ //$NON-NLS-2$
+						if (peerPort.equals(previousPeerPort)) result = null;
 					}
 
 					if (fireListener) {
