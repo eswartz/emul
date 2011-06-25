@@ -1,0 +1,663 @@
+2000-03-09  Ed Swartz  <ejs@juncture>
+
+	* Source/command.l.c, Source/command.y.c: Reformatted?!
+
+	* Config.rules: Added
+
+2000-01-08  Ed Swartz  <ejs@juncture>
+
+	* Tools/TIAsm/tiasm.c:
+	Fixed some ^M stuff
+
+	* Source/Generate/generatevdpdrawrow.c, Source/Generate/generatevdpdrawrowtext.c, Source/help.c, Source/keyboard.c, Source/lexer.c, Source/log.c, Source/memory.c, Source/mix_server.c, Source/moduledb.c, Source/modules.c, Source/Modules/dsr_emudisk.c, Source/Modules/dsr_realdisk.c, Source/Modules/dsr_rs232.c, Source/Modules/dsr_rs232_int_null.c, Source/Modules/keyboard_null.c, Source/Modules/sound_null.c, Source/Modules/Unix/clisrv.c, Source/Modules/Unix/dsr_rs232_unix.c, Source/Modules/Unix/keyboard_console.c, Source/Modules/Unix/keyboard_X.c, Source/Modules/Unix/oss_error.c, Source/Modules/Unix/oss_server.c, Source/Modules/Unix/sound_alsa.c, Source/Modules/Unix/sound_gus.c, Source/Modules/Unix/sound_gus.vox.c, Source/Modules/Unix/sound_oss.c, Source/Modules/Unix/sound_speaker.c, Source/Modules/Unix/video_svgalib.c, Source/Modules/Unix/video_X.c, Source/Modules/video_null.c, Source/Modules/Win32/dsr_rs232_win32.c, Source/Modules/Win32/keyboard_win32.c, Source/Modules/Win32/sound_win32.c, Source/Modules/Win32/sound_win32.cpp, Source/Modules/Win32/video_win32.cpp, Source/OSLib/FileHandles.c, Source/OSLib/Generic.c, Source/OSLib/MacOS.c, Source/OSLib/Posix.c, Source/OSLib/StringExtras.c, Source/OSLib/StringUtils.c, Source/OSLib/Win32.c, Source/roms.c, Source/sound.c, Source/speech.c, Source/sysdeps.c, Source/timer.c, Source/tms5220r.c, Source/unixmain.c, Source/v9t9.c, Source/v9t9_module.c, Source/vdp.c, Source/vdpsprites.c, Source/winerror.c, Source/winmain.c, Source/xmalloc.c, Tools/TIAsm/expr.c, Tools/TIAsm/tiasm.c, Source/9900.c, Source/9901.c, Source/command.c, Source/command.l.c, Source/command_rl.c, Source/command.y.c, Source/cru.c, Source/debugger.c, Source/dsr.c, Source/emulate.c, Source/error.c, Source/grom.c, config.win32.h, pretty.sh:
+	Code prettying with indent
+
+	* Source/Modules/Win32/sound_win32.c, Source/Modules/Win32/video_win32_drawdib.h, Source/Modules/dsr_rs232.c, Source/winmain.c, Source/winv9t9.h, Includes/dsr_rs232.h, V9t9.mcp:
+	Fixes for Win32
+
+1999-12-08  Ed Swartz  <ejs@juncture>
+
+	* Source/Modules/dsr_emudisk.c:
+	Fix the size of a bad file in-memory.
+
+	* Source/debugger.c:
+	Don't use ':' since this messes up the logger
+
+1999-12-06  Ed Swartz  <ejs@juncture>
+
+	* Source/9900.c, Source/emulate.c:
+	No interrupts during debugging, and EMITCHAR
+
+1999-11-29  Ed Swartz  <ejs@juncture>
+
+	* Source/Modules/Win32/dsr_rs232_win32.c, Source/Modules/Win32/sound_win32.c, Source/Modules/Win32/video_win32.cpp, Source/Modules/Win32/video_win32_ddraw.h, Source/Modules/Win32/video_win32_drawdib.h, Source/Modules/dsr_emudisk.c, Source/command.l, Source/command.l.c, Source/command.y, Source/command.y.c, Source/keyboard.c, Source/log.c, Source/modules.c, Source/speech.c, Source/winerror.c, Source/winmain.c, Source/9900.c, Source/9901.c, Source/command.c, Includes/9900st.h, Includes/log.h, V9t9.mcp:
+	Win32 changes
+
+	* Includes/log.h, Source/log.c:
+	Added
+
+1999-11-28  Ed Swartz  <ejs@juncture>
+
+	* Source/Modules/Unix/video_X.c:
+	Fix lockup problem.
+
+	* Source/9900.c, Source/emulate.c:
+	Fix problems with repeating interrupts.
+
+1999-11-26  Ed Swartz  <ejs@juncture>
+
+	* Source/Modules/Unix/dsr_rs232_unix.c:
+	Fix spelling
+
+	* Source/debugger.c:
+	Fix MPY/DIV
+
+1999-11-21  Ed Swartz  <ejs@juncture>
+
+	* Source/Modules/dsr_emudisk.c, Source/9900.c, Source/keyboard.c, Source/sound.c, Source/unixmain.c, Source/v9t9_module.c, Source/vdpsprites.c, Includes/memory.h, Includes/module.h:
+	More, more
+
+	* Source/Modules/Win32/dsr_rs232_win32.c, Source/Modules/Win32/keyboard_win32.c, Source/Modules/Win32/sound_win32.c, Source/9900.c, Source/9901.c, Source/command.c, Source/command.l, Source/command.l.c, Source/config.c, Source/cru.c, Source/debugger.c, Source/dsr.c, Source/emulate.c, Source/grom.c, Source/help.c, Source/keyboard.c, Source/lexer.c, Source/Makefile, Source/memory.c, Source/mix_server.c, Source/moduledb.c, Source/modules.c, Source/Modules/dsr_emudisk.c, Source/Modules/dsr_realdisk.c, Source/Modules/dsr_rs232.c, Source/Modules/dsr_rs232_int_null.c, Source/Modules/Unix/dsr_rs232_unix.c, Source/Modules/Unix/keyboard_console.c, Source/Modules/Unix/keyboard_X.c, Source/Modules/Unix/sound_alsa.c, Source/Modules/Unix/sound_oss.c, Source/Modules/Unix/sound_speaker.c, Source/Modules/Unix/video_svgalib.c, Source/Modules/Unix/video_X.c, Source/roms.c, Source/sound.c, Source/speech.c, Source/timer.c, Source/unixmain.c, Source/v9t9.c, Source/v9t9_module.c, Source/vdp.c, Source/vdpsprites.c, Source/video.c, Source/Xmain.c, Source/xmalloc.c, Includes/9900st.h, Includes/debugger.h, Includes/dsr_rs232.h, Includes/error.h, Includes/main.h, Includes/v9t9_common.h:
+	Rewrote logging system
+
+	* BUGS:
+	Fixed sprite bug
+
+1999-11-19  Ed Swartz  <ejs@juncture>
+
+	* Source/Modules/Unix/dsr_rs232_unix.c, Source/Modules/dsr_rs232.c, Includes/dsr_rs232.h:
+	Enhanced RS232 support using buffers
+
+1999-11-18  Ed Swartz  <ejs@juncture>
+
+	* Makefile.config:
+	Whoops, this should have been here a long time ago
+
+	* Source/Modules/Unix/dsr_rs232_int.c, Source/Modules/Unix/dsr_rs232_unix.c:
+	Renamed
+
+	* Source/Modules/Win32/dsr_rs232_win32.c:
+	Ported shitty RS232 to Win32
+
+	* Source/Modules/Win32/sound_win32.c, Source/Modules/Win32/video_win32.cpp, Source/Modules/Win32/video_win32_ddraw.h, Source/Modules/Win32/video_win32_drawdib.h:
+	Port back to Win32.
+
+	* Source/Modules/Unix/dsr_rs232_int.c, Source/Modules/dsr_realdisk.c, Source/Modules/dsr_rs232.c, Source/Modules/dsr_rs232_int_null.c:
+	Port back to Win32.  Add shitty RS232 support to Win32
+
+	* Source/debugger.c, Source/sound.c, Source/speech.c, Source/v9t9.c, Includes/dsr_rs232.h, Includes/memory.h, Includes/moduleconfig.h, Includes/speech.h, BUGS, V9t9.mcp:
+	Port back to Win32
+
+1999-11-17  Ed Swartz  <ejs@juncture>
+
+	* Source/Modules/Unix/dsr_rs232_int.c:
+	Support RTS/DSR/CTS on Linux.
+
+	* Source/debugger.c, Source/unixmain.c, Source/vdp.c:
+	More enhancements...
+
+1999-11-16  Ed Swartz  <ejs@juncture>
+
+	* Source/debugger.c, Source/emulate.c, Source/Makefile, Source/speech.c, Source/v9t9.c, Includes/debugger.h, Includes/memory.h, Includes/speech.h:
+	Prettier debugger.
+
+	* Source/Modules/dsr_rs232.c, Source/debugger.c:
+	Rewrite to show more information,
+	and update register display only with jumps.
+
+1999-11-15  Ed Swartz  <ejs@juncture>
+
+	* Source/Modules/dsr_emudisk.c:
+	Bug fix for direct output.
+
+	* Source/9900.c, Source/command_rl.c, Source/emulate.c, Source/Makefile, Source/memory.c, Source/unixmain.c, Source/v9t9.c:
+	D'oh!  Major bug fix for shifts.  Also, send commands to different files.
+
+1999-11-14  Ed Swartz  <ejs@juncture>
+
+	* Source/emulate.c, Source/memory.c, Source/mix_server.c, Source/Modules/dsr_rs232.c, Source/Modules/Unix/dsr_rs232_int.c, Source/Modules/Unix/sound_pthread_mixer.h, Source/speech.c, Includes/memory.h:
+	Allow normal and extra console RAM.
+
+	* Source/speech.c:
+	More.
+
+	* Source/speech.c, Source/tms5220r.c:
+	Added from MAME.
+
+	* Source/speech.c:
+	Even better!
+
+	* Source/speech.c:
+	Whee!!!
+
+	* Source/Modules/Unix/dsr_rs232_int.c, Source/Modules/dsr_rs232.c:
+	Yay!  Works with interrupts.
+
+	* Source/emulate.c:
+	Only update every minute
+
+	* Source/debugger.c, Source/Modules/dsr_rs232.c, Source/Modules/Unix/dsr_rs232_int.c, Includes/dsr_rs232.h:
+	Reading, writing work.  Interrupts started, but flakey.
+
+	* Source/Modules/Unix/dsr_rs232_int.c, Source/Modules/dsr_rs232.c, Source/Modules/dsr_rs232_int_null.c, Source/Modules/Makefile, Source/cru.c, Source/error.c, Source/Makefile, Includes/dsr_rs232.h, Includes/moduleconfig.h:
+	Added serial support... reading is iffy
+
+1999-11-06  Ed Swartz  <ejs@juncture>
+
+	* Source/9900.c, Source/emulate.c, Source/vdp.c:
+	Matched up timings to real working TI.  Still a little too fast.
+
+1999-10-17  Ed Swartz  <ejs@juncture>
+
+	* Distrib/ROMs/Forth/forth.tsm, Distrib/ROMs/Forth/kbd.inc, Distrib/ROMs/Forth/Makefile, Includes/keyboard.h, Source/9900.c, Source/9901.c, Source/cru.c, Source/keyboard.c, Source/Modules/Unix/keyboard_console.c, Source/Modules/Unix/keyboard_X.c, TODO:
+	Canada changes:  fix joysticks and alpha lock...
+
+	* Source/Makefile, TODO:
+	???
+
+1999-09-23  Ed Swartz  <ejs@juncture>
+
+	* Distrib/ROMs/Forth/Makefile, Includes/moduleconfig.h, Includes/v9t9_module.h, Includes/video.h, Source/9901.c, Source/emulate.c, Source/keyboard.c, Source/mix_server.c, Source/moduledb.c, Source/Modules/dsr_emudisk.c, Source/Modules/dsr_realdisk.c, Source/Modules/video_null.c, Source/Modules/Win32/keyboard_win32.c, Source/Modules/Win32/sound_win32.c, Source/Modules/Win32/video_win32.cpp, Source/Modules/Win32/video_win32_ddraw.h, Source/Modules/Win32/video_win32_drawdib.h, Source/sound.c, Source/v9t9.c, Source/v9t9_module.c, Source/vdp.c, Source/winerror.c, Source/winmain.c, Source/winv9t9.h, Tools/TIAsm/Makefile, Tools/TIAsm/tiasm.c, V9t9.mcp:
+	Changes for Win32 -- added returns and split video modules
+
+	* Source/Modules/Unix/sound_oss.c:
+	Use SFMT_U8 by default.
+
+1999-09-11  Ed Swartz  <ejs@juncture>
+
+	* Distrib/ROMs/Forth/test.inc:
+	Added...
+
+1999-09-10  Ed Swartz  <ejs@juncture>
+
+	* Source/Modules/Unix/sound_alsa.c, Source/Modules/Unix/sound_oss.c, Source/Modules/Unix/sound_pthread_mixer.h, Source/9900.c, Source/9901.c, Source/emulate.c, Source/mix_server.c, Source/sound.c, Source/v9t9_module.c, Includes/emulate.h, Includes/sound.h, Includes/v9t9_module.h:
+	More cassette I/O work.
+
+	* Distrib/ROMs/Forth/forth.tsm:
+	More tests for cassette I/O.
+
+1999-09-02  Ed Swartz  <ejs@juncture>
+
+	* Source/Modules/Unix/sound_pthread_mixer.h, Source/9900.c, Source/9901.c, Source/cru.c, Source/emulate.c, Source/mix_server.c, Source/v9t9.c, Source/vdp.c, Includes/9901.h, Includes/emulate.h, Includes/sound.h, Includes/v9t9_types.h:
+	Better timer and audio gate implementation.
+
+	* Distrib/ROMs/Forth/forth.tsm, Distrib/ROMs/Forth/Makefile, Makefile:
+	Added support for Forth.
+
+1999-09-01  Ed Swartz  <ejs@juncture>
+
+	* Source/9900.c, Source/9901.c, Source/cru.c, Source/emulate.c, Source/Modules/dsr_realdisk.c, Source/v9t9.c, Source/vdp.c, Includes/9900.h, Includes/9901.h:
+	Lots of messy changes to CRU and timer.  Removed multibit support
+	from CRU, and implemented timer.
+
+1999-08-31  Ed Swartz  <ejs@juncture>
+
+	* Source/9900.c, Source/9901.c, Source/cru.c, Source/emulate.c, Source/mix_server.c, Source/Modules/Unix/sound_alsa.c, Source/vdp.c, Includes/9901.h, Includes/cru.h:
+	Reimplemented timer for 9901
+
+1999-08-22  Ed Swartz  <ejs@juncture>
+
+	* Source/9900.c, Source/9901.c, Source/command_rl.c, Source/mix_server.c, Source/Modules/dsr_emudisk.c, Source/Modules/Unix/keyboard_console.c, Source/Modules/Unix/sound_alsa.c, Source/Modules/Unix/sound_oss.c, Source/Modules/Unix/sound_pthread_mixer.h, Source/Modules/Unix/video_svgalib.c, Source/Modules/Unix/video_X.c, Source/speech.c, Source/unixmain.c, Source/vdp.c, Source/vdpsprites.c, Source/Xv9t9.h, Includes/9901.h, Includes/command_rl.h, Includes/memory.h, Includes/mix_server.h, Includes/v9t9_module.h, Includes/vdp.h, TODO:
+	Lots of updates... got X video/kbd working, added real timings, etc.
+
+1999-08-17  Ed Swartz  <ejs@juncture>
+
+	* Source/9900.c:
+	Whoo-hoo!  Real instruction timings!
+
+1999-08-09  Ed Swartz  <ejs@juncture>
+
+	* Source/Modules/Unix/keyboard_X.c, Source/Modules/Unix/video_X.c, Source/Modules/Makefile, Source/emulate.c, Source/Makefile, Source/unixmain.c, Source/v9t9_module.c, Source/winmain.c, Source/Xmain.c:
+	Merge SVGA and X for Unix.
+
+	* Includes/v9t9_module.h: Prevent module clashes...
+
+	* Makefile, Makefile.rules:
+	Rewrite configuration rules.
+
+1999-08-08  Ed Swartz  <ejs@juncture>
+
+	* Source/Modules/Unix/keyboard_X.c, Source/Modules/Unix/video_X.c, Source/unixmain.c, Source/command.c, Source/keyboard.c, Source/Makefile, Source/Xmain.c, Source/Xv9t9.h, Includes/command.h, Includes/keyboard.h:
+	X porting work
+
+	* Makefile.rules:
+	X fixes
+
+1999-08-05  Ed Swartz  <ejs@juncture>
+
+	* Source/OSLib/OSLibExtras.h, Source/OSLib/StringExtras.c: Add stristr
+
+	* Source/Modules/dsr_emudisk.c:
+	Fix bug where we overwrite innocent non-v9t9 files
+
+	* Source/mix_server.c, Source/moduledb.c, Source/v9t9.c:
+	Remove comments, read module db before config file, allow case-insensitive
+	tag matches
+
+	* Source/Modules/Unix/sound_speaker.c:
+	Added SpeakerArpeggioRate for speaker module.
+
+	* Source/moduledb.c:
+	Allow user to reference longer tag than defined.
+
+1999-07-25  Ed Swartz  <ejs@juncture>
+
+	* Source/Generate/generatevdpdrawrow.c, Source/Modules/dsr_emudisk.c, Source/Modules/Win32/keyboard_win32.c, Source/Modules/Win32/sound_win32.c, Source/Modules/Win32/video_win32.cpp, Source/OSLib/StringUtils.c, Source/winerror.c, Includes/moduledb.h, Source/moduledb.c, Source/v9t9.c, Source/vdpdrawrow.c, V9t9.mcp:
+	Win32 changes.
+
+	* Includes/moduledb.h:
+	Added
+
+	* Source/moduledb.c: Added
+
+	* Source/Modules/dsr_emudisk.c, Source/command.c, Source/help.c, Source/xmalloc.c, Includes/command.h, Includes/xmalloc.h:
+	Mo fixes
+
+	* Source/Modules/dsr_emudisk.c, Source/Modules/dsr_realdisk.c, Includes/emudiskdsr.h:
+	Add support for reading unknown files as text in dsr_emudisk.c.
+
+	* Source/Modules/keyboard_null.c, Source/Modules/sound_null.c, Source/Modules/Unix/keyboard_console.c, Source/Modules/Unix/sound_alsa.c, Source/Modules/Unix/sound_oss.c, Source/Modules/Unix/sound_pthread_mixer.h, Source/Modules/Unix/sound_speaker.c, Source/Modules/Unix/video_svgalib.c, Source/Modules/video_null.c, Source/cru.c, Source/emulate.c, Source/Modules/dsr_emudisk.c, Source/Modules/dsr_realdisk.c, Source/speech.c, Source/unixmain.c, Source/v9t9.c, Source/v9t9_module.c, Includes/cru.h, Includes/sound.h, Includes/v9t9_module.h, TODO:
+	Support for enabling/disabling modules at runtime.
+
+	* Source/emulate.c, Source/Makefile:
+	Mo bug fixes
+
+	* Source/9900.c, Source/command.l, Source/command.l.c, Source/emulate.c, Source/Makefile, Source/modules.c, Source/unixmain.c, Source/v9t9.c, Source/vdp.c, Source/vdpdrawrow.c, Source/vdpdrawrowtext.c:
+	Mo' fixes.  Added module database.
+
+	* Includes/9900st.h, Includes/emulate_config.h:
+	Fixed bug causing Treasure Island to be hosed.
+
+	* modconv.sh, TODO:
+	Added
+
+	* Source/Modules/Win32/keyboard_win32.c, Source/Modules/Win32/sound_win32.c, Source/Modules/Win32/video_win32.cpp, Source/Modules/dsr_emudisk.c, Source/Modules/dsr_realdisk.c, Source/Generate/generatevdpdrawrowtext.c, Source/Generate/generatevdpdrawrow.c, Source/sound.c, Source/timer.c, Source/unixmain.c, Source/v9t9_module.c, Source/vdp.c, Source/vdpdrawrow.c, Source/vdpdrawrowtext.c, Source/winerror.c, Source/winmain.c, Source/winv9t9.h, Source/emulate.c, Includes/main.h, Includes/sound.h, Includes/vdp.h:
+	Mo' Win32 porting and more system_ functions
+
+	* V9t9.mcp:
+	Mo' Win32 porting -- to CWPro5
+
+1999-07-24  Ed Swartz  <ejs@juncture>
+
+	* Source/emulate.c, Source/unixmain.c, Includes/emulate.h:
+	Better threading for real-time emulation.
+
+1999-07-19  Ed Swartz  <ejs@juncture>
+
+	* Source/Modules/Unix/keyboard_console.c, Source/keyboard.c, Source/vdpdrawrow.c, Source/vdpdrawrowtext.c, Includes/keyboard.h:
+	Added joystick / mouse support
+
+	* Source/command.y, Source/command.y.c, Source/emulate.c, Source/Generate/generatevdpdrawrow.c, Source/Generate/generatevdpdrawrowtext.c, Source/help.c, Source/keyboard.c, Source/memory.c, Source/mix_server.c, Source/modules.c, Source/Modules/dsr_emudisk.c, Source/Modules/dsr_realdisk.c, Source/Modules/keyboard_null.c, Source/Modules/Win32/keyboard_win32.c, Source/Modules/Win32/sound_win32.c, Source/Modules/Win32/video_win32.cpp, Source/sound.c, Source/speech.c, Source/timer.c, Source/v9t9.c, Source/v9t9_module.c, Source/vdp.c, Source/vdpsprites.c, Source/winerror.c, Source/winmain.c, Source/xmalloc.c, Includes/9901.h, Includes/command.h, Includes/main.h, Includes/v9t9.h, Includes/v9t9_module.h, Includes/xmalloc.h, Source/9900.c, Source/9901.c, Source/command.c, Source/command.l, Source/command.l.c, config.win32.h, V9t9.mcp:
+	Ported back to Win32.
+
+1999-07-18  Ed Swartz  <ejs@juncture>
+
+	* Source/grom.c, Source/help.c, Source/Modules/dsr_emudisk.c, Source/Modules/dsr_realdisk.c, Source/Modules/Unix/keyboard_X.c, Source/Modules/Unix/sound_pthread_mixer.h, Source/Modules/Unix/video_X.c, Source/Xmain.c, Source/Xv9t9.h, Includes/9901.h, Source/xmalloc.c, Includes/xmalloc.h:
+	Added
+
+	* Source/command.l.c, Source/command.y, Source/command.y.c, Source/emulate.c, Source/Makefile, Source/memory.c, Source/roms.c, Source/unixmain.c, Source/v9t9.c, Source/9900.c, Source/9901.c, Includes/16bit.h, Includes/v9t9_module.h:
+	Fixes for real-time emulation, better parser for commands.
+
+	* Source/Modules/Unix/keyboard_console.c, Source/Modules/Unix/sound_alsa.c, Source/Modules/Unix/sound_oss.c, Source/Modules/Unix/sound_speaker.c, Source/Modules/Unix/video_svgalib.c, Source/Modules/Win32/keyboard_win32.c, Source/Modules/Win32/sound_win32.c, Source/Modules/Win32/sound_win32.cpp, Source/OSLib/clstandardheaders.h, Source/OSLib/clstandardtypes.h, Source/OSLib/Generic.c, Source/OSLib/Makefile, Source/OSLib/OSLibGeneric.h, Source/Modules/keyboard_null.c, Source/Modules/Makefile, Source/Modules/sound_null.c, Source/Modules/video_null.c, Source/Generate/Makefile, Source/DSRs/emudiskdsr.c, Source/DSRs/Makefile, Source/DSRs/realdiskdsr.c, Source/9900.c, Source/9901.c, Source/command.c, Source/command.l, Source/command.l.c, Source/command.y, Source/command.y.c, Source/command.y.h, Source/cru.c, Source/debugger.c, Source/dsr.c, Source/emulate.c, Source/keyboard.c, Source/lexer.c, Source/Makefile, Source/memory.c, Source/mix_server.c, Source/modules.c, Source/roms.c, Source/sound.c, Source/speech.c, Source/timer.c, Source/unixmain.c, Source/v9t9.c, Source/v9t9_module.c, Source/vdp.c, Source/vdpsprites.c, Source/video.c, Source/winmain.c, Includes/9900st.h, Includes/994amem.h, Includes/command.h, Includes/command_lexer.h, Includes/command_parser.h, Includes/cru.h, Includes/dsr_config.h, Includes/dsr.h, Includes/dsrmem.h, Includes/emudiskdsr.h, Includes/emulate.h, Includes/gplmem.h, Includes/keyboard.h, Includes/memory.h, Includes/mix_server.h, Includes/moduleconfig.h, Includes/modulemem.h, Includes/modules.h, Includes/realdiskdsr.h, Includes/roms.h, Includes/sound.h, Includes/sysdeps.h, Includes/v9t9_common.h, Includes/v9t9.h, Includes/v9t9_module.h, Includes/v9t9_types.h, Includes/vdpmem.h, Config/unixprefix.h, Makefile, Makefile.rules, TODO:
+	Tons of changes...
+
+1999-06-04  edswartz  <edswartz@juncture>
+
+	* Source/Modules/Unix/sound_alsa.c:
+	Um, turn off "return vmNotAvailable;" in the detect routine.
+
+	* Source/DSRs/emudiskdsr.c:
+	Changed semantics of errors during DSR calls.  Docs say only the CLOSE
+	operation closes a file.  Not calling closefile() until CLOSE is called.
+	Also, correctly reading records that are longer than those requested
+	in the PAB.
+
+	* Source/mix_server.c, Source/speech.c, Source/9900.c:
+	Optimize DIV in C.  Fix buffer-shrink bug in mix server.  More tweaks
+	to speech code.
+
+1999-06-03  edswartz  <edswartz@juncture>
+
+	* Source/mix_server.c:
+	Fix error when shrinking blocks.
+
+	* Includes/moduleconfig.h:
+	Added ALSA module.
+
+	* Source/Makefile, Source/speech.c:
+	Fixed remaining bugs in speech.  Mainly, zeroed parameters really ARE
+	zeroed, and not set to KxTrans[0].  Also, turned on interpolation.
+
+	* Source/Modules/Unix/keyboard_console.c, Source/Modules/Unix/sound_oss.c, Source/Modules/Unix/sound_oss.h:
+	Fixed major bug -- OSS doesn't support AFMT_S8!!!!
+
+	* Source/Modules/Makefile: *** empty log message ***
+
+	* Source/Modules/Unix/sound_alsa.c:
+	Added ALSA driver.  Note, probes all cards...
+
+1999-06-02  edswartz  <edswartz@juncture>
+
+	* Source/Modules/Unix/sound_speaker.c, Source/Modules/sound_null.c, Source/v9t9.c, Source/v9t9_module.c:
+	Updates to allow null callbacks for sound.
+	Also, use vmFlags in the module routines.
+
+	* Includes/sound.h: Updates to allow null callbacks for sound.
+
+	* NOTES: *** empty log message ***
+
+	* Includes/keyboard.h, Includes/video.h, Source/emulate.c, Source/keyboard.c, Source/Modules/Unix/keyboard_console.c, Source/Modules/Win32/keyboard_win32.c, Source/Modules/Win32/video_win32.cpp, Source/v9t9.c, Source/winv9t9.h, config.win32.h, V9t9.mcp:
+	Port back to Windows.
+
+	* Source/Modules/Win32/keyboard_win32.c, Source/Modules/Win32/sound_win32.c, Source/Modules/Win32/video_win32.cpp, Source/Modules/Unix/keyboard_console.c, Source/Modules/Unix/sound_oss.c, Source/Modules/Unix/sound_speaker.c, Source/Modules/Unix/video_svgalib.c, Source/Modules/keyboard_null.c, Source/Modules/Makefile, Source/Modules/sound_null.c, Source/Modules/video_null.c, Source/Generate/Makefile, Source/command.l.c, Source/command.y, Source/command.y.c, Source/command.y.h, Source/emulate.c, Source/v9t9.c, Source/v9t9_module.c, Source/vdp.c, Source/video.c:
+	Massive changes to move video stuff into modules.
+
+	* Source/command.l, Source/Makefile, Includes/command_lexer.h, Includes/command_parser.h, Includes/emulate_config.h, Includes/moduleconfig.h, Includes/module.h, Includes/sound.h, Includes/v9t9_config.h, Includes/v9t9_module.h, Includes/video.h, config.win32.h, NOTES:
+	Massive changes to move more video routines into modules.
+
+1999-06-01  edswartz  <edswartz@juncture>
+
+	* Source/dsr.c, Source/Makefile, Includes/dsr.h, Includes/sound.h, Includes/v9t9_module.h, Includes/video.h, BUGS, README, TODO:
+	Added documentation
+
+	* Source/winmain.c, Source/winv9t9.c:
+	Um, use the correctly named file
+
+	* V9t9.mcp:
+	Win32
+
+	* Source/OSLib/FileHandles.c, Source/OSLib/Generic.c, Source/OSLib/MacOS.c, Source/OSLib/OSLib.h, Source/OSLib/Posix.c, Source/OSLib/Posix.h, Source/OSLib/StringExtras.c, Source/OSLib/Win32.c:
+	Merged latest fixes to OSLib
+
+	* Source/Modules/Unix/sound_oss.c:
+	Fixed bugs in sound
+
+	* Source/DSRs/Makefile: ???
+
+	* Source/command.c, Source/command.l, Source/command.y, Source/Makefile, Source/mix_server.c, Source/speech.c, Source/unixmain.c:
+	Added command parser skeleton, and fixed major bugs in mix_server memory
+	allcoation
+
+	* Includes/command.h, Includes/command_lexer.h, Includes/command_parser.h:
+	Added command parser skeleton
+
+	* config.win32.h:
+	Add notice for Win32 users
+
+1999-05-30  edswartz  <edswartz@juncture>
+
+	* Source/DSRs/emudiskdsr.c, Source/DSRs/realdiskdsr.c, Source/v9t9.c, Includes/config.h, Includes/v9t9.h, config.win32.h, V9t9.mcp:
+	Updates
+
+	* Source/DSRs/Makefile, Source/Generate/Makefile, Source/Makefile, Source/Modules/Makefile, Source/Modules/sound_null.c, Source/Modules/Unix/sound_oss.c, Source/Modules/Unix/video_svga.h, Source/Modules/Unix/video_svgalib.c, Source/Modules/Win32/sound_win32.c, Source/OSLib/Makefile, Source/speech.c, Source/vdp.c, Makefile, README:
+	Merged linux_threads branch
+
+	* Source/DSRs/Makefile, Source/Generate/Makefile, Source/Modules/Makefile, Source/Modules/Unix/unixmain.c, Source/Modules/Win32/win32prefix.h, Source/Modules/Win32/winerror.c, Source/Modules/Win32/winheaders.pch, Source/Modules/Win32/winheaders.pch++, Source/Modules/Win32/winmain.c, Source/Modules/Win32/winv9t9.c, Source/Modules/Win32/winv9t9.h, Source/OSLib/Generic.c, Source/OSLib/Mac.c, Source/OSLib/MacFileTypes.c, Source/OSLib/Mac.h, Source/OSLib/MacOS.c, Source/OSLib/MacOS.h, Source/OSLib/MacSpecs.c, Source/OSLib/Makefile, Source/OSLib/MsDos.c, Source/OSLib/MsDos.h, Source/OSLib/OSLib.h, Source/OSLib/Posix.c, Source/OSLib/Win32.c, Source/OSLib/Win32.h, Source/v9t9.c, Source/vdpdrawrow.c, Source/vdpdrawrowtext.c, Source/winerror.c, Source/winheaders.pch, Source/winheaders.pch++, Source/winmain.c, Source/winv9t9.c, Source/winv9t9.h, Source/config.c, Source/dsr.c, Source/Makefile, Source/unixmain.c, Config/macosprefix.h, Config/unixprefix.h, Config/win32prefix.h, Makefile.rules:
+	Moved files around, added sub-Makefiles
+
+	* Makefile:
+	Moved files around...
+
+	* Source/Modules/Win32/winheaders.pch, Source/Modules/Win32/winheaders.pch++, Tools/TIAsm/tiasm.mcp:
+	Added
+
+	* Includes/timer.h, Source/Modules/Win32/video_win32.cpp, Source/timer.c, Source/vdp.c:
+	Attempt to fix timer problems
+
+	* Source/Modules/Unix/video_svga.h:
+	Removed
+
+	* Source/speech.c:
+	Swank up the swapbits() routine.
+
+	* Makefile, README, Source/Modules/Unix/sound_oss.c, Source/Modules/Unix/unixmain.c, Source/Modules/Unix/video_svgalib.c, Source/Modules/Win32/sound_win32.c, Source/vdp.c:
+	Implemented threaded version of sound mixer.
+
+1999-04-17  edswartz  <edswartz@juncture>
+
+	* Source/mix_server.c, Source/Modules/Unix/oss_server.c, Source/Modules/Unix/sound_oss.c, Source/Modules/Unix/unixmain.c, Source/vdp.c:
+	Merged Win32 changes with Linux.
+
+	* Distrib/ROMs/Forth/Makefile, Tools/TIAsm/tiasm.c, Source/OSLib/MsDos.c, Source/OSLib/OSLib.h, Includes/mix_server.h, Includes/moduleconfig.h, Includes/sysdeps.h, Includes/tms5220.h, Includes/v9t9.h, Source/9900.c, Source/DSRs/emudiskdsr.c, Source/emulate.c, Source/mix_server.c, Source/Modules/Win32/sound_win32.c, Source/Modules/Win32/sound_win32.cpp, Source/Modules/Win32/video_win32.cpp, Source/Modules/Win32/winerror.c, Source/Modules/Win32/winv9t9.c, Source/Modules/Win32/winv9t9.h, Source/roms.c, Source/speech.c, Source/sysdeps.c, Source/timer.c, Source/v9t9.c:
+	Windows changes.
+
+1999-04-08  edswartz  <edswartz@juncture>
+
+	* Source/Modules/Unix/keyboard_console.c, Source/Modules/Win32/keyboard_win32.c:
+	Reverse PGUP and PGDN
+
+	* Distrib/Disks/forthdsk, Includes/dsr_config.h, Includes/dsr.h, Source/config.c, Source/dsr.c, Source/DSRs/emudiskdsr.c, Source/speech.c:
+	Updated disk DSR to use TIFILES format files.  Luckily, it was easy.
+	Also added code to convert files on-the-fly to the favorite format.
+
+1999-04-07  edswartz  <edswartz@juncture>
+
+	* Source/Modules/Unix/oss_error.c, Source/Modules/Unix/oss_server.c, Source/Modules/Unix/sound_oss.c, Source/Modules/Unix/unixmain.c, Source/Modules/Unix/video_svgalib.c, Source/speech.c, Source/timer.c, Source/vdpsprites.c, Makefile, Source/Modules/Unix/clisrv.c, Source/Modules/Unix/keyboard_console.c:
+	More fixes... prevent getting stuck if keyboard can process ctrl+break;
+	fixed bug caused by sprite optimization; rewrote timer routines to
+	avoid list corruption; fix screen start address when exiting from
+	svgalib; handle pipe-full situations better; fix some speech problems.
+
+	* v9t9.cnf:
+	Bye!
+
+	* v9t9.cnf, Source/timer.c:
+	Fixed mysterious timer-list corruption bug.  Caused lockup when
+	speech was used.
+
+1999-04-06  edswartz  <edswartz@juncture>
+
+	* Distrib/ROMs/Forth/general.inc, Distrib/ROMs/Forth/int.inc, Distrib/ROMs/Forth/kbd.inc, Distrib/ROMs/Forth/ram.inc, Distrib/ROMs/Forth/term.inc, Distrib/ROMs/Forth/video.inc, Distrib/ROMs/Forth/dev.inc, Distrib/ROMs/Forth/forth.gsm, Distrib/ROMs/Forth/forth.tsm, Distrib/ROMs/Forth/Makefile, Distrib/ROMs/DSRs/disk.dsr, Distrib/ROMs/DSRs/emu2disk.dsr, Distrib/ROMs/DSRs/emudisk.dsr, Distrib/ROMs/DSRs/emurs232.dsr, Distrib/ROMs/DSRs/Makefile, Distrib/ROMs/DSRs/opcodes.inc, Tools/TIAsm/defines.inc, Tools/TIAsm/expr.c, Tools/TIAsm/expr.h, Tools/TIAsm/Makefile, Tools/TIAsm/tiasm.c, Tools/TIAsm/tiasm.h, Tools/TIAsm/tiasm.mak, Tools/TIAsm/tiasm.prj, Source/OSLib/centry.h, Source/OSLib/cexit.h, Source/OSLib/clstandardheaders.h, Source/OSLib/clstandardtypes.h, Source/OSLib/FileHandles.c, Source/OSLib/Generic.c, Source/OSLib/Mac.c, Source/OSLib/MacFileTypes.c, Source/OSLib/Mac.h, Source/OSLib/MacSpecs.c, Source/OSLib/MsDos.c, Source/OSLib/MsDos.h, Source/OSLib/OSLibExtras.h, Source/OSLib/OSLibGeneric.h, Source/OSLib/OSLib.h, Source/OSLib/Posix.c, Source/OSLib/Posix.h, Source/OSLib/StringExtras.c, Source/OSLib/StringUtils.c, Source/OSLib/StringUtils.h, Distrib/Disks/forthdsk, BUGS, Includes/16bit.h, Includes/9900asm.h, Includes/9900.h, Includes/9900st.h, Includes/994amem.h, Includes/config.h, Includes/cru.h, Includes/debugger.h, Includes/dsr_config.h, Includes/dsr.h, Includes/dsrmem.h, Includes/emudiskdsr.h, Includes/emulate_config.h, Includes/emulate.h, Includes/error.h, Includes/gplmem.h, Includes/keyboard.h, Includes/lexer.h, Includes/memory.h, Includes/module.h, Includes/modulemem.h, Includes/modules.h, Includes/opcode_callbacks.h, Includes/pab.h, Includes/realdiskdsr.h, Includes/roms.h, Includes/sound_config.h, Includes/sound.h, Includes/speech_config.h, Includes/speech.h, Includes/sysdeps.h, Includes/timer.h, Includes/tms5220.h, Includes/v9t9_common.h, Includes/v9t9_config.h, Includes/v9t9_defs.h, Includes/v9t9.h, Includes/v9t9_module.h, Includes/v9t9_types.h, Includes/vdp.h, Includes/vdpmem.h, Includes/vdpsprites.h, Includes/video.h, Makefile, Source/9900.c, Source/config.c, Source/cru.c, Source/dsr.c, Source/DSRs/emudiskdsr.c, Source/DSRs/realdiskdsr.c, Source/emulate.c, Source/error.c, Source/keyboard.c, Source/memory.c, Source/mix_server.c, Source/Modules/Unix/keyboard_console.c, Source/Modules/Unix/sound_oss.c, Source/Modules/Unix/sound_speaker.c, Source/Modules/Unix/unixmain.c, Source/Modules/Unix/video_svgalib.c, Source/Modules/Win32/keyboard_win32.c, Source/Modules/Win32/sound_win32.c, Source/Modules/Win32/video_win32.cpp, Source/Modules/Win32/winerror.c, Source/Modules/Win32/winv9t9.h, Source/roms.c, Source/speech.c, Source/sysdeps.c, Source/v9t9.c, Source/vdp.c, v9t9.cnf, video_win32.c:
+	Merged changes from os_indep into the main trunk.  Also fixed
+	bug in DSKSave().
+
+	* Distrib/ROMs/Forth/dev.inc, Source/OSLib/centry.h, Source/OSLib/cexit.h, Source/OSLib/Posix.c, Source/OSLib/Posix.h, Source/OSLib/StringExtras.c, Source/OSLib/StringUtils.h, Source/OSLib/OSLib.h, Distrib/Disks/forthdsk, Includes/emulate_config.h, Includes/emulate.h, Includes/error.h, Includes/gplmem.h, Includes/keyboard.h, Includes/lexer.h, Includes/memory.h, Includes/module.h, Includes/modulemem.h, Includes/modules.h, Includes/realdiskdsr.h, Includes/roms.h, Includes/sound_config.h, Includes/sound.h, Includes/speech_config.h, Includes/speech.h, Includes/sysdeps.h, Includes/timer.h, Includes/tms5220.h, Includes/v9t9_config.h, Includes/v9t9_defs.h, Includes/v9t9.h, Includes/v9t9_module.h, Includes/v9t9_types.h, Includes/vdp.h, Includes/vdpmem.h, Includes/vdpsprites.h, Includes/video.h, Source/emulate.c, Source/keyboard.c, Source/mix_server.c, Source/Modules/Unix/keyboard_console.c, Source/Modules/Unix/sound_oss.c, Source/Modules/Unix/unixmain.c, Source/Modules/Unix/video_svgalib.c, Source/Modules/Win32/keyboard_win32.c, Source/Modules/Win32/sound_win32.c, Source/Modules/Win32/video_win32.cpp, Source/Modules/Win32/winerror.c, Source/Modules/Win32/winv9t9.h, Source/speech.c, Source/sysdeps.c, Source/v9t9.c, Source/vdp.c, v9t9.cnf, video_win32.c:
+	More merging with Win32, and more work on emulated disk DSR stuff.
+	Made C++ resistant.
+
+	* Source/Modules/Win32/video_win32.cpp: New file.
+
+	* BUGS, Includes/16bit.h, Includes/9900asm.h, Includes/9900.h, Includes/9900st.h, Includes/994amem.h, Includes/config.h, Includes/cru.h, Includes/debugger.h, Includes/dsr_config.h, Includes/dsr.h, Includes/dsrmem.h, Makefile, Source/9900.c, Source/cru.c, Source/DSRs/emudiskdsr.c:
+	More merging with Win32, and more work on emulated disk DSR stuff.
+	Made C++ resistant.
+
+1999-04-01  edswartz  <edswartz@juncture>
+
+	* Source/9900.c:
+	Wow
+
+	* Source/speech.c:
+	Bye bye slow logger
+
+1999-03-31  edswartz  <edswartz@juncture>
+
+	* BUGS, Includes/9900.h, Source/dsr.c, Source/DSRs/emudiskdsr.c, Source/Modules/Unix/keyboard_console.c, v9t9.cnf:
+	Fixed read-from-fixed-file bug, added write to file and seek operations
+	to emudiskdsr.  Also fixed bug where NUMLOCK to turn off keyboard did
+	not turn off keyboardupdate()!
+
+	* Tools/TIAsm/defines.inc, Tools/TIAsm/expr.c, Tools/TIAsm/expr.h, Tools/TIAsm/Makefile, Tools/TIAsm/tiasm.c, Tools/TIAsm/tiasm.h, Tools/TIAsm/tiasm.mak, Tools/TIAsm/tiasm.prj:
+	Added TIASM project, used for generating absolute binary images.
+
+	* Tools/TIAsm/defines.inc, Tools/TIAsm/expr.c, Tools/TIAsm/expr.h, Tools/TIAsm/Makefile, Tools/TIAsm/tiasm.c, Tools/TIAsm/tiasm.h, Tools/TIAsm/tiasm.mak, Tools/TIAsm/tiasm.prj:
+	New file.
+
+	* Distrib/ROMs/Forth/dev.inc, Distrib/ROMs/Forth/forth.gsm, Distrib/ROMs/Forth/forth.tsm, Distrib/ROMs/Forth/general.inc, Distrib/ROMs/Forth/int.inc, Distrib/ROMs/Forth/kbd.inc, Distrib/ROMs/Forth/Makefile, Distrib/ROMs/Forth/ram.inc, Distrib/ROMs/Forth/term.inc, Distrib/ROMs/Forth/video.inc:
+	Added FORTH ROM files for v9t9.
+
+	* Distrib/ROMs/Forth/dev.inc, Distrib/ROMs/Forth/forth.gsm, Distrib/ROMs/Forth/forth.tsm, Distrib/ROMs/Forth/general.inc, Distrib/ROMs/Forth/int.inc, Distrib/ROMs/Forth/kbd.inc, Distrib/ROMs/Forth/Makefile, Distrib/ROMs/Forth/ram.inc, Distrib/ROMs/Forth/term.inc, Distrib/ROMs/Forth/video.inc:
+	New file.
+
+	* Distrib/ROMs/DSRs/disk.dsr, Distrib/ROMs/DSRs/emu2disk.dsr, Distrib/ROMs/DSRs/emudisk.dsr, Distrib/ROMs/DSRs/emurs232.dsr, Distrib/ROMs/DSRs/Makefile, Distrib/ROMs/DSRs/opcodes.inc:
+	Added DSR files for v9t9, converted to use TIASM.
+
+	* Distrib/ROMs/DSRs/disk.dsr, Distrib/ROMs/DSRs/emu2disk.dsr, Distrib/ROMs/DSRs/emudisk.dsr, Distrib/ROMs/DSRs/emurs232.dsr, Distrib/ROMs/DSRs/Makefile, Distrib/ROMs/DSRs/opcodes.inc:
+	New file.
+
+1999-03-30  edswartz  <edswartz@juncture>
+
+	* BUGS, Includes/dsrmem.h, Source/dsr.c, Source/DSRs/emudiskdsr.c, Source/Modules/Unix/unixmain.c, v9t9.cnf:
+	Fixed variable read bug.  Dumb error.  Also updated filenaming scheme
+	for FIAD.
+
+1999-03-29  edswartz  <edswartz@juncture>
+
+	* Includes/error.h, Includes/pab.h, Source/error.c, Source/Modules/Unix/keyboard_console.c, Source/Modules/Unix/unixmain.c, BUGS, Makefile, Source/DSRs/emudiskdsr.c:
+	Fun day.
+
+1999-03-28  edswartz  <edswartz@juncture>
+
+	* Includes/16bit.h, Includes/dsr_config.h, Includes/pab.h, Makefile, Source/config.c, Source/dsr.c, Source/DSRs/emudiskdsr.c, Source/DSRs/realdiskdsr.c, Source/emulate.c, Source/Modules/Unix/unixmain.c, v9t9.cnf:
+	Added binary load/save file handling code.
+
+1999-03-27  edswartz  <edswartz@juncture>
+
+	* Source/OSLib/centry.h, Source/OSLib/cexit.h, Source/OSLib/clstandardheaders.h, Source/OSLib/clstandardtypes.h, Source/OSLib/Mac.c, Source/OSLib/MacFileTypes.c, Source/OSLib/Mac.h, Source/OSLib/MacSpecs.c, Source/OSLib/MsDos.c, Source/OSLib/MsDos.h, Source/OSLib/OSLibExtras.h, Source/OSLib/OSLibGeneric.h, Source/OSLib/OSLib.h, Source/OSLib/Posix.c, Source/OSLib/Posix.h, Source/OSLib/StringExtras.c, Source/OSLib/StringUtils.c, Source/OSLib/StringUtils.h:
+	Added OS-indep files
+
+	* Source/OSLib/centry.h, Source/OSLib/cexit.h, Source/OSLib/clstandardheaders.h, Source/OSLib/clstandardtypes.h, Source/OSLib/Mac.c, Source/OSLib/MacFileTypes.c, Source/OSLib/Mac.h, Source/OSLib/MacSpecs.c, Source/OSLib/MsDos.c, Source/OSLib/MsDos.h, Source/OSLib/OSLibExtras.h, Source/OSLib/OSLibGeneric.h, Source/OSLib/OSLib.h, Source/OSLib/Posix.c, Source/OSLib/Posix.h, Source/OSLib/StringExtras.c, Source/OSLib/StringUtils.c, Source/OSLib/StringUtils.h:
+	New file.
+
+	* Source/OSLib/FileHandles.c, Source/OSLib/Generic.c:
+	Added OS-indep files
+
+	* Source/OSLib/FileHandles.c, Source/OSLib/Generic.c: New file.
+
+	* Includes/9900.h, Includes/debugger.h, Includes/dsr_config.h, Includes/dsr.h, Includes/dsrmem.h, Includes/emudiskdsr.h, Includes/emulate.h, Includes/error.h, Includes/memory.h, Includes/opcode_callbacks.h, Includes/pab.h, Includes/roms.h, Includes/v9t9_common.h, Includes/v9t9_config.h, Includes/v9t9.h, Makefile, Source/9900.c, Source/config.c, Source/dsr.c, Source/DSRs/emudiskdsr.c, Source/DSRs/realdiskdsr.c, Source/emulate.c, Source/error.c, Source/memory.c, Source/Modules/Unix/keyboard_console.c, Source/Modules/Unix/sound_speaker.c, Source/roms.c, Source/speech.c, Source/v9t9.c, Source/vdp.c, v9t9.cnf:
+	Initial checkins... got OSLib in there.
+
+	* Includes/emudiskdsr.h, Includes/opcode_callbacks.h, Includes/pab.h, Source/DSRs/emudiskdsr.c:
+	New file.
+
+	* Source/DSRs/realdiskdsr.c, fixdeps.pl:
+	Added
+
+	* BUGS, Includes/dsr.h, Includes/memory.h, Includes/realdiskdsr.h, Makefile, Source/cru.c, Source/dsr.c, Source/emulate.c, Source/Modules/Unix/video_svgalib.c, Source/v9t9.c, v9t9.cnf, video_win32.c, Includes/9900.h, Source/9900.c:
+	Fixed the keyboard slowdown problem by using an emulated opcode
+	(again) and got old emulation speeds back.  Added dependencies
+	to Makefile.
+
+1999-03-26  edswartz  <edswartz@juncture>
+
+	* BUGS, Source/cru.c, Source/emulate.c:
+	Tests
+
+	* Includes/memory.h, Includes/realdiskdsr.h, Makefile, Source/9900.c, Source/debugger.c, Source/dsr.c, Source/emulate.c, Source/keyboard.c, Source/Modules/Unix/clisrv.c, Source/Modules/Unix/keyboard_console.c, Source/Modules/Unix/sound_oss.c, Source/Modules/Unix/unixmain.c, Source/Modules/Unix/video_svgalib.c, Source/vdp.c, Source/vdpsprites.c, v9t9.cnf:
+	Fixed bug in SBZ (caused failure of disk DSR),
+	activated and debugged real-disk DSR,
+	fixed fake-shift problem with shift maps,
+	fixed debugger read-outside-of-memory problem by changing prototypes
+	  for readflatword, etc.
+	fixed console-fuck problem by opening sound at startup
+	attacked screen blanking problem, did not fix yet (can see garbage
+		during TI ARTIST startup)
+
+1999-03-25  edswartz  <edswartz@juncture>
+
+	* BUGS, Source/cru.c, Source/speech.c, v9t9.cnf:
+	Make keyboard slowdown hack.  Updated buglist.  Speech fixes, a little.
+
+	* V9t9.mcp:
+	Updates
+
+	* Includes/16bit.h, Includes/debugger.h, Includes/emulate.h, Includes/error.h, Includes/gplmem.h, Includes/keyboard.h, Includes/main.h, Includes/memory.h, Includes/mix_server.h, Includes/moduleconfig.h, Includes/sysdeps.h, Includes/timer.h, Includes/v9t9_common.h, Includes/v9t9_defs.h, Includes/v9t9.h, Includes/v9t9_module.h, Includes/vdpmem.h, Makefile, Source/9900.c, Source/config.c, Source/debugger.c, Source/emulate.c, Source/error.c, Source/lexer.c, Source/memory.c, Source/mix_server.c, Source/Modules/keyboard_null.c, Source/Modules/sound_null.c, Source/Modules/Unix/keyboard_console.c, Source/Modules/Unix/oss_server.c, Source/Modules/Unix/sound_oss.c, Source/Modules/Unix/unixmain.c, Source/Modules/Unix/video_svga.h, Source/Modules/Unix/video_svgalib.c, Source/Modules/Win32/keyboard_win32.c, Source/Modules/Win32/sound_win32.c, Source/Modules/Win32/win32prefix.h, Source/Modules/Win32/winerror.c, Source/Modules/Win32/winmain.c, Source/Modules/Win32/winv9t9.c, Source/Modules/Win32/winv9t9.h, Source/roms.c, Source/speech.c, Source/sysdeps.c, Source/timer.c, Source/v9t9.c, Source/vdp.c, Source/vdpsprites.c, v9t9.cnf, video_win32.c:
+	Updates from Win32, and subsequent patches to Linux.
+
+	* BUGS, Includes/sysdeps.h, Makefile, Source/debugger.c, Source/emulate.c, Source/Modules/Unix/keyboard_console.c, v9t9.cnf:
+	Fixes for Linux
+
+1999-03-12  edswartz  <edswartz@juncture>
+
+	* BUGS, Includes/16bit.h, Includes/9900asm.h, Includes/9900.h, Includes/9900st.h, Includes/clisrv.h, Includes/cru.h, Includes/debugger.h, Includes/emulate_config.h, Includes/emulate.h, Includes/gplmem.h, Includes/keyboard.h, Includes/memory.h, Includes/module.h, Includes/oldtms5220.h, Includes/realdiskdsr.h, Includes/roms.h, Includes/sound.h, Includes/sysdeps.h, Includes/sysopts.h, Includes/timer.h, Includes/tms5220.h, Includes/v9t9_common.h, Includes/v9t9_defs.h, Includes/v9t9_module.h, Includes/v9t9_types.h, Includes/vdp.h, Includes/vdpmem.h, Includes/vdpsprites.h, Includes/video.h, Makefile, Source/9900.c, Source/9901.c, Source/config.c, Source/cru.c, Source/debugger.c, Source/dsr.c, Source/emulate.c, Source/error.c, Source/Generate/generatevdpdrawrow.c, Source/Generate/generatevdpdrawrowtext.c, Source/keyboard.c, Source/lexer.c, Source/memory.c, Source/modules.c, Source/Modules/Unix/clisrv.c, Source/Modules/Unix/keyboard_console.c, Source/Modules/Unix/keyboard_console.h, Source/Modules/Unix/oss_error.c, Source/Modules/Unix/oss_error.h, Source/Modules/Unix/oss_server.c, Source/Modules/Unix/oss_server.h, Source/Modules/Unix/sound_oss.c, Source/Modules/Unix/sound_oss.h, Source/Modules/Unix/sound_speaker.c, Source/Modules/Unix/sound_speaker.h, Source/Modules/Unix/video_svga.h, Source/Modules/Unix/video_svgalib.c, Source/roms.c, Source/sound.c, Source/speech.c, Source/sysdeps.c, Source/timer.c, Source/v9t9.c, Source/v9t9_module.c, Source/vdp.c, Source/vdpsprites.c, Source/video.c, v9t9.cnf:
+	Merged changes into main branch.
+
+	* V9t9.mcp:
+	From CodeWarrior land
+
+	* v9t9:
+	Bye!
+
+	* Includes/debugger.h, Includes/gplmem.h, Includes/memory.h, Includes/vdpmem.h, Source/memory.c, v9t9.cnf:
+	Changes for GCC
+
+	* Includes/sysdeps.h, Includes/sysopts.h, Source/sysdeps.c:
+	Added...
+
+	* Includes/sysdeps.h, Includes/sysopts.h, Source/sysdeps.c: New file.
+
+	* Includes/9900asm.h, Includes/9900.h, Includes/9900st.h, Includes/cru.h, Includes/debugger.h, Includes/memory.h, Includes/realdiskdsr.h, Includes/roms.h, Includes/v9t9_common.h, Includes/v9t9_module.h, Includes/v9t9_types.h, Includes/vdp.h, Includes/vdpsprites.h, Includes/video.h, Source/9900.c, Source/9901.c, Source/config.c, Source/cru.c, Source/debugger.c, Source/dsr.c, Source/emulate.c, Source/error.c, Source/keyboard.c, Source/lexer.c, Source/memory.c, Source/modules.c, Source/roms.c, Source/sound.c, Source/speech.c, Source/timer.c, Source/v9t9.c, Source/vdp.c, Source/vdpsprites.c, Source/video.c, v9t9.cnf:
+	Updates for Codewarrior Pro4
+
+	* Includes/16bit.h:
+	Updates for CodeWarrior Win32
+
+	* BUGS, Includes/9900asm.h, Includes/9900.h, Includes/9900st.h, Includes/keyboard.h, Includes/video.h, Makefile, Source/9900.c, Source/emulate.c, Source/modules.c, Source/Modules/Unix/keyboard_console.h, Source/Modules/Unix/video_svga.h, Source/v9t9.c, v9t9.cnf:
+	Got rid of all the assembly (conditionally, of course!) and
+	cleaned up module selection for future ports.
+
+	* Source/Modules/Unix/keyboard_console.h, Source/Modules/Unix/video_svga.h, Includes/clisrv.h, Source/Modules/Unix/clisrv.c:
+	New file.
+
+	* Includes/clisrv.h, Source/Modules/Unix/clisrv.c:
+	Routines for reading/writing packets.
+
+1999-03-11  edswartz  <edswartz@juncture>
+
+	* BUGS, Includes/9900asm.h, Includes/9900.h, Includes/9900st.h, Includes/oldtms5220.h, Includes/tms5220.h, Makefile, Source/9900.c, Source/Modules/Unix/oss_server.c, Source/speech.c, v9t9.cnf:
+	Found real-life TMS5220 values for Kx, but no beans in getting
+	valid speech data (lots of overflows, it seems).
+	Rewrote some assembly in C for porting purposes.
+	Found out about a TI ExtBasic crasher, can't trace it to
+	bad assembly yet.
+
+	* Includes/oldtms5220.h, Includes/tms5220.h: New file.
+
+1999-03-10  edswartz  <edswartz@juncture>
+
+	* Includes/v9t9_module.h, Makefile, Source/cru.c, Source/Modules/Unix/keyboard_console.c, Source/Modules/Unix/oss_server.c, Source/Modules/Unix/oss_server.h, Source/Modules/Unix/sound_oss.c, Source/Modules/Unix/sound_speaker.c, Source/speech.c, v9t9.cnf:
+	Fixes... added noise and speech to oss_server.
+
+1999-03-09  edswartz  <edswartz@juncture>
+
+	* Includes/emulate.h, Includes/module.h, Includes/sound.h, Includes/v9t9_module.h, Makefile, Source/config.c, Source/emulate.c, Source/Modules/Unix/keyboard_console.c, Source/Modules/Unix/oss_error.c, Source/Modules/Unix/oss_error.h, Source/Modules/Unix/oss_server.c, Source/Modules/Unix/oss_server.h, Source/Modules/Unix/sound_oss.c, Source/Modules/Unix/sound_oss.h, Source/Modules/Unix/sound_speaker.c, Source/Modules/Unix/sound_speaker.h, Source/Modules/Unix/video_svgalib.c, Source/sound.c, Source/speech.c, Source/v9t9.c, Source/v9t9_module.c, v9t9.cnf:
+	Added OSS module with 3-voice sound
+
+	* Source/Modules/Unix/oss_error.c, Source/Modules/Unix/oss_error.h, Source/Modules/Unix/oss_server.c, Source/Modules/Unix/oss_server.h, Source/Modules/Unix/sound_oss.c, Source/Modules/Unix/sound_oss.h, Source/Modules/Unix/sound_speaker.h:
+	New file.
+
+1999-03-08  edswartz  <edswartz@juncture>
+
+	* Includes/v9t9_common.h, Source/v9t9_module.c:
+	Added
+
+	* Includes/v9t9_common.h, Source/v9t9_module.c: New file.
+
+	* Includes/16bit.h, Includes/emulate_config.h, Includes/emulate.h, Includes/keyboard.h, Includes/memory.h, Includes/module.h, Includes/timer.h, Includes/v9t9_defs.h, Includes/v9t9_module.h, Includes/v9t9_types.h, Includes/video.h, Makefile, Source/config.c, Source/cru.c, Source/emulate.c, Source/Generate/generatevdpdrawrow.c, Source/Generate/generatevdpdrawrowtext.c, Source/keyboard.c, Source/Modules/Unix/keyboard_console.c, Source/Modules/Unix/video_svgalib.c, Source/sound.c, Source/speech.c, Source/timer.c, Source/v9t9.c, Source/vdp.c, Source/video.c, v9t9.cnf:
+	Make things into modules; not done with sound yet
+
+	* Includes/module.h, Includes/timer.h, Includes/v9t9_defs.h, Includes/v9t9_module.h, Includes/v9t9_types.h, Source/Generate/generatevdpdrawrow.c, Source/Generate/generatevdpdrawrowtext.c, Source/timer.c:
+	New file.
+
+1999-03-07  edswartz  <edswartz@juncture>
+
+	* Includes/vdp.h, Source/Modules/Unix/video_svgalib.c, v9t9:
+	...
+
+	* vdpdrawrow.c, vdpdrawrowtext.c:
+	Bye! Generated files.
+
+	* Makefile, Source/Modules/Unix/sound_speaker.c, Source/speech.c, Source/v9t9.c, v9t9:
+	Fixes for non-root user (rearrange inits) and fix bug in speech when
+	not using GUS.
+
+	* 9900_fast.s, 9900.i, 9900_lastval_slow.s, 9900.s, v9t9.s, vdpdrawrow.s:
+	Removed generated files
+
+1999-03-07  root  <root@juncture>
+
+	* 9900_fast.s, 9900.i, 9900_lastval_slow.s, 9900.s, BUGS, Distrib/Disks/forthdsk, Includes/16bit.h, Includes/9900asm.h, Includes/9900.h, Includes/9900st.h, Includes/994amem.h, Includes/config.h, Includes/cru.h, Includes/debugger.h, Includes/dsr_config.h, Includes/dsr.h, Includes/dsrmem.h, Includes/emulate_config.h, Includes/emulate.h, Includes/error.h, Includes/gplmem.h, Includes/keyboard.h, Includes/lexer.h, Includes/memory.h, Includes/modulemem.h, Includes/modules.h, Includes/realdiskdsr.h, Includes/roms.h, Includes/sound_config.h, Includes/sound.h, Includes/speech_config.h, Includes/speech.h, Includes/v9t9_config.h, Includes/v9t9.h, Includes/vdp.h, Includes/vdpmem.h, Includes/vdpsprites.h, Includes/video.h, Makefile, README, Source/9900.c, Source/9901.c, Source/config.c, Source/cru.c, Source/debugger.c, Source/dsr.c, Source/emulate.c, Source/error.c, Source/keyboard.c, Source/lexer.c, Source/memory.c, Source/modules.c, Source/Modules/Unix/keyboard_console.c, Source/Modules/Unix/sound_gus.c, Source/Modules/Unix/sound_gus.vox.c, Source/Modules/Unix/sound_speaker.c, Source/Modules/Unix/video_svgalib.c, Source/roms.c, Source/sound.c, Source/speech.c, Source/v9t9.c, Source/vdp.c, Source/vdpsprites.c, Source/video.c, TODO, v9t9, v9t9.cnf, v9t9.s, vdpdrawrow.c, vdpdrawrow.s, vdpdrawrowtext.c:
+	Imported from v9t9-0.04 tree.  Way alpha, speech crashes without a GUS.
+
+	* 9900_fast.s, 9900.i, 9900_lastval_slow.s, 9900.s, BUGS, Distrib/Disks/forthdsk, Includes/16bit.h, Includes/9900asm.h, Includes/9900.h, Includes/9900st.h, Includes/994amem.h, Includes/config.h, Includes/cru.h, Includes/debugger.h, Includes/dsr_config.h, Includes/dsr.h, Includes/dsrmem.h, Includes/emulate_config.h, Includes/emulate.h, Includes/error.h, Includes/gplmem.h, Includes/keyboard.h, Includes/lexer.h, Includes/memory.h, Includes/modulemem.h, Includes/modules.h, Includes/realdiskdsr.h, Includes/roms.h, Includes/sound_config.h, Includes/sound.h, Includes/speech_config.h, Includes/speech.h, Includes/v9t9_config.h, Includes/v9t9.h, Includes/vdp.h, Includes/vdpmem.h, Includes/vdpsprites.h, Includes/video.h, Makefile, README, Source/9900.c, Source/9901.c, Source/config.c, Source/cru.c, Source/debugger.c, Source/dsr.c, Source/emulate.c, Source/error.c, Source/keyboard.c, Source/lexer.c, Source/memory.c, Source/modules.c, Source/Modules/Unix/keyboard_console.c, Source/Modules/Unix/sound_gus.c, Source/Modules/Unix/sound_gus.vox.c, Source/Modules/Unix/sound_speaker.c, Source/Modules/Unix/video_svgalib.c, Source/roms.c, Source/sound.c, Source/speech.c, Source/v9t9.c, Source/vdp.c, Source/vdpsprites.c, Source/video.c, TODO, v9t9, v9t9.cnf, v9t9.s, vdpdrawrow.c, vdpdrawrow.s, vdpdrawrowtext.c:
+	New file.
+

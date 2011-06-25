@@ -1,0 +1,5 @@
+*.d *.o *~ *.bak .depend #*
+config.cache config.log config.status configure Makefile conf.h
+doc
+
+nforth.grm nforth.prm nforth*.rom nforth*.bin

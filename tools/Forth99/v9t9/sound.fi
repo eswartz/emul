@@ -1,0 +1,26 @@
+
+: sound-vclear ( addr -- )
+    $9f over c!
+    $bf over c!
+    $df over c!
+    $ff swap c!
+
+;
+
+1 <export
+
+:  sound-off
+
+    SOUND sound-vclear
+    $20 0 do 
+        SOUND i + 2+
+        sound-vclear      
+    6 +loop
+;    
+
+export>
+
+: sound-init
+    sound-off
+     
+;

@@ -1,0 +1,8 @@
+
+\ Note: this value is only used during compilation. 
+
+User ramptr     
+
+RamTop ramptr !
+
+

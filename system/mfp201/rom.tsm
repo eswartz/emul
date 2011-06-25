@@ -1,0 +1,107 @@
+
+;
+;
+;
+
+    incl general.i
+    incl ram.i
+    incl video.i
+
+; ============
+; variables
+
+
+	aorg >f000
+	
+reset:
+	ldc sysstack, SP
+	
+	; initialize watchdog
+
+	; initialize peripherals
+
+	; turn on interrupts
+	or ST_GIE, SR
+	
+	call vinit
+	
+	call vreset
+	
+	
+	br idle
+	
+int1handler:
+	pushn #4, R0
+	pushn #4, R4
+	pushn #4, R8
+	push R12
+	
+	; reset int acknowledge bit
+	
+	pop R12
+	popn #4, R8
+	popn #4, R4
+	popn #4, R0
+	
+	reti
+	
+nmihandler:
+    push R0
+
+	; reset int acknowledge bit
+	
+	pop R0
+    reti
+    
+bkpthandler:
+    reti
+    
+; =============
+
+;	R0 = character
+fillscr:
+	pushn #2, r1
+	ldc mode0screen, r1
+	ldc 768, r2
+	loop r2: mov.b r0, *r1+
+	popn #2, r1
+	ret
+	
+clrscr:
+	push r0
+	clr r0
+	call fillscr
+	pop r0
+	ret
+
+	
+; =============
+
+idle:
+	clr r0
+	
+$0:
+	call fillscr
+	
+	seto r12
+	loop r12: nop		; note: loop must ignore changes to PC!
+	
+	inc r0
+	jmp $0-
+	
+	
+; =============
+	
+	aorg >ffe0
+	
+	dw bkpthandler
+	
+	aorg >fffc
+	
+	dw nmihandler
+
+	aorg >fffe
+	
+	dw	reset
+	
+	

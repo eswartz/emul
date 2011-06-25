@@ -1,0 +1,511 @@
+2009-07-25  Ed Swartz  <ejs@juncture>
+
+	* tools/Forth/99prims.fs, tools/Forth/doc/crossdoc.fd, tools/Forth/forthdsk, tools/Forth/nforth.tsm, tools/Forth/nforthA.rom, tools/Forth/nforthB.rom, tools/Forth/nforthg.bin, tools/Forth/sound.i, tools/Forth/video.fs:
+	Commit before test
+
+2009-03-01  Ed Swartz  <ejs@juncture>
+
+	* tools/Forth/cpuram.i, tools/Forth/forthdsk, tools/Forth/lib/99equs, tools/Forth/locals.fs, tools/Forth/nforth.tsm, tools/Forth/nforthA.rom, tools/Forth/nforthB.rom, tools/Forth/nforthg.bin, tools/Forth/ram.i, tools/Forth/sound.i, tools/Forth/v9t9music.txt:
+	Add balance support to sound engine, also allow individual track scheduling, and more work on locals
+
+2009-02-24  Ed Swartz  <ejs@juncture>
+
+	* tools/Forth/99prims.fs, tools/Forth/compile.fs, tools/Forth/doc/crossdoc.fd, tools/Forth/locals.fs, tools/Forth/nforthB.rom, tools/Forth/nforthg.bin:
+	Do some fixes to test locals keywords (not working)
+
+	* tools/Forth/99build.fs, tools/Forth/99kernel.fs, tools/Forth/Makefile.am, tools/Forth/Makefile.in, tools/Forth/blocks.fs, tools/Forth/compile.fs, tools/Forth/dict.fs, tools/Forth/doc/crossdoc.fd, tools/Forth/editor.fs, tools/Forth/forthdsk, tools/Forth/init.fs, tools/Forth/kbd.i, tools/Forth/locals.fs, tools/Forth/nforthA.rom, tools/Forth/nforthB.rom, tools/Forth/nforthc.bin, tools/Forth/nforthg.bin, tools/Forth/sound.i, tools/Forth/term.i, tools/Forth/video.fs:
+	-- Really turn off sound
+	-- Add VALUE and TO (in prep for locals)
+	-- Add "clear to eol" to make ctrl-fctn-9 in editor not enter a mess from before
+	-- Make use of distinct backspace and FCTN-S keycodes
+	-- Fix bug in DOES> builder
+	-- Try to make allowance for GROM extended dictionary in enhanced mode
+	-- Try to avoid building in Win32 without gforth
+	-- More abbv of names
+	--
+
+2009-02-12  Ed Swartz  <ejs@juncture>
+
+	* tools/Forth/dev.i, tools/Forth/forthdsk, tools/Forth/nforth.tsm, tools/Forth/nforthA.rom, tools/Forth/video.i, tools/Forth/video_bit.i, tools/Forth/video_bit4.i:
+	Give XOPs their own labels and make RWBLOCK use full 1k blocks and use
+	multi-disk spanning.
+	Clean up some video stuff.  Make FORTHDSK only 360k.
+
+	* tools/Forth/sound.i, tools/Forth/v9t9music.txt: Some fixes
+
+2009-01-19  Ed Swartz  <ejs@juncture>
+
+	* tools/Forth/nforthA.rom, tools/Forth/sound.i, tools/Forth/v9t9music.txt:
+	Allow allowing noise notes, for drums.
+
+2009-01-18  Ed Swartz  <ejs@juncture>
+
+	* tools/Forth/nforthA.rom, tools/Forth/ram.i, tools/Forth/sound.i, tools/Forth/v9t9music.txt:
+	Add waveforms
+
+	* tools/Forth/forthdsk, tools/Forth/nforthA.rom, tools/Forth/ram.i, tools/Forth/sound.i, tools/Forth/v9t9music.txt:
+	Add tremolo
+
+	* tools/Forth/forthdsk, tools/Forth/nforthA.rom, tools/Forth/ram.i, tools/Forth/sound.i, tools/Forth/v9t9music.txt:
+	Enhanced sound, pass 2
+
+2009-01-17  Ed Swartz  <ejs@juncture>
+
+	* tools/Forth/nforthA.rom, tools/Forth/sound.i:
+	Fix low pitched envelopes again
+
+	* tools/Forth/nforthA.rom, tools/Forth/sound.i: Fix low pitches
+
+	* tools/Forth/99memory.fs, tools/Forth/cpuram.i, tools/Forth/forthdsk, tools/Forth/int.i, tools/Forth/lib/99equs, tools/Forth/nforth.tsm, tools/Forth/nforthA.rom, tools/Forth/ram.i, tools/Forth/sound.i, tools/Forth/v9t9music.txt:
+	Add a more enhanced sound generator
+
+2009-01-11  Ed Swartz  <ejs@juncture>
+
+	* tools/Forth/forthdsk, tools/Forth/nforth.tsm:
+	*** empty log message ***
+
+	* tools/Forth/99prims.fs, tools/Forth/compile.fs, tools/Forth/dict.fs, tools/Forth/doc/crossdoc.fd, tools/Forth/forthdsk, tools/Forth/init.fs, tools/Forth/interp.fs, tools/Forth/kernel.fs, tools/Forth/nforthA.rom, tools/Forth/nforthB.rom:
+	Try to speed things up with a prim NUMBER impl and make room for some tree routines...
+
+2009-01-09  Ed Swartz  <ejs@juncture>
+
+	* tools/Forth/99memory.fs, tools/Forth/doc/crossdoc.fd, tools/Forth/editor.fs, tools/Forth/forthdsk, tools/Forth/general.i, tools/Forth/init.fs, tools/Forth/int.i, tools/Forth/interp.fs, tools/Forth/nforth.tsm, tools/Forth/nforthA.rom, tools/Forth/nforthB.rom:
+	Update to match new MMIO addresses.  Reset editor after restart.  Ensure contents restored when using <VIDEO.  Remove gforth-isms from [IF]/...
+
+2009-01-05  Ed Swartz  <ejs@juncture>
+
+	* tools/Forth/general.i, tools/Forth/lib/99ram, tools/Forth/nforth.tsm, tools/Forth/nforthA.rom, tools/Forth/nforthB.rom, tools/Forth/ram.i, tools/Forth/99build.fs, tools/Forth/99memory.fs, tools/Forth/Makefile.am, tools/Forth/Makefile.in, tools/Forth/cpuram.i, tools/Forth/dev.i, tools/Forth/forthdsk:
+	Update RAM allocation to avoid legacy >8300 area and to allow dictionary
+	to grow linearly from >0000 to >D800.  Also, use new bank-switching address.
+
+2009-01-03  Ed Swartz  <ejs@juncture>
+
+	* tools/Forth/99asm.fs, tools/Forth/99build.fs, tools/Forth/99config.fs, tools/Forth/99equs.fs, tools/Forth/99kernel.fs, tools/Forth/99memory.fs, tools/Forth/99prims.fs, tools/Forth/Makefile.am, tools/Forth/Makefile.in, tools/Forth/cpuram.i, tools/Forth/dev.i, tools/Forth/doc/crossdoc.fd, tools/Forth/files-bad.fs, tools/Forth/files.fs, tools/Forth/forthdsk, tools/Forth/general.i, tools/Forth/init.fs, tools/Forth/int.i, tools/Forth/kbd.i, tools/Forth/lib/99equs, tools/Forth/lib/99ram, tools/Forth/nforth.tsm, tools/Forth/nforthA.rom, tools/Forth/nforthB.rom, tools/Forth/nforthc.bin, tools/Forth/ram.i, tools/Forth/testing.fs, tools/Forth/video.fs, tools/Forth/video.i, tools/Forth/video_bit.i, tools/Forth/video_bit4.i, tools/Forth/video_text.i:
+	Allow FORTH to live in enhanced memory model
+
+	* tools/Forth/site-forth/cross.fs:
+	Revert cross.fs code that is not our indirect-threading code
+
+	* tools/Forth/site-forth/cross.fs, tools/Forth/99build.fs, tools/Forth/99config.fs, tools/Forth/99equs.fs, tools/Forth/99kernel.fs, tools/Forth/99prims.fs, tools/Forth/common.fs, tools/Forth/compile.fs, tools/Forth/dict.fs, tools/Forth/init.fs:
+	Remove indirect threading code.
+
+	* tools/Forth/99prims.fs, tools/Forth/commonhash.fs, tools/Forth/compile.fs, tools/Forth/dict.fs, tools/Forth/doc/crossdoc.fd, tools/Forth/forthdsk, tools/Forth/init.fs, tools/Forth/interp.fs, tools/Forth/nforth.tsm, tools/Forth/nforthA.rom, tools/Forth/nforthB.rom, tools/Forth/nforthc.bin, tools/Forth/video_bit.i, tools/Forth/video_bit4.i:
+	Fix ?DO, [CHAR] in runtime.  Make DUMP adapt to screen width.  Add support for swapping (FIND) with hashed version (no luck).  Scan keyboard more often, to overcome occasional sluggishness of 1/60 second scanning.  Factor out "font in GROM" assumption for bitmap modes (no room to do anything else, though).
+
+2009-01-02  Ed Swartz  <ejs@juncture>
+
+	* tools/Forth/doc/crossdoc.fd, tools/Forth/lib/99ram, tools/Forth/99prims.fs, tools/Forth/blocks.fs, tools/Forth/compile.fs, tools/Forth/cpuram.i, tools/Forth/dev.i, tools/Forth/forthdsk, tools/Forth/int.i, tools/Forth/interp.fs, tools/Forth/kernel.fs, tools/Forth/nforth.tsm, tools/Forth/nforthA.rom, tools/Forth/nforthB.rom, tools/Forth/nforthc.bin, tools/Forth/ram.i, tools/Forth/video.i, tools/Forth/video_bit.i, tools/Forth/video_bit4.i:
+	Add sound list support, optimize >NUMBER, and fix some bugs in gfx terminal initialization and DSR VDP usage.
+
+	* tools/Forth/99build.fs: Fix another bug with auto bank changing
+
+2008-12-23  Ed Swartz  <ejs@juncture>
+
+	* tools/Forth/99prims.fs, tools/Forth/doc/crossdoc.fd, tools/Forth/forthdsk, tools/Forth/interp.fs, tools/Forth/nforthB.rom, tools/Forth/nforthc.bin:
+	Optimize to make parser faster (assembler parse: 2990 ticks -> 2250!), and add some sound words
+
+	* tools/Forth/doc/crossdoc.fd, tools/Forth/editor.fs, tools/Forth/forthdsk, tools/Forth/int.i, tools/Forth/nforthA.rom, tools/Forth/nforthB.rom, tools/Forth/nforthc.bin:
+	Add sound support
+
+2008-12-21  Ed Swartz  <ejs@juncture>
+
+	* tools/Forth/99prims.fs, tools/Forth/cpuram.i, tools/Forth/doc/crossdoc.fd, tools/Forth/editor.fs, tools/Forth/forthdsk, tools/Forth/init.fs, tools/Forth/int.i, tools/Forth/lib/99ram, tools/Forth/nforthA.rom, tools/Forth/nforthB.rom, tools/Forth/nforthc.bin, tools/Forth/ram.i:
+	Support the TMS9901 timer and user INT 3 handler.
+
+	* tools/Forth/forthdsk, tools/Forth/kernel.fs, tools/Forth/nforthA.rom, tools/Forth/video.i, tools/Forth/video_bit.i:
+	Simplify bitmap line routine (scrap V9938 color ops) and fix turtle graphics, mostly
+
+	* tools/Forth/nforthA.rom, tools/Forth/video_bit.i: Last tweak
+
+	* tools/Forth/forthdsk, tools/Forth/nforthA.rom, tools/Forth/ram.i, tools/Forth/video.i, tools/Forth/video_bit.i:
+	Migrate bitmap line routine to full V9938 support
+
+2008-12-20  Ed Swartz  <ejs@juncture>
+
+	* tools/Forth/forthdsk, tools/Forth/nforthA.rom, tools/Forth/video_bit.i:
+	More memory savings
+
+	* tools/Forth/nforthA.rom, tools/Forth/ram.i, tools/Forth/video.i, tools/Forth/video_bit.i, tools/Forth/video_bit4.i, tools/Forth/video_text.i:
+	Save some more space with register saves
+
+	* tools/Forth/init.fs, tools/Forth/nforth.tsm, tools/Forth/nforthA.rom, tools/Forth/ram.i, tools/Forth/term.i, tools/Forth/video.i, tools/Forth/video_bit.i, tools/Forth/video_bit4.i, tools/Forth/video_text.i:
+	Initial attempt at reducing code size by looking for unnecessary register saves.
+
+	* tools/Forth/cpuram.i, tools/Forth/doc/crossdoc.fd, tools/Forth/editor.fs, tools/Forth/forthdsk, tools/Forth/general.i, tools/Forth/int.i, tools/Forth/nforth.tsm, tools/Forth/nforthA.rom, tools/Forth/nforthB.rom, tools/Forth/nforthc.bin, tools/Forth/ram.i, tools/Forth/testing.fs, tools/Forth/video.fs, tools/Forth/video.i, tools/Forth/video_bit.i, tools/Forth/video_bit4.i, tools/Forth/video_text.i:
+	Implement sprite motion... eight bytes left!!!
+
+	* tools/Forth/int.i:
+	Previous commit also had some cleanup of interrupt, in preparation for sprite motion.
+
+	* tools/Forth/site-forth/cross.fs: Bogus whitespace changes
+
+	* tools/Forth/lib/99equs: Add #type XOP for (TYPE)
+
+	* tools/Forth/99build.fs, tools/Forth/99kernel.fs, tools/Forth/99prims.fs, tools/Forth/Makefile.am, tools/Forth/Makefile.in, tools/Forth/blocks.fs, tools/Forth/compile.fs, tools/Forth/cpuram.i, tools/Forth/doc/crossdoc.fd, tools/Forth/files-bad.fs, tools/Forth/files.fs, tools/Forth/getforthsyms.py, tools/Forth/init.fs, tools/Forth/int.i, tools/Forth/interp.fs, tools/Forth/kbd.i, tools/Forth/nforth.tsm, tools/Forth/nforthA.rom, tools/Forth/nforthB.rom, tools/Forth/nforthc.bin, tools/Forth/ram.i, tools/Forth/term.i, tools/Forth/video.fs, tools/Forth/video.i, tools/Forth/video_bit4.i:
+	*** empty log message ***
+
+	* tools/Forth/99build.fs:
+	Fix resolution of migrated functions -- need to update the xt too :)
+
+2008-12-19  Ed Swartz  <ejs@juncture>
+
+	* tools/Forth/doc/crossdoc.fd, tools/Forth/dict.fs, tools/Forth/editor.fs, tools/Forth/nforthB.rom, tools/Forth/nforthc.bin:
+	Make "erase" copy to clip.  Also support Ctrl-K to delete to EOL
+
+	* tools/Forth/99prims.fs, tools/Forth/blocks.fs, tools/Forth/compile.fs, tools/Forth/doc/crossdoc.fd, tools/Forth/editor.fs, tools/Forth/forthdsk, tools/Forth/int.i, tools/Forth/kbd.i, tools/Forth/nforthA.rom, tools/Forth/nforthB.rom, tools/Forth/nforthc.bin:
+	Handle ABORT keystroke differently, so it doesn't repeat, tweak editor to be friendlier,
+	fix error messages on ROM boundary, allow reverting individual blocks,
+	and put the 9900 assembler in the forthdsk at block 40
+
+	* tools/Forth/doc/crossdoc.fd, tools/Forth/99build.fs, tools/Forth/99config.fs, tools/Forth/99kernel.fs, tools/Forth/99prims.fs, tools/Forth/init.fs, tools/Forth/interp.fs, tools/Forth/nforth.tsm, tools/Forth/nforthA.rom, tools/Forth/nforthB.rom, tools/Forth/nforthc.bin:
+	Reorganize so 99kernel.fs has all the ROM code and init.fs has init code,
+	as expected.
+
+	* tools/Forth/doc/crossdoc.fd, tools/Forth/99build.fs, tools/Forth/99config.fs, tools/Forth/99prims.fs, tools/Forth/compile.fs, tools/Forth/init.fs, tools/Forth/nforthB.rom, tools/Forth/nforthc.bin, tools/Forth/user.fs:
+	Save more space and time by allowing User vars to be considered Variables.
+
+2008-12-18  Ed Swartz  <ejs@juncture>
+
+	* tools/Forth/99build.fs, tools/Forth/99prims.fs, tools/Forth/compile.fs, tools/Forth/doc/crossdoc.fd, tools/Forth/editor.fs, tools/Forth/forthdsk, tools/Forth/init.fs, tools/Forth/nforthB.rom, tools/Forth/nforthc.bin, tools/Forth/testing.fs, tools/Forth/user.fs:
+	Support USER vars at runtime, make testing code for box drawing
+
+	* tools/Forth/doc/crossdoc.fd, tools/Forth/cpuram.i, tools/Forth/editor.fs, tools/Forth/nforthB.rom, tools/Forth/nforthc.bin, tools/Forth/video.fs:
+	Add "revert" function in case edit screen did get corrupted
+
+	* tools/Forth/doc/crossdoc.fd, tools/Forth/editor.fs, tools/Forth/nforthA.rom, tools/Forth/nforthB.rom, tools/Forth/nforthc.bin, tools/Forth/video_text.i:
+	Let the editor flip back and forth nondestructively.  And fix 212-mode in text2
+
+	* tools/Forth/lib/99equs, tools/Forth/site-forth/cross.fs, tools/Forth/99build.fs, tools/Forth/99equs.fs, tools/Forth/99prims.fs, tools/Forth/common.fs, tools/Forth/compile.fs, tools/Forth/doc/crossdoc.fd, tools/Forth/getforthsyms.py, tools/Forth/nforth.grm, tools/Forth/nforthA.rom, tools/Forth/nforthB.rom, tools/Forth/nforthc.bin:
+	Reclaim 160 bytes by customizing CONSTANT creation
+
+	* tools/Forth/nforthA.rom, tools/Forth/video.i, tools/Forth/video_bit.i, tools/Forth/video_bit4.i, tools/Forth/video_text.i:
+	Restore video page at mode set
+
+	* tools/Forth/doc/crossdoc.fd, tools/Forth/99build.fs, tools/Forth/99config.fs, tools/Forth/99equs.fs, tools/Forth/99memory.fs, tools/Forth/99prims.fs, tools/Forth/99simple.fs, tools/Forth/99test.fs, tools/Forth/blocks.fs, tools/Forth/common.fs, tools/Forth/commonhash.fs, tools/Forth/compile.fs, tools/Forth/dev.i, tools/Forth/dict.fs, tools/Forth/editor.fs, tools/Forth/files-bad.fs, tools/Forth/files.fs, tools/Forth/forthdsk, tools/Forth/general.i, tools/Forth/init.fs, tools/Forth/interp.fs, tools/Forth/kernel.fs, tools/Forth/nforth.grm, tools/Forth/nforth.gsm, tools/Forth/nforthA.rom, tools/Forth/nforthB.rom, tools/Forth/nforthc.bin:
+	Fix copyright dates, more editor work, space optimization, box characters,
+
+2008-12-17  Ed Swartz  <ejs@juncture>
+
+	* tools/Forth/99asm.fs, tools/Forth/doc/crossdoc.fd, tools/Forth/init.fs, tools/Forth/kernel.fs, tools/Forth/nforthB.rom, tools/Forth/nforthc.bin, tools/Forth/user.fs:
+	Hide more symbols
+
+	* tools/Forth/doc/crossdoc.fd, tools/Forth/99build.fs, tools/Forth/99prims.fs, tools/Forth/Makefile.am, tools/Forth/Makefile.in, tools/Forth/compile.fs, tools/Forth/constant.fs, tools/Forth/editor.fs, tools/Forth/kernel.fs, tools/Forth/nforth.tsm, tools/Forth/nforthA.rom, tools/Forth/nforthB.rom, tools/Forth/nforthc.bin:
+	Reduce memory size by excising test code and optimizing some big algorithms;
+	fix the way test code is included and repair GROM->RAM copying
+
+	* tools/Forth/lib/99equs, tools/Forth/site-forth/cross.fs, tools/Forth/99build.fs, tools/Forth/99prims.fs, tools/Forth/Makefile.am, tools/Forth/Makefile.in, tools/Forth/dict.fs, tools/Forth/doc/crossdoc.fd, tools/Forth/editor.fs, tools/Forth/files-bad.fs, tools/Forth/files.fs, tools/Forth/getforthsyms.py, tools/Forth/init.fs, tools/Forth/interp.fs, tools/Forth/kbd.i, tools/Forth/nforth.gsm, tools/Forth/nforth.tsm, tools/Forth/nforthA.rom, tools/Forth/nforthB.rom, tools/Forth/nforthc.bin, tools/Forth/ram.i, tools/Forth/video.fs:
+	More work on editor, allow hiding words, and produce a symbol table
+
+2008-12-16  Ed Swartz  <ejs@juncture>
+
+	* tools/Forth/lib/99equs, tools/Forth/lib/99ram, tools/Forth/site-forth/cross.fs, tools/Forth/99build.fs, tools/Forth/99equs.fs, tools/Forth/99memory.fs, tools/Forth/99prims.fs, tools/Forth/Makefile.am, tools/Forth/Makefile.in, tools/Forth/benchmark.fs, tools/Forth/blocks.fs, tools/Forth/compile.fs, tools/Forth/cpuram.i, tools/Forth/dict.fs, tools/Forth/doc/crossdoc.fd, tools/Forth/editor.fs, tools/Forth/files-bad.fs, tools/Forth/include.fs, tools/Forth/interp.fs, tools/Forth/kernel.fs, tools/Forth/nforth.tsm, tools/Forth/nforthA.rom, tools/Forth/nforthB.rom, tools/Forth/nforthc.bin, tools/Forth/ram.i, tools/Forth/term.i, tools/Forth/testing.fs, tools/Forth/video.fs, tools/Forth/video.i, tools/Forth/video_bit.i, tools/Forth/video_bit4.i, tools/Forth/video_text.i:
+	Add an initial block editor (and commit files I forgot to add!!!)
+
+2008-12-15  Ed Swartz  <ejs@juncture>
+
+	* tools/Forth/doc/crossdoc.fd, tools/Forth/kbd.i, tools/Forth/lib/99equs, tools/Forth/nforthA.rom, tools/Forth/nforthB.rom, tools/Forth/nforthc.bin, tools/Forth/video.i:
+	Support text blink mode and support keyboard abort again
+
+	* tools/Forth/99prims.fs, tools/Forth/doc/crossdoc.fd, tools/Forth/lib/99equs, tools/Forth/nforth.tsm, tools/Forth/nforthA.rom, tools/Forth/nforthB.rom, tools/Forth/nforthc.bin, tools/Forth/ram.i, tools/Forth/video.i:
+	Support paging in enhanced graphics and text modes
+
+	* tools/Forth/99asm.fs, tools/Forth/99prims.fs, tools/Forth/compile.fs, tools/Forth/dev.i, tools/Forth/doc/crossdoc.fd, tools/Forth/int.i, tools/Forth/kbd.i, tools/Forth/kernel.fs, tools/Forth/lib/99equs, tools/Forth/lib/bench, tools/Forth/nforth.tsm, tools/Forth/nforthA.rom, tools/Forth/nforthB.rom, tools/Forth/nforthc.bin, tools/Forth/ram.i, tools/Forth/video.i:
+	Support TICKS, DSRs in all graphics modes, video quicksort hack, video paging, ...
+
+2008-12-07  Ed Swartz  <ejs@juncture>
+
+	* tools/TIAsm/build.xml, tools/TIAsm/tiasm.jar: Fix build
+
+	* tools/Forth/nforthB.rom, tools/Forth/nforthc.bin:
+	Fix an assembler bug
+
+	* tools/Forth/doc/crossdoc.fd, tools/Forth/nforth.tsm, tools/Forth/nforthA.rom, tools/Forth/nforthB.rom, tools/Forth/nforthc.bin, tools/Forth/video.i:
+	Implement all-modes pixel, line, and rect routines
+
+	* tools/Forth/nforthA.rom, tools/Forth/video.i: Fix bit4x cursor
+
+	* tools/Forth/99prims.fs, tools/Forth/Makefile.am, tools/Forth/Makefile.in, tools/Forth/doc/crossdoc.fd, tools/Forth/nforthA.rom, tools/Forth/nforthB.rom, tools/Forth/nforthc.bin, tools/Forth/video.i:
+	Move more utilities to MSX acceleration
+
+2008-12-04  Ed Swartz  <ejs@juncture>
+
+	* tools/Forth/nforthA.rom, tools/Forth/nforthc.bin, tools/Forth/ram.i, tools/Forth/video.i:
+	Make a cursor that works in all bitmapped modes
+
+2008-11-29  Ed Swartz  <ejs@juncture>
+
+	* tools/Forth/99build.fs, tools/Forth/99memory.fs, tools/Forth/99prims.fs, tools/Forth/Makefile.am, tools/Forth/Makefile.in, tools/Forth/compile.fs, tools/Forth/dev.i, tools/Forth/doc/crossdoc.fd, tools/Forth/forthdsk, tools/Forth/init.fs, tools/Forth/interp.fs, tools/Forth/kernel.fs, tools/Forth/nforth.tsm, tools/Forth/nforthA.rom, tools/Forth/nforthB.rom, tools/Forth/nforthc.bin, tools/Forth/ram.i, tools/Forth/user.fs:
+	Add block set
+
+	* tools/Forth/dev.i, tools/Forth/doc/crossdoc.fd, tools/Forth/forthdsk, tools/Forth/kernel.fs, tools/Forth/nforth.tsm, tools/Forth/nforthA.rom, tools/Forth/nforthB.rom, tools/Forth/nforthc.bin, tools/Forth/video.i:
+	*** empty log message ***
+
+2008-11-28  Ed Swartz  <ejs@juncture>
+
+	* tools/Forth/nforthA.rom, tools/Forth/nforthB.rom, tools/Forth/nforthc.bin, tools/Forth/video.i:
+	Slightly better non-multiple-of-desired font drawing behavior
+
+2008-11-27  Ed Swartz  <ejs@juncture>
+
+	* tools/Forth/99prims.fs, tools/Forth/doc/crossdoc.fd, tools/Forth/nforthA.rom, tools/Forth/nforthB.rom, tools/Forth/nforthc.bin, tools/Forth/video.i:
+	Set standard palette on mode switch.
+
+	* tools/Forth/99prims.fs, tools/Forth/doc/crossdoc.fd, tools/Forth/nforth.tsm, tools/Forth/nforthA.rom, tools/Forth/nforthB.rom, tools/Forth/nforthc.bin, tools/Forth/ram.i, tools/Forth/video.i:
+	Support setting/getting VDP R1, sprite color table, better banking support, proper 9918A emulation
+
+	* tools/Forth/lib/99equs, tools/Forth/99config.fs, tools/Forth/99prims.fs, tools/Forth/doc/crossdoc.fd, tools/Forth/nforth.tsm, tools/Forth/nforthA.rom, tools/Forth/nforthB.rom, tools/Forth/nforthc.bin, tools/Forth/ram.i, tools/Forth/video.i:
+	Clean up video mode specifications
+
+2008-11-26  Ed Swartz  <ejs@juncture>
+
+	* tools/Forth/nforth.tsm, tools/Forth/nforthA.rom, tools/Forth/ram.i, tools/Forth/term.i, tools/Forth/video.i:
+	Add drawing support for modes 3-6
+
+	* tools/Forth/99build.fs, tools/Forth/99config.fs, tools/Forth/99prims.fs, tools/Forth/Makefile.am, tools/Forth/Makefile.in, tools/Forth/dev.i, tools/Forth/doc/crossdoc.fd, tools/Forth/general.i, tools/Forth/init.fs, tools/Forth/lib/99equs, tools/Forth/lib/bench, tools/Forth/lib/video, tools/Forth/nforth.tsm, tools/Forth/nforthA.rom, tools/Forth/nforthB.rom, tools/Forth/nforthc.bin, tools/Forth/ram.i, tools/Forth/term.i, tools/Forth/video.i:
+	Start supporting V9938 modes, use more assembler, clean up terminal handling
+
+2008-11-09  Ed Swartz  <ejs@juncture>
+
+	* tools/Forth/lib/99equs, tools/Forth/lib/bench, tools/Forth/lib/doermake, tools/Forth/lib/rndtest, tools/Forth/lib/speedtest, tools/Forth/lib/speedtest0:
+	Commit before turning off cached TOS
+
+	* tools/Forth/dev.i, tools/Forth/int.i, tools/Forth/kbd.i, tools/Forth/nforth.tsm, tools/Forth/nforthA.rom, tools/Forth/video.i, tools/TIAsm/tiasm.jar:
+	Update to new assembler
+
+2008-11-02  Ed Swartz  <ejs@juncture>
+
+	* tools/Forth/dev.i, tools/Forth/general.i, tools/Forth/kbd.i, tools/Forth/nforth.tsm, tools/Forth/nforthB.rom, tools/Forth/term.i, tools/Forth/video.i, tools/TIAsm/tiasm.jar:
+	Adapt to Java TIAsm
+
+2008-10-26  Ed Swartz  <ejs@juncture>
+
+	* tools/TIAsm/build.xml, tools/TIAsm/tiasm.jar: Make cleaner build
+
+	* tools/Forth/Makefile.am, tools/Forth/Makefile.in, tools/Forth/dev.i, tools/Forth/int.i, tools/Forth/kbd.i, tools/Forth/nforth.gsm, tools/Forth/nforth.tsm, tools/Forth/nforthA.rom, tools/Forth/ram.i, tools/Forth/term.i, tools/Forth/video.i, tools/TIAsm/build.xml, tools/TIAsm/tiasm.jar:
+	Add Java TIAsm to the build and remove forthish assembly stuff
+
+	* tools/Forth/kbd.i, tools/Forth/ram.i: Fix some suspicious symbols
+
+2008-10-24  Ed Swartz  <ejs@juncture>
+
+	* tools/Forth/nforth.cnf, tools/Forth/nforthA.rom, tools/Forth/video.i:
+	Fix bitmap rect filling
+
+	* source/debugger.c, source/gtkcallbacks-debugger.h:
+	Fix some annoying debugger glitches
+
+2008-10-21  Ed Swartz  <ejs@juncture>
+
+	* tools/Forth/doc/crossdoc.fd, tools/Forth/99prims.fs, tools/Forth/init.fs, tools/Forth/nforthB.rom, tools/Forth/nforthc.bin:
+	Code TYPE as a primitive
+
+	* tools/DSRs/emu2disk.dsr, tools/DSRs/emudisk.dsr, tools/TIAsm/tiasm.c:
+	Fix some alignment bugs
+
+	* source/debugger.c, source/gtkcallbacks-debugger.h, source/gtkinterface.c, v9t9.glade:
+	Fix debugger window bugs
+
+	* tools/Forth/lib/asm99: Attempt to cross-build
+
+	* tools/Forth/99build.fs, tools/Forth/99prims.fs, tools/Forth/Makefile.am, tools/Forth/Makefile.in, tools/Forth/dev.i, tools/Forth/doc/crossdoc.fd, tools/Forth/files.fs, tools/Forth/fonttable.xcf.gz, tools/Forth/interp.fs, tools/Forth/nforth.cnf, tools/Forth/nforth.grm, tools/Forth/nforth.gsm, tools/Forth/nforth.tsm, tools/Forth/nforthA.rom, tools/Forth/nforthB.rom, tools/Forth/nforthc.bin:
+	Make INCLUDED work without huge files package, and fix 5x6 font
+
+2008-10-20  Ed Swartz  <ejs@juncture>
+
+	* tools/Forth/fonttable.xcf.gz: Make 5x6 font
+
+	* tools/Forth/general.i, tools/Forth/nforth.grm, tools/Forth/nforth.gsm, tools/Forth/nforthA.rom, tools/Forth/video.i:
+	Add real 5x6 font
+
+2008-10-19  Ed Swartz  <ejs@juncture>
+
+	* tools/Forth/lib/video, tools/Forth/nforth.tsm, tools/Forth/nforthA.rom, tools/Forth/nforthB.rom, tools/Forth/ram.i, tools/Forth/video.i:
+	more tweaks for bitmap filling/fonting
+
+	* tools/Forth/lib/asm99, tools/Forth/nforth.tsm, tools/Forth/nforthA.rom:
+	Clean some debug code
+
+	* tools/Forth/Makefile.am, tools/Forth/Makefile.in, tools/Forth/general.i, tools/Forth/int.i, tools/Forth/kbd.i, tools/Forth/nforth.tsm, tools/Forth/nforthA.rom, tools/Forth/nforthB.rom, tools/Forth/nforthc.bin, tools/Forth/nforthg.bin, tools/Forth/ram.i, tools/Forth/romaddr.c, tools/Forth/video.i:
+	Migrate ROM to banked model
+
+	* tools/TIAsm/tiasm.c:
+	Fix stupid coding pattern and bug in symbol resolution
+
+	* source/OSLib/Makefile.in, tools/DSRs/Makefile.in, tools/FileUtils/Makefile.am, tools/FileUtils/Makefile.in, tools/Makefile.in, tools/TIAsm/Makefile.in, source/Generate/Makefile.in, source/Modules/MacOS/Makefile.in, source/Modules/Makefile.in, source/Modules/Unix/Makefile.in, source/Modules/Win32/Makefile.in:
+	...
+
+	* source/9900.c, source/Makefile.am, source/Makefile.in, source/gtkcallbacks-debugger.h, source/gtkcallbacks.c, source/gtkinterface.c, source/gtkloop.c, source/memory.c, source/moduledb.c:
+	Add support for banked CPU ROM and some debugger fixes
+
+	* intl/Makefile.in: ...
+
+	* Makefile.in, configure.ac, v9t9.gtkrc: Fix debugger font
+
+	* tools/Forth/doc/crossdoc.fd, tools/Forth/lib/asm99, tools/Forth/lib/video, tools/Forth/99build.fs, tools/Forth/99prims.fs, tools/Forth/Makefile.am, tools/Forth/Makefile.in, tools/Forth/dev.i, tools/Forth/dev.inc, tools/Forth/files.fs, tools/Forth/general.i, tools/Forth/general.inc, tools/Forth/init.fs, tools/Forth/int.i, tools/Forth/int.inc, tools/Forth/kbd.i, tools/Forth/kbd.inc, tools/Forth/nforth.cnf, tools/Forth/nforth.rom, tools/Forth/nforth.tsm, tools/Forth/nforthA.rom, tools/Forth/nforthB.rom, tools/Forth/nforthc.bin, tools/Forth/nforthg.bin, tools/Forth/ram.i, tools/Forth/ram.inc, tools/Forth/term.i, tools/Forth/term.inc, tools/Forth/video.i, tools/Forth/video.inc:
+	Updates: rename files for easier xemacs use, add non-8x8 bitmap font support, retool build for a banked CPU rom solution
+
+2008-10-12  Ed Swartz  <ejs@juncture>
+
+	* tools/Forth/lib/asm99, tools/Forth/lib/video, tools/Forth/files.fs, tools/Forth/int.inc, tools/Forth/kbd.inc, tools/Forth/nforth.cnf, tools/Forth/nforth.rom, tools/Forth/nforth.tsm, tools/Forth/nforthc.bin, tools/Forth/nforthg.bin, tools/Forth/ram.inc, tools/Forth/video.inc:
+	More work on graphics lib and asm99
+
+	* tools/Forth/.cvsignore: Ignore doc
+
+	* tools/Forth/99equs.fs, tools/Forth/99prims.fs, tools/Forth/compile.fs, tools/Forth/doc/crossdoc.fd, tools/Forth/files.fs, tools/Forth/init.fs, tools/Forth/interp.fs, tools/Forth/kernel.fs, tools/Forth/lib/99code, tools/Forth/lib/99equs, tools/Forth/lib/asm99, tools/Forth/lib/asm99_fs, tools/Forth/lib/asm99test, tools/Forth/lib/video, tools/Forth/nforth.cnf, tools/Forth/nforth.rom, tools/Forth/nforth.tsm, tools/Forth/nforthc.bin, tools/Forth/nforthg.bin, tools/Forth/ram.inc, tools/Forth/video.inc:
+	More assembler, file, interpreting, and video work
+
+2008-10-11  Ed Swartz  <ejs@juncture>
+
+	* tools/Forth/lib/filetest: Add test
+
+	* tools/Forth/lib/asm99_fs, tools/Forth/lib/asm99test, tools/Forth/99prims.fs, tools/Forth/compile.fs, tools/Forth/dict.fs, tools/Forth/doc/crossdoc.fd, tools/Forth/files.fs, tools/Forth/interp.fs, tools/Forth/nforth.cnf, tools/Forth/nforth.rom, tools/Forth/nforthc.bin, tools/Forth/nforthg.bin:
+	Fix text file operation, write better assembler, allow tabs in parse, better define interaction, fix >body
+
+2008-10-08  Ed Swartz  <ejs@juncture>
+
+	* tools/Forth/99build.fs, tools/Forth/99prims.fs, tools/Forth/files.fs, tools/Forth/init.fs, tools/Forth/interp.fs, tools/Forth/kernel.fs, tools/Forth/nforth.cnf, tools/Forth/nforth.rom, tools/Forth/nforthc.bin, tools/Forth/nforthg.bin:
+	More fun.  Make disk access faster by using dis/var 80 for INCLUDED.
+
+2008-10-04  Ed Swartz  <ejs@juncture>
+
+	* tools/Forth/doc/crossdoc.fd, tools/Forth/99asm.fs, tools/Forth/99build.fs, tools/Forth/99config.fs, tools/Forth/99prims.fs, tools/Forth/Makefile.am, tools/Forth/Makefile.in, tools/Forth/compile.fs, tools/Forth/dict.fs, tools/Forth/files.fs, tools/Forth/interp.fs, tools/Forth/kernel.fs, tools/Forth/nforth.rom, tools/Forth/nforthc.bin, tools/Forth/nforthg.bin:
+	Fix some more bugs in parsing primitives and DEFER/IS.
+
+	* tools/Forth/doc/.cvsignore, tools/Forth/doc/crossdoc.fd: ignore!
+
+	* tools/Forth/99build.fs, tools/Forth/99config.fs, tools/Forth/99equs.fs, tools/Forth/99prims.fs, tools/Forth/compile.fs, tools/Forth/kernel.fs, tools/Forth/nforth.rom, tools/Forth/nforthc.bin, tools/Forth/nforthg.bin:
+	Fix error in UNLOOP optimization that broke LEAVE
+
+2008-10-02  Ed Swartz  <ejs@juncture>
+
+	* tools/Forth/doc/crossdoc.fd, tools/Forth/99build.fs, tools/Forth/99config.fs, tools/Forth/99equs.fs, tools/Forth/99memory.fs, tools/Forth/99prims.fs, tools/Forth/README.txt, tools/Forth/kernel.fs, tools/Forth/nforth.rom, tools/Forth/nforthc.bin, tools/Forth/nforthg.bin:
+	Last bit of hacking before REWRITE
+
+2008-10-01  Ed Swartz  <ejs@juncture>
+
+	* tools/Forth/99asm.fs, tools/Forth/99build.fs, tools/Forth/99config.fs, tools/Forth/99equs.fs, tools/Forth/99prims.fs, tools/Forth/README.txt, tools/Forth/common.fs, tools/Forth/compile.fs, tools/Forth/dict.fs, tools/Forth/doc/crossdoc.fd, tools/Forth/interp.fs, tools/Forth/nforth.cnf, tools/Forth/nforth.rom, tools/Forth/nforthc.bin, tools/Forth/nforthg.bin:
+	Make fixes for indirect threading
+
+2008-09-30  Ed Swartz  <ejs@juncture>
+
+	* tools/Forth/99build.fs, tools/Forth/99config.fs, tools/Forth/99equs.fs, tools/Forth/99prims.fs, tools/Forth/Makefile.am, tools/Forth/Makefile.in, tools/Forth/README.txt, tools/Forth/dict.fs, tools/Forth/doc/crossdoc.fd, tools/Forth/init.fs, tools/Forth/interp.fs, tools/Forth/nforth.cnf, tools/Forth/nforth.rom, tools/Forth/nforthc.bin, tools/Forth/nforthg.bin:
+	Do some work maintaining code.
+
+	* source/Modules/Unix/sound_pthread_mixer.h: Turn off logging
+
+	* source/OSLib/StringUtils.c: Fix bug in reusing va_list
+
+	* source/Modules/Unix/sound_oss.c: Turn off logging
+
+	* source/command_parser.h: ?
+
+2008-05-24  Ed Swartz  <ejs@juncture>
+
+	* po/v9t9.pot, source/Modules/Unix/sound_oss.c, source/Modules/Unix/sound_pthread_mixer.h, source/Modules/dsr_emudisk.c, source/Modules/dsr_rs232.c, source/Modules/video_gtk.c, source/command.c, source/command_parser.h, source/command_parser.y, source/lpc.c, source/memory.h, source/mix_server.c, source/sound.c, source/v9t9_types.h, tools/Forth/nforth.rom, tools/Forth/nforthc.bin, tools/Forth/nforthg.bin, Makefile.in, aclocal.m4:
+	Migrate to x86_64
+
+2006-03-08  Ed Swartz  <ejs@juncture>
+
+	* dateline.txt, po/v9t9.pot, source/Makefile.am, source/Makefile.in, source/Modules/Unix/sound_alsa.c, source/Modules/Unix/sound_esd.c, source/Modules/Unix/sound_oss.c, source/Modules/Unix/sound_pthread_mixer.h, source/Modules/Win32/sound_win32.c, source/Modules/sound_thread_mixer.h, source/gnomecallbacks-modules.h, source/gnomecallbacks.h, source/lpc.c, source/lpc.h, source/mix_server.c, source/mix_server.h, source/speech.c, source/speech.h, source/tms5220.h, source/tms5220r.c, source/v9t9_module.h, tools/FileUtils/Makefile.am, tools/FileUtils/Makefile.in, tools/FileUtils/lpcutils.c, tools/FileUtils/tidir.c, tools/FileUtils/tispeak.c:
+	Fix speech and stuff.
+
+2006-02-20  Ed Swartz  <ejs@juncture>
+
+	* source/Modules/keyboard_gnome.cc, source/Modules/video_gnome.cc: Add
+
+	* Makefile.in, aclocal.m4, configure.ac, intl/Makefile.in, po/v9t9.pot, source/9900.c, source/9900.h, source/Generate/Makefile.in, source/Makefile.am, source/Makefile.in, source/Modules/MacOS/Makefile.in, source/Modules/Makefile.in, source/Modules/Unix/Makefile.in, source/Modules/Unix/dsr_rs232_unix.c, source/Modules/Win32/Makefile.in, source/Modules/dsr_realdisk.c, source/OSLib/Makefile.in, source/command.c, source/datafiles.c, source/debugger.c, source/demo.c, source/emulate.c, source/gnomecallbacks-debugger.h, source/gnomecallbacks.h, source/gnomeloop.h, source/grom.c, source/grom.h, source/moduleconfig.h, source/unixmain.c, source/vdp.c, tools/DSRs/Makefile.in, tools/FileUtils/Makefile.am, tools/FileUtils/Makefile.in, tools/Forth/Makefile.in, tools/Makefile.in, tools/TIAsm/Makefile.in, v9t9.glade-2, v9t9.gtkrc:
+	Updates for gnome-2
+
+2005-02-26  Ed Swartz  <ejs@juncture>
+
+	* source/mix_server.c: no, the high-pitched noises are bad
+
+	* TODO: not fixed
+
+2005-02-22  Ed Swartz  <ejs@juncture>
+
+	* source/mix_server.c: don't ignore too high-pitched sound
+
+	* TODO: updates
+
+	* TODO: updated
+
+	* source/speech.c:
+	quash spurious error about not finding spchrom.bin at startup
+
+2005-02-21  Ed Swartz  <ejs@juncture>
+
+	* tools/Printer/tiprinter.py: Get the measurements right
+
+	* source/Modules/dsr_emudisk.c, source/Modules/dsr_emupio.c:
+	Fix bug with LOAD command (don't trash PAB).  Don't truncate records in PIO.
+
+	* source/debugger.c, source/debugger.h, source/emulate.c, source/emulate.h, source/gtkcallbacks-debugger.h, source/gtkcallbacks.c, source/gtkcallbacks.h, source/gtkinterface.c, source/memory.c, source/memory.h:
+	Support memory breakpoints
+
+	* v9t9.glade, v9t9.glade-2: wire up debugger close window command
+
+2005-02-20  Ed Swartz  <ejs@juncture>
+
+	* tools/Printer/tiprinter.py: fool with it more
+
+	* tools/Printer/tiprinter.py: plot printer_*.out files to a canvas
+
+	* tools/FileUtils/trkdump.py: add utility to show *.TRK files
+
+	* source/Modules/dsr_emudisk.c, source/Modules/dsr_realdisk.c:
+	fix behavior disallowing finding hidden sectors
+
+	* dp99.txt: log the rediscovery of Draw 'n' Plot
+
+2005-02-19  Ed Swartz  <ejs@juncture>
+
+	* source/Modules/dsr_emupio.c, source/9900.c: fix PIO bug
+
+	* tools/DSRs/emupio.dsr, po/v9t9.pot, source/9900.c, source/9900st.h, source/Modules/Unix/keyboard_svgalib.c, source/Modules/Unix/sound_alsa.c, source/Modules/Unix/sound_esd.c, source/Modules/Unix/sound_oss.c, source/Modules/Unix/sound_pthread_mixer.h, source/Modules/dsr_emudisk.c, source/Modules/dsr_emupio.c, source/Modules/dsr_emupio.h, source/Modules/dsr_realdisk.c, source/Modules/video_gtk.c, source/OSLib/Posix.c, source/OSLib/StringUtils.c, source/command_parser.h, source/compiler.c, source/demo.c, source/demo.h, source/emulate.c, source/emulate.h, source/gtkcallbacks-disks.h, source/gtkloop.c, source/log.c, source/log.h, source/moduleconfig.h, source/pab.h, source/vdp.c, source/vdp.h, tools/DSRs/Makefile.am, tools/DSRs/Makefile.in, tools/DSRs/emurs232.dsr, tools/Makefile.am, tools/Makefile.in, acconfig.h, config.h.in, configure.ac:
+	add PIO support
+
+2004-10-09  Ed Swartz  <ejs@juncture>
+
+	* po/POTFILES.in, po/v9t9.pot, tools/FileUtils/Makefile.am, tools/FileUtils/Makefile.in, tools/FileUtils/tidecomp.c:
+	fix some issues
+
+	* tools/Forth/Makefile.in: odd change
+
+2004-04-10  Ed Swartz  <ejs@juncture>
+
+	* v9t9.glade-2: added
+
+	* intl/Makefile.in, source/9900.c, source/Generate/Makefile.in, source/Makefile.am, source/Makefile.in, source/Modules/MacOS/Makefile.in, source/Modules/Makefile.in, source/Modules/Unix/Makefile.in, source/Modules/Win32/Makefile.in, source/OSLib/Makefile.in, source/configfile.c, source/gtkloop.c, source/mix_server.c, source/svgaloop.c, source/unixmain.c, source/winmain.c, source/xlibloop.c, tools/DSRs/Makefile.in, tools/FileUtils/Makefile.in, tools/Makefile.in, tools/TIAsm/Makefile.in, Makefile.in, configure.ac, v9t9.glade:
+	fixup configure
+
+2004-04-08  Ed Swartz  <ejs@juncture>
+
+	* intl/Makefile.in, po/POTFILES.in, po/v9t9.pot, source/Generate/Makefile.am, source/Generate/Makefile.in, source/Makefile.am, source/Makefile.in, source/Modules/MacOS/Makefile.in, source/Modules/Makefile.in, source/Modules/Unix/Makefile.in, source/Modules/Win32/Makefile.in, source/OSLib/Makefile.in, source/gtkloop.c, source/unixmain.c, tools/DSRs/Makefile.in, tools/FileUtils/Makefile.in, tools/Forth/Makefile.in, tools/Makefile.in, tools/TIAsm/Makefile.in, Makefile.in, aclocal.m4, config.h.in, configure.ac, rebuild.sh:
+	broken gtk2 port.  saved before restructuring.
+
+	* source/gnome_v99filesel.c, source/gnome_v99filesel.h, source/gnomecallbacks-debugger.h, source/gnomecallbacks-disks.h, source/gnomecallbacks-memory.h, source/gnomecallbacks-modules.h, source/gnomecallbacks-v9t9.h, source/gnomecallbacks.h, source/gnomeinterface.c, source/gnomeinterface.h, source/gnomeloop.c, source/gnomeloop.h, source/gnomesupport.c, source/gnomesupport.h, source/gnomecallbacks-command.h, source/gnomecallbacks.c:
+	added
+
+2004-03-13  Ed Swartz  <ejs@juncture>
+
+	* po/v9t9.pot: updates, from Win merge
+
+	* Makefile.in, V9t9.mcp, source/9900.c, source/9900.h, source/9900asm.h, source/9900st.h, source/Modules/Win32/sound_win32.c, source/Modules/video_gtk.c, source/OSLib/Makefile.in, source/OSLib/Win32.c, source/compiler.c, source/gtkcallbacks-command.h, source/gtkcallbacks-debugger.h, source/keyboard.c, source/sysdeps.c, source/v9t9.c, source/vdp.c, source/winheaders.pch, source/winheaders.pch++:
+	Win32 updates
+
+2004-01-26  Ed Swartz  <ejs@juncture>
+
+	* source/v9t9.c, source/xlibloop.c, tools/Forth/nforth.cnf:
+	Use alternate method of loading config files
+
+2004-01-21  Ed Swartz  <ejs@juncture>
+
+	* ChangeLog, po/POTFILES.in, po/v9t9.pot, rebuild.sh, source/9900.c, source/Makefile.am, source/Makefile.in, source/Modules/dsr_realdisk.c, source/Modules/keyboard_gtk.c, source/command_parser.h, source/gtkloop.c, source/xlibloop.c, source/xlibresource.h, source/xlibrsrc.h:
+	what was that other VCS system?
+
+2003-12-31  Ed Swartz  <ejs@juncture>
+
+	* source/9900.c, source/9900.h, source/Modules/video_gtk.c, source/OSLib/Makefile.am, source/OSLib/Makefile.in, source/cru.c, source/dis9900.c, source/dis9900.h, source/xmalloc.h, tools/Makefile.am, tools/Makefile.in, po/v9t9.pot:
+	some refactoring stuff
+

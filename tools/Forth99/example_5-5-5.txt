@@ -1,0 +1,267 @@
+VDP interrupt target: 0
+Speech reset
+Failed to load: spchrom.bin
+VDP interrupt target: 83333
+target: 50000
+raw memory:
+017C: 0174 8265 7120 77BD 17A3 5400 
+0182:  FIELDLIT #>FFFD (-3)	(  -- FFFD )    		 sp=F7FE rp=FEFE sr=0 @ 0
+0182:  FIELDLIT #>0005 (5)	(  -- 0005 )    		 sp=F7FC rp=FEFE sr=0 @ 0
+0184:  FIELDLIT #>0003 (3)	(  -- 0003 )    		 sp=F7FA rp=FEFE sr=0 @ 0
+0186:  EXIT			( R 0000  -- R )		 sp=F7FA rp=FF00 sr=0 @ 0
+raw memory:
+017C: 0174 8265 7120 738D 03FC 01C8 7215 0315 
+0182:  LIT #>03FC (1020) 	(  -- 03FC )    		 sp=F7FE rp=FEFE sr=0 @ 0
+0182:  LIT #>01C8 (456)		(  -- 01C8 )    		 sp=F7FC rp=FEFE sr=0 @ 0
+0182:  STORE			( 03FC 01C8  -- )       	 sp=F800 rp=FEFE sr=0 @ 0
+0188:  LIT #>0315 (789)		(  -- 0315 )    		 sp=F7FE rp=FEFE sr=0 @ 0
+0188:  DUP			( 0315  -- 0315 0315 )  	 sp=F7FC rp=FEFE sr=0 @ 0
+0188:  EXIT			( R 0000  -- R )		 sp=F7FC rp=FF00 sr=0 @ 0
+raw memory:
+017C: 0174 836E 756D 7F95 5678 1234 
+0182:  LIT_D #>12345678 (305419896)	(  -- 5678 1234 )       	 sp=F7FC rp=FEFE sr=0 @ 0
+0182:  EXIT			( R 0000  -- R )		 sp=F7FC rp=FF00 sr=0 @ 0
+dictionary cells:
+017C: 0174 8474 7275 6520 5BBF 0004 7EC0 0002 
+018C: 7400 5400 
+raw memory:
+017C: 0174 8474 7275 6520 5BBF 0004 7EC0 0002 
+018C: 7400 5400 
+0184:  0BRANCH #>0004 (4)	( 0005  -- )    		 sp=F800 rp=FEFE sr=0 @ 0
+0184:  FIELDLIT #>FFFF (-1)	(  -- FFFF )    		 sp=F7FE rp=FEFE sr=0 @ 0
+0188:  BRANCH #>0002 (2) 	(  -- ) 			 sp=F7FE rp=FEFE sr=0 @ 0
+018E:  EXIT			( R 0000  -- R )		 sp=F7FE rp=FF00 sr=0 @ 0
+raw memory:
+017C: 0174 8474 7275 6520 5BBF 0004 7EC0 0002 
+018C: 7400 5400 
+0184:  0BRANCH #>0004 (4)	( 0000  -- )    		 sp=F800 rp=FEFE sr=0 @ 0
+018C:  FIELDLIT #>0000 (0)	(  -- 0000 )    		 sp=F7FE rp=FEFE sr=0 @ 0
+018E:  EXIT			( R 0000  -- R )		 sp=F7FE rp=FF00 sr=0 @ 0
+dictionary cells:
+017C: 0174 8373 676E 4156 0006 3FBF 7EC0 000A 
+018C: 2EDD 0004 03F6 0002 7420 5400 
+raw memory:
+017C: 0174 8373 676E 4156 0006 3FBF 7EC0 000A 
+018C: 2EDD 0004 03F6 0002 7420 5400 
+0182:  DUP			( 0005  -- 0005 0005 )  	 sp=F7FC rp=FEFE sr=0 @ 0
+0182:  0LT			( 0005  -- 0000 )       	 sp=F7FC rp=FEFE sr=0 @ 0
+0182:  0BRANCH #>0006 (6)	( 0000  -- )    		 sp=F7FE rp=FEFE sr=0 @ 0
+018C:  0EQU			( 0005  -- 0000 )       	 sp=F7FE rp=FEFE sr=0 @ 0
+018C:  0BRANCH #>0004 (4)	( 0000  -- )    		 sp=F800 rp=FEFE sr=0 @ 0
+0194:  FIELDLIT #>0001 (1)	(  -- 0001 )    		 sp=F7FE rp=FEFE sr=0 @ 0
+0196:  EXIT			( R 0000  -- R )		 sp=F7FE rp=FF00 sr=0 @ 0
+raw memory:
+017C: 0174 8373 676E 4156 0006 3FBF 7EC0 000A 
+018C: 2EDD 0004 03F6 0002 7420 5400 
+0182:  DUP			( FF9A  -- FF9A FF9A )  	 sp=F7FC rp=FEFE sr=0 @ 0
+0182:  0LT			( FF9A  -- FFFF )       	 sp=F7FC rp=FEFE sr=0 @ 0
+0182:  0BRANCH #>0006 (6)	( FFFF  -- )    		 sp=F7FE rp=FEFE sr=0 @ 0
+0186:  DROP			( FF9A  -- )    		 sp=F800 rp=FEFE sr=0 @ 0
+0186:  FIELDLIT #>FFFF (-1)	(  -- FFFF )    		 sp=F7FE rp=FEFE sr=0 @ 0
+0188:  BRANCH #>000A (10)	(  -- ) 			 sp=F7FE rp=FEFE sr=0 @ 0
+0196:  EXIT			( R 0000  -- R )		 sp=F7FE rp=FF00 sr=0 @ 0
+raw memory:
+017C: 0174 8373 676E 4156 0006 3FBF 7EC0 000A 
+018C: 2EDD 0004 03F6 0002 7420 5400 
+0182:  DUP			( 0000  -- 0000 0000 )  	 sp=F7FC rp=FEFE sr=0 @ 0
+0182:  0LT			( 0000  -- 0000 )       	 sp=F7FC rp=FEFE sr=0 @ 0
+0182:  0BRANCH #>0006 (6)	( 0000  -- )    		 sp=F7FE rp=FEFE sr=0 @ 0
+018C:  0EQU			( 0000  -- FFFF )       	 sp=F7FE rp=FEFE sr=0 @ 0
+018C:  0BRANCH #>0004 (4)	( FFFF  -- )    		 sp=F800 rp=FEFE sr=0 @ 0
+018C:  FIELDLIT #>0000 (0)	(  -- 0000 )    		 sp=F7FE rp=FEFE sr=0 @ 0
+0190:  BRANCH #>0002 (2) 	(  -- ) 			 sp=F7FE rp=FEFE sr=0 @ 0
+0196:  EXIT			( R 0000  -- R )		 sp=F7FE rp=FF00 sr=0 @ 0
+dictionary cells:
+017C: 0174 8373 7562 7C5D 2835 017C 856F 7574 
+018C: 6572 7000 0064 FFFF 7000 FFCE FFFE 06A0 
+raw memory:
+017C: 0174 8373 7562 7C5D 2835 017C 856F 7574 
+018C: 6572 7000 0064 80C1 7000 FFCE 80C1 06A0 
+018E:  LIT #>0064 (100)		(  -- 0064 )    		 sp=F7FE rp=FEFE sr=0 @ 0
+0190:  CALL #>0182 (386) 	( 0064 R  -- R 0194 )   	 sp=F7FE rp=FEFC sr=0 @ 0
+"sub" 
+0182:  NEG			( 0064  -- FF9C )       	 sp=F7FE rp=FEFC sr=0 @ 0
+0182:  FIELDLIT #>000A (10)	(  -- 000A )    		 sp=F7FC rp=FEFC sr=0 @ 0
+0184:  ADD			( FF9C 000A  -- FFA6 )  	 sp=F7FE rp=FEFC sr=0 @ 0
+0184:  EXIT			( R 0194  -- R )		 sp=F7FE rp=FEFE sr=0 @ 0
+0194:  LIT #>FFCE (-50)		(  -- FFCE )    		 sp=F7FC rp=FEFE sr=0 @ 0
+0196:  CALL #>0182 (386) 	( FFCE R  -- R 019A )   	 sp=F7FC rp=FEFC sr=0 @ 0
+"sub" 
+0182:  NEG			( FFCE  -- 0032 )       	 sp=F7FC rp=FEFC sr=0 @ 0
+0182:  FIELDLIT #>000A (10)	(  -- 000A )    		 sp=F7FA rp=FEFC sr=0 @ 0
+0184:  ADD			( 0032 000A  -- 003C )  	 sp=F7FC rp=FEFC sr=0 @ 0
+0184:  EXIT			( R 019A  -- R )		 sp=F7FC rp=FEFE sr=0 @ 0
+019A:  ADD			( FFA6 003C  -- FFE2 )  	 sp=F7FE rp=FEFE sr=0 @ 0
+019A:  EXIT			( R 0000  -- R )		 sp=F7FE rp=FF00 sr=0 @ 0
+raw memory:
+017C: 0174 852A 2F6D 6F64 4CD4 7CD5 017C 822A 
+018C: 2F20 0000 80C2 45F5 0188 8770 6572 6365 
+019C: 6E74 7000 0064 80C7 5400 0194 856F 7574 
+01AC: 6572 7380 01F4 0019 80CF 5400 
+01AE:  LIT #>01F4 (500)		(  -- 01F4 )    		 sp=F7FE rp=FEFE sr=0 @ 0
+01AE:  LIT #>0019 (25)		(  -- 0019 )    		 sp=F7FC rp=FEFE sr=0 @ 0
+01B2:  CALL #>019E (414) 	( 0019 R  -- R 01B6 )   	 sp=F7FC rp=FEFC sr=0 @ 0
+"percent" 
+019E:  LIT #>0064 (100)		(  -- 0064 )    		 sp=F7FA rp=FEFC sr=0 @ 0
+01A0:  CALL #>018E (398) 	( 0064 R  -- R 01A4 )   	 sp=F7FA rp=FEFA sr=0 @ 0
+"*/" 
+018E:  CALL #>0184 (388) 	( 0064 R  -- R 0192 )   	 sp=F7FA rp=FEF8 sr=0 @ 0
+"*/mod" 
+0184:  >R			( 0064 R  -- R 0064 )   	 sp=F7FC rp=FEF6 sr=0 @ 0
+0184:  UMUL			( 01F4 0019  -- 30D4 0000 )      sp=F7FC rp=FEF6 sr=0 @ 0
+0184:  R>			( R 0064  -- 0064 R )   	 sp=F7FA rp=FEF8 sr=0 @ 0
+0186:  UDIVMOD			( 30D4 0000 0064  -- 0000 007D ) sp=F7FC rp=FEF8 sr=0 @ 0
+0186:  EXIT			( R 0192  -- R )		 sp=F7FC rp=FEFA sr=0 @ 0
+0192:  SWAP			( 0000 007D  -- 007D 0000 )      sp=F7FC rp=FEFA sr=0 @ 0
+0192:  DROP			( 0000  -- )    		 sp=F7FE rp=FEFA sr=0 @ 0
+0192:  EXIT			( R 01A4  -- R )		 sp=F7FE rp=FEFC sr=0 @ 0
+01A4:  EXIT			( R 01B6  -- R )		 sp=F7FE rp=FEFE sr=0 @ 0
+01B6:  EXIT			( R 0000  -- R )		 sp=F7FE rp=FF00 sr=0 @ 0
+raw memory:
+017C: 0174 8264 3D20 7CFF 050B 5400 017C 856F 
+018C: 7574 6572 7386 8888 FFFF 7F80 7778 8887 
+019C: 80C1 5400 
+0190:  LIT #>8888 (-30584)	(  -- 8888 )    		 sp=F7FE rp=FEFE sr=0 @ 0
+0190:  LIT #>FFFF (-1)		(  -- FFFF )    		 sp=F7FC rp=FEFE sr=0 @ 0
+0190:  UMUL			( 8888 FFFF  -- 7778 8887 )      sp=F7FC rp=FEFE sr=0 @ 0
+0196:  LIT_D #>88877778 (-2004387976)	(  -- 7778 8887 )       	 sp=F7F8 rp=FEFE sr=0 @ 0
+019A:  CALL #>0182 (386) 	( 8887 R  -- R 019E )   	 sp=F7F8 rp=FEFC sr=0 @ 0
+"d=" 
+0182:  NEG_D			( 7778 8887  -- 8888 7778 )      sp=F7F8 rp=FEFC sr=0 @ 0
+0182:  ADD_D			( 7778 8887 8888 7778  -- 0000 0000 )    sp=F7FC rp=FEFC sr=0 @ 0
+0184:  OR			( 0000 0000  -- 0000 )  	 sp=F7FE rp=FEFC sr=0 @ 0
+0184:  0EQU			( 0000  -- FFFF )       	 sp=F7FE rp=FEFC sr=0 @ 0
+0186:  EXIT			( R 019E  -- R )		 sp=F7FE rp=FEFE sr=0 @ 0
+019E:  EXIT			( R 0000  -- R )		 sp=F7FE rp=FF00 sr=0 @ 0
+raw memory:
+017C: 0174 856F 7574 6572 7F9F 7778 8887 4F94 
+018C: 8887 097C 7778 504B 06A0 
+0184:  LIT_D #>88877778 (-2004387976)	(  -- 7778 8887 )       	 sp=F7FC rp=FEFE sr=0 @ 0
+0184:  2>R			( 7778 8887 R  -- R 7778 8887 )  sp=F800 rp=FEFA sr=0 @ 0
+018A:  LIT #>8887 (-30585)	(  -- 8887 )    		 sp=F7FE rp=FEFA sr=0 @ 0
+018A:  R>			( R 8887  -- 8887 R )   	 sp=F7FC rp=FEFC sr=0 @ 0
+018E:  SUB			( 8887 8887  -- 0000 )  	 sp=F7FE rp=FEFC sr=0 @ 0
+018E:  0EQU			( 0000  -- FFFF )       	 sp=F7FE rp=FEFC sr=0 @ 0
+018E:  LIT #>7778 (30584)	(  -- 7778 )    		 sp=F7FC rp=FEFC sr=0 @ 0
+0192:  R>			( R 7778  -- 7778 R )   	 sp=F7FA rp=FEFE sr=0 @ 0
+0192:  SUB			( 7778 7778  -- 0000 )  	 sp=F7FC rp=FEFE sr=0 @ 0
+0192:  0EQU			( 0000  -- FFFF )       	 sp=F7FC rp=FEFE sr=0 @ 0
+0194:  ADD			( FFFF FFFF  -- FFFE )  	 sp=F7FE rp=FEFE sr=0 @ 0
+0194:  EXIT			( R 0000  -- R )		 sp=F7FE rp=FF00 sr=0 @ 0
+dictionary cells:
+017C: 0174 8573 7461 636B 741F 4C00 7F38 FFFC 
+018C: 6735 
+raw memory:
+017C: 0174 8573 7461 636B 741F 4C00 7F38 FFFC 
+018C: 6735 
+0184:  FIELDLIT #>0000 (0)	(  -- 0000 )    		 sp=F7FC rp=FEFE sr=0 @ 0
+0184:  2>R			( 0005 0000 R  -- R 0005 0000 )  sp=F800 rp=FEFA sr=0 @ 0
+0188:  I 			(  -- 0000 )    		 sp=F7FE rp=FEFA sr=0 @ 0
+0188:  LOOP #>FFFC (-4)		(  -- ) 			 sp=F7FE rp=FEFA sr=0 @ 0
+0188:  I 			(  -- 0001 )    		 sp=F7FC rp=FEFA sr=0 @ 0
+0188:  LOOP #>FFFC (-4)		(  -- ) 			 sp=F7FC rp=FEFA sr=0 @ 0
+0188:  I 			(  -- 0002 )    		 sp=F7FA rp=FEFA sr=0 @ 0
+0188:  LOOP #>FFFC (-4)		(  -- ) 			 sp=F7FA rp=FEFA sr=0 @ 0
+0188:  I 			(  -- 0003 )    		 sp=F7F8 rp=FEFA sr=0 @ 0
+0188:  LOOP #>FFFC (-4)		(  -- ) 			 sp=F7F8 rp=FEFA sr=0 @ 0
+0188:  I 			(  -- 0004 )    		 sp=F7F6 rp=FEFA sr=0 @ 0
+0188:  LOOP #>FFFC (-4)		( R 0005 0004  -- R 0000 0000 )  sp=F7F6 rp=FEFE sr=0 @ 0
+018C:  RDROP			( R 0000  -- R )		 sp=F7F6 rp=FF00 sr=0 @ 0
+018C:  RDROP			( R 0000  -- R )		 sp=F7F6 rp=FF02 sr=0 @ 0
+018C:  EXIT			( R 0000  -- R )		 sp=F7F6 rp=FF04 sr=0 @ 0
+raw memory:
+017C: 0174 8573 7461 636B 747F 43F3 0976 0006 
+018C: 673F 5800 0004 7F38 FFFC 6735 
+0184:  FIELDLIT #>0003 (3)	(  -- 0003 )    		 sp=F7FC rp=FEFE sr=0 @ 0
+0184:  DUP_D			( 0005 0003  -- 0005 0003 0005 0003 )    sp=F7F8 rp=FEFE sr=0 @ 0
+0186:  2>R			( 0005 0003 R  -- R 0005 0003 )  sp=F7FC rp=FEFA sr=0 @ 0
+0188:  SUB			( 0005 0003  -- 0002 )  	 sp=F7FE rp=FEFA sr=0 @ 0
+0188:  0EQU			( 0002  -- 0000 )       	 sp=F7FE rp=FEFA sr=0 @ 0
+0188:  0BRANCH #>0006 (6)	( 0000  -- )    		 sp=F800 rp=FEFA sr=0 @ 0
+0192:  I 			(  -- 0003 )    		 sp=F7FE rp=FEFA sr=0 @ 0
+0192:  LOOP #>FFFC (-4)		(  -- ) 			 sp=F7FE rp=FEFA sr=0 @ 0
+0192:  I 			(  -- 0004 )    		 sp=F7FC rp=FEFA sr=0 @ 0
+0192:  LOOP #>FFFC (-4)		( R 0005 0004  -- R 0000 0000 )  sp=F7FC rp=FEFE sr=0 @ 0
+0196:  RDROP			( R 0000  -- R )		 sp=F7FC rp=FF00 sr=0 @ 0
+0196:  RDROP			( R 0000  -- R )		 sp=F7FC rp=FF02 sr=0 @ 0
+0196:  EXIT			( R 0000  -- R )		 sp=F7FC rp=FF04 sr=0 @ 0
+raw memory:
+017C: 0174 8573 7461 636B 747F 43F3 0976 0006 
+018C: 673F 5800 0004 7F38 FFFC 6735 
+0184:  FIELDLIT #>0003 (3)	(  -- 0003 )    		 sp=F7FA rp=FEFE sr=0 @ 0
+0184:  DUP_D			( 0003 0003  -- 0003 0003 0003 0003 )    sp=F7F6 rp=FEFE sr=0 @ 0
+0186:  2>R			( 0003 0003 R  -- R 0003 0003 )  sp=F7FA rp=FEFA sr=0 @ 0
+0188:  SUB			( 0003 0003  -- 0000 )  	 sp=F7FC rp=FEFA sr=0 @ 0
+0188:  0EQU			( 0000  -- FFFF )       	 sp=F7FC rp=FEFA sr=0 @ 0
+0188:  0BRANCH #>0006 (6)	( FFFF  -- )    		 sp=F7FE rp=FEFA sr=0 @ 0
+018C:  RDROP			( R 0003  -- R )		 sp=F7FE rp=FEFC sr=0 @ 0
+018C:  RDROP			( R 0003  -- R )		 sp=F7FE rp=FEFE sr=0 @ 0
+018C:  BRANCH #>0004 (4) 	(  -- ) 			 sp=F7FE rp=FEFE sr=0 @ 0
+0192:  CALL #>FFF8 (-8)		( FFF6 R  -- R 0196 )   	 sp=F7FE rp=FEFC sr=0 @ 0
+FFFA:  LOOP #>0000 (0)		(  -- ) 			 sp=F7FE rp=FEFC sr=0 @ 0
+raw memory:
+017C: 0174 8573 7461 636B 755D 0FF3 7F3D 144B 
+018C: 5B39 0004 7EC0 0004 7F38 FFF0 6735 
+0184:  FIELDLIT #>000A (10)	(  -- 000A )    		 sp=F7FE rp=FEFE sr=0 @ 0
+0184:  FIELDLIT #>0003 (3)	(  -- 0003 )    		 sp=F7FC rp=FEFE sr=0 @ 0
+0186:  2>R			( 000A 0003 R  -- R 000A 0003 )  sp=F800 rp=FEFA sr=0 @ 0
+0188:  I 			(  -- 0003 )    		 sp=F7FE rp=FEFA sr=0 @ 0
+0188:  FIELDLIT #>0005 (5)	(  -- 0005 )    		 sp=F7FC rp=FEFA sr=0 @ 0
+018A:  SUB			( 0003 0005  -- FFFE )  	 sp=F7FE rp=FEFA sr=0 @ 0
+018A:  0EQU			( FFFE  -- 0000 )       	 sp=F7FE rp=FEFA sr=0 @ 0
+018C:  0BRANCH #>0004 (4)	( 0000  -- )    		 sp=F800 rp=FEFA sr=0 @ 0
+0194:  I 			(  -- 0003 )    		 sp=F7FE rp=FEFA sr=0 @ 0
+0194:  LOOP #>FFF0 (-16) 	(  -- ) 			 sp=F7FE rp=FEFA sr=0 @ 0
+0188:  I 			(  -- 0004 )    		 sp=F7FC rp=FEFA sr=0 @ 0
+0188:  FIELDLIT #>0005 (5)	(  -- 0005 )    		 sp=F7FA rp=FEFA sr=0 @ 0
+018A:  SUB			( 0004 0005  -- FFFF )  	 sp=F7FC rp=FEFA sr=0 @ 0
+018A:  0EQU			( FFFF  -- 0000 )       	 sp=F7FC rp=FEFA sr=0 @ 0
+018C:  0BRANCH #>0004 (4)	( 0000  -- )    		 sp=F7FE rp=FEFA sr=0 @ 0
+0194:  I 			(  -- 0004 )    		 sp=F7FC rp=FEFA sr=0 @ 0
+0194:  LOOP #>FFF0 (-16) 	(  -- ) 			 sp=F7FC rp=FEFA sr=0 @ 0
+0188:  I 			(  -- 0005 )    		 sp=F7FA rp=FEFA sr=0 @ 0
+0188:  FIELDLIT #>0005 (5)	(  -- 0005 )    		 sp=F7F8 rp=FEFA sr=0 @ 0
+018A:  SUB			( 0005 0005  -- 0000 )  	 sp=F7FA rp=FEFA sr=0 @ 0
+018A:  0EQU			( 0000  -- FFFF )       	 sp=F7FA rp=FEFA sr=0 @ 0
+018C:  0BRANCH #>0004 (4)	( FFFF  -- )    		 sp=F7FC rp=FEFA sr=0 @ 0
+018C:  RDROP			( R 0005  -- R )		 sp=F7FC rp=FEFC sr=0 @ 0
+018C:  RDROP			( R 000A  -- R )		 sp=F7FC rp=FEFE sr=0 @ 0
+0190:  BRANCH #>0004 (4) 	(  -- ) 			 sp=F7FC rp=FEFE sr=0 @ 0
+0198:  RDROP			( R 0000  -- R )		 sp=F7FC rp=FF00 sr=0 @ 0
+0198:  RDROP			( R 0000  -- R )		 sp=F7FC rp=FF02 sr=0 @ 0
+0198:  EXIT			( R 0000  -- R )		 sp=F7FC rp=FF04 sr=0 @ 0
+raw memory:
+017C: 0174 8564 6570 7468 743B 741B 0881 7422 
+018C: 5400 017C 8672 6465 7074 6820 747B 745B 
+019C: 0881 7422 5400 018E 8573 7461 636B 743D 
+01AC: 0BA4 74B3 80C2 80CC 66A0 
+01AA:  FIELDLIT #>0001 (1)	(  -- 0001 )    		 sp=F7FE rp=FEFE sr=0 @ 0
+01AA:  FIELDLIT #>0002 (2)	(  -- 0002 )    		 sp=F7FC rp=FEFE sr=0 @ 0
+01AC:  FIELDLIT #>0004 (4)	(  -- 0004 )    		 sp=F7FA rp=FEFE sr=0 @ 0
+01AE:  FIELDLIT #>0005 (5)	(  -- 0005 )    		 sp=F7F8 rp=FEFE sr=0 @ 0
+01AE:  >R			( 0005 R  -- R 0005 )   	 sp=F7FA rp=FEFC sr=0 @ 0
+01AE:  CALL #>0184 (388) 	( 0004 R  -- R 01B2 )   	 sp=F7FA rp=FEFA sr=0 @ 0
+"depth" 
+0184:  FIELDLIT #>0001 (1)	(  -- 0001 )    		 sp=F7F8 rp=FEFA sr=0 @ 0
+0184:  CONTEXT>			( 0001  -- F800 )       	 sp=F7F8 rp=FEFA sr=0 @ 0
+0186:  FIELDLIT #>0000 (0)	(  -- 0000 )    		 sp=F7F6 rp=FEFA sr=0 @ 0
+0186:  CONTEXT>			( 0000  -- F7F8 )       	 sp=F7F6 rp=FEFA sr=0 @ 0
+0188:  SUB			( F800 F7F8  -- 0008 )  	 sp=F7F8 rp=FEFA sr=0 @ 0
+0188:  ASH #>0001 (1)		( 0008  -- 0004 )       	 sp=F7F8 rp=FEFA sr=0 @ 0
+018A:  FIELDLIT #>0001 (1)	(  -- 0001 )    		 sp=F7F6 rp=FEFA sr=0 @ 0
+018A:  SUB			( 0004 0001  -- 0003 )  	 sp=F7F8 rp=FEFA sr=0 @ 0
+018C:  EXIT			( R 01B2  -- R )		 sp=F7F8 rp=FEFC sr=0 @ 0
+01B0:  CALL #>0198 (408) 	( 0003 R  -- R 01B4 )   	 sp=F7F8 rp=FEFA sr=0 @ 0
+"rdepth" 
+0198:  FIELDLIT #>0003 (3)	(  -- 0003 )    		 sp=F7F6 rp=FEFA sr=0 @ 0
+0198:  CONTEXT>			( 0003  -- FF00 )       	 sp=F7F6 rp=FEFA sr=0 @ 0
+019A:  FIELDLIT #>0002 (2)	(  -- 0002 )    		 sp=F7F4 rp=FEFA sr=0 @ 0
+019A:  CONTEXT>			( 0002  -- FEFA )       	 sp=F7F4 rp=FEFA sr=0 @ 0
+019C:  SUB			( FF00 FEFA  -- 0006 )  	 sp=F7F6 rp=FEFA sr=0 @ 0
+019C:  ASH #>0001 (1)		( 0006  -- 0003 )       	 sp=F7F6 rp=FEFA sr=0 @ 0
+019E:  FIELDLIT #>0001 (1)	(  -- 0001 )    		 sp=F7F4 rp=FEFA sr=0 @ 0
+019E:  SUB			( 0003 0001  -- 0002 )  	 sp=F7F6 rp=FEFA sr=0 @ 0
+01A0:  EXIT			( R 01B4  -- R )		 sp=F7F6 rp=FEFC sr=0 @ 0
+01B4:  RDROP			( R 0005  -- R )		 sp=F7F6 rp=FEFE sr=0 @ 0
+01B4:  EXIT			( R 0000  -- R )		 sp=F7F6 rp=FF00 sr=0 @ 0
+

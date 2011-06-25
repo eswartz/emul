@@ -1,0 +1,13 @@
+\ DOER/MAKE
+: NOTHING ;
+: DOER create ['] nothing  >body ,  does> @ >r ;
+VARIABLE marker
+: (MAKE) r>  dup cell+  dup cell+  swap @  >body !
+	@ ?dup if >r then ;
+: MAKE  state @ if 
+	postpone (make)  here marker !  0 ,
+	else here postpone '  >body !
+	postpone ]  then ;  immediate
+: ;AND  postpone exit  here marker @ ! ;  immediate
+: UNDO ['] nothing  >body  postpone '  >body ! ;
+

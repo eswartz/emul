@@ -1,0 +1,15 @@
+#Tue Mar 23 07:56:05 CDT 2010
+antlr_core_builder_Xconversiontimeout=200
+antlr_core_builder_Xdfaverbose=false
+antlr_core_builder_Xm=4
+antlr_core_builder_Xmaxdfaedges=65534
+antlr_core_builder_Xnocollapse=false
+antlr_core_builder_Xnomergestopstates=false
+antlr_core_builder_Xnoprune=false
+antlr_core_builder_dfa=false
+antlr_core_builder_include_stacktrace_on_internal_errors=false
+antlr_core_builder_max_number_of_problems_reported_per_grammar=25
+antlr_core_builder_nfa=false
+antlr_core_builder_report=false
+antlr_core_builder_runtime=3.1.3
+eclipse.preferences.version=1

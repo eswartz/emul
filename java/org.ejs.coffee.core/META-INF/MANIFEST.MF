@@ -1,0 +1,27 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Coffee Core Library
+Bundle-SymbolicName: org.ejs.coffee.core;singleton:=true
+Bundle-Version: 1.0.0
+Export-Package: 
+ com.vladium.utils.timing,
+ net.iHarder,
+ org.ejs.coffee.core.jface,
+ org.ejs.coffee.core.properties,
+ org.ejs.coffee.core.settings,
+ org.ejs.coffee.core.sound,
+ org.ejs.coffee.core.sound.ui,
+ org.ejs.coffee.core.timer,
+ org.ejs.coffee.core.utils,
+ org.json
+Require-Bundle: org.eclipse.jface,
+ org.eclipse.core.runtime,
+ org.junit,
+ org.junit4,
+ org.eclipse.ui,
+ com.ibm.icu,
+ org.eclipse.ui.ide,
+ com.sun.jna;bundle-version="3.2.7",
+ org.eclipse.swt
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-ActivationPolicy: lazy

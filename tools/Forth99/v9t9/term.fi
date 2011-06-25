@@ -1,0 +1,348 @@
+
+( In the terminal, characters are located by a video-mode-specific
+position in a video-mode-specific window.  I.e. for text modes
+they represent characters, and for graphics modes, they 
+represent pixels.  These are called "units" here.
+
+The video mode determines how to advance the cursor based on
+the current font.
+)
+
+0   RamVar  t-data
+
+t-data
+    ( cursor position, in units, offset from window )
+    +field  v-x             \ cursor x unit
+    +field  v-y             \ cursor y unit
+    
+    ( maximum window size, in units )
+    +field  win-mx  
+    +field  win-my  
+
+    ( window attributes, in units )
+|+    +field  win-x
+|+    +field  win-y
+|+    +field  win-sx
+|+    +field  win-sy
+
+    ( stock character sizes, in units )
+|+    +1field win-chxs
+|+    +1field win-chys
+    
+    ( size of window, in characters )
+    +1field win-cx
+    +1field win-cy
+
+dup constant t-data0
+    
+t-data over -  Constant t-data-size
+
+ramptr !
+
+: term-refresh
+    v-text  c@ not  if
+        v-width @   v-fntwidth c@   dup win-chxs c!  %-  win-mx  !
+        v-height @  v-fntheight c@  dup win-chys c!  %-  win-my  !
+    else
+        v-width @   win-mx  !
+        v-height @  win-my  !
+        1 win-chxs c!
+        1 win-chys c!
+    then
+    (win-update)
+;
+
+\   Reset terminal from the current mode
+: term-reset
+    cursor-off
+    
+    term-refresh
+
+    full!
+    
+    home
+;
+
+: (win-update)
+    win-sx @  win-chxs c@  U/  win-cx c!
+    win-sy @  win-chys c@  U/  win-cy c!
+;
+
+
+1 <export
+:   home
+    0 0 .at-xy
+;
+
+( units )
+:   .xy ( -- v-x v-y )
+    v-x @  v-y @
+;
+
+( units )
+:   .at-xy ( x y  -- )
+    cursor-off
+    win-sy @ UMOD  v-y !  
+    win-sx @ UMOD  v-x !
+;
+
+( character units )
+::   xy ( -- v-x v-y )
+    .xy 
+    v-text c@ 0= if 
+        win-chys c@  U/  
+        swap win-chxs c@  U/  
+        swap
+    then
+;
+
+( character units )
+:   at-xy ( x y  -- )
+    v-text c@ 0= if 
+        swap  win-chxs c@ U*  swap win-chys c@ U*
+    then
+    .at-xy
+;
+
+( units )
+::   .win! ( w h x y -- )
+    cursor-off
+    win-mx @ :> mx
+    win-my @ :> my
+    w  mx  umin  x +  mx  umin  :> x2
+    h  
+    my  umin  y +  my  umin  :> y2
+    0 x max  mx  umin  dup  win-x !  x2  swap -  win-sx !
+    0 y max  my  umin  dup  win-y !  y2  swap -  win-sy !
+    
+    (win-update)    
+    home
+;
+
+( character units )
+::   win! ( w h x y -- )
+    w  win-chxs c@  U*
+    h  win-chys c@  U*
+    x  win-chxs c@  U*
+    y  win-chxs c@  U*
+    .win!
+;
+
+( set full window )
+: full!
+    -1 -1 0 0  .win!
+;
+
+( get window params, units )
+: .win@ ( -- w h x y )
+	win-sx @  win-sy @
+	win-x @ 
+	win-y @ 
+;
+
+( get window params, characters )
+: win@ ( -- w h x y )
+	win-cx c@  win-cy c@
+	win-x @ win-chxs c@ u/ 
+	win-y @ win-chys c@ u/ 
+;
+
+export>
+
+( screen, vs. window, x y, units ) 
+:   $xy ( -- x y )
+    v-x @ win-x @ +
+    v-y @ win-y @ +
+;
+
+
+( for text modes, screen address of character in window )
+:   txt-xy>addr ( x y -- addr )
+    win-y @ +  v-width @  U*  
+    swap  win-x @ +  +
+    v-screen @ +
+;
+
+:   home-col
+    0 v-x !
+;
+
+:   ch>xy ( ch -- xs ys )
+    drop  v-text c@  if  1 1  else  v-fntwidth c@  v-fntheight c@  then
+;
+:   ch>y ( ch -- ys )
+    drop  v-text c@  if  1  else  v-fntheight c@  then   
+;
+:   ch>x ( ch -- xs )
+    drop  v-text c@  if  1  else  v-fntwidth c@  then   
+;
+
+:   advance-row 
+    v-y @  win-chys c@  +   
+    dup win-sy @ >= if
+       drop 0
+    then
+    v-y !
+;
+
+:   new-line
+    home-col
+    advance-row
+    'v-clear @ ?dup if
+        >r win-sx @  win-chys c@  v-x @ win-x @ +  v-y @ win-y @ +  r>  execute
+    else  
+        32  win-cx c@  hchar
+    then
+;
+
+:   advance-cursor ( ch -- )
+    ch>x  v-x @  +   
+    dup win-sx @ >= if
+        drop 0
+    then
+    v-x !
+;
+
+:   cursor-off
+    v-curs c@ if
+        $xy v-cursor-off
+    then
+;
+
+:   crlf
+    cursor-off    
+    new-line
+;  
+
+:   bksp ( ch -- )
+    cursor-off
+    ch>xy  negate :> y  negate :> x   
+    x v-x +!
+    v-x @ 0< if
+        win-sx @ x +  v-x !
+        y v-y +!
+        v-y @ 0< if
+            win-sy @ y +  v-y !
+        then
+    then
+;
+
+1 <EXPORT
+
+:   chfill  ( ch -- )
+    home
+    win-cy c@  0 ?do
+        dup  win-cx c@  hchar
+        advance-row
+    loop
+    drop
+;
+
+:   hchar ( ch len -- ) 
+    'v-hchar @  ?dup if
+        >r  $xy  r>  execute
+    else
+        xy 2>r
+        0 ?do  dup  (emit) dup  advance-cursor  loop  drop
+        2r> at-xy
+    then
+;
+
+::   vchar ( ch len -- ) 
+    'v-vchar @  ?dup if
+        >r  ch len $xy  r>  execute
+    else
+        ch ch>xy :> ys :> xs
+        v-y @ :> origvy
+        xy 2>r
+        len 0 ?do  
+            ch  (emit) 
+            v-y @  ys +  win-sy @ umod  dup v-y !  
+            origvy = if
+                v-x @ xs +  win-sx @ umod  v-x !
+            then   
+        loop 
+        2r> at-xy
+    then
+;
+
+:   cls
+    'v-clear @ ?dup if
+        >r  win-sx @  win-sy @  win-x @  win-y @  r>  execute
+    else
+        win-cy c@ 0 do
+           0  i at-xy
+           32  win-cx c@  hchar
+        loop
+    then 
+    home
+;
+
+\ Draw a character without advancing the cursor.
+:   (emit)  ( ch -- )
+    $xy  'v-drawchar @  execute  
+;
+
+| : (emit+) ( ch -- )
+    dup  (emit) advance-cursor
+    v-x @ 0=  if new-line  then
+;
+
+:   emit    ( ch -- )
+    cursor-off
+    dup 13 = if
+        drop crlf
+    else dup 8 = if
+        drop 32 bksp
+    else dup 9 = if
+        drop begin
+            32 (emit+)
+            v-x @  7 AND  0=
+        until
+    else
+        (emit+)
+    then then then
+;    target-only
+
+:   getch    ( x y -- ch )
+    'v-readchar @  ?dup if
+        execute
+    else
+        2drop -1
+    then
+;
+
+:   cr  13 emit  ; 
+:   space  32 emit  ;
+
+:   type ( caddr n -- )
+    over + swap do i c@ emit loop     
+;
+
+
+( get size of save area )
+:   #vrs ( -- n )
+    v-data-size t-data-size +
+;
+
+( save video state: needs buffer of v-data-size size )
+: vsave  ( buff -- )
+    v-data0  over                 v-data-size  cmove 
+    t-data0  swap  v-data-size +  t-data-size  cmove 
+;
+
+( restore video state: needs buffer of v-data-size size )
+: vrestore  ( buff -- )
+    cursor-off
+    
+    dup   v-data0                 v-data-size  cmove 
+          v-data-size +  t-data0  t-data-size  cmove
+    
+    16 0 do
+        v-regsave i + c@  $8000  i 8 lshift  OR  OR  vwaddr
+    loop 
+;
+
+EXPORT>
+
+

@@ -1,0 +1,267 @@
+
+\   Figure the address and shift for a pixel on the screen
+: bit-pixaddr ( x y -- addr shift )
+    ( Y -> row offs )
+    dup  5 lshift  OR  $ff07  AND  >R
+    
+    dup  
+    R>  +
+    
+    ( X -> byte offs and shift )
+    swap  7 AND  dup >R  -
+    R>
+;    
+
+: bit-chaddr ( x y -- addr )
+    -8 and  swap  -8 and  swap
+    bit-pixaddr  drop
+;
+
+: bit-setupmode
+    std-sprite-setup
+    
+    ( set repeating 0-255 in three sections of SIT )
+    v-screen @  +!vwaddr
+    768 0 do i  VDPWD c!  loop
+;
+
+: bit-drawchar ( ch x y -- )
+    \ simple-stupid 8x8 only version 
+    bit-chaddr  :> addr
+    >v-fontaddr  addr v-patts @ +  v-fntheight c@  +gvmove  
+    
+    v-mono c@ 0= if
+        addr  v-colors @ +
+        v-fntheight c@  
+        color-byte +vfill
+    then
+;
+
+:: (set-bits) ( bits vaddr baddr -- )
+    vaddr +vwaddr  VDPRD c@  
+        dup baddr c!
+    vaddr !vwaddr  
+        bits OR  VDPWD c!
+;
+: (reset-bits) ( bits vaddr baddr -- )
+    swap  +!vwaddr  c@  VDPWD c!  drop
+;
+
+: bit-blinkcursor ( x y -- )
+    bit-chaddr  0 :> shift  
+                v-patts @ + :> addr     \ only change patt
+
+    addr vsetbank  to addr
+
+    \ pattern    
+    $c0c0 shift CRSHIFT  :> bits
+    
+    \ based on the cursor mode, we either save + modify or restore the bits under the cursor
+    $80 v-curs c+!
+    v-curs c@ if
+        ['] (set-bits)
+    else
+        ['] (reset-bits)
+    then
+    
+    :> changer
+    
+    v-fntheight c@  0  do
+        bits addr i +
+        v-curs-under i +  changer execute
+        
+        \ simple-stupid
+        \ 1 'addr +!
+    loop
+;
+
+( clear rows where h==8 )
+:: bit-clear-rows ( w x y -- )
+    x y  bit-pixaddr  drop  :> addr 
+    
+    ( # bytes = w/8 * 8 )
+    addr  v-patts @ +   w  0  +vfill 
+    
+    v-mono c@ 0= if
+        addr  v-colors @ +   w  color-byte  +vfill
+    then
+;
+
+:: bit-clear ( w h x y -- )
+    x  -8 and  to x
+    y  -8 and  to y
+    w 7 + -8 and to w
+    h 7 + -8 and to h
+
+[ 0 [if] ]
+    \ clear unaligned rows before aligned Y
+    y  7 and  ?dup
+    if
+        h  over -  h!
+        w swap  x y  bit-clear-rows
+        y 7 +  7  nand  y!
+    then
+
+    \ clear aligned wx8 rows; y and h are updated
+    h 8 >= if
+        y h +  y  do
+            w 8 x i  bit-clear-rows
+        8 +loop
+        h 7     nand  y +  y!
+        h 7     and   h!
+    then
+    
+    \ clear remaining unaligned rows after Y
+    h ?dup if 
+        w swap  x y  bit-clear-rows 
+    then
+[ [else] ]
+    y h +  y  ?do
+        w x i  bit-clear-rows
+    8 +loop
+[ [then] ]
+    
+\    v-patts @   v-pattsz @   0  vfill
+\    v-colors @  v-colorsz @  color-byte vfill
+;
+
+: bit-updatecolors ( -- )
+    color-byte  $8700 OR  v-regaddr
+    v-mono c@ if
+        v-colors @  v-colorsz @  color-byte  +vfill
+    then
+;
+
+: bit-setfont   ( addr -- )
+    drop
+;
+
+
+: bit-set-patt-reg
+    v-patts @  11 URSHIFT   3 OR
+    v-pob c@  3 lshift OR  
+    4 (vr!)
+;
+
+: bit-set-color-reg
+    v-colors @  6   URSHIFT   w>b
+    v-pob c@  OR
+    10 (vr!)
+    v-mono c@  0= if  $7f OR  then
+    3 (vr!)
+;
+
+
+
+: bit-setupregs
+    std-set-screen-reg
+    bit-set-patt-reg
+    bit-set-color-reg
+    std-set-sprite-reg
+    std-set-sprpat-reg
+;
+
+
+Create BitFunctions
+    'v-drawchar ,        ' bit-drawchar ,
+    'v-blinkcursor ,     ' bit-blinkcursor ,
+    'v-setfont ,         ' bit-setfont ,
+    'v-clear ,           ' bit-clear ,
+    0 , 
+
+
+
+\       2=bitmap mode (graphics 2 mode)
+\           >0000 = patts
+\           >1800 = screen
+\           >1B00 = sprites
+\           >1B80 = sprite motion
+\           >1C00 = sprite patts    (really >1800)
+\           >2000 = colors
+\           >3800+= free
+\
+Create BitModeParams
+    v-screen    , $1800 ,   v-screensz  , $300 ,
+    v-colors    , $2000 ,   v-colorsz   , $1800 ,   
+    v-patts     , $0000 ,   v-pattsz    , $1800 ,
+    v-sprites   , $1B00 ,   v-sprcol    , 0 ,
+    v-sprpat    , $1800 ,   v-sprmot    , $1B80 ,
+    v-free      , $3800 ,   v-pagesize  , $4000 ,
+
+    v-width     , 256 ,     v-height    , 192 ,
+    \ v-stride    , 32 ,
+    
+    'v-setupregs ,           ' bit-setupregs ,
+    'v-setupmode ,           ' bit-setupmode ,
+    'v-updatecolors ,        ' bit-updatecolors ,
+
+    0 ,
+    
+    
+: bit-mode
+    BitFunctions write-var-list
+    BitModeParams v-set-alloc-list
+        
+    $02A0 write-vmoderegs
+;
+
+
+\       3=graphics 3 mode (256x192x8+8), sprites 2
+\           >0000 = patts
+\           >1800 = sprite patts
+\           >1900 = sprite colors
+\           >1B00 = sprites
+\           >1B80 = sprite motion
+\           >1C00 = sprite patts ( really >1800)
+\           >2000 = colors
+\           >3800 = screen
+\           >3B00+= free
+\
+Create Gfx3ModeParamsDiffs
+    v-screen    , $3800 ,   
+    v-sprcol    , $1900 ,
+    v-free      , $3B00 ,   
+    
+    'v-setupregs ,           ' gfx3-setupregs ,
+
+    0 ,
+
+: gfx3-setupregs
+    bit-setupregs
+    std-set-sprite-reg
+    std-set-sprpat-reg
+;
+    
+: gfx3-mode
+    BitFunctions write-var-list
+    BitModeParams v-set-alloc-list
+    Gfx3ModeParamsDiffs v-set-alloc-list
+    $04A0 write-vmoderegs
+;
+
+\      9=monochrome bitmap mode (graphics 2 mode)
+\           >0000 = patts
+\           >1800 = screen
+\           >1B00 = sprites
+\           >1B80 = sprite motion
+\           >1C00 = sprite patts    (really >1800)
+\           >2000 = colors
+\           >2040+= free (seems like 2800)
+\
+Create MonoModeParamsDiffs
+    v-colorsz   , $40 ,   
+    v-free      , $2040 ,   
+
+    0 ,    
+    
+: mono-mode
+    true v-mono c!
+    
+    BitFunctions write-var-list
+    BitModeParams v-set-alloc-list
+    MonoModeParamsDiffs v-set-alloc-list
+        
+    $02B0 write-vmoderegs
+;
+
+

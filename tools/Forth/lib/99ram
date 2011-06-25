@@ -1,0 +1,44 @@
+
+\ CPU RAM shared space
+
+." CPU RAM DEFS: " order 
+
+T s" enhanced-mode" environment? H [if]
+
+    ."  ENHANCED"
+ $FF60   constant RAMBASE
+ $FC00   constant fws             \ FORTH workspace
+[else] 
+    ."  STANDARD"
+ $8200   constant RAMBASE
+ $8380   constant fws
+[endif]
+cr order cr 
+minimal     \ for the love of g*d, don't change this... it's the only way to let this get included
+            \ in two different places 
+ 
+RAMBASE $00 + constant vintflags \ vdp status read during interrupt
+RAMBASE $01 + constant vstatus   \ vdp status read during interrupt
+RAMBASE $02 + constant 'userint  \ user interrupt vector for VDP interrupt
+RAMBASE $04 + constant 'timerint \ user interrupt vector for timer interrupt
+
+RAMBASE $06 + constant 'nsprmot  \ byte: number of moving sprites
+
+RAMBASE $07 + constant sndflg    \ byte: sound list flags
+RAMBASE $08 + constant sndlist   \ address of sound list (incremented on tick)
+RAMBASE $0A + constant snddur    \ duration of current group
+
+
+
+RAMBASE $0C + constant <rm      \ loc of beginning of important CPU RAM info  
+
+RAMBASE $0C + constant vpob      \ byte: VDP "page offset" bank (added to V9938 bank register to represent
+                         \ the banks inaccessible to 16-bit arithmetic)
+RAMBASE $0D + constant vblink    \ flag to set blink bit in text mode
+RAMBASE $0E + constant vpgrow    \ VDP "page row offset" (added to V9938 commands to select the page)
+RAMBASE $10 + constant vtextpage \ VDP text page offset (in addition to vpob)
+
+RAMBASE $12 + <rm - constant #rm      \ loc of size of important CPU RAM info  
+
+RAMBASE $12 + constant '<vr      \ loc of beginning of other important video info  
+RAMBASE $14 + constant '#vr      \ loc of size of other important video info  

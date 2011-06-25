@@ -1,0 +1,84 @@
+\	init.fs						-- FORTH initialization/bootstrap
+\
+\	(c) 1996-2001 Edward Swartz
+\
+\   This program is free software; you can redistribute it and/or modify
+\   it under the terms of the GNU General Public License as published by
+\   the Free Software Foundation; either version 2 of the License, or
+\   (at your option) any later version.
+\ 
+\   This program is distributed in the hope that it will be useful, but
+\   WITHOUT ANY WARRANTY; without even the implied warranty of
+\   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+\   General Public License for more details.
+\ 
+\   You should have received a copy of the GNU General Public License
+\   along with this program; if not, write to the Free Software
+\   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+\   02111-1307, USA.  
+\
+\	$Id: init.fs,v 1.8 2008-10-01 02:42:32 ejs Exp $
+
+\ \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+: (splash)
+	." V9t9 FORTH" cr
+	." press shift+ctrl+alt+space to abort" cr
+	cr
+
+	\ debug notes
+	\ ." file words are really inefficient" cr
+;
+
+[[ $90 checkmemory   previous previous	\ !!! was: ]]
+
+: (cold) 
+	\	Set up initial variable vals
+
+	(rp0) rp0 ! 	
+	(sp0) sp0 !
+	(pad0) (pad) ! 	
+	(#-pad0) (#-pad) !
+	(slit-pad0) (slit-pad) !
+
+	
+
+	\ This code is very important!
+	\ We don't initialize these DEFERed words
+	\ since their deferral address must reside in RAM
+	\ in order to be changed.
+
+	\ Also, the use of (IS) is specific to
+	\ the cross compiler, which assumes we have more
+	\ stuff between the NFA and the PFA than we do.
+	\ (i.e., not >body)
+
+	['] (EMIT) ['] EMIT  (IS)
+	['] (EMIT) ['] EMIT8 (IS)
+	['] (KEY?) ['] KEY?  (IS)
+	['] (KEY) ['] KEY 	 (IS)
+	['] (TYPE) ['] TYPE  (IS)
+
+	cls
+	(splash)
+
+\ 	flush user dictionary
+	dp0 dp !		\ bye bye!
+	
+\	set up wordlist 	!!!
+	fence >latest !
+
+	decimal
+
+[ [[ test-level @ [IF] previous previous ( !!! was: ]] ) ]
+	." Running tests..." cr
+	runtests
+[ [[ [THEN]   previous previous	( !!! was: ]]) ]
+
+	sp0 @ sp!
+
+\	init-files
+
+	quit
+;
+

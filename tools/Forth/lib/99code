@@ -1,0 +1,29 @@
+: PUSH
+	rSP 		dect
+	rTOS  rSP *R  	mov
+; immediate
+
+: POP
+	rSP *R+  rTOS	mov
+; immediate
+
+has? inlining-next [if]
+ 	has? standard-threading [if]
+		: NEXT
+			rIP *R+  rWA	mov
+			rWA *R+  0	mov
+			0 *R		b
+		;	immediate
+	[else]
+		: NEXT
+			rIP *R+	 0	mov
+			0 *R		b
+		;	immediate
+	[endif]
+[else]
+	: NEXT
+		rNEXT *R	b
+	; 	immediate
+[endif]
+
+

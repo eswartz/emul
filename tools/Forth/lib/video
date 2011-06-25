@@ -1,0 +1,143 @@
+\ Video library
+
+[ifundef] MOVB
+s" dsk1.asm99" included
+[endif]
+
+: video ;
+
+5	constant	#gxy
+6	constant	#cls
+7	constant	#win
+8	constant	#win?
+9	constant	#mode
+10	constant	#fgbg!
+11	constant	#fgbg@
+12	constant	#line
+13	constant	#pixel
+14 	constant	#bitfnc
+15	constant	#vfix
+16	constant	#vbfnt
+17	constant	#rect
+18	constant	#random
+32  constant    #circle
+
+\ clear window
+Code: cls	( -- )
+	rT1 clr		rT1 SYS^ xop	#cls data	NEXT	
+end-code
+
+\ create text window
+Code: window!				( rows cols row col -- )
+	rSP *R+ rT1 mov		rTOS 8 sla		rT1 andi $ff ,	rTOS rT1 soc		\ offsets in T1
+
+	rSP *R+ rTOS mov	
+	rSP *R+ rT2 mov		rTOS 8 sla		rT2 andi $ff ,	rTOS rT2 soc		\ size coords in T2
+
+	rT1 SYS^ xop		#win data		POP				NEXT
+end-code
+
+\ full screen window
+Code: full!
+	rT1 clr		rT2 seto	rT1 SYS^ xop	$07 data	NEXT
+end-code
+
+\ get dimensions of window
+Code: window@				( -- rows cols row col )
+	rT1 SYS^ xop		#win? data
+	PUSH		  		rT2 rTOS mov		rTOS andi $ff ,
+	PUSH		  		rT2 8 srl			rT2 rTOS mov	
+	PUSH		  		rT1 rTOS mov		rTOS andi $ff ,
+	PUSH		  		rT1 8 srl			rT1 rTOS mov
+	NEXT
+end-code
+
+Code: (fgbg!)	( fg|bg -- )
+	rTOS 8 sla		rTOS SYS^ XOP	#fgbg! data		POP				NEXT	
+end-code
+Code: (fgbg@)	( -- fg|bg )
+	PUSH			rTOS SYS^ XOP	#fgbg@ data		rTOS 8 srl		NEXT	
+end-code
+
+: fg!	( fg -- )
+	4 lshift (fgbg@) $0f and or (fgbg!) ;
+: bg!	( bg -- )
+	(fgbg@) $f0 and or (fgbg!) ;
+: fg@	( -- fg )
+	(fgbg@) 4 rshift ;
+: bg@	( -- bg )
+	(fgbg@) $0f and ;
+	
+
+Code: line	( x1 y1 x2 y2 -- )
+	rTOS rT1 mov
+	rSP *R+ rT2 mov
+	rSP *R+ rT3 mov
+	rSP *R+ rT4 mov
+	rT1	SYS^ xop	#line data
+	rSP *R+ rTOS mov
+	NEXT
+end-code
+
+
+Code: circle ( x y r c -- )
+	rTOS rT1 mov
+	rSP *R+ rT2 mov
+	rSP *R+ rT3 mov
+	rSP *R+ rT4 mov
+	rT1	SYS^ xop	#circle data
+	rSP *R+ rTOS mov
+	NEXT
+end-code
+
+Code: pixel	( x1 y1 -- )
+	rTOS rT1 mov
+	rSP *R+ rT2 mov
+	rT1	SYS^ xop	#pixel data
+	rSP *R+ rTOS mov
+	NEXT
+end-code
+
+Code: >set
+	rT1 clr		1 $+ jmp
+end-code
+Code: >reset
+	rT1 li 1 ,	1 $+ jmp
+end-code
+Code: >xor
+	rT1 li 2 ,	1 $:
+	rT1 SYS^ xop 	#bitfnc data	NEXT
+end-code
+
+Code: <video
+	rT1 seto 	1 $:
+	rT1 SYS^ xop 	#vfix data		NEXT
+end-code
+Code: video>
+	rT1 clr 	1 $- jmp
+end-code
+
+Code: (rnd) ( -- random )
+	PUSH
+	rTOS SYS^ xop	#random data
+	NEXT
+end-code
+
+Code: bit8x8
+	rT1 clr		1 $+ jmp
+Code: bit6x8
+	rT1 li 1 ,	1 $+ jmp
+Code: bit5x6
+	rT1 li 2 ,	1 $:
+	rT1 SYS^ xop 	#vbfnt data		NEXT
+
+Code: fillrect ( x y w h -- )
+	rTOS rT4 mov
+	rSP *R+ rT3 mov
+	rSP *R+ rT2 mov
+	rSP *R+ rT1 mov
+	rT1	SYS^ xop	#rect data
+	rSP *R+ rTOS mov
+	NEXT
+end-code
+	

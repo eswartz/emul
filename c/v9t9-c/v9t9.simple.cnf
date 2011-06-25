@@ -1,0 +1,58 @@
+#
+#	this is a simple template for v9t9.cnf that you can use to
+#	bootstrap a "real" v9t9.cnf
+#
+
+# rom and module paths
+ROMSPath = InstallDir() + "forth/roms:" + InstallDir() + "dsrs"
+ModulesPath = InstallDir() + "forth/roms:"
+SessionsPath = "~/.v9t9/sessions"
+DemosPath = "~/.v9t9/demos"
+DiskImagePath = "~/.v9t9/doad"
+
+# set up module list
+ReadModuleDatabase "modules.inf"
+
+# setup base ROMs
+ConsoleROMFilename = "994arom.bin"
+ConsoleGROMFileName = "994agrom.bin"
+
+# real 9900 speed!
+RealTime on
+
+# support extended memory?
+MemoryExpansion32k=on
+
+# various module preferences...
+#togglev9t9 "dsrRealDisk" off
+#togglev9t9 "dsrEmuDisk" off
+#togglev9t9 "sndOSS" off
+#togglev9t9 "sndALSA" off
+#togglev9t9 "sndESD" off
+#togglev9t9 "sndSpeaker" off
+
+# FIAD disk directory paths
+DSK1Path= "~/.v9t9/fiad/disk"
+#DSK2Path= "~/.v9t9/fiad/disk"
+#DSK3Path= "~/.v9t9/fiad/disk"
+#DSK4Path= "~/.v9t9/fiad/disk"
+#DSK5Path= "~/.v9t9/fiad/disk"
+
+# update FIAD file formats?
+KeepFileFormat=on
+NewFileFormat=TIFILES	# or V9t9
+
+# RS232 devices or files (files not really supported)
+RS232_1="/dev/ttyS0"
+#RS232_2="serial2.txt"
+#RS232_3="serial3.txt"
+#RS232_4="serial4.txt"
+
+# loading startup module?  Use either the full name,
+# part of it, or the "tag" (four letter abbrevation from DefineModule)
+#LoadModule "Disk Manager"
+#LoadModule "adv"
+#LoadModule "Parsec"
+#LoadModule "music"
+#LoadModule "jawb"
+

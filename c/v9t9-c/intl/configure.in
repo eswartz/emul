@@ -1,0 +1,15 @@
+AC_INIT(libgettext.h)
+
+dnl get top-level directory
+if test "x$TOP" = "x" ; then
+TOP=`pwd`/..
+fi
+AC_SUBST(TOP)
+
+VERSION=`cat $TOP/.version`
+AM_INIT_AUTOMAKE(v9t9, $VERSION)
+
+USE_INCLUDED_INTL=no
+AC_SUBST(USE_INCLUDED_INTL)
+AC_OUTPUT(Makefile)
+

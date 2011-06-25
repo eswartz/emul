@@ -1,0 +1,101 @@
+;	To be compiled with tiasm
+
+;	DSR for emulated disk driver co-existing with
+;	standard TI disk DSR.  We don't define DSK1, DSK2,
+;	or CALL FILES.
+
+	incl	opcodes.inc
+
+	aorg	>4000
+
+dskdsr:	dw	>aa99				; id
+	dw	0
+	dw	dskinit				; ptr to init code
+	dw	0
+	dw	ddevtab				; ptr to device table
+	dw	dsubtab				; ptr to subprograms
+	dw	0
+	dw	0
+
+dsubtab: dw	dst1
+	dw	dst10ex
+	dw	>110
+dst1:	dw	dst2
+	dw	dst11ex
+	dw	>111
+dst2:	dw	dst3
+	dw	dst12ex
+	dw	>112
+dst3:	dw	dst4
+	dw	dst13ex
+	dw	>113
+dst4:	dw	dst5
+	dw	dst14ex
+	dw	>114
+dst5:	dw	dst6
+	dw	dst15ex
+	dw	>115
+dst6:	dw	0
+	dw	dst16ex
+	dw	>116
+
+ddevtab: dw	ddt3
+	dw	ddtdsk
+	db	3,"DSK"
+	even
+ddt3:	dw	ddt32
+	dw	ddtdsk3
+	db	4,"DSK3"
+	even
+ddt32:	dw	ddt33
+	dw	ddtdsk4
+	db	4,"DSK4"
+	even
+ddt33:	dw	ddt4
+	dw	ddtdsk5
+	db	4,"DSK5"
+	even
+
+ddt4:	dw	ddt7
+	dw	ddtdsk
+	db	3,"dsk"
+	even
+ddt7:	dw	ddt72
+	dw	ddtdsk3
+	db	4,"dsk3"
+	even
+ddt72:	dw	ddt73
+	dw	ddtdsk4
+	db	4,"dsk4"
+	even
+ddt73:	dw	0
+	dw	ddtdsk5
+	db	4,"dsk5"
+
+	EVEN
+
+;	Note that D_INIT, D_xxx can be recycled for a different CRU base.
+
+dskinit: dw	0
+	dw	dskinitcode
+	dw	0
+
+dskinitcode: DSR D_INIT
+
+dst10ex:	DSR D_SECRW
+dst11ex:	DSR D_FMTDISK
+dst12ex:	DSR D_PROT
+dst13ex:	DSR D_RENAME
+dst14ex:	DSR D_DINPUT
+dst15ex:	DSR D_DOUTPUT
+dst16ex:	DSR D_16
+
+
+ddtdsk:		DSR D_DSK
+ddtdsk1:	DSR D_DSK1
+ddtdsk2:	DSR D_DSK2
+ddtdsk3:	DSR D_DSK3
+ddtdsk4:	DSR D_DSK4
+ddtdsk5:	DSR D_DSK5
+
+

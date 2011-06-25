@@ -1,0 +1,121 @@
+
+;	nforth0.tsm					-- alt bank ROM
+;
+;	(c) 1996-2008 Edward Swartz
+;
+;	This program is free software; you can redistribute it and/or modify
+;	it under the terms of the GNU General Public License as
+;	published by the Free Software Foundation; either version 2 of
+;	the License, or (at your option) any later version.
+; 
+;	This program is distributed in the hope that it will be useful,
+;	but WITHOUT ANY WARRANTY; without even the implied warranty of
+;	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the
+;	GNU General Public License for more details.
+; 
+;	You should have received a copy of the GNU General Public
+;	License along with this library; if not, write to the Free Software
+;	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;	02111-1307, USA.
+;
+;	$Id: nforth.tsm,v 1.7 2008-10-19 14:41:59 ejs Exp $
+
+;
+;	In this model, there is a banked CPU ROM.  One bank contains
+;	all the ROM routines in assembly.  The other bank contains
+;	the low FORTH dictionary.
+;
+;	FORTH will never directly invoke ROM routines.  Instead it uses
+;	XOP or interrupt vectors to do that.
+;
+;	This file contains only the bare essentials for the ROM that
+;	will be paired with the low FORTH dictionary and which will share
+;	the same memory area in the other bank.
+;
+;	It contains the interrupt and XOP vectors, which point to code
+;	that switches to the other 
+;
+
+    incl    general.i
+	incl	cpuram.i
+
+	aorg	>0
+
+resetv	dw	mainws,INT0PC
+int1v	dw	intws,INT1PC
+
+	aorg	>c
+
+	db		>30,>AA
+
+INT0PC:
+	bl		@BANK
+	dw		0
+ 	; notreached
+	nop
+	nop
+
+INT1PC:
+	limi	0
+	bl		@BANK
+	dw		int1flag
+ 	; notreached
+	nop
+	nop
+
+XOP1PC:
+	limi	0
+	mov		*14+,1		; code
+	mov		11,0
+	bl		@BANK
+	dw		xop1flag
+ 	; notreached
+	nop
+	nop
+	nop
+
+	aorg	>40
+
+xop0v	dw	0,0
+xop1v	dw 	xopws,XOP1PC
+
+forth_start dw COMMON_END
+
+	;	in other bank, this branches to real ROM
+
+BANK:
+
+bankA:
+	szc		*11+,@intsfromA
+	seto	@ROMBANK
+	rt
+bankB:
+	seto	@FTHBANK
+	rt
+
+bankBrtwp:
+	nop
+	nop
+	rtwp
+
+FORTH_COLD:
+	; boot FORTH
+	nop
+	nop
+	b		@COMMON_END
+FORTH_QUIT:
+	; abort
+	nop
+	nop
+	b		@COMMON_END + 4
+
+;   default for LOAD* interrupt NMI
+ABORT:
+    limi    0
+    seto    @intsfromA
+    lwpi    mainws
+    jmp     FORTH_QUIT         ; ctrl+fctn+shift+space breaks
+    
+COMMON_END:
+
+	; in forth, instructions for branching to COLD and QUIT are here

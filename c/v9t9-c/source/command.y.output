@@ -1,0 +1,2047 @@
+
+
+Terminals which are not used:
+
+   NEG
+
+
+State 1 contains 5 shift/reduce conflicts.
+State 9 contains 1 shift/reduce conflict.
+State 12 contains 1 shift/reduce conflict.
+State 15 contains 2 reduce/reduce conflicts.
+State 22 contains 1 shift/reduce conflict.
+State 31 contains 1 shift/reduce conflict.
+State 44 contains 1 shift/reduce conflict.
+State 69 contains 1 shift/reduce conflict.
+State 85 contains 1 shift/reduce conflict.
+State 86 contains 1 shift/reduce conflict.
+State 92 contains 1 shift/reduce conflict.
+State 96 contains 1 shift/reduce conflict.
+
+Grammar
+rule 1    input ->		/* empty */
+rule 2    input -> input line
+rule 3    eol -> ';'
+rule 4    eol -> '\n'
+rule 5    line ->		/* empty */
+rule 6    line -> assignstmt
+rule 7    line -> printstmt
+rule 8    line -> eol
+rule 9    printstmt -> PRINT printexprlist
+rule 10   printexprlist ->		/* empty */
+rule 11   printexprlist -> printexprlist expr
+rule 12   expr -> assign
+rule 13   id -> IDSTRING
+rule 14   assignstmt -> id '=' comma
+rule 15   assignstmt -> assignline
+rule 16   assignline -> id expr expr expr expr expr expr
+rule 17   assignline -> id expr expr expr expr expr
+rule 18   assignline -> id expr expr expr expr
+rule 19   assignline -> id expr expr expr
+rule 20   assignline -> id expr expr
+rule 21   assignline -> id expr
+rule 22   assignline -> id
+rule 23   comma -> cond
+rule 24   comma -> comma ',' cond
+rule 25   assign -> id '=' assign
+rule 26   assign -> cond
+rule 27   cond -> logcond
+rule 28   cond -> logcond '?' expr ':' cond
+rule 29   logcond -> binlogcond
+rule 30   logcond -> logcond COMPAND binlogcond
+rule 31   logcond -> logcond COMPOR binlogcond
+rule 32   logcond -> logcond COMPXOR binlogcond
+rule 33   binlogcond -> compeq
+rule 34   binlogcond -> binlogcond '&' compeq
+rule 35   binlogcond -> binlogcond '|' compeq
+rule 36   binlogcond -> binlogcond '^' compeq
+rule 37   compeq -> comp
+rule 38   compeq -> compeq COMPEQ comp
+rule 39   compeq -> compeq COMPNE comp
+rule 40   comp -> shift
+rule 41   comp -> comp COMPLE shift
+rule 42   comp -> comp COMPGE shift
+rule 43   comp -> comp '>' shift
+rule 44   comp -> comp '<' shift
+rule 45   shift -> factor
+rule 46   shift -> shift LSHIFT factor
+rule 47   shift -> shift RSHIFT factor
+rule 48   factor -> term
+rule 49   factor -> factor '+' term
+rule 50   factor -> factor '-' term
+rule 51   term -> unary
+rule 52   term -> term '*' unary
+rule 53   term -> term '/' unary
+rule 54   unary -> atom
+rule 55   unary -> '-' unary
+rule 56   unary -> '!' unary
+rule 57   unary -> '~' unary
+rule 58   atom -> ERR
+rule 59   atom -> NUM
+rule 60   atom -> STRING
+rule 61   atom -> IDSTRING
+rule 62   atom -> id '(' expr ')'
+rule 63   atom -> id '(' expr ',' expr ')'
+rule 64   atom -> id '(' expr ',' expr ',' expr ')'
+rule 65   atom -> id '(' expr ',' expr ',' expr ',' expr ')'
+rule 66   atom -> id '(' expr ',' expr ',' expr ',' expr ',' expr ')'
+rule 67   atom -> id '(' expr ',' expr ',' expr ',' expr ',' expr ',' expr ')'
+rule 68   atom -> '(' id ')'
+rule 69   atom -> '(' expr ')'
+
+Terminals, with rules where they appear
+
+$ (-1)
+'\n' (10) 4
+'!' (33) 56
+'&' (38) 34
+'(' (40) 62 63 64 65 66 67 68 69
+')' (41) 62 63 64 65 66 67 68 69
+'*' (42) 52
+'+' (43) 49
+',' (44) 24 63 64 65 66 67
+'-' (45) 50 55
+'/' (47) 53
+':' (58) 28
+';' (59) 3
+'<' (60) 44
+'=' (61) 14 25
+'>' (62) 43
+'?' (63) 28
+'^' (94) 36
+'|' (124) 35
+'~' (126) 57
+error (256)
+NUM (257) 59
+STRING (258) 60
+IDSTRING (259) 13 61
+ERR (260) 58
+LSHIFT (261) 46
+RSHIFT (262) 47
+COMPLE (263) 41
+COMPGE (264) 42
+COMPEQ (265) 38
+COMPNE (266) 39
+COMPAND (267) 30
+COMPOR (268) 31
+COMPXOR (269) 32
+PRINT (270) 9
+NEG (271)
+
+Nonterminals, with rules where they appear
+
+input (37)
+    on left: 1 2, on right: 2
+eol (38)
+    on left: 3 4, on right: 8
+line (39)
+    on left: 5 6 7 8, on right: 2
+printstmt (40)
+    on left: 9, on right: 7
+printexprlist (41)
+    on left: 10 11, on right: 9 11
+expr (42)
+    on left: 12, on right: 11 16 17 18 19 20 21 28 62 63 64 65 66 67
+    69
+id (43)
+    on left: 13, on right: 14 16 17 18 19 20 21 22 25 62 63 64 65 66
+    67 68
+assignstmt (44)
+    on left: 14 15, on right: 6
+assignline (45)
+    on left: 16 17 18 19 20 21 22, on right: 15
+comma (46)
+    on left: 23 24, on right: 14 24
+assign (47)
+    on left: 25 26, on right: 12 25
+cond (48)
+    on left: 27 28, on right: 23 24 26 28
+logcond (49)
+    on left: 29 30 31 32, on right: 27 28 30 31 32
+binlogcond (50)
+    on left: 33 34 35 36, on right: 29 30 31 32 34 35 36
+compeq (51)
+    on left: 37 38 39, on right: 33 34 35 36 38 39
+comp (52)
+    on left: 40 41 42 43 44, on right: 37 38 39 41 42 43 44
+shift (53)
+    on left: 45 46 47, on right: 40 41 42 43 44 46 47
+factor (54)
+    on left: 48 49 50, on right: 45 46 47 49 50
+term (55)
+    on left: 51 52 53, on right: 48 49 50 52 53
+unary (56)
+    on left: 54 55 56 57, on right: 51 52 53 55 56 57
+atom (57)
+    on left: 58 59 60 61 62 63 64 65 66 67 68 69, on right: 54
+
+
+state 0
+
+    $default	reduce using rule 1 (input)
+
+    input	go to state 1
+
+
+
+state 1
+
+    input  ->  input . line   (rule 2)
+
+    $   	go to state 113
+    IDSTRING	shift, and go to state 2
+    PRINT	shift, and go to state 3
+    ';' 	shift, and go to state 4
+    '\n'	shift, and go to state 5
+
+    $   	[reduce using rule 5 (line)]
+    IDSTRING	[reduce using rule 5 (line)]
+    PRINT	[reduce using rule 5 (line)]
+    ';' 	[reduce using rule 5 (line)]
+    '\n'	[reduce using rule 5 (line)]
+    $default	reduce using rule 5 (line)
+
+    eol 	go to state 6
+    line	go to state 7
+    printstmt	go to state 8
+    id  	go to state 9
+    assignstmt	go to state 10
+    assignline	go to state 11
+
+
+
+state 2
+
+    id  ->  IDSTRING .   (rule 13)
+
+    $default	reduce using rule 13 (id)
+
+
+
+state 3
+
+    printstmt  ->  PRINT . printexprlist   (rule 9)
+
+    $default	reduce using rule 10 (printexprlist)
+
+    printexprlist	go to state 12
+
+
+
+state 4
+
+    eol  ->  ';' .   (rule 3)
+
+    $default	reduce using rule 3 (eol)
+
+
+
+state 5
+
+    eol  ->  '\n' .   (rule 4)
+
+    $default	reduce using rule 4 (eol)
+
+
+
+state 6
+
+    line  ->  eol .   (rule 8)
+
+    $default	reduce using rule 8 (line)
+
+
+
+state 7
+
+    input  ->  input line .   (rule 2)
+
+    $default	reduce using rule 2 (input)
+
+
+
+state 8
+
+    line  ->  printstmt .   (rule 7)
+
+    $default	reduce using rule 7 (line)
+
+
+
+state 9
+
+    assignstmt  ->  id . '=' comma   (rule 14)
+    assignline  ->  id . expr expr expr expr expr expr   (rule 16)
+    assignline  ->  id . expr expr expr expr expr   (rule 17)
+    assignline  ->  id . expr expr expr expr   (rule 18)
+    assignline  ->  id . expr expr expr   (rule 19)
+    assignline  ->  id . expr expr   (rule 20)
+    assignline  ->  id . expr   (rule 21)
+    assignline  ->  id .   (rule 22)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '=' 	shift, and go to state 17
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    IDSTRING	[reduce using rule 22 (assignline)]
+    $default	reduce using rule 22 (assignline)
+
+    expr	go to state 22
+    id  	go to state 23
+    assign	go to state 24
+    cond	go to state 25
+    logcond	go to state 26
+    binlogcond	go to state 27
+    compeq	go to state 28
+    comp	go to state 29
+    shift	go to state 30
+    factor	go to state 31
+    term	go to state 32
+    unary	go to state 33
+    atom	go to state 34
+
+
+
+state 10
+
+    line  ->  assignstmt .   (rule 6)
+
+    $default	reduce using rule 6 (line)
+
+
+
+state 11
+
+    assignstmt  ->  assignline .   (rule 15)
+
+    $default	reduce using rule 15 (assignstmt)
+
+
+
+state 12
+
+    printstmt  ->  PRINT printexprlist .   (rule 9)
+    printexprlist  ->  printexprlist . expr   (rule 11)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    IDSTRING	[reduce using rule 9 (printstmt)]
+    $default	reduce using rule 9 (printstmt)
+
+    expr	go to state 35
+    id  	go to state 23
+    assign	go to state 24
+    cond	go to state 25
+    logcond	go to state 26
+    binlogcond	go to state 27
+    compeq	go to state 28
+    comp	go to state 29
+    shift	go to state 30
+    factor	go to state 31
+    term	go to state 32
+    unary	go to state 33
+    atom	go to state 34
+
+
+
+state 13
+
+    atom  ->  NUM .   (rule 59)
+
+    $default	reduce using rule 59 (atom)
+
+
+
+state 14
+
+    atom  ->  STRING .   (rule 60)
+
+    $default	reduce using rule 60 (atom)
+
+
+
+state 15
+
+    id  ->  IDSTRING .   (rule 13)
+    atom  ->  IDSTRING .   (rule 61)
+
+    '=' 	reduce using rule 13 (id)
+    '(' 	reduce using rule 13 (id)
+    '(' 	[reduce using rule 61 (atom)]
+    ')' 	reduce using rule 13 (id)
+    ')' 	[reduce using rule 61 (atom)]
+    $default	reduce using rule 61 (atom)
+
+
+
+state 16
+
+    atom  ->  ERR .   (rule 58)
+
+    $default	reduce using rule 58 (atom)
+
+
+
+state 17
+
+    assignstmt  ->  id '=' . comma   (rule 14)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    id  	go to state 36
+    comma	go to state 37
+    cond	go to state 38
+    logcond	go to state 26
+    binlogcond	go to state 27
+    compeq	go to state 28
+    comp	go to state 29
+    shift	go to state 30
+    factor	go to state 31
+    term	go to state 32
+    unary	go to state 33
+    atom	go to state 34
+
+
+
+state 18
+
+    unary  ->  '-' . unary   (rule 55)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    id  	go to state 36
+    unary	go to state 39
+    atom	go to state 34
+
+
+
+state 19
+
+    unary  ->  '!' . unary   (rule 56)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    id  	go to state 36
+    unary	go to state 40
+    atom	go to state 34
+
+
+
+state 20
+
+    unary  ->  '~' . unary   (rule 57)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    id  	go to state 36
+    unary	go to state 41
+    atom	go to state 34
+
+
+
+state 21
+
+    atom  ->  '(' . id ')'   (rule 68)
+    atom  ->  '(' . expr ')'   (rule 69)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    expr	go to state 42
+    id  	go to state 43
+    assign	go to state 24
+    cond	go to state 25
+    logcond	go to state 26
+    binlogcond	go to state 27
+    compeq	go to state 28
+    comp	go to state 29
+    shift	go to state 30
+    factor	go to state 31
+    term	go to state 32
+    unary	go to state 33
+    atom	go to state 34
+
+
+
+state 22
+
+    assignline  ->  id expr . expr expr expr expr expr   (rule 16)
+    assignline  ->  id expr . expr expr expr expr   (rule 17)
+    assignline  ->  id expr . expr expr expr   (rule 18)
+    assignline  ->  id expr . expr expr   (rule 19)
+    assignline  ->  id expr . expr   (rule 20)
+    assignline  ->  id expr .   (rule 21)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    IDSTRING	[reduce using rule 21 (assignline)]
+    $default	reduce using rule 21 (assignline)
+
+    expr	go to state 44
+    id  	go to state 23
+    assign	go to state 24
+    cond	go to state 25
+    logcond	go to state 26
+    binlogcond	go to state 27
+    compeq	go to state 28
+    comp	go to state 29
+    shift	go to state 30
+    factor	go to state 31
+    term	go to state 32
+    unary	go to state 33
+    atom	go to state 34
+
+
+
+state 23
+
+    assign  ->  id . '=' assign   (rule 25)
+    atom  ->  id . '(' expr ')'   (rule 62)
+    atom  ->  id . '(' expr ',' expr ')'   (rule 63)
+    atom  ->  id . '(' expr ',' expr ',' expr ')'   (rule 64)
+    atom  ->  id . '(' expr ',' expr ',' expr ',' expr ')'   (rule 65)
+    atom  ->  id . '(' expr ',' expr ',' expr ',' expr ',' expr ')'   (rule 66)
+    atom  ->  id . '(' expr ',' expr ',' expr ',' expr ',' expr ',' expr ')'   (rule 67)
+
+    '=' 	shift, and go to state 45
+    '(' 	shift, and go to state 46
+
+
+
+state 24
+
+    expr  ->  assign .   (rule 12)
+
+    $default	reduce using rule 12 (expr)
+
+
+
+state 25
+
+    assign  ->  cond .   (rule 26)
+
+    $default	reduce using rule 26 (assign)
+
+
+
+state 26
+
+    cond  ->  logcond .   (rule 27)
+    cond  ->  logcond . '?' expr ':' cond   (rule 28)
+    logcond  ->  logcond . COMPAND binlogcond   (rule 30)
+    logcond  ->  logcond . COMPOR binlogcond   (rule 31)
+    logcond  ->  logcond . COMPXOR binlogcond   (rule 32)
+
+    COMPAND	shift, and go to state 47
+    COMPOR	shift, and go to state 48
+    COMPXOR	shift, and go to state 49
+    '?' 	shift, and go to state 50
+
+    $default	reduce using rule 27 (cond)
+
+
+
+state 27
+
+    logcond  ->  binlogcond .   (rule 29)
+    binlogcond  ->  binlogcond . '&' compeq   (rule 34)
+    binlogcond  ->  binlogcond . '|' compeq   (rule 35)
+    binlogcond  ->  binlogcond . '^' compeq   (rule 36)
+
+    '&' 	shift, and go to state 51
+    '|' 	shift, and go to state 52
+    '^' 	shift, and go to state 53
+
+    $default	reduce using rule 29 (logcond)
+
+
+
+state 28
+
+    binlogcond  ->  compeq .   (rule 33)
+    compeq  ->  compeq . COMPEQ comp   (rule 38)
+    compeq  ->  compeq . COMPNE comp   (rule 39)
+
+    COMPEQ	shift, and go to state 54
+    COMPNE	shift, and go to state 55
+
+    $default	reduce using rule 33 (binlogcond)
+
+
+
+state 29
+
+    compeq  ->  comp .   (rule 37)
+    comp  ->  comp . COMPLE shift   (rule 41)
+    comp  ->  comp . COMPGE shift   (rule 42)
+    comp  ->  comp . '>' shift   (rule 43)
+    comp  ->  comp . '<' shift   (rule 44)
+
+    COMPLE	shift, and go to state 56
+    COMPGE	shift, and go to state 57
+    '>' 	shift, and go to state 58
+    '<' 	shift, and go to state 59
+
+    $default	reduce using rule 37 (compeq)
+
+
+
+state 30
+
+    comp  ->  shift .   (rule 40)
+    shift  ->  shift . LSHIFT factor   (rule 46)
+    shift  ->  shift . RSHIFT factor   (rule 47)
+
+    LSHIFT	shift, and go to state 60
+    RSHIFT	shift, and go to state 61
+
+    $default	reduce using rule 40 (comp)
+
+
+
+state 31
+
+    shift  ->  factor .   (rule 45)
+    factor  ->  factor . '+' term   (rule 49)
+    factor  ->  factor . '-' term   (rule 50)
+
+    '-' 	shift, and go to state 62
+    '+' 	shift, and go to state 63
+
+    '-' 	[reduce using rule 45 (shift)]
+    $default	reduce using rule 45 (shift)
+
+
+
+state 32
+
+    factor  ->  term .   (rule 48)
+    term  ->  term . '*' unary   (rule 52)
+    term  ->  term . '/' unary   (rule 53)
+
+    '*' 	shift, and go to state 64
+    '/' 	shift, and go to state 65
+
+    $default	reduce using rule 48 (factor)
+
+
+
+state 33
+
+    term  ->  unary .   (rule 51)
+
+    $default	reduce using rule 51 (term)
+
+
+
+state 34
+
+    unary  ->  atom .   (rule 54)
+
+    $default	reduce using rule 54 (unary)
+
+
+
+state 35
+
+    printexprlist  ->  printexprlist expr .   (rule 11)
+
+    $default	reduce using rule 11 (printexprlist)
+
+
+
+state 36
+
+    atom  ->  id . '(' expr ')'   (rule 62)
+    atom  ->  id . '(' expr ',' expr ')'   (rule 63)
+    atom  ->  id . '(' expr ',' expr ',' expr ')'   (rule 64)
+    atom  ->  id . '(' expr ',' expr ',' expr ',' expr ')'   (rule 65)
+    atom  ->  id . '(' expr ',' expr ',' expr ',' expr ',' expr ')'   (rule 66)
+    atom  ->  id . '(' expr ',' expr ',' expr ',' expr ',' expr ',' expr ')'   (rule 67)
+
+    '(' 	shift, and go to state 46
+
+
+
+state 37
+
+    assignstmt  ->  id '=' comma .   (rule 14)
+    comma  ->  comma . ',' cond   (rule 24)
+
+    ',' 	shift, and go to state 66
+
+    $default	reduce using rule 14 (assignstmt)
+
+
+
+state 38
+
+    comma  ->  cond .   (rule 23)
+
+    $default	reduce using rule 23 (comma)
+
+
+
+state 39
+
+    unary  ->  '-' unary .   (rule 55)
+
+    $default	reduce using rule 55 (unary)
+
+
+
+state 40
+
+    unary  ->  '!' unary .   (rule 56)
+
+    $default	reduce using rule 56 (unary)
+
+
+
+state 41
+
+    unary  ->  '~' unary .   (rule 57)
+
+    $default	reduce using rule 57 (unary)
+
+
+
+state 42
+
+    atom  ->  '(' expr . ')'   (rule 69)
+
+    ')' 	shift, and go to state 67
+
+
+
+state 43
+
+    assign  ->  id . '=' assign   (rule 25)
+    atom  ->  id . '(' expr ')'   (rule 62)
+    atom  ->  id . '(' expr ',' expr ')'   (rule 63)
+    atom  ->  id . '(' expr ',' expr ',' expr ')'   (rule 64)
+    atom  ->  id . '(' expr ',' expr ',' expr ',' expr ')'   (rule 65)
+    atom  ->  id . '(' expr ',' expr ',' expr ',' expr ',' expr ')'   (rule 66)
+    atom  ->  id . '(' expr ',' expr ',' expr ',' expr ',' expr ',' expr ')'   (rule 67)
+    atom  ->  '(' id . ')'   (rule 68)
+
+    '=' 	shift, and go to state 45
+    '(' 	shift, and go to state 46
+    ')' 	shift, and go to state 68
+
+
+
+state 44
+
+    assignline  ->  id expr expr . expr expr expr expr   (rule 16)
+    assignline  ->  id expr expr . expr expr expr   (rule 17)
+    assignline  ->  id expr expr . expr expr   (rule 18)
+    assignline  ->  id expr expr . expr   (rule 19)
+    assignline  ->  id expr expr .   (rule 20)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    IDSTRING	[reduce using rule 20 (assignline)]
+    $default	reduce using rule 20 (assignline)
+
+    expr	go to state 69
+    id  	go to state 23
+    assign	go to state 24
+    cond	go to state 25
+    logcond	go to state 26
+    binlogcond	go to state 27
+    compeq	go to state 28
+    comp	go to state 29
+    shift	go to state 30
+    factor	go to state 31
+    term	go to state 32
+    unary	go to state 33
+    atom	go to state 34
+
+
+
+state 45
+
+    assign  ->  id '=' . assign   (rule 25)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    id  	go to state 23
+    assign	go to state 70
+    cond	go to state 25
+    logcond	go to state 26
+    binlogcond	go to state 27
+    compeq	go to state 28
+    comp	go to state 29
+    shift	go to state 30
+    factor	go to state 31
+    term	go to state 32
+    unary	go to state 33
+    atom	go to state 34
+
+
+
+state 46
+
+    atom  ->  id '(' . expr ')'   (rule 62)
+    atom  ->  id '(' . expr ',' expr ')'   (rule 63)
+    atom  ->  id '(' . expr ',' expr ',' expr ')'   (rule 64)
+    atom  ->  id '(' . expr ',' expr ',' expr ',' expr ')'   (rule 65)
+    atom  ->  id '(' . expr ',' expr ',' expr ',' expr ',' expr ')'   (rule 66)
+    atom  ->  id '(' . expr ',' expr ',' expr ',' expr ',' expr ',' expr ')'   (rule 67)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    expr	go to state 71
+    id  	go to state 23
+    assign	go to state 24
+    cond	go to state 25
+    logcond	go to state 26
+    binlogcond	go to state 27
+    compeq	go to state 28
+    comp	go to state 29
+    shift	go to state 30
+    factor	go to state 31
+    term	go to state 32
+    unary	go to state 33
+    atom	go to state 34
+
+
+
+state 47
+
+    logcond  ->  logcond COMPAND . binlogcond   (rule 30)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    id  	go to state 36
+    binlogcond	go to state 72
+    compeq	go to state 28
+    comp	go to state 29
+    shift	go to state 30
+    factor	go to state 31
+    term	go to state 32
+    unary	go to state 33
+    atom	go to state 34
+
+
+
+state 48
+
+    logcond  ->  logcond COMPOR . binlogcond   (rule 31)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    id  	go to state 36
+    binlogcond	go to state 73
+    compeq	go to state 28
+    comp	go to state 29
+    shift	go to state 30
+    factor	go to state 31
+    term	go to state 32
+    unary	go to state 33
+    atom	go to state 34
+
+
+
+state 49
+
+    logcond  ->  logcond COMPXOR . binlogcond   (rule 32)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    id  	go to state 36
+    binlogcond	go to state 74
+    compeq	go to state 28
+    comp	go to state 29
+    shift	go to state 30
+    factor	go to state 31
+    term	go to state 32
+    unary	go to state 33
+    atom	go to state 34
+
+
+
+state 50
+
+    cond  ->  logcond '?' . expr ':' cond   (rule 28)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    expr	go to state 75
+    id  	go to state 23
+    assign	go to state 24
+    cond	go to state 25
+    logcond	go to state 26
+    binlogcond	go to state 27
+    compeq	go to state 28
+    comp	go to state 29
+    shift	go to state 30
+    factor	go to state 31
+    term	go to state 32
+    unary	go to state 33
+    atom	go to state 34
+
+
+
+state 51
+
+    binlogcond  ->  binlogcond '&' . compeq   (rule 34)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    id  	go to state 36
+    compeq	go to state 76
+    comp	go to state 29
+    shift	go to state 30
+    factor	go to state 31
+    term	go to state 32
+    unary	go to state 33
+    atom	go to state 34
+
+
+
+state 52
+
+    binlogcond  ->  binlogcond '|' . compeq   (rule 35)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    id  	go to state 36
+    compeq	go to state 77
+    comp	go to state 29
+    shift	go to state 30
+    factor	go to state 31
+    term	go to state 32
+    unary	go to state 33
+    atom	go to state 34
+
+
+
+state 53
+
+    binlogcond  ->  binlogcond '^' . compeq   (rule 36)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    id  	go to state 36
+    compeq	go to state 78
+    comp	go to state 29
+    shift	go to state 30
+    factor	go to state 31
+    term	go to state 32
+    unary	go to state 33
+    atom	go to state 34
+
+
+
+state 54
+
+    compeq  ->  compeq COMPEQ . comp   (rule 38)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    id  	go to state 36
+    comp	go to state 79
+    shift	go to state 30
+    factor	go to state 31
+    term	go to state 32
+    unary	go to state 33
+    atom	go to state 34
+
+
+
+state 55
+
+    compeq  ->  compeq COMPNE . comp   (rule 39)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    id  	go to state 36
+    comp	go to state 80
+    shift	go to state 30
+    factor	go to state 31
+    term	go to state 32
+    unary	go to state 33
+    atom	go to state 34
+
+
+
+state 56
+
+    comp  ->  comp COMPLE . shift   (rule 41)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    id  	go to state 36
+    shift	go to state 81
+    factor	go to state 31
+    term	go to state 32
+    unary	go to state 33
+    atom	go to state 34
+
+
+
+state 57
+
+    comp  ->  comp COMPGE . shift   (rule 42)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    id  	go to state 36
+    shift	go to state 82
+    factor	go to state 31
+    term	go to state 32
+    unary	go to state 33
+    atom	go to state 34
+
+
+
+state 58
+
+    comp  ->  comp '>' . shift   (rule 43)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    id  	go to state 36
+    shift	go to state 83
+    factor	go to state 31
+    term	go to state 32
+    unary	go to state 33
+    atom	go to state 34
+
+
+
+state 59
+
+    comp  ->  comp '<' . shift   (rule 44)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    id  	go to state 36
+    shift	go to state 84
+    factor	go to state 31
+    term	go to state 32
+    unary	go to state 33
+    atom	go to state 34
+
+
+
+state 60
+
+    shift  ->  shift LSHIFT . factor   (rule 46)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    id  	go to state 36
+    factor	go to state 85
+    term	go to state 32
+    unary	go to state 33
+    atom	go to state 34
+
+
+
+state 61
+
+    shift  ->  shift RSHIFT . factor   (rule 47)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    id  	go to state 36
+    factor	go to state 86
+    term	go to state 32
+    unary	go to state 33
+    atom	go to state 34
+
+
+
+state 62
+
+    factor  ->  factor '-' . term   (rule 50)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    id  	go to state 36
+    term	go to state 87
+    unary	go to state 33
+    atom	go to state 34
+
+
+
+state 63
+
+    factor  ->  factor '+' . term   (rule 49)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    id  	go to state 36
+    term	go to state 88
+    unary	go to state 33
+    atom	go to state 34
+
+
+
+state 64
+
+    term  ->  term '*' . unary   (rule 52)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    id  	go to state 36
+    unary	go to state 89
+    atom	go to state 34
+
+
+
+state 65
+
+    term  ->  term '/' . unary   (rule 53)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    id  	go to state 36
+    unary	go to state 90
+    atom	go to state 34
+
+
+
+state 66
+
+    comma  ->  comma ',' . cond   (rule 24)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    id  	go to state 36
+    cond	go to state 91
+    logcond	go to state 26
+    binlogcond	go to state 27
+    compeq	go to state 28
+    comp	go to state 29
+    shift	go to state 30
+    factor	go to state 31
+    term	go to state 32
+    unary	go to state 33
+    atom	go to state 34
+
+
+
+state 67
+
+    atom  ->  '(' expr ')' .   (rule 69)
+
+    $default	reduce using rule 69 (atom)
+
+
+
+state 68
+
+    atom  ->  '(' id ')' .   (rule 68)
+
+    $default	reduce using rule 68 (atom)
+
+
+
+state 69
+
+    assignline  ->  id expr expr expr . expr expr expr   (rule 16)
+    assignline  ->  id expr expr expr . expr expr   (rule 17)
+    assignline  ->  id expr expr expr . expr   (rule 18)
+    assignline  ->  id expr expr expr .   (rule 19)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    IDSTRING	[reduce using rule 19 (assignline)]
+    $default	reduce using rule 19 (assignline)
+
+    expr	go to state 92
+    id  	go to state 23
+    assign	go to state 24
+    cond	go to state 25
+    logcond	go to state 26
+    binlogcond	go to state 27
+    compeq	go to state 28
+    comp	go to state 29
+    shift	go to state 30
+    factor	go to state 31
+    term	go to state 32
+    unary	go to state 33
+    atom	go to state 34
+
+
+
+state 70
+
+    assign  ->  id '=' assign .   (rule 25)
+
+    $default	reduce using rule 25 (assign)
+
+
+
+state 71
+
+    atom  ->  id '(' expr . ')'   (rule 62)
+    atom  ->  id '(' expr . ',' expr ')'   (rule 63)
+    atom  ->  id '(' expr . ',' expr ',' expr ')'   (rule 64)
+    atom  ->  id '(' expr . ',' expr ',' expr ',' expr ')'   (rule 65)
+    atom  ->  id '(' expr . ',' expr ',' expr ',' expr ',' expr ')'   (rule 66)
+    atom  ->  id '(' expr . ',' expr ',' expr ',' expr ',' expr ',' expr ')'   (rule 67)
+
+    ',' 	shift, and go to state 93
+    ')' 	shift, and go to state 94
+
+
+
+state 72
+
+    logcond  ->  logcond COMPAND binlogcond .   (rule 30)
+    binlogcond  ->  binlogcond . '&' compeq   (rule 34)
+    binlogcond  ->  binlogcond . '|' compeq   (rule 35)
+    binlogcond  ->  binlogcond . '^' compeq   (rule 36)
+
+    '&' 	shift, and go to state 51
+    '|' 	shift, and go to state 52
+    '^' 	shift, and go to state 53
+
+    $default	reduce using rule 30 (logcond)
+
+
+
+state 73
+
+    logcond  ->  logcond COMPOR binlogcond .   (rule 31)
+    binlogcond  ->  binlogcond . '&' compeq   (rule 34)
+    binlogcond  ->  binlogcond . '|' compeq   (rule 35)
+    binlogcond  ->  binlogcond . '^' compeq   (rule 36)
+
+    '&' 	shift, and go to state 51
+    '|' 	shift, and go to state 52
+    '^' 	shift, and go to state 53
+
+    $default	reduce using rule 31 (logcond)
+
+
+
+state 74
+
+    logcond  ->  logcond COMPXOR binlogcond .   (rule 32)
+    binlogcond  ->  binlogcond . '&' compeq   (rule 34)
+    binlogcond  ->  binlogcond . '|' compeq   (rule 35)
+    binlogcond  ->  binlogcond . '^' compeq   (rule 36)
+
+    '&' 	shift, and go to state 51
+    '|' 	shift, and go to state 52
+    '^' 	shift, and go to state 53
+
+    $default	reduce using rule 32 (logcond)
+
+
+
+state 75
+
+    cond  ->  logcond '?' expr . ':' cond   (rule 28)
+
+    ':' 	shift, and go to state 95
+
+
+
+state 76
+
+    binlogcond  ->  binlogcond '&' compeq .   (rule 34)
+    compeq  ->  compeq . COMPEQ comp   (rule 38)
+    compeq  ->  compeq . COMPNE comp   (rule 39)
+
+    COMPEQ	shift, and go to state 54
+    COMPNE	shift, and go to state 55
+
+    $default	reduce using rule 34 (binlogcond)
+
+
+
+state 77
+
+    binlogcond  ->  binlogcond '|' compeq .   (rule 35)
+    compeq  ->  compeq . COMPEQ comp   (rule 38)
+    compeq  ->  compeq . COMPNE comp   (rule 39)
+
+    COMPEQ	shift, and go to state 54
+    COMPNE	shift, and go to state 55
+
+    $default	reduce using rule 35 (binlogcond)
+
+
+
+state 78
+
+    binlogcond  ->  binlogcond '^' compeq .   (rule 36)
+    compeq  ->  compeq . COMPEQ comp   (rule 38)
+    compeq  ->  compeq . COMPNE comp   (rule 39)
+
+    COMPEQ	shift, and go to state 54
+    COMPNE	shift, and go to state 55
+
+    $default	reduce using rule 36 (binlogcond)
+
+
+
+state 79
+
+    compeq  ->  compeq COMPEQ comp .   (rule 38)
+    comp  ->  comp . COMPLE shift   (rule 41)
+    comp  ->  comp . COMPGE shift   (rule 42)
+    comp  ->  comp . '>' shift   (rule 43)
+    comp  ->  comp . '<' shift   (rule 44)
+
+    COMPLE	shift, and go to state 56
+    COMPGE	shift, and go to state 57
+    '>' 	shift, and go to state 58
+    '<' 	shift, and go to state 59
+
+    $default	reduce using rule 38 (compeq)
+
+
+
+state 80
+
+    compeq  ->  compeq COMPNE comp .   (rule 39)
+    comp  ->  comp . COMPLE shift   (rule 41)
+    comp  ->  comp . COMPGE shift   (rule 42)
+    comp  ->  comp . '>' shift   (rule 43)
+    comp  ->  comp . '<' shift   (rule 44)
+
+    COMPLE	shift, and go to state 56
+    COMPGE	shift, and go to state 57
+    '>' 	shift, and go to state 58
+    '<' 	shift, and go to state 59
+
+    $default	reduce using rule 39 (compeq)
+
+
+
+state 81
+
+    comp  ->  comp COMPLE shift .   (rule 41)
+    shift  ->  shift . LSHIFT factor   (rule 46)
+    shift  ->  shift . RSHIFT factor   (rule 47)
+
+    LSHIFT	shift, and go to state 60
+    RSHIFT	shift, and go to state 61
+
+    $default	reduce using rule 41 (comp)
+
+
+
+state 82
+
+    comp  ->  comp COMPGE shift .   (rule 42)
+    shift  ->  shift . LSHIFT factor   (rule 46)
+    shift  ->  shift . RSHIFT factor   (rule 47)
+
+    LSHIFT	shift, and go to state 60
+    RSHIFT	shift, and go to state 61
+
+    $default	reduce using rule 42 (comp)
+
+
+
+state 83
+
+    comp  ->  comp '>' shift .   (rule 43)
+    shift  ->  shift . LSHIFT factor   (rule 46)
+    shift  ->  shift . RSHIFT factor   (rule 47)
+
+    LSHIFT	shift, and go to state 60
+    RSHIFT	shift, and go to state 61
+
+    $default	reduce using rule 43 (comp)
+
+
+
+state 84
+
+    comp  ->  comp '<' shift .   (rule 44)
+    shift  ->  shift . LSHIFT factor   (rule 46)
+    shift  ->  shift . RSHIFT factor   (rule 47)
+
+    LSHIFT	shift, and go to state 60
+    RSHIFT	shift, and go to state 61
+
+    $default	reduce using rule 44 (comp)
+
+
+
+state 85
+
+    shift  ->  shift LSHIFT factor .   (rule 46)
+    factor  ->  factor . '+' term   (rule 49)
+    factor  ->  factor . '-' term   (rule 50)
+
+    '-' 	shift, and go to state 62
+    '+' 	shift, and go to state 63
+
+    '-' 	[reduce using rule 46 (shift)]
+    $default	reduce using rule 46 (shift)
+
+
+
+state 86
+
+    shift  ->  shift RSHIFT factor .   (rule 47)
+    factor  ->  factor . '+' term   (rule 49)
+    factor  ->  factor . '-' term   (rule 50)
+
+    '-' 	shift, and go to state 62
+    '+' 	shift, and go to state 63
+
+    '-' 	[reduce using rule 47 (shift)]
+    $default	reduce using rule 47 (shift)
+
+
+
+state 87
+
+    factor  ->  factor '-' term .   (rule 50)
+    term  ->  term . '*' unary   (rule 52)
+    term  ->  term . '/' unary   (rule 53)
+
+    '*' 	shift, and go to state 64
+    '/' 	shift, and go to state 65
+
+    $default	reduce using rule 50 (factor)
+
+
+
+state 88
+
+    factor  ->  factor '+' term .   (rule 49)
+    term  ->  term . '*' unary   (rule 52)
+    term  ->  term . '/' unary   (rule 53)
+
+    '*' 	shift, and go to state 64
+    '/' 	shift, and go to state 65
+
+    $default	reduce using rule 49 (factor)
+
+
+
+state 89
+
+    term  ->  term '*' unary .   (rule 52)
+
+    $default	reduce using rule 52 (term)
+
+
+
+state 90
+
+    term  ->  term '/' unary .   (rule 53)
+
+    $default	reduce using rule 53 (term)
+
+
+
+state 91
+
+    comma  ->  comma ',' cond .   (rule 24)
+
+    $default	reduce using rule 24 (comma)
+
+
+
+state 92
+
+    assignline  ->  id expr expr expr expr . expr expr   (rule 16)
+    assignline  ->  id expr expr expr expr . expr   (rule 17)
+    assignline  ->  id expr expr expr expr .   (rule 18)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    IDSTRING	[reduce using rule 18 (assignline)]
+    $default	reduce using rule 18 (assignline)
+
+    expr	go to state 96
+    id  	go to state 23
+    assign	go to state 24
+    cond	go to state 25
+    logcond	go to state 26
+    binlogcond	go to state 27
+    compeq	go to state 28
+    comp	go to state 29
+    shift	go to state 30
+    factor	go to state 31
+    term	go to state 32
+    unary	go to state 33
+    atom	go to state 34
+
+
+
+state 93
+
+    atom  ->  id '(' expr ',' . expr ')'   (rule 63)
+    atom  ->  id '(' expr ',' . expr ',' expr ')'   (rule 64)
+    atom  ->  id '(' expr ',' . expr ',' expr ',' expr ')'   (rule 65)
+    atom  ->  id '(' expr ',' . expr ',' expr ',' expr ',' expr ')'   (rule 66)
+    atom  ->  id '(' expr ',' . expr ',' expr ',' expr ',' expr ',' expr ')'   (rule 67)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    expr	go to state 97
+    id  	go to state 23
+    assign	go to state 24
+    cond	go to state 25
+    logcond	go to state 26
+    binlogcond	go to state 27
+    compeq	go to state 28
+    comp	go to state 29
+    shift	go to state 30
+    factor	go to state 31
+    term	go to state 32
+    unary	go to state 33
+    atom	go to state 34
+
+
+
+state 94
+
+    atom  ->  id '(' expr ')' .   (rule 62)
+
+    $default	reduce using rule 62 (atom)
+
+
+
+state 95
+
+    cond  ->  logcond '?' expr ':' . cond   (rule 28)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    id  	go to state 36
+    cond	go to state 98
+    logcond	go to state 26
+    binlogcond	go to state 27
+    compeq	go to state 28
+    comp	go to state 29
+    shift	go to state 30
+    factor	go to state 31
+    term	go to state 32
+    unary	go to state 33
+    atom	go to state 34
+
+
+
+state 96
+
+    assignline  ->  id expr expr expr expr expr . expr   (rule 16)
+    assignline  ->  id expr expr expr expr expr .   (rule 17)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    IDSTRING	[reduce using rule 17 (assignline)]
+    $default	reduce using rule 17 (assignline)
+
+    expr	go to state 99
+    id  	go to state 23
+    assign	go to state 24
+    cond	go to state 25
+    logcond	go to state 26
+    binlogcond	go to state 27
+    compeq	go to state 28
+    comp	go to state 29
+    shift	go to state 30
+    factor	go to state 31
+    term	go to state 32
+    unary	go to state 33
+    atom	go to state 34
+
+
+
+state 97
+
+    atom  ->  id '(' expr ',' expr . ')'   (rule 63)
+    atom  ->  id '(' expr ',' expr . ',' expr ')'   (rule 64)
+    atom  ->  id '(' expr ',' expr . ',' expr ',' expr ')'   (rule 65)
+    atom  ->  id '(' expr ',' expr . ',' expr ',' expr ',' expr ')'   (rule 66)
+    atom  ->  id '(' expr ',' expr . ',' expr ',' expr ',' expr ',' expr ')'   (rule 67)
+
+    ',' 	shift, and go to state 100
+    ')' 	shift, and go to state 101
+
+
+
+state 98
+
+    cond  ->  logcond '?' expr ':' cond .   (rule 28)
+
+    $default	reduce using rule 28 (cond)
+
+
+
+state 99
+
+    assignline  ->  id expr expr expr expr expr expr .   (rule 16)
+
+    $default	reduce using rule 16 (assignline)
+
+
+
+state 100
+
+    atom  ->  id '(' expr ',' expr ',' . expr ')'   (rule 64)
+    atom  ->  id '(' expr ',' expr ',' . expr ',' expr ')'   (rule 65)
+    atom  ->  id '(' expr ',' expr ',' . expr ',' expr ',' expr ')'   (rule 66)
+    atom  ->  id '(' expr ',' expr ',' . expr ',' expr ',' expr ',' expr ')'   (rule 67)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    expr	go to state 102
+    id  	go to state 23
+    assign	go to state 24
+    cond	go to state 25
+    logcond	go to state 26
+    binlogcond	go to state 27
+    compeq	go to state 28
+    comp	go to state 29
+    shift	go to state 30
+    factor	go to state 31
+    term	go to state 32
+    unary	go to state 33
+    atom	go to state 34
+
+
+
+state 101
+
+    atom  ->  id '(' expr ',' expr ')' .   (rule 63)
+
+    $default	reduce using rule 63 (atom)
+
+
+
+state 102
+
+    atom  ->  id '(' expr ',' expr ',' expr . ')'   (rule 64)
+    atom  ->  id '(' expr ',' expr ',' expr . ',' expr ')'   (rule 65)
+    atom  ->  id '(' expr ',' expr ',' expr . ',' expr ',' expr ')'   (rule 66)
+    atom  ->  id '(' expr ',' expr ',' expr . ',' expr ',' expr ',' expr ')'   (rule 67)
+
+    ',' 	shift, and go to state 103
+    ')' 	shift, and go to state 104
+
+
+
+state 103
+
+    atom  ->  id '(' expr ',' expr ',' expr ',' . expr ')'   (rule 65)
+    atom  ->  id '(' expr ',' expr ',' expr ',' . expr ',' expr ')'   (rule 66)
+    atom  ->  id '(' expr ',' expr ',' expr ',' . expr ',' expr ',' expr ')'   (rule 67)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    expr	go to state 105
+    id  	go to state 23
+    assign	go to state 24
+    cond	go to state 25
+    logcond	go to state 26
+    binlogcond	go to state 27
+    compeq	go to state 28
+    comp	go to state 29
+    shift	go to state 30
+    factor	go to state 31
+    term	go to state 32
+    unary	go to state 33
+    atom	go to state 34
+
+
+
+state 104
+
+    atom  ->  id '(' expr ',' expr ',' expr ')' .   (rule 64)
+
+    $default	reduce using rule 64 (atom)
+
+
+
+state 105
+
+    atom  ->  id '(' expr ',' expr ',' expr ',' expr . ')'   (rule 65)
+    atom  ->  id '(' expr ',' expr ',' expr ',' expr . ',' expr ')'   (rule 66)
+    atom  ->  id '(' expr ',' expr ',' expr ',' expr . ',' expr ',' expr ')'   (rule 67)
+
+    ',' 	shift, and go to state 106
+    ')' 	shift, and go to state 107
+
+
+
+state 106
+
+    atom  ->  id '(' expr ',' expr ',' expr ',' expr ',' . expr ')'   (rule 66)
+    atom  ->  id '(' expr ',' expr ',' expr ',' expr ',' . expr ',' expr ')'   (rule 67)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    expr	go to state 108
+    id  	go to state 23
+    assign	go to state 24
+    cond	go to state 25
+    logcond	go to state 26
+    binlogcond	go to state 27
+    compeq	go to state 28
+    comp	go to state 29
+    shift	go to state 30
+    factor	go to state 31
+    term	go to state 32
+    unary	go to state 33
+    atom	go to state 34
+
+
+
+state 107
+
+    atom  ->  id '(' expr ',' expr ',' expr ',' expr ')' .   (rule 65)
+
+    $default	reduce using rule 65 (atom)
+
+
+
+state 108
+
+    atom  ->  id '(' expr ',' expr ',' expr ',' expr ',' expr . ')'   (rule 66)
+    atom  ->  id '(' expr ',' expr ',' expr ',' expr ',' expr . ',' expr ')'   (rule 67)
+
+    ',' 	shift, and go to state 109
+    ')' 	shift, and go to state 110
+
+
+
+state 109
+
+    atom  ->  id '(' expr ',' expr ',' expr ',' expr ',' expr ',' . expr ')'   (rule 67)
+
+    NUM 	shift, and go to state 13
+    STRING	shift, and go to state 14
+    IDSTRING	shift, and go to state 15
+    ERR 	shift, and go to state 16
+    '-' 	shift, and go to state 18
+    '!' 	shift, and go to state 19
+    '~' 	shift, and go to state 20
+    '(' 	shift, and go to state 21
+
+    expr	go to state 111
+    id  	go to state 23
+    assign	go to state 24
+    cond	go to state 25
+    logcond	go to state 26
+    binlogcond	go to state 27
+    compeq	go to state 28
+    comp	go to state 29
+    shift	go to state 30
+    factor	go to state 31
+    term	go to state 32
+    unary	go to state 33
+    atom	go to state 34
+
+
+
+state 110
+
+    atom  ->  id '(' expr ',' expr ',' expr ',' expr ',' expr ')' .   (rule 66)
+
+    $default	reduce using rule 66 (atom)
+
+
+
+state 111
+
+    atom  ->  id '(' expr ',' expr ',' expr ',' expr ',' expr ',' expr . ')'   (rule 67)
+
+    ')' 	shift, and go to state 112
+
+
+
+state 112
+
+    atom  ->  id '(' expr ',' expr ',' expr ',' expr ',' expr ',' expr ')' .   (rule 67)
+
+    $default	reduce using rule 67 (atom)
+
+
+
+state 113
+
+    $   	go to state 114
+
+
+
+state 114
+
+    $default	accept

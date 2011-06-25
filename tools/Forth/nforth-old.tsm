@@ -1,0 +1,426 @@
+
+;	nforth.tsm					-- main FORTH ROM controller
+;
+;	(c) 1996-2001 Edward Swartz
+;
+;	This program is free software; you can redistribute it and/or modify
+;	it under the terms of the GNU General Public License as
+;	published by the Free Software Foundation; either version 2 of
+;	the License, or (at your option) any later version.
+; 
+;	This program is distributed in the hope that it will be useful,
+;	but WITHOUT ANY WARRANTY; without even the implied warranty of
+;	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the
+;	GNU General Public License for more details.
+; 
+;	You should have received a copy of the GNU General Public
+;	License along with this library; if not, write to the Free Software
+;	Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+;	02111-1307, USA.
+;
+;	$Id: nforth.tsm,v 1.7 2008-10-19 14:41:59 ejs Exp $
+
+;===========================================================================
+;	V9T9 ROM!
+;===========================================================================
+
+;	stack pointer
+SP	equ		10
+
+	incl	general.i
+	incl	ram.i
+
+;==========================================================================
+;	ROM start
+;==========================================================================
+
+	aorg	>0
+
+resetv	dw	mainws,reset		; vector for RESET
+intv	dw	intws,int		; vector for INTERRUPTS
+
+;------------------------------
+
+hunder	byte	"_"
+
+	aorg	>c
+
+	db	>30,>AA
+
+	aorg 	>40
+
+xop0v	dw 0,0
+xop1v	dw	xopws,xop1			; vector for XOP 1
+
+	aorg	>4A
+
+	dw		the_end				; flag for forth rom
+
+xop1list dw	xop1_0,xop1_1,xop1_2,xop1_3,xop1_4
+	dw		xop1_5,xop1_6,xop1_7,xop1_8,xop1_9
+	dw		xop1_10,xop1_11,xop1_12,xop1_13,xop1_14
+	dw		xop1_15,xop1_16,xop1_17
+xop1last equ $
+
+;	xop <arg> , 0
+;	data <op>
+;
+xop1
+	limi 0
+	mov @SP SP +(13), SP			; stack ptr
+	dect SP
+	mov 12 , *SP
+	mov 11 , 12				; copy op ptr
+
+	mov	+*14,1				; code
+	ci	1,1
+	jl	xop1_out
+	ci	1,xop1last xop1list - 2 /
+	jle	xop1_pick
+xop1_out
+xop1_0
+	mov +*SP, 12
+	rtwp
+
+xop1_pick
+	a	1,1
+	mov	@xop1list(1),1
+	b	*1
+	
+	;	1 = keyavail?
+xop1_1 
+;	limi 0
+	bl	@kbdavail
+	clr	*12
+	jeq xop1_1_out
+	seto *12
+xop1_1_out
+;	limi 1
+	jmp xop1_out
+
+	;	2 = readkey
+xop1_2	
+;	limi 0
+	bl	@kbdread
+;	swpb 1
+	mov	0,*12
+;	limi 1
+	jmp xop1_out
+
+	;	3 = emit (interpreted)
+xop1_3
+	mov	*12,1
+;	swpb 1
+;	andi 1,>ff00
+;	limi 0
+	ci	 1,>0d			 ; enter?
+	jne	 C_Em00
+	bl	 @crlf
+	jmp	 c_Em99
+
+C_Em00  ci	  1,>07			 ; bell?
+	jne	 C_Em01
+	nop
+	jmp	 C_Em99
+
+C_Em01  ci	  1,>08			 ; backspace?
+	jeq	 C_Em010
+	ci	 1, 211 
+	jne	 C_Em02
+c_Em010
+	bl	 @bksp
+	jmp	 C_Em99
+
+C_Em02  ci	  1,>09			 ; tab?
+	jne	 C_Em98
+	bl	 @tab
+	jmp	 C_Em99
+
+C_Em98  swpb 1
+	bl @printchar
+C_Em99 ; limi	1
+	jmp xop1_out
+
+	;	4 = emit, not interpreted
+xop1_4
+;	limi 0
+	mov *12,1
+	bl	@printchar
+;	limi 1
+	jmp xop1_out
+
+	; 	5 = gotoxy
+xop1_5
+	mov *12,0		; hi=x, lo=y
+	bl @gotoxy
+	jmp xop1_out
+
+	;	6 = cls (text)
+xop1_6
+	mov @vclear,1
+	blwp *1
+	jmp xop1_out
+
+	;	7 = text window offs X/Y, size X/Y
+	;	
+xop1_7
+	mov *12, 0
+	mov @2(12), 1
+	bl @window
+	jmp xop1_out
+
+	;	8 = report text window offs X/Y, size X/Y
+xop1_8
+	movb @vwx, +*12
+	movb @vwy, +*12
+	movb @vwxs, +*12
+	movb @vwys, +*12
+	jmp xop1_out
+
+	;	9 = graphics mode (mode # 0=graphics, 1=text, 2=bitmap, 3=mono)
+xop1_9
+	mov *12, 1
+	bl @vsetmode
+	jmp xop1_out
+
+	;	10 = set colors (Fg|bg)
+xop1_10:
+	movb *12, 0
+	bl @vsetcolor
+	jmp xop1_out
+
+	;	11 = get colors (Fg|bg)
+xop1_11:
+	movb @vfgbg, *12
+	jmp xop1_out
+
+	;	12 = draw line (x1, y1, x2, y2)
+xop1_12:
+	mov +*12, 1
+	mov +*12, 2
+	mov +*12, 3
+	mov +*12, 4
+	blwp @vbitline
+	jmp xop1_out
+
+	;	13 = draw pixel (x1, y1)
+xop1_13:
+	mov +*12, 1
+	mov *12, 2
+	blwp @vbitpixel
+	jmp xop1_out
+
+	;	14 = set draw function (0=set, 1=reset, 2=xor)
+xop1_14:
+	mov *12, 1
+	bl @vsetbitfunc
+	jmp xop1_out
+
+	;	15 = control video int (0=normal, 1=no blink/blank)
+xop1_15:
+	movb @1(12), @vfixed
+	jmp xop1_out
+
+	;	16 = set bitmap font (0 = 8x8, 1 = 6x8)
+xop1_16:
+	mov *12, 1
+	bl @vbitfont
+	jmp xop1_out
+
+	;	17 = generate pseudorandom number
+xop1_17:
+	bl @random
+	mov 0, *12
+	jmp xop1_out
+
+random:
+	mov @randseed1, 0
+	mov 0, 1
+	srl 0, 1
+	andi 1, 1
+	neg 1
+	andi 1, >B400
+	xor 1, 0
+	mov 0, @randseed1
+
+	li 2, >6fe5
+	mpy @randseed2, 2
+	ai 5, >7ab9
+	mov 5, @randseed2
+
+	a	@uptime, 0
+	src 5, 0
+	xor 5, 0
+	xor @randnoise, 0
+	rt
+
+;------------------------------
+
+h00 equ $
+h1	data	1
+h01 equ $ 1-
+h7	data	7
+; h00	byte	0
+; h01	byte	1
+hff	byte	>ff
+kbdbufmask db	0 kbdbufsize -
+h40	byte	>40
+h81	byte	>81
+h80	byte	>80
+h20	byte	>20
+haa55	dw	>aa55
+
+;------------------------------
+
+sinit	li	SP,sysstack sysstacksize +
+	clr @>1000
+
+	clr	@uptime
+	clr	@uptime 2 +
+	clr	@timeout
+	clr	@userint
+	li 0, >ACE1
+	mov 0,@randseed1
+	clr @randseed2
+	clr @randnoise
+
+	rt
+
+
+	incl	int.i
+
+	incl	video.i
+	incl	kbd.i
+	
+	incl	term.i
+
+	incl	dev.i
+
+reset   limi	0
+	bl	@sinit			; system init
+	bl	@vinit			; video init
+	bl	@kinit			; keyboard init
+	bl	@tinit			; terminal init
+	bl	@dinit			; device init
+
+	bl	@diskinit		; disk init
+
+boot:	clr	12
+	sbz	0			; Interrupt mode
+	sbo	1			; Enable external interrupts
+	sbo	2			; Enable VDP interrupts
+	sbz	3			; Disable clock interrupts
+
+	c	@>6000,@haa55		; rom loaded?
+	jne	booterr
+	b @boot0
+
+booterr:
+ 	li	2,noromerr
+	b	@dieerr
+
+noromerr db	"No FORTH ROM found!",>ff
+	db	"Be sure you select 'Forth Kernel' from",>ff
+	db	"the startup selection list if you",>ff
+	db	"want to run FORTH.",>ff,>ff
+	db	"(See FORTH.TXT for info.)",>ff,>ff
+	db	"Press Ctrl+Break to halt, or",>ff
+	db	"Ctrl+F8 to load the kernel module.",0
+	even
+
+boot0:
+	; see if we have GROM extension
+	li 0, >6000
+	bl @gwaddr
+
+	bl @copyram
+
+boot1:
+	mov	@>4A,0		; @>4A is end of our memory
+	mov	*0, 0		; ... at which is the FORTH entry address
+	b	*0 
+
+;	Copy memory from GROM into RAM
+;
+;	GROM addr should be set
+;
+;	If memory block exists, it is in the form:
+;	<aa55> <start RAM addr> <end RAM addr> <data...>
+;
+copyram: 
+;	dbg
+	si	SP,2
+	mov	11,*SP
+
+cr0:
+	movb @GPLRD, 0
+	swpb 0
+	movb @GPLRD, 0
+	swpb 0			; R1 = start addr in RAM
+	ci 0, >aa55
+	jne cr1			; no GROM block
+
+	movb @GPLRD, 1
+	swpb 1
+	movb @GPLRD, 1
+	swpb 1			; R1 = start addr in RAM
+
+	movb @GPLRD, 2
+	swpb 2
+	movb @GPLRD, 2
+	swpb 2			; R2 = end addr in RAM
+
+	ai 1, 6
+	jmp cr3
+
+	;	copy data into RAM
+cr2:
+	movb @GPLRD, +*1
+	movb @GPLRD, +*1
+cr3:
+	c 1, 2
+	jl cr2
+
+	jmp cr0
+
+cr1:
+	mov	+*SP,11
+	rt
+
+
+;	Print an error message
+;	
+;	R2 = message
+;
+errmsg: si	SP,2
+	mov	11,*SP
+errmsg0:
+	clr	1
+	movb +*2,1
+	jeq	errret
+	cb	1,@hff
+	jeq	errprcr
+	bl	@printchar
+	jmp	errmsg0
+errprcr bl	@crlf
+	jmp	errmsg0
+errret	mov	+*SP,11
+	rt
+
+;	Print an error message and die
+;	
+;	R2 = message
+;
+dieerr:	bl	@errmsg
+	jmp	$
+
+the_end equ $
+
+	aorg 	>1ffe
+	dw 	>ed99
+
+
+
+
+
+

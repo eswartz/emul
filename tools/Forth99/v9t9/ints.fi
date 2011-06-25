@@ -1,0 +1,138 @@
+
+:   ints-check
+    ints-on ints-off
+;
+
+\   Last VDP status
+1       RamVar vdp-status
+
+|+ cell RamVar 'vsprmot
+
+\   Timer
+2 cells RamVar    vdp-ticks 
+cell    RamVar    vdp-timeout
+
+:   v-intflag-off?  ( mask -- t|f )
+    v-intflags c@  AND  0=
+;
+
+:   vdp-int-handler 
+    'INTS c@  
+    dup M_INT_VDP and 0=  if drop exiti  then 
+
+    \ acknowledge interrupt
+    [ M_INT_VDP invert literal ] and  'INTSP c!
+    
+    \ acknowledge VDP
+    VDPST c@  vdp-status c!
+    
+    \ timer
+    1. vdp-ticks d+!
+
+    \ timeout
+    1 vdp-timeout +!
+    vdp-timeout @ 0= if
+        false vid-show
+    then  
+    
+    \ keyboard timer
+    kbdtimer c@ 1+ kbdtimer c!    
+    
+    \ scan keyboard
+    
+    kbd-scan
+    
+    \ do other (expensive) things if interrupts allow
+    v-int-nocursor v-intflag-off? if 
+        update-cursor
+    then
+    
+    v-int-nosprmot v-intflag-off? if 
+        'vsprmot @ ?dup if  execute  then
+    then
+    
+    exiti
+;
+
+:   kbd-int-handler
+    'INTS c@  
+    dup M_INT_KBD and if
+        \ [char] K demit
+     
+        \ acknowledge interrupt
+        [ M_INT_KBD invert literal ]  and  'INTSP c!
+        
+        kbd-scan
+    else
+        drop
+    then
+    exiti
+;
+
+:   nmi-int-handler
+    \ acknowledge all interrupts
+    $00 'INTSP c!
+    \ reset mask
+    0  [ ItoContext c,  CTX_SR field, ] 
+    
+    $00 msx-cmdsetup
+    err-abort throw
+    \ exiti       \ NOTREACHED
+;
+
+:   fault-int-handler   ( rp sp st pc -- )
+    err-fault >message  v-screen @  5  +gvmove
+    begin (idle) again
+    \ exiti         \ NOTREACHED
+;
+
+:   >int-vec ( num -- )
+    2*  IntVecs +
+;
+:   set-int-vec ( addr num -- )
+    >int-vec  !
+;
+
+:   enable-int ( addr num -- )
+    dup >r   set-int-vec
+
+    \ enable bit
+    'INTS c@  1 r> lshift  or  'INTS c!
+
+;
+
+:   call-int    ( num -- )
+    >int-vec @  
+    7  [ IcontextFrom c,  CTX_INT field, ] >r 
+    execute
+;
+
+:   ints-init
+    ints-off
+    0 'vsprmot !
+ \   ['] kbd-int-handler     INT_KBD    enable-int
+    ['] fault-int-handler   INT_FAULT   set-int-vec
+    ['] bye                 INT_RESET   set-int-vec
+    ['] nmi-int-handler     INT_NMI     set-int-vec
+    ['] vdp-int-handler     INT_VDP     enable-int
+;
+
+( execute 'xt' for up to 'ms' mseconds until it returns !0; return 0 if timeout )
+:: (ms) ( msecs xt -- result )
+    msecs 60 1000 U*/  s>d
+    vdp-ticks d@  d+  :> h-limit :> l-limit
+    
+    begin
+        xt execute
+        ?dup if exit then
+        ints-check
+        vdp-ticks d@  l-limit h-limit  d>=  if  false exit  then
+    again
+;
+
+1 <export
+
+: ms  ['] false (ms) drop  ;
+
+export>
+

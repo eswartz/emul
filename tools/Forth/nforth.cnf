@@ -1,0 +1,40 @@
+# run as v9t9 -c nforth.cnf
+log all off
+
+.print InstallDir()
+ROMSPath=".:" + InstallDir()+"forth/roms:" + InstallDir()+"dsrs:" + \
+		"../Forth:" + "../DSRs:."
+
+ModulesPath=".:" + InstallDir()+"forth/roms:" + InstallDir()+"tools/Forth:."
+SessionsPath="."
+
+#DefineMemory "RG" 0x0 -24576 "nforth.grm" 0 "Console GROM" 
+#DefineMemory "RC" 0x6000 8192 "nforthc.bin" 0 "FORTH ROM" 
+#DefineMemory "RG" 0x6000 -40960 "nforthg.bin" 0 "FORTH GROM"
+
+#ConsoleROMFileName "nforth.rom" 
+DefineMemory "RC1" 0x0 8192 "nforthA.rom" 0 "Console ROM 1" 
+DefineMemory "RC2" 0x0 8192 "nforthB.rom" 0 "Console ROM 2" 
+
+ConsoleGROMFileName "nforth.grm" 
+
+MemoryExpansion32K=on
+RealTime=off
+
+playsound off
+togglev9t9 "sndESD" off
+togglev9t9 "sndALSA" off
+togglev9t9 "sndOSS" off
+togglev9t9 "sndESD" off
+togglev9t9 "dsrRealDisk" off
+togglev9t9 "dsrEmuDisk" on
+togglev9t9 "dsrRealRS232" off
+DSK1Path="."
+
+UnknownFileIsText on
+
+InitModuleDatabase
+DefineModule "FORT" "Forth dictionary" "nforth" ROM+GROM
+
+DSK1Path "./lib"
+LoadModule "forth"

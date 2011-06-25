@@ -1,0 +1,999 @@
+
+\   V9t9 FORTH Block Editor (character mode)
+\
+\   This edits one block as a collection of NL-terminated lines.  
+\   Thus, technically up to 1024 lines may live in one line.  
+\   The constants c/l and l/blk do not directly map to the logical
+\   lines, just the physical boundaries on the screen. 
+
+0 <export
+
+10 constant nl
+
+2 constant tab-size
+
+User 'lastscr
+User 'lastline
+User 'lastcol
+
+\ scroll position
+User 'scrx
+User 'scry
+
+
+
+\   Cursor line 
+User 'line      ( 0 - l/blk )
+
+\   Cursor column 
+User 'col       ( 0 - c/l )
+
+\   Current line addr 
+User 'laddr     ( baddr - baddr+blocksize )
+
+\   Current line content end addr (at NL or past end of block) 
+User 'laddr)    ( baddr - baddr+blocksize )
+
+\   Current next line addr == 'laddr) if no line else 1+ that
+User 'laddr+    ( 'laddr-end - baddr+blocksize )
+
+User ovr        ( insert/overwrite flag )
+
+\ current block start
+User 'baddr
+
+\ effective end of block (last non-blank char)
+User 'baddr)
+
+\ effective end of block (last non-blank char)
+User 'lines
+
+\ indicate that the block needs to be refreshed and redrawn; don't move cursor, though
+: redraw-block
+    $36 fl|
+;
+
+\ Fetch the block with cursor turned off as a signal about load time
+: fetch-block
+    <video  >r
+    
+    scr @  ['] block  catch
+    ?dup if
+        edit.message
+        
+        \ fix the block, assuming it's out of bounds, and redraw
+        'lastscr @  1 max  scr !  redraw-block   
+          
+        scr @ block  ( rethrows otherwise )
+    then
+    
+    r>  video>
+;
+
+\ Get current block bounds -- count spaces so we can type spaces at EOF
+: baddrs!  ( -- )
+    fetch-block
+    
+    dup 'baddr !
+    
+    1 'lines !
+    
+    dup :> last
+    
+    chars/block  over + 
+    swap  do
+        i c@  dup  bl >= if
+            drop 
+            i  to last
+        else
+            nl = if
+                1 'lines +!
+                i to last
+            then                 
+        then
+    loop
+    
+    last 1+  baddr  chars/block +  min  'baddr)  !
+    
+    laddrs!
+;
+
+: baddr
+    'baddr @
+;
+    
+\ Get end of block (excl)
+: baddr) 
+    'baddr) @
+;
+
+\ Get end of the line starting at this address,
+\ bounded by a physical end
+\ (exclusive)
+:: (>lend) ( laddr pend -- laddr-end )
+    pend laddr ?do
+        i c@  dup  NL =  swap 0=  OR 
+        if
+            i 1+  unloop exit
+        then
+    loop
+    pend
+;
+
+\ Get end of the line starting at this address
+\ (exclusive)
+: >lend ( laddr -- laddr-end )
+    baddr)  (>lend)
+;
+
+: to-line ( num -- laddr )
+    baddr
+    swap 0 ?do
+       >lend 
+    loop
+;
+
+
+\ Update bounds for the line
+: laddrs!   ( -- )
+    'line @ to-line  
+    dup    'laddr   ! 
+    
+    >lend  
+    dup    'laddr+  !
+    dup baddr)  < if
+        1-
+    then
+           'laddr) !
+;
+
+\ Get length of content on line (not including NL)
+: >llen ( -- len )
+    'laddr) @  'laddr @  -
+;
+
+\   Point to cursor position on the line
+: >curs  ( -- caddr )
+    'laddr @  'col @  +
+;
+
+\   Delete the range of characters and clear the end of the block
+:: delete-range ( caddr count -- )
+    caddr count +  baddr)  min  caddr -  to count
+    
+    baddr)  caddr count +  -  :> tomove 
+    
+    caddr count +  caddr  tomove  cmove
+    
+    count negate dup dup
+        'baddr)  +!  
+        'laddr)  +!
+        'laddr+  +!
+    
+    baddr) count  erase
+;
+
+\   Move text blanks into the range of characters 
+:: insert-range ( caddr count -- )
+    baddr chars/block + :> bmax
+    
+    \ sanity
+    bmax  caddr count +  min  caddr -  0 max  to count
+
+    \ grow now
+    count  baddr) +  bmax  min  'baddr) ! 
+       
+    \ clip the chars to move based on block space
+    baddr) caddr - count -  0 max :> tomove
+    
+    \ move...
+    caddr  dup count +  tomove  cmove>
+    
+    \ and clear new area
+    caddr  count  bl fill
+    
+    count  dup
+        'laddr)  +!
+        'laddr+  +!
+    
+;
+
+\ -----------------------------------------------------
+
+
+\   Flags: result of last command(s)
+\
+\       $1: content changed, possibly only current line
+\       $2: cursor moved OR redraw status
+\       $4: redraw block
+\       $8: move cursor to upper-left
+User 'fl
+
+: fl|
+    'fl  |!
+;
+
+\   Move the cursor left or right, indicating whether a line adjustment
+\   is needed when one end or the other is hit.
+: ^curs ( cadj -- ladj )
+    'col +! 
+    'col @   0< if
+        $7fff 'col !
+        $60 fl| 
+        -1
+    else
+        \ >llen  > if 
+        \    0 'col !     1
+        \ else
+                         0
+        \ then
+    then
+;    
+
+\   Delete a character at the current spot and add blank at end.
+: ^del  ( -- )
+    >curs  
+    dup c@  NL = if  $7 fl|  then
+    1  delete-range
+;
+
+\   Insert a character at the current spot and bump the cursor.
+\   Yield the line adjustment (0 or 1) depending on if we hit the end.
+: ^ins  ( ch -- ladj )
+    >curs dup  1  insert-range
+    c!                       ( inject char )
+    1 ^curs
+;
+
+\   Set the character at the current spot and bump the cursor.
+\   Yield the line adjustment (0 or 1) depending on if we hit the end.
+: ^chr ( ch -- ladj )
+    \ TODO: if at newline
+    >curs c!
+    1 ^curs
+;
+
+: caddr>col!    ( caddr -- )
+    'laddr @  -  'col !
+;
+ 
+\   Move to the first non-whitespace char of a line,
+\   or the absolute beginning if only whitespace precedes.
+: ^home ( --  )
+    >curs  'laddr @  ?do
+        i  c@  bl >  if 
+            i caddr>col!  unloop  exit  
+        then
+    loop
+    0 'col !
+;
+
+\   Move past the last non-whitespace char of a line (backing up if already beyond it)
+: ^end ( -- )
+    'laddr @  'laddr) @  do  \ reverse loop
+        i 1-  c@  bl > if
+            i caddr>col!  unloop  exit
+        then
+    -1 u+loop
+    0 'col !
+;
+
+\ Insert spaces so the column is inside the line
+: space-to-column ( -- )
+    'col @ dup  0<  if
+        drop
+        0 'col ! 
+    else
+        >llen 2dup > if
+            -   'laddr) @  swap   insert-range
+        else
+            2drop 
+        then
+    then
+;
+
+\   Insert or overwrite a character (insert or overwrite), 
+\   yielding line adjustment if we hit the end.
+: ^char  ( ch -- ladj )
+    space-to-column
+    ovr @  
+    >curs c@ nl <>      \ can't "overwrite" a newline; this adds to the line
+    and if ^chr else ^ins then
+;
+
+\   Find the next tab position in the given direction
+\   (on the same line).  May span past EOL for insertion.
+: +tab ( col dir -- col )
+    0> if
+        tab-size + 
+    else
+        tab-size - 0 max
+    then
+    tab-size negate and
+;
+
+\ -------------------------------------------------------------
+
+
+\   Move the line pointer in a direction, wrapping around
+\   and yielding the block adjustment (-1, 0, 1)
+: ~curs ( ladj -- badj )
+    'line +!
+    'line @  dup  0< if
+        0 'line !    
+        drop 
+    else
+        'lines @  >= if !next-page then  
+    then
+    0
+;
+
+\   Set up a move between the current and next line
+: [line) ( --  lpos nch )
+    'laddr @  'laddr+ @  over -      
+;    
+
+\   Delete the current line, shifting others up.
+: ~del ( -- )
+    ^home
+    [line)  delete-range
+    0  'col  !
+;
+
+\   Insert a copy of the current line, shifting others down.
+\   No effect on last line.
+\   Keeps the same line.
+: ~ins> ( -- )
+    [line)  2dup  insert-range
+    >r  dup  r@ +  swap  r>   cmove
+;
+
+\   Insert a new line, shifting others down.
+: ~ins ( -- )
+    >curs dup  1  insert-range
+    nl swap c!
+;
+
+\   Copy part of a line into TIB
+: copy-tib ( laddr n -- )
+    >r TIB r@  cmove
+    nl  TIB r> +  c!
+;
+
+\   Copy the current line to TIB.
+: !copy-line ( -- )
+    [line)  copy-tib
+;
+
+\   Paste the current line from TIB.
+: !paste (  -- )
+    TIB  dup #TIB +  (>lend) 1-  TIB -
+    
+    >r
+    
+    >curs  dup  r@  insert-range
+    TIB swap r@  cmove
+    
+    r> ^curs  drop
+;
+
+\   Duplicate the line and move down without affecting clip.
+\   Return buffer adj if we need to go to the next buffer.
+: ~dup ( -- badj )
+    
+    \ insert and copy line
+    ~ins>
+    
+    \ move down
+    1 'line +!
+    
+    0
+;
+
+
+: pause begin key? while key drop repeat  key drop ;
+: trace [char] ( emit r@ u. [char] ) emit space .s cr pause ;
+
+\ Editor table
+\
+\ entries: [ flag | keycode ] | xt
+\
+
+
+: !left  -1 ^curs ~curs scr +! ;     
+: !right  1 ^curs ~curs scr +! ;      
+
+: !up  -1 ~curs scr +! ;           
+: !down  1 ~curs scr +! ;           
+
+: !block-down 1 scr +! ;
+: !block-up -1 scr +! ;
+
+\   dup; down    
+: !dup-line  ~dup scr +! ;               
+
+: !prev-page 0 'line @ l/blk - max  'line ! ;
+                 
+: !next-page 'lines @  1-  'line @ l/blk + min  0 max  'line ! ;  
+
+\   erase line contents (copying what's deleted)
+: (erase) ( laddr c -- ) 2dup copy-tib  delete-range ; 
+: !erase 
+    [line)  (erase)
+;
+
+\   erase end of line contents
+: !erase-to 
+    >curs  'laddr) @    over -  (erase)
+;
+                
+\   insert/overwrite mode   
+: !ins/ovr  ovr @ not ovr ! ;
+
+: fix-column
+    >llen  'col @  min  'col !
+;
+
+\   delete one char back
+: !bksp !left  laddrs!  fix-column  ^del ;
+
+\   Figure out how to tab in a given direction
+: (tab)   ( baddr dir -- tabcol col )
+    >r 
+     'col @  dup r>  +tab  swap 
+;
+
+
+: !tab   
+   1 (tab)
+   ?do bl ^char drop loop 
+;
+
+: !untab  
+  -1 (tab)
+    ?do  !bksp -1 +loop
+;
+
+\   enter: 
+\       overwrite mode: go to next line at indent of current line
+\       insert mode: split line
+: !enter 
+    ovr @ if
+        ^home 
+    else 
+        nl ^ins drop
+        0 'col !
+        1 'lines +!
+        $15 fl|    \ this flag only set in insert mode
+    then
+    1 ~curs
+    scr +!
+; 
+
+\   Join lines (e.g. delete newline)
+: !join  
+    'laddr) @  1  delete-range
+;
+        
+: !clear 
+    baddr chars/block erase
+; 
+
+\   load the buffer
+: !load  
+    intp.window  
+    
+    scr @  ['] load catch 
+
+    edit.window 
+
+    edit.message    
+;
+
+: !exit  editor.exit ;                     
+: !interpret 
+    intp.window  
+    \ &11 emit  \ vertical tab, clear to EOL -- not implemented
+    \ cr
+    quit 
+;
+
+
+:: draw-window ( x y sx sy -- )
+    full!
+    
+    \ draw border around editor 
+    x 1-  y 1-      at-xy       
+    &250 emit  &243 sx hchar  
+    x sx +  y 1-    at-xy
+    &249 emit
+
+    x 1-    y  at-xy   &252  sy  vchar
+    x sx +  y  at-xy   &252  sy  vchar
+
+    x 1-
+    y sy +          at-xy
+    &246 emit  &243 sx hchar
+    x sx +   
+    y sy +          at-xy
+    &245 emit
+
+    sx sy  x y  win!
+;
+
+:: draw-centered-window ( sx sy -- )
+    win-mx @  sx -  2/
+    win-my @  sy -  2/
+    sx sy
+    draw-window
+;
+
+: !refresh
+    baddrs!
+    edit.drawui 
+;
+
+: !help  
+    68 14  $C $F  message-window
+    
+    >grom_editorhelp g@
+
+    14 0 do
+        2 i at-xy
+        (gtypez) 
+    loop
+    
+    drop
+
+    dismiss-window 
+;
+
+\ 221=shift bksp
+\ 222=shift tab
+
+\   Flags:
+\       $1: content changed, possibly only current line
+\       $2: cursor moved OR redraw status
+\       $4: redraw block
+\       $8: move cursor to upper-left
+\      $10: recalculate line count
+\      $20: recalculate line bounds
+\      $40: recalculate column
+
+create edittab 
+    &3   ( ctrl-c copy line )               $10 c, c,  ' !copy-line ,
+    &4   ( ctrl-d delete line, no copy )    $35 c, c,  ' ~del ,
+    &8   ( bksp )                           $33 c, c,  ' !bksp ,
+    &9   ( tab )                            $33 c, c,  ' !tab ,
+    &10  ( ctrl-j join lines )              $37 c, c,  ' !join ,   
+    &11  ( ctrl-k clear end of line )       $23 c, c,  ' !erase-to ,   
+    &12  ( ctrl-l load )                    $02 c, c,  ' !load ,
+    &13  ( enter )                          $32 c, c,  ' !enter ,
+    &19  ( ctrl-s save )                    $02 c, c,  ' flush ,
+    &22  ( ctrl-v paste line )              $31 c, c,  ' !paste ,
+    &152 ( fctn-0 end )                     $02 c, c,  ' ^end ,
+    &153 ( fctn-1 delete char )             $33 c, c,  ' ^del ,
+    &154 ( fctn-2 insert/overwrite mode )   $02 c, c,  ' !ins/ovr ,
+    &155 ( fctn-3 erase line )              $33 c, c,  ' !erase ,   
+    &156 ( fctn-4 to end line )             $22 c, c,  ' !next-page ,
+    &157 ( fctn-5 home )                    $22 c, c,  ' ^home  ,
+    &158 ( fctn-6 to first line )           $22 c, c,  ' !prev-page ,
+    &159 ( fctn-7 help          )           $06 c, c,  ' !help ,
+    &160 ( fctn-8 dup; down )               $37 c, c,  ' !dup-line ,
+    &161 ( fctn-9 exit )                    $00 c, c,  ' !exit ,
+    &178 ( ctrl-fctn-l clear )              $3F c, c,  ' !clear ,
+    &184 ( ctrl-fctn-r revert )             $36 c, c,  ' revert ,
+    &197 ( ctrl-fctn-4 block down  )        $3E c, c,  ' !block-down ,
+    &198 ( ctrl-fctn-5 refresh )            $36 c, c,  ' !refresh  ,
+    &199 ( ctrl-fctn-6 block up  )          $3E c, c,  ' !block-up ,
+    &202 ( ctrl-fctn-9 interpret  )         $00 c, c,  ' !interpret ,
+    &210 ( fctn-e up  )                     $22 c, c,  ' !up ,
+    &211 ( fctn-s left )                    $02 c, c,  ' !left ,
+    &212 ( fctn-d right )                   $02 c, c,  ' !right ,
+    &213 ( fctn-x down )                    $22 c, c,  ' !down ,
+    &222 ( shift-tab )                      $33 c, c,  ' !untab ,
+here  edittab -  Constant  editsz
+
+\ Edit a character (insert or overwrite), moving cursor,
+\ possibly to next line or buffer.
+: edit.char  ( ch -- )
+    ^char ~curs ( badj )
+    update  scr +!
+    $3 fl|
+;
+
+\ Handle one key for the buffer and update cursor/line/buffer
+:: onkey       ( key' -- )
+    \ if printable, just insert/overwrite
+    key' &32 &127 within if  
+        key' edit.char  
+    else
+        \ try for function
+        edittab editsz over + swap do
+            i @ w>b swap      ( flags keycode ) 
+            key' = if               ( flags )
+                fl|
+                i cell+ @  execute  
+                unloop exit
+            else
+                drop
+            then
+        4 +loop
+    then
+;
+
+\ -------------------------------------------------------------------
+\   UI for the editor.
+\
+\   This will be brought up by flipping to text mode 2, vpage 15.
+\   (We save the "real" registers/settings and restore them 
+\   afterward, so exiting will restore the screen.)
+\
+
+\ buffer for saved video state
+User orig-video
+User edit-video
+User in-editor
+
+: init-editor
+    \ don't clear buffer/block/etc 
+    0 orig-video !
+    0 edit-video !
+    0 in-editor !
+    1 scr !
+;
+
+: save-video ( ptr -- )
+    dup @ 0= if  here over !  #vrs allot  then
+    @ vsave 
+;
+
+: editor.exit
+    \ restore mode info
+    orig-video @ vrestore
+    0 in-editor !
+    quit   
+;
+
+\ column for status
+&74 constant #statuscol
+&8 constant #x-border
+&1 constant #y-border
+#y-border l/blk + 1+  constant #y-menu
+
+\   Create the interpretation window
+: intp.window
+    -1 -1  0  #y-menu 1+   win!
+    1 vblink!
+;
+
+\   Set up the window for the editor
+: edit.window
+    full!
+        
+    0 vblink!    
+;
+
+\ : number-rows
+\     \ draw row numbers    
+\     l/blk 0 do
+\         0  i #y-border +  at-xy  
+\         
+\         i  'scry @ +  #x-border 2-  u.r    
+\     loop
+\ 
+\ ;
+
+\ Draw the overarching static UI
+\
+: edit.drawui
+    \ switch mode regs without clearing
+    text2 (mode)   
+    
+    &15 vpage  (vreset)
+        
+    font6x8
+
+    $87A1 v-regaddr      \ yellow-on-black border
+    $8CF5 v-regaddr      \ white-on-blue text
+    $8DF0 v-regaddr      \ blink always on
+
+    edit.window
+    
+    \ clear whole screen to border
+    cls
+
+    \ clear out editor window
+    1 vblink!
+    c/l l/blk  #x-border #y-border  win!
+    cls
+    
+    \ clear out interpret window
+    intp.window cls
+    
+    \ work in full window normally though
+    edit.window
+    
+    \ draw labels
+    #statuscol #y-border                    at-xy  ." BLK"
+    #statuscol [ #y-border 2+ ] literal     at-xy  ." LINE"
+    #statuscol [ #y-border 4 + ] literal    at-xy  ." COL"
+    #statuscol [ #y-border 6 + ] literal    at-xy  ." LEN"
+    #statuscol [ #y-border 8 + ] literal    at-xy  ." #LN"
+    #statuscol [ #y-border 10 + ] literal   at-xy  ." #CH"
+
+    \ draw editor window
+    #x-border #y-border c/l l/blk
+    draw-window
+
+    edit.window
+    
+    \ draw menu
+    >grom_menubar g@  
+    0 #y-menu  txt-xy>addr  80  +gvmove 
+    
+    \ save editor mode info
+    edit-video save-video
+;
+
+: message-window ( sx sy bg fg -- state )  
+    <video >r
+    
+    0 vblink!
+    
+    cls
+    
+    4 LSHIFT OR   $8C00 OR  v-regaddr 
+    
+    1 vblink!
+    
+    draw-centered-window
+    
+    cls
+    
+    r>
+;
+
+: dismiss-window  ( state -- )
+    key drop    
+         
+    video>
+    
+    $6 fl|  ( redraw )
+    
+    edit.drawui
+;
+
+
+\   Draw an error message
+: edit.message ( msg# -- )
+    ?dup if 
+        >r
+        
+        60  1   $8 $F  message-window
+        
+        r>  message
+        
+        dismiss-window
+        
+    then
+; 
+
+\   Draw status 
+
+: edit.drawstatus
+    0 vblink!
+    
+    #statuscol [ #y-border 1+ ] literal     at-xy  scr @    4 u.r   
+                                                    dirty? [char] * and emit 
+    #statuscol [ #y-border 3 + ] literal    at-xy  'line @  4 u.r 
+    #statuscol [ #y-border 5 + ] literal    at-xy  'col @   4 u.r
+    
+    #statuscol [ #y-border 7 + ] literal    at-xy  'laddr) @  'laddr @ -  4 u.r                            
+    #statuscol [ #y-border 9 + ] literal    at-xy  'lines @   4 u.r                            
+    #statuscol [ #y-border 11 + ] literal    at-xy  baddr) baddr -  4 u.r
+
+    \ debug                          
+    \ #statuscol [ #y-border 12 + ] literal    at-xy  depth 4 u.r                            
+    
+    #statuscol [ #y-border 14 + ] literal    at-xy  ovr @  if ." OVR" else ." INS" then
+
+    \ set cursor
+    'col @ #x-border + 'scrx @ -
+    'line @ #y-border +  'scry @ -  at-xy
+    
+    1 vblink!
+;
+
+:: drawline   ( lad loffs -- laddr' )
+    \ figure displayed line length
+    lad  'scrx @  + :> lad+x
+    lad >lend  :> lad)
+    lad)  lad+x -  0 max  :> len
+
+    \ draw content, if any visible
+    lad+x  
+    #x-border  loffs #y-border +   txt-xy>addr  
+            
+    \ draw content ( even 0, to establish VDPWA )
+    len  c/l min  cvmove
+    
+    \ draw blanks at eol
+    c/l  len -  0 max  0  ?do
+        bl VDPWD c!
+    loop
+    
+    lad)
+;
+
+\   Draw the given line of the block, return next line ptr
+: edit.drawline ( laddr loffs -- laddr' )
+    <video  >r
+
+    drawline
+    
+    r>  video>
+;
+
+: #drawline ( # -- )
+    dup  'scry @  dup 'lines @ +  within if
+        dup  to-line
+        swap  'scry @  -
+        edit.drawline
+    then
+    drop
+;
+
+
+\   Draw the whole block
+: edit.drawblock ( -- )
+
+    'scry @  to-line
+    
+    l/blk 0 do
+        i edit.drawline
+    loop
+    
+    drop
+;
+
+:: surround ( scraddr target page -- new )
+    scraddr @  :> orig
+    target  orig  dup page +  within not if
+        target orig - :> diff
+        target  diff 0< if
+            \ up 
+            diff  page 2/ negate  max +
+            0 max
+        else
+            \ down
+            diff  page 2/  min +
+        then
+    else
+        orig
+    then
+    
+    dup  orig <> if    
+        $4 fl|
+    then
+    scraddr !
+;
+
+: edit.scroll 
+    'scry  'line @   l/blk  surround
+    
+    'scrx  'col @  c/l  surround
+;
+
+\   Remember last time we updated based on the position ... also fix values
+: edit.lastpos!
+    scr @ 'lastscr !
+    
+    'line @  'lastline !
+    'col @  'lastcol !
+    
+;
+
+: edit.update
+    
+    scr @ 'lastscr @ xor
+    if  
+        $C fl|
+    then
+
+    'fl @  8 and if        \ move cursor
+        0 'col !  0 'line !
+    then      
+
+    \ scroll once to see if redrawing block for new line/col
+    edit.scroll
+    
+    \ did anything change?
+    'fl @
+    
+    \ redraw changed line/block
+    dup $10 and if
+         baddrs!
+         drop  'fl @        \ in case of error
+    else dup $20 and if
+         laddrs!
+    then then
+    
+    dup $40 and if
+        fix-column
+    then
+
+    \ scroll again in case column was reverted
+    edit.scroll
+    
+    dup 4 and if
+        edit.drawblock
+    else dup 1 and if
+        'line @  #drawline
+        \ if status/cursor changed, likely prev line changed too
+        dup 2 and if  'lastline @ #drawline  then      
+    then then
+    
+    dup 1 and if    \ content changed
+        update
+        2 or   
+    then
+    
+    2 and if
+        edit.drawstatus      \ cursor loc, block #, etc
+    then
+    
+    0 'fl !
+    
+    edit.lastpos!
+;
+
+\ Main loop of editor.
+\
+: (edit)
+    \ do most UI work with interrupts enabled, so we
+    \ don't miss keystrokes
+    edit.window
+    edit.drawstatus
+    \ edit.drawblock
+    
+    begin
+        edit.update
+        key  onkey
+    again
+;
+
+export>
+
+\ Start editor from any mode.  Saves the previous mode.
+\
+: edit   ( -- )
+    decimal
+    in-editor @ 0= if
+        \ save mode info
+        orig-video save-video
+        
+        \ switch to text mode, but don't clear screen until selecting the page
+        edit-video @ ?dup if
+            vrestore
+        else
+            edit.drawui
+        then
+    
+        redraw-block
+        
+        \ init block
+        \ baddrs!
+        
+        \ remember last time we updated
+        edit.lastpos!
+        
+        1 in-editor !
+    then
+    
+    (edit)
+;
+
+: >edit ( block # -- )
+    scr !  redraw-block  edit
+;

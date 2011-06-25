@@ -1,0 +1,166 @@
+
+\   Write VWADDR for reading
+\   Assumes addr is masked into 0x3fff range
+\
+:   vwaddr ( addr -- )
+    \ dup VDPWA c! swpb VDPWA c!
+    VDPWA !
+;
+
+\   Write VWADDR for writing
+\   Assumes addr is masked into 0x3fff range
+\
+:   !vwaddr ( addr -- )
+    $4000 OR  VDPWA !
+;
+
+\   Write VWADDR and page
+\
+:   +vwaddr ( addr -- )
+    vsetbank
+    VDPWA !
+;
+
+:   +!vwaddr ( addr -- )
+    vsetbank
+    $4000 OR  VDPWA !
+;
+
+
+:   gwaddr ( addr -- )
+    \ dup swpb GPLWA c! GPLWA c!
+    GPLWA !
+;
+
+:   graddr ( -- addr )
+    \ GPLRA c@ 8 lshift  GPLRA c@  or 1-
+    GPLRA @ 1- 
+;
+
+:   g@  ( addr -- )
+    gwaddr  GPLRD c@  8 lshift  GPLRD c@  or 
+;
+:   g!  ( ch addr -- )
+    gwaddr  dup swpb GPLWD c!  GPLWD c!
+;
+
+:   gc@  ( addr -- )
+    gwaddr  GPLRD c@
+;
+:   gc!  ( ch addr -- )
+    gwaddr  GPLWD c!
+;
+
+:   vc@  ( addr -- )
+    vwaddr  VDPRD c@
+;
+:   vc!  ( val addr -- )
+    !vwaddr  VDPWD c!
+;
+
+:   +vc@  ( addr -- )
+    +vwaddr  VDPRD c@
+;
+:   +vc!  ( val addr -- )
+    +!vwaddr  VDPWD c!
+;
+
+:   vfill ( addr len ch -- )
+    2>r !vwaddr
+    VDPWD 2r> 0 (cfill) 
+;
+:   +vfill ( addr len ch -- )
+    2>r +!vwaddr
+    VDPWD 2r> 0 (cfill) 
+;
+
+( GPL to VDP move )
+:   +gvmove ( gaddr vaddr len -- )
+    rot gwaddr
+    swap  +!vwaddr
+    GPLRD VDPWD rot  0 0 (cmove)
+;
+
+( VDP to CPU move )
+::   vcmove ( vaddr addr len -- )
+    vaddr  +vwaddr
+    VDPRD addr len  0 1 (cmove)
+;
+( CPU to VDP move )
+::   cvmove ( addr vaddr len -- )
+    vaddr  +!vwaddr
+    addr VDPWD len  1 0 (cmove)
+;
+
+( GPL to CPU move )
+::   gcmove ( gaddr addr len -- )
+    gaddr  gwaddr
+    GPLRD addr len  0 1 (cmove)
+;
+( CPU to GPL move )
+::   cgmove ( addr gaddr len -- )
+    gaddr  gwaddr
+    addr GPLWD len  1 0 (cmove)
+;
+
+\ Compare  (src -> dst)
+: cmp?         ( src dst # -- offs cmp )
+    1 1 [ Iccompare c, ]
+;   target-only
+
+
+:   >bit ( mask -- lowest bit# )
+    16 0 do
+        dup  1 and  if
+            drop i unloop exit
+        then
+        1 urshift
+    loop
+    
+    drop true
+;
+
+\ type null-terminated string
+: (gtypez) ( gaddr -- gaddr )
+    begin
+        dup gc@ dup
+    while
+        emit
+        1+
+    repeat
+    drop  1+
+;
+
+\ type null-terminated string
+: gtypez ( gaddr --  )
+    (gtypez) drop
+;
+
+\ type counted string
+: gtype ( gaddr cnt -- )
+    over + swap ?do i gc@ emit loop 
+;
+
+\ copy VDP to VDP, using an auxiliary buffer
+:: vvmove ( vsrc vdst cnt buf n -- )
+    0 :> use
+    cnt 0 ?do
+        cnt i -  n  min  to use
+        
+        vsrc  dup use + to vsrc 
+        buf
+        use
+        vcmove
+        
+        buf 
+        vdst  dup use + to vdst 
+        use 
+        cvmove
+                
+    use u+loop    
+;
+
+: bitset ( on? mask val -- val )
+     rot ( mask val on? )  if  OR  else  swap NAND  then   
+;
+ 

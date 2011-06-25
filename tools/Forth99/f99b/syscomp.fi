@@ -1,0 +1,171 @@
+
+: >call  1 urshift $8000 or  ; 
+: call>  1 lshift  ; 
+ 
+: call,  >call , ;
+
+:: inlineable ( opc -- f )
+    opc $20 >= 
+    opc $7a $80 within not  \ branches + double + ext
+    opc Idovar = not  
+    and and
+;
+
+:: inlineable-imm ( opc -- f )
+    opc Isyscall =
+    opc IcontextFrom =
+    opc ItoContext =
+    opc IlitB =
+    opc $36 =   \ Ispidx
+    opc $3c $40 within      \ Irpidx...Ilalloc with imms  
+    or or or or or
+;
+
+1 <export
+
+User STATE
+
+: literal ( n -- )  
+    dup -8 >= over 8 < and  if
+        $f and $20 or c,  else
+    dup -128 >= over 128 < and  if
+        $78 c, c,
+    else
+        $79 c, ,
+    then then
+; immediate target-only
+ 
+: dliteral ( d -- )  
+    $7e c,
+    2dup -8. d>= over 8. d< and  if
+        drop $f and $20 or c,  else
+    2dup -128. d>= over 128. d< and  if
+        drop $78 c, c,
+    else
+        $79 c, ,
+    then then
+; immediate target-only 
+
+\ Extract a compiled literal from memory
+\
+| : literal@ ( addr -- n )
+    dup    
+    c@
+    dup $20 $30 within 
+    if  
+        drop c@  $20 -  
+        dup 8 >= if  $fff0 or  then   
+    else
+        $78 = if
+            1+  c@
+            dup $80 >= if  $ff00 or  then
+        else
+            $79 <>  err-out-of-range ?throw
+            1+  @
+        then
+    then         
+;
+ 
+: compile,
+    :> addr
+    
+    \ ;s
+    addr ['] ;s       = if  Iexit c,        exit   then
+
+    \ ones we must directly detect
+    addr ['] branch   = if  IbranchB c,     exit   then
+    addr ['] 0branch  = if  I0branchB c,    exit   then
+    addr ['] (s")     = if  addr call,      exit   then
+
+    \ empty prims or words
+    addr c@ $70 = if
+        exit
+    then    
+        
+    \ 1 byte prims
+    addr 1+ c@ $70 = if
+        addr c@  dup  inlineable  if
+            c,
+        else
+            drop
+            addr call,
+        then
+        exit
+    then
+    
+    \ 2 byte prims
+    addr 2+ c@ $70 = if
+        addr c@  :> op1
+        addr 1+ c@  :> op2
+        
+        op1 inlineable-imm  if
+            op1 c, op2 c,
+            exit
+        then   
+        
+        op1 $7e = if
+           op1 c, op2 c,
+           exit
+        then
+        
+        op1 inlineable 
+        op2 inlineable 
+        and if
+            op1 c, op2 c,
+            exit
+        then        
+
+        addr call,   
+        exit
+    then        
+    
+    \ special case of prim that uses r-stack and must be inlined    
+    addr ['] (?do)    = if  Idup_d , ItoR_d , Isub c, I0branchB c,  exit  then
+
+    \ all other cases
+    addr call,   
+;
+
+export>
+
+
+1 [if]
+    : RamVar  ( n -- )  create  
+    
+        negate  ramptr +!  
+        ramptr @  ,
+    
+        ( be sure compiler doesn't optimize )
+    does>
+        @
+    
+    ;  
+[else]
+    : RamVar  ( n -- )    
+    
+        create immediate
+        
+        negate  ramptr +!  
+        ramptr @  , 
+    
+    does>
+    
+        \ oops, for "state" itself, this um compiles a ton of shit
+        \ into the dictionary -- prolly a bug
+        state @ if 
+        
+            $79 c, 
+            @
+            ,  $70 c,
+        else
+            @
+        then
+    
+    ;  
+
+[then]
+
+: +Nfield    ( "name" ptr -- ptr' )    - dup Constant ; immediate
+: +field    ( "name" ptr -- ptr' )    2- dup Constant ; immediate
+: +1field   ( "name" ptr -- ptr' )    1- dup Constant ; immediate
+

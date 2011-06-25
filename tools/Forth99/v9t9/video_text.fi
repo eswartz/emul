@@ -1,0 +1,275 @@
+
+: txt-choffs ( x y -- addr )
+    v-width @ U*  +
+;
+
+: txt-chaddr ( x y -- addr )
+    txt-choffs
+    v-screen @ + 
+;
+
+: txt-waddr ( x y -- )
+    txt-chaddr +!vwaddr
+;
+
+: txt-drawchar ( ch x y -- )
+    txt-waddr  VDPWD c!   
+;
+: txt-readchar ( x y -- )
+    txt-chaddr +vwaddr  VDPRD c@
+;
+: txt-blinkcursor ( x y -- )
+    txt-chaddr 
+    
+    $80 v-curs c+!
+    v-curs c@ if  
+        dup +vwaddr              \ read char under cursor
+        VDPRD c@  v-curs-under c!
+        
+        +!vwaddr
+        [CHAR] _  VDPWD c!      \ draw cursor
+    else
+        +!vwaddr
+        v-curs-under c@  
+        VDPWD c!                \ restore char under cursor
+    then
+;
+
+( Split a range that wraps around a boundary )
+:: range-wrap ( sz addr start len -- addr1 len1 addr2 len2 )
+    ( portion from addr...min addr+sz,start+len )
+    addr  addr sz +  start len +  min  addr  -
+    
+    ( portion from start...start + sz % len )
+    start  over  sz - negate
+;
+ 
+: (txt-hchar) ( ch len offs -- )
+    v-screen @ +
+    rot >r
+    v-screen @ v-screensz @  range-wrap  ( addr1 len1 addr2 len2 )
+    
+    r@  +vfill
+    r>  +vfill
+;
+
+: txt-hchar ( ch len x y -- )
+    txt-choffs
+    (txt-hchar)
+;
+
+:: txt-vchar ( ch len x y -- )
+    x y txt-chaddr  :> addr
+    v-screen @ v-screensz @ + :> lim
+    
+    len 0 ?do
+        ch addr +vc!
+        v-width @  addr +  
+        dup lim >= if  v-screensz @ -  then
+        to addr
+    loop
+;
+
+: txt-setupmode
+    true v-text c!
+;
+
+: txt-updatecolors
+    color-byte  $8700  or v-regaddr
+;
+
+:: txt-clear ( w h x y -- )
+    x y  txt-chaddr  vsetbank  :>  addr
+    h 0 ?do
+        addr w $20  vfill
+        v-width @  addr +  to addr
+    loop
+;
+
+\ -------------------
+
+:: std-setfont   ( addr -- )
+    v-fntheight c@ :> h
+    h 8 = if
+        addr  v-patts @   $800  +gvmove
+    else
+        v-patts @  :> vpaddr
+        256 0 do
+            addr vpaddr h  +gvmove
+            addr h +  to addr  
+            vpaddr 8 +  to vpaddr  
+            vpaddr h +  8 h -  $00  +vfill 
+        loop
+    then
+;
+
+\ -------------------
+
+Create TextFunctions 
+    'v-drawchar ,        ' txt-drawchar ,
+    'v-readchar ,        ' txt-readchar ,
+    'v-blinkcursor ,     ' txt-blinkcursor ,
+    'v-setfont ,         ' std-setfont ,
+    'v-clear ,           ' txt-clear ,
+    'v-hchar ,           ' txt-hchar ,
+    'v-vchar ,           ' txt-vchar ,
+    0 , 
+
+
+
+\       0=text mode
+\           >0000 = screen
+\           >0800 = patts
+\           >1000+= free
+\
+Create TextModeParams
+    v-screen    , 0 ,       v-screensz  , 960 ,
+    v-patts     , $800 ,    v-pattsz    , $800 ,
+    v-free      , $1000 ,   v-pagesize  , $1000 ,
+
+    v-width     , 40 ,      v-height    , 24 ,
+    \ v-stride    , 40 ,
+    
+    'v-setupregs ,           ' txt-setupregs ,
+    'v-setupmode ,           ' txt-setupmode ,
+    'v-updatecolors ,        ' txt-updatecolors ,
+    
+    0 ,
+    
+: txt-setupregs
+    std-set-screen-reg
+    std-set-patt-reg
+;
+    
+: text-mode
+    TextFunctions write-var-list
+    TextModeParams v-set-alloc-list
+        
+    $00B0 write-vmoderegs
+;
+
+\ -------------------
+
+: >txt2-coloraddr ( offs -- mask addr )
+    $80   over   7 and  urshift  ( taddr mask )
+    swap  3 urshift  v-colors @ +  ( mask caddr )
+    
+;
+
+\ reset or set blink bit
+: txt2-blink! ( fl x y -- )
+    txt-choffs  >txt2-coloraddr 
+    
+    dup >r  +vc@
+    v-blink c@  if  OR  else  swap NAND  then  
+    r> +vc!
+; 
+
+:: txt2-drawchar ( ch x y -- )
+    ch x y  txt-drawchar
+    
+    x y  txt2-blink!
+;
+
+:: txt2-clear ( w h x y -- )
+    w h x y  txt-clear
+    
+    h  0  ?do
+        w
+        x  y i +  txt-choffs  
+        (txt2-hchar-colors)
+    loop
+;
+
+:: txt2-hchar ( ch len x y -- )
+    x y  txt-choffs  :> offs
+    
+    ch len offs (txt-hchar)  
+    
+    len offs  (txt2-hchar-colors) 
+;
+
+:: (txt2-hchar-colors) ( len offs -- )    
+     offs >txt2-coloraddr  
+            :> caddr   
+            dup 8 lshift OR  :> mask
+
+    v-blink c@  if ['] OR else ['] NAND then :> func
+    
+    caddr +!vwaddr
+    
+    len 0 ?do
+        mask $8080 =  i' i - 8 >=  and  if
+            \ blast 8 at once
+            v-blink c@  VDPWD c!
+            caddr 1+  to caddr
+            8
+        else
+            \ just one bit at a time
+            caddr +vc@  mask  func execute  caddr +vc!
+            mask  1 crshift  dup  $8080 =  if  caddr 1+  to caddr  then  
+            to mask
+            1
+        then
+    +loop
+;
+
+:: txt2-vchar ( ch len x y -- )
+    ch len x y  txt-vchar  
+
+    y len +  y  ?do
+        x i  txt2-blink! 
+    loop
+;
+
+:   txt2-setupregs
+    txt-setupregs
+    std-set-color-reg
+;
+
+\       8=text 2 mode
+\           >0000 = screen (to >870 for 212-line mode)
+\           >0A00 = colors (blinks)
+\           >1000 = patts
+\           >1800+= free
+\
+Create Text2Functions
+    'v-drawchar ,       ' txt2-drawchar  ,      
+    'v-clear ,          ' txt2-clear     ,
+    'v-hchar ,          ' txt2-hchar     ,      
+    'v-vchar ,          ' txt2-vchar     ,      
+    0 ,
+
+Create Text2ModeParams
+    v-screen    , 0 ,       v-screensz  , $870 ,
+    v-colors    , $a00 ,    v-colorsz   , $870 8 / ,
+    v-patts     , $1000 ,   v-pattsz    , $800 ,
+    v-free      , $1800 ,   v-pagesize  , $2000 ,
+     
+    v-width     , 80 ,      v-height    , 26 ,
+    \ v-stride    , 80 ,
+    
+    'v-setupregs ,           ' txt2-setupregs ,
+    'v-setupmode ,           ' txt2-setupmode ,
+    'v-updatecolors ,        ' txt-updatecolors ,
+
+    0 ,
+    
+: txt2-setupmode
+    txt-setupmode
+    \ set blink to inverse colors
+    bg@  4 lshift  fg@  OR  $8C00 OR  v-regaddr  
+
+;
+    
+: text2-mode
+    TextFunctions write-var-list
+    Text2Functions write-var-list
+    Text2ModeParams v-set-alloc-list
+        
+    $04B0 write-vmoderegs
+    $8D22 v-regaddr
+
+;
+    
+    

@@ -1,0 +1,75 @@
+\ These words compile differently for interpret and compile states,
+\ thus must be defined after compiler words to avoid confusing them
+\ with built-in compiler words.
+
+[IFUNDEF] SLITERAL
+: s,    ( caddr u -- )
+    dup c, 
+    here swap chars dup allot move
+;
+
+: SLITERAL  \ C: ( caddr u --  ) R: ( -- caddr u )
+    [compile] (s") s,
+; immediate target-only
+[THEN]
+
+[IFUNDEF] S"
+: S"
+    $22 parse
+    state @ if
+        postpone sliteral
+    else
+       \ copy string to safe place
+       >r (spad) @ r@ cmove
+       (spad) @ r>
+    then
+; immediate  target-only
+[THEN]
+
+
+[IFUNDEF] ABORT"
+| : (abort")
+    \ rot if cr ." error: " type cr abort else 2drop then
+    rot if 
+        type cr
+        err-abort" throw  
+    else  
+        2drop  
+    then
+;
+
+: ABORT"
+\        Compilation: ( "ccc<quote>" -- )
+\
+\   Parse ccc delimited by a " (double-quote). Append the run-time semantics
+\   given below to the current definition.
+\
+\        Run-time: ( i*x x1 --  | i*x ) ( R: j*x --  | j*x )
+\
+\   Remove x1 from the stack. If any bit of x1 is not zero, display ccc and
+\   perform an implementation-defined abort sequence that includes the
+\   function of ABORT.
+
+    postpone s"
+    state @ if
+        postpone (abort")
+    else
+        (abort")
+    then
+; immediate  target-only
+[THEN]
+
+
+[IFUNDEF] ."
+: ."
+    postpone s"
+    state @ if
+        [compile] type
+    else 
+        type
+    then
+;    immediate target-only
+
+
+
+[THEN]

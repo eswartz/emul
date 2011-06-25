@@ -1,0 +1,66 @@
+
+Instructions:
+
+//-- unary  // none!
+
+//-- casting
+    //-- bitcast
+    
+-- data related:
+    //store/load data
+    //insertvalue
+    //extractvalue
+    //getelementptr
+    
+//-- calls
+
+//-- global data
+
+   // -- clean up TupleTempOperand so we can walk its memory allocation easier
+
+//-- Str type is not sized (0 elements) so it makes no sense to assign it to a field or a variable.  
+//    Need a concept like "open arrays" (or transitively detect this) for error checking.
+
+-- Trailing 'if'?   e.g.  foo /= x if x != 0 ;
+
+        do
+            x += 1
+        while x < 10  if y ;
+
+-- Implicit methods on primitive types
+
+-- Operator methods
+
+-- Forcing all data types into 'var' parameters
+
+-- Allowing extra characters in identifiers (e.g. '?' or '!' as in Ruby)
+
+-- Maybe get rid of open statements?  (e.g. always require braces)
+
+-- With <x> as <...> ....
+
+//-- Allowing template args to close with '>>' w/o spaces
+
+-- Iterators
+
+-- Closures
+
+Overall:
+
+-- register coloring
+
+//-- instruction lowering
+
+-- frame setup
+
+-- jump fixing
+
+-- object generation
+
+
+Finally:
+
+//-- llvm optimization
+
+-- phi handling
+

@@ -1,0 +1,25 @@
+log all off
+ROMSPath=".:/usr/src/v9t9.old/Distrib/ROMs/Forth:/usr/src/v9t9-data/roms"
+ModulesPath="."
+DefineMemory "RC" 0x0 8192 "nforth.rom" 0 "Console ROM" 
+DefineMemory "RG" 0x0 -24576 "forth.grm" 0 "Console GROM" 
+DefineMemory "RC" 0x6000 8192 "nforthc.bin" 0 "FORTH ROM" 
+ConsoleROMFileName "nforth.rom" 
+ConsoleGROMFileName "forth.grm" 
+UnloadModuleOnly 
+#ExtraConsoleRAM=off
+MemoryExpansion32K=on
+RealTime=on
+SessionsPath="."
+
+togglev9t9 "dsrRealDisk" off
+togglev9t9 "dsrEmuDisk" on
+DSK1Path="/usr/src/v9t9.old/Distrib/Disks"
+#VDPInterruptRate=20
+#Debug=on
+
+#BaseClockHZ 100000
+
+DSK1Path="/C/tidisk/disk"
+
+DiskImagePath "/C/tidisk/thierry/zip/disass:/C/ti994a/v60ugly/disks:/home/ejs/src/99forth/Release/Disks/home/ejs/disks" 

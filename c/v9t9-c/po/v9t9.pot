@@ -1,0 +1,6887 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2010-02-07 21:36-0600\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: source/vdpsprites.c:103
+#, c-format
+msgid ""
+"spritechanges: %08X\n"
+"\n"
+msgstr ""
+
+#: source/vdpsprites.c:107
+#, c-format
+msgid "Sprite %02d changed: %s%s%s\n"
+msgstr ""
+
+#: source/vdpsprites.c:108
+msgid "pos, "
+msgstr ""
+
+#: source/vdpsprites.c:109
+msgid "color, "
+msgstr ""
+
+#: source/vdpsprites.c:110
+msgid "patt"
+msgstr ""
+
+#: source/vdpsprites.c:127
+#, c-format
+msgid "Deleted sprites past %d\n"
+msgstr ""
+
+#: source/vdpsprites.c:134
+#, c-format
+msgid "Updating sprite %d because undeleted\n"
+msgstr ""
+
+#. need to delete sprite
+#. newly deleted
+#: source/vdpsprites.c:137
+#, c-format
+msgid "Updating sprite %d because deleted\n"
+msgstr ""
+
+#: source/vdpsprites.c:142
+#, c-format
+msgid "Sprite %d changed pattern\n"
+msgstr ""
+
+#. vdp_changes.sprite&=~(olddelbitmap|newdelbitmap); /* deleted, don't bother */
+#: source/vdpsprites.c:158
+#, c-format
+msgid "VDP_CHANGES.SPRITE: %04X  DELBITMAP: %04X/%04X\n"
+msgstr ""
+
+#: source/vdpsprites.c:162
+msgid "No deleted sprites\n"
+msgstr ""
+
+#: source/vdpsprites.c:190
+#, c-format
+msgid "redrawing char %d due to deleted sprite\n"
+msgstr ""
+
+#: source/vdpsprites.c:261
+msgid "Five sprites on lines:\n"
+msgstr ""
+
+#: source/vdpsprites.c:344
+#, c-format
+msgid "going to redraw sprite %d at %d,%d\n"
+msgstr ""
+
+#.
+#. Mark all the screen positions that need to be updated
+#.
+#. If sprbitmap&vdp_changes.sprite, then that space needs update.
+#.
+#. NOT toredraw here -- clear sprites aren't drawn but the spaces
+#. they occupy may have changed (if they turn clear -- as in carwars)
+#.
+#: source/vdpsprites.c:361
+#, c-format
+msgid "Toredraw: %08X  spritechanges: %08X\n"
+msgstr ""
+
+#: source/vdpsprites.c:366
+#, c-format
+msgid "redrawing char %d due to moved/deleted sprite\n"
+msgstr ""
+
+#: source/vdpsprites.c:373
+msgid ""
+"screenchanges:\n"
+"\t"
+msgstr ""
+
+#: source/vdpsprites.c:411
+#, c-format
+msgid "Sprite at (%d,%d) intersects (%d,%d)\n"
+msgstr ""
+
+#: source/vdpsprites.c:569
+#, c-format
+msgid "Redrawing sprite #%d [%d,%d,%02x,%02x]\n"
+msgstr ""
+
+#: source/Modules/Unix/video_svgalib.c:83
+msgid "Setting graphics mode\n"
+msgstr ""
+
+#: source/Modules/Unix/video_svgalib.c:122
+msgid "Setting text mode\n"
+msgstr ""
+
+#. __svgalib_runinbackground = 1;
+#: source/Modules/Unix/video_svgalib.c:137
+msgid "testing console video... "
+msgstr ""
+
+#: source/Modules/Unix/video_svgalib.c:139
+#: source/Modules/Unix/keyboard_svgalib.c:71
+msgid "cannot access.\n"
+msgstr ""
+
+#: source/Modules/Unix/video_svgalib.c:142
+#: source/Modules/Unix/keyboard_svgalib.c:74
+#: source/Modules/Unix/keyboard_svgalib.c:99
+msgid "ok.\n"
+msgstr ""
+
+#: source/Modules/Unix/video_svgalib.c:153
+msgid "SVGAlib Options"
+msgstr ""
+
+#: source/Modules/Unix/video_svgalib.c:154
+msgid "These commands control the SVGAlib interface"
+msgstr ""
+
+#: source/Modules/Unix/video_svgalib.c:157
+msgid "Set the video mode used in SVGAlib"
+msgstr ""
+
+#: source/Modules/Unix/video_svgalib.c:163
+msgid "video mode"
+msgstr ""
+
+#: source/Modules/Unix/video_svgalib.c:189
+#, c-format
+msgid "detecting mode %d... "
+msgstr ""
+
+#: source/Modules/Unix/video_svgalib.c:192 source/gtkinterface.c:3243
+#: source/gnomeinterface.c:2681
+msgid "\n"
+msgstr ""
+
+#: source/Modules/Unix/video_svgalib.c:198
+msgid "no suitable VGA modes found.\n"
+msgstr ""
+
+#: source/Modules/Unix/video_svgalib.c:203
+msgid "succeeded.\n"
+msgstr ""
+
+#: source/Modules/Unix/video_svgalib.c:213
+#, c-format
+msgid "testing mode %d... "
+msgstr ""
+
+#: source/Modules/Unix/video_svgalib.c:215
+msgid "success.\n"
+msgstr ""
+
+#: source/Modules/Unix/video_svgalib.c:218
+msgid "cannot use this mode.\n"
+msgstr ""
+
+#: source/Modules/Unix/video_svgalib.c:234
+msgid "Could not restore video mode for SVGAlib\n"
+msgstr ""
+
+#: source/Modules/Unix/video_svgalib.c:255
+msgid "Shutting down video... "
+msgstr ""
+
+#: source/Modules/Unix/video_svgalib.c:260
+msgid "done.\n"
+msgstr ""
+
+#: source/Modules/Unix/sound_esd.c:62
+#, c-format
+msgid "could not open audio (%s)\n"
+msgstr ""
+
+#: source/Modules/Unix/sound_esd.c:80
+#, c-format
+msgid "could not open stream (%s)\n"
+msgstr ""
+
+#: source/Modules/Unix/sound_esd.c:85
+msgid ""
+"\n"
+"warning, this module is not optimal and\n"
+"sound can be delayed up to a second.\n"
+"Consider killing esd and using native OSS or ALSA sound.\n"
+"\n"
+msgstr ""
+
+#: source/Modules/Unix/sound_esd.c:179
+#, c-format
+msgid "Could not open Enlightened Sound Daemon:  %s\n"
+msgstr ""
+
+#: source/Modules/Unix/sound_esd.c:241 source/Modules/Unix/sound_oss.c:231
+#, c-format
+msgid "disable: %d\n"
+msgstr ""
+
+#: source/Modules/Unix/dsr_rs232_unix.c:123
+#: source/Modules/Unix/dsr_rs232_unix.c:143
+#: source/Modules/Unix/dsr_rs232_unix.c:173
+#: source/Modules/Win32/dsr_rs232_win32.c:114
+#: source/Modules/Win32/dsr_rs232_win32.c:125
+#, c-format
+msgid "RS232/%d is %s\n"
+msgstr ""
+
+#: source/Modules/Unix/dsr_rs232_unix.c:133
+#, c-format
+msgid "RS232/%d cannot be assigned to a device\n"
+msgstr ""
+
+#: source/Modules/Unix/dsr_rs232_unix.c:147
+#, c-format
+msgid "RS232/%d cannot be used (%s)\n"
+msgstr ""
+
+#: source/Modules/Unix/dsr_rs232_unix.c:179
+msgid "Linux-RS232: could not assign any serial ports\n"
+msgstr ""
+
+#: source/Modules/Unix/dsr_rs232_unix.c:182
+#, c-format
+msgid ""
+"could not assign %d serial ports, only RS232/1 through RS232/%d are "
+"available\n"
+msgstr ""
+
+#: source/Modules/Unix/dsr_rs232_unix.c:186
+#: source/Modules/Win32/dsr_rs232_win32.c:138
+#, c-format
+msgid "assigned %d serial ports\n"
+msgstr ""
+
+#: source/Modules/Unix/dsr_rs232_unix.c:220
+#, c-format
+msgid "Could not open %s\n"
+msgstr ""
+
+#: source/Modules/Unix/dsr_rs232_unix.c:320
+msgid "failure in select() in My_RS232_Interrupt\n"
+msgstr ""
+
+#: source/Modules/Unix/dsr_rs232_unix.c:333
+msgid "... data ready for reading\n"
+msgstr ""
+
+#: source/Modules/Unix/dsr_rs232_unix.c:346
+#: source/Modules/Win32/dsr_rs232_win32.c:381
+msgid "... data ready to write\n"
+msgstr ""
+
+#: source/Modules/Unix/dsr_rs232_unix.c:356
+#: source/Modules/Win32/dsr_rs232_win32.c:391
+msgid "... data exception\n"
+msgstr ""
+
+#: source/Modules/Unix/dsr_rs232_unix.c:367
+#: source/Modules/Unix/dsr_rs232_unix.c:512
+msgid "cannot read modem lines\n"
+msgstr ""
+
+#: source/Modules/Unix/dsr_rs232_unix.c:373
+#: source/Modules/Win32/dsr_rs232_win32.c:418
+msgid "** Interrupt **\n"
+msgstr ""
+
+#: source/Modules/Unix/dsr_rs232_unix.c:402
+#, c-format
+msgid "Trying to receive %d chars\n"
+msgstr ""
+
+#: source/Modules/Unix/dsr_rs232_unix.c:409
+#, c-format
+msgid "most=%d, max=%d\n"
+msgstr ""
+
+#: source/Modules/Unix/dsr_rs232_unix.c:417
+#, c-format
+msgid "select passed, max = %d\n"
+msgstr ""
+
+#: source/Modules/Unix/dsr_rs232_unix.c:439
+#, c-format
+msgid "received %d chars of %d maximum\n"
+msgstr ""
+
+#: source/Modules/Unix/dsr_rs232_unix.c:494
+#, c-format
+msgid "sent %d chars\n"
+msgstr ""
+
+#: source/Modules/Unix/dsr_rs232_unix.c:532
+msgid "could not set RTS/DSR lines\n"
+msgstr ""
+
+#: source/Modules/Unix/dsr_rs232_unix.c:547
+#, c-format
+msgid "could not set attributes (%s)\n"
+msgstr ""
+
+#: source/Modules/Unix/dsr_rs232_unix.c:595
+#, c-format
+msgid "unsupported baud rate %d, using 50\n"
+msgstr ""
+
+#: source/Modules/Unix/dsr_rs232_unix.c:605
+#, c-format
+msgid "could not set input baud rate of %d\n"
+msgstr ""
+
+#: source/Modules/Unix/dsr_rs232_unix.c:608
+#, c-format
+msgid "Input baud rate:  %d\n"
+msgstr ""
+
+#: source/Modules/Unix/dsr_rs232_unix.c:613
+#, c-format
+msgid "could not set output baud rate of %d\n"
+msgstr ""
+
+#: source/Modules/Unix/dsr_rs232_unix.c:616
+#, c-format
+msgid "Output baud rate:  %d\n"
+msgstr ""
+
+#: source/Modules/Unix/dsr_rs232_unix.c:650
+#: source/Modules/Win32/dsr_rs232_win32.c:518
+#: source/Modules/dsr_rs232_int_null.c:70
+#, c-format
+msgid "Setting CTRL register to %04X\n"
+msgstr ""
+
+#: source/Modules/Unix/dsr_rs232_unix.c:676
+#: source/Modules/Win32/dsr_rs232_win32.c:543
+#: source/Modules/dsr_rs232_int_null.c:76
+#, c-format
+msgid "Setting INVL register to %04X\n"
+msgstr ""
+
+#: source/Modules/Unix/dsr_rs232_unix.c:687
+#: source/Modules/Win32/dsr_rs232_win32.c:552
+#: source/Modules/dsr_rs232_int_null.c:82
+#, c-format
+msgid "Setting RCVRATE register to %04X\n"
+msgstr ""
+
+#: source/Modules/Unix/dsr_rs232_unix.c:703
+#: source/Modules/Win32/dsr_rs232_win32.c:567
+#: source/Modules/dsr_rs232_int_null.c:88
+#, c-format
+msgid "Setting XMITRATE register to %04X\n"
+msgstr ""
+
+#: source/Modules/Unix/dsr_rs232_unix.c:716
+#: source/Modules/Win32/dsr_rs232_win32.c:584
+#: source/Modules/dsr_rs232_int_null.c:95
+#, c-format
+msgid "Setting control bits to %04X\n"
+msgstr ""
+
+#: source/Modules/Unix/dsr_rs232_unix.c:753
+#: source/Modules/Win32/dsr_rs232_win32.c:642
+#: source/Modules/dsr_rs232_int_null.c:101
+#, c-format
+msgid "Transmitting char %02X (%c)\n"
+msgstr ""
+
+#: source/Modules/Unix/dsr_rs232_unix.c:757
+#, c-format
+msgid "RS232/%d write error\n"
+msgstr ""
+
+#. The interrupt routine sets the status bits.
+#: source/Modules/Unix/dsr_rs232_unix.c:770
+#: source/Modules/Win32/dsr_rs232_win32.c:675
+#: source/Modules/dsr_rs232_int_null.c:108
+#, c-format
+msgid "Reading status bits as %08X\n"
+msgstr ""
+
+#: source/Modules/Unix/dsr_rs232_unix.c:785
+#: source/Modules/Win32/dsr_rs232_win32.c:695
+#: source/Modules/dsr_rs232_int_null.c:115
+#, c-format
+msgid "Receiving char %02X (%c)\n"
+msgstr ""
+
+#: source/Modules/Unix/video_X.c:125
+msgid "Could not create image for window\n"
+msgstr ""
+
+#: source/Modules/Unix/video_X.c:132
+#, c-format
+msgid "cannot handle bits_per_pixel of %d\n"
+msgstr ""
+
+#: source/Modules/Unix/video_X.c:180
+#, c-format
+msgid "dirtying rectangle (%d,%d+%d,%d)\n"
+msgstr ""
+
+#: source/Modules/Unix/video_X.c:210
+#, c-format
+msgid "Resize: vwxsz = %d, vwysz = %d\n"
+msgstr ""
+
+#. if (index != 0 && index != 16)
+#. return;
+#: source/Modules/Unix/video_X.c:248 source/Modules/video_gtk.c:1212
+#, c-format
+msgid "Setting index %d to color %d\n"
+msgstr ""
+
+#: source/Modules/Unix/video_X.c:255
+msgid "Index is normal color\n"
+msgstr ""
+
+#: source/Modules/Unix/video_X.c:260
+msgid "Index is fg/bg color changing\n"
+msgstr ""
+
+#: source/Modules/Unix/video_X.c:323
+msgid "no compatible color classes found, cannot display\n"
+msgstr ""
+
+#: source/Modules/Unix/video_X.c:331
+#, c-format
+msgid "video_X:  Cannot use visual with only %d colors.\n"
+msgstr ""
+
+#: source/Modules/Unix/video_X.c:338
+#, c-format
+msgid "color class = %s\n"
+msgstr ""
+
+#: source/Modules/Unix/video_X.c:340
+msgid "Detected X Window System...\n"
+msgstr ""
+
+#: source/Modules/Unix/video_X.c:367 source/gnomeloop.c:162
+#: source/gtkloop.c:160
+msgid "cannot allocate size hints\n"
+msgstr ""
+
+#: source/Modules/Unix/video_X.c:431
+msgid "failed in XCreateWindow\n"
+msgstr ""
+
+#: source/Modules/Unix/video_X.c:472
+msgid "Could not create GC for window\n"
+msgstr ""
+
+#: source/Modules/Unix/video_X.c:536
+#, c-format
+msgid "could not allocate color %d\n"
+msgstr ""
+
+#: source/Modules/Unix/video_X.c:539
+#, c-format
+msgid "color #%d:  got named color '%s'\n"
+msgstr ""
+
+#: source/Modules/Unix/video_X.c:544
+#, c-format
+msgid "color #%d:  got RGB color\n"
+msgstr ""
+
+#: source/Modules/Unix/video_X.c:567
+msgid "Could not allocate 2 read/write colorcells\n"
+msgstr ""
+
+#. if (!using_palette) {
+#. cmap[0] = cmap[1];
+#. cmap[16] = cmap[15];
+#. }
+#. If we got an insufficient number of colors,
+#. try for virtual colormap.
+#: source/Modules/Unix/video_X.c:576
+#, c-format
+msgid "alloced = %d\n"
+msgstr ""
+
+#: source/Modules/Unix/video_X.c:581
+msgid "allocated custom colormap for window\n"
+msgstr ""
+
+#: source/Modules/Unix/video_X.c:727
+#, c-format
+msgid "X_video_updatelist (%d,%d+%d,%d)\n"
+msgstr ""
+
+#: source/Modules/Unix/video_X.c:808
+#, c-format
+msgid "Got color %d (%x)\n"
+msgstr ""
+
+#. XFlush(GDK_WINDOW_XDISPLAY(v9t9_drawing_area->window));
+#: source/Modules/Unix/video_X.c:818 source/Modules/video_gtk.c:1741
+#: source/Modules/video_gtk.c:2021
+#, c-format
+msgid "Drew %d rects, %d pixels\n"
+msgstr ""
+
+#: source/Modules/Unix/video_X.c:819 source/Modules/video_gtk.c:1743
+#, c-format
+msgid "%d/%d solid\n"
+msgstr ""
+
+#: source/Modules/Unix/keyboard_svgalib.c:69
+msgid "testing console keyboard... "
+msgstr ""
+
+#: source/Modules/Unix/keyboard_svgalib.c:93
+msgid "Opening console keyboard... "
+msgstr ""
+
+#: source/Modules/Unix/keyboard_svgalib.c:96
+msgid "could not open console!\n"
+msgstr ""
+
+#: source/Modules/Unix/keyboard_svgalib.c:119
+msgid "setting raw mode\n"
+msgstr ""
+
+#: source/Modules/Unix/keyboard_svgalib.c:137
+msgid "Cannot get keyboard mode.\n"
+msgstr ""
+
+#: source/Modules/Unix/keyboard_svgalib.c:153
+#, c-format
+msgid "restart[ed] (%d, %d)...\n"
+msgstr ""
+
+#: source/Modules/Unix/keyboard_svgalib.c:161
+#, c-format
+msgid "restop (%d, %d)...\n"
+msgstr ""
+
+#: source/Modules/Unix/keyboard_svgalib.c:173
+#, c-format
+msgid "disable... (%d, %d)\n"
+msgstr ""
+
+#. TM_ResetEvent(keyboard_event_tag);
+#: source/Modules/Unix/keyboard_svgalib.c:176
+msgid "Releasing keyboard...\n"
+msgstr ""
+
+#: source/Modules/Unix/keyboard_svgalib.c:232
+msgid "switched_back\n"
+msgstr ""
+
+#: source/Modules/Unix/keyboard_svgalib.c:256
+msgid "switched_away\n"
+msgstr ""
+
+#: source/Modules/Unix/keyboard_svgalib.c:302
+#, c-format
+msgid "orig_acqsig = %p, vt.acqsig = %d\n"
+msgstr ""
+
+#: source/Modules/Unix/keyboard_svgalib.c:323
+#, c-format
+msgid "retrieving keycode for %d = "
+msgstr ""
+
+#: source/Modules/Unix/keyboard_svgalib.c:327
+#, c-format
+msgid "%d\n"
+msgstr ""
+
+#: source/Modules/Unix/keyboard_svgalib.c:330
+msgid "not mapped\n"
+msgstr ""
+
+#: source/Modules/Unix/keyboard_svgalib.c:341
+msgid "function key\n"
+msgstr ""
+
+#: source/Modules/Unix/keyboard_svgalib.c:382
+#, c-format
+msgid "Unknown function keycode %04X\n"
+msgstr ""
+
+#: source/Modules/Unix/keyboard_svgalib.c:392
+msgid "special key\n"
+msgstr ""
+
+#: source/Modules/Unix/keyboard_svgalib.c:419
+#, c-format
+msgid "Unknown special keycode %04X\n"
+msgstr ""
+
+#: source/Modules/Unix/keyboard_svgalib.c:430
+msgid "cursor key\n"
+msgstr ""
+
+#: source/Modules/Unix/keyboard_svgalib.c:445
+#, c-format
+msgid "Unknown cursor keycode %04X\n"
+msgstr ""
+
+#: source/Modules/Unix/keyboard_svgalib.c:454
+msgid "shift key\n"
+msgstr ""
+
+#: source/Modules/Unix/keyboard_svgalib.c:474
+#, c-format
+msgid "Unknown shift keycode %04X\n"
+msgstr ""
+
+#: source/Modules/Unix/keyboard_svgalib.c:515
+#, c-format
+msgid "Latin key %c [%02X]\n"
+msgstr ""
+
+#: source/Modules/Unix/keyboard_svgalib.c:526
+#, c-format
+msgid "kblatin:  Got strange latin key %d\n"
+msgstr ""
+
+#: source/Modules/Unix/keyboard_svgalib.c:576
+#, c-format
+msgid "kblatin:  Unprogrammed fake key '%c' (%d)\n"
+msgstr ""
+
+#: source/Modules/Unix/keyboard_svgalib.c:583
+msgid "keypad key\n"
+msgstr ""
+
+#: source/Modules/Unix/keyboard_svgalib.c:642
+#, c-format
+msgid "Unknown keycode %04X\n"
+msgstr ""
+
+#: source/Modules/Unix/keyboard_svgalib.c:662
+#, c-format
+msgid "Unknown scancode %d\n"
+msgstr ""
+
+#: source/Modules/Unix/keyboard_svgalib.c:682
+#, c-format
+msgid "Mouse: (%d,%d,%d)\n"
+msgstr ""
+
+#: source/Modules/Unix/keyboard_svgalib.c:709
+#, c-format
+msgid "got %d chars to read...\n"
+msgstr ""
+
+#: source/Modules/Unix/keyboard_svgalib.c:719
+#, c-format
+msgid "scan: %02X\n"
+msgstr ""
+
+#: source/Modules/Unix/keyboard_svgalib.c:720
+#, c-format
+msgid "Key: S:%d O:%d T:%d V:%d\n"
+msgstr ""
+
+#: source/Modules/Unix/sound_alsa.c:111
+#, c-format
+msgid "params setup error: %s\n"
+msgstr ""
+
+#: source/Modules/Unix/sound_alsa.c:122
+#, c-format
+msgid "cannot set up period size: %s\n"
+msgstr ""
+
+#: source/Modules/Unix/sound_alsa.c:135
+#, c-format
+msgid "params setting error: %s\n"
+msgstr ""
+
+#: source/Modules/Unix/sound_alsa.c:143
+msgid "error preparing PCM handle\n"
+msgstr ""
+
+#: source/Modules/Unix/sound_alsa.c:160
+#, c-format
+msgid "record info error: %s\n"
+msgstr ""
+
+#: source/Modules/Unix/sound_alsa.c:169
+#, c-format
+msgid "device supports recording range %d to %d Hzclipping default rate.\n"
+msgstr ""
+
+#: source/Modules/Unix/sound_alsa.c:183
+msgid "device does not support desired eight-bit recording format\n"
+msgstr ""
+
+#: source/Modules/Unix/sound_alsa.c:189
+msgid "device cannot set recording format\n"
+msgstr ""
+
+#: source/Modules/Unix/sound_alsa.c:205
+#, c-format
+msgid ""
+"device cannot set requested PCM recording parameters:\n"
+"%s\n"
+msgstr ""
+
+#: source/Modules/Unix/sound_alsa.c:291
+msgid "StopSoundRecording:  Closing previously recording soundtrack\n"
+msgstr ""
+
+#: source/Modules/Unix/sound_alsa.c:312
+#, c-format
+msgid "RecordSoundToFile:  could not open '%s' for appending"
+msgstr ""
+
+#: source/Modules/Unix/sound_alsa.c:322
+#, c-format
+msgid "PausingSoundRecording:  %s\n"
+msgstr ""
+
+#: source/Modules/Unix/sound_alsa.c:323 source/winmain.c:805
+#: source/unixmain.c:671
+msgid "paused"
+msgstr ""
+
+#: source/Modules/Unix/sound_alsa.c:323
+msgid "resuming"
+msgstr ""
+
+#: source/Modules/Unix/sound_alsa.c:353
+#, c-format
+msgid "RecordSoundToFile:  using '%s'\n"
+msgstr ""
+
+#: source/Modules/Unix/sound_alsa.c:374
+msgid "ALSA Sound Mixer Options"
+msgstr ""
+
+#: source/Modules/Unix/sound_alsa.c:375
+msgid "These commands control the ALSA 99/4A sound module"
+msgstr ""
+
+#: source/Modules/Unix/sound_alsa.c:378
+msgid "Specify ALSA PCM drivere"
+msgstr ""
+
+#: source/Modules/Unix/sound_alsa.c:383
+msgid "device"
+msgstr ""
+
+#: source/Modules/Unix/sound_alsa.c:384
+msgid "device to use for PCM sound; e.g. 'plughw:0,0' "
+msgstr ""
+
+#: source/Modules/Unix/sound_alsa.c:390
+msgid "Record soundtrack to a file"
+msgstr ""
+
+#: source/Modules/Unix/sound_alsa.c:395 source/Modules/dsr_emupio.c:637
+#: source/Modules/dsr_emudisk.c:2780 source/Modules/dsr_emudisk.c:2792
+#: source/Modules/dsr_rs232.c:653 source/Modules/dsr_realdisk.c:1665
+#: source/Modules/dsr_realdisk.c:1677 source/Modules/dsr_realdisk.c:1689
+#: source/Modules/dsr_realdisk.c:1702 source/moduledb.c:847
+#: source/moduledb.c:910 source/moduledb.c:924 source/moduledb.c:938
+#: source/moduledb.c:952 source/moduledb.c:966 source/moduledb.c:980
+#: source/v9t9.c:851 source/v9t9.c:865 source/v9t9.c:878 source/v9t9.c:891
+#: source/v9t9.c:905 source/speech.c:623
+msgid "file"
+msgstr ""
+
+#: source/Modules/Unix/sound_alsa.c:396
+msgid ""
+"file to receive sound; if file exists, new data will be appended to it; if "
+"no extension is given, one will be added that details the RAW sound format "
+"used"
+msgstr ""
+
+#: source/Modules/Unix/sound_alsa.c:407
+msgid "Pause or resume soundtrack recording (does not close sound file)"
+msgstr ""
+
+#: source/Modules/Unix/sound_alsa.c:413 source/keyboard.c:307
+msgid "state"
+msgstr ""
+
+#: source/Modules/Unix/sound_alsa.c:414
+msgid "whether recording is paused"
+msgstr ""
+
+#: source/Modules/Unix/sound_alsa.c:421
+msgid "Stop soundtrack recording and close sound file"
+msgstr ""
+
+#: source/Modules/Unix/sound_alsa.c:458
+#, c-format
+msgid "Could not open ALSA PCM device (%s): %s\n"
+msgstr ""
+
+#: source/Modules/Unix/keyboard_X.c:72
+#, c-format
+msgid "key = 0x%X\n"
+msgstr ""
+
+#: source/Modules/Unix/keyboard_X.c:76 source/Modules/keyboard_gtk.c:68
+msgid "direct key\n"
+msgstr ""
+
+#: source/Modules/Unix/keyboard_X.c:290
+#, c-format
+msgid "no symbol for keycode (%d)\n"
+msgstr ""
+
+#. **************************
+#. not fatal -- might not be supported
+#: source/Modules/Unix/sound_oss.c:88 source/Modules/Unix/sound_oss.c:93
+msgid "ioctl failed ("
+msgstr ""
+
+#: source/Modules/Unix/sound_oss.c:118
+#, c-format
+msgid "desired sound quality not supported by hardware (%08X/%08X)\n"
+msgstr ""
+
+#: source/Modules/Unix/sound_oss.c:178
+msgid "Detected Open Sound System...\n"
+msgstr ""
+
+#: source/Modules/Unix/sound_oss.c:182
+#, c-format
+msgid "Could not open /dev/dsp:  %s\n"
+msgstr ""
+
+#: source/Modules/Unix/sound_oss.c:206
+#, c-format
+msgid "cannot open sound (%s)\n"
+msgstr ""
+
+#: source/Modules/Unix/sound_speaker.c:87
+msgid "speaker_poll\n"
+msgstr ""
+
+#: source/Modules/Unix/sound_speaker.c:91
+#, c-format
+msgid "speaker_poll:  next=%d, v->volume=%d, v->hertz=%d\n"
+msgstr ""
+
+#: source/Modules/Unix/sound_speaker.c:145
+msgid "Detected PC speaker..\n"
+msgstr ""
+
+#: source/Modules/Unix/sound_speaker.c:168
+msgid "PC Speaker Options"
+msgstr ""
+
+#: source/Modules/Unix/sound_speaker.c:169
+msgid "These commands control the PC speaker sound module"
+msgstr ""
+
+#: source/Modules/Unix/sound_speaker.c:172
+msgid "Set base rate for arpeggiation"
+msgstr ""
+
+#. ret
+#: source/Modules/Unix/sound_speaker.c:176 source/sound.c:447
+msgid "Hz"
+msgstr ""
+
+#: source/Modules/Unix/sound_speaker.c:177
+msgid "changes per second"
+msgstr ""
+
+#: source/Modules/Unix/sound_speaker.c:192
+#, c-format
+msgid "Could not open console for sound effects (%s)\n"
+msgstr ""
+
+#: source/Modules/Win32/sound_win32.c:231
+msgid "No Win32 wave sound devices installed\n"
+msgstr ""
+
+#: source/Modules/Win32/sound_win32.c:259
+#: source/Modules/Win32/sound_win32.c:302
+msgid "out of memory for wave headers\n"
+msgstr ""
+
+#: source/Modules/Win32/sound_win32.c:263
+msgid "could not create wave semaphore\n"
+msgstr ""
+
+#: source/Modules/Win32/sound_win32.c:267
+msgid "Could not create mixer event\n"
+msgstr ""
+
+#: source/Modules/Win32/sound_win32.c:274
+#, c-format
+msgid "could not create mixer thread, '%d'\n"
+msgstr ""
+
+#: source/Modules/Win32/sound_win32.c:287
+msgid "Could not open a wave device.\n"
+msgstr ""
+
+#: source/Modules/Win32/sound_win32.c:314
+#, c-format
+msgid "failed in waveOutPrepareHeader (%d)\n"
+msgstr ""
+
+#: source/Modules/Win32/keyboard_win32.c:175
+#, c-format
+msgid "win32keyboard_scan: key is %d [%d]\n"
+msgstr ""
+
+#: source/Modules/Win32/keyboard_win32.c:327
+#, c-format
+msgid "unknown keycode %d\n"
+msgstr ""
+
+#: source/Modules/Win32/dsr_rs232_win32.c:131
+msgid "could not assign any serial ports\n"
+msgstr ""
+
+#: source/Modules/Win32/dsr_rs232_win32.c:134
+#, c-format
+msgid ""
+"could not assign %d serial ports,\n"
+"only RS232/1 through RS232/%d are available\n"
+msgstr ""
+
+#. share
+#. security
+#. overlapped
+#: source/Modules/Win32/dsr_rs232_win32.c:171
+msgid "opening RS232 port"
+msgstr ""
+
+#. buffer input but not output
+#: source/Modules/Win32/dsr_rs232_win32.c:181
+msgid "setting comm buffers"
+msgstr ""
+
+#: source/Modules/Win32/dsr_rs232_win32.c:184
+msgid "getting comm state"
+msgstr ""
+
+#. don't ignore stuff if DSR is low
+#. of course...
+#: source/Modules/Win32/dsr_rs232_win32.c:201
+msgid "setting comm state"
+msgstr ""
+
+#: source/Modules/Win32/dsr_rs232_win32.c:206
+msgid "setting comm mask"
+msgstr ""
+
+#: source/Modules/Win32/dsr_rs232_win32.c:215
+msgid "setting timeouts"
+msgstr ""
+
+#: source/Modules/Win32/dsr_rs232_win32.c:219
+msgid "creating RS232 mutex"
+msgstr ""
+
+#: source/Modules/Win32/dsr_rs232_win32.c:229
+msgid "creating RS232 monitor thread"
+msgstr ""
+
+#: source/Modules/Win32/dsr_rs232_win32.c:371
+msgid "... interrupt: data ready for reading\n"
+msgstr ""
+
+#: source/Modules/Win32/dsr_rs232_win32.c:397
+msgid "... line change\n"
+msgstr ""
+
+#: source/Modules/Win32/dsr_rs232_win32.c:433
+#, c-format
+msgid ""
+"Commit_Changes: BaudRate=%d, fParity=%d, ByteSize=%d, Parity=%d, StopBits=%"
+"d\n"
+msgstr ""
+
+#: source/Modules/Win32/dsr_rs232_win32.c:437
+msgid "committing RS232 state changes"
+msgstr ""
+
+#: source/Modules/Win32/dsr_rs232_win32.c:440
+msgid "setting RTS"
+msgstr ""
+
+#: source/Modules/Win32/dsr_rs232_win32.c:445
+msgid "setting break"
+msgstr ""
+
+#: source/Modules/Win32/dsr_rs232_win32.c:485
+#, c-format
+msgid "Baud rate:  %d\n"
+msgstr ""
+
+#: source/Modules/Win32/dsr_rs232_win32.c:623
+msgid "*- Interrupt -*\n"
+msgstr ""
+
+#: source/Modules/Win32/dsr_rs232_win32.c:650
+#, c-format
+msgid "RS232/%d write error (%s)\n"
+msgstr ""
+
+#: source/Modules/Win32/dsr_rs232_win32.c:687
+#, c-format
+msgid "RS232/%d read error (%s)\n"
+msgstr ""
+
+#: source/Modules/Win32/video_win32_ddraw.cpp:86
+#, c-format
+msgid "video_restore: could not restore bitmap %8X\n"
+msgstr ""
+
+#: source/Modules/Win32/video_win32_ddraw.cpp:94
+#, c-format
+msgid "video_restore: could not restore primary %8X\n"
+msgstr ""
+
+#: source/Modules/Win32/video_win32_ddraw.cpp:111
+#, c-format
+msgid "SetCooperativeLevel failed (%d)\n"
+msgstr ""
+
+#: source/Modules/Win32/video_win32_ddraw.cpp:116
+msgid "SetDisplayMode\n"
+msgstr ""
+
+#: source/Modules/Win32/video_win32_ddraw.cpp:123
+#, c-format
+msgid "SetEntries failed (%d)\n"
+msgstr ""
+
+#: source/Modules/Win32/video_win32_ddraw.cpp:147
+msgid "SetCooperativeLevel (DDSCL_NORMAL)"
+msgstr ""
+
+#: source/Modules/Win32/video_win32_ddraw.cpp:177
+msgid "RegisterClass szVideoClassName"
+msgstr ""
+
+#: source/Modules/Win32/video_win32_ddraw.cpp:193
+msgid "V9t9-on-a-Monitor"
+msgstr ""
+
+#: source/Modules/Win32/video_win32_ddraw.cpp:205
+#: source/Modules/Win32/video_win32_drawdib.c:157
+#: source/Modules/Win32/video_win32_drawdib.c:193
+msgid "could not create window\n"
+msgstr ""
+
+#: source/Modules/Win32/video_win32_ddraw.cpp:239
+#, c-format
+msgid "error in Lock with %8X\n"
+msgstr ""
+
+#: source/Modules/Win32/video_win32_ddraw.cpp:372
+#, c-format
+msgid "videoupdatepalette:  SetPalette failed (%d)\n"
+msgstr ""
+
+#: source/Modules/Win32/video_win32_ddraw.cpp:650
+#, c-format
+msgid "CreateSurface (%d)\n"
+msgstr ""
+
+#: source/Modules/Win32/video_win32_ddraw.cpp:651
+msgid "CreateSurface (screen)"
+msgstr ""
+
+#: source/Modules/Win32/video_win32_ddraw.cpp:658
+msgid "GetAttachedSurface (screen)"
+msgstr ""
+
+#: source/Modules/Win32/video_win32_ddraw.cpp:669
+msgid "CreateSurface (offscreen)"
+msgstr ""
+
+#: source/Modules/Win32/video_win32_ddraw.cpp:698
+msgid "CreatePalette failed"
+msgstr ""
+
+#: source/Modules/Win32/video_win32_ddraw.cpp:705
+#, c-format
+msgid "deo failed (%d)\n"
+msgstr ""
+
+#: source/Modules/Win32/video_win32_drawdib.c:105
+msgid "RegisterClass szWindowClassName"
+msgstr ""
+
+#: source/Modules/Win32/video_win32_drawdib.c:124
+msgid "RegisterClass szStatusClassName"
+msgstr ""
+
+#: source/Modules/Win32/video_win32_drawdib.c:145
+msgid "V9t9-in-a-Box"
+msgstr ""
+
+#: source/Modules/Win32/video_win32_drawdib.c:181
+msgid "V9t9 Status"
+msgstr ""
+
+#: source/Modules/Win32/video_win32_drawdib.c:350
+#, c-format
+msgid "Refresh rate: %d pixels/frame, %1.2f (%d) frames/second\n"
+msgstr ""
+
+#: source/Modules/Win32/video_win32_drawdib.c:501
+#, c-format
+msgid "Update: %d,%d %d,%d\n"
+msgstr ""
+
+#: source/Modules/Win32/video_win32_drawdib.c:574
+#, c-format
+msgid "could not do SetWindowPos (%d)\n"
+msgstr ""
+
+#: source/Modules/Win32/video_win32_drawdib.c:693
+msgid "drawdib paint\n"
+msgstr ""
+
+#. let Windows draw icon
+#: source/Modules/Win32/video_win32_drawdib.c:697
+msgid "drawdib painting\n"
+msgstr ""
+
+#: source/Modules/Win32/video_win32_drawdib.c:958
+msgid "Win32 DrawDIB Commands"
+msgstr ""
+
+#: source/Modules/Win32/video_win32_drawdib.c:959
+msgid "These options control the behavior of the V9t9-in-a-Window module"
+msgstr ""
+
+#: source/Modules/Win32/video_win32_drawdib.c:962
+msgid "Toggle direct painting of windows versus waiting for a WM_PAINT message"
+msgstr ""
+
+#: source/Modules/Win32/video_win32_drawdib.c:968
+msgid "on:  draw as soon as possible; off:  queue updates for WM_PAINT"
+msgstr ""
+
+#: source/Modules/Win32/video_win32_drawdib.c:1002
+msgid "Could not find GTK main window!\n"
+msgstr ""
+
+#: source/Modules/dsr_emupio.c:209
+#, c-format
+msgid "could not find a spare page file for '%s' (page=%d)"
+msgstr ""
+
+#: source/Modules/dsr_emupio.c:214 source/Modules/dsr_emupio.c:222
+#, c-format
+msgid "could not create page file '%s'"
+msgstr ""
+
+#: source/Modules/dsr_emupio.c:230
+#, c-format
+msgid "could not write file '%s' (%s)"
+msgstr ""
+
+#: source/Modules/dsr_emupio.c:243
+#, c-format
+msgid "error writing to PIO (%s) (%s)"
+msgstr ""
+
+#: source/Modules/dsr_emupio.c:559 source/Modules/dsr_emudisk.c:2264
+#, c-format
+msgid ""
+"handling code %d\n"
+"\n"
+msgstr ""
+
+#: source/Modules/dsr_emupio.c:589
+#, c-format
+msgid "unsupported operation %d on PIO/%d\n"
+msgstr ""
+
+#: source/Modules/dsr_emupio.c:593
+#, c-format
+msgid "doing operation %d on PIO/%d\n"
+msgstr ""
+
+#: source/Modules/dsr_emupio.c:615
+msgid "PIO DSR Options"
+msgstr ""
+
+#: source/Modules/dsr_emupio.c:616
+msgid "These commands control the parallel port (PIO) emulation"
+msgstr ""
+
+#: source/Modules/dsr_emupio.c:619
+msgid "Give local name for PIO output"
+msgstr ""
+
+#: source/Modules/dsr_emupio.c:624 source/Modules/dsr_rs232.c:627
+#: source/Modules/dsr_rs232.c:640 source/emulate.c:1225 source/emulate.c:1254
+#: source/command.c:61
+msgid "filename"
+msgstr ""
+
+#: source/Modules/dsr_emupio.c:625
+#, c-format
+msgid ""
+"filename for printer pages under V9t9DataDir; use a printf-style specifier "
+"to number separate pages (e.g. 'page%03d.out')"
+msgstr ""
+
+#: source/Modules/dsr_emupio.c:632
+msgid ""
+"Name of emulated PIO DSR ROM image which fits in the CPU address space "
+">4000...>5FFF"
+msgstr ""
+
+#: source/Modules/dsr_emupio.c:638 source/Modules/dsr_emudisk.c:2781
+#: source/Modules/dsr_emudisk.c:2793 source/Modules/dsr_rs232.c:654
+#: source/Modules/dsr_realdisk.c:1703 source/moduledb.c:911
+#: source/moduledb.c:925 source/moduledb.c:939 source/moduledb.c:953
+#: source/moduledb.c:967 source/moduledb.c:981 source/speech.c:624
+msgid "name of binary image"
+msgstr ""
+
+#: source/Modules/dsr_emupio.c:726
+msgid "setting up PIO DSR ROM\n"
+msgstr ""
+
+#: source/Modules/dsr_emupio.c:748
+msgid "PIO DSR ROM"
+msgstr ""
+
+#: source/Modules/keyboard_gtk.c:43
+#, c-format
+msgid "GTK key = %02X (%d)\n"
+msgstr ""
+
+#: source/Modules/video_gtk.c:416
+msgid "create_xshm_image failed\n"
+msgstr ""
+
+#: source/Modules/video_gtk.c:448
+msgid "apple2: internal colormap allocation error\n"
+msgstr ""
+
+#: source/Modules/video_gtk.c:505
+msgid "Can't figure out color space\n"
+msgstr ""
+
+#: source/Modules/video_gtk.c:512
+msgid "Composite mode initialized\n"
+msgstr ""
+
+#: source/Modules/video_gtk.c:1190
+msgid "Composite video not supported on this OS\n"
+msgstr ""
+
+#: source/Modules/video_gtk.c:1263
+msgid "GTK Video Options"
+msgstr ""
+
+#: source/Modules/video_gtk.c:1264
+msgid "These commands control the GTK video emulation"
+msgstr ""
+
+#: source/Modules/video_gtk.c:1267
+msgid "Use composite video filter (borrowed from Apple2 BSOD hack)"
+msgstr ""
+
+#: source/Modules/video_gtk.c:1273
+msgid "on:  use composite mode; off:  use pixel-for-pixel display"
+msgstr ""
+
+#: source/Modules/video_gtk.c:1280
+msgid "Set tint level for composite video"
+msgstr ""
+
+#: source/Modules/video_gtk.c:1285 source/Modules/video_gtk.c:1297
+#: source/Modules/video_gtk.c:1309 source/Modules/video_gtk.c:1321
+msgid "level"
+msgstr ""
+
+#: source/Modules/video_gtk.c:1286
+msgid "tint level (0..359)"
+msgstr ""
+
+#: source/Modules/video_gtk.c:1292
+msgid "Set brightness level for composite video"
+msgstr ""
+
+#: source/Modules/video_gtk.c:1298
+msgid "brightness level (0..100)"
+msgstr ""
+
+#: source/Modules/video_gtk.c:1304
+msgid "Set color level for composite video"
+msgstr ""
+
+#: source/Modules/video_gtk.c:1310
+msgid "color level (0..100)"
+msgstr ""
+
+#: source/Modules/video_gtk.c:1316
+msgid "Set contrast level for composite video"
+msgstr ""
+
+#: source/Modules/video_gtk.c:1322
+msgid "contrast level (0..100)"
+msgstr ""
+
+#: source/Modules/video_gtk.c:1328
+msgid "Dump screen info"
+msgstr ""
+
+#: source/Modules/video_gtk.c:1405
+msgid "Could not allocate 15 colors\n"
+msgstr ""
+
+#: source/Modules/video_gtk.c:1429
+msgid "Got writeable colors for bg/fg\n"
+msgstr ""
+
+#: source/Modules/video_gtk.c:1438
+msgid "No writeable colors available\n"
+msgstr ""
+
+#: source/Modules/video_gtk.c:1442
+#, c-format
+msgid "Color %d is %08X\n"
+msgstr ""
+
+#: source/Modules/video_gtk.c:1769
+msgid "Could not get visual\n"
+msgstr ""
+
+#: source/Modules/video_gtk.c:1791
+msgid "Could not get image\n"
+msgstr ""
+
+#: source/Modules/sound_null.c:51
+msgid "No sound driver loaded\n"
+msgstr ""
+
+#: source/Modules/video_null.c:57
+msgid "No video driver loaded\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:203
+#, c-format
+msgid "%.*s: got PAB error %d [%s (%s)]\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:247
+#, c-format
+msgid "%.*s:  existing PAB not closed\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:293
+#, c-format
+msgid ""
+"PAB contents: flags=>%02X, reclen=%d, addr=>%04X, charcount=%d, recnum=%d\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:299
+#, c-format
+msgid "PAB contents: addr=>%04X, charcount=%d, recnum=%d\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:351
+#, c-format
+msgid "got subroutine error %d\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:361
+#, c-format
+msgid "got subroutine error %d [%s (%s)]\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:448
+#, c-format
+msgid "filename in FDR doesn't match filename ('%.*s' | '%.*s')\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:467
+msgid "DSKcomparefdrandpab:  record length differs\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:472
+msgid "DSKcomparefdrandpab:  var + relative file\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:477
+msgid "DSKcomparefdrandpab: fixed/variable flag differs\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:480
+msgid "file type mismatch on file open"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:491
+#, c-format
+msgid "DSKcomparefdrandsub:  filenames don't match ('%.*s' | '%.*s')\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:524
+#, c-format
+msgid "reading sector %d"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:537
+#, c-format
+msgid "writing sector %d"
+msgstr ""
+
+#. length of device+filename
+#: source/Modules/dsr_emudisk.c:569
+#, c-format
+msgid "getfilespec_pab:  pab len = %d\n"
+msgstr ""
+
+#. addr of filename (skip period)
+#. module_logger(&emuDiskDSR, _L | L_2, _("getfilespec_pab:  fnaddr++ at 0x8356 = %20.20s       \n"),
+#. VDP_PTR(0) + fnaddr);
+#. minus length of device + period
+#: source/Modules/dsr_emudisk.c:574
+#, c-format
+msgid "getfilespec_pab:  length of device 0x8354 = %04X\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:579 source/Modules/dsr_emudisk.c:614
+msgid "bad characters in filename"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:589
+msgid "couldn't make spec"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:660
+#, c-format
+msgid "trying to match '%s'\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:744
+#, c-format
+msgid "Re-reading catalog for DSK%d\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:747
+msgid "couldn't open directory for catalog"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:800
+msgid "reading catalog entry\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:831
+msgid "DSKreadcatalog: reached end of directory\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:901
+msgid "no free files"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:913
+msgid "can't have variable record size of 255"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:934
+msgid "bad catalog open flags"
+msgstr ""
+
+#. can't append to FIXED file
+#. &&
+#. !(pab->pflags & fp_internal)
+#: source/Modules/dsr_emudisk.c:961
+msgid "can't append to FIXED file"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:973
+msgid "could not open for update"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:982
+msgid "read FDR successfully\n"
+msgstr ""
+
+#. read PAB
+#. opening
+#: source/Modules/dsr_emudisk.c:986 source/Modules/dsr_emudisk.c:1022
+#: source/Modules/dsr_emudisk.c:1398
+msgid "setting up new FDR\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:1016 source/Modules/dsr_emudisk.c:1389
+msgid "could not open for output"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:1035 source/Modules/dsr_emudisk.c:1310
+msgid "could not open for input"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:1090
+msgid "DSKRead:  error due to not finding open file"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:1100
+msgid "read from append/output file"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:1115
+msgid "dump of catalog record:"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:1169
+msgid "DSKWrite:  error due to not finding open file"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:1178
+msgid "writing to input file"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:1183
+msgid "writing to catalog"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:1226
+msgid "DSKSeek:  error due to not finding open file"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:1234
+msgid "DSKSeek:  error due to seeking catalog"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:1246
+msgid "append/output mode can't seek"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:1298
+msgid "can't open catalog as binary"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:1302
+msgid "trying to open binary image\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:1338
+#, c-format
+msgid "read %d bytes to >%04X\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:1377
+msgid "can't save catalog as binary"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:1381
+msgid "trying to save binary image\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:1446
+msgid "can't delete catalog"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:1450
+msgid "trying to delete file\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:1456
+msgid "deleting file\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:1502
+msgid "DSKStatus:  EOF on variable file"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:1507
+msgid "DSKStatus:  EOF on fixed file\n"
+msgstr ""
+
+#. file is not open, open it now
+#: source/Modules/dsr_emudisk.c:1530
+msgid "DSKStatus:  no PAB file yet...\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:1542 source/Modules/dsr_emudisk.c:1567
+msgid "DSKStatus:  file not found\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:1551
+msgid "DSKStatus:  catalog status\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:1558
+msgid "DSKStatus:  opening file\n"
+msgstr ""
+
+#. file was already open
+#: source/Modules/dsr_emudisk.c:1577
+msgid "DSKStatus:  file was open\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:1596
+#, c-format
+msgid ""
+"DSKStatus:  flags=%02X\n"
+"\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:1641
+msgid "creating catalog sector 0\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:1679
+msgid "creating catalog sector 1\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:1706
+#, c-format
+msgid "creating catalog directory sector %d\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:1765
+msgid "ignoring sector write request"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:1840
+msgid "could not open to modify protection"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:1926
+msgid "could not open to modify filename"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:1936
+#, c-format
+msgid ""
+"Renamed '%s' to '%s'\n"
+"\n"
+"\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:1985
+msgid "could not open to read sectors"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2012
+#, c-format
+msgid ""
+"reading %d sectors from sector #%d from file, storing to >%04X\n"
+"\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2019
+msgid "DskDirectInput:  Could not seek to sector"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2023
+msgid "DskDirectInput:  Could not read sectors"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2073
+msgid "could not open to write sectors"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2096
+#, c-format
+msgid "Setting size of '%s' to %d sectors\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2121
+#, c-format
+msgid ""
+"writing %d sectors at sector #%d to file, reading from >%04X\n"
+"\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2156
+msgid ""
+"The current program is attempting to control the disk controller,\n"
+"but this functionality does not work with the emulated disk DSR.\n"
+"Consider running this application from a disk-on-a-disk (DOAD).\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2194
+msgid "emu disk DSR on\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2212
+#, c-format
+msgid ""
+"DSR Read >4000 = >%2X\n"
+"\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2215
+msgid "emu disk DSR off\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2244
+#, c-format
+msgid ""
+"code = %d\n"
+"\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2253
+msgid "passing control to real disk"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2259
+msgid "passing control to real disk\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2287
+#, c-format
+msgid "did not match DSK.%.*s\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2290
+#, c-format
+msgid "matched DSK.%.*s on DSK%d\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2331
+#, c-format
+msgid "doing operation %d on DSK%d\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2401
+#, c-format
+msgid "doing operation %d on DSK%d [%d, %04X, %04X]\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2412
+#, c-format
+msgid "ignoring code = %d\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2576
+msgid "error in emudisk_config_files"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2587
+msgid "Invalid file number\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2610
+#, c-format
+msgid "Invalid file name '%s'\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2638
+#, c-format
+msgid "Could not reopen catalog at '%s'\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2648
+#, c-format
+msgid "Could not reopen file '%s'\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2663
+#, c-format
+msgid "Unrecognized file field: %d\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2686
+#, c-format
+msgid "DSK%d (%s) is inaccessible when real (DOAD) disk DSR is loaded\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2705
+msgid "Emulated Disk DSR Options"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2706
+msgid ""
+"These commands control the emulated files-in-a-directory (FIAD) emulation"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2709
+msgid "Set DSK1 directory"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2715 source/Modules/dsr_emudisk.c:2728
+#: source/Modules/dsr_emudisk.c:2741 source/Modules/dsr_emudisk.c:2754
+#: source/Modules/dsr_emudisk.c:2767
+msgid "dir"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2716 source/Modules/dsr_emudisk.c:2729
+#: source/Modules/dsr_emudisk.c:2742 source/Modules/dsr_emudisk.c:2755
+#: source/Modules/dsr_emudisk.c:2768
+msgid "directory containing V9t9 files"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2722
+msgid "Set DSK2 directory"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2735
+msgid "Set DSK3 directory"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2748
+msgid "Set DSK4 directory"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2761
+msgid "Set DSK5 directory"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2775
+msgid ""
+"Name of emulated DSR ROM image which fits in the CPU address space >4000..."
+">5FFF; this DSR defines DSK1 through DSK5"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2787
+msgid ""
+"Name of emulated DSR ROM image which fits in the CPU address space >4000..."
+">5FFF; this DSR defines DSK3 through DSK5 and can share space with the real "
+"(DOAD) disk DSR"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2800
+msgid "Toggle preservation of original file type (V9t9 or TIFILES)"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2805
+msgid ""
+"on: don't change existing file's type; off: change type to NewFileFormat"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2813
+msgid "Select type for new files or converted files"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2818
+msgid "v9t9: original V9t9 file type; tifiles: TIFILES (XMODEM) format"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2826
+msgid ""
+"Toggle treatment of unknown (non-V9t9 and non-TIFILES) files as DOS/Unix/Mac "
+"text files"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2832
+msgid "on:  read unknown file as text; off:  generate error"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2839
+msgid ""
+"Allow catalogs read through DSKx. to return more than 127 records; some "
+"programs may depend on this limit"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2845
+msgid "on: allow up to 32767 entries, off: restrict to 127 entries"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2851
+msgid ""
+"Repair files with bad file sizes, even when opened read-only.  This is a bit "
+"dangerous if you try to open a non-V9t9 file, which will (obviously) appear "
+"damaged.  V9t9 will try to rule out files that don't pass enough sanity "
+"checks, though."
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2859
+msgid "on: repair damaged files, off: leave them alone"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2865
+msgid ""
+"Rename older V9t9 files which were mangled to fit in the DOS 8.3 filename "
+"format.  These files were split at the 8th character with a '.' and all "
+"illegal DOS characters ("
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2883
+msgid "on: rename old V9t9 files, off: leave them alone"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2890
+msgid ""
+"Generate filenames that conform to the old V9t9 DOS-mangled format (see "
+"above) instead of the new format. Not recommended unless you actively use "
+"the DOS version."
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2897
+msgid "on: generate old V9t9 filenames, off: generate current V9t9 filenames"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2913
+msgid "Top address used in VDP RAM"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2917 source/emulate.c:984 source/emulate.c:998
+#: source/emulate.c:1013 source/emulate.c:1027 source/emulate.c:1090
+#: source/emulate.c:1150 source/emulate.c:1177 source/emulate.c:1206
+#: source/emulate.c:1235 source/emulate.c:1240 source/emulate.c:1264
+#: source/emulate.c:1269 source/moduledb.c:833 source/debugger.c:1229
+#: source/debugger.c:1242 source/debugger.c:1256 source/debugger.c:1276
+#: source/debugger.c:1300
+msgid "address"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2918
+msgid "VDP RAM address, minus one"
+msgstr ""
+
+#. ret
+#: source/Modules/dsr_emudisk.c:2929
+msgid "file number"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2930
+msgid "index of files[] array"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2936
+msgid "name of field in pab_tifile to save"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2940
+msgid "field contents"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2941
+msgid "contents of field"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2967
+msgid "setting up emulated disk DSR ROM\n"
+msgstr ""
+
+#: source/Modules/dsr_emudisk.c:2991
+msgid "Emulated disk DSR ROM"
+msgstr ""
+
+#: source/Modules/dsr_rs232.c:62
+#, c-format
+msgid "loadctrl=%1X\t\n"
+msgstr ""
+
+#: source/Modules/dsr_rs232.c:66
+#, c-format
+msgid ""
+"ctrl=%02X\n"
+"rcl0=%d,rcl1=%d, clk4m=%d, Podd=%d,Penb=%d, SBS2=%d,SBS1=%d\t"
+msgstr ""
+
+#: source/Modules/dsr_rs232.c:74
+#, c-format
+msgid "invl=%03X\t"
+msgstr ""
+
+#: source/Modules/dsr_rs232.c:78
+#, c-format
+msgid "rcvrate=%03X\t"
+msgstr ""
+
+#: source/Modules/dsr_rs232.c:82
+#, c-format
+msgid "xmitrate=%03X\t"
+msgstr ""
+
+#: source/Modules/dsr_rs232.c:86
+#, c-format
+msgid "txchar=%02X (%c)\t"
+msgstr ""
+
+#: source/Modules/dsr_rs232.c:88
+#, c-format
+msgid "recvbps=%d, xmitbps=%d\n"
+msgstr ""
+
+#: source/Modules/dsr_rs232.c:91
+#, c-format
+msgid "Write buffer: %d/%d  Read buffer: %d/%d\n"
+msgstr ""
+
+#: source/Modules/dsr_rs232.c:180
+msgid "*** Interrupt ***\n"
+msgstr ""
+
+#: source/Modules/dsr_rs232.c:193
+#, c-format
+msgid ""
+"Buffering char %02X (%c)\n"
+"\n"
+msgstr ""
+
+#: source/Modules/dsr_rs232.c:217
+#, c-format
+msgid "Received char %02X (%c)\n"
+msgstr ""
+
+#: source/Modules/dsr_rs232.c:251
+msgid "*** Flushing buffers"
+msgstr ""
+
+#: source/Modules/dsr_rs232.c:260
+msgid "*** Transmit buffer was not empty\n"
+msgstr ""
+
+#. baseclockhz
+#: source/Modules/dsr_rs232.c:327
+#, c-format
+msgid ""
+"Calc_BPS_Rate:  *bps = %d\n"
+"\n"
+msgstr ""
+
+#: source/Modules/dsr_rs232.c:393
+#, c-format
+msgid "RealRS232_0_10_w: %d / %d\n"
+msgstr ""
+
+#: source/Modules/dsr_rs232.c:426
+#, c-format
+msgid "RealRS232_11_14_w: %d / %d\n"
+msgstr ""
+
+#: source/Modules/dsr_rs232.c:454
+#, c-format
+msgid "RealRS232_16_21_w: %d / %d\n"
+msgstr ""
+
+#: source/Modules/dsr_rs232.c:487
+#, c-format
+msgid "RealRS232_0_7_r: %04X / %d\n"
+msgstr ""
+
+#. turn off bit once read
+#. if (bit == RS_INT || bit == RS_RBINT || bit == RS_XBINT ||
+#. bit == RS_TIMINT || bit == RS_DSCINT)
+#. rs->rdport &= ~bit;
+#: source/Modules/dsr_rs232.c:523
+#, c-format
+msgid "RealRS232_9_31_r: %d / %d\n"
+msgstr ""
+
+#: source/Modules/dsr_rs232.c:532
+#, c-format
+msgid "RealRS232_Reset_w: %d\n"
+msgstr ""
+
+#: source/Modules/dsr_rs232.c:618
+msgid "TI RS232 DSR Options"
+msgstr ""
+
+#: source/Modules/dsr_rs232.c:619
+msgid "These commands control the TI RS232 emulation"
+msgstr ""
+
+#: source/Modules/dsr_rs232.c:622
+msgid "Give local name for first RS232 port"
+msgstr ""
+
+#: source/Modules/dsr_rs232.c:628 source/Modules/dsr_rs232.c:641
+msgid "filename or device for current operating system"
+msgstr ""
+
+#: source/Modules/dsr_rs232.c:635
+msgid "Give local name for second RS232 port"
+msgstr ""
+
+#: source/Modules/dsr_rs232.c:648
+msgid ""
+"Name of RS232 DSR ROM image which fits in the CPU address space >4000...>5FFF"
+msgstr ""
+
+#: source/Modules/dsr_rs232.c:778
+msgid "setting up TI RS232 DSR ROM\n"
+msgstr ""
+
+#: source/Modules/dsr_rs232.c:810
+msgid "TI RS232 DSR ROM"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:247
+#, c-format
+msgid "DOAD server:  cannot get %d bytes for disk image '%s' (%s)\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:284
+#, c-format
+msgid "DOAD server:  cannot write disk header for image '%s' (%s)\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:313
+#, c-format
+msgid "DOAD server:  cannot read disk header for image '%s' (%s)\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:329
+#, c-format
+msgid ""
+"DOAD server:  disk image '%s' has unknown type (got '%*s', expected '%*s')\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:338
+#, c-format
+msgid "DOAD server:  disk image '%s' has too new version (%d > %d)\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:347
+#, c-format
+msgid "DOAD server:  cannot get info about disk image '%s' (%s)\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:357
+#, c-format
+msgid "DOAD server:  cannot read sector 0 for '%s' (%s)\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:388
+#, c-format
+msgid "Disk image has too large track size (%d > %d)\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:402
+#, c-format
+msgid "DOAD server:  creating new disk image at DSK%d (%s)\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:420
+#, c-format
+msgid "DOAD server:  could not create disk (%s)\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:436
+msgid "FDCopendisk\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:457
+#, c-format
+msgid "Cannot access disk '%s' (%s)\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:485
+#, c-format
+msgid ""
+"Opened %s disk '%s' #%d,\n"
+"#tracks=%d, tracksize=%d, sides=%d\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:489
+#, c-format
+msgid "DSK.handle=%d\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:497
+msgid "Buffer contents:\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:523
+#, c-format
+msgid "writing %d bytes of data on track %d, trackoffset = %d, offset = %d\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:536
+#, c-format
+msgid "DOAD server:  could not seek disk '%s' to byte %d (%s)\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:546
+#, c-format
+msgid ""
+"DOAD server:  could not write %d bytes of data to disk '%s' at byte %d (%s)\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:584
+#, c-format
+msgid "retrying for id marker (CRC=%04X != %04X)\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:590
+#, c-format
+msgid "Formatting sector track:%d, side:%d, sector:%d, size:%d, crc=%04X\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:597
+#, c-format
+msgid ""
+"Program is formatting track on '%s' with non-ordinary sectors;\n"
+"this does not work with sector-image disks"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:619
+#, c-format
+msgid "retrying for sector data (CRC=%04X != %04X)\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:631
+#, c-format
+msgid "Lost sector data in format of sector-image disk '%s'\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:655
+#, c-format
+msgid "DOAD server:  disk image '%s' is write-protected\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:669
+#, c-format
+msgid "Inconsistent idoffset (%d)"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:688
+#, c-format
+msgid "Inconsistent dataoffset (%d)"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:730
+msgid "FDChold on\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:733
+msgid "FDChold off\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:745
+msgid "FDCclosedisk\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:775
+#, c-format
+msgid "cannot seek past end of disk Tr%d(%d) Sd%d(%d)\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:785
+#, c-format
+msgid "seeking to Tr%d Sd%d = byte %d of file\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:789
+msgid "failed to seek!\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:808
+#, c-format
+msgid "Reading data from track %d\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:819
+#, c-format
+msgid "failed to read track %d data\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:852
+msgid "FDC seek home\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:871
+#, c-format
+msgid "FDC seek, T%d s%d\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:901 source/Modules/dsr_realdisk.c:931
+#, c-format
+msgid "FDC seek, record mismatch (%d != %d) %d\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:910
+#, c-format
+msgid "FDC step in, T%d s%d\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:941
+msgid "FDC find ID marker\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:959
+#, c-format
+msgid ""
+"FDCfindIDmarker: starting at %d, traversing [%d...%d) (track offset: %d)\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:990
+#, c-format
+msgid "FDCfindIDmarker: failed ID CRC check (%04X != %04X)\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:997
+#, c-format
+msgid "FDCfindIDmarker: T%d, S%d, s%d\n"
+msgstr ""
+
+#. found one; look somewhere else next time
+#: source/Modules/dsr_realdisk.c:1001
+#, c-format
+msgid "FDCfindIDmarker: found marker at offset >%04X\n"
+msgstr ""
+
+#. easy
+#: source/Modules/dsr_realdisk.c:1016
+msgid "FDCfindIDmarker: noop success\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1032
+#, c-format
+msgid "FDC match ID marker: looking for T%d, S%d\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1055
+#, c-format
+msgid "unmatching track T%d S%d s%d z%d\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1062 source/Modules/dsr_realdisk.c:1086
+msgid "FDCmatchIDmarker failed\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1067 source/Modules/dsr_realdisk.c:1108
+#, c-format
+msgid "FDCmatchIDmarker succeeded: track %d, sector %d, side %d, size %d\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1172
+#, c-format
+msgid "FDC read sector, T%d S%d s%d\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1200
+#, c-format
+msgid "FDC write sector, T%d S%d s%d\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1222
+#, c-format
+msgid "FDC write track, #%d\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1234
+#, c-format
+msgid "FDC read track, #%d\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1273
+#, c-format
+msgid "FDC read ID marker: track=%d sector=%d side=%d size=%d\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1281
+msgid "FDC interrupt\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1300
+#, c-format
+msgid "FDC read status >%04X = >%02X\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1305
+#, c-format
+msgid "FDC read track addr >%04X = >%02X\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1310
+#, c-format
+msgid "FDC read sector addr >%04X = >%02X\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1334
+#, c-format
+msgid "FDC read data (%d) >%02X (%d)\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1344
+#, c-format
+msgid "FDC read write xxx >%04X = >%02X\n"
+msgstr ""
+
+#. W_RDSTAT
+#. W_RTADDR
+#. W_RSADDR
+#. W_RDDATA
+#: source/Modules/dsr_realdisk.c:1359
+#, c-format
+msgid "FDC write read xxx >%04X, >%02X\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1366
+#, c-format
+msgid "FDC command >%02X\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1399
+#, c-format
+msgid "unknown FDC command >%02X\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1407
+#, c-format
+msgid "FDC write track addr >%04X, >%02X\n"
+msgstr ""
+
+#. DSK.status &= ~fdc_LOSTDATA;
+#: source/Modules/dsr_realdisk.c:1413
+#, c-format
+msgid "FDC write sector addr >%04X, >%02X\n"
+msgstr ""
+
+#. W_WTDATA
+#: source/Modules/dsr_realdisk.c:1417
+#, c-format
+msgid "FDC write data (%d,%d) >%02X\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1444
+#, c-format
+msgid "Unexpected data write >%02X for command >%02X\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1491
+msgid "real disk DSR on\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1498
+#, c-format
+msgid "DSR Read >4000 = >%02X\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1500
+msgid "real disk DSR off\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1512
+#, c-format
+msgid "CRU Motor %s\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1520
+#, c-format
+msgid "CRU hold %s\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1537
+#, c-format
+msgid "CRU Heads %s\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1556
+#, c-format
+msgid "CRU disk select, #%d\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1559
+#, c-format
+msgid "opening (DSK.num=%d)\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1569
+msgid "closing\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1579
+#, c-format
+msgid "CRU disk side #%d\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1604
+#, c-format
+msgid ""
+"DOAD server:  DSK%d (%s) is inaccessible\n"
+"when emulated (FIAD) disk DSR is loaded\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1609
+#, c-format
+msgid "Changing disk %d while it's being accessed!\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1642
+msgid "TI Disk DSR Options"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1643
+msgid "These commands control the TI 'real' disk-on-a-disk (DOAD) emulation"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1646
+msgid "Set directory list to search for DOAD disk images"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1651 source/moduledb.c:722
+#: source/moduledb.c:738 source/moduledb.c:755 source/moduledb.c:773
+#: source/moduledb.c:789 source/moduledb.c:806 source/v9t9.c:803
+#: source/v9t9.c:820 source/v9t9.c:836 source/demo.c:1235
+msgid "path"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1652 source/moduledb.c:723
+#: source/moduledb.c:739 source/moduledb.c:756 source/moduledb.c:774
+#: source/moduledb.c:790 source/moduledb.c:807 source/v9t9.c:804
+#: source/v9t9.c:821 source/v9t9.c:837 source/demo.c:1236
+msgid "list of directories separated by one of these characters: '"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1660
+msgid "DOAD image in drive 1"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1666 source/Modules/dsr_realdisk.c:1678
+#: source/Modules/dsr_realdisk.c:1690
+msgid "name of DOAD image"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1672
+msgid "DOAD image in drive 2"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1684
+msgid "DOAD image in drive 3"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1697
+msgid "Name of DSR ROM image which fits in the CPU address space >4000...>5FFF"
+msgstr ""
+
+#. if (!(features & FE_realdisk))
+#. return vmOk;
+#: source/Modules/dsr_realdisk.c:1728
+msgid "setting up TI real-disk DSR ROM\n"
+msgstr ""
+
+#: source/Modules/dsr_realdisk.c:1773
+msgid "TI disk DSR ROM"
+msgstr ""
+
+#: source/Modules/keyboard_null.c:66
+msgid "No keyboard driver loaded\n"
+msgstr ""
+
+#: source/keyboard.c:150
+#, c-format
+msgid ""
+"Binding %scommand to '%s':\n"
+"\t%s\n"
+msgstr ""
+
+#: source/keyboard.c:151
+msgid "up "
+msgstr ""
+
+#: source/keyboard.c:151
+msgid "down "
+msgstr ""
+
+#: source/keyboard.c:159
+#, c-format
+msgid ""
+"Unbinding old 'up' command:\n"
+"\t%s\n"
+"\n"
+msgstr ""
+
+#: source/keyboard.c:169
+#, c-format
+msgid ""
+"Unbinding old 'down' command:\n"
+"\t%s\n"
+"\n"
+msgstr ""
+
+#: source/keyboard.c:179
+#, c-format
+msgid "BindKey: key '%s' not defined\n"
+msgstr ""
+
+#: source/keyboard.c:206
+msgid "<no keys to bind>\n"
+msgstr ""
+
+#: source/keyboard.c:220
+#, c-format
+msgid "<%s unavailable>\n"
+msgstr ""
+
+#: source/keyboard.c:228
+msgid "<empty>"
+msgstr ""
+
+#: source/keyboard.c:234
+msgid "<no keys bound>\n"
+msgstr ""
+
+#: source/keyboard.c:243
+msgid "Map of keyboard CRU:\n"
+msgstr ""
+
+#: source/keyboard.c:297
+msgid "Keyboard / Joystick Options"
+msgstr ""
+
+#: source/keyboard.c:298
+msgid ""
+"These are generic commands for controlling the keyboard and joystick "
+"emulation"
+msgstr ""
+
+#: source/keyboard.c:301
+msgid ""
+"Enable or disable ALPHA LOCK state (i.e., upon startup; CAPS performs this "
+"function at runtime)"
+msgstr ""
+
+#: source/keyboard.c:315
+msgid "Bind a non-TI key to a command"
+msgstr ""
+
+#: source/keyboard.c:320
+msgid "key"
+msgstr ""
+
+#: source/keyboard.c:321
+msgid ""
+"symbolic name of key (see ListKeys); bare key name means 'perform command "
+"when key is pressed'; +key means 'perform command when key is pressed' and "
+"'perform command bound to -key when key is released'"
+msgstr ""
+
+#: source/keyboard.c:328
+msgid "command"
+msgstr ""
+
+#: source/keyboard.c:329
+msgid "text of command to execute"
+msgstr ""
+
+#: source/keyboard.c:336
+msgid "List symbolic names of bindable keys"
+msgstr ""
+
+#: source/keyboard.c:344
+msgid "List current key bindings"
+msgstr ""
+
+#: source/keyboard.c:352
+msgid "Display map of current TI keys held down"
+msgstr ""
+
+#: source/keyboard.c:361
+msgid "Reset keyboard (i.e. when a key seems stuck)"
+msgstr ""
+
+#: source/keyboard.c:368
+msgid ""
+"Enable software keyboard mode; this mode remembers only the last key pressed "
+"and flushes the keyboard map at regular intervals; used with clients that do "
+"not reliably send key release events.  Default set by client."
+msgstr ""
+
+#: source/keyboard.c:377
+msgid "off|on"
+msgstr ""
+
+#: source/keyboard.c:378
+msgid ""
+"off: assume key press and release events are reliable\n"
+"on: handle one key at a time, flush keymap KeyboardFlushRate times per "
+"second\n"
+msgstr ""
+
+#: source/keyboard.c:386
+msgid ""
+"Control rate keyboard map is cleared when SoftKeyScanning mode is enabled "
+"and keyboard is idle"
+msgstr ""
+
+#: source/keyboard.c:392 source/emulate.c:962 source/vdp.c:1468
+#: source/vdp.c:1482 source/speech.c:636
+msgid "hertz"
+msgstr ""
+
+#: source/keyboard.c:393
+msgid "times per second to flush keyboard map\n"
+msgstr ""
+
+#: source/keyboard.c:423
+#, c-format
+msgid "Illegal special key value %d in %s, ignoring\n"
+msgstr ""
+
+#: source/keyboard.c:447
+#, c-format
+msgid ""
+"Activating binding for +'%s'\n"
+"\n"
+"\n"
+msgstr ""
+
+#: source/keyboard.c:452
+#, c-format
+msgid ""
+"Nothing bound to '+%s'\n"
+"\n"
+msgstr ""
+
+#: source/keyboard.c:454
+#, c-format
+msgid ""
+"Special key %d not supported\n"
+"\n"
+msgstr ""
+
+#: source/keyboard.c:460
+#, c-format
+msgid ""
+"Activating binding for -'%s'\n"
+"\n"
+msgstr ""
+
+#: source/keyboard.c:591
+#, c-format
+msgid "Resetting %d for key %d\n"
+msgstr ""
+
+#: source/keyboard.c:649
+#, c-format
+msgid ""
+"keyboard_setkey:  got a key that should be faked '%c' (%d)\n"
+"\n"
+msgstr ""
+
+#: source/keyboard.c:688
+msgid "Clearing fake shifts\n"
+msgstr ""
+
+#: source/keyboard.c:715
+#, c-format
+msgid ""
+"keyboard_isset:  got a key that should be faked '%c' (%d)\n"
+"\n"
+msgstr ""
+
+#: source/keyboard.c:732
+#, c-format
+msgid ""
+"changing JOY_X (%d)\n"
+"\n"
+msgstr ""
+
+#: source/keyboard.c:737
+#, c-format
+msgid ""
+"changing JOY_Y (%d)\n"
+"\n"
+msgstr ""
+
+#: source/keyboard.c:742
+#, c-format
+msgid ""
+"changing JOY_B (%d)\n"
+"\n"
+msgstr ""
+
+#: source/command_rl.c:126
+#, c-format
+msgid ""
+"\n"
+"%s (a TI-99/4A Emulator) version %s\n"
+"%s comes with ABSOLUTELY NO WARRANTY; for details type 'license'\n"
+"Type 'exit' to continue emulating, 'quit' to quit %s\n"
+"\n"
+msgstr ""
+
+#: source/command_rl.c:165 source/command_rl.c:199
+#, c-format
+msgid "Enter a command> "
+msgstr ""
+
+#: source/command_rl.c:175
+#, c-format
+msgid "<EOF>\n"
+msgstr ""
+
+#: source/emulate.c:116
+msgid "inserting keyboard delay hack\n"
+msgstr ""
+
+#: source/emulate.c:140
+msgid "Calibrating processor... "
+msgstr ""
+
+#: source/emulate.c:157
+#, c-format
+msgid ""
+"%Ld bogocycles.\n"
+"\n"
+msgstr ""
+
+#: source/emulate.c:250
+#, c-format
+msgid "Cannot set PC to %04X, ignoring\n"
+msgstr ""
+
+#: source/emulate.c:272
+#, c-format
+msgid "Cannot set WP to %04X, ignoring\n"
+msgstr ""
+
+#: source/emulate.c:450
+#, c-format
+msgid "Can't access memory type '%s'\n"
+msgstr ""
+
+#: source/emulate.c:525
+#, c-format
+msgid ""
+"Mismatched on RLE compress:\n"
+"In : %s\n"
+"Out: %s\n"
+"Ver: %s\n"
+msgstr ""
+
+#: source/emulate.c:689 source/emulate.c:740
+#, c-format
+msgid "end address (>%04X) less than start address (>%04X)"
+msgstr ""
+
+#: source/emulate.c:694
+#, c-format
+msgid "end address (>%04X) equals start address (>%04X)"
+msgstr ""
+
+#: source/emulate.c:847
+msgid "Internal Emulator Commands"
+msgstr ""
+
+#: source/emulate.c:848
+msgid "These options affect the mechanics of 99/4A emulation"
+msgstr ""
+
+#: source/emulate.c:852
+msgid ""
+"Toggle real-time emulation mode (attempts to operate at the same speed of "
+"the original 9900)"
+msgstr ""
+
+#: source/emulate.c:859
+msgid "on:  execute at 9900 speed; off:  execute with DelayBetweenInstructions"
+msgstr ""
+
+#: source/emulate.c:868
+msgid "Sets a constant delay between instructions (when not in real-time mode)"
+msgstr ""
+
+#: source/emulate.c:873
+msgid "cycles"
+msgstr ""
+
+#: source/emulate.c:874
+msgid "number of cycles to count"
+msgstr ""
+
+#: source/emulate.c:882
+msgid "Resets the 99/4A via RESET"
+msgstr ""
+
+#: source/emulate.c:891
+msgid "Pauses emulation of the 99/4A"
+msgstr ""
+
+#: source/emulate.c:905
+msgid "Enable the debugger/tracer"
+msgstr ""
+
+#: source/emulate.c:919
+msgid "Allow interrupts to occur while debugging"
+msgstr ""
+
+#: source/emulate.c:933
+msgid ""
+"Check for locked-up 99/4A and enter interactive mode. The test is very "
+"simple and may not be true in all cases."
+msgstr ""
+
+#: source/emulate.c:948
+msgid "Execute one instruction and stop"
+msgstr ""
+
+#: source/emulate.c:957
+msgid "Set HZ speed base clock (usually 3.0 MHz)"
+msgstr ""
+
+#: source/emulate.c:963 source/vdp.c:1469 source/vdp.c:1483
+msgid "number of times per second"
+msgstr ""
+
+#: source/emulate.c:976
+msgid "Memory / Debugging Commands"
+msgstr ""
+
+#: source/emulate.c:977
+msgid ""
+"These options allow you to change the running state of the virtual machine"
+msgstr ""
+
+#: source/emulate.c:979
+msgid "Set the program counter"
+msgstr ""
+
+#: source/emulate.c:985 source/emulate.c:999 source/emulate.c:1014
+#: source/emulate.c:1151 source/emulate.c:1178 source/emulate.c:1207
+msgid "illegal addresses will be ignored"
+msgstr ""
+
+#: source/emulate.c:993
+msgid "Set the workspace pointer"
+msgstr ""
+
+#: source/emulate.c:1008
+msgid "Set the status register"
+msgstr ""
+
+#: source/emulate.c:1022
+msgid "Set the VDP address register"
+msgstr ""
+
+#: source/emulate.c:1036
+msgid "Set a VDP register"
+msgstr ""
+
+#: source/emulate.c:1041
+msgid "register"
+msgstr ""
+
+#: source/emulate.c:1042
+msgid "register number, 0-7"
+msgstr ""
+
+#: source/emulate.c:1046
+msgid "value"
+msgstr ""
+
+#: source/emulate.c:1047
+msgid "value for register"
+msgstr ""
+
+#: source/emulate.c:1056
+msgid "Set VDP read-ahead value"
+msgstr ""
+
+#: source/emulate.c:1061
+msgid "byte"
+msgstr ""
+
+#: source/emulate.c:1062
+msgid "next byte to read from VDP RAM"
+msgstr ""
+
+#: source/emulate.c:1071
+msgid "Set VDP address"
+msgstr ""
+
+#: source/emulate.c:1076
+msgid "flag"
+msgstr ""
+
+#: source/emulate.c:1077
+msgid "value of flag, 0 for high, 1 for low"
+msgstr ""
+
+#: source/emulate.c:1085
+msgid "Set the GROM address register"
+msgstr ""
+
+#: source/emulate.c:1132
+msgid "Read contents of memory"
+msgstr ""
+
+#: source/emulate.c:1138
+msgid "contents"
+msgstr ""
+
+#: source/emulate.c:1139
+msgid "memory bytes formatted into a single word"
+msgstr ""
+
+#: source/emulate.c:1145 source/emulate.c:1171 source/emulate.c:1201
+#: source/emulate.c:1230 source/emulate.c:1259 source/debugger.c:1282
+#: source/debugger.c:1306 source/sound.c:483
+msgid "type"
+msgstr ""
+
+#: source/emulate.c:1146 source/emulate.c:1202 source/emulate.c:1231
+#: source/emulate.c:1260 source/debugger.c:1283 source/debugger.c:1307
+msgid "memory type: C/V/G/S"
+msgstr ""
+
+#: source/emulate.c:1155 source/emulate.c:1182
+msgid "bytes"
+msgstr ""
+
+#: source/emulate.c:1156
+msgid "number of bytes to read (1, 2, or 4)"
+msgstr ""
+
+#: source/emulate.c:1164
+msgid "Write contents of memory"
+msgstr ""
+
+#: source/emulate.c:1172
+msgid ""
+"memory type: C/V/G/S, plus R to force writing of ROM (only valid if memory "
+"is not mapped as zero)"
+msgstr ""
+
+#: source/emulate.c:1183
+msgid "number of bytes to write (1, 2, or 4)"
+msgstr ""
+
+#: source/emulate.c:1187
+msgid "data"
+msgstr ""
+
+#: source/emulate.c:1188
+msgid "data to write, as a single integer"
+msgstr ""
+
+#: source/emulate.c:1196
+msgid "Change contents of multiple consecutive bytes of RAM"
+msgstr ""
+
+#: source/emulate.c:1211 source/command.c:56
+msgid "string"
+msgstr ""
+
+#: source/emulate.c:1212
+msgid "hexadecimal string"
+msgstr ""
+
+#: source/emulate.c:1220
+msgid "Write contents of memory to a file (no headers!)"
+msgstr ""
+
+#: source/emulate.c:1226
+msgid "file to write"
+msgstr ""
+
+#: source/emulate.c:1236 source/emulate.c:1265
+msgid "start address"
+msgstr ""
+
+#: source/emulate.c:1241 source/emulate.c:1270
+msgid "end address"
+msgstr ""
+
+#: source/emulate.c:1249
+msgid "Load contents of memory from a file (no headers!)"
+msgstr ""
+
+#: source/emulate.c:1255
+msgid "file to read"
+msgstr ""
+
+#: source/emulate.c:1278
+msgid "Set all RAM to a known pattern (0xAA55)"
+msgstr ""
+
+#: source/emulate.c:1301
+msgid "on:  dump trace to stdout; off:  don't"
+msgstr ""
+
+#: source/emulate.c:1667
+#, c-format
+msgid ""
+"\n"
+"Invalid workspace pointer set (>%04X);\n"
+"emulated 99/4A is probably locked up.\n"
+"(If this is the first thing V9t9 is doing,\n"
+"perhaps your ROMs are missing or misconfigured?)\n"
+"\n"
+"Enter 'SanityCheckLockupState off' to disable this message.\n"
+msgstr ""
+
+#: source/emulate.c:1726
+#, c-format
+msgid "emulate_keyslow; slowing=%d, resume=%d\n"
+msgstr ""
+
+#. status = (u8) memory_read_byte(0x837C);	// not set yet
+#. lastkey != 0xff && curkey == 0xff && curkey == lastkey) {
+#: source/emulate.c:1737
+#, c-format
+msgid "got a keypress [%02X : %02X]\n"
+msgstr ""
+
+#: source/emulate.c:1739
+msgid "slowing down...\n"
+msgstr ""
+
+#: source/emulate.c:1769
+#, c-format
+msgid "different key [%02X != %02X] : %02X\n"
+msgstr ""
+
+#: source/gnomeloop.c:228 source/gtkloop.c:226
+msgid "GTK Options"
+msgstr ""
+
+#: source/gnomeloop.c:229 source/gtkloop.c:227
+msgid "These commands control the GTK interface"
+msgstr ""
+
+#: source/gnomeloop.c:232 source/gtkloop.c:230
+msgid ""
+"Set the number of times per second that the debugger refreshes in 'Run' mode"
+msgstr ""
+
+#: source/gnomeloop.c:238 source/gtkloop.c:236
+msgid "rate"
+msgstr ""
+
+#: source/gnomeloop.c:239 source/gtkloop.c:237
+msgid "update rate in hertz"
+msgstr ""
+
+#: source/gnomeloop.c:246 source/gtkloop.c:244
+msgid "Set the font used for the 'Command Central' window"
+msgstr ""
+
+#: source/gnomeloop.c:251 source/gtkloop.c:249
+msgid "font"
+msgstr ""
+
+#: source/gnomeloop.c:252 source/gtkloop.c:250
+msgid ""
+"font string in X11 format, i.e., '-adobe-utopia-regular-r-normal-*-*-120-*-*-"
+"p-*-iso8859-1'"
+msgstr ""
+
+#: source/gnomeloop.c:333 source/gtkloop.c:318
+msgid ""
+"\n"
+"Emulator is paused; press 'Resume' button to resume\n"
+msgstr ""
+
+#: source/gnomeloop.c:393 source/gtkloop.c:378
+#, c-format
+msgid "Executing %d cycles per second, %d instructions per second"
+msgstr ""
+
+#: source/gnomeloop.c:403 source/gtkloop.c:388
+#, c-format
+msgid "Displaying %d frames per second"
+msgstr ""
+
+#: source/gnomeloop.c:454 source/gtkloop.c:440
+#, c-format
+msgid "Unhandled event %d!"
+msgstr ""
+
+#: source/9900.c:263
+#, c-format
+msgid "Illegal workspace pointer set (>%04X)\n"
+msgstr ""
+
+#: source/9900.c:280
+#, c-format
+msgid "Invalid program counter set (>%04X), aborting\n"
+msgstr ""
+
+#: source/9900.c:299
+msgid "*** BLWP'ing to same workspace, may be hosed\n"
+msgstr ""
+
+#: source/9900.c:717
+#, c-format
+msgid "unhandled extended opcode >%04X at >%04X [%d]\n"
+msgstr ""
+
+#: source/memory.c:94
+#, c-format
+msgid ""
+"set_area_handler:  attempt made to set a memory handler on an illegal "
+"boundary\n"
+"(0x%04X...0x%04X), the minimum granularity is %d bytes\n"
+msgstr ""
+
+#: source/memory.c:101
+msgid ""
+"set_area_handler:  cannot have a handler define read_word without read_byte\n"
+msgstr ""
+
+#: source/memory.c:105
+msgid ""
+"set_area_handler:  cannot have a handler define write_word without "
+"write_byte\n"
+msgstr ""
+
+#: source/memory.c:109
+msgid "set_area_handler:  must have areamemory set\n"
+msgstr ""
+
+#: source/memory.c:113
+msgid "set_area_handler:  domain out of range\n"
+msgstr ""
+
+#: source/memory.c:119
+msgid "set_area_handler:  illegal address or size\n"
+msgstr ""
+
+#: source/memory.c:527
+#, c-format
+msgid ""
+"\n"
+"Memory map (%s):\n"
+msgstr ""
+
+#: source/memory.c:529
+#, c-format
+msgid "'%s': Addr: >%04X, Offs: >%04X, Size: >%04X (>%04X)\n"
+msgstr ""
+
+#: source/memory.c:534
+#, c-format
+msgid "\tFilename: '%s'\n"
+msgstr ""
+
+#: source/memory.c:535
+msgid "\tFlags:"
+msgstr ""
+
+#. case MEMENT_DSR:		logger( LOG_USER, "DSR\n"); break;
+#. case MEMENT_DSR:		*bptr++ = 'D'; break;
+#: source/memory.c:548 source/memory.c:1106
+#, c-format
+msgid "invalid MEMENT_xxx: %d\n"
+msgstr ""
+
+#: source/memory.c:591
+msgid "memory_remove_entry_from_list"
+msgstr ""
+
+#: source/memory.c:648
+#, c-format
+msgid ""
+"Splitting entry '%s' into >%04X (>%04X), >%04X (>%04X), and >%04X (>%04X)\n"
+msgstr ""
+
+#: source/memory.c:657 source/memory.c:666
+#, c-format
+msgid "Shrinking entry '%s' to >%04X (>%04X)\n"
+msgstr ""
+
+#. old entry completely overriden
+#: source/memory.c:671
+#, c-format
+msgid "Overriding old entry '%s' at >%04X (>%04X)\n"
+msgstr ""
+
+#: source/memory.c:701
+#, c-format
+msgid "Saving memory image to '%s'\n"
+msgstr ""
+
+#: source/memory.c:725
+#, c-format
+msgid "Restoring memory image from '%s'\n"
+msgstr ""
+
+#: source/memory.c:740
+#, c-format
+msgid "Image '%s' ('%s') not found, resetting to zero\n"
+msgstr ""
+
+#: source/memory.c:755
+#, c-format
+msgid "Reading ROM image '%s' at %d to >%04X, size %d\n"
+msgstr ""
+
+#: source/memory.c:778
+#, c-format
+msgid "Zeroes for '%s' at >%04X, size %d\n"
+msgstr ""
+
+#. reset affected memory
+#: source/memory.c:790
+#, c-format
+msgid "Resetting memory area from >%04X to >%04X\n"
+msgstr ""
+
+#: source/memory.c:968
+#, c-format
+msgid "Can't locate '%s'\n"
+msgstr ""
+
+#: source/memory.c:1144
+#, c-format
+msgid "Unknown memory type '%c' (at '%s')\n"
+msgstr ""
+
+#: source/memory.c:1178
+#, c-format
+msgid "Unknown memory flag '%c' (at '%s')\n"
+msgstr ""
+
+#: source/memory.c:1187
+#, c-format
+msgid "Illegal address (>%04x) for entry\n"
+msgstr ""
+
+#: source/memory.c:1193
+#, c-format
+msgid "Address is impossible to use, minimum granularity is >%04x bytes\n"
+msgstr ""
+
+#: source/memory.c:1203
+#, c-format
+msgid ""
+"Illegal size (%d) for entry, should have magnitude between 0 and >FFFF\n"
+msgstr ""
+
+#: source/memory.c:1209
+#, c-format
+msgid ""
+"Size (>%04X) for entry plus starting address (>%04X) too large; truncating\n"
+msgstr ""
+
+#: source/memory.c:1216
+#, c-format
+msgid "Illegal size for RAM entry, must be >= 0 (%d)\n"
+msgstr ""
+
+#: source/memory.c:1222
+#, c-format
+msgid "Entry is impossible to allocate, minimum granularity is >%04X bytes\n"
+msgstr ""
+
+#: source/memory.c:1276
+msgid "Low expansion RAM"
+msgstr ""
+
+#: source/memory.c:1285
+msgid "Console RAM (256 bytes)"
+msgstr ""
+
+#: source/memory.c:1290
+msgid "Console RAM (1K)"
+msgstr ""
+
+#: source/memory.c:1298
+msgid "High expansion RAM"
+msgstr ""
+
+#: source/memory.c:1307
+msgid "Sound MMIO"
+msgstr ""
+
+#: source/memory.c:1312
+msgid "VDP read MMIO"
+msgstr ""
+
+#: source/memory.c:1317
+msgid "VDP write MMIO"
+msgstr ""
+
+#: source/memory.c:1322
+msgid "Speech read MMIO"
+msgstr ""
+
+#: source/memory.c:1327
+msgid "Speech write MMIO"
+msgstr ""
+
+#: source/memory.c:1332
+msgid "GROM read MMIO"
+msgstr ""
+
+#: source/memory.c:1337
+msgid "GROM/GRAM write MMIO"
+msgstr ""
+
+#: source/memory.c:1381
+msgid "Initializing memory...\n"
+msgstr ""
+
+#: source/help.c:302
+msgid "Not saved to configuration file\r"
+msgstr ""
+
+#: source/help.c:304
+msgid "Only saved to session files\r"
+msgstr ""
+
+#: source/help.c:306
+msgid "Only saved to config files\r"
+msgstr ""
+
+#: source/help.c:309
+#, c-format
+msgid "Arguments%s:\t"
+msgstr ""
+
+#: source/help.c:310
+msgid " (optional)"
+msgstr ""
+
+#: source/help.c:315
+msgid "Returns first argument\r"
+msgstr ""
+
+#: source/help.c:317
+msgid "Returns:\r"
+msgstr ""
+
+#: source/help.c:377
+#, c-format
+msgid "No command matches '%s'\n"
+msgstr ""
+
+#: source/help.c:400
+msgid "No commands defined\n"
+msgstr ""
+
+#: source/gtkcallbacks.c:262 source/gtkcallbacks.c:523
+#: source/gnomecallbacks.c:229 source/gnomecallbacks.c:490
+#, c-format
+msgid "Button mapped to missing option '%s'\n"
+msgstr ""
+
+#: source/gtkcallbacks.c:320 source/gnomecallbacks.c:287
+#, c-format
+msgid "Text entry mapped to missing option '%s'\n"
+msgstr ""
+
+#: source/gtkcallbacks.c:390 source/gnomecallbacks.c:357
+msgid "Select ROM Filename"
+msgstr ""
+
+#: source/gtkcallbacks.c:590 source/gnomecallbacks.c:557
+#, c-format
+msgid "Could not resolve filename '%s' (%s)\n"
+msgstr ""
+
+#: source/gtkcallbacks.c:658 source/gnomecallbacks.c:625
+msgid "Save Session File"
+msgstr ""
+
+#: source/gtkcallbacks.c:659 source/gnomecallbacks.c:626
+msgid "Load Session File"
+msgstr ""
+
+#: source/gtkcallbacks.c:677 source/gnomecallbacks.c:644
+msgid "Sessions"
+msgstr ""
+
+#: source/gtkcallbacks.c:687 source/gnomecallbacks.c:654
+msgid "Configurations"
+msgstr ""
+
+#: source/gtkcallbacks.c:818 source/gnomecallbacks.c:785
+msgid "Cannot get log_table from dialog\n"
+msgstr ""
+
+#: source/compiler.c:727
+#, c-format
+msgid "unhandled instruction %s\n"
+msgstr ""
+
+#: source/compiler.c:1016
+#, c-format
+msgid "could not create %s in %s"
+msgstr ""
+
+#: source/compiler.c:1023 source/compiler.c:1028 source/compiler.c:1034
+msgid "out of memory"
+msgstr ""
+
+#: source/compiler.c:1047
+msgid "compiler failed to build segment\n"
+msgstr ""
+
+#: source/compiler.c:1061
+#, c-format
+msgid "compiler failed to open file '%s' (%s)\n"
+msgstr ""
+
+#: source/compiler.c:1073
+#, c-format
+msgid "compiler failed to write text(1) to file '%s' (%s)\n"
+msgstr ""
+
+#: source/compiler.c:1085
+#, c-format
+msgid "compiler failed to write text(2) to file '%s' (%s)\n"
+msgstr ""
+
+#: source/compiler.c:1097
+#, c-format
+msgid "compiler failed to write text(3) to file '%s' (%s)\n"
+msgstr ""
+
+#: source/compiler.c:1112
+msgid "did not write source text"
+msgstr ""
+
+#: source/compiler.c:1164
+#, c-format
+msgid "could not execute 'make' (%s)\n"
+msgstr ""
+
+#: source/compiler.c:1178
+#, c-format
+msgid "error compiling code (see %s)\n"
+msgstr ""
+
+#: source/compiler.c:1190
+#, c-format
+msgid "could not locate '%s'\n"
+msgstr ""
+
+#: source/compiler.c:1347
+#, c-format
+msgid "Could not load code block '%s' (%s)\n"
+msgstr ""
+
+#: source/compiler.c:1354
+#, c-format
+msgid "Could not resolve symbol 'native' in '%s' (%s)\n"
+msgstr ""
+
+#: source/compiler.c:1645
+#, c-format
+msgid "flushing code block at >%04X due to workspace overlap\n"
+msgstr ""
+
+#: source/compiler.c:1671
+#, c-format
+msgid "flushing compile cache for %s(%04x) due to memory content change\n"
+msgstr ""
+
+#: source/compiler.c:1770
+msgid "Compiler Options"
+msgstr ""
+
+#: source/compiler.c:1771
+msgid "These are commands for controlling real-time compilation"
+msgstr ""
+
+#: source/compiler.c:1780
+msgid "enable or disable real-time compilation of 9900 code"
+msgstr ""
+
+#: source/compiler.c:1787
+msgid "Set compiler temporary directory"
+msgstr ""
+
+#: source/compiler.c:1792 source/v9t9.c:789 source/command.c:60
+msgid "directory"
+msgstr ""
+
+#: source/compiler.c:1793
+msgid "temporary directory"
+msgstr ""
+
+#: source/gnomesupport.c:60 source/gnomesupport.c:85 source/gtksupport.c:121
+#, c-format
+msgid "Couldn't find pixmap file: %s"
+msgstr ""
+
+#: source/9901.c:73
+#, c-format
+msgid "Triggering interrupt... %04X/%04X/%04X\n"
+msgstr ""
+
+#. if (addr == 0x1a) {
+#. cruwAudioGate(addr, data, num);
+#. return;
+#. } else if (addr == 0x1c) {
+#. cruwCS2Motor(addr, data, num);
+#. return;
+#. }
+#: source/9901.c:309
+#, c-format
+msgid "Altering 9901 bit... addr=%04X, data=%04X,mask=%04X\n"
+msgstr ""
+
+#: source/9901.c:315
+#, c-format
+msgid "before reset: int9901 = %04X, currentints = %04X\n"
+msgstr ""
+
+#: source/9901.c:321
+#, c-format
+msgid "after reset: int9901 = %04X, currentints = %04X\n"
+msgstr ""
+
+#: source/9901.c:352
+#, c-format
+msgid "audiogate.play=%d\n"
+msgstr ""
+
+#: source/gtksupport.c:130
+#, c-format
+msgid "Error loading pixmap file: %s"
+msgstr ""
+
+#: source/configfile.c:79 source/configfile.c:227
+msgid "Out of memory for config file\n"
+msgstr ""
+
+#: source/configfile.c:159
+#, c-format
+msgid "Unhandled type in dump_command (%d)\n"
+msgstr ""
+
+#: source/configfile.c:210
+#, c-format
+msgid "Saving %s file to %s\n"
+msgstr ""
+
+#: source/configfile.c:211
+msgid "session"
+msgstr ""
+
+#: source/configfile.c:211
+msgid "config"
+msgstr ""
+
+#: source/configfile.c:222
+#, c-format
+msgid "Cannot write to %s\n"
+msgstr ""
+
+#: source/configfile.c:233
+#, c-format
+msgid ""
+"#\n"
+"#  v9t9 configuration file\n"
+"#\n"
+msgstr ""
+
+#: source/configfile.c:280
+#, c-format
+msgid ""
+"Could not save config file to '%s' in:\n"
+"%s\n"
+msgstr ""
+
+#: source/configfile.c:296
+#, c-format
+msgid ""
+"Could not find config file '%s' in:\n"
+"%s\n"
+msgstr ""
+
+#: source/configfile.c:312
+#, c-format
+msgid ""
+"Could not save session to '%s' in:\n"
+"%s\n"
+msgstr ""
+
+#: source/configfile.c:328
+#, c-format
+msgid ""
+"Could not find session file '%s' in:\n"
+"%s\n"
+msgstr ""
+
+#: source/winmain.c:200
+#, c-format
+msgid ""
+"Unknown option '%s %s';\n"
+"expected one of %s \n"
+msgstr ""
+
+#: source/winmain.c:241 source/unixmain.c:302
+msgid "Using GTK\n"
+msgstr ""
+
+#: source/winmain.c:271
+msgid "Using DrawDib\n"
+msgstr ""
+
+#: source/winmain.c:294
+msgid "Using DirectDraw\n"
+msgstr ""
+
+#: source/winmain.c:298 source/unixmain.c:396
+msgid "Could not find a frontend\n"
+msgstr ""
+
+#: source/winmain.c:549
+msgid "timer init\n"
+msgstr ""
+
+#: source/winmain.c:551
+msgid "Could not get timer caps\n"
+msgstr ""
+
+#: source/winmain.c:556
+#, c-format
+msgid "timerRes = %d\n"
+msgstr ""
+
+#: source/winmain.c:564
+msgid "timer install\n"
+msgstr ""
+
+#: source/winmain.c:567
+#, c-format
+msgid ""
+"Could not set timer to %d ms\n"
+"\n"
+msgstr ""
+
+#: source/winmain.c:572
+msgid "Could not create timer event\n"
+msgstr ""
+
+#: source/winmain.c:582
+msgid "timer uninstall\n"
+msgstr ""
+
+#: source/winmain.c:610
+msgid "Could not create timer\n"
+msgstr ""
+
+#: source/winmain.c:622
+msgid "Could not set timer to 10 ms"
+msgstr ""
+
+#: source/winmain.c:651
+msgid ""
+"Entering interactive mode\n"
+"\n"
+msgstr ""
+
+#: source/winmain.c:654
+msgid ""
+"FAILED: could not open stdin/stdout\n"
+"\n"
+msgstr ""
+
+#: source/winmain.c:675
+msgid "could not open log.win.txt\n"
+msgstr ""
+
+#: source/winmain.c:681
+msgid "Could not get stdout for console\n"
+msgstr ""
+
+#: source/winmain.c:682
+msgid "V9t9 Log"
+msgstr ""
+
+#: source/winmain.c:804 source/unixmain.c:670
+#, c-format
+msgid "Execution is %s\n"
+msgstr ""
+
+#: source/winmain.c:805 source/unixmain.c:671
+msgid "resumed"
+msgstr ""
+
+#: source/winmain.c:825
+#, c-format
+msgid ""
+"win_command: %d\n"
+"\n"
+msgstr ""
+
+#. The directories clist
+#: source/gtk_v99filesel.c:540 source/gnome_v99filesel.c:541
+msgid "Directories"
+msgstr ""
+
+#. The files clist
+#: source/gtk_v99filesel.c:559 source/gnome_v99filesel.c:560
+msgid "Files"
+msgstr ""
+
+#. The OK button
+#: source/gtk_v99filesel.c:582 source/gnome_v99filesel.c:583
+#: source/gtkinterface.c:2938 source/gnomeinterface.c:2422
+msgid "OK"
+msgstr ""
+
+#. The Cancel button
+#: source/gtk_v99filesel.c:589 source/gtk_v99filesel.c:1108
+#: source/gtk_v99filesel.c:1215 source/gtk_v99filesel.c:1337
+#: source/gnome_v99filesel.c:590 source/gnome_v99filesel.c:1109
+#: source/gnome_v99filesel.c:1216 source/gnome_v99filesel.c:1338
+msgid "Cancel"
+msgstr ""
+
+#: source/gtk_v99filesel.c:620 source/gtk_v99filesel.c:1821
+#: source/gnome_v99filesel.c:621 source/gnome_v99filesel.c:1822
+#, c-format
+msgid "Directory unreadable: %s"
+msgstr ""
+
+#: source/gtk_v99filesel.c:652 source/gnome_v99filesel.c:653
+msgid "Create Dir"
+msgstr ""
+
+#: source/gtk_v99filesel.c:663 source/gtk_v99filesel.c:1184
+#: source/gnome_v99filesel.c:664 source/gnome_v99filesel.c:1185
+msgid "Delete File"
+msgstr ""
+
+#: source/gtk_v99filesel.c:674 source/gtk_v99filesel.c:1295
+#: source/gnome_v99filesel.c:675 source/gnome_v99filesel.c:1296
+msgid "Rename File"
+msgstr ""
+
+#.
+#. gtk_signal_connect (GTK_OBJECT (dialog), "destroy",
+#. (GtkSignalFunc) gtk_file_selection_fileop_destroy,
+#. (gpointer) fs);
+#.
+#: source/gtk_v99filesel.c:971 source/gnome_v99filesel.c:972
+msgid "Error"
+msgstr ""
+
+#. close button
+#: source/gtk_v99filesel.c:994 source/gnome_v99filesel.c:995
+#: source/gtkinterface.c:791 source/gtkinterface.c:1124
+#: source/gtkinterface.c:1652 source/gtkinterface.c:2214
+#: source/gtkinterface.c:2677 source/gtkinterface.c:2876
+#: source/gtkinterface.c:3094 source/gnomeinterface.c:592
+#: source/gnomeinterface.c:895 source/gnomeinterface.c:1325
+#: source/gnomeinterface.c:1778 source/gnomeinterface.c:2161
+#: source/gnomeinterface.c:2362 source/gnomeinterface.c:2551
+msgid "Close"
+msgstr ""
+
+#: source/gtk_v99filesel.c:1072 source/gnome_v99filesel.c:1073
+msgid "Create Directory"
+msgstr ""
+
+#: source/gtk_v99filesel.c:1086 source/gnome_v99filesel.c:1087
+msgid "Directory name:"
+msgstr ""
+
+#. buttons
+#: source/gtk_v99filesel.c:1099 source/gnome_v99filesel.c:1100
+msgid "Create"
+msgstr ""
+
+#. buttons
+#: source/gtk_v99filesel.c:1206 source/gnome_v99filesel.c:1207
+msgid "Delete"
+msgstr ""
+
+#. buttons
+#: source/gtk_v99filesel.c:1328 source/gnome_v99filesel.c:1329
+msgid "Rename"
+msgstr ""
+
+#: source/gtk_v99filesel.c:1800 source/gnome_v99filesel.c:1801
+msgid "Selection: "
+msgstr ""
+
+#: source/moduledb.c:273
+#, c-format
+msgid "GRAMKRACKER base filename should have at most one '%%d' (got '%s')\n"
+msgstr ""
+
+#: source/moduledb.c:283
+msgid "GRAMKRACKER base filename cannot have both a ',' and '%' (got '%s')\n"
+msgstr ""
+
+#: source/moduledb.c:310
+#, c-format
+msgid "Could not find GRAM Kracker segment '%s' (in '%s')\n"
+msgstr ""
+
+#: source/moduledb.c:366
+#, c-format
+msgid ""
+"Could not find expected remaining GRAM Kracker segments\n"
+"numbered starting at %d"
+msgstr ""
+
+#: source/moduledb.c:372
+#, c-format
+msgid "Could not find first segment of GRAM Kracker file with base '%s'\n"
+msgstr ""
+
+#: source/moduledb.c:461
+msgid "List of installed modules:"
+msgstr ""
+
+#: source/moduledb.c:463
+#, c-format
+msgid "Tag: '%s', Name: '%s'\n"
+msgstr ""
+
+#: source/moduledb.c:464
+#, c-format
+msgid "\tCommands:  '%s'\n"
+msgstr ""
+
+#: source/moduledb.c:482
+#, c-format
+msgid "Loading module '%s'\n"
+msgstr ""
+
+#: source/moduledb.c:515
+#, c-format
+msgid "No module matches '%s'\n"
+msgstr ""
+
+#: source/moduledb.c:699
+#, c-format
+msgid "memory bank must be 0 or 1 (got %d)\n"
+msgstr ""
+
+#: source/moduledb.c:710
+msgid "Memory Map / ROM / RAM / Module Options"
+msgstr ""
+
+#: source/moduledb.c:711
+msgid ""
+"These are commands for dealing with the layout of memory in the virtual 99/4A"
+msgstr ""
+
+#: source/moduledb.c:717
+msgid "Set secondary directory list to search for module ROM images"
+msgstr ""
+
+#: source/moduledb.c:733
+msgid "Set secondary directory list to search for console ROM and GROM images"
+msgstr ""
+
+#: source/moduledb.c:750
+msgid "Set secondary directory list to search for nonvolatile RAM images"
+msgstr ""
+
+#: source/moduledb.c:768
+msgid "Set initial directory list to search for module ROM images"
+msgstr ""
+
+#: source/moduledb.c:784
+msgid "Set initial directory list to search for console ROM and GROM images"
+msgstr ""
+
+#: source/moduledb.c:801
+msgid "Set initial directory list to search for nonvolatile RAM images"
+msgstr ""
+
+#: source/moduledb.c:818
+msgid "Specify existence of a memory area"
+msgstr ""
+
+#: source/moduledb.c:823
+msgid "flags"
+msgstr ""
+
+#: source/moduledb.c:824
+msgid ""
+"string of characters defining memory characteristics:\n"
+"first, 'R' for ROM, 'W' for RAM, and 'S' for stored RAM;\n"
+"then, 'M' for a module, or nothing;\n"
+"then, '1' or '2' for banks of a banked module, or nothing;\n"
+"then, one of 'C'onsole, 'G'raphics, 'V'ideo, 'S'peech"
+msgstr ""
+
+#: source/moduledb.c:834
+msgid "starting address of image"
+msgstr ""
+
+#: source/moduledb.c:838
+msgid "size"
+msgstr ""
+
+#: source/moduledb.c:839
+msgid ""
+"size of ROM in bytes; except for 0, which indicates an unknown size, and a "
+"negative number (enclose in parentheses!), which indicates the magnitude of "
+"the maximum size allowed "
+msgstr ""
+
+#: source/moduledb.c:848
+msgid ""
+"name of binary image to load and/or store, searched in the ROMSPath or "
+"ModulesPath; if blank, memory is read as zeroes"
+msgstr ""
+
+#: source/moduledb.c:854
+msgid "offset"
+msgstr ""
+
+#: source/moduledb.c:855
+msgid "byte offset of image, if stored in larger file"
+msgstr ""
+
+#: source/moduledb.c:859 source/moduledb.c:1035 source/moduledb.c:1066
+msgid "name"
+msgstr ""
+
+#: source/moduledb.c:860
+msgid "text name of memory area"
+msgstr ""
+
+#: source/moduledb.c:868
+msgid "Setup defaults for a 99/4A memory map"
+msgstr ""
+
+#: source/moduledb.c:877
+msgid "Use 32K expansion memory (may be overridden by a DefineRAM command)"
+msgstr ""
+
+#: source/moduledb.c:883 source/moduledb.c:897
+msgid "toggle"
+msgstr ""
+
+#: source/moduledb.c:891
+msgid ""
+"Set up >8000->82FF range as real RAM (like in the Geneve) instead of "
+"mirroring >8300->83FF (the default)"
+msgstr ""
+
+#: source/moduledb.c:905
+msgid "Name of console ROM which starts at address >0000"
+msgstr ""
+
+#: source/moduledb.c:919
+msgid "Name of console GROM which starts at address G>0000"
+msgstr ""
+
+#: source/moduledb.c:933
+msgid "Name of module GROM which starts at address G>6000"
+msgstr ""
+
+#: source/moduledb.c:947
+msgid "Name of module ROM (non-banked) which starts at CPU address >6000"
+msgstr ""
+
+#: source/moduledb.c:961
+msgid "Name of module ROM (first bank) which starts at CPU address >6000"
+msgstr ""
+
+#: source/moduledb.c:975
+msgid "Name of module ROM (second bank) which starts at CPU address >6000"
+msgstr ""
+
+#: source/moduledb.c:989
+msgid "Load all memory images (ROMs and RAMs) into the emulator"
+msgstr ""
+
+#: source/moduledb.c:998
+msgid "Load the volatile memory images (RAMs) into the emulator"
+msgstr ""
+
+#: source/moduledb.c:1007
+msgid "Save the volatile memory images (RAMs) to disk"
+msgstr ""
+
+#: source/moduledb.c:1016
+msgid "List memory map"
+msgstr ""
+
+#: source/moduledb.c:1025
+msgid "Define or redefine a standard module/cartridge in the database"
+msgstr ""
+
+#: source/moduledb.c:1030 source/moduledb.c:1061 source/v9t9_module.c:974
+msgid "tag"
+msgstr ""
+
+#: source/moduledb.c:1031 source/moduledb.c:1062
+msgid "short tag for easy reference"
+msgstr ""
+
+#: source/moduledb.c:1036 source/moduledb.c:1067
+msgid "full name of module"
+msgstr ""
+
+#: source/moduledb.c:1040 source/moduledb.c:1071
+msgid "base"
+msgstr ""
+
+#: source/moduledb.c:1041 source/moduledb.c:1072
+msgid "base of module file name"
+msgstr ""
+
+#: source/moduledb.c:1045
+msgid "GROM=1|ROM=2|BANKED=4|MINIMEM=8|GRAMKRACKER=16"
+msgstr ""
+
+#: source/moduledb.c:1046
+msgid "sections present (sum of one or more of GROM, ROM, BANKED, MINIMEM)"
+msgstr ""
+
+#: source/moduledb.c:1055
+msgid ""
+"Define or redefine a module/cartridge in the database, giving commands to "
+"define its memory configuration"
+msgstr ""
+
+#: source/moduledb.c:1076
+msgid "commands"
+msgstr ""
+
+#: source/moduledb.c:1077
+msgid ""
+"commands used to define module memory map, e.g., 'DefineMemory \"RWMC\" "
+"0x6000 0x2000 \"module_rom.bin\" 0x0 \"Module ROM file\"; DefineMemory \"RMG"
+"\" 0x6000 0x6000 \"module_grom.bin\" 0x0 \"Module GRAM file\"'"
+msgstr ""
+
+#: source/moduledb.c:1087
+msgid "List modules in database"
+msgstr ""
+
+#: source/moduledb.c:1096
+msgid ""
+"Initialize current module list to empty (use 'ReadModuleDatabase <file>' or "
+"LoadConfigFile <file>' to add entries)"
+msgstr ""
+
+#: source/moduledb.c:1107
+msgid ""
+"Unload currently loaded module(s); you may want to 'ResetComputer' next!"
+msgstr ""
+
+#: source/moduledb.c:1116
+msgid "Load a module by tag or name"
+msgstr ""
+
+#: source/moduledb.c:1121 source/moduledb.c:1135
+msgid "tag|name"
+msgstr ""
+
+#: source/moduledb.c:1122 source/moduledb.c:1136
+msgid "tag or title substring"
+msgstr ""
+
+#: source/moduledb.c:1130
+msgid "Replace current module but do not reset computer"
+msgstr ""
+
+#: source/moduledb.c:1144
+msgid "Change active ROM bank of module (only applies to banked modules)"
+msgstr ""
+
+#: source/moduledb.c:1149
+msgid "bank"
+msgstr ""
+
+#: source/moduledb.c:1150
+msgid "0 or 1"
+msgstr ""
+
+#: source/cru.c:62
+msgid "crudevicedump:"
+msgstr ""
+
+#: source/cru.c:63
+msgid "\tREAD:\n"
+msgstr ""
+
+#: source/cru.c:66 source/cru.c:73
+#, c-format
+msgid "\t\tdevice = >%04X (%p)\n"
+msgstr ""
+
+#: source/cru.c:70
+msgid "\tWRITE:"
+msgstr ""
+
+#: source/cru.c:100
+#, c-format
+msgid "cruadddevice:  address 0x%x is invalid\n"
+msgstr ""
+
+#: source/cru.c:107
+#, c-format
+msgid "cruadddevice:  only single-bit ranges supported (0x%04X, %d)\n"
+msgstr ""
+
+#: source/cru.c:118
+#, c-format
+msgid "cruadddevice:  invalid 'rw' flag (%d) passed\n"
+msgstr ""
+
+#: source/cru.c:137
+#, c-format
+msgid "cruadddevice:  overlapping I/O (0x%x)\n"
+msgstr ""
+
+#: source/cru.c:162
+#, c-format
+msgid "crudeldevice:  address 0x%x is invalid\n"
+msgstr ""
+
+#: source/cru.c:169
+#, c-format
+msgid "crudeldevice:  only single-bit ranges supported (0x%04X, %d)\n"
+msgstr ""
+
+#: source/cru.c:180
+#, c-format
+msgid "crudeldevice:  invalid 'rw' flag (%d) passed\n"
+msgstr ""
+
+#: source/cru.c:196
+#, c-format
+msgid "crudeldevice:  device not found (0x%x)\n"
+msgstr ""
+
+#: source/cru.c:210
+#, c-format
+msgid "CRU write: >%04X[%d], %04X\n"
+msgstr ""
+
+#: source/cru.c:235
+#, c-format
+msgid "cruwrite:  skipping bits, range is now %04X[%d]\n"
+msgstr ""
+
+#: source/cru.c:243
+#, c-format
+msgid "cruwrite:  handling %04X[%d] with %04X\n"
+msgstr ""
+
+#: source/cru.c:275
+#, c-format
+msgid "CRU read: >%04X[%d] = \n"
+msgstr ""
+
+#: source/cru.c:293
+#, c-format
+msgid "cruread:  skipping bits, range is now %04X[%d]\n"
+msgstr ""
+
+#: source/cru.c:301
+#, c-format
+msgid "cruread:  handling %04X[%d] with %04X\n"
+msgstr ""
+
+#: source/mix_server.c:81
+#, c-format
+msgid ""
+"mix_init: swapendian=%d\n"
+"\n"
+msgstr ""
+
+#: source/mix_server.c:202
+#, c-format
+msgid "accessing outside sampleblock (%d, %d)\n"
+msgstr ""
+
+#: source/mix_server.c:417
+msgid "samples:\t"
+msgstr ""
+
+#: source/mix_server.c:419
+#, c-format
+msgid "[start=%d, size=%d] "
+msgstr ""
+
+#: source/mix_server.c:471
+#, c-format
+msgid "mix_handle_voice: channel %d, hertz = 0x%x, volume = %d\n"
+msgstr ""
+
+#: source/mix_server.c:481
+#, c-format
+msgid "ignoring tone at %d Hz\n"
+msgstr ""
+
+#: source/mix_server.c:506
+#, c-format
+msgid "mix_handle_noise: channel %d, hertz = 0x%x, volume = %d, iswhite = %d\n"
+msgstr ""
+
+#: source/mix_server.c:537
+#, c-format
+msgid "mix_handle_data: using %d bytes of %d Hz data on channel %d\n"
+msgstr ""
+
+#. int x;
+#: source/mix_server.c:575
+#, c-format
+msgid "writing %d bytes of %d as audio gate\n"
+msgstr ""
+
+#: source/v9t9.c:107
+#, c-format
+msgid ""
+"\n"
+"V9t9: TI Emulator! v7.0\n"
+"\n"
+"v9t9 {options} {file|commands}...\n"
+"\n"
+"-h:       display help\n"
+"-c:       load alternate config file (default 'v9t9.cnf')\n"
+"-m:       load alternate module database (default 'modules.inf' if\n"
+"          'ReadModuleDatabase' command not present in config)\n"
+"-r:       reboot instead of loading previous 'session.cnf'\n"
+"-d <dir>: set v9t9 data directory to <dir>\n"
+"          (default: '%s',\n"
+"          '%s', or '.')\n"
+"file |    try to load session file; if not found, execute as\n"
+"commands: commands instead\n"
+"\n"
+msgstr ""
+
+#: source/v9t9.c:126
+msgid ""
+"\n"
+"V9t9: TI Emulator! v7.0\n"
+"\n"
+"v9t9 {options} {file|commands}...\n"
+"\n"
+"-h:       display help\n"
+"-c:       load alternate config file (default '~/.v9t9/v9t9.cnf')\n"
+"-r:       reboot instead of loading previous 'session.cnf'\n"
+"-d <dir>: set v9t9 data directory to <dir> (default '~/.v9t9')\n"
+"file |    try to load session file; if not found, execute as\n"
+"commands: commands instead\n"
+"\n"
+msgstr ""
+
+#: source/v9t9.c:188
+msgid "could not locate home directory, using current directory\n"
+msgstr ""
+
+#: source/v9t9.c:274
+#, c-format
+msgid "directory '%s' not found\n"
+msgstr ""
+
+#. session
+#: source/v9t9.c:283
+#, c-format
+msgid "config file '%s' not found\n"
+msgstr ""
+
+#. add modules
+#. session
+#: source/v9t9.c:294 source/v9t9.c:299
+#, c-format
+msgid "modules db '%s' not found\n"
+msgstr ""
+
+#. session
+#: source/v9t9.c:310
+#, c-format
+msgid "session file '%s' not found\n"
+msgstr ""
+
+#: source/v9t9.c:320
+msgid ""
+"executing commands may have no apparent effect when '-r' is used;\n"
+"specify '-e <cmds>' before '-r' if necessary\n"
+msgstr ""
+
+#. session
+#: source/v9t9.c:349
+msgid "config file 'v9t9.cnf' not found\n"
+msgstr ""
+
+#: source/v9t9.c:358
+msgid "default config file 'v9t9.cnf' not found\n"
+msgstr ""
+
+#: source/v9t9.c:365
+msgid "default modules db 'modules.inf' not found\n"
+msgstr ""
+
+#. session
+#: source/v9t9.c:391
+#, c-format
+msgid "could not load session file '%s'\n"
+msgstr ""
+
+#: source/v9t9.c:401
+#, c-format
+msgid "could not execute demo '%s'\n"
+msgstr ""
+
+#: source/v9t9.c:410
+#, c-format
+msgid "could not execute commands '%s'\n"
+msgstr ""
+
+#. session
+#: source/v9t9.c:421
+msgid "No 'session.cnf' found; restarting\n"
+msgstr ""
+
+#: source/v9t9.c:722
+msgid "Major Emulator Commands"
+msgstr ""
+
+#: source/v9t9.c:723
+msgid "These are general commands to control the emulator"
+msgstr ""
+
+#: source/v9t9.c:726
+msgid "Display command help"
+msgstr ""
+
+#. ret
+#: source/v9t9.c:730
+msgid "option"
+msgstr ""
+
+#: source/v9t9.c:731
+msgid "option (or prefix) to get help for"
+msgstr ""
+
+#: source/v9t9.c:738
+msgid "Display GPL license and terms of use"
+msgstr ""
+
+#: source/v9t9.c:746
+msgid "Control whether emulator waits for user commands"
+msgstr ""
+
+#: source/v9t9.c:752
+msgid ""
+"if 'on', emulation will halt; if 'off', emulation continues at end of "
+"command list"
+msgstr ""
+
+#: source/v9t9.c:760
+msgid "Exit from interactive mode (same as 'Interactive=off')"
+msgstr ""
+
+#: source/v9t9.c:768
+msgid "Exit V9t9 without saving session"
+msgstr ""
+
+#: source/v9t9.c:776
+msgid "Exit V9t9 and save session"
+msgstr ""
+
+#: source/v9t9.c:784
+msgid "Set V9t9 installation directory"
+msgstr ""
+
+#: source/v9t9.c:790
+msgid "directory root where V9t9 was installed (i.e., /usr/share/v9t9)"
+msgstr ""
+
+#: source/v9t9.c:798
+msgid "Set fallback directory list for loading and storing data files"
+msgstr ""
+
+#: source/v9t9.c:815
+msgid "Set directory list for searching and saving configuration files"
+msgstr ""
+
+#: source/v9t9.c:831
+msgid "Set directory list for searching and saving session files"
+msgstr ""
+
+#: source/v9t9.c:846
+msgid "Save current configuration settings to 'file'"
+msgstr ""
+
+#: source/v9t9.c:852 source/v9t9.c:879 source/v9t9.c:892
+msgid "name of config file"
+msgstr ""
+
+#: source/v9t9.c:859
+msgid ""
+"Load configuration settings from 'file', or merge module list from 'file'"
+msgstr ""
+
+#: source/v9t9.c:866
+msgid "name of config file or modules.inf file"
+msgstr ""
+
+#: source/v9t9.c:873
+msgid "Save current configuration settings and machine state to 'file'"
+msgstr ""
+
+#: source/v9t9.c:886
+msgid "Load configuration settings and machine state from 'file'"
+msgstr ""
+
+#: source/v9t9.c:900
+msgid "Take a screenshot and save to 'file' or an autogenerated name"
+msgstr ""
+
+#: source/v9t9.c:906
+msgid ""
+"name of file to write, or \"\" to use an automatic name in the current "
+"directory"
+msgstr ""
+
+#: source/vdp.c:252
+msgid "VDP memory"
+msgstr ""
+
+#: source/vdp.c:590
+msgid "vdp_update_params:  blank screen\n"
+msgstr ""
+
+#: source/vdp.c:614
+msgid "vdp_update_params:  graphics mode\n"
+msgstr ""
+
+#: source/vdp.c:637
+msgid "vdp_update_params:  text mode\n"
+msgstr ""
+
+#: source/vdp.c:661
+msgid "vdp_update_params:  bitmap mode\n"
+msgstr ""
+
+#: source/vdp.c:694
+msgid "vdp_update_params:  multi mode\n"
+msgstr ""
+
+#: source/vdp.c:716
+#, c-format
+msgid ""
+"Unknown graphics mode %d set\n"
+"\n"
+msgstr ""
+
+#: source/vdp.c:840
+#, c-format
+msgid "Undefined VDP register %d\n"
+msgstr ""
+
+#: source/vdp.c:1077
+#, c-format
+msgid "char %d changed due to patt %d\n"
+msgstr ""
+
+#. this screen pos updated?
+#: source/vdp.c:1089
+#, c-format
+msgid "redrawing char %d\n"
+msgstr ""
+
+#: source/vdp.c:1445
+msgid "Video Options"
+msgstr ""
+
+#: source/vdp.c:1446
+msgid "These are generic commands for controlling video emulation"
+msgstr ""
+
+#: source/vdp.c:1449
+msgid "Control whether the screen is displayed"
+msgstr ""
+
+#: source/vdp.c:1455
+msgid "toggle video on or off"
+msgstr ""
+
+#: source/vdp.c:1463
+msgid "Control how often the screen is updated"
+msgstr ""
+
+#: source/vdp.c:1477
+msgid "Control how often the VDP interrupts the CPU"
+msgstr ""
+
+#: source/vdp.c:1491
+msgid "Control whether sprites are displayed"
+msgstr ""
+
+#: source/vdp.c:1497
+msgid "toggle sprites on or off"
+msgstr ""
+
+#: source/vdp.c:1504
+msgid "Obey five-sprites-on-a-line limit of TMS9918A"
+msgstr ""
+
+#: source/vdp.c:1510
+msgid ""
+"on: fifth sprite on a line not drawn (default); off: all sprites always drawn"
+msgstr ""
+
+#: source/vdp.c:1623
+#, c-format
+msgid "Could not open '%s' for writing\n"
+msgstr ""
+
+#: source/vdp.c:1633 source/vdp.c:1640
+msgid "Could not initialize PNG subsystem\n"
+msgstr ""
+
+#: source/vdp.c:1647
+#, c-format
+msgid "Failed to write PNG file '%s'\n"
+msgstr ""
+
+#: source/vdp.c:1726
+#, c-format
+msgid "Writing to '%s'\n"
+msgstr ""
+
+#: source/vdp.c:1748
+msgid "Could not make a filename for screen shot\n"
+msgstr ""
+
+#: source/vdp.c:1753
+#, c-format
+msgid "Could not create '%s' for screen shot\n"
+msgstr ""
+
+#: source/vdp.c:1763
+msgid "No graphics file formats supported!\n"
+msgstr ""
+
+#: source/xmalloc.c:78
+#, c-format
+msgid "xmalloc:  failed in allocation of %d bytes\n"
+msgstr ""
+
+#: source/xmalloc.c:92
+#, c-format
+msgid ""
+"xcalloc:  failed in allocation of %d bytes\n"
+"\n"
+msgstr ""
+
+#: source/xmalloc.c:105
+#, c-format
+msgid ""
+"xrealloc:  failed in reallocation to %d bytes\n"
+"\n"
+msgstr ""
+
+#: source/xmalloc.c:129
+#, c-format
+msgid ""
+"xstrdup:  failed to copy string\n"
+"\n"
+msgstr ""
+
+#: source/xmalloc.c:145
+#, c-format
+msgid ""
+"xintdup:  failed to copy int\n"
+"\n"
+msgstr ""
+
+#: source/lpc.c:246
+#, c-format
+msgid "Equation: %s\n"
+msgstr ""
+
+#: source/lpc.c:248
+#, c-format
+msgid "ebf=%d, pbf=%d, env=%d, pnv=%d\n"
+msgstr ""
+
+#: source/log.c:157
+#, c-format
+msgid "Unknown subsystem '%s'\n"
+msgstr ""
+
+#: source/log.c:177
+msgid "Supported logging subsystems:"
+msgstr ""
+
+#: source/log.c:179
+#, c-format
+msgid "\t%20s\t(level=%d)"
+msgstr ""
+
+#: source/log.c:229
+msgid "Logging Commands"
+msgstr ""
+
+#: source/log.c:230
+msgid "These options control sources and verbosity of logging"
+msgstr ""
+
+#: source/log.c:234
+msgid "Toggle logging for given subsystem"
+msgstr ""
+
+#: source/log.c:239
+msgid "system"
+msgstr ""
+
+#: source/log.c:240
+msgid "one of the subsystems from ListLogSystems"
+msgstr ""
+
+#: source/log.c:244
+msgid "log level"
+msgstr ""
+
+#: source/log.c:245
+msgid ""
+"level of verbosity (0=off...9=max); a negative value sends output only to "
+"file, else output is copied to console or log window"
+msgstr ""
+
+#: source/log.c:254
+msgid "List targets for logging"
+msgstr ""
+
+#: source/log.c:263
+msgid "Change logging verbosity for log file"
+msgstr ""
+
+#: source/log.c:268 source/log.c:284
+msgid "delta"
+msgstr ""
+
+#: source/log.c:269 source/log.c:285
+msgid "delta>0 increases verbosity, delta<0 decreases verbosity"
+msgstr ""
+
+#: source/log.c:277
+msgid ""
+"Change logging verbosity for messages echoed to console; note:  LogVerbosity "
+"is treated as being at least ConsoleLogVerbosity, so messages will always be "
+"logged to disk"
+msgstr ""
+
+#: source/log.c:440
+msgid ""
+"\n"
+"OS error:\t"
+msgstr ""
+
+#: source/log.c:442
+#, c-format
+msgid "%s (error %d)\n"
+msgstr ""
+
+#: source/log.c:479
+#, c-format
+msgid "Disk %d %s\n"
+msgstr ""
+
+#: source/log.c:481 source/log.c:489 source/log.c:497
+msgid "on"
+msgstr ""
+
+#: source/log.c:481 source/log.c:489 source/log.c:497
+msgid "off"
+msgstr ""
+
+#: source/log.c:487
+#, c-format
+msgid "RS232/%d %s\n"
+msgstr ""
+
+#: source/log.c:496
+#, c-format
+msgid "PIO %s\n"
+msgstr ""
+
+#: source/log.c:657
+#, c-format
+msgid "assertion failed:  %s:%d: %s\n"
+msgstr ""
+
+#: source/gnomecallbacks.c:886
+msgid "ResetComputer\n"
+msgstr ""
+
+#: source/command.c:53
+msgid "void"
+msgstr ""
+
+#: source/command.c:54
+msgid "symbol"
+msgstr ""
+
+#: source/command.c:55
+msgid "number"
+msgstr ""
+
+#: source/command.c:57
+msgid "enumeration"
+msgstr ""
+
+#: source/command.c:59
+msgid "filepath"
+msgstr ""
+
+#: source/command.c:62
+msgid "boolean"
+msgstr ""
+
+#: source/command.c:100
+msgid "negate"
+msgstr ""
+
+#: source/command.c:103
+msgid "()"
+msgstr ""
+
+#: source/command.c:265
+#, c-format
+msgid "get_indexed_string: '%s' #%d --> '%s'\n"
+msgstr ""
+
+#: source/command.c:311
+#, c-format
+msgid "%s:  ambiguous identifier (collides with '%s')\n"
+msgstr ""
+
+#: source/command.c:336
+#, c-format
+msgid "for '%s', matched '%s' (%d)\n"
+msgstr ""
+
+#: source/command.c:430 source/command.c:446 source/command.c:462
+#: source/command.c:482 source/command.c:497 source/command.c:512
+msgid "<unnamed>"
+msgstr ""
+
+#: source/command.c:447 source/command.c:529
+msgid "a number"
+msgstr ""
+
+#: source/command.c:463
+msgid "a string"
+msgstr ""
+
+#: source/command.c:483
+msgid "a filespec"
+msgstr ""
+
+#: source/command.c:498
+msgid "a pathspec"
+msgstr ""
+
+#: source/command.c:513
+msgid "a filename"
+msgstr ""
+
+#: source/command.c:547
+msgid "one of the items in the list"
+msgstr ""
+
+#: source/command.c:595
+#, c-format
+msgid "Unhandled size in command_arg_read_num (%d)\n"
+msgstr ""
+
+#: source/command.c:661
+#, c-format
+msgid "Unhandled size in command_arg_set_num (%d)\n"
+msgstr ""
+
+#: source/command.c:781
+#, c-format
+msgid "argument '%s': cannot set to '%s' (%s)\n"
+msgstr ""
+
+#: source/command.c:845 source/command.c:880 source/command.c:1750
+#, c-format
+msgid "'%s' does not match an enumeration in '%s'\n"
+msgstr ""
+
+#: source/command.c:912 source/command.c:972
+#, c-format
+msgid "Unhandled ca_XXXX (%s)\n"
+msgstr ""
+
+#: source/command.c:994
+#, c-format
+msgid "%s:  unexpected additional %s argument #%d\n"
+msgstr ""
+
+#: source/command.c:1035
+#, c-format
+msgid "%s:  type mismatch in argument '%s' (expected %s)\n"
+msgstr ""
+
+#: source/command.c:1039 source/command.c:1066
+#, c-format
+msgid "command_set_args:  cannot handle %s\n"
+msgstr ""
+
+#: source/command.c:1047
+#, c-format
+msgid "%s:  expected additional parameters\n"
+msgstr ""
+
+#: source/command.c:1093 source/command.c:1229 source/command.c:1304
+#, c-format
+msgid "invalid expr type %d\n"
+msgstr ""
+
+#: source/command.c:1099
+#, c-format
+msgid "invalid expr rtype %d\n"
+msgstr ""
+
+#: source/command.c:1238
+#, c-format
+msgid "cannot combine lists with '%s'\n"
+msgstr ""
+
+#: source/command.c:1246
+#, c-format
+msgid "invalid binary expr type '%s'\n"
+msgstr ""
+
+#: source/command.c:1258 source/command.c:1328
+msgid "invalid use of 'void' expression\n"
+msgstr ""
+
+#: source/command.c:1264
+#, c-format
+msgid "type mismatch in '%s' %s '%s'\n"
+msgstr ""
+
+#: source/command.c:1314
+#, c-format
+msgid "cannot modify list with '%s'\n"
+msgstr ""
+
+#: source/command.c:1322
+#, c-format
+msgid "invalid unary expr type %s\n"
+msgstr ""
+
+#: source/command.c:1430
+#, c-format
+msgid "unhandled ca_XXX (%s)"
+msgstr ""
+
+#: source/command.c:1460
+msgid "<void>"
+msgstr ""
+
+#: source/command.c:1477
+#, c-format
+msgid "command_expr_type_stringify: unhandled type '%s'"
+msgstr ""
+
+#: source/command.c:1526 source/command.c:1530
+msgid "Division by zero\n"
+msgstr ""
+
+#: source/command.c:1551 source/command.c:1567
+#, c-format
+msgid "unhandled ce_XXX: '%s'\n"
+msgstr ""
+
+#: source/command.c:1653
+#, c-format
+msgid "unexpected arguments to '%s' (%s, %s)\n"
+msgstr ""
+
+#: source/command.c:1685
+#, c-format
+msgid "unexpected arguments to '%s' (%s)\n"
+msgstr ""
+
+#: source/command.c:1712
+#, c-format
+msgid "command_expr_evaluate: unhandled type '%s'\n"
+msgstr ""
+
+#: source/command.c:1768
+#, c-format
+msgid "expected sum of enumeration values from '%s'\n"
+msgstr ""
+
+#: source/command.c:1796
+msgid "command_exprlist_evaluate: forcing to enum argument\n"
+msgstr ""
+
+#: source/command.c:1810
+#, c-format
+msgid "arg '%s' type '%s', expr type '%s'\n"
+msgstr ""
+
+#: source/command.c:1839
+msgid "<expression>"
+msgstr ""
+
+#: source/command.c:1840
+msgid "log"
+msgstr ""
+
+#: source/command.c:1841
+msgid "assert"
+msgstr ""
+
+#: source/command.c:1862
+#, c-format
+msgid "unknown identifier '%s'\n"
+msgstr ""
+
+#: source/command.c:2063
+msgid "unnesting past NULL command_exec_context\n"
+msgstr ""
+
+#: source/command.c:2162
+#, c-format
+msgid "assertion '%s' failed\n"
+msgstr ""
+
+#: source/command.c:2193
+#, c-format
+msgid "unhandled statement type '%s'\n"
+msgstr ""
+
+#: source/command.c:2251
+msgid "V9t9 Options"
+msgstr ""
+
+#: source/command.c:2252
+msgid ""
+"This is the complete list of options and commands you may specify in a "
+"configuration file or command prompt."
+msgstr ""
+
+#: source/command.c:2259
+msgid "Could not create mutex for command parser"
+msgstr ""
+
+#: source/fiad.c:110
+#, c-format
+msgid "fiad_filename_ti2dos:  incoming = '%.*s', outgoing = '%s'\n"
+msgstr ""
+
+#: source/fiad.c:157
+#, c-format
+msgid "fiad_filename_ti2host:  incoming = '%.*s', outgoing = '%s'\n"
+msgstr ""
+
+#: source/fiad.c:184
+#, c-format
+msgid "FIAD server:  renaming old-style file '%s' to '%s'\n"
+msgstr ""
+
+#: source/fiad.c:187
+#, c-format
+msgid "FIAD server:  could not rename file (%s)\n"
+msgstr ""
+
+#: source/fiad.c:274
+#, c-format
+msgid "fiad_filename_host2ti:  incoming: '%s', outgoing: '%.10s'\n"
+msgstr ""
+
+#: source/fiad.c:331
+#, c-format
+msgid "FIAD server:  invalid flags %02x for file '%s'\n"
+msgstr ""
+
+#: source/fiad.c:345
+#, c-format
+msgid ""
+"FIAD server:  invalid number of sectors %d for data size %d in file '%s'\n"
+msgstr ""
+
+#: source/fiad.c:359
+#, c-format
+msgid ""
+"FIAD server:  record length %d / records per sector %d invalid\n"
+"for FIXED file '%s'\n"
+msgstr ""
+
+#: source/fiad.c:374
+#, c-format
+msgid ""
+"FIAD server:  record length %d / records per sector %d invalid\n"
+"for VARIABLE file '%s'\n"
+msgstr ""
+
+#: source/fiad.c:385
+#, c-format
+msgid ""
+"FIAD server:  record length %d / records per sector %d invalid\n"
+"for PROGRAM file '%s'\n"
+msgstr ""
+
+#: source/fiad.c:491 source/fiad.c:540
+#, c-format
+msgid "setup FDR name as '%.10s'\n"
+msgstr ""
+
+#: source/fiad.c:560
+#, c-format
+msgid "%s: could not read FDR\n"
+msgstr ""
+
+#: source/fiad.c:565
+#, c-format
+msgid "%s: FDR is short\n"
+msgstr ""
+
+#: source/fiad.c:586
+#, c-format
+msgid ""
+"TIFILES read> secsused=%04X, flags=%x, recspersec=%x, byteoffs=%x, reclen=%"
+"d, numrecs=%04X\n"
+msgstr ""
+
+#: source/fiad.c:601
+#, c-format
+msgid ""
+"V9t9 read> secsused=%04X, flags=%x, recspersec=%x, byteoffs=%x, reclen=%d, "
+"numrecs=%04X\n"
+msgstr ""
+
+#. treat file as text
+#: source/fiad.c:607
+#, c-format
+msgid "Treating '%s' as text\n"
+msgstr ""
+
+#: source/fiad.c:613
+#, c-format
+msgid "File '%s' does not appear to be a V9t9 file\n"
+msgstr ""
+
+#: source/fiad.c:633
+#, c-format
+msgid "%s: Trying to write FDR on a closed or read-only file\n"
+msgstr ""
+
+#: source/fiad.c:679
+#, c-format
+msgid "%s: could not write FDR\n"
+msgstr ""
+
+#: source/fiad.c:682
+#, c-format
+msgid "%s: wrote short FDR\n"
+msgstr ""
+
+#: source/fiad.c:699
+#, c-format
+msgid "FIAD server: can't read FDR from file '%s'\n"
+msgstr ""
+
+#: source/fiad.c:713
+#, c-format
+msgid "FIAD server:  FDR is short in file '%s'\n"
+msgstr ""
+
+#: source/fiad.c:725
+#, c-format
+msgid "FIAD server:  repaired fields of FDR in '%s'\n"
+msgstr ""
+
+#: source/fiad.c:850
+#, c-format
+msgid "fiad_tifile_open_file: '%s', create: %d, always: %d, readonly: %d\n"
+msgstr ""
+
+#: source/fiad.c:876
+#, c-format
+msgid "created FIAD file '%s'\n"
+msgstr ""
+
+#: source/fiad.c:901
+msgid "Failed to verify, creating new file\n"
+msgstr ""
+
+#: source/fiad.c:914
+msgid "Truncating file\n"
+msgstr ""
+
+#: source/fiad.c:996
+msgid "fiad_tifile_rewrite_fdr: File is open!\n"
+msgstr ""
+
+#: source/fiad.c:1008
+#, c-format
+msgid "%s: changing file format to %s\n"
+msgstr ""
+
+#: source/fiad.c:1015
+#, c-format
+msgid "%s: rewriting damaged FDR\n"
+msgstr ""
+
+#: source/fiad.c:1113
+#, c-format
+msgid ""
+"FIAD ERROR:  file appears corrupt [curoffs=%d, len=%d]\n"
+"\n"
+"\n"
+msgstr ""
+
+#: source/fiad.c:1214
+#, c-format
+msgid ""
+"fixed read, wanted %d, max is %d\n"
+"\n"
+msgstr ""
+
+#: source/fiad.c:1354
+#, c-format
+msgid "fixed write, at %d, cur is %d\n"
+msgstr ""
+
+#: source/fiad.c:1432
+#, c-format
+msgid ""
+"file has >%04X or %d sectors\n"
+"\n"
+msgstr ""
+
+#: source/fiad.c:1434
+#, c-format
+msgid "going to read at most %d bytes from file with size %d\n"
+msgstr ""
+
+#: source/fiad.c:1474
+#, c-format
+msgid ""
+"trying to write %d bytes to file\n"
+"\n"
+msgstr ""
+
+#: source/fiad.c:1606
+msgid "reading dir\n"
+msgstr ""
+
+#: source/fiad.c:1615
+#, c-format
+msgid "Skipping '%s' which doesn't appear to be a V9t9 file\n"
+msgstr ""
+
+#: source/fiad.c:1639
+#, c-format
+msgid ""
+"got file '%s'\n"
+"\n"
+msgstr ""
+
+#: source/fiad.c:1708
+#, c-format
+msgid "Invalid catalog sort '%d'\n"
+msgstr ""
+
+#: source/gtkinterface.c:31 source/gnomeinterface.c:38
+#: source/gnomeinterface.c:2960
+msgid "V9t9"
+msgstr ""
+
+#: source/gtkinterface.c:103 source/gnomeinterface.c:105
+msgid "Quit V9t9"
+msgstr ""
+
+#: source/gtkinterface.c:113 source/gnomeinterface.c:111
+msgid "Save current session before quitting?\n"
+msgstr ""
+
+#: source/gtkinterface.c:128 source/gnomeinterface.c:121
+msgid "_Yes, Save"
+msgstr ""
+
+#: source/gtkinterface.c:143 source/gnomeinterface.c:129
+msgid "_No, Don't Save"
+msgstr ""
+
+#: source/gtkinterface.c:161 source/gnomeinterface.c:140
+msgid "_Don't Quit"
+msgstr ""
+
+#: source/gtkinterface.c:205 source/gnomeinterface.c:189
+msgid "Select Font"
+msgstr ""
+
+#: source/gtkinterface.c:327 source/gnomeinterface.c:301
+msgid "Disks"
+msgstr ""
+
+#: source/gtkinterface.c:352 source/gnomeinterface.c:317
+msgid "DSK_1"
+msgstr ""
+
+#: source/gtkinterface.c:363 source/gnomeinterface.c:324
+msgid "DSK_2"
+msgstr ""
+
+#: source/gtkinterface.c:374 source/gnomeinterface.c:331
+msgid "DSK_3"
+msgstr ""
+
+#: source/gtkinterface.c:385 source/gnomeinterface.c:338
+msgid "DSK_4"
+msgstr ""
+
+#: source/gtkinterface.c:396 source/gnomeinterface.c:345
+msgid "DSK_5"
+msgstr ""
+
+#: source/gtkinterface.c:405 source/gtkinterface.c:416
+#: source/gtkinterface.c:427 source/gtkinterface.c:438
+#: source/gtkinterface.c:494 source/gtkinterface.c:678
+#: source/gtkinterface.c:688 source/gtkinterface.c:738
+#: source/gtkinterface.c:1968 source/gtkinterface.c:1998
+#: source/gtkinterface.c:2084 source/gtkinterface.c:2094
+#: source/gtkinterface.c:2146 source/gtkinterface.c:2176
+#: source/gnomeinterface.c:352 source/gnomeinterface.c:360
+#: source/gnomeinterface.c:368 source/gnomeinterface.c:376
+#: source/gnomeinterface.c:414 source/gnomeinterface.c:510
+#: source/gnomeinterface.c:517 source/gnomeinterface.c:553
+#: source/gnomeinterface.c:1623 source/gnomeinterface.c:1643
+#: source/gnomeinterface.c:1691 source/gnomeinterface.c:1698
+#: source/gnomeinterface.c:1732 source/gnomeinterface.c:1752
+msgid "Choose..."
+msgstr ""
+
+#: source/gtkinterface.c:505 source/gnomeinterface.c:422
+msgid "DSKx Mappings"
+msgstr ""
+
+#: source/gtkinterface.c:528 source/gnomeinterface.c:435
+msgid "_Convert file headers to:"
+msgstr ""
+
+#: source/gtkinterface.c:546 source/gnomeinterface.c:443
+msgid "_V9t9"
+msgstr ""
+
+#: source/gtkinterface.c:558 source/gnomeinterface.c:449
+msgid "_TIFILES"
+msgstr ""
+
+#: source/gtkinterface.c:570 source/gnomeinterface.c:455
+msgid "Treat _unknown files as DIS/VAR 80"
+msgstr ""
+
+#: source/gtkinterface.c:581 source/gnomeinterface.c:459
+msgid "Allow \"DSKx.\" catalogs _longer than 127 filenames"
+msgstr ""
+
+#: source/gtkinterface.c:592 source/gnomeinterface.c:463
+msgid "_Repair damaged V9t9 files"
+msgstr ""
+
+#: source/gtkinterface.c:603 source/gnomeinterface.c:467
+msgid "_Fixup filenames for files created with V9t9 for DOS"
+msgstr ""
+
+#: source/gtkinterface.c:614 source/gnomeinterface.c:471
+msgid "_Generate filenames compatible with V9t9 for DOS"
+msgstr ""
+
+#: source/gtkinterface.c:623 source/gtkinterface.c:712
+#: source/gnomeinterface.c:524 source/gnomeinterface.c:566
+msgid "DSR ROM Selection"
+msgstr ""
+
+#: source/gtkinterface.c:658 source/gnomeinterface.c:496
+msgid "_Lone"
+msgstr ""
+
+#: source/gtkinterface.c:669 source/gnomeinterface.c:503
+msgid "_Shared"
+msgstr ""
+
+#: source/gtkinterface.c:698 source/gnomeinterface.c:528
+msgid "File Directory Options"
+msgstr ""
+
+#: source/gtkinterface.c:729 source/gnomeinterface.c:546
+msgid "S_hared"
+msgstr ""
+
+#: source/gtkinterface.c:757 source/gnomeinterface.c:570
+msgid "Disk Image Options"
+msgstr ""
+
+#: source/gtkinterface.c:772 source/gnomeinterface.c:580
+msgid "Use file directories (FIAD)"
+msgstr ""
+
+#: source/gtkinterface.c:779 source/gnomeinterface.c:584
+msgid "Use disk images (DOAD)"
+msgstr ""
+
+#: source/gtkinterface.c:1001 source/gnomeinterface.c:838
+msgid "Modules"
+msgstr ""
+
+#: source/gtkinterface.c:1029
+msgid "Name"
+msgstr ""
+
+#: source/gtkinterface.c:1036
+msgid "Tag"
+msgstr ""
+
+#: source/gtkinterface.c:1043
+msgid "Commands"
+msgstr ""
+
+#: source/gtkinterface.c:1072 source/gnomeinterface.c:868
+msgid "Show _setup commands"
+msgstr ""
+
+#: source/gtkinterface.c:1084 source/gnomeinterface.c:873
+msgid "_Reset computer after load"
+msgstr ""
+
+#: source/gtkinterface.c:1103 source/gnomeinterface.c:882
+msgid "_Unload"
+msgstr ""
+
+#: source/gtkinterface.c:1112 source/gnomeinterface.c:886
+msgid "Pull out the module while V9t9 is running"
+msgstr ""
+
+#: source/gtkinterface.c:1137 source/gnomeinterface.c:903
+msgid "_Load"
+msgstr ""
+
+#: source/gtkinterface.c:1146 source/gnomeinterface.c:907
+msgid "Insert module"
+msgstr ""
+
+#: source/gtkinterface.c:1156 source/gnomeinterface.c:915
+msgid "Re_fresh"
+msgstr ""
+
+#: source/gtkinterface.c:1165 source/gnomeinterface.c:919
+msgid "Reload module database from \"modules.inf\""
+msgstr ""
+
+#: source/gtkinterface.c:1293 source/gnomeinterface.c:1063
+msgid "V9t9 Debugger"
+msgstr ""
+
+#: source/gtkinterface.c:1311 source/gnomeinterface.c:1131
+msgid "Registers"
+msgstr ""
+
+#: source/gtkinterface.c:1343 source/gnomeinterface.c:1094
+msgid "WP"
+msgstr ""
+
+#: source/gtkinterface.c:1365 source/gnomeinterface.c:1108
+msgid "PC"
+msgstr ""
+
+#: source/gtkinterface.c:1387 source/gnomeinterface.c:1122
+msgid "Status"
+msgstr ""
+
+#: source/gtkinterface.c:1412 source/gnomeinterface.c:1160
+msgid "Instructions"
+msgstr ""
+
+#: source/gtkinterface.c:1444 source/gnomeinterface.c:1191
+msgid "CPU Memory 1"
+msgstr ""
+
+#: source/gtkinterface.c:1485 source/gnomeinterface.c:1222
+msgid "CPU Memory 2"
+msgstr ""
+
+#: source/gtkinterface.c:1526 source/gnomeinterface.c:1253
+msgid "VDP Memory"
+msgstr ""
+
+#: source/gtkinterface.c:1567 source/gnomeinterface.c:1284
+msgid "GROM/GRAM Memory"
+msgstr ""
+
+#: source/gtkinterface.c:1599 source/gnomeinterface.c:1309
+msgid "Speech Memory"
+msgstr ""
+
+#: source/gtkinterface.c:1665 source/gnomeinterface.c:1333
+msgid "_Run"
+msgstr ""
+
+#: source/gtkinterface.c:1674 source/gnomeinterface.c:1337
+msgid "Execute emulator with minimal debugger refresh"
+msgstr ""
+
+#: source/gtkinterface.c:1684 source/gnomeinterface.c:1345
+msgid "_Step"
+msgstr ""
+
+#: source/gtkinterface.c:1693 source/gnomeinterface.c:1349
+msgid "Step one instruction (even into calls) and break"
+msgstr ""
+
+#: source/gtkinterface.c:1703 source/gnomeinterface.c:1357
+msgid "_After"
+msgstr ""
+
+#: source/gtkinterface.c:1712 source/gnomeinterface.c:1361
+msgid ""
+"Execute until the PC reaches the next instruction (ignore conditional jumps)"
+msgstr ""
+
+#: source/gtkinterface.c:1729 source/gnomeinterface.c:1373
+msgid "_Break"
+msgstr ""
+
+#: source/gtkinterface.c:1738 source/gnomeinterface.c:1377
+msgid "Break execution"
+msgstr ""
+
+#: source/gtkinterface.c:1748 source/gnomeinterface.c:1385
+msgid "_Walk"
+msgstr ""
+
+#: source/gtkinterface.c:1757 source/gnomeinterface.c:1389
+msgid "Execute emulator with maximum debugger refresh"
+msgstr ""
+
+#: source/gtkinterface.c:1767 source/gnomeinterface.c:1397
+msgid "_Next"
+msgstr ""
+
+#: source/gtkinterface.c:1776 source/gnomeinterface.c:1401
+msgid "Execute until the PC reaches the next instruction (skip over calls)"
+msgstr ""
+
+#: source/gtkinterface.c:1798 source/gnomeinterface.c:1418
+msgid "Updates per second"
+msgstr ""
+
+#: source/gtkinterface.c:1816 source/gnomeinterface.c:1431
+msgid "Number of times debugger refreshes in \"Run\" mode"
+msgstr ""
+
+#: source/gtkinterface.c:1931 source/gnomeinterface.c:1599
+msgid "Memory Configuration"
+msgstr ""
+
+#: source/gtkinterface.c:1959 source/gnomeinterface.c:1616
+msgid "Console _ROM"
+msgstr ""
+
+#: source/gtkinterface.c:1980 source/gnomeinterface.c:1630
+msgid "Console _GROM"
+msgstr ""
+
+#: source/gtkinterface.c:2017 source/gnomeinterface.c:1654
+msgid "Use 32K _extended memory"
+msgstr ""
+
+#: source/gtkinterface.c:2028 source/gnomeinterface.c:1658
+msgid "Enable Gene_ve-style RAM in >8000->82FF range"
+msgstr ""
+
+#: source/gtkinterface.c:2044 source/gnomeinterface.c:1666
+msgid "Load custom module ROMs"
+msgstr ""
+
+#: source/gtkinterface.c:2106 source/gnomeinterface.c:1705
+msgid "_Module ROM"
+msgstr ""
+
+#: source/gtkinterface.c:2117 source/gnomeinterface.c:1712
+msgid "M_odule GROM"
+msgstr ""
+
+#: source/gtkinterface.c:2128 source/gnomeinterface.c:1719
+msgid "Module ROM (bank _1)"
+msgstr ""
+
+#: source/gtkinterface.c:2158 source/gnomeinterface.c:1739
+msgid "Module ROM (bank _2)"
+msgstr ""
+
+#: source/gtkinterface.c:2193 source/gnomeinterface.c:1763
+msgid "Resume"
+msgstr ""
+
+#: source/gtkinterface.c:2200 source/gnomeinterface.c:1767
+msgid "Continue emulation"
+msgstr ""
+
+#: source/gtkinterface.c:2202 source/gnomeinterface.c:1769
+msgid "Boot and Run"
+msgstr ""
+
+#: source/gtkinterface.c:2209 source/gnomeinterface.c:1773
+msgid "Close window and reset computer"
+msgstr ""
+
+#: source/gtkinterface.c:2221 source/gtkinterface.c:2684
+#: source/gtkinterface.c:2883 source/gnomeinterface.c:1782
+#: source/gnomeinterface.c:2165 source/gnomeinterface.c:2366
+msgid "Close window and continue emulation"
+msgstr ""
+
+#: source/gtkinterface.c:2226 source/gnomeinterface.c:1833
+msgid "Advanced options"
+msgstr ""
+
+#: source/gtkinterface.c:2241 source/gnomeinterface.c:1796
+msgid "Explore memory map"
+msgstr ""
+
+#: source/gtkinterface.c:2250 source/gnomeinterface.c:1802
+msgid "Unload module"
+msgstr ""
+
+#: source/gtkinterface.c:2259 source/gnomeinterface.c:1808
+msgid "Unload all ROMs and RAMs associated with a module"
+msgstr ""
+
+#: source/gtkinterface.c:2261 source/gnomeinterface.c:1810
+msgid "Save volatile RAM"
+msgstr ""
+
+#: source/gtkinterface.c:2270 source/gnomeinterface.c:1816
+msgid "These RAMs are saved automatically at certain points"
+msgstr ""
+
+#: source/gtkinterface.c:2272 source/gnomeinterface.c:1818
+msgid "Load volatile RAM"
+msgstr ""
+
+#: source/gtkinterface.c:2281 source/gnomeinterface.c:1824
+msgid "These RAMs are loaded automatically at certain points"
+msgstr ""
+
+#: source/gtkinterface.c:2283 source/gnomeinterface.c:1826
+msgid "Default memory map"
+msgstr ""
+
+#: source/gtkinterface.c:2291 source/gnomeinterface.c:1831
+msgid ""
+"Sets up RAM and memory-mapped areas to standard 99/4A settings in case there "
+"was a mishap with DefineMemory"
+msgstr ""
+
+#: source/gtkinterface.c:2480 source/gnomeinterface.c:2051
+msgid "Basic Options"
+msgstr ""
+
+#: source/gtkinterface.c:2499 source/gnomeinterface.c:2062
+msgid "Enable _sound"
+msgstr ""
+
+#: source/gtkinterface.c:2510 source/gnomeinterface.c:2066
+msgid "Enable s_peech"
+msgstr ""
+
+#: source/gtkinterface.c:2528 source/gnomeinterface.c:2074
+msgid "_Real-time emulation"
+msgstr ""
+
+#: source/gtkinterface.c:2546 source/gnomeinterface.c:2082
+msgid "_9900 Clock Speed"
+msgstr ""
+
+#: source/gtkinterface.c:2561 source/gnomeinterface.c:2092
+msgid ""
+"This affects the maximum execution speed when real-time emulation is enavbled"
+msgstr ""
+
+#: source/gtkinterface.c:2563 source/gtkinterface.c:2597
+#: source/gtkinterface.c:2630 source/gtkinterface.c:2663
+#: source/gnomeinterface.c:2094 source/gnomeinterface.c:2113
+#: source/gnomeinterface.c:2133 source/gnomeinterface.c:2153
+msgid "Default"
+msgstr ""
+
+#: source/gtkinterface.c:2579 source/gnomeinterface.c:2102
+msgid "Instruction _delay"
+msgstr ""
+
+#: source/gtkinterface.c:2595 source/gnomeinterface.c:2111
+msgid "This value is highly CPU-dependent"
+msgstr ""
+
+#: source/gtkinterface.c:2613 source/gnomeinterface.c:2121
+msgid "_Video refresh rate"
+msgstr ""
+
+#: source/gtkinterface.c:2628 source/gnomeinterface.c:2131
+msgid ""
+"This controls how often the changed parts of the 99/4A screen are redrawn"
+msgstr ""
+
+#: source/gtkinterface.c:2646 source/gnomeinterface.c:2141
+msgid "VDP _interrupt rate"
+msgstr ""
+
+#: source/gtkinterface.c:2661 source/gnomeinterface.c:2151
+msgid "This affects sprite motion and timing"
+msgstr ""
+
+#: source/gtkinterface.c:2837 source/gnomeinterface.c:2338
+msgid "Logging Configuration"
+msgstr ""
+
+#: source/gtkinterface.c:2868 source/gnomeinterface.c:2357
+msgid "Reset All"
+msgstr ""
+
+#: source/gtkinterface.c:2916 source/gnomeinterface.c:2406
+msgid "Fatal error"
+msgstr ""
+
+#: source/gtkinterface.c:3012 source/gnomeinterface.c:2492
+msgid "Memory Map"
+msgstr ""
+
+#: source/gtkinterface.c:3032 source/gnomeinterface.c:2506
+msgid "Console / CPU"
+msgstr ""
+
+#: source/gtkinterface.c:3043 source/gnomeinterface.c:2515
+msgid "GROM/GRAM"
+msgstr ""
+
+#: source/gtkinterface.c:3054 source/gnomeinterface.c:2524
+msgid "VDP"
+msgstr ""
+
+#: source/gtkinterface.c:3065 source/gnomeinterface.c:2533
+msgid "Speech"
+msgstr ""
+
+#: source/gtkinterface.c:3086 source/gnomeinterface.c:2546
+msgid "Refresh"
+msgstr ""
+
+#: source/gtkinterface.c:3163 source/gnomeinterface.c:2651
+msgid "Command Central"
+msgstr ""
+
+#: source/gtkinterface.c:3189 source/gnomeinterface.c:2607
+msgid "_Options"
+msgstr ""
+
+#: source/gtkinterface.c:3207 source/gnomeinterface.c:2588
+msgid "_Flush Log"
+msgstr ""
+
+#: source/gtkinterface.c:3218 source/gnomeinterface.c:2595
+msgid "_Select Font..."
+msgstr ""
+
+#: source/gtkinterface.c:3253 source/gnomeinterface.c:2688
+msgid "Welcome to V9t9!"
+msgstr ""
+
+#: source/gtkinterface.c:3272 source/gnomeinterface.c:2699
+msgid "Reboot"
+msgstr ""
+
+#: source/gtkinterface.c:3279 source/gnomeinterface.c:2703
+msgid "Reset emulated 99/4A"
+msgstr ""
+
+#: source/gtkinterface.c:3288 source/gnomeinterface.c:2709
+msgid "Pause"
+msgstr ""
+
+#: source/gtkinterface.c:3295 source/gnomeinterface.c:2713
+msgid "Pause execution of V9t9"
+msgstr ""
+
+#: source/gtkinterface.c:3304 source/gnomeinterface.c:2719
+msgid "Save..."
+msgstr ""
+
+#: source/gtkinterface.c:3311 source/gnomeinterface.c:2723
+msgid "Save machine state"
+msgstr ""
+
+#: source/gtkinterface.c:3313 source/gnomeinterface.c:2725
+msgid "Load..."
+msgstr ""
+
+#: source/gtkinterface.c:3320 source/gnomeinterface.c:2729
+msgid "Load machine state"
+msgstr ""
+
+#: source/gtkinterface.c:3329 source/gnomeinterface.c:2735
+msgid "Options..."
+msgstr ""
+
+#: source/gtkinterface.c:3336 source/gnomeinterface.c:2739
+msgid "Set basic configuration options"
+msgstr ""
+
+#: source/gtkinterface.c:3338 source/gnomeinterface.c:2741
+msgid "Debugger..."
+msgstr ""
+
+#: source/gtkinterface.c:3345 source/gnomeinterface.c:2745
+msgid "Control emulated 99/4A and trace execution"
+msgstr ""
+
+#: source/gtkinterface.c:3347 source/gnomeinterface.c:2747
+msgid "Modules..."
+msgstr ""
+
+#: source/gtkinterface.c:3354 source/gnomeinterface.c:2751
+msgid "Load or unload modules"
+msgstr ""
+
+#: source/gtkinterface.c:3356 source/gnomeinterface.c:2753
+msgid "Disks..."
+msgstr ""
+
+#: source/gtkinterface.c:3363 source/gnomeinterface.c:2757
+msgid "Assign drives to local directories or files"
+msgstr ""
+
+#: source/gtkinterface.c:3365 source/gnomeinterface.c:2759
+msgid "Memory..."
+msgstr ""
+
+#: source/gtkinterface.c:3372 source/gnomeinterface.c:2763
+msgid "Assign files to ROM or RAM segments of the memory map"
+msgstr ""
+
+#: source/gtkinterface.c:3374 source/gnomeinterface.c:2765
+msgid "Quit"
+msgstr ""
+
+#: source/gtkinterface.c:3382 source/gnomeinterface.c:2770
+msgid "Logging..."
+msgstr ""
+
+#: source/gtkinterface.c:3389 source/gnomeinterface.c:2774
+msgid "Modify log levels for debugging"
+msgstr ""
+
+#: source/unixmain.c:115
+msgid "SIGSEGV caught.\n"
+msgstr ""
+
+#: source/unixmain.c:150
+#, c-format
+msgid "Can't un-set root privileges!\n"
+msgstr ""
+
+#: source/unixmain.c:242
+#, c-format
+msgid ""
+"Unknown option '%s %s';\n"
+"expected one of %s\n"
+msgstr ""
+
+#: source/unixmain.c:261
+msgid "X11 not detected, using SVGAlib\n"
+msgstr ""
+
+#: source/unixmain.c:267
+msgid "X11 not detected, cannot use specified frontend\n"
+msgstr ""
+
+#: source/unixmain.c:338
+msgid "Using QT/Embedded\n"
+msgstr ""
+
+#: source/unixmain.c:365
+msgid "Using Xlib\n"
+msgstr ""
+
+#: source/unixmain.c:392
+msgid "Using SVGAlib\n"
+msgstr ""
+
+#: source/unixmain.c:401
+msgid "Could not use specified frontend\n"
+msgstr ""
+
+#: source/unixmain.c:461
+msgid "Entering interactive mode\n"
+msgstr ""
+
+#: source/unixmain.c:463
+msgid "FAILED: could not open terminal\n"
+msgstr ""
+
+#: source/unixmain.c:548
+#, c-format
+msgid "Could not create log file\n"
+msgstr ""
+
+#: source/unixmain.c:552
+#, c-format
+msgid "Could not create user log file\n"
+msgstr ""
+
+#: source/speech.c:127
+msgid "Done with speech phrase\n"
+msgstr ""
+
+#: source/speech.c:161
+msgid "Speech reset\n"
+msgstr ""
+
+#: source/speech.c:193
+#, c-format
+msgid ""
+"Speech read: %02X\n"
+"\n"
+msgstr ""
+
+#: source/speech.c:214
+#, c-format
+msgid "Speech addr = %04X\n"
+msgstr ""
+
+#: source/speech.c:231
+#, c-format
+msgid "Speaking phrase at %04X\n"
+msgstr ""
+
+#: source/speech.c:253
+msgid "Speaking external data\n"
+msgstr ""
+
+#: source/speech.c:278
+#, c-format
+msgid ""
+"Cmd=%02X  Status: %02X\n"
+"\n"
+msgstr ""
+
+#: source/speech.c:311
+#, c-format
+msgid "FIFO write: %02X  len=%d\n"
+msgstr ""
+
+#: source/speech.c:327
+#, c-format
+msgid "FIFO read: %02X  len=%d\n"
+msgstr ""
+
+#: source/speech.c:334
+msgid "Speech timed out\n"
+msgstr ""
+
+#: source/speech.c:426
+msgid "Speech Interrupt\n"
+msgstr ""
+
+#: source/speech.c:472
+msgid "Out of speech interrupt\n"
+msgstr ""
+
+#: source/speech.c:528
+msgid "Speech ROM"
+msgstr ""
+
+#: source/speech.c:542
+msgid ""
+"Sound module cannot play speech, speech disabled.\n"
+"\n"
+msgstr ""
+
+#: source/speech.c:544
+msgid ""
+"Setting up LPC speech...\n"
+"\n"
+msgstr ""
+
+#: source/speech.c:600
+msgid "Speech Options"
+msgstr ""
+
+#: source/speech.c:601
+msgid "These are commands for controlling speech synthesis"
+msgstr ""
+
+#: source/speech.c:604
+msgid "Control whether speech is played"
+msgstr ""
+
+#: source/speech.c:610
+msgid "toggle speech on or off"
+msgstr ""
+
+#: source/speech.c:618
+msgid "Name of speech ROM"
+msgstr ""
+
+#: source/speech.c:631
+msgid "Set sample rate for speech"
+msgstr ""
+
+#: source/speech.c:637
+msgid "normal value is 8000"
+msgstr ""
+
+#: source/speech.c:644
+msgid "Set sample length for a unit of speech"
+msgstr ""
+
+#: source/speech.c:649
+msgid "length"
+msgstr ""
+
+#: source/speech.c:650
+msgid "in bytes, normal value is 200"
+msgstr ""
+
+#: source/debugger.c:1082 source/debugger.c:1128
+msgid "no usable memory at that address"
+msgstr ""
+
+#: source/debugger.c:1090
+msgid ""
+"setting multiple memory breakpoints in the same 1k area; unsetting any "
+"breakpoint in this area turns them all off"
+msgstr ""
+
+#: source/debugger.c:1149
+msgid "Active breakpoints:\n"
+msgstr ""
+
+#: source/debugger.c:1152
+msgid "\t<none>\n"
+msgstr ""
+
+#: source/debugger.c:1220
+msgid "Debugger Options"
+msgstr ""
+
+#: source/debugger.c:1221
+msgid "These commands control the debugger"
+msgstr ""
+
+#: source/debugger.c:1224
+msgid "Add a breakpoint at the given PC"
+msgstr ""
+
+#: source/debugger.c:1230
+msgid "PC address at which to break"
+msgstr ""
+
+#: source/debugger.c:1237
+msgid "Remove breakpoint at the given PC"
+msgstr ""
+
+#: source/debugger.c:1243 source/debugger.c:1257 source/debugger.c:1301
+msgid "PC address of breakpoint"
+msgstr ""
+
+#: source/debugger.c:1250
+msgid ""
+"Add temporary breakpoint at the given PC, which will be removed upon being "
+"caught"
+msgstr ""
+
+#: source/debugger.c:1264
+msgid "List active breakpoints"
+msgstr ""
+
+#: source/debugger.c:1271
+msgid "Add a breakpoint on memory access"
+msgstr ""
+
+#: source/debugger.c:1277
+msgid "address at which to break"
+msgstr ""
+
+#: source/debugger.c:1287
+msgid "access"
+msgstr ""
+
+#: source/debugger.c:1288
+msgid "access type: R/W/RW"
+msgstr ""
+
+#: source/debugger.c:1295
+msgid "Remove memory breakpoint at the given address"
+msgstr ""
+
+#: source/sound.c:91
+#, c-format
+msgid ""
+"voice_cache_values: lo=>%02x, hi=>%02x, period=>%04x, hertz=%d, volume=%d\n"
+msgstr ""
+
+#: source/sound.c:219
+#, c-format
+msgid ""
+"Cassette %d is %p (%s)\n"
+"\n"
+msgstr ""
+
+#: source/sound.c:380
+#, c-format
+msgid "Invalid sound channel specified (%d)\n"
+msgstr ""
+
+#: source/sound.c:408
+msgid "Sound Options"
+msgstr ""
+
+#: source/sound.c:409
+msgid "These are generic commands for controlling sound emulation"
+msgstr ""
+
+#: source/sound.c:412
+msgid ""
+"Control whether music/noise sound is played.\n"
+"(Note: to turn off all sound, disable the sound module or use \"EnableSound "
+"off\".)"
+msgstr ""
+
+#: source/sound.c:420 source/sound.c:434
+msgid "toggle sound on or off"
+msgstr ""
+
+#: source/sound.c:428
+msgid "Control whether any sound is emitted."
+msgstr ""
+
+#: source/sound.c:442
+msgid ""
+"Set playback rate for digitized sound; interpretation is dependent on sound "
+"module in effect"
+msgstr ""
+
+#: source/sound.c:448
+msgid "set rate for playback"
+msgstr ""
+
+#: source/sound.c:454
+msgid ""
+"Set word size for digitized sound; interpretation is dependent on sound "
+"module in effect"
+msgstr ""
+
+#: source/sound.c:460
+msgid "set word size for playback"
+msgstr ""
+
+#. ret
+#: source/sound.c:471
+msgid "channel"
+msgstr ""
+
+#: source/sound.c:472
+msgid "channel number, 0-3"
+msgstr ""
+
+#: source/sound.c:475
+msgid "period"
+msgstr ""
+
+#: source/sound.c:476
+msgid "period of channel"
+msgstr ""
+
+#: source/sound.c:479
+msgid "volume"
+msgstr ""
+
+#: source/sound.c:480
+msgid "volume 0-15, 15=off"
+msgstr ""
+
+#: source/sound.c:484
+msgid "type of noise, or 0 for tone"
+msgstr ""
+
+#: source/demo.c:183
+#, c-format
+msgid "Could not add %d bytes to demo (%s)\n"
+msgstr ""
+
+#: source/demo.c:204 source/demo.c:222
+#, c-format
+msgid "missing bytes on read (%d of %d, %s)\n"
+msgstr ""
+
+#: source/demo.c:289
+msgid "Invalid use of demo handle\n"
+msgstr ""
+
+#: source/demo.c:380
+#, c-format
+msgid "buffer_poke:  overrun (%d+%d > %d)\n"
+msgstr ""
+
+#: source/demo.c:402
+#, c-format
+msgid "Illegal buffer length %d (max = %d), pos = %d\n"
+msgstr ""
+
+#: source/demo.c:409
+#, c-format
+msgid "Demo file is truncated (expected %d bytes at %d, got %d)\n"
+msgstr ""
+
+#: source/demo.c:457
+#, c-format
+msgid "Setting up demo (%s)\n"
+msgstr ""
+
+#: source/demo.c:463
+#, c-format
+msgid "Could not create demo file '%s' (%s)\n"
+msgstr ""
+
+#: source/demo.c:471
+#, c-format
+msgid "Could not allocate memory for demo (%s)\n"
+msgstr ""
+
+#: source/demo.c:543
+#, c-format
+msgid "Demo file header invalid (got %02x%02x%02x%02x, expected '%.*s''\n"
+msgstr ""
+
+#: source/demo.c:574
+#, c-format
+msgid "Initiating demo (%s)\n"
+msgstr ""
+
+#: source/demo.c:580
+#, c-format
+msgid "Could not load demo file %s (%s)\n"
+msgstr ""
+
+#: source/demo.c:605
+#, c-format
+msgid "Initiating demo (%s / %s)\n"
+msgstr ""
+
+#: source/demo.c:611
+#, c-format
+msgid "Could not open demo reader %s (%s)\n"
+msgstr ""
+
+#: source/demo.c:619
+#, c-format
+msgid "Could not open demo writer %s (%s)\n"
+msgstr ""
+
+#: source/demo.c:642
+#, c-format
+msgid "Initiating demo client on port %d\n"
+msgstr ""
+
+#: source/demo.c:648
+#, c-format
+msgid "error creating listening socket (%s)\n"
+msgstr ""
+
+#: source/demo.c:672
+#, c-format
+msgid "error calling connect() (%s)\n"
+msgstr ""
+
+#: source/demo.c:690
+msgid "Closing demo\n"
+msgstr ""
+
+#: source/demo.c:692
+#, c-format
+msgid "Closing demo (%s)\n"
+msgstr ""
+
+#: source/demo.c:703
+#, c-format
+msgid "Could not write demo file '%s' (%s)\n"
+msgstr ""
+
+#: source/demo.c:714
+msgid "Demo playback stopped.\n"
+msgstr ""
+
+#. flush all current data
+#: source/demo.c:788
+msgid "Tick\n"
+msgstr ""
+
+#: source/demo.c:817
+#, c-format
+msgid "Video >%04X, PC=>%04X "
+msgstr ""
+
+#: source/demo.c:830
+#, c-format
+msgid "Sound >%02X\n"
+msgstr ""
+
+#: source/demo.c:843
+#, c-format
+msgid "Speech %d"
+msgstr ""
+
+#: source/demo.c:869
+#, c-format
+msgid "Unknown event type passed to demo_event (%d)\n"
+msgstr ""
+
+#: source/demo.c:916
+msgid "."
+msgstr ""
+
+#: source/demo.c:921
+msgid "tick\n"
+msgstr ""
+
+#: source/demo.c:930
+#, c-format
+msgid "Video %d\n"
+msgstr ""
+
+#: source/demo.c:944
+#, c-format
+msgid "(video >%04x, %d bytes)\n"
+msgstr ""
+
+#: source/demo.c:958
+#, c-format
+msgid "(video reg >%04x)\n"
+msgstr ""
+
+#: source/demo.c:967
+#, c-format
+msgid "Sound %d\n"
+msgstr ""
+
+#: source/demo.c:969
+#, c-format
+msgid "(sound %02x)\n"
+msgstr ""
+
+#: source/demo.c:976
+#, c-format
+msgid "Speech %d\n"
+msgstr ""
+
+#: source/demo.c:989
+#, c-format
+msgid "(speech %02x)\n"
+msgstr ""
+
+#: source/demo.c:1038
+#, c-format
+msgid "(type %d)\n"
+msgstr ""
+
+#: source/demo.c:1041
+#, c-format
+msgid "Demo appears to be corrupt at %d\n"
+msgstr ""
+
+#: source/demo.c:1096
+msgid "Ending currently recording demo.\n"
+msgstr ""
+
+#: source/demo.c:1099
+msgid "Stopping currently playing demo.\n"
+msgstr ""
+
+#: source/demo.c:1116
+#, c-format
+msgid "Invalid demo filename '%s' (%s)\n"
+msgstr ""
+
+#: source/demo.c:1138
+#, c-format
+msgid "Can't load demo '%s' (%s)\n"
+msgstr ""
+
+#: source/demo.c:1188
+#, c-format
+msgid "Can't load demo reader '%s' (%s)\n"
+msgstr ""
+
+#: source/demo.c:1196
+#, c-format
+msgid "Can't load demo writer '%s' (%s)\n"
+msgstr ""
+
+#: source/demo.c:1224
+msgid "Demo Options"
+msgstr ""
+
+#: source/demo.c:1225
+msgid ""
+"These commands control recording and playback of V9t9 demos, which do not "
+"require ROMs to view."
+msgstr ""
+
+#: source/demo.c:1229
+msgid ""
+"Set directory list to search for demo files; first entry of the list is used "
+"to save demos"
+msgstr ""
+
+#: source/demo.c:1246
+msgid "Start recording a new demo"
+msgstr ""
+
+#: source/demo.c:1252
+msgid "demo file to create"
+msgstr ""
+
+#: source/demo.c:1259
+msgid "Start playing an existing demo"
+msgstr ""
+
+#: source/demo.c:1265
+msgid "demo file to play"
+msgstr ""
+
+#: source/demo.c:1272
+msgid "Start listening for demo data on fifos"
+msgstr ""
+
+#: source/demo.c:1278
+msgid "demo read file"
+msgstr ""
+
+#: source/demo.c:1283
+msgid "demo write file"
+msgstr ""
+
+#: source/demo.c:1291
+msgid "Start listening for demo data on port"
+msgstr ""
+
+#: source/demo.c:1297
+msgid "port to listen on"
+msgstr ""
+
+#: source/demo.c:1304
+msgid "Pause recording or playback of demo"
+msgstr ""
+
+#: source/demo.c:1310
+msgid "off: continues, on: pauses"
+msgstr ""
+
+#: source/demo.c:1318
+msgid "Stop recording or playback of demo"
+msgstr ""
+
+#: source/datafiles.c:61
+msgid "NULL argument passed to data_find_file()"
+msgstr ""
+
+#: source/datafiles.c:109
+msgid "NULL argument passed to data_create_file()"
+msgstr ""
+
+#: source/datafiles.c:182
+#, c-format
+msgid ""
+"Cannot find '%s' in path:\n"
+"'%s'\n"
+msgstr ""
+
+#: source/datafiles.c:187
+#, c-format
+msgid "Loading %s image %s... "
+msgstr ""
+
+#: source/datafiles.c:192
+#, c-format
+msgid "%s too long, only %d bytes of %d read... "
+msgstr ""
+
+#: source/datafiles.c:204
+msgid "could not read\n"
+msgstr ""
+
+#: source/datafiles.c:209
+msgid "swapping bytes... "
+msgstr ""
+
+#: source/datafiles.c:213 source/datafiles.c:296
+msgid "done\n"
+msgstr ""
+
+#: source/datafiles.c:251
+#, c-format
+msgid "Couldn't create %s image %s anywhere in path: %s\n"
+msgstr ""
+
+#: source/datafiles.c:260
+#, c-format
+msgid ""
+"Couldn't create %s image '%s' anywhere in path:\n"
+"'%s'\n"
+msgstr ""
+
+#: source/datafiles.c:267
+#, c-format
+msgid "Writing %s image %s... "
+msgstr ""
+
+#: source/datafiles.c:277
+msgid "swapping bytes to save... "
+msgstr ""
+
+#: source/datafiles.c:287
+msgid "swapping bytes back... "
+msgstr ""
+
+#: source/datafiles.c:292
+msgid "could not write\n"
+msgstr ""
+
+#: source/datafiles.c:395
+#, c-format
+msgid "GRAM Kracker segment '%s' is not a PROGRAM file (it's %s)\n"
+msgstr ""
+
+#: source/datafiles.c:401
+#, c-format
+msgid ""
+"GRAM Kracker segment '%s' is too long\n"
+"to be a segment (%d bytes > 8192+6 bytes)\n"
+msgstr ""
+
+#: source/datafiles.c:426
+#, c-format
+msgid ""
+"Could not read signature for GRAM Kracker segment in V9t9 file '%s' (%s)\n"
+msgstr ""
+
+#: source/datafiles.c:438
+#, c-format
+msgid ""
+"Could not read signature for GRAM Kracker segment in binary file '%s' (%s)\n"
+msgstr ""
+
+#: source/datafiles.c:451
+#, c-format
+msgid "GRAM Kracker segment '%s' is a 'UTIL' segment (not supported)\n"
+msgstr ""
+
+#: source/datafiles.c:460
+#, c-format
+msgid "GRAM Kracker segment '%s' is not a ROM file (got >%02X)\n"
+msgstr ""
+
+#: source/svgaloop.c:55
+msgid ""
+"Can't get setuid root privileges!\n"
+"As root, execute 'chown root:root v9t9; chmod +s v9t9'\n"
+"to use the SVGAlib interface.\n"
+"\n"
+msgstr ""
+
+#: source/v9t9_module.c:88
+msgid "AddModule:  too many modules defined"
+msgstr ""
+
+#: source/v9t9_module.c:93
+msgid "AddModule:  module has no name\n"
+msgstr ""
+
+#: source/v9t9_module.c:99
+#, c-format
+msgid ""
+"AddModule:  module has wrong module version (%d != %d)\n"
+"\n"
+msgstr ""
+
+#: source/v9t9_module.c:105
+msgid "AddModule: module has no specific module pointer\n"
+msgstr ""
+
+#: source/v9t9_module.c:112
+#, c-format
+msgid "AddModule: CPU module '%s' has wrong version (%d)\n"
+msgstr ""
+
+#: source/v9t9_module.c:117
+#, c-format
+msgid "AddModule: CPU module '%s' has NULL callback(s)\n"
+msgstr ""
+
+#: source/v9t9_module.c:125
+#, c-format
+msgid "AddModule: video module '%s' has wrong version (%d)\n"
+msgstr ""
+
+#: source/v9t9_module.c:132
+msgid "AddModule: Video module has NULL callback(s)\n"
+msgstr ""
+
+#: source/v9t9_module.c:139
+#, c-format
+msgid "AddModule: sound module has wrong version (%d)\n"
+msgstr ""
+
+#: source/v9t9_module.c:150
+msgid ""
+"AddModule: invalid sound module (has no callbacks and is not exclusive), "
+"ignoring\n"
+msgstr ""
+
+#: source/v9t9_module.c:159
+#, c-format
+msgid "AddModule: keyboard module has wrong version (%d)\n"
+msgstr ""
+
+#: source/v9t9_module.c:164
+msgid "AddModule: Keyboard module has NULL callback(s)\n"
+msgstr ""
+
+#: source/v9t9_module.c:171
+#, c-format
+msgid "AddModule: DSR module has wrong version (%d)\n"
+msgstr ""
+
+#: source/v9t9_module.c:176
+msgid "AddModule: DSR module has NULL callback(s)\n"
+msgstr ""
+
+#: source/v9t9_module.c:181
+#, c-format
+msgid "AddModule:  module has unknown type (%d)\n"
+msgstr ""
+
+#: source/v9t9_module.c:192
+#, c-format
+msgid "AddModule:  callback(s) missing in '%s'\n"
+msgstr ""
+
+#: source/v9t9_module.c:408
+#, c-format
+msgid "CollectModules:  Could not find a %s module\n"
+msgstr ""
+
+#: source/v9t9_module.c:471
+msgid "SelectModules: unavailable, skipping\n"
+msgstr ""
+
+#: source/v9t9_module.c:476
+msgid "SelectModules: is unselected, skipping\n"
+msgstr ""
+
+#: source/v9t9_module.c:484
+msgid "SelectModules: not using since non-exclusive module already in use\n"
+msgstr ""
+
+#: source/v9t9_module.c:505
+#, c-format
+msgid ""
+"SelectModules: not using since it doesn't satisfy missing callbacks from "
+"module '%s'\n"
+msgstr ""
+
+#. just use it
+#: source/v9t9_module.c:512
+msgid "SelectModules: using\n"
+msgstr ""
+
+#: source/v9t9_module.c:525
+#, c-format
+msgid "SelectModules: terminating search, only one %s module may be active\n"
+msgstr ""
+
+#: source/v9t9_module.c:534
+msgid "SelectModule: terminating search, all sound callbacks defined\n"
+msgstr ""
+
+#: source/v9t9_module.c:542
+#, c-format
+msgid "SelectModules:  did not find a single usable %s module?\n"
+msgstr ""
+
+#: source/v9t9_module.c:572
+#, c-format
+msgid ""
+"ValidateModules: must not be selected since only one %s module may be active "
+"at once\n"
+msgstr ""
+
+#: source/v9t9_module.c:582
+msgid ""
+"ValidateModules: must not be selected since other non-exclusive modules are "
+"already selected\n"
+msgstr ""
+
+#: source/v9t9_module.c:599
+#, c-format
+msgid ""
+"ValidateModules: must not be selected since module '%s' defines the same "
+"callbacks\n"
+msgstr ""
+
+#: source/v9t9_module.c:618
+#, c-format
+msgid "ValidateModules: no %s modules are selected; at least one is required\n"
+msgstr ""
+
+#: source/v9t9_module.c:833
+#, c-format
+msgid "Tag: '%s', name: '%s', type: '%s'\n"
+msgstr ""
+
+#: source/v9t9_module.c:835
+msgid "\tFlags: "
+msgstr ""
+
+#: source/v9t9_module.c:837
+msgid "exclusive "
+msgstr ""
+
+#: source/v9t9_module.c:840
+msgid "[enable-once] "
+msgstr ""
+
+#: source/v9t9_module.c:842
+msgid "enable-once "
+msgstr ""
+
+#: source/v9t9_module.c:845
+msgid "[disable-once] "
+msgstr ""
+
+#: source/v9t9_module.c:847
+msgid "disable-once "
+msgstr ""
+
+#: source/v9t9_module.c:849
+msgid "in-use "
+msgstr ""
+
+#: source/v9t9_module.c:851
+msgid "unselected "
+msgstr ""
+
+#: source/v9t9_module.c:892
+#, c-format
+msgid ""
+"No such v9t9 module '%s'\n"
+"\n"
+msgstr ""
+
+#: source/v9t9_module.c:897
+#, c-format
+msgid "Module '%s' is unavailable, cannot toggle\n"
+msgstr ""
+
+#: source/v9t9_module.c:957
+msgid "V9t9 Module Commands"
+msgstr ""
+
+#: source/v9t9_module.c:958
+msgid "These options affect the modules used to emulate V9t9"
+msgstr ""
+
+#: source/v9t9_module.c:961
+msgid "List available modules and current status"
+msgstr ""
+
+#: source/v9t9_module.c:969
+msgid "Turn use of a module on or off"
+msgstr ""
+
+#: source/v9t9_module.c:975
+msgid "tag name for module"
+msgstr ""
+
+#: source/v9t9_module.c:980
+msgid "whether to use or not use module"
+msgstr ""
+
+#: source/v9t9_module.c:987
+msgid "Setup module gestalt"
+msgstr ""
+
+#: source/gnomeinterface.c:2884
+msgid "_New Session"
+msgstr ""
+
+#: source/gnomeinterface.c:2890
+msgid "_Load Configuration"
+msgstr ""
+
+#: source/gnomeinterface.c:2897
+msgid "Sa_ve Configuration"
+msgstr ""
+
+#: source/gnomeinterface.c:2904
+msgid "Save _Configuration As..."
+msgstr ""
+
+#: source/gnomeinterface.c:2976
+msgid "New File"
+msgstr ""
+
+#: source/gnomeinterface.c:2982
+msgid "Open File"
+msgstr ""
+
+#: source/gnomeinterface.c:2988
+msgid "Save File"
+msgstr ""
+
+#: source/dsr.c:44
+msgid "dsr_set_active:  trying to install bogus module"
+msgstr ""
+
+#: source/xlibloop.c:143
+#, c-format
+msgid "Cannot connect to X server '%s'\n"
+msgstr ""
+
+#: source/xlibloop.c:155
+msgid "Cannot create command thread\n"
+msgstr ""
+
+#: source/xlibloop.c:177
+#, c-format
+msgid ""
+"Event = %d\n"
+"\n"
+"\n"
+msgstr ""
+
+#: source/timer.c:94
+#, c-format
+msgid "tick... %d\n"
+msgstr ""
+
+#. >tick<
+#. went off?
+#: source/timer.c:112
+#, c-format
+msgid "executing event with id=%d\n"
+msgstr ""
+
+#: source/timer.c:122
+#, c-format
+msgid ""
+"freeing event with id=%d\n"
+"\n"
+msgstr ""
+
+#: source/timer.c:220
+msgid ""
+"\n"
+"Timer event list full\n"
+msgstr ""
+
+#: source/timer.c:236
+msgid "TM_SetEvent:\n"
+msgstr ""

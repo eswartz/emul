@@ -1,0 +1,220 @@
+
+( the routine that handles RWBLK )
+| User >rwblk
+
+\ ----------------------------
+
+( execute 'xt' for up to 'ms' mseconds until it returns !0; throw err-file-i/o if timeout )
+:: wait4 ( msecs xt -- result )
+
+    [ 0 [if] ]
+         msecs 0 do
+            xt execute
+            ?dup if  unloop exit  then
+        loop
+        err-file-i/o throw
+    [ [else] ]
+    	msecs xt (ms)
+        ?dup if exit then
+	    err-file-i/o throw
+    [ [then] ]         
+;
+
+
+0 <export
+
+: fdc-ready ( -- 0|$80 )
+    'DSKST c@ 
+    dup  #dskStRdy <
+    swap #dskStBusy AND 0=
+    AND
+;
+
+: fdc-wait-ready ( ms -- ! )
+    ['] fdc-ready  wait4  drop
+;
+
+: fdc-command ( cmd-byte -- ! )
+    3000 dup  fdc-wait-ready
+    
+    swap  'DSKCMD c!
+    
+    fdc-wait-ready
+;
+
+
+: dsk-flg! ( on? mask -- )
+    'DSKFLG c@  
+     bitset
+    'DSKFLG c!
+;
+
+: dsk-flg? ( mask -- )
+    'DSKFLG c@  AND
+;
+
+: motor ( on? -- 0|err )
+    #dskFlgMotor dsk-flg!
+;
+
+
+: seek-command ( cmd -- )
+    [ #dskCmd'Head #dskCmd'Verify #dskCmd'10ms OR OR ] literal  OR      
+    fdc-command 
+;
+
+:: seek-track ( trk side -- )
+    true motor
+    false #dskFlgHold dsk-flg!
+    
+    side 1 U>=  err-inv-block-number ?throw
+     
+    \ set side
+    side #dskFlgSide  dsk-flg!
+    \ load head
+    true #dskFlgHead  dsk-flg!
+
+    \ STUPID for now
+    #dskCmdRestore seek-command   
+    
+    trk 'DSKDAT c!
+    #dskCmdSeek seek-command
+    
+    \ keep motor going in case of xfers 
+;
+
+
+\ ---------
+
+40 constant tracks-per-side
+9 constant secs-per-track
+256 constant bytes-per-sector
+chars/block bytes-per-sector u/  constant secs-per-block
+
+: sec>attrs ( sec# -- sec trk side )
+    secs-per-track U/MOD
+    tracks-per-side U/MOD
+;
+
+: block>sec ( block -- sec )
+    secs-per-block  U*
+;
+
+
+: disk-seek-sec ( sec# -- )
+    sec>attrs
+    seek-track
+    'DSKSEC c!
+;
+
+: drq-ready ( -- 0|$2 )
+    'DSKST c@  #dskStDrq  AND
+;
+
+: (dsk-read) ( addr --  )
+    'DSKDAT c@  swap c!  
+;
+    
+: (dsk-write) ( addr -- )
+    c@  'DSKDAT c!   
+;
+    
+: xfer ( addr xt cmd -- addr )
+    fdc-command
+
+    true #dskFlgHold dsk-flg!
+    true motor
+        
+    1 ['] drq-ready  wait4  drop
+    bytes-per-sector 0 do
+        2dup execute  swap 1+ swap
+    loop
+    drop
+
+    false #dskFlgHold dsk-flg!
+    \ keep motor going in case of further xfers
+;
+
+\ read/write block on current disk 
+:: (disk-rwblk)  ( addr  block# r/w -- )
+    \ note: block 0 is valid
+    
+    block#  secs-per-block U*  :> sec
+    
+    secs-per-block 0 do
+        i sec +  disk-seek-sec
+        
+        addr
+        r/w if
+            ['] (dsk-read)  #dskCmdReadSector
+        else
+            ['] (dsk-write) #dskCmdWriteSector
+        then
+        xfer
+        to addr
+    loop
+;
+
+\ ---------------
+
+: disk-rwblk    ( addr  block# r/w --  )
+    1 'DSKNUM c!
+
+    ['] (disk-rwblk) catch
+
+    \ finally...    
+    >r
+    0 'DSKNUM c!
+    r> throw
+;
+
+| >gram_disk_base negate chars/block U/  
+            Constant    #GRAM
+
+
+: gram-rwblk    ( addr  block# r/w --  )
+    >r
+    1-  ( block 0 not valid )
+    dup  0  #GRAM  within  not err-inv-block-number ?throw 
+    chars/block U*  >gram_disk_base +  
+    r>  if  
+        swap  chars/block  gcmove  
+    else  
+        chars/block        cgmove  
+    then
+;
+
+: set-disk  ( xt -- )
+    flush
+    >rwblk  !
+;
+
+: fdc-interrupt
+    #dskCmdInterrupt fdc-command
+;
+
+export>
+
+: DSK1 ( -- )
+    ['] fdc-interrupt catch  drop
+    ['] disk-rwblk  set-disk
+;
+
+: GRAM ( -- )
+    ['] gram-rwblk  set-disk
+;
+
+
+\ read or write:  r/w == TRUE means read, FALSE means write
+: R/W ( addr block# r/w -- )
+    over $7fff = if
+        \ test
+        2drop drop
+    else
+        >rwblk @  execute
+    then
+;
+
+| : io-init
+    GRAM    
+; 

@@ -1,0 +1,297 @@
+2005/02/22
+
+-- the file selection dialog is broken, probably due to changes
+underneath in the GTK widget we stole this from
+-- move generic debugger stuff out of gtkcallbacks-debugger.h
+-- move a lot of stuff out of GTK callbacks!
+-- make DSKx entries emit change when focus/tab out
+-- figure out why we can;t run two instances of v9t9 at once (sound device?)
+
+2003/10/16
+
+-- now that we host only on modern OSes, we should change the
+architecture.  Currently, everything revolves around the emulation,
+with a nasty use of flags (stateflag), timer signals, instruction
+counts, etc.  to interrupt this process and handle everything else
+(including UI!).  Sound is on its own thread from necessity already.
+Video updating could certainly be done this way too.
+
+Emulation itself should be a thread as well.  I'm unsure whether it
+will make sense to [un]lock a mutex on every single instruction
+executed; maybe we can keep the execute-a-block-of-instructions
+behavior... and again we may have to keep stateflag in order to
+detect debugging, 9901 interrupts, etc....
+
+Well, okay.  We can't get rid of all the supposed cruft above,
+but removing the bits that have to do with scheduling would be
+good.
+
+2002/01/30
+
+-- look in rj/dsk/s1 line 152 for double-sided track ordering
+-- l.185 
+
+2002/01/29
+
+//-- trigger error if 0x5ff0--0x5fff range read/written for emulated disk 
+
+2001/12/31
+
+//-- maybe allow real disk DSR to be loaded on startup, and then disabled;
+//turning on this DSR after boot really hoses the system
+	-- fixed: didn't properly trigger reload of emu disk DSR when 
+	real disk DSR turned on/off
+
+2001/06/11
+//-- find out how to be setuid for svgalib but not for gtk
+
+2001/02/07
+
+//-- debugger: respond to close button in run mode
+
+2001/02/04
+
+-- make use of more optional arguments (screenshot, etc)
+
+2001/02/03
+
+//-- fix bug in demo where screen stays black
+	-- this required reading these arguments after postconfiginit();
+	i think that might be wrong.  Not sure why I ordered them like this.
+	Perhaps we should break up CL argument parsing into two stages.
+
+2001/01/20
+
+//-- don't accept file dialog that returns wrong type of file/dir
+	-- need to emit some sort of error to make it clear why the
+	dialog doesn't close!
+//-- breakpoint inside sources doesn't show first line in v9t9 debugger
+
+2001/01/19
+
+//-- emit error for unknown ID
+	was not showing the message, that's all  ;)
+//-- fix help for enumeration arguments (i.e., newfileformat: remove =xxx and || )
+//-- figure out when to emit a newline from PRINT (just do space '\n')
+-- unpause after saving a session file from GTK
+
+2001/01/17
+
+//-- don't re-read emu disk dsr rom all the time!
+//-- rename HomeDir to HomeV9t9 so ppl don't confuse it with $HOME
+	-- used DataDir
+//-- interpret '~' and '$xxx' in strings
+//-- create $HOME/.v9t9/sessions, put the home directories before system dirs
+	in default configs
+
+
+2001/01/16
+
+//-- fix broken command language... why are we getting csa_READ off of
+//Interactive?
+
+2001/01/11
+
+//-- make sure config files are found in v9t9 living directory
+ // -- no, make that the SHARE directory.  Also look for v9t9.gtkrc here.
+//	Find the share directory based on the binary's directory (../share/v9t9?)
+
+
+2001/01/06
+
+-- make SpeechState more detailed... it's completely nonportable at the moment
+
+2001/01/02
+
+//-- make Makefile.am for tools/DSRs and tools/Forth
+//-- add hooks to emit package/version info
+//-- add hooks to use GNU command-line options, fix command-line options
+entirely:
+
+i//	First of all, need to be able to distinguish a file on the cmdline
+//	from being a config file vs. a session file.  We can assume that
+//	the default is a session file.  A config file is specified with 
+//	'-c file'.  If not specified, the config file is v9t9.cnf.
+//	If no module database is read in the config file, then modules.inf
+//	is read.  (I.e., it's read AFTER we have our paths!)
+
+2001/01/02
+
+//-- fix bug in activation of DSR-related disk entries when ROMs can't be 
+found
+//-- fix bug where signal for 'choose' disk image isn't removed when
+//a new 'choose' is activated
+
+2000/12/31
+
+//-- split vdp.c in two
+	// moved video stuff more into video.c
+//-- fix erratic splits in roms.c/moduledb.c/etc
+-- verify that we can save/load parts of one big file via DefineMemory
+-- moduledb.c --> memorysegments.c ? 
+-- moduleconfig.h --> v9t9_module_config.h ?
+-- mix_server.c --> soundmixer.c ?
+-- WRITE_TO_FILE capability
+-- make utility module for stuff in emulate.c (rle_compress, etc.)
+-- better dox for DSR module in dsr.h
+//-- get rid of obvious prefix problems (UnloadModule / UnloadModuleOnly)
+//-- "16bit.h" should reflect the way memory is accessed.
+//-- GNU GPL stuff in interactive mode
+
+2000/12/30
+
+//-- fix mysterious death when sound modules die (dialog, etc)
+//-- fix global_sti/global_cli problem or document it
+//-- detect missing roms/modules
+//-- clarify specification of config file vs. session file on argv[]
+//-- gtk-config stuff is in wrong configure file
+//-- show error if romspath doesn't exist.
+	// fixed generally with sanitychecklockupstate
+//-- module database read before ROM paths exist!
+??-- fix bug where long definitions can't have an argument on the next line
+	// not really a bug -- eol is the only way to know it's done...
+	// but we should know the # args to expect and parse based on that
+
+2000/12/05
+
+//Strange lockup running sieve? // (+loop) was broken
+
+2000/12/04
+
+Fix serious efficiency problems in the files.fs wordset by caching the 
+file size.
+
+2000/12/03
+
+Try to figure out why archiver3 is broken YET AGAIN.
+
+2000/11/30
+
+Fix the bad saving of alternate module ROM filenames (from memory dialog)
+in session file.  Neither the memory map nor the rom commands are saved.
+
+2000/10/11
+
+//Fix the binary save routines... methinks the dsk write sectors routine.
+//It makes files too large by one sector.
+
+dis/fix files can't be created by fw assembler
+
+2000/08/28
+
+Allow saving of debug log...
+
+2000/06/25
+
+//Be sure to kill main app when v9t9_window is closed
+
+2000/06/24
+
+//Add dialog for controlling realtime, sound/speech, ...
+
+2000/06/20
+
+//When adding a disk image from an unknown directory, the error message pops
+//up although the directory will be added to the path.
+
+2000/06/09
+
+//files.cnf:  reopens a file for appending, but somehow the FDR is overwritten
+to a dis/fix 0.
+
+2000/06/08
+
+//Add escape key as accelerator
+//Way repetitious catalog reads in Multiplan?
+//	-- fuckin' opens and closes the catalog once per file!
+//	   argh!  argh!  argh!  How to detect this in a sane way?
+//	-- keep a flag telling whether catalog for a disk should have
+//	changed, based on our knowledge of files opened with write
+//	permission, or time out after five seconds?
+	// fixed, using timeout
+
+Slow down log window
+Recent file list for quick save/quick load
+
+2000/06/08
+
+//Log levels are not quite sane.  Want to see debug output in svgalib!
+//L_0 apparently triggers sprite stuff and svga keyboard stuff too.
+
+2000/06/05
+
+//Skip unrecognized argv options instead of dying
+//Add speech rom setting to config file
+
+2000/06/04
+
+//Have dialog for log levels
+
+2000/06/01
+
+//unzip was causing this problem...
+
+//-- d'oh!  renaming of old DOS files doesn't work since extended ASCII
+//characters are mapped funny.  See if this is something that VFAT does
+//or what... we can't allow the renames if they become meaningless
+//(i.e., DSK>>P1 goes to DSK;P1 when it should be DSK/P1)
+
+2000/05/31
+
+-- some way for the user to use c_DYNAMIC functions?
+-- add command button to save screenshot
+//-- add options to disk dialog (catalog size, unknown files, repairs)
+
+2000/05/29
+
+-- debugger state is not saved properly to session files (i.e., the event tag,
+info about verbosity)
+//-- speech memory view is wrong
+
+2000/05/27
+
+//-- Add a command on modules panel to reread modules.inf
+//-- Make status window to show various infos... maybe the v9t9 window itself.
+
+//The debugger can use this status window, or status callback function,
+//to update the necessary info at the necessary time.  We need, then,
+//commands to:  single-step (pause+single?), set breakpoint (use either
+//code word overwrite or "hardware" breakpoint), refresh intermittently
+//(imperative to have low-cost tracing).
+
+//for debugger memory watches, we want to have as much common code as possible,
+//meaning it should send status of memory windows with the hex dump, etc.,
+//but seems difficult to use this to display "updated" memory regions on the
+//display, unless we pass as arguments to the status function the ascii string
+//and a bitmask of changed bytes on the line for use by the UI.  Um.  Or,
+//we should send the array of bytes themselves, and let the UI format them.
+
+//We should be able to use the "print" functionality and the read-command
+//feature in the UI, since this tells us the PC, status, WP, etc., without
+//having to manually send events everywhere when these change.  But why?
+//Although it's neat to use the commands, we need to decode text strings
+//and stuff.  Or not.  
+
+2000/04/20
+
+// dont do this, it's too slow
+&&Change sprite stuff so perfect bitmap of screen is maintained, and
+&&this is copied to temp buffer where sprites are drawn.  No need to
+&&meticulously maintain history of sprite movement.  Also, five sprites
+&&on a line can be handled easier this way.  
+
+// FIXED: by correctly implementing VDP read-before-write
+//NOT TRUE:  looks like a bug (this below)
+//(Popeye depends on this effect,
+//this accounts for mysterious five bottles on a row that never disappear.)
+
+2000/04/09
+
+Stuff to do:
+
+//-- parser gets stuck on mismatched quotes
+//-- fix parser so no-argument items can be read with 'print'
+	// via (xxx), this isn't perfect
+-- modifiers for BindKey
+//-- move debugger over to MemoryEntry
+

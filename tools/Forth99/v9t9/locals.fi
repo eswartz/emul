@@ -1,0 +1,269 @@
+\
+\   Forth99 local support.
+\
+\   This is a mix of Factor and ANS Forth.
+\
+\   Locals may be declared with   :> name  
+\   at any time in a word, provided the first occurrence is not
+\   inside control flow.  This removes the top stack item
+\   and assigns it to 'name'.
+\
+\   'name' anywhere after in the word then pushes the
+\   current value onto the stack.
+\
+\   The syntax  TO name
+\   will remove the top stack item and reassign 'name'.   
+\
+\   Also, a word may be declared to take named arguments
+\   by using the '::' syntax.  Here, the stack effect
+\   comment is parsed for argument names on the LHS
+\   of the '--'.  Each name becomes another local,
+\   in the same ordering expected in the comment.
+\   Arguments after '--' (or a missing '--') is ignored.
+\
+\   A word may have an empty or missing stack effect
+\   comment, which allows the first use of  :> name
+\   to occur anywhere.
+\ 
+
+0 <export
+
+\ Generally, 4-6 chars per name, 2 for LFA, 8 for code
+96 Constant #localspace 
+
+\ base of local storage
+User lbase 
+
+\ current upper limit of allocated locals
+User ldp 
+
+\ current LFA entry for allocated locals
+User llfa
+
+\ current # of allocated locals
+User lcount 
+
+\ Set up a word to the default state: no locals 
+: reset-locals
+    0 'lfind !
+    0 lcount !
+    0 llfa !
+    lbase @
+    
+    0 over !           \ LFA 
+    ldp !
+;
+    
+: init-locals
+    0 lbase !
+    reset-locals
+;
+
+\ Match two counted strings case-sensitively
+\ : c= ( caddr1 caddr2 -- t|f )
+\    dup c@ 1+  ( caddr1 caddr2 len ) 
+\    cmp? ( pos cmp )  
+\    nip  0=
+\ ;
+
+\ Search local dict for name
+: (lfind) ( caddr -- caddr 0 | xt 1 )
+    state @ if 
+        llfa @  (find)
+    else
+        0
+    then
+;
+
+
+: alloc-locals
+    lbase @ ?dup 0= if
+        here  #localspace allot
+    then
+    dup  lbase !
+          ldp !
+    0 'lfind !
+    0 lcount !
+;
+
+\ --------------------------
+
+\ These routines operate with a relocated DP/HERE
+\ into the local dictionary.  Be careful!
+
+\ Add a NFA for the given counted string in the local dictionary
+: (lname,) ( caddr -- )
+    
+    \ link LFA
+    llfa @  ,  
+    
+    count  ( caddr u )
+    
+    \ length+name
+    dup 1+ 
+
+    ( caddr len len+1 )
+    here >r 
+    allot  
+    
+    \ put length + IMMED + SRCH
+    dup  [ |immed |srch OR ] literal OR  r@  c!
+    
+    \ put word
+    ( caddr len )
+    1+ r@ 1+  swap  cmove
+    
+    r>  2-  llfa !
+;
+
+\ Define a name and XT that will compile a reference to a local
+\ in either read, write, or fetch-address mode.
+
+: (local,)  ( mode caddr -- )
+
+    \ ANTICIPATORY check of local dictionary overflow
+    \ (here because we can't lose the DP when emitting the error)
+    ldp @  over c@  10 + +
+    lbase @  #localspace +  >  err-dict-overflow ?throw
+
+    \ Reassign DP
+    here >r
+    ldp @  dp !
+    
+    (lname,)
+    
+    align
+    lcount @  postpone literal
+    postpone literal
+    postpone local,
+    [compile] ;S
+    
+    \ Restore DP
+    here ldp !
+    r> dp !
+;
+
+\ -------------------------------
+
+
+: is-local ( xt -- t|f )
+    lbase @  ldp @  within
+;
+
+: to-local ( xt -- ) 
+    ?comp
+    literal@
+    1 local,
+; 
+
+
+\ Add a local to the local dictionary, an entry for it:
+\   "name" ( -- value )
+: lname, ( caddr u -- )
+    
+    \ make counted string
+    here (>c)
+    
+    -1 here (local,)
+    
+    \ new local
+    1 lcount +!
+;
+
+
+\  Set up a word to use locals.  Can only be done at the 
+\  top-level of a word (not inside control)
+\ 
+: enter-locals ( -- | local* 7 )
+    'lfind @  0= if
+        sp@ csp @ - err-local-init ?throw
+    
+        <locals,
+        0 lcount !
+        ['] (lfind) 'lfind !
+        7
+    then
+;
+
+\ Cleanup locals at exit (if any used)
+: exit-locals ( -- )
+    lcount @  if
+        locals>,
+    then
+;
+
+\ Wrap up locals for a word (if any used) at exit
+: finish-locals ( local* 7 | -- )
+    'lfind @  if
+        7 ?pairs
+        locals>,
+        0 lcount !
+    then
+;
+
+export>
+
+\ Define a new local
+: :>  ( "name" -- )
+    ?comp
+    \ if not yet inited locals, jump around it
+    lbase @  0= if
+        postpone SKIP
+        alloc-locals
+        postpone THEN
+    then
+    \ setup on first local
+    enter-locals 
+    
+    parse-name
+    lname,
+    
+    1 ^locals,
+    
+; immediate target-only
+
+\ Define a word using locals.  The stack effect is parsed and 
+\ the words to the left of -- (if present) are assigned to successive
+\ stack positions.  Each name is entered into a transient local
+\ dictionary.
+: ::
+    alloc-locals
+    :
+   
+    enter-locals
+   
+    \ get  '(' 
+    
+    >in @  >r
+    
+    parse-name s" (" str= 
+    if  
+        rdrop
+        
+        begin
+            parse-name
+            
+            \ end of comment: done
+            2dup s" )" str= if
+                2drop true 
+            else
+                
+                \ -- : end of arguments; skip to ')'
+                2dup s" --" str=   
+                if  
+                    2drop  [char] )  parse  2drop true  
+                else
+                    \ else, local
+                    lname,  0
+                then
+            then
+        until
+    else
+        r> >in !
+        
+    then
+
+    lcount @  ^locals,
+; target-only
+
+

@@ -1,0 +1,229 @@
+
+\   ---------   memory map
+
+$0000       constant    I/O
+
+$0000       constant    VDPRD
+$0002       constant    VDPST
+$0004       constant    VDPWD
+$0006       constant    VDPWA       \ high then low
+$0008       constant    VDPCL
+$000A       constant    VDPWI
+
+$0010       constant    GPLRD
+$0012       constant    GPLRA       \ high then low
+$0014       constant    GPLWD
+$0016       constant    GPLWA
+$0018       constant    SPCHRD
+$001a       constant    SPCHWT
+
+$0020       constant    KBD
+
+$0040       constant    SOUND  \ ... 0x20!
+
+\   ---------  peripherals
+
+$0080       constant    'INTS
+$0081       constant    'INTSP
+    
+    $1      constant    M_INT_BKPT
+    $2      constant    M_INT_EXT
+    $4      constant    M_INT_VDP
+    $8      constant    M_INT_KBD
+
+$0082       constant    'KBD
+$0083       constant    'KBDA
+
+$0084       constant    'GATE
+
+$0088       constant    'DSK 
+
+\   0: write: cmd; read: status
+  'DSK 0 +  constant    'DSKCMD
+        $00 constant    #dskCmdRestore
+        $10 constant    #dskCmdSeek
+        $80 constant    #dskCmdReadSector
+        $A0 constant    #dskCmdWriteSector
+        $F0 constant    #dskCmdInterrupt
+        
+        $08 constant    #dskCmd'Head
+        $04 constant    #dskCmd'Verify
+        $02 constant    #dskCmd'10ms
+        
+\   0: write: cmd; read: status
+  'DSK 0 +  constant    'DSKST
+        $80 constant    #dskStRdy
+        $02 constant    #dskStDrq
+        $01 constant    #dskStBusy
+        
+\   1: write/read: track addr
+  'DSK 1 +  constant    'DSKTRK
+  
+\  2: write/read: sector addr
+  'DSK 2 +  constant    'DSKSEC
+  
+\  3: write/read: data
+  'DSK 3 +  constant    'DSKDAT
+  
+\  4: write/read: [0 | 0 | 0 | 0 | motor | hold | head | side ] 
+  'DSK 4 +  constant    'DSKFLG
+        $01 constant    #dskFlgSide
+        $02 constant    #dskFlgHead
+        $04 constant    #dskFlgHold
+        $08 constant    #dskFlgMotor
+  
+\  5: write/read: [0 | 0 | 0 | 0 | 0 | D2 | D1 | D0] 
+  'DSK 5 +  constant    'DSKNUM
+
+$00ff       constant    'DBG
+
+\   -----------------------    
+
+$0400       constant    ROM
+
+ROM         constant    (BOOT)
+ROM 2 +     constant    (COLD)
+ROM 4 +     constant    DP0
+ROM 6 +     constant    (LATEST)
+
+$ffc0       constant    FaultStacks \ ... 0x20
+
+$ffe0       constant    IntVecs     \ ... 0x20
+
+    15      constant    INT_RESET
+    14      constant    INT_NMI
+    13      constant    INT_FAULT
+    3       constant    INT_KBD
+    2       constant    INT_VDP
+    0       constant    INT_BKPT
+
+
+\ sizes of fixed areas
+$80         constant    (#RP)
+$80         constant    (#SP)
+
+\ minimum size is (2*n)+2 where n is cell size
+#cell 3 LSHIFT  2*  2+ 
+            constant   (#numbuf)
+$100        constant   (#slit-pad)
+$100        constant   #TIB
+
+|+ $400        constant    CHARS/BLOCK \ basic block size
+CHARS/BLOCK 
+    2 +     \ block # field (or 0x8000 for modified)
+            constant   (#blk)
+(#blk) 3 *  constant   (#blks)    \ total block space
+
+$80        constant   (#up)       \ global user space
+
+|+ FaultStacks  (#RP) - (#SP) - (#numbuf) - (#slit-pad) - #TIB - (#blks) - (#up) -
+             constant RamTop    \ grows down
+
+\ Arrange memory to minimize problems in case of overflow.
+RamTop                        constant (first)    \ grows up
+(first) (#blks) +             constant (limit)
+(limit)                       constant (up0)      \ grows up 
+(up0) (#up) + (#numbuf) +     constant (numbuf0)     \ grows down
+(numbuf0)                     constant (slit-pad0)    \ grows up
+(slit-pad0) (#slit-pad) +     constant TIB         \ grows up
+TIB #TIB + (#rp) +            constant (rp0)    \ grows down
+(rp0) (#sp) +                 constant (sp0)      \ grows down
+
+
+\ -----------   GROM addresses
+
+$0
+
+dup         constant    >grom_sig           2+
+dup         constant    >grom_dict          2+      \ note: build depends on this offset
+dup         constant    >grom_dictend       2+      \ note: build depends on this offset
+dup         constant    >grom_logo          2+
+dup         constant    >grom_kbdlist       2+
+dup         constant    >grom_font8x8       2+
+dup         constant    >grom_font5x6       2+
+dup         constant    >grom_errptrs       2+
+dup         constant    >grom_editorhelp    2+
+dup         constant    >grom_menubar       2+
+
+drop
+
+$4000       Constant    >gram_dict_base
+$8000       Constant    >gram_disk_base
+
+\ -----------   constants
+
+0           constant    CTX_SP       
+1           constant    CTX_SP0
+2           constant    CTX_RP       
+3           constant    CTX_RP0       
+4           constant    CTX_UP       
+5           constant    CTX_LP       
+7           constant    CTX_INT        
+8           constant    CTX_SR        
+
+\ -----------   opcodes
+
+$0          constant    IbranchX
+$10         constant    I0branchX
+$39         constant    IRfrom
+$3a         constant    IRdrop
+$3b         constant    IatR
+$3c         constant    Irpidx
+$3d         constant    Ilpidx
+$3e         constant    Ilocal
+$7e3e       constant    ItoLocals
+$3f         constant    Ilalloc
+$7e3f       constant    IfromLocals
+$41         constant    Isub
+$46         constant    Iumul
+$47         constant    Iudivmod
+$7e47       constant    Iudivmod_d
+$60         constant    Iload
+$61         constant    Icload
+$62         constant    Istore
+$63         constant    Icstore
+$66         constant    Iuser
+$67         constant    Iupidx
+$68         constant    IloopUp
+$69         constant    IuloopUp
+$6a         constant    IplusLoopUp
+$6b         constant    IuplusLoopUp
+$6c         constant    Icfill
+$6e         constant    Icmove
+$6f         constant    Iccompare
+$70         constant    Iexit
+$72         constant    Iexecute
+$73         constant    Idovar
+$74         constant    Isyscall
+$76         constant    IcontextFrom
+$77         constant    ItoContext
+$78         constant    IlitB
+$79         constant    IlitW
+$7a         constant    IbranchB
+$7c         constant    I0branchB
+$7e30       constant    Idup_d
+$7e38       constant    ItoR_d
+$7e3a       constant    Irdrop_d
+
+
+\ ----------    syscalls
+
+$00         constant    #idle
+$01         constant    #dbg
+$02         constant    #dbgf
+$03         constant    #regsym
+$04         constant    #find
+$05         constant    #gfind
+$06         constant    #number
+$07         constant    #decorated-number
+$08         constant    #spin
+
+
+\ ---------     interrupt flag bits
+
+$80         constant    v-int-nosprmot
+$40         constant    v-int-nocursor
+$20         constant    v-int-noabort
+
+
+

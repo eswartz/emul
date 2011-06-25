@@ -1,0 +1,3 @@
+EXPORTS
+scaleAndMakeNoisyImage=_scaleAndMakeNoisyImage
+addNoiseRGBA=_addNoiseRGBA

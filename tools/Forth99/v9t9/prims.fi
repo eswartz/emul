@@ -1,0 +1,35 @@
+
+
+\   Custom:  set a flag in a word
+: |!        ( mask addr -- )
+    swap over @ OR swap !     
+;
+
+: tolower ( ch -- ch )
+   dup [char] a [ [char] z 1+ literal ] within $20 and -
+;
+
+:: s<>     ( addr u addr' u' -- -1/0/1 )
+    u u' min 0 do
+        addr i + c@ tolower
+        addr' i + c@ tolower
+        - ?dup if unloop exit then
+    loop
+    u u' -  \ length is answer
+;
+
+( align 'val' to 'scale' )
+:: %- ( val scale -- val' )
+    val scale  u/mod  nip scale u*    
+;
+
+:   w>b ( w -- lo hi )
+    dup $ff and swap 8 urshift  
+;
+
+: umax   ( u1 u2 -- u )
+    2dup U> if drop else nip then
+;
+: umin   ( u1 u2 -- u )
+    2dup U< if drop else nip then
+;

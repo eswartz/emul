@@ -1,0 +1,1857 @@
+Terminals unused in grammar
+
+   ID
+   NEG
+
+
+State 23 conflicts: 2 shift/reduce
+State 24 conflicts: 2 shift/reduce
+State 25 conflicts: 2 shift/reduce
+State 26 conflicts: 2 shift/reduce
+State 27 conflicts: 2 shift/reduce
+State 28 conflicts: 2 shift/reduce
+State 31 conflicts: 1 shift/reduce
+State 45 conflicts: 1 shift/reduce
+State 54 conflicts: 1 shift/reduce
+State 95 conflicts: 1 shift/reduce
+State 96 conflicts: 1 shift/reduce
+
+
+Grammar
+
+    0 $accept: toplevel $end
+
+    1 toplevel: stmtlist
+
+    2 stmtlist: /* empty */
+    3         | stmtlist stmt
+
+    4 eol: ';'
+    5    | '\n'
+
+    6 stmt: eol
+    7     | exprstmt
+    8     | assertstmt
+    9     | msgstmt
+   10     | ifstmt
+
+   11 exprstmt: IDSTRING exprlist
+   12         | assign
+   13         | '(' expr ')'
+
+   14 assertstmt: ASSERT expr
+
+   15 msgstmt: LOGGER exprlist
+   16        | PRINT exprlist
+   17        | ERROR exprlist
+   18        | WARNING exprlist
+   19        | INFO exprlist
+
+   20 ifstmt: IF expr stmtlist iftail FI
+
+   21 iftail: /* empty */
+   22       | ELSE stmtlist
+   23       | ELSIF expr stmtlist iftail
+
+   24 exprlist: /* empty */
+   25         | exprlist expr
+
+   26 expr: assign
+   27     | cond
+
+   28 assign: IDSTRING '=' expr
+
+   29 cond: logcond
+   30     | logcond '?' cond ':' cond
+
+   31 logcond: binlogcond
+   32        | logcond COMPAND binlogcond
+   33        | logcond COMPOR binlogcond
+   34        | logcond COMPXOR binlogcond
+
+   35 binlogcond: compeq
+   36           | binlogcond '&' compeq
+   37           | binlogcond '|' compeq
+   38           | binlogcond '^' compeq
+
+   39 compeq: comp
+   40       | compeq COMPEQ comp
+   41       | compeq COMPNE comp
+
+   42 comp: shift
+   43     | comp COMPLE shift
+   44     | comp COMPGE shift
+   45     | comp '<' shift
+   46     | comp '>' shift
+
+   47 shift: factor
+   48      | shift LSHIFT factor
+   49      | shift RSHIFT factor
+
+   50 factor: term
+   51       | factor '+' term
+   52       | factor '-' term
+
+   53 term: unary
+   54     | term '*' unary
+   55     | term '/' unary
+
+   56 unary: atom
+   57      | '-' unary
+   58      | '!' unary
+   59      | '~' unary
+
+   60 atom: ERR
+   61     | NUM
+   62     | STRING
+   63     | IDSTRING '(' exprlist ')'
+   64     | IDSTRING
+   65     | '(' expr ')'
+
+
+Terminals, with rules where they appear
+
+$end (0) 0
+'\n' (10) 5
+'!' (33) 58
+'&' (38) 36
+'(' (40) 13 63 65
+')' (41) 13 63 65
+'*' (42) 54
+'+' (43) 51
+'-' (45) 52 57
+'/' (47) 55
+':' (58) 30
+';' (59) 4
+'<' (60) 45
+'=' (61) 28
+'>' (62) 46
+'?' (63) 30
+'^' (94) 38
+'|' (124) 37
+'~' (126) 59
+error (256)
+NUM (258) 61
+STRING (259) 62
+IDSTRING (260) 11 28 63 64
+ERR (261) 60
+ID (262)
+LSHIFT (263) 48
+RSHIFT (264) 49
+COMPLE (265) 43
+COMPGE (266) 44
+COMPEQ (267) 40
+COMPNE (268) 41
+COMPAND (269) 32
+COMPOR (270) 33
+COMPXOR (271) 34
+PRINT (272) 16
+LOGGER (273) 15
+ERROR (274) 17
+WARNING (275) 18
+INFO (276) 19
+ASSERT (277) 14
+IF (278) 20
+ELSE (279) 22
+FI (280) 20
+ELSIF (281) 23
+NEG (282)
+
+
+Nonterminals, with rules where they appear
+
+$accept (46)
+    on left: 0
+toplevel (47)
+    on left: 1, on right: 0
+stmtlist (48)
+    on left: 2 3, on right: 1 3 20 22 23
+eol (49)
+    on left: 4 5, on right: 6
+stmt (50)
+    on left: 6 7 8 9 10, on right: 3
+exprstmt (51)
+    on left: 11 12 13, on right: 7
+assertstmt (52)
+    on left: 14, on right: 8
+msgstmt (53)
+    on left: 15 16 17 18 19, on right: 9
+ifstmt (54)
+    on left: 20, on right: 10
+iftail (55)
+    on left: 21 22 23, on right: 20 23
+exprlist (56)
+    on left: 24 25, on right: 11 15 16 17 18 19 25 63
+expr (57)
+    on left: 26 27, on right: 13 14 20 23 25 28 65
+assign (58)
+    on left: 28, on right: 12 26
+cond (59)
+    on left: 29 30, on right: 27 30
+logcond (60)
+    on left: 31 32 33 34, on right: 29 30 32 33 34
+binlogcond (61)
+    on left: 35 36 37 38, on right: 31 32 33 34 36 37 38
+compeq (62)
+    on left: 39 40 41, on right: 35 36 37 38 40 41
+comp (63)
+    on left: 42 43 44 45 46, on right: 39 40 41 43 44 45 46
+shift (64)
+    on left: 47 48 49, on right: 42 43 44 45 46 48 49
+factor (65)
+    on left: 50 51 52, on right: 47 48 49 51 52
+term (66)
+    on left: 53 54 55, on right: 50 51 52 54 55
+unary (67)
+    on left: 56 57 58 59, on right: 53 54 55 57 58 59
+atom (68)
+    on left: 60 61 62 63 64 65, on right: 56
+
+
+state 0
+
+    0 $accept: . toplevel $end
+
+    $default  reduce using rule 2 (stmtlist)
+
+    toplevel  go to state 1
+    stmtlist  go to state 2
+
+
+state 1
+
+    0 $accept: toplevel . $end
+
+    $end  shift, and go to state 3
+
+
+state 2
+
+    1 toplevel: stmtlist .
+    3 stmtlist: stmtlist . stmt
+
+    IDSTRING  shift, and go to state 4
+    PRINT     shift, and go to state 5
+    LOGGER    shift, and go to state 6
+    ERROR     shift, and go to state 7
+    WARNING   shift, and go to state 8
+    INFO      shift, and go to state 9
+    ASSERT    shift, and go to state 10
+    IF        shift, and go to state 11
+    ';'       shift, and go to state 12
+    '\n'      shift, and go to state 13
+    '('       shift, and go to state 14
+
+    $default  reduce using rule 1 (toplevel)
+
+    eol         go to state 15
+    stmt        go to state 16
+    exprstmt    go to state 17
+    assertstmt  go to state 18
+    msgstmt     go to state 19
+    ifstmt      go to state 20
+    assign      go to state 21
+
+
+state 3
+
+    0 $accept: toplevel $end .
+
+    $default  accept
+
+
+state 4
+
+   11 exprstmt: IDSTRING . exprlist
+   28 assign: IDSTRING . '=' expr
+
+    '='  shift, and go to state 22
+
+    $default  reduce using rule 24 (exprlist)
+
+    exprlist  go to state 23
+
+
+state 5
+
+   16 msgstmt: PRINT . exprlist
+
+    $default  reduce using rule 24 (exprlist)
+
+    exprlist  go to state 24
+
+
+state 6
+
+   15 msgstmt: LOGGER . exprlist
+
+    $default  reduce using rule 24 (exprlist)
+
+    exprlist  go to state 25
+
+
+state 7
+
+   17 msgstmt: ERROR . exprlist
+
+    $default  reduce using rule 24 (exprlist)
+
+    exprlist  go to state 26
+
+
+state 8
+
+   18 msgstmt: WARNING . exprlist
+
+    $default  reduce using rule 24 (exprlist)
+
+    exprlist  go to state 27
+
+
+state 9
+
+   19 msgstmt: INFO . exprlist
+
+    $default  reduce using rule 24 (exprlist)
+
+    exprlist  go to state 28
+
+
+state 10
+
+   14 assertstmt: ASSERT . expr
+
+    NUM       shift, and go to state 29
+    STRING    shift, and go to state 30
+    IDSTRING  shift, and go to state 31
+    ERR       shift, and go to state 32
+    '-'       shift, and go to state 33
+    '('       shift, and go to state 34
+    '!'       shift, and go to state 35
+    '~'       shift, and go to state 36
+
+    expr        go to state 37
+    assign      go to state 38
+    cond        go to state 39
+    logcond     go to state 40
+    binlogcond  go to state 41
+    compeq      go to state 42
+    comp        go to state 43
+    shift       go to state 44
+    factor      go to state 45
+    term        go to state 46
+    unary       go to state 47
+    atom        go to state 48
+
+
+state 11
+
+   20 ifstmt: IF . expr stmtlist iftail FI
+
+    NUM       shift, and go to state 29
+    STRING    shift, and go to state 30
+    IDSTRING  shift, and go to state 31
+    ERR       shift, and go to state 32
+    '-'       shift, and go to state 33
+    '('       shift, and go to state 34
+    '!'       shift, and go to state 35
+    '~'       shift, and go to state 36
+
+    expr        go to state 49
+    assign      go to state 38
+    cond        go to state 39
+    logcond     go to state 40
+    binlogcond  go to state 41
+    compeq      go to state 42
+    comp        go to state 43
+    shift       go to state 44
+    factor      go to state 45
+    term        go to state 46
+    unary       go to state 47
+    atom        go to state 48
+
+
+state 12
+
+    4 eol: ';' .
+
+    $default  reduce using rule 4 (eol)
+
+
+state 13
+
+    5 eol: '\n' .
+
+    $default  reduce using rule 5 (eol)
+
+
+state 14
+
+   13 exprstmt: '(' . expr ')'
+
+    NUM       shift, and go to state 29
+    STRING    shift, and go to state 30
+    IDSTRING  shift, and go to state 31
+    ERR       shift, and go to state 32
+    '-'       shift, and go to state 33
+    '('       shift, and go to state 34
+    '!'       shift, and go to state 35
+    '~'       shift, and go to state 36
+
+    expr        go to state 50
+    assign      go to state 38
+    cond        go to state 39
+    logcond     go to state 40
+    binlogcond  go to state 41
+    compeq      go to state 42
+    comp        go to state 43
+    shift       go to state 44
+    factor      go to state 45
+    term        go to state 46
+    unary       go to state 47
+    atom        go to state 48
+
+
+state 15
+
+    6 stmt: eol .
+
+    $default  reduce using rule 6 (stmt)
+
+
+state 16
+
+    3 stmtlist: stmtlist stmt .
+
+    $default  reduce using rule 3 (stmtlist)
+
+
+state 17
+
+    7 stmt: exprstmt .
+
+    $default  reduce using rule 7 (stmt)
+
+
+state 18
+
+    8 stmt: assertstmt .
+
+    $default  reduce using rule 8 (stmt)
+
+
+state 19
+
+    9 stmt: msgstmt .
+
+    $default  reduce using rule 9 (stmt)
+
+
+state 20
+
+   10 stmt: ifstmt .
+
+    $default  reduce using rule 10 (stmt)
+
+
+state 21
+
+   12 exprstmt: assign .
+
+    $default  reduce using rule 12 (exprstmt)
+
+
+state 22
+
+   28 assign: IDSTRING '=' . expr
+
+    NUM       shift, and go to state 29
+    STRING    shift, and go to state 30
+    IDSTRING  shift, and go to state 31
+    ERR       shift, and go to state 32
+    '-'       shift, and go to state 33
+    '('       shift, and go to state 34
+    '!'       shift, and go to state 35
+    '~'       shift, and go to state 36
+
+    expr        go to state 51
+    assign      go to state 38
+    cond        go to state 39
+    logcond     go to state 40
+    binlogcond  go to state 41
+    compeq      go to state 42
+    comp        go to state 43
+    shift       go to state 44
+    factor      go to state 45
+    term        go to state 46
+    unary       go to state 47
+    atom        go to state 48
+
+
+state 23
+
+   11 exprstmt: IDSTRING exprlist .
+   25 exprlist: exprlist . expr
+
+    NUM       shift, and go to state 29
+    STRING    shift, and go to state 30
+    IDSTRING  shift, and go to state 31
+    ERR       shift, and go to state 32
+    '-'       shift, and go to state 33
+    '('       shift, and go to state 34
+    '!'       shift, and go to state 35
+    '~'       shift, and go to state 36
+
+    IDSTRING  [reduce using rule 11 (exprstmt)]
+    '('       [reduce using rule 11 (exprstmt)]
+    $default  reduce using rule 11 (exprstmt)
+
+    expr        go to state 52
+    assign      go to state 38
+    cond        go to state 39
+    logcond     go to state 40
+    binlogcond  go to state 41
+    compeq      go to state 42
+    comp        go to state 43
+    shift       go to state 44
+    factor      go to state 45
+    term        go to state 46
+    unary       go to state 47
+    atom        go to state 48
+
+
+state 24
+
+   16 msgstmt: PRINT exprlist .
+   25 exprlist: exprlist . expr
+
+    NUM       shift, and go to state 29
+    STRING    shift, and go to state 30
+    IDSTRING  shift, and go to state 31
+    ERR       shift, and go to state 32
+    '-'       shift, and go to state 33
+    '('       shift, and go to state 34
+    '!'       shift, and go to state 35
+    '~'       shift, and go to state 36
+
+    IDSTRING  [reduce using rule 16 (msgstmt)]
+    '('       [reduce using rule 16 (msgstmt)]
+    $default  reduce using rule 16 (msgstmt)
+
+    expr        go to state 52
+    assign      go to state 38
+    cond        go to state 39
+    logcond     go to state 40
+    binlogcond  go to state 41
+    compeq      go to state 42
+    comp        go to state 43
+    shift       go to state 44
+    factor      go to state 45
+    term        go to state 46
+    unary       go to state 47
+    atom        go to state 48
+
+
+state 25
+
+   15 msgstmt: LOGGER exprlist .
+   25 exprlist: exprlist . expr
+
+    NUM       shift, and go to state 29
+    STRING    shift, and go to state 30
+    IDSTRING  shift, and go to state 31
+    ERR       shift, and go to state 32
+    '-'       shift, and go to state 33
+    '('       shift, and go to state 34
+    '!'       shift, and go to state 35
+    '~'       shift, and go to state 36
+
+    IDSTRING  [reduce using rule 15 (msgstmt)]
+    '('       [reduce using rule 15 (msgstmt)]
+    $default  reduce using rule 15 (msgstmt)
+
+    expr        go to state 52
+    assign      go to state 38
+    cond        go to state 39
+    logcond     go to state 40
+    binlogcond  go to state 41
+    compeq      go to state 42
+    comp        go to state 43
+    shift       go to state 44
+    factor      go to state 45
+    term        go to state 46
+    unary       go to state 47
+    atom        go to state 48
+
+
+state 26
+
+   17 msgstmt: ERROR exprlist .
+   25 exprlist: exprlist . expr
+
+    NUM       shift, and go to state 29
+    STRING    shift, and go to state 30
+    IDSTRING  shift, and go to state 31
+    ERR       shift, and go to state 32
+    '-'       shift, and go to state 33
+    '('       shift, and go to state 34
+    '!'       shift, and go to state 35
+    '~'       shift, and go to state 36
+
+    IDSTRING  [reduce using rule 17 (msgstmt)]
+    '('       [reduce using rule 17 (msgstmt)]
+    $default  reduce using rule 17 (msgstmt)
+
+    expr        go to state 52
+    assign      go to state 38
+    cond        go to state 39
+    logcond     go to state 40
+    binlogcond  go to state 41
+    compeq      go to state 42
+    comp        go to state 43
+    shift       go to state 44
+    factor      go to state 45
+    term        go to state 46
+    unary       go to state 47
+    atom        go to state 48
+
+
+state 27
+
+   18 msgstmt: WARNING exprlist .
+   25 exprlist: exprlist . expr
+
+    NUM       shift, and go to state 29
+    STRING    shift, and go to state 30
+    IDSTRING  shift, and go to state 31
+    ERR       shift, and go to state 32
+    '-'       shift, and go to state 33
+    '('       shift, and go to state 34
+    '!'       shift, and go to state 35
+    '~'       shift, and go to state 36
+
+    IDSTRING  [reduce using rule 18 (msgstmt)]
+    '('       [reduce using rule 18 (msgstmt)]
+    $default  reduce using rule 18 (msgstmt)
+
+    expr        go to state 52
+    assign      go to state 38
+    cond        go to state 39
+    logcond     go to state 40
+    binlogcond  go to state 41
+    compeq      go to state 42
+    comp        go to state 43
+    shift       go to state 44
+    factor      go to state 45
+    term        go to state 46
+    unary       go to state 47
+    atom        go to state 48
+
+
+state 28
+
+   19 msgstmt: INFO exprlist .
+   25 exprlist: exprlist . expr
+
+    NUM       shift, and go to state 29
+    STRING    shift, and go to state 30
+    IDSTRING  shift, and go to state 31
+    ERR       shift, and go to state 32
+    '-'       shift, and go to state 33
+    '('       shift, and go to state 34
+    '!'       shift, and go to state 35
+    '~'       shift, and go to state 36
+
+    IDSTRING  [reduce using rule 19 (msgstmt)]
+    '('       [reduce using rule 19 (msgstmt)]
+    $default  reduce using rule 19 (msgstmt)
+
+    expr        go to state 52
+    assign      go to state 38
+    cond        go to state 39
+    logcond     go to state 40
+    binlogcond  go to state 41
+    compeq      go to state 42
+    comp        go to state 43
+    shift       go to state 44
+    factor      go to state 45
+    term        go to state 46
+    unary       go to state 47
+    atom        go to state 48
+
+
+state 29
+
+   61 atom: NUM .
+
+    $default  reduce using rule 61 (atom)
+
+
+state 30
+
+   62 atom: STRING .
+
+    $default  reduce using rule 62 (atom)
+
+
+state 31
+
+   28 assign: IDSTRING . '=' expr
+   63 atom: IDSTRING . '(' exprlist ')'
+   64     | IDSTRING .
+
+    '='  shift, and go to state 22
+    '('  shift, and go to state 53
+
+    '('       [reduce using rule 64 (atom)]
+    $default  reduce using rule 64 (atom)
+
+
+state 32
+
+   60 atom: ERR .
+
+    $default  reduce using rule 60 (atom)
+
+
+state 33
+
+   57 unary: '-' . unary
+
+    NUM       shift, and go to state 29
+    STRING    shift, and go to state 30
+    IDSTRING  shift, and go to state 54
+    ERR       shift, and go to state 32
+    '-'       shift, and go to state 33
+    '('       shift, and go to state 34
+    '!'       shift, and go to state 35
+    '~'       shift, and go to state 36
+
+    unary  go to state 55
+    atom   go to state 48
+
+
+state 34
+
+   65 atom: '(' . expr ')'
+
+    NUM       shift, and go to state 29
+    STRING    shift, and go to state 30
+    IDSTRING  shift, and go to state 31
+    ERR       shift, and go to state 32
+    '-'       shift, and go to state 33
+    '('       shift, and go to state 34
+    '!'       shift, and go to state 35
+    '~'       shift, and go to state 36
+
+    expr        go to state 56
+    assign      go to state 38
+    cond        go to state 39
+    logcond     go to state 40
+    binlogcond  go to state 41
+    compeq      go to state 42
+    comp        go to state 43
+    shift       go to state 44
+    factor      go to state 45
+    term        go to state 46
+    unary       go to state 47
+    atom        go to state 48
+
+
+state 35
+
+   58 unary: '!' . unary
+
+    NUM       shift, and go to state 29
+    STRING    shift, and go to state 30
+    IDSTRING  shift, and go to state 54
+    ERR       shift, and go to state 32
+    '-'       shift, and go to state 33
+    '('       shift, and go to state 34
+    '!'       shift, and go to state 35
+    '~'       shift, and go to state 36
+
+    unary  go to state 57
+    atom   go to state 48
+
+
+state 36
+
+   59 unary: '~' . unary
+
+    NUM       shift, and go to state 29
+    STRING    shift, and go to state 30
+    IDSTRING  shift, and go to state 54
+    ERR       shift, and go to state 32
+    '-'       shift, and go to state 33
+    '('       shift, and go to state 34
+    '!'       shift, and go to state 35
+    '~'       shift, and go to state 36
+
+    unary  go to state 58
+    atom   go to state 48
+
+
+state 37
+
+   14 assertstmt: ASSERT expr .
+
+    $default  reduce using rule 14 (assertstmt)
+
+
+state 38
+
+   26 expr: assign .
+
+    $default  reduce using rule 26 (expr)
+
+
+state 39
+
+   27 expr: cond .
+
+    $default  reduce using rule 27 (expr)
+
+
+state 40
+
+   29 cond: logcond .
+   30     | logcond . '?' cond ':' cond
+   32 logcond: logcond . COMPAND binlogcond
+   33        | logcond . COMPOR binlogcond
+   34        | logcond . COMPXOR binlogcond
+
+    COMPAND  shift, and go to state 59
+    COMPOR   shift, and go to state 60
+    COMPXOR  shift, and go to state 61
+    '?'      shift, and go to state 62
+
+    $default  reduce using rule 29 (cond)
+
+
+state 41
+
+   31 logcond: binlogcond .
+   36 binlogcond: binlogcond . '&' compeq
+   37           | binlogcond . '|' compeq
+   38           | binlogcond . '^' compeq
+
+    '&'  shift, and go to state 63
+    '|'  shift, and go to state 64
+    '^'  shift, and go to state 65
+
+    $default  reduce using rule 31 (logcond)
+
+
+state 42
+
+   35 binlogcond: compeq .
+   40 compeq: compeq . COMPEQ comp
+   41       | compeq . COMPNE comp
+
+    COMPEQ  shift, and go to state 66
+    COMPNE  shift, and go to state 67
+
+    $default  reduce using rule 35 (binlogcond)
+
+
+state 43
+
+   39 compeq: comp .
+   43 comp: comp . COMPLE shift
+   44     | comp . COMPGE shift
+   45     | comp . '<' shift
+   46     | comp . '>' shift
+
+    COMPLE  shift, and go to state 68
+    COMPGE  shift, and go to state 69
+    '<'     shift, and go to state 70
+    '>'     shift, and go to state 71
+
+    $default  reduce using rule 39 (compeq)
+
+
+state 44
+
+   42 comp: shift .
+   48 shift: shift . LSHIFT factor
+   49      | shift . RSHIFT factor
+
+    LSHIFT  shift, and go to state 72
+    RSHIFT  shift, and go to state 73
+
+    $default  reduce using rule 42 (comp)
+
+
+state 45
+
+   47 shift: factor .
+   51 factor: factor . '+' term
+   52       | factor . '-' term
+
+    '-'  shift, and go to state 74
+    '+'  shift, and go to state 75
+
+    '-'       [reduce using rule 47 (shift)]
+    $default  reduce using rule 47 (shift)
+
+
+state 46
+
+   50 factor: term .
+   54 term: term . '*' unary
+   55     | term . '/' unary
+
+    '*'  shift, and go to state 76
+    '/'  shift, and go to state 77
+
+    $default  reduce using rule 50 (factor)
+
+
+state 47
+
+   53 term: unary .
+
+    $default  reduce using rule 53 (term)
+
+
+state 48
+
+   56 unary: atom .
+
+    $default  reduce using rule 56 (unary)
+
+
+state 49
+
+   20 ifstmt: IF expr . stmtlist iftail FI
+
+    $default  reduce using rule 2 (stmtlist)
+
+    stmtlist  go to state 78
+
+
+state 50
+
+   13 exprstmt: '(' expr . ')'
+
+    ')'  shift, and go to state 79
+
+
+state 51
+
+   28 assign: IDSTRING '=' expr .
+
+    $default  reduce using rule 28 (assign)
+
+
+state 52
+
+   25 exprlist: exprlist expr .
+
+    $default  reduce using rule 25 (exprlist)
+
+
+state 53
+
+   63 atom: IDSTRING '(' . exprlist ')'
+
+    $default  reduce using rule 24 (exprlist)
+
+    exprlist  go to state 80
+
+
+state 54
+
+   63 atom: IDSTRING . '(' exprlist ')'
+   64     | IDSTRING .
+
+    '('  shift, and go to state 53
+
+    '('       [reduce using rule 64 (atom)]
+    $default  reduce using rule 64 (atom)
+
+
+state 55
+
+   57 unary: '-' unary .
+
+    $default  reduce using rule 57 (unary)
+
+
+state 56
+
+   65 atom: '(' expr . ')'
+
+    ')'  shift, and go to state 81
+
+
+state 57
+
+   58 unary: '!' unary .
+
+    $default  reduce using rule 58 (unary)
+
+
+state 58
+
+   59 unary: '~' unary .
+
+    $default  reduce using rule 59 (unary)
+
+
+state 59
+
+   32 logcond: logcond COMPAND . binlogcond
+
+    NUM       shift, and go to state 29
+    STRING    shift, and go to state 30
+    IDSTRING  shift, and go to state 54
+    ERR       shift, and go to state 32
+    '-'       shift, and go to state 33
+    '('       shift, and go to state 34
+    '!'       shift, and go to state 35
+    '~'       shift, and go to state 36
+
+    binlogcond  go to state 82
+    compeq      go to state 42
+    comp        go to state 43
+    shift       go to state 44
+    factor      go to state 45
+    term        go to state 46
+    unary       go to state 47
+    atom        go to state 48
+
+
+state 60
+
+   33 logcond: logcond COMPOR . binlogcond
+
+    NUM       shift, and go to state 29
+    STRING    shift, and go to state 30
+    IDSTRING  shift, and go to state 54
+    ERR       shift, and go to state 32
+    '-'       shift, and go to state 33
+    '('       shift, and go to state 34
+    '!'       shift, and go to state 35
+    '~'       shift, and go to state 36
+
+    binlogcond  go to state 83
+    compeq      go to state 42
+    comp        go to state 43
+    shift       go to state 44
+    factor      go to state 45
+    term        go to state 46
+    unary       go to state 47
+    atom        go to state 48
+
+
+state 61
+
+   34 logcond: logcond COMPXOR . binlogcond
+
+    NUM       shift, and go to state 29
+    STRING    shift, and go to state 30
+    IDSTRING  shift, and go to state 54
+    ERR       shift, and go to state 32
+    '-'       shift, and go to state 33
+    '('       shift, and go to state 34
+    '!'       shift, and go to state 35
+    '~'       shift, and go to state 36
+
+    binlogcond  go to state 84
+    compeq      go to state 42
+    comp        go to state 43
+    shift       go to state 44
+    factor      go to state 45
+    term        go to state 46
+    unary       go to state 47
+    atom        go to state 48
+
+
+state 62
+
+   30 cond: logcond '?' . cond ':' cond
+
+    NUM       shift, and go to state 29
+    STRING    shift, and go to state 30
+    IDSTRING  shift, and go to state 54
+    ERR       shift, and go to state 32
+    '-'       shift, and go to state 33
+    '('       shift, and go to state 34
+    '!'       shift, and go to state 35
+    '~'       shift, and go to state 36
+
+    cond        go to state 85
+    logcond     go to state 40
+    binlogcond  go to state 41
+    compeq      go to state 42
+    comp        go to state 43
+    shift       go to state 44
+    factor      go to state 45
+    term        go to state 46
+    unary       go to state 47
+    atom        go to state 48
+
+
+state 63
+
+   36 binlogcond: binlogcond '&' . compeq
+
+    NUM       shift, and go to state 29
+    STRING    shift, and go to state 30
+    IDSTRING  shift, and go to state 54
+    ERR       shift, and go to state 32
+    '-'       shift, and go to state 33
+    '('       shift, and go to state 34
+    '!'       shift, and go to state 35
+    '~'       shift, and go to state 36
+
+    compeq  go to state 86
+    comp    go to state 43
+    shift   go to state 44
+    factor  go to state 45
+    term    go to state 46
+    unary   go to state 47
+    atom    go to state 48
+
+
+state 64
+
+   37 binlogcond: binlogcond '|' . compeq
+
+    NUM       shift, and go to state 29
+    STRING    shift, and go to state 30
+    IDSTRING  shift, and go to state 54
+    ERR       shift, and go to state 32
+    '-'       shift, and go to state 33
+    '('       shift, and go to state 34
+    '!'       shift, and go to state 35
+    '~'       shift, and go to state 36
+
+    compeq  go to state 87
+    comp    go to state 43
+    shift   go to state 44
+    factor  go to state 45
+    term    go to state 46
+    unary   go to state 47
+    atom    go to state 48
+
+
+state 65
+
+   38 binlogcond: binlogcond '^' . compeq
+
+    NUM       shift, and go to state 29
+    STRING    shift, and go to state 30
+    IDSTRING  shift, and go to state 54
+    ERR       shift, and go to state 32
+    '-'       shift, and go to state 33
+    '('       shift, and go to state 34
+    '!'       shift, and go to state 35
+    '~'       shift, and go to state 36
+
+    compeq  go to state 88
+    comp    go to state 43
+    shift   go to state 44
+    factor  go to state 45
+    term    go to state 46
+    unary   go to state 47
+    atom    go to state 48
+
+
+state 66
+
+   40 compeq: compeq COMPEQ . comp
+
+    NUM       shift, and go to state 29
+    STRING    shift, and go to state 30
+    IDSTRING  shift, and go to state 54
+    ERR       shift, and go to state 32
+    '-'       shift, and go to state 33
+    '('       shift, and go to state 34
+    '!'       shift, and go to state 35
+    '~'       shift, and go to state 36
+
+    comp    go to state 89
+    shift   go to state 44
+    factor  go to state 45
+    term    go to state 46
+    unary   go to state 47
+    atom    go to state 48
+
+
+state 67
+
+   41 compeq: compeq COMPNE . comp
+
+    NUM       shift, and go to state 29
+    STRING    shift, and go to state 30
+    IDSTRING  shift, and go to state 54
+    ERR       shift, and go to state 32
+    '-'       shift, and go to state 33
+    '('       shift, and go to state 34
+    '!'       shift, and go to state 35
+    '~'       shift, and go to state 36
+
+    comp    go to state 90
+    shift   go to state 44
+    factor  go to state 45
+    term    go to state 46
+    unary   go to state 47
+    atom    go to state 48
+
+
+state 68
+
+   43 comp: comp COMPLE . shift
+
+    NUM       shift, and go to state 29
+    STRING    shift, and go to state 30
+    IDSTRING  shift, and go to state 54
+    ERR       shift, and go to state 32
+    '-'       shift, and go to state 33
+    '('       shift, and go to state 34
+    '!'       shift, and go to state 35
+    '~'       shift, and go to state 36
+
+    shift   go to state 91
+    factor  go to state 45
+    term    go to state 46
+    unary   go to state 47
+    atom    go to state 48
+
+
+state 69
+
+   44 comp: comp COMPGE . shift
+
+    NUM       shift, and go to state 29
+    STRING    shift, and go to state 30
+    IDSTRING  shift, and go to state 54
+    ERR       shift, and go to state 32
+    '-'       shift, and go to state 33
+    '('       shift, and go to state 34
+    '!'       shift, and go to state 35
+    '~'       shift, and go to state 36
+
+    shift   go to state 92
+    factor  go to state 45
+    term    go to state 46
+    unary   go to state 47
+    atom    go to state 48
+
+
+state 70
+
+   45 comp: comp '<' . shift
+
+    NUM       shift, and go to state 29
+    STRING    shift, and go to state 30
+    IDSTRING  shift, and go to state 54
+    ERR       shift, and go to state 32
+    '-'       shift, and go to state 33
+    '('       shift, and go to state 34
+    '!'       shift, and go to state 35
+    '~'       shift, and go to state 36
+
+    shift   go to state 93
+    factor  go to state 45
+    term    go to state 46
+    unary   go to state 47
+    atom    go to state 48
+
+
+state 71
+
+   46 comp: comp '>' . shift
+
+    NUM       shift, and go to state 29
+    STRING    shift, and go to state 30
+    IDSTRING  shift, and go to state 54
+    ERR       shift, and go to state 32
+    '-'       shift, and go to state 33
+    '('       shift, and go to state 34
+    '!'       shift, and go to state 35
+    '~'       shift, and go to state 36
+
+    shift   go to state 94
+    factor  go to state 45
+    term    go to state 46
+    unary   go to state 47
+    atom    go to state 48
+
+
+state 72
+
+   48 shift: shift LSHIFT . factor
+
+    NUM       shift, and go to state 29
+    STRING    shift, and go to state 30
+    IDSTRING  shift, and go to state 54
+    ERR       shift, and go to state 32
+    '-'       shift, and go to state 33
+    '('       shift, and go to state 34
+    '!'       shift, and go to state 35
+    '~'       shift, and go to state 36
+
+    factor  go to state 95
+    term    go to state 46
+    unary   go to state 47
+    atom    go to state 48
+
+
+state 73
+
+   49 shift: shift RSHIFT . factor
+
+    NUM       shift, and go to state 29
+    STRING    shift, and go to state 30
+    IDSTRING  shift, and go to state 54
+    ERR       shift, and go to state 32
+    '-'       shift, and go to state 33
+    '('       shift, and go to state 34
+    '!'       shift, and go to state 35
+    '~'       shift, and go to state 36
+
+    factor  go to state 96
+    term    go to state 46
+    unary   go to state 47
+    atom    go to state 48
+
+
+state 74
+
+   52 factor: factor '-' . term
+
+    NUM       shift, and go to state 29
+    STRING    shift, and go to state 30
+    IDSTRING  shift, and go to state 54
+    ERR       shift, and go to state 32
+    '-'       shift, and go to state 33
+    '('       shift, and go to state 34
+    '!'       shift, and go to state 35
+    '~'       shift, and go to state 36
+
+    term   go to state 97
+    unary  go to state 47
+    atom   go to state 48
+
+
+state 75
+
+   51 factor: factor '+' . term
+
+    NUM       shift, and go to state 29
+    STRING    shift, and go to state 30
+    IDSTRING  shift, and go to state 54
+    ERR       shift, and go to state 32
+    '-'       shift, and go to state 33
+    '('       shift, and go to state 34
+    '!'       shift, and go to state 35
+    '~'       shift, and go to state 36
+
+    term   go to state 98
+    unary  go to state 47
+    atom   go to state 48
+
+
+state 76
+
+   54 term: term '*' . unary
+
+    NUM       shift, and go to state 29
+    STRING    shift, and go to state 30
+    IDSTRING  shift, and go to state 54
+    ERR       shift, and go to state 32
+    '-'       shift, and go to state 33
+    '('       shift, and go to state 34
+    '!'       shift, and go to state 35
+    '~'       shift, and go to state 36
+
+    unary  go to state 99
+    atom   go to state 48
+
+
+state 77
+
+   55 term: term '/' . unary
+
+    NUM       shift, and go to state 29
+    STRING    shift, and go to state 30
+    IDSTRING  shift, and go to state 54
+    ERR       shift, and go to state 32
+    '-'       shift, and go to state 33
+    '('       shift, and go to state 34
+    '!'       shift, and go to state 35
+    '~'       shift, and go to state 36
+
+    unary  go to state 100
+    atom   go to state 48
+
+
+state 78
+
+    3 stmtlist: stmtlist . stmt
+   20 ifstmt: IF expr stmtlist . iftail FI
+
+    IDSTRING  shift, and go to state 4
+    PRINT     shift, and go to state 5
+    LOGGER    shift, and go to state 6
+    ERROR     shift, and go to state 7
+    WARNING   shift, and go to state 8
+    INFO      shift, and go to state 9
+    ASSERT    shift, and go to state 10
+    IF        shift, and go to state 11
+    ELSE      shift, and go to state 101
+    ELSIF     shift, and go to state 102
+    ';'       shift, and go to state 12
+    '\n'      shift, and go to state 13
+    '('       shift, and go to state 14
+
+    $default  reduce using rule 21 (iftail)
+
+    eol         go to state 15
+    stmt        go to state 16
+    exprstmt    go to state 17
+    assertstmt  go to state 18
+    msgstmt     go to state 19
+    ifstmt      go to state 20
+    iftail      go to state 103
+    assign      go to state 21
+
+
+state 79
+
+   13 exprstmt: '(' expr ')' .
+
+    $default  reduce using rule 13 (exprstmt)
+
+
+state 80
+
+   25 exprlist: exprlist . expr
+   63 atom: IDSTRING '(' exprlist . ')'
+
+    NUM       shift, and go to state 29
+    STRING    shift, and go to state 30
+    IDSTRING  shift, and go to state 31
+    ERR       shift, and go to state 32
+    '-'       shift, and go to state 33
+    '('       shift, and go to state 34
+    ')'       shift, and go to state 104
+    '!'       shift, and go to state 35
+    '~'       shift, and go to state 36
+
+    expr        go to state 52
+    assign      go to state 38
+    cond        go to state 39
+    logcond     go to state 40
+    binlogcond  go to state 41
+    compeq      go to state 42
+    comp        go to state 43
+    shift       go to state 44
+    factor      go to state 45
+    term        go to state 46
+    unary       go to state 47
+    atom        go to state 48
+
+
+state 81
+
+   65 atom: '(' expr ')' .
+
+    $default  reduce using rule 65 (atom)
+
+
+state 82
+
+   32 logcond: logcond COMPAND binlogcond .
+   36 binlogcond: binlogcond . '&' compeq
+   37           | binlogcond . '|' compeq
+   38           | binlogcond . '^' compeq
+
+    '&'  shift, and go to state 63
+    '|'  shift, and go to state 64
+    '^'  shift, and go to state 65
+
+    $default  reduce using rule 32 (logcond)
+
+
+state 83
+
+   33 logcond: logcond COMPOR binlogcond .
+   36 binlogcond: binlogcond . '&' compeq
+   37           | binlogcond . '|' compeq
+   38           | binlogcond . '^' compeq
+
+    '&'  shift, and go to state 63
+    '|'  shift, and go to state 64
+    '^'  shift, and go to state 65
+
+    $default  reduce using rule 33 (logcond)
+
+
+state 84
+
+   34 logcond: logcond COMPXOR binlogcond .
+   36 binlogcond: binlogcond . '&' compeq
+   37           | binlogcond . '|' compeq
+   38           | binlogcond . '^' compeq
+
+    '&'  shift, and go to state 63
+    '|'  shift, and go to state 64
+    '^'  shift, and go to state 65
+
+    $default  reduce using rule 34 (logcond)
+
+
+state 85
+
+   30 cond: logcond '?' cond . ':' cond
+
+    ':'  shift, and go to state 105
+
+
+state 86
+
+   36 binlogcond: binlogcond '&' compeq .
+   40 compeq: compeq . COMPEQ comp
+   41       | compeq . COMPNE comp
+
+    COMPEQ  shift, and go to state 66
+    COMPNE  shift, and go to state 67
+
+    $default  reduce using rule 36 (binlogcond)
+
+
+state 87
+
+   37 binlogcond: binlogcond '|' compeq .
+   40 compeq: compeq . COMPEQ comp
+   41       | compeq . COMPNE comp
+
+    COMPEQ  shift, and go to state 66
+    COMPNE  shift, and go to state 67
+
+    $default  reduce using rule 37 (binlogcond)
+
+
+state 88
+
+   38 binlogcond: binlogcond '^' compeq .
+   40 compeq: compeq . COMPEQ comp
+   41       | compeq . COMPNE comp
+
+    COMPEQ  shift, and go to state 66
+    COMPNE  shift, and go to state 67
+
+    $default  reduce using rule 38 (binlogcond)
+
+
+state 89
+
+   40 compeq: compeq COMPEQ comp .
+   43 comp: comp . COMPLE shift
+   44     | comp . COMPGE shift
+   45     | comp . '<' shift
+   46     | comp . '>' shift
+
+    COMPLE  shift, and go to state 68
+    COMPGE  shift, and go to state 69
+    '<'     shift, and go to state 70
+    '>'     shift, and go to state 71
+
+    $default  reduce using rule 40 (compeq)
+
+
+state 90
+
+   41 compeq: compeq COMPNE comp .
+   43 comp: comp . COMPLE shift
+   44     | comp . COMPGE shift
+   45     | comp . '<' shift
+   46     | comp . '>' shift
+
+    COMPLE  shift, and go to state 68
+    COMPGE  shift, and go to state 69
+    '<'     shift, and go to state 70
+    '>'     shift, and go to state 71
+
+    $default  reduce using rule 41 (compeq)
+
+
+state 91
+
+   43 comp: comp COMPLE shift .
+   48 shift: shift . LSHIFT factor
+   49      | shift . RSHIFT factor
+
+    LSHIFT  shift, and go to state 72
+    RSHIFT  shift, and go to state 73
+
+    $default  reduce using rule 43 (comp)
+
+
+state 92
+
+   44 comp: comp COMPGE shift .
+   48 shift: shift . LSHIFT factor
+   49      | shift . RSHIFT factor
+
+    LSHIFT  shift, and go to state 72
+    RSHIFT  shift, and go to state 73
+
+    $default  reduce using rule 44 (comp)
+
+
+state 93
+
+   45 comp: comp '<' shift .
+   48 shift: shift . LSHIFT factor
+   49      | shift . RSHIFT factor
+
+    LSHIFT  shift, and go to state 72
+    RSHIFT  shift, and go to state 73
+
+    $default  reduce using rule 45 (comp)
+
+
+state 94
+
+   46 comp: comp '>' shift .
+   48 shift: shift . LSHIFT factor
+   49      | shift . RSHIFT factor
+
+    LSHIFT  shift, and go to state 72
+    RSHIFT  shift, and go to state 73
+
+    $default  reduce using rule 46 (comp)
+
+
+state 95
+
+   48 shift: shift LSHIFT factor .
+   51 factor: factor . '+' term
+   52       | factor . '-' term
+
+    '-'  shift, and go to state 74
+    '+'  shift, and go to state 75
+
+    '-'       [reduce using rule 48 (shift)]
+    $default  reduce using rule 48 (shift)
+
+
+state 96
+
+   49 shift: shift RSHIFT factor .
+   51 factor: factor . '+' term
+   52       | factor . '-' term
+
+    '-'  shift, and go to state 74
+    '+'  shift, and go to state 75
+
+    '-'       [reduce using rule 49 (shift)]
+    $default  reduce using rule 49 (shift)
+
+
+state 97
+
+   52 factor: factor '-' term .
+   54 term: term . '*' unary
+   55     | term . '/' unary
+
+    '*'  shift, and go to state 76
+    '/'  shift, and go to state 77
+
+    $default  reduce using rule 52 (factor)
+
+
+state 98
+
+   51 factor: factor '+' term .
+   54 term: term . '*' unary
+   55     | term . '/' unary
+
+    '*'  shift, and go to state 76
+    '/'  shift, and go to state 77
+
+    $default  reduce using rule 51 (factor)
+
+
+state 99
+
+   54 term: term '*' unary .
+
+    $default  reduce using rule 54 (term)
+
+
+state 100
+
+   55 term: term '/' unary .
+
+    $default  reduce using rule 55 (term)
+
+
+state 101
+
+   22 iftail: ELSE . stmtlist
+
+    $default  reduce using rule 2 (stmtlist)
+
+    stmtlist  go to state 106
+
+
+state 102
+
+   23 iftail: ELSIF . expr stmtlist iftail
+
+    NUM       shift, and go to state 29
+    STRING    shift, and go to state 30
+    IDSTRING  shift, and go to state 31
+    ERR       shift, and go to state 32
+    '-'       shift, and go to state 33
+    '('       shift, and go to state 34
+    '!'       shift, and go to state 35
+    '~'       shift, and go to state 36
+
+    expr        go to state 107
+    assign      go to state 38
+    cond        go to state 39
+    logcond     go to state 40
+    binlogcond  go to state 41
+    compeq      go to state 42
+    comp        go to state 43
+    shift       go to state 44
+    factor      go to state 45
+    term        go to state 46
+    unary       go to state 47
+    atom        go to state 48
+
+
+state 103
+
+   20 ifstmt: IF expr stmtlist iftail . FI
+
+    FI  shift, and go to state 108
+
+
+state 104
+
+   63 atom: IDSTRING '(' exprlist ')' .
+
+    $default  reduce using rule 63 (atom)
+
+
+state 105
+
+   30 cond: logcond '?' cond ':' . cond
+
+    NUM       shift, and go to state 29
+    STRING    shift, and go to state 30
+    IDSTRING  shift, and go to state 54
+    ERR       shift, and go to state 32
+    '-'       shift, and go to state 33
+    '('       shift, and go to state 34
+    '!'       shift, and go to state 35
+    '~'       shift, and go to state 36
+
+    cond        go to state 109
+    logcond     go to state 40
+    binlogcond  go to state 41
+    compeq      go to state 42
+    comp        go to state 43
+    shift       go to state 44
+    factor      go to state 45
+    term        go to state 46
+    unary       go to state 47
+    atom        go to state 48
+
+
+state 106
+
+    3 stmtlist: stmtlist . stmt
+   22 iftail: ELSE stmtlist .
+
+    IDSTRING  shift, and go to state 4
+    PRINT     shift, and go to state 5
+    LOGGER    shift, and go to state 6
+    ERROR     shift, and go to state 7
+    WARNING   shift, and go to state 8
+    INFO      shift, and go to state 9
+    ASSERT    shift, and go to state 10
+    IF        shift, and go to state 11
+    ';'       shift, and go to state 12
+    '\n'      shift, and go to state 13
+    '('       shift, and go to state 14
+
+    $default  reduce using rule 22 (iftail)
+
+    eol         go to state 15
+    stmt        go to state 16
+    exprstmt    go to state 17
+    assertstmt  go to state 18
+    msgstmt     go to state 19
+    ifstmt      go to state 20
+    assign      go to state 21
+
+
+state 107
+
+   23 iftail: ELSIF expr . stmtlist iftail
+
+    $default  reduce using rule 2 (stmtlist)
+
+    stmtlist  go to state 110
+
+
+state 108
+
+   20 ifstmt: IF expr stmtlist iftail FI .
+
+    $default  reduce using rule 20 (ifstmt)
+
+
+state 109
+
+   30 cond: logcond '?' cond ':' cond .
+
+    $default  reduce using rule 30 (cond)
+
+
+state 110
+
+    3 stmtlist: stmtlist . stmt
+   23 iftail: ELSIF expr stmtlist . iftail
+
+    IDSTRING  shift, and go to state 4
+    PRINT     shift, and go to state 5
+    LOGGER    shift, and go to state 6
+    ERROR     shift, and go to state 7
+    WARNING   shift, and go to state 8
+    INFO      shift, and go to state 9
+    ASSERT    shift, and go to state 10
+    IF        shift, and go to state 11
+    ELSE      shift, and go to state 101
+    ELSIF     shift, and go to state 102
+    ';'       shift, and go to state 12
+    '\n'      shift, and go to state 13
+    '('       shift, and go to state 14
+
+    $default  reduce using rule 21 (iftail)
+
+    eol         go to state 15
+    stmt        go to state 16
+    exprstmt    go to state 17
+    assertstmt  go to state 18
+    msgstmt     go to state 19
+    ifstmt      go to state 20
+    iftail      go to state 111
+    assign      go to state 21
+
+
+state 111
+
+   23 iftail: ELSIF expr stmtlist iftail .
+
+    $default  reduce using rule 23 (iftail)

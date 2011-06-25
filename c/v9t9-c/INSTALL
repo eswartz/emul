@@ -1,0 +1,55 @@
+CONFIGURATION
+-------------
+
+The first time you extract the sources, or after checking out from CVS,
+or after running "make distclean", run "./rebuild.sh" to configure and
+build v9t9 and its utility programs.
+
+If you have "automake" installed, then "make" will update the Makefiles
+itself, so there will be no pressing need to perform the steps above.
+
+If your software configuration changes (i.e., adding libraries or programs
+that v9t9 could use or would miss), execute "rm -f config.cache ; ./configure"
+at the top level to synchronize the configuration headers with the sources,
+and then execute "make" to rebuild.
+
+
+INSTALLATION
+------------
+
+After building, "make install" will install v9t9 to ${prefix}/bin/v9t9
+(usually /usr/local/bin; see the "--prefix" or "--bindir" option to
+"configure"), and associated utilities, DSR ROMs and V9t9 FORTH to
+{datadir}/v9t9 (usually /usr/local/share/v9t9; see the "--datadir" option
+to "configure").
+
+Problems you may encounter:
+
+-- cannot use SVGAlib:
+
+svgalib: cannot get I/O permissions
+
+Install v9t9 (this will enable the suid bit on v9t9), or, if executing
+from the source directory, execute "chown root:root source/v9t9" and
+"chmod +s source/v9t9".
+
+-- when using SVGAlib, the error:
+
+svgalib: mmap error in paged screen memory
+
+or
+
+svgalib: mmap error in shared screen memory
+
+means you should reconfigure SVGAlib's Makefile.cfg to change this line:
+
+	BACKGROUND = y
+
+to
+
+	# BACKGROUND = y
+
+Newer Linux kernels apparently do not allow this anymore.  This doesn't
+affect the functionality of v9t9.  (It never ran in the background anyway.)
+
+
