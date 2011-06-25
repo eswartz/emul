@@ -90,7 +90,7 @@ public abstract class CpuBase  implements MemoryAccessListener, IPersistable, Cp
 				baseclockhz = setting.getInt();
 				targetcycles = (int)((long) baseclockhz * CpuBase.this.interruptTick / 1000);
 		        currenttargetcycles = targetcycles;
-		        System.out.println("target: " + targetcycles);
+		        //System.out.println("target: " + targetcycles);
 			}
         	
         });

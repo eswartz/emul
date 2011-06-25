@@ -27,6 +27,7 @@ public abstract class BaseRedrawHandler implements VdpModeRedrawHandler {
 	public BaseRedrawHandler(VdpRedrawInfo info, VdpModeInfo vdpModeInfo) {
 		this.info = info;
 		this.modeInfo = vdpModeInfo;
+		/*
 		if (true && modeInfo.screen.size != 0) {
 			System.out.println("VDP Tables:\n" +
 					"Reg 1: " + Integer.toHexString(info.vdpregs[1] & 0xff) + "\n"+
@@ -35,8 +36,8 @@ public abstract class BaseRedrawHandler implements VdpModeRedrawHandler {
 					"Color: " + Integer.toHexString(modeInfo.color.base) + "\n" +
 					"Sprites: " + Integer.toHexString(modeInfo.sprite.base) + "\n"
 					);
-					
 		}
+		*/
 	}
 	
 	protected VdpTouchHandler modify_screen_default = new VdpTouchHandler() {

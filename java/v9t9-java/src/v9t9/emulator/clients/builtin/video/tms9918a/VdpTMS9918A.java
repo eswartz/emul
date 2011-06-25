@@ -159,7 +159,7 @@ public class VdpTMS9918A implements VdpHandler {
         vdpInterruptLimit = Cpu.settingCyclesPerSecond.getInt() / settingVdpInterruptRate.getInt();
         vdpInterruptFrac = 0;
         fixedTimeVdpInterruptDelta = (int) ((long) settingVdpInterruptRate.getInt() * 65536 / machine.getCpuTicksPerSec());
-        System.out.println("VDP interrupt target: " + Cpu.settingCyclesPerSecond.getInt() + " /  " + settingVdpInterruptRate.getInt() + " = " + vdpInterruptLimit);		
+        //System.out.println("VDP interrupt target: " + Cpu.settingCyclesPerSecond.getInt() + " /  " + settingVdpInterruptRate.getInt() + " = " + vdpInterruptLimit);		
 	}
 
 	public static void log(String msg) {

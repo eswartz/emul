@@ -74,7 +74,7 @@ public class TMS5220 implements Fetcher, Sender {
 	private LPCSpeech lpc;
 	
 	public static final SettingProperty settingLogSpeech = new SettingProperty("LogSpeech",
-			new Integer(1));
+			new Integer(0));
 
 	private Sender sender;
 
@@ -342,8 +342,7 @@ public class TMS5220 implements Fetcher, Sender {
 
 	private void reset()
 	{
-		Logging.writeLogLine(1, settingLogSpeech,
-				"Speech reset");
+		Logging.writeLogLine(1, settingLogSpeech, "Speech reset");
 		status = SS_BE | SS_BL;
 		purgeFIFO();
 		command = 0x70;
