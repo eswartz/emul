@@ -34,6 +34,7 @@
 ;
 
 | : (dmp) ( addr cnt xt -- )
+    base @ >r hex
     >r cr
     over +   ( addr addr+cnt )
     swap
@@ -43,18 +44,19 @@
         (pause?) if leave else per-line then
     u+loop
     rdrop
+    r> base !
 ;
 
 : dump
-    base @ >r hex
     ['] c@ (dmp)
-    r> base !
 ;
 
 : vdump
-    base @ >r hex
     ['] +vc@ (dmp)
-    r> base !
+;
+
+: gdump
+    ['] gc@ (dmp)
 ;
 
 : mfree
