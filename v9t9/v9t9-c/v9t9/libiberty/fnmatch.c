@@ -36,14 +36,6 @@
 #endif
 #include <fnmatch.h>
 
-/* We need glib.h for G_DIR_SEPARATOR and G_OS_WIN32 */
-#if HAVE_GTK
-#include <glib.h>
-#else
-#define G_DIR_SEPARATOR '/'
-#define G_OS_WIN32 0
-#endif
-
 #include <ctype.h>
 
 
@@ -56,6 +48,15 @@
    it is simpler to just do this in the source for each such file.  */
 
 #if defined (_LIBC) || !defined (__GNU_LIBRARY__)
+
+
+/* We need glib.h for G_DIR_SEPARATOR and G_OS_WIN32 */
+#if HAVE_GTK
+#include <glib.h>
+#else
+#define G_DIR_SEPARATOR '/'
+#define G_OS_WIN32 0
+#endif
 
 #if !defined(__GNU_LIBRARY__) && !defined(STDC_HEADERS) && !(defined(__MWERKS__) && defined(__MSL__))
 extern int errno;

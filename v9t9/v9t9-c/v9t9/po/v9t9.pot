@@ -8,10 +8,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-02-07 21:36-0600\n"
+"POT-Creation-Date: 2011-06-25 21:32-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -792,7 +793,7 @@ msgid "Record soundtrack to a file"
 msgstr ""
 
 #: source/Modules/Unix/sound_alsa.c:395 source/Modules/dsr_emupio.c:637
-#: source/Modules/dsr_emudisk.c:2780 source/Modules/dsr_emudisk.c:2792
+#: source/Modules/dsr_emudisk.c:2774 source/Modules/dsr_emudisk.c:2786
 #: source/Modules/dsr_rs232.c:653 source/Modules/dsr_realdisk.c:1665
 #: source/Modules/dsr_realdisk.c:1677 source/Modules/dsr_realdisk.c:1689
 #: source/Modules/dsr_realdisk.c:1702 source/moduledb.c:847
@@ -1010,8 +1011,8 @@ msgstr ""
 #: source/Modules/Win32/dsr_rs232_win32.c:433
 #, c-format
 msgid ""
-"Commit_Changes: BaudRate=%d, fParity=%d, ByteSize=%d, Parity=%d, StopBits=%"
-"d\n"
+"Commit_Changes: BaudRate=%d, fParity=%d, ByteSize=%d, Parity=%d, StopBits="
+"%d\n"
 msgstr ""
 
 #: source/Modules/Win32/dsr_rs232_win32.c:437
@@ -1203,7 +1204,7 @@ msgstr ""
 msgid "error writing to PIO (%s) (%s)"
 msgstr ""
 
-#: source/Modules/dsr_emupio.c:559 source/Modules/dsr_emudisk.c:2264
+#: source/Modules/dsr_emupio.c:559 source/Modules/dsr_emudisk.c:2258
 #, c-format
 msgid ""
 "handling code %d\n"
@@ -1251,8 +1252,8 @@ msgid ""
 ">4000...>5FFF"
 msgstr ""
 
-#: source/Modules/dsr_emupio.c:638 source/Modules/dsr_emudisk.c:2781
-#: source/Modules/dsr_emudisk.c:2793 source/Modules/dsr_rs232.c:654
+#: source/Modules/dsr_emupio.c:638 source/Modules/dsr_emudisk.c:2775
+#: source/Modules/dsr_emudisk.c:2787 source/Modules/dsr_rs232.c:654
 #: source/Modules/dsr_realdisk.c:1703 source/moduledb.c:911
 #: source/moduledb.c:925 source/moduledb.c:939 source/moduledb.c:953
 #: source/moduledb.c:967 source/moduledb.c:981 source/speech.c:624
@@ -1382,75 +1383,75 @@ msgstr ""
 msgid "No video driver loaded\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:203
+#: source/Modules/dsr_emudisk.c:197
 #, c-format
 msgid "%.*s: got PAB error %d [%s (%s)]\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:247
+#: source/Modules/dsr_emudisk.c:241
 #, c-format
 msgid "%.*s:  existing PAB not closed\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:293
+#: source/Modules/dsr_emudisk.c:287
 #, c-format
 msgid ""
 "PAB contents: flags=>%02X, reclen=%d, addr=>%04X, charcount=%d, recnum=%d\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:299
+#: source/Modules/dsr_emudisk.c:293
 #, c-format
 msgid "PAB contents: addr=>%04X, charcount=%d, recnum=%d\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:351
+#: source/Modules/dsr_emudisk.c:345
 #, c-format
 msgid "got subroutine error %d\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:361
+#: source/Modules/dsr_emudisk.c:355
 #, c-format
 msgid "got subroutine error %d [%s (%s)]\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:448
+#: source/Modules/dsr_emudisk.c:442
 #, c-format
 msgid "filename in FDR doesn't match filename ('%.*s' | '%.*s')\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:467
+#: source/Modules/dsr_emudisk.c:461
 msgid "DSKcomparefdrandpab:  record length differs\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:472
+#: source/Modules/dsr_emudisk.c:466
 msgid "DSKcomparefdrandpab:  var + relative file\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:477
+#: source/Modules/dsr_emudisk.c:471
 msgid "DSKcomparefdrandpab: fixed/variable flag differs\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:480
+#: source/Modules/dsr_emudisk.c:474
 msgid "file type mismatch on file open"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:491
+#: source/Modules/dsr_emudisk.c:485
 #, c-format
 msgid "DSKcomparefdrandsub:  filenames don't match ('%.*s' | '%.*s')\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:524
+#: source/Modules/dsr_emudisk.c:518
 #, c-format
 msgid "reading sector %d"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:537
+#: source/Modules/dsr_emudisk.c:531
 #, c-format
 msgid "writing sector %d"
 msgstr ""
 
 #. length of device+filename
-#: source/Modules/dsr_emudisk.c:569
+#: source/Modules/dsr_emudisk.c:563
 #, c-format
 msgid "getfilespec_pab:  pab len = %d\n"
 msgstr ""
@@ -1459,215 +1460,215 @@ msgstr ""
 #. module_logger(&emuDiskDSR, _L | L_2, _("getfilespec_pab:  fnaddr++ at 0x8356 = %20.20s       \n"),
 #. VDP_PTR(0) + fnaddr);
 #. minus length of device + period
-#: source/Modules/dsr_emudisk.c:574
+#: source/Modules/dsr_emudisk.c:568
 #, c-format
 msgid "getfilespec_pab:  length of device 0x8354 = %04X\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:579 source/Modules/dsr_emudisk.c:614
+#: source/Modules/dsr_emudisk.c:573 source/Modules/dsr_emudisk.c:608
 msgid "bad characters in filename"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:589
+#: source/Modules/dsr_emudisk.c:583
 msgid "couldn't make spec"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:660
+#: source/Modules/dsr_emudisk.c:654
 #, c-format
 msgid "trying to match '%s'\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:744
+#: source/Modules/dsr_emudisk.c:738
 #, c-format
 msgid "Re-reading catalog for DSK%d\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:747
+#: source/Modules/dsr_emudisk.c:741
 msgid "couldn't open directory for catalog"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:800
+#: source/Modules/dsr_emudisk.c:794
 msgid "reading catalog entry\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:831
+#: source/Modules/dsr_emudisk.c:825
 msgid "DSKreadcatalog: reached end of directory\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:901
+#: source/Modules/dsr_emudisk.c:895
 msgid "no free files"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:913
+#: source/Modules/dsr_emudisk.c:907
 msgid "can't have variable record size of 255"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:934
+#: source/Modules/dsr_emudisk.c:928
 msgid "bad catalog open flags"
 msgstr ""
 
 #. can't append to FIXED file
 #. &&
 #. !(pab->pflags & fp_internal)
-#: source/Modules/dsr_emudisk.c:961
+#: source/Modules/dsr_emudisk.c:955
 msgid "can't append to FIXED file"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:973
+#: source/Modules/dsr_emudisk.c:967
 msgid "could not open for update"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:982
+#: source/Modules/dsr_emudisk.c:976
 msgid "read FDR successfully\n"
 msgstr ""
 
 #. read PAB
 #. opening
-#: source/Modules/dsr_emudisk.c:986 source/Modules/dsr_emudisk.c:1022
-#: source/Modules/dsr_emudisk.c:1398
+#: source/Modules/dsr_emudisk.c:980 source/Modules/dsr_emudisk.c:1016
+#: source/Modules/dsr_emudisk.c:1392
 msgid "setting up new FDR\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:1016 source/Modules/dsr_emudisk.c:1389
+#: source/Modules/dsr_emudisk.c:1010 source/Modules/dsr_emudisk.c:1383
 msgid "could not open for output"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:1035 source/Modules/dsr_emudisk.c:1310
+#: source/Modules/dsr_emudisk.c:1029 source/Modules/dsr_emudisk.c:1304
 msgid "could not open for input"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:1090
+#: source/Modules/dsr_emudisk.c:1084
 msgid "DSKRead:  error due to not finding open file"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:1100
+#: source/Modules/dsr_emudisk.c:1094
 msgid "read from append/output file"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:1115
+#: source/Modules/dsr_emudisk.c:1109
 msgid "dump of catalog record:"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:1169
+#: source/Modules/dsr_emudisk.c:1163
 msgid "DSKWrite:  error due to not finding open file"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:1178
+#: source/Modules/dsr_emudisk.c:1172
 msgid "writing to input file"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:1183
+#: source/Modules/dsr_emudisk.c:1177
 msgid "writing to catalog"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:1226
+#: source/Modules/dsr_emudisk.c:1220
 msgid "DSKSeek:  error due to not finding open file"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:1234
+#: source/Modules/dsr_emudisk.c:1228
 msgid "DSKSeek:  error due to seeking catalog"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:1246
+#: source/Modules/dsr_emudisk.c:1240
 msgid "append/output mode can't seek"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:1298
+#: source/Modules/dsr_emudisk.c:1292
 msgid "can't open catalog as binary"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:1302
+#: source/Modules/dsr_emudisk.c:1296
 msgid "trying to open binary image\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:1338
+#: source/Modules/dsr_emudisk.c:1332
 #, c-format
 msgid "read %d bytes to >%04X\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:1377
+#: source/Modules/dsr_emudisk.c:1371
 msgid "can't save catalog as binary"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:1381
+#: source/Modules/dsr_emudisk.c:1375
 msgid "trying to save binary image\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:1446
+#: source/Modules/dsr_emudisk.c:1440
 msgid "can't delete catalog"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:1450
+#: source/Modules/dsr_emudisk.c:1444
 msgid "trying to delete file\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:1456
+#: source/Modules/dsr_emudisk.c:1450
 msgid "deleting file\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:1502
+#: source/Modules/dsr_emudisk.c:1496
 msgid "DSKStatus:  EOF on variable file"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:1507
+#: source/Modules/dsr_emudisk.c:1501
 msgid "DSKStatus:  EOF on fixed file\n"
 msgstr ""
 
 #. file is not open, open it now
-#: source/Modules/dsr_emudisk.c:1530
+#: source/Modules/dsr_emudisk.c:1524
 msgid "DSKStatus:  no PAB file yet...\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:1542 source/Modules/dsr_emudisk.c:1567
+#: source/Modules/dsr_emudisk.c:1536 source/Modules/dsr_emudisk.c:1561
 msgid "DSKStatus:  file not found\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:1551
+#: source/Modules/dsr_emudisk.c:1545
 msgid "DSKStatus:  catalog status\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:1558
+#: source/Modules/dsr_emudisk.c:1552
 msgid "DSKStatus:  opening file\n"
 msgstr ""
 
 #. file was already open
-#: source/Modules/dsr_emudisk.c:1577
+#: source/Modules/dsr_emudisk.c:1571
 msgid "DSKStatus:  file was open\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:1596
+#: source/Modules/dsr_emudisk.c:1590
 #, c-format
 msgid ""
 "DSKStatus:  flags=%02X\n"
 "\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:1641
+#: source/Modules/dsr_emudisk.c:1635
 msgid "creating catalog sector 0\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:1679
+#: source/Modules/dsr_emudisk.c:1673
 msgid "creating catalog sector 1\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:1706
+#: source/Modules/dsr_emudisk.c:1700
 #, c-format
 msgid "creating catalog directory sector %d\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:1765
+#: source/Modules/dsr_emudisk.c:1759
 msgid "ignoring sector write request"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:1840
+#: source/Modules/dsr_emudisk.c:1834
 msgid "could not open to modify protection"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:1926
+#: source/Modules/dsr_emudisk.c:1920
 msgid "could not open to modify filename"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:1936
+#: source/Modules/dsr_emudisk.c:1930
 #, c-format
 msgid ""
 "Renamed '%s' to '%s'\n"
@@ -1675,228 +1676,228 @@ msgid ""
 "\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:1985
+#: source/Modules/dsr_emudisk.c:1979
 msgid "could not open to read sectors"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2012
+#: source/Modules/dsr_emudisk.c:2006
 #, c-format
 msgid ""
 "reading %d sectors from sector #%d from file, storing to >%04X\n"
 "\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2019
+#: source/Modules/dsr_emudisk.c:2013
 msgid "DskDirectInput:  Could not seek to sector"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2023
+#: source/Modules/dsr_emudisk.c:2017
 msgid "DskDirectInput:  Could not read sectors"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2073
+#: source/Modules/dsr_emudisk.c:2067
 msgid "could not open to write sectors"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2096
+#: source/Modules/dsr_emudisk.c:2090
 #, c-format
 msgid "Setting size of '%s' to %d sectors\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2121
+#: source/Modules/dsr_emudisk.c:2115
 #, c-format
 msgid ""
 "writing %d sectors at sector #%d to file, reading from >%04X\n"
 "\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2156
+#: source/Modules/dsr_emudisk.c:2150
 msgid ""
 "The current program is attempting to control the disk controller,\n"
 "but this functionality does not work with the emulated disk DSR.\n"
 "Consider running this application from a disk-on-a-disk (DOAD).\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2194
+#: source/Modules/dsr_emudisk.c:2188
 msgid "emu disk DSR on\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2212
+#: source/Modules/dsr_emudisk.c:2206
 #, c-format
 msgid ""
 "DSR Read >4000 = >%2X\n"
 "\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2215
+#: source/Modules/dsr_emudisk.c:2209
 msgid "emu disk DSR off\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2244
+#: source/Modules/dsr_emudisk.c:2238
 #, c-format
 msgid ""
 "code = %d\n"
 "\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2253
+#: source/Modules/dsr_emudisk.c:2247
 msgid "passing control to real disk"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2259
+#: source/Modules/dsr_emudisk.c:2253
 msgid "passing control to real disk\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2287
+#: source/Modules/dsr_emudisk.c:2281
 #, c-format
 msgid "did not match DSK.%.*s\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2290
+#: source/Modules/dsr_emudisk.c:2284
 #, c-format
 msgid "matched DSK.%.*s on DSK%d\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2331
+#: source/Modules/dsr_emudisk.c:2325
 #, c-format
 msgid "doing operation %d on DSK%d\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2401
+#: source/Modules/dsr_emudisk.c:2395
 #, c-format
 msgid "doing operation %d on DSK%d [%d, %04X, %04X]\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2412
+#: source/Modules/dsr_emudisk.c:2406
 #, c-format
 msgid "ignoring code = %d\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2576
+#: source/Modules/dsr_emudisk.c:2570
 msgid "error in emudisk_config_files"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2587
+#: source/Modules/dsr_emudisk.c:2581
 msgid "Invalid file number\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2610
+#: source/Modules/dsr_emudisk.c:2604
 #, c-format
 msgid "Invalid file name '%s'\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2638
+#: source/Modules/dsr_emudisk.c:2632
 #, c-format
 msgid "Could not reopen catalog at '%s'\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2648
+#: source/Modules/dsr_emudisk.c:2642
 #, c-format
 msgid "Could not reopen file '%s'\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2663
+#: source/Modules/dsr_emudisk.c:2657
 #, c-format
 msgid "Unrecognized file field: %d\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2686
+#: source/Modules/dsr_emudisk.c:2680
 #, c-format
 msgid "DSK%d (%s) is inaccessible when real (DOAD) disk DSR is loaded\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2705
+#: source/Modules/dsr_emudisk.c:2699
 msgid "Emulated Disk DSR Options"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2706
+#: source/Modules/dsr_emudisk.c:2700
 msgid ""
 "These commands control the emulated files-in-a-directory (FIAD) emulation"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2709
+#: source/Modules/dsr_emudisk.c:2703
 msgid "Set DSK1 directory"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2715 source/Modules/dsr_emudisk.c:2728
-#: source/Modules/dsr_emudisk.c:2741 source/Modules/dsr_emudisk.c:2754
-#: source/Modules/dsr_emudisk.c:2767
+#: source/Modules/dsr_emudisk.c:2709 source/Modules/dsr_emudisk.c:2722
+#: source/Modules/dsr_emudisk.c:2735 source/Modules/dsr_emudisk.c:2748
+#: source/Modules/dsr_emudisk.c:2761
 msgid "dir"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2716 source/Modules/dsr_emudisk.c:2729
-#: source/Modules/dsr_emudisk.c:2742 source/Modules/dsr_emudisk.c:2755
-#: source/Modules/dsr_emudisk.c:2768
+#: source/Modules/dsr_emudisk.c:2710 source/Modules/dsr_emudisk.c:2723
+#: source/Modules/dsr_emudisk.c:2736 source/Modules/dsr_emudisk.c:2749
+#: source/Modules/dsr_emudisk.c:2762
 msgid "directory containing V9t9 files"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2722
+#: source/Modules/dsr_emudisk.c:2716
 msgid "Set DSK2 directory"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2735
+#: source/Modules/dsr_emudisk.c:2729
 msgid "Set DSK3 directory"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2748
+#: source/Modules/dsr_emudisk.c:2742
 msgid "Set DSK4 directory"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2761
+#: source/Modules/dsr_emudisk.c:2755
 msgid "Set DSK5 directory"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2775
+#: source/Modules/dsr_emudisk.c:2769
 msgid ""
 "Name of emulated DSR ROM image which fits in the CPU address space >4000..."
 ">5FFF; this DSR defines DSK1 through DSK5"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2787
+#: source/Modules/dsr_emudisk.c:2781
 msgid ""
 "Name of emulated DSR ROM image which fits in the CPU address space >4000..."
 ">5FFF; this DSR defines DSK3 through DSK5 and can share space with the real "
 "(DOAD) disk DSR"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2800
+#: source/Modules/dsr_emudisk.c:2794
 msgid "Toggle preservation of original file type (V9t9 or TIFILES)"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2805
+#: source/Modules/dsr_emudisk.c:2799
 msgid ""
 "on: don't change existing file's type; off: change type to NewFileFormat"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2813
+#: source/Modules/dsr_emudisk.c:2807
 msgid "Select type for new files or converted files"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2818
+#: source/Modules/dsr_emudisk.c:2812
 msgid "v9t9: original V9t9 file type; tifiles: TIFILES (XMODEM) format"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2826
+#: source/Modules/dsr_emudisk.c:2820
 msgid ""
 "Toggle treatment of unknown (non-V9t9 and non-TIFILES) files as DOS/Unix/Mac "
 "text files"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2832
+#: source/Modules/dsr_emudisk.c:2826
 msgid "on:  read unknown file as text; off:  generate error"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2839
+#: source/Modules/dsr_emudisk.c:2833
 msgid ""
 "Allow catalogs read through DSKx. to return more than 127 records; some "
 "programs may depend on this limit"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2845
+#: source/Modules/dsr_emudisk.c:2839
 msgid "on: allow up to 32767 entries, off: restrict to 127 entries"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2851
+#: source/Modules/dsr_emudisk.c:2845
 msgid ""
 "Repair files with bad file sizes, even when opened read-only.  This is a bit "
 "dangerous if you try to open a non-V9t9 file, which will (obviously) appear "
@@ -1904,37 +1905,37 @@ msgid ""
 "checks, though."
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2859
+#: source/Modules/dsr_emudisk.c:2853
 msgid "on: repair damaged files, off: leave them alone"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2865
+#: source/Modules/dsr_emudisk.c:2859
 msgid ""
 "Rename older V9t9 files which were mangled to fit in the DOS 8.3 filename "
 "format.  These files were split at the 8th character with a '.' and all "
 "illegal DOS characters ("
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2883
+#: source/Modules/dsr_emudisk.c:2877
 msgid "on: rename old V9t9 files, off: leave them alone"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2890
+#: source/Modules/dsr_emudisk.c:2884
 msgid ""
 "Generate filenames that conform to the old V9t9 DOS-mangled format (see "
 "above) instead of the new format. Not recommended unless you actively use "
 "the DOS version."
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2897
+#: source/Modules/dsr_emudisk.c:2891
 msgid "on: generate old V9t9 filenames, off: generate current V9t9 filenames"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2913
+#: source/Modules/dsr_emudisk.c:2907
 msgid "Top address used in VDP RAM"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2917 source/emulate.c:984 source/emulate.c:998
+#: source/Modules/dsr_emudisk.c:2911 source/emulate.c:984 source/emulate.c:998
 #: source/emulate.c:1013 source/emulate.c:1027 source/emulate.c:1090
 #: source/emulate.c:1150 source/emulate.c:1177 source/emulate.c:1206
 #: source/emulate.c:1235 source/emulate.c:1240 source/emulate.c:1264
@@ -1944,36 +1945,36 @@ msgstr ""
 msgid "address"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2918
+#: source/Modules/dsr_emudisk.c:2912
 msgid "VDP RAM address, minus one"
 msgstr ""
 
 #. ret
-#: source/Modules/dsr_emudisk.c:2929
+#: source/Modules/dsr_emudisk.c:2923
 msgid "file number"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2930
+#: source/Modules/dsr_emudisk.c:2924
 msgid "index of files[] array"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2936
+#: source/Modules/dsr_emudisk.c:2930
 msgid "name of field in pab_tifile to save"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2940
+#: source/Modules/dsr_emudisk.c:2934
 msgid "field contents"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2941
+#: source/Modules/dsr_emudisk.c:2935
 msgid "contents of field"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2967
+#: source/Modules/dsr_emudisk.c:2961
 msgid "setting up emulated disk DSR ROM\n"
 msgstr ""
 
-#: source/Modules/dsr_emudisk.c:2991
+#: source/Modules/dsr_emudisk.c:2985
 msgid "Emulated disk DSR ROM"
 msgstr ""
 
@@ -5059,86 +5060,86 @@ msgstr ""
 msgid "Could not create mutex for command parser"
 msgstr ""
 
-#: source/fiad.c:110
+#: source/fiad.c:118
 #, c-format
 msgid "fiad_filename_ti2dos:  incoming = '%.*s', outgoing = '%s'\n"
 msgstr ""
 
-#: source/fiad.c:157
+#: source/fiad.c:165
 #, c-format
 msgid "fiad_filename_ti2host:  incoming = '%.*s', outgoing = '%s'\n"
 msgstr ""
 
-#: source/fiad.c:184
+#: source/fiad.c:192
 #, c-format
 msgid "FIAD server:  renaming old-style file '%s' to '%s'\n"
 msgstr ""
 
-#: source/fiad.c:187
+#: source/fiad.c:195
 #, c-format
 msgid "FIAD server:  could not rename file (%s)\n"
 msgstr ""
 
-#: source/fiad.c:274
+#: source/fiad.c:282
 #, c-format
 msgid "fiad_filename_host2ti:  incoming: '%s', outgoing: '%.10s'\n"
 msgstr ""
 
-#: source/fiad.c:331
+#: source/fiad.c:339
 #, c-format
 msgid "FIAD server:  invalid flags %02x for file '%s'\n"
 msgstr ""
 
-#: source/fiad.c:345
+#: source/fiad.c:353
 #, c-format
 msgid ""
 "FIAD server:  invalid number of sectors %d for data size %d in file '%s'\n"
 msgstr ""
 
-#: source/fiad.c:359
+#: source/fiad.c:367
 #, c-format
 msgid ""
 "FIAD server:  record length %d / records per sector %d invalid\n"
 "for FIXED file '%s'\n"
 msgstr ""
 
-#: source/fiad.c:374
+#: source/fiad.c:382
 #, c-format
 msgid ""
 "FIAD server:  record length %d / records per sector %d invalid\n"
 "for VARIABLE file '%s'\n"
 msgstr ""
 
-#: source/fiad.c:385
+#: source/fiad.c:393
 #, c-format
 msgid ""
 "FIAD server:  record length %d / records per sector %d invalid\n"
 "for PROGRAM file '%s'\n"
 msgstr ""
 
-#: source/fiad.c:491 source/fiad.c:540
+#: source/fiad.c:499 source/fiad.c:548
 #, c-format
 msgid "setup FDR name as '%.10s'\n"
 msgstr ""
 
-#: source/fiad.c:560
+#: source/fiad.c:568
 #, c-format
 msgid "%s: could not read FDR\n"
 msgstr ""
 
-#: source/fiad.c:565
+#: source/fiad.c:573
 #, c-format
 msgid "%s: FDR is short\n"
 msgstr ""
 
-#: source/fiad.c:586
+#: source/fiad.c:594
 #, c-format
 msgid ""
-"TIFILES read> secsused=%04X, flags=%x, recspersec=%x, byteoffs=%x, reclen=%"
-"d, numrecs=%04X\n"
+"TIFILES read> secsused=%04X, flags=%x, recspersec=%x, byteoffs=%x, reclen="
+"%d, numrecs=%04X\n"
 msgstr ""
 
-#: source/fiad.c:601
+#: source/fiad.c:609
 #, c-format
 msgid ""
 "V9t9 read> secsused=%04X, flags=%x, recspersec=%x, byteoffs=%x, reclen=%d, "
@@ -5146,79 +5147,79 @@ msgid ""
 msgstr ""
 
 #. treat file as text
-#: source/fiad.c:607
+#: source/fiad.c:615
 #, c-format
 msgid "Treating '%s' as text\n"
 msgstr ""
 
-#: source/fiad.c:613
+#: source/fiad.c:621
 #, c-format
 msgid "File '%s' does not appear to be a V9t9 file\n"
 msgstr ""
 
-#: source/fiad.c:633
+#: source/fiad.c:641
 #, c-format
 msgid "%s: Trying to write FDR on a closed or read-only file\n"
 msgstr ""
 
-#: source/fiad.c:679
+#: source/fiad.c:687
 #, c-format
 msgid "%s: could not write FDR\n"
 msgstr ""
 
-#: source/fiad.c:682
+#: source/fiad.c:690
 #, c-format
 msgid "%s: wrote short FDR\n"
 msgstr ""
 
-#: source/fiad.c:699
+#: source/fiad.c:707
 #, c-format
 msgid "FIAD server: can't read FDR from file '%s'\n"
 msgstr ""
 
-#: source/fiad.c:713
+#: source/fiad.c:721
 #, c-format
 msgid "FIAD server:  FDR is short in file '%s'\n"
 msgstr ""
 
-#: source/fiad.c:725
+#: source/fiad.c:733
 #, c-format
 msgid "FIAD server:  repaired fields of FDR in '%s'\n"
 msgstr ""
 
-#: source/fiad.c:850
+#: source/fiad.c:858
 #, c-format
 msgid "fiad_tifile_open_file: '%s', create: %d, always: %d, readonly: %d\n"
 msgstr ""
 
-#: source/fiad.c:876
+#: source/fiad.c:884
 #, c-format
 msgid "created FIAD file '%s'\n"
 msgstr ""
 
-#: source/fiad.c:901
+#: source/fiad.c:909
 msgid "Failed to verify, creating new file\n"
 msgstr ""
 
-#: source/fiad.c:914
+#: source/fiad.c:922
 msgid "Truncating file\n"
 msgstr ""
 
-#: source/fiad.c:996
+#: source/fiad.c:1004
 msgid "fiad_tifile_rewrite_fdr: File is open!\n"
 msgstr ""
 
-#: source/fiad.c:1008
+#: source/fiad.c:1016
 #, c-format
 msgid "%s: changing file format to %s\n"
 msgstr ""
 
-#: source/fiad.c:1015
+#: source/fiad.c:1023
 #, c-format
 msgid "%s: rewriting damaged FDR\n"
 msgstr ""
 
-#: source/fiad.c:1113
+#: source/fiad.c:1121
 #, c-format
 msgid ""
 "FIAD ERROR:  file appears corrupt [curoffs=%d, len=%d]\n"
@@ -5226,54 +5227,54 @@ msgid ""
 "\n"
 msgstr ""
 
-#: source/fiad.c:1214
+#: source/fiad.c:1222
 #, c-format
 msgid ""
 "fixed read, wanted %d, max is %d\n"
 "\n"
 msgstr ""
 
-#: source/fiad.c:1354
+#: source/fiad.c:1362
 #, c-format
 msgid "fixed write, at %d, cur is %d\n"
 msgstr ""
 
-#: source/fiad.c:1432
+#: source/fiad.c:1440
 #, c-format
 msgid ""
 "file has >%04X or %d sectors\n"
 "\n"
 msgstr ""
 
-#: source/fiad.c:1434
+#: source/fiad.c:1442
 #, c-format
 msgid "going to read at most %d bytes from file with size %d\n"
 msgstr ""
 
-#: source/fiad.c:1474
+#: source/fiad.c:1482
 #, c-format
 msgid ""
 "trying to write %d bytes to file\n"
 "\n"
 msgstr ""
 
-#: source/fiad.c:1606
+#: source/fiad.c:1614
 msgid "reading dir\n"
 msgstr ""
 
-#: source/fiad.c:1615
+#: source/fiad.c:1623
 #, c-format
 msgid "Skipping '%s' which doesn't appear to be a V9t9 file\n"
 msgstr ""
 
-#: source/fiad.c:1639
+#: source/fiad.c:1647
 #, c-format
 msgid ""
 "got file '%s'\n"
 "\n"
 msgstr ""
 
-#: source/fiad.c:1708
+#: source/fiad.c:1716
 #, c-format
 msgid "Invalid catalog sort '%d'\n"
 msgstr ""

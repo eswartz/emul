@@ -40,13 +40,6 @@
 #include "fiad.h"
 #include "dis9900.h"
 
-int generateoldv9t9filenames = 0,
-	fixupoldv9t9filenames = 0,
-	unknownfileistext = 1,
-	repairbadfiles = 0,
-	keepfileformat = 1,
-	newfileformat = F_TIFILES;
-
 /* options */
 const char *progname;
 char *ext = ".dump";

@@ -6,6 +6,8 @@
  */
 package v9t9.emulator.hardware.memory;
 
+import v9t9.engine.files.DataFiles;
+
 
 /**
  * Enhanced console memory model.
@@ -21,8 +23,10 @@ public class EnhancedTI994ACompatibleConsoleMemoryModel extends TI994AStandardCo
 
 	@Override
 	protected void initSettings() {
+		DataFiles.addSearchPath("../../build/forth");
 		super.initSettings();
 		ConsoleRamArea.settingEnhRam.setBoolean(true);
+
 
 	}
 }

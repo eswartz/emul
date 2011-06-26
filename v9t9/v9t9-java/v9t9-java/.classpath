@@ -13,5 +13,31 @@
 	<classpathentry kind="lib" path="libs/antlr-runtime-3.2.jar"/>
 	<classpathentry kind="lib" path="libs/antlr-3.2.jar"/>
 	<classpathentry kind="lib" path="libs/bcel-5.2.jar"/>
+	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.bridge_1.7.0.v201011041433.jar"/>
+	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.bridge.source_1.7.0.v201011041433.jar"/>
+	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.css_1.7.0.v201011041433.jar"/>
+	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.css.source_1.7.0.v201011041433.jar"/>
+	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.dom_1.7.0.v201011041433.jar"/>
+	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.dom.source_1.7.0.v201011041433.jar"/>
+	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.dom.svg_1.7.0.v201011041433.jar"/>
+	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.dom.svg.source_1.7.0.v201011041433.jar"/>
+	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.ext.awt_1.7.0.v201011041433.jar"/>
+	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.ext.awt.source_1.7.0.v201011041433.jar"/>
+	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.extension_1.7.0.v201011041433.jar"/>
+	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.extension.source_1.7.0.v201011041433.jar"/>
+	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.parser_1.7.0.v201011041433.jar"/>
+	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.parser.source_1.7.0.v201011041433.jar"/>
+	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.svggen_1.7.0.v201011041433.jar"/>
+	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.svggen.source_1.7.0.v201011041433.jar"/>
+	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.swing_1.7.0.v201011041433.jar"/>
+	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.swing.source_1.7.0.v201011041433.jar"/>
+	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.transcoder_1.7.0.v201011041433.jar"/>
+	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.transcoder.source_1.7.0.v201011041433.jar"/>
+	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.util_1.7.0.v201011041433.jar"/>
+	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.util.gui_1.7.0.v200903091627.jar"/>
+	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.util.gui.source_1.7.0.v200903091627.jar"/>
+	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.util.source_1.7.0.v201011041433.jar"/>
+	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.xml_1.7.0.v201011041433.jar"/>
+	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.xml.source_1.7.0.v201011041433.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -11,7 +11,9 @@ GFORTHPATH:=$(shell pwd)/site-forth:$(GFORTHPATH):$(shell pwd)
 
 #TIASM = ../TIAsm/tiasm
 TIASM_RUN = java -jar $(TIASM)
-TIASM = $(TOP)/../build/tiasm.jar
+BUILD = $(TOP)/../../build
+OUTDIR = $(BUILD)/forth
+TIASM = $(BUILD)/bin/tiasm.jar
 
 OUTS = nforthA.rom nforth.grm nforthB.rom nforthB.sym  \
 	nforth.prm nforthc.bin nforthg.bin  nforthc.sym nforthg.sym
@@ -30,7 +32,8 @@ EXTRA_DIST = $(ROM99) $(FORTH99) $(FORTHCOMMON) \
 	romaddr.c doc/placeholder.txt nforth.cnf $(OUTS)
 
 all-local:	$(OUTS)
-
+	cp -f $(OUTS) $(OUTDIR)
+    
 clean-local:
 	rm -f $(OUTS)
 
@@ -65,9 +68,9 @@ nforthA.rom: $(FORCE) $(ROM99) $(TIASM)
 nforth.grm: nforth.gsm $(TIASM)
 	$(TIASM_RUN) -DENHANCED_MEMORY $< -g $@ -l nforthg.lst
 
-GFORTH = @GFORTH@
-
 if HAVE_GFORTH
+
+GFORTH = @GFORTH@
 
 #ROMADDR=100
 
@@ -89,12 +92,14 @@ nforthB.rom nforthB.sym: $(FORCE) nforth.prm nforth0.rom $(ROMADDR)
 		dd if=nforth.prm of=nforthB.rom bs=1 seek=$$SIZE count=$$[16384-$$SIZE]; \
 	fi ;		 
 	python getforthsyms.py <$(LIST) >nforthB.sym
-    
+
 else
 
 nforth.prm nforthc.bin nforthg.bin: $(FORCE) $(TIASM) $(ROMADDR) nforth0.rom $(FORTH99) $(FORTHCOMMON)
 	@echo "GNU forth (gforth) is not installed, kernel cannot be rebuilt."
 
 endif
+
+
 
 

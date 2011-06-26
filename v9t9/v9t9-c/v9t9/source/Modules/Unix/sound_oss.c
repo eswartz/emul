@@ -78,7 +78,7 @@ static void
 sound_module_mix(void *buffer, int bytes)
 {
 	//printf("Writing %p / %d to %d\n", buffer, bytes, sound_fd);
-	write(sound_fd, buffer, bytes);
+	(void) write(sound_fd, buffer, bytes);
 }
 
 
@@ -152,7 +152,7 @@ oss_read(vmsReadMask kind, u16 * data, int len, int hz)
 {
 	int         x;
 
-	read(sound_fd, data, len * sizeof(data[0]));
+	(void) read(sound_fd, data, len * sizeof(data[0]));
 	if (soundformat == AFMT_S16_LE) {
 		for (x = 0; x < len; x++)
 			data[x] ^= 0x8000;

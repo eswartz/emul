@@ -227,8 +227,8 @@ only RS232/1 through RS232/%d are available\n", 191},
   {"... interrupt: data ready for reading\n", 200},
   {"... line change\n", 201},
   {"\
-Commit_Changes: BaudRate=%d, fParity=%d, ByteSize=%d, Parity=%d, StopBits=%\
-d\n", 202},
+Commit_Changes: BaudRate=%d, fParity=%d, ByteSize=%d, Parity=%d, StopBits=\
+%d\n", 202},
   {"committing RS232 state changes", 203},
   {"setting RTS", 204},
   {"setting break", 205},
@@ -1334,8 +1334,8 @@ for PROGRAM file '%s'\n", 1052},
   {"%s: could not read FDR\n", 1054},
   {"%s: FDR is short\n", 1055},
   {"\
-TIFILES read> secsused=%04X, flags=%x, recspersec=%x, byteoffs=%x, reclen=%\
-d, numrecs=%04X\n", 1056},
+TIFILES read> secsused=%04X, flags=%x, recspersec=%x, byteoffs=%x, reclen=\
+%d, numrecs=%04X\n", 1056},
   {"\
 V9t9 read> secsused=%04X, flags=%x, recspersec=%x, byteoffs=%x, reclen=%d, \
 numrecs=%04X\n", 1057},

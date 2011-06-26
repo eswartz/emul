@@ -50,6 +50,14 @@ OSFileType  osV99Type = 'FI99';
 OSFileType  osTIFILESType = 'TI99';
 #endif
 
+int         keepfileformat = 1;
+int         unknownfileistext = 0;
+int			repairbadfiles = 0;
+int			fixupoldv9t9filenames = 1;
+int			generateoldv9t9filenames = 0;
+int         newfileformat = F_V9t9;
+
+
 /*
  *	Suitable logger for no-nag situations
  */

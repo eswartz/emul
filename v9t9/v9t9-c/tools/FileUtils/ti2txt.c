@@ -35,13 +35,6 @@
 
 #include "fiad.h"
 
-int generateoldv9t9filenames = 0,
-	fixupoldv9t9filenames = 0,
-	unknownfileistext = 1,
-	repairbadfiles = 0,
-	keepfileformat = 1,
-	newfileformat = F_TIFILES;
-
 /* options */
 char *progname = 0L;
 char *ext = ".txt";

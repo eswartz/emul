@@ -34,13 +34,6 @@
 
 #include "fiad.h"
 
-int generateoldv9t9filenames = 0,
-	fixupoldv9t9filenames = 0,
-	unknownfileistext = 0,
-	repairbadfiles = 0,
-	keepfileformat = 1,
-	newfileformat = F_TIFILES;
-
 enum
 {
 	TOLIST_WIDE,

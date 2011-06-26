@@ -8,13 +8,6 @@
 #include <stdio.h>
 #include "lpc.h"
 
-int generateoldv9t9filenames = 0,
-	fixupoldv9t9filenames = 0,
-	unknownfileistext = 0,
-	repairbadfiles = 0,
-	keepfileformat = 1,
-	newfileformat = 0;
-
 int stUnvoiced = 0;
 int stRepeat = 1;
 int stReverse = 0;

@@ -29,7 +29,7 @@ fi
 AC_SUBST(TOP)
 CPPFLAGS="$CPPFLAGS -I$TOP/$host"
 
-VERSION=`cat $TOP/.version`
+VERSION=`cat $TOP/version`
 AM_INIT_AUTOMAKE(v9t9, $VERSION)
 
 AC_OPERATING_SYSTEM
@@ -108,6 +108,8 @@ AC_SUBST(MACMODSRCS)
 AC_SUBST(OSLIBSRCS)
 
 dnl find gforth
+AM_CONDITIONAL(GFORTH_BUILD_IS_BROKEN, true)
+
 AC_CHECK_PROG(GFORTH, gforth, gforth)
 if test -z "$GFORTH" ; then
 	AC_MSG_RESULT(gforth version 0.4.0 or later must be installed to build v9t9 forth)
@@ -134,4 +136,7 @@ AC_PROG_INSTALL
 
 AC_OUTPUT(Makefile 
 	DSRs/Makefile TIAsm/Makefile \
-	FileUtils/Makefile Forth/Makefile )
+	FileUtils/Makefile \
+	Forth/Makefile )	
+
+

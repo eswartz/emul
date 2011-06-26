@@ -105,12 +105,6 @@ char        emu2diskfilename[OS_NAMESIZE] = "emu2disk.bin";
 u8          emudiskdsr[8192];
 OSPathSpec  emudiskpath[5];
 
-int         keepfileformat = 1;
-int         newfileformat = F_V9t9;
-int         unknownfileistext = 0;
-int			repairbadfiles = 0;
-int			fixupoldv9t9filenames = 1;
-int			generateoldv9t9filenames = 0;
 int         allowlongcatalogs = 0;
 
 u16			rambase;	   	// base of scratch-pad RAM

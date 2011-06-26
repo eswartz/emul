@@ -29,7 +29,7 @@ fi
 AC_SUBST(TOP)
 CPPFLAGS="$CPPFLAGS -I$TOP/$host"
 
-VERSION=`cat $TOP/.version`
+VERSION=`cat $TOP/version`
 AM_INIT_AUTOMAKE(v9t9, $VERSION)
 
 dnl get compiler flags to pass to child directories
@@ -196,13 +196,13 @@ fi
 AC_ARG_WITH(gnome2,
 [  --with-gnome2[=ARG]      use the GNOME2 interface (ARG=yes)],
 [ 
-if test "$withval" = "yes"; then
-	want_gnome2=yes
-else
+if test "$withval" = "no"; then
 	want_gnome2=no
+else
+	want_gnome2=yes
 fi],
 [
-	want_gnome2=no  # not default
+	want_gnome2=default
 ]
 )
 
@@ -297,7 +297,7 @@ if test "$want_gtk" != "no" && test "$has_gnome2" != "yes"; then
 	fi
 
 	if test "x$GTKFLAGS" = "x"; then
-		AC_CHECK_PROG(HAVE_GTK_CONFIG, gtk-config, 1)
+		AC_CHECK_PROG(HAVE_GTK_CONFIG, gtk-config)
 		if test "x$HAVE_GTK_CONFIG" = "x1" ; then
 			GTKFLAGS="`gtk-config --cflags`"
 			GTKLIBS="`gtk-config --libs`"
