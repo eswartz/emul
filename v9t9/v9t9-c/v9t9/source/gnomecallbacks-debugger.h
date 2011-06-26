@@ -14,6 +14,11 @@ GtkWidget *debugger_registers_table,
 // updates (turned on/off during intermittent mode, etc)
 static bool debugger_verbose_updates;
 
+static const char* debugger_font()
+{
+	return "Monospace 9";
+}
+
 #define DBG_FG_NORMAL(s)	(&(s)->fg[GTK_STATE_NORMAL])
 #define DBG_FG_AUTO(s)		(&(s)->fg[GTK_STATE_PRELIGHT])
 #define DBG_FG_BREAK(s)		(&(s)->fg[GTK_STATE_SELECTED])
@@ -82,6 +87,61 @@ debugger_status_color_bg(status_item item, GtkStyle *style)
 //	return 0L;
 }
 
+static GtkTextTag *
+get_text_tag(GtkTextBuffer* tb, status_item item, GtkStyle* style)
+{
+	GdkColor* fg = debugger_status_color_fg(item, style);
+	int fgcolor = fg->pixel;
+	GdkColor* bg = debugger_status_color_bg(item, style);
+	int bgcolor = bg->pixel;
+
+	gchar* fgn = gdk_color_to_string(fg);
+	gchar* bgn = gdk_color_to_string(bg);
+	gchar* name = g_strconcat(fgn, ":", bgn, NULL);
+
+	GtkTextTag* tag = gtk_text_tag_table_lookup(gtk_text_buffer_get_tag_table(tb), name);
+	if (!tag)
+	{
+		if (DBG_BG_NORMAL(style) == bg)
+			tag = gtk_text_buffer_create_tag(tb, name,
+					"foreground", fgn,
+					"font", debugger_font(),
+					NULL);
+		else
+			tag = gtk_text_buffer_create_tag(tb, name,
+							"foreground", fgn,
+							"font", debugger_font(),
+							"background", bgn,
+							NULL);
+	}
+	g_free(name);
+	g_free(bgn);
+	g_free(fgn);
+
+	return tag;
+}
+
+static GtkTextIter append_text(GtkTextBuffer* tb, GtkStyle* style, status_item item, const gchar* buffer, int len)
+{
+	GtkTextIter end;
+	gtk_text_buffer_get_end_iter(tb, &end);
+	gtk_text_buffer_insert_with_tags(tb, &end, buffer, len, get_text_tag(tb, item, style), NULL);
+
+	return end;
+
+}
+
+static void append_text_and_scroll(GtkTextView* tv, GtkStyle* style, status_item item, const gchar* buffer, int len)
+{
+	GtkTextBuffer* tb = gtk_text_view_get_buffer(tv);
+	GtkTextIter end = append_text(tb, style, item, buffer, len);
+
+	gtk_text_view_scroll_to_iter(tv, &end, false, false, 0, 0);
+
+}
+
+
+
 //??? can anyone explain why the string height is wrong under X?
 #if UNDER_WIN32
 #define ADJUST_HEIGHT(h)	(h)
@@ -112,6 +172,8 @@ setup_debugger_registers_table(void)
 
 	s = gtk_widget_get_style(debugger_registers_table);
 
+	PangoFontDescription* font_desc = pango_font_description_from_string (debugger_font());
+
 	// setup base size of text box
 	width = gdk_string_width(gtk_style_get_font(s), "_>FFFF_");
 	height = ADJUST_HEIGHT(gdk_string_height(gtk_style_get_font(s), "!")) + 4;
@@ -136,26 +198,22 @@ setup_debugger_registers_table(void)
 		w = gtk_label_new(tmp);
 		gtk_widget_ref(w);
 		gtk_object_set_data_full(GTK_OBJECT(debugger_window), 
-								 widget_tag("register_label_", reg, 1),
+								 g_strdup(widget_tag("register_label_", reg, 1)),
 								 w, (GtkDestroyNotify) gtk_widget_unref);
-		gtk_widget_show(w);
 		gtk_table_attach(t, w, 0, 1, reg, reg+1,
 						 (GtkAttachOptions) (0),
 						 (GtkAttachOptions) (0), 2, 0);
 
 		// assign text entry to register
 
-		w = gtk_text_new(NULL, NULL);
-		gtk_text_set_editable(GTK_TEXT(w), true);
-		gtk_text_set_word_wrap(GTK_TEXT(w), false);
-		gtk_text_set_line_wrap(GTK_TEXT(w), false);
+		w = gtk_entry_new();
 		gtk_widget_ref(w);
 
 		// force size
 		gtk_widget_set_usize(w, width, height);
 
 		gtk_object_set_data_full(GTK_OBJECT(debugger_window),
-								 widget_tag("reg_value_", reg, 1),
+								 g_strdup(widget_tag("reg_value_", reg, 1)),
 								 w, (GtkDestroyNotify) gtk_widget_unref);
 
 		// callback
@@ -173,15 +231,28 @@ setup_debugger_registers_table(void)
 						 (GtkAttachOptions) (0),
 						 (GtkAttachOptions) (0), 2, 0);
 
-		gtk_widget_show(w);
+		gtk_widget_modify_font(w, font_desc);
 	}
+	gtk_widget_show_all(GTK_WIDGET(t));
+	pango_font_description_free(font_desc);
+
 }
 
+static void
+set_entry_style(GtkWidget* w, status_item item, GtkStyle* style)
+{
+	PangoFontDescription* desc = pango_font_description_from_string(debugger_font());
+	gtk_widget_modify_font(w, desc);
+	pango_font_description_free(desc);
+	gtk_widget_modify_fg(w, GTK_STATE_NORMAL, debugger_status_color_fg(item, style));
+	gtk_widget_modify_bg(w, GTK_STATE_NORMAL, debugger_status_color_bg(item, style));
+
+}
 static void
 update_debugger_register(status_item item, int reg, int val)
 {
 	GtkTable *t = GTK_TABLE(debugger_registers_table);
-	GtkText *tb;
+	GtkEntry *e;
 	GtkWidget *w;
 	GtkStyle *style;
 	char buffer[8];
@@ -194,25 +265,13 @@ update_debugger_register(status_item item, int reg, int val)
 
 	// get style
 	style = gtk_widget_get_style(w);
-
-	// freeze entry
-	tb = GTK_TEXT(w);
-	gtk_text_freeze(tb);
-	
-	// remove old text
-	gtk_editable_delete_text(GTK_EDITABLE(tb), 0, -1);
+	e = GTK_ENTRY(w);
 
 	// insert new text
 	sprintf(buffer, ">%04X", val);
-	gtk_text_insert(tb, 
-					gtk_style_get_font(style),
-					debugger_status_color_fg(item, style),
-					debugger_status_color_bg(item, style),
-					buffer,
-					5);
-					
-	// update
-	gtk_text_thaw(tb);
+	gtk_entry_set_text(e, buffer);
+
+	set_entry_style(w, item, style);
 }
 
 /*
@@ -253,7 +312,7 @@ on_debugger_memory_window_size_request_event (GtkWidget       *widget,
 	int width, height;
 
 	v = widget;
-	g_return_if_fail(GTK_IS_TEXT(user_data));
+	g_return_if_fail(GTK_IS_TEXT_VIEW(user_data));
 
 	tb = GTK_WIDGET(user_data);
 	s = gtk_widget_get_style(tb);
@@ -278,6 +337,7 @@ on_debugger_memory_window_size_request_event (GtkWidget       *widget,
 
 }
 
+// TODO: broken conversion from GTK 1.x
 static gboolean
 on_debugger_memory_window_size_allocate_event  (GtkWidget       *widget,
                                         GtkAllocation 	*allocation,
@@ -289,7 +349,7 @@ on_debugger_memory_window_size_allocate_event  (GtkWidget       *widget,
 	GtkScrolledWindow *sw;
 
 	v = widget;
-	g_return_val_if_fail(GTK_IS_TEXT(user_data), 0);
+	g_return_val_if_fail(GTK_IS_TEXT_VIEW(user_data), 0);
 
 //	g_print("allocated %d x %d\n", allocation->width, allocation->height);
 
@@ -315,10 +375,10 @@ on_debugger_memory_window_size_allocate_event  (GtkWidget       *widget,
 
 //	gtk_style_unref(s);
 
-	gtk_object_set_data(GTK_OBJECT(tb), "view_width", (gpointer)width);
-	gtk_object_set_data(GTK_OBJECT(tb), "view_height", (gpointer)height);
+	gtk_object_set_data(GTK_OBJECT(tb), "view_width", (gpointer)(ptrdiff_t)width);
+	gtk_object_set_data(GTK_OBJECT(tb), "view_height", (gpointer)(ptrdiff_t)height);
 
-	which = (int)gtk_object_get_data(GTK_OBJECT(tb), "which");
+	which = (ptrdiff_t)gtk_object_get_data(GTK_OBJECT(tb), "which");
 	debugger_memory_view_size[which] = width * height;
 
 	sw = GTK_SCROLLED_WINDOW(v->parent);
@@ -357,8 +417,7 @@ setup_debugger_memory_views(void)
 	GtkWidget *w;
 	GtkScrolledWindow *sw;
 	GtkViewport *v;
-	GtkText *tb;
-	GtkStyle *s;
+	GtkTextView *tv;
 
 	int width, height;
 	int idx;
@@ -370,15 +429,20 @@ setup_debugger_memory_views(void)
 	default_tab_width = 1;
 
 	// setup base size of text box
-	s = gtk_widget_get_style(debugger_window);
-	width = gdk_string_width(gtk_style_get_font(s), "^") * (debugger_hex_dump_bytes_to_chars(6));
-	height = ADJUST_HEIGHT(gdk_string_height(gtk_style_get_font(s), "!"));
-//	gtk_style_unref(s);
+
+	PangoFontDescription* font_desc = pango_font_description_from_string (debugger_font());
+
+	GdkFont* font = gdk_font_from_description(font_desc);
+	width = gdk_string_width(font, "^") * (debugger_hex_dump_bytes_to_chars(6));
+	height = ADJUST_HEIGHT(gdk_string_height(font, "!"));
+	gdk_font_unref(font);
 
 	idx = MEMORY_VIEW_CPU_1;
 	while (idx < MEMORY_VIEW_COUNT) {
 		w = gtk_object_get_data(GTK_OBJECT(debugger_window), 
 								  memory_frame_names[idx]);
+
+		gtk_widget_modify_font(w, font_desc);
 
 		// 'w' is a frame containing a GtkBin.
 		// The GtkBin has a GtkScrolledWindow inside, whose scrollbar
@@ -396,24 +460,24 @@ setup_debugger_memory_views(void)
 		g_return_if_fail(v = GTK_VIEWPORT(w));
 
 		w = GTK_BIN(v)->child;
-		g_return_if_fail(tb = GTK_TEXT(w));
+		g_return_if_fail(tv = GTK_TEXT_VIEW(w));
 
-		gtk_text_set_editable (tb, false);
+		gtk_text_view_set_editable (tv, false);
 
 		// force size
 		//gtk_widget_set_usize(w, width, height);
 
 		// don't wrap lines!
-		gtk_text_set_line_wrap(tb, false);
+		gtk_text_view_set_wrap_mode(tv, GTK_WRAP_NONE);
 
 		//adj = (GtkAdjustment*)gtk_adjustment_new(0, 0, 65536, 1, 64, 32);
 		//gtk_scrolled_window_set_hadjustment(sw, 0L);
 		//gtk_scrolled_window_set_vadjustment(sw, 0L);
 		//gtk_scrolled_window_set_vadjustment(sw, adj);
-		gtk_text_set_adjustments(tb, 0L, 0L);
+		//gtk_text_view_set_adjustments(tb, 0L, 0L);
 
 		// set tab width
-		tb->default_tab_width = default_tab_width;
+		//tb->default_tab_width = default_tab_width;
 
 		// rename the memory view to point to the scrolled window
 		gtk_object_set_data_full(GTK_OBJECT(debugger_window), 
@@ -421,32 +485,34 @@ setup_debugger_memory_views(void)
 								 sw,	
 								 (GtkDestroyNotify) gtk_widget_unref);
 
-		gtk_object_set_data(GTK_OBJECT(tb), 
+		gtk_object_set_data(GTK_OBJECT(tv),
 							"which",
-							(gpointer)idx);
+							(gpointer)(ptrdiff_t)idx);
 
 		debugger_memory_view_size[idx] = MEMORY_BYTES_PER_ROW * 4;
 
 		// watch for resizes so we can fill the memory view
 		gtk_signal_connect (GTK_OBJECT (v), "size_allocate",
                       GTK_SIGNAL_FUNC (on_debugger_memory_window_size_allocate_event),
-                      (gpointer)tb);
+                      (gpointer)tv);
 
 		gtk_signal_connect (GTK_OBJECT (v), "size_request",
                       GTK_SIGNAL_FUNC (on_debugger_memory_window_size_request_event),
-                      (gpointer)tb);
+                      (gpointer)tv);
 
 		//gtk_widget_show(w);
 		//gtk_container_add(GTK_CONTAINER(win), w);
 
 		idx++;
 	}
+	pango_font_description_free(font_desc);
 }
 
 static void
 update_memory_window(status_item item, Memory *mem)
 {
-	GtkText *tb;
+	GtkTextView *tv;
+	GtkTextBuffer *tb;
 	GtkViewport *v;
 	GtkScrolledWindow *sw;
 	GtkWidget *w;
@@ -471,24 +537,22 @@ update_memory_window(status_item item, Memory *mem)
 	g_return_if_fail(v = GTK_VIEWPORT(w));
 
 	w = GTK_BIN(v)->child;
-	g_return_if_fail(tb = GTK_TEXT(w));
+	g_return_if_fail(tv = GTK_TEXT_VIEW(w));
+	tb = gtk_text_view_get_buffer(tv);
 
-//	adj = gtk_scrolled_window_get_vadjustment(sw);
-//	if (adj)
-//		g_print("adj: %f-%f, %f\n", adj->lower, adj->upper, adj->value);
-
-	width = (int)gtk_object_get_data(GTK_OBJECT(tb), "view_width");
-	height = (int)gtk_object_get_data(GTK_OBJECT(tb), "view_height");
-	which = (int)gtk_object_get_data(GTK_OBJECT(tb), "which");
+	width = (ptrdiff_t)gtk_object_get_data(GTK_OBJECT(tv), "view_width");
+	height = (ptrdiff_t)gtk_object_get_data(GTK_OBJECT(tv), "view_height");
+	which = (ptrdiff_t)gtk_object_get_data(GTK_OBJECT(tv), "which");
 
 	// get style
-	style = gtk_widget_get_style((GtkWidget*)tb);
-
-	// freeze entry
-	gtk_text_freeze(tb);
+	style = gtk_widget_get_style((GtkWidget*)tv);
 	
 	// remove old text
-	gtk_editable_delete_text(GTK_EDITABLE(tb), 0, -1);
+	GtkTextIter istart, iend;
+	gtk_text_buffer_get_start_iter(tb, &istart);
+	gtk_text_buffer_get_end_iter(tb, &iend);
+
+	gtk_text_buffer_delete(tb, &istart, &iend);
 
 	offs = 0;
 
@@ -508,58 +572,30 @@ update_memory_window(status_item item, Memory *mem)
 		}
 
 		// insert normal text
-		gtk_text_insert(tb, 
-						gtk_style_get_font(style),
-						debugger_status_color_fg(STATUS_MEMORY_VIEW, style),
-						debugger_status_color_bg(STATUS_MEMORY_VIEW, style),
-						buffer,
-						start - buffer);
+		append_text(tb, style, STATUS_MEMORY_VIEW, buffer, start - buffer);
 	
 		// insert hex byte update text
 		if (start < end) {
-			gtk_text_insert(tb, 
-							gtk_style_get_font(style),
-							debugger_status_color_fg(item, style),
-							debugger_status_color_bg(item, style),
-							start,
-							end - start);
+			append_text(tb, style, item, start, end - start);
 		}
 
 		// insert normal text
 		if (end < astart) {
-			gtk_text_insert(tb, 
-							gtk_style_get_font(style),
-							debugger_status_color_fg(STATUS_MEMORY_VIEW, style),
-							debugger_status_color_bg(STATUS_MEMORY_VIEW, style),
-							end,
-							astart - end);
+			append_text(tb, style, STATUS_MEMORY_VIEW, end, astart - end);
 		}
 
 		// insert ascii changed text
 		if (astart < aend) {
-			gtk_text_insert(tb, 
-							gtk_style_get_font(style),
-							debugger_status_color_fg(item, style),
-							debugger_status_color_bg(item, style),
-							astart,
-							aend - astart);
+			append_text(tb, style, item, astart, aend - astart);
 		}
 
 		// insert normal ascii text
 		if (aend < buffer + len) {
-			gtk_text_insert(tb, 
-							gtk_style_get_font(style),
-							debugger_status_color_fg(STATUS_MEMORY_VIEW, style),
-							debugger_status_color_bg(STATUS_MEMORY_VIEW, style),
-							aend,
-							buffer + len - aend);
+			append_text(tb, style, STATUS_MEMORY_VIEW, aend, buffer + len - aend);
 		}
 
 		offs += width;
 	}
-
-	// update
-	gtk_text_thaw(tb);
 }
 
 #define INSTRUCTION_BOX_MAX_LENGTH (256*1024)
@@ -567,16 +603,16 @@ update_memory_window(status_item item, Memory *mem)
 static void
 setup_debugger_instruction_box(void)
 {
-	GtkText *tb;
+	GtkTextView *tv;
 	GtkStyle *s;
 	int width, height;
 
 	g_return_if_fail(debugger_instruction_box);
 
-	tb = GTK_TEXT(debugger_instruction_box);
+	tv = GTK_TEXT_VIEW(debugger_instruction_box);
 
-	// set tab width
-	tb->default_tab_width = 4;
+	// set tab width (TODO: PangoTabArray)
+	//tv->default_tab_width = 4;
 
 	// setup base size of text box
 	s = gtk_widget_get_style(debugger_instruction_box);
@@ -594,7 +630,7 @@ setup_debugger_instruction_box(void)
 //	gtk_widget_size_request(debugger_instruction_box, &req);
 
 	// don't wrap lines!
-	gtk_text_set_line_wrap(tb, false);
+	gtk_text_view_set_wrap_mode(tv, GTK_WRAP_NONE);
 }
 
 static void
@@ -605,7 +641,8 @@ update_debugger_instruction(status_item item, bool show_verbose,
 {
 	char buffer[256];
 	GtkStyle *style;
-	GtkText *tb;
+	GtkTextView *tv;
+	GtkTextBuffer *tb;
 	int len, point;
 
 	if (!VALID_WINDOW(debugger_instruction_box))
@@ -614,30 +651,31 @@ update_debugger_instruction(status_item item, bool show_verbose,
 	// only deal with single instructions, ignore their effects
 	if (item == STATUS_CPU_INSTRUCTION)
 	{
-		tb = GTK_TEXT(debugger_instruction_box);
+		tv = GTK_TEXT_VIEW(debugger_instruction_box);
+		tb = gtk_text_view_get_buffer(tv);
 
 		// delete old text
-		len = gtk_text_get_length(tb);
+		len = gtk_text_buffer_get_char_count(tb);
 		if (len > INSTRUCTION_BOX_MAX_LENGTH * 2) {
+			/*
 			gtk_text_freeze(tb);
 			point = gtk_text_get_point(tb);
 			gtk_text_set_point(tb, 0);
 			gtk_text_forward_delete(tb, len - INSTRUCTION_BOX_MAX_LENGTH);
 			gtk_text_set_point(tb, INSTRUCTION_BOX_MAX_LENGTH);
 			gtk_text_thaw(tb);
+			*/
+			GtkTextIter start, end;
+			gtk_text_buffer_get_start_iter(tb, &start);
+			gtk_text_buffer_get_iter_at_offset(tb, &end, len - INSTRUCTION_BOX_MAX_LENGTH);
+			gtk_text_buffer_delete(tb, &start, &end);
 		}
 
 		len = sprintf(buffer, "%s %s %s\n",
 					  hex, inst->name, disasm);
 
 		style = gtk_widget_get_style(debugger_instruction_box);
-		gtk_text_insert(tb,
-						gtk_style_get_font(style),
-						debugger_status_color_fg(item, style),
-						debugger_status_color_bg(item, style),
-						buffer,
-						len);
-		gtk_text_set_point(tb, gtk_text_get_length(tb));
+		append_text_and_scroll(tv, style, item, buffer, len);
 	}
 }
 

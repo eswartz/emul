@@ -63,6 +63,10 @@ GTK_system_debugger_enabled(bool enabled)
 													"debugger_st_entry");
 
 			setup_debugger_registers_table();
+			set_entry_style(debugger_pc_entry, STATUS_CPU_REGISTER_VIEW, gtk_widget_get_style(debugger_window));
+			set_entry_style(debugger_wp_entry, STATUS_CPU_REGISTER_VIEW, gtk_widget_get_style(debugger_window));
+			set_entry_style(debugger_st_entry, STATUS_CPU_REGISTER_VIEW, gtk_widget_get_style(debugger_window));
+
 			setup_debugger_memory_views();
 			setup_debugger_instruction_box();
 		}

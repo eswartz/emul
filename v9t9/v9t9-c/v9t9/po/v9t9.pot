@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-06-26 10:28-0500\n"
+"POT-Creation-Date: 2011-06-26 13:22-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3457,42 +3457,42 @@ msgid "No commands defined\n"
 msgstr ""
 
 #: source/gtkcallbacks.c:262 source/gtkcallbacks.c:523
-#: source/gnomecallbacks.c:229 source/gnomecallbacks.c:490
+#: source/gnomecallbacks.c:233 source/gnomecallbacks.c:494
 #, c-format
 msgid "Button mapped to missing option '%s'\n"
 msgstr ""
 
-#: source/gtkcallbacks.c:320 source/gnomecallbacks.c:287
+#: source/gtkcallbacks.c:320 source/gnomecallbacks.c:291
 #, c-format
 msgid "Text entry mapped to missing option '%s'\n"
 msgstr ""
 
-#: source/gtkcallbacks.c:390 source/gnomecallbacks.c:357
+#: source/gtkcallbacks.c:390 source/gnomecallbacks.c:361
 msgid "Select ROM Filename"
 msgstr ""
 
-#: source/gtkcallbacks.c:590 source/gnomecallbacks.c:557
+#: source/gtkcallbacks.c:590 source/gnomecallbacks.c:561
 #, c-format
 msgid "Could not resolve filename '%s' (%s)\n"
 msgstr ""
 
-#: source/gtkcallbacks.c:658 source/gnomecallbacks.c:625
+#: source/gtkcallbacks.c:658 source/gnomecallbacks.c:629
 msgid "Save Session File"
 msgstr ""
 
-#: source/gtkcallbacks.c:659 source/gnomecallbacks.c:626
+#: source/gtkcallbacks.c:659 source/gnomecallbacks.c:630
 msgid "Load Session File"
 msgstr ""
 
-#: source/gtkcallbacks.c:677 source/gnomecallbacks.c:644
+#: source/gtkcallbacks.c:677 source/gnomecallbacks.c:648
 msgid "Sessions"
 msgstr ""
 
-#: source/gtkcallbacks.c:687 source/gnomecallbacks.c:654
+#: source/gtkcallbacks.c:687 source/gnomecallbacks.c:658
 msgid "Configurations"
 msgstr ""
 
-#: source/gtkcallbacks.c:818 source/gnomecallbacks.c:785
+#: source/gtkcallbacks.c:818 source/gnomecallbacks.c:789
 msgid "Cannot get log_table from dialog\n"
 msgstr ""
 
@@ -4799,7 +4799,7 @@ msgstr ""
 msgid "assertion failed:  %s:%d: %s\n"
 msgstr ""
 
-#: source/gnomecallbacks.c:886
+#: source/gnomecallbacks.c:890
 msgid "ResetComputer\n"
 msgstr ""
 

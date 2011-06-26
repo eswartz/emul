@@ -1436,13 +1436,13 @@ create_debugger_window (void)
 
   g_signal_connect ((gpointer) debugger_wp_entry, "activate",
                     G_CALLBACK (on_debugger_editable_activate),
-                    NULL);
+                    "WorkspacePointer");
   g_signal_connect ((gpointer) debugger_pc_entry, "activate",
                     G_CALLBACK (on_debugger_editable_activate),
-                    NULL);
+                    "ProgramCounter");
   g_signal_connect ((gpointer) debugger_st_entry, "activate",
                     G_CALLBACK (on_debugger_editable_activate),
-                    NULL);
+                    "StatusRegister");
   g_signal_connect ((gpointer) button44, "clicked",
                     G_CALLBACK (on_debugger_close_button_clicked),
                     NULL);
@@ -1466,10 +1466,10 @@ create_debugger_window (void)
                     NULL);
   g_signal_connect ((gpointer) spinbutton1, "realize",
                     G_CALLBACK (on_v9t9_spin_button_realize_value),
-                    NULL);
+                    "GTKDebuggerUpdateRate");
   g_signal_connect ((gpointer) spinbutton1, "changed",
                     G_CALLBACK (on_v9t9_spin_button_changed_value),
-                    NULL);
+                    "GTKDebuggerUpdateRate");
 
   /* Store pointers to all widgets, for use by lookup_widget(). */
   GLADE_HOOKUP_OBJECT_NO_REF (debugger_window, debugger_window, "debugger_window");
