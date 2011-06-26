@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-06-25 21:32-0500\n"
+"POT-Creation-Date: 2011-06-26 10:28-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -167,7 +167,7 @@ msgid "detecting mode %d... "
 msgstr ""
 
 #: source/Modules/Unix/video_svgalib.c:192 source/gtkinterface.c:3243
-#: source/gnomeinterface.c:2681
+#: source/gnomeinterface.c:2683
 msgid "\n"
 msgstr ""
 
@@ -5280,7 +5280,7 @@ msgid "Invalid catalog sort '%d'\n"
 msgstr ""
 
 #: source/gtkinterface.c:31 source/gnomeinterface.c:38
-#: source/gnomeinterface.c:2960
+#: source/gnomeinterface.c:2962
 msgid "V9t9"
 msgstr ""
 
@@ -5780,91 +5780,91 @@ msgstr ""
 msgid "_Select Font..."
 msgstr ""
 
-#: source/gtkinterface.c:3253 source/gnomeinterface.c:2688
+#: source/gtkinterface.c:3253 source/gnomeinterface.c:2690
 msgid "Welcome to V9t9!"
 msgstr ""
 
-#: source/gtkinterface.c:3272 source/gnomeinterface.c:2699
+#: source/gtkinterface.c:3272 source/gnomeinterface.c:2701
 msgid "Reboot"
 msgstr ""
 
-#: source/gtkinterface.c:3279 source/gnomeinterface.c:2703
+#: source/gtkinterface.c:3279 source/gnomeinterface.c:2705
 msgid "Reset emulated 99/4A"
 msgstr ""
 
-#: source/gtkinterface.c:3288 source/gnomeinterface.c:2709
+#: source/gtkinterface.c:3288 source/gnomeinterface.c:2711
 msgid "Pause"
 msgstr ""
 
-#: source/gtkinterface.c:3295 source/gnomeinterface.c:2713
+#: source/gtkinterface.c:3295 source/gnomeinterface.c:2715
 msgid "Pause execution of V9t9"
 msgstr ""
 
-#: source/gtkinterface.c:3304 source/gnomeinterface.c:2719
+#: source/gtkinterface.c:3304 source/gnomeinterface.c:2721
 msgid "Save..."
 msgstr ""
 
-#: source/gtkinterface.c:3311 source/gnomeinterface.c:2723
+#: source/gtkinterface.c:3311 source/gnomeinterface.c:2725
 msgid "Save machine state"
 msgstr ""
 
-#: source/gtkinterface.c:3313 source/gnomeinterface.c:2725
+#: source/gtkinterface.c:3313 source/gnomeinterface.c:2727
 msgid "Load..."
 msgstr ""
 
-#: source/gtkinterface.c:3320 source/gnomeinterface.c:2729
+#: source/gtkinterface.c:3320 source/gnomeinterface.c:2731
 msgid "Load machine state"
 msgstr ""
 
-#: source/gtkinterface.c:3329 source/gnomeinterface.c:2735
+#: source/gtkinterface.c:3329 source/gnomeinterface.c:2737
 msgid "Options..."
 msgstr ""
 
-#: source/gtkinterface.c:3336 source/gnomeinterface.c:2739
+#: source/gtkinterface.c:3336 source/gnomeinterface.c:2741
 msgid "Set basic configuration options"
 msgstr ""
 
-#: source/gtkinterface.c:3338 source/gnomeinterface.c:2741
+#: source/gtkinterface.c:3338 source/gnomeinterface.c:2743
 msgid "Debugger..."
 msgstr ""
 
-#: source/gtkinterface.c:3345 source/gnomeinterface.c:2745
+#: source/gtkinterface.c:3345 source/gnomeinterface.c:2747
 msgid "Control emulated 99/4A and trace execution"
 msgstr ""
 
-#: source/gtkinterface.c:3347 source/gnomeinterface.c:2747
+#: source/gtkinterface.c:3347 source/gnomeinterface.c:2749
 msgid "Modules..."
 msgstr ""
 
-#: source/gtkinterface.c:3354 source/gnomeinterface.c:2751
+#: source/gtkinterface.c:3354 source/gnomeinterface.c:2753
 msgid "Load or unload modules"
 msgstr ""
 
-#: source/gtkinterface.c:3356 source/gnomeinterface.c:2753
+#: source/gtkinterface.c:3356 source/gnomeinterface.c:2755
 msgid "Disks..."
 msgstr ""
 
-#: source/gtkinterface.c:3363 source/gnomeinterface.c:2757
+#: source/gtkinterface.c:3363 source/gnomeinterface.c:2759
 msgid "Assign drives to local directories or files"
 msgstr ""
 
-#: source/gtkinterface.c:3365 source/gnomeinterface.c:2759
+#: source/gtkinterface.c:3365 source/gnomeinterface.c:2761
 msgid "Memory..."
 msgstr ""
 
-#: source/gtkinterface.c:3372 source/gnomeinterface.c:2763
+#: source/gtkinterface.c:3372 source/gnomeinterface.c:2765
 msgid "Assign files to ROM or RAM segments of the memory map"
 msgstr ""
 
-#: source/gtkinterface.c:3374 source/gnomeinterface.c:2765
+#: source/gtkinterface.c:3374 source/gnomeinterface.c:2767
 msgid "Quit"
 msgstr ""
 
-#: source/gtkinterface.c:3382 source/gnomeinterface.c:2770
+#: source/gtkinterface.c:3382 source/gnomeinterface.c:2772
 msgid "Logging..."
 msgstr ""
 
-#: source/gtkinterface.c:3389 source/gnomeinterface.c:2774
+#: source/gtkinterface.c:3389 source/gnomeinterface.c:2776
 msgid "Modify log levels for debugging"
 msgstr ""
 
@@ -6809,31 +6809,31 @@ msgstr ""
 msgid "Setup module gestalt"
 msgstr ""
 
-#: source/gnomeinterface.c:2884
+#: source/gnomeinterface.c:2886
 msgid "_New Session"
 msgstr ""
 
-#: source/gnomeinterface.c:2890
+#: source/gnomeinterface.c:2892
 msgid "_Load Configuration"
 msgstr ""
 
-#: source/gnomeinterface.c:2897
+#: source/gnomeinterface.c:2899
 msgid "Sa_ve Configuration"
 msgstr ""
 
-#: source/gnomeinterface.c:2904
+#: source/gnomeinterface.c:2906
 msgid "Save _Configuration As..."
 msgstr ""
 
-#: source/gnomeinterface.c:2976
+#: source/gnomeinterface.c:2978
 msgid "New File"
 msgstr ""
 
-#: source/gnomeinterface.c:2982
+#: source/gnomeinterface.c:2984
 msgid "Open File"
 msgstr ""
 
-#: source/gnomeinterface.c:2988
+#: source/gnomeinterface.c:2990
 msgid "Save File"
 msgstr ""
 

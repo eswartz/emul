@@ -89,7 +89,7 @@ static History *history_get(History **where)
 
 static void	history_append(History *history, gpointer data)
 {
-	g_list_append(history->lines, data);
+	history->lines = g_list_append(history->lines, data);
 	history->index = g_list_length(history->lines);
 }
 

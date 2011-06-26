@@ -82,7 +82,7 @@ on_module_clist_realize                (GtkWidget       *widget,
 	}
 
 	// Set new model
-	gtk_tree_view_set_model(treeview, store);
+	gtk_tree_view_set_model(treeview, GTK_TREE_MODEL(store));
 
 	// Reselect old selection
 	selection = gtk_tree_view_get_selection(treeview);
@@ -139,14 +139,18 @@ on_module_clist_load_button_clicked    (GtkButton       *button,
 	GtkListStore *store;
 
 	//g_return_if_fail(GTK_IS_TREE_VIEW(treeview = user_data));
-	g_return_if_fail(GTK_IS_TREE_VIEW(treeview = lookup_widget(module_dialog, "module_clist")));
+//	g_return_if_fail(GTK_IS_TREE_VIEW(treeview = GTK_TREE_VIEW(lookup_widget(module_dialog, "module_clist"))));
+	GtkWidget* w = lookup_widget(module_dialog, "module_clist");
+	g_return_if_fail(GTK_IS_TREE_VIEW(w));
+
+	treeview = GTK_TREE_VIEW(w);
 	store = GTK_LIST_STORE(gtk_tree_view_get_model(treeview));
 	selection = gtk_tree_view_get_selection(treeview);
 
 	if (gtk_tree_selection_get_selected(selection, NULL, &iter)) 
 	{
 		ModuleEntry *ent;
-		gtk_tree_model_get(store, &iter, mc_module_entry, &ent, -1);
+		gtk_tree_model_get(GTK_TREE_MODEL(store), &iter, mc_module_entry, &ent, -1);
 		module_load(ent);
 
 		if (!module_reset_toggle ||
@@ -169,7 +173,10 @@ on_module_clist_close_button_clicked  (GtkButton       *button,
 {
 	GtkTreeView *treeview;
 	GtkTreeSelection *selection;
-	g_return_if_fail(GTK_IS_TREE_VIEW(treeview = user_data));
+
+	GtkWidget* w = lookup_widget(module_dialog, "module_clist");
+	g_return_if_fail(GTK_IS_TREE_VIEW(w));
+	treeview = GTK_TREE_VIEW(w);
 	selection = gtk_tree_view_get_selection(treeview);
 
 	// Unselect items
@@ -217,7 +224,7 @@ on_clist_key_press_event               (GtkWidget       *widget,
                                         gpointer         user_data)
 {
 	return FALSE;
-#if 0
+#if 0  // CONVERT
 	GtkTreeView *treeview;
 	gchar *old;
 	char *prefix_name;
@@ -438,11 +445,13 @@ void
 on_modules_refresh_button_clicked      (GtkButton       *button,
                                         gpointer         user_data)
 {
-	g_return_if_fail(GTK_IS_TREE_VIEW(user_data));
+	GtkWidget* w = lookup_widget(module_dialog, "module_clist");
+	g_return_if_fail(GTK_IS_TREE_VIEW(w));
+
 	GTK_send_command("InitModuleDatabase\n"
 					 "LoadConfigFile \"modules.inf\"\n");
-	module_clist_prefix_clear(GTK_WIDGET(user_data));
-	on_module_clist_realize(GTK_WIDGET(user_data), 0L);
+	module_clist_prefix_clear(w);
+	on_module_clist_realize(w, 0L);
 }
 
 void

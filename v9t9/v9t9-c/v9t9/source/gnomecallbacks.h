@@ -7,7 +7,7 @@
  *      Size of TI screen, set by VIDEO(resize)
  */
 extern int GTK_x_size, GTK_y_size;
- 
+
 /*
  *      Size of drawing area (as of last configure_event)
  *      and multiple of x_size and y_size this is

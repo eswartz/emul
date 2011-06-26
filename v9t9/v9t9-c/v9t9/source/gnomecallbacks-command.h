@@ -89,7 +89,7 @@ static History *history_get(History **where)
 
 static void	history_append(History *history, gpointer data)
 {
-	g_list_append(history->lines, data);
+	history->lines = g_list_append(history->lines, data);
 	history->index = g_list_length(history->lines);
 }
 
@@ -366,7 +366,7 @@ on_completions_selection_clicked       (GtkCList         *_list,
 	g_return_if_fail(editable);
 
 	/* what word did the user pick? */
-	row = (gint)clist->selection->data;
+	row = (ptrdiff_t)clist->selection->data;
 	gtk_clist_get_text(clist, row, 0, &selection);
 	g_return_if_fail(selection);
 

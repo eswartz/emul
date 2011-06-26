@@ -355,16 +355,16 @@ create_rom_file_selection (void)
   GtkWidget *cancel_button2;
 
   rom_file_selection = gtk_file_selection_new (_("Select ROM Filename"));
-  gtk_object_set_data( (rom_file_selection), "rom_file_selection", rom_file_selection);
+  gtk_object_set_data( GTK_OBJECT(rom_file_selection), "rom_file_selection", GTK_OBJECT(rom_file_selection));
   gtk_container_set_border_width (GTK_CONTAINER (rom_file_selection), 10);
 
   ok_button2 = GTK_FILE_SELECTION (rom_file_selection)->ok_button;
-  gtk_object_set_data ((rom_file_selection), "ok_button2", ok_button2);
+  gtk_object_set_data (GTK_OBJECT(rom_file_selection), "ok_button2", GTK_OBJECT(ok_button2));
   gtk_widget_show (ok_button2);
   GTK_WIDGET_SET_FLAGS (ok_button2, GTK_CAN_DEFAULT);
 
   cancel_button2 = GTK_FILE_SELECTION (rom_file_selection)->cancel_button;
-  gtk_object_set_data ((rom_file_selection), "cancel_button2", cancel_button2);
+  gtk_object_set_data (GTK_OBJECT(rom_file_selection), "cancel_button2", GTK_OBJECT(cancel_button2));
   gtk_widget_show (cancel_button2);
   GTK_WIDGET_SET_FLAGS (cancel_button2, GTK_CAN_DEFAULT);
 
@@ -378,7 +378,7 @@ static void
 on_rom_file_ok_button_clicked         (GtkButton       *button,
                                         gpointer         user_data)
 {
-	gchar *path;
+	const gchar *path;
 	gchar *copy;
 	GtkEntry *entry;
 	OSSpec spec;
@@ -548,7 +548,7 @@ on_config_file_ok_button_clicked         (GtkButton       *button,
 	const char *path;
 	OSSpec spec;
 	OSError err;
-	bool loading = (gint)user_data == GTK_QUICK_LOAD;
+	bool loading = (ptrdiff_t)user_data == GTK_QUICK_LOAD;
 
 	path = v99_file_selection_get_filename(config_file_dialog);
 	err = OS_MakeFileSpec(path, &spec);
@@ -559,7 +559,7 @@ on_config_file_ok_button_clicked         (GtkButton       *button,
 		return;
 	}
 	
-	if ((gint)user_data == GTK_QUICK_LOAD ? 
+	if ((ptrdiff_t)user_data == GTK_QUICK_LOAD ?
 		config_load_spec(&spec, true /*session*/) :
 		config_save_spec(&spec, true /*session*/)) 
 	{	
@@ -614,14 +614,14 @@ on_v9t9_quick_load_save_button_clicked      (GtkButton       *button,
 {
 	GtkCList *clist;
 	int paused = execution_paused();
-	if ((int)user_data == 0) execution_pause(1);
+	if (!user_data) execution_pause(1);
 
 	if (VALID_WINDOW(config_file_dialog)) {
 		gtk_widget_destroy((GtkWidget *)config_file_dialog);
 	}
 
 	config_file_dialog = V99_FILE_SELECTION(create_disk_file_selection(
-		(gint)user_data == GTK_QUICK_SAVE 
+		(ptrdiff_t)user_data == GTK_QUICK_SAVE
 		? _("Save Session File") 
 		: _("Load Session File")));
 
@@ -660,7 +660,7 @@ on_v9t9_quick_load_save_button_clicked      (GtkButton       *button,
 					   GTK_SIGNAL_FUNC(on_config_file_path_list_select_row),
 					   (gpointer)0L);
 
-	if ((gint)user_data == GTK_QUICK_LOAD)
+	if ((ptrdiff_t)user_data == GTK_QUICK_LOAD)
 		v99_file_selection_complete(config_file_dialog, "*.cnf");
 	else
 		v99_file_selection_complete(config_file_dialog, "quicksave.cnf");
@@ -724,7 +724,7 @@ on_log_spin_button_realize_value      (GtkWidget       *widget,
 	s = GTK_SPIN_BUTTON(widget);
 
 	/* Look up the symbol and set its value */
-	val = log_level((int)user_data);
+	val = log_level((ptrdiff_t)user_data);
 	gtk_spin_button_set_value(s, (gfloat)val);
 }
 
@@ -743,7 +743,7 @@ on_log_spin_button_changed_value      (GtkEditable     *editable,
 	s = GTK_SPIN_BUTTON(editable);
 
 	snprintf(command, sizeof(command), "Log %s %d\n", 
-			 log_name((int)user_data), 
+			 log_name((ptrdiff_t)user_data),
 			 gtk_spin_button_get_value_as_int(s));
 
 	GTK_send_command(command);
@@ -807,26 +807,26 @@ on_logging_log_table_realize           (GtkWidget       *widget,
 		gtk_widget_ref(label);
 		gtk_widget_ref(hbox);
 
-		gtk_object_set_data_full (log_table, "log_spin_button", 
+		gtk_object_set_data_full (GTK_OBJECT(log_table), "log_spin_button",
 								  spin,(GtkDestroyNotify) gtk_widget_unref);
-		gtk_object_set_data_full (log_table, "log_label", 
+		gtk_object_set_data_full (GTK_OBJECT(log_table), "log_label",
 								  label,(GtkDestroyNotify) gtk_widget_unref);
-		gtk_object_set_data_full (log_table, "log_hbox", 
+		gtk_object_set_data_full (GTK_OBJECT(log_table), "log_hbox",
 								  hbox,(GtkDestroyNotify) gtk_widget_unref);
 
 		/* associate subsystem with spin button */
-		gtk_signal_connect_after (spin, "activate",
+		gtk_signal_connect_after (GTK_OBJECT(spin), "activate",
 								  GTK_SIGNAL_FUNC (on_log_spin_button_changed_value),
-								  (gpointer)sys);
-		gtk_signal_connect (spin, "changed",
+								  (gpointer)(ptrdiff_t)sys);
+		gtk_signal_connect (GTK_OBJECT(spin), "changed",
 							GTK_SIGNAL_FUNC (on_log_spin_button_changed_value),
-							  (gpointer)sys);
-		gtk_signal_connect (spin, "realize",
+							  (gpointer)(ptrdiff_t)sys);
+		gtk_signal_connect (GTK_OBJECT(spin), "realize",
 							GTK_SIGNAL_FUNC (on_log_spin_button_realize_value),
-							(gpointer)sys);
-		gtk_signal_connect (spin, "show",
+							(gpointer)(ptrdiff_t)sys);
+		gtk_signal_connect (GTK_OBJECT(spin), "show",
 							GTK_SIGNAL_FUNC (on_log_spin_button_realize_value),
-							(gpointer)sys);
+							(gpointer)(ptrdiff_t)sys);
 
 		gtk_box_pack_start(GTK_BOX(hbox), label, 
 						   TRUE /*expand*/, FALSE /*fill*/, 0 /*padding*/);

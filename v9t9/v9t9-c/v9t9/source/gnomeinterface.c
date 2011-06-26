@@ -150,13 +150,13 @@ create_quit_dialog (void)
 
   g_signal_connect ((gpointer) save_button, "clicked",
                     G_CALLBACK (on_v9t9_button_clicked),
-                    NULL);
+                    "Quit");
   g_signal_connect ((gpointer) die_button, "clicked",
                     G_CALLBACK (on_v9t9_button_clicked),
-                    NULL);
+                    "Die");
   g_signal_connect ((gpointer) cancel_button, "clicked",
                     G_CALLBACK (on_v9t9_button_cancel),
-                    NULL);
+                    quit_dialog);
 
   /* Store pointers to all widgets, for use by lookup_widget(). */
   GLADE_HOOKUP_OBJECT_NO_REF (quit_dialog, quit_dialog, "quit_dialog");
@@ -713,28 +713,28 @@ create_disks_dialog (void)
                     (gpointer *)"DiskDSRFilename");
   g_signal_connect ((gpointer) checkbutton3, "toggled",
                     G_CALLBACK (on_emu_disk_cb_toggled),
-                    NULL);
+                    disk_info_table);
   g_signal_connect ((gpointer) checkbutton3, "realize",
                     G_CALLBACK (on_emu_disk_cb_realize),
-                    NULL);
+                    disk_info_table);
   g_signal_connect ((gpointer) checkbutton3, "toggled",
                     G_CALLBACK (on_v9t9_togglebutton_toggled_widget_enable),
-                    NULL);
+                    fiad_options_vbox);
   g_signal_connect ((gpointer) checkbutton3, "realize",
                     G_CALLBACK (on_v9t9_togglebutton_realize_widget_enable),
-                    NULL);
+                    fiad_options_vbox);
   g_signal_connect ((gpointer) checkbutton4, "toggled",
                     G_CALLBACK (on_real_disk_cb_toggled),
-                    NULL);
+                    disk_info_table);
   g_signal_connect ((gpointer) checkbutton4, "realize",
                     G_CALLBACK (on_real_disk_cb_realize),
-                    NULL);
+                    disk_info_table);
   g_signal_connect ((gpointer) checkbutton4, "toggled",
                     G_CALLBACK (on_v9t9_togglebutton_toggled_widget_enable),
-                    NULL);
+                    doad_options_vbox);
   g_signal_connect ((gpointer) checkbutton4, "realize",
                     G_CALLBACK (on_v9t9_togglebutton_realize_widget_enable),
-                    NULL);
+                    doad_options_vbox);
   g_signal_connect ((gpointer) close_button, "clicked",
                     G_CALLBACK (on_disk_dialog_close_button_clicked),
                     NULL);
@@ -941,7 +941,7 @@ create_modules_dialog (void)
                     NULL);
   g_signal_connect ((gpointer) show_commands_cb, "toggled",
                     G_CALLBACK (on_show_commands_cb_toggled),
-                    NULL);
+                   	   module_clist);
   g_signal_connect ((gpointer) reset_computer_cb, "toggled",
                     G_CALLBACK (on_reset_computer_cb_toggled),
                     NULL);
@@ -1836,103 +1836,103 @@ create_memory_dialog (void)
 
   g_signal_connect ((gpointer) console_rom_entry, "activate",
                     G_CALLBACK (on_v9t9_rom_entry_activate),
-                    NULL);
+                    "ConsoleROMFilename");
   g_signal_connect ((gpointer) console_rom_entry, "realize",
                     G_CALLBACK (on_v9t9_rom_entry_realize),
-                    NULL);
+                    "ConsoleROMFilename");
   g_signal_connect ((gpointer) button35, "clicked",
                     G_CALLBACK (on_v9t9_rom_button_clicked),
-                    NULL);
+                    console_rom_entry);
   g_signal_connect ((gpointer) console_grom_entry, "activate",
                     G_CALLBACK (on_v9t9_rom_entry_activate),
-                    NULL);
+                    "ConsoleGROMFilename");
   g_signal_connect ((gpointer) console_grom_entry, "realize",
                     G_CALLBACK (on_v9t9_rom_entry_realize),
-                    NULL);
+                    "ConsoleGROMFilename");
   g_signal_connect ((gpointer) button36, "clicked",
                     G_CALLBACK (on_v9t9_rom_button_clicked),
-                    NULL);
+                    on_v9t9_rom_button_clicked);
   g_signal_connect ((gpointer) checkbutton11, "toggled",
                     G_CALLBACK (on_v9t9_togglebutton_toggled_command_toggle),
-                    NULL);
+                    "MemoryExpansion32K");
   g_signal_connect ((gpointer) checkbutton11, "realize",
                     G_CALLBACK (on_v9t9_togglebutton_realize_active),
-                    NULL);
+                    "MemoryExpansion32K");
   g_signal_connect ((gpointer) checkbutton10, "toggled",
                     G_CALLBACK (on_v9t9_togglebutton_toggled_command_toggle),
-                    NULL);
+                    "ExtraConsoleRAM");
   g_signal_connect ((gpointer) checkbutton10, "realize",
                     G_CALLBACK (on_v9t9_togglebutton_realize_active),
-                    NULL);
+                    "ExtraConsoleRAM");
   g_signal_connect ((gpointer) checkbutton13, "toggled",
                     G_CALLBACK (on_v9t9_togglebutton_toggled_widget_enable),
-                    NULL);
+                    module_roms_table);
   g_signal_connect ((gpointer) checkbutton13, "realize",
                     G_CALLBACK (on_memory_config_module_rom_button_realize),
-                    NULL);
+                    module_roms_table);
   g_signal_connect ((gpointer) checkbutton13, "toggled",
                     G_CALLBACK (on_memory_config_module_rom_button_clicked),
                     NULL);
   g_signal_connect ((gpointer) module_rom_entry, "activate",
                     G_CALLBACK (on_memory_config_banked_module_deactivate),
-                    NULL);
+                    module_rom1_entry);
   g_signal_connect ((gpointer) module_rom_entry, "realize",
                     G_CALLBACK (on_v9t9_rom_entry_realize),
-                    NULL);
+                    "ModuleROMFilename");
   g_signal_connect ((gpointer) module_rom_entry, "activate",
                     G_CALLBACK (on_memory_config_banked_module_deactivate),
-                    NULL);
+                    module_rom2_entry);
   g_signal_connect ((gpointer) module_rom_entry, "activate",
                     G_CALLBACK (on_v9t9_rom_entry_activate),
-                    NULL);
+                    "ModuleROMFilename");
   g_signal_connect ((gpointer) module_grom_entry, "activate",
                     G_CALLBACK (on_v9t9_rom_entry_activate),
-                    NULL);
+                    "ModuleGROMFilename");
   g_signal_connect ((gpointer) module_grom_entry, "realize",
                     G_CALLBACK (on_v9t9_rom_entry_realize),
-                    NULL);
+                    "ModuleGROMFilename");
   g_signal_connect ((gpointer) button53, "clicked",
                     G_CALLBACK (on_v9t9_rom_button_clicked),
-                    NULL);
+                    module_rom_entry);
   g_signal_connect ((gpointer) button54, "clicked",
                     G_CALLBACK (on_v9t9_rom_button_clicked),
-                    NULL);
+                    module_grom_entry);
   g_signal_connect ((gpointer) module_rom1_entry, "activate",
                     G_CALLBACK (on_module_config_banked_module_activate),
-                    NULL);
+                    module_rom_entry);
   g_signal_connect ((gpointer) module_rom1_entry, "realize",
                     G_CALLBACK (on_v9t9_rom_entry_realize),
-                    NULL);
+                    "ModuleROM1Filename");
   g_signal_connect ((gpointer) module_rom1_entry, "activate",
                     G_CALLBACK (on_v9t9_rom_entry_activate),
-                    NULL);
+                    "ModuleROM1Filename");
   g_signal_connect ((gpointer) button55, "clicked",
                     G_CALLBACK (on_v9t9_rom_button_clicked),
-                    NULL);
+                    module_rom1_entry);
   g_signal_connect ((gpointer) module_rom2_entry, "activate",
                     G_CALLBACK (on_module_config_banked_module_activate),
-                    NULL);
+                    module_rom_entry);
   g_signal_connect ((gpointer) module_rom2_entry, "realize",
                     G_CALLBACK (on_v9t9_rom_entry_realize),
-                    NULL);
+                    "ModuleROM2Filename");
   g_signal_connect ((gpointer) module_rom2_entry, "activate",
                     G_CALLBACK (on_v9t9_rom_entry_activate),
-                    NULL);
+                    "ModuleROM2Filename");
   g_signal_connect ((gpointer) button56, "clicked",
                     G_CALLBACK (on_v9t9_rom_button_clicked),
-                    NULL);
+                    module_rom2_entry);
   g_signal_connect ((gpointer) button58, "clicked",
                     G_CALLBACK (on_v9t9_button_clicked),
-                    NULL);
+                    "PauseComputer off");
   g_signal_connect ((gpointer) button59, "clicked",
                     G_CALLBACK (on_v9t9_button_clicked),
-                    NULL);
+                    "ResetComputer");
   g_signal_connect ((gpointer) button59, "clicked",
                     G_CALLBACK (on_v9t9_button_clicked),
-                    NULL);
+                    "ResetComputer");
   g_signal_connect ((gpointer) button59, "clicked",
                     G_CALLBACK (on_memory_dialog_close_button_clicked),
-                    NULL);
+                    "ResetComputer");
   g_signal_connect ((gpointer) button38, "clicked",
                     G_CALLBACK (on_memory_dialog_close_button_clicked),
                     NULL);
@@ -1941,16 +1941,16 @@ create_memory_dialog (void)
                     NULL);
   g_signal_connect ((gpointer) button57, "clicked",
                     G_CALLBACK (on_v9t9_button_clicked),
-                    NULL);
+                    "UnloadModule");
   g_signal_connect ((gpointer) button47, "clicked",
                     G_CALLBACK (on_v9t9_button_clicked),
-                    NULL);
+                    "SaveMemory");
   g_signal_connect ((gpointer) button95, "clicked",
                     G_CALLBACK (on_v9t9_button_clicked),
-                    NULL);
+                    "LoadMemory");
   g_signal_connect ((gpointer) button45, "clicked",
                     G_CALLBACK (on_v9t9_button_clicked),
-                    NULL);
+                    "DefaultMemoryMap");
 
   gtk_label_set_mnemonic_widget (GTK_LABEL (label30), console_rom_entry);
   gtk_label_set_mnemonic_widget (GTK_LABEL (label31), console_grom_entry);
@@ -2171,109 +2171,109 @@ create_options_dialog (void)
   gtk_widget_show (hseparator5);
   gtk_box_pack_start (GTK_BOX (vbox12), hseparator5, TRUE, TRUE, 0);
 
-  g_signal_connect_swapped ((gpointer) checkbutton15, "toggled",
+  g_signal_connect ((gpointer) checkbutton15, "toggled",
                             G_CALLBACK (on_v9t9_togglebutton_toggled_command_toggle),
-                            GTK_OBJECT ((gpointer)"PlaySound"));
-  g_signal_connect_swapped ((gpointer) checkbutton15, "realize",
+                           ("PlaySound"));
+  g_signal_connect ((gpointer) checkbutton15, "realize",
                             G_CALLBACK (on_v9t9_togglebutton_realize_active),
-                            GTK_OBJECT ((gpointer)"PlaySound"));
-  g_signal_connect_swapped ((gpointer) checkbutton17, "toggled",
+                           ("PlaySound"));
+  g_signal_connect ((gpointer) checkbutton17, "toggled",
                             G_CALLBACK (on_v9t9_togglebutton_toggled_command_toggle),
-                            GTK_OBJECT ((gpointer)"PlaySpeech"));
-  g_signal_connect_swapped ((gpointer) checkbutton17, "realize",
+                           ("PlaySpeech"));
+  g_signal_connect ((gpointer) checkbutton17, "realize",
                             G_CALLBACK (on_v9t9_togglebutton_realize_active),
-                            GTK_OBJECT ((gpointer)"PlaySpeech"));
-  g_signal_connect_swapped ((gpointer) checkbutton14, "toggled",
+                           ("PlaySpeech"));
+  g_signal_connect ((gpointer) checkbutton14, "toggled",
                             G_CALLBACK (on_v9t9_togglebutton_toggled_command_toggle),
-                            GTK_OBJECT ((gpointer)"RealTimeEmulation"));
-  g_signal_connect_swapped ((gpointer) checkbutton14, "realize",
+                           ("RealTimeEmulation"));
+  g_signal_connect ((gpointer) checkbutton14, "realize",
                             G_CALLBACK (on_v9t9_togglebutton_realize_active),
-                            GTK_OBJECT ((gpointer)"RealTimeEmulation"));
-  g_signal_connect_swapped ((gpointer) checkbutton14, "toggled",
+                           ("RealTimeEmulation"));
+  g_signal_connect ((gpointer) checkbutton14, "toggled",
                             G_CALLBACK (on_v9t9_togglebutton_toggled_widget_enable_not),
                             GTK_OBJECT ((gpointer)delay_hbox));
-  g_signal_connect_swapped ((gpointer) checkbutton14, "realize",
+  g_signal_connect ((gpointer) checkbutton14, "realize",
                             G_CALLBACK (on_v9t9_togglebutton_realize_widget_enable_not),
                             GTK_OBJECT ((gpointer)delay_hbox));
-  g_signal_connect_swapped ((gpointer) checkbutton14, "toggled",
+  g_signal_connect ((gpointer) checkbutton14, "toggled",
                             G_CALLBACK (on_v9t9_togglebutton_toggled_widget_enable),
                             GTK_OBJECT ((gpointer)clock_speed_hbox));
-  g_signal_connect_swapped ((gpointer) checkbutton14, "realize",
+  g_signal_connect ((gpointer) checkbutton14, "realize",
                             G_CALLBACK (on_v9t9_togglebutton_realize_widget_enable),
                             GTK_OBJECT ((gpointer)clock_speed_hbox));
   g_signal_connect_data ((gpointer) clock_speed_spin_button, "activate",
                          G_CALLBACK (on_v9t9_spin_button_changed_value),
-                         GTK_OBJECT ((gpointer)"BaseClockHZ"),
-                         NULL, G_CONNECT_AFTER | G_CONNECT_SWAPPED);
-  g_signal_connect_swapped ((gpointer) clock_speed_spin_button, "realize",
+                        ("BaseClockHZ"),
+                         NULL, G_CONNECT_AFTER);
+  g_signal_connect ((gpointer) clock_speed_spin_button, "realize",
                             G_CALLBACK (on_v9t9_spin_button_realize_value),
-                            GTK_OBJECT ((gpointer)"BaseClockHZ"));
+                           ("BaseClockHZ"));
   g_signal_connect ((gpointer) clock_speed_spin_button, "show",
                     G_CALLBACK (on_v9t9_spin_button_realize_value),
-                    NULL);
+                    "BaseClockHZ");
   g_signal_connect_after ((gpointer) clock_speed_spin_button, "changed",
                           G_CALLBACK (on_v9t9_spin_button_changed_value),
-                          NULL);
+                          "BaseClockHZ");
   g_signal_connect ((gpointer) button70, "clicked",
                     G_CALLBACK (on_v9t9_button_clicked),
-                    NULL);
-  g_signal_connect_swapped ((gpointer) button70, "clicked",
+                    "BaseClockHZ 3300000");
+  g_signal_connect ((gpointer) button70, "clicked",
                             G_CALLBACK (on_v9t9_button_clicked_realize_widget),
                             GTK_OBJECT ((gpointer)clock_speed_spin_button));
   g_signal_connect_after ((gpointer) delay_spin_button, "activate",
                           G_CALLBACK (on_v9t9_spin_button_changed_value),
-                          NULL);
+                          "DelayBetweenInstructions");
   g_signal_connect ((gpointer) delay_spin_button, "realize",
                     G_CALLBACK (on_v9t9_spin_button_realize_value),
-                    NULL);
+                    "DelayBetweenInstructions");
   g_signal_connect ((gpointer) delay_spin_button, "show",
                     G_CALLBACK (on_v9t9_spin_button_realize_value),
-                    NULL);
+                    "DelayBetweenInstructions");
   g_signal_connect_after ((gpointer) delay_spin_button, "changed",
                           G_CALLBACK (on_v9t9_spin_button_changed_value),
-                          NULL);
+                          "DelayBetweenInstructions");
   g_signal_connect ((gpointer) button71, "clicked",
                     G_CALLBACK (on_v9t9_button_clicked),
-                    NULL);
+                    "DelayBetweenInstructions 0");
   g_signal_connect ((gpointer) button71, "clicked",
                     G_CALLBACK (on_v9t9_button_clicked_realize_widget),
-                    NULL);
+                    delay_spin_button);
   g_signal_connect_after ((gpointer) video_refresh_spin_button, "activate",
                           G_CALLBACK (on_v9t9_spin_button_changed_value),
-                          NULL);
+                          "VideoUpdateSpeed");
   g_signal_connect ((gpointer) video_refresh_spin_button, "realize",
                     G_CALLBACK (on_v9t9_spin_button_realize_value),
-                    NULL);
+                    "VideoUpdateSpeed");
   g_signal_connect ((gpointer) video_refresh_spin_button, "show",
                     G_CALLBACK (on_v9t9_spin_button_realize_value),
-                    NULL);
+                    "VideoUpdateSpeed");
   g_signal_connect_after ((gpointer) video_refresh_spin_button, "changed",
                           G_CALLBACK (on_v9t9_spin_button_changed_value),
-                          NULL);
+                          "VideoUpdateSpeed");
   g_signal_connect ((gpointer) button72, "clicked",
                     G_CALLBACK (on_v9t9_button_clicked),
-                    NULL);
+                    "VideoUpdateSpeed 30");
   g_signal_connect ((gpointer) button72, "clicked",
                     G_CALLBACK (on_v9t9_button_clicked_realize_widget),
-                    NULL);
+                    video_refresh_spin_button);
   g_signal_connect_after ((gpointer) vdp_interrupt_spin_button, "activate",
                           G_CALLBACK (on_v9t9_spin_button_changed_value),
-                          NULL);
+                          "VDPInterruptRate");
   g_signal_connect ((gpointer) vdp_interrupt_spin_button, "realize",
                     G_CALLBACK (on_v9t9_spin_button_realize_value),
-                    NULL);
+                    "VDPInterruptRate");
   g_signal_connect ((gpointer) vdp_interrupt_spin_button, "show",
                     G_CALLBACK (on_v9t9_spin_button_realize_value),
-                    NULL);
+                    "VDPInterruptRate");
   g_signal_connect_after ((gpointer) vdp_interrupt_spin_button, "changed",
                           G_CALLBACK (on_v9t9_spin_button_changed_value),
-                          NULL);
+                          "VDPInterruptRate");
   g_signal_connect ((gpointer) button73, "clicked",
                     G_CALLBACK (on_v9t9_button_clicked),
-                    NULL);
+                    "VDPInterruptRate 60");
   g_signal_connect ((gpointer) button73, "clicked",
                     G_CALLBACK (on_v9t9_button_clicked_realize_widget),
-                    NULL);
+                    vdp_interrupt_spin_button);
   g_signal_connect ((gpointer) button69, "clicked",
                     G_CALLBACK (on_option_dialog_close_button_clicked),
                     NULL);
@@ -2650,6 +2650,8 @@ create_command_dialog (void)
   command_dialog = gtk_window_new (GTK_WINDOW_TOPLEVEL);
   gtk_window_set_title (GTK_WINDOW (command_dialog), _("Command Central"));
 
+  gtk_widget_set_size_request(command_dialog, 600, 400);
+
   hbox17 = gtk_hbox_new (FALSE, 0);
   gtk_widget_show (hbox17);
   gtk_container_add (GTK_CONTAINER (command_dialog), hbox17);
@@ -2809,7 +2811,7 @@ create_command_dialog (void)
                           NULL);
   g_signal_connect ((gpointer) reboot_button, "clicked",
                     G_CALLBACK (on_v9t9_button_clicked),
-                    NULL);
+                    "ResetComputer");
   g_signal_connect ((gpointer) pause_button, "clicked",
                     G_CALLBACK (on_v9t9_pause_button_clicked),
                     NULL);

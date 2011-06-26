@@ -60,10 +60,18 @@ vdpdrawrow.c vdpdrawrowtext.c:
 
 FORCE:
 
-gtkcallbacks.o: gtkcallbacks.c $(wildcard $(SRC)/gtkcallbacks-*.h)
+gtkcallbacks.$(OBJEXT): gtkcallbacks.c gtkcallbacks.h $(wildcard $(SRC)/gtkcallbacks-*.h)
 
 gtkcallbacks.c: $(TOP)/v9t9.glade
 	-@PERL@ -w $(SRC)/fixgtkcallbacks.pl gtkcallbacks.c
+
+
+gnomecallbacks.$(OBJEXT): gnomecallbacks.c gnomecallbacks.h $(wildcard $(SRC)/gnomecallbacks-*.h)
+
+# can't really regenerate this now
+#gnomecallbacks.c: $(TOP)/v9t9.glade-2
+#	-@PERL@ -w $(SRC)/fixgnomecallbacks.pl gnomecallbacks.c
+
 
 qteloop.$(OBJEXT): qteloop.cc qteloop.h Modules/video_qte.h Modules/keyboard_qte.h 
 

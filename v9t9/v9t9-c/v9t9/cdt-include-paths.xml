@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cdtprojectproperties>
+<section name="org.eclipse.cdt.internal.ui.wizards.settingswizards.IncludePaths">
+<language name="C++ Source File">
+<includepath>/usr/include/glib-2.0</includepath>
+<includepath>/usr/lib/x86_64-linux-gnu/glib-2.0/include</includepath>
+<includepath>/usr/include/pango-1.0</includepath>
+<includepath>/usr/include/freetype2</includepath>
+<includepath>/usr/include/atk-1.0</includepath>
+<includepath>/usr/include/libgnomeui-2.0</includepath>
+<includepath>/usr/include/gtk-2.0</includepath>
+<includepath>/usr/include/gdk-pixbuf-2.0</includepath>
+<includepath>/usr/include/gnome-vfs-2.0</includepath>
+<includepath>/usr/lib/gtk-2.0/include</includepath>
+<includepath>/usr/include/cairo</includepath>
+<includepath>/usr/include/pixman-1</includepath>
+
+</language>
+<language name="C Source File">
+<includepath>/usr/include/glib-2.0</includepath>
+<includepath>/usr/lib/x86_64-linux-gnu/glib-2.0/include</includepath>
+<includepath>/usr/include/pango-1.0</includepath>
+<includepath>/usr/include/freetype2</includepath>
+<includepath>/usr/include/atk-1.0</includepath>
+<includepath>/usr/include/libgnomeui-2.0</includepath>
+<includepath>/usr/include/gtk-2.0</includepath>
+<includepath>/usr/include/gdk-pixbuf-2.0</includepath>
+<includepath>/usr/include/gnome-vfs-2.0</includepath>
+<includepath>/usr/include/gnome-vfs-2.0/include</includepath>
+<includepath>/usr/lib/gtk-2.0/include</includepath>
+<includepath>/usr/include/cairo</includepath>
+<includepath>/usr/include/pixman-1</includepath>
+
+</language>
+<language name="Object File">
+
+</language>
+<language name="Assembly Source File">
+<includepath>/usr/include/glib-2.0</includepath>
+<includepath>/usr/lib/x86_64-linux-gnu/glib-2.0/include</includepath>
+<includepath>/usr/include/pango-1.0</includepath>
+<includepath>/usr/include/freetype2</includepath>
+<includepath>/usr/include/atk-1.0</includepath>
+<includepath>/usr/include/libgnomeui-2.0</includepath>
+<includepath>/usr/include/gtk-2.0</includepath>
+<includepath>/usr/include/gdk-pixbuf-2.0</includepath>
+<includepath>/usr/include/gnome-vfs-2.0</includepath>
+<includepath>/usr/lib/gtk-2.0/include</includepath>
+<includepath>/usr/include/cairo</includepath>
+<includepath>/usr/include/pixman-1</includepath>
+
+</language>
+</section>
+<section name="org.eclipse.cdt.internal.ui.wizards.settingswizards.Macros">
+<language name="C++ Source File">
+
+</language>
+<language name="C Source File">
+
+</language>
+<language name="Object File">
+
+</language>
+<language name="Assembly Source File">
+
+</language>
+</section>
+</cdtprojectproperties>

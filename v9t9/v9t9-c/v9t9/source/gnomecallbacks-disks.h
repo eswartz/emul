@@ -145,7 +145,7 @@ static gchar *disk_file_canonicalize(gchar **searchpath,
 				char *list = (char *)xmalloc((*searchpath ? strlen(*searchpath) : 0) 
 											 + (fptr - path) + 1 + 1);
 				sprintf(list, "%s%c%.*s", *searchpath ? *searchpath : "", 
-						OS_ENVSEP, fptr - path, path);
+						OS_ENVSEP, (int)(fptr - path), path);
 
 				/* can we find it in the revised path? */
 				if (data_find_binary(list, fptr, spec)) {
@@ -228,7 +228,7 @@ on_disk_combo_entry_activate           (GtkEditable     *editable,
 	gchar *copy;
 	OSSpec spec;
 
-	disk = (gint)user_data;
+	disk = (ptrdiff_t)user_data;
 	path = gtk_editable_get_chars(editable, 0, -1);
 
 	copy = disk_file_canonicalize(&diskimagepath,
@@ -398,7 +398,7 @@ void
 on_disk_file_ok_button_clicked         (GtkButton       *button,
                                         gpointer         user_data)
 {
-	gint disk = (gint)user_data;
+	gint disk = (ptrdiff_t)user_data;
 	gboolean dir = dsr_is_emu_disk(disk);
 	const char *path;
 	gchar *copy;
@@ -449,7 +449,7 @@ void
 on_disk_choose_button_clicked          (GtkButton       *button,
                                         gpointer         user_data)
 {
-	gint disk = (gint)user_data;
+	gint disk = (ptrdiff_t)user_data;
 
 	g_return_if_fail(disk >= 1 && disk <= 5);
 
@@ -468,13 +468,13 @@ on_disk_choose_button_clicked          (GtkButton       *button,
 													 NULL);
 			gtk_signal_connect(GTK_OBJECT(disk_file_dialog->file_list),
 							   "click_column",
-							   on_v99_file_selection_file_click_column,
+							   GTK_SIGNAL_FUNC(on_v99_file_selection_file_click_column),
 							   NULL);
 
 			// no, we can't select files as directories
 			v99_file_selection_set_file_list_active(disk_file_dialog, 
 													FALSE);
-			disk_file_dialog->user_data = (gpointer)(disk - 1);
+			disk_file_dialog->user_data = (gpointer)(ptrdiff_t)(disk - 1);
 		}
 	}
 
@@ -516,11 +516,11 @@ on_disk_choose_button_clicked          (GtkButton       *button,
 	gtk_signal_connect(GTK_OBJECT(disk_file_dialog->ok_button), 
 					   "clicked", 
 					   GTK_SIGNAL_FUNC(on_disk_file_ok_button_clicked),
-					   (gpointer)disk);
+					   (gpointer)(ptrdiff_t)disk);
 	gtk_signal_connect(GTK_OBJECT(disk_file_dialog->cancel_button), 
 					   "clicked", 
 					   GTK_SIGNAL_FUNC(on_disk_file_cancel_button_clicked),
-					   (gpointer)disk);
+					   (gpointer)(ptrdiff_t)disk);
 }
 
 /*
