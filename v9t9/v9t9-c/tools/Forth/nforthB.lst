@@ -16,13 +16,852 @@ sym:009E:(first)
 sym:00A2:(limit)
 
 sym:00A6:(up0)
-Minimal Minimal Target     Target <5> 0 10000 -1 F00C 2ABDFBBDF648 
+Minimal Minimal Target     Target Minimal Minimal Target     Target 
+sym:00B2:#cell
+
+sym:00BE:#char
+
+sym:00C6:0
+
+sym:00CE:1
+
+sym:00D6:2
+
+sym:00E0:-1
+
+sym:00EA:-2
+
+sym:00F6:noop
+>007E = 00 00 00 00 00 00 00 00 ........
+>0086 = 06 98 DC 00 06 98 E0 00 ........
+>008E = 06 98 E0 00 06 98 E2 00 ........
+>0096 = 06 98 E2 00 06 98 E3 00 ........
+>009E = 06 98 E4 00 06 98 F0 0C ........
+>00A6 = 06 98 F0 0C 00 00 85 23 .......#
+>00AE = 63 65 6C 6C 06 98 00 02 cell....
+>00B6 = 00 AA 85 23 63 68 61 72 ...#char
+>00BE = 06 98 00 01 00 B6 81 30 .......0
+>00C6 = 06 98 00 00 00 C2 81 31 .......1
+>00CE = 06 98 00 01 00 CA 81 32 .......2
+>00D6 = 06 98 00 02 00 D2 82 2D .......-
+>00DE = 31 20 06 98 FF FF 00 DA 1 ......
+>00E6 = 82 2D 32 20 06 98 FF FE .-2 ....
+>00EE = 00 E4 84 6E 6F 6F 70 20 ...noop 
+
+Assembling at @>F6 
+
+>00F6=>10FF JMP   >00F6
+
+
+sym:0100:(dbg)
+>00F8 = 00 EE 85 28 64 62 67 29 ...(dbg)
+
+Assembling at @>100 
+
+>0100=>0DE0 DBG   
+>0102=>0456 B     *R6
+
+
+sym:010C:ticks
+>0104 = 00 F8 85 74 69 63 6B 73 ...ticks
+
+Assembling at @>10C 
+
+>010C=>064F DECT  R15
+>010E=>C7C1 MOV   R1,*R15
+>0110=>0D62 KYSL  
+>0112=>C043 MOV   R3,R1
+>0114=>064F DECT  R15
+>0116=>C7C1 MOV   R1,*R15
+>0118=>C042 MOV   R2,R1
+>011A=>0456 B     *R6
+
+
+sym:0122:lit
+>011C = 01 04 83 6C 69 74       ...lit
+
+Assembling at @>122 
+
+>0122=>064F DECT  R15
+>0124=>C7C1 MOV   R1,*R15
+>0126=>C07D MOV   *R13+,R1
+>0128=>10E6 JMP   >00F6
+
+
+sym:0132:(s")
+>012A = 01 1C 84 28 73 22 29 20 ...(s") 
+
+Assembling at @>132 
+
+>0132=>064F DECT  R15
+>0134=>C7C1 MOV   R1,*R15
+>0136=>D0BD MOVB  *R13+,R2
+>0138=>0982 SRL   R2,>8
+>013A=>C04D MOV   R13,R1
+>013C=>064F DECT  R15
+>013E=>C7C1 MOV   R1,*R15
+>0140=>A342 A     R2,R13
+>0142=>C042 MOV   R2,R1
+>0144=>058D INC   R13
+>0146=>024D ANDI  R13,>FFFE
+>014A=>0456 B     *R6
+
+
+sym:0152:>R
+>014C = 01 2A 82 3E 52 20       .*.>R 
+
+Assembling at @>152 
+
+>0152=>064E DECT  R14
+>0154=>C781 MOV   R1,*R14
+>0156=>C07F MOV   *R15+,R1
+>0158=>10E7 JMP   >0128
+
+
+sym:0160:R>
+>015A = 01 4C 82 52 3E 20       .L.R> 
+
+Assembling at @>160 
+
+>0160=>064F DECT  R15
+>0162=>C7C1 MOV   R1,*R15
+>0164=>C07E MOV   *R14+,R1
+>0166=>10F8 JMP   >0158
+
+
+sym:016C:@
+>0168 = 01 5A 81 40             .Z.@
+
+Assembling at @>16C 
+
+>016C=>C051 MOV   *R1,R1
+>016E=>10FB JMP   >0166
+
+
+sym:0176:C@
+>0170 = 01 68 82 43 40 20       .h.C@ 
+
+Assembling at @>176 
+
+>0176=>D051 MOVB  *R1,R1
+>0178=>0981 SRL   R1,>8
+>017A=>10F9 JMP   >016E
+
+
+sym:0182:R@
+>017C = 01 70 82 52 40 20       .p.R@ 
+
+Assembling at @>182 
+
+>0182=>064F DECT  R15
+>0184=>C7C1 MOV   R1,*R15
+>0186=>C05E MOV   *R14,R1
+>0188=>10F8 JMP   >017A
+
+
+sym:0192:RDROP
+>018A = 01 7C 85 52 44 52 4F 50 .|.RDROP
+
+Assembling at @>192 
+
+>0192=>05CE INCT  R14
+>0194=>10F9 JMP   >0188
+
+
+sym:0196::dodoes
+
+deferred word ca>native is uninitialized
+Assembling at @>196 
+
+>0196=>064F DECT  R15
+>0198=>C7C1 MOV   R1,*R15
+>019A=>C03B MOV   *R11+,R0
+>019C=>C04B MOV   R11,R1
+>019E=>0450 B     *R0
+
+
+sym:01A6:;S
+>01A0 = 01 8A 82 3B 53 20       ...;S 
+
+Assembling at @>1A6 
+
+>01A6=>C37E MOV   *R14+,R13
+>01A8=>10F5 JMP   >0194
+
+
+sym:01B4::docol
+>01AA = 01 A0 86 3A 64 6F 63 6F ...:doco
+>01B2 = 6C 20                   l 
+
+Assembling at @>1B4 
+
+>01B4=>064E DECT  R14
+>01B6=>C78D MOV   R13,*R14
+>01B8=>C34B MOV   R11,R13
+
+
+sym:01BA:@Next
+
+deferred word ca>native is uninitialized
+Assembling at @>1BA 
+
+
+
+sym:01BA:ExEntry
+
+deferred word ca>native is uninitialized
+Assembling at @>1BA 
+Label 9 = @>01BA
+
+>01BA=>C03D MOV   *R13+,R0
+>01BC=>0450 B     *R0
+
+
+sym:01BE::dodefer
+
+deferred word ca>native is uninitialized
+Assembling at @>1BE 
+
+>01BE=>C03B MOV   *R11+,R0
+>01C0=>0450 B     *R0
+
+
+sym:01C2::dordefer
+
+deferred word ca>native is uninitialized
+Assembling at @>1C2 
+
+>01C2=>C03B MOV   *R11+,R0
+>01C4=>C010 MOV   *R0,R0
+>01C6=>0450 B     *R0
+
+
+sym:01D2::dovar
+>01C8 = 01 AA 86 3A 64 6F 76 61 ...:dova
+>01D0 = 72 20                   r 
+
+Assembling at @>1D2 
+
+>01D2=>0456 B     *R6
+
+
+sym:01DE::docon
+>01D4 = 01 C8 86 3A 64 6F 63 6F ...:doco
+>01DC = 6E 20                   n 
+
+Assembling at @>1DE 
+
+>01DE=>064F DECT  R15
+>01E0=>C7C1 MOV   R1,*R15
+>01E2=>C05B MOV   *R11,R1
+>01E4=>10EA JMP   >01BA
+
+
+sym:01EE:(IS)
+>01E6 = 01 D4 84 28 49 53 29 20 ...(IS) 
+
+Assembling at @>1EE 
+Label 0 = @>01F8
+Label 1 = @>01FA
+
+>01EE=>C081 MOV   R1,R2
+>01F0=>05C2 INCT  R2
+>01F2=>0281 CI    R1,>4000
+>01F6=>1401 JHE   >01FA
+>01F8=>C092 MOV   *R2,R2
+>01FA=>C07F MOV   *R15+,R1
+>01FC=>C481 MOV   R1,*R2
+>01FE=>C07F MOV   *R15+,R1
+>0200=>0456 B     *R6
+
+
+sym:020A:(IS?)
+>0202 = 01 E6 85 28 49 53 3F 29 ...(IS?)
+
+Assembling at @>20A 
+Label 0 = @>0214
+Label 1 = @>0216
+
+>020A=>C081 MOV   R1,R2
+>020C=>05C2 INCT  R2
+>020E=>0281 CI    R1,>4000
+>0212=>1401 JHE   >0216
+>0214=>C092 MOV   *R2,R2
+>0216=>C052 MOV   *R2,R1
+>0218=>0456 B     *R6
+
+
+sym:0224::douser
+>021A = 02 02 87 3A 64 6F 75 73 ...:dous
+>0222 = 65 72                   er
+
+Assembling at @>224 
+
+>0224=>C051 MOV   *R1,R1
+>0226=>0456 B     *R6
+
+
+sym:0232:branch
+>0228 = 02 1A 86 62 72 61 6E 63 ...branc
+>0230 = 68 20                   h 
+
+Assembling at @>232 
+
+>0232=>A35D A     *R13,R13
+>0234=>10C2 JMP   >01BA
+
+
+sym:0240:?branch
+>0236 = 02 28 87 3F 62 72 61 6E .(.?bran
+>023E = 63 68                   ch
+
+Assembling at @>240 
+Label 2 = @>024A
+
+>0240=>C041 MOV   R1,R1
+>0242=>1603 JNE   >024A
+>0244=>C07F MOV   *R15+,R1
+>0246=>A35D A     *R13,R13
+>0248=>10B8 JMP   >01BA
+>024A=>05CD INCT  R13
+>024C=>C07F MOV   *R15+,R1
+>024E=>10B5 JMP   >01BA
+
+
+sym:0256:DUP
+>0250 = 02 36 83 44 55 50       .6.DUP
+
+Assembling at @>256 
+
+>0256=>064F DECT  R15
+>0258=>C7C1 MOV   R1,*R15
+>025A=>10AF JMP   >01BA
+
+
+sym:0264:DROP
+>025C = 02 50 84 44 52 4F 50 20 .P.DROP 
+
+Assembling at @>264 
+
+>0264=>C07F MOV   *R15+,R1
+>0266=>10A9 JMP   >01BA
+
+
+sym:0270:SWAP
+>0268 = 02 5C 84 53 57 41 50 20 .\.SWAP 
+
+Assembling at @>270 
+
+>0270=>C081 MOV   R1,R2
+>0272=>C05F MOV   *R15,R1
+>0274=>C7C2 MOV   R2,*R15
+>0276=>10A1 JMP   >01BA
+
+
+sym:027E:1+
+>0278 = 02 68 82 31 2B 20       .h.1+ 
+
+Assembling at @>27E 
+
+>027E=>0581 INC   R1
+>0280=>109C JMP   >01BA
+
+
+sym:0288:+!
+>0282 = 02 78 82 2B 21 20       .x.+! 
+
+Assembling at @>288 
+
+>0288=>A47F A     *R15+,*R1
+>028A=>C07F MOV   *R15+,R1
+>028C=>1096 JMP   >01BA
+
+
+sym:0296:2DUP
+>028E = 02 82 84 32 44 55 50 20 ...2DUP 
+
+Assembling at @>296 
+
+>0296=>064F DECT  R15
+>0298=>C7C1 MOV   R1,*R15
+>029A=>064F DECT  R15
+>029C=>C7EF MOV   @>0004(R15),*R15
+>02A0=>0456 B     *R6
+
+
+sym:02AA:?DUP
+>02A2 = 02 8E 84 3F 44 55 50 20 ...?DUP 
+
+Assembling at @>2AA 
+Label 0 = @>02B2
+
+>02AA=>C041 MOV   R1,R1
+>02AC=>1302 JEQ   >02B2
+>02AE=>064F DECT  R15
+>02B0=>C7C1 MOV   R1,*R15
+>02B2=>0456 B     *R6
+
+
+sym:02BC:2DROP
+>02B4 = 02 A2 85 32 44 52 4F 50 ...2DROP
+
+Assembling at @>2BC 
+
+>02BC=>05CF INCT  R15
+>02BE=>C07F MOV   *R15+,R1
+>02C0=>0456 B     *R6
+
+
+sym:02CA:2SWAP
+>02C2 = 02 B4 85 32 53 57 41 50 ...2SWAP
+
+Assembling at @>2CA 
+
+>02CA=>C081 MOV   R1,R2
+>02CC=>C06F MOV   @>0002(R15),R1
+>02D0=>CBC2 MOV   R2,@>0002(R15)
+>02D4=>C09F MOV   *R15,R2
+>02D6=>C7EF MOV   @>0004(R15),*R15
+>02DA=>CBC2 MOV   R2,@>0004(R15)
+>02DE=>0456 B     *R6
+
+
+sym:02E8:OVER
+>02E0 = 02 C2 84 4F 56 45 52 20 ...OVER 
+
+Assembling at @>2E8 
+
+>02E8=>064F DECT  R15
+>02EA=>C7C1 MOV   R1,*R15
+>02EC=>C06F MOV   @>0002(R15),R1
+>02F0=>0456 B     *R6
+
+
+sym:02FA:2OVER
+>02F2 = 02 E0 85 32 4F 56 45 52 ...2OVER
+
+Assembling at @>2FA 
+
+>02FA=>064F DECT  R15
+>02FC=>C7C1 MOV   R1,*R15
+>02FE=>C06F MOV   @>0006(R15),R1
+>0302=>064F DECT  R15
+>0304=>C7C1 MOV   R1,*R15
+>0306=>C06F MOV   @>0006(R15),R1
+>030A=>0456 B     *R6
+
+
+sym:0312:ROT
+>030C = 02 F2 83 52 4F 54       ...ROT
+
+Assembling at @>312 
+
+>0312=>C0AF MOV   @>0002(R15),R2
+>0316=>CBDF MOV   *R15,@>0002(R15)
+>031A=>C7C1 MOV   R1,*R15
+>031C=>C042 MOV   R2,R1
+>031E=>0456 B     *R6
+
+
+sym:0326:NIP
+>0320 = 03 0C 83 4E 49 50       ...NIP
+
+Assembling at @>326 
+
+>0326=>05CF INCT  R15
+>0328=>0456 B     *R6
+
+
+sym:0332:PICK
+>032A = 03 20 84 50 49 43 4B 20 . .PICK 
+
+Assembling at @>332 
+
+>0332=>A041 A     R1,R1
+>0334=>A04F A     R15,R1
+>0336=>C051 MOV   *R1,R1
+>0338=>0456 B     *R6
+
+
+sym:0340:2>R
+>033A = 03 2A 83 32 3E 52       .*.2>R
+
+Assembling at @>340 
+
+>0340=>022E AI    R14,>FFFC
+>0344=>C781 MOV   R1,*R14
+>0346=>CBBF MOV   *R15+,@>0002(R14)
+>034A=>C07F MOV   *R15+,R1
+>034C=>0456 B     *R6
+
+
+sym:0354:2R>
+>034E = 03 3A 83 32 52 3E       .:.2R>
+
+Assembling at @>354 
+
+>0354=>064F DECT  R15
+>0356=>C7C1 MOV   R1,*R15
+>0358=>C06E MOV   @>0002(R14),R1
+>035C=>064F DECT  R15
+>035E=>C7C1 MOV   R1,*R15
+>0360=>C07E MOV   *R14+,R1
+>0362=>05CE INCT  R14
+>0364=>0456 B     *R6
+
+
+sym:036C:2R@
+>0366 = 03 4E 83 32 52 40       .N.2R@
+
+Assembling at @>36C 
+
+>036C=>064F DECT  R15
+>036E=>C7C1 MOV   R1,*R15
+>0370=>C06E MOV   @>0002(R14),R1
+>0374=>064F DECT  R15
+>0376=>C7C1 MOV   R1,*R15
+>0378=>C05E MOV   *R14,R1
+>037A=>0456 B     *R6
+
+
+sym:0386:2RDROP
+>037C = 03 66 86 32 52 44 52 4F .f.2RDRO
+>0384 = 50 20                   P 
+
+Assembling at @>386 
+
+>0386=>022E AI    R14,>0004
+>038A=>0456 B     *R6
+
+
+sym:038C:shifter
+
+deferred word ca>native is uninitialized
+Assembling at @>38C 
+Label 0 = @>038C
+
+>038C=>C001 MOV   R1,R0
+>038E=>C07F MOV   *R15+,R1
+>0390=>0482 X     R2
+>0392=>0456 B     *R6
+
+
+sym:039E:RSHIFT
+>0394 = 03 7C 86 52 53 48 49 46 .|.RSHIF
+>039C = 54 20                   T 
+
+Assembling at @>39E 
+
+>039E=>0202 LI    R2,>0801
+>03A2=>10F4 JMP   >038C
+
+
+sym:03AE:LSHIFT
+>03A4 = 03 94 86 4C 53 48 49 46 ...LSHIF
+>03AC = 54 20                   T 
+
+Assembling at @>3AE 
+
+>03AE=>0202 LI    R2,>0A01
+>03B2=>10EC JMP   >038C
+
+
+sym:03BE:urshift
+>03B4 = 03 A4 87 75 72 73 68 69 ...urshi
+>03BC = 66 74                   ft
+
+Assembling at @>3BE 
+
+>03BE=>0202 LI    R2,>0901
+>03C2=>10E4 JMP   >038C
+
+
+sym:03CE:cshift
+>03C4 = 03 B4 86 63 73 68 69 66 ...cshif
+>03CC = 74 20                   t 
+
+Assembling at @>3CE 
+
+>03CE=>0202 LI    R2,>0B01
+>03D2=>10DC JMP   >038C
+
+
+sym:03DA:UM*
+>03D4 = 03 C4 83 55 4D 2A       ...UM*
+
+Assembling at @>3DA 
+
+>03DA=>C081 MOV   R1,R2
+>03DC=>389F MPY   *R15,>2
+>03DE=>C7C3 MOV   R3,*R15
+>03E0=>C042 MOV   R2,R1
+>03E2=>0456 B     *R6
+
+
+sym:03EA:AND
+>03E4 = 03 D4 83 41 4E 44       ...AND
+
+Assembling at @>3EA 
+
+>03EA=>0541 INV   R1
+>03EC=>47C1 SZC   R1,*R15
+>03EE=>C07F MOV   *R15+,R1
+>03F0=>0456 B     *R6
+
+
+sym:03F8:OR
+>03F2 = 03 E4 82 4F 52 20       ...OR 
+
+Assembling at @>3F8 
+
+>03F8=>E07F SOC   *R15+,R1
+>03FA=>0456 B     *R6
+
+
+sym:0402:XOR
+>03FC = 03 F2 83 58 4F 52       ...XOR
+
+Assembling at @>402 
+
+>0402=>287F XOR   *R15+,>1
+>0404=>0456 B     *R6
+
+
+sym:0410:EXECUTE
+>0406 = 03 FC 87 45 58 45 43 55 ...EXECU
+>040E = 54 45                   TE
+
+Assembling at @>410 
+
+>0410=>C001 MOV   R1,R0
+>0412=>C07F MOV   *R15+,R1
+>0414=>0450 B     *R0
+
+
+sym:041E:(of)
+>0416 = 04 06 84 28 6F 66 29 20 ...(of) 
+
+Assembling at @>41E 
+Label 1 = @>042C
+
+>041E=>C081 MOV   R1,R2
+>0420=>C07F MOV   *R15+,R1
+>0422=>8081 C     R1,R2
+>0424=>1603 JNE   >042C
+>0426=>C07F MOV   *R15+,R1
+>0428=>05CD INCT  R13
+>042A=>0456 B     *R6
+>042C=>A35D A     *R13,R13
+>042E=>0456 B     *R6
+
+
+sym:043A:(loop)
+>0430 = 04 16 86 28 6C 6F 6F 70 ...(loop
+>0438 = 29 20                   ) 
+
+Assembling at @>43A 
+Label 1 = @>0446
+
+>043A=>059E INC   *R14
+>043C=>8B9E C     *R14,@>0002(R14)
+>0440=>1602 JNE   >0446
+>0442=>05CD INCT  R13
+>0444=>0456 B     *R6
+>0446=>A35D A     *R13,R13
+>0448=>0456 B     *R6
+
+
+sym:0454:(+loop)
+>044A = 04 30 87 28 2B 6C 6F 6F .0.(+loo
+>0452 = 70 29                   p)
+
+Assembling at @>454 
+Label 0 = @>046A
+
+>0454=>C0AE MOV   @>0002(R14),R2
+>0458=>C0C2 MOV   R2,R3
+>045A=>609E S     *R14,R2
+>045C=>A781 A     R1,*R14
+>045E=>60DE S     *R14,R3
+>0460=>C07F MOV   *R15+,R1
+>0462=>2883 XOR   R3,>2
+>0464=>1102 JLT   >046A
+>0466=>A35D A     *R13,R13
+>0468=>0456 B     *R6
+>046A=>05CD INCT  R13
+>046C=>0456 B     *R6
+
+
+sym:0476:(do)
+>046E = 04 4A 84 28 64 6F 29 20 .J.(do) 
+
+Assembling at @>476 
+
+>0476=>022E AI    R14,>FFFC
+>047A=>C781 MOV   R1,*R14
+>047C=>CBBF MOV   *R15+,@>0002(R14)
+>0480=>C07F MOV   *R15+,R1
+>0482=>0456 B     *R6
+
+
+sym:048C:(?do)
+>0484 = 04 6E 85 28 3F 64 6F 29 .n.(?do)
+
+Assembling at @>48C 
+Label 1 = @>04A2
+
+>048C=>022E AI    R14,>FFFC
+>0490=>C081 MOV   R1,R2
+>0492=>C782 MOV   R2,*R14
+>0494=>CB9F MOV   *R15,@>0002(R14)
+>0498=>60BF S     *R15+,R2
+>049A=>1603 JNE   >04A2
+>049C=>A35D A     *R13,R13
+>049E=>C07F MOV   *R15+,R1
+>04A0=>0456 B     *R6
+>04A2=>05CD INCT  R13
+>04A4=>C07F MOV   *R15+,R1
+>04A6=>0456 B     *R6
+
+
+sym:04B2:UNLOOP
+>04A8 = 04 84 86 55 4E 4C 4F 4F ...UNLOO
+>04B0 = 50 20                   P 
+
+Assembling at @>4B2 
+
+>04B2=>022E AI    R14,>0004
+>04B6=>0456 B     *R6
+
+
+sym:04BC:I
+>04B8 = 04 A8 81 49             ...I
+
+Assembling at @>4BC 
+
+>04BC=>064F DECT  R15
+>04BE=>C7C1 MOV   R1,*R15
+>04C0=>C05E MOV   *R14,R1
+>04C2=>0456 B     *R6
+
+
+sym:04C8:J
+>04C4 = 04 B8 81 4A             ...J
+
+Assembling at @>4C8 
+
+>04C8=>064F DECT  R15
+>04CA=>C7C1 MOV   R1,*R15
+>04CC=>C06E MOV   @>0004(R14),R1
+>04D0=>0456 B     *R6
+
+
+sym:04DA:RPICK
+>04D2 = 04 C4 85 52 50 49 43 4B ...RPICK
+
+Assembling at @>4DA 
+Label 0 = @>04E0
+
+>04DA=>C081 MOV   R1,R2
+>04DC=>A082 A     R2,R2
+>04DE=>C07F MOV   *R15+,R1
+>04E0=>064F DECT  R15
+>04E2=>C7C1 MOV   R1,*R15
+>04E4=>A08E A     R14,R2
+>04E6=>C052 MOV   *R2,R1
+>04E8=>0456 B     *R6
+
+
+sym:04F0:i'
+>04EA = 04 D2 82 69 27 20       ...i' 
+
+Assembling at @>4F0 
+
+>04F0=>0202 LI    R2,>0002
+>04F4=>10F5 JMP   >04E0
+
+
+sym:04FC:j'
+>04F6 = 04 EA 82 6A 27 20       ...j' 
+
+Assembling at @>4FC 
+
+>04FC=>0202 LI    R2,>0006
+>0500=>10EF JMP   >04E0
+
+
+sym:0506:k
+>0502 = 04 F6 81 6B             ...k
+
+Assembling at @>506 
+
+>0506=>0202 LI    R2,>0008
+>050A=>10EA JMP   >04E0
+
+
+sym:0514:DIGIT
+>050C = 05 02 85 44 49 47 49 54 ...DIGIT
+
+Assembling at @>514 
+Label 3 = @>0534
+Label 4 = @>0538
+Label 0 = @>053C
+Label 1 = @>0548
+
+>0514=>C0BF MOV   *R15+,R2
+>0516=>0281 CI    R1,>0061
+>051A=>140C JHE   >0534
+>051C=>0281 CI    R1,>0041
+>0520=>140B JHE   >0538
+>0522=>0281 CI    R1,>003A
+>0526=>1410 JHE   >0548
+>0528=>0281 CI    R1,>0030
+>052C=>1A0D JL    >0548
+>052E=>0221 AI    R1,>FFD0
+>0532=>1004 JMP   >053C
+>0534=>0221 AI    R1,>FFE0
+>0538=>0221 AI    R1,>FFC9
+>053C=>8081 C     R1,R2
+>053E=>1404 JHE   >0548
+>0540=>064F DECT  R15
+>0542=>C7C1 MOV   R1,*R15
+>0544=>0701 SETO  R1
+>0546=>0456 B     *R6
+>0548=>04C1 CLR   R1
+>054A=>0456 B     *R6
+
+
+sym:0554:m\/mod
+>054C = 05 0C 85 6D 2F 6D 6F 64 ...m/mod
+
+Assembling at @>554 
+
+>0554=>C101 MOV   R1,R4
+>0556=>C0DF MOV   *R15,R3
+>0558=>04C2 CLR   R2
+>055A=>3C84 DIV   R4,>2
+>055C=>C042 MOV   R2,R1
+>055E=>C083 MOV   R3,R2
+>0560=>C0EF MOV   @>0002(R15),R3
+>0564=>3C84 DIV   R4,>2
+>0566=>CBC3 MOV   R3,@>0002(R15)
+>056A=>C7C2 MOV   R2,*R15
+>056C=>0456 B     *R6
+
+
+sym:0578:(find)
+doer,
+
 in file included from *OS command line*:-1
 in file included from 99build.fs:716
-99kernel.fs:20: Invalid memory address
-(up0) tup .s >>>!<<<   \ even if we don't have USER variables, this will be used for other stuff we want in RAM
+in file included from 99kernel.fs:24
+99prims.fs:693: Invalid memory address
+DeferROM (find)      ( c-addr lfa -- c-addr 0 | nfa 1 )>>> <<<
 Backtrace:
-$2ABDFBBD6238 c! 
-$2ABDFD346FF9 
-$2ABDFD346FF8 
-$2ABDFBBD6AB8 S! 
+$2B6C6701A350 c@ 
+$2B6C68969028 
+$2B6C6896902A 
+$2B6C6701AA68 S@ 
+$2B6C67033128 @ 
+$2B6C67016988 execute 
+$2B6C6701DD28 execute 

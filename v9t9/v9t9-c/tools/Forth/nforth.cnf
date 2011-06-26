@@ -3,9 +3,9 @@ log all off
 
 .print InstallDir()
 ROMSPath=".:" + InstallDir()+"forth/roms:" + InstallDir()+"dsrs:" + \
-		"../Forth:" + "../DSRs:."
+		"../../build/forth:" + "../../build/dsrs:."
 
-ModulesPath=".:" + InstallDir()+"forth/roms:" + InstallDir()+"tools/Forth:."
+ModulesPath=".:" + InstallDir()+"forth/roms:" + InstallDir()+"tools/Forth:" + "../../build/forth:."
 SessionsPath="."
 
 #DefineMemory "RG" 0x0 -24576 "nforth.grm" 0 "Console GROM" 
@@ -36,5 +36,5 @@ UnknownFileIsText on
 InitModuleDatabase
 DefineModule "FORT" "Forth dictionary" "nforth" ROM+GROM
 
-DSK1Path "./lib"
+DSK1Path "../tools/Forth/lib"
 LoadModule "forth"

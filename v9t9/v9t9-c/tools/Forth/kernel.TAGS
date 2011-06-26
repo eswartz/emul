@@ -1,0 +1,71 @@
+
+99prims.fs,0
+2 constant #cell #cell 23,0
+1 constant #char #char 24,0
+0   constant 0 0 26,0
+1   constant 1 1 27,0
+2   constant 2 2 28,0
+-1  constant -1 -1 30,0
+-2  constant -2 -2 31,0
+Code noop noop 78,0
+Code (dbg) (dbg) 83,0
+Code ticks ticks 89,0
+code lit lit 99,0
+Code (s") (s") 106,0
+Code >R >R 123,0
+Code R> R> 130,0
+Code @ @ 136,0
+Code C@ C@ 141,0
+Code R@ R@ 147,0
+Code RDROP RDROP 153,0
+Code ;S ;S 171,0
+code :docol  :docol 180,0
+Code :dovar :dovar 222,0
+Code :docon :docon 227,0
+Code  (IS) (IS) 241,0
+Code  (IS?)  (IS?) 268,0
+Code :douser :douser 296,0
+Code branch branch 314,0
+Code ?branch ?branch 319,0
+Code DUP DUP 337,0
+Code DROP DROP 342,0
+Code SWAP SWAP 347,0
+Code 1+ 1+ 354,0
+Code +!  +! 359,0
+Code 2DUP 2DUP 367,0
+Code ?DUP ?DUP 375,0
+Code 2DROP 2DROP 382,0
+Code 2SWAP 2SWAP 387,0
+Code OVER OVER 398,0
+Code 2OVER 2OVER 404,0
+Code ROT	 ROT 412,0
+Code NIP  NIP 420,0
+Code PICK	 PICK 425,0
+Code 2>R 2>R 432,0
+Code 2R> 2R> 441,0
+Code 2R@ 2R@ 450,0
+Code 2RDROP 2RDROP 458,0
+Code RSHIFT RSHIFT 476,0
+Code LSHIFT LSHIFT 481,0
+Code urshift urshift 486,0
+Code cshift cshift 491,0
+Code UM* UM* 496,0
+Code AND AND 505,0
+Code OR OR 512,0
+Code XOR XOR 517,0
+Code EXECUTE EXECUTE 525,0
+Code (of)	 (of) 532,0
+Code (loop) (loop) 545,0
+Code (+loop) (+loop) 557,0
+Code (do) (do) 575,0
+Code (?do) (?do) 583,0
+Code UNLOOP UNLOOP 601,0
+Code I I 607,0
+Code J J 613,0
+Code RPICK	 RPICK 619,0
+Code i' i' 631,0
+Code j' j' 636,0
+Code k k 641,0
+Code DIGIT	 DIGIT 646,0
+Code m/mod	 m/mod 675,0
+DeferROM (find)  (find) 693,0

@@ -1,0 +1,138 @@
+
+make-doc #cell )
+
+make-doc #char )
+
+make-doc 0 )
+
+make-doc 1 )
+
+make-doc 2 )
+
+make-doc -1 )
+
+make-doc -2 )
+
+make-doc noop )
+
+make-doc (dbg) )
+
+make-doc ticks )
+
+make-doc lit )
+
+make-doc (s") )
+
+make-doc >R )
+
+make-doc R> )
+
+make-doc @ )
+
+make-doc C@ )
+
+make-doc R@ )
+
+make-doc RDROP )
+
+make-doc ;S )
+
+make-doc :docol )
+
+make-doc :dovar )
+
+make-doc :docon )
+
+make-doc (IS) )
+
+make-doc (IS?) isaddr -- xt  )
+
+make-doc :douser )
+
+make-doc branch )
+
+make-doc ?branch )
+
+make-doc DUP )
+
+make-doc DROP )
+
+make-doc SWAP )
+
+make-doc 1+ )
+
+make-doc +! n addr --  )
+
+make-doc 2DUP )
+
+make-doc ?DUP )
+
+make-doc 2DROP )
+
+make-doc 2SWAP )
+
+make-doc OVER )
+
+make-doc 2OVER )
+
+make-doc ROT a b c -- b c a  )
+
+make-doc NIP a b -- b  )
+
+make-doc PICK ix* n -- x[n]  )
+
+make-doc 2>R )
+
+make-doc 2R> )
+
+make-doc 2R@ )
+
+make-doc 2RDROP )
+
+make-doc RSHIFT )
+
+make-doc LSHIFT )
+
+make-doc urshift )
+
+make-doc cshift )
+
+make-doc UM* )
+
+make-doc AND )
+
+make-doc OR )
+
+make-doc XOR )
+
+make-doc EXECUTE )
+
+make-doc (of) itm itm? -- <> | itm  )
+
+make-doc (loop) )
+
+make-doc (+loop) )
+
+make-doc (do) )
+
+make-doc (?do) )
+
+make-doc UNLOOP )
+
+make-doc I )
+
+make-doc J )
+
+make-doc RPICK R:ix* -- R:ix*n | n -- x[n]  )
+
+make-doc i' )
+
+make-doc j' )
+
+make-doc k )
+
+make-doc DIGITb c -- d -1 | 0 )
+
+make-doc m/mod ud un -- un.r ud.q  )
+
+make-doc (find) c-addr lfa -- c-addr 0 | nfa 1  )
