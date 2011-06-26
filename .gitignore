@@ -19,8 +19,20 @@ v9t9/v9t9-c/tools/.cproject
 v9t9/v9t9-c/tools/config.status
 v9t9/v9t9-c/tools/Makefile
 v9t9/v9t9-c/tools/FileUtils/Makefile
+v9t9/v9t9-c/tools/FileUtils/Makefile.in
 v9t9/v9t9-c/tools/DSRs/Makefile
+v9t9/v9t9-c/tools/DSRs/Makefile.in
 v9t9/v9t9-c/tools/TIAsm/Makefile
+v9t9/v9t9-c/tools/TIAsm/Makefile.in
+v9t9/v9t9-c/tools/Forth/Makefile
+v9t9/v9t9-c/tools/Forth/Makefile.in
 v9t9/v9t9-java/*/hs_err*.log
 v9t9/build/bin
+config.status
+config.log
+aclocal.m4
+autom4te.cache
+configure
+install-sh
+missing
 
