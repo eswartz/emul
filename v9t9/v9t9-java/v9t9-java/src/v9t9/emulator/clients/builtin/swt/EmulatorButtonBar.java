@@ -149,7 +149,7 @@ public class EmulatorButtonBar  {
 				public void widgetSelected(SelectionEvent e) {
 					swtWindow.toggleToolShell(DISK_SELECTOR_TOOL_ID, "DiskWindowBounds", true, true, new IToolShellFactory() {
 						public Control createContents(Shell shell) {
-							return new DiskSelector(shell, machine.getModel().getDsrSettings(machine));
+							return new DiskSelector(shell, machine);
 						}
 					});
 				}

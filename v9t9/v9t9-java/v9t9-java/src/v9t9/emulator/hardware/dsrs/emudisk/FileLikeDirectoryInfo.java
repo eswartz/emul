@@ -5,8 +5,11 @@ package v9t9.emulator.hardware.dsrs.emudisk;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
+import v9t9.emulator.hardware.dsrs.CatalogEntry;
 import v9t9.emulator.hardware.dsrs.DsrException;
 import v9t9.emulator.hardware.dsrs.PabConstants;
 import v9t9.engine.files.FDR;
@@ -34,8 +37,43 @@ public class FileLikeDirectoryInfo extends DirectoryInfo {
 		this.index = index;
 	}
 	
-	public int readRecord(ByteMemoryAccess access) throws DsrException {
+	protected CatalogEntry decodeFile(File file) throws DsrException {
+		NativeFile nativefile;
+		try {
+			nativefile = NativeFileFactory.createNativeFile(file);
+		} catch (IOException e) {
+			nativefile = new NativeTextFile(file);
+		}
 		
+		// first field is the string representing the
+		// file or volume name
+		String name = mapper.getDsrFileName(file.getName());
+
+		// second field is file type
+		int flags = nativefile instanceof NativeFDRFile ? ((NativeFDRFile) nativefile).getFlags() : FDR.ff_variable;
+
+		// third field is file size, one sector for fdr
+		int size = 1 + (nativefile.getFileSize() + 255) / 256;
+
+		// fourth field is record size
+		int reclen = nativefile instanceof NativeFDRFile ? ((NativeFDRFile) nativefile).getFDR().getRecordLength() : 80;
+
+		return new CatalogEntry(name, size, flags, reclen);
+	}
+
+	public List<CatalogEntry> readCatalog() {
+		List<CatalogEntry> list = new ArrayList<CatalogEntry>();
+		for (int index = 1; index < lastEntry; index++) {
+			try {
+				list.add(decodeFile(entries[index - 1]));
+			} catch (DsrException e) { 
+				// ignore
+			}
+		}
+		return list;
+	}
+
+	public int readRecord(ByteMemoryAccess access) throws DsrException {
 		int offset = access.offset;
 		
 		// volume record?
@@ -74,41 +112,19 @@ public class FileLikeDirectoryInfo extends DirectoryInfo {
 		}
 		
 		// Get file info
-		File file = entries[index - 1];
-		
-		NativeFile nativefile;
-		try {
-			nativefile = NativeFileFactory.createNativeFile(file);
-		} catch (IOException e) {
-			nativefile = new NativeTextFile(file);
-		}
+		CatalogEntry entry = decodeFile(entries[index - 1]);
 		
 		// first field is the string representing the
 		// file or volume name
-		offset = writeName(access, offset, mapper.getDsrFileName(file.getName()));
+		offset = writeName(access, offset, entry.fileName);
 
-		// second field is file type
-		int flags = nativefile instanceof NativeFDRFile ? ((NativeFDRFile) nativefile).getFlags() : FDR.ff_variable;
-		{
-			int         idx;
-
-			for (idx = 0; idx < EmuDiskDsr.drcTrans.length; idx++)
-				if (EmuDiskDsr.drcTrans[idx][0] ==
-					(flags & (FDR.ff_internal | FDR.ff_program | FDR.ff_variable))) {
-					offset = writeFloat(access, offset, EmuDiskDsr.drcTrans[idx][1]);
-					break;
-				}
-			// no match == program
-			if (idx >= EmuDiskDsr.drcTrans.length) {
-				offset = writeFloat(access, offset, 1);
-			}
-		}
+		offset = writeFloat(access, offset, entry.typeCode);
 
 		// third field is file size, one sector for fdr
-		offset = writeFloat(access, offset, 1 + (nativefile.getFileSize() + 255) / 256);
+		offset = writeFloat(access, offset, entry.secs);
 
 		// fourth field is record size
-		offset = writeFloat(access, offset, nativefile instanceof NativeFDRFile ? ((NativeFDRFile) nativefile).getFDR().getRecordLength() : 80);
+		offset = writeFloat(access, offset, entry.recordLength);
 
 		index++;
 		

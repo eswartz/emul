@@ -53,9 +53,12 @@ import org.ejs.coffee.core.properties.SettingProperty;
 import v9t9.emulator.clients.builtin.ISettingDecorator;
 import v9t9.emulator.clients.builtin.IconSetting;
 import v9t9.emulator.common.EmulatorSettings;
+import v9t9.emulator.common.Machine;
+import v9t9.emulator.hardware.dsrs.CatalogEntry;
+import v9t9.emulator.hardware.dsrs.DsrHandler;
 import v9t9.emulator.hardware.dsrs.DsrSettings;
+import v9t9.emulator.hardware.dsrs.emudisk.EmuDiskDsr;
 import v9t9.emulator.hardware.dsrs.realdisk.BaseDiskImage;
-import v9t9.emulator.hardware.dsrs.realdisk.CatalogEntry;
 import v9t9.emulator.hardware.dsrs.realdisk.DiskImageFactory;
 
 /**
@@ -65,6 +68,7 @@ import v9t9.emulator.hardware.dsrs.realdisk.DiskImageFactory;
  */
 public class DiskSelector extends Composite {
 
+	private final Machine machine;
 	public static class CatalogLabelProvider extends LabelProvider implements ITableLabelProvider {
 
 		/* (non-Javadoc)
@@ -241,27 +245,41 @@ public class DiskSelector extends Composite {
 				}
 			});			
 			
+			catalog = new Button(parent, SWT.PUSH);
+			GridDataFactory.fillDefaults().grab(false, false).applyTo(catalog);
+			catalog.setText("Catalog...");
 			if (isDiskImage()) {
-				catalog = new Button(parent, SWT.PUSH);
-				GridDataFactory.fillDefaults().grab(false, false).applyTo(catalog);
-				catalog.setText("Catalog...");
 				catalog.addSelectionListener(new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
-						if (isDiskImage()) {
-							BaseDiskImage image = DiskImageFactory.createDiskImage(setting.getName(), new File(setting.getString()));
-							try {
-								image.openDiskImage();
-								
-								List<CatalogEntry> entries = image.readCatalog();
-								
-								image.closeDiskImage();
+						BaseDiskImage image = DiskImageFactory.createDiskImage(setting.getName(), new File(setting.getString()));
+						try {
+							image.openDiskImage();
+							
+							List<CatalogEntry> entries = image.readCatalog();
+							
+							image.closeDiskImage();
+							
+							showCatalogDialog(setting, entries);
+							
+						} catch (IOException e2) {
+							ErrorDialog.openError(getShell(), "Failed to open", "Could not read catalog for disk image " + setting.getString(), 
+									new Status(IStatus.ERROR, "org.ejs.v9t9", null, e2));
+						}
+					}
+				});
+			}
+			else {
+				catalog.addSelectionListener(new SelectionAdapter() {
+					@Override
+					public void widgetSelected(SelectionEvent e) {
+						for (DsrHandler dsr : machine.getDsrManager().getDsrs()) {
+							if (dsr instanceof EmuDiskDsr) {
+								List<CatalogEntry> entries = ((EmuDiskDsr) dsr).readCatalog(
+										new File(setting.getString()));
 								
 								showCatalogDialog(setting, entries);
-								
-							} catch (IOException e2) {
-								ErrorDialog.openError(getShell(), "Failed to open", "Could not read catalog for disk image " + setting.getString(), 
-										new Status(IStatus.ERROR, "org.ejs.v9t9", null, e2));
+								break;
 							}
 						}
 					}
@@ -401,9 +419,12 @@ public class DiskSelector extends Composite {
 	/**
 	 * 
 	 */
-	public DiskSelector(Shell shell, List<DsrSettings> list) {
+	public DiskSelector(Shell shell, Machine machine) {
 		
 		super(shell, SWT.NONE);
+		
+		this.machine = machine;
+		List<DsrSettings> list = machine.getModel().getDsrSettings(machine);
 		
 		shell.setText("Disk Selector");
 

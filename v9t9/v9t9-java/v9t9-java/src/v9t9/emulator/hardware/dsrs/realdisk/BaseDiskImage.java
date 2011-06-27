@@ -14,7 +14,7 @@ import org.ejs.coffee.core.properties.IPersistable;
 import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.settings.ISettingSection;
 
-import v9t9.engine.files.IFDRFlags;
+import v9t9.emulator.hardware.dsrs.CatalogEntry;
 import v9t9.engine.files.V9t9FDR;
 
 
@@ -391,21 +391,9 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 			try {
 				readSector(sec, fdrSec, 0, 256);
 				V9t9FDR fdr = V9t9FDR.createFDR(fdrSec, 0);
-				String type = "???";
-				if ((fdr.getFlags() & IFDRFlags.ff_program) != 0)
-					type = "PROGRAM";
-				else {
-					if ((fdr.getFlags() & IFDRFlags.ff_internal) != 0)
-						type = "INT";
-					else
-						type = "DIS";
-					if ((fdr.getFlags() & IFDRFlags.ff_variable) != 0)
-						type += "/VAR";
-					else
-						type += "/FIX";
-				}
 				int sz = fdr.getSectorsUsed() + 1;
-				entries.add(new CatalogEntry(fdr.getFileName(), sz, type, fdr.getRecordLength()));
+				
+				entries.add(new CatalogEntry(fdr.getFileName(), sz, fdr.getFlags(), fdr.getRecordLength()));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

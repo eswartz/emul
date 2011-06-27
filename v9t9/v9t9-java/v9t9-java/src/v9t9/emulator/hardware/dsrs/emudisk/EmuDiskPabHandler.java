@@ -214,9 +214,9 @@ public class EmuDiskPabHandler extends PabHandler {
 			break;
 		case PabConstants.op_close:
 			if (!isCatalog)
-				DSKClose(file);
+				DSKClose();
 			else
-				DSKCloseCatalog(file);
+				DSKCloseCatalog();
 			break;
 		case PabConstants.op_read:
 			if (!isCatalog)
@@ -378,7 +378,7 @@ public class EmuDiskPabHandler extends PabHandler {
 		}
 	}
 
-	private void DSKClose(File file) throws DsrException {
+	private void DSKClose() throws DsrException {
 		OpenFile openFile = block.findOpenFile(pab.pabaddr);
 		// no error closing closed file
 		if (openFile != null) {
@@ -440,7 +440,7 @@ public class EmuDiskPabHandler extends PabHandler {
 		pab.recnum = 0;
 	}
 	
-	private void DSKCloseCatalog(File file) throws DsrException {
+	private void DSKCloseCatalog() throws DsrException {
 		block.closeDirectory(pab.pabaddr);
 	}
 	

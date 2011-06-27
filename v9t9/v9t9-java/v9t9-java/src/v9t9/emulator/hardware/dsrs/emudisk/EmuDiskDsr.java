@@ -21,6 +21,7 @@ import v9t9.emulator.clients.builtin.IconSetting;
 import v9t9.emulator.clients.builtin.swt.IDevIcons;
 import v9t9.emulator.clients.builtin.swt.IDeviceIndicatorProvider;
 import v9t9.emulator.common.WorkspaceSettings;
+import v9t9.emulator.hardware.dsrs.CatalogEntry;
 import v9t9.emulator.hardware.dsrs.DeviceIndicatorProvider;
 import v9t9.emulator.hardware.dsrs.DsrException;
 import v9t9.emulator.hardware.dsrs.DsrHandler;
@@ -325,12 +326,6 @@ public class EmuDiskDsr implements DsrHandler9900 {
 		
 	}
 
-	static byte drcTrans[][] = new byte[][] { 
-		{0, 1}, {FDR.ff_program, 5},
-		{FDR.ff_internal, 3}, {(byte) FDR.ff_variable, 2},
-		{(byte) (FDR.ff_variable + FDR.ff_internal), 4}
-	};
-
 	public static FDR createNewFDR(String dsrFile) throws DsrException {
 		// make a FDR file for it
 		V9t9FDR fdr = new V9t9FDR();
@@ -374,5 +369,12 @@ public class EmuDiskDsr implements DsrHandler9900 {
 	@Override
 	public List<IDeviceIndicatorProvider> getDeviceIndicatorProviders() {
 		return deviceIndicatorProviders;
+	}
+	
+
+	public List<CatalogEntry> readCatalog(File file) {
+		File dir = file.isDirectory() ? file : file.getParentFile();
+		FileLikeDirectoryInfo info = new FileLikeDirectoryInfo(dir, mapper);
+		return info.readCatalog();
 	}
 }
