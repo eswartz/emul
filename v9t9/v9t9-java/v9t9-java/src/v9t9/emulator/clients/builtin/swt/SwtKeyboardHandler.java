@@ -318,17 +318,17 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler implements ISwtKeybo
 		        // System.out.println("keyPressed(" + SwtKey.findByCode(event.keyCode) + ")");
 		        if (event.keyCode == lastKeyPressedCode) {
 		            // ignore if this is a repeat event
-		//            return;
+		        	//return;
 		        }
 
-		        if (lastKeyPressedCode != -1) {
+		        if (lastKeyPressedCode != -1 && event.keyCode != lastKeyPressedCode) {
 		            // if this is a different key to the last key that was pressed, then
 		            // add an 'up' even for the previous one - SWT doesn't send an 'up' event for the
 		            // first key in the below scenario:
 		            // 1. key 1 down
 		            // 2. key 2 down
 		            // 3. key 1 up
-		            recordKey(false, event.stateMask, lastKeyPressedCode, System.currentTimeMillis());
+		        	//recordKey(false, event.stateMask, lastKeyPressedCode, System.currentTimeMillis());
 		        }
 
 		        lastKeyPressedCode = event.keyCode;

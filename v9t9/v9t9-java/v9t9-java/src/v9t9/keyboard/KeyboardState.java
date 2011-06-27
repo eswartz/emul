@@ -888,6 +888,7 @@ public class KeyboardState {
     }
     
 	public synchronized void setAlpha(boolean on) {
+		System.out.println("Alpha lock is " + (on ? "ON" : "OFF"));
 		this.alphaLock = on;
 	}
 

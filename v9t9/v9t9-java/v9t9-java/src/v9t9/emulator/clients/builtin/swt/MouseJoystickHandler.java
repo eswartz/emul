@@ -8,6 +8,7 @@ import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseMoveListener;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.widgets.Control;
 
 import v9t9.keyboard.KeyboardState;
 
@@ -59,10 +60,10 @@ public class MouseJoystickHandler {
 		mouseMoveListener = new MouseMoveListener() {
 			
 			public void mouseMove(MouseEvent e) {
-				if (!enabled)
+				if (!enabled || !(e.widget instanceof Control))
 					return;
 				int joy = (e.stateMask & SWT.SHIFT) != 0 ? 2 : 1;
-				Point loc = renderer.getControl().toDisplay(e.x, e.y);
+				Point loc = new Point(e.x, e.y);
 				move(joy, loc.x, loc.y);
 				
 				boolean pressed = false;
@@ -89,7 +90,9 @@ public class MouseJoystickHandler {
 		keyboardState.resetJoystick();
 		
 		if (enabled) {
-			center = renderer.getControl().getDisplay().getCursorLocation();
+			//center = renderer.getControl().getDisplay().getCursorLocation();
+			Point size = renderer.getControl().getSize();
+			center = new Point(size.x / 2, size.y / 2);
 		}
 	}
 
@@ -106,34 +109,38 @@ public class MouseJoystickHandler {
 	 * @param y2 
 	 */
 	protected void move(int joy, int x, int y) {
-		Point diff = new Point(x - center.x, y - center.y);
-		
-		double delta = 2 * Math.PI / 8;
-		double ang = Math.atan2(-diff.y, diff.x);
-		
-		int quad = (int) ((ang + delta/2 ) / delta + 8) % 8;
-		
-		//System.out.println(diff + " -> " + ang+"  =  " +quad);
-		
 		int dx = 0, dy = 0;
 		
-		switch (quad) {
-		case 0:
-			dx = 1; dy = 0; break;
-		case 1:
-			dx = 1; dy = -1; break;
-		case 2:
-			dx = 0; dy = -1; break;
-		case 3:
-			dx = -1; dy = -1; break;
-		case 4:
-			dx = -1; dy = 0; break;
-		case 5:
-			dx = -1; dy = 1; break;
-		case 6:
-			dx = 0; dy = 1; break;
-		case 7:
-			dx = 1; dy = 1; break;
+		Point diff = new Point(x - center.x, y - center.y);
+		
+		Point size = renderer.getControl().getSize();
+		int dist = (diff.x * diff.x) + (diff.y * diff.y);
+		//System.out.println(dist + " / " + size.x + " + " + size.y);
+		if (dist / 8 >= size.x + size.y) {
+			double delta = 2 * Math.PI / 8;
+			double ang = Math.atan2(-diff.y, diff.x);
+			int quad = (int) ((ang + delta/2 ) / delta + 8) % 8;
+			
+			//System.out.println(diff + " -> " + ang+"  =  " +quad);
+			
+			switch (quad) {
+			case 0:
+				dx = 1; dy = 0; break;
+			case 1:
+				dx = 1; dy = -1; break;
+			case 2:
+				dx = 0; dy = -1; break;
+			case 3:
+				dx = -1; dy = -1; break;
+			case 4:
+				dx = -1; dy = 0; break;
+			case 5:
+				dx = -1; dy = 1; break;
+			case 6:
+				dx = 0; dy = 1; break;
+			case 7:
+				dx = 1; dy = 1; break;
+			}
 		}
 		keyboardState.setJoystick(joy, KeyboardState.JOY_X | KeyboardState.JOY_Y, dx, dy, false, System.currentTimeMillis());
 	}
