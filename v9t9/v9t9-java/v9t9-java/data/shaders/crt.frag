@@ -21,7 +21,7 @@ void main()
         else
             hvec = vec4(1,1,1,1);
         
-        gl_FragColor = color * hvec * vvec;
+        gl_FragColor = color * hvec * vvec * vec4(1.3, 1.3, 1.3, 1);
     } else {
         gl_FragColor = color;
     }
