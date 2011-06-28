@@ -100,6 +100,7 @@ public class TCFLaunch extends Launch {
     }
 
     private static final Collection<LaunchListener> listeners = new ArrayList<LaunchListener>();
+    private static LaunchListener[] listeners_array;
 
     private final Collection<ActionsListener> action_listeners = new ArrayList<ActionsListener>();
 
@@ -168,9 +169,14 @@ public class TCFLaunch extends Launch {
         }
     };
 
+    private static LaunchListener[] getListeners() {
+        if (listeners_array != null) return listeners_array;
+        return listeners_array = listeners.toArray(new LaunchListener[listeners.size()]);
+    }
+
     public TCFLaunch(ILaunchConfiguration launchConfiguration, String mode) {
         super(launchConfiguration, mode, null);
-        for (LaunchListener l : listeners) l.onCreated(TCFLaunch.this);
+        for (LaunchListener l : getListeners()) l.onCreated(TCFLaunch.this);
     }
 
     private void onConnected() throws Exception {
@@ -276,7 +282,7 @@ public class TCFLaunch extends Launch {
                 @Override
                 void start() {
                     connecting = false;
-                    for (LaunchListener l : listeners) l.onConnected(TCFLaunch.this);
+                    for (LaunchListener l : getListeners()) l.onConnected(TCFLaunch.this);
                     fireChanged();
                 }
             };
@@ -293,7 +299,7 @@ public class TCFLaunch extends Launch {
         breakpoints_status = null;
         connecting = false;
         disconnected = true;
-        for (LaunchListener l : listeners) l.onDisconnected(this);
+        for (LaunchListener l : getListeners()) l.onDisconnected(this);
         if (DebugPlugin.getDefault() != null) fireChanged();
         runShutdownSequence(new Runnable() {
             public void run() {
@@ -817,13 +823,13 @@ public class TCFLaunch extends Launch {
                 if (stream_ids.get(id) == null) return;
                 if (lost_size > 0) {
                     Exception x = new IOException("Process output data lost due buffer overflow");
-                    for (LaunchListener l : listeners) l.onProcessStreamError(TCFLaunch.this, peocess_id, no, x, lost_size);
+                    for (LaunchListener l : getListeners()) l.onProcessStreamError(TCFLaunch.this, peocess_id, no, x, lost_size);
                 }
                 if (data != null && data.length > 0) {
-                    for (LaunchListener l : listeners) l.onProcessOutput(TCFLaunch.this, peocess_id, no, data);
+                    for (LaunchListener l : getListeners()) l.onProcessOutput(TCFLaunch.this, peocess_id, no, data);
                 }
                 if (error != null) {
-                    for (LaunchListener l : listeners) l.onProcessStreamError(TCFLaunch.this, peocess_id, no, error, 0);
+                    for (LaunchListener l : getListeners()) l.onProcessStreamError(TCFLaunch.this, peocess_id, no, error, 0);
                 }
                 if (eos || error != null) {
                     disconnectStream(id);
@@ -885,11 +891,13 @@ public class TCFLaunch extends Launch {
     public static void addListener(LaunchListener listener) {
         assert Protocol.isDispatchThread();
         listeners.add(listener);
+        listeners_array = null;
     }
 
     public static void removeListener(LaunchListener listener) {
         assert Protocol.isDispatchThread();
         listeners.remove(listener);
+        listeners_array = null;
     }
 
     public void launchConfigurationChanged(final ILaunchConfiguration cfg) {
@@ -945,7 +953,7 @@ public class TCFLaunch extends Launch {
             public void doneWrite(IToken token, Exception error) {
                 if (error == null) return;
                 if (stream_ids.get(id) == null) return;
-                for (LaunchListener l : listeners) l.onProcessStreamError(TCFLaunch.this, prs, 0, error, len);
+                for (LaunchListener l : getListeners()) l.onProcessStreamError(TCFLaunch.this, prs, 0, error, len);
                 disconnectStream(id);
             }
         });
