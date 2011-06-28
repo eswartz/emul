@@ -332,7 +332,7 @@ static void * interactive_handler(void * x) {
             done = 1;
         }
         len = strlen(buf);
-        if (len > 0 && buf[len-1] == '\n') {
+        while (len > 0 && (buf[len - 1] == '\n' || buf[len - 1] == '\r')) {
             buf[--len] = '\0';
         }
         post_event(event_cmd_line, loc_strdup(buf));
