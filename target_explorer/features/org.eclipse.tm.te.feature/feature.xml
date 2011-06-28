@@ -3,10 +3,7 @@
       id="org.eclipse.tm.te.feature"
       label="%featureName"
       version="1.0.0.qualifier"
-      provider-name="%featureProvider"
-      os="linux,solaris,win32"
-      ws="gtk,win32"
-      arch="sparc,x86">
+      provider-name="%featureProvider">
 
    <description>
       %description
