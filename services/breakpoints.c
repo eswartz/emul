@@ -755,15 +755,30 @@ static void expr_cache_enter(CacheClient * client, BreakpointInfo * bp, Context 
         bp->status_changed = 1;
     }
 
-    l = broadcast_group->channels.next;
-    while (l != &broadcast_group->channels) {
-        Channel * c = link_bcg2chnl(l);
-        if (!is_channel_closed(c)) {
+    if (*bp->id) {
+        l = bp->link_clients.next;
+        while (l != &bp->link_clients) {
+            BreakpointRef * br = link_bp2br(l);
+            Channel * c = br->channel;
+            assert(br->bp == bp);
+            assert(!is_channel_closed(c));
             cache_enter_cnt++;
             run_ctrl_lock();
             cache_enter(client, c, &args, sizeof(args));
+            l = l->next;
         }
-        l = l->next;
+    }
+    else {
+        l = broadcast_group->channels.next;
+        while (l != &broadcast_group->channels) {
+            Channel * c = link_bcg2chnl(l);
+            if (!is_channel_closed(c)) {
+                cache_enter_cnt++;
+                run_ctrl_lock();
+                cache_enter(client, c, &args, sizeof(args));
+            }
+            l = l->next;
+        }
     }
 }
 
@@ -1063,9 +1078,10 @@ static int check_context_ids_condition(BreakpointInfo * bp, Context * ctx) {
 }
 
 static void evaluate_condition(void * x) {
-    int i;
+    int i = 0;
     EvaluationArgs * args = (EvaluationArgs *)x;
     Context * ctx = args->ctx;
+    BreakpointInfo * bp = args->bp;
     EvaluationRequest * req = EXT(ctx)->req;
 
     assert(req != NULL);
@@ -1075,28 +1091,29 @@ static void evaluate_condition(void * x) {
     assert(cache_enter_cnt > 0);
 
     for (i = 0; i < req->bp_cnt; i++) {
-        BreakpointInfo * bp = req->bp_arr[i].bp;
+        if (bp != req->bp_arr[i].bp) continue;
 
-        if (is_disabled(bp)) continue;
-        if (!check_context_ids_condition(bp, ctx)) continue;
+        if (is_disabled(bp)) break;
+        if (!check_context_ids_condition(bp, ctx)) break;
 
         if (bp->condition != NULL) {
             Value v;
             int b = 0;
             if (evaluate_expression(ctx, STACK_TOP_FRAME, 0, bp->condition, 1, &v) < 0 || value_to_boolean(&v, &b) < 0) {
                 int no = get_error_code(errno);
-                if (no == ERR_CACHE_MISS) continue;
-                if (no == ERR_CHANNEL_CLOSED) continue;
+                if (no == ERR_CACHE_MISS) break;
+                if (no == ERR_CHANNEL_CLOSED) break;
                 trace(LOG_ALWAYS, "%s: %s", errno_to_str(errno), bp->condition);
                 req->bp_arr[i].condition_ok = 1;
             }
             else if (b) {
                 req->bp_arr[i].condition_ok = 1;
             }
-            continue;
+            break;
         }
 
         req->bp_arr[i].condition_ok = 1;
+        break;
     }
 
     expr_cache_exit(args);
@@ -1160,8 +1177,10 @@ static void event_replant_breakpoints(void * arg) {
         }
         if (req->bp_cnt > 0) {
             int i;
-            for (i = 0; i < req->bp_cnt; i++) req->bp_arr[i].condition_ok = 0;
-            expr_cache_enter(evaluate_condition, NULL, ctx);
+            for (i = 0; i < req->bp_cnt; i++) {
+                req->bp_arr[i].condition_ok = 0;
+                expr_cache_enter(evaluate_condition, req->bp_arr[i].bp, ctx);
+            }
         }
     }
     done_evaluation();
@@ -2259,6 +2278,7 @@ static void event_context_disposed(Context * ctx, void * args) {
     }
 }
 
+#if SERVICE_MemoryMap
 static void event_code_unmapped(Context * ctx, ContextAddress addr, ContextAddress size, void * args) {
     /* Unmapping a code section unplants all breakpoint instructions in that section as side effect.
      * This function udates service data structure to reflect that.
@@ -2291,6 +2311,7 @@ static void event_code_unmapped(Context * ctx, ContextAddress addr, ContextAddre
     }
     if (cnt > 0 && generation_done == generation_active) notify_breakpoints_status();
 }
+#endif
 
 static void channel_close_listener(Channel * c) {
     delete_breakpoint_refs(c);
@@ -2311,6 +2332,7 @@ void ini_breakpoints_service(Protocol * proto, TCFBroadcastGroup * bcg) {
         };
         add_context_event_listener(&listener, NULL);
     }
+#if SERVICE_MemoryMap
     {
         static MemoryMapEventListener listener = {
             event_context_changed,
@@ -2320,6 +2342,7 @@ void ini_breakpoints_service(Protocol * proto, TCFBroadcastGroup * bcg) {
         };
         add_memory_map_event_listener(&listener, NULL);
     }
+#endif
     list_init(&breakpoints);
     list_init(&instructions);
     list_init(&evaluations_posted);
