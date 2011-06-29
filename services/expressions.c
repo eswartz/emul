@@ -2604,7 +2604,9 @@ static void command_assign_cache_client(void * x) {
             StackFrame * info = NULL;
             if (get_frame_info(ctx, frame, &info) < 0) err = errno;
             if (!err && write_reg_bytes(info, value.reg, 0, args->value_size, (uint8_t *)args->value_buf) < 0) err = errno;
+#if SERVICE_Registers
             if (!err) send_event_register_changed(register2id(ctx, frame, value.reg));
+#endif
         }
         else if (value.remote) {
             if (context_write_mem(ctx, value.address, args->value_buf, args->value_size) < 0) err = errno;

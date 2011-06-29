@@ -484,6 +484,25 @@ extern void swap_bytes(void * buf, size_t size);
 extern ELF_File * elf_open(const char * file_name);
 
 /*
+ * Load section data into memory.
+ * section->data is set to section data address in memory.
+ * Data will stay in memory at least until file is closed.
+ * Returns zero on success. If error, returns -1 and sets errno.
+ */
+extern int elf_load(ELF_Section * section);
+
+/*
+ * Register ELF file close callback.
+ * The callback is called each time an ELF file data is about to be disposed.
+ * Service implementation can use the callback to deallocate
+ * cached data related to the file.
+ */
+typedef void (*ELFCloseListener)(ELF_File *);
+extern void elf_add_close_listener(ELFCloseListener listener);
+
+#if ENABLE_DebugContext
+
+/*
  * Open ELF file for reading for given device and inode.
  * Same file can be opened mutiple times.
  * Returns the file descriptior on success. If error, returns NULL and sets errno.
@@ -505,23 +524,6 @@ extern ELF_File * elf_list_next(Context * ctx);
 extern void elf_list_done(Context * ctx);
 
 /*
- * Load section data into memory.
- * section->data is set to section data address in memory.
- * Data will stay in memory at least until file is closed.
- * Returns zero on success. If error, returns -1 and sets errno.
- */
-extern int elf_load(ELF_Section * section);
-
-/*
- * Register ELF file close callback.
- * The callback is called each time an ELF file data is about to be disposed.
- * Service implementation can use the callback to deallocate
- * cached data related to the file.
- */
-typedef void (*ELFCloseListener)(ELF_File *);
-extern void elf_add_close_listener(ELFCloseListener listener);
-
-/*
  * Map link-time address in an ELF file to run-time address in a context.
  * Return 0 if the address is not currently mapped.
  */
@@ -532,8 +534,6 @@ extern ContextAddress elf_map_to_run_time_address(Context * ctx, ELF_File * file
  * Return 0 if the address is not currently mapped.
  */
 extern ContextAddress elf_map_to_link_time_address(Context * ctx, ContextAddress addr, ELF_File ** file, ELF_Section ** sec);
-
-#if ENABLE_DebugContext
 
 /*
  * Read a word from context memory. Word size and endianess are determened by ELF file.
@@ -546,12 +546,6 @@ extern int elf_read_memory_word(Context * ctx, ELF_File * file, ContextAddress a
  * Return 0 if the structure could not be found.
  */
 extern ContextAddress elf_get_debug_structure_address(Context * ctx, ELF_File ** file);
-
-/*
- * Search and return first compilation unit address range in given run-time address range 'addr_min'..'addr_max' (inclusive).
- * If 'range_rt_addr' not NULL, *range_rt_addr is assigned run-time address of the range.
- */
-extern struct UnitAddressRange * elf_find_unit(Context * ctx, ContextAddress addr_min, ContextAddress addr_max, ContextAddress * range_rt_addr);
 
 #endif
 

@@ -221,6 +221,12 @@ extern void read_and_evaluate_dwarf_object_property(Context * ctx, int frame, U8
 /* Convert PropertyValue to a number */
 extern U8_T get_numeric_property_value(PropertyValue * Value);
 
+/*
+ * Search and return first compilation unit address range in given run-time address range 'addr_min'..'addr_max' (inclusive).
+ * If 'range_rt_addr' not NULL, *range_rt_addr is assigned run-time address of the range.
+ */
+extern struct UnitAddressRange * elf_find_unit(Context * ctx, ContextAddress addr_min, ContextAddress addr_max, ContextAddress * range_rt_addr);
+
 #endif /* ENABLE_ELF && ENABLE_DebugContext */
 
 #endif /* D_dwarfcache */

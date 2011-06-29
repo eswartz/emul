@@ -61,11 +61,15 @@ static U4_T listeners_max = 0;
 static int elf_cleanup_posted = 0;
 static ino_t elf_ino_cnt = 0;
 
+#if ENABLE_DebugContext
+
 static Context *    elf_list_ctx;
 static unsigned     elf_list_pos;
 static MemoryMap    elf_list;
 
 static MemoryMap    elf_map;
+
+#endif
 
 void elf_add_close_listener(ELFCloseListener listener) {
     if (listeners_cnt >= listeners_max) {
@@ -187,26 +191,6 @@ static ino_t elf_ino(const char * fnm) {
     if (strcmp(abs, fnm) != 0) add_ino(abs, elf_ino_cnt);
     free(abs);
     return elf_ino_cnt++;
-}
-
-static ELF_File * find_open_file_by_inode(dev_t dev, ino_t ino, int64_t mtime) {
-    ELF_File * prev = NULL;
-    ELF_File * file = files;
-    while (file != NULL) {
-        if (file->dev == dev && file->ino == ino &&
-            (mtime ? file->mtime == mtime : !file->mtime_changed)) {
-            if (prev != NULL) {
-                prev->next = file->next;
-                file->next = files;
-                files = file;
-            }
-            file->age = 0;
-            return file;
-        }
-        prev = file;
-        file = file->next;
-    }
-    return NULL;
 }
 
 static ELF_File * find_open_file_by_name(const char * name) {
@@ -691,6 +675,28 @@ int elf_load(ELF_Section * s) {
     return 0;
 }
 
+#if ENABLE_DebugContext
+
+static ELF_File * find_open_file_by_inode(dev_t dev, ino_t ino, int64_t mtime) {
+    ELF_File * prev = NULL;
+    ELF_File * file = files;
+    while (file != NULL) {
+        if (file->dev == dev && file->ino == ino &&
+            (mtime ? file->mtime == mtime : !file->mtime_changed)) {
+            if (prev != NULL) {
+                prev->next = file->next;
+                file->next = files;
+                files = file;
+            }
+            file->age = 0;
+            return file;
+        }
+        prev = file;
+        file = file->next;
+    }
+    return NULL;
+}
+
 static ELF_File * open_memory_region_file(MemoryRegion * r, int * error) {
     ELF_File * file = NULL;
     ino_t ino = r->ino;
@@ -756,16 +762,31 @@ static void search_regions(MemoryMap * map, ContextAddress addr0, ContextAddress
 }
 
 static int get_map(Context * ctx, ContextAddress addr0, ContextAddress addr1, MemoryMap * map) {
-    MemoryMap * client_map = NULL;
-    MemoryMap * target_map = NULL;
-
     map->region_cnt = 0;
-#if ENABLE_DebugContext
     ctx = context_get_group(ctx, CONTEXT_GROUP_PROCESS);
+#if SERVICE_MemoryMap
+    {
+        MemoryMap * client_map = NULL;
+        MemoryMap * target_map = NULL;
+        if (memory_map_get(ctx, &client_map, &target_map) < 0) return -1;
+        search_regions(client_map, addr0, addr1, map);
+        search_regions(target_map, addr0, addr1, map);
+    }
+#else
+    {
+        int error = 0;
+        MemoryMap target_map;
+        memset(&target_map, 0, sizeof(target_map));
+        if (context_get_memory_map(ctx, &target_map) < 0) error = errno;
+        if (!error) search_regions(&target_map, addr0, addr1, map);
+        context_clear_memory_map(&target_map);
+        loc_free(target_map.regions);
+        if (error) {
+            errno = error;
+            return -1;
+        }
+    }
 #endif
-    if (memory_map_get(ctx, &client_map, &target_map) < 0) return -1;
-    search_regions(client_map, addr0, addr1, map);
-    search_regions(target_map, addr0, addr1, map);
     return 0;
 }
 
@@ -841,7 +862,6 @@ void elf_list_done(Context * ctx) {
     elf_list.region_cnt = 0;
 }
 
-#if ENABLE_DebugContext
 UnitAddressRange * elf_find_unit(Context * ctx, ContextAddress addr_min, ContextAddress addr_max, ContextAddress * range_rt_addr) {
     unsigned i, j;
     UnitAddressRange * range = NULL;
@@ -921,7 +941,6 @@ UnitAddressRange * elf_find_unit(Context * ctx, ContextAddress addr_min, Context
 #endif
     return range;
 }
-#endif
 
 ContextAddress elf_map_to_run_time_address(Context * ctx, ELF_File * file, ELF_Section * sec, ContextAddress addr) {
     unsigned i;
@@ -1040,8 +1059,6 @@ ContextAddress elf_map_to_link_time_address(Context * ctx, ContextAddress addr, 
     }
     return 0;
 }
-
-#if ENABLE_DebugContext
 
 static int get_dynamic_tag(Context * ctx, ELF_File * file, int tag, ContextAddress * addr) {
     unsigned i, j;
@@ -1195,7 +1212,8 @@ ContextAddress elf_get_debug_structure_address(Context * ctx, ELF_File ** file_p
     return addr;
 }
 
-#endif
+#endif /* ENABLE_DebugContext */
+
 
 /************************ ELF symbol tables *****************************************/
 

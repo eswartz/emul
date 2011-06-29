@@ -23,6 +23,8 @@
 #include <framework/context.h>
 #include <framework/protocol.h>
 
+#if SERVICE_MemoryMap
+
 /*
  * Get memory maps for given context.
  * 'client_map' returns map entries that are created by the agent clients.
@@ -57,4 +59,12 @@ extern void add_memory_map_event_listener(MemoryMapEventListener * listener, voi
 
 extern void ini_memory_map_service(Protocol * proto, TCFBroadcastGroup * bcg);
 
-#endif
+#else
+
+#define memory_map_event_module_loaded(ctx)
+#define memory_map_event_code_section_ummapped(ctx, addr, size)
+#define memory_map_event_module_unloaded(ctx)
+#define memory_map_event_mapping_chnaged(ctx)
+
+#endif /* SERVICE_MemoryMap */
+#endif /* D_memorymap */
