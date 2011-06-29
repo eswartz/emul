@@ -101,7 +101,7 @@ struct Symbol {
 #include <services/symbols_alloc.h>
 
 typedef struct SymbolCacheEntry {
-    HANDLE process;
+    struct SymbolCacheEntry * next;
     ULONG64 pc;
     char name[MAX_SYM_NAME];
     ErrorReport * error;
@@ -112,7 +112,14 @@ typedef struct SymbolCacheEntry {
 } SymbolCacheEntry;
 
 #define SYMBOL_CACHE_SIZE (4 * MEM_USAGE_FACTOR - 1)
-static SymbolCacheEntry symbol_cache[SYMBOL_CACHE_SIZE];
+
+typedef struct ContextExtensionWinSym {
+    SymbolCacheEntry ** symbol_cache;
+} ContextExtensionWinSym;
+
+static size_t context_extension_offset = 0;
+
+#define EXT(ctx) ((ContextExtensionWinSym *)((char *)(ctx) + context_extension_offset))
 
 static char * tmp_buf = NULL;
 static int tmp_buf_size = 0;
@@ -785,46 +792,60 @@ int get_array_symbol(const Symbol * sym, ContextAddress length, Symbol ** ptr) {
     return 0;
 }
 
-static unsigned symbol_hash(HANDLE process, ULONG64 pc, PCSTR name) {
+static unsigned symbol_hash(ULONG64 pc, PCSTR name) {
     int i;
-    unsigned h = (unsigned)(uintptr_t)process;
-    h += h >> 8;
-    h += (unsigned)(uintptr_t)pc;
+    unsigned h = (unsigned)(uintptr_t)pc;
     for (i = 0; name[i]; i++) h += name[i];
     h = h + h / SYMBOL_CACHE_SIZE;
     return h % SYMBOL_CACHE_SIZE;
 }
 
-static int find_cache_symbol(Context * ctx, int frame, HANDLE process, ULONG64 pc, PCSTR name, Symbol * sym) {
-    SymbolCacheEntry * entry = symbol_cache + symbol_hash(process, pc, name);
-    assert(process != NULL);
-    if (entry->process != process) return 0;
-    if (entry->pc != pc) return 0;
-    if (strcmp(entry->name, name)) return 0;
-    if (entry->error == NULL) {
-        if (entry->frame_relative) {
-            assert(frame >= 0);
-            sym->frame = frame - STACK_NO_FRAME;
+static int find_cache_symbol(Context * ctx, int frame, ULONG64 pc, PCSTR name, Symbol * sym) {
+    ContextExtensionWinSym * ext = EXT(ctx->mem);
+    if (ext->symbol_cache != NULL) {
+        int cnt = 0;
+        SymbolCacheEntry * entry = ext->symbol_cache[symbol_hash(pc, name)];
+        while (entry != NULL) {
+            if (entry->pc == pc && strcmp(entry->name, name) == 0) {
+                if (entry->error == NULL) {
+                    if (entry->frame_relative) {
+                        assert(frame >= 0);
+                        sym->frame = frame - STACK_NO_FRAME;
+                    }
+                    else {
+                        ctx = ctx->mem;
+                    }
+                    sym->ctx = ctx;
+                    sym->sym_class = entry->sym_class;
+                    sym->module = entry->module;
+                    sym->index = entry->index;
+                }
+                set_error_report_errno(entry->error);
+                return 1;
+            }
+            else if (cnt > 32) {
+                while (entry->next) {
+                    SymbolCacheEntry * next = entry->next;
+                    entry->next = next->next;
+                    release_error_report(next->error);
+                    loc_free(next);
+                }
+                return 0;
+            }
+            entry = entry->next;
+            cnt++;
         }
-        else {
-            ctx = ctx->mem;
-        }
-        sym->ctx = ctx;
-        sym->sym_class = entry->sym_class;
-        sym->module = entry->module;
-        sym->index = entry->index;
     }
-    set_error_report_errno(entry->error);
-    return 1;
+    return 0;
 }
 
-static void add_cache_symbol(HANDLE process, ULONG64 pc, PCSTR name, Symbol * sym, int error) {
-    SymbolCacheEntry * entry = symbol_cache + symbol_hash(process, pc, name);
-    assert(process != NULL);
-    entry->process = process;
+static void add_cache_symbol(Context * ctx, ULONG64 pc, PCSTR name, Symbol * sym, int error) {
+    unsigned h = symbol_hash(pc, name);
+    ContextExtensionWinSym * ext = EXT(ctx->mem);
+    SymbolCacheEntry * entry = (SymbolCacheEntry *)loc_alloc_zero(sizeof(SymbolCacheEntry));
+    assert(!ctx->mem->exited);
     entry->pc = pc;
     strcpy(entry->name, name);
-    release_error_report(entry->error);
     entry->error = get_error_report(error);
     if (!error) {
         entry->frame_relative = sym->frame > 0;
@@ -832,6 +853,9 @@ static void add_cache_symbol(HANDLE process, ULONG64 pc, PCSTR name, Symbol * sy
         entry->module = sym->module;
         entry->index = sym->index;
     }
+    if (ext->symbol_cache == NULL) ext->symbol_cache = (SymbolCacheEntry **)loc_alloc_zero(sizeof(SymbolCacheEntry *) * SYMBOL_CACHE_SIZE);
+    entry->next = ext->symbol_cache[h];
+    ext->symbol_cache[h] = entry;
 }
 
 static int set_pe_context(Context * ctx, int frame, ContextAddress ip, HANDLE process, IMAGEHLP_STACK_FRAME * stack_frame) {
@@ -879,25 +903,25 @@ static int find_pe_symbol_by_name(Context * ctx, int frame, ContextAddress ip, c
     info->SizeOfStruct = sizeof(SYMBOL_INFO);
     info->MaxNameLen = MAX_SYM_NAME;
 
-    if (find_cache_symbol(ctx, frame, process, stack_frame.InstructionOffset, name, sym)) return errno ? -1 : 0;
+    if (find_cache_symbol(ctx, frame, stack_frame.InstructionOffset, name, sym)) return errno ? -1 : 0;
 
     /* TODO: SymFromName() searches only main executable, need to search DLLs too */
     if (SymFromName(process, name, info) && info->Tag != SymTagPublicSymbol) {
         syminfo2symbol(ctx, frame, info, sym);
-        add_cache_symbol(process, stack_frame.InstructionOffset, name, sym, 0);
+        add_cache_symbol(ctx, stack_frame.InstructionOffset, name, sym, 0);
         return 0;
     }
     if (stack_frame.InstructionOffset != 0) {
         DWORD64 module = SymGetModuleBase64(process, stack_frame.InstructionOffset);
         if (module != 0 && SymGetTypeFromName(process, module, name, info)) {
             syminfo2symbol(ctx, frame, info, sym);
-            add_cache_symbol(process, stack_frame.InstructionOffset, name, sym, 0);
+            add_cache_symbol(ctx, stack_frame.InstructionOffset, name, sym, 0);
             return 0;
         }
     }
     set_win32_errno(err = GetLastError());
     if (err == 0 || err == ERROR_MOD_NOT_FOUND) {
-        add_cache_symbol(process, stack_frame.InstructionOffset, name, NULL, ERR_SYM_NOT_FOUND);
+        add_cache_symbol(ctx, stack_frame.InstructionOffset, name, NULL, ERR_SYM_NOT_FOUND);
         errno = ERR_SYM_NOT_FOUND;
     }
     return -1;
@@ -1062,34 +1086,55 @@ int get_next_stack_frame(StackFrame * frame, StackFrame * down) {
 
 static void event_context_exited(Context * ctx, void * client_data) {
     unsigned i;
-    HANDLE handle = get_context_handle(ctx);
-    if (ctx->parent != NULL) return;
-    assert(handle != NULL);
+    SymbolCacheEntry ** symbol_cache = EXT(ctx)->symbol_cache;
+    if (symbol_cache == NULL) return;
     for (i = 0; i < SYMBOL_CACHE_SIZE; i++) {
-        if (symbol_cache[i].process == handle) {
-            release_error_report(symbol_cache[i].error);
-            memset(symbol_cache + i, 0, sizeof(SymbolCacheEntry));
+        while (symbol_cache[i] != NULL) {
+            SymbolCacheEntry * entry = symbol_cache[i];
+            symbol_cache[i] = entry->next;
+            release_error_report(entry->error);
+            loc_free(entry);
         }
     }
+    loc_free(symbol_cache);
+    EXT(ctx)->symbol_cache = NULL;
 }
 
 static void event_module_loaded(Context * ctx, void * client_data) {
     unsigned i;
-    HANDLE handle = get_context_handle(ctx);
+    SymbolCacheEntry ** symbol_cache = EXT(ctx)->symbol_cache;
     assert(ctx->mem == ctx);
-    assert(handle != NULL);
+    if (symbol_cache == NULL) return;
     for (i = 0; i < SYMBOL_CACHE_SIZE; i++) {
-        if (symbol_cache[i].process == handle && symbol_cache[i].error) symbol_cache[i].process = NULL;
+        SymbolCacheEntry * prev = NULL;
+        SymbolCacheEntry * next = symbol_cache[i];
+        while (next != NULL) {
+            SymbolCacheEntry * entry = next;
+            next = next->next;
+            if (entry->error) {
+                if (prev) prev->next = next;
+                else symbol_cache[i] = next;
+                release_error_report(entry->error);
+                loc_free(entry);
+            }
+            else {
+                prev = entry;
+            }
+        }
     }
 }
 
 static void event_module_unloaded(Context * ctx, void * client_data) {
     unsigned i;
-    HANDLE handle = get_context_handle(ctx);
-    assert(ctx->mem == ctx);
-    assert(handle != NULL);
+    SymbolCacheEntry ** symbol_cache = EXT(ctx)->symbol_cache;
+    if (symbol_cache == NULL) return;
     for (i = 0; i < SYMBOL_CACHE_SIZE; i++) {
-        if (symbol_cache[i].process == handle) symbol_cache[i].process = NULL;
+        while (symbol_cache[i] != NULL) {
+            SymbolCacheEntry * entry = symbol_cache[i];
+            symbol_cache[i] = entry->next;
+            release_error_report(entry->error);
+            loc_free(entry);
+        }
     }
 }
 
@@ -1106,6 +1151,7 @@ void ini_symbols_lib(void) {
     add_context_event_listener(&ctx_listener, NULL);
     add_memory_map_event_listener(&map_listener, NULL);
     SymSetOptions(SymGetOptions() | SYMOPT_UNDNAME | SYMOPT_DEFERRED_LOADS);
+    context_extension_offset = context_extension(sizeof(ContextExtensionWinSym));
 }
 
 
