@@ -85,5 +85,59 @@
          </enablement>
       </editorPageBinding>
    </extension>
-
+   <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution
+            locationURI="popup:org.eclipse.tm.te.ui.controls.menu.fs?after=additions">
+         <command
+               commandId="org.eclipse.ui.file.properties"
+               helpContextId="org.eclipse.tm.te.tcf.filesystem.command_Properties"
+               id="properties"
+               label="%PropertiesAction.label"
+               tooltip="%PropertiesAction.tooltip">
+               <visibleWhen>
+                  <with variable="selection">
+                     <count value="1"/>
+                     <iterate operator="and" ifEmpty="false">
+                        <instanceof
+                              value="org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode">
+                        </instanceof>
+                     </iterate>
+                  </with>
+               </visibleWhen>
+         </command>
+      </menuContribution>
+      <menuContribution locationURI="popup:org.eclipse.tm.te.ui.views.TargetExplorer#Popup?after=group.properties">
+         <command
+               commandId="org.eclipse.ui.file.properties"
+               helpContextId="org.eclipse.tm.te.tcf.filesystem.command_Properties"
+               id="properties"
+               label="%PropertiesAction.label"
+               tooltip="%PropertiesAction.tooltip">
+               <visibleWhen>
+                  <with variable="selection">
+                     <count value="1"/>
+                     <iterate operator="and" ifEmpty="false">
+                        <instanceof
+                              value="org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode">
+                        </instanceof>
+                     </iterate>
+                  </with>
+               </visibleWhen>
+         </command>
+      </menuContribution>
+   </extension>
+   <extension
+         point="org.eclipse.ui.propertyPages">
+      <page
+            class="org.eclipse.tm.te.tcf.filesystem.internal.properties.GeneralInformationPage"
+            id="org.eclipse.tm.te.tcf.filesystem.pages.basic"
+            name="%GeneralInformationPage.name">
+         <enabledWhen>
+            <instanceof
+                  value="org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode">
+            </instanceof>
+         </enabledWhen>
+      </page>
+   </extension>
 </plugin>

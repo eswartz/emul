@@ -1,12 +1,13 @@
-/*******************************************************************************
+/*********************************************************************************************
  * Copyright (c) 2011 Wind River Systems, Inc. and others. All rights reserved.
  * This program and the accompanying materials are made available under the terms
  * of the Eclipse Public License v1.0 which accompanies this distribution, and is
  * available at http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * Uwe Stieber (Wind River) - initial API and implementation
- *******************************************************************************/
+ * Uwe Stieber (Wind River)		- initial API and implementation
+ * William Chen (Wind River)	- [345384]Provide property pages for remote file system nodes
+ *********************************************************************************************/
 package org.eclipse.tm.te.tcf.filesystem.model;
 
 import java.util.ArrayList;
@@ -17,6 +18,7 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.PlatformObject;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IFileSystem;
+import org.eclipse.tm.te.tcf.filesystem.interfaces.IWindowsFileAttributes;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel;
 
 /**
@@ -116,5 +118,75 @@ public final class FSTreeNode extends PlatformObject {
 		buffer.append(": name=" + (name != null ? name : super.toString())); //$NON-NLS-1$
 		buffer.append(", UUID=" + uniqueId.toString()); //$NON-NLS-1$
 		return buffer.toString();
+	}
+
+	/**
+	 * Return if the node is a Windows file/folder node.
+	 * @return true if it is a Windows node, or else false.
+	 */
+	public boolean isWindowsNode() {
+		return attr != null && attr.attributes != null && attr.attributes.containsKey("Win32Attrs"); //$NON-NLS-1$
+	}
+
+	/**
+	 * Return if the node is a file.
+	 * @return true if it is a file, or else false.
+	 */
+	public boolean isFile() {
+		return attr != null && attr.isFile();
+	}
+
+	/**
+	 * Return if the node is a directory.
+	 * @return true if it is a directory, or else false.
+	 */
+	public boolean isDirectory() {
+		return attr != null && attr.isDirectory();
+	}
+
+	/**
+	 * Return if the attribute specified by the mask bit is turned on.
+	 * @param bit The attribute's mask bit.
+	 * @return true if it is on, or else false.
+	 */
+	public boolean isWin32AttrOn(int bit) {
+		if (attr != null && attr.attributes.get("Win32Attrs") instanceof Integer) { //$NON-NLS-1$
+			Integer win32Attrs = (Integer) attr.attributes.get("Win32Attrs"); //$NON-NLS-1$
+			return (win32Attrs.intValue() & bit) != 0;
+		}
+		return false;
+	}
+
+	/**
+	 * Return if this file/folder is hidden.
+	 * @return true if it is hidden, or else false.
+	 */
+	public boolean isHidden() {
+		return isWin32AttrOn(IWindowsFileAttributes.FILE_ATTRIBUTE_HIDDEN);
+	}
+
+	/**
+	 * Return if this file/folder is read-only.
+	 * @return true if it is read-only, or else false.
+	 */
+	public boolean isReadOnly() {
+		return isWin32AttrOn(IWindowsFileAttributes.FILE_ATTRIBUTE_READONLY);
+	}
+
+	/**
+	 * Get the location of a file/folder node using the format of the file
+	 * system's platform.
+	 *
+	 * @param node The file/folder node.
+	 * @return The location of the file/folder.
+	 */
+	public String getLocation() {
+		String pathSep = isWindowsNode() ? "\\" : "/"; //$NON-NLS-1$//$NON-NLS-2$
+		if (parent == null || parent.type.endsWith("FSRootNode") || parent.type.endsWith("FSRootDirNode")) //$NON-NLS-1$ //$NON-NLS-2$
+			return parent.name;
+		String pLoc = parent.getLocation();
+		if (pLoc.endsWith(pathSep))
+			return pLoc + parent.name;
+		return pLoc + pathSep + parent.name;
 	}
 }
