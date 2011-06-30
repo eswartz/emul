@@ -9,9 +9,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import v9t9.emulator.hardware.dsrs.CatalogEntry;
 import v9t9.emulator.hardware.dsrs.DsrException;
 import v9t9.emulator.hardware.dsrs.PabConstants;
+import v9t9.engine.files.CatalogEntry;
 import v9t9.engine.files.FDR;
 import v9t9.engine.files.NativeFDRFile;
 import v9t9.engine.files.NativeFile;

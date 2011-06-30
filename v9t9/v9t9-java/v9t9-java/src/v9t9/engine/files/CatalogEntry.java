@@ -1,10 +1,8 @@
 /**
  * 
  */
-package v9t9.emulator.hardware.dsrs;
+package v9t9.engine.files;
 
-import v9t9.engine.files.FDR;
-import v9t9.engine.files.IFDRFlags;
 
 /**
  * @author ejs

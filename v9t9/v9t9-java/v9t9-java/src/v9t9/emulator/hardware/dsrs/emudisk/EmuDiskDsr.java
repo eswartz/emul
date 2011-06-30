@@ -22,7 +22,6 @@ import v9t9.emulator.clients.builtin.IconSetting;
 import v9t9.emulator.clients.builtin.swt.IDevIcons;
 import v9t9.emulator.clients.builtin.swt.IDeviceIndicatorProvider;
 import v9t9.emulator.common.WorkspaceSettings;
-import v9t9.emulator.hardware.dsrs.CatalogEntry;
 import v9t9.emulator.hardware.dsrs.DeviceIndicatorProvider;
 import v9t9.emulator.hardware.dsrs.DsrException;
 import v9t9.emulator.hardware.dsrs.DsrHandler;
@@ -33,6 +32,7 @@ import v9t9.emulator.hardware.dsrs.emudisk.DiskDirectoryMapper.EmuDiskSetting;
 import v9t9.emulator.hardware.dsrs.emudisk.EmuDiskPabHandler.PabInfoBlock;
 import v9t9.emulator.hardware.dsrs.realdisk.StandardDiskImageDsr;
 import v9t9.emulator.runtime.cpu.Executor;
+import v9t9.engine.files.Catalog;
 import v9t9.engine.files.FDR;
 import v9t9.engine.files.V9t9FDR;
 import v9t9.engine.memory.DiskMemoryEntry;
@@ -373,9 +373,13 @@ public class EmuDiskDsr implements DsrHandler9900 {
 	}
 	
 
-	public List<CatalogEntry> readCatalog(File file) {
+	public Catalog readCatalog(File file) {
 		File dir = file.isDirectory() ? file : file.getParentFile();
 		FileLikeDirectoryInfo info = new FileLikeDirectoryInfo(dir, mapper);
-		return info.readCatalog();
+		long total = dir.getTotalSpace();
+		long used = total - dir.getFreeSpace();
+		return new Catalog(dir.getName().toUpperCase(), (int)(total / 256) & 0xffff, 
+				(int)((total - used) / 256) & 0xffff,
+				info.readCatalog());
 	}
 }

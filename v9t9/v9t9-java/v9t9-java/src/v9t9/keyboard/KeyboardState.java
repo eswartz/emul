@@ -957,4 +957,8 @@ public class KeyboardState {
 		}
 		return any;
 	}
+
+	public byte getShiftMask() {
+		return realshift;
+	}
 }

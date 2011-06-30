@@ -14,8 +14,10 @@ import org.ejs.coffee.core.properties.IPersistable;
 import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.settings.ISettingSection;
 
-import v9t9.emulator.hardware.dsrs.CatalogEntry;
+import v9t9.engine.files.Catalog;
+import v9t9.engine.files.CatalogEntry;
 import v9t9.engine.files.V9t9FDR;
+import v9t9.engine.files.VDR;
 
 
 /**
@@ -378,14 +380,20 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	 * @return
 	 * @throws IOException 
 	 */
-	public List<CatalogEntry> readCatalog() throws IOException {
+	public Catalog readCatalog() throws IOException {
 		List<CatalogEntry> entries = new ArrayList<CatalogEntry>();
-		byte[] sec1 = new byte[256];
+		byte[] asec = new byte[256];
 		byte[] fdrSec = new byte[256];
 		
-		readSector(1, sec1, 0, 256);
+		readSector(0, asec, 0, 256);
+		VDR vdr = VDR.createVDR(asec, 0);
+		String volume = vdr.getVolumeName();
+		int total = vdr.getTotalSecs();
+		int used = vdr.getSecsUsed();
+		
+		readSector(1, asec, 0, 256);
 		for (int ent = 0; ent < 256; ent+=2) {
-			int sec = ((sec1[ent] << 8) | (sec1[ent+1] & 0xff)) & 0xffff;
+			int sec = ((asec[ent] << 8) | (asec[ent+1] & 0xff)) & 0xffff;
 			if (sec == 0)
 				break;
 			try {
@@ -398,6 +406,6 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 				e.printStackTrace();
 			}
 		}
-		return entries;
+		return new Catalog(volume, total, used, entries);
 	}
 }

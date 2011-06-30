@@ -22,6 +22,8 @@ import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.ArrayContentProvider;
+import org.eclipse.jface.viewers.DoubleClickEvent;
+import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.TableViewer;
@@ -30,6 +32,8 @@ import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.events.MouseAdapter;
+import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
@@ -46,6 +50,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
+import org.eclipse.swt.widgets.TableItem;
 import org.ejs.coffee.core.properties.IProperty;
 import org.ejs.coffee.core.properties.IPropertyListener;
 import org.ejs.coffee.core.properties.SettingProperty;
@@ -53,13 +58,15 @@ import org.ejs.coffee.core.properties.SettingProperty;
 import v9t9.emulator.clients.builtin.ISettingDecorator;
 import v9t9.emulator.clients.builtin.IconSetting;
 import v9t9.emulator.common.EmulatorSettings;
+import v9t9.emulator.common.IEventNotifier.Level;
 import v9t9.emulator.common.Machine;
-import v9t9.emulator.hardware.dsrs.CatalogEntry;
 import v9t9.emulator.hardware.dsrs.DsrHandler;
 import v9t9.emulator.hardware.dsrs.DsrSettings;
 import v9t9.emulator.hardware.dsrs.emudisk.EmuDiskDsr;
 import v9t9.emulator.hardware.dsrs.realdisk.BaseDiskImage;
 import v9t9.emulator.hardware.dsrs.realdisk.DiskImageFactory;
+import v9t9.engine.files.Catalog;
+import v9t9.engine.files.CatalogEntry;
 
 /**
  * Select and set up disks
@@ -256,11 +263,11 @@ public class DiskSelector extends Composite {
 						try {
 							image.openDiskImage();
 							
-							List<CatalogEntry> entries = image.readCatalog();
+							Catalog catalog = image.readCatalog();
 							
 							image.closeDiskImage();
 							
-							showCatalogDialog(setting, entries);
+							showCatalogDialog(setting, catalog);
 							
 						} catch (IOException e2) {
 							ErrorDialog.openError(getShell(), "Failed to open", "Could not read catalog for disk image " + setting.getString(), 
@@ -275,10 +282,10 @@ public class DiskSelector extends Composite {
 					public void widgetSelected(SelectionEvent e) {
 						for (DsrHandler dsr : machine.getDsrManager().getDsrs()) {
 							if (dsr instanceof EmuDiskDsr) {
-								List<CatalogEntry> entries = ((EmuDiskDsr) dsr).readCatalog(
+								Catalog catalog = ((EmuDiskDsr) dsr).readCatalog(
 										new File(setting.getString()));
 								
-								showCatalogDialog(setting, entries);
+								showCatalogDialog(setting, catalog);
 								break;
 							}
 						}
@@ -293,15 +300,19 @@ public class DiskSelector extends Composite {
 		 * @param entries
 		 */
 		protected void showCatalogDialog(final SettingProperty setting,
-				final List<CatalogEntry> entries) {
+				final Catalog catalog) {
+			final List<CatalogEntry> entries = catalog.getEntries();
 			Dialog dialog = new Dialog(getShell()) {
+				{
+					setShellStyle(getShellStyle() | SWT.RESIZE | SWT.MODELESS);
+				}
 				/* (non-Javadoc)
 				 * @see org.eclipse.jface.window.Window#configureShell(org.eclipse.swt.widgets.Shell)
 				 */
 				@Override
 				protected void configureShell(Shell newShell) {
 					super.configureShell(newShell);
-					newShell.setText("Catalog of " + setting.getName() + " (" + setting.getString() + ")");
+					newShell.setText("Catalog of " + setting.getName());
 				}
 				/* (non-Javadoc)
 				 * @see org.eclipse.jface.dialogs.Dialog#getInitialSize()
@@ -317,11 +328,15 @@ public class DiskSelector extends Composite {
 				protected Control createDialogArea(Composite parent) {
 					Composite composite = (Composite) super.createDialogArea(parent);
 					
+					Label label = new Label(composite, SWT.WRAP);
+					label.setText(setting.getString() + "\n\nName: " + catalog.volumeName + "; Total: " + catalog.totalSectors + "; Used: " + catalog.usedSectors);
+					GridDataFactory.fillDefaults().grab(true,false).applyTo(label);
+					
 					final TableViewer viewer = new TableViewer(composite, SWT.FULL_SELECTION | SWT.BORDER | SWT.MULTI);
 					viewer.setContentProvider(new ArrayContentProvider());
 					viewer.setLabelProvider(new CatalogLabelProvider());
 
-					Table table = viewer.getTable();
+					final Table table = viewer.getTable();
 					table.setHeaderVisible(true);
 					
 					GridDataFactory.fillDefaults().grab(true,true).applyTo(viewer.getControl());
@@ -342,6 +357,42 @@ public class DiskSelector extends Composite {
 					typeColumn.pack();
 					lenColumn.pack();
 					///
+					
+
+					final boolean[] isShifted = { false };
+					table.addMouseListener(new MouseAdapter() {
+						@Override
+						public void mouseDoubleClick(MouseEvent e) {
+							isShifted[0] = (e.stateMask & SWT.SHIFT) != 0;
+							TableItem item = table.getItem(new Point(e.x, e.y));
+							if (item != null && item.getData() instanceof CatalogEntry) {
+								CatalogEntry entry = (CatalogEntry)item.getData();
+								String filePath;
+								if (isShifted[0])
+									filePath = entry.fileName;
+								else
+									filePath = setting.getName() + "." + entry.fileName;
+								machine.getClient().getEventNotifier().notifyEvent(entry, 
+										Level.INFO, "Pasting '" + filePath + "'");
+										
+								machine.getKeyboardState().pasteText(filePath);
+							}
+						}
+					});
+					
+					viewer.addDoubleClickListener(new IDoubleClickListener() {
+						
+						@Override
+						public void doubleClick(DoubleClickEvent event) {
+							
+						}
+					});
+					
+
+					label = new Label(composite, SWT.WRAP);
+					label.setText("Double-click to paste path (shift for filename)");
+					GridDataFactory.fillDefaults().grab(true,false).applyTo(label);
+					
 					
 					return composite;
 				}
