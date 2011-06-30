@@ -6,7 +6,7 @@ package v9t9.emulator.hardware.dsrs.emudisk;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import v9t9.emulator.hardware.dsrs.DsrException;
@@ -22,7 +22,7 @@ class DiskLikeDirectoryInfo extends DirectoryInfo {
 		int len;
 		NativeFile file;
 	}
-	Map<File, DiskFileRange> sectorRanges = new HashMap<File, DiskFileRange>();
+	Map<File, DiskFileRange> sectorRanges = new LinkedHashMap<File, DiskFileRange>();
 	private String devname;
 	int lastSector;
 	
@@ -171,15 +171,16 @@ class DiskLikeDirectoryInfo extends DirectoryInfo {
 	public void synthesizeIndexSector(ByteMemoryAccess access) {
 		int offset = access.offset;
 		
-		int cnt = 128;
+		int endOffset = offset + 256;
+		int cnt = 127;
 		for (Map.Entry<File, DiskFileRange> entry : sectorRanges.entrySet()) {
 			int fdrSector = entry.getValue().fdrSector;
 			access.memory[offset++] = (byte) (fdrSector / 256);
 			access.memory[offset++] = (byte) (fdrSector % 256);
-			if (cnt-- == 0)
+			if (--cnt == 0)
 				break;
 		}
-		while (cnt-- > 0) {
+		while (offset < endOffset) {
 			access.memory[offset++] = (byte) 0;
 			access.memory[offset++] = (byte) 0;
 		}

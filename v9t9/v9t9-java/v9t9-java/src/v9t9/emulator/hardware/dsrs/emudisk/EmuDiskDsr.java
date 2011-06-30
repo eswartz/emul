@@ -277,8 +277,8 @@ public class EmuDiskDsr implements DsrHandler9900 {
 			return true;
 	
 		//case D_FMTDISK:
-		//case D_PROT:
-		//case D_RENAME:
+		case D_PROT:
+		case D_RENAME:
 		case D_DINPUT:
 		case D_DOUTPUT:
 		case D_SECRW:

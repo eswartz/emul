@@ -61,9 +61,13 @@ public class FileLikeDirectoryInfo extends DirectoryInfo {
 		return new CatalogEntry(name, size, flags, reclen);
 	}
 
+	/**
+	 * Read the full catalog, even if the client can only process 128 entries.
+	 * @return
+	 */
 	public List<CatalogEntry> readCatalog() {
 		List<CatalogEntry> list = new ArrayList<CatalogEntry>();
-		for (int index = 1; index < lastEntry; index++) {
+		for (int index = 1; index <= entries.length; index++) {
 			try {
 				list.add(decodeFile(entries[index - 1]));
 			} catch (DsrException e) { 
