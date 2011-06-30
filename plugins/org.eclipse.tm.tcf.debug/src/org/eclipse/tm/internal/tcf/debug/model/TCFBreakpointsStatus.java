@@ -26,6 +26,7 @@ import org.eclipse.tm.tcf.services.IBreakpoints;
 public class TCFBreakpointsStatus {
 
     private final IBreakpoints service;
+    private final Map<String,Map<String,Object>> breakpoints = new HashMap<String,Map<String,Object>>();
     private final Map<String,Map<String,Object>> status = new HashMap<String,Map<String,Object>>();
     private final Set<ITCFBreakpointListener> listeners = new HashSet<ITCFBreakpointListener>();
 
@@ -53,6 +54,7 @@ public class TCFBreakpointsStatus {
                 public void contextAdded(Map<String,Object>[] bps) {
                     for (Map<String,Object> bp : bps) {
                         String id = (String)bp.get(IBreakpoints.PROP_ID);
+                        breakpoints.put(id, bp);
                         if (status.get(id) != null) continue;
                         status.put(id, new HashMap<String,Object>());
                         for (Iterator<ITCFBreakpointListener> i = listeners.iterator(); i.hasNext();) {
@@ -64,6 +66,7 @@ public class TCFBreakpointsStatus {
                 public void contextChanged(Map<String,Object>[] bps) {
                     for (Map<String,Object> bp : bps) {
                         String id = (String)bp.get(IBreakpoints.PROP_ID);
+                        breakpoints.put(id, bp);
                         if (!status.containsKey(id)) continue;
                         for (Iterator<ITCFBreakpointListener> i = listeners.iterator(); i.hasNext();) {
                             i.next().breakpointChanged(id);
@@ -73,6 +76,7 @@ public class TCFBreakpointsStatus {
 
                 public void contextRemoved(String[] ids) {
                     for (String id : ids) {
+                        breakpoints.remove(id);
                         if (!status.containsKey(id)) continue;
                         for (Iterator<ITCFBreakpointListener> i = listeners.iterator(); i.hasNext();) {
                             i.next().breakpointRemoved(id);
@@ -89,13 +93,16 @@ public class TCFBreakpointsStatus {
                 public void doneGetIDs(IToken token, Exception error, String[] ids) {
                     if (error != null) return;
                     for (final String id : ids) {
-                        // fake properties - only ID is required for contextAdded
-                        Map<String, Object> bpProps = new HashMap<String, Object>();
-                        bpProps.put(IBreakpoints.PROP_ID, id);
-                        listener.contextAdded((Map<String, Object>[]) new Map[] { bpProps });
-                        service.getStatus(id, new IBreakpoints.DoneGetStatus() {
-                            public void doneGetStatus(IToken token, Exception error, Map<String, Object> status) {
-                                if (error == null) listener.breakpointStatusChanged(id, status);
+                        service.getProperties(id, new IBreakpoints.DoneGetProperties() {
+                            public void doneGetProperties(IToken token, Exception error, Map<String, Object> props) {
+                                if (error == null) {
+                                    listener.contextAdded((Map<String, Object>[]) new Map[] { props });
+                                    service.getStatus(id, new IBreakpoints.DoneGetStatus() {
+                                        public void doneGetStatus(IToken token, Exception error, Map<String, Object> status) {
+                                            if (error == null) listener.breakpointStatusChanged(id, status);
+                                        }
+                                    });
+                                }
                             }
                         });
                     }
@@ -113,6 +120,12 @@ public class TCFBreakpointsStatus {
         assert Protocol.isDispatchThread();
         if (service == null) return status_not_supported;
         return status.get(id);
+    }
+
+    public Map<String,Object> getProperties(String id) {
+        assert id != null;
+        assert Protocol.isDispatchThread();
+        return breakpoints.get(id);
     }
 
     public Map<String,Object> getStatus(IBreakpoint bp) {

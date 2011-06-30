@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2008, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,36 +10,56 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.debug.core.ILaunch;
+import org.eclipse.debug.core.model.ISourceLocator;
+import org.eclipse.debug.core.sourcelookup.ISourceLookupDirector;
 import org.eclipse.debug.ui.DebugUITools;
 import org.eclipse.debug.ui.IDebugUIConstants;
-import org.eclipse.debug.ui.IDebugView;
+import org.eclipse.debug.ui.ISourcePresentation;
+import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.Position;
 import org.eclipse.jface.text.source.Annotation;
 import org.eclipse.jface.text.source.IAnnotationModel;
 import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.graphics.Device;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.tm.internal.tcf.debug.launch.TCFSourceLookupDirector;
+import org.eclipse.tm.internal.tcf.debug.launch.TCFSourceLookupParticipant;
 import org.eclipse.tm.internal.tcf.debug.model.ITCFBreakpointListener;
 import org.eclipse.tm.internal.tcf.debug.model.TCFBreakpoint;
 import org.eclipse.tm.internal.tcf.debug.model.TCFBreakpointsStatus;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
+import org.eclipse.tm.internal.tcf.debug.model.TCFSourceRef;
+import org.eclipse.tm.internal.tcf.debug.ui.Activator;
+import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IBreakpoints;
+import org.eclipse.tm.tcf.services.ILineNumbers;
+import org.eclipse.tm.tcf.services.IRunControl;
+import org.eclipse.tm.tcf.util.TCFDataCache;
+import org.eclipse.tm.tcf.util.TCFTask;
 import org.eclipse.ui.IEditorInput;
+import org.eclipse.ui.IEditorPart;
+import org.eclipse.ui.IEditorReference;
 import org.eclipse.ui.ISelectionListener;
 import org.eclipse.ui.IWindowListener;
-import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
@@ -50,18 +70,19 @@ public class TCFAnnotationManager {
 
     class TCFAnnotation extends Annotation {
 
-        final TCFModel model;
-        final String exe_id;
-        final ITextEditor editor;
+        final ILineNumbers.CodeArea area;
         final Image image;
-        final Position position;
+        final String text;
+        final int hash_code;
 
-        TCFAnnotation(TCFModel model, String exe_id, ITextEditor editor, Image image, Position position) {
-            this.model = model;
-            this.exe_id = exe_id;
-            this.editor = editor;
+        IAnnotationModel model;
+
+        TCFAnnotation(ILineNumbers.CodeArea area, Image image, String text) {
+            this.area = area;
             this.image = image;
-            this.position = position;
+            this.text = text;
+            hash_code = area.hashCode() + image.hashCode() + text.hashCode();
+            setText(text);
         }
 
         protected Image getImage() {
@@ -70,17 +91,30 @@ public class TCFAnnotationManager {
 
         void dispose() {
             assert Thread.currentThread() == display.getThread();
-            IDocumentProvider doc_provider = editor.getDocumentProvider();
-            IEditorInput editor_input = editor.getEditorInput();
-            if (doc_provider != null) {
-                IAnnotationModel ann_model = doc_provider.getAnnotationModel(editor_input);
-                if (ann_model != null) ann_model.removeAnnotation(this);
+            if (model != null) {
+                model.removeAnnotation(this);
+                model = null;
             }
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (!(o instanceof TCFAnnotation)) return false;
+            TCFAnnotation a = (TCFAnnotation)o;
+            if (!area.equals(a.area)) return false;
+            if (!image.equals(a.image)) return false;
+            if (!text.equals(a.text)) return false;
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            return hash_code;
         }
     }
 
     private class WorkbenchWindowInfo {
-        final ArrayList<TCFAnnotation> annotations = new ArrayList<TCFAnnotation>();
+        final LinkedList<TCFAnnotation> annotations = new LinkedList<TCFAnnotation>();
 
         void dispose() {
             for (TCFAnnotation a : annotations) a.dispose();
@@ -92,6 +126,9 @@ public class TCFAnnotationManager {
     private final HashMap<IWorkbenchWindow,WorkbenchWindowInfo> windows =
         new HashMap<IWorkbenchWindow,WorkbenchWindowInfo>();
 
+    private final HashSet<IWorkbenchWindow> dirty_windows = new HashSet<IWorkbenchWindow>();
+    private final HashSet<TCFLaunch> dirty_launches = new HashSet<TCFLaunch>();
+
     private final TCFLaunch.LaunchListener launch_listener = new TCFLaunch.LaunchListener() {
 
         public void onCreated(TCFLaunch launch) {
@@ -99,26 +136,17 @@ public class TCFAnnotationManager {
 
         public void onConnected(final TCFLaunch launch) {
             updateActiveLaunch();
+            updateAnnotations(null, launch);
             TCFBreakpointsStatus bps = launch.getBreakpointsStatus();
             if (bps == null) return;
             bps.addListener(new ITCFBreakpointListener() {
 
                 public void breakpointStatusChanged(String id) {
-                    displayExec(new Runnable() {
-                        public void run() {
-                            if (active_launch != launch) return;
-                            refreshBreakpointView();
-                        }
-                    });
+                    updateAnnotations(null, launch);
                 }
 
                 public void breakpointRemoved(String id) {
-                    displayExec(new Runnable() {
-                        public void run() {
-                            if (active_launch != launch) return;
-                            refreshBreakpointView();
-                        }
-                    });
+                    updateAnnotations(null, launch);
                 }
 
                 public void breakpointChanged(String id) {
@@ -128,22 +156,8 @@ public class TCFAnnotationManager {
 
         public void onDisconnected(final TCFLaunch launch) {
             assert Protocol.isDispatchThread();
-            synchronized (Device.class) {
-                displayExec(new Runnable() {
-                    public void run() {
-                        for (WorkbenchWindowInfo info : windows.values()) {
-                            for (Iterator<TCFAnnotation> i = info.annotations.iterator(); i.hasNext();) {
-                                TCFAnnotation a = i.next();
-                                if (a.model.getLaunch() == launch) {
-                                    i.remove();
-                                    a.dispose();
-                                }
-                            }
-                        }
-                    }
-                });
-            }
             updateActiveLaunch();
+            updateAnnotations(null, launch);
         }
 
         public void onProcessOutput(TCFLaunch launch, String process_id, int stream_id, byte[] data) {
@@ -158,6 +172,7 @@ public class TCFAnnotationManager {
 
         public void selectionChanged(IWorkbenchPart part, ISelection selection) {
             updateActiveLaunch();
+            updateAnnotations(part.getSite().getWorkbenchWindow(), (TCFLaunch)null);
         }
     };
 
@@ -185,12 +200,13 @@ public class TCFAnnotationManager {
                     IDebugUIConstants.ID_DEBUG_VIEW, selection_listener);
             windows.put(window, new WorkbenchWindowInfo());
             updateActiveLaunch();
+            updateAnnotations(window, (TCFLaunch)null);
         }
     };
 
     private final Display display = Display.getDefault();
-    private int refresh_breakpoint_view_cnt = 0;
     private int update_active_launch_cnt = 0;
+    private int update_unnotations_cnt = 0;
     private boolean started;
     private boolean disposed;
 
@@ -253,35 +269,12 @@ public class TCFAnnotationManager {
                 if (adaptable != null) {
                     ILaunch x = (ILaunch)adaptable.getAdapter(ILaunch.class);
                     if (x instanceof TCFLaunch) {
-                        final TCFLaunch l = (TCFLaunch)x;
-                        final boolean[] b = new boolean[1];
-                        Protocol.invokeAndWait(new Runnable() {
-                            public void run() {
-                                IChannel channel = l.getChannel();
-                                b[0] = channel != null && channel.getState() == IChannel.STATE_OPEN;
-                            }
-                        });
-                        if (b[0]) launch = l;
+                        TCFLaunch l = (TCFLaunch)x;
+                        IChannel channel = l.getChannel();
+                        if (channel != null && channel.getState() == IChannel.STATE_OPEN) launch = l;
                     }
                 }
-                if (active_launch != launch) {
-                    active_launch = launch;
-                    refreshBreakpointView();
-                }
-            }
-        });
-    }
-
-    private void refreshBreakpointView() {
-        assert !disposed;
-        final int cnt = ++refresh_breakpoint_view_cnt;
-        displayExec(new Runnable() {
-            public void run() {
-                if (cnt != refresh_breakpoint_view_cnt) return;
-                for (IWorkbenchWindow window : windows.keySet()) {
-                    IDebugView view = (IDebugView)window.getActivePage().findView(IDebugUIConstants.ID_BREAKPOINT_VIEW);
-                    if (view != null) view.getViewer().refresh();
-                }
+                active_launch = launch;
             }
         });
     }
@@ -290,7 +283,7 @@ public class TCFAnnotationManager {
         assert Protocol.isDispatchThread();
         if (disposed) return null;
         final TCFLaunch launch = active_launch;
-        if (launch != null && launch.getBreakpointsStatus() != null) {
+        if (launch != null) {
             TCFBreakpointsStatus bs = launch.getBreakpointsStatus();
             if (bs != null) {
                 Map<String,Object> map = bs.getStatus(breakpoint);
@@ -307,74 +300,273 @@ public class TCFAnnotationManager {
         return null;
     }
 
-    void addStackFrameAnnotation(TCFModel model, String exe_id, boolean top_frame,
-            IWorkbenchPage page, ITextEditor editor, IRegion region) {
-        if (disposed) return;
-        assert Thread.currentThread() == display.getThread();
-        TCFAnnotation annotation = null;
-        IAnnotationModel ann_model = null;
+    @SuppressWarnings("unchecked")
+    private Object[] toObjectArray(Object o) {
+        if (o == null) return null;
+        Collection<Object> c = (Collection<Object>)o;
+        return (Object[])c.toArray(new Object[c.size()]);
+    }
 
-        if (editor != null && region != null) {
-            IDocumentProvider doc_provider = editor.getDocumentProvider();
-            IEditorInput editor_input = editor.getEditorInput();
-            ann_model = doc_provider.getAnnotationModel(editor_input);
-            if (ann_model != null) {
-                String type;
-                String text;
-                Image image;
-                if (top_frame) {
-                    type = "org.eclipse.tm.tcf.debug.top_frame"; //$NON-NLS-1$
-                    text = "Debug Current Instruction Pointer"; //$NON-NLS-1$
-                    image = DebugUITools.getImage(IDebugUIConstants.IMG_OBJS_INSTRUCTION_POINTER_TOP);
-                }
-                else {
-                    type = "org.eclipse.tm.tcf.debug.stack_frame"; //$NON-NLS-1$
-                    text = "Debug Stack Frame"; //$NON-NLS-1$
-                    image = DebugUITools.getImage(IDebugUIConstants.IMG_OBJS_INSTRUCTION_POINTER);
-                }
-                annotation = new TCFAnnotation(model, exe_id, editor, image,
-                        new Position(region.getOffset(), region.getLength()));
-                annotation.setType(type);
-                annotation.setText(text);
-            }
-        }
+    @SuppressWarnings("unchecked")
+    private Map<String,Object> toObjectMap(Object o) {
+        return (Map<String,Object>)o;
+    }
 
-        if (page != null) {
-            WorkbenchWindowInfo info = windows.get(page.getWorkbenchWindow());
-            if (info != null) {
-                if (annotation != null && info.annotations.size() == 1) {
-                    for (TCFAnnotation a : info.annotations) {
-                        if (a.model != annotation.model) continue;
-                        if (a.editor != annotation.editor) continue;
-                        if (a.image != annotation.image) continue;
-                        if (!a.exe_id.equals(annotation.exe_id)) continue;
-                        if (!a.position.equals(annotation.position)) continue;
-                        if (!a.getType().equals(annotation.getType())) continue;
-                        if (!a.getText().equals(annotation.getText())) continue;
-                        return;
-                    }
-                }
-                for (TCFAnnotation a : info.annotations) a.dispose();
-                info.annotations.clear();
-                if (annotation != null) {
-                    ann_model.addAnnotation(annotation, annotation.position);
-                    info.annotations.add(annotation);
-                }
+    private BigInteger toBigInteger(Number n) {
+        if (n == null) return null;
+        if (n instanceof BigInteger) return (BigInteger)n;
+        return new BigInteger(n.toString());
+    }
+
+    private void addBreakpointErrorAnnotation(List<TCFAnnotation> set, TCFLaunch launch, String id, String error) {
+        Map<String,Object> props = launch.getBreakpointsStatus().getProperties(id);
+        if (props != null) {
+            String file = (String)props.get(IBreakpoints.PROP_FILE);
+            Number line = (Number)props.get(IBreakpoints.PROP_LINE);
+            if (file != null && line != null) {
+                ILineNumbers.CodeArea area = new ILineNumbers.CodeArea(null, file,
+                        line.intValue(), 0, line.intValue() + 1, 0,
+                        null, null, 0, false, false, false, false);
+                TCFAnnotation a = new TCFAnnotation(area,
+                        ImageCache.getImage(ImageCache.IMG_BREAKPOINT_ERROR),
+                        "Cannot plant breakpoint: " + error);
+                a.setType("org.eclipse.tm.tcf.debug.breakpoint_instance"); //$NON-NLS-1$
+                set.add(a);
             }
         }
     }
 
-    void removeStackFrameAnnotation(TCFModel model, Set<String> ids) {
+    private void updateAnnotations(IWorkbenchWindow window, final TCFNode node) {
         if (disposed) return;
         assert Thread.currentThread() == display.getThread();
-        for (WorkbenchWindowInfo info : windows.values()) {
-            for (Iterator<TCFAnnotation> i = info.annotations.iterator(); i.hasNext();) {
-                TCFAnnotation a = i.next();
-                if (a.model == model && ids.contains(a.exe_id)) {
-                    i.remove();
-                    a.dispose();
+        final WorkbenchWindowInfo win_info = windows.get(window);
+        if (win_info == null) return;
+        List<TCFAnnotation> set = null;
+        if (node != null) {
+            set = new TCFTask<List<TCFAnnotation>>(node.getChannel()) {
+                public void run() {
+                    if (node.isDisposed()) {
+                        done(null);
+                        return;
+                    }
+                    TCFNodeExecContext thread = null;
+                    TCFNodeExecContext memory = null;
+                    TCFNodeStackFrame frame = null;
+                    String bp_group = null;
+                    if (node instanceof TCFNodeStackFrame) {
+                        thread = (TCFNodeExecContext)node.getParent();
+                        frame = (TCFNodeStackFrame)node;
+                    }
+                    else if (node instanceof TCFNodeExecContext) {
+                        thread = (TCFNodeExecContext)node;
+                        TCFChildrenStackTrace trace = thread.getStackTrace();
+                        if (!trace.validate(this)) return;
+                        frame = trace.getTopFrame();
+                    }
+                    if (thread != null) {
+                        TCFDataCache<IRunControl.RunControlContext> rc_ctx_cache = thread.getRunContext();
+                        if (!rc_ctx_cache.validate(this)) return;
+                        IRunControl.RunControlContext rc_ctx_data = rc_ctx_cache.getData();
+                        if (rc_ctx_data != null) bp_group = rc_ctx_data.getBPGroup();
+                        TCFDataCache<TCFNodeExecContext> mem_cache = thread.getMemoryNode();
+                        if (!mem_cache.validate(this)) return;
+                        memory = mem_cache.getData();
+                    }
+                    List<TCFAnnotation> set = new ArrayList<TCFAnnotation>();
+                    if (memory != null) {
+                        TCFLaunch launch = node.getModel().getLaunch();
+                        TCFBreakpointsStatus bs = launch.getBreakpointsStatus();
+                        if (bs != null) {
+                            for (String id : bs.getStatusIDs()) {
+                                Map<String,Object> map = bs.getStatus(id);
+                                if (map == null) continue;
+                                String error = (String)map.get(IBreakpoints.STATUS_ERROR);
+                                if (error != null) addBreakpointErrorAnnotation(set, launch, id, error);
+                                Object[] arr = toObjectArray(map.get(IBreakpoints.STATUS_INSTANCES));
+                                if (arr == null) continue;
+                                for (Object o : arr) {
+                                    Map<String,Object> m = toObjectMap(o);
+                                    String ctx_id = (String)m.get(IBreakpoints.INSTANCE_CONTEXT);
+                                    if (ctx_id == null) continue;
+                                    if (!ctx_id.equals(node.getID()) && !ctx_id.equals(bp_group)) continue;
+                                    error = (String)m.get(IBreakpoints.INSTANCE_ERROR);
+                                    BigInteger addr = toBigInteger((Number)m.get(IBreakpoints.INSTANCE_ADDRESS));
+                                    if (addr != null) {
+                                        ILineNumbers.CodeArea area = null;
+                                        TCFDataCache<TCFSourceRef> line_cache = memory.getLineInfo(addr);
+                                        if (line_cache != null) {
+                                            if (!line_cache.validate(this)) return;
+                                            TCFSourceRef line_data = line_cache.getData();
+                                            if (line_data != null && line_data.area != null) area = line_data.area;
+                                        }
+                                        if (area == null) {
+                                            Map<String,Object> props = launch.getBreakpointsStatus().getProperties(id);
+                                            if (props != null) {
+                                                String file = (String)props.get(IBreakpoints.PROP_FILE);
+                                                Number line = (Number)props.get(IBreakpoints.PROP_LINE);
+                                                if (file != null && line != null) {
+                                                    area = new ILineNumbers.CodeArea(null, file,
+                                                            line.intValue(), 0, line.intValue() + 1, 0,
+                                                            null, null, 0, false, false, false, false);
+                                                }
+                                            }
+                                        }
+                                        if (area != null) {
+                                            if (error != null) {
+                                                TCFAnnotation a = new TCFAnnotation(area,
+                                                        ImageCache.getImage(ImageCache.IMG_BREAKPOINT_ERROR),
+                                                        "Cannot plant breakpoint at 0x" + addr.toString(16) + ": " + error);
+                                                a.setType("org.eclipse.tm.tcf.debug.breakpoint_instance"); //$NON-NLS-1$
+                                                set.add(a);
+                                                error = null;
+                                            }
+                                            else {
+                                                TCFAnnotation a = new TCFAnnotation(area,
+                                                        ImageCache.getImage(ImageCache.IMG_BREAKPOINT_INSTALLED),
+                                                        "Breakpoint planted at 0x" + addr.toString(16));
+                                                a.setType("org.eclipse.tm.tcf.debug.breakpoint_instance"); //$NON-NLS-1$
+                                                set.add(a);
+                                            }
+                                        }
+                                    }
+                                    if (error != null) addBreakpointErrorAnnotation(set, launch, id, error);
+                                }
+                            }
+                        }
+                    }
+                    if (frame != null && frame.getFrameNo() >= 0) {
+                        TCFDataCache<TCFSourceRef> line_cache = frame.getLineInfo();
+                        if (!line_cache.validate(this)) return;
+                        TCFSourceRef line_data = line_cache.getData();
+                        if (line_data != null && line_data.area != null) {
+                            TCFAnnotation a = null;
+                            if (frame.getFrameNo() == 0) {
+                                a = new TCFAnnotation(line_data.area,
+                                        DebugUITools.getImage(IDebugUIConstants.IMG_OBJS_INSTRUCTION_POINTER_TOP),
+                                        "Current Instruction Pointer");
+                                a.setType("org.eclipse.tm.tcf.debug.top_frame"); //$NON-NLS-1$
+                            }
+                            else {
+                                a = new TCFAnnotation(line_data.area,
+                                        DebugUITools.getImage(IDebugUIConstants.IMG_OBJS_INSTRUCTION_POINTER),
+                                        "Stack Frame");
+                                a.setType("org.eclipse.tm.tcf.debug.stack_frame"); //$NON-NLS-1$
+                            }
+                            set.add(a);
+                        }
+                    }
+                    done(set);
+                }
+            }.getE();
+        }
+        Iterator<TCFAnnotation> i = win_info.annotations.iterator();
+        while (i.hasNext()) {
+            TCFAnnotation a = i.next();
+            if (set != null && set.remove(a)) continue;
+            a.dispose();
+            i.remove();
+        }
+        if (set == null || set.size() == 0) return;
+        Map<IEditorInput,ITextEditor> editors = new HashMap<IEditorInput,ITextEditor>();
+        for (IEditorReference ref : window.getActivePage().getEditorReferences()) {
+            IEditorPart part = ref.getEditor(false);
+            if (!(part instanceof ITextEditor)) continue;
+            ITextEditor editor = (ITextEditor)part;
+            editors.put(editor.getEditorInput(), editor);
+        }
+        ISourceLocator locator = node.getModel().getLaunch().getSourceLocator();
+        ISourcePresentation presentation = TCFModelPresentation.getDefault();
+        for (TCFAnnotation a : set) {
+            Object source_element = null;
+            if (locator instanceof TCFSourceLookupDirector) {
+                source_element = ((TCFSourceLookupDirector)locator).getSourceElement(a.area);
+            }
+            else if (locator instanceof ISourceLookupDirector) {
+                // support for foreign (CDT) source locator
+                String filename = TCFSourceLookupParticipant.toFileName(a.area);
+                if (filename != null) {
+                    source_element = ((ISourceLookupDirector)locator).getSourceElement(filename);
+                    if (source_element == null && !filename.equals(a.area.file)) {
+                        // retry with relative path
+                        source_element = ((ISourceLookupDirector)locator).getSourceElement(a.area.file);
+                    }
                 }
             }
+            if (source_element == null) continue;
+            IEditorInput editor_input = presentation.getEditorInput(source_element);
+            ITextEditor editor = editors.get(editor_input);
+            if (editor == null) continue;
+            IDocumentProvider doc_provider = editor.getDocumentProvider();
+            IAnnotationModel ann_model = doc_provider.getAnnotationModel(editor_input);
+            if (ann_model == null) continue;
+            IRegion region = null;
+            try {
+                doc_provider.connect(editor_input);
+            }
+            catch (CoreException e) {
+            }
+            try {
+                IDocument document = doc_provider.getDocument(editor_input);
+                if (document != null) region = document.getLineInformation(a.area.start_line - 1);
+            }
+            catch (BadLocationException e) {
+            }
+            finally {
+                doc_provider.disconnect(editor_input);
+            }
+            if (region == null) continue;
+            ann_model.addAnnotation(a, new Position(region.getOffset(), region.getLength()));
+            a.model = ann_model;
+            win_info.annotations.add(a);
         }
+    }
+
+    private void updateAnnotations() {
+        final int cnt = ++update_unnotations_cnt;
+        displayExec(new Runnable() {
+            public void run() {
+                TCFNode node = null;
+                if (cnt != update_unnotations_cnt) return;
+                for (IWorkbenchWindow window : windows.keySet()) {
+                    if (dirty_windows.contains(null) || dirty_windows.contains(window)) {
+                        try {
+                            ISelection active_context = DebugUITools.getDebugContextManager()
+                                    .getContextService(window).getActiveContext();
+                            if (active_context instanceof IStructuredSelection) {
+                                IStructuredSelection selection = (IStructuredSelection)active_context;
+                                if (!selection.isEmpty()) {
+                                    Object first_element = selection.getFirstElement();
+                                    if (first_element instanceof IAdaptable) {
+                                        node = (TCFNode)((IAdaptable)first_element).getAdapter(TCFNode.class);
+                                    }
+                                }
+                            }
+                            if (dirty_launches.contains(null) || node != null && dirty_launches.contains(node.getModel().getLaunch())) {
+                                updateAnnotations(window, node);
+                            }
+                        }
+                        catch (Throwable x) {
+                            if (node != null && node.isDisposed()) return;
+                            Activator.log("Cannot update editor annotations", x);
+                        }
+                    }
+                }
+                for (TCFLaunch launch : dirty_launches) {
+                    if (launch != null) launch.removePendingClient(TCFAnnotationManager.this);
+                }
+                dirty_windows.clear();
+                dirty_launches.clear();
+            }
+        });
+    }
+
+    void updateAnnotations(final IWorkbenchWindow window, final TCFLaunch launch) {
+        displayExec(new Runnable() {
+            public void run() {
+                dirty_windows.add(window);
+                dirty_launches.add(launch);
+                updateAnnotations();
+            }
+        });
     }
 }

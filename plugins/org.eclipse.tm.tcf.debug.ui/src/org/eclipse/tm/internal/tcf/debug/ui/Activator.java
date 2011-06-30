@@ -40,9 +40,6 @@ public class Activator extends AbstractUIPlugin {
                     if (model_manager == null) {
                         model_manager = new TCFModelManager();
                     }
-                    if (annotation_manager == null) {
-                        annotation_manager = new TCFAnnotationManager();
-                    }
                 }
             });
         }

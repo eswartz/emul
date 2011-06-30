@@ -168,6 +168,11 @@ public class TCFNodeStackFrame extends TCFNode {
         };
     }
 
+    /**
+     * Get frame position in the parent's stack trace.
+     * Top frame position is 0.
+     * @return frame position or -1 if the frame is not part of the trace.
+     */
     public int getFrameNo() {
         assert Protocol.isDispatchThread();
         return frame_no;

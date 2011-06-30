@@ -275,22 +275,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     private final IModelSelectionPolicy selection_policy;
 
-    private final HashSet<String> removed_annotations = new HashSet<String>();
-    private boolean removed_annotations_posted;
-    private final Runnable removed_annotations_runnable = new Runnable() {
-        public void run() {
-            HashSet<String> set = null;
-            synchronized (removed_annotations) {
-                assert removed_annotations_posted;
-                removed_annotations_posted = false;
-                if (removed_annotations.size() == 0) return;
-                set = new HashSet<String>(removed_annotations);
-                removed_annotations.clear();
-            }
-            annotation_manager.removeStackFrameAnnotation(TCFModel.this, set);
-        }
-    };
-
     private IChannel channel;
     private TCFNodeLaunch launch_node;
     private boolean disposed;
@@ -345,7 +329,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                     ((TCFNodeExecContext)node).onContainerResumed();
                 }
             }
-            for (String id : context_ids) removeAnnotation(id);
+            annotation_manager.updateAnnotations(null, launch);
         }
 
         public void containerSuspended(String context, String pc, String reason,
@@ -415,7 +399,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             if (node instanceof TCFNodeExecContext) {
                 ((TCFNodeExecContext)node).onContextResumed();
             }
-            removeAnnotation(id);
+            annotation_manager.updateAnnotations(null, launch);
         }
 
         public void contextSuspended(String id, String pc, String reason, Map<String,Object> params) {
@@ -520,7 +504,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         public void onContextActionStart(TCFAction action) {
             final String id = action.getContextID();
             active_actions.put(id, action);
-            removeAnnotation(id);
+            annotation_manager.updateAnnotations(null, launch);
         }
 
         public void onContextActionResult(String id, String reason) {
@@ -801,7 +785,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         launch_node.onAnyContextAddedOrRemoved();
         // Close debug session if the last context is removed:
         onContextOrProcessRemoved();
-        for (String id : context_ids) removeAnnotation(id);
+        annotation_manager.updateAnnotations(null, launch);
     }
 
     private void onContextOrProcessRemoved() {
@@ -1240,12 +1224,8 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                         }
                         if (source_element != null) {
                             ISourcePresentation presentation = TCFModelPresentation.getDefault();
-                            if (presentation != null) {
-                                editor_input = presentation.getEditorInput(source_element);
-                            }
-                            if (editor_input != null) {
-                                editor_id = presentation.getEditorId(editor_input, source_element);
-                            }
+                            editor_input = presentation.getEditorInput(source_element);
+                            if (editor_input != null) editor_id = presentation.getEditorId(editor_input, source_element);
                             line = area.start_line;
                         }
                     }
@@ -1289,25 +1269,14 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                         region = getLineInformation(text_editor, line);
                         if (region != null) text_editor.selectAndReveal(region.getOffset(), 0);
                     }
-                    annotation_manager.addStackFrameAnnotation(TCFModel.this,
-                            exe_id, top_frame, page, text_editor, region);
+                    if (wait_for_pc_update_after_step) launch.addPendingClient(annotation_manager);
+                    annotation_manager.updateAnnotations(page.getWorkbenchWindow(), launch);
                 }
                 finally {
                     if (cnt == display_source_generation) launch.removePendingClient(TCFModel.this);
                 }
             }
         });
-    }
-
-    /* Remove editor annotations for given executable context ID */
-    private void removeAnnotation(String id) {
-        synchronized (removed_annotations) {
-            removed_annotations.add(id);
-            if (!removed_annotations_posted) {
-                display.asyncExec(removed_annotations_runnable);
-                removed_annotations_posted = true;
-            }
-        }
     }
 
     /*
@@ -1426,7 +1395,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     /*
      * Returns the line information for the given line in the given editor
      */
-    private IRegion getLineInformation(ITextEditor editor, int lineNumber) {
+    private IRegion getLineInformation(ITextEditor editor, int line) {
         IDocumentProvider provider = editor.getDocumentProvider();
         IEditorInput input = editor.getEditorInput();
         try {
@@ -1437,8 +1406,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         }
         try {
             IDocument document = provider.getDocument(input);
-            if (document != null)
-                return document.getLineInformation(lineNumber - 1);
+            if (document != null) return document.getLineInformation(line - 1);
         }
         catch (BadLocationException e) {
         }

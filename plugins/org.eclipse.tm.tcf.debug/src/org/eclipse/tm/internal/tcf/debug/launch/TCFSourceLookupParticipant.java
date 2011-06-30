@@ -125,7 +125,7 @@ public class TCFSourceLookupParticipant extends AbstractSourceLookupParticipant 
                 int j = name.lastIndexOf('\\');
                 if (i > j) base = name.substring(i + 1);
                 if (j > i) base = name.substring(j + 1);
-                res = super.findSourceElements(base);
+                if (!base.equals(name)) res = super.findSourceElements(base);
             }
         }
         ArrayList<Object> list = new ArrayList<Object>();
