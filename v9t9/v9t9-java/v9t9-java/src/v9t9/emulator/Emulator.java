@@ -8,6 +8,7 @@ package v9t9.emulator;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
 
@@ -269,17 +270,25 @@ public class Emulator {
 		return false;
 	}
 
-	public static File getDataFile(String string) {
-		File file = new File(string);
-		if (file.exists())
-			return file;
+	public static URL getDataURL(String string) {
 		Bundle bundle = Platform.getBundle("v9t9-java");
 		if (bundle != null) {
 			URL url = FileLocator.find(bundle, new Path(string), Collections.emptyMap());
 			if (url != null)
-				return new File(url.toExternalForm());
+				return url;
 		}
-		return new File("../v9t9-java/" + string);
+		
+		URL url = Emulator.class.getClassLoader().getResource(string);
+		        
+		if (url != null) {
+			return url;
+		}
+	        
+		try {
+			return new URL("file", null, "../v9t9-java/data/" + string);
+		} catch (MalformedURLException e) {
+			return null;
+		}
 	}
 
 }

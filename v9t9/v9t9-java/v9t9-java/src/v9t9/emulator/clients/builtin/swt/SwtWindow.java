@@ -4,6 +4,8 @@
 package v9t9.emulator.clients.builtin.swt;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
@@ -84,18 +86,32 @@ public class SwtWindow extends BaseEmulatorWindow {
 		shell = new Shell(display, SWT.SHELL_TRIM | SWT.RESIZE);
 		shell.setText("V9t9 [" + machine.getModel().getIdentifier() + "]");
 		
-		File iconFile = Emulator.getDataFile("icons/v9t9.png");
-		Image icon = new Image(shell.getDisplay(), iconFile.getAbsolutePath());
+		URL iconFile = Emulator.getDataURL("icons/v9t9.png");
+		if (iconFile != null) {
+			Image icon;
+			try {
+				icon = new Image(shell.getDisplay(), iconFile.openStream());
+				shell.setImage(icon);
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+		}
 
 		TreeMap<Integer, Image> mainIcons = new TreeMap<Integer, Image>();
 		for (int size : new int[] { 16, 32, 64, 128 }) {
-			File iconsFile = Emulator.getDataFile("icons/icons_" + size + ".png");
-			mainIcons.put(size, new Image(getShell().getDisplay(), iconsFile.getAbsolutePath()));
+			URL iconsFile = Emulator.getDataURL("icons/icons_" + size + ".png");
+			if (iconsFile != null) {
+				try {
+					mainIcons.put(size, new Image(getShell().getDisplay(), 
+							iconsFile.openStream()));
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+			}
 		}
 
 		imageProvider = new MultiImageSizeProvider(mainIcons);
 		
-		shell.setImage(icon);
 		
 		shell.addDisposeListener(new DisposeListener() {
 

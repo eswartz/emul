@@ -3,6 +3,8 @@
  */
 package v9t9.emulator.clients.builtin;
 
+import java.net.URL;
+
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.ejs.coffee.core.properties.SettingProperty;
 
@@ -12,13 +14,13 @@ import org.ejs.coffee.core.properties.SettingProperty;
  */
 public class IconSetting extends SettingProperty implements ISettingDecorator {
 
-	private final String iconPath;
+	private final URL iconPath;
 
 	/**
 	 * @param name
 	 * @param storage
 	 */
-	public IconSetting(String name, String label, String description, Object storage, String iconPath) {
+	public IconSetting(String name, String label, String description, Object storage, URL iconPath) {
 		super(name, label, description, storage);
 		this.iconPath = iconPath;
 	}
@@ -27,7 +29,7 @@ public class IconSetting extends SettingProperty implements ISettingDecorator {
 	 * @see v9t9.emulator.clients.builtin.ISettingDecorator#getIcon()
 	 */
 	public ImageDescriptor getIcon() {
-		return ImageDescriptor.createFromFile(null, iconPath);
+		return ImageDescriptor.createFromURL(iconPath);
 	}
 
 }

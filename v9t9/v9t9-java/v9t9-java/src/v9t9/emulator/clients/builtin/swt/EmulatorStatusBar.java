@@ -3,7 +3,8 @@
  */
 package v9t9.emulator.clients.builtin.swt;
 
-import java.io.File;
+import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
@@ -42,8 +43,15 @@ public class EmulatorStatusBar {
 
 		TreeMap<Integer, Image> mainIcons = new TreeMap<Integer, Image>();
 		for (int size : new int[] { 16, 32, 64, 128 }) {
-			File iconsFile = Emulator.getDataFile("icons/dev_icons_" + size + ".png");
-			mainIcons.put(size, new Image(swtWindow.getShell().getDisplay(), iconsFile.getAbsolutePath()));
+			URL iconsFile = Emulator.getDataURL("icons/dev_icons_" + size + ".png");
+			if (iconsFile != null) {
+				try {
+					mainIcons.put(size, new Image(
+							swtWindow.getShell().getDisplay(), iconsFile.openStream()));
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+			}
 		}
 
 		deviceIconImageProvider = new MultiImageSizeProvider(mainIcons);

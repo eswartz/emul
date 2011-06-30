@@ -30,6 +30,7 @@ import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 
 import javax.imageio.ImageIO;
 import javax.swing.Box;
@@ -90,10 +91,14 @@ public class AwtWindow extends BaseEmulatorWindow implements
 		frame.setFocusCycleRoot(true);
 		frame.setFocusTraversalKeysEnabled(false);
 
-		File iconsFile = Emulator.getDataFile("icons/icons.png");
-		try {
-			icons = ImageIO.read(iconsFile);
-		} catch (IOException e1) {
+		URL iconsFile = Emulator.getDataURL("icons/icons.png");
+		if (iconsFile != null) {
+			try {
+				icons = ImageIO.read(iconsFile);
+			} catch (IOException e1) {
+			}
+		}
+		if (icons == null) {
 			icons = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
 		}
 

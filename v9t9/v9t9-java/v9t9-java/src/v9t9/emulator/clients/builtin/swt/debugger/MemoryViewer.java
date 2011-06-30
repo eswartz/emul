@@ -3,6 +3,7 @@
  */
 package v9t9.emulator.clients.builtin.swt.debugger;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -214,7 +215,11 @@ public class MemoryViewer extends Composite {
 		buttonBar.setLayout(new RowLayout(SWT.HORIZONTAL));
 		
 		filterButton = new Button(buttonBar, SWT.TOGGLE);
-		filterButton.setImage(new Image(getDisplay(), Emulator.getDataFile("icons/filter.png").getAbsolutePath()));
+		try {
+			filterButton.setImage(new Image(getDisplay(), Emulator.getDataURL("icons/filter.png").openStream()));
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
 		filterButton.setSize(24, 24);
 		filterMemory = true;
 		filterButton.setSelection(true);
@@ -229,7 +234,11 @@ public class MemoryViewer extends Composite {
 
 		
 		refreshButton = new Button(buttonBar, SWT.TOGGLE);
-		refreshButton.setImage(new Image(getDisplay(), Emulator.getDataFile("icons/refresh.png").getAbsolutePath()));
+		try {
+			refreshButton.setImage(new Image(getDisplay(), Emulator.getDataURL("icons/refresh.png").openStream()));
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
 		refreshButton.setSize(24, 24);
 		autoRefresh = true;
 		refreshButton.setSelection(true);
@@ -242,7 +251,11 @@ public class MemoryViewer extends Composite {
 		});
 		
 		pinButton = new Button(buttonBar, SWT.TOGGLE);
-		pinButton.setImage(new Image(getDisplay(), Emulator.getDataFile("icons/pin.png").getAbsolutePath()));
+		try {
+			pinButton.setImage(new Image(getDisplay(), Emulator.getDataURL("icons/pin.png").openStream()));
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
 		pinButton.setSize(24, 24);
 		pinMemory = false;
 		pinButton.setSelection(false);

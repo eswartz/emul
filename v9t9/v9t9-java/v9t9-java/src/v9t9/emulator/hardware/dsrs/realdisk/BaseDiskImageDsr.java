@@ -5,6 +5,7 @@ package v9t9.emulator.hardware.dsrs.realdisk;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -40,7 +41,7 @@ import v9t9.emulator.runtime.cpu.Executor;
  *
  */
 public abstract class BaseDiskImageDsr implements FDC1771Constants, DsrSettings {
-	private static final String diskImageIconPath = Emulator.getDataFile("icons/disk_image.png").getAbsolutePath();
+	private static final URL diskImageIconPath = Emulator.getDataURL("icons/disk_image.png");
 
 
 	public static final SettingProperty diskImageDebug = new SettingProperty("DiskImageDebug",
@@ -143,7 +144,7 @@ public abstract class BaseDiskImageDsr implements FDC1771Constants, DsrSettings 
 	}
 
 	static class DiskImageSetting extends IconSetting {
-		public DiskImageSetting(String name, Object storage, String iconPath) {
+		public DiskImageSetting(String name, Object storage, URL iconPath) {
 			super(name, 
 					"DSK" + name.charAt(name.length() - 1) + " Image",
 					"Specify the full path of the image for this disk.\n\n"+

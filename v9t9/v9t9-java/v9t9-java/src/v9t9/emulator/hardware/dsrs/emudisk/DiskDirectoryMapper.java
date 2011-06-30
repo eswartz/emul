@@ -5,6 +5,7 @@ package v9t9.emulator.hardware.dsrs.emudisk;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,7 +28,7 @@ public class DiskDirectoryMapper implements IFileMapper, IPersistable {
 	public static final DiskDirectoryMapper INSTANCE = new DiskDirectoryMapper();
 	
 	static class EmuDiskSetting extends IconSetting {
-		public EmuDiskSetting(String name, Object storage, String iconPath) {
+		public EmuDiskSetting(String name, Object storage, URL iconPath) {
 			super(name, 
 					"DSK" + name.charAt(name.length() - 1) + " Directory",
 					"Specify the full path of the directory representing this disk.",

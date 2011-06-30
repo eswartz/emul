@@ -4,6 +4,7 @@
 package v9t9.emulator.hardware.dsrs.pcode;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -35,7 +36,7 @@ import v9t9.engine.memory.MemoryEntry;
  *
  */
 public class PCodeDsr implements DsrHandler9900 {
-	private static String pcodeIconPath = Emulator.getDataFile("icons/pcode_system.png").getAbsolutePath();
+	private static URL pcodeIconPath = Emulator.getDataURL("icons/pcode_system.png");
 
 	static public final IconSetting settingPCodeCardEnabled = new IconSetting(
 			"PCodeCardEnabled", "Enable P-Code Card", 

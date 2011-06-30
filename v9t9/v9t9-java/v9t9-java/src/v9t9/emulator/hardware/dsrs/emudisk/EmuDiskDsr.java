@@ -5,6 +5,7 @@ package v9t9.emulator.hardware.dsrs.emudisk;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -45,7 +46,7 @@ import v9t9.engine.memory.MemoryDomain;
  *
  */
 public class EmuDiskDsr implements DsrHandler9900 {
-	private static String diskDirectoryIconPath = Emulator.getDataFile("icons/disk_directory.png").getAbsolutePath();
+	private static URL diskDirectoryIconPath = Emulator.getDataURL("icons/disk_directory.png");
 	
 	public static final SettingProperty emuDiskDsrEnabled = new IconSetting("EmuDiskDSREnabled", 
 			"Disk Directory Support",
