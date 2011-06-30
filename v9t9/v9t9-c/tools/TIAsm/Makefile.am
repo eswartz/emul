@@ -1,12 +1,16 @@
 AUTOMAKE_OPTIONS = foreign no-dependencies
 
-bin_PROGRAMS = tiasm
+TOP = $(top_srcdir)
 
-tiasm_SOURCES = tiasm.c
+BIN = $(TOP)/../../build/bin
 
-%.$(OBJEXT): %.c
-	$(COMPILE) -c $< -o $@
+TIASM_JAR = $(BIN)/tiasm.jar
 
-localedir=@prefix@/share/locale
-DEFS = @DEFS@ -DLOCALEDIR=\"$(localedir)\" -I$(top_srcdir) $(shell pkg-config glib-2.0 --cflags)
-LIBS = @LIBS@  $(shell pkg-config glib-2.0 --libs)
+all: $(TIASM_JAR)
+	
+$(TIASM_JAR):
+	ant
+
+clean:
+	rm -f $(TIASM_JAR)
+	

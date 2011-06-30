@@ -3,15 +3,18 @@
     <!--this file was created by Eclipse Runnable JAR Export Wizard-->
     <!--ANT 1.7 is required                                        -->
     <target name="create_run_jar">
-        <jar destfile="../../build/bin/tiasm.jar" filesetmanifest="mergewithoutmain">
+        <jar destfile="../../../build/bin/tiasm.jar" filesetmanifest="mergewithoutmain">
             <manifest>
                 <attribute name="Built-By" value="${user.name}"/>
-                <attribute name="Main-Class" value="v9t9.tools.asm.Assemble"/>
+                <attribute name="Main-Class" value="v9t9.tools.asm.assembler.Assemble"/>
                 <attribute name="Class-Path" value="."/>
             </manifest>
             <fileset dir="../../../v9t9-java/v9t9-java/bin" includes="v9t9/tools/**"/>
             <fileset dir="../../../v9t9-java/v9t9-java/bin" includes="v9t9/engine/**"/>
             <fileset dir="../../../v9t9-java/v9t9-java/bin" includes="v9t9/utils/**"/>
+            <fileset dir="../../../v9t9-java/org.ejs.coffee.core/bin" includes="org/ejs/coffee/core/settings/**"/>
+            <fileset dir="../../../v9t9-java/org.ejs.coffee.core/bin" includes="org/ejs/coffee/core/properties/**"/>
+            <fileset dir="../../../v9t9-java/org.ejs.coffee.core/bin" includes="org/ejs/coffee/core/utils/**"/>
 
             <zipfileset excludes="META-INF/*.SF" src="../../../v9t9-java/v9t9-java/libs/gnu-getopt-1.0.11.jar"/>
         </jar>
