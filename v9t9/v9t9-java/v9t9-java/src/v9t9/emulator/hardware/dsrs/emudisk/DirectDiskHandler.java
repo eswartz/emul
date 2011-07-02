@@ -207,11 +207,10 @@ public class DirectDiskHandler {
 				fdr.setByteOffset(xfer.readParamByte(parms + 6) & 0xff);
 				fdr.setRecordLength(xfer.readParamByte(parms + 7) & 0xff);
 				fdr.setNumberRecords(xfer.readParamWord(parms + 8) & 0xffff);
-				if (fdr instanceof V9t9FDR) {
-					try {
-						((V9t9FDR)fdr).setFileName(filename);
-					} catch (IOException e) {
-					}
+				try {
+					fdr.setFileName(filename);
+				} catch (IOException e) {
+					throw new DsrException(EmuDiskDsr.es_badvalerr, e);
 				}
 				try {
 					fdr.writeFDR(file.getFile());
@@ -393,12 +392,11 @@ public class DirectDiskHandler {
 				throw new DsrException(EmuDiskDsr.es_hardware, "Cannot rename; file is protected: " + file.getFile());
 			}
 			
-			if (fdr instanceof V9t9FDR) {
-				try {
-					((V9t9FDR)fdr).setFileName(toFilename);
-				} catch (IOException e) {
-				}
-			}	
+			try {
+				fdr.setFileName(toFilename);
+			} catch (IOException e) {
+				throw new DsrException(EmuDiskDsr.es_badvalerr, e);
+			}
 			
 			try {
 				fdr.writeFDR(file.getFile());

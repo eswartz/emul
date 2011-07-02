@@ -23,7 +23,6 @@ import v9t9.emulator.hardware.dsrs.emudisk.EmuDiskDsr;
 import v9t9.emulator.hardware.dsrs.emudisk.EmuDiskPabHandler;
 import v9t9.engine.files.FDR;
 import v9t9.engine.files.FDRFactory;
-import v9t9.engine.files.V9t9FDR;
 import v9t9.engine.memory.ByteMemoryAccess;
 
 /**
@@ -48,6 +47,7 @@ public class BaseEmuDiskDSRTest {
 		dir = new File(dir.getParentFile(), mymapper.getLocalFileName("EXTRA/LALA"));
 		mymapper.setDiskPath("DSK2", dir);
 
+		EmuDiskDsr.emuDiskDsrEnabled.setBoolean(true);
 	}
 	
 	static class FakeMemory implements MemoryTransfer {
@@ -174,10 +174,8 @@ public class BaseEmuDiskDSRTest {
 		FDR fdr = FDRFactory.createFDR(src);
 		assertNotNull(fdr);
 		
-		if (fdr instanceof V9t9FDR) {
-			((V9t9FDR) fdr).setFileName(mymapper.getDsrFileName(dst.getName()));
-			fdr.writeFDR(dst);
-		}
+		fdr.setFileName(mymapper.getDsrFileName(dst.getName()));
+		fdr.writeFDR(dst);
 	}
 	
 

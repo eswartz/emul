@@ -239,4 +239,9 @@ public abstract class FDR implements IFDRFlags, IFDRInfo {
         }
 	}
     
+
+    /**
+     * Set the filename -- may be a noop!
+     */
+    abstract public void setFileName(String name) throws IOException; 
 }

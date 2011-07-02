@@ -284,7 +284,7 @@ public class EmuDiskPabHandler extends PabHandler {
 		}
 		
 		if (file.isDirectory()) {
-			// TODO
+			// should not get here (should be in DSKOpenCatalog)
 			throw new DsrException(PabConstants.e_illegal, "Directory read not implemented");
 		}
 		

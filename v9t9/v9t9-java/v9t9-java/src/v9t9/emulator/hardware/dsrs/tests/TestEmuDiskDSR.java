@@ -207,6 +207,7 @@ public class TestEmuDiskDSR extends BaseEmuDiskDSRTest {
 
 	protected PabStruct createOpenPab(int mode, int access, int addr, int reclen, String path) {
 		PabStruct pab = new PabStruct();
+		pab.pabaddr = (short)(addr - 0x20);
 		pab.opcode = PabConstants.op_open;
 		pab.bufaddr = addr;
 		pab.preclen = reclen;
@@ -824,8 +825,8 @@ public class TestEmuDiskDSR extends BaseEmuDiskDSRTest {
 		runCase(pab1);
 		assertFDRFile(pab1);
 
-		pab2 = createOpenPab(PabConstants.m_output, 0, 0x1000, 0, "DSK1.TMP1");
-		pab2.pabaddr = 0x80;
+		// second file, at different address
+		pab2 = createOpenPab(PabConstants.m_output, 0, 0x1100, 0, "DSK1.TMP1");
 		try {
 			runCase(pab2);
 			fail("Should have failed to open extra file");

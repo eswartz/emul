@@ -89,4 +89,9 @@ public class TIFILESFDR extends FDR {
         
         file.setWritable(!isReadOnly());
     }
+    
+    @Override
+    public void setFileName(String name) throws IOException {
+    	// nothing to do
+    }
 }
