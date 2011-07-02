@@ -145,7 +145,7 @@ public class Sprite2RedrawHandler extends SpriteRedrawHandler {
 				sprite.setDeleted(true);
 			} else {
 				sprite.setDeleted(false);
-				sprite.move(x, y);
+				sprite.move(x, y + 1);
 				int patOffs = sprpatbase + (ch << 3);
 				if (sprpatOffsMap[i] != patOffs) {
 					sprite.setPattern(info.vdp.getByteReadMemoryAccess(patOffs));
