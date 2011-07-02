@@ -59,13 +59,6 @@ User lcount
     reset-locals
 ;
 
-\ Match two counted strings case-sensitively
-\ : c= ( caddr1 caddr2 -- t|f )
-\    dup c@ 1+  ( caddr1 caddr2 len ) 
-\    cmp? ( pos cmp )  
-\    nip  0=
-\ ;
-
 \ Search local dict for name
 : (lfind) ( caddr -- caddr 0 | xt 1 )
     state @ if 

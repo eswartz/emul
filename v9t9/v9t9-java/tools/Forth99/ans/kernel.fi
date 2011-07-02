@@ -753,6 +753,7 @@ $20 constant BL
 
 : (>c)      ( caddr u naddr -- )
 \   make counted string at naddr
+	over 255 > 	err-string-overflow ?throw
     2dup c!             \ set length byte
     1+ swap cmove>      \ move data
 ;

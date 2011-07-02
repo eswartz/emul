@@ -571,6 +571,7 @@ msgptrs
     dw -8, err_dict_overflow
     dw -261, err_local_init
     dw -262, err_no_memory
+    dw -18, err_string_overflow
     dw 0
 
 msg_fault           db "FAULT",0
@@ -591,6 +592,7 @@ err_file_io         db "file I/O error",0
 err_dict_overflow   db "dictionary overflow",0
 err_local_init      db "locals start inside control",0
 err_no_memory       db "out of memory",0
+err_string_overflow db "counted string overflow",0
 
 editorhelp
       ; 0         1         2         3         4         5         6

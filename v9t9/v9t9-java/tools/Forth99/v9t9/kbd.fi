@@ -102,12 +102,12 @@ cell    RamVar    randnoise
 
     key-actions
     
-    \ check alpha and uppercase if needed
+    \ check alpha and uppercase if needed 
+    \ (note: MMIO here -- don't be fooled!)
     $80 'KBDA c!  'KBDA c@  if  toupper  then  $00 'KBDA c!
     
     \ Fctn-Shift-S  -->  Ctrl-H
     dup 211 = if  
-        \ kbdshift c@ .d 10 demit
         $30 kbdshift c@ = if  drop $08  then 
     then
 
@@ -161,7 +161,7 @@ cell    RamVar    randnoise
 ;
 
 :   kbd-init
-    30 kbddelay c!   \ 1/2 s before repeat
+    20 kbddelay c!   \ 1/2 s before repeat
     3 kbdrate c!     \ 1/20 s delay between repeat
     0 kbdtail c!
     0 kbdhead c!

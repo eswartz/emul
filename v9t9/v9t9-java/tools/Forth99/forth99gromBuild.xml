@@ -6,9 +6,9 @@
               as the first entry and export the buildfile again. -->
 <project basedir="." default="Assemble GROM" name="v9t9-java">
     <property environment="env"/>
-    <property name="org.ejs.coffee.core.location" value="../../java/org.ejs.coffee.core"/>
+    <property name="org.ejs.coffee.core.location" value="../../org.ejs.coffee.core"/>
     <property name="ECLIPSE_HOME" value="../../../../../../usr/local/eclipse-3.6.1/eclipse"/>
-    <property name="v9t9-java.location" value="../../java/v9t9-java"/>
+    <property name="v9t9-java.location" value="../../v9t9-java"/>
     <property name="v9t9-tools.location" value="../../tools"/>
     <property name="project_loc:v9t9-tools" value="../../tools"/>
     <property name="project_loc:libv9t9render" value="../../c/libv9t9render"/>
@@ -80,7 +80,7 @@
     <target name="build-subprojects"/>
     <target name="Assemble GROM">
         <java classname="v9t9.tools.asm.assembler.Assemble" failonerror="true" fork="yes">
-            <arg line="${project_loc:v9t9-tools}/Forth99/data/forth99.gsm -g ${project_loc:v9t9-tools}/Forth99/bin/forth99.grm#8192"/>
+            <arg line="data/forth99.gsm -g ../../../build/forth99/forth99.grm#8192"/>
             <classpath refid="v9t9-java.classpath"/>
             <classpath refid="org.ejs.coffee.core.classpath"/>
         </java>

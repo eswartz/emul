@@ -7,10 +7,10 @@
 <project basedir="." default="ForthComp" name="v9t9.forthcomp">
     <property environment="env"/>
     <property name="ECLIPSE_HOME" value="../../../../../../usr/local/eclipse-3.5/eclipse"/>
-    <property name="org.ejs.coffee.core.location" value="../../java/org.ejs.coffee.core"/>
+    <property name="org.ejs.coffee.core.location" value="../../org.ejs.coffee.core"/>
     <property name="project_loc:libv9t9render" value="../../c/libv9t9render"/>
     <property name="junit.output.dir" value="junit"/>
-    <property name="v9t9-java.location" value="../../java/v9t9-java"/>
+    <property name="v9t9-java.location" value="../../v9t9-java"/>
     <property name="debuglevel" value="source,lines,vars"/>
     <property name="target" value="1.5"/>
     <property name="source" value="1.5"/>
@@ -85,7 +85,7 @@
     </target>
     <target name="ForthComp">
         <java classname="v9t9.forthcomp.ForthComp" failonerror="true" fork="yes">
-            <arg line="-b f99b/f99brom.f99 -h -c bin/f99brom.bin -g  bin/f99bgromdict.bin"/>
+            <arg line="-b f99b/f99brom.f99 -h -c ../../../build/forth99/f99brom.bin -g  ../../../build/forth99/f99bgromdict.bin"/>
             <classpath refid="v9t9.forthcomp.classpath"/>
         </java>
     </target>

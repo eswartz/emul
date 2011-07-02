@@ -23,7 +23,7 @@
     val scale  u/mod  nip scale u*    
 ;
 
-:   w>b ( w -- lo hi )
+: w>b ( w -- lo hi )
     dup $ff and swap 8 urshift  
 ;
 
