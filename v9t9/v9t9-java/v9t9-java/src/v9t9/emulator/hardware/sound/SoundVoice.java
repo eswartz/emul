@@ -19,10 +19,30 @@ public abstract class SoundVoice implements ISoundVoice, IPersistable
 
 	static public final int volumeToMagntiude24[] = {
 		0x00000000,
-		0x0009A9C5, 0x000BAC10, 0x000E1945, 0x001107A1, 0x001491FC,
-		0x0018D8C4, 0x001E0327, 0x00244075, 0x002BC9D6, 0x0034E454,
-		0x003FE353, 0x004D2B8C, 0x005D36AB, 0x007097A5, 0x007FFFFF };
+		0x0000a396,
+		0x00017b71,
+		0x00029844,
+		0x00041018,
+		0x0005ffff,
+		0x00088e5a,
+		0x000bedc6,
+		0x00106111,
+		0x00164060,
+		0x001dffff,
+		0x00283968,
+		0x0035b719,
+		0x00478446,
+		0x005f0180,
+		0x007fffff,
+
+		};
 	
+	public static void main(String[] args) {
+		for (int x = 0; x < 16; x++) {
+			double y = (Math.exp((x/15.)*Math.log(64))-1.0)/64;
+			System.out.printf("\t0x%08x,\n", (int)(y * 0x800000));
+		}
+	}
 	public SoundVoice(String name) {
 		this.name = name;
 	}
