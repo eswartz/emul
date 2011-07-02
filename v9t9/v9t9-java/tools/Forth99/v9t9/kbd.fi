@@ -161,7 +161,7 @@ cell    RamVar    randnoise
 ;
 
 :   kbd-init
-    20 kbddelay c!   \ 1/2 s before repeat
+    20 kbddelay c!   \ 1/3 s before repeat
     3 kbdrate c!     \ 1/20 s delay between repeat
     0 kbdtail c!
     0 kbdhead c!
