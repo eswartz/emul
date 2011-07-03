@@ -319,7 +319,7 @@ public class DiskSelector extends Composite {
 				 */
 				@Override
 				protected Point getInitialSize() {
-					return new Point(400, 300);
+					return new Point(400, 600);
 				}
 				/* (non-Javadoc)
 				 * @see org.eclipse.jface.dialogs.Dialog#createDialogArea(org.eclipse.swt.widgets.Composite)
