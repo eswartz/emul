@@ -14,7 +14,6 @@ import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.EnhancedCompatibleMachineModel;
 import v9t9.emulator.hardware.MachineModel;
 import v9t9.emulator.hardware.TI994A;
-import v9t9.emulator.hardware.memory.V9t9EnhancedConsoleMemoryModel;
 import v9t9.emulator.hardware.memory.mmio.Vdp9938Mmio;
 import v9t9.engine.memory.ByteMemoryAccess;
 import v9t9.engine.memory.Memory;

@@ -5,7 +5,6 @@ import v9t9.tools.asm.assembler.Assembler;
 import v9t9.tools.asm.assembler.ResolveException;
 import v9t9.tools.asm.assembler.operand.ll.LLOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegIndOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLRegOffsOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegisterOperand;
 
 /**

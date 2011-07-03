@@ -87,9 +87,9 @@ public class NativeTextFile implements NativeFile {
      * @see v9t9.engine.files.NativeFile#getFDRFlags()
      */
     public int getFlags() {
-    	int flags = IFDRFlags.ff_variable;
+    	int flags = FDR.ff_variable;
     	if (!file.canWrite())
-    		flags |= IFDRFlags.ff_protected;
+    		flags |= FDR.ff_protected;
     	return flags;
     }
     

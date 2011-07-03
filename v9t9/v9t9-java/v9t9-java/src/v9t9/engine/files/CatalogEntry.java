@@ -37,14 +37,14 @@ public class CatalogEntry {
 		this.isProtected = isProtected;
 		
 		String ttype = "???";
-		if ((flags & IFDRFlags.ff_program) != 0)
+		if ((flags & FDR.ff_program) != 0)
 			ttype = "PROGRAM";
 		else {
-			if ((flags & IFDRFlags.ff_internal) != 0)
+			if ((flags & FDR.ff_internal) != 0)
 				ttype = "INT";
 			else
 				ttype = "DIS";
-			if ((flags & IFDRFlags.ff_variable) != 0)
+			if ((flags & FDR.ff_variable) != 0)
 				ttype += "/VAR";
 			else
 				ttype += "/FIX";

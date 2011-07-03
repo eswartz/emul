@@ -96,7 +96,7 @@ public class NativeFDRFile implements NativeFile {
 	public int getFlags() {
 		int flags = fdr.getFlags();
 		if (!file.canWrite())
-			flags |= IFDRFlags.ff_protected;
+			flags |= FDR.ff_protected;
 		return flags;
 	}
 	

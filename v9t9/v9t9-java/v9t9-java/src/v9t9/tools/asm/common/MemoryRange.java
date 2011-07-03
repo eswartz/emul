@@ -6,7 +6,6 @@
  */
 package v9t9.tools.asm.common;
 
-import v9t9.engine.cpu.IInstruction;
 import v9t9.tools.asm.decomp.HighLevelInstruction;
 
 

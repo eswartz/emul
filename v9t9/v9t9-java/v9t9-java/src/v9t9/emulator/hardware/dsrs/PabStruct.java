@@ -4,7 +4,6 @@
 package v9t9.emulator.hardware.dsrs;
 
 import v9t9.engine.files.FDR;
-import v9t9.engine.files.IFDRFlags;
 import v9t9.engine.files.V9t9FDR;
 
 public class PabStruct implements PabConstants
@@ -103,11 +102,11 @@ public class PabStruct implements PabConstants
 
 		/* program files are easy */
 		if (opcode == op_load || opcode == op_save)
-			if ((fflags & IFDRFlags.ff_program) != 0)
+			if ((fflags & FDR.ff_program) != 0)
 				return;
 
 		/* both must be fixed or variable */
-		if (((pflags & fp_variable) != 0) == ((fflags & IFDRFlags.ff_variable) != 0)) {
+		if (((pflags & fp_variable) != 0) == ((fflags & FDR.ff_variable) != 0)) {
 			/*  fixup the PAB if it doesn't know record size */
 			if (preclen == 0)
 				preclen = fdr.getRecordLength();

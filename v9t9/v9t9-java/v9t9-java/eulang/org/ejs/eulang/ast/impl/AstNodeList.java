@@ -61,7 +61,7 @@ public class AstNodeList<T extends IAstNode> extends AstNode implements IAstNode
 			return true;
 		if (getClass() != obj.getClass())
 			return false;
-		AstNodeList<T> other = (AstNodeList) obj;
+		AstNodeList<T> other = (AstNodeList<T>) obj;
 		if (list == null) {
 			if (other.list != null)
 				return false;

@@ -6,8 +6,6 @@ package v9t9.forthcomp.words;
 import v9t9.forthcomp.AbortException;
 import v9t9.forthcomp.HostContext;
 import v9t9.forthcomp.ISemantics;
-import v9t9.forthcomp.ITargetWord;
-import v9t9.forthcomp.IWord;
 
 /**
  * @author ejs

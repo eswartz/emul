@@ -219,7 +219,6 @@ public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListen
      * @param exec
      * @return
      */
-    @SuppressWarnings("unchecked")
 	private boolean load() {
         if (code != null) {
 			return true;
@@ -230,9 +229,9 @@ public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListen
 		}
 
         // load and construct an instance of the class
-        Class clas = loader.load(uniqueClassName, bytecode);
+        Class<?> clas = loader.load(uniqueClassName, bytecode);
         try {
-            Constructor cons = clas.getConstructor(new Class[] { Executor.class });
+            Constructor<?> cons = clas.getConstructor(new Class[] { Executor.class });
             code = (CompiledCode)cons.newInstance(new Object[] { exec });
             return true;
         } catch (InvocationTargetException ex) {

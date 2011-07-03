@@ -6,14 +6,7 @@ package v9t9.forthcomp;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import v9t9.forthcomp.AbortException;
-import v9t9.forthcomp.DictEntry;
-import v9t9.forthcomp.IWord;
-import v9t9.forthcomp.LocalVariableTriple;
-
 import v9t9.forthcomp.words.LocalVariable;
-import v9t9.forthcomp.words.LocalVariableAddr;
-import v9t9.forthcomp.words.StoreLocalVariable;
 import v9t9.forthcomp.words.TargetContext;
 
 /**

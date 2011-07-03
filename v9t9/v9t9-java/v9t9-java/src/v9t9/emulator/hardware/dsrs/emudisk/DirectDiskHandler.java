@@ -14,7 +14,6 @@ import org.ejs.coffee.core.utils.HexUtils;
 import v9t9.emulator.hardware.dsrs.DsrException;
 import v9t9.emulator.hardware.dsrs.MemoryTransfer;
 import v9t9.engine.files.FDR;
-import v9t9.engine.files.IFDRFlags;
 import v9t9.engine.files.NativeFDRFile;
 import v9t9.engine.files.NativeFile;
 import v9t9.engine.files.NativeFileFactory;
@@ -202,7 +201,7 @@ public class DirectDiskHandler {
 				NativeFDRFile fdrFile = (NativeFDRFile) file;
 				FDR fdr = fdrFile.getFDR();
 				fdr.setSectorsUsed(xfer.readParamWord(parms + 2) & 0xffff);
-				fdr.setFlags(xfer.readParamByte(parms + 4) & IFDRFlags.FF_VALID_FLAGS);
+				fdr.setFlags(xfer.readParamByte(parms + 4) & FDR.FF_VALID_FLAGS);
 				fdr.setRecordsPerSector(xfer.readParamByte(parms + 5) & 0xff);
 				fdr.setByteOffset(xfer.readParamByte(parms + 6) & 0xff);
 				fdr.setRecordLength(xfer.readParamByte(parms + 7) & 0xff);
@@ -236,7 +235,7 @@ public class DirectDiskHandler {
 			
 			// try to make real file match virtual protected bit, 
 			// but ignore error if fails -- filesystem may not allow it (VFAT on Linux)
-			file.getFile().setWritable((flags & IFDRFlags.ff_protected) != 0);
+			file.getFile().setWritable((flags & FDR.ff_protected) != 0);
 
 		} else {
 			// write sectors
@@ -336,9 +335,9 @@ public class DirectDiskHandler {
 			
 			FDR fdr = fdrFile.getFDR();
 			if (protect)
-				fdr.setFlags(fdr.getFlags() | IFDRFlags.ff_protected);
+				fdr.setFlags(fdr.getFlags() | FDR.ff_protected);
 			else
-				fdr.setFlags(fdr.getFlags() &~ IFDRFlags.ff_protected);
+				fdr.setFlags(fdr.getFlags() &~ FDR.ff_protected);
 			
 			try {
 				fdr.writeFDR(file.getFile());
@@ -388,7 +387,7 @@ public class DirectDiskHandler {
 			NativeFDRFile fdrFile = (NativeFDRFile) file;
 			
 			FDR fdr = fdrFile.getFDR();
-			if ((fdr.getFlags() & IFDRFlags.ff_protected) != 0) {
+			if ((fdr.getFlags() & FDR.ff_protected) != 0) {
 				throw new DsrException(EmuDiskDsr.es_hardware, "Cannot rename; file is protected: " + file.getFile());
 			}
 			

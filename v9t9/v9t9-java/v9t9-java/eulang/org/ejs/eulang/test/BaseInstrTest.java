@@ -225,14 +225,13 @@ public class BaseInstrTest extends BaseTest {
 		assertTrue(prefix, instrFactory.supportsOp(instr.getInst(), i, op));
 	}
 
-	@SuppressWarnings("unchecked")
 	protected void matchInstr(AsmInstruction instr, String name, Object... stuff) {
 		assertEquals(instr+"", name.toLowerCase(), InstTable9900.getInstName(instr.getInst()).toLowerCase());
 		int opidx = 1;
 		for( int i = 0; i < stuff.length; ) {
 			AssemblerOperand op = instr.getOp(opidx++);
 			if (stuff[i] instanceof Class) {
-				assertTrue("type mismatch: " + instr+":"+i+":" + stuff[i], ((Class)stuff[i]).isInstance(op));
+				assertTrue("type mismatch: " + instr+":"+i+":" + stuff[i], ((Class<?>)stuff[i]).isInstance(op));
 				i++;
 				if (i >= stuff.length)
 					break;

@@ -185,7 +185,7 @@ public class SectorDiskImage extends BaseDiskImage  {
 			return;
 		}
 		
-		formatSectorTrack(rwBuffer, i, buflen, status);
+		formatSectorTrack(rwBuffer, i, buflen);
 
 		// dump contents
 		StandardDiskImageDsr.dumpBuffer(rwBuffer, i, buflen);
@@ -196,7 +196,7 @@ public class SectorDiskImage extends BaseDiskImage  {
 	 * Interpret track data and extract sector data from it 
 	 * @param fdc 
 	 */
-	private void formatSectorTrack(byte[] buffer, int start, int length, FDCStatus status) {
+	private void formatSectorTrack(byte[] buffer, int start, int length) {
 		// interpret data
 		int is = start;
 		while (is < length) {

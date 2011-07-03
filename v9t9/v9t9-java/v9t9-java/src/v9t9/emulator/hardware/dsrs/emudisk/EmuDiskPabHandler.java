@@ -16,7 +16,6 @@ import v9t9.emulator.hardware.dsrs.PabConstants;
 import v9t9.emulator.hardware.dsrs.PabHandler;
 import v9t9.emulator.hardware.dsrs.PabStruct;
 import v9t9.engine.files.FDR;
-import v9t9.engine.files.IFDRFlags;
 import v9t9.engine.files.NativeFDRFile;
 import v9t9.engine.files.NativeFile;
 import v9t9.engine.files.NativeFileFactory;
@@ -292,9 +291,9 @@ public class EmuDiskPabHandler extends PabHandler {
 		
 		int fdrflags = 0;
 		if ((pab.pflags & PabConstants.fp_internal) != 0)
-			fdrflags |= IFDRFlags.ff_internal;
+			fdrflags |= FDR.ff_internal;
 		if ((pab.pflags & PabConstants.fp_variable) != 0)
-			fdrflags |= IFDRFlags.ff_variable;
+			fdrflags |= FDR.ff_variable;
 
 		// make sure our native file works
 		if (pab.getOpenMode() != PabConstants.m_input) {
@@ -342,8 +341,8 @@ public class EmuDiskPabHandler extends PabHandler {
 		// validate flags for existing file
 		if (openFile.getNativeFile() instanceof NativeFDRFile) {
 			NativeFDRFile fdrFile = (NativeFDRFile) openFile.getNativeFile();
-			int mask = IFDRFlags.ff_variable + IFDRFlags.ff_program;
-			int extFdrFlags = (fdrFile.getFDR().getFlags() & IFDRFlags.ff_internal + IFDRFlags.ff_variable + IFDRFlags.ff_program);
+			int mask = FDR.ff_variable + FDR.ff_program;
+			int extFdrFlags = (fdrFile.getFDR().getFlags() & FDR.ff_internal + FDR.ff_variable + FDR.ff_program);
 			if ((extFdrFlags & mask) != (fdrflags & mask)) {
 				throw new DsrException(PabConstants.e_badopenmode, "Open file mode does not match FDR: " + 
 						HexUtils.toHex2(extFdrFlags) + " vs. " + HexUtils.toHex2(fdrflags));
@@ -645,13 +644,13 @@ public class EmuDiskPabHandler extends PabHandler {
 			
 			if (nativeFile != null) {
 				int fdrflags = nativeFile.getFlags();
-				if ((fdrflags & IFDRFlags.ff_internal) != 0)
+				if ((fdrflags & FDR.ff_internal) != 0)
 					status |= PabConstants.st_internal;
-				if ((fdrflags & IFDRFlags.ff_program) != 0)
+				if ((fdrflags & FDR.ff_program) != 0)
 					status |= PabConstants.st_program;
-				if ((fdrflags & IFDRFlags.ff_variable) != 0)
+				if ((fdrflags & FDR.ff_variable) != 0)
 					status |= PabConstants.st_variable;
-				if ((fdrflags & IFDRFlags.ff_protected) != 0)
+				if ((fdrflags & FDR.ff_protected) != 0)
 					status |= PabConstants.st_protected;
 			}
 			

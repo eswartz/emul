@@ -44,6 +44,9 @@ public class MemoryRanges {
         return subMap.get(subMap.lastKey());
     }
 
+    /**
+	 * @param isCode  
+	 */
     public void addRange(int baseAddr, int size, boolean isCode) {
         Check.checkArg((size > 0));
         /*

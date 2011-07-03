@@ -7,7 +7,6 @@ import java.util.Arrays;
 import v9t9.emulator.hardware.dsrs.DsrException;
 import v9t9.emulator.hardware.dsrs.PabConstants;
 import v9t9.engine.files.FDR;
-import v9t9.engine.files.IFDRFlags;
 import v9t9.engine.files.InvalidFDRException;
 import v9t9.engine.files.NativeFDRFile;
 import v9t9.engine.files.NativeFile;
@@ -60,7 +59,7 @@ public class OpenFile {
 		fdr.setFlags(fdrflags);
 		fdr.setRecordLength(reclen);
 		
-		if ((fdrflags & IFDRFlags.ff_variable) != 0)
+		if ((fdrflags & FDR.ff_variable) != 0)
 			fdr.setRecordsPerSector(255 / (reclen + 1));
 		else
 			fdr.setRecordsPerSector(Math.min(255, 256 / reclen));
@@ -125,7 +124,7 @@ public class OpenFile {
 	}
 	
 	public boolean isVariable() {
-		return nativefile instanceof NativeFDRFile ? (((NativeFDRFile) nativefile).getFDR().getFlags() & IFDRFlags.ff_variable) != 0 : true;
+		return nativefile instanceof NativeFDRFile ? (((NativeFDRFile) nativefile).getFDR().getFlags() & FDR.ff_variable) != 0 : true;
 	}
 
 	public int getRecordLength() {
@@ -250,7 +249,7 @@ public class OpenFile {
 	 * @return
 	 */
 	public boolean isProgram() {
-		return nativefile != null && (nativefile.getFlags() & IFDRFlags.ff_program) != 0;
+		return nativefile != null && (nativefile.getFlags() & FDR.ff_program) != 0;
 	}
 
 	/**
@@ -264,6 +263,6 @@ public class OpenFile {
 	 * @return
 	 */
 	public boolean isProtected() {
-		return nativefile != null && (nativefile.getFlags() & IFDRFlags.ff_protected) != 0;
+		return nativefile != null && (nativefile.getFlags() & FDR.ff_protected) != 0;
 	}
 }

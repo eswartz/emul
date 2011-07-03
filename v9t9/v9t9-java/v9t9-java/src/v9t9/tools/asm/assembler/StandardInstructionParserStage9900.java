@@ -20,12 +20,10 @@ import v9t9.tools.asm.assembler.operand.hl.RegisterOperand;
 import v9t9.tools.asm.assembler.operand.hl.SymbolOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLCountOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLImmedOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLPCRelativeOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLOffsetOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLRegIncOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLPCRelativeOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegIndOperand;
-import v9t9.tools.asm.assembler.operand.ll.LLRegOffsOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegisterOperand;
 
 /**

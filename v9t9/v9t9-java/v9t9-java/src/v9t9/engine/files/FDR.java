@@ -17,7 +17,14 @@ import org.ejs.coffee.core.utils.HexUtils;
  * in the TI Disk Controller.
  * @author ejs
  */
-public abstract class FDR implements IFDRFlags, IFDRInfo {
+public abstract class FDR implements IFDRInfo {
+	public static final int ff_variable = 0x80;
+	public static final int ff_backup = 0x10;       // set by MYARC HD
+	public static final int ff_protected = 0x8;
+	public static final int ff_internal = 0x2;
+	public static final int ff_program = 0x1;
+	public static final int FF_VALID_FLAGS = ff_variable|ff_backup|ff_protected|ff_internal|ff_program;
+	    
 	/** number of records: 16-bit */
     protected int numrecs;
     /** length of record: 8-bit */
@@ -150,7 +157,7 @@ public abstract class FDR implements IFDRFlags, IFDRInfo {
 
     public int getFileSize() {
     	int full;
-        if ((flags & IFDRFlags.ff_variable + IFDRFlags.ff_program) != 0) {
+        if ((flags & FDR.ff_variable + FDR.ff_program) != 0) {
         	full = secsused * 256;
 	        if (byteoffs != 0) {
 				full = full - 256 + byteoffs;
@@ -175,7 +182,7 @@ public abstract class FDR implements IFDRFlags, IFDRInfo {
     		throw new IOException("File size too big: " + size);
     	
     	secsused = ((size + 255) / 256);
-    	if ((flags & IFDRFlags.ff_variable + IFDRFlags.ff_program) != 0) {
+    	if ((flags & FDR.ff_variable + FDR.ff_program) != 0) {
     		byteoffs = (size & 0xff);
     	} else {
     		if (recspersec > 0 && reclen > 0) {

@@ -7,7 +7,6 @@ import java.util.Arrays;
 
 import v9t9.emulator.clients.builtin.video.SpriteBase;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
-import v9t9.emulator.clients.builtin.video.VdpChanges;
 import v9t9.emulator.clients.builtin.video.VdpSprite;
 import v9t9.engine.memory.ByteMemoryAccess;
 

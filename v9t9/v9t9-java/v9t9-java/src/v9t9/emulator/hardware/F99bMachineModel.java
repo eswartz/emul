@@ -7,10 +7,8 @@ import java.util.Collections;
 import java.util.List;
 
 import v9t9.emulator.clients.builtin.SoundProvider;
-import v9t9.emulator.clients.builtin.sound.JavaSoundHandler;
 import v9t9.emulator.clients.builtin.swt.IDeviceIndicatorProvider;
 import v9t9.emulator.clients.builtin.video.v9938.VdpV9938;
-import v9t9.emulator.common.EmulatorSettings;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.dsrs.DsrSettings;
 import v9t9.emulator.hardware.dsrs.realdisk.MemoryDiskImageDsr;
