@@ -166,7 +166,7 @@ final static int FL_last	= 8;		/* stop frame seen */
 
 			/* translate energy */
 			//env = KTRANS(energytable[env]);
-			env = RomTables.energytable[env] >> 6;		// 15-bit to 14-bit
+			env = RomTables.energytable[env] >> 6;		// 15-bit to 9-bit
 
 			/*  Get K parameters  */
 
@@ -301,7 +301,7 @@ final static int FL_last	= 8;		/* stop frame seen */
 					ns2++;
 			} else {
 				/* get next chirp value */
-				U = ppctr < RomTables.chirptable.length ? RomTables.chirptable[ppctr] * ebf / 256 : 0;
+				U = ppctr < RomTables.chirptable.length ? RomTables.chirptable[ppctr] * ebf / 128 : 0;
 
 				if (pbf != 0) 
 					ppctr = (ppctr + 1) % pbf;
