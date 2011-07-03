@@ -145,7 +145,7 @@ public class OpenFile {
 				if (nativefile != null) {
 					int read = nativefile.readContents(sector, 0, secnum * 256, sector.length);
 					// if short, clear sector (when seeking past EOF to write data, don't repeat other records)
-					if (read <= sector.length)
+					if (read < sector.length)
 						Arrays.fill(sector, Math.max(0, read), sector.length, (byte) 0);
 				}
 			} catch (IOException e) {
