@@ -309,12 +309,15 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler implements ISwtKeybo
 	
 	
 	private int lastKeyPressedCode = -1;
-	public void init(Control control) {
+	public void init(final Control control) {
 		Shell shell = control.getShell();
 	 	shell.getDisplay().addFilter(SWT.KeyDown, new Listener() {
 
 
 			public void handleEvent(Event event) {
+				if (!control.isFocusControl())
+					return;
+				
 		        // System.out.println("keyPressed(" + SwtKey.findByCode(event.keyCode) + ")");
 		        if (event.keyCode == lastKeyPressedCode) {
 		            // ignore if this is a repeat event
