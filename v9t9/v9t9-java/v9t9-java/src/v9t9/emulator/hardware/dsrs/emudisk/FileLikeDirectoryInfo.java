@@ -105,7 +105,7 @@ public class FileLikeDirectoryInfo extends DirectoryInfo {
 		if (index < 0 || index > 128)
 			throw new DsrException(PabConstants.e_endoffile, "End of directory");
 
-		if (index >= lastEntry) {
+		if (index > lastEntry) {
 			// make an empty record
 			access.memory[offset++] = (byte) 0;
 			offset = writeFloat(access, offset, 0);
