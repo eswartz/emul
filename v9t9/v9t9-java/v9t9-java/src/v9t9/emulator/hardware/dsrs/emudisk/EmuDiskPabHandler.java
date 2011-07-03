@@ -462,7 +462,7 @@ public class EmuDiskPabHandler extends PabHandler {
 		
 		pab.recnum++;
 		
-		if (true) {
+		if (false) {
 			dump(pab.bufaddr, pab.charcount);
 		}
 	}
@@ -526,7 +526,8 @@ public class EmuDiskPabHandler extends PabHandler {
 					0, pab.recnum);
 			xfer.dirtyVdpMemory(pab.bufaddr, read);
 			
-			dump(pab.bufaddr, Math.min(read, 32));
+			if (false)
+				dump(pab.bufaddr, Math.min(read, 32));
 			
 			if (read >= 0) {
 				// no error or EOF (which is okay for DSKLoad)
@@ -656,6 +657,7 @@ public class EmuDiskPabHandler extends PabHandler {
 			
 		}
 		
+		//System.out.printf("Status: %02X\n", status);
 		pab.scrnoffs = status;
 	}
 	
