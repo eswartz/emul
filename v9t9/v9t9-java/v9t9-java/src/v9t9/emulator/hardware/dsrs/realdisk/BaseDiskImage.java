@@ -16,6 +16,7 @@ import org.ejs.coffee.core.settings.ISettingSection;
 
 import v9t9.engine.files.Catalog;
 import v9t9.engine.files.CatalogEntry;
+import v9t9.engine.files.FDR;
 import v9t9.engine.files.V9t9FDR;
 import v9t9.engine.files.VDR;
 
@@ -401,7 +402,9 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 				V9t9FDR fdr = V9t9FDR.createFDR(fdrSec, 0);
 				int sz = fdr.getSectorsUsed() + 1;
 				
-				entries.add(new CatalogEntry(fdr.getFileName(), sz, fdr.getFlags(), fdr.getRecordLength()));
+				entries.add(new CatalogEntry(fdr.getFileName(), sz, 
+						fdr.getFlags(), fdr.getRecordLength(),
+						(fdr.getFlags() & FDR.ff_protected) != 0));
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

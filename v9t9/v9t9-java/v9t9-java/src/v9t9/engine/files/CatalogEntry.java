@@ -23,6 +23,7 @@ public class CatalogEntry {
 	public final String type;
 	public final int recordLength;
 	public final int typeCode;
+	public final boolean isProtected;
 
 	/**
 	 * @param fileName
@@ -30,9 +31,10 @@ public class CatalogEntry {
 	 * @param type
 	 * @param recordLength
 	 */
-	public CatalogEntry(String fileName, int sz, int flags, int recordLength) {
+	public CatalogEntry(String fileName, int sz, int flags, int recordLength, boolean isProtected) {
 		this.fileName = fileName;
 		this.secs = sz;
+		this.isProtected = isProtected;
 		
 		String ttype = "???";
 		if ((flags & IFDRFlags.ff_program) != 0)
@@ -66,4 +68,43 @@ public class CatalogEntry {
 		this.recordLength = recordLength;
 	}
 
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result
+				+ ((fileName == null) ? 0 : fileName.hashCode());
+		result = prime * result + (isProtected ? 1231 : 1237);
+		result = prime * result + recordLength;
+		result = prime * result + secs;
+		result = prime * result + typeCode;
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		CatalogEntry other = (CatalogEntry) obj;
+		if (fileName == null) {
+			if (other.fileName != null)
+				return false;
+		} else if (!fileName.equals(other.fileName))
+			return false;
+		if (isProtected != other.isProtected)
+			return false;
+		if (recordLength != other.recordLength)
+			return false;
+		if (secs != other.secs)
+			return false;
+		if (typeCode != other.typeCode)
+			return false;
+		return true;
+	}
+
+	
 }

@@ -58,7 +58,8 @@ public class FileLikeDirectoryInfo extends DirectoryInfo {
 		// fourth field is record size
 		int reclen = nativefile instanceof NativeFDRFile ? ((NativeFDRFile) nativefile).getFDR().getRecordLength() : 80;
 
-		return new CatalogEntry(name, size, flags, reclen);
+		return new CatalogEntry(name, size, flags, reclen, 
+				(flags & FDR.ff_protected) != 0 || !file.canWrite());
 	}
 
 	/**

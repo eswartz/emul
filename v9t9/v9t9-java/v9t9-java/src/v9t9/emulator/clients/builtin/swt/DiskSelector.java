@@ -21,36 +21,23 @@ import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.jface.viewers.ArrayContentProvider;
-import org.eclipse.jface.viewers.DoubleClickEvent;
-import org.eclipse.jface.viewers.IDoubleClickListener;
-import org.eclipse.jface.viewers.ITableLabelProvider;
-import org.eclipse.jface.viewers.LabelProvider;
-import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
-import org.eclipse.swt.events.MouseAdapter;
-import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.Table;
-import org.eclipse.swt.widgets.TableColumn;
-import org.eclipse.swt.widgets.TableItem;
 import org.ejs.coffee.core.properties.IProperty;
 import org.ejs.coffee.core.properties.IPropertyListener;
 import org.ejs.coffee.core.properties.SettingProperty;
@@ -58,7 +45,6 @@ import org.ejs.coffee.core.properties.SettingProperty;
 import v9t9.emulator.clients.builtin.ISettingDecorator;
 import v9t9.emulator.clients.builtin.IconSetting;
 import v9t9.emulator.common.EmulatorSettings;
-import v9t9.emulator.common.IEventNotifier.Level;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.dsrs.DsrHandler;
 import v9t9.emulator.hardware.dsrs.DsrSettings;
@@ -76,34 +62,7 @@ import v9t9.engine.files.CatalogEntry;
 public class DiskSelector extends Composite {
 
 	private final Machine machine;
-	public static class CatalogLabelProvider extends LabelProvider implements ITableLabelProvider {
-
-		/* (non-Javadoc)
-		 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnImage(java.lang.Object, int)
-		 */
-		public Image getColumnImage(Object element, int columnIndex) {
-			return null;
-		}
-
-		/* (non-Javadoc)
-		 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnText(java.lang.Object, int)
-		 */
-		public String getColumnText(Object element, int columnIndex) {
-			CatalogEntry entry = (CatalogEntry) element;
-			switch(columnIndex) {
-			case  0:
-				return entry.fileName;
-			case 1:
-				return "" + entry.secs;
-			case 2:
-				return entry.type;
-			case 3:
-				return entry.type.equals("PROGRAM") ? "" :  "" + entry.recordLength;
-			}
-			return null;
-		}
-		
-	}
+	
 	abstract class SettingEntry extends Composite {
 		protected final SettingProperty setting;
 		private IPropertyListener enableListener;
@@ -302,101 +261,7 @@ public class DiskSelector extends Composite {
 		protected void showCatalogDialog(final SettingProperty setting,
 				final Catalog catalog) {
 			final List<CatalogEntry> entries = catalog.getEntries();
-			Dialog dialog = new Dialog(getShell()) {
-				{
-					setShellStyle(getShellStyle() | SWT.RESIZE | SWT.MODELESS);
-				}
-				/* (non-Javadoc)
-				 * @see org.eclipse.jface.window.Window#configureShell(org.eclipse.swt.widgets.Shell)
-				 */
-				@Override
-				protected void configureShell(Shell newShell) {
-					super.configureShell(newShell);
-					newShell.setText("Catalog of " + setting.getName());
-				}
-				/* (non-Javadoc)
-				 * @see org.eclipse.jface.dialogs.Dialog#getInitialSize()
-				 */
-				@Override
-				protected Point getInitialSize() {
-					return new Point(400, 600);
-				}
-				/* (non-Javadoc)
-				 * @see org.eclipse.jface.dialogs.Dialog#createDialogArea(org.eclipse.swt.widgets.Composite)
-				 */
-				@Override
-				protected Control createDialogArea(Composite parent) {
-					Composite composite = (Composite) super.createDialogArea(parent);
-					
-					Label label = new Label(composite, SWT.WRAP);
-					label.setText(setting.getString() + "\n\nName: " + catalog.volumeName + "; Total: " + catalog.totalSectors + "; Used: " + catalog.usedSectors);
-					GridDataFactory.fillDefaults().grab(true,false).applyTo(label);
-					
-					final TableViewer viewer = new TableViewer(composite, SWT.FULL_SELECTION | SWT.BORDER | SWT.MULTI);
-					viewer.setContentProvider(new ArrayContentProvider());
-					viewer.setLabelProvider(new CatalogLabelProvider());
-
-					final Table table = viewer.getTable();
-					table.setHeaderVisible(true);
-					
-					GridDataFactory.fillDefaults().grab(true,true).applyTo(viewer.getControl());
-					
-					TableColumn fileColumn = new TableColumn(table, SWT.LEFT);
-					fileColumn.setText("Filename");
-					TableColumn sizeColumn = new TableColumn(table, SWT.LEFT);
-					sizeColumn.setText("Sectors");
-					TableColumn typeColumn = new TableColumn(table, SWT.LEFT);
-					typeColumn.setText("Type");
-					TableColumn lenColumn = new TableColumn(table, SWT.LEFT);
-					lenColumn.setText("RecLen");
-					
-					viewer.setInput(entries);
-					
-					fileColumn.pack();
-					sizeColumn.pack();
-					typeColumn.pack();
-					lenColumn.pack();
-					///
-					
-
-					final boolean[] isShifted = { false };
-					table.addMouseListener(new MouseAdapter() {
-						@Override
-						public void mouseDoubleClick(MouseEvent e) {
-							isShifted[0] = (e.stateMask & SWT.SHIFT) != 0;
-							TableItem item = table.getItem(new Point(e.x, e.y));
-							if (item != null && item.getData() instanceof CatalogEntry) {
-								CatalogEntry entry = (CatalogEntry)item.getData();
-								String filePath;
-								if (isShifted[0])
-									filePath = entry.fileName;
-								else
-									filePath = setting.getName() + "." + entry.fileName;
-								machine.getClient().getEventNotifier().notifyEvent(entry, 
-										Level.INFO, "Pasting '" + filePath + "'");
-										
-								machine.getKeyboardState().pasteText(filePath);
-							}
-						}
-					});
-					
-					viewer.addDoubleClickListener(new IDoubleClickListener() {
-						
-						@Override
-						public void doubleClick(DoubleClickEvent event) {
-							
-						}
-					});
-					
-
-					label = new Label(composite, SWT.WRAP);
-					label.setText("Double-click to paste path (shift for filename)");
-					GridDataFactory.fillDefaults().grab(true,false).applyTo(label);
-					
-					
-					return composite;
-				}
-			};
+			Dialog dialog = new CatalogDialog(getShell(), machine, entries, catalog, setting);
 			dialog.open();
 
 			
