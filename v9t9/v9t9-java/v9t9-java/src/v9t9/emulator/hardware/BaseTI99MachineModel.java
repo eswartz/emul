@@ -4,7 +4,6 @@
 package v9t9.emulator.hardware;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import v9t9.emulator.clients.builtin.swt.IDeviceIndicatorProvider;
