@@ -20,6 +20,8 @@ import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.KeyAdapter;
+import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
@@ -86,6 +88,7 @@ public class ModuleSelector extends Composite {
 		viewer.setLabelProvider(new ModuleTableLabelProvider());
 		
 		selectedModule = null;
+		final IModule[] realModules = machine.getModuleManager().getModules();
 		
 		viewer.addSelectionChangedListener(new ISelectionChangedListener() {
 			
@@ -121,7 +124,6 @@ public class ModuleSelector extends Composite {
 			}
 		});
 		
-		
 		buttonBar = new Composite(this, SWT.NONE);
 		GridLayoutFactory.fillDefaults().numColumns(1).applyTo(buttonBar);
 		
@@ -135,7 +137,48 @@ public class ModuleSelector extends Composite {
 		});
 		switchButton.setEnabled(false);
 		
-		IModule[] realModules = machine.getModuleManager().getModules();
+
+		if (realModules.length > 0) {
+			table.addKeyListener(new KeyAdapter() {
+				StringBuilder search = new StringBuilder();
+				int index = 0;
+				
+				@Override
+				public void keyPressed(KeyEvent e) {
+					if (e.keyCode == '\b') {
+						search.setLength(0);
+						index = 0;
+						e.doit = false;
+					}
+					else if (e.character >= 32 && e.character < 127) {
+						search.append(e.character);
+						e.doit = false;
+					}
+					else if (e.keyCode == '\r' || e.keyCode == '\n') {
+						switchModule();
+						e.doit = false;
+						return;
+					}
+					else {
+						return;
+					}
+					
+					if (search.length() > 0) {
+						int end = (index + realModules.length - 1) % realModules.length;
+						for (int i = index; i != end; i = (i + 1) % realModules.length) {
+							IModule m = realModules[i];
+							if (m.getName().toLowerCase().contains(search.toString().toLowerCase())) {
+								viewer.setSelection(new StructuredSelection(m));
+								index = i;
+								break;
+							}
+						}
+					}
+				}
+			});
+		}
+		
+		
 		Object[] modulesPlusEmpty = new Object[realModules.length + 1];
 		modulesPlusEmpty[0] = "<No module>";
 		System.arraycopy(realModules, 0, modulesPlusEmpty, 1, realModules.length);
