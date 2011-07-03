@@ -15,6 +15,7 @@ import v9t9.emulator.hardware.memory.mmio.Vdp9918AMmio;
 import v9t9.emulator.hardware.sound.SoundTMS9919;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.MemoryModel;
+import v9t9.keyboard.KeyboardState;
 
 /**
  * @author ejs
@@ -62,6 +63,8 @@ public class StandardMachineModel extends BaseTI99MachineModel {
 	}
 	
 	public void defineDevices(Machine machine_) {
+		KeyboardState.backspaceIsCtrlH.setBoolean(false);
+		
 		if (machine_ instanceof TI99Machine) {
 			TI99Machine machine = (TI99Machine) machine_;
 			machine.getCpu().setCruAccess(new InternalCru9901(machine, machine.getKeyboardState()));

@@ -7,8 +7,10 @@ import java.util.Collections;
 import java.util.List;
 
 import v9t9.emulator.clients.builtin.SoundProvider;
+import v9t9.emulator.clients.builtin.sound.JavaSoundHandler;
 import v9t9.emulator.clients.builtin.swt.IDeviceIndicatorProvider;
 import v9t9.emulator.clients.builtin.video.v9938.VdpV9938;
+import v9t9.emulator.common.EmulatorSettings;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.dsrs.DsrSettings;
 import v9t9.emulator.hardware.dsrs.realdisk.MemoryDiskImageDsr;
@@ -25,6 +27,7 @@ import v9t9.emulator.runtime.cpu.Executor;
 import v9t9.emulator.runtime.interpreter.InterpreterF99b;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.MemoryModel;
+import v9t9.keyboard.KeyboardState;
 import v9t9.tools.asm.assembler.F99bInstructionFactory;
 import v9t9.tools.asm.assembler.IInstructionFactory;
 
@@ -82,6 +85,8 @@ public class F99bMachineModel implements MachineModel {
 	}
 	
 	public void defineDevices(final Machine machine_) {
+		KeyboardState.backspaceIsCtrlH.setBoolean(true);
+		
 		memoryDiskDsr = new MemoryDiskImageDsr(machine_, InternalCruF99.DISK_BASE);
 
 		InternalCruF99 cruAccess = new InternalCruF99(machine_, machine_.getKeyboardState());

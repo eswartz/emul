@@ -17,6 +17,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.Map.Entry;
 
+import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.utils.HexUtils;
 import org.ejs.coffee.core.utils.Pair;
 
@@ -77,6 +78,8 @@ import v9t9.emulator.common.Machine;
  */
 @SuppressWarnings("unused")
 public class KeyboardState {
+	public static SettingProperty backspaceIsCtrlH = new SettingProperty("SettingIsControlH", Boolean.FALSE);
+	
 	public static boolean DEBUG = false;
 	
     /* Masks, corresponding to column 0 */
@@ -218,7 +221,10 @@ public class KeyboardState {
 		switch (ch) {
 		
 		case 8:
-			setKey(realKey, pressed, synthetic, ctrlShifted, 'H', when);	/* BKSP */
+			if (backspaceIsCtrlH.getBoolean())
+				setKey(realKey, pressed, synthetic, ctrlShifted, 'H', when);	/* BKSP */
+			else
+				setKey(realKey, pressed, synthetic, fctnShifted, 'S', when);	/* FCTN-S */
 			break;
 		case 9:
 			setKey(realKey, pressed, synthetic, ctrlShifted, 'I', when);	/* TAB */

@@ -15,6 +15,7 @@ import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.BankedMemoryEntry;
 import v9t9.engine.memory.MemoryModel;
 import v9t9.engine.memory.WindowBankedMemoryEntry;
+import v9t9.keyboard.KeyboardState;
 
 /**
  * This is an enhanced machine model that has a more regular memory model as well.
@@ -71,6 +72,8 @@ public class EnhancedMachineModel extends BaseTI99MachineModel {
 	}
 	
 	public void defineDevices(final Machine machine_) {
+		KeyboardState.backspaceIsCtrlH.setBoolean(true);
+		
 		if (machine_ instanceof TI99Machine) {
 			TI99Machine machine = (TI99Machine) machine_;
 			machine.getCpu().setCruAccess(new InternalCru9901(machine, machine.getKeyboardState()));

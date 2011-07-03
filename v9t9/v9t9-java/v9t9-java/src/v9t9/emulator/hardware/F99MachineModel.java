@@ -24,6 +24,7 @@ import v9t9.emulator.runtime.cpu.Executor;
 import v9t9.emulator.runtime.interpreter.InterpreterF99;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.memory.MemoryModel;
+import v9t9.keyboard.KeyboardState;
 import v9t9.tools.asm.assembler.IInstructionFactory;
 
 /**
@@ -77,6 +78,7 @@ public class F99MachineModel implements MachineModel {
 	}
 	
 	public void defineDevices(final Machine machine_) {
+		KeyboardState.backspaceIsCtrlH.setBoolean(true);
 		machine_.getCpu().setCruAccess(new InternalCruF99(machine_, machine_.getKeyboardState()));
 		/*
 		if (machine_ instanceof TI99Machine) {
