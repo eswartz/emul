@@ -46,7 +46,9 @@ import v9t9.engine.cpu.RawInstruction;
  *
  */
 public class CpuViewer extends Composite implements InstructionListener {
-
+	public interface ICpuTracker {
+		void updateForInstruction();
+	}
 	private Button playPauseButton;
 	private Image playImage;
 	private Image pauseImage;
@@ -69,6 +71,7 @@ public class CpuViewer extends Composite implements InstructionListener {
 	private Button clearButton;
 	private Font tableFont;
 	private Font smallerFont;
+	private ICpuTracker tracker;
 	
 	public CpuViewer(Composite parent, int style, final Machine machine, Timer timer) {
 		super(parent, style);
@@ -377,6 +380,8 @@ public class CpuViewer extends Composite implements InstructionListener {
 			Executor.settingSingleStep.setBoolean(false);
 			Machine.settingPauseMachine.setBoolean(true);
 			machine.getExecutor().interruptExecution = true;
+			if (tracker != null)
+				tracker.updateForInstruction();
 		}
 		//throw new AbortedException();
 	}
@@ -417,6 +422,8 @@ public class CpuViewer extends Composite implements InstructionListener {
 								+ instString
 								+ "\t" + machine.getCpu().getCurrentStateString()
 								);
+						if (tracker != null)
+							tracker.updateForInstruction();
 					} else {
 						nextInstructionText.setText("");
 					}
@@ -426,8 +433,12 @@ public class CpuViewer extends Composite implements InstructionListener {
 	}
 	
 	protected void resizeTable() {
-		for (TableColumn column1 : instTableViewer.getTable().getColumns()) {
-			column1.pack();
+		for (TableColumn c : instTableViewer.getTable().getColumns()) {
+			c.pack();
 		}
+	}
+	
+	public void setTracker(ICpuTracker tracker) {
+		this.tracker = tracker;
 	}
 }

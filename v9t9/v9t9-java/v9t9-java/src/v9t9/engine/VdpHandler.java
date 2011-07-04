@@ -78,4 +78,10 @@ public interface VdpHandler extends IPersistable{
 	
 	/** Get the handler for video-mode specific handling */
 	VdpModeRedrawHandler getVdpModeRedrawHandler();
+
+	int getRegisterCount();
+	String getRegisterName(int reg);
+	String getRegisterTooltip(int reg);
+	byte getRegister(int reg);
+	void setRegister(int reg, byte value);
 }

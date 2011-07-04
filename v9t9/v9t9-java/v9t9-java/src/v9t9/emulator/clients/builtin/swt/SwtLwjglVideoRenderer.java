@@ -305,7 +305,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	@Override
 	public void canvasResized(VdpCanvas canvas) {
 		super.canvasResized(canvas);
-		Display.getDefault().syncExec(new Runnable() {
+		Display.getDefault().asyncExec(new Runnable() {
 			public void run() {
 				updateWidgetSizeForMode();
 			}

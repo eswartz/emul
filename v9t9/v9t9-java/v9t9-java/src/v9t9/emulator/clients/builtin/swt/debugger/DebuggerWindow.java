@@ -23,6 +23,7 @@ public class DebuggerWindow extends Composite {
 	/*private*/ final Machine machine;
 	/*private*/ CpuViewer cpuViewer;
 	private SashForm vertSash;
+	private RegisterViews regViewer;
 
 	public DebuggerWindow(Composite parent, int style, Machine machine, Timer timer) {
 		super(parent, style);
@@ -32,7 +33,15 @@ public class DebuggerWindow extends Composite {
 		horizSash = new SashForm(this, SWT.HORIZONTAL);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(horizSash);
 		
-		cpuViewer = new CpuViewer(horizSash, SWT.BORDER, machine, timer);
+		SashForm innerSash = new SashForm(horizSash, SWT.VERTICAL);
+		
+		cpuViewer = new CpuViewer(innerSash, SWT.BORDER, machine, timer);
+		regViewer = new RegisterViews(innerSash, SWT.BORDER, machine);
+
+		GridDataFactory.fillDefaults().grab(true, true).applyTo(cpuViewer);
+		GridDataFactory.fillDefaults().grab(true, true).applyTo(regViewer);
+
+		cpuViewer.setTracker(regViewer);
 		
 		vertSash = new SashForm(horizSash, SWT.VERTICAL);
 		

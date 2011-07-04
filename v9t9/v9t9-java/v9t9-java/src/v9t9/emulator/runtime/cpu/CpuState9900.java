@@ -43,12 +43,32 @@ public class CpuState9900 implements CpuState {
 	}
 
 	public int getRegister(int reg) {
-	    return console.readWord(WP + reg*2);
+		if (reg < 16)
+			return console.readWord(WP + reg*2);
+		
+		if (reg == Cpu9900.REG_PC)
+			return PC;
+		else if (reg == Cpu9900.REG_WP)
+			return WP;
+		else if (reg == Cpu9900.REG_ST)
+			return status.flatten();
+		
+		return 0;
 	}
 
 	@Override
 	public void setRegister(int reg, int val) {
-		console.writeWord(WP + reg*2, (short) val);
+		if (reg < 16) {
+			console.writeWord(WP + reg*2, (short) val);
+			return;
+		}
+		if (reg == Cpu9900.REG_PC)
+			PC = (short) val;
+		else if (reg == Cpu9900.REG_WP)
+			WP = (short) val;
+		else if (reg == Cpu9900.REG_ST)
+			status.expand((short) val);
+		
 	}
 
 	@Override
@@ -88,4 +108,20 @@ public class CpuState9900 implements CpuState {
 		getStatus().expand(st);
 	}
 
+
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.cpu.Cpu#getRegisterCount()
+	 */
+	@Override
+	public int getRegisterCount() {
+		return 16 + 3;
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.cpu.Cpu#getRegisterName(int)
+	 */
+	@Override
+	public String getRegisterName(int reg) {
+		return reg < 16 ? "R" + reg : (reg == Cpu9900.REG_PC ? "PC" : reg == Cpu9900.REG_ST ? "ST" : 
+			reg == Cpu9900.REG_WP ? "WP" : null);
+	}
 }

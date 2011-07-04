@@ -56,6 +56,23 @@ public class CpuStateMFP201 implements CpuState {
 		}
 		
 	}
+	
+
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.cpu.CpuState#getRegisterCount()
+	 */
+	@Override
+	public int getRegisterCount() {
+		return 16;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.cpu.CpuState#getRegisterName(int)
+	 */
+	@Override
+	public String getRegisterName(int reg) {
+		return "R" + reg;
+	}
 
 	@Override
 	public Status createStatus() {

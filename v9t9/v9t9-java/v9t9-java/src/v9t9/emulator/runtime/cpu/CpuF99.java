@@ -90,6 +90,8 @@ public class CpuF99 extends CpuBase {
 	public static final int PC = 2;
 	public static final int UP = 3;
 	public static final int SR = 4;
+	
+	public static final int REG_COUNT = 5;
     
 	 /* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.Cpu#resetInterruptRequest()

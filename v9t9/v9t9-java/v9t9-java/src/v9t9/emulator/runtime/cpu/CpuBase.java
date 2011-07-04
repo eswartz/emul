@@ -261,4 +261,21 @@ public abstract class CpuBase  implements MemoryAccessListener, IPersistable, Cp
     		handleInterrupts();
     	}
     }
+	
+	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.cpu.CpuState#getRegisterCount()
+	 */
+	@Override
+	public int getRegisterCount() {
+		return state.getRegisterCount();
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.cpu.CpuState#getRegisterName(int)
+	 */
+	@Override
+	public String getRegisterName(int reg) {
+		return state.getRegisterName(reg);
+	}
+
 }

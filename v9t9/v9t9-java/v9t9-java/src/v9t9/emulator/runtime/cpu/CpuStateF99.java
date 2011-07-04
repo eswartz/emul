@@ -59,7 +59,29 @@ public class CpuStateF99 implements CpuState {
 		}
 		
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.cpu.CpuState#getRegisterCount()
+	 */
+	@Override
+	public int getRegisterCount() {
+		return CpuF99.REG_COUNT;
+	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.cpu.CpuState#getRegisterName(int)
+	 */
+	@Override
+	public String getRegisterName(int reg) {
+		switch (reg) {
+		case CpuF99.PC: return "PC";
+		case CpuF99.SP: return "SP";
+		case CpuF99.RSP: return "RSP";
+		case CpuF99.UP: return "UP";
+		case CpuF99.SR: return "SR";
+		default: return null;
+		}
+	}
 	@Override
 	public Status createStatus() {
 		return new StatusF99();

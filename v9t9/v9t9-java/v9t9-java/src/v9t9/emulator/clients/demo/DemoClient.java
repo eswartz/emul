@@ -534,5 +534,39 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
 		return video.getVdpModeRedrawHandler();
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.engine.VdpHandler#getRegisterCount()
+	 */
+	@Override
+	public int getRegisterCount() {
+		return video.getRegisterCount();
+	}
+	
+	public byte getRegister(int reg) {
+		return video.getRegister(reg);
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.engine.VdpHandler#setRegister(int, byte)
+	 */
+	@Override
+	public void setRegister(int reg, byte value) {
+		video.setRegister(reg, value);
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.engine.VdpHandler#getRegisterName(int)
+	 */
+	@Override
+	public String getRegisterName(int reg) {
+		return video.getRegisterName(reg);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.VdpHandler#getRegisterTooltip(int)
+	 */
+	@Override
+	public String getRegisterTooltip(int reg) {
+		return video.getRegisterTooltip(reg);
+	}
 }
+
 

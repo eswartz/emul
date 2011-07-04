@@ -104,6 +104,10 @@ public class VdpTMS9918A implements VdpHandler {
     // this should pretty much stay on
     static public final SettingProperty settingCpuSynchedVdpInterrupt = new SettingProperty("CpuSynchedVdpInterrupt",
     		new Boolean(true));
+    
+    
+    public static final int REG_ST = 0;
+	private static final int REG_COUNT = 8 + 1;
 
 	/** The circular counter for VDP interrupt timing. */
 	private int vdpInterruptFrac;
@@ -802,5 +806,111 @@ public class VdpTMS9918A implements VdpHandler {
 	 */
 	public VdpModeRedrawHandler getVdpModeRedrawHandler() {
 		return vdpModeRedrawHandler;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.engine.VdpHandler#getRegisterCount()
+	 */
+	@Override
+	public int getRegisterCount() {
+		return REG_COUNT;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.engine.VdpHandler#getRegister(int)
+	 */
+	@Override
+	public byte getRegister(int reg) {
+		return reg == REG_ST ? vdpStatus : vdpregs[reg - 1] ;
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.engine.VdpHandler#getRegisterName(int)
+	 */
+	@Override
+	public String getRegisterName(int reg) {
+		return reg == REG_ST ? "ST" : "VR" + (reg - 1);
+	}
+	
+	protected String yOrN(String label, int i) {
+		return i != 0 ? label : "";
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.VdpHandler#getRegisterTooltip(int)
+	 */
+	@Override
+	public String getRegisterTooltip(int reg) {
+		switch (reg) {
+		case REG_ST:
+			return "Status: " + getStatusString(vdpStatus);
+		}
+		reg--;
+		byte val = vdpregs[reg];
+		switch (reg) {
+		case 0:
+			return caten(yOrN("Bitmap", val & 0x2), yOrN("Ext Vid", val & 0x1));
+		case 1:
+			return caten(yOrN("16K", val & 0x80), yOrN("Blank", val & 0x40),
+					yOrN("Int on", val & 0x20), yOrN("Multi", val & 0x10),
+					yOrN("Text", val & 0x08),
+					yOrN("Size 4", val & 0x02), yOrN("Mag", val & 0x01));
+		case 2: 
+			return "Screen: " + HexUtils.toHex4(vdpModeInfo.screen.base);
+		case 3: 
+			return "Colors: " + HexUtils.toHex4(vdpModeInfo.color.base)
+			+ (vdpModeRedrawHandler instanceof BitmapModeRedrawHandler ?
+					" | Mask: " + HexUtils.toHex4(((BitmapModeRedrawHandler) vdpModeRedrawHandler).bitcolormask) 
+							: "");
+		case 4: 
+			return "Patterns: " + HexUtils.toHex4(vdpModeInfo.patt.base)
+			+ (vdpModeRedrawHandler instanceof BitmapModeRedrawHandler ?
+					" | Mask: " + HexUtils.toHex4(((BitmapModeRedrawHandler) vdpModeRedrawHandler).bitpattmask) 
+					: "");
+		case 5: 
+			return "Sprites: " + HexUtils.toHex4(vdpModeInfo.sprite.base);
+		case 6: 
+			return "Sprite patterns: " + HexUtils.toHex4(vdpModeInfo.sprpat.base);
+		case 7: 
+			return "Color BG: " + HexUtils.toHex2(val & 0x7) 
+			+ " | FG: " + HexUtils.toHex2((val & 0xf0) >> 4);
+		}
+		return null;
+	}
+	
+	protected String getStatusString(byte s) {
+		return caten(yOrN("Int", s & 0x80),
+				yOrN("5 Sprites", s & 0x40),
+				yOrN("Coinc", s & 0x20))
+				+ " | 5th: " + (s & 0x1f);
+	}
+
+	/**
+	 * @param yOrN
+	 * @param yOrN2
+	 * @param yOrN3
+	 * @return
+	 */
+	protected String caten(String... vals) {
+		StringBuilder sb = new StringBuilder();
+		boolean first = true;
+		for (String v : vals) {
+			if (first)
+				first = false;
+			else
+				sb.append(" | ");
+			sb.append(v.length() == 0 ? "0" : v);
+		}
+		return sb.toString();
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.engine.VdpHandler#setRegister(int, byte)
+	 */
+	@Override
+	public void setRegister(int reg, byte value) {
+		if (reg == REG_ST)
+			vdpStatus = value;
+		else
+			writeVdpReg(reg - 1, value);
 	}
 }

@@ -49,8 +49,11 @@ public class VdpV9938 extends VdpTMS9918A {
 	private byte[] statusvec = new byte[16];
 	private int indreg;
 	private boolean indinc;
+	/** ms */
 	private int blinkPeriod;
+	/** ms */
 	private int blinkOnPeriod;
+	/** ms */
 	private int blinkOffPeriod;
 	boolean blinkOn;
 	private boolean isEnhancedMode;
@@ -283,6 +286,9 @@ public class VdpV9938 extends VdpTMS9918A {
 	public final static int MODE_GRAPHICS6 = 20;
 	public final static int MODE_GRAPHICS7 = 28;
 	
+	private static final int REG_SR0 = 48;
+	private static final int REG_COUNT = 48 + 9;
+	
 	@Override
 	protected int doWriteVdpReg(int reg, byte old, byte val) {
 		//System.out.println(Utils.toHex2(reg) + " = " + Utils.toHex2(val));
@@ -344,8 +350,8 @@ public class VdpV9938 extends VdpTMS9918A {
 			
 		case 13:
 			// blinking period (pg 6)
-			blinkOnPeriod = ((val >> 4) & 0xf);
-			blinkOffPeriod = (val & 0xf);
+			blinkOnPeriod = ((val >> 4) & 0xf) * 1000 / 6;
+			blinkOffPeriod = (val & 0xf) * 1000 / 6;
 			blinkPeriod = blinkOnPeriod + blinkOffPeriod;
 			blinkOn = false;
 			redraw |= REDRAW_PALETTE;
@@ -780,7 +786,7 @@ public class VdpV9938 extends VdpTMS9918A {
 			boolean isBlinking = modeNumber == MODE_TEXT2;
 			boolean isPageFlipping = (vdpregs[2] & 0x20) != 0 && !isBlinking;
 			
-			boolean isAltMode = (System.currentTimeMillis() / (1000 / 6)) % blinkPeriod >= blinkOffPeriod;
+			boolean isAltMode = System.currentTimeMillis() % blinkPeriod >= blinkOffPeriod;
 			if (isPageFlipping) {
 				pageOffset = isAltMode ? pageSize : 0;
 				if (prevPageOffset != pageOffset) {
@@ -1248,5 +1254,200 @@ public class VdpV9938 extends VdpTMS9918A {
 			}
 		}
 	}
+
+
+	/* (non-Javadoc)
+	 * @see v9t9.engine.VdpHandler#getRegisterCount()
+	 */
+	@Override
+	public int getRegisterCount() {
+		return REG_COUNT;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A#getRegister(int)
+	 */
+	@Override
+	public byte getRegister(int reg) {
+		if (reg > REG_SR0)
+			return statusvec[reg - REG_SR0];
+		else
+			return super.getRegister(reg);
+	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A#setRegister(int, byte)
+	 */
+	@Override
+	public void setRegister(int reg, byte value) {
+		if (reg > REG_SR0)
+			statusvec[reg - REG_SR0] = value;
+		else
+			super.setRegister(reg, value);
+	}
+	
+	
+
+	protected String getStatusString(byte s) {
+		return caten(yOrN("Int", s & 0x80),
+				yOrN("9 Sprites", s & 0x40),
+				yOrN("Coinc", s & 0x20))
+				+ " | 9th: " + (s & 0x1f);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A#getRegisterName(int)
+	 */
+	@Override
+	public String getRegisterName(int reg) {
+		if (reg >= REG_SR0)
+			return "SR" + (reg - REG_SR0);
+		else
+			return super.getRegisterName(reg);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A#getRegisterTooltip(int)
+	 */
+	@Override
+	public String getRegisterTooltip(int reg) {
+		if (reg == REG_ST)
+			return super.getStatusString(vdpStatus);
+		byte val = 0;
+		if (reg < REG_SR0) {
+			reg--;
+			val = vdpregs[reg];
+		} else {
+			val = statusvec[reg - REG_SR0];
+		}
+		switch (reg) {
+		case 0:
+			return caten(yOrN("DG", val & 0x40), yOrN("IE2", val & 0x40),
+					yOrN("IE1", val & 0x20), yOrN("M5", val & 0x08),
+					yOrN("M4", val & 0x04), yOrN("M3", val & 0x02));
+		case 1:
+			return caten(yOrN("Blank", val & 0x40),
+					yOrN("IE0", val & 0x20), yOrN("M1", val & 0x10),
+					yOrN("M2", val & 0x08),
+					yOrN("Size 4", val & 0x02), yOrN("Mag", val & 0x01));
+		case 8:
+			return caten(yOrN("Mouse", val & 0x80), yOrN("Light Pen", val & 0x40),
+					yOrN("NoTransp", val & 0x20), yOrN("ColorBus", val & 0x10), 
+					(val & 0x08) != 0 ? "64K" : "16K",
+					yOrN("Sprites", val & 0x02), yOrN("B&W", val & 0x01));
+		case 9:
+			return caten((val & 0x80) != 0 ? "212ln" : "192ln",
+					yOrN("Simul1", val & 0x20),
+					yOrN("Simul0", val & 0x10),
+					yOrN("Interlace", val & 0x08),
+					yOrN("EvenOdd", val & 0x04),
+					(val & 0x02) != 0 ? "PAL" : "NTSC",
+					yOrN("DC", val & 0x01));
+		case 10:
+			return super.getRegisterTooltip(3);
+		case 11:
+			return super.getRegisterTooltip(6);
+		case 12:
+			return "Blink Color BG: " + HexUtils.toHex2(val & 0x7) 
+			+ " | FG: " + HexUtils.toHex2((val & 0xf0) >> 4);
+		case 13:
+			return "Blink period on: " + blinkOnPeriod + " ms"
+			+ " | Off: " + blinkOffPeriod + " ms";
+		case 14:
+			return "Page base: " + HexUtils.toHex4(val << 14);
+		case 15:
+			return "Status register #";
+		case 16:
+			return "Color palette address";
+		case 17:
+			return caten("Control register pointer: " + (val & 0x7f), yOrN("AutoInc", val & 0x80));
+		case 18:
+			return "Display adjust Vert: " + ((val & 0xf0) >> 4)
+			+ " | Horiz: " + (val & 0xf);
+		case 19:
+			return "Interrupt line";
+		case 23:
+			return "Display offset";
+		case 20:
+			return "Color burst 1";
+		case 21:
+			return "Color burst 2";
+		case 22:
+			return "Color burst 3";
+		case 32:
+			return "Source X Low";
+		case 33:
+			return "Source X High";
+		case 34:
+			return "Source Y Low";
+		case 35:
+			return "Source Y High";
+		case 36:
+			return "Dest X Low";
+		case 37:
+			return "Dest X High";
+		case 38:
+			return "Dest Y Low";
+		case 39:
+			return "Dest Y High";
+		case 40:
+			return "# Dots X Low";
+		case 41:
+			return "# Dots X High";
+		case 42:
+			return "# Dots Y Low";
+		case 43:
+			return "# Dots Y High";
+		case 44:
+			return "Color High: " + ((val & 0xf0) >> 4) + " | Low: " + (val & 0xf);
+		case 45:
+			return "Arguments: " +
+			caten(yOrN("MXC", val & 0x40),
+					yOrN("MXD", val & 0x20),
+					yOrN("MXS", val & 0x10),
+					yOrN("DIY", val & 0x08),
+					yOrN("DIX", val & 0x04),
+					yOrN("EQ", val & 0x02),
+					yOrN("MAJ", val & 0x01));
+		case 46:
+			return "Command: " + ((val & 0xf0) >> 4) + " | Lo: " + (val & 0xf);
+			
+		case REG_SR0: // already handled
+			return null;
+		case REG_SR0 + 1:
+			return "Status register 1: " + 
+			caten(yOrN("FL", val & 0x80),
+					yOrN("LPS", val & 0x40),
+					"ID: " + ((val & 0x3e) >> 1),
+					yOrN("FH", val & 0x01));
+		case REG_SR0 + 2:
+			return "Status register 2: " + 
+			caten(yOrN("TransRdy", val & 0x80),
+					yOrN("VertScan", val & 0x40),
+					yOrN("HorizScan", val & 0x20),
+					yOrN("BoundDetect", val & 0x10),
+					yOrN("EvenOdd", val & 0x02),
+					yOrN("CmdExec", val & 0x01)
+					);
+		case REG_SR0 + 3:
+			return "Column register low";
+		case REG_SR0 + 4:
+			return "Column register high";
+		case REG_SR0 + 5:
+			return "Row register low";
+		case REG_SR0 + 6:
+			return "Row register high";
+		case REG_SR0 + 7:
+			return "Color register";
+		case REG_SR0 + 8:
+			return "Border X register low";
+		case REG_SR0 + 9:
+			return "Border X register high";
+		}
+		
+		if (reg >= REG_SR0)
+			return null;
+		
+		return super.getRegisterTooltip(reg);
+	}
 }

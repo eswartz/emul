@@ -43,6 +43,8 @@ public class CpuF99b extends CpuBase {
 	public static final int UP0 = 6;
 	public static final int LP = 7;
 	public static final int SR = 8;
+	
+	public static final int REG_COUNT = 9;
 
     /**
 	 * 

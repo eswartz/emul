@@ -327,7 +327,8 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 	
 
 	public void setFocus() {
-		canvas.setFocus();		
+		if (!canvas.isDisposed())
+			canvas.setFocus();		
 	}
 
 	public void saveScreenShot(File file) throws IOException {

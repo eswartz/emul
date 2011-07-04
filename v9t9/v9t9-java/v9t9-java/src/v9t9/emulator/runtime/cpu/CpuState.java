@@ -23,6 +23,9 @@ public interface CpuState {
 	int getRegister(int reg);
 
 	void setRegister(int reg, int val);
+	
+	int getRegisterCount();
+	String getRegisterName(int reg);
 
 	MemoryDomain getConsole();
 

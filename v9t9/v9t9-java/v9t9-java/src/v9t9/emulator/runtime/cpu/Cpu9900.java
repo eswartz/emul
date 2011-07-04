@@ -71,6 +71,9 @@ public class Cpu9900 extends CpuBase {
     
     /** When intreq, the interrupt level (IC* bits on the TMS9900). */
     private byte ic;
+	public static final int REG_PC = 16;
+	public static final int REG_ST = 17;
+	public static final int REG_WP = 18;
   
 
     /**
