@@ -20,10 +20,13 @@ Bundle-Localization: plugin
 Export-Package: org.eclipse.tm.te.tcf.filesystem.activator;x-internal:=true,
  org.eclipse.tm.te.tcf.filesystem.controls,
  org.eclipse.tm.te.tcf.filesystem.dialogs,
+ org.eclipse.tm.te.tcf.filesystem.filters,
+ org.eclipse.tm.te.tcf.filesystem.interfaces,
  org.eclipse.tm.te.tcf.filesystem.interfaces.preferences,
  org.eclipse.tm.te.tcf.filesystem.internal;x-internal:=true,
  org.eclipse.tm.te.tcf.filesystem.internal.explorer;x-internal:=true,
  org.eclipse.tm.te.tcf.filesystem.internal.help;x-internal:=true,
  org.eclipse.tm.te.tcf.filesystem.internal.nls;x-internal:=true,
  org.eclipse.tm.te.tcf.filesystem.internal.preferences;x-internal:=true,
+ org.eclipse.tm.te.tcf.filesystem.internal.properties;x-internal:=true,
  org.eclipse.tm.te.tcf.filesystem.model
