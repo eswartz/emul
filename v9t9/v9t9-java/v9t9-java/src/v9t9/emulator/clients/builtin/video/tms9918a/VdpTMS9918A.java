@@ -848,12 +848,14 @@ public class VdpTMS9918A implements VdpHandler {
 		byte val = vdpregs[reg];
 		switch (reg) {
 		case 0:
-			return caten(yOrN("Bitmap", val & 0x2), yOrN("Ext Vid", val & 0x1));
+			return caten(yOrN("Bitmap", val & 0x2), yOrN("Ext Vid", val & 0x1))
+				+ " (" + getModeName() + ")";
 		case 1:
 			return caten(yOrN("16K", val & 0x80), yOrN("Blank", val & 0x40),
 					yOrN("Int on", val & 0x20), yOrN("Multi", val & 0x10),
 					yOrN("Text", val & 0x08),
-					yOrN("Size 4", val & 0x02), yOrN("Mag", val & 0x01));
+					yOrN("Size 4", val & 0x02), yOrN("Mag", val & 0x01))
+				+ " (" + getModeName() + ")";
 		case 2: 
 			return "Screen: " + HexUtils.toHex4(vdpModeInfo.screen.base);
 		case 3: 
@@ -912,5 +914,18 @@ public class VdpTMS9918A implements VdpHandler {
 			vdpStatus = value;
 		else
 			writeVdpReg(reg - 1, value);
+	}
+
+	/**
+	 * @return
+	 */
+	public String getModeName() {
+		switch (modeNumber) {
+		case MODE_BITMAP: return "Bitmap";
+		case MODE_GRAPHICS: return "Graphics";
+		case MODE_MULTI: return "MultiColor";
+		case MODE_TEXT: return "Text";
+		}
+		return null;
 	}
 }
