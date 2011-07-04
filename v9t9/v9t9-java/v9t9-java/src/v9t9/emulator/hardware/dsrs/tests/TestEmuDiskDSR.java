@@ -803,7 +803,7 @@ public class TestEmuDiskDSR extends BaseEmuDiskDSRTest {
 	
 	@Test
 	public void testFileCount() throws Exception {
-		xfer.writeParamWord(0x4c, (short) 1);
+		xfer.writeParamByte(0x4c, (byte) 1);
 		dsr.handleDSR(xfer, (short) EmuDiskDsr.D_FILES);
 		assertEquals(0, xfer.readParamByte(0x50));
 		

@@ -133,15 +133,17 @@ public class BaseEmuDiskDSRTest {
 		
 	}
 	
-	protected EmuDiskDsr dsr = new EmuDiskDsr(mymapper);
 	protected FakeMemory xfer = new FakeMemory();
-	
-	protected EmuDiskPabHandler runCase(PabStruct pab) throws DsrException {
-		return runCase(pab, pab.bufaddr - 0x100);
+	{
+		xfer.writeParamWord(0x70, (short) 0x3fff);
+	}
+	protected EmuDiskDsr dsr = new EmuDiskDsr(mymapper);
+	{
+		dsr.handleDSR(xfer, (short) EmuDiskDsr.D_INIT);
 	}
 	
-	protected EmuDiskPabHandler runCase(PabStruct pab, int pabaddr) throws DsrException {
-		EmuDiskPabHandler handler = new EmuDiskPabHandler((short)0x1000, xfer, mymapper, pab);
+	protected EmuDiskPabHandler runCase(PabStruct pab) throws DsrException {
+		EmuDiskPabHandler handler = new EmuDiskPabHandler((short)0x1000, xfer, mymapper, pab, (short) 0x3ff5);
 		xfer.reset();
 		handler.run();
 		return handler;

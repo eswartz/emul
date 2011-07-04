@@ -121,21 +121,43 @@ public class EmuDiskPabHandler extends PabHandler {
 		return block;
 	}
 
-	final IFileMapper mapper;
+	IFileMapper mapper;
 	private EmuDiskPabHandler.PabInfoBlock block;
 
-	public EmuDiskPabHandler(short cruaddr, MemoryTransfer xfer, IFileMapper mapper) {
+	public EmuDiskPabHandler(short cruaddr, MemoryTransfer xfer, IFileMapper mapper, short vdpNameCompareBuffer) {
 		super(xfer);
-		this.block = getPabInfoBlock(cruaddr);
-		this.mapper = mapper;
+		init(cruaddr, mapper, vdpNameCompareBuffer);
+	}
+	public EmuDiskPabHandler(short cruaddr, MemoryTransfer xfer, IFileMapper mapper, PabStruct pab, short vdpNameCompareBuffer) {
+		super(xfer, pab);
+		init(cruaddr, mapper, vdpNameCompareBuffer);
 	}
 
-	public EmuDiskPabHandler(short cruaddr, MemoryTransfer xfer, IFileMapper mapper, PabStruct pab) {
-		super(xfer, pab);
+	private void init(short cruaddr, IFileMapper mapper,
+			short vdpNameCompareBuffer) {
 		this.block = getPabInfoBlock(cruaddr);
 		this.mapper = mapper;
+
+		// convert to absolute path
+		File localFile = mapper.getLocalFile(devname, fname);
+		File dir = localFile != null ? mapper.getLocalRoot(localFile) : null;
+		String devName = dir != null ? mapper.getDsrDeviceName(dir) : null;
+		
+		if (devName != null) {
+			devname = devName;
+			fname = fname.substring(fname.lastIndexOf('.') + 1);
+		}
+		
+		// copy filename to VDP
+		int drive = devname.charAt(devname.length() - 1) - '0';
+		xfer.writeVdpByte(vdpNameCompareBuffer, (byte) drive);
+		for (int i = 0; i < fname.length(); i++)
+			xfer.writeVdpByte(vdpNameCompareBuffer + i + 1, (byte) fname.charAt(i));
+		for (int i = fname.length(); i < 10; i++)
+			xfer.writeVdpByte(vdpNameCompareBuffer + i + 1, (byte) ' ');
+			
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
@@ -189,7 +211,6 @@ public class EmuDiskPabHandler extends PabHandler {
 	 * 
 	 */
 	public void run() throws DsrException {
-
 
 		if (pab.opcode > 9) {
 			throw new DsrException(PabConstants.e_illegal, "Bad opcode: " + pab.opcode);
@@ -405,6 +426,8 @@ public class EmuDiskPabHandler extends PabHandler {
 			openFile.seekToRecord(pab.recnum);
 			pab.recnum++;
 		}
+		
+		//System.out.printf("%s @ %08x\n", openFile.getNativeFile().getFile(), openFile.getPosition());
 		
 		ByteMemoryAccess access = xfer.getVdpMemory(pab.bufaddr);
 		pab.charcount = openFile.readRecord(access, pab.preclen);

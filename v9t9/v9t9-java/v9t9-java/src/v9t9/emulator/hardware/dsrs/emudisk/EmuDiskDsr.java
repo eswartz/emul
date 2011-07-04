@@ -73,9 +73,9 @@ public class EmuDiskDsr implements DsrHandler9900 {
 	public static final int D_RENAME = 10;	// rename file          (13)
 	public static final int D_DINPUT = 11;	// direct input file    (14)
 	public static final int D_DOUTPUT = 12;	// direct output file   (15)
-	public static final int D_16 = 13;		// set the VDP end of buffer (like call files) (16)
+	public static final int D_FILES = 13;		// set the number of file buffers (16)
 
-	public static final int D_FILES = 14;	
+	public static final int D_CALL_FILES = 14;	// BASIC entry point for FILES
 			
 	/*	Error codes for subroutines */
 	public static final byte es_okay = 0;
@@ -88,14 +88,14 @@ public class EmuDiskDsr implements DsrHandler9900 {
 	public static final byte es_hardware = 0x6;
 	
 	private DiskMemoryEntry memoryEntry;
-	private short vdpnamebuffer;
+	private short vdpNameCompareBuffer;
 	private final IFileMapper mapper;
 
 	private Map<String, SettingProperty> diskActivitySettings;
 	private List<IDeviceIndicatorProvider> deviceIndicatorProviders;
 
 	private SettingProperty emuDiskDsrActiveSetting;
-	
+
 	public static String getEmuDiskSetting(int i) {
 		return "DSK" + i;
 	}
@@ -203,11 +203,11 @@ public class EmuDiskDsr implements DsrHandler9900 {
 		case D_DSK4:
 		case D_DSK5:
 		{
-			EmuDiskPabHandler handler = new EmuDiskPabHandler(getCruBase(), xfer, mapper);
+			EmuDiskPabHandler handler = new EmuDiskPabHandler(getCruBase(), xfer, mapper, 
+					(short) (vdpNameCompareBuffer + 1));
 			
 			if (handler.devname.equals("DSK1")
-					|| handler.devname.equals("DSK2")
-					|| (handler.devname.equals("DSK") && handler.mapper.getLocalFile(handler.devname, handler.fname) == null)) {
+					|| handler.devname.equals("DSK2")) {
 				if (StandardDiskImageDsr.diskImageDsrEnabled.getBoolean())
 					return false;
 			}
@@ -237,10 +237,11 @@ public class EmuDiskDsr implements DsrHandler9900 {
 			EmuDiskPabHandler.getPabInfoBlock(getCruBase()).reset();
 			DirectDiskHandler.getDiskInfoBlock(getCruBase()).reset();
 			
-			// also steal some RAM for the name compare buffer,
-			//  so dependent programs can function 
-			vdpnamebuffer = (short) (xfer.readParamWord(0x70) - 9);
-			xfer.writeParamWord(0x70, (short) (vdpnamebuffer - 1));
+			// steal some RAM for the name compare buffer,
+			// so dependent programs can function 
+			vdpNameCompareBuffer = (short) (xfer.readParamWord(0x70) - 11);
+			
+			allocFiles(xfer, -3);
 			
 			// ???
 			xfer.writeParamWord(0x6c, (short) 0x404);
@@ -252,28 +253,36 @@ public class EmuDiskDsr implements DsrHandler9900 {
 			return false;  // does not bump return
 		}
 	
-			/* ???? */
-		/*
-		case D_16:
-		{
-			console.writeByte(rambase+0x50, 0);	// no error 
-			bumpReturnAddress(cpu);
-			break;
-		}*/
-	
-			/* call files(x) */
+			/* # of files */
 		case D_FILES:
-			PabInfoBlock block = EmuDiskPabHandler.getPabInfoBlock(getCruBase());
-			
-			int cnt = xfer.readParamWord(0x4c);
-			if (block.openFiles.size() > cnt) {
-				xfer.writeParamWord(0x50, (short) -1);
-			} else if (cnt < 1 || cnt >= 16) { 
-				xfer.writeParamWord(0x50, (short) -1);
-			} else {
-				xfer.writeParamWord(0x50, (short) 0);
-				block.maxOpenFileCount = cnt;
+		{
+			subAllocFiles(xfer);
+			return true;
+		}
+	
+			/* call files(x) from BASIC */
+		case D_CALL_FILES:
+			// 0x50 is 0xffff ?
+			// 0x52 points to BASIC tokenization of argument
+			int argptr = xfer.readParamWord(0x2c) + 7;
+			short arginfo = xfer.readVdpShort(argptr);
+			// codes for "number literal", with length 1
+			boolean error = true;
+			if (arginfo == (short)0xC801) {
+				argptr += 2;
+				int cnt = xfer.readVdpByte(argptr++);
+				cnt -= '0';
+				xfer.writeParamByte(0x4c, (byte) cnt);
+				subAllocFiles(xfer);
+				error = xfer.readParamByte(0x50) != 0;
 			}
+			if (!error) {
+				// advance param ptr
+				xfer.writeParamWord(0x2c, (short)(argptr + 2));
+				// clear error
+				xfer.writeParamByte(0x42, (byte) 0);
+			}
+			
 			return true;
 	
 		//case D_FMTDISK:
@@ -314,6 +323,70 @@ public class EmuDiskDsr implements DsrHandler9900 {
 		default:
 			info("EmuDiskDSR: ignoring code = " + code);
 			return false;
+		}
+	}
+
+	private void subAllocFiles(MemoryTransfer xfer) {
+		int cnt = xfer.readParamByte(0x4c);
+		if (Math.abs(cnt) > 16) { 
+			xfer.writeParamWord(0x50, (short) -1);
+		} else {
+			allocFiles(xfer, cnt);
+		}
+	}
+
+	/**
+	 * Implement backend for CALL FILES or FILES subprograms.
+	 * Since we actually need no memory, allow count<0 to mean
+	 * -count files open but no VDP space consumed.
+	 * @param xfer
+	 * @param count
+	 */
+	private void allocFiles(MemoryTransfer xfer, int count) {
+		
+		boolean empty = count < 0;
+		if (empty)
+			count = -count;
+		
+		PabInfoBlock block = EmuDiskPabHandler.getPabInfoBlock(getCruBase());
+		if (block.openFiles.size() > count) {
+			xfer.writeParamWord(0x50, (short) -1);
+			return;
+		}
+
+		int addr;
+		if (!empty) {
+			/*
+			 * filename compare == 11 (vdpnamebuffer)
+			 * 
+			 * VIB from sector 0 = 256
+			 * not used = 6 bytes
+			 * disk drive info = 4 bytes
+			 * VDP stack = 252 bytes
+			 */
+			short vdptop = (short) (vdpNameCompareBuffer - 256 - 6 - 4 - 252);
+
+			/*
+			 * Buffer area header = 5 bytes
+			 * {
+			 * 		File control block = 6 bytes
+			 * 		FDR for file = 256
+			 * 		Data buffer = 256
+			 * }
+			 */
+			addr = vdptop - count * (256 + 256 + 6) - 5;
+		}
+		else
+			addr = vdpNameCompareBuffer;
+		
+		if (addr > 0) {
+			xfer.writeParamWord(0x70, (short) addr);
+			xfer.writeParamWord(0x50, (short) 0);
+			
+			block.maxOpenFileCount = count;
+
+		} else {
+			xfer.writeParamWord(0x50, (short) -1);
 		}
 	}
 
