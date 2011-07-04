@@ -6,7 +6,6 @@
  */
 package v9t9.emulator;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -40,6 +39,7 @@ import v9t9.emulator.hardware.MFP201MachineModel;
 import v9t9.emulator.hardware.MachineModel;
 import v9t9.emulator.hardware.MachineModelFactory;
 import v9t9.emulator.hardware.StandardMachineModel;
+import v9t9.emulator.hardware.StandardMachineV9938Model;
 import v9t9.emulator.hardware.memory.mmio.GplMmio;
 import v9t9.emulator.runtime.compiler.Compiler;
 import v9t9.emulator.runtime.cpu.Cpu;
@@ -73,6 +73,7 @@ public class Emulator {
 
 	static {
 		MachineModelFactory.register(StandardMachineModel.ID, StandardMachineModel.class);
+		MachineModelFactory.register(StandardMachineV9938Model.ID, StandardMachineV9938Model.class);
 		MachineModelFactory.register(EnhancedCompatibleMachineModel.ID, EnhancedCompatibleMachineModel.class);
 		MachineModelFactory.register(EnhancedMachineModel.ID, EnhancedMachineModel.class);
 		MachineModelFactory.register(MFP201MachineModel.ID, MFP201MachineModel.class);
@@ -182,13 +183,12 @@ public class Emulator {
     		modelId = F99MachineModel.ID;
         } else if (findArgument(args, "--mfp201")) {
         	modelId = MFP201MachineModel.ID;
+        } else if (findArgument(args, "--enhanced")) {
+        	modelId = EnhancedMachineModel.ID;
+        } else if (findArgument(args, "--v9938")) {
+        	modelId = StandardMachineV9938Model.ID;
         } else {
-	        if (findArgument(args, "--enhanced")) {
-	        	modelId = EnhancedMachineModel.ID;
-	        }
-	        else {
-	        	modelId = StandardMachineModel.ID;
-	        }
+        	modelId = StandardMachineModel.ID;
         }
         
         MachineModel model = MachineModelFactory.createModel(modelId);
