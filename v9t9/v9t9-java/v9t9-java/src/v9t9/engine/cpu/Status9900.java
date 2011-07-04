@@ -123,7 +123,7 @@ public class Status9900 implements Status {
             }
         }
         lastparity = (byte) ((stat & Status9900.ST_P) != 0 ? 1 : 0);
-        bits = (short) (bits & ~ST_INTLEVEL | stat & ST_INTLEVEL);
+        bits = (short) ((bits & ~(ST_INTLEVEL + ST_C + ST_O + ST_X)) | (stat & ST_INTLEVEL + ST_C + ST_O + ST_X));
     }
 
     /*
