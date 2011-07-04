@@ -310,7 +310,7 @@ public class VdpV9938 extends VdpTMS9918A {
 			}
 			break;
 		case 8:
-			// input bus, display mode, line count
+			// memory, input bus, display mode, line count
 			if (CHANGED(old, val, R8_VR)) {
 				switchBank();
 				redraw |= REDRAW_MODE;
@@ -537,6 +537,18 @@ public class VdpV9938 extends VdpTMS9918A {
 		return super.calculateModeNumber();
 	}
 	
+	public String getModeName() {
+		switch (modeNumber) {
+		case MODE_GRAPHICS3: return "Graphics 3";
+		case MODE_GRAPHICS4: return "Graphics 4";
+		case MODE_GRAPHICS5: return "Graphics 5";
+		case MODE_GRAPHICS6: return "Graphics 6";
+		case MODE_GRAPHICS7: return "Graphics 7";
+		case MODE_TEXT2: return "Text 2";
+		}
+		return super.getModeName();
+	}
+	
 	@Override
 	protected void establishVideoMode() {
 		modeNumber = calculateModeNumber();
@@ -617,7 +629,7 @@ public class VdpV9938 extends VdpTMS9918A {
 		VdpModeInfo vdpModeInfo = new VdpModeInfo(); 
 		int ramsize = getModeAddressMask();
 		
-		vdpModeInfo.screen.base = ((vdpregs[2] & 0x7c) * 0x400) & ramsize;
+		vdpModeInfo.screen.base = ((vdpregs[2] & 0x7f) * 0x400) & ramsize;
 		vdpModeInfo.screen.size = 80 * 27;	// last 2.5 rows only visible in 212-line mode
 		vdpModeInfo.patt.base = getPatternTableBase();
 		vdpModeInfo.patt.size = 2048;
@@ -752,10 +764,7 @@ public class VdpV9938 extends VdpTMS9918A {
 	 * old masking applies. */
 	@Override
 	protected int getModeAddressMask() {
-		//if (isEnhancedMode())
-		return 0x1ffff;
-		//else
-		//return 0x3fff;
+		return (vdpregs[8] & R8_VR) != 0 ? 0x1ffff : 0x3fff;
 	}
 	@Override
 	protected int getSpriteTableBase() {
@@ -1312,35 +1321,36 @@ public class VdpV9938 extends VdpTMS9918A {
 	@Override
 	public String getRegisterTooltip(int reg) {
 		if (reg == REG_ST)
-			return super.getStatusString(vdpStatus);
+			return getStatusString(vdpStatus);
 		byte val = 0;
 		if (reg < REG_SR0) {
-			reg--;
-			val = vdpregs[reg];
+			val = vdpregs[reg - 1];
 		} else {
 			val = statusvec[reg - REG_SR0];
 		}
-		switch (reg) {
+		switch (reg < REG_SR0 ? reg - 1 : reg) {
 		case 0:
 			return caten(yOrN("DG", val & 0x40), yOrN("IE2", val & 0x40),
-					yOrN("IE1", val & 0x20), yOrN("M5", val & 0x08),
-					yOrN("M4", val & 0x04), yOrN("M3", val & 0x02));
+					yOrN("IE1", val & 0x20), yOrN("M5", val & R0_M5),
+					yOrN("M4", val & R0_M4), yOrN("M3", val & R0_M3))
+					+ " (" + getModeName() + ")";
 		case 1:
-			return caten(yOrN("Blank", val & 0x40),
-					yOrN("IE0", val & 0x20), yOrN("M1", val & 0x10),
-					yOrN("M2", val & 0x08),
-					yOrN("Size 4", val & 0x02), yOrN("Mag", val & 0x01));
+			return caten((val & R1_NOBLANK) != 0 ? "Show" : "Blank",
+					yOrN("IE0", val & R1_INT), yOrN("M1", val & R1_M1),
+					yOrN("M2", val & R1_M2),
+					yOrN("Size 4", val & R1_SPR4), yOrN("Mag", val & R1_SPRMAG))
+					+ " (" + getModeName() + ")";
 		case 8:
 			return caten(yOrN("Mouse", val & 0x80), yOrN("Light Pen", val & 0x40),
-					yOrN("NoTransp", val & 0x20), yOrN("ColorBus", val & 0x10), 
-					(val & 0x08) != 0 ? "64K" : "16K",
-					yOrN("Sprites", val & 0x02), yOrN("B&W", val & 0x01));
+					yOrN("NoTransp", val & R8_TP), yOrN("ColorBus", val & 0x10), 
+					(val & R8_VR) != 0 ? "64K" : "16K",
+					yOrN("Sprites", val & R8_SPD), yOrN("B&W", val & R8_BW));
 		case 9:
-			return caten((val & 0x80) != 0 ? "212ln" : "192ln",
+			return caten((val & R9_LN) != 0 ? "212ln" : "192ln",
 					yOrN("Simul1", val & 0x20),
 					yOrN("Simul0", val & 0x10),
-					yOrN("Interlace", val & 0x08),
-					yOrN("EvenOdd", val & 0x04),
+					yOrN("Interlace", val & R9_IL),
+					yOrN("EvenOdd", val & R9_EO),
 					(val & 0x02) != 0 ? "PAL" : "NTSC",
 					yOrN("DC", val & 0x01));
 		case 10:
@@ -1402,13 +1412,13 @@ public class VdpV9938 extends VdpTMS9918A {
 			return "Color High: " + ((val & 0xf0) >> 4) + " | Low: " + (val & 0xf);
 		case 45:
 			return "Arguments: " +
-			caten(yOrN("MXC", val & 0x40),
-					yOrN("MXD", val & 0x20),
-					yOrN("MXS", val & 0x10),
-					yOrN("DIY", val & 0x08),
-					yOrN("DIX", val & 0x04),
-					yOrN("EQ", val & 0x02),
-					yOrN("MAJ", val & 0x01));
+			caten(yOrN("MXC", val & R45_MXC),
+					yOrN("MXD", val & R45_MXD),
+					yOrN("MXS", val & R45_MXS),
+					yOrN("DIY", val & R45_DIY),
+					yOrN("DIX", val & R45_DIX),
+					yOrN("EQ", val & R45_EQ),
+					yOrN("MAJ", val & R45_MAJ));
 		case 46:
 			return "Command: " + ((val & 0xf0) >> 4) + " | Lo: " + (val & 0xf);
 			
