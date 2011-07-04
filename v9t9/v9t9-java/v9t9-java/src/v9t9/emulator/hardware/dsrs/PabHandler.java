@@ -33,7 +33,7 @@ public abstract class PabHandler {
 		len -= devlen + 1;	/* minus length of device + period */
 		fname = readFilename(fnaddr, len);
 		
-		devname = readFilename((short) (fnaddr - devlen - 1), devlen);
+		devname = readFilename((short) (fnaddr - devlen - 1), devlen).toUpperCase();
 	
 		pab = new PabStruct();
 		
