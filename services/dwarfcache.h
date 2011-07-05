@@ -209,7 +209,7 @@ extern void load_line_numbers(CompUnit * unit);
 /* Find ObjectInfo by ID */
 extern ObjectInfo * find_object(DWARFCache * cache, U8_T ID);
 
-/* Search and return first compilation unit address range in given link-time address range 'addr_min'..'addr_max'. */
+/* Search and return first compilation unit address range in given link-time address range 'addr_min'..'addr_max' (inclusive). */
 extern UnitAddressRange * find_comp_unit_addr_range(DWARFCache * cache, ContextAddress addr_min, ContextAddress addr_max);
 
 /*

@@ -557,7 +557,7 @@ U8_T get_numeric_property_value(PropertyValue * Value) {
     U8_T Res = 0;
 
     if (Value->mRegister != NULL) {
-        str_exception(ERR_INV_CONTEXT, "register variable");
+        str_exception(ERR_INV_CONTEXT, "Register variable");
     }
     else if (Value->mAddr != NULL) {
         size_t i;
@@ -1064,7 +1064,7 @@ UnitAddressRange * find_comp_unit_addr_range(DWARFCache * cache, ContextAddress 
     while (l < h) {
         unsigned k = (h + l) / 2;
         UnitAddressRange * rk = cache->mAddrRanges + k;
-        if (rk->mAddr < addr_max && rk->mAddr + rk->mSize > addr_min) {
+        if (rk->mAddr <= addr_max && rk->mAddr + rk->mSize > addr_min) {
             int first = 1;
             if (k > 0) {
                 UnitAddressRange * rp = rk - 1;
