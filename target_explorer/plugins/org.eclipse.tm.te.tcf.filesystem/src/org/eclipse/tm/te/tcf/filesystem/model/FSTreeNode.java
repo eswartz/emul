@@ -10,6 +10,8 @@
  *********************************************************************************************/
 package org.eclipse.tm.te.tcf.filesystem.model;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -19,6 +21,7 @@ import org.eclipse.core.runtime.PlatformObject;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IFileSystem;
 import org.eclipse.tm.te.tcf.filesystem.interfaces.IWindowsFileAttributes;
+import org.eclipse.tm.te.tcf.filesystem.internal.url.TcfURLConnection;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel;
 
 /**
@@ -182,11 +185,42 @@ public final class FSTreeNode extends PlatformObject {
 	 */
 	public String getLocation() {
 		String pathSep = isWindowsNode() ? "\\" : "/"; //$NON-NLS-1$//$NON-NLS-2$
+		return getLocation(pathSep);
+	}
+
+	/**
+	 * Get the location of a file/folder using the specified file path
+	 * separator.
+	 * @param pathSep The file path separator.
+	 * @return The path to the file/folder.
+	 */
+	private String getLocation(String pathSep){
 		if (parent == null || parent.type.endsWith("FSRootNode") || parent.type.endsWith("FSRootDirNode")) //$NON-NLS-1$ //$NON-NLS-2$
 			return parent.name;
 		String pLoc = parent.getLocation();
 		if (pLoc.endsWith(pathSep))
 			return pLoc + parent.name;
 		return pLoc + pathSep + parent.name;
+	}
+
+	/**
+	 * Get the URL of the file or folder. The URL's format
+	 * is created in the following way:
+	 * tcf:///<TCF_AGENT_ID>/remote/path/to/the/resource...
+	 * See {@link TcfURLConnection#TcfURLConnection(URL)}
+	 *
+	 * @return The URL of the file/folder.
+	 * @throws MalformedURLException
+	 */
+	public URL getLocationURL() throws MalformedURLException {
+		String id = peerNode.getPeer().getID();
+		String path = getLocation("/"); //$NON-NLS-1$
+		String url = TcfURLConnection.PROTOCOL_SCHEMA+":///" + id + (isWindowsNode() ? "/" + path : path); //$NON-NLS-1$ //$NON-NLS-2$
+		if (url.endsWith("/")) { //$NON-NLS-1$
+			url += name;
+		} else {
+			url += "/" + name; //$NON-NLS-1$
+		}
+		return new URL(url);
 	}
 }

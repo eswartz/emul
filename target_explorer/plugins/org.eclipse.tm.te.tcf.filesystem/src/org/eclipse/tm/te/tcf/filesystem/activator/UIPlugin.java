@@ -6,17 +6,26 @@
  *
  * Contributors:
  * Uwe Stieber (Wind River) - initial API and implementation
+ * William Chen (Wind River)- [345387]Open the remote files with a proper editor
  *******************************************************************************/
 package org.eclipse.tm.te.tcf.filesystem.activator;
 
+import java.io.IOException;
 import java.net.URL;
+import java.net.URLConnection;
+import java.util.Hashtable;
 
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.resource.ImageRegistry;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.tm.te.tcf.filesystem.internal.ImageConsts;
+import org.eclipse.tm.te.tcf.filesystem.internal.url.TcfURLConnection;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceRegistration;
+import org.osgi.service.url.AbstractURLStreamHandlerService;
+import org.osgi.service.url.URLConstants;
+import org.osgi.service.url.URLStreamHandlerService;
 
 
 /**
@@ -25,6 +34,8 @@ import org.osgi.framework.BundleContext;
 public class UIPlugin extends AbstractUIPlugin {
 	// The shared instance
 	private static UIPlugin plugin;
+	// The service registration for the "tcf" URL stream handler.
+	private ServiceRegistration regURLStreamHandlerService;
 
 	/**
 	 * The constructor
@@ -58,6 +69,18 @@ public class UIPlugin extends AbstractUIPlugin {
 	public void start(BundleContext context) throws Exception {
 		super.start(context);
 		plugin = this;
+
+		// Register the "tcf" URL stream handler service.
+		Hashtable<String, String[]> properties = new Hashtable<String, String[]>();
+		properties.put(URLConstants.URL_HANDLER_PROTOCOL, new String[] { TcfURLConnection.PROTOCOL_SCHEMA });
+		regURLStreamHandlerService = context.registerService(
+				URLStreamHandlerService.class.getName(),
+				new AbstractURLStreamHandlerService() {
+					@Override
+					public URLConnection openConnection(URL u) throws IOException {
+						return new TcfURLConnection(u);
+					}
+				}, properties);
 	}
 
 	/* (non-Javadoc)
@@ -65,6 +88,10 @@ public class UIPlugin extends AbstractUIPlugin {
 	 */
 	@Override
 	public void stop(BundleContext context) throws Exception {
+		if (regURLStreamHandlerService != null) {
+			regURLStreamHandlerService.unregister();
+			regURLStreamHandlerService = null;
+		}
 		plugin = null;
 		super.stop(context);
 	}

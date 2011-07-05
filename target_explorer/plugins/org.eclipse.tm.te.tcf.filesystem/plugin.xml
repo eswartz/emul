@@ -89,6 +89,43 @@
          point="org.eclipse.ui.menus">
       <menuContribution
             locationURI="popup:org.eclipse.tm.te.ui.controls.menu.fs?after=additions">
+         <separator
+               name="group.open"
+               visible="true">
+         </separator>
+         <command
+               commandId="org.eclipse.tm.te.tcf.filesystem.commands.open"
+               helpContextId="org.eclipse.tm.te.tcf.filesystem.command_Open"
+               id="open"
+               label="Open"
+               style="push">
+            <visibleWhen
+                  checkEnabled="false">
+               <with
+                     variable="activeMenuSelection">
+                  <count
+                        value="1">
+                  </count>
+                  <iterate>
+                     <instanceof
+                           value="org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode">
+                     </instanceof>
+                     <test
+                           property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isFile">
+                     </test>
+                     <not>
+                        <test
+                              property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isBinaryFile">
+                        </test>
+                     </not>
+                  </iterate>
+               </with>
+            </visibleWhen>
+         </command>
+         <separator
+               name="group.properties"
+               visible="true">
+         </separator>
          <command
                commandId="org.eclipse.ui.file.properties"
                helpContextId="org.eclipse.tm.te.tcf.filesystem.command_Properties"
@@ -126,6 +163,38 @@
                </visibleWhen>
          </command>
       </menuContribution>
+      <menuContribution
+            locationURI="popup:org.eclipse.tm.te.ui.views.TargetExplorer#Popup?after=group.open">
+         <command
+               commandId="org.eclipse.tm.te.tcf.filesystem.commands.open"
+               helpContextId="org.eclipse.tm.te.tcf.filesystem.command_Open"
+               id="open"
+               label="Open"
+               style="push">
+            <visibleWhen
+                  checkEnabled="false">
+               <with
+                     variable="selection">
+                  <count
+                        value="1">
+                  </count>
+                  <iterate>
+                     <instanceof
+                           value="org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode">
+                     </instanceof>
+                     <test
+                           property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isFile">
+                     </test>
+                     <not>
+                        <test
+                              property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isBinaryFile">
+                        </test>
+                     </not>
+                  </iterate>
+               </with>
+            </visibleWhen>
+         </command>
+      </menuContribution>
    </extension>
    <extension
          point="org.eclipse.ui.propertyPages">
@@ -139,5 +208,37 @@
             </instanceof>
          </enabledWhen>
       </page>
+   </extension>
+   <extension
+         point="org.eclipse.core.expressions.propertyTesters">
+      <propertyTester
+            class="org.eclipse.tm.te.tcf.filesystem.internal.handlers.FSTreeNodePropertyTester"
+            id="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode"
+            namespace="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode"
+            properties="isFile,isDirectory,isBinaryFile"
+            type="org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode">
+      </propertyTester>
+   </extension>
+   <extension
+         point="org.eclipse.ui.commands">
+      <command
+            id="org.eclipse.tm.te.tcf.filesystem.commands.open"
+            name="Open">
+      </command>
+   </extension>
+   <extension
+         point="org.eclipse.ui.handlers">
+      <handler
+            class="org.eclipse.tm.te.tcf.filesystem.internal.handlers.OpenFileHandler"
+            commandId="org.eclipse.tm.te.tcf.filesystem.commands.open">
+         <enabledWhen>
+            <with
+                  variable="activeMenuSelection">
+               <count
+                     value="1">
+               </count>
+            </with>
+         </enabledWhen>
+      </handler>
    </extension>
 </plugin>

@@ -97,6 +97,12 @@ public class Messages extends NLS {
 	public static String AdvancedAttributesDialog_Temporary;
 	public static String AdvancedAttributesDialog_Virtual;
 
+	public static String CacheManager_Bytes;
+	public static String CacheManager_DowloadingFile;
+	public static String CacheManager_DownloadingError;
+	public static String CacheManager_DownloadingProgress;
+	public static String CacheManager_KBs;
+	public static String CacheManager_MBs;
 	public static String InformationPage_Accessed;
 	public static String InformationPage_Advanced;
 	public static String InformationPage_Attributes;
@@ -119,12 +125,20 @@ public class Messages extends NLS {
 
 	public static String FSOpenFileDialog_title;
 
-	public static String OpenWithMenu_DefaultEditor;
-
+	public static String OpenFileHandler_OpeningBinaryNotSupported;
+	public static String OpenFileHandler_Warning;
 	public static String PermissionsGroup_Executable;
 	public static String PermissionsGroup_GroupPermissions;
 	public static String PermissionsGroup_OtherPermissions;
 	public static String PermissionsGroup_Readable;
 	public static String PermissionsGroup_UserPermissions;
 	public static String PermissionsGroup_Writable;
+	public static String TcfInputStream_CloseTimeout;
+	public static String TcfInputStream_NoDataAvailable;
+	public static String TcfInputStream_NoFileReturned;
+	public static String TcfInputStream_NoFSServiceAvailable;
+	public static String TcfInputStream_OpenFileTimeout;
+	public static String TcfInputStream_OpenTCFTimeout;
+	public static String TcfInputStream_ReadTimeout;
+	public static String TcfInputStream_StreamClosed;
 }
