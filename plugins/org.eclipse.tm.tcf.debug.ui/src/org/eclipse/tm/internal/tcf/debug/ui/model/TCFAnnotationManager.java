@@ -354,7 +354,7 @@ public class TCFAnnotationManager {
                     TCFNodeStackFrame frame = null;
                     String bp_group = null;
                     if (node instanceof TCFNodeStackFrame) {
-                        thread = (TCFNodeExecContext)node.getParent();
+                        thread = (TCFNodeExecContext)node.parent;
                         frame = (TCFNodeStackFrame)node;
                     }
                     else if (node instanceof TCFNodeExecContext) {
@@ -371,10 +371,11 @@ public class TCFAnnotationManager {
                         TCFDataCache<TCFNodeExecContext> mem_cache = thread.getMemoryNode();
                         if (!mem_cache.validate(this)) return;
                         memory = mem_cache.getData();
+                        if (bp_group == null && memory != null && rc_ctx_data != null && rc_ctx_data.hasState()) bp_group = memory.id;
                     }
                     List<TCFAnnotation> set = new ArrayList<TCFAnnotation>();
                     if (memory != null) {
-                        TCFLaunch launch = node.getModel().getLaunch();
+                        TCFLaunch launch = node.launch;
                         TCFBreakpointsStatus bs = launch.getBreakpointsStatus();
                         if (bs != null) {
                             for (String id : bs.getStatusIDs()) {
@@ -388,7 +389,7 @@ public class TCFAnnotationManager {
                                     Map<String,Object> m = toObjectMap(o);
                                     String ctx_id = (String)m.get(IBreakpoints.INSTANCE_CONTEXT);
                                     if (ctx_id == null) continue;
-                                    if (!ctx_id.equals(node.getID()) && !ctx_id.equals(bp_group)) continue;
+                                    if (!ctx_id.equals(node.id) && !ctx_id.equals(bp_group)) continue;
                                     error = (String)m.get(IBreakpoints.INSTANCE_ERROR);
                                     BigInteger addr = toBigInteger((Number)m.get(IBreakpoints.INSTANCE_ADDRESS));
                                     if (addr != null) {
@@ -474,7 +475,7 @@ public class TCFAnnotationManager {
             ITextEditor editor = (ITextEditor)part;
             editors.put(editor.getEditorInput(), editor);
         }
-        ISourceLocator locator = node.getModel().getLaunch().getSourceLocator();
+        ISourceLocator locator = node.launch.getSourceLocator();
         ISourcePresentation presentation = TCFModelPresentation.getDefault();
         for (TCFAnnotation a : set) {
             Object source_element = null;
@@ -541,7 +542,7 @@ public class TCFAnnotationManager {
                                     }
                                 }
                             }
-                            if (dirty_launches.contains(null) || node != null && dirty_launches.contains(node.getModel().getLaunch())) {
+                            if (dirty_launches.contains(null) || node != null && dirty_launches.contains(node.launch)) {
                                 updateAnnotations(window, node);
                             }
                         }
