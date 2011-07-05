@@ -12,6 +12,7 @@ package org.eclipse.tm.te.core.extensions;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
+import org.eclipse.core.runtime.IExecutableExtension;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.PlatformObject;
 import org.eclipse.core.runtime.Status;
@@ -22,7 +23,7 @@ import org.eclipse.tm.te.core.nls.Messages;
 /**
  * Target Explorer: Executable extension implementation.
  */
-public class ExecutableExtension extends PlatformObject {
+public class ExecutableExtension extends PlatformObject implements IExecutableExtension {
 	// The mandatory id of the extension
 	private String id = null;
 
