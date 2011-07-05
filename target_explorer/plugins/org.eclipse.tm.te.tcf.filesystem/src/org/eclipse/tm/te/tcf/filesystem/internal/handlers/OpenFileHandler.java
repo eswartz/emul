@@ -31,23 +31,18 @@ import org.eclipse.ui.ide.IDE;
  */
 public class OpenFileHandler extends AbstractHandler {
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.core.commands.AbstractHandler#execute(org.eclipse.core.commands
-	 * .ExecutionEvent)
+	/* (non-Javadoc)
+	 *
+	 * @see org.eclipse.core.commands.AbstractHandler#execute(org.eclipse.core.commands.ExecutionEvent)
 	 */
 	public Object execute(ExecutionEvent event) throws ExecutionException {
-		IStructuredSelection selection = (IStructuredSelection) HandlerUtil
-				.getActiveMenuSelectionChecked(event);
+		IStructuredSelection selection = (IStructuredSelection) HandlerUtil.getActiveMenuSelectionChecked(event);
 		final FSTreeNode node = (FSTreeNode) selection.getFirstElement();
 		IWorkbenchPage page = HandlerUtil.getActiveSite(event).getPage();
 		if (ContentTypeHelper.getInstance().isBinaryFile(node)) {
 			// If the file is a binary file.
 			Shell parent = HandlerUtil.getActiveShell(event);
-			MessageDialog.openWarning(parent,
-					Messages.OpenFileHandler_Warning, Messages.OpenFileHandler_OpeningBinaryNotSupported); 
+			MessageDialog.openWarning(parent, Messages.OpenFileHandler_Warning, Messages.OpenFileHandler_OpeningBinaryNotSupported);
 		} else {
 			// Open the file node.
 			openFile(node, page);
@@ -59,7 +54,7 @@ public class OpenFileHandler extends AbstractHandler {
 	 * Open the file node in an editor of the specified workbench page. If the
 	 * local cache file of the node is stale, then download it. Then open its
 	 * local cache file.
-	 * 
+	 *
 	 * @param node
 	 *            The file node to be opened.
 	 * @param page
@@ -69,11 +64,8 @@ public class OpenFileHandler extends AbstractHandler {
 		if (CacheManager.getInstance().isCacheStale(node)) {
 			// If the file node's local cache is already stale, download it.
 			Shell parent = page.getWorkbenchWindow().getShell();
-			boolean successful = CacheManager.getInstance().download(node,
-					parent);
-			if (successful) {
-				openEditor(page, node);
-			}
+			boolean successful = CacheManager.getInstance().download(node, parent);
+			if (successful) openEditor(page, node);
 		} else {
 			openEditor(page, node);
 		}
@@ -81,7 +73,7 @@ public class OpenFileHandler extends AbstractHandler {
 
 	/**
 	 * Open the editor to display the file node in the UI thread.
-	 * 
+	 *
 	 * @param page
 	 *            The workbench page in which the editor is opened.
 	 * @param node

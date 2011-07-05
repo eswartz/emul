@@ -2,16 +2,16 @@ How to setup a Target Explorer development environment
 ======================================================
 
 1. Download and extract the Eclipse SDK environment
-	- Download the Eclipse Classic 3.6.2 SDK package from http://www.eclipse.org/downloads
+	- Download the Eclipse Classic 3.7.0 SDK package from http://www.eclipse.org/downloads
 	- Extract the downloaded archive
 	
 Note: Once available, you can use newer versions of the Eclipse SDK package as development
-tools base. The Target Explorer build target platform has to be Eclipse 3.6.2.  
+tools base. The Target Explorer build target platform has to be Eclipse 3.7.0.  
 
 2. Add the Subversion team provider and the C/C++ tooling
 	- Launch Eclipse
 	- Open the "Install" dialog via "Help > Install New Software ..."
-	- Select the Eclipse 3.6.2 release site (http://download.eclipse.org/releases/helios).
+	- Select the Eclipse 3.7.0 release site (http://download.eclipse.org/releases/indigo).
 	  If not in the list, add it.
 	- Choose the Subversive team provider (Collaboration > Subversive SVN Team Provider)
 	- Choose the C/C++ tooling (Programming Languages > C/C++ Development Tools)

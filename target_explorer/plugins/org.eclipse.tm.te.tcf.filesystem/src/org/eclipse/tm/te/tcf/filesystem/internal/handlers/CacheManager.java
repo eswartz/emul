@@ -19,14 +19,14 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.text.DecimalFormat;
 
-import org.eclipse.core.resources.IWorkspaceRoot;
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.tm.te.tcf.filesystem.activator.UIPlugin;
 import org.eclipse.tm.te.tcf.filesystem.internal.nls.Messages;
 import org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode;
 
@@ -36,9 +36,7 @@ import org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode;
  */
 public class CacheManager {
 	private static final String WS_AGENT_DIR_PREFIX = "agent_"; //$NON-NLS-1$
-	private static final String WS_METADATA_DIR = ".metadata"; //$NON-NLS-1$
-	private static final String WS_PLUGINS_DIR = ".plugins"; //$NON-NLS-1$
-	private static final String WS_PLUGIN_FS_DIR = "org.eclipse.tm.te.tcf.filesystem"; //$NON-NLS-1$
+
 	// The singleton instance.
 	private static CacheManager instance;
 	// The formatter used to format the size displayed while downloading.
@@ -59,33 +57,41 @@ public class CacheManager {
 	}
 
 	/**
-	 * Get the local path of a node's cached file. Current implementation is a
-	 * file under a sub directory of the ".metadata" folder. The path is:
-	 * <workspace>/.metadata/.plugins/org.eclipse.tm.te.tcf.filesytem/
-	 * agent_<hashcode_of_peerId>/remote/path/to/the/file...
+	 * Get the local path of a node's cached file.
+	 * <p>
+	 * The preferred location is within the plugin's state location, in
+	 * example <code>&lt;state location&gt;agent_<hashcode_of_peerId>/remote/path/to/the/file...</code>.
+	 * <p>
+	 * If the plugin is loaded in a RCP workspace-less environment, the
+	 * fallback strategy is to use the users home directory.
 	 *
 	 * @param node
 	 *            The file/folder node.
 	 * @return The local path of the node's cached file.
 	 */
 	public IPath getCachePath(FSTreeNode node) {
-		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
-		IPath wsPath = root.getLocation();
-		IPath metadata = wsPath.append(WS_METADATA_DIR);
-		IPath plugins = metadata.append(WS_PLUGINS_DIR);
-		IPath fsDir = plugins.append(WS_PLUGIN_FS_DIR);
-		File fsDirFile = fsDir.toFile();
-		if (!fsDirFile.exists()) {
-			fsDirFile.mkdir();
-		}
+        File location;
+        try {
+        	location = UIPlugin.getDefault().getStateLocation().toFile();
+        }
+        catch (IllegalStateException e) {
+            // An RCP workspace-less environment (-data @none)
+        	location = new File(System.getProperty("user.home"), ".tcf"); //$NON-NLS-1$ //$NON-NLS-2$
+        	location = new File(location, "fs"); //$NON-NLS-1$
+        }
+
+        // Create the location if it not exist
+		if (!location.exists()) location.mkdir();
+
 		String agentId = node.peerNode.getPeer().getID();
 		// Use Math.abs to avoid negative hash value.
 		String agent = WS_AGENT_DIR_PREFIX + Math.abs(agentId.hashCode());
-		IPath agentDir = fsDir.append(agent);
+		IPath agentDir = new Path(location.getAbsolutePath()).append(agent);
 		File agentDirFile = agentDir.toFile();
 		if (!agentDirFile.exists()) {
 			agentDirFile.mkdir();
 		}
+
 		return appendNodePath(agentDir, node);
 	}
 
