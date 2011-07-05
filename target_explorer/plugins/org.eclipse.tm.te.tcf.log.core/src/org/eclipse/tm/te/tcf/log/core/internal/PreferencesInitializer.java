@@ -34,7 +34,7 @@ public class PreferencesInitializer extends AbstractPreferenceInitializer {
 	@Override
 	public void initializeDefaultPreferences() {
 		// Get the bundles preferences manager
-		IEclipsePreferences prefs = new DefaultScope().getNode(CoreBundleActivator.getUniqueIdentifier());
+		IEclipsePreferences prefs = DefaultScope.INSTANCE.getNode(CoreBundleActivator.getUniqueIdentifier());
 		if (prefs != null) {
 			// [Hidden] Enable back-end communication logging: default on
 			prefs.putBoolean(IPreferenceKeys.PREF_LOGGING_ENABLED, true);

@@ -35,7 +35,7 @@ public class UIPlugin extends AbstractUIPlugin {
 	// The shared instance
 	private static UIPlugin plugin;
 	// The service registration for the "tcf" URL stream handler.
-	private ServiceRegistration regURLStreamHandlerService;
+	private ServiceRegistration<?> regURLStreamHandlerService;
 
 	/**
 	 * The constructor
