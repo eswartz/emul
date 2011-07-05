@@ -3,7 +3,7 @@
  * This program and the accompanying materials are made available under the terms
  * of the Eclipse Public License v1.0 which accompanies this distribution, and is
  * available at http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  * Uwe Stieber (Wind River) - initial API and implementation
  *******************************************************************************/
@@ -152,7 +152,7 @@ public class ApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
 					Messages.PromptOnExitDialog_choice, false, null, null);
 			if (dlg.getReturnCode() != IDialogConstants.OK_ID) { return false; }
 			if (dlg.getToggleState()) {
-				new InstanceScope().getNode(UIPlugin.getUniqueIdentifier()).putBoolean(EXIT_PROMPT_ON_CLOSE_LAST_WINDOW, false);
+				InstanceScope.INSTANCE.getNode(UIPlugin.getUniqueIdentifier()).putBoolean(EXIT_PROMPT_ON_CLOSE_LAST_WINDOW, false);
 			}
 		}
 
