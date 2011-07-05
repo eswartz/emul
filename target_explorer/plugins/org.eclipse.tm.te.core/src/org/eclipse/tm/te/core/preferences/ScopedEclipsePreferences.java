@@ -67,7 +67,7 @@ public class ScopedEclipsePreferences {
 	 * @param qualifier The qualifier for the preferences (in example the unique identifier of a plugin). Must not be <code>null</code>.
 	 */
 	public ScopedEclipsePreferences(String qualifier) {
-		this(new InstanceScope(), qualifier);
+		this(InstanceScope.INSTANCE, qualifier);
 	}
 
 	/**
@@ -83,7 +83,7 @@ public class ScopedEclipsePreferences {
 		Assert.isNotNull(context);
 		Assert.isNotNull(qualifier);
 		this.qualifier = qualifier;
-		defaultPrefs = new DefaultScope().getNode(getQualifier());
+		defaultPrefs = DefaultScope.INSTANCE.getNode(getQualifier());
 		contextScopePrefs = context.getNode(getQualifier());
 	}
 
