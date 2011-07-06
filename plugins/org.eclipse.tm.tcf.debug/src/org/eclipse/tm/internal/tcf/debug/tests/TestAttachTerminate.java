@@ -110,7 +110,7 @@ class TestAttachTerminate implements ITCFTest, IRunControl.RunControlListener {
                     if (error instanceof IErrorReport) {
                         int code = ((IErrorReport)error).getErrorCode();
                         if (code == IErrorReport.TCF_ERROR_ALREADY_RUNNING) return;
-                        if (code == IErrorReport.TCF_ERROR_INV_CONTEXT) return;
+                        if (code == IErrorReport.TCF_ERROR_INV_CONTEXT && ctx_map.get(id) == null) return;
                     }
                     if (error != null) exit(error);
                 }
@@ -121,22 +121,41 @@ class TestAttachTerminate implements ITCFTest, IRunControl.RunControlListener {
     private void startTestContext(String test_name) {
         for (int i = 0; i < 4; i++) {
             diag.runTest(test_name, new IDiagnostics.DoneRunTest() {
-                public void doneRunTest(IToken token, Throwable error, String context_id) {
+                public void doneRunTest(IToken token, Throwable error, final String id) {
                     cnt--;
                     if (error != null) {
                         exit(error);
                     }
                     else {
-                        assert context_id != null;
-                        if (ctx_map.get(context_id) == null) {
-                            exit(new Error("Missing 'contextAdded' event for context " + context_id));
+                        assert id != null;
+                        if (ctx_map.get(id) == null) {
+                            exit(new Error("Missing 'contextAdded' event for context " + id));
                         }
-                        test_ctx_ids.add(context_id);
-                        diag.cancelTest(context_id, new IDiagnostics.DoneCancelTest() {
-                            public void doneCancelTest(IToken token, Throwable error) {
-                                if (error != null) exit(error);
-                            }
-                        });
+                        else {
+                            test_ctx_ids.add(id);
+                            Runnable r = new Runnable() {
+                                public void run() {
+                                    if (!test_suite.isActive(TestAttachTerminate.this)) return;
+                                    IRunControl.RunControlContext ctx = ctx_map.get(id);
+                                    if (ctx == null) return;
+                                    if (!test_suite.canResume(ctx)) {
+                                        Protocol.invokeLater(100, this);
+                                    }
+                                    else {
+                                        diag.cancelTest(id, new IDiagnostics.DoneCancelTest() {
+                                            public void doneCancelTest(IToken token, Throwable error) {
+                                                if (error instanceof IErrorReport) {
+                                                    int code = ((IErrorReport)error).getErrorCode();
+                                                    if (code == IErrorReport.TCF_ERROR_INV_CONTEXT && ctx_map.get(id) == null) return;
+                                                }
+                                                if (error != null) exit(error);
+                                            }
+                                        });
+                                    }
+                                }
+                            };
+                            Protocol.invokeLater(r);
+                        }
                     }
                 }
             });

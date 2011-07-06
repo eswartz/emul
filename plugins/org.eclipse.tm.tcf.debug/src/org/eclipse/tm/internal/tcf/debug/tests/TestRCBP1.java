@@ -281,25 +281,12 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
         if (test_id != null) {
             if (test_ctx_id == null) {
                 startTestContext();
-                Protocol.invokeLater(100, new Runnable() {
-                    int cnt = 0;
+                Protocol.invokeLater(200, new Runnable() {
                     public void run() {
                         if (!test_suite.isActive(TestRCBP1.this)) return;
-                        cnt++;
-                        if (test_suite.cancel) {
-                            exit(null);
-                        }
-                        else if (cnt < 600) {
-                            Protocol.invokeLater(100, this);
-                            for (SuspendedContext sc : suspended.values()) {
-                                if (sc.ok_to_resume) resume(sc);
-                            }
-                        }
-                        else if (test_ctx_id == null) {
-                            exit(new Error("Timeout waiting for reply of Diagnostics.runTest command"));
-                        }
-                        else {
-                            exit(new Error("Missing 'contextRemoved' event for " + test_ctx_id));
+                        Protocol.invokeLater(200, this);
+                        for (SuspendedContext sc : suspended.values()) {
+                            if (sc.ok_to_resume) resume(sc);
                         }
                     }
                 });
