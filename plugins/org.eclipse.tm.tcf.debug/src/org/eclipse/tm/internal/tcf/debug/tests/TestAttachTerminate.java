@@ -13,6 +13,7 @@ package org.eclipse.tm.internal.tcf.debug.tests;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Random;
 
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IErrorReport;
@@ -27,12 +28,15 @@ class TestAttachTerminate implements ITCFTest, IRunControl.RunControlListener {
     private final TCFTestSuite test_suite;
     private final IDiagnostics diag;
     private final IRunControl rc;
+    private final Random rnd = new Random();
 
     private int cnt = 0;
 
     private final HashMap<String,IRunControl.RunControlContext> ctx_map =
         new HashMap<String,IRunControl.RunControlContext>();
-    private final HashSet<String> process_ids = new HashSet<String>();
+    private final HashSet<String> test_ctx_ids = new HashSet<String>();
+    private final HashSet<String> suspended_ctx_ids = new HashSet<String>();
+    private final HashMap<String,IToken> resume_cmds = new HashMap<String,IToken>();
 
     TestAttachTerminate(TCFTestSuite test_suite, IChannel channel) {
         this.test_suite = test_suite;
@@ -52,32 +56,29 @@ class TestAttachTerminate implements ITCFTest, IRunControl.RunControlListener {
                     if (error != null) {
                         exit(error);
                     }
-                    else {
-                        for (int i = 0; i < list.length; i++) {
-                            if (list[i].equals("RCBP1")) {
-                                startProcess();
-                                Protocol.invokeLater(1000, new Runnable() {
-                                    int cnt = 0;
-                                    public void run() {
-                                        if (!test_suite.isActive(TestAttachTerminate.this)) return;
-                                        cnt++;
-                                        if (cnt < 30) {
-                                            Protocol.invokeLater(1000, this);
-                                        }
-                                        else if (test_suite.cancel) {
-                                            exit(null);
-                                        }
-                                        else if (process_ids.isEmpty()) {
-                                            exit(new Error("Missing 'contextAdded' event"));
-                                        }
-                                        else {
-                                            exit(new Error("Missing 'contextRemoved' event for " + process_ids));
-                                        }
-                                    }
-                                });
-                                return;
+                    else if (list.length > 0) {
+                        startTestContext(list[rnd.nextInt(list.length)]);
+                        Protocol.invokeLater(100, new Runnable() {
+                            int cnt = 0;
+                            public void run() {
+                                if (!test_suite.isActive(TestAttachTerminate.this)) return;
+                                cnt++;
+                                if (test_suite.cancel) {
+                                    exit(null);
+                                }
+                                else if (cnt < 300) {
+                                    Protocol.invokeLater(100, this);
+                                    for (String id : suspended_ctx_ids) resume(id);
+                                }
+                                else if (test_ctx_ids.isEmpty()) {
+                                    exit(new Error("Missing 'contextAdded' event"));
+                                }
+                                else {
+                                    exit(new Error("Missing 'contextRemoved' event for " + test_ctx_ids));
+                                }
                             }
-                        }
+                        });
+                        return;
                     }
                     exit(null);
                 }
@@ -85,9 +86,41 @@ class TestAttachTerminate implements ITCFTest, IRunControl.RunControlListener {
         }
     }
 
-    private void startProcess() {
+    public boolean canResume(IRunControl.RunControlContext ctx) {
+        if (resume_cmds.get(ctx.getID()) != null) return false;
+        String grp = ctx.getRCGroup();
+        if (grp != null) {
+            for (String id : resume_cmds.keySet()) {
+                IRunControl.RunControlContext c = ctx_map.get(id);
+                if (c == null) return false;
+                if (grp.equals(c.getRCGroup())) return false;
+            }
+        }
+        return true;
+    }
+
+    private void resume(final String id) {
+        IRunControl.RunControlContext ctx = ctx_map.get(id);
+        if (ctx != null && test_suite.canResume(ctx)) {
+            assert resume_cmds.get(id) == null;
+            resume_cmds.put(id, ctx.resume(IRunControl.RM_RESUME, 1, new IRunControl.DoneCommand() {
+                public void doneCommand(IToken token, Exception error) {
+                    assert resume_cmds.get(id) == token;
+                    resume_cmds.remove(id);
+                    if (error instanceof IErrorReport) {
+                        int code = ((IErrorReport)error).getErrorCode();
+                        if (code == IErrorReport.TCF_ERROR_ALREADY_RUNNING) return;
+                        if (code == IErrorReport.TCF_ERROR_INV_CONTEXT) return;
+                    }
+                    if (error != null) exit(error);
+                }
+            }));
+        }
+    }
+
+    private void startTestContext(String test_name) {
         for (int i = 0; i < 4; i++) {
-            diag.runTest("RCBP1", new IDiagnostics.DoneRunTest() {
+            diag.runTest(test_name, new IDiagnostics.DoneRunTest() {
                 public void doneRunTest(IToken token, Throwable error, String context_id) {
                     cnt--;
                     if (error != null) {
@@ -98,7 +131,7 @@ class TestAttachTerminate implements ITCFTest, IRunControl.RunControlListener {
                         if (ctx_map.get(context_id) == null) {
                             exit(new Error("Missing 'contextAdded' event for context " + context_id));
                         }
-                        process_ids.add(context_id);
+                        test_ctx_ids.add(context_id);
                         diag.cancelTest(context_id, new IDiagnostics.DoneCancelTest() {
                             public void doneCancelTest(IToken token, Throwable error) {
                                 if (error != null) exit(error);
@@ -118,6 +151,7 @@ class TestAttachTerminate implements ITCFTest, IRunControl.RunControlListener {
     }
 
     public void containerResumed(String[] context_ids) {
+        for (String id : context_ids) contextResumed(id);
     }
 
     public void containerSuspended(String main_context, String pc,
@@ -149,28 +183,19 @@ class TestAttachTerminate implements ITCFTest, IRunControl.RunControlListener {
     public void contextRemoved(String[] context_ids) {
         for (String id : context_ids) {
             ctx_map.remove(id);
-            process_ids.remove(id);
+            test_ctx_ids.remove(id);
+            suspended_ctx_ids.remove(id);
         }
-        if (cnt == 0 && process_ids.isEmpty()) exit(null);
+        if (cnt == 0 && test_ctx_ids.isEmpty()) exit(null);
     }
 
     public void contextResumed(String context) {
+        suspended_ctx_ids.remove(context);
     }
 
     public void contextSuspended(String context, String pc, String reason, Map<String,Object> params) {
         assert context != null;
-        IRunControl.RunControlContext ctx = ctx_map.get(context);
-        if (ctx != null && process_ids.contains(ctx.getParentID())) {
-            ctx.resume(IRunControl.RM_RESUME, 1, new IRunControl.DoneCommand() {
-                public void doneCommand(IToken token, Exception error) {
-                    if (error instanceof IErrorReport) {
-                        int code = ((IErrorReport)error).getErrorCode();
-                        if (code == IErrorReport.TCF_ERROR_ALREADY_RUNNING) return;
-                        if (code == IErrorReport.TCF_ERROR_INV_CONTEXT) return;
-                    }
-                    if (error != null) exit(error);
-                }
-            });
-        }
+        suspended_ctx_ids.add(context);
+        resume(context);
     }
 }

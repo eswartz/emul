@@ -16,6 +16,7 @@ import java.util.HashSet;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IErrorReport;
 import org.eclipse.tm.tcf.protocol.IToken;
+import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.services.ISysMonitor;
 import org.eclipse.tm.tcf.services.ISysMonitor.SysMonitorContext;
 
@@ -111,5 +112,9 @@ class TestSysMonitor implements ITCFTest {
     private void exit(Throwable x) {
         if (!test_suite.isActive(this)) return;
         test_suite.done(this, x);
+    }
+
+    public boolean canResume(IRunControl.RunControlContext ctx) {
+        return true;
     }
 }

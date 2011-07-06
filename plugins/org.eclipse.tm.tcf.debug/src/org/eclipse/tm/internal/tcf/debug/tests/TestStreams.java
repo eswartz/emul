@@ -16,6 +16,7 @@ import java.util.Random;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.services.IDiagnostics;
+import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.services.IStreams;
 
 class TestStreams implements ITCFTest, IStreams.StreamsListener {
@@ -297,5 +298,9 @@ class TestStreams implements ITCFTest, IStreams.StreamsListener {
     public void disposed(String stream_type, String stream_id) {
         if (!IDiagnostics.NAME.equals(stream_type)) exit(new Exception("Invalid stream type in Streams.disposed event"));
         if (!stream_ids.remove(stream_id)) exit(new Exception("Invalid stream ID in Streams.disposed event"));
+    }
+
+    public boolean canResume(IRunControl.RunControlContext ctx) {
+        return true;
     }
 }

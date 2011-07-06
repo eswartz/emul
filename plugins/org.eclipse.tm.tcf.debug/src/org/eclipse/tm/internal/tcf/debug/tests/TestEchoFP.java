@@ -17,6 +17,7 @@ import java.util.Random;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.services.IDiagnostics;
+import org.eclipse.tm.tcf.services.IRunControl;
 
 class TestEchoFP implements ITCFTest, IDiagnostics.DoneEchoFP {
 
@@ -73,5 +74,9 @@ class TestEchoFP implements ITCFTest, IDiagnostics.DoneEchoFP {
         else if (msgs.isEmpty()){
             test_suite.done(this, null);
         }
+    }
+
+    public boolean canResume(IRunControl.RunControlContext ctx) {
+        return true;
     }
 }

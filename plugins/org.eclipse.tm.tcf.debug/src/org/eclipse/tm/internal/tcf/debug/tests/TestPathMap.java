@@ -18,6 +18,7 @@ import java.util.Random;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.services.IPathMap;
+import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.services.IPathMap.PathMapRule;
 
 class TestPathMap implements ITCFTest {
@@ -174,5 +175,9 @@ class TestPathMap implements ITCFTest {
     private void exit(Throwable x) {
         if (!test_suite.isActive(this)) return;
         test_suite.done(this, x);
+    }
+
+    public boolean canResume(IRunControl.RunControlContext ctx) {
+        return false;
     }
 }

@@ -22,6 +22,7 @@ import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IErrorReport;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.services.IDiagnostics;
+import org.eclipse.tm.tcf.services.IRunControl;
 
 class TestEchoERR implements ITCFTest, IDiagnostics.DoneEchoERR {
 
@@ -109,5 +110,9 @@ class TestEchoERR implements ITCFTest, IDiagnostics.DoneEchoERR {
         else if (list.size() == 0) {
             test_suite.done(this, null);
         }
+    }
+
+    public boolean canResume(IRunControl.RunControlContext ctx) {
+        return true;
     }
 }

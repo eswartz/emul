@@ -7,6 +7,7 @@ import java.util.Random;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.services.IProcesses;
+import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.services.ITerminals;
 import org.eclipse.tm.tcf.services.ITerminals.TerminalContext;
 
@@ -183,5 +184,9 @@ class TestTerminals implements ITCFTest {
         if (!test_suite.isActive(this)) return;
         if (terminals != null) terminals.removeListener(listener);
         test_suite.done(this, x);
+    }
+
+    public boolean canResume(IRunControl.RunControlContext ctx) {
+        return true;
     }
 }

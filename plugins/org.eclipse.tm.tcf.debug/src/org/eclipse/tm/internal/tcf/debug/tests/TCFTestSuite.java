@@ -24,6 +24,7 @@ import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IMemoryMap;
+import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.services.IPathMap.PathMapRule;
 
 /**
@@ -262,6 +263,13 @@ public class TCFTestSuite {
 
     Collection<ITCFTest> getActiveTests() {
         return active_tests.keySet();
+    }
+
+    boolean canResume(IRunControl.RunControlContext ctx) {
+        for (ITCFTest t : active_tests.keySet()) {
+            if (!t.canResume(ctx)) return false;
+        }
+        return true;
     }
 
     void done(ITCFTest test, Throwable error) {

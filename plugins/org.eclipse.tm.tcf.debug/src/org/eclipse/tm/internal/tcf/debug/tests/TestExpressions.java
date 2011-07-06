@@ -15,10 +15,10 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 import org.eclipse.tm.tcf.protocol.IChannel;
-import org.eclipse.tm.tcf.protocol.IErrorReport;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IBreakpoints;
@@ -38,13 +38,16 @@ class TestExpressions implements ITCFTest,
     private final IStackTrace stk;
     private final IRunControl rc;
     private final IBreakpoints bp;
+    private final Random rnd = new Random();
 
+    private String test_id;
     private String bp_id;
     private boolean bp_ok;
     private IDiagnostics.ISymbol sym_func3;
     private String test_ctx_id;
     private String process_id;
     private String thread_id;
+    private boolean run_to_bp_done;
     private boolean test_done;
     private IRunControl.RunControlContext test_ctx;
     private IRunControl.RunControlContext thread_ctx;
@@ -53,6 +56,8 @@ class TestExpressions implements ITCFTest,
     private String[] stack_trace;
     private IStackTrace.StackTraceContext[] stack_frames;
     private String[] local_vars;
+    private final HashSet<String> suspended_ctx_ids = new HashSet<String>();
+    private final HashMap<String,IToken> resume_cmds = new HashMap<String,IToken>();
     private final HashMap<String,IRunControl.RunControlContext> ctx_map = new HashMap<String,IRunControl.RunControlContext>();
     private final Map<String,IExpressions.Expression> expr_ctx = new HashMap<String,IExpressions.Expression>();
     private final Map<String,IExpressions.Value> expr_val = new HashMap<String,IExpressions.Value>();
@@ -129,32 +134,72 @@ class TestExpressions implements ITCFTest,
                         exit(error);
                     }
                     else {
-                        for (int i = 0; i < list.length; i++) {
-                            if (list[i].equals("RCBP1")) {
-                                runTest();
-                                Protocol.invokeLater(1000, new Runnable() {
-                                    int cnt = 0;
-                                    public void run() {
-                                        if (!test_suite.isActive(TestExpressions.this)) return;
-                                        cnt++;
-                                        if (cnt < 60) {
-                                            Protocol.invokeLater(1000, this);
-                                        }
-                                        else if (test_suite.cancel) {
-                                            exit(null);
-                                        }
-                                        else {
-                                            exit(new Error("Missing 'contextRemoved' event for " + test_ctx_id));
-                                        }
+                        if (list.length > 0) {
+                            test_id = list[rnd.nextInt(list.length)];
+                            runTest();
+                            Protocol.invokeLater(100, new Runnable() {
+                                int cnt = 0;
+                                public void run() {
+                                    if (!test_suite.isActive(TestExpressions.this)) return;
+                                    cnt++;
+                                    if (test_suite.cancel) {
+                                        exit(null);
                                     }
-                                });
-                                return;
-                            }
+                                    else if (cnt < 600) {
+                                        Protocol.invokeLater(100, this);
+                                        for (String id : suspended_ctx_ids) resume(id);
+                                    }
+                                    else if (test_ctx_id == null) {
+                                        exit(new Error("Timeout waiting for reply of Diagnostics.runTest command"));
+                                    }
+                                    else {
+                                        exit(new Error("Missing 'contextRemoved' event for " + test_ctx_id));
+                                    }
+                                }
+                            });
+                            return;
                         }
                         exit(null);
                     }
                 }
             });
+        }
+    }
+
+    public boolean canResume(IRunControl.RunControlContext ctx) {
+        if (test_ctx_id != null && thread_ctx == null) return false;
+        if (resume_cmds.get(ctx.getID()) != null) return false;
+        String grp = ctx.getRCGroup();
+        if (thread_ctx != null && !test_done) {
+            if (ctx.getID().equals(thread_id) || grp != null && grp.equals(thread_ctx.getRCGroup())) {
+                if (sym_func3 == null) return false;
+                if (suspended_pc == null) return false;
+                BigInteger pc0 = new BigInteger(sym_func3.getValue().toString());
+                BigInteger pc1 = new BigInteger(suspended_pc);
+                if (pc0.equals(pc1)) return false;
+            }
+        }
+        if (grp != null) {
+            for (String id : resume_cmds.keySet()) {
+                IRunControl.RunControlContext c = ctx_map.get(id);
+                if (c == null) return false;
+                if (grp.equals(c.getRCGroup())) return false;
+            }
+        }
+        return true;
+    }
+
+    private void resume(final String id) {
+        IRunControl.RunControlContext ctx = ctx_map.get(id);
+        if (ctx != null && test_suite.canResume(ctx)) {
+            assert resume_cmds.get(id) == null;
+            resume_cmds.put(id, ctx.resume(IRunControl.RM_RESUME, 1, new IRunControl.DoneCommand() {
+                public void doneCommand(IToken token, Exception error) {
+                    assert resume_cmds.get(id) == token;
+                    resume_cmds.remove(id);
+                    if (error != null && suspended_ctx_ids.contains(id)) exit(error);
+                }
+            }));
         }
     }
 
@@ -193,13 +238,16 @@ class TestExpressions implements ITCFTest,
             return;
         }
         if (test_ctx_id == null) {
-            diag.runTest("RCBP1", new IDiagnostics.DoneRunTest() {
+            diag.runTest(test_id, new IDiagnostics.DoneRunTest() {
                 public void doneRunTest(IToken token, Throwable error, String id) {
                     if (error != null) {
                         exit(error);
                     }
                     else if (id == null) {
                         exit(new Exception("Test context ID must not be null"));
+                    }
+                    else if (ctx_map.get(id) == null) {
+                        exit(new Exception("Missing context added event"));
                     }
                     else {
                         test_ctx_id = id;
@@ -221,9 +269,7 @@ class TestExpressions implements ITCFTest,
                     else {
                         test_ctx = ctx;
                         process_id = test_ctx.getProcessID();
-                        if (!process_id.equals(test_ctx_id)) {
-                            thread_id = test_ctx_id;
-                        }
+                        if (test_ctx.hasState()) thread_id = test_ctx_id;
                         runTest();
                     }
                 }
@@ -303,17 +349,15 @@ class TestExpressions implements ITCFTest,
             });
             return;
         }
-        BigInteger pc0 = new BigInteger(sym_func3.getValue().toString());
-        BigInteger pc1 = new BigInteger(suspended_pc);
-        if (!pc0.equals(pc1)) {
-            suspended_pc = null;
-            waiting_suspend = true;
-            thread_ctx.resume(IRunControl.RM_RESUME, 1, new IRunControl.DoneCommand() {
-                public void doneCommand(IToken token, Exception error) {
-                    if (error != null) exit(error);
-                }
-            });
-            return;
+        if (!run_to_bp_done) {
+            BigInteger pc0 = new BigInteger(sym_func3.getValue().toString());
+            BigInteger pc1 = new BigInteger(suspended_pc);
+            if (!pc0.equals(pc1)) {
+                waiting_suspend = true;
+                resume(thread_ctx.getID());
+                return;
+            }
+            run_to_bp_done = true;
         }
         if (stack_trace == null) {
             stk.getChildren(thread_id, new IStackTrace.DoneGetChildren() {
@@ -503,11 +547,24 @@ class TestExpressions implements ITCFTest,
             return;
         }
         test_done = true;
-        diag.cancelTest(test_ctx_id, new IDiagnostics.DoneCancelTest() {
-            public void doneCancelTest(IToken token, Throwable error) {
-                if (error != null) exit(error);
-            }
-        });
+        if (test_suite.canResume(thread_ctx)) {
+            final String id = thread_ctx.getID();
+            assert resume_cmds.get(id) == null;
+            resume_cmds.put(id, diag.cancelTest(test_ctx_id, new IDiagnostics.DoneCancelTest() {
+                public void doneCancelTest(IToken token, Throwable error) {
+                    assert resume_cmds.get(id) == token;
+                    resume_cmds.remove(id);
+                    if (error != null) exit(error);
+                }
+            }));
+        }
+        else {
+            Protocol.invokeLater(20, new Runnable() {
+                public void run() {
+                    runTest();
+                }
+            });
+        }
     }
 
     private void exit(Throwable x) {
@@ -521,12 +578,12 @@ class TestExpressions implements ITCFTest,
     //--------------------------- Run Control listener ---------------------------//
 
     public void containerResumed(String[] context_ids) {
+        for (String id : context_ids) contextResumed(id);
     }
 
     public void containerSuspended(String context, String pc, String reason,
             Map<String,Object> params, String[] suspended_ids) {
         for (String id : suspended_ids) {
-            assert id != null;
             contextSuspended(id, null, null, null);
         }
     }
@@ -558,6 +615,7 @@ class TestExpressions implements ITCFTest,
 
     public void contextRemoved(String[] context_ids) {
         for (String id : context_ids) {
+            suspended_ctx_ids.remove(id);
             ctx_map.remove(id);
             if (id.equals(test_ctx_id)) {
                 if (test_done) {
@@ -576,31 +634,43 @@ class TestExpressions implements ITCFTest,
     }
 
     public void contextResumed(String context) {
+        suspended_ctx_ids.remove(context);
+        if (context.equals(thread_id)) {
+            suspended_pc = null;
+        }
     }
 
     public void contextSuspended(String context, String pc, String reason, Map<String,Object> params) {
+        assert context != null;
+        suspended_ctx_ids.add(context);
         if (context.equals(thread_id)) {
-            suspended_pc = pc;
-            if (waiting_suspend) {
-                waiting_suspend = false;
-                runTest();
-            }
-        }
-        if (test_done) {
-            IRunControl.RunControlContext ctx = ctx_map.get(context);
-            if (ctx != null && process_id != null && process_id.equals(ctx.getParentID())) {
-                ctx.resume(IRunControl.RM_RESUME, 1, new IRunControl.DoneCommand() {
-                    public void doneCommand(IToken token, Exception error) {
-                        if (error instanceof IErrorReport) {
-                            int code = ((IErrorReport)error).getErrorCode();
-                            if (code == IErrorReport.TCF_ERROR_ALREADY_RUNNING) return;
-                            if (code == IErrorReport.TCF_ERROR_INV_CONTEXT) return;
+            if (pc == null && thread_ctx != null) {
+                thread_ctx.getState(new IRunControl.DoneGetState() {
+                    public void doneGetState(IToken token, Exception error,
+                            boolean suspended, String pc, String reason,
+                            Map<String,Object> params) {
+                        if (error != null) {
+                            exit(error);
                         }
-                        if (error != null) exit(error);
+                        else if (suspended) {
+                            suspended_pc = pc;
+                            if (waiting_suspend) {
+                                waiting_suspend = false;
+                                runTest();
+                            }
+                        }
                     }
                 });
             }
+            else {
+                suspended_pc = pc;
+                if (waiting_suspend) {
+                    waiting_suspend = false;
+                    runTest();
+                }
+            }
         }
+        resume(context);
     }
 
     //--------------------------- Expressions listener ---------------------------//

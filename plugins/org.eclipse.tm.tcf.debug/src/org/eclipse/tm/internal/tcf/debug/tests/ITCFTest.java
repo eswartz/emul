@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.tests;
 
+import org.eclipse.tm.tcf.services.IRunControl;
+
 /**
  * Each (sub)test in TCF Test Suite should implement this interface.
  */
@@ -19,4 +21,11 @@ interface ITCFTest {
      * Start execution of the test.
      */
     void start();
+
+    /**
+     * Check if the test don't need the context to stay suspended.
+     * @param ctx - run control context.
+     * @return true if it is OK to resume the context.
+     */
+    boolean canResume(IRunControl.RunControlContext ctx);
 }

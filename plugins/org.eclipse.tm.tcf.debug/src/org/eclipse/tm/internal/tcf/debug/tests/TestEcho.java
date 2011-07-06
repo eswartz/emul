@@ -16,6 +16,7 @@ import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IErrorReport;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.services.IDiagnostics;
+import org.eclipse.tm.tcf.services.IRunControl;
 
 class TestEcho implements ITCFTest, IDiagnostics.DoneEcho {
 
@@ -86,5 +87,9 @@ class TestEcho implements ITCFTest, IDiagnostics.DoneEcho {
         else if (msgs.isEmpty()){
             test_suite.done(this, null);
         }
+    }
+
+    public boolean canResume(IRunControl.RunControlContext ctx) {
+        return true;
     }
 }
