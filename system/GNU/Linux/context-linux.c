@@ -28,6 +28,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <sched.h>
+#include <dirent.h>
 #include <asm/unistd.h>
 #include <sys/ptrace.h>
 #include <linux/kdev_t.h>
@@ -811,15 +812,48 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
     case PTRACE_EVENT_VFORK:
     case PTRACE_EVENT_CLONE:
         if (ptrace((enum __ptrace_request)PTRACE_GETEVENTMSG, pid, 0, &msg) < 0) {
-                trace(LOG_ALWAYS, "error: ptrace(PTRACE_GETEVENTMSG) failed; pid %d, error %d %s",
+            trace(LOG_ALWAYS, "error: ptrace(PTRACE_GETEVENTMSG) failed; pid %d, error %d %s",
                 pid, errno, errno_to_str(errno));
             break;
         }
-        assert(msg != 0);
-        add_waitpid_process(msg);
         {
             Context * prs2 = NULL;
             Context * ctx2 = NULL;
+            /* Check the thread is not killed already by SIGKILL */
+            if (msg == SIGKILL) {
+                unsigned long child_pid = 0;
+                DIR * dir = NULL;
+                char task_file_name[FILE_PATH_SIZE];
+                snprintf(task_file_name, sizeof(task_file_name), "/proc/%d/task", EXT(ctx->parent)->pid);
+                dir = opendir(task_file_name);
+                if (dir == NULL) {
+                    trace(LOG_ALWAYS, "error: opendir(%s) failed; error %d %s",
+                        task_file_name, errno, errno_to_str(errno));
+                }
+                else {
+                    struct dirent * e;
+                    for (;;) {
+                        int n = 0;
+                        e = readdir(dir);
+                        if (e == NULL) break;
+                        n = atoi(e->d_name);
+                        if (n != 0 && context_find_from_pid(n, 1) == NULL) {
+                            child_pid = n;
+                            break;
+                        }
+                    }
+                    closedir(dir);
+                }
+                if (child_pid) {
+                    msg = child_pid;
+                }
+                else {
+                    trace(LOG_ALWAYS, "cannot trace %s - aborted by SIGKILL", event_name(event));
+                    break;
+                }
+            }
+            assert(msg != 0);
+            add_waitpid_process(msg);
             if (event == PTRACE_EVENT_CLONE) {
                 /* TODO: using the PTRACE_EVENT_CLONE to determine if the new context is a thread is not correct.
                  * The only way I know of is to look at the Tgid field of /proc/<pid>/status */
