@@ -931,7 +931,7 @@ public class LocatorService implements ILocator {
                     if (!subnet.contains(x.address)) continue;
                 }
                 subnet.send_all_ok = true;
-                String s = x.last_packet_time + ":" + x.port + ":" + x.address.getHostAddress();
+                String s = ttl + ":" + x.port + ":" + x.address.getHostAddress();
                 byte[] bt = getUTF8Bytes(s);
                 if (i > 8 && i + bt.length >= PREF_PACKET_SIZE) {
                     sendDatagramPacket(subnet, i, addr, port);
@@ -1079,7 +1079,7 @@ public class LocatorService implements ILocator {
                         long time_val = timestamp.length() > 0 ? Long.parseLong(timestamp) : time_now;
                         if (time_val < 3600000) {
                             /* Time stamp is "time to live" in milliseconds */
-                            time_val = time_now + time_val / 1000 - DATA_RETENTION_PERIOD;
+                            time_val = time_now + time_val - DATA_RETENTION_PERIOD;
                         }
                         else if (time_val < time_now / 1000 + 50000000) {
                             /* Time stamp is in seconds */
