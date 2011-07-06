@@ -568,7 +568,14 @@ int find_symbol_by_name(Context * ctx, int frame, ContextAddress ip, char * name
             else if (strcmp(name, "signed long long int") == 0) s = "long long int";
             else if (strcmp(name, "unsigned long long") == 0) s = "unsigned long long int";
             else if (strcmp(name, "char") == 0) s = "signed char";
-            if (s != NULL) found = find_in_dwarf(s, res);
+            if (s != NULL) {
+                found = find_in_dwarf(s, res);
+                if (!found) {
+                    s = NULL;
+                    if (strcmp(name, "char") == 0) s = "unsigned char";
+                    if (s != NULL) found = find_in_dwarf(s, res);
+                }
+            }
             clear_trap(&trap);
         }
         else {
