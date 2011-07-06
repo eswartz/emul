@@ -105,10 +105,28 @@ public class CacheManager {
 	 * @return The path to the node.
 	 */
 	private IPath appendNodePath(IPath path, FSTreeNode node) {
-		if (!node.type.endsWith("FSRootDirNode")) { //$NON-NLS-1$
+		if (!node.isRoot()) {
 			path = appendNodePath(path, node.parent);
+			return appendPathSegment(node, path, node.name);
 		}
-		IPath newPath = path.append(node.name);
+		if (node.isWindowsNode()) {
+			String name = node.name.substring(0, 1);
+			return appendPathSegment(node, path, name);
+		}
+		return path;
+	}
+
+	/**
+	 * Append the path with the segment "name". Create a directory
+	 * if the node is a directory which does not yet exist.
+	 * 
+	 * @param node The file/folder node.
+	 * @param path The path to appended.
+	 * @param name The segment's name.
+	 * @return
+	 */
+	private IPath appendPathSegment(FSTreeNode node, IPath path, String name) {
+		IPath newPath = path.append(name);
 		File newFile = newPath.toFile();
 		if (node.isDirectory() && !newFile.exists()) {
 			newFile.mkdir();
@@ -121,7 +139,7 @@ public class CacheManager {
 	 * file is already out-dated, then return true.
 	 * <p>
 	 * When a local cache file is created, the modified time is set to that of
-	 * its remote correponding file. So if its remote file is changed, the
+	 * its remote corresponding file. So if its remote file is changed, the
 	 * modified time stamp should be different from the local cache file's
 	 * modified time stamp.
 	 * <p>

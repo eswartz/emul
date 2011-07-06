@@ -184,23 +184,30 @@ public final class FSTreeNode extends PlatformObject {
 	 * @return The location of the file/folder.
 	 */
 	public String getLocation() {
-		String pathSep = isWindowsNode() ? "\\" : "/"; //$NON-NLS-1$//$NON-NLS-2$
-		return getLocation(pathSep);
+		if (parent == null)
+			return null;
+		String location = parent.getLocation(false);
+		if (parent.isRoot()) {
+			return location + (isWindowsNode() ? "\\" : "/"); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+		return location;
 	}
 
 	/**
-	 * Get the location of a file/folder using the specified file path
-	 * separator.
-	 * @param pathSep The file path separator.
+	 * Get the location of a file/folder.
+	 * 
+	 * @param cross If the format is cross-platform.
 	 * @return The path to the file/folder.
 	 */
-	private String getLocation(String pathSep){
-		if (parent == null || parent.type.endsWith("FSRootNode") || parent.type.endsWith("FSRootDirNode")) //$NON-NLS-1$ //$NON-NLS-2$
-			return parent.name;
-		String pLoc = parent.getLocation();
-		if (pLoc.endsWith(pathSep))
-			return pLoc + parent.name;
-		return pLoc + pathSep + parent.name;
+	private String getLocation(boolean cross) {
+		if (parent == null)
+			return null;
+		String pLoc = parent.getLocation(cross);
+		if (pLoc == null) {
+			return name.substring(0, name.length() - 1);
+		}
+		String pathSep = (!cross && isWindowsNode()) ? "\\" : "/"; //$NON-NLS-1$ //$NON-NLS-2$
+		return pLoc + pathSep + name;
 	}
 
 	/**
@@ -214,7 +221,7 @@ public final class FSTreeNode extends PlatformObject {
 	 */
 	public URL getLocationURL() throws MalformedURLException {
 		String id = peerNode.getPeer().getID();
-		String path = getLocation("/"); //$NON-NLS-1$
+		String path = getLocation(true);
 		String url = TcfURLConnection.PROTOCOL_SCHEMA+":///" + id + (isWindowsNode() ? "/" + path : path); //$NON-NLS-1$ //$NON-NLS-2$
 		if (url.endsWith("/")) { //$NON-NLS-1$
 			url += name;
@@ -222,5 +229,13 @@ public final class FSTreeNode extends PlatformObject {
 			url += "/" + name; //$NON-NLS-1$
 		}
 		return new URL(url);
+	}
+
+	/**
+	 * If this node is a root node.
+	 * @return true if this node is a root node.
+	 */
+	public boolean isRoot() {
+		return type.endsWith("FSRootDirNode"); //$NON-NLS-1$
 	}
 }
