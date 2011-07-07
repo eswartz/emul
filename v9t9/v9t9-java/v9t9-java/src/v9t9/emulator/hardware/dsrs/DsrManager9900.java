@@ -56,7 +56,7 @@ public class DsrManager9900 extends DsrManager implements IPersistable, IDsrMana
 	public void handleDSR(InstructionWorkBlock instructionWorkBlock) {
 		short callpc = (short) (instructionWorkBlock.pc - 2);
 		short rambase = (short) (instructionWorkBlock.wp - 0xe0);
-		short crubase = instructionWorkBlock.domain.readWord(rambase+ 0xD0);
+		short crubase = instructionWorkBlock.domain.readWord(instructionWorkBlock.wp + 12 * 2);
 	
 		if (callpc >= 0x4000 && callpc < 0x6000) {
 			
