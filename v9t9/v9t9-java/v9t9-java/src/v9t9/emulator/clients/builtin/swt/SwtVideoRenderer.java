@@ -163,7 +163,11 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 					
 					//updateWidgetSizeForMode();
 					
-					doTriggerRedraw(redrawRect);
+					try {
+						doTriggerRedraw(redrawRect);
+					} catch (Throwable t) {
+						t.printStackTrace();
+					}
 					
 					isDirty = false;
 				}
