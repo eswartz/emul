@@ -202,9 +202,9 @@ public class Emulator {
         	//Executor.settingDumpInstructions.setBoolean(true);
         	//Compiler.settingDebugInstructions.setBoolean(true);
         	Executor.settingDumpFullInstructions.setBoolean(true);
-        	VdpTMS9918A.settingDumpVdpAccess.setBoolean(true);
-        	GplMmio.settingDumpGplAccess.setBoolean(true);
         }
+        VdpTMS9918A.settingDumpVdpAccess.setBoolean(true);
+        GplMmio.settingDumpGplAccess.setBoolean(true);
         
         
         Emulator.createAndRun(machine, client);
