@@ -458,7 +458,13 @@ static void evaluate_expression(U8_T BaseAddress, PropertyValue * Value, ELF_Sec
                 read_and_evaluate_dwarf_object_property(Value->mContext, Value->mFrame, 0, Parent, AT_frame_base, &FP);
 
                 dio_EnterSection(&Unit->mDesc, Section, Pos);
-                sExprStack[sExprStackLen++] = get_numeric_property_value(&FP);
+                if (FP.mRegister != NULL) {
+                    if (read_reg_value(get_stack_frame(&FP), FP.mRegister, sExprStack + sExprStackLen) < 0) exception(errno);
+                    sExprStackLen++;
+                }
+                else {
+                    sExprStack[sExprStackLen++] = get_numeric_property_value(&FP);
+                }
                 assert(sExprStackLen > 0);
                 sExprStack[sExprStackLen - 1] += dio_ReadS8LEB128();
             }
