@@ -9,6 +9,7 @@
  * Contributors:
  *    Liping Ke        (Intel Corp.) - initial API and implementation
  *    Sheldon D'souza  (Celunite)    - LoginThread and readUntil implementation
+ *    Liping Ke        (Intel Corp.) - For non-login mode, we don't need detect command prompt    
  ******************************************************************************/
 package org.eclipse.tm.internal.tcf.rse.shells;
 
@@ -94,17 +95,16 @@ public class TCFTerminalShell extends AbstractTerminalShell {
 
         public void run() {
             tcfPropertySet = ((TCFConnectorService)fSessionProvider).getTCFPropertySet();
+            /* By default, we only support non-login mode. If user open the 
+             * switch on the agent side, he can also set the properties in 
+             * TCF connection property*/
             String login_required = tcfPropertySet.getPropertyValue(TCFConnectorService.PROPERTY_LOGIN_REQUIRED);
-            String login_prompt = tcfPropertySet.getPropertyValue(TCFConnectorService.PROPERTY_LOGIN_PROMPT);
-            String password_prompt =tcfPropertySet.getPropertyValue(TCFConnectorService.PROPERTY_PASSWORD_PROMPT);
-            String command_prompt = tcfPropertySet.getPropertyValue(TCFConnectorService.PROPERTY_COMMAND_PROMPT);
-            String pwd_required = tcfPropertySet.getPropertyValue(TCFConnectorService.PROPERTY_PWD_REQUIRED);
-
-            /* Before Login service is implemented, we only support non-login mode. After Login service
-             * is available, below assignment should be removed */
-            login_required = String.valueOf(false);
 
             if (Boolean.valueOf(login_required).booleanValue()) {
+                String login_prompt = tcfPropertySet.getPropertyValue(TCFConnectorService.PROPERTY_LOGIN_PROMPT);
+                String password_prompt =tcfPropertySet.getPropertyValue(TCFConnectorService.PROPERTY_PASSWORD_PROMPT);
+                String command_prompt = tcfPropertySet.getPropertyValue(TCFConnectorService.PROPERTY_COMMAND_PROMPT);
+                String pwd_required = tcfPropertySet.getPropertyValue(TCFConnectorService.PROPERTY_PWD_REQUIRED);
                 status = ITCFSessionProvider.SUCCESS_CODE;
                 if (login_prompt != null && login_prompt.length() > 0) {
                     status = readUntil(login_prompt,fInputStream);
@@ -121,10 +121,7 @@ public class TCFTerminalShell extends AbstractTerminalShell {
                     write("\n");
                 }
             } else {
-                if (command_prompt != null && command_prompt.length() > 0) {
-                    status = readUntil(command_prompt,fInputStream);
-                    write("\n");
-                }
+                status = ITCFSessionProvider.SUCCESS_CODE;
             }
         }
 
