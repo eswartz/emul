@@ -238,7 +238,7 @@ public final class LogManager implements IProtocolStateChangeListener {
 	 * @param channel The channel. Must not be <code>null</code>.
 	 * @return The log file base name.
 	 */
-	protected String getLogName(IChannel channel) {
+	public String getLogName(IChannel channel) {
 		Assert.isNotNull(channel);
 		Assert.isTrue(Protocol.isDispatchThread());
 
@@ -289,7 +289,7 @@ public final class LogManager implements IProtocolStateChangeListener {
 	 *
 	 * @return The log directory.
 	 */
-	private IPath getLogDir() {
+	public IPath getLogDir() {
 		IPath logDir = null;
 
 		try {
