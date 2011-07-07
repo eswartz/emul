@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,6 +11,7 @@
  *     Uwe Stieber      (Wind River) - [271227] Fix compiler warnings in org.eclipse.tm.tcf.rse
  *     Anna Dushistova  (MontaVista) - [285373] TCFConnectorService should send CommunicationsEvent.BEFORE_CONNECT and CommunicationsEvent.BEFORE_DISCONNECT
  *     Liping Ke        (Intel Corp.)- [326490] Add authentication to the TCF Connector Service and attach stream subs/unsubs method
+ *     Jeff Johnston    (RedHat)     - [350752] TCFConnectorService doesn't recognize connections with SSL transport
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.rse;
 
@@ -151,7 +152,7 @@ public class TCFConnectorService extends StandardConnectorService implements ITC
 
         }
         catch (Exception e) {
-            e.printStackTrace();//$NON-NLS-1$
+            e.printStackTrace();
             throw new RemoteFileException("Error creating Terminal", e); //$NON-NLS-1$
         }
         finally {
@@ -222,7 +223,8 @@ public class TCFConnectorService extends StandardConnectorService implements ITC
             ILocator locator = Protocol.getLocator();
             for (IPeer p : locator.getPeers().values()) {
                 Map<String, String> attrs = p.getAttributes();
-                if ("TCP".equals(attrs.get(IPeer.ATTR_TRANSPORT_NAME)) && //$NON-NLS-1$
+                if (("TCP".equals(attrs.get(IPeer.ATTR_TRANSPORT_NAME)) || //$NON-NLS-1$
+                        "SSL".equals(attrs.get(IPeer.ATTR_TRANSPORT_NAME)))&& //$NON-NLS-1$
                         host.equalsIgnoreCase(attrs.get(IPeer.ATTR_IP_HOST)) &&
                         port_str.equals(attrs.get(IPeer.ATTR_IP_PORT))) {
                     peer = p;
