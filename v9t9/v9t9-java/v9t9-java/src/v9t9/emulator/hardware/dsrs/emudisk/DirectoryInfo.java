@@ -17,7 +17,10 @@ class DirectoryInfo {
 		
 		this.dir = file;
 		this.entries = file != null ? file.listFiles() : new File[0];
-		Arrays.sort(entries);
+		if (entries == null)
+			entries = new File[0];
+		else
+			Arrays.sort(entries);
 	}
 
 }

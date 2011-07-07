@@ -145,7 +145,7 @@ public class DirectDiskHandler {
 				xfer.writeParamByte(parms + 5, (byte) fdr.getRecordsPerSector());
 				xfer.writeParamByte(parms + 6, (byte) fdr.getByteOffset());
 				xfer.writeParamByte(parms + 7, (byte) fdr.getRecordLength());
-				xfer.writeParamWord(parms + 8, (short) fdr.getNumberRecords());
+				xfer.writeParamWord(parms + 8, swpb((short) fdr.getNumberRecords()));
 			} else {
 				int size = file.getFileSize();
 				xfer.writeParamWord(parms + 2, (short) ((size + 255) / 256));
@@ -205,7 +205,7 @@ public class DirectDiskHandler {
 				fdr.setRecordsPerSector(xfer.readParamByte(parms + 5) & 0xff);
 				fdr.setByteOffset(xfer.readParamByte(parms + 6) & 0xff);
 				fdr.setRecordLength(xfer.readParamByte(parms + 7) & 0xff);
-				fdr.setNumberRecords(xfer.readParamWord(parms + 8) & 0xffff);
+				fdr.setNumberRecords(swpb(xfer.readParamWord(parms + 8)));
 				try {
 					fdr.setFileName(filename);
 				} catch (IOException e) {
@@ -265,12 +265,20 @@ public class DirectDiskHandler {
 		}
 	}
 	
+	/**
+	 * @param i
+	 * @return
+	 */
+	private short swpb(short x) {
+		return (short) (((x & 0xff) << 8) | ((x >> 8) & 0xff));
+	}
+
 	private void directSectorReadWrite() throws DsrException {
 		boolean write = opt == 0;
 		
 		// we only pretend to read sectors, e.g. to handle catalogs
 		if (write)
-			throw new DsrException(EmuDiskDsr.es_hardware, "Not implemented");
+			throw new DsrException(EmuDiskDsr.es_hardware, "Write sector not implemented");
 		
 		short addr = addr1;
 		int secnum = addr2 & 0xffff;

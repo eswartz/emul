@@ -111,8 +111,8 @@ public class V9t9FDR extends FDR {
     	raf.write(secsused & 0xff);
     	raf.write(byteoffs);
     	raf.write(reclen);
-    	raf.write(numrecs >> 8);
     	raf.write(numrecs & 0xff);
+    	raf.write(numrecs >> 8);
     	raf.write(rec20);
         raf.write(dcpb);
         

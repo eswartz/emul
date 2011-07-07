@@ -30,6 +30,7 @@ import v9t9.emulator.hardware.dsrs.MemoryTransfer;
 import v9t9.emulator.hardware.dsrs.PabConstants;
 import v9t9.emulator.hardware.dsrs.emudisk.DiskDirectoryMapper.EmuDiskSetting;
 import v9t9.emulator.hardware.dsrs.emudisk.EmuDiskPabHandler.PabInfoBlock;
+import v9t9.emulator.hardware.dsrs.realdisk.BaseDiskImageDsr;
 import v9t9.emulator.hardware.dsrs.realdisk.StandardDiskImageDsr;
 import v9t9.emulator.runtime.cpu.Executor;
 import v9t9.engine.files.Catalog;
@@ -238,8 +239,11 @@ public class EmuDiskDsr implements DsrHandler9900 {
 			DirectDiskHandler.getDiskInfoBlock(getCruBase()).reset();
 			
 			// steal some RAM for the name compare buffer,
-			// so dependent programs can function 
-			vdpNameCompareBuffer = (short) (xfer.readParamWord(0x70) - 11);
+			// so dependent programs can function
+			if (!BaseDiskImageDsr.diskImageDsrEnabled.getBoolean())
+				vdpNameCompareBuffer = (short) (xfer.readParamWord(0x70) - 11);
+			else
+				vdpNameCompareBuffer = (short) 0x3ff5;
 			
 			allocFiles(xfer, -3);
 			
@@ -327,6 +331,10 @@ public class EmuDiskDsr implements DsrHandler9900 {
 	}
 
 	private void subAllocFiles(MemoryTransfer xfer) {
+		// let real disk allocate space
+		if (BaseDiskImageDsr.diskImageDsrEnabled.getBoolean())
+			return;
+		
 		int cnt = xfer.readParamByte(0x4c);
 		if (Math.abs(cnt) > 16) { 
 			xfer.writeParamWord(0x50, (short) -1);
