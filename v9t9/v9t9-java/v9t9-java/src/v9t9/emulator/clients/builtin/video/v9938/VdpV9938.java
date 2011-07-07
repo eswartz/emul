@@ -463,7 +463,7 @@ public class VdpV9938 extends VdpTMS9918A {
 			int vdpbank = (vdpregs[14] & 0x7);
 			
 			// 16k mode?
-			if ((vdpregs[8] & R8_VR) == 0 || memoryBank.getBankCount() == 1) {
+			if (/*(vdpregs[8] & R8_VR) == 0 ||*/ memoryBank.getBankCount() == 1) {
 				vdpbank = 0;
 			} else {
 				// expansion RAM?
@@ -629,7 +629,7 @@ public class VdpV9938 extends VdpTMS9918A {
 		VdpModeInfo vdpModeInfo = new VdpModeInfo(); 
 		int ramsize = getModeAddressMask();
 		
-		vdpModeInfo.screen.base = ((vdpregs[2] & 0x7f) * 0x400) & ramsize;
+		vdpModeInfo.screen.base = ((vdpregs[2] & 0x7c) * 0x400) & ramsize;
 		vdpModeInfo.screen.size = 80 * 27;	// last 2.5 rows only visible in 212-line mode
 		vdpModeInfo.patt.base = getPatternTableBase();
 		vdpModeInfo.patt.size = 2048;
@@ -764,7 +764,7 @@ public class VdpV9938 extends VdpTMS9918A {
 	 * old masking applies. */
 	@Override
 	protected int getModeAddressMask() {
-		return (vdpregs[8] & R8_VR) != 0 ? 0x1ffff : 0x3fff;
+		return isEnhancedMode() || (vdpregs[8] & R8_VR) != 0 ? 0x1ffff : 0x3fff;
 	}
 	@Override
 	protected int getSpriteTableBase() {
