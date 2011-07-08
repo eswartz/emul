@@ -85,6 +85,20 @@ extern const char * errno_to_str(int no);
 extern int set_errno(int no, const char * msg);
 
 /*
+ * Set errno to indicate given error code and additional error message.
+ * This routine is a wrapper on top of set_errno() routine but takes a variable
+ * number of arguments and format the error string according to provided format
+ * string.
+ * If formatting of the error string fails, the errno is set to provided error code
+ * without any additional error message.
+ * The function puts the formatted message into a queue of limited size.
+ * Clients should not rely on messages being kept in the queue longer then one dispatch cycle.
+ * Persistent error report can be obtained by calling get_error_report().
+ * Return new error code that designates both original code and the message.
+ */
+extern int set_fmt_errno(int no, const char * fmt, ...);
+
+/*
  * Set errno to indicate getaddrinfo() error code.
  * Return new value of errno.
  */

@@ -21,6 +21,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include <assert.h>
 #include <framework/errors.h>
 #include <framework/events.h>
@@ -401,6 +402,25 @@ int set_errno(int no, const char * msg) {
         errno = err;
     }
     return errno;
+}
+
+int set_fmt_errno(int no, const char * fmt, ...) {
+    va_list vaList;
+    char * buf = NULL;
+    size_t len = 100;
+    int err, n;
+
+    while (1) {
+        buf = (char *)loc_realloc(buf, len);
+        va_start(vaList, fmt);
+        n = vsnprintf(buf, len, fmt, vaList);
+        va_end(vaList);
+        if (n < (int)len) break;
+        len = n + 1;
+    }
+    err = n <= 0 ? no : set_errno(no, buf);
+    loc_free(buf);
+    return errno = err;
 }
 
 int set_gai_errno(int no) {
