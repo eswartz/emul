@@ -5,8 +5,8 @@
  * available at http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * Uwe Stieber (Wind River) - initial API and implementation
- * William Chen (Wind River)- [345387]Open the remote files with a proper editor
+ * Wind River Systems - initial API and implementation
+ * William Chen (Wind River) - [345387] Open the remote files with a proper editor
  *******************************************************************************/
 package org.eclipse.tm.te.tcf.filesystem.activator;
 
