@@ -85,47 +85,31 @@
          </enablement>
       </editorPageBinding>
    </extension>
-   <extension
-         point="org.eclipse.ui.menus">
-      <menuContribution
-            locationURI="popup:org.eclipse.tm.te.ui.controls.menu.fs?after=additions">
-         <separator
-               name="group.open"
-               visible="true">
-         </separator>
+   
+<!-- Target Explorer context menu contributions -->
+   <extension point="org.eclipse.ui.menus">
+      <menuContribution locationURI="popup:org.eclipse.tm.te.ui.controls.menu.fs?after=additions">
+         <separator name="group.open" visible="true"/>
          <command
                commandId="org.eclipse.tm.te.tcf.filesystem.commands.open"
                helpContextId="org.eclipse.tm.te.tcf.filesystem.command_Open"
                id="open"
                label="Open"
                style="push">
-            <visibleWhen
-                  checkEnabled="false">
-               <with
-                     variable="activeMenuSelection">
-                  <count
-                        value="1">
-                  </count>
+            <visibleWhen checkEnabled="false">
+               <with variable="activeMenuSelection">
+                  <count value="1"/>
                   <iterate>
-                     <instanceof
-                           value="org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode">
-                     </instanceof>
-                     <test
-                           property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isFile">
-                     </test>
+                     <instanceof value="org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode"/>
+                     <test property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isFile"/>
                      <not>
-                        <test
-                              property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isBinaryFile">
-                        </test>
+                        <test property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isBinaryFile"/>
                      </not>
                   </iterate>
                </with>
             </visibleWhen>
          </command>
-         <separator
-               name="group.properties"
-               visible="true">
-         </separator>
+         <separator name="group.properties" visible="true"/>
          <command
                commandId="org.eclipse.ui.file.properties"
                helpContextId="org.eclipse.tm.te.tcf.filesystem.command_Properties"
@@ -163,32 +147,21 @@
                </visibleWhen>
          </command>
       </menuContribution>
-      <menuContribution
-            locationURI="popup:org.eclipse.tm.te.ui.views.TargetExplorer#Popup?after=group.open">
+      <menuContribution locationURI="popup:org.eclipse.tm.te.ui.views.TargetExplorer#Popup?after=group.open">
          <command
                commandId="org.eclipse.tm.te.tcf.filesystem.commands.open"
                helpContextId="org.eclipse.tm.te.tcf.filesystem.command_Open"
                id="open"
                label="Open"
                style="push">
-            <visibleWhen
-                  checkEnabled="false">
-               <with
-                     variable="selection">
-                  <count
-                        value="1">
-                  </count>
+            <visibleWhen checkEnabled="false">
+               <with variable="selection">
+                  <count value="1"/>
                   <iterate>
-                     <instanceof
-                           value="org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode">
-                     </instanceof>
-                     <test
-                           property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isFile">
-                     </test>
+                     <instanceof value="org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode"/>
+                     <test property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isFile"/>
                      <not>
-                        <test
-                              property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isBinaryFile">
-                        </test>
+                        <test property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isBinaryFile"/>
                      </not>
                   </iterate>
                </with>
@@ -196,21 +169,21 @@
          </command>
       </menuContribution>
    </extension>
-   <extension
-         point="org.eclipse.ui.propertyPages">
+   
+<!-- Target Explorer property page contributions -->   
+   <extension point="org.eclipse.ui.propertyPages">
       <page
             class="org.eclipse.tm.te.tcf.filesystem.internal.properties.GeneralInformationPage"
             id="org.eclipse.tm.te.tcf.filesystem.pages.basic"
             name="%GeneralInformationPage.name">
          <enabledWhen>
-            <instanceof
-                  value="org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode">
-            </instanceof>
+            <instanceof value="org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode"/>
          </enabledWhen>
       </page>
    </extension>
-   <extension
-         point="org.eclipse.core.expressions.propertyTesters">
+   
+<!-- Target Explorer property tester contributions -->   
+   <extension point="org.eclipse.core.expressions.propertyTesters">
       <propertyTester
             class="org.eclipse.tm.te.tcf.filesystem.internal.handlers.FSTreeNodePropertyTester"
             id="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode"
@@ -219,26 +192,50 @@
             type="org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode">
       </propertyTester>
    </extension>
-   <extension
-         point="org.eclipse.ui.commands">
+   
+<!-- Target Explorer command contributions -->
+   <extension point="org.eclipse.ui.commands">
       <command
             id="org.eclipse.tm.te.tcf.filesystem.commands.open"
             name="Open">
       </command>
    </extension>
-   <extension
-         point="org.eclipse.ui.handlers">
+
+<!-- Target Explorer command handler contributions -->
+   <extension point="org.eclipse.ui.handlers">
       <handler
             class="org.eclipse.tm.te.tcf.filesystem.internal.handlers.OpenFileHandler"
             commandId="org.eclipse.tm.te.tcf.filesystem.commands.open">
          <enabledWhen>
-            <with
-                  variable="activeMenuSelection">
-               <count
-                     value="1">
-               </count>
+            <with variable="activeMenuSelection">
+               <count value="1"/>
             </with>
          </enabledWhen>
       </handler>
+
+      <!-- This handler contribution is for the double click behaviour in the
+           Target Explore tree view -->
+      <handler
+            class="org.eclipse.tm.te.tcf.filesystem.internal.handlers.OpenFileHandler"
+            commandId="org.eclipse.ui.navigator.Open">
+         <activeWhen>
+            <and>
+               <with variable="activePartId">
+                  <equals value="org.eclipse.tm.te.ui.views.TargetExplorer"/>
+               </with>
+               <with variable="selection">
+                  <count value="1"/>
+                  <iterate>
+                     <instanceof value="org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode"/>
+                     <test property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isFile"/>
+                     <not>
+                        <test property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isBinaryFile"/>
+                     </not>
+                  </iterate>
+               </with>
+            </and>
+         </activeWhen>
+      </handler>
    </extension>
+   
 </plugin>

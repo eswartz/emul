@@ -223,11 +223,6 @@ public final class FSTreeNode extends PlatformObject {
 		String id = peerNode.getPeer().getID();
 		String path = getLocation(true);
 		String url = TcfURLConnection.PROTOCOL_SCHEMA+":///" + id + (isWindowsNode() ? "/" + path : path); //$NON-NLS-1$ //$NON-NLS-2$
-		if (url.endsWith("/")) { //$NON-NLS-1$
-			url += name;
-		} else {
-			url += "/" + name; //$NON-NLS-1$
-		}
 		return new URL(url);
 	}
 

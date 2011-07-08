@@ -117,6 +117,8 @@ public class View extends CommonNavigator {
 				ctx.addVariable(ISources.ACTIVE_WORKBENCH_WINDOW_NAME, PlatformUI.getWorkbench().getActiveWorkbenchWindow());
 				ctx.addVariable(ISources.ACTIVE_PART_ID_NAME, getViewSite().getId());
 				ctx.addVariable(ISources.ACTIVE_PART_NAME, this);
+				ctx.addVariable(ISources.ACTIVE_SITE_NAME, getViewSite());
+				ctx.addVariable(ISources.ACTIVE_SHELL_NAME, getViewSite().getShell());
 				ExecutionEvent event = new ExecutionEvent(command, Collections.EMPTY_MAP, this, ctx);
 				command.executeWithChecks(event);
 			} catch (Exception e) {
