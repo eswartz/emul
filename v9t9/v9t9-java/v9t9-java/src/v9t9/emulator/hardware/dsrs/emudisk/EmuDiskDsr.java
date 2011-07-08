@@ -213,7 +213,9 @@ public class EmuDiskDsr implements DsrHandler9900 {
 					return false;
 			}
 			
-			diskActivitySettings.get(handler.devname).setBoolean(true);
+			SettingProperty settingProperty = diskActivitySettings.get(handler.devname);
+			if (settingProperty != null)
+				settingProperty.setBoolean(true);
 			
 			info(handler.toString());
 			try {
@@ -223,7 +225,8 @@ public class EmuDiskDsr implements DsrHandler9900 {
 			}
 			handler.store();
 	
-			diskActivitySettings.get(handler.devname).setBoolean(false);
+			if (settingProperty != null)
+				settingProperty.setBoolean(false);
 			
 			//  return, indicating that the DSR handled the operation 
 			return true;
