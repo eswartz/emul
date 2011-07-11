@@ -39,7 +39,7 @@ public class TCFLaunchContext {
             for (int i = 0; i < extensions.length; i++) {
                 try {
                     Bundle bundle = Platform.getBundle(extensions[i].getNamespaceIdentifier());
-                    bundle.start();
+                    bundle.start(Bundle.START_TRANSIENT);
                     IConfigurationElement[] e = extensions[i].getConfigurationElements();
                     for (int j = 0; j < e.length; j++) {
                         String nm = e[j].getName();
