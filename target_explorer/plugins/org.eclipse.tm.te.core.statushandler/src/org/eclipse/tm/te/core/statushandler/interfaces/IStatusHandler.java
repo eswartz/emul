@@ -11,6 +11,7 @@ package org.eclipse.tm.te.core.statushandler.interfaces;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.tm.te.core.interfaces.IExecutableExtension;
+import org.eclipse.tm.te.core.interfaces.IPropertiesContainer;
 
 /**
  * Target Explorer: Status handler API declaration
@@ -20,15 +21,16 @@ public interface IStatusHandler extends IExecutableExtension {
 	/**
 	 * Handle the given status and invoke the callback if finished.
 	 * <p>
-	 * The method semantic is asynchronous by design. It's up to the
+	 * By design, the method behavior is asynchronous. It's up to the
 	 * status handle contributor if the implementation is asynchronous
 	 * or synchronous. Synchronous implementations must invoke the callback
 	 * too if finished.
 	 *
 	 * @param status The status. Must not be <code>null</code>.
+	 * @param data Custom status data or <code>null</code>.
 	 * @param done The callback. Must not be <code>null</code>.
 	 */
-	public void handleStatus(IStatus status, DoneHandleStatus done);
+	public void handleStatus(IStatus status, IPropertiesContainer data, DoneHandleStatus done);
 
     /**
      * Client call back interface for handleStatus().
@@ -37,8 +39,9 @@ public interface IStatusHandler extends IExecutableExtension {
         /**
          * Called when the status handling is done.
          *
-         * @param error – error description if operation failed, <code>null</code> if succeeded.
+         * @param error An error if failed, <code>null</code> if succeeded.
+         * @param data The custom data object passed in to {@link IStatusHandler#handleStatus(IStatus, IPropertiesContainer, DoneHandleStatus)}.
          */
-        void doneHandleStatus(Exception error);
+        void doneHandleStatus(Exception error, IPropertiesContainer data);
     }
 }
