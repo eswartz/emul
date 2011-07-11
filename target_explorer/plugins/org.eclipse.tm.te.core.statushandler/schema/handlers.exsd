@@ -65,7 +65,7 @@
                </documentation>
             </annotation>
          </attribute>
-         <attribute name="label" type="string" use="required">
+         <attribute name="label" type="string">
             <annotation>
                <documentation>
                   The label representing the status handler within the UI.

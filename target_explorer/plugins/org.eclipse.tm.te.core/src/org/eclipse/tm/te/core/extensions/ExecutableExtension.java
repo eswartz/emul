@@ -12,12 +12,12 @@ package org.eclipse.tm.te.core.extensions;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
-import org.eclipse.core.runtime.IExecutableExtension;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.PlatformObject;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.tm.te.core.activator.CoreBundleActivator;
+import org.eclipse.tm.te.core.interfaces.IExecutableExtension;
 import org.eclipse.tm.te.core.nls.Messages;
 
 /**
@@ -76,11 +76,8 @@ public class ExecutableExtension extends PlatformObject implements IExecutableEx
 				null));
 	}
 
-	/**
-	 * Returns the unique id of the extension. The returned
-	 * id must be never <code>null</code> or an empty string.
-	 *
-	 * @return The unique id.
+	/* (non-Javadoc)
+	 * @see org.eclipse.tm.te.core.interfaces.IExecutableExtension#getId()
 	 */
 	public String getId() {
 		return id;
@@ -97,10 +94,8 @@ public class ExecutableExtension extends PlatformObject implements IExecutableEx
 		return configElement;
 	}
 
-	/**
-	 * Returns the label or UI name of the extension.
-	 *
-	 * @return The label or UI name. An empty string if not set.
+	/* (non-Javadoc)
+	 * @see org.eclipse.tm.te.core.interfaces.IExecutableExtension#getLabel()
 	 */
 	public String getLabel() {
 		// Try the "label" attribute first
@@ -112,10 +107,8 @@ public class ExecutableExtension extends PlatformObject implements IExecutableEx
 		return label != null ? label.trim() : ""; //$NON-NLS-1$
 	}
 
-	/**
-	 * Returns the description of the extension.
-	 *
-	 * @return The description or an empty string.
+	/* (non-Javadoc)
+	 * @see org.eclipse.tm.te.core.interfaces.IExecutableExtension#getDescription()
 	 */
 	public String getDescription() {
 		// Read the description text from the "<description>" child element
