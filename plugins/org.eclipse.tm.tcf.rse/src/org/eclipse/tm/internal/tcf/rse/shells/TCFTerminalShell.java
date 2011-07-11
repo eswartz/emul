@@ -9,7 +9,7 @@
  * Contributors:
  *    Liping Ke        (Intel Corp.) - initial API and implementation
  *    Sheldon D'souza  (Celunite)    - LoginThread and readUntil implementation
- *    Liping Ke        (Intel Corp.) - For non-login mode, we don't need detect command prompt    
+ *    Liping Ke        (Intel Corp.) - For non-login mode, we don't need detect command prompt
  ******************************************************************************/
 package org.eclipse.tm.internal.tcf.rse.shells;
 
@@ -95,8 +95,8 @@ public class TCFTerminalShell extends AbstractTerminalShell {
 
         public void run() {
             tcfPropertySet = ((TCFConnectorService)fSessionProvider).getTCFPropertySet();
-            /* By default, we only support non-login mode. If user open the 
-             * switch on the agent side, he can also set the properties in 
+            /* By default, we only support non-login mode. If user open the
+             * switch on the agent side, he can also set the properties in
              * TCF connection property*/
             String login_required = tcfPropertySet.getPropertyValue(TCFConnectorService.PROPERTY_LOGIN_REQUIRED);
 
