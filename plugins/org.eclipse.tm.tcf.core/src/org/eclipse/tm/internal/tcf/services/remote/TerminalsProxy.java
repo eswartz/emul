@@ -37,27 +37,39 @@ public class TerminalsProxy implements ITerminals {
         }
 
         public String getID() {
-            return (String) props.get(PROP_ID);
+            return (String)props.get(PROP_ID);
         }
 
         public String getProcessID() {
-            return (String) props.get(PROP_PROCESS_ID);
+            return (String)props.get(PROP_PROCESS_ID);
         }
 
         public String getPtyType() {
-            return (String) props.get(PROP_PTY_TYPE);
+            return (String)props.get(PROP_PTY_TYPE);
         }
 
         public String getEncoding() {
-            return (String) props.get(PROP_ENCODING);
+            return (String)props.get(PROP_ENCODING);
         }
 
         public int getWidth() {
-            return ((Integer) props.get(PROP_WIDTH)).intValue();
+            return ((Integer)props.get(PROP_WIDTH)).intValue();
         }
 
         public int getHeight() {
-            return ((Integer) props.get(PROP_HEIGHT)).intValue();
+            return ((Integer)props.get(PROP_HEIGHT)).intValue();
+        }
+
+        public String getStdInID() {
+            return (String)props.get(PROP_STDIN_ID);
+        }
+
+        public String getStdOutID() {
+            return (String)props.get(PROP_STDOUT_ID);
+        }
+
+        public String getStdErrID() {
+            return (String)props.get(PROP_STDERR_ID);
         }
 
         public IToken exit(final DoneCommand done) {

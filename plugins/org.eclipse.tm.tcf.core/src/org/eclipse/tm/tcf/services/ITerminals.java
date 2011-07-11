@@ -57,7 +57,7 @@ public interface ITerminals extends IService {
      * Context property names.
      */
     static final String
-        /** The TCF context ID */
+        /** The TCF context ID of the terminal */
         PROP_ID = "ID",
 
         /** The process ID of the login process of the terminal */
@@ -66,22 +66,22 @@ public interface ITerminals extends IService {
         /** The PTY type */
         PROP_PTY_TYPE = "PtyType",
 
-        /** terminal encoding */
+        /** The terminal streams encoding */
         PROP_ENCODING = "Encoding",
 
-        /** window width size */
+        /** Window width size */
         PROP_WIDTH = "Width",
 
-        /** window height size */
+        /** Window height size */
         PROP_HEIGHT = "Height",
 
-        /** Process standard input stream ID */
+        /** Terminal standard input stream ID */
         PROP_STDIN_ID = "StdInID",
 
-        /** Process standard output stream ID */
+        /** Terminal standard output stream ID */
         PROP_STDOUT_ID = "StdOutID",
 
-        /** Process standard error stream ID */
+        /** Terminal standard error stream ID */
         PROP_STDERR_ID = "StdErrID";
 
     interface TerminalContext {
@@ -123,7 +123,25 @@ public interface ITerminals extends IService {
         int getHeight();
 
         /**
-         * Get all available context properties.
+         * Get standard input stream ID of the terminal.
+         * Same as getProperties().get(“StdInID”)
+         */
+        String getStdInID();
+
+        /**
+         * Get standard output stream ID of the terminal.
+         * Same as getProperties().get(“StdOutID”)
+         */
+        String getStdOutID();
+
+        /**
+         * Get standard error stream ID of the terminal.
+         * Same as getProperties().get(“StdErrID”)
+         */
+        String getStdErrID();
+
+        /**
+         * Get all available terminal properties.
          * @return Map 'property name' -> 'property value'
          */
         Map<String, Object> getProperties();
