@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -387,7 +387,7 @@ public class PeerListControl implements ISelectionProvider {
                 filteredPeers.add(info);
             }
         }
-        PeerInfo[] buf = (PeerInfo[]) filteredPeers.toArray(new PeerInfo[filteredPeers.size()]);
+        PeerInfo[] buf = filteredPeers.toArray(new PeerInfo[filteredPeers.size()]);
         peer.listener = new LocatorListener(peer);
         peer.locator.addListener(peer.listener);
         return buf;
@@ -489,7 +489,7 @@ public class PeerListControl implements ISelectionProvider {
             if (expanded) {
                 assert items.length == arr.length;
                 for (int i = 0; i < items.length; i++) fillItem(items[i], arr[i]);
-                if (fInitialPeerId != null) {
+                if (fInitialPeerId != null && items.length > 0) {
                     if ("*".equals(fInitialPeerId)) {
                         fInitialPeerId = null;
                         peer_tree.setSelection(items[0]);
