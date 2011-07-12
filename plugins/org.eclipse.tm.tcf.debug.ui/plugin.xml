@@ -390,9 +390,7 @@
             name="%propertyPage.name">
          <filter name="debugModelId" value="org.eclipse.tm.tcf.debug"/>
          <enabledWhen>
-            <instanceof
-                  name="org.eclipse.cdt.debug.core.model.ICBreakpoint"
-                  value="org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode"/>
+            <instanceof value="org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode"/>
          </enabledWhen>
       </page>
    </extension>
