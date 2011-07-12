@@ -25,14 +25,9 @@ public interface IStatusHandler extends IExecutableExtension {
 	 * status handle contributor if the implementation is asynchronous
 	 * or synchronous. Synchronous implementations must invoke the callback
 	 * too if finished.
-	 * <p>
-	 * If a custom status data object is passed in, the same object must be
-	 * passed to the done callback. The status handler may add properties
-	 * to the data object to return status handler custom results.
-	 *
 	 *
 	 * @param status The status. Must not be <code>null</code>.
-	 * @param data Custom status data or <code>null</code>.
+	 * @param data The custom status data object, or <code>null</code> if none.
 	 * @param done The callback. Must not be <code>null</code>.
 	 */
 	public void handleStatus(IStatus status, IPropertiesContainer data, DoneHandleStatus done);
@@ -45,7 +40,7 @@ public interface IStatusHandler extends IExecutableExtension {
          * Called when the status handling is done.
          *
          * @param error An error if failed, <code>null</code> if succeeded.
-         * @param data The custom data object passed in to {@link IStatusHandler#handleStatus(IStatus, IPropertiesContainer, DoneHandleStatus)}.
+         * @param data The status handler custom result data object, or <code>null</code> if none.
          */
         void doneHandleStatus(Exception error, IPropertiesContainer data);
     }
