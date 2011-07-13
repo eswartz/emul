@@ -89,7 +89,7 @@ public class CustomTitleAreaDialog extends TitleAreaDialog implements IMessagePr
 	 * overriding the dialog settings container without changing the dialog
 	 * settings structure.
 	 *
-	 * @return The dialog settings container to use. Must be not <code>null</code>.
+	 * @return The dialog settings container to use. Must not be <code>null</code>.
 	 */
 	protected IDialogSettings doGetDialogSettingsToInitialize() {
 		return UIPlugin.getDefault().getDialogSettings();
@@ -155,7 +155,7 @@ public class CustomTitleAreaDialog extends TitleAreaDialog implements IMessagePr
 	/**
 	 * Configure the dialog top control.
 	 *
-	 * @param composite The dialog top control. Must be not <code>null</code>.
+	 * @param composite The dialog top control. Must not be <code>null</code>.
 	 */
 	protected void configureDialogAreaControl(Composite composite) {
 		assert composite != null;
