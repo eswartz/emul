@@ -40,7 +40,7 @@ public interface IWizardConfigurationPanel extends IMessageProvider {
 	 *
 	 * @return The wizard configuration panels top control or <code>null</code> if the configuration panel has been not setup yet.
 	 */
-	public Composite getTopControl();
+	public Composite getControl();
 
 	/**
 	 * Validates the control and sets the message text and type so the parent

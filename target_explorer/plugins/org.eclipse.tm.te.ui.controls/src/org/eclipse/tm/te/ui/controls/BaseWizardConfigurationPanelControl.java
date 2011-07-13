@@ -12,6 +12,7 @@ package org.eclipse.tm.te.ui.controls;
 import java.util.Hashtable;
 import java.util.Map;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.dialogs.IDialogPage;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StackLayout;
@@ -82,10 +83,10 @@ public class BaseWizardConfigurationPanelControl extends BaseDialogPageControl {
 	/**
 	 * To be called from the embedding control to setup the controls UI elements.
 	 *
-	 * @param parent The parent control. Must be not <code>null</code>!
+	 * @param parent The parent control. Must not be <code>null</code>!
 	 */
-	public void doSetupPanel(Composite parent, Object layoutData, String[] configurationPanelKeys) {
-		assert parent != null;
+	public void setupPanel(Composite parent, String[] configurationPanelKeys) {
+		Assert.isNotNull(parent);
 
 		if (isPanelIsGroup()) {
 			panel = new Group(parent, SWT.NONE);
@@ -93,9 +94,8 @@ public class BaseWizardConfigurationPanelControl extends BaseDialogPageControl {
 		} else {
 			panel = new Composite(parent, SWT.NONE);
 		}
-		assert panel != null;
+		Assert.isNotNull(panel);
 		panel.setFont(parent.getFont());
-		panel.setLayoutData(layoutData);
 
 		panelLayout = new StackLayout();
 		panel.setLayout(panelLayout);
@@ -113,7 +113,7 @@ public class BaseWizardConfigurationPanelControl extends BaseDialogPageControl {
 	/**
 	 * Returns the wizard configuration panel instance registered for the given configuration panel key.
 	 *
-	 * @param key The key to get the wizard configuration panel for. Must be not <code>null</code>!
+	 * @param key The key to get the wizard configuration panel for. Must not be <code>null</code>!
 	 * @return The wizard configuration panel instance or <code>null</code> if the key is unknown.
 	 */
 	public IWizardConfigurationPanel getConfigurationPanel(String key) {
@@ -126,7 +126,7 @@ public class BaseWizardConfigurationPanelControl extends BaseDialogPageControl {
 	 * list of known panels. If the given configuration panel is <code>null</code>, any configuration
 	 * panel stored under the given key is removed from the list of known panels.
 	 *
-	 * @param key The key to get the wizard configuration panel for. Must be not <code>null</code>!
+	 * @param key The key to get the wizard configuration panel for. Must not be <code>null</code>!
 	 * @param panel The wizard configuration panel instance or <code>null</code>.
 	 */
 	public void addConfigurationPanel(String key, IWizardConfigurationPanel panel) {
@@ -144,7 +144,7 @@ public class BaseWizardConfigurationPanelControl extends BaseDialogPageControl {
 	 * The default implementation iterates over the given list of configuration panel keys and calls
 	 * <code>setupPanel(...)</code> for each of them.
 	 *
-	 * @param parent The parent composite to use for the wizard configuration panels. Must be not <code>null</code>!
+	 * @param parent The parent composite to use for the wizard configuration panels. Must not be <code>null</code>!
 	 * @param configurationPanelKeys The list of configuration panels to initialize. Might be <code>null</code> or empty!
 	 */
 	public void setupConfigurationPanels(Composite parent, String[] configurationPanelKeys) {
@@ -162,14 +162,14 @@ public class BaseWizardConfigurationPanelControl extends BaseDialogPageControl {
 	 * most top configuration panel. If no configuration panel is registered under the given key,
 	 * nothing will happen.
 	 *
-	 * @param key The key to get the wizard configuration panel for. Must be not <code>null</code>!
+	 * @param key The key to get the wizard configuration panel for. Must not be <code>null</code>!
 	 */
 	public void showConfigurationPanel(String key) {
 		if (key == null) return;
 
 		IWizardConfigurationPanel configPanel = getConfigurationPanel(key);
-		if (configPanel != null && configPanel.getTopControl() != null) {
-			panelLayout.topControl = configPanel.getTopControl();
+		if (configPanel != null && configPanel.getControl() != null) {
+			panelLayout.topControl = configPanel.getControl();
 			panel.layout();
 		}
 	}

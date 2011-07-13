@@ -82,6 +82,7 @@ public class Messages extends NLS {
 	public static String FileSelectionControl_editfield_label;
 
 	public static String RemoteHostAddressControl_label;
+	public static String RemoteHostAddressControl_button_label;
 	public static String RemoteHostAddressControl_information_checkNameAddressUserInformation;
 	public static String RemoteHostAddressControl_information_checkNameAddressField;
 	public static String RemoteHostAddressControl_information_checkNameAddressFieldOk;
@@ -89,6 +90,8 @@ public class Messages extends NLS {
 	public static String RemoteHostAddressControl_error_invalidTargetNameAddress;
 	public static String RemoteHostAddressControl_error_invalidTargetIpAddress;
 	public static String RemoteHostAddressControl_error_targetNameNotResolveable;
+
+	public static String RemoteHostPortControl_label;
 
 	public static String NameOrIPValidator_Information_MissingNameOrIP;
 	public static String NameOrIPValidator_Information_MissingName;

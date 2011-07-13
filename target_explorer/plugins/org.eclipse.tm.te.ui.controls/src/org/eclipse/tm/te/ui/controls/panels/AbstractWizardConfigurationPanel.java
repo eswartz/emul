@@ -9,7 +9,10 @@
  *******************************************************************************/
 package org.eclipse.tm.te.ui.controls.panels;
 
+import org.eclipse.core.runtime.Assert;
+import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.dialogs.IMessageProvider;
+import org.eclipse.swt.widgets.Composite;
 import org.eclipse.tm.te.ui.controls.BaseDialogPageControl;
 import org.eclipse.tm.te.ui.controls.interfaces.IWizardConfigurationPanel;
 
@@ -18,6 +21,7 @@ import org.eclipse.tm.te.ui.controls.interfaces.IWizardConfigurationPanel;
  */
 public abstract class AbstractWizardConfigurationPanel implements IWizardConfigurationPanel {
 	private final BaseDialogPageControl parentControl;
+	private Composite topControl = null;
 
 	private String message = null;
 	private int messageType = IMessageProvider.NONE;
@@ -25,11 +29,11 @@ public abstract class AbstractWizardConfigurationPanel implements IWizardConfigu
 	/**
 	 * Constructor.
 	 *
-	 * @param parentPageControl The parent control this backend configuration panel is embedded in. Must be not <code>null</code>!
+	 * @param parentPageControl The parent control. Must not be <code>null</code>!
 	 */
 	public AbstractWizardConfigurationPanel(BaseDialogPageControl parentPageControl) {
 		super();
-		assert parentPageControl != null;
+		Assert.isNotNull(parentPageControl);
 		this.parentControl = parentPageControl;
 	}
 
@@ -66,5 +70,52 @@ public abstract class AbstractWizardConfigurationPanel implements IWizardConfigu
 	protected final void setMessage(String message, int messageType) {
 		this.message = message;
 		this.messageType = messageType;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.tm.te.ui.controls.interfaces.IWizardConfigurationPanel#dispose()
+	 */
+	public void dispose() {
+	}
+
+	/**
+	 * Sets the top control.
+	 *
+	 * @param topControl The top control or <code>null</code>.
+	 */
+	protected void setControl(Composite topControl) {
+		this.topControl = topControl;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.tm.te.ui.controls.interfaces.IWizardConfigurationPanel#getControl()
+	 */
+	public Composite getControl() {
+		return topControl;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.tm.te.ui.controls.interfaces.IWizardConfigurationPanel#doRestoreWidgetValues(org.eclipse.jface.dialogs.IDialogSettings, java.lang.String)
+	 */
+	public void doRestoreWidgetValues(IDialogSettings settings, String idPrefix) {
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.tm.te.ui.controls.interfaces.IWizardConfigurationPanel#doSaveWidgetValues(org.eclipse.jface.dialogs.IDialogSettings, java.lang.String)
+	 */
+	public void doSaveWidgetValues(IDialogSettings settings, String idPrefix) {
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.tm.te.ui.controls.interfaces.IWizardConfigurationPanel#adjustControlEnablement()
+	 */
+	public void adjustControlEnablement() {
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.tm.te.ui.controls.interfaces.IWizardConfigurationPanel#isValid()
+	 */
+	public boolean isValid() {
+		return true;
 	}
 }

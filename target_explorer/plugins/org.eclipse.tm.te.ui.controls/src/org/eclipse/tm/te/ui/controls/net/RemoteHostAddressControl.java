@@ -47,7 +47,8 @@ public class RemoteHostAddressControl extends BaseEditBrowseTextControl {
 		super(parentPage);
 		setIsGroup(false);
 		setHasHistory(false);
-		setEditFieldControlText(Messages.RemoteHostAddressControl_label);
+		setEditFieldLabel(Messages.RemoteHostAddressControl_label);
+		setButtonLabel(Messages.RemoteHostAddressControl_button_label);
 	}
 
 	/* (non-Javadoc)
@@ -82,38 +83,30 @@ public class RemoteHostAddressControl extends BaseEditBrowseTextControl {
 	 * @see org.eclipse.tm.te.ui.controls.BaseEditBrowseTextControl#configureEditFieldValidator(org.eclipse.tm.te.ui.controls.validator.Validator)
 	 */
 	@Override
-	protected void configureEditFieldValidator(Validator editFieldValidator) {
-		if (editFieldValidator != null && editFieldValidator instanceof NameOrIPValidator) {
-			editFieldValidator.setMessageText(NameOrIPValidator.INFO_MISSING_NAME_OR_IP, Messages.RemoteHostAddressControl_information_missingTargetNameAddress);
-			editFieldValidator.setMessageText(NameOrIPValidator.ERROR_INVALID_NAME_OR_IP, Messages.RemoteHostAddressControl_error_invalidTargetNameAddress);
-			editFieldValidator.setMessageText(NameOrIPValidator.ERROR_INVALID_NAME, Messages.RemoteHostAddressControl_error_invalidTargetNameAddress);
-			editFieldValidator.setMessageText(NameOrIPValidator.ERROR_INVALID_IP, Messages.RemoteHostAddressControl_error_invalidTargetIpAddress);
-			editFieldValidator.setMessageText(NameOrIPValidator.INFO_CHECK_NAME, getUserInformationTextCheckNameAddress());
+	protected void configureEditFieldValidator(Validator validator) {
+		if (validator != null && validator instanceof NameOrIPValidator) {
+			validator.setMessageText(NameOrIPValidator.INFO_MISSING_NAME_OR_IP, Messages.RemoteHostAddressControl_information_missingTargetNameAddress);
+			validator.setMessageText(NameOrIPValidator.ERROR_INVALID_NAME_OR_IP, Messages.RemoteHostAddressControl_error_invalidTargetNameAddress);
+			validator.setMessageText(NameOrIPValidator.ERROR_INVALID_NAME, Messages.RemoteHostAddressControl_error_invalidTargetNameAddress);
+			validator.setMessageText(NameOrIPValidator.ERROR_INVALID_IP, Messages.RemoteHostAddressControl_error_invalidTargetIpAddress);
+			validator.setMessageText(NameOrIPValidator.INFO_CHECK_NAME, getUserInformationTextCheckNameAddress());
 		}
 	}
 
-	private VerifyListener fEditFieldControlVerifyListener;
+	private VerifyListener verifyListener;
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.ui.controls.BaseEditBrowseTextControl#doGetEditFieldControlVerifyListener()
 	 */
 	@Override
 	protected VerifyListener doGetEditFieldControlVerifyListener() {
-		if (fEditFieldControlVerifyListener == null) {
-			fEditFieldControlVerifyListener =
+		if (verifyListener == null) {
+			verifyListener =
 				new NameOrIPVerifyListener(
 					NameOrIPVerifyListener.ATTR_IP |
 					NameOrIPVerifyListener.ATTR_NAME);
 		}
-		return fEditFieldControlVerifyListener;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.ui.controls.BaseEditBrowseTextControl#isAdjustEditFieldControlWidthHint()
-	 */
-	@Override
-	protected boolean isAdjustEditFieldControlWidthHint() {
-		return false;
+		return verifyListener;
 	}
 
 	/**
@@ -223,7 +216,7 @@ public class RemoteHostAddressControl extends BaseEditBrowseTextControl {
 		}	catch (Exception e) {}
 	}
 
-	void setCheckResultMessage(int severity, String message) {
+	protected void setCheckResultMessage(int severity, String message) {
 		setMessage(message, severity);
 		if (getParentPage() instanceof DialogPage) {
 			((DialogPage)getParentPage()).setMessage(message, severity);

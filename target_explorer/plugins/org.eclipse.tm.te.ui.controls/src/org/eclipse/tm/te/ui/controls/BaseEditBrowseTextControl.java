@@ -1173,9 +1173,9 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 	 * Configure the edit field validator.
 	 * Subclasses should override this method to configure the validator.
 	 *
-	 * @param editFieldValidator The validator to be configured.
+	 * @param validator The validator to be configured.
 	 */
-	protected void configureEditFieldValidator(Validator editFieldValidator) {
+	protected void configureEditFieldValidator(Validator validator) {
 		// do nothing
 	}
 
