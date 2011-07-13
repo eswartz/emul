@@ -25,6 +25,7 @@ Export-Package: org.eclipse.tm.te.ui,
  org.eclipse.tm.te.ui.tables,
  org.eclipse.tm.te.ui.tables.properties,
  org.eclipse.tm.te.ui.trees,
+ org.eclipse.tm.te.ui.utils,
  org.eclipse.tm.te.ui.wizards,
  org.eclipse.tm.te.ui.wizards.newWizard,
  org.eclipse.tm.te.ui.wizards.pages

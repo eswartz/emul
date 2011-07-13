@@ -310,7 +310,7 @@ public class CustomFormToolkit extends PlatformObject {
 	 * If <code>overwriteBackground</code> is set, the parent background color and background image
 	 * is applied to the created section.
 	 *
-	 * @param parent The parent scrolled form. Must not be <code>null</code>.
+	 * @param scrolledForm The parent scrolled form. Must not be <code>null</code>.
 	 * @param title The expandable composite title. Must not be <code>null</code>.
 	 * @param overwriteBackground If <code>true</code>, the parent background color and image are applied to the section.
 	 *
@@ -328,6 +328,51 @@ public class CustomFormToolkit extends PlatformObject {
 		if (overwriteBackground) {
 			section.setBackground(scrolledForm.getBackground());
 			section.setBackgroundImage(scrolledForm.getBackgroundImage());
+		}
+
+		// Configure the layout
+		section.setLayout(new GridLayout());
+		section.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+
+		// Create the client area the caller can use as parent for the control
+		Composite client = getFormToolkit().createComposite(section);
+		client.setLayout(new GridLayout());
+
+		// Overwrite background color and image if requested
+		if (overwriteBackground) {
+			client.setBackground(section.getBackground());
+			client.setBackgroundImage(section.getBackgroundImage());
+		}
+
+		// And associated the client
+		section.setClient(client);
+
+		return section;
+	}
+
+	/**
+	 * Creates an non-expandable section within the given parent composite using the given title.
+	 * If <code>overwriteBackground</code> is set, the parent background color and background image
+	 * is applied to the created section.
+	 *
+	 * @param parent The parent composite. Must not be <code>null</code>.
+	 * @param title The expandable composite title. Must not be <code>null</code>.
+	 * @param overwriteBackground If <code>true</code>, the parent background color and image are applied to the section.
+	 *
+	 * @return The section.
+	 */
+	public final Section createSection(final Composite parent, String title, boolean overwriteBackground) {
+		Assert.isNotNull(parent);
+		Assert.isNotNull(title);
+
+		// Create the section within the scrollable container
+		final Section section = getFormToolkit().createSection(parent, ExpandableComposite.TITLE_BAR | ExpandableComposite.CLIENT_INDENT);
+		section.setText(title);
+
+		// Overwrite background color and image if requested
+		if (overwriteBackground) {
+			section.setBackground(parent.getBackground());
+			section.setBackgroundImage(parent.getBackgroundImage());
 		}
 
 		// Configure the layout
