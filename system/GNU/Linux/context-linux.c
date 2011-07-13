@@ -68,7 +68,6 @@
 #define PTRACE_EVENT_EXIT       6
 #endif
 
-#define USE_ESRCH_WORKAROUND    1
 #define USE_PTRACE_SYSCALL      0
 
 static const int PTRACE_FLAGS =
@@ -196,10 +195,12 @@ int context_stop(Context * ctx) {
     assert(!ext->regs_dirty);
     if (tkill(ext->pid, SIGSTOP) < 0) {
         int err = errno;
-        if (err != ESRCH) {
-            trace(LOG_ALWAYS, "error: tkill(SIGSTOP) failed: ctx %#lx, id %s, error %d %s",
-                ctx, ctx->id, err, errno_to_str(err));
+        if (err == ESRCH) {
+            ctx->exiting = 1;
+            return 0;
         }
+        trace(LOG_ALWAYS, "error: tkill(SIGSTOP) failed: ctx %#lx, id %s, error %d %s",
+            ctx, ctx->id, err, errno_to_str(err));
         errno = err;
         return -1;
     }
@@ -255,13 +256,11 @@ int context_continue(Context * ctx) {
     if (ext->regs_dirty) {
         if (ptrace(PTRACE_SETREGS, ext->pid, 0, ext->regs) < 0) {
             int err = errno;
-#if USE_ESRCH_WORKAROUND
             if (err == ESRCH) {
                 ext->regs_dirty = 0;
                 send_context_started_event(ctx);
                 return 0;
             }
-#endif
             trace(LOG_ALWAYS, "error: ptrace(PTRACE_SETREGS) failed: ctx %#lx, id %s, error %d %s",
                 ctx, ctx->id, err, errno_to_str(err));
             errno = err;
@@ -275,12 +274,10 @@ int context_continue(Context * ctx) {
     if (ptrace(PTRACE_CONT, ext->pid, 0, signal) < 0) {
 #endif
         int err = errno;
-#if USE_ESRCH_WORKAROUND
         if (err == ESRCH) {
             send_context_started_event(ctx);
             return 0;
         }
-#endif
         trace(LOG_ALWAYS, "error: ptrace(PTRACE_CONT, ...) failed: ctx %#lx, id %s, error %d %s",
             ctx, ctx->id, err, errno_to_str(err));
         errno = err;
@@ -312,14 +309,12 @@ int context_single_step(Context * ctx) {
     if (ext->regs_dirty) {
         if (ptrace(PTRACE_SETREGS, ext->pid, 0, ext->regs) < 0) {
             int err = errno;
-#if USE_ESRCH_WORKAROUND
             if (err == ESRCH) {
                 ext->regs_dirty = 0;
                 ext->pending_step = 1;
                 send_context_started_event(ctx);
                 return 0;
             }
-#endif
             trace(LOG_ALWAYS, "error: ptrace(PTRACE_SETREGS) failed: ctx %#lx, id %s, error %d %s",
                 ctx, ctx->id, err, errno_to_str(err));
             errno = err;
@@ -329,13 +324,11 @@ int context_single_step(Context * ctx) {
     }
     if (ptrace(PTRACE_SINGLESTEP, ext->pid, 0, 0) < 0) {
         int err = errno;
-#if USE_ESRCH_WORKAROUND
         if (err == ESRCH) {
             ext->pending_step = 1;
             send_context_started_event(ctx);
             return 0;
         }
-#endif
         trace(LOG_ALWAYS, "error: ptrace(PTRACE_SINGLESTEP, ...) failed: ctx %#lx, id %s, error %d %s",
             ctx, ctx->id, err, errno_to_str(err));
         errno = err;
@@ -750,6 +743,33 @@ static void event_pid_exited(pid_t pid, int status, int signal) {
 #   error "get_syscall_id() is not implemented for CPU other then X86"
 #endif
 
+static unsigned long get_child_pid(pid_t parent_pid) {
+    unsigned long child_pid = 0;
+    DIR * dir = NULL;
+    char task_file_name[FILE_PATH_SIZE];
+    snprintf(task_file_name, sizeof(task_file_name), "/proc/%d/task", parent_pid);
+    dir = opendir(task_file_name);
+    if (dir == NULL) {
+        trace(LOG_ALWAYS, "error: opendir(%s) failed; error %d %s",
+            task_file_name, errno, errno_to_str(errno));
+    }
+    else {
+        struct dirent * e;
+        for (;;) {
+            int n = 0;
+            e = readdir(dir);
+            if (e == NULL) break;
+            n = atoi(e->d_name);
+            if (n != 0 && context_find_from_pid(n, 1) == NULL) {
+                child_pid = n;
+                break;
+            }
+        }
+        closedir(dir);
+    }
+    return child_pid;
+}
+
 static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
     int stopped_by_exception = 0;
     unsigned long msg = 0;
@@ -797,7 +817,7 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
             flags |= PTRACE_O_TRACEFORK;
             flags |= PTRACE_O_TRACEVFORK;
         }
-        if (ptrace((enum __ptrace_request)PTRACE_SETOPTIONS, ext->pid, 0, flags) < 0) {
+        if (ptrace((enum __ptrace_request)PTRACE_SETOPTIONS, ext->pid, 0, flags) < 0 && errno != ESRCH) {
             int err = errno;
             trace(LOG_ALWAYS, "error: ptrace(PTRACE_SETOPTIONS) failed: pid %d, error %d %s",
                 ext->pid, err, errno_to_str(err));
@@ -812,38 +832,21 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
     case PTRACE_EVENT_VFORK:
     case PTRACE_EVENT_CLONE:
         if (ptrace((enum __ptrace_request)PTRACE_GETEVENTMSG, pid, 0, &msg) < 0) {
-            trace(LOG_ALWAYS, "error: ptrace(PTRACE_GETEVENTMSG) failed; pid %d, error %d %s",
-                pid, errno, errno_to_str(errno));
-            break;
+            if (errno == ESRCH) {
+                msg = SIGKILL;
+            }
+            else {
+                trace(LOG_ALWAYS, "error: ptrace(PTRACE_GETEVENTMSG) failed; pid %d, error %d %s",
+                    pid, errno, errno_to_str(errno));
+                break;
+            }
         }
         {
             Context * prs2 = NULL;
             Context * ctx2 = NULL;
             /* Check the thread is not killed already by SIGKILL */
             if (msg == SIGKILL) {
-                unsigned long child_pid = 0;
-                DIR * dir = NULL;
-                char task_file_name[FILE_PATH_SIZE];
-                snprintf(task_file_name, sizeof(task_file_name), "/proc/%d/task", EXT(ctx->parent)->pid);
-                dir = opendir(task_file_name);
-                if (dir == NULL) {
-                    trace(LOG_ALWAYS, "error: opendir(%s) failed; error %d %s",
-                        task_file_name, errno, errno_to_str(errno));
-                }
-                else {
-                    struct dirent * e;
-                    for (;;) {
-                        int n = 0;
-                        e = readdir(dir);
-                        if (e == NULL) break;
-                        n = atoi(e->d_name);
-                        if (n != 0 && context_find_from_pid(n, 1) == NULL) {
-                            child_pid = n;
-                            break;
-                        }
-                    }
-                    closedir(dir);
-                }
+                unsigned long child_pid = get_child_pid(EXT(ctx->parent)->pid);
                 if (child_pid) {
                     msg = child_pid;
                 }
@@ -897,6 +900,30 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
         memory_map_event_mapping_chnaged(ctx->mem);
         break;
     case PTRACE_EVENT_EXIT:
+        {
+            /* SIGKILL can override PTRACE_EVENT_CLONE event */
+            unsigned long child_pid = get_child_pid(EXT(ctx->parent)->pid);
+            if (child_pid) {
+                Context * prs = ctx->parent;
+                Context * ctx2 = create_context(pid2id(child_pid, EXT(prs)->pid));
+                EXT(ctx2)->pid = child_pid;
+                EXT(ctx2)->attach_children = EXT(prs)->attach_children;
+                EXT(ctx2)->regs = (REG_SET *)loc_alloc(sizeof(REG_SET));
+                ctx2->mem = prs;
+                ctx2->big_endian = prs->big_endian;
+                ctx2->sig_dont_stop = ctx->sig_dont_stop;
+                ctx2->sig_dont_pass = ctx->sig_dont_pass;
+                ctx2->exiting = 1;
+                (ctx2->creator = ctx)->ref_count++;
+                (ctx2->parent = prs)->ref_count++;
+                list_add_last(&ctx2->cldl, &prs->children);
+                link_context(ctx2);
+                trace(LOG_EVENTS, "event: new context 0x%x, id %s", ctx2, ctx2->id);
+                send_context_created_event(ctx2);
+                event_pid_stopped(child_pid, SIGTRAP, 0, 0);
+                add_waitpid_process(child_pid);
+            }
+        }
         ctx->exiting = 1;
         ext->regs_dirty = 0;
         break;
@@ -937,7 +964,6 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
 
         if (ptrace(PTRACE_GETREGS, ext->pid, 0, ext->regs) < 0) {
             assert(errno != 0);
-#if USE_ESRCH_WORKAROUND
             if (errno == ESRCH) {
                 /* Racing condition: somebody resumed this context while we are handling stop event.
                  *
@@ -950,7 +976,6 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
                 ctx->stopped = 0;
                 return;
             }
-#endif
             ext->regs_error = get_error_report(errno);
             trace(LOG_ALWAYS, "error: ptrace(PTRACE_GETREGS) failed; pid %d, error %d %s",
                 ext->pid, errno, errno_to_str(errno));

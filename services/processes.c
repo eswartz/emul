@@ -1294,7 +1294,7 @@ static void command_start(char * token, Channel * c, void * x) {
         if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
         envp = json_read_alloc_string_array(&c->inp, &envp_len);
         if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-        if (version > 0 && (peek_stream(&c->inp) == '{'|| peek_stream(&c->inp) == 'n')) {
+        if (version > 0 && (peek_stream(&c->inp) == '{' || peek_stream(&c->inp) == 'n')) {
             json_read_struct(&c->inp, read_start_params, &params);
         }
         else {

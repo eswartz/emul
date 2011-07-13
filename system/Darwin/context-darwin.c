@@ -133,10 +133,12 @@ int context_stop(Context * ctx) {
     assert(!EXT(ctx)->regs_dirty);
     if (kill(EXT(ctx)->pid, SIGSTOP) < 0) {
         int err = errno;
-        if (err != ESRCH) {
-            trace(LOG_ALWAYS, "error: tkill(SIGSTOP) failed: ctx %#lx, id %s, error %d %s",
-                ctx, ctx->id, err, errno_to_str(err));
+        if (err == ESRCH) {
+            ctx->exiting = 1;
+            return 0;
         }
+        trace(LOG_ALWAYS, "error: tkill(SIGSTOP) failed: ctx %#lx, id %s, error %d %s",
+            ctx, ctx->id, err, errno_to_str(err));
         errno = err;
         return -1;
     }
@@ -204,12 +206,10 @@ int context_continue(Context * ctx) {
     }
     if (ptrace(PT_CONTINUE, EXT(ctx)->pid, 0, signal) < 0) {
         int err = errno;
-#if USE_ESRCH_WORKAROUND
         if (err == ESRCH) {
             send_context_started_event(ctx);
             return 0;
         }
-#endif
         trace(LOG_ALWAYS, "error: ptrace(PT_CONTINUE, ...) failed: ctx %#lx, id %s, error %d %s",
             ctx, ctx->id, err, errno_to_str(err));
         errno = err;
@@ -249,13 +249,11 @@ int context_single_step(Context * ctx) {
     }
     if (ptrace(PT_STEP, EXT(ctx)->pid, 0, 0) < 0) {
         int err = errno;
-#if USE_ESRCH_WORKAROUND
         if (err == ESRCH) {
             EXT(ctx)->pending_step = 1;
             send_context_started_event(ctx);
             return 0;
         }
-#endif
         trace(LOG_ALWAYS, "error: ptrace(PT_STEP, ...) failed: ctx %#lx, id %s, error %d %s",
             ctx, ctx->id, err, errno_to_str(err));
         errno = err;

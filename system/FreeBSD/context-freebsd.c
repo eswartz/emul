@@ -48,7 +48,6 @@
 #define PTRACE_CONT       PT_CONTINUE
 #define PTRACE_SINGLESTEP PT_STEP
 
-#define USE_ESRCH_WORKAROUND    1
 #define USE_PTRACE_SYSCALL      0
 
 typedef struct ContextExtensionBSD {
@@ -149,10 +148,12 @@ int context_stop(Context * ctx) {
     assert(!EXT(ctx)->regs_dirty);
     if (tkill(EXT(ctx)->pid, SIGSTOP) < 0) {
         int err = errno;
-        if (err != ESRCH) {
-            trace(LOG_ALWAYS, "error: tkill(SIGSTOP) failed: ctx %#lx, id %s, error %d %s",
-                ctx, ctx->id, err, errno_to_str(err));
+        if (err == ESRCH) {
+            ctx->exiting = 1;
+            return 0;
         }
+        trace(LOG_ALWAYS, "error: tkill(SIGSTOP) failed: ctx %#lx, id %s, error %d %s",
+            ctx, ctx->id, err, errno_to_str(err));
         errno = err;
         return -1;
     }
@@ -189,13 +190,11 @@ int context_continue(Context * ctx) {
     if (EXT(ctx)->regs_dirty) {
         if (ptrace(PTRACE_SETREGS, EXT(ctx)->pid, 0, (int)EXT(ctx)->regs) < 0) {
             int err = errno;
-#if USE_ESRCH_WORKAROUND
             if (err == ESRCH) {
                 EXT(ctx)->regs_dirty = 0;
                 send_context_started_event(ctx);
                 return 0;
             }
-#endif
             trace(LOG_ALWAYS, "error: ptrace(PTRACE_SETREGS) failed: ctx %#lx, id %s, error %d %s",
                 ctx, ctx->id, err, errno_to_str(err));
             errno = err;
@@ -205,12 +204,10 @@ int context_continue(Context * ctx) {
     }
     if (ptrace(PTRACE_CONT, EXT(ctx)->pid, 0, signal) < 0) {
         int err = errno;
-#if USE_ESRCH_WORKAROUND
         if (err == ESRCH) {
             send_context_started_event(ctx);
             return 0;
         }
-#endif
         trace(LOG_ALWAYS, "error: ptrace(PTRACE_CONT, ...) failed: ctx %#lx, id %s, error %d %s",
             ctx, ctx->id, err, errno_to_str(err));
         errno = err;
@@ -234,14 +231,12 @@ int context_single_step(Context * ctx) {
     if (EXT(ctx)->regs_dirty) {
         if (ptrace(PTRACE_SETREGS, EXT(ctx)->pid, 0, (int)EXT(ctx)->regs) < 0) {
             int err = errno;
-#if USE_ESRCH_WORKAROUND
             if (err == ESRCH) {
                 EXT(ctx)->regs_dirty = 0;
                 EXT(ctx)->pending_step = 1;
                 send_context_started_event(ctx);
                 return 0;
             }
-#endif
             trace(LOG_ALWAYS, "error: ptrace(PTRACE_SETREGS) failed: ctx %#lx, id %s, error %d %s",
                 ctx, ctx->id, err, errno_to_str(err));
             errno = err;
@@ -251,13 +246,11 @@ int context_single_step(Context * ctx) {
     }
     if (ptrace(PTRACE_SINGLESTEP, EXT(ctx)->pid, 0, 0) < 0) {
         int err = errno;
-#if USE_ESRCH_WORKAROUND
         if (err == ESRCH) {
             EXT(ctx)->pending_step = 1;
             send_context_started_event(ctx);
             return 0;
         }
-#endif
         trace(LOG_ALWAYS, "error: ptrace(PTRACE_SINGLESTEP, ...) failed: ctx %#lx, id %s, error %d %s",
             ctx, ctx->id, err, errno_to_str(err));
         errno = err;
@@ -613,7 +606,6 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
 
         if (ptrace(PTRACE_GETREGS, EXT(ctx)->pid, 0, (int)EXT(ctx)->regs) < 0) {
             assert(errno != 0);
-#if USE_ESRCH_WORKAROUND
             if (errno == ESRCH) {
                 /* Racing condition: somebody resumed this context while we are handling stop event.
                  *
@@ -626,7 +618,6 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
                 ctx->stopped = 0;
                 return;
             }
-#endif
             EXT(ctx)->regs_error = get_error_report(errno);
             trace(LOG_ALWAYS, "error: ptrace(PTRACE_GETREGS) failed; id %s, error %d %s",
                 ctx->id, errno, errno_to_str(errno));
