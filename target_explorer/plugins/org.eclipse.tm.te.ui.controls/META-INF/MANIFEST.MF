@@ -17,4 +17,5 @@ Export-Package: org.eclipse.tm.te.ui.controls,
  org.eclipse.tm.te.ui.controls.interfaces,
  org.eclipse.tm.te.ui.controls.net,
  org.eclipse.tm.te.ui.controls.nls,
+ org.eclipse.tm.te.ui.controls.panels,
  org.eclipse.tm.te.ui.controls.validator
