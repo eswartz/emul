@@ -225,6 +225,7 @@ static void waitpid_done(void * arg) {
 void add_waitpid_process(int pid) {
     AsyncReqInfo * req = (AsyncReqInfo *)loc_alloc_zero(sizeof(AsyncReqInfo));
     assert(listener_cnt > 0);
+    trace(LOG_WAITPID, "waitpid: add pid %d", pid);
     req->done = waitpid_done;
     req->type = AsyncReqWaitpid;
     req->u.wpid.pid = pid;
