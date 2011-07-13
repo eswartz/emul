@@ -48,7 +48,7 @@ public class ChannelTraceListener implements TraceListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param channel The channel. Must be not <code>null</code>.
+	 * @param channel The channel. Must not be <code>null</code>.
 	 */
 	public ChannelTraceListener(IChannel channel) {
 		Assert.isNotNull(channel);
