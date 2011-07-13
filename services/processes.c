@@ -1204,29 +1204,27 @@ static int start_process(Channel * c, char ** envp, char * dir, char * exe, char
 
         fd_tty_master = posix_openpt(O_RDWR|O_NOCTTY);
         if (fd_tty_master < 0 || grantpt(fd_tty_master) < 0 || unlockpt(fd_tty_master) < 0) err = errno;
-        if (!err) {
-             tty_slave_name = ptsname(fd_tty_master);
-             if (tty_slave_name == NULL) err = EINVAL;
-        }
-
-        if (!err && fd_tty_master < 3) {
-            int fd0 = fd_tty_master;
-            if ((fd_tty_master = dup(fd_tty_master)) < 0 || close(fd0)) err = errno;
-        }
+        if (!err && (tty_slave_name = ptsname(fd_tty_master)) == NULL) err = EINVAL;
 
         if (!err) {
             *pid = fork();
             if (*pid < 0) err = errno;
             if (*pid == 0) {
                 int fd = -1;
-                int fd_tty_slave = -1;
 
-                setsid();
+                if (!err && setsid() < 0) err = errno;;
+                if (!err && (fd = open(tty_slave_name, O_RDWR)) < 0) err = errno;
+                while (!err && fd < 3) {
+                    int fd0 = fd;
+                    if ((fd = dup(fd)) < 0 || close(fd0)) err = errno;
+                }
+#if defined(TIOCSCTTY)
+                if (!err && (ioctl(fd, TIOCSCTTY, NULL)) < 0) err = errno;
+#endif
+                if (!err && dup2(fd, 0) < 0) err = errno;
+                if (!err && dup2(fd, 1) < 0) err = errno;
+                if (!err && dup2(fd, 2) < 0) err = errno;
                 if (!err && (fd = sysconf(_SC_OPEN_MAX)) < 0) err = errno;
-                if (!err && (fd_tty_slave = open(tty_slave_name, O_RDWR)) < 0) err = errno;
-                if (!err && dup2(fd_tty_slave, 0) < 0) err = errno;
-                if (!err && dup2(fd_tty_slave, 1) < 0) err = errno;
-                if (!err && dup2(fd_tty_slave, 2) < 0) err = errno;
                 while (!err && fd > 3) close(--fd);
                 if (!err && params->attach && context_attach_self() < 0) err = errno;
                 if (!err) {
@@ -1239,7 +1237,7 @@ static int start_process(Channel * c, char ** envp, char * dir, char * exe, char
                 exit(err);
             }
         }
-        if ((fd_tty_out = dup(fd_tty_master)) < 0) err = errno;
+        if (!err && (fd_tty_out = dup(fd_tty_master)) < 0) err = errno;
         if (!err) {
             *prs = (ChildProcess *)loc_alloc_zero(sizeof(ChildProcess));
             (*prs)->pid = *pid;
@@ -1247,6 +1245,10 @@ static int start_process(Channel * c, char ** envp, char * dir, char * exe, char
             (*prs)->inp_struct = write_process_input(*prs, fd_tty_master);
             (*prs)->out_struct = read_process_output(*prs, fd_tty_out);
             list_add_first(&(*prs)->link, &prs_list);
+        }
+        else {
+            if (fd_tty_master >= 0) close(fd_tty_master);
+            if (fd_tty_out >= 0) close(fd_tty_out);
         }
     }
 

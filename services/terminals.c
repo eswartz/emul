@@ -101,6 +101,7 @@ typedef struct Terminal {
     char encoding[TERM_PROP_DEF_SIZE];
     unsigned long width;
     unsigned long height;
+    int prompt_ok;
     int terminated;
     long exit_code;
 
@@ -279,7 +280,7 @@ static int kill_term(Terminal * term) {
         if (!CloseHandle(h) && !err) err = set_win32_errno(GetLastError());
     }
 #else
-    if (kill(term->pid, TERM_EXIT_SIGNAL) < 0) err = errno;
+    if (kill(term->pid, term->prompt_ok ? TERM_EXIT_SIGNAL : SIGKILL) < 0) err = errno;
 #endif
     term->terminated = 1;
     return err;
@@ -318,8 +319,8 @@ static void terminal_exited(Terminal * prs) {
         clear_trap(&trap);
     }
     else {
-        trace(LOG_ALWAYS, "Exception sending terminal exited event: %d %s", trap.error,
-                errno_to_str(trap.error));
+        trace(LOG_ALWAYS, "Exception sending terminal exited event: %d %s",
+            trap.error, errno_to_str(trap.error));
     }
 
     list_remove(&prs->link);
@@ -419,23 +420,21 @@ static void terminal_output_streams_callback(VirtualStream * stream, int event_c
         }
 
         assert(buf_len <= (int) sizeof(out->buf));
-        assert(out->buf_pos <= (size_t) buf_len);
+        assert(out->buf_pos <= (size_t)buf_len);
         assert(out->req.u.fio.bufp == out->buf);
 #ifdef __linux__
-        if (err == EIO)
-        err = 0;
+        if (err == EIO) err = 0;
 #endif
-        if (err) trace(LOG_ALWAYS, "Can't read terminal output stream: %d %s", err, errno_to_str(
-                err));
+        if (err) trace(LOG_ALWAYS, "Can't read terminal output stream: %d %s", err, errno_to_str(err));
 
-        if (out->buf_pos < (size_t) buf_len || out->eos != eos) {
+        if (out->buf_pos < (size_t)buf_len || out->eos != eos) {
             size_t done = 0;
             virtual_stream_add_data(stream, out->buf + out->buf_pos, buf_len - out->buf_pos, &done, eos);
             out->buf_pos += done;
             if (eos) out->eos = 1;
         }
 
-        if (out->buf_pos >= (size_t) buf_len) {
+        if (out->buf_pos >= (size_t)buf_len) {
             if (!eos) {
                 out->req_posted = 1;
                 async_req_post(&out->req);
@@ -455,10 +454,11 @@ static void terminal_output_streams_callback(VirtualStream * stream, int event_c
 
 static void read_terminal_output_done(void * x) {
     AsyncReqInfo * req = (AsyncReqInfo *) x;
-    TerminalOutput * out = (TerminalOutput *) req->client_data;
+    TerminalOutput * out = (TerminalOutput *)req->client_data;
 
     out->buf_pos = 0;
     out->req_posted = 0;
+    if (out->prs && !out->prs->prompt_ok && out->req.u.fio.rval > 0) out->prs->prompt_ok = 1;
     terminal_output_streams_callback(out->vstream, 0, out);
 }
 
@@ -552,14 +552,6 @@ static void set_terminal_env(char *** envp, int * env_len, const char * pty_type
         ++i;
     }
 #endif
-}
-
-static void env_free(char ** envp, int envp_len) {
-    if (envp) {
-        int i;
-        for (i = 0; i < envp_len && envp[i]; i++) loc_free(envp[i]);
-        loc_free(envp);
-    }
 }
 
 #endif
@@ -701,8 +693,8 @@ static int start_terminal(Channel * c, const char * pty_type, const char * encod
         (*prs)->pid = *pid;
         (*prs)->bcg = c->bcg;
         (*prs)->channel = c;
-        if (*pty_type) snprintf((*prs)->pty_type, sizeof((*prs)->pty_type), "%s", pty_type);
-        if (*encoding) snprintf((*prs)->encoding, sizeof((*prs)->encoding), "%s", encoding);
+        strlcpy((*prs)->pty_type, pty_type, sizeof((*prs)->pty_type));
+        strlcpy((*prs)->encoding, encoding, sizeof((*prs)->encoding));
         (*prs)->inp_struct = write_terminal_input(*prs, fpipes[0][1]);
         (*prs)->out_struct = read_terminal_output(*prs, fpipes[1][0]);
         (*prs)->err_struct = read_terminal_output(*prs, fpipes[2][0]);
@@ -734,19 +726,11 @@ static int start_terminal(Channel * c, const char * pty_type, const char * encod
     memset(&size, 0, sizeof(struct winsize));
     fd_tty_master = posix_openpt(O_RDWR | O_NOCTTY);
     if (fd_tty_master < 0 || grantpt(fd_tty_master) < 0 || unlockpt(fd_tty_master) < 0) err = errno;
-    if (!err) {
-        tty_slave_name = ptsname(fd_tty_master);
-        if (tty_slave_name == NULL) err = EINVAL;
-    }
+    if (!err && (tty_slave_name = ptsname(fd_tty_master)) == NULL) err = EINVAL;
 
     if (ioctl(fd_tty_master, TIOCGWINSZ, &size) < 0 || size.ws_col <= 0 || size.ws_row <= 0) {
         size.ws_col = 80;
         size.ws_row = 24;
-    }
-
-    if (!err && fd_tty_master < 3) {
-        int fd0 = fd_tty_master;
-        if ((fd_tty_master = dup(fd_tty_master)) < 0 || close(fd0)) err = errno;
     }
 
     if (!err) {
@@ -754,42 +738,43 @@ static int start_terminal(Channel * c, const char * pty_type, const char * encod
         if (*pid < 0) err = errno;
         if (*pid == 0) {
             int fd = -1;
-            int fd_tty_slave = -1;
-            char *path;
+            char * path;
 
             set_terminal_env(&envp, &envp_len, pty_type, encoding, exe);
-            path=getenv("HOME");
+            path = getenv("HOME");
             if (path && chdir(path) < 0) err = errno;
-            setsid();
-
-            if (!err && (fd = sysconf(_SC_OPEN_MAX)) < 0) err = errno;
-            if (!err && (fd_tty_slave = open(tty_slave_name, O_RDWR)) < 0) err = errno;
+            if (!err && setsid() < 0) err = errno;
+            if (!err && (fd = open(tty_slave_name, O_RDWR)) < 0) err = errno;
+            while (!err && fd < 3) {
+                int fd0 = fd;
+                if ((fd = dup(fd)) < 0 || close(fd0)) err = errno;
+            }
 #if defined(TIOCSCTTY)
-            if (!err && (ioctl(fd_tty_slave, TIOCSCTTY, NULL)) < 0) err = errno;
+            if (!err && (ioctl(fd, TIOCSCTTY, NULL)) < 0) err = errno;
 #endif
-            if (!err && dup2(fd_tty_slave, 0) < 0) err = errno;
-            if (!err && dup2(fd_tty_slave, 1) < 0) err = errno;
-            if (!err && dup2(fd_tty_slave, 2) < 0) err = errno;
+            if (!err && dup2(fd, 0) < 0) err = errno;
+            if (!err && dup2(fd, 1) < 0) err = errno;
+            if (!err && dup2(fd, 2) < 0) err = errno;
+            if (!err && (fd = sysconf(_SC_OPEN_MAX)) < 0) err = errno;
             while (!err && fd > 3) close(--fd);
             if (!err) {
                 execve(exe, (char **)args, envp);
                 err = errno;
             }
-            if (envp) env_free(envp,envp_len);
             fprintf(stderr, "Cannot start %s: %s\n", exe, errno_to_str(err));
             exit(1);
         }
     }
 
-    if ((fd_tty_out = dup(fd_tty_master)) < 0) err = errno;
+    if (!err && (fd_tty_out = dup(fd_tty_master)) < 0) err = errno;
 
     if (!err) {
         *prs = (Terminal *)loc_alloc_zero(sizeof(Terminal));
         (*prs)->pid = *pid;
         (*prs)->bcg = c->bcg;
         (*prs)->channel = c;
-        if (*pty_type) snprintf((*prs)->pty_type, sizeof((*prs)->pty_type), "%s", pty_type);
-        if (*encoding) snprintf((*prs)->encoding, sizeof((*prs)->encoding), "%s", encoding);
+        strlcpy((*prs)->pty_type, pty_type, sizeof((*prs)->pty_type));
+        strlcpy((*prs)->encoding, encoding, sizeof((*prs)->encoding));
         (*prs)->width = size.ws_row;
         (*prs)->height = size.ws_col;
         (*prs)->inp_struct = write_terminal_input(*prs, fd_tty_master);
@@ -797,8 +782,9 @@ static int start_terminal(Channel * c, const char * pty_type, const char * encod
         list_add_first(&(*prs)->link, &terms_list);
         channel_lock(c);
     }
-    else if (fd_tty_master >= 0) {
-        close(fd_tty_master);
+    else {
+        if (fd_tty_master >= 0) close(fd_tty_master);
+        if (fd_tty_out >= 0) close(fd_tty_out);
     }
 
     if (!err) return 0;
@@ -862,10 +848,10 @@ static void command_launch(char * token, Channel * c) {
 
 #if !defined(WIN32)
         {
-            char fnm[FILE_PATH_SIZE];
             struct stat st;
             if (err == 0 && stat(exec, &st) != 0) {
                 int n = errno;
+                static char fnm[FILE_PATH_SIZE];
                 /* On some systems (e.g. Free DSB) bash is installed under /usr/local */
                 assert(exec[0] == '/');
                 snprintf(fnm, sizeof(fnm), "/usr/local%s", exec);
@@ -883,7 +869,10 @@ static void command_launch(char * token, Channel * c) {
                 c, pty_type, encoding, envp, envp_len, exec,
                 args, &pid, &prs) < 0) err = errno;
 
-        if (!err) add_waitpid_process(pid);
+        if (!err) {
+            assert(find_terminal(pid) != NULL);
+            add_waitpid_process(pid);
+        }
 
         /* write result back */
         write_stringz(&c->out, "R");
@@ -944,8 +933,9 @@ static void command_set_win_size(char * token, Channel * c) {
 
 }
 
-static void waitpid_listener(int pid, int exited, int exit_code, int signal, int event_code,
-        int syscall, void * args) {
+static void waitpid_listener(int pid, int exited, int exit_code,
+        int signal, int event_code, int syscall, void * args) {
+    assert(find_terminal(pid) == NULL || exited);
     if (exited) {
         Terminal * prs = find_terminal(pid);
         if (prs) {
