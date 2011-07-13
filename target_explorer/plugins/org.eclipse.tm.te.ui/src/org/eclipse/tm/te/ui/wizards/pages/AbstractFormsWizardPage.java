@@ -72,7 +72,7 @@ public abstract class AbstractFormsWizardPage extends AbstractWizardPage {
 	 *
 	 * @return The forms toolkit instance or <code>null</code>.
 	 */
-	protected final CustomFormToolkit getFormToolkit() {
+	public final CustomFormToolkit getFormToolkit() {
 		return toolkit;
 	}
 
