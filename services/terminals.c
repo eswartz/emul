@@ -719,6 +719,7 @@ static int start_terminal(Channel * c, const char * pty_type, const char * encod
         int envp_len, const char * exe, const char ** args, int * pid, Terminal ** prs) {
     int err = 0;
     int fd_tty_master = -1;
+    int fd_tty_slave = -1;
     int fd_tty_out = -1;
     char * tty_slave_name = NULL;
     struct winsize size;
@@ -727,6 +728,7 @@ static int start_terminal(Channel * c, const char * pty_type, const char * encod
     fd_tty_master = posix_openpt(O_RDWR | O_NOCTTY);
     if (fd_tty_master < 0 || grantpt(fd_tty_master) < 0 || unlockpt(fd_tty_master) < 0) err = errno;
     if (!err && (tty_slave_name = ptsname(fd_tty_master)) == NULL) err = EINVAL;
+    if (!err && (fd_tty_slave = open(tty_slave_name, O_RDWR | O_NOCTTY)) < 0) err = errno;
 
     if (ioctl(fd_tty_master, TIOCGWINSZ, &size) < 0 || size.ws_col <= 0 || size.ws_row <= 0) {
         size.ws_col = 80;
@@ -786,6 +788,7 @@ static int start_terminal(Channel * c, const char * pty_type, const char * encod
         if (fd_tty_master >= 0) close(fd_tty_master);
         if (fd_tty_out >= 0) close(fd_tty_out);
     }
+    if (fd_tty_slave >= 0) close(fd_tty_slave);
 
     if (!err) return 0;
     errno = err;

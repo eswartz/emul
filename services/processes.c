@@ -1199,12 +1199,14 @@ static int start_process(Channel * c, char ** envp, char * dir, char * exe, char
     }
     else {
         int fd_tty_master = -1;
+        int fd_tty_slave = -1;
         int fd_tty_out = -1;
         char * tty_slave_name = NULL;
 
         fd_tty_master = posix_openpt(O_RDWR|O_NOCTTY);
         if (fd_tty_master < 0 || grantpt(fd_tty_master) < 0 || unlockpt(fd_tty_master) < 0) err = errno;
         if (!err && (tty_slave_name = ptsname(fd_tty_master)) == NULL) err = EINVAL;
+        if (!err && (fd_tty_slave = open(tty_slave_name, O_RDWR | O_NOCTTY)) < 0) err = errno;
 
         if (!err) {
             *pid = fork();
@@ -1250,6 +1252,7 @@ static int start_process(Channel * c, char ** envp, char * dir, char * exe, char
             if (fd_tty_master >= 0) close(fd_tty_master);
             if (fd_tty_out >= 0) close(fd_tty_out);
         }
+        if (fd_tty_slave >= 0) close(fd_tty_slave);
     }
 
     *selfattach = 1;
