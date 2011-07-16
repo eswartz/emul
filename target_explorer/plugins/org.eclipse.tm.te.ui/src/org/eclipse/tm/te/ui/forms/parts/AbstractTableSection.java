@@ -17,12 +17,11 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.forms.IManagedForm;
 import org.eclipse.ui.forms.widgets.FormToolkit;
-import org.eclipse.ui.forms.widgets.Section;
 
 /**
- * Target Explorer: Table section implementation.
+ * Target Explorer: Abstract table section implementation.
  */
-public class TableSection extends AbstractStructuredViewerSection implements ISelectionChangedListener, IDoubleClickListener {
+public abstract class AbstractTableSection extends AbstractStructuredViewerSection implements ISelectionChangedListener, IDoubleClickListener {
 
 	/**
 	 * Table section table part adapter implementation.
@@ -43,7 +42,7 @@ public class TableSection extends AbstractStructuredViewerSection implements ISe
 		 */
 		@Override
 		public void selectionChanged(SelectionChangedEvent event) {
-			TableSection.this.selectionChanged(event);
+			AbstractTableSection.this.selectionChanged(event);
 		}
 
 		/* (non-Javadoc)
@@ -51,7 +50,7 @@ public class TableSection extends AbstractStructuredViewerSection implements ISe
 		 */
 		@Override
 		public void doubleClick(DoubleClickEvent event) {
-			TableSection.this.doubleClick(event);
+			AbstractTableSection.this.doubleClick(event);
 		}
 
 		/* (non-Javadoc)
@@ -59,7 +58,7 @@ public class TableSection extends AbstractStructuredViewerSection implements ISe
 		 */
 		@Override
 		protected void onButtonSelected(Button button) {
-			TableSection.this.onButtonSelected(button);
+			AbstractTableSection.this.onButtonSelected(button);
 		}
 
 		/* (non-Javadoc)
@@ -80,7 +79,7 @@ public class TableSection extends AbstractStructuredViewerSection implements ISe
 	 * @param style The section style.
 	 * @param labels The list of label to apply to the created buttons in the given order. Must not be <code>null</code>.
 	 */
-	public TableSection(IManagedForm form, Composite parent, int style, String[] labels) {
+	public AbstractTableSection(IManagedForm form, Composite parent, int style, String[] labels) {
 		this(form, parent, style, true, labels);
 	}
 
@@ -93,7 +92,7 @@ public class TableSection extends AbstractStructuredViewerSection implements ISe
 	 * @param titleBar If <code>true</code>, the title bar style bit is added to <code>style</code>.
 	 * @param labels The list of label to apply to the created buttons in the given order. Must not be <code>null</code>.
 	 */
-	public TableSection(IManagedForm form, Composite parent, int style, boolean titleBar, String[] labels) {
+	public AbstractTableSection(IManagedForm form, Composite parent, int style, boolean titleBar, String[] labels) {
 		super(form, parent, style, titleBar, labels);
 
 	}
@@ -113,13 +112,6 @@ public class TableSection extends AbstractStructuredViewerSection implements ISe
 	 */
 	protected TablePart getTablePart() {
 		return (TablePart)getViewerPart();
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.ui.forms.parts.AbstractSection#createClient(org.eclipse.ui.forms.widgets.Section, org.eclipse.ui.forms.widgets.FormToolkit)
-	 */
-	@Override
-	protected void createClient(Section section, FormToolkit toolkit) {
 	}
 
 	/* (non-Javadoc)
