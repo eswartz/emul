@@ -15,53 +15,54 @@ import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredViewer;
-import org.eclipse.jface.viewers.TableViewer;
+import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 
 /**
- * Target Explorer: Table part implementation.
+ * Target Explorer: Tree part implementation.
  */
-public class TablePart extends AbstractStructuredViewerPart implements ISelectionChangedListener, IDoubleClickListener {
+public class TreePart extends AbstractStructuredViewerPart implements ISelectionChangedListener, IDoubleClickListener {
 
 	/**
 	 * Constructor.
 	 *
 	 * @param labels The list of label to apply to the created buttons in the given order. Must not be <code>null</code>.
 	 */
-	public TablePart(String[] labels) {
+	public TreePart(String[] labels) {
 		super(labels);
+
 	}
 
 	/**
-	 * Creates the table viewer instance.
+	 * Creates the tree viewer instance.
 	 *
 	 * @param parent The parent composite. Must not be <code>null</code>.
 	 * @param style The viewer style.
 	 *
-	 * @return The table viewer instance.
+	 * @return The tree viewer instance.
 	 */
-	protected TableViewer createTableViewer(Composite parent, int style) {
-		return new TableViewer(parent, style);
+	protected TreeViewer createTreeViewer(Composite parent, int style) {
+		return new TreeViewer(parent, style);
 	}
 
 	/**
-	 * Configures the table viewer instance.
+	 * Configures the tree viewer instance.
 	 *
-	 * @param viewer The table viewer instance. Must not be <code>null</code<.
+	 * @param viewer The tree viewer instance. Must not be <code>null</code<.
 	 */
-	protected void configureTableViewer(TableViewer viewer) {
+	protected void configureTreeViewer(TreeViewer viewer) {
 		Assert.isNotNull(viewer);
 
 		viewer.addSelectionChangedListener(new ISelectionChangedListener() {
 			public void selectionChanged(SelectionChangedEvent e) {
-				TablePart.this.selectionChanged(e);
+				TreePart.this.selectionChanged(e);
 			}
 		});
 		viewer.addDoubleClickListener(new IDoubleClickListener() {
 			public void doubleClick(DoubleClickEvent e) {
-				TablePart.this.doubleClick(e);
+				TreePart.this.doubleClick(e);
 			}
 		});
 	}
@@ -76,20 +77,20 @@ public class TablePart extends AbstractStructuredViewerPart implements ISelectio
 		// Adjust the style bits
 		style |= SWT.H_SCROLL | SWT.V_SCROLL | (toolkit != null ? toolkit.getBorderStyle() : SWT.BORDER);
 
-		TableViewer viewer = createTableViewer(parent, style);
+		TreeViewer viewer = createTreeViewer(parent, style);
 		Assert.isNotNull(viewer);
-		configureTableViewer(viewer);
+		configureTreeViewer(viewer);
 
 		return viewer;
 	}
 
 	/**
-	 * Returns the table viewer instance.
+	 * Returns the tree viewer instance.
 	 *
-	 * @return The table viewer instance or <code>null</code>.
+	 * @return The tree viewer instance or <code>null</code>.
 	 */
-	protected TableViewer getTableViewer() {
-		return (TableViewer)getViewer();
+	protected TreeViewer getTreeViewer() {
+		return (TreeViewer)getViewer();
 	}
 
 	/* (non-Javadoc)
@@ -103,4 +104,5 @@ public class TablePart extends AbstractStructuredViewerPart implements ISelectio
 	 */
 	public void doubleClick(DoubleClickEvent event) {
 	}
+
 }

@@ -82,45 +82,49 @@ public abstract class AbstractPartWithButtons extends AbstractPart {
 	 *
 	 * @param parent The parent composite. Must not be <code>null</code>.
 	 * @param toolkit The form toolkit or <code>null</code>.
+	 *
+	 * @return The buttons panel composite or <code>null</code>.
 	 */
-	protected void createButtonsPanel(Composite parent, FormToolkit toolkit) {
-		if (labels.length > 0) {
-			buttons = new Button[labels.length];
+	protected Composite createButtonsPanel(Composite parent, FormToolkit toolkit) {
+		if (labels.length == 0) return null;
 
-			Composite panel = createComposite(parent, toolkit);
-			GridLayout layout = new GridLayout();
-			layout.marginHeight = 0; layout.marginWidth = 0;
-			panel.setLayout(layout);
-			GridData layoutData = new GridData(SWT.BEGINNING, SWT.FILL, false, true);
-			panel.setLayoutData(layoutData);
+		buttons = new Button[labels.length];
 
-			SelectionListener listener = new SelectionAdapter() {
-				@Override
-				public void widgetSelected(SelectionEvent e) {
-					AbstractPartWithButtons.this.onButtonSelected((Button) e.widget);
-				}
-			};
+		Composite panel = createComposite(parent, toolkit);
+		GridLayout layout = new GridLayout();
+		layout.marginHeight = 0; layout.marginWidth = 0;
+		panel.setLayout(layout);
+		GridData layoutData = new GridData(SWT.BEGINNING, SWT.FILL, false, true);
+		panel.setLayoutData(layoutData);
 
-			for (int i = 0; i < labels.length; i++) {
-				if (labels[i] != null) {
-					Button button = toolkit != null ? toolkit.createButton(panel, null, SWT.PUSH) : new Button(panel, SWT.PUSH);
-					Assert.isNotNull(button);
+		SelectionListener listener = new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				AbstractPartWithButtons.this.onButtonSelected((Button) e.widget);
+			}
+		};
 
-					button.setFont(JFaceResources.getDialogFont());
-					button.setText(labels[i]);
-					button.setData(Integer.valueOf(i));
-					button.addSelectionListener(listener);
+		for (int i = 0; i < labels.length; i++) {
+			if (labels[i] != null) {
+				Button button = toolkit != null ? toolkit.createButton(panel, null, SWT.PUSH) : new Button(panel, SWT.PUSH);
+				Assert.isNotNull(button);
 
-					layoutData = new GridData(SWT.FILL, SWT.BEGINNING, true, false);
-					layoutData.widthHint = Math.max(new PixelConverter(button).convertHorizontalDLUsToPixels(IDialogConstants.BUTTON_WIDTH), button.computeSize(SWT.DEFAULT, SWT.DEFAULT, true).x);
-					button.setLayoutData(layoutData);
+				button.setFont(JFaceResources.getDialogFont());
+				button.setText(labels[i]);
+				button.setData(Integer.valueOf(i));
+				button.addSelectionListener(listener);
 
-					buttons[i] = button;
-				} else {
-					createEmptySpace(parent, 1, toolkit);
-				}
+				layoutData = new GridData(SWT.FILL, SWT.BEGINNING, true, false);
+				layoutData.widthHint = Math.max(new PixelConverter(button).convertHorizontalDLUsToPixels(IDialogConstants.BUTTON_WIDTH), button.computeSize(SWT.DEFAULT, SWT.DEFAULT, true).x);
+				button.setLayoutData(layoutData);
+
+				buttons[i] = button;
+			} else {
+				createEmptySpace(parent, 1, toolkit);
 			}
 		}
+
+		return panel;
 	}
 
 	/**

@@ -14,28 +14,29 @@ import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
-import org.eclipse.jface.viewers.TableViewer;
+import org.eclipse.jface.viewers.TreeViewer;
+import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.forms.IManagedForm;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 
 /**
- * Target Explorer: Abstract table section implementation.
+ * Target Explorer: Abstract tree section implementation.
  */
-public abstract class AbstractTableSection extends AbstractStructuredViewerSection implements ISelectionChangedListener, IDoubleClickListener {
+public abstract class AbstractTreeSection extends AbstractStructuredViewerSection implements ISelectionChangedListener, IDoubleClickListener {
 
 	/**
-	 * Table section table part adapter implementation.
+	 * Tree section tree part adapter implementation.
 	 */
-	protected class TablePartAdapter extends TablePart {
+	protected class TreePartAdapter extends TreePart {
 
 		/**
 		 * Constructor.
 		 *
 		 * @param labels The list of label to apply to the created buttons in the given order. Must not be <code>null</code>.
 		 */
-		public TablePartAdapter(String[] labels) {
+		public TreePartAdapter(String[] labels) {
 			super(labels);
 		}
 
@@ -44,7 +45,7 @@ public abstract class AbstractTableSection extends AbstractStructuredViewerSecti
 		 */
 		@Override
 		public void selectionChanged(SelectionChangedEvent event) {
-			AbstractTableSection.this.selectionChanged(event);
+			AbstractTreeSection.this.selectionChanged(event);
 		}
 
 		/* (non-Javadoc)
@@ -52,7 +53,7 @@ public abstract class AbstractTableSection extends AbstractStructuredViewerSecti
 		 */
 		@Override
 		public void doubleClick(DoubleClickEvent event) {
-			AbstractTableSection.this.doubleClick(event);
+			AbstractTreeSection.this.doubleClick(event);
 		}
 
 		/* (non-Javadoc)
@@ -60,7 +61,7 @@ public abstract class AbstractTableSection extends AbstractStructuredViewerSecti
 		 */
 		@Override
 		protected void onButtonSelected(Button button) {
-			AbstractTableSection.this.onButtonSelected(button);
+			AbstractTreeSection.this.onButtonSelected(button);
 		}
 
 		/* (non-Javadoc)
@@ -70,24 +71,28 @@ public abstract class AbstractTableSection extends AbstractStructuredViewerSecti
 		protected Composite createButtonsPanel(Composite parent, FormToolkit toolkit) {
 			Composite panel = super.createButtonsPanel(parent, toolkit);
 			initializeButtonsEnablement();
+			if (parent.getData("filtered") != null) { //$NON-NLS-1$
+				GridLayout layout = (GridLayout) panel.getLayout();
+				layout.marginHeight = 28;
+			}
 			return panel;
 		}
 
 		/* (non-Javadoc)
-		 * @see org.eclipse.tm.te.ui.forms.parts.TablePart#createTableViewer(org.eclipse.swt.widgets.Composite, int)
+		 * @see org.eclipse.tm.te.ui.forms.parts.TreePart#createTreeViewer(org.eclipse.swt.widgets.Composite, int)
 		 */
 		@Override
-		protected TableViewer createTableViewer(Composite parent, int style) {
-			return AbstractTableSection.this.createTableViewer(parent, style);
+		protected TreeViewer createTreeViewer(Composite parent, int style) {
+			return AbstractTreeSection.this.createTreeViewer(parent, style);
 		}
 
 		/* (non-Javadoc)
-		 * @see org.eclipse.tm.te.ui.forms.parts.TablePart#configureTableViewer(org.eclipse.jface.viewers.TableViewer)
+		 * @see org.eclipse.tm.te.ui.forms.parts.TreePart#configureTreeViewer(org.eclipse.jface.viewers.TreeViewer)
 		 */
 		@Override
-		protected void configureTableViewer(TableViewer viewer) {
-			super.configureTableViewer(viewer);
-			AbstractTableSection.this.configureTableViewer(viewer);
+		protected void configureTreeViewer(TreeViewer viewer) {
+			super.configureTreeViewer(viewer);
+			AbstractTreeSection.this.configureTreeViewer(viewer);
 		}
 	}
 
@@ -99,7 +104,7 @@ public abstract class AbstractTableSection extends AbstractStructuredViewerSecti
 	 * @param style The section style.
 	 * @param labels The list of label to apply to the created buttons in the given order. Must not be <code>null</code>.
 	 */
-	public AbstractTableSection(IManagedForm form, Composite parent, int style, String[] labels) {
+	public AbstractTreeSection(IManagedForm form, Composite parent, int style, String[] labels) {
 		this(form, parent, style, true, labels);
 	}
 
@@ -112,7 +117,7 @@ public abstract class AbstractTableSection extends AbstractStructuredViewerSecti
 	 * @param titleBar If <code>true</code>, the title bar style bit is added to <code>style</code>.
 	 * @param labels The list of label to apply to the created buttons in the given order. Must not be <code>null</code>.
 	 */
-	public AbstractTableSection(IManagedForm form, Composite parent, int style, boolean titleBar, String[] labels) {
+	public AbstractTreeSection(IManagedForm form, Composite parent, int style, boolean titleBar, String[] labels) {
 		super(form, parent, style, titleBar, labels);
 
 	}
@@ -122,36 +127,36 @@ public abstract class AbstractTableSection extends AbstractStructuredViewerSecti
 	 */
 	@Override
 	protected AbstractStructuredViewerPart createViewerPart(String[] labels) {
-		return new TablePartAdapter(labels);
+		return new TreePartAdapter(labels);
 	}
 
 	/**
-	 * Returns the table part instance.
+	 * Returns the tree part instance.
 	 *
-	 * @return The table part instance.
+	 * @return The tree part instance.
 	 */
-	protected TablePart getTablePart() {
-		return (TablePart)getViewerPart();
+	protected TreePart getTreePart() {
+		return (TreePart)getViewerPart();
 	}
 
 	/**
-	 * Creates the table viewer instance.
+	 * Creates the tree viewer instance.
 	 *
 	 * @param parent The parent composite. Must not be <code>null</code>.
 	 * @param style The viewer style.
 	 *
-	 * @return The table viewer instance.
+	 * @return The tree viewer instance.
 	 */
-	protected TableViewer createTableViewer(Composite parent, int style) {
-		return new TableViewer(parent, style);
+	protected TreeViewer createTreeViewer(Composite parent, int style) {
+		return new TreeViewer(parent, style);
 	}
 
 	/**
-	 * Configures the table viewer instance.
+	 * Configures the tree viewer instance.
 	 *
-	 * @param viewer The table viewer instance. Must not be <code>null</code<.
+	 * @param viewer The tree viewer instance. Must not be <code>null</code<.
 	 */
-	protected void configureTableViewer(TableViewer viewer) {
+	protected void configureTreeViewer(TreeViewer viewer) {
 		Assert.isNotNull(viewer);
 	}
 
@@ -170,7 +175,7 @@ public abstract class AbstractTableSection extends AbstractStructuredViewerSecti
 	/**
 	 * Initialize the enablement of the buttons in the buttons bar.
 	 * <p>
-	 * Called from {@link TablePartAdapter#createButtonsPanel(Composite, FormToolkit)}.
+	 * Called from {@link TreePartAdapter#createButtonsPanel(Composite, FormToolkit)}.
 	 */
 	protected void initializeButtonsEnablement() {
 	}
