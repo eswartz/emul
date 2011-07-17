@@ -12,6 +12,7 @@ package org.eclipse.tm.te.ui.controls.interfaces;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.dialogs.IMessageProvider;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.ui.forms.widgets.FormToolkit;
 
 /**
  * Target explorer: Interface to deal with the replaceable wizard configuration panels.
@@ -25,8 +26,9 @@ public interface IWizardConfigurationPanel extends IMessageProvider {
 	 * stack layout to show the different panels if the backend selection is changing.
 	 *
 	 * @param parent The parent composite to create the UI elements in. Must not be <code>null</code>.
+	 * @param toolkit The form toolkit. Must not be <code>null</code>.
 	 */
-	public void setupPanel(Composite parent);
+	public void setupPanel(Composite parent, FormToolkit toolkit);
 
 	/**
 	 * Cleanup all resources the wizard configuration panel might have been created.

@@ -45,6 +45,7 @@ import org.eclipse.tm.te.ui.controls.interfaces.IValidatableDialogPage;
 import org.eclipse.tm.te.ui.controls.nls.Messages;
 import org.eclipse.tm.te.ui.controls.validator.Validator;
 import org.eclipse.tm.te.ui.utils.SWTControlUtil;
+import org.eclipse.ui.forms.widgets.FormToolkit;
 
 /**
  * Target Explorer: Base implementation of a common UI control providing an
@@ -80,6 +81,9 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 
 	private Validator editFieldValidator;
 
+	// If set, the toolkit will be used to create the controls.
+	private FormToolkit toolkit = null;
+
 	/**
 	 * Constructor.
 	 *
@@ -88,6 +92,24 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 	 */
 	public BaseEditBrowseTextControl(IDialogPage parentPage) {
 		super(parentPage);
+	}
+
+	/**
+	 * Sets the form toolkit to be used for creating the control widgets.
+	 *
+	 * @param toolkit The form toolkit instance or <code>null</code>.
+	 */
+	public final void setFormToolkit(FormToolkit toolkit) {
+		this.toolkit = toolkit;
+	}
+
+	/**
+	 * Returns the form toolkit used for creating the control widgets.
+	 *
+	 * @return The form toolkit instance or <code>null</code>.
+	 */
+	public final FormToolkit getFormToolkit() {
+		return toolkit;
 	}
 
 	/**
@@ -348,16 +370,16 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 	 * Sets the label to use for the edit field. If <code>null</code>, the
 	 * edit field label is set to an empty string.
 	 *
-	 * @param editFieldLabel The edit field label to use or <code>null</code>.
+	 * @param label The edit field label to use or <code>null</code>.
 	 */
-	public final void setEditFieldLabel(String editFieldLabel) {
-		if (editFieldLabel != null) {
-			this.editFieldLabel = editFieldLabel;
+	public final void setEditFieldLabel(String label) {
+		if (label != null) {
+			this.editFieldLabel = label;
 		} else {
 			this.editFieldLabel = ""; //$NON-NLS-1$
 		}
 		// Update the control as well if already created.
-		setLabelControlText(editFieldLabel);
+		setLabelControlText(label);
 	}
 
 	/**
@@ -373,11 +395,11 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 	 * Sets the label to use for the button. If <code>null</code>, the
 	 * button label is set to an empty string.
 	 *
-	 * @param buttonLabel The button label to use or <code>null</code>.
+	 * @param label The button label to use or <code>null</code>.
 	 */
-	public final void setButtonLabel(String buttonLabel) {
-		if (buttonLabel != null) {
-			this.buttonLabel = buttonLabel;
+	public final void setButtonLabel(String label) {
+		if (label != null) {
+			this.buttonLabel = label;
 		} else {
 			this.buttonLabel = ""; //$NON-NLS-1$
 		}
@@ -458,9 +480,10 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 		Composite innerPanel;
 		if (isGroup()) {
 			innerPanel = new Group(parent, SWT.NONE);
+			if (toolkit != null) toolkit.adapt(innerPanel);
 			((Group)innerPanel).setText(getGroupLabel());
 		} else {
-			innerPanel = new Composite(parent, SWT.NONE);
+			innerPanel = toolkit != null ? toolkit.createComposite(parent) : new Composite(parent, SWT.NONE);
 		}
 
 		return innerPanel;
@@ -538,9 +561,9 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 
 		Control labelControl;
 		if (!isLabelIsButton()) {
-			labelControl = new Label(parent, SWT.None);
+			labelControl = toolkit != null ? toolkit.createLabel(parent, null) : new Label(parent, SWT.NONE);
 		} else {
-			labelControl = new Button(parent, getLabelButtonStyle() | SWT.NO_FOCUS);
+			labelControl = toolkit != null ? toolkit.createButton(parent, null, getLabelButtonStyle() | SWT.NO_FOCUS) : new Button(parent, getLabelButtonStyle() | SWT.NO_FOCUS);
 			SWTControlUtil.setSelection((Button)labelControl, false);
 		}
 		SWTControlUtil.setText(labelControl, getEditFieldLabel());
@@ -655,9 +678,7 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 	 */
 	public String getLabelControlText() {
 		String value = SWTControlUtil.getText(labelControl);
-		if (value == null) {
-			value = ""; //$NON-NLS-1$
-		}
+		if (value == null) value = ""; //$NON-NLS-1$
 		return value;
 	}
 
@@ -775,6 +796,7 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 				style |= SWT.READ_ONLY;
 			}
 			editField = new Combo(parent, doAdjustEditFieldControlStyles(style));
+			if (toolkit != null) toolkit.adapt((Combo)editField);
 			((Combo)editField).addModifyListener(new ModifyListener() {
 				public void modifyText(ModifyEvent e) {
 					if (!isInitializing) { // do not call this unless the boundaries of the control are calculated yet
@@ -802,7 +824,7 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 			if (isReadOnly()) {
 				style |= SWT.READ_ONLY;
 			}
-			editField = new Text(parent, doAdjustEditFieldControlStyles(SWT.BORDER | style));
+			editField = toolkit != null ? toolkit.createText(parent, null, doAdjustEditFieldControlStyles(SWT.BORDER | style)) : new Text(parent, doAdjustEditFieldControlStyles(SWT.BORDER | style));
 			((Text)editField).addModifyListener(new ModifyListener() {
 				public void modifyText(ModifyEvent e) {
 					if (!isInitializing) { // do not call this unless the boundaries of the control are calculated yet
@@ -827,15 +849,15 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 	 * this hook to configure the edit field control for their specific needs and to register any
 	 * required listener to the control.
 	 *
-	 * @param editField The edit field control to configure. Must not be <code>null</code>!
+	 * @param control The edit field control to configure. Must not be <code>null</code>!
 	 */
-	protected void configureEditFieldControl(Control editField) {
-		assert editField != null;
+	protected void configureEditFieldControl(Control control) {
+		assert control != null;
 
 		// the edit field control expands within the inner composite
 		GridData layoutData = new GridData(SWT.FILL, SWT.CENTER, true, false);
 		doAdjustEditFieldControlLayoutData(layoutData);
-		editField.setLayoutData(layoutData);
+		control.setLayoutData(layoutData);
 
 		// The edit field can influence the layout data of the label control (SWT.MULTI).
 		// Give the label control the chance to reconfigure after the edit field control
@@ -847,23 +869,23 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 		VerifyListener verifyListener = doGetEditFieldControlVerifyListener();
 		SelectionListener selectionListener = doGetEditFieldControlSelectionListener();
 
-		if (editField instanceof Text) {
+		if (control instanceof Text) {
 			if (modifyListener != null) {
-				((Text)editField).addModifyListener(modifyListener);
+				((Text)control).addModifyListener(modifyListener);
 			}
 			if (verifyListener != null) {
-				((Text)editField).addVerifyListener(verifyListener);
+				((Text)control).addVerifyListener(verifyListener);
 			}
 		}
-		if (editField instanceof Combo) {
+		if (control instanceof Combo) {
 			if (modifyListener != null) {
-				((Combo)editField).addModifyListener(modifyListener);
+				((Combo)control).addModifyListener(modifyListener);
 			}
 			if (verifyListener != null) {
-				((Combo)editField).addVerifyListener(verifyListener);
+				((Combo)control).addVerifyListener(verifyListener);
 			}
 			if (selectionListener != null) {
-				((Combo)editField).addSelectionListener(selectionListener);
+				((Combo)control).addSelectionListener(selectionListener);
 			}
 		}
 		// if the label control is an button control, trigger an initial onLabelControlSelectedChanged to
@@ -912,12 +934,12 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 	 * the given edit field control. The method is called after the edit field control
 	 * has been created.
 	 *
-	 * @param editField The edit field control. Must not be <code>null</code>.
+	 * @param control The edit field control. Must not be <code>null</code>.
 	 * @return The control decoration object instance.
 	 */
-	protected ControlDecoration doCreateEditFieldControlDecoration(Control editField) {
-		assert editField != null;
-		return new ControlDecoration(editField, doGetEditFieldControlDecorationPosition());
+	protected ControlDecoration doCreateEditFieldControlDecoration(Control control) {
+		assert control != null;
+		return new ControlDecoration(control, doGetEditFieldControlDecorationPosition());
 	}
 
 	/**
@@ -1198,7 +1220,7 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 	protected Button doCreateButtonControl(Composite parent) {
 		assert parent != null;
 
-		Button button = new Button(parent, SWT.PUSH);
+		Button button = toolkit != null ? toolkit.createButton(parent, null, SWT.PUSH) : new Button(parent, SWT.PUSH);
 		// add a whitespace at the beginning and at the end of the button text to make the
 		// button visibly broader than the label itself.
 		button.setText(" " + getButtonLabel().trim() + " "); //$NON-NLS-1$ //$NON-NLS-2$
@@ -1264,7 +1286,7 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 		// do we need a group or a plain composite
 		if (!isParentControlIsInnerPanel() || !(parent.getLayout() instanceof GridLayout)) {
 			// create the control most enclosing composite
-			Composite composite = new Composite(parent, SWT.NONE);
+			Composite composite = toolkit != null ? toolkit.createComposite(parent) : new Composite(parent, SWT.NONE);
 			if (isAdjustBackgroundColor()) {
 				SWTControlUtil.setBackground(composite, parent.getBackground());
 			}
@@ -1301,7 +1323,7 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 		// squeeze the edit field control and the button into such panel
 		Composite innerInnerPanel = innerPanel;
 		if (((GridLayout)innerInnerPanel.getLayout()).numColumns == 2 && !isHideBrowseButton() && !isHideEditFieldControl()) {
-			innerInnerPanel = new Composite(innerPanel, SWT.NONE);
+			innerInnerPanel = toolkit != null ? toolkit.createComposite(innerPanel) : new Composite(innerPanel, SWT.NONE);
 			if (isAdjustBackgroundColor()) {
 				SWTControlUtil.setBackground(innerInnerPanel, innerPanel.getBackground());
 			}

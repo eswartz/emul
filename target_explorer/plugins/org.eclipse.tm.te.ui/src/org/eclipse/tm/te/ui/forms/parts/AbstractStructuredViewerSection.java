@@ -13,11 +13,9 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
-import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.tm.te.ui.forms.FormLayoutFactory;
 import org.eclipse.ui.forms.IManagedForm;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 
@@ -82,21 +80,6 @@ public abstract class AbstractStructuredViewerSection extends AbstractSection {
 	 */
 	protected final AbstractStructuredViewerPart getViewerPart() {
 		return viewerPart;
-	}
-
-	/**
-	 * Creates the client container composite.
-	 *
-	 * @param parent The parent composite. Must not be <code>null</code>.
-	 * @param span The horizontal span.
-	 * @param toolkit The form toolkit or <code>null</code>.
-	 *
-	 * @return The client container composite.
-	 */
-	protected Composite createClientContainer(Composite parent, int span, FormToolkit toolkit) {
-		Composite container = toolkit != null ? toolkit.createComposite(parent) : new Composite(parent, SWT.NONE);
-		container.setLayout(FormLayoutFactory.createSectionClientGridLayout(false, span));
-		return container;
 	}
 
 	/**

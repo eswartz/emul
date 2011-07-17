@@ -19,6 +19,7 @@ import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.tm.te.ui.controls.interfaces.IWizardConfigurationPanel;
+import org.eclipse.ui.forms.widgets.FormToolkit;
 
 /**
  * Target Explorer: Base control to deal with wizard or property page controls
@@ -84,9 +85,11 @@ public class BaseWizardConfigurationPanelControl extends BaseDialogPageControl {
 	 * To be called from the embedding control to setup the controls UI elements.
 	 *
 	 * @param parent The parent control. Must not be <code>null</code>!
+	 * @param toolkit The form toolkit. Must not be <code>null</code>.
 	 */
-	public void setupPanel(Composite parent, String[] configurationPanelKeys) {
+	public void setupPanel(Composite parent, String[] configurationPanelKeys, FormToolkit toolkit) {
 		Assert.isNotNull(parent);
+		Assert.isNotNull(toolkit);
 
 		if (isPanelIsGroup()) {
 			panel = new Group(parent, SWT.NONE);
@@ -100,7 +103,7 @@ public class BaseWizardConfigurationPanelControl extends BaseDialogPageControl {
 		panelLayout = new StackLayout();
 		panel.setLayout(panelLayout);
 
-		setupConfigurationPanels(panel, configurationPanelKeys);
+		setupConfigurationPanels(panel, configurationPanelKeys, toolkit);
 	}
 
 	/**
@@ -146,13 +149,16 @@ public class BaseWizardConfigurationPanelControl extends BaseDialogPageControl {
 	 *
 	 * @param parent The parent composite to use for the wizard configuration panels. Must not be <code>null</code>!
 	 * @param configurationPanelKeys The list of configuration panels to initialize. Might be <code>null</code> or empty!
+	 * @param toolkit The form toolkit. Must not be <code>null</code>.
 	 */
-	public void setupConfigurationPanels(Composite parent, String[] configurationPanelKeys) {
-		assert parent != null;
+	public void setupConfigurationPanels(Composite parent, String[] configurationPanelKeys, FormToolkit toolkit) {
+		Assert.isNotNull(parent);
+		Assert.isNotNull(toolkit);
+
 		if (configurationPanelKeys != null) {
 			for (int i = 0; i < configurationPanelKeys.length; i++) {
 				IWizardConfigurationPanel configPanel = getConfigurationPanel(configurationPanelKeys[i]);
-				if (configPanel != null) configPanel.setupPanel(parent);
+				if (configPanel != null) configPanel.setupPanel(parent, toolkit);
 			}
 		}
 	}
