@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2008, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -19,7 +19,6 @@ import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IFileSystem;
-import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.services.IFileSystem.DirEntry;
 import org.eclipse.tm.tcf.services.IFileSystem.FileAttrs;
 import org.eclipse.tm.tcf.services.IFileSystem.FileSystemException;
@@ -426,7 +425,7 @@ class TestFileSystem implements ITCFTest, IFileSystem.DoneStat,
         test_suite.done(this, x);
     }
 
-    public boolean canResume(IRunControl.RunControlContext ctx) {
+    public boolean canResume(String id) {
         return true;
     }
 }

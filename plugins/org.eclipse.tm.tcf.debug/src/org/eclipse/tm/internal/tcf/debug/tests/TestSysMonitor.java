@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2010, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -16,7 +16,6 @@ import java.util.HashSet;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IErrorReport;
 import org.eclipse.tm.tcf.protocol.IToken;
-import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.services.ISysMonitor;
 import org.eclipse.tm.tcf.services.ISysMonitor.SysMonitorContext;
 
@@ -114,7 +113,7 @@ class TestSysMonitor implements ITCFTest {
         test_suite.done(this, x);
     }
 
-    public boolean canResume(IRunControl.RunControlContext ctx) {
+    public boolean canResume(String id) {
         return true;
     }
 }

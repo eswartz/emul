@@ -48,6 +48,7 @@ import org.eclipse.tm.tcf.services.ISymbols.Symbol;
 class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
 
     private final TCFTestSuite test_suite;
+    private final RunControl test_rc;
     private final int channel_id;
     private final List<PathMapRule> path_map;
     private final Map<String,ArrayList<MemoryRegion>> mem_map;
@@ -68,7 +69,6 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     private final Map<String,Map<String,Object>[]> disassembly_capabilities = new HashMap<String,Map<String,Object>[]>();
     private final Set<String> running = new HashSet<String>();
     private final Set<IToken> get_state_cmds = new HashSet<IToken>();
-    private final HashMap<String,IToken> resume_cmds = new HashMap<String,IToken>();
     private final Map<String,Map<String,IRegisters.RegistersContext>> regs =
         new HashMap<String,Map<String,IRegisters.RegistersContext>>();
     private final Map<String,Map<String,Object>> bp_list = new HashMap<String,Map<String,Object>>();
@@ -232,9 +232,10 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
         }
     };
 
-    TestRCBP1(TCFTestSuite test_suite, IChannel channel, int channel_id,
+    TestRCBP1(TCFTestSuite test_suite, RunControl test_rc, IChannel channel, int channel_id,
             List<PathMapRule> path_map, Map<String,ArrayList<MemoryRegion>> mem_map) {
         this.test_suite = test_suite;
+        this.test_rc = test_rc;
         this.channel_id = channel_id;
         this.path_map = path_map;
         this.mem_map = mem_map;
@@ -281,15 +282,6 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
         if (test_id != null) {
             if (test_ctx_id == null) {
                 startTestContext();
-                Protocol.invokeLater(200, new Runnable() {
-                    public void run() {
-                        if (!test_suite.isActive(TestRCBP1.this)) return;
-                        Protocol.invokeLater(200, this);
-                        for (SuspendedContext sc : suspended.values()) {
-                            if (sc.ok_to_resume) resume(sc);
-                        }
-                    }
-                });
                 return;
             }
             if (test_context == null) {
@@ -337,11 +329,9 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                 return;
             }
             assert resume_cnt == 0;
+            assert !all_setup_done;
             all_setup_done = true;
-            for (SuspendedContext s : suspended.values()) {
-                if (s.get_state_pending) continue;
-                resume(s.id);
-            }
+            for (SuspendedContext s : suspended.values()) resume(s.id);
         }
         else if (suspended.size() > 0) {
             final int test_cnt = suspended.size();
@@ -374,13 +364,8 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                 }
                 else {
                     if (list == null) list = new String[0];
+                    if (list.length > 0) test_id = list[rnd.nextInt(list.length)];
                     test_list = list;
-                    for (String s : list) {
-                        if (s.equals("RCBP1")) test_id = s;
-                    }
-                    if (test_id == null && list.length > 0) {
-                        test_id = list[rnd.nextInt(list.length)];
-                    }
                     runTest();
                 }
             }
@@ -462,6 +447,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
         }
         srv_breakpoints.getCapabilities(test_ctx_id, new IBreakpoints.DoneGetCapabilities() {
             public void doneGetCapabilities(IToken token, Exception error, Map<String,Object> capabilities) {
+                if (!test_suite.isActive(TestRCBP1.this)) return;
                 if (error != null) {
                     exit(error);
                     return;
@@ -671,10 +657,14 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                     exit(error);
                     return;
                 }
-                for (ITCFTest t : test_suite.getActiveTests()) {
-                    if (t instanceof TestRCBP1 && ((TestRCBP1)t).threads.get(id) != null) {
-                        exit(new Exception("Invalid or missing 'CreatorID' context attribute.\nContext: " + ctx));
-                        return;
+                if (test_id != null) {
+                    assert test_ctx_id != null;
+                    assert isMyContext(ctx);
+                    for (ITCFTest t : test_suite.getActiveTests()) {
+                        if (t != TestRCBP1.this && t instanceof TestRCBP1 && ((TestRCBP1)t).threads.get(id) != null) {
+                            exit(new Exception("Invalid or missing 'CreatorID' context attribute.\nContext: " + ctx));
+                            return;
+                        }
                     }
                 }
                 if (ctx.hasState()) {
@@ -686,7 +676,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                             get_state_cmds.remove(token);
                             if (test_suite.cancel) return;
                             if (error != null) {
-                                exit(error);
+                                exit(new Exception("Cannot get context state", error));
                                 return;
                             }
                             if (!susp) {
@@ -704,15 +694,16 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                                 }
                                 SuspendedContext sc = suspended.get(id);
                                 if (sc != null && sc.pc != null && !sc.pc.equals(pc)) {
-                                    exit(new Exception("Invalid result of getState command: invalid PC"));
+                                    exit(new Exception("Invalid result of getState command: invalid PC. Context: " + id));
                                     return;
                                 }
                                 if (sc != null && sc.reason != null && !sc.reason.equals(reason)) {
-                                    exit(new Exception("Invalid result of getState command: invalid suspend reason"));
+                                    exit(new Exception("Invalid result of getState command: invalid suspend reason. Context: " + id));
                                     return;
                                 }
                                 if (test_id != null && "Breakpoint".equals(reason)) {
-                                    exit(new Exception("Invalid suspend reason of main thread after test start: " + reason + " " + pc));
+                                    exit(new Exception("Invalid suspend reason of main thread " +
+                                            id + " after test start: " + reason + " " + pc));
                                     return;
                                 }
                                 assert !done_get_state;
@@ -903,7 +894,8 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                         return;
                     }
                 }
-                if (!bp_change_done) {
+                if (threads.size() > 0 && !all_setup_done) {
+                    assert !canResume(id);
                     exit(new Exception("Unexpected contextAdded event\nContext: " + ctx));
                     return;
                 }
@@ -966,7 +958,6 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
     }
 
     public void contextResumed(String id) {
-        resume_cmds.remove(id);
         IRunControl.RunControlContext ctx = threads.get(id);
         if (ctx == null) return;
         assert isMyContext(ctx);
@@ -975,8 +966,8 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
             return;
         }
         SuspendedContext sc = suspended.remove(id);
-        if (!done_get_state) return;
-        if (sc == null || !sc.ok_to_resume || sc.get_state_pending && ctx.getRCGroup() == null) {
+        if (!done_get_state || sc == null || !sc.ok_to_resume || sc.get_state_pending && ctx.getRCGroup() == null) {
+            assert !canResume(id);
             exit(new Exception("Unexpected contextResumed event: " + id));
             return;
         }
@@ -1071,7 +1062,6 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
         }
         if (!all_setup_done) return;
         if (!test_suite.isActive(this)) return;
-        assert resume_cmds.get(sc.id) == null;
         Runnable done = new Runnable() {
             public void run() {
                 if (suspended.get(sc.id) == sc) resume(sc.id);
@@ -1103,6 +1093,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
 
     private boolean isMyContext(IRunControl.RunControlContext ctx) {
         // Check if the context was created by this test
+        if (test_ctx_id == null) return false;
         return  test_ctx_id.equals(ctx.getID()) ||
                 test_ctx_id.equals(ctx.getParentID()) ||
                 test_ctx_id.equals(ctx.getCreatorID());
@@ -1153,9 +1144,8 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
             assert !done_get_state || done_disassembly || srv_disassembly == null;
             suspended.put(id, sc);
         }
-        if (!bp_sync_done) return;
+        if (!all_setup_done) return;
         assert get_state_cmds.size() == 0;
-        assert resume_cmds.get(id) == null;
         assert suspended.get(id) == sc;
         assert !sc.get_state_pending;
         sc.get_state_pending = true;
@@ -1164,7 +1154,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
             public void doneGetState(IToken token, Exception error, boolean susp,
                     String pc, String reason, Map<String, Object> params) {
                 if (error != null) {
-                    exit(error);
+                    exit(new Exception("Cannot get context state", error));
                 }
                 else if (suspended.get(id) != sc0) {
                     exit(new Exception("Context resumed before RunControl.getState result"));
@@ -1194,22 +1184,21 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
         });
     }
 
-    public boolean canResume(IRunControl.RunControlContext ctx) {
-        if (test_ctx_id != null && !all_setup_done) return false;
-        if (resume_cmds.get(ctx.getID()) != null) return false;
+    public boolean canResume(String id) {
+        if (test_ctx_id != null && threads.size() == 0)
+            // Don't know yet neither my thread IDs nor my RC group.
+            return false;
+        IRunControl.RunControlContext ctx = test_rc.getContext(id);
+        if (ctx == null) return false;
+        if (isMyContext(ctx) && (!all_setup_done || threads.get(id) == null))
+            // My threads should stay suspended until all_setup_done
+            return false;
         String grp = ctx.getRCGroup();
         for (IRunControl.RunControlContext x : threads.values()) {
-            if (x.getID().equals(ctx.getID()) || grp != null && grp.equals(x.getRCGroup())) {
+            if (x.getID().equals(id) || grp != null && grp.equals(x.getRCGroup())) {
                 SuspendedContext sc = suspended.get(x.getID());
                 if (sc == null) return false;
                 if (!sc.ok_to_resume) return false;
-            }
-        }
-        if (grp != null) {
-            for (String id : resume_cmds.keySet()) {
-                IRunControl.RunControlContext c = threads.get(id);
-                if (c == null) return false;
-                if (grp.equals(c.getRCGroup())) return false;
             }
         }
         return true;
@@ -1217,7 +1206,6 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
 
     private void resume(String id) {
         assert done_get_state || resume_cnt == 0;
-        assert resume_cmds.get(id) == null;
         assert bp_sync_done;
         assert mem_map_test_done;
         resume_cnt++;
@@ -1227,40 +1215,13 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
             assert !sc.get_state_pending;
             assert !sc.ok_to_resume;
             sc.ok_to_resume = true;
-            resume(sc);
-        }
-    }
-
-    private void resume(final SuspendedContext sc) {
-        assert sc.ok_to_resume;
-        final String id = sc.id;
-        final IRunControl.RunControlContext ctx = threads.get(id);
-        if (!test_suite.canResume(ctx)) return;
-        int rm = IRunControl.RM_RESUME;
-        if (isMyBreakpoint(sc)) {
-            rm = rnd.nextInt(6);
-            if (!ctx.canResume(rm)) rm = IRunControl.RM_RESUME;
-        }
-        resume_cmds.put(id, ctx.resume(rm, 1, new HashMap<String,Object>(), new IRunControl.DoneCommand() {
-            public void doneCommand(IToken token, Exception error) {
-                if (test_suite.cancel) return;
-                if (!test_suite.isActive(TestRCBP1.this)) return;
-                if (threads.get(id) == null) return;
-                if (error instanceof IErrorReport &&
-                        ((IErrorReport)error).getErrorCode() == IErrorReport.TCF_ERROR_ALREADY_RUNNING &&
-                        ctx.getRCGroup() != null) {
-                    error = null;
-                }
-                if (error != null) {
-                    exit(error);
-                    return;
-                }
-                if (suspended.get(id) == sc || resume_cmds.get(id) == token) {
-                    exit(new Exception("Missing contextResumed event after resume command"));
-                    return;
-                }
+            int rm = IRunControl.RM_RESUME;
+            if (isMyBreakpoint(sc)) {
+                rm = rnd.nextInt(6);
+                if (!ctx.canResume(rm)) rm = IRunControl.RM_RESUME;
             }
-        }));
+            test_rc.resume(id, rm);
+        }
     }
 
     private void runMemoryTest(final SuspendedContext sc, final Runnable done) {
@@ -1462,7 +1423,6 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                         exit(error);
                         return;
                     }
-                    assert resume_cmds.get(sc.id) == null;
                     if (ctx.getSize() != value.length) {
                         exit(new Exception("Invalid register value size"));
                         return;

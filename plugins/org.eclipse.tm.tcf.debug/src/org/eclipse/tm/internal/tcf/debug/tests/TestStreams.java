@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2010, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -16,7 +16,6 @@ import java.util.Random;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.services.IDiagnostics;
-import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.services.IStreams;
 
 class TestStreams implements ITCFTest, IStreams.StreamsListener {
@@ -300,7 +299,7 @@ class TestStreams implements ITCFTest, IStreams.StreamsListener {
         if (!stream_ids.remove(stream_id)) exit(new Exception("Invalid stream ID in Streams.disposed event"));
     }
 
-    public boolean canResume(IRunControl.RunControlContext ctx) {
+    public boolean canResume(String id) {
         return true;
     }
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -24,8 +24,7 @@ import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IMemoryMap;
-import org.eclipse.tm.tcf.services.IRunControl;
-import org.eclipse.tm.tcf.services.IPathMap.PathMapRule;
+import org.eclipse.tm.tcf.services.IPathMap;
 
 /**
  * TCF Test Suite implements stress testing of communication channels and capabilities of remote peer.
@@ -38,9 +37,11 @@ public class TCFTestSuite {
 
     private final TestListener listener;
     private final IChannel[] channels;
+    private final Map<IChannel,RunControl> run_controls = new HashMap<IChannel, RunControl>();
     private final LinkedList<Runnable> pending_tests = new LinkedList<Runnable>();
     private final Collection<Throwable> errors = new ArrayList<Throwable>();
     private final Map<ITCFTest,IChannel> active_tests = new HashMap<ITCFTest,IChannel>();
+    private final static HashMap<String,String> cancel_test_ids = new HashMap<String,String>();
 
     private int count_total;
     private int count_done;
@@ -54,8 +55,8 @@ public class TCFTestSuite {
         public void done(Collection<Throwable> errors);
     }
 
-    public TCFTestSuite(final IPeer peer, final TestListener listener,
-            final List<PathMapRule> path_map, final Map<String,ArrayList<IMemoryMap.MemoryRegion>> mem_map) throws IOException {
+    public TCFTestSuite(final IPeer peer, final TestListener listener, final List<IPathMap.PathMapRule> path_map,
+            final Map<String,ArrayList<IMemoryMap.MemoryRegion>> mem_map) throws IOException {
         this.listener = listener;
         pending_tests.add(new Runnable() {
             public void run() {
@@ -85,7 +86,7 @@ public class TCFTestSuite {
             public void run() {
                 listener.progress("Running Debugger Attach/Terminate Test...", ++count_done, count_total);
                 for (IChannel channel : channels) {
-                    active_tests.put(new TestAttachTerminate(TCFTestSuite.this, channel), channel);
+                    active_tests.put(new TestAttachTerminate(TCFTestSuite.this, run_controls.get(channel), channel), channel);
                 }
             }
         });
@@ -101,7 +102,7 @@ public class TCFTestSuite {
             public void run() {
                 listener.progress("Running Expressions Test...", ++count_done, count_total);
                 for (IChannel channel : channels) {
-                    active_tests.put(new TestExpressions(TCFTestSuite.this, channel), channel);
+                    active_tests.put(new TestExpressions(TCFTestSuite.this, run_controls.get(channel), channel), channel);
                 }
             }
         });
@@ -134,7 +135,8 @@ public class TCFTestSuite {
                 int i = 0;
                 listener.progress("Running Run Control Test...", ++count_done, count_total);
                 for (IChannel channel : channels) {
-                    active_tests.put(new TestRCBP1(TCFTestSuite.this, channel, i++, path_map, mem_map), channel);
+                    active_tests.put(new TestRCBP1(TCFTestSuite.this, run_controls.get(channel),
+                            channel, i++, path_map, mem_map), channel);
                 }
             }
         });
@@ -152,21 +154,22 @@ public class TCFTestSuite {
                 listener.progress("Running Interability Test...", ++count_done, count_total);
                 Random rnd = new Random();
                 for (int i = 0; i < channels.length; i++) {
+                    IChannel channel = channels[i];
                     ITCFTest test = null;
                     switch (rnd.nextInt(11)) {
-                    case 0: test = new TestEcho(TCFTestSuite.this, channels[i]); break;
-                    case 1: test = new TestEchoERR(TCFTestSuite.this, channels[i]); break;
-                    case 2: test = new TestEchoFP(TCFTestSuite.this, channels[i]); break;
-                    case 3: test = new TestAttachTerminate(TCFTestSuite.this, channels[i]); break;
-                    case 4: test = new TestExpressions(TCFTestSuite.this, channels[i]); break;
-                    case 5: test = new TestRCBP1(TCFTestSuite.this, channels[i], i, path_map, mem_map); break;
-                    case 6: test = new TestFileSystem(TCFTestSuite.this, channels[i], i); break;
-                    case 7: test = new TestPathMap(TCFTestSuite.this, channels[i], path_map); break;
-                    case 8: test = new TestStreams(TCFTestSuite.this, channels[i]); break;
-                    case 9: test = new TestSysMonitor(TCFTestSuite.this, channels[i]); break;
-                    case 10: test = new TestTerminals(TCFTestSuite.this, channels[i]); break;
+                    case 0: test = new TestEcho(TCFTestSuite.this, channel); break;
+                    case 1: test = new TestEchoERR(TCFTestSuite.this, channel); break;
+                    case 2: test = new TestEchoFP(TCFTestSuite.this, channel); break;
+                    case 3: test = new TestAttachTerminate(TCFTestSuite.this, run_controls.get(channel), channel); break;
+                    case 4: test = new TestExpressions(TCFTestSuite.this, run_controls.get(channel), channel); break;
+                    case 5: test = new TestRCBP1(TCFTestSuite.this, run_controls.get(channel), channel, i, path_map, mem_map); break;
+                    case 6: test = new TestFileSystem(TCFTestSuite.this, channel, i); break;
+                    case 7: test = new TestPathMap(TCFTestSuite.this, channel, path_map); break;
+                    case 8: test = new TestStreams(TCFTestSuite.this, channel); break;
+                    case 9: test = new TestSysMonitor(TCFTestSuite.this, channel); break;
+                    case 10: test = new TestTerminals(TCFTestSuite.this, channel); break;
                     }
-                    active_tests.put(test, channels[i]);
+                    active_tests.put(test, channel);
                 }
             }
         });
@@ -201,6 +204,9 @@ public class TCFTestSuite {
                     for (int i = 0; i < channels.length; i++) {
                         if (channels[i] == null) return;
                         if (channels[i].getState() != IChannel.STATE_OPEN) return;
+                    }
+                    for (int i = 0; i < channels.length; i++) {
+                        run_controls.put(channels[i], new RunControl(TCFTestSuite.this, channels[i]));
                     }
                     runNextTest();
                 }
@@ -265,9 +271,16 @@ public class TCFTestSuite {
         return active_tests.keySet();
     }
 
-    boolean canResume(IRunControl.RunControlContext ctx) {
+    Map<String,String> getCanceledTests() {
+        return cancel_test_ids;
+    }
+
+    boolean canResume(String id) {
+        for (RunControl r : run_controls.values()) {
+            if (!r.canResume(id)) return false;
+        }
         for (ITCFTest t : active_tests.keySet()) {
-            if (!t.canResume(ctx)) return false;
+            if (!t.canResume(id)) return false;
         }
         return true;
     }

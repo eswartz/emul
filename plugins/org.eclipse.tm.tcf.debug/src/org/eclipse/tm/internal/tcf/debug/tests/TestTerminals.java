@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2011 Wind River Systems, Inc. and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Wind River Systems - initial API and implementation
+ *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.tests;
 
 import java.util.Collection;
@@ -10,7 +20,6 @@ import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IProcesses;
-import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.services.IStreams;
 import org.eclipse.tm.tcf.services.ITerminals;
 import org.eclipse.tm.tcf.services.ITerminals.TerminalContext;
@@ -324,7 +333,7 @@ class TestTerminals implements ITCFTest {
             streams.read(id, 0x1000, stderr_read);
         }
         if (!delay_done) {
-            Protocol.invokeLater(rnd.nextInt(500), new Runnable() {
+            Protocol.invokeLater(rnd.nextInt(250), new Runnable() {
                 public void run() {
                     delay_done = true;
                     TestTerminals.this.run();
@@ -424,7 +433,7 @@ class TestTerminals implements ITCFTest {
         test_suite.done(this, x);
     }
 
-    public boolean canResume(IRunControl.RunControlContext ctx) {
+    public boolean canResume(String id) {
         return true;
     }
 }
