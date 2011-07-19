@@ -15,6 +15,7 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.tm.te.ui.utils.SWTControlUtil;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 
 /**
@@ -100,7 +101,7 @@ public abstract class AbstractPart extends PlatformObject {
 
 		GridData layoutData = new GridData(SWT.BEGINNING, SWT.BEGINNING, false, false);
 		layoutData.horizontalSpan = span;
-		layoutData.widthHint = 0; layoutData.heightHint = 0;
+		layoutData.widthHint = 0; layoutData.heightHint = SWTControlUtil.convertHeightInCharsToPixels(emptySpace, 1);
 
 		emptySpace.setLayoutData(layoutData);
 

@@ -120,7 +120,7 @@ public abstract class AbstractPartWithButtons extends AbstractPart {
 
 				buttons[i] = button;
 			} else {
-				createEmptySpace(parent, 1, toolkit);
+				createEmptySpace(panel, 1, toolkit);
 			}
 		}
 

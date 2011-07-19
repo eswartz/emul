@@ -67,14 +67,14 @@ public abstract class AbstractSection extends SectionPart implements IAdaptable 
 	 * Creates the client container composite.
 	 *
 	 * @param parent The parent composite. Must not be <code>null</code>.
-	 * @param span The horizontal span.
+	 * @param numColumns The number of columns.
 	 * @param toolkit The form toolkit or <code>null</code>.
 	 *
 	 * @return The client container composite.
 	 */
-	protected Composite createClientContainer(Composite parent, int span, FormToolkit toolkit) {
+	protected Composite createClientContainer(Composite parent, int numColumns, FormToolkit toolkit) {
 		Composite container = toolkit != null ? toolkit.createComposite(parent) : new Composite(parent, SWT.NONE);
-		container.setLayout(FormLayoutFactory.createSectionClientGridLayout(false, span));
+		container.setLayout(FormLayoutFactory.createSectionClientGridLayout(false, numColumns));
 		return container;
 	}
 
