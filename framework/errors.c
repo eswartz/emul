@@ -40,7 +40,12 @@
 
 #define MESSAGE_CNT             (ERR_MESSAGE_MAX - ERR_MESSAGE_MIN + 1)
 
-#define SRC_SYSTEM  1
+#ifdef WIN32
+#  define ERR_WINDOWS_MIN       (STD_ERR_BASE + 0x10000)
+#  define ERR_WINDOWS_MAX       (ERR_WINDOWS_MIN + 0xffff)
+#  define ERR_WINDOWS_CNT       (ERR_WINDOWS_MAX - ERR_WINDOWS_MIN + 1)
+#endif
+
 #define SRC_GAI     2
 #define SRC_MESSAGE 3
 #define SRC_REPORT  4
@@ -110,7 +115,7 @@ static ErrorMessage * alloc_msg(int source) {
 
 #ifdef WIN32
 
-static char * system_strerror(DWORD errno_win32) {
+static char * system_strerror(DWORD win32_error_code) {
     WCHAR * buf = NULL;
     assert(is_dispatch_thread());
     msg_len = 0;
@@ -120,7 +125,7 @@ static char * system_strerror(DWORD errno_win32) {
             FORMAT_MESSAGE_IGNORE_INSERTS |
             FORMAT_MESSAGE_MAX_WIDTH_MASK,
             NULL,
-            errno_win32,
+            win32_error_code,
             MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), /* Default language */
             (LPWSTR)&buf, 0, NULL)) {
         msg_len = WideCharToMultiByte(CP_UTF8, 0, buf, -1, NULL, 0, NULL, NULL);
@@ -131,7 +136,7 @@ static char * system_strerror(DWORD errno_win32) {
     }
     if (msg_len == 0) {
         realloc_msg_buf();
-        msg_len = snprintf(msg_buf, msg_max, "System error code 0x%lx", (unsigned long)errno_win32);
+        msg_len = snprintf(msg_buf, msg_max, "System error code 0x%lx", (unsigned long)win32_error_code);
     }
     if (buf != NULL) LocalFree(buf);
     while (msg_len > 0 && msg_buf[msg_len - 1] <= ' ') msg_len--;
@@ -140,46 +145,10 @@ static char * system_strerror(DWORD errno_win32) {
     return msg_buf;
 }
 
-typedef struct EventArgs {
-    HANDLE done;
-    int win32_code;
-    int error_code;
-} EventArgs;
-
-static void set_win32_errno_event(void * args) {
-    ErrorMessage * m = NULL;
-    EventArgs * e = (EventArgs *)args;
-
-    m = alloc_msg(SRC_SYSTEM);
-    m->error = e->win32_code;
-    e->error_code = errno;
-    SetEvent(e->done);
-}
-
 int set_win32_errno(DWORD win32_error_code) {
-    if (win32_error_code) {
-        if (is_dispatch_thread()) {
-            ErrorMessage * m = alloc_msg(SRC_SYSTEM);
-            m->error = win32_error_code;
-        }
-        else {
-            /* Called on background thread */
-            int error = 0;
-            EventArgs * e = (EventArgs *)loc_alloc_zero(sizeof(EventArgs));
-            e->done = CreateEvent(NULL, TRUE, FALSE, NULL);
-            e->win32_code = win32_error_code;
-            post_event(set_win32_errno_event, e);
-            WaitForSingleObject(e->done, INFINITE);
-            CloseHandle(e->done);
-            error = e->error_code;
-            loc_free(e);
-            errno = error;
-        }
-    }
-    else {
-        errno = 0;
-    }
-    return errno;
+    if (win32_error_code == 0) return errno = 0;
+    if (win32_error_code >= ERR_WINDOWS_CNT) return errno = ERR_OTHER;
+    return errno = ERR_WINDOWS_MIN + win32_error_code;
 }
 
 #elif defined(__SYMBIAN32__)
@@ -356,10 +325,6 @@ const char * errno_to_str(int err) {
                     return format_error_report_message(m->report->pub.format, m->report->pub.params, m->report->pub.param_cnt);
                 }
                 switch (m->source) {
-#ifdef WIN32
-                case SRC_SYSTEM:
-                    return system_strerror(m->error);
-#endif
                 case SRC_GAI:
                     return loc_gai_strerror(m->error);
                 case SRC_MESSAGE:
@@ -372,6 +337,11 @@ const char * errno_to_str(int err) {
                 return "cannot get error message text: errno_to_str() must be called from the main thread";
             }
         }
+#ifdef WIN32
+        if (err >= ERR_WINDOWS_MIN && err <= ERR_WINDOWS_MAX) {
+            return system_strerror(err - ERR_WINDOWS_MIN);
+        }
+#endif
 #ifdef __SYMBIAN32__
         if (err < 0) {
             return system_strerror(err);
@@ -505,17 +475,18 @@ ErrorReport * get_error_report(int err) {
 
         report->pub.format = loc_strdup(errno_to_str(err));
 
+#ifdef WIN32
+        if (err >= ERR_WINDOWS_MIN && err <= ERR_WINDOWS_MAX) {
+            add_report_prop_int(report, "AltCode", err);
+            add_report_prop_str(report, "AltOrg", "WIN32");
+            err = ERR_OTHER;
+        }
+#endif
+
         if (m != NULL) {
             if (m->source == SRC_MESSAGE) {
                 err = m->error;
             }
-#ifdef WIN32
-            else if (m->source == SRC_SYSTEM) {
-                add_report_prop_int(report, "AltCode", m->error);
-                add_report_prop_str(report, "AltOrg", "WIN32");
-                err = ERR_OTHER;
-            }
-#endif
             else {
                 err = ERR_OTHER;
             }
