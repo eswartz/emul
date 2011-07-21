@@ -45,14 +45,14 @@
       <import plugin="org.eclipse.cdt.ui"/>
       <import plugin="org.eclipse.cdt.debug.core"/>
       <import plugin="org.eclipse.core.expressions"/>
-      <import feature="org.eclipse.cdt" version="5.0.0" match="greaterOrEqual"/>
+      <import feature="org.eclipse.cdt" version="8.0.0" match="greaterOrEqual"/>
       <import plugin="org.eclipse.text" version="3.5.0" match="greaterOrEqual"/>
       <import plugin="org.eclipse.cdt.debug.ui"/>
       <import plugin="org.eclipse.tm.tcf.core"/>
       <import plugin="org.eclipse.tm.tcf.debug"/>
       <import plugin="org.eclipse.tm.tcf.debug.ui"/>
       <import plugin="org.eclipse.jface.text" version="3.5.0" match="greaterOrEqual"/>
-      <import plugin="org.eclipse.cdt.launch" version="6.1.0" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.cdt.launch" version="7.0.0" match="greaterOrEqual"/>
    </requires>
 
    <plugin
