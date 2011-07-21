@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<site>
+   <category-def name="org.eclipse.tcf" label="TCF">
+      <description>Target Communication Framework</description>
+   </category-def>
+   <feature url="features/org.eclipse.tm.tcf.feature_0.0.0.qualifier.jar" id="org.eclipse.tm.tcf.feature" version="0.0.0">
+      <category name="org.eclipse.tcf"/>
+   </feature>
+   <feature url="features/org.eclipse.tm.tcf.cdt.feature_0.0.0.qualifier.jar" id="org.eclipse.tm.tcf.cdt.feature" version="0.0.0">
+      <category name="org.eclipse.tcf"/>
+   </feature>
+   <feature url="features/org.eclipse.tm.tcf.rse.feature_0.0.0.qualifier.jar" id="org.eclipse.tm.tcf.rse.feature" version="0.0.0">
+      <category name="org.eclipse.tcf"/>
+   </feature>
+</site>
