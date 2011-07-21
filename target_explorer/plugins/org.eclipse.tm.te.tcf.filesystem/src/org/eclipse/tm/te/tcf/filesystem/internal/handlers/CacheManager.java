@@ -5,6 +5,7 @@
  * available at http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
+ * Wind River Systems - initial API and implementation
  * William Chen (Wind River)- [345387]Open the remote files with a proper editor
  *******************************************************************************/
 package org.eclipse.tm.te.tcf.filesystem.internal.handlers;
@@ -119,7 +120,7 @@ public class CacheManager {
 	/**
 	 * Append the path with the segment "name". Create a directory
 	 * if the node is a directory which does not yet exist.
-	 * 
+	 *
 	 * @param node The file/folder node.
 	 * @param path The path to appended.
 	 * @param name The segment's name.
@@ -192,6 +193,9 @@ public class CacheManager {
 			// If downloading is successful, set the last modified time to
 			// that of its corresponding file.
 			file.setLastModified(node.attr.mtime);
+			// If the node is read-only, make the cache file read-only.
+			if(!node.isWritable())
+				file.setReadOnly();
 			return true;
 		} catch (InvocationTargetException e) {
 			// Something's gone wrong. Roll back the downloading and display the
@@ -243,6 +247,10 @@ public class CacheManager {
 			input = new BufferedInputStream(in);
 			// Write the data to its local cache file.
 			File file = getCachePath(node).toFile();
+			if(file.exists() && !file.canWrite()){
+				// If the file exists and is read-only, delete it.
+				file.delete();
+			}
 			output = new BufferedOutputStream(new FileOutputStream(file));
 
 			// The buffer used to download the file.

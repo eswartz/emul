@@ -102,6 +102,9 @@
                   <iterate>
                      <instanceof value="org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode"/>
                      <test property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isFile"/>
+                     <test
+                           property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isReadable">
+                     </test>
                      <not>
                         <test property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isBinaryFile"/>
                      </not>
@@ -160,6 +163,9 @@
                   <iterate>
                      <instanceof value="org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode"/>
                      <test property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isFile"/>
+                     <test
+                           property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isReadable">
+                     </test>
                      <not>
                         <test property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isBinaryFile"/>
                      </not>
@@ -188,7 +194,7 @@
             class="org.eclipse.tm.te.tcf.filesystem.internal.handlers.FSTreeNodePropertyTester"
             id="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode"
             namespace="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode"
-            properties="isFile,isDirectory,isBinaryFile"
+            properties="isFile,isDirectory,isBinaryFile,isReadable,isWritable,isExecutable"
             type="org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode">
       </propertyTester>
    </extension>
@@ -228,6 +234,9 @@
                   <iterate>
                      <instanceof value="org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode"/>
                      <test property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isFile"/>
+                     <test
+                           property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isReadable">
+                     </test>
                      <not>
                         <test property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isBinaryFile"/>
                      </not>

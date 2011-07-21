@@ -7,6 +7,8 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  * William Chen (Wind River) - [345384] Provide property pages for remote file system nodes
+ * William Chen (Wind River) - [352302]Opening a file in an editor depending on
+ *                             the client's permissions.
  *******************************************************************************/
 package org.eclipse.tm.te.tcf.filesystem.model;
 
@@ -18,9 +20,16 @@ import java.util.UUID;
 
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.PlatformObject;
+import org.eclipse.tm.tcf.protocol.IChannel;
+import org.eclipse.tm.tcf.protocol.IChannel.IChannelListener;
+import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IFileSystem;
+import org.eclipse.tm.tcf.services.IFileSystem.DoneUser;
+import org.eclipse.tm.tcf.services.IFileSystem.FileSystemException;
 import org.eclipse.tm.te.tcf.filesystem.interfaces.IWindowsFileAttributes;
+import org.eclipse.tm.te.tcf.filesystem.internal.UserAccount;
+import org.eclipse.tm.te.tcf.filesystem.internal.url.Rendezvous;
 import org.eclipse.tm.te.tcf.filesystem.internal.url.TcfURLConnection;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel;
 
@@ -31,6 +40,9 @@ import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel;
  * the TCF event dispatch thread.
  */
 public final class FSTreeNode extends PlatformObject {
+	// The key to save and retrieve the user account in a peer model.
+	private static final String USER_ACCOUNT_KEY = "user.account"; //$NON-NLS-1$
+
 	private final UUID uniqueId = UUID.randomUUID();
 
 	/**
@@ -232,5 +244,160 @@ public final class FSTreeNode extends PlatformObject {
 	 */
 	public boolean isRoot() {
 		return type.endsWith("FSRootDirNode"); //$NON-NLS-1$
+	}
+
+	/**
+	 * If this file is readable.
+	 *
+	 * @return true if it is readable.
+	 */
+	public boolean isReadable() {
+		UserAccount account = getUserAccount();
+		if (account != null && attr != null) {
+			if (attr.uid == account.getEUID()) {
+				return (attr.permissions & IFileSystem.S_IRUSR) != 0;
+			} else if (attr.gid == account.getEGID()) {
+				return (attr.permissions & IFileSystem.S_IRGRP) != 0;
+			} else {
+				return (attr.permissions & IFileSystem.S_IROTH) != 0;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * If this file is writable.
+	 *
+	 * @return true if it is writable.
+	 */
+	public boolean isWritable() {
+		UserAccount account = getUserAccount();
+		if (account != null && attr != null) {
+			if (attr.uid == account.getEUID()) {
+				return (attr.permissions & IFileSystem.S_IWUSR) != 0;
+			} else if (attr.gid == account.getEGID()) {
+				return (attr.permissions & IFileSystem.S_IWGRP) != 0;
+			} else {
+				return (attr.permissions & IFileSystem.S_IWOTH) != 0;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * If this file is executable.
+	 *
+	 * @return true if it is executable.
+	 */
+	public boolean isExecutable() {
+		UserAccount account = getUserAccount();
+		if (account != null && attr != null) {
+			if (attr.uid == account.getEUID()) {
+				return (attr.permissions & IFileSystem.S_IXUSR) != 0;
+			} else if (attr.gid == account.getEGID()) {
+				return (attr.permissions & IFileSystem.S_IXGRP) != 0;
+			} else {
+				return (attr.permissions & IFileSystem.S_IXOTH) != 0;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Get the information of the client user account.
+	 *
+	 * @return The client user account's information.
+	 */
+	private UserAccount getUserAccount() {
+		UserAccount account = getUserAccount(peerNode);
+		if (account == null) {
+			final Rendezvous rendezvous = new Rendezvous();
+			IChannel channel = peerNode.getPeer().openChannel();
+			channel.addChannelListener(new IChannelListener() {
+				public void onChannelOpened() {
+					rendezvous.arrive();
+				}
+
+				public void onChannelClosed(Throwable error) {
+				}
+
+				public void congestionLevel(int level) {
+				}
+			});
+			try {
+				rendezvous.waiting(5000L);
+			} catch (InterruptedException e) {
+				return null;
+			}
+			rendezvous.reset();
+			IFileSystem service = channel.getRemoteService(IFileSystem.class);
+			final UserAccount[] accounts = new UserAccount[1];
+			service.user(new DoneUser() {
+				public void doneUser(IToken token, FileSystemException error,
+						int real_uid, int effective_uid, int real_gid,
+						int effective_gid, String home) {
+					if (error == null) {
+						accounts[0] = new UserAccount(real_uid, real_gid,
+								effective_uid, effective_gid, home);
+					}
+					rendezvous.arrive();
+				}
+			});
+			try {
+				rendezvous.waiting(5000L);
+			} catch (InterruptedException e) {
+				return null;
+			}
+			if (accounts[0] == null)
+				return null;
+			account = accounts[0];
+			setUserAccount(peerNode, account);
+		}
+		return account;
+	}
+
+	/**
+	 * Get the user account stored in the specified peer model using a key named
+	 * "user.account" defined by the constant USER_ACCOUNT_KEY.
+	 *
+	 * @param peer
+	 *            The peer model from which the user account is retrieved.
+	 * @return The user account if it exists or null if not.
+	 */
+	private UserAccount getUserAccount(final IPeerModel peer) {
+		UserAccount account;
+		if (Protocol.isDispatchThread()) {
+			account = (UserAccount) peer.getProperty(USER_ACCOUNT_KEY);
+		} else {
+			final UserAccount[] accounts = new UserAccount[1];
+			Protocol.invokeAndWait(new Runnable() {
+				public void run() {
+					accounts[0] = (UserAccount) peer
+							.getProperty(USER_ACCOUNT_KEY);
+				}
+			});
+			account = accounts[0];
+		}
+		return account;
+	}
+
+	/**
+	 * Save the user account to the specified peer model using a key named
+	 * "user.account" defined by the constant USER_ACCOUNT_KEY.
+	 *
+	 * @param peer
+	 *            The peer model to which the user account is saved.
+	 */
+	private void setUserAccount(final IPeerModel peer, final UserAccount account) {
+		assert peer != null && account != null;
+		if (Protocol.isDispatchThread()) {
+			peer.setProperty(USER_ACCOUNT_KEY, account);
+		} else {
+			Protocol.invokeAndWait(new Runnable() {
+				public void run() {
+					peer.setProperty(USER_ACCOUNT_KEY, account);
+				}
+			});
+		}
 	}
 }

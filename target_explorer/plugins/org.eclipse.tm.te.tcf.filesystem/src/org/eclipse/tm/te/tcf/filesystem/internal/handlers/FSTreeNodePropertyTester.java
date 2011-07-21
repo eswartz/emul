@@ -5,7 +5,10 @@
  * available at http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * William Chen (Wind River)- [345387]Open the remote files with a proper editor
+ * Wind River Systems - initial API and implementation
+ * William Chen (Wind River) - [345387]Open the remote files with a proper editor
+ * William Chen (Wind River) - [352302]Opening a file in an editor depending on
+ *                             the client's permissions.
  *******************************************************************************/
 package org.eclipse.tm.te.tcf.filesystem.internal.handlers;
 
@@ -13,14 +16,15 @@ import org.eclipse.core.expressions.PropertyTester;
 import org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode;
 
 /**
- * The property tester of an FSTreeNode. The properties include "isFile" telling
- * if it is a file node, "isDirectory" telling if it is a directory, or
- * "isBinaryFile" telling if the file is a binary file.
+ * The property tester of an FSTreeNode. The properties include "isFile"
+ * if it is a file node, "isDirectory" if it is a directory, "isBinaryFile"
+ * if it is a binary file, "isReadable" if it is readable, "isWritable" if
+ * it is writable and "isExecutable" if it is executable.
  */
 public class FSTreeNodePropertyTester extends PropertyTester {
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.eclipse.core.expressions.IPropertyTester#test(java.lang.Object,
 	 * java.lang.String, java.lang.Object[], java.lang.Object)
 	 */
@@ -34,6 +38,12 @@ public class FSTreeNodePropertyTester extends PropertyTester {
 			return node.isDirectory();
 		} else if (property.equals("isBinaryFile")) { //$NON-NLS-1$
 			return ContentTypeHelper.getInstance().isBinaryFile(node);
+		} else if (property.equals("isReadable")){ //$NON-NLS-1$
+			return node.isReadable();
+		} else if (property.equals("isWritable")){ //$NON-NLS-1$
+			return node.isWritable();
+		} else if (property.equals("isExecutable")){ //$NON-NLS-1$
+			return node.isExecutable();
 		}
 		return false;
 	}
