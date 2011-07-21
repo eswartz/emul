@@ -306,12 +306,15 @@ class TestExpressions implements ITCFTest,
                     if (error != null) {
                         exit(new Exception("Cannot get context state", error));
                     }
-                    else if (suspended) {
-                        suspended_pc = pc;
-                        runTest();
+                    else if (!suspended) {
+                        waiting_suspend = true;
+                    }
+                    else if (pc == null || pc.length() == 0 || pc.equals("0")) {
+                        exit(new Exception("Invalid context PC"));
                     }
                     else {
-                        waiting_suspend = true;
+                        suspended_pc = pc;
+                        runTest();
                     }
                 }
             });
@@ -599,40 +602,12 @@ class TestExpressions implements ITCFTest,
         }
     }
 
-    public void contextSuspended(String context, String pc, String reason, Map<String,Object> params) {
-        assert context != null;
-        if (context.equals(thread_id)) {
-            if (pc == null && thread_ctx != null) {
-                thread_ctx.getState(new IRunControl.DoneGetState() {
-                    public void doneGetState(IToken token, Exception error,
-                            boolean suspended, String pc, String reason,
-                            Map<String,Object> params) {
-                        if (error != null) {
-                            exit(new Exception("Cannot get context state", error));
-                        }
-                        else if (!suspended) {
-                            exit(new Exception("Invalid context state"));
-                        }
-                        else if (pc == null || pc.length() == 0 || pc.equals("0")) {
-                            exit(new Exception("Invalid context PC"));
-                        }
-                        else {
-                            suspended_pc = pc;
-                            if (waiting_suspend) {
-                                waiting_suspend = false;
-                                runTest();
-                            }
-                        }
-                    }
-                });
-            }
-            else {
-                suspended_pc = pc;
-                if (waiting_suspend) {
-                    waiting_suspend = false;
-                    runTest();
-                }
-            }
+    public void contextSuspended(String id, String pc, String reason, Map<String,Object> params) {
+        assert id != null;
+        if (id.equals(thread_id) && waiting_suspend) {
+            suspended_pc = pc;
+            waiting_suspend = false;
+            runTest();
         }
     }
 
