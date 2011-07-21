@@ -103,7 +103,7 @@ static void display_tcf_reply(Channel * c, void * client_data, int error) {
     int i;
 
     if (error) {
-        printf("Reply error %d: %s\n", error, errno_to_str(error));
+        fprintf(stderr, "Reply error %d: %s\n", error, errno_to_str(error));
         cmd_done(error);
         return;
     }
@@ -131,7 +131,7 @@ static int cmd_tcf(char *s) {
     Channel * c = chan;
 
     if (c == NULL) {
-        printf("Error: Channel not connected, use 'connect' command\n");
+        fprintf(stderr, "Error: Channel not connected, use 'connect' command\n");
         return -1;
     }
     ind = 0;
@@ -140,7 +140,7 @@ static int cmd_tcf(char *s) {
         args[ind] = strtok(NULL, " \t");
     }
     if (args[0] == NULL || args[1] == NULL) {
-        printf("Error: Expected at least service and command name arguments\n");
+        fprintf(stderr, "Error: Expected at least service and command name arguments\n");
         return -1;
     }
     protocol_send_command(c, args[0], args[1], display_tcf_reply, c);
@@ -231,6 +231,7 @@ static void connect_callback(void * args, int error, Channel * c) {
         channel_start(c);
         chan = c;
         for (i = 0; i < connect_hnd_count; ++i) connect_hnds[i](c);
+        printf(" Connection established with %s\n", c->peer_name);
     }
     peer_server_free(ps);
 }
@@ -240,7 +241,7 @@ static int cmd_connect(char * s) {
 
     ps = channel_peer_from_url(s);
     if (ps == NULL) {
-        fprintf(stderr, "Error: Cannot parse peer identifer: %s\n", s);
+        fprintf(stderr, "Error: Cannot parse peer identifier: %s\n", s);
         return -1;
     }
 
