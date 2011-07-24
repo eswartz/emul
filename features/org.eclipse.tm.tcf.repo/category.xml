@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <site>
-   <category-def name="org.eclipse.tcf" label="TCF">
-      <description>Target Communication Framework</description>
-   </category-def>
    <feature url="features/org.eclipse.tm.tcf.feature_0.0.0.qualifier.jar" id="org.eclipse.tm.tcf.feature" version="0.0.0">
       <category name="org.eclipse.tcf"/>
    </feature>
@@ -12,4 +9,20 @@
    <feature url="features/org.eclipse.tm.tcf.rse.feature_0.0.0.qualifier.jar" id="org.eclipse.tm.tcf.rse.feature" version="0.0.0">
       <category name="org.eclipse.tcf"/>
    </feature>
+   <feature url="features/org.eclipse.tm.te.feature_1.0.0.qualifier.jar" id="org.eclipse.tm.te.feature" version="1.0.0.qualifier">
+      <category name="org.eclipse.tm.te"/>
+   </feature>
+   <feature url="features/org.eclipse.tm.te.tcf.feature_1.0.0.qualifier.jar" id="org.eclipse.tm.te.tcf.feature" version="1.0.0.qualifier">
+      <category name="org.eclipse.tm.te"/>
+   </feature>
+   <category-def name="org.eclipse.tcf" label="TCF">
+      <description>
+         Target Communication Framework
+      </description>
+   </category-def>
+   <category-def name="org.eclipse.tm.te" label="Target Explorer">
+      <description>
+         Target Explorer to manage TCF targets.
+      </description>
+   </category-def>
 </site>
