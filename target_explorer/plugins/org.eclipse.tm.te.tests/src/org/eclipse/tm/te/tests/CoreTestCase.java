@@ -240,19 +240,6 @@ public class CoreTestCase extends TestCase {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see junit.framework.TestCase#runTest()
-	 */
-	@Override
-	protected void runTest() throws Throwable {
-		long start = printStart(getName());
-		try {
-			super.runTest();
-		} finally {
-			printEnd(getName(), start);
-		}
-	}
-
 	// Local date format presenting long date and time format.
 	private final DateFormat DATE_FORMAT = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG, Locale.getDefault());
 
