@@ -15,7 +15,7 @@
    <feature url="features/org.eclipse.tm.te.tcf.feature_1.0.0.qualifier.jar" id="org.eclipse.tm.te.tcf.feature" version="1.0.0.qualifier">
       <category name="org.eclipse.tm.te"/>
    </feature>
-   <category-def name="org.eclipse.tcf" label="TCF">
+   <category-def name="org.eclipse.tcf" label="Target Communication Framework">
       <description>
          Target Communication Framework
       </description>
