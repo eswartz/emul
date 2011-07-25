@@ -132,17 +132,29 @@ class RunControl {
                                                 }
                                                 else {
                                                     if (suspended) suspended_ctx_ids.add(id);
+                                                    getStateDone();
                                                 }
                                             }
                                         }));
                                     }
+                                    getStateDone();
                                 }
                             }
                         }));
                     }
+                    getStateDone();
                 }
             }
         }));
+    }
+
+    private void getStateDone() {
+        if (get_state_cmds.size() > 0) return;
+        if (channel.getState() != IChannel.STATE_OPEN) return;
+        if (suspended_ctx_ids.size() > 0) {
+            String[] arr = suspended_ctx_ids.toArray(new String[suspended_ctx_ids.size()]);
+            resume(arr[rnd.nextInt(arr.length)], IRunControl.RM_RESUME);
+        }
     }
 
     private void startTimer() {
@@ -174,6 +186,7 @@ class RunControl {
 
     boolean canResume(String id) {
         if (sync_pending) return false;
+        if (get_state_cmds.size() > 0) return false;
         if (resume_cmds.get(id) != null) return false;
         if (test_suite.getCanceledTests().get(id) == null && !suspended_ctx_ids.contains(id)) return false;
         IRunControl.RunControlContext ctx = ctx_map.get(id);
@@ -190,7 +203,7 @@ class RunControl {
     }
 
     void resume(final String id, final int mode) {
-        if (!canResume(id)) return;
+        if (!test_suite.canResume(id)) return;
         assert !sync_pending;
         sync_pending = true;
         Protocol.sync(new Runnable() {
