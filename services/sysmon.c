@@ -1457,7 +1457,7 @@ static void command_get_context(char * token, Channel * c) {
         else {
             snprintf(dir, sizeof(dir), "/proc/%d", pid);
         }
-        if (lstat(dir, &st) < 0) err = errno;
+        if (lstat(dir, &st) < 0) err = errno == ENOENT ? ESRCH : errno;
         else if (!S_ISDIR(st.st_mode)) err = ERR_INV_CONTEXT;
     }
 
@@ -1508,6 +1508,9 @@ static void command_get_children(char * token, Channel * c) {
                     /* Zombie */
                     err = 0;
                 }
+                else {
+                    err = ESRCH;
+                }
             }
             write_errno(&c->out, err);
             write_stringz(&c->out, "null");
@@ -1553,7 +1556,7 @@ static void command_get_command_line(char * token, Channel * c) {
     if (pid != 0 && parent == 0) {
         struct stat st;
         snprintf(dir, sizeof(dir), "/proc/%d", pid);
-        if (lstat(dir, &st) < 0) err = errno;
+        if (lstat(dir, &st) < 0) err = errno == ENOENT ? ESRCH : errno;
         else if (!S_ISDIR(st.st_mode)) err = ERR_INV_CONTEXT;
     }
     else {
@@ -1596,7 +1599,7 @@ static void command_get_environment(char * token, Channel * c) {
     if (pid != 0 && parent == 0) {
         struct stat st;
         snprintf(dir, sizeof(dir), "/proc/%d", pid);
-        if (lstat(dir, &st) < 0) err = errno;
+        if (lstat(dir, &st) < 0) err = errno == ENOENT ? ESRCH : errno;
         else if (!S_ISDIR(st.st_mode)) err = ERR_INV_CONTEXT;
     }
     else {
