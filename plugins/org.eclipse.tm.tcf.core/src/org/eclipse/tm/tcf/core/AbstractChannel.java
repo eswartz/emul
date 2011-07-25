@@ -866,13 +866,14 @@ public abstract class AbstractChannel implements IChannel {
             }
         }
         try {
+            Message cmd = null;
             Token token = null;
             switch (msg.type) {
             case 'P':
             case 'R':
             case 'N':
                 String token_id = msg.token.getID();
-                Message cmd = msg.type == 'P' ? out_tokens.get(token_id) : out_tokens.remove(token_id);
+                cmd = msg.type == 'P' ? out_tokens.get(token_id) : out_tokens.remove(token_id);
                 if (cmd == null) throw new Exception("Invalid token received: " + token_id);
                 token = cmd.token;
                 break;
@@ -905,8 +906,16 @@ public abstract class AbstractChannel implements IChannel {
                 sendCongestionLevel();
                 break;
             case 'N':
-                token.getListener().terminated(token, new ErrorReport(
-                        "Command is not recognized", IErrorReport.TCF_ERROR_INV_COMMAND));
+                {
+                    String s = null;
+                    if (remote_service_by_name.get(cmd.service) == null) {
+                        s = "No such service: " + cmd.service;
+                    }
+                    else {
+                        s = "Command is not recognized: " + cmd.service + "." + cmd.name;
+                    }
+                    token.getListener().terminated(token, new ErrorReport(s, IErrorReport.TCF_ERROR_INV_COMMAND));
+                }
                 break;
             case 'E':
                 boolean hello = msg.service.equals(ILocator.NAME) && msg.name.equals("Hello");
