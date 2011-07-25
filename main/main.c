@@ -68,6 +68,49 @@ static BOOL CtrlHandler(DWORD ctrl) {
 }
 #endif
 
+#if !defined(_WRS_KERNEL)
+static const char * help_text[] = {
+    "Usage: agent [OPTION]...",
+    "Start Target Communication Framework agent.",
+    "  -d               run in daemon mode",
+#if ENABLE_Cmdline
+    "  -i               run in interactive mode",
+#endif
+#if ENABLE_RCBP_TEST
+    "  -t               run in diagnostic mode",
+#endif
+    "  -L<file>         enable logging, use -L- to send log to stderr",
+    "  -l<number>       set log level, the value is bitwise OR of:",
+    "       0x0001          memory allocation and deallocation",
+    "       0x0002          main event queue",
+    "       0x0004          waitpid() events",
+    "       0x0008          low-level debugger events",
+    "       0x0020          communication protocol",
+    "       0x0040          debugger actions",
+    "       0x0080          discovery",
+    "       0x0100          async I/O",
+    "       0x0200          proxy state",
+    "       0x0400          proxy traffic",
+    "       0x0800          ELF reader",
+    "       0x1000          LUA interpreter",
+    "       0x2000          stack trace service",
+    "       0x4000          plugins",
+    "  -s<url>          set agent listening port and protocol, default is TCP::1534",
+#if ENABLE_Plugins
+    "  -P<dir>          set agent plugins directory name",
+#endif
+#if ENABLE_SSL
+    "  -g               generate SSL certificate and exit",
+#endif
+    NULL
+};
+
+static void show_help(void) {
+    const char ** p = help_text;
+    while (*p != NULL) fprintf(stderr, "%s\n", *p++);
+}
+#endif
+
 #if defined(_WRS_KERNEL)
 int tcf(void) {
 #else
@@ -157,16 +200,13 @@ int main(int argc, char ** argv) {
                     plugins_path = s;
                     break;
 #endif
-
-                default:
-                    fprintf(stderr, "%s: error: illegal option '%c'\n", progname, c);
-                    exit(1);
                 }
                 s = "";
                 break;
 
             default:
                 fprintf(stderr, "%s: error: illegal option '%c'\n", progname, c);
+                show_help();
                 exit(1);
             }
         }
