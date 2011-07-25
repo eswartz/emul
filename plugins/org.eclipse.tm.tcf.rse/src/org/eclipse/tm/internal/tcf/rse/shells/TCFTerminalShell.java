@@ -108,17 +108,17 @@ public class TCFTerminalShell extends AbstractTerminalShell {
                 status = ITCFSessionProvider.SUCCESS_CODE;
                 if (login_prompt != null && login_prompt.length() > 0) {
                     status = readUntil(login_prompt,fInputStream);
-                    write(username + "\n");
+                    write(username + "\n"); //$NON-NLS-1$
                 }
                 if (Boolean.valueOf(pwd_required).booleanValue()) {
                     if (status == ITCFSessionProvider.SUCCESS_CODE && password_prompt != null && password_prompt.length() > 0) {
                         status = readUntil(password_prompt,fInputStream);
-                        write(password + "\n");
+                        write(password + "\n"); //$NON-NLS-1$
                     }
                 }
                 if (status == ITCFSessionProvider.SUCCESS_CODE && command_prompt != null && command_prompt.length() > 0) {
                     status = readUntil(command_prompt,fInputStream);
-                    write("\n");
+                    write("\n"); //$NON-NLS-1$
                 }
             } else {
                 status = ITCFSessionProvider.SUCCESS_CODE;
@@ -227,14 +227,13 @@ public class TCFTerminalShell extends AbstractTerminalShell {
                                 ITerminals.TerminalContext terminal) {
 
                             terminalContext = terminal;
-                            if (error != null)
-                                error(error);
+                            if (error != null) error(error);
                             else done(terminal);
                         }
                     });
                 }
 
-            }.getS(null, Messages.TCFShellService_Name); //$NON-NLS-1$
+            }.getS(null, Messages.TCFTerminalService_Name);
 
             fPtyType = terminalContext.getPtyType();
             fEncoding = terminalContext.getEncoding();
@@ -246,10 +245,14 @@ public class TCFTerminalShell extends AbstractTerminalShell {
             out_id = (String)map_ids.get(ITerminals.PROP_STDIN_ID);
 
             String user = fSessionProvider.getSessionUserId();
-            String password = fSessionProvider.getSessionPassword(); //$NON-NLS-1$
+            String password = fSessionProvider.getSessionPassword();
             status = ITCFSessionProvider.ERROR_CODE;
 
-            IStreams streams = ((TCFConnectorService)sessionProvider).getService(IStreams.class);
+            IStreams streams = new TCFRSETask<IStreams>() {
+                public void run() {
+                    done(((TCFConnectorService)sessionProvider).getService(IStreams.class));
+                }
+            }.getS(null, Messages.TCFTerminalService_Name);
             fOutputStream = new TCFTerminalOutputStream(streams, out_id);
             fInputStream = new TCFTerminalInputStream(streams, in_id);
             if (fEncoding != null) {
