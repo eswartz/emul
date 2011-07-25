@@ -13,7 +13,6 @@
 
 	<version>1.0.0.qualifier</version>
 	<artifactId>org.eclipse.tm.te.tests</artifactId>
-	<name>Target Explorer Unit Tests</name>
 	<packaging>eclipse-test-plugin</packaging>
 
 	<properties>
