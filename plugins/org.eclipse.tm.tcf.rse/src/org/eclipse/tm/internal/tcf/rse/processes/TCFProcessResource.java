@@ -197,14 +197,7 @@ public class TCFProcessResource extends AbstractResource implements IHostProcess
     }
 
     public String getName() {
-        String s = (String)properties.get(ISysMonitor.PROP_FILE);
-        if (s != null) {
-            int i = s.lastIndexOf('/');
-            int j = s.lastIndexOf('\\');
-            if (j > i) i = j;
-            if (i > 0) s = s.substring(i + 1);
-        }
-        return s;
+        return (String)properties.get(ISysMonitor.PROP_FILE);
     }
 
     public long getPPid() {
