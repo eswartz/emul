@@ -45,6 +45,7 @@
 	  <module>plugins/org.eclipse.tm.tcf.rse</module>
 
 	  <module>features/org.eclipse.tm.tcf.feature</module>
+	  <module>features/org.eclipse.tm.tcf.sdk.feature</module>
 	  <module>features/org.eclipse.tm.tcf.cdt.feature</module>
 	  <module>features/org.eclipse.tm.tcf.rse.feature</module>
 	  
@@ -60,7 +61,9 @@
 	  <module>target_explorer/plugins/org.eclipse.tm.te.ui.views</module>
 
 	  <module>target_explorer/features/org.eclipse.tm.te.feature</module>
+	  <module>target_explorer/features/org.eclipse.tm.te.sdk.feature</module>
 	  <module>target_explorer/features/org.eclipse.tm.te.tcf.feature</module>
+	  <module>target_explorer/features/org.eclipse.tm.te.tcf.sdk.feature</module>
 	  
 	  <module>target_explorer/plugins/org.eclipse.tm.te.tests</module>
 
