@@ -258,6 +258,7 @@ int context_continue(Context * ctx) {
             int err = errno;
             if (err == ESRCH) {
                 ext->regs_dirty = 0;
+                ctx->exiting = 1;
                 send_context_started_event(ctx);
                 return 0;
             }
@@ -275,6 +276,7 @@ int context_continue(Context * ctx) {
 #endif
         int err = errno;
         if (err == ESRCH) {
+            ctx->exiting = 1;
             send_context_started_event(ctx);
             return 0;
         }
@@ -311,7 +313,7 @@ int context_single_step(Context * ctx) {
             int err = errno;
             if (err == ESRCH) {
                 ext->regs_dirty = 0;
-                ext->pending_step = 1;
+                ctx->exiting = 1;
                 send_context_started_event(ctx);
                 return 0;
             }
@@ -325,7 +327,7 @@ int context_single_step(Context * ctx) {
     if (ptrace(PTRACE_SINGLESTEP, ext->pid, 0, 0) < 0) {
         int err = errno;
         if (err == ESRCH) {
-            ext->pending_step = 1;
+            ctx->exiting = 1;
             send_context_started_event(ctx);
             return 0;
         }
@@ -901,7 +903,7 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
         break;
     case PTRACE_EVENT_EXIT:
         {
-            /* SIGKILL can override PTRACE_EVENT_CLONE event */
+            /* SIGKILL can override PTRACE_EVENT_CLONE event with PTRACE_EVENT_EXIT */
             unsigned long child_pid = get_child_pid(EXT(ctx->parent)->pid);
             if (child_pid) {
                 Context * prs = ctx->parent;
@@ -965,15 +967,8 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
         if (ptrace(PTRACE_GETREGS, ext->pid, 0, ext->regs) < 0) {
             assert(errno != 0);
             if (errno == ESRCH) {
-                /* Racing condition: somebody resumed this context while we are handling stop event.
-                 *
-                 * One possible cause: main thread has exited forcing children to exit too.
-                 * I beleive it is a bug in PTRACE implementation - PTRACE should delay exiting of
-                 * a context while it is stopped, but it does not, which causes a nasty racing.
-                 *
-                 * Workaround: Ignore current event, assume context is running.
-                 */
                 ctx->stopped = 0;
+                ctx->exiting = 1;
                 return;
             }
             ext->regs_error = get_error_report(errno);
