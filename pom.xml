@@ -67,7 +67,9 @@
 	  <module>target_explorer/features/org.eclipse.tm.te.tcf.feature</module>
 	  <module>target_explorer/features/org.eclipse.tm.te.tcf.sdk.feature</module>
 	  
+<!--	  
 	  <module>target_explorer/plugins/org.eclipse.tm.te.tests</module>
+-->
 
 	  <module>features/org.eclipse.tm.tcf.repo</module>
 	</modules>
