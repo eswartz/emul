@@ -47,7 +47,9 @@
 	  <module>features/org.eclipse.tm.tcf.feature</module>
 	  <module>features/org.eclipse.tm.tcf.sdk.feature</module>
 	  <module>features/org.eclipse.tm.tcf.cdt.feature</module>
+	  <module>features/org.eclipse.tm.tcf.cdt.sdk.feature</module>
 	  <module>features/org.eclipse.tm.tcf.rse.feature</module>
+	  <module>features/org.eclipse.tm.tcf.rse.sdk.feature</module>
 	  
 	  <module>target_explorer/plugins/org.eclipse.tm.te.core</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.core.statushandler</module>
