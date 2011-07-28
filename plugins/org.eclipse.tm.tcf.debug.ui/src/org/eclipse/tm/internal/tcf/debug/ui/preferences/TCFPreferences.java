@@ -18,6 +18,8 @@ public class TCFPreferences {
     public static final String
         PREF_STACK_FRAME_LIMIT_ENABLED = "StackFrameLimitEnabled",
         PREF_STACK_FRAME_LIMIT_VALUE = "StackFrameLimitValue",
+        PREF_STACK_FRAME_ARG_NAMES = "StackFrameArgNames",
+        PREF_STACK_FRAME_ARG_VALUES = "StackFrameArgValues",
         PREF_WAIT_FOR_PC_UPDATE_AFTER_STEP = "WaitForPCUpdateAfterStep",
         PREF_WAIT_FOR_VIEWS_UPDATE_AFTER_STEP = "WaitForViewsUpdateAfterStep",
         PREF_DELAY_STACK_UPDATE_UNTIL_LAST_STEP = "DelayStackUpdateUntilLastStep",

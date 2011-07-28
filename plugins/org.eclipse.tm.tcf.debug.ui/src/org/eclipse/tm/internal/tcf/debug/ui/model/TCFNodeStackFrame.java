@@ -34,6 +34,7 @@ import org.eclipse.tm.tcf.util.TCFDataCache;
 public class TCFNodeStackFrame extends TCFNode {
 
     private int frame_no;
+    private boolean trace_limit;
     private final boolean emulated;
     private final TCFChildrenRegisters children_regs;
     private final TCFChildrenLocalVariables children_vars;
@@ -182,6 +183,10 @@ public class TCFNodeStackFrame extends TCFNode {
         this.frame_no = frame_no;
     }
 
+    void setTraceLimit(boolean trace_limit) {
+        this.trace_limit = trace_limit;
+    }
+
     TCFChildren getHoverExpressionCache(String expression) {
         if (expression != hover_expression && (expression == null || !expression.equals(hover_expression))) {
             hover_expression = expression;
@@ -220,6 +225,14 @@ public class TCFNodeStackFrame extends TCFNode {
 
     public boolean isEmulated() {
         return emulated;
+    }
+
+    boolean isTraceLimit() {
+        return trace_limit;
+    }
+
+    void riseTraceLimit() {
+        ((TCFNodeExecContext)parent).riseTraceLimit();
     }
 
     private TCFChildren getChildren(IPresentationContext ctx) {
@@ -270,6 +283,9 @@ public class TCFNodeStackFrame extends TCFNode {
         if (!stack_trace_cache.validate(done)) return false;
         if (stack_trace_cache.getData().get(id) == null) {
             result.setLabel("", 0);
+        }
+        else if (trace_limit) {
+            result.setLabel("<select to see more frames>", 0);
         }
         else {
             TCFDataCache<TCFContextState> state_cache = ((TCFNodeExecContext)parent).getState();

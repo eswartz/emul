@@ -19,8 +19,10 @@ public class TCFPreferencesInitializer extends AbstractPreferenceInitializer {
     public void initializeDefaultPreferences() {
         IPreferenceStore prefs = TCFPreferences.getPreferenceStore();
 
-        prefs.setDefault(TCFPreferences.PREF_STACK_FRAME_LIMIT_ENABLED, false);
+        prefs.setDefault(TCFPreferences.PREF_STACK_FRAME_LIMIT_ENABLED, true);
         prefs.setDefault(TCFPreferences.PREF_STACK_FRAME_LIMIT_VALUE, 10);
+        prefs.setDefault(TCFPreferences.PREF_STACK_FRAME_ARG_NAMES, false);
+        prefs.setDefault(TCFPreferences.PREF_STACK_FRAME_ARG_VALUES, false);
         prefs.setDefault(TCFPreferences.PREF_WAIT_FOR_PC_UPDATE_AFTER_STEP, true);
         prefs.setDefault(TCFPreferences.PREF_WAIT_FOR_VIEWS_UPDATE_AFTER_STEP, false);
         prefs.setDefault(TCFPreferences.PREF_DELAY_STACK_UPDATE_UNTIL_LAST_STEP, false);

@@ -40,6 +40,7 @@ public class TCFDebugPreferencePage extends FieldEditorPreferencePage implements
         parent.setLayout(layout);
 
         createPerformanceGroup(parent);
+        createStackTraceGroup(parent);
     }
 
     private void createPerformanceGroup(Composite parent) {
@@ -48,19 +49,6 @@ public class TCFDebugPreferencePage extends FieldEditorPreferencePage implements
         GridLayout layout = new GridLayout(3, false);
         group.setLayout(layout);
         group.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-
-        /* TODO: stack limit
-        IntegerFieldEditor limitEditor = new IntegerWithBooleanFieldEditor(
-                TCFPreferences.PREF_STACK_FRAME_LIMIT_ENABLED,
-                TCFPreferences.PREF_STACK_FRAME_LIMIT_VALUE,
-                "Limit number of stack frames to",
-                group);
-
-        limitEditor.setValidRange(1, Integer.MAX_VALUE);
-        limitEditor.setValidateStrategy(IntegerWithBooleanFieldEditor.VALIDATE_ON_FOCUS_LOST);
-        limitEditor.fillIntoGrid(group, 3);
-        addField(limitEditor);
-        */
 
         BooleanFieldEditor syncSteppingEditor = new BooleanFieldEditor(
                 TCFPreferences.PREF_WAIT_FOR_PC_UPDATE_AFTER_STEP,
@@ -119,6 +107,43 @@ public class TCFDebugPreferencePage extends FieldEditorPreferencePage implements
 
         trafficThrottleEditor.fillIntoGrid(group, 3);
         addField(trafficThrottleEditor);
+
+        group.setLayout(layout);
+    }
+
+    private void createStackTraceGroup(Composite parent) {
+        Group group = new Group(parent, SWT.NONE);
+        group.setText("Stack trace");
+        GridLayout layout = new GridLayout(3, false);
+        group.setLayout(layout);
+        group.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+
+        BooleanFieldEditor showArgNamesEditor = new BooleanFieldEditor(
+                TCFPreferences.PREF_STACK_FRAME_ARG_NAMES,
+                "Show function argument names in stack frames",
+                group);
+
+        showArgNamesEditor.fillIntoGrid(group, 3);
+        addField(showArgNamesEditor);
+
+        BooleanFieldEditor showArgValuesEditor = new BooleanFieldEditor(
+                TCFPreferences.PREF_STACK_FRAME_ARG_VALUES,
+                "Show function argument values in stack frames",
+                group);
+
+        showArgValuesEditor.fillIntoGrid(group, 3);
+        addField(showArgValuesEditor);
+
+        IntegerFieldEditor limitEditor = new IntegerWithBooleanFieldEditor(
+                TCFPreferences.PREF_STACK_FRAME_LIMIT_ENABLED,
+                TCFPreferences.PREF_STACK_FRAME_LIMIT_VALUE,
+                "Limit number of stack frames to",
+                group);
+
+        limitEditor.setValidRange(1, Integer.MAX_VALUE);
+        limitEditor.setValidateStrategy(IntegerWithBooleanFieldEditor.VALIDATE_ON_FOCUS_LOST);
+        limitEditor.fillIntoGrid(group, 3);
+        addField(limitEditor);
 
         group.setLayout(layout);
     }

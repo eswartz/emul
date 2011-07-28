@@ -1120,6 +1120,14 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         }
     }
 
+    private void postStackChangedDelta() {
+        for (TCFModelProxy p : model.getModelProxies()) {
+            if (IDebugUIConstants.ID_DEBUG_VIEW.equals(p.getPresentationContext().getId())) {
+                p.addDelta(this, IModelDelta.CONTENT);
+            }
+        }
+    }
+
     void onContextAdded(IRunControl.RunControlContext context) {
         children_exec.onContextAdded(context);
     }
@@ -1299,6 +1307,16 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         children_stack.onRegisterValueChanged();
         children_exps.onRegisterValueChanged();
         postContentChangedDelta();
+    }
+
+    void onPreferencesChanged() {
+        children_stack.onPreferencesChanged();
+        postStackChangedDelta();
+    }
+
+    void riseTraceLimit() {
+        children_stack.riseTraceLimit();
+        postStackChangedDelta();
     }
 
     private boolean hasSuspendedChildren(SuspendedChildrenInfo info, Runnable done) {

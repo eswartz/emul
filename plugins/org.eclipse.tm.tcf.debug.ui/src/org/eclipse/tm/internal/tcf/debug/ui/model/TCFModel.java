@@ -189,6 +189,10 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     private boolean wait_for_pc_update_after_step;
     private boolean wait_for_views_update_after_step;
     private boolean delay_stack_update_until_last_step;
+    private boolean stack_frames_limit_enabled;
+    private int stack_frames_limit_value;
+    private boolean show_function_arg_names;
+    private boolean show_function_arg_values;
 
     private final Map<String,String> action_results = new HashMap<String,String>();
     private final HashMap<String,TCFAction> active_actions = new HashMap<String,TCFAction>();
@@ -609,6 +613,19 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 wait_for_pc_update_after_step = prefs.getBoolean(TCFPreferences.PREF_WAIT_FOR_PC_UPDATE_AFTER_STEP);
                 wait_for_views_update_after_step = prefs.getBoolean(TCFPreferences.PREF_WAIT_FOR_VIEWS_UPDATE_AFTER_STEP);
                 delay_stack_update_until_last_step = prefs.getBoolean(TCFPreferences.PREF_DELAY_STACK_UPDATE_UNTIL_LAST_STEP);
+                stack_frames_limit_enabled = prefs.getBoolean(TCFPreferences.PREF_STACK_FRAME_LIMIT_ENABLED);
+                stack_frames_limit_value = prefs.getInt(TCFPreferences.PREF_STACK_FRAME_LIMIT_VALUE);
+                show_function_arg_names = prefs.getBoolean(TCFPreferences.PREF_STACK_FRAME_ARG_NAMES);
+                show_function_arg_values = prefs.getBoolean(TCFPreferences.PREF_STACK_FRAME_ARG_VALUES);
+                Protocol.invokeLater(new Runnable() {
+                    public void run() {
+                        for (TCFNode n : id2node.values()) {
+                            if (n instanceof TCFNodeExecContext) {
+                                ((TCFNodeExecContext)n).onPreferencesChanged();
+                            }
+                        }
+                    }
+                });
             }
         };
         listener.propertyChange(null);
@@ -755,6 +772,22 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     public boolean getChannelThrottleEnabled() {
         return channel_throttle_enabled;
+    }
+
+    public boolean getStackFramesLimitEnabled() {
+        return stack_frames_limit_enabled;
+    }
+
+    public int getStackFramesLimitValue() {
+        return stack_frames_limit_value;
+    }
+
+    public boolean getShowFunctionArgNames() {
+        return show_function_arg_names;
+    }
+
+    public boolean getShowFunctionArgValues() {
+        return show_function_arg_values;
     }
 
     void onProxyInstalled(TCFModelProxy mp) {

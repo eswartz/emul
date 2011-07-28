@@ -173,6 +173,16 @@ public class TCFAnnotationManager {
         public void selectionChanged(IWorkbenchPart part, ISelection selection) {
             updateActiveLaunch();
             updateAnnotations(part.getSite().getWorkbenchWindow(), (TCFLaunch)null);
+            if (selection instanceof IStructuredSelection) {
+                final Object obj = ((IStructuredSelection)selection).getFirstElement();
+                if (obj instanceof TCFNodeStackFrame && ((TCFNodeStackFrame)obj).isTraceLimit()) {
+                    Protocol.invokeLater(new Runnable() {
+                        public void run() {
+                            ((TCFNodeStackFrame)obj).riseTraceLimit();
+                        }
+                    });
+                }
+            }
         }
     };
 
