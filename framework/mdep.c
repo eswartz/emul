@@ -26,7 +26,6 @@
 #include <errno.h>
 #include <signal.h>
 #include <fcntl.h>
-#include <framework/myalloc.h>
 #include <framework/errors.h>
 
 pthread_attr_t pthread_create_attr;
@@ -294,26 +293,52 @@ int getegid(void) {
     return 0;
 }
 
-int utf8_stat(const char * name, struct utf8_stat * buf) {
-    struct _stati64 tmp;
-    wchar_t path[FILE_PATH_SIZE];
-    if (!MultiByteToWideChar(CP_UTF8, 0, name, -1, path, sizeof(path) / sizeof(wchar_t))) {
+static wchar_t * str_to_wide_char(const char * str) {
+    wchar_t * res = NULL;
+    int len = MultiByteToWideChar(CP_UTF8, 0, str, -1, NULL, 0);
+    if (len == 0) {
         set_win32_errno(GetLastError());
+        return NULL;
+    }
+    len += 16; /* utf8_opendir() needs extra space at the end of the string */
+    res = (wchar_t *)malloc(sizeof(wchar_t) * len);
+    if (res == NULL) {
+        errno = ENOMEM;
+        return NULL;
+    }
+    len = MultiByteToWideChar(CP_UTF8, 0, str, -1, res, len);
+    if (len == 0) {
+        set_win32_errno(GetLastError());
+        return NULL;
+    }
+    return res;
+}
+
+int utf8_stat(const char * name, struct utf8_stat * buf) {
+    int error = 0;
+    struct _stati64 tmp;
+    wchar_t * path = str_to_wide_char(name);
+    if (path == NULL) return -1;
+    memset(&tmp, 0, sizeof(tmp));
+    if (_wstati64(path, &tmp)) error = errno;
+    if (!error) {
+        buf->st_dev = tmp.st_dev;
+        buf->st_ino = tmp.st_ino;
+        buf->st_mode = tmp.st_mode;
+        buf->st_nlink = tmp.st_nlink;
+        buf->st_uid = tmp.st_uid;
+        buf->st_gid = tmp.st_gid;
+        buf->st_rdev = tmp.st_rdev;
+        buf->st_size = tmp.st_size;
+        buf->st_atime = tmp.st_atime;
+        buf->st_mtime = tmp.st_mtime;
+        buf->st_ctime = tmp.st_ctime;
+    }
+    free(path);
+    if (error) {
+        errno = error;
         return -1;
     }
-    memset(&tmp, 0, sizeof(tmp));
-    if (_wstati64(path, &tmp)) return -1;
-    buf->st_dev = tmp.st_dev;
-    buf->st_ino = tmp.st_ino;
-    buf->st_mode = tmp.st_mode;
-    buf->st_nlink = tmp.st_nlink;
-    buf->st_uid = tmp.st_uid;
-    buf->st_gid = tmp.st_gid;
-    buf->st_rdev = tmp.st_rdev;
-    buf->st_size = tmp.st_size;
-    buf->st_atime = tmp.st_atime;
-    buf->st_mtime = tmp.st_mtime;
-    buf->st_ctime = tmp.st_ctime;
     return 0;
 }
 
@@ -336,69 +361,99 @@ int utf8_fstat(int fd, struct utf8_stat * buf) {
 }
 
 int utf8_open(const char * name, int flags, int perms) {
-    wchar_t path[FILE_PATH_SIZE];
-    if (!MultiByteToWideChar(CP_UTF8, 0, name, -1, path, sizeof(path) / sizeof(wchar_t))) {
-        set_win32_errno(GetLastError());
+    int fd = -1;
+    int error = 0;
+    wchar_t * path = str_to_wide_char(name);
+    if (path == NULL) return -1;
+    if ((fd = _wopen(path, flags, perms)) < 0) error = errno;
+    free(path);
+    if (error) {
+        errno = error;
         return -1;
     }
-    return _wopen(path, flags, perms);
+    return fd;
 }
 
 int utf8_chmod(const char * name, int mode) {
-    wchar_t path[FILE_PATH_SIZE];
-    if (!MultiByteToWideChar(CP_UTF8, 0, name, -1, path, sizeof(path) / sizeof(wchar_t))) {
-        set_win32_errno(GetLastError());
+    int error = 0;
+    wchar_t * path = str_to_wide_char(name);
+    if (path == NULL) return -1;
+    if (_wchmod(path, mode) < 0) error = errno;
+    free(path);
+    if (error) {
+        errno = error;
         return -1;
     }
-    return _wchmod(path, mode);
+    return 0;
 }
 
 int utf8_remove(const char * name) {
-    wchar_t path[FILE_PATH_SIZE];
-    if (!MultiByteToWideChar(CP_UTF8, 0, name, -1, path, sizeof(path) / sizeof(wchar_t))) {
-        set_win32_errno(GetLastError());
+    int error = 0;
+    wchar_t * path = str_to_wide_char(name);
+    if (path == NULL) return -1;
+    if (_wremove(path) < 0) error = errno;
+    free(path);
+    if (error) {
+        errno = error;
         return -1;
     }
-    return _wremove(path);
+    return 0;
 }
 
 int utf8_rmdir(const char * name) {
-    wchar_t path[FILE_PATH_SIZE];
-    if (!MultiByteToWideChar(CP_UTF8, 0, name, -1, path, sizeof(path) / sizeof(wchar_t))) {
-        set_win32_errno(GetLastError());
+    int error = 0;
+    wchar_t * path = str_to_wide_char(name);
+    if (path == NULL) return -1;
+    if (_wrmdir(path) < 0) error = errno;
+    free(path);
+    if (error) {
+        errno = error;
         return -1;
     }
-    return _wrmdir(path);
+    return 0;
 }
 
 int utf8_mkdir(const char * name, int mode) {
-    wchar_t path[FILE_PATH_SIZE];
-    if (!MultiByteToWideChar(CP_UTF8, 0, name, -1, path, sizeof(path) / sizeof(wchar_t))) {
-        set_win32_errno(GetLastError());
+    int error = 0;
+    wchar_t * path = str_to_wide_char(name);
+    if (path == NULL) return -1;
+    if (_wmkdir(path) < 0) error = errno;
+    free(path);
+    if (error) {
+        errno = error;
         return -1;
     }
-    return _wmkdir(path);
+    return 0;
 }
 
 int utf8_rename(const char * name1, const char * name2) {
-    wchar_t path1[FILE_PATH_SIZE];
-    wchar_t path2[FILE_PATH_SIZE];
-    if (!MultiByteToWideChar(CP_UTF8, 0, name1, -1, path1, sizeof(path1) / sizeof(wchar_t))) {
-        set_win32_errno(GetLastError());
+    int error = 0;
+    wchar_t * path1 = NULL;
+    wchar_t * path2 = NULL;
+    path1 = str_to_wide_char(name1);
+    if (path1 == NULL) {
+        error = errno;
+    }
+    else {
+        path2 = str_to_wide_char(name2);
+        if (path2 == NULL) error = errno;
+    }
+    if (!error && _wrename(path1, path2) < 0) error = errno;
+    free(path1);
+    free(path2);
+    if (error) {
+        errno = error;
         return -1;
     }
-    if (!MultiByteToWideChar(CP_UTF8, 0, name2, -1, path2, sizeof(path2) / sizeof(wchar_t))) {
-        set_win32_errno(GetLastError());
-        return -1;
-    }
-    return _wrename(path1, path2);
+    return 0;
 }
 
 DIR * utf8_opendir(const char * path) {
-    DIR * d = (DIR *)loc_alloc(sizeof(DIR));
+    DIR * d = (DIR *)malloc(sizeof(DIR));
     if (!d) { errno = ENOMEM; return 0; }
-    strcpy(d->path, path);
-    strcat(d->path, "/*.*");
+    d->path = str_to_wide_char(path);
+    if (!d->path) { free(d); return NULL; }
+    wcscat(d->path, L"/*.*");
     d->hdl = -1;
     return d;
 }
@@ -407,22 +462,19 @@ struct dirent * utf8_readdir(DIR * d) {
     static struct dirent de;
 
     if (d->hdl < 0) {
-        wchar_t path[FILE_PATH_SIZE];
-        if (!MultiByteToWideChar(CP_UTF8, 0, d->path, -1, path, sizeof(path) / sizeof(wchar_t))) {
-            set_win32_errno(GetLastError());
-            return 0;
-        }
-        d->hdl = _wfindfirsti64(path, &d->blk);
-        if (d->hdl < 0) {
+        int error = 0;
+        d->hdl = _wfindfirsti64(d->path, &d->blk);
+        if (d->hdl < 0) error = errno;
+        if (error) {
             if (errno == ENOENT) errno = 0;
-            return 0;
+            return NULL;
         }
     }
     else {
         int r = _wfindnexti64(d->hdl, &d->blk);
         if (r < 0) {
             if (errno == ENOENT) errno = 0;
-            return 0;
+            return NULL;
         }
     }
     if (!WideCharToMultiByte(CP_UTF8, 0, d->blk.name, -1, de.d_name, sizeof(de.d_name), NULL, NULL)) {
@@ -443,7 +495,8 @@ int utf8_closedir(DIR * d) {
         return -1;
     }
     if (d->hdl >= 0) r = _findclose(d->hdl);
-    loc_free(d);
+    free(d->path);
+    free(d);
     return r;
 }
 

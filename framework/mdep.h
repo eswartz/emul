@@ -196,7 +196,7 @@ extern int utf8_rename(const char * path1, const char * path2);
 struct UTF8_DIR {
   long hdl;
   struct _wfinddatai64_t blk;
-  char path[FILE_PATH_SIZE];
+  wchar_t * path;
 };
 
 struct utf8_dirent {
