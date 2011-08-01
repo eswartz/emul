@@ -61,6 +61,7 @@ public class CpuRegisterProvider implements IRegisterProvider {
 		 */
 		@Override
 		public String getTooltip() {
+			boolean isGplWs = (machine.getCpu().getRegister(Cpu9900.REG_WP) & 0xffff) == 0x83e0;
 			switch (reg) {
 			case Cpu9900.REG_ST:
 				return "Status register: " + machine.getCpu().getStatus().toString();
@@ -71,11 +72,11 @@ public class CpuRegisterProvider implements IRegisterProvider {
 			case 11:
 				return "BL return address";
 			case 13:
-				return "BLWP saved WP";
+				return isGplWs ? "GROM Read Data Address" : "BLWP saved WP";
 			case 14:
-				return "BLWP saved PC";
+				return isGplWs ? "System Flags" : "BLWP saved PC";
 			case 15:
-				return "BLWP saved ST";
+				return isGplWs ? "VDP Address Write Address" : "BLWP saved ST";
 			}
 			return null;
 		}
