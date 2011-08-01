@@ -141,6 +141,12 @@ public class SymbolsProxy implements ISymbols {
         public String getRegisterID() {
             return (String)props.get(PROP_REGISTER);
         }
+
+        public int getFlags() {
+            Number n = (Number)props.get(PROP_FLAGS);
+            if (n == null) return 0;
+            return n.intValue();
+        }
     }
 
     public SymbolsProxy(IChannel channel) {

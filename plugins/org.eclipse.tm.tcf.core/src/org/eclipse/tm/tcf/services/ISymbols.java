@@ -42,6 +42,24 @@ public interface ISymbols extends IService {
         function                // function type.
     }
 
+    static final int
+        SYM_FLAG_PARAMETER      = 0x0001,
+        SYM_FLAG_TYPEDEF        = 0x0002,
+        SYM_FLAG_CONST_TYPE     = 0x0004,
+        SYM_FLAG_PACKET_TYPE    = 0x0008,
+        SYM_FLAG_SUBRANGE_TYPE  = 0x0010,
+        SYM_FLAG_VOLATILE_TYPE  = 0x0020,
+        SYM_FLAG_RESTRICT_TYPE  = 0x0040,
+        SYM_FLAG_UNION_TYPE     = 0x0080,
+        SYM_FLAG_CLASS_TYPE     = 0x0100,
+        SYM_FLAG_INTERFACE_TYPE = 0x0200,
+        SYM_FLAG_SHARED_TYPE    = 0x0400,
+        SYM_FLAG_REFERENCE      = 0x0800,
+        SYM_FLAG_BIG_ENDIAN     = 0x1000,
+        SYM_FLAG_LITTLE_ENDIAN  = 0x2000,
+        SYM_FLAG_OPTIONAL       = 0x4000,
+        SYM_FLAG_EXTERNAL       = 0x8000;
+
     /**
      * Symbol context interface.
      */
@@ -170,6 +188,12 @@ public interface ISymbols extends IService {
         String getRegisterID();
 
         /**
+         * Return symbol flags, see SYM_FLAG_*.
+         * @return bit set of symbol flags.
+         */
+        int getFlags();
+
+        /**
          * Get complete map of context properties.
          * @return map of context properties.
          */
@@ -197,7 +221,8 @@ public interface ISymbols extends IService {
         PROP_ADDRESS = "Address",
         PROP_VALUE = "Value",
         PROP_BIG_ENDIAN = "BigEndian",
-        PROP_REGISTER = "Register";
+        PROP_REGISTER = "Register",
+        PROP_FLAGS = "Flags";
 
     /**
      * Symbol context properties update policies.
