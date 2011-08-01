@@ -27,6 +27,7 @@ import org.eclipse.tm.internal.tcf.debug.model.TCFSourceRef;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
+import org.eclipse.tm.tcf.services.IExpressions;
 import org.eclipse.tm.tcf.services.IStackTrace;
 import org.eclipse.tm.tcf.services.ISymbols;
 import org.eclipse.tm.tcf.util.TCFDataCache;
@@ -288,6 +289,8 @@ public class TCFNodeStackFrame extends TCFNode {
             result.setLabel("<select to see more frames>", 0);
         }
         else {
+            boolean show_arg_names = model.getShowFunctionArgNames();
+            boolean show_arg_values = model.getShowFunctionArgValues();
             TCFDataCache<TCFContextState> state_cache = ((TCFNodeExecContext)parent).getState();
             TCFDataCache<TCFNodeExecContext> mem_cache = ((TCFNodeExecContext)parent).getMemoryNode();
             TCFDataCache<?> pending = null;
@@ -297,6 +300,17 @@ public class TCFNodeStackFrame extends TCFNode {
             if (!address.validate()) pending = address;
             if (!line_info.validate()) pending = line_info;
             if (!func_info.validate()) pending = func_info;
+            if (show_arg_names || show_arg_values) {
+                if (!children_vars.validate()) {
+                    pending = children_vars;
+                }
+                else {
+                    for (TCFNode n : children_vars.toArray()) {
+                        TCFNodeExpression e = (TCFNodeExpression)n;
+                        if (!e.getVariable().validate()) pending = e.getVariable();
+                    }
+                }
+            }
             if (pending != null) {
                 pending.wait(done);
                 return false;
@@ -341,7 +355,41 @@ public class TCFNodeStackFrame extends TCFNode {
                 if (sym_data != null && sym_data.getName() != null) {
                     bf.append(" ");
                     bf.append(sym_data.getName());
-                    bf.append("()");
+                    bf.append('(');
+                    if (show_arg_names || show_arg_values) {
+                        if (children_vars.getError() != null) {
+                            bf.append('?');
+                        }
+                        else {
+                            int cnt = 0;
+                            for (TCFNode n : children_vars.toArray()) {
+                                ISymbols.Symbol sym = null;
+                                TCFNodeExpression expr_node = (TCFNodeExpression)n;
+                                IExpressions.Expression expr_props = expr_node.getVariable().getData();
+                                if (expr_props != null) {
+                                    TCFDataCache<ISymbols.Symbol> s = model.getSymbolInfoCache(expr_props.getSymbolID());
+                                    if (!s.validate(done)) return false;
+                                    sym = s.getData();
+                                }
+                                if (sym == null) continue;
+                                if ((sym.getFlags() & ISymbols.SYM_FLAG_PARAMETER) == 0) continue;
+                                if (cnt > 0) bf.append(',');
+                                if (show_arg_names) {
+                                    String name = "?";
+                                    if (sym != null && sym.getName() != null) name = sym.getName();
+                                    bf.append(name);
+                                    if (show_arg_values) bf.append('=');
+                                }
+                                if (show_arg_values) {
+                                    String s = expr_node.getValueText(done);
+                                    if (s == null) return false;
+                                    bf.append(s.length() == 0 ? "?" : s);
+                                }
+                                cnt++;
+                            }
+                        }
+                    }
+                    bf.append(')');
                 }
             }
             if (sref != null && sref.area != null && sref.area.file != null) {
