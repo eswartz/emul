@@ -89,7 +89,18 @@ public class InterpreterF99b implements Interpreter {
 	 */
 	@Override
 	public void executeChunk(int numinsts, Executor executor) {
-		for (int i = 0; i < numinsts; i++) {
+		int i;
+		for (i = numinsts; i > 4; i -= 4) {
+			execute();
+			execute();
+			execute();
+			execute();
+			executor.nInstructions += 4;
+			cpu.checkAndHandleInterrupts();
+			if (executor.interruptExecution || cpu.isIdle())
+				return;
+		}
+		while (i-- > 0) {
 			execute();
 			executor.nInstructions++;
 			cpu.checkAndHandleInterrupts();
