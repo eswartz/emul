@@ -251,7 +251,7 @@ public class EmuDiskDsr implements DsrHandler9900 {
 			allocFiles(xfer, -3);
 			
 			// ???
-			xfer.writeParamWord(0x6c, (short) 0x404);
+			//xfer.writeParamWord(0x6c, (short) 0x404);
 			
 			for (SettingProperty property : diskActivitySettings.values()) {
 				property.setBoolean(false);
