@@ -22,7 +22,7 @@ public class F99PrimitiveWord extends TargetWord {
 	/**
 	 * @param entry
 	 */
-	public F99PrimitiveWord(DictEntry entry, int opcode) {
+	public F99PrimitiveWord(final DictEntry entry, int opcode) {
 		super(entry);
 		this.opcode = opcode;
 		
@@ -32,6 +32,7 @@ public class F99PrimitiveWord extends TargetWord {
 					throws AbortException {
 				int opcode = getOpcode();
 				targetContext.compileOpcode(opcode);
+				entry.use();
 			}
 		});
 	}

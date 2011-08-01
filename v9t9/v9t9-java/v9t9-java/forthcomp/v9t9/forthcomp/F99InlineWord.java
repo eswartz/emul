@@ -32,7 +32,8 @@ public class F99InlineWord extends TargetWord {
 					throws AbortException {
 				int[] opcodes = getOpcodes();
 				for (int opcode : opcodes)
-					targetContext.compileOpcode(opcode);				
+					targetContext.compileOpcode(opcode);		
+				getEntry().use();
 			}
 		});
 	}

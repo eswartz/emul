@@ -41,6 +41,7 @@ public class To extends BaseWord {
 				
 				targetContext.markHostExecutionUnsupported();
 				targetContext.compileToValue(hostContext, (TargetValue) word);
+				getEntry().use();
 			}
 		});
 		
