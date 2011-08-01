@@ -1262,6 +1262,8 @@ public class VdpV9938 extends VdpTMS9918A {
 				}
 			}
 		}
+		
+		blinkOn = true;
 	}
 
 
