@@ -16,6 +16,21 @@ call testOne
 assert R0 == 10
 >>>
 
+<<< test function blocks
+summer = code (provider:code(=>Int) => Int) {
+    s := 0; while (t := provider()) != 0 do s += t*t;     // also tests that while() does a proper comparison
+};
+// 1+4+9+16
+v : Int;
+testOne = code () {
+   v = 1;
+   summer({ if v < 5: v++ else 0  });
+};
+===
+call testOne
+assert R0 == 30
+>>>
+
 <<< explicit closures 1
 
 /*
