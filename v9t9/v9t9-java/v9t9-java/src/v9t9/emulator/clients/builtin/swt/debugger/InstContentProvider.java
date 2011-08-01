@@ -9,6 +9,7 @@ import java.util.List;
 import org.eclipse.jface.viewers.ILazyContentProvider;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.swt.widgets.Display;
 
 class InstContentProvider implements ILazyContentProvider {
 
@@ -41,9 +42,15 @@ class InstContentProvider implements ILazyContentProvider {
 	}
 	
 	public void addInstRow(final InstRow row) {
-		if (insts.size() > 100000)
-			insts = new ArrayList<InstRow>(insts.subList(insts.size() / 2, insts.size()));
+		if (insts.size() > 100000) {
+			int cutoff = insts.size() / 2;
+			if (Display.getCurrent() != null)
+				tableViewer.remove(insts.subList(0, cutoff).toArray());
+			insts = new ArrayList<InstRow>(insts.subList(cutoff, insts.size()));
+		}
 		insts.add(row);
+		if (Display.getCurrent() != null)
+			tableViewer.add(row);
 	}
 	
 	public int getCount() {
@@ -57,11 +64,17 @@ class InstContentProvider implements ILazyContentProvider {
 		return insts.size() > 0 ? insts.get(insts.size() - 1) : null;
 	}
 
+	public void removeInstRow(InstRow row) {
+		insts.remove(row);
+		if (Display.getCurrent() != null)
+			tableViewer.remove(row);
+	}
 	/**
 	 * 
 	 */
 	public void clear() {
 		insts.clear();
-		tableViewer.setItemCount(0);
+		if (Display.getCurrent() != null)
+			tableViewer.setItemCount(0);
 	}
 }
