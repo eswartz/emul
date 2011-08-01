@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-06-29 19:27-0500\n"
+"POT-Creation-Date: 2011-07-02 12:25-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -167,7 +167,7 @@ msgid "detecting mode %d... "
 msgstr ""
 
 #: source/Modules/Unix/video_svgalib.c:192 source/gtkinterface.c:3243
-#: source/gnomeinterface.c:2684
+#: source/gnomeinterface.c:2683
 msgid "\n"
 msgstr ""
 
@@ -3817,7 +3817,7 @@ msgstr ""
 
 #. The OK button
 #: source/gtk_v99filesel.c:582 source/gnome_v99filesel.c:583
-#: source/gtkinterface.c:2938 source/gnomeinterface.c:2423
+#: source/gtkinterface.c:2938 source/gnomeinterface.c:2422
 msgid "OK"
 msgstr ""
 
@@ -3863,10 +3863,10 @@ msgstr ""
 #: source/gtkinterface.c:791 source/gtkinterface.c:1124
 #: source/gtkinterface.c:1652 source/gtkinterface.c:2214
 #: source/gtkinterface.c:2677 source/gtkinterface.c:2876
-#: source/gtkinterface.c:3094 source/gnomeinterface.c:593
-#: source/gnomeinterface.c:896 source/gnomeinterface.c:1326
-#: source/gnomeinterface.c:1779 source/gnomeinterface.c:2162
-#: source/gnomeinterface.c:2363 source/gnomeinterface.c:2552
+#: source/gtkinterface.c:3094 source/gnomeinterface.c:592
+#: source/gnomeinterface.c:895 source/gnomeinterface.c:1325
+#: source/gnomeinterface.c:1778 source/gnomeinterface.c:2161
+#: source/gnomeinterface.c:2362 source/gnomeinterface.c:2551
 msgid "Close"
 msgstr ""
 
@@ -5280,55 +5280,55 @@ msgid "Invalid catalog sort '%d'\n"
 msgstr ""
 
 #: source/gtkinterface.c:31 source/gnomeinterface.c:38
-#: source/gnomeinterface.c:2963
+#: source/gnomeinterface.c:2962
 msgid "V9t9"
 msgstr ""
 
-#: source/gtkinterface.c:103 source/gnomeinterface.c:106
+#: source/gtkinterface.c:103 source/gnomeinterface.c:105
 msgid "Quit V9t9"
 msgstr ""
 
-#: source/gtkinterface.c:113 source/gnomeinterface.c:112
+#: source/gtkinterface.c:113 source/gnomeinterface.c:111
 msgid "Save current session before quitting?\n"
 msgstr ""
 
-#: source/gtkinterface.c:128 source/gnomeinterface.c:122
+#: source/gtkinterface.c:128 source/gnomeinterface.c:121
 msgid "_Yes, Save"
 msgstr ""
 
-#: source/gtkinterface.c:143 source/gnomeinterface.c:130
+#: source/gtkinterface.c:143 source/gnomeinterface.c:129
 msgid "_No, Don't Save"
 msgstr ""
 
-#: source/gtkinterface.c:161 source/gnomeinterface.c:141
+#: source/gtkinterface.c:161 source/gnomeinterface.c:140
 msgid "_Don't Quit"
 msgstr ""
 
-#: source/gtkinterface.c:205 source/gnomeinterface.c:190
+#: source/gtkinterface.c:205 source/gnomeinterface.c:189
 msgid "Select Font"
 msgstr ""
 
-#: source/gtkinterface.c:327 source/gnomeinterface.c:302
+#: source/gtkinterface.c:327 source/gnomeinterface.c:301
 msgid "Disks"
 msgstr ""
 
-#: source/gtkinterface.c:352 source/gnomeinterface.c:318
+#: source/gtkinterface.c:352 source/gnomeinterface.c:317
 msgid "DSK_1"
 msgstr ""
 
-#: source/gtkinterface.c:363 source/gnomeinterface.c:325
+#: source/gtkinterface.c:363 source/gnomeinterface.c:324
 msgid "DSK_2"
 msgstr ""
 
-#: source/gtkinterface.c:374 source/gnomeinterface.c:332
+#: source/gtkinterface.c:374 source/gnomeinterface.c:331
 msgid "DSK_3"
 msgstr ""
 
-#: source/gtkinterface.c:385 source/gnomeinterface.c:339
+#: source/gtkinterface.c:385 source/gnomeinterface.c:338
 msgid "DSK_4"
 msgstr ""
 
-#: source/gtkinterface.c:396 source/gnomeinterface.c:346
+#: source/gtkinterface.c:396 source/gnomeinterface.c:345
 msgid "DSK_5"
 msgstr ""
 
@@ -5339,86 +5339,86 @@ msgstr ""
 #: source/gtkinterface.c:1968 source/gtkinterface.c:1998
 #: source/gtkinterface.c:2084 source/gtkinterface.c:2094
 #: source/gtkinterface.c:2146 source/gtkinterface.c:2176
-#: source/gnomeinterface.c:353 source/gnomeinterface.c:361
-#: source/gnomeinterface.c:369 source/gnomeinterface.c:377
-#: source/gnomeinterface.c:415 source/gnomeinterface.c:511
-#: source/gnomeinterface.c:518 source/gnomeinterface.c:554
-#: source/gnomeinterface.c:1624 source/gnomeinterface.c:1644
-#: source/gnomeinterface.c:1692 source/gnomeinterface.c:1699
-#: source/gnomeinterface.c:1733 source/gnomeinterface.c:1753
+#: source/gnomeinterface.c:352 source/gnomeinterface.c:360
+#: source/gnomeinterface.c:368 source/gnomeinterface.c:376
+#: source/gnomeinterface.c:414 source/gnomeinterface.c:510
+#: source/gnomeinterface.c:517 source/gnomeinterface.c:553
+#: source/gnomeinterface.c:1623 source/gnomeinterface.c:1643
+#: source/gnomeinterface.c:1691 source/gnomeinterface.c:1698
+#: source/gnomeinterface.c:1732 source/gnomeinterface.c:1752
 msgid "Choose..."
 msgstr ""
 
-#: source/gtkinterface.c:505 source/gnomeinterface.c:423
+#: source/gtkinterface.c:505 source/gnomeinterface.c:422
 msgid "DSKx Mappings"
 msgstr ""
 
-#: source/gtkinterface.c:528 source/gnomeinterface.c:436
+#: source/gtkinterface.c:528 source/gnomeinterface.c:435
 msgid "_Convert file headers to:"
 msgstr ""
 
-#: source/gtkinterface.c:546 source/gnomeinterface.c:444
+#: source/gtkinterface.c:546 source/gnomeinterface.c:443
 msgid "_V9t9"
 msgstr ""
 
-#: source/gtkinterface.c:558 source/gnomeinterface.c:450
+#: source/gtkinterface.c:558 source/gnomeinterface.c:449
 msgid "_TIFILES"
 msgstr ""
 
-#: source/gtkinterface.c:570 source/gnomeinterface.c:456
+#: source/gtkinterface.c:570 source/gnomeinterface.c:455
 msgid "Treat _unknown files as DIS/VAR 80"
 msgstr ""
 
-#: source/gtkinterface.c:581 source/gnomeinterface.c:460
+#: source/gtkinterface.c:581 source/gnomeinterface.c:459
 msgid "Allow \"DSKx.\" catalogs _longer than 127 filenames"
 msgstr ""
 
-#: source/gtkinterface.c:592 source/gnomeinterface.c:464
+#: source/gtkinterface.c:592 source/gnomeinterface.c:463
 msgid "_Repair damaged V9t9 files"
 msgstr ""
 
-#: source/gtkinterface.c:603 source/gnomeinterface.c:468
+#: source/gtkinterface.c:603 source/gnomeinterface.c:467
 msgid "_Fixup filenames for files created with V9t9 for DOS"
 msgstr ""
 
-#: source/gtkinterface.c:614 source/gnomeinterface.c:472
+#: source/gtkinterface.c:614 source/gnomeinterface.c:471
 msgid "_Generate filenames compatible with V9t9 for DOS"
 msgstr ""
 
 #: source/gtkinterface.c:623 source/gtkinterface.c:712
-#: source/gnomeinterface.c:525 source/gnomeinterface.c:567
+#: source/gnomeinterface.c:524 source/gnomeinterface.c:566
 msgid "DSR ROM Selection"
 msgstr ""
 
-#: source/gtkinterface.c:658 source/gnomeinterface.c:497
+#: source/gtkinterface.c:658 source/gnomeinterface.c:496
 msgid "_Lone"
 msgstr ""
 
-#: source/gtkinterface.c:669 source/gnomeinterface.c:504
+#: source/gtkinterface.c:669 source/gnomeinterface.c:503
 msgid "_Shared"
 msgstr ""
 
-#: source/gtkinterface.c:698 source/gnomeinterface.c:529
+#: source/gtkinterface.c:698 source/gnomeinterface.c:528
 msgid "File Directory Options"
 msgstr ""
 
-#: source/gtkinterface.c:729 source/gnomeinterface.c:547
+#: source/gtkinterface.c:729 source/gnomeinterface.c:546
 msgid "S_hared"
 msgstr ""
 
-#: source/gtkinterface.c:757 source/gnomeinterface.c:571
+#: source/gtkinterface.c:757 source/gnomeinterface.c:570
 msgid "Disk Image Options"
 msgstr ""
 
-#: source/gtkinterface.c:772 source/gnomeinterface.c:581
+#: source/gtkinterface.c:772 source/gnomeinterface.c:580
 msgid "Use file directories (FIAD)"
 msgstr ""
 
-#: source/gtkinterface.c:779 source/gnomeinterface.c:585
+#: source/gtkinterface.c:779 source/gnomeinterface.c:584
 msgid "Use disk images (DOAD)"
 msgstr ""
 
-#: source/gtkinterface.c:1001 source/gnomeinterface.c:839
+#: source/gtkinterface.c:1001 source/gnomeinterface.c:838
 msgid "Modules"
 msgstr ""
 
@@ -5434,437 +5434,437 @@ msgstr ""
 msgid "Commands"
 msgstr ""
 
-#: source/gtkinterface.c:1072 source/gnomeinterface.c:869
+#: source/gtkinterface.c:1072 source/gnomeinterface.c:868
 msgid "Show _setup commands"
 msgstr ""
 
-#: source/gtkinterface.c:1084 source/gnomeinterface.c:874
+#: source/gtkinterface.c:1084 source/gnomeinterface.c:873
 msgid "_Reset computer after load"
 msgstr ""
 
-#: source/gtkinterface.c:1103 source/gnomeinterface.c:883
+#: source/gtkinterface.c:1103 source/gnomeinterface.c:882
 msgid "_Unload"
 msgstr ""
 
-#: source/gtkinterface.c:1112 source/gnomeinterface.c:887
+#: source/gtkinterface.c:1112 source/gnomeinterface.c:886
 msgid "Pull out the module while V9t9 is running"
 msgstr ""
 
-#: source/gtkinterface.c:1137 source/gnomeinterface.c:904
+#: source/gtkinterface.c:1137 source/gnomeinterface.c:903
 msgid "_Load"
 msgstr ""
 
-#: source/gtkinterface.c:1146 source/gnomeinterface.c:908
+#: source/gtkinterface.c:1146 source/gnomeinterface.c:907
 msgid "Insert module"
 msgstr ""
 
-#: source/gtkinterface.c:1156 source/gnomeinterface.c:916
+#: source/gtkinterface.c:1156 source/gnomeinterface.c:915
 msgid "Re_fresh"
 msgstr ""
 
-#: source/gtkinterface.c:1165 source/gnomeinterface.c:920
+#: source/gtkinterface.c:1165 source/gnomeinterface.c:919
 msgid "Reload module database from \"modules.inf\""
 msgstr ""
 
-#: source/gtkinterface.c:1293 source/gnomeinterface.c:1064
+#: source/gtkinterface.c:1293 source/gnomeinterface.c:1063
 msgid "V9t9 Debugger"
 msgstr ""
 
-#: source/gtkinterface.c:1311 source/gnomeinterface.c:1132
+#: source/gtkinterface.c:1311 source/gnomeinterface.c:1131
 msgid "Registers"
 msgstr ""
 
-#: source/gtkinterface.c:1343 source/gnomeinterface.c:1095
+#: source/gtkinterface.c:1343 source/gnomeinterface.c:1094
 msgid "WP"
 msgstr ""
 
-#: source/gtkinterface.c:1365 source/gnomeinterface.c:1109
+#: source/gtkinterface.c:1365 source/gnomeinterface.c:1108
 msgid "PC"
 msgstr ""
 
-#: source/gtkinterface.c:1387 source/gnomeinterface.c:1123
+#: source/gtkinterface.c:1387 source/gnomeinterface.c:1122
 msgid "Status"
 msgstr ""
 
-#: source/gtkinterface.c:1412 source/gnomeinterface.c:1161
+#: source/gtkinterface.c:1412 source/gnomeinterface.c:1160
 msgid "Instructions"
 msgstr ""
 
-#: source/gtkinterface.c:1444 source/gnomeinterface.c:1192
+#: source/gtkinterface.c:1444 source/gnomeinterface.c:1191
 msgid "CPU Memory 1"
 msgstr ""
 
-#: source/gtkinterface.c:1485 source/gnomeinterface.c:1223
+#: source/gtkinterface.c:1485 source/gnomeinterface.c:1222
 msgid "CPU Memory 2"
 msgstr ""
 
-#: source/gtkinterface.c:1526 source/gnomeinterface.c:1254
+#: source/gtkinterface.c:1526 source/gnomeinterface.c:1253
 msgid "VDP Memory"
 msgstr ""
 
-#: source/gtkinterface.c:1567 source/gnomeinterface.c:1285
+#: source/gtkinterface.c:1567 source/gnomeinterface.c:1284
 msgid "GROM/GRAM Memory"
 msgstr ""
 
-#: source/gtkinterface.c:1599 source/gnomeinterface.c:1310
+#: source/gtkinterface.c:1599 source/gnomeinterface.c:1309
 msgid "Speech Memory"
 msgstr ""
 
-#: source/gtkinterface.c:1665 source/gnomeinterface.c:1334
+#: source/gtkinterface.c:1665 source/gnomeinterface.c:1333
 msgid "_Run"
 msgstr ""
 
-#: source/gtkinterface.c:1674 source/gnomeinterface.c:1338
+#: source/gtkinterface.c:1674 source/gnomeinterface.c:1337
 msgid "Execute emulator with minimal debugger refresh"
 msgstr ""
 
-#: source/gtkinterface.c:1684 source/gnomeinterface.c:1346
+#: source/gtkinterface.c:1684 source/gnomeinterface.c:1345
 msgid "_Step"
 msgstr ""
 
-#: source/gtkinterface.c:1693 source/gnomeinterface.c:1350
+#: source/gtkinterface.c:1693 source/gnomeinterface.c:1349
 msgid "Step one instruction (even into calls) and break"
 msgstr ""
 
-#: source/gtkinterface.c:1703 source/gnomeinterface.c:1358
+#: source/gtkinterface.c:1703 source/gnomeinterface.c:1357
 msgid "_After"
 msgstr ""
 
-#: source/gtkinterface.c:1712 source/gnomeinterface.c:1362
+#: source/gtkinterface.c:1712 source/gnomeinterface.c:1361
 msgid ""
 "Execute until the PC reaches the next instruction (ignore conditional jumps)"
 msgstr ""
 
-#: source/gtkinterface.c:1729 source/gnomeinterface.c:1374
+#: source/gtkinterface.c:1729 source/gnomeinterface.c:1373
 msgid "_Break"
 msgstr ""
 
-#: source/gtkinterface.c:1738 source/gnomeinterface.c:1378
+#: source/gtkinterface.c:1738 source/gnomeinterface.c:1377
 msgid "Break execution"
 msgstr ""
 
-#: source/gtkinterface.c:1748 source/gnomeinterface.c:1386
+#: source/gtkinterface.c:1748 source/gnomeinterface.c:1385
 msgid "_Walk"
 msgstr ""
 
-#: source/gtkinterface.c:1757 source/gnomeinterface.c:1390
+#: source/gtkinterface.c:1757 source/gnomeinterface.c:1389
 msgid "Execute emulator with maximum debugger refresh"
 msgstr ""
 
-#: source/gtkinterface.c:1767 source/gnomeinterface.c:1398
+#: source/gtkinterface.c:1767 source/gnomeinterface.c:1397
 msgid "_Next"
 msgstr ""
 
-#: source/gtkinterface.c:1776 source/gnomeinterface.c:1402
+#: source/gtkinterface.c:1776 source/gnomeinterface.c:1401
 msgid "Execute until the PC reaches the next instruction (skip over calls)"
 msgstr ""
 
-#: source/gtkinterface.c:1798 source/gnomeinterface.c:1419
+#: source/gtkinterface.c:1798 source/gnomeinterface.c:1418
 msgid "Updates per second"
 msgstr ""
 
-#: source/gtkinterface.c:1816 source/gnomeinterface.c:1432
+#: source/gtkinterface.c:1816 source/gnomeinterface.c:1431
 msgid "Number of times debugger refreshes in \"Run\" mode"
 msgstr ""
 
-#: source/gtkinterface.c:1931 source/gnomeinterface.c:1600
+#: source/gtkinterface.c:1931 source/gnomeinterface.c:1599
 msgid "Memory Configuration"
 msgstr ""
 
-#: source/gtkinterface.c:1959 source/gnomeinterface.c:1617
+#: source/gtkinterface.c:1959 source/gnomeinterface.c:1616
 msgid "Console _ROM"
 msgstr ""
 
-#: source/gtkinterface.c:1980 source/gnomeinterface.c:1631
+#: source/gtkinterface.c:1980 source/gnomeinterface.c:1630
 msgid "Console _GROM"
 msgstr ""
 
-#: source/gtkinterface.c:2017 source/gnomeinterface.c:1655
+#: source/gtkinterface.c:2017 source/gnomeinterface.c:1654
 msgid "Use 32K _extended memory"
 msgstr ""
 
-#: source/gtkinterface.c:2028 source/gnomeinterface.c:1659
+#: source/gtkinterface.c:2028 source/gnomeinterface.c:1658
 msgid "Enable Gene_ve-style RAM in >8000->82FF range"
 msgstr ""
 
-#: source/gtkinterface.c:2044 source/gnomeinterface.c:1667
+#: source/gtkinterface.c:2044 source/gnomeinterface.c:1666
 msgid "Load custom module ROMs"
 msgstr ""
 
-#: source/gtkinterface.c:2106 source/gnomeinterface.c:1706
+#: source/gtkinterface.c:2106 source/gnomeinterface.c:1705
 msgid "_Module ROM"
 msgstr ""
 
-#: source/gtkinterface.c:2117 source/gnomeinterface.c:1713
+#: source/gtkinterface.c:2117 source/gnomeinterface.c:1712
 msgid "M_odule GROM"
 msgstr ""
 
-#: source/gtkinterface.c:2128 source/gnomeinterface.c:1720
+#: source/gtkinterface.c:2128 source/gnomeinterface.c:1719
 msgid "Module ROM (bank _1)"
 msgstr ""
 
-#: source/gtkinterface.c:2158 source/gnomeinterface.c:1740
+#: source/gtkinterface.c:2158 source/gnomeinterface.c:1739
 msgid "Module ROM (bank _2)"
 msgstr ""
 
-#: source/gtkinterface.c:2193 source/gnomeinterface.c:1764
+#: source/gtkinterface.c:2193 source/gnomeinterface.c:1763
 msgid "Resume"
 msgstr ""
 
-#: source/gtkinterface.c:2200 source/gnomeinterface.c:1768
+#: source/gtkinterface.c:2200 source/gnomeinterface.c:1767
 msgid "Continue emulation"
 msgstr ""
 
-#: source/gtkinterface.c:2202 source/gnomeinterface.c:1770
+#: source/gtkinterface.c:2202 source/gnomeinterface.c:1769
 msgid "Boot and Run"
 msgstr ""
 
-#: source/gtkinterface.c:2209 source/gnomeinterface.c:1774
+#: source/gtkinterface.c:2209 source/gnomeinterface.c:1773
 msgid "Close window and reset computer"
 msgstr ""
 
 #: source/gtkinterface.c:2221 source/gtkinterface.c:2684
-#: source/gtkinterface.c:2883 source/gnomeinterface.c:1783
-#: source/gnomeinterface.c:2166 source/gnomeinterface.c:2367
+#: source/gtkinterface.c:2883 source/gnomeinterface.c:1782
+#: source/gnomeinterface.c:2165 source/gnomeinterface.c:2366
 msgid "Close window and continue emulation"
 msgstr ""
 
-#: source/gtkinterface.c:2226 source/gnomeinterface.c:1834
+#: source/gtkinterface.c:2226 source/gnomeinterface.c:1833
 msgid "Advanced options"
 msgstr ""
 
-#: source/gtkinterface.c:2241 source/gnomeinterface.c:1797
+#: source/gtkinterface.c:2241 source/gnomeinterface.c:1796
 msgid "Explore memory map"
 msgstr ""
 
-#: source/gtkinterface.c:2250 source/gnomeinterface.c:1803
+#: source/gtkinterface.c:2250 source/gnomeinterface.c:1802
 msgid "Unload module"
 msgstr ""
 
-#: source/gtkinterface.c:2259 source/gnomeinterface.c:1809
+#: source/gtkinterface.c:2259 source/gnomeinterface.c:1808
 msgid "Unload all ROMs and RAMs associated with a module"
 msgstr ""
 
-#: source/gtkinterface.c:2261 source/gnomeinterface.c:1811
+#: source/gtkinterface.c:2261 source/gnomeinterface.c:1810
 msgid "Save volatile RAM"
 msgstr ""
 
-#: source/gtkinterface.c:2270 source/gnomeinterface.c:1817
+#: source/gtkinterface.c:2270 source/gnomeinterface.c:1816
 msgid "These RAMs are saved automatically at certain points"
 msgstr ""
 
-#: source/gtkinterface.c:2272 source/gnomeinterface.c:1819
+#: source/gtkinterface.c:2272 source/gnomeinterface.c:1818
 msgid "Load volatile RAM"
 msgstr ""
 
-#: source/gtkinterface.c:2281 source/gnomeinterface.c:1825
+#: source/gtkinterface.c:2281 source/gnomeinterface.c:1824
 msgid "These RAMs are loaded automatically at certain points"
 msgstr ""
 
-#: source/gtkinterface.c:2283 source/gnomeinterface.c:1827
+#: source/gtkinterface.c:2283 source/gnomeinterface.c:1826
 msgid "Default memory map"
 msgstr ""
 
-#: source/gtkinterface.c:2291 source/gnomeinterface.c:1832
+#: source/gtkinterface.c:2291 source/gnomeinterface.c:1831
 msgid ""
 "Sets up RAM and memory-mapped areas to standard 99/4A settings in case there "
 "was a mishap with DefineMemory"
 msgstr ""
 
-#: source/gtkinterface.c:2480 source/gnomeinterface.c:2052
+#: source/gtkinterface.c:2480 source/gnomeinterface.c:2051
 msgid "Basic Options"
 msgstr ""
 
-#: source/gtkinterface.c:2499 source/gnomeinterface.c:2063
+#: source/gtkinterface.c:2499 source/gnomeinterface.c:2062
 msgid "Enable _sound"
 msgstr ""
 
-#: source/gtkinterface.c:2510 source/gnomeinterface.c:2067
+#: source/gtkinterface.c:2510 source/gnomeinterface.c:2066
 msgid "Enable s_peech"
 msgstr ""
 
-#: source/gtkinterface.c:2528 source/gnomeinterface.c:2075
+#: source/gtkinterface.c:2528 source/gnomeinterface.c:2074
 msgid "_Real-time emulation"
 msgstr ""
 
-#: source/gtkinterface.c:2546 source/gnomeinterface.c:2083
+#: source/gtkinterface.c:2546 source/gnomeinterface.c:2082
 msgid "_9900 Clock Speed"
 msgstr ""
 
-#: source/gtkinterface.c:2561 source/gnomeinterface.c:2093
+#: source/gtkinterface.c:2561 source/gnomeinterface.c:2092
 msgid ""
 "This affects the maximum execution speed when real-time emulation is enavbled"
 msgstr ""
 
 #: source/gtkinterface.c:2563 source/gtkinterface.c:2597
 #: source/gtkinterface.c:2630 source/gtkinterface.c:2663
-#: source/gnomeinterface.c:2095 source/gnomeinterface.c:2114
-#: source/gnomeinterface.c:2134 source/gnomeinterface.c:2154
+#: source/gnomeinterface.c:2094 source/gnomeinterface.c:2113
+#: source/gnomeinterface.c:2133 source/gnomeinterface.c:2153
 msgid "Default"
 msgstr ""
 
-#: source/gtkinterface.c:2579 source/gnomeinterface.c:2103
+#: source/gtkinterface.c:2579 source/gnomeinterface.c:2102
 msgid "Instruction _delay"
 msgstr ""
 
-#: source/gtkinterface.c:2595 source/gnomeinterface.c:2112
+#: source/gtkinterface.c:2595 source/gnomeinterface.c:2111
 msgid "This value is highly CPU-dependent"
 msgstr ""
 
-#: source/gtkinterface.c:2613 source/gnomeinterface.c:2122
+#: source/gtkinterface.c:2613 source/gnomeinterface.c:2121
 msgid "_Video refresh rate"
 msgstr ""
 
-#: source/gtkinterface.c:2628 source/gnomeinterface.c:2132
+#: source/gtkinterface.c:2628 source/gnomeinterface.c:2131
 msgid ""
 "This controls how often the changed parts of the 99/4A screen are redrawn"
 msgstr ""
 
-#: source/gtkinterface.c:2646 source/gnomeinterface.c:2142
+#: source/gtkinterface.c:2646 source/gnomeinterface.c:2141
 msgid "VDP _interrupt rate"
 msgstr ""
 
-#: source/gtkinterface.c:2661 source/gnomeinterface.c:2152
+#: source/gtkinterface.c:2661 source/gnomeinterface.c:2151
 msgid "This affects sprite motion and timing"
 msgstr ""
 
-#: source/gtkinterface.c:2837 source/gnomeinterface.c:2339
+#: source/gtkinterface.c:2837 source/gnomeinterface.c:2338
 msgid "Logging Configuration"
 msgstr ""
 
-#: source/gtkinterface.c:2868 source/gnomeinterface.c:2358
+#: source/gtkinterface.c:2868 source/gnomeinterface.c:2357
 msgid "Reset All"
 msgstr ""
 
-#: source/gtkinterface.c:2916 source/gnomeinterface.c:2407
+#: source/gtkinterface.c:2916 source/gnomeinterface.c:2406
 msgid "Fatal error"
 msgstr ""
 
-#: source/gtkinterface.c:3012 source/gnomeinterface.c:2493
+#: source/gtkinterface.c:3012 source/gnomeinterface.c:2492
 msgid "Memory Map"
 msgstr ""
 
-#: source/gtkinterface.c:3032 source/gnomeinterface.c:2507
+#: source/gtkinterface.c:3032 source/gnomeinterface.c:2506
 msgid "Console / CPU"
 msgstr ""
 
-#: source/gtkinterface.c:3043 source/gnomeinterface.c:2516
+#: source/gtkinterface.c:3043 source/gnomeinterface.c:2515
 msgid "GROM/GRAM"
 msgstr ""
 
-#: source/gtkinterface.c:3054 source/gnomeinterface.c:2525
+#: source/gtkinterface.c:3054 source/gnomeinterface.c:2524
 msgid "VDP"
 msgstr ""
 
-#: source/gtkinterface.c:3065 source/gnomeinterface.c:2534
+#: source/gtkinterface.c:3065 source/gnomeinterface.c:2533
 msgid "Speech"
 msgstr ""
 
-#: source/gtkinterface.c:3086 source/gnomeinterface.c:2547
+#: source/gtkinterface.c:3086 source/gnomeinterface.c:2546
 msgid "Refresh"
 msgstr ""
 
-#: source/gtkinterface.c:3163 source/gnomeinterface.c:2652
+#: source/gtkinterface.c:3163 source/gnomeinterface.c:2651
 msgid "Command Central"
 msgstr ""
 
-#: source/gtkinterface.c:3189 source/gnomeinterface.c:2608
+#: source/gtkinterface.c:3189 source/gnomeinterface.c:2607
 msgid "_Options"
 msgstr ""
 
-#: source/gtkinterface.c:3207 source/gnomeinterface.c:2589
+#: source/gtkinterface.c:3207 source/gnomeinterface.c:2588
 msgid "_Flush Log"
 msgstr ""
 
-#: source/gtkinterface.c:3218 source/gnomeinterface.c:2596
+#: source/gtkinterface.c:3218 source/gnomeinterface.c:2595
 msgid "_Select Font..."
 msgstr ""
 
-#: source/gtkinterface.c:3253 source/gnomeinterface.c:2691
+#: source/gtkinterface.c:3253 source/gnomeinterface.c:2690
 msgid "Welcome to V9t9!"
 msgstr ""
 
-#: source/gtkinterface.c:3272 source/gnomeinterface.c:2702
+#: source/gtkinterface.c:3272 source/gnomeinterface.c:2701
 msgid "Reboot"
 msgstr ""
 
-#: source/gtkinterface.c:3279 source/gnomeinterface.c:2706
+#: source/gtkinterface.c:3279 source/gnomeinterface.c:2705
 msgid "Reset emulated 99/4A"
 msgstr ""
 
-#: source/gtkinterface.c:3288 source/gnomeinterface.c:2712
+#: source/gtkinterface.c:3288 source/gnomeinterface.c:2711
 msgid "Pause"
 msgstr ""
 
-#: source/gtkinterface.c:3295 source/gnomeinterface.c:2716
+#: source/gtkinterface.c:3295 source/gnomeinterface.c:2715
 msgid "Pause execution of V9t9"
 msgstr ""
 
-#: source/gtkinterface.c:3304 source/gnomeinterface.c:2722
+#: source/gtkinterface.c:3304 source/gnomeinterface.c:2721
 msgid "Save..."
 msgstr ""
 
-#: source/gtkinterface.c:3311 source/gnomeinterface.c:2726
+#: source/gtkinterface.c:3311 source/gnomeinterface.c:2725
 msgid "Save machine state"
 msgstr ""
 
-#: source/gtkinterface.c:3313 source/gnomeinterface.c:2728
+#: source/gtkinterface.c:3313 source/gnomeinterface.c:2727
 msgid "Load..."
 msgstr ""
 
-#: source/gtkinterface.c:3320 source/gnomeinterface.c:2732
+#: source/gtkinterface.c:3320 source/gnomeinterface.c:2731
 msgid "Load machine state"
 msgstr ""
 
-#: source/gtkinterface.c:3329 source/gnomeinterface.c:2738
+#: source/gtkinterface.c:3329 source/gnomeinterface.c:2737
 msgid "Options..."
 msgstr ""
 
-#: source/gtkinterface.c:3336 source/gnomeinterface.c:2742
+#: source/gtkinterface.c:3336 source/gnomeinterface.c:2741
 msgid "Set basic configuration options"
 msgstr ""
 
-#: source/gtkinterface.c:3338 source/gnomeinterface.c:2744
+#: source/gtkinterface.c:3338 source/gnomeinterface.c:2743
 msgid "Debugger..."
 msgstr ""
 
-#: source/gtkinterface.c:3345 source/gnomeinterface.c:2748
+#: source/gtkinterface.c:3345 source/gnomeinterface.c:2747
 msgid "Control emulated 99/4A and trace execution"
 msgstr ""
 
-#: source/gtkinterface.c:3347 source/gnomeinterface.c:2750
+#: source/gtkinterface.c:3347 source/gnomeinterface.c:2749
 msgid "Modules..."
 msgstr ""
 
-#: source/gtkinterface.c:3354 source/gnomeinterface.c:2754
+#: source/gtkinterface.c:3354 source/gnomeinterface.c:2753
 msgid "Load or unload modules"
 msgstr ""
 
-#: source/gtkinterface.c:3356 source/gnomeinterface.c:2756
+#: source/gtkinterface.c:3356 source/gnomeinterface.c:2755
 msgid "Disks..."
 msgstr ""
 
-#: source/gtkinterface.c:3363 source/gnomeinterface.c:2760
+#: source/gtkinterface.c:3363 source/gnomeinterface.c:2759
 msgid "Assign drives to local directories or files"
 msgstr ""
 
-#: source/gtkinterface.c:3365 source/gnomeinterface.c:2762
+#: source/gtkinterface.c:3365 source/gnomeinterface.c:2761
 msgid "Memory..."
 msgstr ""
 
-#: source/gtkinterface.c:3372 source/gnomeinterface.c:2766
+#: source/gtkinterface.c:3372 source/gnomeinterface.c:2765
 msgid "Assign files to ROM or RAM segments of the memory map"
 msgstr ""
 
-#: source/gtkinterface.c:3374 source/gnomeinterface.c:2768
+#: source/gtkinterface.c:3374 source/gnomeinterface.c:2767
 msgid "Quit"
 msgstr ""
 
-#: source/gtkinterface.c:3382 source/gnomeinterface.c:2773
+#: source/gtkinterface.c:3382 source/gnomeinterface.c:2772
 msgid "Logging..."
 msgstr ""
 
-#: source/gtkinterface.c:3389 source/gnomeinterface.c:2777
+#: source/gtkinterface.c:3389 source/gnomeinterface.c:2776
 msgid "Modify log levels for debugging"
 msgstr ""
 
@@ -6809,31 +6809,31 @@ msgstr ""
 msgid "Setup module gestalt"
 msgstr ""
 
-#: source/gnomeinterface.c:2887
+#: source/gnomeinterface.c:2886
 msgid "_New Session"
 msgstr ""
 
-#: source/gnomeinterface.c:2893
+#: source/gnomeinterface.c:2892
 msgid "_Load Configuration"
 msgstr ""
 
-#: source/gnomeinterface.c:2900
+#: source/gnomeinterface.c:2899
 msgid "Sa_ve Configuration"
 msgstr ""
 
-#: source/gnomeinterface.c:2907
+#: source/gnomeinterface.c:2906
 msgid "Save _Configuration As..."
 msgstr ""
 
-#: source/gnomeinterface.c:2979
+#: source/gnomeinterface.c:2978
 msgid "New File"
 msgstr ""
 
-#: source/gnomeinterface.c:2985
+#: source/gnomeinterface.c:2984
 msgid "Open File"
 msgstr ""
 
-#: source/gnomeinterface.c:2991
+#: source/gnomeinterface.c:2990
 msgid "Save File"
 msgstr ""
 
