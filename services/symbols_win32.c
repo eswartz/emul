@@ -782,6 +782,20 @@ int get_symbol_register(const Symbol * sym, Context ** ctx, int * frame, Registe
     return -1;
 }
 
+int get_symbol_flags(const Symbol * sym, SYM_FLAGS * flags) {
+    DWORD dword = 0;
+    SYMBOL_INFO * info = NULL;
+
+    *flags = 0;
+    assert(sym->magic == SYMBOL_MAGIC);
+    if (sym->address || sym->base || sym->info) return 0;
+    if (get_sym_info(sym, sym->index, &info) < 0) return -1;
+    if (info->Flags & SYMFLAG_PARAMETER) *flags |= SYM_FLAG_PARAMETER;
+    if (get_type_info(sym, TI_GET_IS_REFERENCE, &dword) == 0 && dword) *flags |= SYM_FLAG_REFERENCE;
+
+    return 0;
+}
+
 int get_array_symbol(const Symbol * sym, ContextAddress length, Symbol ** ptr) {
     assert(sym->magic == SYMBOL_MAGIC);
     *ptr = alloc_symbol();

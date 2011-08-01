@@ -33,7 +33,7 @@ struct InputBuf {
     InputStream * stream;
     int inp_esc;
     int out_esc;
-    int eof;
+    int eof;                /* EOS is received, the buffer might still have unhandled messages */
     int long_msg;           /* Message is longer then buffer, start handling before EOM */
     int message_count;      /* Number of messages waiting to be dispatched */
     int handling_msg;       /* Channel in the process of handling a message */

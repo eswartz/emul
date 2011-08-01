@@ -335,6 +335,7 @@ static int find_in_object_tree(ObjectInfo * list, ContextAddress ip, const char 
         case TAG_subprogram:
         case TAG_entry_point:
         case TAG_lexical_block:
+        case TAG_inlined_subroutine:
             if (ip != 0 && check_in_range(obj, ip)) {
                 if (find_in_object_tree(obj->mChildren, ip, name, sym)) return 1;
             }
@@ -673,6 +674,7 @@ static int find_by_addr_in_unit(ObjectInfo * obj, int level, ContextAddress addr
         case TAG_subprogram:
         case TAG_entry_point:
         case TAG_lexical_block:
+        case TAG_inlined_subroutine:
             if (check_in_range(obj, addr)) {
                 object2symbol(obj, res);
                 return 1;
@@ -776,6 +778,7 @@ static void enumerate_local_vars(ObjectInfo * obj, int level,
         case TAG_subprogram:
         case TAG_entry_point:
         case TAG_lexical_block:
+        case TAG_inlined_subroutine:
             if (check_in_range(obj, sym_ip)) {
                 enumerate_local_vars(obj->mChildren, level + 1, call_back, args);
             }
@@ -1824,6 +1827,88 @@ int get_symbol_register(const Symbol * sym, Context ** ctx, int * frame, Registe
 
     errno = ERR_INV_CONTEXT;
     return -1;
+}
+
+int get_symbol_flags(const Symbol * sym, SYM_FLAGS * flags) {
+    U8_T v = 0;
+    ObjectInfo * i = NULL;
+    *flags = 0;
+    assert(sym->magic == SYMBOL_MAGIC);
+    if (sym->base || is_cardinal_type_pseudo_symbol(sym) || sym->address) return 0;
+    if (unpack(sym) < 0) return -1;
+    i = obj;
+    while (i != NULL) {
+        switch (i->mTag) {
+        case TAG_subrange_type:
+            *flags |= SYM_FLAG_SUBRANGE_TYPE;
+            i = i->mType;
+            break;
+        case TAG_packed_type:
+            *flags |= SYM_FLAG_PACKET_TYPE;
+            i = i->mType;
+            break;
+        case TAG_const_type:
+            *flags |= SYM_FLAG_CONST_TYPE;
+            i = i->mType;
+            break;
+        case TAG_volatile_type:
+            *flags |= SYM_FLAG_VOLATILE_TYPE;
+            i = i->mType;
+            break;
+        case TAG_restrict_type:
+            *flags |= SYM_FLAG_RESTRICT_TYPE;
+            i = i->mType;
+            break;
+        case TAG_shared_type:
+            *flags |= SYM_FLAG_SHARED_TYPE;
+            i = i->mType;
+            break;
+        case TAG_typedef:
+            if (i == obj) *flags |= SYM_FLAG_TYPEDEF;
+            i = i->mType;
+            break;
+        case TAG_reference_type:
+            *flags |= SYM_FLAG_REFERENCE;
+            i = NULL;
+            break;
+        case TAG_union_type:
+            *flags |= SYM_FLAG_UNION_TYPE;
+            i = NULL;
+            break;
+        case TAG_class_type:
+            *flags |= SYM_FLAG_CLASS_TYPE;
+            i = NULL;
+            break;
+        case TAG_interface_type:
+            *flags |= SYM_FLAG_INTERFACE_TYPE;
+            i = NULL;
+            break;
+        case TAG_formal_parameter:
+        case TAG_variable:
+        case TAG_constant:
+        case TAG_base_type:
+            if (i->mTag == TAG_formal_parameter) {
+                *flags |= SYM_FLAG_PARAMETER;
+                if (get_num_prop(i, AT_is_optional, &v) && v != 0) *flags |= SYM_FLAG_OPTIONAL;
+            }
+            if (i->mTag == TAG_variable && get_num_prop(obj, AT_external, &v) && v != 0) {
+                *flags |= SYM_FLAG_EXTERNAL;
+            }
+            if (get_num_prop(i, AT_endianity, &v)) {
+                if (v == DW_END_big) *flags |= SYM_FLAG_BIG_ENDIAN;
+                if (v == DW_END_little) *flags |= SYM_FLAG_LITTLE_ENDIAN;
+            }
+            i = NULL;
+            break;
+        default:
+            i = NULL;
+            break;
+        }
+    }
+    if (obj != NULL && sym->sym_class == SYM_CLASS_TYPE && !(*flags & (SYM_FLAG_BIG_ENDIAN|SYM_FLAG_LITTLE_ENDIAN))) {
+        *flags |= obj->mCompUnit->mFile->big_endian ? SYM_FLAG_BIG_ENDIAN : SYM_FLAG_LITTLE_ENDIAN;
+    }
+    return 0;
 }
 
 int get_array_symbol(const Symbol * sym, ContextAddress length, Symbol ** ptr) {

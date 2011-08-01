@@ -202,6 +202,7 @@
 #define AT_call_file                0x0058  /* v3 */
 #define AT_call_line                0x0059  /* v3 */
 #define AT_description              0x005a  /* v3 */
+#define AT_endianity                0x0065  /* v3 */
 #define AT_lo_user_v1               0x0200
 #define AT_hi_user_v1               0x03ff
 #define AT_push_mask                0x0220
@@ -565,3 +566,9 @@
 #define ADDR_huge16                 3
 #define ADDR_near32                 4
 #define ADDR_far32                  5
+
+#define DW_END_default              0x00
+#define DW_END_big                  0x01
+#define DW_END_little               0x02
+#define DW_END_lo_user              0x40
+#define DW_END_hi_user              0xff

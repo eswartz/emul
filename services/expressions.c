@@ -90,6 +90,7 @@ static int text_ch = 0;
 static int text_sy = 0;
 static Value text_val;
 
+/* Host endianness */
 static int big_endian = 0;
 
 static char str_pool[STR_POOL_SIZE];
@@ -573,6 +574,23 @@ static void next_sy(void) {
 }
 
 #if ENABLE_Symbols
+static void set_value_endianness(Value * v, Symbol * sym, Symbol * type) {
+    SYM_FLAGS flags = 0;
+    if (sym != NULL && get_symbol_flags(sym, &flags) < 0) {
+        error(errno, "Cannot retrieve symbol flags");
+    }
+    if (flags & SYM_FLAG_BIG_ENDIAN) v->big_endian = 1;
+    else if (flags & SYM_FLAG_LITTLE_ENDIAN) v->big_endian = 0;
+    else {
+        if (type != NULL && get_symbol_flags(type, &flags) < 0) {
+            error(errno, "Cannot retrieve symbol flags");
+        }
+        if (flags & SYM_FLAG_BIG_ENDIAN) v->big_endian = 1;
+        else if (flags & SYM_FLAG_LITTLE_ENDIAN) v->big_endian = 0;
+        else v->big_endian = expression_context->big_endian;
+    }
+}
+
 /* Note: sym2value() does NOT set v->size if v->sym != NULL */
 static int sym2value(Symbol * sym, Value * v) {
     int sym_class = 0;
@@ -627,8 +645,8 @@ static int sym2value(Symbol * sym, Value * v) {
             }
         }
         else {
+            set_value_endianness(v, sym, v->type);
             v->sym = sym;
-            v->big_endian = expression_context->big_endian;
             v->remote = 1;
         }
         break;
@@ -1073,24 +1091,26 @@ static void primary_expression(int mode, Value * v) {
 }
 
 static void op_deref(int mode, Value * v) {
-    if (mode == MODE_SKIP) return;
 #if ENABLE_Symbols
+    Symbol * type = NULL;
+    if (mode == MODE_SKIP) return;
     if (v->type_class != TYPE_CLASS_ARRAY && v->type_class != TYPE_CLASS_POINTER) {
         error(ERR_INV_EXPRESSION, "Array or pointer type expected");
+    }
+    if (get_symbol_base_type(v->type, &type) < 0) {
+        error(errno, "Cannot retrieve symbol type");
     }
     if (v->type_class == TYPE_CLASS_POINTER) {
         if (v->sym != NULL && v->size == 0 && get_symbol_size(v->sym, &v->size) < 0) {
             error(errno, "Cannot retrieve symbol size");
         }
         v->address = (ContextAddress)to_uns(mode, v);
-        v->big_endian = expression_context->big_endian;
         v->remote = 1;
         v->constant = 0;
         v->value = NULL;
+        set_value_endianness(v, NULL, type);
     }
-    if (get_symbol_base_type(v->type, &v->type) < 0) {
-        error(errno, "Cannot retrieve symbol type");
-    }
+    v->type = type;
     if (get_symbol_type_class(v->type, &v->type_class) < 0) {
         error(errno, "Cannot retrieve symbol type class");
     }
@@ -1213,6 +1233,7 @@ static void op_field(int mode, Value * v) {
             if (get_symbol_type_class(sym, &v->type_class) < 0) {
                 error(errno, "Cannot retrieve symbol type class");
             }
+            set_value_endianness(v, sym, v->type);
         }
     }
 #else
@@ -1237,18 +1258,18 @@ static void op_index(int mode, Value * v) {
     if (v->type == NULL) {
         error(ERR_INV_EXPRESSION, "Value type is unknown");
     }
-    if (v->type_class == TYPE_CLASS_POINTER) {
-        v->address = (ContextAddress)to_uns(mode, v);
-        v->big_endian = expression_context->big_endian;
-        v->remote = 1;
-        v->constant = 0;
-        v->value = NULL;
-    }
     if (get_symbol_base_type(v->type, &type) < 0) {
         error(errno, "Cannot get array element type");
     }
+    if (v->type_class == TYPE_CLASS_POINTER) {
+        v->address = (ContextAddress)to_uns(mode, v);
+        v->remote = 1;
+        v->constant = 0;
+        v->value = NULL;
+        set_value_endianness(v, NULL, type);
+    }
     if (get_symbol_size(type, &size) < 0) {
-        error(errno, "Cannot get array element type");
+        error(errno, "Cannot get array element size");
     }
     if (get_symbol_lower_bound(v->type, &lower_bound) < 0) {
         error(errno, "Cannot get array lower bound");

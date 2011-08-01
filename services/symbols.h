@@ -47,6 +47,25 @@ typedef struct Symbol Symbol;
 #define TYPE_CLASS_ENUMERATION  7
 #define TYPE_CLASS_FUNCTION     8
 
+typedef uint32_t SYM_FLAGS;
+
+#define SYM_FLAG_PARAMETER      0x0001
+#define SYM_FLAG_TYPEDEF        0x0002
+#define SYM_FLAG_CONST_TYPE     0x0004
+#define SYM_FLAG_PACKET_TYPE    0x0008
+#define SYM_FLAG_SUBRANGE_TYPE  0x0010
+#define SYM_FLAG_VOLATILE_TYPE  0x0020
+#define SYM_FLAG_RESTRICT_TYPE  0x0040
+#define SYM_FLAG_UNION_TYPE     0x0080
+#define SYM_FLAG_CLASS_TYPE     0x0100
+#define SYM_FLAG_INTERFACE_TYPE 0x0200
+#define SYM_FLAG_SHARED_TYPE    0x0400
+#define SYM_FLAG_REFERENCE      0x0800
+#define SYM_FLAG_BIG_ENDIAN     0x1000
+#define SYM_FLAG_LITTLE_ENDIAN  0x2000
+#define SYM_FLAG_OPTIONAL       0x4000
+#define SYM_FLAG_EXTERNAL       0x8000
+
 /* Symbol properties update policies */
 #define UPDATE_ON_MEMORY_MAP_CHANGES 0
 #define UPDATE_ON_EXE_STATE_CHANGES  1
@@ -162,6 +181,9 @@ extern int get_symbol_address(const Symbol * sym, ContextAddress * address);
 
 /* Get register if the symbol is a register variable */
 extern int get_symbol_register(const Symbol * sym, Context ** ctx, int * frame, RegisterDefinition ** reg);
+
+/* Get symbol flags, see SYM_FLAG_* */
+extern int get_symbol_flags(const Symbol * sym, SYM_FLAGS * flags);
 
 /* Get a type that represents an array of elements of given base type.
  * If 'length' is zero, returned type represents pointer to given type */

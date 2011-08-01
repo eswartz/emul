@@ -60,6 +60,7 @@ static void command_get_context_cache_client(void * x) {
     RegisterDefinition * reg = NULL;
     Context * reg_ctx = NULL;
     int reg_frame = 0;
+    SYM_FLAGS flags = 0;
     void * value = NULL;
     size_t value_size = 0;
 
@@ -88,6 +89,7 @@ static void command_get_context_cache_client(void * x) {
         if (sym_class == SYM_CLASS_VALUE) {
             get_symbol_value(sym, &value, &value_size, &big_endian);
         }
+        get_symbol_flags(sym, &flags);
     }
 
     cache_exit();
@@ -196,6 +198,13 @@ static void command_get_context_cache_client(void * x) {
             json_write_string(&c->out, "Register");
             write_stream(&c->out, ':');
             json_write_string(&c->out, register2id(reg_ctx, reg_frame, reg));
+            write_stream(&c->out, ',');
+        }
+
+        if (flags) {
+            json_write_string(&c->out, "Flags");
+            write_stream(&c->out, ':');
+            json_write_long(&c->out, flags);
             write_stream(&c->out, ',');
         }
 
