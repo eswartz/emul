@@ -206,7 +206,7 @@ static int is_register(SYMBOL_INFO * info) {
 static void syminfo2symbol(Context * ctx, int frame, SYMBOL_INFO * info, Symbol * sym) {
     sym->module = info->ModBase;
     sym->index = info->Index;
-    if (is_frame_relative(info)) {
+    if (is_frame_relative(info) || is_register(info)) {
         assert(frame >= 0);
         assert(ctx != ctx->mem);
         sym->frame = frame - STACK_NO_FRAME;
@@ -751,6 +751,12 @@ int get_symbol_address(const Symbol * sym, ContextAddress * addr) {
         return -1;
     }
     if (get_sym_info(sym, sym->index, &info) < 0) return -1;
+
+    if (is_register(info)) {
+        set_errno(ERR_INV_CONTEXT, "Register variable");
+        return -1;
+    }
+
     *addr = (ContextAddress)info->Address;
 
     if (is_frame_relative(info)) {
@@ -763,7 +769,18 @@ int get_symbol_address(const Symbol * sym, ContextAddress * addr) {
     return 0;
 }
 
+static RegisterDefinition * find_register(Context * ctx, const char * name) {
+    RegisterDefinition * defs = get_reg_definitions(ctx);
+    if (defs == NULL) return NULL;
+    while (defs->name != NULL) {
+        if (stricmp(defs->name, name) == 0) return defs;
+        defs++;
+    }
+    return NULL;
+}
+
 int get_symbol_register(const Symbol * sym, Context ** ctx, int * frame, RegisterDefinition ** reg) {
+    RegisterDefinition * def = NULL;
     SYMBOL_INFO * info = NULL;
 
     assert(sym->magic == SYMBOL_MAGIC);
@@ -776,9 +793,30 @@ int get_symbol_register(const Symbol * sym, Context ** ctx, int * frame, Registe
         errno = ERR_INV_CONTEXT;
         return -1;
     }
-
-    /* TODO: map info.Register to regditer definition */
-    errno = ERR_UNSUPPORTED;
+    /* Register numbers are defined in cvconst.h */
+    if (info->Register < 40) {
+        static const char * reg_names[] = {
+            NULL, "AL", "CL", "DL", "BL", "AH", "CH", "DH", "BH", "AX",
+            "CX", "DX", "BX", "SP", "BP", "SI", "DI", "EAX", "ECX", "EDX",
+            "EBX", "ESP", "EBP", "ESI", "EDI", "ES", "CS", "SS", "DS", "FS",
+            "GS", "IP", "FLAGS", "EIP", "EFLAGS", NULL, NULL, NULL, NULL, NULL,
+        };
+        def = find_register(sym->ctx, reg_names[info->Register]);
+    }
+    else if (info->Register >= 328 && info->Register <= 343) {
+        static const char * reg_names[] = {
+            "RAX", "RBX", "RCX", "RDX", "RSI", "RDI", "RBP", "RSP",
+            "R8", "R9", "R10", "R11", "R12", "R13", "R14", "R15"
+        };
+        def = find_register(sym->ctx, reg_names[info->Register - 328]);
+    }
+    if (def != NULL) {
+        *ctx = sym->ctx;
+        *frame = sym->frame + STACK_NO_FRAME;
+        *reg = def;
+        return 0;
+    }
+    errno = ERR_INV_CONTEXT;
     return -1;
 }
 
@@ -789,8 +827,7 @@ int get_symbol_flags(const Symbol * sym, SYM_FLAGS * flags) {
     *flags = 0;
     assert(sym->magic == SYMBOL_MAGIC);
     if (sym->address || sym->base || sym->info) return 0;
-    if (get_sym_info(sym, sym->index, &info) < 0) return -1;
-    if (info->Flags & SYMFLAG_PARAMETER) *flags |= SYM_FLAG_PARAMETER;
+    if (get_sym_info(sym, sym->index, &info) == 0 && (info->Flags & SYMFLAG_PARAMETER) != 0) *flags |= SYM_FLAG_PARAMETER;
     if (get_type_info(sym, TI_GET_IS_REFERENCE, &dword) == 0 && dword) *flags |= SYM_FLAG_REFERENCE;
 
     return 0;
