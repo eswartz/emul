@@ -320,16 +320,11 @@ public class ExpressionInformationControlCreator implements
                 public void viewerUpdatesComplete() {
                     fViewer.getDisplay().timerExec(100, new Runnable() {
                         public void run() {
-                            TreeSelection selection = (TreeSelection) fViewer
-                                    .getSelection();
-                            if (selection.isEmpty()) {
-                                selection = new TreeSelection(fViewer
-                                        .getTopElementPath());
-                            }
+                            if (fViewer.getControl().isDisposed()) return;
+                            TreeSelection selection = (TreeSelection) fViewer.getSelection();
+                            if (selection.isEmpty()) selection = new TreeSelection(fViewer.getTopElementPath());
                             fViewer.setSelection(selection);
-                            if (fDetailPane != null) {
-                                fDetailPane.display(selection);
-                            }
+                            if (fDetailPane != null) fDetailPane.display(selection);
                         }
                     });
                 }

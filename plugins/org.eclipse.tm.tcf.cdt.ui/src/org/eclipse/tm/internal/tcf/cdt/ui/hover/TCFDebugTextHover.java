@@ -74,30 +74,38 @@ public class TCFDebugTextHover extends AbstractDebugTextHover implements ITextHo
         if (activeFrame == null) {
             return null;
         }
-        final String text= getExpressionText(textViewer, hoverRegion);
+        final String text = getExpressionText(textViewer, hoverRegion);
         if (text == null || text.length() == 0) {
             return null;
         }
-        TCFNode hoverNode = new TCFTask<TCFNode>() {
-            public void run() {
-                TCFNode evalContext = activeFrame.isEmulated() ? activeFrame.getParent() : activeFrame;
-                TCFChildren cache = evalContext.getModel().getHoverExpressionCache(evalContext, text);
-                if (!cache.validate(this)) return;
-                Map<String,TCFNode> nodes = cache.getData();
-                if (nodes != null) {
-                    for (TCFNode node : nodes.values()) {
-                        TCFDataCache<IExpressions.Value> value = ((TCFNodeExpression)node).getValue();
-                        if (!value.validate(this)) return;
-                        if (value.getData() != null) {
-                            done(node.getParent());
-                            return;
+        try {
+            return new TCFTask<TCFNode>() {
+                public void run() {
+                    TCFNode evalContext = activeFrame.isEmulated() ? activeFrame.getParent() : activeFrame;
+                    TCFChildren cache = evalContext.getModel().getHoverExpressionCache(evalContext, text);
+                    if (!cache.validate(this)) return;
+                    Map<String,TCFNode> nodes = cache.getData();
+                    if (nodes != null) {
+                        for (TCFNode node : nodes.values()) {
+                            TCFDataCache<IExpressions.Value> value = ((TCFNodeExpression)node).getValue();
+                            if (!value.validate(this)) return;
+                            if (value.getData() != null) {
+                                done(node.getParent());
+                                return;
+                            }
                         }
                     }
+                    done(null);
                 }
-                done(null);
-            }
-        }.getE();
-        return hoverNode;
+            }.get();
+        }
+        catch (Exception x) {
+            // Problem in Eclipse 3.7: 
+            // TextViewerHoverManager calls Thread.interrupt(),
+            // but it fails to handle InterruptedException.
+            // We have to catch and ignore the exception. 
+            return null;
+        }
     }
 
     @Override
@@ -112,18 +120,25 @@ public class TCFDebugTextHover extends AbstractDebugTextHover implements ITextHo
         IAdaptable context = getSelectionAdaptable();
         if (context instanceof TCFNodeStackFrame) {
             return (TCFNodeStackFrame) context;
-        } else if (context instanceof TCFNodeExecContext) {
-            final TCFNodeExecContext _execContext = (TCFNodeExecContext) context;
-            TCFNodeStackFrame frame = new TCFTask<TCFNodeStackFrame>() {
-                public void run() {
-                    TCFChildrenStackTrace stack = _execContext.getStackTrace();
-                    if (!stack.validate(this)) {
-                        return;
+        }
+        if (context instanceof TCFNodeExecContext) {
+            try {
+                final TCFNodeExecContext exe = (TCFNodeExecContext) context;
+                return new TCFTask<TCFNodeStackFrame>() {
+                    public void run() {
+                        TCFChildrenStackTrace stack = exe.getStackTrace();
+                        if (!stack.validate(this)) return;
+                        done(stack.getTopFrame());
                     }
-                    done(stack.getTopFrame());
-                }
-            }.getE();
-            return frame;
+                }.get();
+            }
+            catch (Exception x) {
+                // Problem in Eclipse 3.7: 
+                // TextViewerHoverManager calls Thread.interrupt(),
+                // but it fails to handle InterruptedException.
+                // We have to catch and ignore the exception. 
+                return null;
+            }
         }
         return null;
     }
@@ -134,7 +149,7 @@ public class TCFDebugTextHover extends AbstractDebugTextHover implements ITextHo
         if (activeFrame == null) {
             return null;
         }
-        String value = new TCFTask<String>() {
+        return new TCFTask<String>() {
             public void run() {
                 IChannel channel = activeFrame.getChannel();
                 final IExpressions exprSvc = channel.getRemoteService(IExpressions.class);
@@ -167,7 +182,6 @@ public class TCFDebugTextHover extends AbstractDebugTextHover implements ITextHo
                 }
             }
         }.getE();
-        return value;
     }
 
     private static String getValueText(Value value) {
