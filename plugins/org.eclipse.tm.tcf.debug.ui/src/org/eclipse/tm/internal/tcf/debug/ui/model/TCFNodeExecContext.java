@@ -1063,6 +1063,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     void postContextAddedDelta() {
         for (TCFModelProxy p : model.getModelProxies()) {
             if (IDebugUIConstants.ID_DEBUG_VIEW.equals(p.getPresentationContext().getId())) {
+                /* Note: should use IModelDelta.INSERTED but it is broken in Eclipse 3.6 */
                 p.addDelta(this, IModelDelta.ADDED);
             }
         }
