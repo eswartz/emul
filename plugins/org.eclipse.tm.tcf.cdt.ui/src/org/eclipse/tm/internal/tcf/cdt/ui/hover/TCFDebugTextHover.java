@@ -67,19 +67,13 @@ public class TCFDebugTextHover extends AbstractDebugTextHover implements ITextHo
     }
 
     public Object getHoverInfo2(ITextViewer textViewer, IRegion hoverRegion) {
-        if (!useExpressionExplorer()) {
-            return getHoverInfo(textViewer, hoverRegion);
-        }
+        if (!useExpressionExplorer()) return getHoverInfo(textViewer, hoverRegion);
         final TCFNodeStackFrame activeFrame = getActiveFrame();
-        if (activeFrame == null) {
-            return null;
-        }
+        if (activeFrame == null) return null;
         final String text = getExpressionText(textViewer, hoverRegion);
-        if (text == null || text.length() == 0) {
-            return null;
-        }
+        if (text == null || text.length() == 0) return null;
         try {
-            return new TCFTask<TCFNode>() {
+            return new TCFTask<TCFNode>(activeFrame.getChannel()) {
                 public void run() {
                     TCFNode evalContext = activeFrame.isEmulated() ? activeFrame.getParent() : activeFrame;
                     TCFChildren cache = evalContext.getModel().getHoverExpressionCache(evalContext, text);
@@ -110,21 +104,16 @@ public class TCFDebugTextHover extends AbstractDebugTextHover implements ITextHo
 
     @Override
     protected boolean canEvaluate() {
-        if (getActiveFrame() == null) {
-            return false;
-        }
-        return true;
+        return getActiveFrame() != null;
     }
 
     private TCFNodeStackFrame getActiveFrame() {
         IAdaptable context = getSelectionAdaptable();
-        if (context instanceof TCFNodeStackFrame) {
-            return (TCFNodeStackFrame) context;
-        }
+        if (context instanceof TCFNodeStackFrame) return (TCFNodeStackFrame) context;
         if (context instanceof TCFNodeExecContext) {
             try {
                 final TCFNodeExecContext exe = (TCFNodeExecContext) context;
-                return new TCFTask<TCFNodeStackFrame>() {
+                return new TCFTask<TCFNodeStackFrame>(exe.getChannel()) {
                     public void run() {
                         TCFChildrenStackTrace stack = exe.getStackTrace();
                         if (!stack.validate(this)) return;
@@ -146,12 +135,10 @@ public class TCFDebugTextHover extends AbstractDebugTextHover implements ITextHo
     @Override
     protected String evaluateExpression(final String expression) {
         final TCFNodeStackFrame activeFrame = getActiveFrame();
-        if (activeFrame == null) {
-            return null;
-        }
-        return new TCFTask<String>() {
+        if (activeFrame == null) return null;
+        final IChannel channel = activeFrame.getChannel();
+        return new TCFTask<String>(channel) {
             public void run() {
-                IChannel channel = activeFrame.getChannel();
                 final IExpressions exprSvc = channel.getRemoteService(IExpressions.class);
                 if (exprSvc != null) {
                     TCFNode evalContext = activeFrame.isEmulated() ? activeFrame.getParent() : activeFrame;
