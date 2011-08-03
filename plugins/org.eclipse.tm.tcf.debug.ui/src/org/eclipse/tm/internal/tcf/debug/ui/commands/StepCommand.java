@@ -40,7 +40,7 @@ abstract class StepCommand implements IDebugCommandHandler {
     protected abstract void execute(IDebugCommandRequest monitor,
             IRunControl.RunControlContext ctx, boolean src_step, Runnable done);
 
-    private boolean getContextSet(Object[] elements, Set<IRunControl.RunControlContext> set, Runnable done) {
+    private boolean getContextSet(boolean exec, Object[] elements, Set<IRunControl.RunControlContext> set, Runnable done) {
         for (int i = 0; i < elements.length; i++) {
             TCFNode node = null;
             if (elements[i] instanceof TCFNode) node = (TCFNode)elements[i];
@@ -57,7 +57,7 @@ abstract class StepCommand implements IDebugCommandHandler {
                 }
                 else {
                     int action_cnt = model.getLaunch().getContextActionsCount(ctx.getID());
-                    if (action_cnt >= MAX_ACTION_CNT) break;
+                    if (exec && action_cnt >= MAX_ACTION_CNT) break;
                     if (action_cnt == 0 && !ctx.isContainer()) {
                         TCFDataCache<TCFContextState> state_cache = ((TCFNodeExecContext)node).getState();
                         if (!state_cache.validate(done)) return false;
@@ -78,10 +78,12 @@ abstract class StepCommand implements IDebugCommandHandler {
         new TCFRunnable(monitor) {
             public void run() {
                 if (done) return;
-                Set<IRunControl.RunControlContext> set = new HashSet<IRunControl.RunControlContext>();
-                if (!getContextSet(monitor.getElements(), set, this)) return;
-                monitor.setEnabled(set.size() > 0);
-                monitor.setStatus(Status.OK_STATUS);
+                if (!monitor.isCanceled()) {
+                    Set<IRunControl.RunControlContext> set = new HashSet<IRunControl.RunControlContext>();
+                    if (!getContextSet(false, monitor.getElements(), set, this)) return;
+                    monitor.setEnabled(set.size() > 0);
+                    monitor.setStatus(Status.OK_STATUS);
+                }
                 done();
             }
         };
@@ -92,7 +94,7 @@ abstract class StepCommand implements IDebugCommandHandler {
             public void run() {
                 if (done) return;
                 Set<IRunControl.RunControlContext> set = new HashSet<IRunControl.RunControlContext>();
-                if (!getContextSet(monitor.getElements(), set, this)) return;
+                if (!getContextSet(true, monitor.getElements(), set, this)) return;
                 if (set.size() == 0) {
                     monitor.setStatus(Status.OK_STATUS);
                     monitor.done();

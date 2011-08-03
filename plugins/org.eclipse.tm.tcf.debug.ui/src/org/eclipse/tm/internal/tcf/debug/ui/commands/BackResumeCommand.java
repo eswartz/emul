@@ -29,9 +29,7 @@ public class BackResumeCommand extends StepCommand {
 
     @Override
     protected boolean canExecute(IRunControl.RunControlContext ctx) {
-        if (ctx == null) return false;
-        if (ctx.canResume(IRunControl.RM_REVERSE_RESUME)) return true;
-        return false;
+        return ctx.canResume(IRunControl.RM_REVERSE_RESUME);
     }
 
     @Override

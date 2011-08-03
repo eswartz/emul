@@ -1148,13 +1148,13 @@ public class TCFLaunch extends Launch {
                 synchronized (pending_clients) {
                     if (pending_clients.size() > 0) {
                         if (time - timestamp < actions_interval + 1000) {
-                            Protocol.invokeLater(50, this);
+                            Protocol.invokeLater(20, this);
                             return;
                         }
                         pending_clients.clear();
                     }
-                    else if (time - pending_clients_timestamp < 10) {
-                        Protocol.invokeLater(time - pending_clients_timestamp, this);
+                    else if (time < pending_clients_timestamp + 10) {
+                        Protocol.invokeLater(pending_clients_timestamp + 10 - time, this);
                         return;
                     }
                 }

@@ -31,8 +31,7 @@ public class ResumeCommand extends StepCommand implements IResumeHandler {
 
     @Override
     protected boolean canExecute(IRunControl.RunControlContext ctx) {
-        if (ctx.canResume(IRunControl.RM_RESUME)) return true;
-        return false;
+        return ctx.canResume(IRunControl.RM_RESUME);
     }
 
     @Override

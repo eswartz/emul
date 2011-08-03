@@ -252,6 +252,7 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
      * @param node - a model node that will become new selection.
      */
     void setSelection(TCFNode node) {
+        if (selection.size() > 0 && selection.getLast() == node) return;
         selection.add(node);
         expand(node.getParent(getPresentationContext()));
     }
@@ -324,7 +325,8 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
                 if ((flags & IModelDelta.REMOVED) != 0 && (flags & (IModelDelta.INSERTED|IModelDelta.ADDED)) != 0) return null;
                 if (node == selection) {
                     // Bug in Eclipse 3.6.1: SELECT delta has no effect without STATE
-                    flags |= IModelDelta.REVEAL | IModelDelta.SELECT | IModelDelta.STATE;
+                    flags |= IModelDelta.SELECT | IModelDelta.STATE;
+                    if (this.selection.size() <= 1) flags |= IModelDelta.REVEAL;
                 }
                 if (node.parent == null) {
                     // The node is TCF launch node
@@ -403,6 +405,7 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
     private void postDelta(final ModelDelta root) {
         assert pending_node == null;
         if (root.getFlags() != 0 || root.getChildDeltas().length > 0) {
+            last_update_time = System.currentTimeMillis();
             asyncExec(new Runnable() {
                 public void run() {
                     sortDeltaChildren(root);
@@ -426,8 +429,9 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
                         found = ((ITreeModelContentProviderTarget)getViewer()).findElementIndex(TreePath.EMPTY, launch) >= 0;
                         Protocol.invokeLater(new Runnable() {
                             public void run() {
+                                if (disposed) return;
                                 if (found) realized = true;
-                                else last_update_time = System.currentTimeMillis();
+                                else last_update_time = System.currentTimeMillis() + 20;
                                 post();
                             }
                         });
@@ -470,7 +474,6 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
             if (pending_node == null) {
                 node2flags.clear();
                 postDelta(root);
-                last_update_time = System.currentTimeMillis();
             }
         }
         node2delta.clear();

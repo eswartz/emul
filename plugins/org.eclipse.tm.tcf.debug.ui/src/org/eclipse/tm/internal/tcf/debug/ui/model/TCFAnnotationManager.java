@@ -532,14 +532,15 @@ public class TCFAnnotationManager {
         }
     }
 
-    private void updateAnnotations() {
-        final int cnt = ++update_unnotations_cnt;
+    private void updateAnnotations(final int cnt) {
         displayExec(new Runnable() {
             public void run() {
-                TCFNode node = null;
-                if (cnt != update_unnotations_cnt) return;
+                synchronized (TCFAnnotationManager.this) {
+                    if (cnt != update_unnotations_cnt) return;
+                }
                 for (IWorkbenchWindow window : windows.keySet()) {
                     if (dirty_windows.contains(null) || dirty_windows.contains(window)) {
+                        TCFNode node = null;
                         try {
                             ISelection active_context = DebugUITools.getDebugContextManager()
                                     .getContextService(window).getActiveContext();
@@ -557,8 +558,9 @@ public class TCFAnnotationManager {
                             }
                         }
                         catch (Throwable x) {
-                            if (node != null && node.isDisposed()) return;
-                            Activator.log("Cannot update editor annotations", x);
+                            if (node == null || !node.isDisposed()) {
+                                Activator.log("Cannot update editor annotations", x);
+                            }
                         }
                     }
                 }
@@ -571,12 +573,13 @@ public class TCFAnnotationManager {
         });
     }
 
-    void updateAnnotations(final IWorkbenchWindow window, final TCFLaunch launch) {
+    synchronized void updateAnnotations(final IWorkbenchWindow window, final TCFLaunch launch) {
+        final int cnt = ++update_unnotations_cnt;
         displayExec(new Runnable() {
             public void run() {
                 dirty_windows.add(window);
                 dirty_launches.add(launch);
-                updateAnnotations();
+                updateAnnotations(cnt);
             }
         });
     }
