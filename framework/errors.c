@@ -477,7 +477,7 @@ ErrorReport * get_error_report(int err) {
 
 #ifdef WIN32
         if (err >= ERR_WINDOWS_MIN && err <= ERR_WINDOWS_MAX) {
-            add_report_prop_int(report, "AltCode", err);
+            add_report_prop_int(report, "AltCode", err - ERR_WINDOWS_MIN);
             add_report_prop_str(report, "AltOrg", "WIN32");
             err = ERR_OTHER;
         }
