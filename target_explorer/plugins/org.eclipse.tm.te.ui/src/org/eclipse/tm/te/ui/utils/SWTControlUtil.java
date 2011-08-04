@@ -632,6 +632,18 @@ public final class SWTControlUtil {
 		}
 	}
 
+	/**
+	 * Sets the given image as control background image.
+	 *
+	 * @param control The control.
+	 * @param image The image.
+	 */
+	public static void setBackgroundImage(Control control, Image image) {
+		if (control != null && !control.isDisposed() && image != null) {
+			control.setBackgroundImage(image);
+		}
+	}
+
 	/* --------------------------------------------------------------------
 	 *
 	 * Generate system specific checkbox images.
