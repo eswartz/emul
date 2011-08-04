@@ -9,6 +9,7 @@
  *******************************************************************************/
 package org.eclipse.tm.te.ui.controls.validator;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.swt.events.VerifyEvent;
 
 /**
@@ -60,7 +61,7 @@ public class HexVerifyListener extends RegexVerifyListener {
 	 * @param maxBytes The maximum number of bytes. Must be non-negative.
 	 */
 	public void setBounds(int maxBytes) {
-		assert maxBytes >= 0;
+		Assert.isTrue(maxBytes >= 0);
 		setRegularExpression(getRegEx(getAttributes(), maxBytes));
 	}
 

@@ -9,6 +9,7 @@
  *******************************************************************************/
 package org.eclipse.tm.te.ui.controls;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogPage;
 import org.eclipse.swt.widgets.Composite;
@@ -58,7 +59,7 @@ public class BaseJFaceDialogSelectionControl extends BaseEditBrowseTextControl {
 	 * @return The created button control.
 	 */
 	protected Dialog doCreateDialogControl(Composite parent) {
-		assert parent != null;
+		Assert.isNotNull(parent);
 		return null;
 	}
 
@@ -69,7 +70,7 @@ public class BaseJFaceDialogSelectionControl extends BaseEditBrowseTextControl {
 	 * @param dialog The dialog to configure. Must not be <code>null</code>!
 	 */
 	protected void configureDialogControl(Dialog dialog) {
-		assert dialog != null;
+		Assert.isNotNull(dialog);
 	}
 
 	/**
@@ -83,7 +84,7 @@ public class BaseJFaceDialogSelectionControl extends BaseEditBrowseTextControl {
 	 * @return The selected element or <code>null</code>.
 	 */
 	protected String doOpenDialogControl(Dialog dialog) {
-		assert dialog != null;
+		Assert.isNotNull(dialog);
 		return null;
 	}
 
@@ -116,7 +117,7 @@ public class BaseJFaceDialogSelectionControl extends BaseEditBrowseTextControl {
 	 * @param selectedElement The selected element from that controls associated dialog. Must not be <code>null</code>.
 	 */
 	protected void doApplyElementFromDialogControl(String selectedElement) {
-		assert selectedElement != null;
+		Assert.isNotNull(selectedElement);
 		setEditFieldControlText(selectedElement);
 	}
 }

@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.dialogs.IDialogSettings;
 
 /**
@@ -41,7 +42,7 @@ public class DialogSettingsUtil {
 	 * @return The new list of history entries.
 	 */
 	public static String[] addToHistory(String[] history, String newEntry) {
-		assert history != null;
+		Assert.isNotNull(history);
 
 		// We have to create a new ArrayList from the transformed array. Otherwise
 		// modification of the list would not be supported (java.lang.UnsupportedOperationException).
@@ -85,7 +86,8 @@ public class DialogSettingsUtil {
 	 * @return The string array or an empty array.
 	 */
 	public static String[] getSettingsArraySafe(IDialogSettings settings, String key) {
-		assert settings != null && key != null;
+		Assert.isNotNull(settings);
+		Assert.isNotNull(key);
 
 		String[] result = null;
 

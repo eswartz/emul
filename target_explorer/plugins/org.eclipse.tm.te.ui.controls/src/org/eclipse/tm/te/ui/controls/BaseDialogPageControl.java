@@ -9,6 +9,7 @@
  *******************************************************************************/
 package org.eclipse.tm.te.ui.controls;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.dialogs.IDialogPage;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.operation.IRunnableContext;
@@ -65,7 +66,7 @@ public class BaseDialogPageControl extends BaseControl implements IRunnableConte
 	 */
 	@Override
 	protected IDialogSettings doGetParentSection(IDialogSettings settings) {
-		assert settings != null;
+		Assert.isNotNull(settings);
 
 		// We are going to create a subsection per parent page containing a subsection per control,
 		// if the parent page is set at all

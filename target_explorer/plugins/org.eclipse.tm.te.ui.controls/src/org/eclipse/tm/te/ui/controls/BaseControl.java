@@ -9,6 +9,7 @@
  *******************************************************************************/
 package org.eclipse.tm.te.ui.controls;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.PlatformObject;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.dialogs.IMessageProvider;
@@ -82,7 +83,7 @@ public class BaseControl extends PlatformObject implements IMessageProvider {
 	 * @param parent The parent control. Must not be <code>null</code>!
 	 */
 	public void setupPanel(Composite parent) {
-		assert parent != null;
+		Assert.isNotNull(parent);
 		parentControl = parent;
 	}
 
@@ -222,7 +223,7 @@ public class BaseControl extends PlatformObject implements IMessageProvider {
 	 * @return The parent section for the control dialog settings. Must never be <code>null</code>.
 	 */
 	protected IDialogSettings doGetParentSection(IDialogSettings settings) {
-		assert settings != null;
+		Assert.isNotNull(settings);
 		return settings;
 	}
 
@@ -240,11 +241,11 @@ public class BaseControl extends PlatformObject implements IMessageProvider {
 	 * @param idPrefix The prefix to use for every dialog settings slot keys. If <code>null</code>, the dialog settings slot keys are not to prefix.
 	 */
 	public final void restoreWidgetValues(IDialogSettings settings, String idPrefix) {
-		assert settings != null;
+		Assert.isNotNull(settings);
 
 		// Get the parent section for the control dialog settings.
 		IDialogSettings parentSection = doGetParentSection(settings);
-		assert parentSection != null;
+		Assert.isNotNull(parentSection);
 
 		// Store the settings of the control within it's own section.
 		IDialogSettings section = parentSection.getSection(this.getClass().getName());
@@ -264,7 +265,7 @@ public class BaseControl extends PlatformObject implements IMessageProvider {
 	 * @param idPrefix The prefix to use for every dialog settings slot keys. If <code>null</code>, the dialog settings slot keys are not to prefix.
 	 */
 	public void doRestoreWidgetValues(IDialogSettings settings, String idPrefix) {
-		assert settings != null;
+		Assert.isNotNull(settings);
 	}
 
 	/**
@@ -280,11 +281,11 @@ public class BaseControl extends PlatformObject implements IMessageProvider {
 	 * @param idPrefix The prefix to use for every dialog settings slot keys. If <code>null</code>, the dialog settings slot keys are not to prefix.
 	 */
 	public final void saveWidgetValues(IDialogSettings settings, String idPrefix) {
-		assert settings != null;
+		Assert.isNotNull(settings);
 
 		// Get the parent section for the control dialog settings.
 		IDialogSettings parentSection = doGetParentSection(settings);
-		assert parentSection != null;
+		Assert.isNotNull(parentSection);
 
 		// Store the settings of the control within it's own section.
 		IDialogSettings section = parentSection.getSection(this.getClass().getName());
@@ -304,6 +305,6 @@ public class BaseControl extends PlatformObject implements IMessageProvider {
 	 * @param idPrefix The prefix to use for every dialog settings slot keys. If <code>null</code>, the dialog settings slot keys are not to prefix.
 	 */
 	public void doSaveWidgetValues(IDialogSettings settings, String idPrefix) {
-		assert settings != null;
+		Assert.isNotNull(settings);
 	}
 }

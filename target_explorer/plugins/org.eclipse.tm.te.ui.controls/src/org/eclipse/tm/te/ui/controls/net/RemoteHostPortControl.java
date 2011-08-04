@@ -34,6 +34,7 @@ public class RemoteHostPortControl extends BaseEditBrowseTextControl {
 		setHasHistory(false);
 		setHideBrowseButton(true);
 		setEditFieldLabel(Messages.RemoteHostPortControl_label);
+		setAdjustBackgroundColor(parentPage != null);
 	}
 
 	/* (non-Javadoc)

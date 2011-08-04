@@ -11,6 +11,8 @@ package org.eclipse.tm.te.ui.controls.validator;
 
 import java.math.BigInteger;
 
+import org.eclipse.core.runtime.Assert;
+
 /**
  * Target Explorer: Validator for hex values.
  */
@@ -88,7 +90,7 @@ public class HexValidator extends RegexValidator {
 	 * @param maxBytes The maximum number of bytes. Must be non-negative.
 	 */
 	public void setBounds(int minBytes, int maxBytes) {
-		assert minBytes >= 0 && maxBytes >= 0 && minBytes <= maxBytes;
+		Assert.isTrue(minBytes >= 0 && maxBytes >= 0 && minBytes <= maxBytes);
 		setRegularExpression(getRegEx(getAttributes(), minBytes, maxBytes));
 		this.minBytes = minBytes;
 		this.maxBytes = maxBytes;
@@ -156,7 +158,7 @@ public class HexValidator extends RegexValidator {
 	 * @return The big integer representation or <code>null</code> if the decoding failed.
 	 */
 	public final static BigInteger decode(String value) {
-		assert value != null;
+		Assert.isNotNull(value);
 		BigInteger result = null;
 		if (value != null) {
 			try {

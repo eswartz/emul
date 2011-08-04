@@ -9,6 +9,7 @@
  *******************************************************************************/
 package org.eclipse.tm.te.ui.controls;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
@@ -93,7 +94,7 @@ public class FileSelectionControl extends BaseDialogSelectionControl {
 	 */
 	@Override
 	protected Dialog doCreateDialogControl(Composite parent) {
-		assert parent != null;
+		Assert.isNotNull(parent);
 
 		// create a standard file dialog
 		FileDialog dialog = new FileDialog(parent.getShell(), SWT.OPEN);
@@ -182,7 +183,7 @@ public class FileSelectionControl extends BaseDialogSelectionControl {
 	 */
 	@Override
 	protected String doOpenDialogControl(Dialog dialog) {
-		assert dialog != null;
+		Assert.isNotNull(dialog);
 
 		// We do expect a file dialog here.
 		if (dialog instanceof FileDialog) {

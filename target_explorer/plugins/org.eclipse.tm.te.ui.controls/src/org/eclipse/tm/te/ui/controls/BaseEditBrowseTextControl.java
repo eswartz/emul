@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.dialogs.IDialogPage;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.dialogs.IMessageProvider;
@@ -475,7 +476,7 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 	 * @return The created inner panel composite.
 	 */
 	protected Composite doCreateInnerPanelComposite(Composite parent) {
-		assert parent != null;
+		Assert.isNotNull(parent);
 
 		Composite innerPanel;
 		if (isGroup()) {
@@ -497,7 +498,7 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 	 * @param innerPanel The inner panel composite to configure. Must not be <code>null</code>!
 	 */
 	protected void configureInnerPanelComposite(Composite innerPanel) {
-		assert innerPanel != null;
+		Assert.isNotNull(innerPanel);
 
 		if (isAdjustBackgroundColor()) {
 			SWTControlUtil.setBackground(innerPanel, innerPanel.getParent().getBackground());
@@ -535,7 +536,7 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 	 * @param layout The grid layout. Must not be <code>null</code>
 	 */
 	protected void doAdjustInnerPanelLayout(GridLayout layout) {
-		assert layout != null;
+		Assert.isNotNull(layout);
 	}
 
 	/**
@@ -557,7 +558,7 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 	 * @return The created label control.
 	 */
 	protected Control doCreateLabelControl(Composite parent) {
-		assert parent != null;
+		Assert.isNotNull(parent);
 
 		Control labelControl;
 		if (!isLabelIsButton()) {
@@ -579,7 +580,7 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 	 * @param button The label control to configure. Must not be <code>null</code>!
 	 */
 	protected void configureLabelControl(final Control label) {
-		assert label != null;
+		Assert.isNotNull(label);
 		if (isAdjustBackgroundColor()) {
 			SWTControlUtil.setBackground(label, label.getParent().getBackground());
 		}
@@ -734,7 +735,7 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 	 * @param layoutData The layout data to apply to the edit field control. Must not be <code>null</code>.
 	 */
 	protected void doAdjustEditFieldControlLayoutData(GridData layoutData) {
-		assert layoutData != null;
+		Assert.isNotNull(layoutData);
 
 		// adjust the control indentation
 		if (getEditFieldControlDecoration() != null) {
@@ -786,7 +787,7 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 	 * @return The created edit field control.
 	 */
 	protected Control doCreateEditFieldControl(Composite parent) {
-		assert parent != null;
+		Assert.isNotNull(parent);
 
 		final Scrollable editField;
 		if (hasHistory()) {
@@ -852,7 +853,7 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 	 * @param control The edit field control to configure. Must not be <code>null</code>!
 	 */
 	protected void configureEditFieldControl(Control control) {
-		assert control != null;
+		Assert.isNotNull(control);
 
 		// the edit field control expands within the inner composite
 		GridData layoutData = new GridData(SWT.FILL, SWT.CENTER, true, false);
@@ -938,7 +939,7 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 	 * @return The control decoration object instance.
 	 */
 	protected ControlDecoration doCreateEditFieldControlDecoration(Control control) {
-		assert control != null;
+		Assert.isNotNull(control);
 		return new ControlDecoration(control, doGetEditFieldControlDecorationPosition());
 	}
 
@@ -958,7 +959,7 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 	 * @param decoration The edit field control decoration. Must not be <code>null</code>.
 	 */
 	protected void configureEditFieldControlDecoration(ControlDecoration decoration) {
-		assert decoration != null;
+		Assert.isNotNull(decoration);
 		decoration.setShowOnlyOnFocus(false);
 	}
 
@@ -971,7 +972,8 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 	 * @param messageType The message type.
 	 */
 	protected void updateEditFieldControlDecorationForMessage(ControlDecoration decoration, String message, int messageType) {
-		assert decoration != null && message != null;
+		Assert.isNotNull(decoration);
+		Assert.isNotNull(message);
 
 		// The description is the same as the message
 		decoration.setDescriptionText(message);
@@ -1129,7 +1131,7 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 	 * @param historyEntries The history entries to set. Must not be <code>null</code>!
 	 */
 	public void setEditFieldControlHistory(String[] historyEntries) {
-		assert historyEntries != null;
+		Assert.isNotNull(historyEntries);
 		if (hasHistory() && getEditFieldControl() instanceof Combo) {
 			Combo combo = (Combo)getEditFieldControl();
 			List<String> oldItems = new ArrayList<String>(Arrays.asList(SWTControlUtil.getItems(combo)));
@@ -1218,7 +1220,7 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 	 * @return The created button control.
 	 */
 	protected Button doCreateButtonControl(Composite parent) {
-		assert parent != null;
+		Assert.isNotNull(parent);
 
 		Button button = toolkit != null ? toolkit.createButton(parent, null, SWT.PUSH) : new Button(parent, SWT.PUSH);
 		// add a whitespace at the beginning and at the end of the button text to make the
@@ -1236,7 +1238,7 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 	 * @param button The button control to configure. Must not be <code>null</code>!
 	 */
 	protected void configureButtonControl(Button button) {
-		assert button != null;
+		Assert.isNotNull(button);
 		// add the selection listener to open the file dialog if the user pressed the button
 		button.addSelectionListener(new SelectionAdapter() {
 			@Override
@@ -1337,7 +1339,7 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 			// Create the edit field control itself. The result of
 			// doCreateEditFieldControl(...) must be always not null!
 			editFieldControl = doCreateEditFieldControl(innerInnerPanel);
-			assert editFieldControl != null;
+			Assert.isNotNull(editFieldControl);
 
 			// Once the edit field got created, the control decoration must
 			// be created and configured _before_ the edit field itself is
@@ -1345,7 +1347,7 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 			// not be configured correctly.
 			if (!isHideEditFieldControlDecoration()) {
 				controlDecoration = doCreateEditFieldControlDecoration(editFieldControl);
-				assert controlDecoration != null;
+				Assert.isNotNull(controlDecoration);
 				configureEditFieldControlDecoration(controlDecoration);
 			}
 
@@ -1428,7 +1430,7 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 	 * @return The history entries or an empty array. Will never return <code>null</code>!
 	 */
 	protected String[] getHistory(IDialogSettings settings, String idPrefix) {
-		assert settings != null;
+		Assert.isNotNull(settings);
 		if (settings != null && getDialogSettingsSlotId(idPrefix) != null) {
 			return DialogSettingsUtil.getSettingsArraySafe(settings, getDialogSettingsSlotId(idPrefix));
 		}
@@ -1441,7 +1443,7 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 	 */
 	@Override
 	public void doSaveWidgetValues(IDialogSettings settings, String idPrefix) {
-		assert settings != null;
+		Assert.isNotNull(settings);
 		if (settings != null && getDialogSettingsSlotId(idPrefix) != null) {
 			String[] historyEntries = DialogSettingsUtil.getSettingsArraySafe(settings, getDialogSettingsSlotId(idPrefix));
 			historyEntries = DialogSettingsUtil.addToHistory(historyEntries, getEditFieldControlText());

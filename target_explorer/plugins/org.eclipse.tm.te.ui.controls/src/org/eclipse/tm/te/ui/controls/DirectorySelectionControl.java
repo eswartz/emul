@@ -9,6 +9,7 @@
  *******************************************************************************/
 package org.eclipse.tm.te.ui.controls;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.dialogs.IDialogPage;
 import org.eclipse.swt.widgets.Composite;
@@ -70,7 +71,7 @@ public class DirectorySelectionControl extends BaseDialogSelectionControl {
 	 */
 	@Override
 	protected Dialog doCreateDialogControl(Composite parent) {
-		assert parent != null;
+		Assert.isNotNull(parent);
 
 		Dialog dialog = new DirectoryDialog(parent.getShell());
 		return dialog;
@@ -129,7 +130,7 @@ public class DirectorySelectionControl extends BaseDialogSelectionControl {
 	 */
 	@Override
 	public void setEditFieldValidator(Validator editFieldValidator) {
-		assert editFieldValidator instanceof DirectoryNameValidator;
+		Assert.isTrue(editFieldValidator instanceof DirectoryNameValidator);
 
 		if (editFieldValidator instanceof DirectoryNameValidator) {
 			super.setEditFieldValidator(editFieldValidator);
@@ -141,7 +142,7 @@ public class DirectorySelectionControl extends BaseDialogSelectionControl {
 	 */
 	@Override
 	protected String doOpenDialogControl(Dialog dialog) {
-		assert dialog != null;
+		Assert.isNotNull(dialog);
 
 		// We do expect a directory dialog here.
 		if (dialog instanceof DirectoryDialog) {

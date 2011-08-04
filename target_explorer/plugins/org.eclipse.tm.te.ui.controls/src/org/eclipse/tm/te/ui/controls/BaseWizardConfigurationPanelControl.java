@@ -99,6 +99,7 @@ public class BaseWizardConfigurationPanelControl extends BaseDialogPageControl {
 		}
 		Assert.isNotNull(panel);
 		panel.setFont(parent.getFont());
+		panel.setBackground(parent.getBackground());
 
 		panelLayout = new StackLayout();
 		panel.setLayout(panelLayout);

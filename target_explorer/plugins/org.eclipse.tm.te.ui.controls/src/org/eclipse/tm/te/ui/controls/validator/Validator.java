@@ -12,6 +12,7 @@ package org.eclipse.tm.te.ui.controls.validator;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.dialogs.IMessageProvider;
 import org.eclipse.jface.viewers.ICellEditorValidator;
 import org.eclipse.tm.te.ui.controls.nls.Messages;
@@ -244,7 +245,7 @@ public abstract class Validator implements IMessageProvider, ICellEditorValidato
 	 * @return The string value or <code>null</code>
 	 */
 	protected String getString(String key) {
-		assert key != null;
+		Assert.isNotNull(key);
 		return Messages.getString(key);
 	}
 }
