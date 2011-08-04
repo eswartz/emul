@@ -249,7 +249,7 @@ public class NewWizardSelectionPage extends WizardPage {
 			}
 
 			// Create the wizard node for the selected descriptor if not yet done
-			if (!wizardNodes.containsKey(selectedWizardDescriptor)) {
+			if (selectedWizardDescriptor != null && !wizardNodes.containsKey(selectedWizardDescriptor)) {
 				wizardNodes.put(selectedWizardDescriptor, new NewWizardNode(this, selectedWizardDescriptor));
 			}
 		}
