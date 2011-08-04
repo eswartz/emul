@@ -997,7 +997,7 @@ static int find_pe_symbol_by_addr(Context * ctx, int frame, ContextAddress addr,
     }
 
     set_win32_errno(err = GetLastError());
-    if (err == 0 || err == ERROR_MOD_NOT_FOUND) {
+    if (err == 0 || err == ERROR_MOD_NOT_FOUND || err == ERROR_INVALID_ADDRESS) {
         errno = ERR_SYM_NOT_FOUND;
     }
     return -1;
