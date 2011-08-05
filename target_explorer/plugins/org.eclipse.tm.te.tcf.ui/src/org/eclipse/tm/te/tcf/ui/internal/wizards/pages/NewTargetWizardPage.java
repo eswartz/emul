@@ -27,15 +27,14 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.te.tcf.ui.internal.help.IContextHelpIds;
 import org.eclipse.tm.te.tcf.ui.internal.nls.Messages;
-import org.eclipse.tm.te.ui.controls.interfaces.IValidatableDialogPage;
-import org.eclipse.tm.te.ui.wizards.pages.AbstractWizardPage;
+import org.eclipse.tm.te.ui.controls.wizards.pages.AbstractValidatableWizardPage;
 import org.eclipse.ui.PlatformUI;
 
 /**
  * Wizard page implementation querying all information needed
  * to create the different TCF peer types.
  */
-public class NewTargetWizardPage extends AbstractWizardPage implements IValidatableDialogPage {
+public class NewTargetWizardPage extends AbstractValidatableWizardPage {
 	private Combo transportTypeControl;
 	private Text addressControl;
 	private Text portControl;
@@ -175,9 +174,16 @@ public class NewTargetWizardPage extends AbstractWizardPage implements IValidata
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.ui.controls.interfaces.IValidatableDialogPage#validatePage()
+	 * @see org.eclipse.tm.te.ui.controls.wizards.pages.AbstractValidatableWizardPage#validatePage()
 	 */
+	@Override
 	public void validatePage() {
+		super.validatePage();
+		if (!isPageComplete()) return;
+
+		if (isValidationInProgress()) return;
+		setValidationInProgress(true);
+
 		boolean valid = true;
 
 		if ("".equals(addressControl.getText()) || "".equals(portControl)) { //$NON-NLS-1$ //$NON-NLS-2$
@@ -185,6 +191,7 @@ public class NewTargetWizardPage extends AbstractWizardPage implements IValidata
 		}
 
 		setPageComplete(valid);
+		setValidationInProgress(false);
 	}
 
 	/**
