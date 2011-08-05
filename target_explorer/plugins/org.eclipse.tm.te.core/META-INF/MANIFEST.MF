@@ -11,10 +11,13 @@ Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Bundle-ActivationPolicy: lazy
 Bundle-Localization: plugin
 Export-Package: org.eclipse.tm.te.core.activator;x-internal:=true,
+ org.eclipse.tm.te.core.events,
  org.eclipse.tm.te.core.extensions,
  org.eclipse.tm.te.core.interfaces,
+ org.eclipse.tm.te.core.interfaces.events,
  org.eclipse.tm.te.core.interfaces.nodes,
  org.eclipse.tm.te.core.internal;x-internal:=true,
+ org.eclipse.tm.te.core.internal.tracing;x-internal:=true,
  org.eclipse.tm.te.core.nls,
  org.eclipse.tm.te.core.nodes,
  org.eclipse.tm.te.core.preferences,
