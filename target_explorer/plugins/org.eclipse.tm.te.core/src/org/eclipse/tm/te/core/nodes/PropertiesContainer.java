@@ -10,14 +10,20 @@
 package org.eclipse.tm.te.core.nodes;
 
 import java.util.Collections;
+import java.util.EventObject;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 
 import org.eclipse.core.runtime.Assert;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.PlatformObject;
-import org.eclipse.tm.te.core.interfaces.IPropertiesContainer;
+import org.eclipse.tm.te.core.activator.CoreBundleActivator;
+import org.eclipse.tm.te.core.events.EventManager;
+import org.eclipse.tm.te.core.events.PropertyChangeEvent;
+import org.eclipse.tm.te.core.interfaces.nodes.IPropertiesContainer;
+import org.eclipse.tm.te.core.internal.tracing.ITraceIds;
 
 /**
  * A generic properties container implementation.
@@ -32,6 +38,9 @@ public class PropertiesContainer extends PlatformObject implements IPropertiesCo
 
 	// The unique node id
 	private final UUID uniqueId;
+
+	// The flag to remember the notification enablement
+	private boolean changeEventsEnabled = false;
 
 	/**
 	 * The custom properties map. The keys are always strings, the value might be any object.
@@ -110,6 +119,92 @@ public class PropertiesContainer extends PlatformObject implements IPropertiesCo
 		buffer.append("}"); //$NON-NLS-1$
 
 		return buffer.toString();
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.tm.te.core.interfaces.nodes.IPropertiesContainer#setChangeEventsEnabled(boolean)
+	 */
+	public final boolean setChangeEventsEnabled(boolean enabled) {
+		boolean changed = changeEventsEnabled != enabled;
+		if (changed) changeEventsEnabled = enabled;
+		return changed;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.tm.te.core.interfaces.nodes.IPropertiesContainer#changeEventsEnabled()
+	 */
+	public final boolean changeEventsEnabled() {
+		return changeEventsEnabled;
+	}
+
+	/**
+	 * Creates a new property change notification event object. The event object is initialized
+	 * with the given parameter.
+	 * <p>
+	 * This method is typically called from {@link #setProperty(String, Object)} in case the
+	 * property changed it's value. <code>Null</code> is returned if no event should be fired.
+	 *
+	 * @param source The source object. Must not be <code>null</code>.
+	 * @param key The property key. Must not be <code>null</code>.
+	 * @param oldValue The old properties value.
+	 * @param newValue The new properties value.
+	 *
+	 * @return The new property change notification event instance or <code>null</code>.
+	 */
+	protected final EventObject newEvent(Object source, String key, Object oldValue, Object newValue) {
+		Assert.isNotNull(source);
+		Assert.isNotNull(key);
+
+		// Check if the event is dropped
+		if (dropEvent(source, key, oldValue, newValue)) {
+			// Log the event dropping if tracing is enabled
+			if (CoreBundleActivator.getTraceHandler().isSlotEnabled(0, ITraceIds.TRACE_EVENTS)) {
+				CoreBundleActivator.getTraceHandler().trace("Drop event notification (not created change event)\n" + //$NON-NLS-1$
+						"for eventId=" + key + ",\n" + //$NON-NLS-1$ //$NON-NLS-2$
+						"currentValue=" + oldValue + ",\n" + //$NON-NLS-1$ //$NON-NLS-2$
+						"newValue    =" + newValue, //$NON-NLS-1$
+						0, ITraceIds.TRACE_EVENTS, IStatus.WARNING, this);
+			}
+			return null;
+		}
+
+		// Create the notification event instance.
+		return newEventDelegate(source, key, oldValue, newValue);
+	}
+
+	/**
+	 * Creates a new property change notification event object instance.
+	 * <p>
+	 * This method is typically called from {@link #newEvent(Object, String, Object, Object)}
+	 * if notifications are enabled.
+	 *
+	 * @param source The source object. Must not be <code>null</code>.
+	 * @param key The property key. Must not be <code>null</code>.
+	 * @param oldValue The old properties value.
+	 * @param newValue The new properties value.
+	 *
+	 * @return The new property change notification event instance or <code>null</code>.
+	 */
+	protected EventObject newEventDelegate(Object source, String key, Object oldValue, Object newValue) {
+		Assert.isNotNull(source);
+		Assert.isNotNull(key);
+		return new PropertyChangeEvent(source, key, oldValue, newValue);
+	}
+
+	/**
+	 * Returns if or if not notifying the given property change has to be dropped.
+	 *
+	 * @param source The source object. Must not be <code>null</code>.
+	 * @param key The property key. Must not be <code>null</code>.
+	 * @param oldValue The old properties value.
+	 * @param newValue The new properties value.
+	 *
+	 * @return <code>True</code> if dropping the property change notification, <code>false</code> if notifying the property change.
+	 */
+	protected boolean dropEvent(Object source, String key, Object oldValue, Object newValue) {
+		Assert.isNotNull(source);
+		Assert.isNotNull(key);
+		return !changeEventsEnabled || key.endsWith(".silent"); //$NON-NLS-1$
 	}
 
 	/* (non-Javadoc)
@@ -222,7 +317,10 @@ public class PropertiesContainer extends PlatformObject implements IPropertiesCo
 
 		this.properties.clear();
 		this.properties.putAll(properties);
-	}
+
+		EventObject event = newEvent(this, "properties", null, properties); //$NON-NLS-1$
+		if (event != null) EventManager.getInstance().fireEvent(event);
+}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.core.interfaces.IPropertiesContainer#setProperty(java.lang.String, boolean)
@@ -292,6 +390,8 @@ public class PropertiesContainer extends PlatformObject implements IPropertiesCo
 			} else {
 				properties.remove(key);
 			}
+			EventObject event = newEvent(this, key, oldValue, value);
+			if (event != null) EventManager.getInstance().fireEvent(event);
 			return true;
 		}
 		return false;

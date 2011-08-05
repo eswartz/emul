@@ -1,0 +1,173 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Schema file written by PDE -->
+<schema targetNamespace="org.eclipse.tm.te.core" xmlns="http://www.w3.org/2001/XMLSchema">
+<annotation>
+      <appinfo>
+         <meta.schema plugin="org.eclipse.tm.te.core" id="eventListeners" name="Event Listeners"/>
+      </appinfo>
+      <documentation>
+         This extension point is used to contribute event listeners.
+      </documentation>
+   </annotation>
+
+   <element name="extension">
+      <annotation>
+         <appinfo>
+            <meta.element />
+         </appinfo>
+      </annotation>
+      <complexType>
+         <sequence>
+            <element ref="eventListener" minOccurs="1" maxOccurs="unbounded"/>
+         </sequence>
+         <attribute name="point" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="id" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="name" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+               <appinfo>
+                  <meta.attribute translatable="true"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="eventListener">
+      <complexType>
+         <sequence>
+            <element ref="eventType" minOccurs="0" maxOccurs="unbounded"/>
+            <element ref="eventSourceType" minOccurs="0" maxOccurs="unbounded"/>
+         </sequence>
+         <attribute name="class" type="string" use="required">
+            <annotation>
+               <documentation>
+                  A fully qualified name of the Java class implementing &lt;code&gt;org.eclipse.tm.te.core.interfaces.events.IEventListener&lt;/code&gt;.
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="java" basedOn=":org.eclipse.tm.te.core.interfaces.events.IEventListener"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+         <attribute name="forcePluginActivation" type="boolean">
+            <annotation>
+               <documentation>
+                  If set to &lt;code&gt;true&lt;/code&gt; and if the contributing plug-in has not been activated yet, the plug-in will be forced to be activated by loading the event listener implementation class. If set to &lt;code&gt;false&lt;/code&gt;, the default and the contributing plu-in has not been activated yet, the event listener implementation will be not invoked even if the event type matches one of the declared event types.
+               </documentation>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="eventType">
+      <complexType>
+         <attribute name="class" type="string" use="required">
+            <annotation>
+               <documentation>
+                  A fully qualified name of the Java class implementing &lt;code&gt;java.util.EventObject&lt;/code&gt;.
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="java" basedOn="java.util.EventObject:"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+         <attribute name="bundleId" type="string">
+            <annotation>
+               <documentation>
+                  The unique id of the bundle which contains the class loader required to load the event type class. If not specified, the extension points declaring bundle class loader is used.
+               </documentation>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="eventSourceType">
+      <complexType>
+         <attribute name="class" type="string" use="required">
+            <annotation>
+               <documentation>
+                  A fully qualified name of the Java class being used to match the event source type. If specified, the contributed notification listener is inheriting from the specified class or implementing the specified interface.
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="java"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+         <attribute name="bundleId" type="string">
+            <annotation>
+               <documentation>
+                  The unique id of the bundle which contains the class loader required to load the event source type class. If not specified, the extension points declaring bundle class loader is used.
+               </documentation>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="since"/>
+      </appinfo>
+      <documentation>
+         Target Explorer 1.0.0
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="examples"/>
+      </appinfo>
+      <documentation>
+         The following is an example of this extension point&apos;s usage:
+&lt;p&gt;
+&lt;pre&gt;
+   &lt;extension point=&quot;org.eclipse.tm.te.core.eventListeners&quot;&gt;
+      &lt;eventListener
+            class=&quot;org.eclipse.tm.te.ui.MyEventListener&quot;
+            forcePluginActivation=&quot;false&quot;&gt;
+         &lt;eventType class=&quot;org.eclipse.tme.te.core.events.PropertyChangeEvent&quot;/&gt;
+      &lt;/eventListener&gt;
+   &lt;/extension&gt;
+&lt;/pre&gt;
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="apiinfo"/>
+      </appinfo>
+      <documentation>
+         The provider of a event listener must implement &lt;samp&gt;org.eclipse.tm.te.core.interfaces.events.IEventListener&lt;/samp&gt;.
+      </documentation>
+   </annotation>
+
+
+   <annotation>
+      <appinfo>
+         <meta.section type="copyright"/>
+      </appinfo>
+      <documentation>
+         Copyright (c) 2011 Wind River Systems, Inc. and others.
+
+All rights reserved.
+
+This program and the accompanying materials are made available under the terms
+of the Eclipse Public License v1.0 which accompanies this distribution, and is
+available at http://www.eclipse.org/legal/epl-v10.html.
+      </documentation>
+   </annotation>
+
+</schema>

@@ -11,7 +11,7 @@ package org.eclipse.tm.te.core.statushandler.interfaces;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.tm.te.core.interfaces.IExecutableExtension;
-import org.eclipse.tm.te.core.interfaces.IPropertiesContainer;
+import org.eclipse.tm.te.core.interfaces.nodes.IPropertiesContainer;
 
 /**
  * Target Explorer: Status handler API declaration

@@ -32,4 +32,6 @@ public class Messages extends NLS {
 	public static String Extension_error_missingRequiredAttribute;
 	public static String Extension_error_duplicateExtension;
 	public static String Extension_error_invalidExtensionPoint;
+
+	public static String PendingOperationModelNode_label;
 }

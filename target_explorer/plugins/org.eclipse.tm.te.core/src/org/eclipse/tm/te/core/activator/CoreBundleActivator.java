@@ -3,12 +3,13 @@
  * This program and the accompanying materials are made available under the terms
  * of the Eclipse Public License v1.0 which accompanies this distribution, and is
  * available at http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
 package org.eclipse.tm.te.core.activator;
 
+import org.eclipse.tm.te.core.tracing.TraceHandler;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 
@@ -18,6 +19,8 @@ import org.osgi.framework.BundleContext;
 public class CoreBundleActivator implements BundleActivator {
 	// The bundle context
 	private static BundleContext context;
+	// The trace handler instance
+	private static TraceHandler traceHandler;
 
 	/**
 	 * Returns the bundle context
@@ -38,6 +41,18 @@ public class CoreBundleActivator implements BundleActivator {
 		return null;
 	}
 
+	/**
+	 * Returns the bundles trace handler.
+	 *
+	 * @return The bundles trace handler.
+	 */
+	public static TraceHandler getTraceHandler() {
+		if (traceHandler == null) {
+			traceHandler = new TraceHandler(getUniqueIdentifier());
+		}
+		return traceHandler;
+	}
+
 	/* (non-Javadoc)
 	 * @see org.osgi.framework.BundleActivator#start(org.osgi.framework.BundleContext)
 	 */
@@ -50,6 +65,7 @@ public class CoreBundleActivator implements BundleActivator {
 	 */
 	public void stop(BundleContext bundleContext) throws Exception {
 		CoreBundleActivator.context = null;
+		traceHandler = null;
 	}
 
 }

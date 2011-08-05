@@ -7,7 +7,7 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.core.interfaces;
+package org.eclipse.tm.te.core.interfaces.nodes;
 
 import java.util.Map;
 import java.util.UUID;
@@ -25,6 +25,21 @@ public interface IPropertiesContainer extends IAdaptable {
 	 * @return The unique identifier.
 	 */
 	public UUID getUUID();
+
+	/**
+	 * Set if or if not firing change events is enabled.
+	 *
+	 * @param param enabled <code>True</code> to enable the change events, <code>false</code> to disable the change events.
+	 * @return <code>True</code> if the enablement has changed, <code>false</code> if not.
+	 */
+	public boolean setChangeEventsEnabled(boolean enabled);
+
+	/**
+	 * Returns if or if not firing change events is enabled.
+	 *
+	 * @return <code>True</code> if change events are enabled, <code>false</code> if disabled.
+	 */
+	public boolean changeEventsEnabled();
 
 	/**
 	 * Set the properties from the given map. Calling this method

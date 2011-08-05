@@ -13,6 +13,7 @@ Bundle-Localization: plugin
 Export-Package: org.eclipse.tm.te.core.activator;x-internal:=true,
  org.eclipse.tm.te.core.extensions,
  org.eclipse.tm.te.core.interfaces,
+ org.eclipse.tm.te.core.interfaces.nodes,
  org.eclipse.tm.te.core.internal;x-internal:=true,
  org.eclipse.tm.te.core.nls,
  org.eclipse.tm.te.core.nodes,
