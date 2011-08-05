@@ -12,6 +12,19 @@
             properties="preference"
             type="java.lang.Object">
       </propertyTester>
+
+      <propertyTester
+            class="org.eclipse.tm.te.core.internal.PropertiesContainerPropertyTester"
+            id="org.eclipse.tm.te.core.PropertiesContainerPropertyTester"
+            namespace="org.eclipse.tm.te.core"
+            properties="isProperty"
+            type="org.eclipse.tm.te.core.interfaces.nodes.IPropertiesContainer">
+      </propertyTester>
+   </extension>
+
+<!-- Event listener contributions -->
+   <extension point="org.eclipse.tm.te.core.eventListeners">
+      <eventListener class="org.eclipse.tm.te.core.internal.DebugEventListener"/>
    </extension>
 
 </plugin>
