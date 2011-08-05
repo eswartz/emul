@@ -117,18 +117,4 @@ public abstract class AbstractWizardPage extends WizardPage {
 	 */
 	public void restoreWidgetValues() {
 	}
-
-	/**
-	 * Validates the page status.
-	 * <p>
-	 * If necessary, set corresponding messages and message types to signal if some
-	 * control on the page needs attention.
-	 * <p>
-	 * Depending on the outcome of the page data validation, call {@link WizardPage#setPageComplete(boolean)}
-	 * with either <code>true</code> or <code>false</code> to signal if the wizard
-	 * can finish given the current page data or not.
-	 */
-	public void validatePage() {
-	}
-
 }

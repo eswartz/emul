@@ -27,6 +27,7 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.te.tcf.ui.internal.help.IContextHelpIds;
 import org.eclipse.tm.te.tcf.ui.internal.nls.Messages;
+import org.eclipse.tm.te.ui.controls.interfaces.IValidatableDialogPage;
 import org.eclipse.tm.te.ui.wizards.pages.AbstractWizardPage;
 import org.eclipse.ui.PlatformUI;
 
@@ -34,7 +35,7 @@ import org.eclipse.ui.PlatformUI;
  * Wizard page implementation querying all information needed
  * to create the different TCF peer types.
  */
-public class NewTargetWizardPage extends AbstractWizardPage {
+public class NewTargetWizardPage extends AbstractWizardPage implements IValidatableDialogPage {
 	private Combo transportTypeControl;
 	private Text addressControl;
 	private Text portControl;
@@ -174,9 +175,8 @@ public class NewTargetWizardPage extends AbstractWizardPage {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.ui.wizards.pages.AbstractWizardPage#validatePage()
+	 * @see org.eclipse.tm.te.ui.controls.interfaces.IValidatableDialogPage#validatePage()
 	 */
-	@Override
 	public void validatePage() {
 		boolean valid = true;
 

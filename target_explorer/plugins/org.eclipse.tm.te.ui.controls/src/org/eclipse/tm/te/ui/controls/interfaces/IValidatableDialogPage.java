@@ -17,11 +17,14 @@ import org.eclipse.jface.wizard.WizardPage;
 public interface IValidatableDialogPage {
 
 	/**
-	 * Validates the page status. If necessary, set corresponding messages
-	 * and message types to signal if some control on the page needs attention.
-	 * In case the page is a {@link WizardPage}, {@link WizardPage#setPageComplete(boolean)}
-	 * should be used to signal if the wizard cannot be completed with the current
-	 * page status.
+	 * Validates the page status.
+	 * <p>
+	 * If necessary, set corresponding messages and message types to signal if some
+	 * control on the page needs attention.
+	 * <p>
+	 * Depending on the outcome of the page data validation, call {@link WizardPage#setPageComplete(boolean)}
+	 * with either <code>true</code> or <code>false</code> to signal if the wizard
+	 * can finish given the current page data or not.
 	 */
 	public void validatePage();
 }
