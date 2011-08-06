@@ -35,6 +35,17 @@ public interface IModelNode extends IPropertiesContainer, ISchedulingRule {
 	public static final String PROPERTY_IS_VISIBLE = "isVisible"; //$NON-NLS-1$
 
 	/**
+	 * Property: Type. May be used to group nodes or set an node type id.
+	 */
+	public static final String PROPERTY_TYPE= "type"; //$NON-NLS-1$
+
+	/**
+	 * Property: Type label. May be used to represent the group or node
+	 *           type in UI widgets.
+	 */
+	public static final String PROPERTY_TYPE_LABEL = "typeLabel"; //$NON-NLS-1$
+
+	/**
 	 * Property: Model node error text. May be used to decorate the
 	 *           node in UI widgets with the error text.
 	 */
