@@ -174,7 +174,7 @@ The status handler implementation class must be specified either by the class at
          <meta.section type="apiinfo"/>
       </appinfo>
       <documentation>
-         Plug-ins that want to extend this extension point, the referenced class must implement the &lt;samp&gt;org.eclipse.tm.te.core.interfaces.IStatusHandler&lt;/samp&gt; interface.
+         Plug-ins that want to extend this extension point, the referenced class must implement the &lt;samp&gt;org.eclipse.tm.te.core.statushandler.interfaces.IStatusHandler&lt;/samp&gt; interface.
       </documentation>
    </annotation>
 
