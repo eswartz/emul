@@ -44,6 +44,7 @@ import org.eclipse.tm.internal.tcf.debug.launch.TCFSourceLookupParticipant;
 import org.eclipse.tm.internal.tcf.debug.model.ITCFBreakpointListener;
 import org.eclipse.tm.internal.tcf.debug.model.TCFBreakpoint;
 import org.eclipse.tm.internal.tcf.debug.model.TCFBreakpointsStatus;
+import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
 import org.eclipse.tm.internal.tcf.debug.model.TCFSourceRef;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
@@ -68,21 +69,29 @@ import org.eclipse.ui.texteditor.ITextEditor;
 
 public class TCFAnnotationManager {
 
+    private static final String
+        TYPE_BP_INSTANCE = "org.eclipse.tm.tcf.debug.breakpoint_instance",
+        TYPE_TOP_FRAME = "org.eclipse.tm.tcf.debug.top_frame",
+        TYPE_STACK_FRAME = "org.eclipse.tm.tcf.debug.stack_frame";
+
     class TCFAnnotation extends Annotation {
 
         final ILineNumbers.CodeArea area;
         final Image image;
         final String text;
+        final String type;
         final int hash_code;
 
         IAnnotationModel model;
 
-        TCFAnnotation(ILineNumbers.CodeArea area, Image image, String text) {
+        TCFAnnotation(ILineNumbers.CodeArea area, Image image, String text, String type) {
             this.area = area;
             this.image = image;
             this.text = text;
-            hash_code = area.hashCode() + image.hashCode() + text.hashCode();
+            this.type = type;
+            hash_code = area.hashCode() + image.hashCode() + text.hashCode() + type.hashCode();
             setText(text);
+            setType(type);
         }
 
         protected Image getImage() {
@@ -104,6 +113,7 @@ public class TCFAnnotationManager {
             if (!area.equals(a.area)) return false;
             if (!image.equals(a.image)) return false;
             if (!text.equals(a.text)) return false;
+            if (!type.equals(a.type)) return false;
             return true;
         }
 
@@ -339,8 +349,8 @@ public class TCFAnnotationManager {
                         null, null, 0, false, false, false, false);
                 TCFAnnotation a = new TCFAnnotation(area,
                         ImageCache.getImage(ImageCache.IMG_BREAKPOINT_ERROR),
-                        "Cannot plant breakpoint: " + error);
-                a.setType("org.eclipse.tm.tcf.debug.breakpoint_instance"); //$NON-NLS-1$
+                        "Cannot plant breakpoint: " + error,
+                        TYPE_BP_INSTANCE);
                 set.add(a);
             }
         }
@@ -362,7 +372,9 @@ public class TCFAnnotationManager {
                     TCFNodeExecContext thread = null;
                     TCFNodeExecContext memory = null;
                     TCFNodeStackFrame frame = null;
+                    TCFNodeStackFrame last_top_frame = null;
                     String bp_group = null;
+                    boolean suspended = false;
                     if (node instanceof TCFNodeStackFrame) {
                         thread = (TCFNodeExecContext)node.parent;
                         frame = (TCFNodeStackFrame)node;
@@ -382,6 +394,10 @@ public class TCFAnnotationManager {
                         if (!mem_cache.validate(this)) return;
                         memory = mem_cache.getData();
                         if (bp_group == null && memory != null && rc_ctx_data != null && rc_ctx_data.hasState()) bp_group = memory.id;
+                        last_top_frame = thread.getLastTopFrame();
+                        TCFDataCache<TCFContextState> state_cache = thread.getState();
+                        if (!state_cache.validate(this)) return;
+                        suspended = state_cache.getData() != null && state_cache.getData().is_suspended;
                     }
                     List<TCFAnnotation> set = new ArrayList<TCFAnnotation>();
                     if (memory != null) {
@@ -426,16 +442,16 @@ public class TCFAnnotationManager {
                                             if (error != null) {
                                                 TCFAnnotation a = new TCFAnnotation(area,
                                                         ImageCache.getImage(ImageCache.IMG_BREAKPOINT_ERROR),
-                                                        "Cannot plant breakpoint at 0x" + addr.toString(16) + ": " + error);
-                                                a.setType("org.eclipse.tm.tcf.debug.breakpoint_instance"); //$NON-NLS-1$
+                                                        "Cannot plant breakpoint at 0x" + addr.toString(16) + ": " + error,
+                                                        TYPE_BP_INSTANCE);
                                                 set.add(a);
                                                 error = null;
                                             }
                                             else {
                                                 TCFAnnotation a = new TCFAnnotation(area,
                                                         ImageCache.getImage(ImageCache.IMG_BREAKPOINT_INSTALLED),
-                                                        "Breakpoint planted at 0x" + addr.toString(16));
-                                                a.setType("org.eclipse.tm.tcf.debug.breakpoint_instance"); //$NON-NLS-1$
+                                                        "Breakpoint planted at 0x" + addr.toString(16),
+                                                        TYPE_BP_INSTANCE);
                                                 set.add(a);
                                             }
                                         }
@@ -445,7 +461,7 @@ public class TCFAnnotationManager {
                             }
                         }
                     }
-                    if (frame != null && frame.getFrameNo() >= 0) {
+                    if (suspended && frame != null && frame.getFrameNo() >= 0) {
                         TCFDataCache<TCFSourceRef> line_cache = frame.getLineInfo();
                         if (!line_cache.validate(this)) return;
                         TCFSourceRef line_data = line_cache.getData();
@@ -454,15 +470,27 @@ public class TCFAnnotationManager {
                             if (frame.getFrameNo() == 0) {
                                 a = new TCFAnnotation(line_data.area,
                                         DebugUITools.getImage(IDebugUIConstants.IMG_OBJS_INSTRUCTION_POINTER_TOP),
-                                        "Current Instruction Pointer");
-                                a.setType("org.eclipse.tm.tcf.debug.top_frame"); //$NON-NLS-1$
+                                        "Current Instruction Pointer",
+                                        TYPE_TOP_FRAME);
                             }
                             else {
                                 a = new TCFAnnotation(line_data.area,
                                         DebugUITools.getImage(IDebugUIConstants.IMG_OBJS_INSTRUCTION_POINTER),
-                                        "Stack Frame");
-                                a.setType("org.eclipse.tm.tcf.debug.stack_frame"); //$NON-NLS-1$
+                                        "Stack Frame",
+                                        TYPE_STACK_FRAME);
                             }
+                            set.add(a);
+                        }
+                    }
+                    if (!suspended && last_top_frame != null) {
+                        TCFDataCache<TCFSourceRef> line_cache = last_top_frame.getLineInfo();
+                        if (!line_cache.validate(this)) return;
+                        TCFSourceRef line_data = line_cache.getData();
+                        if (line_data != null && line_data.area != null) {
+                            TCFAnnotation a = new TCFAnnotation(line_data.area,
+                                    DebugUITools.getImage(IDebugUIConstants.IMG_OBJS_INSTRUCTION_POINTER),
+                                    "Last Instruction Pointer position",
+                                    TYPE_STACK_FRAME);
                             set.add(a);
                         }
                     }

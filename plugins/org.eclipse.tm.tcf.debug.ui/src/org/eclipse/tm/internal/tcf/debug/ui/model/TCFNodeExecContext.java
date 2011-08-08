@@ -699,6 +699,12 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         return children_exec;
     }
 
+    public TCFNodeStackFrame getLastTopFrame() {
+        if (!resume_pending) return null;
+        if (last_stack_trace == null || last_stack_trace.length == 0) return null;
+        return (TCFNodeStackFrame)last_stack_trace[0];
+    }
+
     /**
      * Get context full name - including all ancestor names.
      * Return context ID if the context does not have a name.
@@ -1258,6 +1264,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                     children_stack.onResumed();
                     resume_pending = false;
                     postAllAndParentsChangedDelta();
+                    model.onContextRunning();
                 }
             });
         }

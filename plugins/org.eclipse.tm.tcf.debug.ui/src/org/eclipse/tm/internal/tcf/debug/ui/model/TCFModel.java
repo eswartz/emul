@@ -828,6 +828,10 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         annotation_manager.updateAnnotations(null, launch);
     }
 
+    void onContextRunning() {
+        annotation_manager.updateAnnotations(null, launch);
+    }
+
     private void onContextOrProcessRemoved() {
         final int generation = ++auto_disconnect_generation;
         Protocol.invokeLater(1000, new Runnable() {
