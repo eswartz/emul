@@ -9,11 +9,44 @@
  *******************************************************************************/
 package org.eclipse.tm.te.core.persistence.interfaces;
 
+import java.io.IOException;
+
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.tm.te.core.interfaces.IExecutableExtension;
+import org.eclipse.tm.te.core.interfaces.nodes.IPropertiesContainer;
 
 /**
  * Target Explorer: Persistence delegate API declaration
  */
 public interface IPersistenceDelegate extends IExecutableExtension {
 
+	/**
+	 * Writes the given data to the persistence storage given by
+	 * the <code>&quot;path&quot;</code> parameter.
+	 * <p>
+	 * If the persistence delegate implements a file less storage,
+	 * the <code>&quot;path&quot;</code> parameter might be ignored or
+	 * set to <code>null</code>.
+	 *
+	 * @param path The persistence storage path or <code>null</code>.
+	 * @param data The data. Must not be <code>null</code>.
+	 *
+	 * @throws IOException - if the operation fails
+	 */
+	public void write(IPath path, IPropertiesContainer data) throws IOException;
+
+	/**
+	 * Reads the data from the persistence storage given by
+	 * the <code>&quot;path&quot;</code> parameter.
+	 * <p>
+	 * If the persistence delegate implements a file less storage,
+	 * the <code>&quot;path&quot;</code> parameter might be ignored or
+	 * set to <code>null</code>.
+	 *
+	 * @param path The persistence storage path or <code>null</code>.
+	 * @return The data.
+	 *
+	 * @throws IOException - if the operation fails
+	 */
+	public IPropertiesContainer read(IPath path) throws IOException;
 }

@@ -16,6 +16,6 @@ import org.eclipse.tm.te.core.persistence.interfaces.IPersistenceDelegate;
  * Target Explorer: Abstract persistence delegate implementation.
  *
  */
-public class AbstractPersistenceDelegate extends ExecutableExtension implements IPersistenceDelegate {
+public abstract class AbstractPersistenceDelegate extends ExecutableExtension implements IPersistenceDelegate {
 
 }

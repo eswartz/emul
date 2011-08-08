@@ -2,5 +2,13 @@
 <?eclipse version="3.4"?>
 <plugin>
    <extension-point id="delegates" name="%ExtensionPoint.delegates.name" schema="schema/delegates.exsd"/>
+   <extension
+         point="org.eclipse.tm.te.core.persistence.delegates">
+      <delegate
+            class="org.eclipse.tm.te.core.persistence.properties.PropertiesFilePersistenceDelegate"
+            id="org.eclipse.tm.te.core.persistence.properties"
+            label="%PropertiesFilePersistenceDelegate.label">
+      </delegate>
+   </extension>
 
 </plugin>
