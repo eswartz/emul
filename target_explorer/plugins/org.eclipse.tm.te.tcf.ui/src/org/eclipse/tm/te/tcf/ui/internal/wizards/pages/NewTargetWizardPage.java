@@ -27,7 +27,7 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.te.tcf.ui.internal.help.IContextHelpIds;
 import org.eclipse.tm.te.tcf.ui.internal.nls.Messages;
-import org.eclipse.tm.te.ui.controls.wizards.pages.AbstractValidatableWizardPage;
+import org.eclipse.tm.te.ui.wizards.pages.AbstractValidatableWizardPage;
 import org.eclipse.ui.PlatformUI;
 
 /**

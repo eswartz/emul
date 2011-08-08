@@ -42,10 +42,10 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Layout;
 import org.eclipse.swt.widgets.Scrollable;
 import org.eclipse.swt.widgets.Text;
-import org.eclipse.tm.te.ui.controls.interfaces.IValidatableDialogPage;
 import org.eclipse.tm.te.ui.controls.nls.Messages;
 import org.eclipse.tm.te.ui.controls.validator.Validator;
 import org.eclipse.tm.te.ui.utils.SWTControlUtil;
+import org.eclipse.tm.te.ui.wizards.interfaces.IValidatableWizardPage;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 
 /**
@@ -636,8 +636,8 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 
 			// validate the page content.
 			IDialogPage parentPage = getParentPage();
-			if (parentPage instanceof IValidatableDialogPage) {
-				((IValidatableDialogPage)parentPage).validatePage();
+			if (parentPage instanceof IValidatableWizardPage) {
+				((IValidatableWizardPage)parentPage).validatePage();
 			}
 		}
 	}
@@ -1015,9 +1015,9 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 		public void modifyText(ModifyEvent e) {
 			// validate the page content.
 			IDialogPage parentPage = getParentPage();
-			if (parentPage instanceof IValidatableDialogPage) {
+			if (parentPage instanceof IValidatableWizardPage) {
 				// Validate the page
-				((IValidatableDialogPage)parentPage).validatePage();
+				((IValidatableWizardPage)parentPage).validatePage();
 			}
 		}
 	};
@@ -1057,8 +1057,8 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 		public void widgetSelected(SelectionEvent e) {
 			// validate the page content.
 			IDialogPage parentPage = getParentPage();
-			if (parentPage instanceof IValidatableDialogPage) {
-				((IValidatableDialogPage)parentPage).validatePage();
+			if (parentPage instanceof IValidatableWizardPage) {
+				((IValidatableWizardPage)parentPage).validatePage();
 			}
 		}
 	};

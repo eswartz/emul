@@ -7,7 +7,7 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.ui.interfaces.newWizard;
+package org.eclipse.tm.te.ui.wizards.interfaces;
 
 import org.eclipse.tm.te.ui.wizards.newWizard.NewWizardSelectionPage;
 import org.eclipse.ui.wizards.IWizardDescriptor;

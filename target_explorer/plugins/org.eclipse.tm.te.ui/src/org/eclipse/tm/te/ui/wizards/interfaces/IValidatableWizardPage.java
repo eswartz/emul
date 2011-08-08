@@ -7,14 +7,14 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.ui.controls.interfaces;
+package org.eclipse.tm.te.ui.wizards.interfaces;
 
 import org.eclipse.jface.wizard.WizardPage;
 
 /**
- * Target Explorer: Public interface for validatable dialog pages.
+ * Target Explorer: Public interface for validatable wizard pages.
  */
-public interface IValidatableDialogPage {
+public interface IValidatableWizardPage {
 
 	/**
 	 * Validates the page status.

@@ -7,11 +7,10 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.ui.controls.wizards.pages;
+package org.eclipse.tm.te.ui.wizards.pages;
 
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.tm.te.ui.controls.interfaces.IValidatableDialogPage;
-import org.eclipse.tm.te.ui.wizards.pages.AbstractWizardPage;
+import org.eclipse.tm.te.ui.wizards.interfaces.IValidatableWizardPage;
 
 /**
  * An abstract validatable wizard page implementation.
@@ -19,7 +18,7 @@ import org.eclipse.tm.te.ui.wizards.pages.AbstractWizardPage;
  * This wizard page implementation is adding utility methods
  * for handling page validation.
  */
-public abstract class AbstractValidatableWizardPage extends AbstractWizardPage implements IValidatableDialogPage {
+public abstract class AbstractValidatableWizardPage extends AbstractWizardPage implements IValidatableWizardPage {
 	// A used to detect if a validation process is already running.
 	// If set to true, validatePage() should return immediately.
 	private boolean validationInProgress = false;
