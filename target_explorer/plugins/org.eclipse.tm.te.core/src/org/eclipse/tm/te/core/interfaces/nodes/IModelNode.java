@@ -37,7 +37,7 @@ public interface IModelNode extends IPropertiesContainer, ISchedulingRule {
 	/**
 	 * Property: Type. May be used to group nodes or set an node type id.
 	 */
-	public static final String PROPERTY_TYPE= "type"; //$NON-NLS-1$
+	public static final String PROPERTY_TYPE = "type"; //$NON-NLS-1$
 
 	/**
 	 * Property: Type label. May be used to represent the group or node
