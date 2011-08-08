@@ -432,6 +432,7 @@ struct ELF_Section {
     void * data;
     U4_T type;
     U4_T flags;
+    U4_T alignment;
     U8_T offset;
     U8_T size;
     U8_T addr;

@@ -417,6 +417,7 @@ static ELF_File * create_elf_cache(const char * file_name) {
                         sec->index = cnt;
                         sec->name_offset = shdr.sh_name;
                         sec->type = shdr.sh_type;
+                        sec->alignment = (U4_T)shdr.sh_addralign;
                         sec->offset = shdr.sh_offset;
                         sec->size = shdr.sh_size;
                         sec->flags = shdr.sh_flags;
@@ -529,6 +530,7 @@ static ELF_File * create_elf_cache(const char * file_name) {
                         sec->index = cnt;
                         sec->name_offset = shdr.sh_name;
                         sec->type = shdr.sh_type;
+                        sec->alignment = (U4_T)shdr.sh_addralign;
                         sec->offset = shdr.sh_offset;
                         sec->size = shdr.sh_size;
                         sec->flags = (U4_T)shdr.sh_flags;
