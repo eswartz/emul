@@ -67,6 +67,7 @@ public abstract class Command implements IChannel.ICommandListener {
     private boolean done;
 
     private static final SimpleDateFormat timestamp_format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+    private static int arg_size_limit = Integer.MAX_VALUE;
 
     public Command(IChannel channel, IService service, String command, Object[] args) {
         this.service = service;
@@ -119,7 +120,23 @@ public abstract class Command implements IChannel.ICommandListener {
 
     public abstract void done(Exception error, Object[] args);
 
-    public String getCommandString() {
+    private int getArgSizeLimit() {
+        if (arg_size_limit == Integer.MAX_VALUE) {
+            arg_size_limit = 100;
+            String name = "org.eclipse.tcf.core.errmsg_size_limit";
+            try {
+                String s = System.getProperty(name);
+                if (s != null) arg_size_limit = Integer.parseInt(s);
+            }
+            catch (NumberFormatException x) {
+                Protocol.log("Invalid value of system property " + name, x);
+            }
+        }
+        return arg_size_limit;
+    }
+
+    public String getCommandString(int arg_size_limit) {
+        if (arg_size_limit <= 0) arg_size_limit = getArgSizeLimit();
         StringBuffer buf = new StringBuffer();
         buf.append(service.getName());
         buf.append(' ');
@@ -128,7 +145,14 @@ public abstract class Command implements IChannel.ICommandListener {
             for (int i = 0; i < args.length; i++) {
                 buf.append(i == 0 ? " " : ", ");
                 try {
-                    buf.append(JSON.toJSON(args[i]));
+                    String s = JSON.toJSON(args[i]);
+                    if (s.length() > arg_size_limit) {
+                        buf.append(s.substring(0, arg_size_limit));
+                        buf.append("...");
+                    }
+                    else {
+                        buf.append(s);
+                    }
                 }
                 catch (IOException x) {
                     buf.append("***");
@@ -138,6 +162,10 @@ public abstract class Command implements IChannel.ICommandListener {
             }
         }
         return buf.toString();
+    }
+
+    public String getCommandString() {
+        return getCommandString(Integer.MAX_VALUE);
     }
 
     @SuppressWarnings({ "unchecked" })
@@ -221,10 +249,8 @@ public abstract class Command implements IChannel.ICommandListener {
         bf.append("TCF error report:");
         bf.append('\n');
         if (include_command_text) {
-            String cmd = getCommandString();
-            if (cmd.length() > 120) cmd = cmd.substring(0, 120) + "...";
             bf.append("Command: ");
-            bf.append(cmd);
+            bf.append(getCommandString(0));
         }
         appendErrorProps(bf, map);
         return new ErrorReport(bf.toString(), map);

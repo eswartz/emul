@@ -95,11 +95,9 @@ public class FileSystemProxy implements IFileSystem {
             if (data == null) return null;
             Map<String,Object> map = (Map<String,Object>)data;
             Number error_code = (Number)map.get(IErrorReport.ERROR_CODE);
-            String cmd = getCommandString();
-            if (cmd.length() > 72) cmd = cmd.substring(0, 72) + "...";
             Status s = new Status(error_code.intValue(),
                     "TCF command exception:" +
-                    "\nCommand: " + cmd +
+                    "\nCommand: " + getCommandString(0) +
                     "\nException: " + toErrorString(data) +
                     "\nError code: " + error_code, map);
             Object caused_by = map.get(IErrorReport.ERROR_CAUSED_BY);
