@@ -33,9 +33,11 @@
 
 #include <config.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include <assert.h>
 #include <framework/exceptions.h>
+#include <framework/myalloc.h>
 #include <framework/events.h>
 #include <framework/trace.h>
 
@@ -76,4 +78,23 @@ void exception(int error) {
 
 void str_exception(int error, const char * msg) {
     exception(set_errno(error, msg));
+}
+
+void str_fmt_exception(int error, const char * fmt, ...) {
+    va_list vaList;
+    char * buf = NULL;
+    size_t len = 100;
+    int n;
+
+    while (1) {
+        buf = (char *)loc_realloc(buf, len);
+        va_start(vaList, fmt);
+        n = vsnprintf(buf, len, fmt, vaList);
+        va_end(vaList);
+        if (n < (int)len) break;
+        len = n + 1;
+    }
+    error = set_errno(error, buf);
+    loc_free(buf);
+    exception(error);
 }
