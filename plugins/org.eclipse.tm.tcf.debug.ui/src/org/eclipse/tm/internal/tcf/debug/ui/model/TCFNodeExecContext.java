@@ -51,6 +51,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     private final TCFChildrenRegisters children_regs;
     private final TCFChildrenExpressions children_exps;
     private final TCFChildrenHoverExpressions children_hover_exps;
+    private final TCFChildrenLogExpressions children_log_exps;
     private final TCFChildrenModules children_modules;
 
     private final TCFData<IMemory.MemoryContext> mem_context;
@@ -215,6 +216,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         children_regs = new TCFChildrenRegisters(this);
         children_exps = new TCFChildrenExpressions(this);
         children_hover_exps = new TCFChildrenHoverExpressions(this);
+        children_log_exps = new TCFChildrenLogExpressions(this);
         children_modules = new TCFChildrenModules(this);
         mem_context = new TCFData<IMemory.MemoryContext>(channel) {
             @Override
@@ -485,6 +487,10 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
 
     String getHoverExpression() {
         return hover_expression;
+    }
+
+    public TCFChildrenLogExpressions getLogExpressionCache() {
+        return children_log_exps;
     }
 
     void setRunContext(IRunControl.RunControlContext ctx) {
@@ -1225,6 +1231,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         children_regs.onSuspended();
         children_exps.onSuspended();
         children_hover_exps.onSuspended();
+        children_log_exps.onSuspended();
         for (TCFNodeSymbol s : symbols.values()) s.onExeStateChange();
         if (model.getActiveAction(id) == null) {
             boolean update_now = pc != null || resumed_by_action;
@@ -1288,6 +1295,8 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         children_exec.onMemoryChanged(addr, size);
         children_stack.onMemoryChanged();
         children_exps.onMemoryChanged();
+        children_hover_exps.onMemoryChanged();
+        children_log_exps.onMemoryChanged();
         postContentChangedDelta();
     }
 
@@ -1314,6 +1323,8 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         address.reset();
         children_stack.onRegisterValueChanged();
         children_exps.onRegisterValueChanged();
+        children_hover_exps.onRegisterValueChanged();
+        children_log_exps.onRegisterValueChanged();
         postContentChangedDelta();
     }
 

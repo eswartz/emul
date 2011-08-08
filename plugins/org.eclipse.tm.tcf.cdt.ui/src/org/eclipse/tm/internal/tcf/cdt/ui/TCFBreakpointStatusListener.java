@@ -182,7 +182,7 @@ class TCFBreakpointStatusListener {
                             for (IBreakpoint bp : bps) {
                                 IMarker marker = bp.getMarker();
                                 if (marker == null) continue;
-                                if (id.equals(bp_model.getBreakpointID(bp))) {
+                                if (id.equals(TCFBreakpointsModel.getBreakpointID(bp))) {
                                     if (create) {
                                         int cnt = marker.getAttribute(ATTR_REFCOUNT, 0) + 1;
                                         markerAttrs.put(ATTR_REFCOUNT, cnt);

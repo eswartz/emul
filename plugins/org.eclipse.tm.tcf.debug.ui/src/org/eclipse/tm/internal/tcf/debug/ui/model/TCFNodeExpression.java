@@ -1213,7 +1213,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         return name;
     }
 
-    String getDetailText(Runnable done) {
+    public String getDetailText(Runnable done) {
         if (!expression.validate(done)) return null;
         if (!value.validate(done)) return null;
         StringBuffer bf = new StringBuffer();
@@ -1249,7 +1249,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         return bf.toString();
     }
 
-    String getValueText(Runnable done) {
+    public String getValueText(Runnable done) {
         if (!expression.validate(done)) return null;
         if (!value.validate(done)) return null;
         StringBuffer bf = new StringBuffer();
@@ -1261,6 +1261,12 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                 if (!appendValueText(bf, 1, v.getTypeID(),
                         data, 0, data.length, big_endian, done)) return null;
             }
+        }
+        if (bf.length() == 0 && expression.getError() != null) {
+            bf.append(TCFModel.getErrorMessage(expression.getError(), false));
+        }
+        if (bf.length() == 0 && value.getError() != null) {
+            bf.append(TCFModel.getErrorMessage(value.getError(), false));
         }
         return bf.toString();
     }

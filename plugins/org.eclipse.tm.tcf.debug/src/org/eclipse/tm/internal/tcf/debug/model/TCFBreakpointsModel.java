@@ -74,7 +74,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
      * @return TCF ID of the breakpoint.
      * @throws CoreException
      */
-    public String getBreakpointID(IBreakpoint bp) throws CoreException {
+    public static String getBreakpointID(IBreakpoint bp) throws CoreException {
         IMarker marker = bp.getMarker();
         String id = (String)marker.getAttributes().get(ITCFConstants.ID_TCF_DEBUG_MODEL + '.' + IBreakpoints.PROP_ID);
         if (id != null) return id;
@@ -217,7 +217,6 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
         IBreakpoints.DoneCommand done;
         Map<String,Object> tcf_attrs;
 
-        @SuppressWarnings("unchecked")
         BreakpointUpdate(IBreakpoint breakpoint) throws CoreException, IOException {
             this.breakpoint = breakpoint;
             marker_attrs = new HashMap<String,Object>(breakpoint.getMarker().getAttributes());
@@ -283,7 +282,6 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
         }
     }
 
-    @SuppressWarnings("unchecked")
     private Set<String> calcMarkerDeltaKeys(IMarker marker, IMarkerDelta delta) throws CoreException {
         Set<String> keys = new HashSet<String>();
         if (delta == null) return keys;

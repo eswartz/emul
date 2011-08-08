@@ -28,6 +28,7 @@ public class Activator extends AbstractUIPlugin {
     public static final String PLUGIN_ID = "org.eclipse.tm.tcf.cdt.ui";
     private static Activator plugin;
     private static TCFBreakpointStatusListener bp_status_listener;
+    private static TCFBreakpointActions bp_actions;
 
     public void start(BundleContext context) throws Exception {
         super.start(context);
@@ -36,6 +37,7 @@ public class Activator extends AbstractUIPlugin {
         Protocol.invokeLater(new Runnable() {
             public void run() {
                 if (bp_status_listener == null) bp_status_listener = new TCFBreakpointStatusListener();
+                if (bp_actions == null) bp_actions = new TCFBreakpointActions();
             }
         });
     }
@@ -46,6 +48,10 @@ public class Activator extends AbstractUIPlugin {
                 if (bp_status_listener != null) {
                     bp_status_listener.dispose();
                     bp_status_listener = null;
+                }
+                if (bp_actions != null) {
+                    bp_actions.dispose();
+                    bp_actions = null;
                 }
             }
         });
