@@ -916,11 +916,19 @@ static void create_search_index(DWARFCache * cache, ELF_Section * section) {
         ref_pos = dio_GetPos();
         fde_end = ref_pos + fde_length;
         if (fde_end > rules.section->size) {
-            char msg[256];
-            snprintf(msg, sizeof(msg),
-                "Invalid length 0x%" PRIX64
-                " in FDE at 0x%" PRIX64, fde_length, fde_pos);
-            str_exception(ERR_INV_DWARF, msg);
+            U4_T alignment = section->alignment;
+            if (alignment > 1 && fde_pos % alignment != 0) {
+                /* Workaround for sections with invalid alignment */
+                dio_Skip(fde_pos + alignment - fde_pos % alignment - dio_GetPos());
+                continue;
+            }
+            else {
+                char msg[256];
+                snprintf(msg, sizeof(msg),
+                    "Invalid length 0x%" PRIX64
+                    " in FDE at 0x%" PRIX64, fde_length, fde_pos);
+                str_exception(ERR_INV_DWARF, msg);
+            }
         }
         cie_ref = fde_dwarf64 ? dio_ReadU8() : dio_ReadU4();
         if (rules.eh_frame) fde_flag = cie_ref != 0;
