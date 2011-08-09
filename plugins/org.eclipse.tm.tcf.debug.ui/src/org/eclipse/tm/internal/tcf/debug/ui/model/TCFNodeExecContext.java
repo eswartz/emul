@@ -1042,7 +1042,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
             }
         }
         last_image = ImageCache.getImageDescriptor(image_name);
-        if (suspended_by_bp) last_image = ImageCache.addOverlay(last_image, ImageCache.IMG_BREAKPOINT_ENABLED);
+        if (suspended_by_bp) last_image = ImageCache.addOverlay(last_image, ImageCache.IMG_BREAKPOINT_OVERLAY);
         result.setImageDescriptor(last_image, 0);
         result.setLabel(last_label = label.toString(), 0);
         return true;

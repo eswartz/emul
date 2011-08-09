@@ -64,7 +64,8 @@ public class ImageCache {
         IMG_BREAKPOINT_INSTALLED = "icons/ovr16/installed_ovr.gif",
         IMG_BREAKPOINT_CONDITIONAL = "icons/ovr16/conditional_ovr.gif",
         IMG_BREAKPOINT_WARNING = "icons/ovr16/warning_ovr.gif",
-        IMG_BREAKPOINT_ERROR = "icons/ovr16/error_ovr.gif";
+        IMG_BREAKPOINT_ERROR = "icons/ovr16/error_ovr.gif",
+        IMG_BREAKPOINT_OVERLAY = "icons/brkp_ovr.gif";
 
     private static final Map<String,ImageDescriptor> desc_cache = new HashMap<String,ImageDescriptor>();
     private static final Map<ImageDescriptor,Image> image_cache = new HashMap<ImageDescriptor,Image>();
