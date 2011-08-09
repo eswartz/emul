@@ -84,6 +84,7 @@ public class Messages extends NLS {
 	public static String NodePropertiesLabelProvider_services_remote;
 
 	public static String NewTargetWizard_windowTitle;
+	public static String NewTargetWizard_error_savePeer;
 
 	public static String NewTargetWizardPage_title;
 	public static String NewTargetWizardPage_TransportTypeControl_label;
@@ -91,4 +92,6 @@ public class Messages extends NLS {
 	public static String NewTargetWizardPage_AgentPortControl_label;
 	public static String NewTargetWizardPage_PeerIdControl_label;
 	public static String NewTargetWizardPage_PeerNameControl_label;
+
+	public static String NewTargetPersistenceManager_error_noRootLocation;
 }

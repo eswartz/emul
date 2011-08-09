@@ -9,20 +9,21 @@
  *******************************************************************************/
 package org.eclipse.tm.te.tcf.ui.internal.wizards;
 
+import java.io.IOException;
 import java.util.Map;
 
+import org.eclipse.jface.dialogs.IMessageProvider;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.wizard.IWizardPage;
-import org.eclipse.tm.tcf.protocol.IChannel;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.Protocol;
-import org.eclipse.tm.te.tcf.core.Tcf;
-import org.eclipse.tm.te.tcf.core.interfaces.IChannelManager;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.ILocatorModel;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel;
 import org.eclipse.tm.te.tcf.locator.interfaces.services.ILocatorModelLookupService;
+import org.eclipse.tm.te.tcf.locator.interfaces.services.ILocatorModelRefreshService;
 import org.eclipse.tm.te.tcf.ui.internal.model.Model;
 import org.eclipse.tm.te.tcf.ui.internal.nls.Messages;
 import org.eclipse.tm.te.tcf.ui.internal.wizards.pages.NewTargetWizardPage;
@@ -66,19 +67,24 @@ public class NewTargetWizard extends AbstractWizard implements INewWizard {
 			// Trigger the saving of the widget history
 			((NewTargetWizardPage)page).saveWidgetValues();
 			// Get the peer attributes map from the page
-			Map<String, String> peerAttributes = ((NewTargetWizardPage)page).getPeerAttributes();
+			final Map<String, String> peerAttributes = ((NewTargetWizardPage)page).getPeerAttributes();
 			if (peerAttributes != null) {
-				// Try to connect to the peer
-				IChannel channel = null;
 				try {
-					Tcf.getChannelManager().openChannel(peerAttributes, new IChannelManager.DoneOpenChannel() {
-						public void doneOpenChannel(Throwable error, IChannel channel) {
-							// We ignore the error here, because we don't present it to the user
-							if (channel != null && channel.getRemotePeer() != null) {
-								IPeer peer = channel.getRemotePeer();
-								ILocatorModel model = Model.getModel();
-								if (model != null) {
-									final IPeerModel peerNode = model.getService(ILocatorModelLookupService.class).lkupPeerModelById(peer.getID());
+					// Save the new peer
+					NewTargetPersistenceManager.getInstance().write(peerAttributes);
+					// Get the locator model
+					final ILocatorModel model = Model.getModel();
+					if (model != null) {
+						// Trigger a refresh of the model to read in the newly created static peer
+						final ILocatorModelRefreshService service = model.getService(ILocatorModelRefreshService.class);
+						if (service != null) {
+							Protocol.invokeLater(new Runnable() {
+								public void run() {
+									// Refresh the model now (must be executed within the TCF dispatch thread)
+									service.refresh();
+
+									// Get the peer model node from the model
+									final IPeerModel peerNode = model.getService(ILocatorModelLookupService.class).lkupPeerModelById(peerAttributes.get(IPeer.ATTR_ID));
 									if (peerNode != null && PlatformUI.isWorkbenchRunning()) {
 										PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
 											public void run() {
@@ -92,26 +98,13 @@ public class NewTargetWizard extends AbstractWizard implements INewWizard {
 										});
 									}
 								}
-							}
-
-							if (channel != null) channel.close();
-						}
-					});
-				} catch (Exception e) {
-				} finally {
-					// Close the channel again
-					if (channel != null) {
-						final IChannel finChannel = channel;
-						if (Protocol.isDispatchThread()) {
-							finChannel.close();
-						} else {
-							Protocol.invokeAndWait(new Runnable() {
-								public void run() {
-									finChannel.close();
-								}
 							});
 						}
 					}
+				} catch (IOException e) {
+					((NewTargetWizardPage)page).setMessage(NLS.bind(Messages.NewTargetWizard_error_savePeer, e.getLocalizedMessage()), IMessageProvider.ERROR);
+					getContainer().updateMessage();
+					return false;
 				}
 			}
 		}
