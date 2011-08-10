@@ -107,6 +107,7 @@ public class PropertiesFilePersistenceDelegate extends AbstractPersistenceDelega
 			writer.newLine();
 
 			for (String key : childKeys) {
+				writer.write('\t');
 				writer.write(key);
 				writer.write(" = "); //$NON-NLS-1$
 
