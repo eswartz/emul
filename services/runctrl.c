@@ -828,14 +828,16 @@ static void send_event_context_removed(Context * ctx) {
 }
 
 static void send_event_context_suspended(void) {
-    LINK p;
-    Context * ctx = NULL;
+    LINK p0; /* List of contexts intercepted by breakpoint or exception */
+    LINK p1; /* List of all other intercepted contexts */
     LINK * l = context_root.next;
-    list_init(&p);
+    list_init(&p0);
+    list_init(&p1);
     while (l != &context_root) {
         Context * x = ctxl2ctxp(l);
         l = l->next;
         if (x->pending_intercept && x->stopped) {
+            LINK * n = &p1;
             ContextExtensionRC * e = EXT(x);
             assert(!x->exited);
             assert(!e->intercepted);
@@ -843,41 +845,42 @@ static void send_event_context_suspended(void) {
             cancel_step_mode(x);
             notify_context_intercepted(x);
             x->pending_intercept = 0;
-            list_add_last(&e->link, &p);
             if (get_context_breakpoint_ids(x) != NULL) e->intercepted_by_bp++;
-            if (ctx != NULL) {
-                if (ctx->stopped_by_exception) continue;
-                if (!x->stopped_by_exception) {
-                    if (EXT(ctx)->intercepted_by_bp == 1) continue;
-                }
-            }
-            ctx = x;
+            if (e->intercepted_by_bp || x->stopped_by_exception) n = &p0;
+            list_add_last(&e->link, n);
         }
     }
 
-    if (!list_is_empty(&p)) {
+    while (!list_is_empty(&p0) || !list_is_empty(&p1)) {
         OutputStream * out = &broadcast_group->out;
+        LINK * n = !list_is_empty(&p0) ? p0.next : p1.next;
+        Context * ctx = link2ctx(n);
+        int container = list_is_empty(&p0) && !list_is_empty(&p1);
+
+        list_remove(n);
 
         write_stringz(out, "E");
         write_stringz(out, RUN_CONTROL);
-        write_stringz(out, p.next == p.prev ? "contextSuspended" : "containerSuspended");
+        write_stringz(out, container ? "containerSuspended" : "contextSuspended");
 
         json_write_string(out, ctx->id);
         write_stream(out, 0);
 
         write_context_state(out, ctx);
 
-        if (p.next != p.prev) {
-            l = p.next;
+        if (container) {
             write_stream(out, '[');
-            while (l != &p) {
+            json_write_string(out, ctx->id);
+            l = p1.next;
+            while (l != &p1) {
                 Context * x = link2ctx(l);
-                if (l != p.next) write_stream(out, ',');
+                write_stream(out, ',');
                 json_write_string(out, x->id);
                 l = l->next;
             }
             write_stream(out, ']');
             write_stream(out, 0);
+            list_init(&p1);
         }
 
         write_stream(out, MARKER_EOM);
