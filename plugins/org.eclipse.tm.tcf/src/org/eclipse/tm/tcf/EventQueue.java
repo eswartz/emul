@@ -89,7 +89,7 @@ class EventQueue implements IEventQueue, Runnable {
             try {
                 Runnable r = null;
                 synchronized (this) {
-                    while (queue.isEmpty()) {
+                    while (queue.size() == 0) {
                         if (shutdown) return;
                         waiting = true;
                         wait();

@@ -305,7 +305,7 @@ public abstract class AbstractChannel implements IChannel {
                         Message msg = null;
                         boolean last = false;
                         synchronized (out_queue) {
-                            while (out_queue.isEmpty()) out_queue.wait();
+                            while (out_queue.size() == 0) out_queue.wait();
                             msg = out_queue.removeFirst();
                             if (msg == null) break;
                             last = out_queue.isEmpty();

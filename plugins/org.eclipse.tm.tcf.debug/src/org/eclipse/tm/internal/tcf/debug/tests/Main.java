@@ -41,7 +41,7 @@ public class Main {
                 while (true) {
                     Runnable r = null;
                     synchronized (this) {
-                        while (queue.isEmpty()) wait();
+                        while (queue.size() == 0) wait();
                         r = queue.removeFirst();
                     }
                     r.run();
