@@ -343,7 +343,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 TCFNode node = getNode(id);
                 action_results.remove(id);
                 if (active_actions.get(id) != null) action_cnt++;
-                if (node instanceof TCFNodeExecContext) {
+                if (!id.equals(context) && node instanceof TCFNodeExecContext) {
                     ((TCFNodeExecContext)node).onContainerSuspended();
                 }
                 onMemoryChanged(id);
@@ -413,8 +413,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             TCFNode node = getNode(id);
             action_results.remove(id);
             if (node instanceof TCFNodeExecContext) {
-                TCFNodeExecContext exe = (TCFNodeExecContext)node;
-                exe.onContextSuspended(pc, reason, params);
+                ((TCFNodeExecContext)node).onContextSuspended(pc, reason, params);
             }
             launch_node.onAnyContextSuspendedOrChanged();
             if (active_actions.get(id) == null) {

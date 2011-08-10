@@ -16,18 +16,20 @@ import java.util.Map;
 
 import org.eclipse.cdt.debug.core.CDebugCorePlugin;
 import org.eclipse.cdt.debug.core.breakpointactions.BreakpointActionManager;
+import org.eclipse.cdt.debug.core.breakpointactions.IBreakpointAction;
 import org.eclipse.cdt.debug.core.breakpointactions.ILogActionEnabler;
 import org.eclipse.cdt.debug.core.breakpointactions.IResumeActionEnabler;
 import org.eclipse.core.resources.IMarker;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.model.IBreakpoint;
+import org.eclipse.tm.internal.tcf.debug.actions.TCFAction;
 import org.eclipse.tm.internal.tcf.debug.model.TCFBreakpointsModel;
 import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
@@ -45,67 +47,92 @@ import org.eclipse.tm.tcf.util.TCFTask;
 
 public class TCFBreakpointActions {
     
-    private class BreakpointActionAdapter implements IAdaptable, ILogActionEnabler, IResumeActionEnabler {
+    private class BreakpointActionAdapter extends TCFAction implements IAdaptable, ILogActionEnabler, IResumeActionEnabler {
         
-        private final Job job;
         private final TCFNodeExecContext node;
+        private final Job job;
         
-        private boolean resumed;
+        private boolean dont_resume;
         
         BreakpointActionAdapter(final IBreakpoint breakpoint, TCFNodeExecContext node) {
+            super(node.getModel().getLaunch(), node.getID());
             this.node = node;
             job = new Job("Breakpoint actions") { //$NON-NLS-1$
                 @Override
                 protected IStatus run(IProgressMonitor monitor) {
-                    BreakpointActionManager manager = CDebugCorePlugin.getDefault().getBreakpointActionManager();
-                    manager.executeActions(breakpoint, BreakpointActionAdapter.this);
-                    return Status.OK_STATUS;
+                    IStatus status = Status.OK_STATUS;
+                    try {
+                        IMarker marker = breakpoint.getMarker();
+                        String names = marker.getAttribute(BreakpointActionManager.BREAKPOINT_ACTION_ATTRIBUTE, "");
+                        final String[] actions = names.split(","); //$NON-NLS-1$
+                        for (int i = 0; i < actions.length && !monitor.isCanceled(); i++) {
+                            String name = actions[i];
+                            IBreakpointAction action = bp_action_manager.findBreakpointAction(name);
+                            if (action != null) {
+                                monitor.setTaskName(action.getSummary());
+                                status = action.execute(breakpoint, BreakpointActionAdapter.this, monitor);
+                                if (status.getCode() != IStatus.OK) break;
+                            }
+                            monitor.worked(1);
+                        }
+                    } 
+                    catch (Exception e) {
+                        status = new Status(IStatus.ERROR, Activator.PLUGIN_ID, IStatus.ERROR,
+                                "Cannot execute breakpoint action", e);
+                    }
+                    Protocol.invokeAndWait(new Runnable() {
+                        public void run() {
+                            BreakpointActionAdapter.this.done();
+                        }
+                    });
+                    if (!monitor.isCanceled() && status.getCode() != IStatus.OK) Activator.log(status);
+                    return status;
                 };
             };
-            job.setSystem(true);
-            job.schedule();
         }
         
         @SuppressWarnings("rawtypes")
         public Object getAdapter(Class adapter) {
-            if (adapter.equals(ILogActionEnabler.class)) {
-                return this;
-            }
-            if (adapter.equals(IResumeActionEnabler.class)) {
-                return this;
-            }
-            return null;
+            if (adapter.isInstance(this)) return this;
+            return Platform.getAdapterManager().loadAdapter(this, adapter.getName());
         }
 
         public void resume() throws Exception {
-            Runnable r = new Runnable() {
+            new TCFTask<Boolean>(node.getChannel()) {
                 public void run() {
-                    if (resumed) return;
-                    if (node.isDisposed()) return;
+                    if (aborted || dont_resume || node.isDisposed()) {
+                        done(false);
+                        return;
+                    }
                     TCFDataCache<TCFContextState> state_cache = node.getState();
                     if (!state_cache.validate(this)) return;
                     TCFContextState state_data = state_cache.getData();
-                    if (state_data == null) return;
-                    if (!state_data.is_suspended) return;
+                    if (state_data == null || !state_data.is_suspended) {
+                        done(false);
+                        return;
+                    }
                     TCFDataCache<IRunControl.RunControlContext> ctx_cache = node.getRunContext();
                     if (!ctx_cache.validate(this)) return;
                     IRunControl.RunControlContext ctx_data = ctx_cache.getData();
-                    if (ctx_data == null) return;
-                    resumed = true;
+                    if (ctx_data == null) {
+                        done(false);
+                        return;
+                    }
+                    dont_resume = true;
                     ctx_data.resume(IRunControl.RM_RESUME, 1, new IRunControl.DoneCommand() {
                         public void doneCommand(IToken token, Exception error) {
-                            // TODO: need to report resume action error
+                            if (error != null && !aborted) error(error);
+                            else done(true);
                         }
                     });
                 }
-            };
-            Protocol.invokeLater(r);
+            }.get();
         }
 
         public String evaluateExpression(final String expression) throws Exception {
             return new TCFTask<String>(node.getChannel()) {
                 public void run() {
-                    if (node.isDisposed()) {
+                    if (aborted || node.isDisposed()) {
                         done("");
                         return;
                     }
@@ -117,6 +144,19 @@ public class TCFBreakpointActions {
                     if (s != null) done(expression + " = " + s);
                 }
             }.get();
+        }
+
+        public void run() {
+            assert !aborted;
+            // Post delta to update commands UI state.
+            node.postStateChangedDelta();
+            job.schedule();
+        }
+
+        @Override
+        public void abort() {
+            super.abort();
+            job.cancel();
         }
     }
     
@@ -144,48 +184,34 @@ public class TCFBreakpointActions {
         public void contextRemoved(String[] context_ids) {
             for (String id : context_ids) {
                 BreakpointActionAdapter a = active_actions.remove(id);
-                if (a != null) a.resumed = true;
+                if (a != null) a.dont_resume = true;
             }
         }
 
-        public void contextSuspended(String context, String pc, String reason,
-                Map<String, Object> params) {
-            final TCFNodeExecContext node = (TCFNodeExecContext)model.getNode(context);
+        public void contextSuspended(String context, String pc, String reason, Map<String,Object> params) {
+            if (params == null) return;
+            Object ids = params.get(IRunControl.STATE_BREAKPOINT_IDS);
+            if (ids == null) return;
+            TCFNodeExecContext node = (TCFNodeExecContext)model.getNode(context);
             if (node == null) return;
-            Runnable r = new Runnable() {
-                public void run() {
-                    TCFDataCache<TCFContextState> state_cache = node.getState();
-                    if (!state_cache.validate(this)) return;
-                    TCFContextState state_data = state_cache.getData();
-                    if (state_data == null) return;
-                    if (state_data.suspend_params == null) return;
-                    Object ids = state_data.suspend_params.get(IRunControl.STATE_BREAKPOINT_IDS);
-                    if (ids == null) return;
-                    @SuppressWarnings("unchecked")
-                    Collection<String> c = (Collection<String>)ids;
-                    for (String bp_id : c) {
-                        IBreakpoint breakpoint = findPlatformBreakpoint(bp_id);
-                        if (breakpoint == null) continue;
-                        active_actions.put(node.getID(), new BreakpointActionAdapter(breakpoint, node));
-                    }
-                }
-            };
-            Protocol.invokeLater(r);
+            @SuppressWarnings("unchecked")
+            Collection<String> c = (Collection<String>)ids;
+            for (String bp_id : c) {
+                IBreakpoint bp = bp_model.getBreakpoint(bp_id);
+                if (!bp_action_manager.breakpointHasActions(bp)) continue;
+                active_actions.put(node.getID(), new BreakpointActionAdapter(bp, node));
+            }
         }
 
         public void contextResumed(String context) {
             BreakpointActionAdapter a = active_actions.remove(context);
-            if (a != null) a.resumed = true;
+            if (a != null) a.dont_resume = true;
         }
 
         public void containerSuspended(String context, String pc,
                 String reason, Map<String, Object> params,
                 String[] suspended_ids) {
             contextSuspended(context, pc, reason, params);
-            for (String id : suspended_ids) {
-                if (id.equals(context)) continue;
-                contextSuspended(id, null, null, null);
-            }
         }
 
         public void containerResumed(String[] context_ids) {
@@ -202,7 +228,7 @@ public class TCFBreakpointActions {
 
         public void onConnected(TCFLaunch launch, TCFModel model) {
             assert rc_listeners.get(launch) == null;
-            if (launch.getBreakpointsStatus() != null) new RunControlListener(model);
+            new RunControlListener(model);
         }
 
         public void onDisconnected(TCFLaunch launch, TCFModel model) {
@@ -211,20 +237,24 @@ public class TCFBreakpointActions {
         }
     };
     
+    private final TCFBreakpointsModel bp_model;
     private final TCFModelManager model_manager;
+    private final BreakpointActionManager bp_action_manager;
     private final Map<TCFLaunch,RunControlListener> rc_listeners;;
     private final HashMap<String,BreakpointActionAdapter> active_actions = new HashMap<String,BreakpointActionAdapter>();
 
     TCFBreakpointActions() {
+        bp_action_manager = CDebugCorePlugin.getDefault().getBreakpointActionManager();
+        bp_model = TCFBreakpointsModel.getBreakpointsModel();
         model_manager = TCFModelManager.getModelManager();
         model_manager.addListener(launch_listener);
         rc_listeners = new HashMap<TCFLaunch,RunControlListener>();
         // handle already connected launches
         for (ILaunch launch : DebugPlugin.getDefault().getLaunchManager().getLaunches()) {
             if (launch instanceof TCFLaunch) {
-                TCFLaunch tcfLaunch = (TCFLaunch) launch;
-                if (!tcfLaunch.isDisconnected() && !tcfLaunch.isConnecting() && tcfLaunch.getBreakpointsStatus() != null) {
-                    launch_listener.onConnected(tcfLaunch, model_manager.getModel(tcfLaunch));
+                TCFLaunch tcf_launch = (TCFLaunch)launch;
+                if (!tcf_launch.isDisconnected() && !tcf_launch.isConnecting()) {
+                    launch_listener.onConnected(tcf_launch, model_manager.getModel(tcf_launch));
                 }
             }
         }
@@ -234,23 +264,5 @@ public class TCFBreakpointActions {
         model_manager.removeListener(launch_listener);
         for (RunControlListener l : rc_listeners.values()) l.dispose();
         rc_listeners.clear();
-    }
-
-    private IBreakpoint findPlatformBreakpoint(String id) {
-        IBreakpoint[] bps = DebugPlugin.getDefault().getBreakpointManager().getBreakpoints();
-        for (IBreakpoint bp : bps) {
-            try {
-                if (id.equals(TCFBreakpointsModel.getBreakpointID(bp))) {
-                    IMarker marker = bp.getMarker();
-                    if (marker == null) return null;
-                    String s = marker.getAttribute(BreakpointActionManager.BREAKPOINT_ACTION_ATTRIBUTE, "");
-                    if (s.length() == 0) return null;
-                    return bp;
-                }
-            }
-            catch (CoreException x) {
-            }
-        }
-        return null;
     }
 }

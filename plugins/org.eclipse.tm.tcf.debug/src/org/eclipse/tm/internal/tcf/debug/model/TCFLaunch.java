@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -1200,7 +1201,15 @@ public class TCFLaunch extends Launch {
         String id = action.getContextID();
         LinkedList<TCFAction> list = context_action_queue.get(id);
         if (list == null) context_action_queue.put(id, list = new LinkedList<TCFAction>());
-        list.add(action);
+        int priority = action.getPriority();
+        for (ListIterator<TCFAction> i = list.listIterator();;) {
+            if (i.hasNext()) {
+                if (priority <= i.next().getPriority()) continue;
+                i.previous();
+            }
+            i.add(action);
+            break;
+        }
         startAction(id);
     }
 

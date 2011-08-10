@@ -47,6 +47,10 @@ public abstract class TCFAction implements Runnable {
         return ctx_id;
     }
 
+    public int getPriority() {
+        return 0;
+    }
+
     public void setActionResult(String id, String result) {
         launch.setContextActionResult(id, result);
     }

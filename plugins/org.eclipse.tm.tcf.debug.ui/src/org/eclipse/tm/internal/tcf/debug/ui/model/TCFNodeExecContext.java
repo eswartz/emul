@@ -1117,7 +1117,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         }
     }
 
-    private void postStateChangedDelta() {
+    public void postStateChangedDelta() {
         for (TCFModelProxy p : model.getModelProxies()) {
             if (IDebugUIConstants.ID_DEBUG_VIEW.equals(p.getPresentationContext().getId())) {
                 p.addDelta(this, IModelDelta.STATE);
