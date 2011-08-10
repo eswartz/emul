@@ -14,5 +14,4 @@
   <version>1.0.0.qualifier</version>
   <artifactId>org.eclipse.tm.te.core.persistence</artifactId>
   <packaging>eclipse-plugin</packaging>
-  <name>Target Explorer, Persistence Core plugin</name>
 </project>

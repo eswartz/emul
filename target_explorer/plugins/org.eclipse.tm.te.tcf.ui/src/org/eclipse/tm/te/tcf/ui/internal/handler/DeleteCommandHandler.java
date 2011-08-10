@@ -45,7 +45,7 @@ public class DeleteCommandHandler extends AbstractHandler {
 					} catch (IOException e) {
 						// Ignore it for now, we will have to pass it to the status handler later
 					}
-
+					
 					// Get the locator model
 					final ILocatorModel model = Model.getModel();
 					if (model != null) {
@@ -60,7 +60,7 @@ public class DeleteCommandHandler extends AbstractHandler {
 							});
 						}
 					}
-
+					
 				}
 			}
 		}
