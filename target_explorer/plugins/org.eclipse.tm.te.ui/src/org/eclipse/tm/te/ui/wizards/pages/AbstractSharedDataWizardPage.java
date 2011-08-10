@@ -55,4 +55,10 @@ public abstract class AbstractSharedDataWizardPage extends AbstractValidatableWi
 	 */
 	public void initializeData(IPropertiesContainer data) {
 	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.tm.te.ui.wizards.interfaces.ISharedDataWizardPage#removeData(org.eclipse.tm.te.core.interfaces.nodes.IPropertiesContainer)
+	 */
+	public void removeData(IPropertiesContainer data) {
+	}
 }

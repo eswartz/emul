@@ -115,6 +115,16 @@ public class BaseWizardConfigurationPanelControl extends BaseDialogPageControl {
 	}
 
 	/**
+	 * Returns a unsorted list of all registered wizard configuration
+	 * panel id's.
+	 *
+	 * @return A list of registered wizard configuration panel id's.
+	 */
+	public String[] getConfigurationPanelIds() {
+		return configurationPanels.keySet().toArray(new String[configurationPanels.keySet().size()]);
+	}
+
+	/**
 	 * Returns the wizard configuration panel instance registered for the given configuration panel key.
 	 *
 	 * @param key The key to get the wizard configuration panel for. Must not be <code>null</code>!

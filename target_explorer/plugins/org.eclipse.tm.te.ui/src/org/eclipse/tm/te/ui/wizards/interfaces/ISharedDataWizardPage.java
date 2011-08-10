@@ -12,15 +12,16 @@ package org.eclipse.tm.te.ui.wizards.interfaces;
 import org.eclipse.tm.te.core.interfaces.nodes.IPropertiesContainer;
 
 /**
- * Target Explorer: Public interface for wizard pages sharing a parent data object.
+ * Target Explorer: Public interface for wizard or dialog pages or wizard page
+ *                  widgets sharing a common data object.
  */
 public interface ISharedDataWizardPage {
 
 	/**
 	 * Initialize the page widgets based of the data from the given properties container.
 	 * <p>
-	 * This method may called multiple times during the lifetime of the page and the
-	 * given properties container might be even <code>null</code>.
+	 * This method may called multiple times during the lifetime of the page and
+	 * the given properties container might be even <code>null</code>.
 	 *
 	 * @param data The properties container or <code>null</code>.
 	 */
@@ -30,8 +31,8 @@ public interface ISharedDataWizardPage {
 	 * Extract the data from the page widgets and write it back to the given
 	 * properties container.
 	 * <p>
-	 * This method may called multiple times during the lifetime of the page and the
-	 * given properties container might be even <code>null</code>.
+	 * This method may called multiple times during the lifetime of the page and
+	 * the given properties container might be even <code>null</code>.
 	 *
 	 * @param data The properties container or <code>null</code>.
 	 */
@@ -48,4 +49,15 @@ public interface ISharedDataWizardPage {
 	 * @param data The properties container or <code>null</code>.
 	 */
 	public void initializeData(IPropertiesContainer data);
+
+	/**
+	 * Remove the data of the page widgets from the given properties
+	 * container.
+	 * <p>
+	 * This method may called multiple times during the lifetime of the page and the
+	 * given properties container might be even <code>null</code>.
+	 *
+	 * @param data The properties container or <code>null</code>.
+	 */
+	public void removeData(IPropertiesContainer data);
 }
