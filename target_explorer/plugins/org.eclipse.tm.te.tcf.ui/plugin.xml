@@ -115,9 +115,9 @@
       <menuContribution locationURI="popup:org.eclipse.tm.te.ui.views.TargetExplorer#Popup?after=group.delete">
          <command
                commandId="org.eclipse.ui.edit.delete"
-               disabledIcon="platform:/plugin/org.eclipse.ui/icons/full/dlcl16/remove.gif"
+               disabledIcon="platform:/plugin/org.eclipse.ui/icons/full/dtool16/delete.gif"
                helpContextId="org.eclipse.tm.te.tcf.ui.command_Delete"
-               icon="platform:/plugin/org.eclipse.ui/icons/full/elcl16/remove.gif"
+               icon="platform:/plugin/org.eclipse.ui/icons/full/etool16/delete.gif"
                id="org.eclipse.tm.te.tcf.ui.commands.delete"
                label="%command.delete.label"
                style="push"
