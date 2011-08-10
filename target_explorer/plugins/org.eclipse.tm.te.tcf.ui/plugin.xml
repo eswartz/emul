@@ -93,9 +93,9 @@
       <menuContribution locationURI="popup:org.eclipse.tm.te.ui.views.TargetExplorer#Popup?after=group.refresh">
          <command
                commandId="org.eclipse.tm.te.tcf.ui.command.refresh"
-               disabledIcon="platform:/plugin/org.eclipse.ui.ide/icons/full/dlcl16/refresh_nav.gif"
+               disabledIcon="platform:/plugin/org.eclipse.ui/icons/full/dlcl16/refresh_nav.gif"
                helpContextId="org.eclipse.tm.te.tcf.ui.command_Refresh"
-               icon="platform:/plugin/org.eclipse.ui.ide/icons/full/elcl16/refresh_nav.gif"
+               icon="platform:/plugin/org.eclipse.ui/icons/full/elcl16/refresh_nav.gif"
                id="org.eclipse.tm.te.tcf.ui.commands.refresh"
                label="%command.refresh.label"
                style="push"
@@ -110,6 +110,30 @@
             </visibleWhen>
          </command>
          <separator name="operationsGroupMarker" visible="true"/>
+      </menuContribution>
+
+      <menuContribution locationURI="popup:org.eclipse.tm.te.ui.views.TargetExplorer#Popup?after=group.delete">
+         <command
+               commandId="org.eclipse.ui.edit.delete"
+               disabledIcon="platform:/plugin/org.eclipse.ui/icons/full/dlcl16/remove.gif"
+               helpContextId="org.eclipse.tm.te.tcf.ui.command_Delete"
+               icon="platform:/plugin/org.eclipse.ui/icons/full/elcl16/remove.gif"
+               id="org.eclipse.tm.te.tcf.ui.commands.delete"
+               label="%command.delete.label"
+               style="push"
+               tooltip="%command.delete.tooltip">
+            <visibleWhen checkEnabled="false">
+               <with variable="selection">
+                  <count value="1"/>
+                  <iterate operator="and" ifEmpty="false">
+                     <and>
+                        <instanceof value="org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel"/>
+                        <test property="org.eclipse.tm.te.tcf.locator.isStaticPeer" value="true"/>
+                     </and>
+                  </iterate>
+               </with>
+            </visibleWhen>
+         </command>
       </menuContribution>
    </extension>
 
@@ -132,6 +156,11 @@
       <handler
             class="org.eclipse.tm.te.tcf.ui.internal.handler.RefreshCommandHandler"
             commandId="org.eclipse.tm.te.tcf.ui.command.refresh">
+      </handler>
+      
+      <handler
+            class="org.eclipse.tm.te.tcf.ui.internal.handler.DeleteCommandHandler"
+            commandId="org.eclipse.ui.edit.delete">
       </handler>
    </extension>
 </plugin>

@@ -24,6 +24,7 @@ import org.eclipse.tm.te.tcf.locator.interfaces.nodes.ILocatorModel;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel;
 import org.eclipse.tm.te.tcf.locator.interfaces.services.ILocatorModelLookupService;
 import org.eclipse.tm.te.tcf.locator.interfaces.services.ILocatorModelRefreshService;
+import org.eclipse.tm.te.tcf.ui.internal.PeersPersistenceManager;
 import org.eclipse.tm.te.tcf.ui.internal.model.Model;
 import org.eclipse.tm.te.tcf.ui.internal.nls.Messages;
 import org.eclipse.tm.te.tcf.ui.internal.wizards.pages.NewTargetWizardPage;
@@ -71,7 +72,7 @@ public class NewTargetWizard extends AbstractWizard implements INewWizard {
 			if (peerAttributes != null) {
 				try {
 					// Save the new peer
-					NewTargetPersistenceManager.getInstance().write(peerAttributes);
+					PeersPersistenceManager.getInstance().write(peerAttributes);
 					// Get the locator model
 					final ILocatorModel model = Model.getModel();
 					if (model != null) {

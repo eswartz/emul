@@ -15,9 +15,17 @@
             class="org.eclipse.tm.te.tcf.locator.internal.MyPropertyTester"
             id="org.eclipse.tm.te.tcf.locator.LocatorModelPropertyTester"
             namespace="org.eclipse.tm.te.tcf.locator"
-            properties="name,hasLocalService,hasRemoteService"
+            properties="name,hasLocalService,hasRemoteService,isStaticPeer"
             type="org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel">
       </propertyTester>
+   </extension>
+
+<!-- Target Explorer persistence delegate contributions -->
+   <extension point="org.eclipse.tm.te.core.persistence.delegates">
+      <delegate 
+            id="org.eclipse.tm.te.tcf.locator.persistence"
+            class="org.eclipse.tm.te.tcf.locator.internal.PeersPersistenceDelegate">
+      </delegate>
    </extension>
 
 </plugin>

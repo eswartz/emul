@@ -19,8 +19,6 @@ import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModelProperties;
 
 /**
  * Locator model property tester.
- *
- * @author uwe.stieber@windriver.com
  */
 public class MyPropertyTester extends PropertyTester {
 
@@ -79,6 +77,12 @@ public class MyPropertyTester extends PropertyTester {
 					}
 				}
 			}
+		}
+
+		if ("isStaticPeer".equals(property)) { //$NON-NLS-1$
+			String path = node.getPeer().getAttributes().get("Path"); //$NON-NLS-1$
+			boolean isStaticPeer = path != null && !"".equals(path.trim()); //$NON-NLS-1$
+			if (expectedValue instanceof Boolean) return ((Boolean)expectedValue).booleanValue() == isStaticPeer;
 		}
 
 		return false;

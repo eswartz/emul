@@ -92,6 +92,4 @@ public class Messages extends NLS {
 	public static String NewTargetWizardPage_AgentPortControl_label;
 	public static String NewTargetWizardPage_PeerIdControl_label;
 	public static String NewTargetWizardPage_PeerNameControl_label;
-
-	public static String NewTargetPersistenceManager_error_noRootLocation;
 }

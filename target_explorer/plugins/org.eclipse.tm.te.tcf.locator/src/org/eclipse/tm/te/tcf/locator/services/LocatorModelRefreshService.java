@@ -155,6 +155,9 @@ public class LocatorModelRefreshService extends AbstractLocatorModelService impl
 							Properties properties = new Properties();
 							properties.load(new FileInputStream(candidate));
 
+							// Remember the file path within the properties
+							properties.setProperty("Path", candidate.getAbsolutePath()); //$NON-NLS-1$
+
 							// Validate the name attribute. If not set, set
 							// it to the file name without the .ini extension.
 							String name = properties.getProperty(IPeer.ATTR_NAME);
