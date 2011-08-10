@@ -14,6 +14,7 @@ import java.util.Map;
 
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.dialogs.IDialogPage;
+import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.widgets.Composite;
@@ -188,6 +189,34 @@ public class BaseWizardConfigurationPanelControl extends BaseDialogPageControl {
 		if (configPanel != null && configPanel.getControl() != null) {
 			panelLayout.topControl = configPanel.getControl();
 			panel.layout();
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.tm.te.ui.controls.BaseControl#doSaveWidgetValues(org.eclipse.jface.dialogs.IDialogSettings, java.lang.String)
+	 */
+	@Override
+	public void doSaveWidgetValues(IDialogSettings settings, String idPrefix) {
+		super.doSaveWidgetValues(settings, idPrefix);
+		if (settings != null) {
+			for (String key : configurationPanels.keySet()) {
+				IWizardConfigurationPanel configPanel = getConfigurationPanel(key);
+				if (configPanel != null) configPanel.doSaveWidgetValues(settings, idPrefix);
+			}
+		}
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.tm.te.ui.controls.BaseControl#doRestoreWidgetValues(org.eclipse.jface.dialogs.IDialogSettings, java.lang.String)
+	 */
+	@Override
+	public void doRestoreWidgetValues(IDialogSettings settings, String idPrefix) {
+		super.doRestoreWidgetValues(settings, idPrefix);
+		if (settings != null) {
+			for (String key : configurationPanels.keySet()) {
+				IWizardConfigurationPanel configPanel = getConfigurationPanel(key);
+				if (configPanel != null) configPanel.doRestoreWidgetValues(settings, idPrefix);
+			}
 		}
 	}
 }
