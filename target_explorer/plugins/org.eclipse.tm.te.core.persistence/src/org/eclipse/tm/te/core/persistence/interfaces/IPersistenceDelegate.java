@@ -27,6 +27,12 @@ public interface IPersistenceDelegate extends IExecutableExtension {
 	 * If the persistence delegate implements a file less storage,
 	 * the <code>&quot;path&quot;</code> parameter might be ignored or
 	 * set to <code>null</code>.
+	 * <p>
+	 * If the persistence delegate implements a file based storage,
+	 * the persistence delegate contributor defines the exact semantic
+	 * of the <code>&quot;path&quot;</code> parameter. If and how
+	 * relative path information are processed may differ between
+	 * the delegate implementations.
 	 *
 	 * @param path The persistence storage path or <code>null</code>.
 	 * @param data The data. Must not be <code>null</code>.
@@ -42,6 +48,12 @@ public interface IPersistenceDelegate extends IExecutableExtension {
 	 * If the persistence delegate implements a file less storage,
 	 * the <code>&quot;path&quot;</code> parameter might be ignored or
 	 * set to <code>null</code>.
+	 * <p>
+	 * If the persistence delegate implements a file based storage,
+	 * the persistence delegate contributor defines the exact semantic
+	 * of the <code>&quot;path&quot;</code> parameter. If and how
+	 * relative path information are processed may differ between
+	 * the delegate implementations.
 	 *
 	 * @param path The persistence storage path or <code>null</code>.
 	 * @return The data.
@@ -49,4 +61,25 @@ public interface IPersistenceDelegate extends IExecutableExtension {
 	 * @throws IOException - if the operation fails
 	 */
 	public IPropertiesContainer read(IPath path) throws IOException;
+
+	/**
+	 * Deletes the persistence storage given by the <code>&quot;path&quot;</code>
+	 * parameter.
+	 * <p>
+	 * If the persistence delegate implements a file less storage,
+	 * the <code>&quot;path&quot;</code> parameter might be ignored or
+	 * set to <code>null</code>.
+	 * <p>
+	 * If the persistence delegate implements a file based storage,
+	 * the persistence delegate contributor defines the exact semantic
+	 * of the <code>&quot;path&quot;</code> parameter. If and how
+	 * relative path information are processed may differ between
+	 * the delegate implementations.
+	 *
+	 * @param path The persistence storage path or <code>null</code>.
+	 * @return <code>True</code> if the persistence storage is successfully deleted; <code>false</code> otherwise.
+	 *
+	 * @throws IOException - if the operation fails
+	 */
+	public boolean delete(IPath path) throws IOException;
 }
