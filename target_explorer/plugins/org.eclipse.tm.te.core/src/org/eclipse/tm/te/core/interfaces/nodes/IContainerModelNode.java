@@ -57,6 +57,14 @@ public interface IContainerModelNode extends IModelNode {
 	public boolean clear();
 
 	/**
+	 * Remove all child nodes with a special type.
+	 *
+	 * @param nodeType The node type.
+	 * @return <code>True</code> if child nodes got removed from the mode, <code>false</code> if not.
+	 */
+	public <T> boolean removeAll(Class<T> nodeType);
+
+	/**
 	 * Returns the child nodes.
 	 */
 	public IModelNode[] getChildren();
@@ -64,9 +72,10 @@ public interface IContainerModelNode extends IModelNode {
 	/**
 	 * Returns all child nodes with a special type.
 	 *
-	 * @param instanceOf The node type.
+	 * @param nodeType The node type.
+	 * @return The array of nodes or an empty list.
 	 */
-	public IModelNode[] getChildren(Class<?> instanceOf);
+	public <T> T[] getChildren(Class<T> nodeType);
 
 	/**
 	 * Returns true if node may have children.

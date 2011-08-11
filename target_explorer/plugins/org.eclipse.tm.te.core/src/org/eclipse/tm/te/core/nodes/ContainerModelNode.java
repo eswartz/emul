@@ -73,24 +73,25 @@ public class ContainerModelNode extends ModelNode implements IContainerModelNode
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.core.interfaces.nodes.IContainerModelNode#getChildren(java.lang.Class)
 	 */
-	public IModelNode[] getChildren(Class<?> instanceOf) {
+	@SuppressWarnings("unchecked")
+	public <T> T[] getChildren(Class<T> instanceOf) {
 		// Create the list that will hold the found children being
 		// a instance of the given class
-		List<IModelNode> children = new ArrayList<IModelNode>();
+		List<T> children = new ArrayList<T>();
 		try {
 			// Acquire the lock while copying the child references
 			childListLock.lock();
 			// Walk through all the children and check for the class
 			for (IModelNode child : childList) {
 				if (instanceOf.isInstance(child)) {
-					children.add(child);
+					children.add((T)child);
 				}
 			}
 		} finally {
 			// Release the look
 			childListLock.unlock();
 		}
-		return children.toArray(new IModelNode[children.size()]);
+		return (T[])children.toArray();
 	}
 
 	/* (non-Javadoc)
@@ -130,7 +131,7 @@ public class ContainerModelNode extends ModelNode implements IContainerModelNode
 	}
 
 	/* (non-Javadoc)
-	 * @see com.windriver.ide.target.api.model.IContainerModelNode#remove(com.windriver.ide.target.api.model.IModelNode)
+	 * @see org.eclipse.tm.te.core.interfaces.nodes.IContainerModelNode#remove(org.eclipse.tm.te.core.interfaces.nodes.IModelNode, boolean)
 	 */
 	public boolean remove(IModelNode node, boolean recursive) {
 		if (node instanceof IContainerModelNode && recursive) {
@@ -151,16 +152,16 @@ public class ContainerModelNode extends ModelNode implements IContainerModelNode
 	}
 
 	/* (non-Javadoc)
-	 * @see com.windriver.ide.target.api.model.IContainerModelNode#removeAll(java.lang.Class)
+	 * @see org.eclipse.tm.te.core.interfaces.nodes.IContainerModelNode#removeAll(java.lang.Class)
 	 */
-	public boolean removeAll(Class<?> nodeType) {
+	public <T> boolean removeAll(Class<T> nodeType) {
 		boolean removed = false;
-		IModelNode[] children;
+		T[] children;
 
 		try {
 			childListLock.lock();
 			children = getChildren(nodeType);
-			for (IModelNode child : children) {
+			for (T child : children) {
 				removed |= childList.remove(child);
 			}
 		} finally {
@@ -176,7 +177,7 @@ public class ContainerModelNode extends ModelNode implements IContainerModelNode
 	}
 
 	/* (non-Javadoc)
-	 * @see com.windriver.ide.target.model.IContainerModelNode#clear()
+	 * @see org.eclipse.tm.te.core.interfaces.nodes.IContainerModelNode#clear()
 	 */
 	public boolean clear() {
 		boolean removed = false;
@@ -199,14 +200,14 @@ public class ContainerModelNode extends ModelNode implements IContainerModelNode
 	}
 
 	/* (non-Javadoc)
-	 * @see com.windriver.core.runtime.model.interfaces.IContainerModelNode#size()
+	 * @see org.eclipse.tm.te.core.interfaces.nodes.IContainerModelNode#size()
 	 */
 	public int size() {
 		return childList.size();
 	}
 
 	/* (non-Javadoc)
-	 * @see com.windriver.ide.target.model.IContainerModelNode#contains(com.windriver.ide.target.model.IModelNode)
+	 * @see org.eclipse.tm.te.core.interfaces.nodes.IContainerModelNode#contains(org.eclipse.tm.te.core.interfaces.nodes.IModelNode)
 	 */
 	public boolean contains(IModelNode node) {
 		if (node != null) {
@@ -233,7 +234,7 @@ public class ContainerModelNode extends ModelNode implements IContainerModelNode
 	}
 
 	/* (non-Javadoc)
-	 * @see com.windriver.ide.target.api.model.ModelNode#contains(org.eclipse.core.runtime.jobs.ISchedulingRule)
+	 * @see org.eclipse.tm.te.core.nodes.ModelNode#contains(org.eclipse.core.runtime.jobs.ISchedulingRule)
 	 */
 	@Override
 	public boolean contains(ISchedulingRule rule) {
@@ -261,7 +262,7 @@ public class ContainerModelNode extends ModelNode implements IContainerModelNode
 	}
 
 	/* (non-Javadoc)
-	 * @see com.windriver.ide.target.api.model.ModelNode#isConflicting(org.eclipse.core.runtime.jobs.ISchedulingRule)
+	 * @see org.eclipse.tm.te.core.nodes.ModelNode#isConflicting(org.eclipse.core.runtime.jobs.ISchedulingRule)
 	 */
 	@Override
 	public boolean isConflicting(ISchedulingRule rule) {
