@@ -74,7 +74,7 @@ public class ContainerModelNode extends ModelNode implements IContainerModelNode
 	 * @see org.eclipse.tm.te.core.interfaces.nodes.IContainerModelNode#getChildren(java.lang.Class)
 	 */
 	@SuppressWarnings("unchecked")
-	public <T> T[] getChildren(Class<T> instanceOf) {
+	public <T> List<T> getChildren(Class<T> instanceOf) {
 		// Create the list that will hold the found children being
 		// a instance of the given class
 		List<T> children = new ArrayList<T>();
@@ -91,7 +91,8 @@ public class ContainerModelNode extends ModelNode implements IContainerModelNode
 			// Release the look
 			childListLock.unlock();
 		}
-		return (T[])children.toArray();
+
+		return children;
 	}
 
 	/* (non-Javadoc)
@@ -156,14 +157,12 @@ public class ContainerModelNode extends ModelNode implements IContainerModelNode
 	 */
 	public <T> boolean removeAll(Class<T> nodeType) {
 		boolean removed = false;
-		T[] children;
+		List<T> children;
 
 		try {
 			childListLock.lock();
 			children = getChildren(nodeType);
-			for (T child : children) {
-				removed |= childList.remove(child);
-			}
+			removed |= childList.removeAll(children);
 		} finally {
 			childListLock.unlock();
 		}

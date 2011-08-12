@@ -9,6 +9,8 @@
  *******************************************************************************/
 package org.eclipse.tm.te.core.interfaces.nodes;
 
+import java.util.List;
+
 
 /**
  * A container (data) model node.
@@ -73,9 +75,9 @@ public interface IContainerModelNode extends IModelNode {
 	 * Returns all child nodes with a special type.
 	 *
 	 * @param nodeType The node type.
-	 * @return The array of nodes or an empty list.
+	 * @return The list of nodes or an empty list.
 	 */
-	public <T> T[] getChildren(Class<T> nodeType);
+	public <T> List<T> getChildren(Class<T> nodeType);
 
 	/**
 	 * Returns true if node may have children.

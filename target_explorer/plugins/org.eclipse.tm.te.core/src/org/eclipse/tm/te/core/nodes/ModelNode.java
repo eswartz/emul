@@ -11,6 +11,7 @@ package org.eclipse.tm.te.core.nodes;
 
 import java.util.UUID;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.tm.te.core.activator.CoreBundleActivator;
@@ -56,11 +57,11 @@ public class ModelNode extends PropertiesContainer implements IModelNode, IModel
 	 * @see org.eclipse.tm.te.core.interfaces.nodes.IModelNode#getParent(java.lang.Class)
 	 */
 	public final IContainerModelNode getParent(Class<?> nodeType) {
-		if (getParent() != null) {
-			if (nodeType.isInstance(getParent())) {
-				return getParent();
+		if (this.parent != null) {
+			if (nodeType.isInstance(this.parent)) {
+				return this.parent;
 			}
-			return getParent().getParent(nodeType);
+			return this.parent.getParent(nodeType);
 		}
 		return null;
 	}
@@ -69,7 +70,7 @@ public class ModelNode extends PropertiesContainer implements IModelNode, IModel
 	 * @see org.eclipse.tm.te.core.interfaces.nodes.IModelNode#setParent(org.eclipse.tm.te.core.interfaces.nodes.IContainerModelNode)
 	 */
 	public final void setParent(IContainerModelNode parent) {
-		if (parent != null) {
+		if (this.parent != null) {
 			throw new IllegalStateException("Model node already associated with a parent container model node!"); //$NON-NLS-1$
 		}
 		this.parent = parent;
@@ -79,16 +80,16 @@ public class ModelNode extends PropertiesContainer implements IModelNode, IModel
 	 * @see org.eclipse.tm.te.core.interfaces.nodes.IModelNode#move(org.eclipse.tm.te.core.interfaces.nodes.IContainerModelNode)
 	 */
 	public final void move(IContainerModelNode newParent) {
-		assert newParent != null;
+		Assert.isNotNull(newParent);
 
 		// If the node is associated with a parent container, remove the node from
 		// the container node non-recursive (keeping all children if being ourself
 		// a container model node)
-		if (getParent() != null) {
+		if (this.parent != null) {
 			// Remove the node from the old parent container
-			if (!getParent().contains(this) || getParent().remove(this, false)) {
+			if (!this.parent.contains(this) || this.parent.remove(this, false)) {
 				// Unset the parent reference (will enable the add to the new container)
-				parent = null;
+				this.parent = null;
 			}
 		}
 
