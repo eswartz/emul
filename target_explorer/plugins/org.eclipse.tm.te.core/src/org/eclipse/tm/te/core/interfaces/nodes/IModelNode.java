@@ -142,7 +142,6 @@ public interface IModelNode extends IPropertiesContainer, ISchedulingRule {
 	 */
 	public void setPending(boolean pending);
 
-
 	/**
 	 * Returns the nodes pending state.
 	 *
