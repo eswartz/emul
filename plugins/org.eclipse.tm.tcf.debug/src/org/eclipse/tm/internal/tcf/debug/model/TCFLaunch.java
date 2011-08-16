@@ -1145,6 +1145,7 @@ public class TCFLaunch extends Launch {
         long time = System.currentTimeMillis();
         Protocol.invokeLater(timestamp + actions_interval - time, new Runnable() {
             public void run() {
+                if (active_actions.get(id) != action) return;
                 long time = System.currentTimeMillis();
                 synchronized (pending_clients) {
                     if (pending_clients.size() > 0) {

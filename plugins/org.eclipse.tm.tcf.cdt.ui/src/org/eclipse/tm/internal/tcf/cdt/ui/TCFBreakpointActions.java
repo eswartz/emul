@@ -49,13 +49,17 @@ public class TCFBreakpointActions {
     
     private class BreakpointActionAdapter extends TCFAction implements IAdaptable, ILogActionEnabler, IResumeActionEnabler {
         
+        private final HashMap<String,BreakpointActionAdapter> active_actions;
         private final TCFNodeExecContext node;
         private final Job job;
         
-        private boolean dont_resume;
+        private boolean started;
+        private boolean resumed;
         
-        BreakpointActionAdapter(final IBreakpoint breakpoint, TCFNodeExecContext node) {
+        BreakpointActionAdapter(final HashMap<String,BreakpointActionAdapter> actions,
+                final IBreakpoint breakpoint, TCFNodeExecContext node) {
             super(node.getModel().getLaunch(), node.getID());
+            this.active_actions = actions;
             this.node = node;
             job = new Job("Breakpoint actions") { //$NON-NLS-1$
                 @Override
@@ -77,18 +81,25 @@ public class TCFBreakpointActions {
                         }
                     } 
                     catch (Exception e) {
-                        status = new Status(IStatus.ERROR, Activator.PLUGIN_ID, IStatus.ERROR,
+                        status = new Status(
+                                IStatus.ERROR, Activator.PLUGIN_ID, IStatus.ERROR,
                                 "Cannot execute breakpoint action", e);
                     }
+                    if (!monitor.isCanceled() && status.getCode() != IStatus.OK) Activator.log(status);
                     Protocol.invokeAndWait(new Runnable() {
                         public void run() {
+                            assert aborted == (actions.get(ctx_id) != BreakpointActionAdapter.this);
+                            if (!aborted) actions.remove(ctx_id);
                             BreakpointActionAdapter.this.done();
                         }
                     });
-                    if (!monitor.isCanceled() && status.getCode() != IStatus.OK) Activator.log(status);
                     return status;
                 };
             };
+            BreakpointActionAdapter a = actions.get(ctx_id);
+            if (a != null) a.abort();
+            assert actions.get(ctx_id) == null;
+            actions.put(ctx_id, this);
         }
         
         @SuppressWarnings("rawtypes")
@@ -100,7 +111,7 @@ public class TCFBreakpointActions {
         public void resume() throws Exception {
             new TCFTask<Boolean>(node.getChannel()) {
                 public void run() {
-                    if (aborted || dont_resume || node.isDisposed()) {
+                    if (aborted || resumed || node.isDisposed()) {
                         done(false);
                         return;
                     }
@@ -118,7 +129,7 @@ public class TCFBreakpointActions {
                         done(false);
                         return;
                     }
-                    dont_resume = true;
+                    resumed = true;
                     ctx_data.resume(IRunControl.RM_RESUME, 1, new IRunControl.DoneCommand() {
                         public void doneCommand(IToken token, Exception error) {
                             if (error != null && !aborted) error(error);
@@ -147,16 +158,29 @@ public class TCFBreakpointActions {
         }
 
         public void run() {
-            assert !aborted;
-            // Post delta to update commands UI state.
-            node.postStateChangedDelta();
-            job.schedule();
+            if (aborted) {
+                done();
+            }
+            else {
+                // Post delta to update commands UI state.
+                node.postStateChangedDelta();
+                job.schedule();
+                started = true;
+            }
+        }
+        
+        @Override
+        public int getPriority() {
+            return 100;
         }
 
         @Override
         public void abort() {
+            assert aborted == (active_actions.get(ctx_id) != this);
+            if (aborted) return;
             super.abort();
-            job.cancel();
+            active_actions.remove(ctx_id);
+            if (started && job.cancel()) done();
         }
     }
     
@@ -164,15 +188,19 @@ public class TCFBreakpointActions {
         
         private final IRunControl rc;
         private final TCFModel model;
+        private final HashMap<String,BreakpointActionAdapter> active_actions;
         
         RunControlListener(TCFModel model) {
             this.model = model;
+            active_actions = new HashMap<String,BreakpointActionAdapter>();
             rc = model.getLaunch().getService(IRunControl.class);
             if (rc != null) rc.addListener(this);
         }
         
         void dispose() {
             if (rc != null) rc.removeListener(this);
+            BreakpointActionAdapter[] arr = active_actions.values().toArray(new BreakpointActionAdapter[active_actions.size()]);
+            for (BreakpointActionAdapter a : arr) a.abort();
         }
 
         public void contextAdded(RunControlContext[] contexts) {
@@ -183,8 +211,8 @@ public class TCFBreakpointActions {
 
         public void contextRemoved(String[] context_ids) {
             for (String id : context_ids) {
-                BreakpointActionAdapter a = active_actions.remove(id);
-                if (a != null) a.dont_resume = true;
+                BreakpointActionAdapter a = active_actions.get(id);
+                if (a != null) a.abort();
             }
         }
 
@@ -199,13 +227,13 @@ public class TCFBreakpointActions {
             for (String bp_id : c) {
                 IBreakpoint bp = bp_model.getBreakpoint(bp_id);
                 if (!bp_action_manager.breakpointHasActions(bp)) continue;
-                active_actions.put(node.getID(), new BreakpointActionAdapter(bp, node));
+                new BreakpointActionAdapter(active_actions, bp, node);
             }
         }
 
         public void contextResumed(String context) {
-            BreakpointActionAdapter a = active_actions.remove(context);
-            if (a != null) a.dont_resume = true;
+            BreakpointActionAdapter a = active_actions.get(context);
+            if (a != null && !a.resumed) a.abort();
         }
 
         public void containerSuspended(String context, String pc,
@@ -241,9 +269,9 @@ public class TCFBreakpointActions {
     private final TCFModelManager model_manager;
     private final BreakpointActionManager bp_action_manager;
     private final Map<TCFLaunch,RunControlListener> rc_listeners;;
-    private final HashMap<String,BreakpointActionAdapter> active_actions = new HashMap<String,BreakpointActionAdapter>();
 
     TCFBreakpointActions() {
+        assert Protocol.isDispatchThread();
         bp_action_manager = CDebugCorePlugin.getDefault().getBreakpointActionManager();
         bp_model = TCFBreakpointsModel.getBreakpointsModel();
         model_manager = TCFModelManager.getModelManager();
@@ -261,6 +289,7 @@ public class TCFBreakpointActions {
     }
     
     void dispose() {
+        assert Protocol.isDispatchThread();
         model_manager.removeListener(launch_listener);
         for (RunControlListener l : rc_listeners.values()) l.dispose();
         rc_listeners.clear();
