@@ -214,7 +214,9 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 public void run() {
                     if (!validate(this)) return;
                     Map<String,TCFMemoryBlockRetrieval> map = getData();
-                    for (TCFMemoryBlockRetrieval r : map.values()) r.onMemoryChanged();
+                    if (map != null) { // map can be null if, for example, the channel was closed
+                        for (TCFMemoryBlockRetrieval r : map.values()) r.onMemoryChanged();
+                    }
                     launch.removePendingClient(mem_blocks_update);
                     mem_blocks_update = null;
                 }
@@ -897,14 +899,25 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         return display;
     }
 
+    /**
+     * @return debug model launch object.
+     */
     public TCFLaunch getLaunch() {
         return launch;
     }
 
+    /**
+     * @return communication channel that this model is using.
+     */
     public IChannel getChannel() {
         return channel;
     }
 
+    /**
+     * Get top level (root) debug model node.
+     * Same as getNode("").
+     * @return root node.
+     */
     public TCFNodeLaunch getRootNode() {
         return launch_node;
     }
@@ -932,6 +945,12 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         return null;
     }
 
+    /**
+     * Get a model node with given ID.
+     * ID == "" means launch node.
+     * @param id - node ID.
+     * @return debug model node or null if no node exists with such ID.
+     */
     public TCFNode getNode(String id) {
         if (id == null) return null;
         if (id.equals("")) return launch_node;
@@ -939,10 +958,22 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         return id2node.get(id);
     }
 
+    /**
+     * Get a type that should be used to cast a value of an expression when it is shown in a view.
+     * Return null if original type of the value should be used.
+     * @param id - expression node ID.
+     * @return a string that designates a type or null.
+     */
     public String getCastToType(String id) {
         return cast_to_type_map.get(id);
     }
 
+    /**
+     * Register a type that should be used to cast a value of an expression when it is shown in a view.
+     * 'type' == null means original type of the value should be used.
+     * @param id - expression node ID.
+     * @param type - a string that designates a type.
+     */
     public void setCastToType(String id, String type) {
         if (type != null && type.trim().length() == 0) type = null;
         if (type == null) cast_to_type_map.remove(id);
@@ -953,6 +984,12 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         }
     }
 
+    /**
+     * Get a data cache that contains properties of a symbol.
+     * New cache object is created if it does not exist yet.
+     * @param sym_id - the symbol ID.
+     * @return data cache object.
+     */
     public TCFDataCache<ISymbols.Symbol> getSymbolInfoCache(final String sym_id) {
         if (sym_id == null) return null;
         TCFNodeSymbol n = (TCFNodeSymbol)getNode(sym_id);
@@ -960,6 +997,12 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         return n.getContext();
     }
 
+    /**
+     * Get a data cache that contains children of a symbol.
+     * New cache object is created if it does not exist yet.
+     * @param sym_id - the symbol ID.
+     * @return data cache object.
+     */
     public TCFDataCache<String[]> getSymbolChildrenCache(final String sym_id) {
         if (sym_id == null) return null;
         TCFNodeSymbol n = (TCFNodeSymbol)getNode(sym_id);
@@ -1459,18 +1502,30 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         return null;
     }
 
+    /**
+     * Registers the given listener for suspend notifications.
+     * @param listener suspend listener
+     */
     public synchronized void addSuspendTriggerListener(ISuspendTriggerListener listener) {
         suspend_trigger_listeners.add(listener);
     }
 
+    /**
+     * Unregisters the given listener for suspend notifications.
+     * @param listener suspend listener
+     */
     public synchronized void removeSuspendTriggerListener(ISuspendTriggerListener listener) {
         suspend_trigger_listeners.remove(listener);
     }
 
+    /*
+     * Lazily run registered suspend listeners.
+     * @param node - suspended context.
+     */
     private synchronized void runSuspendTrigger(final TCFNode node) {
+        if (suspend_trigger_listeners.size() == 0) return;
         final ISuspendTriggerListener[] listeners = suspend_trigger_listeners.toArray(
                 new ISuspendTriggerListener[suspend_trigger_listeners.size()]);
-        if (listeners.length == 0) return;
 
         final int generation = ++suspend_trigger_generation;
         if (wait_for_pc_update_after_step || wait_for_views_update_after_step) {
@@ -1499,7 +1554,6 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     /**
      * Set whether instruction stepping mode should be enabled or not.
-     *
      * @param enabled
      */
     public void setInstructionSteppingEnabled(boolean enabled) {
