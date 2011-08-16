@@ -52,20 +52,28 @@ abstract class StepCommand implements IDebugCommandHandler {
                     if (!cache.validate(done)) return false;
                     ctx = cache.getData();
                 }
-                if (ctx == null || !canExecute(ctx)) {
+                if (ctx == null) {
                     node = node.getParent();
                 }
                 else {
+                    if (!canExecute(ctx)) break;
                     int action_cnt = model.getLaunch().getContextActionsCount(ctx.getID());
                     if (exec && action_cnt >= MAX_ACTION_CNT) break;
-                    if (action_cnt == 0 && !ctx.isContainer()) {
-                        TCFDataCache<TCFContextState> state_cache = ((TCFNodeExecContext)node).getState();
-                        if (!state_cache.validate(done)) return false;
-                        TCFContextState state_data = state_cache.getData();
-                        if (state_data != null && state_data.is_suspended) set.add(ctx);
+                    if (action_cnt > 0) {
+                        set.add(ctx);
                     }
                     else {
-                        set.add(ctx);
+                        if (ctx.isContainer()) {
+                            TCFNodeExecContext.ChildrenStateInfo s = new TCFNodeExecContext.ChildrenStateInfo();
+                            if (!((TCFNodeExecContext)node).hasSuspendedChildren(s, done)) return false;
+                            if (s.suspended) set.add(ctx);
+                        }
+                        if (ctx.hasState()) {
+                            TCFDataCache<TCFContextState> state_cache = ((TCFNodeExecContext)node).getState();
+                            if (!state_cache.validate(done)) return false;
+                            TCFContextState state_data = state_cache.getData();
+                            if (state_data != null && state_data.is_suspended) set.add(ctx);
+                        }
                     }
                     break;
                 }

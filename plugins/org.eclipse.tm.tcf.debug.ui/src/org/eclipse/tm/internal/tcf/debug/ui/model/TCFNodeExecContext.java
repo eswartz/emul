@@ -110,9 +110,10 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         }
     }
 
-    private static class SuspendedChildrenInfo {
-        boolean suspended;
-        boolean suspended_by_bp;
+    public static class ChildrenStateInfo {
+        public boolean running;
+        public boolean suspended;
+        public boolean breakpoint;
     }
 
     private final Map<String,TCFNodeSymbol> symbols = new HashMap<String,TCFNodeSymbol>();
@@ -1033,11 +1034,11 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                 }
                 else {
                     // Thread container (process)
-                    SuspendedChildrenInfo i = new SuspendedChildrenInfo();
+                    ChildrenStateInfo i = new ChildrenStateInfo();
                     if (!hasSuspendedChildren(i, done)) return false;
                     if (i.suspended) image_name = ImageCache.IMG_PROCESS_SUSPENDED;
                     else image_name = ImageCache.IMG_PROCESS_RUNNING;
-                    suspended_by_bp = i.suspended_by_bp;
+                    suspended_by_bp = i.breakpoint;
                 }
             }
         }
@@ -1338,10 +1339,10 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         postStackChangedDelta();
     }
 
-    private boolean hasSuspendedChildren(SuspendedChildrenInfo info, Runnable done) {
+    public boolean hasSuspendedChildren(ChildrenStateInfo info, Runnable done) {
         if (!children_exec.validate(done)) return false;
         Map<String,TCFNode> m = children_exec.getData();
-        if (m == null) return true;
+        if (m == null || m.size() == 0) return true;
         for (TCFNode n : m.values()) {
             if (!(n instanceof TCFNodeExecContext)) continue;
             TCFNodeExecContext e = (TCFNodeExecContext)n;
@@ -1351,20 +1352,22 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                 TCFDataCache<TCFContextState> state_cache = e.getState();
                 if (!state_cache.validate(done)) return false;
                 TCFContextState state_data = state_cache.getData();
-                if (state_data != null && state_data.is_suspended && !e.isNotActive()) {
-                    info.suspended = true;
-                    String r = model.getContextActionResult(e.id);
-                    if (r == null) r = state_data.suspend_reason;
-                    if (IRunControl.REASON_BREAKPOINT.equals(r)) {
-                        info.suspended_by_bp = true;
-                        return true;
+                if (state_data != null) {
+                    if (!state_data.is_suspended) {
+                        info.running = true;
+                    }
+                    else if (!e.isNotActive()) {
+                        info.suspended = true;
+                        String r = model.getContextActionResult(e.id);
+                        if (r == null) r = state_data.suspend_reason;
+                        if (IRunControl.REASON_BREAKPOINT.equals(r)) info.breakpoint = true;
                     }
                 }
             }
             else {
                 if (!e.hasSuspendedChildren(info, done)) return false;
-                if (info.suspended_by_bp) return true;
             }
+            if (info.breakpoint && info.running) break;
         }
         return true;
     }

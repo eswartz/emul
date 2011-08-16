@@ -63,15 +63,19 @@ public class SuspendCommand implements ISuspendHandler {
                             res = true;
                             break;
                         }
-                        else if (ctx.isContainer()) {
-                            if (ctx.canSuspend()) res = true;
-                            break;
-                        }
                         else {
-                            TCFDataCache<TCFContextState> state_cache = ((TCFNodeExecContext)node).getState();
-                            if (!state_cache.validate(this)) return;
-                            TCFContextState state_data = state_cache.getData();
-                            if (state_data != null && !state_data.is_suspended && ctx.canSuspend()) res = true;
+                            if (!ctx.canSuspend()) break;
+                            if (ctx.isContainer()) {
+                                TCFNodeExecContext.ChildrenStateInfo s = new TCFNodeExecContext.ChildrenStateInfo();
+                                if (!((TCFNodeExecContext)node).hasSuspendedChildren(s, this)) return;
+                                if (s.running) res = true;
+                            }
+                            if (ctx.hasState()) {
+                                TCFDataCache<TCFContextState> state_cache = ((TCFNodeExecContext)node).getState();
+                                if (!state_cache.validate(this)) return;
+                                TCFContextState state_data = state_cache.getData();
+                                if (state_data != null && !state_data.is_suspended && ctx.canSuspend()) res = true;
+                            }
                             break;
                         }
                     }
