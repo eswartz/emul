@@ -26,7 +26,8 @@ public class TCFPreferences {
         PREF_MIN_STEP_INTERVAL = "MinStepInterval",
         PREF_MIN_UPDATE_INTERVAL = "MinUpdateInterval",
         PREF_VIEW_UPDATES_THROTTLE = "ViewUpdatesThrottle",
-        PREF_TARGET_TRAFFIC_THROTTLE = "TargetTrafficThrottle";
+        PREF_TARGET_TRAFFIC_THROTTLE = "TargetTrafficThrottle",
+        PREF_DELAY_CHILDREN_LIST_UPDATES = "DelayChildrenListUpdates";
 
     public static IPreferenceStore getPreferenceStore() {
         return Activator.getDefault().getPreferenceStore();

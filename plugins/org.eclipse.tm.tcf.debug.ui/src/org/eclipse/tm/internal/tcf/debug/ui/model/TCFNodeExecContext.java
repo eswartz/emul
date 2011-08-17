@@ -124,6 +124,8 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     private TCFNode[] last_stack_trace;
     private String last_label;
     private ImageDescriptor last_image;
+    private ChildrenStateInfo last_children_state_info;
+    private boolean delayed_children_list_delta;
 
     private String hover_expression;
 
@@ -1031,6 +1033,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                             }
                         }
                     }
+                    last_children_state_info = null;
                 }
                 else {
                     // Thread container (process)
@@ -1039,6 +1042,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                     if (i.suspended) image_name = ImageCache.IMG_PROCESS_SUSPENDED;
                     else image_name = ImageCache.IMG_PROCESS_RUNNING;
                     suspended_by_bp = i.breakpoint;
+                    last_children_state_info = i;
                 }
             }
         }
@@ -1074,6 +1078,11 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     }
 
     void postContextAddedDelta() {
+        if (last_children_state_info != null && !last_children_state_info.suspended && model.getDelayChildrenListUpdates()) {
+            // Delay content update until a child is suspended.
+            delayed_children_list_delta = true;
+            return;
+        }
         for (TCFModelProxy p : model.getModelProxies()) {
             if (IDebugUIConstants.ID_DEBUG_VIEW.equals(p.getPresentationContext().getId())) {
                 /* Note: should use IModelDelta.INSERTED but it is broken in Eclipse 3.6 */
@@ -1083,6 +1092,11 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     }
 
     private void postContextRemovedDelta() {
+        if (last_children_state_info != null && !last_children_state_info.suspended && model.getDelayChildrenListUpdates()) {
+            // Delay content update until a child is suspended.
+            delayed_children_list_delta = true;
+            return;
+        }
         for (TCFModelProxy p : model.getModelProxies()) {
             if (IDebugUIConstants.ID_DEBUG_VIEW.equals(p.getPresentationContext().getId())) {
                 p.addDelta(this, IModelDelta.REMOVED);
@@ -1091,6 +1105,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     }
 
     private void postContentChangedDelta() {
+        delayed_children_list_delta = false;
         for (TCFModelProxy p : model.getModelProxies()) {
             int flags = 0;
             String view_id = p.getPresentationContext().getId();
@@ -1113,7 +1128,9 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         postContentChangedDelta();
         TCFNode n = this;
         while (n instanceof TCFNodeExecContext) {
-            ((TCFNodeExecContext)n).postStateChangedDelta();
+            TCFNodeExecContext e = (TCFNodeExecContext)n;
+            if (e.delayed_children_list_delta) e.postContentChangedDelta();
+            e.postStateChangedDelta();
             n = n.parent;
         }
     }
@@ -1330,6 +1347,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     }
 
     void onPreferencesChanged() {
+        if (delayed_children_list_delta && !model.getDelayChildrenListUpdates()) postContentChangedDelta();
         children_stack.onPreferencesChanged();
         postStackChangedDelta();
     }
