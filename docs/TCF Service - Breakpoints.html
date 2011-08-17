@@ -155,11 +155,11 @@ A breakpoint service implementation may not change the properties set by the cli
 <ul>
     <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propID'>"ID"</a> : <i>&lt;string&gt;</i></font></b></code>
     <dd>Breakpoint ID. This is the only required property.
-        </li>
+    </li>
 
     <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propeEnabled'>"Enabled"</a> : <i>&lt;boolean&gt;</i></font></b></code>
     <dd>If true, the breakpoint is enabled.
-        </li>
+    </li>
 
     <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propType'>"Type"</a> : <i>&lt;string&gt;</i></font></b></code>
     <dd>The breakpoint type
@@ -171,65 +171,67 @@ A breakpoint service implementation may not change the properties set by the cli
         The actual type of each breakpoint instance consequently installed is received as a status event.</li>
     </ul>
     </dl>
-        </li>
+    </li>
 
     <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propContextIDs'>"ContextIds"</a> : <i>&lt;string&gt;</i></font></b></code>
     <dd>This property contains an array of TCF context identifiers for which this breakpoint should be installed.
-        </li>
+    </li>
 
     <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propContextNames'>"ContextNames"</a> : <i>&lt;string&gt;</i></font></b></code>
     <dd>This property contains an array of contexts names (such as a process/thread name) for which this breakpoint should be installed.
-        </li>
+    </li>
 
     <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propExecPaths'>"ExecutablePaths"</a> : <i>&lt;string&gt;</i></font></b></code>
     <dd>This property contains all the target executable paths for which this breakpoint should be installed.
-        </li>
+    </li>
 
     <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propLocation'> "Location" </a> : <i>&lt;string&gt;</i></font></b></code>
     <dd>If preset, defines location of the breakpoint. The expression evaluates either to a memory address
     or a register location.
-        </li>
+    </li>
 
     <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propAccessMode'>"AccessMode"</a> : <i>&lt;int&gt;</i></font></b></code>
-    <dd>The access mode that will trigger the breakpoint.  Access mode can be a bitwise OR of the values below:
+    <dd>The access mode that will trigger the breakpoint. Access mode can be a bitwise OR of the values below:
     <dl>
     <ul>
         <li><dt><code><b>READ = 0x01</b></code> <dd>Triggered by a read from the breakpoint location.</li>
         <li><dt><code><b>WRITE = 0x02</b></code> <dd>Triggered by a write to the breakpoint location.</li>
         <li><dt><code><b>EXECUTE = 0x04</b></code> <dd>Triggered by an instruction execution at the breakpoint location. Whether the breakpoint is
-                  triggered before the instruction execution or after depends on the target support for this mode. This is the default for Line and Address breakpoints.</li>
+                  triggered before or after the instruction execution depends on the target support for this mode. This is the default for Line and Address breakpoints.</li>
         <li><dt><code><b>CHANGE = 0x08</b></code> <dd>Triggered by a data change (not an explicit write) at the breakpoint location.</li>
     </ul>
     </dl>
-        </li>
+    </li>
 
     <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propSize'>"Size"</a> : <i>&lt;int&gt;</i></font></b></code>
-    <dd>The number of bytes starting at address given by the location expression to which the AccessMode triggers applies.
-        </li>
+    <dd>The number of bytes starting at address given by the location expression.
+            AccessMode applies to accesses within the range [location .. location+size-1].
+                The MaskValue and Mask applies to the bytes within the range, i.e. the breakpoint triggers when (valueof[location .. location+size-1] & Mask) == (MaskValue & Mask).
+    </li>
 
     <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propFile'>"File"</a> : <i>&lt;string&gt;</i></font></b></code>
     <dd>Source code file name of breakpoint location.
-        </li>
+    </li>
 
     <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propLine'>"Line"</a> : <i>&lt;int&gt;</i></font></b></code>
     <dd>Source code line number of breakpoint location.
-        </li>
+    </li>
 
     <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propColumn'>"Column"</a> : <i>&lt;int&gt;</i></font></b></code>
     <dd>Source code column number of breakpoint location.
-        </li>
+    </li>
 
     <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propMaskValue'>"MaskValue"</a> : <i>&lt;int&gt;</i></font></b></code>
     <dd>A breakpoint can be qualified with a mask value which may be further refined with a mask.
-        </li>
+    </li>
 
     <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propMask'>"Mask"</a> : <i>&lt;int&gt;</i></font></b></code>
     <dd>A mask which is bitwise ANDed with the value accessed.
-        </li>
+    </li>
 
     <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propTime'>"Time"</a> : <i>&lt;number&gt;</i></font></b></code>
     <dd>The time value in the execution of the program at which to set the breakpoint
-        </li>
+    </li>
 
     <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propTimeScale'>"TimeScale"</a> : <i>&lt;string&gt;</i></font></b></code>
     <dd>The scale for the time value
@@ -240,7 +242,7 @@ A breakpoint service implementation may not change the properties set by the cli
        <li><dt><code><b>"Absolute"</b></code> <dd> Time value in the absolute time scale.</li>
      </ul>
     </dl>
-        </li>
+    </li>
 
     <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propTimeUnits'>"TimeUnits"</a> : <i>&lt;string&gt;</i></font></b></code>
     <dd>The units for the time value
@@ -251,24 +253,24 @@ A breakpoint service implementation may not change the properties set by the cli
         <li><dt><code><b>"InstructionCount"</b></code> <dd> Time value in instructions.</li>
     </ul>
     </dl>
-        </li>
+    </li>
 
     <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propCondition'>"Condition"</a> : <i>&lt;string&gt;</i></font></b></code>
     <dd>Expression that must evaluate to true before the breakpoint is triggered.
-        </li>
+    </li>
 
     <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propIgnoreCount'>"IgnoreCount"</a>: <i>&lt;int&gt;</i></font></b></code>
     <dd>The number of times this breakpoint is to be ignored before it is triggered. The ignore count is tested after all other Location and Condition properties are validated.
-        </li>
+    </li>
 
     <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name = 'propStopGroup'>"StopGroup"</a> : <i>&lt;string&gt;</i></font></b></code>
     <dd>An array of TCF Context identifiers representing contexts to be stopped when this breakpoint is triggered.
     This is an "Action" property that is used to stop contexts in addition to the one that triggered the breakpoint.
-        </li>
+    </li>
 
     <li><dt><code><b><font face="Courier New" size=2 color=#333399><a name='propTemporary'>"Temporary"</a> : <i>&lt;boolean&gt;</i></font></b></code>
     <dd>If set, results in the breakpoint being removed after it is triggered once. The default value for this property is false.
-        </li>
+    </li>
 </ul>
 </dl>
 
