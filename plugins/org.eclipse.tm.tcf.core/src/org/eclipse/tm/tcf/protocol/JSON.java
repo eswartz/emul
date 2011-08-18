@@ -410,7 +410,7 @@ public final class JSON {
                 StringBuffer sb = new StringBuffer();
                 sb.append(vl);
                 while (true) {
-                    sb.append(cur_ch);
+                    sb.append((char)cur_ch);
                     read();
                     if (cur_ch < '0' || cur_ch > '9') {
                         BigInteger n = new BigInteger(sb.toString());
