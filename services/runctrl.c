@@ -275,7 +275,7 @@ static void write_context_state(OutputStream * out, Context * ctx) {
 
     /* Number: PC */
     if (get_current_pc(ctx, &pc) < 0) pc_error = errno;
-    json_write_ulong(out, pc);
+    json_write_uint64(out, pc);
     write_stream(out, 0);
 
     /* String: Reason */
