@@ -24,7 +24,8 @@ import org.eclipse.tm.te.core.internal.tracing.ITraceIds;
  * A common (data) model node implementation.
  * <p>
  * <b>Note:</b> The (data) model node implementation is not thread-safe. Clients requiring
- *              a thread-safe implementation should subclass the model node.
+ *              a thread-safe implementation should subclass the properties container and
+ *              overwrite {@link #checkThreadAccess()}.
  */
 public class ModelNode extends PropertiesContainer implements IModelNode, IModelNodeProvider {
 	// Reference to the parent model node
@@ -50,6 +51,7 @@ public class ModelNode extends PropertiesContainer implements IModelNode, IModel
 	 * @see org.eclipse.tm.te.core.interfaces.nodes.IModelNode#getParent()
 	 */
 	public final IContainerModelNode getParent() {
+		Assert.isTrue(checkThreadAccess());
 		return parent;
 	}
 
@@ -57,6 +59,7 @@ public class ModelNode extends PropertiesContainer implements IModelNode, IModel
 	 * @see org.eclipse.tm.te.core.interfaces.nodes.IModelNode#getParent(java.lang.Class)
 	 */
 	public final IContainerModelNode getParent(Class<?> nodeType) {
+		Assert.isTrue(checkThreadAccess());
 		if (this.parent != null) {
 			if (nodeType.isInstance(this.parent)) {
 				return this.parent;
@@ -70,6 +73,7 @@ public class ModelNode extends PropertiesContainer implements IModelNode, IModel
 	 * @see org.eclipse.tm.te.core.interfaces.nodes.IModelNode#setParent(org.eclipse.tm.te.core.interfaces.nodes.IContainerModelNode)
 	 */
 	public final void setParent(IContainerModelNode parent) {
+		Assert.isTrue(checkThreadAccess());
 		if (this.parent != null) {
 			throw new IllegalStateException("Model node already associated with a parent container model node!"); //$NON-NLS-1$
 		}
@@ -80,6 +84,7 @@ public class ModelNode extends PropertiesContainer implements IModelNode, IModel
 	 * @see org.eclipse.tm.te.core.interfaces.nodes.IModelNode#move(org.eclipse.tm.te.core.interfaces.nodes.IContainerModelNode)
 	 */
 	public final void move(IContainerModelNode newParent) {
+		Assert.isTrue(checkThreadAccess());
 		Assert.isNotNull(newParent);
 
 		// If the node is associated with a parent container, remove the node from
@@ -179,8 +184,8 @@ public class ModelNode extends PropertiesContainer implements IModelNode, IModel
 		if (parent == null && suppressEventsOnNullParent) {
 			if (CoreBundleActivator.getTraceHandler().isSlotEnabled(0, ITraceIds.TRACE_EVENTS)) {
 				CoreBundleActivator.getTraceHandler().trace("Drop change event (null parent)\n" + //$NON-NLS-1$
-															"for eventId=" + key //$NON-NLS-1$
-															, 1, ITraceIds.TRACE_EVENTS, IStatus.WARNING, this);
+															"for eventId=" + key, //$NON-NLS-1$
+															1, ITraceIds.TRACE_EVENTS, IStatus.WARNING, this);
 			}
 			return true;
 		}
@@ -231,6 +236,7 @@ public class ModelNode extends PropertiesContainer implements IModelNode, IModel
 	 * @see org.eclipse.tm.te.core.interfaces.nodes.IModelNode#setDirty(boolean)
 	 */
 	public final void setDirty(boolean dirty) {
+		Assert.isTrue(checkThreadAccess());
 		this.dirty = dirty;
 	}
 
@@ -238,6 +244,7 @@ public class ModelNode extends PropertiesContainer implements IModelNode, IModel
 	 * @see org.eclipse.tm.te.core.interfaces.nodes.IModelNode#isDirty()
 	 */
 	public final boolean isDirty() {
+		Assert.isTrue(checkThreadAccess());
 		return dirty;
 	}
 
@@ -245,6 +252,7 @@ public class ModelNode extends PropertiesContainer implements IModelNode, IModel
 	 * @see org.eclipse.tm.te.core.interfaces.nodes.IModelNode#setPending(boolean)
 	 */
 	public final void setPending(boolean pending) {
+		Assert.isTrue(checkThreadAccess());
 		this.pending = pending;
 	}
 
@@ -252,6 +260,7 @@ public class ModelNode extends PropertiesContainer implements IModelNode, IModel
 	 * @see org.eclipse.tm.te.core.interfaces.nodes.IModelNode#isPending()
 	 */
 	public final boolean isPending() {
+		Assert.isTrue(checkThreadAccess());
 		return pending;
 	}
 

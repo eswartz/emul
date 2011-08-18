@@ -25,7 +25,8 @@ import org.eclipse.tm.te.core.interfaces.nodes.IModelNode;
  * A common (data) model container node implementation.
  * <p>
  * <b>Note:</b> The (data) model node implementation is not thread-safe. Clients requiring
- *              a thread-safe implementation should subclass the model node.
+ *              a thread-safe implementation should subclass the properties container and
+ *              overwrite {@link #checkThreadAccess()}.
  */
 public class ContainerModelNode extends ModelNode implements IContainerModelNode {
 	// Note: Do _not_ use sorted sets/trees here! The trees get not resorted if the element state

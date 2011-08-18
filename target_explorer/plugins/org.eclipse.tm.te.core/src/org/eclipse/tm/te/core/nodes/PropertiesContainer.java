@@ -29,7 +29,8 @@ import org.eclipse.tm.te.core.internal.tracing.ITraceIds;
  * A generic properties container implementation.
  * <p>
  * <b>Note:</b> The properties container implementation is not thread-safe. Clients requiring
- *              a thread-safe implementation should subclass the properties container.
+ *              a thread-safe implementation should subclass the properties container and
+ *              overwrite {@link #checkThreadAccess()}.
  */
 public class PropertiesContainer extends PlatformObject implements IPropertiesContainer {
 	// Used to have a simple check that the random generated UUID isn't
@@ -52,6 +53,8 @@ public class PropertiesContainer extends PlatformObject implements IPropertiesCo
 	 */
 	public PropertiesContainer() {
 		super();
+
+		Assert.isTrue(checkThreadAccess());
 
 		// Initialize the unique node id.
 		UUID uuid = UUID.randomUUID();
@@ -207,10 +210,24 @@ public class PropertiesContainer extends PlatformObject implements IPropertiesCo
 		return !changeEventsEnabled || key.endsWith(".silent"); //$NON-NLS-1$
 	}
 
+	/**
+	 * Checks if the access to the properties container happens in
+	 * a privileged thread.
+	 * <p>
+	 * The default implementation returns always <code>true</code>. Overwrite
+	 * to implement thread-safe properties container access.
+	 *
+	 * @return <code>True</code> if the access to the properties container is allowed, <code>false</code> otherwise.
+	 */
+	protected boolean checkThreadAccess() {
+		return true;
+	}
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.core.interfaces.IPropertiesContainer#getProperties()
 	 */
 	public Map<String, Object> getProperties() {
+		Assert.isTrue(checkThreadAccess());
 		return Collections.unmodifiableMap(new HashMap<String, Object>(properties));
 	}
 
@@ -218,6 +235,7 @@ public class PropertiesContainer extends PlatformObject implements IPropertiesCo
 	 * @see org.eclipse.tm.te.core.interfaces.IPropertiesContainer#getProperty(java.lang.String)
 	 */
 	public Object getProperty(String key) {
+		Assert.isTrue(checkThreadAccess());
 		return properties.get(key);
 	}
 
@@ -313,6 +331,7 @@ public class PropertiesContainer extends PlatformObject implements IPropertiesCo
 	 * @see org.eclipse.tm.te.core.interfaces.IPropertiesContainer#setProperties(java.util.Map)
 	 */
 	public final void setProperties(Map<String, Object> properties) {
+		Assert.isTrue(checkThreadAccess());
 		Assert.isNotNull(properties);
 
 		this.properties.clear();
@@ -381,6 +400,7 @@ public class PropertiesContainer extends PlatformObject implements IPropertiesCo
 	 * @see org.eclipse.tm.te.core.interfaces.IPropertiesContainer#setProperty(java.lang.String, java.lang.Object)
 	 */
 	public boolean setProperty(String key, Object value) {
+		Assert.isTrue(checkThreadAccess());
 		Assert.isNotNull(key);
 
 		Object oldValue = properties.get(key);
@@ -401,6 +421,7 @@ public class PropertiesContainer extends PlatformObject implements IPropertiesCo
 	 * @see org.eclipse.tm.te.core.interfaces.IPropertiesContainer#clearProperties()
 	 */
 	public final void clearProperties() {
+		Assert.isTrue(checkThreadAccess());
 		properties.clear();
 	}
 
