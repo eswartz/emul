@@ -106,6 +106,8 @@ class TestExpressions implements ITCFTest,
         "&((struct test_struct *)0)->f_float",
         "tcf_test_func3",
         "&tcf_test_func3",
+        "tcf_test_array + 10",
+        "*(tcf_test_array + 10) | 1",
     };
 
     TestExpressions(TCFTestSuite test_suite, RunControl test_rc, IChannel channel) {
