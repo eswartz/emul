@@ -1470,7 +1470,7 @@ static void lazy_unary_expression(int mode, Value * v) {
 static void unary_expression(int mode, Value * v) {
     lazy_unary_expression(mode, v);
 #if ENABLE_Symbols
-    if (mode == MODE_NORMAL && v->sym != NULL && v->size == 0 && get_symbol_size(v->sym, &v->size) < 0) {
+    if (mode != MODE_SKIP && v->sym != NULL && v->size == 0 && get_symbol_size(v->sym, &v->size) < 0) {
         error(errno, "Cannot retrieve symbol size");
     }
 #endif
