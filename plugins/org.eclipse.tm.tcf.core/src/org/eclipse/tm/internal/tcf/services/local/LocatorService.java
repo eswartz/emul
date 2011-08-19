@@ -74,9 +74,9 @@ public class LocatorService implements ILocator {
     private InetAddress loopback_addr;
 
     /**
-     * Flag indicating whether tracing of the the discovery activity is enabled.
+     * Flag indicating whether tracing of the discovery activity is enabled.
      */
-    static boolean TRACE_DISCOVERY = System.getProperty("org.eclipse.tm.tcf.core.tracing.discovery") != null;
+    private static boolean TRACE_DISCOVERY = System.getProperty("org.eclipse.tm.tcf.core.tracing.discovery") != null;
 
     private static class SubNet {
         final int prefix_length;

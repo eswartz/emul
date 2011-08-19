@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 import org.eclipse.debug.ui.AbstractLaunchConfigurationTab;
@@ -998,6 +999,10 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
                         mem_map = new HashMap<String,ArrayList<IMemoryMap.MemoryRegion>>();
                         TCFLaunchDelegate.parseMemMapsAttribute(mem_map, mem_map_cfg);
                     }
+                    boolean enable_tracing =
+                            "true".equals(Platform.getDebugOption("org.eclipse.tm.tcf.debug/debug")) &&
+                            "true".equals(Platform.getDebugOption("org.eclipse.tm.tcf.debug/debug/tests/runcontrol"));
+                    if (enable_tracing) System.setProperty("org.eclipse.tm.tcf.debug.tracing.tests.runcontrol", "true");
                     test[0] = new TCFTestSuite(peer, done, path_map, mem_map);
                 }
                 catch (Throwable x) {

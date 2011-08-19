@@ -206,7 +206,7 @@ public class TCFTestSuite {
                         if (channels[i].getState() != IChannel.STATE_OPEN) return;
                     }
                     for (int i = 0; i < channels.length; i++) {
-                        run_controls.put(channels[i], new RunControl(TCFTestSuite.this, channels[i]));
+                        run_controls.put(channels[i], new RunControl(TCFTestSuite.this, channels[i], i));
                     }
                     runNextTest();
                 }

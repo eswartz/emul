@@ -28,6 +28,7 @@ class RunControl {
 
     private final TCFTestSuite test_suite;
     private final IChannel channel;
+    private int channel_id;
     private final IRunControl rc_service;
     private final HashSet<String> suspended_ctx_ids = new HashSet<String>();
     private final HashSet<IToken> get_state_cmds = new HashSet<IToken>();
@@ -35,6 +36,8 @@ class RunControl {
     private final HashSet<String> pending_resume_ids = new HashSet<String>();
     private final HashMap<String,IRunControl.RunControlContext> ctx_map = new HashMap<String,IRunControl.RunControlContext>();
     private final Random rnd = new Random();
+
+    private boolean enable_trace;
 
     private boolean sync_pending;
 
@@ -61,6 +64,7 @@ class RunControl {
         }
 
         public void contextSuspended(final String id, String pc, String reason, Map<String,Object> params) {
+            if (enable_trace) System.out.println("" + channel_id + " suspended " + id);
             suspended_ctx_ids.add(id);
             Protocol.invokeLater(new Runnable() {
                 public void run() {
@@ -69,12 +73,21 @@ class RunControl {
             });
         }
 
-        public void contextResumed(String context) {
-            suspended_ctx_ids.remove(context);
-            pending_resume_ids.remove(context);
+        public void contextResumed(String id) {
+            if (enable_trace) System.out.println("" + channel_id + " resumed " + id);
+            suspended_ctx_ids.remove(id);
+            pending_resume_ids.remove(id);
         }
 
         public void containerSuspended(String context, String pc, String reason, Map<String, Object> params, String[] suspended_ids) {
+            if (enable_trace) {
+                StringBuffer bf = new StringBuffer();
+                for (String id : suspended_ids) {
+                    if (bf.length() > 0) bf.append(',');
+                    bf.append(id);
+                }
+                System.out.println("" + channel_id + " suspended " + bf);
+            }
             for (String id : suspended_ids) {
                 suspended_ctx_ids.add(id);
                 resume(id, IRunControl.RM_RESUME);
@@ -82,6 +95,14 @@ class RunControl {
         }
 
         public void containerResumed(String[] context_ids) {
+            if (enable_trace) {
+                StringBuffer bf = new StringBuffer();
+                for (String id : context_ids) {
+                    if (bf.length() > 0) bf.append(',');
+                    bf.append(id);
+                }
+                System.out.println("" + channel_id + " resumed " + bf);
+            }
             for (String id : context_ids) {
                 suspended_ctx_ids.remove(id);
                 pending_resume_ids.remove(id);
@@ -92,15 +113,17 @@ class RunControl {
         }
     };
 
-    RunControl(TCFTestSuite test_suite, IChannel channel) {
+    RunControl(TCFTestSuite test_suite, IChannel channel, int channel_id) {
         this.test_suite = test_suite;
         this.channel = channel;
+        this.channel_id = channel_id;
         rc_service = channel.getRemoteService(IRunControl.class);
         if (rc_service != null) {
             rc_service.addListener(listener);
             getState();
             startTimer();
         }
+        enable_trace = System.getProperty("org.eclipse.tm.tcf.debug.tracing.tests.runcontrol") != null;
     }
 
     private void getState() {
@@ -213,11 +236,13 @@ class RunControl {
                     assert resume_cmds.get(id) == null;
                     final String test_id = test_suite.getCanceledTests().get(id);
                     if (test_id != null) {
+                        if (enable_trace) System.out.println("" + channel_id + " cancel " + id);
                         IDiagnostics diag = channel.getRemoteService(IDiagnostics.class);
                         resume_cmds.put(id, diag.cancelTest(test_id, new IDiagnostics.DoneCancelTest() {
                             public void doneCancelTest(IToken token, Throwable error) {
                                 assert resume_cmds.get(id) == token;
                                 resume_cmds.remove(id);
+                                if (enable_trace) System.out.println("" + channel_id + " done cancel " + error);
                                 if (error != null && ctx_map.get(test_id) != null) exit(error);
                             }
                         }));
@@ -226,10 +251,12 @@ class RunControl {
                         IRunControl.RunControlContext ctx = ctx_map.get(id);
                         if (ctx != null) {
                             pending_resume_ids.add(id);
+                            if (enable_trace) System.out.println("" + channel_id + " resume " + mode + " " + id);
                             resume_cmds.put(id, ctx.resume(mode, 1, new IRunControl.DoneCommand() {
                                 public void doneCommand(IToken token, Exception error) {
                                     assert resume_cmds.get(id) == token;
                                     resume_cmds.remove(id);
+                                    if (enable_trace) System.out.println("" + channel_id + " done resume " + error);
                                     if (error != null) {
                                         pending_resume_ids.remove(id);
                                         if (suspended_ctx_ids.contains(id)) exit(error);
