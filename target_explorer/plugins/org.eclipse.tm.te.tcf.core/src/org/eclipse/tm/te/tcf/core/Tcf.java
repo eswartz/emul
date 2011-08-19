@@ -149,6 +149,7 @@ public final class Tcf {
 	 * @param state The new state.
 	 */
 	public static final void fireChannelStateChangeListeners(final IChannel channel, final int state) {
+		Assert.isTrue(Protocol.isDispatchThread());
 		Assert.isNotNull(channel);
 
 		Tcf tcf = getInstance();
@@ -156,13 +157,9 @@ public final class Tcf {
 
 		final IChannelStateChangeListener[] listeners = tcf.channelStateChangeListeners.toArray(new IChannelStateChangeListener[tcf.channelStateChangeListeners.size()]);
 		if (listeners.length > 0) {
-			Protocol.invokeLater(new Runnable() {
-				public void run() {
-					for (IChannelStateChangeListener listener : listeners) {
-						listener.stateChanged(channel, state);
-					}
-				}
-			});
+			for (IChannelStateChangeListener listener : listeners) {
+				listener.stateChanged(channel, state);
+			}
 		}
 	}
 
@@ -195,7 +192,7 @@ public final class Tcf {
 			Protocol.addChannelOpenListener(tcf.channelOpenListener);
 		}
 
-		// Signal to interested listeners that we've started up
+		// Signal (asynchronously) to interested listeners that we've started up
 		final IProtocolStateChangeListener[] listeners = tcf.protocolStateChangeListeners.toArray(new IProtocolStateChangeListener[tcf.protocolStateChangeListeners.size()]);
 		if (listeners.length > 0) {
 			Protocol.invokeLater(new Runnable() {

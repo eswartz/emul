@@ -12,6 +12,7 @@ package org.eclipse.tm.te.tcf.core.internal.listener;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.tm.tcf.protocol.IChannel;
+import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.te.tcf.core.Tcf;
 import org.eclipse.tm.te.tcf.core.internal.interfaces.IChannelOpenListener;
 import org.eclipse.tm.te.tcf.core.internal.nls.Messages;
@@ -54,6 +55,8 @@ public class InternalChannelListener implements IChannel.IChannelListener {
 	 * @see org.eclipse.tm.tcf.protocol.IChannel.IChannelListener#onChannelClosed(java.lang.Throwable)
 	 */
 	public void onChannelClosed(Throwable error) {
+		Assert.isTrue(Protocol.isDispatchThread());
+
 		// Detach the listeners cleanly
 		detachListeners(getChannel());
 
