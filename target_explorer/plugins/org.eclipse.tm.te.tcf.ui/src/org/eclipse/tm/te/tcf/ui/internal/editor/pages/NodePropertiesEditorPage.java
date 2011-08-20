@@ -54,6 +54,8 @@ public class NodePropertiesEditorPage extends AbstractCustomFormToolkitEditorPag
 	 */
 	@Override
 	protected void createFormContent(IManagedForm managedForm) {
+		super.createFormContent(managedForm);
+
 		// Configure the managed form
 		configureManagedForm(managedForm);
 

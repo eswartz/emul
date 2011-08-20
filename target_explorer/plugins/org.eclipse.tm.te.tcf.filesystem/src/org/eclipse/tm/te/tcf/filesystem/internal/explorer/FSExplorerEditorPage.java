@@ -46,6 +46,8 @@ public class FSExplorerEditorPage extends AbstractCustomFormToolkitEditorPage {
 	 */
 	@Override
 	protected void createFormContent(IManagedForm managedForm) {
+		super.createFormContent(managedForm);
+
 		// Configure the managed form
 		configureManagedForm(managedForm);
 
