@@ -17,7 +17,7 @@ import org.eclipse.tm.te.tcf.filesystem.controls.FSTreeControl;
 import org.eclipse.tm.te.tcf.filesystem.internal.help.IContextHelpIds;
 import org.eclipse.tm.te.tcf.filesystem.internal.nls.Messages;
 import org.eclipse.tm.te.ui.forms.CustomFormToolkit;
-import org.eclipse.tm.te.ui.views.editor.AbstractEditorPage;
+import org.eclipse.tm.te.ui.views.editor.AbstractCustomFormToolkitEditorPage;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.forms.IManagedForm;
 import org.eclipse.ui.forms.widgets.ExpandableComposite;
@@ -27,15 +27,10 @@ import org.eclipse.ui.forms.widgets.TableWrapData;
 
 /**
  * Target Explorer: File system editor page implementation.
- *
- * @author uwe.stieber@windriver.com
  */
-public class FSExplorerEditorPage extends AbstractEditorPage {
+public class FSExplorerEditorPage extends AbstractCustomFormToolkitEditorPage {
 	// The references to the pages subcontrol's (needed for disposal)
 	private FSTreeControl fileSystemControl;
-
-	// Reference to the form toolkit instance
-	private CustomFormToolkit toolkit = null;
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.forms.editor.FormPage#dispose()
@@ -54,14 +49,8 @@ public class FSExplorerEditorPage extends AbstractEditorPage {
 		// Configure the managed form
 		configureManagedForm(managedForm);
 
-		// Get the form body
-		Composite body = managedForm.getForm().getBody();
-
-		// Create the toolkit instance
-		toolkit = new CustomFormToolkit(managedForm.getToolkit());
-
 		// Do create the content of the form now
-		doCreateFormContent(body, toolkit);
+		doCreateFormContent(managedForm.getForm().getBody(), getFormToolkit());
 
 		// Re-arrange the controls
 		managedForm.reflow(true);

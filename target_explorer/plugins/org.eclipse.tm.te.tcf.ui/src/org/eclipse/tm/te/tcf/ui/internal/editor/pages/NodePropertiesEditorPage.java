@@ -25,7 +25,7 @@ import org.eclipse.tm.te.tcf.ui.tables.NodePropertiesViewerComparator;
 import org.eclipse.tm.te.ui.forms.CustomFormToolkit;
 import org.eclipse.tm.te.ui.nls.Messages;
 import org.eclipse.tm.te.ui.tables.properties.NodePropertiesTableControl;
-import org.eclipse.tm.te.ui.views.editor.AbstractEditorPage;
+import org.eclipse.tm.te.ui.views.editor.AbstractCustomFormToolkitEditorPage;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.forms.IManagedForm;
 import org.eclipse.ui.forms.widgets.ExpandableComposite;
@@ -36,12 +36,9 @@ import org.eclipse.ui.forms.widgets.TableWrapData;
 /**
  * Target Explorer: TCF node properties details editor page implementation.
  */
-public class NodePropertiesEditorPage extends AbstractEditorPage {
+public class NodePropertiesEditorPage extends AbstractCustomFormToolkitEditorPage {
 	// The references to the pages subcontrol's (needed for disposal)
 	private NodePropertiesTableControl nodePropertiesTableControl;
-
-	// Reference to the form toolkit instance
-	private CustomFormToolkit toolkit = null;
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.forms.editor.FormPage#dispose()
@@ -60,14 +57,8 @@ public class NodePropertiesEditorPage extends AbstractEditorPage {
 		// Configure the managed form
 		configureManagedForm(managedForm);
 
-		// Get the form body
-		Composite body = managedForm.getForm().getBody();
-
-		// Create the toolkit instance
-		toolkit = new CustomFormToolkit(managedForm.getToolkit());
-
 		// Do create the content of the form now
-		doCreateFormContent(body, toolkit);
+		doCreateFormContent(managedForm.getForm().getBody(), getFormToolkit());
 
 		// Re-arrange the controls
 		managedForm.reflow(true);
