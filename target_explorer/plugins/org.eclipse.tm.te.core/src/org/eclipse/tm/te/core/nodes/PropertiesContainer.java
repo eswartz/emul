@@ -54,7 +54,7 @@ public class PropertiesContainer extends PlatformObject implements IPropertiesCo
 	public PropertiesContainer() {
 		super();
 
-		Assert.isTrue(checkThreadAccess());
+		Assert.isTrue(checkThreadAccess(), "Illegal Thread Access"); //$NON-NLS-1$
 
 		// Initialize the unique node id.
 		UUID uuid = UUID.randomUUID();
@@ -227,7 +227,7 @@ public class PropertiesContainer extends PlatformObject implements IPropertiesCo
 	 * @see org.eclipse.tm.te.core.interfaces.IPropertiesContainer#getProperties()
 	 */
 	public Map<String, Object> getProperties() {
-		Assert.isTrue(checkThreadAccess());
+		Assert.isTrue(checkThreadAccess(), "Illegal Thread Access"); //$NON-NLS-1$
 		return Collections.unmodifiableMap(new HashMap<String, Object>(properties));
 	}
 
@@ -235,7 +235,7 @@ public class PropertiesContainer extends PlatformObject implements IPropertiesCo
 	 * @see org.eclipse.tm.te.core.interfaces.IPropertiesContainer#getProperty(java.lang.String)
 	 */
 	public Object getProperty(String key) {
-		Assert.isTrue(checkThreadAccess());
+		Assert.isTrue(checkThreadAccess(), "Illegal Thread Access"); //$NON-NLS-1$
 		return properties.get(key);
 	}
 
@@ -331,7 +331,7 @@ public class PropertiesContainer extends PlatformObject implements IPropertiesCo
 	 * @see org.eclipse.tm.te.core.interfaces.IPropertiesContainer#setProperties(java.util.Map)
 	 */
 	public final void setProperties(Map<String, Object> properties) {
-		Assert.isTrue(checkThreadAccess());
+		Assert.isTrue(checkThreadAccess(), "Illegal Thread Access"); //$NON-NLS-1$
 		Assert.isNotNull(properties);
 
 		this.properties.clear();
@@ -400,7 +400,7 @@ public class PropertiesContainer extends PlatformObject implements IPropertiesCo
 	 * @see org.eclipse.tm.te.core.interfaces.IPropertiesContainer#setProperty(java.lang.String, java.lang.Object)
 	 */
 	public boolean setProperty(String key, Object value) {
-		Assert.isTrue(checkThreadAccess());
+		Assert.isTrue(checkThreadAccess(), "Illegal Thread Access"); //$NON-NLS-1$
 		Assert.isNotNull(key);
 
 		Object oldValue = properties.get(key);
@@ -421,7 +421,7 @@ public class PropertiesContainer extends PlatformObject implements IPropertiesCo
 	 * @see org.eclipse.tm.te.core.interfaces.IPropertiesContainer#clearProperties()
 	 */
 	public final void clearProperties() {
-		Assert.isTrue(checkThreadAccess());
+		Assert.isTrue(checkThreadAccess(), "Illegal Thread Access"); //$NON-NLS-1$
 		properties.clear();
 	}
 

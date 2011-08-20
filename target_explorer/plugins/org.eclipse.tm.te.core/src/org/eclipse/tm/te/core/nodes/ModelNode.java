@@ -51,7 +51,7 @@ public class ModelNode extends PropertiesContainer implements IModelNode, IModel
 	 * @see org.eclipse.tm.te.core.interfaces.nodes.IModelNode#getParent()
 	 */
 	public final IContainerModelNode getParent() {
-		Assert.isTrue(checkThreadAccess());
+		Assert.isTrue(checkThreadAccess(), "Illegal Thread Access"); //$NON-NLS-1$
 		return parent;
 	}
 
@@ -59,7 +59,7 @@ public class ModelNode extends PropertiesContainer implements IModelNode, IModel
 	 * @see org.eclipse.tm.te.core.interfaces.nodes.IModelNode#getParent(java.lang.Class)
 	 */
 	public final IContainerModelNode getParent(Class<?> nodeType) {
-		Assert.isTrue(checkThreadAccess());
+		Assert.isTrue(checkThreadAccess(), "Illegal Thread Access"); //$NON-NLS-1$
 		if (this.parent != null) {
 			if (nodeType.isInstance(this.parent)) {
 				return this.parent;
@@ -73,7 +73,7 @@ public class ModelNode extends PropertiesContainer implements IModelNode, IModel
 	 * @see org.eclipse.tm.te.core.interfaces.nodes.IModelNode#setParent(org.eclipse.tm.te.core.interfaces.nodes.IContainerModelNode)
 	 */
 	public final void setParent(IContainerModelNode parent) {
-		Assert.isTrue(checkThreadAccess());
+		Assert.isTrue(checkThreadAccess(), "Illegal Thread Access"); //$NON-NLS-1$
 		if (this.parent != null) {
 			throw new IllegalStateException("Model node already associated with a parent container model node!"); //$NON-NLS-1$
 		}
@@ -84,7 +84,7 @@ public class ModelNode extends PropertiesContainer implements IModelNode, IModel
 	 * @see org.eclipse.tm.te.core.interfaces.nodes.IModelNode#move(org.eclipse.tm.te.core.interfaces.nodes.IContainerModelNode)
 	 */
 	public final void move(IContainerModelNode newParent) {
-		Assert.isTrue(checkThreadAccess());
+		Assert.isTrue(checkThreadAccess(), "Illegal Thread Access"); //$NON-NLS-1$
 		Assert.isNotNull(newParent);
 
 		// If the node is associated with a parent container, remove the node from
@@ -236,7 +236,7 @@ public class ModelNode extends PropertiesContainer implements IModelNode, IModel
 	 * @see org.eclipse.tm.te.core.interfaces.nodes.IModelNode#setDirty(boolean)
 	 */
 	public final void setDirty(boolean dirty) {
-		Assert.isTrue(checkThreadAccess());
+		Assert.isTrue(checkThreadAccess(), "Illegal Thread Access"); //$NON-NLS-1$
 		this.dirty = dirty;
 	}
 
@@ -244,7 +244,7 @@ public class ModelNode extends PropertiesContainer implements IModelNode, IModel
 	 * @see org.eclipse.tm.te.core.interfaces.nodes.IModelNode#isDirty()
 	 */
 	public final boolean isDirty() {
-		Assert.isTrue(checkThreadAccess());
+		Assert.isTrue(checkThreadAccess(), "Illegal Thread Access"); //$NON-NLS-1$
 		return dirty;
 	}
 
@@ -252,7 +252,7 @@ public class ModelNode extends PropertiesContainer implements IModelNode, IModel
 	 * @see org.eclipse.tm.te.core.interfaces.nodes.IModelNode#setPending(boolean)
 	 */
 	public final void setPending(boolean pending) {
-		Assert.isTrue(checkThreadAccess());
+		Assert.isTrue(checkThreadAccess(), "Illegal Thread Access"); //$NON-NLS-1$
 		this.pending = pending;
 	}
 
@@ -260,7 +260,7 @@ public class ModelNode extends PropertiesContainer implements IModelNode, IModel
 	 * @see org.eclipse.tm.te.core.interfaces.nodes.IModelNode#isPending()
 	 */
 	public final boolean isPending() {
-		Assert.isTrue(checkThreadAccess());
+		Assert.isTrue(checkThreadAccess(), "Illegal Thread Access"); //$NON-NLS-1$
 		return pending;
 	}
 
