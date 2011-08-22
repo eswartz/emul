@@ -452,7 +452,7 @@ public final class EventManager {
 		 * Constructor.
 		 *
 		 * @param configElement The contributing configuration element of the encapsulated event listener.
-		 *                      Must be not <code>null</code>.
+		 *                      Must not be <code>null</code>.
 		 */
 		public EventListenerProxy(IConfigurationElement configElement) {
 			Assert.isNotNull(configElement);

@@ -38,7 +38,7 @@ public interface IContainerModelNode extends IModelNode {
 	/**
 	 * Adds the given child node to the list of children.
 	 *
-	 * @param child The child node to append. Must be not <code>null</code>!
+	 * @param child The child node to append. Must not be <code>null</code>!
 	 */
 	public boolean add(IModelNode child);
 

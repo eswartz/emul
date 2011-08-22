@@ -19,7 +19,7 @@ import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel;
 import org.eclipse.tm.te.tcf.ui.activator.UIPlugin;
 import org.eclipse.tm.te.tcf.ui.internal.ImageConsts;
 import org.eclipse.tm.te.tcf.ui.internal.navigator.images.PeerImageDescriptor;
-import org.eclipse.tm.te.ui.images.AbstractImageDescriptor;
+import org.eclipse.tm.te.ui.jface.images.AbstractImageDescriptor;
 
 
 /**

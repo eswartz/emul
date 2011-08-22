@@ -1,0 +1,17 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: %pluginName
+Bundle-SymbolicName: org.eclipse.tm.te.ui.swt;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Bundle-Activator: org.eclipse.tm.te.ui.swt.activator.UIPlugin
+Bundle-Vendor: %providerName
+Require-Bundle: org.eclipse.ui,
+ org.eclipse.core.runtime
+Bundle-RequiredExecutionEnvironment: J2SE-1.5
+Bundle-ActivationPolicy: lazy
+Bundle-Localization: plugin
+Export-Package: org.eclipse.tm.te.ui.jface.dialogs,
+ org.eclipse.tm.te.ui.jface.images,
+ org.eclipse.tm.te.ui.swt,
+ org.eclipse.tm.te.ui.swt.activator;x-internal:=true,
+ org.eclipse.tm.te.ui.swt.listener

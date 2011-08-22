@@ -17,7 +17,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.tm.te.ui.forms.FormLayoutFactory;
-import org.eclipse.tm.te.ui.utils.SWTControlUtil;
+import org.eclipse.tm.te.ui.swt.SWTControlUtil;
 import org.eclipse.ui.forms.IManagedForm;
 import org.eclipse.ui.forms.SectionPart;
 import org.eclipse.ui.forms.widgets.ExpandableComposite;

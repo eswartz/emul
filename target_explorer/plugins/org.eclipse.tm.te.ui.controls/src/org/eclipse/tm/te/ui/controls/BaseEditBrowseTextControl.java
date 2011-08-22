@@ -44,7 +44,7 @@ import org.eclipse.swt.widgets.Scrollable;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.tm.te.ui.controls.nls.Messages;
 import org.eclipse.tm.te.ui.controls.validator.Validator;
-import org.eclipse.tm.te.ui.utils.SWTControlUtil;
+import org.eclipse.tm.te.ui.swt.SWTControlUtil;
 import org.eclipse.tm.te.ui.wizards.interfaces.IValidatableWizardPage;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 

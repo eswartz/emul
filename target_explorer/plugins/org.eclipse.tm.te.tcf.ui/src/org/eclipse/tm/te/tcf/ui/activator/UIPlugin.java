@@ -15,7 +15,7 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.resource.ImageRegistry;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.tm.te.tcf.ui.internal.ImageConsts;
-import org.eclipse.tm.te.ui.images.AbstractImageDescriptor;
+import org.eclipse.tm.te.ui.jface.images.AbstractImageDescriptor;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
