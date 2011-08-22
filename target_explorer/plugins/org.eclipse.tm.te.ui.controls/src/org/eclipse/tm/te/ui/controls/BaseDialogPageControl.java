@@ -14,16 +14,17 @@ import org.eclipse.jface.dialogs.IDialogPage;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.tm.te.ui.controls.interfaces.IRunnableContextProvider;
+import org.eclipse.ui.forms.widgets.FormToolkit;
 
 
 /**
  * Target Explorer: Common UI control to be embedded within a dialog page.
  */
 public class BaseDialogPageControl extends BaseControl implements IRunnableContextProvider {
-	/**
-	 * Reference to the parent page if the control is embedded within a page.
-	 */
+	// Reference to the parent page
 	private final IDialogPage parentPage;
+	// Reference to the form toolkit to be used to create the controls.
+	private FormToolkit toolkit = null;
 
 	/**
 	 * Constructor.
@@ -52,6 +53,24 @@ public class BaseDialogPageControl extends BaseControl implements IRunnableConte
 	 */
 	public final IDialogPage getParentPage() {
 		return parentPage;
+	}
+
+	/**
+	 * Sets the form toolkit to be used for creating the control widgets.
+	 *
+	 * @param toolkit The form toolkit instance or <code>null</code>.
+	 */
+	public final void setFormToolkit(FormToolkit toolkit) {
+		this.toolkit = toolkit;
+	}
+
+	/**
+	 * Returns the form toolkit used for creating the control widgets.
+	 *
+	 * @return The form toolkit instance or <code>null</code>.
+	 */
+	public final FormToolkit getFormToolkit() {
+		return toolkit;
 	}
 
 	/* (non-Javadoc)

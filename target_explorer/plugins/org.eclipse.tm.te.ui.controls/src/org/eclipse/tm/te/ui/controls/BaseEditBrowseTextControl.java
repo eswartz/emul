@@ -82,9 +82,6 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 
 	private Validator editFieldValidator;
 
-	// If set, the toolkit will be used to create the controls.
-	private FormToolkit toolkit = null;
-
 	/**
 	 * Constructor.
 	 *
@@ -93,24 +90,6 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 	 */
 	public BaseEditBrowseTextControl(IDialogPage parentPage) {
 		super(parentPage);
-	}
-
-	/**
-	 * Sets the form toolkit to be used for creating the control widgets.
-	 *
-	 * @param toolkit The form toolkit instance or <code>null</code>.
-	 */
-	public final void setFormToolkit(FormToolkit toolkit) {
-		this.toolkit = toolkit;
-	}
-
-	/**
-	 * Returns the form toolkit used for creating the control widgets.
-	 *
-	 * @return The form toolkit instance or <code>null</code>.
-	 */
-	public final FormToolkit getFormToolkit() {
-		return toolkit;
 	}
 
 	/**
@@ -478,7 +457,9 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 	protected Composite doCreateInnerPanelComposite(Composite parent) {
 		Assert.isNotNull(parent);
 
-		Composite innerPanel;
+		Composite innerPanel = null;
+		FormToolkit toolkit = getFormToolkit();
+
 		if (isGroup()) {
 			innerPanel = new Group(parent, SWT.NONE);
 			if (toolkit != null) toolkit.adapt(innerPanel);
@@ -560,7 +541,9 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 	protected Control doCreateLabelControl(Composite parent) {
 		Assert.isNotNull(parent);
 
-		Control labelControl;
+		Control labelControl = null;
+		FormToolkit toolkit = getFormToolkit();
+
 		if (!isLabelIsButton()) {
 			labelControl = toolkit != null ? toolkit.createLabel(parent, null) : new Label(parent, SWT.NONE);
 		} else {
@@ -790,6 +773,8 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 		Assert.isNotNull(parent);
 
 		final Scrollable editField;
+		FormToolkit toolkit = getFormToolkit();
+
 		if (hasHistory()) {
 			// if the control should have an history, the edit field control is an combobox
 			int style = SWT.DROP_DOWN;
@@ -1222,6 +1207,8 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 	protected Button doCreateButtonControl(Composite parent) {
 		Assert.isNotNull(parent);
 
+		FormToolkit toolkit = getFormToolkit();
+
 		Button button = toolkit != null ? toolkit.createButton(parent, null, SWT.PUSH) : new Button(parent, SWT.PUSH);
 		// add a whitespace at the beginning and at the end of the button text to make the
 		// button visibly broader than the label itself.
@@ -1284,6 +1271,8 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 	public void setupPanel(Composite parent) {
 		isInitializing = true;
 		super.setupPanel(parent);
+
+		FormToolkit toolkit = getFormToolkit();
 
 		// do we need a group or a plain composite
 		if (!isParentControlIsInnerPanel() || !(parent.getLayout() instanceof GridLayout)) {
