@@ -95,7 +95,7 @@ public abstract class AbstractSection extends SectionPart implements IAdaptable 
 
 		GridData layoutData = new GridData(SWT.BEGINNING, SWT.BEGINNING, false, false);
 		layoutData.horizontalSpan = span;
-		layoutData.widthHint = 0; layoutData.heightHint = SWTControlUtil.convertHeightInCharsToPixels(emptySpace, 1);
+		layoutData.widthHint = 0; layoutData.heightHint = SWTControlUtil.convertHeightInCharsToPixels(emptySpace, 1) / 2;
 
 		emptySpace.setLayoutData(layoutData);
 
