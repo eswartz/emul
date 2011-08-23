@@ -254,7 +254,7 @@ public class TraceHandler {
 	 * @param clazz The class that calls this tracer or <code>null</code>.
 	 */
 	public final void trace(String message, String slotId, Object clazz) {
-		getTracer().trace(message, 0, null, IStatus.INFO, clazz);
+		getTracer().trace(message, 0, slotId, IStatus.INFO, clazz);
 	}
 
 	/**
