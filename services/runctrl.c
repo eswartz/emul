@@ -1189,6 +1189,7 @@ static int update_step_machine_state(Context * ctx) {
             ext->step_range_start = addr;
             ext->step_range_end = addr + 1;
         }
+        /* fall through */
     case RM_STEP_INTO_RANGE:
     case RM_STEP_OVER_RANGE:
     case RM_REVERSE_STEP_INTO_RANGE:
