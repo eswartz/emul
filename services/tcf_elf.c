@@ -630,7 +630,7 @@ int elf_load(ELF_Section * s) {
     if (s->size == 0) return 0;
 
     s->relocate = 0;
-    if (s->type != SHT_REL && s->type != SHT_REL && s->type != SHT_RELA) {
+    if (s->type != SHT_REL && s->type != SHT_RELA) {
         unsigned i;
         for (i = 1; i < s->file->section_cnt; i++) {
             ELF_Section * r = s->file->sections + i;
