@@ -1673,7 +1673,7 @@ static void additive_expression(int mode, Value * v) {
                 v->type = NULL;
             }
 #if ENABLE_Symbols
-            else if (v->type_class == TYPE_CLASS_POINTER && is_number(&x)) {
+            else if ((v->type_class == TYPE_CLASS_POINTER || v->type_class == TYPE_CLASS_ARRAY) && is_number(&x)) {
                 uint64_t value = 0;
                 Symbol * base = NULL;
                 ContextAddress size = 0;
@@ -1685,9 +1685,16 @@ static void additive_expression(int mode, Value * v) {
                 case '+': value = to_uns(mode, v) + to_uns(mode, &x) * size; break;
                 case '-': value = to_uns(mode, v) - to_uns(mode, &x) * size; break;
                 }
+                if (v->type_class == TYPE_CLASS_ARRAY) {
+                    if (get_array_symbol(base, 0, &v->type) < 0 ||
+                        get_symbol_size(v->type, &v->size) < 0) {
+                        error(errno, "Cannot cast to pointer");
+                    }
+                    v->type_class = TYPE_CLASS_POINTER;
+                }
                 set_int_value(v, (size_t)v->size, value);
             }
-            else if (is_number(v) && x.type_class == TYPE_CLASS_POINTER && sy == '+') {
+            else if (is_number(v) && (x.type_class == TYPE_CLASS_POINTER || x.type_class == TYPE_CLASS_ARRAY) && sy == '+') {
                 uint64_t value = 0;
                 Symbol * base = NULL;
                 ContextAddress size = 0;
@@ -1697,6 +1704,12 @@ static void additive_expression(int mode, Value * v) {
                 }
                 value = to_uns(mode, &x) + to_uns(mode, v) * size;
                 v->type = x.type;
+                if (x.type_class == TYPE_CLASS_ARRAY) {
+                    if (get_array_symbol(base, 0, &v->type) < 0 ||
+                        get_symbol_size(v->type, &v->size) < 0) {
+                        error(errno, "Cannot cast to pointer");
+                    }
+                }
                 v->type_class = TYPE_CLASS_POINTER;
                 set_int_value(v, (size_t)x.size, value);
             }
