@@ -18,6 +18,7 @@ Bundle-Localization: plugin
 Export-Package: org.eclipse.tm.te.ui,
  org.eclipse.tm.te.ui.activator;x-internal:=true,
  org.eclipse.tm.te.ui.dialogs,
+ org.eclipse.tm.te.ui.events,
  org.eclipse.tm.te.ui.forms,
  org.eclipse.tm.te.ui.forms.parts,
  org.eclipse.tm.te.ui.interfaces,
