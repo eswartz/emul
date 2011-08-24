@@ -33,7 +33,6 @@
 #include <framework/errors.h>
 
 typedef struct FileInfo FileInfo;
-typedef struct LocationInfo LocationInfo;
 typedef struct ObjectInfo ObjectInfo;
 typedef struct PubNamesInfo PubNamesInfo;
 typedef struct PubNamesTable PubNamesTable;
