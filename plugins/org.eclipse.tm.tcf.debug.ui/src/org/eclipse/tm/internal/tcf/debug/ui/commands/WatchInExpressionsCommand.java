@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.ui.commands;
 
+import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.IExpressionManager;
 import org.eclipse.debug.core.model.IExpression;
 import org.eclipse.debug.ui.IDebugUIConstants;
@@ -32,7 +33,7 @@ public class WatchInExpressionsCommand extends AbstractActionDelegate {
         try {
             IWorkbenchPage page = getWindow().getActivePage();
             page.showView(IDebugUIConstants.ID_EXPRESSION_VIEW, null, IWorkbenchPage.VIEW_ACTIVATE);
-            for (final TCFNode node : getSelectedNodes()) {
+            for (final TCFNode node : getNodes()) {
                 final IExpressionManager manager = node.getModel().getExpressionManager();
                 IExpression e = new TCFTask<IExpression>(node.getChannel()) {
                     public void run() {
@@ -62,7 +63,16 @@ public class WatchInExpressionsCommand extends AbstractActionDelegate {
     private TCFNode[] getNodes() {
         TCFNode[] arr = getSelectedNodes();
         for (TCFNode n : arr) {
-            if (n instanceof IWatchInExpressions) continue;
+            if (n instanceof IWatchInExpressions) {
+                String script = ((IWatchInExpressions)n).getScript();
+                if (script != null) {
+                    IExpressionManager m = DebugPlugin.getDefault().getExpressionManager();
+                    for (final IExpression e : m.getExpressions()) {
+                        if (script.equals(e.getExpressionText())) return new TCFNode[0];
+                    }
+                }
+                continue;
+            }
             return new TCFNode[0];
         }
         return arr;

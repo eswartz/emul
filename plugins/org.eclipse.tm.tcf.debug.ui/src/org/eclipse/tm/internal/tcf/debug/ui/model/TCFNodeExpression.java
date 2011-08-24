@@ -17,6 +17,7 @@ import java.util.Map;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.IExpressionManager;
 import org.eclipse.debug.core.model.IExpression;
+import org.eclipse.debug.core.model.IWatchExpression;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenCountUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IElementEditor;
@@ -63,6 +64,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
     private final TCFData<String> expression_text;
     private final TCFChildrenSubExpressions children;
     private int sort_pos;
+    private boolean enabled = true;
     private IExpressions.Value prev_value;
     private IExpressions.Value next_value;
 
@@ -565,7 +567,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         postAllChangedDelta();
     }
 
-    String getScript() {
+    public String getScript() {
         return script;
     }
 
@@ -583,6 +585,12 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
 
     void setSortPosition(int sort_pos) {
         this.sort_pos = sort_pos;
+    }
+
+    void setEnabled(boolean enabled) {
+        if (this.enabled == enabled) return;
+        this.enabled = enabled;
+        postAllChangedDelta();
     }
 
     /**
@@ -863,112 +871,130 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
 
     @Override
     protected boolean getData(ILabelUpdate result, Runnable done) {
-        TCFDataCache<ISymbols.Symbol> field = model.getSymbolInfoCache(field_id);
-        TCFDataCache<?> pending = null;
-        if (field != null && !field.validate()) pending = field;
-        if (!var_expression.validate()) pending = var_expression;
-        if (!base_text.validate()) pending = base_text;
-        if (!value.validate()) pending = value;
-        if (!type.validate()) pending = type;
-        if (pending != null) {
-            pending.wait(done);
-            return false;
-        }
-        String name = null;
-        if (index >= 0) {
-            if (index == 0 && deref) {
-                name = "*";
+        if (enabled || script == null) {
+            TCFDataCache<ISymbols.Symbol> field = model.getSymbolInfoCache(field_id);
+            TCFDataCache<?> pending = null;
+            if (field != null && !field.validate()) pending = field;
+            if (!var_expression.validate()) pending = var_expression;
+            if (!base_text.validate()) pending = base_text;
+            if (!value.validate()) pending = value;
+            if (!type.validate()) pending = type;
+            if (pending != null) {
+                pending.wait(done);
+                return false;
             }
-            else {
-                name = "[" + index + "]";
+            String name = null;
+            if (index >= 0) {
+                if (index == 0 && deref) {
+                    name = "*";
+                }
+                else {
+                    name = "[" + index + "]";
+                }
             }
-        }
-        if (name == null && field != null && field.getData() != null) name = field.getData().getName();
-        if (name == null && var_expression.getData() != null) {
-            TCFDataCache<ISymbols.Symbol> var = model.getSymbolInfoCache(var_expression.getData().getSymbolID());
-            if (var != null) {
-                if (!var.validate(done)) return false;
-                if (var.getData() != null) name = var.getData().getName();
+            if (name == null && field != null && field.getData() != null) name = field.getData().getName();
+            if (name == null && var_expression.getData() != null) {
+                TCFDataCache<ISymbols.Symbol> var = model.getSymbolInfoCache(var_expression.getData().getSymbolID());
+                if (var != null) {
+                    if (!var.validate(done)) return false;
+                    if (var.getData() != null) name = var.getData().getName();
+                }
             }
-        }
-        if (name == null && base_text.getData() != null) name = base_text.getData();
-        if (name != null) {
-            String cast = model.getCastToType(id);
-            if (cast != null) name = "(" + cast + ")(" + name + ")";
-        }
-        Throwable error = base_text.getError();
-        if (error == null) error = value.getError();
-        String[] cols = result.getColumnIds();
-        if (error != null) {
-            if (cols == null || cols.length <= 1) {
-                result.setForeground(new RGB(255, 0, 0), 0);
-                result.setLabel(name + ": N/A", 0);
+            if (name == null && base_text.getData() != null) name = base_text.getData();
+            if (name != null) {
+                String cast = model.getCastToType(id);
+                if (cast != null) name = "(" + cast + ")(" + name + ")";
             }
-            else {
-                for (int i = 0; i < cols.length; i++) {
-                    String c = cols[i];
-                    if (c.equals(TCFColumnPresentationExpression.COL_NAME)) {
-                        result.setLabel(name, i);
-                    }
-                    else if (c.equals(TCFColumnPresentationExpression.COL_TYPE)) {
-                        if (!type_name.validate(done)) return false;
-                        result.setLabel(type_name.getData(), i);
-                    }
-                    else {
-                        result.setForeground(new RGB(255, 0, 0), i);
-                        result.setLabel("N/A", i);
+            Throwable error = base_text.getError();
+            if (error == null) error = value.getError();
+            String[] cols = result.getColumnIds();
+            if (error != null) {
+                if (cols == null || cols.length <= 1) {
+                    result.setForeground(new RGB(255, 0, 0), 0);
+                    result.setLabel(name + ": N/A", 0);
+                }
+                else {
+                    for (int i = 0; i < cols.length; i++) {
+                        String c = cols[i];
+                        if (c.equals(TCFColumnPresentationExpression.COL_NAME)) {
+                            result.setLabel(name, i);
+                        }
+                        else if (c.equals(TCFColumnPresentationExpression.COL_TYPE)) {
+                            if (!type_name.validate(done)) return false;
+                            result.setLabel(type_name.getData(), i);
+                        }
+                        else {
+                            result.setForeground(new RGB(255, 0, 0), i);
+                            result.setLabel("N/A", i);
+                        }
                     }
                 }
+            }
+            else {
+                if (cols == null) {
+                    setLabel(result, name, 0, 16);
+                }
+                else {
+                    for (int i = 0; i < cols.length; i++) {
+                        String c = cols[i];
+                        if (c.equals(TCFColumnPresentationExpression.COL_NAME)) {
+                            result.setLabel(name, i);
+                        }
+                        else if (c.equals(TCFColumnPresentationExpression.COL_TYPE)) {
+                            if (!type_name.validate(done)) return false;
+                            result.setLabel(type_name.getData(), i);
+                        }
+                        else if (c.equals(TCFColumnPresentationExpression.COL_HEX_VALUE)) {
+                            setLabel(result, null, i, 16);
+                        }
+                        else if (c.equals(TCFColumnPresentationExpression.COL_DEC_VALUE)) {
+                            setLabel(result, null, i, 10);
+                        }
+                    }
+                }
+            }
+            next_value = value.getData();
+            if (isValueChanged(prev_value, next_value)) {
+                RGB c = new RGB(255, 255, 0);
+                result.setBackground(c, 0);
+                if (cols != null) {
+                    for (int i = 1; i < cols.length; i++) {
+                        result.setBackground(c, i);
+                    }
+                }
+            }
+            ISymbols.TypeClass type_class = ISymbols.TypeClass.unknown;
+            ISymbols.Symbol type_symbol = type.getData();
+            if (type_symbol != null) {
+                type_class = type_symbol.getTypeClass();
+            }
+            switch (type_class) {
+            case pointer:
+                result.setImageDescriptor(ImageCache.getImageDescriptor(ImageCache.IMG_VARIABLE_POINTER), 0);
+                break;
+            case composite:
+            case array:
+                result.setImageDescriptor(ImageCache.getImageDescriptor(ImageCache.IMG_VARIABLE_AGGREGATE), 0);
+                break;
+            default:
+                result.setImageDescriptor(ImageCache.getImageDescriptor(ImageCache.IMG_VARIABLE), 0);
             }
         }
         else {
-            if (cols == null) {
-                setLabel(result, name, 0, 16);
+            String[] cols = result.getColumnIds();
+            if (cols == null || cols.length <= 1) {
+                result.setForeground(new RGB(127, 127, 127), 0);
+                result.setLabel(script, 0);
             }
             else {
                 for (int i = 0; i < cols.length; i++) {
                     String c = cols[i];
                     if (c.equals(TCFColumnPresentationExpression.COL_NAME)) {
-                        result.setLabel(name, i);
-                    }
-                    else if (c.equals(TCFColumnPresentationExpression.COL_TYPE)) {
-                        if (!type_name.validate(done)) return false;
-                        result.setLabel(type_name.getData(), i);
-                    }
-                    else if (c.equals(TCFColumnPresentationExpression.COL_HEX_VALUE)) {
-                        setLabel(result, null, i, 16);
-                    }
-                    else if (c.equals(TCFColumnPresentationExpression.COL_DEC_VALUE)) {
-                        setLabel(result, null, i, 10);
+                        result.setForeground(new RGB(127, 127, 127), i);
+                        result.setLabel(script, i);
                     }
                 }
             }
-        }
-        next_value = value.getData();
-        if (isValueChanged(prev_value, next_value)) {
-            RGB c = new RGB(255, 255, 0);
-            result.setBackground(c, 0);
-            if (cols != null) {
-                for (int i = 1; i < cols.length; i++) {
-                    result.setBackground(c, i);
-                }
-            }
-        }
-        ISymbols.TypeClass type_class = ISymbols.TypeClass.unknown;
-        ISymbols.Symbol type_symbol = type.getData();
-        if (type_symbol != null) {
-            type_class = type_symbol.getTypeClass();
-        }
-        switch (type_class) {
-        case pointer:
-            result.setImageDescriptor(ImageCache.getImageDescriptor(ImageCache.IMG_VARIABLE_POINTER), 0);
-            break;
-        case composite:
-        case array:
-            result.setImageDescriptor(ImageCache.getImageDescriptor(ImageCache.IMG_VARIABLE_AGGREGATE), 0);
-            break;
-        default:
-            result.setImageDescriptor(ImageCache.getImageDescriptor(ImageCache.IMG_VARIABLE), 0);
         }
         return true;
     }
@@ -1214,6 +1240,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
     }
 
     public String getDetailText(Runnable done) {
+        if (!enabled) return "Disabled";
         if (!expression.validate(done)) return null;
         if (!value.validate(done)) return null;
         StringBuffer bf = new StringBuffer();
@@ -1273,20 +1300,31 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
 
     @Override
     protected boolean getData(IChildrenCountUpdate result, Runnable done) {
-        if (!children.validate(done)) return false;
-        result.setChildCount(children.size());
+        if (enabled) {
+            if (!children.validate(done)) return false;
+            result.setChildCount(children.size());
+        }
+        else {
+            result.setChildCount(0);
+        }
         return true;
     }
 
     @Override
     protected boolean getData(IChildrenUpdate result, Runnable done) {
+        if (!enabled) return true;
         return children.getData(result, done);
     }
 
     @Override
     protected boolean getData(IHasChildrenUpdate result, Runnable done) {
-        if (!children.validate(done)) return false;
-        result.setHasChilren(children.size() > 0);
+        if (enabled) {
+            if (!children.validate(done)) return false;
+            result.setHasChilren(children.size() > 0);
+        }
+        else {
+            result.setHasChilren(false);
+        }
         return true;
     }
 
@@ -1322,17 +1360,19 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                         done(node.script != null);
                         return;
                     }
-                    if (!node.expression.validate(this)) return;
-                    if (node.expression.getData() != null && node.expression.getData().expression.canAssign()) {
-                        if (!node.value.validate(this)) return;
-                        if (!node.type.validate(this)) return;
-                        if (TCFColumnPresentationExpression.COL_HEX_VALUE.equals(property)) {
-                            done(TCFNumberFormat.isValidHexNumber(node.toNumberString(16)) == null);
-                            return;
-                        }
-                        if (TCFColumnPresentationExpression.COL_DEC_VALUE.equals(property)) {
-                            done(TCFNumberFormat.isValidDecNumber(true, node.toNumberString(10)) == null);
-                            return;
+                    if (node.enabled) {
+                        if (!node.expression.validate(this)) return;
+                        if (node.expression.getData() != null && node.expression.getData().expression.canAssign()) {
+                            if (!node.value.validate(this)) return;
+                            if (!node.type.validate(this)) return;
+                            if (TCFColumnPresentationExpression.COL_HEX_VALUE.equals(property)) {
+                                done(TCFNumberFormat.isValidHexNumber(node.toNumberString(16)) == null);
+                                return;
+                            }
+                            if (TCFColumnPresentationExpression.COL_DEC_VALUE.equals(property)) {
+                                done(TCFNumberFormat.isValidDecNumber(true, node.toNumberString(10)) == null);
+                                return;
+                            }
                         }
                     }
                     done(Boolean.FALSE);
@@ -1460,12 +1500,17 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
     @SuppressWarnings("rawtypes")
     @Override
     public Object getAdapter(Class adapter) {
-        if (adapter == IExpression.class) {
-            final String script = this.script;
-            if (script != null) {
+        if (script != null) {
+            if (adapter == IExpression.class) {
                 IExpressionManager m = DebugPlugin.getDefault().getExpressionManager();
                 for (final IExpression e : m.getExpressions()) {
                     if (script.equals(e.getExpressionText())) return e;
+                }
+            }
+            if (adapter == IWatchExpression.class) {
+                IExpressionManager m = DebugPlugin.getDefault().getExpressionManager();
+                for (final IExpression e : m.getExpressions()) {
+                    if (e instanceof IWatchExpression && script.equals(e.getExpressionText())) return e;
                 }
             }
         }

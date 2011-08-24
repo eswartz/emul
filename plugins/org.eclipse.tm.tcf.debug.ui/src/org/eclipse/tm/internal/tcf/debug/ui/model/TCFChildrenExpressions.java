@@ -13,6 +13,7 @@ package org.eclipse.tm.internal.tcf.debug.ui.model;
 import java.util.HashMap;
 
 import org.eclipse.debug.core.model.IExpression;
+import org.eclipse.debug.core.model.IWatchExpression;
 
 public class TCFChildrenExpressions extends TCFChildren {
 
@@ -53,6 +54,7 @@ public class TCFChildrenExpressions extends TCFChildren {
             TCFNodeExpression n = findScript(text);
             if (n == null) add(n = new TCFNodeExpression(node, text, null, null, -1, false));
             n.setSortPosition(cnt++);
+            if (e instanceof IWatchExpression) n.setEnabled(((IWatchExpression)e).isEnabled());
             data.put(n.id, n);
         }
         set(null, null, data);
