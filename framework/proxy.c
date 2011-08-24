@@ -286,6 +286,26 @@ void proxy_create(Channel * c1, Channel * c2) {
     channel_start(c2);
 }
 
+Channel *proxy_get_host_channel(Channel * c)
+{
+    Proxy * proxy = (Proxy *)c->client_data;
+
+    if (c->connecting != proxy_connecting || proxy == NULL || c != proxy->c)
+        return NULL;
+    if (proxy->other == -1) proxy--;
+    return proxy[0].c;
+}
+
+Channel *proxy_get_target_channel(Channel * c)
+{
+    Proxy * proxy = (Proxy *)c->client_data;
+
+    if (c->connecting != proxy_connecting || proxy == NULL || c != proxy->c)
+        return NULL;
+    if (proxy->other == -1) proxy--;
+    return proxy[1].c;
+}
+
 void add_channel_redirection_listener(ChannelRedirectionListener listener) {
     assert(redirection_listeners_cnt < (int)(sizeof(redirection_listeners) / sizeof(ChannelRedirectionListener)));
     redirection_listeners[redirection_listeners_cnt++] = listener;

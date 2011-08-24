@@ -34,4 +34,18 @@ extern void add_channel_redirection_listener(ChannelRedirectionListener listener
 
 extern void proxy_create(Channel * c1, Channel * c2);
 
+/*
+ * Retrieve host (upstream) channel for proxy connection.  Channel
+ * argument can be either the host or the target channel.  Returns
+ * NULL if not a proxy connection.
+ */
+extern Channel *proxy_get_host_channel(Channel * c);
+
+/*
+ * Retrieve target (downstream) channel for proxy connection.  Channel
+ * argument can be either the host or the target channel.  Returns
+ * NULL if not a proxy connection.
+ */
+extern Channel *proxy_get_target_channel(Channel * c);
+
 #endif /* D_proxy */
