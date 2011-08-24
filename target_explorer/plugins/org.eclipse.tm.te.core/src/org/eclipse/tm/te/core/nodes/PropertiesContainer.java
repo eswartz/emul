@@ -162,10 +162,10 @@ public class PropertiesContainer extends PlatformObject implements IPropertiesCo
 		if (dropEvent(source, key, oldValue, newValue)) {
 			// Log the event dropping if tracing is enabled
 			if (CoreBundleActivator.getTraceHandler().isSlotEnabled(0, ITraceIds.TRACE_EVENTS)) {
-				CoreBundleActivator.getTraceHandler().trace("Drop event notification (not created change event)\n" + //$NON-NLS-1$
-						"for eventId=" + key + ",\n" + //$NON-NLS-1$ //$NON-NLS-2$
-						"currentValue=" + oldValue + ",\n" + //$NON-NLS-1$ //$NON-NLS-2$
-						"newValue    =" + newValue, //$NON-NLS-1$
+				CoreBundleActivator.getTraceHandler().trace("Drop event notification (not created change event)\n\t\t" + //$NON-NLS-1$
+						"for eventId  = " + key + ",\n\t\t" + //$NON-NLS-1$ //$NON-NLS-2$
+						"currentValue = " + oldValue + ",\n\t\t" + //$NON-NLS-1$ //$NON-NLS-2$
+						"newValue     = " + newValue, //$NON-NLS-1$
 						0, ITraceIds.TRACE_EVENTS, IStatus.WARNING, this);
 			}
 			return null;

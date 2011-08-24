@@ -174,12 +174,6 @@ public class ModelNode extends PropertiesContainer implements IModelNode, IModel
 		boolean drop = super.dropEvent(source, key, oldValue, newValue);
 		if (drop) return true;
 
-		// If the parent node has change events disabled, change events
-		// of this (child) node are dropped too.
-		if (getParent() != null && !getParent().changeEventsEnabled()) {
-			return true;
-		}
-
 		// If the parent is null, it must be allowed to fire change events explicitly
 		if (parent == null && suppressEventsOnNullParent) {
 			if (CoreBundleActivator.getTraceHandler().isSlotEnabled(0, ITraceIds.TRACE_EVENTS)) {
