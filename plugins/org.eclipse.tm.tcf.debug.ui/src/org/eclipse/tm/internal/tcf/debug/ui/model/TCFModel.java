@@ -195,6 +195,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     private boolean show_function_arg_names;
     private boolean show_function_arg_values;
     private boolean delay_children_list_updates;
+    private boolean auto_children_list_updates;
 
     private final Map<String,String> action_results = new HashMap<String,String>();
     private final HashMap<String,TCFAction> active_actions = new HashMap<String,TCFAction>();
@@ -627,6 +628,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 stack_frames_limit_value = prefs.getInt(TCFPreferences.PREF_STACK_FRAME_LIMIT_VALUE);
                 show_function_arg_names = prefs.getBoolean(TCFPreferences.PREF_STACK_FRAME_ARG_NAMES);
                 show_function_arg_values = prefs.getBoolean(TCFPreferences.PREF_STACK_FRAME_ARG_VALUES);
+                auto_children_list_updates = prefs.getBoolean(TCFPreferences.PREF_AUTO_CHILDREN_LIST_UPDATES);
                 delay_children_list_updates = prefs.getBoolean(TCFPreferences.PREF_DELAY_CHILDREN_LIST_UPDATES);
                 Protocol.invokeLater(new Runnable() {
                     public void run() {
@@ -799,6 +801,10 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     public boolean getShowFunctionArgValues() {
         return show_function_arg_values;
+    }
+
+    public boolean getAutoChildrenListUpdates() {
+        return auto_children_list_updates;
     }
 
     public boolean getDelayChildrenListUpdates() {

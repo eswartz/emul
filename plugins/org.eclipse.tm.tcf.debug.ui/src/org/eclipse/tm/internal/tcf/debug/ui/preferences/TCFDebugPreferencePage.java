@@ -51,12 +51,20 @@ public class TCFDebugPreferencePage extends FieldEditorPreferencePage implements
         group.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
         BooleanFieldEditor autoThreadListUpdates = new BooleanFieldEditor(
-                TCFPreferences.PREF_DELAY_CHILDREN_LIST_UPDATES,
-                "Delay children list updates in the Debug View until a child context is suspended",
+                TCFPreferences.PREF_AUTO_CHILDREN_LIST_UPDATES,
+                "Automatic children list updates in the Debug View",
                 group);
 
         autoThreadListUpdates.fillIntoGrid(group, 3);
         addField(autoThreadListUpdates);
+
+        BooleanFieldEditor delayThreadListUpdates = new BooleanFieldEditor(
+                TCFPreferences.PREF_DELAY_CHILDREN_LIST_UPDATES,
+                "Delay children list updates in the Debug View until a child context is suspended",
+                group);
+
+        delayThreadListUpdates.fillIntoGrid(group, 3);
+        addField(delayThreadListUpdates);
 
         BooleanFieldEditor syncSteppingEditor = new BooleanFieldEditor(
                 TCFPreferences.PREF_WAIT_FOR_PC_UPDATE_AFTER_STEP,

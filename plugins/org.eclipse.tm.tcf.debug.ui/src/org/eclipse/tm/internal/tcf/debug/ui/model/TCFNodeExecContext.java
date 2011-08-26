@@ -43,6 +43,7 @@ import org.eclipse.tm.tcf.services.IProcesses;
 import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.services.ISymbols;
 import org.eclipse.tm.tcf.util.TCFDataCache;
+import org.eclipse.ui.IViewPart;
 
 public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
 
@@ -122,6 +123,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     private boolean resume_pending;
     private boolean resumed_by_action;
     private TCFNode[] last_stack_trace;
+    private TCFNode[] last_children_list;
     private String last_label;
     private ImageDescriptor last_image;
     private ChildrenStateInfo last_children_state_info;
@@ -714,6 +716,11 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         return (TCFNodeStackFrame)last_stack_trace[0];
     }
 
+    public TCFNodeStackFrame getViewBottomFrame() {
+        if (last_stack_trace == null || last_stack_trace.length == 0) return null;
+        return (TCFNodeStackFrame)last_stack_trace[last_stack_trace.length - 1];
+    }
+
     /**
      * Get context full name - including all ancestor names.
      * Return context ID if the context does not have a name.
@@ -778,6 +785,10 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                 children = children_stack;
             }
             else {
+                if (!model.getAutoChildrenListUpdates() && last_children_list != null) {
+                    result.setChildCount(last_children_list.length);
+                    return true;
+                }
                 children = children_exec;
             }
         }
@@ -804,12 +815,25 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         if (children != null) {
             if (!children.validate(done)) return false;
             if (children == children_stack) last_stack_trace = children_stack.toArray();
+            if (children == children_exec) last_children_list = children_exec.toArray();
             result.setChildCount(children.size());
         }
         else {
             result.setChildCount(0);
         }
         return true;
+    }
+
+    private void setResultChildren(IChildrenUpdate result, TCFNode[] arr) {
+        int offset = 0;
+        int r_offset = result.getOffset();
+        int r_length = result.getLength();
+        for (TCFNode n : arr) {
+            if (offset >= r_offset && offset < r_offset + r_length) {
+                result.setChild(n, offset);
+            }
+            offset++;
+        }
     }
 
     @Override
@@ -821,16 +845,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
             IRunControl.RunControlContext ctx = run_context.getData();
             if (ctx != null && ctx.hasState()) {
                 if (resume_pending && last_stack_trace != null) {
-                    TCFNode[] arr = last_stack_trace;
-                    int offset = 0;
-                    int r_offset = result.getOffset();
-                    int r_length = result.getLength();
-                    for (TCFNode n : arr) {
-                        if (offset >= r_offset && offset < r_offset + r_length) {
-                            result.setChild(n, offset);
-                        }
-                        offset++;
-                    }
+                    setResultChildren(result, last_stack_trace);
                     return true;
                 }
                 if (!state.validate(done)) return false;
@@ -845,6 +860,10 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                 children = children_stack;
             }
             else {
+                if (!model.getAutoChildrenListUpdates() && last_children_list != null) {
+                    setResultChildren(result, last_children_list);
+                    return true;
+                }
                 children = children_exec;
             }
         }
@@ -872,6 +891,10 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         if (children == children_stack) {
             if (!children.validate(done)) return false;
             last_stack_trace = children_stack.toArray();
+        }
+        if (children == children_exec) {
+            if (!children.validate(done)) return false;
+            last_children_list = children_exec.toArray();
         }
         return children.getData(result, done);
     }
@@ -902,6 +925,10 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                 children = children_stack;
             }
             else {
+                if (!model.getAutoChildrenListUpdates() && last_children_list != null) {
+                    result.setHasChilren(last_children_list.length > 0);
+                    return true;
+                }
                 children = children_exec;
             }
         }
@@ -928,6 +955,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         if (children != null) {
             if (!children.validate(done)) return false;
             if (children == children_stack) last_stack_trace = children_stack.toArray();
+            if (children == children_exec) last_children_list = children_exec.toArray();
             result.setHasChilren(children.size() > 0);
         }
         else {
@@ -1072,16 +1100,31 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         return true;
     }
 
+    public void refresh(IViewPart view) {
+        last_children_list = null;
+        last_children_state_info = null;
+        last_stack_trace = null;
+        last_label = null;
+        last_image = null;
+        super.refresh(view);
+    }
+
     void postAllChangedDelta() {
         postContentChangedDelta();
         postStateChangedDelta();
     }
 
     void postContextAddedDelta() {
-        if (last_children_state_info != null && !last_children_state_info.suspended && model.getDelayChildrenListUpdates()) {
-            // Delay content update until a child is suspended.
-            delayed_children_list_delta = true;
-            return;
+        if (last_children_state_info != null) {
+            if (!model.getAutoChildrenListUpdates()) {
+                // Manual manual updates.
+                return;
+            }
+            if (!last_children_state_info.suspended && model.getDelayChildrenListUpdates()) {
+                // Delay content update until a child is suspended.
+                delayed_children_list_delta = true;
+                return;
+            }
         }
         for (TCFModelProxy p : model.getModelProxies()) {
             if (IDebugUIConstants.ID_DEBUG_VIEW.equals(p.getPresentationContext().getId())) {
@@ -1092,10 +1135,16 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     }
 
     private void postContextRemovedDelta() {
-        if (last_children_state_info != null && !last_children_state_info.suspended && model.getDelayChildrenListUpdates()) {
-            // Delay content update until a child is suspended.
-            delayed_children_list_delta = true;
-            return;
+        if (last_children_state_info != null) {
+            if (!model.getAutoChildrenListUpdates()) {
+                // Manual manual updates.
+                return;
+            }
+            if (!last_children_state_info.suspended && model.getDelayChildrenListUpdates()) {
+                // Delay content update until a child is suspended.
+                delayed_children_list_delta = true;
+                return;
+            }
         }
         for (TCFModelProxy p : model.getModelProxies()) {
             if (IDebugUIConstants.ID_DEBUG_VIEW.equals(p.getPresentationContext().getId())) {
@@ -1347,7 +1396,8 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     }
 
     void onPreferencesChanged() {
-        if (delayed_children_list_delta && !model.getDelayChildrenListUpdates()) postContentChangedDelta();
+        if (delayed_children_list_delta && !model.getDelayChildrenListUpdates() ||
+                model.getAutoChildrenListUpdates()) postContentChangedDelta();
         children_stack.onPreferencesChanged();
         postStackChangedDelta();
     }

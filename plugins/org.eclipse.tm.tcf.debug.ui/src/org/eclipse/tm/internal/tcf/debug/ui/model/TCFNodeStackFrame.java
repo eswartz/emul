@@ -229,7 +229,7 @@ public class TCFNodeStackFrame extends TCFNode {
     }
 
     boolean isTraceLimit() {
-        return trace_limit;
+        return trace_limit && ((TCFNodeExecContext)parent).getViewBottomFrame() == this;
     }
 
     void riseTraceLimit() {
@@ -285,7 +285,7 @@ public class TCFNodeStackFrame extends TCFNode {
         if (stack_trace_cache.getData().get(id) == null) {
             result.setLabel("", 0);
         }
-        else if (trace_limit) {
+        else if (isTraceLimit()) {
             result.setLabel("<select to see more frames>", 0);
         }
         else {
