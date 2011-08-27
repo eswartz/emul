@@ -100,7 +100,7 @@
                   The id of the page this page shall be inserted after, or &quot;last&quot; to insert it at the end of the stack. If &quot;insertBefore&quot; is specified non-empty, it will eclipse the &quot;insertAfter&quot; attribute. If neither &quot;insertBefore&quot; or &quot;insertAfter&quot; is specified, the page will be inserted at the end of the stack.
                </documentation>
                <appinfo>
-                  <meta.attribute kind="identifier" basedOn="org.eclipse.te.ui.views.editorPages/editorPage/@id"/>
+                  <meta.attribute kind="identifier" basedOn="org.eclipse.tm.te.ui.views.editorPages/editorPage/@id"/>
                </appinfo>
             </annotation>
             <simpleType>
