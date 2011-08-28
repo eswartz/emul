@@ -106,13 +106,13 @@ public abstract class AbstractImageDescriptor extends CompositeImageDescriptor {
 	 * image registry, centered right on top of the base image.
 	 *
 	 * @param key The overlay image key. Must not be <code>null</code>.
-	 * @param width The width of the overlay image.
-	 * @param height The height of the overlay image.
+	 * @param width The width of the base image.
+	 * @param height The height of the base image.
 	 */
 	protected void drawCenterRight(String key, int width, int height) {
-		Image baseImage = parentImageRegistry.get(key);
-		if (baseImage != null) {
-			ImageData imageData = baseImage.getImageData();
+		Image image = parentImageRegistry.get(key);
+		if (image != null) {
+			ImageData imageData = image.getImageData();
 			if (imageData != null) {
 				int x = StrictMath.max(0, width - imageData.width);
 				int y = StrictMath.max(0, (height - imageData.height + 1) / 2);
@@ -128,9 +128,9 @@ public abstract class AbstractImageDescriptor extends CompositeImageDescriptor {
 	 * @param key The overlay image key. Must not be <code>null</code>.
 	 */
 	protected void drawTopLeft(String key) {
-		Image baseImage = parentImageRegistry.get(key);
-		if (baseImage != null) {
-			ImageData imageData = baseImage.getImageData();
+		Image image = parentImageRegistry.get(key);
+		if (image != null) {
+			ImageData imageData = image.getImageData();
 			if (imageData != null) {
 				drawImage(imageData, 0, 0);
 			}
@@ -142,13 +142,29 @@ public abstract class AbstractImageDescriptor extends CompositeImageDescriptor {
 	 * image registry, top right on top of the base image.
 	 *
 	 * @param key The overlay image key. Must not be <code>null</code>.
-	 * @param width The width of the overlay image.
-	 * @param height The height of the overlay image.
+	 */
+	protected void drawTopRight(String key) {
+		if (getSize() != null) {
+			Point size = getSize();
+			drawTopRight(key, size.x, size.y);
+		} else {
+			// the default eclipse style guide recommendation is 16x16
+			drawTopRight(key, 16, 16);
+		}
+	}
+
+	/**
+	 * Draw the overlay image, found under the specified key in the parent
+	 * image registry, top right on top of the base image.
+	 *
+	 * @param key The overlay image key. Must not be <code>null</code>.
+	 * @param width The width of the base image.
+	 * @param height The height of the base image.
 	 */
 	protected void drawTopRight(String key, int width, int height) {
-		Image baseImage = parentImageRegistry.get(key);
-		if (baseImage != null) {
-			ImageData imageData = baseImage.getImageData();
+		Image image = parentImageRegistry.get(key);
+		if (image != null) {
+			ImageData imageData = image.getImageData();
 			if (imageData != null) {
 				int x = StrictMath.max(0, width - imageData.width);
 				drawImage(imageData, x, 0);
@@ -161,8 +177,8 @@ public abstract class AbstractImageDescriptor extends CompositeImageDescriptor {
 	 * image registry, bottom center on top of the base image.
 	 *
 	 * @param key The overlay image key. Must not be <code>null</code>.
-	 * @param width The width of the overlay image.
-	 * @param height The height of the overlay image.
+	 * @param width The width of the base image.
+	 * @param height The height of the base image.
 	 */
 	protected void drawBottomCenter(String key, int width, int height) {
 		Image image = parentImageRegistry.get(key);
@@ -181,8 +197,8 @@ public abstract class AbstractImageDescriptor extends CompositeImageDescriptor {
 	 * image registry, bottom left on top of the base image.
 	 *
 	 * @param key The overlay image key. Must not be <code>null</code>.
-	 * @param width The width of the overlay image.
-	 * @param height The height of the overlay image.
+	 * @param width The width of the base image.
+	 * @param height The height of the base image.
 	 */
 	protected void drawBottomLeft(String key, int width, int height) {
 		Image image = parentImageRegistry.get(key);
@@ -200,8 +216,8 @@ public abstract class AbstractImageDescriptor extends CompositeImageDescriptor {
 	 * image registry, center left on top of the base image.
 	 *
 	 * @param key The overlay image key. Must not be <code>null</code>.
-	 * @param width The width of the overlay image.
-	 * @param height The height of the overlay image.
+	 * @param width The width of the base image.
+	 * @param height The height of the base image.
 	 */
 	protected void drawCenterLeft(String key, int width, int height) {
 		Image image = parentImageRegistry.get(key);
@@ -235,8 +251,8 @@ public abstract class AbstractImageDescriptor extends CompositeImageDescriptor {
 	 * image registry, bottom right on top of the base image.
 	 *
 	 * @param key The overlay image key. Must not be <code>null</code>.
-	 * @param width The width of the overlay image.
-	 * @param height The height of the overlay image.
+	 * @param width The width of the base image.
+	 * @param height The height of the base image.
 	 */
 	protected void drawBottomRight(String key, int width, int height) {
 		Image image = parentImageRegistry.get(key);

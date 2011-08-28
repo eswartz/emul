@@ -14,12 +14,14 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.SWTException;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.tm.te.ui.forms.FormLayoutFactory;
 import org.eclipse.ui.forms.IManagedForm;
 import org.eclipse.ui.forms.events.HyperlinkEvent;
 import org.eclipse.ui.forms.events.IHyperlinkListener;
 import org.eclipse.ui.forms.widgets.FormText;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 import org.eclipse.ui.forms.widgets.Section;
+import org.eclipse.ui.forms.widgets.TableWrapData;
 
 /**
  * Target Explorer: Abstract form text section implementation.
@@ -47,7 +49,7 @@ public abstract class AbstractFormTextSection extends AbstractSection implements
 	 */
 	public AbstractFormTextSection(IManagedForm form, Composite parent, int style, boolean titleBar) {
 		super(form, parent, style, titleBar);
-
+		getSection().setLayout(FormLayoutFactory.createClearTableWrapLayout(false, 1));
 	}
 
 	/* (non-Javadoc)
@@ -64,12 +66,15 @@ public abstract class AbstractFormTextSection extends AbstractSection implements
 		section.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
 		// Create the section client
-		Composite client = createClientContainer(section, 1, toolkit);
+		Composite client = toolkit.createComposite(section, SWT.NONE);
 		Assert.isNotNull(client);
-		section.setClient(client);
+		client.setLayout(FormLayoutFactory.createSectionClientTableWrapLayout(false, 1));
+		client.setLayoutData(new TableWrapData(TableWrapData.FILL_GRAB));
 
 		FormText text = createFormText(client, toolkit);
 		configureFormText(text);
+
+		section.setClient(client);
 	}
 
 	/**
