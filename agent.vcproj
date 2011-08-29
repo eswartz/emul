@@ -639,6 +639,14 @@
 				RelativePath=".\services\terminals.h"
 				>
 			</File>
+			<File
+				RelativePath=".\services\vm.c"
+				>
+			</File>
+			<File
+				RelativePath=".\services\vm.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="main"

@@ -310,6 +310,14 @@
 				RelativePath="..\agent\services\tcf_elf.h"
 				>
 			</File>
+			<File
+				RelativePath="..\agent\services\vm.c"
+				>
+			</File>
+			<File
+				RelativePath="..\agent\services\vm.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="main"
