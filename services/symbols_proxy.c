@@ -830,7 +830,7 @@ int get_symbol_size(const Symbol * sym, ContextAddress * size) {
     SymInfoCache * c = get_sym_info_cache(sym);
     if (c == NULL) return -1;
     if (!c->has_size) {
-        errno = ERR_INV_CONTEXT;
+        errno = set_errno(ERR_OTHER, "Debug info not available");
         return -1;
     }
     *size = c->size;

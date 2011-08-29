@@ -483,7 +483,6 @@ int get_symbol_name(const Symbol * sym, char ** name) {
 
 int get_symbol_size(const Symbol * sym, ContextAddress * size) {
     uint64_t res = 0;
-    Symbol type = *sym;
     DWORD tag = 0;
 
     assert(sym->magic == SYMBOL_MAGIC);
@@ -501,12 +500,17 @@ int get_symbol_size(const Symbol * sym, ContextAddress * size) {
         *size = sym->info->size;
         return 0;
     }
+    if (sym->module == 0) {
+        errno = set_errno(ERR_OTHER, "Debug info not available");
+        return -1;
+    }
     if (sym->sym_class == SYM_CLASS_REFERENCE || sym->sym_class == SYM_CLASS_FUNCTION) {
         SYMBOL_INFO * info = NULL;
         if (get_sym_info(sym, sym->index, &info) < 0) return -1;
         res = info->Size;
     }
     else {
+        Symbol type = *sym;
         if (get_type_tag(&type, &tag)) return -1;
         if (get_type_info(&type, TI_GET_LENGTH, &res) < 0) return -1;
     }
