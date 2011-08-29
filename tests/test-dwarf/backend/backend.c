@@ -109,13 +109,12 @@ int context_write_reg(Context * ctx, RegisterDefinition * def, unsigned offs, un
 }
 
 int context_read_mem(Context * ctx, ContextAddress address, void * buf, size_t size) {
-    if (address >= frame_addr && address + size <= frame_addr + sizeof(frame_data)) {
+    if (address >= frame_addr && address + size >= address && address + size <= frame_addr + sizeof(frame_data)) {
         memcpy(buf, frame_data + (address - frame_addr), size);
         return 0;
     }
-    /* TODO: context_read_mem */
-    errno = ERR_UNSUPPORTED;
-    return -1;
+    memset(buf, 0, size);
+    return 0;
 }
 
 int context_write_mem(Context * ctx, ContextAddress address, void * buf, size_t size) {
@@ -184,6 +183,34 @@ static void print_time(struct timespec time_start, int cnt) {
 }
 
 static void test(void * args);
+
+static void loc_var_func(void * args, Symbol * sym) {
+    ContextAddress addr = 0;
+    ContextAddress size = 0;
+    if (get_symbol_address(sym, &addr) < 0) {
+        if (strncmp(errno_to_str(errno), "No object location info found", 29) == 0) return;
+        if (strncmp(errno_to_str(errno), "Object is not available", 23) == 0) return;
+        if (strncmp(errno_to_str(errno), "Object has no RT address", 24) == 0) return;
+
+        if (strncmp(errno_to_str(errno), "Register variable", 17) == 0) {
+            int frame = 0;
+            Context * ctx = NULL;
+            RegisterDefinition * reg = NULL;
+            if (get_symbol_register(sym, &ctx, &frame, &reg) < 0) {
+                error("get_symbol_register");
+            }
+            if (get_symbol_size(sym, &size) < 0) {
+                error("get_symbol_size");
+            }
+            return;
+        }
+
+        error("get_symbol_address");
+    }
+    if (get_symbol_size(sym, &size) < 0) {
+        error("get_symbol_size");
+    }
+}
 
 static void next_pc(void) {
     Symbol * sym = NULL;
@@ -263,6 +290,10 @@ static void next_pc(void) {
             if (line_to_address(elf_ctx, elf_file_name, area.start_line, area.start_column, line_numbers_callback, &area) < 0) {
                 error("line_to_address");
             }
+        }
+
+        if (enumerate_symbols(elf_ctx, STACK_TOP_FRAME, loc_var_func, NULL) < 0) {
+            error("enumerate_symbols");
         }
 
         lt_file = NULL;
