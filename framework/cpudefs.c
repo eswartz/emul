@@ -78,7 +78,9 @@ int write_reg_value(StackFrame * frame, RegisterDefinition * reg_def, uint64_t v
         buf[reg_def->big_endian ? reg_def->size - i - 1 : i] = (uint8_t)value;
         value = value >> 8;
     }
-    return write_reg_bytes(frame, reg_def, 0, reg_def->size, buf);
+    if (write_reg_bytes(frame, reg_def, 0, reg_def->size, buf) < 0) return -1;
+    if (!frame->is_top_frame) frame->has_reg_data = 1;
+    return 0;
 }
 
 ContextAddress get_regs_PC(Context * ctx) {

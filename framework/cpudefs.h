@@ -113,6 +113,7 @@ typedef struct StackTracingInfo {
 
 typedef struct StackFrame {
     int is_top_frame;
+    int has_reg_data;
     Context * ctx;
     ContextAddress fp;      /* frame address */
     RegisterData * regs;    /* register values */
