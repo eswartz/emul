@@ -52,9 +52,14 @@ struct FileInfo {
     U4_T mModTime;
     U4_T mSize;
     unsigned mNameHash;
+    FileInfo * mNextInHash;
+    CompUnit * mCompUnit;
 };
 
-#define TAG_fund_type 0x2000
+#define TAG_fund_type     0x2000
+#define TAG_index_range   0x2001
+#define TAG_mod_pointer   0x2002
+#define TAG_mod_reference 0x2003
 
 struct ObjectInfo {
     ObjectInfo * mHashNext;
@@ -64,11 +69,34 @@ struct ObjectInfo {
 
     U8_T mID; /* Link-time debug information entry address: address of .debug_info section + offset in the section */
     U2_T mTag;
-
-    U2_T mFundType;
-    ObjectInfo * mType;
     CompUnit * mCompUnit;
+    ObjectInfo * mType;
     char * mName;
+
+    union {
+        U2_T mFundType;
+        struct {
+            ContextAddress mLowPC;
+            ContextAddress mHighPC;
+        } mAddr;
+        struct {
+            U2_T mFmt;
+            union {
+                I8_T mValue;
+                struct {
+                    U1_T * mAddr;
+                    size_t mSize;
+                } mExpr;
+            } mLow;
+            union {
+                I8_T mValue;
+                struct {
+                    U1_T * mAddr;
+                    size_t mSize;
+                } mExpr;
+            } mHigh;
+        } mRange;
+    } u;
 };
 
 #define OBJECT_ARRAY_SIZE 128
@@ -126,6 +154,7 @@ struct CompUnit {
     ELF_File * mFile;
     ELF_Section * mTextSection;
 
+    U2_T mLanguage;
     ContextAddress mLowPC;
     ContextAddress mHighPC;
 
@@ -194,6 +223,8 @@ struct DWARFCache {
     FrameInfoRange * mFrameInfoRanges;
     unsigned mFrameInfoRangesCnt;
     unsigned mFrameInfoRangesMax;
+    unsigned mFileInfoHashSize;
+    FileInfo ** mFileInfoHash;
 };
 
 /* Return DWARF cache for given file, create and populate the cache if needed, throw an exception if error */

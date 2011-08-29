@@ -223,19 +223,16 @@ int line_to_address(Context * ctx, char * file_name, int line, int column, LineN
                 /* TODO: support for separate debug info files */
                 if (set_trap(&trap)) {
                     DWARFCache * cache = get_dwarf_cache(file);
-                    ObjectInfo * info = cache->mCompUnits;
-                    while (info != NULL) {
-                        unsigned j;
-                        CompUnit * unit = info->mCompUnit;
-                        assert(unit->mFile == file);
-                        if (!unit->mLineInfoLoaded) load_line_numbers(unit);
-                        for (j = 0; j < unit->mFilesCnt; j++) {
-                            FileInfo * f = unit->mFiles + j;
-                            if (f->mNameHash != h) continue;
-                            if (!compare_path(fnm, unit->mDir, f->mDir, f->mName)) continue;
-                            unit_line_to_address(ctx, unit, j, line, column, client, args);
+                    if (cache->mFileInfoHash) {
+                        FileInfo * f = cache->mFileInfoHash[h % cache->mFileInfoHashSize];
+                        while (f != NULL) {
+                            if (f->mNameHash == h && compare_path(fnm, f->mCompUnit->mDir, f->mDir, f->mName)) {
+                                CompUnit * unit = f->mCompUnit;
+                                unsigned j = f - unit->mFiles;
+                                unit_line_to_address(ctx, unit, j, line, column, client, args);
+                            }
+                            f = f->mNextInHash;
                         }
-                        info = info->mSibling;
                     }
                     clear_trap(&trap);
                 }

@@ -160,6 +160,11 @@ void dio_Skip(I8_T Bytes) {
     sDataPos += Bytes;
 }
 
+void dio_SetPos(U8_T Pos) {
+    if (Pos > sDataLen) exception(ERR_EOF);
+    sDataPos = Pos;
+}
+
 void dio_Read(U1_T * Buf, U4_T Size) {
     if (sDataPos + Size > sDataLen) exception(ERR_EOF);
     memcpy(Buf, sData + sDataPos, Size);
@@ -389,7 +394,7 @@ static void dio_ReadFormStringRef(void) {
     }
 }
 
-static void dio_ReadAttribute(U2_T Attr, U2_T Form) {
+void dio_ReadAttribute(U2_T Attr, U2_T Form) {
     dio_gFormSection = NULL;
     dio_gFormDataAddr = NULL;
     dio_gFormDataSize = 0;
@@ -547,7 +552,6 @@ static void dio_FindAbbrevTable(void);
 void dio_ReadUnit(DIO_UnitDescriptor * Unit, DIO_EntryCallBack CallBack) {
     memset(Unit, 0, sizeof(DIO_UnitDescriptor));
     sUnit = Unit;
-    sUnit->mFile = sSection->file;
     sUnit->mSection = sSection;
     sUnit->mUnitOffs = sDataPos;
     sUnit->m64bit = 0;
@@ -741,8 +745,8 @@ void dio_ChkBlock(U2_T Form, U1_T ** Buf, size_t * Size) {
     case FORM_DATA2     :
     case FORM_DATA4     :
     case FORM_DATA8     :
-    case FORM_STRING    :
-    case FORM_STRP      :
+        assert(dio_gFormDataAddr >= sSection->data);
+        assert((U1_T *)dio_gFormDataAddr < (U1_T *)sSection->data + sSection->size);
         *Size = dio_gFormDataSize;
         *Buf = (U1_T *)dio_gFormDataAddr;
         break;

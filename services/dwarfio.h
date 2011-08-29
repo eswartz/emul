@@ -28,7 +28,6 @@
 #include <services/tcf_elf.h>
 
 typedef struct DIO_UnitDescriptor {
-    ELF_File * mFile;
     ELF_Section * mSection;
     U2_T mVersion;
     U1_T m64bit;
@@ -51,6 +50,7 @@ extern void dio_EnterSection(DIO_UnitDescriptor * Unit, ELF_Section * Section, U
 extern void dio_ExitSection(void);
 
 extern void dio_Skip(I8_T Bytes);
+extern void dio_SetPos(U8_T Pos);
 extern void dio_Read(U1_T * Buf, U4_T Size);
 extern U8_T dio_GetPos(void); /* Offset in the section */
 extern U1_T * dio_GetDataPtr(void);
@@ -76,6 +76,8 @@ extern U8_T dio_ReadAddressX(ELF_Section ** s, int Size);
 extern U8_T dio_ReadAddress(ELF_Section ** s);
 
 extern char * dio_ReadString(void);
+
+extern void dio_ReadAttribute(U2_T Attr, U2_T Form);
 
 typedef void (*DIO_EntryCallBack)(U2_T /* Tag */, U2_T /* Attr */, U2_T /* Form */);
 /*

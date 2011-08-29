@@ -766,7 +766,7 @@ static void read_frame_cie(U8_T fde_pos, U8_T pos) {
             " in FDE at 0x%" PRIX64, pos, fde_pos);
         str_exception(ERR_INV_DWARF, msg);
     }
-    dio_Skip(pos - dio_GetPos());
+    dio_SetPos(pos);
     cie_length = dio_ReadU4();
     if (cie_length == ~(U4_T)0) {
         cie_length = dio_ReadU8();
@@ -817,7 +817,7 @@ static void read_frame_cie(U8_T fde_pos, U8_T pos) {
                 break;
             }
         }
-        dio_Skip(aug_pos + aug_length - dio_GetPos());
+        dio_SetPos(aug_pos + aug_length);
     }
     cie_regs.regs_cnt = 0;
     frame_regs.regs_cnt = 0;
@@ -826,7 +826,7 @@ static void read_frame_cie(U8_T fde_pos, U8_T pos) {
         exec_stack_frame_instruction();
     }
     copy_register_rules(&cie_regs, &frame_regs);
-    dio_Skip(saved_pos - dio_GetPos());
+    dio_SetPos(saved_pos);
 }
 
 static void read_frame_fde(ELF_Section * section, U8_T IP, U8_T fde_pos) {
@@ -919,7 +919,7 @@ static void create_search_index(DWARFCache * cache, ELF_Section * section) {
             U4_T alignment = section->alignment;
             if (alignment > 1 && fde_pos % alignment != 0) {
                 /* Workaround for sections with invalid alignment */
-                dio_Skip(fde_pos + alignment - fde_pos % alignment - dio_GetPos());
+                dio_SetPos(fde_pos + alignment - fde_pos % alignment);
                 continue;
             }
             else {
@@ -950,7 +950,7 @@ static void create_search_index(DWARFCache * cache, ELF_Section * section) {
             range->mSize = (ContextAddress)read_frame_data_pointer(rules.addr_encoding, NULL);
             range->mOffset = fde_pos;
         }
-        dio_Skip(fde_end - dio_GetPos());
+        dio_SetPos(fde_end);
     }
     dio_ExitSection();
     qsort(cache->mFrameInfoRanges, cache->mFrameInfoRangesCnt, sizeof(FrameInfoRange), cmp_frame_info_ranges);

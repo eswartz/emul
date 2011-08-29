@@ -147,6 +147,8 @@ static void object2symbol(ObjectInfo * obj, Symbol ** res) {
     case TAG_enumeration_type:
     case TAG_pointer_type:
     case TAG_reference_type:
+    case TAG_mod_pointer:
+    case TAG_mod_reference:
     case TAG_string_type:
     case TAG_structure_type:
     case TAG_subroutine_type:
@@ -247,25 +249,21 @@ static int get_num_prop(ObjectInfo * obj, int at, U8_T * res) {
     return 1;
 }
 
-/* Check 'addr' belongs to an object address range(s) */
-static int check_in_range(ObjectInfo * obj, ContextAddress addr) {
+/* Check run-time 'addr' belongs to an object address range(s) */
+static int check_in_range(ObjectInfo * obj, ContextAddress rt_offs, ContextAddress addr) {
     Trap trap;
 
-    if (set_trap(&trap)) {
-        U8_T pc0, pc1;
-        PropertyValue v0, v1;
-        read_and_evaluate_dwarf_object_property(sym_ctx, sym_frame, 0, obj, AT_low_pc, &v0);
-        read_and_evaluate_dwarf_object_property(sym_ctx, sym_frame, 0, obj, AT_high_pc, &v1);
-        pc0 = get_numeric_property_value(&v0);
-        pc1 = get_numeric_property_value(&v1);
-        clear_trap(&trap);
-        return pc0 <= addr && pc1 > addr;
+    if (obj->u.mAddr.mHighPC > obj->u.mAddr.mLowPC) {
+        ContextAddress lt_addr = addr - rt_offs;
+        return lt_addr >= obj->u.mAddr.mLowPC && lt_addr < obj->u.mAddr.mHighPC;
     }
+
     if (set_trap(&trap)) {
         CompUnit * unit = obj->mCompUnit;
         DWARFCache * cache = get_dwarf_cache(unit->mFile);
         ELF_Section * debug_ranges = cache->mDebugRanges;
         if (debug_ranges != NULL) {
+            ContextAddress lt_addr = addr - rt_offs;
             ContextAddress base = unit->mLowPC;
             PropertyValue v;
             U8_T offs = 0;
@@ -285,7 +283,7 @@ static int check_in_range(ObjectInfo * obj, ContextAddress addr) {
                 else {
                     x = base + x;
                     y = base + y;
-                    if (x <= addr && addr < y) {
+                    if (x <= lt_addr && lt_addr < y) {
                         res = 1;
                         break;
                     }
@@ -300,7 +298,7 @@ static int check_in_range(ObjectInfo * obj, ContextAddress addr) {
     return 0;
 }
 
-static int find_in_object_tree(ObjectInfo * list, ContextAddress ip, const char * name, Symbol ** sym) {
+static int find_in_object_tree(ObjectInfo * list, ContextAddress rt_offs, ContextAddress ip, const char * name, Symbol ** sym) {
     Symbol * sym_imp = NULL;  /* Imported from a namespace */
     Symbol * sym_enu = NULL;  /* Enumeration constant */
     Symbol * sym_cur = NULL;  /* Found in current scope */
@@ -315,9 +313,9 @@ static int find_in_object_tree(ObjectInfo * list, ContextAddress ip, const char 
             }
             if (sym_frame >= 0 && strcmp(obj->mName, "this") == 0 && get_num_prop(obj, AT_artificial, &v) && v != 0) {
                 ObjectInfo * type = get_original_type(obj);
-                if (type->mTag == TAG_pointer_type && type->mType != NULL) {
+                if ((type->mTag == TAG_pointer_type || type->mTag == TAG_mod_pointer) && type->mType != NULL) {
                     type = get_original_type(type->mType);
-                    find_in_object_tree(type->mChildren, 0, name, &sym_this);
+                    find_in_object_tree(type->mChildren, 0, 0, name, &sym_this);
                     if (sym_this != NULL) {
                         sym_this->ctx = sym_ctx;
                         sym_this->frame = sym_frame;
@@ -328,7 +326,7 @@ static int find_in_object_tree(ObjectInfo * list, ContextAddress ip, const char 
         }
         switch (obj->mTag) {
         case TAG_enumeration_type:
-            find_in_object_tree(obj->mChildren, 0, name, &sym_enu);
+            find_in_object_tree(obj->mChildren, 0, 0, name, &sym_enu);
             break;
         case TAG_global_subroutine:
         case TAG_subroutine:
@@ -336,12 +334,12 @@ static int find_in_object_tree(ObjectInfo * list, ContextAddress ip, const char 
         case TAG_entry_point:
         case TAG_lexical_block:
         case TAG_inlined_subroutine:
-            if (ip != 0 && check_in_range(obj, ip)) {
-                if (find_in_object_tree(obj->mChildren, ip, name, sym)) return 1;
+            if (ip != 0 && check_in_range(obj, rt_offs, ip)) {
+                if (find_in_object_tree(obj->mChildren, rt_offs, ip, name, sym)) return 1;
             }
             break;
         case TAG_inheritance:
-            find_in_object_tree(obj->mType->mChildren, 0, name, &sym_base);
+            find_in_object_tree(obj->mType->mChildren, 0, 0, name, &sym_base);
             break;
         case TAG_imported_module:
             {
@@ -349,7 +347,7 @@ static int find_in_object_tree(ObjectInfo * list, ContextAddress ip, const char 
                 ObjectInfo * module;
                 read_and_evaluate_dwarf_object_property(sym_ctx, sym_frame, 0, obj, AT_import, &p);
                 module = find_object(get_dwarf_cache(obj->mCompUnit->mFile), p.mValue);
-                if (module != NULL) find_in_object_tree(module->mChildren, 0, name, &sym_imp);
+                if (module != NULL) find_in_object_tree(module->mChildren, 0, 0, name, &sym_imp);
             }
             break;
         }
@@ -364,13 +362,14 @@ static int find_in_object_tree(ObjectInfo * list, ContextAddress ip, const char 
 }
 
 static int find_in_dwarf(const char * name, Symbol ** sym) {
-    UnitAddressRange * range = elf_find_unit(sym_ctx, sym_ip, sym_ip, NULL);
+    ContextAddress rt_addr = 0;
+    UnitAddressRange * range = elf_find_unit(sym_ctx, sym_ip, sym_ip, &rt_addr);
     *sym = NULL;
     if (range != NULL) {
         CompUnit * unit = range->mUnit;
-        if (find_in_object_tree(unit->mObject->mChildren, sym_ip, name, sym)) return 1;
+        if (find_in_object_tree(unit->mObject->mChildren, rt_addr - range->mAddr, sym_ip, name, sym)) return 1;
         if (unit->mBaseTypes != NULL) {
-            if (find_in_object_tree(unit->mBaseTypes->mObject->mChildren, 0, name, sym)) return 1;
+            if (find_in_object_tree(unit->mBaseTypes->mObject->mChildren, 0, 0, name, sym)) return 1;
         }
     }
     return 0;
@@ -626,7 +625,7 @@ int find_symbol_in_scope(Context * ctx, int frame, ContextAddress ip, Symbol * s
                 DWARFCache * cache = get_dwarf_cache(file);
                 UnitAddressRange * range = find_comp_unit_addr_range(cache, sym_ip, sym_ip);
                 if (range != NULL) {
-                    found = find_in_object_tree(range->mUnit->mObject->mChildren, 0, name, res);
+                    found = find_in_object_tree(range->mUnit->mObject->mChildren, 0, 0, name, res);
                 }
                 if (!found) {
                     found = find_by_name_in_sym_table(cache, name, res);
@@ -647,7 +646,7 @@ int find_symbol_in_scope(Context * ctx, int frame, ContextAddress ip, Symbol * s
     if (!found && !error && scope != NULL && scope->obj != NULL) {
         Trap trap;
         if (set_trap(&trap)) {
-            found = find_in_object_tree(scope->obj->mChildren, 0, name, res);
+            found = find_in_object_tree(scope->obj->mChildren, 0, 0, name, res);
             clear_trap(&trap);
         }
         else {
@@ -666,7 +665,7 @@ int find_symbol_in_scope(Context * ctx, int frame, ContextAddress ip, Symbol * s
     return 0;
 }
 
-static int find_by_addr_in_unit(ObjectInfo * obj, int level, ContextAddress addr, Symbol ** res) {
+static int find_by_addr_in_unit(ObjectInfo * obj, int level, ContextAddress rt_offs, ContextAddress addr, Symbol ** res) {
     while (obj != NULL) {
         switch (obj->mTag) {
         case TAG_global_subroutine:
@@ -675,12 +674,12 @@ static int find_by_addr_in_unit(ObjectInfo * obj, int level, ContextAddress addr
         case TAG_entry_point:
         case TAG_lexical_block:
         case TAG_inlined_subroutine:
-            if (check_in_range(obj, addr)) {
+            if (check_in_range(obj, rt_offs, addr)) {
                 object2symbol(obj, res);
                 return 1;
             }
-            if (check_in_range(obj, sym_ip)) {
-                return find_by_addr_in_unit(obj->mChildren, level + 1, addr, res);
+            if (check_in_range(obj, rt_offs, sym_ip)) {
+                return find_by_addr_in_unit(obj->mChildren, level + 1, rt_offs, addr, res);
             }
             break;
         case TAG_formal_parameter:
@@ -752,24 +751,27 @@ static int find_by_addr_in_sym_tables(ContextAddress addr, Symbol ** res) {
 int find_symbol_by_addr(Context * ctx, int frame, ContextAddress addr, Symbol ** res) {
     Trap trap;
     int found = 0;
+    ContextAddress rt_addr = 0;
     UnitAddressRange * range = NULL;
     if (!set_trap(&trap)) return -1;
     if (frame == STACK_TOP_FRAME && (frame = get_top_frame(ctx)) < 0) exception(errno);
     if (get_sym_context(ctx, frame, addr) < 0) exception(errno);
-    range = elf_find_unit(sym_ctx, addr, addr, NULL);
-    if (range != NULL) found = find_by_addr_in_unit(range->mUnit->mObject->mChildren, 0, addr, res);
+    range = elf_find_unit(sym_ctx, addr, addr, &rt_addr);
+    if (range != NULL) found = find_by_addr_in_unit(range->mUnit->mObject->mChildren,
+        0, rt_addr - range->mAddr, addr, res);
     if (!found) found = find_by_addr_in_sym_tables(addr, res);
     if (!found && sym_ip != 0) {
         /* Search in compilation unit that contains stack frame PC */
-        range = elf_find_unit(sym_ctx, sym_ip, sym_ip, NULL);
-        if (range != NULL) found = find_by_addr_in_unit(range->mUnit->mObject->mChildren, 0, addr, res);
+        range = elf_find_unit(sym_ctx, sym_ip, sym_ip, &rt_addr);
+        if (range != NULL) found = find_by_addr_in_unit(range->mUnit->mObject->mChildren,
+            0, rt_addr - range->mAddr, addr, res);
     }
     if (!found) exception(ERR_SYM_NOT_FOUND);
     clear_trap(&trap);
     return 0;
 }
 
-static void enumerate_local_vars(ObjectInfo * obj, int level,
+static void enumerate_local_vars(ObjectInfo * obj, int level, ContextAddress rt_offs,
                                  EnumerateSymbolsCallBack * call_back, void * args) {
     while (obj != NULL) {
         switch (obj->mTag) {
@@ -779,8 +781,8 @@ static void enumerate_local_vars(ObjectInfo * obj, int level,
         case TAG_entry_point:
         case TAG_lexical_block:
         case TAG_inlined_subroutine:
-            if (check_in_range(obj, sym_ip)) {
-                enumerate_local_vars(obj->mChildren, level + 1, call_back, args);
+            if (check_in_range(obj, rt_offs, sym_ip)) {
+                enumerate_local_vars(obj->mChildren, level + 1, rt_offs, call_back, args);
             }
             break;
         case TAG_formal_parameter:
@@ -803,8 +805,10 @@ int enumerate_symbols(Context * ctx, int frame, EnumerateSymbolsCallBack * call_
     if (frame == STACK_TOP_FRAME && (frame = get_top_frame(ctx)) < 0) exception(errno);
     if (get_sym_context(ctx, frame, 0) < 0) exception(errno);
     if (sym_ip != 0) {
-        UnitAddressRange * range = elf_find_unit(sym_ctx, sym_ip, sym_ip, NULL);
-        if (range != NULL) enumerate_local_vars(range->mUnit->mObject->mChildren, 0, call_back, args);
+        ContextAddress rt_addr = 0;
+        UnitAddressRange * range = elf_find_unit(sym_ctx, sym_ip, sym_ip, &rt_addr);
+        if (range != NULL) enumerate_local_vars(range->mUnit->mObject->mChildren,
+            0, rt_addr - range->mAddr, call_back, args);
     }
     clear_trap(&trap);
     return 0;
@@ -1082,13 +1086,25 @@ static int unpack(const Symbol * sym) {
     return 0;
 }
 
+static U8_T get_default_lower_bound(ObjectInfo * obj) {
+    switch (obj->mCompUnit->mLanguage) {
+    case LANG_FORTRAN77:
+    case LANG_FORTRAN90:
+    case LANG_FORTRAN95:
+        return 1;
+    }
+    return 0;
+}
+
 static U8_T get_object_length(ObjectInfo * obj) {
     U8_T x, y;
 
     if (get_num_prop(obj, AT_count, &x)) return x;
     if (get_num_prop(obj, AT_upper_bound, &x)) {
-        if (get_num_prop(obj, AT_lower_bound, &y)) return x + 1 - y;
-        return x + 1;
+        if (!get_num_prop(obj, AT_lower_bound, &y)) {
+            y = get_default_lower_bound(obj);
+        }
+        return x + 1 - y;
     }
     if (obj->mTag == TAG_enumeration_type) {
         ObjectInfo * c = obj->mChildren;
@@ -1194,6 +1210,8 @@ int get_symbol_type_class(const Symbol * sym, int * type_class) {
             return 0;
         case TAG_pointer_type:
         case TAG_reference_type:
+        case TAG_mod_pointer:
+        case TAG_mod_reference:
             *type_class = TYPE_CLASS_POINTER;
             return 0;
         case TAG_class_type:
@@ -1227,7 +1245,7 @@ int get_symbol_type_class(const Symbol * sym, int * type_class) {
             *type_class = TYPE_CLASS_UNKNOWN;
             return 0;
         case TAG_fund_type:
-            switch (obj->mFundType) {
+            switch (obj->u.mFundType) {
             case FT_boolean:
                 *type_class = TYPE_CLASS_INTEGER;
                 return 0;
@@ -1352,17 +1370,20 @@ int get_symbol_size(const Symbol * sym, ContextAddress * size) {
         if (!set_trap(&trap)) return -1;
         if (dimension == 0) ok = get_num_prop(obj, AT_byte_size, &sz);
         if (!ok && sym->sym_class == SYM_CLASS_FUNCTION) {
-            U8_T l, h;
-            ok = get_num_prop(obj, AT_low_pc, &l) && get_num_prop(obj, AT_high_pc, &h);
-            if (ok) sz = h - l;
+            if (obj->u.mAddr.mHighPC > obj->u.mAddr.mLowPC) {
+                ok = 1;
+                sz = obj->u.mAddr.mHighPC - obj->u.mAddr.mLowPC;
+            }
         }
-        else {
+        else if (!ok) {
             Symbol * s = NULL;
             ObjectInfo * ref = NULL;
-            if (!ok && sym->sym_class == SYM_CLASS_REFERENCE && obj->mType != NULL) {
+            if (sym->sym_class == SYM_CLASS_REFERENCE) {
                 ref = obj;
-                obj = obj->mType;
-                if (dimension == 0) ok = get_num_prop(obj, AT_byte_size, &sz);
+                if (obj->mType != NULL) {
+                    obj = obj->mType;
+                    if (dimension == 0) ok = get_num_prop(obj, AT_byte_size, &sz);
+                }
             }
             while (!ok && obj->mType != NULL) {
                 if (!is_modified_type(obj) && obj->mTag != TAG_enumeration_type) break;
@@ -1370,31 +1391,40 @@ int get_symbol_size(const Symbol * sym, ContextAddress * size) {
                 if (dimension == 0) ok = get_num_prop(obj, AT_byte_size, &sz);
             }
             if (!ok && obj->mTag == TAG_array_type) {
+                unsigned i = 0;
                 U8_T length = 1;
-                int i = dimension;
+                ObjectInfo * elem_type = obj->mType;
                 ObjectInfo * idx = obj->mChildren;
-                while (i > 0 && idx != NULL) {
-                    idx = idx->mSibling;
-                    i--;
-                }
-                if (idx == NULL) exception(ERR_INV_CONTEXT);
                 while (idx != NULL) {
-                    length *= get_object_length(idx);
+                    if (i++ >= dimension) length *= get_object_length(idx);
                     idx = idx->mSibling;
                 }
-                if (obj->mType == NULL) exception(ERR_INV_CONTEXT);
-                obj = obj->mType;
-                ok = get_num_prop(obj, AT_byte_size, &sz);
-                while (!ok && obj->mType != NULL) {
-                    if (!is_modified_type(obj) && obj->mTag != TAG_enumeration_type) break;
-                    obj = obj->mType;
-                    ok = get_num_prop(obj, AT_byte_size, &sz);
+                ok = get_num_prop(obj, AT_stride_size, &sz);
+                if (ok) {
+                    sz = (sz * length + 7) / 8;
                 }
-                if (ok) sz *= length;
+                else {
+                    if (elem_type == NULL) str_exception(ERR_OTHER, "Unknown array element type");
+                    ok = get_num_prop(elem_type, AT_byte_size, &sz);
+                    while (!ok && elem_type->mType != NULL) {
+                        if (!is_modified_type(elem_type) && elem_type->mTag != TAG_enumeration_type) break;
+                        elem_type = elem_type->mType;
+                        ok = get_num_prop(elem_type, AT_byte_size, &sz);
+                    }
+                    if (ok) sz *= length;
+                }
             }
-            if (!ok && obj->mTag == TAG_pointer_type) {
-                sz = obj->mCompUnit->mDesc.mAddressSize;
-                ok = sz > 0;
+            if (!ok && ref && ref->mTag != TAG_member && ref->mTag != TAG_inheritance) {
+                Trap trap;
+                if (set_trap(&trap)) {
+                    PropertyValue v;
+                    read_and_evaluate_dwarf_object_property(sym_ctx, sym_frame, 0, ref, AT_location, &v);
+                    if (v.mRegister) {
+                        sz = v.mRegister->size;
+                        ok = 1;
+                    }
+                    clear_trap(&trap);
+                }
             }
             if (!ok && ref && map_to_sym_table(ref, &s) && get_symbol_size(s, size) == 0) ok = 1;
         }
@@ -1404,6 +1434,10 @@ int get_symbol_size(const Symbol * sym, ContextAddress * size) {
     }
     else if (sym_info != NULL) {
         *size = (ContextAddress)sym_info->size;
+    }
+    else {
+        errno = set_errno(ERR_OTHER, "Debug info not available");
+        return -1;
     }
     return 0;
 }
@@ -1446,7 +1480,7 @@ int get_symbol_base_type(const Symbol * sym, Symbol ** base_type) {
                 return 0;
             }
         }
-        if (obj->mTag == TAG_pointer_type && obj->mType == NULL) {
+        if ((obj->mTag == TAG_pointer_type || obj->mTag == TAG_mod_pointer) && obj->mType == NULL) {
             /* pointer to void */
             alloc_cardinal_type_pseudo_symbol(sym->ctx, 0, base_type);
             return 0;
@@ -1554,7 +1588,7 @@ int get_symbol_lower_bound(const Symbol * sym, int64_t * value) {
         if (idx != NULL) {
             if (get_num_prop(obj, AT_lower_bound, (U8_T *)value)) return 0;
             if (get_error_code(errno) != ERR_SYM_NOT_FOUND) return -1;
-            *value = 0;
+            *value = get_default_lower_bound(obj);
             return 0;
         }
     }
@@ -1763,7 +1797,7 @@ int get_symbol_address(const Symbol * sym, ContextAddress * address) {
         ContextAddress offs = 0;
         ObjectInfo * type = get_original_type(sym->var);
         if (!set_trap(&trap)) return -1;
-        if (type->mTag != TAG_pointer_type || type->mType == NULL) exception(ERR_INV_CONTEXT);
+        if ((type->mTag != TAG_pointer_type && type->mTag != TAG_mod_pointer) || type->mType == NULL) exception(ERR_INV_CONTEXT);
         read_and_evaluate_dwarf_object_property(sym_ctx, sym_frame, 0, sym->var, AT_location, &v);
         if (v.mRegister == NULL) {
             if (elf_read_memory_word(sym_ctx, sym->var->mCompUnit->mFile,
@@ -1796,6 +1830,8 @@ int get_symbol_address(const Symbol * sym, ContextAddress * address) {
         }
         if (get_error_code(errno) != ERR_SYM_NOT_FOUND) return -1;
         if (map_to_sym_table(obj, &s)) return get_symbol_address(s, address);
+        set_errno(ERR_OTHER, "No object location info found in DWARF data");
+        return -1;
     }
     if (sym_info != NULL) {
         if (syminfo2address(sym_ctx, sym_info, address) == 0) return 0;
@@ -1868,6 +1904,7 @@ int get_symbol_flags(const Symbol * sym, SYM_FLAGS * flags) {
             i = i->mType;
             break;
         case TAG_reference_type:
+        case TAG_mod_reference:
             *flags |= SYM_FLAG_REFERENCE;
             i = NULL;
             break;

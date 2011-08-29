@@ -107,16 +107,59 @@ static CompUnit * add_comp_unit(U8_T ID) {
     return Info->mCompUnit;
 }
 
+static U4_T get_fund_type_size(CompUnit * Unit, U2_T ft) {
+    switch (ft) {
+    case FT_char          :
+    case FT_signed_char   :
+    case FT_unsigned_char :
+        return 1;
+    case FT_short         :
+    case FT_signed_short  :
+    case FT_unsigned_short:
+        return 2;
+    case FT_integer       :
+    case FT_signed_integer:
+    case FT_unsigned_integer:
+        return 4;
+    case FT_long          :
+    case FT_signed_long   :
+    case FT_unsigned_long :
+        return Unit->mFile->elf64 ? 8 : 4;
+    case FT_pointer       :
+        return Unit->mDesc.mAddressSize;
+    case FT_float         :
+        return 4;
+    case FT_dbl_prec_float:
+        return 8;
+    case FT_complex       :
+        return 8;
+    case FT_dbl_prec_complex:
+        return 16;
+    case FT_boolean       :
+        return 4;
+    case FT_void          :
+        return 0;
+    }
+    str_exception(ERR_INV_DWARF, "Invalid fundamental type code");
+    return 0;
+}
+
 static void read_mod_fund_type(U2_T Form, ObjectInfo ** Type) {
     U1_T * Buf;
     size_t BufSize;
     size_t BufPos;
+    int i;
+    U2_T FT = 0;
     dio_ChkBlock(Form, &Buf, &BufSize);
-    *Type = add_object_info(sDebugSection->addr + dio_GetPos() - 1);
+    for (i = 0; i < 2; i++) {
+        FT |= (U2_T)Buf[BufSize - 2 +
+            (sDebugSection->file->big_endian ? 1 - i : i)] << (i * 8);
+    }
+    *Type = add_object_info(sDebugSection->addr + dio_GetPos() - 2);
     (*Type)->mTag = TAG_fund_type;
     (*Type)->mCompUnit = sCompUnit;
-    (*Type)->mFundType = Buf[BufSize - 1];
-    BufPos = BufSize - 1;
+    (*Type)->u.mFundType = FT;
+    BufPos = BufSize - 2;
     while (BufPos > 0) {
         U2_T Tag = 0;
         ObjectInfo * Mod = NULL;
@@ -125,11 +168,13 @@ static void read_mod_fund_type(U2_T Form, ObjectInfo ** Type) {
         case MOD_const:
             continue;
         case MOD_pointer_to:
-            Tag = TAG_pointer_type;
+            Tag = TAG_mod_pointer;
             break;
         case MOD_reference_to:
-            Tag = TAG_reference_type;
+            Tag = TAG_mod_reference;
             break;
+        default:
+            str_exception(ERR_INV_DWARF, "Invalid type modifier code");
         }
         Mod = add_object_info(sDebugSection->addr + dio_GetPos() - BufSize + BufPos);
         Mod->mTag = Tag;
@@ -160,11 +205,13 @@ static void read_mod_user_def_type(U2_T Form, ObjectInfo ** Type) {
         case MOD_const:
             continue;
         case MOD_pointer_to:
-            Tag = TAG_pointer_type;
+            Tag = TAG_mod_pointer;
             break;
         case MOD_reference_to:
-            Tag = TAG_reference_type;
+            Tag = TAG_mod_reference;
             break;
+        default:
+            str_exception(ERR_INV_DWARF, "Invalid type modifier code");
         }
         Mod = add_object_info(sDebugSection->addr + dio_GetPos() - BufSize + BufPos);
         Mod->mTag = Tag;
@@ -172,6 +219,125 @@ static void read_mod_user_def_type(U2_T Form, ObjectInfo ** Type) {
         Mod->mType = *Type;
         *Type = Mod;
     }
+}
+
+static I8_T read_long_value(void) {
+    switch (get_fund_type_size(sCompUnit, FT_long)) {
+    case 4: return (I4_T)dio_ReadU4();
+    case 8: return (I8_T)dio_ReadU8();
+    }
+    str_exception(ERR_OTHER, "Invalid size of long int");
+    return 0;
+}
+
+static void read_subscr_data(U2_T Form, ObjectInfo * Array) {
+    U1_T * Buf;
+    size_t BufSize;
+    U8_T BufEnd = 0;
+    U8_T OrgPos = dio_GetPos();
+    ObjectInfo ** Children = &Array->mChildren;
+
+    assert(Array->mChildren == NULL);
+    assert(Array->mType == NULL);
+
+    dio_ChkBlock(Form, &Buf, &BufSize);
+    dio_SetPos(Buf - (U1_T *)sDebugSection->data);
+    BufEnd = dio_GetPos() + BufSize;
+    while (dio_GetPos() < BufEnd) {
+        ObjectInfo * Type = NULL;
+        U1_T Fmt = dio_ReadU1();
+        switch (Fmt) {
+        case FMT_FT_C_C:
+        case FMT_FT_C_X:
+        case FMT_FT_X_C:
+        case FMT_FT_X_X:
+            Type = add_object_info(sDebugSection->addr + dio_GetPos());
+            Type->mTag = TAG_fund_type;
+            Type->mCompUnit = sCompUnit;
+            Type->u.mFundType = dio_ReadU2();
+            break;
+        case FMT_UT_C_C:
+        case FMT_UT_C_X:
+        case FMT_UT_X_C:
+        case FMT_UT_X_X:
+            dio_ReadAttribute(AT_subscr_data, FORM_REF);
+            Type = add_object_info(dio_gFormData);
+            break;
+        }
+        if (Type != NULL) {
+            ObjectInfo * Range = add_object_info(sDebugSection->addr + dio_GetPos());
+            Range->mTag = TAG_index_range;
+            Range->mCompUnit = sCompUnit;
+            Range->mType = Type;
+            Range->u.mRange.mFmt = Fmt;
+            switch (Fmt) {
+            case FMT_FT_C_C:
+            case FMT_FT_C_X:
+            case FMT_UT_C_C:
+            case FMT_UT_C_X:
+                Range->u.mRange.mLow.mValue = read_long_value();
+                break;
+            case FMT_FT_X_C:
+            case FMT_FT_X_X:
+            case FMT_UT_X_C:
+            case FMT_UT_X_X:
+                dio_ReadAttribute(0, FORM_BLOCK2);
+                Range->u.mRange.mLow.mExpr.mAddr = (U1_T *)dio_gFormDataAddr;
+                Range->u.mRange.mLow.mExpr.mSize = dio_gFormDataSize;
+                break;
+            }
+            switch (Fmt) {
+            case FMT_FT_C_C:
+            case FMT_FT_X_C:
+            case FMT_UT_C_C:
+            case FMT_UT_X_C:
+                Range->u.mRange.mHigh.mValue = read_long_value();
+                break;
+            case FMT_FT_C_X:
+            case FMT_FT_X_X:
+            case FMT_UT_C_X:
+            case FMT_UT_X_X:
+                dio_ReadAttribute(0, FORM_BLOCK2);
+                Range->u.mRange.mHigh.mExpr.mAddr = (U1_T *)dio_gFormDataAddr;
+                Range->u.mRange.mHigh.mExpr.mSize = dio_gFormDataSize;
+                break;
+            }
+            *Children = Range;
+            Children = &Range->mSibling;
+        }
+        else if (Fmt == FMT_ET) {
+            U2_T x = dio_ReadU2();
+            U2_T Attr = (x & 0xfff0u) >> 4;
+            U2_T Form = x & 0xfu;
+            dio_ReadAttribute(Attr, Form);
+            switch (Attr) {
+            case AT_fund_type:
+                dio_ChkData(Form);
+                Type = add_object_info(sDebugSection->addr + dio_GetPos() - dio_gFormDataSize);
+                Type->mTag = TAG_fund_type;
+                Type->mCompUnit = sCompUnit;
+                Type->u.mFundType = (U2_T)dio_gFormData;
+                break;
+            case AT_user_def_type:
+                dio_ChkRef(Form);
+                Type = add_object_info(dio_gFormData);
+                break;
+            case AT_mod_fund_type:
+                read_mod_fund_type(Form, &Type);
+                break;
+            case AT_mod_u_d_type:
+                read_mod_user_def_type(Form, &Type);
+                break;
+            default:
+                str_exception(ERR_INV_DWARF, "Invalid array element type format");
+            }
+            Array->mType = Type;
+        }
+        else {
+            str_exception(ERR_INV_DWARF, "Invalid array subscription format");
+        }
+    }
+    dio_SetPos(OrgPos);
 }
 
 static void read_object_info(U2_T Tag, U2_T Attr, U2_T Form) {
@@ -233,7 +399,7 @@ static void read_object_info(U2_T Tag, U2_T Attr, U2_T Form) {
                     if (SiblingPos > 0 && dio_GetPos() >= SiblingPos) break;
                     if (!dio_ReadEntry(read_object_info, 0)) break;
                 }
-                if (SiblingPos > dio_GetPos()) dio_Skip(SiblingPos - dio_GetPos());
+                if (SiblingPos > dio_GetPos()) dio_SetPos(SiblingPos);
                 sParentObject = Parent;
                 sPrevSibling = PrevSibling;
             }
@@ -251,8 +417,8 @@ static void read_object_info(U2_T Tag, U2_T Attr, U2_T Form) {
         dio_ChkData(Form);
         Info->mType = add_object_info(sDebugSection->addr + dio_GetPos() - dio_gFormDataSize);
         Info->mType->mTag = TAG_fund_type;
-        Info->mCompUnit = sCompUnit;
-        Info->mType->mFundType = (U2_T)dio_gFormData;
+        Info->mType->mCompUnit = sCompUnit;
+        Info->mType->u.mFundType = (U2_T)dio_gFormData;
         break;
     case AT_user_def_type:
         dio_ChkRef(Form);
@@ -263,6 +429,9 @@ static void read_object_info(U2_T Tag, U2_T Attr, U2_T Form) {
         break;
     case AT_mod_u_d_type:
         read_mod_user_def_type(Form, &Info->mType);
+        break;
+    case AT_subscr_data:
+        read_subscr_data(Form, Info);
         break;
     case AT_name:
         dio_ChkString(Form);
@@ -275,6 +444,14 @@ static void read_object_info(U2_T Tag, U2_T Attr, U2_T Form) {
     case AT_abstract_origin:
         dio_ChkRef(Form);
         AOrg = add_object_info(dio_gFormData);
+        break;
+    case AT_low_pc:
+        dio_ChkAddr(Form);
+        Info->u.mAddr.mLowPC = (ContextAddress)dio_gFormData;
+        break;
+    case AT_high_pc:
+        dio_ChkAddr(Form);
+        Info->u.mAddr.mHighPC = (ContextAddress)dio_gFormData;
         break;
     }
     if (Tag == TAG_compile_unit) {
@@ -303,6 +480,10 @@ static void read_object_info(U2_T Tag, U2_T Attr, U2_T Form) {
             break;
         case AT_base_types:
             Unit->mBaseTypes = add_comp_unit(dio_gFormData);
+            break;
+        case AT_language:
+            dio_ChkData(Form);
+            Unit->mLanguage = (U2_T)dio_gFormData;
             break;
         }
     }
@@ -358,7 +539,7 @@ static void load_addr_ranges() {
                     }
                     next = dio_GetPos() + size;
                     if (dio_ReadU2() != 2) {
-                        dio_Skip(next - dio_GetPos());
+                        dio_SetPos(next);
                     }
                     else {
                         U8_T offs = dwarf64 ? dio_ReadU8() : (U8_T)dio_ReadU4();
@@ -464,7 +645,7 @@ static void load_pub_names(ELF_Section * sec, PubNamesTable * tbl) {
             tbl->mHash[h] = tbl->mCnt++;
         }
         assert(next >= dio_GetPos());
-        dio_Skip(next - dio_GetPos());
+        dio_SetPos(next);
     }
     dio_ExitSection();
 }
@@ -573,17 +754,68 @@ U8_T get_numeric_property_value(PropertyValue * Value) {
 
 static void read_dwarf_object_property(Context * Ctx, int Frame, ObjectInfo * Obj, U2_T Attr, PropertyValue * Value) {
 
-    if (Obj->mTag == TAG_fund_type) {
-        /* TAG_fund_type is virtual DWARF object that is created by DWARF reader. It has no properties. */
-        exception(ERR_SYM_NOT_FOUND);
-    }
-
     memset(Value, 0, sizeof(PropertyValue));
     Value->mContext = Ctx;
     Value->mFrame = Frame;
     Value->mObject = Obj;
     Value->mAttr = Attr;
     Value->mBigEndian = Obj->mCompUnit->mFile->big_endian;
+
+    if (Obj->mTag >= TAG_fund_type && Obj->mTag < TAG_fund_type + 0x100) {
+        /* Virtual DWARF object that is created by DWARF reader. It has no properties. */
+        if (Obj->mTag == TAG_fund_type) {
+            if (Attr == AT_byte_size) {
+                Value->mValue = get_fund_type_size(Obj->mCompUnit, Obj->u.mFundType);
+                return;
+            }
+        }
+        else if (Obj->mTag == TAG_index_range) {
+            /* TAG_index_range is virtual DWARF object that is created by DWARF reader. It has no properties. */
+            if (Attr == AT_lower_bound) {
+                switch (Obj->u.mRange.mFmt) {
+                case FMT_FT_C_C:
+                case FMT_FT_C_X:
+                case FMT_UT_C_C:
+                case FMT_UT_C_X:
+                    Value->mValue = Obj->u.mRange.mLow.mValue;
+                    return;
+                case FMT_FT_X_C:
+                case FMT_FT_X_X:
+                case FMT_UT_X_C:
+                case FMT_UT_X_X:
+                    Value->mForm = FORM_BLOCK2;
+                    Value->mAddr = Obj->u.mRange.mLow.mExpr.mAddr;
+                    Value->mSize = Obj->u.mRange.mLow.mExpr.mSize;
+                    return;
+                }
+            }
+            if (Attr == AT_upper_bound) {
+                switch (Obj->u.mRange.mFmt) {
+                case FMT_FT_C_C:
+                case FMT_FT_X_C:
+                case FMT_UT_C_C:
+                case FMT_UT_X_C:
+                    Value->mValue = Obj->u.mRange.mHigh.mValue;
+                    return;
+                case FMT_FT_C_X:
+                case FMT_FT_X_X:
+                case FMT_UT_C_X:
+                case FMT_UT_X_X:
+                    Value->mForm = FORM_BLOCK2;
+                    Value->mAddr = Obj->u.mRange.mHigh.mExpr.mAddr;
+                    Value->mSize = Obj->u.mRange.mHigh.mExpr.mSize;
+                    return;
+                }
+            }
+        }
+        else if (Obj->mTag == TAG_mod_pointer || Obj->mTag == TAG_mod_reference) {
+            if (Attr == AT_byte_size) {
+                Value->mValue = Obj->mCompUnit->mDesc.mAddressSize;
+                return;
+            }
+        }
+        exception(ERR_SYM_NOT_FOUND);
+    }
 
     sCompUnit = Obj->mCompUnit;
     sCache = (DWARFCache *)sCompUnit->mFile->dwarf_dt_cache;
@@ -670,6 +902,18 @@ static void read_dwarf_object_property(Context * Ctx, int Frame, ObjectInfo * Ob
             Value->mValue = 0;
             break;
         }
+        if (Attr == AT_byte_size) {
+            if (Obj->mTag == TAG_pointer_type || Obj->mTag == TAG_reference_type || Obj->mTag == TAG_mod_pointer || Obj->mTag == TAG_mod_reference) {
+                Value->mForm = FORM_UDATA;
+                Value->mValue = sCompUnit->mDesc.mAddressSize;
+                break;
+            }
+            if (Obj->mTag == TAG_ptr_to_member_type) {
+                Value->mForm = FORM_UDATA;
+                Value->mValue = sCompUnit->mDesc.mAddressSize * 2;
+                break;
+            }
+        }
         exception(ERR_SYM_NOT_FOUND);
     }
 
@@ -753,6 +997,7 @@ static void free_dwarf_cache(ELF_File * file) {
         loc_free(Cache->mPubNames.mNext);
         loc_free(Cache->mPubTypes.mHash);
         loc_free(Cache->mPubTypes.mNext);
+        loc_free(Cache->mFileInfoHash);
         loc_free(Cache);
         file->dwarf_dt_cache = NULL;
     }
@@ -833,7 +1078,7 @@ static int state_text_pos_comparator(const void * x1, const void * x2) {
     return 0;
 }
 
-static void compute_reverse_lookup_indices(CompUnit * Unit) {
+static void compute_reverse_lookup_indices(DWARFCache * Cache, CompUnit * Unit) {
     U4_T i;
     qsort(Unit->mStates, Unit->mStatesCnt, sizeof(LineNumbersState), state_address_comparator);
     Unit->mStatesIndex = (LineNumbersState **)loc_alloc(sizeof(LineNumbersState *) * Unit->mStatesCnt);
@@ -843,6 +1088,17 @@ static void compute_reverse_lookup_indices(CompUnit * Unit) {
         LineNumbersState * s = Unit->mStatesIndex[i - 1];
         LineNumbersState * n = Unit->mStatesIndex[i];
         s->mNext = n - Unit->mStates;
+    }
+    if (Cache->mFileInfoHash == NULL) {
+        Cache->mFileInfoHashSize = 251;
+        Cache->mFileInfoHash = (FileInfo **)loc_alloc_zero(sizeof(FileInfo *) * Cache->mFileInfoHashSize);
+    }
+    for (i = 0; i < Unit->mFilesCnt; i++) {
+        FileInfo * File = Unit->mFiles + i;
+        unsigned h = File->mNameHash % Cache->mFileInfoHashSize;
+        File->mCompUnit = Unit;
+        File->mNextInHash = Cache->mFileInfoHash[h];
+        Cache->mFileInfoHash[h] = File;
     }
 }
 
@@ -1047,7 +1303,7 @@ void load_line_numbers(CompUnit * Unit) {
             load_line_numbers_v2(Unit, unit_size, dwarf64);
         }
         dio_ExitSection();
-        compute_reverse_lookup_indices(Unit);
+        compute_reverse_lookup_indices(Cache, Unit);
         Unit->mLineInfoLoaded = 1;
         clear_trap(&trap);
     }
