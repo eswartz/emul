@@ -28,6 +28,7 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <framework/errors.h>
+#include <framework/myalloc.h>
 
 pthread_attr_t pthread_create_attr;
 int utf8_locale = 0;
