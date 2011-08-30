@@ -103,7 +103,7 @@ static int syminfo2address(Context * ctx, ELF_SymbolInfo * info, ContextAddress 
     case STT_FUNC:
         {
             U8_T value = info->value;
-            ELF_File * file = info->section->file;
+            ELF_File * file = info->sym_section->file;
             ELF_Section * sec = NULL;
             if (info->section_index == SHN_UNDEF) {
                 errno = ERR_INV_ADDRESS;
