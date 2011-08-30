@@ -53,7 +53,7 @@ import org.eclipse.ui.forms.widgets.FormToolkit;
  * editable field or combo box to the user with the additional capability
  * of browsing for the field value.
  */
-public class BaseEditBrowseTextControl extends BaseDialogPageControl {
+public class BaseEditBrowseTextControl extends BaseDialogPageControl implements SelectionListener, ModifyListener {
 	private boolean isGroup = true;
 	private boolean hasHistroy = true;
 	private boolean isReadOnly = false;
@@ -989,20 +989,6 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 	}
 
 	/**
-	 * Default edit field control modification listener. The listener takes care of
-	 * updating the target server command line control if the parent page is of type
-	 * <code>AbstractTargetServerWizardPage</code>. In all cases, the parent pages
-	 * <code>validatePage()</code> method is called.
-	 */
-	protected final ModifyListener fcModifyListener = new ModifyListener() {
-		public void modifyText(ModifyEvent e) {
-			// validate the page
-			IValidatableWizardPage validatable = getValidatableWizardPage();
-			if (validatable != null) validatable.validatePage();
-		}
-	};
-
-	/**
 	 * Returns the modification listener instance to be registered for the edit field
 	 * control if not <code>null</code>. The default implementation returns always <code>
 	 * null</code>. Subclasses may override this method to provide a suitable modification
@@ -1011,7 +997,16 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 	 * @return The modification listener to register to the edit field control or <code>null</code>.
 	 */
 	protected ModifyListener doGetEditFieldControlModifyListener() {
-		return fcModifyListener;
+		return this;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.swt.events.ModifyListener#modifyText(org.eclipse.swt.events.ModifyEvent)
+	 */
+	public void modifyText(ModifyEvent e) {
+		// validate the page
+		IValidatableWizardPage validatable = getValidatableWizardPage();
+		if (validatable != null) validatable.validatePage();
 	}
 
 	/**
@@ -1027,21 +1022,6 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 	}
 
 	/**
-	 * Default edit field control selection listener. The listener takes care of
-	 * updating the target server command line control if the parent page is of type
-	 * <code>AbstractTargetServerWizardPage</code>. In all cases, the parent pages
-	 * <code>validatePage()</code> method is called.
-	 */
-	protected final SelectionListener fcSelectionListener = new SelectionAdapter() {
-		@Override
-		public void widgetSelected(SelectionEvent e) {
-			// validate the page
-			IValidatableWizardPage validatable = getValidatableWizardPage();
-			if (validatable != null) validatable.validatePage();
-		}
-	};
-
-	/**
 	 * Returns the selection listener instance to be registered for the edit field
 	 * control if not <code>null</code>. The default implementation returns always <code>
 	 * null</code>. Subclasses may override this method to provide a suitable selection
@@ -1051,9 +1031,24 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 	 */
 	protected SelectionListener doGetEditFieldControlSelectionListener() {
 		if (getEditFieldControl() instanceof Combo) {
-			return fcSelectionListener;
+			return this;
 		}
 		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.swt.events.SelectionListener#widgetDefaultSelected(org.eclipse.swt.events.SelectionEvent)
+	 */
+	public void widgetDefaultSelected(SelectionEvent e) {
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.swt.events.SelectionListener#widgetSelected(org.eclipse.swt.events.SelectionEvent)
+	 */
+	public void widgetSelected(SelectionEvent e) {
+		// validate the page
+		IValidatableWizardPage validatable = getValidatableWizardPage();
+		if (validatable != null) validatable.validatePage();
 	}
 
 	/**
