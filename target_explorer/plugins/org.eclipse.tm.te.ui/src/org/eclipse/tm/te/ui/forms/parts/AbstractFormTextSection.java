@@ -10,11 +10,13 @@
 package org.eclipse.tm.te.ui.forms.parts;
 
 import org.eclipse.core.runtime.Assert;
+import org.eclipse.jface.action.IStatusLineManager;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.SWTException;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.tm.te.ui.forms.FormLayoutFactory;
+import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.forms.IManagedForm;
 import org.eclipse.ui.forms.events.HyperlinkEvent;
 import org.eclipse.ui.forms.events.IHyperlinkListener;
@@ -135,12 +137,22 @@ public abstract class AbstractFormTextSection extends AbstractSection implements
 	 * @see org.eclipse.ui.forms.events.IHyperlinkListener#linkEntered(org.eclipse.ui.forms.events.HyperlinkEvent)
 	 */
 	public void linkEntered(HyperlinkEvent e) {
+		Object container = getManagedForm().getContainer();
+		if (container instanceof IEditorPart) {
+			IStatusLineManager manager = ((IEditorPart)container).getEditorSite().getActionBars().getStatusLineManager();
+			manager.setMessage(e.getLabel());
+		}
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.forms.events.IHyperlinkListener#linkExited(org.eclipse.ui.forms.events.HyperlinkEvent)
 	 */
 	public void linkExited(HyperlinkEvent e) {
+		Object container = getManagedForm().getContainer();
+		if (container instanceof IEditorPart) {
+			IStatusLineManager manager = ((IEditorPart)container).getEditorSite().getActionBars().getStatusLineManager();
+			manager.setMessage(null);
+		}
 	}
 
 	/* (non-Javadoc)
