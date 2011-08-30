@@ -63,17 +63,14 @@ static U8_T read_address(void) {
     ELF_Section * section = NULL;
     CompUnit * Unit = sValue->mObject->mCompUnit;
 
-    dio_SetPos(sStartPos + sState.code_pos);
     addr = dio_ReadAddress(&section);
     addr = elf_map_to_run_time_address(sState.ctx, Unit->mFile, section, (ContextAddress)addr);
     if (addr == 0) str_exception(ERR_INV_ADDRESS, "Object has no RT address");
-    sState.code_pos = (size_t)(dio_GetPos() - sStartPos);
     return addr;
 }
 
 static U8_T get_fbreg(void) {
     PropertyValue FP;
-    U8_T Pos = dio_GetPos();
     CompUnit * Unit = sValue->mObject->mCompUnit;
     ObjectInfo * Parent = get_parent_function(sValue->mObject);
     U8_T addr = 0;
@@ -91,6 +88,7 @@ static U8_T get_fbreg(void) {
         assert(sState.ctx == SState.ctx);
         assert(sState.addr_size == SState.addr_size);
         assert(sState.big_endian == SState.big_endian);
+
         sState.code = SState.code;
         sState.code_pos = SState.code_pos;
         sState.code_len = SState.code_len;
@@ -99,14 +97,31 @@ static U8_T get_fbreg(void) {
         sValue = SValue;
     }
 
-    dio_EnterSection(&Unit->mDesc, Unit->mDesc.mSection, Pos);
     if (FP.mRegister != NULL) {
         if (read_reg_value(get_stack_frame(&FP), FP.mRegister, &addr) < 0) exception(errno);
     }
     else {
         addr = get_numeric_property_value(&FP);
     }
-    return addr;
+    dio_EnterSection(&Unit->mDesc, Unit->mDesc.mSection, sStartPos + sState.code_pos);
+    return addr + dio_ReadS8LEB128();
+}
+
+static void client_op(uint8_t op) {
+    dio_SetPos(sStartPos + sState.code_pos);
+    switch (op) {
+    case OP_addr:
+        sState.stk[sState.stk_pos++] = read_address();
+        break;
+    case OP_fbreg:
+        if (sState.stack_frame == STACK_NO_FRAME) str_exception(ERR_INV_CONTEXT, "Invalid stack frame");
+        sState.stk[sState.stk_pos++] = get_fbreg();
+        break;
+    default:
+        trace(LOG_ALWAYS, "Unsupported DWARF expression op 0x%02x", op);
+        str_exception(ERR_UNSUPPORTED, "Unsupported DWARF expression op");
+    }
+    sState.code_pos = (size_t)(dio_GetPos() - sStartPos);
 }
 
 static void evaluate_expression(ELF_Section * Section, U1_T * Buf, size_t Size) {
@@ -186,8 +201,7 @@ void dwarf_evaluate_expression(U8_T BaseAddress, PropertyValue * v) {
     sState.stack_frame = sValue->mFrame;
     sState.reg_id_scope = Unit->mRegIdScope;
     sState.object_address = BaseAddress;
-    sState.read_address = read_address;
-    sState.get_fbreg = get_fbreg;
+    sState.client_op = client_op;;
 
     if (sValue->mAttr != AT_frame_base) sState.stk_pos = 0;
 

@@ -37,9 +37,8 @@ typedef struct VMState {
     size_t code_pos;
     size_t code_len;
 
-    /* VM callbacks */
-    uint64_t (*read_address)(void);
-    uint64_t (*get_fbreg)(void);
+    /* VM callback */
+    void (*client_op)(uint8_t op);
 
     /* Result */
     RegisterDefinition * reg;

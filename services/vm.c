@@ -162,22 +162,12 @@ static void evaluate_expression(void) {
     while (code_pos < code_len && state->piece_bits == 0) {
         uint8_t op = code[code_pos++];
 
-        if (state->stk_pos >= state->stk_max) {
+        if (state->stk_pos + 4 > state->stk_max) {
             state->stk_max += 8;
             state->stk = (uint64_t *)loc_realloc(state->stk, sizeof(uint64_t) * state->stk_max);
         }
 
         switch (op) {
-        case OP_addr:
-            {
-                VMState * s = state;
-                uint64_t addr = 0;
-                get_state(s);
-                addr = s->read_address();
-                set_state(s);
-                state->stk[state->stk_pos++] = addr;
-            }
-            break;
         case OP_deref:
             check_e_stack(1);
             state->stk[state->stk_pos - 1] = read_memory(state->stk[state->stk_pos - 1], state->addr_size);
@@ -542,16 +532,6 @@ static void evaluate_expression(void) {
                 state->stk_pos++;
             }
             break;
-        case OP_fbreg:
-            {
-                uint64_t addr = 0;
-                VMState * s = state;
-                get_state(s);
-                addr = s->get_fbreg();
-                set_state(s);
-                state->stk[state->stk_pos++] = addr + read_i8leb128();
-            }
-            break;
         case OP_call_frame_cfa:
             {
                 StackFrame * frame = get_stack_frame();
@@ -576,8 +556,12 @@ static void evaluate_expression(void) {
         case OP_call4:
         case OP_call_ref:
         default:
-            trace(LOG_ALWAYS, "Unsupported DWARF expression op 0x%02x", op);
-            str_exception(ERR_UNSUPPORTED, "Unsupported DWARF expression op");
+            {
+                VMState * s = state;
+                get_state(s);
+                s->client_op(op);
+                set_state(s);
+            }
         }
     }
 }
