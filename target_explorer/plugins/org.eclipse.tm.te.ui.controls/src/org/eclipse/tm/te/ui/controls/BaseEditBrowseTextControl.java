@@ -617,11 +617,9 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 				SWTControlUtil.setEnabled(getButtonControl(), false);
 			}
 
-			// validate the page content.
-			IDialogPage parentPage = getParentPage();
-			if (parentPage instanceof IValidatableWizardPage) {
-				((IValidatableWizardPage)parentPage).validatePage();
-			}
+			// validate the page
+			IValidatableWizardPage validatable = getValidatableWizardPage();
+			if (validatable != null) validatable.validatePage();
 		}
 	}
 
@@ -991,6 +989,22 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 	}
 
 	/**
+	 * Returns the validatable wizard page instance.
+	 * <p>
+	 * The default implementation is testing the associated
+	 * parent page to implement the {@link IValidatableWizardPage} interface.
+	 *
+	 * @return The validatable wizard page instance or <code>null</code>.
+	 */
+	protected IValidatableWizardPage getValidatableWizardPage() {
+		IDialogPage parentPage = getParentPage();
+		if (parentPage instanceof IValidatableWizardPage) {
+			return (IValidatableWizardPage)parentPage;
+		}
+		return null;
+	}
+
+	/**
 	 * Default edit field control modification listener. The listener takes care of
 	 * updating the target server command line control if the parent page is of type
 	 * <code>AbstractTargetServerWizardPage</code>. In all cases, the parent pages
@@ -998,12 +1012,9 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 	 */
 	protected final ModifyListener fcModifyListener = new ModifyListener() {
 		public void modifyText(ModifyEvent e) {
-			// validate the page content.
-			IDialogPage parentPage = getParentPage();
-			if (parentPage instanceof IValidatableWizardPage) {
-				// Validate the page
-				((IValidatableWizardPage)parentPage).validatePage();
-			}
+			// validate the page
+			IValidatableWizardPage validatable = getValidatableWizardPage();
+			if (validatable != null) validatable.validatePage();
 		}
 	};
 
@@ -1040,11 +1051,9 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 	protected final SelectionListener fcSelectionListener = new SelectionAdapter() {
 		@Override
 		public void widgetSelected(SelectionEvent e) {
-			// validate the page content.
-			IDialogPage parentPage = getParentPage();
-			if (parentPage instanceof IValidatableWizardPage) {
-				((IValidatableWizardPage)parentPage).validatePage();
-			}
+			// validate the page
+			IValidatableWizardPage validatable = getValidatableWizardPage();
+			if (validatable != null) validatable.validatePage();
 		}
 	};
 
