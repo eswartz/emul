@@ -989,22 +989,6 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl {
 	}
 
 	/**
-	 * Returns the validatable wizard page instance.
-	 * <p>
-	 * The default implementation is testing the associated
-	 * parent page to implement the {@link IValidatableWizardPage} interface.
-	 *
-	 * @return The validatable wizard page instance or <code>null</code>.
-	 */
-	protected IValidatableWizardPage getValidatableWizardPage() {
-		IDialogPage parentPage = getParentPage();
-		if (parentPage instanceof IValidatableWizardPage) {
-			return (IValidatableWizardPage)parentPage;
-		}
-		return null;
-	}
-
-	/**
 	 * Default edit field control modification listener. The listener takes care of
 	 * updating the target server command line control if the parent page is of type
 	 * <code>AbstractTargetServerWizardPage</code>. In all cases, the parent pages

@@ -14,6 +14,7 @@ import org.eclipse.jface.dialogs.IDialogPage;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.tm.te.ui.controls.interfaces.IRunnableContextProvider;
+import org.eclipse.tm.te.ui.wizards.interfaces.IValidatableWizardPage;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 
 
@@ -53,6 +54,22 @@ public class BaseDialogPageControl extends BaseControl implements IRunnableConte
 	 */
 	public final IDialogPage getParentPage() {
 		return parentPage;
+	}
+
+	/**
+	 * Returns the validatable wizard page instance.
+	 * <p>
+	 * The default implementation is testing the associated
+	 * parent page to implement the {@link IValidatableWizardPage} interface.
+	 *
+	 * @return The validatable wizard page instance or <code>null</code>.
+	 */
+	public IValidatableWizardPage getValidatableWizardPage() {
+		IDialogPage parentPage = getParentPage();
+		if (parentPage instanceof IValidatableWizardPage) {
+			return (IValidatableWizardPage)parentPage;
+		}
+		return null;
 	}
 
 	/**
