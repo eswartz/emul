@@ -422,48 +422,49 @@ static int find_by_name_in_sym_table(DWARFCache * cache, char * name, Symbol ** 
             ELF_SymbolInfo sym_info;
             unpack_elf_symbol_info(tbl, n, &sym_info);
             if (cmp_symbol_names(name, sym_info.name) == 0) {
+                int found = 0;
                 ContextAddress addr = 0;
-                if (syminfo2address(prs, &sym_info, &addr) == 0) {
-                    int found = 0;
-                    if (sym_info.section_index != SHN_ABS) {
-                        UnitAddressRange * range = elf_find_unit(sym_ctx, addr, addr, NULL);
-                        if (range != NULL) {
-                            ObjectInfo * obj = range->mUnit->mObject->mChildren;
-                            while (obj != NULL) {
-                                switch (obj->mTag) {
-                                case TAG_global_subroutine:
-                                case TAG_global_variable:
-                                case TAG_subroutine:
-                                case TAG_subprogram:
-                                case TAG_variable:
-                                    if (obj->mName != NULL && strcmp(obj->mName, name) == 0) {
-                                        object2symbol(obj, res);
-                                        found = 1;
-                                        cnt++;
-                                    }
-                                    break;
+                if (sym_info.section_index != SHN_ABS && syminfo2address(prs, &sym_info, &addr) == 0) {
+                    UnitAddressRange * range = elf_find_unit(sym_ctx, addr, addr, NULL);
+                    if (range != NULL) {
+                        ObjectInfo * obj = range->mUnit->mObject->mChildren;
+                        while (obj != NULL) {
+                            switch (obj->mTag) {
+                            case TAG_global_subroutine:
+                            case TAG_global_variable:
+                            case TAG_subroutine:
+                            case TAG_subprogram:
+                            case TAG_variable:
+                                if (obj->mName != NULL && strcmp(obj->mName, name) == 0) {
+                                    object2symbol(obj, res);
+                                    found = 1;
+                                    cnt++;
                                 }
-                                obj = obj->mSibling;
+                                break;
                             }
+                            obj = obj->mSibling;
                         }
                     }
-                    if (!found) {
-                        Symbol * sym = alloc_symbol();
-                        sym->frame = STACK_NO_FRAME;
-                        sym->ctx = prs;
-                        sym->tbl = tbl;
-                        sym->index = n;
-                        switch (sym_info.type) {
-                        case STT_FUNC:
-                            sym->sym_class = SYM_CLASS_FUNCTION;
-                            break;
-                        case STT_OBJECT:
-                            sym->sym_class = SYM_CLASS_REFERENCE;
-                            break;
-                        }
-                        *res = sym;
-                        cnt++;
+                }
+                if (!found) {
+                    Symbol * sym = alloc_symbol();
+                    sym->frame = STACK_NO_FRAME;
+                    sym->ctx = prs;
+                    sym->tbl = tbl;
+                    sym->index = n;
+                    switch (sym_info.type) {
+                    case STT_FUNC:
+                        sym->sym_class = SYM_CLASS_FUNCTION;
+                        break;
+                    case STT_OBJECT:
+                        sym->sym_class = SYM_CLASS_REFERENCE;
+                        break;
+                    default:
+                        sym->sym_class = SYM_CLASS_VALUE;
+                        break;
                     }
+                    *res = sym;
+                    cnt++;
                 }
             }
             n = tbl->sym_names_next[n];
@@ -1433,7 +1434,15 @@ int get_symbol_size(const Symbol * sym, ContextAddress * size) {
         clear_trap(&trap);
     }
     else if (sym_info != NULL) {
-        *size = (ContextAddress)sym_info->size;
+        switch (sym_info->type) {
+        case STT_OBJECT:
+        case STT_FUNC:
+            *size = (ContextAddress)sym_info->size;
+            break;
+        default:
+            *size = sym_info->sym_section->file->elf64 ? 8 : 4;
+            break;
+        }
     }
     else {
         errno = set_errno(ERR_OTHER, "Debug info not available");
@@ -1754,6 +1763,28 @@ int get_symbol_value(const Symbol * sym, void ** value, size_t * size, int * big
         set_errno(ERR_OTHER, "Object location or value info not available");
         return -1;
     }
+    if (sym_info != NULL) {
+        switch (sym_info->type) {
+        case STT_OBJECT:
+        case STT_FUNC:
+            set_errno(ERR_OTHER, "Symbol represents an address");
+            return -1;
+        }
+        if (sym_info->sym_section->file->elf64) {
+            static U8_T buf = 0;
+            buf = sym_info->value;
+            *value = &buf;
+            *size = 8;
+        }
+        else {
+            static U4_T buf = 0;
+            buf = (U4_T)sym_info->value;
+            *value = &buf;
+            *size = 4;
+        }
+        *big_endian = big_endian_host();
+        return 0;
+    }
     errno = ERR_INV_CONTEXT;
     return -1;
 }
@@ -1834,7 +1865,7 @@ int get_symbol_address(const Symbol * sym, ContextAddress * address) {
         return -1;
     }
     if (sym_info != NULL) {
-        if (syminfo2address(sym_ctx, sym_info, address) == 0) return 0;
+        return syminfo2address(sym_ctx, sym_info, address);
     }
 
     errno = ERR_INV_CONTEXT;
