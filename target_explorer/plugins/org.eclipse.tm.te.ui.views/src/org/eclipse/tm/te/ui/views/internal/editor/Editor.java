@@ -131,6 +131,8 @@ public class Editor extends FormEditor implements IPersistableEditor {
 	 */
 	@Override
 	public void doSave(IProgressMonitor monitor) {
+		commitPages(true);
+		editorDirtyStateChanged();
 	}
 
 	/* (non-Javadoc)
