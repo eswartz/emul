@@ -9,6 +9,7 @@
  *******************************************************************************/
 package org.eclipse.tm.te.ui.views.editor;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -17,6 +18,7 @@ import org.eclipse.tm.te.core.nls.Messages;
 import org.eclipse.tm.te.ui.views.activator.UIPlugin;
 import org.eclipse.tm.te.ui.views.interfaces.IEditorPage;
 import org.eclipse.ui.IEditorInput;
+import org.eclipse.ui.forms.IManagedForm;
 import org.eclipse.ui.forms.editor.FormPage;
 
 
@@ -59,6 +61,36 @@ public abstract class AbstractEditorPage extends FormPage implements IEditorPage
 	@Override
 	public String getId() {
 		return id;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.forms.editor.FormPage#createFormContent(org.eclipse.ui.forms.IManagedForm)
+	 */
+	@Override
+	protected void createFormContent(IManagedForm managedForm) {
+		super.createFormContent(managedForm);
+		Assert.isNotNull(managedForm);
+		managedForm.setInput(getEditorInputNode());
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.part.EditorPart#setInput(org.eclipse.ui.IEditorInput)
+	 */
+	@Override
+	protected void setInput(IEditorInput input) {
+		super.setInput(input);
+		// Update the managed form too
+		if (getManagedForm() != null) getManagedForm().setInput(getEditorInputNode());
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.part.EditorPart#setInputWithNotify(org.eclipse.ui.IEditorInput)
+	 */
+	@Override
+	protected void setInputWithNotify(IEditorInput input) {
+		super.setInputWithNotify(input);
+		// Update the managed form too
+		if (getManagedForm() != null) getManagedForm().setInput(getEditorInputNode());
 	}
 
 	/**
