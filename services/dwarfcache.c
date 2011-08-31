@@ -511,7 +511,7 @@ static void add_addr_range(ELF_Section * sec, CompUnit * unit, ContextAddress ad
     range->mUnit = unit;
 }
 
-static void load_addr_ranges() {
+static void load_addr_ranges(void) {
     Trap trap;
     unsigned idx;
     ELF_File * file = sCache->mFile;
@@ -609,40 +609,43 @@ static void load_addr_ranges() {
     }
 }
 
-static void load_pub_names(ELF_Section * sec, PubNamesTable * tbl) {
-    tbl->mMax = (unsigned)(sec->size / 16) + 16;
+static void load_pub_names(ELF_Section * debug_info, ELF_Section * pub_names, PubNamesTable * tbl) {
+    tbl->mMax = (unsigned)(pub_names->size / 16) + 16;
     tbl->mHash = (unsigned *)loc_alloc_zero(sizeof(unsigned) * SYM_HASH_SIZE);
     tbl->mNext = (PubNamesInfo *)loc_alloc(sizeof(PubNamesInfo) * tbl->mMax);
     memset(tbl->mNext + tbl->mCnt++, 0, sizeof(PubNamesInfo));
-    dio_EnterSection(NULL, sec, 0);
-    while (dio_GetPos() < sec->size) {
+    dio_EnterSection(NULL, pub_names, 0);
+    while (dio_GetPos() < pub_names->size) {
         int dwarf64 = 0;
         U8_T size = dio_ReadU4();
         U8_T next = 0;
-        U8_T unit_offs = 0;
-        U8_T unit_size = 0;
         if (size == 0xffffffffu) {
             dwarf64 = 1;
             size = dio_ReadU8();
         }
         next = dio_GetPos() + size;
-        dio_ReadU2(); /* version */
-        unit_offs = dwarf64 ? dio_ReadU8() : (U8_T)dio_ReadU4();
-        unit_size = dwarf64 ? dio_ReadU8() : (U8_T)dio_ReadU4();
-        for (;;) {
-            unsigned h;
-            PubNamesInfo * info = NULL;
-            U8_T obj_offs = dwarf64 ? dio_ReadU8() : (U8_T)dio_ReadU4();
-            if (obj_offs == 0) break;
-            if (tbl->mCnt >= tbl->mMax) {
-                tbl->mMax = tbl->mMax * 3 / 2;
-                tbl->mNext = (PubNamesInfo *)loc_realloc(tbl->mNext, sizeof(PubNamesInfo) * tbl->mMax);
+        if (dio_ReadU2() == 2) {
+            U8_T unit_offs = dwarf64 ? dio_ReadU8() : (U8_T)dio_ReadU4();
+            U8_T unit_size = dwarf64 ? dio_ReadU8() : (U8_T)dio_ReadU4();
+            if (unit_offs + unit_size > debug_info->size) str_fmt_exception(ERR_INV_DWARF,
+                "Invalid unit size in %s section", pub_names->name);
+            for (;;) {
+                unsigned h;
+                PubNamesInfo * info = NULL;
+                U8_T obj_offs = dwarf64 ? dio_ReadU8() : (U8_T)dio_ReadU4();
+                if (obj_offs == 0) break;
+                if (obj_offs >= unit_size) str_fmt_exception(ERR_INV_DWARF,
+                    "Invalid object offset in %s section", pub_names->name);
+                if (tbl->mCnt >= tbl->mMax) {
+                    tbl->mMax = tbl->mMax * 3 / 2;
+                    tbl->mNext = (PubNamesInfo *)loc_realloc(tbl->mNext, sizeof(PubNamesInfo) * tbl->mMax);
+                }
+                info = tbl->mNext + tbl->mCnt;
+                h = calc_symbol_name_hash(dio_ReadString());
+                info->mID = debug_info->addr + unit_offs + obj_offs;
+                info->mNext = tbl->mHash[h];
+                tbl->mHash[h] = tbl->mCnt++;
             }
-            info = tbl->mNext + tbl->mCnt;
-            h = calc_symbol_name_hash(dio_ReadString());
-            info->mID = sec->addr + unit_offs + obj_offs;
-            info->mNext = tbl->mHash[h];
-            tbl->mHash[h] = tbl->mCnt++;
         }
         assert(next >= dio_GetPos());
         dio_SetPos(next);
@@ -655,6 +658,7 @@ static void load_debug_sections(void) {
     unsigned idx;
     ELF_Section * pub_names = NULL;
     ELF_Section * pub_types = NULL;
+    ELF_Section * debug_info = NULL;
     ELF_File * file = sCache->mFile;
 
     memset(&trap, 0, sizeof(trap));
@@ -664,6 +668,7 @@ static void load_debug_sections(void) {
         if (sec->size == 0) continue;
         if (sec->name == NULL) continue;
         if (strcmp(sec->name, ".debug") == 0 || strcmp(sec->name, ".debug_info") == 0) {
+            if (strcmp(sec->name, ".debug_info") == 0) debug_info = sec;
             sDebugSection = sec;
             sParentObject = NULL;
             sPrevSibling = NULL;
@@ -708,8 +713,10 @@ static void load_debug_sections(void) {
         }
     }
 
-    if (pub_names) load_pub_names(pub_names, &sCache->mPubNames);
-    if (pub_types) load_pub_names(pub_types, &sCache->mPubTypes);
+    if (debug_info) {
+        if (pub_names) load_pub_names(debug_info, pub_names, &sCache->mPubNames);
+        if (pub_types) load_pub_names(debug_info, pub_types, &sCache->mPubTypes);
+    }
 
     if (trap.error) exception(trap.error);
 }
