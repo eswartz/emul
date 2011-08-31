@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -153,7 +154,20 @@ public class LocatorModelRefreshService extends AbstractLocatorModelService impl
 					for (File candidate : candidates) {
 						try {
 							Properties properties = new Properties();
-							properties.load(new FileInputStream(candidate));
+
+							// Load the properties found in the candidate file into
+							// the Properties object. The input stream passed to
+							// the Properties.load(...) method needs to be closed
+							// manually afterwards.
+							InputStream is = null;
+							try {
+								is = new FileInputStream(candidate);
+								properties.load(is);
+							} finally {
+								if (is != null) {
+									try { is.close(); } catch (IOException e) { /* ignored on purpose */ }
+								}
+							}
 
 							// Remember the file path within the properties
 							properties.setProperty("Path", candidate.getAbsolutePath()); //$NON-NLS-1$

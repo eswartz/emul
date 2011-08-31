@@ -70,6 +70,17 @@ public class PropertiesFilePersistenceDelegate extends AbstractPersistenceDelega
 	 */
 	public boolean delete(IPath path) throws IOException {
 		Assert.isNotNull(path);
+
+		// The incoming path has to be an absolute path
+		if (!path.isAbsolute()) {
+			throw new IOException("Not Absolute"); //$NON-NLS-1$
+		}
+
+		// If the file extension is no set, default to "properties"
+		if (path.getFileExtension() == null) {
+			path = path.addFileExtension("properties"); //$NON-NLS-1$
+		}
+
 		return path.toFile().delete();
 	}
 

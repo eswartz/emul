@@ -46,14 +46,18 @@ public class PeersPersistenceDelegate extends AbstractPersistenceDelegate {
 			path = path.addFileExtension("ini"); //$NON-NLS-1$
 		}
 
-		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path.toFile()), "UTF-8")); //$NON-NLS-1$
-		for (String attribute : data.getProperties().keySet()) {
-			writer.write(attribute);
-			writer.write('=');
-			writer.write(data.getStringProperty(attribute));
-			writer.newLine();
+		BufferedWriter writer = null;
+		try {
+			writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path.toFile()), "UTF-8")); //$NON-NLS-1$
+			for (String attribute : data.getProperties().keySet()) {
+				writer.write(attribute);
+				writer.write('=');
+				writer.write(data.getStringProperty(attribute));
+				writer.newLine();
+			}
+		} finally {
+			writer.close();
 		}
-		writer.close();
 	}
 
 	/* (non-Javadoc)
