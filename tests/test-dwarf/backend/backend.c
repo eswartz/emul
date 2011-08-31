@@ -185,6 +185,8 @@ static void print_time(struct timespec time_start, int cnt) {
 static void test(void * args);
 
 static void loc_var_func(void * args, Symbol * sym) {
+    int frame = 0;
+    Context * ctx = NULL;
     RegisterDefinition * reg = NULL;
     ContextAddress addr = 0;
     ContextAddress size = 0;
@@ -196,24 +198,22 @@ static void loc_var_func(void * args, Symbol * sym) {
     Symbol * base_type = NULL;
     ContextAddress length = 0;
     int64_t lower_bound = 0;
+    void * value = NULL;
+    size_t value_size = 0;
+    int value_big_endian = 0;
 
     if (get_symbol_flags(sym, &flags) < 0) {
         error("get_symbol_flags");
     }
 
     if (get_symbol_address(sym, &addr) < 0) {
-        if (strncmp(errno_to_str(errno), "No object location info found", 29) == 0) return;
-        if (strncmp(errno_to_str(errno), "Object is not available", 23) == 0) return;
-        if (strncmp(errno_to_str(errno), "Object has no RT address", 24) == 0) return;
-
-        if (strncmp(errno_to_str(errno), "Register variable", 17) == 0) {
-            int frame = 0;
-            Context * ctx = NULL;
-            if (get_symbol_register(sym, &ctx, &frame, &reg) < 0) {
-                error("get_symbol_register");
-            }
-        }
-        else {
+        int err = errno;
+        if ((get_symbol_register(sym, &ctx, &frame, &reg) < 0 || reg == NULL) &&
+            (get_symbol_value(sym, &value, &value_size, &value_big_endian) < 0 || value == NULL)) {
+            if (strncmp(errno_to_str(err), "No object location info found", 29) == 0) return;
+            if (strncmp(errno_to_str(err), "Object is not available", 23) == 0) return;
+            if (strncmp(errno_to_str(err), "Object has no RT address", 24) == 0) return;
+            errno = err;
             error("get_symbol_address");
         }
     }
@@ -221,7 +221,7 @@ static void loc_var_func(void * args, Symbol * sym) {
         error("get_symbol_size");
     }
     if (get_symbol_class(sym, &symbol_class) < 0) {
-        error("get_symbol_type");
+        error("get_symbol_class");
     }
     if (get_symbol_type(sym, &type) < 0) {
         error("get_symbol_type");
