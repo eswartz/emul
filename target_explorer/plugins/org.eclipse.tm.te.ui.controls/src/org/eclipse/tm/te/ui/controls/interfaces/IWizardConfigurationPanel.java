@@ -11,7 +11,9 @@ package org.eclipse.tm.te.ui.controls.interfaces;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.dialogs.IMessageProvider;
+import org.eclipse.swt.events.TypedEvent;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.tm.te.core.interfaces.nodes.IPropertiesContainer;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 
 /**
@@ -53,6 +55,17 @@ public interface IWizardConfigurationPanel extends IMessageProvider {
 	 * @return Result of validation.
 	 */
 	public boolean isValid();
+
+	/**
+	 * Called from external to query if the panel control values have changed
+	 * compared to the given data.
+	 *
+	 * @param data The data. Must not be <code>null</code>.
+	 * @param e The event which triggered the invocation or <code>null</code>.
+	 *
+	 * @return <code>True</code> if the panel control values are different to the given reference data, <code>false</code> otherwise.
+	 */
+	public boolean dataChanged(IPropertiesContainer data, TypedEvent e);
 
 	/**
 	 * Restore the widget values plain from the given dialog settings. This method should
