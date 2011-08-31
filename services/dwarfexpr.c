@@ -23,6 +23,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <framework/events.h>
 #include <framework/myalloc.h>
 #include <framework/exceptions.h>
 #include <framework/errors.h>
@@ -33,10 +34,58 @@
 #include <services/stacktrace.h>
 #include <services/vm.h>
 
+typedef struct ValuePieces {
+    U4_T mCnt;
+    U4_T mMax;
+    PropertyValuePiece * mArray;
+    struct ValuePieces * mNext;
+} ValuePieces;
+
 static VMState sState;
 static ELF_Section * sSection = NULL;
 static U8_T sSectionOffs = 0;
 static PropertyValue * sValue = NULL;
+static ValuePieces * sValuePieces = NULL;
+
+static ValuePieces * sFreeValuePieces = NULL;
+static ValuePieces * sBusyValuePieces = NULL;
+static unsigned sValuePiecesCnt = 0;
+static int sValuePiecesPosted = 0;
+
+static void free_value_pieces(void * args) {
+    while (sBusyValuePieces != NULL) {
+        ValuePieces * Pieces = sBusyValuePieces;
+        sBusyValuePieces = Pieces->mNext;
+        Pieces->mNext = sFreeValuePieces;
+        sFreeValuePieces = Pieces;
+    }
+    while (sFreeValuePieces != NULL && sValuePiecesCnt > 16) {
+        ValuePieces * Pieces = sFreeValuePieces;
+        sFreeValuePieces = sFreeValuePieces->mNext;
+        sValuePiecesCnt--;
+        loc_free(Pieces->mArray);
+        loc_free(Pieces);
+    }
+}
+
+static ValuePieces * alloc_value_pieces(void) {
+    ValuePieces * Pieces = sFreeValuePieces;
+    if (Pieces == NULL) {
+        Pieces = (ValuePieces *)loc_alloc_zero(sizeof(ValuePieces));
+        sValuePiecesCnt++;
+    }
+    else {
+        sFreeValuePieces = sFreeValuePieces->mNext;
+    }
+    Pieces->mNext = sBusyValuePieces;
+    sBusyValuePieces = Pieces;
+    if (!sValuePiecesPosted && sValuePiecesCnt > 8) {
+        post_event(free_value_pieces, NULL);
+        sValuePiecesPosted = 1;
+    }
+    Pieces->mCnt = 0;
+    return Pieces;
+}
 
 static StackFrame * get_stack_frame(PropertyValue * sValue) {
     StackFrame * Info = NULL;
@@ -81,6 +130,7 @@ static U8_T get_fbreg(void) {
 
     {
         PropertyValue * OrgValue = sValue;
+        ValuePieces * OrgValuePieces = sValuePieces;
         ELF_Section * OrgSection = sSection;
         U8_T OrgSectionOffs = sSectionOffs;
         VMState OrgState = sState;
@@ -97,6 +147,7 @@ static U8_T get_fbreg(void) {
         sState.object_address = OrgState.object_address;
         sSectionOffs = OrgSectionOffs;
         sSection = OrgSection;
+        sValuePieces = OrgValuePieces;
         sValue = OrgValue;
     }
 
@@ -138,13 +189,34 @@ static void evaluate_expression(ELF_Section * Section, U1_T * Buf, size_t Size) 
     sSectionOffs = Buf - (U1_T *)Section->data;
     dio_EnterSection(&Unit->mDesc, sSection, sSectionOffs);
     if (evaluate_vm_expression(&sState) < 0) error = errno;
-    dio_ExitSection();
-    if (error) exception(error);
-    if (sState.reg) {
-        sValue->mSize = sState.reg->size;
-        sValue->mBigEndian = sState.reg->big_endian;
-        sValue->mRegister = sState.reg;
+    if (!error && sState.piece_bits) {
+        sValuePieces = alloc_value_pieces();
+        while (!error) {
+            PropertyValuePiece * Piece;
+            if (sValuePieces->mCnt >= sValuePieces->mMax) {
+                sValuePieces->mMax += 8;
+                sValuePieces->mArray = (PropertyValuePiece *)loc_realloc(sValuePieces->mArray,
+                    sizeof(PropertyValuePiece) * sValuePieces->mMax);
+            }
+            Piece = sValuePieces->mArray + sValuePieces->mCnt++;
+            memset(Piece, 0, sizeof(PropertyValuePiece));
+            if (sState.reg) {
+                Piece->mRegister = sState.reg;
+                Piece->mBigEndian = sState.reg->big_endian;
+            }
+            else {
+                Piece->mAddress = sState.stk[--sState.stk_pos];
+                Piece->mBigEndian = sState.big_endian;
+            }
+            Piece->mBitOffset = sState.piece_offs;
+            Piece->mBitSize = sState.piece_bits;
+            if (sState.code_pos >= sState.code_len) break;
+            if (evaluate_vm_expression(&sState) < 0) error = errno;
+        }
     }
+    dio_ExitSection();
+    assert(error || sState.code_pos == sState.code_len);
+    if (error) exception(error);
 }
 
 static void evaluate_location(void) {
@@ -200,6 +272,7 @@ void dwarf_evaluate_expression(U8_T BaseAddress, PropertyValue * v) {
     CompUnit * Unit = v->mObject->mCompUnit;
 
     sValue = v;
+    sValuePieces = NULL;
     sState.ctx = sValue->mContext;
     sState.addr_size = Unit->mDesc.mAddressSize;
     sState.big_endian = Unit->mFile->big_endian;
@@ -229,12 +302,26 @@ void dwarf_evaluate_expression(U8_T BaseAddress, PropertyValue * v) {
         evaluate_expression(Unit->mDesc.mSection, sValue->mAddr, sValue->mSize);
     }
 
-    if (sValue->mRegister == NULL) {
-        assert(sState.stk_pos > 0);
-        sValue->mValue = sState.stk[--sState.stk_pos];
-        sValue->mSize = 0;
-    }
     sValue->mAddr = NULL;
+    sValue->mValue = 0;
+    sValue->mSize = 0;
+    sValue->mBigEndian = sState.big_endian;
+    sValue->mRegister = NULL;
+    sValue->mPieces = NULL;
+    sValue->mPieceCnt = 0;
+
+    if (sValuePieces) {
+        sValue->mPieces = sValuePieces->mArray;
+        sValue->mPieceCnt = sValuePieces->mCnt;
+    }
+    else if (sState.reg) {
+        sValue->mSize = sState.reg->size;
+        sValue->mBigEndian = sState.reg->big_endian;
+        sValue->mRegister = sState.reg;
+    }
+    else {
+        sValue->mValue = sState.stk[--sState.stk_pos];
+    }
 
     if (sState.stk_pos != stk_pos) {
         str_exception(ERR_INV_DWARF, "Invalid DWARF expression stack");

@@ -737,8 +737,8 @@ static void get_object_property_callback(U2_T Tag, U2_T Attr, U2_T Form) {
 U8_T get_numeric_property_value(PropertyValue * Value) {
     U8_T Res = 0;
 
-    if (Value->mRegister != NULL) {
-        str_exception(ERR_INV_CONTEXT, "Register variable");
+    if (Value->mPieces != NULL || Value->mRegister != NULL) {
+        str_exception(ERR_INV_CONTEXT, "Constant DWARF attribute value expected");
     }
     else if (Value->mAddr != NULL) {
         size_t i;

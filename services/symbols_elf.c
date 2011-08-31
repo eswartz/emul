@@ -1757,22 +1757,29 @@ int get_symbol_value(const Symbol * sym, void ** value, size_t * size, int * big
     if (obj != NULL) {
         Trap trap;
         PropertyValue v;
+        static U1_T * bf = NULL;
+        static size_t bf_size = 0;
         if (set_trap(&trap)) {
             read_and_evaluate_dwarf_object_property(sym_ctx, sym_frame, 0, obj, AT_const_value, &v);
             if (v.mAddr != NULL) {
                 *size = v.mSize;
                 *value = v.mAddr;
             }
+            else if (v.mRegister != NULL || v.mPieces != NULL) {
+                str_exception(ERR_INV_CONTEXT, "Constant DWARF attribute value expected");
+            }
             else {
-                static U1_T bf[sizeof(v.mValue)];
                 U8_T n = v.mValue;
                 size_t i = 0;
-                if (v.mRegister != NULL) exception(ERR_INV_CONTEXT);
-                for (i = 0; i < sizeof(bf); i++) {
-                    bf[v.mBigEndian ? sizeof(bf) - i - 1 : i] = n & 0xffu;
+                if (bf_size < sizeof(v.mValue)) {
+                    bf_size = sizeof(v.mValue);
+                    bf = (U1_T *)loc_realloc(bf, bf_size);
+                }
+                for (i = 0; i < sizeof(v.mValue); i++) {
+                    bf[v.mBigEndian ? sizeof(v.mValue) - i - 1 : i] = n & 0xffu;
                     n = n >> 8;
                 }
-                *size = sizeof(bf);
+                *size = sizeof(v.mValue);
                 *value = bf;
             }
             *big_endian = v.mBigEndian;
@@ -1784,11 +1791,48 @@ int get_symbol_value(const Symbol * sym, void ** value, size_t * size, int * big
         }
         if (set_trap(&trap)) {
             read_and_evaluate_dwarf_object_property(sym_ctx, sym_frame, 0, obj, AT_location, &v);
-            if (v.mRegister == NULL) {
-                exception(ERR_INV_CONTEXT);
+            if (v.mPieces != NULL) {
+                U4_T n = 0;
+                U4_T bf_offs = 0;
+                while (n < v.mPieceCnt) {
+                    U4_T i;
+                    U1_T pbf[32];
+                    PropertyValuePiece * piece = v.mPieces + n++;
+                    U4_T piece_size = (piece->mBitSize + 7) / 8;
+                    if (piece_size > sizeof(pbf)) exception(ERR_BUFFER_OVERFLOW);
+                    if (bf_size < bf_offs / 8 + piece_size + 1) {
+                        bf_size = bf_offs / 8 + piece_size + 1;
+                        bf = (U1_T *)loc_realloc(bf, bf_size);
+                    }
+                    if (piece->mRegister) {
+                        StackFrame * frame = NULL;
+                        RegisterDefinition * def = piece->mRegister;
+                        if (get_frame_info(v.mContext, v.mFrame, &frame) < 0) exception(errno);
+                        if (read_reg_bytes(frame, def, 0, piece_size, pbf) < 0) exception(errno);
+                    }
+                    else {
+                        if (context_read_mem(v.mContext, piece->mAddress, pbf, piece_size) < 0) exception(errno);
+                    }
+                    if (!piece->mBigEndian != !v.mBigEndian) swap_bytes(pbf, piece_size);
+                    for (i = piece->mBitOffset; i < piece->mBitOffset + piece->mBitSize;  i++) {
+                        if (pbf[i / 8] & (1u << (i % 8))) {
+                            bf[bf_offs / 8] |=  (1u << (bf_offs % 8));
+                        }
+                        else {
+                            bf[bf_offs / 8] &= ~(1u << (bf_offs % 8));
+                        }
+                        bf_offs++;
+                    }
+                }
+                while (bf_offs % 8) {
+                    bf[bf_offs / 8] &= ~(1u << (bf_offs % 8));
+                    bf_offs++;
+                }
+                *value = bf;
+                *size = bf_offs / 8;
+                *big_endian = v.mBigEndian;
             }
-            else {
-                static U1_T bf[32];
+            else if (v.mRegister != NULL) {
                 StackFrame * frame = NULL;
                 RegisterDefinition * def = v.mRegister;
                 ContextAddress sym_size = def->size;
@@ -1796,7 +1840,10 @@ int get_symbol_value(const Symbol * sym, void ** value, size_t * size, int * big
                 unsigned val_size = 0;
 
                 if (get_symbol_size(sym, &sym_size) < 0) exception(errno);
-                if (sym_size > sizeof(bf)) exception(ERR_BUFFER_OVERFLOW);
+                if (bf_size < sym_size) {
+                    bf_size = (size_t)sym_size;
+                    bf = (U1_T *)loc_realloc(bf, bf_size);
+                }
                 if (get_frame_info(v.mContext, v.mFrame, &frame) < 0) exception(errno);
                 val_size = def->size < sym_size ? (unsigned)def->size : (unsigned)sym_size;
                 if (def->big_endian) val_offs = (unsigned)def->size - val_size;
@@ -1804,6 +1851,9 @@ int get_symbol_value(const Symbol * sym, void ** value, size_t * size, int * big
                 *value = bf;
                 *size = val_size;
                 *big_endian = def->big_endian;
+            }
+            else {
+                exception(ERR_INV_CONTEXT);
             }
             clear_trap(&trap);
             return 0;
@@ -1884,16 +1934,19 @@ int get_symbol_address(const Symbol * sym, ContextAddress * address) {
         if (!set_trap(&trap)) return -1;
         if ((type->mTag != TAG_pointer_type && type->mTag != TAG_mod_pointer) || type->mType == NULL) exception(ERR_INV_CONTEXT);
         read_and_evaluate_dwarf_object_property(sym_ctx, sym_frame, 0, sym->var, AT_location, &v);
-        if (v.mRegister == NULL) {
-            if (elf_read_memory_word(sym_ctx, sym->var->mCompUnit->mFile,
-                (ContextAddress)get_numeric_property_value(&v), &base) < 0) exception(errno);
+        if (v.mPieces != NULL) {
+            str_exception(ERR_UNSUPPORTED, "Unsupported location of 'this' pointer");
         }
-        else {
+        else if (v.mRegister != NULL) {
             U8_T rv = 0;
             StackFrame * frame = NULL;
             if (get_frame_info(v.mContext, v.mFrame, &frame) < 0) exception(errno);
             if (read_reg_value(frame, v.mRegister, &rv) < 0) exception(errno);
             base = (ContextAddress)rv;
+        }
+        else {
+            if (elf_read_memory_word(sym_ctx, sym->var->mCompUnit->mFile,
+                (ContextAddress)get_numeric_property_value(&v), &base) < 0) exception(errno);
         }
         type = get_original_type(type->mType);
         if (!calc_member_offset(type, obj, &offs)) exception(ERR_INV_CONTEXT);
@@ -1938,8 +1991,8 @@ int get_symbol_register(const Symbol * sym, Context ** ctx, int * frame, Registe
     if (unpack(sym) < 0) return -1;
     if (obj != NULL && obj->mTag != TAG_member && obj->mTag != TAG_inheritance) {
         Trap trap;
-        PropertyValue v;
         if (set_trap(&trap)) {
+            PropertyValue v;
             read_and_evaluate_dwarf_object_property(sym_ctx, sym_frame, 0, obj, AT_location, &v);
             *ctx = sym_ctx;
             *frame = sym_frame;

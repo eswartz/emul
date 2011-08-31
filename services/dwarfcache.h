@@ -38,6 +38,7 @@ typedef struct PubNamesInfo PubNamesInfo;
 typedef struct PubNamesTable PubNamesTable;
 typedef struct ObjectArray ObjectArray;
 typedef struct SymbolInfo SymbolInfo;
+typedef struct PropertyValuePiece PropertyValuePiece;
 typedef struct PropertyValue PropertyValue;
 typedef struct LineNumbersState LineNumbersState;
 typedef struct CompUnit CompUnit;
@@ -118,6 +119,14 @@ struct PubNamesTable {
     unsigned mMax;
 };
 
+struct PropertyValuePiece {
+    int mBigEndian;
+    ContextAddress mAddress;
+    RegisterDefinition * mRegister;
+    U4_T mBitOffset;
+    U4_T mBitSize;
+};
+
 struct PropertyValue {
     Context * mContext;
     int mFrame;
@@ -129,6 +138,8 @@ struct PropertyValue {
     size_t mSize;
     int mBigEndian;
     RegisterDefinition * mRegister;
+    PropertyValuePiece * mPieces;
+    U4_T mPieceCnt;
 };
 
 #define LINE_IsStmt         0x01
