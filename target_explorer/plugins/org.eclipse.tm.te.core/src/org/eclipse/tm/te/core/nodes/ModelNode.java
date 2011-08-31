@@ -177,9 +177,9 @@ public class ModelNode extends PropertiesContainer implements IModelNode, IModel
 		// If the parent is null, it must be allowed to fire change events explicitly
 		if (parent == null && suppressEventsOnNullParent) {
 			if (CoreBundleActivator.getTraceHandler().isSlotEnabled(0, ITraceIds.TRACE_EVENTS)) {
-				CoreBundleActivator.getTraceHandler().trace("Drop change event (null parent)\n" + //$NON-NLS-1$
-															"for eventId=" + key, //$NON-NLS-1$
-															1, ITraceIds.TRACE_EVENTS, IStatus.WARNING, this);
+				CoreBundleActivator.getTraceHandler().trace("Drop change event (null parent)\n\t\t" + //$NON-NLS-1$
+															"for eventId = " + key, //$NON-NLS-1$
+															0, ITraceIds.TRACE_EVENTS, IStatus.WARNING, this);
 			}
 			return true;
 		}

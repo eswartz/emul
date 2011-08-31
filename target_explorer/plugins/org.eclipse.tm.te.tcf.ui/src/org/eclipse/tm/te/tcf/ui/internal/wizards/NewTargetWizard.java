@@ -81,9 +81,6 @@ public class NewTargetWizard extends AbstractWizard implements INewWizard {
 									// Refresh the model now (must be executed within the TCF dispatch thread)
 									service.refresh();
 
-									// Trigger a refresh of the viewer
-									ViewsUtil.refresh(IUIConstants.ID_EXPLORER);
-
 									// Get the peer model node from the model and select it in the tree
 									final IPeerModel peerNode = model.getService(ILocatorModelLookupService.class).lkupPeerModelById(peerAttributes.get(IPeer.ATTR_ID));
 									if (peerNode != null) {

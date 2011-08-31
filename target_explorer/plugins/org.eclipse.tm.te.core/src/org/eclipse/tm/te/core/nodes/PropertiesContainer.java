@@ -96,7 +96,7 @@ public class PropertiesContainer extends PlatformObject implements IPropertiesCo
 	 */
 	@Override
 	public String toString() {
-		final StringBuilder buffer = new StringBuilder(getClass().getSimpleName());
+		final StringBuilder buffer = new StringBuilder();
 
 		buffer.append("UUID=" + uniqueId.toString()); //$NON-NLS-1$
 
