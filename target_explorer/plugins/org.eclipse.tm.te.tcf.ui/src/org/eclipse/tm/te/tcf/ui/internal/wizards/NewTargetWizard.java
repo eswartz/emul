@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.util.Map;
 
 import org.eclipse.jface.dialogs.IMessageProvider;
-import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.wizard.IWizardPage;
@@ -28,13 +27,11 @@ import org.eclipse.tm.te.tcf.ui.internal.PeersPersistenceManager;
 import org.eclipse.tm.te.tcf.ui.internal.model.Model;
 import org.eclipse.tm.te.tcf.ui.internal.nls.Messages;
 import org.eclipse.tm.te.tcf.ui.internal.wizards.pages.NewTargetWizardPage;
+import org.eclipse.tm.te.ui.views.ViewsUtil;
 import org.eclipse.tm.te.ui.views.interfaces.IUIConstants;
 import org.eclipse.tm.te.ui.wizards.AbstractWizard;
 import org.eclipse.ui.INewWizard;
-import org.eclipse.ui.IViewReference;
 import org.eclipse.ui.IWorkbench;
-import org.eclipse.ui.IWorkbenchPart;
-import org.eclipse.ui.PlatformUI;
 
 /**
  * New TCF target wizard implementation.
@@ -84,19 +81,13 @@ public class NewTargetWizard extends AbstractWizard implements INewWizard {
 									// Refresh the model now (must be executed within the TCF dispatch thread)
 									service.refresh();
 
-									// Get the peer model node from the model
+									// Trigger a refresh of the viewer
+									ViewsUtil.refresh(IUIConstants.ID_EXPLORER);
+
+									// Get the peer model node from the model and select it in the tree
 									final IPeerModel peerNode = model.getService(ILocatorModelLookupService.class).lkupPeerModelById(peerAttributes.get(IPeer.ATTR_ID));
-									if (peerNode != null && PlatformUI.isWorkbenchRunning()) {
-										PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
-											public void run() {
-												if (PlatformUI.getWorkbench().getActiveWorkbenchWindow() != null && PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage() != null) {
-													IViewReference reference = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().findViewReference(IUIConstants.ID_EXPLORER);
-													IWorkbenchPart part = reference != null ? reference.getPart(false) : null;
-													ISelectionProvider selectionProvider = part != null && part.getSite() != null ? part.getSite().getSelectionProvider() : null;
-													if (selectionProvider != null) selectionProvider.setSelection(new StructuredSelection(peerNode));
-												}
-											}
-										});
+									if (peerNode != null) {
+										ViewsUtil.setSelection(IUIConstants.ID_EXPLORER, new StructuredSelection(peerNode));
 									}
 								}
 							});
