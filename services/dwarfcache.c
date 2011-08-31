@@ -952,7 +952,6 @@ void read_and_evaluate_dwarf_object_property(Context * Ctx, int Frame, U8_T Base
     }
 }
 
-
 static void free_unit_cache(CompUnit * Unit) {
     Unit->mFilesCnt = 0;
     Unit->mFilesMax = 0;

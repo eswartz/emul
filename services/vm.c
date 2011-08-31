@@ -25,7 +25,7 @@
 #include <services/dwarf.h>
 #include <services/vm.h>
 
-#define check_e_stack(n) { if (state->stk_pos < n) inv_dwarf("invalid DWARF expression stack"); }
+#define check_e_stack(n) { if (state->stk_pos < n) inv_dwarf("Invalid DWARF expression stack"); }
 
 static VMState * state = NULL;
 static uint8_t * code = NULL;
@@ -547,10 +547,19 @@ static void evaluate_expression(void) {
         case OP_piece:
             state->piece_bits = read_u4leb128() * 8;
             state->piece_offs = 0;
+            if (code_pos < code_len && state->piece_bits == 0) {
+                if (state->reg) state->reg = NULL;
+                else state->stk_pos--;
+            }
             break;
         case OP_bit_piece:
             state->piece_bits = read_u4leb128();
             state->piece_offs = read_u4leb128();
+            if (code_pos < code_len && state->piece_bits == 0) {
+                if (state->reg) state->reg = NULL;
+                else state->stk_pos--;
+                state->piece_offs = 0;
+            }
             break;
         case OP_call2:
         case OP_call4:

@@ -50,13 +50,17 @@ struct Symbol {
     ObjectInfo * obj;
     ObjectInfo * var; /* 'this' object if the symbol represents implicit 'this' reference */
     ELF_Section * tbl;
+    int has_size;
+    int has_address;
+    ContextAddress size;
     ContextAddress address;
     int sym_class;
     Context * ctx;
     int frame;
     unsigned index;
     unsigned dimension;
-    ContextAddress size;
+    unsigned cardinal;
+    ContextAddress length;
     Symbol * base;
 };
 
@@ -130,11 +134,43 @@ static int syminfo2address(Context * ctx, ELF_SymbolInfo * info, ContextAddress 
     return -1;
 }
 
+static int is_frame_based_object(Symbol * sym) {
+    int res = 0;
+    ContextAddress addr = 0;
+    ContextAddress size = 0;
+    Context * org_ctx = sym_ctx;
+    int org_frame = sym_frame;
+    ContextAddress org_ip = sym_ip;
+
+    if (sym->sym_class == SYM_CLASS_REFERENCE) {
+        if (get_symbol_address(sym, &addr) < 0) {
+            res = 1;
+        }
+        else {
+            sym->has_address = 1;
+            sym->address = addr;
+        }
+    }
+
+    if (!res) {
+        if (get_symbol_size(sym, &size) < 0) {
+            res = 1;
+        }
+        else {
+            sym->has_size = 1;
+            sym->size = size;
+        }
+    }
+
+    sym_ctx = org_ctx;
+    sym_frame = org_frame;
+    sym_ip = org_ip;
+    return res;
+}
+
 static void object2symbol(ObjectInfo * obj, Symbol ** res) {
-    Context * ctx = sym_ctx;
     Symbol * sym = alloc_symbol();
     sym->obj = obj;
-    sym->frame = STACK_NO_FRAME;
     switch (obj->mTag) {
     case TAG_global_subroutine:
     case TAG_subroutine:
@@ -174,21 +210,22 @@ static void object2symbol(ObjectInfo * obj, Symbol ** res) {
     case TAG_global_variable:
     case TAG_inheritance:
     case TAG_member:
-        sym->sym_class = SYM_CLASS_REFERENCE;
-        break;
     case TAG_formal_parameter:
     case TAG_local_variable:
     case TAG_variable:
         sym->sym_class = SYM_CLASS_REFERENCE;
-        sym->frame = sym_frame;
         break;
     case TAG_constant:
     case TAG_enumerator:
         sym->sym_class = SYM_CLASS_VALUE;
         break;
     }
-    if (sym->frame == STACK_NO_FRAME) ctx = context_get_group(ctx, CONTEXT_GROUP_PROCESS);
-    sym->ctx = ctx;
+    sym->frame = STACK_NO_FRAME;
+    sym->ctx = context_get_group(sym_ctx, CONTEXT_GROUP_PROCESS);
+    if (sym_frame != STACK_NO_FRAME && is_frame_based_object(sym)) {
+        sym->frame = sym_frame;
+        sym->ctx = sym_ctx;
+    }
     *res = sym;
 }
 
@@ -311,7 +348,7 @@ static int find_in_object_tree(ObjectInfo * list, ContextAddress rt_offs, Contex
             if (strcmp(obj->mName, name) == 0) {
                 object2symbol(obj, &sym_cur);
             }
-            if (sym_frame >= 0 && strcmp(obj->mName, "this") == 0 && get_num_prop(obj, AT_artificial, &v) && v != 0) {
+            if (sym_frame != STACK_NO_FRAME && strcmp(obj->mName, "this") == 0 && get_num_prop(obj, AT_artificial, &v) && v != 0) {
                 ObjectInfo * type = get_original_type(obj);
                 if ((type->mTag == TAG_pointer_type || type->mTag == TAG_mod_pointer) && type->mType != NULL) {
                     type = get_original_type(type->mType);
@@ -494,6 +531,7 @@ int find_symbol_by_name(Context * ctx, int frame, ContextAddress ip, char * name
             sym->ctx = context_get_group(ctx, CONTEXT_GROUP_PROCESS);
             sym->frame = STACK_NO_FRAME;
             sym->address = (ContextAddress)ptr;
+            sym->has_address = 1;
 
             if (SYM_IS_TEXT(type)) {
                 sym->sym_class = SYM_CLASS_FUNCTION;
@@ -594,6 +632,7 @@ int find_symbol_by_name(Context * ctx, int frame, ContextAddress ip, char * name
             sym->ctx = context_get_group(ctx, CONTEXT_GROUP_PROCESS);
             sym->frame = STACK_NO_FRAME;
             sym->address = (ContextAddress)address;
+            sym->has_address = 1;
             sym->sym_class = sym_class;
             *res = sym;
         }
@@ -790,9 +829,15 @@ static void enumerate_local_vars(ObjectInfo * obj, int level, ContextAddress rt_
         case TAG_local_variable:
         case TAG_variable:
             if (level > 0 && obj->mName != NULL) {
+                Context * org_ctx = sym_ctx;
+                int org_frame = sym_frame;
+                ContextAddress org_ip = sym_ip;
                 Symbol * sym = NULL;
                 object2symbol(obj, &sym);
                 call_back(args, sym);
+                sym_ctx = org_ctx;
+                sym_frame = org_frame;
+                sym_ip = org_ip;
             }
             break;
         }
@@ -825,7 +870,7 @@ const char * symbol2id(const Symbol * sym) {
         assert(sym->frame == STACK_NO_FRAME);
         assert(sym->sym_class == SYM_CLASS_TYPE);
         strcpy(base, symbol2id(sym->base));
-        snprintf(id, sizeof(id), "@P%"PRIX64".%s", (uint64_t)sym->size, base);
+        snprintf(id, sizeof(id), "@P%"PRIX64".%s", (uint64_t)sym->length, base);
     }
     else {
         ELF_File * file = NULL;
@@ -840,14 +885,14 @@ const char * symbol2id(const Symbol * sym) {
         if (sym->tbl != NULL) tbl_index = sym->tbl->index;
         if (frame == STACK_TOP_FRAME) frame = get_top_frame(sym->ctx);
         assert(sym->var == NULL || sym->var->mCompUnit->mFile == file);
-        snprintf(id, sizeof(id), "@S%X.%lX.%lX.%"PRIX64".%"PRIX64".%"PRIX64".%X.%d.%X.%X.%"PRIX64".%s",
+        snprintf(id, sizeof(id), "@S%X.%lX.%lX.%"PRIX64".%"PRIX64".%"PRIX64".%X.%d.%X.%X.%X.%s",
             sym->sym_class,
             file ? (unsigned long)file->dev : 0ul,
             file ? (unsigned long)file->ino : 0ul,
             file ? file->mtime : (int64_t)0,
             obj_index, var_index, tbl_index,
             frame, sym->index,
-            sym->dimension, (uint64_t)sym->size,
+            sym->dimension, sym->cardinal,
             sym->ctx->id);
     }
     return id;
@@ -898,7 +943,7 @@ int id2symbol(const char * id, Symbol ** res) {
     *res = sym;
     if (id != NULL && id[0] == '@' && id[1] == 'P') {
         p = id + 2;
-        sym->size = (ContextAddress)read_hex(&p);
+        sym->length = (ContextAddress)read_hex(&p);
         if (*p == '.') p++;
         if (id2symbol(p, &sym->base)) return -1;
         sym->ctx = sym->base->ctx;
@@ -928,7 +973,7 @@ int id2symbol(const char * id, Symbol ** res) {
         if (*p == '.') p++;
         sym->dimension = (unsigned)read_hex(&p);
         if (*p == '.') p++;
-        sym->size = (ContextAddress)read_hex(&p);
+        sym->cardinal = (unsigned)read_hex(&p);
         if (*p == '.') p++;
         sym->ctx = id2ctx(p);
         if (sym->ctx == NULL) {
@@ -1050,38 +1095,18 @@ void ini_symbols_lib(void) {
 
 /*************** Functions for retrieving symbol properties ***************************************/
 
-static ELF_File * file;
-static DWARFCache * cache;
-static ObjectInfo * obj;
-static ELF_Section * tbl;
-static unsigned sym_index;
-static unsigned dimension;
-static ELF_SymbolInfo * sym_info;
-
 static int unpack(const Symbol * sym) {
+    ELF_File * file = NULL;
     assert(sym->base == NULL);
-    assert(sym->size == 0);
     assert(!is_cardinal_type_pseudo_symbol(sym));
     if (get_sym_context(sym->ctx, sym->frame, 0) < 0) return -1;
-    file = NULL;
-    cache = NULL;
-    obj = sym->obj;
-    tbl = sym->tbl;
-    sym_index = sym->index;
-    dimension = sym->dimension;
-    sym_info = NULL;
-    if (obj != NULL) file = obj->mCompUnit->mFile;
-    if (tbl != NULL) file = tbl->file;
+    if (sym->obj != NULL) file = sym->obj->mCompUnit->mFile;
+    if (sym->tbl != NULL) file = sym->tbl->file;
     if (file != NULL) {
-        cache = (DWARFCache *)file->dwarf_dt_cache;
+        DWARFCache * cache = (DWARFCache *)file->dwarf_dt_cache;
         if (cache == NULL || cache->magic != DWARF_CACHE_MAGIC) {
             errno = ERR_INV_CONTEXT;
             return -1;
-        }
-        if (tbl != NULL) {
-            static ELF_SymbolInfo info;
-            unpack_elf_symbol_info(tbl, sym_index, &info);
-            sym_info = &info;
         }
     }
     return 0;
@@ -1119,12 +1144,12 @@ static U8_T get_object_length(ObjectInfo * obj) {
     return 0;
 }
 
-static void alloc_cardinal_type_pseudo_symbol(Context * ctx, ContextAddress size, Symbol ** type) {
+static void alloc_cardinal_type_pseudo_symbol(Context * ctx, unsigned size, Symbol ** type) {
     *type = alloc_symbol();
     (*type)->ctx = context_get_group(ctx, CONTEXT_GROUP_PROCESS);
     (*type)->frame = STACK_NO_FRAME;
     (*type)->sym_class = SYM_CLASS_TYPE;
-    (*type)->size = size;
+    (*type)->cardinal = size;
 }
 
 static int map_to_sym_table(ObjectInfo * obj, Symbol ** sym) {
@@ -1150,6 +1175,7 @@ int get_symbol_class(const Symbol * sym, int * sym_class) {
 }
 
 int get_symbol_type(const Symbol * sym, Symbol ** type) {
+    ObjectInfo * obj = sym->obj;
     assert(sym->magic == SYMBOL_MAGIC);
     if (sym->base || is_cardinal_type_pseudo_symbol(sym)) {
         *type = (Symbol *)sym;
@@ -1180,10 +1206,11 @@ int get_symbol_type(const Symbol * sym, Symbol ** type) {
 
 int get_symbol_type_class(const Symbol * sym, int * type_class) {
     U8_T x;
+    ObjectInfo * obj = sym->obj;
     assert(sym->magic == SYMBOL_MAGIC);
     if (sym->base) {
         if (sym->base->sym_class == SYM_CLASS_FUNCTION) *type_class = TYPE_CLASS_FUNCTION;
-        else if (sym->size > 0) *type_class = TYPE_CLASS_ARRAY;
+        else if (sym->length > 0) *type_class = TYPE_CLASS_ARRAY;
         else *type_class = TYPE_CLASS_POINTER;
         return 0;
     }
@@ -1308,9 +1335,13 @@ int get_symbol_type_class(const Symbol * sym, int * type_class) {
             break;
         }
     }
-    if (sym_info != NULL && sym_info->type == STT_FUNC) {
-        *type_class = TYPE_CLASS_FUNCTION;
-        return 0;
+    if (sym->tbl != NULL) {
+        ELF_SymbolInfo info;
+        unpack_elf_symbol_info(sym->tbl, sym->index, &info);
+        if (info.type == STT_FUNC) {
+            *type_class = TYPE_CLASS_FUNCTION;
+            return 0;
+        }
     }
     *type_class = TYPE_CLASS_UNKNOWN;
     return 0;
@@ -1343,11 +1374,12 @@ int get_symbol_name(const Symbol * sym, char ** name) {
 }
 
 int get_symbol_size(const Symbol * sym, ContextAddress * size) {
+    ObjectInfo * obj = sym->obj;
     assert(sym->magic == SYMBOL_MAGIC);
     if (sym->base) {
-        if (sym->size > 0) {
+        if (sym->length > 0) {
             if (get_symbol_size(sym->base, size)) return -1;
-            *size *= sym->size;
+            *size *= sym->length;
         }
         else {
             Symbol * base = sym->base;
@@ -1358,6 +1390,10 @@ int get_symbol_size(const Symbol * sym, ContextAddress * size) {
         return 0;
     }
     if (is_cardinal_type_pseudo_symbol(sym)) {
+        *size = sym->cardinal;
+        return 0;
+    }
+    if (sym->has_size != 0) {
         *size = sym->size;
         return 0;
     }
@@ -1369,7 +1405,7 @@ int get_symbol_size(const Symbol * sym, ContextAddress * size) {
         U8_T sz = 0;
 
         if (!set_trap(&trap)) return -1;
-        if (dimension == 0) ok = get_num_prop(obj, AT_byte_size, &sz);
+        if (sym->dimension == 0) ok = get_num_prop(obj, AT_byte_size, &sz);
         if (!ok && sym->sym_class == SYM_CLASS_FUNCTION) {
             if (obj->u.mAddr.mHighPC > obj->u.mAddr.mLowPC) {
                 ok = 1;
@@ -1377,19 +1413,18 @@ int get_symbol_size(const Symbol * sym, ContextAddress * size) {
             }
         }
         else if (!ok) {
-            Symbol * s = NULL;
             ObjectInfo * ref = NULL;
             if (sym->sym_class == SYM_CLASS_REFERENCE) {
                 ref = obj;
                 if (obj->mType != NULL) {
                     obj = obj->mType;
-                    if (dimension == 0) ok = get_num_prop(obj, AT_byte_size, &sz);
+                    if (sym->dimension == 0) ok = get_num_prop(obj, AT_byte_size, &sz);
                 }
             }
             while (!ok && obj->mType != NULL) {
                 if (!is_modified_type(obj) && obj->mTag != TAG_enumeration_type) break;
                 obj = obj->mType;
-                if (dimension == 0) ok = get_num_prop(obj, AT_byte_size, &sz);
+                if (sym->dimension == 0) ok = get_num_prop(obj, AT_byte_size, &sz);
             }
             if (!ok && obj->mTag == TAG_array_type) {
                 unsigned i = 0;
@@ -1397,7 +1432,7 @@ int get_symbol_size(const Symbol * sym, ContextAddress * size) {
                 ObjectInfo * elem_type = obj->mType;
                 ObjectInfo * idx = obj->mChildren;
                 while (idx != NULL) {
-                    if (i++ >= dimension) length *= get_object_length(idx);
+                    if (i++ >= sym->dimension) length *= get_object_length(idx);
                     idx = idx->mSibling;
                 }
                 ok = get_num_prop(obj, AT_stride_size, &sz);
@@ -1427,20 +1462,29 @@ int get_symbol_size(const Symbol * sym, ContextAddress * size) {
                     clear_trap(&trap);
                 }
             }
-            if (!ok && ref && map_to_sym_table(ref, &s) && get_symbol_size(s, size) == 0) ok = 1;
+            if (!ok && ref != NULL) {
+                Symbol * elf_sym = NULL;
+                ContextAddress elf_sym_size = 0;
+                if (map_to_sym_table(ref, &elf_sym) && get_symbol_size(elf_sym, &elf_sym_size) == 0) {
+                    sz = elf_sym_size;
+                    ok = 1;
+                }
+            }
         }
         if (!ok) str_exception(ERR_INV_DWARF, "Object has no size attribute");
         *size = (ContextAddress)sz;
         clear_trap(&trap);
     }
-    else if (sym_info != NULL) {
-        switch (sym_info->type) {
+    else if (sym->tbl != NULL) {
+        ELF_SymbolInfo info;
+        unpack_elf_symbol_info(sym->tbl, sym->index, &info);
+        switch (info.type) {
         case STT_OBJECT:
         case STT_FUNC:
-            *size = (ContextAddress)sym_info->size;
+            *size = (ContextAddress)info.size;
             break;
         default:
-            *size = sym_info->sym_section->file->elf64 ? 8 : 4;
+            *size = info.sym_section->file->elf64 ? 8 : 4;
             break;
         }
     }
@@ -1452,6 +1496,7 @@ int get_symbol_size(const Symbol * sym, ContextAddress * size) {
 }
 
 int get_symbol_base_type(const Symbol * sym, Symbol ** base_type) {
+    ObjectInfo * obj = sym->obj;
     assert(sym->magic == SYMBOL_MAGIC);
     if (sym->base) {
         if (sym->base->sym_class == SYM_CLASS_FUNCTION) {
@@ -1476,7 +1521,7 @@ int get_symbol_base_type(const Symbol * sym, Symbol ** base_type) {
     obj = get_original_type(obj);
     if (obj != NULL) {
         if (obj->mTag == TAG_array_type) {
-            int i = dimension;
+            int i = sym->dimension;
             ObjectInfo * idx = obj->mChildren;
             while (i > 0 && idx != NULL) {
                 idx = idx->mSibling;
@@ -1505,6 +1550,7 @@ int get_symbol_base_type(const Symbol * sym, Symbol ** base_type) {
 }
 
 int get_symbol_index_type(const Symbol * sym, Symbol ** index_type) {
+    ObjectInfo * obj = sym->obj;
     assert(sym->magic == SYMBOL_MAGIC);
     if (sym->base) {
         if (sym->base->sym_class == SYM_CLASS_FUNCTION) {
@@ -1521,7 +1567,7 @@ int get_symbol_index_type(const Symbol * sym, Symbol ** index_type) {
     if (unpack(sym) < 0) return -1;
     obj = get_original_type(obj);
     if (obj != NULL && obj->mTag == TAG_array_type) {
-        int i = dimension;
+        int i = sym->dimension;
         ObjectInfo * idx = obj->mChildren;
         while (i > 0 && idx != NULL) {
             idx = idx->mSibling;
@@ -1537,13 +1583,14 @@ int get_symbol_index_type(const Symbol * sym, Symbol ** index_type) {
 }
 
 int get_symbol_length(const Symbol * sym, ContextAddress * length) {
+    ObjectInfo * obj = sym->obj;
     assert(sym->magic == SYMBOL_MAGIC);
     if (sym->base) {
         if (sym->base->sym_class == SYM_CLASS_FUNCTION) {
             errno = ERR_INV_CONTEXT;
             return -1;
         }
-        *length = sym->size == 0 ? 1 : sym->size;
+        *length = sym->length == 0 ? 1 : sym->length;
         return 0;
     }
     if (is_cardinal_type_pseudo_symbol(sym)) {
@@ -1553,7 +1600,7 @@ int get_symbol_length(const Symbol * sym, ContextAddress * length) {
     if (unpack(sym) < 0) return -1;
     obj = get_original_type(obj);
     if (obj != NULL && obj->mTag == TAG_array_type) {
-        int i = dimension;
+        int i = sym->dimension;
         ObjectInfo * idx = obj->mChildren;
         while (i > 0 && idx != NULL) {
             idx = idx->mSibling;
@@ -1572,6 +1619,7 @@ int get_symbol_length(const Symbol * sym, ContextAddress * length) {
 }
 
 int get_symbol_lower_bound(const Symbol * sym, int64_t * value) {
+    ObjectInfo * obj = sym->obj;
     assert(sym->magic == SYMBOL_MAGIC);
     if (sym->base) {
         if (sym->base->sym_class == SYM_CLASS_FUNCTION) {
@@ -1588,7 +1636,7 @@ int get_symbol_lower_bound(const Symbol * sym, int64_t * value) {
     if (unpack(sym) < 0) return -1;
     obj = get_original_type(obj);
     if (obj != NULL && obj->mTag == TAG_array_type) {
-        int i = dimension;
+        int i = sym->dimension;
         ObjectInfo * idx = obj->mChildren;
         while (i > 0 && idx != NULL) {
             idx = idx->mSibling;
@@ -1609,6 +1657,7 @@ int get_symbol_children(const Symbol * sym, Symbol *** children, int * count) {
     int n = 0;
     static Symbol ** buf = NULL;
     static int buf_len = 0;
+    ObjectInfo * obj = sym->obj;
     assert(sym->magic == SYMBOL_MAGIC);
     if (sym->base) {
         if (sym->base->sym_class == SYM_CLASS_FUNCTION && sym->base->obj == NULL) {
@@ -1680,6 +1729,7 @@ int get_symbol_children(const Symbol * sym, Symbol *** children, int * count) {
 }
 
 int get_symbol_offset(const Symbol * sym, ContextAddress * offset) {
+    ObjectInfo * obj = sym->obj;
     assert(sym->magic == SYMBOL_MAGIC);
     if (sym->base || is_cardinal_type_pseudo_symbol(sym)) {
         errno = ERR_INV_CONTEXT;
@@ -1697,6 +1747,7 @@ int get_symbol_offset(const Symbol * sym, ContextAddress * offset) {
 }
 
 int get_symbol_value(const Symbol * sym, void ** value, size_t * size, int * big_endian) {
+    ObjectInfo * obj = sym->obj;
     assert(sym->magic == SYMBOL_MAGIC);
     if (sym->base || is_cardinal_type_pseudo_symbol(sym) || sym->var) {
         errno = ERR_INV_CONTEXT;
@@ -1763,22 +1814,24 @@ int get_symbol_value(const Symbol * sym, void ** value, size_t * size, int * big
         set_errno(ERR_OTHER, "Object location or value info not available");
         return -1;
     }
-    if (sym_info != NULL) {
-        switch (sym_info->type) {
+    if (sym->tbl != NULL) {
+        ELF_SymbolInfo info;
+        unpack_elf_symbol_info(sym->tbl, sym->index, &info);
+        switch (info.type) {
         case STT_OBJECT:
         case STT_FUNC:
             set_errno(ERR_OTHER, "Symbol represents an address");
             return -1;
         }
-        if (sym_info->sym_section->file->elf64) {
+        if (info.sym_section->file->elf64) {
             static U8_T buf = 0;
-            buf = sym_info->value;
+            buf = info.value;
             *value = &buf;
             *size = 8;
         }
         else {
             static U4_T buf = 0;
-            buf = (U4_T)sym_info->value;
+            buf = (U4_T)info.value;
             *value = &buf;
             *size = 4;
         }
@@ -1810,12 +1863,13 @@ static int calc_member_offset(ObjectInfo * type, ObjectInfo * member, ContextAdd
 }
 
 int get_symbol_address(const Symbol * sym, ContextAddress * address) {
+    ObjectInfo * obj = sym->obj;
     assert(sym->magic == SYMBOL_MAGIC);
     if (sym->base || is_cardinal_type_pseudo_symbol(sym)) {
         errno = ERR_INV_CONTEXT;
         return -1;
     }
-    if (sym->address != 0) {
+    if (sym->has_address) {
         *address = sym->address;
         return 0;
     }
@@ -1864,8 +1918,10 @@ int get_symbol_address(const Symbol * sym, ContextAddress * address) {
         set_errno(ERR_OTHER, "No object location info found in DWARF data");
         return -1;
     }
-    if (sym_info != NULL) {
-        return syminfo2address(sym_ctx, sym_info, address);
+    if (sym->tbl != NULL) {
+        ELF_SymbolInfo info;
+        unpack_elf_symbol_info(sym->tbl, sym->index, &info);
+        return syminfo2address(sym_ctx, &info, address);
     }
 
     errno = ERR_INV_CONTEXT;
@@ -1873,8 +1929,9 @@ int get_symbol_address(const Symbol * sym, ContextAddress * address) {
 }
 
 int get_symbol_register(const Symbol * sym, Context ** ctx, int * frame, RegisterDefinition ** reg) {
+    ObjectInfo * obj = sym->obj;
     assert(sym->magic == SYMBOL_MAGIC);
-    if (sym->base || is_cardinal_type_pseudo_symbol(sym) || sym->address != 0) {
+    if (sym->base || is_cardinal_type_pseudo_symbol(sym) || sym->has_address) {
         errno = ERR_INV_CONTEXT;
         return -1;
     }
@@ -1899,9 +1956,10 @@ int get_symbol_register(const Symbol * sym, Context ** ctx, int * frame, Registe
 int get_symbol_flags(const Symbol * sym, SYM_FLAGS * flags) {
     U8_T v = 0;
     ObjectInfo * i = NULL;
+    ObjectInfo * obj = sym->obj;
     *flags = 0;
     assert(sym->magic == SYMBOL_MAGIC);
-    if (sym->base || is_cardinal_type_pseudo_symbol(sym) || sym->address) return 0;
+    if (sym->base || is_cardinal_type_pseudo_symbol(sym)) return 0;
     if (unpack(sym) < 0) return -1;
     i = obj;
     while (i != NULL) {
@@ -1989,7 +2047,7 @@ int get_array_symbol(const Symbol * sym, ContextAddress length, Symbol ** ptr) {
     (*ptr)->frame = STACK_NO_FRAME;
     (*ptr)->sym_class = SYM_CLASS_TYPE;
     (*ptr)->base = (Symbol *)sym;
-    (*ptr)->size = length;
+    (*ptr)->length = length;
     return 0;
 }
 

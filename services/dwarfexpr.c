@@ -34,7 +34,8 @@
 #include <services/vm.h>
 
 static VMState sState;
-static U8_T sStartPos = 0;
+static ELF_Section * sSection = NULL;
+static U8_T sSectionOffs = 0;
 static PropertyValue * sValue = NULL;
 
 static StackFrame * get_stack_frame(PropertyValue * sValue) {
@@ -79,22 +80,24 @@ static U8_T get_fbreg(void) {
     memset(&FP, 0, sizeof(FP));
 
     {
-        PropertyValue * SValue = sValue;
-        U8_T SStartPos = sStartPos;
-        VMState SState = sState;
+        PropertyValue * OrgValue = sValue;
+        ELF_Section * OrgSection = sSection;
+        U8_T OrgSectionOffs = sSectionOffs;
+        VMState OrgState = sState;
 
         read_and_evaluate_dwarf_object_property(sState.ctx, sState.stack_frame, 0, Parent, AT_frame_base, &FP);
 
-        assert(sState.ctx == SState.ctx);
-        assert(sState.addr_size == SState.addr_size);
-        assert(sState.big_endian == SState.big_endian);
+        assert(sState.ctx == OrgState.ctx);
+        assert(sState.addr_size == OrgState.addr_size);
+        assert(sState.big_endian == OrgState.big_endian);
 
-        sState.code = SState.code;
-        sState.code_pos = SState.code_pos;
-        sState.code_len = SState.code_len;
-        sState.object_address = SState.object_address;
-        sStartPos = SStartPos;
-        sValue = SValue;
+        sState.code = OrgState.code;
+        sState.code_pos = OrgState.code_pos;
+        sState.code_len = OrgState.code_len;
+        sState.object_address = OrgState.object_address;
+        sSectionOffs = OrgSectionOffs;
+        sSection = OrgSection;
+        sValue = OrgValue;
     }
 
     if (FP.mRegister != NULL) {
@@ -103,12 +106,12 @@ static U8_T get_fbreg(void) {
     else {
         addr = get_numeric_property_value(&FP);
     }
-    dio_EnterSection(&Unit->mDesc, Unit->mDesc.mSection, sStartPos + sState.code_pos);
+    dio_EnterSection(&Unit->mDesc, sSection, sSectionOffs + sState.code_pos);
     return addr + dio_ReadS8LEB128();
 }
 
 static void client_op(uint8_t op) {
-    dio_SetPos(sStartPos + sState.code_pos);
+    dio_SetPos(sSectionOffs + sState.code_pos);
     switch (op) {
     case OP_addr:
         sState.stk[sState.stk_pos++] = read_address();
@@ -121,7 +124,7 @@ static void client_op(uint8_t op) {
         trace(LOG_ALWAYS, "Unsupported DWARF expression op 0x%02x", op);
         str_exception(ERR_UNSUPPORTED, "Unsupported DWARF expression op");
     }
-    sState.code_pos = (size_t)(dio_GetPos() - sStartPos);
+    sState.code_pos = (size_t)(dio_GetPos() - sSectionOffs);
 }
 
 static void evaluate_expression(ELF_Section * Section, U1_T * Buf, size_t Size) {
@@ -131,8 +134,9 @@ static void evaluate_expression(ELF_Section * Section, U1_T * Buf, size_t Size) 
     sState.code = Buf;
     sState.code_len = Size;
     sState.code_pos = 0;
-    sStartPos = Buf - (U1_T *)Section->data;
-    dio_EnterSection(&Unit->mDesc, Section, sStartPos);
+    sSection = Section;
+    sSectionOffs = Buf - (U1_T *)Section->data;
+    dio_EnterSection(&Unit->mDesc, sSection, sSectionOffs);
     if (evaluate_vm_expression(&sState) < 0) error = errno;
     dio_ExitSection();
     if (error) exception(error);
@@ -192,6 +196,7 @@ static void evaluate_location(void) {
 }
 
 void dwarf_evaluate_expression(U8_T BaseAddress, PropertyValue * v) {
+    unsigned stk_pos = 0;
     CompUnit * Unit = v->mObject->mCompUnit;
 
     sValue = v;
@@ -204,6 +209,7 @@ void dwarf_evaluate_expression(U8_T BaseAddress, PropertyValue * v) {
     sState.client_op = client_op;;
 
     if (sValue->mAttr != AT_frame_base) sState.stk_pos = 0;
+    stk_pos = sState.stk_pos;
 
     if (sValue->mAttr == AT_data_member_location) {
         if (sState.stk_pos >= sState.stk_max) {
@@ -222,9 +228,6 @@ void dwarf_evaluate_expression(U8_T BaseAddress, PropertyValue * v) {
     else {
         evaluate_expression(Unit->mDesc.mSection, sValue->mAddr, sValue->mSize);
     }
-    if (sValue->mAttr != AT_frame_base && sState.stk_pos != (sValue->mRegister == NULL ? 1u : 0u)) {
-        str_exception(ERR_INV_DWARF, "invalid DWARF expression stack");
-    }
 
     if (sValue->mRegister == NULL) {
         assert(sState.stk_pos > 0);
@@ -233,7 +236,9 @@ void dwarf_evaluate_expression(U8_T BaseAddress, PropertyValue * v) {
     }
     sValue->mAddr = NULL;
 
-    if (sValue->mAttr != AT_frame_base) sState.stk_pos = 0;
+    if (sState.stk_pos != stk_pos) {
+        str_exception(ERR_INV_DWARF, "Invalid DWARF expression stack");
+    }
 }
 
 #endif /* ENABLE_ELF && ENABLE_DebugContext */
