@@ -178,15 +178,29 @@ static void print_time(struct timespec time_start, int cnt) {
     time_diff.tv_nsec /= cnt;
     time_diff.tv_nsec += (long)(((uint64_t)(time_diff.tv_sec % cnt) * 1000000000) / cnt);
     time_diff.tv_sec /= cnt;
-    printf("search time: %ld.%09ld\n", (long)time_diff.tv_sec, time_diff.tv_nsec);
+    printf("search time: %ld.%06ld\n", (long)time_diff.tv_sec, time_diff.tv_nsec / 1000);
     fflush(stdout);
 }
 
 static void test(void * args);
 
 static void loc_var_func(void * args, Symbol * sym) {
+    RegisterDefinition * reg = NULL;
     ContextAddress addr = 0;
     ContextAddress size = 0;
+    SYM_FLAGS flags = 0;
+    int symbol_class = 0;
+    int type_class = 0;
+    Symbol * type = NULL;
+    Symbol * index_type = NULL;
+    Symbol * base_type = NULL;
+    ContextAddress length = 0;
+    int64_t lower_bound = 0;
+
+    if (get_symbol_flags(sym, &flags) < 0) {
+        error("get_symbol_flags");
+    }
+
     if (get_symbol_address(sym, &addr) < 0) {
         if (strncmp(errno_to_str(errno), "No object location info found", 29) == 0) return;
         if (strncmp(errno_to_str(errno), "Object is not available", 23) == 0) return;
@@ -195,20 +209,65 @@ static void loc_var_func(void * args, Symbol * sym) {
         if (strncmp(errno_to_str(errno), "Register variable", 17) == 0) {
             int frame = 0;
             Context * ctx = NULL;
-            RegisterDefinition * reg = NULL;
             if (get_symbol_register(sym, &ctx, &frame, &reg) < 0) {
                 error("get_symbol_register");
             }
-            if (get_symbol_size(sym, &size) < 0) {
-                error("get_symbol_size");
-            }
-            return;
         }
-
-        error("get_symbol_address");
+        else {
+            error("get_symbol_address");
+        }
     }
     if (get_symbol_size(sym, &size) < 0) {
         error("get_symbol_size");
+    }
+    if (get_symbol_class(sym, &symbol_class) < 0) {
+        error("get_symbol_type");
+    }
+    if (get_symbol_type(sym, &type) < 0) {
+        error("get_symbol_type");
+    }
+    if (type != NULL) {
+        if (get_symbol_type_class(sym, &type_class) < 0) {
+            error("get_symbol_type_class");
+        }
+        if (get_symbol_flags(type, &flags) < 0) {
+            error("get_symbol_flags");
+        }
+        if (type_class == TYPE_CLASS_ARRAY) {
+            if (get_symbol_index_type(type, &index_type) < 0) {
+                error("get_symbol_index_type");
+            }
+            if (get_symbol_base_type(type, &base_type) < 0) {
+                error("get_symbol_base_type");
+            }
+            if (get_symbol_length(type, &length) < 0) {
+                error("get_symbol_length");
+            }
+            if (get_symbol_lower_bound(type, &lower_bound) < 0) {
+                error("get_symbol_lower_bound");
+            }
+        }
+        else if (type_class == TYPE_CLASS_POINTER) {
+            if (get_symbol_base_type(type, &base_type) < 0) {
+                error("get_symbol_base_type");
+            }
+        }
+        else if (type_class == TYPE_CLASS_ENUMERATION) {
+            int i;
+            int count = 0;
+            Symbol ** children = NULL;
+            if (get_symbol_children(type, &children, &count) < 0) {
+                error("get_symbol_children");
+            }
+            for (i = 0; i < count; i++) {
+                void * value = NULL;
+                size_t value_size = 0;
+                int big_endian = 0;
+                if (get_symbol_value(children[i], &value, &value_size, &big_endian) < 0) {
+                    error("get_symbol_value");
+                }
+            }
+        }
     }
 }
 
@@ -321,7 +380,7 @@ static void next_pc(void) {
             else {
                 time_diff.tv_nsec = time_now.tv_nsec - time_start.tv_nsec;
             }
-            printf("load time: %ld.%09ld\n", (long)time_diff.tv_sec, time_diff.tv_nsec);
+            printf("load time: %ld.%06ld\n", (long)time_diff.tv_sec, time_diff.tv_nsec / 1000);
             fflush(stdout);
             time_start = time_now;
         }
