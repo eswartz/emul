@@ -67,8 +67,23 @@ ifneq ($(OPSYS),Windows)
   endif
 endif
 
-CC ?= gcc
-AR ?= ar
+# Compiler flags definition
+
+CC		?= gcc
+OUT_OBJ_F	?= -o
+NO_LINK_F	?= -c
+
+# Linker definition and flags
+
+LINK		?= $(CC)
+LINK_FLAGS	?= $(CFLAGS)
+LINK_OUT_F	?= $(OUT_OBJ_F)
+
+# Archiver definition and flags
+
+AR		?= ar
+AR_FLAGS	?= -rc
+
 EXTOBJ ?= .o
 EXTLIB ?= .a
 EXTEXE ?=

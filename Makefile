@@ -1,5 +1,11 @@
 TCF_AGENT_DIR=.
 
+# include custom Makefile fragments if defined
+
+ifdef MAKE_INC
+include $(MAKE_INC)
+endif
+
 include $(TCF_AGENT_DIR)/Makefile.inc
 
 # frame pointers are needed for agent diagnostics to work properly
@@ -11,6 +17,7 @@ ifeq ($(CC),g++)
 endif
 
 LUALIBS = $(LIBS) $(LUADIR)/lib/liblua$(EXTLIB)
+
 ifeq ($(OPSYS),Msys)
   LUALIBS += -lm
 else
@@ -19,36 +26,47 @@ ifneq ($(OPSYS),Windows)
 endif
 endif
 
+LIBTCF		?= $(BINDIR)/libtcf$(EXTLIB)
+
 override CFLAGS += $(OPTS)
 
+LINK_FLAGS	+= $(LINK_OPTS)
+
 all:	$(EXECS)
-libtcf: $(BINDIR)/libtcf$(EXTLIB)
+
+libtcf: $(LIBTCF)
 
 $(BINDIR)/libtcf$(EXTLIB) : $(OFILES)
-	$(AR) -rc $@ $^
+	$(AR) $(AR_FLAGS) $(AR_OUT_F)$@ $^
 	$(RANLIB)
 
-$(BINDIR)/agent$(EXTEXE): $(BINDIR)/main/main$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB)
-	$(CC) $(CFLAGS) -o $@ $(BINDIR)/main/main$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB) $(LIBS)
+$(BINDIR)/agent$(EXTEXE): $(BINDIR)/main/main$(EXTOBJ) $(LIBTCF)
+	$(LINK) $(LINK_FLAGS) $(LINK_OUT_F)$@ $(BINDIR)/main/main$(EXTOBJ) \
+		$(LIBTCF) $(LIBS)
 
-$(BINDIR)/client$(EXTEXE): $(BINDIR)/main/main_client$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB)
-	$(CC) $(CFLAGS) -o $@ $(BINDIR)/main/main_client$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB) $(LIBS)
+$(BINDIR)/client$(EXTEXE): $(BINDIR)/main/main_client$(EXTOBJ) $(LIBTCF)
+	$(LINK) $(LINK_FLAGS) $(LINK_OUT_F)$@ \
+		$(BINDIR)/main/main_client$(EXTOBJ) $(LIBTCF) $(LIBS)
 
-$(BINDIR)/tcflua$(EXTEXE): $(BINDIR)/main/main_lua$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB)
-	$(CC) $(CFLAGS) $(EXPORT_DYNAMIC) -o $@ $(BINDIR)/main/main_lua$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB) $(LUALIBS)
+$(BINDIR)/tcflua$(EXTEXE): $(BINDIR)/main/main_lua$(EXTOBJ) $(LIBTCF)
+	$(LINK) $(LINK_FLAGS) $(EXPORT_DYNAMIC) $(LINK_OUT_F)$@ \
+		$(BINDIR)/main/main_lua$(EXTOBJ) $(LIBTCF) $(LUALIBS)
 
-$(BINDIR)/tcfreg$(EXTEXE): $(BINDIR)/main/main_reg$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB)
-	$(CC) $(CFLAGS) -o $@ $(BINDIR)/main/main_reg$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB) $(LIBS)
+$(BINDIR)/tcfreg$(EXTEXE): $(BINDIR)/main/main_reg$(EXTOBJ) $(LIBTCF)
+	$(LINK) $(LINK_FLAGS) $(LINK_OUT_F)$@ $(BINDIR)/main/main_reg$(EXTOBJ) \
+		$(LIBTCF) $(LIBS)
 
-$(BINDIR)/valueadd$(EXTEXE): $(BINDIR)/main/main_va$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB)
-	$(CC) $(CFLAGS) -o $@ $(BINDIR)/main/main_va$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB) $(LIBS)
+$(BINDIR)/valueadd$(EXTEXE): $(BINDIR)/main/main_va$(EXTOBJ) $(LIBTCF)
+	$(LINK) $(LINK_FLAGS) $(LINK_OUT_F)$@ $(BINDIR)/main/main_va$(EXTOBJ) \
+		$(LIBTCF) $(LIBS)
 
-$(BINDIR)/tcflog$(EXTEXE): $(BINDIR)/main/main_log$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB)
-	$(CC) $(CFLAGS) -o $@ $(BINDIR)/main/main_log$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB) $(LIBS)
+$(BINDIR)/tcflog$(EXTEXE): $(BINDIR)/main/main_log$(EXTOBJ) $(LIBTCF)
+	$(LINK) $(LINK_FLAGS) $(LINK_OUT_F)$@ $(BINDIR)/main/main_log$(EXTOBJ) \
+		$(LIBTCF) $(LIBS)
 
-$(BINDIR)/%$(EXTOBJ): %.c $(HFILES) Makefile Makefile.inc
+$(BINDIR)/%$(EXTOBJ): %.c $(HFILES) Makefile Makefile.inc $(EXTRA_CCDEPS)
 	@$(call MKDIR,$(dir $@))
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(OUT_OBJ_F)$@ $(NO_LINK_F) $<
 
 clean::
 	$(call RMDIR,$(BINDIR))
@@ -72,7 +90,8 @@ install: all
 ALLFILES = Makefile* *.html *.sln *.vcproj *.h \
   bin framework machine main services system
 
-tcf-agent-$(VERSION).tar.bz2: $(HFILES) $(CFILES) Makefile Makefile.inc main/tcf-agent.spec main/tcf-agent.init
+tcf-agent-$(VERSION).tar.bz2: $(HFILES) $(CFILES) Makefile Makefile.inc \
+			      main/tcf-agent.spec main/tcf-agent.init
 	rm -rf tcf-agent-$(VERSION) tcf-agent-$(VERSION).tar.bz2
 	mkdir tcf-agent-$(VERSION)
 	tar c --exclude "*.svn" $(ALLFILES) | tar x -C tcf-agent-$(VERSION)
@@ -83,7 +102,8 @@ tar: tcf-agent-$(VERSION).tar.bz2
 
 rpm: all tar
 	rm -rf RPM
-	mkdir RPM RPM/BUILD RPM/RPMS RPM/RPMS/`uname -i` RPM/RPMS/noarch RPM/SOURCES RPM/SPECS RPM/SRPMS RPM/tmp
+	mkdir RPM RPM/BUILD RPM/RPMS RPM/RPMS/`uname -i` \
+	      RPM/RPMS/noarch RPM/SOURCES RPM/SPECS RPM/SRPMS RPM/tmp
 	echo "%_topdir $(PWD)/RPM" >~/.rpmmacros
 	echo "%_tmppath $(PWD)/RPM/tmp" >>~/.rpmmacros
 	rpmbuild -ta tcf-agent-$(VERSION).tar.bz2
