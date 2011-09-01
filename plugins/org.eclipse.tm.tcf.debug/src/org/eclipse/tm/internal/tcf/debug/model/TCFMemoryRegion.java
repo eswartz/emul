@@ -13,6 +13,7 @@ package org.eclipse.tm.internal.tcf.debug.model;
 import java.math.BigInteger;
 import java.util.Map;
 
+import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.services.IMemoryMap;
 import org.eclipse.tm.tcf.services.IMemoryMap.MemoryRegion;
 
@@ -25,10 +26,8 @@ public class TCFMemoryRegion implements MemoryRegion, Comparable<TCFMemoryRegion
 
     public TCFMemoryRegion(Map<String,Object> props) {
         this.props = props;
-        Number addr = (Number)props.get(IMemoryMap.PROP_ADDRESS);
-        Number size = (Number)props.get(IMemoryMap.PROP_SIZE);
-        this.addr = addr == null || addr instanceof BigInteger ? (BigInteger)addr : new BigInteger(addr.toString());
-        this.size = size == null || size instanceof BigInteger ? (BigInteger)size : new BigInteger(size.toString());
+        this.addr = JSON.toBigInteger((Number)props.get(IMemoryMap.PROP_ADDRESS));
+        this.size = JSON.toBigInteger((Number)props.get(IMemoryMap.PROP_SIZE));
     }
 
     public Number getAddress() {

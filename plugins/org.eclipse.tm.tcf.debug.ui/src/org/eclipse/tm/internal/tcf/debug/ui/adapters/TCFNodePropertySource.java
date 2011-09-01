@@ -24,6 +24,7 @@ import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExecContext;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExecContext.MemoryRegion;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeStackFrame;
+import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.services.IStackTrace;
 import org.eclipse.tm.tcf.util.TCFDataCache;
@@ -179,12 +180,7 @@ public class TCFNodePropertySource implements IPropertySource {
     }
 
     private static String toHexAddrString(Number num) {
-        BigInteger n;
-        if (num instanceof BigInteger) {
-            n = (BigInteger) num;
-        } else {
-            n = BigInteger.valueOf(num.longValue());
-        }
+        BigInteger n = JSON.toBigInteger(num);
         String s = n.toString(16);
         int sz = s.length() > 8 ? 16 : 8;
         int l = sz - s.length();
@@ -192,5 +188,4 @@ public class TCFNodePropertySource implements IPropertySource {
         if (l > 16) l = 16;
         return "0x0000000000000000".substring(0, 2 + l) + s;
     }
-
 }

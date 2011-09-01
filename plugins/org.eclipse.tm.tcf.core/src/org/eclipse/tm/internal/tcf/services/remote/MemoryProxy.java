@@ -59,13 +59,11 @@ public class MemoryProxy implements IMemory {
             this.ranges = c == null ? null : new Range[c.size()];
             if (c != null) {
                 int n = 0;
-                BigInteger addr_bi = addr instanceof BigInteger ?
-                        (BigInteger)addr : new BigInteger(addr.toString());
+                BigInteger addr_bi = JSON.toBigInteger(addr);
                 for (Map<String,Object> m : c) {
                     Range r = new Range();
                     Number x = (Number)m.get(RANGE_KEY_ADDR);
-                    BigInteger y = x instanceof BigInteger ?
-                            (BigInteger)x : new BigInteger(x.toString());
+                    BigInteger y = JSON.toBigInteger(x);
                     r.offs = y.subtract(addr_bi).intValue();
                     r.size = ((Number)m.get(RANGE_KEY_SIZE)).intValue();
                     r.stat = ((Number)m.get(RANGE_KEY_STAT)).intValue();

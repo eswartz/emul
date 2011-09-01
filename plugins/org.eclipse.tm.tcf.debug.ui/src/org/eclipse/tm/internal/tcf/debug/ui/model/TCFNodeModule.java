@@ -14,6 +14,7 @@ import java.math.BigInteger;
 
 import org.eclipse.debug.internal.ui.viewers.model.provisional.ILabelUpdate;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
+import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.services.IMemoryMap;
 
 /**
@@ -76,13 +77,7 @@ public class TCFNodeModule extends TCFNode {
 
     private String toHexString(Number address) {
         if (address == null) return "";
-        BigInteger addr;
-        if (address instanceof BigInteger) {
-            addr = (BigInteger)address;
-        }
-        else {
-            addr = new BigInteger(address.toString());
-        }
+        BigInteger addr = JSON.toBigInteger(address);
         String s = addr.toString(16);
         int sz = s.length() <= 8 ? 8 : 16;
         int l = sz - s.length();

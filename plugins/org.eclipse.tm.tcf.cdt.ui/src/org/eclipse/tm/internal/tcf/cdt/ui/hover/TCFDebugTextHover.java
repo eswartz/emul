@@ -208,5 +208,4 @@ public class TCFDebugTextHover extends AbstractDebugTextHover implements ITextHo
         }
         return new BigInteger(temp);
     }
-
 }

@@ -152,7 +152,7 @@ public class MemoryMapWidget {
                 {
                     Number n = r.getOffset();
                     if (n != null) {
-                        BigInteger x = n instanceof BigInteger ? (BigInteger)n : new BigInteger(n.toString());
+                        BigInteger x = JSON.toBigInteger(n);
                         String s = x.toString(16);
                         int l = 16 - s.length();
                         if (l < 0) l = 0;

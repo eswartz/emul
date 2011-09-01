@@ -23,6 +23,7 @@ import java.util.Set;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IErrorReport;
 import org.eclipse.tm.tcf.protocol.IToken;
+import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IBreakpoints;
 import org.eclipse.tm.tcf.services.IDiagnostics;
@@ -1567,7 +1568,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                                 exit(new Exception("Invalid symbol size attribute"));
                                 return;
                             }
-                            BigInteger y = new BigInteger(addr.toString());
+                            BigInteger y = JSON.toBigInteger(addr);
                             BigInteger z = y.add(BigInteger.valueOf(size));
                             if (x.compareTo(y) < 0 || x.compareTo(z) >= 0) {
                                 exit(new Exception("Invalid symbol address attribute"));

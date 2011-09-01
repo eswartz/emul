@@ -44,6 +44,7 @@ import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModelManager;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExecContext;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeLaunch;
+import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.services.IBreakpoints;
 import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.util.TCFDataCache;
@@ -120,9 +121,7 @@ public class TCFBreakpointStatusPage extends PropertyPage {
                             if (z.text == null) {
                                 Number addr = (Number)m.get(IBreakpoints.INSTANCE_ADDRESS);
                                 if (addr != null) {
-                                    BigInteger i = null;
-                                    if (addr instanceof BigInteger) i = (BigInteger)addr;
-                                    if (i == null) i = new BigInteger(addr.toString());
+                                    BigInteger i = JSON.toBigInteger(addr);
                                     z.text = "Planted at 0x" + i.toString(16);
                                     z.planted_ok = true;
                                 }

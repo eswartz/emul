@@ -26,6 +26,7 @@ import org.eclipse.tm.internal.tcf.debug.model.TCFFunctionRef;
 import org.eclipse.tm.internal.tcf.debug.model.TCFSourceRef;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.tm.tcf.protocol.IToken;
+import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IExpressions;
 import org.eclipse.tm.tcf.services.IStackTrace;
@@ -154,7 +155,7 @@ public class TCFNodeStackFrame extends TCFNode {
                         return true;
                     }
                     if (n != null) {
-                        set(null, null, toBigInteger(n));
+                        set(null, null, JSON.toBigInteger(n));
                         return true;
                     }
                 }
@@ -220,7 +221,7 @@ public class TCFNodeStackFrame extends TCFNode {
         assert Protocol.isDispatchThread();
         if (!stack_trace_context.isValid()) return null;
         IStackTrace.StackTraceContext ctx = stack_trace_context.getData();
-        if (ctx != null) return toBigInteger(ctx.getReturnAddress());
+        if (ctx != null) return JSON.toBigInteger(ctx.getReturnAddress());
         return null;
     }
 
@@ -443,12 +444,6 @@ public class TCFNodeStackFrame extends TCFNode {
             result.setInputElement(mem.getData());
         }
         return true;
-    }
-
-    private BigInteger toBigInteger(Number n) {
-        if (n == null) return null;
-        if (n instanceof BigInteger) return (BigInteger)n;
-        return new BigInteger(n.toString());
     }
 
     private String makeHexAddrString(int addr_size, BigInteger n) {

@@ -50,6 +50,7 @@ import org.eclipse.tm.internal.tcf.debug.model.TCFSourceRef;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.tm.tcf.protocol.IChannel;
+import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IBreakpoints;
 import org.eclipse.tm.tcf.services.ILineNumbers;
@@ -332,12 +333,6 @@ public class TCFAnnotationManager {
         return (Map<String,Object>)o;
     }
 
-    private BigInteger toBigInteger(Number n) {
-        if (n == null) return null;
-        if (n instanceof BigInteger) return (BigInteger)n;
-        return new BigInteger(n.toString());
-    }
-
     private void addBreakpointErrorAnnotation(List<TCFAnnotation> set, TCFLaunch launch, String id, String error) {
         Map<String,Object> props = launch.getBreakpointsStatus().getProperties(id);
         if (props != null) {
@@ -417,7 +412,7 @@ public class TCFAnnotationManager {
                                     if (ctx_id == null) continue;
                                     if (!ctx_id.equals(node.id) && !ctx_id.equals(bp_group)) continue;
                                     error = (String)m.get(IBreakpoints.INSTANCE_ERROR);
-                                    BigInteger addr = toBigInteger((Number)m.get(IBreakpoints.INSTANCE_ADDRESS));
+                                    BigInteger addr = JSON.toBigInteger((Number)m.get(IBreakpoints.INSTANCE_ADDRESS));
                                     if (addr != null) {
                                         ILineNumbers.CodeArea area = null;
                                         TCFDataCache<TCFSourceRef> line_cache = memory.getLineInfo(addr);

@@ -35,6 +35,7 @@ import org.eclipse.tm.internal.tcf.debug.model.TCFSourceRef;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.tm.tcf.protocol.IErrorReport;
 import org.eclipse.tm.tcf.protocol.IToken;
+import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.ILineNumbers;
 import org.eclipse.tm.tcf.services.IMemory;
@@ -152,8 +153,8 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                 addr_end = null;
             }
             else {
-                addr_start = addr instanceof BigInteger ? (BigInteger)addr : new BigInteger(addr.toString());
-                addr_end = addr_start.add(size instanceof BigInteger ? (BigInteger)size : new BigInteger(size.toString()));
+                addr_start = JSON.toBigInteger(addr);
+                addr_end = addr_start.add(JSON.toBigInteger(size));
             }
         }
 
@@ -526,12 +527,6 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         return signal_mask;
     }
 
-    private BigInteger toBigInteger(Number n) {
-        if (n == null) return null;
-        if (n instanceof BigInteger) return (BigInteger)n;
-        return new BigInteger(n.toString());
-    }
-
     public TCFDataCache<TCFSourceRef> getLineInfo(final BigInteger addr) {
         if (isDisposed()) return null;
         TCFDataCache<TCFSourceRef> ref_cache;
@@ -568,8 +563,8 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                         ref_data.address = addr;
                         if (error == null && areas != null && areas.length > 0) {
                             for (ILineNumbers.CodeArea area : areas) {
-                                BigInteger a0 = toBigInteger(area.start_address);
-                                BigInteger a1 = toBigInteger(area.end_address);
+                                BigInteger a0 = JSON.toBigInteger(area.start_address);
+                                BigInteger a1 = JSON.toBigInteger(area.end_address);
                                 if (n0.compareTo(a0) >= 0 && n0.compareTo(a1) < 0) {
                                     if (ref_data.area == null || area.start_line < ref_data.area.start_line) {
                                         if (area.start_address != a0 || area.end_address != a1) {

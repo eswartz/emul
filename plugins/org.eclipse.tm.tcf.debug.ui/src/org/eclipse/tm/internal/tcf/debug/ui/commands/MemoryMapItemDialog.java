@@ -32,6 +32,7 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.services.IMemoryMap;
 
 class MemoryMapItemDialog extends Dialog {
@@ -202,7 +203,7 @@ class MemoryMapItemDialog extends Dialog {
 
     private String toHex(Number n) {
         if (n == null) return null;
-        BigInteger x = n instanceof BigInteger ? (BigInteger)n : new BigInteger(n.toString());
+        BigInteger x = JSON.toBigInteger(n);
         String s = x.toString(16);
         int l = 16 - s.length();
         if (l < 0) l = 0;

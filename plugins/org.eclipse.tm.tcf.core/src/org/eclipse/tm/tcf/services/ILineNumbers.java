@@ -14,6 +14,7 @@ import java.math.BigInteger;
 
 import org.eclipse.tm.tcf.protocol.IService;
 import org.eclipse.tm.tcf.protocol.IToken;
+import org.eclipse.tm.tcf.protocol.JSON;
 
 /**
  * Line numbers service associates locations in the source files with the corresponding
@@ -124,7 +125,7 @@ public interface ILineNumbers extends IService {
             bf.append(" -> ");
             if (start_address != null) {
                 bf.append("0x");
-                bf.append(new BigInteger(start_address.toString()).toString(16));
+                bf.append(JSON.toBigInteger(start_address).toString(16));
             }
             else {
                 bf.append('0');
@@ -132,7 +133,7 @@ public interface ILineNumbers extends IService {
             bf.append("..");
             if (end_address != null) {
                 bf.append("0x");
-                bf.append(new BigInteger(end_address.toString()).toString(16));
+                bf.append(JSON.toBigInteger(end_address).toString(16));
             }
             else {
                 bf.append('0');

@@ -20,6 +20,7 @@ import java.util.Set;
 
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
+import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IBreakpoints;
 import org.eclipse.tm.tcf.services.IDiagnostics;
@@ -182,7 +183,7 @@ class TestExpressions implements ITCFTest,
                 if (run_to_bp_done) return false;
                 if (sym_func3 == null) return false;
                 if (suspended_pc == null) return false;
-                BigInteger pc0 = new BigInteger(sym_func3.getValue().toString());
+                BigInteger pc0 = JSON.toBigInteger(sym_func3.getValue());
                 BigInteger pc1 = new BigInteger(suspended_pc);
                 if (pc0.equals(pc1)) return false;
             }
@@ -340,7 +341,7 @@ class TestExpressions implements ITCFTest,
             return;
         }
         if (!run_to_bp_done) {
-            BigInteger pc0 = new BigInteger(sym_func3.getValue().toString());
+            BigInteger pc0 = JSON.toBigInteger(sym_func3.getValue());
             BigInteger pc1 = new BigInteger(suspended_pc);
             if (!pc0.equals(pc1)) {
                 waiting_suspend = true;

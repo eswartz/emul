@@ -36,6 +36,7 @@ import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
+import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IExpressions;
 import org.eclipse.tm.tcf.services.IMemory;
@@ -1265,8 +1266,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                 }
                 Number addr = v.getAddress();
                 if (addr != null) {
-                    BigInteger i = addr instanceof BigInteger ?
-                            (BigInteger)addr : new BigInteger(addr.toString());
+                    BigInteger i = JSON.toBigInteger(addr);
                     bf.append("Address: 0x");
                     bf.append(i.toString(16));
                     bf.append('\n');

@@ -18,6 +18,7 @@ import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
 import org.eclipse.tm.internal.tcf.debug.model.TCFSourceRef;
 import org.eclipse.tm.tcf.protocol.IToken;
+import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.ILineNumbers;
 import org.eclipse.tm.tcf.services.IRunControl;
@@ -65,10 +66,8 @@ public abstract class TCFActionStepInto extends TCFAction implements IRunControl
     private void setSourceRef(TCFSourceRef ref) {
         ILineNumbers.CodeArea area = ref.area;
         if (area != null) {
-            if (area.start_address instanceof BigInteger) pc0 = (BigInteger)area.start_address;
-            else if (area.start_address != null) pc0 = new BigInteger(area.start_address.toString());
-            if (area.end_address instanceof BigInteger) pc1 = (BigInteger)area.end_address;
-            else if (area.end_address != null) pc1 = new BigInteger(area.end_address.toString());
+            pc0 = JSON.toBigInteger(area.start_address);
+            pc1 = JSON.toBigInteger(area.end_address);
         }
         else {
             pc0 = null;

@@ -763,4 +763,15 @@ public final class JSON {
         else if (o instanceof String) Base64.toByteArray(buf, offs, size, ((String)o).toCharArray());
         else if (o != null) System.arraycopy(toByteArray(o), 0, buf, offs, size);
     }
+
+    /**
+     * Converts a JSON number to BigInteger.
+     * @param n - a Number.
+     * @return BigInteger.
+     */
+    public static BigInteger toBigInteger(Number n) {
+        if (n == null) return null;
+        if (n instanceof BigInteger) return (BigInteger)n;
+        return BigInteger.valueOf(n.longValue());
+    }
 }

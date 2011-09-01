@@ -47,6 +47,7 @@ import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeStackFrame;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IChannel.IChannelListener;
 import org.eclipse.tm.tcf.protocol.IToken;
+import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IDisassembly;
 import org.eclipse.tm.tcf.services.IDisassembly.DoneDisassemble;
@@ -588,7 +589,7 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
                                             if (error == null && context != null) {
                                                 if (context.getTypeClass().equals(ISymbols.TypeClass.function)) {
                                                     symbolList.add(context);
-                                                    nextAddress = toBigInteger(context.getAddress()).add(BigInteger.valueOf(context.getSize()));
+                                                    nextAddress = JSON.toBigInteger(context.getAddress()).add(BigInteger.valueOf(context.getSize()));
                                                 }
                                             }
                                             findNextSymbol(nextAddress);
@@ -600,7 +601,7 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
                             }
                             private void findNextSymbol(BigInteger nextAddress) {
                                 while (++idx[0] < disassembly.length) {
-                                    BigInteger instrAddress = toBigInteger(disassembly[idx[0]].getAddress());
+                                    BigInteger instrAddress = JSON.toBigInteger(disassembly[idx[0]].getAddress());
                                     if (nextAddress == null) {
                                         nextAddress = instrAddress;
                                     } else if (instrAddress.compareTo(nextAddress) < 0) {
@@ -650,9 +651,9 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
 
                     private AddressRange getAddressRange(IDisassemblyLine[] lines) {
                         AddressRange range = new AddressRange();
-                        range.start = toBigInteger(lines[0].getAddress());
+                        range.start = JSON.toBigInteger(lines[0].getAddress());
                         IDisassemblyLine lastLine = lines[lines.length-1];
-                        range.end = toBigInteger(lastLine.getAddress()).add(BigInteger.valueOf(lastLine.getSize()));
+                        range.end = JSON.toBigInteger(lastLine.getAddress()).add(BigInteger.valueOf(lastLine.getSize()));
                         return range;
                     }
                 });
@@ -685,7 +686,7 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
 
             AddressRangePosition p= null;
             for (IDisassemblyLine instruction : instructions) {
-                BigInteger address = toBigInteger(instruction.getAddress());
+                BigInteger address = JSON.toBigInteger(instruction.getAddress());
                 if (startAddress == null) {
                     startAddress = address;
                     fCallback.setGotoAddressPending(address);
@@ -772,7 +773,7 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
     private FunctionOffset getFunctionOffset(BigInteger address, ISymbols.Symbol[] symbols) {
         if (symbols != null) {
             for (ISymbols.Symbol symbol : symbols) {
-                BigInteger symbolAddress = toBigInteger(symbol.getAddress());
+                BigInteger symbolAddress = JSON.toBigInteger(symbol.getAddress());
                 BigInteger offset = address.subtract(symbolAddress);
                 switch (offset.compareTo(BigInteger.ZERO)) {
                 case 0:
@@ -793,7 +794,7 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
     private CodeArea findCodeArea(BigInteger address, CodeArea[] codeAreas) {
         if (codeAreas != null) {
             for (CodeArea codeArea : codeAreas) {
-                if (address.equals(toBigInteger(codeArea.start_address))) {
+                if (address.equals(JSON.toBigInteger(codeArea.start_address))) {
                     return codeArea;
                 }
             }
@@ -965,10 +966,5 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
             }
         }
         return new BigInteger(temp);
-    }
-
-    private static BigInteger toBigInteger(Number address) {
-        if (address instanceof BigInteger) return (BigInteger) address;
-        return BigInteger.valueOf(address.longValue());
     }
 }

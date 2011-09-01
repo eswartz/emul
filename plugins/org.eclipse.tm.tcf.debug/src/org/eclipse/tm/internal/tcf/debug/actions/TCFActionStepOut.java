@@ -18,6 +18,7 @@ import java.util.Map;
 import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
 import org.eclipse.tm.tcf.protocol.IToken;
+import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IBreakpoints;
 import org.eclipse.tm.tcf.services.IRunControl;
@@ -112,7 +113,7 @@ public abstract class TCFActionStepOut extends TCFAction implements IRunControl.
                     return;
                 }
                 if (step_back) {
-                    BigInteger n = new BigInteger(addr.toString());
+                    BigInteger n = JSON.toBigInteger(addr);
                     addr = n.subtract(BigInteger.valueOf(1));
                 }
                 String id = "Step." + ctx.getID();

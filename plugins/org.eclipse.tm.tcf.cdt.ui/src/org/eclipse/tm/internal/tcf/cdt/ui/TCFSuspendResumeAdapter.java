@@ -40,6 +40,7 @@ import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExecContext;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeRegister;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
+import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.services.IBreakpoints;
 import org.eclipse.tm.tcf.services.ILineNumbers;
 import org.eclipse.tm.tcf.services.ILineNumbers.CodeArea;
@@ -540,7 +541,7 @@ public class TCFSuspendResumeAdapter implements ISuspendResume, IRunToLine,
             }
             private byte[] addressToByteArray(Number address, int size, boolean bigEndian) {
                 byte[] bytes = new byte[size];
-                byte[] addrBytes = toBigInteger(address).toByteArray();
+                byte[] addrBytes = JSON.toBigInteger(address).toByteArray();
                 for (int i=0; i < bytes.length; ++i) {
                     byte b = 0; 
                     if (i < addrBytes.length) {
@@ -552,12 +553,4 @@ public class TCFSuspendResumeAdapter implements ISuspendResume, IRunToLine,
             }
         }.getD();
     }
-
-    private static BigInteger toBigInteger(Number address) {
-        if (address instanceof BigInteger) {
-            return (BigInteger) address;
-        }
-        return new BigInteger(address.toString());
-    }
-
 }
