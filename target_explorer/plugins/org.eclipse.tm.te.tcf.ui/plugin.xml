@@ -156,11 +156,40 @@
       <handler
             class="org.eclipse.tm.te.tcf.ui.internal.handler.RefreshCommandHandler"
             commandId="org.eclipse.tm.te.tcf.ui.command.refresh">
+            <activeWhen>
+               <reference definitionId="te.expressions.tcf.peerModel.handlerActivation"/>
+            </activeWhen>
       </handler>
       
       <handler
             class="org.eclipse.tm.te.tcf.ui.internal.handler.DeleteCommandHandler"
             commandId="org.eclipse.ui.edit.delete">
+            <activeWhen>
+               <reference definitionId="te.expressions.tcf.peerModel.handlerActivation"/>
+            </activeWhen>
       </handler>
+   </extension>
+
+<!-- Reusable core expression fragments -->   
+   <extension point="org.eclipse.core.expressions.definitions">
+   
+      <!-- Expression to test if the active part is the Target Explorer and
+           the selection contains only elements of type IPeerModel.
+           
+           This expression is for use in the handlers activeWhen markup.  
+      -->
+      <definition id="te.expressions.tcf.peerModel.handlerActivation">
+         <and>
+            <with variable="activePartId">
+               <equals value="org.eclipse.tm.te.ui.views.TargetExplorer"/>
+            </with>
+            <with variable="selection">
+               <count value="+"/>
+               <iterate operator="and" ifEmpty="false">
+                  <instanceof value="org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel"/>
+               </iterate>
+            </with>
+         </and>
+      </definition>
    </extension>
 </plugin>
