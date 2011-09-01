@@ -70,7 +70,7 @@ import org.eclipse.tm.tcf.util.TCFTask;
 
 @SuppressWarnings("restriction")
 public class TCFDisassemblyBackend implements IDisassemblyBackend {
-
+    
     private static class AddressRange {
         BigInteger start;
         BigInteger end;
@@ -554,6 +554,8 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
                                     if (modCount == getModCount()) {
                                         fCallback.insertError(startAddress, TCFModel.getErrorMessage(error, false));
                                         fCallback.setUpdatePending(false);
+                                        int addr_bits = mem.getAddressSize() * 8;
+                                        if (fCallback.getAddressSize() < addr_bits) fCallback.addressSizeChanged(addr_bits);
                                     }
                                 }
                             });
@@ -640,6 +642,8 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
                         fCallback.asyncExec(new Runnable() {
                             public void run() {
                                 insertDisassembly(modCount, startAddress, disassembly, symbols, areas);
+                                int addr_bits = mem.getAddressSize() * 8;
+                                if (fCallback.getAddressSize() < addr_bits) fCallback.addressSizeChanged(addr_bits);
                             }
                         });
                     }
@@ -681,12 +685,7 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
 
             AddressRangePosition p= null;
             for (IDisassemblyLine instruction : instructions) {
-                BigInteger address;
-                if (instruction.getAddress() instanceof BigInteger) {
-                    address = (BigInteger) instruction.getAddress();
-                } else {
-                    address = BigInteger.valueOf(instruction.getAddress().longValue());
-                }
+                BigInteger address = toBigInteger(instruction.getAddress());
                 if (startAddress == null) {
                     startAddress = address;
                     fCallback.setGotoAddressPending(address);
@@ -969,10 +968,7 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
     }
 
     private static BigInteger toBigInteger(Number address) {
-        if (address instanceof BigInteger) {
-            return (BigInteger) address;
-        }
-        return new BigInteger(address.toString());
+        if (address instanceof BigInteger) return (BigInteger) address;
+        return BigInteger.valueOf(address.longValue());
     }
-
 }
