@@ -102,7 +102,7 @@
                tooltip="%command.refresh.tooltip">
             <visibleWhen checkEnabled="false">
                <with variable="selection">
-                  <count value="1"/>
+                  <count value="+"/>
                   <iterate operator="and" ifEmpty="false">
                      <instanceof value="org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel"/>
                   </iterate>
@@ -124,7 +124,7 @@
                tooltip="%command.delete.tooltip">
             <visibleWhen checkEnabled="false">
                <with variable="selection">
-                  <count value="1"/>
+                  <count value="+"/>
                   <iterate operator="and" ifEmpty="false">
                      <and>
                         <instanceof value="org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel"/>
