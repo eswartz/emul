@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: %pluginName
 Bundle-Vendor: %providerName
 Bundle-SymbolicName: org.eclipse.tm.tcf;singleton:=true
-Bundle-Version: 0.4.0.qualifier
+Bundle-Version: 0.5.0.qualifier
 Bundle-Localization: plugin
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Bundle-ActivationPolicy: lazy
@@ -11,6 +11,6 @@ Eclipse-LazyStart: true
 Require-Bundle: org.eclipse.core.runtime
 Bundle-Activator: org.eclipse.tm.tcf.Activator
 Import-Package: org.eclipse.tm.tcf.core;version="0.4.0",
- org.eclipse.tm.tcf.protocol;version="0.4.0"
+ org.eclipse.tm.tcf.protocol;version="0.5.0"
 Export-Package: org.eclipse.tm.tcf.extensions;version="0.4.0",
  org.eclipse.tm.tcf.ssl;version="0.4.0"
