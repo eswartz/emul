@@ -23,11 +23,11 @@ public interface ILineNumbers extends IService {
     static final String NAME = "LineNumbers";
 
     /**
-     * TextArea represent a continues area in source text mapped to
+     * CodeArea represent a continues area in source text mapped to
      * continues range of code addresses.
      * Line and columns are counted starting from 1.
      * File name can be relative path, in such case client should
-     * use TextArea directory name as origin for the path.
+     * use CodeArea directory name as origin for the path.
      * File and directory names are valid on a host where code was compiled.
      * It is client responsibility to map names to this host file system.
      */
