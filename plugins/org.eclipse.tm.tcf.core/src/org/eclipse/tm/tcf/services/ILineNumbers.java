@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.tm.tcf.services;
 
-import java.math.BigInteger;
-
 import org.eclipse.tm.tcf.protocol.IService;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.JSON;
