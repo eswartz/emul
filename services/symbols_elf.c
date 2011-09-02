@@ -211,6 +211,7 @@ static void object2symbol(ObjectInfo * obj, Symbol ** res) {
     case TAG_inheritance:
     case TAG_member:
     case TAG_formal_parameter:
+    case TAG_unspecified_parameters:
     case TAG_local_variable:
     case TAG_variable:
         sym->sym_class = SYM_CLASS_REFERENCE;
@@ -238,6 +239,7 @@ static ObjectInfo * get_object_type(ObjectInfo * obj) {
         case TAG_entry_point:
         case TAG_enumerator:
         case TAG_formal_parameter:
+        case TAG_unspecified_parameters:
         case TAG_global_variable:
         case TAG_local_variable:
         case TAG_variable:
@@ -723,6 +725,7 @@ static int find_by_addr_in_unit(ObjectInfo * obj, int level, ContextAddress rt_o
             }
             break;
         case TAG_formal_parameter:
+        case TAG_unspecified_parameters:
         case TAG_local_variable:
             if (sym_frame == STACK_NO_FRAME) break;
         case TAG_variable:
@@ -826,9 +829,10 @@ static void enumerate_local_vars(ObjectInfo * obj, int level, ContextAddress rt_
             }
             break;
         case TAG_formal_parameter:
+        case TAG_unspecified_parameters:
         case TAG_local_variable:
         case TAG_variable:
-            if (level > 0 && obj->mName != NULL) {
+            if (level > 0) {
                 Context * org_ctx = sym_ctx;
                 int org_frame = sym_frame;
                 ContextAddress org_ip = sym_ip;
@@ -1322,6 +1326,7 @@ int get_symbol_type_class(const Symbol * sym, int * type_class) {
         case TAG_const_type:
         case TAG_typedef:
         case TAG_formal_parameter:
+        case TAG_unspecified_parameters:
         case TAG_global_variable:
         case TAG_local_variable:
         case TAG_variable:
@@ -1670,7 +1675,7 @@ int get_symbol_children(const Symbol * sym, Symbol *** children, int * count) {
             ObjectInfo * i = sym->base->obj->mChildren;
             if (unpack(sym->base) < 0) return -1;
             while (i != NULL) {
-                if (i->mTag == TAG_formal_parameter) n++;
+                if (i->mTag == TAG_formal_parameter || i->mTag == TAG_unspecified_parameters) n++;
                 i = i->mSibling;
             }
             if (buf_len < n) {
@@ -1680,11 +1685,11 @@ int get_symbol_children(const Symbol * sym, Symbol *** children, int * count) {
             n = 0;
             i = obj->mChildren;
             while (i != NULL) {
-                if (i->mTag == TAG_formal_parameter) {
+                if (i->mTag == TAG_formal_parameter || i->mTag == TAG_unspecified_parameters) {
                     Symbol * x = NULL;
                     Symbol * y = NULL;
                     object2symbol(i, &x);
-                    if (get_symbol_type(x, &y) <0) return -1;
+                    if (get_symbol_type(x, &y) < 0) return -1;
                     buf[n++] = y;
                 }
                 i = i->mSibling;
@@ -2060,6 +2065,11 @@ int get_symbol_flags(const Symbol * sym, SYM_FLAGS * flags) {
             break;
         case TAG_interface_type:
             *flags |= SYM_FLAG_INTERFACE_TYPE;
+            i = NULL;
+            break;
+        case TAG_unspecified_parameters:
+            *flags |= SYM_FLAG_PARAMETER;
+            *flags |= SYM_FLAG_VARARG;
             i = NULL;
             break;
         case TAG_formal_parameter:
