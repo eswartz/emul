@@ -653,8 +653,14 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
             if (!type_cache.validate(done)) return false;
             ISymbols.Symbol type_symbol = type_cache.getData();
             if (type_symbol != null) {
+                int flags = type_symbol.getFlags();
                 s = type_symbol.getName();
-                if (s != null && type_symbol.getTypeClass() == ISymbols.TypeClass.composite) s = "struct " + s;
+                if (s != null && type_symbol.getTypeClass() == ISymbols.TypeClass.composite) {
+                    if ((flags & ISymbols.SYM_FLAG_UNION_TYPE) != 0) s = "union " + s;
+                    else if ((flags & ISymbols.SYM_FLAG_CLASS_TYPE) != 0) s = "class " + s;
+                    else if ((flags & ISymbols.SYM_FLAG_INTERFACE_TYPE) != 0) s = "interface " + s;
+                    else s = "struct " + s;
+                }
                 if (s == null && type_symbol.getSize() == 0) s = "void";
                 if (s == null) {
                     switch (type_symbol.getTypeClass()) {
@@ -685,6 +691,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                         break;
                     case pointer:
                         s = "*";
+                        if ((flags & ISymbols.SYM_FLAG_REFERENCE) != 0) s = "&";
                         get_base_type = true;
                         break;
                     case array:
@@ -723,6 +730,10 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                         s = "<Function>";
                         break;
                     }
+                }
+                if (s != null) {
+                    if ((flags & ISymbols.SYM_FLAG_VOLATILE_TYPE) != 0) s = "volatile " + s;
+                    if ((flags & ISymbols.SYM_FLAG_CONST_TYPE) != 0) s = "const " + s;
                 }
             }
             if (s == null) {
@@ -898,7 +909,12 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                 TCFDataCache<ISymbols.Symbol> var = model.getSymbolInfoCache(var_expression.getData().getSymbolID());
                 if (var != null) {
                     if (!var.validate(done)) return false;
-                    if (var.getData() != null) name = var.getData().getName();
+                    ISymbols.Symbol var_data = var.getData();
+                    if (var_data != null) {
+                        name = var_data.getName();
+                        if (name == null && var_data.getFlag(ISymbols.SYM_FLAG_VARARG)) name = "<VarArg>";
+                        if (name == null) name = "<" + var_data.getID() + ">";
+                    }
                 }
             }
             if (name == null && base_text.getData() != null) name = base_text.getData();

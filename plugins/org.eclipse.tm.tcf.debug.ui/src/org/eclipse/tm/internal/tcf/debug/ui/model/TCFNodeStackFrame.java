@@ -373,7 +373,7 @@ public class TCFNodeStackFrame extends TCFNode {
                                     sym = s.getData();
                                 }
                                 if (sym == null) continue;
-                                if ((sym.getFlags() & ISymbols.SYM_FLAG_PARAMETER) == 0) continue;
+                                if (!sym.getFlag(ISymbols.SYM_FLAG_PARAMETER)) continue;
                                 if (cnt > 0) bf.append(',');
                                 if (show_arg_names) {
                                     String name = "?";

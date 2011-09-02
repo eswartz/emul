@@ -147,6 +147,12 @@ public class SymbolsProxy implements ISymbols {
             if (n == null) return 0;
             return n.intValue();
         }
+
+        public boolean getFlag(int flag) {
+            Number n = (Number)props.get(PROP_FLAGS);
+            if (n == null) return false;
+            return (n.intValue() & flag) != 0;
+        }
     }
 
     public SymbolsProxy(IChannel channel) {

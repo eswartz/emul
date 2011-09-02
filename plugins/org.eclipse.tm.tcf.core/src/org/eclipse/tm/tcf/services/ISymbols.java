@@ -43,22 +43,23 @@ public interface ISymbols extends IService {
     }
 
     static final int
-        SYM_FLAG_PARAMETER      = 0x0001,
-        SYM_FLAG_TYPEDEF        = 0x0002,
-        SYM_FLAG_CONST_TYPE     = 0x0004,
-        SYM_FLAG_PACKET_TYPE    = 0x0008,
-        SYM_FLAG_SUBRANGE_TYPE  = 0x0010,
-        SYM_FLAG_VOLATILE_TYPE  = 0x0020,
-        SYM_FLAG_RESTRICT_TYPE  = 0x0040,
-        SYM_FLAG_UNION_TYPE     = 0x0080,
-        SYM_FLAG_CLASS_TYPE     = 0x0100,
-        SYM_FLAG_INTERFACE_TYPE = 0x0200,
-        SYM_FLAG_SHARED_TYPE    = 0x0400,
-        SYM_FLAG_REFERENCE      = 0x0800,
-        SYM_FLAG_BIG_ENDIAN     = 0x1000,
-        SYM_FLAG_LITTLE_ENDIAN  = 0x2000,
-        SYM_FLAG_OPTIONAL       = 0x4000,
-        SYM_FLAG_EXTERNAL       = 0x8000;
+        SYM_FLAG_PARAMETER      = 0x00001,
+        SYM_FLAG_TYPEDEF        = 0x00002,
+        SYM_FLAG_CONST_TYPE     = 0x00004,
+        SYM_FLAG_PACKET_TYPE    = 0x00008,
+        SYM_FLAG_SUBRANGE_TYPE  = 0x00010,
+        SYM_FLAG_VOLATILE_TYPE  = 0x00020,
+        SYM_FLAG_RESTRICT_TYPE  = 0x00040,
+        SYM_FLAG_UNION_TYPE     = 0x00080,
+        SYM_FLAG_CLASS_TYPE     = 0x00100,
+        SYM_FLAG_INTERFACE_TYPE = 0x00200,
+        SYM_FLAG_SHARED_TYPE    = 0x00400,
+        SYM_FLAG_REFERENCE      = 0x00800,
+        SYM_FLAG_BIG_ENDIAN     = 0x01000,
+        SYM_FLAG_LITTLE_ENDIAN  = 0x02000,
+        SYM_FLAG_OPTIONAL       = 0x04000,
+        SYM_FLAG_EXTERNAL       = 0x08000,
+        SYM_FLAG_VARARG         = 0x10000;
 
     /**
      * Symbol context interface.
@@ -192,6 +193,13 @@ public interface ISymbols extends IService {
          * @return bit set of symbol flags.
          */
         int getFlags();
+
+        /**
+         * Get value of the given flag.
+         * @param flag - one of SYM_FLAG_*.
+         * @return the flag value.
+         */
+        boolean getFlag(int flag);
 
         /**
          * Get complete map of context properties.
