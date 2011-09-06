@@ -1,12 +1,12 @@
 TCF_AGENT_DIR=.
 
+include $(TCF_AGENT_DIR)/Makefile.inc
+
 # include custom Makefile fragments if defined
 
 ifdef MAKE_INC
 include $(MAKE_INC)
 endif
-
-include $(TCF_AGENT_DIR)/Makefile.inc
 
 # frame pointers are needed for agent diagnostics to work properly
 ifeq ($(CC),gcc)
