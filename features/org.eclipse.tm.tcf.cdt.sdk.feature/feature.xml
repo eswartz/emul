@@ -12,7 +12,7 @@
 <feature
       id="org.eclipse.tm.tcf.cdt.sdk.feature"
       label="%featureName"
-      version="0.4.0.qualifier"
+      version="0.5.0.qualifier"
       provider-name="%providerName">
 
    <description url="http://wiki.eclipse.org/TCF">
@@ -28,11 +28,11 @@
    </license>
 
    <url>
-      <update label="%updateSiteName" url="http://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/releases/0.4.0"/>
+      <update label="%updateSiteName" url="http://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/releases/0.5.0"/>
    </url>
 
    <requires>
-      <import feature="org.eclipse.tm.tcf.cdt.feature" version="0.4.0.qualifier"/>
+      <import feature="org.eclipse.tm.tcf.cdt.feature" version="0.5.0.qualifier"/>
    </requires>
 
    <plugin
