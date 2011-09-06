@@ -70,7 +70,7 @@ endif
 # Compiler flags definition
 
 CC		?= gcc
-OUT_OBJ_F	?= -o
+OUT_OBJ_F	?= -o # with a trailing space
 NO_LINK_F	?= -c
 
 # Linker definition and flags
