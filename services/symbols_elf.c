@@ -277,7 +277,7 @@ static ObjectInfo * get_original_type(ObjectInfo * obj) {
     return obj;
 }
 
-static int get_num_prop(ObjectInfo * obj, int at, U8_T * res) {
+static int get_num_prop(ObjectInfo * obj, U2_T at, U8_T * res) {
     Trap trap;
     PropertyValue v;
 
