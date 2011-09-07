@@ -62,7 +62,7 @@ typedef struct test_struct {
 typedef int test_array[10001];
 
 extern void tcf_test_func3(void);
-extern void tcf_test_func2(void);
+extern int tcf_test_func2(void);
 extern void tcf_test_func1(void);
 extern void tcf_test_func0(enum test_enum);
 
@@ -76,7 +76,7 @@ void tcf_test_func3(void) {
     usleep(1000);
 }
 
-void tcf_test_func2(void) {
+int tcf_test_func2(void) {
     int func2_local1 = 1;
     int func2_local2 = 2;
     test_struct func2_local3 = { enum_val3, 153, NULL, 3.14f, 2.71 };
@@ -85,6 +85,7 @@ void tcf_test_func2(void) {
     tcf_test_func3();
     func2_local1++;
     func2_local2 = func2_local1;
+    return func2_local2;
 }
 
 void tcf_test_func1(void) {

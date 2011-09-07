@@ -646,16 +646,15 @@ static void command_signal(char * token, Channel * c) {
 static void command_get_signal_list(char * token, Channel * c) {
     int err = 0;
     char id[256];
-    pid_t pid;
 
     json_read_string(&c->inp, id, sizeof(id));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    pid = id2pid(id, NULL);
+    /* pid is ignored, same signal list for all */
+    id2pid(id, NULL);
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
-    /* pid is ignored, same signal list for all */
 
     write_errno(&c->out, err);
     if (err) {

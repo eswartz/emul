@@ -1434,12 +1434,10 @@ static const luaL_Reg posteventfuncs[] = {
 /*
  * main entry point for TCF client
  *
- * The client is a simple shell permitting communication with the TCF agent.
- * By default the client will run in interactive mode. The client accepts
- * 3 command line options:
+ * Command line options:
  * -L <log_file>        : specify a log file
  * -l <log_mode>        : logging level see trace.c for more details
- * -S <script_file>     : script of commands to run - non-interactive mode
+ * -S <script_file>     : script of commands to run
  */
 
 #if defined(_WRS_KERNEL)
@@ -1450,7 +1448,6 @@ int main(int argc, char ** argv) {
     int c;
     int ind;
     int error;
-    int interactive = 1;
     const char * log_name = "-";
     const char * script_name = NULL;
     char * engine_name;
@@ -1484,14 +1481,6 @@ int main(int argc, char ** argv) {
         s++;
         while ((c = *s++) != '\0') {
             switch (c) {
-            case 'b':
-                interactive = 0;
-                break;
-
-            case 'i':
-                interactive = 1;
-                break;
-
             case 'l':
             case 'L':
             case 'S':
@@ -1513,7 +1502,6 @@ int main(int argc, char ** argv) {
 
                 case 'S':
                     script_name = s;
-                    interactive = 0;
                     break;
 
                 default:
