@@ -1110,15 +1110,19 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     }
 
     void postContextAddedDelta() {
-        if (last_children_state_info != null) {
-            if (!model.getAutoChildrenListUpdates()) {
-                // Manual manual updates.
-                return;
-            }
-            if (!last_children_state_info.suspended && model.getDelayChildrenListUpdates()) {
-                // Delay content update until a child is suspended.
-                delayed_children_list_delta = true;
-                return;
+        if (parent instanceof TCFNodeExecContext) {
+            TCFNodeExecContext exe = (TCFNodeExecContext)parent;
+            ChildrenStateInfo info = exe.last_children_state_info;
+            if (info != null) {
+                if (!model.getAutoChildrenListUpdates()) {
+                    // Manual manual updates.
+                    return;
+                }
+                if (!info.suspended && model.getDelayChildrenListUpdates()) {
+                    // Delay content update until a child is suspended.
+                    exe.delayed_children_list_delta = true;
+                    return;
+                }
             }
         }
         for (TCFModelProxy p : model.getModelProxies()) {
@@ -1130,15 +1134,19 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     }
 
     private void postContextRemovedDelta() {
-        if (last_children_state_info != null) {
-            if (!model.getAutoChildrenListUpdates()) {
-                // Manual manual updates.
-                return;
-            }
-            if (!last_children_state_info.suspended && model.getDelayChildrenListUpdates()) {
-                // Delay content update until a child is suspended.
-                delayed_children_list_delta = true;
-                return;
+        if (parent instanceof TCFNodeExecContext) {
+            TCFNodeExecContext exe = (TCFNodeExecContext)parent;
+            ChildrenStateInfo info = exe.last_children_state_info;
+            if (info != null) {
+                if (!model.getAutoChildrenListUpdates()) {
+                    // Manual manual updates.
+                    return;
+                }
+                if (!info.suspended && model.getDelayChildrenListUpdates()) {
+                    // Delay content update until a child is suspended.
+                    exe.delayed_children_list_delta = true;
+                    return;
+                }
             }
         }
         for (TCFModelProxy p : model.getModelProxies()) {

@@ -31,6 +31,6 @@ public class TCFPreferencesInitializer extends AbstractPreferenceInitializer {
         prefs.setDefault(TCFPreferences.PREF_VIEW_UPDATES_THROTTLE, true);
         prefs.setDefault(TCFPreferences.PREF_TARGET_TRAFFIC_THROTTLE, true);
         prefs.setDefault(TCFPreferences.PREF_AUTO_CHILDREN_LIST_UPDATES, true);
-        prefs.setDefault(TCFPreferences.PREF_DELAY_CHILDREN_LIST_UPDATES, true);
+        prefs.setDefault(TCFPreferences.PREF_DELAY_CHILDREN_LIST_UPDATES, false);
     }
 }
