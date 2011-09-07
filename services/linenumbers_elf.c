@@ -223,6 +223,12 @@ int line_to_address(Context * ctx, char * file_name, int line, int column, LineN
                 /* TODO: support for separate debug info files */
                 if (set_trap(&trap)) {
                     DWARFCache * cache = get_dwarf_cache(file);
+                    ObjectInfo * info = cache->mCompUnits;
+                    while (info != NULL) {
+                        CompUnit * unit = info->mCompUnit;
+                        if (!unit->mLineInfoLoaded) load_line_numbers(unit);
+                        info = info->mSibling;
+                    }
                     if (cache->mFileInfoHash) {
                         FileInfo * f = cache->mFileInfoHash[h % cache->mFileInfoHashSize];
                         while (f != NULL) {
