@@ -18,9 +18,9 @@
    </license>
 
    <requires>
-      <import feature="org.eclipse.tm.te.sdk.feature" version="1.0.0.qualifier"/>
-      <import feature="org.eclipse.tm.te.tcf.feature" version="1.0.0.qualifier"/>
-      <import feature="org.eclipse.tm.tcf.sdk.feature" version="0.5.0.qualifier"/>
+      <import feature="org.eclipse.tm.te.sdk.feature" version="1.0.0" match="greaterOrEqual"/>
+      <import feature="org.eclipse.tm.te.tcf.feature" version="1.0.0" match="greaterOrEqual"/>
+      <import feature="org.eclipse.tm.tcf.sdk.feature" version="0.5.0" match="greaterOrEqual"/>
    </requires>
 
    <plugin
