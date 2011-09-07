@@ -133,7 +133,8 @@ public class MemoryMapWidget {
                     BigInteger x = column == 1 ? r.addr : r.size;
                     if (x == null) return "";
                     String s = x.toString(16);
-                    int sz = mem_ctx.getAddressSize() * 2;
+                    int sz = 0;
+                    if (mem_ctx != null) sz = mem_ctx.getAddressSize() * 2;
                     int l = sz - s.length();
                     if (l < 0) l = 0;
                     if (l > 16) l = 16;
@@ -467,7 +468,7 @@ public class MemoryMapWidget {
     }
 
     private String getSelectedMemoryNode() {
-        if (channel == null) return null;
+        if (channel == null || channel.getState() != IChannel.STATE_OPEN) return null;
         try {
             return new TCFTask<String>(channel) {
                 public void run() {
@@ -511,7 +512,7 @@ public class MemoryMapWidget {
 
     private void loadTargetMemoryNodes() {
         target_map_nodes.clear();
-        if (channel == null) return;
+        if (channel == null || channel.getState() != IChannel.STATE_OPEN) return;
         try {
             new TCFTask<Boolean>(channel) {
                 public void run() {
@@ -559,7 +560,7 @@ public class MemoryMapWidget {
         loaded_files.clear();
         target_map.clear();
         mem_ctx = null;
-        if (channel == null) return;
+        if (channel == null || channel.getState() != IChannel.STATE_OPEN) return;
         try {
             new TCFTask<Boolean>(channel) {
                 public void run() {
