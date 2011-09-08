@@ -976,7 +976,7 @@ public abstract class AbstractChannel implements IChannel {
                 for (IChannelListener l : listeners_array) {
                     if (l == null) break;
                     try {
-                        l.congestionLevel(remote_congestion_level);
+                        l.congestionLevel(getCongestion());
                     }
                     catch (Throwable x) {
                         Protocol.log("Exception in channel listener", x);
