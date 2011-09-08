@@ -116,7 +116,7 @@ public abstract class AbstractChannel implements IChannel {
         }
     }
 
-    private static IChannelListener[] listeners_array = new IChannelListener[4];
+    private IChannelListener[] listeners_array = new IChannelListener[4];
 
     private final LinkedList<Map<String,String>> redirect_queue = new LinkedList<Map<String,String>>();
     private final Map<Class<?>,IService> local_service_by_class = new HashMap<Class<?>,IService>();
@@ -672,7 +672,7 @@ public abstract class AbstractChannel implements IChannel {
                     }
                     out_tokens.clear();
                 }
-                if (!channel_listeners.isEmpty()) {
+                if (channel_listeners.size() > 0) {
                     listeners_array = channel_listeners.toArray(listeners_array);
                     for (IChannelListener l : listeners_array) {
                         if (l == null) break;
@@ -687,6 +687,7 @@ public abstract class AbstractChannel implements IChannel {
                 else if (error != null) {
                     Protocol.log("TCF channel terminated", error);
                 }
+                listeners_array = null;
                 if (trace_listeners != null) {
                     for (TraceListener l : trace_listeners) {
                         try {
@@ -969,6 +970,16 @@ public abstract class AbstractChannel implements IChannel {
                 int len = msg.data.length;
                 if (len > 0 && msg.data[len - 1] == 0) len--;
                 remote_congestion_level = Integer.parseInt(new String(msg.data, 0, len, "ASCII"));
+                listeners_array = channel_listeners.toArray(listeners_array);
+                for (IChannelListener l : listeners_array) {
+                    if (l == null) break;
+                    try {
+                        l.congestionLevel(remote_congestion_level);
+                    }
+                    catch (Throwable x) {
+                        Protocol.log("Exception in channel listener", x);
+                    }
+                }
                 break;
             default:
                 assert false;
