@@ -806,7 +806,14 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
     }
 
     private String toNumberString(int radix, ISymbols.Symbol t, byte[] data, int offs, int size, boolean big_endian) {
-        if (size <= 0 || size >= 16) return "";
+        if (size <= 0 || size > 16) return "";
+        if (radix != 16 && t != null) {
+            switch (t.getTypeClass()) {
+            case array:
+            case composite:
+                return "";
+            }
+        }
         String s = null;
         if (data == null) s = "N/A";
         if (s == null && radix == 10) {
@@ -837,10 +844,12 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                 if (!s.startsWith("0")) s = "0" + s;
                 break;
             case 16:
-                int l = size * 2 - s.length();
-                if (l < 0) l = 0;
-                if (l > 16) l = 16;
-                s = "0000000000000000".substring(0, l) + s;
+                if (s.length() < size * 2) {
+                    StringBuffer bf = new StringBuffer();
+                    while (bf.length() + s.length() < size * 2) bf.append('0');
+                    bf.append(s);
+                    s = bf.toString();
+                }
                 break;
             }
         }
