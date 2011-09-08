@@ -899,7 +899,7 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
         break;
     case PTRACE_EVENT_EXEC:
         send_context_changed_event(ctx);
-        memory_map_event_mapping_chnaged(ctx->mem);
+        memory_map_event_mapping_changed(ctx->mem);
         break;
     case PTRACE_EVENT_EXIT:
         {
@@ -1003,7 +1003,7 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
 #endif
                 case __NR_mremap:
                 case __NR_remap_file_pages:
-                    memory_map_event_mapping_chnaged(ctx->mem);
+                    memory_map_event_mapping_changed(ctx->mem);
                     break;
                 }
                 ext->syscall_enter = 0;
@@ -1129,7 +1129,7 @@ static void eventpoint_at_loader(Context * ctx, void * args) {
 
 static void eventpoint_at_main(Context * ctx, void * args) {
     send_context_changed_event(ctx->mem);
-    memory_map_event_mapping_chnaged(ctx->mem);
+    memory_map_event_mapping_changed(ctx->mem);
     suspend_debug_context(ctx);
 }
 

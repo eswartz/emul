@@ -17,7 +17,7 @@
 #define D_tcf
 
 #define _TCF_VERSION_MAJOR 0
-#define _TCF_VERSION_MINOR 5
+#define _TCF_VERSION_MINOR 6
 #define _TCF_VERSION (_TCF_VERSION_MAJOR * 100 + _TCF_VERSION_MINOR)
 
 #endif

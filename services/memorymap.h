@@ -40,7 +40,7 @@ extern int memory_map_get(Context * ctx, MemoryMap ** client_map, MemoryMap ** t
 extern void memory_map_event_module_loaded(Context * ctx);
 extern void memory_map_event_code_section_ummapped(Context * ctx, ContextAddress addr, ContextAddress size);
 extern void memory_map_event_module_unloaded(Context * ctx);
-extern void memory_map_event_mapping_chnaged(Context * ctx);
+extern void memory_map_event_mapping_changed(Context * ctx);
 
 /*
  * Memory map listener.
@@ -64,7 +64,7 @@ extern void ini_memory_map_service(Protocol * proto, TCFBroadcastGroup * bcg);
 #define memory_map_event_module_loaded(ctx)
 #define memory_map_event_code_section_ummapped(ctx, addr, size)
 #define memory_map_event_module_unloaded(ctx)
-#define memory_map_event_mapping_chnaged(ctx)
+#define memory_map_event_mapping_changed(ctx)
 
 #endif /* SERVICE_MemoryMap */
 #endif /* D_memorymap */

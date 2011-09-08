@@ -188,7 +188,7 @@ static void update_context_client_map(Context * ctx) {
         assert(ext->client_map.region_cnt == r_cnt);
     }
     while (!list_is_empty(&maps)) list_remove(maps.next);
-    if (!equ) memory_map_event_mapping_chnaged(ctx);
+    if (!equ) memory_map_event_mapping_changed(ctx);
 }
 
 static void update_all_context_client_maps(void) {
@@ -308,7 +308,7 @@ void memory_map_event_module_unloaded(Context * ctx) {
     }
 }
 
-void memory_map_event_mapping_chnaged(Context * ctx) {
+void memory_map_event_mapping_changed(Context * ctx) {
     unsigned i;
     assert(ctx->ref_count > 0);
     assert(ctx == get_mem_context(ctx));

@@ -609,7 +609,7 @@ static void event_memory_map_changed(Channel * c, void * args) {
     if (ctx != NULL) {
         assert(*EXT(ctx->ctx) == ctx);
         crear_memory_map_data(ctx);
-        memory_map_event_mapping_chnaged(ctx->ctx);
+        memory_map_event_mapping_changed(ctx->ctx);
     }
     else if (p->rc_done) {
         trace(LOG_ALWAYS, "Invalid ID in 'memory map changed' event: %s", id);
