@@ -12,6 +12,7 @@ package org.eclipse.tm.tcf.core;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -523,6 +524,7 @@ public abstract class AbstractChannel implements IChannel {
     public void removeChannelListener(IChannelListener listener) {
         assert Protocol.isDispatchThread();
         channel_listeners.remove(listener);
+        Arrays.fill(listeners_array, null);
     }
 
     public void addTraceListener(TraceListener listener) {
@@ -687,7 +689,7 @@ public abstract class AbstractChannel implements IChannel {
                 else if (error != null) {
                     Protocol.log("TCF channel terminated", error);
                 }
-                listeners_array = null;
+                Arrays.fill(listeners_array, null);
                 if (trace_listeners != null) {
                     for (TraceListener l : trace_listeners) {
                         try {
