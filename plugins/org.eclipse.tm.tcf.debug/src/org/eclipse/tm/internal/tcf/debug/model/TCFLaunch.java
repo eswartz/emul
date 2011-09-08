@@ -904,32 +904,34 @@ public class TCFLaunch extends Launch {
     public void launchConfigurationChanged(final ILaunchConfiguration cfg) {
         super.launchConfigurationChanged(cfg);
         if (!cfg.equals(getLaunchConfiguration())) return;
-        new TCFTask<Boolean>() {
-            public void run() {
-                try {
-                    if (update_memory_maps != null) update_memory_maps.run();
-                    if (filepath_map != null) {
-                        String s = cfg.getAttribute(TCFLaunchDelegate.ATTR_PATH_MAP, "");
-                        filepath_map = TCFLaunchDelegate.parsePathMapAttribute(s);
-                        final IPathMap path_map_service = getService(IPathMap.class);
-                        path_map_service.set(filepath_map.toArray(new IPathMap.PathMapRule[filepath_map.size()]), new IPathMap.DoneSet() {
-                            public void doneSet(IToken token, Exception error) {
-                                if (error != null) channel.terminate(error);
-                                done(false);
-                            }
-                        });
+        if (channel != null && channel.getState() == IChannel.STATE_OPEN) {
+            new TCFTask<Boolean>(channel) {
+                public void run() {
+                    try {
+                        if (update_memory_maps != null) update_memory_maps.run();
+                        if (filepath_map != null) {
+                            String s = cfg.getAttribute(TCFLaunchDelegate.ATTR_PATH_MAP, "");
+                            filepath_map = TCFLaunchDelegate.parsePathMapAttribute(s);
+                            final IPathMap path_map_service = getService(IPathMap.class);
+                            path_map_service.set(filepath_map.toArray(new IPathMap.PathMapRule[filepath_map.size()]), new IPathMap.DoneSet() {
+                                public void doneSet(IToken token, Exception error) {
+                                    if (error != null) channel.terminate(error);
+                                    done(false);
+                                }
+                            });
+                        }
+                        else {
+                            done(true);
+                        }
                     }
-                    else {
-                        done(true);
+                    catch (Throwable x) {
+                        channel.terminate(x);
+                        done(false);
                     }
                 }
-                catch (Throwable x) {
-                    channel.terminate(x);
-                    done(false);
-                }
-            }
-        }.getE();
-        // TODO: update signal masks when launch configuration changes
+            }.getE();
+            // TODO: update signal masks when launch configuration changes
+        }
     }
 
     /** Thread safe method */

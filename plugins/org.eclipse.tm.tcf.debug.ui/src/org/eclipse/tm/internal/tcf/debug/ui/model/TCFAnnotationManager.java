@@ -22,7 +22,11 @@ import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunch;
+import org.eclipse.debug.core.ILaunchConfiguration;
+import org.eclipse.debug.core.ILaunchConfigurationListener;
+import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.core.model.ISourceLocator;
 import org.eclipse.debug.core.sourcelookup.ISourceLookupDirector;
 import org.eclipse.debug.ui.DebugUITools;
@@ -139,6 +143,7 @@ public class TCFAnnotationManager {
 
     private final HashSet<IWorkbenchWindow> dirty_windows = new HashSet<IWorkbenchWindow>();
     private final HashSet<TCFLaunch> dirty_launches = new HashSet<TCFLaunch>();
+    private final HashSet<TCFLaunch> changed_launch_cfgs = new HashSet<TCFLaunch>();
 
     private final TCFLaunch.LaunchListener launch_listener = new TCFLaunch.LaunchListener() {
 
@@ -225,7 +230,34 @@ public class TCFAnnotationManager {
         }
     };
 
+    private final ILaunchConfigurationListener launch_conf_listener = new ILaunchConfigurationListener() {
+
+        public void launchConfigurationAdded(ILaunchConfiguration cfg) {
+        }
+
+        public void launchConfigurationChanged(final ILaunchConfiguration cfg) {
+            displayExec(new Runnable() {
+                public void run() {
+                    ILaunch[] arr = launch_manager.getLaunches();
+                    for (ILaunch l : arr) {
+                        if (l instanceof TCFLaunch) {
+                            TCFLaunch t = (TCFLaunch)l;
+                            if (cfg.equals(t.getLaunchConfiguration())) {
+                                changed_launch_cfgs.add(t);
+                                updateAnnotations(null, t);
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        public void launchConfigurationRemoved(ILaunchConfiguration cfg) {
+        }
+    };
+
     private final Display display = Display.getDefault();
+    private final ILaunchManager launch_manager = DebugPlugin.getDefault().getLaunchManager();
     private int update_active_launch_cnt = 0;
     private int update_unnotations_cnt = 0;
     private boolean started;
@@ -234,6 +266,7 @@ public class TCFAnnotationManager {
     public TCFAnnotationManager() {
         assert Protocol.isDispatchThread();
         TCFLaunch.addListener(launch_listener);
+        launch_manager.addLaunchConfigurationListener(launch_conf_listener);
         displayExec(new Runnable() {
             public void run() {
                 if (!PlatformUI.isWorkbenchRunning() || PlatformUI.getWorkbench().isStarting()) {
@@ -256,6 +289,7 @@ public class TCFAnnotationManager {
         if (disposed) return;
         assert Protocol.isDispatchThread();
         disposed = true;
+        launch_manager.removeLaunchConfigurationListener(launch_conf_listener);
         TCFLaunch.removeListener(launch_listener);
         displayExec(new Runnable() {
             public void run() {
@@ -493,10 +527,11 @@ public class TCFAnnotationManager {
                 }
             }.getE();
         }
+        boolean flush_all = node == null || changed_launch_cfgs.contains(node.launch);
         Iterator<TCFAnnotation> i = win_info.annotations.iterator();
         while (i.hasNext()) {
             TCFAnnotation a = i.next();
-            if (set != null && set.remove(a)) continue;
+            if (!flush_all && set != null && set.remove(a)) continue;
             a.dispose();
             i.remove();
         }
@@ -590,6 +625,7 @@ public class TCFAnnotationManager {
                 for (TCFLaunch launch : dirty_launches) {
                     if (launch != null) launch.removePendingClient(TCFAnnotationManager.this);
                 }
+                changed_launch_cfgs.clear();
                 dirty_windows.clear();
                 dirty_launches.clear();
             }
