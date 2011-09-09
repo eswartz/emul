@@ -23,6 +23,7 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunchConfiguration;
@@ -487,10 +488,16 @@ public class TCFLaunch extends Launch {
         };
     }
 
-    private void downloadPathMaps(ILaunchConfiguration cfg, final Runnable done) throws Exception {
-        final IPathMap path_map_service = getService(IPathMap.class);
+    private void readPathMapConfiguration(ILaunchConfiguration cfg) throws CoreException {
         String s = cfg.getAttribute(TCFLaunchDelegate.ATTR_PATH_MAP, "");
         filepath_map = TCFLaunchDelegate.parsePathMapAttribute(s);
+        s = cfg.getAttribute(ILaunchConfiguration.ATTR_SOURCE_LOCATOR_MEMENTO, "");
+        filepath_map.addAll(TCFLaunchDelegate.parseSourceLocatorMemento(s));
+    }
+
+    private void downloadPathMaps(ILaunchConfiguration cfg, final Runnable done) throws Exception {
+        readPathMapConfiguration(cfg);
+        final IPathMap path_map_service = getService(IPathMap.class);
         path_map_service.set(filepath_map.toArray(new IPathMap.PathMapRule[filepath_map.size()]), new IPathMap.DoneSet() {
             public void doneSet(IToken token, Exception error) {
                 if (error != null) channel.terminate(error);
@@ -910,8 +917,7 @@ public class TCFLaunch extends Launch {
                     try {
                         if (update_memory_maps != null) update_memory_maps.run();
                         if (filepath_map != null) {
-                            String s = cfg.getAttribute(TCFLaunchDelegate.ATTR_PATH_MAP, "");
-                            filepath_map = TCFLaunchDelegate.parsePathMapAttribute(s);
+                            readPathMapConfiguration(cfg);
                             final IPathMap path_map_service = getService(IPathMap.class);
                             path_map_service.set(filepath_map.toArray(new IPathMap.PathMapRule[filepath_map.size()]), new IPathMap.DoneSet() {
                                 public void doneSet(IToken token, Exception error) {

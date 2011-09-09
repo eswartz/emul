@@ -24,6 +24,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.model.LaunchConfigurationDelegate;
@@ -36,6 +37,9 @@ import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IMemoryMap;
 import org.eclipse.tm.tcf.services.IPathMap;
 import org.eclipse.tm.tcf.util.TCFTask;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 
 public class TCFLaunchDelegate extends LaunchConfigurationDelegate {
@@ -165,6 +169,72 @@ public class TCFLaunchDelegate extends LaunchConfigurationDelegate {
             }
         }
         return map;
+    }
+
+    /**
+     * Given value of ILaunchConfiguration.ATTR_SOURCE_LOCATOR_MEMENTO,
+     * return array of PathMapRule objects.
+     * @param s - value of ATTR_PATH_MAP.
+     * @return array of PathMapRule objects.
+     */
+    public static ArrayList<PathMapRule> parseSourceLocatorMemento(String s) throws CoreException {
+        ArrayList<PathMapRule> map = new ArrayList<PathMapRule>();
+        Element root = DebugPlugin.parseDocument(s);
+        NodeList list = root.getChildNodes();
+        int length = list.getLength();
+        for (int i = 0; i < length; i++) {
+            Node node = list.item(i);
+            short type = node.getNodeType();
+            if (type == Node.ELEMENT_NODE) {
+                Element entry = (Element)node;
+                if (entry.getNodeName().equalsIgnoreCase("sourceContainers")) {
+                    parseSourceContainers(map, entry);
+                }
+            }
+        }
+        return map;
+    }
+
+    private static void parseSourceContainers(ArrayList<PathMapRule> map, Element element) throws CoreException {
+        NodeList list = element.getChildNodes();
+        int length = list.getLength();
+        for (int i = 0; i < length; i++) {
+            Node node = list.item(i);
+            short type = node.getNodeType();
+            if (type == Node.ELEMENT_NODE) {
+                Element entry = (Element)node;
+                String memento = entry.getAttribute("memento");
+                if (memento != null && memento.length() > 0) readSourceContainer(map, memento);
+            }
+        }
+    }
+
+    private static void readSourceContainer(ArrayList<PathMapRule> map, String s) throws CoreException {
+        Element root = DebugPlugin.parseDocument(s);
+        if ("mapping".equals(root.getNodeName())) {
+            NodeList list = root.getChildNodes();
+            int length = list.getLength();
+            for (int i = 0; i < length; i++) {
+                Node node = list.item(i);
+                short type = node.getNodeType();
+                if (type == Node.ELEMENT_NODE) {
+                    Element entry = (Element)node;
+                    if (entry.getNodeName().equalsIgnoreCase("mapEntry")) {
+                        String memento = entry.getAttribute("memento");
+                        if (memento != null && memento.length() > 0) {
+                            Element map_entry = DebugPlugin.parseDocument(memento);
+                            String src = map_entry.getAttribute("backendPath");
+                            String dst = map_entry.getAttribute("localPath");
+                            if (src != null) src = src.replace('\\', '/');
+                            PathMapRule e = new PathMapRule(new HashMap<String,Object>());
+                            e.props.put(IPathMap.PROP_SOURCE, src);
+                            e.props.put(IPathMap.PROP_DESTINATION, dst);
+                            map.add(e);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**
