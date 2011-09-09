@@ -356,7 +356,7 @@ class TCFBreakpointStatusListener {
         for (ILaunch launch : DebugPlugin.getDefault().getLaunchManager().getLaunches()) {
             if (launch instanceof TCFLaunch) {
                 TCFLaunch tcfLaunch = (TCFLaunch) launch;
-                if (!tcfLaunch.isDisconnected() && !tcfLaunch.isConnecting() && tcfLaunch.getBreakpointsStatus() != null) {
+                if (!tcfLaunch.isDisconnected() && !tcfLaunch.isConnecting()) {
                     launch_listener.onConnected(tcfLaunch, model_manager.getModel(tcfLaunch));
                 }
             }

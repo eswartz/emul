@@ -30,13 +30,12 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchesListener;
-import org.eclipse.debug.core.model.ISourceLocator;
-import org.eclipse.debug.core.sourcelookup.ISourceLookupDirector;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocumentExtension4;
 import org.eclipse.jface.text.Position;
 import org.eclipse.tm.internal.tcf.cdt.ui.Activator;
+import org.eclipse.tm.internal.tcf.debug.launch.TCFSourceLookupDirector;
 import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
 import org.eclipse.tm.internal.tcf.debug.model.TCFSourceRef;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFChildrenStackTrace;
@@ -939,13 +938,8 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
 
     public Object insertSource(Position pos, BigInteger address, String file, int lineNumber) {
         TCFNodeExecContext execContext = fExecContext;
-        if (execContext != null) {
-            ISourceLocator locator = fExecContext.getModel().getLaunch().getSourceLocator();
-            if (locator instanceof ISourceLookupDirector) {
-                return ((ISourceLookupDirector)locator).getSourceElement(file);
-            }
-        }
-        return null;
+        if (execContext == null) return null;
+        return TCFSourceLookupDirector.lookup(execContext.getModel().getLaunch().getSourceLocator(), file);
     }
 
     private static BigInteger toBigInteger(byte[] data, boolean big_endian, boolean sign_extension) {

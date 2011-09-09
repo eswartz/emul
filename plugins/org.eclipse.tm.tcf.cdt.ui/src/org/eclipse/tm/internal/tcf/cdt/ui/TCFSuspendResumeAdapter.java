@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.cdt.ui;
 
-import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;

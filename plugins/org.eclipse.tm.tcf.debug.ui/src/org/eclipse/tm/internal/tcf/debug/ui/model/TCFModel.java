@@ -38,7 +38,6 @@ import org.eclipse.debug.core.model.IExpression;
 import org.eclipse.debug.core.model.IMemoryBlockRetrieval;
 import org.eclipse.debug.core.model.IMemoryBlockRetrievalExtension;
 import org.eclipse.debug.core.model.ISourceLocator;
-import org.eclipse.debug.core.sourcelookup.ISourceLookupDirector;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenCountUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IColumnPresentation;
@@ -1306,21 +1305,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                     int line = 0;
                     if (area != null) {
                         ISourceLocator locator = getLaunch().getSourceLocator();
-                        Object source_element = null;
-                        if (locator instanceof TCFSourceLookupDirector) {
-                            source_element = ((TCFSourceLookupDirector)locator).getSourceElement(area);
-                        }
-                        else if (locator instanceof ISourceLookupDirector) {
-                            // support for foreign (CDT) source locator
-                            String filename = TCFSourceLookupParticipant.toFileName(area);
-                            if (filename != null) {
-                                source_element = ((ISourceLookupDirector)locator).getSourceElement(filename);
-                                if (source_element == null && !filename.equals(area.file)) {
-                                    // retry with relative path
-                                    source_element = ((ISourceLookupDirector)locator).getSourceElement(area.file);
-                                }
-                            }
-                        }
+                        Object source_element = TCFSourceLookupDirector.lookup(locator, area);
                         if (source_element != null) {
                             ISourcePresentation presentation = TCFModelPresentation.getDefault();
                             editor_input = presentation.getEditorInput(source_element);

@@ -110,23 +110,13 @@ public class TCFSourceLookupParticipant extends AbstractSourceLookupParticipant 
     }
 
     private Object[] findSource(String name) throws CoreException {
-        name = applyPathMap(name);
-        File file = new File(name);
         Object[] res;
+        File file = new File(applyPathMap(name));
         if (file.isAbsolute() && file.exists() && file.isFile()) {
             res = new Object[]{ new LocalFileStorage(file) };
         }
         else {
             res = super.findSourceElements(name);
-            if (res == null || res.length == 0) {
-                // Remove file path and search by file base name
-                String base = name;
-                int i = name.lastIndexOf('/');
-                int j = name.lastIndexOf('\\');
-                if (i > j) base = name.substring(i + 1);
-                if (j > i) base = name.substring(j + 1);
-                if (!base.equals(name)) res = super.findSourceElements(base);
-            }
         }
         ArrayList<Object> list = new ArrayList<Object>();
         for (Object o : res) {

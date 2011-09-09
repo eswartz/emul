@@ -28,7 +28,6 @@ import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchConfigurationListener;
 import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.core.model.ISourceLocator;
-import org.eclipse.debug.core.sourcelookup.ISourceLookupDirector;
 import org.eclipse.debug.ui.DebugUITools;
 import org.eclipse.debug.ui.IDebugUIConstants;
 import org.eclipse.debug.ui.ISourcePresentation;
@@ -44,7 +43,6 @@ import org.eclipse.swt.graphics.Device;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.tm.internal.tcf.debug.launch.TCFSourceLookupDirector;
-import org.eclipse.tm.internal.tcf.debug.launch.TCFSourceLookupParticipant;
 import org.eclipse.tm.internal.tcf.debug.model.ITCFBreakpointListener;
 import org.eclipse.tm.internal.tcf.debug.model.TCFBreakpoint;
 import org.eclipse.tm.internal.tcf.debug.model.TCFBreakpointsStatus;
@@ -546,21 +544,7 @@ public class TCFAnnotationManager {
         ISourceLocator locator = node.launch.getSourceLocator();
         ISourcePresentation presentation = TCFModelPresentation.getDefault();
         for (TCFAnnotation a : set) {
-            Object source_element = null;
-            if (locator instanceof TCFSourceLookupDirector) {
-                source_element = ((TCFSourceLookupDirector)locator).getSourceElement(a.area);
-            }
-            else if (locator instanceof ISourceLookupDirector) {
-                // support for foreign (CDT) source locator
-                String filename = TCFSourceLookupParticipant.toFileName(a.area);
-                if (filename != null) {
-                    source_element = ((ISourceLookupDirector)locator).getSourceElement(filename);
-                    if (source_element == null && !filename.equals(a.area.file)) {
-                        // retry with relative path
-                        source_element = ((ISourceLookupDirector)locator).getSourceElement(a.area.file);
-                    }
-                }
-            }
+            Object source_element = TCFSourceLookupDirector.lookup(locator, a.area);
             if (source_element == null) continue;
             IEditorInput editor_input = presentation.getEditorInput(source_element);
             ITextEditor editor = editors.get(editor_input);

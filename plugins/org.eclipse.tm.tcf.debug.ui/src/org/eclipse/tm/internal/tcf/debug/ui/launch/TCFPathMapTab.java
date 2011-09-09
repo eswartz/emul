@@ -59,9 +59,16 @@ public class TCFPathMapTab extends AbstractLaunchConfigurationTab {
 
     private static final String[] column_ids = {
         IPathMap.PROP_SOURCE,
+        IPathMap.PROP_DESTINATION,
         IPathMap.PROP_HOST,
         IPathMap.PROP_PROTOCOL,
-        IPathMap.PROP_DESTINATION,
+    };
+
+    private static final int[] column_size = {
+        300,
+        300,
+        50,
+        50,
     };
 
     private static final String TAB_ID = "org.eclipse.tm.tcf.launch.pathMapTab";
@@ -157,7 +164,7 @@ public class TCFPathMapTab extends AbstractLaunchConfigurationTab {
         GridLayout layout = new GridLayout(2, false);
         composite.setFont(font);
         composite.setLayout(layout);
-        composite.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 2, 1));
+        composite.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 1, 1));
 
         viewer = new TableViewer(composite, SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL | SWT.MULTI | SWT.FULL_SELECTION);
         Table table = viewer.getTable();
@@ -173,7 +180,7 @@ public class TCFPathMapTab extends AbstractLaunchConfigurationTab {
         for (int i = 0; i < column_ids.length; i++) {
             TableColumn c = new TableColumn(table, SWT.NONE, i);
             c.setText(column_ids[i]);
-            c.setWidth(600 / column_ids.length);
+            c.setWidth(column_size[i]);
             editors[i] = new TextCellEditor(table);
         }
         viewer.setCellEditors(editors);
