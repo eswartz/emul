@@ -12,7 +12,6 @@ package org.eclipse.tm.tcf.core;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -116,8 +115,6 @@ public abstract class AbstractChannel implements IChannel {
             }
         }
     }
-
-    private IChannelListener[] listeners_array = new IChannelListener[4];
 
     private final LinkedList<Map<String,String>> redirect_queue = new LinkedList<Map<String,String>>();
     private final Map<Class<?>,IService> local_service_by_class = new HashMap<Class<?>,IService>();
@@ -524,7 +521,6 @@ public abstract class AbstractChannel implements IChannel {
     public void removeChannelListener(IChannelListener listener) {
         assert Protocol.isDispatchThread();
         channel_listeners.remove(listener);
-        Arrays.fill(listeners_array, null);
     }
 
     public void addTraceListener(TraceListener listener) {
@@ -675,9 +671,8 @@ public abstract class AbstractChannel implements IChannel {
                     out_tokens.clear();
                 }
                 if (channel_listeners.size() > 0) {
-                    listeners_array = channel_listeners.toArray(listeners_array);
-                    for (IChannelListener l : listeners_array) {
-                        if (l == null) break;
+                    for (IChannelListener l : channel_listeners.toArray(
+                            new IChannelListener[channel_listeners.size()])) {
                         try {
                             l.onChannelClosed(error);
                         }
@@ -689,7 +684,6 @@ public abstract class AbstractChannel implements IChannel {
                 else if (error != null) {
                     Protocol.log("TCF channel terminated", error);
                 }
-                Arrays.fill(listeners_array, null);
                 if (trace_listeners != null) {
                     for (TraceListener l : trace_listeners) {
                         try {
@@ -945,9 +939,8 @@ public abstract class AbstractChannel implements IChannel {
                             TransportManager.channelOpened(this);
                             registered_with_trasport = true;
                         }
-                        listeners_array = channel_listeners.toArray(listeners_array);
-                        for (IChannelListener l : listeners_array) {
-                            if (l == null) break;
+                        for (IChannelListener l : channel_listeners.toArray(
+                                new IChannelListener[channel_listeners.size()])) {
                             try {
                                 l.onChannelOpened();
                             }
@@ -972,9 +965,8 @@ public abstract class AbstractChannel implements IChannel {
                 int len = msg.data.length;
                 if (len > 0 && msg.data[len - 1] == 0) len--;
                 remote_congestion_level = Integer.parseInt(new String(msg.data, 0, len, "ASCII"));
-                listeners_array = channel_listeners.toArray(listeners_array);
-                for (IChannelListener l : listeners_array) {
-                    if (l == null) break;
+                for (IChannelListener l : channel_listeners.toArray(
+                        new IChannelListener[channel_listeners.size()])) {
                     try {
                         l.congestionLevel(getCongestion());
                     }
