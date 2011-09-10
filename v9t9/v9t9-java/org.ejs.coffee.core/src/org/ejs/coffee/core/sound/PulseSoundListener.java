@@ -59,7 +59,13 @@ public class PulseSoundListener implements ISoundListener {
 	/* (non-Javadoc)
 	 * @see org.ejs.chiprocksynth.SoundListener#started(javax.sound.sampled.AudioFormat)
 	 */
-	public void started(AudioFormat format) {
+	public synchronized void started(AudioFormat format) {
+		if (simple != null) {
+			if (soundFormat.equals(format))
+				return;
+			stopped();
+		}
+		
 		soundQueue = new LinkedBlockingQueue<AudioChunk>(20);
 
 		soundFormat = format;
@@ -125,13 +131,13 @@ public class PulseSoundListener implements ISoundListener {
 					
 					//if (chunk != null) dft(chunk.soundToWrite);
 					
+					/*
 					// toss extra chunks if too many arrive
-					if (false) {
-						while (chunk != null && soundQueue.size() > 2) {
-							chunk = soundQueue.poll();
-						}
+					while (chunk != null && soundQueue.size() > 2) {
+						chunk = soundQueue.poll();
 					}
-
+					 */
+					
 					if (simple == null)
 						return;
 					

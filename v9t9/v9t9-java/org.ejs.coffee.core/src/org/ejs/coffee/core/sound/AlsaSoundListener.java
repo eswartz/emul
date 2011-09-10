@@ -196,11 +196,11 @@ public class AlsaSoundListener implements ISoundListener {
 					//if (chunk != null) dft(chunk.soundToWrite);
 					
 					// toss extra chunks if too many arrive
-					if (false) {
-						while (chunk != null && soundQueue.size() > 2) {
-							chunk = soundQueue.poll();
-						}
+					/*
+					while (chunk != null && soundQueue.size() > 2) {
+						chunk = soundQueue.poll();
 					}
+					*/
 
 					if (handle == null || stopped)
 						return;
