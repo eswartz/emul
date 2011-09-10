@@ -14,7 +14,7 @@ import v9t9.emulator.clients.builtin.video.ImageDataCanvas24Bit;
 public class TestVideoSpriteSpeedSwt24Bit extends TestVideoSpriteSpeedSwtBase {
 	@Override
 	protected SwtVideoRenderer createVideoRenderer() {
-		SwtVideoRenderer swtVideoRenderer = new SwtVideoRenderer();
+		SwtVideoRenderer swtVideoRenderer = new SwtVideoRenderer(null);
 		swtVideoRenderer.setCanvas(new ImageDataCanvas24Bit());
 		return swtVideoRenderer;
 	}

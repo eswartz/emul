@@ -10,6 +10,7 @@ import org.eclipse.swt.widgets.Control;
 
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VideoRenderer;
+import v9t9.engine.VdpHandler;
 
 /**
  * Interface implemented by SWT-compatible video renderers.
@@ -33,4 +34,6 @@ public interface ISwtVideoRenderer extends VideoRenderer {
 
 
 	void setFocus();
+
+	VdpHandler getVdpHandler();
 }

@@ -41,6 +41,7 @@ import v9t9.emulator.clients.builtin.swt.gl.TextureLoader;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas24Bit;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
+import v9t9.engine.VdpHandler;
 import v9t9.engine.files.DataFiles;
 
 /**
@@ -49,6 +50,7 @@ import v9t9.engine.files.DataFiles;
  *
  */
 public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IPropertyListener {
+
 	private static boolean VERBOSE = false;
 	
 	static final MonitorParams paramsSTANDARD = new MonitorParams(
@@ -95,6 +97,10 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	private Listener resizeListener;
 	private TextureLoader textureLoader = new TextureLoader();
 	private Map<MonitorEffect, Integer> displayListMap = new HashMap<MonitorEffect, Integer>();
+
+	public SwtLwjglVideoRenderer(VdpHandler vdp) {
+		super(vdp);
+	}
 
 	protected VdpCanvas createVdpCanvas() {
 		imageCanvas = new ImageDataCanvas24Bit();

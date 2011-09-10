@@ -275,6 +275,9 @@ public class SwtWindow extends BaseEmulatorWindow {
 		});
 		*/
 		
+		new SwtDragDropHandler(videoControl, renderer, renderer.getVdpHandler());
+		
+		
 		String boundsPref = EmulatorSettings.INSTANCE.getSettings().get(EMULATOR_WINDOW_BOUNDS);
 		final Rectangle rect = PrefUtils.readBoundsString(boundsPref);
 		if (rect != null) {

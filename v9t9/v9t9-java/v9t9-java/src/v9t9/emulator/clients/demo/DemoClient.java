@@ -458,6 +458,9 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
     	video.setCanvas(canvas);
     }
     
+    public VdpCanvas getCanvas() {
+    	return video.getCanvas();
+    }
     public KeyboardHandler getKeyboardHandler() {
     	return null;
     }

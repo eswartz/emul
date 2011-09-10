@@ -120,7 +120,7 @@ public abstract class BaseSwtJavaClient implements Client {
 	    	}
 	    }*/
 	    if (videoRenderer == null)
-	    	videoRenderer = new SwtVideoRenderer();
+	    	videoRenderer = new SwtVideoRenderer(video);
 	    return videoRenderer;
 	}
 

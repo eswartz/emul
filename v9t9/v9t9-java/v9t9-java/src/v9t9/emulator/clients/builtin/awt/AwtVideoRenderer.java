@@ -68,8 +68,11 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	private AnalogTV analog;
 
 	private IPropertyListener monitorSettingListener;
+
+	private final VdpHandler vdp;
 	
 	public AwtVideoRenderer(VdpHandler vdp) {
+		this.vdp = vdp;
 		// init outside locks
 		V9t9Render.INSTANCE.hashCode();
 		
@@ -108,6 +111,11 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 			
 		};
 		BaseEmulatorWindow.settingMonitorDrawing.addListener(monitorSettingListener);
+	}
+	
+
+	public VdpHandler getVdpHandler() {
+		return vdp;
 	}
 
 	/* (non-Javadoc)

@@ -67,6 +67,7 @@ public interface VdpHandler extends IPersistable{
 	void work();
 	
 	void setCanvas(VdpCanvas canvas);
+	VdpCanvas getCanvas();
 
 	/** This is called regularly from the CPU and should trigger the VDP
 	 * interrupt according to the desired frequency. 
@@ -84,4 +85,5 @@ public interface VdpHandler extends IPersistable{
 	String getRegisterTooltip(int reg);
 	byte getRegister(int reg);
 	void setRegister(int reg, byte value);
+
 }

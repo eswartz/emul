@@ -624,4 +624,11 @@ public abstract class VdpCanvas {
 		return isInterlacedEvenOdd;
 	}
 	
+	/**
+	 * @return the extraSpace
+	 */
+	public int getExtraSpace() {
+		return extraSpace;
+	}
+	
 }

@@ -195,8 +195,8 @@ public abstract class ImageDataCanvas extends BitmapVdpCanvas {
 			xo = (64 - img.getWidth()) / 2;
 			yo = (48 - img.getHeight()) / 2;
 		} else {
-			xo = (imageData.width - img.getWidth()) / 2;
-			yo = (imageData.height - img.getHeight()) / 2;
+			xo = (getVisibleWidth() - img.getWidth() + getXOffset()) / 2;
+			yo = (getVisibleHeight() - img.getHeight() + getYOffset()) / 2;
 		}
 
 		Arrays.fill(imageData.data, (byte) 0); 
@@ -347,8 +347,8 @@ public abstract class ImageDataCanvas extends BitmapVdpCanvas {
 	 * @return 
 	 */
 	public ByteBuffer copy(ByteBuffer buffer) {
-		if (buffer.capacity() < imageData.bytesPerLine * imageData.height)
-			buffer = ByteBuffer.allocateDirect(imageData.bytesPerLine * imageData.height);
+		if (buffer.capacity() < imageData.bytesPerLine * getVisibleHeight())
+			buffer = ByteBuffer.allocateDirect(imageData.bytesPerLine * getVisibleHeight());
 
 		buffer.rewind();
 		int vw = getVisibleWidth();

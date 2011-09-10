@@ -29,6 +29,7 @@ import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas24Bit;
 import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.emulator.clients.builtin.video.VdpCanvas.ICanvasListener;
+import v9t9.engine.VdpHandler;
 
 /**
  * Render video into an SWT window
@@ -49,11 +50,21 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 	private Shell shell;
 	
 	protected FixedAspectLayout fixedAspectLayout;
+	private final VdpHandler vdp;
 	
-	public SwtVideoRenderer() {
+	public SwtVideoRenderer(VdpHandler vdp) {
+		this.vdp = vdp;
 		fixedAspectLayout = new FixedAspectLayout(256, 192, 3.0, 3.0, 1., 5);
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.swt.ISwtVideoRenderer#getVdpHandler()
+	 */
+	@Override
+	public VdpHandler getVdpHandler() {
+		return vdp;
+	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.video.VideoRenderer#dispose()
 	 */
