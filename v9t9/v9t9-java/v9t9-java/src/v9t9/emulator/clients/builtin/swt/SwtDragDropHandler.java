@@ -5,8 +5,6 @@ package v9t9.emulator.clients.builtin.swt;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
-import java.text.DateFormat;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -23,6 +21,8 @@ import org.eclipse.swt.dnd.DropTargetListener;
 import org.eclipse.swt.dnd.FileTransfer;
 import org.eclipse.swt.dnd.ImageTransfer;
 import org.eclipse.swt.dnd.Transfer;
+import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.ImageLoader;
 import org.eclipse.swt.graphics.RGB;
@@ -46,6 +46,7 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 	private final ISwtVideoRenderer renderer;
 	private final VdpHandler vdpHandler;
 	private File tempSourceFile;
+	private boolean dragSourceInProgress;
 
 	/**
 	 * @param videoControl
@@ -59,24 +60,40 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 		
 		source = new DragSource(control, DND.DROP_COPY | DND.DROP_DEFAULT);
 		source.addDragListener(this);
-		if (System.getProperty("os.name").equals("Linux"))
-			source.setTransfer(new Transfer[] { FileTransfer.getInstance(), 
-					//MyImageTransfer.getInstance() 
-					});
-		else
-			source.setTransfer(new Transfer[] { FileTransfer.getInstance(), 
-					ImageTransfer.getInstance() 
-			});
-		
 		target = new DropTarget(control, DND.DROP_COPY | DND.DROP_DEFAULT);
 		target.addDropListener(this);
-		target.setTransfer(new Transfer[] { 
-				FileTransfer.getInstance(), 
-				ImageTransfer.getInstance() 
-				//MyImageTransfer.getInstance() 
-				});
+		
+		if (System.getProperty("os.name").equals("Linux")) {
+			source.setTransfer(new Transfer[] { FileTransfer.getInstance(), 
+					//MyImageTransfer.getInstance() 
+			});
+			target.setTransfer(new Transfer[] { 
+					FileTransfer.getInstance(), 
+					//MyImageTransfer.getInstance() 
+			});
+		} else {
+			source.setTransfer(new Transfer[] { 
+					ImageTransfer.getInstance(), 
+					FileTransfer.getInstance(), 
+			});
+			target.setTransfer(new Transfer[] { 
+					ImageTransfer.getInstance(),
+					FileTransfer.getInstance(), 
+			});
+		}
 		
 		tempSourceFile = null;
+		
+		control.addDisposeListener(new DisposeListener() {
+			
+			@Override
+			public void widgetDisposed(DisposeEvent e) {
+				if (tempSourceFile != null) {
+					tempSourceFile.delete();
+					tempSourceFile = null;
+				}
+			}
+		});
 	}
 
 	/* (non-Javadoc)
@@ -85,6 +102,13 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 	@Override
 	public void dragStart(DragSourceEvent event) {
 		// always allowed
+		if (!dragSourceInProgress) {
+			if (tempSourceFile != null) {
+				tempSourceFile.delete();
+				tempSourceFile = null;
+			}
+		}
+		dragSourceInProgress = true;
 	}
 
 	/* (non-Javadoc)
@@ -125,7 +149,7 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 		}
 		else if (ImageTransfer.getInstance().isSupportedType(event.dataType)) {
 			event.data = visData;
-			((ImageData) event.data).type = Transfer.registerType("image/png");
+			((ImageData) event.data).type = Transfer.registerType("image/bmp");
 			
 		}
 	}
@@ -171,12 +195,7 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 	 */
 	@Override
 	public void dragFinished(DragSourceEvent event) {
-		if (tempSourceFile != null) {
-			tempSourceFile.delete();
-			tempSourceFile = null;
-		}
-			
-		
+		dragSourceInProgress = false;
 	}
 
 	
