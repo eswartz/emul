@@ -35,16 +35,16 @@
 #include "9900.h"
 #include "moduledb.h"
 
-#if UNDER_UNIX
+#if UNDER_UNIX || defined(__CYGWIN32__)
 #include <sys/socket.h>       /*  socket definitions        */
 #include <sys/types.h>        /*  socket types              */
 #include <arpa/inet.h>        /*  inet (3) funtions         */
-#include <unistd.h>           /*  misc. UNIX functions      */
 #include <sys/time.h>
-#include <sys/fcntl.h>
 #include <netinet/tcp.h>
+#include <unistd.h>           /*  misc. UNIX functions      */
+#include <sys/fcntl.h>
+#include <errno.h>
 #endif
-
 
 
 #define _L LOG_DEMO

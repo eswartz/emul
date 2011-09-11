@@ -103,13 +103,13 @@ install-exec-local:
 	$(INSTALL_PROGRAM) -o root -m u=rwx,go=rx,+s v9t9 $(V9t9)
 
 %.$(OBJEXT): %.c
-	$(COMPILE) -fPIC -c $< -o $@
+	$(COMPILE) -c $< -o $@
 
 %.$(OBJEXT): %.cc
-	$(CXXCOMPILE) -fPIC -c $< -o $@
+	$(CXXCOMPILE) -c $< -o $@
 
 %.$(OBJEXT): %.cpp
-	$(CXXCOMPILE) -fPIC -c $< -o $@
+	$(CXXCOMPILE) -c $< -o $@
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT) core *.core

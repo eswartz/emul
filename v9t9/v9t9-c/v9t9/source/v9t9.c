@@ -161,7 +161,7 @@ v9t9_config(int argc, char **argv)
 #if NEW_CONFIG
 	/* get config directory */
 	if (
-#if _WIN32
+#if defined _WIN32
 		(dir = getenv("USERPROFILE")) ||
 #endif
 		(dir = getenv("HOME"))

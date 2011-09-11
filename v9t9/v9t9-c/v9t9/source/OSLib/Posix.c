@@ -71,7 +71,7 @@
 #include <sys/times.h>
 #endif
 
-#if __linux__
+#if __linux__ || __CYGWIN32__
 #include <sys/vfs.h>
 #endif
 
@@ -353,7 +353,7 @@ OSError
 OS_GetDiskStats(const OSPathSpec * spec,
 				OSSize * blocksize, OSSize * total, OSSize * free)
 {
-#if __linux__
+#if __linux__ || __CYGWIN32__
 	struct statfs stf;
 
 	GETPATHSPECSTR(spec, intbuf);

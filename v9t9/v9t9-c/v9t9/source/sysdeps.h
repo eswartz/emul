@@ -24,7 +24,7 @@
 #ifndef __SYSDEPS_H__
 #define __SYSDEPS_H__
 
-#if __MWERKS__ && _WIN32 && defined(_MSL_IMP_EXP)
+#if __MWERKS__ && defined(_WIN32) && defined(_MSL_IMP_EXP)
 #include <size_t.h>
 typedef long ssize_t;
 #endif

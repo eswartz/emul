@@ -36,6 +36,9 @@
 #endif
 #include <time.h>
 
+// Windows
+#undef ERROR
+
 #define OS_MAXPATHLEN 	(MAX_PATH-1)
 #define OS_MAXNAMELEN	63
 #define OS_MAXVOLLEN	63		/* why this long?  for network names */

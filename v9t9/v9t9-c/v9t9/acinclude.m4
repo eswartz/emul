@@ -16,7 +16,7 @@ dnl Check for host OS -- this is a generic check only
 AC_MSG_CHECKING(host operating system)
 HOSTOS=
 
-AC_TRY_COMPILE(,[#if (!defined(__unix__) && !defined(__unix)) || defined(_WIN32)
+AC_TRY_COMPILE(,[#if (!defined(__unix__) && !defined(__unix)) || defined(_WIN32) || defined(__CYGWIN32__)
 #error not unix
 #endif],
 AC_DEFINE(UNDER_UNIX)
@@ -25,7 +25,7 @@ INCDIRS="$INCDIRS $TOP/source/Modules/Unix"
 )
 
 if test "$HOSTOS" = ""; then
-AC_TRY_COMPILE(,[#if !defined(_WIN32)
+AC_TRY_COMPILE(,[#if !defined(_WIN32) && !defined(__CYGWIN32__)
 #error not _WIN32
 #endif], 
 AC_DEFINE(UNDER_WIN32)

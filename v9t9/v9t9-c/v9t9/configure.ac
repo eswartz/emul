@@ -132,14 +132,14 @@ elif test "x$HOSTOS" = "xWin32"; then
 AC_DEFINE(USE_MM_TIMER)
 AC_DEFINE(WIN32_VIDEO) AC_DEFINE(WIN32_KEYBOARD) 
 AC_DEFINE(WIN32_SOUND) AC_DEFINE(USE_MM_TIMER)
-if test "x$CC" = "xgcc" ; then
+if false && test "x$CC" = "xgcc" ; then
 CFLAGS="$CFLAGS -fnative-struct"
 CXXFLAGS="$CFLAGS -fnative-struct"
 fi
 V9T9SRCS="$V9T9SRCS winmain.c fnmatch.c"
 INCDIRS="$INCDIRS $TOP/source/Modules/Win32"
 OSLIBSRCS="$OSLIBSRCS Win32.c"
-WINMODSRCS="$WINMODSRCS dsr_rs232_win32.c video_win32.c video_win32_drawdib.c video_win32_ddraw.cc keyboard_win32.c sound_win32.c"
+WINMODSRCS="$WINMODSRCS dsr_rs232_win32.c video_win32.c video_win32_drawdib.c video_win32_ddraw.cpp keyboard_win32.c sound_win32.c"
 LIBS="$LIBS -lddraw -ldxguid -lmsvfw32 -lwinmm -luser32 -lgdi32"
 
 elif test "x$HOSTOS" = "xMacOS"; then
@@ -172,7 +172,8 @@ AC_CHECK_HEADERS(alsa/asoundlib.h,
 	AC_DEFINE(ALSA_SOUND)
 	UNIXMODSRCS="$UNIXMODSRCS sound_alsa.c"
 	LIBS="$LIBS -lasound")
-AC_CHECK_HEADERS(sys/kd.h, 
+AC_TRY_COMPILE(sys/kd.h, 
+	[return KIOCSOUND;],
 	AC_DEFINE(LINUX_SPEAKER_SOUND)
 	UNIXMODSRCS="$UNIXMODSRCS sound_speaker.c")
 AC_CHECK_HEADERS(esd.h,

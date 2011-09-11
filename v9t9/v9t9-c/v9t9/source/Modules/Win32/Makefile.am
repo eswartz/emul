@@ -15,7 +15,7 @@ EXTRA_DIST = dsr_rs232_win32.c keyboard_win32.c sound_win32.c \
 
 TOP = $(top_srcdir)
 SRC = $(TOP)/source
-INCS = -I$(SRC) -I$(SRC)/OSLib -I$(SRC)/Modules -I$(TOP)
+INCS = -I$(SRC) -I$(SRC)/OSLib -I$(SRC)/Modules -I$(TOP)/Resources -I$(TOP)
 localedir = @prefix@/share/locale
 DEFS = @DEFS@ -DLOCALEDIR=\"$(localedir)\"
 CFLAGS = $(INCS) @CFLAGS@ $(DEFS)
@@ -23,3 +23,11 @@ CFLAGS = $(INCS) @CFLAGS@ $(DEFS)
 LIBS = $(libWin32_a_LIBADD) @LIBS@
 
 
+%.$(OBJEXT): %.c
+	$(COMPILE) -c $< -o $@
+
+%.$(OBJEXT): %.cc
+	$(COMPILE) -c $< -o $@
+
+%.$(OBJEXT): %.cpp
+	$(COMPILE) -c $< -o $@
