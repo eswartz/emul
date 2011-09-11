@@ -47,6 +47,8 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 	private final VdpHandler vdpHandler;
 	private File tempSourceFile;
 	private boolean dragSourceInProgress;
+	private DisposeListener disposeListener;
+	private final Control control;
 
 	/**
 	 * @param videoControl
@@ -55,6 +57,7 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 	 */
 	public SwtDragDropHandler(Control control, ISwtVideoRenderer renderer,
 			VdpHandler vdpHandler) {
+		this.control = control;
 		this.renderer = renderer;
 		this.vdpHandler = vdpHandler;
 		
@@ -84,16 +87,36 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 		
 		tempSourceFile = null;
 		
-		control.addDisposeListener(new DisposeListener() {
+		disposeListener = new DisposeListener() {
 			
 			@Override
 			public void widgetDisposed(DisposeEvent e) {
-				if (tempSourceFile != null) {
-					tempSourceFile.delete();
-					tempSourceFile = null;
-				}
+				dispose();
 			}
-		});
+		};
+		control.addDisposeListener(disposeListener);
+	}
+
+	/**
+	 * 
+	 */
+	public void dispose() {
+		if (tempSourceFile != null) {
+			tempSourceFile.delete();
+			tempSourceFile = null;
+		}
+		if (!source.isDisposed()) {
+			source.removeDragListener(this);
+			source.dispose();
+		}
+		if (!target.isDisposed()) {
+			target.removeDropListener(this);
+			target.dispose();
+		}
+		if (disposeListener != null && !control.isDisposed()) {
+			control.removeDisposeListener(disposeListener);
+			disposeListener = null;
+		}
 	}
 
 	/* (non-Javadoc)

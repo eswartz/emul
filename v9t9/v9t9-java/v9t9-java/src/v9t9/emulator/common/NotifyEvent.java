@@ -15,6 +15,7 @@ public class NotifyEvent implements Comparable<NotifyEvent> {
 	public long timestamp;
 	public Object context;
 	public String message;
+	public boolean isPriority;
 	
 	public NotifyEvent(long timestamp, Object context,
 			Level level, String message) {

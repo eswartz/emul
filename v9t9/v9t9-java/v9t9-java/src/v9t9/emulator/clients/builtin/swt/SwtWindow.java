@@ -15,6 +15,7 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.SWTError;
 import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.dnd.RTFTransfer;
 import org.eclipse.swt.dnd.TextTransfer;
@@ -76,6 +77,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 	private EmulatorButtonBar buttons;
 	private EmulatorStatusBar statusBar;
 	private MultiImageSizeProvider imageProvider;
+	protected SwtDragDropHandler dragDropHandler;
 	
 	public SwtWindow(Display display, final Machine machine) {
 		super(machine);
@@ -177,6 +179,11 @@ public class SwtWindow extends BaseEmulatorWindow {
 				final boolean[] consume = { true };
 				Display.getDefault().syncExec(new Runnable() {
 					public void run() {
+						NotifyEvent event = peekNextEvent();
+						if (event != null && event.isPriority && lastTooltip != null && !lastTooltip.isDisposed()) {
+							lastTooltip.dispose();
+							lastTooltip = null;
+						}
 						consume[0] = lastTooltip == null || lastTooltip.isDisposed() || !lastTooltip.isVisible();
 					}
 				});
@@ -275,9 +282,6 @@ public class SwtWindow extends BaseEmulatorWindow {
 		});
 		*/
 		
-		new SwtDragDropHandler(videoControl, renderer, renderer.getVdpHandler());
-		
-		
 		String boundsPref = EmulatorSettings.INSTANCE.getSettings().get(EMULATOR_WINDOW_BOUNDS);
 		final Rectangle rect = PrefUtils.readBoundsString(boundsPref);
 		if (rect != null) {
@@ -320,19 +324,45 @@ public class SwtWindow extends BaseEmulatorWindow {
 
 	public void setMouseJoystickHandler(MouseJoystickHandler handler) {
 		//mouseJoystickHandler = new MouseJoystickHandler(videoControl, key);
+		boolean first = mouseJoystickHandler == null;
 		this.mouseJoystickHandler = handler; 
 		((ISwtVideoRenderer)videoRenderer).addMouseEventListener(new MouseAdapter() {
 			public void mouseDoubleClick(MouseEvent e) {
-				mouseJoystickHandler.setEnabled(!mouseJoystickHandler.isEnabled());
-				if (eventNotifier != null)
-					if (mouseJoystickHandler.isEnabled())
-						eventNotifier.notifyEvent(null, Level.INFO, "Using mouse as joystick");
-					else
-						eventNotifier.notifyEvent(null, Level.INFO, "Releasing mouse as joystick");
+				swapMouseDragDropForJoystick(true, !mouseJoystickHandler.isEnabled());
 			}
 		});
+		
+		swapMouseDragDropForJoystick(!first, false);
 	}
 	
+
+	/**
+	 * @param b 
+	 * 
+	 */
+	protected void swapMouseDragDropForJoystick(boolean notify, boolean enableJoystick) {
+		if (enableJoystick) {
+			if (dragDropHandler != null)
+				dragDropHandler.dispose();
+			dragDropHandler = null;
+		} 
+		mouseJoystickHandler.setEnabled(enableJoystick);
+		if (notify && eventNotifier != null) {
+			NotifyEvent event = new NotifyEvent(System.currentTimeMillis(), null, Level.INFO, 
+					mouseJoystickHandler.isEnabled() 
+					? "Using mouse as joystick" : "Releasing mouse as joystick");
+			event.isPriority = true;
+			eventNotifier.notifyEvent(event);
+		}
+		if (!enableJoystick) {
+			try {
+				dragDropHandler = new SwtDragDropHandler(videoControl, 
+						(ISwtVideoRenderer) videoRenderer, machine.getVdp());
+			} catch (SWTError e) {
+				e.printStackTrace();
+			}
+		}
+	}
 	/**
 	 * 
 	 */
@@ -819,5 +849,4 @@ public class SwtWindow extends BaseEmulatorWindow {
 	public ImageProvider getIconImageProvider() {
 		return imageProvider;
 	}
-
 }

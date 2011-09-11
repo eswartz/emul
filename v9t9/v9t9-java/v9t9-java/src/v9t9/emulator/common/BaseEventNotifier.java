@@ -139,5 +139,11 @@ public class BaseEventNotifier implements IEventNotifier {
 	public final NotifyEvent getNextEvent() {
 		return pendingEvents.poll();
 	}
+	/**
+	 * @return
+	 */
+	public final NotifyEvent peekNextEvent() {
+		return pendingEvents.peek();
+	}
 
 }
