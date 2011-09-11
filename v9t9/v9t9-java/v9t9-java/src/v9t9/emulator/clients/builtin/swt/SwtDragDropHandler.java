@@ -6,6 +6,10 @@ package v9t9.emulator.clients.builtin.swt;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.MessageFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.SWTException;
@@ -55,11 +59,22 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 		
 		source = new DragSource(control, DND.DROP_COPY | DND.DROP_DEFAULT);
 		source.addDragListener(this);
-		source.setTransfer(new Transfer[] { FileTransfer.getInstance() /*, ImageTransfer.getInstance()*/ });
+		if (System.getProperty("os.name").equals("Linux"))
+			source.setTransfer(new Transfer[] { FileTransfer.getInstance(), 
+					//MyImageTransfer.getInstance() 
+					});
+		else
+			source.setTransfer(new Transfer[] { FileTransfer.getInstance(), 
+					ImageTransfer.getInstance() 
+			});
 		
 		target = new DropTarget(control, DND.DROP_COPY | DND.DROP_DEFAULT);
 		target.addDropListener(this);
-		target.setTransfer(new Transfer[] { FileTransfer.getInstance(), ImageTransfer.getInstance() });
+		target.setTransfer(new Transfer[] { 
+				FileTransfer.getInstance(), 
+				ImageTransfer.getInstance() 
+				//MyImageTransfer.getInstance() 
+				});
 		
 		tempSourceFile = null;
 	}
@@ -89,12 +104,10 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 		if (FileTransfer.getInstance().isSupportedType(event.dataType)) {
 			// apparently the event comes twice...
 			if (tempSourceFile == null) {
-				try {
-					tempSourceFile = File.createTempFile("v9t9", ".png");
-				} catch (IOException e) {
-					e.printStackTrace();
-					return;
-				}
+				SimpleDateFormat fmt = new SimpleDateFormat("yyyyMMDD-HHmmss");
+				String name = MessageFormat.format("v9t9-{0}.png",
+						fmt.format(new Date())); 
+				tempSourceFile = new File(System.getProperty("java.io.tmpdir"), name);
 				
 				ImageLoader imgLoader = new ImageLoader();
 				try {
@@ -115,7 +128,6 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 			((ImageData) event.data).type = Transfer.registerType("image/png");
 			
 		}
-			
 	}
 
 	/**
@@ -236,6 +248,9 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 					ImageData data = datas[0];
 					importImage(data);
 				}
+			}
+			else if (ImageTransfer.getInstance().isSupportedType(event.currentDataType)) {
+				importImage((ImageData) event.data);
 			}
 		} catch (Throwable t) {
 			t.printStackTrace();
