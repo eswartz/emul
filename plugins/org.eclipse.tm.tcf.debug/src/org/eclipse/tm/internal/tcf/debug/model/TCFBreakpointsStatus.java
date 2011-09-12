@@ -130,7 +130,7 @@ public class TCFBreakpointsStatus {
 
     public Map<String,Object> getStatus(IBreakpoint bp) {
         try {
-            String id = TCFBreakpointsModel.getBreakpointsModel().getBreakpointID(bp);
+            String id = TCFBreakpointsModel.getBreakpointID(bp);
             if (id == null) return status_not_supported;
             return getStatus(id);
         }

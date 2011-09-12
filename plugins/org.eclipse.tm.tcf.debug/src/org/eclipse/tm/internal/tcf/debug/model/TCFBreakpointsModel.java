@@ -409,13 +409,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
         }
         if (file == null) file = (String)p.get("org.eclipse.cdt.debug.core.sourceHandle");
         if (file != null && file.length() > 0) {
-            // Map file path to remote file system
-            int i = file.lastIndexOf('/');
-            int j = file.lastIndexOf('\\');
-            String name = file;
-            if (i > j) name = file.substring(i + 1);
-            else if (i < j) name = file.substring(j + 1);
-            m.put(IBreakpoints.PROP_FILE, name);
+            m.put(IBreakpoints.PROP_FILE, file);
             Integer line = (Integer)p.get(IMarker.LINE_NUMBER);
             if (line != null) {
                 m.put(IBreakpoints.PROP_LINE, new Integer(line.intValue()));
@@ -474,7 +468,8 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
             int slash = scopeId.indexOf('/');
             if (slash < 0) {
                 contextIds.add(scopeId);
-            } else if (sessionId != null && sessionId.equals(scopeId.substring(0, slash))) {
+            }
+            else if (sessionId != null && sessionId.equals(scopeId.substring(0, slash))) {
                 contextIds.add(scopeId.substring(slash+1));
             }
         }
