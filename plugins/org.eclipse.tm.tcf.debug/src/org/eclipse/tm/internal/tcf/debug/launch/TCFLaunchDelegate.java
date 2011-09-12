@@ -179,6 +179,7 @@ public class TCFLaunchDelegate extends LaunchConfigurationDelegate {
      */
     public static ArrayList<PathMapRule> parseSourceLocatorMemento(String s) throws CoreException {
         ArrayList<PathMapRule> map = new ArrayList<PathMapRule>();
+        if (s == null || s.length() == 0) return map;
         Element root = DebugPlugin.parseDocument(s);
         NodeList list = root.getChildNodes();
         int length = list.getLength();
