@@ -1049,7 +1049,7 @@ static void evaluate_text_location(void * x) {
 
     bp_ip = 0;
     assert(cache_enter_cnt > 0);
-    if (line_to_address(args->ctx, cache_channel(), bp->file, bp->line, bp->column, plant_breakpoint_address_iterator, args) < 0) {
+    if (line_to_address(args->ctx, bp->file, bp->line, bp->column, plant_breakpoint_address_iterator, args) < 0) {
         address_expression_error(args->ctx, bp, errno);
     }
     if (bp_ip != 0) plant_at_address_expression(args->ctx, bp_ip, args->bp);

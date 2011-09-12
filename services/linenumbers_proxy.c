@@ -198,7 +198,8 @@ static void validate_map_to_memory(Channel * c, void * args, int error) {
     if (trap.error) exception(trap.error);
 }
 
-int line_to_address(Context * ctx, char * file, int line, int column, LineNumbersCallBack * client, void * args) {
+int line_to_address(Context * ctx, char * file, int line, int column,
+                    LineNumbersCallBack * client, void * args) {
     LINK * l = NULL;
     LineNumbersCache * cache = NULL;
     LineAddressCache * f = NULL;

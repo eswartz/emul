@@ -45,7 +45,7 @@ typedef struct CodeArea {
 
 typedef void LineNumbersCallBack(CodeArea *, void *);
 
-extern int line_to_address(Context * ctx, Channel * chnl, char * file, int line, int column, LineNumbersCallBack * client, void * args);
+extern int line_to_address(Context * ctx, char * file, int line, int column, LineNumbersCallBack * client, void * args);
 
 extern int address_to_line(Context * ctx, ContextAddress addr0, ContextAddress addr1, LineNumbersCallBack * client, void * args);
 

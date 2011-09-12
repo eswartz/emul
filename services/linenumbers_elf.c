@@ -213,9 +213,10 @@ static void unit_line_to_address(Context * ctx, CompUnit * unit, unsigned file, 
     }
 }
 
-int line_to_address(Context * ctx, Channel * chnl, char * file_name, int line, int column,
+int line_to_address(Context * ctx, char * file_name, int line, int column,
                     LineNumbersCallBack * client, void * args) {
     int err = 0;
+    Channel * chnl = cache_channel();
 
     if (ctx == NULL) err = ERR_INV_CONTEXT;
     else if (ctx->exited) err = ERR_ALREADY_EXITED;
