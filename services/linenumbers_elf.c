@@ -40,6 +40,7 @@
 #include <services/dwarf.h>
 #include <services/dwarfcache.h>
 #include <services/stacktrace.h>
+#include <services/pathmap.h>
 
 static int is_absolute_path(char * fnm) {
     if (fnm[0] == '/') return 1;
@@ -73,12 +74,15 @@ static void canonic_path(char * fnm, char * buf, size_t buf_size) {
                 }
             }
         }
+        if (i == 0 && ch >= 'a' && ch <= 'z' && *fnm == ':') {
+            ch = ch - 'a' + 'A';
+        }
         buf[i++] = ch;
     }
     buf[i++] = 0;
 }
 
-static int compare_path(char * file, char * pwd, char * dir, char * name) {
+static int compare_path(Channel * chnl, char * file, char * pwd, char * dir, char * name) {
     int i, j;
     char buf[FILE_PATH_SIZE];
 
@@ -103,7 +107,12 @@ static int compare_path(char * file, char * pwd, char * dir, char * name) {
     else {
         canonic_path(name, buf, sizeof(buf));
     }
-
+#if SERVICE_PathMap
+    {
+        char * cnm = apply_path_map(chnl, buf, PATH_MAP_TO_CLIENT);
+        if (cnm != buf) canonic_path(cnm, buf, sizeof(buf));
+    }
+#endif
     i = strlen(file);
     j = strlen(buf);
     return i <= j && strcmp(file, buf + j - i) == 0;
@@ -204,7 +213,8 @@ static void unit_line_to_address(Context * ctx, CompUnit * unit, unsigned file, 
     }
 }
 
-int line_to_address(Context * ctx, char * file_name, int line, int column, LineNumbersCallBack * client, void * args) {
+int line_to_address(Context * ctx, Channel * chnl, char * file_name, int line, int column,
+                    LineNumbersCallBack * client, void * args) {
     int err = 0;
 
     if (ctx == NULL) err = ERR_INV_CONTEXT;
@@ -232,7 +242,7 @@ int line_to_address(Context * ctx, char * file_name, int line, int column, LineN
                     if (cache->mFileInfoHash) {
                         FileInfo * f = cache->mFileInfoHash[h % cache->mFileInfoHashSize];
                         while (f != NULL) {
-                            if (f->mNameHash == h && compare_path(fnm, f->mCompUnit->mDir, f->mDir, f->mName)) {
+                            if (f->mNameHash == h && compare_path(chnl, fnm, f->mCompUnit->mDir, f->mDir, f->mName)) {
                                 CompUnit * unit = f->mCompUnit;
                                 unsigned j = f - unit->mFiles;
                                 unit_line_to_address(ctx, unit, j, line, column, client, args);

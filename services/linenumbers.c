@@ -215,7 +215,7 @@ static void map_to_memory_cache_client(void * x) {
 
 
     code_area_cnt = 0;
-    if (err == 0 && line_to_address(ctx, args->file,
+    if (err == 0 && line_to_address(ctx, cache_channel(), args->file,
         args->line, args->column, add_code_area, NULL) < 0) err = errno;
 
     cache_exit();

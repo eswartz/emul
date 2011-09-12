@@ -44,6 +44,7 @@
 #include <services/linenumbers.h>
 #include <services/stacktrace.h>
 #include <services/memorymap.h>
+#include <services/pathmap.h>
 
 typedef struct BreakpointRef BreakpointRef;
 typedef struct BreakpointAttribute BreakpointAttribute;
@@ -1048,7 +1049,7 @@ static void evaluate_text_location(void * x) {
 
     bp_ip = 0;
     assert(cache_enter_cnt > 0);
-    if (line_to_address(args->ctx, bp->file, bp->line, bp->column, plant_breakpoint_address_iterator, args) < 0) {
+    if (line_to_address(args->ctx, cache_channel(), bp->file, bp->line, bp->column, plant_breakpoint_address_iterator, args) < 0) {
         address_expression_error(args->ctx, bp, errno);
     }
     if (bp_ip != 0) plant_at_address_expression(args->ctx, bp_ip, args->bp);
@@ -2404,6 +2405,18 @@ static void event_code_unmapped(Context * ctx, ContextAddress addr, ContextAddre
 }
 #endif
 
+#if SERVICE_PathMap
+static void event_path_map_changed(Channel * c, void * args) {
+    unsigned hash = (unsigned)(uintptr_t)c / 16 % INP2BR_HASH_SIZE;
+    LINK * l = inp2br[hash].next;
+    while (l != &inp2br[hash]) {
+        BreakpointRef * br = link_inp2br(l);
+        l = l->next;
+        if (br->channel == c && br->bp->file != NULL) replant_breakpoint(br->bp);
+    }
+}
+#endif
+
 static void channel_close_listener(Channel * c) {
     delete_breakpoint_refs(c);
 }
@@ -2432,6 +2445,14 @@ void ini_breakpoints_service(Protocol * proto, TCFBroadcastGroup * bcg) {
             event_context_changed,
         };
         add_memory_map_event_listener(&listener, NULL);
+    }
+#endif
+#if SERVICE_PathMap
+    {
+        static PathMapEventListener listener = {
+            event_path_map_changed,
+        };
+        add_path_map_event_listener(&listener, NULL);
     }
 #endif
     list_init(&breakpoints);

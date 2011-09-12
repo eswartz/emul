@@ -994,8 +994,8 @@ static void read_memory_map_item(InputStream * inp, void * args) {
     memset(m, 0, sizeof(MemoryRegion));
     if (json_read_struct(inp, read_memory_region_property, m) && m->file_name != NULL) {
         struct stat buf;
-        char * fnm = path_map_to_local(c, m->file_name);
-        if (fnm != NULL) {
+        char * fnm = apply_path_map(c, m->file_name, PATH_MAP_TO_LOCAL);
+        if (fnm != m->file_name) {
             loc_free(m->file_name);
             m->file_name = loc_strdup(fnm);
         }

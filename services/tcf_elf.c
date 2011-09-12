@@ -251,6 +251,7 @@ static char * get_debug_info_file_name(ELF_File * file, int * error) {
                 while (offs % 4 != 0) offs++;
                 if (type == 3 && strcmp(name, "GNU") == 0) {
                     char fnm[FILE_PATH_SIZE];
+                    char * lnm = fnm;
                     struct stat buf;
                     char id[64];
                     size_t id_size = 0;
@@ -265,13 +266,10 @@ static char * get_debug_info_file_name(ELF_File * file, int * error) {
                     id[id_size++] = 0;
                     trace(LOG_ELF, "Found GNU build ID %s", id);
                     snprintf(fnm, sizeof(fnm), "/usr/lib/debug/.build-id/%.2s/%s.debug", id, id + 2);
-                    if (stat(fnm, &buf) == 0) return loc_strdup(fnm);
 #if SERVICE_PathMap
-                    {
-                        char * lnm = path_map_to_local(NULL, fnm);
-                        if (lnm != NULL) return loc_strdup(lnm);
-                    }
+                    lnm = apply_path_map(NULL, lnm, PATH_MAP_TO_LOCAL);
 #endif
+                    if (stat(lnm, &buf) == 0) return loc_strdup(lnm);
                     return NULL;
                 }
                 offs += desc_sz;
@@ -286,6 +284,7 @@ static char * get_debug_info_file_name(ELF_File * file, int * error) {
             else {
                 /* TODO: check debug info CRC */
                 char fnm[FILE_PATH_SIZE];
+                char * lnm = fnm;
                 struct stat buf;
                 char * name = (char *)sec->data;
                 int l = strlen(file->name);
@@ -297,13 +296,10 @@ static char * get_debug_info_file_name(ELF_File * file, int * error) {
                 snprintf(fnm, sizeof(fnm), "%.*s.debug/%s", l, file->name, name);
                 if (stat(fnm, &buf) == 0) return loc_strdup(fnm);
                 snprintf(fnm, sizeof(fnm), "/usr/lib/debug%.*s%s", l, file->name, name);
-                if (stat(fnm, &buf) == 0) return loc_strdup(fnm);
 #if SERVICE_PathMap
-                {
-                    char * lnm = path_map_to_local(NULL, fnm);
-                    if (lnm != NULL) return loc_strdup(lnm);
-                }
+                lnm = apply_path_map(NULL, lnm, PATH_MAP_TO_LOCAL);
 #endif
+                if (stat(lnm, &buf) == 0) return loc_strdup(lnm);
                 return NULL;
             }
         }

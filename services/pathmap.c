@@ -30,6 +30,11 @@
 #include <framework/myalloc.h>
 #include <services/pathmap.h>
 
+typedef struct Listener {
+    PathMapEventListener * listener;
+    void * args;
+} Listener;
+
 typedef struct PathMapRuleAttr {
     char * name;
     char * value;
@@ -58,6 +63,30 @@ static int ini_done = 0;
 static LINK maps;
 static char host_name[256];
 
+static Listener * listeners = NULL;
+static unsigned listener_cnt = 0;
+static unsigned listener_max = 0;
+
+static void path_map_event_mapping_changed(Channel * c) {
+    unsigned i;
+    for (i = 0; i < listener_cnt; i++) {
+        Listener * l = listeners + i;
+        if (l->listener->mapping_changed == NULL) continue;
+        l->listener->mapping_changed(c, l->args);
+    }
+}
+
+void add_path_map_event_listener(PathMapEventListener * listener, void * client_data) {
+    Listener * l = NULL;
+    if (listener_cnt >= listener_max) {
+        listener_max += 8;
+        listeners = (Listener *)loc_realloc(listeners, listener_max * sizeof(Listener));
+    }
+    l = listeners + listener_cnt++;
+    l->listener = listener;
+    l->args = client_data;
+}
+
 static PathMap * find_map(Channel * c) {
     LINK * l;
     for (l = maps.next; l != &maps; l = l->next) {
@@ -80,7 +109,7 @@ static int is_my_host(char * host) {
     return strcasecmp(host, host_name) == 0;
 }
 
-static char * map_to_local(PathMap * m, char * fnm) {
+static char * map_file_name(PathMap * m, char * fnm, int mode) {
     unsigned i, j, k;
     static char buf[FILE_PATH_SIZE];
 
@@ -101,35 +130,39 @@ static char * map_to_local(PathMap * m, char * fnm) {
         if (src == NULL || src[0] == 0) continue;
         if (dst == NULL || dst[0] == 0) continue;
         if (prot != NULL && prot[0] != 0 && strcasecmp(prot, "file")) continue;
-        if (!is_my_host(host)) continue;
+        switch (mode) {
+        case PATH_MAP_TO_LOCAL:
+            if (host && !is_my_host(host)) continue;
+            break;
+        }
         k = strlen(src);
         if (strncmp(src, fnm, k)) continue;
         if (fnm[k] != 0 && fnm[k] != '/' && fnm[k] != '\\') continue;
         j = strlen(dst) - 1;
         if (fnm[k] != 0 && (dst[j] == '/' || dst[j] == '\\')) k++;
         snprintf(buf, sizeof(buf), "%s%s", dst, fnm + k);
-        if (stat(buf, &st) == 0) return buf;
+        if (mode != PATH_MAP_TO_LOCAL || stat(buf, &st) == 0) return buf;
     }
 
-    return NULL;
+    return fnm;
 }
 
-char * path_map_to_local(Channel * c, char * fnm) {
+char * apply_path_map(Channel * c, char * fnm, int mode) {
     if (c == NULL) {
         LINK * l = maps.next;
         while (l != &maps) {
             PathMap * m = maps2map(l);
-            char * lnm = map_to_local(m, fnm);
-            if (lnm != NULL) return lnm;
+            char * lnm = map_file_name(m, fnm, mode);
+            if (lnm != fnm) return lnm;
             l = l->next;
         }
     }
     else {
         PathMap * m = find_map(c);
         if (m == NULL) return NULL;
-        return map_to_local(m, fnm);
+        return map_file_name(m, fnm, mode);
     }
-    return NULL;
+    return fnm;
 }
 
 static void write_rule(OutputStream * out, PathMapRule * r) {
@@ -202,6 +235,7 @@ void set_path_map(Channel * c, InputStream * inp) {
         m->rules_cnt = 0;
     }
     json_read_array(inp, read_rule, m);
+    path_map_event_mapping_changed(c);
 }
 
 static void command_get(char * token, Channel * c) {

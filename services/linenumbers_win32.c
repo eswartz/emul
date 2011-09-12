@@ -34,7 +34,8 @@
 #include <system/Windows/windbgcache.h>
 #include <system/Windows/context-win32.h>
 
-int line_to_address(Context * ctx, char * file, int line, int column, LineNumbersCallBack * callback, void * user_args) {
+int line_to_address(Context * ctx, Channel * chnl, char * file, int line, int column,
+                    LineNumbersCallBack * callback, void * user_args) {
     int err = 0;
 
     if (ctx == NULL) err = ERR_INV_CONTEXT;

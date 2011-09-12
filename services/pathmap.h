@@ -24,18 +24,37 @@
 #include <config.h>
 #include <framework/protocol.h>
 
+#if SERVICE_PathMap
+
+#define PATH_MAP_TO_CLIENT 1
+#define PATH_MAP_TO_LOCAL  2
+#define PATH_MAP_TO_TARGET 3
+
 /*
- * Translate debug file name to local name using file path mapping table of given channel.
- * Return pointer to static buffer that contains translated file name,
- * or null if mapping not found.
+ * Path map listener.
  */
-extern char * path_map_to_local(Channel * channel, char * file_name);
+typedef struct PathMapEventListener {
+    void (*mapping_changed)(Channel * c, void * client_data);
+} PathMapEventListener;
+
+/*
+ * Translate debug file name to local or target file name using file path mapping table of given channel.
+ * Return pointer to static buffer that contains translated file name.
+ */
+extern char * apply_path_map(Channel * channel, char * file_name, int mode);
 
 /*
  * Read new path map from the given input stream.
  */
 extern void set_path_map(Channel * c, InputStream * inp);
 
+/*
+ * Add path map listener.
+ */
+extern void add_path_map_event_listener(PathMapEventListener * listener, void * client_data);
+
 extern void ini_path_map_service(Protocol * proto);
+
+#endif /* SERVICE_PathMap */
 
 #endif /* D_pathmap */
