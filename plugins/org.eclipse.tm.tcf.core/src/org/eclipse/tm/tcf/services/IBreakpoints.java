@@ -121,7 +121,9 @@ public interface IBreakpoints extends IService {
         CAPABILITY_LOCATION = "Location",               // Boolean
         CAPABILITY_CONDITION = "Condition",             // Boolean
         CAPABILITY_FILE_LINE = "FileLine",              // Boolean
+        CAPABILITY_FILE_MAPPING = "FileMapping",        // Boolean
         CAPABILITY_CONTEXTIDS = "ContextIds",           // Boolean
+        CAPABILITY_CONTEXTNAMES = "ContextNames",       // Boolean
         CAPABILITY_STOP_GROUP = "StopGroup",            // Boolean
         CAPABILITY_IGNORECOUNT = "IgnoreCount",         // Boolean
         CAPABILITY_ACCESSMODE = "AccessMode";           // Number

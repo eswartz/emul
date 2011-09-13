@@ -47,7 +47,7 @@ import org.eclipse.tm.tcf.services.IBreakpoints;
 public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointManagerListener {
 
     private final IBreakpointManager bp_manager = DebugPlugin.getDefault().getBreakpointManager();
-    private final HashSet<IChannel> channels = new HashSet<IChannel>();
+    private final HashMap<IChannel,Map<String,Object>> channels = new HashMap<IChannel,Map<String,Object>>();
     private final HashMap<String,IBreakpoint> id2bp = new HashMap<String,IBreakpoint>();
 
     private boolean disposed;
@@ -97,56 +97,69 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
 
     @SuppressWarnings("unchecked")
     public void downloadBreakpoints(final IChannel channel, final Runnable done) throws IOException, CoreException {
-        assert Protocol.isDispatchThread();
         assert !disposed;
-        IBreakpoints service = channel.getRemoteService(IBreakpoints.class);
+        assert Protocol.isDispatchThread();
+        final IBreakpoints service = channel.getRemoteService(IBreakpoints.class);
         if (service != null) {
-            if (channels.isEmpty()) {
-                bp_manager.addBreakpointListener(this);
-                bp_manager.addBreakpointManagerListener(this);
-            }
-            channels.add(channel);
-            channel.addChannelListener(new IChannel.IChannelListener() {
-                public void congestionLevel(int level) {
-                }
-                public void onChannelClosed(Throwable error) {
-                    if (disposed) return;
-                    channels.remove(channel);
-                    if (channels.isEmpty()) {
-                        bp_manager.removeBreakpointListener(TCFBreakpointsModel.this);
-                        bp_manager.removeBreakpointManagerListener(TCFBreakpointsModel.this);
-                        id2bp.clear();
+            service.getCapabilities(null, new IBreakpoints.DoneGetCapabilities() {
+                public void doneGetCapabilities(IToken token, Exception error, Map<String,Object> capabilities) {
+                    if (channel.getState() != IChannel.STATE_OPEN) {
+                        Protocol.invokeLater(done);
+                        return;
                     }
-                }
-                public void onChannelOpened() {
-                }
-            });
-            IBreakpoint[] arr = bp_manager.getBreakpoints();
-            if (arr != null && arr.length > 0) {
-                List<Map<String,Object>> bps = new ArrayList<Map<String,Object>>(arr.length);
-                for (int i = 0; i < arr.length; i++) {
-                    if (!isSupported(channel, arr[i])) continue;
-                    String id = getBreakpointID(arr[i]);
-                    if (id == null) continue;
-                    if (!arr[i].isPersisted()) continue;
-                    IMarker marker = arr[i].getMarker();
-                    String file = getFilePath(marker.getResource());
-                    bps.add(toBreakpointAttributes(channel, id, file, marker.getType(), marker.getAttributes()));
-                    id2bp.put(id, arr[i]);
-                }
-                if (!bps.isEmpty()) {
-                    Map<String, Object>[] bpArr = (Map<String,Object>[]) bps.toArray(new Map[bps.size()]);
-                    service.set(bpArr, new IBreakpoints.DoneCommand() {
-                        public void doneCommand(IToken token, Exception error) {
-                            if (error == null) done.run();
-                            else channel.terminate(error);
+                    if (channels.isEmpty()) {
+                        bp_manager.addBreakpointListener(TCFBreakpointsModel.this);
+                        bp_manager.addBreakpointManagerListener(TCFBreakpointsModel.this);
+                    }
+                    channel.addChannelListener(new IChannel.IChannelListener() {
+                        public void congestionLevel(int level) {
+                        }
+                        public void onChannelClosed(Throwable error) {
+                            if (disposed) return;
+                            channels.remove(channel);
+                            if (channels.isEmpty()) {
+                                bp_manager.removeBreakpointListener(TCFBreakpointsModel.this);
+                                bp_manager.removeBreakpointManagerListener(TCFBreakpointsModel.this);
+                                id2bp.clear();
+                            }
+                        }
+                        public void onChannelOpened() {
                         }
                     });
-                    return;
+                    channels.put(channel, capabilities);
+                    IBreakpoint[] arr = bp_manager.getBreakpoints();
+                    if (arr != null && arr.length > 0) {
+                        List<Map<String,Object>> bps = new ArrayList<Map<String,Object>>(arr.length);
+                        for (int i = 0; i < arr.length; i++) {
+                            try {
+                                if (!isSupported(channel, arr[i])) continue;
+                                String id = getBreakpointID(arr[i]);
+                                if (id == null) continue;
+                                if (!arr[i].isPersisted()) continue;
+                                IMarker marker = arr[i].getMarker();
+                                String file = getFilePath(marker.getResource());
+                                bps.add(toBreakpointAttributes(channel, id, file, marker.getType(), marker.getAttributes()));
+                                id2bp.put(id, arr[i]);
+                            }
+                            catch (Exception x) {
+                                Activator.log("Cannot get breakpoint attributes", x);
+                            }
+                        }
+                        if (!bps.isEmpty()) {
+                            Map<String, Object>[] bp_arr = (Map<String,Object>[])bps.toArray(new Map[bps.size()]);
+                            service.set(bp_arr, new IBreakpoints.DoneCommand() {
+                                public void doneCommand(IToken token, Exception error) {
+                                    if (error == null) done.run();
+                                    else channel.terminate(error);
+                                }
+                            });
+                            return;
+                        }
+                    }
+                    Protocol.invokeLater(done);
                 }
-            }
+            });
         }
-        Protocol.invokeLater(done);
     }
 
     public void breakpointManagerEnablementChanged(final boolean enabled) {
@@ -166,7 +179,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
             Runnable r = new Runnable() {
                 public void run() {
                     if (disposed) return;
-                    for (final IChannel channel : channels) {
+                    for (final IChannel channel : channels.keySet()) {
                         IBreakpoints service = channel.getRemoteService(IBreakpoints.class);
                         Set<String> ids = new HashSet<String>();
                         for (String id : map.keySet()) {
@@ -235,7 +248,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
 
         public void run() {
             if (disposed) return;
-            for (final IChannel channel : channels) {
+            for (final IChannel channel : channels.keySet()) {
                 tcf_attrs = toBreakpointAttributes(channel, marker_id, marker_file, marker_type, marker_attrs);
                 service = channel.getRemoteService(IBreakpoints.class);
                 if (!isSupported(channel, breakpoint)) continue;
@@ -409,7 +422,20 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
         }
         if (file == null) file = (String)p.get("org.eclipse.cdt.debug.core.sourceHandle");
         if (file != null && file.length() > 0) {
-            m.put(IBreakpoints.PROP_FILE, file);
+            String name = file;
+            boolean file_mapping = false;
+            Map<String,Object> capabilities = channels.get(channel);
+            if (capabilities != null) {
+                Object obj = capabilities.get(IBreakpoints.CAPABILITY_FILE_MAPPING);
+                if (obj instanceof Boolean) file_mapping = ((Boolean)obj).booleanValue();
+            }
+            if (!file_mapping) {
+                int i = file.lastIndexOf('/');
+                int j = file.lastIndexOf('\\');
+                if (i > j) name = file.substring(i + 1);
+                else if (i < j) name = file.substring(j + 1);
+            }
+            m.put(IBreakpoints.PROP_FILE, name);
             Integer line = (Integer)p.get(IMarker.LINE_NUMBER);
             if (line != null) {
                 m.put(IBreakpoints.PROP_LINE, new Integer(line.intValue()));
@@ -457,7 +483,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
     }
 
     /**
-     * Filter given array of scope ids of the form sessionId/contextId
+     * Filter given array of scope IDs of the form sessionId/contextId
      * to those applicable to the given channel.
      */
     private String[] filterContextIds(IChannel channel, String[] scopeIds) {
