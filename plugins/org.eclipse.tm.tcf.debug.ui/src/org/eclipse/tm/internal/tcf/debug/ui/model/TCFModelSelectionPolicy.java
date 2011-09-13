@@ -15,6 +15,7 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationCont
 import org.eclipse.debug.ui.IDebugUIConstants;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
 import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.util.TCFDataCache;
@@ -108,7 +109,21 @@ class TCFModelSelectionPolicy implements IModelSelectionPolicy {
         return true;
     }
 
-    public ISelection replaceInvalidSelection(ISelection invalid_selection, ISelection new_selection) {
-        return new_selection;
+    public ISelection replaceInvalidSelection(ISelection existing, ISelection candidate) {
+        if (existing instanceof IStructuredSelection && candidate instanceof IStructuredSelection) {
+            Object el_existing = ((IStructuredSelection)existing).getFirstElement();
+            Object el_candidate = ((IStructuredSelection)candidate).getFirstElement();
+            if (el_candidate == null) {
+                if (el_existing == null) return new StructuredSelection(model.getLaunch());
+                if (el_existing instanceof TCFNode) {
+                    TCFNode node = (TCFNode)el_existing;
+                    if (node.parent == null || node.parent instanceof TCFNodeLaunch) {
+                        return new StructuredSelection(model.getLaunch());
+                    }
+                    return new StructuredSelection(node.parent);
+                }
+            }
+        }
+        return candidate;
     }
 }
