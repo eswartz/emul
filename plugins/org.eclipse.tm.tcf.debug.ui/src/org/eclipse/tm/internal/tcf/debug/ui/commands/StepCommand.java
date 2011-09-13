@@ -66,7 +66,7 @@ abstract class StepCommand implements IDebugCommandHandler {
                         if (ctx.isContainer()) {
                             TCFNodeExecContext.ChildrenStateInfo s = new TCFNodeExecContext.ChildrenStateInfo();
                             if (!((TCFNodeExecContext)node).hasSuspendedChildren(s, done)) return false;
-                            if (s.suspended) set.add(ctx);
+                            if (s.suspended || s.not_active) set.add(ctx);
                         }
                         if (ctx.hasState()) {
                             TCFDataCache<TCFContextState> state_cache = ((TCFNodeExecContext)node).getState();

@@ -115,6 +115,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     public static class ChildrenStateInfo {
         public boolean running;
         public boolean suspended;
+        public boolean not_active;
         public boolean breakpoint;
     }
 
@@ -1118,7 +1119,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                     // Manual manual updates.
                     return;
                 }
-                if (!info.suspended && model.getDelayChildrenListUpdates()) {
+                if (!info.suspended && !info.not_active && model.getDelayChildrenListUpdates()) {
                     // Delay content update until a child is suspended.
                     exe.delayed_children_list_delta = true;
                     return;
@@ -1142,7 +1143,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                     // Manual manual updates.
                     return;
                 }
-                if (!info.suspended && model.getDelayChildrenListUpdates()) {
+                if (!info.suspended && !info.not_active && model.getDelayChildrenListUpdates()) {
                     // Delay content update until a child is suspended.
                     exe.delayed_children_list_delta = true;
                     return;
@@ -1427,7 +1428,10 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                     if (!state_data.is_suspended) {
                         info.running = true;
                     }
-                    else if (!e.isNotActive()) {
+                    else if (e.isNotActive()) {
+                        info.not_active = true;
+                    }
+                    else {
                         info.suspended = true;
                         String r = model.getContextActionResult(e.id);
                         if (r == null) r = state_data.suspend_reason;
