@@ -623,7 +623,7 @@ static void command_path_map_set(char * token, Channel * c, void * args) {
     write_stringz(&p->target->out, token);
     write_stringz(&p->target->out, PATH_MAP);
     write_stringz(&p->target->out, "set");
-    set_path_map(p->target, p->fwd_inp);
+    set_path_map(p->host, p->fwd_inp);
     if (read_stream(p->fwd_inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(p->fwd_inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 }
@@ -656,7 +656,7 @@ void create_context_proxy(Channel * host, Channel * target, int forward_pm) {
     add_event_handler2(target, RUN_CONTROL, "containerResumed", event_container_resumed, p);
     add_event_handler2(target, MEMORY_MAP, "changed", event_memory_map_changed, p);
     if (forward_pm) add_command_handler2(host->protocol, PATH_MAP, "set", command_path_map_set, p);
-    /* Retirve initila set of run control contexts */
+    /* Retirve initial set of run control contexts */
     protocol_send_command(p->target, "RunControl", "getChildren", validate_peer_cache_children, p);
     write_stringz(&p->target->out, "null");
     write_stream(&p->target->out, MARKER_EOM);
