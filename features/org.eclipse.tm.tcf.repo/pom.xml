@@ -14,4 +14,42 @@
 	<version>0.5.0-SNAPSHOT</version>
 	<artifactId>org.eclipse.tm.tcf.repo</artifactId>
 	<packaging>eclipse-repository</packaging>
+
+	<profiles>
+		<profile>
+			<id>production</id>
+			<properties>
+				<tcf-install>/home/data/httpd/download.eclipse.org/tools/cdt/builds/hudson/tcf-nightly</tcf-install>
+			</properties>
+			<build>
+				<plugins>
+					<plugin>
+						<artifactId>maven-antrun-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>deploy</id>
+								<phase>install</phase>
+								<goals>
+									<goal>run</goal>
+								</goals>
+								<configuration>
+									<tasks>
+										<mkdir dir="${tcf-install}" />
+										<delete>
+											<fileset dir="${tcf-install}">
+												<include name="**" />
+											</fileset>
+										</delete>
+										<copy file="target/org.eclipse.tm.tcf.repo.zip"
+											tofile="${tcf-install}/org.eclipse.tm.tcf.repo.${unqualifiedVersion}.${buildQualifier}.zip" />
+										<unzip src="target/org.eclipse.tm.tcf.repo.zip" dest="${tcf-install}" />
+									</tasks>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 </project>
