@@ -104,7 +104,7 @@
 #define SERVICE_Streams         (TARGET_UNIX || TARGET_VXWORKS || TARGET_WINDOWS || TARGET_SYMBIAN)
 #endif
 #if !defined(SERVICE_PathMap)
-#define SERVICE_PathMap         ENABLE_ELF
+#define SERVICE_PathMap         1
 #endif
 #if !defined(SERVICE_Terminals)
 #define SERVICE_Terminals       (TARGET_UNIX || TARGET_WINDOWS)

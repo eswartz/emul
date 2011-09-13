@@ -2090,6 +2090,10 @@ static void command_get_capabilities(char * token, Channel * c) {
     write_stream(&c->out, ':');
     json_write_boolean(&c->out, ENABLE_LineNumbers);
     write_stream(&c->out, ',');
+    json_write_string(&c->out, "FileMapping");
+    write_stream(&c->out, ':');
+    json_write_boolean(&c->out, SERVICE_PathMap);
+    write_stream(&c->out, ',');
     json_write_string(&c->out, "IgnoreCount");
     write_stream(&c->out, ':');
     json_write_boolean(&c->out, 1);
