@@ -17,8 +17,15 @@ import org.ejs.coffee.core.utils.Pair;
 public abstract class ImageDataCanvas extends BitmapVdpCanvas {
 
 	protected ImageData imageData;
-	
 
+	/** the RGB-32 pixel for each palette entry */
+	protected int[] palettePixels;
+	/** mapping from RGB-32 pixel to each palette index */
+	protected TreeMap<Integer, Integer> paletteToIndex;
+	
+	/** HSV values of each palette entry */
+	protected float[][] palhsv;
+	
 	public ImageDataCanvas(int extraSpace) {
 		super(extraSpace);
 	}
@@ -80,7 +87,7 @@ public abstract class ImageDataCanvas extends BitmapVdpCanvas {
 			closest = newPixel;
 		}
 		else {
-			closest = getClosestColor(ncols, prgb, format == Format.COLOR16_8x1);
+			closest = getClosestColor(ncols, prgb, limit8, Integer.MAX_VALUE);
 			rgb = thePalette[closest];
 			newPixel = palettePixels[closest];
 		}
@@ -109,33 +116,55 @@ public abstract class ImageDataCanvas extends BitmapVdpCanvas {
 		
 		return closest;
 	}
+	
 
-	private int getClosestColor(int ncols, int[] prgb, boolean limit8) {
-		int closest = -1;
-		int mindiff = Integer.MAX_VALUE;
-		float[] phsv = rgbToHsv(prgb);
-		for (int c = 1; c < ncols; c++) {
-			int dist;
+	private int getColorDistance(int c, float[] phsv, int[] prgb) {
+		int dist;
+		
+		if (phsv[1] < 0.25 && palhsv[c][1] < 0.25) {
+			// only select something with low saturation,
+			// and match value
+			float dh = 16; //(palhsv[c][0] - phsv[0]);	// range: 0-35
+			float ds = (palhsv[c][1] - phsv[1]) * 256;
+			float dv = (palhsv[c][2] - phsv[2]);
 			
+			dist = (int) ((dh * dh) + (ds * ds) + (dv * dv));
+		} else {
 			int dr = ((thePalette[c][0] & 0xff) - prgb[0]);
 			int dg = ((thePalette[c][1] & 0xff) - prgb[1]);
 			int db = ((thePalette[c][2] & 0xff) - prgb[2]);
-			dist = (dr * dr) + (dg * dg) + (db * db);
+			
+			//float dv = Math.abs(palhsv[c][2] - phsv[2]);
+			
+			dist = (int)((dr * dr) + (dg * dg) + (db * db) ) ;
+		}
+		
+		return dist;
+	}
+	
+	private int getColorDistance(int c, int[] prgb) {
+		int dist;
+		
+		int dr = ((thePalette[c][0] & 0xff) - prgb[0]);
+		int dg = ((thePalette[c][1] & 0xff) - prgb[1]);
+		int db = ((thePalette[c][2] & 0xff) - prgb[2]);
+		dist = (dr * dr) + (dg * dg) + (db * db);
+		return dist;
+	}
 
-			if (limit8 && phsv[1] < 0.25) {
-				// bias closer saturation more, to avoid too many unrelated colors
-				float[] chsv = rgbToHsv(thePalette[c]);
-				int sd = (int) ((1.0 - (phsv[1] - chsv[1])) * 100); 
-				dist += sd*sd;
+
+	private int getClosestColor(int ncols, int[] prgb, boolean limit8, int distLimit) {
+		int closest = -1;
+		int mindiff = Integer.MAX_VALUE;
+		for (int c = (isClearFromPalette() ? 0 : 1); c < ncols; c++) {
+			int dist;
+			if (limit8) {
+				float[] phsv = rgbToHsv(prgb);
+				dist = getColorDistance(c, phsv, prgb);  	
+			} else {
+				dist = getColorDistance(c, prgb);
 			}
-			/*
-			float[] chsv = rgbToHsv(thePalette[c]);
-			int dh = (int) (phsv[0] - chsv[0]);
-			int ds = (int) ((phsv[1] - chsv[1]) * 50);
-			int dv = (int) ((phsv[2] - chsv[2]));
-			dist = dh*dh + ds*ds + dv*dv; 
-			*/
-			if (dist < mindiff) {
+			if (dist < distLimit && dist < mindiff) {
 				closest = c;
 				mindiff = dist;
 			}
@@ -174,24 +203,33 @@ public abstract class ImageDataCanvas extends BitmapVdpCanvas {
 		if (format == null || format == Format.TEXT || format == Format.COLOR16_8x8)
 			return;
 
+		updatePaletteMapping();
+		
 		boolean limitDither = false;
 
 		int ncols;
 		if (format == Format.COLOR16_8x1 || format == Format.COLOR16_4x4) {
 			ncols = 16;
 			
+			optimizeFor16Colors(img);
 			limitDither = true;
 		}
 		else if (format == Format.COLOR16_1x1) {
 			ncols = 16;
 			
-			optimizePalette(img);
+			for (int i = 0; i < 16; i++)
+				setRGB(i, getStockRGB(i));
+			
+			//optimizeFor16Colors(img);
+			optimizeFor16ColorsAndRebuildPalette(img);
 		}
 		else if (format == Format.COLOR4_1x1) {
 			ncols = 4;
 		}
 		else if (format == Format.COLOR256_1x1) {
 			ncols = 256;
+			
+			optimizeFor256Colors(img);
 		}
 		else {
 			return;
@@ -299,15 +337,8 @@ public abstract class ImageDataCanvas extends BitmapVdpCanvas {
 		}
 	}
 	
-	private int rgbIdx(int r, int g, int b) {
-		return r*64 + g*8 + b;
-	}
-	
-	private int scaleReduce(int rgb, int shift) {
+	private static int scaleReduce(int rgb, int shift) {
 		int val = (rgb >>> shift) & 0xff;
-		
-		if (val > 255)
-			val = 255;
 		val = ((val >>> 5)) & 0x7;
 		return val;
 		
@@ -329,6 +360,247 @@ public abstract class ImageDataCanvas extends BitmapVdpCanvas {
 		
 	}*/
 	
+
+	/**
+	 * @param rgbs
+	 * @param prgb
+	 * @param i
+	 * @return
+	 */
+	protected int findPaletteColor(int rgb) {
+		
+		int prgb[] = { (rgb >> 16) & 0xff,
+			(rgb >> 8) & 0xff,
+			(rgb >> 0) & 0xff };
+		int c = getClosestColor(16, prgb, true, Integer.MAX_VALUE);
+		return c;
+	}
+
+	private interface IMapColor {
+		/** Return a color index from mapping the RGB pixel 
+		 * 
+		 * @param rgb pixel in X8R8G8B8 format
+		 * @param dist array for receiving distance² from the returned pixel
+		 * @return the color index
+		 */
+		int mapColor(int rgb, int[] dist);
+	}
+	
+	private class TI16MapColor implements IMapColor {
+
+		/* (non-Javadoc)
+		 * @see v9t9.emulator.clients.builtin.video.ImageDataCanvas.IMapColor#mapColor(int, int[])
+		 */
+		@Override
+		public int mapColor(int rgb, int[] distA) {
+			int prgb[] = { (rgb >> 16) & 0xff,
+				(rgb >> 8) & 0xff,
+				(rgb >> 0) & 0xff };
+			
+			float[] phsv = rgbToHsv(prgb);
+			
+			int closest = -1;
+			int mindiff = Integer.MAX_VALUE;
+			for (int c = (isClearFromPalette() ? 0 : 1); c < 16; c++) {
+				int dist = getColorDistance(c, phsv, prgb);
+				if (dist < mindiff) {
+					closest = c;
+					mindiff = dist;
+				}
+			}
+
+			distA[0] = mindiff;
+			return closest;
+		}
+		
+	}
+
+
+	private class RGB333MapColor implements IMapColor {
+
+		/* (non-Javadoc)
+		 * @see v9t9.emulator.clients.builtin.video.ImageDataCanvas.IMapColor#mapColor(int, int[])
+		 */
+		@Override
+		public int mapColor(int rgb, int[] dist) {
+			int r = scaleReduce(rgb, 16);
+			int g = scaleReduce(rgb, 8);
+			int b = scaleReduce(rgb, 0);
+			
+			// not actual RGB332 index!
+			int c = (r << 6) | (g << 3) | b;
+			
+			byte[] rgbs = getGRB333(g, r, b);
+			
+			int dr = ((rgbs[0] & 0xff) - ((rgb >> 16) & 0xff));
+			int dg = ((rgbs[1] & 0xff) - ((rgb >>  8) & 0xff));
+			int db = ((rgbs[2] & 0xff) - ((rgb >>  0) & 0xff));
+			
+			dist[0] = (dr*dr) + (dg*dg) + (db*db);
+			
+			return c;
+		}
+		
+	}
+
+
+	private class RGB332MapColor implements IMapColor {
+
+		/* (non-Javadoc)
+		 * @see v9t9.emulator.clients.builtin.video.ImageDataCanvas.IMapColor#mapColor(int, int[])
+		 */
+		@Override
+		public int mapColor(int rgb, int[] dist) {
+			int r = scaleReduce(rgb, 16);
+			int g = scaleReduce(rgb, 8);
+			int b = scaleReduce(rgb, 0) & ~0x1;
+			
+			// not actual RGB332 index!
+			int c = (r << 6) | (g << 3) | b;
+			
+			byte[] rgbs = getGRB333(g, r, b);
+			
+			int dr = ((rgbs[0] & 0xff) - ((rgb >> 16) & 0xff));
+			int dg = ((rgbs[1] & 0xff) - ((rgb >>  8) & 0xff));
+			int db = ((rgbs[2] & 0xff) - ((rgb >>  0) & 0xff));
+			
+			dist[0] = (dr*dr) + (dg*dg) + (db*db);
+			
+			return c;
+		}
+		
+	}
+	/**
+	 * Build a histogram of the colors in the image once the 
+	 * colors are reduced to the given palette with the given
+	 * error.
+	 * 
+	 * @param img
+	 * @param paletteMapper the means of mapping a palette
+	 * @param hist histogram; count of pixels per each mapped color
+	 * @param maxDist maximum distance² for a pixel beyond which
+	 * it will not be counted in the histogram
+	 * @return the number of colors detected (# of non-zero entries in hist[])
+	 */
+	private int buildHistogram(BufferedImage img, 
+			IMapColor paletteMapper,
+			int maxDist,
+			final int[] hist,
+			final Integer[] indices
+			) 
+	{
+		int[] rgbs = new int[img.getWidth()];
+		int[] distA = { 0 };
+		for (int y = 0; y < img.getHeight(); y++) {
+			img.getRGB(0, y, img.getWidth(), 1, rgbs, 0, rgbs.length);
+			for (int i = 0; i < rgbs.length; i++) {
+				int rgb = rgbs[i];
+				int c = paletteMapper.mapColor(rgb, distA);
+				if (distA[0] <= maxDist) {
+					hist[c]++;
+				}
+			}
+		}
+		for (int i = 0; i < indices.length; i++)
+			indices[i] = i;
+		
+		Arrays.sort(indices, new Comparator<Integer>() {
+
+			@Override
+			public int compare(Integer o1, Integer o2) {
+				return hist[o2] - hist[o1];
+			}
+		});
+		
+		// count actual colors
+		int interestingColors = 0;
+		while (interestingColors < 512) {
+			int idx = indices[interestingColors];
+			if (hist[idx] == 0)
+				break;
+			interestingColors++;
+		}
+
+		return interestingColors;
+	}
+
+
+	/**
+	 * Update the images for the optimal distribution of colors in the fixed
+	 * 16 color palette, presumably bitmap mode or multicolor mode,
+	 * where dithering will not do a lot of good.
+	 * 
+	 * We cannot control the palette in this mode, but we can avoid unwanted
+	 * dithering, e.g. in a cartoon or line art, by replacing the most important
+	 * colors with their closest entries in the palette.
+	 * 
+	 * @param img
+	 */
+	private void optimizeFor16Colors(BufferedImage img) {
+		TI16MapColor mapColor = new TI16MapColor();
+		
+		int minDist = Integer.MAX_VALUE;
+		for (int c = 1; c < 16; c++) {
+			for (int d = c + 1; d < 16; d++) {
+				int[] prgb = { thePalette[d][0] & 0xff,
+						thePalette[d][1] & 0xff, 
+						thePalette[d][2] & 0xff 
+				};
+				int dist = getColorDistance(c, palhsv[d], prgb);
+				if (dist < minDist)
+					minDist = dist;
+			}
+		}
+		System.out.println("Minimum 16-color palette distance: " + minDist);
+		
+
+		final int[] hist = new int[16];
+		final Integer[] indices = new Integer[16];
+		
+		int interestingColors = buildHistogram(img, mapColor, minDist, hist, indices);
+
+		int usedColors = Math.min(16, interestingColors);
+		
+		boolean highColors = interestingColors >= 12;
+		
+		System.out.println("16: interestingColors="+interestingColors+"; usedColors="+usedColors+"; highColor="+highColors);
+		
+		int[] rgbs = new int[img.getWidth()];
+		
+		for (int i = 0; i < usedColors; i++) {
+			// ensure there will be an exact match so no dithering 
+			// occurs on the primary occurrences of this color
+			int idx = indices[i];
+			byte[] rgb = getRGB(idx);
+			int newRGB = ((rgb[0] & 0xff) << 16) | ((rgb[1] & 0xff) << 8) | ((rgb[2] & 0xff));
+			replaceColor16(img, rgbs, idx, newRGB);
+		}
+	}
+
+	/**
+	 * @param img
+	 * @param rgbs 
+	 * @param r
+	 * @param g
+	 * @param b
+	 * @param rgb
+	 */
+	private void replaceColor16(BufferedImage img, int[] rgbs, int theC, int newRGB) {
+		for (int y = 0; y < img.getHeight(); y++) {
+			img.getRGB(0, y, img.getWidth(), 1, rgbs, 0, rgbs.length);
+			for (int i = 0; i < rgbs.length; i++) {
+				int rgb = rgbs[i];
+				int c = findPaletteColor(rgb);
+				if (c == theC) {
+					rgbs[i] = newRGB;
+				}
+			}
+			img.setRGB(0, y, img.getWidth(), 1, rgbs, 0, rgbs.length);
+		}
+
+	}
+
+	
 	/**
 	 * Update the palette for the optimal distribution of colors.
 	 * 
@@ -342,92 +614,27 @@ public abstract class ImageDataCanvas extends BitmapVdpCanvas {
 	 * colors, for art.  Or it may have a large number of
 	 * colors all relatively of the same importance, in a photograph.
 	 * 
-	 * So, rather than taking the 15 most prominent colors, we take
-	 * a sampling of the most important colors covering 25% of the
-	 * image.
-	 * 
-	 * The image will still be dithered without any knowledge of this
-	 * palette alteration, so we need to update the image to physically
-	 * replace the selected colors with their exact RGB values, so 
-	 * dithering will not turn a solid color into a mess.
+	 * So, rather than taking the 15 most prominent colors wholesale,
+	 * which may leave valid but rarely occurring colors stranded, we take
+	 * 4 or 8 (depending on color variety) of the most often occurring
+	 * colors and replace them directly in the image so they will not
+	 * be dithered.  Then we take an exponentially increasing sample
+	 * of the other colors appearing in the image for the remainder
+	 * of the palette. 
 	 * 
 	 * @param img
 	 */
-	private void optimizePalette(BufferedImage img) {
-		final float[] hist = new float[512];
-		int[] rgbs = new int[img.getWidth()];
-		//double[] xImp = new double[img.getWidth()];
-		for (int y = 0; y < img.getHeight(); y++) {
-			//double yImportance = Math.sin(y * Math.PI / img.getHeight());
-			img.getRGB(0, y, img.getWidth(), 1, rgbs, 0, rgbs.length);
-			for (int i = 0; i < rgbs.length; i++) {
-				/*double xImportance;
-				if (y == 0) {
-					xImp[i] = Math.sin(i * Math.PI / rgbs.length);
-				}
-				xImportance = xImp[i];
-				
-				double importance = xImportance + yImportance;
-				//double importance = 1; // + Math.sqrt(xImportance * yImportance);
-				*/
-				
-				int rgb = rgbs[i];
-				int r = scaleReduce(rgb, 16);
-				int g = scaleReduce(rgb, 8);
-				int b = scaleReduce(rgb, 0);
-				hist[rgbIdx(r,g,b)] += 0.5f;
-				
-				/*
-				if (false && importance >= 0.25) {
-					// due to loss of color in the palette, see
-					// if any of the colors are hiding in nearby ones,
-					// so dithering will introduce these colors 
-					int hr = scaleReduceBias(rgb, 16, true);
-					int hg = scaleReduceBias(rgb, 8, true);
-					int hb = scaleReduceBias(rgb, 0, true);
-					//if (hr != r || hg != g || hb != b)
-						hist[rgbIdx(hr,hg,hb)] += 0.125f * importance;
-					
-					int lr = scaleReduceBias(rgb, 16, false);
-					int lg = scaleReduceBias(rgb, 8, false);
-					int lb = scaleReduceBias(rgb, 0, false);
-					//if (lr != r || lg != g || lb != b)
-						hist[rgbIdx(lr,lg,lb)] += 0.375 * importance;
-				}
-				*/
-			}
-		}
-		List<Integer> indices = new ArrayList<Integer>(512);
-		for (int i = 0; i < 512; i++)
-			indices.add(i);
+	private void optimizeFor16ColorsAndRebuildPalette(BufferedImage img) {
 		
-		Collections.sort(indices, new Comparator<Integer>() {
+		final int[] hist = new int[512];
+		final Integer[] indices = new Integer[512];
+		
+		// 0xff --> 0xe0 for R, G, B
+		int maxDist = 0x1f*0x1f * 3;
+		
+		int interestingColors = buildHistogram(img, new RGB333MapColor(), maxDist, hist, indices);
 
-			@Override
-			public int compare(Integer o1, Integer o2) {
-				return (int) Math.signum(hist[o2] - hist[o1]);
-			}
-		});
-		
-		// take sampling of most prominent colors
-		float goal = 0;
-		for (float h : hist)
-			goal += h;
-		
-		//goal *= 0.75f;
-		
-		int interestingColors = 0;
-		while (interestingColors < 512) {
-			int idx = indices.get(interestingColors);
-			if (hist[idx] == 0)
-				break;
-			goal -= hist[idx];
-			if (goal < 0 && interestingColors >= 15)
-				break;
-			interestingColors++;
-		}
-
-		int usedColors = Math.min(15, interestingColors);
+		int usedColors = Math.min(16, interestingColors);
 		
 		boolean highColors = interestingColors >= 128;
 		
@@ -447,8 +654,10 @@ public abstract class ImageDataCanvas extends BitmapVdpCanvas {
 		double K = Math.log(interestingColors - usedColors / 2) / usedColors;
 		
 		int prev = -1;
+		int[] rgbs = new int[img.getWidth()];
+		int replaceLimit = (highColors ? 4 : 8);
 		for (int i = 0; i < usedColors; i++) {
-			int c = i + 1;
+			int c = i;
 			int index;
 			if (interestingColors == usedColors || i < usedColors / 2) {
 				index = i;
@@ -461,16 +670,66 @@ public abstract class ImageDataCanvas extends BitmapVdpCanvas {
 			}
 			System.out.println("index="+index);
 			prev = index;
-			int idx = indices.get(index);
+			int idx = indices[index];
 			int r = (idx>>6) & 0x7;
 			int g = (idx>>3) & 0x7;
 			int b = (idx>>0) & 0x7;
 			setGRB333(c, g, r, b);
 			
-			if ((interestingColors == usedColors || i < (highColors ? 4 : 8))) {
-				// ensure there will be an exact match so no dithering occurs on the primary ones
-				// for this color
+			if ((interestingColors == usedColors || i < replaceLimit)) {
+				// ensure there will be an exact match so no dithering 
+				// occurs on the primary occurrences of this color
 				byte[] rgb = getRGB(c);
+				int newRGB = ((rgb[0] & 0xff) << 16) | ((rgb[1] & 0xff) << 8) | ((rgb[2] & 0xff));
+				replaceColor(img, rgbs, r, g, b, newRGB);
+			}
+		}
+	}
+
+	/**
+	 * Update the images for the optimal distribution of colors in the fixed
+	 * 3-3-2 RGB palette.
+	 * 
+	 * We cannot control the palette in this mode, but we can avoid unwanted
+	 * dithering, e.g. in a cartoon or line art, by replacing the most important
+	 * colors with their closest entries in the palette.
+	 * 
+	 * We create a histogram over the 3-3-2 distribution of colors.
+	 * 
+	 * @param img
+	 */
+	private void optimizeFor256Colors(BufferedImage img) {
+
+		final int[] hist = new int[512];
+		final Integer[] indices = new Integer[512];
+		
+		// 0xff --> 0xe0 for R, G and 0xff -> 0xc0 for B
+		int maxDist = 0x1f*0x1f * 2 + 0x3f*0x3f;
+		
+		int interestingColors = buildHistogram(img, new RGB332MapColor(), maxDist, hist, indices);
+		
+		int usedColors = Math.min(256, interestingColors);
+		
+		boolean highColors = interestingColors >= 64;
+		
+		System.out.println("256: interestingColors="+interestingColors+"; usedColors="+usedColors+"; highColor="+highColors);
+		
+		byte[] rgb = { 0, 0, 0};
+		int[] rgbs = new int[img.getWidth()];
+		
+		int replaceLimit = (highColors ? 64 : 128);
+		for (int i = 0; i < usedColors; i++) {
+			if (interestingColors == usedColors || i < replaceLimit) {
+				// ensure there will be an exact match so no dithering 
+				// occurs on the primary occurrences of this color
+				
+				int idx = indices[i];
+				int r = (idx>>6) & 0x7;
+				int g = (idx>>3) & 0x7;
+				int b = (idx>>0) & 0x6;
+				
+				getGRB332(rgb, (byte)(idx >> 1));
+				byte y = rgb[1]; rgb[1] = rgb[0]; rgb[0] = y;
 				int newRGB = ((rgb[0] & 0xff) << 16) | ((rgb[1] & 0xff) << 8) | ((rgb[2] & 0xff));
 				replaceColor(img, rgbs, r, g, b, newRGB);
 			}
@@ -486,13 +745,15 @@ public abstract class ImageDataCanvas extends BitmapVdpCanvas {
 	 * @param rgb
 	 */
 	private void replaceColor(BufferedImage img, int[] rgbs, int theR, int theG, int theB, int newRGB) {
+		int bMask = format == Format.COLOR256_1x1 ? ~0x1 : ~0;
+		
 		for (int y = 0; y < img.getHeight(); y++) {
 			img.getRGB(0, y, img.getWidth(), 1, rgbs, 0, rgbs.length);
 			for (int i = 0; i < rgbs.length; i++) {
 				int rgb = rgbs[i];
 				int r = scaleReduce(rgb, 16);
 				int g = scaleReduce(rgb, 8);
-				int b = scaleReduce(rgb, 0);
+				int b = scaleReduce(rgb, 0) & bMask;
 				if (r == theR && g == theG && b == theB) {
 					rgbs[i] = newRGB;
 				}
@@ -513,6 +774,9 @@ public abstract class ImageDataCanvas extends BitmapVdpCanvas {
 		if (c == null && format == Format.COLOR256_1x1) {
 			// whhyyyy is someone losing precision?!
 			c = paletteToIndex.get(paletteToIndex.ceilingKey(p));
+		}
+		if (c == null) {
+			return 0;
 		}
 		return (byte) (int) c;
 	}
@@ -545,10 +809,13 @@ public abstract class ImageDataCanvas extends BitmapVdpCanvas {
 		paletteToIndex = new TreeMap<Integer, Integer>();
 		
 		palettePixels = new int[ncols];
+		palhsv = new float[16][];
+		
 		if (ncols < 256) {
 			for (int c = 0; c < ncols; c++) {
 				palettePixels[c] = getPixel(thePalette[c]);
 				paletteToIndex.put(palettePixels[c], c);
+				palhsv[c] = rgbToHsv(thePalette[c]);
 			}
 		} else {
 			byte[] rgb = { 0, 0, 0};

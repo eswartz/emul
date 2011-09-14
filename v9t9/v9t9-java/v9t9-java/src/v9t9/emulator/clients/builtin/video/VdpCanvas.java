@@ -3,8 +3,6 @@
  */
 package v9t9.emulator.clients.builtin.video;
 
-import java.util.TreeMap;
-
 import org.eclipse.swt.graphics.Rectangle;
 
 import v9t9.engine.memory.ByteMemoryAccess;
@@ -294,10 +292,6 @@ public abstract class VdpCanvas {
 
 	protected byte[][] thePalette;
 	
-	/** the RGB-32 pixel for each palette entry */
-	protected int[] palettePixels;
-	/** mapping from RGB-32 pixel to each palette index */
-	protected TreeMap<Integer, Integer> paletteToIndex;
 	protected boolean paletteMappingDirty = true;
 
 	private boolean clearFromPalette;
