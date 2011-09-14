@@ -82,7 +82,7 @@ static void canonic_path(char * fnm, char * buf, size_t buf_size) {
     buf[i++] = 0;
 }
 
-static int compare_path(Channel * chnl, char * file, char * pwd, char * dir, char * name) {
+static int compare_path(Channel * chnl, Context * ctx, char * file, char * pwd, char * dir, char * name) {
     int i, j;
     char buf[FILE_PATH_SIZE];
 
@@ -109,7 +109,7 @@ static int compare_path(Channel * chnl, char * file, char * pwd, char * dir, cha
     }
 #if SERVICE_PathMap
     {
-        char * cnm = apply_path_map(chnl, buf, PATH_MAP_TO_CLIENT);
+        char * cnm = apply_path_map(chnl, ctx, buf, PATH_MAP_TO_CLIENT);
         if (cnm != buf) canonic_path(cnm, buf, sizeof(buf));
     }
 #endif
@@ -243,7 +243,7 @@ int line_to_address(Context * ctx, char * file_name, int line, int column,
                     if (cache->mFileInfoHash) {
                         FileInfo * f = cache->mFileInfoHash[h % cache->mFileInfoHashSize];
                         while (f != NULL) {
-                            if (f->mNameHash == h && compare_path(chnl, fnm, f->mCompUnit->mDir, f->mDir, f->mName)) {
+                            if (f->mNameHash == h && compare_path(chnl, ctx, fnm, f->mCompUnit->mDir, f->mDir, f->mName)) {
                                 CompUnit * unit = f->mCompUnit;
                                 unsigned j = f - unit->mFiles;
                                 unit_line_to_address(ctx, unit, j, line, column, client, args);

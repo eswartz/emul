@@ -22,6 +22,7 @@
 #define D_pathmap
 
 #include <config.h>
+#include <framework/context.h>
 #include <framework/protocol.h>
 
 #if SERVICE_PathMap
@@ -41,7 +42,7 @@ typedef struct PathMapEventListener {
  * Translate debug file name to local or target file name using file path mapping table of given channel.
  * Return pointer to static buffer that contains translated file name.
  */
-extern char * apply_path_map(Channel * channel, char * file_name, int mode);
+extern char * apply_path_map(Channel * channel, Context * ctx, char * file_name, int mode);
 
 /*
  * Read new path map from the given input stream.

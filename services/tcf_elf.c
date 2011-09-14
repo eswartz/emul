@@ -267,7 +267,7 @@ static char * get_debug_info_file_name(ELF_File * file, int * error) {
                     trace(LOG_ELF, "Found GNU build ID %s", id);
                     snprintf(fnm, sizeof(fnm), "/usr/lib/debug/.build-id/%.2s/%s.debug", id, id + 2);
 #if SERVICE_PathMap
-                    lnm = apply_path_map(NULL, lnm, PATH_MAP_TO_LOCAL);
+                    lnm = apply_path_map(NULL, NULL, lnm, PATH_MAP_TO_LOCAL);
 #endif
                     if (stat(lnm, &buf) == 0) return loc_strdup(lnm);
                     return NULL;
@@ -297,7 +297,7 @@ static char * get_debug_info_file_name(ELF_File * file, int * error) {
                 if (stat(fnm, &buf) == 0) return loc_strdup(fnm);
                 snprintf(fnm, sizeof(fnm), "/usr/lib/debug%.*s%s", l, file->name, name);
 #if SERVICE_PathMap
-                lnm = apply_path_map(NULL, lnm, PATH_MAP_TO_LOCAL);
+                lnm = apply_path_map(NULL, NULL, lnm, PATH_MAP_TO_LOCAL);
 #endif
                 if (stat(lnm, &buf) == 0) return loc_strdup(lnm);
                 return NULL;

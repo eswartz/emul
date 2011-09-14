@@ -984,7 +984,7 @@ static void read_memory_region_property(InputStream * inp, const char * name, vo
 }
 
 static void read_memory_map_item(InputStream * inp, void * args) {
-    Channel * c = (Channel *)args;
+    ContextCache * cache = (ContextCache *)args;
     MemoryRegion * m;
     if (mem_buf_pos >= mem_buf_max) {
         mem_buf_max = mem_buf_max == 0 ? 16 : mem_buf_max * 2;
@@ -994,7 +994,7 @@ static void read_memory_map_item(InputStream * inp, void * args) {
     memset(m, 0, sizeof(MemoryRegion));
     if (json_read_struct(inp, read_memory_region_property, m) && m->file_name != NULL) {
         struct stat buf;
-        char * fnm = apply_path_map(c, m->file_name, PATH_MAP_TO_LOCAL);
+        char * fnm = apply_path_map(cache->peer->host, cache->ctx, m->file_name, PATH_MAP_TO_LOCAL);
         if (fnm != m->file_name) {
             loc_free(m->file_name);
             m->file_name = loc_strdup(fnm);
@@ -1022,7 +1022,7 @@ static void validate_memory_map_cache(Channel * c, void * args, int error) {
         if (!error) {
             error = read_errno(&c->inp);
             mem_buf_pos = 0;
-            json_read_array(&c->inp, read_memory_map_item, cache->peer->host);
+            json_read_array(&c->inp, read_memory_map_item, cache);
             cache->mmap.region_cnt = mem_buf_pos;
             cache->mmap.region_max = mem_buf_pos;
             cache->mmap.regions = (MemoryRegion *)loc_alloc(sizeof(MemoryRegion) * mem_buf_pos);

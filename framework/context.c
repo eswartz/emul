@@ -136,6 +136,36 @@ void context_clear_memory_map(MemoryMap * map) {
 
 #if ENABLE_DebugContext
 
+static char * buf = NULL;
+static size_t buf_pos = 0;
+static size_t buf_max = 0;
+
+static void buf_char(char ch) {
+    if (buf_pos >= buf_max) {
+        buf_max += 0x100;
+        buf = (char *)loc_realloc(buf, buf_max);
+    }
+    buf[buf_pos++] = ch;
+}
+
+static void get_context_full_name(Context * ctx) {
+    if (ctx != NULL) {
+        char * name = ctx->name;
+        get_context_full_name(ctx->parent);
+        buf_char('/');
+        if (name != NULL) {
+            while (*name) buf_char(*name++);
+        }
+    }
+}
+
+const char * context_full_name(Context * ctx) {
+    buf_pos = 0;
+    get_context_full_name(ctx);
+    buf_char(0);
+    return buf;
+}
+
 void context_lock(Context * ctx) {
     assert(ctx->ref_count > 0);
     ctx->ref_count++;

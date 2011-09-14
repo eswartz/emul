@@ -97,19 +97,6 @@ static int str_equ(char * x, char * y) {
     return strcmp(x, y) == 0;
 }
 
-static size_t get_context_full_name(Context * ctx, char * buf, size_t buf_size) {
-    size_t pos = 0;
-    if (ctx != NULL) {
-        char * name = ctx->name;
-        pos = get_context_full_name(ctx->parent, buf, buf_size);
-        if (pos < buf_size) buf[pos++] = '/';
-        if (name != NULL) {
-            while (pos < buf_size && *name) buf[pos++] = *name++;
-        }
-    }
-    return pos;
-}
-
 static unsigned find_maps(LINK * maps, const char * id) {
     LINK * l;
     unsigned cnt = 0;
@@ -131,22 +118,29 @@ static Context * get_mem_context(Context * ctx) {
     return ctx;
 }
 
+static Context * get_sym_context(Context * ctx) {
+#if ENABLE_DebugContext
+    ctx = context_get_group(ctx, CONTEXT_GROUP_SYMBOLS);
+#endif
+    return ctx;
+}
+
 static void update_context_client_map(Context * ctx) {
     ContextExtensionMM * ext = EXT(ctx);
+    Context * syms = get_sym_context(ctx);
     unsigned r_cnt = 0;
     int equ = 0;
     unsigned i;
     LINK * l;
     LINK maps;
 
+    if (syms == NULL) return;
     assert(ctx == get_mem_context(ctx));
     list_init(&maps);
-    r_cnt += find_maps(&maps, ctx->id);
-    if (ctx->name != NULL) {
-        char buf[1024];
-        r_cnt += find_maps(&maps, ctx->name);
-        buf[get_context_full_name(ctx, buf, sizeof(buf) - 1)] = 0;
-        r_cnt += find_maps(&maps, buf);
+    r_cnt += find_maps(&maps, syms->id);
+    if (syms->name != NULL) {
+        r_cnt += find_maps(&maps, syms->name);
+        r_cnt += find_maps(&maps, context_full_name(syms));
     }
     equ = ext->client_map.region_cnt == r_cnt;
     if (equ) {

@@ -168,7 +168,7 @@ struct MemoryRegionAttribute {
 
 /* Mode flags for context_attach() */
 #define CONTEXT_ATTACH_SELF      0x01 /* The process is forked child - it will attach itself */
-#define CONTEXT_ATTACH_CHILDREN  0x02 /* Enabel auto-attaching of children of the process*/
+#define CONTEXT_ATTACH_CHILDREN  0x02 /* Enable auto-attaching of children of the process */
 
 /*
  * Convert PID to TCF Context ID
@@ -204,6 +204,11 @@ extern Context * create_context(const char * id);
 extern void context_clear_memory_map(MemoryMap * map);
 
 #if ENABLE_DebugContext
+
+/*
+ * Get context full name that includes ancestor names.
+ */
+extern const char * context_full_name(Context * ctx);
 
 /*
  * Get human redable name of current state of a context.
@@ -406,7 +411,7 @@ extern Context * context_get_group(Context * ctx, int group);
 #define CONTEXT_GROUP_INTERCEPT     3
 
 /*
- * "process" context group - all contexts that share same memory address space,
+ * "process" context group - all contexts that share same memory address space.
  * memory map and symbol files.
  */
 #define CONTEXT_GROUP_PROCESS       4
@@ -416,6 +421,12 @@ extern Context * context_get_group(Context * ctx, int group);
  * On SMP systems, all CPUs (cores) of same type should be members of same group.
  */
 #define CONTEXT_GROUP_CPU           5
+
+/*
+ * "Symbols" context group - all contexts that share same symbol reader configuration,
+ * including source file paths and user defined memory map entries.
+ */
+#define CONTEXT_GROUP_SYMBOLS       6
 
 /*
  * Debug context implementation can support low-level breakpoints.

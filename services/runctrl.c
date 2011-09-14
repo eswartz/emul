@@ -117,6 +117,7 @@ static void write_context(OutputStream * out, Context * ctx) {
     int md, modes;
     Context * rc_grp = context_get_group(ctx, CONTEXT_GROUP_INTERCEPT);
     Context * bp_grp = context_get_group(ctx, CONTEXT_GROUP_BREAKPOINT);
+    Context * ss_grp = context_get_group(ctx, CONTEXT_GROUP_SYMBOLS);
     int has_state = context_has_state(ctx);
 
     assert(!ctx->exited);
@@ -220,18 +221,25 @@ static void write_context(OutputStream * out, Context * ctx) {
         json_write_boolean(out, 1);
     }
 
-    if (rc_grp != ctx) {
+    if (rc_grp != NULL) {
         write_stream(out, ',');
         json_write_string(out, "RCGroup");
         write_stream(out, ':');
         json_write_string(out, rc_grp->id);
     }
 
-    if (bp_grp != ctx) {
+    if (bp_grp != NULL) {
         write_stream(out, ',');
         json_write_string(out, "BPGroup");
         write_stream(out, ':');
         json_write_string(out, bp_grp->id);
+    }
+
+    if (ss_grp != NULL) {
+        write_stream(out, ',');
+        json_write_string(out, "SymbolsGroup");
+        write_stream(out, ':');
+        json_write_string(out, ss_grp->id);
     }
 
     write_stream(out, '}');

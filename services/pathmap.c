@@ -109,7 +109,7 @@ static int is_my_host(char * host) {
     return strcasecmp(host, host_name) == 0;
 }
 
-static char * map_file_name(PathMap * m, char * fnm, int mode) {
+static char * map_file_name(Context * ctx, PathMap * m, char * fnm, int mode) {
     unsigned i, j, k;
     static char buf[FILE_PATH_SIZE];
 
@@ -119,6 +119,7 @@ static char * map_file_name(PathMap * m, char * fnm, int mode) {
         char * dst = NULL;
         char * host = NULL;
         char * prot = NULL;
+        char * sctx = NULL;
         struct stat st;
         for (j = 0; j < r->attrs_cnt; j++) {
             char * nm = r->attrs[j].name;
@@ -126,6 +127,7 @@ static char * map_file_name(PathMap * m, char * fnm, int mode) {
             else if (strcmp(nm, "Destination") == 0) dst = r->attrs[j].value;
             else if (strcmp(nm, "Protocol") == 0) prot = r->attrs[j].value;
             else if (strcmp(nm, "Host") == 0) host = r->attrs[j].value;
+            else if (strcmp(nm, "Context") == 0) sctx = r->attrs[j].value;
         }
         if (src == NULL || src[0] == 0) continue;
         if (dst == NULL || dst[0] == 0) continue;
@@ -134,6 +136,20 @@ static char * map_file_name(PathMap * m, char * fnm, int mode) {
         case PATH_MAP_TO_LOCAL:
             if (host && !is_my_host(host)) continue;
             break;
+        }
+        if (sctx != NULL) {
+            int ok = 0;
+#if ENABLE_DebugContext
+            Context * syms = context_get_group(ctx, CONTEXT_GROUP_SYMBOLS);
+            if (syms != NULL) {
+                ok = strcmp(sctx, syms->id) == 0;
+                if (!ok && syms->name != NULL) {
+                    ok = strcmp(sctx, syms->name) == 0;
+                    if (!ok) ok = strcmp(sctx, context_full_name(syms)) == 0;
+                }
+            }
+#endif
+            if (!ok) continue;
         }
         k = strlen(src);
         if (strncmp(src, fnm, k)) continue;
@@ -147,12 +163,12 @@ static char * map_file_name(PathMap * m, char * fnm, int mode) {
     return fnm;
 }
 
-char * apply_path_map(Channel * c, char * fnm, int mode) {
+char * apply_path_map(Channel * c, Context * ctx, char * fnm, int mode) {
     if (c == NULL) {
         LINK * l = maps.next;
         while (l != &maps) {
             PathMap * m = maps2map(l);
-            char * lnm = map_file_name(m, fnm, mode);
+            char * lnm = map_file_name(ctx, m, fnm, mode);
             if (lnm != fnm) return lnm;
             l = l->next;
         }
@@ -160,7 +176,7 @@ char * apply_path_map(Channel * c, char * fnm, int mode) {
     else {
         PathMap * m = find_map(c);
         if (m == NULL) return NULL;
-        return map_file_name(m, fnm, mode);
+        return map_file_name(ctx, m, fnm, mode);
     }
     return fnm;
 }
