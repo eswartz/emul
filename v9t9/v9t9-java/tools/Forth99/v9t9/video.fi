@@ -291,7 +291,7 @@ export>
 \   -- load font (if needed)
 
 Create msx-enhregs
-    $8808 ,     \ 64k video RAM
+    $8828 ,     \ 64k video RAM, color 0 from palette
     $8E00 ,     \ set bank 0, page 0, etc
     $8980 ,     \ 212-line mode, color, etc
     $8C00 ,     \ turn off alt colors
