@@ -212,7 +212,7 @@ public abstract class ImageDataCanvas extends BitmapVdpCanvas {
 			ncols = 16;
 			
 			optimizeFor16Colors(img);
-			limitDither = true;
+			//limitDither = true;
 		}
 		else if (format == Format.COLOR16_1x1) {
 			ncols = 16;
@@ -367,7 +367,7 @@ public abstract class ImageDataCanvas extends BitmapVdpCanvas {
 	 * @param i
 	 * @return
 	 */
-	protected int findPaletteColor(int rgb) {
+	private int findPaletteColor(int rgb) {
 		
 		int prgb[] = { (rgb >> 16) & 0xff,
 			(rgb >> 8) & 0xff,
@@ -567,10 +567,13 @@ public abstract class ImageDataCanvas extends BitmapVdpCanvas {
 		
 		int[] rgbs = new int[img.getWidth()];
 		
-		for (int i = 0; i < usedColors; i++) {
+		int replaceLimit = usedColors;
+		
+		for (int i = 0; i < replaceLimit; i++) {
 			// ensure there will be an exact match so no dithering 
 			// occurs on the primary occurrences of this color
 			int idx = indices[i];
+			System.out.println("Replacing " + idx);
 			byte[] rgb = getRGB(idx);
 			int newRGB = ((rgb[0] & 0xff) << 16) | ((rgb[1] & 0xff) << 8) | ((rgb[2] & 0xff));
 			replaceColor16(img, rgbs, idx, newRGB);
@@ -668,7 +671,7 @@ public abstract class ImageDataCanvas extends BitmapVdpCanvas {
 				if (index == prev)
 					index++;
 			}
-			System.out.println("index="+index);
+			//System.out.println("index="+index);
 			prev = index;
 			int idx = indices[index];
 			int r = (idx>>6) & 0x7;
