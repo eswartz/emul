@@ -225,7 +225,7 @@ public abstract class VdpCanvas {
 	
 	private byte[] rgbToGrey(byte[] rgb) {
 		byte[] g = new byte[3];
-		int lum = (299 * rgb[0] + 587 * rgb[1] + 114 * rgb[2]) * 256 / 1000;
+		int lum = (299 * (rgb[0] & 0xff) + 587 * (rgb[1] & 0xff) + 114 * (rgb[2] & 0xff)) / 1000;
 		g[0] = g[1] = g[2] = (byte) lum;
 		return g;
 	}
