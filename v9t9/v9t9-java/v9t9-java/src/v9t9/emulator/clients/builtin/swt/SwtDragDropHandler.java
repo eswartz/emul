@@ -284,6 +284,8 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 		try {
 			if (FileTransfer.getInstance().isSupportedType(event.currentDataType)) {
 				String[] files = (String[]) event.data;
+				if (files == null)
+					return;
 				ImageLoader imgLoader = new ImageLoader();
 				ImageData[] datas = imgLoader.load(files[0]);
 				if (datas.length > 0) {
