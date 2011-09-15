@@ -1102,10 +1102,10 @@ static int check_context_ids_condition(BreakpointInfo * bp, Context * ctx) {
     if (bp->context_ids != NULL) {
         int ok = 0;
         char ** ids = bp->context_ids;
+        Context * prs = context_get_group(ctx, CONTEXT_GROUP_PROCESS);
         while (!ok && *ids != NULL) {
-            Context * c = id2ctx(*ids++);
-            if (c == NULL) continue;
-            ok = c == ctx || c == ctx->parent;
+            char * id = *ids++;
+            ok = strcmp(id, ctx->id) == 0 || (prs && strcmp(id, prs->id) == 0);
         }
         if (!ok) return 0;
     }
@@ -1118,11 +1118,14 @@ static int check_context_ids_condition(BreakpointInfo * bp, Context * ctx) {
                 ok = strcmp(name, *names++) == 0;
             }
         }
-        if (!ok && ctx->parent->name) {
-            char * name = ctx->parent->name;
-            char ** names = bp->context_names;
-            while (!ok && *names != NULL) {
-                ok = strcmp(name, *names++) == 0;
+        if (!ok) {
+            Context * prs = context_get_group(ctx, CONTEXT_GROUP_PROCESS);
+            if (prs && prs->name) {
+                char * name = prs->name;
+                char ** names = bp->context_names;
+                while (!ok && *names != NULL) {
+                    ok = strcmp(name, *names++) == 0;
+                }
             }
         }
         if (!ok) return 0;
