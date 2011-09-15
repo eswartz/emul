@@ -9,6 +9,9 @@ import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import javax.imageio.ImageIO;
+
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.SWTException;
 import org.eclipse.swt.dnd.DND;
@@ -273,10 +276,21 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 				if (files == null)
 					return;
 				ImageLoader imgLoader = new ImageLoader();
-				ImageData[] datas = imgLoader.load(files[0]);
-				if (datas.length > 0) {
-					ImageData data = datas[0];
-					importImage(data);
+				String file = files[0];
+				try {
+					ImageData[] datas = imgLoader.load(file);
+					if (datas.length > 0) {
+						ImageData data = datas[0];
+						importImage(data);
+					}
+				} catch (SWTException e) {
+					java.awt.Image img = ImageIO.read(new File(file));
+					if (img != null)
+						importImage(img);
+					else
+						MessageDialog.openError(null, "Failed To Import", 
+								"Image format not recognized for '" +
+								file + "' (tried both SWT and AWT)" );
 				}
 			}
 			else if (ImageTransfer.getInstance().isSupportedType(event.currentDataType)) {
@@ -318,10 +332,17 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 		
 		img.setRGB(0, 0, data.width, data.height, pix, 0, pix.length / data.height);
 
+		importImage(img);
+		
+	}
+
+	/**
+	 * @param img
+	 */
+	protected void importImage(java.awt.Image img) {
 		ImageImport importer = new ImageImport(
 				(ImageDataCanvas) renderer.getCanvas(), renderer.getVdpHandler());
 		importer.importImage(img);
-		
 	}
 
 
