@@ -45,6 +45,7 @@ public class ImageImport implements IBitmapPixelAccess {
 	private final ImageDataCanvas canvas;
 	private boolean paletteMappingDirty;
 	private final VdpHandler vdp;
+	public int firstColor;
 
 	public ImageImport(ImageDataCanvas canvas, VdpHandler vdp) {
 		this.canvas = canvas;
@@ -52,6 +53,7 @@ public class ImageImport implements IBitmapPixelAccess {
 		this.imageData = canvas.getImageData();
 		this.format = canvas.getFormat();
 		this.thePalette = canvas.getPalette();
+		firstColor = (format != Format.COLOR16_8x1 && canvas.isClearFromPalette() ? 0 : 1);
 	}
 
 	private void getRGB(BufferedImage img, int x, int y, int[] rgb) {
@@ -74,7 +76,7 @@ public class ImageImport implements IBitmapPixelAccess {
 		setRGB(img, x, y, rgb);
 
 	}
-	private int ditherize(BufferedImage img, int x, int y, int ncols, boolean limit8) {
+	private void ditherize(BufferedImage img, int x, int y, int ncols, boolean limit8) {
 		int[] prgb = { 0, 0, 0 };
 		getRGB(img, x, y, prgb);
 		int newPixel;
@@ -88,8 +90,13 @@ public class ImageImport implements IBitmapPixelAccess {
 		}
 		else {
 			closest = getClosestColor(ncols, prgb, limit8, Integer.MAX_VALUE);
-			rgb = thePalette[closest];
-			newPixel = palettePixels[closest];
+			if (closest != -1) {
+				rgb = thePalette[closest];
+				newPixel = palettePixels[closest];
+			} else {
+				rgb = new byte[] { (byte) (prgb[0] & 0xff), (byte) (prgb[1] & 0xff), (byte) (prgb[2] & 0xff) };
+				newPixel = img.getRGB(x, y);
+			}
 		}
 		img.setRGB(x, y, newPixel);
 		
@@ -113,15 +120,16 @@ public class ImageImport implements IBitmapPixelAccess {
 			if (x + 1 < img.getWidth())
 				ditherRGB(img, x + 1, y + 1, prgb, 1, r_error, g_error, b_error);
 		}
-		
-		return closest;
 	}
 	
 
 	private int getColorDistance(int c, float[] phsv, int[] prgb) {
 		int dist;
 		
-		if (phsv[1] < 0.25 && palhsv[c][1] < 0.25) {
+		if (phsv[2] < 33 && palhsv[c][2] < 33) {
+			return 0;
+		}
+		else if (phsv[1] < 0.25 && palhsv[c][1] < 0.25) {
 			// only select something with low saturation,
 			// and match value
 			float dh = 16; //(palhsv[c][0] - phsv[0]);	// range: 0-35
@@ -134,9 +142,16 @@ public class ImageImport implements IBitmapPixelAccess {
 			int dg = ((thePalette[c][1] & 0xff) - prgb[1]);
 			int db = ((thePalette[c][2] & 0xff) - prgb[2]);
 			
-			//float dv = Math.abs(palhsv[c][2] - phsv[2]);
+			float dh = Math.abs(palhsv[c][0] - phsv[0]) * 6;
 			
-			dist = (int)((dr * dr) + (dg * dg) + (db * db) ) ;
+			dist = (int)(((dr * dr) + (dg * dg) + (db * db)) * 16 + (dh * dh)) ;
+			/*
+			float dh = (palhsv[c][0] - phsv[0]);	
+			float ds = (palhsv[c][1] - phsv[1]) * 256;
+			float dv = (palhsv[c][2] - phsv[2]) / 2;
+			
+			dist = (int) ((dh * dh) + (ds * ds) + (dv * dv));
+			*/
 		}
 		
 		return dist;
@@ -156,7 +171,7 @@ public class ImageImport implements IBitmapPixelAccess {
 	private int getClosestColor(int ncols, int[] prgb, boolean limit8, int distLimit) {
 		int closest = -1;
 		int mindiff = Integer.MAX_VALUE;
-		for (int c = (canvas.isClearFromPalette() ? 0 : 1); c < ncols; c++) {
+		for (int c = firstColor; c < ncols; c++) {
 			int dist;
 			if (limit8) {
 				float[] phsv = rgbToHsv(prgb);
@@ -206,24 +221,24 @@ public class ImageImport implements IBitmapPixelAccess {
 		updatePaletteMapping();
 		
 		boolean limitDither = false;
-
+		
 		int ncols;
 		if (format == Format.COLOR16_8x1 || format == Format.COLOR16_4x4) {
 			ncols = 16;
 			
 			optimizeFor16Colors(img);
-			//limitDither = true;
+			limitDither = true;
 		}
 		else if (format == Format.COLOR16_1x1) {
 			ncols = 16;
 			
-			
-			
-			//optimizeFor16Colors(img);
 			optimizeFor16ColorsAndRebuildPalette(img);
 		}
 		else if (format == Format.COLOR4_1x1) {
 			ncols = 4;
+			
+			optimizeFor16Colors(img);
+			limitDither = true;
 		}
 		else if (format == Format.COLOR256_1x1) {
 			ncols = 256;
@@ -359,21 +374,6 @@ public class ImageImport implements IBitmapPixelAccess {
 	}*/
 	
 
-	/**
-	 * @param rgbs
-	 * @param prgb
-	 * @param i
-	 * @return
-	 */
-	private int findPaletteColor(int rgb) {
-		
-		int prgb[] = { (rgb >> 16) & 0xff,
-			(rgb >> 8) & 0xff,
-			(rgb >> 0) & 0xff };
-		int c = getClosestColor(16, prgb, true, Integer.MAX_VALUE);
-		return c;
-	}
-
 	private interface IMapColor {
 		/** Return a color index from mapping the RGB pixel 
 		 * 
@@ -399,14 +399,23 @@ public class ImageImport implements IBitmapPixelAccess {
 			
 			int closest = -1;
 			int mindiff = Integer.MAX_VALUE;
-			for (int c = (canvas.isClearFromPalette() ? 0 : 1); c < 16; c++) {
+			
+			for (int c = firstColor; c < 16; c++) {
 				int dist = getColorDistance(c, phsv, prgb);
 				if (dist < mindiff) {
 					closest = c;
 					mindiff = dist;
 				}
 			}
-
+			
+			// don't bother with greyscale pixels unless they match exactly;
+			// dither otherwise
+			if (phsv[1] < 0.25 && mindiff != 0) {
+				closest = -1;
+				mindiff = Integer.MAX_VALUE;
+			}
+				
+			
 			distA[0] = mindiff;
 			return closest;
 		}
@@ -533,8 +542,9 @@ public class ImageImport implements IBitmapPixelAccess {
 	 * colors with their closest entries in the palette.
 	 * 
 	 * @param img
+	 * @return minimum color distance
 	 */
-	private void optimizeFor16Colors(BufferedImage img) {
+	private int optimizeFor16Colors(BufferedImage img) {
 		TI16MapColor mapColor = new TI16MapColor();
 		
 		int minDist = Integer.MAX_VALUE;
@@ -549,13 +559,15 @@ public class ImageImport implements IBitmapPixelAccess {
 					minDist = dist;
 			}
 		}
-		System.out.println("Minimum 16-color palette distance: " + minDist);
+		
+		int ourDist = minDist * 3;
+		System.out.println("Minimum 16-color palette distance: " + minDist+ "; using " + ourDist);
 		
 
 		final int[] hist = new int[16];
 		final Integer[] indices = new Integer[16];
 		
-		int interestingColors = buildHistogram(img, mapColor, minDist, hist, indices);
+		int interestingColors = buildHistogram(img, mapColor, ourDist, hist, indices);
 
 		int usedColors = Math.min(16, interestingColors);
 		
@@ -567,6 +579,7 @@ public class ImageImport implements IBitmapPixelAccess {
 		
 		int replaceLimit = usedColors;
 		
+		ourDist = minDist;
 		for (int i = 0; i < replaceLimit; i++) {
 			// ensure there will be an exact match so no dithering 
 			// occurs on the primary occurrences of this color
@@ -574,8 +587,10 @@ public class ImageImport implements IBitmapPixelAccess {
 			System.out.println("Replacing " + idx);
 			byte[] rgb = canvas.getRGB(idx);
 			int newRGB = ((rgb[0] & 0xff) << 16) | ((rgb[1] & 0xff) << 8) | ((rgb[2] & 0xff));
-			replaceColor16(img, rgbs, idx, newRGB);
+			replaceColor16(img, rgbs, idx, newRGB, ourDist);
 		}
+		
+		return ourDist;
 	}
 
 	/**
@@ -586,12 +601,17 @@ public class ImageImport implements IBitmapPixelAccess {
 	 * @param b
 	 * @param rgb
 	 */
-	private void replaceColor16(BufferedImage img, int[] rgbs, int theC, int newRGB) {
+	private void replaceColor16(BufferedImage img, int[] rgbs, int theC, int newRGB, int minDist) {
 		for (int y = 0; y < img.getHeight(); y++) {
 			img.getRGB(0, y, img.getWidth(), 1, rgbs, 0, rgbs.length);
 			for (int i = 0; i < rgbs.length; i++) {
 				int rgb = rgbs[i];
-				int c = findPaletteColor(rgb);
+				
+				int prgb[] = { (rgb >> 16) & 0xff,
+					(rgb >> 8) & 0xff,
+					(rgb >> 0) & 0xff };
+				int c = getClosestColor(16, prgb, true, minDist);
+				
 				if (c == theC) {
 					rgbs[i] = newRGB;
 				}
@@ -625,7 +645,7 @@ public class ImageImport implements IBitmapPixelAccess {
 	 * 
 	 * @param img
 	 */
-	private void optimizeFor16ColorsAndRebuildPalette(BufferedImage img) {
+	private int optimizeFor16ColorsAndRebuildPalette(BufferedImage img) {
 		
 		final int[] hist = new int[512];
 		final Integer[] indices = new Integer[512];
@@ -685,6 +705,8 @@ public class ImageImport implements IBitmapPixelAccess {
 				replaceColor(img, rgbs, r, g, b, newRGB);
 			}
 		}
+		
+		return maxDist;
 	}
 
 	/**
