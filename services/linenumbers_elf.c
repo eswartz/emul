@@ -61,28 +61,25 @@ static int compare_path(Channel * chnl, Context * ctx, char * file, char * pwd, 
     if (name == NULL) return 0;
 
     if (is_absolute_path(name)) {
-        full_name = canonic_path_map_file_name(name);
+        full_name = name;
     }
     else if (dir != NULL && is_absolute_path(dir)) {
-        snprintf(buf, sizeof(buf), "%s/%s", dir, name);
-        full_name = canonic_path_map_file_name(buf);
+        snprintf(full_name = buf, sizeof(buf), "%s/%s", dir, name);
     }
     else if (dir != NULL && pwd != NULL) {
-        snprintf(buf, sizeof(buf), "%s/%s/%s", pwd, dir, name);
-        full_name = canonic_path_map_file_name(buf);
+        snprintf(full_name = buf, sizeof(buf), "%s/%s/%s", pwd, dir, name);
     }
     else if (pwd != NULL) {
-        snprintf(buf, sizeof(buf), "%s/%s", pwd, name);
-        full_name = canonic_path_map_file_name(buf);
+        snprintf(full_name = buf, sizeof(buf), "%s/%s", pwd, name);
     }
     else {
-        full_name = canonic_path_map_file_name(name);
+        full_name = name;
     }
+    full_name = canonic_path_map_file_name(full_name);
 #if SERVICE_PathMap
-    {
-        char * cnm = apply_path_map(chnl, ctx, full_name, PATH_MAP_TO_CLIENT);
-        if (cnm != full_name) full_name = canonic_path_map_file_name(cnm);
-    }
+    if (full_name != buf) strlcpy(buf, full_name, sizeof(buf));
+    full_name = apply_path_map(chnl, ctx, buf, PATH_MAP_TO_CLIENT);
+    if (full_name != buf) full_name = canonic_path_map_file_name(full_name);
 #endif
     i = strlen(file);
     j = strlen(full_name);
