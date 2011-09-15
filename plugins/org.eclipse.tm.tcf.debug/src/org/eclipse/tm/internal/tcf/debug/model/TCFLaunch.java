@@ -892,6 +892,11 @@ public class TCFLaunch extends Launch {
         return breakpoints_status;
     }
 
+    /**
+     * Check if the agent supports setting of user defined memory map entries
+     * for a context that does not exits yet.
+     * @return true if memory map preloading is supported.
+     */
     public boolean isMemoryMapPreloadingSupported()  {
         return supports_memory_map_preloading;
     }
@@ -1085,6 +1090,11 @@ public class TCFLaunch extends Launch {
         return filepath_map;
     }
 
+    /**
+     * Activate TCF launch: open communication channel and perform all necessary launch steps.
+     * @param mode - on of launch mode constants defined in ILaunchManager.
+     * @param id - TCF peer ID.
+     */
     public void launchTCF(String mode, String id) {
         assert Protocol.isDispatchThread();
         this.mode = mode;
@@ -1201,10 +1211,20 @@ public class TCFLaunch extends Launch {
         }
     }
 
+    /**
+     * Set minimum interval between context actions execution.
+     * @param interval - minimum interval in milliseconds.
+     */
     public void setContextActionsInterval(long interval) {
         actions_interval = interval;
     }
 
+    /**
+     * Add a context action to actions queue.
+     * Examples of context actions are resume/suspend/step commands,
+     * which were requested by a user.
+     * @param action
+     */
     public void addContextAction(TCFAction action) {
         assert Protocol.isDispatchThread();
         String id = action.getContextID();
@@ -1222,11 +1242,22 @@ public class TCFLaunch extends Launch {
         startAction(id);
     }
 
+    /**
+     * Set action result for given context ID.
+     * Action results are usually presented to a user same way as context suspend reasons.
+     * @param id - debug context ID.
+     * @param result - a string to be shown to user.
+     */
     public void setContextActionResult(String id, String result) {
         assert Protocol.isDispatchThread();
         for (ActionsListener l : action_listeners) l.onContextActionResult(id, result);
     }
 
+    /**
+     * Remove an action from the queue.
+     * The method should be called when the action execution is done.
+     * @param action
+     */
     public void removeContextAction(TCFAction action) {
         assert Protocol.isDispatchThread();
         String id = action.getContextID();
@@ -1236,12 +1267,21 @@ public class TCFLaunch extends Launch {
         startAction(id);
     }
 
+    /**
+     * Remove all actions from the queue of a debug context.
+     * @param id - debug context ID.
+     */
     public void removeContextActions(String id) {
         assert Protocol.isDispatchThread();
         context_action_queue.remove(id);
         context_action_timestamps.remove(id);
     }
 
+    /**
+     * Get action queue size of a debug context.
+     * @param id - debug context ID.
+     * @return count of pending actions.
+     */
     public int getContextActionsCount(String id) {
         assert Protocol.isDispatchThread();
         LinkedList<TCFAction> list = context_action_queue.get(id);
@@ -1250,10 +1290,19 @@ public class TCFLaunch extends Launch {
         return n;
     }
 
+    /**
+     * Add a listener that will be notified when an action execution is started or finished,
+     * or when an action result is posted.
+     * @param l - action listener.
+     */
     public void addActionsListener(ActionsListener l) {
         action_listeners.add(l);
     }
 
+    /**
+     * Remove an action listener that was registered with addActionsListener().
+     * @param l - action listener.
+     */
     public void removeActionsListener(ActionsListener l) {
         action_listeners.remove(l);
     }
