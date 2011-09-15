@@ -35,6 +35,9 @@ public interface IPathMap extends IService {
         /** String, destination, or run-time file path */
         PROP_DESTINATION = "Destination",
 
+        /** String, symbols context group ID or name */
+        PROP_CONTEXT = "Context",
+
         /** String, */
         PROP_HOST = "Host",
 

@@ -66,7 +66,12 @@ public interface IRunControl extends IService {
          * Members of same group share same breakpoint instances:
          * a breakpoint is planted once for the group, no need to plant
          * the breakpoint for each member of the group */
-        PROP_BP_GROUP = "BPGroup";
+        PROP_BP_GROUP = "BPGroup",
+
+        /** Context ID of a symbols group that contains the context.
+         * Members of a symbols group share same symbol reader configuration settings,
+         * like user defined memory map entries and source lookup info */
+        PROP_SYMBOLS_GROUP = "SymbolsGroup";
 
     /**
      * Context resume modes.
@@ -378,6 +383,15 @@ public interface IRunControl extends IService {
          * @return value of PROP_BP_GROUP or null if the context does not support breakpoints.
          */
         String getBPGroup();
+
+        /**
+         * Utility method to read context property PROP_SYMBOLS_GROUP -
+         * context ID of a symbols group that contains the context.
+         * Members of a symbols group share same symbol reader configuration settings,
+         * like user defined memory map entries and source lookup info.
+         * @return value of PROP_SYMBOLS_GROUP or null if the context is not a member of a symbols group.
+         */
+        String getSymbolsGroup();
 
         /**
          * Send a command to retrieve current state of a context.

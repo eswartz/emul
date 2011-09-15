@@ -134,9 +134,9 @@ public interface IMemoryMap extends IService {
     }
 
     /**
-     * Set memory map for given context ID.
+     * Set memory map for given context.
      *
-     * @param id – context ID.
+     * @param id – symbols context group ID or name.
      * @param map – memory map data.
      * @param done - call back interface called when operation is completed.
      * @return - pending command handle.
