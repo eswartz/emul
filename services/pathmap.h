@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2010, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -24,6 +24,13 @@
 #include <config.h>
 #include <framework/context.h>
 #include <framework/protocol.h>
+
+/*
+ * Convert a file name to canonic form that is suitable for file name comparisons.
+ * Unlike canonicalize_file_name() or realpath(), the function can be used for remote files.
+ * Return pointer to a static array with converted name.
+ */
+extern char * canonic_path_map_file_name(const char * fnm);
 
 #if SERVICE_PathMap
 

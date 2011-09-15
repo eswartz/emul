@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -52,70 +52,41 @@ static int is_absolute_path(char * fnm) {
     return 0;
 }
 
-static void canonic_path(char * fnm, char * buf, size_t buf_size) {
-    unsigned i = 0;
-    while (i < buf_size - 1) {
-        char ch = *fnm++;
-        if (ch == 0) break;
-        if (ch == '\\') ch = '/';
-        if (ch == '/' && i >= 2 && buf[i - 1] == '/') continue;
-        if (ch == '.' && (i == 0 || buf[i - 1] == '/')) {
-            if (*fnm == '/' || *fnm == '\\') {
-                fnm++;
-                continue;
-            }
-            if (i > 0 && *fnm == '.' && (fnm[1] == '/' || fnm[1] == '\\')) {
-                unsigned j = i - 1;
-                if (j > 0 && buf[j - 1] != '/') {
-                    while (j > 0 && buf[j - 1] != '/') j--;
-                    i = j;
-                    fnm += 2;
-                    continue;
-                }
-            }
-        }
-        if (i == 0 && ch >= 'a' && ch <= 'z' && *fnm == ':') {
-            ch = ch - 'a' + 'A';
-        }
-        buf[i++] = ch;
-    }
-    buf[i++] = 0;
-}
-
 static int compare_path(Channel * chnl, Context * ctx, char * file, char * pwd, char * dir, char * name) {
     int i, j;
     char buf[FILE_PATH_SIZE];
+    char * full_name = NULL;
 
     if (file == NULL) return 0;
     if (name == NULL) return 0;
 
     if (is_absolute_path(name)) {
-        canonic_path(name, buf, sizeof(buf));
+        full_name = canonic_path_map_file_name(name);
     }
     else if (dir != NULL && is_absolute_path(dir)) {
         snprintf(buf, sizeof(buf), "%s/%s", dir, name);
-        canonic_path(buf, buf, sizeof(buf));
+        full_name = canonic_path_map_file_name(buf);
     }
     else if (dir != NULL && pwd != NULL) {
         snprintf(buf, sizeof(buf), "%s/%s/%s", pwd, dir, name);
-        canonic_path(buf, buf, sizeof(buf));
+        full_name = canonic_path_map_file_name(buf);
     }
     else if (pwd != NULL) {
         snprintf(buf, sizeof(buf), "%s/%s", pwd, name);
-        canonic_path(buf, buf, sizeof(buf));
+        full_name = canonic_path_map_file_name(buf);
     }
     else {
-        canonic_path(name, buf, sizeof(buf));
+        full_name = canonic_path_map_file_name(name);
     }
 #if SERVICE_PathMap
     {
-        char * cnm = apply_path_map(chnl, ctx, buf, PATH_MAP_TO_CLIENT);
-        if (cnm != buf) canonic_path(cnm, buf, sizeof(buf));
+        char * cnm = apply_path_map(chnl, ctx, full_name, PATH_MAP_TO_CLIENT);
+        if (cnm != full_name) full_name = canonic_path_map_file_name(cnm);
     }
 #endif
     i = strlen(file);
-    j = strlen(buf);
-    return i <= j && strcmp(file, buf + j - i) == 0;
+    j = strlen(full_name);
+    return i <= j && strcmp(file, full_name + j - i) == 0;
 }
 
 static LineNumbersState * get_next_in_text(CompUnit * unit, LineNumbersState * state) {
@@ -227,7 +198,7 @@ int line_to_address(Context * ctx, char * file_name, int line, int column,
         if (err == 0) {
             unsigned h;
             char fnm[FILE_PATH_SIZE];
-            canonic_path(file_name, fnm, sizeof(fnm));
+            strlcpy(fnm, canonic_path_map_file_name(file_name), sizeof(fnm));
             h = calc_file_name_hash(fnm);
             while (file != NULL) {
                 Trap trap;

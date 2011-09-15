@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2010, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -19,6 +19,48 @@
  */
 
 #include <config.h>
+#include <framework/myalloc.h>
+#include <services/pathmap.h>
+
+char * canonic_path_map_file_name(const char * fnm) {
+    static char * buf = NULL;
+    static size_t buf_pos = 0;
+    static size_t buf_max = 0;
+
+    buf_pos = 0;
+    for (;;) {
+        char ch = *fnm++;
+        if (ch == 0) break;
+        if (ch == '\\') ch = '/';
+        if (ch == '/' && buf_pos >= 2 && buf[buf_pos - 1] == '/') continue;
+        if (ch == '/' && *fnm == 0 && buf_pos > 0 && buf[buf_pos - 1] != ':') break;
+        if (ch == '.' && (buf_pos == 0 || buf[buf_pos - 1] == '/')) {
+            if (*fnm == '/' || *fnm == '\\') {
+                fnm++;
+                continue;
+            }
+            if (buf_pos > 0 && *fnm == '.' && (fnm[1] == '/' || fnm[1] == '\\')) {
+                unsigned j = buf_pos - 1;
+                if (j > 0 && buf[j - 1] != '/') {
+                    while (j > 0 && buf[j - 1] != '/') j--;
+                    buf_pos = j;
+                    fnm += 2;
+                    continue;
+                }
+            }
+        }
+        if (buf_pos == 0 && ch >= 'a' && ch <= 'z' && *fnm == ':') {
+            ch = ch - 'a' + 'A';
+        }
+        if (buf_pos + 1 >= buf_max) {
+            buf_max += 0x100;
+            buf = (char *)loc_realloc(buf, buf_max);
+        }
+        buf[buf_pos++] = ch;
+    }
+    buf[buf_pos] = 0;
+    return buf;
+}
 
 #if SERVICE_PathMap
 
@@ -27,8 +69,6 @@
 #include <framework/json.h>
 #include <framework/events.h>
 #include <framework/exceptions.h>
-#include <framework/myalloc.h>
-#include <services/pathmap.h>
 
 typedef struct Listener {
     PathMapEventListener * listener;
@@ -151,6 +191,7 @@ static char * map_file_name(Context * ctx, PathMap * m, char * fnm, int mode) {
 #endif
             if (!ok) continue;
         }
+        src = canonic_path_map_file_name(src);
         k = strlen(src);
         if (strncmp(src, fnm, k)) continue;
         if (fnm[k] != 0 && fnm[k] != '/' && fnm[k] != '\\') continue;
