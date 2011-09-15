@@ -21,6 +21,11 @@
 #define D_memoryservice
 
 /*
+ * Notify clients about memory content change.
+ */
+extern void send_event_memory_changed(Context * ctx, ContextAddress addr, unsigned long size);
+
+/*
  * Initialize memory service.
  */
 extern void ini_memory_service(Protocol * proto, TCFBroadcastGroup * bcg);

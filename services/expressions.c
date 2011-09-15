@@ -40,6 +40,7 @@
 #include <services/symbols.h>
 #include <services/stacktrace.h>
 #include <services/expressions.h>
+#include <services/memoryservice.h>
 #include <services/registers.h>
 #include <main/test.h>
 
@@ -2644,6 +2645,7 @@ static void command_assign_cache_client(void * x) {
         }
         else if (value.remote) {
             if (context_write_mem(ctx, value.address, args->value_buf, args->value_size) < 0) err = errno;
+            if (!err) send_event_memory_changed(ctx, value.address, args->value_size);
         }
         else {
             err = ERR_INV_EXPRESSION;

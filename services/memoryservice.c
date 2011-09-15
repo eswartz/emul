@@ -34,6 +34,8 @@
 
 static const char * MEMORY = "Memory";
 
+static TCFBroadcastGroup * broadcast_group = NULL;
+
 #define BYTE_VALID        0x00
 #define BYTE_UNKNOWN      0x01
 #define BYTE_INVALID      0x02
@@ -336,7 +338,9 @@ static MemoryCommandArgs * read_command_args(char * token, Channel * c, int cmd)
     }
 }
 
-static void send_event_memory_changed(OutputStream * out, Context * ctx, ContextAddress addr, unsigned long size) {
+void send_event_memory_changed(Context * ctx, ContextAddress addr, unsigned long size) {
+    OutputStream * out = &broadcast_group->out;
+
     write_stringz(out, "E");
     write_stringz(out, MEMORY);
     write_stringz(out, "memoryChanged");
@@ -409,7 +413,7 @@ static void safe_memory_set(void * parm) {
             if (read_stream(inp) != 0) exception(ERR_JSON_SYNTAX);
             if (read_stream(inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-            send_event_memory_changed(&c->bcg->out, ctx, addr0, size);
+            send_event_memory_changed(ctx, addr0, size);
 
             write_stringz(out, "R");
             write_stringz(out, token);
@@ -585,7 +589,7 @@ static void safe_memory_fill(void * parm) {
                 }
             }
 
-            send_event_memory_changed(&c->bcg->out, ctx, addr0, size);
+            send_event_memory_changed(ctx, addr0, size);
 
             write_stringz(out, "R");
             write_stringz(out, token);
@@ -615,7 +619,9 @@ static void command_fill(char * token, Channel * c) {
     if (args != NULL) post_safe_event(args->ctx, safe_memory_fill, args);
 }
 
-static void send_event_context_added(OutputStream * out, Context * ctx) {
+static void send_event_context_added(Context * ctx) {
+    OutputStream * out = &broadcast_group->out;
+
     write_stringz(out, "E");
     write_stringz(out, MEMORY);
     write_stringz(out, "contextAdded");
@@ -629,7 +635,9 @@ static void send_event_context_added(OutputStream * out, Context * ctx) {
     write_stream(out, MARKER_EOM);
 }
 
-static void send_event_context_changed(OutputStream * out, Context * ctx) {
+static void send_event_context_changed(Context * ctx) {
+    OutputStream * out = &broadcast_group->out;
+
     write_stringz(out, "E");
     write_stringz(out, MEMORY);
     write_stringz(out, "contextChanged");
@@ -643,7 +651,9 @@ static void send_event_context_changed(OutputStream * out, Context * ctx) {
     write_stream(out, MARKER_EOM);
 }
 
-static void send_event_context_removed(OutputStream * out, Context * ctx) {
+static void send_event_context_removed(Context * ctx) {
+    OutputStream * out = &broadcast_group->out;
+
     write_stringz(out, "E");
     write_stringz(out, MEMORY);
     write_stringz(out, "contextRemoved");
@@ -657,25 +667,19 @@ static void send_event_context_removed(OutputStream * out, Context * ctx) {
     write_stream(out, MARKER_EOM);
 }
 
-static void event_context_created(Context * ctx, void * client_data) {
-    TCFBroadcastGroup * bcg = (TCFBroadcastGroup *)client_data;
-
+static void event_context_created(Context * ctx, void * args) {
     if (ctx->mem_access == 0) return;
-    send_event_context_added(&bcg->out, ctx);
+    send_event_context_added(ctx);
 }
 
-static void event_context_changed(Context * ctx, void * client_data) {
-    TCFBroadcastGroup * bcg = (TCFBroadcastGroup *)client_data;
-
+static void event_context_changed(Context * ctx, void * args) {
     if (ctx->mem_access == 0) return;
-    send_event_context_changed(&bcg->out, ctx);
+    send_event_context_changed(ctx);
 }
 
-static void event_context_exited(Context * ctx, void * client_data) {
-    TCFBroadcastGroup * bcg = (TCFBroadcastGroup *)client_data;
-
+static void event_context_exited(Context * ctx, void * args) {
     if (ctx->mem_access == 0) return;
-    send_event_context_removed(&bcg->out, ctx);
+    send_event_context_removed(ctx);
 }
 
 void ini_memory_service(Protocol * proto, TCFBroadcastGroup * bcg) {
@@ -686,7 +690,8 @@ void ini_memory_service(Protocol * proto, TCFBroadcastGroup * bcg) {
         NULL,
         event_context_changed
     };
-    add_context_event_listener(&listener, bcg);
+    broadcast_group = bcg;
+    add_context_event_listener(&listener, NULL);
     add_command_handler(proto, MEMORY, "getContext", command_get_context);
     add_command_handler(proto, MEMORY, "getChildren", command_get_children);
     add_command_handler(proto, MEMORY, "set", command_set);
