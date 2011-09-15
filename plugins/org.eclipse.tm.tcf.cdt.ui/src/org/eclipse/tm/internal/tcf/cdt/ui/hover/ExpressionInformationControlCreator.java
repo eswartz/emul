@@ -56,7 +56,7 @@ import org.eclipse.ui.IWorkbenchPartSite;
  * Creates an information control to display an expression in a hover control. <br/>
  * This class is derivative work from JDT's
  * <code>ExpressionInformationControlCreator</code>.
- * 
+ *
  * @noextend This class is not intended to be subclassed by clients.
  */
 @SuppressWarnings("restriction")
@@ -84,7 +84,7 @@ public class ExpressionInformationControlCreator implements
         /**
          * Dialog setting key for details sash weight
          */
-        private static final String SASH_WEIGHT_DETAILS = "SashWeightDetails"; //$NON-NLS-1$		
+        private static final String SASH_WEIGHT_DETAILS = "SashWeightDetails"; //$NON-NLS-1$
 
         /**
          * Variable or expression to display.
@@ -133,7 +133,7 @@ public class ExpressionInformationControlCreator implements
 
         /**
          * Constructs a new control in the given shell.
-         * 
+         *
          * @param parentShell
          *            shell
          * @param resize
@@ -172,7 +172,7 @@ public class ExpressionInformationControlCreator implements
         /**
          * Returns the dialog settings for this hover or <code>null</code> if
          * none
-         * 
+         *
          * @param create
          *            whether to create the settings
          */
@@ -189,7 +189,7 @@ public class ExpressionInformationControlCreator implements
 
         /**
          * Returns an integer value in the given dialog settings or -1 if none.
-         * 
+         *
          * @param settings
          *            dialog settings
          * @param key
@@ -214,7 +214,7 @@ public class ExpressionInformationControlCreator implements
 
         /**
          * Persists dialog settings.
-         * 
+         *
          * @param shell
          */
         private void persistSettings(Shell shell) {
@@ -346,7 +346,7 @@ public class ExpressionInformationControlCreator implements
         /**
          * Attempts to find an appropriate view to emulate, this will either be
          * the variables view or the expressions view.
-         * 
+         *
          * @return a view to emulate or <code>null</code>
          */
         private AbstractDebugView getViewToEmulate() {
@@ -451,7 +451,7 @@ public class ExpressionInformationControlCreator implements
 
     /**
      * Create expression information control creator with customization options.
-     * 
+     *
      * @param showDetailPane
      *            if <code>true</code> the detail pane will be shown
      * @param expansionLevel

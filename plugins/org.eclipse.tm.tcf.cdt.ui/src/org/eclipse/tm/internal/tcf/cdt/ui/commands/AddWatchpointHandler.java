@@ -30,11 +30,11 @@ import org.eclipse.ui.handlers.HandlerUtil;
 @SuppressWarnings("restriction")
 public class AddWatchpointHandler extends AbstractHandler {
     public Object execute(ExecutionEvent event) throws ExecutionException {
-    	ISelection selection = HandlerUtil.getCurrentSelection(event);
-    	String expr = null;
-    	if (selection instanceof ITextSelection) {
-    		expr = ((ITextSelection) selection).getText();
-    	}
+        ISelection selection = HandlerUtil.getCurrentSelection(event);
+        String expr = null;
+        if (selection instanceof ITextSelection) {
+                expr = ((ITextSelection) selection).getText();
+        }
         AddWatchpointDialog dlg = new AddWatchpointDialog(HandlerUtil.getActiveShell(event), null);
         dlg.setExpression(expr);
         if (dlg.open() == Window.OK) {
@@ -44,7 +44,7 @@ public class AddWatchpointHandler extends AbstractHandler {
     }
 
     private void addWatchpoint(boolean write, boolean read, String expression, String memorySpace, BigInteger range) {
-    	IResource resource = ResourcesPlugin.getWorkspace().getRoot();
+        IResource resource = ResourcesPlugin.getWorkspace().getRoot();
         try {
             CDIDebugModel.createWatchpoint("", resource, write, read, expression, memorySpace, range, true, 0, "", true); //$NON-NLS-1$
         }

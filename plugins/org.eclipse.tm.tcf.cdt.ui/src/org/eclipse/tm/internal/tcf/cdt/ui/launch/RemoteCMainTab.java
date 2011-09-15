@@ -69,7 +69,7 @@ public class RemoteCMainTab extends CMainTab implements IShellProvider {
     public Shell getShell() {
         return super.getShell();
     }
-    
+
     public void createControl(Composite parent) {
         Composite comp = new Composite(parent, SWT.NONE);
         GridLayout topLayout = new GridLayout();
@@ -78,7 +78,7 @@ public class RemoteCMainTab extends CMainTab implements IShellProvider {
 
         /* TCF peer selection control */
         createPeerListGroup(comp);
-        
+
         /* The Project and local binary location */
         createVerticalSpacer(comp, 1);
         createProjectGroup(comp, 1);
@@ -216,7 +216,7 @@ public class RemoteCMainTab extends CMainTab implements IShellProvider {
         config.setAttribute(TCFLaunchDelegate.ATTR_RUN_LOCAL_AGENT, false);
         config.setAttribute(TCFLaunchDelegate.ATTR_USE_LOCAL_AGENT, false);
     }
-    
+
     public void performApply(ILaunchConfigurationWorkingCopy config) {
         String peerId = getSelectedPeerId();
         if (peerId != null) {

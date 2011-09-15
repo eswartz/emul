@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -94,10 +94,10 @@ public class TCFDebugTextHover extends AbstractDebugTextHover implements ITextHo
             }.get();
         }
         catch (Exception x) {
-            // Problem in Eclipse 3.7: 
+            // Problem in Eclipse 3.7:
             // TextViewerHoverManager calls Thread.interrupt(),
             // but it fails to handle InterruptedException.
-            // We have to catch and ignore the exception. 
+            // We have to catch and ignore the exception.
             return null;
         }
     }
@@ -122,10 +122,10 @@ public class TCFDebugTextHover extends AbstractDebugTextHover implements ITextHo
                 }.get();
             }
             catch (Exception x) {
-                // Problem in Eclipse 3.7: 
+                // Problem in Eclipse 3.7:
                 // TextViewerHoverManager calls Thread.interrupt(),
                 // but it fails to handle InterruptedException.
-                // We have to catch and ignore the exception. 
+                // We have to catch and ignore the exception.
                 return null;
             }
         }

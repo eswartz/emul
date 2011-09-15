@@ -52,10 +52,10 @@ import org.eclipse.tm.tcf.util.TCFTask;
 import org.eclipse.ui.dialogs.PropertyPage;
 
 public class TCFBreakpointStatusPage extends PropertyPage {
-    
+
     private TreeViewer viewer;
     private List<StatusItem> status;
-    
+
     private static class StatusItem implements Comparable<StatusItem> {
         Object object;
         String text;
@@ -76,11 +76,11 @@ public class TCFBreakpointStatusPage extends PropertyPage {
             return 0;
         }
     }
-    
+
     private class StatusCache extends TCFDataCache<StatusItem> {
-        
+
         final TCFLaunch launch;
-        
+
         TCFDataCache<?> pending;
 
         public StatusCache(TCFLaunch launch) {
@@ -148,7 +148,7 @@ public class TCFBreakpointStatusPage extends PropertyPage {
             set(null, null, x);
             return true;
         }
-        
+
         private StatusItem getNodeItem(StatusItem root, TCFNode node) {
             TCFNode parent = node.getParent();
             if (parent == null) return root;
@@ -183,7 +183,7 @@ public class TCFBreakpointStatusPage extends PropertyPage {
             return y;
         }
     }
-    
+
     private final ITreeContentProvider content_provider = new ITreeContentProvider() {
 
         public void dispose() {
@@ -214,9 +214,9 @@ public class TCFBreakpointStatusPage extends PropertyPage {
             return x.children != null && x.children.size() > 0;
         }
     };
-    
+
     private final LabelProvider label_provider = new LabelProvider() {
-        
+
         @Override
         public Image getImage(Object element) {
             StatusItem x = (StatusItem)element;
@@ -229,7 +229,7 @@ public class TCFBreakpointStatusPage extends PropertyPage {
             if (x.planted_ok) return DebugUITools.getImage(IDebugUIConstants.IMG_OBJS_BREAKPOINT);
             return DebugUITools.getImage(IDebugUIConstants.IMG_OBJS_BREAKPOINT_DISABLED);
         }
-        
+
         @Override
         public String getText(Object element) {
             StatusItem x = (StatusItem)element;
@@ -253,7 +253,7 @@ public class TCFBreakpointStatusPage extends PropertyPage {
         setValid(true);
         return composite;
     }
-    
+
     private void createStatusViewer(Composite parent) {
         Label label = new Label(parent, SWT.NONE);
         label.setText("Breakpoint planting status:");
@@ -269,7 +269,7 @@ public class TCFBreakpointStatusPage extends PropertyPage {
         viewer.setInput(this);
         viewer.expandAll();
     }
-    
+
     private ICBreakpoint getBreakpoint() {
         return (ICBreakpoint)getElement().getAdapter(ICBreakpoint.class);
     }
@@ -310,7 +310,7 @@ public class TCFBreakpointStatusPage extends PropertyPage {
         }.getE();
         return status;
     }
-    
+
     @SuppressWarnings("unchecked")
     private Object[] toObjectArray(Object o) {
         if (o == null) return null;

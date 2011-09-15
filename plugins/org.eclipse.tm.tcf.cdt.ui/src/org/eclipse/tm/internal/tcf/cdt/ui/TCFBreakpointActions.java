@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -46,16 +46,16 @@ import org.eclipse.tm.tcf.util.TCFDataCache;
 import org.eclipse.tm.tcf.util.TCFTask;
 
 public class TCFBreakpointActions {
-    
+
     private class BreakpointActionAdapter extends TCFAction implements IAdaptable, ILogActionEnabler, IResumeActionEnabler {
-        
+
         private final HashMap<String,BreakpointActionAdapter> active_actions;
         private final TCFNodeExecContext node;
         private final Job job;
-        
+
         private boolean started;
         private boolean resumed;
-        
+
         BreakpointActionAdapter(final HashMap<String,BreakpointActionAdapter> actions,
                 final IBreakpoint breakpoint, TCFNodeExecContext node) {
             super(node.getModel().getLaunch(), node.getID());
@@ -79,7 +79,7 @@ public class TCFBreakpointActions {
                             }
                             monitor.worked(1);
                         }
-                    } 
+                    }
                     catch (Exception e) {
                         status = new Status(
                                 IStatus.ERROR, Activator.PLUGIN_ID, IStatus.ERROR,
@@ -101,7 +101,7 @@ public class TCFBreakpointActions {
             assert actions.get(ctx_id) == null;
             actions.put(ctx_id, this);
         }
-        
+
         @SuppressWarnings("rawtypes")
         public Object getAdapter(Class adapter) {
             if (adapter.isInstance(this)) return this;
@@ -168,7 +168,7 @@ public class TCFBreakpointActions {
                 started = true;
             }
         }
-        
+
         @Override
         public int getPriority() {
             return 100;
@@ -183,20 +183,20 @@ public class TCFBreakpointActions {
             if (started && job.cancel()) done();
         }
     }
-    
+
     private class RunControlListener implements IRunControl.RunControlListener {
-        
+
         private final IRunControl rc;
         private final TCFModel model;
         private final HashMap<String,BreakpointActionAdapter> active_actions;
-        
+
         RunControlListener(TCFModel model) {
             this.model = model;
             active_actions = new HashMap<String,BreakpointActionAdapter>();
             rc = model.getLaunch().getService(IRunControl.class);
             if (rc != null) rc.addListener(this);
         }
-        
+
         void dispose() {
             if (rc != null) rc.removeListener(this);
             BreakpointActionAdapter[] arr = active_actions.values().toArray(new BreakpointActionAdapter[active_actions.size()]);
@@ -251,7 +251,7 @@ public class TCFBreakpointActions {
         public void contextException(String context, String msg) {
         }
     }
-    
+
     private final TCFModelManager.ModelManagerListener launch_listener = new TCFModelManager.ModelManagerListener() {
 
         public void onConnected(TCFLaunch launch, TCFModel model) {
@@ -264,7 +264,7 @@ public class TCFBreakpointActions {
             if (l != null) l.dispose();
         }
     };
-    
+
     private final TCFBreakpointsModel bp_model;
     private final TCFModelManager model_manager;
     private final BreakpointActionManager bp_action_manager;
@@ -287,7 +287,7 @@ public class TCFBreakpointActions {
             }
         }
     }
-    
+
     void dispose() {
         assert Protocol.isDispatchThread();
         model_manager.removeListener(launch_listener);

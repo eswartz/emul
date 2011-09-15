@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -143,7 +143,7 @@ public class ProcessListControl {
         composite.setLayout(layout);
         composite.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         fComposite = composite;
-        
+
         fProcessTree = new Tree(composite, SWT.VIRTUAL | SWT.BORDER | SWT.SINGLE);
         GridData gd = new GridData(GridData.FILL_BOTH);
         gd.minimumHeight = 150;

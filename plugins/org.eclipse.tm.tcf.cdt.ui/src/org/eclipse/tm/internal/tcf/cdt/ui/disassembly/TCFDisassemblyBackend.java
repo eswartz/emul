@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -70,7 +70,7 @@ import org.eclipse.tm.tcf.util.TCFTask;
 
 @SuppressWarnings("restriction")
 public class TCFDisassemblyBackend implements IDisassemblyBackend {
-    
+
     private static class AddressRange {
         BigInteger start;
         BigInteger end;
@@ -204,7 +204,7 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
     private final IRunControl.RunControlListener fRunControlListener = new TCFRunControlListener();
     private final IChannelListener fChannelListener = new TCFChannelListener();
     private final ILaunchesListener fLaunchesListener = new TCFLaunchListener();
-    
+
     public void init(IDisassemblyPartCallback callback) {
         fCallback = callback;
     }
@@ -329,7 +329,7 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
         clearDebugContext();
         fCallback.handleTargetEnded();
     }
-    
+
     public void clearDebugContext() {
         if (fExecContext != null) {
             removeListeners(fExecContext);
@@ -386,7 +386,7 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
                 }
             }.getE();
         }
-        
+
         if (execContext == fExecContext) {
             fCallback.setUpdatePending(false);
             if (address == null) address = BigInteger.valueOf(-2);
@@ -510,20 +510,24 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
                     return;
                 }
                 TCFDataCache<TCFNodeExecContext> mem_node_cache = execContext.getModel().searchMemoryContext(execContext);
+                if (mem_node_cache == null) {
+                    fCallback.setUpdatePending(false);
+                    return;
+                }
                 if (!mem_node_cache.validate(this)) return;
-                TCFNodeExecContext memContext = mem_node_cache.getData();
-                if (memContext == null) {
+                TCFNodeExecContext mem_node = mem_node_cache.getData();
+                if (mem_node == null) {
                     fCallback.setUpdatePending(false);
                     return;
                 }
-                TCFDataCache<IMemory.MemoryContext> cache = memContext.getMemoryContext();
-                if (!cache.validate(this)) return;
-                final IMemory.MemoryContext mem = cache.getData();
-                if (mem == null) {
+                TCFDataCache<IMemory.MemoryContext> mem_ctx_cache = mem_node.getMemoryContext();
+                if (!mem_ctx_cache.validate(this)) return;
+                final IMemory.MemoryContext mem_ctx = mem_ctx_cache.getData();
+                if (mem_ctx == null) {
                     fCallback.setUpdatePending(false);
                     return;
                 }
-                final String contextId = mem.getID();
+                final String contextId = mem_ctx.getID();
                 Map<String, Object> params = new HashMap<String, Object>();
                 disass.disassemble(contextId, startAddress, linesHint*4, params, new DoneDisassemble() {
                     public void doneDisassemble(IToken token, final Throwable error,
@@ -536,7 +540,7 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
                                     if (modCount == getModCount()) {
                                         fCallback.insertError(startAddress, TCFModel.getErrorMessage(error, false));
                                         fCallback.setUpdatePending(false);
-                                        int addr_bits = mem.getAddressSize() * 8;
+                                        int addr_bits = mem_ctx.getAddressSize() * 8;
                                         if (fCallback.getAddressSize() < addr_bits) fCallback.addressSizeChanged(addr_bits);
                                     }
                                 }
@@ -592,13 +596,13 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
                                     symbols.findByAddr(contextId, instrAddress, doneFind);
                                     return;
                                 }
-                                ISymbols.Symbol[] functionSymbols = 
+                                ISymbols.Symbol[] functionSymbols =
                                     (ISymbols.Symbol[]) symbolList.toArray(new ISymbols.Symbol[symbolList.size()]);
                                 doneGetSymbols(disassembly, functionSymbols);
                             }
                         });
                     }
-                    
+
                     private void doneGetSymbols(final IDisassemblyLine[] disassembly, final ISymbols.Symbol[] symbols) {
                         ILineNumbers lineNumbers = null;
                         if (mixed) {
@@ -622,12 +626,12 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
                             });
                         }
                     }
-                    
+
                     private void doneGetLineNumbers( final IDisassemblyLine[] disassembly, final ISymbols.Symbol[] symbols, final CodeArea[] areas) {
                         fCallback.asyncExec(new Runnable() {
                             public void run() {
                                 insertDisassembly(modCount, startAddress, disassembly, symbols, areas);
-                                int addr_bits = mem.getAddressSize() * 8;
+                                int addr_bits = mem_ctx.getAddressSize() * 8;
                                 if (fCallback.getAddressSize() < addr_bits) fCallback.addressSizeChanged(addr_bits);
                             }
                         });
@@ -729,7 +733,7 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
                 int instrLength= instruction.getSize();
                 Map<String, Object>[] instrAttrs = instruction.getInstruction();
                 String instr = formatInstruction(instrAttrs);
-                
+
                 p = fCallback.getDocument().insertDisassemblyLine(p, address, instrLength, functionOffset.toString(), instr, sourceFile, firstLine);
                 if (p == null) break;
                 insertedAnyAddress = true;
@@ -787,7 +791,7 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
 
     /**
      * Format an instruction.
-     * 
+     *
      * @param instrAttrs
      * @return string representation
      */

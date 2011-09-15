@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -27,9 +27,9 @@ import org.eclipse.ui.IWorkbenchPage;
  */
 @SuppressWarnings("restriction")
 public class TCFCSourceNotFoundEditor extends CSourceNotFoundEditor {
-    
+
     static final String ID = "org.eclipse.tm.tcf.cdt.ui.source_not_found_editor";
-    
+
     private class LaunchListener implements ILaunchesListener2 {
         public void launchesRemoved(ILaunch[] launches) {
         }
@@ -62,7 +62,7 @@ public class TCFCSourceNotFoundEditor extends CSourceNotFoundEditor {
         }
         super.setInput(input);
     }
-    
+
     @Override
     protected void viewDisassembly() {
         Object artifact = getArtifact();
@@ -72,7 +72,7 @@ public class TCFCSourceNotFoundEditor extends CSourceNotFoundEditor {
             closeEditor();
         }
     }
-    
+
     @Override
     public void dispose() {
         if (fLaunchListener != null) {
@@ -80,7 +80,7 @@ public class TCFCSourceNotFoundEditor extends CSourceNotFoundEditor {
         }
         super.dispose();
     }
-    
+
     protected void closeEditor() {
         final IEditorPart editor = this;
         editor.getSite().getShell().getDisplay().asyncExec(new Runnable() {

@@ -9,7 +9,7 @@
  *     QNX Software Systems - Initial API and implementation
  *     Wind River Systems - Adapted to TCF
  *******************************************************************************/
-package org.eclipse.tm.internal.tcf.cdt.ui.breakpoints; 
+package org.eclipse.tm.internal.tcf.cdt.ui.breakpoints;
 
 import org.eclipse.cdt.debug.core.model.ICBreakpoint;
 import org.eclipse.core.runtime.CoreException;

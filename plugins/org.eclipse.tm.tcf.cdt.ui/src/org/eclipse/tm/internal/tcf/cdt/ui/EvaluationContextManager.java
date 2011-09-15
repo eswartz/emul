@@ -166,7 +166,7 @@ public class EvaluationContextManager implements IWindowListener,
     /**
      * Sets the evaluation context for the given page, and notes that a valid
      * execution context exists.
-     * 
+     *
      * @param page
      * @param target
      */
@@ -181,7 +181,7 @@ public class EvaluationContextManager implements IWindowListener,
     /**
      * Removes an evaluation context for the given page, and determines if any
      * valid execution context remain.
-     * 
+     *
      * @param page
      */
     private void removeContext(IWorkbenchPage page) {

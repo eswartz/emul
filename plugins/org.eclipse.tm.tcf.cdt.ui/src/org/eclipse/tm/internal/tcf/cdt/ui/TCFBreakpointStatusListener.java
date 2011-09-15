@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -54,20 +54,20 @@ import org.eclipse.tm.tcf.services.IBreakpoints;
  */
 @SuppressWarnings("restriction")
 class TCFBreakpointStatusListener {
-    
+
     /** Ref count attribute for foreign breakpoints */
     private static final String ATTR_REFCOUNT = "org.eclipse.tm.tcf.cdt.refcount";
     /** TCF breakpoint ID attribute */
     private static final String ATTR_TCF_ID = ITCFConstants.ID_TCF_DEBUG_MODEL + '.' + IBreakpoints.PROP_ID;
-    
+
     private class BreakpointListener implements ITCFBreakpointListener {
-        
+
         private final TCFLaunch launch;
         private final TCFBreakpointsStatus status;
         private final Map<String,ICBreakpoint> installed = new HashMap<String,ICBreakpoint>();
         private final Set<String> foreign = new HashSet<String>();
         private final Set<String> deleted = new HashSet<String>();
-        
+
         BreakpointListener(TCFLaunch launch) {
             this.launch = launch;
             status = launch.getBreakpointsStatus();
@@ -75,7 +75,7 @@ class TCFBreakpointStatusListener {
             bp_listeners.put(launch, this);
             for (String id : status.getStatusIDs()) breakpointStatusChanged(id);
         }
-        
+
         public void breakpointStatusChanged(String id) {
             IBreakpoint bp = bp_model.getBreakpoint(id);
             if (bp instanceof ICBreakpoint) {
@@ -130,7 +130,7 @@ class TCFBreakpointStatusListener {
             }
             foreign.clear();
         }
-        
+
         private void incrementInstallCount(final ICBreakpoint cbp) {
             Job job = new WorkspaceJob("Increment Install Count") {
                 @Override
@@ -148,7 +148,7 @@ class TCFBreakpointStatusListener {
             job.setSystem(true);
             job.schedule();
         }
-        
+
         private void decrementInstallCount(final ICBreakpoint cbp) {
             Job job = new WorkspaceJob("Decrement Install Count") {
                 @Override
@@ -166,7 +166,7 @@ class TCFBreakpointStatusListener {
             job.setSystem(true);
             job.schedule();
         }
-        
+
         private void createOrUpdateBreakpoint(final String id, final boolean create) {
             IBreakpoints bkpts = launch.getService(IBreakpoints.class);
             if (bkpts == null) return;
@@ -316,7 +316,7 @@ class TCFBreakpointStatusListener {
             job.setSystem(true);
             job.schedule();
         }
-        
+
         private ISchedulingRule getBreakpointAccessRule() {
             IResource resource = ResourcesPlugin.getWorkspace().getRoot();
             ISchedulingRule rule = ResourcesPlugin.getWorkspace().getRuleFactory().markerRule(resource);
@@ -329,7 +329,7 @@ class TCFBreakpointStatusListener {
             return rule;
         }
     }
-    
+
     private final TCFModelManager.ModelManagerListener launch_listener = new TCFModelManager.ModelManagerListener() {
 
         public void onConnected(TCFLaunch launch, TCFModel model) {
@@ -342,7 +342,7 @@ class TCFBreakpointStatusListener {
             if (l != null) l.dispose();
         }
     };
-    
+
     private final TCFModelManager model_manager;
     private final TCFBreakpointsModel bp_model;
     private final Map<TCFLaunch,BreakpointListener> bp_listeners;;
@@ -362,7 +362,7 @@ class TCFBreakpointStatusListener {
             }
         }
     }
-    
+
     void dispose() {
         model_manager.removeListener(launch_listener);
         for (BreakpointListener l : bp_listeners.values()) l.dispose();

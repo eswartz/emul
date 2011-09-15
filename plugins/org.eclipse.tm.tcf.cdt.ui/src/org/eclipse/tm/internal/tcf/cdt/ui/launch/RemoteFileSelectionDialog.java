@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -53,7 +53,7 @@ public class RemoteFileSelectionDialog extends Dialog {
             fFileList.setInput(peer);
         }
     }
-    
+
     public void setSelection(String fileSelection) {
         fSelection = fileSelection;
     }
@@ -95,7 +95,7 @@ public class RemoteFileSelectionDialog extends Dialog {
                 }
             }
         });
-        
+
         if (fForSave) {
             Composite fileNameComp = new Composite(composite, SWT.NONE);
             fileNameComp.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
@@ -112,7 +112,7 @@ public class RemoteFileSelectionDialog extends Dialog {
                 }
             });
         }
-        
+
         if (fSelection != null) {
             fFileList.setInitialSelection(fSelection);
             if (fFileNameText != null) {
@@ -142,7 +142,7 @@ public class RemoteFileSelectionDialog extends Dialog {
             updateButtonState();
         }
     }
-    
+
     protected void handleFileSelected(FileInfo fileInfo) {
         if (fileInfo.isDir) {
             if (fForSave) {

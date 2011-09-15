@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -97,7 +97,7 @@ public class TCFCDTLaunchDelegate extends TCFLaunchDelegate {
 
     protected ILaunchConfiguration convertToTcfConfig(ILaunchConfiguration orig) throws CoreException {
         ILaunchConfigurationWorkingCopy copy = orig.copy(orig.getName());
-        boolean changed = copyStringAttribute(orig, copy, ICDTLaunchConfigurationConstants.ATTR_PROJECT_NAME, 
+        boolean changed = copyStringAttribute(orig, copy, ICDTLaunchConfigurationConstants.ATTR_PROJECT_NAME,
                 TCFLaunchDelegate.ATTR_PROJECT_NAME);
         if (isAttachLaunch(orig)) {
             changed = setStringAttribute(copy, TCFLaunchDelegate.ATTR_LOCAL_PROGRAM_FILE, null) || changed;
@@ -107,9 +107,9 @@ public class TCFCDTLaunchDelegate extends TCFLaunchDelegate {
                     TCFLaunchDelegate.ATTR_LOCAL_PROGRAM_FILE) || changed;
             changed = copyStringAttribute(orig, copy, ICDTLaunchConfigurationConstants.ATTR_PROGRAM_ARGUMENTS,
                     TCFLaunchDelegate.ATTR_PROGRAM_ARGUMENTS) || changed;
-            changed = copyStringAttribute(orig, copy, ICDTLaunchConfigurationConstants.ATTR_PROGRAM_ARGUMENTS, 
+            changed = copyStringAttribute(orig, copy, ICDTLaunchConfigurationConstants.ATTR_PROGRAM_ARGUMENTS,
                     TCFLaunchDelegate.ATTR_WORKING_DIRECTORY) || changed;
-            changed = copyBooleanAttribute(orig, copy, ICDTLaunchConfigurationConstants.ATTR_USE_TERMINAL, 
+            changed = copyBooleanAttribute(orig, copy, ICDTLaunchConfigurationConstants.ATTR_USE_TERMINAL,
                     TCFLaunchDelegate.ATTR_USE_TERMINAL) || changed;
         }
         return changed ? copy.doSave() : orig;

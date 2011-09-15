@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -79,7 +79,7 @@ public class TCFSuspendResumeAdapter implements ISuspendResume, IRunToLine,
     public TCFSuspendResumeAdapter(TCFNodeExecContext execCtx) {
         fExecCtx = execCtx;
     }
-    
+
     @SuppressWarnings("rawtypes")
     public Object getAdapter(Class adapter) {
         if (adapter.isInstance(this)) {
@@ -87,7 +87,7 @@ public class TCFSuspendResumeAdapter implements ISuspendResume, IRunToLine,
         }
         return null;
     }
-    
+
     public boolean canResume() {
         return isSuspended();
     }
@@ -413,7 +413,7 @@ public class TCFSuspendResumeAdapter implements ISuspendResume, IRunToLine,
                     done(null);
                     return;
                 }
-                
+
                 LinkedList<TCFChildren> queue = new LinkedList<TCFChildren>();
                 queue.add(fExecCtx.getRegisters());
                 while (fPCReg == null && !queue.isEmpty()) {
@@ -425,7 +425,7 @@ public class TCFSuspendResumeAdapter implements ISuspendResume, IRunToLine,
                         else error("Cannot retrive registers info");
                         return;
                     }
-                    
+
                     for (TCFNode node : regNodes.values()) {
                         TCFNodeRegister regNode = (TCFNodeRegister)node;
                         TCFDataCache<IRegisters.RegistersContext> regCtxCache = regNode.getContext();
@@ -438,12 +438,12 @@ public class TCFSuspendResumeAdapter implements ISuspendResume, IRunToLine,
                         queue.add(regNode.getChildren());
                     }
                 }
-                
+
                 if (fPCReg == null) {
                     error("Cannot determine PC register.");
                     return;
                 }
-                
+
                 if (location.fAddress == null) {
                     final IChannel channel = fExecCtx.getChannel();
                     final ILineNumbers lineNumbers = channel.getRemoteService(ILineNumbers.class);
@@ -542,7 +542,7 @@ public class TCFSuspendResumeAdapter implements ISuspendResume, IRunToLine,
                 byte[] bytes = new byte[size];
                 byte[] addrBytes = JSON.toBigInteger(address).toByteArray();
                 for (int i=0; i < bytes.length; ++i) {
-                    byte b = 0; 
+                    byte b = 0;
                     if (i < addrBytes.length) {
                         b = addrBytes[addrBytes.length - i - 1];
                     }

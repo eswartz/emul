@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
@@ -35,12 +35,12 @@ public class TCFSourceNotFoundPresentation implements ISourceNotFoundPresentatio
         TCFModel getModel() {
             return fModel;
         }
-        
+
         @Override
         public String getDescription() {
             return getFile();
         }
-        
+
         @Override
         public boolean equals(Object other) {
             if (!(other instanceof TCFCSourceNotFoundElement)) return false;
@@ -53,7 +53,7 @@ public class TCFSourceNotFoundPresentation implements ISourceNotFoundPresentatio
         public TCFCSourceNotFoundEditorInput(CSourceNotFoundElement element) {
             super(element);
         }
-        
+
         @Override
         public boolean equals(Object other) {
             if (!(other instanceof TCFCSourceNotFoundEditorInput)) return false;
