@@ -28,11 +28,10 @@ import org.eclipse.swt.graphics.ImageLoader;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Control;
 
-import v9t9.emulator.clients.builtin.video.IBitmapPixelAccess;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
+import v9t9.emulator.clients.builtin.video.ImageImport;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VdpCanvas.Format;
-import v9t9.engine.VdpHandler;
 
 /**
  * Support dragging image out of window, or into window (and VDP buffer)
@@ -44,22 +43,14 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 	private DragSource source;
 	private DropTarget target;
 	private final ISwtVideoRenderer renderer;
-	private final VdpHandler vdpHandler;
 	private File tempSourceFile;
 	private boolean dragSourceInProgress;
 	private DisposeListener disposeListener;
 	private final Control control;
 
-	/**
-	 * @param videoControl
-	 * @param renderer
-	 * @param vdpHandler
-	 */
-	public SwtDragDropHandler(Control control, ISwtVideoRenderer renderer,
-			VdpHandler vdpHandler) {
+	public SwtDragDropHandler(Control control, ISwtVideoRenderer renderer) {
 		this.control = control;
 		this.renderer = renderer;
-		this.vdpHandler = vdpHandler;
 		
 		source = new DragSource(control, DND.DROP_COPY | DND.DROP_DEFAULT);
 		source.addDragListener(this);
@@ -229,14 +220,9 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 	@Override
 	public void dragEnter(DropTargetEvent event) {
 		// set DND.DROP_NONE if not supported
-		if (!(renderer.getCanvas() instanceof IBitmapPixelAccess)) {
-			System.out.println("Not a bitmap");
-			event.detail = DND.DROP_NONE;
-			return;
-		}
 		
 		Format format = renderer.getCanvas().getFormat();
-		if (format == null || format == Format.TEXT || format == Format.COLOR16_8x8) {
+		if (!ImageImport.isModeSupported(format)) {
 			System.out.println("Unsupported format: " + format);
 			event.detail = DND.DROP_NONE;
 			return;
@@ -305,47 +291,22 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 	 * @param data
 	 */
 	private void importImage(ImageData data) {
-		// scale aspect-sensitively
-		ImageDataCanvas vc = (ImageDataCanvas) renderer.getCanvas();
-		
-		int targWidth = vc.getVisibleWidth();
-		int targHeight = vc.getVisibleHeight();
-		float aspect = targWidth * targHeight / 256.f  / 192.f;
-		if (renderer.getCanvas().getFormat() == Format.COLOR16_4x4) {
-			targWidth = 64;
-			targHeight = 48;
-			aspect = 1.0f;
-		}
-		int realWidth = data.width;
-		int realHeight = data.height;
-		if (realWidth < 0 || realHeight < 0) {
-			return;
-		}
-		
-		if (realWidth != targWidth && realHeight != targHeight) {
-			if (realWidth * targHeight * aspect > realHeight * targWidth) {
-				targHeight = (int) (targWidth * realHeight / realWidth / aspect);
-			} else {
-				targWidth = (int) (targHeight * realWidth * aspect / realHeight);
-			}
-		}
-		
-		ImageData scaled = data. scaledTo(targWidth, targHeight);
-		
-		BufferedImage img = new BufferedImage(targWidth, targHeight, BufferedImage.TYPE_INT_ARGB);
-		int[] pix = new int[scaled.width * scaled.height];
 
-		for (int y = 0; y < targHeight; y++) {
-			scaled.getPixels(0, y, targWidth, pix, targWidth * y);
+		// convert to AWT image -- don't scale with SWT, which is lame
+		BufferedImage img = new BufferedImage(data.width, data.height, BufferedImage.TYPE_INT_RGB);
+		int[] pix = new int[data.width * data.height];
+
+		for (int y = 0; y < data.height; y++) {
+			data.getPixels(0, y, data.width, pix, data.width * y);
 		}
-		if (!scaled.palette.isDirect) {
+		if (!data.palette.isDirect) {
 			// apply palette... wtf
 			for (int i = 0; i < pix.length; i++) {
-				RGB rgb = scaled.palette.colors[pix[i]]; 
+				RGB rgb = data.palette.colors[pix[i]]; 
 				pix[i] = 0xff000000 | (rgb.red << 16) | (rgb.green << 8) | (rgb.blue);
 			}
 		}
-		else if (scaled.palette.blueShift != 0) {
+		else if (data.palette.blueShift != 0) {
 			// assume it was BGR
 			for (int i = 0; i < pix.length; i++) {
 				int p = pix[i];
@@ -355,15 +316,12 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 			}
 		}
 		
-		img.setRGB(0, 0, targWidth, targHeight, pix, 0, pix.length / targHeight);
-		vc.setImageData(img);
+		img.setRGB(0, 0, data.width, data.height, pix, 0, pix.length / data.height);
+
+		ImageImport importer = new ImageImport(
+				(ImageDataCanvas) renderer.getCanvas(), renderer.getVdpHandler());
+		importer.importImage(img);
 		
-		synchronized (vdpHandler) {
-			IBitmapPixelAccess access = (IBitmapPixelAccess) renderer.getCanvas();
-			vdpHandler.getVdpModeRedrawHandler().importImageData(access);
-		}
-		
-		//renderer.getAwtCanvas().repaint();
 	}
 
 

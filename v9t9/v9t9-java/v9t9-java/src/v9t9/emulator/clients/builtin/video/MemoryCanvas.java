@@ -262,8 +262,4 @@ public class MemoryCanvas extends BitmapVdpCanvas {
 			offset += getLineStride();
 		}
 	}
-
-	public byte getPixel(int x, int y) {
-		return bitmap[getBitmapOffset(x, y)];
-	}
 }

@@ -357,7 +357,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		if (!enableJoystick) {
 			try {
 				dragDropHandler = new SwtDragDropHandler(videoControl, 
-						(ISwtVideoRenderer) videoRenderer, machine.getVdp());
+						(ISwtVideoRenderer) videoRenderer);
 			} catch (SWTError e) {
 				e.printStackTrace();
 			}

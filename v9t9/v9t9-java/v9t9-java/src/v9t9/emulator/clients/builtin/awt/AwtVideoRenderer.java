@@ -80,7 +80,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		setCanvas(new ImageDataCanvas24Bit(0));
 		//desiredWidth = (int)(zoomx * 256);
 		//desiredHeight = (int)(zoomy * 192);
-		this.canvas = new AwtCanvas(this, vdp);
+		this.canvas = new AwtCanvas(this);
 		canvas.setFocusTraversalKeysEnabled(false);
 		canvas.setFocusable(true);
 		canvas.addHierarchyBoundsListener(new HierarchyBoundsAdapter() {

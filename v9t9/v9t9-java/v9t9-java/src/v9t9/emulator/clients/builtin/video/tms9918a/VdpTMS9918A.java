@@ -157,8 +157,14 @@ public class VdpTMS9918A implements VdpHandler {
 		
 		vdpRedrawInfo = new VdpRedrawInfo(vdpregs, this, vdpChanges, vdpCanvas);
 		blankModeRedrawHandler = new BlankModeRedrawHandler(vdpRedrawInfo, createBlankModeInfo());
+		
+		resetPalette();
 	}
-	
+
+	public void resetPalette() {
+		// nothing
+	}
+
 	protected void recalcInterruptTiming() {
         vdpInterruptLimit = Cpu.settingCyclesPerSecond.getInt() / settingVdpInterruptRate.getInt();
         vdpInterruptFrac = 0;

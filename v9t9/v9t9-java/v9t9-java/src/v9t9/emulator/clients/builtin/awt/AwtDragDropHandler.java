@@ -4,10 +4,8 @@
 package v9t9.emulator.clients.builtin.awt;
 
 import java.awt.Component;
-import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Point;
-import java.awt.RenderingHints;
 import java.awt.color.ColorSpace;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.SystemFlavorMap;
@@ -38,11 +36,9 @@ import javax.imageio.ImageIO;
 import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.graphics.ImageData;
 
-import v9t9.emulator.clients.builtin.video.IBitmapPixelAccess;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
+import v9t9.emulator.clients.builtin.video.ImageImport;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
-import v9t9.emulator.clients.builtin.video.VdpCanvas.Format;
-import v9t9.engine.VdpHandler;
 
 /**
  * Handle images copied in or out of the screen.
@@ -52,15 +48,12 @@ import v9t9.engine.VdpHandler;
 public class AwtDragDropHandler implements DragGestureListener, DropTargetListener {
 
 	private final AwtVideoRenderer renderer;
-	private final VdpHandler vdp;
 
 	/**
 	 * @param renderer
-	 * @param vdp
 	 */
-	public AwtDragDropHandler(Component component, AwtVideoRenderer renderer, VdpHandler vdp) {
+	public AwtDragDropHandler(Component component, AwtVideoRenderer renderer) {
 		this.renderer = renderer;
-		this.vdp = vdp;
 		
 		DropTarget dt = new DropTarget(component, this);
 		dt.setFlavorMap(SystemFlavorMap.getDefaultFlavorMap());
@@ -150,6 +143,10 @@ public class AwtDragDropHandler implements DragGestureListener, DropTargetListen
 			dtde.rejectDrag();
 			return;
 		}
+		if (!ImageImport.isModeSupported(renderer.getCanvas().getFormat())) {
+			dtde.rejectDrag();
+			return;
+		}
 	}
 
 	/*
@@ -180,10 +177,6 @@ public class AwtDragDropHandler implements DragGestureListener, DropTargetListen
 	 */
 	@Override
 	public void drop(DropTargetDropEvent dtde) {
-		if (!(renderer.getCanvas() instanceof IBitmapPixelAccess))
-			return;
-		IBitmapPixelAccess access = (IBitmapPixelAccess) renderer.getCanvas();
-		
 		Transferable transferable = dtde.getTransferable();
 		Image image = null;
 
@@ -236,112 +229,8 @@ public class AwtDragDropHandler implements DragGestureListener, DropTargetListen
 		}
 		//System.out.println(image);
 		
-		// scale aspect-sensitively
-		ImageDataCanvas vc = (ImageDataCanvas) renderer.getCanvas();
-		
-		int targWidth = vc.getVisibleWidth();
-		int targHeight = vc.getVisibleHeight();
-		float aspect = targWidth * targHeight / 256.f  / 192.f;
-		if (renderer.getCanvas().getFormat() == Format.COLOR16_4x4) {
-			targWidth = 64;
-			targHeight = 48;
-			aspect = 1.0f;
-		}
-		int realWidth = image.getWidth(null);
-		int realHeight = image.getHeight(null);
-		if (realWidth < 0 || realHeight < 0) {
-			return;
-		}
-		
-		if (realWidth * targHeight * aspect > realHeight * targWidth) {
-			targHeight = (int) (targWidth * realHeight / realWidth / aspect);
-		} else {
-			targWidth = (int) (targHeight * realWidth * aspect / realHeight);
-		}
-		
-		BufferedImage scaled = getScaledInstance(image, targWidth, targHeight, 
-				//RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR, 
-				RenderingHints.VALUE_INTERPOLATION_BILINEAR, 
-				false);
-		//System.out.println(scaled.getWidth(null) + " x " +scaled.getHeight(null));
-		
-		vc.setImageData(scaled);
-		
-		synchronized (vdp) {
-			vdp.getVdpModeRedrawHandler().importImageData(access);
-		}
-		
-		//renderer.getAwtCanvas().repaint();
+		ImageImport importer = new ImageImport((ImageDataCanvas) renderer.getCanvas(), 
+				renderer.getVdpHandler());
+		importer.importImage(image);
 	}
-
-	/**
-     * Convenience method that returns a scaled instance of the
-     * provided {@code BufferedImage}.
-     *
-     * @param img the original image to be scaled
-     * @param targetWidth the desired width of the scaled instance,
-     *    in pixels
-     * @param targetHeight the desired height of the scaled instance,
-     *    in pixels
-     * @param hint one of the rendering hints that corresponds to
-     *    {@code RenderingHints.KEY_INTERPOLATION} (e.g.
-     *    {@code RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR},
-     *    {@code RenderingHints.VALUE_INTERPOLATION_BILINEAR},
-     *    {@code RenderingHints.VALUE_INTERPOLATION_BICUBIC})
-     * @param higherQuality if true, this method will use a multi-step
-     *    scaling technique that provides higher quality than the usual
-     *    one-step technique (only useful in downscaling cases, where
-     *    {@code targetWidth} or {@code targetHeight} is
-     *    smaller than the original dimensions, and generally only when
-     *    the {@code BILINEAR} hint is specified)
-     * @return a scaled version of the original {@code BufferedImage}
-     */
-    private BufferedImage getScaledInstance(Image img,
-                                           int targetWidth,
-                                           int targetHeight,
-                                           Object hint,
-                                           boolean higherQuality)
-    {
-        int type = BufferedImage.TYPE_INT_RGB;
-        BufferedImage ret = (BufferedImage)img;
-        int w, h;
-        if (higherQuality) {
-            // Use multi-step technique: start with original size, then
-            // scale down in multiple passes with drawImage()
-            // until the target size is reached
-            w = img.getWidth(null);
-            h = img.getHeight(null);
-        } else {
-            // Use one-step technique: scale directly from original
-            // size to target size with a single drawImage() call
-            w = targetWidth;
-            h = targetHeight;
-        }
-        
-        do {
-            if (higherQuality && w > targetWidth) {
-                w /= 2;
-                if (w < targetWidth) {
-                    w = targetWidth;
-                }
-            }
-
-            if (higherQuality && h > targetHeight) {
-                h /= 2;
-                if (h < targetHeight) {
-                    h = targetHeight;
-                }
-            }
-
-            BufferedImage tmp = new BufferedImage(w, h, type);
-            Graphics2D g2 = tmp.createGraphics();
-            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, hint);
-            g2.drawImage(ret, 0, 0, w, h, null);
-            g2.dispose();
-
-            ret = tmp;
-        } while (w != targetWidth || h != targetHeight);
-
-        return ret;
-    }
 }

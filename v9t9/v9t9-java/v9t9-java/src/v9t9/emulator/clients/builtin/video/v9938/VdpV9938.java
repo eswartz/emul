@@ -137,14 +137,13 @@ public class VdpV9938 extends VdpTMS9918A {
 
 	public VdpV9938(Machine machine) {
 		super(machine);
-		reset();
 	}
 
 	protected byte[] allocVdpRegs() {
 		return new byte[48];
 	}
 	
-	protected void reset() {
+	public void resetPalette() {
 		vdpCanvas.setGRB333(0, 0, 0, 0); 
 		vdpCanvas.setGRB333(1, 0, 0, 0); 
 		vdpCanvas.setGRB333(2, 6, 1, 1); 

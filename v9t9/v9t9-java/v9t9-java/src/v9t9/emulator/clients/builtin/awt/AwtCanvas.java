@@ -7,7 +7,6 @@ import java.awt.Canvas;
 import java.awt.Graphics;
 import java.awt.Rectangle;
 
-import v9t9.engine.VdpHandler;
 
 /**
  * @author ejs
@@ -17,11 +16,11 @@ public class AwtCanvas extends Canvas {
 	/**
 	 * @param config
 	 */
-	public AwtCanvas(AwtVideoRenderer renderer, VdpHandler vdp) {
+	public AwtCanvas(AwtVideoRenderer renderer) {
 		super();
 		this.renderer = renderer;
 
-		new AwtDragDropHandler(this, renderer, vdp);
+		new AwtDragDropHandler(this, renderer);
 	}
 
 	private static final long serialVersionUID = 8795221581767897631L;
