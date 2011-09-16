@@ -755,7 +755,6 @@ static void post_location_evaluation_request(Context * ctx, BreakpointInfo * bp)
         else if (req->bp != bp) {
             req->bp = NULL;
         }
-        post_evaluation_request(req);
         EXT(grp)->empty_bp_grp = 0;
     }
 }
