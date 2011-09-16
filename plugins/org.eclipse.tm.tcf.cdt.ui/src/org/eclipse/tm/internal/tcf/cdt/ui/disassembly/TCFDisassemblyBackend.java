@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2010, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -17,10 +17,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.cdt.debug.internal.ui.disassembly.dsf.AbstractDisassemblyBackend;
 import org.eclipse.cdt.debug.internal.ui.disassembly.dsf.AddressRangePosition;
 import org.eclipse.cdt.debug.internal.ui.disassembly.dsf.DisassemblyUtils;
 import org.eclipse.cdt.debug.internal.ui.disassembly.dsf.ErrorPosition;
-import org.eclipse.cdt.debug.internal.ui.disassembly.dsf.IDisassemblyBackend;
 import org.eclipse.cdt.debug.internal.ui.disassembly.dsf.IDisassemblyPartCallback;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IPath;
@@ -30,12 +30,14 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchesListener;
+import org.eclipse.debug.core.model.ISourceLocator;
+import org.eclipse.debug.core.sourcelookup.ISourceLookupDirector;
 import org.eclipse.jface.dialogs.ErrorDialog;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocumentExtension4;
 import org.eclipse.jface.text.Position;
 import org.eclipse.tm.internal.tcf.cdt.ui.Activator;
-import org.eclipse.tm.internal.tcf.debug.launch.TCFSourceLookupDirector;
 import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
 import org.eclipse.tm.internal.tcf.debug.model.TCFSourceRef;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFChildrenStackTrace;
@@ -46,7 +48,6 @@ import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeStackFrame;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IChannel.IChannelListener;
 import org.eclipse.tm.tcf.protocol.IToken;
-import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IDisassembly;
 import org.eclipse.tm.tcf.services.IDisassembly.DoneDisassemble;
@@ -67,9 +68,10 @@ import org.eclipse.tm.tcf.services.IRunControl.RunControlListener;
 import org.eclipse.tm.tcf.services.ISymbols;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 import org.eclipse.tm.tcf.util.TCFTask;
+import org.eclipse.ui.PlatformUI;
 
 @SuppressWarnings("restriction")
-public class TCFDisassemblyBackend implements IDisassemblyBackend {
+public class TCFDisassemblyBackend extends AbstractDisassemblyBackend {
 
     private static class AddressRange {
         BigInteger start;
@@ -205,6 +207,7 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
     private final IChannelListener fChannelListener = new TCFChannelListener();
     private final ILaunchesListener fLaunchesListener = new TCFLaunchListener();
 
+    @Override
     public void init(IDisassemblyPartCallback callback) {
         fCallback = callback;
     }
@@ -349,8 +352,7 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
             // shortcut for goto frame on suspend
             address = fSuspendAddress;
             fSuspendAddress = null;
-        }
-        else {
+        } else {
             final int suspendCount = fSuspendCount;
             final TCFChildrenStackTrace stack = execContext.getStackTrace();
             address = new TCFTask<BigInteger>(execContext.getChannel()) {
@@ -359,12 +361,13 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
                         done(null);
                         return;
                     }
-                    if (!stack.validate(this)) return;
+                    if (!stack.validate(this)) {
+                        return;
+                    }
                     TCFNodeStackFrame frame = null;
                     if (targetFrame == 0) {
                         frame = stack.getTopFrame();
-                    }
-                    else {
+                    } else {
                         Map<String,TCFNode> frameData = stack.getData();
                         for (TCFNode node : frameData.values()) {
                             if (node instanceof TCFNodeStackFrame) {
@@ -378,7 +381,9 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
                     }
                     if (frame != null) {
                         TCFDataCache<BigInteger> addressCache = frame.getAddress();
-                        if (!addressCache.validate(this)) return;
+                        if (!addressCache.validate(this)) {
+                            return;
+                        }
                         done(addressCache.getData());
                         return;
                     }
@@ -389,18 +394,20 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
 
         if (execContext == fExecContext) {
             fCallback.setUpdatePending(false);
-            if (address == null) address = BigInteger.valueOf(-2);
-            if (targetFrame == 0) {
-                fCallback.updatePC(address);
-            }
-            else {
-                fCallback.gotoFrame(targetFrame, address);
+            if (address != null) {
+                if (targetFrame == 0) {
+                    fCallback.updatePC(address);
+                } else {
+                    fCallback.gotoFrame(targetFrame, address);
+                }
             }
         }
     }
 
     public int getFrameLevel() {
-        if (fActiveFrame == null) return -1;
+        if (fActiveFrame == null) {
+            return -1;
+        }
         Integer level = new TCFTask<Integer>() {
             public void run() {
                 done(fActiveFrame != null ? fActiveFrame.getFrameNo() : -1);
@@ -440,7 +447,9 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
 
     public String getFrameFile() {
         final TCFNodeStackFrame frame = fActiveFrame;
-        if (frame == null) return null;
+        if (frame == null) {
+            return null;
+        }
         String file = new TCFTask<String>(frame.getChannel()) {
             public void run() {
                 if (frame != fActiveFrame) {
@@ -448,7 +457,9 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
                     return;
                 }
                 TCFDataCache<TCFSourceRef> sourceRefCache = frame.getLineInfo();
-                if (!sourceRefCache.validate(this)) return;
+                if (!sourceRefCache.validate(this)) {
+                    return;
+                }
                 TCFSourceRef sourceRef = sourceRefCache.getData();
                 String file = sourceRef.area.file;
                 if (file != null) {
@@ -469,7 +480,9 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
 
     public int getFrameLine() {
         final TCFNodeStackFrame frame = fActiveFrame;
-        if (frame == null) return -1;
+        if (frame == null) {
+            return -1;
+        }
         Integer line = new TCFTask<Integer>(frame.getChannel()) {
             public void run() {
                 if (frame != fActiveFrame) {
@@ -477,7 +490,9 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
                     return;
                 }
                 TCFDataCache<TCFSourceRef> sourceRefCache = frame.getLineInfo();
-                if (!sourceRefCache.validate(this)) return;
+                if (!sourceRefCache.validate(this)) {
+                    return;
+                }
                 TCFSourceRef sourceRef = sourceRefCache.getData();
                 done(sourceRef.area.start_line);
             }
@@ -498,7 +513,9 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
         final long modCount = getModCount();
         Protocol.invokeLater(new Runnable() {
             public void run() {
-                if (execContext != fExecContext) return;
+                if (execContext != fExecContext) {
+                    return;
+                }
                 if (suspendCount != fSuspendCount) {
                     fCallback.setUpdatePending(false);
                     return;
@@ -510,38 +527,36 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
                     return;
                 }
                 TCFDataCache<TCFNodeExecContext> mem_node_cache = execContext.getModel().searchMemoryContext(execContext);
-                if (mem_node_cache == null) {
-                    fCallback.setUpdatePending(false);
-                    return;
-                }
                 if (!mem_node_cache.validate(this)) return;
-                TCFNodeExecContext mem_node = mem_node_cache.getData();
-                if (mem_node == null) {
+                TCFNodeExecContext memContext = mem_node_cache.getData();
+                if (memContext == null) {
                     fCallback.setUpdatePending(false);
                     return;
                 }
-                TCFDataCache<IMemory.MemoryContext> mem_ctx_cache = mem_node.getMemoryContext();
-                if (!mem_ctx_cache.validate(this)) return;
-                final IMemory.MemoryContext mem_ctx = mem_ctx_cache.getData();
-                if (mem_ctx == null) {
+                TCFDataCache<IMemory.MemoryContext> cache = memContext.getMemoryContext();
+                if (!cache.validate(this)) return;
+                final IMemory.MemoryContext mem = cache.getData();
+                if (mem == null) {
                     fCallback.setUpdatePending(false);
                     return;
                 }
-                final String contextId = mem_ctx.getID();
+                final String contextId = mem.getID();
                 Map<String, Object> params = new HashMap<String, Object>();
                 disass.disassemble(contextId, startAddress, linesHint*4, params, new DoneDisassemble() {
                     public void doneDisassemble(IToken token, final Throwable error,
                             final IDisassemblyLine[] disassembly) {
-                        if (execContext != fExecContext) return;
+                        if (execContext != fExecContext) {
+                            return;
+                        }
                         if (error != null) {
                             fCallback.asyncExec(new Runnable() {
                                 public void run() {
-                                    if (execContext != fExecContext) return;
+                                    if (execContext != fExecContext) {
+                                        return;
+                                    }
                                     if (modCount == getModCount()) {
                                         fCallback.insertError(startAddress, TCFModel.getErrorMessage(error, false));
                                         fCallback.setUpdatePending(false);
-                                        int addr_bits = mem_ctx.getAddressSize() * 8;
-                                        if (fCallback.getAddressSize() < addr_bits) fCallback.addressSizeChanged(addr_bits);
                                     }
                                 }
                             });
@@ -574,7 +589,7 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
                                             if (error == null && context != null) {
                                                 if (context.getTypeClass().equals(ISymbols.TypeClass.function)) {
                                                     symbolList.add(context);
-                                                    nextAddress = JSON.toBigInteger(context.getAddress()).add(BigInteger.valueOf(context.getSize()));
+                                                    nextAddress = toBigInteger(context.getAddress()).add(BigInteger.valueOf(context.getSize()));
                                                 }
                                             }
                                             findNextSymbol(nextAddress);
@@ -586,18 +601,17 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
                             }
                             private void findNextSymbol(BigInteger nextAddress) {
                                 while (++idx[0] < disassembly.length) {
-                                    BigInteger instrAddress = JSON.toBigInteger(disassembly[idx[0]].getAddress());
+                                    BigInteger instrAddress = toBigInteger(disassembly[idx[0]].getAddress());
                                     if (nextAddress == null) {
                                         nextAddress = instrAddress;
-                                    }
-                                    else if (instrAddress.compareTo(nextAddress) < 0) {
+                                    } else if (instrAddress.compareTo(nextAddress) < 0) {
                                         continue;
                                     }
                                     symbols.findByAddr(contextId, instrAddress, doneFind);
                                     return;
                                 }
                                 ISymbols.Symbol[] functionSymbols =
-                                    (ISymbols.Symbol[]) symbolList.toArray(new ISymbols.Symbol[symbolList.size()]);
+                                    symbolList.toArray(new ISymbols.Symbol[symbolList.size()]);
                                 doneGetSymbols(disassembly, functionSymbols);
                             }
                         });
@@ -610,16 +624,14 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
                         }
                         if (lineNumbers == null) {
                             doneGetLineNumbers(disassembly, symbols, null);
-                        }
-                        else {
+                        } else {
                             AddressRange range = getAddressRange(disassembly);
                             lineNumbers.mapToSource(contextId, range.start, range.end, new DoneMapToSource() {
                                 public void doneMapToSource(IToken token, Exception error, final CodeArea[] areas) {
                                     if (error != null) {
                                         Activator.log(error);
                                         doneGetLineNumbers(disassembly, symbols, null);
-                                    }
-                                    else {
+                                    } else {
                                         doneGetLineNumbers(disassembly, symbols, areas);
                                     }
                                 }
@@ -631,17 +643,15 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
                         fCallback.asyncExec(new Runnable() {
                             public void run() {
                                 insertDisassembly(modCount, startAddress, disassembly, symbols, areas);
-                                int addr_bits = mem_ctx.getAddressSize() * 8;
-                                if (fCallback.getAddressSize() < addr_bits) fCallback.addressSizeChanged(addr_bits);
                             }
                         });
                     }
 
                     private AddressRange getAddressRange(IDisassemblyLine[] lines) {
                         AddressRange range = new AddressRange();
-                        range.start = JSON.toBigInteger(lines[0].getAddress());
+                        range.start = toBigInteger(lines[0].getAddress());
                         IDisassemblyLine lastLine = lines[lines.length-1];
-                        range.end = JSON.toBigInteger(lastLine.getAddress()).add(BigInteger.valueOf(lastLine.getSize()));
+                        range.end = toBigInteger(lastLine.getAddress()).add(BigInteger.valueOf(lastLine.getSize()));
                         return range;
                     }
                 });
@@ -654,9 +664,13 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
     }
 
     protected final void insertDisassembly(long modCount, BigInteger startAddress, IDisassemblyLine[] instructions, ISymbols.Symbol[] symbols, CodeArea[] codeAreas) {
-        if (!fCallback.hasViewer() || fExecContext == null) return;
-        if (modCount != getModCount()) return;
-        if (DEBUG) System.out.println("insertDisassembly " + DisassemblyUtils.getAddressText(startAddress)); //$NON-NLS-1$
+        if (!fCallback.hasViewer() || fExecContext == null) {
+            return;
+        }
+        if (modCount != getModCount()) {
+            return;
+        }
+        if (DEBUG) System.out.println("insertDisassembly "+ DisassemblyUtils.getAddressText(startAddress)); //$NON-NLS-1$
         boolean updatePending = fCallback.getUpdatePending();
         assert updatePending;
         if (!updatePending) {
@@ -670,7 +684,12 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
 
             AddressRangePosition p= null;
             for (IDisassemblyLine instruction : instructions) {
-                BigInteger address = JSON.toBigInteger(instruction.getAddress());
+                BigInteger address;
+                if (instruction.getAddress() instanceof BigInteger) {
+                    address = (BigInteger) instruction.getAddress();
+                } else {
+                    address = BigInteger.valueOf(instruction.getAddress().longValue());
+                }
                 if (startAddress == null) {
                     startAddress = address;
                     fCallback.setGotoAddressPending(address);
@@ -681,12 +700,10 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
                 if (p instanceof ErrorPosition && p.fValid) {
                     p.fValid = false;
                     fCallback.getDocument().addInvalidAddressRange(p);
-                }
-                else if (p == null /* || address.compareTo(endAddress) > 0 */) {
+                } else if (p == null /* || address.compareTo(endAddress) > 0 */) {
                     if (DEBUG) System.out.println("Excess disassembly lines at " + DisassemblyUtils.getAddressText(address)); //$NON-NLS-1$
                     return;
-                }
-                else if (p.fValid) {
+                } else if (p.fValid) {
                     if (DEBUG) System.out.println("Excess disassembly lines at " + DisassemblyUtils.getAddressText(address)); //$NON-NLS-1$
 //                    if (!p.fAddressOffset.equals(address)) {
 //                        // override probably unaligned disassembly
@@ -716,8 +733,7 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
                 if (sourceFile != null && firstLine >= 0) {
                     try {
                         p = fCallback.insertSource(p, address, sourceFile, firstLine, lastLine);
-                    }
-                    catch (NoSuchMethodError nsme) {
+                    } catch (NoSuchMethodError nsme) {
                         // use fallback
                         p = fCallback.insertSource(p, address, sourceFile, firstLine);
                     }
@@ -735,32 +751,32 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
                 String instr = formatInstruction(instrAttrs);
 
                 p = fCallback.getDocument().insertDisassemblyLine(p, address, instrLength, functionOffset.toString(), instr, sourceFile, firstLine);
-                if (p == null) break;
+                if (p == null) {
+                    break;
+                }
                 insertedAnyAddress = true;
             }
-        }
-        catch (BadLocationException e) {
+        } catch (BadLocationException e) {
             // should not happen
             DisassemblyUtils.internalError(e);
-        }
-        finally {
+        } finally {
             fCallback.setUpdatePending(false);
             if (insertedAnyAddress) {
                 fCallback.updateInvalidSource();
                 fCallback.unlockScroller();
                 fCallback.doPending();
                 fCallback.updateVisibleArea();
-            }
-            else {
+            } else {
                 fCallback.unlockScroller();
             }
         }
+        return;
     }
 
     private FunctionOffset getFunctionOffset(BigInteger address, ISymbols.Symbol[] symbols) {
         if (symbols != null) {
             for (ISymbols.Symbol symbol : symbols) {
-                BigInteger symbolAddress = JSON.toBigInteger(symbol.getAddress());
+                BigInteger symbolAddress = toBigInteger(symbol.getAddress());
                 BigInteger offset = address.subtract(symbolAddress);
                 switch (offset.compareTo(BigInteger.ZERO)) {
                 case 0:
@@ -781,7 +797,7 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
     private CodeArea findCodeArea(BigInteger address, CodeArea[] codeAreas) {
         if (codeAreas != null) {
             for (CodeArea codeArea : codeAreas) {
-                if (address.equals(JSON.toBigInteger(codeArea.start_address))) {
+                if (address.equals(toBigInteger(codeArea.start_address))) {
                     return codeArea;
                 }
             }
@@ -802,8 +818,7 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
             if (IDisassembly.FTYPE_STRING.equals(type) || IDisassembly.FTYPE_Register.equals(type)) {
                 Object text = attrs.get(IDisassembly.FIELD_TEXT);
                 buf.append(text);
-            }
-            else {
+            } else {
                 Object value = attrs.get(IDisassembly.FIELD_VALUE);
                 BigInteger bigValue = new BigInteger(value.toString());
                 // TODO number format
@@ -815,10 +830,14 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
 
     public void gotoSymbol(final String symbol) {
         final TCFNodeStackFrame activeFrame = fActiveFrame;
-        if (activeFrame == null) return;
+        if (activeFrame == null) {
+            return;
+        }
         Protocol.invokeLater(new Runnable() {
             public void run() {
-                if (activeFrame != fActiveFrame) return;
+                if (activeFrame != fActiveFrame) {
+                    return;
+                }
                 IChannel channel = activeFrame.getChannel();
                 final IExpressions exprSvc = channel.getRemoteService(IExpressions.class);
                 if (exprSvc != null) {
@@ -835,8 +854,7 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
                                                     fCallback.gotoAddress(address);
                                                 }
                                             });
-                                        }
-                                        else {
+                                        } else {
                                             handleError(error);
                                         }
                                         exprSvc.dispose(context.getID(), new DoneDispose() {
@@ -846,8 +864,7 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
                                         });
                                     }
                                 });
-                            }
-                            else {
+                            } else {
                                 handleError(error);
                             }
                         }
@@ -874,7 +891,9 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
 
     public String evaluateExpression(final String expression) {
         final TCFNodeStackFrame activeFrame = fActiveFrame;
-        if (activeFrame == null) return null;
+        if (activeFrame == null) {
+            return null;
+        }
         String value = new TCFTask<String>(activeFrame.getChannel()) {
             public void run() {
                 if (activeFrame != fActiveFrame) {
@@ -892,7 +911,7 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
                                     public void doneEvaluate(IToken token, Exception error, Value value) {
                                         if (error == null) {
                                             final BigInteger address = toBigInteger(value.getValue(), value.isBigEndian(), false);
-                                            done("0x" + address.toString(16));
+                                            done("0x"+address.toString(16));
                                         }
                                         else {
                                             done(null);
@@ -910,8 +929,7 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
                             }
                         }
                     });
-                }
-                else {
+                } else {
                     done(null);
                 }
             }
@@ -924,8 +942,13 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
 
     public Object insertSource(Position pos, BigInteger address, String file, int lineNumber) {
         TCFNodeExecContext execContext = fExecContext;
-        if (execContext == null) return null;
-        return TCFSourceLookupDirector.lookup(execContext.getModel().getLaunch().getSourceLocator(), file);
+        if (execContext != null) {
+            ISourceLocator locator = fExecContext.getModel().getLaunch().getSourceLocator();
+            if (locator instanceof ISourceLookupDirector) {
+                return ((ISourceLookupDirector)locator).getSourceElement(file);
+            }
+        }
+        return null;
     }
 
     private static BigInteger toBigInteger(byte[] data, boolean big_endian, boolean sign_extension) {
@@ -947,4 +970,30 @@ public class TCFDisassemblyBackend implements IDisassemblyBackend {
         }
         return new BigInteger(temp);
     }
+
+    private static BigInteger toBigInteger(Number address) {
+        if (address instanceof BigInteger) {
+            return (BigInteger) address;
+        }
+        return new BigInteger(address.toString());
+    }
+
+    /*
+     * @see org.eclipse.cdt.debug.internal.ui.disassembly.dsf.AbstractDisassemblyBackend#evaluateAddressExpression(java.lang.String, boolean)
+     */
+    @Override
+    public BigInteger evaluateAddressExpression(String expression, boolean suppressError) {
+        String value = evaluateExpression(expression);
+        if (value != null) {
+            try {
+                return DisassemblyUtils.decodeAddress(value);
+            } catch (NumberFormatException e) {
+                if (!suppressError) {
+                    MessageDialog.openError(PlatformUI.getWorkbench().getDisplay().getActiveShell(), "Error", "Expression does not evaluate to an address");
+                }
+            }
+        }
+        return null;
+    }
+
 }
