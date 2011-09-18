@@ -169,10 +169,21 @@ public abstract class VdpCanvas {
 	    fromRBG("777"),  // F
 	};
 
-	public static final byte[][][] palettes = {
-		stockPaletteEd,
-		stockPaletteV9938
+	public static final byte[][][] palettes() {
+		return new byte[][][] {
+			stockPaletteEd,
+			stockPaletteV9938
+		};
 	};
+
+	public static byte[][][] allPalettes() {
+		return new byte[][][] {
+			stockPalette,
+			stockPaletteEd,
+			stockPaletteV9938,
+			stockPaletteWashed
+		};
+	}
 	
 	protected static final byte[][] altSpritePaletteGBR = {
 		{ 0, 0, 0 },
@@ -228,7 +239,7 @@ public abstract class VdpCanvas {
 		return format;
 	}
 	
-	private byte[] rgbToGrey(byte[] rgb) {
+	public byte[] rgbToGrey(byte[] rgb) {
 		byte[] g = new byte[3];
 		int lum = (299 * (rgb[0] & 0xff) + 587 * (rgb[1] & 0xff) + 114 * (rgb[2] & 0xff)) / 1000;
 		g[0] = g[1] = g[2] = (byte) lum;
@@ -512,6 +523,10 @@ public abstract class VdpCanvas {
 		this.isGreyscale = b;
 		thePalette = b ? greyPalette : colorPalette;
 		paletteMappingDirty = true;
+	}
+	
+	public boolean isGreyscale() {
+		return isGreyscale;
 	}
 
 	/**

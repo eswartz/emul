@@ -231,6 +231,6 @@ public class AwtDragDropHandler implements DragGestureListener, DropTargetListen
 		
 		ImageImport importer = new ImageImport((ImageDataCanvas) renderer.getCanvas(), 
 				renderer.getVdpHandler());
-		importer.importImage(image);
+		importer.importImage(image, false);
 	}
 }

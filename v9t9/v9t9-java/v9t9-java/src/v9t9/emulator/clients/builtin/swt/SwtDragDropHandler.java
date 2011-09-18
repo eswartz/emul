@@ -286,7 +286,7 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 				} catch (SWTException e) {
 					java.awt.Image img = ImageIO.read(new File(file));
 					if (img != null)
-						importImage(img);
+						importImage(img, false);
 					else
 						MessageDialog.openError(null, "Failed To Import", 
 								"Image format not recognized for '" +
@@ -307,17 +307,18 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 	private void importImage(ImageData data) {
 
 		// convert to AWT image -- don't scale with SWT, which is lame
-		BufferedImage img = new BufferedImage(data.width, data.height, BufferedImage.TYPE_INT_RGB);
+		BufferedImage img = new BufferedImage(data.width, data.height, BufferedImage.TYPE_INT_ARGB);
 		int[] pix = new int[data.width * data.height];
 
 		for (int y = 0; y < data.height; y++) {
-			data.getPixels(0, y, data.width, pix, data.width * y);
+			int offs = data.width * y;
+			data.getPixels(0, y, data.width, pix, offs);
 		}
 		if (!data.palette.isDirect) {
-			// apply palette... wtf
+			// apply palette..
 			for (int i = 0; i < pix.length; i++) {
 				RGB rgb = data.palette.colors[pix[i]]; 
-				pix[i] = 0xff000000 | (rgb.red << 16) | (rgb.green << 8) | (rgb.blue);
+				pix[i] = (rgb.red << 16) | (rgb.green << 8) | (rgb.blue);
 			}
 		}
 		else if (data.palette.blueShift != 0) {
@@ -330,19 +331,34 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 			}
 		}
 		
+		// apply alpha
+		for (int y = 0; y < data.height; y++) {
+			int offs = data.width * y;
+			
+			if (data.alphaData != null) {
+				for (int x = 0; x < data.width; x++)
+					pix[offs + x] |= ((data.alphaData[offs + x] & 0xff) << 24);
+			} else {
+				int alpha = data.alpha != -1 ? data.alpha << 24 : 0xff000000;
+				for (int x = 0; x < data.width; x++)
+					pix[offs + x] |= alpha;
+			}
+		}
+		
 		img.setRGB(0, 0, data.width, data.height, pix, 0, pix.length / data.height);
 
-		importImage(img);
+		importImage(img, !data.palette.isDirect);
 		
 	}
 
 	/**
 	 * @param img
+	 * @param isLowColor 
 	 */
-	protected void importImage(java.awt.Image img) {
+	protected void importImage(java.awt.Image img, boolean isLowColor) {
 		ImageImport importer = new ImageImport(
 				(ImageDataCanvas) renderer.getCanvas(), renderer.getVdpHandler());
-		importer.importImage(img);
+		importer.importImage(img, isLowColor);
 	}
 
 
