@@ -477,6 +477,9 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		if (true || displayList == null) {
 			effect.getRender().init();
 			
+			if (displayList != null)
+				glDeleteLists(displayList, 1);
+			
 			displayList = glGenLists(1);
 			glNewList(displayList, GL_COMPILE);
 			effect.getRender().render();
