@@ -201,7 +201,6 @@ Create BitModeParams
 : bit-mode
     BitFunctions write-var-list
     BitModeParams v-set-alloc-list
-        
     $02A0 write-vmoderegs
 ;
 

@@ -87,7 +87,7 @@ public class MulticolorModeRedrawHandler extends BaseRedrawHandler implements
 				byte b = access.getPixel(x + 1, y);
 				
 				int poffs = ((y >> 3) << 8) + (y & 7) + ((x >> 1) << 3);  
-				System.out.println("("+y+","+x+") = "+ poffs);
+				//System.out.println("("+y+","+x+") = "+ poffs);
 				patt.memory[patt.offset + poffs] = (byte) ((f << 4) | b);
 				touch(patt.offset + poffs);
 			}

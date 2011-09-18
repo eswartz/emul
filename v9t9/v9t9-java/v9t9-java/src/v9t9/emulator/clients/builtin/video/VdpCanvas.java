@@ -169,6 +169,11 @@ public abstract class VdpCanvas {
 	    fromRBG("777"),  // F
 	};
 
+	public static final byte[][][] palettes = {
+		stockPaletteEd,
+		stockPaletteV9938
+	};
+	
 	protected static final byte[][] altSpritePaletteGBR = {
 		{ 0, 0, 0 },
 		{ 0, 0, 2 },
