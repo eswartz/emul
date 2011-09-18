@@ -98,17 +98,11 @@ class ImageBar extends Composite implements IImageBar {
 				axis = cursize.y;
 				size = cursize.x;
 			}
-			/*
-			size = Math.max(minsize, maxsize);
-			if (size < 16)
-				size = 16;
-			else if (size > 128)
-				size = 128;
-			*/
 			//System.out.println(axis+","+whint+","+hhint);
 			if (smoothResize) {
 				axis = axis * 7 / 8;
 				size = axis / num;
+				size = Math.min(48, size);
 				if (isHorizontal) {
 					w = axis;
 					h = size;
@@ -131,7 +125,6 @@ class ImageBar extends Composite implements IImageBar {
 					h = hhint >= 0 ? hhint : size * num;
 				}
 			}
-			
 			
 			return new Point(w, h);
 		}
