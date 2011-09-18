@@ -110,31 +110,115 @@ public class ImageImport implements IBitmapPixelAccess {
 		@Override
 		public int mapColor(int[] prgb, int[] distA) {
 			int closest = getCloseColor(prgb);
-			distA[0] = getColorDistance(closest, prgb);
+			distA[0] = getColorDistance(thePalette, closest, prgb);
 			
 			return closest;
 		}
 		
 		/**
+		 * Get the closest color by sheer brute force -- we don't
+		 * want dark green to emerge as a "close" color for dark or
+		 * desaturated colors!
+		 * 
+		 * 0 clear
+		 * 
+		 * 1 black
+		 * 
+		 * 2 medium green
+		 * 
+		 * 3 light green
+		 * 
+		 * 4 dark blue
+		 * 
+		 * 5 light blue
+		 * 
+		 * 6 dark red
+		 * 
+		 * 7 cyan
+		 * 
+		 * 8 medium red
+		 * 
+		 * 9 orange/skin
+		 * 
+		 * 10 yellow
+		 * 
+		 * 11 light yellow
+		 * 
+		 * 12 dark green
+		 * 
+		 * 13 purple
+		 * 
+		 * 14 grey
+		 * 
+		 * 15 white
+		 * 
 		 * @param prgb
 		 * @return
 		 */
 		private int getCloseColor(int[] prgb) {
 			float[] phsv = rgbToHsv(prgb);
-
-			int closest = -1;
 			
 			float hue = phsv[0];
 			float val = phsv[2] * 100 / 256;
+
+			int closest = -1;
+
+			if (phsv[1] < (hue >= 30 && hue < 75 ? 0.66f : 0.33f)) {
+				if (val >= 66) {
+					closest = 15;
+				} else if (val >= 15) {
+					// dithering will take care of the rest
+					closest = 14;
+				} else {
+					closest = 1;
+				}
+			}
+			else {
+				int mindiff = Integer.MAX_VALUE;
+				
+				for (int c = 1; c < 16; c++) {
+					// don't match dark green implicitly
+					if (c != 12) {
+						int dist = getColorDistance(thePalette, c, prgb);
+						if (dist < mindiff) {
+							mindiff = dist;
+							closest = c;
+						}
+					}
+				}
+				
+				// see how the color matches
+				//closest = rigidMatch(phsv, hue, val);
+				
+				if (closest == 1) {
+					if (phsv[1] > 0.9f) {
+						if ((hue >= 75 && hue < 140) && (val >= 5 && val <= 33)) {
+							closest = 12;
+						}
+					}
+				}
+				/*else {
+					int rigid = rigidMatch(phsv, hue, val);
+					if (phsv[1] < 0.5f && (rigid == 1 || rigid == 14 || rigid == 15)) {
+						closest = rigid;
+					}
+				}*/
+			}
 			
+			return closest;
+		}
+		
+		int rigidMatch(float[] phsv, float hue, float val) {
+			int closest;
 			if (val <= 25) {
 				// any color
 				closest = 1;
 			}
-			else if (phsv[1] <= 0.33) {
-				if (val >= 85 - 25/2) {
+			else if (phsv[1] < 0.333f) {
+				if (val >= 66) {
 					closest = 15;
-				} else if (val >= 75 - 25/2) {
+				} else if (val >= 33) {
+					// dithering will take care of the rest
 					closest = 14;
 				} else {
 					closest = 1;
@@ -145,7 +229,7 @@ public class ImageImport implements IBitmapPixelAccess {
 					// skin
 					if (val >= 75)
 						closest = 9;
-					else if (val >= 50)
+					else if (val >= 66)
 						closest = 8;
 					else
 						closest = 1;
@@ -161,20 +245,22 @@ public class ImageImport implements IBitmapPixelAccess {
 				// yellow/orange
 				if (val >= 95) {
 					if (phsv[1] < 0.8)
-						closest = 9;
-					else
 						closest = 11;
+					else
+						closest = 10;
 				} else if (val >= 75 && phsv[1] >= 0.8) {
 					closest = 10;
-				} else if (val >= 50 && phsv[1] < 0.8) {
+				} else if (val >= 66 && phsv[1] < 0.8) {
 					closest = 9;
 				} else {
 					if (hue >= 75 && val >= 50 - 25/2) {
 						// green-yellow
 						closest = 12;
-					} else if (val < 50) {
-						// could be considered green
-						closest = 12;
+					//} else if (val < 50 && phsv[1] >= 0.75f) {
+					//	// could be considered green
+					//	closest = 12;
+					} else if (val >= 33) {
+						closest = 14;
 					} else {
 						closest = 1;
 					}
@@ -182,9 +268,9 @@ public class ImageImport implements IBitmapPixelAccess {
 			} else if (hue >= 75 && hue < 140) {
 				// green
 				if (val >= 75) {
-					closest = 4;
-				} else if (val >= 64 - 25/2) {
 					closest = 3;
+				} else if (val >= 64 - 25/2) {
+					closest = 2;
 				} else if (val >= 25 - 25/2) {
 					closest = 12;
 				} else {
@@ -216,7 +302,6 @@ public class ImageImport implements IBitmapPixelAccess {
 					closest = 1;
 				}
 			}
-			
 			return closest;
 		}
 
@@ -339,7 +424,7 @@ public class ImageImport implements IBitmapPixelAccess {
 					mindiff = dist;
 				}
 			}
-			return getPixel(thePalette[closest]);
+			return rgb8ToPixel(thePalette[closest]);
 		}
 	}
 
@@ -383,7 +468,7 @@ public class ImageImport implements IBitmapPixelAccess {
 		@Override
 		public int getClosestPalettePixel(int[] prgb) {
 			byte[] rgb = VdpCanvas.getGRB333(prgb[1] >> 5, prgb[0] >> 5, prgb[2] >> 5);
-			return getPixel(rgb);
+			return rgb8ToPixel(rgb);
 		}
 		
 	}
@@ -431,10 +516,10 @@ public class ImageImport implements IBitmapPixelAccess {
 			for (int c = firstColor; c < numColors; c++) {
 				int dist = getColorDistance(palette, c, prgb);
 				if (dist < 25*3) {
-					return getPixel(palette[closest]);
+					return rgb8ToPixel(palette[closest]);
 				}
 			}
-			return getPixel(prgb);
+			return rgb8ToPixel(prgb);
 		}
 	}
 
@@ -465,10 +550,15 @@ public class ImageImport implements IBitmapPixelAccess {
 		if (vdp instanceof VdpV9938) {
 			// hack: graphics mode 2 allows this too, but for comparison shopping,
 			// pretend we can't.
-			if (format == Format.COLOR16_8x1 && (vdp.readVdpReg(0) & 0x6) == 0x2)
+			if (format == Format.COLOR16_8x1 && (vdp.readVdpReg(0) & 0x6) == 0x2) {
 				canSetPalette = false;
-			else
+				
+				// measure against this palette, since
+				// it has more regular (non-pastel) colors
+				thePalette = VdpCanvas.stockPaletteEd;
+			} else {
 				canSetPalette = format != Format.COLOR256_1x1;
+			}
 		} else {
 			canSetPalette = false;
 		}
@@ -637,16 +727,17 @@ public class ImageImport implements IBitmapPixelAccess {
 
 
 	/** Import image from 'img' and set the color indices in 'colorMap' which is #getVisibleWidth() by #getVisibleHeight() */
-	public void setImageData(BufferedImage img) {
+	protected void setImageData(BufferedImage img) {
 		if (format == null || format == Format.TEXT || format == Format.COLOR16_8x8)
 			return;
 
 		updatePaletteMapping();
 		
+		Arrays.fill(imageData.data, (byte) 0);
+		
 		if (!importDirectMappedImage(img)) {
 			convertImageToColorMap(img);
 		}
-
 
 		replaceImageData(img);
 	}
@@ -686,7 +777,7 @@ public class ImageImport implements IBitmapPixelAccess {
 		
 		if (matched) {
 			for (int c = 0; c < numColors; c++) {
-				replaceColor(img, hist, c, getPixel(thePalette[c]), Integer.MAX_VALUE);
+				replaceColor(img, hist, c, rgb8ToPixel(thePalette[c]), Integer.MAX_VALUE);
 			}
 			
 			return true;
@@ -702,7 +793,7 @@ public class ImageImport implements IBitmapPixelAccess {
 		if (format == Format.COLOR16_8x1 || format == Format.COLOR16_4x4) {
 			mapColor = canSetPalette ? new RGB333MapColor(16) : new TI16MapColor();
 			optimizeForNColors(img, mapColor);
-			limitDither = true;
+			limitDither = !canSetPalette;
 		}
 		else if (format == Format.COLOR16_1x1) {
 			mapColor = new RGB333MapColor(16);
@@ -733,29 +824,25 @@ public class ImageImport implements IBitmapPixelAccess {
 	}
 
 	private void replaceImageData(BufferedImage img) {
-		int xo;
-		int yo;
+		int xoffs, yoffs;
 		
 		if (format == Format.COLOR16_4x4) {
-			xo = (64 - img.getWidth()) / 2;
-			yo = (48 - img.getHeight()) / 2;
+			xoffs = (64 - img.getWidth()) / 2;
+			yoffs = (48 - img.getHeight()) / 2;
 		} else {
-			xo = (canvas.getVisibleWidth() - img.getWidth() + canvas.getXOffset()) / 2;
-			yo = (canvas.getVisibleHeight() - img.getHeight() + canvas.getYOffset()) / 2;
+			xoffs = (canvas.getVisibleWidth() - img.getWidth() + canvas.getXOffset() + canvas.getExtraSpace()) / 2;
+			yoffs = (canvas.getVisibleHeight() - img.getHeight() + canvas.getYOffset()) / 2;
 		}
-
-		// borders to background
-		Arrays.fill(imageData.data, (byte) 0); 
 
 		if (format == Format.COLOR16_8x1) {
 			
-			reduceBitmapMode(img, xo, yo);
+			reduceBitmapMode(img, xoffs, yoffs);
 
 		} else {
 
 			for (int y = 0; y < img.getHeight(); y++) {
 				for (int x = 0; x < img.getWidth(); x++) {
-					imageData.setPixel(x + xo, y + yo, img.getRGB(x, y));
+					imageData.setPixel(x + xoffs, y + yoffs, img.getRGB(x, y));
 				}
 			}
 		}
@@ -763,21 +850,30 @@ public class ImageImport implements IBitmapPixelAccess {
 
 	/**
 	 * @param img
-	 * @param xo
-	 * @param yo
+	 * @param xoffs
+	 * @param yoffs
 	 */
-	protected void reduceBitmapMode(BufferedImage img, int xo, int yo) {
+	protected void reduceBitmapMode(BufferedImage img, int xoffs, int yoffs) {
 		Map<Integer, Integer> histogram = new HashMap<Integer, Integer>();
 		
+		// be sure we select the 8 pixel groups sensibly
+		if ((xoffs & 7) > 3)
+			xoffs = (xoffs + 7) & ~7;
+		else
+			xoffs = xoffs & ~7;
+		
+		int width = img.getWidth();
 		for (int y = 0; y < img.getHeight(); y++) {
-			for (int x = 0; x < img.getWidth(); x += 8) {
+			for (int x = 0; x < width; x += 8) {
 
 				histogram.clear();
 				
-				int maxx = Math.min(x + 8, img.getWidth());
+				int maxx = x + 8 < width ? x + 8 : width;
 				
+				int pixel = 0;
 				for (int xd = x; xd < maxx; xd++) {
-					int pixel = img.getRGB(xd, y);
+					if (xd < width)
+						pixel = img.getRGB(xd, y);
 					
 					Integer cnt = histogram.get(pixel);
 					if (cnt == null)
@@ -810,8 +906,10 @@ public class ImageImport implements IBitmapPixelAccess {
 					fpixel = bpixel = sorted.get(0).first;
 				}
 				
+				int newPixel = 0;
 				for (int xd = x; xd < maxx; xd++) {
-					int newPixel = img.getRGB(xd, y);
+					if (xd < width)
+						newPixel = img.getRGB(xd, y);
 					
 					if (newPixel != fpixel && newPixel != bpixel) {
 						if (fpixel < bpixel) {
@@ -821,7 +919,7 @@ public class ImageImport implements IBitmapPixelAccess {
 						}
 					}
 						
-					imageData.setPixel(xd + xo, y + yo, newPixel);
+					imageData.setPixel(xd + xoffs, y + yoffs, newPixel);
 				}
 			}
 		}
@@ -1148,7 +1246,7 @@ public class ImageImport implements IBitmapPixelAccess {
 			canvas.setGRB333(c, g, r, b);
 			
 			//if ((interestingColors == usedColors || i < replaceLimit)) {
-			replaceColor(img, hist, idx, getPixel(thePalette[c]), replaceDist);
+			replaceColor(img, hist, idx, rgb8ToPixel(thePalette[c]), replaceDist);
 		}
 		
 		return maxDist;
@@ -1265,10 +1363,10 @@ public class ImageImport implements IBitmapPixelAccess {
 		return (byte) (int) c;
 	}
 
-	protected static int getPixel(byte[] nrgb) {
+	protected static int rgb8ToPixel(byte[] nrgb) {
 		return ((nrgb[0] & 0xff) << 16) | ((nrgb[1] & 0xff) << 8) | (nrgb[2] & 0xff);
 	}
-	protected static int getPixel(int[] prgb) {
+	protected static int rgb8ToPixel(int[] prgb) {
 		return ((prgb[0]) << 16) | ((prgb[1]) << 8) | (prgb[2]);
 	}
 
@@ -1296,14 +1394,14 @@ public class ImageImport implements IBitmapPixelAccess {
 		
 		if (ncols < 256) {
 			for (int c = 0; c < ncols; c++) {
-				palettePixels[c] = getPixel(thePalette[c]);
+				palettePixels[c] = rgb8ToPixel(thePalette[c]);
 				paletteToIndex.put(palettePixels[c], c);
 			}
 		} else {
 			byte[] rgb = { 0, 0, 0};
 			for (int c = 0; c < ncols; c++) {
 				canvas.getGRB332(rgb, (byte) c);
-				palettePixels[c] = getPixel(rgb);
+				palettePixels[c] = rgb8ToPixel(rgb);
 				paletteToIndex.put(palettePixels[c], c);
 			}
 		}
@@ -1416,6 +1514,13 @@ public class ImageImport implements IBitmapPixelAccess {
 			targHeight = (int) (targWidth * realHeight / realWidth / aspect);
 		} else {
 			targWidth = (int) (targHeight * realWidth * aspect / realHeight);
+			
+			// make sure, for bitmap mode, that the size is a multiple of 8,
+			// otherwise the import into video memory will destroy the picture
+			if (format == Format.COLOR16_8x1) {
+				targWidth &= ~7;
+				targHeight = (int) (targWidth * realHeight / realWidth / aspect);
+			}
 		}
 		
 		BufferedImage scaled = getScaledInstance(image, targWidth, targHeight, 
@@ -1428,6 +1533,7 @@ public class ImageImport implements IBitmapPixelAccess {
 
 		synchronized (vdp) {
 			vdp.getVdpModeRedrawHandler().importImageData(this);
+			vdp.getCanvas().markDirty();
 		}
 
 	}
