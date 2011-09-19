@@ -574,6 +574,21 @@ static void next_sy(void) {
     }
 }
 
+static void reg2value(Context * ctx, int frame, RegisterDefinition * def, Value * v) {
+    memset(v, 0, sizeof(Value));
+    set_value(v, NULL, def->size, def->big_endian);
+    v->type_class = TYPE_CLASS_CARDINAL;
+    v->reg = def;
+    if (frame == STACK_TOP_FRAME) {
+        if (context_read_reg(ctx, def, 0, def->size, v->value) < 0) exception(errno);
+    }
+    else {
+        StackFrame * info = NULL;
+        if (get_frame_info(ctx, frame, &info) < 0) exception(errno);
+        if (read_reg_bytes(info, def, 0, def->size, (uint8_t *)v->value) < 0) exception(errno);
+    }
+}
+
 #if ENABLE_Symbols
 static void set_value_endianness(Value * v, Symbol * sym, Symbol * type) {
     SYM_FLAGS flags = 0;
@@ -680,6 +695,18 @@ static int identifier(Value * scope, char * name, Value * v) {
         }
         if (expression_context == NULL) {
             exception(ERR_INV_CONTEXT);
+        }
+        if (name[0] == '$') {
+            RegisterDefinition * def = get_reg_definitions(expression_context);
+            if (def != NULL) {
+                while (def->name != NULL) {
+                    if (strcmp(name + 1, def->name) == 0) {
+                        reg2value(expression_context, expression_frame, def, v);
+                        return SYM_CLASS_REFERENCE;
+                    }
+                    def++;
+                }
+            }
         }
         if (strcmp(name, "$thread") == 0) {
             set_string_value(v, expression_context->id);
@@ -1074,15 +1101,29 @@ static void primary_expression(int mode, Value * v) {
     }
     else if (text_sy == SY_ID) {
         if (mode != MODE_SKIP) {
+            int ok = 0;
+            const char * id = (char *)text_val.value;
+            {
+                Context * ctx = NULL;
+                int frame = STACK_NO_FRAME;
+                RegisterDefinition * def = NULL;
+                if (id2register(id, &ctx, &frame, &def) >= 0) {
+                    if (frame == STACK_TOP_FRAME) frame = expression_frame;
+                    reg2value(ctx, frame, def, v);
+                    ok = 1;
+                }
+            }
 #if ENABLE_Symbols
-            int sym_class = 0;
-            Symbol * sym = NULL;
-            if (id2symbol((char *)text_val.value, &sym) < 0) error(errno, "Invalid symbol ID");
-            sym_class = sym2value(sym, v);
-            if (sym_class == SYM_CLASS_TYPE) error(ERR_INV_EXPRESSION, "Illegal usage of type '%s'", text_val.value);
-#else
-            error(ERR_INV_EXPRESSION, "Invalid usage of symbol ID - symbols service not available");
+            if (!ok) {
+                Symbol * sym = NULL;
+                if (id2symbol(id, &sym) >= 0) {
+                    int sym_class = sym2value(sym, v);
+                    if (sym_class == SYM_CLASS_TYPE) error(ERR_INV_EXPRESSION, "Illegal usage of type '%s'", id);
+                    ok = 1;
+                }
+            }
 #endif
+            if (!ok) error(ERR_INV_EXPRESSION, "Symbol not found: %s", id);
         }
         next_sy();
     }
@@ -2645,7 +2686,9 @@ static void command_assign_cache_client(void * x) {
         }
         else if (value.remote) {
             if (context_write_mem(ctx, value.address, args->value_buf, args->value_size) < 0) err = errno;
+#if SERVICE_Memory
             if (!err) send_event_memory_changed(ctx, value.address, args->value_size);
+#endif
         }
         else {
             err = ERR_INV_EXPRESSION;
