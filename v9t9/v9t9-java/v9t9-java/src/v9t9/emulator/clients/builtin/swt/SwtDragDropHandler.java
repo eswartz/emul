@@ -3,8 +3,15 @@
  */
 package v9t9.emulator.clients.builtin.swt;
 
+import java.awt.Image;
 import java.awt.image.BufferedImage;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URL;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -22,6 +29,7 @@ import org.eclipse.swt.dnd.DropTarget;
 import org.eclipse.swt.dnd.DropTargetEvent;
 import org.eclipse.swt.dnd.DropTargetListener;
 import org.eclipse.swt.dnd.FileTransfer;
+import org.eclipse.swt.dnd.URLTransfer;
 import org.eclipse.swt.dnd.ImageTransfer;
 import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.events.DisposeEvent;
@@ -30,6 +38,7 @@ import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.ImageLoader;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Control;
+import org.ejs.coffee.core.utils.Pair;
 
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
 import v9t9.emulator.clients.builtin.video.ImageImport;
@@ -50,6 +59,8 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 	private boolean dragSourceInProgress;
 	private DisposeListener disposeListener;
 	private final Control control;
+	private File lastURLFile;
+	private String lastURL;
 
 	public SwtDragDropHandler(Control control, ISwtVideoRenderer renderer) {
 		this.control = control;
@@ -61,17 +72,18 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 		target.addDropListener(this);
 		
 		if (System.getProperty("os.name").equals("Linux")) {
-			source.setTransfer(new Transfer[] { FileTransfer.getInstance(), 
-					//MyImageTransfer.getInstance() 
-			});
-			target.setTransfer(new Transfer[] { 
+			source.setTransfer(new Transfer[] { 
 					FileTransfer.getInstance(), 
-					//MyImageTransfer.getInstance() 
+			});
+			target.setTransfer(new Transfer[] {
+					FileTransfer.getInstance(), 
+					URLTransfer.getInstance(),
 			});
 		} else {
 			source.setTransfer(new Transfer[] { 
 					ImageTransfer.getInstance(), 
 					FileTransfer.getInstance(), 
+					URLTransfer.getInstance(), 
 			});
 			target.setTransfer(new Transfer[] { 
 					ImageTransfer.getInstance(),
@@ -271,40 +283,126 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 	@Override
 	public void drop(DropTargetEvent event) {
 		try {
+			Pair<java.awt.Image, Boolean> info = null;
+			
 			if (FileTransfer.getInstance().isSupportedType(event.currentDataType)) {
 				String[] files = (String[]) event.data;
-				if (files == null)
-					return;
-				ImageLoader imgLoader = new ImageLoader();
-				String file = files[0];
-				try {
-					ImageData[] datas = imgLoader.load(file);
-					if (datas.length > 0) {
-						ImageData data = datas[0];
-						importImage(data);
-					}
-				} catch (SWTException e) {
-					java.awt.Image img = ImageIO.read(new File(file));
-					if (img != null)
-						importImage(img, false);
-					else
-						MessageDialog.openError(null, "Failed To Import", 
-								"Image format not recognized for '" +
-								file + "' (tried both SWT and AWT)" );
-				}
+				if (files != null)
+					info = loadImageFromFile(files[0]);
 			}
-			else if (ImageTransfer.getInstance().isSupportedType(event.currentDataType)) {
-				importImage((ImageData) event.data);
+			if (info == null && ImageTransfer.getInstance().isSupportedType(event.currentDataType)) {
+				info = convertImage((ImageData) event.data);
+			}
+			if (info == null && URLTransfer.getInstance().isSupportedType(event.currentDataType)) {
+				
+				String[] entries = ((String) event.data).split("\n");
+				String trimmed = null;
+				for (String entry : entries) {
+					trimmed = entry.replaceAll("\u00A0", "").trim();
+					break;
+				}
+				
+				if (!trimmed.equals(lastURL)) {
+					if (lastURLFile != null)
+						lastURLFile.delete();
+					File temp = File.createTempFile("url", ".img");
+					URL url = new URL(trimmed);
+					lastURLFile = readImageFromURL(temp, url);
+					if (lastURLFile != null)
+						lastURL = trimmed;
+					else {
+						lastURLFile = null;
+						temp.delete();
+					}
+				}
+				if (lastURLFile != null)
+					info = loadImageFromFile(lastURLFile.getAbsolutePath());
+			}
+			
+			if (info != null) {
+				importImage(info.first, info.second);
 			}
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}
 	}
 
+	private File readImageFromURL(File temp, URL url) {
+		System.out.println("Loading " + url + " into " + temp);
+
+		InputStream is = null;
+		try {
+			is = url.openStream();
+			OutputStream os = null;
+			try {
+				os = new BufferedOutputStream(new FileOutputStream(temp));
+				byte[] buf = new byte[32768];
+				int len;
+				while ((len = is.read(buf)) != -1) {
+					os.write(buf, 0, len);
+				}
+			} catch (IOException e) {
+				MessageDialog.openError(null, "I/O Error", 
+						"Could not read '" +
+						url + "' to '" + temp + "' (" + e.getMessage() + ")" );
+			} finally {
+				if (os != null) {
+					try {
+						os.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		} catch (IOException e) {
+			MessageDialog.openError(null, "I/O Error", 
+					"Could not load '" +
+					url + "' (" + e.getMessage() + ")" );
+		} finally {
+			if (is != null) {
+				try {
+					is.close();
+				} catch (IOException e) {
+				}
+			}
+		}
+		return temp;
+	}
+
+	private Pair<Image, Boolean> loadImageFromFile(String file) {
+		Pair<Image, Boolean> info = null;
+		try {
+			ImageLoader imgLoader = new ImageLoader();
+			ImageData[] datas = imgLoader.load(file);
+			if (datas.length > 0) {
+				info = convertImage(datas[0]);
+			}
+		} catch (SWTException e) {
+			java.awt.Image img;
+			try {
+				img = ImageIO.read(new File(file));
+				if (img != null)
+					info = new Pair<Image, Boolean>(img, false);
+			} catch (IOException e1) {
+				MessageDialog.openError(null, "I/O Error", 
+						"Could not load '" +
+						file + "' (" + e1.getMessage() + ")" );
+				return null;
+			}
+		}
+
+		if (info == null)
+			MessageDialog.openError(null, "Failed To Import", 
+					"Image format not recognized for '" +
+					file + "' (tried both SWT and AWT)" );
+
+		return info;
+	}
+
 	/**
 	 * @param data
 	 */
-	private void importImage(ImageData data) {
+	private Pair<java.awt.Image, Boolean> convertImage(ImageData data) {
 
 		// convert to AWT image -- don't scale with SWT, which is lame
 		BufferedImage img = new BufferedImage(data.width, data.height, BufferedImage.TYPE_INT_ARGB);
@@ -347,7 +445,7 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 		
 		img.setRGB(0, 0, data.width, data.height, pix, 0, pix.length / data.height);
 
-		importImage(img, !data.palette.isDirect);
+		return new Pair<java.awt.Image, Boolean>(img, !data.palette.isDirect);
 		
 	}
 
