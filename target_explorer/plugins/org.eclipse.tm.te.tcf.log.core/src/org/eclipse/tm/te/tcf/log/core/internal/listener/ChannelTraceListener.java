@@ -9,11 +9,12 @@
  *******************************************************************************/
 package org.eclipse.tm.te.tcf.log.core.internal.listener;
 
+import java.io.ByteArrayInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Date;
 
 import org.eclipse.core.runtime.Assert;
@@ -21,7 +22,6 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.tm.tcf.core.AbstractChannel.TraceListener;
 import org.eclipse.tm.tcf.protocol.IChannel;
-import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.te.tcf.log.core.activator.CoreBundleActivator;
 import org.eclipse.tm.te.tcf.log.core.interfaces.IPreferenceKeys;
 import org.eclipse.tm.te.tcf.log.core.interfaces.ITracing;
@@ -96,7 +96,7 @@ public class ChannelTraceListener implements TraceListener {
 														ITracing.ID_TRACE_CHANNEL_TRACE_LISTENER, this);
 		}
 
-		doLogMessage(type, token, service, name, data);
+		doLogMessage(type, token, service, name, data, true);
 	}
 
 	/* (non-Javadoc)
@@ -109,13 +109,13 @@ public class ChannelTraceListener implements TraceListener {
 														ITracing.ID_TRACE_CHANNEL_TRACE_LISTENER, this);
 		}
 
-		doLogMessage(type, token, service, name, data);
+		doLogMessage(type, token, service, name, data, false);
 	}
 
 	/**
 	 * Helper method to output the message to the logger.
 	 */
-	private void doLogMessage(final char type, String token, String service, String name, byte[] data) {
+	private void doLogMessage(final char type, String token, String service, String name, byte[] data, boolean received) {
 		// Filter out the heart beat messages if not overwritten by the preferences
 		boolean showHeartbeats = Platform.getPreferencesService().getBoolean(CoreBundleActivator.getUniqueIdentifier(),
 																			 IPreferenceKeys.PREF_SHOW_HEARTBEATS, false, null);
@@ -124,7 +124,7 @@ public class ChannelTraceListener implements TraceListener {
 		}
 
 		// Format the message
-		final String message = formatMessage(type, token, service, name, data);
+		final String message = formatMessage(type, token, service, name, data, received);
 		// Get the file writer
 		FileWriter writer = LogManager.getInstance().getWriter(channel);
 		if (writer != null) {
@@ -141,24 +141,39 @@ public class ChannelTraceListener implements TraceListener {
 	/**
 	 * Format the trace message.
 	 */
-	protected String formatMessage(char type, String token, String service, String name, byte[] data) {
+	protected String formatMessage(char type, String token, String service, String name, byte[] data, boolean received) {
 		// Get the current time stamp
 		String time = TIME_FORMAT.format(new Date(System.currentTimeMillis()));
 
 		// Decode the arguments again for tracing purpose
-		Object[] args = null;
-		if (data != null) try { args = JSON.parseSequence(data); } catch (IOException e) { /* ignored on purpose */ }
+		String args = null;
+		if (data != null) {
+			StringBuilder builder = new StringBuilder();
+			InputStreamReader reader = new InputStreamReader(new ByteArrayInputStream(data));
+			try {
+				int c = reader.read();
+				while (c != -1) {
+					builder.append(c != 0 ? Character.valueOf((char)c).charValue() : ' ');
+					c = reader.read();
+				}
+			} catch (IOException ex) { /* ignored on purpose */ }
+
+			if (builder.length() > 0) args = builder.toString().trim();
+		}
 
 		// Construct the full message
-		String message = NLS.bind(Messages.ChannelTraceListener_message,
-		                          new Object[] { time,
-												 Character.valueOf(type).toString(),
-												 token != null ? token : "-", //$NON-NLS-1$
-												 service != null ? service : "", //$NON-NLS-1$
-												 name != null ? "#" + name : "", //$NON-NLS-1$ //$NON-NLS-2$
-												 (data != null ? Arrays.toString(args) : "") }); //$NON-NLS-1$
+		//
+		// The message format is: <time>: [<---|--->] <type> <token> <service>#<name> <args>
+		StringBuilder message = new StringBuilder();
+		message.append(time).append(":"); //$NON-NLS-1$
+		message.append(" ").append(received ? "<---" : "--->"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+		message.append(" ").append(Character.valueOf(type)); //$NON-NLS-1$
+		if (token != null) message.append(" ").append(token); //$NON-NLS-1$
+		if (service != null) message.append(" ").append(service); //$NON-NLS-1$
+		if (name != null) message.append(" ").append(name); //$NON-NLS-1$
+		if (args != null && args.trim().length() > 0) message.append(" ").append(args.trim()); //$NON-NLS-1$
 
-		return message;
+		return message.toString();
 	}
 
 }

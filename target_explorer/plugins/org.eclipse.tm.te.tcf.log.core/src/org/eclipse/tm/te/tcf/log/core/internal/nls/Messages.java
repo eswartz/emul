@@ -29,7 +29,6 @@ public class Messages extends NLS {
 
 	// **** Declare externalized string id's down here *****
 
-	public static String ChannelTraceListener_message;
 	public static String ChannelTraceListener_channelOpened_message;
 	public static String ChannelTraceListener_channelClosed_message;
 	public static String ChannelTraceListener_logManagerDispose_message;

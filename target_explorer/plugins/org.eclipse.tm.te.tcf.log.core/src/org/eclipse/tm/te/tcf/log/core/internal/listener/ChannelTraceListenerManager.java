@@ -124,7 +124,13 @@ public class ChannelTraceListenerManager {
 		if (!(channel instanceof AbstractChannel)) return;
 
 		// Remove the trace listener if any
-		AbstractChannel.TraceListener traceListener = listeners.remove(channel);
-		if (traceListener != null) ((AbstractChannel)channel).removeTraceListener(traceListener);
+		final AbstractChannel.TraceListener traceListener = listeners.remove(channel);
+		if (traceListener != null) {
+			Protocol.invokeLater(new Runnable() {
+				public void run() {
+					((AbstractChannel)channel).removeTraceListener(traceListener);
+				}
+			});
+		}
 	}
 }
