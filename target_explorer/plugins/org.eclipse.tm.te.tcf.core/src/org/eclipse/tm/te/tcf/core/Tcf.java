@@ -228,13 +228,16 @@ public final class Tcf {
 		// Signal to interested listeners that we've just went down
 		final IProtocolStateChangeListener[] listeners = tcf.protocolStateChangeListeners.toArray(new IProtocolStateChangeListener[tcf.protocolStateChangeListeners.size()]);
 		if (listeners.length > 0) {
-			Protocol.invokeLater(new Runnable() {
-				public void run() {
-					for (IProtocolStateChangeListener listener : listeners) {
-						listener.stateChanged(false);
+			// Catch IllegalStateException: TCF event dispatcher might have been shut down already
+			try {
+				Protocol.invokeLater(new Runnable() {
+					public void run() {
+						for (IProtocolStateChangeListener listener : listeners) {
+							listener.stateChanged(false);
+						}
 					}
-				}
-			});
+				});
+			} catch (IllegalStateException e) { /* ignored on purpose */ }
 		}
 	}
 
