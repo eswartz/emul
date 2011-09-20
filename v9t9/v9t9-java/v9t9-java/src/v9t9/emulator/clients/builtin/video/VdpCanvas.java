@@ -3,6 +3,8 @@
  */
 package v9t9.emulator.clients.builtin.video;
 
+import java.util.Arrays;
+
 import org.eclipse.swt.graphics.Rectangle;
 
 import v9t9.engine.memory.ByteMemoryAccess;
@@ -208,7 +210,7 @@ public abstract class VdpCanvas {
     	this.extraSpace = extraSpace;
 		colorPalette = new byte[16][];
     	for (int i = 0; i < 16; i++)
-    		colorPalette[i] = stockPalette[i]; 
+    		colorPalette[i] = Arrays.copyOf(stockPalette[i], 3); 
 
     	greyPalette = new byte[16][];
     	for (int i = 0; i < 16; i++)
@@ -239,7 +241,7 @@ public abstract class VdpCanvas {
 		return format;
 	}
 	
-	public byte[] rgbToGrey(byte[] rgb) {
+	public static byte[] rgbToGrey(byte[] rgb) {
 		byte[] g = new byte[3];
 		int lum = (299 * (rgb[0] & 0xff) + 587 * (rgb[1] & 0xff) + 114 * (rgb[2] & 0xff)) / 1000;
 		g[0] = g[1] = g[2] = (byte) lum;
@@ -371,6 +373,11 @@ public abstract class VdpCanvas {
 	
 	/** Get the 8-bit RGB values from a packed 3-3-2 GRB byte */
 	public void getGRB332(byte[] rgb, byte grb) {
+		getGRB332(rgb, grb, isGreyscale);
+	}
+
+	/** Get the 8-bit RGB values from a packed 3-3-2 GRB byte */
+	public static void getGRB332(byte[] rgb, byte grb, boolean isGreyscale) {
 		rgb[0] = rgb3to8[(grb >> 2) & 0x7];
 		rgb[1] = rgb3to8[(grb >> 5) & 0x7];
 		rgb[2] = rgb2to8[grb & 0x3];
@@ -527,6 +534,10 @@ public abstract class VdpCanvas {
 	
 	public boolean isGreyscale() {
 		return isGreyscale;
+	}
+	
+	public byte[][] getPalette() {
+		return thePalette;
 	}
 
 	/**

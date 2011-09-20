@@ -58,10 +58,4 @@ public abstract class ImageDataCanvas extends BitmapVdpCanvas {
 		return buffer;
 	}
 
-	/**
-	 * @return
-	 */
-	public byte[][] getPalette() {
-		return thePalette;
-	}
 }

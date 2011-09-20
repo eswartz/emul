@@ -119,15 +119,86 @@ public class BitmapModeRedrawHandler extends BaseRedrawHandler implements
 	 */
 	@Override
 	public void importImageData(IBitmapPixelAccess access) {
-		boolean isMono = bitcolormask != 0x1fff;
+		boolean isMono = isMono();
 		
 		ByteMemoryAccess screen = info.vdp.getByteReadMemoryAccess(modeInfo.screen.base);
 		ByteMemoryAccess patt = info.vdp.getByteReadMemoryAccess(modeInfo.patt.base);
 		ByteMemoryAccess color = info.vdp.getByteReadMemoryAccess(modeInfo.color.base);
 		
+		byte f = 0, b = 0;
+		
+		if (isMono) {
+			f = (byte) ((info.vdp.readVdpReg(7) >> 4) & 0xf);
+			b = (byte) ((info.vdp.readVdpReg(7) >> 0) & 0xf);
+		}
+
 		for (int y = 0; y < 192; y++) {
 			for (int x = 0; x < 256; x += 8) {
-				byte p = 0, f = 0, b = 0;
+				
+				int choffs = ((y >> 6) << 8) + ((y & 0x3f) >> 3) * 32 + (x >> 3);
+				int ch = screen.memory[screen.offset + choffs] & 0xff;
+
+				int poffs = (y >> 6) * 0x800 + (ch << 3) + (y & 7);
+				
+				byte p = 0;
+				
+				if (!isMono) {
+					// in color mode, by convention keep the foreground color
+					// as the lesser color.
+					f = access.getPixel(x, y);
+					p = (byte) 0x80;
+				
+					boolean gotBG = false;
+					for (int xo = 1; xo < 8; xo++) {
+						byte c = access.getPixel(x + xo, y);
+						if (c == f) {
+							p |= 0x80 >> xo;
+						} else {
+							if (!gotBG) {
+								if (c < f) {
+									b = f;
+									f = c;
+									p ^= (0xff << (8 - xo));
+									p |= 0x80 >> xo;
+								} else {
+									b = c;
+								}
+								gotBG = true;
+							}
+						}
+					}
+					
+					color.memory[color.offset + poffs] = (byte) ((f << 4) | (b));
+					touch(color.offset + poffs);
+				} else {
+					// in mono mode, mapper has matched with fg and bg from vr7
+					for (int xo = 0; xo < 8; xo++) {
+						byte c = access.getPixel(x + xo, y);
+						if (c == f) {
+							p |= 0x80 >> xo;
+						}
+					}
+				}
+
+				patt.memory[patt.offset + poffs] = p;
+				touch(patt.offset + poffs);
+			}
+		}
+		
+	}
+
+	void __importImageData(IBitmapPixelAccess access) {
+		boolean isMono = isMono();
+		
+		ByteMemoryAccess screen = info.vdp.getByteReadMemoryAccess(modeInfo.screen.base);
+		ByteMemoryAccess patt = info.vdp.getByteReadMemoryAccess(modeInfo.patt.base);
+		ByteMemoryAccess color = info.vdp.getByteReadMemoryAccess(modeInfo.color.base);
+		
+		byte f = 0, b = 0;
+		
+		for (int y = 0; y < 192; y++) {
+			for (int x = 0; x < 256; x += 8) {
+				byte p = 0;
 				
 				// for the benefit of mono pictures or mono modes, 
 				// always select the lesser color as foreground.
@@ -152,12 +223,20 @@ public class BitmapModeRedrawHandler extends BaseRedrawHandler implements
 						}
 					}
 				}
-
+				
 				int choffs = ((y >> 6) << 8) + ((y & 0x3f) >> 3) * 32 + (x >> 3);
 				int ch = screen.memory[screen.offset + choffs] & 0xff;
 
 				int poffs = (y >> 6) * 0x800 + (ch << 3) + (y & 7);
-				
+
+				if (!gotBG) {
+					// use 0 instead of 1 for solid
+					p = 0;
+					byte c = f;
+					f = b;
+					b = c;
+				}
+
 				patt.memory[patt.offset + poffs] = p;
 				touch(patt.offset + poffs);
 				
@@ -168,5 +247,10 @@ public class BitmapModeRedrawHandler extends BaseRedrawHandler implements
 			}
 		}
 		
+	}
+
+	public boolean isMono() {
+		boolean isMono = bitcolormask != 0x1fff;
+		return isMono;
 	}
 }
