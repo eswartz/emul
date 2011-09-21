@@ -436,7 +436,7 @@ int check_breakpoints_on_memory_read(Context * ctx, ContextAddress address, void
             ContextAddress mem_base = 0;
             ContextAddress mem_size = 0;
             if (context_get_canonical_addr(ctx, address, &mem, &mem_addr, &mem_base, &mem_size) < 0) return -1;
-            if (mem_base + mem_size - mem_addr < sz) sz = mem_base + mem_size - mem_addr;
+            if ((size_t)(mem_base + mem_size - mem_addr) < sz) sz = (size_t)(mem_base + mem_size - mem_addr);
             while (l != &instructions) {
                 BreakInstruction * bi = link_all2bi(l);
                 size_t i;
@@ -471,7 +471,7 @@ int check_breakpoints_on_memory_write(Context * ctx, ContextAddress address, voi
             ContextAddress mem_base = 0;
             ContextAddress mem_size = 0;
             if (context_get_canonical_addr(ctx, address, &mem, &mem_addr, &mem_base, &mem_size) < 0) return -1;
-            if (mem_base + mem_size - mem_addr < sz) sz = mem_base + mem_size - mem_addr;
+            if ((size_t)(mem_base + mem_size - mem_addr) < sz) sz = (size_t)(mem_base + mem_size - mem_addr);
             while (l != &instructions) {
                 BreakInstruction * bi = link_all2bi(l);
                 l = l->next;
@@ -2383,7 +2383,7 @@ static void event_code_unmapped(Context * ctx, ContextAddress addr, ContextAddre
      */
     int cnt = 0;
     while (size > 0) {
-        size_t sz = size;
+        ContextAddress sz = size;
         LINK * l = instructions.next;
         Context * mem = NULL;
         ContextAddress mem_addr = 0;
