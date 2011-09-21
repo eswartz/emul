@@ -1,0 +1,24 @@
+# ignore various emacs droppings
+*~
+\#*\#
+
+# .
+*.ncb
+*.opt
+*.plg
+*.user
+*.suo
+obj
+
+# cmake/
+cmake/msvc-debug
+cmake/msvc-release
+cmake/gcc-release
+cmake/build-gcc-debug.sh
+cmake/gcc-debug
+
+# server/
+server/obj
+server/*.ncb
+server/*.suo
+server/*.user
