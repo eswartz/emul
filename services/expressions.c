@@ -1503,24 +1503,9 @@ static void lazy_unary_expression(int mode, Value * v) {
             v->type = NULL;
         }
         break;
-    default:
-        postfix_expression(mode, v);
-        break;
-    }
-}
-
-static void unary_expression(int mode, Value * v) {
-    lazy_unary_expression(mode, v);
 #if ENABLE_Symbols
-    if (mode != MODE_SKIP && v->sym != NULL && v->size == 0 && get_symbol_size(v->sym, &v->size) < 0) {
-        error(errno, "Cannot retrieve symbol size");
-    }
-#endif
-}
-
-static void cast_expression(int mode, Value * v) {
-#if ENABLE_Symbols
-    if (text_sy == '(') {
+    case '(':
+    {
         Symbol * type = NULL;
         int type_class = TYPE_CLASS_UNKNOWN;
         ContextAddress type_size = 0;
@@ -1533,13 +1518,13 @@ static void cast_expression(int mode, Value * v) {
             next_ch();
             next_sy();
             assert(text_sy == '(');
-            unary_expression(mode, v);
-            return;
+            postfix_expression(mode, v);
+            break;
         }
         if (text_sy != ')') error(ERR_INV_EXPRESSION, "')' expected");
         next_sy();
-        cast_expression(mode, v);
-        if (mode == MODE_SKIP) return;
+        unary_expression(mode, v);
+        if (mode == MODE_SKIP) break;
         if (get_symbol_type_class(type, &type_class) < 0) {
             error(errno, "Cannot retrieve symbol type class");
         }
@@ -1570,7 +1555,7 @@ static void cast_expression(int mode, Value * v) {
             if (ok) {
                 v->type = type;
                 v->type_class = type_class;
-                return;
+                break;
             }
         }
         switch (type_class) {
@@ -1624,19 +1609,31 @@ static void cast_expression(int mode, Value * v) {
             error(ERR_INV_EXPRESSION, "Invalid type cast: illegal destination type");
             break;
         }
-        return;
+        break;
     }
 #endif
-    unary_expression(mode, v);
+    default:
+        postfix_expression(mode, v);
+        break;
+    }
+}
+
+static void unary_expression(int mode, Value * v) {
+    lazy_unary_expression(mode, v);
+#if ENABLE_Symbols
+    if (mode != MODE_SKIP && v->sym != NULL && v->size == 0 && get_symbol_size(v->sym, &v->size) < 0) {
+        error(errno, "Cannot retrieve symbol size");
+    }
+#endif
 }
 
 static void multiplicative_expression(int mode, Value * v) {
-    cast_expression(mode, v);
+    unary_expression(mode, v);
     while (text_sy == '*' || text_sy == '/' || text_sy == '%') {
         Value x;
         int sy = text_sy;
         next_sy();
-        cast_expression(mode, &x);
+        unary_expression(mode, &x);
         if (mode != MODE_SKIP) {
             if (!is_number(v) || !is_number(&x)) {
                 error(ERR_INV_EXPRESSION, "Numeric types expected");
