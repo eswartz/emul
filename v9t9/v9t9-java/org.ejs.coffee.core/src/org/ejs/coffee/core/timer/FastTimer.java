@@ -92,10 +92,15 @@ public class FastTimer {
 								try {
 									if (now >= info.deadline) {
 										//System.out.println("moving from " + info.deadline + " by " + info.delay + " to " + (info.delay + info.deadline));
-										 
-										while (now >= info.deadline) {
-											info.deadline += info.delay;
+										if (now - info.deadline > info.delay * 10) {
+											// too much delay (suspended process, etc)
+											info.deadline = now + info.delay;
 											info.task.run();
+										} else {
+											while (now >= info.deadline) {
+												info.deadline += info.delay;
+												info.task.run();
+											}
 										}
 									}
 									else if ((now ^ info.deadline) < 0) {
