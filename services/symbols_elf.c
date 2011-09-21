@@ -561,7 +561,7 @@ int find_symbol_by_name(Context * ctx, int frame, ContextAddress ip, char * name
     }
 
     if (error == 0 && !found) {
-        ELF_File * file = elf_list_first(sym_ctx, 0, ~(ContextAddress)0);
+        ELF_File * file = elf_list_first(sym_ctx, sym_ip, sym_ip ? sym_ip : ~(ContextAddress)0);
         if (file == NULL) error = errno;
         while (error == 0 && file != NULL) {
             Trap trap;
@@ -640,6 +640,41 @@ int find_symbol_by_name(Context * ctx, int frame, ContextAddress ip, char * name
         }
     }
 #endif
+
+    if (error == 0 && !found && sym_ip == 0) {
+        /* Search all compilation units */
+        ELF_File * file = elf_list_first(sym_ctx, 0, ~(ContextAddress)0);
+        if (file == NULL) error = errno;
+        while (error == 0 && file != NULL) {
+            Trap trap;
+            if (set_trap(&trap)) {
+                unsigned i;
+                DWARFCache * cache = get_dwarf_cache(file);
+                for (i = 0; i < cache->mAddrRangesCnt; i++) {
+                    UnitAddressRange * range = cache->mAddrRanges + i;
+                    CompUnit * unit = range->mUnit;
+                    ContextAddress rt_addr = elf_map_to_run_time_address(sym_ctx, file, unit->mTextSection, range->mAddr);
+                    if (rt_addr != 0) {
+                        sym_ip = rt_addr;
+                        if (find_in_object_tree(unit->mObject->mChildren, rt_addr - range->mAddr, sym_ip, name, res)) found = 1;
+                        if (!found && unit->mBaseTypes != NULL) {
+                            if (find_in_object_tree(unit->mBaseTypes->mObject->mChildren, 0, 0, name, res)) found = 1;
+                        }
+                    }
+                }
+                clear_trap(&trap);
+            }
+            else {
+                error = trap.error;
+                break;
+            }
+            if (found) break;
+            file = elf_list_next(sym_ctx);
+            if (file == NULL) error = errno;
+        }
+        elf_list_done(sym_ctx);
+        sym_ip = 0;
+    }
 
     if (error == 0 && !found) error = ERR_SYM_NOT_FOUND;
 
