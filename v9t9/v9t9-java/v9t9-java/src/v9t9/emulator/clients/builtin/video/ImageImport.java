@@ -1401,7 +1401,7 @@ public class ImageImport implements IBitmapPixelAccess {
 			xoffs = (64 - img.getWidth()) / 2;
 			yoffs = (48 - img.getHeight()) / 2;
 		} else {
-			xoffs = (canvas.getVisibleWidth() - img.getWidth() + canvas.getXOffset() + canvas.getExtraSpace()) / 2;
+			xoffs = (canvas.getVisibleWidth() - img.getWidth() + canvas.getXOffset() + 0*canvas.getExtraSpace()) / 2;
 			yoffs = (canvas.getVisibleHeight() - img.getHeight() + canvas.getYOffset()) / 2;
 		}
 	
@@ -1919,16 +1919,18 @@ public class ImageImport implements IBitmapPixelAccess {
 			throw new IllegalArgumentException("image has zero or negative size");
 		}
 		
-		if (realWidth * targHeight * aspect > realHeight * targWidth) {
-			targHeight = (int) (targWidth * realHeight / realWidth / aspect);
-		} else {
-			targWidth = (int) (targHeight * realWidth * aspect / realHeight);
-			
-			// make sure, for bitmap mode, that the size is a multiple of 8,
-			// otherwise the import into video memory will destroy the picture
-			if (format == Format.COLOR16_8x1) {
-				targWidth &= ~7;
+		if (realWidth != targWidth && realHeight != targHeight) {
+			if (realWidth * targHeight * aspect > realHeight * targWidth) {
 				targHeight = (int) (targWidth * realHeight / realWidth / aspect);
+			} else {
+				targWidth = (int) (targHeight * realWidth * aspect / realHeight);
+				
+				// make sure, for bitmap mode, that the size is a multiple of 8,
+				// otherwise the import into video memory will destroy the picture
+				if (format == Format.COLOR16_8x1) {
+					targWidth &= ~7;
+					targHeight = (int) (targWidth * realHeight / realWidth / aspect);
+				}
 			}
 		}
 		
