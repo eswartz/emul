@@ -655,6 +655,7 @@ int find_symbol_by_name(Context * ctx, int frame, ContextAddress ip, char * name
                     CompUnit * unit = range->mUnit;
                     ContextAddress rt_addr = elf_map_to_run_time_address(sym_ctx, file, unit->mTextSection, range->mAddr);
                     if (rt_addr != 0) {
+                        *res = NULL;
                         sym_ip = rt_addr;
                         if (find_in_object_tree(unit->mObject->mChildren, rt_addr - range->mAddr, sym_ip, name, res)) found = 1;
                         if (!found && unit->mBaseTypes != NULL) {
@@ -691,6 +692,7 @@ int find_symbol_in_scope(Context * ctx, int frame, ContextAddress ip, Symbol * s
     int error = 0;
     int found = 0;
 
+    *res = NULL;
     if (get_sym_context(ctx, frame, ip) < 0) error = errno;
 
     if (!error && scope == NULL && sym_ip != 0) {
