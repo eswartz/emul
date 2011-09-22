@@ -45,6 +45,7 @@ public abstract class AbstractTreeSection extends AbstractStructuredViewerSectio
 		 */
 		@Override
 		public void selectionChanged(SelectionChangedEvent event) {
+			getManagedForm().fireSelectionChanged(AbstractTreeSection.this, event.getSelection());
 			AbstractTreeSection.this.selectionChanged(event);
 		}
 
