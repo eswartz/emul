@@ -135,6 +135,9 @@ public class PropertiesFilePersistenceDelegate extends AbstractPersistenceDelega
 
 		// If the child key list is not empty, write the section
 		if (!childKeys.isEmpty()) {
+			// Write a new line except it is the "core" section
+			if (!"core".equals(section)) writer.newLine(); //$NON-NLS-1$
+
 			// Write the header
 			writer.write("[" + section.trim() + "]"); //$NON-NLS-1$ //$NON-NLS-2$
 			writer.newLine();
@@ -157,8 +160,6 @@ public class PropertiesFilePersistenceDelegate extends AbstractPersistenceDelega
 
 		// If there are map type values, write them now
 		if (!childMapKeys.isEmpty()) {
-			writer.newLine();
-
 			for (String key : childMapKeys) {
 				// Calculate the section name
 				String newSection = "core".equals(section) ? key.trim() : section + "." + key.trim(); //$NON-NLS-1$ //$NON-NLS-2$
