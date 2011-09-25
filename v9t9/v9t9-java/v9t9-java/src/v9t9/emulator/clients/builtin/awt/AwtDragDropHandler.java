@@ -6,6 +6,7 @@ package v9t9.emulator.clients.builtin.awt;
 import java.awt.Component;
 import java.awt.Image;
 import java.awt.Point;
+import java.awt.RenderingHints;
 import java.awt.color.ColorSpace;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.SystemFlavorMap;
@@ -178,7 +179,7 @@ public class AwtDragDropHandler implements DragGestureListener, DropTargetListen
 	@Override
 	public void drop(DropTargetDropEvent dtde) {
 		Transferable transferable = dtde.getTransferable();
-		Image image = null;
+		BufferedImage image = null;
 
 		DataFlavor[] flavors = dtde.getCurrentDataFlavors();
 		/*
@@ -216,8 +217,17 @@ public class AwtDragDropHandler implements DragGestureListener, DropTargetListen
 				}
 			} else if (dtde.isDataFlavorSupported(DataFlavor.imageFlavor)) {
 				dtde.acceptDrop(DND.DROP_COPY);
-				image = (Image) transferable
+				Image origImage = (Image) transferable
 						.getTransferData(DataFlavor.imageFlavor);
+				if (!(origImage instanceof BufferedImage)) {
+					image = ImageImport.getScaledInstance(origImage,
+							origImage.getWidth(null),
+							origImage.getHeight(null),
+							RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR,
+							false);
+				} else {
+					image = (BufferedImage) origImage;
+				}
 			}
 			if (image == null) {
 				dtde.rejectDrop();

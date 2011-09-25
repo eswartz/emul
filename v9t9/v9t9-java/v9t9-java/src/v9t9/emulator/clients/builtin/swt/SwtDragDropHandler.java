@@ -3,7 +3,6 @@
  */
 package v9t9.emulator.clients.builtin.swt;
 
-import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -74,6 +73,7 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 		if (System.getProperty("os.name").equals("Linux")) {
 			source.setTransfer(new Transfer[] { 
 					FileTransfer.getInstance(), 
+					ImageTransfer.getInstance(),
 			});
 			target.setTransfer(new Transfer[] {
 					FileTransfer.getInstance(), 
@@ -283,7 +283,7 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 	@Override
 	public void drop(DropTargetEvent event) {
 		try {
-			Pair<java.awt.Image, Boolean> info = null;
+			Pair<BufferedImage, Boolean> info = null;
 			
 			if (FileTransfer.getInstance().isSupportedType(event.currentDataType)) {
 				String[] files = (String[]) event.data;
@@ -369,8 +369,8 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 		return temp;
 	}
 
-	private Pair<Image, Boolean> loadImageFromFile(String file) {
-		Pair<Image, Boolean> info = null;
+	private Pair<BufferedImage, Boolean> loadImageFromFile(String file) {
+		Pair<BufferedImage, Boolean> info = null;
 		try {
 			ImageLoader imgLoader = new ImageLoader();
 			ImageData[] datas = imgLoader.load(file);
@@ -378,11 +378,11 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 				info = convertImage(datas[0]);
 			}
 		} catch (SWTException e) {
-			java.awt.Image img;
+			BufferedImage img;
 			try {
 				img = ImageIO.read(new File(file));
 				if (img != null)
-					info = new Pair<Image, Boolean>(img, false);
+					info = new Pair<BufferedImage, Boolean>(img, false);
 			} catch (IOException e1) {
 				MessageDialog.openError(null, "I/O Error", 
 						"Could not load '" +
@@ -402,7 +402,7 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 	/**
 	 * @param data
 	 */
-	private Pair<java.awt.Image, Boolean> convertImage(ImageData data) {
+	private Pair<BufferedImage, Boolean> convertImage(ImageData data) {
 
 		// convert to AWT image -- don't scale with SWT, which is lame
 		BufferedImage img = new BufferedImage(data.width, data.height, BufferedImage.TYPE_INT_ARGB);
@@ -445,7 +445,7 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 		
 		img.setRGB(0, 0, data.width, data.height, pix, 0, pix.length / data.height);
 
-		return new Pair<java.awt.Image, Boolean>(img, !data.palette.isDirect);
+		return new Pair<BufferedImage, Boolean>(img, !data.palette.isDirect);
 		
 	}
 
@@ -453,7 +453,7 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 	 * @param img
 	 * @param isLowColor 
 	 */
-	protected void importImage(java.awt.Image img, boolean isLowColor) {
+	protected void importImage(BufferedImage img, boolean isLowColor) {
 		ImageImport importer = new ImageImport(
 				(ImageDataCanvas) renderer.getCanvas(), renderer.getVdpHandler());
 		importer.importImage(img, isLowColor);
