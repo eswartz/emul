@@ -24,13 +24,16 @@ class RGB332MapColor extends RGB333MapColor {
 	@Override
 	public int getClosestPalettePixel(int[] prgb) {
 		// we don't need to trawl the palette here
-		byte[] rgb = VdpCanvas.getGRB333(prgb[1] >> 5, prgb[0] >> 5, (prgb[2] >> 5) & ~1);
+		int g = prgb[1] >> 5;
+		int r = prgb[0] >> 5;
+		int b = prgb[2] >> 6;
+		byte[] rgb = VdpCanvas.getGRB332(g, r, b);
 		return ColorMapUtils.rgb8ToPixel(rgb);
 	}
 	
 	@Override
 	public int getMaximalReplaceDistance(int usedColors) {
-		return 0x7*0x7*2 + 0x3*0x3;
+		return 0xf*0xf*2 + 0x1f*0x1f;
 	}
 	
 }

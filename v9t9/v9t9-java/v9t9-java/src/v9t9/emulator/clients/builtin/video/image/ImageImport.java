@@ -199,11 +199,16 @@ public class ImageImport implements IBitmapPixelAccess {
 		int b_error = prgb[2] - ((newPixel >> 0) & 0xff);
 		
 		if (limit8) {
-	
 			r_error /= 3;
 			g_error /= 3;
 			b_error /= 3;
 		}
+		else {
+			// blue has limited resolution; don't spread error too far
+			if (format == Format.COLOR256_1x1)
+				b_error /= 2;
+		}
+		
 		if (x + 1 < img.getWidth()) {
 			// x+1, y
 			ditherRGB(img, x + 1, y, prgb, 

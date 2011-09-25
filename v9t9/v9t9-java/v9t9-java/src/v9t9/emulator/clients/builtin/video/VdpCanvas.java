@@ -365,6 +365,10 @@ public abstract class VdpCanvas {
 	public static byte[] getGRB333(int g, int r, int b) {
 		return new byte[] { rgb3to8[r&0x7], rgb3to8[g&0x7], rgb3to8[b&0x7] };
 	}
+	/** Get the RGB triple for the 3-bit GRB. */
+	public static byte[] getGRB332(int g, int r, int b) {
+		return new byte[] { rgb3to8[r&0x7], rgb3to8[g&0x7], rgb2to8[b&0x3] };
+	}
 
 	/** Set the RGB triple for the palette entry, using 3-bit RGB (usually from a palette). */
 	public void setGRB333(int idx, int g, int r, int b) {
