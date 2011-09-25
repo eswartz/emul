@@ -40,9 +40,9 @@ import org.eclipse.swt.widgets.Control;
 import org.ejs.coffee.core.utils.Pair;
 
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
-import v9t9.emulator.clients.builtin.video.ImageImport;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VdpCanvas.Format;
+import v9t9.emulator.clients.builtin.video.image.ImageImport;
 
 /**
  * Support dragging image out of window, or into window (and VDP buffer)

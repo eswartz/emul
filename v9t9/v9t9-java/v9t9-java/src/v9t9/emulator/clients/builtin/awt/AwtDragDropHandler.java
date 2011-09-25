@@ -38,8 +38,9 @@ import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.graphics.ImageData;
 
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
-import v9t9.emulator.clients.builtin.video.ImageImport;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
+import v9t9.emulator.clients.builtin.video.image.ImageImport;
+import v9t9.emulator.clients.builtin.video.image.ColorMapUtils;
 
 /**
  * Handle images copied in or out of the screen.
@@ -220,7 +221,7 @@ public class AwtDragDropHandler implements DragGestureListener, DropTargetListen
 				Image origImage = (Image) transferable
 						.getTransferData(DataFlavor.imageFlavor);
 				if (!(origImage instanceof BufferedImage)) {
-					image = ImageImport.getScaledInstance(origImage,
+					image = ColorMapUtils.getScaledInstance(origImage,
 							origImage.getWidth(null),
 							origImage.getHeight(null),
 							RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR,
