@@ -93,7 +93,7 @@ Create MultiModeParams
 ;
 
 : multi-setupmode
-    txt-setupmode
+    gfx-setupmode
     
     ( set up SIT to contain $00-$1F repeated 4 times, $20-$3F, ... $A0-$BF )
     v-screen @  +!vwaddr
