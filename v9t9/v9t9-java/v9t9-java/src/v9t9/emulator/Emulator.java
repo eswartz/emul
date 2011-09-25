@@ -216,6 +216,11 @@ public class Emulator {
 	 * @throws IOException 
 	 */
 	public static void createAndRun(Machine machine, Client client) throws IOException {
+		if (client == null || machine == null) {
+			System.err.println("Failed to create machine or client, exiting");
+			System.exit(23);
+		}
+		
         final Emulator app = new Emulator(machine, client);
         
         app.setupDefaults();

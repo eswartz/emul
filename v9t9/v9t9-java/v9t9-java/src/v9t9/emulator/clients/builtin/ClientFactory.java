@@ -29,16 +29,10 @@ public class ClientFactory {
 			return null;
 		try {
 			return klass.getConstructor(Machine.class).newInstance(machine);
-		} catch (SecurityException e) {
-			assert false : e.getCause().getMessage();
-		} catch (InstantiationException e) {
-			assert false : e.getCause().getMessage();
-		} catch (IllegalAccessException e) {
-			assert false : e.getCause().getMessage();
 		} catch (InvocationTargetException e) {
-			assert false : e.getCause().getMessage();
-		} catch (NoSuchMethodException e) {
-			assert false : e.getCause().getMessage();
+			e.getCause().printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 		return null;
 	}
