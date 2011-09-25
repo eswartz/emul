@@ -5,5 +5,6 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="HRTimer"/>
 	<classpathentry excluding="api/" kind="src" path="Base64-2.2.2"/>
+	<classpathentry kind="lib" path="libs/jna.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -39,5 +39,6 @@
 	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.util.source_1.7.0.v201011041433.jar"/>
 	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.xml_1.7.0.v201011041433.jar"/>
 	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.xml.source_1.7.0.v201011041433.jar"/>
+	<classpathentry kind="lib" path="/org.ejs.coffee.core/libs/jna.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -21,7 +21,6 @@ Require-Bundle: org.eclipse.jface,
  org.eclipse.ui,
  com.ibm.icu,
  org.eclipse.ui.ide,
- com.sun.jna;bundle-version="3.2.7",
  org.eclipse.swt
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ActivationPolicy: lazy
