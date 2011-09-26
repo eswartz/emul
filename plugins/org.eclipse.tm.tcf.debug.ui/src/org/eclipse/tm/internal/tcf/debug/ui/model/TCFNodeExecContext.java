@@ -65,6 +65,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     private final TCFData<Collection<Map<String,Object>>> signal_list;
     private final TCFData<SignalMask[]> signal_mask;
     private final TCFData<TCFNodeExecContext> memory_node;
+    private final TCFData<TCFNodeExecContext> symbols_node;
     private final TCFData<String> full_name;
 
     private LinkedHashMap<BigInteger,TCFDataCache<TCFSourceRef>> line_info_lookup_cache;
@@ -253,6 +254,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                 }
                 command = run.getContext(id, new IRunControl.DoneGetContext() {
                     public void doneGetContext(IToken token, Exception error, IRunControl.RunControlContext context) {
+                        if (context != null) model.updateContextMap(id, context);
                         set(token, error, context);
                     }
                 });
@@ -392,37 +394,48 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         memory_node = new TCFData<TCFNodeExecContext>(channel) {
             @Override
             protected boolean startDataRetrieval() {
-                TCFNode n = TCFNodeExecContext.this;
-                String id = null;
-                Throwable err = null;
-                while (n != null && !n.isDisposed()) {
-                    if (n instanceof TCFNodeExecContext) {
-                        TCFNodeExecContext exe = (TCFNodeExecContext)n;
-                        TCFDataCache<IRunControl.RunControlContext> cache = exe.getRunContext();
-                        if (!cache.validate(this)) return false;
-                        err = cache.getError();
-                        if (err != null) break;
-                        IRunControl.RunControlContext ctx = cache.getData();
-                        if (ctx == null) break;
-                        String prs = ctx.getProcessID();
-                        id = prs != null ? prs : n.id;
-                        break;
-                    }
-                    n = n.parent;
+                String mem_id = null;
+                if (!run_context.validate(this)) return false;
+                Throwable err = run_context.getError();
+                if (err == null) {
+                    IRunControl.RunControlContext ctx = run_context.getData();
+                    if (ctx != null) mem_id = ctx.getProcessID();
                 }
                 if (err != null) {
                     set(null, err, null);
                 }
-                else if (id == null) {
+                else if (mem_id == null) {
                     set(null, new Exception("Context does not provide memory access"), null);
                 }
                 else {
-                    if (!model.createNode(id, this)) return false;
-                    if (!isValid()) {
-                        TCFNodeExecContext exe = (TCFNodeExecContext)model.getNode(id);
-                        if (!exe.getMemoryContext().validate(this)) return false;
-                        set(null, null, exe);
+                    if (!model.createNode(mem_id, this)) return false;
+                    if (!isValid()) set(null, null, (TCFNodeExecContext)model.getNode(mem_id));
+                }
+                return true;
+            }
+        };
+        symbols_node = new TCFData<TCFNodeExecContext>(channel) {
+            @Override
+            protected boolean startDataRetrieval() {
+                String syms_id = null;
+                if (!run_context.validate(this)) return false;
+                Throwable err = run_context.getError();
+                if (err == null) {
+                    IRunControl.RunControlContext ctx = run_context.getData();
+                    if (ctx != null) {
+                        syms_id = ctx.getSymbolsGroup();
+                        if (syms_id == null) syms_id = ctx.getProcessID();
                     }
+                }
+                if (err != null) {
+                    set(null, err, null);
+                }
+                else if (syms_id == null) {
+                    set(null, new Exception("Context does not support symbol groups"), null);
+                }
+                else {
+                    if (!model.createNode(syms_id, this)) return false;
+                    if (!isValid()) set(null, null, (TCFNodeExecContext)model.getNode(syms_id));
                 }
                 return true;
             }
@@ -445,7 +458,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                         lst.add(res);
                         while (p.parent instanceof TCFNodeExecContext) {
                             p = (TCFNodeExecContext)p.parent;
-                            TCFDataCache<IRunControl.RunControlContext> run_ctx_cache = p.getRunContext();
+                            TCFDataCache<IRunControl.RunControlContext> run_ctx_cache = p.run_context;
                             if (!run_ctx_cache.validate(this)) return false;
                             IRunControl.RunControlContext run_ctx_data = run_ctx_cache.getData();
                             String name = null;
@@ -512,6 +525,10 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         mem_context.reset(ctx);
     }
 
+    public TCFDataCache<TCFNodeExecContext> getSymbolsNode() {
+        return symbols_node;
+    }
+
     public TCFDataCache<TCFNodeExecContext> getMemoryNode() {
         return memory_node;
     }
@@ -550,7 +567,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                 IMemory.MemoryContext mem_data = null;
                 TCFNodeExecContext mem = memory_node.getData();
                 if (mem != null) {
-                    TCFDataCache<IMemory.MemoryContext> mem_cache = mem.getMemoryContext();
+                    TCFDataCache<IMemory.MemoryContext> mem_cache = mem.mem_context;
                     if (!mem_cache.validate(this)) return false;
                     mem_data = mem_cache.getData();
                 }
@@ -611,7 +628,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                 IMemory.MemoryContext mem_data = null;
                 TCFNodeExecContext mem = memory_node.getData();
                 if (mem != null) {
-                    TCFDataCache<IMemory.MemoryContext> mem_cache = mem.getMemoryContext();
+                    TCFDataCache<IMemory.MemoryContext> mem_cache = mem.mem_context;
                     if (!mem_cache.validate(this)) return false;
                     mem_data = mem_cache.getData();
                 }
@@ -1087,6 +1104,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
             if (frame != null) result.setInputElement(frame);
         }
         else if (IDebugUIConstants.ID_MODULE_VIEW.equals(view_id)) {
+            // TODO: need to post view input delta when memory context changes
             TCFDataCache<TCFNodeExecContext> mem = model.searchMemoryContext(this);
             if (mem == null) return true;
             if (!mem.validate(done)) return false;
@@ -1220,6 +1238,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         assert !isDisposed();
         full_name.reset();
         run_context.reset(context);
+        symbols_node.reset();
         memory_node.reset();
         signal_mask.reset();
         if (state.isValid()) {
@@ -1363,7 +1382,6 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
 
     void onMemoryChanged(Number[] addr, long[] size) {
         assert !isDisposed();
-        children_exec.onMemoryChanged(addr, size);
         children_stack.onMemoryChanged();
         children_exps.onMemoryChanged();
         children_hover_exps.onMemoryChanged();
@@ -1374,10 +1392,11 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     void onMemoryMapChanged() {
         clearLookupCaches();
         memory_map.reset();
-        children_exec.onMemoryMapChanged();
-        children_stack.onMemoryMapChanged();
         children_modules.onMemoryMapChanged();
+        children_stack.onMemoryMapChanged();
         children_exps.onMemoryMapChanged();
+        children_hover_exps.onMemoryMapChanged();
+        children_log_exps.onMemoryMapChanged();
         postModulesChangedDelta();
     }
 

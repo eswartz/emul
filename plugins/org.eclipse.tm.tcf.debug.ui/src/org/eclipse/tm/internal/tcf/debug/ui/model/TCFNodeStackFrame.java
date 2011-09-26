@@ -437,6 +437,7 @@ public class TCFNodeStackFrame extends TCFNode {
             if (stack_trace_cache.getTopFrame() == this) result.setInputElement(exe);
         }
         else if (IDebugUIConstants.ID_MODULE_VIEW.equals(id)) {
+            // TODO: need to post view input delta when memory context changes
             TCFDataCache<TCFNodeExecContext> mem = model.searchMemoryContext(this);
             if (mem == null) return true;
             if (!mem.validate(done)) return false;

@@ -35,6 +35,10 @@ public class TCFChildrenLogExpressions extends TCFChildren {
         for (TCFNode n : getNodes()) ((TCFNodeExpression)n).onMemoryChanged();
     }
 
+    void onMemoryMapChanged() {
+        for (TCFNode n : getNodes()) ((TCFNodeExpression)n).onMemoryMapChanged();
+    }
+
     public TCFNodeExpression findScript(String script) {
         for (TCFNode n : getNodes()) {
             TCFNodeExpression e = (TCFNodeExpression)n;

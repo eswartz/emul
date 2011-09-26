@@ -60,14 +60,12 @@ public class TCFPathMapTab extends AbstractLaunchConfigurationTab {
     private static final String[] column_ids = {
         IPathMap.PROP_SOURCE,
         IPathMap.PROP_DESTINATION,
-        IPathMap.PROP_HOST,
-        IPathMap.PROP_PROTOCOL,
+        IPathMap.PROP_CONTEXT,
     };
 
     private static final int[] column_size = {
         300,
         300,
-        50,
         50,
     };
 

@@ -483,20 +483,25 @@ public class MemoryMapWidget {
                         return;
                     }
                     String id = null;
-                    TCFNodeExecContext node = mem_cache.getData();
-                    if (node != null) {
-                        TCFDataCache<IMemory.MemoryContext> mem_ctx = node.getMemoryContext();
-                        if (!mem_ctx.validate(this)) return;
-                        if (mem_ctx.getData() != null) {
-                            if (node.getModel().getLaunch().isMemoryMapPreloadingSupported()) {
-                                TCFDataCache<String> name_cache = node.getFullName();
-                                if (!name_cache.validate(this)) return;
-                                id = name_cache.getData();
+                    TCFNodeExecContext mem_node = mem_cache.getData();
+                    if (mem_node != null) {
+                        TCFDataCache<TCFNodeExecContext> syms_cache = mem_node.getSymbolsNode();
+                        if (!syms_cache.validate(this)) return;
+                        TCFNodeExecContext syms_node = syms_cache.getData();
+                        if (syms_node != null) {
+                            TCFDataCache<IMemory.MemoryContext> mem_ctx = syms_node.getMemoryContext();
+                            if (!mem_ctx.validate(this)) return;
+                            if (mem_ctx.getData() != null) {
+                                if (syms_node.getModel().getLaunch().isMemoryMapPreloadingSupported()) {
+                                    TCFDataCache<String> name_cache = syms_node.getFullName();
+                                    if (!name_cache.validate(this)) return;
+                                    id = name_cache.getData();
+                                }
+                                else {
+                                    id = mem_ctx.getData().getName();
+                                }
+                                if (id == null) id = syms_node.getID();
                             }
-                            else {
-                                id = mem_ctx.getData().getName();
-                            }
-                            if (id == null) id = node.getID();
                         }
                     }
                     done(id);
@@ -528,20 +533,25 @@ public class MemoryMapWidget {
                             if (n instanceof TCFNodeExecContext) {
                                 TCFNodeExecContext exe = (TCFNodeExecContext)n;
                                 if (!collectMemoryNodes(exe.getChildren())) return false;
-                                TCFDataCache<IMemory.MemoryContext> mem_ctx = exe.getMemoryContext();
-                                if (!mem_ctx.validate(this)) return false;
-                                if (mem_ctx.getData() != null) {
-                                    String s = null;
-                                    if (exe.getModel().getLaunch().isMemoryMapPreloadingSupported()) {
-                                        TCFDataCache<String> nm = exe.getFullName();
-                                        if (!nm.validate(this)) return false;
-                                        s = nm.getData();
+                                TCFDataCache<TCFNodeExecContext> syms_cache = exe.getSymbolsNode();
+                                if (!syms_cache.validate(this)) return false;
+                                TCFNodeExecContext syms_node = syms_cache.getData();
+                                if (syms_node != null) {
+                                    TCFDataCache<IMemory.MemoryContext> mem_ctx = syms_node.getMemoryContext();
+                                    if (!mem_ctx.validate(this)) return false;
+                                    if (mem_ctx.getData() != null) {
+                                        String id = null;
+                                        if (syms_node.getModel().getLaunch().isMemoryMapPreloadingSupported()) {
+                                            TCFDataCache<String> name_cache = syms_node.getFullName();
+                                            if (!name_cache.validate(this)) return false;
+                                            id = name_cache.getData();
+                                        }
+                                        else {
+                                            id = mem_ctx.getData().getName();
+                                        }
+                                        if (id == null) id = syms_node.getID();
+                                        target_map_nodes.put(id, syms_node);
                                     }
-                                    else {
-                                        s = mem_ctx.getData().getName();
-                                    }
-                                    if (s == null) s = exe.getID();
-                                    if (s != null) target_map_nodes.put(s, exe);
                                 }
                             }
                         }

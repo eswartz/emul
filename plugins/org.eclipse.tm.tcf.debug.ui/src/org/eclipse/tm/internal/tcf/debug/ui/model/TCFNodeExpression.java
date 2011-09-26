@@ -350,17 +350,32 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
             protected boolean startDataRetrieval() {
                 if (addr != null) {
                     if (mem == null) {
-                        TCFDataCache<TCFNodeExecContext> mem_cache = model.searchMemoryContext(parent);
-                        if (mem_cache == null) {
+                        TCFDataCache<TCFNodeExecContext> mem_node_cache = model.searchMemoryContext(parent);
+                        if (mem_node_cache == null) {
                             set(null, new Exception("Context does not provide memory access"), null);
                             return true;
                         }
-                        if (!mem_cache.validate(this)) return false;
-                        if (mem_cache.getError() != null) {
-                            set(null, mem_cache.getError(), null);
+                        if (!mem_node_cache.validate(this)) return false;
+                        if (mem_node_cache.getError() != null) {
+                            set(null, mem_node_cache.getError(), null);
                             return true;
                         }
-                        mem = mem_cache.getData().getMemoryContext().getData();
+                        TCFNodeExecContext mem_node = mem_node_cache.getData();
+                        if (mem_node == null) {
+                            set(null, new Exception("Context does not provide memory access"), null);
+                            return true;
+                        }
+                        TCFDataCache<IMemory.MemoryContext> mem_ctx_cache = mem_node.getMemoryContext();
+                        if (!mem_ctx_cache.validate(this)) return false;
+                        if (mem_ctx_cache.getError() != null) {
+                            set(null, mem_ctx_cache.getError(), null);
+                            return true;
+                        }
+                        mem = mem_ctx_cache.getData();
+                        if (mem == null) {
+                            set(null, new Exception("Context does not provide memory access"), null);
+                            return true;
+                        }
                     }
                     if (size == 0) {
                         // data is ASCII string
@@ -479,6 +494,18 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         type_name = new TCFData<String>(channel) {
             @Override
             protected boolean startDataRetrieval() {
+                if (!type.validate(this)) return false;
+                if (type.getData() == null) {
+                    if (!value.validate(this)) return false;
+                    IExpressions.Value val = value.getData();
+                    if (val != null && val.getValue() != null) {
+                        String s = getTypeName(val.getTypeClass(), val.getValue().length);
+                        if (s != null) {
+                            set(null, null, s);
+                            return true;
+                        }
+                    }
+                }
                 StringBuffer bf = new StringBuffer();
                 if (!getTypeName(bf, type, this)) return false;
                 set(null, null, bf.toString());
@@ -645,6 +672,25 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         return false;
     }
 
+    private String getTypeName(ISymbols.TypeClass type_class, int size) {
+        String s = null;
+        switch (type_class) {
+        case integer:
+            if (size == 0) s = "<Void>";
+            else s = "<Integer-" + (size * 8) + ">";
+            break;
+        case cardinal:
+            if (size == 0) s = "<Void>";
+            else s = "<Unsigned-" + (size * 8) + ">";
+            break;
+        case real:
+            if (size == 0) s = "<Void>";
+            else s = "<Float-" + (size * 8) + ">";
+            break;
+        }
+        return s;
+    }
+
     private boolean getTypeName(StringBuffer bf, TCFDataCache<ISymbols.Symbol> type_cache, Runnable done) {
         String name = null;
         for (;;) {
@@ -661,34 +707,9 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                     else if ((flags & ISymbols.SYM_FLAG_INTERFACE_TYPE) != 0) s = "interface " + s;
                     else s = "struct " + s;
                 }
-                if (s == null && type_symbol.getSize() == 0) s = "void";
+                if (s == null) s = getTypeName(type_symbol.getTypeClass(), type_symbol.getSize());
                 if (s == null) {
                     switch (type_symbol.getTypeClass()) {
-                    case integer:
-                        switch (type_symbol.getSize()) {
-                        case 1: s = "char"; break;
-                        case 2: s = "short"; break;
-                        case 4: s = "int"; break;
-                        case 8: s = "long long"; break;
-                        default: s = "<Integer>"; break;
-                        }
-                        break;
-                    case cardinal:
-                        switch (type_symbol.getSize()) {
-                        case 1: s = "unsigned char"; break;
-                        case 2: s = "unsigned short"; break;
-                        case 4: s = "unsigned"; break;
-                        case 8: s = "unsigned long long"; break;
-                        default: s = "<Unsigned>"; break;
-                        }
-                        break;
-                    case real:
-                        switch (type_symbol.getSize()) {
-                        case 4: s = "float"; break;
-                        case 8: s = "double"; break;
-                        default: s = "<Float>"; break;
-                        }
-                        break;
                     case pointer:
                         s = "*";
                         if ((flags & ISymbols.SYM_FLAG_REFERENCE) != 0) s = "&";
@@ -805,10 +826,10 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         return new BigInteger(temp);
     }
 
-    private String toNumberString(int radix, ISymbols.Symbol t, byte[] data, int offs, int size, boolean big_endian) {
+    private String toNumberString(int radix, ISymbols.TypeClass t, byte[] data, int offs, int size, boolean big_endian) {
         if (size <= 0 || size > 16) return "";
-        if (radix != 16 && t != null) {
-            switch (t.getTypeClass()) {
+        if (radix != 16) {
+            switch (t) {
             case array:
             case composite:
                 return "";
@@ -818,12 +839,12 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         if (data == null) s = "N/A";
         if (s == null && radix == 10) {
             if (t != null) {
-                switch (t.getTypeClass()) {
+                switch (t) {
                 case integer:
                     s = toBigInteger(data, offs, size, big_endian, true).toString();
                     break;
                 case real:
-                    switch (t.getSize()) {
+                    switch (size) {
                     case 4:
                         s = Float.toString(Float.intBitsToFloat(toBigInteger(
                                 data, offs, size, big_endian, true).intValue()));
@@ -862,7 +883,11 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         IExpressions.Value val = value.getData();
         if (val != null) {
             byte[] data = val.getValue();
-            if (data != null) s = toNumberString(radix, type.getData(), data, 0, data.length, val.isBigEndian());
+            if (data != null) {
+                ISymbols.TypeClass t = val.getTypeClass();
+                if (t == ISymbols.TypeClass.unknown && type.getData() != null) t = type.getData().getTypeClass();
+                s = toNumberString(radix, t, data, 0, data.length, val.isBigEndian());
+            }
         }
         if (s == null) s = "N/A";
         return s;
@@ -1124,19 +1149,36 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
             type_data = type_cache.getData();
         }
         if (type_data == null) {
+            ISymbols.TypeClass type_class = ISymbols.TypeClass.unknown;
+            if (!value.validate(done)) return false;
+            if (value.getData() != null) type_class = value.getData().getTypeClass();
             if (level == 0) {
-                bf.append("Type: not available\n");
+                assert offs == 0;
+                assert size == data.length;
+                String s = getTypeName(type_class, size);
+                if (s == null) s = "not available";
+                bf.append("Type: ");
+                bf.append(s);
+                bf.append('\n');
                 bf.append("Size: ");
-                bf.append(data.length);
-                bf.append(data.length == 1 ? " byte\n" : " bytes\n");
-                if (data.length > 0) {
+                bf.append(size);
+                bf.append(size == 1 ? " byte\n" : " bytes\n");
+                if (size > 0) {
+                    if (type_class == ISymbols.TypeClass.integer || type_class == ISymbols.TypeClass.real) {
+                        bf.append("Dec: ");
+                        bf.append(toNumberString(10, type_class, data, offs, size, big_endian));
+                        bf.append("\n");
+                    }
                     bf.append("Hex: ");
-                    bf.append(toNumberString(16, type_data, data, 0, data.length, big_endian));
+                    bf.append(toNumberString(16, type_class, data, offs, size, big_endian));
                     bf.append("\n");
                 }
             }
+            else if (type_class == ISymbols.TypeClass.integer || type_class == ISymbols.TypeClass.real) {
+                bf.append(toNumberString(10, type_class, data, offs, size, big_endian));
+            }
             else {
-                bf.append(toNumberString(16, type_data, data, 0, data.length, big_endian));
+                bf.append(toNumberString(16, type_class, data, offs, size, big_endian));
             }
             return true;
         }
@@ -1154,43 +1196,44 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
             }
         }
         if (type_data.getSize() > 0) {
-            switch (type_data.getTypeClass()) {
+            ISymbols.TypeClass type_class = type_data.getTypeClass();
+            switch (type_class) {
             case enumeration:
             case integer:
             case cardinal:
             case real:
                 if (level == 0) {
                     bf.append("Dec: ");
-                    bf.append(toNumberString(10, type_data, data, offs, size, big_endian));
+                    bf.append(toNumberString(10, type_class, data, offs, size, big_endian));
                     bf.append("\n");
                     bf.append("Oct: ");
-                    bf.append(toNumberString(8, type_data, data, offs, size, big_endian));
+                    bf.append(toNumberString(8, type_class, data, offs, size, big_endian));
                     bf.append("\n");
                     bf.append("Hex: ");
-                    bf.append(toNumberString(16, type_data, data, offs, size, big_endian));
+                    bf.append(toNumberString(16, type_class, data, offs, size, big_endian));
                     bf.append("\n");
                 }
                 else if (type_data.getTypeClass() == ISymbols.TypeClass.cardinal) {
                     bf.append("0x");
-                    bf.append(toNumberString(16, type_data, data, offs, size, big_endian));
+                    bf.append(toNumberString(16, type_class, data, offs, size, big_endian));
                 }
                 else {
-                    bf.append(toNumberString(10, type_data, data, offs, size, big_endian));
+                    bf.append(toNumberString(10, type_class, data, offs, size, big_endian));
                 }
                 break;
             case pointer:
             case function:
                 if (level == 0) {
                     bf.append("Oct: ");
-                    bf.append(toNumberString(8, type_data, data, offs, size, big_endian));
+                    bf.append(toNumberString(8, type_class, data, offs, size, big_endian));
                     bf.append("\n");
                     bf.append("Hex: ");
-                    bf.append(toNumberString(16, type_data, data, offs, size, big_endian));
+                    bf.append(toNumberString(16, type_class, data, offs, size, big_endian));
                     bf.append("\n");
                 }
                 else {
                     bf.append("0x");
-                    bf.append(toNumberString(16, type_data, data, offs, size, big_endian));
+                    bf.append(toNumberString(16, type_class, data, offs, size, big_endian));
                 }
                 break;
             case array:
@@ -1484,14 +1527,6 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                                     IExpressions exps = node.launch.getService(IExpressions.class);
                                     exps.assign(exp.getID(), bf, new IExpressions.DoneAssign() {
                                         public void doneAssign(IToken token, Exception error) {
-                                            TCFNode exe = node;
-                                            while (exe != null) {
-                                                if (exe instanceof TCFNodeExecContext) {
-                                                    exe.model.onMemoryChanged(exe.id);
-                                                    break;
-                                                }
-                                                exe = exe.parent;
-                                            }
                                             node.getRootExpression().onValueChanged();
                                             if (error != null) {
                                                 node.model.showMessageBox("Cannot modify element value", error);

@@ -307,11 +307,12 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
         public void contextChanged(IMemory.MemoryContext[] contexts) {
             for (IMemory.MemoryContext ctx : contexts) {
-                TCFNode node = getNode(ctx.getID());
+                String id = ctx.getID();
+                TCFNode node = getNode(id);
                 if (node instanceof TCFNodeExecContext) {
                     ((TCFNodeExecContext)node).onContextChanged(ctx);
                 }
-                onMemoryChanged(ctx.getID());
+                onMemoryChanged(id, true);
             }
         }
 
@@ -319,12 +320,12 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             onContextRemoved(context_ids);
         }
 
-        public void memoryChanged(String context_id, Number[] addr, long[] size) {
-            TCFNode node = getNode(context_id);
+        public void memoryChanged(String id, Number[] addr, long[] size) {
+            TCFNode node = getNode(id);
             if (node instanceof TCFNodeExecContext) {
                 ((TCFNodeExecContext)node).onMemoryChanged(addr, size);
             }
-            onMemoryChanged(context_id);
+            onMemoryChanged(id, true);
         }
     };
 
@@ -350,7 +351,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 if (!id.equals(context) && node instanceof TCFNodeExecContext) {
                     ((TCFNodeExecContext)node).onContainerSuspended();
                 }
-                onMemoryChanged(id);
+                onMemoryChanged(id, false);
             }
             TCFNode node = getNode(context);
             if (node instanceof TCFNodeExecContext) {
@@ -389,7 +390,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 if (node instanceof TCFNodeExecContext) {
                     ((TCFNodeExecContext)node).onContextChanged(ctx);
                 }
-                onMemoryChanged(id);
+                onMemoryChanged(id, true);
             }
             launch_node.onAnyContextSuspendedOrChanged();
         }
@@ -424,18 +425,19 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 setDebugViewSelection(node, reason);
                 annotation_manager.updateAnnotations(null, launch);
             }
-            onMemoryChanged(id);
+            onMemoryChanged(id, false);
         }
     };
 
     private final IMemoryMap.MemoryMapListener mmap_listenr = new IMemoryMap.MemoryMapListener() {
 
-        public void changed(String context) {
-            TCFNode node = getNode(context);
+        public void changed(String id) {
+            TCFNode node = getNode(id);
             if (node instanceof TCFNodeExecContext) {
                 TCFNodeExecContext exe = (TCFNodeExecContext)node;
                 exe.onMemoryMapChanged();
             }
+            onMemoryChanged(id, true);
             display.asyncExec(new Runnable() {
                 public void run() {
                     if (PlatformUI.isWorkbenchRunning()) {
@@ -746,8 +748,21 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         Activator.log(bf.toString(), x);
     }
 
-    void onMemoryChanged(String id) {
+    void onMemoryChanged(String id, boolean notify_references) {
         if (channel == null) return;
+        if (notify_references) {
+            for (Object obj : context_map.values()) {
+                if (obj instanceof IRunControl.RunControlContext) {
+                    IRunControl.RunControlContext subctx = (IRunControl.RunControlContext)obj;
+                    if (id.equals(subctx.getProcessID()) && !id.equals(subctx.getID())) {
+                        TCFNode subnode = getNode(subctx.getID());
+                        if (subnode instanceof TCFNodeExecContext) {
+                            ((TCFNodeExecContext)subnode).onMemoryChanged(null, null);
+                        }
+                    }
+                }
+            }
+        }
         if (mem_retrieval.size() == 0) return;
         if (mem_blocks_update == null) {
             mem_blocks_update = new MemoryBlocksUpdate(channel);
@@ -843,6 +858,10 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     void onContextRunning() {
         annotation_manager.updateAnnotations(null, launch);
+    }
+
+    void updateContextMap(String id, IRunControl.RunControlContext ctx) {
+        context_map.put(id, ctx);
     }
 
     private void onContextOrProcessRemoved() {

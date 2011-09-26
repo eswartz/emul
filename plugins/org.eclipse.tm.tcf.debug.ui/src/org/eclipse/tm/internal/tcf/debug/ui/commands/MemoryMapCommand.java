@@ -21,6 +21,7 @@ import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExpression;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeLaunch;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeModule;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeStackFrame;
+import org.eclipse.tm.tcf.services.IMemory;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 import org.eclipse.tm.tcf.util.TCFTask;
 
@@ -37,12 +38,21 @@ public class MemoryMapCommand extends AbstractActionDelegate {
                         return;
                     }
                     if (!mem_cache.validate(this)) return;
-                    if (mem_cache.getError() != null) {
+                    TCFNodeExecContext mem_node = mem_cache.getData();
+                    if (mem_node == null) {
                         done(false);
                         return;
                     }
-                    TCFNodeExecContext node = mem_cache.getData();
-                    done(node != null && node.getMemoryContext().getData() != null);
+                    TCFDataCache<TCFNodeExecContext> syms_cache = mem_node.getSymbolsNode();
+                    if (!syms_cache.validate(this)) return;
+                    TCFNodeExecContext syms_node = syms_cache.getData();
+                    if (syms_node == null) {
+                        done(false);
+                        return;
+                    }
+                    TCFDataCache<IMemory.MemoryContext> ctx_cache = syms_node.getMemoryContext();
+                    if (!ctx_cache.validate(this)) return;
+                    done(ctx_cache.getData() != null);
                 }
             }.getE();
         }

@@ -109,6 +109,7 @@ class TestExpressions implements ITCFTest,
         "&tcf_test_func3",
         "tcf_test_array + 10",
         "*(tcf_test_array + 10) | 1",
+        "&*(char *)(int *)0 == 0",
     };
 
     TestExpressions(TCFTestSuite test_suite, RunControl test_rc, IChannel channel) {
