@@ -97,14 +97,14 @@ public class ColorOctree {
 	private Comparator<InnerNode> comparator;
 
 	@SuppressWarnings("unchecked")
-	public ColorOctree(int maxDepth, int maxLeafCount, boolean limitDither) {
+	public ColorOctree(int maxDepth, int maxLeafCount, boolean removeDetail) {
 		if (maxDepth < 2 || maxLeafCount < 1)
 			throw new IllegalArgumentException();
 		
 		this.maxDepth = maxDepth;
 		this.maxLeafCount = maxLeafCount;
 		root = new InnerNode(null);
-		comparator = (limitDither ?
+		comparator = (removeDetail ?
 				createLeastUsedFirstComparator() : createMostUsedFirstComparator());
 		
 		reducibleLists = new LinkedList[maxDepth];
@@ -136,6 +136,8 @@ public class ColorOctree {
 			traverse = addToTreeLevel((InnerNode) traverse, depth, prgb);
 			depth++;
 		}
+		
+		// don't reduce serially; loses detail at bottom of image
 		//if (leafCount > maxLeafCount * maxLeafCount)
 		//reduceTree();
 	}
@@ -353,7 +355,7 @@ public class ColorOctree {
 
 		leafCount++;
 
-		//System.out.println("merged into " + newLeaf);
+		// System.out.println("merged into " + newLeaf);
 		return newLeaf;
 	}
 

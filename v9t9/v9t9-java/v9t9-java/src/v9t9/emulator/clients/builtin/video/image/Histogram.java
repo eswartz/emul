@@ -51,7 +51,7 @@ class Histogram {
 		
 		int rgbByte = (0xff00 & ~(0xff << mask)) >> 8;
 		int rgbMask = (rgbByte << 16) | (rgbByte << 8) | rgbByte;
-		System.out.println("rgbMask = " + Integer.toHexString(rgbMask));
+		if (ColorMapUtils.DEBUG) System.out.println("rgbMask = " + Integer.toHexString(rgbMask));
 		
 		int[] distA = { 0 };
 		int[] prgb = { 0, 0, 0 };

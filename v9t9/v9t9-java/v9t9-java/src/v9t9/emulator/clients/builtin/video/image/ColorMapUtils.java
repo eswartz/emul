@@ -7,6 +7,8 @@ import java.awt.image.BufferedImage;
 import java.util.TreeMap;
 
 public class ColorMapUtils {
+	static boolean DEBUG = true;
+
 	private ColorMapUtils() {
 	}
 
@@ -214,7 +216,9 @@ public class ColorMapUtils {
 	}
 
 	public static int rgb8ToPixel(int[] prgb) {
-		return ((prgb[0]) << 16) | ((prgb[1]) << 8) | (prgb[2]);
+		return (Math.max(0, Math.min(prgb[0], 255)) << 16) 
+				| (Math.max(0, Math.min(prgb[1], 255)) << 8) 
+				| Math.max(0, Math.min(prgb[2], 255));
 	}
 
 	public static void pixelToRGB(int pixel, int[] prgb) {
@@ -324,7 +328,7 @@ public class ColorMapUtils {
 					hist.put(key, count + 1);
 			}
 		}
-		System.out.println("For mask size " + mask +"; " + hist.size() + " colors");
+		if (DEBUG) System.out.println("For mask size " + mask +"; " + hist.size() + " colors");
 		return hist.size();
 	}
 

@@ -37,7 +37,7 @@ abstract class BasePaletteMapper implements IMapColor {
 						palette[d][2] & 0xff 
 				};
 				int dist = ColorMapUtils.getRGBDistance(palette, c, prgb);
-				if (dist != 0 && dist < minDist)
+				if (dist > 0 && dist < minDist)
 					minDist = dist;
 			}
 		}
@@ -71,7 +71,9 @@ abstract class BasePaletteMapper implements IMapColor {
 		if (!isFixedPalette()) {
 			//boolean highColors = numColors < 16 || usedColors > numColors * 4;
 			//return highColors ? 0x7*0x7 * 3 : minDist;
-			return ((numColors == 4 ? 0x3*0x3*3 : 0x7*0x7 * 3) * 3 + minDist) / 4;
+			if (numColors == 4)
+				return 0x3*0x3*3;
+			return ((0x7*0x7 * 3) * 3 + minDist) / 4;
 		} else {
 			return minDist;
 		}
