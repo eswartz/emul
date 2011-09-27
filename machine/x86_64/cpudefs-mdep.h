@@ -37,18 +37,49 @@ RegisterDefinition regs_index[] = {
 #   define REG_SP Esp
 #   define REG_BP Ebp
 #   define REG_IP Eip
-    { "eax",    REG_OFFSET(Eax),      4,  0,  0},
-    { "ecx",    REG_OFFSET(Ecx),      4,  1,  1},
-    { "edx",    REG_OFFSET(Edx),      4,  2,  2},
-    { "ebx",    REG_OFFSET(Ebx),      4,  3,  3},
-    { "esp",    REG_OFFSET(Esp),      4,  4,  4},
-    { "ebp",    REG_OFFSET(Ebp),      4,  5,  5},
-    { "esi",    REG_OFFSET(Esi),      4,  6,  6},
-    { "edi",    REG_OFFSET(Edi),      4,  7,  7},
-    { "eip",    REG_OFFSET(Eip),      4,  8,  8},
-    { "eflags", REG_OFFSET(EFlags),   4,  9,  9},
-    { "cs",     REG_OFFSET(SegCs),    4, -1, -1},
-    { "ss",     REG_OFFSET(SegSs),    4, -1, -1},
+    { "eax",    REG_OFFSET(Eax),      4,  0,  0 },
+    { "ebx",    REG_OFFSET(Ebx),      4,  3,  3 },
+    { "ecx",    REG_OFFSET(Ecx),      4,  1,  1 },
+    { "edx",    REG_OFFSET(Edx),      4,  2,  2 },
+    { "esp",    REG_OFFSET(Esp),      4,  4,  4 },
+    { "ebp",    REG_OFFSET(Ebp),      4,  5,  5 },
+    { "esi",    REG_OFFSET(Esi),      4,  6,  6 },
+    { "edi",    REG_OFFSET(Edi),      4,  7,  7 },
+    { "eip",    REG_OFFSET(Eip),      4,  8,  8 },
+    { "eflags", REG_OFFSET(EFlags),   4,  9,  9 },
+    { "cs",     REG_OFFSET(SegCs),    4, -1, -1 },
+    { "ss",     REG_OFFSET(SegSs),    4, -1, -1 },
+
+    { "ax",     REG_OFFSET(Eax),      2, -1, -1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, regs_index + 0 },
+    { "al",     REG_OFFSET(Eax),      1, -1, -1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, regs_index + 12 },
+    { "ah",     REG_OFFSET(Eax) + 1,  1, -1, -1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, regs_index + 12 },
+
+    { "bx",     REG_OFFSET(Ebx),      2, -1, -1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, regs_index + 1 },
+    { "bl",     REG_OFFSET(Ebx),      1, -1, -1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, regs_index + 15 },
+    { "bh",     REG_OFFSET(Ebx) + 1,  1, -1, -1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, regs_index + 15 },
+
+    { "cx",     REG_OFFSET(Ecx),      2, -1, -1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, regs_index + 2 },
+    { "cl",     REG_OFFSET(Ecx),      1, -1, -1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, regs_index + 18 },
+    { "ch",     REG_OFFSET(Ecx) + 1,  1, -1, -1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, regs_index + 18 },
+
+    { "dx",     REG_OFFSET(Edx),      2, -1, -1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, regs_index + 3 },
+    { "dl",     REG_OFFSET(Edx),      1, -1, -1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, regs_index + 21 },
+    { "dh",     REG_OFFSET(Edx) + 1,  1, -1, -1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, regs_index + 21 },
+
+    { "fpu",    0, 0, -1, -1 },
+
+    { "f0", REG_OFFSET(FloatSave.RegisterArea) + 0,  10, -1, -1, 0, 1, 0,  0,  0,  0,  0,  0,  0,  0,  0, regs_index + 24 },
+    { "f1", REG_OFFSET(FloatSave.RegisterArea) + 10, 10, -1, -1, 0, 1, 0,  0,  0,  0,  0,  0,  0,  0,  0, regs_index + 24 },
+    { "f2", REG_OFFSET(FloatSave.RegisterArea) + 20, 10, -1, -1, 0, 1, 0,  0,  0,  0,  0,  0,  0,  0,  0, regs_index + 24 },
+    { "f3", REG_OFFSET(FloatSave.RegisterArea) + 30, 10, -1, -1, 0, 1, 0,  0,  0,  0,  0,  0,  0,  0,  0, regs_index + 24 },
+    { "f4", REG_OFFSET(FloatSave.RegisterArea) + 40, 10, -1, -1, 0, 1, 0,  0,  0,  0,  0,  0,  0,  0,  0, regs_index + 24 },
+    { "f5", REG_OFFSET(FloatSave.RegisterArea) + 50, 10, -1, -1, 0, 1, 0,  0,  0,  0,  0,  0,  0,  0,  0, regs_index + 24 },
+    { "f6", REG_OFFSET(FloatSave.RegisterArea) + 60, 10, -1, -1, 0, 1, 0,  0,  0,  0,  0,  0,  0,  0,  0, regs_index + 24 },
+    { "f7", REG_OFFSET(FloatSave.RegisterArea) + 70, 10, -1, -1, 0, 1, 0,  0,  0,  0,  0,  0,  0,  0,  0, regs_index + 24 },
+
+    { "control", REG_OFFSET(FloatSave.ControlWord),  2, -1, -1, 0, 1, 0,  0,  0,  0,  0,  0,  0,  0,  0, regs_index + 24 },
+    { "status",  REG_OFFSET(FloatSave.StatusWord),   2, -1, -1, 0, 1, 0,  0,  0,  0,  0,  0,  0,  0,  0, regs_index + 24 },
+    { "tag",     REG_OFFSET(FloatSave.TagWord),      2, -1, -1, 0, 1, 0,  0,  0,  0,  0,  0,  0,  0,  0, regs_index + 24 },
 
 #elif defined(__APPLE__) && defined(__i386__)
 #   define REG_SP __esp

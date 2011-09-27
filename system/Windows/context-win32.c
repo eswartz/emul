@@ -194,7 +194,7 @@ static void get_registers(Context * ctx) {
     assert(context_has_state(ctx));
     assert(ctx->stopped);
 
-    ext->regs->ContextFlags = CONTEXT_CONTROL | CONTEXT_INTEGER;
+    ext->regs->ContextFlags = CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_FLOATING_POINT;
 #if USE_HW_BPS
     ext->regs->ContextFlags |= CONTEXT_DEBUG_REGISTERS;
 #endif
