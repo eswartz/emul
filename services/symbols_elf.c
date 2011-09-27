@@ -1696,44 +1696,41 @@ int get_symbol_lower_bound(const Symbol * sym, int64_t * value) {
 }
 
 int get_symbol_children(const Symbol * sym, Symbol *** children, int * count) {
-    int n = 0;
     static Symbol ** buf = NULL;
     static int buf_len = 0;
     ObjectInfo * obj = sym->obj;
     assert(sym->magic == SYMBOL_MAGIC);
     if (sym->base) {
-        if (sym->base->sym_class == SYM_CLASS_FUNCTION && sym->base->obj == NULL) {
-            *children = NULL;
-            *count = 0;
-            errno = ERR_SYM_NOT_FOUND;
-            return -1;
-        }
+        obj = sym->base->obj;
         if (sym->base->sym_class == SYM_CLASS_FUNCTION) {
-            ObjectInfo * i = sym->base->obj->mChildren;
-            if (unpack(sym->base) < 0) return -1;
-            while (i != NULL) {
-                if (i->mTag == TAG_formal_parameter || i->mTag == TAG_unspecified_parameters) n++;
-                i = i->mSibling;
+            if (obj == NULL) {
+                *children = NULL;
+                *count = 0;
+                errno = ERR_SYM_NOT_FOUND;
+                return -1;
             }
-            if (buf_len < n) {
-                buf = (Symbol **)loc_realloc(buf, sizeof(Symbol *) * n);
-                buf_len = n;
-            }
-            n = 0;
-            i = obj->mChildren;
-            while (i != NULL) {
-                if (i->mTag == TAG_formal_parameter || i->mTag == TAG_unspecified_parameters) {
-                    Symbol * x = NULL;
-                    Symbol * y = NULL;
-                    object2symbol(i, &x);
-                    if (get_symbol_type(x, &y) < 0) return -1;
-                    buf[n++] = y;
+            else {
+                int n = 0;
+                ObjectInfo * i = obj->mChildren;
+                if (unpack(sym->base) < 0) return -1;
+                while (i != NULL) {
+                    if (i->mTag == TAG_formal_parameter || i->mTag == TAG_unspecified_parameters) {
+                        Symbol * x = NULL;
+                        Symbol * y = NULL;
+                        object2symbol(i, &x);
+                        if (get_symbol_type(x, &y) < 0) return -1;
+                        if (buf_len <= n) {
+                            buf_len += 16;
+                            buf = (Symbol **)loc_realloc(buf, sizeof(Symbol *) * buf_len);
+                        }
+                        buf[n++] = y;
+                    }
+                    i = i->mSibling;
                 }
-                i = i->mSibling;
+                *children = buf;
+                *count = n;
+                return 0;
             }
-            *children = buf;
-            *count = n;
-            return 0;
         }
         *children = NULL;
         *count = 0;
@@ -1747,26 +1744,24 @@ int get_symbol_children(const Symbol * sym, Symbol *** children, int * count) {
     if (unpack(sym) < 0) return -1;
     obj = get_original_type(obj);
     if (obj != NULL) {
+        int n = 0;
         ObjectInfo * i = obj->mChildren;
-        while (i != NULL) {
-            i = i->mSibling;
-            n++;
-        }
-        if (buf_len < n) {
-            buf = (Symbol **)loc_realloc(buf, sizeof(Symbol *) * n);
-            buf_len = n;
-        }
-        n = 0;
-        i = obj->mChildren;
         while (i != NULL) {
             Symbol * x = NULL;
             object2symbol(i, &x);
+            if (buf_len <= n) {
+                buf_len += 16;
+                buf = (Symbol **)loc_realloc(buf, sizeof(Symbol *) * buf_len);
+            }
             buf[n++] = x;
             i = i->mSibling;
         }
+        *children = buf;
+        *count = n;
+        return 0;
     }
-    *children = buf;
-    *count = n;
+    *children = NULL;
+    *count = 0;
     return 0;
 }
 
