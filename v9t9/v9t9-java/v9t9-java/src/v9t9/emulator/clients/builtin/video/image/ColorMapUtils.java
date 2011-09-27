@@ -7,7 +7,7 @@ import java.awt.image.BufferedImage;
 import java.util.TreeMap;
 
 public class ColorMapUtils {
-	static boolean DEBUG = true;
+	static boolean DEBUG = false;
 
 	private ColorMapUtils() {
 	}

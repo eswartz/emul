@@ -66,6 +66,7 @@ public class ColorOctree {
 			blues += node.blues;
 		}
 	}
+
 	static class InnerNode extends Node {
 		Node[] kids;
 		int pixelCount;
@@ -143,7 +144,7 @@ public class ColorOctree {
 	}
 
 	/** Get the octree child index from the given bit of the RGB index */
-	private int getIndex(int[] prgb, int depth) {
+	private static int getIndex(int[] prgb, int depth) {
 		int mask = 0x80 >> depth;
 		return ((prgb[0] & mask) != 0 ? 4 : 0)
 				| ((prgb[1] & mask) != 0 ? 2 : 0) 
@@ -197,41 +198,44 @@ public class ColorOctree {
 	public void reduceTree() {
 		while (leafCount > maxLeafCount) {
 			LinkedList<InnerNode> list = null;
-			for (int depth = maxDepth - 1; depth >= 0; depth--) {
+			int depth;
+			for (depth = maxDepth - 1; depth >= 0; depth--) {
 				if (!(list = reducibleLists[depth]).isEmpty())
 					break;
 			}
-			if (list == null || list.isEmpty()) {
+			if (list == null || depth < 0) {
 				// the root must have only LeafNodes -- remove one
 				collapseRoot();
 				continue;
 			}
 			
-			TreeSet<InnerNode> sorted = new TreeSet<InnerNode>(comparator);
-			sorted.addAll(list);
-			
-			Iterator<InnerNode> iter = sorted.iterator();
-			InnerNode candidate = iter.next();
-			
-			mergeInnerNode(candidate);
-			list.remove(candidate);
-	
-			//if (leafCount != gatherLeaves().size())
-			//	throw new IllegalStateException();
+			while (leafCount > maxLeafCount &&  !list.isEmpty()) {
+				TreeSet<InnerNode> sorted = new TreeSet<InnerNode>(comparator);
+				sorted.addAll(list);
+				
+				Iterator<InnerNode> iter = sorted.iterator();
+				InnerNode candidate = iter.next();
+				
+				mergeInnerNode(depth, candidate);
+				
+				iter.remove();
+				//if (leafCount != gatherLeaves().size())
+				//	throw new IllegalStateException();
+			}
 		}
 	}
 
 	private void collapseRoot() {
-		int minIndex = getMinRootLeaf();
+		int leafIndex = getMinRootLeaf();
 		leafCount--;
 		
-		LeafNode leaf = (LeafNode) root.kids[minIndex];
-		root.kids[minIndex] = null;
+		LeafNode leaf = (LeafNode) root.kids[leafIndex];
+		root.kids[leafIndex] = null;
 		
 		// find nearest neighbor
 		LeafNode gtNeighbor = null;
 		int gtNeighborIndex = -1;
-		for (int i = minIndex + 1; i < 8; i++) {
+		for (int i = leafIndex + 1; i < 8; i++) {
 			if (root.kids[i] instanceof LeafNode) {
 				gtNeighborIndex = i;
 				gtNeighbor = (LeafNode) root.kids[i];
@@ -240,7 +244,7 @@ public class ColorOctree {
 		}
 		LeafNode ltNeighbor = null;
 		int ltNeighborIndex = -1;
-		for (int i = minIndex - 1; i >= 0; i--) {
+		for (int i = leafIndex - 1; i >= 0; i--) {
 			if (root.kids[i] instanceof LeafNode) {
 				ltNeighborIndex = i;
 				ltNeighbor = (LeafNode) root.kids[i];
@@ -262,9 +266,9 @@ public class ColorOctree {
 			neighborIndex = ltNeighborIndex;
 		} 
 		else {
-			// get closest
-			//if (Math.abs(ltNeighborIndex - minIndex) < Math.abs(gtNeighborIndex - minIndex)) {
-			if (minIndex < 8) {
+			// aim for filling out darker or lighter areas, to
+			// avoid averaging everything towards grey
+			if (leafIndex <= 8) {
 				neighbor = ltNeighbor;
 				neighborIndex = ltNeighborIndex;
 			} else {
@@ -274,22 +278,14 @@ public class ColorOctree {
 		}
 		
 		// merge two nodes into their middle
-		int avgIndex = (minIndex * leaf.pixelCount + neighborIndex * neighbor.pixelCount) / (leaf.pixelCount + neighbor.pixelCount);
-		//int avgIndex = (minIndex + neighborIndex) / 2;
-		if (avgIndex == neighborIndex) {
-			neighbor.add(leaf);
-			leaf = neighbor;
-		} else if (avgIndex != minIndex && root.kids[avgIndex] != null) {
-			LeafNode existing = (LeafNode) root.kids[avgIndex];
-			existing.add(leaf);
-			existing.add(neighbor);
-			leaf = existing;
-			leafCount--;
-		} else {
-			leaf.add(neighbor);
-		}
+		
+		//int avgIndex = (leafIndex * leaf.pixelCount + neighborIndex * neighbor.pixelCount) / (leaf.pixelCount + neighbor.pixelCount);
+		leaf.add(neighbor);
+		int[] prgb = leaf.reprRGB();
+		int avgIndex = getIndex(prgb, 0);
+		
 		root.kids[neighborIndex] = null;
-		root.kids[minIndex] = null;
+		root.kids[leafIndex] = null;
 		root.kids[avgIndex] = leaf;
 	}
 
@@ -330,7 +326,7 @@ public class ColorOctree {
 	 * @param inner
 	 * @return 
 	 */
-	private LeafNode mergeInnerNode(InnerNode parent) {
+	private LeafNode mergeInnerNode(int depth, InnerNode parent) {
 		LeafNode newLeaf = new LeafNode(parent.parent);
 		for (int i = 0; i < 8; i++) {
 			Node n = parent.kids[i];
@@ -340,7 +336,7 @@ public class ColorOctree {
 				leafCount--;
 			}
 			else if (n instanceof InnerNode) {
-				LeafNode rec = mergeInnerNode((InnerNode) n);
+				LeafNode rec = mergeInnerNode(depth + 1, (InnerNode) n);
 				newLeaf.add(rec);
 				parent.kids[i] = null;
 				leafCount--;
@@ -351,9 +347,25 @@ public class ColorOctree {
 		while (index < 8 && parent.parent.kids[index] != parent) {
 			index++;
 		}
+
+		// bias towards extremes so dark and light are not lost
+		if (depth == 0) {
+			if (index == 0) {
+				newLeaf.reds = (newLeaf.reds * 2) / 3; 
+				newLeaf.greens = (newLeaf.greens * 2) / 3; 
+				newLeaf.blues = (newLeaf.blues * 2) / 3; 
+			} else if (index == 7) {
+				newLeaf.reds = (newLeaf.reds * 3) / 2; 
+				newLeaf.greens = (newLeaf.greens * 3) / 2; 
+				newLeaf.blues = (newLeaf.blues * 3) / 2; 
+			}
+		}
+
 		parent.parent.kids[index] = newLeaf;
 
 		leafCount++;
+
+		reducibleLists[depth].remove(parent);
 
 		// System.out.println("merged into " + newLeaf);
 		return newLeaf;

@@ -35,7 +35,7 @@ import v9t9.engine.VdpHandler;
  *
  */
 public class ImageImport implements IBitmapPixelAccess {
-
+	private boolean DEBUG = true;
 
 	private ImageData imageData;
 	private Format format;
@@ -56,9 +56,6 @@ public class ImageImport implements IBitmapPixelAccess {
 	private boolean isMono;
 	private boolean isStandardPalette;
 	
-	private boolean DEBUG = false;
-
-
 	/* 
 	 * This palette adheres to the strict naming of the given colors
 	 * and is quite tacky visually, but helps in color selection, since
