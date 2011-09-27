@@ -425,6 +425,7 @@ class TestExpressions implements ITCFTest,
                 if (txt.indexOf("local") >= 0) continue;
                 if (txt.indexOf("test_struct") >= 0) continue;
                 if (txt.indexOf("tcf_test_array") >= 0) continue;
+                if (txt.indexOf("(char *)") >= 0) continue;
             }
             if (expr_ctx.get(txt) == null) {
                 expr.create(stack_trace[stack_trace.length - 2], null, txt, new IExpressions.DoneCreate() {
