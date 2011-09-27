@@ -118,33 +118,42 @@ public class TCFNumberFormat {
             return Double.toString(Double.longBitsToDouble(toBigInteger(
                     data, offs, size, big_endian, true).longValue()));
         case 10:
+        case 16:
             {
                 byte[] arr = new byte[size];
-                if (!big_endian) {
+                if (big_endian) {
+                    System.arraycopy(data, offs, arr, 0, size);
+                }
+                else {
                     for (int i = 0; i < size; i++) {
                         arr[arr.length - i - 1] = data[offs + i];
                     }
                 }
-                else {
-                    System.arraycopy(data, offs, arr, 0, size);
-                }
                 boolean neg = (arr[0] & 0x80) != 0;
-                int scale = ((arr[0] & 0x7f) << 8) | (arr[1] & 0xff);
-                if (scale == 0x7fff) {
+                int exponent = ((arr[0] & 0x7f) << 8) | (arr[1] & 0xff);
+                if (exponent == 0x7fff) {
                     for (int i = 2; i < arr.length; i++) {
                         int n = arr[i] & 0xff;
-                        if (i == 2) n &= 0x7f;
+                        if (size == 10 && i == 2) n &= 0x7f;
                         if (n != 0) return neg ? "-NaN" : "+NaN";
                     }
                     return neg ? "-Inf" : "+Inf";
                 }
-                scale -= 16446;
                 arr[0] = arr[1] = 0;
+                if (size == 10) {
+                    exponent -= 63;
+                }
+                else {
+                    if (exponent == 0) exponent = 1;
+                    else arr[1] = 1;
+                    exponent -= size * 8 - 16;
+                }
+                exponent -= 16383;
                 BigDecimal a = new BigDecimal(new BigInteger(arr), 0);
-                if (a.signum() != 0 && scale != 0) {
+                if (a.signum() != 0 && exponent != 0) {
                     BigDecimal p = new BigDecimal(BigInteger.valueOf(2), 0);
-                    if (scale > 0) a = a.multiply(p.pow(scale));
-                    else a = a.divide(p.pow(-scale), a.scale() - scale / 3, RoundingMode.HALF_DOWN);
+                    if (exponent > 0) a = a.multiply(p.pow(exponent));
+                    else a = a.divide(p.pow(-exponent), a.scale() - exponent / 3, RoundingMode.HALF_DOWN);
                 }
                 String s = a.toString();
                 if (neg) s = "-" + s;
