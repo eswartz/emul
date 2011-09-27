@@ -456,7 +456,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                                             set(null, null, toASCIIString(data, 0, data.length, '"'));
                                             return true;
                                         }
-                                        BigInteger a = toBigInteger(data, 0, data.length, v.isBigEndian(), false);
+                                        BigInteger a = TCFNumberFormat.toBigInteger(data, 0, data.length, v.isBigEndian(), false);
                                         if (!a.equals(BigInteger.valueOf(0))) {
                                             addr = a;
                                             Protocol.invokeLater(this);
@@ -805,27 +805,6 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         return bf.toString();
     }
 
-    private BigInteger toBigInteger(byte[] data, int offs, int size, boolean big_endian, boolean sign_extension) {
-        assert offs + size <= data.length;
-        byte[] temp = null;
-        if (sign_extension) {
-            temp = new byte[size];
-        }
-        else {
-            temp = new byte[size + 1];
-            temp[0] = 0; // Extra byte to avoid sign extension by BigInteger
-        }
-        if (big_endian) {
-            System.arraycopy(data, offs, temp, sign_extension ? 0 : 1, size);
-        }
-        else {
-            for (int i = 0; i < size; i++) {
-                temp[temp.length - i - 1] = data[i + offs];
-            }
-        }
-        return new BigInteger(temp);
-    }
-
     private String toNumberString(int radix, ISymbols.TypeClass t, byte[] data, int offs, int size, boolean big_endian) {
         if (size <= 0 || size > 16) return "";
         if (radix != 16) {
@@ -841,25 +820,16 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
             if (t != null) {
                 switch (t) {
                 case integer:
-                    s = toBigInteger(data, offs, size, big_endian, true).toString();
+                    s = TCFNumberFormat.toBigInteger(data, offs, size, big_endian, true).toString();
                     break;
                 case real:
-                    switch (size) {
-                    case 4:
-                        s = Float.toString(Float.intBitsToFloat(toBigInteger(
-                                data, offs, size, big_endian, true).intValue()));
-                        break;
-                    case 8:
-                        s = Double.toString(Double.longBitsToDouble(toBigInteger(
-                                data, offs, size, big_endian, true).longValue()));
-                        break;
-                    }
+                    s = TCFNumberFormat.toFPString(data, offs, size, big_endian);
                     break;
                 }
             }
         }
         if (s == null) {
-            s = toBigInteger(data, offs, size, big_endian, false).toString(radix);
+            s = TCFNumberFormat.toBigInteger(data, offs, size, big_endian, false).toString(radix);
             switch (radix) {
             case 8:
                 if (!s.startsWith("0")) s = "0" + s;

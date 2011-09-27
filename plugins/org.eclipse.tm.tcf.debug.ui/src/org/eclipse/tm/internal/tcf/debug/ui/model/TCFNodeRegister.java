@@ -348,17 +348,12 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
             }
             return bf.toString();
         }
-        byte[] temp = new byte[data.length + 1];
-        temp[0] = 0; // Extra byte to avoid sign extension by BigInteger
-        if (ctx.isBigEndian()) {
-            System.arraycopy(data, 0, temp, 1, data.length);
+        if (radix == 10 && ctx.isFloat()) {
+            String s = TCFNumberFormat.toFPString(data, 0, data.length, ctx.isBigEndian());
+            if (s != null) return s;
         }
-        else {
-            for (int i = 0; i < data.length; i++) {
-                temp[temp.length - i - 1] = data[i];
-            }
-        }
-        String s = new BigInteger(temp).toString(radix);
+        BigInteger b = TCFNumberFormat.toBigInteger(data, 0, data.length, ctx.isBigEndian(), false);
+        String s = b.toString(radix);
         switch (radix) {
         case 8:
             if (!s.startsWith("0")) s = "0" + s;

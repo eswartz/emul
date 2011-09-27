@@ -10,7 +10,9 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 
 public class TCFNumberFormat {
 
@@ -105,5 +107,71 @@ public class TCFNumberFormat {
             if (j >= 0 && j < rs.length) rs[j] = b;
         }
         return rs;
+    }
+
+    public static String toFPString(byte[] data, int offs, int size, boolean big_endian) {
+        switch (size) {
+        case 4:
+            return Float.toString(Float.intBitsToFloat(toBigInteger(
+                    data, offs, size, big_endian, true).intValue()));
+        case 8:
+            return Double.toString(Double.longBitsToDouble(toBigInteger(
+                    data, offs, size, big_endian, true).longValue()));
+        case 10:
+            {
+                byte[] arr = new byte[size];
+                if (!big_endian) {
+                    for (int i = 0; i < size; i++) {
+                        arr[arr.length - i - 1] = data[offs + i];
+                    }
+                }
+                else {
+                    System.arraycopy(data, offs, arr, 0, size);
+                }
+                boolean neg = (arr[0] & 0x80) != 0;
+                int scale = ((arr[0] & 0x7f) << 8) | (arr[1] & 0xff);
+                if (scale == 0x7fff) {
+                    for (int i = 2; i < arr.length; i++) {
+                        int n = arr[i] & 0xff;
+                        if (i == 2) n &= 0x7f;
+                        if (n != 0) return neg ? "-NaN" : "+NaN";
+                    }
+                    return neg ? "-Inf" : "+Inf";
+                }
+                scale -= 16446;
+                arr[0] = arr[1] = 0;
+                BigDecimal a = new BigDecimal(new BigInteger(arr), 0);
+                if (a.signum() != 0 && scale != 0) {
+                    BigDecimal p = new BigDecimal(BigInteger.valueOf(2), 0);
+                    if (scale > 0) a = a.multiply(p.pow(scale));
+                    else a = a.divide(p.pow(-scale), a.scale() - scale / 3, RoundingMode.HALF_DOWN);
+                }
+                String s = a.toString();
+                if (neg) s = "-" + s;
+                return s;
+            }
+        }
+        return null;
+    }
+
+    public static BigInteger toBigInteger(byte[] data, int offs, int size, boolean big_endian, boolean sign_extension) {
+        assert offs + size <= data.length;
+        byte[] temp = null;
+        if (sign_extension) {
+            temp = new byte[size];
+        }
+        else {
+            temp = new byte[size + 1];
+            temp[0] = 0; // Extra byte to avoid sign extension by BigInteger
+        }
+        if (big_endian) {
+            System.arraycopy(data, offs, temp, sign_extension ? 0 : 1, size);
+        }
+        else {
+            for (int i = 0; i < size; i++) {
+                temp[temp.length - i - 1] = data[i + offs];
+            }
+        }
+        return new BigInteger(temp);
     }
 }

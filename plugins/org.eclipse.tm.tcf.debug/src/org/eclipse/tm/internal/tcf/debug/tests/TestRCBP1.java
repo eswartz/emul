@@ -1476,6 +1476,7 @@ class TestRCBP1 implements ITCFTest, IRunControl.RunControlListener {
                 if (!ctx.isWriteable()) continue;
                 if (ctx.isReadOnce()) continue;
                 if (ctx.isWriteOnce()) continue;
+                if (ctx.getSize() == 0) continue;
                 int offs = rnd.nextInt(ctx.getSize());
                 int size = rnd.nextInt(ctx.getSize() - offs) + 1;
                 locs.add(new IRegisters.Location(id, offs, size));
