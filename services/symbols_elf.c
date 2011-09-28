@@ -661,6 +661,7 @@ int find_symbol_by_name(Context * ctx, int frame, ContextAddress ip, char * name
                         if (!found && unit->mBaseTypes != NULL) {
                             if (find_in_object_tree(unit->mBaseTypes->mObject->mChildren, 0, 0, name, res)) found = 1;
                         }
+                        if (found) break;
                     }
                 }
                 clear_trap(&trap);
