@@ -232,61 +232,36 @@ public class ColorOctree {
 		LeafNode leaf = (LeafNode) root.kids[leafIndex];
 		root.kids[leafIndex] = null;
 		
-		// find nearest neighbor
-		LeafNode gtNeighbor = null;
-		int gtNeighborIndex = -1;
-		for (int i = leafIndex + 1; i < 8; i++) {
-			if (root.kids[i] instanceof LeafNode) {
-				gtNeighborIndex = i;
-				gtNeighbor = (LeafNode) root.kids[i];
-				break;
-			}
-		}
-		LeafNode ltNeighbor = null;
-		int ltNeighborIndex = -1;
-		for (int i = leafIndex - 1; i >= 0; i--) {
-			if (root.kids[i] instanceof LeafNode) {
-				ltNeighborIndex = i;
-				ltNeighbor = (LeafNode) root.kids[i];
-				break;
-			}
-		}
+		// distribute pixels to closest color
+		LeafNode minNeighbor = null;
 		
-		if (ltNeighborIndex == -1 && gtNeighborIndex == -1)
-			throw new IllegalStateException();
-		
-		LeafNode neighbor;
-		int neighborIndex;
-		if (ltNeighborIndex == -1) {
-			neighbor = gtNeighbor;
-			neighborIndex = gtNeighborIndex;
-		}
-		else if (gtNeighborIndex == -1) {
-			neighbor = ltNeighbor;
-			neighborIndex = ltNeighborIndex;
-		} 
-		else {
-			// aim for filling out darker or lighter areas, to
-			// avoid averaging everything towards grey
-			if (leafIndex <= 8) {
-				neighbor = ltNeighbor;
-				neighborIndex = ltNeighborIndex;
-			} else {
-				neighbor = gtNeighbor;
-				neighborIndex = gtNeighborIndex;
-			}
-		}
-		
-		// merge two nodes into their middle
-		
-		//int avgIndex = (leafIndex * leaf.pixelCount + neighborIndex * neighbor.pixelCount) / (leaf.pixelCount + neighbor.pixelCount);
-		leaf.add(neighbor);
 		int[] prgb = leaf.reprRGB();
-		int avgIndex = getIndex(prgb, 0);
+		int bit;
+		if ((prgb[0] & 0x80) != 0) {
+			bit = 4;
+		} else if ((prgb[1] & 0x80) != 0) {
+			bit = 2;
+		} else {
+			bit = 1;
+		}
 		
-		root.kids[neighborIndex] = null;
-		root.kids[leafIndex] = null;
-		root.kids[avgIndex] = leaf;
+		if ((root.kids[leafIndex ^ bit]) instanceof LeafNode) {
+			minNeighbor = (LeafNode) (root.kids[leafIndex ^ bit]);
+		} else {
+			// just find one with least representation
+			for (int idx = 0; idx < 8; idx++) {
+				if (root.kids[idx] instanceof LeafNode) {
+					LeafNode neighbor = (LeafNode) root.kids[idx];
+			
+					if (minNeighbor == null || neighbor.pixelCount < minNeighbor.pixelCount) {
+						minNeighbor = neighbor;
+					}
+				}
+			}
+		}
+		if (minNeighbor != null) {
+			minNeighbor.add(leaf);
+		}
 	}
 
 	private int getMinRootLeaf() {
@@ -349,11 +324,11 @@ public class ColorOctree {
 		}
 
 		// bias towards extremes so dark and light are not lost
-		if (depth == 0) {
+		if (maxLeafCount < 8 && depth == 0) {
 			if (index == 0) {
-				newLeaf.reds = (newLeaf.reds * 2) / 3; 
-				newLeaf.greens = (newLeaf.greens * 2) / 3; 
-				newLeaf.blues = (newLeaf.blues * 2) / 3; 
+				newLeaf.reds = (newLeaf.reds * 1) / 3; 
+				newLeaf.greens = (newLeaf.greens * 1) / 3; 
+				newLeaf.blues = (newLeaf.blues * 1) / 3; 
 			} else if (index == 7) {
 				newLeaf.reds = (newLeaf.reds * 3) / 2; 
 				newLeaf.greens = (newLeaf.greens * 3) / 2; 

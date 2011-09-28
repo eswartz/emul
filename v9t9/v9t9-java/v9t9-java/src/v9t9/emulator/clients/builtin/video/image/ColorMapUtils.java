@@ -121,6 +121,16 @@ public class ColorMapUtils {
 		dist = (dr * dr) + (dg * dg) + (db * db);
 		return dist;
 	}
+	public static int getRGBDistance(int[] rgb, int[] prgb) {
+		int dist;
+		
+		int dr = (rgb[0] - prgb[0]);
+		int dg = (rgb[1] - prgb[1]);
+		int db = (rgb[2] - prgb[2]);
+		
+		dist = (dr * dr) + (dg * dg) + (db * db);
+		return dist;
+	}
 
 	/**
 	 * @param i

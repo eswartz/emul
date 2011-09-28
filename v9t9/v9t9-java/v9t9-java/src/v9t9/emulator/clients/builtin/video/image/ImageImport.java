@@ -443,6 +443,56 @@ public class ImageImport implements IBitmapPixelAccess {
 		}
 	}
 
+	private void createOptimalPaletteWithHSV(BufferedImage image, int colorCount) {
+		int toAllocate = colorCount - firstColor;
+			
+		ColorOctree octree = new ColorOctree(3, toAllocate, true);
+		int[] prgb = { 0, 0, 0 };
+		float[] hsv = { 0, 0, 0 };
+		int[] rgbs = new int[image.getWidth()];
+		for (int y = 0; y < image.getHeight(); y++) {
+			image.getRGB(0, y, rgbs.length, 1, rgbs, 0, rgbs.length);
+			for (int x = 0; x < rgbs.length; x++) {
+				ColorMapUtils.pixelToRGB(rgbs[x], prgb);
+				ColorMapUtils.rgbToHsv(prgb, hsv);
+				prgb[0] = (int) (hsv[0] * 256 / 360);
+				prgb[1] = (int) (hsv[1] * 255);
+				prgb[2] = (int) hsv[2];
+				octree.addColor(prgb);
+			}
+		}
+		
+		octree.reduceTree();
+
+		int index = firstColor;
+		
+		List<LeafNode> leaves = octree.gatherLeaves();
+		if (leaves.size() > toAllocate)
+			throw new IllegalStateException();
+		
+		for (ColorOctree.LeafNode node : leaves) {
+			int[] repr = node.reprRGB();
+			
+			hsv[0] = repr[0] * 360 / 256.f;
+			hsv[1] = repr[1] / 255.f;
+			hsv[2] = repr[2];
+			ColorMapUtils.hsvToRgb(hsv[0], hsv[1], hsv[2], repr);
+			
+			if (DEBUG) System.out.println("palette[" + index +"] = " 
+					+ Integer.toHexString(repr[0]) + "/" 
+					+ Integer.toHexString(repr[1]) + "/" 
+					+ Integer.toHexString(repr[2]));
+			
+			canvas.setGRB333(index, Math.min(255, (repr[1] * 0xff / 0xdf)) >> 5, 
+				Math.min(255, (repr[0] * 0xff / 0xdf)) >> 5, 
+				Math.min(255, (repr[2] * 0xff / 0xdf)) >> 5);
+			
+			index++;
+			
+		}
+	}
+
+
 	private void createOptimalPalette(BufferedImage image, int colorCount) {
 		int toAllocate = colorCount - firstColor;
 			
@@ -454,14 +504,6 @@ public class ImageImport implements IBitmapPixelAccess {
 			for (int x = 0; x < rgbs.length; x++) {
 				ColorMapUtils.pixelToRGB(rgbs[x], prgb);
 				octree.addColor(prgb);
-				
-				/*
-				byte[] rgb = VdpCanvas.getGRB333(
-						Math.min(255, prgb[1] ) >> 5, 
-						Math.min(255, prgb[0] ) >> 5, 
-						Math.min(255, prgb[2] ) >> 5);
-				octree.addColor(new int[] { rgb[0]&0xff, rgb[1]&0xff, rgb[2]&0xff });
-				*/
 			}
 		}
 		
@@ -481,9 +523,10 @@ public class ImageImport implements IBitmapPixelAccess {
 					+ Integer.toHexString(repr[1]) + "/" 
 					+ Integer.toHexString(repr[2]));
 			
-			canvas.setGRB333(index, Math.min(255, repr[1] + 15) >> 5, 
-				Math.min(255, repr[0] + 15) >> 5, 
-				Math.min(255, repr[2] + 15) >> 5);
+			canvas.setGRB333(index, Math.min(255, (repr[1] * 0xff / 0xdf)) >> 5, 
+				Math.min(255, (repr[0] * 0xff / 0xdf)) >> 5, 
+				Math.min(255, (repr[2] * 0xff / 0xdf)) >> 5);
+			
 			index++;
 			
 		}
@@ -622,11 +665,6 @@ public class ImageImport implements IBitmapPixelAccess {
 		int usedColors = //Math.min(numColors * 3 / 4, 
 				Math.min(numColors, interestingColors);
 		//usedColors = Math.min(numColors * 3 / 4, usedColors);
-		
-		if (!(mapColor instanceof MonoMapColor)) {
-			if (interestingColors == 2)
-				usedColors = 1;
-		}
 		
 		if (DEBUG) System.out.println("\nN-color: interestingColors="+interestingColors
 				+"; usedColors="+usedColors
