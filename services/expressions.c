@@ -577,7 +577,7 @@ static void next_sy(void) {
 static void reg2value(Context * ctx, int frame, RegisterDefinition * def, Value * v) {
     memset(v, 0, sizeof(Value));
     set_value(v, NULL, def->size, def->big_endian);
-    v->type_class = TYPE_CLASS_CARDINAL;
+    v->type_class = def->fp_value ? TYPE_CLASS_REAL : TYPE_CLASS_CARDINAL;
     v->reg = def;
     if (frame == STACK_TOP_FRAME) {
         if (context_read_reg(ctx, def, 0, def->size, v->value) < 0) exception(errno);

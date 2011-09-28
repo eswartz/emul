@@ -66,7 +66,7 @@ RegisterDefinition regs_index[] = {
     { "dl",     REG_OFFSET(Edx),      1, -1, -1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, regs_index + 21 },
     { "dh",     REG_OFFSET(Edx) + 1,  1, -1, -1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, regs_index + 21 },
 
-    { "fpu",    0, 0, -1, -1 },
+    { "fpu",    0, 0, -1, -1, 0, 0, 1, 1 },
 
     { "f0", REG_OFFSET(FloatSave.RegisterArea) + 0,  10, -1, -1, 0, 1, 0,  0,  0,  0,  0,  0,  0,  0,  0, regs_index + 24 },
     { "f1", REG_OFFSET(FloatSave.RegisterArea) + 10, 10, -1, -1, 0, 1, 0,  0,  0,  0,  0,  0,  0,  0,  0, regs_index + 24 },
@@ -77,9 +77,9 @@ RegisterDefinition regs_index[] = {
     { "f6", REG_OFFSET(FloatSave.RegisterArea) + 60, 10, -1, -1, 0, 1, 0,  0,  0,  0,  0,  0,  0,  0,  0, regs_index + 24 },
     { "f7", REG_OFFSET(FloatSave.RegisterArea) + 70, 10, -1, -1, 0, 1, 0,  0,  0,  0,  0,  0,  0,  0,  0, regs_index + 24 },
 
-    { "control", REG_OFFSET(FloatSave.ControlWord),  2, -1, -1, 0, 1, 0,  0,  0,  0,  0,  0,  0,  0,  0, regs_index + 24 },
-    { "status",  REG_OFFSET(FloatSave.StatusWord),   2, -1, -1, 0, 1, 0,  0,  0,  0,  0,  0,  0,  0,  0, regs_index + 24 },
-    { "tag",     REG_OFFSET(FloatSave.TagWord),      2, -1, -1, 0, 1, 0,  0,  0,  0,  0,  0,  0,  0,  0, regs_index + 24 },
+    { "control", REG_OFFSET(FloatSave.ControlWord),  2, -1, -1, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0, regs_index + 24 },
+    { "status",  REG_OFFSET(FloatSave.StatusWord),   2, -1, -1, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0, regs_index + 24 },
+    { "tag",     REG_OFFSET(FloatSave.TagWord),      2, -1, -1, 0, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0, regs_index + 24 },
 
 #elif defined(__APPLE__) && defined(__i386__)
 #   define REG_SP __esp
