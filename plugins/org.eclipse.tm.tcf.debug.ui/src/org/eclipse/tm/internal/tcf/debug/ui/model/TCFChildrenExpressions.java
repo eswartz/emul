@@ -52,7 +52,7 @@ public class TCFChildrenExpressions extends TCFChildren {
         for (final IExpression e : node.model.getExpressionManager().getExpressions()) {
             String text = e.getExpressionText();
             TCFNodeExpression n = findScript(text);
-            if (n == null) add(n = new TCFNodeExpression(node, text, null, null, -1, false));
+            if (n == null) add(n = new TCFNodeExpression(node, text, null, null, null, -1, false));
             n.setSortPosition(cnt++);
             if (e instanceof IWatchExpression) n.setEnabled(((IWatchExpression)e).isEnabled());
             data.put(n.id, n);

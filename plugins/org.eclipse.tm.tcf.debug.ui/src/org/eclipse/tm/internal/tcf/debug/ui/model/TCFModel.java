@@ -102,6 +102,7 @@ import org.eclipse.tm.internal.tcf.debug.ui.preferences.TCFPreferences;
 import org.eclipse.tm.tcf.core.Command;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IErrorReport;
+import org.eclipse.tm.tcf.protocol.IService;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IDisassembly;
@@ -111,7 +112,7 @@ import org.eclipse.tm.tcf.services.IMemoryMap;
 import org.eclipse.tm.tcf.services.IProcesses;
 import org.eclipse.tm.tcf.services.IRegisters;
 import org.eclipse.tm.tcf.services.IRunControl;
-import org.eclipse.tm.tcf.services.IRunControl.RunControlContext;
+import org.eclipse.tm.tcf.services.IStackTrace;
 import org.eclipse.tm.tcf.services.ISymbols;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 import org.eclipse.tm.tcf.util.TCFTask;
@@ -1056,58 +1057,146 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     /**
      * Asynchronously create model node for given ID.
-     * Only nodes for IDs recognized by Run Control service can be created this way.
-     * If 'cache' is valid after the method returns, the node cannot be created, and
-     * the cache will contain an error report.
-     * @param id - Run Control service context ID.
+     * If 'cache' is valid after the method returns, the node cannot be created,
+     * and the cache will contain an error report.
+     * @param id - context ID.
      * @param cache - data cache object that need the node for validation.
      * @return - true if all done, false if 'cache' is waiting for remote data.
      */
     public boolean createNode(String id, final TCFDataCache<?> cache) {
         TCFNode parent = getNode(id);
         if (parent != null) return true;
-        LinkedList<IRunControl.RunControlContext> path = null;
+        LinkedList<Object> path = null;
         for (;;) {
             Object obj = context_map.get(id);
-            if (obj == null) {
-                final String command_id = id;
-                IRunControl rc = channel.getRemoteService(IRunControl.class);
-                if (rc == null) {
-                    cache.set(null, new Exception("Target does not provide Run Control service"), null);
-                    return true;
-                }
-                cache.start(rc.getContext(command_id, new IRunControl.DoneGetContext() {
-                    public void doneGetContext(IToken token, Exception error, RunControlContext context) {
-                        if (error == null && context == null) {
-                            error = new Exception("Invalid context ID");
-                        }
-                        context_map.put(command_id, error != null ? error : context);
-                        cache.done(token);
-                    }
-                }));
+            if (obj == null) obj = new CreateNodeRunnable(id);
+            if (obj instanceof CreateNodeRunnable) {
+                ((CreateNodeRunnable)obj).wait(cache);
                 return false;
             }
             if (obj instanceof Throwable) {
                 cache.set(null, (Throwable)obj, null);
                 return true;
             }
-            IRunControl.RunControlContext ctx = (IRunControl.RunControlContext)obj;
-            if (path == null) path = new LinkedList<IRunControl.RunControlContext>();
-            path.add(ctx);
-            String parent_id = ctx.getParentID();
+            if (path == null) path = new LinkedList<Object>();
+            path.add(obj);
+            String parent_id = null;
+            if (obj instanceof IRunControl.RunControlContext) {
+                parent_id = ((IRunControl.RunControlContext)obj).getParentID();
+            }
+            else if (obj instanceof IStackTrace.StackTraceContext) {
+                parent_id = ((IStackTrace.StackTraceContext)obj).getParentID();
+            }
+            else {
+                parent_id = ((IRegisters.RegistersContext)obj).getParentID();
+            }
             parent = parent_id == null ? launch_node : getNode(parent_id);
             if (parent != null) break;
             id = parent_id;
         }
         while (path.size() > 0) {
-            IRunControl.RunControlContext ctx = path.removeLast();
-            TCFNodeExecContext n = new TCFNodeExecContext(parent, ctx.getID());
-            if (parent instanceof TCFNodeLaunch) ((TCFNodeLaunch)parent).getChildren().add(n);
-            else ((TCFNodeExecContext)parent).getChildren().add(n);
-            n.setRunContext(ctx);
-            parent = n;
+            Object obj = path.removeLast();
+            if (obj instanceof IRunControl.RunControlContext) {
+                IRunControl.RunControlContext ctx = (IRunControl.RunControlContext)obj;
+                TCFNodeExecContext n = new TCFNodeExecContext(parent, ctx.getID());
+                if (parent instanceof TCFNodeLaunch) ((TCFNodeLaunch)parent).getChildren().add(n);
+                else ((TCFNodeExecContext)parent).getChildren().add(n);
+                n.setRunContext(ctx);
+                parent = n;
+            }
+            else if (obj instanceof IStackTrace.StackTraceContext) {
+                IStackTrace.StackTraceContext ctx = (IStackTrace.StackTraceContext)obj;
+                TCFNodeStackFrame n = new TCFNodeStackFrame((TCFNodeExecContext)parent, ctx.getID(), false);
+                ((TCFNodeExecContext)parent).getStackTrace().add(n);
+                parent = n;
+            }
+            else if (obj instanceof IRegisters.RegistersContext) {
+                IRegisters.RegistersContext ctx = (IRegisters.RegistersContext)obj;
+                TCFNodeRegister n = new TCFNodeRegister(parent, ctx.getID());
+                if (parent instanceof TCFNodeRegister) ((TCFNodeRegister)parent).getChildren().add(n);
+                else if (parent instanceof TCFNodeStackFrame) ((TCFNodeStackFrame)parent).getRegisters().add(n);
+                else ((TCFNodeExecContext)parent).getRegisters().add(n);
+                parent = n;
+            }
+            else {
+                assert false;
+            }
         }
         return true;
+    }
+    
+    private class CreateNodeRunnable implements Runnable {
+        
+        final String id;
+        final ArrayList<Runnable> waiting_list = new ArrayList<Runnable>();
+        final ArrayList<IService> service_list = new ArrayList<IService>();
+        
+        CreateNodeRunnable(String id) {
+            this.id = id;
+            assert context_map.get(id) == null;
+            String[] arr = { IRunControl.NAME, IStackTrace.NAME, IRegisters.NAME }; 
+            for (String nm : arr) {
+                IService s = channel.getRemoteService(nm);
+                if (s != null) service_list.add(s);
+            }
+            context_map.put(id, this);
+            Protocol.invokeLater(this);
+        }
+        
+        void wait(Runnable r) {
+            assert context_map.get(id) == this;
+            waiting_list.add(r);
+        }
+        
+        public void run() {
+            assert context_map.get(id) == this;
+            if (service_list.size() == 0) {
+                context_map.put(id, new Exception("Invalid context ID"));
+                for (Runnable r : waiting_list) r.run();
+            }
+            else {
+                IService s = service_list.remove(0);
+                if (s instanceof IRunControl) {
+                    ((IRunControl)s).getContext(id, new IRunControl.DoneGetContext() {
+                        public void doneGetContext(IToken token, Exception error, IRunControl.RunControlContext context) {
+                            if (error == null && context != null) {
+                                context_map.put(id, context);
+                                for (Runnable r : waiting_list) r.run();
+                            }
+                            else {
+                                run();
+                            }
+                        }
+                    });
+                }
+                else if (s instanceof IStackTrace) {
+                    ((IStackTrace)s).getContext(new String[]{ id }, new IStackTrace.DoneGetContext() {
+                        public void doneGetContext(IToken token, Exception error, IStackTrace.StackTraceContext[] context) {
+                            if (error == null && context != null && context.length == 1 && context[0] != null) {
+                                context_map.put(id, context[0]);
+                                for (Runnable r : waiting_list) r.run();
+                            }
+                            else {
+                                run();
+                            }
+                        }
+                    });
+                }
+                else {
+                    ((IRegisters)s).getContext(id, new IRegisters.DoneGetContext() {
+                        public void doneGetContext(IToken token, Exception error, IRegisters.RegistersContext context) {
+                            if (error == null && context != null) {
+                                context_map.put(id, context);
+                                for (Runnable r : waiting_list) r.run();
+                            }
+                            else {
+                                run();
+                            }
+                        }
+                    });
+                }
+            }
+        }
     }
 
     public void update(IChildrenCountUpdate[] updates) {

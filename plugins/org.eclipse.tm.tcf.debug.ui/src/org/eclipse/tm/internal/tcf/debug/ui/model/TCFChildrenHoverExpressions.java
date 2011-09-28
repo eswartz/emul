@@ -58,7 +58,7 @@ class TCFChildrenHoverExpressions extends TCFChildren {
         if (expression_script != null) {
             TCFNodeExpression expression_node = findScript(expression_script);
             if (expression_node == null) {
-                add(expression_node = new TCFNodeExpression(node, expression_script, null, null, -1, false));
+                add(expression_node = new TCFNodeExpression(node, expression_script, null, null, null, -1, false));
             }
             data.put(expression_node.id, expression_node);
         }

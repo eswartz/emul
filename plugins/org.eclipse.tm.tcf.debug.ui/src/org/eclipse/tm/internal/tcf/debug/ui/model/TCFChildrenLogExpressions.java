@@ -57,7 +57,7 @@ public class TCFChildrenLogExpressions extends TCFChildren {
         for (String script : scripts) {
             TCFNodeExpression expression_node = findScript(script);
             if (expression_node == null) {
-                add(expression_node = new TCFNodeExpression(node, script, null, null, -1, false));
+                add(expression_node = new TCFNodeExpression(node, script, null, null, null, -1, false));
             }
             data.put(expression_node.id, expression_node);
         }

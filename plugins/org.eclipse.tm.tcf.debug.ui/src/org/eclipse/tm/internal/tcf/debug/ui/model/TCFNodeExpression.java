@@ -55,6 +55,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
     private final int index;
     private final boolean deref;
     private final String field_id;
+    private final String reg_id;
     private final TCFData<IExpressions.Expression> var_expression;
     private final TCFData<String> base_text;
     private final TCFData<Expression> expression;
@@ -98,12 +99,13 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
     }
 
     TCFNodeExpression(final TCFNode parent, final String script,
-            final String field_id, final String var_id,
+            final String field_id, final String var_id, final String reg_id,
             final int index, final boolean deref) {
         super(parent, var_id != null ? var_id : "Expr" + expr_cnt++);
-        assert script != null || field_id != null || var_id != null || index >= 0;
+        assert script != null || field_id != null || var_id != null || reg_id != null || index >= 0;
         this.script = script;
         this.field_id = field_id;
+        this.reg_id = reg_id;
         this.index = index;
         this.deref = deref;
         var_expression = new TCFData<IExpressions.Expression>(channel) {
@@ -142,6 +144,10 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                         if (exp == null) err = new Exception("Missing 'Expression' property");
                     }
                     set(null, err, exp);
+                    return true;
+                }
+                if (reg_id != null) {
+                    set(null, null, "${" + reg_id + "}");
                     return true;
                 }
                 TCFNode n = parent;
@@ -187,6 +193,24 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                             if (var.getData() != null) expr_text = var.getData().getName();
                         }
                     }
+                }
+                else if (reg_id != null) {
+                    if (!model.createNode(reg_id, this)) return false;
+                    if (isValid()) return true;
+                    TCFNodeRegister reg_node = (TCFNodeRegister)model.getNode(reg_id);
+                    for (;;) {
+                        TCFDataCache<IRegisters.RegistersContext> ctx_cache = reg_node.getContext();
+                        if (!ctx_cache.validate(this)) return false;
+                        IRegisters.RegistersContext ctx_data = ctx_cache.getData();
+                        if (ctx_data == null) {
+                            set(null, ctx_cache.getError(), null);
+                            return true; 
+                        }
+                        expr_text = expr_text == null ? ctx_data.getName() : ctx_data.getName() + "." + expr_text; 
+                        if (!(reg_node.parent instanceof TCFNodeRegister)) break;
+                        reg_node = (TCFNodeRegister)reg_node.parent;
+                    }
+                    expr_text = "$" + expr_text;
                 }
                 else {
                     TCFDataCache<?> pending = null;
@@ -603,6 +627,10 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         return field_id;
     }
 
+    String getRegisterID() {
+        return reg_id;
+    }
+
     int getIndex() {
         return index;
     }
@@ -891,6 +919,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
             TCFDataCache<ISymbols.Symbol> field = model.getSymbolInfoCache(field_id);
             TCFDataCache<?> pending = null;
             if (field != null && !field.validate()) pending = field;
+            if (reg_id != null && !expression_text.validate(done)) pending = expression_text;
             if (!var_expression.validate()) pending = var_expression;
             if (!base_text.validate()) pending = base_text;
             if (!value.validate()) pending = value;
@@ -909,6 +938,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                 }
             }
             if (name == null && field != null && field.getData() != null) name = field.getData().getName();
+            if (name == null && reg_id != null && expression_text.getData() != null) name = expression_text.getData();
             if (name == null && var_expression.getData() != null) {
                 TCFDataCache<ISymbols.Symbol> var = model.getSymbolInfoCache(var_expression.getData().getSymbolID());
                 if (var != null) {
