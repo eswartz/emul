@@ -1,10 +1,13 @@
 #!/bin/bash
 
-if [ ! -d trunk ]
-then
-  echo "Directory \'trunk\' must exist and contain files from TCF source code repository"
-  exit 1
-fi
+cd `dirname $0` || exit 1
+cd ../.. || exit 1
+
+REPOS=`pwd`
+
+cd .. || exit 1
+
+BUILD=`pwd`
 
 if [ -z "$VBOXUSER" ]
 then
@@ -22,8 +25,8 @@ VBOXHOST=192.168.155.1
 
 rm -rf java-bin || exit 1
 mkdir java-bin || exit 1
-SRCPATH=`pwd`/trunk/plugins/org.eclipse.tm.tcf
-DSTPATH=`pwd`/java-bin
+SRCPATH=$REPOS/org.eclipse.tcf/plugins/org.eclipse.tm.tcf
+DSTPATH=$BUILD/java-bin
 javac -g -nowarn \
   -sourcepath $SRCPATH.core/src:$SRCPATH.debug/src \
   -d $DSTPATH \
@@ -131,7 +134,7 @@ function ping_vm()
         DATE=`date +%m%d%H%M.%S`
         $SSH -tt "sudo /bin/date $DATE" >>logs/$LOGFILE 2>&1
       fi
-      if $SSH "cd $TRUNK" >>logs/$LOGFILE 2>&1 ; then
+      if $SSH "cd $AGENT" >>logs/$LOGFILE 2>&1 ; then
         echo "<img src=\"../icons/accept.png\" title=\"OK\"/>" >>$HTML
       else
         echo "<img src=\"../icons/cross.png\" title=\"SSH cd failed\"/>" >>$HTML
@@ -199,14 +202,14 @@ function build_and_start_server()
   echo "Compiler: $CC" >>logs/$LOGFILE
   echo "Options: `get_make_options`" >>logs/$LOGFILE
   echo >>logs/$LOGFILE
-  if $SSH "cd $TRUNK/server; $MAKE `get_make_options` clean all" >>logs/$LOGFILE 2>&1
+  if $SSH "cd $AGENT/server; $MAKE `get_make_options` clean all" >>logs/$LOGFILE 2>&1
   then
     echo "<img src=\"../icons/accept.png\" title=\"Server OK\"/>" >>$HTML
-    local SERVER_LFILE=$BUILD/logs/server-$HOST.txt
+    local SERVER_LFILE=$VMBUILD/logs/server-$HOST.txt
     if [ $OPSYS = Windows ] ; then
       local SERVER_LFILE=`$SSH "cygpath -m $SERVER_LFILE"`
     fi
-    $SSH "$TRUNK/server/obj/$OPSYS/$MACHINE/$CONF/server -s TCP::1535 -L$SERVER_LFILE -l0x800" >>logs/$LOGFILE 2>&1 &
+    $SSH "$AGENT/server/obj/$OPSYS/$MACHINE/$CONF/server -s TCP::1535 -L$SERVER_LFILE -l0x800" >>logs/$LOGFILE 2>&1 &
   else
     echo "<img src=\"../icons/cross.png\" title=\"Server build failed\"/>" >>$HTML
   fi
@@ -237,17 +240,17 @@ function build_and_test_agent()
   local BUILD_ERROR=
   local TEST_ERROR=
   local TEST_WARNING=
-  if $SSH "cd $TRUNK/agent; time -p $MAKE `get_make_options` clean all" >>logs/$LOGFILE 2>&1
+  if $SSH "cd $AGENT; time -p $MAKE `get_make_options` clean all" >>logs/$LOGFILE 2>&1
   then
     if [ $SEQ = 1 ] ; then
-      $SSH "$TRUNK/agent/obj/$OPSYS/$MACHINE/$CONF/agent -c" >>logs/$LOGFILE 2>&1
+      $SSH "$AGENT/obj/$OPSYS/$MACHINE/$CONF/agent -c" >>logs/$LOGFILE 2>&1
     fi
     if [ $OPSYS = Windows ] ; then
-      local AGENT_L_OPT=-L`$SSH "cygpath -m $BUILD/logs/agent-$HOST.txt"`
+      local AGENT_L_OPT=-L`$SSH "cygpath -m $VMBUILD/logs/agent-$HOST.txt"`
     else
-      local AGENT_L_OPT=-L$BUILD/logs/agent-$HOST.txt
+      local AGENT_L_OPT=-L$VMBUILD/logs/agent-$HOST.txt
     fi
-    $SSH "$TRUNK/agent/obj/$OPSYS/$MACHINE/$CONF/agent -s TCP::1534 $AGENT_L_OPT -l0" >>logs/$LOGFILE 2>&1 &
+    $SSH "$AGENT/obj/$OPSYS/$MACHINE/$CONF/agent -s TCP::1534 $AGENT_L_OPT -l0" >>logs/$LOGFILE 2>&1 &
     sleep 15
     TESTURL1=TransportName=TCP:Host=$HOST:Port=1534
     TESTURL2=TransportName=TCP:Host=$HOST:Port=1535
@@ -309,7 +312,7 @@ function build_and_test_agent()
           TESTURL1=TransportName=TCP:Host=localhost:Port=1534
           ;;
         esac
-        $SSH "$TRUNK/agent/obj/$OPSYS/$MACHINE/$CONF/agent -s $AGENT_S_OPT $AGENT_L_OPT -l0" >>logs/$LOGFILE 2>&1 &
+        $SSH "$AGENT/obj/$OPSYS/$MACHINE/$CONF/agent -s $AGENT_S_OPT $AGENT_L_OPT -l0" >>logs/$LOGFILE 2>&1 &
         sleep 25
         echo >>logs/$LOGFILE
         echo "Starting tests, target: $TESTURL2 $TESTURL1" >>logs/$LOGFILE
@@ -353,7 +356,7 @@ function build_and_test_agent()
   echo "</a>" >>$HTML
 
   sleep 5
-  $SSH "cd $TRUNK/agent; rm -rf obj" >>logs/$LOGFILE 2>&1
+  $SSH "cd $AGENT; rm -rf obj" >>logs/$LOGFILE 2>&1
 }
 
 function test_one_conf()
@@ -427,7 +430,7 @@ function build_rpm()
   echo RPM build on $VM >logs/$HOST-RPM.txt
   if [ -z "$BUILD_RPM" ] ; then
     echo "<img src=\"../icons/error.png\" title=\"Not supported\"/>" >>$HTML
-  elif $SSH "cd $TRUNK/agent; $MAKE clean rpm" >>logs/$HOST-RPM.txt 2>&1 ; then
+  elif $SSH "cd $AGENT; $MAKE clean rpm" >>logs/$HOST-RPM.txt 2>&1 ; then
     echo "<img src=\"../icons/accept.png\" title=\"OK\"/>" >>$HTML
   else
     echo "<img src=\"../icons/cross.png\" title=\"Failed\"/>" >>$HTML
@@ -454,8 +457,8 @@ do
       continue
     fi
 
-    BUILD=/net/$VBOXHOST/home/virtualbox/build
-    TRUNK=$BUILD/trunk
+    VMBUILD=/net/$VBOXHOST$BUILD
+    AGENT=/net/$VBOXHOST$REPOS/org.eclipse.tcf.agent
     MAKE=make
     PING_FLAG=-c
     OPSYS_FLAG=-o
