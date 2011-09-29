@@ -1,4 +1,4 @@
-TCF_AGENT_DIR=../agent
+TCF_AGENT_DIR=..
 
 include $(TCF_AGENT_DIR)/Makefile.inc
 
