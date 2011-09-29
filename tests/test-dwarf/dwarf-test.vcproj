@@ -174,211 +174,211 @@
 			Name="framework"
 			>
 			<File
-				RelativePath="..\..\agent\framework\asyncreq.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\asyncreq.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\asyncreq.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\asyncreq.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\base64.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\base64.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\base64.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\base64.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\cache.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\cache.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\cache.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\cache.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\channel.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\channel.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\channel.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\channel.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\channel_pipe.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\channel_pipe.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\channel_pipe.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\channel_pipe.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\channel_tcp.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\channel_tcp.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\channel_tcp.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\channel_tcp.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\context.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\context.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\context.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\context.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\cpudefs.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\cpudefs.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\cpudefs.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\cpudefs.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\errors.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\errors.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\errors.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\errors.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\events.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\events.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\events.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\events.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\exceptions.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\exceptions.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\exceptions.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\exceptions.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\inputbuf.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\inputbuf.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\inputbuf.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\inputbuf.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\ip_ifc.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\ip_ifc.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\ip_ifc.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\ip_ifc.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\json.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\json.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\json.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\json.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\link.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\link.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\mdep.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\mdep.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\mdep.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\mdep.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\myalloc.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\myalloc.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\myalloc.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\myalloc.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\outputbuf.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\outputbuf.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\outputbuf.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\outputbuf.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\peer.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\peer.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\peer.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\peer.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\plugins.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\plugins.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\plugins.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\plugins.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\protocol.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\protocol.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\protocol.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\protocol.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\proxy.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\proxy.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\proxy.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\proxy.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\signames.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\signames.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\signames.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\signames.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\streams.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\streams.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\streams.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\streams.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\tcf.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\tcf.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\trace.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\trace.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\trace.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\trace.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\waitpid.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\waitpid.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\framework\waitpid.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\framework\waitpid.h"
 				>
 			</File>
 		</Filter>
@@ -386,27 +386,27 @@
 			Name="main"
 			>
 			<File
-				RelativePath="..\..\agent\main\main.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\main\main.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\main\server.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\main\server.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\main\server.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\main\server.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\main\services-ext.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\main\services-ext.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\main\services.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\main\services.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\main\services.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\main\services.h"
 				>
 			</File>
 		</Filter>
@@ -414,235 +414,235 @@
 			Name="services"
 			>
 			<File
-				RelativePath="..\..\agent\services\breakpoints.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\breakpoints.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\breakpoints.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\breakpoints.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\diagnostics.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\diagnostics.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\diagnostics.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\diagnostics.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\discovery.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\discovery.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\discovery.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\discovery.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\discovery_udp.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\discovery_udp.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\discovery_udp.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\discovery_udp.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\dwarf.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\dwarf.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\dwarfcache.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\dwarfcache.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\dwarfcache.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\dwarfcache.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\dwarfexpr.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\dwarfexpr.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\dwarfexpr.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\dwarfexpr.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\dwarfframe.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\dwarfframe.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\dwarfframe.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\dwarfframe.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\dwarfio.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\dwarfio.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\dwarfio.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\dwarfio.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\dwarfreloc.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\dwarfreloc.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\dwarfreloc.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\dwarfreloc.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\expressions.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\expressions.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\expressions.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\expressions.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\filesystem.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\filesystem.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\filesystem.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\filesystem.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\linenumbers.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\linenumbers.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\linenumbers.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\linenumbers.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\linenumbers_elf.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\linenumbers_elf.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\linenumbers_proxy.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\linenumbers_proxy.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\linenumbers_win32.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\linenumbers_win32.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\memorymap.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\memorymap.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\memorymap.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\memorymap.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\memoryservice.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\memoryservice.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\memoryservice.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\memoryservice.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\pathmap.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\pathmap.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\pathmap.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\pathmap.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\processes.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\processes.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\processes.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\processes.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\registers.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\registers.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\registers.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\registers.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\runctrl.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\runctrl.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\runctrl.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\runctrl.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\stacktrace.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\stacktrace.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\stacktrace.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\stacktrace.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\streamsservice.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\streamsservice.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\streamsservice.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\streamsservice.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\symbols.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\symbols.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\symbols.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\symbols.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\symbols_alloc.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\symbols_alloc.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\symbols_elf.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\symbols_elf.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\symbols_proxy.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\symbols_proxy.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\symbols_win32.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\symbols_win32.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\sysmon.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\sysmon.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\sysmon.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\sysmon.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\tcf_elf.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\tcf_elf.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\tcf_elf.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\tcf_elf.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\terminals.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\terminals.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\terminals.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\terminals.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\vm.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\vm.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\agent\services\vm.h"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\services\vm.h"
 				>
 			</File>
 		</Filter>
@@ -657,7 +657,7 @@
 				Name="i386"
 				>
 				<File
-					RelativePath="..\..\agent\machine\i386\elf-mdep.h"
+					RelativePath="..\..\..\org.eclipse.tcf.agent\machine\i386\elf-mdep.h"
 					>
 				</File>
 			</Filter>
@@ -678,7 +678,7 @@
 			Name="system"
 			>
 			<File
-				RelativePath="..\..\agent\system\Windows\pthreads-win32.c"
+				RelativePath="..\..\..\org.eclipse.tcf.agent\system\Windows\pthreads-win32.c"
 				>
 			</File>
 		</Filter>

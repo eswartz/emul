@@ -1,4 +1,4 @@
-TCF_AGENT_DIR=../../agent
+TCF_AGENT_DIR=../../../org.eclipse.tcf.agent
 
 include $(TCF_AGENT_DIR)/Makefile.inc
 
@@ -9,7 +9,7 @@ CFILES := $(sort $(foreach dir,$(SRCDIRS),$(wildcard $(dir)/*.c)) $(CFILES))
 
 EXECS = $(BINDIR)/agent$(EXTEXE)
 
-all:	$(EXECS)
+all:    $(EXECS)
 
 $(BINDIR)/libtcf$(EXTLIB) : $(OFILES)
 	$(AR) -rc $@ $^

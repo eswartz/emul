@@ -1,14 +1,15 @@
-TCF_AGENT_DIR=../../../tcf/trunk/agent
+TCF_AGENT_DIR=../../../org.eclipse.tcf.agent
 
 include $(TCF_AGENT_DIR)/Makefile.inc
 
-CFLAGS := $(foreach dir,$(SRCDIRS),-I$(dir)) $(CFLAGS)
+override CFLAGS += $(foreach dir,$(INCDIRS),-I$(dir)) $(OPTS)
+
 HFILES := $(foreach dir,$(SRCDIRS),$(wildcard $(dir)/*.h)) $(HFILES)
 CFILES := $(sort $(foreach dir,$(SRCDIRS),$(wildcard $(dir)/*.c)) $(CFILES))
 
 EXECS = $(BINDIR)/agent$(EXTEXE)
 
-all:	$(EXECS)
+all:    $(EXECS)
 
 $(BINDIR)/libtcf$(EXTLIB) : $(OFILES)
 	$(AR) -rc $@ $^
@@ -18,12 +19,12 @@ $(BINDIR)/agent$(EXTEXE): $(BINDIR)/main/main$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB)
 	$(CC) $(CFLAGS) -o $@ $(BINDIR)/main/main$(EXTOBJ) $(BINDIR)/libtcf$(EXTLIB) $(LIBS)
 
 $(BINDIR)/%$(EXTOBJ): %.c $(HFILES) Makefile
-	@mkdir -p $(dir $@)
+	@$(call MKDIR,$(dir $@))
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(BINDIR)/%$(EXTOBJ): $(TCF_AGENT_DIR)/%.c $(HFILES) Makefile
-	@mkdir -p $(dir $@)
+	@$(call MKDIR,$(dir $@))
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -rf $(BINDIR)
+	$(call RMDIR,$(BINDIR))

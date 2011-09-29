@@ -16,6 +16,6 @@
 #ifndef D_config
 
 #define USE_HW_BPS 0
-#include "../../agent/config.h"
+#include "../../../org.eclipse.tcf.agent/config.h"
 
 #endif /* D_config */
