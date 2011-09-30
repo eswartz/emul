@@ -106,11 +106,15 @@ public class ScopedEclipsePreferences {
 		Assert.isNotNull(stream);
 		try {
 			IPreferenceFilter filter = new IPreferenceFilter() {
+				/* (non-Javadoc)
+				 * @see org.eclipse.core.runtime.preferences.IPreferenceFilter#getScopes()
+				 */
 				public String[] getScopes() {
 					return new String[] { InstanceScope.SCOPE };
 				}
-
-				@SuppressWarnings("rawtypes")
+				/* (non-Javadoc)
+				 * @see org.eclipse.core.runtime.preferences.IPreferenceFilter#getMapping(java.lang.String)
+				 */
 				public Map getMapping(String scope) {
 					return null;
 				}

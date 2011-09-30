@@ -58,7 +58,7 @@ public class LocatorListener implements ILocator.LocatorListener {
 			if (peerNode == null) {
 				peerNode = new PeerModel(model, peer);
 				// Validate the peer node before adding
-				if (peerNode != null) peerNode = model.validatePeerNodeForAdd(peerNode);
+				peerNode = model.validatePeerNodeForAdd(peerNode);
 				// Add the peer node to the model
 				if (peerNode != null) {
 					model.getService(ILocatorModelUpdateService.class).add(peerNode);
@@ -68,7 +68,7 @@ public class LocatorListener implements ILocator.LocatorListener {
 				}
 			} else {
 				// Peer node found, update the peer instance
-				if (peerNode != null) peerNode.setProperty(IPeerModelProperties.PROP_INSTANCE, peer);
+				peerNode.setProperty(IPeerModelProperties.PROP_INSTANCE, peer);
 			}
 		}
 	}

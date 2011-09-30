@@ -200,7 +200,6 @@ public class Editor extends FormEditor implements IPersistableEditor {
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.part.MultiPageEditorPart#getAdapter(java.lang.Class)
 	 */
-	@SuppressWarnings("rawtypes")
 	@Override
 	public Object getAdapter(Class adapter) {
 		// We pass on the adapt request to the currently active page

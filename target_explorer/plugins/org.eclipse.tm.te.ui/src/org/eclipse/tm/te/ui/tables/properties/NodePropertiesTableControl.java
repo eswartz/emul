@@ -355,7 +355,7 @@ public abstract class NodePropertiesTableControl extends WorkbenchPartControl {
 		// Cursor needs to be explicitly disposed
 		toolbar.addDisposeListener(new DisposeListener() {
 			public void widgetDisposed(DisposeEvent e) {
-				if ((handCursor != null) && (handCursor.isDisposed() == false)) {
+				if (handCursor.isDisposed() == false) {
 					handCursor.dispose();
 				}
 			}
@@ -398,7 +398,6 @@ public abstract class NodePropertiesTableControl extends WorkbenchPartControl {
 	 * @see org.eclipse.core.runtime.IAdaptable#getAdapter(java.lang.Class)
 	 */
 	@Override
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public Object getAdapter(Class adapter) {
 		if (Viewer.class.isAssignableFrom(adapter)) {
 			// We have to double check if our real viewer is assignable to

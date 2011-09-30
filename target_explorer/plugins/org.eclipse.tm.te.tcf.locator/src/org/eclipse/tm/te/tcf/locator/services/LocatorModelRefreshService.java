@@ -113,7 +113,7 @@ public class LocatorModelRefreshService extends AbstractLocatorModelService impl
 			if (peerNode == null) peerNode = new PeerModel(model, peer);
 			else oldChildren.remove(peerNode);
 			// Validate the peer node before adding
-			if (peerNode != null) peerNode = model.validatePeerNodeForAdd(peerNode);
+			peerNode = model.validatePeerNodeForAdd(peerNode);
 			if (peerNode != null) {
 				// Add the peer node to model
 				model.getService(ILocatorModelUpdateService.class).add(peerNode);
@@ -175,14 +175,14 @@ public class LocatorModelRefreshService extends AbstractLocatorModelService impl
 							// Validate the name attribute. If not set, set
 							// it to the file name without the .ini extension.
 							String name = properties.getProperty(IPeer.ATTR_NAME);
-							if (name == null || (name != null && "".equals(name.trim()))) { //$NON-NLS-1$
+							if (name == null || "".equals(name.trim())) { //$NON-NLS-1$
 								name = new Path(candidate.getAbsolutePath()).removeFileExtension().lastSegment();
 								properties.setProperty(IPeer.ATTR_NAME, name);
 							}
 
 							// Validate the id attribute. If not set, generate one.
 							String id = properties.getProperty(IPeer.ATTR_ID);
-							if (id == null || (id != null && "".equals(id.trim())) || (id != null && "USR:".equals(id.trim()))) { //$NON-NLS-1$ //$NON-NLS-2$
+							if (id == null || "".equals(id.trim()) || "USR:".equals(id.trim())) { //$NON-NLS-1$ //$NON-NLS-2$
 								String transport = properties.getProperty(IPeer.ATTR_TRANSPORT_NAME);
 								String host = properties.getProperty(IPeer.ATTR_IP_HOST);
 								String port = properties.getProperty(IPeer.ATTR_IP_PORT);

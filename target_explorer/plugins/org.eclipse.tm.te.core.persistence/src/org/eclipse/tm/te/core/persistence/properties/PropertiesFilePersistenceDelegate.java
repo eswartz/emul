@@ -112,7 +112,6 @@ public class PropertiesFilePersistenceDelegate extends AbstractPersistenceDelega
 	 * @param section The section name. Must not be <code>null</code>.
 	 * @param data The data. Must not be <code>null</code>.
 	 */
-	@SuppressWarnings("unchecked")
 	protected void writeMap(BufferedWriter writer, String section, Map<String, Object> data) throws IOException {
 		Assert.isNotNull(writer);
 		Assert.isNotNull(section);
@@ -223,7 +222,6 @@ public class PropertiesFilePersistenceDelegate extends AbstractPersistenceDelega
 					if (sectionName.endsWith(subSectionName)) {
 						parentSection.put(subSectionName, section);
 					} else {
-						@SuppressWarnings("unchecked")
 						Map<String, Object> subSection = (Map<String, Object>)parentSection.get(subSectionName);
 						if (subSection == null) {
 							subSection = new HashMap<String, Object>();
@@ -234,7 +232,6 @@ public class PropertiesFilePersistenceDelegate extends AbstractPersistenceDelega
 				}
 			} else {
 				// Place it into the root object, but check if it may exist
-				@SuppressWarnings("unchecked")
 				Map<String, Object> oldSection = (Map<String, Object>)data.get(sectionName);
 				if (oldSection != null) oldSection.putAll(section);
 				else data.put(sectionName, section);

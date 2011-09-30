@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.dialogs.IMessageProvider;
 import org.eclipse.jface.dialogs.TitleAreaDialog;
@@ -207,19 +208,19 @@ public class CustomTitleAreaDialog extends TitleAreaDialog implements IMessagePr
 	 * Adds the given string to the given list.
 	 *
 	 * @param history List to add the given entry to it.
-	 * @param newEntry The new entry to add.
+	 * @param newEntry The new entry to add. Must not be <code>null</code>
+	 *
 	 * @return The updated list containing the old list content plus the new entry.
 	 */
 	protected void addToHistory(List<String> history, String newEntry) {
-		assert newEntry!=null;
-		if(newEntry!=null) {
-			history.remove(newEntry);
-			history.add(0, newEntry);
-			// since only one new item was added, we can be over the limit
-			// by at most one item
-			if (history.size() > comboHistoryLength) {
-				history.remove(comboHistoryLength);
-			}
+		Assert.isNotNull(newEntry);
+
+		history.remove(newEntry);
+		history.add(0, newEntry);
+		// since only one new item was added, we can be over the limit
+		// by at most one item
+		if (history.size() > comboHistoryLength) {
+			history.remove(comboHistoryLength);
 		}
 	}
 

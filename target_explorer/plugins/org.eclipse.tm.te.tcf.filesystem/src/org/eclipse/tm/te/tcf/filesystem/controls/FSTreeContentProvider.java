@@ -417,7 +417,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 
 		IFileSystem.FileAttrs attrs = entry.attrs;
 
-		if (attrs == null || attrs != null && attrs.isDirectory()) {
+		if (attrs == null || attrs.isDirectory()) {
 			node = new FSTreeNode();
 			node.childrenQueried = false;
 			node.childrenQueryRunning = false;
