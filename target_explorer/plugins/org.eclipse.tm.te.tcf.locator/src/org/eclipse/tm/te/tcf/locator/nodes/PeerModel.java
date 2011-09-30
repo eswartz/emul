@@ -85,7 +85,6 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	/* (non-Javadoc)
 	 * @see org.eclipse.core.runtime.PlatformObject#getAdapter(java.lang.Class)
 	 */
-	@SuppressWarnings({ "rawtypes" })
 	@Override
 	public Object getAdapter(final Class adapter) {
 		// NOTE: The getAdapter(...) method can be invoked from many place and

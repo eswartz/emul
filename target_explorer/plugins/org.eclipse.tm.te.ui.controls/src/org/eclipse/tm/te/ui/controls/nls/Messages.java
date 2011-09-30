@@ -14,7 +14,7 @@ import java.lang.reflect.Field;
 import org.eclipse.osgi.util.NLS;
 
 /**
- * Target ExploreR: Common Controls plug-in externalized strings management.
+ * Common Controls plug-in externalized strings management.
  */
 public class Messages extends NLS {
 

@@ -182,7 +182,6 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 	/* (non-Javadoc)
 	 * @see org.eclipse.core.runtime.PlatformObject#getAdapter(java.lang.Class)
 	 */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
 	public Object getAdapter(Class adapter) {
 		if (adapter.isAssignableFrom(ILocator.LocatorListener.class)) {
@@ -376,7 +375,7 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 																			, ITracing.ID_TRACE_LOCATOR_MODEL, this);
 							}
 						} else if (loopback != null && loopback.equals(peerIP) && !loopback.equals(previousPeerIP)
-								&& (canonical == null || canonical != null && !canonical.equals(previousPeerIP))) {
+								&& (canonical == null || !canonical.equals(previousPeerIP))) {
 							// Remove the old node and replace it with the new new
 							peers.remove(previousNode.getPeer().getID());
 							fireListener = true;

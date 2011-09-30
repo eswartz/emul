@@ -81,14 +81,12 @@ public class EditorPageBindingExtensionPointManager extends AbstractExtensionPoi
 			@Override
 			public EditorPageBinding newInstance() {
 				EditorPageBinding instance = new EditorPageBinding();
-				if (instance != null) {
-					try {
-						instance.setInitializationData(getConfigurationElement(), null, null);
-					} catch (CoreException e) {
-						IStatus status = new Status(IStatus.ERROR, UIPlugin.getUniqueIdentifier(),
-						                            e.getLocalizedMessage(), e);
-						UIPlugin.getDefault().getLog().log(status);
-					}
+				try {
+					instance.setInitializationData(getConfigurationElement(), null, null);
+				} catch (CoreException e) {
+					IStatus status = new Status(IStatus.ERROR, UIPlugin.getUniqueIdentifier(),
+							e.getLocalizedMessage(), e);
+					UIPlugin.getDefault().getLog().log(status);
 				}
 				return instance;
 			}

@@ -42,7 +42,6 @@ public class LocatorModelUpdateService extends AbstractLocatorModelService imple
 		Assert.isNotNull(peer);
 		Assert.isTrue(Protocol.isDispatchThread());
 
-		@SuppressWarnings("unchecked")
 		Map<String, IPeerModel> peers = (Map<String, IPeerModel>)getLocatorModel().getAdapter(Map.class);
 		Assert.isNotNull(peers);
 		peers.put(peer.getPeer().getID(), peer);
@@ -66,7 +65,6 @@ public class LocatorModelUpdateService extends AbstractLocatorModelService imple
 		Assert.isNotNull(peer);
 		Assert.isTrue(Protocol.isDispatchThread());
 
-		@SuppressWarnings("unchecked")
 		Map<String, IPeerModel> peers = (Map<String, IPeerModel>)getLocatorModel().getAdapter(Map.class);
 		Assert.isNotNull(peers);
 		peers.remove(peer.getPeer().getID());

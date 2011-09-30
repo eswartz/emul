@@ -18,14 +18,12 @@
    </license>
 
    <requires>
-      <import plugin="org.eclipse.tm.te.core" version="1.0.0" match="greaterOrEqual"/>
       <import plugin="org.eclipse.core.runtime" version="3.7.0" match="greaterOrEqual"/>
       <import plugin="org.eclipse.core.expressions" version="3.4.300" match="greaterOrEqual"/>
       <import plugin="org.eclipse.ui" version="3.7.0" match="greaterOrEqual"/>
       <import plugin="org.eclipse.ui.forms" version="3.5.100" match="greaterOrEqual"/>
       <import plugin="org.eclipse.help" version="3.5.100" match="greaterOrEqual"/>
       <import plugin="org.eclipse.ui.navigator" version="3.5.100" match="greaterOrEqual"/>
-      <import plugin="org.eclipse.tm.te.ui" version="1.0.0" match="greaterOrEqual"/>
    </requires>
 
    <plugin
@@ -65,6 +63,13 @@
 
    <plugin
          id="org.eclipse.tm.te.core.persistence"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.tm.te.ui.forms"
          download-size="0"
          install-size="0"
          version="0.0.0"

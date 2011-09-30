@@ -126,7 +126,6 @@ public class Sorter extends TreePathViewerSorter {
 	 *
 	 * @return The compare result.
 	 */
-	@SuppressWarnings("unchecked")
 	protected int doCompare(Object node1, Object node2, String sortColumn, int index, int inverter) {
 		if (node1 == null && node2 == null) return 0;
 		if (node1 != null && node2 == null) return 1;

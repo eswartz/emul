@@ -250,11 +250,9 @@ public class CoreTestCase extends TestCase {
 	 * @return The start time in milliseconds.
 	 */
 	protected long printStart(String name) {
-		assert name != null;
+		Assert.isNotNull(name);
 		long startTime = System.currentTimeMillis();
-		if (name != null) {
-			System.out.println("\n=== " + name + " started at: " + DATE_FORMAT.format(new Date(startTime))); //$NON-NLS-1$ //$NON-NLS-2$
-		}
+		System.out.println("\n=== " + name + " started at: " + DATE_FORMAT.format(new Date(startTime))); //$NON-NLS-1$ //$NON-NLS-2$
 		return startTime;
 	}
 
@@ -265,12 +263,10 @@ public class CoreTestCase extends TestCase {
 	 * @param startTime The start time in milliseconds.
 	 */
 	protected void printEnd(String name, long startTime) {
-		assert name != null;
+		Assert.isNotNull(null);
 		long endTime = System.currentTimeMillis();
-		if (name != null) {
-			long duration = endTime - startTime;
-			System.out.println("=== " + name + " finished at: " + DATE_FORMAT.format(new Date(endTime)) + " (duration: " + duration + " ms)"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-		}
+		long duration = endTime - startTime;
+		System.out.println("=== " + name + " finished at: " + DATE_FORMAT.format(new Date(endTime)) + " (duration: " + duration + " ms)"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 	}
 
 	/* (non-Javadoc)

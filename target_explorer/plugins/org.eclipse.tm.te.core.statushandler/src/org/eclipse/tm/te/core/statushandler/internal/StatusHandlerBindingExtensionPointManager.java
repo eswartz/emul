@@ -80,14 +80,12 @@ public class StatusHandlerBindingExtensionPointManager extends AbstractExtension
 			@Override
 			public StatusHandlerBinding newInstance() {
 				StatusHandlerBinding instance = new StatusHandlerBinding();
-				if (instance != null) {
-					try {
-						instance.setInitializationData(getConfigurationElement(), null, null);
-					} catch (CoreException e) {
-						IStatus status = new Status(IStatus.ERROR, CoreBundleActivator.getUniqueIdentifier(),
-						                            e.getLocalizedMessage(), e);
-						Platform.getLog(CoreBundleActivator.getContext().getBundle()).log(status);
-					}
+				try {
+					instance.setInitializationData(getConfigurationElement(), null, null);
+				} catch (CoreException e) {
+					IStatus status = new Status(IStatus.ERROR, CoreBundleActivator.getUniqueIdentifier(),
+												e.getLocalizedMessage(), e);
+					Platform.getLog(CoreBundleActivator.getContext().getBundle()).log(status);
 				}
 				return instance;
 			}

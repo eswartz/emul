@@ -154,7 +154,6 @@ public class EditorInput implements IEditorInput, IPersistableElement {
 	/* (non-Javadoc)
 	 * @see org.eclipse.core.runtime.IAdaptable#getAdapter(java.lang.Class)
 	 */
-	@SuppressWarnings("rawtypes")
 	public Object getAdapter(Class adapter) {
 		if (IPersistableElement.class.isAssignableFrom(adapter)) {
 			return getPersistable();

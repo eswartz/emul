@@ -69,7 +69,6 @@ public class CustomFormToolkit extends PlatformObject {
 	 * @see org.eclipse.core.runtime.PlatformObject#getAdapter(java.lang.Class)
 	 */
 	@Override
-	@SuppressWarnings("rawtypes")
 	public Object getAdapter(Class adapter) {
 		if (FormToolkit.class.isAssignableFrom(adapter))
 			return getFormToolkit();
