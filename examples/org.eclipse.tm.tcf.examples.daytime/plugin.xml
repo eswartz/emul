@@ -5,5 +5,5 @@
    <extension point="org.eclipse.tm.tcf.startup">
       <class name="org.eclipse.tm.internal.tcf.examples.daytime.DaytimeServiceProxy"/>
    </extension>
-   
+
 </plugin>

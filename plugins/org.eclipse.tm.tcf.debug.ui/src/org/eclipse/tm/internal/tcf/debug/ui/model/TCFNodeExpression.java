@@ -204,9 +204,9 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                         IRegisters.RegistersContext ctx_data = ctx_cache.getData();
                         if (ctx_data == null) {
                             set(null, ctx_cache.getError(), null);
-                            return true; 
+                            return true;
                         }
-                        expr_text = expr_text == null ? ctx_data.getName() : ctx_data.getName() + "." + expr_text; 
+                        expr_text = expr_text == null ? ctx_data.getName() : ctx_data.getName() + "." + expr_text;
                         if (!(reg_node.parent instanceof TCFNodeRegister)) break;
                         reg_node = (TCFNodeRegister)reg_node.parent;
                     }

@@ -1124,17 +1124,17 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         }
         return true;
     }
-    
+
     private class CreateNodeRunnable implements Runnable {
-        
+
         final String id;
         final ArrayList<Runnable> waiting_list = new ArrayList<Runnable>();
         final ArrayList<IService> service_list = new ArrayList<IService>();
-        
+
         CreateNodeRunnable(String id) {
             this.id = id;
             assert context_map.get(id) == null;
-            String[] arr = { IRunControl.NAME, IStackTrace.NAME, IRegisters.NAME }; 
+            String[] arr = { IRunControl.NAME, IStackTrace.NAME, IRegisters.NAME };
             for (String nm : arr) {
                 IService s = channel.getRemoteService(nm);
                 if (s != null) service_list.add(s);
@@ -1142,12 +1142,12 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             context_map.put(id, this);
             Protocol.invokeLater(this);
         }
-        
+
         void wait(Runnable r) {
             assert context_map.get(id) == this;
             waiting_list.add(r);
         }
-        
+
         public void run() {
             assert context_map.get(id) == this;
             if (service_list.size() == 0) {

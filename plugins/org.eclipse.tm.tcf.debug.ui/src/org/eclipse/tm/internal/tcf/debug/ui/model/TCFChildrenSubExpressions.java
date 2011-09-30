@@ -116,7 +116,7 @@ public class TCFChildrenSubExpressions extends TCFChildren {
         pending.wait(this);
         return false;
     }
-    
+
     private TCFNodeExpression findReg(String reg_id) {
         assert reg_id != null;
         for (TCFNode n : getNodes()) {
@@ -125,7 +125,7 @@ public class TCFChildrenSubExpressions extends TCFChildren {
         }
         return null;
     }
-    
+
     private boolean findRegs(TCFNodeRegister reg_node, Map<String,TCFNode> map) {
         TCFChildren reg_children = reg_node.getChildren();
         if (!reg_children.validate(this)) return false;
