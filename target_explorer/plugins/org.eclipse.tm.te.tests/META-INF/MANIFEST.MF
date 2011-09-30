@@ -16,4 +16,6 @@ Bundle-ActivationPolicy: lazy
 Bundle-Localization: plugin
 Export-Package: org.eclipse.tm.te.tests,
  org.eclipse.tm.te.tests.activator;x-internal:=true,
- org.eclipse.tm.te.tests.interfaces
+ org.eclipse.tm.te.tests.interfaces,
+ org.eclipse.tm.te.tests.statushandler,
+ org.eclipse.tm.te.tests.suites
