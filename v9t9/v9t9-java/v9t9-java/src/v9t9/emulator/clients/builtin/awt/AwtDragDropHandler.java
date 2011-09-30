@@ -190,8 +190,8 @@ public class AwtDragDropHandler implements DragGestureListener, DropTargetListen
 		try {
 			if (dtde.isDataFlavorSupported(DataFlavor.stringFlavor)
 					|| dtde.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-				dtde.acceptDrop(DND.DROP_COPY);
 				URL url = null;
+				dtde.acceptDrop(DND.DROP_COPY);
 				for (DataFlavor flavor : flavors) {
 					try {
 						Object data = transferable.getTransferData(flavor);
@@ -199,7 +199,7 @@ public class AwtDragDropHandler implements DragGestureListener, DropTargetListen
 							url = ((File)((List<?>)data).get(0)).toURI().toURL();
 						}
 						else if (data instanceof String) {
-							String uriStr = data.toString().trim();
+							String uriStr = data.toString().split("\n")[0].trim();
 							url = new URL(uriStr);
 							break;
 						}
