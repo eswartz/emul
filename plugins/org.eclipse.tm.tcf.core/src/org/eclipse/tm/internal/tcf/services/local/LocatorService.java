@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -19,6 +19,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.Inet4Address;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
@@ -57,7 +58,7 @@ import org.eclipse.tm.tcf.services.ILocator;
 // TODO: research usage of DNS-SD (DNS Service Discovery) to discover TCF peers
 public class LocatorService implements ILocator {
 
-    private static final int DISCOVEY_PORT = 1534;
+    private static final int DISCOVERY_PORT = 1534;
     private static final int MAX_PACKET_SIZE = 9000 - 40 - 8;
     private static final int PREF_PACKET_SIZE = 1500 - 40 - 8;
 
@@ -337,7 +338,9 @@ public class LocatorService implements ILocator {
             out_buf[6] = 0;
             out_buf[7] = 0;
             try {
-                socket = new DatagramSocket(DISCOVEY_PORT);
+                socket = new DatagramSocket(null);
+                socket.setReuseAddress(false);
+                socket.bind(new InetSocketAddress(DISCOVERY_PORT));
                 if (TRACE_DISCOVERY) {
                     LoggingUtil.trace("Became the master agent (bound to port " + socket.getLocalPort() + ")");
                 }
@@ -501,11 +504,13 @@ public class LocatorService implements ILocator {
             for (RemotePeer p : stale_peers) p.dispose();
         }
         /* Try to become a master */
-        if (socket.getLocalPort() != DISCOVEY_PORT && last_master_packet_time + DATA_RETENTION_PERIOD / 2 <= time) {
+        if (socket.getLocalPort() != DISCOVERY_PORT && last_master_packet_time + DATA_RETENTION_PERIOD / 2 <= time) {
             DatagramSocket s0 = socket;
             DatagramSocket s1 = null;
             try {
-                s1 = new DatagramSocket(DISCOVEY_PORT);
+                s1 = new DatagramSocket(null);
+                s1.setReuseAddress(false);
+                s1.bind(new InetSocketAddress(DISCOVERY_PORT));
                 s1.setBroadcast(true);
                 socket = s1;
                 s0.close();
@@ -514,7 +519,7 @@ public class LocatorService implements ILocator {
             }
         }
         refreshSubNetList();
-        if (socket.getLocalPort() != DISCOVEY_PORT) {
+        if (socket.getLocalPort() != DISCOVERY_PORT) {
             for (SubNet subnet : subnets) {
                 addSlave(subnet.address, socket.getLocalPort(), time, time);
             }
@@ -755,7 +760,7 @@ public class LocatorService implements ILocator {
         try {
             if (addr == null) {
                 addr = subnet.broadcast;
-                port = DISCOVEY_PORT;
+                port = DISCOVERY_PORT;
                 for (Slave slave : slaves) {
                     sendDatagramPacket(subnet, size, slave.address, slave.port);
                 }
@@ -853,7 +858,7 @@ public class LocatorService implements ILocator {
 
         for (SubNet subnet : subnets) {
             if (peer instanceof RemotePeer) {
-                if (socket.getLocalPort() != DISCOVEY_PORT) return;
+                if (socket.getLocalPort() != DISCOVERY_PORT) return;
                 if (!subnet.address.equals(loopback_addr) && !subnet.address.equals(peer_addr)) continue;
             }
             if (!subnet.address.equals(loopback_addr)) {
@@ -971,7 +976,7 @@ public class LocatorService implements ILocator {
                 }
                 else {
                     Slave sl = null;
-                    if (remote_port != DISCOVEY_PORT) {
+                    if (remote_port != DISCOVERY_PORT) {
                         sl = addSlave(remote_address, remote_port, time, time);
                     }
                     switch (buf[4]) {
@@ -991,13 +996,13 @@ public class LocatorService implements ILocator {
                     for (SubNet subnet : subnets) {
                         if (!subnet.contains(remote_address)) continue;
                         long delay = DATA_RETENTION_PERIOD / 3;
-                        if (remote_port != DISCOVEY_PORT) delay = DATA_RETENTION_PERIOD / 3 * 2;
+                        if (remote_port != DISCOVERY_PORT) delay = DATA_RETENTION_PERIOD / 3 * 2;
                         else if (!subnet.address.equals(remote_address)) delay = DATA_RETENTION_PERIOD / 2;
                         if (subnet.last_slaves_req_time + delay <= time) {
                             sendSlavesRequest(subnet, remote_address, remote_port);
                             subnet.last_slaves_req_time = time;
                         }
-                        if (subnet.address.equals(remote_address) && remote_port == DISCOVEY_PORT) {
+                        if (subnet.address.equals(remote_address) && remote_port == DISCOVERY_PORT) {
                             last_master_packet_time = time;
                         }
                     }
@@ -1072,7 +1077,7 @@ public class LocatorService implements ILocator {
                 int port = Integer.parseInt(s.substring(port0, port1));
                 String timestamp = s.substring(time0, time1);
                 String host = s.substring(host0, host1);
-                if (port != DISCOVEY_PORT) {
+                if (port != DISCOVERY_PORT) {
                     InetAddress addr = getInetAddress(host);
                     if (addr != null) {
                         long delta = 1000 * 60 * 30; // 30 minutes
