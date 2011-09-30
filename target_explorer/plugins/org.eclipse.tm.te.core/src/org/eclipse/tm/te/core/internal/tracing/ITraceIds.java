@@ -19,4 +19,8 @@ public interface ITraceIds {
 	 */
 	public static final String TRACE_EVENTS = "trace/events"; //$NON-NLS-1$
 
+	/**
+	 * If activated, trace information about asynchronous callbacks is printed out.
+	 */
+	public static final String TRACE_CALLBACKS = "trace/callbacks"; //$NON-NLS-1$
 }
