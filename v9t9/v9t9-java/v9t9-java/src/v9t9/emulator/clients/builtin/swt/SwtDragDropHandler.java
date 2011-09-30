@@ -157,7 +157,7 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 		if (FileTransfer.getInstance().isSupportedType(event.dataType)) {
 			// apparently the event comes twice...
 			if (tempSourceFile == null) {
-				SimpleDateFormat fmt = new SimpleDateFormat("yyyyMMDD-HHmmss");
+				SimpleDateFormat fmt = new SimpleDateFormat("yyyyMMdd-HHmmss");
 				String name = MessageFormat.format("v9t9-{0}.png",
 						fmt.format(new Date())); 
 				tempSourceFile = new File(System.getProperty("java.io.tmpdir"), name);
