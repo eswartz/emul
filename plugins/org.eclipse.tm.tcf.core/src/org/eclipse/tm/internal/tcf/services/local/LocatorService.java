@@ -324,6 +324,20 @@ public class LocatorService implements ILocator {
         });
     }
 
+    private static DatagramSocket createSocket(boolean slave) throws SocketException {
+        DatagramSocket socket = null;
+        if (slave) {
+            socket = new DatagramSocket();
+        }
+        else {
+            socket = new DatagramSocket(null);
+            socket.setReuseAddress(false);
+            socket.bind(new InetSocketAddress(DISCOVERY_PORT));
+        }
+        socket.setBroadcast(true);
+        return socket;
+    }
+
     public LocatorService() {
         locator = this;
         local_peer = new LocalPeer();
@@ -338,20 +352,17 @@ public class LocatorService implements ILocator {
             out_buf[6] = 0;
             out_buf[7] = 0;
             try {
-                socket = new DatagramSocket(null);
-                socket.setReuseAddress(false);
-                socket.bind(new InetSocketAddress(DISCOVERY_PORT));
+                socket = createSocket(false);
                 if (TRACE_DISCOVERY) {
                     LoggingUtil.trace("Became the master agent (bound to port " + socket.getLocalPort() + ")");
                 }
             }
             catch (SocketException x) {
-                socket = new DatagramSocket();
+                socket = createSocket(true);
                 if (TRACE_DISCOVERY) {
                     LoggingUtil.trace("Became a slave agent (bound to port " + socket.getLocalPort() + ")");
                 }
             }
-            socket.setBroadcast(true);
             input_thread.setName("TCF Locator Receiver");
             timer_thread.setName("TCF Locator Timer");
             dns_lookup_thread.setName("TCF Locator DNS Lookup");
@@ -505,14 +516,12 @@ public class LocatorService implements ILocator {
         }
         /* Try to become a master */
         if (socket.getLocalPort() != DISCOVERY_PORT && last_master_packet_time + DATA_RETENTION_PERIOD / 2 <= time) {
-            DatagramSocket s0 = socket;
-            DatagramSocket s1 = null;
             try {
-                s1 = new DatagramSocket(null);
-                s1.setReuseAddress(false);
-                s1.bind(new InetSocketAddress(DISCOVERY_PORT));
-                s1.setBroadcast(true);
-                socket = s1;
+                DatagramSocket s0 = socket;
+                socket = createSocket(false);
+                if (TRACE_DISCOVERY) {
+                    LoggingUtil.trace("Became the master agent (bound to port " + socket.getLocalPort() + ")");
+                }
                 s0.close();
             }
             catch (Throwable x) {
@@ -521,25 +530,30 @@ public class LocatorService implements ILocator {
         refreshSubNetList();
         if (socket.getLocalPort() != DISCOVERY_PORT) {
             for (SubNet subnet : subnets) {
-                addSlave(subnet.address, socket.getLocalPort(), time, time);
+                addSlave(subnet.address, socket.getLocalPort(), time);
             }
         }
         sendAll(null, 0, null, time);
     }
 
-    private Slave addSlave(InetAddress addr, int port, long timestamp, long time_now) {
+    private Slave addSlave(InetAddress addr, int port, long timestamp) {
         for (Slave s : slaves) {
             if (s.port == port && s.address.equals(addr)) {
                 if (s.last_packet_time < timestamp) s.last_packet_time = timestamp;
                 return s;
             }
         }
-        Slave s = new Slave(addr, port);
+        final Slave s = new Slave(addr, port);
         s.last_packet_time = timestamp;
         slaves.add(s);
-        sendPeersRequest(addr, port);
-        sendAll(addr, port, s, time_now);
-        sendSlaveInfo(s, time_now);
+        Protocol.invokeLater(new Runnable() {
+            public void run() {
+                long time_now = System.currentTimeMillis();
+                sendPeersRequest(s.address, s.port);
+                sendAll(s.address, s.port, s, time_now);
+                sendSlaveInfo(s, time_now);
+            }
+        });
         return s;
     }
 
@@ -972,12 +986,12 @@ public class LocatorService implements ILocator {
             InetAddress remote_address = p.getAddress();
             if (isRemote(remote_address, remote_port)) {
                 if (buf[4] == CONF_PEERS_REMOVED) {
-                    handlePeerRemovedPacket(p);
+                    handlePeerRemovedPacket(p, remote_port == DISCOVERY_PORT && remote_address.isLoopbackAddress());
                 }
                 else {
                     Slave sl = null;
                     if (remote_port != DISCOVERY_PORT) {
-                        sl = addSlave(remote_address, remote_port, time, time);
+                        sl = addSlave(remote_address, remote_port, time);
                     }
                     switch (buf[4]) {
                     case CONF_PEER_INFO:
@@ -1002,7 +1016,7 @@ public class LocatorService implements ILocator {
                             sendSlavesRequest(subnet, remote_address, remote_port);
                             subnet.last_slaves_req_time = time;
                         }
-                        if (subnet.address.equals(remote_address) && remote_port == DISCOVERY_PORT) {
+                        if (remote_port == DISCOVERY_PORT && subnet.address.equals(remote_address)) {
                             last_master_packet_time = time;
                         }
                     }
@@ -1050,9 +1064,7 @@ public class LocatorService implements ILocator {
     }
 
     private void handleReqInfoPacket(InputPacket p, Slave sl, long time) {
-        if (TRACE_DISCOVERY) {
-            traceDiscoveryPacket(true, "CONF_REQ_INFO", null, p);
-        }
+        if (TRACE_DISCOVERY) traceDiscoveryPacket(true, "CONF_REQ_INFO", null, p);
         sendAll(p.getAddress(), p.getPort(), sl, time);
     }
 
@@ -1103,7 +1115,7 @@ public class LocatorService implements ILocator {
                                     new Exception(msg));
                             time_val = time_now - DATA_RETENTION_PERIOD / 2;
                         }
-                        addSlave(addr, port, time_val, time_now);
+                        addSlave(addr, port, time_val);
                     }
                 }
             }
@@ -1119,13 +1131,31 @@ public class LocatorService implements ILocator {
         sendSlavesInfo(p.getAddress(), p.getPort(),  time);
     }
 
-    private void handlePeerRemovedPacket(InputPacket p) {
+    private void handlePeerRemovedPacket(InputPacket p, boolean master_exited) {
         try {
             Map<String,String> map = parseIDs(p.getData(), p.getLength());
             if (TRACE_DISCOVERY) traceDiscoveryPacket(true, "CONF_PEERS_REMOVED", map, p);
             for (String id : map.values()) {
                 IPeer peer = peers.get(id);
                 if (peer instanceof RemotePeer) ((RemotePeer)peer).dispose();
+            }
+            if (master_exited) {
+                // Master locator has exited, let's try to get master port.
+                Protocol.invokeLater(500, new Runnable() {
+                    public void run() {
+                        if (socket.getLocalPort() == DISCOVERY_PORT) return;
+                        try {
+                            DatagramSocket s0 = socket;
+                            socket = createSocket(false);
+                            if (TRACE_DISCOVERY) {
+                                LoggingUtil.trace("Became the master agent (bound to port " + socket.getLocalPort() + ")");
+                            }
+                            s0.close();
+                        }
+                        catch (Throwable x) {
+                        }
+                    }
+                });
             }
         }
         catch (Exception x) {
