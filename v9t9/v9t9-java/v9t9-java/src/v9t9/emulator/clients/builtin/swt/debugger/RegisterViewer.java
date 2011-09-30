@@ -10,13 +10,17 @@ import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.viewers.BaseLabelProvider;
 import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
+import org.eclipse.swt.events.KeyAdapter;
+import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseTrackAdapter;
 import org.eclipse.swt.graphics.Font;
@@ -33,6 +37,8 @@ import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 import org.ejs.coffee.core.utils.CompatUtils;
 import org.ejs.coffee.core.utils.HexUtils;
+
+import v9t9.emulator.common.Machine;
 
 /**
  * @author ejs
@@ -80,16 +86,17 @@ public class RegisterViewer extends Composite {
 
 	/**
 	 * @param parent
+	 * @param machine 
 	 * @param style
 	 */
-	public RegisterViewer(Composite parent, final IRegisterProvider regProvider, int perColumn) {
+	public RegisterViewer(Composite parent, Machine machine, final IRegisterProvider regProvider, int perColumn) {
 		super(parent, SWT.NONE);
 		
 		setLayout(new GridLayout());
 		
 		Label label = new Label(this, SWT.NONE);
 		label.setText(regProvider.getLabel());
-		GridDataFactory.fillDefaults().grab(true, true).span(1, 1).applyTo(label);
+		GridDataFactory.fillDefaults().grab(true, false).span(1, 1).applyTo(label);
 		
 
 		FontDescriptor fontDescriptor = CompatUtils.getFontDescriptor(JFaceResources.getTextFont());
@@ -97,9 +104,16 @@ public class RegisterViewer extends Composite {
 		FontDescriptor smallerFontDescriptor = fontDescriptor.increaseHeight(-2);
 		smallerFont = smallerFontDescriptor.createFont(getDisplay());
 		
+		ScrolledComposite tableScroller = new ScrolledComposite(this, SWT.H_SCROLL);
+		GridDataFactory.fillDefaults().grab(true, true).span(1, 1).applyTo(tableScroller);
 		
-		Composite tables = new Composite(this, SWT.NONE);
+		Composite tables = new Composite(tableScroller, SWT.NONE);
+		tables.setLayout(new GridLayout());
 		GridDataFactory.fillDefaults().grab(true, true).span(1, 1).applyTo(tables);
+		
+		tableScroller.setContent(tables);
+		tableScroller.setExpandHorizontal(true);
+		tableScroller.setExpandVertical(true);
 		
 		int cnt = regProvider.getRegisterCount();
 		if (cnt % perColumn < 3)
@@ -122,7 +136,7 @@ public class RegisterViewer extends Composite {
 			idx++;
 		}
 		
-		
+		tableScroller.setMinSize(tables.computeSize(SWT.DEFAULT, SWT.DEFAULT));
 
 		addDisposeListener(new DisposeListener() {
 
@@ -145,7 +159,7 @@ public class RegisterViewer extends Composite {
 			final IRegisterProvider regProvider, final int startReg, final int count) {
 
 		///
-		TableViewer regViewer = new TableViewer(tables, SWT.BORDER + SWT.VIRTUAL + SWT.NO_FOCUS + SWT.FULL_SELECTION);
+		final TableViewer regViewer = new TableViewer(tables, SWT.BORDER + SWT.VIRTUAL + SWT.NO_FOCUS + SWT.FULL_SELECTION);
 		regViewer.setContentProvider(new IStructuredContentProvider() {
 			
 			/* (non-Javadoc)
@@ -206,7 +220,6 @@ public class RegisterViewer extends Composite {
 		regViewer.setCellEditors(editors);
 		
 		regViewer.setInput(new Object());
-		
 
 		table.addMouseTrackListener(new MouseTrackAdapter() {
 			@Override
@@ -226,6 +239,21 @@ public class RegisterViewer extends Composite {
 			}
 		});
 
+		// oops, key listeners mess up everything else
+		/*
+		table.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.keyCode == '\r' && !regViewer.isCellEditorActive()
+						&& !regViewer.getSelection().isEmpty()) {
+					regViewer.editElement(
+							((IStructuredSelection) regViewer.getSelection()).getFirstElement(), 
+							1);
+					e.doit = false;
+				}
+			}
+		});
+		*/
 		
 		if (false) Display.getDefault().asyncExec(new Runnable() {
 			public void run() {

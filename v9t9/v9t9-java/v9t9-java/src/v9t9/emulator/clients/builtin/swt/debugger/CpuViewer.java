@@ -281,6 +281,8 @@ public class CpuViewer extends Composite implements InstructionListener {
 					return;
 				if (CpuViewer.this.isDisposed())
 					return;
+				if (!machine.isExecuting())
+					return;
 				working = true;
 				try {
 					if (tracker != null)
