@@ -31,6 +31,29 @@ public class LLForwardOperand extends LLOperand {
 		return "{" + getOriginal() + "}";
 	}
 
+	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + size;
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		LLForwardOperand other = (LLForwardOperand) obj;
+		if (size != other.size)
+			return false;
+		return true;
+	}
+
 	/* (non-Javadoc)
 	 * @see v9t9.tools.asm.operand.ll.LLOperand#createMachineOperand()
 	 */

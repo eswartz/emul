@@ -33,6 +33,32 @@ public class LLInstOperand extends LLOperand {
 		return inst.toString();
 	}
 	
+	
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + ((inst == null) ? 0 : inst.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		LLInstOperand other = (LLInstOperand) obj;
+		if (inst == null) {
+			if (other.inst != null)
+				return false;
+		} else if (!inst.equals(other.inst))
+			return false;
+		return true;
+	}
 
 	/* (non-Javadoc)
 	 * @see v9t9.tools.asm.assembler.operand.ll.LLOperand#createMachineOperand(v9t9.tools.asm.assembler.operand.ll.IMachineOperandFactory)
