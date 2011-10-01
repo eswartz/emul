@@ -138,6 +138,10 @@ public class SoundTMS9919 implements SoundProvider {
 			soundHandler.updateVoice(machine.getCpu().getCurrentCycleCount(), machine.getCpu().getCurrentTargetCycleCount());
 	}
 
+	/**
+	 * @param v
+	 * @param val
+	 */
 	protected void updateVoice(ClockedSoundVoice v, byte val) {
 		v.setupVoice();
 		updateNoise();

@@ -3,8 +3,6 @@
  */
 package v9t9.engine.cpu;
 
-import java.util.Arrays;
-
 import v9t9.emulator.runtime.cpu.CpuF99b;
 import v9t9.emulator.runtime.cpu.CpuStateF99b;
 

@@ -3,9 +3,6 @@
  */
 package v9t9.emulator.common;
 
-import v9t9.emulator.common.IEventNotifier.Level;
-
-
 /**
  * Handler for events happening inside the emulator, usually presented to the user
  * as a tooltip or balloon.

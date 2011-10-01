@@ -24,6 +24,7 @@ public class DumpFullReporterF99b implements InstructionListener {
 	private final PrintWriter dump;
 
 	/**
+	 * @param cpu 
 	 * 
 	 */
 	public DumpFullReporterF99b(CpuF99b cpu, PrintWriter dump) {

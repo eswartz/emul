@@ -569,7 +569,6 @@ public class TestAssembler9900 extends BaseTest {
 				new Symbol[] { createSymbol("foo", 0x104) });
 		
 	}
-	@SuppressWarnings("unchecked")
 	public void testAssemblerProgDirectives3() throws Exception {
 		String text =
 			" aorg >a000\n"+
@@ -589,7 +588,7 @@ public class TestAssembler9900 extends BaseTest {
 				new Symbol[] { 
 					createSymbol("lab", 0xa00c) });
 		
-		List<AssemblerOperand> ops = (List) Collections.singletonList(new StringOperand("hello!"));
+		List<AssemblerOperand> ops = Collections.<AssemblerOperand>singletonList(new StringOperand("hello!"));
 		BaseAssemblerInstruction dbInst = new DefineByteDirective(ops);
 		IInstruction[] resolve = dbInst.resolve(assembler, null, true);
 		byte[] bytes = ((Directive) resolve[0]).getBytes(assembler.getInstructionFactory());
