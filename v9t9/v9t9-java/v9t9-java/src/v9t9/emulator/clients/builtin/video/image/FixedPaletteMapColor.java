@@ -25,7 +25,7 @@ class FixedPaletteMapColor extends BasePaletteMapper {
 	 * @see v9t9.emulator.clients.builtin.video.ImageImport.IMapColor#getClosestPaletteColor(int[])
 	 */
 	@Override
-	public int getClosestPalettePixel(int[] prgb) {
+	public int getClosestPalettePixel(int x, int y, int[] prgb) {
 		int closest = -1;
 		for (int c = firstColor; c < numColors; c++) {
 			int dist = ColorMapUtils.getRGBDistance(palette, c, prgb);

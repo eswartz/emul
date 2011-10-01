@@ -48,7 +48,7 @@ class RGB333MapColor extends BasePaletteMapper {
 	 * @see v9t9.emulator.clients.builtin.video.ImageImport.IMapColor#getClosestPaletteColor(int[])
 	 */
 	@Override
-	public int getClosestPalettePixel(int[] prgb) {
+	public int getClosestPalettePixel(int x, int y, int[] prgb) {
 		int closest = -1;
 		int mindiff = Integer.MAX_VALUE;
 		for (int c = firstColor; c < numColors; c++) {

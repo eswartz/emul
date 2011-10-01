@@ -22,7 +22,7 @@ class RGB332MapColor extends RGB333MapColor {
 	 * @see v9t9.emulator.clients.builtin.video.ImageImport.IMapColor#getClosestPaletteColor(int[])
 	 */
 	@Override
-	public int getClosestPalettePixel(int[] prgb) {
+	public int getClosestPalettePixel(int x, int y, int[] prgb) {
 		// we don't need to trawl the palette here
 		int g = prgb[1] >> 5;
 		int r = prgb[0] >> 5;

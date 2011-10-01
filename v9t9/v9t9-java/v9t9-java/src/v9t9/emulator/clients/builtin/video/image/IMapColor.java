@@ -2,7 +2,7 @@ package v9t9.emulator.clients.builtin.video.image;
 
 import java.awt.image.BufferedImage;
 
-interface IMapColor {
+interface IMapColor extends IMapColorBase {
 	/**
 	 * Get number of colors (range of indices for mapColor and getClosestPalettePixel)
 	 */
@@ -30,13 +30,6 @@ interface IMapColor {
 	 */
 	int mapColor(int[] prgb, int[] dist);
 
-	/**
-	 * Get the color in the new palette closest to this one.
-	 * @param prgb
-	 * @return color index or -1
-	 */
-	int getClosestPalettePixel(int[] prgb);
-	
 	/**
 	 * Get the maximum pixel distance for absolutely replacing a range
 	 * of source pixels with palette pixels. 

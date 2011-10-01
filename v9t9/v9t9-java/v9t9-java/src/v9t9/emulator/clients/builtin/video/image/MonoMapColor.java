@@ -55,7 +55,7 @@ class MonoMapColor extends BasePaletteMapper {
 	 * @see v9t9.emulator.clients.builtin.video.ImageImport.IMapColor#getClosestColor(int[])
 	 */
 	@Override
-	public int getClosestPalettePixel(int[] prgb) {
+	public int getClosestPalettePixel(int x, int y, int[] prgb) {
 		int c = getCloseColor(prgb);
 		return getPalettePixels()[c];
 	}

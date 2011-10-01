@@ -131,16 +131,16 @@ public class ColorMapUtils {
 		dist = (dr * dr) + (dg * dg) + (db * db);
 		return dist;
 	}
-
-	/**
-	 * @param i
-	 * @param newRGB
-	 * @return
-	 */
 	public static int getPixelDistance(int pixel, int newRGB) {
 		int dr = ((pixel & 0xff0000) - (newRGB & 0xff0000)) >> 16;
 		int dg = ((pixel & 0x00ff00) - (newRGB & 0x00ff00)) >> 8;
 		int db = ((pixel & 0x0000ff) - (newRGB & 0x0000ff)) >> 0;
+		return dr * dr + dg * dg + db * db;
+	}
+	public static int getRGBDistance(int pixel, int[] prgb) {
+		int dr = ((pixel & 0xff0000) >> 16) - prgb[0];
+		int dg = ((pixel & 0x00ff00) >> 8) - prgb[1];
+		int db = ((pixel & 0x0000ff) >> 0) - prgb[2];
 		return dr * dr + dg * dg + db * db;
 	}
 
