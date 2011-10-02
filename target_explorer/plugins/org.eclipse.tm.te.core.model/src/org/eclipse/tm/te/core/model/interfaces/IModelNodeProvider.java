@@ -7,20 +7,20 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.core.internal.tracing;
+package org.eclipse.tm.te.core.model.interfaces;
+
+import org.eclipse.core.runtime.IAdaptable;
 
 /**
- * Target Explorer: Core plug-in trace slot identifiers.
+ * Interface to implement from objects which are associated
+ * with (data) model nodes and providing access to them.
  */
-public interface ITraceIds {
+public interface IModelNodeProvider extends IAdaptable {
 
 	/**
-	 * If activated, trace information about event dispatching is printed out.
+	 * Returns the associated (data) model node.
+	 *
+	 * @return The (data) model node or <code>null</code>.
 	 */
-	public static final String TRACE_EVENTS = "trace/events"; //$NON-NLS-1$
-
-	/**
-	 * If activated, trace information about asynchronous callbacks is printed out.
-	 */
-	public static final String TRACE_CALLBACKS = "trace/callbacks"; //$NON-NLS-1$
+	public IModelNode getModelNode();
 }

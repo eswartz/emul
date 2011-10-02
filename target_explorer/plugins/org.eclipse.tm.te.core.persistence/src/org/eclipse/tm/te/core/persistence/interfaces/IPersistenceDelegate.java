@@ -13,7 +13,7 @@ import java.io.IOException;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.tm.te.core.interfaces.IExecutableExtension;
-import org.eclipse.tm.te.core.interfaces.nodes.IPropertiesContainer;
+import org.eclipse.tm.te.core.interfaces.properties.IPropertiesContainer;
 
 /**
  * Target Explorer: Persistence delegate API declaration

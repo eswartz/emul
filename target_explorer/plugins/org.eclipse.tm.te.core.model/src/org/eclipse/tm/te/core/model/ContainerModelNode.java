@@ -7,7 +7,7 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.core.nodes;
+package org.eclipse.tm.te.core.model;
 
 import java.util.ArrayList;
 import java.util.EventObject;
@@ -18,8 +18,8 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.tm.te.core.events.EventManager;
-import org.eclipse.tm.te.core.interfaces.nodes.IContainerModelNode;
-import org.eclipse.tm.te.core.interfaces.nodes.IModelNode;
+import org.eclipse.tm.te.core.model.interfaces.IContainerModelNode;
+import org.eclipse.tm.te.core.model.interfaces.IModelNode;
 
 /**
  * A common (data) model container node implementation.

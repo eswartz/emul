@@ -7,20 +7,20 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.core.interfaces.nodes;
+package org.eclipse.tm.te.core.model;
 
-import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.tm.te.core.model.nls.Messages;
+
 
 /**
- * Interface to implement from objects which are associated
- * with (data) model nodes and providing access to them.
+ * An immutable model node to visualize a pending operation.
  */
-public interface IModelNodeProvider extends IAdaptable {
+public final class PendingOperationModelNode extends MessageModelNode {
 
 	/**
-	 * Returns the associated (data) model node.
-	 *
-	 * @return The (data) model node or <code>null</code>.
+	 * Constructor.
 	 */
-	public IModelNode getModelNode();
+	public PendingOperationModelNode() {
+		super(Messages.PendingOperationModelNode_label, PENDING, true);
+	}
 }

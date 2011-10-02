@@ -7,7 +7,7 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.core.nodes;
+package org.eclipse.tm.te.core.model;
 
 import java.util.UUID;
 
@@ -15,10 +15,11 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.tm.te.core.activator.CoreBundleActivator;
-import org.eclipse.tm.te.core.interfaces.nodes.IContainerModelNode;
-import org.eclipse.tm.te.core.interfaces.nodes.IModelNode;
-import org.eclipse.tm.te.core.interfaces.nodes.IModelNodeProvider;
-import org.eclipse.tm.te.core.internal.tracing.ITraceIds;
+import org.eclipse.tm.te.core.interfaces.tracing.ITraceIds;
+import org.eclipse.tm.te.core.model.interfaces.IContainerModelNode;
+import org.eclipse.tm.te.core.model.interfaces.IModelNode;
+import org.eclipse.tm.te.core.model.interfaces.IModelNodeProvider;
+import org.eclipse.tm.te.core.properties.PropertiesContainer;
 
 /**
  * A common (data) model node implementation.

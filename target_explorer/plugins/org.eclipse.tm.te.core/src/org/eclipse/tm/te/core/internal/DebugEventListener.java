@@ -14,7 +14,7 @@ import java.util.EventObject;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.tm.te.core.activator.CoreBundleActivator;
 import org.eclipse.tm.te.core.interfaces.events.IEventListener;
-import org.eclipse.tm.te.core.internal.tracing.ITraceIds;
+import org.eclipse.tm.te.core.interfaces.tracing.ITraceIds;
 
 /**
  * Event listener for internal debugging purpose.

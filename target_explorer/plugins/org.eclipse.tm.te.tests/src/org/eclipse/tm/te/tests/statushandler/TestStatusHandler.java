@@ -10,7 +10,7 @@
 package org.eclipse.tm.te.tests.statushandler;
 
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.tm.te.core.interfaces.nodes.IPropertiesContainer;
+import org.eclipse.tm.te.core.interfaces.properties.IPropertiesContainer;
 import org.eclipse.tm.te.core.statushandler.AbstractStatusHandler;
 
 /**

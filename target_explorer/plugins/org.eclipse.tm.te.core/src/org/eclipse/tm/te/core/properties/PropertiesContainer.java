@@ -7,7 +7,7 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.core.nodes;
+package org.eclipse.tm.te.core.properties;
 
 import java.util.Collections;
 import java.util.EventObject;
@@ -22,8 +22,8 @@ import org.eclipse.core.runtime.PlatformObject;
 import org.eclipse.tm.te.core.activator.CoreBundleActivator;
 import org.eclipse.tm.te.core.events.EventManager;
 import org.eclipse.tm.te.core.events.PropertyChangeEvent;
-import org.eclipse.tm.te.core.interfaces.nodes.IPropertiesContainer;
-import org.eclipse.tm.te.core.internal.tracing.ITraceIds;
+import org.eclipse.tm.te.core.interfaces.properties.IPropertiesContainer;
+import org.eclipse.tm.te.core.interfaces.tracing.ITraceIds;
 
 /**
  * A generic properties container implementation.

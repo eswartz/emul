@@ -23,7 +23,7 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.tm.te.core.activator.CoreBundleActivator;
 import org.eclipse.tm.te.core.interfaces.events.IEventFireDelegate;
 import org.eclipse.tm.te.core.interfaces.events.IEventListener;
-import org.eclipse.tm.te.core.internal.tracing.ITraceIds;
+import org.eclipse.tm.te.core.interfaces.tracing.ITraceIds;
 import org.osgi.framework.Bundle;
 
 

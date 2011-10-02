@@ -7,11 +7,12 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.core.interfaces.nodes;
+package org.eclipse.tm.te.core.model.interfaces;
 
 import java.util.UUID;
 
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
+import org.eclipse.tm.te.core.interfaces.properties.IPropertiesContainer;
 
 /**
  * A common (data) model node.

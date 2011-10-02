@@ -17,7 +17,7 @@ import java.io.OutputStreamWriter;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.tm.te.core.interfaces.nodes.IPropertiesContainer;
+import org.eclipse.tm.te.core.interfaces.properties.IPropertiesContainer;
 import org.eclipse.tm.te.core.persistence.AbstractPersistenceDelegate;
 import org.eclipse.tm.te.tcf.locator.activator.CoreBundleActivator;
 import org.eclipse.tm.te.tcf.locator.internal.nls.Messages;

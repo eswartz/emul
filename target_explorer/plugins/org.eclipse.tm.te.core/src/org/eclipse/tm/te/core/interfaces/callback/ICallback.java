@@ -12,7 +12,7 @@ package org.eclipse.tm.te.core.interfaces.callback;
 import javax.security.auth.callback.Callback;
 
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.tm.te.core.interfaces.nodes.IPropertiesContainer;
+import org.eclipse.tm.te.core.interfaces.properties.IPropertiesContainer;
 
 
 /**

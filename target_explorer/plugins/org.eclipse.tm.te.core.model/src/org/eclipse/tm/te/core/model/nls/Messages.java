@@ -7,17 +7,17 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.core.nls;
+package org.eclipse.tm.te.core.model.nls;
 
 import org.eclipse.osgi.util.NLS;
 
 /**
- * Target Explorer Core plugin externalized strings management.
+ * Target Explorer Model Core plugin externalized strings management.
  */
 public class Messages extends NLS {
 
 	// The plug-in resource bundle name
-	private static final String BUNDLE_NAME = "org.eclipse.tm.te.core.nls.Messages"; //$NON-NLS-1$
+	private static final String BUNDLE_NAME = "org.eclipse.tm.te.core.model.nls.Messages"; //$NON-NLS-1$
 
 	/**
 	 * Static constructor.
@@ -29,7 +29,5 @@ public class Messages extends NLS {
 
 	// **** Declare externalized string id's down here *****
 
-	public static String Extension_error_missingRequiredAttribute;
-	public static String Extension_error_duplicateExtension;
-	public static String Extension_error_invalidExtensionPoint;
+	public static String PendingOperationModelNode_label;
 }

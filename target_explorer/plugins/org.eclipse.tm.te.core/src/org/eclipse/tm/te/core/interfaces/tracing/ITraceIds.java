@@ -7,20 +7,20 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.core.nodes;
-
-import org.eclipse.tm.te.core.nls.Messages;
-
+package org.eclipse.tm.te.core.interfaces.tracing;
 
 /**
- * An immutable model node to visualize a pending operation.
+ * Target Explorer: Core plug-in trace slot identifiers.
  */
-public final class PendingOperationModelNode extends MessageModelNode {
+public interface ITraceIds {
 
 	/**
-	 * Constructor.
+	 * If activated, trace information about event dispatching is printed out.
 	 */
-	public PendingOperationModelNode() {
-		super(Messages.PendingOperationModelNode_label, PENDING, true);
-	}
+	public static final String TRACE_EVENTS = "trace/events"; //$NON-NLS-1$
+
+	/**
+	 * If activated, trace information about asynchronous callbacks is printed out.
+	 */
+	public static final String TRACE_CALLBACKS = "trace/callbacks"; //$NON-NLS-1$
 }

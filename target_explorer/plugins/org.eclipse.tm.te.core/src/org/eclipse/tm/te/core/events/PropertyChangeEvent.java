@@ -12,7 +12,7 @@ package org.eclipse.tm.te.core.events;
 import java.util.EventObject;
 
 import org.eclipse.tm.te.core.activator.CoreBundleActivator;
-import org.eclipse.tm.te.core.internal.tracing.ITraceIds;
+import org.eclipse.tm.te.core.interfaces.tracing.ITraceIds;
 
 /**
  * Property change event implementation.

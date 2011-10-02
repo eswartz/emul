@@ -10,7 +10,7 @@
 package org.eclipse.tm.te.ui.wizards.pages;
 
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.tm.te.core.interfaces.nodes.IPropertiesContainer;
+import org.eclipse.tm.te.core.interfaces.properties.IPropertiesContainer;
 import org.eclipse.tm.te.ui.wizards.interfaces.ISharedDataWizardPage;
 
 /**

@@ -7,10 +7,10 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.core.nodes;
+package org.eclipse.tm.te.core.model;
 
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.tm.te.core.activator.CoreBundleActivator;
+import org.eclipse.tm.te.core.model.activator.CoreBundleActivator;
 
 /**
  * A common (data) model node representing a message.

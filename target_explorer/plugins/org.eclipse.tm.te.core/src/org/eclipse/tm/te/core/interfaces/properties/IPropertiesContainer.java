@@ -7,7 +7,7 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.core.interfaces.nodes;
+package org.eclipse.tm.te.core.interfaces.properties;
 
 import java.util.Map;
 import java.util.UUID;

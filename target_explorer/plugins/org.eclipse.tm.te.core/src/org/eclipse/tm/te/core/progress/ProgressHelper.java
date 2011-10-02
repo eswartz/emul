@@ -19,7 +19,7 @@ import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.tm.te.core.activator.CoreBundleActivator;
 import org.eclipse.tm.te.core.callback.Callback;
 import org.eclipse.tm.te.core.interfaces.callback.ICallback;
-import org.eclipse.tm.te.core.internal.tracing.ITraceIds;
+import org.eclipse.tm.te.core.interfaces.tracing.ITraceIds;
 
 /**
  * Helper implementation to deal with progress monitors and callbacks.

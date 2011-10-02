@@ -34,21 +34,14 @@
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.tm.te.ui"
+         id="org.eclipse.tm.te.core.model"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.tm.te.ui.views"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.eclipse.tm.te.ui.controls"
+         id="org.eclipse.tm.te.core.persistence"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -62,7 +55,14 @@
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.tm.te.core.persistence"
+         id="org.eclipse.tm.te.ui"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.tm.te.ui.controls"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -77,6 +77,13 @@
 
    <plugin
          id="org.eclipse.tm.te.ui.swt"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.tm.te.ui.views"
          download-size="0"
          install-size="0"
          version="0.0.0"

@@ -10,7 +10,7 @@
 package org.eclipse.tm.te.core.internal;
 
 import org.eclipse.core.expressions.PropertyTester;
-import org.eclipse.tm.te.core.interfaces.nodes.IPropertiesContainer;
+import org.eclipse.tm.te.core.interfaces.properties.IPropertiesContainer;
 
 /**
  * Property tester implementation for objects of type {@link IPropertiesContainer}.

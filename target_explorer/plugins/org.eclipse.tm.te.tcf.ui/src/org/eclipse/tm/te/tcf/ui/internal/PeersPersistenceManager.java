@@ -16,10 +16,10 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.Protocol;
-import org.eclipse.tm.te.core.interfaces.nodes.IPropertiesContainer;
-import org.eclipse.tm.te.core.nodes.PropertiesContainer;
+import org.eclipse.tm.te.core.interfaces.properties.IPropertiesContainer;
 import org.eclipse.tm.te.core.persistence.PersistenceDelegateManager;
 import org.eclipse.tm.te.core.persistence.interfaces.IPersistenceDelegate;
+import org.eclipse.tm.te.core.properties.PropertiesContainer;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel;
 
 

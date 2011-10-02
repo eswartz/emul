@@ -18,7 +18,7 @@
             id="org.eclipse.tm.te.core.PropertiesContainerPropertyTester"
             namespace="org.eclipse.tm.te.core"
             properties="isProperty"
-            type="org.eclipse.tm.te.core.interfaces.nodes.IPropertiesContainer">
+            type="org.eclipse.tm.te.core.interfaces.properties.IPropertiesContainer">
       </propertyTester>
    </extension>
 

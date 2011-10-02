@@ -10,18 +10,18 @@ Require-Bundle: org.eclipse.core.runtime;bundle-version="3.7.0",
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Bundle-ActivationPolicy: lazy
 Bundle-Localization: plugin
-Export-Package: org.eclipse.tm.te.core.activator;x-internal:=true,
+Export-Package: org.eclipse.tm.te.core.activator,
  org.eclipse.tm.te.core.callback,
  org.eclipse.tm.te.core.events,
  org.eclipse.tm.te.core.extensions,
  org.eclipse.tm.te.core.interfaces,
  org.eclipse.tm.te.core.interfaces.callback,
  org.eclipse.tm.te.core.interfaces.events,
- org.eclipse.tm.te.core.interfaces.nodes,
+ org.eclipse.tm.te.core.interfaces.properties,
+ org.eclipse.tm.te.core.interfaces.tracing,
  org.eclipse.tm.te.core.internal;x-internal:=true,
- org.eclipse.tm.te.core.internal.tracing;x-internal:=true,
  org.eclipse.tm.te.core.nls,
- org.eclipse.tm.te.core.nodes,
  org.eclipse.tm.te.core.preferences,
  org.eclipse.tm.te.core.progress,
+ org.eclipse.tm.te.core.properties,
  org.eclipse.tm.te.core.tracing
