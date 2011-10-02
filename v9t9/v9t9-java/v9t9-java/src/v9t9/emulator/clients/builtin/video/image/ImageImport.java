@@ -348,14 +348,15 @@ public class ImageImport implements IBitmapPixelAccess {
 			convertImageToColorMap(img);
 		}
 	
-
-
-		try {
-			ImageIO.write(img, "png", new File("/tmp/dragged.png"));
-		} catch (IOException e) {
-			e.printStackTrace();
+		if (false) {
+			File tempfile = new File(System.getProperty("java.io.tmpdir"), "dragged.png");
+			System.out.println("Temporary buffer to " + tempfile);
+			try {
+				ImageIO.write(img, "png", tempfile);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
-		
 		
 		replaceImageData(img);
 	}
