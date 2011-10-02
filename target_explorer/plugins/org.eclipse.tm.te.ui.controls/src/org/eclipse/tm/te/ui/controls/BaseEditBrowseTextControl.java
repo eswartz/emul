@@ -1253,7 +1253,7 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl implements 
 	}
 
 	/* (non-Javadoc)
-	 * @see com.windriver.ide.target.ui.wizard.WRTMBaseTargetConnectionPageControl#setupPanel(org.eclipse.swt.widgets.Composite)
+	 * @see org.eclipse.tm.te.ui.controls.BaseControl#setupPanel(org.eclipse.swt.widgets.Composite)
 	 */
 	@Override
 	public void setupPanel(Composite parent) {
