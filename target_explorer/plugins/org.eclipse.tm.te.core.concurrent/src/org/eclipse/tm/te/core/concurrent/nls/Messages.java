@@ -29,4 +29,5 @@ public class Messages extends NLS {
 
 	// **** Declare externalized string id's down here *****
 
+	public static String AbstractDelegatingExecutorService_unhandledException;
 }
