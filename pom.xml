@@ -53,18 +53,19 @@
 	  <module>features/org.eclipse.tm.tcf.rse.sdk.feature</module>
 	  
 	  <module>target_explorer/plugins/org.eclipse.tm.te.core</module>
+	  <module>target_explorer/plugins/org.eclipse.tm.te.core.model</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.core.persistence</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.core.statushandler</module>
+	  <module>target_explorer/plugins/org.eclipse.tm.te.ui</module>
+	  <module>target_explorer/plugins/org.eclipse.tm.te.ui.controls</module>
+	  <module>target_explorer/plugins/org.eclipse.tm.te.ui.forms</module>
+	  <module>target_explorer/plugins/org.eclipse.tm.te.ui.swt</module>
+	  <module>target_explorer/plugins/org.eclipse.tm.te.ui.views</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.tcf.core</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.tcf.filesystem</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.tcf.locator</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.tcf.log.core</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.tcf.ui</module>
-	  <module>target_explorer/plugins/org.eclipse.tm.te.ui</module>
-	  <module>target_explorer/plugins/org.eclipse.tm.te.ui.swt</module>
-	  <module>target_explorer/plugins/org.eclipse.tm.te.ui.forms</module>
-	  <module>target_explorer/plugins/org.eclipse.tm.te.ui.controls</module>
-	  <module>target_explorer/plugins/org.eclipse.tm.te.ui.views</module>
 
 	  <module>target_explorer/features/org.eclipse.tm.te.feature</module>
 	  <module>target_explorer/features/org.eclipse.tm.te.sdk.feature</module>

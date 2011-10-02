@@ -80,6 +80,8 @@ tests/test-dwarf/*.ncb
 # target explorer
 /target_explorer/plugins/org.eclipse.tm.te.core/target
 /target_explorer/plugins/org.eclipse.tm.te.core/bin
+/target_explorer/plugins/org.eclipse.tm.te.core.model/target
+/target_explorer/plugins/org.eclipse.tm.te.core.model/bin
 /target_explorer/plugins/org.eclipse.tm.te.core.persistence/target
 /target_explorer/plugins/org.eclipse.tm.te.core.persistence/bin
 /target_explorer/plugins/org.eclipse.tm.te.core.statushandler/target
