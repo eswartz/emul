@@ -10,7 +10,7 @@
       <propertyTester
             class="org.eclipse.tm.te.runtime.internal.PreferencesPropertyTester"
             id="org.eclipse.tm.te.runtime.PreferencesPropertyTester"
-            namespace="org.eclipse.tm.te.runtimee"
+            namespace="org.eclipse.tm.te.runtime"
             properties="preference"
             type="java.lang.Object">
       </propertyTester>
