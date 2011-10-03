@@ -693,7 +693,7 @@ static void udp_receive_ack_info(void) {
             }
         }
     }
-    trace(LOG_ALWAYS, "Received malformed UDP discovery packet from %s:%d",
+    trace(LOG_DISCOVERY, "Received malformed ACK_INFO from %s:%d",
         inet_ntoa(recvreq_addr.sin_addr), ntohs(recvreq_addr.sin_port));
     peer_server_free(ps);
 }
