@@ -111,7 +111,7 @@ public final class ExecutorsUtil {
 	static {
 		EXECUTOR = (ISingleThreadedExecutor) Executors.getSharedExecutor("org.eclipse.tm.te.runtime.concurrent.executors.singleThreaded"); //$NON-NLS-1$
 		Assert.isNotNull(EXECUTOR);
-		UI_EXECUTOR = (ISingleThreadedExecutor) Executors.getSharedExecutor("org.eclipse.tm.ui.swt.executors.display"); //$NON-NLS-1$
+		UI_EXECUTOR = (ISingleThreadedExecutor) Executors.getSharedExecutor("org.eclipse.tm.te.ui.executors.platform.display"); //$NON-NLS-1$
 	}
 
 	/**
