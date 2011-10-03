@@ -166,6 +166,7 @@ public class RemoteHostAddressControl extends BaseEditBrowseTextControl {
 				/* (non-Javadoc)
 				 * @see org.eclipse.jface.operation.IRunnableWithProgress#run(org.eclipse.core.runtime.IProgressMonitor)
 				 */
+				@Override
 				public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 					try {
 						monitor.setTaskName(getTaskNameCheckNameAddress());

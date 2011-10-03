@@ -155,6 +155,7 @@ public final class LogManager implements IProtocolStateChangeListener {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.core.interfaces.listeners.IProtocolStateChangeListener#stateChanged(boolean)
 	 */
+	@Override
 	public void stateChanged(boolean state) {
 		Assert.isTrue(Protocol.isDispatchThread());
 

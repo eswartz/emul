@@ -76,7 +76,7 @@
                      <test property="org.eclipse.tm.te.tcf.locator.hasRemoteService" value="FileSystem"/>
                   </adapt>
                   <test
-                        property="org.eclipse.tm.te.core.preference"
+                        property="org.eclipse.tm.te.runtime.preference"
                         args="bundleId=org.eclipse.tm.te.tcf.filesystem,key=tcf.filesystem.core.feature.editor.content.enable"
                         value="true">
                   </test>

@@ -36,6 +36,7 @@ public class UnreachablePeersFilter extends ViewerFilter {
 				state[0] = peerModel.getIntProperty(IPeerModelProperties.PROP_STATE);
 			} else {
 				Protocol.invokeAndWait(new Runnable() {
+					@Override
 					public void run() {
 						state[0] = peerModel.getIntProperty(IPeerModelProperties.PROP_STATE);
 					}

@@ -137,6 +137,7 @@ public class NewWizardSelectionPage extends WizardPage {
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets.Composite)
 	 */
+	@Override
 	public void createControl(Composite parent) {
 		Composite composite = new Composite(parent, SWT.NONE);
 		composite.setLayout(new GridLayout());
@@ -160,11 +161,13 @@ public class NewWizardSelectionPage extends WizardPage {
 		treeViewer.setComparator(new NewWizardViewerComparator());
 
 		treeViewer.addSelectionChangedListener(new ISelectionChangedListener() {
+			@Override
 			public void selectionChanged(SelectionChangedEvent event) {
 				onSelectionChanged();
 			}
 		});
 		treeViewer.addDoubleClickListener(new IDoubleClickListener() {
+			@Override
 			public void doubleClick(DoubleClickEvent event) {
 				// Double-click on a connection type is triggering the sub wizard
 				if (event.getSelection() instanceof IStructuredSelection) {

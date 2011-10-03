@@ -32,9 +32,9 @@ import org.eclipse.ui.ide.IDE;
 public class OpenFileHandler extends AbstractHandler {
 
 	/* (non-Javadoc)
-	 *
 	 * @see org.eclipse.core.commands.AbstractHandler#execute(org.eclipse.core.commands.ExecutionEvent)
 	 */
+	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 		IStructuredSelection selection = (IStructuredSelection) HandlerUtil.getActiveMenuSelectionChecked(event);
 		final FSTreeNode node = (FSTreeNode) selection.getFirstElement();
@@ -82,6 +82,7 @@ public class OpenFileHandler extends AbstractHandler {
 	private void openEditor(final IWorkbenchPage page, final FSTreeNode node) {
 		Display display = page.getWorkbenchWindow().getWorkbench().getDisplay();
 		display.asyncExec(new Runnable() {
+			@Override
 			public void run() {
 				IPath path = CacheManager.getInstance().getCachePath(node);
 				IFileStore fileStore = EFS.getLocalFileSystem().getStore(path);

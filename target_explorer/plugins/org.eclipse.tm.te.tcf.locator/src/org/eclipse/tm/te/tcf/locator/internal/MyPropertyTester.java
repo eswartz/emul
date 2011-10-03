@@ -25,6 +25,7 @@ public class MyPropertyTester extends PropertyTester {
 	/* (non-Javadoc)
 	 * @see org.eclipse.core.expressions.IPropertyTester#test(java.lang.Object, java.lang.String, java.lang.Object[], java.lang.Object)
 	 */
+	@Override
 	public boolean test(final Object receiver, final String property, final Object[] args, final Object expectedValue) {
 		// The receiver is expected to be a peer model node
 		if (receiver instanceof IPeerModel) {
@@ -33,6 +34,7 @@ public class MyPropertyTester extends PropertyTester {
 				result[0] = Boolean.valueOf(testPeerModel((IPeerModel)receiver, property, args, expectedValue));
 			} else {
 				Protocol.invokeAndWait(new Runnable() {
+					@Override
 					public void run() {
 						result[0] = Boolean.valueOf(testPeerModel((IPeerModel)receiver, property, args, expectedValue));
 					}

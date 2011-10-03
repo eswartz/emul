@@ -71,6 +71,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.IPeerModel#getModel()
 	 */
+	@Override
 	public ILocatorModel getModel() {
 		return (ILocatorModel)getAdapter(ILocatorModel.class);
 	}
@@ -78,6 +79,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.IPeerModel#getPeer()
 	 */
+	@Override
 	public IPeer getPeer() {
 		return (IPeer)getAdapter(IPeer.class);
 	}
@@ -95,6 +97,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 			object[0] = doGetAdapter(adapter);
 		} else {
 			Protocol.invokeAndWait(new Runnable() {
+				@Override
 				public void run() {
 					object[0] = doGetAdapter(adapter);
 				}
@@ -151,6 +154,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 			buffer.append(", name=" + peer.getName()); //$NON-NLS-1$
 		} else {
 			Protocol.invokeAndWait(new Runnable() {
+				@Override
 				public void run() {
 					IPeer peer = getPeer();
 					buffer.append(": id=" + peer.getID()); //$NON-NLS-1$
@@ -166,6 +170,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.IPeerModel#getProperties()
 	 */
+	@Override
 	public Map<String, Object> getProperties() {
 		Assert.isTrue(Protocol.isDispatchThread());
 		return Collections.unmodifiableMap(new HashMap<String, Object>(properties));
@@ -174,6 +179,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.IPeerModel#getProperty(java.lang.String)
 	 */
+	@Override
 	public Object getProperty(String key) {
 		Assert.isTrue(Protocol.isDispatchThread());
 
@@ -188,6 +194,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.IPeerModel#getBooleanProperty(java.lang.String)
 	 */
+	@Override
 	public final boolean getBooleanProperty(String key) {
 		Object value = getProperty(key);
 		if (value instanceof Boolean) {
@@ -204,6 +211,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.IPeerModel#getLongProperty(java.lang.String)
 	 */
+	@Override
 	public final long getLongProperty(String key) {
 		Object value = getProperty(key);
 		if (value instanceof Long) {
@@ -224,6 +232,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.IPeerModel#getIntProperty(java.lang.String)
 	 */
+	@Override
 	public final int getIntProperty(String key) {
 		Object value = getProperty(key);
 		try {
@@ -238,6 +247,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.IPeerModel#getStringProperty(java.lang.String)
 	 */
+	@Override
 	public final String getStringProperty(String key) {
 		Object value = getProperty(key);
 		return value instanceof String ? (String)value :
@@ -247,6 +257,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.IPeerModel#getFloatProperty(java.lang.String)
 	 */
+	@Override
 	public final float getFloatProperty(String key) {
 		Object value = getProperty(key);
 		try {
@@ -261,6 +272,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.IPeerModel#getDoubleProperty(java.lang.String)
 	 */
+	@Override
 	public final double getDoubleProperty(String key) {
 		Object value = getProperty(key);
 		try {
@@ -276,6 +288,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.IPeerModel#setProperties(java.util.Map)
 	 */
+	@Override
 	public final void setProperties(Map<String, Object> properties) {
 		Assert.isNotNull(properties);
 		Assert.isTrue(Protocol.isDispatchThread());
@@ -286,6 +299,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 		final IModelListener[] listeners = parentModel.getListener();
 		if (listeners.length > 0) {
 			Protocol.invokeLater(new Runnable() {
+				@Override
 				@SuppressWarnings("synthetic-access")
 				public void run() {
 					for (IModelListener listener : listeners) {
@@ -299,6 +313,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.IPeerModel#setProperty(java.lang.String, boolean)
 	 */
+	@Override
 	public final boolean setProperty(String key, boolean value) {
 		boolean oldValue = getBooleanProperty(key);
 		if (oldValue != value) {
@@ -310,6 +325,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.IPeerModel#setProperty(java.lang.String, long)
 	 */
+	@Override
 	public final boolean setProperty(String key, long value) {
 		long oldValue = getLongProperty(key);
 		if (oldValue != value) {
@@ -321,6 +337,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.IPeerModel#setProperty(java.lang.String, int)
 	 */
+	@Override
 	public final boolean setProperty(String key, int value) {
 		int oldValue = getIntProperty(key);
 		if (oldValue != value) {
@@ -332,6 +349,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.IPeerModel#setProperty(java.lang.String, float)
 	 */
+	@Override
 	public final boolean setProperty(String key, float value) {
 		float oldValue = getFloatProperty(key);
 		if (oldValue != value) {
@@ -343,6 +361,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.IPeerModel#setProperty(java.lang.String, double)
 	 */
+	@Override
 	public final boolean setProperty(String key, double value) {
 		double oldValue = getDoubleProperty(key);
 		if (oldValue != value) {
@@ -354,6 +373,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.IPeerModel#setProperty(java.lang.String, java.lang.Object)
 	 */
+	@Override
 	public boolean setProperty(String key, Object value) {
 		Assert.isNotNull(key);
 		Assert.isTrue(Protocol.isDispatchThread());
@@ -372,6 +392,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 				final IModelListener[] listeners = parentModel.getListener();
 				if (listeners.length > 0) {
 					Protocol.invokeLater(new Runnable() {
+						@Override
 						@SuppressWarnings("synthetic-access")
 						public void run() {
 							for (IModelListener listener : listeners) {
@@ -390,6 +411,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.IPeerModel#clearProperties()
 	 */
+	@Override
 	public final void clearProperties() {
 		Assert.isTrue(Protocol.isDispatchThread());
 		properties.clear();
@@ -398,6 +420,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.IPeerModel#isProperty(java.lang.String, long)
 	 */
+	@Override
 	public final boolean isProperty(String key, long value) {
 		return getLongProperty(key) == value;
 	}
@@ -405,6 +428,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.IPeerModel#isProperty(java.lang.String, boolean)
 	 */
+	@Override
 	public final boolean isProperty(String key, boolean value) {
 		return getBooleanProperty(key) == value;
 	}
@@ -412,6 +436,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.IPeerModel#isProperty(java.lang.String, int)
 	 */
+	@Override
 	public final boolean isProperty(String key, int value) {
 		return getIntProperty(key) == value;
 	}
@@ -419,6 +444,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.IPeerModel#isProperty(java.lang.String, float)
 	 */
+	@Override
 	public final boolean isProperty(String key, float value) {
 		return getFloatProperty(key) == value;
 	}
@@ -426,6 +452,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.IPeerModel#isProperty(java.lang.String, double)
 	 */
+	@Override
 	public final boolean isProperty(String key, double value) {
 		return getDoubleProperty(key) == value;
 	}
@@ -433,6 +460,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.IPeerModel#isPropertyIgnoreCase(java.lang.String, java.lang.String)
 	 */
+	@Override
 	public final boolean isPropertyIgnoreCase(String key, String value) {
 		String property = getStringProperty(key);
 		return (property == null && value == null) || (property != null && property.equalsIgnoreCase(value));
@@ -441,6 +469,7 @@ public class PeerModel extends PlatformObject implements IPeerModel {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.IPeerModel#isProperty(java.lang.String, java.lang.Object)
 	 */
+	@Override
 	public final boolean isProperty(String key, Object value) {
 		Object property = getProperty(key);
 		return (property == null && value == null) || (property != null && property.equals(value));

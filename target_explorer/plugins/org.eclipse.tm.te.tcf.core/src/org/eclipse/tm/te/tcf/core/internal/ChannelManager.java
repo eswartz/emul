@@ -36,11 +36,13 @@ public final class ChannelManager extends PlatformObject implements IChannelMana
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.core.interfaces.IChannelManager#openChannel(org.eclipse.tm.tcf.protocol.IPeer, org.eclipse.tm.te.tcf.core.interfaces.IChannelManager.DoneOpenChannel)
 	 */
+	@Override
 	public void openChannel(final IPeer peer, final DoneOpenChannel done) {
 		if (Protocol.isDispatchThread()) {
 			internalOpenChannel(peer, done);
 		} else {
 			Protocol.invokeLater(new Runnable() {
+				@Override
 				public void run() {
 					internalOpenChannel(peer, done);
 				}
@@ -67,6 +69,7 @@ public final class ChannelManager extends PlatformObject implements IChannelMana
 		if (channel != null) {
 			channel.addChannelListener(new IChannel.IChannelListener() {
 
+				@Override
 				public void onChannelOpened() {
 					// Remove ourself as listener from the channel
 					channel.removeChannelListener(this);
@@ -74,6 +77,7 @@ public final class ChannelManager extends PlatformObject implements IChannelMana
 					done.doneOpenChannel(null, channel);
 				}
 
+				@Override
 				public void onChannelClosed(Throwable error) {
 					// Remove ourself as listener from the channel
 					channel.removeChannelListener(this);
@@ -81,6 +85,7 @@ public final class ChannelManager extends PlatformObject implements IChannelMana
 					done.doneOpenChannel(error, channel);
 				}
 
+				@Override
 				public void congestionLevel(int level) {
 					// ignored
 				}
@@ -95,11 +100,13 @@ public final class ChannelManager extends PlatformObject implements IChannelMana
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.core.interfaces.IChannelManager#openChannel(java.util.Map, org.eclipse.tm.te.tcf.core.interfaces.IChannelManager.DoneOpenChannel)
 	 */
+	@Override
 	public void openChannel(final Map<String, String> peerAttributes, final DoneOpenChannel done) {
 		if (Protocol.isDispatchThread()) {
 			internalOpenChannel(peerAttributes, done);
 		} else {
 			Protocol.invokeLater(new Runnable() {
+				@Override
 				public void run() {
 					internalOpenChannel(peerAttributes, done);
 				}

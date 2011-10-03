@@ -153,15 +153,18 @@ public class TcfInputStream extends InputStream {
 		// Open the channel
 		channel = peer.openChannel();
 		channel.addChannelListener(new IChannelListener() {
+			@Override
 			public void onChannelOpened() {
 				Assert.isTrue(Protocol.isDispatchThread());
 				service = channel.getRemoteService(IFileSystem.class);
 				rendezvous.arrive();
 			}
 
+			@Override
 			public void onChannelClosed(Throwable error) {
 			}
 
+			@Override
 			public void congestionLevel(int level) {
 			}
 		});
@@ -176,6 +179,7 @@ public class TcfInputStream extends InputStream {
 			final FileSystemException[] errors = new FileSystemException[1];
 			// Open the file.
 			service.open(path, IFileSystem.TCF_O_READ, null, new DoneOpen() {
+				@Override
 				public void doneOpen(IToken token, FileSystemException error,
 						IFileHandle hdl) {
 					errors[0] = error;
@@ -250,6 +254,7 @@ public class TcfInputStream extends InputStream {
 	private void readBlock() {
 		final Rendezvous rendezvous = new Rendezvous();
 		service.read(handle, position, chunk_size, new DoneRead() {
+			@Override
 			public void doneRead(IToken token, FileSystemException error,
 					byte[] data, boolean eof) {
 				if (error != null) {
@@ -285,6 +290,7 @@ public class TcfInputStream extends InputStream {
 		if (connected && !closed) {
 			final Rendezvous rendezvous = new Rendezvous();
 			service.close(handle, new DoneClose() {
+				@Override
 				public void doneClose(IToken token, FileSystemException error) {
 					rendezvous.arrive();
 				}

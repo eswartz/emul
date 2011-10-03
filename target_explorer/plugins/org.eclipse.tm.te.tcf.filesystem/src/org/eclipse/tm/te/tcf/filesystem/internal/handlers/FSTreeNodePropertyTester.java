@@ -22,14 +22,12 @@ import org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode;
  * it is writable and "isExecutable" if it is executable.
  */
 public class FSTreeNodePropertyTester extends PropertyTester {
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.core.expressions.IPropertyTester#test(java.lang.Object,
-	 * java.lang.String, java.lang.Object[], java.lang.Object)
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.core.expressions.IPropertyTester#test(java.lang.Object, java.lang.String, java.lang.Object[], java.lang.Object)
 	 */
-	public boolean test(Object receiver, String property, Object[] args,
-			Object expectedValue) {
+	@Override
+	public boolean test(Object receiver, String property, Object[] args, Object expectedValue) {
 		assert receiver != null && receiver instanceof FSTreeNode;
 		FSTreeNode node = (FSTreeNode) receiver;
 		if (property.equals("isFile")) { //$NON-NLS-1$

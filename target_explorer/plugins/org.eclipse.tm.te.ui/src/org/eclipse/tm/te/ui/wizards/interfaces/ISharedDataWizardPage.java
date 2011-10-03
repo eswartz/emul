@@ -9,7 +9,7 @@
  *******************************************************************************/
 package org.eclipse.tm.te.ui.wizards.interfaces;
 
-import org.eclipse.tm.te.core.interfaces.properties.IPropertiesContainer;
+import org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer;
 
 /**
  * Target Explorer: Public interface for wizard or dialog pages or wizard page

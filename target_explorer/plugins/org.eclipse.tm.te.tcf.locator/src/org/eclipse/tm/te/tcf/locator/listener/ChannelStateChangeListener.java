@@ -42,6 +42,7 @@ public class ChannelStateChangeListener implements IChannelStateChangeListener {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.tcf.core.interfaces.listeners.IChannelStateChangeListener#stateChanged(org.eclipse.tm.tcf.protocol.IChannel, int)
 	 */
+	@Override
 	public void stateChanged(IChannel channel, int state) {
 		Assert.isNotNull(channel);
 		Assert.isTrue(Protocol.isDispatchThread());

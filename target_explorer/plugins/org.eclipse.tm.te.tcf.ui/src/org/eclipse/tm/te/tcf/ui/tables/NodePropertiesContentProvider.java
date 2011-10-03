@@ -61,12 +61,14 @@ public class NodePropertiesContentProvider implements IStructuredContentProvider
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.IContentProvider#dispose()
 	 */
+	@Override
 	public void dispose() {
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.IStructuredContentProvider#getElements(java.lang.Object)
 	 */
+	@Override
 	public Object[] getElements(final Object inputElement) {
 		List<TableNode> nodes = new ArrayList<TableNode>();
 
@@ -81,6 +83,7 @@ public class NodePropertiesContentProvider implements IStructuredContentProvider
 				properties.putAll(((IPeerModel)inputElement).getPeer().getAttributes());
 			} else {
 				Protocol.invokeAndWait(new Runnable() {
+					@Override
 					public void run() {
 						properties.putAll(((IPeerModel)inputElement).getProperties());
 						properties.putAll(((IPeerModel)inputElement).getPeer().getAttributes());
@@ -151,6 +154,7 @@ public class NodePropertiesContentProvider implements IStructuredContentProvider
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.IContentProvider#inputChanged(org.eclipse.jface.viewers.Viewer, java.lang.Object, java.lang.Object)
 	 */
+	@Override
 	public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
 		// Do nothing if we shall not update the section title
 		if (!updateParentSectionTitle) return;

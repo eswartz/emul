@@ -93,6 +93,7 @@ public class RenameDialog extends CustomTitleAreaDialog {
 		name.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		name.setText(oldName);
 		name.addModifyListener(new ModifyListener(){
+			@Override
 			public void modifyText(ModifyEvent e) {
 				if (usedNames.contains(name.getText())) {
 					setButtonEnabled(OK, false);

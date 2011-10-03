@@ -62,6 +62,7 @@ public class Scanner extends Job implements IScanner {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.IScanner#setConfiguration(java.util.Map)
 	 */
+	@Override
 	public void setConfiguration(Map<String, Object> configuration) {
 		Assert.isNotNull(configuration);
 		this.configuration.clear();
@@ -71,6 +72,7 @@ public class Scanner extends Job implements IScanner {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.IScanner#getConfiguration()
 	 */
+	@Override
 	public Map<String, Object> getConfiguration() {
 		return configuration;
 	}
@@ -89,6 +91,7 @@ public class Scanner extends Job implements IScanner {
 			// The first runnable is setting the thread which will finish
 			// the job at the end
 			Protocol.invokeLater(new Runnable() {
+				@Override
 				public void run() {
 					Scanner.this.setThread(Thread.currentThread());
 				}
@@ -106,6 +109,7 @@ public class Scanner extends Job implements IScanner {
 			// scanner runnable's are processed and will reschedule the job
 			final IStatus result = monitor.isCanceled() ? Status.CANCEL_STATUS : Status.OK_STATUS;
 			Protocol.invokeLater(new Runnable() {
+				@Override
 				public void run() {
 					Scanner.this.done(result);
 
@@ -123,6 +127,7 @@ public class Scanner extends Job implements IScanner {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.IScanner#terminate()
 	 */
+	@Override
 	public void terminate() {
 		terminated.set(true);
 	}
@@ -130,6 +135,7 @@ public class Scanner extends Job implements IScanner {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.IScanner#isTerminated()
 	 */
+	@Override
 	public final boolean isTerminated() {
 		return terminated.get();
 	}

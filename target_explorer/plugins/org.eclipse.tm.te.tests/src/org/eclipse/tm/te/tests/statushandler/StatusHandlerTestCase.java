@@ -15,8 +15,8 @@ import java.util.List;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
-import org.eclipse.tm.te.core.statushandler.StatusHandlerManager;
-import org.eclipse.tm.te.core.statushandler.interfaces.IStatusHandler;
+import org.eclipse.tm.te.runtime.statushandler.StatusHandlerManager;
+import org.eclipse.tm.te.runtime.statushandler.interfaces.IStatusHandler;
 import org.eclipse.tm.te.tests.CoreTestCase;
 import org.eclipse.tm.te.tests.interfaces.IInterruptCondition;
 
@@ -78,10 +78,12 @@ public class StatusHandlerTestCase extends CoreTestCase {
 
 		IInterruptCondition context = new IInterruptCondition() {
 
+			@Override
 			public boolean isTrue() {
 				return false;
 			}
 
+			@Override
 			public void dispose() {
 			}
 		};

@@ -136,6 +136,7 @@ public abstract class AbstractFormTextSection extends AbstractSection implements
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.forms.events.IHyperlinkListener#linkEntered(org.eclipse.ui.forms.events.HyperlinkEvent)
 	 */
+	@Override
 	public void linkEntered(HyperlinkEvent e) {
 		Object container = getManagedForm().getContainer();
 		if (container instanceof IEditorPart) {
@@ -147,6 +148,7 @@ public abstract class AbstractFormTextSection extends AbstractSection implements
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.forms.events.IHyperlinkListener#linkExited(org.eclipse.ui.forms.events.HyperlinkEvent)
 	 */
+	@Override
 	public void linkExited(HyperlinkEvent e) {
 		Object container = getManagedForm().getContainer();
 		if (container instanceof IEditorPart) {
@@ -158,6 +160,7 @@ public abstract class AbstractFormTextSection extends AbstractSection implements
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.forms.events.IHyperlinkListener#linkActivated(org.eclipse.ui.forms.events.HyperlinkEvent)
 	 */
+	@Override
 	public void linkActivated(HyperlinkEvent e) {
 	}
 }

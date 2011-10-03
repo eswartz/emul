@@ -20,8 +20,8 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.tm.te.core.extensions.AbstractExtensionPointManager;
-import org.eclipse.tm.te.core.extensions.ExecutableExtensionProxy;
+import org.eclipse.tm.te.runtime.extensions.AbstractExtensionPointManager;
+import org.eclipse.tm.te.runtime.extensions.ExecutableExtensionProxy;
 import org.eclipse.tm.te.ui.views.activator.UIPlugin;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.ISources;
@@ -54,7 +54,7 @@ public class EditorPageBindingExtensionPointManager extends AbstractExtensionPoi
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.ui.views.internal.extensions.AbstractExtensionPointManager#getExtensionPointId()
+	 * @see org.eclipse.tm.te.runtime.extensions.AbstractExtensionPointManager#getExtensionPointId()
 	 */
 	@Override
 	protected String getExtensionPointId() {
@@ -62,7 +62,7 @@ public class EditorPageBindingExtensionPointManager extends AbstractExtensionPoi
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.ui.views.internal.extensions.AbstractExtensionPointManager#getConfigurationElementName()
+	 * @see org.eclipse.tm.te.runtime.extensions.AbstractExtensionPointManager#getConfigurationElementName()
 	 */
 	@Override
 	protected String getConfigurationElementName() {
@@ -70,13 +70,13 @@ public class EditorPageBindingExtensionPointManager extends AbstractExtensionPoi
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.ui.views.internal.extensions.AbstractExtensionPointManager#doCreateExtensionProxy(org.eclipse.core.runtime.IConfigurationElement)
+	 * @see org.eclipse.tm.te.runtime.extensions.AbstractExtensionPointManager#doCreateExtensionProxy(org.eclipse.core.runtime.IConfigurationElement)
 	 */
 	@Override
 	protected ExecutableExtensionProxy<EditorPageBinding> doCreateExtensionProxy(IConfigurationElement element) throws CoreException {
 		return new ExecutableExtensionProxy<EditorPageBinding>(element) {
 			/* (non-Javadoc)
-			 * @see org.eclipse.tm.te.ui.views.internal.extensions.ExecutableExtensionProxy#newInstance()
+			 * @see org.eclipse.tm.te.runtime.extensions.ExecutableExtensionProxy#newInstance()
 			 */
 			@Override
 			public EditorPageBinding newInstance() {

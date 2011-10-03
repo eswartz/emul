@@ -193,6 +193,7 @@ public abstract class AbstractTreeControl extends WorkbenchPartControl {
 		MenuManager manager = new MenuManager("#PopupMenu"); //$NON-NLS-1$
 		// Attach the menu listener
 		manager.addMenuListener(new IMenuListener() {
+			@Override
 			public void menuAboutToShow(IMenuManager manager) {
 				manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 			}
@@ -246,6 +247,7 @@ public abstract class AbstractTreeControl extends WorkbenchPartControl {
 		toolbar.setCursor(handCursor);
 		// Cursor needs to be explicitly disposed
 		toolbar.addDisposeListener(new DisposeListener() {
+			@Override
 			public void widgetDisposed(DisposeEvent e) {
 				if (handCursor.isDisposed() == false) {
 					handCursor.dispose();

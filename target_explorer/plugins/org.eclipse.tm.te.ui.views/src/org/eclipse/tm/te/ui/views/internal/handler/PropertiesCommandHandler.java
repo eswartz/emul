@@ -37,6 +37,7 @@ public class PropertiesCommandHandler extends AbstractHandler {
 	/* (non-Javadoc)
 	 * @see org.eclipse.core.commands.IHandler#execute(org.eclipse.core.commands.ExecutionEvent)
 	 */
+	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 		// Get the active selection
 		ISelection selection = HandlerUtil.getCurrentSelection(event);

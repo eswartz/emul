@@ -48,12 +48,14 @@ public class InternalChannelListener implements IChannel.IChannelListener {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.tcf.protocol.IChannel.IChannelListener#congestionLevel(int)
 	 */
+	@Override
 	public void congestionLevel(int level) {
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.tcf.protocol.IChannel.IChannelListener#onChannelClosed(java.lang.Throwable)
 	 */
+	@Override
 	public void onChannelClosed(Throwable error) {
 		Assert.isTrue(Protocol.isDispatchThread());
 
@@ -92,6 +94,7 @@ public class InternalChannelListener implements IChannel.IChannelListener {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.tcf.protocol.IChannel.IChannelListener#onChannelOpened()
 	 */
+	@Override
 	public void onChannelOpened() {
 	}
 }

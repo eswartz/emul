@@ -52,12 +52,12 @@
 	  <module>features/org.eclipse.tm.tcf.rse.feature</module>
 	  <module>features/org.eclipse.tm.tcf.rse.sdk.feature</module>
 	  
+	  <module>target_explorer/plugins/org.eclipse.tm.te.runtime</module>
+	  <module>target_explorer/plugins/org.eclipse.tm.te.runtime.concurrent</module>
+	  <module>target_explorer/plugins/org.eclipse.tm.te.runtime.model</module>
+	  <module>target_explorer/plugins/org.eclipse.tm.te.runtime.persistence</module>
+	  <module>target_explorer/plugins/org.eclipse.tm.te.runtime.statushandler</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.core</module>
-	  <module>target_explorer/plugins/org.eclipse.tm.te.core.concurrent</module>
-	  <module>target_explorer/plugins/org.eclipse.tm.te.core.extensions</module>
-	  <module>target_explorer/plugins/org.eclipse.tm.te.core.model</module>
-	  <module>target_explorer/plugins/org.eclipse.tm.te.core.persistence</module>
-	  <module>target_explorer/plugins/org.eclipse.tm.te.core.statushandler</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.ui</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.ui.controls</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.ui.forms</module>

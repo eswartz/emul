@@ -782,6 +782,7 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl implements 
 			editField = new Combo(parent, doAdjustEditFieldControlStyles(style));
 			if (toolkit != null) toolkit.adapt((Combo)editField);
 			((Combo)editField).addModifyListener(new ModifyListener() {
+				@Override
 				public void modifyText(ModifyEvent e) {
 					if (!isInitializing) { // do not call this unless the boundaries of the control are calculated yet
 						SWTControlUtil.setValueToolTip(editField);
@@ -798,6 +799,7 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl implements 
 			});
 			// make sure that after resizing a control, the necessity of showing the tool tip is recalculated
 			((Combo)editField).addPaintListener(new PaintListener() {
+				@Override
 				public void paintControl(PaintEvent e) {
 					if (!isInitializing) { // do not call this unless the boundaries of the control are calculated yet
 						SWTControlUtil.setValueToolTip(editField);
@@ -810,6 +812,7 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl implements 
 			}
 			editField = toolkit != null ? toolkit.createText(parent, null, doAdjustEditFieldControlStyles(SWT.BORDER | style)) : new Text(parent, doAdjustEditFieldControlStyles(SWT.BORDER | style));
 			((Text)editField).addModifyListener(new ModifyListener() {
+				@Override
 				public void modifyText(ModifyEvent e) {
 					if (!isInitializing) { // do not call this unless the boundaries of the control are calculated yet
 						SWTControlUtil.setValueToolTip(editField);
@@ -818,6 +821,7 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl implements 
 			});
 			// make sure that after resizing a control, the necessity of showing the tool tip is recalculated
 			((Text)editField).addPaintListener(new PaintListener() {
+				@Override
 				public void paintControl(PaintEvent e) {
 					if (!isInitializing) { // do not call this unless the boundaries of the control are calculated yet
 						SWTControlUtil.setValueToolTip(editField);
@@ -1003,6 +1007,7 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl implements 
 	/* (non-Javadoc)
 	 * @see org.eclipse.swt.events.ModifyListener#modifyText(org.eclipse.swt.events.ModifyEvent)
 	 */
+	@Override
 	public void modifyText(ModifyEvent e) {
 		// validate the page
 		IValidatableWizardPage validatable = getValidatableWizardPage();
@@ -1039,12 +1044,14 @@ public class BaseEditBrowseTextControl extends BaseDialogPageControl implements 
 	/* (non-Javadoc)
 	 * @see org.eclipse.swt.events.SelectionListener#widgetDefaultSelected(org.eclipse.swt.events.SelectionEvent)
 	 */
+	@Override
 	public void widgetDefaultSelected(SelectionEvent e) {
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.swt.events.SelectionListener#widgetSelected(org.eclipse.swt.events.SelectionEvent)
 	 */
+	@Override
 	public void widgetSelected(SelectionEvent e) {
 		// validate the page
 		IValidatableWizardPage validatable = getValidatableWizardPage();

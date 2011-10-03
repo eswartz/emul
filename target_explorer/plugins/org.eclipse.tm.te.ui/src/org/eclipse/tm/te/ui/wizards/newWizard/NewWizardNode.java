@@ -55,12 +55,14 @@ import org.eclipse.ui.wizards.IWizardDescriptor;
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.wizard.IWizardNode#dispose()
 	 */
+	@Override
 	public void dispose() {
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.wizard.IWizardNode#getExtent()
 	 */
+	@Override
 	public Point getExtent() {
         return new Point(-1, -1);
 	}
@@ -68,6 +70,7 @@ import org.eclipse.ui.wizards.IWizardDescriptor;
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.IPluginContribution#getLocalId()
 	 */
+	@Override
 	public String getLocalId() {
     	IPluginContribution contribution = (IPluginContribution)Util.getAdapter(descriptor, IPluginContribution.class);
 		if (contribution != null) {
@@ -79,6 +82,7 @@ import org.eclipse.ui.wizards.IWizardDescriptor;
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.IPluginContribution#getPluginId()
 	 */
+	@Override
 	public String getPluginId() {
        	IPluginContribution contribution = (IPluginContribution) Util.getAdapter(descriptor, IPluginContribution.class);
 		if (contribution != null) {
@@ -90,6 +94,7 @@ import org.eclipse.ui.wizards.IWizardDescriptor;
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.wizard.IWizardNode#isContentCreated()
 	 */
+	@Override
 	public boolean isContentCreated() {
 		return wizard != null;
 	}
@@ -97,6 +102,7 @@ import org.eclipse.ui.wizards.IWizardDescriptor;
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.wizard.IWizardNode#getWizard()
 	 */
+	@Override
 	public IWizard getWizard() {
 		if (wizard == null) {
 			wizard = createWizard(descriptor);

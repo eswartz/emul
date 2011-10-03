@@ -29,6 +29,7 @@ public class ContentProviderDelegate implements ITreeContentProvider {
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.ITreeContentProvider#getChildren(java.lang.Object)
 	 */
+	@Override
 	public Object[] getChildren(Object parentElement) {
 		Object[] children = NO_ELEMENTS;
 
@@ -48,6 +49,7 @@ public class ContentProviderDelegate implements ITreeContentProvider {
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.ITreeContentProvider#getParent(java.lang.Object)
 	 */
+	@Override
 	public Object getParent(Object element) {
 		// If it is a peer model node, return the parent locator model
 		if (element instanceof IPeerModel) {
@@ -59,6 +61,7 @@ public class ContentProviderDelegate implements ITreeContentProvider {
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.ITreeContentProvider#hasChildren(java.lang.Object)
 	 */
+	@Override
 	public boolean hasChildren(Object element) {
 		boolean hasChildren = false;
 
@@ -72,6 +75,7 @@ public class ContentProviderDelegate implements ITreeContentProvider {
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.IStructuredContentProvider#getElements(java.lang.Object)
 	 */
+	@Override
 	public Object[] getElements(Object inputElement) {
 		return getChildren(inputElement);
 	}
@@ -79,6 +83,7 @@ public class ContentProviderDelegate implements ITreeContentProvider {
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.IContentProvider#dispose()
 	 */
+	@Override
 	public void dispose() {
 		Model.dispose();
 	}
@@ -86,6 +91,7 @@ public class ContentProviderDelegate implements ITreeContentProvider {
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.IContentProvider#inputChanged(org.eclipse.jface.viewers.Viewer, java.lang.Object, java.lang.Object)
 	 */
+	@Override
 	public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
 		if (newInput instanceof IRoot) {
 			final ILocatorModel model = Model.getModel();
@@ -94,6 +100,7 @@ public class ContentProviderDelegate implements ITreeContentProvider {
 				model.getService(ILocatorModelRefreshService.class).refresh();
 			} else {
 				Protocol.invokeLater(new Runnable() {
+					@Override
 					public void run() {
 						model.getService(ILocatorModelRefreshService.class).refresh();
 					}

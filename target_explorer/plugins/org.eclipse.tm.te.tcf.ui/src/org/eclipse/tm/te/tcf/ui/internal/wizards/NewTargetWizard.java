@@ -41,6 +41,7 @@ public class NewTargetWizard extends AbstractWizard implements INewWizard {
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.IWorkbenchWizard#init(org.eclipse.ui.IWorkbench, org.eclipse.jface.viewers.IStructuredSelection)
 	 */
+	@Override
 	public void init(IWorkbench workbench, IStructuredSelection selection) {
 		// Set the window title
 		setWindowTitle(Messages.NewTargetWizard_windowTitle);
@@ -77,6 +78,7 @@ public class NewTargetWizard extends AbstractWizard implements INewWizard {
 						final ILocatorModelRefreshService service = model.getService(ILocatorModelRefreshService.class);
 						if (service != null) {
 							Protocol.invokeLater(new Runnable() {
+								@Override
 								public void run() {
 									// Refresh the model now (must be executed within the TCF dispatch thread)
 									service.refresh();

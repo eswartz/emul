@@ -16,10 +16,10 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.Protocol;
-import org.eclipse.tm.te.core.interfaces.properties.IPropertiesContainer;
-import org.eclipse.tm.te.core.persistence.PersistenceDelegateManager;
-import org.eclipse.tm.te.core.persistence.interfaces.IPersistenceDelegate;
-import org.eclipse.tm.te.core.properties.PropertiesContainer;
+import org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer;
+import org.eclipse.tm.te.runtime.persistence.PersistenceDelegateManager;
+import org.eclipse.tm.te.runtime.persistence.interfaces.IPersistenceDelegate;
+import org.eclipse.tm.te.runtime.properties.PropertiesContainer;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel;
 
 
@@ -88,6 +88,7 @@ public class PeersPersistenceManager {
 			path[0] = peer.getPeer().getAttributes().get("Path"); //$NON-NLS-1$
 		} else {
 			Protocol.invokeAndWait(new Runnable() {
+				@Override
 				public void run() {
 					path[0] = peer.getPeer().getAttributes().get("Path"); //$NON-NLS-1$
 				}

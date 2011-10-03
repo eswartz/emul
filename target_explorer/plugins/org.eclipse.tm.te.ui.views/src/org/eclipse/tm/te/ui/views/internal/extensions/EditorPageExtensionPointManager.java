@@ -13,8 +13,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.eclipse.tm.te.core.extensions.AbstractExtensionPointManager;
-import org.eclipse.tm.te.core.extensions.ExecutableExtensionProxy;
+import org.eclipse.tm.te.runtime.extensions.AbstractExtensionPointManager;
+import org.eclipse.tm.te.runtime.extensions.ExecutableExtensionProxy;
 import org.eclipse.tm.te.ui.views.interfaces.IEditorPage;
 
 
@@ -44,7 +44,7 @@ public class EditorPageExtensionPointManager extends AbstractExtensionPointManag
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.ui.views.internal.extensions.AbstractExtensionPointManager#getExtensionPointId()
+	 * @see org.eclipse.tm.te.runtime.extensions.AbstractExtensionPointManager#getExtensionPointId()
 	 */
 	@Override
 	protected String getExtensionPointId() {
@@ -52,7 +52,7 @@ public class EditorPageExtensionPointManager extends AbstractExtensionPointManag
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.ui.views.internal.extensions.AbstractExtensionPointManager#getConfigurationElementName()
+	 * @see org.eclipse.tm.te.runtime.extensions.AbstractExtensionPointManager#getConfigurationElementName()
 	 */
 	@Override
 	protected String getConfigurationElementName() {

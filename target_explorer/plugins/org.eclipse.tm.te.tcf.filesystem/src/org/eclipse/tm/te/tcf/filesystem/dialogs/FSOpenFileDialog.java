@@ -80,6 +80,7 @@ public class FSOpenFileDialog extends CustomTrayDialog {
 		/* (non-Javadoc)
 		 * @see org.eclipse.jface.viewers.ISelectionChangedListener#selectionChanged(org.eclipse.jface.viewers.SelectionChangedEvent)
 		 */
+		@Override
 		@SuppressWarnings("synthetic-access")
 		public void selectionChanged(SelectionChangedEvent event) {
 			selection = event.getSelection();

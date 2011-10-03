@@ -10,8 +10,8 @@
 package org.eclipse.tm.te.ui.events;
 
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.tm.te.core.interfaces.events.IEventFireDelegate;
-import org.eclipse.tm.te.core.interfaces.events.IEventListener;
+import org.eclipse.tm.te.runtime.interfaces.events.IEventFireDelegate;
+import org.eclipse.tm.te.runtime.interfaces.events.IEventListener;
 import org.eclipse.tm.te.ui.swt.DisplayUtil;
 import org.eclipse.ui.PlatformUI;
 
@@ -22,8 +22,9 @@ import org.eclipse.ui.PlatformUI;
 public abstract class AbstractEventListener implements IEventListener, IEventFireDelegate {
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.core.interfaces.events.IEventFireDelegate#fire(java.lang.Runnable)
+	 * @see org.eclipse.tm.te.runtime.interfaces.events.IEventFireDelegate#fire(java.lang.Runnable)
 	 */
+	@Override
 	public void fire(Runnable runnable) {
 		// Do nothing if no valid runnable is passed
 		if (runnable == null) return;

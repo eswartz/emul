@@ -10,7 +10,7 @@
 package org.eclipse.tm.te.tcf.log.core.activator;
 
 import org.eclipse.core.runtime.Plugin;
-import org.eclipse.tm.te.core.tracing.TraceHandler;
+import org.eclipse.tm.te.runtime.tracing.TraceHandler;
 import org.osgi.framework.BundleContext;
 
 /**

@@ -13,7 +13,7 @@ import org.eclipse.core.expressions.Expression;
 import org.eclipse.core.expressions.ExpressionConverter;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
-import org.eclipse.tm.te.core.extensions.ExecutableExtension;
+import org.eclipse.tm.te.runtime.extensions.ExecutableExtension;
 
 /**
  * Target Explorer: Details editor page binding implementation.
@@ -25,7 +25,7 @@ public class EditorPageBinding extends ExecutableExtension {
 	private Expression expression;
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.ui.views.internal.extensions.ExecutableExtension#setInitializationData(org.eclipse.core.runtime.IConfigurationElement, java.lang.String, java.lang.Object)
+	 * @see org.eclipse.tm.te.runtime.extensions.ExecutableExtension#setInitializationData(org.eclipse.core.runtime.IConfigurationElement, java.lang.String, java.lang.Object)
 	 */
 	@Override
 	public void setInitializationData(IConfigurationElement config, String propertyName, Object data) throws CoreException {

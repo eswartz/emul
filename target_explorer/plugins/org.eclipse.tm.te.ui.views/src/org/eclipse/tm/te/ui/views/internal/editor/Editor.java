@@ -153,6 +153,7 @@ public class Editor extends FormEditor implements IPersistableEditor {
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.IPersistableEditor#restoreState(org.eclipse.ui.IMemento)
 	 */
+	@Override
 	public void restoreState(IMemento memento) {
 		// Get the editor specific memento
 		mementoToRestore = internalGetMemento(memento);
@@ -161,6 +162,7 @@ public class Editor extends FormEditor implements IPersistableEditor {
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.IPersistable#saveState(org.eclipse.ui.IMemento)
 	 */
+	@Override
 	public void saveState(IMemento memento) {
 		// Get the editor specific memento
 		memento = internalGetMemento(memento);

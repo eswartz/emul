@@ -82,6 +82,7 @@ public class EditorInput implements IEditorInput, IPersistableElement {
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.IEditorInput#exists()
 	 */
+	@Override
 	public boolean exists() {
 		return node != null;
 	}
@@ -89,6 +90,7 @@ public class EditorInput implements IEditorInput, IPersistableElement {
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.IEditorInput#getImageDescriptor()
 	 */
+	@Override
 	public ImageDescriptor getImageDescriptor() {
 		return UIPlugin.getImageDescriptor(ImageConsts.IMAGE_EDITOR);
 	}
@@ -96,6 +98,7 @@ public class EditorInput implements IEditorInput, IPersistableElement {
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.IEditorInput#getName()
 	 */
+	@Override
 	public String getName() {
 		if (name == null && node != null) {
 			CommonViewer viewer = getViewer();
@@ -126,6 +129,7 @@ public class EditorInput implements IEditorInput, IPersistableElement {
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.IEditorInput#getPersistable()
 	 */
+	@Override
 	public IPersistableElement getPersistable() {
 		// We cannot persist this kind of editor input.
 		return null;
@@ -134,6 +138,7 @@ public class EditorInput implements IEditorInput, IPersistableElement {
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.IPersistableElement#getFactoryId()
 	 */
+	@Override
 	public String getFactoryId() {
 		return null;
 	}
@@ -141,12 +146,14 @@ public class EditorInput implements IEditorInput, IPersistableElement {
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.IPersistable#saveState(org.eclipse.ui.IMemento)
 	 */
+	@Override
 	public void saveState(IMemento memento) {
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.IEditorInput#getToolTipText()
 	 */
+	@Override
 	public String getToolTipText() {
 		return getName();
 	}
@@ -154,6 +161,7 @@ public class EditorInput implements IEditorInput, IPersistableElement {
 	/* (non-Javadoc)
 	 * @see org.eclipse.core.runtime.IAdaptable#getAdapter(java.lang.Class)
 	 */
+	@Override
 	public Object getAdapter(Class adapter) {
 		if (IPersistableElement.class.isAssignableFrom(adapter)) {
 			return getPersistable();

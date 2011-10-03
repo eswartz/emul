@@ -84,6 +84,7 @@ public abstract class AbstractValidatableWizardPage extends AbstractWizardPage i
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.ui.controls.interfaces.IValidatableDialogPage#validatePage()
 	 */
+	@Override
 	public void validatePage() {
 		if (isValidationInProgress())  return;
 		setValidationInProgress(true);

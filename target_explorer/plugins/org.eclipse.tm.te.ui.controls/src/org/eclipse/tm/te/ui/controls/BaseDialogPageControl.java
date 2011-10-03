@@ -93,6 +93,7 @@ public class BaseDialogPageControl extends BaseControl implements IRunnableConte
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.ui.controls.interfaces.IRunnableContextProvider#getRunnableContext()
 	 */
+	@Override
 	public IRunnableContext getRunnableContext() {
 		return getParentPage() instanceof IRunnableContextProvider ? ((IRunnableContextProvider)getParentPage()).getRunnableContext() : null;
 	}

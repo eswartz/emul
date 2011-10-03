@@ -46,6 +46,7 @@ public class PeerImageDescriptor extends AbstractImageDescriptor {
 			initialize(node);
 		} else {
 			Protocol.invokeAndWait(new Runnable() {
+				@Override
 				public void run() {
 					initialize(node);
 				}

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+<!-- Extension points -->
+   <extension-point id="eventListeners" name="Event Listener Contributions" schema="schema/eventListeners.exsd"/>
+
+<!-- Eclipse core expressions property tester -->
+   <extension point="org.eclipse.core.expressions.propertyTesters">
+      <propertyTester
+            class="org.eclipse.tm.te.runtime.internal.PreferencesPropertyTester"
+            id="org.eclipse.tm.te.runtime.PreferencesPropertyTester"
+            namespace="org.eclipse.tm.te.runtimee"
+            properties="preference"
+            type="java.lang.Object">
+      </propertyTester>
+
+      <propertyTester
+            class="org.eclipse.tm.te.runtime.internal.PropertiesContainerPropertyTester"
+            id="org.eclipse.tm.te.runtime.PropertiesContainerPropertyTester"
+            namespace="org.eclipse.tm.te.runtime"
+            properties="isProperty"
+            type="org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer">
+      </propertyTester>
+   </extension>
+
+<!-- Event listener contributions -->
+   <extension point="org.eclipse.tm.te.runtime.eventListeners">
+      <eventListener class="org.eclipse.tm.te.runtime.internal.DebugEventListener"/>
+   </extension>
+
+</plugin>

@@ -41,6 +41,7 @@ public class LabelProviderDelegate extends LabelProvider implements ILabelDecora
 				peerName[0] = peer.getName();
 			} else {
 				Protocol.invokeAndWait(new Runnable() {
+					@Override
 					public void run() {
 						peerName[0] = peer.getName();
 					}
@@ -73,6 +74,7 @@ public class LabelProviderDelegate extends LabelProvider implements ILabelDecora
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.ILabelDecorator#decorateImage(org.eclipse.swt.graphics.Image, java.lang.Object)
 	 */
+	@Override
 	public Image decorateImage(Image image, Object element) {
 		Image decoratedImage = null;
 
@@ -90,6 +92,7 @@ public class LabelProviderDelegate extends LabelProvider implements ILabelDecora
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.ILabelDecorator#decorateText(java.lang.String, java.lang.Object)
 	 */
+	@Override
 	public String decorateText(String text, Object element) {
 		if (element instanceof IPeerModel) {
 			String label = text;
@@ -100,6 +103,7 @@ public class LabelProviderDelegate extends LabelProvider implements ILabelDecora
 				doDecorateText(builder, peer);
 			} else {
 				Protocol.invokeAndWait(new Runnable() {
+					@Override
 					public void run() {
 						doDecorateText(builder, peer);
 					}

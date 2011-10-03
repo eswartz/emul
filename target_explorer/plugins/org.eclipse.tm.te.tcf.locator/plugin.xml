@@ -21,7 +21,7 @@
    </extension>
 
 <!-- Target Explorer persistence delegate contributions -->
-   <extension point="org.eclipse.tm.te.core.persistence.delegates">
+   <extension point="org.eclipse.tm.te.runtime.persistence.delegates">
       <delegate 
             id="org.eclipse.tm.te.tcf.locator.persistence"
             class="org.eclipse.tm.te.tcf.locator.internal.PeersPersistenceDelegate">

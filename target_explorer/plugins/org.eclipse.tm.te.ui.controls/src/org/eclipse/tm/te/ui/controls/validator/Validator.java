@@ -126,6 +126,7 @@ public abstract class Validator implements IMessageProvider, ICellEditorValidato
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.ICellEditorValidator#isValid(java.lang.Object)
 	 */
+	@Override
 	public final String isValid(Object newValue) {
 		String strValue = (newValue != null) ? newValue.toString() : null;
 		if (!isValid(strValue)) {
@@ -156,6 +157,7 @@ public abstract class Validator implements IMessageProvider, ICellEditorValidato
 	 * (non-Javadoc)
 	 * @see org.eclipse.jface.dialogs.IMessageProvider#getMessage()
 	 */
+	@Override
 	public final String getMessage() {
 		return message;
 	}
@@ -172,6 +174,7 @@ public abstract class Validator implements IMessageProvider, ICellEditorValidato
 	 * (non-Javadoc)
 	 * @see org.eclipse.jface.dialogs.IMessageProvider#getMessageType()
 	 */
+	@Override
 	public final int getMessageType() {
 		return messageType;
 	}

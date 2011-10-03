@@ -33,6 +33,7 @@ public class InternalChannelOpenListener implements IChannelOpenListener {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.tcf.protocol.Protocol.ChannelOpenListener#onChannelOpen(org.eclipse.tm.tcf.protocol.IChannel)
 	 */
+	@Override
 	public void onChannelOpen(IChannel channel) {
 		Assert.isNotNull(channel);
 		Assert.isTrue(Protocol.isDispatchThread());
@@ -57,6 +58,7 @@ public class InternalChannelOpenListener implements IChannelOpenListener {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.core.internal.interfaces.IChannelOpenListener#setChannelListener(org.eclipse.tm.tcf.protocol.IChannel, org.eclipse.tm.tcf.protocol.IChannel.IChannelListener)
 	 */
+	@Override
 	public void setChannelListener(IChannel channel, IChannelListener listener) {
 		Assert.isNotNull(channel);
 		if (listener != null) channelListeners.put(channel, listener);

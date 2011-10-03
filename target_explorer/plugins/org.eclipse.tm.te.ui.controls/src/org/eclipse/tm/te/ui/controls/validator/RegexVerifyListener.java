@@ -68,6 +68,7 @@ public class RegexVerifyListener extends VerifyListener {
 	 * Verify the full text.
 	 * The result is set in <code>e.doit</code>.
 	 */
+	@Override
 	public void verifyText(VerifyEvent e) {
 		e.doit = getFullText(e).matches(regex);
 	}

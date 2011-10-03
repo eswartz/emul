@@ -33,6 +33,7 @@ public class DeleteCommandHandler extends AbstractHandler {
 	/* (non-Javadoc)
 	 * @see org.eclipse.core.commands.IHandler#execute(org.eclipse.core.commands.ExecutionEvent)
 	 */
+	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 		ISelection selection = HandlerUtil.getCurrentSelection(event);
 		if (selection instanceof IStructuredSelection && !selection.isEmpty()) {
@@ -45,7 +46,7 @@ public class DeleteCommandHandler extends AbstractHandler {
 					} catch (IOException e) {
 						// Ignore it for now, we will have to pass it to the status handler later
 					}
-					
+
 					// Get the locator model
 					final ILocatorModel model = Model.getModel();
 					if (model != null) {
@@ -53,6 +54,7 @@ public class DeleteCommandHandler extends AbstractHandler {
 						final ILocatorModelRefreshService service = model.getService(ILocatorModelRefreshService.class);
 						if (service != null) {
 							Protocol.invokeLater(new Runnable() {
+								@Override
 								public void run() {
 									// Refresh the model now (must be executed within the TCF dispatch thread)
 									service.refresh();
@@ -60,7 +62,7 @@ public class DeleteCommandHandler extends AbstractHandler {
 							});
 						}
 					}
-					
+
 				}
 			}
 		}

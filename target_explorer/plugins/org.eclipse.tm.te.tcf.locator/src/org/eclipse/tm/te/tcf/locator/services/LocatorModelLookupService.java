@@ -37,6 +37,7 @@ public class LocatorModelLookupService extends AbstractLocatorModelService imple
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.services.ILocatorModelLookupService#lkupPeerModelById(java.lang.String)
 	 */
+	@Override
 	public IPeerModel lkupPeerModelById(String id) {
 		Assert.isNotNull(id);
 		Assert.isTrue(Protocol.isDispatchThread());
@@ -56,6 +57,7 @@ public class LocatorModelLookupService extends AbstractLocatorModelService imple
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.interfaces.services.ILocatorModelLookupService#lkupPeerModelByAgentId(java.lang.String)
 	 */
+	@Override
 	public IPeerModel[] lkupPeerModelByAgentId(String agentId) {
 		Assert.isNotNull(agentId);
 		Assert.isTrue(Protocol.isDispatchThread());
