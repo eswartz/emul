@@ -147,7 +147,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	}
 
 	protected VdpCanvas createVdpCanvas() {
-		imageCanvas = new ImageDataCanvas24Bit();
+		imageCanvas = new ImageDataCanvas24Bit(0);
 		vdpCanvasBuffer = ByteBuffer.allocateDirect(imageCanvas.getImageData().bytesPerLine * imageCanvas.getImageData().height);
 		imageCanvasFormat = GL_RGB; 
 		imageCanvasType = GL_UNSIGNED_BYTE; 

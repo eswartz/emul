@@ -49,9 +49,13 @@ public abstract class ImageDataCanvas extends BitmapVdpCanvas {
 		int vh = getVisibleHeight();
 		int offs = getBitmapOffset(0, 0);
 		int bpp = imageData.bytesPerLine / imageData.width;
-		for (int r = 0; r < vh; r++) {
-			buffer.put(imageData.data, offs, bpp * vw);
-			offs += imageData.bytesPerLine;
+		if (imageData.bytesPerLine == bpp * vw) {
+			buffer.put(imageData.data, offs, bpp * vw * vh);
+		} else {
+			for (int r = 0; r < vh; r++) {
+				buffer.put(imageData.data, offs, bpp * vw);
+				offs += imageData.bytesPerLine;
+			}
 		}
 		buffer.rewind();
 		
