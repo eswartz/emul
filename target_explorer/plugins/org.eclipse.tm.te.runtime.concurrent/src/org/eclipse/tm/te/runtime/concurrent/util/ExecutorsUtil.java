@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.tm.te.runtime.concurrent.Executors;
@@ -162,19 +163,68 @@ public final class ExecutorsUtil {
 					EXECUTOR.execute(runnable);
 				}
 			} else {
-				if (EXECUTOR != null) {
-					EXECUTOR.execute(runnable);
+				EXECUTOR.execute(runnable);
+			}
+		}
+	}
+
+
+	/**
+	 * Schedule the given {@link Runnable} for invocation within the used
+	 * executor thread and blocks the caller until the runnable got executed.
+	 * <p>
+	 * <b>Note:</b> The method is using {@link #wait()} to block the calling
+	 *              thread. Therefore the method cannot be called from within
+	 *              the executor thread itself.
+	 *
+	 * @param runnable
+	 *            The <code>java.lang.Runnable</code> to execute within the
+	 *            executor thread.
+	 */
+	public static void executeWait(final Runnable runnable) {
+		Assert.isTrue(!EXECUTOR.isExecutorThread());
+		if (runnable == null) return;
+
+		// Wrap the original runnable in another runnable
+		// to notify ourself
+		Runnable r = new Runnable() {
+			@Override
+			public void run() {
+				try {
+					runnable.run();
+				} finally {
+					synchronized(runnable) {
+						runnable.notifyAll();
+					}
 				}
+			}
+		};
+
+		if (EXECUTOR instanceof ExecutorService) {
+			if (!((ExecutorService) EXECUTOR).isShutdown()
+					&& !((ExecutorService) EXECUTOR).isTerminated()) {
+				EXECUTOR.execute(r);
+			}
+		} else {
+			EXECUTOR.execute(r);
+		}
+
+		synchronized(runnable) {
+			try {
+				runnable.wait();
+			} catch (InterruptedException e) {
+				/* ignored on purpose */
 			}
 		}
 	}
 
 	/**
-	 * Schedule the given {@link Runnable} to run the current workbench display
-	 * thread.
+	 * Schedule the given {@link Runnable} to run the current platform display
+	 * thread and blocks the caller until the runnable got executed.
 	 *
 	 * @param runnable
-	 *            The runnable to execute.
+	 *            The <code>java.lang.Runnable</code> to execute within the
+	 *            UI thread.
 	 */
 	public static void executeInUI(Runnable runnable) {
 		if (runnable != null) {
@@ -189,6 +239,56 @@ public final class ExecutorsUtil {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Schedule the given {@link Runnable} to run the current platform display
+	 * thread and blocks the caller until the runnable got executed.
+	 *
+	 * @param runnable
+	 *            The <code>java.lang.Runnable</code> to execute within the
+	 *            UI thread.
+	 */
+	public static void executeInUIWait(final Runnable runnable) {
+		if (runnable == null) return;
+
+		final AtomicBoolean invoked = new AtomicBoolean(false);
+
+		// Wrap the original runnable in another runnable
+		// to set the invoked flag
+		Runnable r = new Runnable() {
+			@Override
+			public void run() {
+				try {
+					runnable.run();
+				} finally {
+					invoked.set(true);
+				}
+			}
+		};
+
+		if (UI_EXECUTOR instanceof ExecutorService) {
+			if (!((ExecutorService) UI_EXECUTOR).isShutdown()
+					&& !((ExecutorService) UI_EXECUTOR).isTerminated()) {
+				UI_EXECUTOR.execute(r);
+			}
+		} else {
+			if (UI_EXECUTOR != null) {
+				UI_EXECUTOR.execute(r);
+			} else {
+				invoked.set(true);
+			}
+		}
+
+		waitAndExecute(0, new IConditionTester() {
+			@Override
+			public boolean isConditionFulfilled() {
+				return invoked.get();
+			}
+			@Override
+			public void cleanup() {
+			}
+		});
 	}
 
 	/**
