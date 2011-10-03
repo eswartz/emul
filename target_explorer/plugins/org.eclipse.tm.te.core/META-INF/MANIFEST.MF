@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: %pluginName
-Bundle-SymbolicName: org.eclipse.tm.te.runtime;singleton:=true
+Bundle-SymbolicName: org.eclipse.tm.te.core;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Bundle-Activator: org.eclipse.tm.te.core.activator.CoreBundleActivator
 Bundle-Vendor: %providerName
