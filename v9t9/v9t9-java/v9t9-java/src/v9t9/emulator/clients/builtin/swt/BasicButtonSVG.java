@@ -6,7 +6,6 @@ package v9t9.emulator.clients.builtin.swt;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
@@ -162,7 +161,7 @@ class BasicButtonSVG extends Canvas {
 				overlayImage.dispose();
 			try {
 				overlayImage = new Image(getDisplay(), icon.getImageData(overlayBounds, getSize()));
-			} catch (CoreException e) {
+			} catch (SVGException e) {
 				e.printStackTrace();
 			}
 		}
@@ -176,7 +175,7 @@ class BasicButtonSVG extends Canvas {
 				image.dispose();
 			try {
 				image = new Image(getDisplay(), icon.getImageData(bounds, getSize()));
-			} catch (CoreException e) {
+			} catch (SVGException e) {
 				e.printStackTrace();
 			}
 		}

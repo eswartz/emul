@@ -5,6 +5,7 @@ package v9t9.emulator.clients.builtin.swt;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -14,10 +15,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.dialogs.Dialog;
-import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -45,6 +43,7 @@ import org.ejs.coffee.core.properties.SettingProperty;
 import v9t9.emulator.clients.builtin.ISettingDecorator;
 import v9t9.emulator.clients.builtin.IconSetting;
 import v9t9.emulator.common.EmulatorSettings;
+import v9t9.emulator.common.IEventNotifier.Level;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.dsrs.DsrHandler;
 import v9t9.emulator.hardware.dsrs.DsrSettings;
@@ -229,8 +228,10 @@ public class DiskSelector extends Composite {
 							showCatalogDialog(setting, catalog);
 							
 						} catch (IOException e2) {
-							ErrorDialog.openError(getShell(), "Failed to open", "Could not read catalog for disk image " + setting.getString(), 
-									new Status(IStatus.ERROR, "org.ejs.v9t9", null, e2));
+							machine.getClient().getEventNotifier().notifyEvent(
+									image, Level.ERROR,
+									MessageFormat.format("Could not read catalog for disk image ''{0}''\n\n{1}",
+											setting.getString(), e2.getMessage()));
 						}
 					}
 				});

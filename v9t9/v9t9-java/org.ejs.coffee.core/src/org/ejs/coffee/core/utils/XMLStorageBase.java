@@ -14,9 +14,6 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -42,35 +39,35 @@ public abstract class XMLStorageBase {
 		documentElement = null;
 	}
 	
-	protected CoreException newCoreException(String message, Exception e) {
-		return new CoreException(new Status(IStatus.ERROR, "org.ejs.chiprocksynth", message, e));
+	protected StorageException newStorageException(String message, Exception e) {
+		return new StorageException(message, e);
 	}
 	/** 
 	 * Get the stream for the existing content
 	 * @return InputStream (will be closed by caller)
-	 * @throws CoreException if storage does not exist or cannot be read
+	 * @throws StorageException if storage does not exist or cannot be read
 	 */
-	abstract protected InputStream getStorageInputStream() throws CoreException;
+	abstract protected InputStream getStorageInputStream() throws StorageException;
 
 	/** 
 	 * Get the stream to write the new content
 	 * @return OutputStream (will be closed by caller)
-	 * @throws CoreException if storage cannot be created
+	 * @throws StorageException if storage cannot be created
 	 */
-	abstract protected OutputStream getStorageOutputStream() throws CoreException;
+	abstract protected OutputStream getStorageOutputStream() throws StorageException;
 	
 	/**
 	 * Create an empty document.
-	 * @throws CoreException if document could not be created (fatal!)
+	 * @throws StorageException if document could not be created (fatal!)
 	 */
-	public void create(String documentElementName) throws CoreException {
+	public void create(String documentElementName) throws StorageException {
 		document = null;
 		documentElement = null;
 		// not existing
 		try {
 			document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
 		} catch (ParserConfigurationException e2) {
-			throw newCoreException("Failed to create XML document", e2);
+			throw newStorageException("Failed to create XML document", e2);
 		}
 		
 		documentElement = document.createElement(documentElementName);
@@ -80,9 +77,9 @@ public abstract class XMLStorageBase {
 	
 	/**
 	 * Load the document.
-	 * @throws CoreException if document could not be loade
+	 * @throws StorageException if document could not be loade
 	 */
-	public void load(String documentElementName) throws CoreException {
+	public void load(String documentElementName) throws StorageException {
 		try {
 			Document newDocument = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(
 					getStorageInputStream());
@@ -91,19 +88,19 @@ public abstract class XMLStorageBase {
 			documentElement = document.getDocumentElement();
 			dirty = false;
 		} catch (Exception e) {
-			throw newCoreException("Failed to load XML storage", e);
+			throw newStorageException("Failed to load XML storage", e);
 		}
 	}
 
-	protected CoreException saveException(Exception e) {
-		return newCoreException("Failed to persist XML storage", e);
+	protected StorageException saveException(Exception e) {
+		return newStorageException("Failed to persist XML storage", e);
 	}
 
 	/**
 	 * Save the storage to XML.
-	 * @throws CoreException
+	 * @throws StorageException
 	 */
-	public void save() throws CoreException {
+	public void save() throws StorageException {
 		if (document == null)
 			return;
 		

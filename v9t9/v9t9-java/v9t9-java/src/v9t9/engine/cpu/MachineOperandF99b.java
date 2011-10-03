@@ -3,15 +3,15 @@
  */
 package v9t9.engine.cpu;
 
+import static v9t9.engine.cpu.InstF99b.ctxStrings;
+import static v9t9.engine.cpu.InstF99b.syscallStrings;
+
 import org.ejs.coffee.core.utils.Check;
 import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.tools.asm.assembler.Assembler;
 import v9t9.tools.asm.assembler.ResolveException;
 import v9t9.tools.asm.assembler.Symbol;
-
-import static v9t9.engine.cpu.InstF99b.ctxStrings;
-import static v9t9.engine.cpu.InstF99b.syscallStrings;
 
 /**
  * A machine operand, as parsed from an instruction or converted from an

@@ -6,9 +6,9 @@ package org.ejs.coffee.core.settings;
 import java.io.File;
 import java.io.IOException;
 
-import org.eclipse.core.runtime.CoreException;
 import org.ejs.coffee.core.settings.ISettingSection.Type;
 import org.ejs.coffee.core.utils.FileXMLStorage;
+import org.ejs.coffee.core.utils.StorageException;
 import org.ejs.coffee.core.utils.XMLUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -53,7 +53,7 @@ public class XMLSettingStorage implements ISettingStorage {
 
 			loadSection(root, storage.getDocumentElement());
 			
-		} catch (CoreException e) {
+		} catch (StorageException e) {
 			if (e.getCause() instanceof IOException)
 				throw (IOException) e.getCause();
 			throw (IOException) new IOException().initCause(e);
@@ -176,7 +176,7 @@ public class XMLSettingStorage implements ISettingStorage {
 			storage.create(rootElement);
 			saveSection(storage.getDocumentElement(), section);
 			storage.save();
-		} catch (CoreException e) {
+		} catch (StorageException e) {
 			if (e.getCause() instanceof IOException)
 				throw (IOException) e.getCause();
 			throw (IOException) new IOException().initCause(e);

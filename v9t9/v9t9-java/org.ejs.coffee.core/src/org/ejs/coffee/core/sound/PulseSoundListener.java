@@ -6,7 +6,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioFormat.Encoding;
 
-
 import com.sun.jna.ptr.IntByReference;
 
 

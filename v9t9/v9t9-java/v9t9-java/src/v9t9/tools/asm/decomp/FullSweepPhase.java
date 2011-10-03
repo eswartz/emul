@@ -16,7 +16,6 @@ import v9t9.engine.cpu.Inst9900;
 import v9t9.engine.cpu.InstInfo;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.MachineOperand9900;
-import v9t9.engine.memory.MemoryDomain;
 import v9t9.tools.asm.common.LabelOperand;
 import v9t9.tools.asm.common.MemoryRange;
 

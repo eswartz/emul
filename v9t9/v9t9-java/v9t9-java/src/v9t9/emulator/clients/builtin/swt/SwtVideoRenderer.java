@@ -24,11 +24,11 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
-import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas24Bit;
-import v9t9.emulator.clients.builtin.video.VideoRenderer;
+import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VdpCanvas.ICanvasListener;
+import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.engine.VdpHandler;
 
 /**

@@ -10,9 +10,6 @@ import org.apache.batik.transcoder.TranscoderInput;
 import org.apache.batik.transcoder.TranscoderOutput;
 import org.apache.batik.transcoder.image.ImageTranscoder;
 import org.apache.batik.util.XMLResourceDescriptor;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.swt.graphics.Device;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
@@ -98,7 +95,7 @@ public class SVGLoader {
     /**
      * @deprecated
      */
-    public Image getImage(Point size) throws CoreException {
+    public Image getImage(Point size) throws SVGException {
     	ImageData imageData = getImageData(size);
     	if (device == null || imageData == null)
     		return null;
@@ -110,7 +107,7 @@ public class SVGLoader {
      * @param size the size to scale to, or null
      * @return new ImageData
      */
-	public ImageData getImageData(Point size) throws CoreException {
+	public ImageData getImageData(Point size) throws SVGException {
 		try {
 			if (document == null) {
 				document = getSvgDomFromFile(uri);
@@ -124,8 +121,7 @@ public class SVGLoader {
 				if (tce.getException() != null)
 					e = tce.getException();
 			}
-			throw new CoreException(
-					new Status(IStatus.ERROR, "", null, e));
+			throw new SVGException("Failed to read SVG image from " + uri, e);
 		}
 	}
 	/**
@@ -134,7 +130,7 @@ public class SVGLoader {
 	 * @param size the size to scale to, or null
 	 * @return new ImageData
 	 */
-	public ImageData getImageData(Rectangle aoi, Point size) throws CoreException {
+	public ImageData getImageData(Rectangle aoi, Point size) throws SVGException {
 		try {
 			if (document == null) {
 				document = getSvgDomFromFile(uri);
@@ -150,8 +146,7 @@ public class SVGLoader {
 				if (tce.getException() != null)
 					e = tce.getException();
 			}
-			throw new CoreException(
-					new Status(IStatus.ERROR, "v9t9", null, e));
+			throw new SVGException("Failed to load " + uri, e);
 		}
 	}
 	

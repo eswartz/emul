@@ -3,7 +3,13 @@
  */
 package v9t9.emulator.clients.builtin.swt.gl;
 
-import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL11.GL_FILL;
+import static org.lwjgl.opengl.GL11.GL_MAP2_TEXTURE_COORD_2;
+import static org.lwjgl.opengl.GL11.GL_MAP2_VERTEX_3;
+import static org.lwjgl.opengl.GL11.glEnable;
+import static org.lwjgl.opengl.GL11.glEvalMesh2;
+import static org.lwjgl.opengl.GL11.glMap2f;
+import static org.lwjgl.opengl.GL11.glMapGrid2f;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;

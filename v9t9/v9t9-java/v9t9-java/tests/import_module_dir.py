@@ -53,6 +53,7 @@ def addentry(root, db, dir, file):
         entries.text = "\n"
         entries.tail = "\n"
 
+    #print root,dir,file
     intname = discover_name(os.path.join(dir, file))
     if intname:
         module.set("name", intname)
@@ -137,6 +138,10 @@ def discover_name(path):
         f.close()
         
 if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print "Run as: import_module_dir.py <dir> <modules.inf>"
+        sys.exit(1)
+		
     # build a tree structure
     root = ET.Element("modules")
     root.text = "\n"
@@ -144,7 +149,7 @@ if __name__ == "__main__":
 
     db = {}
 
-    convert(root, db, sys.argv[1])
+    convert(root, db, os.path.abspath(sys.argv[1]))
     
     tree = ET.ElementTree(root)
     tree.write(sys.argv[2], "UTF-8")

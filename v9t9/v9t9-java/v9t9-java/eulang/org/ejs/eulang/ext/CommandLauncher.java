@@ -4,10 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.IProgressMonitor;
-
 /**
  * Stolen from CDT
  */
@@ -86,15 +82,15 @@ public class CommandLauncher {
 	 * @since 5.1
 	 * @see org.eclipse.cdt.core.ICommandLauncher#execute(IPath, String[], String[], IPath, IProgressMonitor)
 	 */
-	public Process execute(IPath commandPath, String[] args, String[] env, IPath changeToDirectory, IProgressMonitor monitor) throws CoreException {
+	public Process execute(String commandPath, String[] args, String[] env, String changeToDirectory) throws IOException {
 		try {
 			// add platform specific arguments (shell invocation)
-			fCommandArgs = constructCommandArray(commandPath.toOSString(), args);
+			fCommandArgs = constructCommandArray(commandPath, args);
 			
 			File file = null;
 			
 			if(changeToDirectory != null)
-				file = changeToDirectory.toFile();
+				file = new File(changeToDirectory);
 			
 			fProcess = Runtime.getRuntime().exec(fCommandArgs, env, file);
 			fErrorMessage = ""; //$NON-NLS-1$
@@ -125,6 +121,7 @@ public class CommandLauncher {
 	/* (non-Javadoc)
 	 * @see org.eclipse.cdt.core.ICommandLauncher#waitAndRead(java.io.OutputStream, java.io.OutputStream, org.eclipse.core.runtime.IProgressMonitor)
 	 */
+	/*
 	public int waitAndRead(OutputStream output, OutputStream err, IProgressMonitor monitor) {
 		if (fShowCommand) {
 			printCommandLine(output);
@@ -157,7 +154,7 @@ public class CommandLauncher {
 			return -1;
 		}
 	}
-
+	*/
 	protected void printCommandLine(OutputStream os) {
 		if (os != null) {
 			String cmd = getCommandLine(getCommandArgs());

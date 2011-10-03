@@ -37,8 +37,6 @@ import org.antlr.runtime.CommonTokenStream;
 import org.antlr.runtime.ParserRuleReturnScope;
 import org.antlr.runtime.RecognitionException;
 import org.antlr.runtime.tree.Tree;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.Path;
 import org.ejs.eulang.ITarget;
 import org.ejs.eulang.Message;
 import org.ejs.eulang.TargetV9t9;
@@ -601,7 +599,7 @@ public class BaseTest {
 	}
 	
 	protected void doAssemble(String text, File file, boolean expectErrors)
-			throws IOException, FileNotFoundException, CoreException,
+			throws IOException, FileNotFoundException,
 			AssertionFailedError {
 		File llfile = new File(file.getAbsolutePath() + ".ll");
 		FileOutputStream os = new FileOutputStream(llfile);
@@ -633,7 +631,7 @@ public class BaseTest {
 	}
 	
 	protected String doOptimize(File file, File llfile,
-			File bcFile) throws CoreException,
+			File bcFile) throws
 			IOException, AssertionFailedError {
 		File bcOptFile = new File(file.getAbsolutePath() + ".opt.bc");
 		bcOptFile.delete();
@@ -686,12 +684,11 @@ public class BaseTest {
 	 * @param absolutePath2
 	 * @throws CoreException 
 	 */
-	private String runAndReturn(String prog, String... args) throws CoreException {
+	private String runAndReturn(String prog, String... args) throws IOException {
 		CommandLauncher launcher = new CommandLauncher();
 		launcher.showCommand(true);
-		launcher.execute(new Path(prog), 
+		launcher.execute(prog, 
 				args,
-				null,
 				null,
 				null);
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -705,7 +702,7 @@ public class BaseTest {
 		return out.toString();
 	}
 
-	private void run(String prog, String... args) throws CoreException {
+	private void run(String prog, String... args) throws IOException {
 		runAndReturn(prog, args);
 	}
 	/**

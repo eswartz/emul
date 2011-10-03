@@ -6,10 +6,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 
 import javax.sound.sampled.AudioFileFormat;
+import javax.sound.sampled.AudioFileFormat.Type;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.AudioFileFormat.Type;
 
 /**
  * Mixing and output for sound

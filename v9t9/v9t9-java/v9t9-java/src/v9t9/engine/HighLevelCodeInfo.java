@@ -10,8 +10,8 @@ import java.util.TreeMap;
 import org.ejs.coffee.core.utils.Check;
 
 import v9t9.emulator.runtime.cpu.CpuState;
-import v9t9.engine.cpu.RawInstruction;
 import v9t9.engine.cpu.InstTable9900;
+import v9t9.engine.cpu.RawInstruction;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.tools.asm.common.MemoryRanges;
 import v9t9.tools.asm.decomp.Block;

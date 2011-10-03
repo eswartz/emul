@@ -3,7 +3,8 @@
  */
 package org.ejs.coffee.core.timer;
 
-import com.sun.jna.*;
+import com.sun.jna.Callback;
+import com.sun.jna.PointerType;
 
 /**
  * @author ejs

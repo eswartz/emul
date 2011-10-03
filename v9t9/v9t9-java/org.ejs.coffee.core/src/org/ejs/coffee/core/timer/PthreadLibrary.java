@@ -3,7 +3,6 @@
  */
 package org.ejs.coffee.core.timer;
 
-import com.sun.jna.*;
 
 /**
  * @author ejs

@@ -5,11 +5,6 @@ package v9t9.emulator.clients.builtin.swt;
 
 import java.util.TreeMap;
 
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.Point;
@@ -22,7 +17,7 @@ import org.ejs.coffee.core.utils.Pair;
 public class SVGImageProvider extends MultiImageSizeProvider {
 
 	private final SVGLoader svgIcon;
-	private Job loadIconJob;
+	private Thread loadIconThread;
 	
 	private Point desiredSize;
 	private Image scaledImage;
@@ -52,7 +47,7 @@ public class SVGImageProvider extends MultiImageSizeProvider {
 				} catch (InterruptedException e) {
 				}
 			}*/
-			if (loadIconJob == null)
+			if (loadIconThread == null)
 				recreate = true;
 		}
 		if (!svgFailed && recreate) {
@@ -60,10 +55,14 @@ public class SVGImageProvider extends MultiImageSizeProvider {
 			if (scaledImage != null)
 				scaledImage.dispose();
 			scaledImage = null;
-			loadIconJob = new Job("Scaling icon") {
+			loadIconThread = new Thread("Scaling icon") {
 
-				@Override
-				protected IStatus run(IProgressMonitor monitor) {
+				public void run() {
+					try {
+						Thread.sleep(100);
+					} catch (InterruptedException e1) {
+						return;
+					}
 					final ImageData scaledImageData;
 					try {
 						//int min = iconMap.values().iterator().next().getBounds().width;
@@ -92,17 +91,15 @@ public class SVGImageProvider extends MultiImageSizeProvider {
 								}
 							});
 						}
-					} catch (CoreException e) {
+					} catch (SVGException e) {
 						svgFailed = true;
 					}
-					loadIconJob = null;
+					loadIconThread = null;
 					
-					
-					return Status.OK_STATUS;
 				}
 				
 			};
-			loadIconJob.schedule(100);
+			loadIconThread.start();
 		}
 		if (scaledImage == null) {
 			return super.getImage(size);

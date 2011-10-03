@@ -8,8 +8,8 @@ package v9t9.emulator.hardware.memory.mmio;
 
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.common.Machine.ConsoleMmioWriter;
-import v9t9.emulator.hardware.speech.TMS5220;
 import v9t9.emulator.hardware.speech.LPCSpeech.Sender;
+import v9t9.emulator.hardware.speech.TMS5220;
 import v9t9.engine.SoundHandler;
 
 /** 

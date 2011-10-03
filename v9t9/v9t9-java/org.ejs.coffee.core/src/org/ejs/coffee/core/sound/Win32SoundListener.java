@@ -262,8 +262,8 @@ public class Win32SoundListener implements ISoundListener {
 	 */
 	public synchronized void played(SoundChunk chunk) {
 		try {
-				if (soundQueue.remainingCapacity() == 0)
-					soundQueue.remove();
+			if (soundQueue.remainingCapacity() == 0)
+				soundQueue.remove();
 			// will block if sound is too fast
 			AudioChunk o = new AudioChunk(chunk, volume);
 			soundQueue.put(o);

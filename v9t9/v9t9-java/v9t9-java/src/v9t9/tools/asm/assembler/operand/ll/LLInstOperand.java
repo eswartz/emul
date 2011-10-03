@@ -3,7 +3,9 @@
  */
 package v9t9.tools.asm.assembler.operand.ll;
 
-import v9t9.engine.cpu.*;
+import v9t9.engine.cpu.InstructionMFP201;
+import v9t9.engine.cpu.MachineOperand;
+import v9t9.engine.cpu.MachineOperandMFP201Inst;
 import v9t9.tools.asm.assembler.InstructionFactoryMFP201;
 import v9t9.tools.asm.assembler.LLInstruction;
 import v9t9.tools.asm.assembler.ResolveException;

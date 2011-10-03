@@ -9,15 +9,10 @@ package v9t9.emulator;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Collections;
 
-import org.eclipse.core.runtime.FileLocator;
-import org.eclipse.core.runtime.Path;
-import org.eclipse.core.runtime.Platform;
 import org.ejs.coffee.core.properties.IProperty;
 import org.ejs.coffee.core.properties.IPropertyListener;
 import org.ejs.coffee.core.utils.Check;
-import org.osgi.framework.Bundle;
 
 import v9t9.emulator.clients.builtin.ClientFactory;
 import v9t9.emulator.clients.builtin.NotifyException;
@@ -276,12 +271,14 @@ public class Emulator {
 	}
 
 	public static URL getDataURL(String string) {
+		/*
 		Bundle bundle = Platform.getBundle("v9t9-java");
 		if (bundle != null) {
 			URL url = FileLocator.find(bundle, new Path(string), Collections.emptyMap());
 			if (url != null)
 				return url;
 		}
+		*/
 		
 		URL url = Emulator.class.getClassLoader().getResource(string);
 		        

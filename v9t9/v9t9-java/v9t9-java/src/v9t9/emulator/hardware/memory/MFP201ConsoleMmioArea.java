@@ -5,7 +5,9 @@ package v9t9.emulator.hardware.memory;
 
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.memory.mmio.ConsoleMmioArea;
-import v9t9.engine.memory.*;
+import v9t9.engine.memory.MemoryDomain;
+import v9t9.engine.memory.MemoryEntry;
+import v9t9.engine.memory.MemoryListener;
 
 /**
  * MFP201 memory-mapped I/O area

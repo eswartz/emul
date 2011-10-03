@@ -6,7 +6,8 @@ package v9t9.emulator.runtime.cpu;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.core.runtime.ListenerList;
+import org.ejs.coffee.core.utils.ListenerList;
+import org.ejs.coffee.core.utils.ListenerList.IFire;
 
 /**
  * Track the metrics of the CPU
@@ -71,13 +72,13 @@ public class CpuMetrics {
 	}
 	
 
-	private ListenerList metricsListeners;
+	private ListenerList<IMetricsListener> metricsListeners;
 	
 	private long nLastCycleCount;
 	private ArrayList<MetricEntry> entries;
 	public CpuMetrics() {
 		entries = new ArrayList<MetricEntry>();
-		metricsListeners = new ListenerList();
+		metricsListeners = new ListenerList<IMetricsListener>();
 		reset();
 	}
 	
@@ -118,17 +119,25 @@ public class CpuMetrics {
         return entry;
 	}
 	private void fireListeners() {
-		for (Object obj : metricsListeners.getListeners()) {
-			IMetricsListener listener = (IMetricsListener) obj;
-			listener.metricsChanged();
-		}
+		metricsListeners.fire(new IFire<CpuMetrics.IMetricsListener>() {
+
+			@Override
+			public void fire(IMetricsListener listener) {
+				listener.metricsChanged();
+			}
+
+			@Override
+			public void threw(IMetricsListener listener, Throwable t) {
+				
+			}
+		});
 	}
 
 	public MetricEntry[] getLastEntries(int x) {
 		synchronized (entries) {
 			int idx = Math.max(0, entries.size() - x);
 			List<MetricEntry> subList = entries.subList(idx, entries.size());
-			return (MetricEntry[]) subList.toArray(new MetricEntry[subList.size()]);
+			return subList.toArray(new MetricEntry[subList.size()]);
 		}
 	}
 

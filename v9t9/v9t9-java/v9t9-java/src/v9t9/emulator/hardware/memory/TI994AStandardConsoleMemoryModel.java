@@ -19,7 +19,7 @@ import v9t9.emulator.hardware.memory.mmio.ConsoleSpeechReadArea;
 import v9t9.emulator.hardware.memory.mmio.ConsoleSpeechWriteArea;
 import v9t9.emulator.hardware.memory.mmio.ConsoleVdpReadArea;
 import v9t9.emulator.hardware.memory.mmio.ConsoleVdpWriteArea;
-import v9t9.engine.memory.*;
+import v9t9.engine.memory.MemoryEntry;
 
 /**
  * The standard TI-99/4[A] console memory map.
