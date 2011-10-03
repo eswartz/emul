@@ -54,6 +54,7 @@
 	  
 	  <module>target_explorer/plugins/org.eclipse.tm.te.core</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.core.concurrent</module>
+	  <module>target_explorer/plugins/org.eclipse.tm.te.core.extensions</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.core.model</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.core.persistence</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.core.statushandler</module>
