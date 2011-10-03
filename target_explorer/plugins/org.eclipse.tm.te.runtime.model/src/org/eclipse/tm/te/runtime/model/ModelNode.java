@@ -28,7 +28,6 @@ import org.eclipse.tm.te.runtime.properties.PropertiesContainer;
  *              a thread-safe implementation should subclass the properties container and
  *              overwrite {@link #checkThreadAccess()}.
  */
-@SuppressWarnings("restriction")
 public class ModelNode extends PropertiesContainer implements IModelNode, IModelNodeProvider {
 	// Reference to the parent model node
 	private IContainerModelNode parent = null;
