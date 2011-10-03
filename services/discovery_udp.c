@@ -671,17 +671,31 @@ static void udp_receive_ack_info(void) {
         p++;
     }
     if (p != NULL && ps->id != NULL) {
-        /* TODO: should ignore peer info if peer host does not belong to one of known subnets */
-        trace(LOG_DISCOVERY, "ACK_INFO from %s:%d, ID=%s",
-            inet_ntoa(recvreq_addr.sin_addr), ntohs(recvreq_addr.sin_port), ps->id);
-        ps->flags = PS_FLAG_DISCOVERABLE;
-        peer_server_add(ps, PEER_DATA_RETENTION_PERIOD);
+        const char * prot = peer_server_getprop(ps, "TransportName", NULL);
+        if (prot != NULL && (strcmp(prot, "TCP") == 0 || strcmp(prot, "SSL") == 0)) {
+            const char * host = peer_server_getprop(ps, "Host", NULL);
+            if (host != NULL) {
+                struct in_addr peer_addr;
+                memset(&peer_addr, 0, sizeof(peer_addr));
+                if (inet_pton(AF_INET, host, &peer_addr) > 0) {
+                    int n;
+                    for (n = 0; n < ifc_cnt; n++) {
+                        ip_ifc_info * ifc = ifc_list + n;
+                        if ((ifc->addr & ifc->mask) == (peer_addr.s_addr & ifc->mask)) {
+                            trace(LOG_DISCOVERY, "ACK_INFO from %s:%d, ID=%s",
+                                inet_ntoa(recvreq_addr.sin_addr), ntohs(recvreq_addr.sin_port), ps->id);
+                            ps->flags = PS_FLAG_DISCOVERABLE;
+                            peer_server_add(ps, PEER_DATA_RETENTION_PERIOD);
+                            return;
+                        }
+                    }
+                }
+            }
+        }
     }
-    else {
-        trace(LOG_ALWAYS, "Received malformed UDP discovery packet from %s:%d",
-            inet_ntoa(recvreq_addr.sin_addr), ntohs(recvreq_addr.sin_port));
-        peer_server_free(ps);
-    }
+    trace(LOG_ALWAYS, "Received malformed UDP discovery packet from %s:%d",
+        inet_ntoa(recvreq_addr.sin_addr), ntohs(recvreq_addr.sin_port));
+    peer_server_free(ps);
 }
 
 static void udp_receive_req_slaves(SlaveInfo * s, time_t timenow) {
