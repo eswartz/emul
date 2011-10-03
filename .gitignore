@@ -7,6 +7,7 @@ hs_err*.log
 *.d
 *.lo
 *.pyc
+v9t9/build
 v9t9/v9t9-java/libanalogtv/swig
 v9t9/v9t9-java/libv9t9render/libv9t9render.so
 v9t9/v9t9-java/libv9t9render/swig
