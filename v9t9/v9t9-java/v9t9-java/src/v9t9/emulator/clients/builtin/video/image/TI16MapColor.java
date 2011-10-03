@@ -85,8 +85,8 @@ class TI16MapColor extends BasePaletteMapper {
 			
 			// see how the color matches
 			if (closest == black) {
-				if (phsv[1] > 0.9f) {
-					if ((hue >= 75 && hue < 140) && (val >= 5 && val <= 33)) {
+				if (phsv[1] > 0.9f && val >= 64) {
+					if ((hue >= 90 && hue < 140) && (val >= 5 && val <= 33)) {
 						closest = 12;
 					}
 				}

@@ -263,7 +263,7 @@ public class ImageImport implements IBitmapPixelAccess {
 		for (int y = 0; y < img.getHeight(); y++) {
 			for (int x = 0; x < img.getWidth(); x += 8) {
 				for (int xo = 0; xo < 8; xo++) {
-					ditherize(img, mapper, x + xo, y, prgb, false);
+					ditherize(img, mapper, x + xo, y, prgb, !canSetPalette);
 				}
 			}
 		}
@@ -437,7 +437,7 @@ public class ImageImport implements IBitmapPixelAccess {
 			palettes.addAll(Arrays.asList(VdpCanvas.palettes()));
 		
 		for (byte[][] palette : palettes) {
-			int matchedC = hist.generate(new FixedPaletteMapColor(palette, firstColor, numColors), maxDist, ~0); 
+			int matchedC = hist.generate(new FixedPaletteMapColor(palette, firstColor, numColors), maxDist); 
 			if (matchedC == numPixels) {
 				matched = true;
 				break;
@@ -463,7 +463,6 @@ public class ImageImport implements IBitmapPixelAccess {
 			if (canSetPalette) {
 				createOptimalPalette(img, 16);
 				limitDither = true;
-				canSetPalette = false;
 				//mapColor = new RGB333MapColor(thePalette, firstColor, 16, canvas.isGreyscale());
 				mapColor = new UserPaletteMapColor(thePalette, firstColor, 16, canvas.isGreyscale(), false);
 			} else {
@@ -483,13 +482,11 @@ public class ImageImport implements IBitmapPixelAccess {
 		}
 		else if (format == Format.COLOR16_1x1) {
 			createOptimalPalette(img, 16);
-			canSetPalette = false;
 			//mapColor = new RGB333MapColor(thePalette, firstColor, 16, canvas.isGreyscale());
 			mapColor = new UserPaletteMapColor(thePalette, firstColor, 16, canvas.isGreyscale(), false);
 		}
 		else if (format == Format.COLOR4_1x1) {
 			createOptimalPalette(img, 4);
-			canSetPalette = false;
 			//mapColor = new RGB333MapColor(thePalette, firstColor, 4, canvas.isGreyscale());
 			mapColor = new UserPaletteMapColor(thePalette, firstColor, 4, canvas.isGreyscale(), false);
 		}
@@ -499,7 +496,7 @@ public class ImageImport implements IBitmapPixelAccess {
 		else {
 			return;
 		}
-		optimizeForNColors(img, mapColor, 0);
+		optimizeForNColors(img, mapColor);
 		
 		updatePaletteMapping();
 
@@ -698,12 +695,8 @@ public class ImageImport implements IBitmapPixelAccess {
 	 * @param img
 	 * @return minimum color distance
 	 */
-	private int optimizeForNColors(BufferedImage img, IMapColor mapColor, int startMask) {
+	private int optimizeForNColors(BufferedImage img, IMapColor mapColor) {
 		
-		if (canSetPalette) {
-			return optimizeForNColorsAndRebuildPalette(img, mapColor);
-		}
-			
 		int numColors = mapColor.getNumColors();
 		
 		byte[][] palette = mapColor.getPalette();
@@ -715,23 +708,13 @@ public class ImageImport implements IBitmapPixelAccess {
 		Histogram hist = new Histogram(img);
 		int mappedColors = 0;
 		int interestingColors = 0;
-		int total = img.getWidth() * img.getHeight();
 		
-		for (int mask = startMask; mask < 5; mask++) {
-			mappedColors = hist.generate(mapColor, ourDist, mask);
-			interestingColors = hist.size();
-			if (DEBUG) System.out.println("For mask " + Integer.toHexString(mask) 
-					+"; # interesting = " + interestingColors
-					+"; # mapped = " + mappedColors);
-
-			if (interestingColors <= numColors || mappedColors >= total / 2)
-				break;
-		}
-
+		mappedColors = hist.generate(mapColor, ourDist);
+		interestingColors = hist.size();
+		if (DEBUG) System.out.println("# interesting = " + interestingColors
+				+"; # mapped = " + mappedColors);
 		
-		int usedColors = //Math.min(numColors * 3 / 4, 
-				Math.min(numColors, interestingColors);
-		//usedColors = Math.min(numColors * 3 / 4, usedColors);
+		int usedColors = Math.min(numColors, interestingColors);
 		
 		if (DEBUG) System.out.println("\nN-color: interestingColors="+interestingColors
 				+"; usedColors="+usedColors
@@ -793,7 +776,7 @@ public class ImageImport implements IBitmapPixelAccess {
 		//int total = img.getWidth() * img.getHeight();
 		
 		//for (int mask = 4; mask < 7; mask++) {
-			mappedColors = hist.generate(mapColor, maxDist, 0);
+			mappedColors = hist.generate(mapColor, maxDist);
 			interestingColors = hist.size();
 			if (interestingColors > mostInterestingColors)
 				mostInterestingColors = interestingColors;
@@ -977,6 +960,102 @@ public class ImageImport implements IBitmapPixelAccess {
 		return replaced;
 	}
 
+	interface IBitmapColorUser {
+		/** Called once per each 8x1 block */
+		void useColor(int x, int maxx, int y, List<Pair<Integer,Integer>> sorted);
+	}
+
+	/**
+	 * Only two colors can exist per 8x1 pixels, so find those colors.
+	 * If there's a tossup (lots of colors), use information from neighbors
+	 * to enhance the odds.
+	 * @param img
+	 */
+	protected void analyzeBitmap(BufferedImage img, boolean includeSides, IBitmapColorUser colorUser) {
+		@SuppressWarnings("unchecked")
+		Map<Integer, Integer>[] histograms = new Map[(img.getWidth() + 7) / 8];
+		@SuppressWarnings("unchecked")
+		Map<Integer, Integer>[] histogramSides = new Map[(img.getWidth() + 7) / 8];
+		
+		int width = img.getWidth();
+		for (int y = 0; y < img.getHeight(); y++) {
+			// first scan: get histogram for each range
+			
+			for (int x = 0; x < width; x += 8) {
+				Map<Integer, Integer> histogram = new HashMap<Integer, Integer>();
+				Map<Integer, Integer> histogramSide = new HashMap<Integer, Integer>();
+				
+				histograms[x / 8] = histogram;
+				histogramSides[x / 8] = histogramSide;
+				
+				int maxx = x + 8 < width ? x + 8 : width;
+				
+				int scmx;
+				int scmn;
+				
+				// scan outside the 8 pixels to get a broader
+				// idea of what colors are important
+				if (includeSides) {
+					scmn = Math.max(0, x - 4);
+					scmx = Math.min(width, maxx + 4);
+				} else {
+					scmn = x;
+					scmx = maxx;
+				}
+				
+				int pixel = 0;
+				for (int xd = scmn; xd < scmx; xd++) {
+					if (xd < width)
+						pixel = img.getRGB(xd, y);
+					
+					Map<Integer, Integer> hist = (xd >= x && xd < maxx) ? histogram : histogramSide;
+					
+					Integer cnt = hist.get(pixel);
+					if (cnt == null)
+						cnt = 1;
+					else
+						cnt++;
+					
+					hist.put(pixel, cnt);
+				}
+			}
+			
+	
+			for (int x = 0; x < width; x += 8) {
+				Map<Integer, Integer> histogram = histograms[x / 8];
+				Map<Integer, Integer> histogramSide = histogramSides[x / 8];
+				
+				int maxx = x + 8 < width ? x + 8 : width;
+				
+				// get prominent colors, weighing colors that also
+				// appear in surrounding pixels higher  
+				List<Pair<Integer, Integer>> sorted = new ArrayList<Pair<Integer,Integer>>();
+				for (Map.Entry<Integer, Integer> entry : histogram.entrySet()) {
+					Integer c = entry.getKey();
+					int cnt = entry.getValue();
+					if (includeSides) {
+						cnt *= 2;
+						Integer scnt = histogramSide.get(c);
+						if (scnt != null)
+							cnt += scnt;
+					}
+					sorted.add(new Pair<Integer, Integer>(c, cnt));
+				}
+				Collections.sort(sorted, new Comparator<Pair<Integer, Integer>>() {
+	
+					@Override
+					public int compare(Pair<Integer, Integer> o1,
+							Pair<Integer, Integer> o2) {
+						return o2.second - o1.second;
+					}
+					
+				});
+	
+				colorUser.useColor(x, maxx, y, sorted);
+			}
+		}
+	}
+
 	/**
 	 * Find the two dominant colors per each 8x1 block, so dithering
 	 * will only use those colors.
@@ -1106,100 +1185,6 @@ public class ImageImport implements IBitmapPixelAccess {
 		});
 	}
 
-	interface IBitmapColorUser {
-		/** Called once per each 8x1 block */
-		void useColor(int x, int maxx, int y, List<Pair<Integer,Integer>> sorted);
-	}
-	/**
-	 * Only two colors can exist per 8x1 pixels, so find those colors.
-	 * If there's a tossup (lots of colors), use information from neighbors
-	 * to enhance the odds.
-	 * @param img
-	 */
-	protected void analyzeBitmap(BufferedImage img, boolean includeSides, IBitmapColorUser colorUser) {
-		@SuppressWarnings("unchecked")
-		Map<Integer, Integer>[] histograms = new Map[(img.getWidth() + 7) / 8];
-		@SuppressWarnings("unchecked")
-		Map<Integer, Integer>[] histogramSides = new Map[(img.getWidth() + 7) / 8];
-		
-		int width = img.getWidth();
-		for (int y = 0; y < img.getHeight(); y++) {
-			// first scan: get histogram for each range
-			
-			for (int x = 0; x < width; x += 8) {
-				Map<Integer, Integer> histogram = new HashMap<Integer, Integer>();
-				Map<Integer, Integer> histogramSide = new HashMap<Integer, Integer>();
-				
-				histograms[x / 8] = histogram;
-				histogramSides[x / 8] = histogramSide;
-				
-				int maxx = x + 8 < width ? x + 8 : width;
-				
-				int scmx;
-				int scmn;
-				
-				// scan outside the 8 pixels to get a broader
-				// idea of what colors are important
-				if (includeSides) {
-					scmn = Math.max(0, x - 4);
-					scmx = Math.min(width, maxx + 4);
-				} else {
-					scmn = x;
-					scmx = maxx;
-				}
-				
-				int pixel = 0;
-				for (int xd = scmn; xd < scmx; xd++) {
-					if (xd < width)
-						pixel = img.getRGB(xd, y);
-					
-					Map<Integer, Integer> hist = (xd >= x && xd < maxx) ? histogram : histogramSide;
-					
-					Integer cnt = hist.get(pixel);
-					if (cnt == null)
-						cnt = 1;
-					else
-						cnt++;
-					
-					hist.put(pixel, cnt);
-				}
-			}
-			
-	
-			for (int x = 0; x < width; x += 8) {
-				Map<Integer, Integer> histogram = histograms[x / 8];
-				Map<Integer, Integer> histogramSide = histogramSides[x / 8];
-				
-				int maxx = x + 8 < width ? x + 8 : width;
-				
-				// get prominent colors, weighing colors that also
-				// appear in surrounding pixels higher  
-				List<Pair<Integer, Integer>> sorted = new ArrayList<Pair<Integer,Integer>>();
-				for (Map.Entry<Integer, Integer> entry : histogram.entrySet()) {
-					Integer c = entry.getKey();
-					int cnt = entry.getValue();
-					if (includeSides) {
-						cnt *= 2;
-						Integer scnt = histogramSide.get(c);
-						if (scnt != null)
-							cnt += scnt;
-					}
-					sorted.add(new Pair<Integer, Integer>(c, cnt));
-				}
-				Collections.sort(sorted, new Comparator<Pair<Integer, Integer>>() {
-	
-					@Override
-					public int compare(Pair<Integer, Integer> o1,
-							Pair<Integer, Integer> o2) {
-						return o2.second - o1.second;
-					}
-					
-				});
-	
-				colorUser.useColor(x, maxx, y, sorted);
-			}
-		}
-	}
 	public byte getPixel(int x, int y) {
 		if (paletteMappingDirty) {
 			updatePaletteMapping();

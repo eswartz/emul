@@ -32,26 +32,21 @@ class Histogram {
 	 * colors are reduced to the given palette with the given
 	 * error.
 	 * @param paletteMapper the color mapper
-	 * @param mask TODO
 	 * @return the number of colors that map directly (within maxDist)
 	 */
-	public int generate(IMapColor paletteMapper, int maxDist, int mask) {
-		int mapped = gather(paletteMapper, maxDist, mask);
+	public int generate(IMapColor paletteMapper, int maxDist) {
+		int mapped = gather(paletteMapper, maxDist);
 		
 		sort();
 		
 		return mapped;
 	}
 
-	private int gather(IMapColor paletteMapper, int maxDist, int mask) {
+	private int gather(IMapColor paletteMapper, int maxDist) {
 		hist.clear();
 		indices.clear();
 		pixelToColor.clear();
 		Arrays.fill(mappedColors, 0);
-		
-		int rgbByte = (0xff00 & ~(0xff << mask)) >> 8;
-		int rgbMask = (rgbByte << 16) | (rgbByte << 8) | rgbByte;
-		if (ColorMapUtils.DEBUG) System.out.println("rgbMask = " + Integer.toHexString(rgbMask));
 		
 		int[] distA = { 0 };
 		int[] prgb = { 0, 0, 0 };
@@ -59,14 +54,14 @@ class Histogram {
 		int mapped = 0;
 		for (int y = 0; y < img.getHeight(); y++) {
 			for (int x = 0; x < img.getWidth(); x++) {
-				int pixel = img.getRGB(x, y) & rgbMask;
+				int pixel = img.getRGB(x, y);
 				int c;
 				Integer color = pixelToColor.get(pixel);
 				if (color == null) {
 					ColorMapUtils.pixelToRGB(pixel, prgb);
 					
 					c = paletteMapper.mapColor(prgb, distA);
-					if (distA[0] <= maxDist * (1 << mask)) {
+					if (distA[0] <= maxDist) {
 						pixelToColor.put(pixel, c);
 						
 						Integer count = hist.get(c);
