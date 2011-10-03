@@ -60,18 +60,18 @@
 <!-- Executor service contributions -->
    <extension point="org.eclipse.tm.te.runtime.concurrent.executorServices">
       <executorService
-            id="org.eclipse.tm.te.ui.executors.platform.display"
+            id="org.eclipse.tm.te.ui.executors.SWTDisplay"
             label="Eclipse Platform Display Executor"
-            class="org.eclipse.tm.te.ui.internal.executors.EclipsePlatformDisplayExecutor">
+            class="org.eclipse.tm.te.ui.internal.executors.SWTDisplayExecutor">
       </executorService>
    </extension>
    
 <!-- Executor utility delegate contributions -->
    <extension point="org.eclipse.tm.te.runtime.concurrent.executorUtilDelegates">
       <executorUtilDelegate
-      		class="org.eclipse.tm.te.ui.internal.executors.EclipsePlatformDisplayExecutorUtilDelegate"
-            id="org.eclipse.tm.te.ui.executors.delegate.display"
-            label="%EclipsePlatformDisplayExecutorUtilDelegate.label">
+      		class="org.eclipse.tm.te.ui.internal.executors.SWTDisplayExecutorUtilDelegate"
+            id="org.eclipse.tm.te.ui.executors.delegate.SWTDisplay"
+            label="%SWTDisplayExecutorUtilDelegate.label">
       </executorUtilDelegate>
    </extension>
    
