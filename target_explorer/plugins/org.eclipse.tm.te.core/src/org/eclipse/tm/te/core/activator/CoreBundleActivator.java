@@ -9,7 +9,7 @@
  *******************************************************************************/
 package org.eclipse.tm.te.core.activator;
 
-import org.eclipse.tm.te.core.tracing.TraceHandler;
+import org.eclipse.tm.te.runtime.tracing.TraceHandler;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 
@@ -56,6 +56,7 @@ public class CoreBundleActivator implements BundleActivator {
 	/* (non-Javadoc)
 	 * @see org.osgi.framework.BundleActivator#start(org.osgi.framework.BundleContext)
 	 */
+	@Override
 	public void start(BundleContext bundleContext) throws Exception {
 		CoreBundleActivator.context = bundleContext;
 	}
@@ -63,6 +64,7 @@ public class CoreBundleActivator implements BundleActivator {
 	/* (non-Javadoc)
 	 * @see org.osgi.framework.BundleActivator#stop(org.osgi.framework.BundleContext)
 	 */
+	@Override
 	public void stop(BundleContext bundleContext) throws Exception {
 		CoreBundleActivator.context = null;
 		traceHandler = null;

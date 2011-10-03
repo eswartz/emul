@@ -56,11 +56,13 @@ public class TreePart extends AbstractStructuredViewerPart implements ISelection
 		Assert.isNotNull(viewer);
 
 		viewer.addSelectionChangedListener(new ISelectionChangedListener() {
+			@Override
 			public void selectionChanged(SelectionChangedEvent e) {
 				TreePart.this.selectionChanged(e);
 			}
 		});
 		viewer.addDoubleClickListener(new IDoubleClickListener() {
+			@Override
 			public void doubleClick(DoubleClickEvent e) {
 				TreePart.this.doubleClick(e);
 			}
@@ -96,12 +98,14 @@ public class TreePart extends AbstractStructuredViewerPart implements ISelection
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.ISelectionChangedListener#selectionChanged(org.eclipse.jface.viewers.SelectionChangedEvent)
 	 */
+	@Override
 	public void selectionChanged(SelectionChangedEvent event) {
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.IDoubleClickListener#doubleClick(org.eclipse.jface.viewers.DoubleClickEvent)
 	 */
+	@Override
 	public void doubleClick(DoubleClickEvent event) {
 	}
 

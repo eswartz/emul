@@ -14,7 +14,7 @@ import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.osgi.util.NLS;
-import org.eclipse.tm.te.core.nls.Messages;
+import org.eclipse.tm.te.runtime.nls.Messages;
 import org.eclipse.tm.te.ui.views.activator.UIPlugin;
 import org.eclipse.tm.te.ui.views.interfaces.IEditorPage;
 import org.eclipse.ui.IEditorInput;

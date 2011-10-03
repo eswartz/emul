@@ -33,6 +33,7 @@ public class ViewsUtil {
 
 		// Create the runnable
 		Runnable runnable = new Runnable() {
+			@Override
 			public void run() {
 				// Check the active workbench window and active page instances
 				if (PlatformUI.getWorkbench().getActiveWorkbenchWindow() != null && PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage() != null) {
@@ -67,6 +68,7 @@ public class ViewsUtil {
 
 		// Create the runnable
 		Runnable runnable = new Runnable() {
+			@Override
 			public void run() {
 				// Check the active workbench window and active page instances
 				if (PlatformUI.getWorkbench().getActiveWorkbenchWindow() != null && PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage() != null) {

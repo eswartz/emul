@@ -25,18 +25,21 @@ public class WorkbenchWindowListener implements IWindowListener {
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.IWindowListener#windowActivated(org.eclipse.ui.IWorkbenchWindow)
 	 */
+	@Override
 	public void windowActivated(IWorkbenchWindow window) {
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.IWindowListener#windowDeactivated(org.eclipse.ui.IWorkbenchWindow)
 	 */
+	@Override
 	public void windowDeactivated(IWorkbenchWindow window) {
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.IWindowListener#windowClosed(org.eclipse.ui.IWorkbenchWindow)
 	 */
+	@Override
 	public void windowClosed(IWorkbenchWindow window) {
 		// On close, remove all global listeners from the window
 		if (window != null && window.getPartService() != null) {
@@ -47,6 +50,7 @@ public class WorkbenchWindowListener implements IWindowListener {
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.IWindowListener#windowOpened(org.eclipse.ui.IWorkbenchWindow)
 	 */
+	@Override
 	public void windowOpened(IWorkbenchWindow window) {
 		// On open, register all global listener to the window
 		if (window != null && window.getPartService() != null) {

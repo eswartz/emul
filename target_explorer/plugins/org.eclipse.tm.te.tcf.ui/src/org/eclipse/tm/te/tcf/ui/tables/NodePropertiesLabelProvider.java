@@ -51,6 +51,7 @@ public class NodePropertiesLabelProvider extends LabelProvider implements ITable
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.vtl.ui.datasource.controls.tables.TableLabelProvider#getColumnText(org.eclipse.tm.te.tcf.core.runtime.model.interfaces.IModelNode, int)
 	 */
+	@Override
 	public String getColumnText(Object element, int columnIndex) {
 		Assert.isNotNull(element);
 
@@ -87,6 +88,7 @@ public class NodePropertiesLabelProvider extends LabelProvider implements ITable
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnImage(java.lang.Object, int)
 	 */
+	@Override
 	public Image getColumnImage(Object element, int columnIndex) {
 		return null;
 	}
@@ -94,6 +96,7 @@ public class NodePropertiesLabelProvider extends LabelProvider implements ITable
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.ITableColorProvider#getForeground(java.lang.Object, int)
 	 */
+	@Override
 	public Color getForeground(Object element, int columnIndex) {
 		if (element instanceof TableNode && IPeerModelProperties.PROP_LAST_SCANNER_ERROR.equals(((TableNode)element).name)) {
 			return getParentViewer().getControl().getDisplay().getSystemColor(SWT.COLOR_RED);
@@ -104,6 +107,7 @@ public class NodePropertiesLabelProvider extends LabelProvider implements ITable
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.ITableColorProvider#getBackground(java.lang.Object, int)
 	 */
+	@Override
 	public Color getBackground(Object element, int columnIndex) {
 		return null;
 	}

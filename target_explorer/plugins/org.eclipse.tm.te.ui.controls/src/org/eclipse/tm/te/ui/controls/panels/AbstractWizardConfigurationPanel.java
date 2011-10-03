@@ -49,6 +49,7 @@ public abstract class AbstractWizardConfigurationPanel implements IWizardConfigu
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.dialogs.IMessageProvider#getMessage()
 	 */
+	@Override
 	public final String getMessage() {
 		return message;
 	}
@@ -56,6 +57,7 @@ public abstract class AbstractWizardConfigurationPanel implements IWizardConfigu
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.dialogs.IMessageProvider#getMessageType()
 	 */
+	@Override
 	public final int getMessageType() {
 		return messageType;
 	}
@@ -75,6 +77,7 @@ public abstract class AbstractWizardConfigurationPanel implements IWizardConfigu
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.ui.controls.interfaces.IWizardConfigurationPanel#dispose()
 	 */
+	@Override
 	public void dispose() {
 	}
 
@@ -90,6 +93,7 @@ public abstract class AbstractWizardConfigurationPanel implements IWizardConfigu
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.ui.controls.interfaces.IWizardConfigurationPanel#getControl()
 	 */
+	@Override
 	public Composite getControl() {
 		return topControl;
 	}
@@ -97,24 +101,28 @@ public abstract class AbstractWizardConfigurationPanel implements IWizardConfigu
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.ui.controls.interfaces.IWizardConfigurationPanel#doRestoreWidgetValues(org.eclipse.jface.dialogs.IDialogSettings, java.lang.String)
 	 */
+	@Override
 	public void doRestoreWidgetValues(IDialogSettings settings, String idPrefix) {
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.ui.controls.interfaces.IWizardConfigurationPanel#doSaveWidgetValues(org.eclipse.jface.dialogs.IDialogSettings, java.lang.String)
 	 */
+	@Override
 	public void doSaveWidgetValues(IDialogSettings settings, String idPrefix) {
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.ui.controls.interfaces.IWizardConfigurationPanel#adjustControlEnablement()
 	 */
+	@Override
 	public void adjustControlEnablement() {
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.ui.controls.interfaces.IWizardConfigurationPanel#isValid()
 	 */
+	@Override
 	public boolean isValid() {
 		return true;
 	}

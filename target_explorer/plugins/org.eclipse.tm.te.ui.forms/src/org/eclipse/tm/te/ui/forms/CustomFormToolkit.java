@@ -170,6 +170,7 @@ public class CustomFormToolkit extends PlatformObject {
 			/* (non-Javadoc)
 			 * @see org.eclipse.ui.forms.events.IExpansionListener#expansionStateChanged(org.eclipse.ui.forms.events.ExpansionEvent)
 			 */
+			@Override
 			public void expansionStateChanged(ExpansionEvent e) {
 				// Always set the scrolled form to re-flow. Otherwise it wouldn't
 				// re-arrange the controls following this expandable composite on
@@ -195,6 +196,7 @@ public class CustomFormToolkit extends PlatformObject {
 			/* (non-Javadoc)
 			 * @see org.eclipse.ui.forms.events.IExpansionListener#expansionStateChanging(org.eclipse.ui.forms.events.ExpansionEvent)
 			 */
+			@Override
 			public void expansionStateChanging(ExpansionEvent e) {
 			}
 		});
@@ -257,6 +259,7 @@ public class CustomFormToolkit extends PlatformObject {
 			/* (non-Javadoc)
 			 * @see org.eclipse.ui.forms.events.IExpansionListener#expansionStateChanged(org.eclipse.ui.forms.events.ExpansionEvent)
 			 */
+			@Override
 			public void expansionStateChanged(ExpansionEvent e) {
 				// Always set the scrolled form to re-flow. Otherwise it wouldn't
 				// re-arrange the controls following this expandable composite on
@@ -282,6 +285,7 @@ public class CustomFormToolkit extends PlatformObject {
 			/* (non-Javadoc)
 			 * @see org.eclipse.ui.forms.events.IExpansionListener#expansionStateChanging(org.eclipse.ui.forms.events.ExpansionEvent)
 			 */
+			@Override
 			public void expansionStateChanging(ExpansionEvent e) {
 			}
 		});

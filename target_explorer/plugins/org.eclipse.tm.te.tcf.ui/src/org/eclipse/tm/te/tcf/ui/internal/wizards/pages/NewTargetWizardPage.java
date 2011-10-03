@@ -61,6 +61,7 @@ public class NewTargetWizardPage extends AbstractValidatableWizardPage {
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets.Composite)
 	 */
+	@Override
 	public void createControl(Composite parent) {
 		// Setup title and description
 		setTitle(Messages.NewTargetWizardPage_title);
@@ -112,6 +113,7 @@ public class NewTargetWizardPage extends AbstractValidatableWizardPage {
 		addressControl = new Text(panel, SWT.SINGLE | SWT.BORDER);
 		addressControl.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		addressControl.addModifyListener(new ModifyListener() {
+			@Override
 			public void modifyText(ModifyEvent e) {
 				updatePeerId();
 			}
@@ -124,6 +126,7 @@ public class NewTargetWizardPage extends AbstractValidatableWizardPage {
 		portControl.setText("1534"); //$NON-NLS-1$
 		portControl.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		portControl.addModifyListener(new ModifyListener() {
+			@Override
 			public void modifyText(ModifyEvent e) {
 				updatePeerId();
 			}

@@ -314,13 +314,16 @@ public final class FSTreeNode extends PlatformObject {
 			final Rendezvous rendezvous = new Rendezvous();
 			IChannel channel = peerNode.getPeer().openChannel();
 			channel.addChannelListener(new IChannelListener() {
+				@Override
 				public void onChannelOpened() {
 					rendezvous.arrive();
 				}
 
+				@Override
 				public void onChannelClosed(Throwable error) {
 				}
 
+				@Override
 				public void congestionLevel(int level) {
 				}
 			});
@@ -333,6 +336,7 @@ public final class FSTreeNode extends PlatformObject {
 			IFileSystem service = channel.getRemoteService(IFileSystem.class);
 			final UserAccount[] accounts = new UserAccount[1];
 			service.user(new DoneUser() {
+				@Override
 				public void doneUser(IToken token, FileSystemException error,
 						int real_uid, int effective_uid, int real_gid,
 						int effective_gid, String home) {
@@ -371,6 +375,7 @@ public final class FSTreeNode extends PlatformObject {
 		} else {
 			final UserAccount[] accounts = new UserAccount[1];
 			Protocol.invokeAndWait(new Runnable() {
+				@Override
 				public void run() {
 					accounts[0] = (UserAccount) peer
 							.getProperty(USER_ACCOUNT_KEY);
@@ -394,6 +399,7 @@ public final class FSTreeNode extends PlatformObject {
 			peer.setProperty(USER_ACCOUNT_KEY, account);
 		} else {
 			Protocol.invokeAndWait(new Runnable() {
+				@Override
 				public void run() {
 					peer.setProperty(USER_ACCOUNT_KEY, account);
 				}

@@ -56,6 +56,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.IContentProvider#inputChanged(org.eclipse.jface.viewers.Viewer, java.lang.Object, java.lang.Object)
 	 */
+	@Override
 	public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
 		this.viewer = viewer;
 	}
@@ -63,6 +64,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.IContentProvider#dispose()
 	 */
+	@Override
 	public void dispose() {
 		model.dispose();
 	}
@@ -76,6 +78,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 				channel.close();
 			} else {
 				Protocol.invokeAndWait(new Runnable() {
+					@Override
 					public void run() {
 						channel.close();
 					}
@@ -87,6 +90,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.ITreeContentProvider#getElements(java.lang.Object)
 	 */
+	@Override
 	public Object[] getElements(Object inputElement) {
 		return getChildren(inputElement);
 	}
@@ -94,6 +98,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.ITreeContentProvider#getParent(java.lang.Object)
 	 */
+	@Override
 	public Object getParent(Object element) {
 		if (element instanceof FSTreeNode) {
 			FSTreeNode parent = ((FSTreeNode)element).parent;
@@ -109,6 +114,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.ITreeContentProvider#getChildren(java.lang.Object)
 	 */
+	@Override
 	public Object[] getChildren(Object parentElement) {
 		Assert.isNotNull(parentElement);
 
@@ -125,6 +131,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 				root[0] = model.getRoot(peerId);
 			} else {
 				Protocol.invokeAndWait(new Runnable() {
+					@Override
 					public void run() {
 						root[0] = model.getRoot(peerId);
 					}
@@ -137,6 +144,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 				IPeer peer = peerNode.getPeer();
 				final int[] state = new int[1];
 				Protocol.invokeAndWait(new Runnable() {
+					@Override
 					public void run() {
 						state[0] = peerNode.getIntProperty(IPeerModelProperties.PROP_STATE);
 					}
@@ -146,6 +154,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 					// Create the root node and the initial pending node.
 					// This must happen in the TCF dispatch thread.
 					Protocol.invokeAndWait(new Runnable() {
+						@Override
 						public void run() {
 							// The root node
 							FSTreeNode rootNode = new FSTreeNode();
@@ -170,6 +179,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 					children = candidates.toArray();
 
 					Tcf.getChannelManager().openChannel(peer, new IChannelManager.DoneOpenChannel() {
+						@Override
 						public void doneOpenChannel(final Throwable error, final IChannel channel) {
 							Assert.isTrue(Protocol.isDispatchThread());
 
@@ -178,8 +188,10 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 								if (service != null) {
 
 									Protocol.invokeLater(new Runnable() {
+										@Override
 										public void run() {
 											service.roots(new IFileSystem.DoneRoots() {
+												@Override
 												public void doneRoots(IToken token, FileSystemException error, DirEntry[] entries) {
 													// Close the channel, not needed anymore
 													closeOpenChannel(channel);
@@ -212,6 +224,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 													}
 
 													PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
+														@Override
 														public void run() {
 															if (viewer != null) viewer.refresh();
 														}
@@ -222,6 +235,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 									});
 
 									PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
+										@Override
 										public void run() {
 											if (viewer != null) viewer.refresh();
 										}
@@ -240,6 +254,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 				// This must happen in the TCF dispatch thread.
 				final List<FSTreeNode> candidates = new ArrayList<FSTreeNode>();
 				Protocol.invokeAndWait(new Runnable() {
+					@Override
 					public void run() {
 						candidates.addAll(root[0].getChildren());
 					}
@@ -253,6 +268,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 			// This must happen in the TCF dispatch thread.
 			final List<FSTreeNode> candidates = new ArrayList<FSTreeNode>();
 			Protocol.invokeAndWait(new Runnable() {
+				@Override
 				public void run() {
 					candidates.addAll(node.getChildren());
 				}
@@ -264,6 +280,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 				// Add a special "Pending..." node
 				// This must happen in the TCF dispatch thread.
 				Protocol.invokeAndWait(new Runnable() {
+					@Override
 					public void run() {
 						FSTreeNode pendingNode = new FSTreeNode();
 						pendingNode.name = Messages.PendingOperation_label;
@@ -284,6 +301,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 					if (absName != null) {
 						// Open a channel to the peer and query the children
 						Tcf.getChannelManager().openChannel(node.peerNode.getPeer(), new IChannelManager.DoneOpenChannel() {
+							@Override
 							public void doneOpenChannel(final Throwable error, final IChannel channel) {
 								Assert.isTrue(Protocol.isDispatchThread());
 
@@ -292,8 +310,10 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 									if (service != null) {
 
 										Protocol.invokeLater(new Runnable() {
+											@Override
 											public void run() {
 												service.opendir(absName, new IFileSystem.DoneOpen() {
+													@Override
 													public void doneOpen(IToken token, FileSystemException error, final IFileHandle handle) {
 														if (error == null) {
 															// Read the directory content until finished
@@ -347,13 +367,16 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 		Assert.isNotNull(parentNode);
 
 		Protocol.invokeLater(new Runnable() {
+			@Override
 			public void run() {
 				service.readdir(handle, new IFileSystem.DoneReadDir() {
 
+					@Override
 					public void doneReadDir(IToken token, FileSystemException error, DirEntry[] entries, boolean eof) {
 						// Close the handle and channel if EOF is signaled or an error occurred.
 						if (eof) {
 							service.close(handle, new IFileSystem.DoneClose() {
+								@Override
 								public void doneClose(IToken token, FileSystemException error) {
 									closeOpenChannel(channel);
 								}
@@ -392,6 +415,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 						}
 
 						PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
+							@Override
 							public void run() {
 								if (viewer instanceof StructuredViewer) ((StructuredViewer)viewer).refresh(parentNode);
 							}
@@ -476,6 +500,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.ITreeContentProvider#hasChildren(java.lang.Object)
 	 */
+	@Override
 	public boolean hasChildren(final Object element) {
 		Assert.isNotNull(element);
 
@@ -489,6 +514,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 				} else if (node.childrenQueried) {
 					final boolean[] result = new boolean[1];
 					Protocol.invokeAndWait(new Runnable() {
+						@Override
 						public void run() {
 							result[0] = node.getChildren().size() > 0;
 						}
@@ -503,6 +529,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 				peerId[0] = ((IPeerModel)element).getPeer().getID();
 			} else {
 				Protocol.invokeAndWait(new Runnable() {
+					@Override
 					public void run() {
 						peerId[0] = ((IPeerModel)element).getPeer().getID();
 					}

@@ -170,8 +170,8 @@ public class CacheManager {
 	 */
 	public boolean download(final FSTreeNode node, Shell parent) {
 		IRunnableWithProgress runnable = new IRunnableWithProgress() {
-			public void run(IProgressMonitor monitor)
-					throws InvocationTargetException, InterruptedException {
+			@Override
+			public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 				monitor.beginTask(NLS.bind(Messages.CacheManager_DowloadingFile, node.name), 100);
 				try {
 					boolean canceled = downloadFile(node, monitor);

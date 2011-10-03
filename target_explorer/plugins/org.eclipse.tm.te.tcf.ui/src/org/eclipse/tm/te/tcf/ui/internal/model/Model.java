@@ -36,6 +36,7 @@ public final class Model {
 				initialize();
 			} else {
 				Protocol.invokeAndWait(new Runnable() {
+					@Override
 					public void run() {
 						initialize();
 					}
@@ -69,6 +70,7 @@ public final class Model {
 			locatorModel.dispose();
 		} else {
 			Protocol.invokeAndWait(new Runnable() {
+				@Override
 				public void run() {
 					locatorModel.dispose();
 				}

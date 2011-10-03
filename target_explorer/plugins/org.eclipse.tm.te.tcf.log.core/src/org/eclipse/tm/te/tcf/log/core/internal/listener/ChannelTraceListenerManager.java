@@ -127,6 +127,7 @@ public class ChannelTraceListenerManager {
 		final AbstractChannel.TraceListener traceListener = listeners.remove(channel);
 		if (traceListener != null) {
 			Protocol.invokeLater(new Runnable() {
+				@Override
 				public void run() {
 					((AbstractChannel)channel).removeTraceListener(traceListener);
 				}

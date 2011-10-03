@@ -102,6 +102,7 @@ public abstract class AbstractStructuredViewerSection extends AbstractSection {
 		// Create and initialize the menu manager
 		MenuManager manager = new MenuManager();
 		manager.addMenuListener(new IMenuListener() {
+			@Override
 			public void menuAboutToShow(IMenuManager manager2) {
 				fillContextMenu(manager2);
 			}

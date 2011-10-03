@@ -196,6 +196,7 @@ public final class Tcf {
 		final IProtocolStateChangeListener[] listeners = tcf.protocolStateChangeListeners.toArray(new IProtocolStateChangeListener[tcf.protocolStateChangeListeners.size()]);
 		if (listeners.length > 0) {
 			Protocol.invokeLater(new Runnable() {
+				@Override
 				public void run() {
 					for (IProtocolStateChangeListener listener : listeners) {
 						listener.stateChanged(true);
@@ -231,6 +232,7 @@ public final class Tcf {
 			// Catch IllegalStateException: TCF event dispatcher might have been shut down already
 			try {
 				Protocol.invokeLater(new Runnable() {
+					@Override
 					public void run() {
 						for (IProtocolStateChangeListener listener : listeners) {
 							listener.stateChanged(false);
@@ -254,6 +256,7 @@ public final class Tcf {
 		Assert.isNotNull(tcf);
 
 		runSafe(new Runnable() {
+			@Override
 			public void run() {
 				Assert.isTrue(Protocol.isDispatchThread());
 

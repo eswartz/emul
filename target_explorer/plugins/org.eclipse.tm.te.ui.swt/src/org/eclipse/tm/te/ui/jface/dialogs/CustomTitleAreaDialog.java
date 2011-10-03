@@ -358,6 +358,7 @@ public class CustomTitleAreaDialog extends TitleAreaDialog implements IMessagePr
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.dialogs.IMessageProvider#getMessageType()
 	 */
+	@Override
 	public int getMessageType() {
 		return errorMessage != null ? IMessageProvider.ERROR : messageType;
 	}

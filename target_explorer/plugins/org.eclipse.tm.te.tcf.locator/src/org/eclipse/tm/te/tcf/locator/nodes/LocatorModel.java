@@ -88,6 +88,7 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.ILocatorModel#addListener(org.eclipse.tm.te.tcf.locator.core.interfaces.IModelListener)
 	 */
+	@Override
 	public void addListener(IModelListener listener) {
 		Assert.isNotNull(listener);
 		Assert.isTrue(Protocol.isDispatchThread());
@@ -102,6 +103,7 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.ILocatorModel#removeListener(org.eclipse.tm.te.tcf.locator.core.interfaces.IModelListener)
 	 */
+	@Override
 	public void removeListener(IModelListener listener) {
 		Assert.isNotNull(listener);
 		Assert.isTrue(Protocol.isDispatchThread());
@@ -116,6 +118,7 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.interfaces.nodes.ILocatorModel#getListener()
 	 */
+	@Override
 	public IModelListener[] getListener() {
 		return modelListener.toArray(new IModelListener[modelListener.size()]);
 	}
@@ -123,6 +126,7 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.ILocatorModel#dispose()
 	 */
+	@Override
 	public void dispose() {
 		Assert.isTrue(Protocol.isDispatchThread());
 
@@ -138,6 +142,7 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 		final IModelListener[] listeners = getListener();
 		if (listeners.length > 0) {
 			Protocol.invokeLater(new Runnable() {
+				@Override
 				public void run() {
 					for (IModelListener listener : listeners) {
 						listener.locatorModelDisposed(LocatorModel.this);
@@ -168,6 +173,7 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.ILocatorModel#isDisposed()
 	 */
+	@Override
 	public boolean isDisposed() {
 		return disposed;
 	}
@@ -175,6 +181,7 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.ILocatorModel#getPeers()
 	 */
+	@Override
 	public IPeerModel[] getPeers() {
 		return peers.values().toArray(new IPeerModel[peers.values().size()]);
 	}
@@ -220,6 +227,7 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.ILocatorModel#getService(java.lang.Class)
 	 */
+	@Override
 	@SuppressWarnings("unchecked")
 	public <V extends ILocatorModelService> V getService(Class<V> serviceInterface) {
 		Assert.isNotNull(serviceInterface);
@@ -256,6 +264,7 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.ILocatorModel#getScanner()
 	 */
+	@Override
 	public IScanner getScanner() {
 		if (scanner == null) scanner = new Scanner(this);
 		return scanner;
@@ -264,6 +273,7 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.ILocatorModel#startScanner(long, long)
 	 */
+	@Override
 	public void startScanner(long delay, long schedule) {
 		if (CoreBundleActivator.getTraceHandler().isSlotEnabled(0, ITracing.ID_TRACE_LOCATOR_MODEL)) {
 			CoreBundleActivator.getTraceHandler().trace("LocatorModel.startScanner( " + delay + ", " + schedule + " )", ITracing.ID_TRACE_LOCATOR_MODEL, this); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
@@ -291,6 +301,7 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.ILocatorModel#stopScanner()
 	 */
+	@Override
 	public void stopScanner() {
 		if (CoreBundleActivator.getTraceHandler().isSlotEnabled(0, ITracing.ID_TRACE_LOCATOR_MODEL)) {
 			CoreBundleActivator.getTraceHandler().trace("LocatorModel.stopScanner()", ITracing.ID_TRACE_LOCATOR_MODEL, this); //$NON-NLS-1$
@@ -307,6 +318,7 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.ILocatorModel#validatePeerNodeForAdd(org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.IPeerModel)
 	 */
+	@Override
 	public IPeerModel validatePeerNodeForAdd(IPeerModel node) {
 		Assert.isNotNull(node);
 		Assert.isTrue(Protocol.isDispatchThread());
@@ -410,6 +422,7 @@ public class LocatorModel extends PlatformObject implements ILocatorModel {
 				final IModelListener[] listeners = getListener();
 				if (listeners.length > 0) {
 					Protocol.invokeLater(new Runnable() {
+						@Override
 						public void run() {
 							for (IModelListener listener : listeners) {
 								listener.locatorModelChanged(LocatorModel.this);

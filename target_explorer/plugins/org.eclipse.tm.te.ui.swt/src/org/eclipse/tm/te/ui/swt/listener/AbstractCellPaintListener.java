@@ -53,6 +53,7 @@ public abstract class AbstractCellPaintListener implements Listener {
 			widget.addListener(SWT.MeasureItem, this);
 			widget.addListener(SWT.PaintItem, this);
 			widget.addDisposeListener(new DisposeListener() {
+				@Override
 				public void widgetDisposed(DisposeEvent e) {
 					deregister(e.widget);
 				}
@@ -74,6 +75,7 @@ public abstract class AbstractCellPaintListener implements Listener {
 	/* (non-Javadoc)
 	 * @see org.eclipse.swt.widgets.Listener#handleEvent(org.eclipse.swt.widgets.Event)
 	 */
+	@Override
 	public void handleEvent(Event event) {
 		// Check if the event type is handled.
 		if (!isHandledEventType(event.type)) {

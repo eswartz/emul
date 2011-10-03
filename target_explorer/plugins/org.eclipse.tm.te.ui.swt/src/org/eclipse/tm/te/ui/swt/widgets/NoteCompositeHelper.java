@@ -89,6 +89,7 @@ public class NoteCompositeHelper {
 		noteLabel.setLayoutData(new GridData(GridData.VERTICAL_ALIGN_BEGINNING));
 
 		final IPropertyChangeListener fontListener = new IPropertyChangeListener() {
+			@Override
 			public void propertyChange(PropertyChangeEvent event) {
 				// Note: This is actually wrong but the same as in platforms
 				// PreferencePage
@@ -99,6 +100,7 @@ public class NoteCompositeHelper {
 		};
 		JFaceResources.getFontRegistry().addListener(fontListener);
 		noteLabel.addDisposeListener(new DisposeListener() {
+			@Override
 			public void widgetDisposed(DisposeEvent event) {
 				JFaceResources.getFontRegistry().removeListener(fontListener);
 			}

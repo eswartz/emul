@@ -59,6 +59,7 @@ public class LocatorModelRefreshService extends AbstractLocatorModelService impl
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.services.ILocatorModelRefreshService#refresh()
 	 */
+	@Override
 	public void refresh() {
 		Assert.isTrue(Protocol.isDispatchThread());
 
@@ -143,6 +144,7 @@ public class LocatorModelRefreshService extends AbstractLocatorModelService impl
 			for (File root : roots) {
 				// List all "*.ini" files within the root location
 				File[] candidates = root.listFiles(new FileFilter() {
+					@Override
 					public boolean accept(File pathname) {
 						IPath path = new Path(pathname.getAbsolutePath());
 						return path.getFileExtension() != null && path.getFileExtension().toLowerCase().equals("ini"); //$NON-NLS-1$

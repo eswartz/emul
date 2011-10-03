@@ -28,6 +28,7 @@ public class PerspectiveFactory extends PlatformObject implements IPerspectiveFa
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.IPerspectiveFactory#createInitialLayout(org.eclipse.ui.IPageLayout)
 	 */
+	@Override
 	public void createInitialLayout(IPageLayout layout) {
 		// editor is placed for free
 		String editorArea = layout.getEditorArea();

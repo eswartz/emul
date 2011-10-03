@@ -67,6 +67,7 @@ public class ChannelTraceListener implements TraceListener {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.tcf.core.AbstractChannel.TraceListener#onChannelClosed(java.lang.Throwable)
 	 */
+	@Override
 	public void onChannelClosed(Throwable error) {
 		if (CoreBundleActivator.getTraceHandler().isSlotEnabled(0, ITracing.ID_TRACE_CHANNEL_TRACE_LISTENER)) {
 			CoreBundleActivator.getTraceHandler().trace("TraceListener.onChannelClosed ( " + error + " )", //$NON-NLS-1$ //$NON-NLS-2$
@@ -89,6 +90,7 @@ public class ChannelTraceListener implements TraceListener {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.tcf.core.AbstractChannel.TraceListener#onMessageReceived(char, java.lang.String, java.lang.String, java.lang.String, byte[])
 	 */
+	@Override
 	public void onMessageReceived(char type, String token, String service, String name, byte[] data) {
 		if (CoreBundleActivator.getTraceHandler().isSlotEnabled(0, ITracing.ID_TRACE_CHANNEL_TRACE_LISTENER)) {
 			CoreBundleActivator.getTraceHandler().trace("TraceListener.onMessageReceived ( " + type //$NON-NLS-1$
@@ -102,6 +104,7 @@ public class ChannelTraceListener implements TraceListener {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.tcf.core.AbstractChannel.TraceListener#onMessageSent(char, java.lang.String, java.lang.String, java.lang.String, byte[])
 	 */
+	@Override
 	public void onMessageSent(final char type, String token, String service, String name, byte[] data) {
 		if (CoreBundleActivator.getTraceHandler().isSlotEnabled(0, ITracing.ID_TRACE_CHANNEL_TRACE_LISTENER)) {
 			CoreBundleActivator.getTraceHandler().trace("TraceListener.onMessageSent ( " + type //$NON-NLS-1$

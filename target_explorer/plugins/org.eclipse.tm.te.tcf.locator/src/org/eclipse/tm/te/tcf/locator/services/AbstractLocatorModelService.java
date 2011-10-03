@@ -35,6 +35,7 @@ public abstract class AbstractLocatorModelService extends PlatformObject impleme
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.interfaces.services.ILocatorModelService#getLocatorModel()
 	 */
+	@Override
 	public final ILocatorModel getLocatorModel() {
 		return locatorModel;
 	}

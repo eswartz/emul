@@ -38,7 +38,7 @@ public class WorkspaceContainerValidator extends Validator {
 	}
 
 	/* (non-Javadoc)
-	 * @see com.windriver.ide.common.ui.validator.WRValidator#isValid(java.lang.String)
+	 * @see org.eclipse.tm.te.ui.controls.validator.Validator#isValid(java.lang.String)
 	 */
 	@Override
 	public boolean isValid(String newText) {

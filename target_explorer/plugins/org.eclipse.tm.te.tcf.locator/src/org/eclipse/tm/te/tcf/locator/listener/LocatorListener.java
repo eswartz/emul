@@ -46,6 +46,7 @@ public class LocatorListener implements ILocator.LocatorListener {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.tcf.services.ILocator.LocatorListener#peerAdded(org.eclipse.tm.tcf.protocol.IPeer)
 	 */
+	@Override
 	public void peerAdded(IPeer peer) {
 		if (CoreBundleActivator.getTraceHandler().isSlotEnabled(0, ITracing.ID_TRACE_LOCATOR_LISTENER)) {
 			CoreBundleActivator.getTraceHandler().trace("LocatorListener.peerAdded( " + (peer != null ? peer.getID() : null) + " )", ITracing.ID_TRACE_LOCATOR_LISTENER, this); //$NON-NLS-1$ //$NON-NLS-2$
@@ -76,6 +77,7 @@ public class LocatorListener implements ILocator.LocatorListener {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.tcf.services.ILocator.LocatorListener#peerChanged(org.eclipse.tm.tcf.protocol.IPeer)
 	 */
+	@Override
 	public void peerChanged(IPeer peer) {
 		if (CoreBundleActivator.getTraceHandler().isSlotEnabled(0, ITracing.ID_TRACE_LOCATOR_LISTENER)) {
 			CoreBundleActivator.getTraceHandler().trace("LocatorListener.peerChanged( " + (peer != null ? peer.getID() : null) + " )", ITracing.ID_TRACE_LOCATOR_LISTENER, this); //$NON-NLS-1$ //$NON-NLS-2$
@@ -92,6 +94,7 @@ public class LocatorListener implements ILocator.LocatorListener {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.tcf.services.ILocator.LocatorListener#peerRemoved(java.lang.String)
 	 */
+	@Override
 	public void peerRemoved(String id) {
 		if (CoreBundleActivator.getTraceHandler().isSlotEnabled(0, ITracing.ID_TRACE_LOCATOR_LISTENER)) {
 			CoreBundleActivator.getTraceHandler().trace("LocatorListener.peerRemoved( " + id + " )", ITracing.ID_TRACE_LOCATOR_LISTENER, this); //$NON-NLS-1$ //$NON-NLS-2$
@@ -110,6 +113,7 @@ public class LocatorListener implements ILocator.LocatorListener {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.tcf.services.ILocator.LocatorListener#peerHeartBeat(java.lang.String)
 	 */
+	@Override
 	public void peerHeartBeat(String id) {
 		if (CoreBundleActivator.getTraceHandler().isSlotEnabled(0, ITracing.ID_TRACE_LOCATOR_LISTENER)) {
 			CoreBundleActivator.getTraceHandler().trace("LocatorListener.peerHeartBeat( " + id + " )", ITracing.ID_TRACE_LOCATOR_LISTENER, this); //$NON-NLS-1$ //$NON-NLS-2$

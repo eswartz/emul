@@ -151,6 +151,7 @@ public class BaseControl extends PlatformObject implements IMessageProvider {
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.dialogs.IMessageProvider#getMessage()
 	 */
+	@Override
 	public final String getMessage() {
 		return message;
 	}
@@ -158,6 +159,7 @@ public class BaseControl extends PlatformObject implements IMessageProvider {
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.dialogs.IMessageProvider#getMessageType()
 	 */
+	@Override
 	public final int getMessageType() {
 		return messageType;
 	}

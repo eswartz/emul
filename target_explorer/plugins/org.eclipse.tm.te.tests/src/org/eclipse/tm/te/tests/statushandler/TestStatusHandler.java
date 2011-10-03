@@ -10,8 +10,8 @@
 package org.eclipse.tm.te.tests.statushandler;
 
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.tm.te.core.interfaces.nodes.IPropertiesContainer;
-import org.eclipse.tm.te.core.statushandler.AbstractStatusHandler;
+import org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer;
+import org.eclipse.tm.te.runtime.statushandler.AbstractStatusHandler;
 
 /**
  * Target Explorer: Test status handler implementation.
@@ -19,8 +19,9 @@ import org.eclipse.tm.te.core.statushandler.AbstractStatusHandler;
 public class TestStatusHandler extends AbstractStatusHandler {
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.core.statushandler.interfaces.IStatusHandler#handleStatus(org.eclipse.core.runtime.IStatus, org.eclipse.tm.te.core.interfaces.IPropertiesContainer, org.eclipse.tm.te.core.statushandler.interfaces.IStatusHandler.DoneHandleStatus)
+	 * @see org.eclipse.tm.te.runtime.statushandler.interfaces.IStatusHandler#handleStatus(org.eclipse.core.runtime.IStatus, org.eclipse.tm.te.runtime.interfaces.IPropertiesContainer, org.eclipse.tm.te.runtime.statushandler.interfaces.IStatusHandler.DoneHandleStatus)
 	 */
+	@Override
 	public void handleStatus(IStatus status, IPropertiesContainer data, DoneHandleStatus done) {
 	}
 }

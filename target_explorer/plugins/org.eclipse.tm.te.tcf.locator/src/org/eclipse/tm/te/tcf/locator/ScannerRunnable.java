@@ -73,6 +73,7 @@ public class ScannerRunnable implements Runnable, IChannel.IChannelListener {
 	/* (non-Javadoc)
 	 * @see java.lang.Runnable#run()
 	 */
+	@Override
 	public void run() {
 		if (peerNode != null && peerNode.getPeer() != null) {
 			// Open the channel
@@ -91,6 +92,7 @@ public class ScannerRunnable implements Runnable, IChannel.IChannelListener {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.tcf.protocol.IChannel.IChannelListener#onChannelOpened()
 	 */
+	@Override
 	public void onChannelOpened() {
 		// Peer is reachable
 		if (channel != null) {
@@ -129,6 +131,7 @@ public class ScannerRunnable implements Runnable, IChannel.IChannelListener {
 					if (peers != null && !peers.isEmpty()) {
 						// Execute asynchronously within the TCF dispatch thread
 						Protocol.invokeLater(new Runnable() {
+							@Override
 							public void run() {
 								for (String peerId : peers.keySet()) {
 									// Try to find an existing peer node first
@@ -154,6 +157,7 @@ public class ScannerRunnable implements Runnable, IChannel.IChannelListener {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.tcf.protocol.IChannel.IChannelListener#onChannelClosed(java.lang.Throwable)
 	 */
+	@Override
 	public void onChannelClosed(Throwable error) {
 		// Peer is not reachable
 
@@ -175,6 +179,7 @@ public class ScannerRunnable implements Runnable, IChannel.IChannelListener {
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.tcf.protocol.IChannel.IChannelListener#congestionLevel(int)
 	 */
+	@Override
 	public void congestionLevel(int level) {
 	}
 

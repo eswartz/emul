@@ -28,6 +28,7 @@ public class Startup {
 		if (Protocol.getEventQueue() != null) {
 			// Execute the listener registration within the TCF dispatch thread
 			Protocol.invokeLater(new Runnable() {
+				@Override
 				public void run() {
 					LogManager.getInstance().initListeners();
 				}

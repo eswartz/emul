@@ -35,6 +35,7 @@ public class Startup {
 			// runnable to execute and be invoked once the framework
 			// is fully up and usable.
 			Protocol.invokeLater(new Runnable() {
+				@Override
 				public void run() {
 					// Core framework is scheduling the runnables, means it is started.
 					setStarted(true);
@@ -56,6 +57,7 @@ public class Startup {
 			// Catch IllegalStateException: TCF event dispatcher has shut down
 			try {
 				Protocol.invokeLater(new Runnable() {
+					@Override
 					public void run() {
 						if (STARTED.get()) Tcf.start(); else Tcf.stop();
 					}

@@ -29,9 +29,4 @@ public class Messages extends NLS {
 
 	// **** Declare externalized string id's down here *****
 
-	public static String Extension_error_missingRequiredAttribute;
-	public static String Extension_error_duplicateExtension;
-	public static String Extension_error_invalidExtensionPoint;
-
-	public static String PendingOperationModelNode_label;
 }

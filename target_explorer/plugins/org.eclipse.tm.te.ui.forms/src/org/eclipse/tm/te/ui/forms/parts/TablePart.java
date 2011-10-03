@@ -55,11 +55,13 @@ public class TablePart extends AbstractStructuredViewerPart implements ISelectio
 		Assert.isNotNull(viewer);
 
 		viewer.addSelectionChangedListener(new ISelectionChangedListener() {
+			@Override
 			public void selectionChanged(SelectionChangedEvent e) {
 				TablePart.this.selectionChanged(e);
 			}
 		});
 		viewer.addDoubleClickListener(new IDoubleClickListener() {
+			@Override
 			public void doubleClick(DoubleClickEvent e) {
 				TablePart.this.doubleClick(e);
 			}
@@ -95,12 +97,14 @@ public class TablePart extends AbstractStructuredViewerPart implements ISelectio
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.ISelectionChangedListener#selectionChanged(org.eclipse.jface.viewers.SelectionChangedEvent)
 	 */
+	@Override
 	public void selectionChanged(SelectionChangedEvent event) {
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.IDoubleClickListener#doubleClick(org.eclipse.jface.viewers.DoubleClickEvent)
 	 */
+	@Override
 	public void doubleClick(DoubleClickEvent event) {
 	}
 }

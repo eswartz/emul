@@ -43,6 +43,7 @@ public class ModelListener extends ModelAdapter {
 	public void locatorModelChanged(final ILocatorModel model) {
 		if (parentModel.equals(model)) {
 			PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
+				@Override
 				public void run() {
 					CommonViewer viewer = getViewer();
 					if (viewer != null) viewer.refresh();
@@ -58,6 +59,7 @@ public class ModelListener extends ModelAdapter {
 	public void peerModelChanged(final ILocatorModel model, final IPeerModel peer) {
 		if (parentModel.equals(model)) {
 			PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
+				@Override
 				public void run() {
 					CommonViewer viewer = getViewer();
 					if (viewer != null) viewer.refresh(peer);

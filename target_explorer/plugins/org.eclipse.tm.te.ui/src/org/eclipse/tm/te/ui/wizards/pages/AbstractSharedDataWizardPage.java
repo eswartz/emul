@@ -10,7 +10,7 @@
 package org.eclipse.tm.te.ui.wizards.pages;
 
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.tm.te.core.interfaces.nodes.IPropertiesContainer;
+import org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer;
 import org.eclipse.tm.te.ui.wizards.interfaces.ISharedDataWizardPage;
 
 /**
@@ -39,26 +39,30 @@ public abstract class AbstractSharedDataWizardPage extends AbstractValidatableWi
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.ui.wizards.interfaces.ISharedDataWizardPage#setupData(org.eclipse.tm.te.core.interfaces.nodes.IPropertiesContainer)
+	 * @see org.eclipse.tm.te.ui.wizards.interfaces.ISharedDataWizardPage#setupData(org.eclipse.tm.te.runtime.interfaces.nodes.IPropertiesContainer)
 	 */
+	@Override
 	public void setupData(IPropertiesContainer data) {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.ui.wizards.interfaces.ISharedDataWizardPage#extractData(org.eclipse.tm.te.core.interfaces.nodes.IPropertiesContainer)
+	 * @see org.eclipse.tm.te.ui.wizards.interfaces.ISharedDataWizardPage#extractData(org.eclipse.tm.te.runtime.interfaces.nodes.IPropertiesContainer)
 	 */
+	@Override
 	public void extractData(IPropertiesContainer data) {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.ui.wizards.interfaces.ISharedDataWizardPage#initializeData(org.eclipse.tm.te.core.interfaces.nodes.IPropertiesContainer)
+	 * @see org.eclipse.tm.te.ui.wizards.interfaces.ISharedDataWizardPage#initializeData(org.eclipse.tm.te.runtime.interfaces.nodes.IPropertiesContainer)
 	 */
+	@Override
 	public void initializeData(IPropertiesContainer data) {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.ui.wizards.interfaces.ISharedDataWizardPage#removeData(org.eclipse.tm.te.core.interfaces.nodes.IPropertiesContainer)
+	 * @see org.eclipse.tm.te.ui.wizards.interfaces.ISharedDataWizardPage#removeData(org.eclipse.tm.te.runtime.interfaces.nodes.IPropertiesContainer)
 	 */
+	@Override
 	public void removeData(IPropertiesContainer data) {
 	}
 }

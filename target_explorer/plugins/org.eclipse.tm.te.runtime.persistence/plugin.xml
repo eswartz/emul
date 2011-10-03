@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+<!-- Extension points -->
+   <extension-point id="delegates" name="%ExtensionPoint.delegates.name" schema="schema/delegates.exsd"/>
+   
+<!-- Persistence delegate contributions -->
+   <extension point="org.eclipse.tm.te.runtime.persistence.delegates">
+      <delegate
+            class="org.eclipse.tm.te.runtime.persistence.properties.PropertiesFilePersistenceDelegate"
+            id="org.eclipse.tm.te.runtime.persistence.properties"
+            label="%PropertiesFilePersistenceDelegate.label">
+      </delegate>
+   </extension>
+
+</plugin>

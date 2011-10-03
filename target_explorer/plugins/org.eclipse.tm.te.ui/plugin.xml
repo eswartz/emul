@@ -56,4 +56,23 @@
             sequence="M1+N">
       </key>
    </extension>
+
+<!-- Executor service contributions -->
+   <extension point="org.eclipse.tm.te.runtime.concurrent.executorServices">
+      <executorService
+            id="org.eclipse.tm.te.ui.executors.platform.display"
+            label="Eclipse Platform Display Executor"
+            class="org.eclipse.tm.te.ui.internal.executors.EclipsePlatformDisplayExecutor">
+      </executorService>
+   </extension>
+   
+<!-- Executor utility delegate contributions -->
+   <extension point="org.eclipse.tm.te.runtime.concurrent.executorUtilDelegates">
+      <executorUtilDelegate
+      		class="org.eclipse.tm.te.ui.internal.executors.EclipsePlatformDisplayExecutorUtilDelegate"
+            id="org.eclipse.tm.te.ui.executors.delegate.display"
+            label="%EclipsePlatformDisplayExecutorUtilDelegate.label">
+      </executorUtilDelegate>
+   </extension>
+   
 </plugin>

@@ -33,6 +33,7 @@ public class RefreshCommandHandler extends AbstractHandler {
 	/* (non-Javadoc)
 	 * @see org.eclipse.core.commands.IHandler#execute(org.eclipse.core.commands.ExecutionEvent)
 	 */
+	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 		ISelection selection = HandlerUtil.getCurrentSelection(event);
 		if (selection instanceof IStructuredSelection && !selection.isEmpty()) {
@@ -47,6 +48,7 @@ public class RefreshCommandHandler extends AbstractHandler {
 							model.getService(ILocatorModelRefreshService.class).refresh();
 						} else {
 							Protocol.invokeLater(new Runnable() {
+								@Override
 								public void run() {
 									model.getService(ILocatorModelRefreshService.class).refresh();
 								}

@@ -72,12 +72,14 @@ public class CoreTestCase extends TestCase {
 		/* (non-Javadoc)
 		 * @see junit.framework.TestListener#startTest(junit.framework.Test)
 		 */
+		@Override
 		public void startTest(Test test) {
 		}
 
 		/* (non-Javadoc)
 		 * @see junit.framework.TestListener#addError(junit.framework.Test, java.lang.Throwable)
 		 */
+		@Override
 		public synchronized void addError(Test test, Throwable error) {
 			if (test != null && error != null) {
 				// Log the error to the error log.
@@ -94,6 +96,7 @@ public class CoreTestCase extends TestCase {
 		/* (non-Javadoc)
 		 * @see junit.framework.TestListener#addFailure(junit.framework.Test, junit.framework.AssertionFailedError)
 		 */
+		@Override
 		public synchronized void addFailure(Test test, AssertionFailedError failure) {
 			if (test != null && failure != null) {
 				// Log the failure to the error log.
@@ -110,6 +113,7 @@ public class CoreTestCase extends TestCase {
 		/* (non-Javadoc)
 		 * @see junit.framework.TestListener#endTest(junit.framework.Test)
 		 */
+		@Override
 		public void endTest(Test test) {
 			// nothing to do on end test
 		}
@@ -325,6 +329,7 @@ public class CoreTestCase extends TestCase {
 			final Exception[] ex = new Exception[1];
 			display = Display.getDefault();
 			display.syncExec(new Runnable() {
+				@Override
 				public void run() {
 					try {
 						flushEventQueue();

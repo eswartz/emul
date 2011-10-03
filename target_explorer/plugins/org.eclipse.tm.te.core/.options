@@ -1,3 +1,1 @@
 org.eclipse.tm.te.core/debugmode = 0
-org.eclipse.tm.te.core/trace/events = false
-org.eclipse.tm.te.core/trace/callbacks = false

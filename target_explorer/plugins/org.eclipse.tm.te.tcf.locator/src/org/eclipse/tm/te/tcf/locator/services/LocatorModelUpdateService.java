@@ -38,6 +38,7 @@ public class LocatorModelUpdateService extends AbstractLocatorModelService imple
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.services.ILocatorModelUpdateService#add(org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.IPeerModel)
 	 */
+	@Override
 	public void add(IPeerModel peer) {
 		Assert.isNotNull(peer);
 		Assert.isTrue(Protocol.isDispatchThread());
@@ -49,6 +50,7 @@ public class LocatorModelUpdateService extends AbstractLocatorModelService imple
 		final IModelListener[] listeners = getLocatorModel().getListener();
 		if (listeners.length > 0) {
 			Protocol.invokeLater(new Runnable() {
+				@Override
 				public void run() {
 					for (IModelListener listener : listeners) {
 						listener.locatorModelChanged(getLocatorModel());
@@ -61,6 +63,7 @@ public class LocatorModelUpdateService extends AbstractLocatorModelService imple
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.services.ILocatorModelUpdateService#remove(org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.IPeerModel)
 	 */
+	@Override
 	public void remove(IPeerModel peer) {
 		Assert.isNotNull(peer);
 		Assert.isTrue(Protocol.isDispatchThread());
@@ -72,6 +75,7 @@ public class LocatorModelUpdateService extends AbstractLocatorModelService imple
 		final IModelListener[] listeners = getLocatorModel().getListener();
 		if (listeners.length > 0) {
 			Protocol.invokeLater(new Runnable() {
+				@Override
 				public void run() {
 					for (IModelListener listener : listeners) {
 						listener.locatorModelChanged(getLocatorModel());
@@ -84,6 +88,7 @@ public class LocatorModelUpdateService extends AbstractLocatorModelService imple
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.locator.core.interfaces.services.ILocatorModelUpdateService#updatePeerServices(org.eclipse.tm.te.tcf.locator.core.interfaces.nodes.IPeerModel, java.util.Collection, java.util.Collection)
 	 */
+	@Override
 	public void updatePeerServices(IPeerModel peerNode, Collection<String> localServices, Collection<String> remoteServices) {
 		Assert.isNotNull(peerNode);
 		Assert.isTrue(Protocol.isDispatchThread());
