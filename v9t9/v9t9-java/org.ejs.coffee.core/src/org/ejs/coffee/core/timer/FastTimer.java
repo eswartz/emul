@@ -3,7 +3,8 @@
  */
 package org.ejs.coffee.core.timer;
 
-import org.eclipse.core.runtime.ListenerList;
+import org.ejs.coffee.core.utils.ListenerList;
+import org.ejs.coffee.core.utils.ListenerList.IFire;
 
 import com.vladium.utils.timing.HRTimer;
 import com.vladium.utils.timing.ITimer;
@@ -20,7 +21,7 @@ import com.vladium.utils.timing.TimerFactory;
  */
 public class FastTimer {
 	private ITimer timer;
-	private ListenerList taskinfos;
+	private ListenerList<RunnableInfo> taskinfos;
 	private Object controlLock;
 	private Thread timerThread;
 	private static int gCnt;
@@ -39,7 +40,7 @@ public class FastTimer {
 		long delay;
 	}
 	public FastTimer() {
-		taskinfos = new ListenerList();
+		taskinfos = new ListenerList<RunnableInfo>();
 		timer = TimerFactory.newTimer();
 		controlLock = new Object();
 	}
@@ -55,7 +56,7 @@ public class FastTimer {
 			taskinfos.add(info);
 			
 			//System.out.println("Adding task @ " + info.delay + " ns");
-			if (taskinfos.size() > 0) {
+			if (taskinfos.iterator().hasNext()) {
 				if (timerThread == null)
 					startTimer();
 			}
@@ -82,14 +83,15 @@ public class FastTimer {
 							return;
 						}
 						synchronized (controlLock) {
-							long now = timer.getTimeNs();
+							final long now = timer.getTimeNs();
 							//System.out.println(now);
 							//long elapsed = now - prev;
 							//System.out.print(elapsed + ",");
 	
-							for (Object o : taskinfos.getListeners()) {
-								RunnableInfo info = (RunnableInfo) o;
-								try {
+							taskinfos.fire(new IFire<FastTimer.RunnableInfo>() {
+
+								@Override
+								public void fire(RunnableInfo info) {
 									if (now >= info.deadline) {
 										//System.out.println("moving from " + info.deadline + " by " + info.delay + " to " + (info.delay + info.deadline));
 										if (now - info.deadline > info.delay * 10) {
@@ -107,12 +109,16 @@ public class FastTimer {
 										// clock overflowed
 										info.deadline = now + info.delay;
 										info.task.run();
-									}
-								} catch (Throwable t) {
+									}									
+								}
+
+								@Override
+								public void threw(RunnableInfo info,
+										Throwable t) {
 									t.printStackTrace();
 									info.deadline = -1;
 								}
-							}
+							});
 							//prev = now;
 						}
 					}

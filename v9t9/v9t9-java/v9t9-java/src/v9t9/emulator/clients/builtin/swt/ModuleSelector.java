@@ -3,9 +3,8 @@
  */
 package v9t9.emulator.clients.builtin.swt;
 
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.jface.dialogs.ErrorDialog;
+import java.text.MessageFormat;
+
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.jface.viewers.ArrayContentProvider;
@@ -34,6 +33,7 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 
 import v9t9.emulator.clients.builtin.NotifyException;
+import v9t9.emulator.common.IEventNotifier.Level;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.runtime.cpu.Cpu9900;
 import v9t9.engine.modules.IModule;
@@ -207,13 +207,11 @@ public class ModuleSelector extends Composite {
 
 			getShell().dispose();
 		} catch (NotifyException e) {
-			ErrorDialog.openError(getShell(), "Failed to load", 
-					"Failed to load all the entries from the module",
-					new Status(IStatus.ERROR, "v9t9", e.getMessage(), e));
+			machine.getClient().getEventNotifier().notifyEvent(
+					selectedModule, Level.ERROR,
+					MessageFormat.format("Failed to load all the entries from the module ''{0}''\n\n{1}",
+							selectedModule.getName(), e.getMessage()));
 		}
-		
-			
-		
 	}
 
 	/**

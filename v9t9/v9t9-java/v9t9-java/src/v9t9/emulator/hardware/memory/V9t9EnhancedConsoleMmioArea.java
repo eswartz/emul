@@ -5,7 +5,11 @@ package v9t9.emulator.hardware.memory;
 
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.memory.mmio.ConsoleMmioArea;
-import v9t9.engine.memory.*;
+import v9t9.engine.memory.MemoryDomain;
+import v9t9.engine.memory.MemoryEntry;
+import v9t9.engine.memory.MemoryListener;
+import v9t9.engine.memory.MultiBankedMemoryEntry;
+import v9t9.engine.memory.TIMemoryModel;
 
 /**
  * Enhanced memory-mapped I/O area, which is much compacted (and yes, sheds any 

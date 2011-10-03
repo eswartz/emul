@@ -47,9 +47,9 @@ import v9t9.emulator.Emulator;
 import v9t9.emulator.clients.builtin.BaseEmulatorWindow;
 import v9t9.emulator.common.BaseEventNotifier;
 import v9t9.emulator.common.IEventNotifier;
+import v9t9.emulator.common.IEventNotifier.Level;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.common.NotifyEvent;
-import v9t9.emulator.common.IEventNotifier.Level;
 import v9t9.emulator.runtime.cpu.Executor;
 
 /**

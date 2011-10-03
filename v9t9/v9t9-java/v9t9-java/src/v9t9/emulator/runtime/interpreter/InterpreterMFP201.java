@@ -3,6 +3,50 @@
  */
 package v9t9.emulator.runtime.interpreter;
 
+import static v9t9.engine.cpu.InstMFP201.Iadc;
+import static v9t9.engine.cpu.InstMFP201.Iadcb;
+import static v9t9.engine.cpu.InstMFP201.Iadd;
+import static v9t9.engine.cpu.InstMFP201.Iaddb;
+import static v9t9.engine.cpu.InstMFP201.Iand;
+import static v9t9.engine.cpu.InstMFP201.Iandb;
+import static v9t9.engine.cpu.InstMFP201.Ibkpt;
+import static v9t9.engine.cpu.InstMFP201.Ibr;
+import static v9t9.engine.cpu.InstMFP201.Ibra;
+import static v9t9.engine.cpu.InstMFP201.Icall;
+import static v9t9.engine.cpu.InstMFP201.Icalla;
+import static v9t9.engine.cpu.InstMFP201.Idiv;
+import static v9t9.engine.cpu.InstMFP201.Ijmp;
+import static v9t9.engine.cpu.InstMFP201.Ildc;
+import static v9t9.engine.cpu.InstMFP201.Iloop;
+import static v9t9.engine.cpu.InstMFP201.Iloopeq;
+import static v9t9.engine.cpu.InstMFP201.Iloopnc;
+import static v9t9.engine.cpu.InstMFP201.Iloopne;
+import static v9t9.engine.cpu.InstMFP201.Imov;
+import static v9t9.engine.cpu.InstMFP201.Imovb;
+import static v9t9.engine.cpu.InstMFP201.Inand;
+import static v9t9.engine.cpu.InstMFP201.Inandb;
+import static v9t9.engine.cpu.InstMFP201.Ior;
+import static v9t9.engine.cpu.InstMFP201.Iorb;
+import static v9t9.engine.cpu.InstMFP201.Ipop;
+import static v9t9.engine.cpu.InstMFP201.Ipopb;
+import static v9t9.engine.cpu.InstMFP201.Ipopn;
+import static v9t9.engine.cpu.InstMFP201.Ipopnb;
+import static v9t9.engine.cpu.InstMFP201.Ipush;
+import static v9t9.engine.cpu.InstMFP201.Ipushb;
+import static v9t9.engine.cpu.InstMFP201.Ipushn;
+import static v9t9.engine.cpu.InstMFP201.Ipushnb;
+import static v9t9.engine.cpu.InstMFP201.Isbb;
+import static v9t9.engine.cpu.InstMFP201.Isbbb;
+import static v9t9.engine.cpu.InstMFP201.Isub;
+import static v9t9.engine.cpu.InstMFP201.Isubb;
+import static v9t9.engine.cpu.InstMFP201.Itst;
+import static v9t9.engine.cpu.InstMFP201.Itstb;
+import static v9t9.engine.cpu.InstMFP201.Itstn;
+import static v9t9.engine.cpu.InstMFP201.Itstnb;
+import static v9t9.engine.cpu.InstMFP201.Ixor;
+import static v9t9.engine.cpu.InstMFP201.Ixorb;
+import static v9t9.engine.cpu.MachineOperandMFP201.OP_REG;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,13 +56,19 @@ import v9t9.emulator.common.Machine;
 import v9t9.emulator.runtime.InstructionListener;
 import v9t9.emulator.runtime.cpu.CpuMFP201;
 import v9t9.emulator.runtime.cpu.Executor;
-import v9t9.engine.cpu.*;
+import v9t9.engine.cpu.InstInfo;
+import v9t9.engine.cpu.InstTableCommon;
+import v9t9.engine.cpu.InstTableMFP201;
+import v9t9.engine.cpu.InstructionMFP201;
+import v9t9.engine.cpu.InstructionWorkBlock;
+import v9t9.engine.cpu.MachineOperand;
+import v9t9.engine.cpu.MachineOperandMFP201;
+import v9t9.engine.cpu.MachineOperandMFP201Inst;
+import v9t9.engine.cpu.Operand;
+import v9t9.engine.cpu.StatusMFP201;
 import v9t9.engine.memory.MemoryArea;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
-
-import static v9t9.engine.cpu.InstMFP201.*;
-import static v9t9.engine.cpu.MachineOperandMFP201.*;
 
 /**
  * This class interprets MFP201 instructions one by one.

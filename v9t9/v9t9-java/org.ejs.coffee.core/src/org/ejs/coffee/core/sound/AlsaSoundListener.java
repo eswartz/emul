@@ -1,17 +1,17 @@
 package org.ejs.coffee.core.sound;
 
+import static org.ejs.coffee.core.sound.AlsaLibrary.INSTANCE;
+
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.AudioFormat.Encoding;
+import javax.sound.sampled.AudioSystem;
 
 import org.ejs.coffee.core.sound.AlsaLibrary.snd_pcm_sw_params_t;
 
 import com.sun.jna.ptr.IntByReference;
-
-import static org.ejs.coffee.core.sound.AlsaLibrary.INSTANCE;
 
 /**
  * ALSA sound output handler.

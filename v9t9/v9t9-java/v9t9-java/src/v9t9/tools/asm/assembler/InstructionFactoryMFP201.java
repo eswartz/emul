@@ -3,13 +3,22 @@
  */
 package v9t9.tools.asm.assembler;
 
-import v9t9.engine.cpu.*;
+import v9t9.engine.cpu.InstMFP201;
+import v9t9.engine.cpu.InstPatternMFP201;
+import v9t9.engine.cpu.InstTableMFP201;
+import v9t9.engine.cpu.InstructionMFP201;
+import v9t9.engine.cpu.MachineOperandMFP201;
+import v9t9.engine.cpu.PseudoPattern;
+import v9t9.engine.cpu.RawInstruction;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.IRegisterOperand;
 import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
 import v9t9.tools.asm.assembler.operand.hl.PcRelativeOperand;
-import v9t9.tools.asm.assembler.operand.ll.*;
+import v9t9.tools.asm.assembler.operand.ll.LLImmedOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLInstOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLOperand;
+import v9t9.tools.asm.assembler.operand.ll.LLRegisterOperand;
 
 /**
  * @author Ed

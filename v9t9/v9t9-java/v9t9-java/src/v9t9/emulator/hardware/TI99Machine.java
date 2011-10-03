@@ -9,7 +9,8 @@ import v9t9.emulator.hardware.memory.mmio.GplMmio;
 import v9t9.emulator.hardware.memory.mmio.SpeechMmio;
 import v9t9.emulator.hardware.memory.mmio.VdpMmio;
 import v9t9.engine.CruHandler;
-import v9t9.engine.memory.*;
+import v9t9.engine.memory.MemoryDomain;
+import v9t9.engine.memory.TIMemoryModel;
 
 public class TI99Machine extends Machine {
 

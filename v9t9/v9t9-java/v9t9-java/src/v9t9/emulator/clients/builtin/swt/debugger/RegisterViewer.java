@@ -195,13 +195,13 @@ public class RegisterViewer extends Composite {
 		props[0] = "Name";
 		final TableColumn nameColumn = new TableColumn(table, SWT.LEFT);
 		nameColumn.setText(props[0]);
-		nameColumn.setWidth(charWidth * 8);
+		nameColumn.setWidth(charWidth * 8 + 4);
 		
 		props[1] = "Value";
 		final TableColumn valColumn = new TableColumn(table, SWT.LEFT);
 		valColumn.setText(props[1]);
 		valColumn.setMoveable(true);
-		valColumn.setWidth(charWidth * 4);
+		valColumn.setWidth(charWidth * 6);
 
 		//table.setHeaderVisible(true);
 		table.setLinesVisible(true);

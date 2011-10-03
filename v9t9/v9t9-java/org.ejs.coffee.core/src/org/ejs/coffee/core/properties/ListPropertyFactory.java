@@ -32,7 +32,6 @@ public class ListPropertyFactory implements IClassPropertyFactory {
 	/* (non-Javadoc)
 	 * @see org.ejs.chiprocksynth.editor.model.IClassPropertyFactory#getId(java.lang.Object)
 	 */
-	@SuppressWarnings("unchecked")
 	public String getId(Object value) {
 		if (value instanceof ArrayList)
 			return ARRAY;

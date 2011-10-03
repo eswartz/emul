@@ -8,18 +8,12 @@ package v9t9.keyboard;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Queue;
-import java.util.Set;
-import java.util.Map.Entry;
 
 import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.utils.HexUtils;
-import org.ejs.coffee.core.utils.Pair;
 
 import v9t9.emulator.common.Machine;
 

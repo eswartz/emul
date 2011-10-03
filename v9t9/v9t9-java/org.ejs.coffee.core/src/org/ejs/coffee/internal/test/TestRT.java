@@ -3,7 +3,8 @@
  */
 package org.ejs.coffee.internal.test;
 
-import org.ejs.coffee.core.timer.*;
+import org.ejs.coffee.core.timer.PthreadLibrary;
+import org.ejs.coffee.core.timer.RTLibrary;
 import org.ejs.coffee.core.timer.RTLibrary.RT;
 
 import com.sun.jna.Native;

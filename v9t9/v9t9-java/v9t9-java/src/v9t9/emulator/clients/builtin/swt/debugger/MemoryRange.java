@@ -7,9 +7,9 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import v9t9.engine.memory.MemoryDomain;
+import v9t9.engine.memory.MemoryDomain.MemoryWriteListener;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.WordMemoryArea;
-import v9t9.engine.memory.MemoryDomain.MemoryWriteListener;
 
 /**
  * A range of viewable memory

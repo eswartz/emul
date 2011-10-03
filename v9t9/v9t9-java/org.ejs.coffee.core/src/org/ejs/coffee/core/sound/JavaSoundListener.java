@@ -107,11 +107,11 @@ public class JavaSoundListener implements ISoundListener {
 					//if (chunk != null) dft(chunk.soundToWrite);
 					
 					// toss extra chunks if too many arrive
-					if (false) {
+					/*
 						while (chunk != null && soundQueue.size() > 2) {
 							chunk = soundQueue.poll();
 						}
-					}
+					*/
 
 					if (soundGeneratorLine == null)
 						return;

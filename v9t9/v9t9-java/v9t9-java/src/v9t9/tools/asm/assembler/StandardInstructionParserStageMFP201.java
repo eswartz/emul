@@ -3,7 +3,12 @@
  */
 package v9t9.tools.asm.assembler;
 
-import static v9t9.engine.cpu.InstPatternMFP201.*;
+import static v9t9.engine.cpu.InstPatternMFP201.CNT;
+import static v9t9.engine.cpu.InstPatternMFP201.GEN;
+import static v9t9.engine.cpu.InstPatternMFP201.IMM;
+import static v9t9.engine.cpu.InstPatternMFP201.NONE;
+import static v9t9.engine.cpu.InstPatternMFP201.OFF;
+import static v9t9.engine.cpu.InstPatternMFP201.REG;
 import v9t9.engine.cpu.IInstruction;
 import v9t9.engine.cpu.InstPatternMFP201;
 import v9t9.engine.cpu.InstTableMFP201;

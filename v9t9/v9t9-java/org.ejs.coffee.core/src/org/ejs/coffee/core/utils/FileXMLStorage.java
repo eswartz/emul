@@ -10,8 +10,6 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.eclipse.core.runtime.CoreException;
-
 /**
  * @author ejs
  *
@@ -37,13 +35,13 @@ public class FileXMLStorage extends XMLStorageBase {
 	 * @see org.ejs.chiprocksynth.editor.model.XMLStorageBase#getStorageInputStream()
 	 */
 	@Override
-	protected InputStream getStorageInputStream() throws CoreException {
+	protected InputStream getStorageInputStream() throws StorageException {
 		if (file == null)
-			throw newCoreException("No file to read", null);
+			throw newStorageException("No file to read", null);
 		try {
 			return new FileInputStream(file);
 		} catch (FileNotFoundException e) {
-			throw newCoreException(null, e);
+			throw newStorageException(null, e);
 		}
 	}
 
@@ -51,13 +49,13 @@ public class FileXMLStorage extends XMLStorageBase {
 	 * @see org.ejs.chiprocksynth.editor.model.XMLStorageBase#getStorageOutputStream()
 	 */
 	@Override
-	protected OutputStream getStorageOutputStream() throws CoreException {
+	protected OutputStream getStorageOutputStream() throws StorageException {
 		if (file == null)
-			throw newCoreException("No file to read", null);
+			throw newStorageException("No file to read", null);
 		try {
 			return new FileOutputStream(file);
 		} catch (FileNotFoundException e) {
-			throw newCoreException(null, e);
+			throw newStorageException(null, e);
 		}
 	}
 

@@ -12,8 +12,8 @@ import v9t9.emulator.hardware.CruAccess;
 import v9t9.engine.VdpHandler;
 import v9t9.engine.cpu.Status;
 import v9t9.engine.memory.MemoryDomain;
-import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.MemoryDomain.MemoryAccessListener;
+import v9t9.engine.memory.MemoryEntry;
 
 public abstract class CpuBase  implements MemoryAccessListener, IPersistable, Cpu {
 

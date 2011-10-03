@@ -5,7 +5,8 @@ package v9t9.emulator.runtime.cpu;
 
 import org.ejs.coffee.core.utils.HexUtils;
 
-import v9t9.engine.cpu.*;
+import v9t9.engine.cpu.Status;
+import v9t9.engine.cpu.StatusF99;
 import v9t9.engine.memory.MemoryDomain;
 
 /**

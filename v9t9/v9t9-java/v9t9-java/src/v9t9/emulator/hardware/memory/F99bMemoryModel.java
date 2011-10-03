@@ -4,8 +4,8 @@ import java.io.File;
 import java.io.IOException;
 
 import v9t9.emulator.common.IEventNotifier;
-import v9t9.emulator.common.Machine;
 import v9t9.emulator.common.IEventNotifier.Level;
+import v9t9.emulator.common.Machine;
 import v9t9.engine.files.DataFiles;
 import v9t9.engine.memory.ByteMemoryArea;
 import v9t9.engine.memory.DiskMemoryEntry;

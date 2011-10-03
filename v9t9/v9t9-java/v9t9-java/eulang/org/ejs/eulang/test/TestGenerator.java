@@ -68,7 +68,6 @@ public class TestGenerator extends BaseTest {
     	assertTrue(mod.getScope().getSymbols().length == 0);
     }
     
-    @SuppressWarnings("unchecked")
 	@Test
     public void testOneEntryConstModule() throws Exception {
     	IAstModule mod = treeize("foo = 3;");
@@ -77,7 +76,7 @@ public class TestGenerator extends BaseTest {
     	assertEquals(1, mod.getScope().getSymbols().length);
     	assertEquals(1, mod.getChildren().length);
     	
-    	IAstDefineStmt def0 = (IAstDefineStmt) ((IAstNodeList) mod.getChildren()[0]).list().get(0);
+    	IAstDefineStmt def0 = (IAstDefineStmt) ((IAstNodeList<?>) mod.getChildren()[0]).list().get(0);
     	IAstDefineStmt def = (IAstDefineStmt) mod.getScope().getNode("foo");
     	assertSame(def0, def);
     	

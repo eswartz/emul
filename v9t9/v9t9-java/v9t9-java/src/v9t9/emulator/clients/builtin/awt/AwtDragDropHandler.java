@@ -39,8 +39,8 @@ import org.eclipse.swt.graphics.ImageData;
 
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
-import v9t9.emulator.clients.builtin.video.image.ImageImport;
 import v9t9.emulator.clients.builtin.video.image.ColorMapUtils;
+import v9t9.emulator.clients.builtin.video.image.ImageImport;
 
 /**
  * Handle images copied in or out of the screen.

@@ -6,9 +6,9 @@ package v9t9.emulator.clients.builtin.swt.debugger;
 import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.engine.cpu.BaseInstructionWorkBlock;
+import v9t9.engine.cpu.BaseMachineOperand;
 import v9t9.engine.cpu.InstructionWorkBlock;
 import v9t9.engine.cpu.MachineOperand;
-import v9t9.engine.cpu.BaseMachineOperand;
 import v9t9.engine.cpu.Operand;
 import v9t9.engine.memory.MemoryEntry;
 

@@ -4,12 +4,11 @@
 package v9t9.engine.modules;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.core.runtime.CoreException;
 import org.ejs.coffee.core.utils.FileXMLStorage;
+import org.ejs.coffee.core.utils.StorageException;
 import org.ejs.coffee.core.utils.XMLUtils;
 import org.w3c.dom.Element;
 
@@ -31,7 +30,7 @@ public class ModuleLoader {
 		
 		File file;
 		
-		file = DataFiles.resolveFileAtPath(EmulatorSettings.INSTANCE.getConfigFilePath(), name);
+		file = DataFiles.resolveFileAtPath(EmulatorSettings.INSTANCE.getConfigDirectory(), name);
 		if (file == null) {
 			file = DataFiles.resolveFile(name);
 			if (file == null)
@@ -42,8 +41,8 @@ public class ModuleLoader {
 		FileXMLStorage storage = new FileXMLStorage(file);
 		try {
 			storage.load("modules");
-		} catch (CoreException e) {
-			if (e.getCause() instanceof IOException)
+		} catch (StorageException e) {
+			if (e.getCause() instanceof StorageException)
 				throw new NotifyException(null, "Error loading module list " + name, e.getCause());
 			throw new NotifyException(null, "Error parsing module list " + name, e);
 		}
