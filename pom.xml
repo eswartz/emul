@@ -62,6 +62,7 @@
 	  <module>target_explorer/plugins/org.eclipse.tm.te.ui.controls</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.ui.forms</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.ui.swt</module>
+	  <module>target_explorer/plugins/org.eclipse.tm.te.ui.terminal</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.ui.views</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.tcf.core</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.tcf.filesystem</module>
