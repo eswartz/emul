@@ -1202,7 +1202,6 @@ static void find_field(Symbol * sym, ContextAddress offs, const char * name, Sym
 #endif
 
 static void op_field(int mode, Value * v) {
-#if ENABLE_Symbols
     char * id = NULL;
     char * name = NULL;
     if (text_sy == SY_ID) id = (char *)text_val.value;
@@ -1210,10 +1209,8 @@ static void op_field(int mode, Value * v) {
     else error(ERR_INV_EXPRESSION, "Field name expected");
     next_sy();
     if (mode == MODE_SKIP) return;
-    if (v->type_class != TYPE_CLASS_COMPOSITE) {
-        error(ERR_INV_EXPRESSION, "Composite type expected");
-    }
-    else {
+    if (v->type_class == TYPE_CLASS_COMPOSITE) {
+#if ENABLE_Symbols
         Symbol * sym = NULL;
         int sym_class = 0;
         ContextAddress size = 0;
@@ -1277,10 +1274,36 @@ static void op_field(int mode, Value * v) {
             }
             set_value_endianness(v, sym, v->type);
         }
-    }
 #else
-    error(ERR_UNSUPPORTED, "Symbols service not available");
+        error(ERR_UNSUPPORTED, "Symbols service not available");
 #endif
+    }
+    else if (v->reg != NULL) {
+        if (id != NULL) {
+            Context * ctx = NULL;
+            int frame = STACK_NO_FRAME;
+            RegisterDefinition * def = NULL;
+            if (id2register(id, &ctx, &frame, &def) < 0) exception(errno);
+            if (frame == STACK_TOP_FRAME) frame = expression_frame;
+            reg2value(ctx, frame, def, v);
+        }
+        else {
+            RegisterDefinition * def = get_reg_definitions(expression_context);
+            if (def != NULL) {
+                while (def->name != NULL) {
+                    if (def->parent == v->reg && strcmp(name, def->name) == 0) {
+                        reg2value(expression_context, expression_frame, def, v);
+                        return;
+                    }
+                    def++;
+                }
+            }
+            error(ERR_INV_EXPRESSION, "Unknown register; %s", name);
+        }
+    }
+    else {
+        error(ERR_INV_EXPRESSION, "Composite type expected");
+    }
 }
 
 static void op_index(int mode, Value * v) {
