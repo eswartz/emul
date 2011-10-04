@@ -92,7 +92,7 @@ public class UIPlugin extends AbstractUIPlugin {
 	@Override
 	protected void initializeImageRegistry(ImageRegistry registry) {
 		URL url = UIPlugin.getDefault().getBundle().getEntry(ImageConsts.IMAGE_DIR_ROOT + ImageConsts.IMAGE_DIR_EVIEW + "prop_ps.gif"); //$NON-NLS-1$
-		registry.put(ImageConsts.IMAGE_EDITOR, ImageDescriptor.createFromURL(url));
+		registry.put(ImageConsts.EDITOR, ImageDescriptor.createFromURL(url));
 	}
 
 	/**

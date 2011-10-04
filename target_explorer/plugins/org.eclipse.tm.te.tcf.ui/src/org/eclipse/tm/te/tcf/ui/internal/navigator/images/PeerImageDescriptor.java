@@ -85,19 +85,19 @@ public class PeerImageDescriptor extends AbstractImageDescriptor {
 		drawCentered(baseImage, width, height);
 
 		if (state == IPeerModelProperties.STATE_UNKNOWN) { /* unknown */
-			drawBottomRight(ImageConsts.IMAGE_GREY_OVR);
+			drawBottomRight(ImageConsts.GREY_OVR);
 		}
 		else if (state == IPeerModelProperties.STATE_REACHABLE) { /* not connected, but reachable */
-			drawBottomRight(ImageConsts.IMAGE_GOLD_OVR);
+			drawBottomRight(ImageConsts.GOLD_OVR);
 		}
 		else if (state == IPeerModelProperties.STATE_CONNECTED) { /* connected */
-			drawBottomRight(ImageConsts.IMAGE_GREEN_OVR);
+			drawBottomRight(ImageConsts.GREEN_OVR);
 		}
 		else if (state == IPeerModelProperties.STATE_NOT_REACHABLE) { /* not connected, not reachable */
-			drawBottomRight(ImageConsts.IMAGE_RED_OVR);
+			drawBottomRight(ImageConsts.RED_OVR);
 		}
 		else if (state == IPeerModelProperties.STATE_ERROR) { /* not connected, error */
-			drawBottomRight(ImageConsts.IMAGE_RED_X_OVR);
+			drawBottomRight(ImageConsts.RED_X_OVR);
 		}
 	}
 

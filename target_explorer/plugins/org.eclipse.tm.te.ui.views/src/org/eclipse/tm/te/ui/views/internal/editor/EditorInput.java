@@ -92,7 +92,7 @@ public class EditorInput implements IEditorInput, IPersistableElement {
 	 */
 	@Override
 	public ImageDescriptor getImageDescriptor() {
-		return UIPlugin.getImageDescriptor(ImageConsts.IMAGE_EDITOR);
+		return UIPlugin.getImageDescriptor(ImageConsts.EDITOR);
 	}
 
 	/* (non-Javadoc)

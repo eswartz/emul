@@ -64,7 +64,7 @@ public final class NewWizard extends Wizard implements INewWizard {
 	 */
 	@Override
 	public Image getDefaultPageImage() {
-		return UIPlugin.getImage(ImageConsts.IMAGE_NEW_TARGET_WIZARD);
+		return UIPlugin.getImage(ImageConsts.NEW_TARGET_WIZARD);
 	}
 
 

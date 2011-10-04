@@ -101,9 +101,9 @@ public class FSTreeLabelProvider extends LabelProvider implements ITableLabelPro
 			if (element instanceof FSTreeNode) {
 				FSTreeNode node = (FSTreeNode)element;
 				if ("FSRootDirNode".equals(node.type)) {//$NON-NLS-1$
-					return isExpanded ? UIPlugin.getImage(ImageConsts.IMAGE_ROOT_DRIVE_OPEN) : UIPlugin.getImage(ImageConsts.IMAGE_ROOT_DRIVE);
+					return isExpanded ? UIPlugin.getImage(ImageConsts.ROOT_DRIVE_OPEN) : UIPlugin.getImage(ImageConsts.ROOT_DRIVE);
 				} else if ("FSDirNode".equals(node.type)) { //$NON-NLS-1$
-					return isExpanded ? PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_OBJ_FOLDER) : UIPlugin.getImage(ImageConsts.IMAGE_FOLDER);
+					return isExpanded ? PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_OBJ_FOLDER) : UIPlugin.getImage(ImageConsts.FOLDER);
 				} else if ("FSFileNode".equals(node.type)) { //$NON-NLS-1$
 					String key = node.name;
 					Image image = UIPlugin.getImage(key);

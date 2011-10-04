@@ -89,13 +89,13 @@ public class UIPlugin extends AbstractUIPlugin {
 	@Override
 	protected void initializeImageRegistry(ImageRegistry registry) {
 		URL url = UIPlugin.getDefault().getBundle().getEntry(ImageConsts.IMAGE_DIR_ROOT + ImageConsts.IMAGE_DIR_WIZBAN + "newtarget_wiz.gif"); //$NON-NLS-1$
-		registry.put(ImageConsts.IMAGE_NEW_TARGET_WIZARD, ImageDescriptor.createFromURL(url));
+		registry.put(ImageConsts.NEW_TARGET_WIZARD, ImageDescriptor.createFromURL(url));
 
 		url = UIPlugin.getDefault().getBundle().getEntry(ImageConsts.IMAGE_DIR_ROOT + ImageConsts.IMAGE_DIR_DLCL + "newtarget_wiz.gif"); //$NON-NLS-1$
-		registry.put(ImageConsts.IMAGE_NEW_TARGET_WIZARD_DISABLED, ImageDescriptor.createFromURL(url));
+		registry.put(ImageConsts.NEW_TARGET_WIZARD_DISABLED, ImageDescriptor.createFromURL(url));
 
 		url = UIPlugin.getDefault().getBundle().getEntry(ImageConsts.IMAGE_DIR_ROOT + ImageConsts.IMAGE_DIR_ELCL + "newtarget_wiz.gif"); //$NON-NLS-1$
-		registry.put(ImageConsts.IMAGE_NEW_TARGET_WIZARD_ENABLED, ImageDescriptor.createFromURL(url));
+		registry.put(ImageConsts.NEW_TARGET_WIZARD_ENABLED, ImageDescriptor.createFromURL(url));
 	}
 
 	/**

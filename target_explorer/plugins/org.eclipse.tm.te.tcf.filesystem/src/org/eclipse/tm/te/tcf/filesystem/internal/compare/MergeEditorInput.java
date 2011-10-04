@@ -334,7 +334,7 @@ public class MergeEditorInput extends CompareEditorInput implements
 	 */
 	@Override
 	public Image getTitleImage() {
-		return UIPlugin.getImage(ImageConsts.IMAGE_COMPARE_EDITOR);
+		return UIPlugin.getImage(ImageConsts.COMPARE_EDITOR);
 	}
 
 	/* (non-Javadoc)
@@ -342,7 +342,7 @@ public class MergeEditorInput extends CompareEditorInput implements
 	 */
 	@Override
 	public ImageDescriptor getImageDescriptor() {
-		return UIPlugin.getImageDescriptor(ImageConsts.IMAGE_COMPARE_EDITOR);
+		return UIPlugin.getImageDescriptor(ImageConsts.COMPARE_EDITOR);
 	}
 
 	/* (non-Javadoc)

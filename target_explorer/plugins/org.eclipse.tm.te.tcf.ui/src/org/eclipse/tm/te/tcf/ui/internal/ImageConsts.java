@@ -51,30 +51,30 @@ public interface ImageConsts {
     /**
      * The key to access the base target object image.
      */
-    public static final String IMAGE_TARGET = "TargetObject"; //$NON-NLS-1$
+    public static final String TARGET = "TargetObject"; //$NON-NLS-1$
 
     /**
      * The key to access the target object gold overlay image.
      */
-    public static final String IMAGE_GOLD_OVR = "GoldOverlay"; //$NON-NLS-1$
+    public static final String GOLD_OVR = "GoldOverlay"; //$NON-NLS-1$
 
     /**
      * The key to access the target object green overlay image.
      */
-    public static final String IMAGE_GREEN_OVR = "GreenOverlay"; //$NON-NLS-1$
+    public static final String GREEN_OVR = "GreenOverlay"; //$NON-NLS-1$
 
     /**
      * The key to access the target object grey overlay image.
      */
-    public static final String IMAGE_GREY_OVR = "GreyOverlay"; //$NON-NLS-1$
+    public static final String GREY_OVR = "GreyOverlay"; //$NON-NLS-1$
 
     /**
      * The key to access the target object red overlay image.
      */
-    public static final String IMAGE_RED_OVR = "RedOverlay"; //$NON-NLS-1$
+    public static final String RED_OVR = "RedOverlay"; //$NON-NLS-1$
 
     /**
      * The key to access the target object red X overlay image.
      */
-    public static final String IMAGE_RED_X_OVR = "RedXOverlay"; //$NON-NLS-1$
+    public static final String RED_X_OVR = "RedXOverlay"; //$NON-NLS-1$
 }

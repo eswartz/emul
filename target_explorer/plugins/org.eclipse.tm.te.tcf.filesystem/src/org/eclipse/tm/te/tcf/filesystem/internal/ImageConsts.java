@@ -33,20 +33,20 @@ public interface ImageConsts {
     /**
      * The key to access the base folder object image.
      */
-    public static final String IMAGE_FOLDER = "Folder"; //$NON-NLS-1$
+    public static final String FOLDER = "Folder"; //$NON-NLS-1$
 
     /**
      * The key to access the base folder object image.
      */
-    public static final String IMAGE_ROOT_DRIVE = "RootDrive"; //$NON-NLS-1$
+    public static final String ROOT_DRIVE = "RootDrive"; //$NON-NLS-1$
 
     /**
      * The key to access the base folder object image.
      */
-    public static final String IMAGE_ROOT_DRIVE_OPEN = "RootDriveOpen"; //$NON-NLS-1$
+    public static final String ROOT_DRIVE_OPEN = "RootDriveOpen"; //$NON-NLS-1$
     
     /**
      * The key to access the image of compare editor.
      */
-    public static final String IMAGE_COMPARE_EDITOR = "CompareEditor"; //$NON-NLS-1$
+    public static final String COMPARE_EDITOR = "CompareEditor"; //$NON-NLS-1$
 }

@@ -133,14 +133,14 @@ public class UIPlugin extends AbstractUIPlugin {
 	@Override
 	protected void initializeImageRegistry(ImageRegistry registry) {
 		URL url = UIPlugin.getDefault().getBundle().getEntry(ImageConsts.IMAGE_DIR_ROOT + ImageConsts.IMAGE_DIR_OBJ + "folder.gif"); //$NON-NLS-1$
-		registry.put(ImageConsts.IMAGE_FOLDER, ImageDescriptor.createFromURL(url));
+		registry.put(ImageConsts.FOLDER, ImageDescriptor.createFromURL(url));
 
 		url = UIPlugin.getDefault().getBundle().getEntry(ImageConsts.IMAGE_DIR_ROOT + ImageConsts.IMAGE_DIR_OBJ + "rootdrive.gif"); //$NON-NLS-1$
-		registry.put(ImageConsts.IMAGE_ROOT_DRIVE, ImageDescriptor.createFromURL(url));
+		registry.put(ImageConsts.ROOT_DRIVE, ImageDescriptor.createFromURL(url));
 		url = UIPlugin.getDefault().getBundle().getEntry(ImageConsts.IMAGE_DIR_ROOT + ImageConsts.IMAGE_DIR_OBJ + "rootdriveopen.gif"); //$NON-NLS-1$
-		registry.put(ImageConsts.IMAGE_ROOT_DRIVE_OPEN, ImageDescriptor.createFromURL(url));
+		registry.put(ImageConsts.ROOT_DRIVE_OPEN, ImageDescriptor.createFromURL(url));
 		url = UIPlugin.getDefault().getBundle().getEntry(ImageConsts.IMAGE_DIR_ROOT + ImageConsts.IMAGE_DIR_OBJ + "synch_synch.gif"); //$NON-NLS-1$
-		registry.put(ImageConsts.IMAGE_COMPARE_EDITOR, ImageDescriptor.createFromURL(url));
+		registry.put(ImageConsts.COMPARE_EDITOR, ImageDescriptor.createFromURL(url));
 	}
 
 	/**

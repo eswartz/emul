@@ -76,18 +76,18 @@ public class UIPlugin extends AbstractUIPlugin {
 	@Override
 	protected void initializeImageRegistry(ImageRegistry registry) {
 		URL url = UIPlugin.getDefault().getBundle().getEntry(ImageConsts.IMAGE_DIR_ROOT + ImageConsts.IMAGE_DIR_OBJ + "target.gif"); //$NON-NLS-1$
-		registry.put(ImageConsts.IMAGE_TARGET, ImageDescriptor.createFromURL(url));
+		registry.put(ImageConsts.TARGET, ImageDescriptor.createFromURL(url));
 
 		url = UIPlugin.getDefault().getBundle().getEntry(ImageConsts.IMAGE_DIR_ROOT + ImageConsts.IMAGE_DIR_OVR + "gold_ovr.gif"); //$NON-NLS-1$
-		registry.put(ImageConsts.IMAGE_GOLD_OVR, ImageDescriptor.createFromURL(url));
+		registry.put(ImageConsts.GOLD_OVR, ImageDescriptor.createFromURL(url));
 		url = UIPlugin.getDefault().getBundle().getEntry(ImageConsts.IMAGE_DIR_ROOT + ImageConsts.IMAGE_DIR_OVR + "green_ovr.gif"); //$NON-NLS-1$
-		registry.put(ImageConsts.IMAGE_GREEN_OVR, ImageDescriptor.createFromURL(url));
+		registry.put(ImageConsts.GREEN_OVR, ImageDescriptor.createFromURL(url));
 		url = UIPlugin.getDefault().getBundle().getEntry(ImageConsts.IMAGE_DIR_ROOT + ImageConsts.IMAGE_DIR_OVR + "grey_ovr.gif"); //$NON-NLS-1$
-		registry.put(ImageConsts.IMAGE_GREY_OVR, ImageDescriptor.createFromURL(url));
+		registry.put(ImageConsts.GREY_OVR, ImageDescriptor.createFromURL(url));
 		url = UIPlugin.getDefault().getBundle().getEntry(ImageConsts.IMAGE_DIR_ROOT + ImageConsts.IMAGE_DIR_OVR + "red_ovr.gif"); //$NON-NLS-1$
-		registry.put(ImageConsts.IMAGE_RED_OVR, ImageDescriptor.createFromURL(url));
+		registry.put(ImageConsts.RED_OVR, ImageDescriptor.createFromURL(url));
 		url = UIPlugin.getDefault().getBundle().getEntry(ImageConsts.IMAGE_DIR_ROOT + ImageConsts.IMAGE_DIR_OVR + "redX_ovr.gif"); //$NON-NLS-1$
-		registry.put(ImageConsts.IMAGE_RED_X_OVR, ImageDescriptor.createFromURL(url));
+		registry.put(ImageConsts.RED_X_OVR, ImageDescriptor.createFromURL(url));
 	}
 
 	/**

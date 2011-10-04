@@ -40,15 +40,15 @@ public interface ImageConsts {
     /**
      * The key to access the New target wizard banner image.
      */
-    public static final String IMAGE_NEW_TARGET_WIZARD = "NewTargetWizard"; //$NON-NLS-1$
+    public static final String NEW_TARGET_WIZARD = "NewTargetWizard"; //$NON-NLS-1$
 
     /**
      * The key to access the New target wizard image (enabled).
      */
-    public static final String  IMAGE_NEW_TARGET_WIZARD_ENABLED = "NewTargetWizard_enabled"; //$NON-NLS-1$
+    public static final String  NEW_TARGET_WIZARD_ENABLED = "NewTargetWizard_enabled"; //$NON-NLS-1$
 
     /**
      * The key to access the New target wizard image (disabled).
      */
-    public static final String  IMAGE_NEW_TARGET_WIZARD_DISABLED = "NewTargetWizard_disabled"; //$NON-NLS-1$
+    public static final String  NEW_TARGET_WIZARD_DISABLED = "NewTargetWizard_disabled"; //$NON-NLS-1$
 }
