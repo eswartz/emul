@@ -12,6 +12,6 @@
   </parent>
 
   <version>1.0.0.qualifier</version>
-  <artifactId>org.eclipse.tm.te.ui.forms</artifactId>
+  <artifactId>org.eclipse.tm.te.ui.swt</artifactId>
   <packaging>eclipse-plugin</packaging>
 </project>
