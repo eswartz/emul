@@ -61,20 +61,30 @@ public class WatchInExpressionsCommand extends AbstractActionDelegate {
     }
 
     private TCFNode[] getNodes() {
-        TCFNode[] arr = getSelectedNodes();
-        for (TCFNode n : arr) {
-            if (n instanceof IWatchInExpressions) {
-                String script = ((IWatchInExpressions)n).getScript();
-                if (script != null) {
-                    IExpressionManager m = DebugPlugin.getDefault().getExpressionManager();
-                    for (final IExpression e : m.getExpressions()) {
-                        if (script.equals(e.getExpressionText())) return new TCFNode[0];
+        final TCFNode[] arr = getSelectedNodes();
+        return new TCFTask<TCFNode[]>(2000) {
+            public void run() {
+                for (TCFNode n : arr) {
+                    if (n instanceof IWatchInExpressions) {
+                        TCFDataCache<String> text_cache = ((IWatchInExpressions)n).getExpressionText();
+                        if (!text_cache.validate(this)) return;
+                        String text_data = text_cache.getData();
+                        if (text_data != null) {
+                            IExpressionManager m = DebugPlugin.getDefault().getExpressionManager();
+                            for (final IExpression e : m.getExpressions()) {
+                                if (text_data.equals(e.getExpressionText())) {
+                                    done(new TCFNode[0]);
+                                    return;
+                                }
+                            }
+                        }
+                        continue;
                     }
+                    done(new TCFNode[0]);
+                    return;
                 }
-                continue;
+                done(arr);
             }
-            return new TCFNode[0];
-        }
-        return arr;
+        }.getE();
     }
 }

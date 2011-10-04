@@ -221,14 +221,17 @@ public class TCFTerminalShell extends AbstractTerminalShell {
             new TCFRSETask<ITerminals.TerminalContext>() {
                 public void run() {
                     terminal = ((TCFConnectorService)sessionProvider).getService(ITerminals.class);
-                    terminal.addListener(listeners);
                     terminal.launch(ptyType, encoding, environment, new ITerminals.DoneLaunch() {
                         public void doneLaunch(IToken token, Exception error,
-                                ITerminals.TerminalContext terminal) {
+                                ITerminals.TerminalContext ctx) {
 
-                            terminalContext = terminal;
+                            if (ctx != null) {
+                                terminalContext = ctx;
+                                terminal.addListener(listeners);
+                            }
+
                             if (error != null) error(error);
-                            else done(terminal);
+                            else done(ctx);
                         }
                     });
                 }

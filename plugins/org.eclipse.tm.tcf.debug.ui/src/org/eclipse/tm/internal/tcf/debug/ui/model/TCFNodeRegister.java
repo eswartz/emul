@@ -34,11 +34,11 @@ import org.eclipse.tm.tcf.util.TCFDataCache;
 import org.eclipse.tm.tcf.util.TCFTask;
 
 
-//TODO: hierarchical registers
-public class TCFNodeRegister extends TCFNode implements IElementEditor {
+public class TCFNodeRegister extends TCFNode implements IElementEditor, IWatchInExpressions {
 
     private final TCFChildrenRegisters children;
     private final TCFData<IRegisters.RegistersContext> context;
+    private final TCFData<String> expression_text;
     private final TCFData<byte[]> value;
     private final boolean is_stack_frame_register;
 
@@ -67,6 +67,35 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
                     }
                 });
                 return false;
+            }
+        };
+        expression_text = new TCFData<String>(channel) {
+            @Override
+            protected boolean startDataRetrieval() {
+                String nm = null;
+                Throwable err = null;
+                TCFNodeRegister n = TCFNodeRegister.this;
+                for (;;) {
+                    if (!n.context.validate(this)) return false;
+                    IRegisters.RegistersContext ctx = n.context.getData();
+                    if (ctx == null) {
+                        err = n.context.getError();
+                        nm = null;
+                        break;
+                    }
+                    String s = ctx.getName();
+                    if (s == null) break;
+                    nm = nm == null ? s : s + '.' + nm;
+                    if (n.parent instanceof TCFNodeRegister) {
+                        n = (TCFNodeRegister)n.parent;
+                    }
+                    else {
+                        break;
+                    }
+                }
+                if (nm != null) nm = "$" + nm;
+                set(null, err, nm);
+                return true;
             }
         };
         value = new TCFData<byte[]>(channel) {
@@ -111,6 +140,10 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
 
     public TCFChildren getChildren() {
         return children;
+    }
+
+    public TCFDataCache<String> getExpressionText() {
+        return expression_text;
     }
 
     void setIndex(int index) {
@@ -430,6 +463,7 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor {
 
     void onRegistersChanged() {
         children.onRegistersChanged();
+        expression_text.reset();
         context.reset();
         value.reset();
         // No need to post delta: parent posted CONTENT
