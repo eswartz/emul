@@ -12,14 +12,18 @@
  *******************************************************************************/
 package org.eclipse.tm.te.tcf.filesystem.internal.handlers;
 
+import java.io.File;
+
 import org.eclipse.core.expressions.PropertyTester;
+import org.eclipse.tm.te.tcf.filesystem.model.CacheState;
 import org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode;
 
 /**
  * The property tester of an FSTreeNode. The properties include "isFile"
  * if it is a file node, "isDirectory" if it is a directory, "isBinaryFile"
  * if it is a binary file, "isReadable" if it is readable, "isWritable" if
- * it is writable and "isExecutable" if it is executable.
+ * it is writable, "isExecutable" if it is executable and "getCacheState" to
+ * get a node's state.
  */
 public class FSTreeNodePropertyTester extends PropertyTester {
 
@@ -42,6 +46,12 @@ public class FSTreeNodePropertyTester extends PropertyTester {
 			return node.isWritable();
 		} else if (property.equals("isExecutable")){ //$NON-NLS-1$
 			return node.isExecutable();
+		} else if (property.equals("getCacheState")){ //$NON-NLS-1$
+			File file = CacheManager.getInstance().getCacheFile(node);
+			if(!file.exists())
+				return false;
+			CacheState state = StateManager.getInstance().getCacheState(node);
+			return state.name().equals(expectedValue);
 		}
 		return false;
 	}

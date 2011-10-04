@@ -12,6 +12,7 @@ package org.eclipse.tm.te.tcf.filesystem.internal.preferences;
 import org.eclipse.core.runtime.preferences.AbstractPreferenceInitializer;
 import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.tm.te.tcf.filesystem.activator.UIPlugin;
 import org.eclipse.tm.te.tcf.filesystem.interfaces.preferences.IPreferenceKeys;
 
@@ -39,5 +40,7 @@ public class PreferencesInitializer extends AbstractPreferenceInitializer {
 			// [Hidden] Editor content contribution: default on
 			prefs.putBoolean(IPreferenceKeys.PREF_FEATURE_ENABLE_EDITOR_CONTENT_CONTRIBUTION, true);
 		}
+		IPreferenceStore preferenceStore = UIPlugin.getDefault().getPreferenceStore();
+		preferenceStore.setDefault(TargetExplorerPreferencePage.PREF_AUTOSAVING, TargetExplorerPreferencePage.DEFAULT_AUTOSAVING);
 	}
 }

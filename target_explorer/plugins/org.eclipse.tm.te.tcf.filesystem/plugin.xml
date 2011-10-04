@@ -25,11 +25,16 @@
             icon="icons/obj16/rootdrive.gif"
             id="org.eclipse.tm.te.tcf.filesystem.navigator.content"
             labelProvider="org.eclipse.tm.te.tcf.filesystem.controls.FSTreeLabelProvider"
-            name="Target File System (TCF)"
+            name="%navigatorContent.name"
             priority="normal">
             <triggerPoints>
-            	<instanceof value="org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel"/>
-                <test property="org.eclipse.tm.te.tcf.locator.hasRemoteService" value="FileSystem"/>
+                <adapt
+                      type="org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel">
+                   <test
+                         property="org.eclipse.tm.te.tcf.locator.hasRemoteService"
+                         value="FileSystem">
+                   </test>
+                </adapt>
             </triggerPoints>
             <possibleChildren>
             	<instanceof value="org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode"/>
@@ -91,13 +96,13 @@
       <menuContribution locationURI="popup:org.eclipse.tm.te.ui.controls.menu.fs?after=additions">
          <separator name="group.open" visible="true"/>
          <command
-               commandId="org.eclipse.tm.te.tcf.filesystem.commands.open"
+               commandId="org.eclipse.ui.navigator.Open"
                helpContextId="org.eclipse.tm.te.tcf.filesystem.command_Open"
                id="open"
-               label="Open"
+               label="%fsmenu.open.label"
                style="push">
             <visibleWhen checkEnabled="false">
-               <with variable="activeMenuSelection">
+               <with variable="selection">
                   <count value="1"/>
                   <iterate>
                      <instanceof value="org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode"/>
@@ -110,6 +115,166 @@
                      </not>
                   </iterate>
                </with>
+            </visibleWhen>
+         </command>
+         <separator
+               name="group.state"
+               visible="true">
+         </separator>
+         <command
+               commandId="org.eclipse.ui.file.refresh"
+               helpContextId="org.eclipse.tm.te.tcf.filesystem.command_Refresh"
+               icon="platform:/plugin/org.eclipse.ui/icons/full/elcl16/refresh_nav.gif"
+               id="refresh"
+               label="%fsmenu.refresh.label"
+               style="push">
+            <visibleWhen
+                  checkEnabled="false">
+               <and>
+	               <with
+	                     variable="selection">
+	                  <count
+	                        value="1">
+	                  </count>
+	                  <iterate>
+	                     <instanceof
+	                           value="org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode">
+	                     </instanceof>
+	                     <test
+	                           property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isFile">
+	                     </test>
+	                  </iterate>
+	               </with>
+                 <not>
+                    <test
+                          property="org.eclipse.tm.te.tcf.filesystem.propertytester.cache.isAutoSavingOn">
+                    </test>
+                 </not>
+               </and>
+            </visibleWhen>
+         </command>
+         <command
+               commandId="org.eclipse.tm.te.tcf.filesystem.commands.update"
+               helpContextId="org.eclipse.tm.te.tcf.filesystem.command_Update"
+               id="update"
+               label="%fsmenu.update.label"
+               style="push">
+            <visibleWhen
+                  checkEnabled="false">
+                  <and>
+               <with
+                     variable="selection">
+                  <count
+                        value="1">
+                  </count>
+                  <iterate>
+                     <instanceof
+                           value="org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode">
+                     </instanceof>
+                     <test
+                           property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isFile">
+                     </test>
+                  </iterate>
+               </with>
+                <not>
+                   <test
+                         property="org.eclipse.tm.te.tcf.filesystem.propertytester.cache.isAutoSavingOn">
+                   </test>
+                </not>
+               </and>
+            </visibleWhen>
+         </command>
+         <command
+               commandId="org.eclipse.tm.te.tcf.filesystem.commands.commit"
+               helpContextId="org.eclipse.tm.te.tcf.filesystem.command_Commit"
+               id="commit"
+               label="%fsmenu.commit.label"
+               style="push">
+            <visibleWhen
+                  checkEnabled="false">
+               <and>
+               <with
+                     variable="selection">
+                  <count
+                        value="1">
+                  </count>
+                  <iterate>
+                     <instanceof
+                           value="org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode">
+                     </instanceof>
+                     <test
+                           property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isFile">
+                     </test>
+                  </iterate>
+               </with>
+                <not>
+                   <test
+                         property="org.eclipse.tm.te.tcf.filesystem.propertytester.cache.isAutoSavingOn">
+                   </test>
+                </not>
+               </and>
+            </visibleWhen>
+         </command>
+         <command
+               commandId="org.eclipse.tm.te.tcf.filesystem.commands.merge"
+               helpContextId="org.eclipse.tm.te.tcf.filesystem.command_Merge"
+               id="merge"
+               label="%fsmenu.merge.label"
+               style="push">
+            <visibleWhen
+                  checkEnabled="false">
+               <and>
+               <with
+                     variable="selection">
+                  <count
+                        value="1">
+                  </count>
+                  <iterate>
+                     <instanceof
+                           value="org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode">
+                     </instanceof>
+                     <test
+                           property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isFile">
+                     </test>
+                  </iterate>
+               </with>
+                <not>
+                   <test
+                         property="org.eclipse.tm.te.tcf.filesystem.propertytester.cache.isAutoSavingOn">
+                   </test>
+                </not>
+               </and>
+            </visibleWhen>
+         </command>
+         <command
+               commandId="org.eclipse.tm.te.tcf.filesystem.commands.revert"
+               helpContextId="org.eclipse.tm.te.tcf.filesystem.command_Revert"
+               id="revert"
+               label="%fsmenu.revert.label"
+               style="push">
+            <visibleWhen
+                  checkEnabled="false">
+               <and>
+               <with
+                     variable="selection">
+                  <count
+                        value="1">
+                  </count>
+                  <iterate>
+                     <instanceof
+                           value="org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode">
+                     </instanceof>
+                     <test
+                           property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isFile">
+                     </test>
+                  </iterate>
+               </with>
+                <not>
+                   <test
+                         property="org.eclipse.tm.te.tcf.filesystem.propertytester.cache.isAutoSavingOn">
+                   </test>
+                </not>
+               </and>
             </visibleWhen>
          </command>
          <separator name="group.properties" visible="true"/>
@@ -152,10 +317,10 @@
       </menuContribution>
       <menuContribution locationURI="popup:org.eclipse.tm.te.ui.views.TargetExplorer#Popup?after=group.open">
          <command
-               commandId="org.eclipse.tm.te.tcf.filesystem.commands.open"
+               commandId="org.eclipse.ui.navigator.Open"
                helpContextId="org.eclipse.tm.te.tcf.filesystem.command_Open"
                id="open"
-               label="Open"
+               label="%temenu.open.label"
                style="push">
             <visibleWhen checkEnabled="false">
                <with variable="selection">
@@ -171,6 +336,166 @@
                      </not>
                   </iterate>
                </with>
+            </visibleWhen>
+         </command>
+         <separator
+               name="group.state"
+               visible="true">
+         </separator>
+         <command
+               commandId="org.eclipse.ui.file.refresh"
+               helpContextId="org.eclipse.tm.te.tcf.filesystem.command_Refresh"
+               icon="platform:/plugin/org.eclipse.ui/icons/full/elcl16/refresh_nav.gif"
+               id="refresh"
+               label="%temenu.refresh.label"
+               style="push">
+            <visibleWhen
+                  checkEnabled="false">
+               <and>
+                  <with
+                        variable="selection">
+                     <count
+                           value="1">
+                     </count>
+                     <iterate>
+                        <instanceof
+                              value="org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode">
+                        </instanceof>
+                        <test
+                              property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isFile">
+                        </test>
+                     </iterate>
+                  </with>
+                  <not>
+                     <test
+                           property="org.eclipse.tm.te.tcf.filesystem.propertytester.cache.isAutoSavingOn">
+                     </test>
+                  </not>
+               </and>
+            </visibleWhen>
+         </command>
+         <command
+               commandId="org.eclipse.tm.te.tcf.filesystem.commands.update"
+               helpContextId="org.eclipse.tm.te.tcf.filesystem.command_Update"
+               id="update"
+               label="%temenu.update.label"
+               style="push">
+            <visibleWhen
+                  checkEnabled="false">
+               <and>
+                  <with
+                        variable="selection">
+                     <count
+                           value="1">
+                     </count>
+                     <iterate>
+                        <instanceof
+                              value="org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode">
+                        </instanceof>
+                        <test
+                              property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isFile">
+                        </test>
+                     </iterate>
+                  </with>
+                  <not>
+                     <test
+                           property="org.eclipse.tm.te.tcf.filesystem.propertytester.cache.isAutoSavingOn">
+                     </test>
+                  </not>
+               </and>
+            </visibleWhen>
+         </command>
+         <command
+               commandId="org.eclipse.tm.te.tcf.filesystem.commands.commit"
+               helpContextId="org.eclipse.tm.te.tcf.filesystem.command_Commit"
+               id="commit"
+               label="%temenu.commit.label"
+               style="push">
+            <visibleWhen
+                  checkEnabled="false">
+               <and>
+                  <with
+                        variable="selection">
+                     <count
+                           value="1">
+                     </count>
+                     <iterate>
+                        <instanceof
+                              value="org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode">
+                        </instanceof>
+                        <test
+                              property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isFile">
+                        </test>
+                     </iterate>
+                  </with>
+                  <not>
+                     <test
+                           property="org.eclipse.tm.te.tcf.filesystem.propertytester.cache.isAutoSavingOn">
+                     </test>
+                  </not>
+               </and>
+            </visibleWhen>
+         </command>
+         <command
+               commandId="org.eclipse.tm.te.tcf.filesystem.commands.merge"
+               helpContextId="org.eclipse.tm.te.tcf.filesystem.command_Merge"
+               id="merge"
+               label="%temenu.merge.label"
+               style="push">
+            <visibleWhen
+                  checkEnabled="false">
+               <and>
+                  <with
+                        variable="selection">
+                     <count
+                           value="1">
+                     </count>
+                     <iterate>
+                        <instanceof
+                              value="org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode">
+                        </instanceof>
+                        <test
+                              property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isFile">
+                        </test>
+                     </iterate>
+                  </with>
+                  <not>
+                     <test
+                           property="org.eclipse.tm.te.tcf.filesystem.propertytester.cache.isAutoSavingOn">
+                     </test>
+                  </not>
+               </and>
+            </visibleWhen>
+         </command>
+         <command
+               commandId="org.eclipse.tm.te.tcf.filesystem.commands.revert"
+               helpContextId="org.eclipse.tm.te.tcf.filesystem.command_Revert"
+               id="revert"
+               label="%temenu.revert.label"
+               style="push">
+            <visibleWhen
+                  checkEnabled="false">
+               <and>
+                  <with
+                        variable="selection">
+                     <count
+                           value="1">
+                     </count>
+                     <iterate>
+                        <instanceof
+                              value="org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode">
+                        </instanceof>
+                        <test
+                              property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isFile">
+                        </test>
+                     </iterate>
+                  </with>
+                  <not>
+                     <test
+                           property="org.eclipse.tm.te.tcf.filesystem.propertytester.cache.isAutoSavingOn">
+                     </test>
+                  </not>
+               </and>
             </visibleWhen>
          </command>
       </menuContribution>
@@ -194,30 +519,40 @@
             class="org.eclipse.tm.te.tcf.filesystem.internal.handlers.FSTreeNodePropertyTester"
             id="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode"
             namespace="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode"
-            properties="isFile,isDirectory,isBinaryFile,isReadable,isWritable,isExecutable"
+            properties="isFile,isDirectory,isBinaryFile,isReadable,isWritable,isExecutable,getCacheState"
             type="org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode">
+      </propertyTester>
+      <propertyTester
+            class="org.eclipse.tm.te.tcf.filesystem.internal.handlers.CachePropertyTester"
+            id="org.eclipse.tm.te.tcf.filesystem.propertytester.cache"
+            namespace="org.eclipse.tm.te.tcf.filesystem.propertytester.cache"
+            properties="isAutoSavingOn"
+            type="java.lang.Object">
       </propertyTester>
    </extension>
    
 <!-- Target Explorer command contributions -->
    <extension point="org.eclipse.ui.commands">
       <command
-            id="org.eclipse.tm.te.tcf.filesystem.commands.open"
-            name="Open">
+            id="org.eclipse.tm.te.tcf.filesystem.commands.update"
+            name="%command.update.name">
+      </command>
+      <command
+            id="org.eclipse.tm.te.tcf.filesystem.commands.commit"
+            name="%command.commit.name">
+      </command>
+      <command
+            id="org.eclipse.tm.te.tcf.filesystem.commands.merge"
+            name="%command.merge.name">
+      </command>
+      <command
+            id="org.eclipse.tm.te.tcf.filesystem.commands.revert"
+            name="%command.revert.name">
       </command>
    </extension>
 
 <!-- Target Explorer command handler contributions -->
    <extension point="org.eclipse.ui.handlers">
-      <handler
-            class="org.eclipse.tm.te.tcf.filesystem.internal.handlers.OpenFileHandler"
-            commandId="org.eclipse.tm.te.tcf.filesystem.commands.open">
-         <enabledWhen>
-            <with variable="activeMenuSelection">
-               <count value="1"/>
-            </with>
-         </enabledWhen>
-      </handler>
 
       <!-- This handler contribution is for the double click behaviour in the
            Target Explore tree view -->
@@ -226,25 +561,203 @@
             commandId="org.eclipse.ui.navigator.Open">
          <activeWhen>
             <and>
-               <with variable="activePartId">
-                  <equals value="org.eclipse.tm.te.ui.views.TargetExplorer"/>
-               </with>
-               <with variable="selection">
-                  <count value="1"/>
+               <with
+                     variable="selection">
+                  <count
+                        value="1">
+                  </count>
                   <iterate>
-                     <instanceof value="org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode"/>
-                     <test property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isFile"/>
+                     <instanceof
+                           value="org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode">
+                     </instanceof>
                      <test
+                           forcePluginActivation="true"
+                           property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isFile">
+                     </test>
+                     <test
+                           forcePluginActivation="true"
                            property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isReadable">
                      </test>
                      <not>
-                        <test property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isBinaryFile"/>
+                        <test
+                              forcePluginActivation="true"
+                              property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isBinaryFile">
+                        </test>
                      </not>
                   </iterate>
+               </with>
+               <with
+                     variable="activePartId">
+                  <or>
+                     <equals
+                           value="org.eclipse.tm.te.ui.views.TargetExplorer">
+                     </equals>
+                     <equals
+                           value="org.eclipse.tm.te.ui.view.Editor">
+                     </equals>
+                  </or>
                </with>
             </and>
          </activeWhen>
       </handler>
+      <handler
+            class="org.eclipse.tm.te.tcf.filesystem.internal.handlers.RefreshHandler"
+            commandId="org.eclipse.ui.file.refresh">
+         <activeWhen>
+            <with
+                  variable="activePartId">
+               <or>
+                  <equals
+                        value="org.eclipse.tm.te.ui.views.TargetExplorer">
+                  </equals>
+                  <equals
+                        value="org.eclipse.tm.te.ui.view.Editor">
+                  </equals>
+               </or>
+            </with>
+         </activeWhen>
+      </handler>
+      <handler
+            class="org.eclipse.tm.te.tcf.filesystem.internal.handlers.UpdateHandler"
+            commandId="org.eclipse.tm.te.tcf.filesystem.commands.update">
+         <enabledWhen>
+            <with
+                  variable="selection">
+               <count
+                     value="1">
+               </count>
+               <iterate>
+                  <test
+                        property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.getCacheState"
+                        value="outdated">
+                  </test>
+               </iterate>
+            </with>
+         </enabledWhen>
+      </handler>
+      <handler
+            class="org.eclipse.tm.te.tcf.filesystem.internal.handlers.CommitHandler"
+            commandId="org.eclipse.tm.te.tcf.filesystem.commands.commit">
+         <enabledWhen>
+            <with
+                  variable="selection">
+               <count
+                     value="1">
+               </count>
+               <iterate>
+                  <test
+                        property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.getCacheState"
+                        value="modified">
+                  </test>
+               </iterate>
+            </with>
+         </enabledWhen>
+      </handler>
+      <handler
+            class="org.eclipse.tm.te.tcf.filesystem.internal.handlers.MergeHandler"
+            commandId="org.eclipse.tm.te.tcf.filesystem.commands.merge">
+         <enabledWhen>
+            <with
+                  variable="selection">
+               <count
+                     value="1">
+               </count>
+               <iterate>
+                  <test
+                        property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.getCacheState"
+                        value="conflict">
+                  </test>
+               </iterate>
+            </with>
+         </enabledWhen>
+      </handler>
+      <handler
+            class="org.eclipse.tm.te.tcf.filesystem.internal.handlers.RevertHandler"
+            commandId="org.eclipse.tm.te.tcf.filesystem.commands.revert">
+         <enabledWhen>
+            <with
+                  variable="selection">
+               <count
+                     value="1">
+               </count>
+               <iterate>
+                  <or>
+                     <test
+                           property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.getCacheState"
+                           value="modified">
+                     </test>
+                     <test
+                           property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.getCacheState"
+                           value="conflict">
+                     </test>
+                  </or>
+               </iterate>
+            </with>
+         </enabledWhen>
+      </handler>
+   </extension>
+   
+   <extension point="org.eclipse.ui.decorators">
+      <decorator
+            icon="icons/ovr/ovr_modified.png"
+            id="org.eclipse.tm.te.tcf.filesystem.decorators.modified"
+            label="%decorator.modified.label"
+            lightweight="true"
+            location="TOP_RIGHT"
+            state="true">
+         <enablement>
+            <objectState
+                  name="cache.state"
+                  value="modified">
+            </objectState>
+         </enablement>
+      </decorator>
+      <decorator
+            icon="icons/ovr/ovr_outdated.png"
+            id="org.eclipse.tm.te.tcf.filesystem.decorators.outdated"
+            label="%decorator.outdated.label"
+            lightweight="true"
+            location="TOP_RIGHT"
+            state="true">
+         <enablement>
+            <objectState
+                  name="cache.state"
+                  value="outdated">
+            </objectState>
+         </enablement>
+      </decorator>
+      <decorator
+            icon="icons/ovr/ovr_conflict.png"
+            id="org.eclipse.tm.te.tcf.filesystem.decorators.conflict"
+            label="%decorator.conflict.label"
+            lightweight="true"
+            location="TOP_RIGHT"
+            state="true">
+         <enablement>
+            <objectState
+                  name="cache.state"
+                  value="conflict">
+            </objectState>
+         </enablement>
+      </decorator>
+   </extension>
+   
+   <extension point="org.eclipse.ui.preferencePages">
+      <page
+            class="org.eclipse.tm.te.tcf.filesystem.internal.preferences.TargetExplorerPreferencePage"
+            id="org.eclipse.tm.te.tcf.filesystem.preferencePage"
+            name="%preference.page.name">
+      </page>
+   </extension>
+   
+   <extension point="org.eclipse.core.runtime.adapters">
+      <factory
+            adaptableType="org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode"
+            class="org.eclipse.tm.te.tcf.filesystem.internal.adapters.NodeStateFilterFactory">
+         <adapter
+               type="org.eclipse.ui.IActionFilter">
+         </adapter>
+      </factory>
    </extension>
    
 </plugin>

@@ -9,9 +9,9 @@
  *******************************************************************************/
 package org.eclipse.tm.te.tcf.filesystem.internal.handlers;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
@@ -38,10 +38,10 @@ public class ContentTypeHelper {
 	private Map<URL, IContentType> resolvables = new HashMap<URL, IContentType>();
 	// Already known unresolvable file nodes specified by their URLs.
 	private Map<URL, FSTreeNode> unresolvables = new HashMap<URL, FSTreeNode>();
-	
+
 	/**
 	 * Get the singleton instance of the content type helper.
-	 * 
+	 *
 	 * @return The singleton instance of the content type helper.
 	 */
 	public static ContentTypeHelper getInstance() {
@@ -53,7 +53,7 @@ public class ContentTypeHelper {
 
 	/**
 	 * Judges if the node is a binary file.
-	 * 
+	 *
 	 * @param node
 	 *            The file node.
 	 * @return true if the node is a binary file or else false.
@@ -71,24 +71,19 @@ public class ContentTypeHelper {
 
 	/**
 	 * Get the content type of the specified file node.
-	 * 
+	 *
 	 * @param node
 	 *            The file node.
 	 * @return The content type of the file node.
 	 */
 	public IContentType getContentType(FSTreeNode node) {
-		URL location = null;
-		try {
-			location = node.getLocationURL();
-		} catch (MalformedURLException e1) {
-			return null;
-		}
+		URL location = node.getLocationURL();
 		if (unresolvables.get(location) != null)
 			// If it is already known unresolvable.
 			return null;
 		IContentType contentType = null;
 		contentType = resolvables.get(location);
-		if (contentType != null) 
+		if (contentType != null)
 			// If it is already known to have a certain content type.
 			return contentType;
 		// First check the content type by its name.
@@ -110,7 +105,7 @@ public class ContentTypeHelper {
 
 	/**
 	 * Find the content type of the file using its content stream.
-	 * 
+	 *
 	 * @param node
 	 *            The file node.
 	 * @return The content type of the file.
@@ -119,13 +114,12 @@ public class ContentTypeHelper {
 	 * @throws IOException
 	 *             If something goes wrong during the content type parsing.
 	 */
-	private IContentType findContentTypeByStream(FSTreeNode node)
-			throws CoreException, IOException {
+	private IContentType findContentTypeByStream(FSTreeNode node) throws CoreException, IOException {
 		InputStream is = null;
 		try {
-			if (!CacheManager.getInstance().isCacheStale(node)) {
-				// If the local cache file is update to date, then use the local
-				// cache file.
+			File file = CacheManager.getInstance().getCacheFile(node);
+			if (file.exists()) {
+				// If the local cache file exits.
 				IPath path = CacheManager.getInstance().getCachePath(node);
 				IFileStore fileStore = EFS.getLocalFileSystem().getStore(path);
 				is = fileStore.openInputStream(EFS.NONE, null);
@@ -134,8 +128,7 @@ public class ContentTypeHelper {
 				URL url = node.getLocationURL();
 				is = url.openStream();
 			}
-			return Platform.getContentTypeManager().findContentTypeFor(is,
-					node.name);
+			return Platform.getContentTypeManager().findContentTypeFor(is, node.name);
 		} finally {
 			if (is != null) {
 				try {
