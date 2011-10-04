@@ -585,7 +585,6 @@ int context_unplant_breakpoint(ContextBreakpoint * bp) {
 }
 
 int context_get_memory_map(Context * ctx, MemoryMap * map) {
-    MemoryRegion * prev = NULL;
     char maps_file_name[FILE_PATH_SIZE];
     FILE * file = NULL;
 
@@ -596,6 +595,7 @@ int context_get_memory_map(Context * ctx, MemoryMap * map) {
     snprintf(maps_file_name, sizeof(maps_file_name), "/proc/%d/maps", id2pid(ctx->id, NULL));
     if ((file = fopen(maps_file_name, "r")) == NULL) return -1;
     for (;;) {
+        MemoryRegion * prev = NULL;
         unsigned long addr0 = 0;
         unsigned long addr1 = 0;
         unsigned long offset = 0;
@@ -621,7 +621,7 @@ int context_get_memory_map(Context * ctx, MemoryMap * map) {
         file_name[i++] = 0;
 
         if (map->region_cnt >= map->region_max) {
-            map->region_max += 8;
+            map->region_max = map->region_max < 8 ? 8 : map->region_max * 2;
             map->regions = (MemoryRegion *)loc_realloc(map->regions, sizeof(MemoryRegion) * map->region_max);
         }
 
@@ -633,6 +633,8 @@ int context_get_memory_map(Context * ctx, MemoryMap * map) {
             }
         }
 
+        if (map->region_cnt > 0) prev = map->regions + (map->region_cnt - 1);
+
         if (inode != 0 && file_name[0] && file_name[0] != '[') {
             MemoryRegion * r = map->regions + map->region_cnt++;
             memset(r, 0, sizeof(MemoryRegion));
@@ -643,7 +645,6 @@ int context_get_memory_map(Context * ctx, MemoryMap * map) {
             r->dev = MKDEV(dev_ma, dev_mi);
             r->ino = (ino_t)inode;
             r->file_name = loc_strdup(file_name);
-            prev = r;
         }
         else if (file_name[0] == 0 && prev != NULL && prev->addr + prev->size == addr0) {
             MemoryRegion * r = map->regions + map->region_cnt++;
@@ -656,7 +657,6 @@ int context_get_memory_map(Context * ctx, MemoryMap * map) {
             r->dev = prev->dev;
             r->ino = prev->ino;
             r->file_name = loc_strdup(prev->file_name);
-            prev = r;
         }
     }
     fclose(file);
