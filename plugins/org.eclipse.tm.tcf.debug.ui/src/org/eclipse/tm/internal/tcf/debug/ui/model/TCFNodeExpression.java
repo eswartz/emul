@@ -674,6 +674,14 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         return type;
     }
 
+    /**
+     * Get human readable expression script,
+     * including type cast, and using variable names instead of IDs.
+     */
+    public TCFDataCache<String> getExpressionText() {
+        return expression_text;
+    }
+
     private Boolean usePrevValue(Runnable done) {
         // Check if view should show old value.
         // Old value is shown if context is running or
@@ -1575,9 +1583,5 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
             }
         }
         return super.getAdapter(adapter);
-    }
-
-    public TCFDataCache<String> getExpressionText() {
-        return expression_text;
     }
 }

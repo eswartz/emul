@@ -14,7 +14,5 @@ import org.eclipse.tm.tcf.util.TCFDataCache;
 
 public interface IWatchInExpressions {
 
-    String getScript();
-
     TCFDataCache<String> getExpressionText();
 }
