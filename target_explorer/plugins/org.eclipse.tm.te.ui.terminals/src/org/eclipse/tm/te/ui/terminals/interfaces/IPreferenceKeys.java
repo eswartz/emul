@@ -7,22 +7,19 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.ui.interfaces;
-
-import org.eclipse.tm.te.ui.activator.UIPlugin;
+package org.eclipse.tm.te.ui.terminals.interfaces;
 
 /**
- * Target Explorer: Common UI constants.
+ * Terminals plug-in preference key definitions.
  */
-public interface IUIConstants {
+public interface IPreferenceKeys {
+	/**
+	 * Preference keys family prefix.
+	 */
+	public final String PREF_TERMINAL = "terminals"; //$NON-NLS-1$
 
 	/**
-	 * The Target Explorer common controls context menu id base part.
+	 * Preference key: Remove terminated terminals when a new terminal is created.
 	 */
-	public static final String ID_CONTROL_MENUS_BASE = UIPlugin.getUniqueIdentifier() + ".controls"; //$NON-NLS-1$
-
-	/**
-	 * The Target Explorer new target wizard selection page context help id.
-	 */
-	public static final String HELP_NEW_WIZARD_SELECTION_PAGE = UIPlugin.getUniqueIdentifier() + ".NewWizardSelectionPage"; //$NON-NLS-1$
+	public final String PREF_REMOVE_TERMINATED_TERMINALS = PREF_TERMINAL + ".removeTerminatedTerminals"; //$NON-NLS-1$
 }

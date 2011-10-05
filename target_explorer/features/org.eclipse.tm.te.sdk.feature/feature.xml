@@ -92,7 +92,7 @@
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.tm.te.ui.terminal.source"
+         id="org.eclipse.tm.te.ui.terminals.source"
          download-size="0"
          install-size="0"
          version="0.0.0"

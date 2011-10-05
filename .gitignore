@@ -114,8 +114,8 @@ tests/test-dwarf/*.ncb
 /target_explorer/plugins/org.eclipse.tm.te.ui.forms/bin
 /target_explorer/plugins/org.eclipse.tm.te.ui.swt/target
 /target_explorer/plugins/org.eclipse.tm.te.ui.swt/bin
-/target_explorer/plugins/org.eclipse.tm.te.ui.terminal/target
-/target_explorer/plugins/org.eclipse.tm.te.ui.terminal/bin
+/target_explorer/plugins/org.eclipse.tm.te.ui.terminals/target
+/target_explorer/plugins/org.eclipse.tm.te.ui.terminals/bin
 /target_explorer/plugins/org.eclipse.tm.te.ui.views/target
 /target_explorer/plugins/org.eclipse.tm.te.ui.views/bin
 /target_explorer/features/org.eclipse.tm.te.feature/target

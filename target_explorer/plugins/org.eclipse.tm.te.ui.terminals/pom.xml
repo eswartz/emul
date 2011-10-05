@@ -12,6 +12,6 @@
   </parent>
 
   <version>1.0.0.qualifier</version>
-  <artifactId>org.eclipse.tm.te.ui.terminal</artifactId>
+  <artifactId>org.eclipse.tm.te.ui.terminals</artifactId>
   <packaging>eclipse-plugin</packaging>
 </project>

@@ -7,22 +7,30 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.ui.interfaces;
+package org.eclipse.tm.te.ui.terminals.interfaces;
 
-import org.eclipse.tm.te.ui.activator.UIPlugin;
+import org.eclipse.ui.IViewPart;
 
 /**
- * Target Explorer: Common UI constants.
+ * Terminals view public interface.
  */
-public interface IUIConstants {
+public interface ITerminalsView extends IViewPart {
 
 	/**
-	 * The Target Explorer common controls context menu id base part.
+	 * Switch to the empty page control.
 	 */
-	public static final String ID_CONTROL_MENUS_BASE = UIPlugin.getUniqueIdentifier() + ".controls"; //$NON-NLS-1$
+	public void switchToEmptyPageControl();
 
 	/**
-	 * The Target Explorer new target wizard selection page context help id.
+	 * Switch to the tab folder control.
 	 */
-	public static final String HELP_NEW_WIZARD_SELECTION_PAGE = UIPlugin.getUniqueIdentifier() + ".NewWizardSelectionPage"; //$NON-NLS-1$
+	public void switchToTabFolderControl();
+
+	/**
+	 * Returns the context help id associated with the terminal
+	 * console view instance.
+	 *
+	 * @return The context help id or <code>null</code> if none is associated.
+	 */
+	public String getContextHelpId();
 }

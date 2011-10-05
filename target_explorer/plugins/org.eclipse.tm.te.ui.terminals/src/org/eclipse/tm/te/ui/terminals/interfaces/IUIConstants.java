@@ -7,22 +7,15 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.ui.interfaces;
-
-import org.eclipse.tm.te.ui.activator.UIPlugin;
+package org.eclipse.tm.te.ui.terminals.interfaces;
 
 /**
- * Target Explorer: Common UI constants.
+ * Terminals common UI constants.
  */
 public interface IUIConstants {
-
 	/**
-	 * The Target Explorer common controls context menu id base part.
+	 * The view id of the terminals view.
 	 */
-	public static final String ID_CONTROL_MENUS_BASE = UIPlugin.getUniqueIdentifier() + ".controls"; //$NON-NLS-1$
+	public static final String ID = "org.eclipse.tm.te.ui.terminals.TerminalsView"; //$NON-NLS-1$
 
-	/**
-	 * The Target Explorer new target wizard selection page context help id.
-	 */
-	public static final String HELP_NEW_WIZARD_SELECTION_PAGE = UIPlugin.getUniqueIdentifier() + ".NewWizardSelectionPage"; //$NON-NLS-1$
 }
