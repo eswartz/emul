@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+<!-- View contributions -->
+   <extension point="org.eclipse.ui.views">
+      <view
+            category="org.eclipse.tm.te.ui.views.category"
+            class="org.eclipse.tm.te.ui.terminals.view.TerminalsView"
+            icon="platform:/plugin/org.eclipse.ui.console/icons/full/eview16/console_view.gif"
+            id="org.eclipse.tm.te.ui.terminals.TerminalsView"
+            name="%TerminalsView.name">
+      </view>
+    </extension>
+    
+<!-- Perspective extension contributions -->    
+   <extension point="org.eclipse.ui.perspectiveExtensions">
+      <perspectiveExtension targetID="*">
+         <view
+               id="org.eclipse.tm.te.ui.terminals.TerminalsView"
+               minimized="false"
+               relationship="stack"
+               relative="org.eclipse.ui.views.TaskList"
+               visible="false">
+         </view>
+      </perspectiveExtension>
+   </extension>
+
+<!-- Terminal connector contributions -->
+   <extension point="org.eclipse.tm.terminal.terminalConnectors">
+      <connector 
+                 name="%TerminalConnector.process"
+                 id="org.eclipse.tm.te.ui.terminals.ProcessConnector"
+                 class="org.eclipse.tm.te.ui.terminals.process.ProcessConnector"/>
+                 
+      <connector 
+                 name="%TerminalConnector.streams"
+                 id="org.eclipse.tm.te.ui.terminals.StreamsConnector"
+                 hidden="true"
+                 class="org.eclipse.tm.te.ui.terminals.streams.StreamsConnector"/>
+   </extension>
+   
+<!-- Preferences contributions -->
+   <extension point="org.eclipse.core.runtime.preferences">
+      <initializer class="org.eclipse.tm.te.ui.terminals.internal.PreferenceInitializer"/>
+   </extension>
+
+</plugin>

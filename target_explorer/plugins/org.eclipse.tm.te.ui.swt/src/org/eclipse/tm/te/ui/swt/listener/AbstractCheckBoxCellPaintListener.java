@@ -46,7 +46,7 @@ public abstract class AbstractCheckBoxCellPaintListener extends AbstractCellPain
 	}
 
 	/* (non-Javadoc)
-	 * @see com.windriver.ui.swt.listener.AbstractCellPaintListener#getPaintOrigin(org.eclipse.swt.widgets.Event, org.eclipse.swt.graphics.Image)
+	 * @see org.eclipse.tm.te.ui.swt.listener.AbstractCellPaintListener#getPaintOrigin(org.eclipse.swt.widgets.Event, org.eclipse.swt.graphics.Image)
 	 */
 	@Override
 	protected Point getPaintOrigin(Event event, Image image) {
@@ -60,7 +60,7 @@ public abstract class AbstractCheckBoxCellPaintListener extends AbstractCellPain
 	}
 
 	/* (non-Javadoc)
-	 * @see com.windriver.ui.swt.listener.AbstractCellPaintListener#getImageToDraw(org.eclipse.swt.widgets.Item, int)
+	 * @see org.eclipse.tm.te.ui.swt.listener.AbstractCellPaintListener#getImageToDraw(org.eclipse.swt.widgets.Item, int)
 	 */
 	@Override
 	protected Image getImageToDraw(Item item, int columnIndex) {

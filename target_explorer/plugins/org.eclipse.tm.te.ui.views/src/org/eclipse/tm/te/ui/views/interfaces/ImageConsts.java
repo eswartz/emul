@@ -28,5 +28,5 @@ public interface ImageConsts {
     /**
      * The key to access the Target Explorer editor image.
      */
-    public static final String  IMAGE_EDITOR = "TargetExplorerEditor"; //$NON-NLS-1$
+    public static final String  EDITOR = "TargetExplorerEditor"; //$NON-NLS-1$
 }

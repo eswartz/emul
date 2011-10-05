@@ -13,8 +13,6 @@ import org.eclipse.tm.te.ui.activator.UIPlugin;
 
 /**
  * Target Explorer: Common UI constants.
- *
- * @author uwe.stieber@windriver.com
  */
 public interface IUIConstants {
 

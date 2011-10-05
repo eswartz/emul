@@ -59,8 +59,8 @@ public class NewActionProvider extends CommonActionProvider {
             window.getWorkbench().getHelpSystem().setHelp(newWizardCommandAction, IContextHelpIds.NEW_TARGET_WIZARD);
 
 			newWizardCommandActionToolbar = new CommandAction(window, "org.eclipse.tm.te.ui.command.newWizards"); //$NON-NLS-1$
-			newWizardCommandActionToolbar.setImageDescriptor(org.eclipse.tm.te.ui.activator.UIPlugin.getImageDescriptor(ImageConsts.IMAGE_NEW_TARGET_WIZARD_ENABLED));
-			newWizardCommandActionToolbar.setDisabledImageDescriptor(org.eclipse.tm.te.ui.activator.UIPlugin.getImageDescriptor(ImageConsts.IMAGE_NEW_TARGET_WIZARD_DISABLED));
+			newWizardCommandActionToolbar.setImageDescriptor(org.eclipse.tm.te.ui.activator.UIPlugin.getImageDescriptor(ImageConsts.NEW_TARGET_WIZARD_ENABLED));
+			newWizardCommandActionToolbar.setDisabledImageDescriptor(org.eclipse.tm.te.ui.activator.UIPlugin.getImageDescriptor(ImageConsts.NEW_TARGET_WIZARD_DISABLED));
 			newWizardCommandActionToolbar.setText(Messages.NewActionProvider_NewWizardCommandAction_label);
 			newWizardCommandActionToolbar.setToolTipText(Messages.NewActionProvider_NewWizardCommandAction_tooltip);
             window.getWorkbench().getHelpSystem().setHelp(newWizardCommandActionToolbar, IContextHelpIds.NEW_TARGET_WIZARD);
@@ -100,7 +100,7 @@ public class NewActionProvider extends CommonActionProvider {
 
 		// Create the new sub menu
 		IMenuManager newMenu = new MenuManager(Messages.NewActionProvider_NewMenu_label,
-											   org.eclipse.tm.te.ui.activator.UIPlugin.getImageDescriptor(ImageConsts.IMAGE_NEW_TARGET_WIZARD_ENABLED),
+											   org.eclipse.tm.te.ui.activator.UIPlugin.getImageDescriptor(ImageConsts.NEW_TARGET_WIZARD_ENABLED),
 											   IUIConstants.ID_EXPLORER + ".menu.new"); //$NON-NLS-1$
 
 		// Add the context sensitive wizards (commonWizard element)

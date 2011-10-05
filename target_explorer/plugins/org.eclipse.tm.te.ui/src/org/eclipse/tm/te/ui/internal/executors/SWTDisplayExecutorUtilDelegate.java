@@ -14,9 +14,9 @@ import org.eclipse.tm.te.runtime.concurrent.interfaces.IExecutorUtilDelegate;
 import org.eclipse.tm.te.runtime.extensions.ExecutableExtension;
 
 /**
- * Eclipse platform display executor utility delegate implementation.
+ * SWT display executor utility delegate implementation.
  */
-public class EclipsePlatformDisplayExecutorUtilDelegate extends ExecutableExtension implements IExecutorUtilDelegate {
+public class SWTDisplayExecutorUtilDelegate extends ExecutableExtension implements IExecutorUtilDelegate {
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.runtime.concurrent.interfaces.IExecutorUtilDelegate#isHandledExecutorThread()

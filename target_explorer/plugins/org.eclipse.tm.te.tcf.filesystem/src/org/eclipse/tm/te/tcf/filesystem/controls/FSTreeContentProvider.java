@@ -15,8 +15,9 @@ import java.util.List;
 
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.viewers.ITreeContentProvider;
-import org.eclipse.jface.viewers.StructuredViewer;
+import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.IToken;
@@ -27,6 +28,7 @@ import org.eclipse.tm.tcf.services.IFileSystem.FileSystemException;
 import org.eclipse.tm.tcf.services.IFileSystem.IFileHandle;
 import org.eclipse.tm.te.tcf.core.Tcf;
 import org.eclipse.tm.te.tcf.core.interfaces.IChannelManager;
+import org.eclipse.tm.te.tcf.filesystem.internal.events.INodeStateListener;
 import org.eclipse.tm.te.tcf.filesystem.model.FSModel;
 import org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel;
@@ -38,7 +40,7 @@ import org.eclipse.ui.PlatformUI;
 /**
  * Target Explorer: File system tree content provider implementation.
  */
-public class FSTreeContentProvider implements ITreeContentProvider {
+public class FSTreeContentProvider implements ITreeContentProvider, INodeStateListener {
 	/**
 	 * Static reference to the return value representing no elements.
 	 */
@@ -46,19 +48,22 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 
 	/**
 	 * The file system model instance associated with this file system
-	 * tree content provider instance. Each content provider has it's own
-	 * file system mode instance.
+	 * tree content provider instance.
 	 */
-	/* default*/ final FSModel model = new FSModel();
+	/* package */ final static FSModel model = FSModel.getInstance();
 
-	/* default */ Viewer viewer = null;
+	/* package */ TreeViewer viewer = null;
+
+	public FSTreeContentProvider(){
+		model.addNodeStateListener(this);
+	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.IContentProvider#inputChanged(org.eclipse.jface.viewers.Viewer, java.lang.Object, java.lang.Object)
 	 */
 	@Override
 	public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
-		this.viewer = viewer;
+		this.viewer = (TreeViewer) viewer;
 	}
 
 	/* (non-Javadoc)
@@ -66,7 +71,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 	 */
 	@Override
 	public void dispose() {
-		model.dispose();
+		model.removeNodeStateListener(this);
 	}
 
 	/**
@@ -205,6 +210,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 																node.parent = rootNode;
 																node.peerNode = rootNode.peerNode;
 																rootNode.getChildren().add(node);
+																model.addNode(node);
 															}
 														}
 
@@ -391,6 +397,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 									node.parent = parentNode;
 									node.peerNode = parentNode.peerNode;
 									parentNode.getChildren().add(node);
+									model.addNode(node);
 								}
 							}
 						}
@@ -417,7 +424,7 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 						PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
 							@Override
 							public void run() {
-								if (viewer instanceof StructuredViewer) ((StructuredViewer)viewer).refresh(parentNode);
+								viewer.refresh(parentNode);
 							}
 						});
 					}
@@ -545,5 +552,24 @@ public class FSTreeContentProvider implements ITreeContentProvider {
 		}
 
 		return hasChildren;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.tm.te.tcf.filesystem.internal.events.INodeStateListener#stateChanged(org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode)
+	 */
+	@Override
+	public void stateChanged(final FSTreeNode node) {
+		// Make sure that this node is inside of this viewer.
+		Display display = PlatformUI.getWorkbench().getDisplay();
+		if (display.getThread() == Thread.currentThread()) {
+			viewer.refresh(node);
+		} else {
+			display.asyncExec(new Runnable() {
+				@Override
+				public void run() {
+					viewer.refresh(node);
+				}
+			});
+		}
 	}
 }

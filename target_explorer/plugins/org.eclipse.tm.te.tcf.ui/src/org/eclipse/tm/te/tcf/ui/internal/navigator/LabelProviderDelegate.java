@@ -64,7 +64,7 @@ public class LabelProviderDelegate extends LabelProvider implements ILabelDecora
 	@Override
 	public Image getImage(Object element) {
 		if (element instanceof IPeerModel) {
-			return UIPlugin.getImage(ImageConsts.IMAGE_TARGET);
+			return UIPlugin.getImage(ImageConsts.TARGET);
 		}
 
 		return super.getImage(element);
