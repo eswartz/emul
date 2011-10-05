@@ -1007,7 +1007,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
                     }
                 }
                 label.append(nm != null ? nm : id);
-                if (ctx.hasState()) {
+                if (ctx.hasState() && !TCFModel.ID_PINNED_VIEW.equals(result.getPresentationContext().getId())) {
                     // Thread
                     if (resume_pending && resumed_by_action || model.getActiveAction(id) != null) {
                         image_name = ImageCache.IMG_THREAD_RUNNNIG;

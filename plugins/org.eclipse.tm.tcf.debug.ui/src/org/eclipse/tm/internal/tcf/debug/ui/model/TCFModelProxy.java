@@ -43,6 +43,7 @@ import org.eclipse.tm.tcf.protocol.Protocol;
  * fires deltas to notify listeners of changes in the model.
  * Model proxy listeners are debuggers views.
  */
+@SuppressWarnings("restriction")
 public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Runnable {
 
     private static final TCFNode[] EMPTY_NODE_ARRAY = new TCFNode[0];

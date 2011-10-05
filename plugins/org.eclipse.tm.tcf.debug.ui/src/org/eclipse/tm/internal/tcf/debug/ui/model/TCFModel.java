@@ -120,6 +120,7 @@ import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IPersistableElement;
 import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
@@ -137,6 +138,9 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     /** The id of the expression hover presentation context */
     public static final String ID_EXPRESSION_HOVER = Activator.PLUGIN_ID + ".expression_hover";
+
+    /** The id of a pinned view description presentation context */
+    public static final String ID_PINNED_VIEW = Activator.PLUGIN_ID + ".pinned_view";
 
     /**
      * A dummy editor input to open the disassembly view as editor.
@@ -268,6 +272,8 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     private final Map<String,Object> context_map = new HashMap<String,Object>();
 
     private final Set<String> expanded_nodes = new HashSet<String>();
+
+    private final Map<IWorkbenchPart,TCFNode> pins = new HashMap<IWorkbenchPart,TCFNode>();
 
     private TCFConsole console;
 
@@ -1261,23 +1267,34 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         }
     }
 
-    public void update(IViewerInputUpdate update) {
-        if (IDebugUIConstants.ID_BREAKPOINT_VIEW.equals(update.getPresentationContext().getId())) {
-            // Current implementation does not support flexible hierarchy for breakpoints
-            IViewerInputProvider p = (IViewerInputProvider)launch.getAdapter(IViewerInputProvider.class);
-            if (p != null) {
-                p.update(update);
-                return;
+    public void update(final IViewerInputUpdate update) {
+        Protocol.invokeLater(new Runnable() {
+            public void run() {
+                TCFNode node = pins.get(update.getPresentationContext().getPart());
+                if (node != null) {
+                    update.setInputElement(node);
+                    update.done();
+                }
+                else {
+                    if (IDebugUIConstants.ID_BREAKPOINT_VIEW.equals(update.getPresentationContext().getId())) {
+                        // Current implementation does not support flexible hierarchy for breakpoints
+                        IViewerInputProvider p = (IViewerInputProvider)launch.getAdapter(IViewerInputProvider.class);
+                        if (p != null) {
+                            p.update(update);
+                            return;
+                        }
+                    }
+                    Object o = update.getElement();
+                    if (o instanceof TCFLaunch) {
+                        update.setInputElement(o);
+                        update.done();
+                    }
+                    else {
+                        ((TCFNode)o).update(update);
+                    }
+                }
             }
-        }
-        Object o = update.getElement();
-        if (o instanceof TCFLaunch) {
-            update.setInputElement(o);
-            update.done();
-        }
-        else {
-            ((TCFNode)o).update(update);
-        }
+        });
     }
 
     public IModelProxy createModelProxy(Object element, IPresentationContext context) {
@@ -1310,6 +1327,12 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             return TCFColumnPresentationModules.PRESENTATION_ID;
         }
         return null;
+    }
+
+    public void setPin(IWorkbenchPart part, TCFNode node) {
+        assert Protocol.isDispatchThread();
+        if (node == null) pins.remove(part);
+        else pins.put(part, node);
     }
 
     public void setDebugViewSelection(TCFNode node, String reason) {

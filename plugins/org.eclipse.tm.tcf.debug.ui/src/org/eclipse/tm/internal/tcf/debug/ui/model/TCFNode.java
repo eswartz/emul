@@ -193,7 +193,6 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
      * @return parent node or null if the node is a root
      */
     public final TCFNode getParent() {
-        assert Protocol.isDispatchThread();
         return parent;
     }
 
