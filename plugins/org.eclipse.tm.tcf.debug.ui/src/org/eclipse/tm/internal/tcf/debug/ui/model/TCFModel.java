@@ -1272,8 +1272,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             public void run() {
                 TCFNode node = pins.get(update.getPresentationContext().getPart());
                 if (node != null) {
-                    update.setInputElement(node);
-                    update.done();
+                    node.update(update);
                 }
                 else {
                     if (IDebugUIConstants.ID_BREAKPOINT_VIEW.equals(update.getPresentationContext().getId())) {

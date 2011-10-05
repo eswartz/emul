@@ -428,7 +428,7 @@ public class TCFNodeStackFrame extends TCFNode {
 
     @Override
     protected boolean getData(IViewerInputUpdate result, Runnable done) {
-        result.setInputElement(result.getElement());
+        result.setInputElement(this);
         String id = result.getPresentationContext().getId();
         if (IDebugUIConstants.ID_REGISTER_VIEW.equals(id) || IDebugUIConstants.ID_EXPRESSION_VIEW.equals(id)) {
             TCFNodeExecContext exe = (TCFNodeExecContext)parent;

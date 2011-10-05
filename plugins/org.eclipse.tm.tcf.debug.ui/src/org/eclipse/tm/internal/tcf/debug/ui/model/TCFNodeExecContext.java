@@ -1096,7 +1096,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
 
     @Override
     protected boolean getData(IViewerInputUpdate result, Runnable done) {
-        result.setInputElement(result.getElement());
+        result.setInputElement(this);
         String view_id = result.getPresentationContext().getId();
         if (IDebugUIConstants.ID_VARIABLE_VIEW.equals(view_id)) {
             if (!children_stack.validate(done)) return false;
