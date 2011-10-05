@@ -15,7 +15,7 @@
 	<name>TCF Parent</name>
 
 	<properties>
-		<tycho-version>0.12.0</tycho-version>
+		<tycho-version>0.13.0</tycho-version>
 		<platform-version>3.7</platform-version>
 		<platform-site>http://download.eclipse.org/eclipse/updates/${platform-version}</platform-site>
 		<cdt-site>http://download.eclipse.org/tools/cdt/builds/hudson/cdt-nightly</cdt-site>
