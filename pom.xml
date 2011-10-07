@@ -68,6 +68,8 @@
 	  <module>target_explorer/plugins/org.eclipse.tm.te.tcf.filesystem</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.tcf.locator</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.tcf.log.core</module>
+	  <module>target_explorer/plugins/org.eclipse.tm.te.tcf.processes.core</module>
+	  <module>target_explorer/plugins/org.eclipse.tm.te.tcf.processes.ui</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.tcf.ui</module>
 
 	  <module>target_explorer/features/org.eclipse.tm.te.feature</module>
