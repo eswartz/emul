@@ -97,6 +97,8 @@ static void elf_dispose(ELF_File * file) {
 #endif
             loc_free(s->data);
             loc_free(s->sym_addr_table);
+            loc_free(s->sym_names_hash);
+            loc_free(s->sym_names_next);
         }
         loc_free(file->sections);
     }
