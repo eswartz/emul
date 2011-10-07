@@ -29,7 +29,11 @@
 #include <services/stacktrace.h>
 #include <services/linenumbers.h>
 #include <services/memtrace.h>
-#include <system/Windows/context-win32.h>
+#if defined(WIN32)
+#  include <system/Windows/context-win32.h>
+#endif
+
+#define USE_DEBUG_REGS  0
 
 #define FUNC_CREATE     1
 #define FUNC_ALLOC      2
@@ -54,6 +58,7 @@ static EventPoint points[] = {
     { "realloc",        1, FUNC_REALLOC },
     { "free",           1, FUNC_FREE },
 
+#if defined(WIN32)
     { "_malloc_dbg",    2, FUNC_ALLOC },
     { "_realloc_dbg",   2, FUNC_REALLOC },
     { "_expand_dbg",    2, FUNC_EXPAND },
@@ -64,6 +69,8 @@ static EventPoint points[] = {
     { "HeapReAlloc",    3, FUNC_REALLOC },
     { "HeapFree",       3, FUNC_FREE },
     { "HeapDestroy",    3, FUNC_DESTROY },
+#endif
+
     { NULL, 0, 0 }
 };
 
@@ -107,6 +114,9 @@ typedef struct MemorySpace {
 typedef struct ReturnPoint {
     LINK link_mem;
     Context * ctx;
+#if !USE_DEBUG_REGS
+    BreakpointInfo * bp;
+#endif
     MemorySpace * mem;
     StackTrace * trace;
     ContextAddress addr;
@@ -117,6 +127,8 @@ static LINK mem_hash[MEM_HASH_SIZE];
 static RegisterDefinition * reg_def_eax = NULL;
 static RegisterDefinition * reg_def_esp = NULL;
 static RegisterDefinition * reg_def_eip = NULL;
+static RegisterDefinition * reg_def_rdi = NULL;
+static RegisterDefinition * reg_def_rsi = NULL;
 
 #define link_mem2trace(x)  ((StackTrace *)((char *)(x) - offsetof(StackTrace, link_all)))
 #define link_mem2ret(x)    ((ReturnPoint *)((char *)(x) - offsetof(ReturnPoint, link_mem)))
@@ -132,7 +144,7 @@ static unsigned calc_trace_hash(StackTrace * t) {
 }
 
 static unsigned calc_mem_hash(Context * ctx) {
-    return (unsigned)ctx->mem % MEM_HASH_SIZE;
+    return (unsigned)((uintptr_t)ctx->mem % MEM_HASH_SIZE);
 }
 
 static MemorySpace * get_mem_space(Context * ctx, int alloc) {
@@ -185,6 +197,8 @@ static void free_mem_space(MemorySpace * m) {
 
 static void free_return_point(ReturnPoint * r) {
     int error = 0;
+
+#if USE_DEBUG_REGS
     CONTEXT regs;
 
     memset(&regs, 0, sizeof(regs));
@@ -194,6 +208,10 @@ static void free_return_point(ReturnPoint * r) {
         regs.Dr7 &= ~0x03030003;
         if (SetThreadContext(get_context_handle(r->ctx), &regs) == 0) error = set_win32_errno(GetLastError());
     }
+#else
+    destroy_eventpoint(r->bp);
+#endif
+
     if (error) {
         printf("free_return_point: %s\n", errno_to_str(error));
     }
@@ -505,12 +523,22 @@ static void print_text_pos(CodeArea * area, void * args) {
     print_text_pos_cnt++;
 }
 
+#if !USE_DEBUG_REGS
+static void rp_callback(Context * ctx, void * args) {
+    ReturnPoint * r = (ReturnPoint *)args;
+    assert(r->ctx == ctx);
+    return_point(ctx, r);
+}
+#endif
+
 static void event_point(Context * ctx, void * args) {
     EventPoint * p = (EventPoint *)args;
     int top_frame = STACK_NO_FRAME;
     StackFrame * info = NULL;
     uint64_t esp = 0;
     uint64_t eip = 0;
+    uint64_t rdi = 0;
+    uint64_t rsi = 0;
     ContextAddress buf[4];
     MemorySpace * m = NULL;
     static StackTrace trace;
@@ -524,11 +552,15 @@ static void event_point(Context * ctx, void * args) {
         return;
     }
 
-    if ((top_frame = get_top_frame(ctx)) < 0) error = errno;
-    if (!error && get_frame_info(ctx, top_frame, &info) < 0) error = errno;
-    if (!error && read_reg_value(info, reg_def_esp, &esp) < 0) error = errno;
-    if (!error && read_reg_value(info, reg_def_eip, &eip) < 0) error = errno;
-    if (!error && context_read_mem(ctx, (ContextAddress)esp, buf, sizeof(buf)) < 0) error = errno;
+    if ((top_frame = get_top_frame(ctx)) < 0) error = set_errno(errno, "Cannot get top frame");
+    if (!error && get_frame_info(ctx, top_frame, &info) < 0) error = set_errno(errno, "Cannot get frame info");
+    if (!error && read_reg_value(info, reg_def_esp, &esp) < 0) error = set_errno(errno, "Cannot read SP register");
+    if (!error && read_reg_value(info, reg_def_eip, &eip) < 0) error = set_errno(errno, "Cannot read IP register");
+#if defined(__x86_64__)
+    if (!error && read_reg_value(info, reg_def_rdi, &rdi) < 0) error = set_errno(errno, "Cannot read DI register");
+    if (!error && read_reg_value(info, reg_def_rsi, &rsi) < 0) error = set_errno(errno, "Cannot read SI register");
+#endif
+    if (!error && context_read_mem(ctx, (ContextAddress)esp, buf, sizeof(buf)) < 0) error = set_errno(errno, "Cannot read memory");
     memset(&trace, 0, sizeof(trace));
     if (!error) {
         trace.mem = ctx->mem;
@@ -537,11 +569,11 @@ static void event_point(Context * ctx, void * args) {
         trace.frame_cnt = 0;
         while (trace.frame_cnt < STK_TRACE_SIZE && trace.frame_cnt < top_frame) {
             if (get_frame_info(ctx, top_frame - trace.frame_cnt - 1, &info) < 0) {
-                error = errno;
+                if (trace.frame_cnt == 0) error = errno;
                 break;
             }
             if (read_reg_value(info, reg_def_eip, &eip) < 0) {
-                error = errno;
+                if (trace.frame_cnt == 0) error = errno;
                 break;
             }
             trace.frames[trace.frame_cnt++] = (ContextAddress)eip;
@@ -574,7 +606,12 @@ static void event_point(Context * ctx, void * args) {
     }
     if (!error) {
         if (p->func_type == FUNC_FREE) {
-            MemBlock * b = find_mem_block(m, buf[1], buf[1] + 1);
+#if defined(__x86_64__)
+            ContextAddress addr = (ContextAddress)rdi;
+#else
+            ContextAddress addr = buf[1];
+#endif
+            MemBlock * b = find_mem_block(m, addr, addr + 1);
             if (b != NULL) {
                 rem_mem_block(m, b);
                 b->trace->size_current -= b->size;
@@ -584,28 +621,43 @@ static void event_point(Context * ctx, void * args) {
         else if (p->func_type == FUNC_DESTROY) {
         }
         else {
-            CONTEXT regs;
             ReturnPoint * r = (ReturnPoint *)loc_alloc_zero(sizeof(ReturnPoint));
 
             r->trace = t;
             r->ctx = ctx;
             r->mem = m;
             r->addr = buf[0];
+#if defined(__x86_64__)
+            r->args[0] = (ContextAddress)rdi;
+            r->args[1] = (ContextAddress)rsi;
+#else
             r->args[0] = buf[1];
             r->args[1] = buf[2];
+#endif
             list_add_first(&r->link_mem, &m->link_rtn);
             context_lock(r->ctx);
 
-            memset(&regs, 0, sizeof(regs));
-            regs.ContextFlags = CONTEXT_DEBUG_REGISTERS;
-            if (GetThreadContext(get_context_handle(ctx), &regs) == 0) error = set_win32_errno(GetLastError());
-            if (!error && (regs.Dr7 & 0x03) != 0) error = set_errno(ERR_OTHER, "HW breakpoint not available");
-            if (!error) {
-                regs.Dr0 = r->addr;
-                regs.Dr7 &= ~0x03030003;
-                regs.Dr7 |=  0x00000001;
-                if (SetThreadContext(get_context_handle(ctx), &regs) == 0) error = set_win32_errno(GetLastError());
+#if USE_DEBUG_REGS
+            {
+                CONTEXT regs;
+                memset(&regs, 0, sizeof(regs));
+                regs.ContextFlags = CONTEXT_DEBUG_REGISTERS;
+                if (GetThreadContext(get_context_handle(ctx), &regs) == 0) error = set_win32_errno(GetLastError());
+                if (!error && (regs.Dr7 & 0x03) != 0) error = set_errno(ERR_OTHER, "HW breakpoint not available");
+                if (!error) {
+                    regs.Dr0 = r->addr;
+                    regs.Dr7 &= ~0x03030003;
+                    regs.Dr7 |=  0x00000001;
+                    if (SetThreadContext(get_context_handle(ctx), &regs) == 0) error = set_win32_errno(GetLastError());
+                }
             }
+#else
+            {
+                char buf[64];
+                snprintf(buf, sizeof(buf), "0x%" PRIX64, (uint64_t)r->addr);
+                r->bp = create_eventpoint(buf, ctx, rp_callback, r);
+            }
+#endif
             if (error) free_return_point(r);
         }
     }
@@ -635,7 +687,7 @@ static void event_point(Context * ctx, void * args) {
             }
             assert(pos == cnt);
             qsort(buf, cnt, sizeof(StackTrace *), sort_func);
-            printf("\nPID %d, total traces %d\n", m->mem, cnt);
+            printf("\nID %s, total traces %d\n", m->mem->id, cnt);
             for (i = 0; i < 8 && i < cnt; i++) {
                 int j;
                 StackTrace * t = buf[i];
@@ -645,7 +697,7 @@ static void event_point(Context * ctx, void * args) {
                     print_text_pos_cnt = 0;
                     address_to_line(ctx, t->frames[j], t->frames[j] + 1, print_text_pos, NULL);
                     if (print_text_pos_cnt == 0) {
-                        printf("    0x%08x\n", t->frames[j]);
+                        printf("    0x%" PRIX64 "\n", (uint64_t)t->frames[j]);
                     }
                 }
             }
@@ -659,6 +711,7 @@ static void event_context_created(Context * ctx, void * args) {
 
 }
 
+#if USE_DEBUG_REGS
 static int contex_exception_handler(Context * ctx, EXCEPTION_DEBUG_INFO * info) {
     if (info->ExceptionRecord.ExceptionCode == EXCEPTION_SINGLE_STEP) {
         MemorySpace * m = get_mem_space(ctx, 0);
@@ -679,6 +732,7 @@ static int contex_exception_handler(Context * ctx, EXCEPTION_DEBUG_INFO * info) 
     }
     return 0;
 }
+#endif
 
 static void event_context_stopped(Context * ctx, void * args) {
 }
@@ -722,12 +776,24 @@ void ini_mem_trace_service(Protocol * proto) {
     for (i = 0; i < MEM_HASH_SIZE; i++) list_init(mem_hash + i);
 
     while (r->name != NULL) {
+#if defined(__x86_64__)
+        if (strcmp(r->name, "rax") == 0) reg_def_eax = r;
+        if (strcmp(r->name, "rsp") == 0) reg_def_esp = r;
+        if (strcmp(r->name, "rip") == 0) reg_def_eip = r;
+        if (strcmp(r->name, "rdi") == 0) reg_def_rdi = r;
+        if (strcmp(r->name, "rsi") == 0) reg_def_rsi = r;
+#elif defined(__i386__)
         if (strcmp(r->name, "eax") == 0) reg_def_eax = r;
         if (strcmp(r->name, "esp") == 0) reg_def_esp = r;
         if (strcmp(r->name, "eip") == 0) reg_def_eip = r;
+#else
+#  error Unknown CPU
+#endif
         r++;
     }
 
     add_context_event_listener(&listener, NULL);
+#if USE_DEBUG_REGS
     add_context_exception_handler(contex_exception_handler);
+#endif
 }
