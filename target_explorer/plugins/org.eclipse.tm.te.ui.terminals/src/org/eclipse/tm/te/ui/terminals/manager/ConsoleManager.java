@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.swt.custom.CTabItem;
@@ -131,7 +132,7 @@ public class ConsoleManager {
 	 * @return The console view instance if available or <code>null</code> otherwise.
 	 */
 	public ITerminalsView findConsoleView(String id) {
-		assert Display.findDisplay(Thread.currentThread()) != null;
+		Assert.isNotNull(Display.findDisplay(Thread.currentThread()));
 
 		ITerminalsView view = null;
 
@@ -157,7 +158,7 @@ public class ConsoleManager {
 	 * @param id The terminal console view id or <code>null</code> to show the default terminal console view.
 	 */
 	public void showConsoleView(String id) {
-		assert Display.findDisplay(Thread.currentThread()) != null;
+		Assert.isNotNull(Display.findDisplay(Thread.currentThread()));
 
 		// Get the active workbench page
 		IWorkbenchPage page = getActiveWorkbenchPage();
@@ -210,8 +211,9 @@ public class ConsoleManager {
 	 * @param activate If <code>true</code> activate the console view.
 	 */
 	public void openConsole(String id, String title, ITerminalConnector connector, Object data, boolean activate) {
-		assert title != null && connector != null;
-		assert Display.findDisplay(Thread.currentThread()) != null;
+		Assert.isNotNull(title);
+		Assert.isNotNull(connector);
+		Assert.isNotNull(Display.findDisplay(Thread.currentThread()));
 
 		// make the consoles view visible
 		bringToTop(id, activate);
@@ -264,8 +266,9 @@ public class ConsoleManager {
 	 * @return The corresponding console tab item or <code>null</code>.
 	 */
 	public CTabItem findConsole(String id, String title, ITerminalConnector connector, Object data) {
-		assert title != null && connector != null;
-		assert Display.findDisplay(Thread.currentThread()) != null;
+		Assert.isNotNull(title);
+		Assert.isNotNull(connector);
+		Assert.isNotNull(Display.findDisplay(Thread.currentThread()));
 
 		// Get the console view
 		ITerminalsView view = findConsoleView(id);
@@ -289,8 +292,9 @@ public class ConsoleManager {
 	 * @param data The custom terminal data node or <code>null</code>.
 	 */
 	public void closeConsole(String id, String title, ITerminalConnector connector, Object data) {
-		assert title != null && connector != null;
-		assert Display.findDisplay(Thread.currentThread()) != null;
+		Assert.isNotNull(title);
+		Assert.isNotNull(connector);
+		Assert.isNotNull(Display.findDisplay(Thread.currentThread()));
 
 		// Lookup the console
 		CTabItem console = findConsole(id, title, connector, data);

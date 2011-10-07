@@ -243,7 +243,7 @@ public class TabFolderMenuHandler extends PlatformObject {
 	 * @param manager The menu manager. Must not be <code>null</code>.
 	 */
 	protected void doFillContextMenu(MenuManager manager) {
-		assert manager != null;
+		Assert.isNotNull(manager);
 
 		// Loop all actions and add them to the menu manager
 		for (AbstractTerminalAction action : contextMenuActions) {

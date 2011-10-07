@@ -15,9 +15,9 @@ import org.eclipse.tm.te.runtime.activator.CoreBundleActivator;
 import org.eclipse.tm.te.runtime.interfaces.tracing.ITraceIds;
 
 /**
- * Property change event implementation.
+ * Common change event implementation.
  */
-public class PropertyChangeEvent extends EventObject {
+public class ChangeEvent extends EventObject {
 	private static final long serialVersionUID = -7859159130977760588L;
 
 	private Object eventId;
@@ -34,11 +34,10 @@ public class PropertyChangeEvent extends EventObject {
 	 *
 	 * @exception IllegalArgumentException if eventId == null.
 	 */
-	public PropertyChangeEvent(Object source, Object eventId, Object oldValue, Object newValue) {
+	public ChangeEvent(Object source, Object eventId, Object oldValue, Object newValue) {
 		super(source);
 
-		if (eventId == null)
-		    throw new IllegalArgumentException("null eventId"); //$NON-NLS-1$
+		if (eventId == null) throw new IllegalArgumentException("null eventId"); //$NON-NLS-1$
 
 		this.eventId = eventId;
 		this.oldValue = oldValue;
@@ -90,7 +89,8 @@ public class PropertyChangeEvent extends EventObject {
 		return formattedValue;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
 	 * @see java.util.EventObject#toString()
 	 */
 	@Override
@@ -113,5 +113,5 @@ public class PropertyChangeEvent extends EventObject {
 		toString.append("}"); //$NON-NLS-1$
 
 		return toString.toString();
-   }
+	}
 }

@@ -75,7 +75,7 @@ public class OutputStreamMonitor implements IDisposable {
 	 * @param disposable The disposable object. Must not be <code>null</code>.
 	 */
 	public final void addDisposable(IDisposable disposable) {
-		assert disposable != null;
+		Assert.isNotNull(disposable);
 		if (!disposed && !disposables.contains(disposable)) disposables.add(disposable);
 	}
 
@@ -85,7 +85,7 @@ public class OutputStreamMonitor implements IDisposable {
 	 * @param disposable The disposable object. Must not be <code>null</code>.
 	 */
 	public final void removeDisposable(IDisposable disposable) {
-		assert disposable != null;
+		Assert.isNotNull(disposable);
 		disposables.remove(disposable);
 	}
 
@@ -216,7 +216,7 @@ public class OutputStreamMonitor implements IDisposable {
      *
      */
     protected byte[] onContentReadFromStream(byte[] byteBuffer, int bytesRead) {
-    	assert byteBuffer != null;
+    	Assert.isNotNull(byteBuffer);
     	return byteBuffer;
     }
 }

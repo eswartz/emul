@@ -21,7 +21,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.PlatformObject;
 import org.eclipse.tm.te.runtime.activator.CoreBundleActivator;
 import org.eclipse.tm.te.runtime.events.EventManager;
-import org.eclipse.tm.te.runtime.events.PropertyChangeEvent;
+import org.eclipse.tm.te.runtime.events.ChangeEvent;
 import org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer;
 import org.eclipse.tm.te.runtime.interfaces.tracing.ITraceIds;
 
@@ -194,7 +194,7 @@ public class PropertiesContainer extends PlatformObject implements IPropertiesCo
 	protected EventObject newEventDelegate(Object source, String key, Object oldValue, Object newValue) {
 		Assert.isNotNull(source);
 		Assert.isNotNull(key);
-		return new PropertyChangeEvent(source, key, oldValue, newValue);
+		return new ChangeEvent(source, key, oldValue, newValue);
 	}
 
 	/**

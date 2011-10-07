@@ -16,6 +16,7 @@ import java.util.UUID;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.tm.te.runtime.events.EventManager;
 import org.eclipse.tm.te.runtime.model.interfaces.IContainerModelNode;
@@ -121,7 +122,7 @@ public class ContainerModelNode extends ModelNode implements IContainerModelNode
 					node.setParent(this);
 				}
 				else {
-					assert node.getParent() == this : "Attempt to add child node to " + getName() + " with this != node.getParent()!!!"; //$NON-NLS-1$ //$NON-NLS-2$
+					Assert.isTrue(node.getParent() == this, "Attempt to add child node to " + getName() + " with this != node.getParent()!!!"); //$NON-NLS-1$ //$NON-NLS-2$
 				}
 				childList.add(node);
 			} finally {

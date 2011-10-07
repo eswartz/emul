@@ -13,6 +13,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import org.eclipse.cdt.utils.pty.PTY;
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.tm.internal.terminal.provisional.api.ISettingsStore;
 import org.eclipse.tm.internal.terminal.provisional.api.ITerminalConnector;
 import org.eclipse.tm.internal.terminal.provisional.api.TerminalConnectorExtension;
@@ -84,7 +85,8 @@ public class ConnectorManager {
 	 * @return The terminal connector object instance or <code>null</code>.
 	 */
 	public ITerminalConnector createTelnetConnector(String[] attributes, int portOffset) {
-		assert attributes != null && attributes.length >= 2;
+		Assert.isNotNull(attributes);
+		Assert.isTrue(attributes.length >= 2);
 
 		final String serverName = attributes[0];
 		final String serverPort = Integer.toString(Integer.decode(attributes[1]).intValue() + portOffset);
@@ -130,7 +132,7 @@ public class ConnectorManager {
 	 * @return The terminal connector object instance or <code>null</code>.
 	 */
 	public ITerminalConnector createProcessConnector(String connectorTypeId, final String image, final String arguments, final Process process, PTY pty, boolean localEcho) {
-		assert image != null || process != null;
+		Assert.isTrue(image != null || process != null);
 
 		// Normalize the process connector id
 		if (connectorTypeId == null) connectorTypeId = "org.eclipse.tm.te.ui.terminals.ProcessConnector"; //$NON-NLS-1$

@@ -18,4 +18,5 @@ Export-Package: org.eclipse.tm.te.tcf.core,
  org.eclipse.tm.te.tcf.core.internal.interfaces;x-internal:=true,
  org.eclipse.tm.te.tcf.core.internal.listener;x-internal:=true,
  org.eclipse.tm.te.tcf.core.internal.nls;x-internal:=true,
- org.eclipse.tm.te.tcf.core.internal.utils;x-internal:=true
+ org.eclipse.tm.te.tcf.core.internal.utils;x-internal:=true,
+ org.eclipse.tm.te.tcf.core.utils

@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.tm.te.tcf.filesystem.internal.handlers;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.widgets.Shell;
@@ -152,7 +153,9 @@ public class UserManager {
 	 *            The peer model to which the user account is saved.
 	 */
 	private void setUserToPeer(final IPeerModel peer, final UserAccount account) {
-		assert peer != null && account != null;
+		Assert.isNotNull(peer);
+		Assert.isNotNull(account);
+
 		if (Protocol.isDispatchThread()) {
 			peer.setProperty(USER_ACCOUNT_KEY, account);
 		} else {

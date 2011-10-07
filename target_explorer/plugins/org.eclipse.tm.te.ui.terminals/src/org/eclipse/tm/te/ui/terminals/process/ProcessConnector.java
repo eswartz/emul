@@ -96,7 +96,7 @@ public class ProcessConnector extends AbstractStreamsConnector {
 	 */
 	@Override
 	public void connect(ITerminalControl control) {
-		assert control != null;
+		Assert.isNotNull(control);
 		super.connect(control);
 
 		pty = null;

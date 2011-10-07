@@ -78,7 +78,8 @@ public class TabTerminalListener implements ITerminalListener {
 	 * @return The terminal console tab title to set or <code>null</code> to leave the title unchanged.
 	 */
 	protected String getTerminalConsoleTabTitle(TerminalState state) {
-		assert state != null && Display.findDisplay(Thread.currentThread()) != null;
+		Assert.isNotNull(state);
+		Assert.isNotNull(Display.findDisplay(Thread.currentThread()));
 
 		// The tab item must have been not yet disposed
 		CTabItem item = getTabItem();

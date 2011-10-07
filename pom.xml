@@ -56,6 +56,7 @@
 	  <module>target_explorer/plugins/org.eclipse.tm.te.runtime.concurrent</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.runtime.model</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.runtime.persistence</module>
+	  <module>target_explorer/plugins/org.eclipse.tm.te.runtime.services</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.runtime.statushandler</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.core</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.ui</module>
@@ -68,6 +69,8 @@
 	  <module>target_explorer/plugins/org.eclipse.tm.te.tcf.filesystem</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.tcf.locator</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.tcf.log.core</module>
+	  <module>target_explorer/plugins/org.eclipse.tm.te.tcf.processes.core</module>
+	  <module>target_explorer/plugins/org.eclipse.tm.te.tcf.processes.ui</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.tcf.ui</module>
 
 	  <module>target_explorer/features/org.eclipse.tm.te.feature</module>

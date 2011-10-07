@@ -76,7 +76,7 @@ public class InputStreamMonitor extends OutputStream implements IDisposable {
 	 * @param disposable The disposable object. Must not be <code>null</code>.
 	 */
 	public final void addDisposable(IDisposable disposable) {
-		assert disposable != null;
+		Assert.isNotNull(disposable);
 		if (!disposed && !disposables.contains(disposable)) disposables.add(disposable);
 	}
 
@@ -86,7 +86,7 @@ public class InputStreamMonitor extends OutputStream implements IDisposable {
 	 * @param disposable The disposable object. Must not be <code>null</code>.
 	 */
 	public final void removeDisposable(IDisposable disposable) {
-		assert disposable != null;
+		Assert.isNotNull(disposable);
 		disposables.remove(disposable);
 	}
 
