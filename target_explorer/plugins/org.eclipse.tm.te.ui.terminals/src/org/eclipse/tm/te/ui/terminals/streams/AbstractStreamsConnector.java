@@ -12,6 +12,7 @@ package org.eclipse.tm.te.ui.terminals.streams;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.tm.internal.terminal.provisional.api.ITerminalControl;
 import org.eclipse.tm.internal.terminal.provisional.api.provider.TerminalConnectorImpl;
 import org.eclipse.ui.services.IDisposable;
@@ -38,7 +39,7 @@ public abstract class AbstractStreamsConnector extends TerminalConnectorImpl {
      * @param stderr The stderr stream or <code>null</code>.
      */
     protected void connectStreams(ITerminalControl terminalControl, OutputStream stdin, InputStream stdout, InputStream stderr) {
-    	assert terminalControl != null;
+    	Assert.isNotNull(terminalControl);
 
     	// Create the input stream monitor
     	if (stdin != null) {
@@ -67,11 +68,11 @@ public abstract class AbstractStreamsConnector extends TerminalConnectorImpl {
     		stdErrMonitor.startMonitoring();
     	}
     }
-    
+
     /**
      * Creates an stdin monitor for the given terminal control and stdin stream.
      * Subclasses may override to create a specialized stream monitor.
-     *  
+     *
      * @param terminalControl The terminal control. Must not be <code>null</code>.
      * @param stdin The stdin stream or <code>null</code>.
      * @return input stream monitor
@@ -83,7 +84,7 @@ public abstract class AbstractStreamsConnector extends TerminalConnectorImpl {
     /**
      * Creates an stdout monitor for the given terminal control and stdout stream.
      * Subclasses may override to create a specialized stream monitor.
-     *  
+     *
      * @param terminalControl The terminal control. Must not be <code>null</code>.
      * @param stdout The stdout stream or <code>null</code>.
      * @return output stream monitor
@@ -95,7 +96,7 @@ public abstract class AbstractStreamsConnector extends TerminalConnectorImpl {
     /**
      * Creates an stderr monitor for the given terminal control and stderr stream.
      * Subclasses may override to create a specialized stream monitor.
-     *  
+     *
      * @param terminalControl The terminal control. Must not be <code>null</code>.
      * @param stderr The stderr stream or <code>null</code>.
      * @return output stream monitor

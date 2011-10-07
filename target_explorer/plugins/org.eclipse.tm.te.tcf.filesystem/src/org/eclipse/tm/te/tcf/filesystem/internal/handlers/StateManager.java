@@ -12,6 +12,7 @@ package org.eclipse.tm.te.tcf.filesystem.internal.handlers;
 
 import java.io.File;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
@@ -142,7 +143,7 @@ public class StateManager {
 		node.attr = attr;
 		if (sync) {
 			File file = CacheManager.getInstance().getCacheFile(node);
-			assert file.exists();
+			Assert.isTrue(file.exists());
 			file.setLastModified(attr.mtime);
 			CacheManager.getInstance().setBaseTimestamp(node.getLocationURL(), attr.mtime);
 		}
@@ -157,7 +158,7 @@ public class StateManager {
 	 */
 	public void commitState(final FSTreeNode node) throws TCFException {
 		File file = CacheManager.getInstance().getCacheFile(node);
-		assert file.exists();
+		Assert.isTrue(file.exists());
 		long mtime = file.lastModified();
 		// Create the new file attribute based on the file's last modified time.
 		final IFileSystem.FileAttrs attrs = new IFileSystem.FileAttrs(node.attr.flags, node.attr.size, node.attr.uid, node.attr.gid, node.attr.permissions, node.attr.atime, mtime,

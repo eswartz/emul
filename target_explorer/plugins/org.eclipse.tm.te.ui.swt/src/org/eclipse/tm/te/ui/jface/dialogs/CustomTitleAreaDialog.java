@@ -76,7 +76,7 @@ public class CustomTitleAreaDialog extends TitleAreaDialog implements IMessagePr
 	 */
 	protected void initializeDialogSettings() {
 		IDialogSettings settings = doGetDialogSettingsToInitialize();
-		assert settings != null;
+		Assert.isNotNull(settings);
 		IDialogSettings section = settings.getSection(getDialogSettingsSectionName());
 		if (section == null) {
 			section = settings.addNewSection(getDialogSettingsSectionName());
@@ -159,7 +159,7 @@ public class CustomTitleAreaDialog extends TitleAreaDialog implements IMessagePr
 	 * @param composite The dialog top control. Must not be <code>null</code>.
 	 */
 	protected void configureDialogAreaControl(Composite composite) {
-		assert composite != null;
+		Assert.isNotNull(composite);
 		Layout layout = composite.getLayout();
 		if (layout == null || layout instanceof GridLayout) {
 			composite.setLayout(new GridLayout());

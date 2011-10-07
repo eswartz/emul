@@ -13,6 +13,7 @@ import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.util.Date;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -254,7 +255,7 @@ public class GeneralInformationPage extends PropertyPage {
 	@Override
 	protected Control createContents(Composite parent) {
 		IAdaptable element = getElement();
-		assert element != null && element instanceof FSTreeNode;
+		Assert.isTrue(element instanceof FSTreeNode);
 
 		FSTreeNode node = (FSTreeNode) element;
 		Composite page = new Composite(parent, SWT.NONE);

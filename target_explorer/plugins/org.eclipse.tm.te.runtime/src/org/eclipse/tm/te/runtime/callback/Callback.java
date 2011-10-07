@@ -34,6 +34,13 @@ public class Callback extends PropertiesContainer implements ICallback {
 	protected static final String PROPERTY_IS_DONE = "isDone"; //$NON-NLS-1$
 	protected static final String PROPERTY_STATUS = "status"; //$NON-NLS-1$
 
+	/**
+	 * Property: Asynchronous operations can store a result to the callback
+	 *           object they invoke once the operation has been finished.
+	 */
+	protected final String PROPERTY_RESULT = "result"; //$NON-NLS-1$
+
+
 	private static final String[] PROPERTY_KEYS_NOT_TO_COPY = {
 													PROPERTY_PARENT_CALLBACK, PROPERTY_PROGRESS_MONITOR,
 													PROPERTY_PROGRESS_TICKS, PROPERTY_IS_DONE, PROPERTY_STATUS
@@ -143,7 +150,7 @@ public class Callback extends PropertiesContainer implements ICallback {
 	 */
 	@Override
 	public final void done(Object caller, IStatus status) {
-		assert status != null;
+		Assert.isNotNull(status);
 
 		if (isDone()) {
 			CoreBundleActivator.getTraceHandler().trace("WARNING: callback called twice!!", 1, this); //$NON-NLS-1$
@@ -208,7 +215,7 @@ public class Callback extends PropertiesContainer implements ICallback {
 				destination.setProperty(key, source.getProperty(key));
 			}
 		}
-		assert !destination.isDone();
+		Assert.isTrue(!destination.isDone());
 	}
 
 	/**
@@ -291,5 +298,21 @@ public class Callback extends PropertiesContainer implements ICallback {
 		} else {
 			setProperty(PROPERTY_PARENT_CALLBACK, callback);
 		}
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.tm.te.runtime.interfaces.callback.ICallback#setResult(java.lang.Object)
+	 */
+	@Override
+	public void setResult(Object result) {
+		setProperty(PROPERTY_RESULT, result);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.tm.te.runtime.interfaces.callback.ICallback#getResult()
+	 */
+	@Override
+	public Object getResult() {
+	    return getProperty(PROPERTY_RESULT);
 	}
 }

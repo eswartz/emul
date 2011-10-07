@@ -18,6 +18,7 @@ import org.eclipse.compare.IPropertyChangeNotifier;
 import org.eclipse.compare.structuremergeviewer.Differencer;
 import org.eclipse.compare.structuremergeviewer.ICompareInput;
 import org.eclipse.compare.structuremergeviewer.ICompareInputChangeListener;
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.ISafeRunnable;
 import org.eclipse.core.runtime.ListenerList;
@@ -279,7 +280,7 @@ public class MergeEditorInput extends CompareEditorInput implements
 	 */
 	public LocalFileSaveable getSaveable() {
 		if (saveable == null) {
-			assert getCompareResult() != null;
+			Assert.isNotNull(getCompareResult());
 			saveable = new LocalFileSaveable(getCompareResult(), this, left);
 		}
 		return saveable;

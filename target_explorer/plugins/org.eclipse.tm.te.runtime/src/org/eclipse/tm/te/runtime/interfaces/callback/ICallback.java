@@ -48,4 +48,20 @@ public interface ICallback extends IPropertiesContainer {
 	 *            The parent callback. Must not be <code>null</code>.
 	 */
 	public void addParentCallback(ICallback callback);
+
+	/**
+	 * Sets the result of an asynchronous operation to be carried by
+	 * the callback object.
+	 *
+	 * @param result The result object or <code>null</code>.
+	 */
+	public void setResult(Object result);
+
+	/**
+	 * Gets the result of an asynchronous operation which is carried by
+	 * the callback object.
+	 *
+	 * @return The result object or <code>null</code>.
+	 */
+	public Object getResult();
 }

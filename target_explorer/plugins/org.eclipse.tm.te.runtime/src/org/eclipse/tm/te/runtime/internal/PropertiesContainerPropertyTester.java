@@ -10,6 +10,7 @@
 package org.eclipse.tm.te.runtime.internal;
 
 import org.eclipse.core.expressions.PropertyTester;
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer;
 
 /**
@@ -43,7 +44,7 @@ public class PropertiesContainerPropertyTester extends PropertyTester {
 	 * @return <code>True</code> if the property to test has the expected value, <code>false</code> otherwise.
 	 */
 	protected boolean testIsProperty(IPropertiesContainer node, Object[] args, Object expectedValue) {
-		assert node != null;
+		Assert.isNotNull(node);
 
 		if (args != null && args.length > 0 && args[0] instanceof String) {
 			return node.isProperty((String)args[0], expectedValue);

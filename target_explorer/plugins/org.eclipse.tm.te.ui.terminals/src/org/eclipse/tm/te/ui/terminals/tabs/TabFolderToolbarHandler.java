@@ -150,7 +150,7 @@ public class TabFolderToolbarHandler extends PlatformObject {
 
 		// Register ourself as selection listener to the tab folder
 		selectionChangedListener = doCreateSelectionChangedListener();
-		assert selectionChangedListener != null;
+		Assert.isNotNull(selectionChangedListener);
 		getParentView().getViewSite().getSelectionProvider().addSelectionChangedListener(selectionChangedListener);
 
 		// Get the parent view action bars
@@ -243,7 +243,7 @@ public class TabFolderToolbarHandler extends PlatformObject {
 	 * @param manager The menu manager. Must not be <code>null</code>.
 	 */
 	protected void doFillToolbar(IToolBarManager manager) {
-		assert manager != null;
+		Assert.isNotNull(manager);
 
 		// Note: For the toolbar, the actions are added from left to right!
 		//       So we start with the additions marker here which is the most

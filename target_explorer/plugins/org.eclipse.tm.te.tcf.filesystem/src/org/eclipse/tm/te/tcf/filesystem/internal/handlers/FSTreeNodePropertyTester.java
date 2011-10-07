@@ -15,6 +15,7 @@ package org.eclipse.tm.te.tcf.filesystem.internal.handlers;
 import java.io.File;
 
 import org.eclipse.core.expressions.PropertyTester;
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.tm.te.tcf.filesystem.model.CacheState;
 import org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode;
 
@@ -32,7 +33,7 @@ public class FSTreeNodePropertyTester extends PropertyTester {
 	 */
 	@Override
 	public boolean test(Object receiver, String property, Object[] args, Object expectedValue) {
-		assert receiver != null && receiver instanceof FSTreeNode;
+		Assert.isTrue(receiver instanceof FSTreeNode);
 		FSTreeNode node = (FSTreeNode) receiver;
 		if (property.equals("isFile")) { //$NON-NLS-1$
 			return node.isFile();
