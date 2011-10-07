@@ -76,6 +76,8 @@ static const int PTRACE_FLAGS =
 #endif
       PTRACE_O_TRACECLONE |
       PTRACE_O_TRACEEXEC |
+      PTRACE_O_TRACEFORK |
+      PTRACE_O_TRACEVFORK |
       PTRACE_O_TRACEVFORKDONE |
       PTRACE_O_TRACEEXIT;
 
@@ -105,6 +107,7 @@ static size_t context_extension_offset = 0;
 #include <system/pid-hash.h>
 
 static LINK pending_list;
+static LINK detach_list;
 
 static MemoryErrorInfo mem_err_info;
 
@@ -808,24 +811,35 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
         }
     }
 
-    if (ctx == NULL) return;
+    if (ctx == NULL) {
+        ctx = context_find_from_pid(pid, 0);
+        if (ctx != NULL) {
+            /* Fork child that we don't want to attach */
+            unplant_breakpoints(ctx);
+            assert(ctx->ref_count == 1);
+            ctx->exited = 1;
+            if (ptrace((enum __ptrace_request)PTRACE_DETACH, pid, 0, 0) < 0) {
+                trace(LOG_ALWAYS, "error: ptrace(PTRACE_DETACH) failed: pid %d, error %d %s",
+                    pid, errno, errno_to_str(errno));
+            }
+            list_remove(ctx2pidlink(ctx));
+            context_unlock(ctx);
+        }
+        detach_waitpid_process();
+        return;
+    }
 
     ext = EXT(ctx);
     assert(!ctx->exited);
     assert(!ext->attach_callback);
     if (ext->ptrace_flags == 0) {
-        int flags = PTRACE_FLAGS;
-        if (ext->attach_children) {
-            flags |= PTRACE_O_TRACEFORK;
-            flags |= PTRACE_O_TRACEVFORK;
-        }
-        if (ptrace((enum __ptrace_request)PTRACE_SETOPTIONS, ext->pid, 0, flags) < 0 && errno != ESRCH) {
+        if (ptrace((enum __ptrace_request)PTRACE_SETOPTIONS, ext->pid, 0, PTRACE_FLAGS) < 0 && errno != ESRCH) {
             int err = errno;
             trace(LOG_ALWAYS, "error: ptrace(PTRACE_SETOPTIONS) failed: pid %d, error %d %s",
                 ext->pid, err, errno_to_str(err));
         }
         else {
-            ext->ptrace_flags = flags;
+            ext->ptrace_flags = PTRACE_FLAGS;
         }
     }
 
@@ -877,8 +891,13 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
                 prs2->sig_dont_stop = ctx->sig_dont_stop;
                 prs2->sig_dont_pass = ctx->sig_dont_pass;
                 link_context(prs2);
-                send_context_created_event(prs2);
                 clone_breakpoints_on_process_fork(ctx, prs2);
+                if (!ext->attach_children) {
+                    list_remove(&prs2->ctxl);
+                    list_add_first(&prs2->ctxl, &detach_list);
+                    break;
+                }
+                send_context_created_event(prs2);
             }
 
             ctx2 = create_context(pid2id(msg, EXT(prs2)->pid));
@@ -1135,6 +1154,7 @@ static void eventpoint_at_main(Context * ctx, void * args) {
 
 void init_contexts_sys_dep(void) {
     list_init(&pending_list);
+    list_init(&detach_list);
     context_extension_offset = context_extension(sizeof(ContextExtensionLinux));
     add_waitpid_listener(waitpid_listener, NULL);
     ini_context_pid_hash();

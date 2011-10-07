@@ -124,6 +124,10 @@ void add_waitpid_process(int pid) {
     check_error_win32(ReleaseSemaphore(semaphore, 1, 0));
 }
 
+void detach_waitpid_process(void) {
+    assert(0);
+}
+
 #elif defined(_WRS_KERNEL)
 
 #include <taskHookLib.h>
@@ -164,9 +168,14 @@ static void init(void) {
 void add_waitpid_process(int pid) {
 }
 
+void detach_waitpid_process(void) {
+}
+
 #else
 
 #include <sys/wait.h>
+
+static int detach = 0;
 
 static void waitpid_done(void * arg) {
     int i;
@@ -182,6 +191,7 @@ static void waitpid_done(void * arg) {
 
     trace(LOG_WAITPID, "waitpid: pid %d status %#x, error %d", pid, status, error);
     assert(req->u.wpid.rval == -1 || req->u.wpid.rval == pid);
+    detach = 0;
 
     if (req->u.wpid.rval == -1) {
         assert(error);
@@ -215,6 +225,10 @@ static void waitpid_done(void * arg) {
     if (exited) {
         loc_free(req);
     }
+    else if (detach) {
+        trace(LOG_WAITPID, "waitpid: pid %d detached", pid);
+        loc_free(req);
+    }
     else {
         req->error = 0;
         req->u.wpid.status = 0;
@@ -233,6 +247,10 @@ void add_waitpid_process(int pid) {
     req->u.wpid.options |= __WALL;
 #endif
     async_req_post(req);
+}
+
+void detach_waitpid_process(void) {
+    detach = 1;
 }
 
 static void init(void) {

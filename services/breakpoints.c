@@ -425,6 +425,34 @@ void clone_breakpoints_on_process_fork(Context * parent, Context * child) {
     }
 }
 
+void unplant_breakpoints(Context * ctx) {
+    Context * mem = context_get_group(ctx, CONTEXT_GROUP_PROCESS);
+    LINK * l = instructions.next;
+    while (l != &instructions) {
+        int i;
+        BreakInstruction * bi = link_all2bi(l);
+        l = l->next;
+        if (!bi->planted) continue;
+        if (!bi->saved_size) continue;
+        if (bi->cb.ctx != mem) continue;
+        remove_instruction(bi);
+        for (i = 0; i < bi->ref_cnt; i++) {
+            BreakpointInfo * bp = bi->refs[i].bp; 
+            assert(bp->instruction_cnt > 0);
+            bp->instruction_cnt--;
+            bp->status_changed = 1;
+            context_unlock(bi->refs[i].ctx);
+            release_error_report(bi->refs[i].address_error);
+        }
+        list_remove(&bi->link_all);
+        list_remove(&bi->link_adr);
+        context_unlock(bi->cb.ctx);
+        release_error_report(bi->planting_error);
+        loc_free(bi->refs);
+        loc_free(bi);
+    }
+}
+
 int check_breakpoints_on_memory_read(Context * ctx, ContextAddress address, void * p, size_t size) {
     if (!planting_instruction) {
         while (size > 0) {
@@ -793,6 +821,9 @@ static void expr_cache_enter(CacheClient * client, BreakpointInfo * bp, Context 
 }
 
 static void free_bp(BreakpointInfo * bp) {
+    assert(list_is_empty(&evaluations_posted));
+    assert(list_is_empty(&evaluations_active));
+    assert(list_is_empty(&bp->link_clients));
     assert(bp->instruction_cnt == 0);
     assert(bp->client_cnt == 0);
     list_remove(&bp->link_all);
@@ -838,10 +869,7 @@ static void notify_breakpoints_status(void) {
                 assert(bi->cb.ctx->ref_count > 0);
                 for (i = 0; i < bi->ref_cnt; i++) {
                     assert(bi->refs[i].cnt > 0);
-                    if (bi->refs[i].bp == bp) {
-                        instruction_cnt++;
-                        assert(bp->client_cnt > 0);
-                    }
+                    if (bi->refs[i].bp == bp) instruction_cnt++;
                 }
             }
             assert(bp->enabled || instruction_cnt == 0);
@@ -864,9 +892,7 @@ static void notify_breakpoints_status(void) {
         }
 #endif
         if (bp->client_cnt == 0) {
-            assert(list_is_empty(&bp->link_clients));
-            assert(bp->instruction_cnt == 0);
-            free_bp(bp);
+            if (bp->instruction_cnt == 0) free_bp(bp);
         }
         else if (bp->status_changed) {
             if (*bp->id) send_event_breakpoint_status(&broadcast_group->out, bp);
@@ -1277,13 +1303,13 @@ static int str_arr_equ(char ** x, char ** y) {
 }
 
 static void replant_breakpoint(BreakpointInfo * bp) {
-    if (bp->client_cnt == 0 && bp->instruction_cnt == 0) {
-        free_bp(bp);
-        return;
+    if (bp->instruction_cnt == 0) {
+        if (bp->client_cnt == 0) return;
+        if (list_is_empty(&context_root)) return;
+        if (bp->ctx != NULL && bp->ctx->exited) return;
     }
-    if (list_is_empty(&context_root)) return;
     if (bp->ctx != NULL) {
-        if (!bp->ctx->exited) post_location_evaluation_request(bp->ctx, bp);
+        post_location_evaluation_request(bp->ctx, bp);
     }
     else if (bp->context_ids && bp->context_ids_prev) {
         char ** ids = bp->context_ids;

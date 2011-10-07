@@ -30,6 +30,8 @@ extern void add_waitpid_listener(WaitPIDListener * listener, void * args);
 
 extern void add_waitpid_process(int pid);
 
+extern void detach_waitpid_process(void);
+
 #endif
 
 #endif /* D_waitpid */
