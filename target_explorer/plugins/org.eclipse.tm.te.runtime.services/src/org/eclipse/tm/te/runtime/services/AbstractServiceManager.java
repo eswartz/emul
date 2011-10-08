@@ -67,7 +67,7 @@ public abstract class AbstractServiceManager<ServiceClass extends IService> {
 		 * @param serviceType The type to add.
 		 */
 		public void addType(Class<? extends ServiceClass> serviceType) {
-			assert serviceType != null;
+			Assert.isNotNull(serviceType);
 			if (service == null && serviceTypes != null && !serviceTypes.contains(serviceType)) {
 				serviceTypes.add(serviceType);
 			}
@@ -194,7 +194,7 @@ public abstract class AbstractServiceManager<ServiceClass extends IService> {
 	 * @return The service or <code>null</code>.
 	 */
 	public ServiceClass getService(String id, Class<? extends ServiceClass> serviceType, boolean unique) {
-		assert serviceType != null;
+		Assert.isNotNull(serviceType);
 		if (id == null) {
 			id = ""; //$NON-NLS-1$
 		}
@@ -232,7 +232,7 @@ public abstract class AbstractServiceManager<ServiceClass extends IService> {
 	 * @return The service list or empty list.
 	 */
 	public IService[] getServices(String id, Class<? extends ServiceClass> serviceType, boolean unique) {
-		assert serviceType != null;
+		Assert.isNotNull(serviceType);
 		if (id == null) {
 			id = ""; //$NON-NLS-1$
 		}
@@ -258,13 +258,16 @@ public abstract class AbstractServiceManager<ServiceClass extends IService> {
 	 * Add a service proxy to the list of available services.
 	 */
 	protected boolean addService(String id, ServiceProxy proxy) {
-		assert services != null && id != null && proxy != null;
+		Assert.isNotNull(services);
+		Assert.isNotNull(id);
+		Assert.isNotNull(proxy);
+
 		List<ServiceProxy> proxies = services.get(id);
 		if (proxies == null) {
 			proxies = new ArrayList<ServiceProxy>();
 			services.put(id, proxies);
 		}
-		assert proxies != null;
+		Assert.isNotNull(proxies);
 		if (proxies.isEmpty() || !proxies.contains(proxy)) {
 			return proxies.add(proxy);
 		}

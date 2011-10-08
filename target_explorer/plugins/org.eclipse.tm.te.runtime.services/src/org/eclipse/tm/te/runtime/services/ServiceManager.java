@@ -80,7 +80,7 @@ public class ServiceManager extends AbstractServiceManager<IService> {
 	}
 
 	/* (non-Javadoc)
-	 * @see com.windriver.core.runtime.services.AbstractServiceManager#loadServices()
+	 * @see org.eclipse.tm.te.runtime.services.AbstractServiceManager#loadServices()
 	 */
 	@SuppressWarnings("unchecked")
 	@Override

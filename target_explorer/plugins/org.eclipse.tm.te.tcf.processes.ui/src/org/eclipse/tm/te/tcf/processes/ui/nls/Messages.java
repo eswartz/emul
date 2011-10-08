@@ -29,4 +29,26 @@ public class Messages extends NLS {
 
 	// **** Declare externalized string id's down here *****
 
+	public static String ProcessExplorerTreeControl_section_title;
+
+	public static String ProcessesTreeControl_column_name_label;
+	public static String ProcessesTreeControl_column_pid_label;
+	public static String ProcessesTreeControl_column_ppid_label;
+	public static String ProcessesTreeControl_column_state_label;
+	public static String ProcessesTreeControl_column_user_label;
+
+	public static String ProcessSelectionDialog_title;
+
+	public static String LaunchObjectSelectionControl_editfield_label;
+	public static String LaunchObjectSelectionControl_info_missingValue;
+	public static String LaunchObjectSelectionControl_error_invalidName;
+
+	public static String LaunchObjectArgumentsControl_editfield_label;
+
+	public static String LaunchObjectSelectionControl_title;
+	public static String LaunchObjectSelectionControl_defaultMessage;
+
+	public static String LaunchProcessesCommandHandler_error_title;
+
+	public static String AbstractChannelCommandHandler_statusDialog_title;
 }

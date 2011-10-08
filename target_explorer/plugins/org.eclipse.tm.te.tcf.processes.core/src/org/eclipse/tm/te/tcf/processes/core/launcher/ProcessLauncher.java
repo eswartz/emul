@@ -110,7 +110,7 @@ public class ProcessLauncher extends PlatformObject implements IProcessLauncher 
 	}
 
 	/* (non-Javadoc)
-	 * @see com.windriver.ide.target.core.tcf.interfaces.launcher.IProcessLauncher#dispose()
+	 * @see org.eclipse.tm.te.tcf.processes.core.interfaces.launcher.IProcessLauncher#dispose()
 	 */
 	@Override
 	public void dispose() {
@@ -175,7 +175,7 @@ public class ProcessLauncher extends PlatformObject implements IProcessLauncher 
 	}
 
 	/* (non-Javadoc)
-	 * @see com.windriver.ide.target.core.tcf.interfaces.launcher.IProcessLauncher#terminate()
+	 * @see org.eclipse.tm.te.tcf.processes.core.interfaces.launcher.IProcessLauncher#terminate()
 	 */
 	@Override
 	public void terminate() {
@@ -301,7 +301,7 @@ public class ProcessLauncher extends PlatformObject implements IProcessLauncher 
 	}
 
 	/* (non-Javadoc)
-	 * @see com.windriver.ide.target.core.tcf.interfaces.launcher.IProcessLauncher#launch(org.eclipse.tm.tcf.protocol.IPeer, com.windriver.core.runtime.model.interfaces.IPropertiesContainer, com.windriver.ide.target.core.tcf.interfaces.ICallback)
+	 * @see org.eclipse.tm.te.tcf.processes.core.interfaces.launcher.IProcessLauncher#launch(org.eclipse.tm.tcf.protocol.IPeer, org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer, org.eclipse.tm.te.runtime.interfaces.callback.ICallback)
 	 */
 	@Override
 	public void launch(final IPeer peer, final IPropertiesContainer properties, final ICallback callback) {
