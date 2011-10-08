@@ -32,7 +32,7 @@ config.status
 config.log
 config.guess
 config.sub
-core
+*/core
 .deps
 depcomp
 Makefile
