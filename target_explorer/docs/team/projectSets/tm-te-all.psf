@@ -1,99 +1,145 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <psf version="2.0">
+<provider id="org.eclipse.egit.core.GitProvider">
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,plugins/org.eclipse.tm.tcf"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.agent.git,master,."/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,features/org.eclipse.tm.tcf.cdt.feature"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,features/org.eclipse.tm.tcf.cdt.sdk.feature"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,plugins/org.eclipse.tm.tcf.cdt.ui"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,plugins/org.eclipse.tm.tcf.core"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,plugins/org.eclipse.tm.tcf.debug"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,plugins/org.eclipse.tm.tcf.debug.ui"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,features/org.eclipse.tm.tcf.feature"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,features/org.eclipse.tm.tcf.headless.build"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,features/org.eclipse.tm.tcf.repo"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,plugins/org.eclipse.tm.tcf.rse"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,features/org.eclipse.tm.tcf.rse.feature"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,features/org.eclipse.tm.tcf.rse.sdk.feature"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,features/org.eclipse.tm.tcf.sdk.feature"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,features/org.eclipse.tm.tcf.site"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,target_explorer/plugins/org.eclipse.tm.te.core"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,target_explorer/docs"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,target_explorer/features/org.eclipse.tm.te.feature"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,target_explorer/plugins/org.eclipse.tm.te.rcp"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,target_explorer/plugins/org.eclipse.tm.te.rcp.application"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,target_explorer/features/org.eclipse.tm.te.rcp.feature"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,target_explorer/plugins/org.eclipse.tm.te.runtime"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,target_explorer/plugins/org.eclipse.tm.te.runtime.concurrent"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,target_explorer/plugins/org.eclipse.tm.te.runtime.model"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,target_explorer/plugins/org.eclipse.tm.te.runtime.persistence"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,target_explorer/plugins/org.eclipse.tm.te.runtime.services"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,target_explorer/plugins/org.eclipse.tm.te.runtime.statushandler"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,target_explorer/features/org.eclipse.tm.te.sdk.feature"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,target_explorer/plugins/org.eclipse.tm.te.tcf.core"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,target_explorer/features/org.eclipse.tm.te.tcf.feature"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,target_explorer/plugins/org.eclipse.tm.te.tcf.filesystem"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,target_explorer/plugins/org.eclipse.tm.te.tcf.locator"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,target_explorer/plugins/org.eclipse.tm.te.tcf.log.core"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,target_explorer/plugins/org.eclipse.tm.te.tcf.processes.core"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,target_explorer/plugins/org.eclipse.tm.te.tcf.processes.ui"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,target_explorer/features/org.eclipse.tm.te.tcf.rcp.feature"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,target_explorer/features/org.eclipse.tm.te.tcf.sdk.feature"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,target_explorer/plugins/org.eclipse.tm.te.tcf.ui"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,target_explorer/plugins/org.eclipse.tm.te.tests"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,target_explorer/plugins/org.eclipse.tm.te.ui"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,target_explorer/plugins/org.eclipse.tm.te.ui.controls"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,target_explorer/plugins/org.eclipse.tm.te.ui.forms"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,target_explorer/plugins/org.eclipse.tm.te.ui.swt"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,target_explorer/plugins/org.eclipse.tm.te.ui.terminals"/>
+<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,target_explorer/plugins/org.eclipse.tm.te.ui.views"/>
+</provider>
 <provider id="org.eclipse.team.cvs.core.cvsnature">
-<project reference="1.0,:pserver:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal,org.eclipse.tm.terminal"/>
-<project reference="1.0,:pserver:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal-feature,org.eclipse.tm.terminal-feature"/>
-<project reference="1.0,:pserver:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.local,org.eclipse.tm.terminal.local"/>
-<project reference="1.0,:pserver:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.local-feature,org.eclipse.tm.terminal.local-feature"/>
-<project reference="1.0,:pserver:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.local.sdk-feature,org.eclipse.tm.terminal.local.sdk-feature"/>
-<project reference="1.0,:pserver:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.sdk-feature,org.eclipse.tm.terminal.sdk-feature"/>
-<project reference="1.0,:pserver:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.serial,org.eclipse.tm.terminal.serial"/>
-<project reference="1.0,:pserver:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.serial-feature,org.eclipse.tm.terminal.serial-feature"/>
-<project reference="1.0,:pserver:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.ssh,org.eclipse.tm.terminal.ssh"/>
-<project reference="1.0,:pserver:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.ssh-feature,org.eclipse.tm.terminal.ssh-feature"/>
-<project reference="1.0,:pserver:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.telnet,org.eclipse.tm.terminal.telnet"/>
-<project reference="1.0,:pserver:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.telnet-feature,org.eclipse.tm.terminal.telnet-feature"/>
-<project reference="1.0,:pserver:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.test,org.eclipse.tm.terminal.test"/>
-<project reference="1.0,:pserver:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.test-feature,org.eclipse.tm.terminal.test-feature"/>
-<project reference="1.0,:pserver:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.view,org.eclipse.tm.terminal.view"/>
-<project reference="1.0,:pserver:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.view-feature,org.eclipse.tm.terminal.view-feature"/>
+<project reference="1.0,:extssh:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal,org.eclipse.tm.terminal"/>
+<project reference="1.0,:extssh:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal-feature,org.eclipse.tm.terminal-feature"/>
+<project reference="1.0,:extssh:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.local,org.eclipse.tm.terminal.local"/>
+<project reference="1.0,:extssh:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.local-feature,org.eclipse.tm.terminal.local-feature"/>
+<project reference="1.0,:extssh:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.local.sdk-feature,org.eclipse.tm.terminal.local.sdk-feature"/>
+<project reference="1.0,:extssh:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.sdk-feature,org.eclipse.tm.terminal.sdk-feature"/>
+<project reference="1.0,:extssh:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.serial,org.eclipse.tm.terminal.serial"/>
+<project reference="1.0,:extssh:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.serial-feature,org.eclipse.tm.terminal.serial-feature"/>
+<project reference="1.0,:extssh:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.ssh,org.eclipse.tm.terminal.ssh"/>
+<project reference="1.0,:extssh:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.ssh-feature,org.eclipse.tm.terminal.ssh-feature"/>
+<project reference="1.0,:extssh:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.telnet,org.eclipse.tm.terminal.telnet"/>
+<project reference="1.0,:extssh:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.telnet-feature,org.eclipse.tm.terminal.telnet-feature"/>
+<project reference="1.0,:extssh:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.test,org.eclipse.tm.terminal.test"/>
+<project reference="1.0,:extssh:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.test-feature,org.eclipse.tm.terminal.test-feature"/>
+<project reference="1.0,:extssh:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.view,org.eclipse.tm.terminal.view"/>
+<project reference="1.0,:extssh:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.view-feature,org.eclipse.tm.terminal.view-feature"/>
 </provider>
-<provider id="org.eclipse.team.svn.core.svnnature">
-<project reference="1.0.1,https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/plugins/org.eclipse.tcf.target.core,org.eclipse.tcf.target.core,70f57635e48100101ed2871d857ef6bd;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;branches;tags;trunk;true;6a79697e-3843-0410-8446-a9668620458d;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;;false;;;0"/>
-<project reference="1.0.1,https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/plugins/org.eclipse.tcf.target.ui,org.eclipse.tcf.target.ui,70f57635e48100101ed2871d857ef6bd;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;branches;tags;trunk;true;6a79697e-3843-0410-8446-a9668620458d;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;;false;;;0"/>
-<project reference="1.0.1,https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/plugins/org.eclipse.tm.tcf,org.eclipse.tm.tcf,70f57635e48100101ed2871d857ef6bd;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;branches;tags;trunk;true;6a79697e-3843-0410-8446-a9668620458d;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;;false;;;0"/>
-<project reference="1.0.1,https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/agent,org.eclipse.tm.tcf.agent,70f57635e48100101ed2871d857ef6bd;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;branches;tags;trunk;true;6a79697e-3843-0410-8446-a9668620458d;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;;false;;;0"/>
-<project reference="1.0.1,https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/plugins/org.eclipse.tm.tcf.cdt.ui,org.eclipse.tm.tcf.cdt.ui,70f57635e48100101ed2871d857ef6bd;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;branches;tags;trunk;true;6a79697e-3843-0410-8446-a9668620458d;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;;false;;;0"/>
-<project reference="1.0.1,https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/plugins/org.eclipse.tm.tcf.core,org.eclipse.tm.tcf.core,70f57635e48100101ed2871d857ef6bd;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;branches;tags;trunk;true;6a79697e-3843-0410-8446-a9668620458d;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;;false;;;0"/>
-<project reference="1.0.1,https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/plugins/org.eclipse.tm.tcf.debug,org.eclipse.tm.tcf.debug,70f57635e48100101ed2871d857ef6bd;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;branches;tags;trunk;true;6a79697e-3843-0410-8446-a9668620458d;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;;false;;;0"/>
-<project reference="1.0.1,https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/plugins/org.eclipse.tm.tcf.debug.ui,org.eclipse.tm.tcf.debug.ui,70f57635e48100101ed2871d857ef6bd;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;branches;tags;trunk;true;6a79697e-3843-0410-8446-a9668620458d;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;;false;;;0"/>
-<project reference="1.0.1,https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/docs,org.eclipse.tm.tcf.docs,70f57635e48100101ed2871d857ef6bd;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;branches;tags;trunk;true;6a79697e-3843-0410-8446-a9668620458d;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;;false;;;0"/>
-<project reference="1.0.1,https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/plugins/org.eclipse.tm.tcf.rse,org.eclipse.tm.tcf.rse,70f57635e48100101ed2871d857ef6bd;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;branches;tags;trunk;true;6a79697e-3843-0410-8446-a9668620458d;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;;false;;;0"/>
-<project reference="1.0.1,https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/target_explorer/plugins/org.eclipse.tm.te.core,org.eclipse.tm.te.core,70f57635e48100101ed2871d857ef6bd;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;branches;tags;trunk;true;6a79697e-3843-0410-8446-a9668620458d;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;;false;;;0"/>
-<project reference="1.0.1,https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/target_explorer/docs,org.eclipse.tm.te.docs,70f57635e48100101ed2871d857ef6bd;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;branches;tags;trunk;true;6a79697e-3843-0410-8446-a9668620458d;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;;false;;;0"/>
-<project reference="1.0.1,https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/target_explorer/features/org.eclipse.tm.te.feature,org.eclipse.tm.te.feature,70f57635e48100101ed2871d857ef6bd;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;branches;tags;trunk;true;6a79697e-3843-0410-8446-a9668620458d;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;;false;;;0"/>
-<project reference="1.0.1,https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/target_explorer/plugins/org.eclipse.tm.te.rcp,org.eclipse.tm.te.rcp,70f57635e48100101ed2871d857ef6bd;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;branches;tags;trunk;true;6a79697e-3843-0410-8446-a9668620458d;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;;false;;;0"/>
-<project reference="1.0.1,https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/target_explorer/plugins/org.eclipse.tm.te.rcp.application,org.eclipse.tm.te.rcp.application,70f57635e48100101ed2871d857ef6bd;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;branches;tags;trunk;true;6a79697e-3843-0410-8446-a9668620458d;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;;false;;;0"/>
-<project reference="1.0.1,https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/target_explorer/features/org.eclipse.tm.te.rcp.feature,org.eclipse.tm.te.rcp.feature,70f57635e48100101ed2871d857ef6bd;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;branches;tags;trunk;true;6a79697e-3843-0410-8446-a9668620458d;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;;false;;;0"/>
-<project reference="1.0.1,https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/target_explorer/plugins/org.eclipse.tm.te.tcf.core,org.eclipse.tm.te.tcf.core,70f57635e48100101ed2871d857ef6bd;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;branches;tags;trunk;true;6a79697e-3843-0410-8446-a9668620458d;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;;false;;;0"/>
-<project reference="1.0.1,https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/target_explorer/features/org.eclipse.tm.te.tcf.feature,org.eclipse.tm.te.tcf.feature,70f57635e48100101ed2871d857ef6bd;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;branches;tags;trunk;true;6a79697e-3843-0410-8446-a9668620458d;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;;false;;;0"/>
-<project reference="1.0.1,https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/target_explorer/plugins/org.eclipse.tm.te.tcf.filesystem,org.eclipse.tm.te.tcf.filesystem,70f57635e48100101ed2871d857ef6bd;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;branches;tags;trunk;true;6a79697e-3843-0410-8446-a9668620458d;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;;false;;;0"/>
-<project reference="1.0.1,https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/target_explorer/plugins/org.eclipse.tm.te.tcf.locator,org.eclipse.tm.te.tcf.locator,70f57635e48100101ed2871d857ef6bd;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;branches;tags;trunk;true;6a79697e-3843-0410-8446-a9668620458d;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;;false;;;0"/>
-<project reference="1.0.1,https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/target_explorer/features/org.eclipse.tm.te.tcf.rcp.feature,org.eclipse.tm.te.tcf.rcp.feature,70f57635e48100101ed2871d857ef6bd;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;branches;tags;trunk;true;6a79697e-3843-0410-8446-a9668620458d;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;;false;;;0"/>
-<project reference="1.0.1,https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/target_explorer/plugins/org.eclipse.tm.te.tcf.ui,org.eclipse.tm.te.tcf.ui,70f57635e48100101ed2871d857ef6bd;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;branches;tags;trunk;true;6a79697e-3843-0410-8446-a9668620458d;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;;false;;;0"/>
-<project reference="1.0.1,https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/target_explorer/plugins/org.eclipse.tm.te.ui,org.eclipse.tm.te.ui,70f57635e48100101ed2871d857ef6bd;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;branches;tags;trunk;true;6a79697e-3843-0410-8446-a9668620458d;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;;false;;;0"/>
-<project reference="1.0.1,https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf/trunk/target_explorer/plugins/org.eclipse.tm.te.ui.views,org.eclipse.tm.te.ui.views,70f57635e48100101ed2871d857ef6bd;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;branches;tags;trunk;true;6a79697e-3843-0410-8446-a9668620458d;https://dev.eclipse.org/svnroot/dsdp/org.eclipse.tm.tcf;;false;;;0"/>
-</provider>
-<workingSets editPageId="org.eclipse.jdt.ui.JavaWorkingSetPage" id="1305787907732_5" label="Target Explorer" name="Target Explorer">
-<item elementID="=org.eclipse.tm.te.core" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
-<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.te.docs" type="4"/>
-<item elementID="=org.eclipse.tm.te.tcf.core" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
-<item elementID="=org.eclipse.tm.te.tcf.filesystem" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
-<item elementID="=org.eclipse.tm.te.tcf.locator" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
-<item elementID="=org.eclipse.tm.te.tcf.ui" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
-<item elementID="=org.eclipse.tm.te.ui" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
-<item elementID="=org.eclipse.tm.te.ui.views" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
-</workingSets>
-<workingSets editPageId="org.eclipse.jdt.ui.JavaWorkingSetPage" id="1305787914747_6" label="Target Explorer (Features)" name="Target Explorer (Features)">
-<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.te.feature" type="4"/>
-<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.te.rcp.feature" type="4"/>
-<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.te.tcf.feature" type="4"/>
-<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.te.tcf.rcp.feature" type="4"/>
-</workingSets>
-<workingSets editPageId="org.eclipse.jdt.ui.JavaWorkingSetPage" id="1305787935745_7" label="Target Explorer (RCP)" name="Target Explorer (RCP)">
-<item elementID="=org.eclipse.tm.te.rcp" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
-<item elementID="=org.eclipse.tm.te.rcp.application" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
-</workingSets>
-<workingSets editPageId="org.eclipse.jdt.ui.JavaWorkingSetPage" id="1305787902889_4" label="TCF Core" name="TCF Core">
-<item elementID="=org.eclipse.tcf.target.core" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
-<item elementID="=org.eclipse.tcf.target.ui" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
+<workingSets editPageId="org.eclipse.jdt.ui.JavaWorkingSetPage" id="1242292713839_4" label="Target Communication Framework Core" name="Target Communication Framework Core">
+<item elementID="=org.eclipse.tm.tcf.debug" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.tcf.agent" type="4"/>
 <item elementID="=org.eclipse.tm.tcf" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
 <item elementID="=org.eclipse.tm.tcf.cdt.ui" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
-<item elementID="=org.eclipse.tm.tcf.core" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
-<item elementID="=org.eclipse.tm.tcf.debug" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
-<item elementID="=org.eclipse.tm.tcf.debug.ui" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
 <item elementID="=org.eclipse.tm.tcf.rse" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
-<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.tcf.agent" type="4"/>
-<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.tcf.docs" type="4"/>
+<item elementID="=org.eclipse.tm.tcf.debug.ui" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
+<item elementID="=org.eclipse.tm.tcf.core" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
 </workingSets>
-<workingSets editPageId="org.eclipse.jdt.ui.JavaWorkingSetPage" id="1305787879019_2" label="Terminal" name="Terminal">
+<workingSets editPageId="org.eclipse.jdt.ui.JavaWorkingSetPage" id="1311664650682_17" label="Target Communication Framework Core (Features)" name="Target Communication Framework Core (Features)">
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.tcf.feature" type="4"/>
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.tcf.rse.sdk.feature" type="4"/>
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.tcf.repo" type="4"/>
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.tcf.rse.feature" type="4"/>
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.tcf.site" type="4"/>
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.tcf.headless.build" type="4"/>
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.tcf.cdt.sdk.feature" type="4"/>
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.tcf.sdk.feature" type="4"/>
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.tcf.cdt.feature" type="4"/>
+</workingSets>
+<workingSets editPageId="org.eclipse.jdt.ui.JavaWorkingSetPage" id="1303838561540_9" label="Target Explorer" name="Target Explorer">
+<item elementID="=org.eclipse.tm.te.tcf.log.core" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
+<item elementID="=org.eclipse.tm.te.runtime.persistence" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
+<item elementID="=org.eclipse.tm.te.ui.views" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
+<item elementID="=org.eclipse.tm.te.core" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
+<item elementID="=org.eclipse.tm.te.tcf.locator" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.te.docs" type="4"/>
+<item elementID="=org.eclipse.tm.te.tests" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
+<item elementID="=org.eclipse.tm.te.ui.terminals" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
+<item elementID="=org.eclipse.tm.te.runtime" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
+<item elementID="=org.eclipse.tm.te.tcf.ui" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
+<item elementID="=org.eclipse.tm.te.runtime.concurrent" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
+<item elementID="=org.eclipse.tm.te.ui" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
+<item elementID="=org.eclipse.tm.te.tcf.filesystem" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
+<item elementID="=org.eclipse.tm.te.ui.controls" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
+<item elementID="=org.eclipse.tm.te.ui.forms" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
+<item elementID="=org.eclipse.tm.te.runtime.model" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
+<item elementID="=org.eclipse.tm.te.runtime.statushandler" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
+<item elementID="=org.eclipse.tm.te.ui.swt" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
+<item elementID="=org.eclipse.tm.te.tcf.core" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
+<item elementID="=org.eclipse.tm.te.tcf.processes.core" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
+<item elementID="=org.eclipse.tm.te.tcf.processes.ui" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
+<item elementID="=org.eclipse.tm.te.runtime.services" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
+</workingSets>
+<workingSets editPageId="org.eclipse.jdt.ui.JavaWorkingSetPage" id="1303886691257_10" label="Target Explorer (Features)" name="Target Explorer (Features)">
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.te.tcf.feature" type="4"/>
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.te.tcf.rcp.feature" type="4"/>
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.te.rcp.feature" type="4"/>
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.te.sdk.feature" type="4"/>
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.te.feature" type="4"/>
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.te.tcf.sdk.feature" type="4"/>
+</workingSets>
+<workingSets editPageId="org.eclipse.jdt.ui.JavaWorkingSetPage" id="1303886703877_11" label="Target Explorer (RCP)" name="Target Explorer (RCP)">
+<item elementID="=org.eclipse.tm.te.rcp.application" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
+<item elementID="=org.eclipse.tm.te.rcp" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
+</workingSets>
+<workingSets editPageId="org.eclipse.jdt.ui.JavaWorkingSetPage" id="1303935575396_15" label="Terminal" name="Terminal">
+<item elementID="=org.eclipse.tm.terminal.view" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
 <item elementID="=org.eclipse.tm.terminal" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
-<item elementID="=org.eclipse.tm.terminal.local" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
-<item elementID="=org.eclipse.tm.terminal.serial" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
+<item elementID="=org.eclipse.tm.terminal.test" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
 <item elementID="=org.eclipse.tm.terminal.ssh" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
 <item elementID="=org.eclipse.tm.terminal.telnet" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
-<item elementID="=org.eclipse.tm.terminal.test" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
-<item elementID="=org.eclipse.tm.terminal.view" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
+<item elementID="=org.eclipse.tm.terminal.local" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
+<item elementID="=org.eclipse.tm.terminal.serial" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
 </workingSets>
-<workingSets editPageId="org.eclipse.jdt.ui.JavaWorkingSetPage" id="1305787887458_3" label="Terminal (Features)" name="Terminal (Features)">
-<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.terminal-feature" type="4"/>
-<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.terminal.local-feature" type="4"/>
-<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.terminal.local.sdk-feature" type="4"/>
-<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.terminal.sdk-feature" type="4"/>
-<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.terminal.serial-feature" type="4"/>
-<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.terminal.ssh-feature" type="4"/>
-<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.terminal.telnet-feature" type="4"/>
+<workingSets editPageId="org.eclipse.jdt.ui.JavaWorkingSetPage" id="1303935609498_17" label="Terminal (Features)" name="Terminal (Features)">
 <item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.terminal.test-feature" type="4"/>
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.terminal.serial-feature" type="4"/>
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.terminal.telnet-feature" type="4"/>
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.terminal.local.sdk-feature" type="4"/>
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.terminal-feature" type="4"/>
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.terminal.ssh-feature" type="4"/>
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.terminal.local-feature" type="4"/>
 <item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.terminal.view-feature" type="4"/>
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/org.eclipse.tm.terminal.sdk-feature" type="4"/>
 </workingSets>
 </psf>
