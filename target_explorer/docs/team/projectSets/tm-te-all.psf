@@ -12,9 +12,6 @@
 <project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,features/org.eclipse.tm.tcf.feature"/>
 <project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,features/org.eclipse.tm.tcf.headless.build"/>
 <project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,features/org.eclipse.tm.tcf.repo"/>
-<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,plugins/org.eclipse.tm.tcf.rse"/>
-<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,features/org.eclipse.tm.tcf.rse.feature"/>
-<project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,features/org.eclipse.tm.tcf.rse.sdk.feature"/>
 <project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,features/org.eclipse.tm.tcf.sdk.feature"/>
 <project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,features/org.eclipse.tm.tcf.site"/>
 <project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,target_explorer/plugins/org.eclipse.tm.te.core"/>
@@ -49,22 +46,22 @@
 <project reference="1.0,git://git.eclipse.org/gitroot/tcf/org.eclipse.tcf.git,master,target_explorer/plugins/org.eclipse.tm.te.ui.views"/>
 </provider>
 <provider id="org.eclipse.team.cvs.core.cvsnature">
-<project reference="1.0,:extssh:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal,org.eclipse.tm.terminal"/>
-<project reference="1.0,:extssh:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal-feature,org.eclipse.tm.terminal-feature"/>
-<project reference="1.0,:extssh:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.local,org.eclipse.tm.terminal.local"/>
-<project reference="1.0,:extssh:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.local-feature,org.eclipse.tm.terminal.local-feature"/>
-<project reference="1.0,:extssh:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.local.sdk-feature,org.eclipse.tm.terminal.local.sdk-feature"/>
-<project reference="1.0,:extssh:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.sdk-feature,org.eclipse.tm.terminal.sdk-feature"/>
-<project reference="1.0,:extssh:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.serial,org.eclipse.tm.terminal.serial"/>
-<project reference="1.0,:extssh:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.serial-feature,org.eclipse.tm.terminal.serial-feature"/>
-<project reference="1.0,:extssh:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.ssh,org.eclipse.tm.terminal.ssh"/>
-<project reference="1.0,:extssh:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.ssh-feature,org.eclipse.tm.terminal.ssh-feature"/>
-<project reference="1.0,:extssh:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.telnet,org.eclipse.tm.terminal.telnet"/>
-<project reference="1.0,:extssh:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.telnet-feature,org.eclipse.tm.terminal.telnet-feature"/>
-<project reference="1.0,:extssh:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.test,org.eclipse.tm.terminal.test"/>
-<project reference="1.0,:extssh:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.test-feature,org.eclipse.tm.terminal.test-feature"/>
-<project reference="1.0,:extssh:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.view,org.eclipse.tm.terminal.view"/>
-<project reference="1.0,:extssh:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.view-feature,org.eclipse.tm.terminal.view-feature"/>
+<project reference="1.0,:pserver:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal,org.eclipse.tm.terminal"/>
+<project reference="1.0,:pserver:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal-feature,org.eclipse.tm.terminal-feature"/>
+<project reference="1.0,:pserver:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.local,org.eclipse.tm.terminal.local"/>
+<project reference="1.0,:pserver:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.local-feature,org.eclipse.tm.terminal.local-feature"/>
+<project reference="1.0,:pserver:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.local.sdk-feature,org.eclipse.tm.terminal.local.sdk-feature"/>
+<project reference="1.0,:pserver:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.sdk-feature,org.eclipse.tm.terminal.sdk-feature"/>
+<project reference="1.0,:pserver:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.serial,org.eclipse.tm.terminal.serial"/>
+<project reference="1.0,:pserver:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.serial-feature,org.eclipse.tm.terminal.serial-feature"/>
+<project reference="1.0,:pserver:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.ssh,org.eclipse.tm.terminal.ssh"/>
+<project reference="1.0,:pserver:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.ssh-feature,org.eclipse.tm.terminal.ssh-feature"/>
+<project reference="1.0,:pserver:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.telnet,org.eclipse.tm.terminal.telnet"/>
+<project reference="1.0,:pserver:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.telnet-feature,org.eclipse.tm.terminal.telnet-feature"/>
+<project reference="1.0,:pserver:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.test,org.eclipse.tm.terminal.test"/>
+<project reference="1.0,:pserver:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.test-feature,org.eclipse.tm.terminal.test-feature"/>
+<project reference="1.0,:pserver:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.view,org.eclipse.tm.terminal.view"/>
+<project reference="1.0,:pserver:dev.eclipse.org:/cvsroot/tools,org.eclipse.tm.core/terminal/org.eclipse.tm.terminal.view-feature,org.eclipse.tm.terminal.view-feature"/>
 </provider>
 <workingSets editPageId="org.eclipse.jdt.ui.JavaWorkingSetPage" id="1242292713839_4" label="Target Communication Framework Core" name="Target Communication Framework Core">
 <item elementID="=org.eclipse.tm.tcf.debug" factoryID="org.eclipse.jdt.ui.PersistableJavaElementFactory"/>
