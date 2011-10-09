@@ -224,9 +224,18 @@ public class Emulator {
         	app.run();
         } finally {
         	WorkspaceSettings.CURRENT.save();        	
-        	EmulatorSettings.INSTANCE.save();        	
+        	EmulatorSettings.INSTANCE.save();   
+        	
+        	app.dispose();
         }
 		
+	}
+
+	/**
+	 * 
+	 */
+	private void dispose() {
+		machine.getMemory().save();
 	}
 
 	private static Client createClient(String[] args, Machine machine) {

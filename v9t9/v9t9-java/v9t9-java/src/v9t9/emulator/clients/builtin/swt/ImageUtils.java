@@ -16,7 +16,7 @@ import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Display;
 
 /**
- * Symbian-specific image utilities
+ * Image utilities
  * 
  */
 public abstract class ImageUtils {

@@ -192,9 +192,9 @@ public class ImageDataCanvasPaletted extends ImageDataCanvas {
 				
 				mem = access.memory[access.offset + j];
 				
-				int r = rgb3to8[(mem >> 5) & 0x7] & 0xff;
-				int g = rgb3to8[(mem >> 2) & 0x7] & 0xff;
-				int b = rgb2to8[mem & 0x3] & 0xff;
+				int r = ColorMapUtils.rgb3to8[(mem >> 5) & 0x7] & 0xff;
+				int g = ColorMapUtils.rgb3to8[(mem >> 2) & 0x7] & 0xff;
+				int b = ColorMapUtils.rgb2to8[mem & 0x3] & 0xff;
 				
 				// XXX: no palette
 				byte pix = (byte) imageData.palette.getPixel(new RGB(r, g, b));

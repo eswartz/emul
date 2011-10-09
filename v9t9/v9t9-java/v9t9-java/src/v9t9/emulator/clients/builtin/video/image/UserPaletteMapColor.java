@@ -1,18 +1,19 @@
 package v9t9.emulator.clients.builtin.video.image;
 
+import org.ejs.coffee.core.utils.Pair;
+
+import v9t9.emulator.clients.builtin.video.ColorMapUtils;
+
 class UserPaletteMapColor extends BasePaletteMapper {
 	
-	private final boolean limitDither;
-
 	public UserPaletteMapColor(byte[][] thePalette, int firstColor, int numColors,
-			boolean isGreyscale, boolean limitDither) {
+			boolean isGreyscale) {
 		super(thePalette, firstColor, numColors, false, isGreyscale);
-		this.limitDither = limitDither;
 	}
 	
 	@Override
 	protected boolean isFixedPalette() {
-		return limitDither;
+		return false;
 	}
 	
 	/* (non-Javadoc)
@@ -20,10 +21,9 @@ class UserPaletteMapColor extends BasePaletteMapper {
 	 */
 	@Override
 	public int mapColor(int[] prgb, int[] distA) {
-		int closest = getCloseColor(prgb);
-		distA[0] = ColorMapUtils.getRGBDistance(palette, closest, prgb);
-		
-		return closest;
+		Pair<Integer, Integer> info = getCloseColor(prgb);
+		distA[0] = info.second;
+		return info.first;
 	}
 	
 	/**
@@ -31,7 +31,10 @@ class UserPaletteMapColor extends BasePaletteMapper {
 	 * @param prgb
 	 * @return
 	 */
-	private int getCloseColor(int[] prgb) {
+	private Pair<Integer, Integer> getCloseColor(int[] prgb) {
+		if (isGreyscale) {
+			return ColorMapUtils.getClosestColorByLumDistance(palette, firstColor, numColors, prgb);
+		}
 		return ColorMapUtils.getClosestColorByDistance(palette, firstColor, numColors, prgb, -1);
 	}
 	
@@ -40,7 +43,7 @@ class UserPaletteMapColor extends BasePaletteMapper {
 	 */
 	@Override
 	public int getClosestPalettePixel(int x, int y, int[] prgb) {
-		int c = getCloseColor(prgb);
-		return getPalettePixels()[c];
+		Pair<Integer, Integer> info = getCloseColor(prgb);
+		return getPalettePixels()[info.first];
 	}
 }

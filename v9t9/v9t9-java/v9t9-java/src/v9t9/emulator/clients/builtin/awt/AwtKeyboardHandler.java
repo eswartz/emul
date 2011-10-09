@@ -138,11 +138,11 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 				}
 				break;
 			case KeyEvent.VK_CANCEL:
-				System.exit(0);
+				machine.getClient().close();
 				break;
 			case KeyEvent.VK_PAUSE:
 				if (pressed && (shift & KeyboardState.CTRL) != 0)
-					System.exit(0);
+					machine.getClient().close();
 				break;
 			case KeyEvent.VK_F1:
 			case KeyEvent.VK_F2:

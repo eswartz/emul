@@ -1,5 +1,7 @@
 package v9t9.emulator.clients.builtin.video.image;
 
+import v9t9.emulator.clients.builtin.video.ColorMapUtils;
+
 class FixedPaletteMapColor extends BasePaletteMapper {
 	public FixedPaletteMapColor(byte[][] thePalette, int firstColor, int numColors) {
 		super(thePalette, firstColor, numColors, false, false);

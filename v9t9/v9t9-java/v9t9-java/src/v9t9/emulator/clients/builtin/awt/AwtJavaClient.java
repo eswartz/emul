@@ -86,7 +86,6 @@ public class AwtJavaClient implements Client {
     	} catch (TerminatedException e) {
     		// expected
     		window.dispose();
-    		System.exit(0);
     	}
     }
 

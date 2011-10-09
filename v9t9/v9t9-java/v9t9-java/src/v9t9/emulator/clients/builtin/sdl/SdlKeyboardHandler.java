@@ -74,7 +74,7 @@ public class SdlKeyboardHandler extends BaseKeyboardHandler {
 				break;
 			case 302:		// actual break -- SDLJava has incorrect SCROLL_LOCK value here
 				if (pressed)
-					System.exit(0);
+					machine.getClient().close();
 				break;
 			case SDLKey.SDLK_F1:
 			case SDLKey.SDLK_F2:

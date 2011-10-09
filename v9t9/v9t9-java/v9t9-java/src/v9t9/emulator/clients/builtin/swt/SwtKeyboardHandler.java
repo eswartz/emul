@@ -164,7 +164,7 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler implements ISwtKeybo
 				break;
 			case SWT.BREAK:
 				if (pressed)
-					System.exit(0);
+					machine.getClient().close();
 				break;
 				
 			case SWT.ESC:

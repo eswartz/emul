@@ -1,6 +1,6 @@
 package v9t9.emulator.clients.builtin.video.image;
 
-import v9t9.emulator.clients.builtin.video.VdpCanvas;
+import v9t9.emulator.clients.builtin.video.ColorMapUtils;
 
 abstract class BasePaletteMapper implements IMapColor {
 	private final boolean canSetPalette;
@@ -16,14 +16,15 @@ abstract class BasePaletteMapper implements IMapColor {
 		this.palette = palette;
 		this.isGreyscale = isGreyscale;
 		
+		/*
 		if (isGreyscale) {
 			// convert palette
 			byte[][] greyPalette = new byte[palette.length][];
 			for (int c = 0; c < greyPalette.length; c++) {
-				greyPalette[c] = VdpCanvas.rgbToGrey(palette[c]);
+				greyPalette[c] = ColorMapUtils.rgbToGrey(palette[c]);
 			}
 			this.palette = greyPalette;
-		}
+		}*/
 		
 		this.firstColor = firstColor;
 		this.numColors = numColors;
@@ -36,7 +37,11 @@ abstract class BasePaletteMapper implements IMapColor {
 						palette[d][1] & 0xff, 
 						palette[d][2] & 0xff 
 				};
-				int dist = ColorMapUtils.getRGBDistance(palette, c, prgb);
+				int dist;
+				if (!isGreyscale)
+					dist = ColorMapUtils.getRGBDistance(palette, c, prgb);
+				else
+					dist = ColorMapUtils.getRGBLumDistance(palette, c, prgb);
 				if (dist > 0 && dist < minDist)
 					minDist = dist;
 			}
@@ -97,7 +102,10 @@ abstract class BasePaletteMapper implements IMapColor {
 			palettePixels = new int[numColors];
 			
 			for (int x = 0; x < numColors; x++) {
-				palettePixels[x] = ColorMapUtils.rgb8ToPixel(palette[x]);
+				byte[] nrgb = palette[x];
+				if (isGreyscale)
+					nrgb = ColorMapUtils.getRgbToGreyForGreyscaleMode(nrgb);
+				palettePixels[x] = ColorMapUtils.rgb8ToPixel(nrgb);
 			}
 		}
 		return palettePixels;
@@ -105,6 +113,6 @@ abstract class BasePaletteMapper implements IMapColor {
 	
 	@Override
 	public int getPalettePixel(int c) {
-		return ColorMapUtils.rgb8ToPixel(palette[c]);
+		return getPalettePixels()[c]; //ColorMapUtils.rgb8ToPixel(palette[c]);
 	}
 }

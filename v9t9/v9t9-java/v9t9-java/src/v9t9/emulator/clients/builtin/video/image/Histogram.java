@@ -11,6 +11,8 @@ import java.util.TreeMap;
 
 import org.ejs.coffee.core.utils.Pair;
 
+import v9t9.emulator.clients.builtin.video.ColorMapUtils;
+
 
 class Histogram {
 	private final BufferedImage img;

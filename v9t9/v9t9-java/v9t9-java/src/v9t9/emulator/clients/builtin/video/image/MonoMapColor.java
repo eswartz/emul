@@ -1,5 +1,7 @@
 package v9t9.emulator.clients.builtin.video.image;
 
+import v9t9.emulator.clients.builtin.video.ColorMapUtils;
+
 class MonoMapColor extends BasePaletteMapper {
 	private final int fg;
 	private final int bg;

@@ -59,26 +59,7 @@ public abstract class VdpCanvas {
 
 	private boolean isInterlacedEvenOdd;
 	
-	protected static byte[] rgb3to8 = new byte[8];
-	protected static byte[] rgb2to8 = new byte[4];
-
 	protected final int extraSpace;
-	static {
-		for (int i = 0; i < 8; i++) {
-			byte val = (byte) i;
-			byte val8 = (byte) (val << 5);
-			//if (val > 4)
-			//	val8 |= 0x1f;
-			val8 |= i * 0x1f / 7; 
-			rgb3to8[i] = val8;
-		}
-		for (int i = 0; i < 4; i++) {
-			byte val = (byte) i;
-			byte val8 = (byte) (val << 6);
-			val8 |= i * 0x3f / 3;
-			rgb2to8[i] = val8;
-		}
-	}
 	
 	public VdpCanvas() {
 		this(8);
@@ -87,7 +68,7 @@ public abstract class VdpCanvas {
 		int r = Integer.parseInt(hex.substring(0, 1), 16);
 		int b = Integer.parseInt(hex.substring(1, 2), 16);
 		int g = Integer.parseInt(hex.substring(2, 3), 16);
-		return getGRB333(g, r, b);
+		return ColorMapUtils.getGRB333(g, r, b);
 	}
 	
 
@@ -214,11 +195,11 @@ public abstract class VdpCanvas {
 
     	greyPalette = new byte[16][];
     	for (int i = 0; i < 16; i++)
-    		greyPalette[i] = rgbToGrey(stockPalette[i]);
+    		greyPalette[i] = ColorMapUtils.rgbToGrey(stockPalette[i]);
     	
     	altSpritePalette = new byte[16][];
     	for (int i = 0; i < 16; i++) {
-    		altSpritePalette[i] = getGRB333(
+    		altSpritePalette[i] = ColorMapUtils.getGRB333(
     				altSpritePaletteGBR[i][0], altSpritePaletteGBR[i][1], altSpritePaletteGBR[i][2]);
     	}
     	
@@ -241,13 +222,6 @@ public abstract class VdpCanvas {
 		return format;
 	}
 	
-	public static byte[] rgbToGrey(byte[] rgb) {
-		byte[] g = new byte[3];
-		int lum = (299 * (rgb[0] & 0xff) + 587 * (rgb[1] & 0xff) + 114 * (rgb[2] & 0xff)) / 1000;
-		g[0] = g[1] = g[2] = (byte) lum;
-		return g;
-	}
-
 	public final void setSize(int x, int y) {
 		setSize(x, y, false);
 	}
@@ -356,44 +330,21 @@ public abstract class VdpCanvas {
 		colorPalette[idx][1] = rgb[1];
 		colorPalette[idx][2] = rgb[2];
 		
-		greyPalette[idx] = rgbToGrey(rgb);
+		greyPalette[idx] = ColorMapUtils.rgbToGrey(rgb);
 		
 		paletteMappingDirty = true;
 	}
 	
-	/** Get the RGB triple for the 3-bit GRB. */
-	public static byte[] getGRB333(int g, int r, int b) {
-		return new byte[] { rgb3to8[r&0x7], rgb3to8[g&0x7], rgb3to8[b&0x7] };
-	}
-	/** Get the RGB triple for the 3-bit GRB. */
-	public static byte[] getGRB332(int g, int r, int b) {
-		return new byte[] { rgb3to8[r&0x7], rgb3to8[g&0x7], rgb2to8[b&0x3] };
-	}
-
 	/** Set the RGB triple for the palette entry, using 3-bit RGB (usually from a palette). */
 	public void setGRB333(int idx, int g, int r, int b) {
-		setRGB(idx, getGRB333(g, r, b));
+		setRGB(idx, ColorMapUtils.getGRB333(g, r, b));
 	}
 	
 	/** Get the 8-bit RGB values from a packed 3-3-2 GRB byte */
 	public void getGRB332(byte[] rgb, byte grb) {
-		getGRB332(rgb, grb, isGreyscale);
+		ColorMapUtils.getGRB332(rgb, grb, isGreyscale);
 	}
 
-	/** Get the 8-bit RGB values from a packed 3-3-2 GRB byte */
-	public static void getGRB332(byte[] rgb, byte grb, boolean isGreyscale) {
-		rgb[0] = rgb3to8[(grb >> 2) & 0x7];
-		rgb[1] = rgb3to8[(grb >> 5) & 0x7];
-		rgb[2] = rgb2to8[grb & 0x3];
-		if (isGreyscale) {
-			// (299 * rgb[0] + 587 * rgb[1] + 114 * rgb[2]) * 256 / 1000;
-			
-			int l = ((rgb[0] & 0xff) * 299 + (rgb[1] & 0xff) * 587 + (rgb[2] & 0xff) * 114) / 1000;
-			rgb[0] = (byte) l;
-			rgb[1] = (byte) l;
-			rgb[2] = (byte) l;
-		}
-	}
 	public byte[] getStockRGB(int i) {
 		return stockPalette[i];
 	}
@@ -542,6 +493,13 @@ public abstract class VdpCanvas {
 	
 	public byte[][] getPalette() {
 		return thePalette;
+	}
+	
+	/**
+	 * @return the colorPalette
+	 */
+	public byte[][] getColorPalette() {
+		return colorPalette;
 	}
 
 	/**

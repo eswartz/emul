@@ -1,5 +1,9 @@
 package v9t9.emulator.clients.builtin.video.image;
 
+import org.ejs.coffee.core.utils.Pair;
+
+import v9t9.emulator.clients.builtin.video.ColorMapUtils;
+
 class TI16MapColor extends BasePaletteMapper {
 	
 	public TI16MapColor(byte[][] thePalette) {
@@ -11,10 +15,9 @@ class TI16MapColor extends BasePaletteMapper {
 	 */
 	@Override
 	public int mapColor(int[] prgb, int[] distA) {
-		int closest = getCloseColor(prgb);
-		distA[0] = ColorMapUtils.getRGBDistance(palette, closest, prgb);
-		
-		return closest;
+		Pair<Integer, Integer> info = getCloseColor(prgb);
+		distA[0] = info.second;
+		return info.first;
 	}
 	
 	/**
@@ -55,9 +58,9 @@ class TI16MapColor extends BasePaletteMapper {
 	 * 15 white
 	 * 
 	 * @param prgb
-	 * @return
+	 * @return pair of index and distance
 	 */
-	private int getCloseColor(int[] prgb) {
+	private Pair<Integer, Integer> getCloseColor(int[] prgb) {
 		float[] phsv = { 0, 0, 0 };
 		ColorMapUtils.rgbToHsv(prgb, phsv);
 		
@@ -65,6 +68,7 @@ class TI16MapColor extends BasePaletteMapper {
 		float val = phsv[2] * 100 / 256;
 
 		int closest = -1;
+		int mindiff;
 
 		final int white = 15;
 		final int black = 1;
@@ -79,15 +83,18 @@ class TI16MapColor extends BasePaletteMapper {
 			} else {
 				closest = black;
 			}
+			mindiff = ColorMapUtils.getRGBDistance(palette, closest, prgb);
 		}
 		else {
-			closest = ColorMapUtils.getClosestColorByDistanceAndHSV(palette, firstColor, 16, prgb, 12);
+			Pair<Integer, Integer> info = ColorMapUtils.getClosestColorByDistanceAndHSV(palette, firstColor, 16, prgb, 12);
 			
 			// see how the color matches
+			closest = info.first; mindiff = info.second;
 			if (closest == black) {
 				if (phsv[1] > 0.9f && val >= 64) {
 					if ((hue >= 90 && hue < 140) && (val >= 5 && val <= 33)) {
 						closest = 12;
+						mindiff = ColorMapUtils.getRGBDistance(palette, closest, prgb);
 					}
 				}
 			}
@@ -101,7 +108,7 @@ class TI16MapColor extends BasePaletteMapper {
 		
 		//closest = rigidMatch(phsv, hue, val);
 		
-		return closest;
+		return new Pair<Integer, Integer>(closest, mindiff);
 	}
 	
 	/* (non-Javadoc)
@@ -109,8 +116,8 @@ class TI16MapColor extends BasePaletteMapper {
 	 */
 	@Override
 	public int getClosestPalettePixel(int x, int y, int[] prgb) {
-		int c = getCloseColor(prgb);
-		return getPalettePixels()[c];
+		Pair<Integer, Integer> info = getCloseColor(prgb);
+		return getPalettePixels()[info.first];
 	}
 	
 	@Override

@@ -570,7 +570,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		exit.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				System.exit(0);
+				machine.getClient().close();
 			}
 		});
 		*/
@@ -751,7 +751,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 			exit.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
-					System.exit(0);
+					machine.getClient().close();
 				}
 			});
 		}

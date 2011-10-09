@@ -1,6 +1,6 @@
 package v9t9.emulator.clients.builtin.video.image;
 
-import v9t9.emulator.clients.builtin.video.VdpCanvas;
+import v9t9.emulator.clients.builtin.video.ColorMapUtils;
 
 class RGB333MapColor extends BasePaletteMapper {
 	/**
@@ -22,7 +22,10 @@ class RGB333MapColor extends BasePaletteMapper {
 		
 		byte[] rgbs = getRGB333(r, g, b);
 		
-		dist[0] = ColorMapUtils.getRGBDistance(rgbs, prgb);
+		if (isGreyscale)
+			dist[0] = ColorMapUtils.getRGBLumDistance(rgbs, prgb);
+		else
+			dist[0] = ColorMapUtils.getRGBDistance(rgbs, prgb);
 		
 		// not actual RGB332 index!
 		int c = (r << 6) | (g << 3) | b;
@@ -32,13 +35,15 @@ class RGB333MapColor extends BasePaletteMapper {
 
 	private byte[] getRGB333(int r, int g, int b) {
 		byte[] rgbs;
-		if (!isGreyscale)
-			rgbs = VdpCanvas.getGRB333(g, r, b);
-		else {
+		if (!isGreyscale) {
+			rgbs = ColorMapUtils.getGRB333(g, r, b);
+		} else {
 			// (299 * rgb[0] + 587 * rgb[1] + 114 * rgb[2]) * 256 / 1000;
 			
-			int l = (r * 299 + g * 587 + b * 114) / 1000;
-			rgbs = VdpCanvas.getGRB333(l, l, l);
+			//int l = (r * 299 + g * 587 + b * 114) / 1000;
+			//rgbs = ColorMapUtils.getGRB333(l, l, l);
+			rgbs = ColorMapUtils.getRgbToGreyForGreyscaleMode(new byte[] { 
+					(byte) r, (byte) g, (byte) b });
 		}
 			
 		return rgbs;
@@ -51,11 +56,21 @@ class RGB333MapColor extends BasePaletteMapper {
 	public int getClosestPalettePixel(int x, int y, int[] prgb) {
 		int closest = -1;
 		int mindiff = Integer.MAX_VALUE;
-		for (int c = firstColor; c < numColors; c++) {
-			int dist = ColorMapUtils.getRGBDistance(palette, c, prgb);
-			if (dist < mindiff) {
-				closest = c;
-				mindiff = dist;
+		if (isGreyscale) {
+			for (int c = firstColor; c < numColors; c++) {
+				int dist = ColorMapUtils.getRGBLumDistance(palette, c, prgb);
+				if (dist < mindiff) {
+					closest = c;
+					mindiff = dist;
+				}
+			}
+		} else {
+			for (int c = firstColor; c < numColors; c++) {
+				int dist = ColorMapUtils.getRGBDistance(palette, c, prgb);
+				if (dist < mindiff) {
+					closest = c;
+					mindiff = dist;
+				}
 			}
 		}
 		return getPalettePixels()[closest];
