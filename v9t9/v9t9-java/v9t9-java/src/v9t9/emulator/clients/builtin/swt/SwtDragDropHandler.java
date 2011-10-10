@@ -77,6 +77,7 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 			source.setTransfer(new Transfer[] { 
 					FileTransfer.getInstance(), 
 					ImageTransfer.getInstance(),
+					URLTransfer.getInstance(), 
 			});
 			target.setTransfer(new Transfer[] {
 					FileTransfer.getInstance(), 

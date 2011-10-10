@@ -443,7 +443,6 @@ public class ColorMapUtils {
 					}
 				}
 			}
-			
 			/*
 			for (Map.Entry<Integer, byte[]> ent : greyToRgbMap.entrySet()) {
 				System.out.printf("%d:\t%02x %02x %02x\n",
@@ -451,7 +450,8 @@ public class ColorMapUtils {
 						(ent.getValue()[0]) & 0xff,
 						(ent.getValue()[1]) & 0xff,
 						(ent.getValue()[2]) & 0xff);
-			}*/
+			}
+			*/
 		}
 		return greyToRgbMap;
 	}

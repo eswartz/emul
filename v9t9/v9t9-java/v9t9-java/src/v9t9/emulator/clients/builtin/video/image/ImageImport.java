@@ -38,7 +38,7 @@ import v9t9.engine.VdpHandler;
  *
  */
 public class ImageImport implements IBitmapPixelAccess {
-	private boolean DEBUG = true;
+	private boolean DEBUG = false;
 
 	private ImageData imageData;
 	private Format format;
