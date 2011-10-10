@@ -14,11 +14,12 @@ import java.util.Collection;
 import java.util.List;
 
 import org.eclipse.core.runtime.Assert;
-import org.eclipse.tm.te.runtime.statushandler.interfaces.IStatusHandler;
-import org.eclipse.tm.te.runtime.statushandler.internal.StatusHandlerBinding;
-import org.eclipse.tm.te.runtime.statushandler.internal.StatusHandlerBindingExtensionPointManager;
 import org.eclipse.tm.te.runtime.extensions.AbstractExtensionPointManager;
 import org.eclipse.tm.te.runtime.extensions.ExecutableExtensionProxy;
+import org.eclipse.tm.te.runtime.statushandler.interfaces.IStatusHandler;
+import org.eclipse.tm.te.runtime.statushandler.interfaces.IStatusHandlerConstants;
+import org.eclipse.tm.te.runtime.statushandler.internal.StatusHandlerBinding;
+import org.eclipse.tm.te.runtime.statushandler.internal.StatusHandlerBindingExtensionPointManager;
 
 /**
  * Target Explorer: Status handler manager implementation.
@@ -120,6 +121,13 @@ public final class StatusHandlerManager extends AbstractExtensionPointManager<IS
 		for (StatusHandlerBinding binding : bindings) {
 			IStatusHandler handler = getHandler(binding.getHandlerId(), false);
 			if (handler != null && !handlers.contains(handler)) handlers.add(handler);
+		}
+
+		// If no applicable status handler is found, always return the default status handler
+		if (handlers.isEmpty()) {
+			IStatusHandler handler = getHandler(IStatusHandlerConstants.ID_DEFAUT_HANDLER, false);
+			Assert.isNotNull(handler);
+			handlers.add(handler);
 		}
 
 		return handlers.toArray(new IStatusHandler[handlers.size()]);

@@ -2,20 +2,29 @@ How to setup a Target Explorer development environment
 ======================================================
 
 1. Download and extract the Eclipse SDK environment
-	- Download the Eclipse Classic 3.7.0 SDK package from http://www.eclipse.org/downloads
+	- Download the Eclipse Classic 3.7.1 SDK package from http://www.eclipse.org/downloads
 	- Extract the downloaded archive
-	
-Note: Once available, you can use newer versions of the Eclipse SDK package as development
-tools base. The Target Explorer build target platform has to be Eclipse 3.7.0.  
 
-2. Add the Subversion team provider and the C/C++ tooling
+	Note: The Target Explorer is expected to work with Eclipse 3.7.0 and higher. Keep this
+	      in mind if introducing new dependencies and check the minimum version declared
+		  in the MANIFEST.MF.
+	Note: To build the Target Explorer plug-in's, you need to have a Java SE 6 JDK installed.
+	      The use of Java 6 language features is permitted.
+	
+2. Add the EGit team provider and the C/C++ tooling
 	- Launch Eclipse
 	- Open the "Install" dialog via "Help > Install New Software ..."
-	- Select the Eclipse 3.7.0 release site (http://download.eclipse.org/releases/indigo).
+	- Select the Eclipse 3.7.x release site (http://download.eclipse.org/releases/indigo).
 	  If not in the list, add it.
-	- Choose the Subversive team provider (Collaboration > Subversive SVN Team Provider)
+	- Choose the EGit team provider
+			* Collaboration > Eclipse EGit and
+			* Collaboration > Eclipse JGit
 	- Choose the C/C++ tooling (Programming Languages > C/C++ Development Tools)
 	- Install the additional components and restart Eclipse
 
-3. Import the team project set
+3. Import the code formatter settings
+	- Window > Preferences > Java > Code Style > Formatter > Import...
+	- Import from org.eclipse.tm.te.docs/team/CodeFormatterSettings.xml.
+	
+4. Import the team project set
 	- Import the project set from org.eclipse.tm.te.docs/team/projectSets/tm-te-all.psf

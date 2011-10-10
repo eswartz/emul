@@ -3,7 +3,8 @@ Target Explorer (Eclipse.org) Contributions
 
 1. Update the copyright header of modified source files and submit new files only with a valid copyright header.
 
-2. Format the contributions source files using the default "Eclipse [built-in]" formatter profile.
+2. Format the contributions source files using the "Target Explorer Java STD" formatter profile. The formatter
+   profile can be imported from org.eclipse.tm.te.docs/team/CodeFormatterSettings.xml.
 
 3. Keep the javadoc comments up-to-date.
 	a) At minimum, classes, interfaces and all their public and protected members must be fully documented.

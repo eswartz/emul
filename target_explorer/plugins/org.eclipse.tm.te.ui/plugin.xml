@@ -57,6 +57,15 @@
       </key>
    </extension>
 
+<!-- Status handler contributions -->
+   <extension point="org.eclipse.tm.te.runtime.statushandler.handlers">
+      <handler
+            class="org.eclipse.tm.te.ui.statushandler.DefaultStatusHandler"
+            id="org.eclipse.tm.te.statushandler.default"
+            label="%DefaultStatusHandler.label">
+      </handler>
+   </extension>
+
 <!-- Executor service contributions -->
    <extension point="org.eclipse.tm.te.runtime.concurrent.executorServices">
       <executorService

@@ -13,4 +13,5 @@ Bundle-ActivationPolicy: lazy
 Bundle-Localization: plugin
 Export-Package: org.eclipse.tm.te.core.activator;x-internal:=true,
  org.eclipse.tm.te.core.async,
- org.eclipse.tm.te.core.nls;x-internal:=true
+ org.eclipse.tm.te.core.nls;x-internal:=true,
+ org.eclipse.tm.te.core.utils.text
