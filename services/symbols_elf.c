@@ -1117,8 +1117,16 @@ int get_next_stack_frame(StackFrame * frame, StackFrame * down) {
             int i;
             frame->fp = (ContextAddress)evaluate_stack_trace_commands(ctx, frame, info->fp);
             for (i = 0; i < info->reg_cnt; i++) {
-                uint64_t v = evaluate_stack_trace_commands(ctx, frame, info->regs[i]);
-                if (write_reg_value(down, info->regs[i]->reg, v) < 0) exception(errno);
+                int ok = 0;
+                uint64_t v = 0;
+                Trap trap_reg;
+                if (set_trap(&trap_reg)) {
+                    /* If a saved register value cannot be evaluated - ignore it */
+                    v = evaluate_stack_trace_commands(ctx, frame, info->regs[i]);
+                    clear_trap(&trap_reg);
+                    ok = 1;
+                }
+                if (ok && write_reg_value(down, info->regs[i]->reg, v) < 0) exception(errno);
             }
             clear_trap(&trap);
         }
