@@ -1072,7 +1072,8 @@ int get_stack_tracing_info(Context * ctx, ContextAddress rt_addr, StackTracingIn
 
     lt_addr = elf_map_to_link_time_address(ctx, rt_addr, &file, &sec);
     if (file != NULL) {
-        assert(rt_addr == elf_map_to_run_time_address(ctx, file, sec, lt_addr));
+        /* This assert fails because of ambiguity in Linux memory maps:
+         * assert(rt_addr == elf_map_to_run_time_address(ctx, file, sec, lt_addr)); */
         if (set_trap(&trap)) {
             get_dwarf_stack_frame_info(ctx, file, sec, lt_addr);
             if (dwarf_stack_trace_fp->cmds_cnt > 0) {
