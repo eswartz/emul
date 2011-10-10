@@ -151,7 +151,7 @@ public class TCFBreakpointActions {
                     cache.addScript(expression);
                     if (!cache.validate(this)) return;
                     TCFNodeExpression expr = cache.findScript(expression);
-                    String s = expr.getValueText(this);
+                    String s = expr.getValueText(true, this);
                     if (s != null) done(expression + " = " + s);
                 }
             }.get();

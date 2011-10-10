@@ -1352,7 +1352,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         return bf.toString();
     }
 
-    public String getValueText(Runnable done) {
+    public String getValueText(boolean add_error_text, Runnable done) {
         if (!expression.validate(done)) return null;
         if (!value.validate(done)) return null;
         StringBuffer bf = new StringBuffer();
@@ -1365,11 +1365,13 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                         data, 0, data.length, big_endian, done)) return null;
             }
         }
-        if (bf.length() == 0 && expression.getError() != null) {
-            bf.append(TCFModel.getErrorMessage(expression.getError(), false));
-        }
-        if (bf.length() == 0 && value.getError() != null) {
-            bf.append(TCFModel.getErrorMessage(value.getError(), false));
+        if (add_error_text) {
+            if (bf.length() == 0 && expression.getError() != null) {
+                bf.append(TCFModel.getErrorMessage(expression.getError(), false));
+            }
+            if (bf.length() == 0 && value.getError() != null) {
+                bf.append(TCFModel.getErrorMessage(value.getError(), false));
+            }
         }
         return bf.toString();
     }
