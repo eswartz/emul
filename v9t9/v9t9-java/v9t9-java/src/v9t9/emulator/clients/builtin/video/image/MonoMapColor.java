@@ -28,9 +28,9 @@ class MonoMapColor extends BasePaletteMapper {
 	 * @see v9t9.emulator.clients.builtin.video.ImageDataCanvas.IMapColor#mapColor(int, int[])
 	 */
 	@Override
-	public int mapColor(int[] prgb, int[] distA) {
-		int distF = ColorMapUtils.getRGBDistance(palette, fg, prgb);
-		int distB = ColorMapUtils.getRGBDistance(palette, bg, prgb);
+	public int mapColor(int pixel, int[] distA) {
+		int distF = ColorMapUtils.getRGBDistance(palette[fg], pixel);
+		int distB = ColorMapUtils.getRGBDistance(palette[bg], pixel);
 		if (fg < bg) {
 			distA[0] = distF;
 			return fg;
@@ -40,25 +40,20 @@ class MonoMapColor extends BasePaletteMapper {
 	}
 	
 	/**
-	 * Get the closest color by sheer brute force -- we don't
-	 * want dark green to emerge as a "close" color for dark or
-	 * desaturated colors!
-	
 	 * @param prgb
 	 * @return
 	 */
-	private int getCloseColor(int[] prgb) {
-		float[] phsv = { 0, 0, 0 };
-		ColorMapUtils.rgbToHsv(prgb, phsv);
-		return phsv[2] < 64 ? fg : bg;
+	private int getCloseColor(int pixel) {
+		int lum = ColorMapUtils.getPixelLum(pixel);
+		return lum < 50 ? fg : bg;
 	}
 	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.video.ImageImport.IMapColor#getClosestColor(int[])
 	 */
 	@Override
-	public int getClosestPalettePixel(int x, int y, int[] prgb) {
-		int c = getCloseColor(prgb);
+	public int getClosestPalettePixel(int x, int y, int pixel) {
+		int c = getCloseColor(pixel);
 		return getPalettePixels()[c];
 	}
 	

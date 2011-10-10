@@ -30,12 +30,6 @@ public class ColorMapUtils {
 	private ColorMapUtils() {
 	}
 
-	public static float[] rgbToHsv(byte[] rgb) {
-		float[] hsv = { 0, 0, 0 };
-		rgbToHsv(rgb[0] & 0xff, rgb[1] & 0xff, rgb[2] & 0xff, hsv);
-		return hsv;
-	}
-
 	public static void rgbToHsv(byte[] rgb, float[] hsv) {
 		rgbToHsv(rgb[0] & 0xff, rgb[1] & 0xff, rgb[2] & 0xff, hsv);
 	}
@@ -129,25 +123,11 @@ public class ColorMapUtils {
 		rgb[2] = (int) ((fb + m) * 255);
 	}
 
-	public static int getRGBDistance(byte[] rgb, int[] prgb) {
-		int dist;
-
-		int dr = ((rgb[0] & 0xff) - prgb[0]);
-		int dg = ((rgb[1] & 0xff) - prgb[1]);
-		int db = ((rgb[2] & 0xff) - prgb[2]);
-
-		dist = (dr * dr) + (dg * dg) + (db * db);
-		return dist;
-	}
-	public static int getRGBDistance(int[] rgb, int[] prgb) {
-		int dist;
-		
-		int dr = (rgb[0] - prgb[0]);
-		int dg = (rgb[1] - prgb[1]);
-		int db = (rgb[2] - prgb[2]);
-		
-		dist = (dr * dr) + (dg * dg) + (db * db);
-		return dist;
+	public static int getRGBDistance(byte[] rgb, int pixel) {
+		int dr = ((pixel & 0xff0000) >> 16) - (rgb[0] & 0xff);
+		int dg = ((pixel & 0x00ff00) >> 8) - (rgb[1] & 0xff);
+		int db = ((pixel & 0x0000ff) >> 0) - (rgb[2] & 0xff);
+		return dr * dr + dg * dg + db * db;
 	}
 	public static int getPixelDistance(int pixel, int newRGB) {
 		int dr = ((pixel & 0xff0000) - (newRGB & 0xff0000)) >> 16;
@@ -155,44 +135,18 @@ public class ColorMapUtils {
 		int db = ((pixel & 0x0000ff) - (newRGB & 0x0000ff)) >> 0;
 		return dr * dr + dg * dg + db * db;
 	}
-	public static int getRGBDistance(int pixel, int[] prgb) {
-		int dr = ((pixel & 0xff0000) >> 16) - prgb[0];
-		int dg = ((pixel & 0x00ff00) >> 8) - prgb[1];
-		int db = ((pixel & 0x0000ff) >> 0) - prgb[2];
-		return dr * dr + dg * dg + db * db;
-	}
-
-	public static int getRGBDistance(byte[][] palette, int c, int[] prgb) {
-		return getRGBDistance(palette[c], prgb);
-	}
-
-
-	public static int getRGBLumDistance(byte[][] palette, int c, int[] prgb) {
-		return getRGBLumDistance(palette[c], prgb);
-	}
-
-	public static int getRGBLumDistance(int pixel, int[] prgb) {
+	public static int getRGBLumDistance(byte[] rgb, int pixel) {
 		int p = getPixelLum(pixel);
-		int r = getRGBLum(prgb);
+		int r = getRGBLum(rgb);
 		return (p-r) * (p-r);
 	}
-
+	
 	public static int getPixelLumDistance(int pixel, int newRGB) {
 		int d = getPixelLum(pixel) - getPixelLum(newRGB);
 		return d * d;
 	}
 	
-	/**
-	 * @param bs
-	 * @param prgb
-	 * @return
-	 */
-	public static int getRGBLumDistance(byte[] rgb, int[] prgb) {
-		int lum = getRGBLum(prgb);
-		int plum = getRGBLum(rgb);
-		return (lum - plum) * (lum - plum);
-	}
-
+	
 	/**
 	 * @param rgb
 	 * @return
@@ -232,13 +186,13 @@ public class ColorMapUtils {
 	 * @return
 	 */
 	public static Pair<Integer, Integer> getClosestColorByDistance(byte[][] thePalette, int first,
-			int count, int[] prgb, int exceptFor) {
+			int count, int pixel, int exceptFor) {
 		int mindiff = Integer.MAX_VALUE;
 		int closest = -1;
 
 		for (int c = first; c < count; c++) {
 			if (c != exceptFor) {
-				int dist = getRGBDistance(thePalette, c, prgb);
+				int dist = getRGBDistance(thePalette[c], pixel);
 				if (dist < mindiff) {
 					mindiff = dist;
 					closest = c;
@@ -248,16 +202,16 @@ public class ColorMapUtils {
 
 		if (closest == -1) {
 			closest = exceptFor;
-			mindiff = getRGBDistance(thePalette, closest, prgb);
+			mindiff = getRGBDistance(thePalette[closest], pixel);
 		}
 		return new Pair<Integer, Integer>(closest, mindiff);
 	}
 
 
 	public static Pair<Integer, Integer> getClosestColorByLumDistance(byte[][] thePalette, int first,
-			int count, int[] prgb) {
+			int count, int pixel) {
 		
-		int lum = getRGBLum(prgb);
+		int lum = getPixelLum(pixel);
 		
 		int mindiff = Integer.MAX_VALUE;
 		int closest = -1;
@@ -275,13 +229,13 @@ public class ColorMapUtils {
 
 
 	public static Pair<Integer, Integer> getClosestColorByDistanceAndHSV(byte[][] thePalette, int first,
-			int count, int[] prgb, int exceptFor) {
+			int count, int pixel, int exceptFor) {
 		int mindiff = Integer.MAX_VALUE;
 		int closest = -1;
 
 		// first, only pick greys for low hue cases
 		float[] phsv = { 0, 0, 0 };
-		rgbToHsv(prgb, phsv);
+		rgbToHsv((pixel & 0xff0000) >> 16, (pixel & 0xff00) >> 8, (pixel & 0xff), phsv);
 
 		if (phsv[1] < (phsv[0] >= 30 && phsv[0] < 75 ? 0.66f : 0.33f)) {
 			float[] hsv = { 0, 0, 0 };
@@ -314,11 +268,11 @@ public class ColorMapUtils {
 					closest = blackColor;
 				else
 					closest = whiteColor;
-				mindiff = getRGBDistance(thePalette, closest, prgb);
+				mindiff = getRGBDistance(thePalette[closest], pixel);
 			}
 		}
 		if (closest == -1) {
-			return getClosestColorByDistance(thePalette, first, count, prgb, exceptFor);
+			return getClosestColorByDistance(thePalette, first, count, pixel, exceptFor);
 		}
 		return new Pair<Integer, Integer>(closest, mindiff);
 	}
@@ -382,27 +336,6 @@ public class ColorMapUtils {
 		return g;
 	}
 	
-
-	/**
-	 * Return an RGB triplet corresponding to the luminance
-	 * of the incoming color RGB triplet, in a mode where
-	 * all colors are rendered as greyscale.
-	 * 
-	 * Obviously, the incoming color trivially fulfills this requirement.
-	 * But the intent here is to return a canonical RGB triplet
-	 * which will allow reducing a full-color gamut into a
-	 * set of 199 RGB values to allow for better palette matching.
-	 * 
-	 * @param rgb
-	 * @return
-	 */
-	public static int[] getRgbToGreyForGreyscaleMode(int[] rgb) {
-		int[] ret = { 0, 0, 0 };
-		rgbToGreyForGreyscaleMode(rgb, ret);
-		return ret;
-	}
-
-
 	/**
 	 * Return an RGB triplet corresponding to the luminance
 	 * of the incoming color RGB triplet, in a mode where

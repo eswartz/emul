@@ -357,7 +357,8 @@ public class SwtWindow extends BaseEmulatorWindow {
 		if (!enableJoystick) {
 			try {
 				dragDropHandler = new SwtDragDropHandler(videoControl, 
-						(ISwtVideoRenderer) videoRenderer);
+						(ISwtVideoRenderer) videoRenderer,
+						eventNotifier);
 			} catch (SWTError e) {
 				e.printStackTrace();
 			}
@@ -830,7 +831,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		if (contents != null) {
 			machine.getKeyboardState().pasteText(contents);
 		} else {
-			showErrorMessage("Paste Error", 
+			eventNotifier.notifyEvent(null, Level.WARNING, 
 					"Cannot paste: no text on clipboard");
 		}
 		clip.dispose();

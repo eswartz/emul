@@ -11,9 +11,9 @@ class FixedPaletteMapColor extends BasePaletteMapper {
 	 * @see v9t9.emulator.clients.builtin.video.ImageDataCanvas.IMapColor#mapColor(int, int[])
 	 */
 	@Override
-	public int mapColor(int[] prgb, int[] distA) {
+	public int mapColor(int pixel, int[] distA) {
 		for (int c = firstColor; c < numColors; c++) {
-			int dist = ColorMapUtils.getRGBDistance(palette, c, prgb);
+			int dist = ColorMapUtils.getRGBDistance(palette[c], pixel);
 			if (dist < 25*3) {
 				distA[0] = dist;
 				return c;
@@ -23,18 +23,15 @@ class FixedPaletteMapColor extends BasePaletteMapper {
 		return -1;
 	}
 	
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.clients.builtin.video.ImageImport.IMapColor#getClosestPaletteColor(int[])
-	 */
 	@Override
-	public int getClosestPalettePixel(int x, int y, int[] prgb) {
+	public int getClosestPalettePixel(int x, int y, int pixel) {
 		int closest = -1;
 		for (int c = firstColor; c < numColors; c++) {
-			int dist = ColorMapUtils.getRGBDistance(palette, c, prgb);
+			int dist = ColorMapUtils.getRGBDistance(palette[c], pixel);
 			if (dist < 25*3) {
 				return getPalettePixels()[closest];
 			}
 		}
-		return ColorMapUtils.rgb8ToPixel(prgb);
+		return pixel;
 	}
 }

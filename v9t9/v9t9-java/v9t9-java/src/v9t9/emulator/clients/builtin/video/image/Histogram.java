@@ -11,9 +11,6 @@ import java.util.TreeMap;
 
 import org.ejs.coffee.core.utils.Pair;
 
-import v9t9.emulator.clients.builtin.video.ColorMapUtils;
-
-
 class Histogram {
 	private final BufferedImage img;
 	final Map<Integer, Integer> hist;
@@ -51,7 +48,6 @@ class Histogram {
 		Arrays.fill(mappedColors, 0);
 		
 		int[] distA = { 0 };
-		int[] prgb = { 0, 0, 0 };
 		int offs = 0;
 		int mapped = 0;
 		for (int y = 0; y < img.getHeight(); y++) {
@@ -60,9 +56,7 @@ class Histogram {
 				int c;
 				Integer color = pixelToColor.get(pixel);
 				if (color == null) {
-					ColorMapUtils.pixelToRGB(pixel, prgb);
-					
-					c = paletteMapper.mapColor(prgb, distA);
+					c = paletteMapper.mapColor(pixel, distA);
 					if (distA[0] <= maxDist) {
 						pixelToColor.put(pixel, c);
 						

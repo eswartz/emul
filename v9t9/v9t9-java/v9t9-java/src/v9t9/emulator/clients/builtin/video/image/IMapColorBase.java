@@ -4,11 +4,11 @@ interface IMapColorBase {
 
 	/**
 	 * Get the color in the new palette closest to this one.
-	 * @param x TODO
-	 * @param y TODO
-	 * @param prgb
+	 * @param x 
+	 * @param y 
+	 * @param pixel
 	 * @return color index or -1
 	 */
-	int getClosestPalettePixel(int x, int y, int[] prgb);
+	int getClosestPalettePixel(int x, int y, int pixel);
 
 }

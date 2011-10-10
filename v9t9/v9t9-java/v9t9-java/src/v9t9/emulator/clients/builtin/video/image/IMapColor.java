@@ -24,11 +24,11 @@ interface IMapColor extends IMapColorBase {
 	
 	/** Return a color index from mapping the RGB pixel 
 	 * 
-	 * @param prgb pixel in X8R8G8B8 format
+	 * @param pixel pixel in X8R8G8B8 format
 	 * @param dist array for receiving distance² from the returned pixel
 	 * @return the color index
 	 */
-	int mapColor(int[] prgb, int[] dist);
+	int mapColor(int pixel, int[] dist);
 
 	/**
 	 * Get the maximum pixel distance for absolutely replacing a range

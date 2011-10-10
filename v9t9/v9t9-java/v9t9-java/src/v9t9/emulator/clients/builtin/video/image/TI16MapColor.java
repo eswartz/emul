@@ -14,8 +14,8 @@ class TI16MapColor extends BasePaletteMapper {
 	 * @see v9t9.emulator.clients.builtin.video.ImageDataCanvas.IMapColor#mapColor(int, int[])
 	 */
 	@Override
-	public int mapColor(int[] prgb, int[] distA) {
-		Pair<Integer, Integer> info = getCloseColor(prgb);
+	public int mapColor(int pixel, int[] distA) {
+		Pair<Integer, Integer> info = getCloseColor(pixel);
 		distA[0] = info.second;
 		return info.first;
 	}
@@ -60,9 +60,9 @@ class TI16MapColor extends BasePaletteMapper {
 	 * @param prgb
 	 * @return pair of index and distance
 	 */
-	private Pair<Integer, Integer> getCloseColor(int[] prgb) {
+	private Pair<Integer, Integer> getCloseColor(int pixel) {
 		float[] phsv = { 0, 0, 0 };
-		ColorMapUtils.rgbToHsv(prgb, phsv);
+		ColorMapUtils.rgbToHsv((pixel & 0xff0000) >> 16, (pixel & 0x00ff00) >> 8, (pixel & 0xff), phsv);
 		
 		float hue = phsv[0];
 		float val = phsv[2] * 100 / 256;
@@ -83,10 +83,11 @@ class TI16MapColor extends BasePaletteMapper {
 			} else {
 				closest = black;
 			}
-			mindiff = ColorMapUtils.getRGBDistance(palette, closest, prgb);
+			mindiff = ColorMapUtils.getRGBDistance(palette[closest], pixel);
 		}
 		else {
-			Pair<Integer, Integer> info = ColorMapUtils.getClosestColorByDistanceAndHSV(palette, firstColor, 16, prgb, 12);
+			Pair<Integer, Integer> info = ColorMapUtils.getClosestColorByDistanceAndHSV(
+					palette, firstColor, 16, pixel, 12);
 			
 			// see how the color matches
 			closest = info.first; mindiff = info.second;
@@ -94,7 +95,7 @@ class TI16MapColor extends BasePaletteMapper {
 				if (phsv[1] > 0.9f && val >= 64) {
 					if ((hue >= 90 && hue < 140) && (val >= 5 && val <= 33)) {
 						closest = 12;
-						mindiff = ColorMapUtils.getRGBDistance(palette, closest, prgb);
+						mindiff = ColorMapUtils.getRGBDistance(palette[closest], pixel);
 					}
 				}
 			}
@@ -115,8 +116,8 @@ class TI16MapColor extends BasePaletteMapper {
 	 * @see v9t9.emulator.clients.builtin.video.ImageImport.IMapColor#getClosestColor(int[])
 	 */
 	@Override
-	public int getClosestPalettePixel(int x, int y, int[] prgb) {
-		Pair<Integer, Integer> info = getCloseColor(prgb);
+	public int getClosestPalettePixel(int x, int y, int pixel) {
+		Pair<Integer, Integer> info = getCloseColor(pixel);
 		return getPalettePixels()[info.first];
 	}
 	

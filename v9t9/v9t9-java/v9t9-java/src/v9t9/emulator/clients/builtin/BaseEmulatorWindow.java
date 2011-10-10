@@ -163,7 +163,7 @@ public abstract class BaseEmulatorWindow {
 		        
 				machine.loadState(settings);
 			} catch (Throwable e1) {
-				showErrorMessage("Load error", 
+				machine.getClient().getEventNotifier().notifyEvent(null, Level.ERROR, 
 						"Failed to load machine state:\n\n" + e1.getMessage());
 			
 			}
@@ -201,7 +201,7 @@ public abstract class BaseEmulatorWindow {
 		if (filenameBase != null) {
 			File saveFile = getUniqueFile(filenameBase);
 			if (saveFile == null) {
-				showErrorMessage("Save error", 
+				machine.getClient().getEventNotifier().notifyEvent(null, Level.ERROR, 
 						"Too many screenshots here!");
 				EmulatorSettings.INSTANCE.clearConfigVar("ScreenShotsBase");
 				return screenshot();

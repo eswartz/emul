@@ -15,17 +15,17 @@ class RGB333MapColor extends BasePaletteMapper {
 	 * @see v9t9.emulator.clients.builtin.video.ImageDataCanvas.IMapColor#mapColor(int, int[])
 	 */
 	@Override
-	public int mapColor(int[] prgb, int[] dist) {
-		int r = prgb[0] >>> 5;
-		int g = prgb[1] >>> 5;
-		int b = prgb[2] >>> 5;
+	public int mapColor(int pixel, int[] dist) {
+		int r = ((pixel & 0xff0000) >>> 16) >>> 5;
+		int g = ((pixel & 0x00ff00) >>>  8) >>> 5;
+		int b = ((pixel & 0x0000ff) >>>  0) >>> 5;
 		
 		byte[] rgbs = getRGB333(r, g, b);
 		
 		if (isGreyscale)
-			dist[0] = ColorMapUtils.getRGBLumDistance(rgbs, prgb);
+			dist[0] = ColorMapUtils.getRGBLumDistance(rgbs, pixel);
 		else
-			dist[0] = ColorMapUtils.getRGBDistance(rgbs, prgb);
+			dist[0] = ColorMapUtils.getRGBDistance(rgbs, pixel);
 		
 		// not actual RGB332 index!
 		int c = (r << 6) | (g << 3) | b;
@@ -53,12 +53,12 @@ class RGB333MapColor extends BasePaletteMapper {
 	 * @see v9t9.emulator.clients.builtin.video.ImageImport.IMapColor#getClosestPaletteColor(int[])
 	 */
 	@Override
-	public int getClosestPalettePixel(int x, int y, int[] prgb) {
+	public int getClosestPalettePixel(int x, int y, int pixel) {
 		int closest = -1;
 		int mindiff = Integer.MAX_VALUE;
 		if (isGreyscale) {
 			for (int c = firstColor; c < numColors; c++) {
-				int dist = ColorMapUtils.getRGBLumDistance(palette, c, prgb);
+				int dist = ColorMapUtils.getRGBLumDistance(palette[c], pixel);
 				if (dist < mindiff) {
 					closest = c;
 					mindiff = dist;
@@ -66,7 +66,7 @@ class RGB333MapColor extends BasePaletteMapper {
 			}
 		} else {
 			for (int c = firstColor; c < numColors; c++) {
-				int dist = ColorMapUtils.getRGBDistance(palette, c, prgb);
+				int dist = ColorMapUtils.getRGBDistance(palette[c], pixel);
 				if (dist < mindiff) {
 					closest = c;
 					mindiff = dist;

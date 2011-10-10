@@ -20,30 +20,30 @@ class UserPaletteMapColor extends BasePaletteMapper {
 	 * @see v9t9.emulator.clients.builtin.video.ImageDataCanvas.IMapColor#mapColor(int, int[])
 	 */
 	@Override
-	public int mapColor(int[] prgb, int[] distA) {
-		Pair<Integer, Integer> info = getCloseColor(prgb);
+	public int mapColor(int pixel, int[] distA) {
+		Pair<Integer, Integer> info = getCloseColor(pixel);
 		distA[0] = info.second;
 		return info.first;
 	}
 	
 	/**
 	 * Get the closest color by sheer brute force 
-	 * @param prgb
+	 * @param pixel
 	 * @return
 	 */
-	private Pair<Integer, Integer> getCloseColor(int[] prgb) {
+	private Pair<Integer, Integer> getCloseColor(int pixel) {
 		if (isGreyscale) {
-			return ColorMapUtils.getClosestColorByLumDistance(palette, firstColor, numColors, prgb);
+			return ColorMapUtils.getClosestColorByLumDistance(palette, firstColor, numColors, pixel);
 		}
-		return ColorMapUtils.getClosestColorByDistance(palette, firstColor, numColors, prgb, -1);
+		return ColorMapUtils.getClosestColorByDistance(palette, firstColor, numColors, pixel, -1);
 	}
 	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.video.ImageImport.IMapColor#getClosestColor(int[])
 	 */
 	@Override
-	public int getClosestPalettePixel(int x, int y, int[] prgb) {
-		Pair<Integer, Integer> info = getCloseColor(prgb);
+	public int getClosestPalettePixel(int x, int y, int pixel) {
+		Pair<Integer, Integer> info = getCloseColor(pixel);
 		return getPalettePixels()[info.first];
 	}
 }

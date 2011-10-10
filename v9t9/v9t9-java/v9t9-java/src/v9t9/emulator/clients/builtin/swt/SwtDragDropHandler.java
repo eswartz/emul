@@ -17,7 +17,6 @@ import java.util.Date;
 
 import javax.imageio.ImageIO;
 
-import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.SWTException;
 import org.eclipse.swt.dnd.DND;
@@ -43,6 +42,8 @@ import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VdpCanvas.Format;
 import v9t9.emulator.clients.builtin.video.image.ImageImport;
+import v9t9.emulator.common.IEventNotifier;
+import v9t9.emulator.common.IEventNotifier.Level;
 
 /**
  * Support dragging image out of window, or into window (and VDP buffer)
@@ -60,10 +61,12 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 	private final Control control;
 	private File lastURLFile;
 	private String lastURL;
+	private final IEventNotifier notifier;
 
-	public SwtDragDropHandler(Control control, ISwtVideoRenderer renderer) {
+	public SwtDragDropHandler(Control control, ISwtVideoRenderer renderer, IEventNotifier notifier) {
 		this.control = control;
 		this.renderer = renderer;
+		this.notifier = notifier;
 		
 		source = new DragSource(control, DND.DROP_COPY | DND.DROP_DEFAULT);
 		source.addDragListener(this);
@@ -342,7 +345,7 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 					os.write(buf, 0, len);
 				}
 			} catch (IOException e) {
-				MessageDialog.openError(null, "I/O Error", 
+				notifier.notifyEvent(null, Level.ERROR, 
 						"Could not read '" +
 						url + "' to '" + temp + "' (" + e.getMessage() + ")" );
 			} finally {
@@ -355,7 +358,7 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 				}
 			}
 		} catch (IOException e) {
-			MessageDialog.openError(null, "I/O Error", 
+			notifier.notifyEvent(null, Level.ERROR, 
 					"Could not load '" +
 					url + "' (" + e.getMessage() + ")" );
 		} finally {
@@ -384,7 +387,7 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 				if (img != null)
 					info = new Pair<BufferedImage, Boolean>(img, false);
 			} catch (IOException e1) {
-				MessageDialog.openError(null, "I/O Error", 
+				notifier.notifyEvent(null, Level.ERROR, 
 						"Could not load '" +
 						file + "' (" + e1.getMessage() + ")" );
 				return null;
@@ -392,9 +395,9 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 		}
 
 		if (info == null)
-			MessageDialog.openError(null, "Failed To Import", 
+			notifier.notifyEvent(null, Level.ERROR, 
 					"Image format not recognized for '" +
-					file + "' (tried both SWT and AWT)" );
+					file + "'" );
 
 		return info;
 	}

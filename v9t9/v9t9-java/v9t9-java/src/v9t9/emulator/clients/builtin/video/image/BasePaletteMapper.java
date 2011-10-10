@@ -16,32 +16,19 @@ abstract class BasePaletteMapper implements IMapColor {
 		this.palette = palette;
 		this.isGreyscale = isGreyscale;
 		
-		/*
-		if (isGreyscale) {
-			// convert palette
-			byte[][] greyPalette = new byte[palette.length][];
-			for (int c = 0; c < greyPalette.length; c++) {
-				greyPalette[c] = ColorMapUtils.rgbToGrey(palette[c]);
-			}
-			this.palette = greyPalette;
-		}*/
-		
 		this.firstColor = firstColor;
 		this.numColors = numColors;
 		this.canSetPalette = canSetPalette;
 		
 		minDist = Integer.MAX_VALUE;
 		for (int c = 0; c < numColors; c++) {
+			int cpixel = ColorMapUtils.rgb8ToPixel(palette[c]);
 			for (int d = c + 1; d < numColors; d++) {
-				int[] prgb = { palette[d][0] & 0xff,
-						palette[d][1] & 0xff, 
-						palette[d][2] & 0xff 
-				};
 				int dist;
 				if (!isGreyscale)
-					dist = ColorMapUtils.getRGBDistance(palette, c, prgb);
+					dist = ColorMapUtils.getRGBDistance(palette[d], cpixel);
 				else
-					dist = ColorMapUtils.getRGBLumDistance(palette, c, prgb);
+					dist = ColorMapUtils.getRGBLumDistance(palette[d], cpixel);
 				if (dist > 0 && dist < minDist)
 					minDist = dist;
 			}
