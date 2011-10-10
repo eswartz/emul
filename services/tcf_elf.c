@@ -750,13 +750,38 @@ static void search_regions(MemoryMap * map, ContextAddress addr0, ContextAddress
                         x.file_name = file->name;
                         x.file_offs = p->offset;
                         x.flags = MM_FLAG_R | MM_FLAG_W | MM_FLAG_X;
-                        add_region(res, &x);;
+                        add_region(res, &x);
+                    }
+                }
+            }
+        }
+        else if (r->addr <= addr1 && r->size == 0 && r->sect_name != NULL) {
+            int error = 0;
+            ELF_File * file = open_memory_region_file(r, &error);
+            if (file != NULL) {
+                unsigned j;
+                for (j = 0; j < file->section_cnt; j++) {
+                    ELF_Section * s = file->sections + j;
+                    if (s == NULL || s->name == NULL) continue;
+                    if (strcmp(s->name, r->sect_name)) continue;
+                    if (r->addr + s->size > addr0) {
+                        MemoryRegion x;
+                        memset(&x, 0, sizeof(x));
+                        x.addr = r->addr;
+                        x.size = s->size;
+                        x.dev = file->dev;
+                        x.ino = file->ino;
+                        x.file_name = file->name;
+                        x.sect_name = r->sect_name;
+                        x.flags = r->flags;
+                        if (x.flags == 0) x->flags = MM_FLAG_R | MM_FLAG_W | MM_FLAG_X;
+                        add_region(res, &x);
                     }
                 }
             }
         }
         else if (r->addr <= addr1 && r->addr + r->size > addr0) {
-            add_region(res, r);;
+            add_region(res, r);
         }
     }
 }
