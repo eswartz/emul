@@ -774,7 +774,7 @@ static void search_regions(MemoryMap * map, ContextAddress addr0, ContextAddress
                         x.file_name = file->name;
                         x.sect_name = r->sect_name;
                         x.flags = r->flags;
-                        if (x.flags == 0) x->flags = MM_FLAG_R | MM_FLAG_W | MM_FLAG_X;
+                        if (x.flags == 0) x.flags = MM_FLAG_R | MM_FLAG_W | MM_FLAG_X;
                         add_region(res, &x);
                     }
                 }
