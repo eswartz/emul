@@ -20,8 +20,10 @@ Export-Package: org.eclipse.tm.te.runtime.activator,
  org.eclipse.tm.te.runtime.interfaces.extensions,
  org.eclipse.tm.te.runtime.interfaces.properties,
  org.eclipse.tm.te.runtime.interfaces.tracing,
+ org.eclipse.tm.te.runtime.internal;x-internal:=true,
  org.eclipse.tm.te.runtime.nls,
  org.eclipse.tm.te.runtime.preferences,
  org.eclipse.tm.te.runtime.progress,
  org.eclipse.tm.te.runtime.properties,
- org.eclipse.tm.te.runtime.tracing
+ org.eclipse.tm.te.runtime.tracing,
+ org.eclipse.tm.te.runtime.utils

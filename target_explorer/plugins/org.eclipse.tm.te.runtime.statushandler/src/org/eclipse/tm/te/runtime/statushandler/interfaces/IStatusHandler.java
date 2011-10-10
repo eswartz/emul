@@ -41,6 +41,6 @@ public interface IStatusHandler extends IExecutableExtension {
 		 * @param error An error if failed, <code>null</code> if succeeded.
 		 * @param data The status handler custom result data object, or <code>null</code> if none.
 		 */
-		void doneHandleStatus(Exception error, IPropertiesContainer data);
+		void doneHandleStatus(Throwable error, IPropertiesContainer data);
 	}
 }

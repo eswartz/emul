@@ -70,4 +70,7 @@ public class Messages extends NLS {
 	// **** Declare externalized string id's down here *****
 
 	public static String NoteCompositeHelper_note_label;
+
+	public static String OptionalMessageDialog_doNotShowAgain_label;
+	public static String OptionalMessageDialog_rememberMyDecision_label;
 }

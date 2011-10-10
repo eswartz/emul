@@ -44,4 +44,10 @@ public class Messages extends NLS {
 	public static String PendingOperation_label;
 
 	public static String EditBrowseTextControl_button_label;
+
+	public static String DefaultStatusHandler_question_title;
+	public static String DefaultStatusHandler_warning_title;
+	public static String DefaultStatusHandler_error_title;
+	public static String DefaultStatusHandler_information_title;
+	public static String DefaultStatusHandler_toggleMessage_doNotShowAgain;
 }

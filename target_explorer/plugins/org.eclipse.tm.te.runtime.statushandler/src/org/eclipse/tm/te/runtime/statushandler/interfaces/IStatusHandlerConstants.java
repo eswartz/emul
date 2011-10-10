@@ -36,6 +36,13 @@ public interface IStatusHandlerConstants {
 	public final static String PROPERTY_TITLE = "title"; //$NON-NLS-1$
 
 	/**
+	 * Property: An string array listing the labels of the message dialog buttons.
+	 *           If <code>null</code>, the default labeling, typically &quot;OK&quot;
+	 *           for a single button message dialog, will be applied.
+	 */
+	public final static String PROPERTY_BUTTON_LABEL = "buttonLabel"; //$NON-NLS-1$
+
+	/**
 	 * Property: The context help id of the message dialog.
 	 *           The value is expected to be a string.
 	 */
@@ -52,4 +59,9 @@ public interface IStatusHandlerConstants {
 	 *           be the caller object or the callers class object.
 	 */
 	public final static String PROPERTY_CALLER = "caller"; //$NON-NLS-1$
+
+	/**
+	 * Property: The result of the status handling.
+	 */
+	public final static String PROPERTY_RESULT = "result"; //$NON-NLS-1$
 }
