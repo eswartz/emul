@@ -20,17 +20,17 @@ import org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer;
 public interface ITerminalService extends IService {
 
 	/**
-	 * Opens the terminal console asynchronously and invokes the given callback if done.
+	 * Opens a terminal asynchronously and invokes the given callback if done.
 	 *
-	 * @param properties The terminal console properties. Must be not <code>null</code>.
+	 * @param properties The terminal properties. Must be not <code>null</code>.
 	 * @param callback The target callback to invoke if finished or <code>null</code>.
 	 */
 	public void openConsole(IPropertiesContainer properties, ICallback callback);
 
 	/**
-	 * Close the terminal console asynchronously and invokes the given callback if done.
+	 * Close the terminal asynchronously and invokes the given callback if done.
 	 *
-	 * @param properties The terminal console properties. Must be not <code>null</code>.
+	 * @param properties The terminal properties. Must be not <code>null</code>.
 	 * @param callback The target callback to invoke if finished or <code>null</code>.
 	 */
 	public void closeConsole(IPropertiesContainer properties, ICallback callback);
