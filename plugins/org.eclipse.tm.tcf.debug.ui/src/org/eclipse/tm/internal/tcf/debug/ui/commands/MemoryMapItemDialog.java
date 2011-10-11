@@ -30,8 +30,10 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModel;
 import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.services.IMemoryMap;
 
@@ -219,7 +221,12 @@ class MemoryMapItemDialog extends Dialog {
     private void setData() {
         setText(addr_text, toHex((Number)props.get(IMemoryMap.PROP_ADDRESS)));
         setText(size_text, toHex((Number)props.get(IMemoryMap.PROP_SIZE)));
-        setText(offset_text, toHex((Number)props.get(IMemoryMap.PROP_OFFSET)));
+        if (props.get(IMemoryMap.PROP_SECTION_NAME) != null) {
+            setText(offset_text, (String)props.get(IMemoryMap.PROP_SECTION_NAME));
+        }
+        else {
+            setText(offset_text, toHex((Number)props.get(IMemoryMap.PROP_OFFSET)));
+        }
         setText(file_text, (String)props.get(IMemoryMap.PROP_FILE_NAME));
         int flags = 0;
         Number n = (Number)props.get(IMemoryMap.PROP_FLAGS);
@@ -256,7 +263,14 @@ class MemoryMapItemDialog extends Dialog {
     private void getData() {
         getNumber(addr_text, IMemoryMap.PROP_ADDRESS);
         getNumber(size_text, IMemoryMap.PROP_SIZE);
-        getNumber(offset_text, IMemoryMap.PROP_OFFSET);
+        if (offset_text.getText().startsWith(".")) {
+            props.put(IMemoryMap.PROP_SECTION_NAME, offset_text.getText());
+            props.remove(IMemoryMap.PROP_OFFSET);
+        }
+        else {
+            getNumber(offset_text, IMemoryMap.PROP_OFFSET);
+            props.remove(IMemoryMap.PROP_SECTION_NAME);
+        }
         getText(file_text, IMemoryMap.PROP_FILE_NAME);
         int flags = 0;
         if (rd_button.getSelection()) flags |= IMemoryMap.FLAG_READ;
@@ -272,7 +286,18 @@ class MemoryMapItemDialog extends Dialog {
 
     @Override
     protected void okPressed() {
-        if (enable_editing) getData();
+        if (enable_editing) {
+            try {
+                getData();
+            }
+            catch (Throwable x) {
+                MessageBox mb = new MessageBox(getShell(), SWT.ICON_ERROR | SWT.OK);
+                mb.setText("Invalid data");
+                mb.setMessage(TCFModel.getErrorMessage(x, true));
+                mb.open();
+                return;
+            }
+        }
         super.okPressed();
     }
 }

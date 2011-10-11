@@ -151,7 +151,6 @@ public final class JSON {
                 ch |= inp[inp_pos++] & 0x3f;
             }
             else {
-                assert false : "invalid UTF-8 encoding";
                 ch &= 0xff;
             }
         }

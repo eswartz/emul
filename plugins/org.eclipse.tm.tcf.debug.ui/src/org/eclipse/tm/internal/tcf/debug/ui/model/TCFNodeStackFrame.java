@@ -382,7 +382,7 @@ public class TCFNodeStackFrame extends TCFNode {
                                     if (show_arg_values) bf.append('=');
                                 }
                                 if (show_arg_values) {
-                                    String s = expr_node.getValueText(done);
+                                    String s = expr_node.getValueText(false, done);
                                     if (s == null) return false;
                                     bf.append(s.length() == 0 ? "?" : s);
                                 }
