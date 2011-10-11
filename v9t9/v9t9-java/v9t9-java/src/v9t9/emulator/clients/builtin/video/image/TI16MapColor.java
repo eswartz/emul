@@ -61,6 +61,15 @@ class TI16MapColor extends BasePaletteMapper {
 	 * @return pair of index and distance
 	 */
 	private Pair<Integer, Integer> getCloseColor(int pixel) {
+		if (isGreyscale) {
+			return ColorMapUtils.getClosestColorByLumDistance(palette, firstColor, numColors, pixel);
+		}
+		
+		final int white = 15;
+		final int black = 1;
+		final int grey = 14;
+		final int darkGreen = 12;
+		
 		float[] phsv = { 0, 0, 0 };
 		ColorMapUtils.rgbToHsv((pixel & 0xff0000) >> 16, (pixel & 0x00ff00) >> 8, (pixel & 0xff), phsv);
 		
@@ -70,14 +79,11 @@ class TI16MapColor extends BasePaletteMapper {
 		int closest = -1;
 		int mindiff;
 
-		final int white = 15;
-		final int black = 1;
-		final int grey = 14;
 		
 		if (phsv[1] < (hue >= 30 && hue < 75 ? 0.66f : 0.33f)) {
 			if (val >= 70) {
 				closest = white;
-			} else if (val >= 10) {
+			} else if (val >= 25) {
 				// dithering will take care of the rest
 				closest = grey;
 			} else {
@@ -87,24 +93,26 @@ class TI16MapColor extends BasePaletteMapper {
 		}
 		else {
 			Pair<Integer, Integer> info = ColorMapUtils.getClosestColorByDistanceAndHSV(
-					palette, firstColor, 16, pixel, 12);
+					palette, firstColor, 16, pixel, darkGreen);
 			
-			// see how the color matches
 			closest = info.first; mindiff = info.second;
-			if (closest == black) {
-				if (phsv[1] > 0.9f && val >= 64) {
-					if ((hue >= 90 && hue < 140) && (val >= 5 && val <= 33)) {
-						closest = 12;
-						mindiff = ColorMapUtils.getRGBDistance(palette[closest], pixel);
+			if (!isGreyscale) {
+				// see how the color matches
+				if (closest == black) {
+					if (phsv[1] > 0.9f && val >= 25) {
+						if ((hue >= 90 && hue < 140) && (val >= 5 && val <= 33)) {
+							closest = 12;
+							mindiff = ColorMapUtils.getRGBDistance(palette[closest], pixel);
+						}
 					}
 				}
+				/*else {
+					int rigid = rigidMatch(phsv, hue, val);
+					if (phsv[1] < 0.5f && (rigid == 1 || rigid == 14 || rigid == 15)) {
+						closest = rigid;
+					}
+				}*/
 			}
-			/*else {
-				int rigid = rigidMatch(phsv, hue, val);
-				if (phsv[1] < 0.5f && (rigid == 1 || rigid == 14 || rigid == 15)) {
-					closest = rigid;
-				}
-			}*/
 		}
 		
 		//closest = rigidMatch(phsv, hue, val);
