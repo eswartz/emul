@@ -28,12 +28,6 @@
 
 <!-- Terminal connector contributions -->
    <extension point="org.eclipse.tm.terminal.terminalConnectors">
-      <connector
-            class="org.eclipse.tm.te.ui.terminals.process.ProcessConnector"
-            hidden="true"
-            id="org.eclipse.tm.te.ui.terminals.ProcessConnector"
-            name="%TerminalConnector.process"/>
-                 
       <connector 
                  name="%TerminalConnector.streams"
                  id="org.eclipse.tm.te.ui.terminals.StreamsConnector"

@@ -43,7 +43,7 @@ public class ConsoleManager {
 	private final IPerspectiveListener perspectiveListener;
 
 	// Internal perspective listener implementation
-	static class TerminalConsoleManagerPerspectiveListener extends PerspectiveAdapter {
+	static class ConsoleManagerPerspectiveListener extends PerspectiveAdapter {
 		private final List<IViewReference> references = new ArrayList<IViewReference>();
 
 		/* (non-Javadoc)
@@ -104,7 +104,7 @@ public class ConsoleManager {
 		super();
 
 		// Attach the perspective listener
-		perspectiveListener = new TerminalConsoleManagerPerspectiveListener();
+		perspectiveListener = new ConsoleManagerPerspectiveListener();
 		if (PlatformUI.isWorkbenchRunning() && PlatformUI.getWorkbench() != null && PlatformUI.getWorkbench().getActiveWorkbenchWindow() != null) {
 			PlatformUI.getWorkbench().getActiveWorkbenchWindow().addPerspectiveListener(perspectiveListener);
 		}

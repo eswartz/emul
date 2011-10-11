@@ -39,8 +39,8 @@ import org.eclipse.tm.internal.terminal.provisional.api.ISettingsPage;
 import org.eclipse.tm.internal.terminal.provisional.api.ISettingsStore;
 import org.eclipse.tm.internal.terminal.provisional.api.ITerminalControl;
 import org.eclipse.tm.internal.terminal.provisional.api.TerminalState;
-import org.eclipse.tm.te.ui.terminals.activator.UIPlugin;
-import org.eclipse.tm.te.ui.terminals.nls.Messages;
+import org.eclipse.tm.te.ui.terminals.process.activator.UIPlugin;
+import org.eclipse.tm.te.ui.terminals.process.nls.Messages;
 import org.eclipse.tm.te.ui.terminals.streams.AbstractStreamsConnector;
 
 /**
