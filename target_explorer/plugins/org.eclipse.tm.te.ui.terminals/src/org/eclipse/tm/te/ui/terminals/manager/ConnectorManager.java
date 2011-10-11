@@ -12,7 +12,6 @@ package org.eclipse.tm.te.ui.terminals.manager;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.eclipse.cdt.utils.pty.PTY;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.tm.internal.terminal.provisional.api.ISettingsStore;
 import org.eclipse.tm.internal.terminal.provisional.api.ITerminalConnector;
@@ -131,7 +130,7 @@ public class ConnectorManager {
 	 *
 	 * @return The terminal connector object instance or <code>null</code>.
 	 */
-	public ITerminalConnector createProcessConnector(String connectorTypeId, final String image, final String arguments, final Process process, PTY pty, boolean localEcho) {
+	public ITerminalConnector createProcessConnector(String connectorTypeId, final String image, final String arguments, final Process process, org.eclipse.cdt.utils.pty.PTY pty, boolean localEcho) {
 		Assert.isTrue(image != null || process != null);
 
 		// Normalize the process connector id

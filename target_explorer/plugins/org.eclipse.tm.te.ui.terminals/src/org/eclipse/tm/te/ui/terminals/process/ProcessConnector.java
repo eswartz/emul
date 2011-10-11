@@ -260,7 +260,7 @@ public class ProcessConnector extends AbstractStreamsConnector {
 	private static String[] getProcessEnvironment() {
         Map<String, String> env = getNativeEnvironment();
 
-        env.put("TERM", "vt100"); //$NON-NLS-1$ //$NON-NLS-2$
+        env.put("TERM", "ansi"); //$NON-NLS-1$ //$NON-NLS-2$
 
         Iterator<Map.Entry<String, String>> iter = env.entrySet().iterator();
         List<String> strings = new ArrayList<String>(env.size());
