@@ -53,7 +53,7 @@ import org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer;
 import org.eclipse.tm.te.runtime.properties.PropertiesContainer;
 import org.eclipse.tm.te.runtime.services.ServiceManager;
 import org.eclipse.tm.te.runtime.services.interfaces.ITerminalService;
-import org.eclipse.tm.te.runtime.services.interfaces.constants.ITerminalServiceConstants;
+import org.eclipse.tm.te.runtime.services.interfaces.constants.ITerminalsConnectorConstants;
 import org.eclipse.tm.te.tcf.core.Tcf;
 import org.eclipse.tm.te.tcf.core.interfaces.IChannelManager;
 import org.eclipse.tm.te.tcf.processes.core.activator.CoreBundleActivator;
@@ -501,26 +501,26 @@ public class ProcessLauncher extends PlatformObject implements IProcessLauncher 
 				if (terminal != null) {
 					// Create the terminal streams settings
 					PropertiesContainer props = new PropertiesContainer();
-					props.setProperty(ITerminalServiceConstants.PROP_CONNECTOR_TYPE, ITerminalServiceConstants.ConnectorType.STREAMS);
-					props.setProperty(ITerminalServiceConstants.PROP_ID, "org.eclipse.tm.te.ui.terminals.TerminalsView"); //$NON-NLS-1$
+					props.setProperty(ITerminalsConnectorConstants.PROP_CONNECTOR_TYPE_ID, "org.eclipse.tm.te.ui.terminals.type.streams"); //$NON-NLS-1$
+					props.setProperty(ITerminalsConnectorConstants.PROP_ID, "org.eclipse.tm.te.ui.terminals.TerminalsView"); //$NON-NLS-1$
 					// Set the terminal tab title
 					String terminalTitle = getTerminalTitle();
 					if (terminalTitle != null) {
-						props.setProperty(ITerminalServiceConstants.PROP_TITLE, terminalTitle);
+						props.setProperty(ITerminalsConnectorConstants.PROP_TITLE, terminalTitle);
 					}
 
 					// Create and store the streams which will be connected to the terminals stdin
-					props.setProperty(ITerminalServiceConstants.PROP_STREAMS_STDIN, connectRemoteOutputStream(getStreamsListener(), new String[] { IProcesses.PROP_STDIN_ID }));
+					props.setProperty(ITerminalsConnectorConstants.PROP_STREAMS_STDIN, connectRemoteOutputStream(getStreamsListener(), new String[] { IProcesses.PROP_STDIN_ID }));
 					// Create and store the streams the terminal will see as stdout
-					props.setProperty(ITerminalServiceConstants.PROP_STREAMS_STDOUT, connectRemoteInputStream(getStreamsListener(), new String[] { IProcesses.PROP_STDOUT_ID }));
+					props.setProperty(ITerminalsConnectorConstants.PROP_STREAMS_STDOUT, connectRemoteInputStream(getStreamsListener(), new String[] { IProcesses.PROP_STDOUT_ID }));
 					// Create and store the streams the terminal will see as stderr
-					props.setProperty(ITerminalServiceConstants.PROP_STREAMS_STDERR, connectRemoteInputStream(getStreamsListener(), new String[] { IProcesses.PROP_STDERR_ID }));
+					props.setProperty(ITerminalsConnectorConstants.PROP_STREAMS_STDERR, connectRemoteInputStream(getStreamsListener(), new String[] { IProcesses.PROP_STDERR_ID }));
 
 					// Local echo is OFF
-					props.setProperty(ITerminalServiceConstants.PROP_LOCAL_ECHO, false);
+					props.setProperty(ITerminalsConnectorConstants.PROP_LOCAL_ECHO, false);
 
 					// The custom data object is the process launcher itself
-					props.setProperty(ITerminalServiceConstants.PROP_DATA, this);
+					props.setProperty(ITerminalsConnectorConstants.PROP_DATA, this);
 
 					// Open the console
 					terminal.openConsole(props, null);

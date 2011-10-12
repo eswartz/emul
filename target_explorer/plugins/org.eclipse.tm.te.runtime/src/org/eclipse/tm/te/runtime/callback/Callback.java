@@ -20,8 +20,8 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.tm.te.runtime.activator.CoreBundleActivator;
 import org.eclipse.tm.te.runtime.interfaces.IConditionTester;
 import org.eclipse.tm.te.runtime.interfaces.callback.ICallback;
-import org.eclipse.tm.te.runtime.progress.ProgressHelper;
 import org.eclipse.tm.te.runtime.properties.PropertiesContainer;
+import org.eclipse.tm.te.runtime.utils.ProgressHelper;
 
 /**
  * Default implementation of the <code>ICallback</code> interface.

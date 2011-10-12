@@ -2,6 +2,9 @@
 <?eclipse version="3.4"?>
 <plugin>
 
+<!-- Extension points -->
+   <extension-point id="connectorTypes" name="Terminal Connector Types" schema="schema/connectorTypes.exsd"/>
+
 <!-- View contributions -->
    <extension point="org.eclipse.ui.views">
       <view
@@ -38,6 +41,21 @@
 <!-- Preferences contributions -->
    <extension point="org.eclipse.core.runtime.preferences">
       <initializer class="org.eclipse.tm.te.ui.terminals.internal.PreferenceInitializer"/>
+   </extension>
+   
+<!-- Terminal connector type contributions -->
+   <extension point="org.eclipse.tm.te.ui.terminals.connectorTypes">
+      <connectorType
+            class="org.eclipse.tm.te.ui.terminals.types.TelnetConnectorType"
+            id="org.eclipse.tm.te.ui.terminals.type.telnet"
+            label="%TelnetConnectorType.label">
+      </connectorType>
+
+      <connectorType
+            class="org.eclipse.tm.te.ui.terminals.types.StreamsConnectorType"
+            id="org.eclipse.tm.te.ui.terminals.type.streams"
+            label="%StreamsConnectorType.label">
+      </connectorType>
    </extension>
 
 </plugin>

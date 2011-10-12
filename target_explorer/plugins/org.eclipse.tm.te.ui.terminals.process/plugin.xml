@@ -10,5 +10,14 @@
             id="org.eclipse.tm.te.ui.terminals.ProcessConnector"
             name="%TerminalConnector.process"/>
    </extension>
+
+<!-- Terminal connector type contributions -->
+   <extension point="org.eclipse.tm.te.ui.terminals.connectorTypes">
+      <connectorType
+            class="org.eclipse.tm.te.ui.terminals.process.ProcessConnectorType"
+            id="org.eclipse.tm.te.ui.terminals.type.process"
+            label="%ProcessConnectorType.label">
+      </connectorType>
+   </extension>
    
 </plugin>

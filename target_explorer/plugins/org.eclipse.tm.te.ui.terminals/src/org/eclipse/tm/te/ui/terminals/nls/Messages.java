@@ -42,4 +42,7 @@ public class Messages extends NLS {
 	public static String OutputStreamMonitor_error_readingFromStream;
 
 	public static String InputStreamMonitor_error_writingToStream;
+
+	public static String TerminalService_error_cannotCreateConnector;
+	public static String TerminalService_defaultTitle;
 }

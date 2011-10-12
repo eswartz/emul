@@ -15,7 +15,7 @@ import org.eclipse.tm.te.runtime.services.interfaces.IService;
 /**
  * Abstract service implementation.
  */
-public class AbstractService extends PlatformObject implements IService {
+public abstract class AbstractService extends PlatformObject implements IService {
 
 	private String id = null;
 

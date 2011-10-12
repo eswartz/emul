@@ -14,6 +14,7 @@ Require-Bundle: org.eclipse.core.runtime;bundle-version="3.7.0",
  org.eclipse.tm.terminal.telnet;bundle-version="2.1.0",
  org.eclipse.tm.terminal.view;bundle-version="2.2.0",
  org.eclipse.tm.te.runtime;bundle-version="1.0.0",
+ org.eclipse.tm.te.runtime.services;bundle-version="1.0.0",
  org.eclipse.tm.te.ui;bundle-version="1.0.0",
  org.eclipse.tm.te.ui.swt;bundle-version="1.0.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
@@ -26,6 +27,8 @@ Export-Package: org.eclipse.tm.te.ui.terminals.actions,
  org.eclipse.tm.te.ui.terminals.internal;x-internal:=true,
  org.eclipse.tm.te.ui.terminals.manager,
  org.eclipse.tm.te.ui.terminals.nls;x-internal:=true,
+ org.eclipse.tm.te.ui.terminals.services,
  org.eclipse.tm.te.ui.terminals.streams,
  org.eclipse.tm.te.ui.terminals.tabs,
+ org.eclipse.tm.te.ui.terminals.types,
  org.eclipse.tm.te.ui.terminals.view
