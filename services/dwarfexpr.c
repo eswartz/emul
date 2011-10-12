@@ -241,6 +241,8 @@ static void evaluate_location(void) {
         ELF_Section * S1 = NULL;
         U8_T Addr0 = dio_ReadAddress(&S0);
         U8_T Addr1 = dio_ReadAddress(&S1);
+        if (S0 == NULL) S0 = Unit->mTextSection;
+        if (S1 == NULL) S1 = Unit->mTextSection;
         if (Addr0 == AddrMax) {
             Base = Addr1;
         }
