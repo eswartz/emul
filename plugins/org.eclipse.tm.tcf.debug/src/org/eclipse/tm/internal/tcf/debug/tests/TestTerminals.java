@@ -10,9 +10,11 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.tests;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -35,6 +37,10 @@ class TestTerminals implements ITCFTest {
     private final StringBuffer stdout_buf = new StringBuffer();
     private final StringBuffer stderr_buf = new StringBuffer();
     private final HashSet<IToken> disconnect_cmds = new HashSet<IToken>();
+    private final List<String> echo_tx = new ArrayList<String>();
+    private final List<Integer> echo_rx = new ArrayList<Integer>();
+
+    private final int echo_cnt = 50;
 
     private IStreams.StreamsListener streams_listener;
     private IStreams.DoneRead stdout_read;
@@ -292,14 +298,28 @@ class TestTerminals implements ITCFTest {
                     }
                     else {
                         try {
-                            if (data != null) stdout_buf.append(new String(data, encoding));
+                            boolean run = false;
+                            if (data != null) {
+                                stdout_buf.append(new String(data, encoding));
+                                if (echo_tx.size() > echo_rx.size()) {
+                                    String s = echo_tx.get(echo_rx.size());
+                                    int n = 0;
+                                    if (echo_rx.size() > 0) n = echo_rx.get(echo_rx.size() - 1);
+                                    int i = stdout_buf.indexOf("\n" + s, n);
+                                    if (i >= 0) {
+                                        echo_rx.add(i + 1);
+                                        run = true;
+                                    }
+                                }
+                            }
                             if (!eos) {
                                 streams.read(id, 0x1000, this);
                             }
                             else {
                                 stdout_eos = true;
-                                run();
+                                run = true;
                             }
+                            if (run) run();
                         }
                         catch (Exception x) {
                             exit(x);
@@ -341,6 +361,34 @@ class TestTerminals implements ITCFTest {
             });
             return;
         }
+        if (echo_tx.size() < echo_cnt && echo_rx.size() == echo_tx.size()) {
+            try {
+                StringBuffer bf = new StringBuffer();
+                for (int i = 0; i < 0x100; i++) {
+                    bf.append((char)('A' + rnd.nextInt('Z' - 'A' + 1)));
+                    bf.append((char)('a' + rnd.nextInt('Z' - 'A' + 1)));
+                }
+                String s = bf.toString();
+                echo_tx.add(s);
+                s = "echo " + s + '\n';
+                byte[] buf = s.getBytes(encoding);
+                streams.write(terminal.getStdInID(), buf, 0, buf.length, new IStreams.DoneWrite() {
+                    public void doneWrite(IToken token, Exception error) {
+                        if (error != null) {
+                            exit(error);
+                        }
+                        else {
+                            run();
+                        }
+                    }
+                });
+            }
+            catch (Exception x) {
+                exit(x);
+            }
+            return;
+        }
+        if (!exited && !stdout_eos && echo_rx.size() < echo_cnt) return;
         if (!signal_sent) {
             assert !exited;
             if (signal_cmd == null) {
@@ -416,14 +464,16 @@ class TestTerminals implements ITCFTest {
                 stream_ids.clear();
                 checkTerminalOutput(stdout_buf);
                 checkTerminalOutput(stderr_buf);
+                if (echo_rx.size() < echo_cnt) {
+                    exit(new Exception("Terminal exited before test finished"));
+                }
             }
         }
     }
 
     private void checkTerminalOutput(StringBuffer bf) {
-        String s = bf.toString();
-        if (s.indexOf("Cannot start") >= 0) {
-            exit(new Exception("Unexpected terminal output:\n" + s));
+        if (bf.indexOf("Cannot start") >= 0) {
+            exit(new Exception("Unexpected terminal output:\n" + bf));
         }
     }
 
