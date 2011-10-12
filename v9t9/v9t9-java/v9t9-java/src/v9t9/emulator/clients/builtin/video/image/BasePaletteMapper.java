@@ -2,7 +2,7 @@ package v9t9.emulator.clients.builtin.video.image;
 
 import v9t9.emulator.clients.builtin.video.ColorMapUtils;
 
-abstract class BasePaletteMapper implements IMapColor {
+abstract class BasePaletteMapper implements IPaletteMapper {
 	private final boolean canSetPalette;
 	private int minDist;
 	protected byte[][] palette;

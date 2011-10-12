@@ -169,6 +169,7 @@ public class ColorMapUtils {
 
 
 	/**
+	 * Get pixel luminance (0-255)
 	 * @param prgb
 	 * @return
 	 */

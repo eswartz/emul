@@ -2,7 +2,7 @@ package v9t9.emulator.clients.builtin.video.image;
 
 import java.awt.image.BufferedImage;
 
-interface IMapColor extends IMapColorBase {
+interface IPaletteMapper extends IPaletteColorMapper, IColorMapper {
 	/**
 	 * Get number of colors (range of indices for mapColor and getClosestPalettePixel)
 	 */
@@ -22,14 +22,6 @@ interface IMapColor extends IMapColorBase {
 	 */
 	int getMinimalPaletteDistance();
 	
-	/** Return a color index from mapping the RGB pixel 
-	 * 
-	 * @param pixel pixel in X8R8G8B8 format
-	 * @param dist array for receiving distance² from the returned pixel
-	 * @return the color index
-	 */
-	int mapColor(int pixel, int[] dist);
-
 	/**
 	 * Get the maximum pixel distance for absolutely replacing a range
 	 * of source pixels with palette pixels. 

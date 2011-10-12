@@ -1,6 +1,6 @@
 package v9t9.emulator.clients.builtin.video.image;
 
-interface IMapColorBase {
+interface IPaletteColorMapper {
 
 	/**
 	 * Get the color in the new palette closest to this one.

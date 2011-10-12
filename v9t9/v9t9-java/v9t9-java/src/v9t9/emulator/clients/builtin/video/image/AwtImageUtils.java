@@ -7,6 +7,7 @@ import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
+import java.util.Map;
 import java.util.TreeMap;
 
 import v9t9.emulator.clients.builtin.video.ColorMapUtils;
@@ -89,36 +90,6 @@ public class AwtImageUtils {
 	
 	    return ret;
 	}
-
-
-	/**
-	 * Quick histogram: return number of unique colors, when masking
-	 * out @mask bits.
-	 * @param image
-	 * @param mask
-	 * @return count
-	 */
-	public static int quickHist(BufferedImage image, int mask) {
-		int rgbByte = (0xff00 & ~(0xff << mask)) >> 8;
-		int rgbMask = (rgbByte << 16) | (rgbByte << 8) | rgbByte;
-	
-		TreeMap<Integer, Integer> hist = new TreeMap<Integer, Integer>();
-		int[] rgbs = new int[image.getWidth()];
-		for (int y = 0; y < image.getHeight(); y++) {
-			image.getRGB(0, y, rgbs.length, 1, rgbs, 0, rgbs.length);
-			for (int x = 0; x < rgbs.length; x++) {
-				int key = rgbs[x] & rgbMask;
-				Integer count = hist.get(key);
-				if (count == null)
-					hist.put(key, 1);
-				else
-					hist.put(key, count + 1);
-			}
-		}
-		System.out.println("For mask size " + mask +"; " + hist.size() + " colors");
-		return hist.size();
-	}
-
 
 	/**
 	 * Reduce colors in image by @mask bits.

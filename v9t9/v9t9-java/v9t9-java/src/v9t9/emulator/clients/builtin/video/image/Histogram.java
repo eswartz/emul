@@ -33,7 +33,7 @@ class Histogram {
 	 * @param paletteMapper the color mapper
 	 * @return the number of colors that map directly (within maxDist)
 	 */
-	public int generate(IMapColor paletteMapper, int maxDist) {
+	public int generate(IColorMapper paletteMapper, int maxDist) {
 		int mapped = gather(paletteMapper, maxDist);
 		
 		sort();
@@ -41,7 +41,7 @@ class Histogram {
 		return mapped;
 	}
 
-	private int gather(IMapColor paletteMapper, int maxDist) {
+	private int gather(IColorMapper paletteMapper, int maxDist) {
 		hist.clear();
 		indices.clear();
 		pixelToColor.clear();
@@ -113,7 +113,7 @@ class Histogram {
 
 	/**
 	 * Get the sorted palette indices in prominence order.
-	 * @return list of indices into palette from {@link IMapColor#mapColor(int[], int[])}
+	 * @return list of indices into palette from {@link IPaletteMapper#mapColor(int[], int[])}
 	 */
 	public List<Integer> getColorIndices() {
 		return indices;
@@ -121,7 +121,7 @@ class Histogram {
 	/**
 	 * Get the palette index of the i'th most prominent color.
 	 * @param i
-	 * @return index into palette from {@link IMapColor#mapColor(int[], int[])}
+	 * @return index into palette from {@link IPaletteMapper#mapColor(int[], int[])}
 	 */
 	public int getColorIndex(int i) {
 		return indices.get(i);
