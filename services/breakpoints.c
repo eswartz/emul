@@ -437,7 +437,7 @@ void unplant_breakpoints(Context * ctx) {
         if (bi->cb.ctx != mem) continue;
         remove_instruction(bi);
         for (i = 0; i < bi->ref_cnt; i++) {
-            BreakpointInfo * bp = bi->refs[i].bp; 
+            BreakpointInfo * bp = bi->refs[i].bp;
             assert(bp->instruction_cnt > 0);
             bp->instruction_cnt--;
             bp->status_changed = 1;

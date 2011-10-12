@@ -98,6 +98,7 @@ typedef struct ContextExtensionLinux {
     ErrorReport *           regs_error;         /* if not NULL, 'regs' is invalid */
     int                     regs_dirty;         /* if not 0, 'regs' is modified and needs to be saved before context is continued */
     int                     pending_step;
+    int                     tkill_cnt;
 } ContextExtensionLinux;
 
 static size_t context_extension_offset = 0;
@@ -196,6 +197,23 @@ int context_stop(Context * ctx) {
     assert(!ctx->exiting);
     assert(!ctx->stopped);
     assert(!ext->regs_dirty);
+    if (ext->tkill_cnt > 4) {
+        /* Check for zombies */
+        int ch = 0;
+        FILE * file = NULL;
+        char file_name[FILE_PATH_SIZE];
+        snprintf(file_name, sizeof(file_name), "/proc/%d/stat", ext->pid);
+        if ((file = fopen(file_name, "r")) == NULL) return -1;
+        while (ch != EOF && ch != ')') ch = fgetc(file);
+        if (ch == EOF || fgetc(file) != ' ' || fgetc(file) == 'Z') {
+            /* Zombie found */
+            fclose(file);
+            ctx->exiting = 1;
+            return 0;
+        }
+        fclose(file);
+        ext->tkill_cnt = 0;
+    }
     if (tkill(ext->pid, SIGSTOP) < 0) {
         int err = errno;
         if (err == ESRCH) {
@@ -207,6 +225,7 @@ int context_stop(Context * ctx) {
         errno = err;
         return -1;
     }
+    ext->tkill_cnt++;
     return 0;
 }
 
@@ -595,7 +614,7 @@ int context_get_memory_map(Context * ctx, MemoryMap * map) {
     assert(!ctx->exited);
     assert(map->region_cnt == 0);
 
-    snprintf(maps_file_name, sizeof(maps_file_name), "/proc/%d/maps", id2pid(ctx->id, NULL));
+    snprintf(maps_file_name, sizeof(maps_file_name), "/proc/%d/maps", EXT(ctx)->pid);
     if ((file = fopen(maps_file_name, "r")) == NULL) return -1;
     for (;;) {
         MemoryRegion * prev = NULL;
@@ -832,6 +851,7 @@ static void event_pid_stopped(pid_t pid, int signal, int event, int syscall) {
     ext = EXT(ctx);
     assert(!ctx->exited);
     assert(!ext->attach_callback);
+    ext->tkill_cnt = 0;
     if (ext->ptrace_flags == 0) {
         if (ptrace((enum __ptrace_request)PTRACE_SETOPTIONS, ext->pid, 0, PTRACE_FLAGS) < 0 && errno != ESRCH) {
             int err = errno;
