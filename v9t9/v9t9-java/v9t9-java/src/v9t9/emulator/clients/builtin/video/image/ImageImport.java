@@ -14,7 +14,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.NavigableSet;
 import java.util.TreeMap;
 
 import javax.imageio.ImageIO;
@@ -301,12 +300,13 @@ public class ImageImport implements IBitmapPixelAccess {
 			
 		return true;
 	}
-	/** Import image from 'img' and set the color indices in 'colorMap' which is #getVisibleWidth() by #getVisibleHeight() */
+	
+	/** Import image from 'img' and update the canvas' image data
+	 * with colors from the current palette and in a configuration
+	 * legal for the current mode. */
 	protected void setImageData(BufferedImage img) {
 		if (format == null || format == Format.TEXT || format == Format.COLOR16_8x8)
 			return;
-		
-		//denoise(img);
 		
 		flatten(img);
 		
@@ -330,26 +330,6 @@ public class ImageImport implements IBitmapPixelAccess {
 	}
 
 	/**
-	 * Remove color we cannot represent anyway
-	 * @param img
-	 */
-	/*
-	private void denoise(BufferedImage img) {
-		int[] rgbs = new int[img.getWidth()];
-		for (int y = 0; y < img.getHeight(); y++) {
-			img.getRGB(0, y, rgbs.length, 1, rgbs, 0, rgbs.length);
-			for (int x = 0; x < rgbs.length; x++) {
-				int pixel = rgbs[x];
-				pixel &= 0xffe0e0e0;
-				rgbs[x] = pixel;
-			}
-			img.setRGB(0, y, rgbs.length, 1, rgbs, 0, rgbs.length);
-		}
-			
-	}
-	*/
-	
-	/**
 	 * Remove alpha
 	 * @param img
 	 */
@@ -364,7 +344,10 @@ public class ImageImport implements IBitmapPixelAccess {
 				if (alpha == 0) {
 					pixel = 0xffffff;
 				}
-				else if (alpha != 0xff) {
+				else if (alpha == 0xff) {
+					// itself
+				}
+				else {
 					// blend with white
 					ColorMapUtils.pixelToRGB(pixel, prgb);
 					prgb[0] = (alpha * prgb[0] + (255 - alpha) * 255) / 256; 
