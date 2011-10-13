@@ -764,8 +764,8 @@ public class ProcessLauncher extends PlatformObject implements IProcessLauncher 
 		if (processEnvDiff != null && !processEnvDiff.isEmpty()) {
 			processEnv.putAll(processEnvDiff);
 		}
-		// Assure that the TERM variable is set to "vt100"
-		processEnv.put("TERM", "vt100"); //$NON-NLS-1$ //$NON-NLS-2$
+		// Assure that the TERM variable is set to "ansi"
+		processEnv.put("TERM", "ansi"); //$NON-NLS-1$ //$NON-NLS-2$
 
 		boolean attach = properties.getBooleanProperty(IProcessLauncher.PROP_PROCESS_ATTACH);
 
