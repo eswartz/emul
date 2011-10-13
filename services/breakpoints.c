@@ -87,6 +87,7 @@ struct BreakpointInfo {
     char ** context_names_prev;
     char ** stop_group;
     char * file;
+    char * client_data;
     int access_mode;
     int access_size;
     int line;
@@ -839,6 +840,7 @@ static void free_bp(BreakpointInfo * bp) {
     loc_free(bp->stop_group);
     loc_free(bp->file);
     loc_free(bp->condition);
+    loc_free(bp->client_data);
     while (bp->unsupported != NULL) {
         BreakpointAttribute * u = bp->unsupported;
         bp->unsupported = u->next;
@@ -1461,6 +1463,16 @@ static int copy_breakpoint_info(BreakpointInfo * dst, BreakpointInfo * src) {
     }
     src->file = NULL;
 
+    if (!str_equ(dst->client_data, src->client_data)) {
+        loc_free(dst->client_data);
+        dst->client_data = src->client_data;
+        res = 1;
+    }
+    else {
+        loc_free(src->client_data);
+    }
+    src->client_data = NULL;
+
     if (dst->line != src->line) {
         dst->line = src->line;
         res = 1;
@@ -1576,6 +1588,9 @@ static void read_breakpoint_properties(InputStream * inp, BreakpointInfo * bp) {
             }
             else if (strcmp(name, "Enabled") == 0) {
                 bp->enabled = json_read_boolean(inp);
+            }
+            else if (strcmp(name, "ClientData") == 0) {
+                bp->client_data = json_read_object(inp);
             }
             else {
                 BreakpointAttribute * u = (BreakpointAttribute *)loc_alloc(sizeof(BreakpointAttribute));
@@ -1709,6 +1724,13 @@ static void write_breakpoint_properties(OutputStream * out, BreakpointInfo * bp)
         json_write_string(out, "Enabled");
         write_stream(out, ':');
         json_write_boolean(out, bp->enabled);
+    }
+
+    if (bp->client_data) {
+        write_stream(out, ',');
+        json_write_string(out, "ClientData");
+        write_stream(out, ':');
+        write_string(out, bp->client_data);
     }
 
     while (u != NULL) {
@@ -2147,6 +2169,10 @@ static void command_get_capabilities(char * token, Channel * c) {
     json_write_boolean(&c->out, 1);
     write_stream(&c->out, ',');
     json_write_string(&c->out, "StopGroup");
+    write_stream(&c->out, ':');
+    json_write_boolean(&c->out, 1);
+    write_stream(&c->out, ',');
+    json_write_string(&c->out, "ClientData");
     write_stream(&c->out, ':');
     json_write_boolean(&c->out, 1);
     write_stream(&c->out, '}');
