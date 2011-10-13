@@ -41,10 +41,6 @@
                tooltip="%Processes.command.launch.tooltip">
                <visibleWhen checkEnabled="false">
                   <and>
-                     <with variable="org.eclipse.core.runtime.Platform">
-                        <test property="org.eclipse.core.runtime.isBundleInstalled" args="org.eclipse.tm.te.ui"/>
-                        <test property="org.eclipse.core.runtime.isBundleInstalled" args="org.eclipse.cdt.core"/>
-                     </with>
                      <with variable="selection">
                         <count value="1"/>
                         <iterate operator="and" ifEmpty="false">

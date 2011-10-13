@@ -34,10 +34,11 @@ import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel;
 import org.eclipse.tm.te.tcf.processes.ui.activator.UIPlugin;
 import org.eclipse.tm.te.tcf.processes.ui.internal.help.IContextHelpIds;
 import org.eclipse.tm.te.tcf.processes.ui.nls.Messages;
+import org.eclipse.tm.te.ui.swt.DisplayUtil;
 import org.eclipse.ui.handlers.HandlerUtil;
 
 /**
- * Abstract backend channel command handler.
+ * Abstract channel command handler implementation.
  */
 public abstract class AbstractChannelCommandHandler extends AbstractHandler {
 
@@ -66,29 +67,37 @@ public abstract class AbstractChannelCommandHandler extends AbstractHandler {
 							@Override
                             public void doneOpenChannel(final Throwable error, final IChannel channel) {
 								if (error == null) {
-									execute(event, channel, node, new DoneExecute() {
+									// Invoke the execute within the UI thread again.
+									Runnable runnable = new Runnable() {
 										@Override
-                                        public void doneExecute(IStatus status, Object result) {
-											if (status.getSeverity() != IStatus.OK && status.getSeverity() != IStatus.CANCEL) {
-												handleException(channel, new CoreException(status));
-											} else {
-												// Close the channel
-												if (channel != null) {
-													final IChannel finChannel = channel;
-													if (Protocol.isDispatchThread()) {
-														finChannel.close();
+										public void run() {
+											execute(event, channel, node, new DoneExecute() {
+												@Override
+		                                        public void doneExecute(IStatus status, Object result) {
+													if (status.getSeverity() != IStatus.OK && status.getSeverity() != IStatus.CANCEL) {
+														handleException(channel, new CoreException(status));
 													} else {
-														Protocol.invokeAndWait(new Runnable() {
-															@Override
-                                                            public void run() {
+														// Close the channel
+														if (channel != null) {
+															final IChannel finChannel = channel;
+															if (Protocol.isDispatchThread()) {
 																finChannel.close();
+															} else {
+																Protocol.invokeAndWait(new Runnable() {
+																	@Override
+		                                                            public void run() {
+																		finChannel.close();
+																	}
+																});
 															}
-														});
+														}
 													}
 												}
-											}
+											});
 										}
-									});
+									};
+
+									DisplayUtil.safeAsyncExec(runnable);
 
 								} else {
 									handleException(channel, error);

@@ -42,6 +42,16 @@
    <extension point="org.eclipse.core.runtime.preferences">
       <initializer class="org.eclipse.tm.te.ui.terminals.internal.PreferenceInitializer"/>
    </extension>
+
+
+<!-- Service contributions -->
+   <extension point="org.eclipse.tm.te.runtime.services.services">
+      <genericServices>
+         <service class="org.eclipse.tm.te.ui.terminals.services.TerminalService">
+            <serviceType class="org.eclipse.tm.te.runtime.services.interfaces.ITerminalService"/>
+         </service>
+      </genericServices>
+   </extension>
    
 <!-- Terminal connector type contributions -->
    <extension point="org.eclipse.tm.te.ui.terminals.connectorTypes">

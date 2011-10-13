@@ -1,9 +1,9 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!-- Schema file written by PDE -->
-<schema targetNamespace="org.eclipse.tm.te.runtime" xmlns="http://www.w3.org/2001/XMLSchema">
+<schema targetNamespace="org.eclipse.tm.te.runtime.services" xmlns="http://www.w3.org/2001/XMLSchema">
 <annotation>
       <appinfo>
-         <meta.schema plugin="org.eclipse.tm.te.runtime" id="services" name="Services"/>
+         <meta.schema plugin="org.eclipse.tm.te.runtime.services" id="services" name="Services"/>
       </appinfo>
       <documentation>
          This extension point is used to contribute services.
