@@ -625,7 +625,9 @@ static void load_pub_names(ELF_Section * debug_info, ELF_Section * pub_names, Pu
         }
         next = dio_GetPos() + size;
         if (dio_ReadU2() == 2) {
-            U8_T unit_offs = dwarf64 ? dio_ReadU8() : (U8_T)dio_ReadU4();
+            ELF_Section * unit_sect = NULL;
+            U8_T unit_addr = dio_ReadAddressX(&unit_sect, dwarf64 ? 8 : 4);
+            U8_T unit_offs = unit_sect == NULL ? unit_addr : unit_addr - unit_sect->addr;
             U8_T unit_size = dwarf64 ? dio_ReadU8() : (U8_T)dio_ReadU4();
             if (unit_offs + unit_size > debug_info->size) str_fmt_exception(ERR_INV_DWARF,
                 "Invalid unit size in %s section", pub_names->name);
