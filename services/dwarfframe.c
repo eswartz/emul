@@ -169,6 +169,14 @@ static RegisterRules * get_reg(StackFrameRegisters * regs, int reg) {
                 regs->regs[n].offset = 108;
             }
             break;
+        case EM_ARM:
+            if (n >= 4 && n <= 11) { /* Local variables */
+                regs->regs[n].rule = RULE_SAME_VALUE;
+            }
+            else if (n == 13) { /* Stack pointer */
+                regs->regs[n].rule = RULE_VAL_OFFSET;
+            }
+            break;
         }
     }
     return regs->regs + reg;

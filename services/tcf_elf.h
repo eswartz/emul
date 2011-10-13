@@ -66,6 +66,12 @@
 #define EM_860          7 /* Intel 80860 */
 #define EM_MIPS         8 /* MIPS RS3000 Big-Endian */
 #define EM_MIPS_RS4_BE 10 /* MIPS RS4000 Big-Endian */
+#define EM_ARM         40 /* ARM */
+#define EM_SH          42 /* Hitachi Super-H */
+#define EM_SPARCV9     43 /* SPARC Version 9 */
+#define EM_MIPS_X      51 /* Stanford MIPS-X */
+#define EM_COLDFIRE    52 /* Motorola Coldfire */
+#define EM_X86_64      62 /* AMD x86-64 architecture */
 
 #define ET_NONE         0
 #define ET_REL          1
