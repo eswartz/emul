@@ -106,7 +106,7 @@ public class UIPlugin extends AbstractUIPlugin {
 	@Override
 	protected void initializeImageRegistry(ImageRegistry registry) {
 		Bundle bundle = Platform.getBundle("org.eclipse.ui.console"); //$NON-NLS-1$
-		if (bundle != null && (bundle.getState() == Bundle.RESOLVED || bundle.getState() == Bundle.ACTIVE)) {
+		if (bundle != null) {
 			URL url = bundle.getEntry(ImageConsts.IMAGE_DIR_ROOT + "full/" + ImageConsts.IMAGE_DIR_EVIEW + "console_view.gif"); //$NON-NLS-1$ //$NON-NLS-2$
 			registry.put(ImageConsts.VIEW_Terminals, ImageDescriptor.createFromURL(url));
 
