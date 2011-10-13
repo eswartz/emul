@@ -60,7 +60,8 @@ public interface IBreakpoints extends IService {
         PROP_SCALE = "TimeScale",                 // String
         PROP_UNITS = "TimeUnits",                 // String
         PROP_CONDITION = "Condition",             // String
-        PROP_TEMPORARY = "Temporary";             // Boolean
+        PROP_TEMPORARY = "Temporary",             // Boolean
+        PROP_CLIENT_DATA = "ClientData";          // Object
 
     /**
      * BreakpointType values
@@ -126,7 +127,8 @@ public interface IBreakpoints extends IService {
         CAPABILITY_CONTEXTNAMES = "ContextNames",       // Boolean
         CAPABILITY_STOP_GROUP = "StopGroup",            // Boolean
         CAPABILITY_IGNORECOUNT = "IgnoreCount",         // Boolean
-        CAPABILITY_ACCESSMODE = "AccessMode";           // Number
+        CAPABILITY_ACCESSMODE = "AccessMode",           // Number
+        CAPABILITY_CLIENT_DATA = "ClientData";          // Boolean
 
     /**
      * Call back interface for breakpoint service commands.
