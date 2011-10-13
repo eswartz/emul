@@ -12,12 +12,14 @@ package org.eclipse.tm.internal.tcf.debug.model;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IMarkerDelta;
@@ -46,9 +48,28 @@ import org.eclipse.tm.tcf.services.IBreakpoints;
  */
 public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointManagerListener {
 
+    public static final String
+        CDATA_CLIENT_ID = "ClientID",
+        CDATA_TYPE = "Type",
+        CDATA_FILE = "File",
+        CDATA_MARKER = "Marker";
+
+    public static final String
+        ATTR_INSTALL_COUNT = "org.eclipse.cdt.debug.core.installCount",
+        ATTR_ADDRESS = "org.eclipse.cdt.debug.core.address",
+        ATTR_FUNCTION = "org.eclipse.cdt.debug.core.function",
+        ATTR_EXPRESSION = "org.eclipse.cdt.debug.core.expression",
+        ATTR_READ = "org.eclipse.cdt.debug.core.read",
+        ATTR_WRITE = "org.eclipse.cdt.debug.core.write",
+        ATTR_SIZE = "org.eclipse.cdt.debug.core.range",
+        ATTR_FILE = "org.eclipse.cdt.debug.core.sourceHandle",
+        ATTR_CONDITION = "org.eclipse.cdt.debug.core.condition",
+        ATTR_IGNORE_COUNT = "org.eclipse.cdt.debug.core.ignoreCount";
+
     private final IBreakpointManager bp_manager = DebugPlugin.getDefault().getBreakpointManager();
     private final HashMap<IChannel,Map<String,Object>> channels = new HashMap<IChannel,Map<String,Object>>();
     private final HashMap<String,IBreakpoint> id2bp = new HashMap<String,IBreakpoint>();
+    private final String client_id = UUID.randomUUID().toString();
 
     private boolean disposed;
 
@@ -93,6 +114,17 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
     public IBreakpoint getBreakpoint(String id) {
         assert Protocol.isDispatchThread();
         return id2bp.get(id);
+    }
+
+    public String getClientID() {
+        return client_id;
+    }
+
+    @SuppressWarnings("unchecked")
+    public String getClientID(Map<String,Object> properties) {
+        Map<String,Object> client_data = (Map<String,Object>)properties.get(IBreakpoints.PROP_CLIENT_DATA);
+        if (client_data == null) return null;
+        return (String)client_data.get(TCFBreakpointsModel.CDATA_CLIENT_ID);
     }
 
     @SuppressWarnings("unchecked")
@@ -314,7 +346,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
             if (v0 != null && !v0.equals(v1)) continue;
             i.remove();
         }
-        keys.remove("org.eclipse.cdt.debug.core.installCount");
+        keys.remove(ATTR_INSTALL_COUNT);
         return keys;
     }
 
@@ -365,29 +397,81 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
         }
     }
 
+    @SuppressWarnings("unchecked")
     public Map<String,Object> toMarkerAttributes(Map<String,Object> p) {
         assert !disposed;
         assert Protocol.isDispatchThread();
+        Map<String,Object> client_data = (Map<String,Object>)p.get(IBreakpoints.PROP_CLIENT_DATA);
+        if (client_data != null) {
+            Map<String,Object> m = (Map<String,Object>)client_data.get(CDATA_MARKER);
+            if (m != null) return m;
+        }
         Map<String,Object> m = new HashMap<String,Object>();
-        for (Iterator<Map.Entry<String,Object>> i = p.entrySet().iterator(); i.hasNext();) {
-            Map.Entry<String,Object> e = i.next();
+        for (Map.Entry<String,Object> e : p.entrySet()) {
             String key = e.getKey();
             Object val = e.getValue();
             if (key.equals(IBreakpoints.PROP_ENABLED)) continue;
             if (key.equals(IBreakpoints.PROP_FILE)) continue;
             if (key.equals(IBreakpoints.PROP_LINE)) continue;
             if (key.equals(IBreakpoints.PROP_COLUMN)) continue;
+            if (key.equals(IBreakpoints.PROP_LOCATION)) continue;
+            if (key.equals(IBreakpoints.PROP_ACCESSMODE)) continue;
+            if (key.equals(IBreakpoints.PROP_SIZE)) continue;
+            if (key.equals(IBreakpoints.PROP_CONDITION)) continue;
+            if (val instanceof String[]) {
+                StringBuffer bf = new StringBuffer();
+                for (String s : (String[])val) {
+                    if (bf.length() > 0) bf.append(',');
+                    bf.append(s);
+                }
+                if (bf.length() == 0) continue;
+                val = bf.toString();
+            }
+            else if (val instanceof Collection) {
+                StringBuffer bf = new StringBuffer();
+                for (String s : (Collection<String>)val) {
+                    if (bf.length() > 0) bf.append(',');
+                    bf.append(s);
+                }
+                if (bf.length() == 0) continue;
+                val = bf.toString();
+            }
             m.put(ITCFConstants.ID_TCF_DEBUG_MODEL + '.' + key, val);
         }
         Boolean enabled = (Boolean)p.get(IBreakpoints.PROP_ENABLED);
         if (enabled == null) m.put(IBreakpoint.ENABLED, Boolean.FALSE);
         else m.put(IBreakpoint.ENABLED, enabled);
+        String location = (String)p.get(IBreakpoints.PROP_LOCATION);
+        if (location != null && location.length() > 0) {
+            int access_mode = IBreakpoints.ACCESSMODE_EXECUTE;
+            Number access_mode_num = (Number)p.get(IBreakpoints.PROP_ACCESSMODE);
+            if (access_mode_num != null) access_mode = access_mode_num.intValue();
+            if ((access_mode & IBreakpoints.ACCESSMODE_EXECUTE) != 0) {
+                if (Character.isDigit(location.charAt(0))) {
+                    m.put(ATTR_ADDRESS, location);
+                }
+                else {
+                    m.put(ATTR_FUNCTION, location);
+                }
+            }
+            else {
+                m.put(ATTR_EXPRESSION, location.replaceFirst("^&\\((.+)\\)$", "$1"));
+                m.put(ATTR_READ, (access_mode & IBreakpoints.ACCESSMODE_READ) != 0);
+                m.put(ATTR_WRITE, (access_mode & IBreakpoints.ACCESSMODE_WRITE) != 0);
+            }
+            Number size_num = (Number)p.get(IBreakpoints.PROP_SIZE);
+            if (size_num != null) m.put(ATTR_SIZE, size_num.toString());
+        }
         m.put(IBreakpoint.REGISTERED, Boolean.TRUE);
         m.put(IBreakpoint.PERSISTED, Boolean.TRUE);
         m.put(IBreakpoint.ID, ITCFConstants.ID_TCF_DEBUG_MODEL);
         String msg = "";
-        if (p.get(IBreakpoints.PROP_LOCATION) != null) msg += p.get(IBreakpoints.PROP_LOCATION);
+        if (location != null) msg += location;
         m.put(IMarker.MESSAGE, "Breakpoint: " + msg);
+        String file = (String)p.get(IBreakpoints.PROP_FILE);
+        if (file != null && file.length() > 0) {
+            m.put(ATTR_FILE, file);
+        }
         Number line = (Number)p.get(IBreakpoints.PROP_LINE);
         if (line != null) {
             m.put(IMarker.LINE_NUMBER, new Integer(line.intValue()));
@@ -397,6 +481,10 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
                 m.put(IMarker.CHAR_END, new Integer(column.intValue() + 1));
             }
         }
+        String condition = (String)p.get(IBreakpoints.PROP_CONDITION);
+        if (condition != null && condition.length() > 0) m.put(ATTR_CONDITION, condition);
+        Number ignore_count = (Number)p.get(IBreakpoints.PROP_IGNORECOUNT);
+        if (ignore_count != null) m.put(ATTR_IGNORE_COUNT, ignore_count);
         return m;
     }
 
@@ -404,27 +492,43 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
         assert !disposed;
         assert Protocol.isDispatchThread();
         Map<String,Object> m = new HashMap<String,Object>();
+        Map<String,Object> capabilities = channels.get(channel);
+        Map<String,Object> client_data = null;
+        if (capabilities != null) {
+            Object obj = capabilities.get(IBreakpoints.CAPABILITY_CLIENT_DATA);
+            if (obj instanceof Boolean && ((Boolean)obj).booleanValue()) client_data = new HashMap<String,Object>();
+        }
         m.put(IBreakpoints.PROP_ID, id);
-        for (Iterator<Map.Entry<String,Object>> i = p.entrySet().iterator(); i.hasNext();) {
-            Map.Entry<String,Object> e = i.next();
+        if (client_data != null) {
+            m.put(IBreakpoints.PROP_CLIENT_DATA, client_data);
+            client_data.put(CDATA_CLIENT_ID, client_id);
+            if (type != null) client_data.put(CDATA_TYPE, type);
+            if (file != null) client_data.put(CDATA_FILE, file);
+            client_data.put(CDATA_MARKER, p);
+        }
+        for (Map.Entry<String,Object> e : p.entrySet()) {
             String key = e.getKey();
             Object val = e.getValue();
-            if (!key.startsWith(ITCFConstants.ID_TCF_DEBUG_MODEL)) continue;
-            String tcfKey = key.substring(ITCFConstants.ID_TCF_DEBUG_MODEL.length() + 1);
-            if (IBreakpoints.PROP_CONTEXTIDS.equals(tcfKey)) {
-                val = filterContextIds(channel, ((String) val).split(",\\s*"));
+            if (key.startsWith(ITCFConstants.ID_TCF_DEBUG_MODEL)) {
+                String tcf_key = key.substring(ITCFConstants.ID_TCF_DEBUG_MODEL.length() + 1);
+                if (IBreakpoints.PROP_CONTEXTIDS.equals(tcf_key)) {
+                    val = filterContextIds(channel, ((String)val).split(",\\s*"));
+                }
+                else if (IBreakpoints.PROP_CONTEXTNAMES.equals(tcf_key) ||
+                        IBreakpoints.PROP_EXECUTABLEPATHS.equals(tcf_key)) {
+                    val = ((String)val).split(",\\s*");
+                }
+                m.put(tcf_key, val);
             }
-            m.put(tcfKey, val);
         }
         Boolean enabled = (Boolean)p.get(IBreakpoint.ENABLED);
         if (enabled != null && enabled.booleanValue() && bp_manager.isEnabled()) {
             m.put(IBreakpoints.PROP_ENABLED, enabled);
         }
-        if (file == null) file = (String)p.get("org.eclipse.cdt.debug.core.sourceHandle");
+        if (file == null) file = (String)p.get(ATTR_FILE);
         if (file != null && file.length() > 0) {
             String name = file;
             boolean file_mapping = false;
-            Map<String,Object> capabilities = channels.get(channel);
             if (capabilities != null) {
                 Object obj = capabilities.get(IBreakpoints.CAPABILITY_FILE_MAPPING);
                 if (obj instanceof Boolean) file_mapping = ((Boolean)obj).booleanValue();
@@ -443,21 +547,19 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
                 if (column != null) m.put(IBreakpoints.PROP_COLUMN, column);
             }
         }
-        if ("org.eclipse.cdt.debug.core.cWatchpointMarker".equals(type)) {
-            String expr = (String)p.get("org.eclipse.cdt.debug.core.expression");
+        if (p.get(ATTR_EXPRESSION) != null) {
+            String expr = (String)p.get(ATTR_EXPRESSION);
             if (expr != null && expr.length() != 0) {
-                boolean writeAccess = Boolean.TRUE.equals(p.get("org.eclipse.cdt.debug.core.write"));
-                boolean readAccess = Boolean.TRUE.equals(p.get("org.eclipse.cdt.debug.core.read"));
+                boolean writeAccess = Boolean.TRUE.equals(p.get(ATTR_WRITE));
+                boolean readAccess = Boolean.TRUE.equals(p.get(ATTR_READ));
                 int accessMode = 0;
                 if (readAccess) accessMode |= IBreakpoints.ACCESSMODE_READ;
                 if (writeAccess) accessMode |= IBreakpoints.ACCESSMODE_WRITE;
                 m.put(IBreakpoints.PROP_ACCESSMODE, Integer.valueOf(accessMode));
-                Object range = p.get("org.eclipse.cdt.debug.core.range");
+                Object range = p.get(ATTR_SIZE);
                 if (range != null) {
                     int size = Integer.parseInt(range.toString());
-                    if (size > 0) {
-                        m.put(IBreakpoints.PROP_SIZE, size);
-                    }
+                    if (size > 0) m.put(IBreakpoints.PROP_SIZE, size);
                 }
                 if (!Character.isDigit(expr.charAt(0))) {
                     expr = "&(" + expr + ')';
@@ -465,20 +567,18 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
                 m.put(IBreakpoints.PROP_LOCATION, expr);
             }
         }
-        else if ("org.eclipse.cdt.debug.core.cFunctionBreakpointMarker".equals(type)) {
-            String expr = (String)p.get("org.eclipse.cdt.debug.core.function");
-            if (expr != null && expr.length() != 0) {
-                m.put(IBreakpoints.PROP_LOCATION, expr);
-            }
+        else if (p.get(ATTR_FUNCTION) != null) {
+            String expr = (String)p.get(ATTR_FUNCTION);
+            if (expr != null && expr.length() != 0) m.put(IBreakpoints.PROP_LOCATION, expr);
         }
         else if (file == null) {
-            String address = (String)p.get("org.eclipse.cdt.debug.core.address");
+            String address = (String)p.get(ATTR_ADDRESS);
             if (address != null && address.length() > 0) m.put(IBreakpoints.PROP_LOCATION, address);
         }
-        String condition = (String)p.get("org.eclipse.cdt.debug.core.condition");
+        String condition = (String)p.get(ATTR_CONDITION);
         if (condition != null && condition.length() > 0) m.put(IBreakpoints.PROP_CONDITION, condition);
-        Integer skip_count = (Integer)p.get("org.eclipse.cdt.debug.core.ignoreCount");
-        if (skip_count != null && skip_count.intValue() > 0) m.put(IBreakpoints.PROP_IGNORECOUNT, skip_count);
+        Number ignore_count = (Number)p.get(ATTR_IGNORE_COUNT);
+        if (ignore_count != null && ignore_count.intValue() > 0) m.put(IBreakpoints.PROP_IGNORECOUNT, ignore_count);
         return m;
     }
 

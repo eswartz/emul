@@ -173,7 +173,8 @@ class TCFBreakpointStatusListener {
             bkpts.getProperties(id, new IBreakpoints.DoneGetProperties() {
                 public void doneGetProperties(IToken token, Exception error, Map<String, Object> properties) {
                     if (properties == null || error != null) return;
-                    final Map<String, Object> markerAttrs = toMarkerAttributes(properties);
+                    if (bp_model.getClientID().equals(bp_model.getClientID(properties))) return;
+                    final Map<String, Object> markerAttrs = bp_model.toMarkerAttributes(properties);
                     Job job = new WorkspaceJob("Create Breakpoint Marker") {
                         @Override
                         public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
@@ -236,50 +237,6 @@ class TCFBreakpointStatusListener {
                     job.setPriority(Job.SHORT);
                     job.setSystem(true);
                     job.schedule();
-                }
-
-                private Map<String, Object> toMarkerAttributes(Map<String, Object> properties) {
-                    final Map<String, Object> markerAttrs = new HashMap<String, Object>();
-                    String location = (String) properties.get(IBreakpoints.PROP_LOCATION);
-                    int accessMode = IBreakpoints.ACCESSMODE_EXECUTE;
-                    Number accessModeVal = (Number) properties.get(IBreakpoints.PROP_ACCESSMODE);
-                    if (accessModeVal != null) {
-                        accessMode = accessModeVal.intValue();
-                    }
-                    if (location != null && location.length() > 0) {
-                        if ((accessMode & IBreakpoints.ACCESSMODE_EXECUTE) != 0) {
-                            if (Character.isDigit(location.charAt(0))) {
-                                markerAttrs.put(ICLineBreakpoint.ADDRESS, location);
-                            }
-                            else {
-                                markerAttrs.put(ICLineBreakpoint.FUNCTION, location);
-                            }
-                        }
-                        else {
-                            markerAttrs.put(ICWatchpoint.EXPRESSION, location.replaceFirst("^&\\((.+)\\)$", "$1"));
-                            markerAttrs.put(ICWatchpoint.READ, (accessMode & IBreakpoints.ACCESSMODE_READ) != 0);
-                            markerAttrs.put(ICWatchpoint.WRITE, (accessMode & IBreakpoints.ACCESSMODE_WRITE) != 0);
-                        }
-                    }
-                    Object file = properties.get(IBreakpoints.PROP_FILE);
-                    if (file != null) {
-                        markerAttrs.put(ICBreakpoint.SOURCE_HANDLE, file);
-                    }
-                    Object line = properties.get(IBreakpoints.PROP_LINE);
-                    if (line != null) {
-                        markerAttrs.put(IMarker.LINE_NUMBER, line);
-                    }
-                    Object enabled = properties.get(IBreakpoints.PROP_ENABLED);
-                    if (enabled != null) {
-                        markerAttrs.put(IBreakpoint.ENABLED, enabled);
-                    } else {
-                        markerAttrs.put(IBreakpoint.ENABLED, Boolean.FALSE);
-                    }
-                    markerAttrs.put(IBreakpoint.ID, ITCFConstants.ID_TCF_DEBUG_MODEL);
-                    markerAttrs.put(IBreakpoint.REGISTERED, Boolean.TRUE);
-                    String id = (String) properties.get(IBreakpoints.PROP_ID);
-                    markerAttrs.put(ATTR_TCF_ID, id);
-                    return markerAttrs;
                 }
             });
         }
