@@ -844,18 +844,18 @@ static int type_name(int mode, Symbol ** type) {
 }
 
 static void load_value(Value * v) {
-    void * value;
-
     v->sym = NULL;
     v->reg = NULL;
-    if (!v->remote) return;
-    assert(!v->constant);
-    value = alloc_str((size_t)v->size);
-    if (context_read_mem(expression_context, v->address, value, (size_t)v->size) < 0) {
-        error(errno, "Can't read variable value");
+    if (v->remote) {
+        size_t size = (size_t)v->size;
+        void * buf = alloc_str(size);
+        assert(!v->constant);
+        if (context_read_mem(expression_context, v->address, buf, size) < 0) {
+            error(errno, "Can't read variable value");
+        }
+        v->value = buf;
+        v->remote = 0;
     }
-    v->value = value;
-    v->remote = 0;
 }
 
 static int is_number(Value * v) {
@@ -2609,6 +2609,7 @@ static void command_evaluate_cache_client(void * x) {
             while (offs < (size_t)value.size) {
                 int size = (size_t)value.size - offs;
                 if (size > (int)sizeof(buf)) size = (int)sizeof(buf);
+                memset(buf, 0, size);
                 if (!err && context_read_mem(ctx, value.address + offs, buf, size) < 0) err = errno;
                 json_write_binary_data(&state, buf, size);
                 offs += size;
