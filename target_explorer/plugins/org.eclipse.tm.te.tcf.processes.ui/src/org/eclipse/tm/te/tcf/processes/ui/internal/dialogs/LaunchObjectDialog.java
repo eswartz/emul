@@ -185,10 +185,8 @@ public class LaunchObjectDialog extends CustomTrayDialog {
 	protected void validateDialog() {
 
 		boolean valid = !"".equals(imagePath.getText()); //$NON-NLS-1$
-		valid &= !"".equals(arguments.getText()); //$NON-NLS-1$
 
-		if (getButton(IDialogConstants.OK_ID) != null) getButton(IDialogConstants.OK_ID)
-		                .setEnabled(valid);
+		if (getButton(IDialogConstants.OK_ID) != null) getButton(IDialogConstants.OK_ID).setEnabled(valid);
 	}
 
 	/* (non-Javadoc)

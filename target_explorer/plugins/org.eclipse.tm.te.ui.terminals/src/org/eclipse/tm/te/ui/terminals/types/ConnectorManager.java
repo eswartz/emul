@@ -48,7 +48,7 @@ public class ConnectorManager extends AbstractExtensionPointManager<IConnectorTy
 	 */
 	@Override
 	protected String getExtensionPointId() {
-		return "org.eclipse.tm.te.terminals.ui.connectorTypes"; //$NON-NLS-1$
+		return "org.eclipse.tm.te.ui.terminals.connectorTypes"; //$NON-NLS-1$
 	}
 
 	/* (non-Javadoc)

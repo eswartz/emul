@@ -28,7 +28,7 @@ public class ServiceManager extends AbstractServiceManager<IService> {
 	 * Thread save singleton instance creation.
 	 */
 	private static class LazyInstance {
-		public static ServiceManager fInstance = new ServiceManager();
+		public static ServiceManager instance = new ServiceManager();
 	}
 
 	/**
@@ -42,7 +42,7 @@ public class ServiceManager extends AbstractServiceManager<IService> {
 	 * Returns the singleton instance of the service manager.
 	 */
 	public static ServiceManager getInstance() {
-		return LazyInstance.fInstance;
+		return LazyInstance.instance;
 	}
 
 	/**
@@ -85,7 +85,7 @@ public class ServiceManager extends AbstractServiceManager<IService> {
 	@SuppressWarnings("unchecked")
 	@Override
 	protected void loadServices() {
-		IExtensionPoint ep = Platform.getExtensionRegistry().getExtensionPoint("org.eclipse.tm.te.runtime.services"); //$NON-NLS-1$
+		IExtensionPoint ep = Platform.getExtensionRegistry().getExtensionPoint("org.eclipse.tm.te.runtime.services.services"); //$NON-NLS-1$
 		if (ep != null) {
 			IExtension[] extensions = ep.getExtensions();
 			if (extensions != null) {
