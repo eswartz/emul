@@ -58,6 +58,7 @@ class TestTerminals implements ITCFTest {
     private boolean unsubscribe_done;
     private boolean exited;
     private boolean stdout_eos;
+    private int time_out = 0;
 
     private final ITerminals.TerminalsListener listener = new ITerminals.TerminalsListener() {
 
@@ -198,15 +199,17 @@ class TestTerminals implements ITCFTest {
                             }
                         }
                         Protocol.invokeLater(100, new Runnable() {
-                            int cnt = 0;
                             public void run() {
                                 if (!test_suite.isActive(TestTerminals.this)) return;
-                                cnt++;
+                                time_out++;
                                 if (test_suite.cancel) {
                                     exit(null);
                                 }
-                                else if (cnt < 300) {
+                                else if (time_out < 300) {
                                     Protocol.invokeLater(100, this);
+                                }
+                                else if (!signal_sent) {
+                                    exit(new Error("Timeout waiting for terminal reply. Context: " + terminal.getID()));
                                 }
                                 else if (!exited) {
                                     exit(new Error("Timeout waiting for 'Terminals.exited' event. Context: " + terminal.getID()));
@@ -303,10 +306,12 @@ class TestTerminals implements ITCFTest {
                                 stdout_buf.append(new String(data, encoding));
                                 if (echo_tx.size() > echo_rx.size()) {
                                     String s = echo_tx.get(echo_rx.size());
+                                    String p = "\n" + s.substring(0, 12);
                                     int n = 0;
                                     if (echo_rx.size() > 0) n = echo_rx.get(echo_rx.size() - 1);
-                                    int i = stdout_buf.indexOf("\n" + s, n);
+                                    int i = stdout_buf.indexOf(p, n);
                                     if (i >= 0) {
+                                        time_out = 0;
                                         echo_rx.add(i + 1);
                                         run = true;
                                     }
@@ -466,6 +471,16 @@ class TestTerminals implements ITCFTest {
                 checkTerminalOutput(stderr_buf);
                 if (echo_rx.size() < echo_cnt) {
                     exit(new Exception("Terminal exited before test finished"));
+                }
+                else {
+                    int n = 0;
+                    for (int i : echo_rx) {
+                        String s = echo_tx.get(n++);
+                        String r = stdout_buf.substring(i, i + s.length());
+                        if (!s.equals(r)) {
+                            exit(new Exception("Invalid reply: " + r + "\nExpected: " + s));
+                        }
+                    }
                 }
             }
         }
