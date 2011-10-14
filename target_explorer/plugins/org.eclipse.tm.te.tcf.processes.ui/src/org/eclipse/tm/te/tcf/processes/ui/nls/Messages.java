@@ -39,14 +39,15 @@ public class Messages extends NLS {
 
 	public static String ProcessSelectionDialog_title;
 
-	public static String LaunchObjectSelectionControl_editfield_label;
-	public static String LaunchObjectSelectionControl_info_missingValue;
-	public static String LaunchObjectSelectionControl_error_invalidName;
-
-	public static String LaunchObjectArgumentsControl_editfield_label;
-
-	public static String LaunchObjectSelectionControl_title;
-	public static String LaunchObjectSelectionControl_defaultMessage;
+	public static String LaunchObjectDialog_title;
+	public static String LaunchObjectDialog_image_label;
+	public static String LaunchObjectDialog_arguments_label;
+	public static String LaunchObjectDialog_group_label;
+	public static String LaunchObjectDialog_lineseparator_label;
+	public static String LaunchObjectDialog_lineseparator_default;
+	public static String LaunchObjectDialog_lineseparator_lf;
+	public static String LaunchObjectDialog_lineseparator_crlf;
+	public static String LaunchObjectDialog_lineseparator_cr;
 
 	public static String LaunchProcessesCommandHandler_error_title;
 

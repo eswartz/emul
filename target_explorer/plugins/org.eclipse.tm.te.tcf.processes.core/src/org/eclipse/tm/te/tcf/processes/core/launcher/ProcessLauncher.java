@@ -516,8 +516,9 @@ public class ProcessLauncher extends PlatformObject implements IProcessLauncher 
 					// Create and store the streams the terminal will see as stderr
 					props.setProperty(ITerminalsConnectorConstants.PROP_STREAMS_STDERR, connectRemoteInputStream(getStreamsListener(), new String[] { IProcesses.PROP_STDERR_ID }));
 
-					// Local echo is OFF
-					props.setProperty(ITerminalsConnectorConstants.PROP_LOCAL_ECHO, false);
+					// Copy the terminal properties
+					props.setProperty(ITerminalsConnectorConstants.PROP_LOCAL_ECHO, properties.getBooleanProperty(ITerminalsConnectorConstants.PROP_LOCAL_ECHO));
+					props.setProperty(ITerminalsConnectorConstants.PROP_LINE_SEPARATOR, properties.getStringProperty(ITerminalsConnectorConstants.PROP_LINE_SEPARATOR));
 
 					// The custom data object is the process launcher itself
 					props.setProperty(ITerminalsConnectorConstants.PROP_DATA, this);
@@ -543,7 +544,7 @@ public class ProcessLauncher extends PlatformObject implements IProcessLauncher 
 				// Create the receiver instance. If the file already exist, we
 				// overwrite the file content.
 				ProcessStreamsDataReceiver receiver = new ProcessStreamsDataReceiver(new BufferedWriter(new FileWriter(filename)),
-								new String[] { IProcesses.PROP_STDOUT_ID, IProcesses.PROP_STDERR_ID });
+																					 new String[] { IProcesses.PROP_STDOUT_ID, IProcesses.PROP_STDERR_ID });
 				// Register the receiver to the streams listener
 				if (getStreamsListener() instanceof ProcessStreamsListener) {
 					((ProcessStreamsListener)getStreamsListener()).registerDataReceiver(receiver);

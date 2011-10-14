@@ -56,6 +56,12 @@ public interface ITerminalsConnectorConstants {
 	 */
 	public static final String PROP_LOCAL_ECHO = "localEcho"; //$NON-NLS-1$
 
+	/**
+	 * Property: The line separator used by the terminal input.
+	 *           <p>Typical for process and streams terminals.
+	 */
+	public static final String PROP_LINE_SEPARATOR = "lineSeparator"; //$NON-NLS-1$
+
 	// ***** IP based terminals connector properties *****
 
 	/**

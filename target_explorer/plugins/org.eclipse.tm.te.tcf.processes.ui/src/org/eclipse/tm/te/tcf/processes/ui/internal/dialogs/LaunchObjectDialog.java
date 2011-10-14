@@ -28,10 +28,13 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.tm.te.core.utils.text.StringUtil;
+import org.eclipse.tm.te.runtime.services.interfaces.constants.ILineSeparatorConstants;
+import org.eclipse.tm.te.runtime.services.interfaces.constants.ITerminalsConnectorConstants;
 import org.eclipse.tm.te.tcf.filesystem.controls.FSTreeContentProvider;
 import org.eclipse.tm.te.tcf.filesystem.dialogs.FSOpenFileDialog;
 import org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode;
@@ -39,6 +42,7 @@ import org.eclipse.tm.te.tcf.processes.core.interfaces.launcher.IProcessLauncher
 import org.eclipse.tm.te.tcf.processes.ui.internal.help.IContextHelpIds;
 import org.eclipse.tm.te.tcf.processes.ui.nls.Messages;
 import org.eclipse.tm.te.ui.jface.dialogs.CustomTrayDialog;
+import org.eclipse.tm.te.ui.swt.SWTControlUtil;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.forms.editor.FormPage;
 
@@ -49,9 +53,13 @@ public class LaunchObjectDialog extends CustomTrayDialog {
 	private Text imagePath;
 	private Button imagePathBrowse;
 	private Text arguments;
+	/* default */ Button lineSeparatorDefault;
+	/* default */ Button lineSeparatorLF;
+	/* default */ Button lineSeparatorCRLF;
+	/* default */ Button lineSeparatorCR;
 
 	private Map<String, Object> launchAttributes = null;
-	/* default */final IEditorPart part;
+	/* default */ final IEditorPart part;
 
 	/**
 	 * Constructor.
@@ -94,14 +102,16 @@ public class LaunchObjectDialog extends CustomTrayDialog {
 
 		Composite panel = new Composite(composite, SWT.NONE);
 		panel.setLayout(new GridLayout(3, false));
-		panel.setLayoutData(new GridData(GridData.FILL_BOTH));
+		panel.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
 		// Add the controls
 		Label label = new Label(panel, SWT.NONE);
-		label.setText(Messages.LaunchObjectSelectionControl_editfield_label);
+		label.setText(Messages.LaunchObjectDialog_image_label);
 
 		imagePath = new Text(panel, SWT.SINGLE | SWT.BORDER);
-		imagePath.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		GridData layoutData = new GridData(SWT.FILL, SWT.CENTER, true, false);
+		layoutData.widthHint = SWTControlUtil.convertWidthInCharsToPixels(imagePath, 40);
+		imagePath.setLayoutData(layoutData);
 		imagePath.addModifyListener(new ModifyListener() {
 			@Override
 			public void modifyText(ModifyEvent e) {
@@ -132,16 +142,86 @@ public class LaunchObjectDialog extends CustomTrayDialog {
 		});
 
 		label = new Label(panel, SWT.NONE);
-		label.setText(Messages.LaunchObjectArgumentsControl_editfield_label);
+		label.setText(Messages.LaunchObjectDialog_arguments_label);
 
 		arguments = new Text(panel, SWT.SINGLE | SWT.BORDER);
-		GridData layoutData = new GridData(GridData.FILL_HORIZONTAL);
+		layoutData = new GridData(SWT.FILL, SWT.CENTER, true, false);
 		layoutData.horizontalSpan = 2;
 		arguments.setLayoutData(layoutData);
 		arguments.addModifyListener(new ModifyListener() {
 			@Override
 			public void modifyText(ModifyEvent e) {
 				validateDialog();
+			}
+		});
+
+		Group group = new Group(composite, SWT.NONE);
+		layoutData = new GridData(SWT.FILL, SWT.CENTER, true, false);
+		group.setLayoutData(layoutData);
+		group.setText(Messages.LaunchObjectDialog_group_label);
+		group.setLayout(new GridLayout());
+
+		label = new Label(group, SWT.NONE);
+		label.setText(Messages.LaunchObjectDialog_lineseparator_label);
+		layoutData = new GridData(SWT.FILL, SWT.CENTER, true, false);
+		label.setLayoutData(layoutData);
+
+		Composite panel2 = new Composite(group, SWT.NONE);
+		GridLayout layout = new GridLayout(4, false);
+		layout.marginLeft = 15; layout.marginHeight = 2;
+		panel2.setLayout(layout);
+		layoutData = new GridData(SWT.FILL, SWT.CENTER, true, false);
+		panel2.setLayoutData(layoutData);
+
+		lineSeparatorDefault = new Button(panel2, SWT.RADIO);
+		lineSeparatorDefault.setText(Messages.LaunchObjectDialog_lineseparator_default);
+		lineSeparatorDefault.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				if (lineSeparatorDefault.getSelection()) {
+					SWTControlUtil.setSelection(lineSeparatorLF, false);
+					SWTControlUtil.setSelection(lineSeparatorCRLF, false);
+					SWTControlUtil.setSelection(lineSeparatorCR, false);
+				}
+			}
+		});
+
+		lineSeparatorLF = new Button(panel2, SWT.RADIO);
+		lineSeparatorLF.setText(Messages.LaunchObjectDialog_lineseparator_lf);
+		lineSeparatorLF.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				if (lineSeparatorDefault.getSelection()) {
+					SWTControlUtil.setSelection(lineSeparatorDefault, false);
+					SWTControlUtil.setSelection(lineSeparatorCRLF, false);
+					SWTControlUtil.setSelection(lineSeparatorCR, false);
+				}
+			}
+		});
+
+		lineSeparatorCRLF = new Button(panel2, SWT.RADIO);
+		lineSeparatorCRLF.setText(Messages.LaunchObjectDialog_lineseparator_crlf);
+		lineSeparatorCRLF.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				if (lineSeparatorDefault.getSelection()) {
+					SWTControlUtil.setSelection(lineSeparatorDefault, false);
+					SWTControlUtil.setSelection(lineSeparatorLF, false);
+					SWTControlUtil.setSelection(lineSeparatorCR, false);
+				}
+			}
+		});
+
+		lineSeparatorCR = new Button(panel2, SWT.RADIO);
+		lineSeparatorCR.setText(Messages.LaunchObjectDialog_lineseparator_cr);
+		lineSeparatorCR.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				if (lineSeparatorDefault.getSelection()) {
+					SWTControlUtil.setSelection(lineSeparatorDefault, false);
+					SWTControlUtil.setSelection(lineSeparatorLF, false);
+					SWTControlUtil.setSelection(lineSeparatorCRLF, false);
+				}
 			}
 		});
 
@@ -169,7 +249,7 @@ public class LaunchObjectDialog extends CustomTrayDialog {
 	 * {@link #createDialogArea(Composite)}.
 	 */
 	protected void configureTitles() {
-		setDialogTitle(Messages.LaunchObjectSelectionControl_title);
+		setDialogTitle(Messages.LaunchObjectDialog_title);
 	}
 
 	/**
@@ -226,6 +306,21 @@ public class LaunchObjectDialog extends CustomTrayDialog {
 		String argumentsString = arguments.getText();
 		String[] args = argumentsString != null && !"".equals(argumentsString.trim()) ? StringUtil.tokenize(argumentsString, 0, true) : null; //$NON-NLS-1$
 		launchAttributes.put(IProcessLauncher.PROP_PROCESS_ARGS, args);
+
+		// Local Echo is OFF.
+		launchAttributes.put(ITerminalsConnectorConstants.PROP_LOCAL_ECHO, Boolean.FALSE);
+
+		String lineSeparator = null;
+		if (SWTControlUtil.getSelection(lineSeparatorLF)) {
+			lineSeparator = ILineSeparatorConstants.LINE_SEPARATOR_LF;
+		}
+		else if (SWTControlUtil.getSelection(lineSeparatorCRLF)) {
+			lineSeparator = ILineSeparatorConstants.LINE_SEPARATOR_CRLF;
+		}
+		else if (SWTControlUtil.getSelection(lineSeparatorCR)) {
+			lineSeparator = ILineSeparatorConstants.LINE_SEPARATOR_CR;
+		}
+		launchAttributes.put(ITerminalsConnectorConstants.PROP_LINE_SEPARATOR, lineSeparator);
 	}
 
 	/**
@@ -253,6 +348,18 @@ public class LaunchObjectDialog extends CustomTrayDialog {
 		if (settings != null) {
 			settings.put(IProcessLauncher.PROP_PROCESS_PATH, imagePath.getText());
 			settings.put(IProcessLauncher.PROP_PROCESS_ARGS, arguments.getText());
+
+			String lineSeparator = null;
+			if (SWTControlUtil.getSelection(lineSeparatorLF)) {
+				lineSeparator = ILineSeparatorConstants.LINE_SEPARATOR_LF;
+			}
+			else if (SWTControlUtil.getSelection(lineSeparatorCRLF)) {
+				lineSeparator = ILineSeparatorConstants.LINE_SEPARATOR_CRLF;
+			}
+			else if (SWTControlUtil.getSelection(lineSeparatorCR)) {
+				lineSeparator = ILineSeparatorConstants.LINE_SEPARATOR_CR;
+			}
+			settings.put(ITerminalsConnectorConstants.PROP_LINE_SEPARATOR, lineSeparator);
 		}
 	}
 
@@ -266,6 +373,20 @@ public class LaunchObjectDialog extends CustomTrayDialog {
 			if (path != null) imagePath.setText(path);
 			String args = settings.get(IProcessLauncher.PROP_PROCESS_ARGS);
 			if (args != null) arguments.setText(args);
+
+			String lineSeparator = settings.get(ITerminalsConnectorConstants.PROP_LINE_SEPARATOR);
+			if (lineSeparator == null) {
+				SWTControlUtil.setSelection(lineSeparatorDefault, true);
+			}
+			else if (ILineSeparatorConstants.LINE_SEPARATOR_LF.equals(lineSeparator)) {
+				SWTControlUtil.setSelection(lineSeparatorLF, true);
+			}
+			else if (ILineSeparatorConstants.LINE_SEPARATOR_CRLF.equals(lineSeparator)) {
+				SWTControlUtil.setSelection(lineSeparatorCRLF, true);
+			}
+			else if (ILineSeparatorConstants.LINE_SEPARATOR_CR.equals(lineSeparator)) {
+				SWTControlUtil.setSelection(lineSeparatorCR, true);
+			}
 		}
 	}
 

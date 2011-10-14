@@ -21,6 +21,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.tm.internal.terminal.provisional.api.ITerminalControl;
+import org.eclipse.tm.te.runtime.services.interfaces.constants.ILineSeparatorConstants;
 import org.eclipse.tm.te.ui.terminals.activator.UIPlugin;
 import org.eclipse.tm.te.ui.terminals.nls.Messages;
 import org.eclipse.ui.services.IDisposable;
@@ -53,19 +54,70 @@ public class InputStreamMonitor extends OutputStream implements IDisposable {
     // Queue to buffer the data to write to the output stream
     private final Queue<byte[]> queue = new LinkedList<byte[]>();
 
+    // ***** Line separator replacement logic *****
+    // ***** Adapted from org.eclipse.tm.internal.terminal.local.LocalTerminalOutputStream *****
+
+	private final static int TERMINAL_SENDS_CR = 0;
+	private final static int TERMINAL_SENDS_CRLF = 1;
+	private final static int PROGRAM_EXPECTS_LF = 0;
+	private final static int PROGRAM_EXPECTS_CRLF = 1;
+	private final static int PROGRAM_EXPECTS_CR = 2;
+	private final static int NO_CHANGE = 0;
+	private final static int CHANGE_CR_TO_LF = 1;
+	private final static int INSERT_LF_AFTER_CR = 2;
+	private final static int REMOVE_CR = 3;
+	private final static int REMOVE_LF = 4;
+
+	// CRLF conversion table:
+	//
+	// Expected line separator -->         |       LF        |        CRLF        |       CR       |
+	// ------------------------------------+-----------------+--------------------+----------------+
+	// Local echo off - control sends CR   | change CR to LF | insert LF after CR | no change      |
+	// ------------------------------------+-----------------+--------------------+----------------+
+	// Local echo on - control sends CRLF  | remove CR       | no change          | remove LF      |
+	//
+	private final static int[][] CRLF_REPLACEMENT = {
+
+		{CHANGE_CR_TO_LF, INSERT_LF_AFTER_CR, NO_CHANGE},
+		{REMOVE_CR, NO_CHANGE, REMOVE_LF}
+	};
+
+	private int replacement;
+
     /**
      * Constructor.
      *
      * @param terminalControl The parent terminal control. Must not be <code>null</code>.
      * @param stream The stream. Must not be <code>null</code>.
+	 * @param localEcho Local echo on or off.
+	 * @param lineSeparator The line separator used by the stream.
      */
-	public InputStreamMonitor(ITerminalControl terminalControl, OutputStream stream) {
+	public InputStreamMonitor(ITerminalControl terminalControl, OutputStream stream, boolean localEcho, String lineSeparator) {
     	super();
 
     	Assert.isNotNull(terminalControl);
     	this.terminalControl = terminalControl;
     	Assert.isNotNull(stream);
         this.stream = stream;
+
+        // Determine the line separator replacement setting
+		int terminalSends = localEcho ? TERMINAL_SENDS_CRLF : TERMINAL_SENDS_CR;
+		if (lineSeparator == null) {
+			replacement = NO_CHANGE;
+		} else {
+			int programExpects;
+			if (lineSeparator.equals(ILineSeparatorConstants.LINE_SEPARATOR_LF)) {
+				programExpects = PROGRAM_EXPECTS_LF;
+			}
+			else if (lineSeparator.equals(ILineSeparatorConstants.LINE_SEPARATOR_CR)) {
+				programExpects = PROGRAM_EXPECTS_CR;
+			}
+			else {
+				programExpects = PROGRAM_EXPECTS_CRLF;
+			}
+			replacement = CRLF_REPLACEMENT[terminalSends][programExpects];
+		}
+
     }
 
 	/**
@@ -205,11 +257,88 @@ public class InputStreamMonitor extends OutputStream implements IDisposable {
         }
     }
 
+    /* (non-Javadoc)
+     * @see java.io.OutputStream#write(byte[], int, int)
+     */
     @Override
     public void write(byte[] b, int off, int len) throws IOException {
+    	// Write the whole block to the queue to avoid synchronization
+    	// to happen for every byte. To do so, we have to avoid calling
+    	// the super method. Therefore we have to do the same checking
+    	// here as the base class does.
+
+    	// Null check. See the implementation in OutputStream.
+    	if (b == null) throw new NullPointerException();
+
+    	// Boundary check. See the implementation in OutputStream.
+    	if ((off < 0) || (off > b.length) || (len < 0) || ((off + len) > b.length) || ((off + len) < 0)) {
+    		throw new IndexOutOfBoundsException();
+    	}
+    	else if (len == 0) {
+    		return;
+    	}
+
         // Make sure that the written block is not interlaced with other input.
         synchronized(queue) {
-            super.write(b, off, len);
+        	// Preprocess the block to be written
+        	byte[] processedBytes = onWriteContentToStream(b, off, len);
+        	// If the returned array is not the original one, adjust offset and length
+        	if (processedBytes != b) {
+        		off = 0; len = processedBytes.length;
+        	}
+
+        	// Get the content from the byte buffer specified by offset and length
+        	byte[] bytes = new byte[len];
+        	int j = 0;
+        	for (int i = 0 ; i < len ; i++) {
+        	    bytes[j++] = b[off + i];
+        	}
+
+        	queue.add(bytes);
+        	queue.notifyAll();
         }
+    }
+
+    /**
+     * Allow for processing of data from byte stream from the terminal before
+     * it is written to the output stream. If the returned byte array is different
+     * than the one that was passed in with the bytes argument, then the
+     * length value will be adapted.
+     *
+     * @param bytes The byte stream. Must not be <code>null</code>.
+     * @param off The offset.
+     * @param len the length.
+     *
+     * @return The processed byte stream.
+     *
+     */
+    protected byte[] onWriteContentToStream(byte[] bytes, int off, int len) {
+    	Assert.isNotNull(bytes);
+
+    	if (replacement != NO_CHANGE && len > 0) {
+    		String text = new String(bytes, off, len);
+    		//
+    		// TODO: check whether this is correct! new String(byte[], int, int) always uses the default
+    		//       encoding!
+
+    		if (replacement == CHANGE_CR_TO_LF) {
+    			text = text.replace('\r', '\n');
+    		}
+    		else if (replacement == INSERT_LF_AFTER_CR) {
+    			text = text.replaceAll(ILineSeparatorConstants.LINE_SEPARATOR_CR, "\r\n"); //$NON-NLS-1$
+    		}
+    		else if (replacement == REMOVE_CR) {
+    			text = text.replaceAll(ILineSeparatorConstants.LINE_SEPARATOR_CR, ""); //$NON-NLS-1$
+    		}
+    		else if (replacement == REMOVE_LF) {
+    			text = text.replaceAll(ILineSeparatorConstants.LINE_SEPARATOR_LF, ""); //$NON-NLS-1$
+    		}
+
+    		if (text.length() > 0) {
+    			bytes = text.getBytes();
+    		}
+    	}
+
+    	return bytes;
     }
 }

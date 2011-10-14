@@ -29,6 +29,8 @@ public class StreamsSettings {
 	private InputStream stderr;
 	// Flag to control the local echo
 	private boolean localEcho = true;
+	// The line separator setting
+	private String lineSeparator = null;
 
 	/**
 	 * Sets the stdin stream instance.
@@ -104,6 +106,24 @@ public class StreamsSettings {
 	}
 
 	/**
+	 * Sets the stream line separator.
+	 *
+	 * @param separator The stream line separator <code>null</code>.
+	 */
+	public void setLineSeparator(String separator) {
+		this.lineSeparator = separator;
+	}
+
+	/**
+	 * Returns the stream line separator.
+	 *
+	 * @return The stream line separator or <code>null</code>.
+	 */
+	public String getLineSeparator() {
+		return lineSeparator;
+	}
+
+	/**
 	 * Loads the streams settings from the given settings store.
 	 *
 	 * @param store The settings store. Must not be <code>null</code>.
@@ -111,6 +131,7 @@ public class StreamsSettings {
 	public void load(ISettingsStore store) {
 		Assert.isNotNull(store);
 		localEcho = Boolean.parseBoolean(store.get("LocalEcho", Boolean.FALSE.toString())); //$NON-NLS-1$
+		lineSeparator = store.get("LineSeparator", null); //$NON-NLS-1$
 		if (store instanceof IPropertiesContainer) {
 			stdin = (OutputStream)((IPropertiesContainer)store).getProperty("stdin"); //$NON-NLS-1$
 			stdout = (InputStream)((IPropertiesContainer)store).getProperty("stdout"); //$NON-NLS-1$
@@ -126,6 +147,7 @@ public class StreamsSettings {
 	public void save(ISettingsStore store) {
 		Assert.isNotNull(store);
 		store.put("LocalEcho", Boolean.toString(localEcho)); //$NON-NLS-1$
+		store.put("LineSeparator", lineSeparator); //$NON-NLS-1$
 		if (store instanceof IPropertiesContainer) {
 			((IPropertiesContainer)store).setProperty("stdin", stdin); //$NON-NLS-1$
 			((IPropertiesContainer)store).setProperty("stdout", stdout); //$NON-NLS-1$

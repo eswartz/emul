@@ -39,6 +39,7 @@ import org.eclipse.tm.internal.terminal.provisional.api.ISettingsPage;
 import org.eclipse.tm.internal.terminal.provisional.api.ISettingsStore;
 import org.eclipse.tm.internal.terminal.provisional.api.ITerminalControl;
 import org.eclipse.tm.internal.terminal.provisional.api.TerminalState;
+import org.eclipse.tm.te.runtime.services.interfaces.constants.ILineSeparatorConstants;
 import org.eclipse.tm.te.ui.terminals.process.activator.UIPlugin;
 import org.eclipse.tm.te.ui.terminals.process.nls.Messages;
 import org.eclipse.tm.te.ui.terminals.streams.AbstractStreamsConnector;
@@ -155,8 +156,22 @@ public class ProcessConnector extends AbstractStreamsConnector {
                 }
 			}
 
+			String lineSeparator = settings.getLineSeparator();
+			if (lineSeparator == null) {
+				lineSeparator = System.getProperty("line.separator"); //$NON-NLS-1$
+				if ("\r".equals(lineSeparator)) { //$NON-NLS-1$
+					lineSeparator = ILineSeparatorConstants.LINE_SEPARATOR_CR;
+				}
+				else if ("\n".equals(lineSeparator)) { //$NON-NLS-1$
+					lineSeparator = ILineSeparatorConstants.LINE_SEPARATOR_LF;
+				}
+				else {
+					lineSeparator = ILineSeparatorConstants.LINE_SEPARATOR_CRLF;
+				}
+			}
+
 			// connect the streams
-			connectStreams(control, process.getOutputStream(), process.getInputStream(), (pty == null ? process.getErrorStream() : null));
+			connectStreams(control, process.getOutputStream(), process.getInputStream(), (pty == null ? process.getErrorStream() : null), settings.isLocalEcho(), lineSeparator);
 
 			// Set the terminal control state to CONNECTED
 			control.setState(TerminalState.CONNECTED);
