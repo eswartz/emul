@@ -30,6 +30,8 @@ public class ProcessSettings {
 	// Flag to control the local echo (defaults to true if
 	// the PTY is not supported on the current host platform)
 	private boolean localEcho = !PTY.isSupported();
+	// The line separator setting
+	private String lineSeparator = null;
 
 	/**
 	 * Sets the process image.
@@ -129,6 +131,24 @@ public class ProcessSettings {
 	}
 
 	/**
+	 * Sets the process line separator.
+	 *
+	 * @param separator The process line separator <code>null</code>.
+	 */
+	public void setLineSeparator(String separator) {
+		this.lineSeparator = separator;
+	}
+
+	/**
+	 * Returns the process line separator.
+	 *
+	 * @return The process line separator or <code>null</code>.
+	 */
+	public String getLineSeparator() {
+		return lineSeparator;
+	}
+
+	/**
 	 * Loads the process settings from the given settings store.
 	 *
 	 * @param store The settings store. Must not be <code>null</code>.
@@ -138,6 +158,7 @@ public class ProcessSettings {
 		image = store.get("Path", null);//$NON-NLS-1$
 		arguments = store.get("Arguments", null); //$NON-NLS-1$
 		localEcho = Boolean.parseBoolean(store.get("LocalEcho", Boolean.FALSE.toString())); //$NON-NLS-1$
+		lineSeparator = store.get("LineSeparator", null); //$NON-NLS-1$
 		if (store instanceof IPropertiesContainer) {
 			process = (Process)((IPropertiesContainer)store).getProperty("Process"); //$NON-NLS-1$
 			pty = (PTY)((IPropertiesContainer)store).getProperty("PTY"); //$NON-NLS-1$
@@ -154,6 +175,7 @@ public class ProcessSettings {
 		store.put("Path", image);//$NON-NLS-1$
 		store.put("Arguments", arguments); //$NON-NLS-1$
 		store.put("LocalEcho", Boolean.toString(localEcho)); //$NON-NLS-1$
+		store.put("LineSeparator", lineSeparator); //$NON-NLS-1$
 		if (store instanceof IPropertiesContainer) {
 			((IPropertiesContainer)store).setProperty("Process", process); //$NON-NLS-1$
 			((IPropertiesContainer)store).setProperty("PTY", pty); //$NON-NLS-1$

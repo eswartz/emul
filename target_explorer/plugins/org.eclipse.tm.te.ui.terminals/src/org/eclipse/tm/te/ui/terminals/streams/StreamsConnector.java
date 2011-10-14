@@ -51,7 +51,7 @@ public class StreamsConnector extends AbstractStreamsConnector implements IDispo
 		super.connect(control);
 
 		// connect the streams
-		connectStreams(control, settings.getStdinStream(), settings.getStdoutStream(), settings.getStderrStream());
+		connectStreams(control, settings.getStdinStream(), settings.getStdoutStream(), settings.getStderrStream(), settings.isLocalEcho(), settings.getLineSeparator());
 
 		// Set the terminal control state to CONNECTED
 		control.setState(TerminalState.CONNECTED);

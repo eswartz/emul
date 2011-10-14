@@ -37,13 +37,15 @@ public abstract class AbstractStreamsConnector extends TerminalConnectorImpl {
      * @param stdin The stdin stream or <code>null</code>.
      * @param stdout The stdout stream or <code>null</code>.
      * @param stderr The stderr stream or <code>null</code>.
+	 * @param localEcho Local echo on or off.
+	 * @param lineSeparator The line separator used by the stream.
      */
-    protected void connectStreams(ITerminalControl terminalControl, OutputStream stdin, InputStream stdout, InputStream stderr) {
+    protected void connectStreams(ITerminalControl terminalControl, OutputStream stdin, InputStream stdout, InputStream stderr, boolean localEcho, String lineSeparator) {
     	Assert.isNotNull(terminalControl);
 
     	// Create the input stream monitor
     	if (stdin != null) {
-    		stdInMonitor = createStdInMonitor(terminalControl, stdin);
+    		stdInMonitor = createStdInMonitor(terminalControl, stdin, localEcho, lineSeparator);
     		// Register the connector if it implements IDisposable and stdout/stderr are not monitored
     		if (stdout == null && stderr == null && this instanceof IDisposable) stdInMonitor.addDisposable((IDisposable)this);
     		// Start the monitoring
@@ -52,7 +54,7 @@ public abstract class AbstractStreamsConnector extends TerminalConnectorImpl {
 
     	// Create the output stream monitor
     	if (stdout != null) {
-    		stdOutMonitor = createStdOutMonitor(terminalControl, stdout);
+    		stdOutMonitor = createStdOutMonitor(terminalControl, stdout, lineSeparator);
     		// Register the connector if it implements IDisposable
     		if (this instanceof IDisposable) stdOutMonitor.addDisposable((IDisposable)this);
     		// Start the monitoring
@@ -61,7 +63,7 @@ public abstract class AbstractStreamsConnector extends TerminalConnectorImpl {
 
     	// Create the error stream monitor
     	if (stderr != null) {
-    		stdErrMonitor = createStdErrMonitor(terminalControl, stderr);
+    		stdErrMonitor = createStdErrMonitor(terminalControl, stderr, lineSeparator);
     		// Register the connector if it implements IDisposable and stdout is not monitored
     		if (stdout == null && this instanceof IDisposable) stdErrMonitor.addDisposable((IDisposable)this);
     		// Start the monitoring
@@ -75,10 +77,13 @@ public abstract class AbstractStreamsConnector extends TerminalConnectorImpl {
      *
      * @param terminalControl The terminal control. Must not be <code>null</code>.
      * @param stdin The stdin stream or <code>null</code>.
+	 * @param localEcho Local echo on or off.
+	 * @param lineSeparator The line separator used by the stream.
+	 *
      * @return input stream monitor
      */
-    protected InputStreamMonitor createStdInMonitor(ITerminalControl terminalControl, OutputStream stdin) {
-        return new InputStreamMonitor(terminalControl, stdin);
+    protected InputStreamMonitor createStdInMonitor(ITerminalControl terminalControl, OutputStream stdin, boolean localEcho, String lineSeparator) {
+        return new InputStreamMonitor(terminalControl, stdin, localEcho, lineSeparator);
     }
 
     /**
@@ -87,10 +92,12 @@ public abstract class AbstractStreamsConnector extends TerminalConnectorImpl {
      *
      * @param terminalControl The terminal control. Must not be <code>null</code>.
      * @param stdout The stdout stream or <code>null</code>.
+	 * @param lineSeparator The line separator used by the stream.
+	 *
      * @return output stream monitor
      */
-    protected OutputStreamMonitor createStdOutMonitor(ITerminalControl terminalControl, InputStream stdout) {
-        return new OutputStreamMonitor(terminalControl, stdout);
+    protected OutputStreamMonitor createStdOutMonitor(ITerminalControl terminalControl, InputStream stdout, String lineSeparator) {
+        return new OutputStreamMonitor(terminalControl, stdout, lineSeparator);
     }
 
     /**
@@ -99,10 +106,12 @@ public abstract class AbstractStreamsConnector extends TerminalConnectorImpl {
      *
      * @param terminalControl The terminal control. Must not be <code>null</code>.
      * @param stderr The stderr stream or <code>null</code>.
+	 * @param lineSeparator The line separator used by the stream.
+	 *
      * @return output stream monitor
      */
-    protected OutputStreamMonitor createStdErrMonitor(ITerminalControl terminalControl, InputStream stderr) {
-        return new OutputStreamMonitor(terminalControl, stderr);
+    protected OutputStreamMonitor createStdErrMonitor(ITerminalControl terminalControl, InputStream stderr, String lineSeparator) {
+        return new OutputStreamMonitor(terminalControl, stderr, lineSeparator);
     }
 
     /* (non-Javadoc)

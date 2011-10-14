@@ -20,6 +20,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.tm.internal.terminal.provisional.api.ITerminalControl;
+import org.eclipse.tm.te.runtime.services.interfaces.constants.ILineSeparatorConstants;
 import org.eclipse.tm.te.ui.terminals.activator.UIPlugin;
 import org.eclipse.tm.te.ui.terminals.nls.Messages;
 import org.eclipse.ui.services.IDisposable;
@@ -42,6 +43,9 @@ public class OutputStreamMonitor implements IDisposable {
 	// Reference to the monitored (input) stream
     private final InputStream stream;
 
+    // The line separator used by the monitored (input) stream
+    private final String lineSeparator;
+
     // Reference to the thread reading the stream
     private Thread thread;
 
@@ -57,14 +61,17 @@ public class OutputStreamMonitor implements IDisposable {
      *
      * @param terminalControl The parent terminal control. Must not be <code>null</code>.
      * @param stream The stream. Must not be <code>null</code>.
+	 * @param lineSeparator The line separator used by the stream.
      */
-	public OutputStreamMonitor(ITerminalControl terminalControl, InputStream stream) {
+	public OutputStreamMonitor(ITerminalControl terminalControl, InputStream stream, String lineSeparator) {
     	super();
 
     	Assert.isNotNull(terminalControl);
     	this.terminalControl = terminalControl;
     	Assert.isNotNull(stream);
         this.stream = new BufferedInputStream(stream, BUFFER_SIZE);
+
+        this.lineSeparator = lineSeparator;
     }
 
 	/**
@@ -207,8 +214,6 @@ public class OutputStreamMonitor implements IDisposable {
      * array is different than the one that was passed in with the byteBuffer
      * argument, then the bytesRead value will be ignored and the full
      * returned array will be written out.
-     * <p>
-     * The default implementation is returning the byte stream unmodified.
      *
      * @param byteBuffer The byte stream. Must not be <code>null</code>.
      * @param bytesRead The number of bytes that were read into the read buffer.
@@ -217,6 +222,13 @@ public class OutputStreamMonitor implements IDisposable {
      */
     protected byte[] onContentReadFromStream(byte[] byteBuffer, int bytesRead) {
     	Assert.isNotNull(byteBuffer);
+
+    	if (lineSeparator != null && !ILineSeparatorConstants.LINE_SEPARATOR_CRLF.equals(lineSeparator)) {
+    		String text = new String(byteBuffer, 0, bytesRead);
+    		text = text.replaceAll(lineSeparator, "\r\n"); //$NON-NLS-1$
+    		byteBuffer = text.getBytes();
+    	}
+
     	return byteBuffer;
     }
 }
