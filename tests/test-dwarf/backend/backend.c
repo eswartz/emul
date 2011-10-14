@@ -51,11 +51,8 @@ static unsigned reg_size = 0;
 static uint8_t frame_data[0x1000];
 static ContextAddress frame_addr = 0x40000000u;
 
-#define MAX_HEADERS 17
 static const char * elf_file_name = NULL;
-static ELF_PHeader elf_headers[MAX_HEADERS];
-static int elf_headers_cnt = 0;
-static int elf_headers_pos = 0;
+static int mem_region_pos = 0;
 static ContextAddress pc = 0;
 static unsigned pass_cnt = 0;
 static int test_posted = 0;
@@ -133,7 +130,8 @@ int context_get_memory_map(Context * ctx, MemoryMap * map) {
         }
         r = map->regions + map->region_cnt++;
         *r = mem_map.regions[i];
-        r->file_name = loc_strdup(r->file_name);
+        if (r->file_name) r->file_name = loc_strdup(r->file_name);
+        if (r->sect_name) r->sect_name = loc_strdup(r->sect_name);
     }
     return 0;
 }
@@ -280,24 +278,38 @@ static void next_pc(void) {
     struct timespec time_now;
     Trap trap;
     int test_cnt = 0;
+    int loaded = mem_region_pos < 0;
 
     for (;;) {
-        if (elf_headers_pos < 0) {
-            elf_headers_pos = 0;
-            pc = elf_headers[0].address;
+        if (mem_region_pos < 0) {
+            mem_region_pos = 0;
+            pc = mem_map.regions[mem_region_pos].addr;
         }
-        else if (pc + 5 < elf_headers[elf_headers_pos].address + elf_headers[elf_headers_pos].file_size) {
+        else if (pc + 5 < mem_map.regions[mem_region_pos].addr + mem_map.regions[mem_region_pos].size) {
             pc += 5;
         }
-        else if (elf_headers_pos + 1 < elf_headers_cnt) {
-            elf_headers_pos++;
-            pc = elf_headers[elf_headers_pos].address;
+        else if (mem_region_pos + 1 < (int)mem_map.region_cnt) {
+            mem_region_pos++;
+            pc = mem_map.regions[mem_region_pos].addr;
         }
         else {
-            elf_headers_pos++;
+            mem_region_pos++;
             pc = 0;
             print_time(time_start, test_cnt);
             return;
+        }
+
+        while ((mem_map.regions[mem_region_pos].flags & MM_FLAG_X) == 0) {
+            if (mem_region_pos + 1 < (int)mem_map.region_cnt) {
+                mem_region_pos++;
+                pc = mem_map.regions[mem_region_pos].addr;
+            }
+            else {
+                mem_region_pos++;
+                pc = 0;
+                print_time(time_start, test_cnt);
+                return;
+            }
         }
 
         set_regs_PC(elf_ctx, pc);
@@ -369,7 +381,7 @@ static void next_pc(void) {
         }
 
         test_cnt++;
-        if (elf_headers_pos == 0 && pc == elf_headers[0].address) {
+        if (loaded) {
             struct timespec time_diff;
             clock_gettime(CLOCK_REALTIME, &time_now);
             time_diff.tv_sec = time_now.tv_sec - time_start.tv_sec;
@@ -383,6 +395,7 @@ static void next_pc(void) {
             printf("load time: %ld.%06ld\n", (long)time_diff.tv_sec, time_diff.tv_nsec / 1000);
             fflush(stdout);
             time_start = time_now;
+            loaded = 0;
         }
         else if (test_cnt >= 100000) {
             print_time(time_start, test_cnt);
@@ -442,11 +455,45 @@ static void next_file(void) {
         r->file_name = loc_strdup(elf_file_name);
         r->file_offs = p->offset;
         r->size = p->file_size;
-        r->flags = MM_FLAG_R | MM_FLAG_W | MM_FLAG_X;
+        r->flags = MM_FLAG_R | MM_FLAG_W;
+        if (p->flags & PF_X) r->flags |= MM_FLAG_X;
         r->dev = st.st_dev;
         r->ino = st.st_ino;
     }
+    if (mem_map.region_cnt == 0) {
+        for (j = 0; j < f->section_cnt; j++) {
+            ELF_Section * sec = f->sections + j;
+            if (sec->size == 0) continue;
+            if (sec->name == NULL) continue;
+            if (strcmp(sec->name, ".text") == 0 ||
+                strcmp(sec->name, ".data") == 0 ||
+                strcmp(sec->name, ".bss") == 0) {
+                MemoryRegion * r = NULL;
+                if (mem_map.region_cnt >= mem_map.region_max) {
+                    mem_map.region_max += 8;
+                    mem_map.regions = (MemoryRegion *)loc_realloc(mem_map.regions, sizeof(MemoryRegion) * mem_map.region_max);
+                }
+                r = mem_map.regions + mem_map.region_cnt++;
+                memset(r, 0, sizeof(MemoryRegion));
+                r->addr = sec->addr + 0x10000;
+                r->size = sec->size;
+                r->file_offs = sec->offset;
+                r->bss = strcmp(sec->name, ".bss") == 0;
+                r->dev = st.st_dev;
+                r->ino = st.st_ino;
+                r->file_name = loc_strdup(elf_file_name);
+                r->sect_name = loc_strdup(sec->name);
+                r->flags = MM_FLAG_R | MM_FLAG_W;
+                if (strcmp(sec->name, ".text") == 0) r->flags |= MM_FLAG_X;
+            }
+        }
+    }
+    if (mem_map.region_cnt == 0) {
+        printf("File has no program headers.\n");
+        exit(1);
+    }
     memory_map_event_module_loaded(elf_ctx);
+    mem_region_pos = -1;
 
     reg_size = 0;
     memset(reg_defs, 0, sizeof(reg_defs));
@@ -464,15 +511,6 @@ static void next_file(void) {
         reg_size += r->size;
     }
 
-    elf_headers_pos = -1;
-    elf_headers_cnt = 0;
-    for (j = 0; j < f->pheader_cnt && elf_headers_cnt < MAX_HEADERS; j++) {
-        ELF_PHeader * p = f->pheaders + j;
-        if (p->type != PT_LOAD) continue;
-        if ((p->flags & PF_X) == 0) continue;
-        elf_headers[elf_headers_cnt++] = *p;
-    }
-
     pc = 0;
     pass_cnt++;
 
@@ -483,7 +521,7 @@ static void next_file(void) {
 static void test(void * args) {
     assert(test_posted);
     test_posted = 0;
-    if (elf_file_name == NULL || elf_headers_pos >= elf_headers_cnt) {
+    if (elf_file_name == NULL || mem_region_pos >= (int)mem_map.region_cnt) {
         next_file();
     }
     else {
