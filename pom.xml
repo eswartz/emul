@@ -72,6 +72,8 @@
 	  <module>target_explorer/plugins/org.eclipse.tm.te.tcf.log.core</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.tcf.processes.core</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.tcf.processes.ui</module>
+	  <module>target_explorer/plugins/org.eclipse.tm.te.tcf.terminals.core</module>
+	  <module>target_explorer/plugins/org.eclipse.tm.te.tcf.terminals.ui</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.tcf.ui</module>
 
 	  <module>target_explorer/features/org.eclipse.tm.te.feature</module>

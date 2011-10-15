@@ -108,6 +108,10 @@ tests/test-dwarf/*.ncb
 /target_explorer/plugins/org.eclipse.tm.te.tcf.processes.core/bin
 /target_explorer/plugins/org.eclipse.tm.te.tcf.processes.ui/target
 /target_explorer/plugins/org.eclipse.tm.te.tcf.processes.ui/bin
+/target_explorer/plugins/org.eclipse.tm.te.tcf.terminals.core/target
+/target_explorer/plugins/org.eclipse.tm.te.tcf.terminals.core/bin
+/target_explorer/plugins/org.eclipse.tm.te.tcf.terminals.ui/target
+/target_explorer/plugins/org.eclipse.tm.te.tcf.terminals.ui/bin
 /target_explorer/plugins/org.eclipse.tm.te.tcf.ui/target
 /target_explorer/plugins/org.eclipse.tm.te.tcf.ui/bin
 /target_explorer/plugins/org.eclipse.tm.te.tests/target

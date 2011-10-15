@@ -26,6 +26,10 @@
       <import plugin="org.eclipse.ui.ide" version="3.7.0" match="greaterOrEqual"/>
       <import plugin="org.eclipse.core.expressions" version="3.4.300" match="greaterOrEqual"/>
       <import feature="org.eclipse.tm.tcf.feature" version="0.5.0" match="greaterOrEqual"/>
+      <import feature="org.eclipse.tm.te.feature" version="1.0.0" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.compare" version="3.5.200" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.text" version="3.5.100" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.ui.workbench.texteditor" version="3.7.0" match="greaterOrEqual"/>
    </requires>
 
    <plugin
@@ -71,11 +75,24 @@
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.tm.te.tcf.ui"
+         id="org.eclipse.tm.te.tcf.terminals.core"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
 
+   <plugin
+         id="org.eclipse.tm.te.tcf.terminals.ui"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.tm.te.tcf.ui"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
 
 </feature>

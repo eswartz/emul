@@ -23,11 +23,11 @@
       <import plugin="org.eclipse.ui" version="3.7.0" match="greaterOrEqual"/>
       <import plugin="org.eclipse.ui.forms" version="3.5.100" match="greaterOrEqual"/>
       <import plugin="org.eclipse.help" version="3.5.100" match="greaterOrEqual"/>
-      <import plugin="org.eclipse.tm.terminal" version="3.1.1" match="greaterOrEqual"/>
-      <import plugin="org.eclipse.ui.navigator" version="3.5.100" match="greaterOrEqual"/>
       <import plugin="org.eclipse.ui.ide" version="3.7.0" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.tm.terminal" version="3.1.1" match="greaterOrEqual"/>
       <import plugin="org.eclipse.tm.terminal.telnet" version="2.1.0" match="greaterOrEqual"/>
       <import plugin="org.eclipse.tm.terminal.view" version="2.2.0" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.ui.navigator" version="3.5.100" match="greaterOrEqual"/>
    </requires>
 
    <plugin
