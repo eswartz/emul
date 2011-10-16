@@ -8,6 +8,7 @@ package v9t9.emulator.common;
 
 import java.io.IOException;
 import java.text.MessageFormat;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Timer;
@@ -111,7 +112,7 @@ abstract public class Machine {
     	
     	this.machineModel = machineModel;
     	
-    	runnableList = new LinkedList<Runnable>();
+    	runnableList = Collections.synchronizedList(new LinkedList<Runnable>());
     	this.memoryModel = machineModel.getMemoryModel();
     	this.memory = memoryModel.createMemory();
     	this.console = memoryModel.getConsole();
@@ -311,13 +312,11 @@ abstract public class Machine {
         	@Override
         	public void run() {
     	        while (Machine.this.isAlive()) {
-    	        	synchronized (runnableList) {
-	            		Runnable runnable;
-	            		while (runnableList.size() > 0) {
-	            			runnable = runnableList.remove(0);
-	            			runnable.run();
-	            		}
-					}
+            		Runnable runnable;
+            		while (runnableList.size() > 0) {
+            			runnable = runnableList.remove(0);
+            			runnable.run();
+            		}
 	            	
     	        	
     	        	// delay if going too fast
@@ -558,9 +557,7 @@ abstract public class Machine {
 	}
 
 	public void asyncExec(Runnable runnable) {
-		synchronized (runnableList) {
-			runnableList.add(runnable);
-		}
+		runnableList.add(runnable);
 		//synchronized (executionLock) {
 		//	executionLock.notifyAll();
 		//}
