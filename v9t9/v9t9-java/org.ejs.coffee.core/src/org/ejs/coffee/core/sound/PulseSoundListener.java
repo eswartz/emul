@@ -19,7 +19,7 @@ import com.sun.jna.ptr.IntByReference;
  */
 public class PulseSoundListener implements ISoundListener {
 
-	private PulseAudioLibrary.pa_simple simple;
+	private volatile PulseAudioLibrary.pa_simple simple;
 	private PulseAudioLibrary.pa_sample_spec sampleFormat;
 	private AudioFormat soundFormat;
 
@@ -37,9 +37,10 @@ public class PulseSoundListener implements ISoundListener {
 	 * @see org.ejs.chiprocksynth.SoundListener#stopped()
 	 */
 	public synchronized void stopped() {
-		waitUntilSilent();
 		
 		if (simple != null) {
+			IntByReference error = new IntByReference();
+			PulseAudioLibrary.INSTANCE.pa_simple_flush(simple, error);
 			PulseAudioLibrary.INSTANCE.pa_simple_free(simple);
 			simple = null;
 		}

@@ -64,6 +64,7 @@ public interface PulseAudioLibrary extends Library {
 	void pa_simple_free(PulseAudioLibrary.pa_simple simple);
 
 	void pa_simple_drain(PulseAudioLibrary.pa_simple simple, IntByReference error);
+	void pa_simple_flush(PulseAudioLibrary.pa_simple simple, IntByReference error);
 	
 	String pa_strerror(int error);
 }
