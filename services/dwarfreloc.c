@@ -41,19 +41,12 @@ static U8_T sym_value = 0;
 static void * data_buf = NULL;
 static size_t data_size = 0;
 
-#define elf_relocate elf_relocate_i386
-#include <machine/i386/elf-mdep.h>
-#undef elf_relocate
-
 typedef struct ElfRelocateFunc {
     int machine;
     void (*func)(void);
 } ElfRelocateFunc;
 
-static ElfRelocateFunc elf_relocate_funcs[] = {
-    { EM_386, elf_relocate_i386 },
-    { EM_NONE, NULL }
-};
+#include <machine/elf-mdep.h>
 
 static void relocate(void * r) {
     ElfRelocateFunc * func;
