@@ -100,7 +100,7 @@ public class TerminalsLauncher extends PlatformObject implements ITerminalsLaunc
 	 */
 	@Override
 	public void dispose() {
-		// Unlink the process context
+		// Unlink the terminal context
 		terminalContext = null;
 
 		// Store a final reference to the channel instance
@@ -144,7 +144,7 @@ public class TerminalsLauncher extends PlatformObject implements ITerminalsLaunc
 				((TerminalsListener)terminalsListener).dispose(new AsyncCallbackCollector.SimpleCollectorCallback(collector));
 			}
 			terminalsListener = null;
-			// Remove the terminals listener from the processes service
+			// Remove the terminals listener from the terminals service
 			getSvcTerminals().removeListener(terminalsListener);
 		}
 
@@ -209,8 +209,8 @@ public class TerminalsLauncher extends PlatformObject implements ITerminalsLaunc
 			getSvcTerminals().getContext(context.getID(), new ITerminals.DoneGetContext() {
 				@Override
 				public void doneGetContext(IToken token, Exception error, TerminalContext context) {
-					// In case there is no error and we do get back an process context,
-					// the process must be still running, having ignored the SIGTERM.
+					// In case there is no error and we do get back an terminal context,
+					// the terminal must be still running, having ignored the exit.
 					if (error == null && context != null && context.getID().equals(finContext.getID())) {
 						String message = NLS.bind(Messages.TerminalsLauncher_error_terminalExitFailed, context.getProcessID());
 						message += Messages.TerminalsLauncher_error_possibleCauseUnknown;
@@ -249,7 +249,7 @@ public class TerminalsLauncher extends PlatformObject implements ITerminalsLaunc
 			this.callback = callback;
 		}
 
-		// Remember the process properties
+		// Remember the terminal properties
 		this.properties = properties;
 
 		// Open a channel to the given peer
@@ -334,10 +334,10 @@ public class TerminalsLauncher extends PlatformObject implements ITerminalsLaunc
 	}
 
 	/**
-	 * Executes the launch of the remote process.
+	 * Executes the launch of the remote terminal.
 	 */
 	protected void executeLaunch() {
-		// Get the process properties container
+		// Get the properties container
 		final IPropertiesContainer properties = getProperties();
 		if (properties == null) {
 			// This is an illegal argument. Properties must be set
@@ -384,7 +384,7 @@ public class TerminalsLauncher extends PlatformObject implements ITerminalsLaunc
 	 * Called from {@link IStreams#subscribe(String, org.eclipse.tm.tcf.services.IStreams.StreamsListener, org.eclipse.tm.tcf.services.IStreams.DoneSubscribe)}.
 	 */
 	protected void onSubscribeStreamsDone() {
-		// Get the process properties container
+		// Get the properties container
 		IPropertiesContainer properties = getProperties();
 		if (properties == null) {
 			// This is an illegal argument. Properties must be set
@@ -424,7 +424,7 @@ public class TerminalsLauncher extends PlatformObject implements ITerminalsLaunc
 			props.setProperty(ITerminalsConnectorConstants.PROP_LOCAL_ECHO, properties.getBooleanProperty(ITerminalsConnectorConstants.PROP_LOCAL_ECHO));
 			props.setProperty(ITerminalsConnectorConstants.PROP_LINE_SEPARATOR, properties.getStringProperty(ITerminalsConnectorConstants.PROP_LINE_SEPARATOR));
 
-			// The custom data object is the process launcher itself
+			// The custom data object is the terminal launcher itself
 			props.setProperty(ITerminalsConnectorConstants.PROP_DATA, this);
 
 			// Open the console
@@ -457,7 +457,7 @@ public class TerminalsLauncher extends PlatformObject implements ITerminalsLaunc
 			}
 		}
 
-		// Launch the process
+		// Launch the terminal
 		onAttachStreamsDone();
 	}
 
@@ -566,12 +566,12 @@ public class TerminalsLauncher extends PlatformObject implements ITerminalsLaunc
 	}
 
 	/**
-	 * Initiate the process launch.
+	 * Initiate the terminal launch.
 	 * <p>
 	 * Called from {@link #executeLaunch()} or {@link #onAttachStreamsDone()}.
 	 */
 	protected void onAttachStreamsDone() {
-		// Get the process properties container
+		// Get the properties container
 		final IPropertiesContainer properties = getProperties();
 		if (properties == null) {
 			// This is an illegal argument. Properties must be set
@@ -582,7 +582,7 @@ public class TerminalsLauncher extends PlatformObject implements ITerminalsLaunc
 			return;
 		}
 
-		// Create the process listener
+		// Create the terminal listener
 		terminalsListener = createTerminalsListener();
 		if (terminalsListener != null) {
 			getSvcTerminals().addListener(terminalsListener);
@@ -593,7 +593,7 @@ public class TerminalsLauncher extends PlatformObject implements ITerminalsLaunc
 		String encoding = properties.getStringProperty(ITerminalsLauncher.PROP_TERMINAL_ENCODING);
 		Map<String, String> env = (Map<String, String>)properties.getProperty(ITerminalsLauncher.PROP_TERMINAL_ENV);
 
-		// Launch the remote process
+		// Launch the remote terminal
 		getSvcTerminals().launch(type, encoding, makeEnvironmentArray(env), new ITerminals.DoneLaunch() {
 			@Override
 			public void doneLaunch(IToken token, Exception error, ITerminals.TerminalContext terminal) {
@@ -621,22 +621,22 @@ public class TerminalsLauncher extends PlatformObject implements ITerminalsLaunc
 	 * @param terminal The terminals context or <code>null</code>.
 	 */
 	protected void onTerminalLaunchDone(ITerminals.TerminalContext terminal) {
-		// Register the process context with the listeners
+		// Register the terminal context with the listeners
 		if (terminal != null) {
 			if (CoreBundleActivator.getTraceHandler().isSlotEnabled(0, ITraceIds.TRACE_TERMINALS_LAUNCHER)) {
 				CoreBundleActivator.getTraceHandler().trace("Terminal context created: id='" + terminal.getID() + "', PTY type='" + terminal.getPtyType() + "'", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 								0, ITraceIds.TRACE_TERMINALS_LAUNCHER, IStatus.INFO, getClass());
 			}
 
-			// Remember the process context
+			// Remember the terminal context
 			terminalContext = terminal;
 
 			// Push the terminals context to the listeners
 			if (getStreamsListener() instanceof ITerminalsContextAwareListener) {
 				((ITerminalsContextAwareListener)getStreamsListener()).setTerminalsContext(terminal);
 			}
-			if (getProcessesListener() instanceof ITerminalsContextAwareListener) {
-				((ITerminalsContextAwareListener)getProcessesListener()).setTerminalsContext(terminal);
+			if (getTerminalsListener() instanceof ITerminalsContextAwareListener) {
+				((ITerminalsContextAwareListener)getTerminalsListener()).setTerminalsContext(terminal);
 			}
 
 			// Send a notification
@@ -656,7 +656,7 @@ public class TerminalsLauncher extends PlatformObject implements ITerminalsLaunc
 	 */
 	protected TerminalsStateChangeEvent createRemoteTerminalsStateChangeEvent(ITerminals.TerminalContext context) {
 		Assert.isNotNull(context);
-		return new TerminalsStateChangeEvent(context, TerminalsStateChangeEvent.EVENT_PROCESS_CREATED, Boolean.FALSE, Boolean.TRUE, -1);
+		return new TerminalsStateChangeEvent(context, TerminalsStateChangeEvent.EVENT_TERMINAL_CREATED, Boolean.FALSE, Boolean.TRUE, -1);
 	}
 
 	/**
@@ -667,7 +667,7 @@ public class TerminalsLauncher extends PlatformObject implements ITerminalsLaunc
 	 * @param result The result object or <code>null</code>.
 	 */
 	protected void invokeCallback(IStatus status, Object result) {
-		// Dispose the process launcher if we report an error
+		// Dispose the terminal launcher if we report an error
 		if (status.getSeverity() == IStatus.ERROR) {
 			dispose();
 		}
@@ -757,7 +757,7 @@ public class TerminalsLauncher extends PlatformObject implements ITerminalsLaunc
 	 *
 	 * @return The terminals listener instance or <code>null</code> if none.
 	 */
-	protected final ITerminals.TerminalsListener getProcessesListener() {
+	protected final ITerminals.TerminalsListener getTerminalsListener() {
 		return terminalsListener;
 	}
 

@@ -20,12 +20,12 @@ public class TerminalsStateChangeEvent extends ChangeEvent {
 	/**
 	 * Event id signaling if a remote terminal got created.
 	 */
-	public static final String EVENT_PROCESS_CREATED = "created"; //$NON-NLS-1$
+	public static final String EVENT_TERMINAL_CREATED = "created"; //$NON-NLS-1$
 
 	/**
 	 * Event id signaling if a remote terminal terminated.
 	 */
-	public static final String EVENT_PROCESS_TERMINATED = "terminated"; //$NON-NLS-1$
+	public static final String EVENT_TERMINAL_TERMINATED = "terminated"; //$NON-NLS-1$
 
 	/**
 	 * Event id signaling that the communication with the terminal got lost, probably because of a
@@ -65,7 +65,7 @@ public class TerminalsStateChangeEvent extends ChangeEvent {
 
 	/**
 	 * Returns the remote process exit code. The exit code is only applicable if the set event id is
-	 * {@link #EVENT_PROCESS_TERMINATED}.
+	 * {@link #EVENT_TERMINAL_TERMINATED}.
 	 *
 	 * @return The remote process exit code or <code>-1</code> if not applicable.
 	 */

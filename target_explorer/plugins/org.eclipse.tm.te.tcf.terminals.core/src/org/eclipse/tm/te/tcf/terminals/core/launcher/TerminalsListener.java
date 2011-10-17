@@ -124,7 +124,7 @@ public class TerminalsListener implements ITerminals.TerminalsListener, ITermina
 	 */
 	protected TerminalsStateChangeEvent createRemoteTerminalStateChangeEvent(ITerminals.TerminalContext context, int exitCode) {
 		Assert.isNotNull(context);
-		return new TerminalsStateChangeEvent(context, TerminalsStateChangeEvent.EVENT_PROCESS_TERMINATED, Boolean.FALSE, Boolean.TRUE, exitCode);
+		return new TerminalsStateChangeEvent(context, TerminalsStateChangeEvent.EVENT_TERMINAL_TERMINATED, Boolean.FALSE, Boolean.TRUE, exitCode);
 	}
 
 	/* (non-Javadoc)
