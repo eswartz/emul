@@ -7,7 +7,7 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.tcf.processes.core.internal.tracing;
+package org.eclipse.tm.te.tcf.terminals.core.internal.tracing;
 
 /**
  * Core plug-in trace slot identifiers.
@@ -15,17 +15,17 @@ package org.eclipse.tm.te.tcf.processes.core.internal.tracing;
 public interface ITraceIds {
 
 	/**
-	 * If activated, tracing information about the remote process launcher is printed out.
+	 * If activated, tracing information about the remote terminals launcher is printed out.
 	 */
-	public static final String TRACE_PROCESS_LAUNCHER = "trace/processLauncher"; //$NON-NLS-1$
+	public static final String TRACE_TERMINALS_LAUNCHER = "trace/terminalsLauncher"; //$NON-NLS-1$
 
 	/**
-	 * If activated, tracing information about the remote processes listener is printed out.
+	 * If activated, tracing information about the remote terminals listener is printed out.
 	 */
-	public static final String TRACE_PROCESSES_LISTENER = "trace/processesListener"; //$NON-NLS-1$
+	public static final String TRACE_TERMINALS_LISTENER = "trace/terminalsListener"; //$NON-NLS-1$
 
 	/**
-	 * If activated, tracing information about the remote processes streams listener is printed out.
+	 * If activated, tracing information about the remote terminals streams listener is printed out.
 	 */
 	public static final String TRACE_STREAMS_LISTENER = "trace/streamsListener"; //$NON-NLS-1$
 }

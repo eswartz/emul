@@ -28,4 +28,21 @@ public class Messages extends NLS {
 	}
 
 	// **** Declare externalized string id's down here *****
+
+	public static String TerminalsLauncher_error_channelConnectFailed;
+	public static String TerminalsLauncher_error_channelNotConnected;
+	public static String TerminalsLauncher_error_missingProcessPath;
+	public static String TerminalsLauncher_error_missingRequiredService;
+	public static String TerminalsLauncher_error_illegalNullArgument;
+	public static String TerminalsLauncher_error_terminalLaunchFailed;
+	public static String TerminalsLauncher_error_terminalExitFailed;
+	public static String TerminalsLauncher_error_possibleCause;
+	public static String TerminalsLauncher_error_possibleCauseUnknown;
+	public static String TerminalsLauncher_cause_subscribeFailed;
+	public static String TerminalsLauncher_cause_startFailed;
+	public static String TerminalsLauncher_cause_ioexception;
+
+	public static String TerminalsStreamReaderRunnable_error_readFailed;
+	public static String TerminalsStreamWriterRunnable_error_writeFailed;
+	public static String TerminalsStreamReaderRunnable_error_appendFailed;
 }

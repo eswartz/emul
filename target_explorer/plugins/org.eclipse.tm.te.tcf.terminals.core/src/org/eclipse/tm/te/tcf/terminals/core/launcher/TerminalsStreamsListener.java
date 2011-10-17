@@ -7,7 +7,7 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.tcf.processes.core.launcher;
+package org.eclipse.tm.te.tcf.terminals.core.launcher;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -23,8 +23,9 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
-import org.eclipse.tm.tcf.services.IProcesses;
 import org.eclipse.tm.tcf.services.IStreams;
+import org.eclipse.tm.tcf.services.ITerminals;
+import org.eclipse.tm.tcf.services.ITerminals.TerminalContext;
 import org.eclipse.tm.tcf.util.TCFTask;
 import org.eclipse.tm.te.core.async.AsyncCallbackCollector;
 import org.eclipse.tm.te.runtime.callback.Callback;
@@ -32,19 +33,19 @@ import org.eclipse.tm.te.runtime.interfaces.callback.ICallback;
 import org.eclipse.tm.te.tcf.core.streams.StreamsDataProvider;
 import org.eclipse.tm.te.tcf.core.streams.StreamsDataReceiver;
 import org.eclipse.tm.te.tcf.core.utils.ExceptionUtils;
-import org.eclipse.tm.te.tcf.processes.core.activator.CoreBundleActivator;
-import org.eclipse.tm.te.tcf.processes.core.interfaces.launcher.IProcessContextAwareListener;
-import org.eclipse.tm.te.tcf.processes.core.internal.tracing.ITraceIds;
-import org.eclipse.tm.te.tcf.processes.core.nls.Messages;
+import org.eclipse.tm.te.tcf.terminals.core.activator.CoreBundleActivator;
+import org.eclipse.tm.te.tcf.terminals.core.interfaces.launcher.ITerminalsContextAwareListener;
+import org.eclipse.tm.te.tcf.terminals.core.internal.tracing.ITraceIds;
+import org.eclipse.tm.te.tcf.terminals.core.nls.Messages;
 
 /**
- * Remote process streams listener implementation.
+ * Remote terminal streams listener implementation.
  */
-public class ProcessStreamsListener implements IStreams.StreamsListener, IProcessContextAwareListener {
-	// The parent process launcher instance
-	private final ProcessLauncher parent;
-	// The remote process context
-	private IProcesses.ProcessContext context;
+public class TerminalsStreamsListener implements IStreams.StreamsListener, ITerminalsContextAwareListener {
+	// The parent terminals launcher instance
+	private final TerminalsLauncher parent;
+	// The remote terminal context
+	private ITerminals.TerminalContext context;
 	// The list of registered stream data receivers
 	private final List<StreamsDataReceiver> dataReceiver = new ArrayList<StreamsDataReceiver>();
 	// The stream data provider
@@ -127,8 +128,9 @@ public class ProcessStreamsListener implements IStreams.StreamsListener, IProces
 	}
 
 	/**
-	 * Remote process stream reader runnable implementation. The
-	 * runnable will be executed within a thread and is responsible to read the
+	 * Remote stream reader runnable implementation.
+	 * <p>
+	 * The runnable will be executed within a thread and is responsible to read the
 	 * incoming data from the associated stream and forward them to the registered receivers.
 	 */
 	protected class StreamReaderRunnable implements Runnable {
@@ -297,7 +299,7 @@ public class ProcessStreamsListener implements IStreams.StreamsListener, IProces
 					if (!(e instanceof CancellationException)) {
 						// Log the error to the user, might be something serious
 						IStatus status = new Status(IStatus.ERROR, CoreBundleActivator.getUniqueIdentifier(),
-													NLS.bind(Messages.ProcessStreamReaderRunnable_error_readFailed, streamId, e.getLocalizedMessage()),
+													NLS.bind(Messages.TerminalsStreamReaderRunnable_error_readFailed, streamId, e.getLocalizedMessage()),
 													e);
 						Platform.getLog(CoreBundleActivator.getContext().getBundle()).log(status);
 					}
@@ -389,7 +391,7 @@ public class ProcessStreamsListener implements IStreams.StreamsListener, IProces
 				} catch (IOException e) {
 					if (CoreBundleActivator.getTraceHandler().isSlotEnabled(1, null)) {
 						IStatus status = new Status(IStatus.WARNING, CoreBundleActivator.getUniqueIdentifier(),
-													NLS.bind(Messages.ProcessStreamReaderRunnable_error_appendFailed, streamId, data),
+													NLS.bind(Messages.TerminalsStreamReaderRunnable_error_appendFailed, streamId, data),
 													e);
 						Platform.getLog(CoreBundleActivator.getContext().getBundle()).log(status);
 					}
@@ -399,11 +401,12 @@ public class ProcessStreamsListener implements IStreams.StreamsListener, IProces
 	}
 
 	/**
-	 * Default TCF remote process stream writer runnable implementation. The
-	 * runnable will be executed within a thread and is responsible to read the
+	 * Remote stream writer runnable implementation.
+	 * <p>
+	 * The runnable will be executed within a thread and is responsible to read the
 	 * incoming data from the registered providers and forward them to the associated stream.
 	 */
-	protected class ProcessStreamWriterRunnable implements Runnable {
+	protected class StreamWriterRunnable implements Runnable {
 		// The associated stream id
 		private final String streamId;
 		// The associated stream type id
@@ -426,7 +429,7 @@ public class ProcessStreamsListener implements IStreams.StreamsListener, IProces
 		 * @param streamTypeId The associated stream type id. Must not be <code>null</code>.
 		 * @param provider The data provider. Must not be <code>null</code> and must be applicable for the stream type.
 		 */
-		public ProcessStreamWriterRunnable(String streamId, String streamTypeId, StreamsDataProvider provider) {
+		public StreamWriterRunnable(String streamId, String streamTypeId, StreamsDataProvider provider) {
 			Assert.isNotNull(streamId);
 			Assert.isNotNull(streamTypeId);
 			Assert.isNotNull(provider);
@@ -537,7 +540,7 @@ public class ProcessStreamsListener implements IStreams.StreamsListener, IProces
 					if (!(e instanceof CancellationException)) {
 						// Log the error to the user, might be something serious
 						IStatus status = new Status(IStatus.ERROR, CoreBundleActivator.getUniqueIdentifier(),
-													NLS.bind(Messages.ProcessStreamWriterRunnable_error_writeFailed, streamId, e.getLocalizedMessage()),
+													NLS.bind(Messages.TerminalsStreamWriterRunnable_error_writeFailed, streamId, e.getLocalizedMessage()),
 													e);
 						Platform.getLog(CoreBundleActivator.getContext().getBundle()).log(status);
 					}
@@ -614,19 +617,19 @@ public class ProcessStreamsListener implements IStreams.StreamsListener, IProces
 	/**
 	 * Constructor.
 	 *
-	 * @param parent The parent process launcher instance. Must not be <code>null</code>
+	 * @param parent The parent terminals launcher instance. Must not be <code>null</code>
 	 */
-	public ProcessStreamsListener(ProcessLauncher parent) {
+	public TerminalsStreamsListener(TerminalsLauncher parent) {
 		Assert.isNotNull(parent);
 		this.parent = parent;
 	}
 
 	/**
-	 * Returns the parent process launcher instance.
+	 * Returns the parent terminals launcher instance.
 	 *
-	 * @return The parent process launcher instance.
+	 * @return The parent terminals launcher instance.
 	 */
-	protected final ProcessLauncher getParent() {
+	protected final TerminalsLauncher getParent() {
 		return parent;
 	}
 
@@ -656,7 +659,7 @@ public class ProcessStreamsListener implements IStreams.StreamsListener, IProces
 				// Get the service instance from the parent
 				IStreams svcStreams = getParent().getSvcStreams();
 				// Unsubscribe the streams listener from the service
-				svcStreams.unsubscribe(IProcesses.NAME, finStreamsListener, new IStreams.DoneUnsubscribe() {
+				svcStreams.unsubscribe(ITerminals.NAME, finStreamsListener, new IStreams.DoneUnsubscribe() {
 					@Override
                     public void doneUnsubscribe(IToken token, Exception error) {
 						// Loop all registered listeners and close them
@@ -725,15 +728,15 @@ public class ProcessStreamsListener implements IStreams.StreamsListener, IProces
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.tcf.processes.core.interfaces.launcher.IProcessContextAwareListener#setProcessContext(org.eclipse.tm.tcf.services.IProcesses.ProcessContext)
+	 * @see org.eclipse.tm.te.tcf.terminals.core.interfaces.launcher.ITerminalsContextAwareListener#setTerminalsContext(org.eclipse.tm.tcf.services.ITerminals.TerminalContext)
 	 */
 	@Override
-    public void setProcessContext(IProcesses.ProcessContext context) {
+	public void setTerminalsContext(TerminalContext context) {
 		Assert.isNotNull(context);
 		this.context = context;
 
 		if (CoreBundleActivator.getTraceHandler().isSlotEnabled(0, ITraceIds.TRACE_STREAMS_LISTENER)) {
-			CoreBundleActivator.getTraceHandler().trace("Process context set to: id='" + context.getID() + "', name='" + context.getName() + "'", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+			CoreBundleActivator.getTraceHandler().trace("Terminals context set to: id='" + context.getID() + "', PTY type='" + context.getPtyType() + "'", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 			                                            0, ITraceIds.TRACE_STREAMS_LISTENER,
 			                                            IStatus.INFO, getClass());
 		}
@@ -754,10 +757,10 @@ public class ProcessStreamsListener implements IStreams.StreamsListener, IProces
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.tcf.processes.core.interfaces.launcher.IProcessContextAwareListener#getProcessContext()
+	 * @see org.eclipse.tm.te.tcf.terminals.core.interfaces.launcher.ITerminalsContextAwareListener#getTerminalsContext()
 	 */
 	@Override
-    public IProcesses.ProcessContext getProcessContext() {
+	public TerminalContext getTerminalsContext() {
 		return context;
 	}
 
@@ -766,18 +769,18 @@ public class ProcessStreamsListener implements IStreams.StreamsListener, IProces
 	 */
 	@Override
     public void created(String streamType, String streamId, String contextId) {
-		// We ignore any other stream type than IProcesses.NAME
-		if (!IProcesses.NAME.equals(streamType)) return;
+		// We ignore any other stream type than ITerminals.NAME
+		if (!ITerminals.NAME.equals(streamType)) return;
 
 		if (CoreBundleActivator.getTraceHandler().isSlotEnabled(0, ITraceIds.TRACE_STREAMS_LISTENER)) {
-			CoreBundleActivator.getTraceHandler().trace("New remote process stream created: streamId='" + streamId + "', contextId='" + contextId + "'", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+			CoreBundleActivator.getTraceHandler().trace("New remote terminals stream created: streamId='" + streamId + "', contextId='" + contextId + "'", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 			                                            0, ITraceIds.TRACE_STREAMS_LISTENER,
 			                                            IStatus.INFO, getClass());
 		}
 
-		// If a process context is set, check if the created event is for the
-		// monitored process context
-		final IProcesses.ProcessContext context = getProcessContext();
+		// If a terminals context is set, check if the created event is for the
+		// monitored terminals context
+		final ITerminals.TerminalContext context = getTerminalsContext();
 		// The contextId is null if used with an older TCF agent not sending the third parameter
 		if (context != null && (context.getID().equals(contextId) || contextId == null)) {
 			// Create a snapshot of the registered data receivers
@@ -785,41 +788,41 @@ public class ProcessStreamsListener implements IStreams.StreamsListener, IProces
 			synchronized (dataReceiver) {
 				receivers = dataReceiver.toArray(new StreamsDataReceiver[dataReceiver.size()]);
 			}
-			// The created event is for the monitored process context
+			// The created event is for the monitored terminals context
 			// --> Create the stream reader thread(s)
-			if (streamId != null && streamId.equals(context.getProperties().get(IProcesses.PROP_STDIN_ID))) {
+			if (streamId != null && streamId.equals(context.getProperties().get(ITerminals.PROP_STDIN_ID))) {
 				// Data provider set?
 				if (dataProvider != null) {
 					// Create the stdin stream writer runnable
-					ProcessStreamWriterRunnable runnable = new ProcessStreamWriterRunnable(streamId, IProcesses.PROP_STDIN_ID, dataProvider);
+					StreamWriterRunnable runnable = new StreamWriterRunnable(streamId, ITerminals.PROP_STDIN_ID, dataProvider);
 					// Add to the list of created runnable's
 					synchronized (runnables) { runnables.add(runnable); }
 					// And create and start the thread
-					Thread thread = new Thread(runnable, "Thread-" + IProcesses.PROP_STDIN_ID + "-" + streamId); //$NON-NLS-1$ //$NON-NLS-2$
+					Thread thread = new Thread(runnable, "Thread-" + ITerminals.PROP_STDIN_ID + "-" + streamId); //$NON-NLS-1$ //$NON-NLS-2$
 					thread.start();
 				}
 			}
-			if (streamId != null && streamId.equals(context.getProperties().get(IProcesses.PROP_STDOUT_ID))) {
+			if (streamId != null && streamId.equals(context.getProperties().get(ITerminals.PROP_STDOUT_ID))) {
 				// Create the stdout stream reader runnable
-				StreamReaderRunnable runnable = new StreamReaderRunnable(streamId, IProcesses.PROP_STDOUT_ID, receivers);
+				StreamReaderRunnable runnable = new StreamReaderRunnable(streamId, ITerminals.PROP_STDOUT_ID, receivers);
 				// If not empty, create the thread
 				if (!runnable.isEmpty()) {
 					// Add to the list of created runnable's
 					synchronized (runnables) { runnables.add(runnable); }
 					// And create and start the thread
-					Thread thread = new Thread(runnable, "Thread-" + IProcesses.PROP_STDOUT_ID + "-" + streamId); //$NON-NLS-1$ //$NON-NLS-2$
+					Thread thread = new Thread(runnable, "Thread-" + ITerminals.PROP_STDOUT_ID + "-" + streamId); //$NON-NLS-1$ //$NON-NLS-2$
 					thread.start();
 				}
 			}
-			if (streamId != null && streamId.equals(context.getProperties().get(IProcesses.PROP_STDERR_ID))) {
+			if (streamId != null && streamId.equals(context.getProperties().get(ITerminals.PROP_STDERR_ID))) {
 				// Create the stdout stream reader runnable
-				StreamReaderRunnable runnable = new StreamReaderRunnable(streamId, IProcesses.PROP_STDERR_ID, receivers);
+				StreamReaderRunnable runnable = new StreamReaderRunnable(streamId, ITerminals.PROP_STDERR_ID, receivers);
 				// If not empty, create the thread
 				if (!runnable.isEmpty()) {
 					// Add to the list of created runnable's
 					synchronized (runnables) { runnables.add(runnable); }
 					// And create and start the thread
-					Thread thread = new Thread(runnable, "Thread-" + IProcesses.PROP_STDERR_ID + "-" + streamId); //$NON-NLS-1$ //$NON-NLS-2$
+					Thread thread = new Thread(runnable, "Thread-" + ITerminals.PROP_STDERR_ID + "-" + streamId); //$NON-NLS-1$ //$NON-NLS-2$
 					thread.start();
 				}
 			}
@@ -837,11 +840,11 @@ public class ProcessStreamsListener implements IStreams.StreamsListener, IProces
 	 */
 	@Override
     public void disposed(String streamType, String streamId) {
-		// We ignore any other stream type than IProcesses.NAME
-		if (!IProcesses.NAME.equals(streamType)) return;
+		// We ignore any other stream type than ITerminals.NAME
+		if (!ITerminals.NAME.equals(streamType)) return;
 
 		if (CoreBundleActivator.getTraceHandler().isSlotEnabled(0, ITraceIds.TRACE_STREAMS_LISTENER)) {
-			CoreBundleActivator.getTraceHandler().trace("Remote process stream disposed: streamId='" + streamId + "'", //$NON-NLS-1$ //$NON-NLS-2$
+			CoreBundleActivator.getTraceHandler().trace("Remote terminals stream disposed: streamId='" + streamId + "'", //$NON-NLS-1$ //$NON-NLS-2$
 			                                            0, ITraceIds.TRACE_STREAMS_LISTENER,
 			                                            IStatus.INFO, getClass());
 		}

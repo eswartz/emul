@@ -7,10 +7,10 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.tcf.processes.core.launcher;
+package org.eclipse.tm.te.tcf.core.streams;
 
 import java.io.IOException;
-import java.io.Reader;
+import java.io.Writer;
 import java.util.Arrays;
 import java.util.List;
 
@@ -19,34 +19,34 @@ import org.eclipse.core.runtime.PlatformObject;
 import org.eclipse.tm.tcf.services.IProcesses;
 
 /**
- * Remote process streams data provider implementation.
+ * Remote context streams data receiver implementation.
  */
-public class ProcessStreamsDataProvider extends PlatformObject {
-	// The associated reader instance
-	private final Reader reader;
+public class StreamsDataReceiver extends PlatformObject {
+	// The associated writer instance
+	private final Writer writer;
 	// The list of applicable stream type id's
 	private final List<String> streamTypeIds;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param reader The reader instance. Must not be <code>null</code>.
+	 * @param writer The writer instance. Must not be <code>null</code>.
 	 * @param streamTypeIds The list of applicable stream type id's or <code>null</code>.
 	 *
 	 * @see IProcesses
 	 */
-	public ProcessStreamsDataProvider(Reader reader, String[] streamTypeIds) {
-		Assert.isNotNull(reader);
-		this.reader = reader;
+	public StreamsDataReceiver(Writer writer, String[] streamTypeIds) {
+		Assert.isNotNull(writer);
+		this.writer = writer;
 		this.streamTypeIds = streamTypeIds != null ? Arrays.asList(streamTypeIds) : null;
 	}
 
 	/**
-	 * Dispose the data provider instance.
+	 * Dispose the data receiver instance.
 	 */
 	public void dispose() {
 		try {
-			reader.close();
+			writer.close();
 		}
 		catch (IOException e) {
 			/* ignored on purpose */
@@ -54,20 +54,20 @@ public class ProcessStreamsDataProvider extends PlatformObject {
 	}
 
 	/**
-	 * Returns the associated reader instance.
+	 * Returns the associated writer instance.
 	 *
-	 * @return The associated reader instance.
+	 * @return The associated writer instance.
 	 */
-	public final Reader getReader() {
-		return reader;
+	public final Writer getWriter() {
+		return writer;
 	}
 
 	/**
 	 * Returns if or if not the given stream type id is applicable for this data receiver.
 	 *
 	 * @param streamTypeId The stream type id. Must not be <code>null</code>.
-	 * @return <code>True</code> if the given stream type id is applicable for this data receiver,
-	 *         <code>false</code> otherwise.
+	 * @return <code>True</code> if the given stream type id is applicable for this data receiver, <code>false</code>
+	 *         otherwise.
 	 */
 	public final boolean isApplicable(String streamTypeId) {
 		Assert.isNotNull(streamTypeId);
