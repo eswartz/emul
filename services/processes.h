@@ -26,6 +26,31 @@
 
 #include <framework/protocol.h>
 
+typedef struct ChildProcess ChildProcess;
+
+typedef struct ProcessStartParams {
+    char ** envp;
+    const char * dir;
+    const char * exe;
+    char ** args;
+    int attach;
+    int attach_children;
+    int use_terminal;
+    const char * service;
+    EventCallBack * exit_cb;
+    void * exit_args;
+} ProcessStartParams;
+
+extern int start_process(Channel * c, ProcessStartParams * params,
+                         int * selfattach, ChildProcess ** prs);
+
+extern const char * get_process_stream_id(ChildProcess * prs, int stream);
+extern int get_process_tty(ChildProcess * prs);
+extern int get_process_pid(ChildProcess * prs);
+extern int get_process_out_state(ChildProcess * prs);
+extern int get_process_exit_code(ChildProcess * prs);
+
+
 /*
  * Initialize process control service.
  */

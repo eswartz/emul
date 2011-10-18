@@ -74,7 +74,9 @@ static const char * PROCESSES[2] = { "Processes", "ProcessesV1" };
 #  include <dirent.h>
 #endif
 
-#define PIPE_SIZE 0x1000
+#define PBUF_SIZE 0x400
+#define PIPE_SIZE 0x400
+#define SBUF_SIZE 0x1000
 
 typedef struct AttachDoneArgs {
     Channel * c;
@@ -84,12 +86,17 @@ typedef struct AttachDoneArgs {
 typedef struct ChildProcess {
     LINK link;
     int pid;
+    int tty;
+    int got_output;
     TCFBroadcastGroup * bcg;
     struct ProcessInput * inp_struct;
     struct ProcessOutput * out_struct;
     struct ProcessOutput * err_struct;
     char name[256];
+    char service[256];
     long exit_code;
+    EventCallBack * exit_cb;
+    void * exit_args;
 } ChildProcess;
 
 typedef struct ProcessOutput {
@@ -98,7 +105,7 @@ typedef struct ProcessOutput {
     ChildProcess * prs;
     AsyncReqInfo req;
     int req_posted;
-    char buf[PIPE_SIZE];
+    char buf[PBUF_SIZE];
     size_t buf_pos;
     int eos;
     VirtualStream * vstream;
@@ -110,18 +117,12 @@ typedef struct ProcessInput {
     ChildProcess * prs;
     AsyncReqInfo req;
     int req_posted;
-    char buf[PIPE_SIZE];
+    char buf[PBUF_SIZE];
     size_t buf_pos;
     size_t buf_len;
     int eos;
     VirtualStream * vstream;
 } ProcessInput;
-
-typedef struct ProcessStartParams {
-    int attach;
-    int attach_children;
-    int use_terminal;
-} ProcessStartParams;
 
 #define link2prs(A)  ((ChildProcess *)((char *)(A) - offsetof(ChildProcess, link)))
 
@@ -739,6 +740,7 @@ static void process_exited(ChildProcess * prs) {
     }
     if (prs->out_struct) prs->out_struct->prs = NULL;
     if (prs->err_struct) prs->err_struct->prs = NULL;
+    if (prs->exit_cb) prs->exit_cb(prs->exit_args);
     loc_free(prs);
 #if defined(_WRS_KERNEL)
     semGive(prs_list_lock);
@@ -798,10 +800,16 @@ static ProcessInput * write_process_input(ChildProcess * prs, int fd) {
     inp->req.done = write_process_input_done;
     inp->req.type = AsyncReqWrite;
     inp->req.u.fio.fd = fd;
-    virtual_stream_create(PROCESSES[0], pid2id(prs->pid, 0), 0x1000, VS_ENABLE_REMOTE_WRITE,
+    virtual_stream_create(prs->service, pid2id(prs->pid, 0), SBUF_SIZE, VS_ENABLE_REMOTE_WRITE,
         process_input_streams_callback, inp, &inp->vstream);
     virtual_stream_get_id(inp->vstream, inp->id, sizeof(inp->id));
     return inp;
+}
+
+static void post_out_read_req(void * args) {
+    ProcessOutput * out = (ProcessOutput *)args;
+    assert(out->req_posted);
+    async_req_post(&out->req);
 }
 
 static void process_output_streams_callback(VirtualStream * stream, int event_code, void * args) {
@@ -823,7 +831,7 @@ static void process_output_streams_callback(VirtualStream * stream, int event_co
             err = 0;
         }
 
-        assert(buf_len <= (int)sizeof(out->buf));
+        assert((size_t)buf_len <= sizeof(out->buf));
         assert(out->buf_pos <= (size_t)buf_len);
         assert(out->req.u.fio.bufp == out->buf);
 #ifdef __linux__
@@ -835,13 +843,14 @@ static void process_output_streams_callback(VirtualStream * stream, int event_co
             size_t done = 0;
             virtual_stream_add_data(stream, out->buf + out->buf_pos, buf_len - out->buf_pos, &done, eos);
             out->buf_pos += done;
-            if (eos) out->eos = 1;
+            assert(out->buf_pos <= (size_t)buf_len);
+            if (out->buf_pos == (size_t)buf_len && eos) out->eos = 1;
         }
 
         if (out->buf_pos >= (size_t)buf_len) {
             if (!eos) {
                 out->req_posted = 1;
-                async_req_post(&out->req);
+                post_event_with_delay(post_out_read_req, out, 10000);
             }
             else if (virtual_stream_is_empty(stream)) {
                 if (out->prs != NULL) {
@@ -862,6 +871,7 @@ static void read_process_output_done(void * x) {
 
     out->buf_pos = 0;
     out->req_posted = 0;
+    if (out->prs && out->req.u.fio.rval > 0) out->prs->got_output = 1;
     process_output_streams_callback(out->vstream, 0, out);
 }
 
@@ -875,7 +885,7 @@ static ProcessOutput * read_process_output(ChildProcess * prs, int fd) {
     out->req.u.fio.bufp = out->buf;
     out->req.u.fio.bufsz = sizeof(out->buf);
     out->req.u.fio.fd = fd;
-    virtual_stream_create(PROCESSES[0], pid2id(prs->pid, 0), 0x1000, VS_ENABLE_REMOTE_READ,
+    virtual_stream_create(prs->service, pid2id(prs->pid, 0), SBUF_SIZE, VS_ENABLE_REMOTE_READ,
         process_output_streams_callback, out, &out->vstream);
     virtual_stream_get_id(out->vstream, out->id, sizeof(out->id));
     out->req_posted = 1;
@@ -885,8 +895,8 @@ static ProcessOutput * read_process_output(ChildProcess * prs, int fd) {
 
 #if defined(WIN32)
 
-static int start_process(Channel * c, char ** envp, char * dir, char * exe, char ** args, ProcessStartParams * params,
-                int * pid, int * selfattach, ChildProcess ** prs) {
+static int start_process_imp(Channel * c, char ** envp, const char * dir, const char * exe, char ** args,
+                  ProcessStartParams * params, int * selfattach, ChildProcess ** prs) {
     typedef struct _SYSTEM_HANDLE_INFORMATION {
         ULONG Count;
         struct HANDLE_INFORMATION {
@@ -903,6 +913,7 @@ static int start_process(Channel * c, char ** envp, char * dir, char * exe, char
     QuerySystemInformationTypedef QuerySystemInformationProc = (QuerySystemInformationTypedef)GetProcAddress(
         GetModuleHandle("NTDLL.DLL"), "NtQuerySystemInformation");
     DWORD size;
+    DWORD pid = 0;
     NTSTATUS status;
     SYSTEM_HANDLE_INFORMATION * hi = NULL;
     int fpipes[3][2];
@@ -930,7 +941,7 @@ static int start_process(Channel * c, char ** envp, char * dir, char * exe, char
             cmd[cmd_pos++] = (ch); \
         }
         while (args[i] != NULL) {
-            char * p = args[i++];
+            const char * p = args[i++];
             if (cmd_pos > 0) cmd_append(' ');
             cmd_append('"');
             while (*p) {
@@ -1002,12 +1013,12 @@ static int start_process(Channel * c, char ** envp, char * dir, char * exe, char
         si.hStdOutput = hpipes[1][1];
         si.hStdError  = hpipes[2][1];
         if (CreateProcess(exe, cmd, NULL, NULL, TRUE, (params->attach ? CREATE_SUSPENDED : 0),
-                (envp ? envp[0] : NULL), (dir[0] ? dir : NULL), &si, &prs_info) == 0)
+                (envp ? (LPVOID)envp[0] : NULL), dir, &si, &prs_info) == 0)
         {
             err = set_win32_errno(GetLastError());
         }
         else {
-            *pid = prs_info.dwProcessId;
+            pid = prs_info.dwProcessId;
             if (!CloseHandle(prs_info.hThread)) err = set_win32_errno(GetLastError());
             if (!CloseHandle(prs_info.hProcess)) err = set_win32_errno(GetLastError());
         }
@@ -1017,8 +1028,10 @@ static int start_process(Channel * c, char ** envp, char * dir, char * exe, char
     if (close(fpipes[2][1]) < 0 && !err) err = errno;
     if (!err) {
         *prs = (ChildProcess *)loc_alloc_zero(sizeof(ChildProcess));
-        (*prs)->pid = *pid;
+        (*prs)->pid = pid;
+        (*prs)->tty = -1;
         (*prs)->bcg = c->bcg;
+        strlcpy((*prs)->service, params->service, sizeof((*prs)->service));
         (*prs)->inp_struct = write_process_input(*prs, fpipes[0][1]);
         (*prs)->out_struct = read_process_output(*prs, fpipes[1][0]);
         (*prs)->err_struct = read_process_output(*prs, fpipes[2][0]);
@@ -1065,8 +1078,8 @@ static void task_delete_hook(WIND_TCB * tcb) {
     semGive(prs_list_lock);
 }
 
-static int start_process(Channel * c, char ** envp, char * dir, char * exe, char ** args, ProcessStartParams * params,
-                int * pid, int * selfattach, ChildProcess ** prs) {
+static int start_process_imp(Channel * c, char ** envp, const char * dir, const char * exe, char ** args,
+                  ProcessStartParams * params, int * selfattach, ChildProcess ** prs) {
     int err = 0;
     char * ptr;
     SYM_TYPE type;
@@ -1080,12 +1093,12 @@ static int start_process(Channel * c, char ** envp, char * dir, char * exe, char
         int i;
         int pipes[2][2];
         /* TODO: arguments, environment */
-        *pid = taskCreate("tTcf", 100, 0, 0x4000, (FUNCPTR)ptr, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+        int pid = taskCreate("tTcf", 100, 0, 0x4000, (FUNCPTR)ptr, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
         for (i = 0; i < 2; i++) {
             char pnm[32];
             char pnm_m[32];
             char pnm_s[32];
-            snprintf(pnm, sizeof(pnm), "/pty/tcf-%0*lx-%d", sizeof(*pid) * 2, *pid, i);
+            snprintf(pnm, sizeof(pnm), "/pty/tcf-%0*lx-%d", sizeof(pid) * 2, pid, i);
             snprintf(pnm_m, sizeof(pnm_m), "%sM", pnm);
             snprintf(pnm_s, sizeof(pnm_m), "%sS", pnm);
             if (ptyDevCreate(pnm, PIPE_SIZE, PIPE_SIZE) == ERROR) {
@@ -1100,28 +1113,30 @@ static int start_process(Channel * c, char ** envp, char * dir, char * exe, char
             }
         }
         if (err) {
-            taskDelete(*pid);
-            *pid = 0;
+            taskDelete(pid);
+            pid = 0;
         }
         else {
             semTake(prs_list_lock, WAIT_FOREVER);
-            ioTaskStdSet(*pid, 0, pipes[0][1]);
-            ioTaskStdSet(*pid, 1, pipes[0][1]);
-            ioTaskStdSet(*pid, 2, pipes[1][1]);
+            ioTaskStdSet(pid, 0, pipes[0][1]);
+            ioTaskStdSet(pid, 1, pipes[0][1]);
+            ioTaskStdSet(pid, 2, pipes[1][1]);
             *prs = loc_alloc_zero(sizeof(ChildProcess));
-            (*prs)->pid = *pid;
+            (*prs)->pid = pid;
+            (*prs)->tty = -1;
             (*prs)->bcg = c->bcg;
+            strlcpy((*prs)->service, params->service, sizeof((*prs)->service));
             (*prs)->inp_struct = write_process_input(*prs, pipes[0][0]);
             (*prs)->out_struct = read_process_output(*prs, pipes[0][0]);
             (*prs)->err_struct = read_process_output(*prs, pipes[1][0]);
             list_add_first(&(*prs)->link, &prs_list);
             if (params->attach) {
-                taskStop(*pid);
-                taskActivate(*pid);
-                assert(taskIsStopped(*pid));
+                taskStop(pid);
+                taskActivate(pid);
+                assert(taskIsStopped(pid));
             }
             else {
-                taskActivate(*pid);
+                taskActivate(pid);
             }
             semGive(prs_list_lock);
         }
@@ -1133,9 +1148,10 @@ static int start_process(Channel * c, char ** envp, char * dir, char * exe, char
 
 #else
 
-static int start_process(Channel * c, char ** envp, char * dir, char * exe, char ** args, ProcessStartParams * params,
-                int * pid, int * selfattach, ChildProcess ** prs) {
+static int start_process_imp(Channel * c, char ** envp, const char * dir, const char * exe, char ** args,
+                  ProcessStartParams * params, int * selfattach, ChildProcess ** prs) {
     int err = 0;
+    int pid = 0;
     if (!params->use_terminal) {
         int p_inp[2];
         int p_out[2];
@@ -1156,9 +1172,9 @@ static int start_process(Channel * c, char ** envp, char * dir, char * exe, char
         }
 
         if (!err) {
-            *pid = fork();
-            if (*pid < 0) err = errno;
-            if (*pid == 0) {
+            pid = fork();
+            if (pid < 0) err = errno;
+            if (pid == 0) {
                 int fd = -1;
                 int err = 0;
 
@@ -1173,6 +1189,7 @@ static int start_process(Channel * c, char ** envp, char * dir, char * exe, char
                     while (fd > 3) close(--fd);
                 }
                 if (!err && params->attach && context_attach_self() < 0) err = errno;
+                if (!err && params->dir != NULL && chdir(params->dir) < 0) err = errno;
                 if (!err) {
                     execve(exe, args, envp);
                     err = errno;
@@ -1188,8 +1205,10 @@ static int start_process(Channel * c, char ** envp, char * dir, char * exe, char
         }
         if (!err) {
             *prs = (ChildProcess *)loc_alloc_zero(sizeof(ChildProcess));
-            (*prs)->pid = *pid;
+            (*prs)->pid = pid;
+            (*prs)->tty = -1;
             (*prs)->bcg = c->bcg;
+            strlcpy((*prs)->service, params->service, sizeof((*prs)->service));
             (*prs)->inp_struct = write_process_input(*prs, p_inp[1]);
             (*prs)->out_struct = read_process_output(*prs, p_out[0]);
             (*prs)->err_struct = read_process_output(*prs, p_err[0]);
@@ -1208,9 +1227,9 @@ static int start_process(Channel * c, char ** envp, char * dir, char * exe, char
         if (!err && (fd_tty_slave = open(tty_slave_name, O_RDWR | O_NOCTTY)) < 0) err = errno;
 
         if (!err) {
-            *pid = fork();
-            if (*pid < 0) err = errno;
-            if (*pid == 0) {
+            pid = fork();
+            if (pid < 0) err = errno;
+            if (pid == 0) {
                 int fd = -1;
 
                 if (!err && setsid() < 0) err = errno;;
@@ -1228,6 +1247,7 @@ static int start_process(Channel * c, char ** envp, char * dir, char * exe, char
                 if (!err && (fd = sysconf(_SC_OPEN_MAX)) < 0) err = errno;
                 while (!err && fd > 3) close(--fd);
                 if (!err && params->attach && context_attach_self() < 0) err = errno;
+                if (!err && params->dir != NULL && chdir(params->dir) < 0) err = errno;
                 if (!err) {
                     execve(exe, args, envp);
                     err = errno;
@@ -1241,8 +1261,10 @@ static int start_process(Channel * c, char ** envp, char * dir, char * exe, char
         if (!err && (fd_tty_out = dup(fd_tty_master)) < 0) err = errno;
         if (!err) {
             *prs = (ChildProcess *)loc_alloc_zero(sizeof(ChildProcess));
-            (*prs)->pid = *pid;
+            (*prs)->pid = pid;
+            (*prs)->tty = fd_tty_master;
             (*prs)->bcg = c->bcg;
+            strlcpy((*prs)->service, params->service, sizeof((*prs)->service));
             (*prs)->inp_struct = write_process_input(*prs, fd_tty_master);
             (*prs)->out_struct = read_process_output(*prs, fd_tty_out);
             list_add_first(&(*prs)->link, &prs_list);
@@ -1262,6 +1284,48 @@ static int start_process(Channel * c, char ** envp, char * dir, char * exe, char
 
 #endif
 
+int start_process(Channel * c, ProcessStartParams * params, int * selfattach, ChildProcess ** prs) {
+    int res = start_process_imp(c, params->envp, params->dir, params->exe, params->args, params, selfattach, prs);
+    if (prs != NULL) {
+        if (!params->attach) add_waitpid_process((*prs)->pid);
+        strlcpy((*prs)->name, params->exe, sizeof((*prs)->name));
+        (*prs)->exit_args = params->exit_args;
+        (*prs)->exit_cb = params->exit_cb;
+    }
+    return res;
+}
+
+const char * get_process_stream_id(ChildProcess * prs, int stream) {
+    switch (stream) {
+    case 0:
+        if (prs->inp_struct == NULL) return NULL;
+        return prs->inp_struct->id;
+    case 1:
+        if (prs->out_struct == NULL) return NULL;
+        return prs->out_struct->id;
+    case 2:
+        if (prs->err_struct == NULL) return NULL;
+        return prs->err_struct->id;
+    }
+    return NULL;
+}
+
+int get_process_tty(ChildProcess * prs) {
+    return prs->tty;
+}
+
+int get_process_pid(ChildProcess * prs) {
+    return prs->pid;
+}
+
+int get_process_out_state(ChildProcess * prs) {
+    return prs->got_output;
+}
+
+int get_process_exit_code(ChildProcess * prs) {
+    return prs->exit_code;
+}
+
 static void read_start_params(InputStream * inp, const char * nm, void * arg) {
     ProcessStartParams * params = (ProcessStartParams *)arg;
     if (strcmp(nm, "Attach") == 0) params->attach = json_read_boolean(inp);
@@ -1271,13 +1335,8 @@ static void read_start_params(InputStream * inp, const char * nm, void * arg) {
 }
 
 static void command_start(char * token, Channel * c, void * x) {
-    int pid = 0;
     int err = 0;
     int version = *(int *)x;
-    char dir[FILE_PATH_SIZE];
-    char exe[FILE_PATH_SIZE];
-    char ** args = NULL;
-    char ** envp = NULL;
     int args_len = 0;
     int envp_len = 0;
     ProcessStartParams params;
@@ -1288,13 +1347,13 @@ static void command_start(char * token, Channel * c, void * x) {
 
     if (set_trap(&trap)) {
         memset(&params, 0, sizeof(params));
-        json_read_string(&c->inp, dir, sizeof(dir));
+        params.dir = json_read_alloc_string(&c->inp);
         if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-        json_read_string(&c->inp, exe, sizeof(exe));
+        params.exe = json_read_alloc_string(&c->inp);
         if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-        args = json_read_alloc_string_array(&c->inp, &args_len);
+        params.args = json_read_alloc_string_array(&c->inp, &args_len);
         if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
-        envp = json_read_alloc_string_array(&c->inp, &envp_len);
+        params.envp = json_read_alloc_string_array(&c->inp, &envp_len);
         if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
         if (version > 0 && (peek_stream(&c->inp) == '{' || peek_stream(&c->inp) == 'n')) {
             json_read_struct(&c->inp, read_start_params, &params);
@@ -1305,39 +1364,33 @@ static void command_start(char * token, Channel * c, void * x) {
         if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
         if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-        if (dir[0] != 0 && chdir(dir) < 0) err = errno;
-        if (err == 0 && start_process(c, envp, dir, exe, args, &params, &pid, &selfattach, &prs) < 0) err = errno;
-        if (prs != NULL) strlcpy(prs->name, exe, sizeof(prs->name));
-        if (!err) {
-            if (params.attach) {
-                int mode = 0;
-                AttachDoneArgs * data = (AttachDoneArgs *)loc_alloc_zero(sizeof *data);
-                data->c = c;
-                strcpy(data->token, token);
-                if (selfattach) mode |= CONTEXT_ATTACH_SELF;
-                if (params.attach_children) mode |= CONTEXT_ATTACH_CHILDREN;
-                pending = context_attach(pid, start_done, data, mode) == 0;
-                if (pending) {
-                    channel_lock(c);
-                }
-                else {
-                    err = errno;
-                    loc_free(data);
-                }
+        params.service = PROCESSES[version];
+        if (err == 0 && start_process(c, &params, &selfattach, &prs) < 0) err = errno;
+        if (!err && params.attach) {
+            int mode = 0;
+            AttachDoneArgs * data = (AttachDoneArgs *)loc_alloc_zero(sizeof *data);
+            data->c = c;
+            strcpy(data->token, token);
+            if (selfattach) mode |= CONTEXT_ATTACH_SELF;
+            if (params.attach_children) mode |= CONTEXT_ATTACH_CHILDREN;
+            pending = context_attach(prs->pid, start_done, data, mode) == 0;
+            if (pending) {
+                channel_lock(c);
             }
             else {
-                add_waitpid_process(pid);
+                err = errno;
+                loc_free(data);
             }
         }
         if (!pending) {
             write_stringz(&c->out, "R");
             write_stringz(&c->out, token);
             write_errno(&c->out, err);
-            if (err || pid == 0) {
+            if (err || prs->pid == 0) {
                 write_stringz(&c->out, "null");
             }
             else {
-                write_context(&c->out, pid);
+                write_context(&c->out, prs->pid);
                 write_stream(&c->out, 0);
             }
             write_stream(&c->out, MARKER_EOM);
@@ -1345,8 +1398,10 @@ static void command_start(char * token, Channel * c, void * x) {
         clear_trap(&trap);
     }
 
-    loc_free(args);
-    loc_free(envp);
+    loc_free(params.dir);
+    loc_free(params.exe);
+    loc_free(params.args);
+    loc_free(params.envp);
 
     if (trap.error) exception(trap.error);
 }
