@@ -4,6 +4,7 @@
 
 <!-- Extension points -->
    <extension-point id="connectorTypes" name="Terminal Connector Types" schema="schema/connectorTypes.exsd"/>
+   <extension-point id="launcherDelegates" name="Terminal Launcher Delegates" schema="schema/launcherDelegates.exsd"/>
 
 <!-- View contributions -->
    <extension point="org.eclipse.ui.views">
@@ -66,6 +67,39 @@
             id="org.eclipse.tm.te.ui.terminals.type.streams"
             label="%StreamsConnectorType.label">
       </connectorType>
+   </extension>
+
+<!-- Menu contributions -->
+   <extension point="org.eclipse.ui.menus">
+      <menuContribution locationURI="popup:org.eclipse.tm.te.ui.views.TargetExplorer#Popup?after=group.launch">
+         <command
+               commandId="org.eclipse.tm.te.ui.terminals.command.launch"
+               helpContextId="org.eclipse.tm.te.ui.terminals.command_Launch"
+               icon="platform:/plugin/org.eclipse.ui.console/icons/full/eview16/console_view.gif"
+               id="org.eclipse.tm.te.ui.terminals.commands.launch"
+               label="%command.launch.label"
+               style="push"
+               tooltip="%command.launch.tooltip">
+         </command>
+      </menuContribution>
+   </extension>
+
+<!-- Command contributions -->
+   <extension point="org.eclipse.ui.commands">
+      <command
+            categoryId="org.eclipse.tm.te.ui.commands.category"
+            helpContextId="org.eclipse.tm.te.ui.terminals.command_Launch"
+            id="org.eclipse.tm.te.ui.terminals.command.launch"
+            name="%command.launch.name">
+      </command>
+   </extension>
+
+<!-- Handler contributions -->
+   <extension point="org.eclipse.ui.handlers">
+      <handler
+            class="org.eclipse.tm.te.ui.terminals.internal.handler.LaunchTerminalCommandHandler"
+            commandId="org.eclipse.tm.te.ui.terminals.command.launch">
+      </handler>
    </extension>
 
 </plugin>

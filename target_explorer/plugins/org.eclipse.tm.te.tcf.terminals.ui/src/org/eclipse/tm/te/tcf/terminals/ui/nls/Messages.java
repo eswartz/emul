@@ -28,4 +28,8 @@ public class Messages extends NLS {
 	}
 
 	// **** Declare externalized string id's down here *****
+
+	public static String TerminalTypeControl_label;
+	public static String TerminalTypeControl_default_ansi;
+	public static String TerminalTypeControl_default_vt100;
 }

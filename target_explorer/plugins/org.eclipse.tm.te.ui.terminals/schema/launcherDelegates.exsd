@@ -3,12 +3,16 @@
 <schema targetNamespace="org.eclipse.tm.te.ui.terminals" xmlns="http://www.w3.org/2001/XMLSchema">
 <annotation>
       <appinfo>
-         <meta.schema plugin="org.eclipse.tm.te.ui.terminals" id="connectorTypes" name="Terminals Connector Types"/>
+         <meta.schema plugin="org.eclipse.tm.te.ui.terminals" id="launcherDelegates" name="Terminal Launcher Delegates"/>
       </appinfo>
       <documentation>
-         This extension point is used to contribute terminals connector types.
+         This extension point is used to contribute terminal launcher delegates.
+&lt;p&gt;
+Terminal launcher delegates contributes terminal settings widget to the &lt;code&gt;LaunchTerminalSettingsDialog&lt;/code&gt; required to open a remote terminal through a specific communication channel, like TCF or SSH.
       </documentation>
    </annotation>
+
+   <include schemaLocation="schema://org.eclipse.core.expressions/schema/expressionLanguage.exsd"/>
 
    <element name="extension">
       <annotation>
@@ -18,7 +22,7 @@
       </annotation>
       <complexType>
          <sequence>
-            <element ref="connectorType" minOccurs="1" maxOccurs="unbounded"/>
+            <element ref="delegate" minOccurs="1" maxOccurs="unbounded"/>
          </sequence>
          <attribute name="point" type="string" use="required">
             <annotation>
@@ -47,40 +51,41 @@
       </complexType>
    </element>
 
-   <element name="connectorType">
+   <element name="delegate">
       <annotation>
          <documentation>
-            Declares a Target Explorer terminal connector type contribution.
+            Declares a Target Explorer terminal launcher delegate contribution.
          </documentation>
       </annotation>
       <complexType>
          <sequence>
             <element ref="class" minOccurs="0" maxOccurs="1"/>
             <element ref="description" minOccurs="0" maxOccurs="1"/>
+            <element ref="enablement" minOccurs="0" maxOccurs="1"/>
          </sequence>
          <attribute name="id" type="string" use="required">
             <annotation>
                <documentation>
-                  The unique id of the terminal connector type contribution.
+                  The unique id of the terminal launcher delegate contribution.
                </documentation>
             </annotation>
          </attribute>
          <attribute name="label" type="string">
             <annotation>
                <documentation>
-                  The label representing the terminal connector type within the UI.
+                  The label representing the terminal launcher delegate within the UI.
                </documentation>
             </annotation>
          </attribute>
          <attribute name="class" type="string">
             <annotation>
                <documentation>
-                  The class that implements &lt;code&gt;org.eclipse.tm.te.ui.terminals.interfaces.IConnectorType&lt;/code&gt; or extends &lt;code&gt;org.eclipse.tm.te.ui.terminals.types.AbstractConnectorType&lt;/code&gt;.
+                  The class that implements &lt;code&gt;org.eclipse.tm.te.ui.terminals.interfaces.ILauncherDelegate&lt;/code&gt; or extends &lt;code&gt;org.eclipse.tm.te.ui.terminals.launcher.AbstractLauncherDelegate&lt;/code&gt;.
 &lt;p&gt;
-The terminal connector type implementation class must be specified either by the class attribute or the class child element!
+The terminal launcher delegate implementation class must be specified either by the class attribute or the class child element!
                </documentation>
                <appinfo>
-                  <meta.attribute kind="java" basedOn="org.eclipse.tm.te.ui.terminals.types.AbstractConnectorType:org.eclipse.tm.te.ui.terminals.interfaces.IConnectorType"/>
+                  <meta.attribute kind="java" basedOn="org.eclipse.tm.te.ui.terminals.launcher.AbstractLauncherDelegate:org.eclipse.tm.te.ui.terminals.interfaces.ILauncherDelegate"/>
                </appinfo>
             </annotation>
          </attribute>
@@ -108,12 +113,12 @@ The terminal connector type implementation class must be specified either by the
          <attribute name="class" type="string">
             <annotation>
                <documentation>
-                  The class that implements &lt;code&gt;org.eclipse.tm.te.ui.terminals.interfaces.IConnectorType&lt;/code&gt; or extends &lt;code&gt;org.eclipse.tm.te.ui.terminals.types.AbstractConnectorType&lt;/code&gt;.
+                  The class that implements &lt;code&gt;org.eclipse.tm.te.ui.terminals.interfaces.ILauncherDelegate&lt;/code&gt; or extends &lt;code&gt;org.eclipse.tm.te.ui.terminals.launcher.AbstractLauncherDelegate&lt;/code&gt;.
 &lt;p&gt;
-The terminal connector type implementation class must be specified either by the class attribute or the class child element!
+The terminal launcher delegate implementation class must be specified either by the class attribute or the class child element!
                </documentation>
                <appinfo>
-                  <meta.attribute kind="java" basedOn="org.eclipse.tm.te.ui.terminals.types.AbstractConnectorType:org.eclipse.tm.te.ui.terminals.interfaces.IConnectorType"/>
+                  <meta.attribute kind="java" basedOn="org.eclipse.tm.te.ui.terminals.launcher.AbstractLauncherDelegate:org.eclipse.tm.te.ui.terminals.interfaces.ILauncherDelegate"/>
                </appinfo>
             </annotation>
          </attribute>
@@ -161,12 +166,15 @@ The terminal connector type implementation class must be specified either by the
          This is an example of the extension point usage:
 &lt;p&gt;
 &lt;pre&gt;&lt;code&gt;
-  &lt;extension point=&quot;org.eclipse.tm.te.ui.terminals.connectorTypes&quot;&gt;
-      &lt;connectorType
-            id=&quot;org.eclipse.tm.te.ui.terminals.connector.telnet&quot;
-            class=&quot;org.eclipse.tm.te.ui.terminals.internal.TelnetConnectorType&quot;
-            label=&quot;Telnet Terminal Connector Type&quot;&gt;
-      &lt;/connectorType&gt;
+  &lt;extension point=&quot;org.eclipse.tm.te.ui.terminals.launcherDelegates&quot;&gt;
+      &lt;delegate
+            id=&quot;org.eclipse.tm.te.ui.terminals.launcher.tcf&quot;
+            class=&quot;org.eclipse.tm.te.tcf.terminals.ui.internal.TerminalLauncherDelegate&quot;
+            label=&quot;TCF Terminal&quot;&gt;
+            &lt;enablement&gt;
+               ...
+            &lt;/enablement&gt;
+      &lt;/delegate&gt;
    &lt;/extension&gt;
 &lt;/code&gt;&lt;/pre&gt;
       </documentation>
@@ -177,7 +185,7 @@ The terminal connector type implementation class must be specified either by the
          <meta.section type="apiinfo"/>
       </appinfo>
       <documentation>
-         The provider of a connector type must implement &lt;samp&gt;org.eclipse.tm.te.ui.terminals.interfaces.IConnectorType&lt;/samp&gt;.
+         The provider of a launcher delegate must implement &lt;samp&gt;org.eclipse.tm.te.ui.terminals.interfaces.ILauncherDelegate&lt;/samp&gt;.
       </documentation>
    </annotation>
 

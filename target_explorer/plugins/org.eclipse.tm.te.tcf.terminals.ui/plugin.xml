@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.eclipse.tm.te.ui.terminals.launcherDelegates">
+      <delegate
+            class="org.eclipse.tm.te.tcf.terminals.ui.launcher.LauncherDelegate"
+            id="org.eclipse.tm.te.ui.terminals.launcher.tcf"
+            label="%launcherDelegate.label">
+      </delegate>
+   </extension>
+
+</plugin>

@@ -14,3 +14,8 @@ Require-Bundle: org.eclipse.core.runtime;bundle-version="3.7.0",
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ActivationPolicy: lazy
 Bundle-Localization: plugin
+Export-Package: org.eclipse.tm.te.tcf.terminals.core.activator;x-internal:=true,
+ org.eclipse.tm.te.tcf.terminals.core.interfaces.launcher,
+ org.eclipse.tm.te.tcf.terminals.core.internal.tracing;x-internal:=true,
+ org.eclipse.tm.te.tcf.terminals.core.launcher,
+ org.eclipse.tm.te.tcf.terminals.core.nls;x-internal:=true

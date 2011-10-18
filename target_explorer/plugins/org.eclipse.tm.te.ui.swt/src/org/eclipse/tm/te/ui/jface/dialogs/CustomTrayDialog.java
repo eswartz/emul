@@ -9,6 +9,10 @@
  *******************************************************************************/
 package org.eclipse.tm.te.ui.jface.dialogs;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.dialogs.TrayDialog;
@@ -25,6 +29,7 @@ import org.eclipse.ui.PlatformUI;
  * Target Explorer: Custom tray dialog implementation.
  */
 public class CustomTrayDialog extends TrayDialog {
+	protected static final int comboHistoryLength = 10;
 	private String contextHelpId = null;
 
 	// the dialog storage
@@ -150,6 +155,67 @@ public class CustomTrayDialog extends TrayDialog {
 		if (layout == null || layout instanceof GridLayout) {
 			composite.setLayout(new GridLayout());
 		}
+	}
+
+	/**
+	 * Adds the given string to the given string array.
+	 *
+	 * @param history String array to add the given entry to it.
+	 * @param newEntry The new entry to add.
+	 * @return The updated string array containing the old array content plus the new entry.
+	 */
+	protected String[] addToHistory(String[] history, String newEntry) {
+		List<String> l = new ArrayList<String>(Arrays.asList(history));
+		addToHistory(l, newEntry);
+		String[] r = new String[l.size()];
+		l.toArray(r);
+		return r;
+	}
+
+	/**
+	 * Adds the given string to the given list.
+	 *
+	 * @param history List to add the given entry to it.
+	 * @param newEntry The new entry to add. Must not be <code>null</code>
+	 *
+	 * @return The updated list containing the old list content plus the new entry.
+	 */
+	protected void addToHistory(List<String> history, String newEntry) {
+		Assert.isNotNull(newEntry);
+
+		history.remove(newEntry);
+		history.add(0, newEntry);
+		// since only one new item was added, we can be over the limit
+		// by at most one item
+		if (history.size() > comboHistoryLength) {
+			history.remove(comboHistoryLength);
+		}
+	}
+
+	/**
+	 * Save current dialog widgets values.
+	 * Called by <code>okPressed</code>.
+	 */
+	protected void saveWidgetValues() {
+		return;
+	}
+
+	/**
+	 * Restore previous dialog widgets values.
+	 * Note: This method is not called automatically! You have
+	 *       to call this method at the appropriate time and place.
+	 */
+	protected void restoreWidgetValues() {
+		return;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.jface.dialogs.Dialog#okPressed()
+	 */
+	@Override
+	protected void okPressed() {
+		saveWidgetValues();
+		super.okPressed();
 	}
 
 	/**
