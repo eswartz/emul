@@ -7,6 +7,14 @@
             class="org.eclipse.tm.te.tcf.terminals.ui.launcher.LauncherDelegate"
             id="org.eclipse.tm.te.ui.terminals.launcher.tcf"
             label="%launcherDelegate.label">
+            <enablement>
+               <with variable="selection">
+                  <count value="1"/>
+                  <iterate operator="and" ifEmpty="false">
+                     <instanceof value="org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel"/>
+                  </iterate>
+               </with>
+            </enablement>
       </delegate>
    </extension>
 

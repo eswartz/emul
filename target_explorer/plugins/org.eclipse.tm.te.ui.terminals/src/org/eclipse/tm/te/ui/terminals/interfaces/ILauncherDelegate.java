@@ -9,6 +9,7 @@
  *******************************************************************************/
 package org.eclipse.tm.te.ui.terminals.interfaces;
 
+import org.eclipse.core.expressions.Expression;
 import org.eclipse.tm.te.runtime.interfaces.callback.ICallback;
 import org.eclipse.tm.te.runtime.interfaces.extensions.IExecutableExtension;
 import org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer;
@@ -19,6 +20,13 @@ import org.eclipse.tm.te.ui.controls.interfaces.IWizardConfigurationPanel;
  * Terminal launcher delegate.
  */
 public interface ILauncherDelegate extends IExecutableExtension {
+
+	/**
+	 * Returns the enablement expression.
+	 *
+	 * @return The enablement expression or <code>null</code>.
+	 */
+	public Expression getEnablement();
 
 	/**
 	 * Returns the configuration panel instance to present to the

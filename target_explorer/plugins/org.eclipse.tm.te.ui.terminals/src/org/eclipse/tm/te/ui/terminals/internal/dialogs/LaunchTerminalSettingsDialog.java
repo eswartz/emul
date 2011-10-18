@@ -197,7 +197,7 @@ public class LaunchTerminalSettingsDialog extends CustomTrayDialog {
 
     	List<String> items = new ArrayList<String>();
 
-    	ILauncherDelegate[] delegates = LauncherDelegateManager.getInstance().getLauncherDelegates(false);
+    	ILauncherDelegate[] delegates = LauncherDelegateManager.getInstance().getApplicableLauncherDelegates(selection);
     	for (ILauncherDelegate delegate : delegates) {
     		String label = delegate.getLabel();
     		if (label == null || "".equals(label.trim())) label = delegate.getId(); //$NON-NLS-1$

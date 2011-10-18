@@ -44,6 +44,16 @@
       <initializer class="org.eclipse.tm.te.ui.terminals.internal.PreferenceInitializer"/>
    </extension>
 
+<!-- Eclipse core expressions property tester -->
+   <extension point="org.eclipse.core.expressions.propertyTesters">
+      <propertyTester
+            class="org.eclipse.tm.te.ui.terminals.internal.PropertyTester"
+            id="org.eclipse.tm.te.ui.terminals.PropertyTester"
+            namespace="org.eclipse.tm.te.ui.terminals"
+            properties="hasApplicableLauncherDelegates"
+            type="java.lang.Object">
+      </propertyTester>
+   </extension>
 
 <!-- Service contributions -->
    <extension point="org.eclipse.tm.te.runtime.services.services">
@@ -80,6 +90,11 @@
                label="%command.launch.label"
                style="push"
                tooltip="%command.launch.tooltip">
+               <visibleWhen checkEnabled="false">
+                  <with variable="selection">
+                     <test property="org.eclipse.tm.te.ui.terminals.hasApplicableLauncherDelegates" value="true"/>
+                  </with>
+               </visibleWhen>
          </command>
       </menuContribution>
    </extension>
