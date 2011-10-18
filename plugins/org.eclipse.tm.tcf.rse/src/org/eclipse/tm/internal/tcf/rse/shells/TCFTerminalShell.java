@@ -405,8 +405,8 @@ public class TCFTerminalShell extends AbstractTerminalShell {
     }
 
     public void setTerminalSize(int newWidth, int newHeight) {
-        // do nothing
         if (fChannel == null || (fChannel.getState() == IChannel.STATE_CLOSED) || !connected) {
+            // do nothing
             return;
         }
         fWidth = newWidth;
@@ -425,6 +425,9 @@ public class TCFTerminalShell extends AbstractTerminalShell {
 
                             }});
 
+                    }
+                    else {
+                        done(this);
                     }
                 }}.getS(null, Messages.TCFShellService_Name);
         }
