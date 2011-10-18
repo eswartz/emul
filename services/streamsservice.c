@@ -139,7 +139,7 @@ static StreamClient * find_client(char * s, Channel * c) {
             l = l->next;
         }
     }
-    errno = ERR_INV_CONTEXT;
+    errno = set_fmt_errno(ERR_OTHER, "No such stream: %s", s);
     return NULL;
 }
 
