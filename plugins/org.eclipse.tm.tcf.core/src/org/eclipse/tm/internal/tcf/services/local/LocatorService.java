@@ -180,9 +180,10 @@ public class LocatorService implements ILocator {
             while (true) {
                 try {
                     sleep(DATA_RETENTION_PERIOD / 4);
+                    final HashSet<SubNet> set = getSubNetList();
                     Protocol.invokeAndWait(new Runnable() {
                         public void run() {
-                            refresh_timer();
+                            refresh_timer(set);
                         }
                     });
                 }
@@ -363,6 +364,7 @@ public class LocatorService implements ILocator {
                     LoggingUtil.trace("Became a slave agent (bound to port " + socket.getLocalPort() + ")");
                 }
             }
+            refreshSubNetList(getSubNetList());
             input_thread.setName("TCF Locator Receiver");
             timer_thread.setName("TCF Locator Timer");
             dns_lookup_thread.setName("TCF Locator DNS Lookup");
@@ -388,7 +390,6 @@ public class LocatorService implements ILocator {
                 public void peerRemoved(String id) {
                 }
             });
-            refreshSubNetList();
             sendPeersRequest(null, 0);
             sendAll(null, 0, null, System.currentTimeMillis());
         }
@@ -485,7 +486,7 @@ public class LocatorService implements ILocator {
         }
     }
 
-    private void refresh_timer() {
+    private void refresh_timer(HashSet<SubNet> nets) {
         long time = System.currentTimeMillis();
         /* Cleanup slave table */
         if (slaves.size() > 0) {
@@ -527,7 +528,7 @@ public class LocatorService implements ILocator {
             catch (Throwable x) {
             }
         }
-        refreshSubNetList();
+        refreshSubNetList(nets);
         if (socket.getLocalPort() != DISCOVERY_PORT) {
             for (SubNet subnet : subnets) {
                 addSlave(subnet.address, socket.getLocalPort(), time);
@@ -557,7 +558,28 @@ public class LocatorService implements ILocator {
         return s;
     }
 
-    private void refreshSubNetList() {
+    private void refreshSubNetList(HashSet<SubNet> set) {
+        if (set == null) return;
+        for (Iterator<SubNet> i = subnets.iterator(); i.hasNext();) {
+            SubNet s = i.next();
+            if (set.contains(s)) continue;
+            i.remove();
+        }
+        for (Iterator<SubNet> i = set.iterator(); i.hasNext();) {
+            SubNet s = i.next();
+            if (subnets.contains(s)) continue;
+            subnets.add(s);
+        }
+        if (TRACE_DISCOVERY) {
+            StringBuilder str = new StringBuilder("Refreshed subnet list:");
+            for (SubNet subnet : subnets) {
+                str.append("\n\t* address=" + subnet.address + ", broadcast=" + subnet.broadcast);
+            }
+            LoggingUtil.trace(str.toString());
+        }
+    }
+
+    private HashSet<SubNet> getSubNetList() {
         HashSet<SubNet> set = new HashSet<SubNet>();
         try {
             String osname = System.getProperty("os.name", "");
@@ -578,24 +600,9 @@ public class LocatorService implements ILocator {
         }
         catch (Exception x) {
             log("Cannot get list of network interfaces", x);
+            return null;
         }
-        for (Iterator<SubNet> i = subnets.iterator(); i.hasNext();) {
-            SubNet s = i.next();
-            if (set.contains(s)) continue;
-            i.remove();
-        }
-        for (Iterator<SubNet> i = set.iterator(); i.hasNext();) {
-            SubNet s = i.next();
-            if (subnets.contains(s)) continue;
-            subnets.add(s);
-        }
-        if (TRACE_DISCOVERY) {
-            StringBuilder str = new StringBuilder("Refreshed subnet list:");
-            for (SubNet subnet : subnets) {
-                str.append("\n\t* address=" + subnet.address + ", broadcast=" + subnet.broadcast);
-            }
-            LoggingUtil.trace(str.toString());
-        }
+        return set;
     }
 
     private void getSubNetList(HashSet<SubNet> set) throws SocketException {
