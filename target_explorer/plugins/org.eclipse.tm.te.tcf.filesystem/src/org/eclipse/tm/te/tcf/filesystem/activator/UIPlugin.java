@@ -24,6 +24,7 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.tm.te.tcf.filesystem.internal.ImageConsts;
 import org.eclipse.tm.te.tcf.filesystem.internal.autosave.SaveAllListener;
 import org.eclipse.tm.te.tcf.filesystem.internal.autosave.SaveListener;
+import org.eclipse.tm.te.tcf.filesystem.internal.handlers.PersistenceManager;
 import org.eclipse.tm.te.tcf.filesystem.internal.url.TcfURLConnection;
 import org.eclipse.tm.te.tcf.filesystem.model.FSModel;
 import org.eclipse.ui.IWorkbenchCommandConstants;
@@ -110,7 +111,10 @@ public class UIPlugin extends AbstractUIPlugin {
 	 */
 	@Override
 	public void stop(BundleContext context) throws Exception {
+		PersistenceManager.getInstance().dispose();
+		FSModel.getInstance().dispose();
 		if (regURLStreamHandlerService != null) {
+			// When URL stream handler service is unregistered, any URL related operation will be invalid. 			
 			regURLStreamHandlerService.unregister();
 			regURLStreamHandlerService = null;
 		}
@@ -122,7 +126,6 @@ public class UIPlugin extends AbstractUIPlugin {
 			Command saveAllCmd = commandService.getCommand(IWorkbenchCommandConstants.FILE_SAVE_ALL); 
 			saveAllCmd.removeExecutionListener(saveAllListener);
 		}
-		FSModel.getInstance().dispose();
 		plugin = null;
 		super.stop(context);
 	}

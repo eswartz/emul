@@ -31,6 +31,7 @@ import org.eclipse.tm.te.tcf.filesystem.internal.compare.MergeEditorInput;
 import org.eclipse.tm.te.tcf.filesystem.internal.compare.RemoteTypedElement;
 import org.eclipse.tm.te.tcf.filesystem.internal.exceptions.TCFException;
 import org.eclipse.tm.te.tcf.filesystem.internal.handlers.CacheManager;
+import org.eclipse.tm.te.tcf.filesystem.internal.handlers.PersistenceManager;
 import org.eclipse.tm.te.tcf.filesystem.internal.handlers.StateManager;
 import org.eclipse.tm.te.tcf.filesystem.internal.nls.Messages;
 import org.eclipse.tm.te.tcf.filesystem.model.CacheState;
@@ -90,7 +91,7 @@ public class SaveAllListener implements IExecutionListener {
 					}
 				}
 
-				if (CacheManager.getInstance().isAutoSaving()) {
+				if (PersistenceManager.getInstance().isAutoSaving()) {
 					// If auto saving is on.
 					if (!modified.isEmpty()) {
 						// Upload the modified nodes.

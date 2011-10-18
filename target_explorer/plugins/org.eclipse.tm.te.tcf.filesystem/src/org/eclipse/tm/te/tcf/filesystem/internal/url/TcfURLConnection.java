@@ -16,6 +16,7 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
 
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.IToken;
@@ -24,6 +25,8 @@ import org.eclipse.tm.tcf.services.IFileSystem.DoneClose;
 import org.eclipse.tm.tcf.services.IFileSystem.DoneOpen;
 import org.eclipse.tm.tcf.services.IFileSystem.FileSystemException;
 import org.eclipse.tm.tcf.services.IFileSystem.IFileHandle;
+import org.eclipse.tm.te.tcf.core.Tcf;
+import org.eclipse.tm.te.tcf.core.interfaces.IChannelManager.DoneOpenChannel;
 import org.eclipse.tm.te.tcf.filesystem.internal.exceptions.TCFChannelException;
 import org.eclipse.tm.te.tcf.filesystem.internal.nls.Messages;
 import org.eclipse.tm.te.tcf.filesystem.model.FSModel;
@@ -133,6 +136,40 @@ public class TcfURLConnection extends URLConnection {
 	}
 
 	/**
+	 * Open a channel connected to the target represented by the peer.
+	 *
+	 * @return The channel or null if the operation fails.
+	 */
+	private IChannel openChannel(final IPeer peer) throws TCFChannelException {
+		final Rendezvous rendezvous = new Rendezvous();
+		final TCFChannelException[] errors = new TCFChannelException[1];
+		final IChannel[] channels = new IChannel[1];
+		Tcf.getChannelManager().openChannel(peer, new DoneOpenChannel(){
+			@Override
+            public void doneOpenChannel(Throwable error, IChannel channel) {
+				if(error!=null){
+					String message = NLS.bind(Messages.TCFUtilities_OpeningFailureMessage,
+							new Object[]{peer.getID(), error.getLocalizedMessage()});
+					errors[0] = new TCFChannelException(message, error);
+				}else{
+					channels[0] = channel;
+				}
+				rendezvous.arrive();
+            }});
+		try {
+			rendezvous.waiting(5000L);
+		} catch (InterruptedException e) {
+			String message = NLS.bind(Messages.TCFUtilities_OpeningFailureMessage,
+					new Object[]{peer.getID(), e.getLocalizedMessage()});
+			errors[0] = new TCFChannelException(message, e);
+		}
+		if(errors[0] != null){
+			throw errors[0];
+		}
+		return channels[0];
+	}
+
+	/**
 	 * Open a file on the remote file system for read/write and store the file handle.
 	 *
 	 * @throws IOException Opening file fails.
@@ -142,7 +179,7 @@ public class TcfURLConnection extends URLConnection {
 			throw new IOException(Messages.TcfURLConnection_NoSuchTcfAgent);
 		try {
 			// Open the channel
-			channel = TCFUtilities.openChannel(peer);
+			channel = openChannel(peer);
 		} catch (TCFChannelException e) {
 			throw new IOException(e.getLocalizedMessage());
 		}

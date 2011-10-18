@@ -22,24 +22,17 @@ import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.text.DecimalFormat;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
-import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.tm.te.tcf.filesystem.activator.UIPlugin;
 import org.eclipse.tm.te.tcf.filesystem.internal.exceptions.TCFException;
 import org.eclipse.tm.te.tcf.filesystem.internal.nls.Messages;
-import org.eclipse.tm.te.tcf.filesystem.internal.preferences.TargetExplorerPreferencePage;
 import org.eclipse.tm.te.tcf.filesystem.internal.url.TcfURLConnection;
 import org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode;
 import org.eclipse.ui.PlatformUI;
@@ -49,10 +42,6 @@ import org.eclipse.ui.PlatformUI;
  * from a remote file system.
  */
 public class CacheManager {
-
-	// Time stamp file used to persist the time stamps of each file.
-	private static final String TIMESTAMP_FILE = "timestamps.xml"; //$NON-NLS-1$
-
 	// The agent directory's prefixed name.
 	private static final String WS_AGENT_DIR_PREFIX = "agent_"; //$NON-NLS-1$
 
@@ -64,9 +53,6 @@ public class CacheManager {
 
 	// The singleton instance.
 	private static CacheManager instance;
-
-	// The time stamp for each file.
-	private Map<URL, Long> timestamps;
 
 	/**
 	 * Get the singleton cache manager.
@@ -84,113 +70,6 @@ public class CacheManager {
 	 * Create a cache manager.
 	 */
 	private CacheManager() {
-		loadTimestamps();
-	}
-
-	/**
-	 * If the option of "autosaving" is set to on.
-	 *
-	 * @return true if it is auto saving or else false.
-	 */
-	public boolean isAutoSaving(){
-		IPreferenceStore preferenceStore = UIPlugin.getDefault().getPreferenceStore();
-		boolean autoSaving = preferenceStore.getBoolean(TargetExplorerPreferencePage.PREF_AUTOSAVING);
-		return autoSaving;
-	}
-
-	/**
-	 * Load the time stamps from the time stamps file in the cache's root directory.
-	 */
-	private void loadTimestamps() {
-		timestamps = Collections.synchronizedMap(new HashMap<URL, Long>());
-		File location = getCacheRoot();
-		File tsFile = new File(location, TIMESTAMP_FILE);
-		if (tsFile.exists()) {
-			Properties properties = new Properties();
-			InputStream input = null;
-			try {
-				input = new BufferedInputStream(new FileInputStream(tsFile));
-				properties.loadFromXML(input);
-			} catch (IOException e) {
-				e.printStackTrace();
-			} finally {
-				if (input != null) {
-					try {
-						input.close();
-					} catch (IOException e) {
-					}
-				}
-			}
-			Enumeration<String> keys = (Enumeration<String>) properties.propertyNames();
-			while (keys.hasMoreElements()) {
-				String key = keys.nextElement();
-				String value = properties.getProperty(key);
-				long timestamp = 0L;
-				try {
-					timestamp = Long.parseLong(value);
-					timestamps.put(new URL(key), Long.valueOf(timestamp));
-				} catch (Exception nfe) {
-				}
-			}
-		}
-	}
-
-	/**
-	 * Save the time stamps to the time stamps file.
-	 */
-	private void saveTimestamps(){
-		Properties properties = new Properties();
-		for(URL key:timestamps.keySet()){
-			Long timestamp = timestamps.get(key);
-			properties.setProperty(key.toString(), timestamp.toString());
-		}
-        File location = getCacheRoot();
-        File fTimestamp = new File(location, TIMESTAMP_FILE);
-        OutputStream output = null;
-        try{
-        	output = new BufferedOutputStream(new FileOutputStream(fTimestamp));
-        	properties.storeToXML(output, null);
-        }catch(IOException e){
-        	e.printStackTrace();
-        }finally{
-        	if(output!=null){
-        		try{
-        			output.close();
-        		}catch(Exception e){}
-        	}
-        }
-	}
-
-	/**
-	 * Set the time stamp of the FSTreeNode with the specified location.
-	 * @param url The FSTreeNode's location URL.
-	 * @param timestamp The new base time stamp to be set.
-	 */
-	public void setBaseTimestamp(URL url, long timestamp){
-		timestamps.put(url, Long.valueOf(timestamp));
-		// Persist as well.
-		saveTimestamps();
-	}
-
-	/**
-	 * Remove the time stamp entry with the specified URL.
-	 * @param url The URL key.
-	 */
-	public void removeBaseTimestamp(URL url){
-		timestamps.remove(url);
-		// Persist
-		saveTimestamps();
-	}
-
-	/**
-	 * Get the time stamp of the FSTreeNode with the specified location.
-	 *
-	 * @param url The FSTreeNode's location URL.
-	 * @return The FSTreeNode's base time stamp.
-	 */
-	public long getBaseTimestamp(URL url){
-		Long timestamp = timestamps.get(url);
-		return timestamp == null ? 0L : timestamp.longValue();
 	}
 
 	/**
@@ -243,7 +122,7 @@ public class CacheManager {
 	 *
 	 * @return The root folder's location of the cache file system.
 	 */
-	private File getCacheRoot() {
+	public File getCacheRoot() {
 		File location;
         try {
         	location = UIPlugin.getDefault().getStateLocation().toFile();
@@ -356,12 +235,12 @@ public class CacheManager {
 			// Something's gone wrong. Roll back the downloading and display the
 			// error.
 			file.delete();
-			removeBaseTimestamp(node.getLocationURL());
+			PersistenceManager.getInstance().removeBaseTimestamp(node.getLocationURL());
 			displayError(parent, e);
 		} catch (InterruptedException e) {
 			// It is canceled. Just roll back the downloading result.
 			file.delete();
-			removeBaseTimestamp(node.getLocationURL());
+			PersistenceManager.getInstance().removeBaseTimestamp(node.getLocationURL());
 		}
 		return false;
 	}

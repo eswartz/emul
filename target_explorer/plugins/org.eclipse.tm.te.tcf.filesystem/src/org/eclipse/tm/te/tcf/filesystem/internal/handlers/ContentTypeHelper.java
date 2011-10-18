@@ -6,6 +6,8 @@
  *
  * Contributors:
  * William Chen (Wind River)- [345387]Open the remote files with a proper editor
+ * William Chen (Wind River)	  [360494]Provide an "Open With" action in the pop 
+ * 												up menu of file system nodes of Target Explorer.
  *******************************************************************************/
 package org.eclipse.tm.te.tcf.filesystem.internal.handlers;
 
@@ -13,8 +15,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
@@ -33,11 +33,6 @@ public class ContentTypeHelper {
 	private static final String CONTENT_TYPE_BINARY_ID = "org.eclipse.cdt.core.binaryFile"; //$NON-NLS-1$
 	// The singleton of the content type helper.
 	private static ContentTypeHelper instance;
-	// Already known resolved content type of file nodes specified by their
-	// URLs.
-	private Map<URL, IContentType> resolvables = new HashMap<URL, IContentType>();
-	// Already known unresolvable file nodes specified by their URLs.
-	private Map<URL, FSTreeNode> unresolvables = new HashMap<URL, FSTreeNode>();
 
 	/**
 	 * Get the singleton instance of the content type helper.
@@ -77,12 +72,10 @@ public class ContentTypeHelper {
 	 * @return The content type of the file node.
 	 */
 	public IContentType getContentType(FSTreeNode node) {
-		URL location = node.getLocationURL();
-		if (unresolvables.get(location) != null)
+		if (PersistenceManager.getInstance().isUnresovled(node))
 			// If it is already known unresolvable.
 			return null;
-		IContentType contentType = null;
-		contentType = resolvables.get(location);
+		IContentType contentType = PersistenceManager.getInstance().getResolved(node);
 		if (contentType != null)
 			// If it is already known to have a certain content type.
 			return contentType;
@@ -96,9 +89,9 @@ public class ContentTypeHelper {
 			}
 		}
 		if (contentType != null) { // If it is resolved, cache it.
-			resolvables.put(location, contentType);
+			PersistenceManager.getInstance().addResovled(node, contentType);
 		} else { // Or else, remember it as an unresolvable.
-			unresolvables.put(location, node);
+			PersistenceManager.getInstance().addUnresolved(node);
 		}
 		return contentType;
 	}

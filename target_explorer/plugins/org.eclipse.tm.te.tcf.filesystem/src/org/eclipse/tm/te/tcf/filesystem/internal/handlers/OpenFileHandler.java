@@ -33,6 +33,7 @@ import org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.handlers.HandlerUtil;
+import org.eclipse.ui.ide.FileStoreEditorInput;
 import org.eclipse.ui.ide.IDE;
 
 /**
@@ -79,7 +80,7 @@ public class OpenFileHandler extends AbstractHandler {
 				return;
 			}
 		}
-		if (!CacheManager.getInstance().isAutoSaving()) {
+		if (!PersistenceManager.getInstance().isAutoSaving()) {
 			openEditor(page, node);
 		} else {
 			try {
@@ -146,8 +147,14 @@ public class OpenFileHandler extends AbstractHandler {
 			public void run() {
 				IPath path = CacheManager.getInstance().getCachePath(node);
 				IFileStore fileStore = EFS.getLocalFileSystem().getStore(path);
+				String editorID = PersistenceManager.getInstance().getPersistentProperties(node).get(IDE.EDITOR_KEY);
 				try {
-					IDE.openEditorOnFileStore(page, fileStore);
+					if(editorID!=null){
+						FileStoreEditorInput input = new FileStoreEditorInput(fileStore);
+						page.openEditor(input, editorID, true, IWorkbenchPage.MATCH_INPUT|IWorkbenchPage.MATCH_ID);
+					}else{
+						IDE.openEditorOnFileStore(page, fileStore);
+					}
 				} catch (PartInitException e) {
 				}
 			}

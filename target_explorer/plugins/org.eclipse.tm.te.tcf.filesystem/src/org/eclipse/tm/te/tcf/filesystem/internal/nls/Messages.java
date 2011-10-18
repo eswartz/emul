@@ -143,6 +143,10 @@ public class Messages extends NLS {
 	public static String OpenFileHandler_OpenAnyway;
 	public static String OpenFileHandler_OpeningBinaryNotSupported;
 	public static String OpenFileHandler_Warning;
+	public static String OpenWithMenu_ChooseEditorForOpening;
+	public static String OpenWithMenu_DefaultEditor;
+	public static String OpenWithMenu_NoEditorFound;
+	public static String OpenWithMenu_OpenWith;
 	public static String PermissionsGroup_Executable;
 	public static String PermissionsGroup_GroupPermissions;
 	public static String PermissionsGroup_OtherPermissions;
