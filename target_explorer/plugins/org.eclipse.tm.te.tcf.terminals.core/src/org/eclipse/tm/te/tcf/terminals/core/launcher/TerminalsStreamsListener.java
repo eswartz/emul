@@ -408,7 +408,7 @@ public class TerminalsStreamsListener implements IStreams.StreamsListener, ITerm
 	 */
 	protected class StreamWriterRunnable implements Runnable {
 		// The associated stream id
-		private final String streamId;
+		/* default */ final String streamId;
 		// The associated stream type id
 		@SuppressWarnings("unused")
 		private final String streamTypeId;
@@ -551,16 +551,23 @@ public class TerminalsStreamsListener implements IStreams.StreamsListener, ITerm
 
 			// Disconnect from the stream
 			if (svcStreams != null) {
-				svcStreams.disconnect(streamId, new IStreams.DoneDisconnect() {
+				// Write EOS first
+				svcStreams.eos(streamId, new IStreams.DoneEOS() {
 					@Override
-                    @SuppressWarnings("synthetic-access")
-					public void doneDisconnect(IToken token, Exception error) {
-						// Disconnect is done, ignore any error, invoke the callback
-						synchronized (this) {
-							if (getCallback() != null) getCallback().done(this, Status.OK_STATUS);
-						}
-						// Mark the runnable definitely stopped
-						stopped = true;
+					public void doneEOS(IToken token, Exception error) {
+						// Disconnect now
+						svcStreams.disconnect(streamId, new IStreams.DoneDisconnect() {
+							@Override
+		                    @SuppressWarnings("synthetic-access")
+							public void doneDisconnect(IToken token, Exception error) {
+								// Disconnect is done, ignore any error, invoke the callback
+								synchronized (this) {
+									if (getCallback() != null) getCallback().done(this, Status.OK_STATUS);
+								}
+								// Mark the runnable definitely stopped
+								stopped = true;
+							}
+						});
 					}
 				});
 			} else {
