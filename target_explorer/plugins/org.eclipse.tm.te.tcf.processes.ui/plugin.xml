@@ -28,7 +28,7 @@
       </editorPageBinding>
    </extension>
 
-<!-- TCF processes targets tree control contributions -->
+<!-- Processes menu contributions -->
    <extension point="org.eclipse.ui.menus">
       <menuContribution locationURI="popup:org.eclipse.tm.te.ui.views.TargetExplorer#Popup?after=group.launch">
          <command
@@ -58,7 +58,7 @@
       </menuContribution>
    </extension>
 
-<!-- TCF processes command contributions -->
+<!-- Processes command contributions -->
    <extension point="org.eclipse.ui.commands">
       <command
             categoryId="org.eclipse.tm.te.tcf.ui.commands.category"
@@ -68,7 +68,7 @@
       </command>
    </extension>
 
-<!-- TCF processes handler contributions -->
+<!-- Processes handler contributions -->
    <extension point="org.eclipse.ui.handlers">
       <handler
             class="org.eclipse.tm.te.tcf.processes.ui.internal.handler.LaunchProcessesCommandHandler"

@@ -285,8 +285,6 @@ public class LaunchObjectDialog extends CustomTrayDialog {
 	 */
 	@Override
 	protected void okPressed() {
-		saveWidgetValues();
-
 		// Create a new launch attributes map
 		launchAttributes = new HashMap<String, Object>();
 		// Update with the current control content
@@ -343,7 +341,8 @@ public class LaunchObjectDialog extends CustomTrayDialog {
 	/**
 	 * Saves the widget history to the dialog settings.
 	 */
-	protected void saveWidgetValues() {
+	@Override
+    protected void saveWidgetValues() {
 		IDialogSettings settings = getDialogSettings();
 		if (settings != null) {
 			settings.put(IProcessLauncher.PROP_PROCESS_PATH, imagePath.getText());
@@ -366,7 +365,8 @@ public class LaunchObjectDialog extends CustomTrayDialog {
 	/**
 	 * Restores the widget history from the dialog settings.
 	 */
-	protected void restoreWidgetValues() {
+	@Override
+    protected void restoreWidgetValues() {
 		IDialogSettings settings = getDialogSettings();
 		if (settings != null) {
 			String path = settings.get(IProcessLauncher.PROP_PROCESS_PATH);

@@ -29,7 +29,7 @@ public class CachePropertyTester extends PropertyTester {
 	@Override
 	public boolean test(Object receiver, String property, Object[] args, Object expectedValue) {
 		if(property.equals("isAutoSavingOn")){ //$NON-NLS-1$
-			return CacheManager.getInstance().isAutoSaving();
+			return PersistenceManager.getInstance().isAutoSaving();
 		}
 		return false;
 	}

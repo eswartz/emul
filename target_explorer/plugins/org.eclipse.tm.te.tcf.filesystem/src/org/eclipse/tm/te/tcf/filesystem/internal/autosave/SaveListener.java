@@ -29,6 +29,7 @@ import org.eclipse.tm.te.tcf.filesystem.internal.compare.MergeEditorInput;
 import org.eclipse.tm.te.tcf.filesystem.internal.compare.RemoteTypedElement;
 import org.eclipse.tm.te.tcf.filesystem.internal.exceptions.TCFException;
 import org.eclipse.tm.te.tcf.filesystem.internal.handlers.CacheManager;
+import org.eclipse.tm.te.tcf.filesystem.internal.handlers.PersistenceManager;
 import org.eclipse.tm.te.tcf.filesystem.internal.handlers.StateManager;
 import org.eclipse.tm.te.tcf.filesystem.internal.nls.Messages;
 import org.eclipse.tm.te.tcf.filesystem.model.CacheState;
@@ -67,7 +68,7 @@ public class SaveListener implements IExecutionListener {
 			try{
 			// Refresh the fDirtyNode's state.
 			StateManager.getInstance().refreshState(dirtyNode);
-			if (CacheManager.getInstance().isAutoSaving()) {
+			if (PersistenceManager.getInstance().isAutoSaving()) {
 				CacheState state = StateManager.getInstance().getCacheState(dirtyNode);
 				switch (state) {
 				case conflict:

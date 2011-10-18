@@ -25,11 +25,12 @@ import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IProcesses;
 import org.eclipse.tm.tcf.services.IStreams;
-import org.eclipse.tm.tcf.services.IStreams.StreamsListener;
 import org.eclipse.tm.tcf.util.TCFTask;
 import org.eclipse.tm.te.core.async.AsyncCallbackCollector;
 import org.eclipse.tm.te.runtime.callback.Callback;
 import org.eclipse.tm.te.runtime.interfaces.callback.ICallback;
+import org.eclipse.tm.te.tcf.core.streams.StreamsDataProvider;
+import org.eclipse.tm.te.tcf.core.streams.StreamsDataReceiver;
 import org.eclipse.tm.te.tcf.core.utils.ExceptionUtils;
 import org.eclipse.tm.te.tcf.processes.core.activator.CoreBundleActivator;
 import org.eclipse.tm.te.tcf.processes.core.interfaces.launcher.IProcessContextAwareListener;
@@ -39,15 +40,15 @@ import org.eclipse.tm.te.tcf.processes.core.nls.Messages;
 /**
  * Remote process streams listener implementation.
  */
-public class ProcessStreamsListener implements StreamsListener, IProcessContextAwareListener {
+public class ProcessStreamsListener implements IStreams.StreamsListener, IProcessContextAwareListener {
 	// The parent process launcher instance
 	private final ProcessLauncher parent;
 	// The remote process context
 	private IProcesses.ProcessContext context;
 	// The list of registered stream data receivers
-	private final List<ProcessStreamsDataReceiver> dataReceiver = new ArrayList<ProcessStreamsDataReceiver>();
+	private final List<StreamsDataReceiver> dataReceiver = new ArrayList<StreamsDataReceiver>();
 	// The stream data provider
-	private ProcessStreamsDataProvider dataProvider;
+	private StreamsDataProvider dataProvider;
 	// The list of delayed stream created events
 	private final List<StreamCreatedEvent> delayedCreatedEvents = new ArrayList<StreamCreatedEvent>();
 	// The list of created runnable's
@@ -136,7 +137,7 @@ public class ProcessStreamsListener implements StreamsListener, IProcessContextA
 		// The associated stream type id
 		private final String streamTypeId;
 		// The list of receivers applicable for the associated stream type id
-		private final List<ProcessStreamsDataReceiver> receivers = new ArrayList<ProcessStreamsDataReceiver>();
+		private final List<StreamsDataReceiver> receivers = new ArrayList<StreamsDataReceiver>();
 		// The currently active read task
 		private TCFTask<ReadData> activeTask;
 		// The callback to invoke if the runnable stopped
@@ -181,7 +182,7 @@ public class ProcessStreamsListener implements StreamsListener, IProcessContextA
 		 * @param streamTypeId The associated stream type id. Must not be <code>null</code>.
 		 * @param receivers The list of registered data receivers. Must not be <code>null</code>.
 		 */
-		public StreamReaderRunnable(String streamId, String streamTypeId, ProcessStreamsDataReceiver[] receivers) {
+		public StreamReaderRunnable(String streamId, String streamTypeId, StreamsDataReceiver[] receivers) {
 			Assert.isNotNull(streamId);
 			Assert.isNotNull(streamTypeId);
 			Assert.isNotNull(receivers);
@@ -190,7 +191,7 @@ public class ProcessStreamsListener implements StreamsListener, IProcessContextA
 			this.streamTypeId = streamTypeId;
 
 			// Loop the list of receivers and filter out the applicable ones
-			for (ProcessStreamsDataReceiver receiver : receivers) {
+			for (StreamsDataReceiver receiver : receivers) {
 				if (receiver.isApplicable(this.streamTypeId))
 					this.receivers.add(receiver);
 			}
@@ -272,7 +273,7 @@ public class ProcessStreamsListener implements StreamsListener, IProcessContextA
 		@Override
         public void run() {
 			// Create a snapshot of the receivers
-			final ProcessStreamsDataReceiver[] receivers = this.receivers.toArray(new ProcessStreamsDataReceiver[this.receivers.size()]);
+			final StreamsDataReceiver[] receivers = this.receivers.toArray(new StreamsDataReceiver[this.receivers.size()]);
 			// Get the service instance from the parent
 			final IStreams svcStreams = getParent().getSvcStreams();
 
@@ -374,10 +375,10 @@ public class ProcessStreamsListener implements StreamsListener, IProcessContextA
 		 *
 		 * @param data The data or <code>null</code>.
 		 */
-		protected final void notifyReceiver(final String data, final ProcessStreamsDataReceiver[] receivers) {
+		protected final void notifyReceiver(final String data, final StreamsDataReceiver[] receivers) {
 			if (data == null) return;
 			// Notify the data receiver
-			for (ProcessStreamsDataReceiver receiver : receivers) {
+			for (StreamsDataReceiver receiver : receivers) {
 				try {
 					// Get the writer
 					Writer writer = receiver.getWriter();
@@ -409,7 +410,7 @@ public class ProcessStreamsListener implements StreamsListener, IProcessContextA
 		@SuppressWarnings("unused")
 		private final String streamTypeId;
 		// The data provider applicable for the associated stream type id
-		private final ProcessStreamsDataProvider provider;
+		private final StreamsDataProvider provider;
 		// The currently active write task
 		private TCFTask<Object> activeTask;
 		// The callback to invoke if the runnable stopped
@@ -425,7 +426,7 @@ public class ProcessStreamsListener implements StreamsListener, IProcessContextA
 		 * @param streamTypeId The associated stream type id. Must not be <code>null</code>.
 		 * @param provider The data provider. Must not be <code>null</code> and must be applicable for the stream type.
 		 */
-		public ProcessStreamWriterRunnable(String streamId, String streamTypeId, ProcessStreamsDataProvider provider) {
+		public ProcessStreamWriterRunnable(String streamId, String streamTypeId, StreamsDataProvider provider) {
 			Assert.isNotNull(streamId);
 			Assert.isNotNull(streamTypeId);
 			Assert.isNotNull(provider);
@@ -639,9 +640,9 @@ public class ProcessStreamsListener implements StreamsListener, IProcessContextA
 		final IStreams.StreamsListener finStreamsListener = this;
 
 		// Store a final reference to the data receivers list
-		final List<ProcessStreamsDataReceiver> finDataReceivers;
+		final List<StreamsDataReceiver> finDataReceivers;
 		synchronized (dataReceiver) {
-			finDataReceivers = new ArrayList<ProcessStreamsDataReceiver>(dataReceiver);
+			finDataReceivers = new ArrayList<StreamsDataReceiver>(dataReceiver);
 			dataReceiver.clear();
 		}
 
@@ -659,7 +660,7 @@ public class ProcessStreamsListener implements StreamsListener, IProcessContextA
 					@Override
                     public void doneUnsubscribe(IToken token, Exception error) {
 						// Loop all registered listeners and close them
-						for (ProcessStreamsDataReceiver receiver : finDataReceivers) receiver.dispose();
+						for (StreamsDataReceiver receiver : finDataReceivers) receiver.dispose();
 						// Call the original outer callback
 						if (callback != null) callback.done(caller, status);
 					}
@@ -686,7 +687,7 @@ public class ProcessStreamsListener implements StreamsListener, IProcessContextA
 	 *
 	 * @param receiver The data receiver. Must not be <code>null</code>.
 	 */
-	public void registerDataReceiver(ProcessStreamsDataReceiver receiver) {
+	public void registerDataReceiver(StreamsDataReceiver receiver) {
 		Assert.isNotNull(receiver);
 		synchronized (dataReceiver) {
 			if (!dataReceiver.contains(receiver)) dataReceiver.add(receiver);
@@ -698,7 +699,7 @@ public class ProcessStreamsListener implements StreamsListener, IProcessContextA
 	 *
 	 * @param receiver The data receiver. Must not be <code>null</code>.
 	 */
-	public void unregisterDataReceiver(ProcessStreamsDataReceiver receiver) {
+	public void unregisterDataReceiver(StreamsDataReceiver receiver) {
 		Assert.isNotNull(receiver);
 		synchronized (dataReceiver) {
 			dataReceiver.remove(receiver);
@@ -710,7 +711,7 @@ public class ProcessStreamsListener implements StreamsListener, IProcessContextA
 	 *
 	 * @param provider The stream data provider instance or <code>null</code>.
 	 */
-	public void setDataProvider(ProcessStreamsDataProvider provider) {
+	public void setDataProvider(StreamsDataProvider provider) {
 		dataProvider = provider;
 	}
 
@@ -719,7 +720,7 @@ public class ProcessStreamsListener implements StreamsListener, IProcessContextA
 	 *
 	 * @return The stream data provider instance or <code>null</code>.
 	 */
-	public ProcessStreamsDataProvider getDataProvider() {
+	public StreamsDataProvider getDataProvider() {
 		return dataProvider;
 	}
 
@@ -780,9 +781,9 @@ public class ProcessStreamsListener implements StreamsListener, IProcessContextA
 		// The contextId is null if used with an older TCF agent not sending the third parameter
 		if (context != null && (context.getID().equals(contextId) || contextId == null)) {
 			// Create a snapshot of the registered data receivers
-			ProcessStreamsDataReceiver[] receivers;
+			StreamsDataReceiver[] receivers;
 			synchronized (dataReceiver) {
-				receivers = dataReceiver.toArray(new ProcessStreamsDataReceiver[dataReceiver.size()]);
+				receivers = dataReceiver.toArray(new StreamsDataReceiver[dataReceiver.size()]);
 			}
 			// The created event is for the monitored process context
 			// --> Create the stream reader thread(s)

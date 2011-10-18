@@ -45,4 +45,8 @@ public class Messages extends NLS {
 
 	public static String TerminalService_error_cannotCreateConnector;
 	public static String TerminalService_defaultTitle;
+
+	public static String LaunchTerminalSettingsDialog_title;
+	public static String LaunchTerminalSettingsDialog_combo_label;
+	public static String LaunchTerminalSettingsDialog_group_label;
 }

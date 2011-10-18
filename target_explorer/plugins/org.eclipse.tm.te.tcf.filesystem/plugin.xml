@@ -117,6 +117,38 @@
                </with>
             </visibleWhen>
          </command>
+         <menu
+               label="%menu.label.openwith">
+            <visibleWhen
+                  checkEnabled="false">
+               <with
+                     variable="selection">
+                  <count
+                        value="1">
+                  </count>
+                  <iterate>
+                     <instanceof
+                           value="org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode">
+                     </instanceof>
+                     <test
+                           property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isFile">
+                     </test>
+                     <test
+                           property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isReadable">
+                     </test>
+                     <not>
+                        <test
+                              property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isBinaryFile">
+                        </test>
+                     </not>
+                  </iterate>
+               </with>
+            </visibleWhen>
+            <dynamic
+                  class="org.eclipse.tm.te.tcf.filesystem.internal.handlers.OpenWithContribution"
+                  id="openWithMenu">
+            </dynamic>
+         </menu>
          <separator
                name="group.state"
                visible="true">
@@ -338,6 +370,38 @@
                </with>
             </visibleWhen>
          </command>
+         <menu
+               label="%menu.label.openwith">
+            <visibleWhen
+                  checkEnabled="false">
+               <with
+                     variable="selection">
+                  <count
+                        value="1">
+                  </count>
+                  <iterate>
+                     <instanceof
+                           value="org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode">
+                     </instanceof>
+                     <test
+                           property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isFile">
+                     </test>
+                     <test
+                           property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isReadable">
+                     </test>
+                     <not>
+                        <test
+                              property="org.eclipse.tm.te.tcf.filesystem.propertytester.treenode.isBinaryFile">
+                        </test>
+                     </not>
+                  </iterate>
+               </with>
+            </visibleWhen>
+            <dynamic
+                  class="org.eclipse.tm.te.tcf.filesystem.internal.handlers.OpenWithContribution"
+                  id="openWithMenu">
+            </dynamic>
+         </menu>
          <separator
                name="group.state"
                visible="true">

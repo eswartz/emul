@@ -177,7 +177,7 @@ The terminal connector type implementation class must be specified either by the
          <meta.section type="apiinfo"/>
       </appinfo>
       <documentation>
-         The provider of a service must implement &lt;samp&gt;org.eclipse.tm.te.ui.terminals.interfaces.IConnectorType&lt;/samp&gt;.
+         The provider of a connector type must implement &lt;samp&gt;org.eclipse.tm.te.ui.terminals.interfaces.IConnectorType&lt;/samp&gt;.
       </documentation>
    </annotation>
 

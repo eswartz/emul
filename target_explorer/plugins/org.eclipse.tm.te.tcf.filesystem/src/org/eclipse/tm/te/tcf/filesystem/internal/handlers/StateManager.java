@@ -15,17 +15,20 @@ import java.io.File;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.tm.tcf.protocol.IChannel;
+import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.services.IFileSystem;
 import org.eclipse.tm.tcf.services.IFileSystem.DoneSetStat;
 import org.eclipse.tm.tcf.services.IFileSystem.DoneStat;
 import org.eclipse.tm.tcf.services.IFileSystem.FileAttrs;
 import org.eclipse.tm.tcf.services.IFileSystem.FileSystemException;
+import org.eclipse.tm.te.tcf.core.Tcf;
+import org.eclipse.tm.te.tcf.core.interfaces.IChannelManager.DoneOpenChannel;
+import org.eclipse.tm.te.tcf.filesystem.internal.exceptions.TCFChannelException;
 import org.eclipse.tm.te.tcf.filesystem.internal.exceptions.TCFException;
 import org.eclipse.tm.te.tcf.filesystem.internal.exceptions.TCFFileSystemException;
 import org.eclipse.tm.te.tcf.filesystem.internal.nls.Messages;
 import org.eclipse.tm.te.tcf.filesystem.internal.url.Rendezvous;
-import org.eclipse.tm.te.tcf.filesystem.internal.url.TCFUtilities;
 import org.eclipse.tm.te.tcf.filesystem.model.CacheState;
 import org.eclipse.tm.te.tcf.filesystem.model.FSModel;
 import org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode;
@@ -88,46 +91,42 @@ public class StateManager {
 	private void updateFileStat(final FSTreeNode node, final boolean sync) throws TCFException {
 		IChannel channel = null;
 		try {
-			channel = TCFUtilities.openChannel(node.peerNode.getPeer());
+			channel = openChannel(node.peerNode.getPeer());
 			if (channel != null) {
-				updateFileAttr(node, sync, channel);
+				IFileSystem service = channel.getRemoteService(IFileSystem.class);
+				if (service != null) {
+					final TCFFileSystemException[] errors = new TCFFileSystemException[1];
+					final Rendezvous rendezvous = new Rendezvous();
+					String path = node.getLocation(true);
+					service.stat(path, new DoneStat() {
+						@Override
+						public void doneStat(IToken token, FileSystemException error, FileAttrs attrs) {
+							if (error == null) {
+								updateNodeAttr(node, attrs, sync);
+							} else {
+								String message = NLS.bind(Messages.StateManager_CannotGetFileStatMessage, new Object[]{node.name, error});
+								errors[0] = new TCFFileSystemException(message, error);
+							}
+							rendezvous.arrive();
+						}
+					});
+					try {
+						rendezvous.waiting(5000L);
+					} catch (InterruptedException e) {
+						String message = NLS.bind(Messages.StateManager_CannotGetFileStateMessage2, new Object[]{node.name, e});
+						errors[0] = new TCFFileSystemException(message, e);
+					}
+					if (errors[0] != null) {
+						throw errors[0];
+					}
+				}else{
+					String message = NLS.bind(Messages.StateManager_TCFNotProvideFSMessage, node.peerNode.getPeer().getID());
+					throw new TCFFileSystemException(message);
+				}
 			}
 		} finally {
 			if (channel != null)
 				channel.close();
-		}
-	}
-
-	private void updateFileAttr(final FSTreeNode node, final boolean sync, IChannel channel) throws TCFFileSystemException {
-		IFileSystem service = channel.getRemoteService(IFileSystem.class);
-		if (service != null) {
-			final TCFFileSystemException[] errors = new TCFFileSystemException[1];
-			final Rendezvous rendezvous = new Rendezvous();
-			String path = node.getLocation(true);
-			service.stat(path, new DoneStat() {
-				@Override
-				public void doneStat(IToken token, FileSystemException error, FileAttrs attrs) {
-					if (error == null) {
-						updateNodeAttr(node, attrs, sync);
-					} else {
-						String message = NLS.bind(Messages.StateManager_CannotGetFileStatMessage, new Object[]{node.name, error});
-						errors[0] = new TCFFileSystemException(message, error);
-					}
-					rendezvous.arrive();
-				}
-			});
-			try {
-				rendezvous.waiting(5000L);
-			} catch (InterruptedException e) {
-				String message = NLS.bind(Messages.StateManager_CannotGetFileStateMessage2, new Object[]{node.name, e});
-				errors[0] = new TCFFileSystemException(message, e);
-			}
-			if (errors[0] != null) {
-				throw errors[0];
-			}
-		}else{
-			String message = NLS.bind(Messages.StateManager_TCFNotProvideFSMessage, node.peerNode.getPeer().getID());
-			throw new TCFFileSystemException(message);
 		}
 	}
 
@@ -145,7 +144,7 @@ public class StateManager {
 			File file = CacheManager.getInstance().getCacheFile(node);
 			Assert.isTrue(file.exists());
 			file.setLastModified(attr.mtime);
-			CacheManager.getInstance().setBaseTimestamp(node.getLocationURL(), attr.mtime);
+			PersistenceManager.getInstance().setBaseTimestamp(node.getLocationURL(), attr.mtime);
 		}
 		FSModel.getInstance().fireNodeStateChanged(node);
 	}
@@ -165,9 +164,38 @@ public class StateManager {
 				node.attr.attributes);
 		IChannel channel = null;
 		try {
-			channel = TCFUtilities.openChannel(node.peerNode.getPeer());
+			channel = openChannel(node.peerNode.getPeer());
 			if (channel != null) {
-				commitFileAttr(node, attrs, channel);
+				IFileSystem service = channel.getRemoteService(IFileSystem.class);
+				if (service != null) {
+					final TCFFileSystemException[] errors = new TCFFileSystemException[1];
+					final Rendezvous rendezvous = new Rendezvous();
+					String path = node.getLocation(true);
+					service.setstat(path, attrs, new DoneSetStat() {
+						@Override
+						public void doneSetStat(IToken token, FileSystemException error) {
+							if (error == null) {
+								commitNodeAttr(node, attrs);
+							} else {
+								String message = NLS.bind(Messages.StateManager_CannotSetFileStateMessage, new Object[] { node.name, error });
+								errors[0] = new TCFFileSystemException(message, error);
+							}
+							rendezvous.arrive();
+						}
+					});
+					try {
+						rendezvous.waiting(5000L);
+					} catch (InterruptedException e) {
+						String message = NLS.bind(Messages.StateManager_CannotSetFileStateMessage2, new Object[] { node.name, e });
+						errors[0] = new TCFFileSystemException(message, e);
+					}
+					if (errors[0] != null) {
+						throw errors[0];
+					}
+				} else {
+					String message = NLS.bind(Messages.StateManager_TCFNotProvideFSMessage2, node.peerNode.getPeer().getID());
+					throw new TCFFileSystemException(message);
+				}
 			}
 		}  finally {
 			if (channel != null)
@@ -175,37 +203,38 @@ public class StateManager {
 		}
 	}
 
-	private void commitFileAttr(final FSTreeNode node, final IFileSystem.FileAttrs attrs, IChannel channel) throws TCFFileSystemException {
-		IFileSystem service = channel.getRemoteService(IFileSystem.class);
-		if (service != null) {
-			final TCFFileSystemException[] errors = new TCFFileSystemException[1];
-			final Rendezvous rendezvous = new Rendezvous();
-			String path = node.getLocation(true);
-			service.setstat(path, attrs, new DoneSetStat() {
-				@Override
-				public void doneSetStat(IToken token, FileSystemException error) {
-					if (error == null) {
-						commitNodeAttr(node, attrs);
-					} else {
-						String message = NLS.bind(Messages.StateManager_CannotSetFileStateMessage, new Object[] { node.name, error });
-						errors[0] = new TCFFileSystemException(message, error);
-					}
-					rendezvous.arrive();
+	/**
+	 * Open a channel connected to the target represented by the peer.
+	 *
+	 * @return The channel or null if the operation fails.
+	 */
+	private IChannel openChannel(final IPeer peer) throws TCFChannelException {
+		final Rendezvous rendezvous = new Rendezvous();
+		final TCFChannelException[] errors = new TCFChannelException[1];
+		final IChannel[] channels = new IChannel[1];
+		Tcf.getChannelManager().openChannel(peer, new DoneOpenChannel(){
+			@Override
+            public void doneOpenChannel(Throwable error, IChannel channel) {
+				if(error!=null){
+					String message = NLS.bind(Messages.TCFUtilities_OpeningFailureMessage,
+							new Object[]{peer.getID(), error.getLocalizedMessage()});
+					errors[0] = new TCFChannelException(message, error);
+				}else{
+					channels[0] = channel;
 				}
-			});
-			try {
-				rendezvous.waiting(5000L);
-			} catch (InterruptedException e) {
-				String message = NLS.bind(Messages.StateManager_CannotSetFileStateMessage2, new Object[] { node.name, e });
-				errors[0] = new TCFFileSystemException(message, e);
-			}
-			if (errors[0] != null) {
-				throw errors[0];
-			}
-		} else {
-			String message = NLS.bind(Messages.StateManager_TCFNotProvideFSMessage2, node.peerNode.getPeer().getID());
-			throw new TCFFileSystemException(message);
+				rendezvous.arrive();
+            }});
+		try {
+			rendezvous.waiting(5000L);
+		} catch (InterruptedException e) {
+			String message = NLS.bind(Messages.TCFUtilities_OpeningFailureMessage,
+					new Object[]{peer.getID(), e.getLocalizedMessage()});
+			errors[0] = new TCFChannelException(message, e);
 		}
+		if(errors[0] != null){
+			throw errors[0];
+		}
+		return channels[0];
 	}
 
 	/**
@@ -216,7 +245,7 @@ public class StateManager {
 	 */
 	void commitNodeAttr(FSTreeNode node, FileAttrs attr){
 		node.attr = attr;
-		CacheManager.getInstance().setBaseTimestamp(node.getLocationURL(), attr.mtime);
+		PersistenceManager.getInstance().setBaseTimestamp(node.getLocationURL(), attr.mtime);
 		FSModel.getInstance().fireNodeStateChanged(node);
 	}
 
@@ -232,7 +261,7 @@ public class StateManager {
 		if(!file.exists())
 			return CacheState.consistent;
 		long ltime = file.lastModified();
-		long btime = CacheManager.getInstance().getBaseTimestamp(node.getLocationURL());
+		long btime = PersistenceManager.getInstance().getBaseTimestamp(node.getLocationURL());
 		long mtime = 0;
 		if(node.attr!=null)
 			mtime = node.attr.mtime;

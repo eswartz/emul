@@ -22,6 +22,7 @@ import org.eclipse.osgi.util.NLS;
 import org.eclipse.tm.internal.terminal.provisional.api.ITerminalControl;
 import org.eclipse.tm.te.runtime.services.interfaces.constants.ILineSeparatorConstants;
 import org.eclipse.tm.te.ui.terminals.activator.UIPlugin;
+import org.eclipse.tm.te.ui.terminals.internal.tracing.ITraceIds;
 import org.eclipse.tm.te.ui.terminals.nls.Messages;
 import org.eclipse.ui.services.IDisposable;
 
@@ -223,11 +224,38 @@ public class OutputStreamMonitor implements IDisposable {
     protected byte[] onContentReadFromStream(byte[] byteBuffer, int bytesRead) {
     	Assert.isNotNull(byteBuffer);
 
-    	if (lineSeparator != null && !ILineSeparatorConstants.LINE_SEPARATOR_CRLF.equals(lineSeparator)) {
-    		String text = new String(byteBuffer, 0, bytesRead);
-    		text = text.replaceAll(lineSeparator, "\r\n"); //$NON-NLS-1$
-    		byteBuffer = text.getBytes();
+    	// If tracing is enabled, print out the decimal byte values read
+    	if (UIPlugin.getTraceHandler().isSlotEnabled(0, ITraceIds.TRACE_OUTPUT_STREAM_MONITOR)) {
+    		StringBuilder debug = new StringBuilder("byteBuffer [decimal, " + bytesRead + " bytes] : "); //$NON-NLS-1$ //$NON-NLS-2$
+    		for (int i = 0; i < bytesRead; i++) {
+    			debug.append(Byte.valueOf(byteBuffer[i]).intValue());
+    			debug.append(' ');
+    		}
+    		System.out.println(debug.toString());
     	}
+
+    	// Remember if the text got changed.
+    	boolean changed = false;
+
+    	// How can me make sure that we don't mess with the encoding here?
+		String text = new String(byteBuffer, 0, bytesRead);
+
+		// Shift-In (14) and Shift-Out(15) confuses the terminal widget
+		if (text.indexOf(14) != -1 || text.indexOf(15) != -1) {
+			text = text.replaceAll("\\x0e", "").replaceAll("\\x0f", ""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+			changed = true;
+		}
+
+		// Check on the line separator setting
+    	if (lineSeparator != null
+    			&& !ILineSeparatorConstants.LINE_SEPARATOR_CRLF.equals(lineSeparator)
+    			&& text.contains(lineSeparator)) {
+    		text = text.replaceAll(lineSeparator, "\r\n"); //$NON-NLS-1$
+    		changed = true;
+    	}
+
+    	// If changed, get the new bytes array
+    	if (changed) byteBuffer = text.getBytes();
 
     	return byteBuffer;
     }

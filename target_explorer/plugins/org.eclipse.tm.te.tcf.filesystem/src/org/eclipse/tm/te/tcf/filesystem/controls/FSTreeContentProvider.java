@@ -14,6 +14,8 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.core.runtime.Assert;
+import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
@@ -353,9 +355,33 @@ public class FSTreeContentProvider implements ITreeContentProvider, INodeStateLi
 				}
 			}
 		}
+		else {
+			// If the node can be adapted to an IPeerModel object.
+			Object adapted = adaptPeerModel(parentElement);
+			if (adapted != null) {
+				children = getChildren(adapted);
+			}
+		}
 
 		return children;
 	}
+
+	/**
+	 * Adapt the specified element to a IPeerModel.
+	 * 
+	 * @param element The element to be adapted.
+	 * @return The IPeerModel adapted.
+	 */
+	private Object adaptPeerModel(Object element) {
+	    Object adapted;
+	    if (element instanceof IAdaptable) {
+	    	adapted = ((IAdaptable) element).getAdapter(IPeerModel.class);
+	    }
+	    else {
+	    	adapted = Platform.getAdapterManager().getAdapter(element, IPeerModel.class);
+	    }
+	    return adapted;
+    }
 
 	/**
 	 * Reads the content of a directory until the file system service signals EOF.
@@ -549,6 +575,12 @@ public class FSTreeContentProvider implements ITreeContentProvider, INodeStateLi
 			// not queried yet.
 			FSTreeNode root = peerId[0] != null ? model.getRoot(peerId[0]): null;
 			hasChildren = root != null ? hasChildren(root) : true;
+		}
+		else {
+			Object adapted = adaptPeerModel(element);
+			if(adapted!=null){
+				return hasChildren(adapted);
+			}
 		}
 
 		return hasChildren;

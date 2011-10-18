@@ -87,7 +87,7 @@ public class ConnectorManager extends AbstractExtensionPointManager<IConnectorTy
 	 * @param id The unique id of the terminal connector type or <code>null</code>
 	 * @param unique If <code>true</code>, the method returns new instances of the terminal connector type contribution.
 	 *
-	 * @return The status handler instance or <code>null</code>.
+	 * @return The terminal connector type instance or <code>null</code>.
 	 */
 	public IConnectorType getConnectorType(String id, boolean unique) {
 		IConnectorType contribution = null;

@@ -56,6 +56,8 @@ import org.eclipse.tm.te.runtime.services.interfaces.ITerminalService;
 import org.eclipse.tm.te.runtime.services.interfaces.constants.ITerminalsConnectorConstants;
 import org.eclipse.tm.te.tcf.core.Tcf;
 import org.eclipse.tm.te.tcf.core.interfaces.IChannelManager;
+import org.eclipse.tm.te.tcf.core.streams.StreamsDataProvider;
+import org.eclipse.tm.te.tcf.core.streams.StreamsDataReceiver;
 import org.eclipse.tm.te.tcf.processes.core.activator.CoreBundleActivator;
 import org.eclipse.tm.te.tcf.processes.core.interfaces.launcher.IProcessContextAwareListener;
 import org.eclipse.tm.te.tcf.processes.core.interfaces.launcher.IProcessLauncher;
@@ -543,7 +545,7 @@ public class ProcessLauncher extends PlatformObject implements IProcessLauncher 
 			try {
 				// Create the receiver instance. If the file already exist, we
 				// overwrite the file content.
-				ProcessStreamsDataReceiver receiver = new ProcessStreamsDataReceiver(new BufferedWriter(new FileWriter(filename)),
+				StreamsDataReceiver receiver = new StreamsDataReceiver(new BufferedWriter(new FileWriter(filename)),
 																					 new String[] { IProcesses.PROP_STDOUT_ID, IProcesses.PROP_STDERR_ID });
 				// Register the receiver to the streams listener
 				if (getStreamsListener() instanceof ProcessStreamsListener) {
@@ -652,7 +654,7 @@ public class ProcessLauncher extends PlatformObject implements IProcessLauncher 
 
 		// If the input stream creation succeeded, connect the data receiver
 		if (stream != null) {
-			ProcessStreamsDataReceiver receiver = new ProcessStreamsDataReceiver(new OutputStreamWriter(remoteStreamDataReceiverStream), streamIds);
+			StreamsDataReceiver receiver = new StreamsDataReceiver(new OutputStreamWriter(remoteStreamDataReceiverStream), streamIds);
 			// Register the data receiver to the streams listener
 			if (getStreamsListener() instanceof ProcessStreamsListener) {
 				((ProcessStreamsListener)getStreamsListener()).registerDataReceiver(receiver);
@@ -683,7 +685,7 @@ public class ProcessLauncher extends PlatformObject implements IProcessLauncher 
 
 		// If the stream creation succeeded, connect the data provider
 		if (stream != null && inStream != null) {
-			ProcessStreamsDataProvider provider = new ProcessStreamsDataProvider(new InputStreamReader(inStream), streamIds);
+			StreamsDataProvider provider = new StreamsDataProvider(new InputStreamReader(inStream), streamIds);
 			// Register the data provider to the streams listener
 			if (getStreamsListener() instanceof ProcessStreamsListener) {
 				((ProcessStreamsListener)getStreamsListener()).setDataProvider(provider);

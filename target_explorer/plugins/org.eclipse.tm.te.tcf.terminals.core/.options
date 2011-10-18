@@ -1,0 +1,4 @@
+org.eclipse.tm.te.tcf.terminals.core/debugmode = 0
+org.eclipse.tm.te.tcf.terminals.core/trace/terminalsLauncher = false
+org.eclipse.tm.te.tcf.terminals.core/trace/terminalsListener = false
+org.eclipse.tm.te.tcf.processes.core/trace/streamsListener = false

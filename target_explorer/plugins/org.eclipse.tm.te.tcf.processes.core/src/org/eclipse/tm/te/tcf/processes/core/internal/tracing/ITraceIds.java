@@ -25,7 +25,7 @@ public interface ITraceIds {
 	public static final String TRACE_PROCESSES_LISTENER = "trace/processesListener"; //$NON-NLS-1$
 
 	/**
-	 * If activated, tracing information about the remote processes listener is printed out.
+	 * If activated, tracing information about the remote processes streams listener is printed out.
 	 */
 	public static final String TRACE_STREAMS_LISTENER = "trace/streamsListener"; //$NON-NLS-1$
 }

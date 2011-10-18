@@ -29,12 +29,12 @@ public abstract class AbstractWizardConfigurationPanel implements IWizardConfigu
 	/**
 	 * Constructor.
 	 *
-	 * @param parentPageControl The parent control. Must not be <code>null</code>!
+	 * @param parentControl The parent control. Must not be <code>null</code>!
 	 */
-	public AbstractWizardConfigurationPanel(BaseDialogPageControl parentPageControl) {
+	public AbstractWizardConfigurationPanel(BaseDialogPageControl parentControl) {
 		super();
-		Assert.isNotNull(parentPageControl);
-		this.parentControl = parentPageControl;
+		Assert.isNotNull(parentControl);
+		this.parentControl = parentControl;
 	}
 
 	/**
