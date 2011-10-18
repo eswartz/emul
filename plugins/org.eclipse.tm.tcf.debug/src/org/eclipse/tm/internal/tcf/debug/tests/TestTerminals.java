@@ -205,7 +205,7 @@ class TestTerminals implements ITCFTest {
                                 if (test_suite.cancel) {
                                     exit(null);
                                 }
-                                else if (time_out < 300) {
+                                else if (time_out < 200) {
                                     Protocol.invokeLater(100, this);
                                 }
                                 else if (!signal_sent) {
@@ -310,7 +310,7 @@ class TestTerminals implements ITCFTest {
                                     int n = 0;
                                     if (echo_rx.size() > 0) n = echo_rx.get(echo_rx.size() - 1);
                                     int i = stdout_buf.indexOf(p, n);
-                                    if (i >= 0) {
+                                    if (i >= 0 && stdout_buf.length() >= i + s.length() + 4) {
                                         time_out = 0;
                                         echo_rx.add(i + 1);
                                         run = true;
@@ -355,7 +355,10 @@ class TestTerminals implements ITCFTest {
                     }
                 }
             };
-            streams.read(id, 0x1000, stderr_read);
+            int n = rnd.nextInt(4) + 1;
+            for (int i = 0; i < n; i++) {
+                streams.read(id, 0x1000, stderr_read);
+            }
         }
         if (!delay_done) {
             Protocol.invokeLater(rnd.nextInt(250), new Runnable() {
