@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -58,9 +58,8 @@
 #  define _WSPIAPI_H_
 #endif
 
+/* winsock2.h must be included before sys/types.h */
 #include <winsock2.h>
-#include <ws2tcpip.h>
-#include <iphlpapi.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/utime.h>
@@ -99,10 +98,6 @@ typedef int socklen_t;
 #endif
 
 #include <sys/unistd.h>
-
-extern void __stdcall freeaddrinfo(struct addrinfo *);
-extern int __stdcall getaddrinfo(const char *, const char *,
-                const struct addrinfo *, struct addrinfo **);
 
 #else /* not __CYGWIN__ */
 
@@ -221,58 +216,9 @@ extern struct utf8_dirent * readdir(DIR * dir);
 
 #endif /* __CYGWIN__ */
 
-extern const char * loc_gai_strerror(int ecode);
-
-#define MSG_MORE 0
-
-extern const char * inet_ntop(int af, const void * src, char * dst, socklen_t size);
-extern int inet_pton(int af, const char * src, void * dst);
-
-#ifdef DISABLE_PTHREADS_WIN32
-#  include <pthread.h>
-#else
-#  include <system/Windows/pthreads-win32.h>
-#endif
-
-/*
- * Windows socket functions don't set errno as expected.
- * Wrappers are provided to workaround the problem.
- * TODO: more socket function wrappers are needed for better error reports on Windows
- */
-#define socket(af, type, protocol) wsa_socket(af, type, protocol)
-#define connect(socket, addr, addr_size) wsa_connect(socket, addr, addr_size)
-#define bind(socket, addr, addr_size) wsa_bind(socket, addr, addr_size)
-#define listen(socket, size) wsa_listen(socket, size)
-#define recv(socket, buf, size, flags) wsa_recv(socket, buf, size, flags)
-#define recvfrom(socket, buf, size, flags, addr, addr_size) wsa_recvfrom(socket, buf, size, flags, addr, addr_size)
-#define send(socket, buf, size, flags) wsa_send(socket, buf, size, flags)
-#define sendto(socket, buf, size, flags, dest_addr, dest_size) wsa_sendto(socket, buf, size, flags, dest_addr, dest_size)
-#define setsockopt(socket, level, opt, value, size) wsa_setsockopt(socket, level, opt, value, size)
-#define getsockname(socket, name, size) wsa_getsockname(socket, name, size)
-
-extern int wsa_socket(int af, int type, int protocol);
-extern int wsa_connect(int socket, const struct sockaddr * addr, int addr_size);
-extern int wsa_bind(int socket, const struct sockaddr * addr, int addr_size);
-extern int wsa_listen(int socket, int size);
-extern int wsa_recv(int socket, void * buf, size_t size, int flags);
-extern int wsa_recvfrom(int socket, void * buf, size_t size, int flags,
-                    struct sockaddr * addr, socklen_t * addr_size);
-extern int wsa_send(int socket, const void * buf, size_t size, int flags);
-extern int wsa_sendto(int socket, const void * buf, size_t size, int flags,
-                  const struct sockaddr * dest_addr, socklen_t dest_size);
-extern int wsa_setsockopt(int socket, int level, int opt, const char * value, int size);
-extern int wsa_getsockname(int socket, struct sockaddr * name, int * size);
-
-#ifndef SHUT_WR
-#define SHUT_WR SD_SEND
-#endif
-
 extern char * canonicalize_file_name(const char * path);
 
 #define O_LARGEFILE 0
-
-#define loc_freeaddrinfo freeaddrinfo
-#define loc_getaddrinfo getaddrinfo
 
 #elif defined(_WRS_KERNEL)
 /* VxWork kernel module */
@@ -282,26 +228,20 @@ extern char * canonicalize_file_name(const char * path);
 #endif
 
 #include <vxWorks.h>
-#include <inetLib.h>
-#include <pthread.h>
+#include <version.h>
+#include <unistd.h>
+#include <socket.h>
 #include <strings.h>
 #include <sys/ioctl.h>
-#include <netinet/tcp.h>
-#include <net/if.h>
 #include <selectLib.h>
-#include <wrn/coreip/sockLib.h>
-#include <wrn/coreip/hostLib.h>
-#if _WRS_VXWORKS_MAJOR > 6 || _WRS_VXWORKS_MAJOR == 6 && _WRS_VXWORKS_MINOR >= 7
+#if _WRS_VXWORKS_MAJOR > 6 || _WRS_VXWORKS_MAJOR == 6 && _WRS_VXWORKS_MINOR >= 6
 #  include <private/taskLibP.h>
 #endif
 
 #define environ taskIdCurrent->ppEnviron
 
-#define closesocket close
-
 #if _WRS_VXWORKS_MAJOR < 6 || _WRS_VXWORKS_MAJOR == 6 && _WRS_VXWORKS_MINOR < 9
 typedef unsigned int uintptr_t;
-#define send(s, buf, len, flags) (send)(s, (char *)(buf), len, flags)
 #endif
 
 typedef unsigned long useconds_t;
@@ -315,9 +255,6 @@ typedef unsigned long useconds_t;
 #define O_BINARY 0
 #define O_LARGEFILE 0
 #define lstat stat
-#define ifr_netmask ifr_addr
-#define SA_LEN(addr) ((addr)->sa_len)
-#define MSG_MORE 0
 
 extern int truncate(char * path, int64_t size);
 extern char * canonicalize_file_name(const char * path);
@@ -331,11 +268,6 @@ extern int geteuid(void);
 extern int getgid(void);
 extern int getegid(void);
 
-extern void loc_freeaddrinfo(struct addrinfo * ai);
-extern int loc_getaddrinfo(const char * nodename, const char * servname,
-       const struct addrinfo * hints, struct addrinfo ** res);
-extern const char * loc_gai_strerror(int ecode);
-
 #elif defined __SYMBIAN32__
 /* Symbian / OpenC */
 
@@ -344,10 +276,6 @@ extern const char * loc_gai_strerror(int ecode);
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/un.h>
-#include <socket.h>
-#include <in.h>
-#include <netdb.h>
 #include <errno.h>
 #include <utime.h>
 #include <memory.h>
@@ -356,13 +284,8 @@ extern const char * loc_gai_strerror(int ecode);
 #include <inttypes.h>
 #include <fcntl.h>
 #include <utime.h>
-#include <inet.h>
-#include <pthreadtypes.h>
-#include <pthread.h>
 #include <timespec.h>
 #include <e32def.h>
-#include <sys/sockio.h>
-#include <net/if.h>
 #include <unistd.h>
 
 #include <framework/link.h>
@@ -374,26 +297,17 @@ extern const char * loc_gai_strerror(int ecode);
 #  define MEM_USAGE_FACTOR 2
 #endif
 
-#define closesocket close
 #define SIGKILL 1
 
 #define ETIMEDOUT 60
 
-extern const char * loc_gai_strerror(int ecode);
 extern int truncate(const char * path, int64_t size);
 
 extern ssize_t pread(int fd, void * buf, size_t size, off_t offset);
 extern ssize_t pwrite(int fd, const void * buf, size_t size, off_t offset);
 
-#define loc_freeaddrinfo freeaddrinfo
-#define loc_getaddrinfo getaddrinfo
-
 extern int loc_clock_gettime(int, struct timespec *);
 #define clock_gettime loc_clock_gettime /* override Open C impl */
-
-struct ip_ifc_info;
-extern void set_ip_ifc(struct ip_ifc_info * info);
-extern struct ip_ifc_info * get_ip_ifc(void);
 
 #else
 /* Linux, BSD, MacOS, UNIX */
@@ -408,37 +322,17 @@ extern struct ip_ifc_info * get_ip_ifc(void);
 
 #include <unistd.h>
 #include <memory.h>
-#include <pthread.h>
-#include <netdb.h>
-#include <sys/socket.h>
-#include <sys/un.h>
 #include <sys/select.h>
 #include <sys/time.h>
 #include <sys/ioctl.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <arpa/inet.h>
-#include <net/if.h>
 #include <limits.h>
 #include <inttypes.h>
-
-#define loc_freeaddrinfo freeaddrinfo
-#define loc_getaddrinfo getaddrinfo
-#define loc_gai_strerror gai_strerror
 
 #define O_BINARY 0
 
 #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__APPLE__)
-
-#  define O_LARGEFILE 0
-#  define SA_LEN(addr) ((addr)->sa_len)
 extern char ** environ;
 extern char * canonicalize_file_name(const char * path);
-
-#else /* not BSD */
-
-#  define SA_LEN(addr) (sizeof(struct sockaddr))
-
 #endif /* BSD */
 
 #if defined(__APPLE__)
@@ -450,8 +344,6 @@ extern char * canonicalize_file_name(const char * path);
 extern int tkill(pid_t pid, int signal);
 
 #define FILE_PATH_SIZE PATH_MAX
-
-#define closesocket close
 
 #endif
 
@@ -478,8 +370,6 @@ extern size_t strlcat(char * dst, const char * src, size_t size);
 extern char * canonicalize_file_name(const char * path);
 extern int posix_openpt(int flags);
 #endif
-
-extern pthread_attr_t pthread_create_attr;
 
 #if defined(__i386__) || defined(__x86_64__)
 #  define big_endian_host() (0)

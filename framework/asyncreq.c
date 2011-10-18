@@ -21,12 +21,14 @@
 #else
 #  include <sys/wait.h>
 #endif
+#include <framework/mdep-threads.h>
+#include <framework/mdep-inet.h>
 #include <framework/myalloc.h>
 #include <framework/trace.h>
 #include <framework/events.h>
+#include <framework/errors.h>
 #include <framework/link.h>
 #include <framework/asyncreq.h>
-#include <framework/errors.h>
 
 #define MAX_WORKER_THREADS 32
 

@@ -19,6 +19,7 @@
  */
 
 #include <config.h>
+#include <framework/mdep-inet.h>
 #include <framework/myalloc.h>
 #include <services/pathmap.h>
 

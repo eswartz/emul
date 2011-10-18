@@ -38,6 +38,9 @@
 #if defined(WIN32)
 #  include <Windows.h>
 #endif
+#if defined(_WRS_KERNEL)
+#  include <ioLib.h>
+#endif
 #include <framework/myalloc.h>
 #include <framework/asyncreq.h>
 #include <framework/streams.h>

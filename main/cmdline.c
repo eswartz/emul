@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <framework/mdep-threads.h>
 #include <framework/events.h>
 #include <framework/errors.h>
 #include <framework/myalloc.h>

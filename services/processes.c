@@ -83,7 +83,7 @@ typedef struct AttachDoneArgs {
     char token[256];
 } AttachDoneArgs;
 
-typedef struct ChildProcess {
+struct ChildProcess {
     LINK link;
     int pid;
     int tty;
@@ -97,7 +97,7 @@ typedef struct ChildProcess {
     long exit_code;
     EventCallBack * exit_cb;
     void * exit_args;
-} ChildProcess;
+};
 
 typedef struct ProcessOutput {
     int fd;
@@ -1084,7 +1084,7 @@ static int start_process_imp(Channel * c, char ** envp, const char * dir, const 
     char * ptr;
     SYM_TYPE type;
 
-    if (symFindByName(sysSymTbl, exe, &ptr, &type) != OK) {
+    if (symFindByName(sysSymTbl, (char *)exe, &ptr, &type) != OK) {
         err = errno;
         if (err == S_symLib_SYMBOL_NOT_FOUND) err = ERR_SYM_NOT_FOUND;
         assert(err != 0);

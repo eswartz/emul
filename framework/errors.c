@@ -23,6 +23,8 @@
 #include <string.h>
 #include <stdarg.h>
 #include <assert.h>
+#include <time.h>
+#include <framework/mdep-inet.h>
 #include <framework/errors.h>
 #include <framework/events.h>
 #include <framework/exceptions.h>

@@ -27,6 +27,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <signal.h>
+#include <framework/mdep-threads.h>
 #include <framework/events.h>
 #include <framework/errors.h>
 #include <framework/trace.h>
@@ -41,6 +42,7 @@
 
 #include <moduleLib.h>
 #include <taskHookLib.h>
+#include <spinLockLib.h>
 #include <private/vxdbgLibP.h>
 
 #define TRACE_EVENT_STEP        2

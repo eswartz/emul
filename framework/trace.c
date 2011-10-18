@@ -25,6 +25,7 @@ int log_mode = LOG_EVENTS | LOG_CHILD | LOG_WAITPID | LOG_CONTEXT | LOG_PROTOCOL
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <framework/mdep-threads.h>
 
 #if defined(WIN32)
 #elif defined(_WRS_KERNEL)

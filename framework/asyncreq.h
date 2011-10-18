@@ -26,6 +26,7 @@
 #ifdef __SYMBIAN32__
 #  include <select.h>
 #endif
+#include <time.h>
 #include <framework/link.h>
 #include <framework/events.h>
 

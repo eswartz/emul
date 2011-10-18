@@ -40,6 +40,7 @@
 #else
    typedef void SSL;
 #endif
+#include <framework/mdep-inet.h>
 #include <framework/tcf.h>
 #include <framework/channel.h>
 #include <framework/channel_tcp.h>

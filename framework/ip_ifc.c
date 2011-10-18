@@ -22,6 +22,7 @@
 #include <errno.h>
 #include <assert.h>
 #include <string.h>
+#include <framework/mdep-inet.h>
 #include <framework/ip_ifc.h>
 #include <framework/myalloc.h>
 #include <framework/events.h>

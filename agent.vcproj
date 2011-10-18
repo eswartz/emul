@@ -320,6 +320,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\framework\mdep-inet.h"
+				>
+			</File>
+			<File
+				RelativePath=".\framework\mdep-threads.h"
+				>
+			</File>
+			<File
 				RelativePath=".\framework\mdep.c"
 				>
 			</File>

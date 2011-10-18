@@ -30,6 +30,7 @@
 #include <time.h>
 #include <assert.h>
 #include <string.h>
+#include <framework/mdep-threads.h>
 #include <framework/myalloc.h>
 #include <framework/errors.h>
 #include <framework/trace.h>
