@@ -420,7 +420,7 @@ static void command_launch(char * token, Channel * c) {
 
     int selfattach = 0;
     ProcessStartParams prms;
-    Terminal * term = NULL;
+    Terminal * term = (Terminal *)loc_alloc_zero(sizeof(Terminal));
     Trap trap;
 
     if (set_trap(&trap)) {
@@ -451,10 +451,19 @@ static void command_launch(char * token, Channel * c) {
             }
         }
         set_terminal_env(&prms.envp, &envp_len, pty_type, encoding, exec);
+        prms.dir = getenv("HOME");
+#else
+        {
+            const char * home_drv = getenv("HOMEDRIVE");
+            const char * home_dir = getenv("HOMEPATH");
+            if (home_drv && home_dir) {
+                static char fnm[FILE_PATH_SIZE];
+                snprintf(fnm, sizeof(fnm), "%s%s", home_drv, home_dir);
+                prms.dir = fnm;
+            }
+        }
 #endif
 
-        term = (Terminal *)loc_alloc_zero(sizeof(Terminal));
-        prms.dir = getenv("HOME");
         prms.exe = exec;
         prms.args = (char **)args;
         prms.service = TERMINALS;

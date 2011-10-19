@@ -919,6 +919,7 @@ static int start_process_imp(Channel * c, char ** envp, const char * dir, const 
     int fpipes[3][2];
     HANDLE hpipes[3][2];
     char * cmd = NULL;
+    struct stat st;
     int err = 0;
     int i;
 
@@ -999,6 +1000,11 @@ static int start_process_imp(Channel * c, char ** envp, const char * dir, const 
         }
 #endif
     }
+
+    if (!err && params->dir != NULL && chdir(params->dir) < 0) err = errno;
+    /* If 'exe' is not a full file path, use PATH to search for program file */
+    if (!err && stat(exe, &st) != 0) exe = NULL;
+
     if (!err) {
         STARTUPINFO si;
         PROCESS_INFORMATION prs_info;
@@ -1363,6 +1369,11 @@ static void command_start(char * token, Channel * c, void * x) {
         }
         if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
         if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
+        if (params.dir != NULL && params.dir[0] == 0) {
+            loc_free(params.dir);
+            params.dir = NULL;
+        }
 
         params.service = PROCESSES[version];
         if (err == 0 && start_process(c, &params, &selfattach, &prs) < 0) err = errno;
