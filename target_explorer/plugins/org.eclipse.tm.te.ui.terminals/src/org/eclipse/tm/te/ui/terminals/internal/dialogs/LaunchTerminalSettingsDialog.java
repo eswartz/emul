@@ -23,6 +23,7 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.TypedEvent;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Combo;
@@ -32,8 +33,10 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer;
 import org.eclipse.tm.te.runtime.properties.PropertiesContainer;
+import org.eclipse.tm.te.ui.controls.BaseDialogPageControl;
 import org.eclipse.tm.te.ui.controls.BaseWizardConfigurationPanelControl;
 import org.eclipse.tm.te.ui.controls.interfaces.IWizardConfigurationPanel;
+import org.eclipse.tm.te.ui.controls.panels.AbstractWizardConfigurationPanel;
 import org.eclipse.tm.te.ui.jface.dialogs.CustomTrayDialog;
 import org.eclipse.tm.te.ui.swt.SWTControlUtil;
 import org.eclipse.tm.te.ui.terminals.help.IContextHelpIds;
@@ -83,6 +86,41 @@ public class LaunchTerminalSettingsDialog extends CustomTrayDialog {
         public String getGroupLabel() {
             return Messages.LaunchTerminalSettingsDialog_group_label;
         }
+	}
+
+	/**
+	 * An empty terminal settings panel.
+	 */
+	protected class EmptySettingsPanel extends AbstractWizardConfigurationPanel {
+
+		/**
+	     * Constructor.
+	     *
+		 * @param parentControl The parent control. Must not be <code>null</code>!
+	     */
+	    public EmptySettingsPanel(BaseDialogPageControl parentControl) {
+		    super(parentControl);
+	    }
+
+		/* (non-Javadoc)
+	     * @see org.eclipse.tm.te.ui.controls.interfaces.IWizardConfigurationPanel#setupPanel(org.eclipse.swt.widgets.Composite, org.eclipse.tm.te.ui.controls.interfaces.FormToolkit)
+	     */
+	    @Override
+	    public void setupPanel(Composite parent, FormToolkit toolkit) {
+	    	Composite panel = new Composite(parent, SWT.NONE);
+	    	panel.setLayout(new GridLayout());
+	    	panel.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+
+	    	setControl(panel);
+	    }
+
+	    /* (non-Javadoc)
+	     * @see org.eclipse.tm.te.ui.controls.interfaces.IWizardConfigurationPanel#dataChanged(org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer, org.eclipse.swt.events.TypedEvent)
+	     */
+	    @Override
+	    public boolean dataChanged(IPropertiesContainer data, TypedEvent e) {
+	        return false;
+	    }
 	}
 
 	/**
@@ -161,8 +199,8 @@ public class LaunchTerminalSettingsDialog extends CustomTrayDialog {
         	Assert.isNotNull(delegate);
         	// Get the wizard configuration panel instance
         	IWizardConfigurationPanel configPanel = delegate.getPanel(settings);
-        	Assert.isNotNull(configPanel);
-
+        	if (configPanel == null) configPanel = new EmptySettingsPanel(settings);
+        	// Add it
         	settings.addConfigurationPanel(terminalLabel, configPanel);
         }
 
@@ -261,12 +299,12 @@ public class LaunchTerminalSettingsDialog extends CustomTrayDialog {
     }
 
     /**
-     * Returns the currently selected settings.
+     * Returns the configured terminal launcher settings.
      * <p>
      * The settings are extracted from the UI widgets once
      * OK got pressed.
      *
-     * @return The currently selected settings or <code>null</code>.
+     * @return The configured terminal launcher settings or <code>null</code>.
      */
     public IPropertiesContainer getSettings() {
     	return data;

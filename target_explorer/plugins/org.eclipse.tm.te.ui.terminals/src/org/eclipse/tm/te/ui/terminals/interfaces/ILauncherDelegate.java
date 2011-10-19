@@ -29,12 +29,24 @@ public interface ILauncherDelegate extends IExecutableExtension {
 	public Expression getEnablement();
 
 	/**
-	 * Returns the configuration panel instance to present to the
-	 * user. The instance must be always the same on subsequent calls
-	 * until disposed.
+	 * Returns if or if not the user needs to set configuration details for this launcher to work.
+	 * The settings to configure are provided to the user through the configuration panel returned
+	 * by {@link #getPanel(BaseDialogPageControl)}.
+	 *
+	 * @return <code>True</code> if a user configuration is required, <code>false</code> otherwise.
+	 */
+	public boolean needsUserConfiguration();
+
+	/**
+	 * Returns the configuration panel instance to present to the user. The instance must be always
+	 * the same on subsequent calls until disposed.
+	 * <p>
+	 * The method may return <code>null</code> if the launcher does not provide any user
+	 * configurable settings. In this case, {@link #needsUserConfiguration()} should return
+	 * <code>false</code>.
 	 *
 	 * @param parentControl The parent control. Must not be <code>null</code>.
-	 * @return The configuration panel instance.
+	 * @return The configuration panel instance or <code>null</code>
 	 */
 	public IWizardConfigurationPanel getPanel(BaseDialogPageControl parentControl);
 
