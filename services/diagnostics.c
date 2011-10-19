@@ -379,8 +379,9 @@ static void command_create_test_streams(char * token, Channel * c) {
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-#if SERVICE_Streams
     if (buf_size0 <= 0 || buf_size1 <= 0) err = ERR_INV_NUMBER;
+
+#if SERVICE_Streams
     if (!err) {
         StreamsTest * st = (StreamsTest *)loc_alloc_zero(sizeof(StreamsTest));
         virtual_stream_create(DIAGNOSTICS, NULL, (unsigned)buf_size0,
@@ -391,8 +392,9 @@ static void command_create_test_streams(char * token, Channel * c) {
         virtual_stream_get_id(st->out, id_out, sizeof(id_out));
     }
 #else
-    err = ERR_UNSUPPORTED;
+    if (!err) err = ERR_UNSUPPORTED;
 #endif
+
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_errno(&c->out, err);
