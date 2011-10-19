@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2007, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -25,7 +25,7 @@
 
 #include <config.h>
 
-#if SERVICE_Processes
+#if SERVICE_Processes || SERVICE_Terminals
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -46,7 +46,9 @@
 #include <services/streamsservice.h>
 #include <services/processes.h>
 
+#if SERVICE_Processes
 static const char * PROCESSES[2] = { "Processes", "ProcessesV1" };
+#endif
 
 #if defined(WIN32)
 #  include <tlhelp32.h>
@@ -142,6 +144,8 @@ static ChildProcess * find_process(int pid) {
     }
     return NULL;
 }
+
+#if SERVICE_Processes
 
 static int is_attached(pid_t pid) {
 #if ENABLE_DebugContext
@@ -567,11 +571,6 @@ static void start_done(int error, Context * ctx, void * arg) {
     loc_free(data);
 }
 
-#else /* not ENABLE_DebugContext */
-
-#define context_attach(pid, done, client_data, mode) (errno = ERR_UNSUPPORTED, -1)
-#define context_attach_self() (errno = ERR_UNSUPPORTED, -1)
-
 #endif /* ENABLE_DebugContext */
 
 static void command_terminate(char * token, Channel * c) {
@@ -721,8 +720,12 @@ static void command_get_environment(char * token, Channel * c) {
     write_stream(&c->out, MARKER_EOM);
 }
 
+#endif
+
 static void process_exited(ChildProcess * prs) {
+#if SERVICE_Processes
     send_event_process_exited(&prs->bcg->out, prs);
+#endif
 #if defined(_WRS_KERNEL)
     semTake(prs_list_lock, WAIT_FOREVER);
 #endif
@@ -892,6 +895,11 @@ static ProcessOutput * read_process_output(ChildProcess * prs, int fd) {
     async_req_post(&out->req);
     return out;
 }
+
+#if !ENABLE_DebugContext
+#  define context_attach(pid, done, client_data, mode) (errno = ERR_UNSUPPORTED, -1)
+#  define context_attach_self() (errno = ERR_UNSUPPORTED, -1)
+#endif
 
 #if defined(WIN32)
 
@@ -1332,6 +1340,8 @@ int get_process_exit_code(ChildProcess * prs) {
     return prs->exit_code;
 }
 
+#if SERVICE_Processes
+
 static void read_start_params(InputStream * inp, const char * nm, void * arg) {
     ProcessStartParams * params = (ProcessStartParams *)arg;
     if (strcmp(nm, "Attach") == 0) params->attach = json_read_boolean(inp);
@@ -1417,6 +1427,8 @@ static void command_start(char * token, Channel * c, void * x) {
     if (trap.error) exception(trap.error);
 }
 
+#endif
+
 static void waitpid_listener(int pid, int exited, int exit_code, int signal, int event_code, int syscall, void * args) {
     if (exited) {
         ChildProcess * prs = find_process(pid);
@@ -1429,31 +1441,35 @@ static void waitpid_listener(int pid, int exited, int exit_code, int signal, int
 }
 
 void ini_processes_service(Protocol * proto) {
-    int v;
-    static int vs[] = { 0, 1 };
 #if defined(_WRS_KERNEL)
     prs_list_lock = semMCreate(SEM_Q_PRIORITY);
     if (prs_list_lock == NULL) check_error(errno);
     if (taskCreateHookAdd((FUNCPTR)task_create_hook) != OK) check_error(errno);
     if (taskDeleteHookAdd((FUNCPTR)task_delete_hook) != OK) check_error(errno);
-#endif
+#endif /* defined(_WRS_KERNEL) */
     list_init(&prs_list);
     add_waitpid_listener(waitpid_listener, NULL);
-    for (v = 0; v < 2; v++) {
-        add_command_handler(proto, PROCESSES[v], "getContext", command_get_context);
-        add_command_handler(proto, PROCESSES[v], "getChildren", command_get_children);
-        add_command_handler(proto, PROCESSES[v], "terminate", command_terminate);
-        add_command_handler(proto, PROCESSES[v], "signal", command_signal);
-        add_command_handler(proto, PROCESSES[v], "getSignalList", command_get_signal_list);
-        add_command_handler(proto, PROCESSES[v], "getEnvironment", command_get_environment);
-        add_command_handler2(proto, PROCESSES[v], "start", command_start, vs + v);
+#if SERVICE_Processes
+    {
+        int v;
+        static int vs[] = { 0, 1 };
+        for (v = 0; v < 2; v++) {
+            add_command_handler(proto, PROCESSES[v], "getContext", command_get_context);
+            add_command_handler(proto, PROCESSES[v], "getChildren", command_get_children);
+            add_command_handler(proto, PROCESSES[v], "terminate", command_terminate);
+            add_command_handler(proto, PROCESSES[v], "signal", command_signal);
+            add_command_handler(proto, PROCESSES[v], "getSignalList", command_get_signal_list);
+            add_command_handler(proto, PROCESSES[v], "getEnvironment", command_get_environment);
+            add_command_handler2(proto, PROCESSES[v], "start", command_start, vs + v);
 #if ENABLE_DebugContext
-        add_command_handler(proto, PROCESSES[v], "attach", command_attach);
-        add_command_handler(proto, PROCESSES[v], "detach", command_detach);
-        add_command_handler(proto, PROCESSES[v], "getSignalMask", command_get_signal_mask);
-        add_command_handler(proto, PROCESSES[v], "setSignalMask", command_set_signal_mask);
+            add_command_handler(proto, PROCESSES[v], "attach", command_attach);
+            add_command_handler(proto, PROCESSES[v], "detach", command_detach);
+            add_command_handler(proto, PROCESSES[v], "getSignalMask", command_get_signal_mask);
+            add_command_handler(proto, PROCESSES[v], "setSignalMask", command_set_signal_mask);
 #endif /* ENABLE_DebugContext */
+        }
     }
+#endif /* SERVICE_Processes */
 }
 
 #endif
