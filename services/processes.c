@@ -1286,7 +1286,7 @@ static int start_process_imp(Channel * c, char ** envp, const char * dir, const 
 
 int start_process(Channel * c, ProcessStartParams * params, int * selfattach, ChildProcess ** prs) {
     int res = start_process_imp(c, params->envp, params->dir, params->exe, params->args, params, selfattach, prs);
-    if (prs != NULL) {
+    if (*prs != NULL) {
         if (!params->attach) add_waitpid_process((*prs)->pid);
         strlcpy((*prs)->name, params->exe, sizeof((*prs)->name));
         (*prs)->exit_args = params->exit_args;
