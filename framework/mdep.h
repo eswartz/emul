@@ -322,6 +322,7 @@ extern int loc_clock_gettime(int, struct timespec *);
 
 #include <unistd.h>
 #include <memory.h>
+#include <sys/types.h>
 #include <sys/select.h>
 #include <sys/time.h>
 #include <sys/ioctl.h>
