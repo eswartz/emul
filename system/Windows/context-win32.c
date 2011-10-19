@@ -1416,9 +1416,13 @@ static void eventpoint_at_main(Context * ctx, void * args) {
     suspend_debug_context(ctx);
 }
 
+static void waitpid_listener(int pid, int exited, int exit_code, int signal, int event_code, int syscall, void * args) {
+}
+
 void init_contexts_sys_dep(void) {
     context_extension_offset = context_extension(sizeof(ContextExtensionWin32));
     ini_context_pid_hash();
+    add_waitpid_listener(waitpid_listener, NULL);
     memset(&os_version, 0, sizeof(os_version));
     os_version.dwOSVersionInfoSize = sizeof(os_version);
     GetVersionEx((OSVERSIONINFO *)&os_version);

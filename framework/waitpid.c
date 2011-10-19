@@ -109,6 +109,7 @@ static void init(void) {
 void add_waitpid_process(int pid) {
     HANDLE prs = NULL;
     WaitPIDThread * thread = threads;
+    assert(listener_cnt > 0);
     check_error_win32(WaitForSingleObject(semaphore, INFINITE) != WAIT_FAILED);
     while (thread != NULL && thread->handle_cnt >= MAX_HANDLES) thread = thread->next;
     if (thread == NULL) {
