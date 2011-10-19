@@ -148,7 +148,6 @@ public class TCFLaunch extends Launch {
     private final IStreams.StreamsListener streams_listener = new IStreams.StreamsListener() {
 
         public void created(String stream_type, String stream_id, String context_id) {
-            assert IProcesses.NAME.equals(stream_type);
             if (process_start_command == null) {
                 disconnectStream(stream_id);
             }
@@ -214,12 +213,19 @@ public class TCFLaunch extends Launch {
                 new LaunchStep() {
                     @Override
                     void start() {
-                        streams.subscribe(IProcesses.NAME, streams_listener, new IStreams.DoneSubscribe() {
-                            public void doneSubscribe(IToken token, Exception error) {
-                                if (error != null) channel.terminate(error);
-                                else done();
-                            }
-                        });
+                        final Set<IToken> cmds = new HashSet<IToken>();
+                        String[] nms = { IProcesses.NAME, IProcessesV1.NAME };
+                        for (String s : nms) {
+                            if (channel.getRemoteService(s) == null) continue;
+                            cmds.add(streams.subscribe(s, streams_listener, new IStreams.DoneSubscribe() {
+                                public void doneSubscribe(IToken token, Exception error) {
+                                    cmds.remove(token);
+                                    if (error != null) channel.terminate(error);
+                                    if (cmds.size() == 0) done();
+                                }
+                            }));
+                        }
+                        if (cmds.size() == 0) done();
                     }
                 };
             }
@@ -728,15 +734,15 @@ public class TCFLaunch extends Launch {
                         }
                     };
                     String[] args_arr = toArgsArray(file, args);
-                    IProcessesV1 ps_v2 = channel.getRemoteService(IProcessesV1.class);
-                    if (ps_v2 != null) {
+                    IProcessesV1 ps_v1 = channel.getRemoteService(IProcessesV1.class);
+                    if (ps_v1 != null) {
                         Map<String,Object> params = new HashMap<String,Object>();
                         if (mode.equals(ILaunchManager.DEBUG_MODE)) {
                             params.put(IProcessesV1.START_ATTACH, true);
                             if (attach_children) params.put(IProcessesV1.START_ATTACH_CHILDREN, true);
                         }
                         if (use_terminal) params.put(IProcessesV1.START_USE_TERMINAL, true);
-                        process_start_command = ps_v2.start(dir, file, args_arr, process_env, params, done);
+                        process_start_command = ps_v1.start(dir, file, args_arr, process_env, params, done);
                     }
                     else {
                         boolean attach = mode.equals(ILaunchManager.DEBUG_MODE);
