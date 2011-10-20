@@ -134,6 +134,8 @@ public class Messages extends NLS {
 	public static String FSTreeControl_column_modified_label;
 
 	public static String FSOpenFileDialog_title;
+	public static String GeneralInformationPage_PropertiesChangeFailure;
+	public static String GeneralInformationPage_PropertiesChangeTitle;
 	public static String LocalTypedElement_SavingFile;
 
 	public static String OpenFileHandler_Cancel;

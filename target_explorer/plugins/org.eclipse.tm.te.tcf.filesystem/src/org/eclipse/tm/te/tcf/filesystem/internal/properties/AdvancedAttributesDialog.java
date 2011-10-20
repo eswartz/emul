@@ -14,6 +14,8 @@ import java.net.URL;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -39,7 +41,7 @@ public class AdvancedAttributesDialog extends Dialog {
 	private static final String BANNER_IMAGE_PATH = "icons/obj32/banner.png"; //$NON-NLS-1$
 
 	// The file or folder node whose advanced attributes are to be displayed.
-	private FSTreeNode node;
+	FSTreeNode node;
 
 	/**
 	 * Create the advanced attributes dialog with the specified node and a
@@ -136,7 +138,7 @@ public class AdvancedAttributesDialog extends Dialog {
 				: (node.isDirectory() ? Messages.AdvancedAttributesDialog_IndexFolder
 						: null);
 		boolean on = !node.isWin32AttrOn(IWindowsFileAttributes.FILE_ATTRIBUTE_NOT_CONTENT_INDEXED);
-		createOptionField(group, label, on);
+		createOptionField(group, label, IWindowsFileAttributes.FILE_ATTRIBUTE_NOT_CONTENT_INDEXED, on);
 	}
 
 	/**
@@ -150,7 +152,7 @@ public class AdvancedAttributesDialog extends Dialog {
 				: (node.isDirectory() ? Messages.AdvancedAttributesDialog_FolderArchive
 						: null);
 		boolean on = node.isWin32AttrOn(IWindowsFileAttributes.FILE_ATTRIBUTE_ARCHIVE);
-		createOptionField(group, label, on);
+		createOptionField(group, label, IWindowsFileAttributes.FILE_ATTRIBUTE_ARCHIVE, on);
 	}
 
 	/**
@@ -162,7 +164,7 @@ public class AdvancedAttributesDialog extends Dialog {
 	private void createEncrypt(Group group) {
 		String label = Messages.AdvancedAttributesDialog_Encrypt;
 		boolean on = node.isWin32AttrOn(IWindowsFileAttributes.FILE_ATTRIBUTE_ENCRYPTED);
-		createOptionField(group, label, on);
+		createOptionField(group, label, IWindowsFileAttributes.FILE_ATTRIBUTE_ENCRYPTED, on);
 	}
 
 	/**
@@ -174,7 +176,7 @@ public class AdvancedAttributesDialog extends Dialog {
 	private void createCompress(Group group) {
 		String label = Messages.AdvancedAttributesDialog_Compress;
 		boolean on = node.isWin32AttrOn(IWindowsFileAttributes.FILE_ATTRIBUTE_COMPRESSED);
-		createOptionField(group, label, on);
+		createOptionField(group, label, IWindowsFileAttributes.FILE_ATTRIBUTE_COMPRESSED, on);
 	}
 
 	/**
@@ -185,14 +187,23 @@ public class AdvancedAttributesDialog extends Dialog {
 	 *            The group widget where the field is created.
 	 * @param label
 	 *            The label used by the field.
+	 * @param bit
+	 * 				The bit mask to be changed once the value is changed.
 	 * @param on
 	 *            The boolean value to be set.
 	 */
-	private void createOptionField(Group group, String label, boolean on) {
-		Button button = new Button(group, SWT.CHECK);
-		button.setEnabled(false);
+	private void createOptionField(Group group, String label, final int bit, final boolean on) {
+		final Button button = new Button(group, SWT.CHECK);
 		button.setText(label);
 		button.setSelection(on);
+		button.addSelectionListener(new SelectionAdapter(){
+			@Override
+            public void widgetSelected(SelectionEvent e) {
+				if (button.getSelection() != on) {
+					node.setWin32Attr(bit, on);
+				}
+            }
+		});
 	}
 
 	/* (non-Javadoc)
@@ -204,4 +215,11 @@ public class AdvancedAttributesDialog extends Dialog {
 		newShell.setText(Messages.AdvancedAttributesDialog_ShellTitle);
 	}
 
+	/**
+	 * Get the result.
+	 * @return The result.
+	 */
+	public FSTreeNode getResult() {
+	    return node;
+    }
 }

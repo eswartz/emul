@@ -15,6 +15,11 @@ import java.util.Date;
 
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.core.runtime.ISafeRunnable;
+import org.eclipse.core.runtime.SafeRunner;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.window.Window;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -24,6 +29,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.tm.te.tcf.filesystem.internal.handlers.StateManager;
 import org.eclipse.tm.te.tcf.filesystem.internal.nls.Messages;
 import org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode;
 import org.eclipse.ui.dialogs.PropertyPage;
@@ -36,22 +42,29 @@ public class GeneralInformationPage extends PropertyPage {
 	private static final DateFormat DATE_FORMAT = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT);
 	// The formatter for the size of a file.
 	private static final DecimalFormat SIZE_FORMAT = new DecimalFormat();
-
+	// The original node.
+	FSTreeNode node;
+	// Cloned node for modification.
+	FSTreeNode clone;
+	// The button of "Read-Only"
+	Button btnReadOnly;
+	// The button of "Hidden"
+	Button btnHidden;
+	// The button of "Permissions"
+	Button[] btnPermissions;
 	/**
 	 * Get the type of an FSTreeNode.
 	 *
-	 * @param node
-	 *            The FSTreeNode instance
 	 * @return "folder" if it is a directory, "file" if is a file, or else
 	 *         defaults to node.type.
 	 */
-	protected String getNodeTypeLabel(FSTreeNode node) {
-		if (node.isDirectory())
+	protected String getNodeTypeLabel() {
+		if (clone.isDirectory())
 			return Messages.InformationPage_Folder;
-		else if (node.isFile())
+		else if (clone.isFile())
 			return Messages.InformationPage_File;
 		else
-			return node.type;
+			return clone.type;
 	}
 
 	/**
@@ -59,11 +72,9 @@ public class GeneralInformationPage extends PropertyPage {
 	 *
 	 * @param parent
 	 *            The parent composite of the separator.
-	 * @param style
-	 *            The style of the separator.
 	 */
-	protected void createSeparator(Composite parent, int style) {
-		Label label = new Label(parent, SWT.SHADOW_NONE | SWT.HORIZONTAL);
+	protected void createSeparator(Composite parent) {
+		Label label = new Label(parent, SWT.SEPARATOR | SWT.SHADOW_ETCHED_IN | SWT.HORIZONTAL);
 		GridData data = new GridData(SWT.FILL, SWT.BEGINNING, true, false);
 		data.horizontalSpan = 2;
 		label.setLayoutData(data);
@@ -117,11 +128,8 @@ public class GeneralInformationPage extends PropertyPage {
 	 *
 	 * @param parent
 	 *            The parent composite on which it is created.
-	 * @param node
-	 *            The file/folder node.
 	 */
-	protected void createAttributesSection(Composite parent,
-			final FSTreeNode node) {
+	protected void createAttributesSection(Composite parent) {
 		// Attributes
 		Label label = new Label(parent, SWT.NONE);
 		label.setText(Messages.InformationPage_Attributes);
@@ -134,36 +142,58 @@ public class GeneralInformationPage extends PropertyPage {
 		layout.marginHeight = 0;
 		attr.setLayout(layout);
 		// Read-only
-		Button button = new Button(attr, SWT.CHECK);
-		button.setText(Messages.InformationPage_ReadOnly);
-		button.setEnabled(false);
-		button.setSelection(node.isReadOnly());
+		btnReadOnly = new Button(attr, SWT.CHECK);
+		btnReadOnly.setText(Messages.InformationPage_ReadOnly);
+		btnReadOnly.addSelectionListener(new SelectionAdapter(){
+			@Override
+            public void widgetSelected(SelectionEvent e) {
+				if(btnReadOnly.getSelection()!=clone.isReadOnly()){
+					clone.setReadOnly(btnReadOnly.getSelection());
+				}
+            }
+		});
 		// Hidden
-		button = new Button(attr, SWT.CHECK);
-		button.setText(Messages.InformationPage_Hidden);
-		button.setEnabled(false);
-		button.setSelection(node.isHidden());
+		btnHidden = new Button(attr, SWT.CHECK);
+		btnHidden.setText(Messages.InformationPage_Hidden);
+		btnHidden.addSelectionListener(new SelectionAdapter(){
+			@Override
+            public void widgetSelected(SelectionEvent e) {
+				Button btnHidden = (Button) e.getSource();
+				if(btnHidden.getSelection()!=clone.isHidden()){
+					clone.setHidden(btnHidden.getSelection());
+				}
+            }
+		});
 		// Advanced Attributes
-		button = new Button(attr, SWT.PUSH);
-		button.setText(Messages.InformationPage_Advanced);
-		button.addSelectionListener(new SelectionAdapter() {
-
+		Button btnAdvanced = new Button(attr, SWT.PUSH);
+		btnAdvanced.setText(Messages.InformationPage_Advanced);
+		btnAdvanced.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				showAdvancedAttributes(node);
+				showAdvancedAttributes();
 			}
 		});
+		// Update the attribute values.
+		updateAttributes();
+	}
+
+	/**
+	 * Update the value of attributes section.
+	 */
+	private void updateAttributes() {
+		btnReadOnly.setSelection(clone.isReadOnly());
+		btnHidden.setSelection(clone.isHidden());
 	}
 
 	/**
 	 * Show the advanced attributes dialog for the specified file/folder.
-	 *
-	 * @param node
-	 *            The file/folder node.
 	 */
-	void showAdvancedAttributes(FSTreeNode node) {
-		AdvancedAttributesDialog dialog = new AdvancedAttributesDialog(this.getShell(), node);
-		dialog.open();
+	void showAdvancedAttributes() {
+		AdvancedAttributesDialog dialog = new AdvancedAttributesDialog(this.getShell(), (FSTreeNode)(clone.clone()));
+		if (dialog.open() == Window.OK) {
+			FSTreeNode result = dialog.getResult();
+			clone.attr = result.attr;
+		}
 	}
 
 	/**
@@ -171,10 +201,8 @@ public class GeneralInformationPage extends PropertyPage {
 	 *
 	 * @param parent
 	 *            The parent composite on which it is created.
-	 * @param node
-	 *            The file/folder node.
 	 */
-	protected void createPermissionsSection(Composite parent, FSTreeNode node) {
+	protected void createPermissionsSection(Composite parent) {
 		GridLayout gridLayout;
 		Label label = new Label(parent, SWT.NONE);
 		label.setText("Permissions:"); //$NON-NLS-1$
@@ -186,14 +214,15 @@ public class GeneralInformationPage extends PropertyPage {
 		gridLayout = new GridLayout(2, false);
 		gridLayout.marginHeight = 0;
 		perms.setLayout(gridLayout);
+		btnPermissions = new Button[9];
 		createPermissionGroup(perms, 0,
-				Messages.PermissionsGroup_UserPermissions, node.attr.permissions);
+				Messages.PermissionsGroup_UserPermissions);
 		createPermissionGroup(perms, 3,
-				Messages.PermissionsGroup_GroupPermissions,
-				node.attr.permissions);
+				Messages.PermissionsGroup_GroupPermissions);
 		createPermissionGroup(perms, 6,
-				Messages.PermissionsGroup_OtherPermissions,
-				node.attr.permissions);
+				Messages.PermissionsGroup_OtherPermissions);
+		// Update the permission values.
+		updatePermissions();
 	}
 
 	/**
@@ -205,11 +234,8 @@ public class GeneralInformationPage extends PropertyPage {
 	 *            The permission bit index.
 	 * @param header
 	 *            The group's header label.
-	 * @param permissions
-	 *            The permissions bit mask.
 	 */
-	protected void createPermissionGroup(Composite parent, int bit,
-			String header, int permissions) {
+	protected void createPermissionGroup(Composite parent, int bit, String header) {
 		Label label = new Label(parent, SWT.NONE);
 		label.setText(header);
 		GridData data = new GridData();
@@ -219,12 +245,9 @@ public class GeneralInformationPage extends PropertyPage {
 		GridLayout layout = new GridLayout(3, true);
 		layout.marginHeight = 0;
 		group.setLayout(layout);
-		createPermissionButton(Messages.PermissionsGroup_Readable, bit,
-				permissions, group);
-		createPermissionButton(Messages.PermissionsGroup_Writable, bit + 1,
-				permissions, group);
-		createPermissionButton(Messages.PermissionsGroup_Executable, bit + 2,
-				permissions, group);
+		createPermissionButton(Messages.PermissionsGroup_Readable, bit, group);
+		createPermissionButton(Messages.PermissionsGroup_Writable, bit + 1, group);
+		createPermissionButton(Messages.PermissionsGroup_Executable, bit + 2, group);
 	}
 
 	/**
@@ -234,19 +257,94 @@ public class GeneralInformationPage extends PropertyPage {
 	 *            The label of the permission.
 	 * @param index
 	 *            The index of current permission bit mask index.
-	 * @param permissions
-	 *            The permissions bit mask.
 	 * @param parent
 	 *            The parent to hold the check-box field.
 	 */
-	private void createPermissionButton(String label, int index,
-			int permissions, Composite parent) {
-		Button button = new Button(parent, SWT.CHECK);
-		button.setText(label);
-		int bit = 1 << (8 - index);
-		button.setSelection((permissions & bit) != 0);
-		// Not editable yet.
-		button.setEnabled(false);
+	private void createPermissionButton(String label, final int index, Composite parent) {
+		btnPermissions[index] = new Button(parent, SWT.CHECK);
+		btnPermissions[index].setText(label);
+		btnPermissions[index].addSelectionListener(new SelectionAdapter(){
+			@Override
+            public void widgetSelected(SelectionEvent e) {
+				int bit = 1 << (8 - index);
+				boolean on = (clone.attr.permissions & bit) != 0;
+				boolean newOn = btnPermissions[index].getSelection();
+				if (newOn != on) {
+					int permissions = clone.attr.permissions;
+					permissions = newOn ? (permissions | bit) : (permissions & ~bit);
+					clone.setPermissions(permissions);
+				}
+            }
+		});
+	}
+
+	/**
+	 * Update the value of permissions section.
+	 */
+	private void updatePermissions(){
+		for (int i = 0; i < 9; i++) {
+			final int bit = 1 << (8 - i);
+			final boolean on = (clone.attr.permissions & bit) != 0;
+			btnPermissions[i].setSelection(on);
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.eclipse.jface.preference.PreferencePage#performDefaults()
+	 */
+	@Override
+    protected void performDefaults() {
+		clone = (FSTreeNode) node.clone();
+		if (node.isWindowsNode()) {
+			updateAttributes();
+		}
+		else {
+			updatePermissions();
+		}
+	    super.performDefaults();
+    }
+
+	/*
+	 * (non-Javadoc)
+	 * @see org.eclipse.jface.preference.PreferencePage#performOk()
+	 */
+	@Override
+    public boolean performOk() {
+		if (hasAttrsChanged()) {
+			final boolean[] success = new boolean[1];
+			success[0] = true;
+			SafeRunner.run(new ISafeRunnable() {
+				@Override
+				public void handleException(Throwable exception) {
+					String errorMessage = NLS
+					                .bind(Messages.GeneralInformationPage_PropertiesChangeFailure, new Object[] { node.name, exception
+					                                .getLocalizedMessage() });
+					MessageDialog.openError(getShell(), Messages.GeneralInformationPage_PropertiesChangeTitle, errorMessage);
+					success[0] = false;
+				}
+
+				@Override
+				public void run() throws Exception {
+					StateManager.getInstance().setFileAttrs(node, clone.attr);
+				}
+			});
+			return success[0];
+		}
+		return true;
+    }
+
+	/**
+	 * If the attributes has been changed.
+	 * @return If the attributes has been changed.
+	 */
+	private boolean hasAttrsChanged(){
+		if(node.isWindowsNode()){
+			// If it is a Windows file, only check its attributes.
+			return node.getWin32Attrs() != clone.getWin32Attrs();
+		}
+		// If it is not a Windows file, only check its permissions.
+		return node.attr.permissions != clone.attr.permissions;
 	}
 
 	/* (non-Javadoc)
@@ -257,36 +355,35 @@ public class GeneralInformationPage extends PropertyPage {
 		IAdaptable element = getElement();
 		Assert.isTrue(element instanceof FSTreeNode);
 
-		FSTreeNode node = (FSTreeNode) element;
+		node = (FSTreeNode) element;
+		clone = (FSTreeNode) node.clone();
 		Composite page = new Composite(parent, SWT.NONE);
 		GridLayout gridLayout = new GridLayout(2, false);
 		page.setLayout(gridLayout);
 		// Field "Name"
-		createField(Messages.InformationPage_Name, node.name, page);
-		createSeparator(page, SWT.SHADOW_NONE);
+		createField(Messages.InformationPage_Name, clone.name, page);
 		// Field "Type"
-		createField(Messages.InformationPage_Type, getNodeTypeLabel(node), page);
-		// Field "Size"
-		if (node.isFile()) {
-			createField(Messages.InformationPage_Size, getSizeText(node.attr.size), page);
-		}
+		createField(Messages.InformationPage_Type, getNodeTypeLabel(), page);
 		// Field "Location"
-		String location = node.type.endsWith("FSRootNode") //$NON-NLS-1$
-				|| node.type.endsWith("FSRootDirNode") ? Messages.InformationPage_Computer //$NON-NLS-1$
-				: node.getLocation();
+		String location = clone.type.endsWith("FSRootNode") //$NON-NLS-1$
+				|| clone.type.endsWith("FSRootDirNode") ? Messages.InformationPage_Computer //$NON-NLS-1$
+				: clone.getLocation();
 		createField(Messages.InformationPage_Location, location, page);
-		createSeparator(page, SWT.SHADOW_NONE);
-		// Field "Modified"
-		createField(Messages.InformationPage_Modified, getDateText(node.attr.mtime), page);
-		// Field "Accessed"
-		if (node.isFile()) {
-			createField(Messages.InformationPage_Accessed, getDateText(node.attr.atime), page);
+		// Field "Size"
+		if (clone.isFile()) {
+			createField(Messages.InformationPage_Size, getSizeText(clone.attr.size), page);
 		}
-		createSeparator(page, SWT.SHADOW_NONE);
-		if (node.isWindowsNode()) {
-			createAttributesSection(page, node);
+		// Field "Modified"
+		createField(Messages.InformationPage_Modified, getDateText(clone.attr.mtime), page);
+		// Field "Accessed"
+		if (clone.isFile()) {
+			createField(Messages.InformationPage_Accessed, getDateText(clone.attr.atime), page);
+		}
+		createSeparator(page);
+		if (clone.isWindowsNode()) {
+			createAttributesSection(page);
 		} else {
-			createPermissionsSection(page, node);
+			createPermissionsSection(page);
 		}
 		return page;
 	}

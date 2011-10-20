@@ -16,7 +16,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.eclipse.core.runtime.Assert;
@@ -35,7 +37,9 @@ import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel;
  * <b>Note:</b> Node construction and child list access is limited to the TCF
  * event dispatch thread.
  */
-public final class FSTreeNode extends PlatformObject {
+public final class FSTreeNode extends PlatformObject implements Cloneable{
+
+	private static final String KEY_WIN32_ATTRS = "Win32Attrs"; //$NON-NLS-1$
 
 	private final UUID uniqueId = UUID.randomUUID();
 
@@ -87,6 +91,38 @@ public final class FSTreeNode extends PlatformObject {
 		children = Collections.synchronizedList(new ArrayList<FSTreeNode>());
 		Assert.isTrue(Protocol.isDispatchThread());
 	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see java.lang.Object#clone()
+	 */
+	@Override
+	public Object clone() {
+		FSTreeNode clone;
+        try {
+	        clone = (FSTreeNode) super.clone();
+        } catch (CloneNotSupportedException e) {
+        	clone = new FSTreeNode();
+        	clone.children = children;
+        	clone.childrenQueried = childrenQueried;
+        	clone.childrenQueryRunning = childrenQueryRunning;
+        	clone.name = name;
+        	clone.parent = parent;
+        	clone.peerNode = peerNode;
+        	clone.type = type;
+        }
+		Map<String, Object> attributes = new HashMap<String, Object>(attr.attributes);
+		clone.attr = new IFileSystem.FileAttrs(attr.flags, attr.size, attr.uid, attr.gid, attr.permissions, attr.atime, attr.mtime, attributes);
+		return clone;
+	}
+
+	/**
+	 * Set the file's permissions.
+	 * @param permissions The new permissions.
+	 */
+	public void setPermissions(int permissions) {
+		attr = new IFileSystem.FileAttrs(attr.flags, attr.size, attr.uid, attr.gid, permissions, attr.atime, attr.mtime, attr.attributes);
+    }
 
 	/*
 	 * (non-Javadoc)
@@ -145,7 +181,7 @@ public final class FSTreeNode extends PlatformObject {
 	 * @return true if it is a Windows node, or else false.
 	 */
 	public boolean isWindowsNode() {
-		return attr != null && attr.attributes != null && attr.attributes.containsKey("Win32Attrs"); //$NON-NLS-1$
+		return attr != null && attr.attributes != null && attr.attributes.containsKey(KEY_WIN32_ATTRS);
 	}
 
 	/**
@@ -174,12 +210,36 @@ public final class FSTreeNode extends PlatformObject {
 	 * @return true if it is on, or else false.
 	 */
 	public boolean isWin32AttrOn(int bit) {
-		if (attr != null && attr.attributes.get("Win32Attrs") instanceof Integer) { //$NON-NLS-1$
-			Integer win32Attrs = (Integer) attr.attributes.get("Win32Attrs"); //$NON-NLS-1$
+		if (attr != null && attr.attributes.get(KEY_WIN32_ATTRS) instanceof Integer) {
+			Integer win32Attrs = (Integer) attr.attributes.get(KEY_WIN32_ATTRS);
 			return (win32Attrs.intValue() & bit) != 0;
 		}
 		return false;
 	}
+	
+	/**
+	 * Set the attribute specified by the mask bit to on or off.
+	 * @param bit The attribute's mask bit.
+	 * @param on The flag if the bit should be turned on or off.
+	 */
+	public void setWin32Attr(int bit, boolean on) {
+		if (attr != null && attr.attributes.get(KEY_WIN32_ATTRS) instanceof Integer) {
+			int win32attr = ((Integer) attr.attributes.get(KEY_WIN32_ATTRS)).intValue();
+			win32attr = on ? (win32attr | bit) : (win32attr & ~bit);
+			attr.attributes.put(KEY_WIN32_ATTRS, Integer.valueOf(win32attr));
+		}
+	}
+
+	/**
+	 * Get the file's win32 attributes.
+	 * @return The file's win32 attributes.
+	 */
+	public int getWin32Attrs() {
+		if (attr != null && attr.attributes.get(KEY_WIN32_ATTRS) instanceof Integer) {
+			return ((Integer) attr.attributes.get(KEY_WIN32_ATTRS)).intValue();
+		}
+	    return 0;
+    }
 
 	/**
 	 * Return if this file/folder is hidden.
@@ -191,6 +251,14 @@ public final class FSTreeNode extends PlatformObject {
 	}
 
 	/**
+	 * Set the file/folder hidden attribute's value.
+	 * @param hidden The new value.
+	 */
+	public void setHidden(boolean hidden) {
+		setWin32Attr(IWindowsFileAttributes.FILE_ATTRIBUTE_HIDDEN, hidden);
+    }
+
+	/**
 	 * Return if this file/folder is read-only.
 	 * 
 	 * @return true if it is read-only, or else false.
@@ -198,6 +266,14 @@ public final class FSTreeNode extends PlatformObject {
 	public boolean isReadOnly() {
 		return isWin32AttrOn(IWindowsFileAttributes.FILE_ATTRIBUTE_READONLY);
 	}
+
+	/**
+	 * Set the file/folder read-only attribute's value.
+	 * @param readOnly The new value.
+	 */
+	public void setReadOnly(boolean readOnly) {
+		setWin32Attr(IWindowsFileAttributes.FILE_ATTRIBUTE_READONLY, readOnly);
+    }
 
 	/**
 	 * Get the location of a file/folder node using the format of the file
