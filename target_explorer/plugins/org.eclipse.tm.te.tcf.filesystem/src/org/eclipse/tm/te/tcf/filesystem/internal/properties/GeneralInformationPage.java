@@ -6,6 +6,7 @@
  *
  * Contributors:
  * William Chen (Wind River)	- [345384]Provide property pages for remote file system nodes
+ *                                [361322]Minor improvements to the properties dialog of a file.
  *********************************************************************************************/
 package org.eclipse.tm.te.tcf.filesystem.internal.properties;
 
@@ -17,6 +18,7 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.ISafeRunnable;
 import org.eclipse.core.runtime.SafeRunner;
+import org.eclipse.core.runtime.content.IContentType;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.window.Window;
 import org.eclipse.osgi.util.NLS;
@@ -29,6 +31,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.tm.te.tcf.filesystem.internal.handlers.ContentTypeHelper;
 import org.eclipse.tm.te.tcf.filesystem.internal.handlers.StateManager;
 import org.eclipse.tm.te.tcf.filesystem.internal.nls.Messages;
 import org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode;
@@ -60,10 +63,12 @@ public class GeneralInformationPage extends PropertyPage {
 	 */
 	protected String getNodeTypeLabel() {
 		if (clone.isDirectory())
-			return Messages.InformationPage_Folder;
-		else if (clone.isFile())
-			return Messages.InformationPage_File;
-		else
+			return Messages.GeneralInformationPage_Folder;
+		else if (clone.isFile()) {
+			IContentType contentType = ContentTypeHelper.getInstance().getContentType(node);
+			String contentTypeName = contentType == null ? Messages.GeneralInformationPage_UnknownFileType : contentType.getName();
+			return NLS.bind(Messages.GeneralInformationPage_File, contentTypeName);
+		} else
 			return clone.type;
 	}
 
@@ -94,7 +99,7 @@ public class GeneralInformationPage extends PropertyPage {
 		Label label = new Label(parent, SWT.NONE);
 		label.setText(text);
 		GridData data = new GridData();
-		data.horizontalAlignment = SWT.RIGHT;
+		data.horizontalAlignment = SWT.LEFT;
 		label.setLayoutData(data);
 		label = new Label(parent, SWT.NONE);
 		label.setText(value);
@@ -132,9 +137,9 @@ public class GeneralInformationPage extends PropertyPage {
 	protected void createAttributesSection(Composite parent) {
 		// Attributes
 		Label label = new Label(parent, SWT.NONE);
-		label.setText(Messages.InformationPage_Attributes);
+		label.setText(Messages.GeneralInformationPage_Attributes);
 		GridData data = new GridData();
-		data.horizontalAlignment = SWT.RIGHT;
+		data.horizontalAlignment = SWT.LEFT;
 		label.setLayoutData(data);
 
 		Composite attr = new Composite(parent, SWT.NONE);
@@ -143,7 +148,7 @@ public class GeneralInformationPage extends PropertyPage {
 		attr.setLayout(layout);
 		// Read-only
 		btnReadOnly = new Button(attr, SWT.CHECK);
-		btnReadOnly.setText(Messages.InformationPage_ReadOnly);
+		btnReadOnly.setText(Messages.GeneralInformationPage_ReadOnly);
 		btnReadOnly.addSelectionListener(new SelectionAdapter(){
 			@Override
             public void widgetSelected(SelectionEvent e) {
@@ -154,7 +159,7 @@ public class GeneralInformationPage extends PropertyPage {
 		});
 		// Hidden
 		btnHidden = new Button(attr, SWT.CHECK);
-		btnHidden.setText(Messages.InformationPage_Hidden);
+		btnHidden.setText(Messages.GeneralInformationPage_Hidden);
 		btnHidden.addSelectionListener(new SelectionAdapter(){
 			@Override
             public void widgetSelected(SelectionEvent e) {
@@ -166,7 +171,7 @@ public class GeneralInformationPage extends PropertyPage {
 		});
 		// Advanced Attributes
 		Button btnAdvanced = new Button(attr, SWT.PUSH);
-		btnAdvanced.setText(Messages.InformationPage_Advanced);
+		btnAdvanced.setText(Messages.GeneralInformationPage_Advanced);
 		btnAdvanced.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
@@ -207,7 +212,7 @@ public class GeneralInformationPage extends PropertyPage {
 		Label label = new Label(parent, SWT.NONE);
 		label.setText("Permissions:"); //$NON-NLS-1$
 		GridData data = new GridData();
-		data.horizontalAlignment = SWT.RIGHT;
+		data.horizontalAlignment = SWT.LEFT;
 		data.verticalAlignment = SWT.TOP;
 		label.setLayoutData(data);
 		Composite perms = new Composite(parent, SWT.NONE);
@@ -361,23 +366,23 @@ public class GeneralInformationPage extends PropertyPage {
 		GridLayout gridLayout = new GridLayout(2, false);
 		page.setLayout(gridLayout);
 		// Field "Name"
-		createField(Messages.InformationPage_Name, clone.name, page);
+		createField(Messages.GeneralInformationPage_Name, clone.name, page);
 		// Field "Type"
-		createField(Messages.InformationPage_Type, getNodeTypeLabel(), page);
+		createField(Messages.GeneralInformationPage_Type, getNodeTypeLabel(), page);
 		// Field "Location"
 		String location = clone.type.endsWith("FSRootNode") //$NON-NLS-1$
-				|| clone.type.endsWith("FSRootDirNode") ? Messages.InformationPage_Computer //$NON-NLS-1$
+				|| clone.type.endsWith("FSRootDirNode") ? Messages.GeneralInformationPage_Computer //$NON-NLS-1$
 				: clone.getLocation();
-		createField(Messages.InformationPage_Location, location, page);
+		createField(Messages.GeneralInformationPage_Location, location, page);
 		// Field "Size"
 		if (clone.isFile()) {
-			createField(Messages.InformationPage_Size, getSizeText(clone.attr.size), page);
+			createField(Messages.GeneralInformationPage_Size, getSizeText(clone.attr.size), page);
 		}
 		// Field "Modified"
-		createField(Messages.InformationPage_Modified, getDateText(clone.attr.mtime), page);
+		createField(Messages.GeneralInformationPage_Modified, getDateText(clone.attr.mtime), page);
 		// Field "Accessed"
 		if (clone.isFile()) {
-			createField(Messages.InformationPage_Accessed, getDateText(clone.attr.atime), page);
+			createField(Messages.GeneralInformationPage_Accessed, getDateText(clone.attr.atime), page);
 		}
 		createSeparator(page);
 		if (clone.isWindowsNode()) {
