@@ -84,10 +84,10 @@ class ChannelEventListener(channel.EventListener):
                 self.listener.contextResumed(args[0])
             elif name == "contextAdded":
                 assert len(args) == 1
-                self.listener.contextAdded(_toContextArray(args[0]))
+                self.listener.contextAdded(_toContextArray(self.service,args[0]))
             elif name == "contextChanged":
                 assert len(args) == 1
-                self.listener.contextChanged(_toContextArray(args[0]))
+                self.listener.contextChanged(_toContextArray(self.service,args[0]))
             elif name == "contextRemoved":
                 assert len(args) == 1
                 self.listener.contextRemoved(args[0])
@@ -151,8 +151,8 @@ class RunControlProxy(runcontrol.RunControlService):
                 done.doneGetChildren(self.token, error, contexts)
         return GetChildrenCommand().token
 
-def _toContextArray(o):
+def _toContextArray(svc,o):
     if o is None: return None
     ctx = []
-    for m in o: ctx.append(RunContext(m))
+    for m in o: ctx.append(RunContext(svc,m))
     return ctx
