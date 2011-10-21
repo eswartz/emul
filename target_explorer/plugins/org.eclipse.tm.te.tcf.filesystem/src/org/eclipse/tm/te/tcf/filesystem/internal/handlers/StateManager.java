@@ -160,9 +160,20 @@ public class StateManager {
 		Assert.isTrue(file.exists());
 		long mtime = file.lastModified();
 		// Create the new file attribute based on the file's last modified time.
-		final IFileSystem.FileAttrs attrs = new IFileSystem.FileAttrs(node.attr.flags, node.attr.size, node.attr.uid, node.attr.gid, node.attr.permissions, node.attr.atime, mtime,
+		IFileSystem.FileAttrs attrs = new IFileSystem.FileAttrs(node.attr.flags, node.attr.size, node.attr.uid, node.attr.gid, node.attr.permissions, node.attr.atime, mtime,
 				node.attr.attributes);
-		IChannel channel = null;
+		setFileAttrs(node, attrs);
+	}
+
+	/**
+	 * Set the file's attributes using the new attributes.
+	 * 
+	 * @param node The file's node.
+	 * @param attrs The new file attributes.
+	 * @throws TCFException
+	 */
+	public void setFileAttrs(final FSTreeNode node, final IFileSystem.FileAttrs attrs) throws TCFException {
+	    IChannel channel = null;
 		try {
 			channel = openChannel(node.peerNode.getPeer());
 			if (channel != null) {

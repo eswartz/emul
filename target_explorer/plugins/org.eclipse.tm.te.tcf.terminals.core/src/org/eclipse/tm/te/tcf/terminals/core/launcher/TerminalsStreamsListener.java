@@ -753,7 +753,7 @@ public class TerminalsStreamsListener implements IStreams.StreamsListener, ITerm
 			Iterator<StreamCreatedEvent> iterator = delayedCreatedEvents.iterator();
 			while (iterator.hasNext()) {
 				StreamCreatedEvent event = iterator.next();
-				if (context.getID().equals(event.contextId) || event.contextId == null) {
+				if (context.getID().equals(event.contextId) || context.getProcessID().equals(event.contextId) || event.contextId == null) {
 					// Re-dispatch the event
 					created(event.streamType, event.streamId, event.contextId);
 				}
@@ -789,7 +789,12 @@ public class TerminalsStreamsListener implements IStreams.StreamsListener, ITerm
 		// monitored terminals context
 		final ITerminals.TerminalContext context = getTerminalsContext();
 		// The contextId is null if used with an older TCF agent not sending the third parameter
-		if (context != null && (context.getID().equals(contextId) || contextId == null)) {
+		//
+		// 2011-10-18: Since the unification of terminals and processes service, the
+		//             context id of the streams events is the process context id, not
+		//             the terminal context id as before. So check for both here to support
+		//             both the older and the newer version of the terminals service.
+		if (context != null && (context.getID().equals(contextId) || context.getProcessID().equals(contextId) || contextId == null)) {
 			// Create a snapshot of the registered data receivers
 			StreamsDataReceiver[] receivers;
 			synchronized (dataReceiver) {

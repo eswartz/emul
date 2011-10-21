@@ -28,6 +28,11 @@
                visible="false">
          </view>
       </perspectiveExtension>
+      
+      <perspectiveExtension targetID="org.eclipse.tm.te.ui.perspective">
+		 <!-- Register the view shortcuts  -->
+         <viewShortcut id="org.eclipse.tm.te.ui.terminals.TerminalsView"/>
+      </perspectiveExtension>
    </extension>
 
 <!-- Terminal connector contributions -->

@@ -106,6 +106,7 @@ public class Messages extends NLS {
 	public static String CacheManager_UploadingProgress;
 	public static String CacheManager_UploadNFiles;
 	public static String CacheManager_UploadSingleFile;
+
 	public static String CmmitHandler_Cancel;
 	public static String CmmitHandler_CommitAnyway;
 	public static String CmmitHandler_ErrorTitle;
@@ -113,19 +114,23 @@ public class Messages extends NLS {
 	public static String CmmitHandler_Merge;
 	public static String CmmitHandler_StateChangedDialogTitle;
 	public static String CmmitHandler_StateChangedMessage;
-	public static String InformationPage_Accessed;
-	public static String InformationPage_Advanced;
-	public static String InformationPage_Attributes;
-	public static String InformationPage_Computer;
-	public static String InformationPage_File;
-	public static String InformationPage_Folder;
-	public static String InformationPage_Hidden;
-	public static String InformationPage_Location;
-	public static String InformationPage_Modified;
-	public static String InformationPage_Name;
-	public static String InformationPage_ReadOnly;
-	public static String InformationPage_Size;
-	public static String InformationPage_Type;
+
+	public static String GeneralInformationPage_Accessed;
+	public static String GeneralInformationPage_Advanced;
+	public static String GeneralInformationPage_Attributes;
+	public static String GeneralInformationPage_Computer;
+	public static String GeneralInformationPage_File;
+	public static String GeneralInformationPage_Folder;
+	public static String GeneralInformationPage_Hidden;
+	public static String GeneralInformationPage_Location;
+	public static String GeneralInformationPage_Modified;
+	public static String GeneralInformationPage_Name;
+	public static String GeneralInformationPage_ReadOnly;
+	public static String GeneralInformationPage_Size;
+	public static String GeneralInformationPage_Type;
+	public static String GeneralInformationPage_PropertiesChangeFailure;
+	public static String GeneralInformationPage_PropertiesChangeTitle;
+	public static String GeneralInformationPage_UnknownFileType;
 
 	public static String FSExplorerTreeControl_section_title;
 
@@ -134,6 +139,7 @@ public class Messages extends NLS {
 	public static String FSTreeControl_column_modified_label;
 
 	public static String FSOpenFileDialog_title;
+
 	public static String LocalTypedElement_SavingFile;
 
 	public static String OpenFileHandler_Cancel;
@@ -143,27 +149,33 @@ public class Messages extends NLS {
 	public static String OpenFileHandler_OpenAnyway;
 	public static String OpenFileHandler_OpeningBinaryNotSupported;
 	public static String OpenFileHandler_Warning;
+
 	public static String OpenWithMenu_ChooseEditorForOpening;
 	public static String OpenWithMenu_DefaultEditor;
 	public static String OpenWithMenu_NoEditorFound;
 	public static String OpenWithMenu_OpenWith;
+
 	public static String PermissionsGroup_Executable;
 	public static String PermissionsGroup_GroupPermissions;
 	public static String PermissionsGroup_OtherPermissions;
 	public static String PermissionsGroup_Readable;
 	public static String PermissionsGroup_UserPermissions;
 	public static String PermissionsGroup_Writable;
+
 	public static String RemoteTypedElement_GettingRemoteContent;
+
 	public static String SaveAllListener_Cancel;
 	public static String SaveAllListener_Merge;
 	public static String SaveAllListener_SaveAnyway;
 	public static String SaveAllListener_SingularMessage;
 	public static String SaveAllListener_StateChangedDialogTitle;
+
 	public static String SaveListener_Cancel;
 	public static String SaveListener_Merge;
 	public static String SaveListener_SaveAnyway;
 	public static String SaveListener_StateChangedDialogTitle;
 	public static String SaveListener_StateChangedMessage;
+
 	public static String StateManager_CannotGetFileStateMessage2;
 	public static String StateManager_CannotGetFileStatMessage;
 	public static String StateManager_CannotSetFileStateMessage;
@@ -173,6 +185,7 @@ public class Messages extends NLS {
 	public static String StateManager_TCFNotProvideFSMessage;
 	public static String StateManager_TCFNotProvideFSMessage2;
 	public static String StateManager_UpdateFailureTitle;
+
 	public static String TcfInputStream_CloseTimeout;
 	public static String TcfInputStream_NoDataAvailable;
 	public static String TcfInputStream_NoFileReturned;
@@ -181,21 +194,26 @@ public class Messages extends NLS {
 	public static String TcfInputStream_OpenTCFTimeout;
 	public static String TcfInputStream_ReadTimeout;
 	public static String TcfInputStream_StreamClosed;
+
 	public static String TcfOutputStream_StreamClosed;
 	public static String TcfOutputStream_WriteTimeout;
+
 	public static String TcfURLConnection_CloseFileTimeout;
 	public static String TcfURLConnection_NoFileHandleReturned;
 	public static String TcfURLConnection_NoFSServiceAvailable;
 	public static String TcfURLConnection_NoSuchTcfAgent;
 	public static String TcfURLConnection_OpenFileTimeout;
 	public static String TcfURLConnection_OpenTCFChannelTimeout;
+
 	public static String TCFUtilities_OpeningFailureMessage;
 	public static String TCFUtilities_OpeningFailureTitle;
+
 	public static String UpdateHandler_Cancel;
 	public static String UpdateHandler_Merge;
 	public static String UpdateHandler_StateChangedDialogTitle;
 	public static String UpdateHandler_StateChangedMessage;
 	public static String UpdateHandler_UpdateAnyway;
+
 	public static String UserManager_CannotGetUserAccountMessage;
 	public static String UserManager_CannotGetUserAccountMessage2;
 	public static String UserManager_TCFNotProvideFSMessage;

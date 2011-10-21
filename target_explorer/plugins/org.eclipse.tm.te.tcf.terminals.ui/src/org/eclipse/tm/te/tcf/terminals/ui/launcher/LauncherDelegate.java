@@ -29,17 +29,21 @@ import org.eclipse.tm.te.ui.terminals.launcher.AbstractLauncherDelegate;
  * Terminals launcher delegate implementation.
  */
 public class LauncherDelegate extends AbstractLauncherDelegate {
-	private IWizardConfigurationPanel configPanel = null;
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.ui.terminals.interfaces.ILauncherDelegate#getPanel(org.eclipse.tm.te.ui.controls.BaseDialogPageControl)
 	 */
 	@Override
 	public IWizardConfigurationPanel getPanel(BaseDialogPageControl parentControl) {
-		if (configPanel == null || configPanel.getControl() == null || configPanel.getControl().isDisposed()) {
-			configPanel = new SettingsPanel(parentControl);
-		}
-	    return configPanel;
+	    return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.tm.te.ui.terminals.interfaces.ILauncherDelegate#needsUserConfiguration()
+	 */
+	@Override
+	public boolean needsUserConfiguration() {
+	    return false;
 	}
 
 	/* (non-Javadoc)

@@ -131,7 +131,13 @@ public class TerminalsListener implements ITerminals.TerminalsListener, ITermina
 	 * @see org.eclipse.tm.tcf.services.ITerminals.TerminalsListener#winSizeChanged(java.lang.String, int, int)
 	 */
 	@Override
-	public void winSizeChanged(String terminal_id, int newWidth, int newHeight) {
+	public void winSizeChanged(String terminalId, int newWidth, int newHeight) {
+		if (CoreBundleActivator.getTraceHandler().isSlotEnabled(0, ITraceIds.TRACE_TERMINALS_LISTENER)) {
+			CoreBundleActivator.getTraceHandler().trace("Terminals context window size changed: id='" + terminalId + "', newWidth='" + newWidth + "', newHeight='" + newHeight + "'", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+			                                            0, ITraceIds.TRACE_TERMINALS_LISTENER,
+			                                            IStatus.INFO, getClass());
+		}
+
 		// Pass on to the terminal widget
 	}
 }

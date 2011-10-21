@@ -65,6 +65,7 @@
 	  <module>target_explorer/plugins/org.eclipse.tm.te.ui.swt</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.ui.terminals</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.ui.terminals.process</module>
+	  <module>target_explorer/plugins/org.eclipse.tm.te.ui.terminals.ssh</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.ui.views</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.tcf.core</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.tcf.filesystem</module>
