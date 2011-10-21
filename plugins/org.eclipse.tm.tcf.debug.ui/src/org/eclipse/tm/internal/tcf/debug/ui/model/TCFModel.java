@@ -38,6 +38,7 @@ import org.eclipse.debug.core.model.IExpression;
 import org.eclipse.debug.core.model.IMemoryBlockRetrieval;
 import org.eclipse.debug.core.model.IMemoryBlockRetrievalExtension;
 import org.eclipse.debug.core.model.ISourceLocator;
+import org.eclipse.debug.internal.ui.viewers.model.ITreeModelViewer;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenCountUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenUpdate;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IColumnPresentation;
@@ -72,6 +73,7 @@ import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.StructuredViewer;
+import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.graphics.Device;
@@ -133,6 +135,7 @@ import org.eclipse.ui.texteditor.ITextEditor;
  * keeping the cache in a coherent state,
  * and feeding UI with up-to-date data.
  */
+@SuppressWarnings("restriction")
 public class TCFModel implements IElementContentProvider, IElementLabelProvider, IViewerInputProvider,
         IModelProxyFactory, IColumnPresentationFactory, ISourceDisplay, ISuspendTrigger {
 
@@ -274,6 +277,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     private final Set<String> expanded_nodes = new HashSet<String>();
 
     private final Map<IWorkbenchPart,TCFNode> pins = new HashMap<IWorkbenchPart,TCFNode>();
+    private final Map<IWorkbenchPart,TCFSnapshot> locks = new HashMap<IWorkbenchPart,TCFSnapshot>();
 
     private TCFConsole console;
 
@@ -723,6 +727,11 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     void onDisconnected() {
         assert Protocol.isDispatchThread();
+        if (locks.size() > 0) {
+            TCFSnapshot[] arr = locks.values().toArray(new TCFSnapshot[locks.size()]);
+            locks.clear();
+            for (TCFSnapshot s : arr) s.dispose();
+        }
         if (launch_node != null) {
             launch_node.dispose();
             launch_node = null;
@@ -1206,64 +1215,64 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     }
 
     public void update(IChildrenCountUpdate[] updates) {
-        for (int i = 0; i < updates.length; i++) {
-            Object o = updates[i].getElement();
+        for (IChildrenCountUpdate update : updates) {
+            Object o = update.getElement();
             if (o instanceof TCFLaunch) {
                 if (launch_node != null) {
-                    launch_node.update(updates[i]);
+                    launch_node.update(update);
                 }
                 else {
-                    updates[i].setChildCount(0);
-                    updates[i].done();
+                    update.setChildCount(0);
+                    update.done();
                 }
             }
             else {
-                ((TCFNode)o).update(updates[i]);
+                ((TCFNode)o).update(update);
             }
         }
     }
 
     public void update(IChildrenUpdate[] updates) {
-        for (int i = 0; i < updates.length; i++) {
-            Object o = updates[i].getElement();
+        for (IChildrenUpdate update : updates) {
+            Object o = update.getElement();
             if (o instanceof TCFLaunch) {
                 if (launch_node != null) {
-                    launch_node.update(updates[i]);
+                    launch_node.update(update);
                 }
                 else {
-                    updates[i].done();
+                    update.done();
                 }
             }
             else {
-                ((TCFNode)o).update(updates[i]);
+                ((TCFNode)o).update(update);
             }
         }
     }
 
     public void update(IHasChildrenUpdate[] updates) {
-        for (int i = 0; i < updates.length; i++) {
-            Object o = updates[i].getElement();
+        for (IHasChildrenUpdate update : updates) {
+            Object o = update.getElement();
             if (o instanceof TCFLaunch) {
                 if (launch_node != null) {
-                    launch_node.update(updates[i]);
+                    launch_node.update(update);
                 }
                 else {
-                    updates[i].setHasChilren(false);
-                    updates[i].done();
+                    update.setHasChilren(false);
+                    update.done();
                 }
             }
             else {
-                ((TCFNode)o).update(updates[i]);
+                ((TCFNode)o).update(update);
             }
         }
     }
 
     public void update(ILabelUpdate[] updates) {
-        for (int i = 0; i < updates.length; i++) {
-            Object o = updates[i].getElement();
+        for (ILabelUpdate update : updates) {
+            Object o = update.getElement();
             // Launch label is provided by TCFLaunchLabelProvider class.
             assert !(o instanceof TCFLaunch);
-            ((TCFNode)o).update(updates[i]);
+            ((TCFNode)o).update(update);
         }
     }
 
@@ -1332,6 +1341,47 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         assert Protocol.isDispatchThread();
         if (node == null) pins.remove(part);
         else pins.put(part, node);
+    }
+
+    private IPresentationContext getPresentationContext(IWorkbenchPart part) {
+        if (part instanceof IDebugView) {
+            Viewer viewer = ((IDebugView)part).getViewer();
+            if (viewer instanceof ITreeModelViewer) {
+                ITreeModelViewer t = ((ITreeModelViewer)viewer);
+                return t.getPresentationContext();
+            }
+        }
+        return null;
+    }
+
+    public void setLock(IWorkbenchPart part) {
+        if (launch_node == null) return;
+        IPresentationContext ctx = getPresentationContext(part);
+        if (ctx == null) return;
+        locks.put(part, new TCFSnapshot(ctx));
+        TCFModelProxy proxy = model_proxies.get(ctx);
+        if (proxy == null) return;
+        proxy.addDelta((TCFNode)proxy.getInput(), IModelDelta.CONTENT);
+    }
+
+    public boolean isLocked(IWorkbenchPart part) {
+        return locks.get(part) != null;
+    }
+
+    public boolean clearLock(IWorkbenchPart part) {
+        TCFSnapshot snapshot = locks.remove(part);
+        if (snapshot == null) return false;
+        snapshot.dispose();
+        IPresentationContext ctx = getPresentationContext(part);
+        if (ctx != null) {
+            TCFModelProxy proxy = model_proxies.get(ctx);
+            if (proxy != null) proxy.addDelta((TCFNode)proxy.getInput(), IModelDelta.CONTENT);
+        }
+        return true;
+    }
+
+    TCFSnapshot getSnapshot(IPresentationContext ctx) {
+        return locks.get(ctx.getPart());
     }
 
     public void setDebugViewSelection(TCFNode node, String reason) {

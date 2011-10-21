@@ -29,7 +29,6 @@ import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 import org.eclipse.ui.IViewPart;
 
-
 /**
  * TCFNode is base class for all TCF debug model elements.
  */
@@ -239,7 +238,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
                 if (!done) {
                     if (!update.isCanceled()) {
                         if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
-                            if (!getData(update, this)) return;
+                            if (!getLockedData(update, this)) return;
                         }
                         update.setStatus(Status.OK_STATUS);
                     }
@@ -259,7 +258,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
                 if (!done) {
                     if (!update.isCanceled()) {
                         if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
-                            if (!getData(update, this)) return;
+                            if (!getLockedData(update, this)) return;
                         }
                         else {
                             update.setHasChilren(false);
@@ -282,7 +281,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
                 if (!done) {
                     if (!update.isCanceled()) {
                         if (!disposed && channel.getState() == IChannel.STATE_OPEN) {
-                            if (!getData(update, this)) return;
+                            if (!getLockedData(update, this)) return;
                         }
                         else {
                             update.setLabel("...", 0);
@@ -317,6 +316,70 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
                 }
             }
         };
+    }
+
+    /**
+     * Retrieve children count for a presentation context.
+     * If the context is locked, return snapshot data.
+     * Otherwise return live data from the target.
+     * The method is always called on TCF dispatch thread.
+     * @param update - children count update request.
+     * @param done - client call back interface, during data waiting it is
+     * called every time new portion of data becomes available.
+     * @return false if waiting data retrieval, true if all done.
+     */
+    final boolean getLockedData(IChildrenCountUpdate update, Runnable done) {
+        TCFSnapshot snapshot = model.getSnapshot(update.getPresentationContext());
+        if (snapshot != null) return snapshot.getData(update, this, done);
+        return getData(update, done);
+    }
+
+    /**
+     * Retrieve children for a presentation context.
+     * If the context is locked, return snapshot data.
+     * Otherwise return live data from the target.
+     * The method is always called on TCF dispatch thread.
+     * @param update - children update request.
+     * @param done - client call back interface, during data waiting it is
+     * called every time new portion of data becomes available.
+     * @return false if waiting data retrieval, true if all done.
+     */
+    final boolean getLockedData(IChildrenUpdate update, Runnable done) {
+        TCFSnapshot snapshot = model.getSnapshot(update.getPresentationContext());
+        if (snapshot != null) return snapshot.getData(update, this, done);
+        return getData(update, done);
+    }
+
+    /**
+     * Check if the node has children in a presentation context.
+     * If the context is locked, return snapshot data.
+     * Otherwise return live data from the target.
+     * The method is always called on TCF dispatch thread.
+     * @param update - "has children" update request.
+     * @param done - client call back interface, during data waiting it is
+     * called every time new portion of data becomes available.
+     * @return false if waiting data retrieval, true if all done.
+     */
+    final boolean getLockedData(IHasChildrenUpdate update, Runnable done) {
+        TCFSnapshot snapshot = model.getSnapshot(update.getPresentationContext());
+        if (snapshot != null) return snapshot.getData(update, this, done);
+        return getData(update, done);
+    }
+
+    /**
+     * Retrieve node label for a presentation context.
+     * If the context is locked, return snapshot data.
+     * Otherwise return live data from the target.
+     * The method is always called on TCF dispatch thread.
+     * @param update - label update request.
+     * @param done - client call back interface, during data waiting it is
+     * called every time new portion of data becomes available.
+     * @return false if waiting data retrieval, true if all done.
+     */
+    final boolean getLockedData(ILabelUpdate update, Runnable done) {
+        TCFSnapshot snapshot = model.getSnapshot(update.getPresentationContext());
+        if (snapshot != null) return snapshot.getData(update, this, done);
+        return getData(update, done);
     }
 
     /**

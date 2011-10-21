@@ -274,6 +274,19 @@
                </pluginState>
             </enablement>
          </action>
+         <action
+               class="org.eclipse.tm.internal.tcf.debug.ui.commands.ManualRefreshCommand"
+               id="org.eclipse.tm.tcf.debug.ui.actions.ManualRefresh"
+               label="%ManualRefresh.label"
+               menubarPath="additions"
+               style="toggle">
+            <enablement>
+               <pluginState
+                     value="activated"
+                     id="org.eclipse.tm.tcf.debug.ui">
+               </pluginState>
+            </enablement>
+         </action>
       </objectContribution>
 
       <!-- TCFNodeExpression popup menu contributions -->

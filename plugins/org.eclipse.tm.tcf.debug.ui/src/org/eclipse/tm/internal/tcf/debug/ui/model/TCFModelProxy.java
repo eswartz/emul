@@ -283,13 +283,13 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
             if (node.isDisposed()) {
                 res = EMPTY_NODE_ARRAY;
             }
-            else if (!node.getData(children_count_update, null)) {
+            else if (!node.getLockedData(children_count_update, null)) {
                 pending_node = node;
                 res = EMPTY_NODE_ARRAY;
             }
             else {
                 children_update.setLength(children_count_update.count);
-                if (!node.getData(children_update, null)) {
+                if (!node.getLockedData(children_update, null)) {
                     assert false;
                     pending_node = node;
                     res = EMPTY_NODE_ARRAY;
@@ -497,7 +497,7 @@ public class TCFModelProxy extends AbstractModelProxy implements IModelProxy, Ru
         if (pending_node == null) {
             launch.removePendingClient(this);
         }
-        else if (pending_node.getData(children_count_update, this)) {
+        else if (pending_node.getLockedData(children_count_update, this)) {
             assert false;
             Protocol.invokeLater(this);
         }
