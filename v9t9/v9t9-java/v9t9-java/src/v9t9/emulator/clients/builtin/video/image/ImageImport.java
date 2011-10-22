@@ -1189,7 +1189,8 @@ public class ImageImport implements IBitmapPixelAccess {
 	public void importImage(BufferedImage image, boolean isLowColor) {
 		int targWidth = canvas.getVisibleWidth();
 		int targHeight = canvas.getVisibleHeight();
-		float aspect = targWidth * targHeight / 256.f  / 192.f;
+		float aspect = (float) targWidth / targHeight / 256.f * 192.f;
+		//float aspect = (float) targWidth / targHeight;
 		if (canvas.getFormat() == Format.COLOR16_4x4) {
 			targWidth = 64;
 			targHeight = 48;

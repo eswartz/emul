@@ -7,7 +7,6 @@ import v9t9.emulator.clients.builtin.video.IBitmapPixelAccess;
 import v9t9.emulator.clients.builtin.video.RedrawBlock;
 import v9t9.emulator.clients.builtin.video.VdpModeInfo;
 import v9t9.emulator.clients.builtin.video.VdpRedrawInfo;
-import v9t9.engine.memory.ByteMemoryAccess;
 
 /**
  * Redraw graphics 4 mode content (256x192x16)
@@ -30,6 +29,7 @@ public class Graphics4ModeRedrawHandler extends PackedBitmapGraphicsModeRedrawHa
 		blockshift = 2;
 		blockstride = 32;
 		blockcount = (info.vdpregs[9] & 0x80) != 0 ? 32*27 : 768;
+		colshift = 1;
 	}
 	
 	protected void drawBlock(RedrawBlock block, int pageOffset, boolean interlaced) {
@@ -43,24 +43,13 @@ public class Graphics4ModeRedrawHandler extends PackedBitmapGraphicsModeRedrawHa
 
 
 	/* (non-Javadoc)
-	 * @see v9t9.emulator.clients.builtin.video.BaseRedrawHandler#importImageData()
+	 * @see v9t9.emulator.clients.builtin.video.v9938.PackedBitmapGraphicsModeRedrawHandler#importImageDataByte(v9t9.emulator.clients.builtin.video.IBitmapPixelAccess, int, int)
 	 */
 	@Override
-	public void importImageData(IBitmapPixelAccess access) {
-		ByteMemoryAccess patt = info.vdp.getByteReadMemoryAccess(modeInfo.patt.base);
-		
-		int my =  (info.vdpregs[9] & 0x80) != 0 ? 212 : 192;
-		for (int y = 0; y < my; y++) {
-			for (int x = 0; x < 256; x += 2) {
-				
-				byte f = access.getPixel(x, y);
-				byte b = access.getPixel(x + 1, y);
-				
-				int poffs = y * rowstride + (x >> 1); 
-				patt.memory[patt.offset + poffs] = (byte) ((f << 4) | b);
-				touch(patt.offset + poffs);
-			}
-		}
-		
+	protected byte createImageDataByte(IBitmapPixelAccess access, int x, int row) {
+
+		byte f = access.getPixel(x, row);
+		byte b = access.getPixel(x + 1, row);
+		return (byte) ((f << 4) | b);
 	}
 }
