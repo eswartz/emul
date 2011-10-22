@@ -46,6 +46,7 @@ public class EmulatorButtonBar  {
 	private final SwtWindow swtWindow;
 	private ImageBar buttonBar;
 	private final Machine machine;
+	private final ImageProvider imageProvider;
 	/**
 	 * @param mainComposite 
 	 * @param parent
@@ -53,8 +54,9 @@ public class EmulatorButtonBar  {
 	 * @param focusRestorer
 	 * @param smoothResize
 	 */
-	public EmulatorButtonBar(SwtWindow window, Composite mainComposite, Machine machine) {
+	public EmulatorButtonBar(SwtWindow window, ImageProvider imageProvider, Composite mainComposite, Machine machine) {
 		this.swtWindow = window;
+		this.imageProvider = imageProvider;
 		this.machine = machine;
 		
 		createButtons(mainComposite);
@@ -64,10 +66,6 @@ public class EmulatorButtonBar  {
 	private void createButtons(Composite parent) {
 
 		buttonBar = new ImageBar(parent, SWT.VERTICAL, swtWindow.getFocusRestorer(), true);
-		
-		// SLLLOOOOOOWWWW
-		//SVGLoader svgIconLoader = new SVGLoader(Emulator.getDataFile("icons/icons.svg"));
-		//imageProvider = new SVGImageProvider(mainIcons, buttonBar, svgIconLoader);
 		
 		buttonBar.addControlListener(new ControlAdapter() {
 			@Override
@@ -237,7 +235,7 @@ public class EmulatorButtonBar  {
 			}
 		});*/
 		
-		soundButton.setMenuOverlayBounds(swtWindow.getIconImageProvider().imageIndexToBounds(15));
+		soundButton.setMenuOverlayBounds(imageProvider.imageIndexToBounds(15));
 		soundButton.addMenuDetectListener(new MenuDetectListener() {
 
 			public void menuDetected(MenuDetectEvent e) {
@@ -280,7 +278,7 @@ public class EmulatorButtonBar  {
 
 	private BasicButton createButton(int iconIndex, String tooltip, SelectionListener selectionListener) {
 		BasicButton button = new BasicButton(buttonBar, SWT.PUSH,
-				swtWindow.getIconImageProvider(), iconIndex, tooltip);
+				imageProvider, iconIndex, tooltip);
 		button.addSelectionListener(selectionListener);
 		return button;
 	}
@@ -289,7 +287,7 @@ public class EmulatorButtonBar  {
 			final Point noClickCorner, int iconIndex, 
 			final int overlayIndex, String tooltip) {
 		final BasicButton button = new BasicButton(buttonBar, SWT.PUSH,
-				swtWindow.getIconImageProvider(), iconIndex, tooltip);
+				imageProvider, iconIndex, tooltip);
 		setting.addListener(new IPropertyListener() {
 
 			public void propertyChanged(final IProperty setting) {
@@ -299,7 +297,7 @@ public class EmulatorButtonBar  {
 						if (button.isDisposed())
 							return;
 						if (setting.getBoolean() != inverted) {
-							button.setOverlayBounds(swtWindow.getIconImageProvider().imageIndexToBounds(overlayIndex));
+							button.setOverlayBounds(imageProvider.imageIndexToBounds(overlayIndex));
 						} else {
 							button.setOverlayBounds(null);
 						}
@@ -330,7 +328,7 @@ public class EmulatorButtonBar  {
 		});
 		
 		if (setting.getBoolean() != inverted) {
-			button.setOverlayBounds(swtWindow.getIconImageProvider().imageIndexToBounds(overlayIndex));
+			button.setOverlayBounds(imageProvider.imageIndexToBounds(overlayIndex));
 			button.setSelection(setting.getBoolean());
 		}
 		return button;
@@ -398,7 +396,7 @@ public class EmulatorButtonBar  {
 	/**
 	 * @return
 	 */
-	public Control getButtonBar() {
+	public ImageBar getButtonBar() {
 		return buttonBar;
 	}
 

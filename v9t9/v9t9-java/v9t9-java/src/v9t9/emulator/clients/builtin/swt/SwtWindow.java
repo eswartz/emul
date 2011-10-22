@@ -78,7 +78,6 @@ public class SwtWindow extends BaseEmulatorWindow {
 	private MouseJoystickHandler mouseJoystickHandler;
 	private EmulatorButtonBar buttons;
 	private EmulatorStatusBar statusBar;
-	private MultiImageSizeProvider imageProvider;
 	protected SwtDragDropHandler dragDropHandler;
 	private IPropertyListener fullScreenListener;
 	
@@ -114,9 +113,6 @@ public class SwtWindow extends BaseEmulatorWindow {
 				}
 			}
 		}
-
-		imageProvider = new MultiImageSizeProvider(mainIcons);
-		
 		
 		shell.addDisposeListener(new DisposeListener() {
 
@@ -141,6 +137,15 @@ public class SwtWindow extends BaseEmulatorWindow {
 			shell.setMenuBar(bar);
 		}
 		
+		ImageProvider imageProvider;
+		if (false) {
+			// SLLLOOOOOOWWWW
+			SVGLoader svgIconLoader = new SVGLoader(Emulator.getDataURL("icons/icons.svg"));
+			imageProvider = new SVGImageProvider(mainIcons, svgIconLoader);
+		} else {
+			imageProvider = new MultiImageSizeProvider(mainIcons);
+		}
+		
 		Composite mainComposite = shell;
 		GridLayoutFactory.fillDefaults().margins(0, 0).spacing(0, 0).
 			numColumns(3). 
@@ -163,10 +168,13 @@ public class SwtWindow extends BaseEmulatorWindow {
 			}
 		};
 		
-		buttons = new EmulatorButtonBar(this, mainComposite, machine);
+		
+		buttons = new EmulatorButtonBar(this, imageProvider, mainComposite, machine);
+
 		
 		//gd = ((GridData) buttons.getButtonBar().getLayoutData());
 		//gd.verticalSpan = 2;
+		
 		
 		eventNotifier = new BaseEventNotifier() {
 
@@ -221,7 +229,6 @@ public class SwtWindow extends BaseEmulatorWindow {
 							Control b = (Control) e.widget;
 							tip.setLocation(b.toDisplay(e.x, e.y + b.getSize().y));
 						} else {
-							//Point pt = Display.getDefault().getCursorLocation();
 							Point pt = buttons.getTooltipLocation();
 							tip.setLocation(pt);
 						}
@@ -270,22 +277,6 @@ public class SwtWindow extends BaseEmulatorWindow {
 			}
 
 		});
-		
-		/*
-		shell.addControlListener(new ControlAdapter() {
-			@Override
-			public void controlResized(ControlEvent e) {
-				Display.getDefault().syncExec(new Runnable() {
-					public void run() {
-						System.out.printf("before shell layout: %s...", topComposite.getBounds());
-						shell.layout(true);
-						System.out.printf("... %s after%n", topComposite.getBounds());
-						//shell.pack();
-;					}
-				});
-			}
-		});
-		*/
 		
 		String boundsPref = EmulatorSettings.INSTANCE.getSettings().get(EMULATOR_WINDOW_BOUNDS);
 		final Rectangle rect = PrefUtils.readBoundsString(boundsPref);
@@ -344,7 +335,6 @@ public class SwtWindow extends BaseEmulatorWindow {
 	}
 
 	public void setMouseJoystickHandler(MouseJoystickHandler handler) {
-		//mouseJoystickHandler = new MouseJoystickHandler(videoControl, key);
 		boolean first = mouseJoystickHandler == null;
 		this.mouseJoystickHandler = handler; 
 		((ISwtVideoRenderer)videoRenderer).addMouseEventListener(new MouseAdapter() {
@@ -357,10 +347,6 @@ public class SwtWindow extends BaseEmulatorWindow {
 	}
 	
 
-	/**
-	 * @param b 
-	 * 
-	 */
 	protected void swapMouseDragDropForJoystick(boolean notify, boolean enableJoystick) {
 		if (enableJoystick) {
 			if (dragDropHandler != null)
@@ -438,40 +424,9 @@ public class SwtWindow extends BaseEmulatorWindow {
 		
 	}
 	
-	/**
-	 * @return the focusRestorer
-	 */
 	public IFocusRestorer getFocusRestorer() {
 		return focusRestorer;
 	}
-
-	/*
-	private void createControls() {
-		Button spawnMemoryViewButton = new Button(controlsComposite, SWT.PUSH | SWT.NO_FOCUS);
-		spawnMemoryViewButton.setText("View Memory...");
-		spawnMemoryViewButton.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				final Shell shell = new Shell(getShell(), SWT.DIALOG_TRIM | SWT.RESIZE);
-				final MemoryViewer cpuMemory = new MemoryViewer(shell, SWT.NONE, machine.getMemory(), toolUiTimer);
-				createToolShell(shell, cpuMemory, "MemoryWindowBounds");
-			}
-		});
-		
-		
-		Button spawnCpuViewButton = new Button(controlsComposite, SWT.PUSH | SWT.NO_FOCUS);
-		spawnCpuViewButton.setText("View CPU...");
-		spawnCpuViewButton.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				final Shell shell = new Shell(getShell(), SWT.DIALOG_TRIM | SWT.RESIZE);
-				final CpuViewer cpuViewer = new CpuViewer(shell, SWT.NONE, machine, toolUiTimer);
-				createToolShell(shell, cpuViewer, "CpuWindowBounds");
-			}
-		});
-	}
-	 */
-
 
 	protected void recenterToolShells() {
 		Display.getDefault().asyncExec(new Runnable() {
@@ -586,16 +541,6 @@ public class SwtWindow extends BaseEmulatorWindow {
 		populateEditMenu(editMenu);
 		editMenuHeader.setMenu(editMenu);
 
-		/*
-		MenuItem exit = new MenuItem(fileMenu, SWT.NONE);
-		exit.setText("E&xit");
-		exit.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				machine.getClient().close();
-			}
-		});
-		*/
 		Menu viewMenu = appMenu;
 		if (!isPopup) {
 			MenuItem viewMenuHeader = new MenuItem(appMenu, SWT.CASCADE);
@@ -875,12 +820,5 @@ public class SwtWindow extends BaseEmulatorWindow {
 	public void showMenu(Menu menu, final Control parent, final int x, final int y) {
 		runMenu(parent, x, y, menu);
 		menu.dispose();		
-	}
-
-	/**
-	 * @return
-	 */
-	public ImageProvider getIconImageProvider() {
-		return imageProvider;
 	}
 }

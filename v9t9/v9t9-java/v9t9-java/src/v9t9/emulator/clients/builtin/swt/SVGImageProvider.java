@@ -8,7 +8,10 @@ import java.util.TreeMap;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.widgets.Composite;
 import org.ejs.coffee.core.utils.Pair;
+
+import v9t9.emulator.clients.builtin.swt.ImageIconCanvas.IImageBar;
 
 /**
  * @author ejs
@@ -21,23 +24,22 @@ public class SVGImageProvider extends MultiImageSizeProvider {
 	
 	private Point desiredSize;
 	private Image scaledImage;
-	private final ImageBar buttonBar;
 	private boolean svgFailed;
 	
 	/**
 	 * @param iconMap
 	 */
-	public SVGImageProvider(TreeMap<Integer, Image> iconMap, ImageBar buttonBar, SVGLoader svgIcon) {
+	public SVGImageProvider(TreeMap<Integer, Image> iconMap, SVGLoader svgIcon) {
 		super(iconMap);
-		this.buttonBar = buttonBar;
 		this.svgIcon = svgIcon;
 	}
+	
 
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.swt.MultiImageSizeProvider#getImage(org.eclipse.swt.graphics.Point)
 	 */
 	@Override
-	public Pair<Double, Image> getImage(final Point size) {
+	public Pair<Double, Image> getImage(final Point size, final IImageBar imageBar) {
 		boolean recreate = false;
 		if (scaledImage == null || !size.equals(desiredSize)) {
 			/*if (loadIconJob != null) {
@@ -68,7 +70,7 @@ public class SVGImageProvider extends MultiImageSizeProvider {
 						//int min = iconMap.values().iterator().next().getBounds().width;
 						Point scaledSize = new Point(size.x, size.y);
 						Point svgSize = svgIcon.getSize();
-						if (buttonBar.isHorizontal())
+						if (imageBar.isHorizontal())
 							scaledSize.y = size.y * svgSize.y / svgSize.x;
 						else
 							scaledSize.x = size.x * svgSize.x / svgSize.y;
@@ -80,13 +82,15 @@ public class SVGImageProvider extends MultiImageSizeProvider {
 						System.out.println("Loaded " + svgIcon.getFileName() + " @ " + scaledSize + ": " + (end - start) + " ms");
 						svgFailed = false;
 						
-						if (!buttonBar.isDisposed()) {
-							buttonBar.getDisplay().asyncExec(new Runnable() {
+						final Composite composite = imageBar.getComposite();
+						
+						if (!composite.isDisposed()) {
+							composite.getDisplay().asyncExec(new Runnable() {
 								public void run() {
-									if (!buttonBar.isDisposed()) {
-										scaledImage = new Image(buttonBar.getDisplay(), scaledImageData);
+									if (!composite.isDisposed()) {
+										scaledImage = new Image(composite.getDisplay(), scaledImageData);
 										System.out.println("Got image " + scaledImage.getBounds());
-										buttonBar.redrawAll();
+										imageBar.redrawAll();
 									}
 								}
 							});
@@ -102,7 +106,7 @@ public class SVGImageProvider extends MultiImageSizeProvider {
 			loadIconThread.start();
 		}
 		if (scaledImage == null) {
-			return super.getImage(size);
+			return super.getImage(size, imageBar);
 		}
 		else {
 			int min = iconMap.values().iterator().next().getBounds().width;

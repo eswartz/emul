@@ -148,12 +148,12 @@ public class ImageButton extends ImageIconCanvas {
 		offset = pressed ? 2 : 0;
 		try {
 			
-			imageProvider.drawImage(e.gc, size, bounds, offset, offset);
+			imageProvider.drawImage(e.gc, size, bounds, offset, offset, parentDrawer);
 			if (overlayBounds != null)
-				imageProvider.drawImage(e.gc, size, overlayBounds, 0, 0);
+				imageProvider.drawImage(e.gc, size, overlayBounds, 0, 0, parentDrawer);
 			
 			if (menuOverlayBounds != null && isMenuHovering) {
-				imageProvider.drawImage(e.gc, size, menuOverlayBounds, 0, 0);
+				imageProvider.drawImage(e.gc, size, menuOverlayBounds, 0, 0, parentDrawer);
 			}
 		} catch (IllegalArgumentException e2) {
 			e2.printStackTrace();

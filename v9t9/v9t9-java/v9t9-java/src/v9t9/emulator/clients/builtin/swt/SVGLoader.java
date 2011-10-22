@@ -1,6 +1,8 @@
 package v9t9.emulator.clients.builtin.swt;
 
 import java.io.File;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,6 +41,15 @@ public class SVGLoader {
 
     public SVGLoader(File file) {
     	this.uri = file.toURI().toString();
+    }
+    
+    
+    public SVGLoader(URL url) {
+    	try {
+			this.uri = url.toURI().toString();
+		} catch (URISyntaxException e) {
+			throw new IllegalArgumentException(e);
+		}
     }
     
     

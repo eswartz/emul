@@ -25,6 +25,8 @@ public abstract class ImageIconCanvas extends Canvas {
 		Composite getComposite();
 		void drawBackground(GC gc, ImageIconCanvas imageButton, Point offset, Point size);
 		IFocusRestorer getFocusRestorer();
+		boolean isHorizontal();
+		void redrawAll();
 	}
 	protected final Rectangle bounds;
 	protected IImageBar parentDrawer;

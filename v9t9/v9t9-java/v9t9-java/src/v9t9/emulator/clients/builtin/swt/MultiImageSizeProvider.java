@@ -12,6 +12,8 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.ejs.coffee.core.utils.Pair;
 
+import v9t9.emulator.clients.builtin.swt.ImageIconCanvas.IImageBar;
+
 /**
  * Get an image which are available in multiple sizes
  * @author ejs
@@ -26,10 +28,10 @@ public class MultiImageSizeProvider implements ImageProvider {
 	public MultiImageSizeProvider(TreeMap<Integer, Image> iconMap) {
 		this.iconMap = iconMap;
 	}
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.clients.builtin.swt.ImageButton.ImageProvider#getImage(org.eclipse.swt.graphics.Point)
+	/**
+	 * @param imageBar  
 	 */
-	public Pair<Double, Image> getImage(Point size) {
+	public Pair<Double, Image> getImage(Point size, IImageBar imageBar) {
 		SortedMap<Integer, Image> tailMap = iconMap.tailMap(size.x);
 		Image icon;
 		if (tailMap.isEmpty())
@@ -46,9 +48,9 @@ public class MultiImageSizeProvider implements ImageProvider {
 	 */
 	@Override
 	public void drawImage(GC gc, Point size, Rectangle bounds,
-			int xoffset, int yoffset) {
+			int xoffset, int yoffset, IImageBar imageBar) {
 		double ratio;
-		Pair<Double, Image> iconInfo = getImage(size);
+		Pair<Double, Image> iconInfo = getImage(size, imageBar);
 		ratio = iconInfo.first;
 		Image icon = iconInfo.second;
 		gc.drawImage(icon, (int)(bounds.x * ratio), (int)(bounds.y * ratio), 
