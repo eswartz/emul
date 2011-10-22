@@ -83,7 +83,7 @@ class ImageBar extends Composite implements IImageBar {
 			int size;
 			int axis;
 			Point cursize = composite.getParent().getSize();
-			System.out.println("cursize: "+ cursize);
+			//System.out.println("cursize: "+ cursize);
 			if (isHorizontal) {
 				axis = cursize.x;
 				size = cursize.y;
@@ -104,7 +104,7 @@ class ImageBar extends Composite implements IImageBar {
 					w = size;
 					h = axis;
 				}
-				System.out.println("..." + w + "/" + h);
+				//System.out.println("..." + w + "/" + h);
 			} else {
 				int scale = isHorizontal ? 4 : 3;
 				while (scale < 7 && (num * (1 << (scale + 1))) < axis) {
