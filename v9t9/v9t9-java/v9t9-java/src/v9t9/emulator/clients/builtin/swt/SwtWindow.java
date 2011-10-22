@@ -45,6 +45,8 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.ToolTip;
+import org.ejs.coffee.core.properties.IProperty;
+import org.ejs.coffee.core.properties.IPropertyListener;
 import org.ejs.coffee.core.utils.PrefUtils;
 
 import v9t9.emulator.Emulator;
@@ -78,6 +80,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 	private EmulatorStatusBar statusBar;
 	private MultiImageSizeProvider imageProvider;
 	protected SwtDragDropHandler dragDropHandler;
+	private IPropertyListener fullScreenListener;
 	
 	public SwtWindow(Display display, final Machine machine) {
 		super(machine);
@@ -292,6 +295,20 @@ public class SwtWindow extends BaseEmulatorWindow {
 				}
 			});
 		}
+		
+
+		fullScreenListener = new IPropertyListener() {
+
+			public void propertyChanged(final IProperty setting) {
+				Display.getDefault().asyncExec(new Runnable() {
+					public void run() {
+						shell.setFullScreen(setting.getBoolean());
+					}
+				});
+			}
+			
+		};
+		BaseEmulatorWindow.settingFullScreen.addListener(fullScreenListener);
 		
 		shell.open();
 		

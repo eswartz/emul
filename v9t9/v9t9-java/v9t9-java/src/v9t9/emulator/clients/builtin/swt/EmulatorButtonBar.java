@@ -274,6 +274,10 @@ public class EmulatorButtonBar  {
 				swtWindow.showMenu(menu, button, e.x, e.y);
 			}
 		});
+
+		createStateButton(BaseEmulatorWindow.settingFullScreen, 
+				11, 0, "Toggle fullscreen");
+
 	}
 
 	private BasicButton createButton(int iconIndex, String tooltip, SelectionListener selectionListener) {

@@ -35,6 +35,7 @@ public abstract class BaseEmulatorWindow {
 	protected final  Machine machine;
 	static public final SettingProperty settingMonitorDrawing = new SettingProperty("MonitorDrawing", new Boolean(true));
 	static public final SettingProperty settingZoomLevel = new SettingProperty("ZoomLevel", new Integer(3));
+	static public final SettingProperty settingFullScreen = new SettingProperty("FullScreen", new Boolean(false));
 
 	// not persisted
 	static public final SettingProperty settingMachineStatePath = new SettingProperty("MachineStatePath", "");
