@@ -74,7 +74,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 	private Timer toolUiTimer;
 	private IFocusRestorer focusRestorer;
 	private final IEventNotifier eventNotifier;
-	private Composite topComposite;
+	private Composite videoRendererComposite;
 	private MouseJoystickHandler mouseJoystickHandler;
 	private EmulatorButtonBar buttons;
 	private EmulatorStatusBar statusBar;
@@ -142,18 +142,20 @@ public class SwtWindow extends BaseEmulatorWindow {
 		}
 		
 		Composite mainComposite = shell;
-		GridLayoutFactory.fillDefaults().margins(0, 0).spacing(0, 0).applyTo(mainComposite);
+		GridLayoutFactory.fillDefaults().margins(0, 0).spacing(0, 0).
+			numColumns(3). 
+			applyTo(mainComposite);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(mainComposite);
 
 		statusBar = new EmulatorStatusBar(this, mainComposite, machine);
 
-		GridData gd = ((GridData) statusBar.getImageBar().getLayoutData());
-		gd.horizontalSpan = 2;
+		//GridData gd = ((GridData) statusBar.getImageBar().getLayoutData());
+		//gd.verticalSpan = 2;
 		
-		topComposite = new Composite(mainComposite, SWT.NONE);
-		topComposite.setBackground(topComposite.getDisplay().getSystemColor(SWT.COLOR_WIDGET_DARK_SHADOW));
-		GridLayoutFactory.fillDefaults().margins(0, 0).applyTo(topComposite);
-		GridDataFactory.fillDefaults().grab(true, true).indent(0,0 ).span(1, 1).applyTo(topComposite);
+		videoRendererComposite = new Composite(mainComposite, SWT.NONE);
+		videoRendererComposite.setBackground(videoRendererComposite.getDisplay().getSystemColor(SWT.COLOR_WIDGET_DARK_SHADOW));
+		GridLayoutFactory.fillDefaults().margins(0, 0).applyTo(videoRendererComposite);
+		GridDataFactory.fillDefaults().grab(true, true).indent(0,0 ).span(1, 1).applyTo(videoRendererComposite);
 
 		focusRestorer = new IFocusRestorer() {
 			public void restoreFocus() {
@@ -163,8 +165,8 @@ public class SwtWindow extends BaseEmulatorWindow {
 		
 		buttons = new EmulatorButtonBar(this, mainComposite, machine);
 		
-		gd = ((GridData) buttons.getButtonBar().getLayoutData());
-		gd.horizontalSpan = 2;
+		//gd = ((GridData) buttons.getButtonBar().getLayoutData());
+		//gd.verticalSpan = 2;
 		
 		eventNotifier = new BaseEventNotifier() {
 
@@ -238,7 +240,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 	public void setSwtVideoRenderer(final ISwtVideoRenderer renderer) {
 		setVideoRenderer(renderer);
 		
-		this.videoControl = renderer.createControl(topComposite, SWT.BORDER);
+		this.videoControl = renderer.createControl(videoRendererComposite, SWT.BORDER);
 		
 		final GridData rendererLayoutData = GridDataFactory.swtDefaults()
 			.indent(0, 0)
@@ -300,8 +302,10 @@ public class SwtWindow extends BaseEmulatorWindow {
 		fullScreenListener = new IPropertyListener() {
 
 			public void propertyChanged(final IProperty setting) {
-				Display.getDefault().asyncExec(new Runnable() {
+				Display.getDefault().syncExec(new Runnable() {
 					public void run() {
+						((GridData) buttons.getButtonBar().getLayoutData()).exclude = setting.getBoolean();
+						((GridData) statusBar.getImageBar().getLayoutData()).exclude = setting.getBoolean();
 						shell.setFullScreen(setting.getBoolean());
 					}
 				});
@@ -600,7 +604,17 @@ public class SwtWindow extends BaseEmulatorWindow {
 			viewMenu = new Menu(control, SWT.DROP_DOWN);
 			viewMenuHeader.setMenu(viewMenu);
 		}
-		
+
+		final MenuItem fullScreen = new MenuItem(viewMenu, SWT.CHECK);
+		fullScreen.setSelection(settingFullScreen.getBoolean());
+		fullScreen.setText("&Full Screen");
+		fullScreen.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				settingFullScreen.setBoolean(fullScreen.getSelection());
+			}
+		});
+
 		/*
 		MenuItem zoom = new MenuItem(viewMenu, SWT.CASCADE);
 		zoom.setText("&Zoom");
@@ -619,12 +633,14 @@ public class SwtWindow extends BaseEmulatorWindow {
 			emuMenuHeader.setMenu(emuMenu);
 		}
 		
+		/*
 		MenuItem accel= new MenuItem(emuMenu, SWT.CASCADE);
 		accel.setText("&Accelerate");
 		
 		Menu accelMenu = new Menu(accel);
 		populateAccelMenu(accelMenu);
 		accel.setMenu(accelMenu);
+		*/
 		
 		if (mouseJoystickHandler != null) {
 			MenuItem mouseJoystickItem = new MenuItem(appMenu, SWT.CHECK);

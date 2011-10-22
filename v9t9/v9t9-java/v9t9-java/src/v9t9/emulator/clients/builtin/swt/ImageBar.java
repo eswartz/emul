@@ -40,7 +40,6 @@ class ImageBar extends Composite implements IImageBar {
 		
 		GridLayoutFactory.swtDefaults().margins(0, 0).applyTo(this);
 
-		//setLayoutData(new GridData(isHorizontal ? SWT.FILL : SWT.CENTER, isHorizontal ? SWT.CENTER : SWT.FILL, false, false));
 		GridDataFactory.swtDefaults().align(isHorizontal ? SWT.FILL : SWT.CENTER, isHorizontal ? SWT.CENTER : SWT.FILL)
 			.grab(isHorizontal, !isHorizontal).indent(0, 0).applyTo(this);
 
@@ -84,25 +83,20 @@ class ImageBar extends Composite implements IImageBar {
 			int size;
 			int axis;
 			Point cursize = composite.getParent().getSize();
-			//System.out.println("cursize: "+ cursize);
+			System.out.println("cursize: "+ cursize);
 			if (isHorizontal) {
-				//maxsize =  cursize.x * 3 / 4 / num;
 				axis = cursize.x;
 				size = cursize.y;
-				//maxsize =  cursize.x / num;
-				//minsize = cursize.y;
 			} else {
-				//maxsize = cursize.y * 3 / 4 / num;
-				//maxsize = cursize.y / num;
-				//minsize = cursize.x;
 				axis = cursize.y;
 				size = cursize.x;
 			}
 			//System.out.println(axis+","+whint+","+hhint);
 			if (smoothResize) {
 				axis = axis * 7 / 8;
-				size = axis / num;
-				size = Math.min(48, size);
+				if (axis / num < size) {
+					size = axis / num;
+				}
 				if (isHorizontal) {
 					w = axis;
 					h = size;
@@ -110,8 +104,9 @@ class ImageBar extends Composite implements IImageBar {
 					w = size;
 					h = axis;
 				}
+				System.out.println("..." + w + "/" + h);
 			} else {
-				int scale = 4;
+				int scale = isHorizontal ? 4 : 3;
 				while (scale < 7 && (num * (1 << (scale + 1))) < axis) {
 					scale++;
 				}
@@ -136,24 +131,39 @@ class ImageBar extends Composite implements IImageBar {
 			if (num == 0)
 				num = 1;
 			
-			Point curSize = composite.getSize();
-			//Point curSize = computeSize(composite, SWT.DEFAULT, SWT.DEFAULT, false);
+			//Point curSize = composite.getSize();
+			Point curSize = computeSize(composite, SWT.DEFAULT, SWT.DEFAULT, true);
 			int size;
 			int x = 0, y = 0;
+			int axisSize;
 			if (isHorizontal) {
-				size = curSize.y;
+				axisSize = curSize.y;
+				if (axisSize < 24)
+					size = 24;
+				else if (axisSize > 64)
+					size = 64;
+				else
+					size = axisSize;
 				x = (curSize.x - size * num) / 2;
 			} else {
-				size = curSize.x;
+				axisSize = curSize.x;
+				if (axisSize < 24)
+					size = 24;
+				else if (axisSize > 64)
+					size = 64;
+				else
+					size = axisSize;
 				y = (curSize.y - size * num) / 2;
 			}
 			
 			for (Control kid : kids) {
-				kid.setBounds(x, y, size, size);
-				if (isHorizontal)
+				if (isHorizontal) {
+					kid.setBounds(x, y, size, size);
 					x += size;
-				else
+				} else {
+					kid.setBounds(x, y, size, size);
 					y += size;
+				}
 			}
 		}
 		

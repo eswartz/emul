@@ -56,10 +56,7 @@ public class EmulatorStatusBar {
 
 		deviceIconImageProvider = new MultiImageSizeProvider(mainIcons);
 		
-		bar = new ImageBar(mainComposite, SWT.HORIZONTAL, null, true);
-		
-		//GridLayoutFactory.fillDefaults().applyTo(bar);
-		GridDataFactory.fillDefaults().grab(true, false).indent(0, 0).minSize(-1, 32).hint(-1, 48).applyTo(bar);
+		bar = new ImageBar(mainComposite, SWT.VERTICAL, null, true);
 		
 		bar.addPaintListener(new PaintListener() {
 			
@@ -74,8 +71,8 @@ public class EmulatorStatusBar {
 		for (IDeviceIndicatorProvider provider : machine.getModel().getDeviceIndicatorProviders(machine))
 			addDeviceIndicatorProvider(provider);
 
-		new BlankIcon(bar, SWT.NONE);
-		new BlankIcon(bar, SWT.NONE);
+		//new BlankIcon(bar, SWT.NONE);
+		//new BlankIcon(bar, SWT.NONE);
 
 		cpuMetricsCanvas = new CpuMetricsCanvas(bar.getComposite(), SWT.BORDER, machine.getCpuMetrics());
 		GridDataFactory.fillDefaults().align(SWT.RIGHT, SWT.FILL).grab(false, false)

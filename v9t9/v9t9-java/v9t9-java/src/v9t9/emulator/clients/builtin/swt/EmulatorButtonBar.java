@@ -63,9 +63,7 @@ public class EmulatorButtonBar  {
 
 	private void createButtons(Composite parent) {
 
-		//GridDataFactory.swtDefaults().align(SWT.FILL, SWT.BOTTOM).grab(true, false).minSize(-1, 16).applyTo(buttonBar);
-		
-		buttonBar = new ImageBar(parent, SWT.HORIZONTAL, swtWindow.getFocusRestorer(), true);
+		buttonBar = new ImageBar(parent, SWT.VERTICAL, swtWindow.getFocusRestorer(), true);
 		
 		// SLLLOOOOOOWWWW
 		//SVGLoader svgIconLoader = new SVGLoader(Emulator.getDataFile("icons/icons.svg"));
