@@ -94,6 +94,34 @@ public class CpuStateF99b implements CpuState {
 		default: return null;
 		}
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.cpu.CpuState#getRegisterTooltip(int)
+	 */
+	@Override
+	public String getRegisterTooltip(int reg) {
+		switch (reg) {
+		case CpuF99b.PC:
+			return "Program Counter";
+		case CpuF99b.SP:
+			return "Stack pointer";
+		case CpuF99b.SP0:
+			return "Upper Stack Limit";
+		case CpuF99b.RP:
+			return "R-Stack Pointer";
+		case CpuF99b.RP0:
+			return "Upper R-Stack Limit";
+		case CpuF99b.UP0:
+			return "Default User Base";
+		case CpuF99b.UP:
+			return "User Base";
+		case CpuF99b.SR:
+			return "Status Register: " + getStatus().toString();
+		case CpuF99b.LP:
+			return "Locals Pointer";
+		}
+		return null;
+	}
 
 	@Override
 	public Status createStatus() {

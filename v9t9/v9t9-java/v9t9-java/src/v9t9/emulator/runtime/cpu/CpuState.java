@@ -26,6 +26,7 @@ public interface CpuState {
 	
 	int getRegisterCount();
 	String getRegisterName(int reg);
+	String getRegisterTooltip(int reg);
 
 	MemoryDomain getConsole();
 

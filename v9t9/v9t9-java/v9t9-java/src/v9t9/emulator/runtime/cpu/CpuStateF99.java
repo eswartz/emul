@@ -189,5 +189,13 @@ public class CpuStateF99 implements CpuState {
 	public short getBaseUP() {
 		return baseUP;
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.cpu.CpuState#getRegisterTooltip(int)
+	 */
+	@Override
+	public String getRegisterTooltip(int reg) {
+		return null;
+	}
 
 }

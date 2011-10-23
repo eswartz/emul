@@ -124,4 +124,29 @@ public class CpuState9900 implements CpuState {
 		return reg < 16 ? "R" + reg : (reg == Cpu9900.REG_PC ? "PC" : reg == Cpu9900.REG_ST ? "ST" : 
 			reg == Cpu9900.REG_WP ? "WP" : null);
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.cpu.CpuState#getRegisterTooltip(int)
+	 */
+	@Override
+	public String getRegisterTooltip(int reg) {
+		boolean isGplWs = (getRegister(Cpu9900.REG_WP) & 0xffff) == 0x83e0;
+		switch (reg) {
+		case Cpu9900.REG_ST:
+			return "Status register: " + getStatus().toString();
+		case Cpu9900.REG_WP:
+			return "Workspace pointer";
+		case Cpu9900.REG_PC:
+			return "Program counter";
+		case 11:
+			return "BL return address";
+		case 13:
+			return isGplWs ? "GROM Read Data Address" : "BLWP saved WP";
+		case 14:
+			return isGplWs ? "System Flags" : "BLWP saved PC";
+		case 15:
+			return isGplWs ? "VDP Address Write Address" : "BLWP saved ST";
+		}
+		return null;
+	}
 }

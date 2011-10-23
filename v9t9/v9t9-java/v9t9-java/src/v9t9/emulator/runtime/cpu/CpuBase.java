@@ -278,4 +278,11 @@ public abstract class CpuBase  implements MemoryAccessListener, IPersistable, Cp
 		return state.getRegisterName(reg);
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.runtime.cpu.CpuState#getRegisterTooltip(int)
+	 */
+	@Override
+	public String getRegisterTooltip(int reg) {
+		return state.getRegisterTooltip(reg);
+	}
 }
