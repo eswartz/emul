@@ -11,7 +11,11 @@ import org.eclipse.swt.graphics.PaletteData;
 import org.eclipse.swt.graphics.RGB;
 
 /**
+<<<<<<< HEAD
  * Generator for linear gradient drawing
+=======
+ * Generator for gradient drawing
+>>>>>>> 664cf69ce2202c1578adb1a8945cc77574edca66
  * @author ejs
  *
  */
