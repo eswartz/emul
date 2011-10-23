@@ -4,12 +4,13 @@
 package v9t9.emulator.clients.builtin.swt;
 
 import org.eclipse.jface.layout.GridDataFactory;
-import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
+import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Layout;
@@ -18,9 +19,11 @@ import org.eclipse.swt.widgets.Widget;
 import v9t9.emulator.clients.builtin.swt.ImageIconCanvas.IImageBar;
 
 class ImageBar extends Composite implements IImageBar {
+	private static final int MIN_ICON_SIZE = 24;
+	private static final int MAX_ICON_SIZE = 64;
 
-	ButtonBarLayout layout;
-	private boolean isHorizontal;
+	private ButtonBarLayout bblayout;
+	private final boolean isHorizontal;
 	private Composite buttonComposite;
 	private final IFocusRestorer focusRestorer;
 	private final boolean smoothResize;
@@ -33,22 +36,29 @@ class ImageBar extends Composite implements IImageBar {
 	 */
 	public ImageBar(Composite parent, int style, IFocusRestorer focusRestorer, boolean smoothResize) {
 		// the bar itself is the full width of the parent
-		super(parent, style & ~(SWT.HORIZONTAL + SWT.VERTICAL) | SWT.NO_RADIO_GROUP | SWT.NO_FOCUS);
+		super(parent, style & ~(SWT.HORIZONTAL + SWT.VERTICAL) | SWT.NO_RADIO_GROUP | SWT.NO_FOCUS | SWT.NO_BACKGROUND);
 		this.focusRestorer = focusRestorer;
 		this.smoothResize = smoothResize;
 		this.isHorizontal = (style & SWT.HORIZONTAL) != 0;
 		
-		GridLayoutFactory.swtDefaults().margins(0, 0).applyTo(this);
+		//GridLayoutFactory.swtDefaults().margins(0, 0).applyTo(this);
 
-		GridDataFactory.swtDefaults().align(isHorizontal ? SWT.FILL : SWT.CENTER, isHorizontal ? SWT.CENTER : SWT.FILL)
-			.grab(isHorizontal, !isHorizontal).indent(0, 0).applyTo(this);
+		GridDataFactory.swtDefaults()
+			.align(isHorizontal ? SWT.FILL : SWT.CENTER, isHorizontal ? SWT.CENTER : SWT.FILL)
+			.grab(isHorizontal, !isHorizontal).indent(0, 0)
+			.applyTo(this);
 
 		// the inner composite contains the buttons, tightly packed
-		buttonComposite = new Composite(this, SWT.NO_RADIO_GROUP | SWT.NO_FOCUS | SWT.NO_BACKGROUND);
-		layout = new ButtonBarLayout();
-		buttonComposite.setLayout(layout);
+		buttonComposite = this;
+		//buttonComposite = new Composite(this, SWT.NO_RADIO_GROUP | SWT.NO_FOCUS | SWT.NO_BACKGROUND);
+		bblayout = new ButtonBarLayout();
+		buttonComposite.setLayout(bblayout);
 		
-		GridDataFactory.fillDefaults().grab(true, true).indent(0, 0).applyTo(buttonComposite);
+		/*
+		GridDataFactory.swtDefaults()
+			.align(isHorizontal ? SWT.FILL : SWT.CENTER, isHorizontal ? SWT.CENTER : SWT.FILL)
+			.grab(isHorizontal, !isHorizontal).indent(0, 0).applyTo(buttonComposite);
+		*/
 		addPaintListener(new PaintListener() {
 
 			public void paintControl(PaintEvent e) {
@@ -60,7 +70,7 @@ class ImageBar extends Composite implements IImageBar {
 		buttonComposite.addPaintListener(new PaintListener() {
 
 			public void paintControl(PaintEvent e) {
-				paintButtonBar(e.gc, e.widget, new Point(0, 0), getSize());
+				//paintButtonBar(e.gc, e.widget, new Point(0, 0), getSize());
 			}
 			
 		});
@@ -71,10 +81,12 @@ class ImageBar extends Composite implements IImageBar {
 	}
 	class ButtonBarLayout extends Layout {
 
+		private Point prevSize;
+
 		@Override
 		protected Point computeSize(Composite composite, int whint, int hhint,
 				boolean flushCache) {
-			int w, h ;
+			int w, h;
 			Control[] kids = composite.getChildren();
 			int num = kids.length;
 			if (num == 0)
@@ -83,28 +95,23 @@ class ImageBar extends Composite implements IImageBar {
 			int size;
 			int axis;
 			Point cursize = composite.getParent().getSize();
-			//System.out.println("cursize: "+ cursize);
 			if (isHorizontal) {
 				axis = cursize.x;
-				size = cursize.y;
+				size = hhint != SWT.DEFAULT ? Math.min(hhint, cursize.y) : cursize.y;
 			} else {
 				axis = cursize.y;
-				size = cursize.x;
+				size = whint != SWT.DEFAULT ? Math.min(whint, cursize.x) : cursize.x;
 			}
-			//System.out.println(axis+","+whint+","+hhint);
 			if (smoothResize) {
 				axis = axis * 7 / 8;
-				if (axis / num < size) {
-					size = axis / num;
-				}
+				size = axis / num;
 				if (isHorizontal) {
 					w = axis;
-					h = size;
+					h = Math.min(MAX_ICON_SIZE, Math.max(MIN_ICON_SIZE, size));
 				} else {
-					w = size;
+					w = Math.min(MAX_ICON_SIZE, Math.max(MIN_ICON_SIZE, size));
 					h = axis;
 				}
-				//System.out.println("..." + w + "/" + h);
 			} else {
 				int scale = isHorizontal ? 4 : 3;
 				while (scale < 7 && (num * (1 << (scale + 1))) < axis) {
@@ -120,8 +127,15 @@ class ImageBar extends Composite implements IImageBar {
 					h = hhint >= 0 ? hhint : size * num;
 				}
 			}
+
+			prevSize = new Point(w, h);
 			
-			return new Point(w, h);
+			if (isHorizontal)
+				((GridData) ImageBar.this.getLayoutData()).heightHint = h;
+			else
+				((GridData) ImageBar.this.getLayoutData()).widthHint = w; 
+			
+			return prevSize;
 		}
 
 		@Override
@@ -131,26 +145,34 @@ class ImageBar extends Composite implements IImageBar {
 			if (num == 0)
 				num = 1;
 			
+			Point curSize;
+			if (!flushCache) {
+				Rectangle cli = composite.getClientArea();
+				curSize = new Point(cli.width,
+						cli.height);
+			} else {
 			//Point curSize = composite.getSize();
-			Point curSize = computeSize(composite, SWT.DEFAULT, SWT.DEFAULT, true);
+				curSize = computeSize(composite, SWT.DEFAULT, SWT.DEFAULT, flushCache);
+			}
 			int size;
 			int x = 0, y = 0;
 			int axisSize;
+			
 			if (isHorizontal) {
-				axisSize = curSize.y;
-				if (axisSize < 24)
-					size = 24;
-				else if (axisSize > 64)
-					size = 64;
+				axisSize = Math.min(curSize.y, curSize.x / num);
+				if (axisSize < MIN_ICON_SIZE)
+					size = MIN_ICON_SIZE;
+				else if (axisSize > MAX_ICON_SIZE)
+					size = MAX_ICON_SIZE;
 				else
 					size = axisSize;
 				x = (curSize.x - size * num) / 2;
 			} else {
-				axisSize = curSize.x;
-				if (axisSize < 24)
-					size = 24;
-				else if (axisSize > 64)
-					size = 64;
+				axisSize = Math.min(curSize.x, curSize.y / num);
+				if (axisSize < MIN_ICON_SIZE)
+					size = MIN_ICON_SIZE;
+				else if (axisSize > MAX_ICON_SIZE)
+					size = MAX_ICON_SIZE;
 				else
 					size = axisSize;
 				y = (curSize.y - size * num) / 2;
@@ -165,6 +187,8 @@ class ImageBar extends Composite implements IImageBar {
 					y += size;
 				}
 			}
+			
+			//ImageBar.this.getParent().layout(new Control[] { ImageBar.this });
 		}
 		
 	}
@@ -172,12 +196,16 @@ class ImageBar extends Composite implements IImageBar {
 	protected void paintButtonBar(GC gc, Widget w, Point offset,  Point size) {
 		gc.setForeground(w.getDisplay().getSystemColor(SWT.COLOR_WHITE));
 		gc.setBackground(w.getDisplay().getSystemColor(SWT.COLOR_GRAY));
+		int y = size.y;
+		int x = size.x;
 		if (isHorizontal) {
-			gc.fillGradientRectangle(offset.x, offset.y + size.y / 2, size.x, size.y / 2, true);
-			gc.fillGradientRectangle(offset.x, offset.y + size.y / 2, size.x, -size.y / 2, true);
+			y = getSize().y;
+			gc.fillGradientRectangle(offset.x, offset.y + y / 2, x, y / 2, true);
+			gc.fillGradientRectangle(offset.x, offset.y + y / 2, x, -y / 2, true);
 		} else {
-			gc.fillGradientRectangle(offset.x + size.x / 2, offset.y, size.x, size.y, false);
-			gc.fillGradientRectangle(offset.x + size.x / 2, offset.y, -size.x / 2, size.y, false);
+			x = getSize().x;
+			gc.fillGradientRectangle(offset.x + x / 2, offset.y, x, y, false);
+			gc.fillGradientRectangle(offset.x + x / 2, offset.y, -x / 2, y, false);
 			
 		}
 	}
@@ -195,10 +223,6 @@ class ImageBar extends Composite implements IImageBar {
 	 */
 	public Composite getComposite() {
 		return buttonComposite;
-	}
-
-	public void setHorizontal(boolean isHorizontal) {
-		this.isHorizontal = isHorizontal;
 	}
 
 	public boolean isHorizontal() {

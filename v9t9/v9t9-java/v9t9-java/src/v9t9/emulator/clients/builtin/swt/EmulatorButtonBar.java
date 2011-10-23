@@ -48,24 +48,22 @@ public class EmulatorButtonBar  {
 	private final Machine machine;
 	private final ImageProvider imageProvider;
 	/**
-	 * @param mainComposite 
+	 * @param parent 
+	 * @param isHorizontal 
 	 * @param parent
 	 * @param style
 	 * @param focusRestorer
 	 * @param smoothResize
 	 */
-	public EmulatorButtonBar(SwtWindow window, ImageProvider imageProvider, Composite mainComposite, Machine machine) {
+	public EmulatorButtonBar(SwtWindow window, ImageProvider imageProvider, Composite parent, 
+			final Machine machine, boolean isHorizontal) {
 		this.swtWindow = window;
 		this.imageProvider = imageProvider;
 		this.machine = machine;
 		
-		createButtons(mainComposite);
-	}
-
-
-	private void createButtons(Composite parent) {
-
-		buttonBar = new ImageBar(parent, SWT.VERTICAL, swtWindow.getFocusRestorer(), true);
+		buttonBar = new ImageBar(parent, 
+				isHorizontal ? SWT.HORIZONTAL : SWT.VERTICAL, 
+				swtWindow.getFocusRestorer(), true);
 		
 		buttonBar.addControlListener(new ControlAdapter() {
 			@Override

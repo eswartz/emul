@@ -79,19 +79,25 @@ public class FixedAspectLayout extends Layout {
 		//System.out.println("cursize: " + area + " vs " +bounds);
 		
 		int neww, newh;
-		if (wHint == SWT.DEFAULT) {
-			neww = fixup(area.width, bounds.width, w);
-		} else {
-			neww = fixup(wHint, wHint, w);
+		if (composite.getShell().getFullScreen()) {
+			neww = bounds.width;
+			newh = bounds.height;
 		}
-		if (hHint == SWT.DEFAULT) {
-			newh = fixup(area.height, bounds.height, h);
-		} else {
-			newh = fixup(hHint, hHint, h);
+		else {
+			if (wHint == SWT.DEFAULT) {
+				neww = fixup(area.width, bounds.width, w);
+			} else {
+				neww = fixup(wHint, wHint, w);
+			}
+			if (hHint == SWT.DEFAULT) {
+				newh = fixup(area.height, bounds.height, h);
+			} else {
+				newh = fixup(hHint, hHint, h);
+			}
 		}
 		
 		if (neww < newh * aspect) {
-			newh = (int) (newh / aspect);
+			newh = (int) (neww / aspect);
 		}
 		else if (neww > newh * aspect) {
 			neww = (int) (newh * aspect);

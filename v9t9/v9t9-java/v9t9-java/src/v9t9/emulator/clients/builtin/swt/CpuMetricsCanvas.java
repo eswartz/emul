@@ -38,9 +38,11 @@ public class CpuMetricsCanvas extends Canvas {
 	private int lastTooltipIndex;
 	private IMetricsListener metricsListener;
 	private Color gridcolor;
+	private int horizvert;
 	
 	public CpuMetricsCanvas(final Composite parent, int style, CpuMetrics cpuMetrics) {
-		super(parent, style | SWT.NO_BACKGROUND);
+		super(parent, style & ~(SWT.VERTICAL + SWT.HORIZONTAL) | SWT.NO_BACKGROUND);
+		this.horizvert = style & (SWT.VERTICAL | SWT.HORIZONTAL);
 		this.cpuMetrics = cpuMetrics;
 	
 		setVisible(true);
@@ -61,14 +63,25 @@ public class CpuMetricsCanvas extends Canvas {
 
 			public void controlResized(ControlEvent e) {
 				Rectangle bounds = parent.getClientArea();
-				int height = bounds.height;
-				Rectangle metrics = new Rectangle(bounds.x + (bounds.width - height), bounds.y,
-						Math.max(height, 64), height);
+				int sz;
+				
+				int x,y;
+				if ((horizvert & SWT.HORIZONTAL) != 0) {
+					sz = bounds.height;
+					x = bounds.x + (bounds.width - sz);
+					y = bounds.y;
+				} else {
+					sz = bounds.width;
+					x = bounds.x;
+					y = bounds.y + (bounds.height - sz);
+					
+				}
+				Rectangle metrics; 
+				metrics = new Rectangle(x, y, sz, sz);
 				metrics.x += 2;
 				metrics.y += 2;
 				metrics.width -= 4;
 				metrics.height -= 4;
-				//System.out.println(metrics);
 				setBounds(metrics);				
 			}
 			

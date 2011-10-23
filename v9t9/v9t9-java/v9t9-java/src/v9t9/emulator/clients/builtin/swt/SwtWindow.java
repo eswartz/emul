@@ -41,6 +41,7 @@ import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.FileDialog;
+import org.eclipse.swt.widgets.Layout;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
@@ -80,6 +81,83 @@ public class SwtWindow extends BaseEmulatorWindow {
 	private EmulatorStatusBar statusBar;
 	protected SwtDragDropHandler dragDropHandler;
 	private IPropertyListener fullScreenListener;
+	
+	class EmulatorWindowLayout extends Layout {
+
+		private final boolean isHorizontal;
+		private Point vidSz;
+		private Point sbSz;
+		private Point bbSz;
+
+		public EmulatorWindowLayout(boolean isHorizontal) {
+			this.isHorizontal = isHorizontal;
+		}
+
+		/* (non-Javadoc)
+		 * @see org.eclipse.swt.widgets.Layout#computeSize(org.eclipse.swt.widgets.Composite, int, int, boolean)
+		 */
+		@Override
+		protected Point computeSize(Composite composite, int wHint, int hHint,
+				boolean flushCache) {
+			
+			if (composite.getChildren().length != 3)
+				throw new IllegalStateException();
+			
+			Rectangle cur = composite.getBounds();
+			
+			if (flushCache) {
+				vidSz = sbSz = bbSz = null;
+			}
+			
+			if (vidSz == null)
+				vidSz = videoRendererComposite.computeSize(SWT.DEFAULT, SWT.DEFAULT);
+			
+			if (isHorizontal) {
+				if (sbSz == null)
+					sbSz = statusBar.getImageBar().computeSize(SWT.DEFAULT, cur.height); 
+				if (bbSz == null)
+					bbSz = buttons.getButtonBar().computeSize(SWT.DEFAULT, cur.height);
+				
+				return new Point(sbSz.x + bbSz.x + vidSz.x, cur.height);
+			} else {
+				if (sbSz == null)
+					sbSz = statusBar.getImageBar().computeSize(cur.width, SWT.DEFAULT); 
+				if (bbSz == null)
+					bbSz = buttons.getButtonBar().computeSize(cur.width, SWT.DEFAULT);
+				
+				return new Point(cur.width, sbSz.y + bbSz.y + vidSz.y);
+			}
+		}
+
+		/* (non-Javadoc)
+		 * @see org.eclipse.swt.widgets.Layout#layout(org.eclipse.swt.widgets.Composite, boolean)
+		 */
+		@Override
+		protected void layout(Composite composite, boolean flushCache) {
+			if (composite.getChildren().length != 3)
+				throw new IllegalStateException();
+			
+			Rectangle cur = composite.getClientArea();
+			
+			computeSize(composite, cur.width, cur.height, true);
+			
+			if (isHorizontal) {
+				int barSz = Math.min(sbSz.x, bbSz.x);
+				int left = cur.width - barSz * 2;
+				statusBar.getImageBar().setBounds(0, 0, barSz, cur.height);
+				videoRendererComposite.setBounds(barSz, 0, left, cur.height);
+				buttons.getButtonBar().setBounds(barSz + left, 0, barSz, cur.height);
+			} else {
+				int barSz = Math.min(sbSz.y, bbSz.y);
+				int left = cur.height - barSz * 2;
+				statusBar.getImageBar().setBounds(0, 0, cur.width, barSz);
+				videoRendererComposite.setBounds(0, barSz, cur.width, left);
+				buttons.getButtonBar().setBounds(0, barSz + left, cur.width, barSz);
+				
+			}
+		}
+		
+	}
 	
 	public SwtWindow(Display display, final Machine machine) {
 		super(machine);
@@ -146,21 +224,28 @@ public class SwtWindow extends BaseEmulatorWindow {
 			imageProvider = new MultiImageSizeProvider(mainIcons);
 		}
 		
+		final boolean isHorizontal = false;
+		
 		Composite mainComposite = shell;
-		GridLayoutFactory.fillDefaults().margins(0, 0).spacing(0, 0).
-			numColumns(3). 
-			applyTo(mainComposite);
+		/*GridLayoutFactory.fillDefaults().margins(0, 0).spacing(0, 0).
+			numColumns(isHorizontal ? 1 : 3). 
+			applyTo(mainComposite);*/
+		
+		mainComposite.setLayout(new EmulatorWindowLayout(!isHorizontal));
+		
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(mainComposite);
 
-		statusBar = new EmulatorStatusBar(this, mainComposite, machine);
+		statusBar = new EmulatorStatusBar(this, mainComposite, machine, isHorizontal);
 
-		//GridData gd = ((GridData) statusBar.getImageBar().getLayoutData());
-		//gd.verticalSpan = 2;
+		if (isHorizontal) {
+			GridData gd = ((GridData) statusBar.getImageBar().getLayoutData());
+			gd.verticalSpan = 2;
+		}
 		
 		videoRendererComposite = new Composite(mainComposite, SWT.NONE);
 		videoRendererComposite.setBackground(videoRendererComposite.getDisplay().getSystemColor(SWT.COLOR_WIDGET_DARK_SHADOW));
 		GridLayoutFactory.fillDefaults().margins(0, 0).applyTo(videoRendererComposite);
-		GridDataFactory.fillDefaults().grab(true, true).indent(0,0 ).span(1, 1).applyTo(videoRendererComposite);
+		//GridDataFactory.fillDefaults().grab(true, true).indent(0, 0).span(1, 1).applyTo(videoRendererComposite);
 
 		focusRestorer = new IFocusRestorer() {
 			public void restoreFocus() {
@@ -169,11 +254,12 @@ public class SwtWindow extends BaseEmulatorWindow {
 		};
 		
 		
-		buttons = new EmulatorButtonBar(this, imageProvider, mainComposite, machine);
-
+		buttons = new EmulatorButtonBar(this, imageProvider, mainComposite, machine, isHorizontal);
 		
-		//gd = ((GridData) buttons.getButtonBar().getLayoutData());
-		//gd.verticalSpan = 2;
+		if (isHorizontal) {
+			GridData gd = ((GridData) buttons.getButtonBar().getLayoutData());
+			gd.verticalSpan = 2;
+		}
 		
 		
 		eventNotifier = new BaseEventNotifier() {
@@ -249,13 +335,12 @@ public class SwtWindow extends BaseEmulatorWindow {
 		
 		this.videoControl = renderer.createControl(videoRendererComposite, SWT.BORDER);
 		
-		final GridData rendererLayoutData = GridDataFactory.swtDefaults()
+		GridDataFactory.swtDefaults()
 			.indent(0, 0)
 			.align(SWT.CENTER, SWT.CENTER)
 			.grab(true, true)
 			.minSize(128, 64)
-			.create();
-		videoControl.setLayoutData(rendererLayoutData);
+			.applyTo(videoControl);
 		
 		renderer.addMouseEventListener(new MouseAdapter() {
 			
@@ -295,8 +380,8 @@ public class SwtWindow extends BaseEmulatorWindow {
 			public void propertyChanged(final IProperty setting) {
 				Display.getDefault().syncExec(new Runnable() {
 					public void run() {
-						((GridData) buttons.getButtonBar().getLayoutData()).exclude = setting.getBoolean();
-						((GridData) statusBar.getImageBar().getLayoutData()).exclude = setting.getBoolean();
+						//((GridData) buttons.getButtonBar().getLayoutData()).exclude = setting.getBoolean();
+						//((GridData) statusBar.getImageBar().getLayoutData()).exclude = setting.getBoolean();
 						shell.setFullScreen(setting.getBoolean());
 					}
 				});
@@ -501,7 +586,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 					if (toolShell.isDismissOnClickOutside() && !shell.isDisposed() && shell.isVisible()
 							&& System.currentTimeMillis() > toolShell.getClickOutsideCheckTime()) {
 						Rectangle bounds = shell.getBounds();
-						System.out.println(pt + "/"+ bounds);
+						//System.out.println(pt + "/"+ bounds);
 						if (pt.x < bounds.x - 16 || pt.y < bounds.y - 16 
 								|| pt.x > bounds.x + bounds.width + 16 || pt.y > bounds.y + bounds.height + 16) {
 							shell.dispose();
@@ -690,7 +775,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 			Point loc = parent.toDisplay(x, y); 
 			menu.setLocation(loc);
 		}
-		System.out.println("position: " + menu.getParent().getLocation());
+		//System.out.println("position: " + menu.getParent().getLocation());
 		menu.setVisible(true);
 		
 		//System.out.println("Running menu");

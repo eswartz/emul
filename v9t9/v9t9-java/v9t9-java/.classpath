@@ -42,11 +42,11 @@
 	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.xml_1.7.0.v201011041433.jar"/>
 	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.xml.source_1.7.0.v201011041433.jar"/>
 	<classpathentry kind="lib" path="/org.ejs.coffee.core/libs/jna.jar"/>
-	<classpathentry kind="lib" path="/org.ejs.coffee.core/libs/swt/org.eclipse.jface_3.6.2.M20110210-1200.jar"/>
+	<classpathentry kind="lib" path="/org.ejs.coffee.core/libs/swt/org.eclipse.jface_3.6.2.M20110210-1200.jar" sourcepath="/org.ejs.coffee.core/libs/swt/org.eclipse.jface.source_3.6.2.M20110210-1200.jar"/>
 	<classpathentry kind="lib" path="/org.ejs.coffee.core/libs/swt/org.eclipse.core.commands_3.6.0.I20100512-1500.jar"/>
 	<classpathentry kind="lib" path="/org.ejs.coffee.core/libs/swt/org.eclipse.core.runtime_3.6.0.v20100505.jar"/>
 	<classpathentry kind="lib" path="/org.ejs.coffee.core/libs/swt/org.eclipse.equinox.common_3.6.0.v20100503.jar"/>
-	<classpathentry kind="lib" path="/org.ejs.coffee.core/libs/swt/org.eclipse.swt.gtk.linux.x86_64_3.6.2.v3659b.jar"/>
+	<classpathentry kind="lib" path="/org.ejs.coffee.core/libs/swt/org.eclipse.swt.gtk.linux.x86_64_3.6.2.v3659b.jar" sourcepath="/org.ejs.coffee.core/libs/swt/org.eclipse.swt.gtk.linux.x86_64.source_3.6.2.v3659b.jar"/>
 	<classpathentry kind="lib" path="/org.ejs.coffee.core/libs/swt/org.eclipse.swt.gtk.linux.x86_64.source_3.6.2.v3659b.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
