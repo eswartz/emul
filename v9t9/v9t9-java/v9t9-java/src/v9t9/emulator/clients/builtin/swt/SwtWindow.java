@@ -232,12 +232,12 @@ public class SwtWindow extends BaseEmulatorWindow {
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(mainComposite);
 
 		statusBar = new EmulatorStatusBar(this, mainComposite, machine, 
-				new int[] { SWT.COLOR_WIDGET_FOREGROUND, SWT.COLOR_WIDGET_NORMAL_SHADOW, SWT.COLOR_WIDGET_DARK_SHADOW },
+				new int[] { SWT.COLOR_DARK_GRAY, SWT.COLOR_GRAY, SWT.COLOR_BLACK },
 				0.25f,
 				isHorizontal);
 		
 		videoRendererComposite = new Composite(mainComposite, SWT.NONE);
-		videoRendererComposite.setBackground(videoRendererComposite.getDisplay().getSystemColor(SWT.COLOR_WIDGET_DARK_SHADOW));
+		videoRendererComposite.setBackground(videoRendererComposite.getDisplay().getSystemColor(SWT.COLOR_BLACK));
 		GridLayoutFactory.fillDefaults().margins(0, 0).applyTo(videoRendererComposite);
 
 		focusRestorer = new IFocusRestorer() {
@@ -248,7 +248,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		
 		
 		buttons = new EmulatorButtonBar(this, imageProvider, mainComposite, machine,
-				new int[] { SWT.COLOR_WIDGET_DARK_SHADOW, SWT.COLOR_WIDGET_NORMAL_SHADOW, SWT.COLOR_WIDGET_FOREGROUND },
+				new int[] { SWT.COLOR_BLACK, SWT.COLOR_GRAY, SWT.COLOR_DARK_GRAY },
 				0.75f,
 				isHorizontal);
 		
