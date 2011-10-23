@@ -28,15 +28,19 @@ public class ToolShell {
 	private final IFocusRestorer focusRestorer;
 	private Control centerOverControl;
 	private long clickOutsideCheckTime;
+	private final boolean isHorizontal;
 	
 	public ToolShell(Shell shell_, 
 			IFocusRestorer focusRestorer_,
 			String boundsPref_, 
-			Control centerOverControl_, boolean dismissOnClickOutside) {
+			Control centerOverControl_, 
+			boolean isHorizontal,
+			boolean dismissOnClickOutside) {
 		this.shell = shell_;
 		this.focusRestorer = focusRestorer_;
 		this.boundsPref = boundsPref_;
 		this.centerOverControl = centerOverControl_;
+		this.isHorizontal = isHorizontal;
 		this.dismissOnClickOutside = dismissOnClickOutside;
 		this.keepCentered = centerOverControl_ != null;
 		this.clickOutsideCheckTime = System.currentTimeMillis() + 1500;	// let it show up first, so click on the button that created it doesn't kill it
@@ -168,8 +172,12 @@ public class ToolShell {
 		Rectangle bbounds = centerOverControl.getBounds();
 		
 		Point pt = centerOverControl.getParent().toDisplay(bbounds.x, bbounds.y);
-		pt = new Point(pt.x + (bbounds.width - sbounds.width) / 2,
-				pt.y - sbounds.height);
+		if (isHorizontal)
+			pt = new Point(pt.x + (bbounds.width - sbounds.width) / 2,
+					pt.y - sbounds.height);
+		else
+			pt = new Point(pt.x - sbounds.width,
+					pt.y + (bbounds.height - sbounds.height) / 2);
 		
 		recenterTo(pt);
 	}

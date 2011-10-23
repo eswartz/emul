@@ -142,7 +142,7 @@ class BasicButtonSVG extends Canvas {
 
 	protected void doPaint(PaintEvent e) {
 		Point size = getSize();
-		this.buttonBar.paintButtonBar(e.gc, this, new Point(0, 0), size);
+		this.buttonBar.paintButtonBar(e.gc, new Point(0, 0), size);
 		
 		e.gc.drawImage(getImage(), 0, 0);
 		if (overlayBounds != null)

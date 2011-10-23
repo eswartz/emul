@@ -35,7 +35,7 @@ public class EmulatorStatusBar {
 	 * @param mainComposite
 	 */
 	public EmulatorStatusBar(SwtWindow swtWindow, Composite mainComposite, Machine machine,
-			boolean isHorizontal) {
+			int[] colors, float midPoint, boolean isHorizontal) {
 
 		TreeMap<Integer, Image> mainIcons = new TreeMap<Integer, Image>();
 		for (int size : new int[] { 16, 32, 64, 128 }) {
@@ -52,7 +52,10 @@ public class EmulatorStatusBar {
 
 		deviceIconImageProvider = new MultiImageSizeProvider(mainIcons);
 		
-		bar = new ImageBar(mainComposite, isHorizontal ? SWT.HORIZONTAL : SWT.VERTICAL, null, true);
+		bar = new ImageBar(mainComposite, 
+				isHorizontal ? SWT.HORIZONTAL : SWT.VERTICAL, 
+				new Gradient(!isHorizontal, colors, new float[] { midPoint, 1 - midPoint }),
+				null, true);
 		
 		indicators = new ArrayList<ImageDeviceIndicator>();
 		
