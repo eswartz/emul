@@ -12,6 +12,8 @@ import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.MouseMoveListener;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
+import org.eclipse.swt.events.TraverseEvent;
+import org.eclipse.swt.events.TraverseListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
@@ -112,6 +114,14 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 			
 		});
 		
+		canvas.addTraverseListener(new TraverseListener() {
+			
+			@Override
+			public void keyTraversed(TraverseEvent e) {
+				e.doit = false;
+				canvas.setFocus();
+			}
+		});
 		setupCanvas();
 		return canvas;
 	}
