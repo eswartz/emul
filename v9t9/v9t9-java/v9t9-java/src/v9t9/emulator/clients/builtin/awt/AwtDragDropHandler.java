@@ -37,8 +37,8 @@ import javax.imageio.ImageIO;
 import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.graphics.ImageData;
 
+import v9t9.emulator.clients.builtin.video.ICanvas;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
-import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.image.AwtImageUtils;
 import v9t9.emulator.clients.builtin.video.image.ImageImport;
 
@@ -95,7 +95,7 @@ public class AwtDragDropHandler implements DragGestureListener, DropTargetListen
 					throws UnsupportedFlavorException, IOException {
 				if (flavor != DataFlavor.imageFlavor)
 					throw new UnsupportedFlavorException(flavor);
-				VdpCanvas vc = renderer.getCanvas();
+				ICanvas vc = renderer.getCanvas();
 				ImageData data = ((ImageDataCanvas) vc).getImageData();
 
 				ComponentColorModel colorModel = new ComponentColorModel(

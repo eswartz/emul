@@ -19,10 +19,7 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 	private static PaletteData stockPaletteData = new PaletteData(0xFF0000, 0xFF00, 0xFF);
 
 	public ImageDataCanvas24Bit() {
-		this(16);
-	}
-	public ImageDataCanvas24Bit(int displayAdjust) {
-		super(displayAdjust);
+		super();
 		setSize(256, 192);
 	}
 	
@@ -67,7 +64,7 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 	 */
 	@Override
 	final public int getBitmapOffset(int x, int y) {
-		return getLineStride() * (y) + (x + extraSpace / 2) * (imageData.depth >> 3);
+		return getLineStride() * (y) + x * (imageData.depth >> 3);
 	}
 
 	@Override
@@ -280,7 +277,7 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 	}
 	
 	@Override
-	public void blitSpriteBlock(MemoryCanvas spriteCanvas, int x, int y,
+	public void blitSpriteBlock(Sprite2Canvas spriteCanvas, int x, int y,
 			int blockMag) {
 		int sprOffset = spriteCanvas.getBitmapOffset(x, y);
 		int bitmapOffset = getBitmapOffset(x * blockMag, y);
@@ -310,7 +307,7 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 	}
 	
 	@Override
-	public void blitFourColorSpriteBlock(MemoryCanvas spriteCanvas, int x, int y,
+	public void blitFourColorSpriteBlock(Sprite2Canvas spriteCanvas, int x, int y,
 			int blockMag) {
 		int sprOffset = spriteCanvas.getBitmapOffset(x, y);
 		int bitmapOffset = getBitmapOffset(x * blockMag, y);

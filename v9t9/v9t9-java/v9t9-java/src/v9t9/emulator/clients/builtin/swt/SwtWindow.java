@@ -799,7 +799,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		int curCycles = Cpu.settingCyclesPerSecond.getInt();
 		MenuItem item = new MenuItem(menu, SWT.RADIO);
 		final int cycles = (int) (machine.getCpu().getBaseCyclesPerSec() * factor);
-		item.setText(label + " (" + cycles + ")");
+		item.setText(((factor >= 1 && factor < 10) ? "&" : "") + label + " (" + cycles + ")");
 		if (isRealTime && cycles == curCycles) {
 			item.setSelection(true);
 		}

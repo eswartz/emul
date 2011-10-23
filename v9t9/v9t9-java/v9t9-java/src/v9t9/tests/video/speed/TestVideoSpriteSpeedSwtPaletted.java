@@ -15,7 +15,7 @@ public class TestVideoSpriteSpeedSwtPaletted extends TestVideoSpriteSpeedSwtBase
 	@Override
 	protected SwtVideoRenderer createVideoRenderer() {
 		SwtVideoRenderer swtVideoRenderer = new SwtVideoRenderer(null);
-		swtVideoRenderer.setCanvas(new ImageDataCanvasPaletted(0));
+		swtVideoRenderer.setCanvas(new ImageDataCanvasPaletted());
 		return swtVideoRenderer;
 
 	}

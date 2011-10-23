@@ -24,10 +24,11 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
+import v9t9.emulator.clients.builtin.video.ICanvas;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas24Bit;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
-import v9t9.emulator.clients.builtin.video.VdpCanvas.ICanvasListener;
+import v9t9.emulator.clients.builtin.video.BaseVdpCanvas.ICanvasListener;
 import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.engine.VdpHandler;
 
@@ -131,7 +132,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 	}
 
 	protected VdpCanvas createVdpCanvas() {
-		return new ImageDataCanvas24Bit(0);
+		return new ImageDataCanvas24Bit();
 	}
 
 	protected void initWidgets() {
@@ -218,7 +219,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 		return Math.abs(physsize / zoom - logSize) < 64;
 	}
 	
-	public void canvasResized(VdpCanvas canvas) {
+	public void canvasResized(ICanvas canvas) {
 	}
 	public void sync() {
 		if (canvas == null)
@@ -311,7 +312,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 		return (int) fixedAspectLayout.getZoomX();
 	}
 
-	public void canvasDirtied(VdpCanvas canvas) {
+	public void canvasDirtied(ICanvas canvas) {
 		//redraw();
 		//System.out.println("!");
 		isDirty = true;

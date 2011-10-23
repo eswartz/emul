@@ -3,7 +3,9 @@
  */
 package v9t9.emulator.clients.builtin.video.v9938;
 
-import v9t9.emulator.clients.builtin.video.MemoryCanvas;
+import v9t9.emulator.clients.builtin.video.ICanvas;
+import v9t9.emulator.clients.builtin.video.ISpriteCanvas;
+import v9t9.emulator.clients.builtin.video.Sprite2Canvas;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VdpSprite;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpSpriteCanvas;
@@ -49,7 +51,7 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 	public static boolean EARLY = true;
 	public static boolean OR = true;
 	
-	private MemoryCanvas spriteCanvas;
+	private Sprite2Canvas spriteCanvas;
 	/** which screen changes there were, requiring sprite reblits */
 	private byte[] screenSpriteChanges;
 	private final boolean evenOddColors;
@@ -57,21 +59,21 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 	public VdpSprite2Canvas(VdpCanvas canvas, int maxPerLine, boolean evenOddColors) {
 		super(canvas, maxPerLine);
 		this.evenOddColors = evenOddColors;
-		this.spriteCanvas = new MemoryCanvas();
+		this.spriteCanvas = new Sprite2Canvas();
 		spriteCanvas.setClearColor(0);
 		spriteCanvas.setSize(256, canvas.getHeight());
 		screenSpriteChanges = null;
 	}
 	
 	@Override
-	protected void updateSpriteBitmapForScreenChanges(VdpCanvas screenCanvas,
+	protected void updateSpriteBitmapForScreenChanges(ICanvas screenCanvas,
 			byte[] screenChanges) {
 		screenSpriteChanges = screenChanges;
 		// no changes to screen can affect sprites here
 	}
 
 	@Override
-	public void drawSprites(VdpCanvas canvas) {
+	public void drawSprites(ISpriteCanvas canvas) {
 		//spriteCanvas.clear(null);
 		// clear the blocks where the sprites are moving
 		//int cleared = 0;
@@ -85,7 +87,7 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 		//System.out.print(cleared +" cleared; ");
 		super.drawSprites(spriteCanvas);
 		
-		blitSpriteCanvas(canvas, evenOddColors);
+		blitSpriteCanvas((VdpCanvas) canvas, evenOddColors);
 	}
 
 	
@@ -100,7 +102,7 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 	 * @param attr the row attribute table
 	 * @param doubleWidth is the sprite drawn double-wide?
 	 */
-	private void drawUnmagnifiedSpriteChar(VdpCanvas canvas, int y, int x, int rowbitmap, ByteMemoryAccess pattern,
+	private void drawUnmagnifiedSpriteChar(ISpriteCanvas canvas, int y, int x, int rowbitmap, ByteMemoryAccess pattern,
 			ByteMemoryAccess attr, boolean doubleWidth) {
 		
 		int pixy = 0;
@@ -157,7 +159,7 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 	 * @param attr the row attribute table
 	 * @param doubleWidth is the sprite drawn double-wide?
 	 */
-	private void drawMagnifiedSpriteChar(VdpCanvas canvas, int y, int x, int rowbitmap, ByteMemoryAccess pattern,
+	private void drawMagnifiedSpriteChar(ISpriteCanvas canvas, int y, int x, int rowbitmap, ByteMemoryAccess pattern,
 			ByteMemoryAccess attr, boolean doubleWidth) {
 		
 		int pixy = 0;
@@ -204,7 +206,8 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 		}
 	}
 
-	protected void drawSprite(VdpCanvas canvas, VdpSprite sprite, int sprrowbitmap) {
+	@Override
+	protected void drawSprite(ISpriteCanvas canvas, VdpSprite sprite, int sprrowbitmap) {
 		// sprite color 0 does not imply invisibility since this only
 		// applies to the color 0 in the color stripe
 		

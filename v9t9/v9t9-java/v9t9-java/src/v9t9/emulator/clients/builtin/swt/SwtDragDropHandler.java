@@ -38,8 +38,8 @@ import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Control;
 import org.ejs.coffee.core.utils.Pair;
 
+import v9t9.emulator.clients.builtin.video.ICanvas;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
-import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VdpCanvas.Format;
 import v9t9.emulator.clients.builtin.video.image.ImageImport;
 import v9t9.emulator.common.IEventNotifier;
@@ -191,7 +191,7 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 	 * @return
 	 */
 	private ImageData readImage() {
-		VdpCanvas vc = renderer.getCanvas();
+		ICanvas vc = renderer.getCanvas();
 		ImageDataCanvas idc = (ImageDataCanvas) vc;
 		ImageData data = idc.getImageData();
 		
@@ -209,7 +209,7 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 		
 		ImageData visData = new ImageData(visWidth, visHeight, data.depth, data.palette);
 		int[] pix = new int[visWidth];
-		int xoffs = idc.getXOffset() + idc.getExtraSpace() / 2;
+		int xoffs = idc.getXOffset();
 		int yoffs = idc.getYOffset();
 		
 		for (int y = 0; y < visHeight; y += ystep) {

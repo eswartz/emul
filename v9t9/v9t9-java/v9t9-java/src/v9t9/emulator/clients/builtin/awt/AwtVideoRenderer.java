@@ -27,10 +27,11 @@ import v9t9.emulator.clients.builtin.BaseEmulatorWindow;
 import v9t9.emulator.clients.builtin.jna.V9t9Render;
 import v9t9.emulator.clients.builtin.jna.V9t9Render.AnalogTV;
 import v9t9.emulator.clients.builtin.jna.V9t9Render.AnalogTVData;
+import v9t9.emulator.clients.builtin.video.ICanvas;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas24Bit;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
-import v9t9.emulator.clients.builtin.video.VdpCanvas.ICanvasListener;
+import v9t9.emulator.clients.builtin.video.BaseVdpCanvas.ICanvasListener;
 import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.engine.VdpHandler;
 
@@ -77,7 +78,7 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 		V9t9Render.INSTANCE.hashCode();
 		
 		updateRect = new Rectangle(0, 0, 0, 0);
-		setCanvas(new ImageDataCanvas24Bit(0));
+		setCanvas(new ImageDataCanvas24Bit());
 		//desiredWidth = (int)(zoomx * 256);
 		//desiredHeight = (int)(zoomy * 192);
 		this.canvas = new AwtCanvas(this);
@@ -343,13 +344,13 @@ public class AwtVideoRenderer implements VideoRenderer, ICanvasListener {
 	}
 	
 
-	public void canvasResized(VdpCanvas canvas) {
+	public void canvasResized(ICanvas canvas) {
 		//needResize = true;
 		isDirty = true;
 		updateWidgetOnResize((int)(canvas.getVisibleWidth() * zoomx), (int)(canvas.getVisibleHeight() * zoomy));
 	}
 	
-	public void canvasDirtied(VdpCanvas canvas) {
+	public void canvasDirtied(ICanvas canvas) {
 		//redraw();
 		//System.out.println("!");
 		isDirty = true;

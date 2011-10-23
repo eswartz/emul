@@ -7,8 +7,9 @@ package v9t9.tests.video.speed;
 import java.util.Arrays;
 
 import junit.framework.TestCase;
+import v9t9.emulator.clients.builtin.video.ImageDataCanvasPaletted;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
-import v9t9.emulator.clients.builtin.video.MemoryCanvas;
+import v9t9.emulator.clients.builtin.video.Sprite2Canvas;
 import v9t9.emulator.clients.builtin.video.RedrawBlock;
 import v9t9.emulator.clients.builtin.video.VdpSprite;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpSpriteCanvas;
@@ -33,7 +34,7 @@ public class TestSpriteCanvas extends TestCase {
 	
 	@Override
 	protected void setUp() throws Exception {
-		vdpCanvas = new MemoryCanvas();
+		vdpCanvas = new ImageDataCanvasPaletted();
 		vdpCanvas.setSize(256, 192);
 		sprCanvas = new VdpSpriteCanvas(vdpCanvas, 4);
 		sprites = sprCanvas.getSprites();

@@ -8,7 +8,7 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Before;
 import org.junit.Test;
 
-import v9t9.emulator.clients.builtin.video.VdpCanvas;
+import v9t9.emulator.clients.builtin.video.BaseVdpCanvas;
 import v9t9.emulator.clients.builtin.video.v9938.VdpV9938;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.EnhancedCompatibleMachineModel;
@@ -214,7 +214,7 @@ public class TestV9938 {
 	public void testPalette() {
 		byte[] stock;
 		byte[] rgb;
-		VdpCanvas canvas = v9938.getCanvas();
+		BaseVdpCanvas canvas = v9938.getCanvas();
 		
 		vwreg(16, 8);
 		mmio.write(0x8c04, (byte) 0x04);

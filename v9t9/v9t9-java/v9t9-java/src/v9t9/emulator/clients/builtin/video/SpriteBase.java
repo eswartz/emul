@@ -17,6 +17,14 @@ public abstract class SpriteBase {
 	public SpriteBase() {
 		deleted = true;
 	}
+	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "Sprite @" + x + "," + y + " sz " + sizeX + "x" + sizeY;
+	}
 	public void move(int x, int y) {
 		if (x != this.x || y != this.y) {
 			this.x = x;

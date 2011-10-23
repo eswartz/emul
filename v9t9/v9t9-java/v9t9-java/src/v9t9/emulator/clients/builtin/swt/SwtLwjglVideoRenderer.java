@@ -82,6 +82,7 @@ import v9t9.emulator.clients.builtin.swt.gl.MonitorParams;
 import v9t9.emulator.clients.builtin.swt.gl.SimpleCurvedCrtMonitorRender;
 import v9t9.emulator.clients.builtin.swt.gl.StandardMonitorRender;
 import v9t9.emulator.clients.builtin.swt.gl.TextureLoader;
+import v9t9.emulator.clients.builtin.video.ICanvas;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas24Bit;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
@@ -147,7 +148,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	}
 
 	protected VdpCanvas createVdpCanvas() {
-		imageCanvas = new ImageDataCanvas24Bit(0);
+		imageCanvas = new ImageDataCanvas24Bit();
 		vdpCanvasBuffer = ByteBuffer.allocateDirect(imageCanvas.getImageData().bytesPerLine * imageCanvas.getImageData().height);
 		imageCanvasFormat = GL_RGB; 
 		imageCanvasType = GL_UNSIGNED_BYTE; 
@@ -353,7 +354,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	 * @see v9t9.emulator.clients.builtin.swt.SwtVideoRenderer#canvasResized(v9t9.emulator.clients.builtin.video.VdpCanvas)
 	 */
 	@Override
-	public void canvasResized(VdpCanvas canvas) {
+	public void canvasResized(ICanvas canvas) {
 		super.canvasResized(canvas);
 		Display.getDefault().asyncExec(new Runnable() {
 			public void run() {

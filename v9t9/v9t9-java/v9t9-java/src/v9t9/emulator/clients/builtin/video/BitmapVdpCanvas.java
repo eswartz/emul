@@ -15,10 +15,6 @@ public abstract class BitmapVdpCanvas extends VdpCanvas {
 		super();
 	}
 
-	public BitmapVdpCanvas(int extraSpace) {
-		super(extraSpace);
-	}
-
 	/**
 	 * Draw eight pixels in a row, where pixels corresponding to an "on"
 	 * bit in "mem" are painted with the "fg" color, otherwise with the "bg" color.

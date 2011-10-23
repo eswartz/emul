@@ -608,7 +608,7 @@ public class ImageImport implements IBitmapPixelAccess {
 			xoffs = (64 - img.getWidth()) / 2;
 			yoffs = (48 - img.getHeight()) / 2;
 		} else {
-			xoffs = (canvas.getVisibleWidth() - img.getWidth() + canvas.getXOffset() + 0*canvas.getExtraSpace()) / 2;
+			xoffs = (canvas.getVisibleWidth() - img.getWidth() + canvas.getXOffset()) / 2;
 			yoffs = (canvas.getVisibleHeight() - img.getHeight() + canvas.getYOffset()) / 2;
 		}
 	

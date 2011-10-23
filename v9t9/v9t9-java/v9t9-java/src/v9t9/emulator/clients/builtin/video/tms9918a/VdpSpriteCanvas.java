@@ -5,8 +5,10 @@ package v9t9.emulator.clients.builtin.video.tms9918a;
 
 import java.util.Arrays;
 
+import v9t9.emulator.clients.builtin.video.BaseVdpCanvas;
+import v9t9.emulator.clients.builtin.video.ICanvas;
+import v9t9.emulator.clients.builtin.video.ISpriteCanvas;
 import v9t9.emulator.clients.builtin.video.SpriteBase;
-import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VdpSprite;
 import v9t9.engine.memory.ByteMemoryAccess;
 
@@ -28,7 +30,7 @@ public class VdpSpriteCanvas {
 	private boolean isMagnified;
 
 
-	public VdpSpriteCanvas(VdpCanvas vdpCanvas, int maxPerLine) {
+	public VdpSpriteCanvas(BaseVdpCanvas vdpCanvas, int maxPerLine) {
 		this.maxPerLine = maxPerLine;
 		this.oldspritebitmap = new int[vdpCanvas.getBlockCount()];
 		this.spritebitmap = new int[vdpCanvas.getBlockCount()];
@@ -55,7 +57,7 @@ public class VdpSpriteCanvas {
 	 * @param forceRedraw if true, force full redraw
 	 * @return maximal sprite, if detected
 	 */
-	public int updateSpriteCoverage(VdpCanvas screenCanvas,  byte[] screenChanges, boolean forceRedraw) {
+	public int updateSpriteCoverage(ICanvas screenCanvas,  byte[] screenChanges, boolean forceRedraw) {
 		int maximal = -1;
 		
 		if (screenChanges.length < spritebitmap.length)
@@ -100,7 +102,7 @@ public class VdpSpriteCanvas {
 	 * block, but this won't dirty more than necessary
 	 * @param screenCanvas the screen's canvas, used for resolution matching
 	 */
-	protected void updateSpriteBitmapForScreenChanges(VdpCanvas screenCanvas,
+	protected void updateSpriteBitmapForScreenChanges(ICanvas screenCanvas,
 			byte[] screenChanges) {
 		int blockStride = screenCanvas.getVisibleWidth() / 8;
 		// 512-wide modes draw double-width sprites
@@ -243,7 +245,7 @@ public class VdpSpriteCanvas {
 	 * @param screenCanvas the screen's canvas, used for resolution matching
 	 * @param screenChanges
 	 */
-	protected void updateScreenBitmapForSpriteChanges(VdpCanvas screenCanvas,
+	protected void updateScreenBitmapForSpriteChanges(ICanvas screenCanvas,
 			byte[] screenChanges) {
 		int blockStride = screenCanvas.getVisibleWidth() / 8;
 		// 512-wide modes draw double-width sprites
@@ -270,7 +272,7 @@ public class VdpSpriteCanvas {
 	 * Draw sprites, after any modified screen blocks have been restored.
 	 * @param canvas the canvas to modify
 	 */
-	public void drawSprites(VdpCanvas canvas) {
+	public void drawSprites(ISpriteCanvas canvas) {
 		for (int n = sprites.length; --n >= 0; ) {
 			VdpSprite sprite = sprites[n];
 			if (sprite.isBitmapDirty() && !sprite.isDeleted() && sprrowbitmaps[n] != 0) {
@@ -290,7 +292,7 @@ public class VdpSpriteCanvas {
 	 * @param pattern the sprite's pattern
 	 * @param color the color for "on" bits on the sprite; will not be 0
 	 */
-	protected void drawUnmagnifiedSpriteChar(VdpCanvas canvas, int y, int x, int shift, byte color, 
+	protected void drawUnmagnifiedSpriteChar(ISpriteCanvas canvas, int y, int x, int shift, byte color, 
 			int rowbitmap, ByteMemoryAccess pattern) {
 		if (x + shift + 8 <= 0)
 			return;
@@ -326,7 +328,7 @@ public class VdpSpriteCanvas {
 	 * @param pattern the sprite's pattern
 	 * @param color the color for "on" bits on the sprite; will not be 0
 	 */
-	protected void drawMagnifiedSpriteChar(VdpCanvas canvas, int y, int x, int shift, byte color, 
+	protected void drawMagnifiedSpriteChar(ISpriteCanvas canvas, int y, int x, int shift, byte color, 
 			int rowbitmap, ByteMemoryAccess pattern) {
 		if (x + shift + 16 <= 0)
 			return;
@@ -355,7 +357,7 @@ public class VdpSpriteCanvas {
 	/** y,x */
 	protected static final int[] charshifts = { 0, 0, 8, 0, 0, 8, 8, 8 };
 	
-	protected void drawSprite(VdpCanvas canvas, VdpSprite sprite, int sprrowbitmap) {
+	protected void drawSprite(ISpriteCanvas canvas, VdpSprite sprite, int sprrowbitmap) {
 		// color 0 is transparent and always invisible
 		if (sprite.getColor() == 0)
 			return;

@@ -8,8 +8,8 @@ public abstract class ImageDataCanvas extends BitmapVdpCanvas {
 
 	protected ImageData imageData;
 
-	public ImageDataCanvas(int extraSpace) {
-		super(extraSpace);
+	public ImageDataCanvas() {
+		super();
 	}
 
 	public ImageData getImageData() {
@@ -31,7 +31,7 @@ public abstract class ImageDataCanvas extends BitmapVdpCanvas {
 	abstract protected ImageData createImageData();
 
 	public int getDisplayAdjustOffset() {
-		int displayAdjust = getYOffset() * getLineStride() + (getXOffset() + this.extraSpace / 2) * getPixelStride();
+		int displayAdjust = getYOffset() * getLineStride() + getXOffset() * getPixelStride();
 		return displayAdjust;
 	}
 
