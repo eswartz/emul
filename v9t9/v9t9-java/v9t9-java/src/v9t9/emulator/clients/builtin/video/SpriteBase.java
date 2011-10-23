@@ -23,7 +23,8 @@ public abstract class SpriteBase {
 	 */
 	@Override
 	public String toString() {
-		return "Sprite @" + x + "," + y + " sz " + sizeX + "x" + sizeY;
+		return deleted ? "<<Sprite>>" :
+			"Sprite @" + x + "," + y + " sz " + sizeX + "x" + sizeY;
 	}
 	public void move(int x, int y) {
 		if (x != this.x || y != this.y) {

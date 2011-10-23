@@ -189,7 +189,7 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 				}
 				*/
 				sprite.setDeleted(color == 0);
-				sprite.move(x, y + 1);
+				sprite.move(x, (y + 1) & 0xff);
 				sprite.setColor(color);
 				sprite.setShift(shift);
 				int patOffs = sprpatbase + (ch << 3);

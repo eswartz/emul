@@ -294,14 +294,14 @@ public class VdpSpriteCanvas {
 	 */
 	protected void drawUnmagnifiedSpriteChar(ISpriteCanvas canvas, int y, int x, int shift, byte color, 
 			int rowbitmap, ByteMemoryAccess pattern) {
-		if (x + shift + 8 <= 0)
+		if (x + shift + 8 <= 0 || x + shift >= 256)
 			return;
-		
+
 		byte bitmask = -1;
 		if (x + shift < 0) {
-			bitmask &= 0xff >> (x + shift);
+			bitmask &= 0xff >> -(x + shift);
 		} else if (x + shift + 8 > 256) {
-			bitmask &= 0xff << ((x + shift + 8) - 256);
+			bitmask &= 0xffff << ((x + shift + 8) - 256);
 		}
 		
 		x += shift;
@@ -330,17 +330,17 @@ public class VdpSpriteCanvas {
 	 */
 	protected void drawMagnifiedSpriteChar(ISpriteCanvas canvas, int y, int x, int shift, byte color, 
 			int rowbitmap, ByteMemoryAccess pattern) {
-		if (x + shift + 16 <= 0)
+		if (x + shift + 16 <= 0 || x + shift >= 256)
 			return;
 
 		short bitmask = -1;
 		if (x + shift < 0) {
-			bitmask &= 0xffff >> (x + shift);
+			bitmask &= 0xffff >> -(x + shift);
 		} else if (x + shift + 16 > 256) {
 			bitmask &= 0xffff << ((x + shift + 16) - 256);
 		}
 		
-		x +=  shift;
+		x += shift;
 		for (int yy = 0; yy < 16; yy++) {
 			if (y >= canvas.getHeight())
 				continue;

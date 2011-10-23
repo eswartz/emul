@@ -14,6 +14,17 @@ public class VdpSprite extends SpriteBase {
 	public VdpSprite() {
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.video.SpriteBase#toString()
+	 */
+	@Override
+	public String toString() {
+		if (color == 0 && colorStripe == null)
+			return "VdpSprite";
+		else
+			return super.toString();
+	}
+	
 	public byte getColor() {
 		return color;
 	}
