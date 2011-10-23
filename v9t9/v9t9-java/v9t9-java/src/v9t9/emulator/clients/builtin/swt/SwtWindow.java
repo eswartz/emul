@@ -6,7 +6,9 @@ package v9t9.emulator.clients.builtin.swt;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TreeMap;
@@ -161,17 +163,20 @@ public class SwtWindow extends BaseEmulatorWindow {
 		
 		shell = new Shell(display, SWT.SHELL_TRIM | SWT.RESIZE);
 		shell.setText("V9t9 [" + machine.getModel().getIdentifier() + "]");
-		
-		URL iconFile = Emulator.getDataURL("icons/v9t9.png");
-		if (iconFile != null) {
-			Image icon;
-			try {
-				icon = new Image(shell.getDisplay(), iconFile.openStream());
-				shell.setImage(icon);
-			} catch (IOException e1) {
-				e1.printStackTrace();
+
+		List<Image> icons = new ArrayList<Image>();
+		for (int siz : new int[] { 256, 128, 64, 32 }) {
+			URL iconFile = Emulator.getDataURL("icons/v9t9_" + siz + ".png");
+			if (iconFile != null) {
+				try {
+					Image icon = new Image(shell.getDisplay(), iconFile.openStream());
+					icons.add(icon);
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
 			}
 		}
+		shell.setImages(icons.toArray(new Image[icons.size()]));
 
 		TreeMap<Integer, Image> mainIcons = new TreeMap<Integer, Image>();
 		for (int size : new int[] { 16, 32, 64, 128 }) {
