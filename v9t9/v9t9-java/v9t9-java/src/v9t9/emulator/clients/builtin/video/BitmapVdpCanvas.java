@@ -111,9 +111,11 @@ public abstract class BitmapVdpCanvas extends VdpCanvas {
 	}
 
 	public void clearToEvenOddClearColors() {
+		byte cc = (byte) getColorMgr().getClearColor();
+		byte cc1 = (byte) getColorMgr().getClearColor1();
 		for (int r = 0; r < height; r++) {
 			for (int c = 0; c < width; c += 8) {
-				drawEightPixels(getBitmapOffset(c, r), (byte)0xaa, (byte)clearColor, (byte)clearColor1);
+				drawEightPixels(getBitmapOffset(c, r), (byte)0xaa, cc, cc1);
 			}
 		}
 	}

@@ -7,6 +7,7 @@ import v9t9.emulator.clients.builtin.video.ICanvas;
 import v9t9.emulator.clients.builtin.video.ISpriteCanvas;
 import v9t9.emulator.clients.builtin.video.Sprite2Canvas;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
+import v9t9.emulator.clients.builtin.video.VdpColorManager;
 import v9t9.emulator.clients.builtin.video.VdpSprite;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpSpriteCanvas;
 import v9t9.engine.memory.ByteMemoryAccess;
@@ -105,6 +106,8 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 	private void drawUnmagnifiedSpriteChar(ISpriteCanvas canvas, int y, int x, int rowbitmap, ByteMemoryAccess pattern,
 			ByteMemoryAccess attr, boolean doubleWidth) {
 		
+		VdpColorManager colorMgr = canvas.getColorMgr();
+		
 		int pixy = 0;
 		for (int yy = 0; yy < 8; yy++) {
 			if (y >= canvas.getHeight())
@@ -113,7 +116,7 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 			byte attrb = attr.memory[attr.offset + yy];
 			int shift = EARLY && (attrb & 0x80) != 0 ? -32 : 0 ;
 			byte color = (byte) (attrb & 0xf);
-			if (color == 0 && !canvas.isClearFromPalette())
+			if (color == 0 && !colorMgr.isClearFromPalette())
 				continue;
 			
 			byte bitmask = -1;
@@ -162,6 +165,8 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 	private void drawMagnifiedSpriteChar(ISpriteCanvas canvas, int y, int x, int rowbitmap, ByteMemoryAccess pattern,
 			ByteMemoryAccess attr, boolean doubleWidth) {
 		
+		VdpColorManager colorMgr = canvas.getColorMgr();
+		
 		int pixy = 0;
 		for (int yy = 0; yy < 8; yy++) {
 			if (y >= canvas.getHeight())
@@ -170,7 +175,7 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 			byte attrb = attr.memory[attr.offset + yy];
 			int shift = EARLY && (attrb & 0x80) != 0 ? -32 : 0;
 			byte color = (byte) (attrb & 0xf);
-			if (color == 0 && !canvas.isClearFromPalette())
+			if (color == 0 && !colorMgr.isClearFromPalette())
 				continue;
 			
 			short bitmask = -1;

@@ -9,6 +9,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import v9t9.emulator.clients.builtin.video.BaseVdpCanvas;
+import v9t9.emulator.clients.builtin.video.VdpColorManager;
 import v9t9.emulator.clients.builtin.video.v9938.VdpV9938;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.EnhancedCompatibleMachineModel;
@@ -215,6 +216,7 @@ public class TestV9938 {
 		byte[] stock;
 		byte[] rgb;
 		BaseVdpCanvas canvas = v9938.getCanvas();
+		VdpColorManager colorMgr = canvas.getColorMgr();
 		
 		vwreg(16, 8);
 		mmio.write(0x8c04, (byte) 0x04);
@@ -222,13 +224,13 @@ public class TestV9938 {
 		mmio.write(0x8c04, (byte) 0x5a);	// A -> 2
 		mmio.write(0x8c04, (byte) 0xf);
 		
-		rgb = canvas.getRGB(1);
-		stock = canvas.getStockRGB(1);
+		rgb = colorMgr.getRGB(1);
+		stock = colorMgr.getStockRGB(1);
 		assertEquals(stock[0], rgb[0]);
 		assertEquals(stock[1], rgb[1]);
 		assertEquals(stock[2], rgb[2]);
 		
-		rgb = canvas.getRGB(8);
+		rgb = colorMgr.getRGB(8);
 		assertEquals((byte) 0x00, rgb[0]);
 		assertEquals((byte) 0xff, rgb[1]);
 		assertEquals((byte) 0x80, rgb[2]);
@@ -259,7 +261,7 @@ public class TestV9938 {
 		vwreg(8, v9938.readVdpReg(8) & ~VdpV9938.R8_BW);
 		
 		rgb = v9938.getCanvas().getRGB(1);
-		stock = v9938.getCanvas().getStockRGB(1);
+		stock = colorMgr.getStockRGB(1);
 		assertEquals(stock[0], rgb[0]);
 		assertEquals(stock[1], rgb[1]);
 		assertEquals(stock[2], rgb[2]);

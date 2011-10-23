@@ -21,5 +21,4 @@ public interface ISpriteCanvas extends ICanvas {
 	 * @param bitmask mask of rows visible from top-down 
 	 * @param isLogicalOr */
 	void drawEightDoubleMagnifiedSpritePixels(int x, int y, byte mem, byte fg, short bitmask, boolean isLogicalOr);
-
 }

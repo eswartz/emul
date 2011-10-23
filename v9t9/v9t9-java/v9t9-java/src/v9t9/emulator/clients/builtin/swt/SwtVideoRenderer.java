@@ -322,7 +322,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 		if (color != null)
 			color.dispose();
 		if (rgb == null)
-			rgb = vdpCanvas.getRGB(0);
+			rgb = vdpCanvas.getColorMgr().getRGB(0);
 		
 		return new Color(shell.getDisplay(), rgb[0] & 0xff, rgb[1] & 0xff, rgb[2] & 0xff);
 	}

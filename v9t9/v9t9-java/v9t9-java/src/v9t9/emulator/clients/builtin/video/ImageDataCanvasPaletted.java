@@ -41,7 +41,7 @@ public class ImageDataCanvasPaletted extends ImageDataCanvas {
 	 */
 	@Override
 	public void clear(byte[] rgb) {
-		Arrays.fill(imageData.data, 0, imageData.data.length, (byte) clearColor);
+		Arrays.fill(imageData.data, 0, imageData.data.length, (byte) getColorMgr().getClearColor());
 	}
 
 	/* (non-Javadoc)
@@ -152,6 +152,7 @@ public class ImageDataCanvasPaletted extends ImageDataCanvas {
 			ByteMemoryAccess access, int rowstride) {
 		int lineStride = getLineStride();
 		int offs = getBitmapOffset(x, y);
+
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 2; j++) {
 				byte mem;
@@ -161,16 +162,16 @@ public class ImageDataCanvasPaletted extends ImageDataCanvas {
 				mem = access.memory[access.offset + j];
 
 				pix = (byte) ((mem >> 6) & 0x3);
-				imageData.data[offs] = pix;
+				imageData.data[offs] = fourColorMap[0][pix];
 				
 				pix = (byte) ((mem >> 4) & 0x3);
-				imageData.data[offs + 1] = pix;
+				imageData.data[offs + 1] = fourColorMap[1][pix];
 				
 				pix = (byte) ((mem >> 2) & 0x3);
-				imageData.data[offs + 2] = pix;
+				imageData.data[offs + 2] = fourColorMap[0][pix];
 				
 				pix = (byte) (mem & 0x3);
-				imageData.data[offs + 3] = pix;
+				imageData.data[offs + 3] = fourColorMap[1][pix];
 				
 				offs += 4;
 			}

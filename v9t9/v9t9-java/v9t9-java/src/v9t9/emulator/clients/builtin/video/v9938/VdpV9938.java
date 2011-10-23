@@ -8,6 +8,7 @@ import org.ejs.coffee.core.settings.ISettingSection;
 import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
+import v9t9.emulator.clients.builtin.video.VdpColorManager;
 import v9t9.emulator.clients.builtin.video.VdpModeInfo;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.common.Machine;
@@ -144,22 +145,23 @@ public class VdpV9938 extends VdpTMS9918A {
 	}
 	
 	public void resetPalette() {
-		vdpCanvas.setGRB333(0, 0, 0, 0); 
-		vdpCanvas.setGRB333(1, 0, 0, 0); 
-		vdpCanvas.setGRB333(2, 6, 1, 1); 
-		vdpCanvas.setGRB333(3, 7, 3, 3); 
-		vdpCanvas.setGRB333(4, 1, 1, 7); 
-		vdpCanvas.setGRB333(5, 3, 2, 7); 
-		vdpCanvas.setGRB333(6, 1, 5, 1); 
-		vdpCanvas.setGRB333(7, 6, 2, 7); 
-		vdpCanvas.setGRB333(8, 1, 7, 1); 
-		vdpCanvas.setGRB333(9, 3, 7, 3); 
-		vdpCanvas.setGRB333(10, 6, 6, 1); 
-		vdpCanvas.setGRB333(11, 6, 6, 4); 
-		vdpCanvas.setGRB333(12, 4, 4, 1); 
-		vdpCanvas.setGRB333(13, 2, 6, 5); 
-		vdpCanvas.setGRB333(14, 5, 5, 5); 
-		vdpCanvas.setGRB333(15, 7, 7, 7);
+		VdpColorManager cm = vdpCanvas.getColorMgr();
+		cm.setGRB333(0, 0, 0, 0); 
+		cm.setGRB333(1, 0, 0, 0); 
+		cm.setGRB333(2, 6, 1, 1); 
+		cm.setGRB333(3, 7, 3, 3); 
+		cm.setGRB333(4, 1, 1, 7); 
+		cm.setGRB333(5, 3, 2, 7); 
+		cm.setGRB333(6, 1, 5, 1); 
+		cm.setGRB333(7, 6, 2, 7); 
+		cm.setGRB333(8, 1, 7, 1); 
+		cm.setGRB333(9, 3, 7, 3); 
+		cm.setGRB333(10, 6, 6, 1); 
+		cm.setGRB333(11, 6, 6, 4); 
+		cm.setGRB333(12, 4, 4, 1); 
+		cm.setGRB333(13, 2, 6, 5); 
+		cm.setGRB333(14, 5, 5, 5); 
+		cm.setGRB333(15, 7, 7, 7);
 		
 		// color burst regs(pg 149)
 		vdpregs[20] = 0;
@@ -315,7 +317,7 @@ public class VdpV9938 extends VdpTMS9918A {
 				redraw |= REDRAW_MODE;
 			}
 			if (CHANGED(old, val, R8_BW)) {
-				vdpCanvas.setGreyscale((val & R8_BW) != 0);
+				vdpCanvas.getColorMgr().setGreyscale((val & R8_BW) != 0);
 				redraw |= REDRAW_PALETTE;
 			}
 			if (CHANGED(old, val, R8_SPD)) {
@@ -323,7 +325,7 @@ public class VdpV9938 extends VdpTMS9918A {
 				redraw |= REDRAW_SPRITES;
 			}
 			if (CHANGED(old, val, R8_TP)) {
-				vdpCanvas.setClearFromPalette((val & R8_TP) != 0);
+				vdpCanvas.getColorMgr().setClearFromPalette((val & R8_TP) != 0);
 				redraw |= REDRAW_PALETTE + REDRAW_SPRITES;
 			}
 			break;
@@ -486,7 +488,7 @@ public class VdpV9938 extends VdpTMS9918A {
 			int b = palettelatch & 0x7;
 			int g = val & 0x7;
 			//System.out.println("palette " + paletteidx + ": " + g +"|"+ r + "|"+ b);
-			vdpCanvas.setGRB333(vdpregs[16] & 0xf, g, r, b);
+			vdpCanvas.getColorMgr().setGRB333(vdpregs[16] & 0xf, g, r, b);
 			dirtyAll();
 			
 			vdpregs[16] = (byte) ((vdpregs[16]+1)&0xf);
@@ -586,13 +588,13 @@ public class VdpV9938 extends VdpTMS9918A {
 	protected void setupBackdrop() {
 		if (modeNumber == MODE_GRAPHICS5) {
 			// even-odd tiling function
-			vdpCanvas.setClearColor((vdpbg >> 2) & 0x3);
-			vdpCanvas.setClearColor1((vdpbg) & 0x3);
+			vdpCanvas.getColorMgr().setClearColor((vdpbg >> 2) & 0x3);
+			vdpCanvas.getColorMgr().setClearColor1((vdpbg) & 0x3);
 			vdpCanvas.clearToEvenOddClearColors();
 		} else if (modeNumber == MODE_GRAPHICS7) {
 			// an GRB 332 value is here
 			byte[] rgb = { 0, 0, 0 };
-			vdpCanvas.getGRB332(rgb, vdpregs[7]);
+			vdpCanvas.getColorMgr().getGRB332(rgb, vdpregs[7]);
 			vdpCanvas.clear(rgb);
 		} else {
 			super.setupBackdrop();

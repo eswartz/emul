@@ -34,22 +34,20 @@ public abstract class VdpCanvas extends BaseVdpCanvas implements ISpriteCanvas {
 	protected Format format;
 
 	boolean isInterlacedEvenOdd;
+	private int xoffs;
+	private int yoffs;
 	
+	protected byte[] colorMap;
+	protected byte[] spriteColorMap;
+	protected byte[][] fourColorMap;
+
 	public VdpCanvas() {
-		
-    	/*
-    	for (int i = 16;  i < 256; i++) {
-    		setRGB(i, new byte[] { 0, 0, 0 });
-    	}*/
-    	
     	setSize(256, 192);
     }
 
 	public void setFormat(Format format) {
 		this.format = format;
-		paletteMappingDirty = true;
-		useAltSpritePalette = format == Format.COLOR256_1x1;
-		setGreyscale(isGreyscale());	// reset sprite palette
+		getColorMgr().useAltSpritePalette(format == Format.COLOR256_1x1);
 	}
 	public Format getFormat() {
 		return format;
@@ -208,5 +206,58 @@ public abstract class VdpCanvas extends BaseVdpCanvas implements ISpriteCanvas {
 
 	public boolean isInterlacedEvenOdd() {
 		return isInterlacedEvenOdd;
+	}
+	
+
+	/**
+	 * Set adjustment offset 
+	 * @param i
+	 * @param j
+	 */
+	public void setOffset(int x, int y) {
+		xoffs = x;
+		yoffs = y;
+	}
+
+	public int getXOffset() { 
+		return xoffs;
+	}
+
+	public int getYOffset() {
+		return yoffs;
+	}
+
+	public byte[] getRGB(int idx) {
+		return getColorMgr().getRGB(idx);
+	}
+
+	/**
+	 * 
+	 */
+	public void syncColors() {
+		if (colorMap == null) {
+			colorMap = new byte[16];
+			spriteColorMap = new byte[16];
+			fourColorMap = new byte[2][];
+			fourColorMap[0] = new byte[16];
+			fourColorMap[1] = new byte[16];
+		}
+		VdpColorManager cc = getColorMgr();
+		if (cc.isClearFromPalette()) {
+			colorMap[0] = 0;
+			spriteColorMap[0] = 0;
+		} else {
+			colorMap[0] = (byte) cc.getClearColor();
+			spriteColorMap[0] = (byte) cc.getClearColor();
+		}
+		fourColorMap[0][0] = (byte) cc.getFourColorModeColor(0, true);
+		fourColorMap[1][0] = (byte) cc.getFourColorModeColor(0, false);
+			
+		for (int i = 1; i < 16; i++) {
+			colorMap[i] = (byte) i;
+			spriteColorMap[i] = (byte) i;
+			fourColorMap[0][i] = (byte) cc.getFourColorModeColor(i, true);
+			fourColorMap[1][i] = (byte) cc.getFourColorModeColor(i, false);
+		}
 	}
 }

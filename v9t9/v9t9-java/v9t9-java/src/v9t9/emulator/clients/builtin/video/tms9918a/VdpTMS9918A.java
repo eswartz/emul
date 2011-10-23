@@ -631,6 +631,8 @@ public class VdpTMS9918A implements VdpHandler {
 			
 			// don't let video rendering happen in middle of updating
 			synchronized (vdpCanvas) {
+				vdpCanvas.syncColors();
+				
 				vdpModeRedrawHandler.propagateTouches();
 				
 				if (vdpChanges.fullRedraw) {

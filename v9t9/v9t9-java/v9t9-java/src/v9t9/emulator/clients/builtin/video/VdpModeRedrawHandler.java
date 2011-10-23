@@ -57,5 +57,4 @@ public interface VdpModeRedrawHandler {
 	 * @param access 
 	 */
 	void importImageData(IBitmapPixelAccess access);
-
 }

@@ -25,6 +25,7 @@ import v9t9.emulator.clients.builtin.video.ColorMapUtils;
 import v9t9.emulator.clients.builtin.video.IBitmapPixelAccess;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
+import v9t9.emulator.clients.builtin.video.VdpColorManager;
 import v9t9.emulator.clients.builtin.video.VdpCanvas.Format;
 import v9t9.emulator.clients.builtin.video.image.ColorOctree.LeafNode;
 import v9t9.emulator.clients.builtin.video.tms9918a.BitmapModeRedrawHandler;
@@ -49,6 +50,7 @@ public class ImageImport implements IBitmapPixelAccess {
 	protected TreeMap<Integer, Integer> paletteToIndex;
 	
 	private final ImageDataCanvas canvas;
+	private final VdpColorManager colorMgr;
 	private boolean paletteMappingDirty;
 	private final VdpHandler vdp;
 	private int firstColor;
@@ -120,15 +122,16 @@ public class ImageImport implements IBitmapPixelAccess {
 	
 	public ImageImport(ImageDataCanvas canvas, VdpHandler vdp) {
 		this.canvas = canvas;
+		this.colorMgr = canvas.getColorMgr();
 		this.vdp = vdp;
 		this.imageData = canvas.getImageData();
 		this.format = canvas.getFormat();
-		this.thePalette = canvas.getColorPalette();
+		this.thePalette = colorMgr.getColorPalette();
 		
 		isMono = (vdp.getVdpModeRedrawHandler() instanceof BitmapModeRedrawHandler &&
 				((BitmapModeRedrawHandler) vdp.getVdpModeRedrawHandler()).isMono());
 		
-		isGreyScale = canvas.isGreyscale();
+		isGreyScale = colorMgr.isGreyscale();
 		
 		this.rgbs = new int[imageData.width];
 		if (vdp instanceof VdpV9938) {
@@ -146,9 +149,9 @@ public class ImageImport implements IBitmapPixelAccess {
 		} else {
 			canSetPalette = false;
 		}
-		firstColor = (canSetPalette && canvas.isClearFromPalette() ? 0 : 1);
+		firstColor = (canSetPalette && colorMgr.isClearFromPalette() ? 0 : 1);
 		
-		for (byte[][] palette : VdpCanvas.allPalettes()) {
+		for (byte[][] palette : VdpColorManager.allPalettes()) {
 			if (palette.length == thePalette.length) {
 				boolean match = true;
 				for (int i = 0; i < palette.length; i++) {
@@ -386,7 +389,7 @@ public class ImageImport implements IBitmapPixelAccess {
 		List<byte[][]> palettes = new ArrayList<byte[][]>();
 		palettes.add(thePalette);
 		if (isStandardPalette)
-			palettes.addAll(Arrays.asList(VdpCanvas.palettes()));
+			palettes.addAll(Arrays.asList(VdpColorManager.palettes()));
 		
 		for (byte[][] palette : palettes) {
 			FixedPaletteMapColor paletteMapper = new FixedPaletteMapColor(
@@ -503,7 +506,7 @@ public class ImageImport implements IBitmapPixelAccess {
 					+ Integer.toHexString(repr[1]) + "/" 
 					+ Integer.toHexString(repr[2]));
 			
-			canvas.setGRB333(index, Math.min(255, (repr[1] * 0xff / 0xdf)) >> 5, 
+			colorMgr.setGRB333(index, Math.min(255, (repr[1] * 0xff / 0xdf)) >> 5, 
 				Math.min(255, (repr[0] * 0xff / 0xdf)) >> 5, 
 				Math.min(255, (repr[2] * 0xff / 0xdf)) >> 5);
 			
@@ -545,7 +548,7 @@ public class ImageImport implements IBitmapPixelAccess {
 					+ Integer.toHexString(repr[1]) + "/" 
 					+ Integer.toHexString(repr[2]));
 			
-			canvas.setGRB333(index, Math.min(255, (repr[1] * 0xff / 0xe0)) >> 5, 
+			colorMgr.setGRB333(index, Math.min(255, (repr[1] * 0xff / 0xe0)) >> 5, 
 				Math.min(255, (repr[0] * 0xff / 0xe0)) >> 5, 
 				Math.min(255, (repr[2] * 0xff / 0xe0)) >> 5);
 			
@@ -591,7 +594,7 @@ public class ImageImport implements IBitmapPixelAccess {
 			
 			for (int cidx = firstColor; cidx < colorCount; cidx++) {
 				int c = hist.getColorIndex(cidx);
-				canvas.setGRB333(cidx, c, c, c);
+				colorMgr.setGRB333(cidx, c, c, c);
 			}
 			
 			break;
