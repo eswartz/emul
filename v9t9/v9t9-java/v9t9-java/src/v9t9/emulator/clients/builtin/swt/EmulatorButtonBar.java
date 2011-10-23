@@ -14,6 +14,7 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
@@ -56,14 +57,21 @@ public class EmulatorButtonBar  {
 	 * @param smoothResize
 	 */
 	public EmulatorButtonBar(SwtWindow window, ImageProvider imageProvider, Composite parent, 
-			final Machine machine, boolean isHorizontal) {
+			final Machine machine, 
+			int[] colors, float midPoint, boolean isHorizontal) {
 		this.swtWindow = window;
 		this.imageProvider = imageProvider;
 		this.machine = machine;
 		
 		buttonBar = new ImageBar(parent, 
-				isHorizontal ? SWT.HORIZONTAL : SWT.VERTICAL, 
+				isHorizontal ? SWT.HORIZONTAL : SWT.VERTICAL,
+				new Gradient(!isHorizontal, colors, new float[] { midPoint, 1 - midPoint }),
 				swtWindow.getFocusRestorer(), true);
+		
+		if (isHorizontal) {
+			GridData gd = ((GridData) buttonBar.getLayoutData());
+			gd.verticalSpan = 2;
+		}
 		
 		buttonBar.addControlListener(new ControlAdapter() {
 			@Override

@@ -33,19 +33,16 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
-import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Decorations;
 import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Layout;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.ToolTip;
 import org.ejs.coffee.core.properties.IProperty;
 import org.ejs.coffee.core.properties.IPropertyListener;
 import org.ejs.coffee.core.utils.PrefUtils;
@@ -53,7 +50,6 @@ import org.ejs.coffee.core.utils.PrefUtils;
 import v9t9.emulator.Emulator;
 import v9t9.emulator.clients.builtin.BaseEmulatorWindow;
 import v9t9.emulator.clients.builtin.sound.JavaSoundHandler;
-import v9t9.emulator.common.BaseEventNotifier;
 import v9t9.emulator.common.EmulatorSettings;
 import v9t9.emulator.common.IEventNotifier;
 import v9t9.emulator.common.IEventNotifier.Level;
@@ -77,7 +73,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 	private final IEventNotifier eventNotifier;
 	private Composite videoRendererComposite;
 	private MouseJoystickHandler mouseJoystickHandler;
-	private EmulatorButtonBar buttons;
+	EmulatorButtonBar buttons;
 	private EmulatorStatusBar statusBar;
 	protected SwtDragDropHandler dragDropHandler;
 	private IPropertyListener fullScreenListener;
@@ -227,25 +223,19 @@ public class SwtWindow extends BaseEmulatorWindow {
 		final boolean isHorizontal = false;
 		
 		Composite mainComposite = shell;
-		/*GridLayoutFactory.fillDefaults().margins(0, 0).spacing(0, 0).
-			numColumns(isHorizontal ? 1 : 3). 
-			applyTo(mainComposite);*/
 		
 		mainComposite.setLayout(new EmulatorWindowLayout(!isHorizontal));
 		
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(mainComposite);
 
-		statusBar = new EmulatorStatusBar(this, mainComposite, machine, isHorizontal);
-
-		if (isHorizontal) {
-			GridData gd = ((GridData) statusBar.getImageBar().getLayoutData());
-			gd.verticalSpan = 2;
-		}
+		statusBar = new EmulatorStatusBar(this, mainComposite, machine, 
+				new int[] { SWT.COLOR_WIDGET_FOREGROUND, SWT.COLOR_WIDGET_NORMAL_SHADOW, SWT.COLOR_WIDGET_DARK_SHADOW },
+				0.25f,
+				isHorizontal);
 		
 		videoRendererComposite = new Composite(mainComposite, SWT.NONE);
 		videoRendererComposite.setBackground(videoRendererComposite.getDisplay().getSystemColor(SWT.COLOR_WIDGET_DARK_SHADOW));
 		GridLayoutFactory.fillDefaults().margins(0, 0).applyTo(videoRendererComposite);
-		//GridDataFactory.fillDefaults().grab(true, true).indent(0, 0).span(1, 1).applyTo(videoRendererComposite);
 
 		focusRestorer = new IFocusRestorer() {
 			public void restoreFocus() {
@@ -254,78 +244,12 @@ public class SwtWindow extends BaseEmulatorWindow {
 		};
 		
 		
-		buttons = new EmulatorButtonBar(this, imageProvider, mainComposite, machine, isHorizontal);
+		buttons = new EmulatorButtonBar(this, imageProvider, mainComposite, machine,
+				new int[] { SWT.COLOR_WIDGET_DARK_SHADOW, SWT.COLOR_WIDGET_NORMAL_SHADOW, SWT.COLOR_WIDGET_FOREGROUND },
+				0.75f,
+				isHorizontal);
 		
-		if (isHorizontal) {
-			GridData gd = ((GridData) buttons.getButtonBar().getLayoutData());
-			gd.verticalSpan = 2;
-		}
-		
-		
-		eventNotifier = new BaseEventNotifier() {
-
-			ToolTip lastTooltip = null;
-			
-			{
-				startConsumerThread();
-			}
-
-			/* (non-Javadoc)
-			 * @see v9t9.emulator.BaseEventNotifier#canConsume()
-			 */
-			@Override
-			protected boolean canConsume() {
-				final boolean[] consume = { true };
-				Display.getDefault().syncExec(new Runnable() {
-					public void run() {
-						NotifyEvent event = peekNextEvent();
-						if (event != null && event.isPriority && lastTooltip != null && !lastTooltip.isDisposed()) {
-							lastTooltip.dispose();
-							lastTooltip = null;
-						}
-						consume[0] = lastTooltip == null || lastTooltip.isDisposed() || !lastTooltip.isVisible();
-					}
-				});
-				return consume[0];
-			}
-			
-			/* (non-Javadoc)
-			 * @see v9t9.emulator.BaseEventNotifier#consumeEvent(v9t9.emulator.clients.builtin.IEventNotifier.NotifyEvent)
-			 */
-			@Override
-			protected void consumeEvent(final NotifyEvent event) {
-				Display.getDefault().syncExec(new Runnable() {
-					public void run() {
-						if (lastTooltip != null)
-							lastTooltip.dispose();
-						
-						int status = 0;
-						if (event.level == Level.INFO)
-							status = SWT.ICON_INFORMATION;
-						else if (event.level == Level.WARNING)
-							status = SWT.ICON_WARNING;
-						else
-							status = SWT.ICON_ERROR;
-						
-						ToolTip tip = new ToolTip(shell, SWT.BALLOON | status);
-						tip.setText(event.message);
-						tip.setAutoHide(true);
-						if (event.context instanceof Event) {
-							Event e = (Event)event.context;
-							Control b = (Control) e.widget;
-							tip.setLocation(b.toDisplay(e.x, e.y + b.getSize().y));
-						} else {
-							Point pt = buttons.getTooltipLocation();
-							tip.setLocation(pt);
-						}
-						tip.setVisible(true);
-						
-						lastTooltip = tip;
-					}
-				});
-			}
-			
-		};
+		eventNotifier = new GuiEventNotifier(this);
 
 		EmulatorSettings.INSTANCE.register(JavaSoundHandler.settingPlaySound);
 	}

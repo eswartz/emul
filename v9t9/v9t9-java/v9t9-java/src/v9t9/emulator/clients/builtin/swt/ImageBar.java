@@ -14,7 +14,6 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Layout;
-import org.eclipse.swt.widgets.Widget;
 
 import v9t9.emulator.clients.builtin.swt.ImageIconCanvas.IImageBar;
 
@@ -27,20 +26,30 @@ class ImageBar extends Composite implements IImageBar {
 	private Composite buttonComposite;
 	private final IFocusRestorer focusRestorer;
 	private final boolean smoothResize;
+	private Gradient gradient;
 
 	/**
 	 * Create a button bar with the given orientation.  This must be in a parent with a GridLayout.
 	 * @param parent
 	 * @param style
+	 * @param midPoint 
 	 * @param videoRenderer
 	 */
-	public ImageBar(Composite parent, int style, IFocusRestorer focusRestorer, boolean smoothResize) {
+	public ImageBar(Composite parent, int style,
+			Gradient gradient, IFocusRestorer focusRestorer, boolean smoothResize) {
 		// the bar itself is the full width of the parent
 		super(parent, style & ~(SWT.HORIZONTAL + SWT.VERTICAL) | SWT.NO_RADIO_GROUP | SWT.NO_FOCUS | SWT.NO_BACKGROUND);
 		this.focusRestorer = focusRestorer;
 		this.smoothResize = smoothResize;
 		this.isHorizontal = (style & SWT.HORIZONTAL) != 0;
+
+		//topLeftColor = getDisplay().getSystemColor(colors[0]);
+		//centerColor = getDisplay().getSystemColor(colors[1]);
+		//bottomRightColor = getDisplay().getSystemColor(colors[2]);
+		//this.midPoint = midPoint;
 		
+		this.gradient = gradient;
+
 		//GridLayoutFactory.swtDefaults().margins(0, 0).applyTo(this);
 
 		GridDataFactory.swtDefaults()
@@ -62,7 +71,7 @@ class ImageBar extends Composite implements IImageBar {
 		addPaintListener(new PaintListener() {
 
 			public void paintControl(PaintEvent e) {
-				paintButtonBar(e.gc, e.widget, new Point(0, 0), getSize());
+				paintButtonBar(e.gc, new Point(0, 0), getSize());
 			}
 			
 		});
@@ -193,28 +202,48 @@ class ImageBar extends Composite implements IImageBar {
 		
 	}
 
-	protected void paintButtonBar(GC gc, Widget w, Point offset,  Point size) {
-		gc.setForeground(w.getDisplay().getSystemColor(SWT.COLOR_WHITE));
-		gc.setBackground(w.getDisplay().getSystemColor(SWT.COLOR_GRAY));
+	protected void paintButtonBar(GC gc, Point offset, Point size) {
+		
+		/*
+		gc.setForeground(centerColor);
 		int y = size.y;
 		int x = size.x;
 		if (isHorizontal) {
 			y = getSize().y;
-			gc.fillGradientRectangle(offset.x, offset.y + y / 2, x, y / 2, true);
-			gc.fillGradientRectangle(offset.x, offset.y + y / 2, x, -y / 2, true);
+			gc.setBackground(topLeftColor);
+			gc.fillGradientRectangle(offset.x, offset.y, 
+					x, (int) ((y + 1) * midPoint), true);
+			gc.setBackground(centerColor);
+			gc.setForeground(bottomRightColor);
+			gc.fillGradientRectangle(offset.x, (int) (offset.y + y), 
+					x, (int) ((y + 1) * (midPoint - 1)), true);
 		} else {
 			x = getSize().x;
-			gc.fillGradientRectangle(offset.x + x / 2, offset.y, x, y, false);
-			gc.fillGradientRectangle(offset.x + x / 2, offset.y, -x / 2, y, false);
+			gc.setForeground(topLeftColor);
+			gc.fillGradientRectangle(offset.x, offset.y, 
+					(int) ((x + 1) * midPoint), y, false);
+			gc.setBackground(centerColor);
+			gc.setForeground(bottomRightColor);
+			gc.fillGradientRectangle((int) (offset.x + x ), offset.y, 
+					(int) ((x + 1) * (midPoint - 1)), y, false);
 			
 		}
+		*/
+		int y = size.y;
+		int x = size.x;
+		if (isHorizontal) {
+			y = getSize().y;
+		} else {
+			x = getSize().x;
+		}
+		gradient.draw(gc, offset.x, offset.y, x, y);
 	}
 	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.swt.ImageButton.ButtonParentDrawer#draw(org.eclipse.swt.graphics.GC, v9t9.emulator.clients.builtin.swt.ImageButton, org.eclipse.swt.graphics.Point, org.eclipse.swt.graphics.Point)
 	 */
 	public void drawBackground(GC gc, ImageIconCanvas imageButton, Point offset, Point size) {
-		paintButtonBar(gc, imageButton, offset, size);
+		paintButtonBar(gc, offset, size);
 	}
 
 	/**
