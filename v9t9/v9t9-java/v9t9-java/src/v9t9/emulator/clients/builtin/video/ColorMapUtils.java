@@ -456,4 +456,23 @@ public class ColorMapUtils {
 		}
 		return greyToRgbMap;
 	}
+	
+	public static byte[] mapForRGB333(byte[] rgb) {
+		return new byte[] { (byte) Math.min(255, ((rgb[0] & 0xe0) * 0xff / 0xe0)), 
+				(byte) Math.min(255, ((rgb[1] & 0xe0) * 0xff / 0xe0)), 
+				(byte) Math.min(255, ((rgb[2] & 0xe0) * 0xff / 0xe0)) };
+	}
+	
+	public static int[] mapForRGB333(int[] rgb) {
+		return new int[] { Math.min(255, ((rgb[0] & 0xe0) * 0xff / 0xe0)), 
+				Math.min(255, ((rgb[1] & 0xe0) * 0xff / 0xe0)), 
+				Math.min(255, ((rgb[2] & 0xe0) * 0xff / 0xe0)) };
+	}
+	
+	public static int[] mapForRGB555(int[] rgb) {
+		return new int[] { Math.min(255, ((rgb[0] & 0xf8) * 0xff / 0xf8)), 
+				Math.min(255, ((rgb[1] & 0xf8) * 0xff / 0xf8)), 
+				Math.min(255, ((rgb[2] & 0xf8) * 0xff / 0xf8)) };
+	}
+
 }

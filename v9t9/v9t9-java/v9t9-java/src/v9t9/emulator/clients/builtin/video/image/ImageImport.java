@@ -24,7 +24,6 @@ import org.ejs.coffee.core.utils.Pair;
 import v9t9.emulator.clients.builtin.video.ColorMapUtils;
 import v9t9.emulator.clients.builtin.video.IBitmapPixelAccess;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
-import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VdpColorManager;
 import v9t9.emulator.clients.builtin.video.VdpCanvas.Format;
 import v9t9.emulator.clients.builtin.video.image.ColorOctree.LeafNode;
@@ -39,7 +38,7 @@ import v9t9.engine.VdpHandler;
  *
  */
 public class ImageImport implements IBitmapPixelAccess {
-	private boolean DEBUG = false;
+	private boolean DEBUG = true;
 
 	private ImageData imageData;
 	private Format format;
@@ -176,7 +175,7 @@ public class ImageImport implements IBitmapPixelAccess {
 		img.setRGB(x, y, (r << 16) | (g << 8) | b | 0xff000000);
 
 	}
-	private int clamp(int i) {
+	private final int clamp(int i) {
 		return i < 0 ? 0 : i > 255 ? 255 : i;
 	}
 
@@ -200,29 +199,12 @@ public class ImageImport implements IBitmapPixelAccess {
 		if (isGreyScale) {
 			int lum = (299 * r_error + 587 * g_error + 114 * b_error) / 1000;
 			r_error = g_error = b_error = lum;
-			
-			/*
-			int[] gprgb = ColorMapUtils.getRgbToGreyForGreyscaleMode(prgb);
-			
-			int[] gnrgb = { 0, 0, 0 };
-			ColorMapUtils.pixelToRGB(newPixel, gnrgb);
-			ColorMapUtils.rgbToGreyForGreyscaleMode(gnrgb, gnrgb);
-			
-			r_error = gprgb[0] - gnrgb[0];
-			g_error = gprgb[1] - gnrgb[1];
-			b_error = gprgb[2] - gnrgb[2];
-			*/
 		}
 		
 		if (limit8) {
 			r_error /= 3;
 			g_error /= 3;
 			b_error /= 3;
-		}
-		else {
-			// blue has limited resolution; don't spread error too far
-			if (format == Format.COLOR256_1x1)
-				b_error /= 2;
 		}
 		
 		if (x + 1 < img.getWidth()) {
@@ -304,6 +286,46 @@ public class ImageImport implements IBitmapPixelAccess {
 		return true;
 	}
 	
+	protected void reduceNoise(BufferedImage img) {
+		int width = img.getWidth();
+		int[] rgbs = new int[width];
+		int[] prgb = { 0, 0, 0 };
+
+		ColorOctree octree = new ColorOctree(3, 8*8*8, false);
+
+		int total = 0;
+		for (int y = 0; y < img.getHeight(); y++) {
+			img.getRGB(0, y, width, 1, rgbs, 0, width);
+			for (int x = 0; x < width; x++) {
+				ColorMapUtils.pixelToRGB(rgbs[x], prgb);
+				octree.addColor(prgb);
+				total++;
+			}
+		}
+
+		List<LeafNode> leaves = octree.gatherLeaves();
+		int numColors = 0;
+		int numPixels = total / 2;
+		for (LeafNode leaf : leaves) {
+				numColors++;
+				numPixels -= leaf.getPixelCount();
+				if (numPixels <= 0)
+					break;
+		}
+		if (DEBUG) System.out.println("*** finding " + numColors + " apparent colors");
+		if (numColors > (format == Format.COLOR256_1x1 ? 256 : 16))
+			return;
+		
+		for (int y = 0; y < img.getHeight(); y++) {
+			img.getRGB(0, y, width, 1, rgbs, 0, width);
+			for (int x = 0; x < width; x++) {
+				ColorMapUtils.pixelToRGB(rgbs[x], prgb);
+				prgb = ColorMapUtils.mapForRGB333(prgb);
+				rgbs[x] = ColorMapUtils.rgb8ToPixel(prgb);
+			}
+			img.setRGB(0, y, width, 1, rgbs, 0, width);
+		}
+	}
 	/** Import image from 'img' and update the canvas' image data
 	 * with colors from the current palette and in a configuration
 	 * legal for the current mode. */
@@ -315,6 +337,8 @@ public class ImageImport implements IBitmapPixelAccess {
 		
 		if (!importDirectMappedImage(img)) {
 			equalize(img);
+			
+			//reduceNoise(img);
 			
 			convertImageToColorMap(img);
 		}
@@ -380,7 +404,7 @@ public class ImageImport implements IBitmapPixelAccess {
 				: 16;
 		
 		// effective minimum distance for any mode
-		int maxDist = 0xf*0xf * 3;
+		int maxDist = 0x8*0x8 * 3;
 		int numPixels = img.getWidth() * img.getHeight();
 		
 		boolean matched = false;
@@ -506,10 +530,15 @@ public class ImageImport implements IBitmapPixelAccess {
 					+ Integer.toHexString(repr[1]) + "/" 
 					+ Integer.toHexString(repr[2]));
 			
+			/*
 			colorMgr.setGRB333(index, Math.min(255, (repr[1] * 0xff / 0xdf)) >> 5, 
 				Math.min(255, (repr[0] * 0xff / 0xdf)) >> 5, 
 				Math.min(255, (repr[2] * 0xff / 0xdf)) >> 5);
-			
+			*/
+			thePalette[index][0] = (byte) repr[0];
+			thePalette[index][1] = (byte) repr[1];
+			thePalette[index][2] = (byte) repr[2];
+			           
 			index++;
 			
 		}
@@ -548,9 +577,14 @@ public class ImageImport implements IBitmapPixelAccess {
 					+ Integer.toHexString(repr[1]) + "/" 
 					+ Integer.toHexString(repr[2]));
 			
+			/*
 			colorMgr.setGRB333(index, Math.min(255, (repr[1] * 0xff / 0xe0)) >> 5, 
 				Math.min(255, (repr[0] * 0xff / 0xe0)) >> 5, 
 				Math.min(255, (repr[2] * 0xff / 0xe0)) >> 5);
+			*/
+			thePalette[index][0] = (byte) repr[0];
+			thePalette[index][1] = (byte) repr[1];
+			thePalette[index][2] = (byte) repr[2];
 			
 			index++;
 			
@@ -1144,6 +1178,15 @@ public class ImageImport implements IBitmapPixelAccess {
 		paletteToIndex = new TreeMap<Integer, Integer>();
 		
 		if (ncols < 256) {
+			// ensure palette is valid: higher bit depth may have
+			// been guessed during palette optimization
+			for (int c = 0; c < ncols; c++) {
+				colorMgr.setRGB333(c, thePalette[c]);
+				/*colorMgr.setGRB333(c, Math.min(255, (thePalette[c][1] * 0xff / 0xdf)) >> 5, 
+					Math.min(255, (thePalette[c][0] * 0xff / 0xdf)) >> 5, 
+					Math.min(255, (thePalette[c][2] * 0xff / 0xdf)) >> 5);*/
+			}
+			
 			for (int c = 0; c < ncols; c++) {
 				byte[] nrgb = thePalette[c];
 				if (isGreyScale)

@@ -35,7 +35,7 @@ class RGB332MapColor extends RGB333MapColor {
 	
 	@Override
 	public int getMaximalReplaceDistance(int usedColors) {
-		return 0xf*0xf*2 + 0xf * 0xf;
+		return 0x10*0x10*3;
 	}
 	
 }

@@ -65,6 +65,12 @@ public class ColorOctree {
 			greens += node.greens;
 			blues += node.blues;
 		}
+		/**
+		 * @return
+		 */
+		public int getPixelCount() {
+			return pixelCount;
+		}
 	}
 
 	static class InnerNode extends Node {

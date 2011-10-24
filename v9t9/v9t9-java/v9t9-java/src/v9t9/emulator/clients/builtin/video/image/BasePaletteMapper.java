@@ -63,9 +63,13 @@ abstract class BasePaletteMapper implements IPaletteMapper {
 		if (!isFixedPalette()) {
 			//boolean highColors = numColors < 16 || usedColors > numColors * 4;
 			//return highColors ? 0x7*0x7 * 3 : minDist;
-			if (numColors == 4)
-				return 0x3*0x3*3;
-			return ((0x7*0x7 * 3) * 3 + minDist) / 4;
+			//if (numColors == 4)
+			//	return 0x4*0x4*3;
+			//else
+			if (true)
+				return 0x10*0x10*3;
+			//return 0x8*0x8*3;
+			return Math.max(0x8*0x8*3, minDist); //((0x7*0x7 * 3) * 3 + minDist) / 4;
 		} else {
 			return minDist;
 		}
