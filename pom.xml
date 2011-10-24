@@ -58,6 +58,7 @@
 	  <module>target_explorer/plugins/org.eclipse.tm.te.runtime.persistence</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.runtime.services</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.runtime.statushandler</module>
+	  <module>target_explorer/plugins/org.eclipse.tm.te.runtime.stepper</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.core</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.ui</module>
 	  <module>target_explorer/plugins/org.eclipse.tm.te.ui.controls</module>

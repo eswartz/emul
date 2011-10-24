@@ -29,4 +29,7 @@ public class Messages extends NLS {
 
 	// **** Declare externalized string id's down here *****
 
+	public static String ServiceManager_warning_skippedConnectionTypeService;
+	public static String ServiceManager_warning_failedToLoadServiceType;
+	public static String ServiceManager_warning_failedToBindService;
 }

@@ -15,8 +15,10 @@ import org.eclipse.core.runtime.IExtensionPoint;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.tm.te.runtime.activator.CoreBundleActivator;
 import org.eclipse.tm.te.runtime.services.interfaces.IService;
+import org.eclipse.tm.te.runtime.services.nls.Messages;
 import org.osgi.framework.Bundle;
 
 /**
@@ -96,26 +98,13 @@ public class ServiceManager extends AbstractServiceManager<IService> {
 							// Determine the unique id to bind the service contributions to.
 							String id = null;
 
-							if ("backendServices".equals(configElement.getName())) { //$NON-NLS-1$
-								id = configElement.getAttribute("backendId"); //$NON-NLS-1$
+							if ("connectionTypeServices".equals(configElement.getName())) { //$NON-NLS-1$
+								id = configElement.getAttribute("connectionTypeId"); //$NON-NLS-1$
 
-								// For a backend service declaration, the backend id is mandatory
+								// For a connection type service declaration, the connection type id is mandatory
 								if (id == null || "".equals(id)) { //$NON-NLS-1$
 									IStatus status = new Status(IStatus.WARNING, CoreBundleActivator.getUniqueIdentifier(),
-									                            "Skipped backend service contributions from contributor '" + configElement.getDeclaringExtension().getNamespaceIdentifier() + "'." //$NON-NLS-1$ //$NON-NLS-2$
-									                            	+ " Reason: Missing mandatory backend id."); //$NON-NLS-1$
-									Platform.getLog(CoreBundleActivator.getContext().getBundle()).log(status);
-									continue;
-								}
-							}
-							else if ("dataSourceServices".equals(configElement.getName())) { //$NON-NLS-1$
-								id = configElement.getAttribute("dataSourceId"); //$NON-NLS-1$
-
-								// For a data source service declaration, the data source id is mandatory
-								if (id == null || "".equals(id)) { //$NON-NLS-1$
-									IStatus status = new Status(IStatus.WARNING, CoreBundleActivator.getUniqueIdentifier(),
-									                            "Skipped data source service contributions from contributor '" + configElement.getDeclaringExtension().getNamespaceIdentifier() + "'." //$NON-NLS-1$ //$NON-NLS-2$
-									                            	+ " Reason: Missing mandatory data source id."); //$NON-NLS-1$
+																NLS.bind(Messages.ServiceManager_warning_skippedConnectionTypeService, configElement.getDeclaringExtension().getNamespaceIdentifier()));
 									Platform.getLog(CoreBundleActivator.getContext().getBundle()).log(status);
 									continue;
 								}
@@ -153,15 +142,14 @@ public class ServiceManager extends AbstractServiceManager<IService> {
 										}
 										catch (Exception e) {
 											IStatus status = new Status(IStatus.WARNING, CoreBundleActivator.getUniqueIdentifier(),
-											                            "Cannot create service type '" + serviceType.getAttribute("class")   //$NON-NLS-1$//$NON-NLS-2$
-											                            	+ "' for service '" + service.getAttribute("class") + "'.", e); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+																		NLS.bind(Messages.ServiceManager_warning_failedToLoadServiceType, serviceType.getAttribute("class"), service.getAttribute("class")), e); //$NON-NLS-1$ //$NON-NLS-2$
 											Platform.getLog(CoreBundleActivator.getContext().getBundle()).log(status);
 										}
 									}
 								}
 								if (!addService(id, proxy)) {
 									IStatus status = new Status(IStatus.WARNING, CoreBundleActivator.getUniqueIdentifier(),
-									                            "Failed to bind service '" + proxy.clazz + "' to id '" + id + "'.", null); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+																NLS.bind(Messages.ServiceManager_warning_failedToBindService, proxy.clazz, id), null);
 									Platform.getLog(CoreBundleActivator.getContext().getBundle()).log(status);
 								}
 							}
