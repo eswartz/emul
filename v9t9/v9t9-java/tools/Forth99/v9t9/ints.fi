@@ -110,7 +110,7 @@ cell    RamVar    vdp-timeout
 :   ints-init
     ints-off
     0 'vsprmot !
- \   ['] kbd-int-handler     INT_KBD    enable-int
+    ['] kbd-int-handler     INT_KBD    enable-int
     ['] fault-int-handler   INT_FAULT   set-int-vec
     ['] bye                 INT_RESET   set-int-vec
     ['] nmi-int-handler     INT_NMI     set-int-vec

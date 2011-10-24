@@ -9,7 +9,6 @@ import java.util.Arrays;
 import junit.framework.TestCase;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvasPaletted;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
-import v9t9.emulator.clients.builtin.video.Sprite2Canvas;
 import v9t9.emulator.clients.builtin.video.RedrawBlock;
 import v9t9.emulator.clients.builtin.video.VdpSprite;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpSpriteCanvas;

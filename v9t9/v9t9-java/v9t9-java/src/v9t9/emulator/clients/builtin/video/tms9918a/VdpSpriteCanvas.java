@@ -223,7 +223,6 @@ public class VdpSpriteCanvas {
 				}
 			}
 		} while (changed);
-		
 		/*
 		boolean changed;
 		changed = false;
@@ -258,8 +257,9 @@ public class VdpSpriteCanvas {
 			for (int j = 0; j < 32; j++) {
 				if (((spritebitmap[i + j] | oldspritebitmap[i + j]) & knowndirty) != 0) {
 					screenChanges[screenOffs + j * blockMag] = 1;
-					if (blockMag > 1)
+					if (blockMag > 1) {
 						screenChanges[screenOffs + j * blockMag + 1] = 1;
+					} 
 					touched++;
 				}
 			}

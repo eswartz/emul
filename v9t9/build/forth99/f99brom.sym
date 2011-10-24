@@ -879,7 +879,7 @@
 3DD8 enable-int
 3DEA call-int
 3DF4 ints-init
-3E16 (ms)
-3E50 ms
-3E58 (RAM0)
-3E5C RAM
+3E1C (ms)
+3E56 ms
+3E5E (RAM0)
+3E62 RAM
