@@ -23,8 +23,8 @@ import org.eclipse.tm.tcf.services.IStreams;
 public class StreamsProxy implements IStreams {
 
     private final IChannel channel;
-    private final Map<StreamsListener,IChannel.IEventListener> listeners =
-        new HashMap<StreamsListener,IChannel.IEventListener>();
+    private final Map<String,IChannel.IEventListener> listeners =
+        new HashMap<String,IChannel.IEventListener>();
 
     public StreamsProxy(IChannel channel) {
         this.channel = channel;
@@ -88,7 +88,7 @@ public class StreamsProxy implements IStreams {
         }.token;
     }
 
-    public IToken subscribe(String stream_type, final StreamsListener listener, final DoneSubscribe done) {
+    public IToken subscribe(final String stream_type, final StreamsListener listener, final DoneSubscribe done) {
         return new Command(channel, this, "subscribe", new Object[]{ stream_type }) {
             @Override
             public void done(Exception error, Object[] args) {
@@ -101,22 +101,25 @@ public class StreamsProxy implements IStreams {
 
                         public void event(String name, byte[] data) {
                             try {
+                                assert listeners.get(stream_type) == this;
                                 Object[] args = JSON.parseSequence(data);
-                                if (name.equals("created")) {
-                                    if (args.length == 3) {
-                                        listener.created((String)args[0], (String)args[1], (String)args[2]);
+                                if (stream_type.equals(args[0])) {
+                                    if (name.equals("created")) {
+                                        if (args.length == 3) {
+                                            listener.created((String)args[0], (String)args[1], (String)args[2]);
+                                        }
+                                        else {
+                                            assert args.length == 2;
+                                            listener.created((String)args[0], (String)args[1], null);
+                                        }
+                                    }
+                                    else if (name.equals("disposed")) {
+                                        assert args.length == 2;
+                                        listener.disposed((String)args[0], (String)args[1]);
                                     }
                                     else {
-                                        assert args.length == 2;
-                                        listener.created((String)args[0], (String)args[1], null);
+                                        throw new IOException("Streams service: unknown event: " + name);
                                     }
-                                }
-                                else if (name.equals("disposed")) {
-                                    assert args.length == 2;
-                                    listener.disposed((String)args[0], (String)args[1]);
-                                }
-                                else {
-                                    throw new IOException("Streams service: unknown event: " + name);
                                 }
                             }
                             catch (Throwable x) {
@@ -124,7 +127,8 @@ public class StreamsProxy implements IStreams {
                             }
                         }
                     };
-                    listeners.put(listener, l);
+                    assert listeners.get(stream_type) == null;
+                    listeners.put(stream_type, l);
                     channel.addEventListener(StreamsProxy.this, l);
                 }
                 done.doneSubscribe(token, error);
@@ -132,7 +136,7 @@ public class StreamsProxy implements IStreams {
         }.token;
     }
 
-    public IToken unsubscribe(String stream_type, final StreamsListener listener, final DoneUnsubscribe done) {
+    public IToken unsubscribe(final String stream_type, final StreamsListener listener, final DoneUnsubscribe done) {
         return new Command(channel, this, "unsubscribe", new Object[]{ stream_type }) {
             @Override
             public void done(Exception error, Object[] args) {
@@ -141,7 +145,7 @@ public class StreamsProxy implements IStreams {
                     error = toError(args[0]);
                 }
                 if (error == null) {
-                    IChannel.IEventListener l = listeners.remove(listener);
+                    IChannel.IEventListener l = listeners.remove(stream_type);
                     if (l != null) channel.removeEventListener(StreamsProxy.this, l);
                 }
                 done.doneUnsubscribe(token, error);
