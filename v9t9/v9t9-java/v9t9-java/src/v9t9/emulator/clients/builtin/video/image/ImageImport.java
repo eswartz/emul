@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -621,7 +622,7 @@ public class ImageImport implements IBitmapPixelAccess {
 	private void createOptimalPalette(BufferedImage image, int colorCount) {
 		int toAllocate = colorCount - firstColor;
 		
-		ColorOctree octree = new ColorOctree(3, toAllocate, true);
+		ColorOctree octree = new ColorOctree(3, 16 - firstColor, true);
 		int[] prgb = { 0, 0, 0 };
 		int[] rgbs = new int[image.getWidth()];
 		for (int y = 0; y < image.getHeight(); y++) {
@@ -639,8 +640,36 @@ public class ImageImport implements IBitmapPixelAccess {
 		int index = firstColor;
 		
 		List<LeafNode> leaves = octree.gatherLeaves();
-		if (leaves.size() > toAllocate)
-			throw new IllegalStateException();
+		if (colorCount == 4) {
+			// remove 
+			int minLum = Integer.MAX_VALUE, maxLum = Integer.MIN_VALUE;
+			LeafNode minLeaf = null, maxLeaf = null;
+			int total = image.getWidth() * image.getHeight();
+			
+			for (LeafNode leaf : leaves) {
+				int lum = ColorMapUtils.getRGBLum(leaf.reprRGB());
+				if (lum < minLum && (minLeaf == null || leaf.getPixelCount() > total / 16)) {
+					minLum = lum;
+					minLeaf = leaf;
+				}
+				if (lum > maxLum && (maxLeaf == null || leaf.getPixelCount() > total / 16)) {
+					maxLum = lum;
+					maxLeaf = leaf;
+				}
+			}
+			List<LeafNode> toUse = new ArrayList<LeafNode>();
+			toUse.add(minLeaf);
+			toUse.add(maxLeaf);
+			Iterator<LeafNode> iter = leaves.iterator();
+			while (toUse.size() < toAllocate && iter.hasNext()) {
+				LeafNode node = iter.next();
+				if (node == minLeaf || node == maxLeaf)
+					continue;
+				toUse.add(node);
+			}
+			
+			leaves = toUse;
+		}
 		
 		for (ColorOctree.LeafNode node : leaves) {
 			int[] repr = node.reprRGB();

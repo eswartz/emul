@@ -268,6 +268,8 @@ public class ColorOctree {
 		if (minNeighbor != null) {
 			minNeighbor.add(leaf);
 		}
+		
+		
 	}
 
 	private int getMinRootLeaf() {
