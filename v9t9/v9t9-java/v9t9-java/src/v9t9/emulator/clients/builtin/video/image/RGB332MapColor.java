@@ -76,9 +76,11 @@ class RGB332MapColor extends RGB333MapColor {
 		return (r << 6) | (g << 3) | b;
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.video.image.BasePaletteMapper#getMinimalPaletteDistance()
+	 */
 	@Override
-	public int getMaximalReplaceDistance(int usedColors) {
-		return 0x10*0x10*3;
+	public int getMinimalPaletteDistance() {
+		return 0x10 * 0x10 * 3;
 	}
-	
 }

@@ -56,9 +56,4 @@ class MonoMapColor extends BasePaletteMapper {
 		int c = getCloseColor(pixel);
 		return c;
 	}
-	
-	@Override
-	public int getMaximalReplaceDistance(int usedColors) {
-		return 7*7 * 3;
-	}
 }

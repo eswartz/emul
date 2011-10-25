@@ -131,6 +131,6 @@ class TI16MapColor extends BasePaletteMapper {
 	
 	@Override
 	public int getMinimalPaletteDistance() {
-		return 0x20 * 0x20 * 3;
+		return 0x30 * 0x30 * 3;
 	}
 }

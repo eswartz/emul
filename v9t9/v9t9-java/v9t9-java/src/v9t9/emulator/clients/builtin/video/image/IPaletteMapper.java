@@ -21,11 +21,4 @@ interface IPaletteMapper extends IPaletteColorMapper, IColorMapper {
 	 * Get the minimal distance between colors in the palette.
 	 */
 	int getMinimalPaletteDistance();
-	
-	/**
-	 * Get the maximum pixel distance for absolutely replacing a range
-	 * of source pixels with palette pixels. 
-	 * @param usedColors the number of unique colors 
-	 */
-	int getMaximalReplaceDistance(int usedColors);
 }

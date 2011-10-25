@@ -194,7 +194,7 @@ public class ImageImport implements IBitmapPixelAccess {
 		
 		boolean skipped = false;
 		
-		if (!isGreyScale && prevC != -1) {
+		if (!isGreyScale && !isMono && prevC != -1) {
 			if (newC == prevC) {
 				// was not dithered away, but palette may have changed,
 				// so update color but ignore dithering
@@ -206,10 +206,8 @@ public class ImageImport implements IBitmapPixelAccess {
 				// don't change existing colors, but propagate error
 				newPixel = mapColor.getPalettePixel(newC);
 			}
-		} else if (newC != -1) {
+		} else  {
 			newPixel = mapColor.getPalettePixel(newC);
-		} else {
-			throw new IllegalStateException();
 		}
 		
 		img.setRGB(x, y, newPixel | 0xff000000);
@@ -227,15 +225,28 @@ public class ImageImport implements IBitmapPixelAccess {
 			int lum = (299 * r_error + 587 * g_error + 114 * b_error) / 1000;
 			r_error = g_error = b_error = lum;
 		}
-		else {
+		else if (!isMono) {
 			if (limit8) {
 				if (!skipped) {
-					if (Math.abs(r_error) < 0x20)
+					if (Math.abs(r_error) < 0x20 && Math.abs(g_error) < 0x20 && Math.abs(b_error) < 0x20) {
 						r_error /= 4;
-					if (Math.abs(g_error) < 0x20)
 						g_error /= 4;
-					if (Math.abs(b_error) < 0x20)
 						b_error /= 4;
+					}
+					else {
+						//if (Math.abs(r_error) < 0x20)
+						//	r_error /= 4;
+						//else
+							r_error /= 2;
+						//if (Math.abs(g_error) < 0x20)
+						//	g_error /= 4;
+						//else
+							g_error /= 2;
+						//if (Math.abs(b_error) < 0x20)
+						//	b_error /= 4;
+						//else
+							b_error /= 2;
+					}
 				}
 			} else {
 				if (format == Format.COLOR256_1x1) {
