@@ -43,7 +43,7 @@ class RGB333MapColor extends BasePaletteMapper {
 			//int l = (r * 299 + g * 587 + b * 114) / 1000;
 			//rgbs = ColorMapUtils.getGRB333(l, l, l);
 			rgbs = ColorMapUtils.getRgbToGreyForGreyscaleMode(new byte[] { 
-					(byte) r, (byte) g, (byte) b });
+					(byte) (r * 255 / 7), (byte) (g * 255 / 7), (byte) (b * 255 / 7) });
 		}
 			
 		return rgbs;
@@ -53,7 +53,7 @@ class RGB333MapColor extends BasePaletteMapper {
 	 * @see v9t9.emulator.clients.builtin.video.ImageImport.IMapColor#getClosestPaletteColor(int[])
 	 */
 	@Override
-	public int getClosestPalettePixel(int x, int y, int pixel) {
+	public int getClosestPaletteEntry(int x, int y, int pixel) {
 		int closest = -1;
 		int mindiff = Integer.MAX_VALUE;
 		if (isGreyscale) {
@@ -79,8 +79,8 @@ class RGB333MapColor extends BasePaletteMapper {
 	@Override
 	public int getPalettePixel(int c) {
 
-		int g = (c >> 6) & 0x7;
-		int r = (c >> 3) & 0x7;
+		int r = (c >> 6) & 0x7;
+		int g = (c >> 3) & 0x7;
 		int b = (c >> 0) & 0x7;
 		
 		byte[] rgbs = getRGB333(r, g, b);

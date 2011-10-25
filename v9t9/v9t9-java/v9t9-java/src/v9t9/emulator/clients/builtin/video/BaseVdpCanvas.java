@@ -3,8 +3,6 @@
  */
 package v9t9.emulator.clients.builtin.video;
 
-import java.util.Arrays;
-
 import org.eclipse.swt.graphics.Rectangle;
 
 /**

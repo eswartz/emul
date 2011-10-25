@@ -180,11 +180,37 @@ public class ImageImport implements IBitmapPixelAccess {
 	}
 
 	private void ditherize(BufferedImage img, IPaletteColorMapper mapColor,
-			int x, int y, boolean limit8) {
+			Histogram hist, int x, int y, boolean limit8) {
+
 		
 		int pixel = img.getRGB(x, y);
 
-		int newPixel = mapColor.getClosestPalettePixel(x, y, pixel);
+		int newC = mapColor.getClosestPaletteEntry(x, y, pixel);
+		
+		int newPixel;
+		
+		int offs = y * img.getWidth() + x;
+		int prevC = hist.mappedColors()[offs];
+		
+		boolean skipped = false;
+		
+		if (!isGreyScale && prevC != -1) {
+			if (newC == prevC) {
+				// was not dithered away, but palette may have changed,
+				// so update color but ignore dithering
+				pixel = 
+					newPixel = mapColor.getPalettePixel(newC);
+				skipped = true;
+			}
+			else {
+				// don't change existing colors, but propagate error
+				newPixel = mapColor.getPalettePixel(newC);
+			}
+		} else if (newC != -1) {
+			newPixel = mapColor.getPalettePixel(newC);
+		} else {
+			throw new IllegalStateException();
+		}
 		
 		img.setRGB(x, y, newPixel | 0xff000000);
 		
@@ -195,32 +221,50 @@ public class ImageImport implements IBitmapPixelAccess {
 		r_error = ((pixel >> 16) & 0xff) - ((newPixel >> 16) & 0xff);
 		g_error = ((pixel >> 8) & 0xff) - ((newPixel >> 8) & 0xff);
 		b_error = ((pixel >> 0) & 0xff) - ((newPixel >> 0) & 0xff);
-		
+
+
 		if (isGreyScale) {
 			int lum = (299 * r_error + 587 * g_error + 114 * b_error) / 1000;
 			r_error = g_error = b_error = lum;
 		}
-		
-		if (limit8) {
-			r_error /= 3;
-			g_error /= 3;
-			b_error /= 3;
+		else {
+			if (limit8) {
+				if (!skipped) {
+					if (Math.abs(r_error) < 0x20)
+						r_error /= 4;
+					if (Math.abs(g_error) < 0x20)
+						g_error /= 4;
+					if (Math.abs(b_error) < 0x20)
+						b_error /= 4;
+				}
+			} else {
+				if (!skipped) {
+					if (Math.abs(r_error) < 0x10)
+						r_error /= 2;
+					if (Math.abs(g_error) < 0x10)
+						g_error /= 2;
+					if (Math.abs(b_error) < 0x10)
+						b_error /= 2;
+				}
+			}
 		}
 		
-		if (x + 1 < img.getWidth()) {
-			// x+1, y
-			ditherRGB(img, x + 1, y,  
-					7, r_error, g_error, b_error);
-		}
-		if (y + 1 < img.getHeight()) {
-			if (x > 0)
-				ditherRGB(img, x - 1, y + 1, 
-						3, r_error, g_error, b_error);
-			ditherRGB(img, x, y + 1, 
-					5, r_error, g_error, b_error);
-			if (x + 1 < img.getWidth())
-				ditherRGB(img, x + 1, y + 1, 
-						1, r_error, g_error, b_error);
+		if ((r_error | g_error | b_error) != 0) {
+			if (x + 1 < img.getWidth()) {
+				// x+1, y
+				ditherRGB(img, x + 1, y,  
+						7, r_error, g_error, b_error);
+			}
+			if (y + 1 < img.getHeight()) {
+				if (x > 0)
+					ditherRGB(img, x - 1, y + 1, 
+							3, r_error, g_error, b_error);
+				ditherRGB(img, x, y + 1, 
+						5, r_error, g_error, b_error);
+				if (x + 1 < img.getWidth())
+					ditherRGB(img, x + 1, y + 1, 
+							1, r_error, g_error, b_error);
+			}
 		}
 	}
 	
@@ -233,7 +277,7 @@ public class ImageImport implements IBitmapPixelAccess {
 			this.paletteMapper = paletteMapper;
 		}
 		@Override
-		public int getClosestPalettePixel(int x, int y, int pixel) {
+		public int getClosestPaletteEntry(int x, int y, int pixel) {
 			if (bitmapColors != null && bitmapColors[y] != null) {
 				Pair<Integer, Integer> fgbg = bitmapColors[y][x / 8];
 				
@@ -244,31 +288,47 @@ public class ImageImport implements IBitmapPixelAccess {
 							: ColorMapUtils.getPixelDistance(fgbg.second, pixel);
 					int cand = fgdist <= bgdist ? fgbg.first : fgbg.second;
 					//if (DEBUG) System.out.println("y="+y+"; x="+x+" = " + Integer.toHexString(cand));
-					return paletteMapper.getClosestPalettePixel(x, y, cand);
+					return paletteMapper.getClosestPaletteEntry(x, y, cand);
 				}
 			}
-			return paletteMapper.getClosestPalettePixel(x, y, pixel);
+			return paletteMapper.getClosestPaletteEntry(x, y, pixel);
+		}
+		
+		/* (non-Javadoc)
+		 * @see v9t9.emulator.clients.builtin.video.image.IPaletteColorMapper#getClosestPalettePixel(int, int, int)
+		 */
+		@Override
+		public int getClosestPalettePixel(int x, int y, int pixel) {
+			return getPalettePixel(getClosestPaletteEntry(x, y, pixel));
+		}
+		
+		/* (non-Javadoc)
+		 * @see v9t9.emulator.clients.builtin.video.image.IPaletteColorMapper#getPalettePixel(int)
+		 */
+		@Override
+		public int getPalettePixel(int c) {
+			return paletteMapper.getPalettePixel(c);
 		}
 	}
 
-	private void ditherForBitmapMode(BufferedImage img, IPaletteMapper mapColor) {
+	private void ditherForBitmapMode(BufferedImage img, IPaletteMapper mapColor, Histogram hist) {
 		prepareBitmapModeColors(img, mapColor);
 		
 		BitmapDitherColorMapper mapper = new BitmapDitherColorMapper(mapColor);
 		for (int y = 0; y < img.getHeight(); y++) {
 			for (int x = 0; x < img.getWidth(); x += 8) {
 				for (int xo = 0; xo < 8; xo++) {
-					ditherize(img, mapper, x + xo, y, !canSetPalette);
+					ditherize(img, mapper, hist, x + xo, y, !canSetPalette);
 				}
 			}
 		}
 		
 	}
 	
-	private void dither(BufferedImage img, IPaletteMapper mapColor, boolean limitDither) {
+	private void dither(BufferedImage img, IPaletteMapper mapColor, Histogram hist, boolean limitDither) {
 		for (int y = 0; y < img.getHeight(); y++) {
 			for (int x = 0; x < img.getWidth(); x++) {
-				ditherize(img, mapColor, x, y, limitDither);
+				ditherize(img, mapColor, hist, x, y, limitDither);
 			}
 		}
 		
@@ -457,6 +517,7 @@ public class ImageImport implements IBitmapPixelAccess {
 					limitDither = !isGreyScale;
 					if (isStandardPalette && !isGreyScale)
 						mapColor = new TI16MapColor(thePalette);
+						//mapColor = new UserPaletteMapColor(thePalette, firstColor, 16, isGreyScale);
 					else
 						mapColor = new UserPaletteMapColor(thePalette, firstColor, 16, isGreyScale);
 				}
@@ -479,14 +540,14 @@ public class ImageImport implements IBitmapPixelAccess {
 		else {
 			return;
 		}
-		optimizeForNColors(img, mapColor);
+		Histogram hist = optimizeForNColors(img, mapColor);
 		
 		updatePaletteMapping();
 
 		if (format == Format.COLOR16_8x1 && limitDither) {
-			ditherForBitmapMode(img, mapColor);
+			ditherForBitmapMode(img, mapColor, hist);
 		} else {
-			dither(img, mapColor, limitDither);
+			dither(img, mapColor, hist, limitDither);
 		}
 	}
 
@@ -737,11 +798,9 @@ public class ImageImport implements IBitmapPixelAccess {
 	 * @param img
 	 * @return minimum color distance
 	 */
-	private int optimizeForNColors(BufferedImage img, IPaletteMapper mapColor) {
+	private Histogram optimizeForNColors(BufferedImage img, IPaletteMapper mapColor) {
 		
 		int numColors = mapColor.getNumColors();
-		
-		byte[][] palette = mapColor.getPalette();
 		
 		int ourDist = mapColor.getMinimalPaletteDistance();
 		
@@ -763,12 +822,15 @@ public class ImageImport implements IBitmapPixelAccess {
 				+"; mapped="+mappedColors
 				);
 		
+		/*
 		ourDist = mapColor.getMaximalReplaceDistance(usedColors);
 		//if (format == Format.COLOR16_8x1)
 		//	ourDist /= 2;
 		
 		if (DEBUG) System.out.println("replacing colors below distance " + ourDist);
 		
+		byte[][] palette = mapColor.getPalette();
+
 		for (int i = 0; i < usedColors; i++) {
 			// ensure there will be an exact match so no dithering 
 			// occurs on the primary occurrences of this color
@@ -777,8 +839,8 @@ public class ImageImport implements IBitmapPixelAccess {
 			int newRGB = ColorMapUtils.rgb8ToPixel(rgb);
 			replaceColor(img, hist, idx, newRGB, ourDist);
 		}
-		
-		return ourDist;
+		*/
+		return hist;
 	}
 
 	/**
@@ -805,6 +867,8 @@ public class ImageImport implements IBitmapPixelAccess {
 						rgbs[x] = newRGB;
 						replaced++;
 						changed = true;
+					} else {
+						mappedColors[offs] = -1;
 					}
 				}
 				offs++;
@@ -925,7 +989,7 @@ public class ImageImport implements IBitmapPixelAccess {
 	 * @author ejs
 	 *
 	 */
-	private final class PrepareClosestLuminances implements IBitmapColorUser {
+	final class PrepareClosestLuminances implements IBitmapColorUser {
 		/**
 		 * 
 		 */
@@ -1085,7 +1149,9 @@ public class ImageImport implements IBitmapPixelAccess {
 		if (!isGreyScale) {
 			analyzeBitmap(img, false, new PrepareClosestColors(img, mapColor));
 		} else {
-			analyzeBitmap(img, false, new PrepareClosestLuminances(img, mapColor));
+			// doesn't help any in greyscale since we pick totally
+			// random colors
+			//analyzeBitmap(img, false, new PrepareClosestLuminances(img, mapColor));
 		}
 	}
 
@@ -1189,7 +1255,7 @@ public class ImageImport implements IBitmapPixelAccess {
 			
 			for (int c = 0; c < ncols; c++) {
 				byte[] nrgb = thePalette[c];
-				if (isGreyScale)
+				if (isGreyScale) 
 					nrgb = ColorMapUtils.getRgbToGreyForGreyscaleMode(nrgb);
 				int p = ColorMapUtils.rgb8ToPixel(nrgb);
 				paletteToIndex.put(p, c);
@@ -1198,9 +1264,13 @@ public class ImageImport implements IBitmapPixelAccess {
 			byte[] rgb = { 0, 0, 0};
 			for (int c = 0; c < ncols; c++) {
 				ColorMapUtils.getGRB332(rgb, (byte) c, false);
-				if (isGreyScale)
-					rgb = ColorMapUtils.getRgbToGreyForGreyscaleMode(rgb);
-				int p = ColorMapUtils.rgb8ToPixel(rgb);
+				int p;
+				if (isGreyScale) {
+					byte[] nrgb = ColorMapUtils.getRgbToGreyForGreyscaleMode(rgb);
+					p = ColorMapUtils.rgb8ToPixel(nrgb);
+				} else {
+					p = ColorMapUtils.rgb8ToPixel(rgb);
+				}
 				paletteToIndex.put(p, c);
 			}
 		}

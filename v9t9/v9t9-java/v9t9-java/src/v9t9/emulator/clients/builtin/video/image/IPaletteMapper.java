@@ -28,6 +28,4 @@ interface IPaletteMapper extends IPaletteColorMapper, IColorMapper {
 	 * @param usedColors the number of unique colors 
 	 */
 	int getMaximalReplaceDistance(int usedColors);
-
-	int getPalettePixel(int c);
 }

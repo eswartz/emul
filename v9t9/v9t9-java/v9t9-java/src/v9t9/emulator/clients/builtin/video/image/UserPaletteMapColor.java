@@ -42,8 +42,8 @@ class UserPaletteMapColor extends BasePaletteMapper {
 	 * @see v9t9.emulator.clients.builtin.video.ImageImport.IMapColor#getClosestColor(int[])
 	 */
 	@Override
-	public int getClosestPalettePixel(int x, int y, int pixel) {
+	public int getClosestPaletteEntry(int x, int y, int pixel) {
 		Pair<Integer, Integer> info = getCloseColor(pixel);
-		return getPalettePixels()[info.first];
+		return info.first;
 	}
 }

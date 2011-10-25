@@ -106,4 +106,13 @@ abstract class BasePaletteMapper implements IPaletteMapper {
 	public int getPalettePixel(int c) {
 		return getPalettePixels()[c]; //ColorMapUtils.rgb8ToPixel(palette[c]);
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.video.image.IPaletteColorMapper#getClosestPalettePixel(int, int, int)
+	 */
+	@Override
+	public int getClosestPalettePixel(int x, int y, int pixel) {
+		int v = getClosestPaletteEntry(x, y, pixel);
+		return v >= 0 ? getPalettePixel(v) : pixel;
+	}
 }

@@ -144,14 +144,17 @@ class Histogram {
 	}
 	
 	/**
-	 * @return the mapping of RGB pixel to palette color
+	 * @return the mapping of RGB pixel to palette color;
+	 * entry present if color selected, else null
 	 */
 	public Map<Integer, Integer> pixelToColor() {
 		return pixelToColor;
 	}
 
 	/**
-	 * @return
+	 * @return the mapping, per pixel (width x height)
+	 * for which palette index was selected.  May be -1
+	 * if nothing chosen.
 	 */
 	public int[] mappedColors() {
 		return mappedColors;
