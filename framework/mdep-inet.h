@@ -101,7 +101,6 @@ extern const char * loc_gai_strerror(int ecode);
 
 #elif defined __SYMBIAN32__
 
-#include <socket.h>
 #include <in.h>
 #include <netdb.h>
 #include <inet.h>
@@ -122,7 +121,6 @@ extern struct ip_ifc_info * get_ip_ifc(void);
 #else
 
 #include <netdb.h>
-#include <sys/socket.h>
 #include <sys/un.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>

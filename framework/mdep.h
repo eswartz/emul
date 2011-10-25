@@ -274,6 +274,7 @@ extern int getegid(void);
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <socket.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
@@ -326,6 +327,7 @@ extern int loc_clock_gettime(int, struct timespec *);
 #include <sys/select.h>
 #include <sys/time.h>
 #include <sys/ioctl.h>
+#include <sys/socket.h>
 #include <limits.h>
 #include <inttypes.h>
 
