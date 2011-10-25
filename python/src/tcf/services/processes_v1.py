@@ -40,7 +40,7 @@ class ProcessesV1Service(processes.ProcessesService):
         If a client wants first parameter to be the file name, it should add it itself.
         @param environment - map of environment variables for the process,
         if None then default set of environment variables will be used.
-        @param params - additional process start parameters, see START_*.
+        @param params - additional process start parameters as map, see START_* for supported keys.
         @param done - call back interface called when operation is completed.
         @return pending command handle, can be used to cancel the command.
         """

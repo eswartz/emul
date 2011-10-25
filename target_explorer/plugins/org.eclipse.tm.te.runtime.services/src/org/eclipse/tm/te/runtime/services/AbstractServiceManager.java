@@ -80,6 +80,7 @@ public abstract class AbstractServiceManager<ServiceClass extends IService> {
 		protected ServiceClass getService(boolean unique) {
 			if ((service == null || unique) && configElement != null) {
 				try {
+					// Create the service class instance via the configuration element
 					Object service = configElement.createExecutableExtension("class"); //$NON-NLS-1$
 					if (service instanceof IService) {
 						if (unique) {

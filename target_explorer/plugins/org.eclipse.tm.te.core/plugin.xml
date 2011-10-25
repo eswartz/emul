@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+<!-- Extension point contributions -->
+   <extension-point id="connectionTypes" name="Connection Type Contributions" schema="schema/connectionTypes.exsd"/>
+   <extension-point id="connectionTypeBindings" name="Connection Type Bindings Contributions" schema="schema/connectionTypeBindings.exsd"/>
+
+</plugin>

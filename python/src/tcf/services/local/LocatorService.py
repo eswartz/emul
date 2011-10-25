@@ -757,7 +757,7 @@ class LocatorService(locator.LocatorService):
     def addListener(self, listener):
         assert listener is not None
         assert protocol.isDispatchThread()
-        self.listeners.add(listener)
+        self.listeners.append(listener)
 
     def removeListener(self, listener):
         assert protocol.isDispatchThread()

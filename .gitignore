@@ -96,6 +96,8 @@ tests/test-dwarf/*.ncb
 /target_explorer/plugins/org.eclipse.tm.te.runtime.services/bin
 /target_explorer/plugins/org.eclipse.tm.te.runtime.statushandler/target
 /target_explorer/plugins/org.eclipse.tm.te.runtime.statushandler/bin
+/target_explorer/plugins/org.eclipse.tm.te.runtime.stepper/target
+/target_explorer/plugins/org.eclipse.tm.te.runtime.stepper/bin
 /target_explorer/plugins/org.eclipse.tm.te.tcf.core/target
 /target_explorer/plugins/org.eclipse.tm.te.tcf.core/bin
 /target_explorer/plugins/org.eclipse.tm.te.tcf.filesystem/target

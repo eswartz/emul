@@ -1,0 +1,230 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Schema file written by PDE -->
+<schema targetNamespace="org.eclipse.tm.te.core" xmlns="http://www.w3.org/2001/XMLSchema">
+<annotation>
+      <appinfo>
+         <meta.schema plugin="org.eclipse.tm.te.core" id="connectionTypes" name="Connection Types"/>
+      </appinfo>
+      <documentation>
+         This extension point is used to contribute connection types.
+      </documentation>
+   </annotation>
+
+   <element name="extension">
+      <annotation>
+         <appinfo>
+            <meta.element />
+         </appinfo>
+      </annotation>
+      <complexType>
+         <sequence>
+            <element ref="connectionType" minOccurs="1" maxOccurs="unbounded"/>
+         </sequence>
+         <attribute name="point" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="id" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="name" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+               <appinfo>
+                  <meta.attribute translatable="true"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="connectionType">
+      <annotation>
+         <documentation>
+            Declares a Target Explorer connection type contribution.
+         </documentation>
+      </annotation>
+      <complexType>
+         <sequence>
+            <element ref="class" minOccurs="0" maxOccurs="1"/>
+            <element ref="description" minOccurs="0" maxOccurs="1"/>
+         </sequence>
+         <attribute name="id" type="string" use="required">
+            <annotation>
+               <documentation>
+                  The unique id of the connection type contribution.
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="label" type="string" use="required">
+            <annotation>
+               <documentation>
+                  The label representing the connection type within the UI.
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="class" type="string">
+            <annotation>
+               <documentation>
+                  The connection type class that implements &lt;code&gt;org.eclipse.tm.te.core.connection.interfaces.IConnectionType&lt;/code&gt; or extends &lt;code&gt;org.eclipse.tm.te.core.connection.ConnectionType&lt;/code&gt;.
+&lt;p&gt;
+The connection type implementation class must be specified either by the class attribute or the class child element!
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="java" basedOn="org.eclipse.tm.te.core.connection.ConnectionType:org.eclipse.tm.te.core.connection.interfaces.IConnectionType"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+         <attribute name="isEnabled" type="boolean" use="default" value="true">
+            <annotation>
+               <documentation>
+                  Setting this attribute to &lt;code&gt;false&lt;/code&gt; disables this connection type explicitly. If set to &lt;code&gt;true&lt;/code&gt;, the connection type may be still disabled by other conditions like disabled capabilities.
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="shortName" type="string">
+            <annotation>
+               <documentation>
+                  An optional short name for the connection type for default naming of connections and launches.
+&lt;p&gt;
+Can be specified as parameter if the connection type implementation class is specified with the class child element. The parameter key is &quot;shortname&quot;.
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="categoryId" type="string">
+            <annotation>
+               <documentation>
+                  The category id this connection type will be sorted in within the new connection wizard.
+&lt;p&gt;
+Can be specified as parameter if the connection type implementation class is specified with the class child element. The parameter key is &quot;categoryId&quot;.
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="identifier" basedOn="org.eclipse.rse.ui.newConnectionWizards/category/@id"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="description" type="string">
+      <annotation>
+         <documentation>
+            A short description of the connection type to be presented in the UI.
+         </documentation>
+      </annotation>
+   </element>
+
+   <element name="class">
+      <annotation>
+         <documentation>
+            &lt;p&gt;Used when creating an &lt;code&gt;IExecutableExtension&lt;/code&gt; with a named parameter, or more than one.&lt;/p&gt;
+         </documentation>
+      </annotation>
+      <complexType>
+         <sequence>
+            <element ref="parameter" minOccurs="0" maxOccurs="unbounded"/>
+         </sequence>
+         <attribute name="class" type="string">
+            <annotation>
+               <documentation>
+                  The connection type class that implements &lt;code&gt;org.eclipse.tm.te.core.connection.interfaces.IConnectionType&lt;/code&gt; or extends &lt;code&gt;org.eclipse.tm.te.core.connection.ConnectionType&lt;/code&gt;.
+&lt;p&gt;
+The connection type implementation class must be specified either by the class attribute or the class child element!
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="java" basedOn="org.eclipse.tm.te.core.connection.ConnectionType:org.eclipse.tm.te.core.connection.interfaces.IConnectionType"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="parameter">
+      <annotation>
+         <documentation>
+            &lt;p&gt;A parameter for an &lt;code&gt;IExecutableExtension&lt;/code&gt;.&lt;/p&gt;
+         </documentation>
+      </annotation>
+      <complexType>
+         <attribute name="name" type="string" use="required">
+            <annotation>
+               <documentation>
+                  &lt;p&gt;The parameter name.&lt;/p&gt;
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="value" type="string" use="required">
+            <annotation>
+               <documentation>
+                  &lt;p&gt;The parameter value.&lt;/p&gt;
+               </documentation>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="since"/>
+      </appinfo>
+      <documentation>
+         Target Explorer 1.0.0
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="examples"/>
+      </appinfo>
+      <documentation>
+         This is an example of the extension point usage:
+&lt;p&gt;
+&lt;pre&gt;&lt;code&gt;
+  &lt;extension point=&quot;org.eclipse.tm.te.core.connectionTypes&quot;&gt;
+      &lt;connectionType
+            id=&quot;org.eclipse.tm.te.core.connection.ssh&quot;
+            class=&quot;org.eclipse.tm.te.core.connection.types.SSHConnectionType&quot;
+            shortName=&quot;SSH&quot;
+            label=&quot;SSH Connection&quot;
+            isEnabled=&quot;true&quot;&gt;
+      &lt;/connectionType&gt;
+   &lt;/extension&gt;
+&lt;/code&gt;&lt;/pre&gt;
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="apiinfo"/>
+      </appinfo>
+      <documentation>
+         The provider of a connection type must implement &lt;samp&gt;org.eclipse.tm.te.core.interfaces.IConnectionType&lt;/samp&gt;.
+      </documentation>
+   </annotation>
+
+
+   <annotation>
+      <appinfo>
+         <meta.section type="copyright"/>
+      </appinfo>
+      <documentation>
+         Copyright (c) 2011 Wind River Systems, Inc. and others.
+
+All rights reserved.
+
+This program and the accompanying materials are made available under the terms
+of the Eclipse Public License v1.0 which accompanies this distribution, and is
+available at http://www.eclipse.org/legal/epl-v10.html.
+      </documentation>
+   </annotation>
+
+</schema>

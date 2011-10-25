@@ -119,10 +119,12 @@ public class ExecutableExtensionProxy<V> {
 	public V newInstance() {
 		IConfigurationElement element = getConfigurationElement();
 		Assert.isNotNull(element);
+
 		// The "class" to load can be specified either as attribute or as child element
-		if (element != null && (element.getAttribute("class") != null || element.getChildren("class").length > 0)) { //$NON-NLS-1$ //$NON-NLS-2$
+		String attributeName = getExecutableExtensionAttributeName() != null ? getExecutableExtensionAttributeName() : "class"; //$NON-NLS-1$
+		if (element != null && (element.getAttribute(attributeName) != null || element.getChildren(attributeName).length > 0)) {
 			try {
-				return (V)element.createExecutableExtension("class"); //$NON-NLS-1$
+				return (V)element.createExecutableExtension(attributeName);
 			} catch (Exception e) {
 				// Possible exceptions: CoreException, ClassCastException.
 				Platform.getLog(CoreBundleActivator.getContext().getBundle()).log(new Status(IStatus.ERROR,
@@ -131,6 +133,13 @@ public class ExecutableExtensionProxy<V> {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Return the attribute name for the executable extension.
+	 */
+	protected String getExecutableExtensionAttributeName() {
+		return "class"; //$NON-NLS-1$
 	}
 
 	/* (non-Javadoc)

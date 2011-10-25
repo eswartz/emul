@@ -1,0 +1,283 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Schema file written by PDE -->
+<schema targetNamespace="org.eclipse.tm.te.core" xmlns="http://www.w3.org/2001/XMLSchema">
+<annotation>
+      <appinfo>
+         <meta.schema plugin="org.eclipse.tm.te.core" id="connectStrategies" name="Connect Strategies"/>
+      </appinfo>
+      <documentation>
+         This extension point is used to contribute connect strategies.
+      </documentation>
+   </annotation>
+
+   <element name="extension">
+      <annotation>
+         <appinfo>
+            <meta.element />
+         </appinfo>
+      </annotation>
+      <complexType>
+         <sequence>
+            <element ref="connectStrategy" minOccurs="1" maxOccurs="unbounded"/>
+         </sequence>
+         <attribute name="point" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="id" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="name" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="connectStrategy">
+      <annotation>
+         <documentation>
+            Declares a Target Explorer connect strategy contribution.
+         </documentation>
+      </annotation>
+      <complexType>
+         <sequence>
+            <element ref="class" minOccurs="0" maxOccurs="1"/>
+            <element ref="description" minOccurs="0" maxOccurs="1"/>
+            <element ref="stepGroups" minOccurs="0" maxOccurs="1"/>
+         </sequence>
+         <attribute name="id" type="string" use="required">
+            <annotation>
+               <documentation>
+                  The unique id of the connect strategy.
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="label" type="string" use="required">
+            <annotation>
+               <documentation>
+                  The label representing the connect strategy within the UI.
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="class" type="string">
+            <annotation>
+               <documentation>
+                  The connect strategy class that implements &lt;code&gt;org.eclipse.tm.te.core.connection.interfaces.IConnectStrategy&lt;/code&gt; or extends &lt;code&gt;org.eclipse.tm.te.core.connection.AbstractConnectStrategy&lt;/code&gt;.
+&lt;p&gt;
+The connect strategy implementation class must be specified either by the class attribute or the class child element!
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="java" basedOn="org.eclipse.tm.te.core.connection.AbstractConnectStrategy:org.eclipse.tm.te.core.connection.interfaces.IConnectStrategy"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="description" type="string">
+      <annotation>
+         <documentation>
+            A short description of the connect strategy to be presented in the UI.
+         </documentation>
+      </annotation>
+   </element>
+
+   <element name="class">
+      <annotation>
+         <documentation>
+            &lt;p&gt;Used when creating an &lt;code&gt;IExecutableExtension&lt;/code&gt; with a named parameter, or more than one.&lt;/p&gt;
+         </documentation>
+      </annotation>
+      <complexType>
+         <sequence>
+            <element ref="parameter" minOccurs="0" maxOccurs="unbounded"/>
+         </sequence>
+         <attribute name="class" type="string">
+            <annotation>
+               <documentation>
+                  The connect strategy class that implements &lt;code&gt;org.eclipse.tm.te.core.connection.interfaces.IConnectStrategy&lt;/code&gt; or extends &lt;code&gt;org.eclipse.tm.te.core.connection.AbstractConnectStrategy&lt;/code&gt;.
+&lt;p&gt;
+The connect strategy implementation class must be specified either by the class attribute or the class child element!
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="java" basedOn="org.eclipse.tm.te.core.connection.AbstractConnectStrategy:org.eclipse.tm.te.core.connection.interfaces.IConnectStrategy"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="parameter">
+      <annotation>
+         <documentation>
+            &lt;p&gt;A parameter for an &lt;code&gt;IExecutableExtension&lt;/code&gt;.&lt;/p&gt;
+         </documentation>
+      </annotation>
+      <complexType>
+         <attribute name="name" type="string" use="required">
+            <annotation>
+               <documentation>
+                  &lt;p&gt;The parameter name.&lt;/p&gt;
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="value" type="string" use="required">
+            <annotation>
+               <documentation>
+                  &lt;p&gt;The parameter value.&lt;/p&gt;
+               </documentation>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="stepGroups">
+      <annotation>
+         <documentation>
+            The container the step groups are declared in.
+         </documentation>
+      </annotation>
+      <complexType>
+         <sequence>
+            <element ref="stepGroup" minOccurs="1" maxOccurs="unbounded"/>
+         </sequence>
+      </complexType>
+   </element>
+
+   <element name="stepGroup">
+      <annotation>
+         <documentation>
+            A connect strategy step group.
+         </documentation>
+      </annotation>
+      <complexType>
+         <sequence>
+            <element ref="step" minOccurs="1" maxOccurs="unbounded"/>
+         </sequence>
+         <attribute name="id" use="required">
+            <annotation>
+               <documentation>
+                  The unique id of the connect strategy step group.
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="identifier"/>
+               </appinfo>
+            </annotation>
+            <simpleType>
+               <restriction base="string">
+                  <enumeration value="org.eclipse.tm.te.core.steps.connect">
+                  </enumeration>
+                  <enumeration value="org.eclipse.tm.te.core.steps.disconnect">
+                  </enumeration>
+               </restriction>
+            </simpleType>
+         </attribute>
+         <attribute name="label" type="string">
+            <annotation>
+               <documentation>
+                  The label representing the step group in the UI.
+               </documentation>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="step">
+      <annotation>
+         <documentation>
+            A connect strategy step.
+         </documentation>
+      </annotation>
+      <complexType>
+         <attribute name="id" type="string" use="required">
+            <annotation>
+               <documentation>
+                  The unique id of the connect strategy step.
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="label" type="string" use="required">
+            <annotation>
+               <documentation>
+                  The label representing the connect strategy step in the UI.
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="class" type="string" use="required">
+            <annotation>
+               <documentation>
+                  The class implementing the connect strategy step.
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="java" basedOn=":org.eclipse.tm.te.core.stepper.interfaces.IContextStep"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="since"/>
+      </appinfo>
+      <documentation>
+         Target Explorer 1.0.0
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="examples"/>
+      </appinfo>
+      <documentation>
+         This is an example of the extension point usage:
+&lt;p&gt;
+&lt;pre&gt;&lt;code&gt;
+   &lt;extension point=&quot;org.eclipse.tm.te.core.connectStrategies&quot;&gt;
+      &lt;connectStrategy
+            id=&quot;org.eclipse.tm.te.core.strategies.SshConnectStrategy&quot;
+            class=&quot;org.eclipse.tm.te.core.connection.strategies.SshConnectStrategy&quot;
+            label=&quot;Ssh Connect Strategy&quot;&gt;
+      &lt;/connectStrategy&gt;
+   &lt;/extension&gt;
+&lt;/code&gt;&lt;/pre&gt;
+      </documentation>
+   </annotation>
+
+
+   <annotation>
+      <appinfo>
+         <meta.section type="copyright"/>
+      </appinfo>
+      <documentation>
+         Copyright (c) 2011 Wind River Systems, Inc. and others.
+
+All rights reserved.
+
+This program and the accompanying materials are made available under the terms
+of the Eclipse Public License v1.0 which accompanies this distribution, and is
+available at http://www.eclipse.org/legal/epl-v10.html.
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="apiInfo"/>
+      </appinfo>
+      <documentation>
+         The provider of a connect strategy must implement &lt;samp&gt;org.eclipse.tm.te.core.interfaces.IConnectStrategy&lt;/samp&gt;.
+      </documentation>
+   </annotation>
+
+</schema>

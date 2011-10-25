@@ -32,33 +32,33 @@ class ChannelEventListener(channel.EventListener):
             args = channel.fromJSONSequence(data)
             if name == "peerAdded":
                 assert len(args) == 1
-                peer = Peer(self.channel.getRemotePeer(), args[0])
-                if self.proxy.peers.get(peer.getID()):
+                _peer = Peer(self.channel.getRemotePeer(), args[0])
+                if self.proxy.peers.get(_peer.getID()):
                     protocol.log("Invalid peerAdded event", Exception())
                     return
-                self.proxy.peers[peer.getID()] = peer
+                self.proxy.peers[_peer.getID()] = _peer
                 for l in self.proxy.listeners:
                     try:
-                        l.peerAdded(peer)
+                        l.peerAdded(_peer)
                     except Exception as x:
                         protocol.log("Unhandled exception in Locator listener", x)
             elif name == "peerChanged":
                 assert len(args) == 1
                 m = args[0]
                 if not m: raise Exception("Locator service: invalid peerChanged event - no peer ID")
-                peer = self.proxy.peers.get(m.get(peer.ATTR_ID))
-                if not peer: return
-                self.proxy.peers[peer.getID()] = peer
+                _peer = self.proxy.peers.get(m.get(peer.ATTR_ID))
+                if not _peer: return
+                self.proxy.peers[_peer.getID()] = _peer
                 for l in self.proxy.listeners:
                     try:
-                        l.peerChanged(peer)
+                        l.peerChanged(_peer)
                     except Exception as x:
                         protocol.log("Unhandled exception in Locator listener", x)
             elif name == "peerRemoved":
                 assert len(args) == 1
                 id = args[0]
-                peer = self.proxy.peers.get(id)
-                if not peer: return
+                _peer = self.proxy.peers.get(id)
+                if not _peer: return
                 del self.proxy.peers[id]
                 for l in self.proxy.listeners:
                     try:
@@ -68,8 +68,8 @@ class ChannelEventListener(channel.EventListener):
             elif name == "peerHeartBeat":
                 assert len(args) == 1
                 id = args[0]
-                peer = self.proxy.peers.get(id)
-                if not peer: return
+                _peer = self.proxy.peers.get(id)
+                if not _peer: return
                 for l in self.proxy.listeners:
                     try:
                         l.peerHeartBeat(id)
@@ -92,12 +92,12 @@ class LocatorProxy(locator.LocatorService):
     def getPeers(self):
         return self.peers
 
-    def redirect(self, peer, done):
+    def redirect(self, _peer, done):
         done = self._makeCallback(done)
         service = self
         class RedirectCommand(Command):
             def __init__(self):
-                super(RedirectCommand, self).__init__(service.channel, service, "redirect", [peer])
+                super(RedirectCommand, self).__init__(service.channel, service, "redirect", [_peer])
             def done(self, error, args):
                 if not error:
                     assert len(args) == 1
@@ -117,7 +117,7 @@ class LocatorProxy(locator.LocatorService):
         return SyncCommand().token
 
     def addListener(self, listener):
-        self.listeners.add(listener)
+        self.listeners.append(listener)
         if not self.get_peers_done:
             service = self
             class GetPeersCommand(Command):
@@ -135,13 +135,14 @@ class LocatorProxy(locator.LocatorService):
                         for m in c:
                             id = m.get(peer.ATTR_ID)
                             if service.peers.get(id): continue;
-                            peer = Peer(service.channel.getRemotePeer(), m)
-                            service.peers[id] = peer
+                            _peer = Peer(service.channel.getRemotePeer(), m)
+                            service.peers[id] = _peer
                             for l in service.listeners:
                                 try:
-                                    l.peerAdded(peer)
+                                    l.peerAdded(_peer)
                                 except Exception as x:
                                     protocol.log("Unhandled exception in Locator listener", x)
+            GetPeersCommand()
             self.get_peers_done = True
 
     def removeListener(self, listener):

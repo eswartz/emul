@@ -18,7 +18,7 @@
       </annotation>
       <complexType>
          <sequence>
-            <element ref="backendServices" minOccurs="0" maxOccurs="unbounded"/>
+            <element ref="connectionTypeServices" minOccurs="0" maxOccurs="unbounded"/>
             <element ref="genericServices" minOccurs="0" maxOccurs="unbounded"/>
          </sequence>
          <attribute name="point" type="string" use="required">
@@ -48,18 +48,18 @@
       </complexType>
    </element>
 
-   <element name="backendServices">
+   <element name="connectionTypeServices">
       <complexType>
          <sequence>
             <element ref="service" minOccurs="1" maxOccurs="unbounded"/>
          </sequence>
-         <attribute name="backendId" type="string" use="required">
+         <attribute name="connectionTypeId" type="string" use="required">
             <annotation>
                <documentation>
-                  The unique id of the communication backend contribution.
+                  The unique id of the connection type contribution.
                </documentation>
                <appinfo>
-                  <meta.attribute kind="identifier" basedOn="org.eclipse.tm.te.core.backends/backend/@id"/>
+                  <meta.attribute kind="identifier" basedOn="org.eclipse.tm.te.core.connectionTypes/connectionType/@id"/>
                </appinfo>
             </annotation>
          </attribute>
@@ -102,6 +102,13 @@ The service implementation class must be specified either by the class attribute
                <appinfo>
                   <meta.attribute kind="java" basedOn="org.eclipse.tm.te.runtime.services.AbstractService:org.eclipse.tm.te.runtime.interfaces.services.IService"/>
                </appinfo>
+            </annotation>
+         </attribute>
+         <attribute name="plugin" type="string">
+            <annotation>
+               <documentation>
+                  The name of the requested contributing bundle if different from the bundle declaring the contribution.
+               </documentation>
             </annotation>
          </attribute>
       </complexType>

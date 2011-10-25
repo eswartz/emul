@@ -29,4 +29,9 @@ public class Messages extends NLS {
 
 	// **** Declare externalized string id's down here *****
 
+	public static String ConnectStrategyStepExecutor_checkPoint_normalizationNeeded;
+	public static String ConnectStrategyStepExecutor_info_stepFailed;
+	public static String ConnectStrategyStepExecutor_warning_stepFailed;
+	public static String ConnectStrategyStepExecutor_error_stepFailed;
+	public static String ConnectStrategyStepExecutor_stepFailed_debugInfo;
 }
