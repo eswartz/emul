@@ -579,7 +579,7 @@ static void command_subscribe(char * token, Channel * c) {
         Subscription * h = all2subscription(l);
         l = l->next;
         if (h->channel == c && strcmp(type, h->type) == 0) {
-            err = ERR_OTHER;
+            err = set_errno(ERR_OTHER, "Already subscribed");
             break;
         }
     }
