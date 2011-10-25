@@ -19,6 +19,7 @@ import org.eclipse.debug.ui.IDebugUIConstants;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExpression;
+import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNumberFormat;
 import org.eclipse.tm.tcf.services.IExpressions;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 import org.eclipse.tm.tcf.util.TCFTask;
@@ -55,6 +56,13 @@ public class ViewMemoryCommand extends AbstractActionDelegate {
                                     if (addr != null) {
                                         byte[] bytes = val_data.getValue();
                                         if (bytes != null) size = bytes.length;
+                                    }
+                                    else if (val_data.getRegisterID() != null) {
+                                        byte[] bytes = val_data.getValue();
+                                        if (bytes != null) {
+                                            addr = TCFNumberFormat.toBigInteger(bytes, 0, bytes.length,
+                                                    val_data.isBigEndian(), false);
+                                        }
                                     }
                                 }
                             }

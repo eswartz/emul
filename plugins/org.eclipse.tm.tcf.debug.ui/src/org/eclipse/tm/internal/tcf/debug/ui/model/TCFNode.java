@@ -450,10 +450,10 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
     /*--------------------------------------------------------------------------------------*/
     /* Misc                                                                                 */
 
-    public void refresh(IWorkbenchPart view) {
+    public void refresh(IWorkbenchPart part) {
         model.flushAllCaches();
         for (TCFModelProxy p : model.getModelProxies()) {
-            if (p.getPresentationContext().getPart() != view) continue;
+            if (p.getPresentationContext().getPart() != part) continue;
             p.addDelta(this, IModelDelta.STATE | IModelDelta.CONTENT);
         }
     }

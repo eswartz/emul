@@ -27,6 +27,7 @@ import org.eclipse.debug.internal.ui.viewers.model.provisional.IModelDelta;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IViewerInputUpdate;
 import org.eclipse.debug.ui.IDebugUIConstants;
+import org.eclipse.debug.ui.memory.IMemoryRenderingSite;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
@@ -44,7 +45,7 @@ import org.eclipse.tm.tcf.services.IProcesses;
 import org.eclipse.tm.tcf.services.IRunControl;
 import org.eclipse.tm.tcf.services.ISymbols;
 import org.eclipse.tm.tcf.util.TCFDataCache;
-import org.eclipse.ui.IViewPart;
+import org.eclipse.ui.IWorkbenchPart;
 
 public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
 
@@ -1114,13 +1115,19 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
         return true;
     }
 
-    public void refresh(IViewPart view) {
-        last_children_list = null;
-        last_children_state_info = null;
-        last_stack_trace = null;
-        last_label = null;
-        last_image = null;
-        super.refresh(view);
+    @Override
+    public void refresh(IWorkbenchPart part) {
+        if (part instanceof IMemoryRenderingSite) {
+            model.onMemoryChanged(id, false);
+        }
+        else {
+            last_children_list = null;
+            last_children_state_info = null;
+            last_stack_trace = null;
+            last_label = null;
+            last_image = null;
+            super.refresh(part);
+        }
     }
 
     void postAllChangedDelta() {

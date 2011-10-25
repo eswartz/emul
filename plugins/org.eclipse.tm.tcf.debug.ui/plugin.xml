@@ -549,6 +549,41 @@
                   class="org.eclipse.tm.internal.tcf.debug.ui.commands.UpdatePolicyMenu"/>
          </menu>
       </menuContribution>
+      <!-- Memory View -->
+      <menuContribution
+            locationURI="toolbar:org.eclipse.debug.ui.MemoryView?after=additions">
+         <command
+               commandId="org.eclipse.tm.tcf.debug.ui.commands.refresh"
+               icon="icons/refresh.gif"
+               id="org.eclipse.tm.tcf.debug.ui.commands.refresh.memory"
+               label="%Refresh.label"
+               style="push">
+            <visibleWhen checkEnabled="false">
+               <with variable="activeContexts">
+                  <iterate ifEmpty="false" operator="or">
+                     <equals value="org.eclipse.tm.tcf.debug.ui.debugging"/>
+                  </iterate>
+               </with>
+            </visibleWhen>
+         </command>
+      </menuContribution>
+      <menuContribution
+            locationURI="menu:org.eclipse.debug.ui.MemoryView?after=additions">
+         <menu
+               label="%UpdatePolicy.label"
+               id="org.eclipse.tm.tcf.debug.ui.commands.update.policy.memory">
+            <visibleWhen checkEnabled="false">
+               <with variable="activeContexts">
+                  <iterate ifEmpty="false" operator="or">
+                     <equals value="org.eclipse.tm.tcf.debug.ui.debugging"/>
+                  </iterate>
+               </with>
+            </visibleWhen>
+            <dynamic
+                  id="org.eclipse.tm.tcf.debug.ui.commands.update.policy.memory.menu"
+                  class="org.eclipse.tm.internal.tcf.debug.ui.commands.UpdatePolicyMenu"/>
+         </menu>
+      </menuContribution>
    </extension>
 
    <extension

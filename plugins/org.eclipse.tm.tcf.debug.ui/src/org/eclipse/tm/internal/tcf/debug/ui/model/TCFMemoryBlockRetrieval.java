@@ -198,26 +198,6 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
             return 1;
         }
 
-        private BigInteger toBigInteger(byte[] data, boolean big_endian, boolean sign_extension) {
-            byte[] temp = null;
-            if (sign_extension) {
-                temp = new byte[data.length];
-            }
-            else {
-                temp = new byte[data.length + 1];
-                temp[0] = 0; // Extra byte to avoid sign extension by BigInteger
-            }
-            if (big_endian) {
-                System.arraycopy(data, 0, temp, sign_extension ? 0 : 1, data.length);
-            }
-            else {
-                for (int i = 0; i < data.length; i++) {
-                    temp[temp.length - i - 1] = data[i];
-                }
-            }
-            return new BigInteger(temp);
-        }
-
         public BigInteger getBigBaseAddress() throws DebugException {
             return new TCFDebugTask<BigInteger>(exec_ctx.getChannel()) {
                 public void run() {
@@ -245,7 +225,7 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
                         else {
                             ISymbols.Symbol type = expression_type.getData();
                             boolean signed = type != null && type.getTypeClass() == ISymbols.TypeClass.integer;
-                            done(toBigInteger(data, value.isBigEndian(), signed));
+                            done(TCFNumberFormat.toBigInteger(data, 0, data.length, value.isBigEndian(), signed));
                         }
                     }
                 }
