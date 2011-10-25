@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.common.Machine;
-import v9t9.emulator.runtime.cpu.Cpu9900;
 
 /**
  * @author ejs
