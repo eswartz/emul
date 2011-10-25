@@ -322,7 +322,7 @@ public class TCFLaunchDelegate extends LaunchConfigurationDelegate {
             final ILaunch launch, final IProgressMonitor monitor) throws CoreException {
         String local_id = null;
         int task_cnt = 1;
-        if (configuration.getAttribute(ATTR_RUN_LOCAL_AGENT, true)) {
+        if (configuration.getAttribute(ATTR_RUN_LOCAL_AGENT, false)) {
             task_cnt++;
             if (monitor != null) monitor.beginTask("Starting TCF Agent", task_cnt); //$NON-NLS-1$
             local_id = TCFLocalAgent.runLocalAgent();

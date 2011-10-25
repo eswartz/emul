@@ -568,7 +568,7 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
             TreeItem item = findItem(findPeerInfo(id));
             if (item != null) peer_tree.setSelection(item);
             peer_id_text.setText(id);
-            run_local_agent_button.setSelection(configuration.getAttribute(TCFLaunchDelegate.ATTR_RUN_LOCAL_AGENT, true));
+            run_local_agent_button.setSelection(configuration.getAttribute(TCFLaunchDelegate.ATTR_RUN_LOCAL_AGENT, false));
             use_local_agent_button.setSelection(configuration.getAttribute(TCFLaunchDelegate.ATTR_USE_LOCAL_AGENT, true));
             mem_map_cfg = configuration.getAttribute(TCFLaunchDelegate.ATTR_MEMORY_MAP, "null");
         }
@@ -592,6 +592,9 @@ public class TCFTargetTab extends AbstractLaunchConfigurationTab {
     }
 
     public void setDefaults(ILaunchConfigurationWorkingCopy configuration) {
+        configuration.setAttribute(TCFLaunchDelegate.ATTR_RUN_LOCAL_AGENT, false);
+        configuration.setAttribute(TCFLaunchDelegate.ATTR_USE_LOCAL_AGENT, true);
+        configuration.removeAttribute(TCFLaunchDelegate.ATTR_PEER_ID);
     }
 
     @Override
