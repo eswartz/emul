@@ -276,11 +276,6 @@ public class OpenWithMenu extends ContributionItem {
 		                .findEditor(IEditorRegistry.SYSTEM_EXTERNAL_EDITOR_ID);
 		createMenuItem(menu, descriptor, preferredEditor);
 
-		// Add system in-place editor (can be null)
-		descriptor = registry.findEditor(IEditorRegistry.SYSTEM_INPLACE_EDITOR_ID);
-		if (descriptor != null) {
-			createMenuItem(menu, descriptor, preferredEditor);
-		}
 		createDefaultMenuItem(menu);
 
 		// add Other... menu item

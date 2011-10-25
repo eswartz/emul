@@ -31,6 +31,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Text;
 import org.eclipse.tm.te.tcf.filesystem.internal.handlers.ContentTypeHelper;
 import org.eclipse.tm.te.tcf.filesystem.internal.handlers.StateManager;
 import org.eclipse.tm.te.tcf.filesystem.internal.nls.Messages;
@@ -100,9 +101,17 @@ public class GeneralInformationPage extends PropertyPage {
 		label.setText(text);
 		GridData data = new GridData();
 		data.horizontalAlignment = SWT.LEFT;
+		data.verticalAlignment = SWT.TOP;
 		label.setLayoutData(data);
-		label = new Label(parent, SWT.NONE);
-		label.setText(value);
+		Text txt = new Text(parent, SWT.WRAP | SWT.READ_ONLY);
+		data = new GridData();
+		data.verticalAlignment = SWT.TOP;
+		data.widthHint = 300;
+		data.grabExcessHorizontalSpace = true;
+		data.horizontalAlignment = GridData.FILL;		
+		txt.setLayoutData(data);
+		txt.setBackground(txt.getDisplay().getSystemColor(SWT.COLOR_WIDGET_BACKGROUND));
+		txt.setText(value);
 	}
 
 	/**
