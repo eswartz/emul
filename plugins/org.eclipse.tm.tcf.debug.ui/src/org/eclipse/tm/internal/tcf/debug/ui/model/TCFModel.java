@@ -145,6 +145,11 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     /** The id of a pinned view description presentation context */
     public static final String ID_PINNED_VIEW = Activator.PLUGIN_ID + ".pinned_view";
 
+    public static final int
+        UPDATE_POLICY_AUTOMATIC  = 0,
+        UPDATE_POLICY_MANUAL     = 1,
+        UPDATE_POLICY_BREAKPOINT = 2;
+
     /**
      * A dummy editor input to open the disassembly view as editor.
      */
@@ -278,6 +283,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
 
     private final Map<IWorkbenchPart,TCFNode> pins = new HashMap<IWorkbenchPart,TCFNode>();
     private final Map<IWorkbenchPart,TCFSnapshot> locks = new HashMap<IWorkbenchPart,TCFSnapshot>();
+    private final Map<IWorkbenchPart,Integer> lock_policy = new HashMap<IWorkbenchPart,Integer>();
 
     private TCFConsole console;
 
@@ -1380,6 +1386,24 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         return true;
     }
 
+    public void setLockPolicy(IWorkbenchPart part, int policy) {
+        if (policy == UPDATE_POLICY_AUTOMATIC) {
+            clearLock(part);
+            lock_policy.remove(part);
+        }
+        else {
+            if (!isLocked(part)) setLock(part);
+            lock_policy.put(part, policy);
+        }
+    }
+
+    public int getLockPolicy(IWorkbenchPart part) {
+        if (locks.get(part) == null) return UPDATE_POLICY_AUTOMATIC;
+        Integer i = lock_policy.get(part);
+        if (i == null || i.intValue() == 0) return UPDATE_POLICY_MANUAL;
+        return i.intValue();
+    }
+
     TCFSnapshot getSnapshot(IPresentationContext ctx) {
         return locks.get(ctx.getPart());
     }
@@ -1398,6 +1422,14 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 if (reason.equals(IRunControl.REASON_CONTAINER)) continue;
                 if (delay_stack_update_until_last_step && launch.getContextActionsCount(node.id) != 0) continue;
                 if (expanded_nodes.add(node.id)) proxy.expand(node);
+            }
+            if (reason.equals(IRunControl.REASON_BREAKPOINT)) {
+                IWorkbenchPart part = proxy.getPresentationContext().getPart();
+                int policy = getLockPolicy(part);
+                if (policy == UPDATE_POLICY_BREAKPOINT) {
+                    clearLock(part);
+                    setLock(part);
+                }
             }
         }
     }

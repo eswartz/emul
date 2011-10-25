@@ -13,6 +13,7 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
+import org.eclipse.tm.internal.tcf.debug.ui.model.TCFModel;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNode;
 import org.eclipse.tm.tcf.util.TCFTask;
 import org.eclipse.ui.IWorkbenchPart;
@@ -25,7 +26,7 @@ public class UpdatePolicyMenu extends CompoundContributionItem {
     private static final String[] policy_names = {
         "Automatic",
         "Manual",
-        //"Breakpoint Hit",
+        "Breakpoint Hit",
     };
 
     @Override
@@ -87,8 +88,9 @@ public class UpdatePolicyMenu extends CompoundContributionItem {
         if (node == null) return 0;
         return new TCFTask<Integer>(node.getChannel()) {
             public void run() {
-                if (!node.getModel().isLocked(part)) done(0);
-                else done(1);
+                TCFModel model = node.getModel();
+                if (!model.isLocked(part)) done(TCFModel.UPDATE_POLICY_AUTOMATIC);
+                else done(model.getLockPolicy(part));
             }
         }.getE();
     }
@@ -100,12 +102,8 @@ public class UpdatePolicyMenu extends CompoundContributionItem {
         if (node == null) return;
         new TCFTask<Object>(node.getChannel()) {
             public void run() {
-                if (n == 0) {
-                    node.getModel().clearLock(part);
-                }
-                else {
-                    node.getModel().setLock(part);
-                }
+                TCFModel model = node.getModel();
+                model.setLockPolicy(part, n);
                 done(null);
             }
         }.getE();
