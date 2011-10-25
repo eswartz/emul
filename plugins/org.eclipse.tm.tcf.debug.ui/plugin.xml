@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?eclipse version="3.2"?><!--
-    Copyright (c) 2010 Wind River Systems, Inc. and others.
+<?eclipse version="3.2"?>
+<!--
+    Copyright (c) 2010, 2011 Wind River Systems, Inc. and others.
     All rights reserved. This program and the accompanying materials
     are made available under the terms of the Eclipse Public License v1.0
     which accompanies this distribution, and is available at
@@ -63,7 +64,7 @@
    <extension point="org.eclipse.core.expressions.propertyTesters">
       <propertyTester
       		namespace="org.eclipse.tm.tcf.launch"
-            properties="isExecutable"
+            properties="isExecutable,areUpdatePoliciesSupported"
             type="org.eclipse.core.runtime.IAdaptable"
             class="org.eclipse.tm.internal.tcf.debug.ui.launch.TCFPropertyTester"
             id="org.eclipse.tm.tcf.launch.PropertyTester">
@@ -229,6 +230,12 @@
             icon="icons/signals.gif"
             label="%Signals.label"
             menubarPath="additions">
+            <enablement>
+               <pluginState
+                     value="activated"
+                     id="org.eclipse.tm.tcf.debug.ui">
+               </pluginState>
+            </enablement>
          </action>
       </objectContribution>
 
@@ -265,21 +272,9 @@
          <action
             id="org.eclipse.tm.tcf.debug.ui.actions.Refresh"
             class="org.eclipse.tm.internal.tcf.debug.ui.commands.RefreshCommand"
+            icon="icons/refresh.gif"
             label="%Refresh.label"
             menubarPath="additions">
-            <enablement>
-               <pluginState
-                     value="activated"
-                     id="org.eclipse.tm.tcf.debug.ui">
-               </pluginState>
-            </enablement>
-         </action>
-         <action
-               class="org.eclipse.tm.internal.tcf.debug.ui.commands.ManualRefreshCommand"
-               id="org.eclipse.tm.tcf.debug.ui.actions.ManualRefresh"
-               label="%ManualRefresh.label"
-               menubarPath="additions"
-               style="toggle">
             <enablement>
                <pluginState
                      value="activated"
@@ -380,6 +375,183 @@
    </extension>
 
    <extension
+         point="org.eclipse.ui.commands">
+      <category
+            name="%commands.category.name"
+            description="%commands.category.desc"
+            id="org.eclipse.tm.tcf.debug.ui.commands">
+      </category>
+      <command
+           categoryId="org.eclipse.tm.tcf.debug.ui.commands"
+           defaultHandler="org.eclipse.tm.internal.tcf.debug.ui.commands.RefreshHandler"
+           id="org.eclipse.tm.tcf.debug.ui.commands.refresh"
+           name="%Refresh.label"/>
+   </extension>
+
+   <extension point="org.eclipse.ui.handlers">
+      <handler
+            class="org.eclipse.tm.internal.tcf.debug.ui.commands.RefreshHandler"
+            commandId="org.eclipse.ui.file.refresh">
+         <activeWhen>
+            <and>
+               <with variable="activeContexts">
+                  <iterate ifEmpty="false" operator="or">
+                     <equals value="org.eclipse.tm.tcf.debug.ui.debugging"/>
+                  </iterate>
+               </with>
+               <with variable="activePart">
+                  <test property="org.eclipse.tm.tcf.launch.areUpdatePoliciesSupported"/>
+               </with>
+            </and>
+         </activeWhen>
+      </handler>
+   </extension>
+
+   <extension
+         point="org.eclipse.ui.menus">
+      <!-- Registers View -->
+      <menuContribution
+            locationURI="toolbar:org.eclipse.debug.ui.RegisterView?after=additions">
+         <command
+               commandId="org.eclipse.tm.tcf.debug.ui.commands.refresh"
+               icon="icons/refresh.gif"
+               id="org.eclipse.tm.tcf.debug.ui.commands.refresh.registers"
+               label="%Refresh.label"
+               style="push">
+            <visibleWhen checkEnabled="false">
+               <with variable="activeContexts">
+                  <iterate ifEmpty="false" operator="or">
+                     <equals value="org.eclipse.tm.tcf.debug.ui.debugging"/>
+                  </iterate>
+               </with>
+            </visibleWhen>
+         </command>
+      </menuContribution>
+      <menuContribution
+            locationURI="menu:org.eclipse.debug.ui.RegisterView?after=additions">
+         <menu
+               label="%UpdatePolicy.label"
+               id="org.eclipse.tm.tcf.debug.ui.commands.update.policy.registers">
+            <visibleWhen checkEnabled="false">
+               <with variable="activeContexts">
+                  <iterate ifEmpty="false" operator="or">
+                     <equals value="org.eclipse.tm.tcf.debug.ui.debugging"/>
+                  </iterate>
+               </with>
+            </visibleWhen>
+            <dynamic
+                  id="org.eclipse.tm.tcf.debug.ui.commands.update.policy.registers.menu"
+                  class="org.eclipse.tm.internal.tcf.debug.ui.commands.UpdatePolicyMenu"/>
+         </menu>
+      </menuContribution>
+      <!-- Variables View -->
+      <menuContribution
+            locationURI="toolbar:org.eclipse.debug.ui.VariableView?after=additions">
+         <command
+               commandId="org.eclipse.tm.tcf.debug.ui.commands.refresh"
+               icon="icons/refresh.gif"
+               id="org.eclipse.tm.tcf.debug.ui.commands.refresh.variables"
+               label="%Refresh.label"
+               style="push">
+            <visibleWhen checkEnabled="false">
+               <with variable="activeContexts">
+                  <iterate ifEmpty="false" operator="or">
+                     <equals value="org.eclipse.tm.tcf.debug.ui.debugging"/>
+                  </iterate>
+               </with>
+            </visibleWhen>
+         </command>
+      </menuContribution>
+      <menuContribution
+            locationURI="menu:org.eclipse.debug.ui.VariableView?after=additions">
+         <menu
+               label="%UpdatePolicy.label"
+               id="org.eclipse.tm.tcf.debug.ui.commands.update.policy.variables">
+            <visibleWhen checkEnabled="false">
+               <with variable="activeContexts">
+                  <iterate ifEmpty="false" operator="or">
+                     <equals value="org.eclipse.tm.tcf.debug.ui.debugging"/>
+                  </iterate>
+               </with>
+            </visibleWhen>
+            <dynamic
+                  id="org.eclipse.tm.tcf.debug.ui.commands.update.policy.variables.menu"
+                  class="org.eclipse.tm.internal.tcf.debug.ui.commands.UpdatePolicyMenu"/>
+         </menu>
+      </menuContribution>
+      <!-- Expressions View -->
+      <menuContribution
+            locationURI="toolbar:org.eclipse.debug.ui.ExpressionView?after=additions">
+         <command
+               commandId="org.eclipse.tm.tcf.debug.ui.commands.refresh"
+               icon="icons/refresh.gif"
+               id="org.eclipse.tm.tcf.debug.ui.commands.refresh.expressions"
+               label="%Refresh.label"
+               style="push">
+            <visibleWhen checkEnabled="false">
+               <with variable="activeContexts">
+                  <iterate ifEmpty="false" operator="or">
+                     <equals value="org.eclipse.tm.tcf.debug.ui.debugging"/>
+                  </iterate>
+               </with>
+            </visibleWhen>
+         </command>
+      </menuContribution>
+      <menuContribution
+            locationURI="menu:org.eclipse.debug.ui.ExpressionView?after=additions">
+         <menu
+               label="%UpdatePolicy.label"
+               id="org.eclipse.tm.tcf.debug.ui.commands.update.policy.expressions">
+            <visibleWhen checkEnabled="false">
+               <with variable="activeContexts">
+                  <iterate ifEmpty="false" operator="or">
+                     <equals value="org.eclipse.tm.tcf.debug.ui.debugging"/>
+                  </iterate>
+               </with>
+            </visibleWhen>
+            <dynamic
+                  id="org.eclipse.tm.tcf.debug.ui.commands.update.policy.expressions.menu"
+                  class="org.eclipse.tm.internal.tcf.debug.ui.commands.UpdatePolicyMenu"/>
+         </menu>
+      </menuContribution>
+      <!-- Modules View -->
+      <menuContribution
+            locationURI="toolbar:org.eclipse.debug.ui.ModuleView?after=additions">
+         <command
+               commandId="org.eclipse.tm.tcf.debug.ui.commands.refresh"
+               icon="icons/refresh.gif"
+               id="org.eclipse.tm.tcf.debug.ui.commands.refresh.modules"
+               label="%Refresh.label"
+               style="push">
+            <visibleWhen checkEnabled="false">
+               <with variable="activeContexts">
+                  <iterate ifEmpty="false" operator="or">
+                     <equals value="org.eclipse.tm.tcf.debug.ui.debugging"/>
+                  </iterate>
+               </with>
+            </visibleWhen>
+         </command>
+      </menuContribution>
+      <menuContribution
+            locationURI="menu:org.eclipse.debug.ui.ModuleView?after=additions">
+         <menu
+               label="%UpdatePolicy.label"
+               id="org.eclipse.tm.tcf.debug.ui.commands.update.policy.modules">
+            <visibleWhen checkEnabled="false">
+               <with variable="activeContexts">
+                  <iterate ifEmpty="false" operator="or">
+                     <equals value="org.eclipse.tm.tcf.debug.ui.debugging"/>
+                  </iterate>
+               </with>
+            </visibleWhen>
+            <dynamic
+                  id="org.eclipse.tm.tcf.debug.ui.commands.update.policy.modules.menu"
+                  class="org.eclipse.tm.internal.tcf.debug.ui.commands.UpdatePolicyMenu"/>
+         </menu>
+      </menuContribution>
+   </extension>
+
+   <extension
          point="org.eclipse.debug.ui.memoryRenderings">
       <renderingBindings
             defaultIds="org.eclipse.debug.ui.rendering.raw_memory"
@@ -419,6 +591,6 @@
    </extension>
 
    <extension point="org.eclipse.core.runtime.preferences">
-		<initializer class="org.eclipse.tm.internal.tcf.debug.ui.preferences.TCFPreferencesInitializer"/>
+      <initializer class="org.eclipse.tm.internal.tcf.debug.ui.preferences.TCFPreferencesInitializer"/>
    </extension>
 </plugin>

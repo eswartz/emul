@@ -40,6 +40,8 @@ class TCFSnapshot {
     private final String[] columns;
     private final RGB rgb_stalled = new RGB(128, 128, 128);
 
+    private boolean ignore_bg_color = true;
+
     private class PresentationData implements IChildrenCountUpdate, IChildrenUpdate, ILabelUpdate, Runnable {
 
         IViewerUpdate update;
@@ -300,7 +302,7 @@ class TCFSnapshot {
                     }
                 }
             }
-            if (data.bg_color != null) {
+            if (!ignore_bg_color && data.bg_color != null) {
                 for (int i = 0; i < data.bg_color.length; i++) {
                     if (data.bg_color[i] != null) update.setBackground(data.bg_color[i], i);
                 }

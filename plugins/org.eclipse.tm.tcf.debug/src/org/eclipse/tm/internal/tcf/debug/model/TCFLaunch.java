@@ -148,11 +148,9 @@ public class TCFLaunch extends Launch {
     private final IStreams.StreamsListener streams_listener = new IStreams.StreamsListener() {
 
         public void created(String stream_type, String stream_id, String context_id) {
+            stream_ids.put(stream_id, context_id);
             if (process_start_command == null) {
                 disconnectStream(stream_id);
-            }
-            else {
-                stream_ids.put(stream_id, context_id);
             }
         }
 
@@ -860,6 +858,7 @@ public class TCFLaunch extends Launch {
     }
 
     private void disconnectStream(String id) {
+        assert stream_ids.get(id) != null;
         stream_ids.remove(id);
         if (channel.getState() != IChannel.STATE_OPEN) return;
         IStreams streams = getService(IStreams.class);

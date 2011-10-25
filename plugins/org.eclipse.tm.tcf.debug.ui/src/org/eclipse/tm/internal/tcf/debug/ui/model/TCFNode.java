@@ -27,7 +27,7 @@ import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.util.TCFDataCache;
-import org.eclipse.ui.IViewPart;
+import org.eclipse.ui.IWorkbenchPart;
 
 /**
  * TCFNode is base class for all TCF debug model elements.
@@ -450,7 +450,7 @@ public abstract class TCFNode extends PlatformObject implements Comparable<TCFNo
     /*--------------------------------------------------------------------------------------*/
     /* Misc                                                                                 */
 
-    public void refresh(IViewPart view) {
+    public void refresh(IWorkbenchPart view) {
         model.flushAllCaches();
         for (TCFModelProxy p : model.getModelProxies()) {
             if (p.getPresentationContext().getPart() != view) continue;
