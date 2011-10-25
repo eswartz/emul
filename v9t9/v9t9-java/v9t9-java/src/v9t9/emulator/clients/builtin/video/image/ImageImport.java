@@ -238,13 +238,14 @@ public class ImageImport implements IBitmapPixelAccess {
 						b_error /= 4;
 				}
 			} else {
-				if (!skipped) {
-					if (Math.abs(r_error) < 0x10)
+				if (format == Format.COLOR256_1x1) {
+					// will never find a match if the color 
+					// didn't already match...
+					if (Math.abs(r_error) < 0x8 && Math.abs(g_error) < 0x8 && Math.abs(b_error) < 0x8) {
 						r_error /= 2;
-					if (Math.abs(g_error) < 0x10)
 						g_error /= 2;
-					if (Math.abs(b_error) < 0x10)
 						b_error /= 2;
+					}
 				}
 			}
 		}
@@ -822,24 +823,6 @@ public class ImageImport implements IBitmapPixelAccess {
 				+"; mapped="+mappedColors
 				);
 		
-		/*
-		ourDist = mapColor.getMaximalReplaceDistance(usedColors);
-		//if (format == Format.COLOR16_8x1)
-		//	ourDist /= 2;
-		
-		if (DEBUG) System.out.println("replacing colors below distance " + ourDist);
-		
-		byte[][] palette = mapColor.getPalette();
-
-		for (int i = 0; i < usedColors; i++) {
-			// ensure there will be an exact match so no dithering 
-			// occurs on the primary occurrences of this color
-			int idx = hist.getColorIndex(i);
-			byte[] rgb = palette[idx];
-			int newRGB = ColorMapUtils.rgb8ToPixel(rgb);
-			replaceColor(img, hist, idx, newRGB, ourDist);
-		}
-		*/
 		return hist;
 	}
 
@@ -1244,13 +1227,20 @@ public class ImageImport implements IBitmapPixelAccess {
 		paletteToIndex = new TreeMap<Integer, Integer>();
 		
 		if (ncols < 256) {
-			// ensure palette is valid: higher bit depth may have
-			// been guessed during palette optimization
-			for (int c = 0; c < ncols; c++) {
-				colorMgr.setRGB333(c, thePalette[c]);
-				/*colorMgr.setGRB333(c, Math.min(255, (thePalette[c][1] * 0xff / 0xdf)) >> 5, 
-					Math.min(255, (thePalette[c][0] * 0xff / 0xdf)) >> 5, 
-					Math.min(255, (thePalette[c][2] * 0xff / 0xdf)) >> 5);*/
+			// TODO: why is greyscale acting funny?
+			if (isGreyScale) {
+				// ensure palette is valid: higher bit depth may have
+				// been guessed during palette optimization
+				for (int c = 0; c < ncols; c++) {
+					colorMgr.setRGB333(c, thePalette[c]);
+				}
+			} else {
+				// ensure palette is valid: higher bit depth may have
+				// been guessed during palette optimization
+				for (int c = 0; c < ncols; c++) {
+					colorMgr.setRGB(c, thePalette[c]);
+				}
+				
 			}
 			
 			for (int c = 0; c < ncols; c++) {

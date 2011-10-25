@@ -18,6 +18,24 @@ class RGB332MapColor extends RGB333MapColor {
 		return pal;
 	}
 
+
+	protected byte[] getRGB33x(int r, int g, int b) {
+		byte[] rgbs;
+		if (!isGreyscale) {
+			rgbs = ColorMapUtils.getGRB332(g, r, b >> 1);
+		} else {
+			// (299 * rgb[0] + 587 * rgb[1] + 114 * rgb[2]) * 256 / 1000;
+			
+			//int l = (r * 299 + g * 587 + b * 114) / 1000;
+			//rgbs = ColorMapUtils.getGRB333(l, l, l);
+			int bi = ((b & ~1) | ((r | g) & 1));
+			rgbs = ColorMapUtils.getRgbToGreyForGreyscaleMode(new byte[] { 
+					(byte) (r * 255 / 7), (byte) (g * 255 / 7), (byte) (bi * 255 / 7) });
+		}
+			
+		return rgbs;
+	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.video.image.RGB333MapColor#mapColor(int, int[])
 	 */
@@ -38,9 +56,7 @@ class RGB332MapColor extends RGB333MapColor {
 		int r = ((pixel & 0xff0000) >>> 16) >> 5;
 		int g = ((pixel & 0x00ff00) >>>  8) >> 5;
 		int b = ((pixel & 0x0000ff) >>>  0) >> 6;
-		byte[] rgb = ColorMapUtils.getGRB332(g, r, b);
-		if (isGreyscale)
-			rgb = ColorMapUtils.getRgbToGreyForGreyscaleMode(rgb);
+		byte[] rgb = getRGB33x(r, g, b);
 		return ColorMapUtils.rgb8ToPixel(rgb);
 	}
 	
@@ -52,7 +68,6 @@ class RGB332MapColor extends RGB333MapColor {
 		// we don't need to trawl the palette here
 		if (isGreyscale) {
 			pixel = ColorMapUtils.getPixelForGreyscaleMode(pixel);
-			
 		}
 		
 		int r = ((pixel & 0xff0000) >>> 16) >>> 5;

@@ -308,14 +308,19 @@ public class ColorMapUtils {
 
 	/** Get the RGB triple for the 3-bit GRB. */
 	public static byte[] getGRB332(int g, int r, int b) {
-		return new byte[] { rgb3to8[r&0x7], rgb3to8[g&0x7], rgb2to8[b&0x3] };
+		//return new byte[] { rgb3to8[r&0x7], rgb3to8[g&0x7], rgb2to8[b&0x3] };
+		return new byte[] { rgb3to8[r&0x7], rgb3to8[g&0x7], rgb3to8[(b&0x3)*2 + ((r|g) & 1)] };
 	}
 
 	/** Get the 8-bit RGB values from a packed 3-3-2 GRB byte */
 	public static void getGRB332(byte[] rgb, byte grb, boolean isGreyscale) {
-		rgb[0] = rgb3to8[(grb >> 2) & 0x7];
-		rgb[1] = rgb3to8[(grb >> 5) & 0x7];
-		rgb[2] = rgb2to8[grb & 0x3];
+		int g = (grb >> 5) & 0x7;
+		int r = (grb >> 2) & 0x7;
+		rgb[0] = rgb3to8[r];
+		rgb[1] = rgb3to8[g];
+		//rgb[2] = rgb2to8[grb & 0x3];
+		int b = grb & 0x3;
+		rgb[2] = rgb3to8[b*2 + ((r|g) & 1)];
 		if (isGreyscale) {
 			int l = ((rgb[0] & 0xff) * 299 + (rgb[1] & 0xff) * 587 + (rgb[2] & 0xff) * 114) / 1000;
 			rgb[0] = (byte) l;

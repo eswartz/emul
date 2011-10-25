@@ -20,7 +20,7 @@ class RGB333MapColor extends BasePaletteMapper {
 		int g = ((pixel & 0x00ff00) >>>  8) >>> 5;
 		int b = ((pixel & 0x0000ff) >>>  0) >>> 5;
 		
-		byte[] rgbs = getRGB333(r, g, b);
+		byte[] rgbs = getRGB33x(r, g, b);
 		
 		if (isGreyscale)
 			dist[0] = ColorMapUtils.getRGBLumDistance(rgbs, pixel);
@@ -33,7 +33,7 @@ class RGB333MapColor extends BasePaletteMapper {
 		return c;
 	}
 
-	private byte[] getRGB333(int r, int g, int b) {
+	protected byte[] getRGB33x(int r, int g, int b) {
 		byte[] rgbs;
 		if (!isGreyscale) {
 			rgbs = ColorMapUtils.getGRB333(g, r, b);
@@ -83,7 +83,7 @@ class RGB333MapColor extends BasePaletteMapper {
 		int g = (c >> 3) & 0x7;
 		int b = (c >> 0) & 0x7;
 		
-		byte[] rgbs = getRGB333(r, g, b);
+		byte[] rgbs = getRGB33x(r, g, b);
 		return ColorMapUtils.rgb8ToPixel(rgbs);
 	}
 }
