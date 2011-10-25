@@ -251,6 +251,11 @@ class AbstractChannel(object):
         Redirect this channel to given peer using this channel remote peer locator service as a proxy.
         @param peer_attrs - peer that will become new remote communication endpoint of this channel
         """
+        if isinstance(peer_attrs, str):
+            # support for redirect(peerId)
+            map = {}
+            map[peer.ATTR_ID] = peer_attrs
+            peer_attrs = map
         channel = self
         assert protocol.isDispatchThread()
         if self.state == STATE_OPENING:
@@ -264,19 +269,19 @@ class AbstractChannel(object):
                         self.remote_peer.getID() + " has no locator service")
                 peer_id = peer_attrs.get(peer.ATTR_ID)
                 if peer_id and len(peer_attrs) == 1:
-                    peer = l.getPeers().get(peer_id)
-                    if not peer:
+                    _peer = l.getPeers().get(peer_id)
+                    if not _peer:
                         # Peer not found, must wait for a while until peer is discovered or time out
                         class Callback(object):
                             found = None
                             def __call__(self):
                                 if self.found: return
-                                self.channel.terminate(Exception("Peer " + peer_id + " not found"))
+                                channel.terminate(Exception("Peer " + peer_id + " not found"))
                         cb = Callback()
                         protocol.invokeLaterWithDelay(locator.DATA_RETENTION_PERIOD / 3, cb)
                         class Listener(locator.LocatorListener):
-                            def peerAdded(self, peer):
-                                if peer.getID() == peer_id:
+                            def peerAdded(self, new_peer):
+                                if new_peer.getID() == peer_id:
                                     cb.found = True
                                     channel.state = STATE_OPEN
                                     l.removeListener(self)
@@ -289,7 +294,7 @@ class AbstractChannel(object):
                                 channel.redirect_command = None
                                 if channel.state != STATE_OPENING: return
                                 if exc: channel.terminate(exc)
-                                channel.remote_peer = peer
+                                channel.remote_peer = _peer
                                 channel.remote_service_by_class.clear()
                                 channel.remote_service_by_name.clear()
                                 channel.event_listeners.clear()
