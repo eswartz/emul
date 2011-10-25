@@ -16,6 +16,7 @@ from tcf.channel.Command import Command
 class StreamsProxy(streams.StreamsService):
     def __init__(self, channel):
         self.channel = channel
+        self.listeners = {}
 
     def connect(self, stream_id, done):
         done = self._makeCallback(done)
