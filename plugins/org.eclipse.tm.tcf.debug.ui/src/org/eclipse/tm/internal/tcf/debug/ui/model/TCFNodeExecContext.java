@@ -1118,7 +1118,7 @@ public class TCFNodeExecContext extends TCFNode implements ISymbolOwner {
     @Override
     public void refresh(IWorkbenchPart part) {
         if (part instanceof IMemoryRenderingSite) {
-            model.onMemoryChanged(id, false);
+            model.onMemoryChanged(id, false, false);
         }
         else {
             last_children_list = null;

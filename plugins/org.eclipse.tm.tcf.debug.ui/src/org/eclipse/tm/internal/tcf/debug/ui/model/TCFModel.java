@@ -222,6 +222,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
     private class MemoryBlocksUpdate extends TCFDataCache<Map<String,TCFMemoryBlockRetrieval>> {
 
         final Set<String> changeset = new HashSet<String>();
+        final Set<String> suspended = new HashSet<String>();
 
         MemoryBlocksUpdate(IChannel channel) {
             super(channel);
@@ -230,7 +231,9 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                     if (!validate(this)) return;
                     Map<String,TCFMemoryBlockRetrieval> map = getData();
                     if (map != null) { // map can be null if, for example, the channel was closed
-                        for (TCFMemoryBlockRetrieval r : map.values()) r.onMemoryChanged();
+                        for (TCFMemoryBlockRetrieval r : map.values()) {
+                            r.onMemoryChanged(suspended.contains(r.getMemoryID()));
+                        }
                     }
                     launch.removePendingClient(mem_blocks_update);
                     mem_blocks_update = null;
@@ -238,8 +241,9 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             });
         }
 
-        void add(String id) {
+        void add(String id, boolean suspended) {
             changeset.add(id);
+            if (suspended) this.suspended.add(id);
         }
 
         public boolean startDataRetrieval() {
@@ -262,9 +266,11 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                     if (!c.validate(this)) return false;
                     node = c.getData();
                     if (node == null) continue;
-                    if (map.get(node.id) != null) continue;
                     TCFMemoryBlockRetrieval r = mem_retrieval.get(node.id);
-                    if (r != null) map.put(node.id, r);
+                    if (r != null) {
+                        map.put(node.id, r);
+                        if (suspended.contains(id)) suspended.add(node.id);
+                    }
                 }
             }
             set(null, null, map);
@@ -329,7 +335,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 if (node instanceof TCFNodeExecContext) {
                     ((TCFNodeExecContext)node).onContextChanged(ctx);
                 }
-                onMemoryChanged(id, true);
+                onMemoryChanged(id, true, false);
             }
         }
 
@@ -342,7 +348,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
             if (node instanceof TCFNodeExecContext) {
                 ((TCFNodeExecContext)node).onMemoryChanged(addr, size);
             }
-            onMemoryChanged(id, true);
+            onMemoryChanged(id, true, false);
         }
     };
 
@@ -368,7 +374,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 if (!id.equals(context) && node instanceof TCFNodeExecContext) {
                     ((TCFNodeExecContext)node).onContainerSuspended();
                 }
-                onMemoryChanged(id, false);
+                onMemoryChanged(id, false, true);
             }
             TCFNode node = getNode(context);
             if (node instanceof TCFNodeExecContext) {
@@ -407,7 +413,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 if (node instanceof TCFNodeExecContext) {
                     ((TCFNodeExecContext)node).onContextChanged(ctx);
                 }
-                onMemoryChanged(id, true);
+                onMemoryChanged(id, true, false);
             }
             launch_node.onAnyContextSuspendedOrChanged();
         }
@@ -442,7 +448,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 setDebugViewSelection(node, reason);
                 annotation_manager.updateAnnotations(null, launch);
             }
-            onMemoryChanged(id, false);
+            onMemoryChanged(id, false, true);
         }
     };
 
@@ -454,7 +460,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 TCFNodeExecContext exe = (TCFNodeExecContext)node;
                 exe.onMemoryMapChanged();
             }
-            onMemoryChanged(id, true);
+            onMemoryChanged(id, true, false);
             display.asyncExec(new Runnable() {
                 public void run() {
                     if (PlatformUI.isWorkbenchRunning()) {
@@ -770,7 +776,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
         Activator.log(bf.toString(), x);
     }
 
-    void onMemoryChanged(String id, boolean notify_references) {
+    void onMemoryChanged(String id, boolean notify_references, boolean context_suspended) {
         if (channel == null) return;
         if (notify_references) {
             for (Object obj : context_map.values()) {
@@ -792,7 +798,7 @@ public class TCFModel implements IElementContentProvider, IElementLabelProvider,
                 launch.addPendingClient(mem_blocks_update);
             }
         }
-        mem_blocks_update.add(id);
+        mem_blocks_update.add(id, context_suspended);
     }
 
     public TCFAction getActiveAction(String id) {

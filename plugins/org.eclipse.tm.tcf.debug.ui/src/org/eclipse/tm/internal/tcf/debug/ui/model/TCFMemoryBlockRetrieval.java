@@ -31,6 +31,7 @@ import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
+import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IExpressions;
 import org.eclipse.tm.tcf.services.IMemory;
 import org.eclipse.tm.tcf.services.ISymbols;
@@ -46,6 +47,20 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
     private final TCFNodeExecContext exec_ctx;
     private final HashSet<MemoryBlock> mem_blocks = new HashSet<MemoryBlock>();
 
+    private static class MemData {
+        final BigInteger addr;
+        final MemoryByte[] data;
+        final byte[] bytes;
+
+        MemData(BigInteger addr, MemoryByte[] data) {
+            int i = 0;
+            this.addr = addr;
+            this.data = data;
+            this.bytes = new byte[data.length];
+            for (MemoryByte b : data) bytes[i++] = b.getValue();
+        }
+    }
+
     private class MemoryBlock extends PlatformObject implements IMemoryBlockExtension {
 
         private final String expression;
@@ -56,6 +71,10 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
         private final TCFDataCache<ISymbols.Symbol> expression_type;
 
         private boolean disposed;
+
+        private MemData mem_data; // current memory block data
+        private MemData mem_prev; // previous data - before last suspend
+        private MemData mem_last; // last retrieved memory block data
 
         MemoryBlock(final String expression, long length) {
             this.expression = expression;
@@ -236,6 +255,20 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
             return new TCFDebugTask<MemoryByte[]>(exec_ctx.getChannel()) {
                 int offs = 0;
                 public void run() {
+                    if (mem_data != null &&
+                            address.compareTo(mem_data.addr) >= 0 &&
+                            address.add(BigInteger.valueOf(units)).compareTo(
+                                    mem_data.addr.add(BigInteger.valueOf(mem_data.data.length))) <= 0) {
+                        offs = address.subtract(mem_data.addr).intValue();
+                        MemoryByte[] res = mem_data.data;
+                        if (units < mem_data.data.length) {
+                            res = new MemoryByte[(int)units];
+                            System.arraycopy(mem_data, offs, res, 0, res.length);
+                        }
+                        setHistoryFlags();
+                        done(res);
+                        return;
+                    }
                     if (exec_ctx.isDisposed()) {
                         error("Context is disposed");
                         return;
@@ -269,14 +302,14 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
                                     IMemory.ErrorOffset ofs = (IMemory.ErrorOffset)error;
                                     int status = ofs.getStatus(cnt);
                                     if (status == IMemory.ErrorOffset.BYTE_VALID) {
-                                        flags = MemoryByte.READABLE | MemoryByte.WRITABLE;
+                                        flags |= MemoryByte.READABLE | MemoryByte.WRITABLE;
                                     }
                                     else if ((status & IMemory.ErrorOffset.BYTE_UNKNOWN) != 0) {
                                         if (cnt > 0) break;
                                     }
                                 }
                                 else if (error == null) {
-                                    flags = MemoryByte.READABLE | MemoryByte.WRITABLE;
+                                    flags |= MemoryByte.READABLE | MemoryByte.WRITABLE;
                                 }
                                 res[offs] = new MemoryByte(buf[offs], (byte)flags);
                                 offs++;
@@ -286,12 +319,40 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
                                 mem.get(address.add(BigInteger.valueOf(offs)), 1, buf, offs, size - offs, mode, this);
                             }
                             else {
+                                mem_last = mem_data = new MemData(address, res);
+                                setHistoryFlags();
                                 done(res);
                             }
                         }
                     });
                 }
             }.getD();
+        }
+
+        private void setHistoryFlags() {
+            if (mem_data == null) return;
+            BigInteger addr = mem_data.addr;
+            BigInteger his_start = null;
+            BigInteger his_end = null;
+            if (mem_prev != null) {
+                his_start = mem_prev.addr;
+                his_end = mem_prev.addr.add(BigInteger.valueOf(mem_prev.data.length));
+            }
+            for (MemoryByte b : mem_data.data) {
+                int flags = b.getFlags();
+                if (mem_prev != null && addr.compareTo(his_start) >= 0 && addr.compareTo(his_end) < 0) {
+                    flags |= MemoryByte.HISTORY_KNOWN;
+                    int offs = addr.subtract(his_start).intValue();
+                    if (b.getValue() != mem_prev.data[offs].getValue()) {
+                        flags |= MemoryByte.CHANGED;
+                    }
+                }
+                else {
+                    flags &= ~(MemoryByte.HISTORY_KNOWN | MemoryByte.CHANGED);
+                }
+                b.setFlags((byte)flags);
+                addr = addr.add(BigInteger.valueOf(1));
+            }
         }
 
         public MemoryByte[] getBytesFromOffset(BigInteger offset, long units) throws DebugException {
@@ -368,11 +429,12 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
         }
 
         public boolean supportsChangeManagement() {
-            return false;
+            return true;
         }
 
         public byte[] getBytes() throws DebugException {
-            return null;
+            if (mem_data == null) return null;
+            return mem_data.bytes;
         }
 
         public void setValue(long offset, byte[] bytes) throws DebugException {
@@ -428,10 +490,17 @@ class TCFMemoryBlockRetrieval implements IMemoryBlockRetrievalExtension {
         return true;
     }
 
-    void onMemoryChanged() {
+    public String getMemoryID() {
+        return exec_ctx.id;
+    }
+
+    void onMemoryChanged(boolean suspended) {
+        assert Protocol.isDispatchThread();
         if (mem_blocks.size() == 0) return;
         ArrayList<DebugEvent> list = new ArrayList<DebugEvent>();
         for (MemoryBlock b : mem_blocks) {
+            if (suspended) b.mem_prev = b.mem_last;
+            b.mem_data = null;
             list.add(new DebugEvent(b, DebugEvent.CHANGE, DebugEvent.CONTENT));
         }
         DebugPlugin.getDefault().fireDebugEventSet(list.toArray(new DebugEvent[list.size()]));
