@@ -132,7 +132,6 @@ extern struct ip_ifc_info * get_ip_ifc(void);
 #define loc_gai_strerror gai_strerror
 
 #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__APPLE__)
-#  define O_LARGEFILE 0
 #  define SA_LEN(addr) ((addr)->sa_len)
 #else /* not BSD */
 #  define SA_LEN(addr) (sizeof(struct sockaddr))

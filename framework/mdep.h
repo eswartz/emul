@@ -334,6 +334,7 @@ extern int loc_clock_gettime(int, struct timespec *);
 #define O_BINARY 0
 
 #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__APPLE__)
+#  define O_LARGEFILE 0
 extern char ** environ;
 extern char * canonicalize_file_name(const char * path);
 #endif /* BSD */
