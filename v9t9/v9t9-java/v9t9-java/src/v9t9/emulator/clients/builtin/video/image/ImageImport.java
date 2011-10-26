@@ -38,7 +38,7 @@ import v9t9.engine.VdpHandler;
  *
  */
 public class ImageImport implements IBitmapPixelAccess {
-	private boolean DEBUG = false;
+	private boolean DEBUG = true;
 
 	private ImageData imageData;
 	private Format format;
@@ -330,7 +330,7 @@ public class ImageImport implements IBitmapPixelAccess {
 		for (int y = 0; y < img.getHeight(); y++) {
 			for (int x = 0; x < img.getWidth(); x += 8) {
 				for (int xo = 0; xo < 8; xo++) {
-					ditherize(img, mapper, hist, x + xo, y, !canSetPalette);
+					ditherize(img, mapper, hist, x + xo, y, false);
 				}
 			}
 		}
@@ -527,8 +527,10 @@ public class ImageImport implements IBitmapPixelAccess {
 					limitDither = false;  // go nuts!
 				} else {
 					limitDither = !isGreyScale;
-					if (isStandardPalette && !isGreyScale)
+					if (isStandardPalette && !isGreyScale) {
+						//thePalette = VdpColorManager.stockPaletteEd; 
 						mapColor = new TI16MapColor(thePalette);
+					}
 						//mapColor = new UserPaletteMapColor(thePalette, firstColor, 16, isGreyScale);
 					else
 						mapColor = new UserPaletteMapColor(thePalette, firstColor, 16, isGreyScale);
@@ -621,7 +623,7 @@ public class ImageImport implements IBitmapPixelAccess {
 	private void createOptimalPalette(BufferedImage image, int colorCount) {
 		int toAllocate = colorCount - firstColor;
 		
-		ColorOctree octree = new ColorOctree(3, 16 - firstColor, true);
+		ColorOctree octree = new ColorOctree(4, toAllocate, true);
 		int[] prgb = { 0, 0, 0 };
 		int[] rgbs = new int[image.getWidth()];
 		for (int y = 0; y < image.getHeight(); y++) {
@@ -639,24 +641,6 @@ public class ImageImport implements IBitmapPixelAccess {
 		int index = firstColor;
 		
 		List<LeafNode> leaves = octree.gatherLeaves();
-		if (colorCount == 4) {
-			// take something of each major luminance 
-			List<LeafNode> toUse = new ArrayList<LeafNode>();
-			
-			int lumMask = 0;
-			for (LeafNode leaf : leaves) {
-				int lum = ColorMapUtils.getRGBLum(leaf.reprRGB());
-				int lumBit = lum >> 6;
-				if ((lumMask & (1 << lumBit)) == 0 || ((lumMask & 0x9) == 0x9)) {
-					lumMask |= (1 << lumBit);
-					toUse.add(leaf);
-					if (toUse.size() == toAllocate)
-						break;
-				}
-			}
-			
-			leaves = toUse;
-		}
 		
 		for (ColorOctree.LeafNode node : leaves) {
 			int[] repr = node.reprRGB();

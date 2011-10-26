@@ -4,6 +4,7 @@
 package v9t9.emulator.clients.builtin.video.image;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -338,9 +339,9 @@ public class ColorOctree {
 				newLeaf.greens = (newLeaf.greens * 1) / 3; 
 				newLeaf.blues = (newLeaf.blues * 1) / 3; 
 			} else if (index == 7) {
-				newLeaf.reds = (newLeaf.reds * 3) / 2; 
-				newLeaf.greens = (newLeaf.greens * 3) / 2; 
-				newLeaf.blues = (newLeaf.blues * 3) / 2; 
+				newLeaf.reds = Math.min(255 * newLeaf.pixelCount, (newLeaf.reds * 3) / 2); 
+				newLeaf.greens = Math.min(255 * newLeaf.pixelCount, (newLeaf.greens * 3) / 2); 
+				newLeaf.blues = Math.min(255 * newLeaf.pixelCount, (newLeaf.blues * 3) / 2); 
 			}
 		}
 
@@ -357,6 +358,13 @@ public class ColorOctree {
 	public List<LeafNode> gatherLeaves() {
 		List<LeafNode> nodes = new ArrayList<ColorOctree.LeafNode>();
 		gatherLeaves(nodes, root, 0);
+		Collections.sort(nodes, new Comparator<LeafNode>() {
+
+			@Override
+			public int compare(LeafNode o1, LeafNode o2) {
+				return o2.getPixelCount() - o1.getPixelCount();
+			}
+		});
 		return nodes;
 	}
 

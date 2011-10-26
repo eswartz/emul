@@ -93,12 +93,18 @@ class TI16MapColor extends BasePaletteMapper {
 		}
 		else {
 			Pair<Integer, Integer> info = ColorMapUtils.getClosestColorByDistanceAndHSV(
-					palette, firstColor, 16, pixel, darkGreen);
+					palette, firstColor, 16, pixel, -1);
 			
 			closest = info.first; mindiff = info.second;
 			if (!isGreyscale) {
+				if (closest == darkGreen) {
+					if (phsv[1] < 0.5f) {
+						closest = black;
+						mindiff = ColorMapUtils.getRGBDistance(palette[closest], pixel);
+					}
+				}
 				// see how the color matches
-				if (closest == black) {
+				else if (false && closest == black) {
 					if (phsv[1] > 0.9f && val >= 25) {
 						if ((hue >= 90 && hue < 140) && (val >= 5 && val <= 33)) {
 							closest = 12;
@@ -131,6 +137,7 @@ class TI16MapColor extends BasePaletteMapper {
 	
 	@Override
 	public int getMinimalPaletteDistance() {
-		return 0x30 * 0x30 * 3;
+		//return super.getMinimalPaletteDistance();
+		return 0x10 * 0x20 * 3;
 	}
 }
