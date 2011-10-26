@@ -14,13 +14,13 @@
    height="1536"
    id="svg2"
    sodipodi:version="0.32"
-   inkscape:version="0.48.0 r9654"
+   inkscape:version="0.48.2 r9819"
    version="1.0"
    sodipodi:docname="icons.svg"
    inkscape:output_extension="org.inkscape.output.svg.inkscape"
-   inkscape:export-filename="/home/ejs/devel/emul/java/v9t9-java/icons/icons_128.png"
-   inkscape:export-xdpi="180"
-   inkscape:export-ydpi="180">
+   inkscape:export-filename="/home/ejs/devel/emul/v9t9/v9t9-java/v9t9-java/data/icons/v9t9_32png.png"
+   inkscape:export-xdpi="45"
+   inkscape:export-ydpi="45">
   <sodipodi:namedview
      id="base"
      pagecolor="#ffffff"
@@ -31,16 +31,16 @@
      objecttolerance="10"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.4142136"
-     inkscape:cx="62.683992"
-     inkscape:cy="229.07883"
+     inkscape:zoom="4.0000001"
+     inkscape:cx="31.258663"
+     inkscape:cy="793.04851"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
      inkscape:window-width="1130"
      inkscape:window-height="936"
-     inkscape:window-x="261"
-     inkscape:window-y="168"
+     inkscape:window-x="291"
+     inkscape:window-y="79"
      showguides="true"
      inkscape:window-maximized="0"
      inkscape:snap-global="true"
@@ -85725,7 +85725,7 @@
        fy="721.25"
        r="21.25"
        gradientUnits="userSpaceOnUse"
-       gradientTransform="matrix(-0.01176471,2,-0.9999827,-0.00588225,752.34929,663.99257)" />
+       gradientTransform="matrix(0.0196074,1.9999385,-0.59999987,0.0058824,462.89698,655.50921)" />
     <filter
        inkscape:collect="always"
        id="filter21756"
@@ -85935,15 +85935,6 @@
          offset="1"
          style="stop-color:#313131;stop-opacity:1;" />
     </linearGradient>
-    <filter
-       color-interpolation-filters="sRGB"
-       inkscape:collect="always"
-       id="filter22882">
-      <feGaussianBlur
-         inkscape:collect="always"
-         stdDeviation="0.84092172"
-         id="feGaussianBlur22884" />
-    </filter>
     <linearGradient
        id="linearGradient3979-7">
       <stop
@@ -86005,6 +85996,20 @@
        y1="820.25"
        x2="23.999994"
        y2="820.25" />
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath41352">
+      <path
+         sodipodi:type="arc"
+         style="fill:none;stroke:black;stroke-width:3;stroke-linecap:butt;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+         id="path41354"
+         sodipodi:cx="35"
+         sodipodi:cy="725"
+         sodipodi:rx="19.75"
+         sodipodi:ry="19.75"
+         d="m 54.75,725 a 19.75,19.75 0 1 1 -39.5,0 19.75,19.75 0 1 1 39.5,0 z"
+         transform="translate(3.5,-508.125)" />
+    </clipPath>
   </defs>
   <metadata
      id="metadata7">
@@ -86014,7 +86019,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -87098,10 +87103,10 @@
     <rect
        style="fill:#90d9dc;fill-opacity:1;fill-rule:nonzero;stroke:black;stroke-width:2;stroke-linecap:butt;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
        id="rect21578"
-       width="36.625"
-       height="29.875"
-       x="6.375"
-       y="201.25" />
+       width="32"
+       height="29.125"
+       x="11"
+       y="202" />
     <path
        style="opacity:0.75;fill:black;fill-opacity:1;fill-rule:nonzero;stroke:black;stroke-width:2;stroke-linecap:butt;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;filter:url(#filter21574)"
        d="m 40.75,199.625 c -10.902,0 -19.75,8.848 -19.75,19.75 0,4.56118 1.556264,8.7492 4.15625,12.09375 l -0.5625,-0.59375 -16.625,16.625 0.8125,2.96875 2.6875,0.71875 16.625,-16.625 c 3.426688,2.8607 7.846728,4.5625 12.65625,4.5625 10.902,0 19.75,-8.848 19.75,-19.75 0,-10.902 -8.848,-19.75 -19.75,-19.75 z"
@@ -87130,16 +87135,14 @@
        height="1024"
        clip-path="url(#clipPath21600)"
        sodipodi:insensitive="true" />
-    <path
-       transform="translate(3.5,-508.125)"
-       d="m 54.75,725 c 0,10.90762 -8.842376,19.75 -19.75,19.75 -10.907624,0 -19.75,-8.84238 -19.75,-19.75 0,-10.90762 8.842376,-19.75 19.75,-19.75 10.907624,0 19.75,8.84238 19.75,19.75 z"
-       sodipodi:ry="19.75"
-       sodipodi:rx="19.75"
-       sodipodi:cy="725"
-       sodipodi:cx="35"
-       id="path21592"
-       style="opacity:0.5;fill:url(#radialGradient21613);fill-opacity:1;fill-rule:nonzero;stroke:black;stroke-width:3;stroke-linecap:butt;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;filter:url(#filter21591)"
-       sodipodi:type="arc" />
+    <rect
+       y="194"
+       x="-2.5130754"
+       height="44.375"
+       width="54.40115"
+       id="rect41294"
+       style="fill:#90d9dc;fill-opacity:1;fill-rule:nonzero;stroke:black;stroke-width:2.97071123;stroke-linecap:butt;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+       clip-path="url(#clipPath41352)" />
     <path
        sodipodi:type="arc"
        style="fill:none;stroke:black;stroke-width:3;stroke-linecap:butt;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
@@ -87150,6 +87153,16 @@
        sodipodi:ry="19.75"
        d="m 54.75,725 c 0,10.90762 -8.842376,19.75 -19.75,19.75 -10.907624,0 -19.75,-8.84238 -19.75,-19.75 0,-10.90762 8.842376,-19.75 19.75,-19.75 10.907624,0 19.75,8.84238 19.75,19.75 z"
        transform="translate(3.5,-508.125)" />
+    <path
+       transform="translate(3.5,-508.125)"
+       d="m 54.75,725 c 0,10.90762 -8.842376,19.75 -19.75,19.75 -10.907624,0 -19.75,-8.84238 -19.75,-19.75 0,-10.90762 8.842376,-19.75 19.75,-19.75 10.907624,0 19.75,8.84238 19.75,19.75 z"
+       sodipodi:ry="19.75"
+       sodipodi:rx="19.75"
+       sodipodi:cy="725"
+       sodipodi:cx="35"
+       id="path21592"
+       style="opacity:0.25000000000000000;fill:url(#radialGradient21613);fill-opacity:1;fill-rule:nonzero;stroke:black;stroke-width:3;stroke-linecap:butt;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;filter:url(#filter21591)"
+       sodipodi:type="arc" />
     <use
        x="0"
        y="0"
@@ -88263,5 +88276,34 @@
          x="3.8057468"
          y="557.53241"
          style="fill:yellow;font-family:Trebuchet MS;-inkscape-font-specification:Trebuchet MS">Command Cartridge</tspan></text>
+    <path
+       style="fill:none;stroke:#002dc0;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 17,203 0,-8 8,0"
+       id="path41366"
+       inkscape:connector-curvature="0" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#path41366"
+       id="use41368"
+       transform="matrix(0,-1,1,0,-178,257)"
+       width="64"
+       height="1536" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#use41368"
+       id="use41372"
+       transform="matrix(0,-1,1,0,-180,257)"
+       width="64"
+       height="1536" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#use41372"
+       id="use41374"
+       transform="matrix(0.01030875,-0.99994686,0.99994686,0.01030875,-180.60577,252.52271)"
+       width="64"
+       height="1536" />
   </g>
 </svg>

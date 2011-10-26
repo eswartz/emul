@@ -165,7 +165,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		shell.setText("V9t9 [" + machine.getModel().getIdentifier() + "]");
 
 		List<Image> icons = new ArrayList<Image>();
-		for (int siz : new int[] { 256, 128, 64, 32 }) {
+		for (int siz : new int[] { 128, 64, 32 }) {
 			URL iconFile = Emulator.getDataURL("icons/v9t9_" + siz + ".png");
 			if (iconFile != null) {
 				try {
@@ -260,7 +260,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 	public void setSwtVideoRenderer(final ISwtVideoRenderer renderer) {
 		setVideoRenderer(renderer);
 		
-		this.videoControl = renderer.createControl(videoRendererComposite, SWT.BORDER);
+		this.videoControl = renderer.createControl(videoRendererComposite, SWT.NONE);
 		
 		GridDataFactory.swtDefaults()
 			.indent(0, 0)
@@ -425,7 +425,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 			boolean keepCentered, boolean dismissOnClickOutside,
 			IToolShellFactory toolShellFactory) {
 		if (!restoreToolShell(toolId)) {
-			Shell shell = new Shell(getShell(), SWT.RESIZE | SWT.TOOL);
+			Shell shell = new Shell(getShell(), SWT.RESIZE | SWT.TOOL | SWT.TITLE);
 			final ToolShell toolShell = new ToolShell(shell, focusRestorer, boundsPref, 
 							keepCentered ? buttons.getButtonBar() : null,
 									isHorizontal,

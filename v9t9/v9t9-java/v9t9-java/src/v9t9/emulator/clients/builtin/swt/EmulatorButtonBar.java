@@ -227,6 +227,10 @@ public class EmulatorButtonBar  {
 						swtWindow.showMenu(createAccelMenu(button), button, size.x / 2, size.y / 2);
 					}
 				});
+
+		createStateButton(BaseEmulatorWindow.settingFullScreen, 
+				11, 0, "Toggle fullscreen");
+
 		
 		final BasicButton soundButton = createStateButton(JavaSoundHandler.settingPlaySound, 
 				true, 
@@ -276,9 +280,6 @@ public class EmulatorButtonBar  {
 				swtWindow.showMenu(menu, button, e.x, e.y);
 			}
 		});
-
-		createStateButton(BaseEmulatorWindow.settingFullScreen, 
-				11, 0, "Toggle fullscreen");
 
 	}
 
