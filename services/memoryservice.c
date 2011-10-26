@@ -472,6 +472,7 @@ static void safe_memory_get(void * parm) {
                 int rd = size - pos;
                 if (rd > BUF_SIZE) rd = BUF_SIZE;
                 /* TODO: word size, mode */
+                memset(buf, 0, rd);
                 if (err == 0) {
                     if (context_read_mem(ctx, addr, buf, rd) < 0) {
                         err = errno;
@@ -482,9 +483,6 @@ static void safe_memory_get(void * parm) {
                     else {
                         addr += rd;
                     }
-                }
-                else {
-                    memset(buf, 0, rd);
                 }
                 json_write_binary_data(&state, buf, rd);
                 pos += rd;
