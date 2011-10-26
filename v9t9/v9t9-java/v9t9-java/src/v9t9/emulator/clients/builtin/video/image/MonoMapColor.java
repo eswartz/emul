@@ -2,14 +2,15 @@ package v9t9.emulator.clients.builtin.video.image;
 
 import v9t9.emulator.clients.builtin.video.ColorMapUtils;
 
-class MonoMapColor extends BasePaletteMapper {
+class MonoMapColor implements IPaletteMapper {
 	private final int fg;
 	private final int bg;
+	private byte[][] palette;
 	
 	public MonoMapColor(int fg, int bg) {
-		super(createMonoPalette(fg, bg), 0, 16, false, false);
 		this.fg = fg;
 		this.bg = bg;
+		this.palette = createMonoPalette(fg, bg);
 	}
 	
 	private static byte[][] createMonoPalette(int fg, int bg) {
@@ -29,23 +30,9 @@ class MonoMapColor extends BasePaletteMapper {
 	 */
 	@Override
 	public int mapColor(int pixel, int[] distA) {
-		int distF = ColorMapUtils.getRGBDistance(palette[fg], pixel);
-		int distB = ColorMapUtils.getRGBDistance(palette[bg], pixel);
-		if (fg < bg) {
-			distA[0] = distF;
-			return fg;
-		}
-		distA[0] = distB;
-		return bg;
-	}
-	
-	/**
-	 * @param prgb
-	 * @return
-	 */
-	private int getCloseColor(int pixel) {
 		int lum = ColorMapUtils.getPixelLum(pixel);
-		return lum < 50 ? fg : bg;
+		distA[0] = lum;
+		return lum < 128 ? 0 : 1;
 	}
 	
 	/* (non-Javadoc)
@@ -53,7 +40,48 @@ class MonoMapColor extends BasePaletteMapper {
 	 */
 	@Override
 	public int getClosestPaletteEntry(int x, int y, int pixel) {
-		int c = getCloseColor(pixel);
-		return c;
+		int lum = ColorMapUtils.getPixelLum(pixel);
+		return lum <= 128 ? fg : bg;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.video.image.IPaletteColorMapper#getClosestPalettePixel(int, int, int)
+	 */
+	@Override
+	public int getClosestPalettePixel(int x, int y, int pixel) {
+		int lum = ColorMapUtils.getPixelLum(pixel);
+		return lum <= 128 ?  0 : -1;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.video.image.IPaletteMapper#getMinimalPaletteDistance()
+	 */
+	@Override
+	public int getMinimalPaletteDistance() {
+		return 0;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.video.image.IPaletteMapper#getNumColors()
+	 */
+	@Override
+	public int getNumColors() {
+		return 2;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.video.image.IPaletteMapper#getPalette()
+	 */
+	@Override
+	public byte[][] getPalette() {
+		return palette;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.video.image.IPaletteColorMapper#getPalettePixel(int)
+	 */
+	@Override
+	public int getPalettePixel(int c) {
+		return c == fg ? 0 : -1;
 	}
 }
