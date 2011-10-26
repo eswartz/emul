@@ -515,6 +515,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
                     val = filterContextIds(channel, ((String)val).split(",\\s*"));
                 }
                 else if (IBreakpoints.PROP_CONTEXTNAMES.equals(tcf_key) ||
+                        IBreakpoints.PROP_STOP_GROUP.equals(tcf_key) ||
                         IBreakpoints.PROP_EXECUTABLEPATHS.equals(tcf_key)) {
                     val = ((String)val).split(",\\s*");
                 }
