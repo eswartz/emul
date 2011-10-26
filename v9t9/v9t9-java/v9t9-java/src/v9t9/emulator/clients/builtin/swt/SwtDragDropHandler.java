@@ -442,8 +442,12 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 					pix[offs + x] |= ((data.alphaData[offs + x] & 0xff) << 24);
 			} else {
 				int alpha = data.alpha != -1 ? data.alpha << 24 : 0xff000000;
-				for (int x = 0; x < data.width; x++)
-					pix[offs + x] |= alpha;
+				for (int x = 0; x < data.width; x++) {
+					if (data.transparentPixel == data.getPixel(x,y))
+						pix[offs + x] = 0;
+					else
+						pix[offs + x] |= alpha;
+				}
 			}
 		}
 		
