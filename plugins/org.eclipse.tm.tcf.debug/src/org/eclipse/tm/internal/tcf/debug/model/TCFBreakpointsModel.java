@@ -40,36 +40,237 @@ import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IBreakpoints;
 
-
 /**
  * TCFBreakpointsModel class handles breakpoints for all active TCF launches.
  * It downloads initial set of breakpoint data when launch is activated,
  * listens for Eclipse breakpoint manager events and propagates breakpoint changes to TCF targets.
  */
-public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointManagerListener {
+public class TCFBreakpointsModel {
 
     public static final String
-        CDATA_CLIENT_ID = "ClientID",
-        CDATA_TYPE = "Type",
-        CDATA_FILE = "File",
-        CDATA_MARKER = "Marker";
+        CDATA_CLIENT_ID    = "ClientID",
+        CDATA_TYPE         = "Type",
+        CDATA_FILE         = "File",
+        CDATA_MARKER       = "Marker";
 
     public static final String
         ATTR_INSTALL_COUNT = "org.eclipse.cdt.debug.core.installCount",
-        ATTR_ADDRESS = "org.eclipse.cdt.debug.core.address",
-        ATTR_FUNCTION = "org.eclipse.cdt.debug.core.function",
-        ATTR_EXPRESSION = "org.eclipse.cdt.debug.core.expression",
-        ATTR_READ = "org.eclipse.cdt.debug.core.read",
-        ATTR_WRITE = "org.eclipse.cdt.debug.core.write",
-        ATTR_SIZE = "org.eclipse.cdt.debug.core.range",
-        ATTR_FILE = "org.eclipse.cdt.debug.core.sourceHandle",
-        ATTR_CONDITION = "org.eclipse.cdt.debug.core.condition",
-        ATTR_IGNORE_COUNT = "org.eclipse.cdt.debug.core.ignoreCount";
+        ATTR_ADDRESS       = "org.eclipse.cdt.debug.core.address",
+        ATTR_FUNCTION      = "org.eclipse.cdt.debug.core.function",
+        ATTR_EXPRESSION    = "org.eclipse.cdt.debug.core.expression",
+        ATTR_READ          = "org.eclipse.cdt.debug.core.read",
+        ATTR_WRITE         = "org.eclipse.cdt.debug.core.write",
+        ATTR_SIZE          = "org.eclipse.cdt.debug.core.range",
+        ATTR_FILE          = "org.eclipse.cdt.debug.core.sourceHandle",
+        ATTR_CONDITION     = "org.eclipse.cdt.debug.core.condition",
+        ATTR_IGNORE_COUNT  = "org.eclipse.cdt.debug.core.ignoreCount";
 
     private final IBreakpointManager bp_manager = DebugPlugin.getDefault().getBreakpointManager();
     private final HashMap<IChannel,Map<String,Object>> channels = new HashMap<IChannel,Map<String,Object>>();
     private final HashMap<String,IBreakpoint> id2bp = new HashMap<String,IBreakpoint>();
     private final String client_id = UUID.randomUUID().toString();
+
+    private abstract class BreakpointUpdate implements Runnable {
+
+        private final IBreakpoint breakpoint;
+        private boolean removed;
+        protected final Map<String,Object> marker_attrs;
+        protected final boolean is_local;
+        protected final String marker_id;
+        private final String marker_file;
+        private final String marker_type;
+
+        IBreakpoints service;
+        IBreakpoints.DoneCommand done;
+        Map<String,Object> tcf_attrs;
+
+        BreakpointUpdate(IBreakpoint breakpoint, boolean removed) throws CoreException, IOException {
+            this.breakpoint = breakpoint;
+            this.removed = removed;
+            IMarker marker = breakpoint.getMarker();
+            marker_attrs = new HashMap<String,Object>(marker.getAttributes());
+            is_local = isLocal(marker);
+            marker_file = getFilePath(breakpoint.getMarker().getResource());
+            marker_type = breakpoint.getMarker().getType();
+            marker_id = getBreakpointID(breakpoint);
+        }
+
+        synchronized void exec() throws InterruptedException {
+            assert !Protocol.isDispatchThread();
+            if (marker_id != null) {
+                Protocol.invokeLater(this);
+                wait();
+            }
+        }
+
+        public void run() {
+            if (disposed) return;
+            if (removed) id2bp.remove(marker_id);
+            else id2bp.put(marker_id, breakpoint);
+            if (is_local) {
+                for (final IChannel channel : channels.keySet()) {
+                    tcf_attrs = toBreakpointAttributes(channel, marker_id, marker_file, marker_type, marker_attrs);
+                    service = channel.getRemoteService(IBreakpoints.class);
+                    if (!isSupported(channel, breakpoint)) continue;
+                    done = new IBreakpoints.DoneCommand() {
+                        public void doneCommand(IToken token, Exception error) {
+                            if (error != null) channel.terminate(error);
+                        }
+                    };
+                    update();
+                }
+            }
+            Protocol.sync(new Runnable() {
+                public void run() {
+                    synchronized (BreakpointUpdate.this) {
+                        BreakpointUpdate.this.notify();
+                    }
+                }
+            });
+        };
+
+        abstract void update();
+    }
+
+    private final IBreakpointListener breakpoint_listener = new IBreakpointListener() {
+
+        public void breakpointAdded(final IBreakpoint breakpoint) {
+            try {
+                new BreakpointUpdate(breakpoint, false) {
+                    @Override
+                    void update() {
+                        service.add(tcf_attrs, done);
+                    }
+                }.exec();
+            }
+            catch (Throwable x) {
+                Activator.log("Unhandled exception in breakpoint listener", x);
+            }
+        }
+
+        private Set<String> calcMarkerDeltaKeys(IMarker marker, IMarkerDelta delta) throws CoreException {
+            Set<String> keys = new HashSet<String>();
+            if (delta == null) return keys;
+            Map<String,Object> m0 = delta.getAttributes();
+            Map<String,Object> m1 = marker.getAttributes();
+            if (m0 != null) keys.addAll(m0.keySet());
+            if (m1 != null) keys.addAll(m1.keySet());
+            for (Iterator<String> i = keys.iterator(); i.hasNext();) {
+                String key = i.next();
+                Object v0 = m0 != null ? m0.get(key) : null;
+                Object v1 = m1 != null ? m1.get(key) : null;
+                if (v0 instanceof String && ((String)v0).length() == 0) v0 = null;
+                if (v1 instanceof String && ((String)v1).length() == 0) v1 = null;
+                if (v0 instanceof Boolean && !((Boolean)v0).booleanValue()) v0 = null;
+                if (v1 instanceof Boolean && !((Boolean)v1).booleanValue()) v1 = null;
+                if ((v0 == null) != (v1 == null)) continue;
+                if (v0 != null && !v0.equals(v1)) continue;
+                i.remove();
+            }
+            keys.remove(ATTR_INSTALL_COUNT);
+            return keys;
+        }
+
+        public void breakpointChanged(final IBreakpoint breakpoint, IMarkerDelta delta) {
+            try {
+                final Set<String> s = calcMarkerDeltaKeys(breakpoint.getMarker(), delta);
+                if (s.isEmpty()) return;
+                new BreakpointUpdate(breakpoint, false) {
+                    @Override
+                    void update() {
+                        if (s.size() == 1 && s.contains(IBreakpoint.ENABLED)) {
+                            Boolean enabled = (Boolean)tcf_attrs.get(IBreakpoints.PROP_ENABLED);
+                            if (enabled == null || !enabled.booleanValue()) {
+                                service.disable(new String[]{ marker_id }, done);
+                            }
+                            else {
+                                service.enable(new String[]{ marker_id }, done);
+                            }
+                        }
+                        else {
+                            service.change(tcf_attrs, done);
+                        }
+                    }
+                }.exec();
+            }
+            catch (Throwable x) {
+                Activator.log("Unhandled exception in breakpoint listener", x);
+            }
+        }
+
+        public void breakpointRemoved(IBreakpoint breakpoint, IMarkerDelta delta) {
+            try {
+                new BreakpointUpdate(breakpoint, true) {
+                    @Override
+                    void update() {
+                        service.remove(new String[]{ marker_id }, done);
+                    }
+                }.exec();
+            }
+            catch (Throwable x) {
+                Activator.log("Unhandled exception in breakpoint listener", x);
+            }
+        }
+    };
+
+    private final IBreakpointManagerListener manager_listener = new IBreakpointManagerListener() {
+
+        public void breakpointManagerEnablementChanged(final boolean enabled) {
+            try {
+                IBreakpoint[] arr = bp_manager.getBreakpoints();
+                if (arr == null || arr.length == 0) return;
+                final Map<String,IBreakpoint> map = new HashMap<String,IBreakpoint>();
+                for (int i = 0; i < arr.length; i++) {
+                    IMarker marker = arr[i].getMarker();
+                    Boolean b = marker.getAttribute(IBreakpoint.ENABLED, Boolean.FALSE);
+                    if (!b.booleanValue()) continue;
+                    String id = getBreakpointID(arr[i]);
+                    if (id == null) continue;
+                    map.put(id, arr[i]);
+                }
+                if (map.isEmpty()) return;
+                Runnable r = new Runnable() {
+                    public void run() {
+                        if (disposed) return;
+                        for (final IChannel channel : channels.keySet()) {
+                            IBreakpoints service = channel.getRemoteService(IBreakpoints.class);
+                            Set<String> ids = new HashSet<String>();
+                            for (String id : map.keySet()) {
+                                IBreakpoint bp = map.get(id);
+                                if (isSupported(channel, bp)) ids.add(id);
+                            }
+                            IBreakpoints.DoneCommand done = new IBreakpoints.DoneCommand() {
+                                public void doneCommand(IToken token, Exception error) {
+                                    if (error != null) channel.terminate(error);
+                                }
+                            };
+                            if (enabled) {
+                                service.enable(ids.toArray(new String[ids.size()]), done);
+                            }
+                            else {
+                                service.disable(ids.toArray(new String[ids.size()]), done);
+                            }
+                        }
+                        Protocol.sync(new Runnable() {
+                            public void run() {
+                                synchronized (map) {
+                                    map.notify();
+                                }
+                            }
+                        });
+                    }
+                };
+                synchronized (map) {
+                    assert !Protocol.isDispatchThread();
+                    Protocol.invokeLater(r);
+                    map.wait();
+                }
+            }
+            catch (Throwable x) {
+                Activator.log("Unhandled exception in breakpoint listener", x);
+            }
+        }
+    };
 
     private boolean disposed;
 
@@ -78,8 +279,8 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
     }
 
     public void dispose() {
-        bp_manager.removeBreakpointListener(this);
-        bp_manager.removeBreakpointManagerListener(this);
+        bp_manager.removeBreakpointListener(breakpoint_listener);
+        bp_manager.removeBreakpointManagerListener(manager_listener);
         channels.clear();
         disposed = true;
     }
@@ -106,7 +307,7 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
 
     /**
      * Get IBreakpoint for given TCF breakpoint ID.
-     * The mapping works only for breakpoints that were sent to a debug target.
+     * The mapping works only for breakpoints that were sent to (or received from) a debug target.
      * It can be used to map target responses to IBreakpoint objects.
      * @param id - TCF breakpoint ID.
      * @return IBreakpoint object associated with the ID, or null.
@@ -116,17 +317,46 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
         return id2bp.get(id);
     }
 
-    public String getClientID() {
-        return client_id;
-    }
-
+    /**
+     * Check breakpoint ownership.
+     * @param properties - breakpoint properties as reported by TCF Breakpoints service.
+     * @return true if the breakpoint is owned by local instance of Eclipse.
+     * Return false if the properties represent a breakpoint created by some other TCF client.
+     */
     @SuppressWarnings("unchecked")
-    public String getClientID(Map<String,Object> properties) {
+    public boolean isLocal(Map<String,Object> properties) {
+        if (properties == null) return false;
         Map<String,Object> client_data = (Map<String,Object>)properties.get(IBreakpoints.PROP_CLIENT_DATA);
-        if (client_data == null) return null;
-        return (String)client_data.get(TCFBreakpointsModel.CDATA_CLIENT_ID);
+        if (client_data == null) return false;
+        String id = (String)client_data.get(TCFBreakpointsModel.CDATA_CLIENT_ID);
+        return client_id.equals(id);
     }
 
+    /**
+     * Check breakpoint marker ownership.
+     * @param marker - breakpoint marker.
+     * @return true if the marker is owned by local instance of Eclipse.
+     * Return false if the marker represents a breakpoint created by some other TCF client.
+     */
+    public boolean isLocal(IMarker marker) {
+        try {
+            Map<String,Object> marker_attrs = marker.getAttributes();
+            if (marker_attrs == null) return false;
+            return !Boolean.FALSE.equals(marker_attrs.get(IBreakpoint.PERSISTED));
+        }
+        catch (CoreException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Download breakpoint info to a target.
+     * This is supposed to be done once after a channel is opened.
+     * @param channel - TCF communication channel.
+     * @param done - client callback.
+     * @throws IOException
+     * @throws CoreException
+     */
     @SuppressWarnings("unchecked")
     public void downloadBreakpoints(final IChannel channel, final Runnable done) throws IOException, CoreException {
         assert !disposed;
@@ -140,8 +370,8 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
                         return;
                     }
                     if (channels.isEmpty()) {
-                        bp_manager.addBreakpointListener(TCFBreakpointsModel.this);
-                        bp_manager.addBreakpointManagerListener(TCFBreakpointsModel.this);
+                        bp_manager.addBreakpointListener(breakpoint_listener);
+                        bp_manager.addBreakpointManagerListener(manager_listener);
                     }
                     channel.addChannelListener(new IChannel.IChannelListener() {
                         public void congestionLevel(int level) {
@@ -150,8 +380,8 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
                             if (disposed) return;
                             channels.remove(channel);
                             if (channels.isEmpty()) {
-                                bp_manager.removeBreakpointListener(TCFBreakpointsModel.this);
-                                bp_manager.removeBreakpointManagerListener(TCFBreakpointsModel.this);
+                                bp_manager.removeBreakpointListener(breakpoint_listener);
+                                bp_manager.removeBreakpointManagerListener(manager_listener);
                                 id2bp.clear();
                             }
                         }
@@ -194,115 +424,6 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
         }
     }
 
-    public void breakpointManagerEnablementChanged(final boolean enabled) {
-        try {
-            IBreakpoint[] arr = bp_manager.getBreakpoints();
-            if (arr == null || arr.length == 0) return;
-            final Map<String,IBreakpoint> map = new HashMap<String,IBreakpoint>();
-            for (int i = 0; i < arr.length; i++) {
-                IMarker marker = arr[i].getMarker();
-                Boolean b = marker.getAttribute(IBreakpoint.ENABLED, Boolean.FALSE);
-                if (!b.booleanValue()) continue;
-                String id = getBreakpointID(arr[i]);
-                if (id == null) continue;
-                map.put(id, arr[i]);
-            }
-            if (map.isEmpty()) return;
-            Runnable r = new Runnable() {
-                public void run() {
-                    if (disposed) return;
-                    for (final IChannel channel : channels.keySet()) {
-                        IBreakpoints service = channel.getRemoteService(IBreakpoints.class);
-                        Set<String> ids = new HashSet<String>();
-                        for (String id : map.keySet()) {
-                            IBreakpoint bp = map.get(id);
-                            if (isSupported(channel, bp)) ids.add(id);
-                        }
-                        IBreakpoints.DoneCommand done = new IBreakpoints.DoneCommand() {
-                            public void doneCommand(IToken token, Exception error) {
-                                if (error != null) channel.terminate(error);
-                            }
-                        };
-                        if (enabled) {
-                            service.enable(ids.toArray(new String[ids.size()]), done);
-                        }
-                        else {
-                            service.disable(ids.toArray(new String[ids.size()]), done);
-                        }
-                    }
-                    Protocol.sync(new Runnable() {
-                        public void run() {
-                            synchronized (map) {
-                                map.notify();
-                            }
-                        }
-                    });
-                }
-            };
-            synchronized (map) {
-                assert !Protocol.isDispatchThread();
-                Protocol.invokeLater(r);
-                map.wait();
-            }
-        }
-        catch (Throwable x) {
-            Activator.log("Unhandled exception in breakpoint listener", x);
-        }
-    }
-
-    private abstract class BreakpointUpdate implements Runnable {
-
-        private final IBreakpoint breakpoint;
-        protected final Map<String,Object> marker_attrs;
-        private final String marker_file;
-        private final String marker_type;
-        private final String marker_id;
-
-        IBreakpoints service;
-        IBreakpoints.DoneCommand done;
-        Map<String,Object> tcf_attrs;
-
-        BreakpointUpdate(IBreakpoint breakpoint) throws CoreException, IOException {
-            this.breakpoint = breakpoint;
-            marker_attrs = new HashMap<String,Object>(breakpoint.getMarker().getAttributes());
-            marker_file = getFilePath(breakpoint.getMarker().getResource());
-            marker_type = breakpoint.getMarker().getType();
-            marker_id = getBreakpointID(breakpoint);
-        }
-
-        synchronized void exec() throws InterruptedException {
-            assert !Protocol.isDispatchThread();
-            if (marker_id != null) {
-                Protocol.invokeLater(this);
-                wait();
-            }
-        }
-
-        public void run() {
-            if (disposed) return;
-            for (final IChannel channel : channels.keySet()) {
-                tcf_attrs = toBreakpointAttributes(channel, marker_id, marker_file, marker_type, marker_attrs);
-                service = channel.getRemoteService(IBreakpoints.class);
-                if (!isSupported(channel, breakpoint)) continue;
-                done = new IBreakpoints.DoneCommand() {
-                    public void doneCommand(IToken token, Exception error) {
-                        if (error != null) channel.terminate(error);
-                    }
-                };
-                update();
-            }
-            Protocol.sync(new Runnable() {
-                public void run() {
-                    synchronized (BreakpointUpdate.this) {
-                        BreakpointUpdate.this.notify();
-                    }
-                }
-            });
-        };
-
-        abstract void update();
-    }
-
     private String getFilePath(IResource resource) throws IOException {
         if (resource == ResourcesPlugin.getWorkspace().getRoot()) return null;
         IPath p = resource.getRawLocation();
@@ -310,93 +431,11 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
         return p.toFile().getCanonicalPath();
     }
 
-    public void breakpointAdded(final IBreakpoint breakpoint) {
-        try {
-            new BreakpointUpdate(breakpoint) {
-                @Override
-                void update() {
-                    if (!Boolean.FALSE.equals(marker_attrs.get(IBreakpoint.PERSISTED))) {
-                        service.add(tcf_attrs, done);
-                    }
-                    id2bp.put((String)tcf_attrs.get(IBreakpoints.PROP_ID), breakpoint);
-                }
-            }.exec();
-        }
-        catch (Throwable x) {
-            Activator.log("Unhandled exception in breakpoint listener", x);
-        }
-    }
-
-    private Set<String> calcMarkerDeltaKeys(IMarker marker, IMarkerDelta delta) throws CoreException {
-        Set<String> keys = new HashSet<String>();
-        if (delta == null) return keys;
-        Map<String,Object> m0 = delta.getAttributes();
-        Map<String,Object> m1 = marker.getAttributes();
-        if (m0 != null) keys.addAll(m0.keySet());
-        if (m1 != null) keys.addAll(m1.keySet());
-        for (Iterator<String> i = keys.iterator(); i.hasNext();) {
-            String key = i.next();
-            Object v0 = m0 != null ? m0.get(key) : null;
-            Object v1 = m1 != null ? m1.get(key) : null;
-            if (v0 instanceof String && ((String)v0).length() == 0) v0 = null;
-            if (v1 instanceof String && ((String)v1).length() == 0) v1 = null;
-            if (v0 instanceof Boolean && !((Boolean)v0).booleanValue()) v0 = null;
-            if (v1 instanceof Boolean && !((Boolean)v1).booleanValue()) v1 = null;
-            if ((v0 == null) != (v1 == null)) continue;
-            if (v0 != null && !v0.equals(v1)) continue;
-            i.remove();
-        }
-        keys.remove(ATTR_INSTALL_COUNT);
-        return keys;
-    }
-
-    public void breakpointChanged(final IBreakpoint breakpoint, IMarkerDelta delta) {
-        try {
-            final Set<String> s = calcMarkerDeltaKeys(breakpoint.getMarker(), delta);
-            if (s.isEmpty()) return;
-            new BreakpointUpdate(breakpoint) {
-                @Override
-                void update() {
-                    String id = (String)tcf_attrs.get(IBreakpoints.PROP_ID);
-                    if (s.size() == 1 && s.contains(IBreakpoint.ENABLED)) {
-                        Boolean enabled = (Boolean)tcf_attrs.get(IBreakpoints.PROP_ENABLED);
-                        if (enabled == null || !enabled.booleanValue()) {
-                            service.disable(new String[]{ id }, done);
-                        }
-                        else {
-                            service.enable(new String[]{ id }, done);
-                        }
-                    }
-                    else {
-                        service.change(tcf_attrs, done);
-                    }
-                    id2bp.put(id, breakpoint);
-                }
-            }.exec();
-        }
-        catch (Throwable x) {
-            Activator.log("Unhandled exception in breakpoint listener", x);
-        }
-    }
-
-    public void breakpointRemoved(IBreakpoint breakpoint, IMarkerDelta delta) {
-        try {
-            new BreakpointUpdate(breakpoint) {
-                @Override
-                void update() {
-                    String id = (String)tcf_attrs.get(IBreakpoints.PROP_ID);
-                    if (!Boolean.FALSE.equals(marker_attrs.get(IBreakpoint.PERSISTED))) {
-                        service.remove(new String[]{ id }, done);
-                    }
-                    id2bp.remove(id);
-                }
-            }.exec();
-        }
-        catch (Throwable x) {
-            Activator.log("Unhandled exception in breakpoint listener", x);
-        }
-    }
-
+    /**
+     * Translate TCF breakpoint properties to Eclipse breakpoint marker attributes.
+     * @param p - TCF breakpoint properties.
+     * @return Eclipse marker attributes.
+     */
     @SuppressWarnings("unchecked")
     public Map<String,Object> toMarkerAttributes(Map<String,Object> p) {
         assert !disposed;
@@ -488,6 +527,15 @@ public class TCFBreakpointsModel implements IBreakpointListener, IBreakpointMana
         return m;
     }
 
+    /**
+     * Translate Eclipse breakpoint marker attributes to TCF breakpoint properties.
+     * @param channel - TCF communication channel.
+     * @param id - breakpoint ID.
+     * @param file - the maker file or null.
+     * @param type - the marker type.
+     * @param p - the marker attributes.
+     * @return TCF breakpoint properties.
+     */
     public Map<String,Object> toBreakpointAttributes(IChannel channel, String id, String file, String type, Map<String,Object> p) {
         assert !disposed;
         assert Protocol.isDispatchThread();
