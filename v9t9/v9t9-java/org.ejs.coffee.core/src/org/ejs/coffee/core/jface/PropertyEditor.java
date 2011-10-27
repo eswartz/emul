@@ -51,7 +51,7 @@ public class PropertyEditor  {
 	protected Control createFormattedEditor(final Composite parent, final IProperty property) {
 		final Composite holder = new Composite(parent, SWT.NONE);
 		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(holder);
-		GridDataFactory.fillDefaults().grab(true, true).applyTo(holder);
+		GridDataFactory.fillDefaults().grab(true, false).applyTo(holder);
 		
 		final Link link;
 		link = new Link(holder, SWT.NONE);

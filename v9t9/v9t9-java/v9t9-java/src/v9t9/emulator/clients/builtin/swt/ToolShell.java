@@ -29,6 +29,7 @@ public class ToolShell {
 	private Control centerOverControl;
 	private long clickOutsideCheckTime;
 	private final boolean isHorizontal;
+	private Control toolControl;
 	
 	public ToolShell(Shell shell_, 
 			IFocusRestorer focusRestorer_,
@@ -46,16 +47,17 @@ public class ToolShell {
 		this.clickOutsideCheckTime = System.currentTimeMillis() + 1500;	// let it show up first, so click on the button that created it doesn't kill it
 	}
 	
-	public void init(final Control tool) {
+	public void init(Control tool) {
+		this.toolControl = tool;
 		shell.setImage(((Shell)shell.getParent()).getImage());
 		shell.setLayout(new GridLayout(1, false));
 		
 		final GridData data = GridDataFactory.fillDefaults().grab(true, true).hint(400, 300).create();
-		tool.setLayoutData(data);
+		toolControl.setLayoutData(data);
 		
 		shell.addDisposeListener(new DisposeListener() {
 			public void widgetDisposed(DisposeEvent e) {
-				tool.dispose();
+				toolControl.dispose();
 				Display.getDefault().asyncExec(new Runnable() {
 					public void run() {
 						focusRestorer.restoreFocus();
@@ -66,13 +68,18 @@ public class ToolShell {
 
 		String boundsStr = EmulatorSettings.INSTANCE.getSettings().get(boundsPref);
 		if (boundsStr != null) {
-			Rectangle savedBounds = PrefUtils.readBoundsString(boundsStr);
+			final Rectangle savedBounds = PrefUtils.readBoundsString(boundsStr);
 			if (savedBounds != null) {
 				if (keepCentered)
 					shell.setSize(savedBounds.width, savedBounds.height);
 				else {
 					SwtWindow.adjustRectVisibility(shell, savedBounds);
-					shell.setBounds(savedBounds);
+					Display.getDefault().asyncExec(new Runnable() {
+						public void run() {
+							shell.setBounds(savedBounds);
+							shell.setLocation(savedBounds.x, savedBounds.y);
+						}
+					});
 				}
 			}
 		} else {
@@ -120,7 +127,7 @@ public class ToolShell {
 			public void controlResized(ControlEvent e) {
 				// try to stay the same (user controlled) size and not 
 				// grow to full screen when next packed
-				data.heightHint = tool.getSize().y;
+				data.heightHint = toolControl.getSize().y;
 			}
 		});
 		
@@ -131,6 +138,13 @@ public class ToolShell {
 				EmulatorSettings.INSTANCE.getSettings().put(boundsPref, boundsStr);
 			}
 		});
+	}
+	
+	/**
+	 * @return the toolControl
+	 */
+	public Control getToolControl() {
+		return toolControl;
 	}
 	
 	public boolean isKeepCentered() {
@@ -200,6 +214,18 @@ public class ToolShell {
 	 * 
 	 */
 	public void restore() {
+		if (!shell.isVisible()) {
+			shell.setVisible(true);
+			shell.setFocus();
+		}
+		
+		clickOutsideCheckTime = System.currentTimeMillis() + 500;
+	}
+
+	/**
+	 * 
+	 */
+	public void toggle() {
 		if (shell.isVisible()) {
 			shell.setVisible(false);
 			focusRestorer.restoreFocus();
@@ -209,5 +235,4 @@ public class ToolShell {
 		}
 		clickOutsideCheckTime = System.currentTimeMillis() + 500;
 	}
-
 }

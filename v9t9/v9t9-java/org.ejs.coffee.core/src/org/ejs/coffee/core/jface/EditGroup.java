@@ -33,7 +33,7 @@ public class EditGroup extends Composite {
 		group.setText(labelTxt);
 		
 		//GridDataFactory.fillDefaults().grab(true, true).minSize(100,100).applyTo(group);
-		GridDataFactory.swtDefaults().applyTo(group);
+		GridDataFactory.fillDefaults().grab(true, true).applyTo(group);
 		GridLayoutFactory.fillDefaults().numColumns(1).margins(6, 6).applyTo(group);
 
 	}

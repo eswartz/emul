@@ -85,7 +85,7 @@ public class AwtImageUtils {
 	
 	        ret = tmp;
 	    } while (w != targetWidth || h != targetHeight);
-	
+	    
 	    return ret;
 	}
 

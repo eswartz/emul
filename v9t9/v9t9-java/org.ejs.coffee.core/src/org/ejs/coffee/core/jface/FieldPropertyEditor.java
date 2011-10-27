@@ -3,8 +3,6 @@
  */
 package org.ejs.coffee.core.jface;
 
-import java.lang.reflect.Field;
-
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
@@ -75,13 +73,13 @@ public class FieldPropertyEditor implements
 				}
 			});
 			return check;
-		} else if (klass.isAssignableFrom(Enum.class)) {
+		} else if (Enum.class.isAssignableFrom(klass)) {
 			final Combo combo = new Combo(parent, SWT.READ_ONLY);
-			final Field[] enumFields = property.getField().getClass().getEnumConstants();
+			final Enum<?>[] enumFields= (Enum<?>[]) klass.getEnumConstants();
 			if (enumFields != null) {
 				final String[] values = new String[enumFields.length] ;
 				for (int i = 0; i < values.length; i++) {
-					Field ef = enumFields[i];
+					Enum<?> ef = enumFields[i];
 					values[i] = ef.toString();
 				}
 				combo.setItems(values);

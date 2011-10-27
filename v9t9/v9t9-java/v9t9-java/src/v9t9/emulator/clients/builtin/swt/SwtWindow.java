@@ -375,7 +375,8 @@ public class SwtWindow extends BaseEmulatorWindow {
 		}
 		if (!enableJoystick) {
 			try {
-				dragDropHandler = new SwtDragDropHandler(videoControl, 
+				dragDropHandler = new SwtDragDropHandler(this, 
+						videoControl, 
 						(ISwtVideoRenderer) videoRenderer,
 						eventNotifier);
 			} catch (SWTError e) {
@@ -420,13 +421,19 @@ public class SwtWindow extends BaseEmulatorWindow {
 	/**
 	 * @param debuggerToolId
 	 * @param iToolShellFactory
+	 * @return 
+	 * @return 
 	 */
-	protected void toggleToolShell(String toolId, String boundsPref, 
+	protected ToolShell showToolShell(String toolId, String boundsPref, 
 			boolean keepCentered, boolean dismissOnClickOutside,
 			IToolShellFactory toolShellFactory) {
-		if (!restoreToolShell(toolId)) {
+		ToolShell toolShell = toolShells.get(toolId);
+		if (toolShell != null) {
+			toolShell.restore();
+		}
+		else {
 			Shell shell = new Shell(getShell(), SWT.RESIZE | SWT.TOOL | SWT.TITLE);
-			final ToolShell toolShell = new ToolShell(shell, focusRestorer, boundsPref, 
+			toolShell = new ToolShell(shell, focusRestorer, boundsPref, 
 							keepCentered ? buttons.getButtonBar() : null,
 									isHorizontal,
 							dismissOnClickOutside);
@@ -434,9 +441,31 @@ public class SwtWindow extends BaseEmulatorWindow {
 			toolShell.init(tool);
 			addToolShell(toolId, toolShell);
 		}
-		
+		return toolShell;
 	}
-	
+	/**
+	 * @param debuggerToolId
+	 * @param iToolShellFactory
+	 * @return 
+	 */
+	protected void toggleToolShell(String toolId, String boundsPref, 
+			boolean keepCentered, boolean dismissOnClickOutside,
+			IToolShellFactory toolShellFactory) {
+		ToolShell toolShell = toolShells.get(toolId);
+		if (toolShell != null) {
+			toolShell.toggle();
+		}
+		else {
+			Shell shell = new Shell(getShell(), SWT.RESIZE | SWT.TOOL | SWT.TITLE);
+			toolShell = new ToolShell(shell, focusRestorer, boundsPref, 
+							keepCentered ? buttons.getButtonBar() : null,
+									isHorizontal,
+							dismissOnClickOutside);
+			Control tool = toolShellFactory.createContents(shell);
+			toolShell.init(tool);
+			addToolShell(toolId, toolShell);
+		}
+	}
 	public IFocusRestorer getFocusRestorer() {
 		return focusRestorer;
 	}
@@ -471,17 +500,10 @@ public class SwtWindow extends BaseEmulatorWindow {
 		};
 		hider.start();
 	}
-	protected boolean restoreToolShell(String toolId) {
-		ToolShell tool = toolShells.get(toolId);
-		if (tool != null) {
-			tool.restore();
-			return true;
-		} 
-		return false;
-	}
-	protected boolean closeToolShell(String toolId) {
+	public boolean closeToolShell(String toolId) {
 		ToolShell old = toolShells.get(toolId);
 		if (old != null) {
+			toolShells.remove(toolId);
 			old.dispose();
 			focusRestorer.restoreFocus();
 			return true;

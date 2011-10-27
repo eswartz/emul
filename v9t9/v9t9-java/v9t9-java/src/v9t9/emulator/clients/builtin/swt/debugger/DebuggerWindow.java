@@ -10,6 +10,7 @@ import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Shell;
 
 import v9t9.emulator.common.Machine;
 
@@ -25,10 +26,13 @@ public class DebuggerWindow extends Composite {
 	private SashForm vertSash;
 	private RegisterViews regViewer;
 
-	public DebuggerWindow(Composite parent, int style, Machine machine, Timer timer) {
+	public DebuggerWindow(Shell parent, int style, Machine machine, Timer timer) {
 		super(parent, style);
 		this.machine = machine;
 		GridLayoutFactory.fillDefaults().applyTo(this);
+		
+		parent.setText("V9t9 Debugger");
+		
 		
 		horizSash = new SashForm(this, SWT.HORIZONTAL);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(horizSash);

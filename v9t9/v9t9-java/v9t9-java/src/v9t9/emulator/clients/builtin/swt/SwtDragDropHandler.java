@@ -36,14 +36,19 @@ import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.ImageLoader;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Shell;
+import org.ejs.coffee.core.properties.IProperty;
+import org.ejs.coffee.core.properties.IPropertyListener;
 import org.ejs.coffee.core.utils.Pair;
 
 import v9t9.emulator.clients.builtin.video.ICanvas;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
 import v9t9.emulator.clients.builtin.video.VdpCanvas.Format;
 import v9t9.emulator.clients.builtin.video.image.ImageImport;
+import v9t9.emulator.clients.builtin.video.image.ImportOptions;
 import v9t9.emulator.common.IEventNotifier;
 import v9t9.emulator.common.IEventNotifier.Level;
+import v9t9.engine.VdpHandler;
 
 /**
  * Support dragging image out of window, or into window (and VDP buffer)
@@ -52,6 +57,7 @@ import v9t9.emulator.common.IEventNotifier.Level;
  */
 public class SwtDragDropHandler implements DragSourceListener, DropTargetListener {
 
+	private static final String IMAGE_IMPORTER_ID = "swt.image.importer";
 	private DragSource source;
 	private DropTarget target;
 	private final ISwtVideoRenderer renderer;
@@ -62,8 +68,14 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 	private File lastURLFile;
 	private String lastURL;
 	private final IEventNotifier notifier;
+	private final SwtWindow window;
+	private ImportOptions options;
+	private ImageImport importer;
+	protected IPropertyListener importPropertyListener;
 
-	public SwtDragDropHandler(Control control, ISwtVideoRenderer renderer, IEventNotifier notifier) {
+	public SwtDragDropHandler(SwtWindow window, Control control, 
+			ISwtVideoRenderer renderer, IEventNotifier notifier) {
+		this.window = window;
 		this.control = control;
 		this.renderer = renderer;
 		this.notifier = notifier;
@@ -458,13 +470,36 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 	}
 
 	/**
-	 * @param img
+	 * @param image
 	 * @param isLowColor 
 	 */
-	protected void importImage(BufferedImage img, boolean isLowColor) {
-		ImageImport importer = new ImageImport(
-				(ImageDataCanvas) renderer.getCanvas(), renderer.getVdpHandler());
-		importer.importImage(img, isLowColor);
+	protected void importImage(BufferedImage image, boolean isLowColor) {
+		final ImageDataCanvas canvas = (ImageDataCanvas) renderer.getCanvas();
+		final VdpHandler vdp = renderer.getVdpHandler();
+		
+		importer = new ImageImport(canvas, vdp);
+		if (options == null) {
+			options = new ImportOptions();
+			importPropertyListener = new IPropertyListener() {
+
+				@Override
+				public void propertyChanged(IProperty property) {
+					// in case, e.g., mode changed
+					importer = new ImageImport(canvas, vdp);
+					importer.importImage(options);
+				}
+			};
+		}
+		
+		options.updateFrom(canvas, vdp, image, isLowColor);
+		
+		window.showToolShell(IMAGE_IMPORTER_ID, "ImageImporterBounds", 
+				false, false, new IToolShellFactory() {
+			public Control createContents(Shell shell) {
+				return new ImageImportDialog(shell, SWT.NONE, options, importPropertyListener);
+			}
+		});
+		importer.importImage(options);
 	}
 
 

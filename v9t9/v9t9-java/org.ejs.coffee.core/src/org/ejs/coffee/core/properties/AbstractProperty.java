@@ -474,5 +474,4 @@ public abstract class AbstractProperty implements IProperty, Comparable<IPropert
     	}
     		
     }
-
 }

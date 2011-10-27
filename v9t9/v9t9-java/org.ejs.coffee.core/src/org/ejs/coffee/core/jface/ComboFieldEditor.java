@@ -70,10 +70,10 @@ public class ComboFieldEditor extends FieldPropertyEditor {
 		return combo;
 	}
 	private void change() {
-		int waveform = combo.getSelectionIndex();
-		if (waveform >= 0) {
+		int index = combo.getSelectionIndex();
+		if (index >= 0) {
 			try {
-				setValue(waveform);
+				setValue(index);
 			} catch (Exception e1) {
 				e1.printStackTrace();
 			}

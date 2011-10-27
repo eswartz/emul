@@ -60,9 +60,15 @@ public class InternalCruF99 extends BaseCruAccess {
 				if ((val & mask) == 0) {
 					if ((currentints & mask) != 0)
 						acknowledgeInterrupt(i);
+					if (mask == (1 << CpuF99b.INT_KBD)) {
+						keyboardState.resetProbe();
+					}
 				}
-				if (mask == (1 << CpuF99b.INT_KBD)) {
-					keyboardState.resetProbe();
+				else {
+					if (mask == (1 << CpuF99b.INT_KBD) && !keyboardState.anyKeyPressed()) {
+						keyboardState.resetProbe();
+					}
+
 				}
 			}
 			break;
