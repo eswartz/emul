@@ -7,7 +7,7 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.tcf.ui.internal.wizards;
+package org.eclipse.tm.te.tcf.ui.wizards;
 
 import java.io.IOException;
 import java.util.Map;
@@ -25,8 +25,8 @@ import org.eclipse.tm.te.tcf.locator.interfaces.services.ILocatorModelLookupServ
 import org.eclipse.tm.te.tcf.locator.interfaces.services.ILocatorModelRefreshService;
 import org.eclipse.tm.te.tcf.ui.internal.PeersPersistenceManager;
 import org.eclipse.tm.te.tcf.ui.internal.model.Model;
-import org.eclipse.tm.te.tcf.ui.internal.nls.Messages;
-import org.eclipse.tm.te.tcf.ui.internal.wizards.pages.NewTargetWizardPage;
+import org.eclipse.tm.te.tcf.ui.nls.Messages;
+import org.eclipse.tm.te.tcf.ui.wizards.pages.NewTargetWizardPage;
 import org.eclipse.tm.te.ui.views.ViewsUtil;
 import org.eclipse.tm.te.ui.views.interfaces.IUIConstants;
 import org.eclipse.tm.te.ui.wizards.AbstractWizard;

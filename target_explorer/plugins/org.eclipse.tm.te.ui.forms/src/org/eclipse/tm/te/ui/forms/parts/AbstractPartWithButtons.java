@@ -96,6 +96,7 @@ public abstract class AbstractPartWithButtons extends AbstractPart {
 		panel.setLayout(layout);
 		GridData layoutData = new GridData(SWT.BEGINNING, SWT.FILL, false, true);
 		panel.setLayoutData(layoutData);
+		panel.setBackground(parent.getBackground());
 
 		SelectionListener listener = new SelectionAdapter() {
 			@Override

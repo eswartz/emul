@@ -25,4 +25,9 @@ public interface IContextHelpIds {
 	 * New target wizard context help id.
 	 */
 	public final static String NEW_TARGET_WIZARD = PREFIX + "NewTargetWizard"; //$NON-NLS-1$
+
+	/**
+	 * Name/value pair dialog context help id.
+	 */
+	public final static String NAME_VALUE_PAIR_DIALOG = PREFIX + "NameValuePairDialog"; //$NON-NLS-1$
 }

@@ -7,7 +7,7 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.tcf.ui.internal.nls;
+package org.eclipse.tm.te.tcf.ui.nls;
 
 import java.lang.reflect.Field;
 
@@ -19,7 +19,7 @@ import org.eclipse.osgi.util.NLS;
 public class Messages extends NLS {
 
 	// The plug-in resource bundle name
-	private static final String BUNDLE_NAME = "org.eclipse.tm.te.tcf.ui.internal.nls.Messages"; //$NON-NLS-1$
+	private static final String BUNDLE_NAME = "org.eclipse.tm.te.tcf.ui.nls.Messages"; //$NON-NLS-1$
 
 	/**
 	 * Static constructor.
@@ -87,9 +87,32 @@ public class Messages extends NLS {
 	public static String NewTargetWizard_error_savePeer;
 
 	public static String NewTargetWizardPage_title;
-	public static String NewTargetWizardPage_TransportTypeControl_label;
-	public static String NewTargetWizardPage_AgentHostControl_label;
-	public static String NewTargetWizardPage_AgentPortControl_label;
-	public static String NewTargetWizardPage_PeerIdControl_label;
-	public static String NewTargetWizardPage_PeerNameControl_label;
+	public static String NewTargetWizardPage_description;
+	public static String NewTargetWizardPage_section_transportType;
+	public static String NewTargetWizardPage_section_attributes;
+
+	public static String PeerIdControl_label;
+	public static String PeerNameControl_label;
+
+	public static String TransportTypeControl_label;
+	public static String TransportTypeControl_tcpType_label;
+
+	public static String MyRemoteHostAddressControl_label;
+	public static String MyRemoteHostAddressControl_information_missingTargetNameAddress;
+	public static String MyRemoteHostAddressControl_error_invalidTargetNameAddress;
+	public static String MyRemoteHostAddressControl_error_invalidTargetIpAddress;
+	public static String MyRemoteHostAddressControl_error_targetNameNotResolveable;
+	public static String MyRemoteHostAddressControl_information_checkNameAddressUserInformation;
+
+	public static String PeerAttributesTablePart_button_new;
+	public static String PeerAttributesTablePart_button_edit;
+	public static String PeerAttributesTablePart_button_remove;
+	public static String PeerAttributesTablePart_column_name;
+	public static String PeerAttributesTablePart_column_value;
+	public static String PeerAttributesTablePart_add_dialogTitle;
+	public static String PeerAttributesTablePart_add_title;
+	public static String PeerAttributesTablePart_add_message;
+	public static String PeerAttributesTablePart_edit_dialogTitle;
+	public static String PeerAttributesTablePart_edit_title;
+	public static String PeerAttributesTablePart_edit_message;
 }

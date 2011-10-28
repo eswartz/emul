@@ -18,8 +18,8 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModelProperties;
-import org.eclipse.tm.te.tcf.ui.internal.nls.Messages;
-import org.eclipse.tm.te.ui.tables.TableNode;
+import org.eclipse.tm.te.tcf.ui.nls.Messages;
+import org.eclipse.tm.te.ui.tables.properties.NodePropertiesTableTableNode;
 
 
 /**
@@ -57,13 +57,13 @@ public class NodePropertiesLabelProvider extends LabelProvider implements ITable
 
 		String label = null;
 
-		if (element instanceof TableNode) {
+		if (element instanceof NodePropertiesTableTableNode) {
 			switch (columnIndex) {
 				case 0:
-					label = ((TableNode)element).name;
+					label = ((NodePropertiesTableTableNode)element).name;
 					break;
 				case 1:
-					label = ((TableNode)element).value;
+					label = ((NodePropertiesTableTableNode)element).value;
 					break;
 			}
 
@@ -76,7 +76,7 @@ public class NodePropertiesLabelProvider extends LabelProvider implements ITable
 					label = Messages.NodePropertiesLabelProvider_services_local;
 				} else if (IPeerModelProperties.PROP_REMOTE_SERVICES.equals(label)) {
 					label = Messages.NodePropertiesLabelProvider_services_remote;
-				} else if (columnIndex == 1 && IPeerModelProperties.PROP_STATE.equals(((TableNode)element).name)) {
+				} else if (columnIndex == 1 && IPeerModelProperties.PROP_STATE.equals(((NodePropertiesTableTableNode)element).name)) {
 					label = Messages.getString("NodePropertiesLabelProvider_state_" + label.replace('-', '_')); //$NON-NLS-1$
 				}
 			}
@@ -98,7 +98,7 @@ public class NodePropertiesLabelProvider extends LabelProvider implements ITable
 	 */
 	@Override
 	public Color getForeground(Object element, int columnIndex) {
-		if (element instanceof TableNode && IPeerModelProperties.PROP_LAST_SCANNER_ERROR.equals(((TableNode)element).name)) {
+		if (element instanceof NodePropertiesTableTableNode && IPeerModelProperties.PROP_LAST_SCANNER_ERROR.equals(((NodePropertiesTableTableNode)element).name)) {
 			return getParentViewer().getControl().getDisplay().getSystemColor(SWT.COLOR_RED);
 		}
 		return null;
