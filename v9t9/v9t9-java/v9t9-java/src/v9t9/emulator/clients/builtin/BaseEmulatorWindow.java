@@ -54,6 +54,13 @@ public abstract class BaseEmulatorWindow {
 	public void setVideoRenderer(VideoRenderer videoRenderer) {
 		this.videoRenderer = videoRenderer;
 	}
+	
+	/**
+	 * @return the videoRenderer
+	 */
+	public VideoRenderer getVideoRenderer() {
+		return videoRenderer;
+	}
 
 	protected String selectFile(String title, IProperty configVar, String defaultSubdir,
 			String fileName, boolean isSave, boolean ifUndefined, String[] extensions) {

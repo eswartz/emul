@@ -25,6 +25,7 @@ import org.eclipse.swt.widgets.Shell;
 import v9t9.emulator.clients.builtin.BaseEmulatorWindow;
 import v9t9.emulator.clients.builtin.sound.JavaSoundHandler;
 import v9t9.emulator.clients.builtin.swt.ToolShell.Behavior;
+import v9t9.emulator.clients.builtin.swt.ToolShell.Centering;
 import v9t9.emulator.clients.builtin.swt.debugger.DebuggerWindow;
 import v9t9.emulator.common.IEventNotifier.Level;
 import v9t9.emulator.common.Machine;
@@ -170,7 +171,35 @@ public class EmulatorButtonBar extends EmulatorBar  {
 						}
 					}
 			});
+	
 
+		BasicButton imageImportButton = createButton(17, "Import image (drag onto icon!)",
+			new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					swtWindow.toggleToolShell(IMAGE_IMPORTER_ID, new IToolShellFactory() {
+						Behavior behavior = new Behavior();
+						{
+							behavior.boundsPref = "ImageImporterBounds";
+							behavior.centering = Centering.OUTSIDE;
+							behavior.centerOverControl = swtWindow.getShell();
+							behavior.dismissOnClickOutside = true;
+						}
+						public Control createContents(Shell shell) {
+							Control ctrl = swtWindow.createImageImportDialog(shell);
+							swtWindow.addImageImportDnDControl(ctrl);
+							return ctrl;
+						}
+						@Override
+						public Behavior getBehavior() {
+							return behavior;
+						}
+					});
+				}
+			}
+		);
+		swtWindow.setImageImportDnDControl(imageImportButton);
+		
 		/*
 		createButton(buttonBar, 11,
 				"Zoom the screen", new SelectionAdapter() {

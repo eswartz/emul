@@ -25,6 +25,8 @@ public class EmulatorBar {
 	protected static final String MODULE_SELECTOR_TOOL_ID = "module.selector";
 	protected static final String DISK_SELECTOR_TOOL_ID = "disk.selector";
 	protected static final String DEBUGGER_TOOL_ID = "debugger";
+	protected static final String IMAGE_IMPORTER_ID = "swt.image.importer";
+
 	protected final SwtWindow swtWindow;
 	protected ImageBar buttonBar;
 	protected final Machine machine;
