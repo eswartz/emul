@@ -91,14 +91,14 @@ public class TCFBreakpointsStatus {
             service.getIDs(new IBreakpoints.DoneGetIDs() {
                 @SuppressWarnings("unchecked")
                 public void doneGetIDs(IToken token, Exception error, String[] ids) {
-                    if (error != null) return;
+                    if (error != null || ids == null) return;
                     for (final String id : ids) {
                         service.getProperties(id, new IBreakpoints.DoneGetProperties() {
-                            public void doneGetProperties(IToken token, Exception error, Map<String, Object> props) {
+                            public void doneGetProperties(IToken token, Exception error, Map<String,Object> props) {
                                 if (error == null) {
-                                    listener.contextAdded((Map<String, Object>[]) new Map[] { props });
+                                    listener.contextAdded((Map<String,Object>[]) new Map[] { props });
                                     service.getStatus(id, new IBreakpoints.DoneGetStatus() {
-                                        public void doneGetStatus(IToken token, Exception error, Map<String, Object> status) {
+                                        public void doneGetStatus(IToken token, Exception error, Map<String,Object> status) {
                                             if (error == null) listener.breakpointStatusChanged(id, status);
                                         }
                                     });

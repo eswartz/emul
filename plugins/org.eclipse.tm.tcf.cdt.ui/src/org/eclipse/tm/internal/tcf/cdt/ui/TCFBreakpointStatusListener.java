@@ -77,11 +77,11 @@ class TCFBreakpointStatusListener {
 
         public void breakpointStatusChanged(String id) {
             IBreakpoint bp = bp_model.getBreakpoint(id);
-            updateInstallCount(id, bp);
+            updateStatus(id, bp);
             if (bp == null) createOrUpdateBreakpoint(id);
         }
 
-        private void updateInstallCount(String id, IBreakpoint bp) {
+        private void updateStatus(String id, IBreakpoint bp) {
             if (bp instanceof ICBreakpoint) {
                 boolean ok = false;
                 ICBreakpoint cbp = (ICBreakpoint)bp;
@@ -103,6 +103,9 @@ class TCFBreakpointStatusListener {
                     installed.remove(id);
                     decrementInstallCount(cbp);
                 }
+            }
+            else if (bp instanceof TCFBreakpoint) {
+                updateStatus((TCFBreakpoint)bp);
             }
         }
 
@@ -132,7 +135,7 @@ class TCFBreakpointStatusListener {
         }
 
         private void incrementInstallCount(final ICBreakpoint cbp) {
-            Job job = new WorkspaceJob("Increment Install Count") {
+            Job job = new WorkspaceJob("Increment Breakpoint Install Count") {
                 @Override
                 public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
                     try {
@@ -151,7 +154,7 @@ class TCFBreakpointStatusListener {
         }
 
         private void decrementInstallCount(final ICBreakpoint cbp) {
-            Job job = new WorkspaceJob("Decrement Install Count") {
+            Job job = new WorkspaceJob("Decrement Breakpoint Install Count") {
                 @Override
                 public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
                     try {
@@ -164,6 +167,25 @@ class TCFBreakpointStatusListener {
                 }
             };
             job.setRule(cbp.getMarker().getResource());
+            job.setPriority(Job.SHORT);
+            job.setSystem(true);
+            job.schedule();
+        }
+
+        private void updateStatus(final TCFBreakpoint tbp) {
+            Job job = new WorkspaceJob("Update Breakpoint Status") {
+                @Override
+                public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
+                    try {
+                        tbp.notifyStatusChaged();
+                    }
+                    catch (CoreException e) {
+                        // ignore expected race condition with marker deletion
+                    }
+                    return Status.OK_STATUS;
+                }
+            };
+            job.setRule(tbp.getMarker().getResource());
             job.setPriority(Job.SHORT);
             job.setSystem(true);
             job.schedule();
@@ -200,28 +222,28 @@ class TCFBreakpointStatusListener {
                     }
                     if (!create) return Status.OK_STATUS;
                     markerAttrs.put(ATTR_REFCOUNT, 1);
-                    IBreakpoint x = null;
+                    final IBreakpoint bp;
                     IResource resource = ResourcesPlugin.getWorkspace().getRoot();
                     if (markerAttrs.get(ICWatchpoint.EXPRESSION) != null) {
-                        x = new CWatchpoint(resource, markerAttrs, true);
+                        bp = new CWatchpoint(resource, markerAttrs, true);
                     }
                     else if (markerAttrs.get(ICLineBreakpoint.ADDRESS) != null) {
-                        x = new CAddressBreakpoint(resource, markerAttrs, true);
+                        bp = new CAddressBreakpoint(resource, markerAttrs, true);
                     }
                     else if (markerAttrs.get(ICLineBreakpoint.FUNCTION) != null) {
-                        x = new CFunctionBreakpoint(resource, markerAttrs, true);
+                        bp = new CFunctionBreakpoint(resource, markerAttrs, true);
                     }
                     else if (markerAttrs.get(ICBreakpoint.SOURCE_HANDLE) != null &&
                             markerAttrs.get(IMarker.LINE_NUMBER) != null) {
-                        x = new CLineBreakpoint(resource, markerAttrs, true);
+                        bp = new CLineBreakpoint(resource, markerAttrs, true);
                     }
                     else {
-                        x = new TCFBreakpoint(resource, markerAttrs);
+                        /* An "exotic" breakpoint - cannot be represented by one of CDT breakpoint classes */
+                        bp = TCFBreakpoint.createFromMarkerAttributes(markerAttrs);
                     }
-                    final IBreakpoint bp = x;
                     Protocol.invokeLater(new Runnable() {
                         public void run() {
-                            updateInstallCount(id, bp);
+                            updateStatus(id, bp);
                         }
                     });
                     return Status.OK_STATUS;

@@ -54,6 +54,8 @@ public class TCFBreakpointsModel {
         CDATA_MARKER       = "Marker";
 
     public static final String
+        ATTR_ID            = ITCFConstants.ID_TCF_DEBUG_MODEL + '.' + IBreakpoints.PROP_ID,
+        ATTR_STATUS        = ITCFConstants.ID_TCF_DEBUG_MODEL + '.' + "Status",
         ATTR_INSTALL_COUNT = "org.eclipse.cdt.debug.core.installCount",
         ATTR_ADDRESS       = "org.eclipse.cdt.debug.core.address",
         ATTR_FUNCTION      = "org.eclipse.cdt.debug.core.function",
@@ -63,7 +65,11 @@ public class TCFBreakpointsModel {
         ATTR_SIZE          = "org.eclipse.cdt.debug.core.range",
         ATTR_FILE          = "org.eclipse.cdt.debug.core.sourceHandle",
         ATTR_CONDITION     = "org.eclipse.cdt.debug.core.condition",
-        ATTR_IGNORE_COUNT  = "org.eclipse.cdt.debug.core.ignoreCount";
+        ATTR_IGNORE_COUNT  = "org.eclipse.cdt.debug.core.ignoreCount",
+        ATTR_CONTEXTNAMES  = ITCFConstants.ID_TCF_DEBUG_MODEL + '.' + IBreakpoints.PROP_CONTEXTNAMES,
+        ATTR_CONTEXTIDS    = ITCFConstants.ID_TCF_DEBUG_MODEL + '.' + IBreakpoints.PROP_CONTEXTIDS,
+        ATTR_EXE_PATHS     = ITCFConstants.ID_TCF_DEBUG_MODEL + '.' + IBreakpoints.PROP_EXECUTABLEPATHS,
+        ATTR_STOP_GROUP    = ITCFConstants.ID_TCF_DEBUG_MODEL + '.' + IBreakpoints.PROP_STOP_GROUP;
 
     private final IBreakpointManager bp_manager = DebugPlugin.getDefault().getBreakpointManager();
     private final HashMap<IChannel,Map<String,Object>> channels = new HashMap<IChannel,Map<String,Object>>();
@@ -168,6 +174,7 @@ public class TCFBreakpointsModel {
                 i.remove();
             }
             keys.remove(ATTR_INSTALL_COUNT);
+            keys.remove(ATTR_STATUS);
             return keys;
         }
 
@@ -298,7 +305,7 @@ public class TCFBreakpointsModel {
      */
     public static String getBreakpointID(IBreakpoint bp) throws CoreException {
         IMarker marker = bp.getMarker();
-        String id = (String)marker.getAttributes().get(ITCFConstants.ID_TCF_DEBUG_MODEL + '.' + IBreakpoints.PROP_ID);
+        String id = (String)marker.getAttributes().get(ATTR_ID);
         if (id != null) return id;
         id = marker.getResource().getLocationURI().toString();
         if (id == null) return null;

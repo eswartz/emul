@@ -27,6 +27,7 @@ import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchConfigurationListener;
 import org.eclipse.debug.core.ILaunchManager;
+import org.eclipse.debug.core.model.IBreakpoint;
 import org.eclipse.debug.core.model.ISourceLocator;
 import org.eclipse.debug.ui.DebugUITools;
 import org.eclipse.debug.ui.IDebugUIConstants;
@@ -44,14 +45,12 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.tm.internal.tcf.debug.launch.TCFSourceLookupDirector;
 import org.eclipse.tm.internal.tcf.debug.model.ITCFBreakpointListener;
-import org.eclipse.tm.internal.tcf.debug.model.TCFBreakpoint;
 import org.eclipse.tm.internal.tcf.debug.model.TCFBreakpointsStatus;
 import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
 import org.eclipse.tm.internal.tcf.debug.model.TCFLaunch;
 import org.eclipse.tm.internal.tcf.debug.model.TCFSourceRef;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
-import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.IBreakpoints;
@@ -135,7 +134,6 @@ public class TCFAnnotationManager {
         }
     }
 
-    private TCFLaunch active_launch;
     private final HashMap<IWorkbenchWindow,WorkbenchWindowInfo> windows =
         new HashMap<IWorkbenchWindow,WorkbenchWindowInfo>();
 
@@ -149,7 +147,6 @@ public class TCFAnnotationManager {
         }
 
         public void onConnected(final TCFLaunch launch) {
-            updateActiveLaunch();
             updateAnnotations(null, launch);
             TCFBreakpointsStatus bps = launch.getBreakpointsStatus();
             if (bps == null) return;
@@ -170,7 +167,6 @@ public class TCFAnnotationManager {
 
         public void onDisconnected(final TCFLaunch launch) {
             assert Protocol.isDispatchThread();
-            updateActiveLaunch();
             updateAnnotations(null, launch);
         }
 
@@ -185,7 +181,6 @@ public class TCFAnnotationManager {
     private final ISelectionListener selection_listener = new ISelectionListener() {
 
         public void selectionChanged(IWorkbenchPart part, ISelection selection) {
-            updateActiveLaunch();
             updateAnnotations(part.getSite().getWorkbenchWindow(), (TCFLaunch)null);
             if (selection instanceof IStructuredSelection) {
                 final Object obj = ((IStructuredSelection)selection).getFirstElement();
@@ -203,7 +198,6 @@ public class TCFAnnotationManager {
     private final IWindowListener window_listener = new IWindowListener() {
 
         public void windowActivated(IWorkbenchWindow window) {
-            updateActiveLaunch();
         }
 
         public void windowClosed(IWorkbenchWindow window) {
@@ -211,11 +205,9 @@ public class TCFAnnotationManager {
             window.getSelectionService().removeSelectionListener(
                     IDebugUIConstants.ID_DEBUG_VIEW, selection_listener);
             windows.remove(window).dispose();
-            updateActiveLaunch();
         }
 
         public void windowDeactivated(IWorkbenchWindow window) {
-            updateActiveLaunch();
         }
 
         public void windowOpened(IWorkbenchWindow window) {
@@ -223,7 +215,6 @@ public class TCFAnnotationManager {
             window.getSelectionService().addSelectionListener(
                     IDebugUIConstants.ID_DEBUG_VIEW, selection_listener);
             windows.put(window, new WorkbenchWindowInfo());
-            updateActiveLaunch();
             updateAnnotations(window, (TCFLaunch)null);
         }
     };
@@ -256,7 +247,6 @@ public class TCFAnnotationManager {
 
     private final Display display = Display.getDefault();
     private final ILaunchManager launch_manager = DebugPlugin.getDefault().getLaunchManager();
-    private int update_active_launch_cnt = 0;
     private int update_unnotations_cnt = 0;
     private boolean started;
     private boolean disposed;
@@ -311,46 +301,51 @@ public class TCFAnnotationManager {
         }
     }
 
-    private void updateActiveLaunch() {
-        assert !disposed;
-        final int cnt = ++update_active_launch_cnt;
-        displayExec(new Runnable() {
-            public void run() {
-                if (cnt != update_active_launch_cnt) return;
-                TCFLaunch launch = null;
-                IAdaptable adaptable = DebugUITools.getDebugContext();
-                if (adaptable != null) {
-                    ILaunch x = (ILaunch)adaptable.getAdapter(ILaunch.class);
-                    if (x instanceof TCFLaunch) {
-                        TCFLaunch l = (TCFLaunch)x;
-                        IChannel channel = l.getChannel();
-                        if (channel != null && channel.getState() == IChannel.STATE_OPEN) launch = l;
-                    }
-                }
-                active_launch = launch;
+    /**
+     * Return breakpoint status info for all active TCF debug sessions.
+     * @param breakpoint
+     * @return breakpoint status as defined by TCF Breakpoints service.
+     */
+    Map<TCFLaunch,Map<String,Object>> getBreakpointStatus(IBreakpoint breakpoint) {
+        assert Protocol.isDispatchThread();
+        Map<TCFLaunch,Map<String,Object>> map = new HashMap<TCFLaunch,Map<String,Object>>();
+        if (disposed) return null;
+        ILaunch[] launches = DebugPlugin.getDefault().getLaunchManager().getLaunches();
+        for (ILaunch l : launches) {
+            if (l instanceof TCFLaunch) {
+                TCFLaunch launch = (TCFLaunch)l;
+                TCFBreakpointsStatus bs = launch.getBreakpointsStatus();
+                if (bs != null) map.put(launch, bs.getStatus(breakpoint));
             }
-        });
+        }
+        return map;
     }
 
-    String getBreakpointStatus(final TCFBreakpoint breakpoint) {
+    /**
+     * Return breakpoint status text for all active TCF debug sessions.
+     * @param breakpoint
+     * @return breakpoint status as a string.
+     */
+    @SuppressWarnings("unchecked")
+    String getBreakpointStatusText(IBreakpoint breakpoint) {
         assert Protocol.isDispatchThread();
-        if (disposed) return null;
-        final TCFLaunch launch = active_launch;
-        if (launch != null) {
-            TCFBreakpointsStatus bs = launch.getBreakpointsStatus();
-            if (bs != null) {
-                Map<String,Object> map = bs.getStatus(breakpoint);
-                if (map != null) {
-                    String status = null;
-                    String error = (String)map.get(IBreakpoints.STATUS_ERROR);
-                    Object planted = map.get(IBreakpoints.STATUS_INSTANCES);
-                    if (error != null) status = error;
-                    else if (planted != null) status = "Planted";
-                    return status;
+        String error = null;
+        for (Map<String,Object> map : getBreakpointStatus(breakpoint).values()) {
+            if (map != null) {
+                String s = (String)map.get(IBreakpoints.STATUS_ERROR);
+                if (s != null && error == null) error = s;
+                Object planted = map.get(IBreakpoints.STATUS_INSTANCES);
+                if (planted != null) {
+                    Collection<Map<String,Object>> list = (Collection<Map<String,Object>>)planted;
+                    for (Map<String,Object> m : list) {
+                        if (m.get(IBreakpoints.INSTANCE_ERROR) == null) {
+                            return "Planted";
+                        }
+                    }
                 }
             }
         }
-        return null;
+        return error;
     }
 
     @SuppressWarnings("unchecked")
@@ -454,7 +449,7 @@ public class TCFAnnotationManager {
                                             if (line_data != null && line_data.area != null) area = line_data.area;
                                         }
                                         if (area == null) {
-                                            Map<String,Object> props = launch.getBreakpointsStatus().getProperties(id);
+                                            Map<String,Object> props = bs.getProperties(id);
                                             if (props != null) {
                                                 String file = (String)props.get(IBreakpoints.PROP_FILE);
                                                 Number line = (Number)props.get(IBreakpoints.PROP_LINE);

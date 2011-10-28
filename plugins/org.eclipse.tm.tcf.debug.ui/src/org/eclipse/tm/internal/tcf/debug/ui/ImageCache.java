@@ -107,9 +107,15 @@ public class ImageCache {
     }
 
     public static synchronized ImageDescriptor addOverlay(ImageDescriptor descriptor, String name) {
+        return addOverlay(descriptor, name, 0, 0);
+    }
+
+    public static synchronized ImageDescriptor addOverlay(
+            ImageDescriptor descriptor, String name, final int x, final int y) {
         if (descriptor == null || name == null) return descriptor;
-        Map<ImageDescriptor,ImageDescriptor> map = overlay_cache.get(name);
-        if (map == null) overlay_cache.put(name, map = new HashMap<ImageDescriptor,ImageDescriptor>());
+        String key = name + ':' + x + ':' + y;
+        Map<ImageDescriptor,ImageDescriptor> map = overlay_cache.get(key);
+        if (map == null) overlay_cache.put(key, map = new HashMap<ImageDescriptor,ImageDescriptor>());
         ImageDescriptor res = map.get(descriptor);
         if (res != null) return res;
         final ImageData base = descriptor.getImageData();
@@ -118,7 +124,7 @@ public class ImageCache {
             @Override
             protected void drawCompositeImage(int width, int height) {
                 drawImage(base, 0, 0);
-                drawImage(overlay, 0, 0);
+                drawImage(overlay, x, y);
             }
             @Override
             protected Point getSize() {

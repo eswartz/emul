@@ -10,19 +10,18 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.model;
 
-import java.math.BigInteger;
 import java.util.Map;
 
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IWorkspaceRunnable;
+import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.resources.WorkspaceJob;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.model.Breakpoint;
 import org.eclipse.tm.internal.tcf.debug.Activator;
@@ -34,6 +33,17 @@ public class TCFBreakpoint extends Breakpoint {
 
     public static final String MARKER_TYPE = "org.eclipse.tm.tcf.debug.breakpoint.marker";
 
+    private static final String[] attr_names = {
+        TCFBreakpointsModel.ATTR_ADDRESS, "address",
+        TCFBreakpointsModel.ATTR_FUNCTION, "location",
+        TCFBreakpointsModel.ATTR_EXPRESSION, "expression",
+        TCFBreakpointsModel.ATTR_CONDITION, "condition",
+        TCFBreakpointsModel.ATTR_CONTEXTNAMES, "scope (names)",
+        TCFBreakpointsModel.ATTR_CONTEXTIDS, "scope (IDs)",
+        TCFBreakpointsModel.ATTR_EXE_PATHS, "scope (modules)",
+        TCFBreakpointsModel.ATTR_STOP_GROUP, "stop group",
+    };
+
     private static long last_id = 0;
 
     private static String createNewID() {
@@ -44,36 +54,49 @@ public class TCFBreakpoint extends Breakpoint {
         return Long.toHexString(id);
     }
 
-    private String text;
-
-    public TCFBreakpoint() {
+    public static TCFBreakpoint createFromMarkerAttributes(Map<String,Object> attrs) throws CoreException {
+        assert !Protocol.isDispatchThread();
+        assert attrs.get(TCFBreakpointsModel.ATTR_ID) != null;
+        TCFBreakpoint bp = new TCFBreakpoint();
+        IResource resource = ResourcesPlugin.getWorkspace().getRoot();
+        IMarker marker = resource.createMarker(MARKER_TYPE);
+        bp.setMarker(marker);
+        marker.setAttributes(attrs);
+        DebugPlugin.getDefault().getBreakpointManager().addBreakpoint(bp);
+        return bp;
     }
 
-    public TCFBreakpoint(final IResource resource, Map<String,Object> props) throws DebugException {
-        props.put(IBreakpoints.PROP_ID, createNewID());
+    public static TCFBreakpoint createFromTCFProperties(Map<String,Object> props) {
+        assert Protocol.isDispatchThread();
+        if (props.get(IBreakpoints.PROP_ID) == null) props.put(IBreakpoints.PROP_ID, createNewID());
+        final TCFBreakpoint bp = new TCFBreakpoint();
         final Map<String,Object> m = Activator.getBreakpointsModel().toMarkerAttributes(props);
-        final IWorkspaceRunnable runnable = new IWorkspaceRunnable() {
-            public void run(IProgressMonitor monitor) throws CoreException {
+        final IResource resource = ResourcesPlugin.getWorkspace().getRoot();
+        final ISchedulingRule rule = bp.getMarkerRule(resource);
+        Job job = new WorkspaceJob("Add Breakpoint") {  //$NON-NLS-1$
+            @Override
+            public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
                 IMarker marker = resource.createMarker(MARKER_TYPE);
-                setMarker(marker);
+                bp.setMarker(marker);
                 marker.setAttributes(m);
-                DebugPlugin.getDefault().getBreakpointManager().addBreakpoint(TCFBreakpoint.this);
-            }
-        };
-        final ISchedulingRule rule = getMarkerRule(resource);
-        Job job = new Job("Add Breakpoint") {  //$NON-NLS-1$
-            protected IStatus run(IProgressMonitor monitor) {
-                try {
-                    TCFBreakpoint.this.run(getMarkerRule(resource), runnable);
-                }
-                catch (CoreException e) {
-                    return e.getStatus();
-                }
+                DebugPlugin.getDefault().getBreakpointManager().addBreakpoint(bp);
                 return Status.OK_STATUS;
             }
         };
         job.setRule(rule);
+        job.setPriority(Job.SHORT);
+        job.setSystem(true);
         job.schedule();
+        return bp;
+    }
+
+    public TCFBreakpoint() {
+    }
+
+    @Override
+    public void setEnabled(boolean b) throws CoreException {
+        if (!Activator.getBreakpointsModel().isLocal(getMarker())) return;
+        super.setEnabled(b);
     }
 
     public String getModelIdentifier() {
@@ -81,28 +104,32 @@ public class TCFBreakpoint extends Breakpoint {
     }
 
     public String getText() {
-        if (text == null) {
-            IMarker marker = getMarker();
-            if (marker == null) return null;
-            StringBuffer bf = new StringBuffer();
-            String address = marker.getAttribute(
-                    ITCFConstants.ID_TCF_DEBUG_MODEL + '.' + IBreakpoints.PROP_LOCATION, null);
-            if (address != null && address.length() > 0) {
-                bf.append("PC = ");
-                BigInteger n = new BigInteger(address, 10);
-                String s = n.toString(16);
-                int l = Math.min(s.length(), 8);
-                bf.append("0x00000000".substring(0, 10 - l));
-                bf.append(s);
-            }
-            else {
-                String id = marker.getAttribute(
-                        ITCFConstants.ID_TCF_DEBUG_MODEL + '.' + IBreakpoints.PROP_ID, null);
-                bf.append("BP");
-                bf.append(id);
-            }
-            text = bf.toString();
+        IMarker marker = getMarker();
+        if (marker == null) return null;
+        StringBuffer bf = new StringBuffer();
+        for (int i = 0; i < attr_names.length; i += 2) {
+            String s = marker.getAttribute(attr_names[i], null);
+            if (s == null || s.length() == 0) continue;
+            bf.append('[');
+            bf.append(attr_names[i + 1]);
+            bf.append(": ");
+            bf.append(s);
+            bf.append(']');
         }
-        return text;
+        if (bf.length() == 0) {
+            String id = marker.getAttribute(
+                    ITCFConstants.ID_TCF_DEBUG_MODEL + '.' + IBreakpoints.PROP_ID, null);
+            bf.append(id);
+        }
+        return bf.toString();
+    }
+
+    public void notifyStatusChaged() throws CoreException {
+        IMarker marker = getMarker();
+        if (marker == null) return;
+        int cnt = 0;
+        String status = marker.getAttribute(TCFBreakpointsModel.ATTR_STATUS, null);
+        if (status != null) cnt = Integer.parseInt(status);
+        setAttribute(TCFBreakpointsModel.ATTR_STATUS, Integer.toString(cnt + 1));
     }
 }

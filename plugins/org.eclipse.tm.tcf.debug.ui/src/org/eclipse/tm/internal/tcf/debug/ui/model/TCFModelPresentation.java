@@ -13,6 +13,7 @@ package org.eclipse.tm.internal.tcf.debug.ui.model;
 import java.net.URI;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.URIUtil;
@@ -29,8 +30,10 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.tm.internal.tcf.debug.model.TCFBreakpoint;
+import org.eclipse.tm.internal.tcf.debug.model.TCFBreakpointsModel;
 import org.eclipse.tm.internal.tcf.debug.ui.Activator;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
+import org.eclipse.tm.tcf.services.IBreakpoints;
 import org.eclipse.tm.tcf.util.TCFTask;
 import org.eclipse.ui.IEditorDescriptor;
 import org.eclipse.ui.IEditorInput;
@@ -67,16 +70,43 @@ public class TCFModelPresentation implements IDebugModelPresentation {
     public Image getImage(Object element) {
         ImageDescriptor descriptor = null;
         if (element instanceof TCFBreakpoint) {
-            TCFBreakpoint breakpoint = (TCFBreakpoint)element;
+            final TCFBreakpoint breakpoint = (TCFBreakpoint)element;
             descriptor = ImageCache.getImageDescriptor(ImageCache.IMG_BREAKPOINT_DISABLED);
             try {
                 if (breakpoint.isEnabled()) {
-                    descriptor = ImageCache.getImageDescriptor(ImageCache.IMG_BREAKPOINT_ENABLED);
+                    descriptor = new TCFTask<ImageDescriptor>() {
+                        public void run() {
+                            boolean installed = false;
+                            boolean warning = false;
+                            boolean error = false;
+                            ImageDescriptor d = ImageCache.getImageDescriptor(ImageCache.IMG_BREAKPOINT_ENABLED);
+                            for (Map<String,Object> map : Activator.getAnnotationManager().getBreakpointStatus(breakpoint).values()) {
+                                if (map != null) {
+                                    if ((String)map.get(IBreakpoints.STATUS_ERROR) != null) error = true;
+                                    Object planted = map.get(IBreakpoints.STATUS_INSTANCES);
+                                    if (planted != null) {
+                                        @SuppressWarnings("unchecked")
+                                        Collection<Map<String,Object>> list = (Collection<Map<String,Object>>)planted;
+                                        for (Map<String,Object> m : list) {
+                                            if (m.get(IBreakpoints.INSTANCE_ERROR) == null) installed = true;
+                                            else warning = true;
+                                        }
+                                    }
+                                }
+                            }
+                            if (warning) d = ImageCache.addOverlay(d, ImageCache.IMG_BREAKPOINT_WARNING, 9, 8);
+                            if (installed) d = ImageCache.addOverlay(d, ImageCache.IMG_BREAKPOINT_INSTALLED, 0, 8);
+                            if (error) d = ImageCache.addOverlay(d, ImageCache.IMG_BREAKPOINT_ERROR, 9, 8);
+                            done(d);
+                        }
+                    }.getE();
+                }
+                if (breakpoint.getMarker().getAttribute(TCFBreakpointsModel.ATTR_CONDITION, null) != null) {
+                    descriptor = ImageCache.addOverlay(descriptor, ImageCache.IMG_BREAKPOINT_CONDITIONAL);
                 }
             }
-            catch (CoreException e) {
+            catch (Throwable x) {
             }
-            //descriptor = new OverlayImageDescriptor( fDebugImageRegistry.get( descriptor ), computeBreakpointOverlays( breakpoint ) ) );
         }
         if (descriptor != null) return ImageCache.getImage(descriptor);
         return null;
@@ -89,7 +119,7 @@ public class TCFModelPresentation implements IDebugModelPresentation {
             text = breakpoint.getText();
             String status = new TCFTask<String>() {
                 public void run() {
-                    done(Activator.getAnnotationManager().getBreakpointStatus(breakpoint));
+                    done(Activator.getAnnotationManager().getBreakpointStatusText(breakpoint));
                 }
             }.getE();
             if (status != null) text += " (" + status + ")";
