@@ -1,13 +1,12 @@
-/**
- * RenameDialog.java
- * Created on Aug 22, 2011
+/*******************************************************************************
+ * Copyright (c) 2011 Wind River Systems, Inc. and others. All rights reserved.
+ * This program and the accompanying materials are made available under the terms
+ * of the Eclipse Public License v1.0 which accompanies this distribution, and is
+ * available at http://www.eclipse.org/legal/epl-v10.html
  *
- * Copyright (c) 2011 Wind River Systems, Inc.
- *
- * The right to copy, distribute, modify, or otherwise make use
- * of this software may be licensed only pursuant to the terms
- * of an applicable Wind River license agreement.
- */
+ * Contributors:
+ * Wind River Systems - initial API and implementation
+ *******************************************************************************/
 package org.eclipse.tm.te.ui.dialogs;
 
 import java.util.ArrayList;

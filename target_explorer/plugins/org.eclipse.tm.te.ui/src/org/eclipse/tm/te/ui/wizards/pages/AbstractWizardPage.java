@@ -87,19 +87,20 @@ public abstract class AbstractWizardPage extends WizardPage {
 	 * empty space between controls.
 	 *
 	 * @param parent The parent composite. Must not be <code>null</code>.
+	 * @param heightHint The height hint in pixel or <code>SWT.DEFAULT</code>.
 	 * @param span The horizontal span.
 	 * @param toolkit The form toolkit or <code>null</code>.
 	 *
 	 * @return
 	 */
-	protected Label createEmptySpace(Composite parent, int span, FormToolkit toolkit) {
+	protected Label createEmptySpace(Composite parent, int heightHint, int span, FormToolkit toolkit) {
 		Assert.isNotNull(parent);
 
 		Label emptySpace = toolkit != null ? toolkit.createLabel(parent, null) : new Label(parent, SWT.NONE);
 
 		GridData layoutData = new GridData(SWT.BEGINNING, SWT.BEGINNING, false, false);
 		layoutData.horizontalSpan = span;
-		layoutData.widthHint = 0; layoutData.heightHint = SWTControlUtil.convertHeightInCharsToPixels(emptySpace, 1);
+		layoutData.widthHint = 0; layoutData.heightHint = heightHint != SWT.DEFAULT ? heightHint : SWTControlUtil.convertHeightInCharsToPixels(emptySpace, 1);
 
 		emptySpace.setLayoutData(layoutData);
 

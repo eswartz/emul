@@ -31,7 +31,7 @@ Export-Package: org.eclipse.tm.te.tcf.ui.activator;x-internal:=true,
  org.eclipse.tm.te.tcf.ui.internal.model;x-internal:=true,
  org.eclipse.tm.te.tcf.ui.internal.navigator;x-internal:=true,
  org.eclipse.tm.te.tcf.ui.internal.navigator.images;x-internal:=true,
- org.eclipse.tm.te.tcf.ui.internal.nls;x-internal:=true,
- org.eclipse.tm.te.tcf.ui.internal.wizards;x-internal:=true,
- org.eclipse.tm.te.tcf.ui.internal.wizards.pages;x-internal:=true,
- org.eclipse.tm.te.tcf.ui.tables
+ org.eclipse.tm.te.tcf.ui.nls;x-internal:=true,
+ org.eclipse.tm.te.tcf.ui.tables,
+ org.eclipse.tm.te.tcf.ui.wizards;x-internal:=true,
+ org.eclipse.tm.te.tcf.ui.wizards.pages;x-internal:=true

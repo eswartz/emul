@@ -25,8 +25,8 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModelProperties;
-import org.eclipse.tm.te.tcf.ui.internal.nls.Messages;
-import org.eclipse.tm.te.ui.tables.TableNode;
+import org.eclipse.tm.te.tcf.ui.nls.Messages;
+import org.eclipse.tm.te.ui.tables.properties.NodePropertiesTableTableNode;
 import org.eclipse.ui.forms.widgets.Section;
 
 
@@ -70,10 +70,10 @@ public class NodePropertiesContentProvider implements IStructuredContentProvider
 	 */
 	@Override
 	public Object[] getElements(final Object inputElement) {
-		List<TableNode> nodes = new ArrayList<TableNode>();
+		List<NodePropertiesTableTableNode> nodes = new ArrayList<NodePropertiesTableTableNode>();
 
 		if (inputElement instanceof IPeerModel) {
-			TableNode lastErrorNode = null;
+			NodePropertiesTableTableNode lastErrorNode = null;
 
 			// Get all custom properties of the node
 			final Map<String, Object> properties = new HashMap<String, Object>();
@@ -96,7 +96,7 @@ public class NodePropertiesContentProvider implements IStructuredContentProvider
 				if (name.endsWith(".silent") || Arrays.asList(FILTERED_PROPERTIES).contains(name)) continue; //$NON-NLS-1$
 				// Create the properties node, if not one of the services nodes
 				if (!IPeerModelProperties.PROP_LOCAL_SERVICES.equals(name) && !IPeerModelProperties.PROP_REMOTE_SERVICES.equals(name)) {
-					TableNode propertiesNode = new TableNode(name, properties.get(name) != null ? properties.get(name).toString() : ""); //$NON-NLS-1$
+					NodePropertiesTableTableNode propertiesNode = new NodePropertiesTableTableNode(name, properties.get(name) != null ? properties.get(name).toString() : ""); //$NON-NLS-1$
 					if (!IPeerModelProperties.PROP_LAST_SCANNER_ERROR.equals(name)) nodes.add(propertiesNode);
 					else lastErrorNode = propertiesNode;
 				} else {
@@ -115,7 +115,7 @@ public class NodePropertiesContentProvider implements IStructuredContentProvider
 							if (counter < 6) {
 								counter++;
 							} else {
-								TableNode propertiesNode = new TableNode(withName ? name : "\t", nodeValue.toString()); //$NON-NLS-1$
+								NodePropertiesTableTableNode propertiesNode = new NodePropertiesTableTableNode(withName ? name : "\t", nodeValue.toString()); //$NON-NLS-1$
 								nodes.add(propertiesNode);
 								if (withName) withName = false;
 								counter = 1;
@@ -127,14 +127,14 @@ public class NodePropertiesContentProvider implements IStructuredContentProvider
 							String value = nodeValue.toString();
 							if (value.endsWith(", ")) value = value.substring(0, value.length() - 2); //$NON-NLS-1$
 							if (value.trim().length() > 0) {
-								TableNode propertiesNode = new TableNode(withName ? name : "\t", value); //$NON-NLS-1$
+								NodePropertiesTableTableNode propertiesNode = new NodePropertiesTableTableNode(withName ? name : "\t", value); //$NON-NLS-1$
 								nodes.add(propertiesNode);
 							}
 						}
 
 					} else {
 						// Less than 6 service names listed -> generate a single node
-						TableNode propertiesNode = new TableNode(name, services);
+						NodePropertiesTableTableNode propertiesNode = new NodePropertiesTableTableNode(name, services);
 						nodes.add(propertiesNode);
 					}
 				}
@@ -142,13 +142,13 @@ public class NodePropertiesContentProvider implements IStructuredContentProvider
 
 			if (lastErrorNode != null) {
 				// Add an empty line before the error
-				TableNode propertiesNode = new TableNode("", ""); //$NON-NLS-1$ //$NON-NLS-2$
+				NodePropertiesTableTableNode propertiesNode = new NodePropertiesTableTableNode("", ""); //$NON-NLS-1$ //$NON-NLS-2$
 				nodes.add(propertiesNode);
 				nodes.add(lastErrorNode);
 			}
 		}
 
-		return nodes.toArray(new TableNode[nodes.size()]);
+		return nodes.toArray(new NodePropertiesTableTableNode[nodes.size()]);
 	}
 
 	/* (non-Javadoc)

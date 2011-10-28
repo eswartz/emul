@@ -7,7 +7,7 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.ui.tables;
+package org.eclipse.tm.te.ui.tables.properties;
 
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.PlatformObject;
@@ -15,7 +15,7 @@ import org.eclipse.core.runtime.PlatformObject;
 /**
  * Target Explorer: Immutable representation of a table node.
  */
-public final class TableNode extends PlatformObject {
+public final class NodePropertiesTableTableNode extends PlatformObject {
 	/**
 	 * The node name.
 	 */
@@ -32,7 +32,7 @@ public final class TableNode extends PlatformObject {
 	 * @param name The node name. Must not be <code>null</code>.
 	 * @param value The node value. Must not be <code>null</code>.
 	 */
-	public TableNode(String name, String value) {
+	public NodePropertiesTableTableNode(String name, String value) {
 		Assert.isNotNull(name);
 		Assert.isNotNull(value);
 

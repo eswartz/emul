@@ -11,7 +11,7 @@ package org.eclipse.tm.te.tcf.ui.tables;
 
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.Viewer;
-import org.eclipse.tm.te.tcf.ui.internal.nls.Messages;
+import org.eclipse.tm.te.tcf.ui.nls.Messages;
 import org.eclipse.tm.te.ui.tables.TableViewerComparator;
 
 
