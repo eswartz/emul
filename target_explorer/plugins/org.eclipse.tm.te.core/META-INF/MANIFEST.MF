@@ -17,6 +17,6 @@ Export-Package: org.eclipse.tm.te.core.activator;x-internal:=true,
  org.eclipse.tm.te.core.connection,
  org.eclipse.tm.te.core.connection.interfaces,
  org.eclipse.tm.te.core.connection.managers,
- org.eclipse.tm.te.core.model,
+ org.eclipse.tm.te.core.model.interfaces,
  org.eclipse.tm.te.core.nls;x-internal:=true,
  org.eclipse.tm.te.core.utils.text

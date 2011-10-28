@@ -8,7 +8,7 @@
  * of this software may be licensed only pursuant to the terms
  * of an applicable Wind River license agreement.
  */
-package org.eclipse.tm.te.core.model;
+package org.eclipse.tm.te.core.model.interfaces;
 
 import org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer;
 

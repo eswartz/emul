@@ -10,7 +10,7 @@
 package org.eclipse.tm.te.core.connection.interfaces;
 
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.tm.te.core.model.IConnectable;
+import org.eclipse.tm.te.core.model.interfaces.IConnectable;
 import org.eclipse.tm.te.runtime.interfaces.callback.ICallback;
 import org.eclipse.tm.te.runtime.interfaces.extensions.IExecutableExtension;
 
