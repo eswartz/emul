@@ -75,7 +75,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 	private final IEventNotifier eventNotifier;
 	private Composite videoRendererComposite;
 	private MouseJoystickHandler mouseJoystickHandler;
-	EmulatorButtonBar buttons;
+	EmulatorBar buttons;
 	private EmulatorStatusBar statusBar;
 	protected SwtDragDropHandler dragDropHandler;
 	private IPropertyListener fullScreenListener;
@@ -108,14 +108,14 @@ public class SwtWindow extends BaseEmulatorWindow {
 			
 			if (!isHorizontal) {
 				if (sbSz == null)
-					sbSz = statusBar.getImageBar().computeSize(SWT.DEFAULT, cur.height); 
+					sbSz = statusBar.getButtonBar().computeSize(SWT.DEFAULT, cur.height); 
 				if (bbSz == null)
 					bbSz = buttons.getButtonBar().computeSize(SWT.DEFAULT, cur.height);
 				
 				return new Point(sbSz.x + bbSz.x + vidSz.x, cur.height);
 			} else {
 				if (sbSz == null)
-					sbSz = statusBar.getImageBar().computeSize(cur.width, SWT.DEFAULT); 
+					sbSz = statusBar.getButtonBar().computeSize(cur.width, SWT.DEFAULT); 
 				if (bbSz == null)
 					bbSz = buttons.getButtonBar().computeSize(cur.width, SWT.DEFAULT);
 				
@@ -140,13 +140,13 @@ public class SwtWindow extends BaseEmulatorWindow {
 			if (!isHorizontal) {
 				int barSz = Math.min(sbSz.x, bbSz.x);
 				int left = cur.width - barSz * 2;
-				statusBar.getImageBar().setBounds(0, 0, barSz, cur.height);
+				statusBar.getButtonBar().setBounds(0, 0, barSz, cur.height);
 				videoRendererComposite.setBounds(barSz, 0, left, cur.height);
 				buttons.getButtonBar().setBounds(barSz + left, 0, barSz, cur.height);
 			} else {
 				int barSz = Math.min(sbSz.y, bbSz.y);
 				int left = cur.height - barSz * 2;
-				statusBar.getImageBar().setBounds(0, 0, cur.width, barSz);
+				statusBar.getButtonBar().setBounds(0, 0, cur.width, barSz);
 				videoRendererComposite.setBounds(0, barSz, cur.width, left);
 				buttons.getButtonBar().setBounds(0, barSz + left, cur.width, barSz);
 				
@@ -231,7 +231,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 		
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(mainComposite);
 
-		statusBar = new EmulatorStatusBar(this, mainComposite, machine, 
+		statusBar = new EmulatorStatusBar(this, imageProvider, mainComposite, machine, 
 				new int[] { SWT.COLOR_DARK_GRAY, SWT.COLOR_GRAY, SWT.COLOR_BLACK },
 				0.25f,
 				isHorizontal);
@@ -424,22 +424,13 @@ public class SwtWindow extends BaseEmulatorWindow {
 	 * @return 
 	 * @return 
 	 */
-	protected ToolShell showToolShell(String toolId, String boundsPref, 
-			boolean keepCentered, boolean dismissOnClickOutside,
-			IToolShellFactory toolShellFactory) {
+	protected ToolShell showToolShell(String toolId, IToolShellFactory toolShellFactory) {
 		ToolShell toolShell = toolShells.get(toolId);
 		if (toolShell != null) {
 			toolShell.restore();
 		}
 		else {
-			Shell shell = new Shell(getShell(), SWT.RESIZE | SWT.TOOL | SWT.TITLE);
-			toolShell = new ToolShell(shell, focusRestorer, boundsPref, 
-							keepCentered ? buttons.getButtonBar() : null,
-									isHorizontal,
-							dismissOnClickOutside);
-			Control tool = toolShellFactory.createContents(shell);
-			toolShell.init(tool);
-			addToolShell(toolId, toolShell);
+			toolShell = createToolShell(toolId, toolShellFactory);
 		}
 		return toolShell;
 	}
@@ -448,24 +439,35 @@ public class SwtWindow extends BaseEmulatorWindow {
 	 * @param iToolShellFactory
 	 * @return 
 	 */
-	protected void toggleToolShell(String toolId, String boundsPref, 
-			boolean keepCentered, boolean dismissOnClickOutside,
-			IToolShellFactory toolShellFactory) {
+	protected ToolShell toggleToolShell(String toolId, IToolShellFactory toolShellFactory) {
 		ToolShell toolShell = toolShells.get(toolId);
 		if (toolShell != null) {
 			toolShell.toggle();
 		}
 		else {
-			Shell shell = new Shell(getShell(), SWT.RESIZE | SWT.TOOL | SWT.TITLE);
-			toolShell = new ToolShell(shell, focusRestorer, boundsPref, 
-							keepCentered ? buttons.getButtonBar() : null,
-									isHorizontal,
-							dismissOnClickOutside);
-			Control tool = toolShellFactory.createContents(shell);
-			toolShell.init(tool);
-			addToolShell(toolId, toolShell);
+			toolShell = createToolShell(toolId, toolShellFactory);
 		}
+		return toolShell;
 	}
+
+	/**
+	 * @param toolId
+	 * @param boundsPref
+	 * @param keepCentered
+	 * @param dismissOnClickOutside
+	 * @param toolShellFactory
+	 * @return 
+	 */
+	protected ToolShell createToolShell(String toolId, IToolShellFactory toolShellFactory) {
+		ToolShell toolShell;
+		Shell shell = new Shell(getShell(), SWT.RESIZE | SWT.TOOL | SWT.TITLE);
+		toolShell = new ToolShell(shell, focusRestorer, isHorizontal, toolShellFactory.getBehavior());  
+		Control tool = toolShellFactory.createContents(shell);
+		toolShell.init(tool);
+		addToolShell(toolId, toolShell);
+		return toolShell;
+	}
+	
 	public IFocusRestorer getFocusRestorer() {
 		return focusRestorer;
 	}

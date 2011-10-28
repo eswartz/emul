@@ -9,10 +9,8 @@ import java.util.Map;
 
 import org.ejs.coffee.core.properties.SettingProperty;
 
-import v9t9.emulator.clients.builtin.swt.IDevIcons;
 import v9t9.emulator.clients.builtin.swt.IDeviceIndicatorProvider;
 import v9t9.emulator.common.Machine;
-import v9t9.emulator.hardware.dsrs.DeviceIndicatorProvider;
 import v9t9.emulator.hardware.dsrs.IMemoryIOHandler;
 
 /**
@@ -146,13 +144,14 @@ public class MemoryDiskImageDsr extends BaseDiskImageDsr implements IMemoryIOHan
 			if (diskSettingsMap.isEmpty())
 				return memoryDeviceIndicatorProviderList;
 			
+			/*
 			// one inactive icon for DSR
 			DeviceIndicatorProvider deviceIndicatorProvider = new DeviceIndicatorProvider(
 					diskImageDsrEnabled, 
 					"Disk image activity",
 					IDevIcons.DISK_IMAGE, IDevIcons.DISK_IMAGE);
 			memoryDeviceIndicatorProviderList.add(deviceIndicatorProvider);
-
+			 */
 			
 			for (Map.Entry<String, SettingProperty> entry : diskSettingsMap.entrySet()) {
 				BaseDiskImage image = getDiskImage(entry.getValue().getName());

@@ -20,30 +20,33 @@ import org.ejs.coffee.core.utils.PrefUtils;
 import v9t9.emulator.common.EmulatorSettings;
 
 public class ToolShell {
-	private boolean keepCentered;
-	private boolean dismissOnClickOutside;
+	public enum Centering {
+		INSIDE,
+		OUTSIDE,
+	}
+	public static class Behavior {
+		public Centering centering;
+		public boolean dismissOnClickOutside;
+		public String boundsPref;
+		public Control centerOverControl;
+	}
+
 	private Point desiredLocation; 
 	private Shell shell;
-	private final String boundsPref;
 	private final IFocusRestorer focusRestorer;
-	private Control centerOverControl;
+	private Behavior behavior;
 	private long clickOutsideCheckTime;
 	private final boolean isHorizontal;
 	private Control toolControl;
 	
 	public ToolShell(Shell shell_, 
 			IFocusRestorer focusRestorer_,
-			String boundsPref_, 
-			Control centerOverControl_, 
 			boolean isHorizontal,
-			boolean dismissOnClickOutside) {
+			Behavior behavior) {
 		this.shell = shell_;
 		this.focusRestorer = focusRestorer_;
-		this.boundsPref = boundsPref_;
-		this.centerOverControl = centerOverControl_;
+		this.behavior = behavior;
 		this.isHorizontal = isHorizontal;
-		this.dismissOnClickOutside = dismissOnClickOutside;
-		this.keepCentered = centerOverControl_ != null;
 		this.clickOutsideCheckTime = System.currentTimeMillis() + 1500;	// let it show up first, so click on the button that created it doesn't kill it
 	}
 	
@@ -66,11 +69,11 @@ public class ToolShell {
 			}
 		});
 
-		String boundsStr = EmulatorSettings.INSTANCE.getSettings().get(boundsPref);
+		String boundsStr = EmulatorSettings.INSTANCE.getSettings().get(behavior.boundsPref);
 		if (boundsStr != null) {
 			final Rectangle savedBounds = PrefUtils.readBoundsString(boundsStr);
 			if (savedBounds != null) {
-				if (keepCentered)
+				if (behavior.centering != null && behavior.centerOverControl != null)
 					shell.setSize(savedBounds.width, savedBounds.height);
 				else {
 					SwtWindow.adjustRectVisibility(shell, savedBounds);
@@ -86,7 +89,7 @@ public class ToolShell {
 			shell.pack();
 		}
 		
-		if (keepCentered) {
+		if (behavior.centering != null && behavior.centerOverControl != null) {
 			shell.addControlListener(new ControlAdapter() {
 				@Override
 				public void controlResized(ControlEvent e) {
@@ -135,7 +138,7 @@ public class ToolShell {
 			public void widgetDisposed(DisposeEvent e) {
 				Rectangle bounds = shell.getBounds();
 				String boundsStr = PrefUtils.writeBoundsString(bounds);
-				EmulatorSettings.INSTANCE.getSettings().put(boundsPref, boundsStr);
+				EmulatorSettings.INSTANCE.getSettings().put(behavior.boundsPref, boundsStr);
 			}
 		});
 	}
@@ -148,10 +151,10 @@ public class ToolShell {
 	}
 	
 	public boolean isKeepCentered() {
-		return keepCentered;
+		return behavior.centerOverControl != null && behavior.centering != null;
 	}
 	public boolean isDismissOnClickOutside() {
-		return dismissOnClickOutside;
+		return behavior.dismissOnClickOutside;
 	}
 	/**
 	 * @return the clickOutsideCheckTime
@@ -179,18 +182,24 @@ public class ToolShell {
 	
 
 	public void centerShell() {
-		if (shell.isDisposed() || centerOverControl.isDisposed())
+		if (shell.isDisposed() || behavior.centerOverControl == null || behavior.centerOverControl.isDisposed())
 			return;
 		
 		Rectangle sbounds = shell.getBounds();
-		Rectangle bbounds = centerOverControl.getBounds();
+		Rectangle bbounds = behavior.centerOverControl.getBounds();
 		
-		Point pt = centerOverControl.getParent().toDisplay(bbounds.x, bbounds.y);
-		if (isHorizontal)
-			pt = new Point(pt.x + (bbounds.width - sbounds.width) / 2,
-					pt.y - sbounds.height);
+		Point pt;
+		if (behavior.centerOverControl.getParent() != null)
+			pt = behavior.centerOverControl.getParent().toDisplay(bbounds.x, bbounds.y);
 		else
-			pt = new Point(pt.x - sbounds.width,
+			pt = behavior.centerOverControl.getShell().toDisplay(bbounds.x, bbounds.y);
+		
+		if (isHorizontal) {
+			pt = new Point(pt.x + (bbounds.width - sbounds.width) / 2,
+					pt.y + (behavior.centering == Centering.INSIDE ? -1 : 1) * sbounds.height);
+		}
+		else
+			pt = new Point(pt.x + (behavior.centering == Centering.INSIDE ? -1 : 1) * sbounds.width,
 					pt.y + (bbounds.height - sbounds.height) / 2);
 		
 		recenterTo(pt);

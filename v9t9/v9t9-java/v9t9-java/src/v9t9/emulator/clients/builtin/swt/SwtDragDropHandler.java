@@ -41,6 +41,8 @@ import org.ejs.coffee.core.properties.IProperty;
 import org.ejs.coffee.core.properties.IPropertyListener;
 import org.ejs.coffee.core.utils.Pair;
 
+import v9t9.emulator.clients.builtin.swt.ToolShell.Behavior;
+import v9t9.emulator.clients.builtin.swt.ToolShell.Centering;
 import v9t9.emulator.clients.builtin.video.ICanvas;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
 import v9t9.emulator.clients.builtin.video.VdpCanvas.Format;
@@ -493,10 +495,20 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 		
 		options.updateFrom(canvas, vdp, image, isLowColor);
 		
-		window.showToolShell(IMAGE_IMPORTER_ID, "ImageImporterBounds", 
-				false, false, new IToolShellFactory() {
+		window.showToolShell(IMAGE_IMPORTER_ID, new IToolShellFactory() {
+			Behavior behavior = new Behavior();
+			{
+				behavior.boundsPref = "ImageImporterBounds";
+				behavior.centering = Centering.OUTSIDE;
+				behavior.centerOverControl = window.getShell();
+				behavior.dismissOnClickOutside = true;
+			}
 			public Control createContents(Shell shell) {
 				return new ImageImportDialog(shell, SWT.NONE, options, importPropertyListener);
+			}
+			@Override
+			public Behavior getBehavior() {
+				return behavior;
 			}
 		});
 		importer.importImage(options);

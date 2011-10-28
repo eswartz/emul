@@ -12,23 +12,19 @@ import org.eclipse.swt.events.MenuDetectEvent;
 import org.eclipse.swt.events.MenuDetectListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
-import org.ejs.coffee.core.properties.IProperty;
-import org.ejs.coffee.core.properties.IPropertyListener;
-import org.ejs.coffee.core.properties.SettingProperty;
 
 import v9t9.emulator.clients.builtin.BaseEmulatorWindow;
 import v9t9.emulator.clients.builtin.sound.JavaSoundHandler;
+import v9t9.emulator.clients.builtin.swt.ToolShell.Behavior;
 import v9t9.emulator.clients.builtin.swt.debugger.DebuggerWindow;
 import v9t9.emulator.common.IEventNotifier.Level;
 import v9t9.emulator.common.Machine;
@@ -39,15 +35,7 @@ import v9t9.emulator.runtime.cpu.Executor;
  * @author ejs
  *
  */
-public class EmulatorButtonBar  {
-	protected static final String MODULE_SELECTOR_TOOL_ID = "module.selector";
-	protected static final String DISK_SELECTOR_TOOL_ID = "disk.selector";
-	protected static final String DEBUGGER_TOOL_ID = "debugger";
-
-	private final SwtWindow swtWindow;
-	private ImageBar buttonBar;
-	private final Machine machine;
-	private final ImageProvider imageProvider;
+public class EmulatorButtonBar extends EmulatorBar  {
 	/**
 	 * @param parent 
 	 * @param isHorizontal 
@@ -59,14 +47,7 @@ public class EmulatorButtonBar  {
 	public EmulatorButtonBar(SwtWindow window, ImageProvider imageProvider, Composite parent, 
 			final Machine machine, 
 			int[] colors, float midPoint, boolean isHorizontal) {
-		this.swtWindow = window;
-		this.imageProvider = imageProvider;
-		this.machine = machine;
-		
-		buttonBar = new ImageBar(parent, 
-				isHorizontal ? SWT.HORIZONTAL : SWT.VERTICAL,
-				new Gradient(!isHorizontal, colors, new float[] { midPoint, 1 - midPoint }),
-				swtWindow.getFocusRestorer(), true);
+		super(window, imageProvider, parent, machine, colors, midPoint, isHorizontal);
 		
 		if (isHorizontal) {
 			GridData gd = ((GridData) buttonBar.getLayoutData());
@@ -117,46 +98,32 @@ public class EmulatorButtonBar  {
 				2, 
 				0, "Toggle CPU logging");
 
+		createStateButton(Machine.settingPauseMachine, 8,
+				0, "Pause machine");
+
+
 		createButton(7,
 				"Create debugger window", new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
-						swtWindow.toggleToolShell(DEBUGGER_TOOL_ID, "DebuggerWindowBounds", false, false, new IToolShellFactory() {
+						swtWindow.toggleToolShell(DEBUGGER_TOOL_ID, new IToolShellFactory() {
+							ToolShell.Behavior behavior = new ToolShell.Behavior();
+							{
+								behavior.boundsPref = "DebuggerWindowBounds";
+								behavior.dismissOnClickOutside = false;
+								behavior.centerOverControl = buttonBar;
+							}
 							public Control createContents(Shell shell) {
 								return new DebuggerWindow(shell, SWT.NONE, machine, swtWindow.getToolUiTimer());
 							}
-						});
-					}
-			}
-		);
-		
-		if (machine.getModuleManager() != null) {
-			createButton(16,
-				"Switch module", new SelectionAdapter() {
-					@Override
-					public void widgetSelected(SelectionEvent e) {
-						swtWindow.toggleToolShell(MODULE_SELECTOR_TOOL_ID, "ModuleWindowBounds", true, true, new IToolShellFactory() {
-							public Control createContents(Shell shell) {
-								return new ModuleSelector(shell, machine);
+							public Behavior getBehavior() {
+								return behavior;
 							}
 						});
 					}
-				}
-			);
-		}
-		
-		createButton(5,
-			"Setup disks", new SelectionAdapter() {
-				@Override
-				public void widgetSelected(SelectionEvent e) {
-					swtWindow.toggleToolShell(DISK_SELECTOR_TOOL_ID, "DiskWindowBounds", true, true, new IToolShellFactory() {
-						public Control createContents(Shell shell) {
-							return new DiskSelector(shell, machine);
-						}
-					});
-				}
 			}
 		);
+		
 		/*
 		createButton(buttonBar,
 				0, 
@@ -190,9 +157,6 @@ public class EmulatorButtonBar  {
 
 			});
 		
-		createStateButton(Machine.settingPauseMachine, 8,
-				0, "Pause machine");
-
 		createStateButton(BaseEmulatorWindow.settingMonitorDrawing, 9,  
 				0, "Apply monitor effect to video");
 
@@ -218,16 +182,6 @@ public class EmulatorButtonBar  {
 					}
 				});
 		*/
-		createButton(12, "Accelerate execution",
-				new SelectionAdapter() {
-					@Override
-					public void widgetSelected(SelectionEvent e) {
-						Control button = (Control) e.widget;
-						Point size = button.getSize();
-						swtWindow.showMenu(createAccelMenu(button), button, size.x / 2, size.y / 2);
-					}
-				});
-
 		createStateButton(BaseEmulatorWindow.settingFullScreen, 
 				11, 0, "Toggle fullscreen");
 
@@ -283,74 +237,6 @@ public class EmulatorButtonBar  {
 
 	}
 
-	private BasicButton createButton(int iconIndex, String tooltip, SelectionListener selectionListener) {
-		BasicButton button = new BasicButton(buttonBar, SWT.PUSH,
-				imageProvider, iconIndex, tooltip);
-		button.addSelectionListener(selectionListener);
-		return button;
-	}
-	
-	private BasicButton createStateButton(final SettingProperty setting, final boolean inverted, 
-			final Point noClickCorner, int iconIndex, 
-			final int overlayIndex, String tooltip) {
-		final BasicButton button = new BasicButton(buttonBar, SWT.PUSH,
-				imageProvider, iconIndex, tooltip);
-		setting.addListener(new IPropertyListener() {
-
-			public void propertyChanged(final IProperty setting) {
-				Display.getDefault().asyncExec(new Runnable() {
-
-					public void run() {
-						if (button.isDisposed())
-							return;
-						if (setting.getBoolean() != inverted) {
-							button.setOverlayBounds(imageProvider.imageIndexToBounds(overlayIndex));
-						} else {
-							button.setOverlayBounds(null);
-						}
-						if (setting.getBoolean() != button.getSelection()) {
-							button.setSelection(setting.getBoolean());
-						}
-						button.redraw();
-					}
-					
-				});
-			}
-			
-		});
-		
-		button.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				if (noClickCorner != null) {
-					if (e.x >= noClickCorner.x || e.y >= noClickCorner.y)
-						return;
-				}
-				machine.asyncExec(new Runnable() {
-					public void run() {
-						setting.setBoolean(!setting.getBoolean());
-					}
-				});
-			}
-		});
-		
-		if (setting.getBoolean() != inverted) {
-			button.setOverlayBounds(imageProvider.imageIndexToBounds(overlayIndex));
-			button.setSelection(setting.getBoolean());
-		}
-		return button;
-	}
-
-	private BasicButton createStateButton(final SettingProperty setting, int iconIndex, 
-			int overlayIndex, String tooltip) {
-		return createStateButton(setting, false, null, iconIndex, overlayIndex, tooltip);
-	}
-	
-	private Menu createAccelMenu(final Control parent) {
-		final Menu menu = new Menu(parent);
-		return swtWindow.populateAccelMenu(menu);
-	}
-
 	/*
 	private Menu createZoomMenu(final Control parent) {
 		final Menu menu = new Menu(parent);
@@ -385,35 +271,6 @@ public class EmulatorButtonBar  {
 	private Menu createFilePopupMenu(final Control parent) {
 		final Menu menu = new Menu(parent);
 		return swtWindow.populateFileMenu(menu, false);
-	}
-
-
-	/**
-	 * @return
-	 */
-	public Point getTooltipLocation() {
-		Point pt = buttonBar.getParent().toDisplay(buttonBar.getLocation());
-		//System.out.println(pt);
-		pt.y += buttonBar.getSize().y;
-		pt.x += buttonBar.getSize().x * 3 / 4;
-		return pt;
-	}
-
-
-	/**
-	 * @return
-	 */
-	public ImageBar getButtonBar() {
-		return buttonBar;
-	}
-
-
-	/**
-	 * 
-	 */
-	public void dispose() {
-		// TODO Auto-generated method stub
-		
 	}
 
 }

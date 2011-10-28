@@ -49,7 +49,7 @@ public class ImageImportDialog extends Composite {
 
 		Button button = new Button(this, SWT.PUSH);
 		button.setText("Import Again");
-		button.setToolTipText("Import the last dragged image (for example, if the screen has been reset)");
+		button.setToolTipText("Import the last dragged image (for example, if the screen mode or contents changed)");
 		button.addSelectionListener(new SelectionAdapter() {
 			/* (non-Javadoc)
 			 * @see org.eclipse.swt.events.SelectionAdapter#widgetSelected(org.eclipse.swt.events.SelectionEvent)

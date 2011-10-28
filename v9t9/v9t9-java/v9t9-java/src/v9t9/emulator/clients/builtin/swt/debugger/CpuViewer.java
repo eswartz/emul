@@ -25,6 +25,8 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.ejs.coffee.core.properties.IProperty;
@@ -70,6 +72,7 @@ public class CpuViewer extends Composite implements InstructionListener {
 	private ICpuTracker tracker;
 	private InstRow partialInst;
 	private boolean changed;
+	private boolean isVisible;
 	
 	public CpuViewer(Composite parent, int style, final Machine machine, Timer timer) {
 		super(parent, style);
@@ -140,7 +143,7 @@ public class CpuViewer extends Composite implements InstructionListener {
 			}
 			
 		};
-		Machine.settingPauseMachine.addListener(pauseListener);
+		//Machine.settingPauseMachine.addListener(pauseListener);
 		////
 		
 		stepImage = getSubImage(icons, 48, 0, 24, 24);
@@ -213,7 +216,24 @@ public class CpuViewer extends Composite implements InstructionListener {
 		final Table table = instTableViewer.getTable();
 		GridDataFactory.fillDefaults().grab(true, true).span(1, 1).applyTo(table);
 		
-
+		Listener listener = new Listener() {
+			@Override
+			public void handleEvent(Event event) {
+				isVisible = event.type == SWT.Show;
+				if (isVisible) {
+					machine.getExecutor().addInstructionListener(CpuViewer.this);
+					Machine.settingPauseMachine.addListener(pauseListener);
+					Machine.settingPauseMachine.setBoolean(true);
+				} else {
+					machine.getExecutor().removeInstructionListener(CpuViewer.this);
+					Machine.settingPauseMachine.removeListener(pauseListener);
+					Machine.settingPauseMachine.setBoolean(false);
+				}
+			}
+		};
+		getShell().addListener(SWT.Show, listener);
+		getShell().addListener(SWT.Hide, listener);
+		
 		FontDescriptor fontDescriptor = CompatUtils.getFontDescriptor(JFaceResources.getTextFont());
 		//fontDescriptor = fontDescriptor.increaseHeight(-2);
 		tableFont = fontDescriptor.createFont(getDisplay());
@@ -267,9 +287,6 @@ public class CpuViewer extends Composite implements InstructionListener {
 		
 		////
 		
-		Machine.settingPauseMachine.setBoolean(true);
-		machine.getExecutor().addInstructionListener(this);
-		
 		refreshTask = new TimerTask() {
 
 			volatile boolean working;
@@ -321,6 +338,10 @@ public class CpuViewer extends Composite implements InstructionListener {
 			}
 			
 		});
+		
+		machine.getExecutor().addInstructionListener(CpuViewer.this);
+		Machine.settingPauseMachine.addListener(pauseListener);
+		Machine.settingPauseMachine.setBoolean(true);
 	}
 
 
@@ -370,6 +391,9 @@ public class CpuViewer extends Composite implements InstructionListener {
 	 * @see v9t9.emulator.runtime.InstructionListener#executed(v9t9.engine.cpu.InstructionWorkBlock, v9t9.engine.cpu.InstructionWorkBlock)
 	 */
 	public void executed(final BaseInstructionWorkBlock before, BaseInstructionWorkBlock after_) {
+		if (!isVisible)
+			return;
+		
 		if (isWatching || showNextInstruction) {
 			InstructionWorkBlock after= new InstructionWorkBlock(machine.getCpu());
 	        after_.copyTo(after);

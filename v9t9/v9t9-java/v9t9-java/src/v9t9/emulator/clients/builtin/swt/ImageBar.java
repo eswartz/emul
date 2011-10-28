@@ -188,11 +188,17 @@ class ImageBar extends Composite implements IImageBar {
 			}
 			
 			for (Control kid : kids) {
+				int hIndent = 0, vIndent = 0;
+				if (kid.getLayoutData() instanceof GridData) {
+					GridData data = (GridData) kid.getLayoutData();
+					hIndent = data.horizontalIndent;
+					vIndent = data.verticalIndent;
+				}
 				if (isHorizontal) {
-					kid.setBounds(x, y, size, size);
+					kid.setBounds(x + hIndent, y + vIndent, size - hIndent*2, size - vIndent*2);
 					x += size;
 				} else {
-					kid.setBounds(x, y, size, size);
+					kid.setBounds(x + hIndent, y + vIndent, size - hIndent*2, size - vIndent*2);
 					y += size;
 				}
 			}
