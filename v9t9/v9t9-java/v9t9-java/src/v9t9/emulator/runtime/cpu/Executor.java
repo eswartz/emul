@@ -183,10 +183,10 @@ public class Executor {
 			*/
     		while (!cpu.isThrottled() && nVdpInterrupts < VdpTMS9918A.settingVdpInterruptRate.getInt()) {
     			try {
-    				long start = System.currentTimeMillis();
+    				//long start = System.currentTimeMillis();
     				Thread.yield();
     				
-    				long end = System.currentTimeMillis();
+    				//long end = System.currentTimeMillis();
     				cpu.addCycles(1);
     				cpu.checkInterrupts();
     			} catch (AbortedException e) {
