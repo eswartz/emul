@@ -1299,6 +1299,8 @@ public class ImageImport implements IBitmapPixelAccess {
 	 */
 	public void importImage(ImportOptions options) {
 		BufferedImage image = options.getImage();
+		if (image == null)
+			return;
 
 		int targWidth = canvas.getVisibleWidth();
 		int targHeight = canvas.getVisibleHeight();

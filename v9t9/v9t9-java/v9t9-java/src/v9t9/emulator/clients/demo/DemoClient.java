@@ -12,6 +12,7 @@ import org.ejs.coffee.core.settings.ISettingSection;
 
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VdpModeRedrawHandler;
+import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.emulator.common.BaseEventNotifier;
 import v9t9.emulator.common.IEventNotifier;
 import v9t9.emulator.common.Machine;
@@ -569,6 +570,14 @@ public class DemoClient implements Client, VdpHandler, SoundHandler, CruHandler 
 	@Override
 	public String getRegisterTooltip(int reg) {
 		return video.getRegisterTooltip(reg);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.Client#getVideoRenderer()
+	 */
+	@Override
+	public VideoRenderer getVideoRenderer() {
+		return null;
 	}
 }
 

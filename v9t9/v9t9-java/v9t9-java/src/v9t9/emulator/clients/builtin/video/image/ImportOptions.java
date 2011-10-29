@@ -7,7 +7,6 @@ import java.awt.image.BufferedImage;
 import java.util.Arrays;
 
 import org.ejs.coffee.core.properties.FieldProperty;
-import org.ejs.coffee.core.properties.IProperty;
 import org.ejs.coffee.core.properties.IPropertySource;
 import org.ejs.coffee.core.properties.PropertySource;
 
@@ -58,22 +57,32 @@ public class ImportOptions {
 	private BufferedImage image;
 	private Format format;
 	
-	private IProperty[] createProperties() {
-		return new IProperty[] {
-			new FieldProperty(this, "scaleSmooth", "Smooth Scaling"),
-			new FieldProperty(this, "keepAspect", "Keep Aspect Ratio"),
-			new FieldProperty(this, "asGreyScale", "Convert To Greyscale"),
-			new FieldProperty(this, "optimizePalette", "Optimize Palette"),
-			new FieldProperty(this, "ditherType", "Dithering"),
-		};
+	private FieldProperty scaleSmoothProperty;
+	private FieldProperty keepAspectProperty;
+	private FieldProperty asGreyScaleProperty;
+	private FieldProperty optimizePaletteProperty;
+	private FieldProperty ditheringProperty;
+	
+	/**
+	 * 
+	 */
+	public ImportOptions() {
+		scaleSmoothProperty = new FieldProperty(this, "scaleSmooth", "Smooth Scaling");
+		keepAspectProperty = new FieldProperty(this, "keepAspect", "Keep Aspect Ratio");
+		asGreyScaleProperty = new FieldProperty(this, "asGreyScale", "Convert To Greyscale");
+		optimizePaletteProperty = new FieldProperty(this, "optimizePalette", "Optimize Palette");
+		ditheringProperty = new FieldProperty(this, "ditherType", "Dithering");
 	}
 	/**
 	 * @return
 	 */
 	public IPropertySource createPropertySource() {
 		PropertySource ps = new PropertySource();
-		for (IProperty p : createProperties())
-			ps.addProperty(p);
+		ps.addProperty(scaleSmoothProperty);
+		ps.addProperty(keepAspectProperty);
+		ps.addProperty(asGreyScaleProperty);
+		ps.addProperty(optimizePaletteProperty);
+		ps.addProperty(ditheringProperty);
 		return ps;
 	}
 	
@@ -131,6 +140,7 @@ public class ImportOptions {
 		this.format = format;
 	}
 	/**
+	 * Use this when the image has been dragged/dropped.
 	 * @param image2
 	 * @param isLowColor
 	 */

@@ -43,7 +43,6 @@ import v9t9.emulator.clients.builtin.video.ICanvas;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
 import v9t9.emulator.clients.builtin.video.VdpCanvas.Format;
 import v9t9.emulator.clients.builtin.video.image.ImageImport;
-import v9t9.emulator.clients.builtin.video.image.ImportOptions;
 import v9t9.emulator.common.IEventNotifier;
 import v9t9.emulator.common.IEventNotifier.Level;
 
@@ -64,13 +63,11 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 	private File lastURLFile;
 	private String lastURL;
 	private final IEventNotifier notifier;
-	private ImportOptions options;
 	protected IPropertyListener importPropertyListener;
 	private final IImageImportHandler importHandler;
 
-	public SwtDragDropHandler(SwtWindow window, Control control, 
-			ISwtVideoRenderer renderer, IEventNotifier notifier,
-			IImageImportHandler importHandler) {
+	public SwtDragDropHandler(Control control, ISwtVideoRenderer renderer, 
+			IEventNotifier notifier, IImageImportHandler importHandler) {
 		this.importHandler = importHandler;
 		if (renderer == null || control == null || notifier == null)
 			throw new NullPointerException();

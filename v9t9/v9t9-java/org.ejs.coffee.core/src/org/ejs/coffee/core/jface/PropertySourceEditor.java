@@ -29,6 +29,8 @@ public class PropertySourceEditor implements IPropertyEditor {
 		//GridDataFactory.fillDefaults().grab(true, true).applyTo(group);
 		GridDataFactory.swtDefaults(). applyTo(group);
 		for (IProperty property : propertySource.getProperties()) {
+			if (property.isHidden())
+				continue;
 			PropertyEditor editor = new PropertyEditor(property);
 			editor.createEditor(group);
 		}

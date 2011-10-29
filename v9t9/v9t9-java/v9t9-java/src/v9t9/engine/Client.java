@@ -6,6 +6,7 @@
  */
 package v9t9.engine;
 
+import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.emulator.common.IEventNotifier;
 
 
@@ -33,6 +34,8 @@ public interface Client {
 
 	void updateVideo();
 
+	VideoRenderer getVideoRenderer();
+	
 	KeyboardHandler getKeyboardHandler();
 	
 	IEventNotifier getEventNotifier();

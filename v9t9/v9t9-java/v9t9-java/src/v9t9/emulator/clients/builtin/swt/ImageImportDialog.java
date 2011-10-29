@@ -30,24 +30,27 @@ public class ImageImportDialog extends Composite {
 
 	/**
 	 * @param shell
+	 * @param imageDragDropHandler 
 	 * @param options 
 	 * @param none
 	 * @param importer
 	 * @param options
 	 */
-	public ImageImportDialog(final Shell shell, int style, ImportOptions options, final IPropertyListener listener) {
+	public ImageImportDialog(final Shell shell, int style, final ImportOptions options, final IPropertyListener listener) {
 		super(shell, style);
 		
 		shell.setText("Image Importer");
 
 		GridLayoutFactory.fillDefaults().applyTo(this);
 		
+		setToolTipText("Drag an image onto or out of this dialog");
+		
 		propertySource = options.createPropertySource();
 		PropertySourceEditor editor = new PropertySourceEditor(propertySource, "Options");
 		Control editControl = editor.createEditor(this);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(editControl);
 
-		Button button = new Button(this, SWT.PUSH);
+		final Button button = new Button(this, SWT.PUSH);
 		button.setText("Import Again");
 		button.setToolTipText("Import the last dragged image (for example, if the screen mode or contents changed)");
 		button.addSelectionListener(new SelectionAdapter() {
@@ -59,6 +62,33 @@ public class ImageImportDialog extends Composite {
 				listener.propertyChanged(null);
 			}
 		});
+		
+		/*
+		final IProperty imageProperty = propertySource.getProperty("image");
+		button.setEnabled(imageProperty.getString() != null);
+
+		imgPropListener = new IPropertyListener() {
+			
+			@Override
+			public void propertyChanged(final IProperty property) {
+				shell.getDisplay().asyncExec(new Runnable() {
+					public void run() {
+						button.setEnabled(property.getString() != null);
+					}
+				});
+			}
+		};
+		
+		imageProperty.addListener(imgPropListener);
+		
+		button.addDisposeListener(new DisposeListener() {
+			
+			@Override
+			public void widgetDisposed(DisposeEvent e) {
+				imageProperty.removeListener(imgPropListener);
+			}
+		});
+		*/
 		
 		GridDataFactory.fillDefaults().align(SWT.FILL, SWT.BOTTOM).applyTo(button);
 		

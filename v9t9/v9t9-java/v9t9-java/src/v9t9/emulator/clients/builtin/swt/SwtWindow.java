@@ -3,7 +3,6 @@
  */
 package v9t9.emulator.clients.builtin.swt;
 
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -52,23 +51,20 @@ import org.ejs.coffee.core.utils.PrefUtils;
 import v9t9.emulator.Emulator;
 import v9t9.emulator.clients.builtin.BaseEmulatorWindow;
 import v9t9.emulator.clients.builtin.sound.JavaSoundHandler;
-import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
-import v9t9.emulator.clients.builtin.video.image.ImageImport;
-import v9t9.emulator.clients.builtin.video.image.ImportOptions;
 import v9t9.emulator.common.EmulatorSettings;
 import v9t9.emulator.common.IEventNotifier;
 import v9t9.emulator.common.IEventNotifier.Level;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.common.NotifyEvent;
 import v9t9.emulator.runtime.cpu.Cpu;
-import v9t9.engine.VdpHandler;
+import v9t9.engine.Client;
 
 /**
  * Provide the emulator in an SWT window
  * @author ejs
  *
  */
-public class SwtWindow extends BaseEmulatorWindow implements IImageImportHandler {
+public class SwtWindow extends BaseEmulatorWindow{
 	
 	private static final String EMULATOR_WINDOW_BOUNDS = "EmulatorWindowBounds";
 	protected Shell shell;
@@ -85,9 +81,6 @@ public class SwtWindow extends BaseEmulatorWindow implements IImageImportHandler
 	private IPropertyListener fullScreenListener;
 	private boolean isHorizontal;
 	
-	private ImportOptions imageImportOptions;
-	private IPropertyListener importPropertyListener;
-	private Control imageDndControl;
 	
 	class EmulatorWindowLayout extends Layout {
 
@@ -163,7 +156,7 @@ public class SwtWindow extends BaseEmulatorWindow implements IImageImportHandler
 		
 	}
 	
-	public SwtWindow(Display display, final Machine machine) {
+	public SwtWindow(Display display, final Machine machine, final ISwtVideoRenderer videoRenderer) {
 		super(machine);
 				
 		toolShells = new HashMap<String, ToolShell>();
@@ -254,23 +247,20 @@ public class SwtWindow extends BaseEmulatorWindow implements IImageImportHandler
 			}
 		};
 		
+
+		eventNotifier = new GuiEventNotifier(this);
+
+		setVideoRenderer(videoRenderer);
 		
 		buttons = new EmulatorButtonBar(this, imageProvider, mainComposite, machine,
 				new int[] { SWT.COLOR_BLACK, SWT.COLOR_GRAY, SWT.COLOR_DARK_GRAY },
 				0.75f,
 				isHorizontal);
 		
-		eventNotifier = new GuiEventNotifier(this);
 
 		EmulatorSettings.INSTANCE.register(JavaSoundHandler.settingPlaySound);
-	}
-	
-	public void setSwtVideoRenderer(final ISwtVideoRenderer renderer) {
-		setVideoRenderer(renderer);
 		
-		setImageImportDnDControl(imageDndControl);
-		
-		this.videoControl = renderer.createControl(videoRendererComposite, SWT.NONE);
+		this.videoControl = videoRenderer.createControl(videoRendererComposite, SWT.NONE);
 		
 		GridDataFactory.swtDefaults()
 			.indent(0, 0)
@@ -279,7 +269,7 @@ public class SwtWindow extends BaseEmulatorWindow implements IImageImportHandler
 			.minSize(128, 64)
 			.applyTo(videoControl);
 		
-		renderer.addMouseEventListener(new MouseAdapter() {
+		videoRenderer.addMouseEventListener(new MouseAdapter() {
 			
 			public void mouseDown(final MouseEvent e) {
 				//System.out.println("Mouse detected " + e);
@@ -335,7 +325,7 @@ public class SwtWindow extends BaseEmulatorWindow implements IImageImportHandler
 				focusRestorer.restoreFocus();
 			}
 		});
-		renderer.setFocus();
+		videoRenderer.setFocus();
 	}
 	
 	public static void adjustRectVisibility(Shell shell, Rectangle rect) {
@@ -874,62 +864,10 @@ public class SwtWindow extends BaseEmulatorWindow implements IImageImportHandler
 	}
 
 	/**
-	 * @param shell2
 	 * @return
 	 */
-	public Control createImageImportDialog(Shell shell) {
-		return new ImageImportDialog(shell, SWT.NONE, imageImportOptions, importPropertyListener);
+	public Client getClient() {
+		return machine.getClient();
 	}
 
-	public void setImageImportDnDControl(Control control) {
-		this.imageDndControl = control;
-		if (getVideoRenderer() != null) {
-			final ISwtVideoRenderer renderer = (ISwtVideoRenderer) getVideoRenderer();
-			imageImportOptions = new ImportOptions();
-			importPropertyListener = new IPropertyListener() {
-
-				@Override
-				public void propertyChanged(IProperty property) {
-					// in case, e.g., mode changed
-					final ImageDataCanvas canvas = (ImageDataCanvas) renderer.getCanvas();
-					final VdpHandler vdp = renderer.getVdpHandler();
-					
-					ImageImport importer = new ImageImport(canvas, vdp);
-					importer.importImage(imageImportOptions);
-				}
-			};
-
-			new SwtDragDropHandler(this, 
-					imageDndControl, 
-					(ISwtVideoRenderer) getVideoRenderer(),
-					getEventNotifier(),
-					this);
-		}
-	}
-	public void addImageImportDnDControl(Control control) {
-		if (getVideoRenderer() == null)
-			throw new IllegalStateException();
-		
-		new SwtDragDropHandler(this, 
-				control, 
-				(ISwtVideoRenderer) getVideoRenderer(),
-				getEventNotifier(),
-				this);
-	}
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.clients.builtin.swt.IImageImportHandler#importImage(java.awt.image.BufferedImage, boolean)
-	 */
-	@Override
-	public void importImage(BufferedImage image, boolean isLowColor) {
-		ISwtVideoRenderer renderer = (ISwtVideoRenderer) getVideoRenderer();
-		final ImageDataCanvas canvas = (ImageDataCanvas) renderer.getCanvas();
-		final VdpHandler vdp = renderer.getVdpHandler();
-		
-		ImageImport importer = new ImageImport(canvas, vdp);
-		
-		imageImportOptions.updateFrom(canvas, vdp, image, isLowColor);
-		
-		importer.importImage(imageImportOptions);
-		
-	}
 }

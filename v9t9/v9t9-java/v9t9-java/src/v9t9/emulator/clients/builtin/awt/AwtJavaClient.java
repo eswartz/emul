@@ -10,6 +10,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 import v9t9.emulator.clients.builtin.sound.JavaSoundHandler;
+import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.emulator.common.IEventNotifier;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.runtime.TerminatedException;
@@ -148,6 +149,14 @@ public class AwtJavaClient implements Client {
     }
     public boolean isAlive() {
     	return true;
+    }
+    
+    /* (non-Javadoc)
+     * @see v9t9.engine.Client#getVideoRenderer()
+     */
+    @Override
+    public VideoRenderer getVideoRenderer() {
+    	return videoRenderer;
     }
 }
 

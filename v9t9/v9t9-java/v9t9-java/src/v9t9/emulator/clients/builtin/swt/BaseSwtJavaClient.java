@@ -11,6 +11,7 @@ import org.eclipse.swt.widgets.Shell;
 
 import v9t9.emulator.clients.builtin.awt.AwtKeyboardHandler;
 import v9t9.emulator.clients.builtin.sound.JavaSoundHandler;
+import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.emulator.common.IEventNotifier;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.runtime.TerminatedException;
@@ -48,13 +49,13 @@ public abstract class BaseSwtJavaClient implements Client {
     	setupRenderer();
 
 
-        SwtWindow window = new SwtWindow(display, machine);
+        SwtWindow window = new SwtWindow(display, machine, (ISwtVideoRenderer) videoRenderer);
         eventNotifier = window.getEventNotifier();
         
         if (keyboardHandler instanceof AwtKeyboardHandler)
         	((AwtKeyboardHandler) keyboardHandler).setEventNotifier(eventNotifier);
         
-        window.setSwtVideoRenderer((ISwtVideoRenderer) videoRenderer);
+        //window.setSwtVideoRenderer((ISwtVideoRenderer) videoRenderer);
 
         mouseJoystickHandler = new MouseJoystickHandler(videoRenderer, machine.getKeyboardState());
         window.setMouseJoystickHandler(mouseJoystickHandler);
@@ -209,6 +210,14 @@ public abstract class BaseSwtJavaClient implements Client {
 
 	public boolean isAlive() {
 		return !display.isDisposed();
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.Client#getVideoRenderer()
+	 */
+	@Override
+	public VideoRenderer getVideoRenderer() {
+		return videoRenderer;
 	}
 
 }
