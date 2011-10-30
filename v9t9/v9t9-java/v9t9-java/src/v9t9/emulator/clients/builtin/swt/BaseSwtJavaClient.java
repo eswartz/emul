@@ -4,6 +4,8 @@
 package v9t9.emulator.clients.builtin.swt;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.SWTError;
+import org.eclipse.swt.SWTException;
 import org.eclipse.swt.events.ShellAdapter;
 import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.widgets.Display;
@@ -205,7 +207,13 @@ public abstract class BaseSwtJavaClient implements Client {
 	}
 
 	public void handleEvents() {
-		while (display.readAndDispatch()) ;
+		try {
+			while (display.readAndDispatch()) ;
+		} catch (SWTException e) {
+			e.printStackTrace();
+		} catch (SWTError e) {
+			e.printStackTrace();
+		}
 	}
 
 	public boolean isAlive() {
