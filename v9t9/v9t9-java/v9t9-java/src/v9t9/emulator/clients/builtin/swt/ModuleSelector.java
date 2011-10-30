@@ -7,6 +7,8 @@ import java.text.MessageFormat;
 
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
+import org.eclipse.jface.resource.FontDescriptor;
+import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.IOpenListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
@@ -19,10 +21,13 @@ import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
@@ -31,6 +36,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
+import org.ejs.coffee.core.utils.CompatUtils;
 
 import v9t9.emulator.clients.builtin.NotifyException;
 import v9t9.emulator.common.IEventNotifier.Level;
@@ -52,6 +58,7 @@ public class ModuleSelector extends Composite {
 	private final Machine machine;
 	private Button switchButton;
 	private TableColumn fileColumn;
+	private Font tableFont;
 
 	/**
 	 * 
@@ -77,6 +84,21 @@ public class ModuleSelector extends Composite {
 		table.setLinesVisible(true);
 		
 		GridDataFactory.fillDefaults().grab(true,true).applyTo(table);
+		
+		if (table.getFont().getFontData()[0].getHeight() < 12) {
+			FontDescriptor desc = CompatUtils.getFontDescriptor(JFaceResources.getDefaultFont());
+			tableFont = desc.setHeight(12).createFont(getDisplay()); 
+			table.setFont(tableFont);
+		}
+		
+		addDisposeListener(new DisposeListener() {
+			
+			@Override
+			public void widgetDisposed(DisposeEvent e) {
+				if (tableFont != null)
+					tableFont.dispose();
+			}
+		});
 		
 		nameColumn = new TableColumn(table, SWT.LEFT);
 		nameColumn.setText("Name");
@@ -169,6 +191,7 @@ public class ModuleSelector extends Composite {
 							IModule m = realModules[i];
 							if (m.getName().toLowerCase().contains(search.toString().toLowerCase())) {
 								viewer.setSelection(new StructuredSelection(m));
+								viewer.reveal(m);
 								index = i;
 								break;
 							}
