@@ -43,12 +43,13 @@ public class ImageImportDialog extends Composite {
 
 		GridLayoutFactory.fillDefaults().applyTo(this);
 		
-		setToolTipText("Drag an image onto or out of this dialog");
 		
 		propertySource = options.createPropertySource();
 		PropertySourceEditor editor = new PropertySourceEditor(propertySource, "Options");
 		Control editControl = editor.createEditor(this);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(editControl);
+		
+		editControl.setToolTipText("Drag an image onto or out of this dialog");
 
 		final Button button = new Button(this, SWT.PUSH);
 		button.setText("Import Again");
