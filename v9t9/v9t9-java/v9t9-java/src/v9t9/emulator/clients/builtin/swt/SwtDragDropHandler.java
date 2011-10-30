@@ -10,6 +10,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
@@ -166,7 +167,8 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 			return;
 		}
 		
-		if (FileTransfer.getInstance().isSupportedType(event.dataType)) {
+		if (FileTransfer.getInstance().isSupportedType(event.dataType) ||
+			URLTransfer.getInstance().isSupportedType(event.dataType)) { 
 			// apparently the event comes twice...
 			if (tempSourceFile == null) {
 				SimpleDateFormat fmt = new SimpleDateFormat("yyyyMMdd-HHmmss");
@@ -185,8 +187,16 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 			}
 			
 			//System.out.println("sending file: " + tempSourceFile);
-			
-			event.data = new String[] { tempSourceFile.getAbsolutePath() };
+			if (URLTransfer.getInstance().isSupportedType(event.dataType)) {
+				try {
+					event.data = tempSourceFile.toURI().toURL().toString();
+				} catch (MalformedURLException e) {
+					e.printStackTrace();
+					event.doit = false;
+				}
+			} else {
+				event.data = new String[] { tempSourceFile.getAbsolutePath() };
+			}
 		}
 		else if (ImageTransfer.getInstance().isSupportedType(event.dataType)) {
 			event.data = visData;
