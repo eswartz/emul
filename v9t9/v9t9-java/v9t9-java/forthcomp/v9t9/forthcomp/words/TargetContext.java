@@ -400,6 +400,8 @@ public abstract class TargetContext extends Context {
 			compileDoConstant(value, cells);
 		} else {
 			exportFlagNext = false;
+			// assume address
+			symbols.put(value, name);
 		}
 		final TargetConstant constant = (TargetConstant) define(name, new TargetConstant(name, value, 1));
 		return constant;

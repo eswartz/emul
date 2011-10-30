@@ -18,6 +18,8 @@ import v9t9.engine.memory.MemoryEntry;
  */
 public class F99bMemoryModel extends BaseTI994AMemoryModel {
 
+	private MemoryEntry consoleEntry;
+
 	public F99bMemoryModel() {
 		super();
 	}
@@ -27,6 +29,18 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 		DataFiles.addSearchPath("../../build/forth99");
 	}
 
+
+	protected void defineConsoleMemory(Machine machine) {
+		consoleEntry = new MemoryEntry("64K RAM", CPU, 
+				0x0400, 0xFC00, new EnhancedRamByteArea(0, 0xFC00));
+		memory.addAndMap(consoleEntry);
+	}
+	
+	protected void defineMmioMemory(Machine machine) {
+		this.memory.addAndMap(new MemoryEntry("MMIO", CPU, 0x0000, 0x0400,
+                new F99ConsoleMmioArea(machine)));
+	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.memory.StandardConsoleMemoryModel#loadMemory()
 	 */
@@ -41,9 +55,17 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 	                filename, 
 	                0x400, false);
 			cpuRomEntry.load();
-			memory.addAndMap(cpuRomEntry);
 			cpuRomEntry.copySymbols(CPU);
 			
+			// shrink RAM accordingly
+			int st = cpuRomEntry.addr + 0x400 * ((cpuRomEntry.size + 0x3ff) / 0x400);
+			int sz = 0x10000 - st;
+			memory.removeAndUnmap(consoleEntry);
+			consoleEntry = new MemoryEntry("64K RAM", CPU, 
+					st, sz, new EnhancedRamByteArea(0, sz));
+			memory.addAndMap(consoleEntry);
+			
+			memory.addAndMap(cpuRomEntry);
     	} catch (IOException e) {
     		reportLoadError(eventNotifier, filename, e);
     	}
@@ -112,18 +134,6 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 		} catch (IOException e) {
 			reportLoadError(eventNotifier, filename, e);
 		}
-	}
-	
-	protected void defineConsoleMemory(Machine machine) {
-		MemoryEntry entry = new MemoryEntry("64K RAM", CPU, 
-				0x0400, 0xFC00, new EnhancedRamByteArea(0, 0xFC00));
-		entry.getArea().setLatency(0);
-		memory.addAndMap(entry);
-	}
-	
-	protected void defineMmioMemory(Machine machine) {
-		this.memory.addAndMap(new MemoryEntry("MMIO", CPU, 0x0000, 0x0400,
-                new F99ConsoleMmioArea(machine)));
 	}
 	
 	/* (non-Javadoc)

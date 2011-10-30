@@ -51,6 +51,7 @@ import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 import org.ejs.coffee.core.utils.CompatUtils;
 import org.ejs.coffee.core.utils.HexUtils;
+import org.ejs.coffee.core.utils.Pair;
 
 import v9t9.emulator.Emulator;
 import v9t9.engine.memory.Memory;
@@ -369,12 +370,16 @@ public class MemoryViewer extends Composite {
 			private String getSymbolFor(MemoryRange range, int addr) {
 				MemoryEntry entry = range.getEntry();
 				if (entry.addr <= addr && entry.addr + entry.size > addr) {
-					return entry.lookupSymbol((short) addr);
+					Pair<String, Short> info = entry.lookupSymbolNear((short) addr, 0x1000);
+					if (info != null) {
+						return info.first + (info.second == addr ? "" : " + " + HexUtils.toHex4(addr - info.second));
+					}
 				}
 				String symbols = null;
 				for (MemoryEntry e : entry.getDomain().getFlattenedMemoryEntries()) {
-					String sym = e.lookupSymbol((short) addr);
-					if (sym != null) {
+					Pair<String, Short> info = e.lookupSymbolNear((short) addr, 0x100);
+					if (info != null) {
+						String sym = info.first + (info.second == addr ? "" : " + " + HexUtils.toHex4(addr - info.second));
 						if (symbols != null)
 							symbols += ", " + sym;
 						else

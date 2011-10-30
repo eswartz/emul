@@ -57,7 +57,9 @@ public class DumpFullReporterF99b implements InstructionListener {
 		if (entry != null) { 
 			name = entry.lookupSymbol((short) ins.pc);
 			if (name == null && iblock.showSymbol) {
-				name = entry.lookupSymbolNear((short) ins.pc);
+				Pair<String, Short> info = entry.lookupSymbolNear((short) ins.pc, 0x100);
+				if (info != null)
+					name = info.first;
 			}
 		}
 		if (name != null)

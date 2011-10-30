@@ -18,6 +18,7 @@ import java.util.TreeMap;
 import org.ejs.coffee.core.properties.IPersistable;
 import org.ejs.coffee.core.settings.ISettingSection;
 import org.ejs.coffee.core.utils.HexUtils;
+import org.ejs.coffee.core.utils.Pair;
 
 import v9t9.engine.modules.IModule;
 
@@ -269,14 +270,18 @@ public class MemoryEntry implements MemoryAccess, Comparable<MemoryEntry>, IPers
 		}
 	}
 
-	public String lookupSymbolNear(short addr) {
+	public Pair<String,Short> lookupSymbolNear(short addr, int range) {
 		if (symbols == null) return null;
 		SortedMap<Short, String> headMap = symbols.headMap(addr, true);
 		if (headMap.isEmpty())
 			return null;
-		return symbols.get(headMap.lastKey());
+		short naddr = headMap.lastKey();
+		if (addr - naddr >= range)
+			return null;
+		return new Pair<String, Short>(symbols.get(naddr), naddr);
 	}
 	
+
 	public MemoryDomain getDomain() {
 		return domain;
 	}

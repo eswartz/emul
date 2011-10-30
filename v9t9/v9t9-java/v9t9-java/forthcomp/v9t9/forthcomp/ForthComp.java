@@ -414,7 +414,8 @@ public class ForthComp {
 	        	symfile = new File(consoleOutFile + ".sym");
 	        }
 			FileOutputStream fos = new FileOutputStream(symfile);
-			console.getEntryAt(targetContext.getBaseDP()).writeSymbols(new PrintStream(fos));
+			for (MemoryEntry entry : console.getFlattenedMemoryEntries())
+				entry.writeSymbols(new PrintStream(fos));
 			fos.close();
 		}
 			
