@@ -135,7 +135,7 @@ public class CpuF99 extends CpuBase {
 	    }
 	    
     	if (((pins &  PIN_NMI + PIN_RESET) != 0)) {
-    		System.out.println("Pins set... "+pins);
+    		System.out.println("Pins set... "+Integer.toHexString(pins));
     		return true;
     	}   
     	
