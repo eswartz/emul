@@ -161,10 +161,7 @@ public class DiskSelector extends Composite {
 					// always set for disks 
 					if (isDiskImage())
 						setting.setString(path);
-					// only store history for real places
-					if (dir.exists()) {
-						switchPath(combo, path);
-					}
+					switchPath(combo, path);
 				}
 
 			});
@@ -282,8 +279,12 @@ public class DiskSelector extends Composite {
 			for (String p : combo.getItems())
 				if (p.equals(path))
 					return;
-			combo.add(path);
-			setHistory(getHistoryName(), combo.getItems());
+			
+			// only store history for real places
+			if (new File(path).exists()) {
+				combo.add(path);
+				setHistory(getHistoryName(), combo.getItems());
+			}
 		}
 
 		private String getHistoryName() {
