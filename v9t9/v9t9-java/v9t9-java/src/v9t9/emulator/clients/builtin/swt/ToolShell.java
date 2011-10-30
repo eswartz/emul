@@ -192,16 +192,28 @@ public class ToolShell {
 		if (behavior.centerOverControl.getParent() != null)
 			pt = behavior.centerOverControl.getParent().toDisplay(bbounds.x, bbounds.y);
 		else
-			pt = behavior.centerOverControl.getShell().toDisplay(bbounds.x, bbounds.y);
+			pt = new Point(bbounds.x, bbounds.y);
 		
 		if (isHorizontal) {
 			pt = new Point(pt.x + (bbounds.width - sbounds.width) / 2,
-					pt.y + (behavior.centering == Centering.INSIDE ? -1 : 1) * sbounds.height);
+					pt.y + (behavior.centering == Centering.INSIDE ? -sbounds.height: bbounds.height));
 		}
 		else
-			pt = new Point(pt.x + (behavior.centering == Centering.INSIDE ? -1 : 1) * sbounds.width,
+			pt = new Point(pt.x + (behavior.centering == Centering.INSIDE ? -sbounds.width: bbounds.width),
 					pt.y + (bbounds.height - sbounds.height) / 2);
 		
+		Rectangle dbounds = shell.getDisplay().getBounds();
+		if (pt.x < 0)
+			pt.x = 0;
+		else if (pt.x + sbounds.width > dbounds.x + dbounds.width)
+			pt.x = dbounds.x + dbounds.width - sbounds.width;
+
+		if (pt.y < 0)
+			pt.y = 0;
+		else if (pt.y + sbounds.height > dbounds.y + dbounds.height)
+			pt.y = dbounds.y + dbounds.height - sbounds.height;
+		
+		//System.out.println(sbounds + " / " + bbounds + " / " + pt);
 		recenterTo(pt);
 	}
 
