@@ -1248,12 +1248,18 @@ public class ImageImport implements IBitmapPixelAccess {
 				
 			}
 			
-			for (int c = 0; c < ncols; c++) {
-				byte[] nrgb = thePalette[c];
-				if (useColorMappedGreyScale) 
-					nrgb = ColorMapUtils.getRgbToGreyForGreyscaleMode(nrgb);
-				int p = ColorMapUtils.rgb8ToPixel(nrgb);
-				paletteToIndex.put(p, c);
+			if (ditherType == Dither.MONO) {
+				byte reg = vdp.readVdpReg(7);
+				paletteToIndex.put(0x0, (reg >> 4) & 0xf);
+				paletteToIndex.put(0xffffff, (reg >> 0) & 0xf);
+			} else {
+				for (int c = 0; c < ncols; c++) {
+					byte[] nrgb = thePalette[c];
+					if (useColorMappedGreyScale) 
+						nrgb = ColorMapUtils.getRgbToGreyForGreyscaleMode(nrgb);
+					int p = ColorMapUtils.rgb8ToPixel(nrgb);
+					paletteToIndex.put(p, c);
+				}
 			}
 		} else {
 			byte[] rgb = { 0, 0, 0};

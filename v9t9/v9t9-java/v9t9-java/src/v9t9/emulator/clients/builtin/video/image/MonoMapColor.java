@@ -32,7 +32,7 @@ class MonoMapColor implements IPaletteMapper {
 	public int mapColor(int pixel, int[] distA) {
 		int lum = ColorMapUtils.getPixelLum(pixel);
 		distA[0] = lum;
-		return lum < 128 ? 0 : 1;
+		return lum <= 128 ? 0 : 1;
 	}
 	
 	/* (non-Javadoc)
