@@ -23,7 +23,7 @@ import org.eclipse.tm.te.ui.controls.interfaces.IWizardConfigurationPanel;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 
 /**
- * Target Explorer: Base control to deal with wizard or property page controls
+ * Base control to deal with wizard or property page controls
  * which should share the same UI space.
  */
 public class BaseWizardConfigurationPanelControl extends BaseDialogPageControl {

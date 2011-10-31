@@ -14,7 +14,7 @@ import java.lang.reflect.Field;
 import org.eclipse.osgi.util.NLS;
 
 /**
- * Target Explorer: TCF UI Plug-in externalized strings management.
+ * TCF UI Plug-in externalized strings management.
  */
 public class Messages extends NLS {
 
@@ -126,4 +126,7 @@ public class Messages extends NLS {
 	public static String PeerAttributesTablePart_edit_dialogTitle;
 	public static String PeerAttributesTablePart_edit_title;
 	public static String PeerAttributesTablePart_edit_message;
+
+	public static String DeleteCommandHandler_error_title;
+	public static String DeleteCommandHandler_error_deleteFailed;
 }

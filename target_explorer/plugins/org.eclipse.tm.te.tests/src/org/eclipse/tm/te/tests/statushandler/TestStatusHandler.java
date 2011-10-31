@@ -14,7 +14,7 @@ import org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer;
 import org.eclipse.tm.te.runtime.statushandler.AbstractStatusHandler;
 
 /**
- * Target Explorer: Test status handler implementation.
+ * Test status handler implementation.
  */
 public class TestStatusHandler extends AbstractStatusHandler {
 

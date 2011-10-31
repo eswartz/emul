@@ -17,7 +17,7 @@ import org.eclipse.tm.te.tcf.log.core.interfaces.IPreferenceKeys;
 
 
 /**
- * Target Explorer: TCF logging bundle preference initializer.
+ * TCF logging bundle preference initializer.
  */
 public class PreferencesInitializer extends AbstractPreferenceInitializer {
 

@@ -10,7 +10,7 @@
 package org.eclipse.tm.te.ui.terminals.interfaces;
 
 /**
- * Target Explorer: Image registry constants.
+ * Image registry constants.
  */
 public interface ImageConsts {
 	/**

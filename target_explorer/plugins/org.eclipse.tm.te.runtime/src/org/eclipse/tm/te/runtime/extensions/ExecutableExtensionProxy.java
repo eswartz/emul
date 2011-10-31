@@ -21,7 +21,7 @@ import org.eclipse.tm.te.runtime.nls.Messages;
 
 
 /**
- * Target Explorer: Executable extension proxy implementation.
+ * Executable extension proxy implementation.
  */
 public class ExecutableExtensionProxy<V> {
 	// The extension instance. Created on first access

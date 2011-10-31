@@ -21,7 +21,7 @@ import org.eclipse.tm.te.ui.jface.images.AbstractImageDescriptor;
 
 
 /**
- * Target Explorer: Peer model node image descriptor implementation.
+ * Peer model node image descriptor implementation.
  */
 public class PeerImageDescriptor extends AbstractImageDescriptor {
 	// the base image to decorate with overlays

@@ -10,7 +10,7 @@
 package org.eclipse.tm.te.runtime.interfaces.tracing;
 
 /**
- * Target Explorer: Runtime plug-in trace slot identifiers.
+ * Runtime plug-in trace slot identifiers.
  */
 public interface ITraceIds {
 

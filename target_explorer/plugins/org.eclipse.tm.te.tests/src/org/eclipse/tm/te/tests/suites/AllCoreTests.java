@@ -15,7 +15,7 @@ import junit.framework.TestSuite;
 import org.eclipse.tm.te.tests.statushandler.StatusHandlerTestCase;
 
 /**
- * Target Explorer: All core test suites.
+ * All core test suites.
  */
 public class AllCoreTests {
 

@@ -30,7 +30,7 @@ import org.eclipse.ui.handlers.HandlerUtil;
 
 
 /**
- * Target Explorer: Properties command handler implementation.
+ * Properties command handler implementation.
  */
 public class PropertiesCommandHandler extends AbstractHandler {
 

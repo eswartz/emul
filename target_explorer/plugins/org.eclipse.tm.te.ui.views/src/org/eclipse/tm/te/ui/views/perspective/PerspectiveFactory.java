@@ -17,7 +17,7 @@ import org.eclipse.ui.IPlaceholderFolderLayout;
 import org.eclipse.ui.PlatformUI;
 
 /**
- * Target Explorer: Perspective factory.
+ * Perspective factory.
  */
 public class PerspectiveFactory extends PlatformObject implements IPerspectiveFactory {
 	private final static String[] VIEWS_FOR_LEFT_AREA = new String[] {

@@ -14,7 +14,7 @@ import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.te.tcf.core.interfaces.listeners.IChannelStateChangeListener;
 
 /**
- * Target Explorer: TCF logging channel state listener implementation.
+ * TCF logging channel state listener implementation.
  */
 public class ChannelStateChangeListener implements IChannelStateChangeListener {
 

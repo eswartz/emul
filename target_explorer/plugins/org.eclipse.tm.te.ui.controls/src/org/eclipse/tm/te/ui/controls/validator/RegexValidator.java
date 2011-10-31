@@ -11,7 +11,7 @@ package org.eclipse.tm.te.ui.controls.validator;
 
 
 /**
- * Target Explorer: Validator using regular expression.
+ * Validator using regular expression.
  */
 public class RegexValidator extends Validator {
 

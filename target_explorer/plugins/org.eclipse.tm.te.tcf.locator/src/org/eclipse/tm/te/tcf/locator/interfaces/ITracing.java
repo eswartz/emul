@@ -10,7 +10,7 @@
 package org.eclipse.tm.te.tcf.locator.interfaces;
 
 /**
- * Target Explorer: TCF locator bundle tracing identifiers.
+ * TCF locator bundle tracing identifiers.
  */
 public interface ITracing {
 

@@ -17,7 +17,7 @@ import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.Point;
 
 /**
- * Target Explorer: Extended composite image descriptor.
+ * Extended composite image descriptor.
  * <p>
  * The image descriptor implementation adds method for easily drawing overlay
  * images on different positions on top of a base image.

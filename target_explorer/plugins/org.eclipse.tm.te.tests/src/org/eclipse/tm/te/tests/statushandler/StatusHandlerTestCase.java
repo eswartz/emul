@@ -21,7 +21,7 @@ import org.eclipse.tm.te.tests.CoreTestCase;
 import org.eclipse.tm.te.tests.interfaces.IInterruptCondition;
 
 /**
- * Target Explorer: Status handler test cases.
+ * Status handler test cases.
  */
 public class StatusHandlerTestCase extends CoreTestCase {
 

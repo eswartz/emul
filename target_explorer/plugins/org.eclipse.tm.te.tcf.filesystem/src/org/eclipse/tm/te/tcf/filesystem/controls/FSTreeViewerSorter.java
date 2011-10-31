@@ -13,7 +13,7 @@ import org.eclipse.jface.viewers.TreePathViewerSorter;
 import org.eclipse.jface.viewers.Viewer;
 
 /**
- * Target Explorer: File system tree control viewer sorter implementation.
+ * File system tree control viewer sorter implementation.
  */
 public class FSTreeViewerSorter extends TreePathViewerSorter {
 	private final FSTreeLabelProvider labelProvider = new FSTreeLabelProvider();

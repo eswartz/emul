@@ -15,7 +15,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Dialog;
 
 /**
- * Target Explorer: Base implementation of a control allowing to select
+ * Base implementation of a control allowing to select
  * the content of the edit field control from a dialog. The dialog is
  * associated to the base edit browse text controls button.
  */

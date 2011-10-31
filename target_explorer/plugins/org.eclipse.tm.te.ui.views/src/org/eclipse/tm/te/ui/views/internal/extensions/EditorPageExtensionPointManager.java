@@ -19,7 +19,7 @@ import org.eclipse.tm.te.ui.views.interfaces.IEditorPage;
 
 
 /**
- * Target Explorer: Details editor page extension point manager implementation.
+ * Details editor page extension point manager implementation.
  */
 public class EditorPageExtensionPointManager extends AbstractExtensionPointManager<IEditorPage> {
 	/*

@@ -12,7 +12,7 @@ package org.eclipse.tm.te.tcf.ui.internal.navigator;
 import org.eclipse.jface.viewers.DecoratingLabelProvider;
 
 /**
- * Target Explorer: Decorating label provider.
+ * Decorating label provider.
  */
 public class LabelProvider extends DecoratingLabelProvider {
 	private final static LabelProviderDelegate DELEGATE = new LabelProviderDelegate();

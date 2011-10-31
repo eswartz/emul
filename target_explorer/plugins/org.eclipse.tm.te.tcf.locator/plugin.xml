@@ -5,8 +5,7 @@
 <!-- Preference contributions -->
    <extension point="org.eclipse.core.runtime.preferences">
       <initializer
-            class="org.eclipse.tm.te.tcf.locator.internal.preferences.PreferencesInitializer">
-      </initializer>
+            class="org.eclipse.tm.te.tcf.locator.internal.preferences.PreferencesInitializer"/>
    </extension>
 
 <!-- Eclipse core expressions property tester -->
@@ -20,7 +19,7 @@
       </propertyTester>
    </extension>
 
-<!-- Target Explorer persistence delegate contributions -->
+<!-- Persistence delegate contributions -->
    <extension point="org.eclipse.tm.te.runtime.persistence.delegates">
       <delegate 
             id="org.eclipse.tm.te.tcf.locator.persistence"
@@ -28,4 +27,18 @@
       </delegate>
    </extension>
 
+<!-- Adapter factory contributions -->
+   <extension point="org.eclipse.core.runtime.adapters">
+      <factory
+            adaptableType="java.util.Map"
+            class="org.eclipse.tm.te.tcf.locator.internal.adapters.AdapterFactory">
+         <adapter type="org.eclipse.tm.te.runtime.persistence.interfaces.IPersistable"/>
+      </factory>
+      
+      <factory
+            adaptableType="org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel"
+            class="org.eclipse.tm.te.tcf.locator.internal.adapters.AdapterFactory">
+         <adapter type="org.eclipse.tm.te.runtime.persistence.interfaces.IPersistable"/>
+      </factory>
+   </extension>
 </plugin>

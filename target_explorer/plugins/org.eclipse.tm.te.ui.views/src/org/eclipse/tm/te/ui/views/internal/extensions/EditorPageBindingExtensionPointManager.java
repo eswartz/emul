@@ -28,7 +28,7 @@ import org.eclipse.ui.ISources;
 
 
 /**
- * Target Explorer: Details editor page binding extension point manager implementation.
+ * Details editor page binding extension point manager implementation.
  */
 public class EditorPageBindingExtensionPointManager extends AbstractExtensionPointManager<EditorPageBinding> {
 

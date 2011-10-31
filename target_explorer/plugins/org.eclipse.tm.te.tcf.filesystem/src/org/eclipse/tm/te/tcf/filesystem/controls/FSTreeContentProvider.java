@@ -40,7 +40,7 @@ import org.eclipse.ui.PlatformUI;
 
 
 /**
- * Target Explorer: File system tree content provider implementation.
+ * File system tree content provider implementation.
  */
 public class FSTreeContentProvider implements ITreeContentProvider, INodeStateListener {
 	/**

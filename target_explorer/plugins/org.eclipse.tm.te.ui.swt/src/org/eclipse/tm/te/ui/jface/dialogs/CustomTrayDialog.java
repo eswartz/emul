@@ -26,7 +26,7 @@ import org.eclipse.ui.PlatformUI;
 
 
 /**
- * Target Explorer: Custom tray dialog implementation.
+ * Custom tray dialog implementation.
  */
 public class CustomTrayDialog extends TrayDialog {
 	protected static final int comboHistoryLength = 10;

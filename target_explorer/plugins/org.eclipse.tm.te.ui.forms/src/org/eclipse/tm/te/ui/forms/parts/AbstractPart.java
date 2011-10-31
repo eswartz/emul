@@ -19,7 +19,7 @@ import org.eclipse.tm.te.ui.swt.SWTControlUtil;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 
 /**
- * Target Explorer: Abstract part implementation.
+ * Abstract part implementation.
  */
 public abstract class AbstractPart extends PlatformObject {
 	// The parts enabled state

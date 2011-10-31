@@ -10,7 +10,7 @@
 package org.eclipse.tm.te.tcf.log.core.interfaces;
 
 /**
- * Target Explorer: TCF logging tracing identifiers.
+ * TCF logging tracing identifiers.
  */
 public interface ITracing {
 

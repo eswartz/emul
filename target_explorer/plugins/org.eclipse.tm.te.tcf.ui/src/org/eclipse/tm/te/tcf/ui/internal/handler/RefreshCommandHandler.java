@@ -26,7 +26,7 @@ import org.eclipse.ui.handlers.HandlerUtil;
 
 
 /**
- * Target Explorer: TCF refresh command handler.
+ * TCF refresh command handler.
  */
 public class RefreshCommandHandler extends AbstractHandler {
 

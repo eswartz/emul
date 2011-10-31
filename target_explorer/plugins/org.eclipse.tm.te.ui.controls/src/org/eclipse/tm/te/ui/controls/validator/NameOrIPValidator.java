@@ -11,7 +11,7 @@ package org.eclipse.tm.te.ui.controls.validator;
 
 
 /**
- * Target Explorer: Input validator for hostnames id IP addresses.
+ * Input validator for hostnames id IP addresses.
  */
 public class NameOrIPValidator extends Validator {
 

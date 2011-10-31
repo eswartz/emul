@@ -17,7 +17,7 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.dialogs.IDialogSettings;
 
 /**
- * Target Explorer: Utility class providing static methods to centralize
+ * Utility class providing static methods to centralize
  * common operations to perform on JFace dialog settings.
  */
 public class DialogSettingsUtil {

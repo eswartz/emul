@@ -17,7 +17,7 @@ import org.eclipse.tm.te.ui.controls.BaseDialogPageControl;
 import org.eclipse.tm.te.ui.controls.interfaces.IWizardConfigurationPanel;
 
 /**
- * Target Explorer: Abstract base implementation of the <code>IWizardConfigurationPanel</code> interface.
+ * Abstract base implementation of the <code>IWizardConfigurationPanel</code> interface.
  */
 public abstract class AbstractWizardConfigurationPanel implements IWizardConfigurationPanel {
 	private final BaseDialogPageControl parentControl;

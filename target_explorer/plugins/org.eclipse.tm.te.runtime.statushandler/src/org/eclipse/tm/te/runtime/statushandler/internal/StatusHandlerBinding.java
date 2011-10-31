@@ -16,7 +16,7 @@ import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.tm.te.runtime.extensions.ExecutableExtension;
 
 /**
- * Target Explorer: Status handler binding implementation.
+ * Status handler binding implementation.
  */
 public class StatusHandlerBinding extends ExecutableExtension {
 	// The mandatory handler identifier

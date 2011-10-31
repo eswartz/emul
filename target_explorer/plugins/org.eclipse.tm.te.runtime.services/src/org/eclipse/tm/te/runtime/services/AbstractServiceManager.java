@@ -26,7 +26,7 @@ import org.eclipse.tm.te.runtime.services.interfaces.IService;
 /**
  * Abstract service manager implementation.
  */
-public abstract class AbstractServiceManager<ServiceClass extends IService> {
+public abstract class AbstractServiceManager<V extends IService> {
 
 	// map for all services per id
 	private Map<String, List<ServiceProxy>> services = new HashMap<String, List<ServiceProxy>>();
@@ -38,8 +38,8 @@ public abstract class AbstractServiceManager<ServiceClass extends IService> {
 
 		private IConfigurationElement configElement = null;
 		public String clazz;
-		private ServiceClass service = null;
-		private List<Class<? extends ServiceClass>> serviceTypes = new ArrayList<Class<? extends ServiceClass>>();
+		private V service = null;
+		private List<Class<? extends V>> serviceTypes = new ArrayList<Class<? extends V>>();
 
 		/**
 		 * Constructor.
@@ -66,7 +66,7 @@ public abstract class AbstractServiceManager<ServiceClass extends IService> {
 		 *
 		 * @param serviceType The type to add.
 		 */
-		public void addType(Class<? extends ServiceClass> serviceType) {
+		public void addType(Class<? extends V> serviceType) {
 			Assert.isNotNull(serviceType);
 			if (service == null && serviceTypes != null && !serviceTypes.contains(serviceType)) {
 				serviceTypes.add(serviceType);
@@ -77,17 +77,17 @@ public abstract class AbstractServiceManager<ServiceClass extends IService> {
 		 * Return the real service instance for this proxy.
 		 */
 		@SuppressWarnings("unchecked")
-		protected ServiceClass getService(boolean unique) {
+		protected V getService(boolean unique) {
 			if ((service == null || unique) && configElement != null) {
 				try {
 					// Create the service class instance via the configuration element
 					Object service = configElement.createExecutableExtension("class"); //$NON-NLS-1$
 					if (service instanceof IService) {
 						if (unique) {
-							return (ServiceClass) service;
+							return (V) service;
 						}
 						else if (service instanceof IService) {
-							this.service = (ServiceClass)service;
+							this.service = (V)service;
 						}
 						else {
 							IStatus status = new Status(IStatus.ERROR, CoreBundleActivator.getUniqueIdentifier(), "Service '" + service.getClass().getName() + "' not of type IService."); //$NON-NLS-1$ //$NON-NLS-2$
@@ -114,7 +114,7 @@ public abstract class AbstractServiceManager<ServiceClass extends IService> {
 		 * @param serviceType The service type
 		 * @return
 		 */
-		protected boolean isMatching(Class<? extends ServiceClass> serviceType) {
+		protected boolean isMatching(Class<? extends V> serviceType) {
 			if (service != null) {
 				return serviceType.isInstance(service);
 			}
@@ -122,7 +122,7 @@ public abstract class AbstractServiceManager<ServiceClass extends IService> {
 				if (serviceType.getClass().getName().equals(clazz)) {
 					return true;
 				}
-				for (Class<? extends ServiceClass> type : serviceTypes) {
+				for (Class<? extends V> type : serviceTypes) {
 					if (type.equals(serviceType)) {
 						return true;
 					}
@@ -131,7 +131,7 @@ public abstract class AbstractServiceManager<ServiceClass extends IService> {
 			return false;
 		}
 
-		public boolean equals(ServiceClass service) {
+		public boolean equals(V service) {
 			return clazz.equals(service.getClass());
 		}
 
@@ -176,7 +176,7 @@ public abstract class AbstractServiceManager<ServiceClass extends IService> {
 	 * @param serviceType The service type the service should at least implement or extend.
 	 * @return The service or <code>null</code>.
 	 */
-	public ServiceClass getService(String id, Class<? extends ServiceClass> serviceType) {
+	public V getService(String id, Class<? extends V> serviceType) {
 		return getService(id, serviceType, false);
 	}
 
@@ -194,7 +194,7 @@ public abstract class AbstractServiceManager<ServiceClass extends IService> {
 	 *
 	 * @return The service or <code>null</code>.
 	 */
-	public ServiceClass getService(String id, Class<? extends ServiceClass> serviceType, boolean unique) {
+	public V getService(String id, Class<? extends V> serviceType, boolean unique) {
 		Assert.isNotNull(serviceType);
 		if (id == null) {
 			id = ""; //$NON-NLS-1$
@@ -206,14 +206,14 @@ public abstract class AbstractServiceManager<ServiceClass extends IService> {
 			for (ServiceProxy proxy : proxies) {
 				if (proxy.isMatching(serviceType)) {
 					if (!isInterface && proxy.equals(serviceType)) {
-						ServiceClass service = proxy.getService(unique);
+						V service = proxy.getService(unique);
 						service.setId(id);
 						return service;
 					}
 					candidates.add(proxy);
 				}
 			}
-			ServiceClass service = null;
+			V service = null;
 			if (!candidates.isEmpty()) {
 				service = candidates.get(0).getService(unique);
 				service.setId(id);
@@ -232,7 +232,7 @@ public abstract class AbstractServiceManager<ServiceClass extends IService> {
 	 * @param unique <code>true</code> if a new instance of the service is needed.
 	 * @return The service list or empty list.
 	 */
-	public IService[] getServices(String id, Class<? extends ServiceClass> serviceType, boolean unique) {
+	public IService[] getServices(String id, Class<? extends V> serviceType, boolean unique) {
 		Assert.isNotNull(serviceType);
 		if (id == null) {
 			id = ""; //$NON-NLS-1$

@@ -18,7 +18,7 @@ import org.eclipse.tm.te.runtime.extensions.AbstractExtensionPointManager;
 import org.eclipse.tm.te.runtime.extensions.ExecutableExtensionProxy;
 
 /**
- * Target Explorer: Persistence delegate manager implementation.
+ * Persistence delegate manager implementation.
  */
 public class PersistenceDelegateManager extends AbstractExtensionPointManager<IPersistenceDelegate> {
 

@@ -12,7 +12,7 @@ package org.eclipse.tm.te.ui.controls.validator;
 import org.eclipse.swt.events.VerifyEvent;
 
 /**
- * Target Explorer: Verify listener for text widgets to receive floating point numbers.
+ * Verify listener for text widgets to receive floating point numbers.
  */
 public class DoubleNumberVerifyListener extends RegexVerifyListener {
 

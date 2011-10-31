@@ -33,7 +33,7 @@ import org.eclipse.swt.widgets.Tree;
 import org.eclipse.ui.PlatformUI;
 
 /**
- * Target Explorer: Utility providing convenience methods for use with SWT controls.
+ * Utility providing convenience methods for use with SWT controls.
  */
 public final class SWTControlUtil {
 

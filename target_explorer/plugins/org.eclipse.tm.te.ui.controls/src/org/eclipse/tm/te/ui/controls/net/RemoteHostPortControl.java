@@ -18,7 +18,7 @@ import org.eclipse.tm.te.ui.controls.validator.PortNumberVerifyListener;
 import org.eclipse.tm.te.ui.controls.validator.Validator;
 
 /**
- * Target Explorer: Basic remote host port control.
+ * Basic remote host port control.
  */
 public class RemoteHostPortControl extends BaseEditBrowseTextControl {
 

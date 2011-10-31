@@ -10,7 +10,7 @@
 package org.eclipse.tm.te.tcf.filesystem.internal;
 
 /**
- * Target Explorer: File system plug-in Image registry constants.
+ * File system plug-in Image registry constants.
  */
 public interface ImageConsts {
 

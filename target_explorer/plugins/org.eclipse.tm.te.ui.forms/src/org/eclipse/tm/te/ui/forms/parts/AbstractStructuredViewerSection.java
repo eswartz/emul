@@ -20,7 +20,7 @@ import org.eclipse.ui.forms.IManagedForm;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 
 /**
- * Target Explorer: Abstract structured viewer section implementation.
+ * Abstract structured viewer section implementation.
  */
 public abstract class AbstractStructuredViewerSection extends AbstractSection {
 	// The structured viewer part instance

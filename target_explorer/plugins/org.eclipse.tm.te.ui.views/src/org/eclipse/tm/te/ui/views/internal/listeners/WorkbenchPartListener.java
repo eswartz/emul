@@ -20,7 +20,7 @@ import org.eclipse.ui.contexts.IContextActivation;
 import org.eclipse.ui.contexts.IContextService;
 
 /**
- * Target Explorer: The part listener implementation. Takes care of
+ * The part listener implementation. Takes care of
  *                  activation and deactivation of key binding contexts.
  */
 public class WorkbenchPartListener implements IPartListener2 {

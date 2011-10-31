@@ -11,11 +11,13 @@ package org.eclipse.tm.te.runtime.persistence.properties;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -27,85 +29,113 @@ import java.util.regex.Pattern;
 
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.tm.te.runtime.persistence.AbstractPersistenceDelegate;
-import org.eclipse.tm.te.runtime.properties.PropertiesContainer;
 
 /**
- * Target Explorer: Properties file persistence delegate implementation.
+ * Properties file persistence delegate implementation.
  * <p>
  * The persistence delegates reads and writes a simple grouped properties file format.
  */
 public class PropertiesFilePersistenceDelegate extends AbstractPersistenceDelegate {
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.runtime.persistence.interfaces.IPersistenceDelegate#write(org.eclipse.core.runtime.IPath, org.eclipse.tm.te.runtime.interfaces.nodes.IPropertiesContainer)
+	 * @see org.eclipse.tm.te.runtime.persistence.interfaces.IPersistenceDelegate#write(java.net.URI, java.util.Map)
 	 */
 	@Override
-	public void write(IPath path, IPropertiesContainer data) throws IOException {
-		Assert.isNotNull(path);
+	public void write(URI uri, Map<String, Object> data) throws IOException {
+		Assert.isNotNull(uri);
 		Assert.isNotNull(data);
 
-		// The incoming path has to be an absolute path
-		if (!path.isAbsolute()) {
-			throw new IOException("Not Absolute"); //$NON-NLS-1$
+		// Only "file:" URIs are supported
+		if (!"file".equalsIgnoreCase(uri.getScheme())) { //$NON-NLS-1$
+			throw new IOException("Unsupported URI schema '" + uri.getScheme() + "'"); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+
+		// Create the file object from the given URI
+		File file = new File(uri.normalize());
+
+		// The file must be absolute
+		if (!file.isAbsolute()) {
+			throw new IOException("URI must denote an absolute file path."); //$NON-NLS-1$
 		}
 
 		// If the file extension is no set, default to "properties"
+		IPath path = new Path(file.getCanonicalPath());
 		if (path.getFileExtension() == null) {
-			path = path.addFileExtension("properties"); //$NON-NLS-1$
+			file = path.addFileExtension("properties").toFile(); //$NON-NLS-1$
 		}
 
 		// Create the writer object
-		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path.toFile()), "UTF-8")); //$NON-NLS-1$
+		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8")); //$NON-NLS-1$
 		try {
 			// Write the first level of attributes
-			writeMap(writer, "core", data.getProperties()); //$NON-NLS-1$
+			writeMap(writer, "core", data); //$NON-NLS-1$
 		} finally {
 			writer.close();
 		}
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.runtime.persistence.interfaces.IPersistenceDelegate#delete(org.eclipse.core.runtime.IPath)
+	 * @see org.eclipse.tm.te.runtime.persistence.interfaces.IPersistenceDelegate#delete(java.net.URI)
 	 */
 	@Override
-	public boolean delete(IPath path) throws IOException {
-		Assert.isNotNull(path);
+	public boolean delete(URI uri) throws IOException {
+		Assert.isNotNull(uri);
 
-		// The incoming path has to be an absolute path
-		if (!path.isAbsolute()) {
-			throw new IOException("Not Absolute"); //$NON-NLS-1$
+		// Only "file:" URIs are supported
+		if (!"file".equalsIgnoreCase(uri.getScheme())) { //$NON-NLS-1$
+			throw new IOException("Unsupported URI schema '" + uri.getScheme() + "'"); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+
+		// Create the file object from the given URI
+		File file = new File(uri.normalize());
+
+		// The file must be absolute
+		if (!file.isAbsolute()) {
+			throw new IOException("URI must denote an absolute file path."); //$NON-NLS-1$
 		}
 
 		// If the file extension is no set, default to "properties"
+		IPath path = new Path(file.getCanonicalPath());
 		if (path.getFileExtension() == null) {
-			path = path.addFileExtension("properties"); //$NON-NLS-1$
+			file = path.addFileExtension("properties").toFile(); //$NON-NLS-1$
 		}
 
-		return path.toFile().delete();
+		return file.delete();
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.runtime.persistence.interfaces.IPersistenceDelegate#read(org.eclipse.core.runtime.IPath)
+	 * @see org.eclipse.tm.te.runtime.persistence.interfaces.IPersistenceDelegate#read(java.net.URI)
 	 */
 	@Override
-	public IPropertiesContainer read(IPath path) throws IOException {
-		Assert.isNotNull(path);
+	public Map<String, Object> read(URI uri) throws IOException {
+		Assert.isNotNull(uri);
 
-		IPropertiesContainer data = new PropertiesContainer();
-		Map<String, Object> coreSection = new HashMap<String, Object>();
+		// Only "file:" URIs are supported
+		if (!"file".equalsIgnoreCase(uri.getScheme())) { //$NON-NLS-1$
+			throw new IOException("Unsupported URI schema '" + uri.getScheme() + "'"); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+
+		// Create the file object from the given URI
+		File file = new File(uri.normalize());
+
+		// The file must be absolute
+		if (!file.isAbsolute()) {
+			throw new IOException("URI must denote an absolute file path."); //$NON-NLS-1$
+		}
+
+		Map<String, Object> data = new HashMap<String, Object>();
 
 		// Create the reader object
-		BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(path.toFile()), "UTF-8")); //$NON-NLS-1$
+		BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8")); //$NON-NLS-1$
 		try {
-			read(reader, coreSection);
+			read(reader, data);
 		} finally {
 			reader.close();
 		}
-		data.setProperties(coreSection);
 
-		return !data.getProperties().isEmpty() ? data : null;
+		return !data.isEmpty() ? data : null;
 	}
 
 	/**

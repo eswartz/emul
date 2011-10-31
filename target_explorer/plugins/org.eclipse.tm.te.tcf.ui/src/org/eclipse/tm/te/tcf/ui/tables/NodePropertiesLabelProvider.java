@@ -23,7 +23,7 @@ import org.eclipse.tm.te.ui.tables.properties.NodePropertiesTableTableNode;
 
 
 /**
- * Target Explorer: TCF node properties table label provider implementation.
+ * TCF node properties table label provider implementation.
  */
 public class NodePropertiesLabelProvider extends LabelProvider implements ITableLabelProvider, ITableColorProvider {
 	// Reference to the parent table viewer

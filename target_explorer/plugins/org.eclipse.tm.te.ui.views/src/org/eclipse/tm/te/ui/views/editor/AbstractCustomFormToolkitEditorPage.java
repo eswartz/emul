@@ -14,7 +14,7 @@ import org.eclipse.tm.te.ui.forms.CustomFormToolkit;
 import org.eclipse.ui.forms.IManagedForm;
 
 /**
- * Target Explorer: Abstract details editor page implementation managing
+ * Abstract details editor page implementation managing
  *                  an custom form toolkit instance.
  */
 public class AbstractCustomFormToolkitEditorPage extends AbstractEditorPage {

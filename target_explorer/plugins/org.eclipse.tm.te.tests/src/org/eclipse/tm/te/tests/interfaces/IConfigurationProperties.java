@@ -12,7 +12,7 @@ package org.eclipse.tm.te.tests.interfaces;
 import org.eclipse.tm.te.tests.activator.UIPlugin;
 
 /**
- * Target Explorer: Public test configuration property id's.
+ * Public test configuration property id's.
  */
 public interface IConfigurationProperties {
 

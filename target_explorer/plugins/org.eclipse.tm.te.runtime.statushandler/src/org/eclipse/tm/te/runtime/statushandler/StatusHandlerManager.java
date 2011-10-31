@@ -22,7 +22,7 @@ import org.eclipse.tm.te.runtime.statushandler.internal.StatusHandlerBinding;
 import org.eclipse.tm.te.runtime.statushandler.internal.StatusHandlerBindingExtensionPointManager;
 
 /**
- * Target Explorer: Status handler manager implementation.
+ * Status handler manager implementation.
  */
 public final class StatusHandlerManager extends AbstractExtensionPointManager<IStatusHandler> {
 

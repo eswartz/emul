@@ -6,4 +6,13 @@
    <extension-point id="connectionTypes" name="Connection Type Contributions" schema="schema/connectionTypes.exsd"/>
    <extension-point id="connectionTypeBindings" name="Connection Type Bindings Contributions" schema="schema/connectionTypeBindings.exsd"/>
 
+<!-- Adapter factory contributions -->
+   <extension point="org.eclipse.core.runtime.adapters">
+      <factory
+            adaptableType="org.eclipse.tm.te.runtime.model.interfaces.IModelNode"
+            class="org.eclipse.tm.te.core.adapters.AdapterFactory">
+         <adapter type="org.eclipse.tm.te.runtime.persistence.interfaces.IPersistable"/>
+      </factory>
+   </extension>
+
 </plugin>

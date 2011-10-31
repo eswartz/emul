@@ -26,7 +26,7 @@ import org.eclipse.ui.forms.widgets.Section;
 import org.eclipse.ui.forms.widgets.TableWrapData;
 
 /**
- * Target Explorer: Abstract form text section implementation.
+ * Abstract form text section implementation.
  */
 public abstract class AbstractFormTextSection extends AbstractSection implements IHyperlinkListener {
 

@@ -16,7 +16,7 @@ import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.tm.te.runtime.extensions.ExecutableExtension;
 
 /**
- * Target Explorer: Details editor page binding implementation.
+ * Details editor page binding implementation.
  */
 public class EditorPageBinding extends ExecutableExtension {
 	// The mandatory page identifier

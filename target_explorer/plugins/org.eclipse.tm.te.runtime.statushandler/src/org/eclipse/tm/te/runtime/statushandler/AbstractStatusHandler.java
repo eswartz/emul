@@ -13,7 +13,7 @@ import org.eclipse.tm.te.runtime.statushandler.interfaces.IStatusHandler;
 import org.eclipse.tm.te.runtime.extensions.ExecutableExtension;
 
 /**
- * Target Explorer: Abstract status handler implementation.
+ * Abstract status handler implementation.
  */
 public abstract class AbstractStatusHandler extends ExecutableExtension implements IStatusHandler {
 

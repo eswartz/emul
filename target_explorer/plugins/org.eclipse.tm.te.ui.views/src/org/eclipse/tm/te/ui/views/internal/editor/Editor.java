@@ -27,7 +27,7 @@ import org.eclipse.ui.forms.editor.IFormPage;
 
 
 /**
- * Target Explorer: Details editor.
+ * Details editor.
  */
 public class Editor extends FormEditor implements IPersistableEditor {
 

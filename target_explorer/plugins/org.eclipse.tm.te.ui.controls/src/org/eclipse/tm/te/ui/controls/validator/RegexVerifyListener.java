@@ -18,7 +18,7 @@ import org.eclipse.tm.te.ui.controls.activator.UIPlugin;
 
 
 /**
- * Target Explorer: Verify listener using regular expression to check the input.
+ * Verify listener using regular expression to check the input.
  */
 public class RegexVerifyListener extends VerifyListener {
 

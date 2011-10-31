@@ -17,7 +17,7 @@ import org.eclipse.tm.te.tcf.ui.internal.navigator.ModelListener;
 
 
 /**
- * Target Explorer: Helper class to instantiate and initialize the TCF locator model.
+ * Helper class to instantiate and initialize the TCF locator model.
  */
 public final class Model {
 	// Reference to the locator model

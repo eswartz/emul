@@ -16,7 +16,7 @@ import org.eclipse.core.runtime.Platform;
 import org.osgi.framework.Bundle;
 
 /**
- * Target Explorer: Validates a given path to be a workspace path.
+ * Validates a given path to be a workspace path.
  * <p>
  * <b>Note:</b> This validator is useful only if the Eclipse resources plugin is installed.
  */

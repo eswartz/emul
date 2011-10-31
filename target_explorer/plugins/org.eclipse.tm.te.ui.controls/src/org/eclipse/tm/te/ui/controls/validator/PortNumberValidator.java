@@ -11,7 +11,7 @@ package org.eclipse.tm.te.ui.controls.validator;
 
 
 /**
- * Target Explorer: Input validator for port numbers.
+ * Input validator for port numbers.
  * <p>
  * Valid formats are decimal and, if allowed, hex (0xFFFF).
  */

@@ -14,7 +14,7 @@ import org.eclipse.tm.te.ui.activator.UIPlugin;
 import org.eclipse.ui.internal.wizards.AbstractExtensionWizardRegistry;
 
 /**
- * Target Explorer: New target wizard registry.
+ * New target wizard registry.
  *
  * @see org.eclipse.ui.internal.wizards.NewWizardRegistry
  */

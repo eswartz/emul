@@ -9,12 +9,11 @@
  *******************************************************************************/
 package org.eclipse.tm.te.runtime.persistence;
 
-import org.eclipse.tm.te.runtime.persistence.interfaces.IPersistenceDelegate;
 import org.eclipse.tm.te.runtime.extensions.ExecutableExtension;
+import org.eclipse.tm.te.runtime.persistence.interfaces.IPersistenceDelegate;
 
 /**
- * Target Explorer: Abstract persistence delegate implementation.
- *
+ * Abstract persistence delegate implementation.
  */
 public abstract class AbstractPersistenceDelegate extends ExecutableExtension implements IPersistenceDelegate {
 

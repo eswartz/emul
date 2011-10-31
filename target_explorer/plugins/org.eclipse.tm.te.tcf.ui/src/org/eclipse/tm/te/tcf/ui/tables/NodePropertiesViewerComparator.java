@@ -16,7 +16,7 @@ import org.eclipse.tm.te.ui.tables.TableViewerComparator;
 
 
 /**
- * Target Explorer: TCF node properties table viewer comparator implementation.
+ * TCF node properties table viewer comparator implementation.
  */
 public class NodePropertiesViewerComparator extends TableViewerComparator {
 

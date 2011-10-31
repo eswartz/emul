@@ -31,7 +31,7 @@ import org.eclipse.ui.forms.widgets.ScrolledForm;
 import org.eclipse.ui.forms.widgets.Section;
 
 /**
- * Target Explorer: Custom form toolkit for using form elements within
+ * Custom form toolkit for using form elements within
  * dialog and wizard pages, or other containers.
  */
 public class CustomFormToolkit extends PlatformObject {

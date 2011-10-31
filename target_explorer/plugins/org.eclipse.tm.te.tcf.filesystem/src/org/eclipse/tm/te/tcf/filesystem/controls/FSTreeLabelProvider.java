@@ -32,7 +32,7 @@ import org.eclipse.ui.navigator.CommonNavigator;
 
 
 /**
- * Target Explorer: File system tree control label provider implementation.
+ * File system tree control label provider implementation.
  */
 public class FSTreeLabelProvider extends LabelProvider implements ITableLabelProvider {
 	private IEditorRegistry editorRegistry = null;

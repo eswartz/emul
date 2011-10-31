@@ -12,7 +12,7 @@ package org.eclipse.tm.te.ui.nls;
 import org.eclipse.osgi.util.NLS;
 
 /**
- * Target Explorer: Common UI plugin externalized strings management.
+ * Common UI plugin externalized strings management.
  */
 public class Messages extends NLS {
 

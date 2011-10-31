@@ -34,7 +34,7 @@ import org.eclipse.tm.te.ui.controls.validator.Validator;
 
 
 /**
- * Target Explorer: Basic remote host name or IP-address control.
+ * Basic remote host name or IP-address control.
  */
 public class RemoteHostAddressControl extends BaseEditBrowseTextControl {
 

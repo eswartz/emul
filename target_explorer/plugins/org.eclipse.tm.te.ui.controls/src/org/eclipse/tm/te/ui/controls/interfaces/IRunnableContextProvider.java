@@ -12,7 +12,7 @@ package org.eclipse.tm.te.ui.controls.interfaces;
 import org.eclipse.jface.operation.IRunnableContext;
 
 /**
- * Target Explorer: Public interface of a runnable context provider.
+ * Public interface of a runnable context provider.
  */
 public interface IRunnableContextProvider {
 

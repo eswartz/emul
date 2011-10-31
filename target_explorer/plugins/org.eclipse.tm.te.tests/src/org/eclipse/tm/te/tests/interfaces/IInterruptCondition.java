@@ -10,7 +10,7 @@
 package org.eclipse.tm.te.tests.interfaces;
 
 /**
- * Target Explorer: Interface to be implemented for conditional test wait interrupts.
+ * Interface to be implemented for conditional test wait interrupts.
  */
 public interface IInterruptCondition {
 

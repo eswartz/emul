@@ -28,7 +28,7 @@ import org.eclipse.tm.te.tcf.log.core.internal.LogManager;
 import org.eclipse.tm.te.tcf.log.core.internal.nls.Messages;
 
 /**
- * Target Explorer: TCF logging channel trace listener manager implementation.
+ * TCF logging channel trace listener manager implementation.
  */
 public class ChannelTraceListenerManager {
 	// The map of trace listeners per channel

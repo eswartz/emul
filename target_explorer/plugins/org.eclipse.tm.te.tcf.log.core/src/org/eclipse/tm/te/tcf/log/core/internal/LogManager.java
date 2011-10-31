@@ -35,7 +35,7 @@ import org.eclipse.tm.te.tcf.log.core.internal.nls.Messages;
 
 
 /**
- * Target Explorer: TCF logging log manager implementation.
+ * TCF logging log manager implementation.
  */
 public final class LogManager implements IProtocolStateChangeListener {
 	// Reference to the channel state change listener

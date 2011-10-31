@@ -36,7 +36,7 @@ import org.eclipse.ui.forms.widgets.Section;
 
 
 /**
- * Target Explorer: Abstract tree control implementation.
+ * Abstract tree control implementation.
  */
 public abstract class AbstractTreeControl extends WorkbenchPartControl {
 	// Reference to the tree viewer instance

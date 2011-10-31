@@ -23,7 +23,7 @@ import org.eclipse.ui.forms.editor.FormPage;
 
 
 /**
- * Target Explorer: Abstract details editor page implementation.
+ * Abstract details editor page implementation.
  */
 public abstract class AbstractEditorPage extends FormPage implements IEditorPage {
 	// The unique page id

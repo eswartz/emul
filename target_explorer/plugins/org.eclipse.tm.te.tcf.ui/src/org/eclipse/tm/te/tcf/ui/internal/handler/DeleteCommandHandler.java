@@ -15,18 +15,29 @@ import java.util.Iterator;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.tm.tcf.protocol.Protocol;
+import org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer;
+import org.eclipse.tm.te.runtime.persistence.interfaces.IPersistenceService;
+import org.eclipse.tm.te.runtime.properties.PropertiesContainer;
+import org.eclipse.tm.te.runtime.services.ServiceManager;
+import org.eclipse.tm.te.runtime.statushandler.StatusHandlerManager;
+import org.eclipse.tm.te.runtime.statushandler.interfaces.IStatusHandler;
+import org.eclipse.tm.te.runtime.statushandler.interfaces.IStatusHandlerConstants;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.ILocatorModel;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel;
 import org.eclipse.tm.te.tcf.locator.interfaces.services.ILocatorModelRefreshService;
-import org.eclipse.tm.te.tcf.ui.internal.PeersPersistenceManager;
+import org.eclipse.tm.te.tcf.ui.activator.UIPlugin;
+import org.eclipse.tm.te.tcf.ui.internal.help.IContextHelpIds;
 import org.eclipse.tm.te.tcf.ui.internal.model.Model;
+import org.eclipse.tm.te.tcf.ui.nls.Messages;
 import org.eclipse.ui.handlers.HandlerUtil;
 
 /**
- * Target Explorer: TCF static peers delete command handler implementation.
+ * TCF static peers delete command handler implementation.
  */
 public class DeleteCommandHandler extends AbstractHandler {
 
@@ -42,9 +53,24 @@ public class DeleteCommandHandler extends AbstractHandler {
 				Object candidate = iterator.next();
 				if (candidate instanceof IPeerModel && !(candidate.getClass().getSimpleName().equals("RemotePeer"))) { //$NON-NLS-1$
 					try {
-						PeersPersistenceManager.getInstance().delete((IPeerModel)candidate);
+						IPersistenceService service = ServiceManager.getInstance().getService(IPersistenceService.class);
+						if (service == null) throw new IOException("Persistence service instance unavailable."); //$NON-NLS-1$
+						service.delete(candidate);
 					} catch (IOException e) {
-						// Ignore it for now, we will have to pass it to the status handler later
+						// Create the status
+						IStatus status = new Status(IStatus.ERROR, UIPlugin.getUniqueIdentifier(),
+													Messages.DeleteCommandHandler_error_deleteFailed, e);
+
+						// Fill in the status handler custom data
+						IPropertiesContainer data = new PropertiesContainer();
+						data.setProperty(IStatusHandlerConstants.PROPERTY_TITLE, Messages.DeleteCommandHandler_error_title);
+						data.setProperty(IStatusHandlerConstants.PROPERTY_CONTEXT_HELP_ID, IContextHelpIds.MESSAGE_DELETE_FAILED);
+						data.setProperty(IStatusHandlerConstants.PROPERTY_DONT_ASK_AGAIN_ID, IContextHelpIds.MESSAGE_DELETE_FAILED);
+						data.setProperty(IStatusHandlerConstants.PROPERTY_CALLER, this);
+
+						// Get the status handler
+						IStatusHandler[] handler = StatusHandlerManager.getInstance().getHandler(candidate);
+						if (handler.length > 0) handler[0].handleStatus(status, data, null);
 					}
 
 					// Get the locator model

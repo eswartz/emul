@@ -18,7 +18,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 
 /**
- * Target Explorer: Abstract structured viewer part implementation.
+ * Abstract structured viewer part implementation.
  */
 public abstract class AbstractStructuredViewerPart extends AbstractPartWithButtons {
 	// The structured viewer instance

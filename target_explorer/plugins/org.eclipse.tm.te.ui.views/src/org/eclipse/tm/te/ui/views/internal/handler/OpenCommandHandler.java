@@ -28,7 +28,7 @@ import org.eclipse.ui.handlers.HandlerUtil;
 import org.eclipse.ui.navigator.CommonNavigator;
 
 /**
- * Target Explorer: TCF tree elements open command handler implementation.
+ * TCF tree elements open command handler implementation.
  */
 public class OpenCommandHandler extends AbstractHandler {
 

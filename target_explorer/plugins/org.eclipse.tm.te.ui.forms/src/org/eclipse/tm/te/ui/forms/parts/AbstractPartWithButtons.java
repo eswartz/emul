@@ -26,7 +26,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 
 /**
- * Target Explorer: Abstract part with buttons implementation.
+ * Abstract part with buttons implementation.
  */
 public abstract class AbstractPartWithButtons extends AbstractPart {
 	// The button labels

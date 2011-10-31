@@ -12,7 +12,7 @@ package org.eclipse.tm.te.ui.interfaces;
 import org.eclipse.tm.te.ui.activator.UIPlugin;
 
 /**
- * Target Explorer: Context help id definitions.
+ * Context help id definitions.
  */
 public interface IContextHelpIds {
 
