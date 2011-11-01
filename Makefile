@@ -16,19 +16,20 @@ ifeq ($(CC),g++)
   OPTS += -fno-omit-frame-pointer
 endif
 
-LUALIBS = $(LIBS) $(LUADIR)/lib/liblua$(EXTLIB)
-
-ifeq ($(OPSYS),Msys)
-  LUALIBS += -lm
-else
-ifneq ($(OPSYS),Windows)
-  LUALIBS += -lm -ldl
-endif
+ifdef LUADIR
+  EXECS += $(BINDIR)/tcflua$(EXTEXE)
+  OPTS += -DPATH_LUA="$(LUADIR)" "-I$(LUADIR)/include"
+  LUALIBS = $(LIBS) $(LUADIR)/lib/liblua$(EXTLIB)
+  ifeq ($(OPSYS),Msys)
+    LUALIBS += -lm
+  else
+    ifneq ($(OPSYS),Windows)
+      LUALIBS += -lm -ldl
+    endif
+  endif
 endif
 
 LIBTCF		?= $(BINDIR)/libtcf$(EXTLIB)
-
-override CFLAGS += $(OPTS)
 
 LINK_FLAGS	+= $(LINK_OPTS)
 
@@ -36,7 +37,20 @@ all:	$(EXECS)
 
 libtcf: $(LIBTCF)
 
-$(BINDIR)/libtcf$(EXTLIB) : $(OFILES)
+CCDEPS = $(HFILES) Makefile Makefile.inc
+
+ifdef OpenSSL
+  CCDEPS += $(LIBSSL)
+
+$(LIBSSL): $(OpenSSL)/Makefile
+	bin/build-openssl "$(OpenSSL)" "$(OPSYS)" "$(MACHINE)" "$(CONF)"
+endif
+
+CCDEPS += $(EXTRA_CCDEPS)
+
+override CFLAGS += $(OPTS)
+
+$(LIBTCF) : $(OFILES)
 	$(AR) $(AR_FLAGS) $(AR_OUT_F)$@ $^
 	$(RANLIB)
 
@@ -48,9 +62,11 @@ $(BINDIR)/client$(EXTEXE): $(BINDIR)/main/main_client$(EXTOBJ) $(LIBTCF)
 	$(LINK) $(LINK_FLAGS) $(LINK_OUT_F)$@ \
 		$(BINDIR)/main/main_client$(EXTOBJ) $(LIBTCF) $(LIBS)
 
+ifdef LUADIR
 $(BINDIR)/tcflua$(EXTEXE): $(BINDIR)/main/main_lua$(EXTOBJ) $(LIBTCF)
 	$(LINK) $(LINK_FLAGS) $(EXPORT_DYNAMIC) $(LINK_OUT_F)$@ \
 		$(BINDIR)/main/main_lua$(EXTOBJ) $(LIBTCF) $(LUALIBS)
+endif
 
 $(BINDIR)/tcfreg$(EXTEXE): $(BINDIR)/main/main_reg$(EXTOBJ) $(LIBTCF)
 	$(LINK) $(LINK_FLAGS) $(LINK_OUT_F)$@ $(BINDIR)/main/main_reg$(EXTOBJ) \
@@ -64,7 +80,7 @@ $(BINDIR)/tcflog$(EXTEXE): $(BINDIR)/main/main_log$(EXTOBJ) $(LIBTCF)
 	$(LINK) $(LINK_FLAGS) $(LINK_OUT_F)$@ $(BINDIR)/main/main_log$(EXTOBJ) \
 		$(LIBTCF) $(LIBS)
 
-$(BINDIR)/%$(EXTOBJ): %.c $(HFILES) Makefile Makefile.inc $(EXTRA_CCDEPS)
+$(BINDIR)/%$(EXTOBJ): %.c $(CCDEPS)
 	@$(call MKDIR,$(dir $@))
 	$(CC) $(CFLAGS) $(OUT_OBJ_F)$@ $(NO_LINK_F) $<
 

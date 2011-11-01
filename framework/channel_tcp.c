@@ -37,6 +37,9 @@
 #  ifndef _MSC_VER
 #    include <dirent.h>
 #  endif
+#  ifdef WIN32
+#    include <ShlObj.h>
+#  endif
 #else
    typedef void SSL;
 #endif
@@ -60,6 +63,16 @@
 
 #ifndef MSG_MORE
 #define MSG_MORE 0
+#endif
+
+#ifdef WIN32
+#  define FD_SETX(a,b) FD_SET((unsigned)a, b)
+#  define MKDIR_MODE_TCF 0
+#  define MKDIR_MODE_SSL 0
+#else
+#  define FD_SETX(a,b) FD_SET(a, b)
+#  define MKDIR_MODE_TCF (S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)
+#  define MKDIR_MODE_SSL (S_IRWXU)
 #endif
 
 #if defined(_WRS_KERNEL)
@@ -159,6 +172,21 @@ static void ini_ssl(void) {
         RAND_add(&ts.tv_nsec, sizeof(ts.tv_nsec), 0.1);
     }
     inited = 1;
+#ifdef WIN32
+    {
+        WCHAR fnm[MAX_PATH];
+        char buf[MAX_PATH];
+        static char sbuf[MAX_PATH];
+        if (SHGetFolderPathW(0, CSIDL_WINDOWS, NULL, 0, fnm) != S_OK) {
+            check_error(set_errno(ERR_OTHER, "Cannot get WINDOWS folder path"));
+        }
+        if (!WideCharToMultiByte(CP_UTF8, 0, fnm, -1, buf, sizeof(buf), NULL, NULL)) {
+            check_error(set_win32_errno(GetLastError()));
+        }
+        snprintf(sbuf, sizeof(sbuf), "%s/TCF", buf);
+        tcf_dir = sbuf;
+    }
+#endif
 }
 
 static int set_ssl_errno(void) {
@@ -287,9 +315,9 @@ static void post_write_request(OutputBuffer * bf) {
                 FD_ZERO(&c->wr_req.u.select.readfds);
                 FD_ZERO(&c->wr_req.u.select.writefds);
                 FD_ZERO(&c->wr_req.u.select.errorfds);
-                if (err == SSL_ERROR_WANT_WRITE) FD_SET(c->socket, &c->wr_req.u.select.writefds);
-                if (err == SSL_ERROR_WANT_READ) FD_SET(c->socket, &c->wr_req.u.select.readfds);
-                FD_SET(c->socket, &c->wr_req.u.select.errorfds);
+                if (err == SSL_ERROR_WANT_WRITE) FD_SETX(c->socket, &c->wr_req.u.select.writefds);
+                if (err == SSL_ERROR_WANT_READ) FD_SETX(c->socket, &c->wr_req.u.select.readfds);
+                FD_SETX(c->socket, &c->wr_req.u.select.errorfds);
                 c->wr_req.u.select.timeout.tv_sec = 10;
                 async_req_post(&c->wr_req);
             }
@@ -509,9 +537,9 @@ static void tcp_post_read(InputBuf * ibuf, unsigned char * buf, size_t size) {
                 FD_ZERO(&c->rd_req.u.select.readfds);
                 FD_ZERO(&c->rd_req.u.select.writefds);
                 FD_ZERO(&c->rd_req.u.select.errorfds);
-                if (err == SSL_ERROR_WANT_WRITE) FD_SET(c->socket, &c->rd_req.u.select.writefds);
-                if (err == SSL_ERROR_WANT_READ) FD_SET(c->socket, &c->rd_req.u.select.readfds);
-                FD_SET(c->socket, &c->rd_req.u.select.errorfds);
+                if (err == SSL_ERROR_WANT_WRITE) FD_SETX(c->socket, &c->rd_req.u.select.writefds);
+                if (err == SSL_ERROR_WANT_READ) FD_SETX(c->socket, &c->rd_req.u.select.readfds);
+                FD_SETX(c->socket, &c->rd_req.u.select.errorfds);
                 c->rd_req.u.select.timeout.tv_sec = 10;
                 c->read_done = -1;
                 async_req_post(&c->rd_req);
@@ -741,12 +769,12 @@ static ChannelTCP * create_channel(int sock, int en_ssl, int server, int unix_do
 
     if (en_ssl) {
 #if ENABLE_SSL
-        long opts = 0;
-
         if (ssl_ctx == NULL) {
+            const char * agent_id = get_agent_id();
             ini_ssl();
             ssl_ctx = SSL_CTX_new(SSLv23_method());
             SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, certificate_verify_callback);
+            SSL_CTX_set_session_id_context(ssl_ctx, (unsigned char *)agent_id, strlen(agent_id));
         }
 
         if (ssl_cert == NULL) {
@@ -770,9 +798,22 @@ static ChannelTCP * create_channel(int sock, int en_ssl, int server, int unix_do
             }
         }
 
-        if ((opts = fcntl(sock, F_GETFL, NULL)) < 0) return NULL;
-        opts |= O_NONBLOCK;
-        if (fcntl(sock, F_SETFL, opts) < 0) return NULL;
+#ifdef WIN32
+        {
+            unsigned long opts = 1;
+            if (ioctlsocket((SOCKET)sock, FIONBIO, &opts) != 0) {
+                set_win32_errno(WSAGetLastError());
+                return NULL;
+            }
+        }
+#else
+        {
+            long opts = 0;
+            if ((opts = fcntl(sock, F_GETFL, NULL)) < 0) return NULL;
+            opts |= O_NONBLOCK;
+            if (fcntl(sock, F_SETFL, opts) < 0) return NULL;
+        }
+#endif
         ssl = SSL_new(ssl_ctx);
         SSL_set_fd(ssl, sock);
         SSL_use_certificate(ssl, ssl_cert);
@@ -1350,19 +1391,23 @@ void generate_ssl_certificate(void) {
     if (!err && !X509_set_pubkey(cert, rsa_key)) err = set_ssl_errno();
     if (!err) X509_sign(cert, rsa_key, EVP_md5());
     if (!err && !X509_verify(cert, rsa_key)) err = set_ssl_errno();
-    if (stat(tcf_dir, &st) != 0 && mkdir(tcf_dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0) err = errno;
+    if (stat(tcf_dir, &st) != 0 && mkdir(tcf_dir, MKDIR_MODE_TCF) != 0) err = errno;
     snprintf(fnm, sizeof(fnm), "%s/ssl", tcf_dir);
-    if (stat(fnm, &st) != 0 && mkdir(fnm, S_IRWXU) != 0) err = errno;
+    if (stat(fnm, &st) != 0 && mkdir(fnm, MKDIR_MODE_SSL) != 0) err = errno;
     snprintf(fnm, sizeof(fnm), "%s/ssl/local.priv", tcf_dir);
     if (!err && (fp = fopen(fnm, "w")) == NULL) err = errno;
     if (!err && !PEM_write_PKCS8PrivateKey(fp, rsa_key, NULL, NULL, 0, NULL, NULL)) err = set_ssl_errno();
     if (!err && fclose(fp) != 0) err = errno;
+#ifndef WIN32
     if (!err && chmod(fnm, S_IRWXU) != 0) err = errno;
+#endif
     snprintf(fnm, sizeof(fnm), "%s/ssl/local.cert", tcf_dir);
     if (!err && (fp = fopen(fnm, "w")) == NULL) err = errno;
     if (!err && !PEM_write_X509(fp, cert)) err = set_ssl_errno();
     if (!err && fclose(fp) != 0) err = errno;
+#ifndef WIN32
     if (!err && chmod(fnm, S_IRWXU) != 0) err = errno;
+#endif
     if (err) {
         fprintf(stderr, "Cannot create SSL certificate: %s\n", errno_to_str(err));
     }

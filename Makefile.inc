@@ -95,6 +95,26 @@ ifdef PATH_Plugins
   LIBS += -ldl
 endif
 
+ifdef OpenSSL
+  OPTS += -DPATH_OpenSSL="$(OpenSSL)"
+  ifeq ($(OPSYS),Windows)
+    OPTS += "-I$(OpenSSL)/inc32"
+    ifeq ($(CONF),Debug)
+      LIBSSL = $(OpenSSL)/out32.dbg/ssleay32.lib
+      LIBCRYPTO = $(OpenSSL)/out32.dbg/libeay32.lib
+    else
+      LIBSSL = $(OpenSSL)/out32/ssleay32.lib
+      LIBCRYOTO = $(OpenSSL)/out32/libeay32.lib
+    endif
+    LIBS += User32.lib Gdi32.lib
+  else
+    OPTS += "-I$(OpenSSL)/include"
+    LIBSSL = $(OpenSSL)/libssl.a
+    LIBCRYPTO = $(OpenSSL)/libcrypto.a
+  endif
+  LIBS += $(LIBSSL) $(LIBCRYPTO)
+endif
+
 ifeq ($(OPSYS),MinGW)
   VERSION := 0.4.0
 else
@@ -124,11 +144,6 @@ endif
 ifeq ($(OPSYS),MinGW)
   CFILES += system/Windows/pthreads-win32.c
   CFILES += system/Windows/context-win32.c
-endif
-
-ifdef LUADIR
-  EXECS += $(BINDIR)/tcflua$(EXTEXE)
-  OPTS += -DPATH_LUA="$(LUADIR)" "-I$(LUADIR)/include"
 endif
 
 ifdef SERVICES

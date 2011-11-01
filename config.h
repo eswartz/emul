@@ -186,7 +186,9 @@
 #endif
 
 #if !defined(ENABLE_SSL)
-#  if (TARGET_UNIX) && !defined(__APPLE__)
+#  if defined(PATH_OpenSSL)
+#    define ENABLE_SSL          1
+#  elif (TARGET_UNIX) && !defined(__APPLE__)
 #    define ENABLE_SSL          1
 #  else
 #    define ENABLE_SSL          0
