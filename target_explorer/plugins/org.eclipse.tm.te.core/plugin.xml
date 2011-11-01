@@ -15,4 +15,19 @@
       </factory>
    </extension>
 
+<!-- Reusable core expression fragments -->   
+   <extension point="org.eclipse.core.expressions.definitions">
+   
+      <!-- Expression to test if the selection contains only one element which
+           is an connectable model node -->
+      <definition id="te.core.expression.isConnectable">
+         <with variable="selection">
+            <count value="1"/>
+            <iterate operator="and" ifEmpty="false">
+               <instanceof value="org.eclipse.tm.te.core.model.interfaces.IConnectable"/>
+            </iterate>
+         </with>
+      </definition>
+   </extension>
+
 </plugin>

@@ -185,6 +185,8 @@ public final class ExecutorsUtil {
 		Assert.isTrue(!EXECUTOR.isExecutorThread());
 		if (runnable == null) return;
 
+		final AtomicBoolean invoked = new AtomicBoolean(false);
+
 		// Wrap the original runnable in another runnable
 		// to notify ourself
 		Runnable r = new Runnable() {
@@ -193,6 +195,7 @@ public final class ExecutorsUtil {
 				try {
 					runnable.run();
 				} finally {
+					invoked.set(true);
 					synchronized(runnable) {
 						runnable.notifyAll();
 					}
@@ -211,7 +214,7 @@ public final class ExecutorsUtil {
 
 		synchronized(runnable) {
 			try {
-				runnable.wait();
+				if (!invoked.get()) runnable.wait();
 			} catch (InterruptedException e) {
 				/* ignored on purpose */
 			}

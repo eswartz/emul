@@ -1,31 +1,29 @@
-/**
- * IConnectable.java
- * Created on Aug 12, 2011
+/*******************************************************************************
+ * Copyright (c) 2011 Wind River Systems, Inc. and others. All rights reserved.
+ * This program and the accompanying materials are made available under the terms
+ * of the Eclipse Public License v1.0 which accompanies this distribution, and is
+ * available at http://www.eclipse.org/legal/epl-v10.html
  *
- * Copyright (c) 2011 Wind River Systems, Inc.
- *
- * The right to copy, distribute, modify, or otherwise make use
- * of this software may be licensed only pursuant to the terms
- * of an applicable Wind River license agreement.
- */
+ * Contributors:
+ * Wind River Systems - initial API and implementation
+ *******************************************************************************/
 package org.eclipse.tm.te.core.model.interfaces;
 
-import org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer;
 
 /**
- * SoftICE extensions model: Defines a model node which can be connected.
+ * Interface to be implemented by model nodes which can be connected.
  */
-public interface IConnectable extends IPropertiesContainer {
+public interface IConnectable {
 
 	/**
 	 * Property: Connect state.
 	 */
-	public static final String PROPERTY_CONNECT_STATE = "connectstate"; //$NON-NLS-1$
+	public static final String PROPERTY_CONNECT_STATE = "connectstate.transient"; //$NON-NLS-1$
 
 	/**
 	 * Property: Connect sub state.
 	 */
-	public static final String PROPERTY_CONNECT_SUB_STATE = "connectSubState"; //$NON-NLS-1$
+	public static final String PROPERTY_CONNECT_SUB_STATE = "connectSubState.transient"; //$NON-NLS-1$
 
 	public static final int STATE_UNREACHABLE = -1;
 	public static final int STATE_UNCONNECTED = 0;
@@ -69,6 +67,21 @@ public interface IConnectable extends IPropertiesContainer {
 	 * @return <code>true</code> if the current connect state equals the given one.
 	 */
 	public boolean isConnectState(int connectState);
+
+	/**
+	 * Returns the connect sub state of this context.
+	 *
+	 * @return The connect sub state.
+	 */
+	public int getConnectSubState();
+
+	/**
+	 * Set the connect sub state of for this context.
+	 *
+	 * @param connectSubState The connect sub state to check.
+	 * @return <code>true</code> if the state has changed.
+	 */
+	public boolean setConnectSubState(int connectSubState);
 
 	/**
 	 * Check the current sub state.
