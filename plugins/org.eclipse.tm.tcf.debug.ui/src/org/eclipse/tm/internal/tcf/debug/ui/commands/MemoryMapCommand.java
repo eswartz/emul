@@ -20,6 +20,7 @@ import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExecContext;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeExpression;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeLaunch;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeModule;
+import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeRegister;
 import org.eclipse.tm.internal.tcf.debug.ui.model.TCFNodeStackFrame;
 import org.eclipse.tm.tcf.services.IMemory;
 import org.eclipse.tm.tcf.util.TCFDataCache;
@@ -59,6 +60,7 @@ public class MemoryMapCommand extends AbstractActionDelegate {
         if (n instanceof TCFNodeStackFrame) return true;
         if (n instanceof TCFNodeExpression) return true;
         if (n instanceof TCFNodeArrayPartition) return true;
+        if (n instanceof TCFNodeRegister) return true;
         if (n instanceof TCFNodeModule) return true;
         return false;
     }
