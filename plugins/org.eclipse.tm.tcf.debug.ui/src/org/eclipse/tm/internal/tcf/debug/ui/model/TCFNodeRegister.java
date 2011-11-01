@@ -11,6 +11,7 @@
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IChildrenCountUpdate;
@@ -72,29 +73,50 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor, IWatchIn
         expression_text = new TCFData<String>(channel) {
             @Override
             protected boolean startDataRetrieval() {
-                String nm = null;
                 Throwable err = null;
                 TCFNodeRegister n = TCFNodeRegister.this;
+                ArrayList<String> names = new ArrayList<String>();
                 for (;;) {
                     if (!n.context.validate(this)) return false;
                     IRegisters.RegistersContext ctx = n.context.getData();
                     if (ctx == null) {
                         err = n.context.getError();
-                        nm = null;
                         break;
                     }
                     String s = ctx.getName();
                     if (s == null) break;
-                    nm = nm == null ? s : s + '.' + nm;
-                    if (n.parent instanceof TCFNodeRegister) {
-                        n = (TCFNodeRegister)n.parent;
-                    }
-                    else {
-                        break;
-                    }
+                    names.add(s);
+                    if (!(n.parent instanceof TCFNodeRegister)) break;
+                    n = (TCFNodeRegister)n.parent;
                 }
-                if (nm != null) nm = "$" + nm;
-                set(null, err, nm);
+                if (names.size() == 0 || err != null) {
+                    set(null, err, null);
+                }
+                else {
+                    StringBuffer bf = new StringBuffer();
+                    boolean first = true;
+                    int m = names.size();
+                    while (m > 0) {
+                        String s = names.get(--m);
+                        boolean need_quotes = false;
+                        int l = s.length();
+                        for (int i = 0; i < l; i++) {
+                            char ch = s.charAt(i);
+                            if (ch >= 'A' && ch <= 'Z') continue;
+                            if (ch >= 'a' && ch <= 'z') continue;
+                            if (ch >= '0' && ch <= '9') continue;
+                            need_quotes = true;
+                            break;
+                        }
+                        if (!first) bf.append('.');
+                        if (need_quotes) bf.append("$\"");
+                        if (first) bf.append('$');
+                        bf.append(s);
+                        if (need_quotes) bf.append('"');
+                        first = false;
+                    }
+                    set(null, null, bf.toString());
+                }
                 return true;
             }
         };

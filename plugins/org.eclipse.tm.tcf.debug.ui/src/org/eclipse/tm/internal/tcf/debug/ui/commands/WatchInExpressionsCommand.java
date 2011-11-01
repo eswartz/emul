@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.tm.internal.tcf.debug.ui.commands;
 
-import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.IExpressionManager;
 import org.eclipse.debug.core.model.IExpression;
 import org.eclipse.debug.ui.IDebugUIConstants;
@@ -43,7 +42,15 @@ public class WatchInExpressionsCommand extends AbstractActionDelegate {
                                 TCFDataCache<String> text_cache = ((IWatchInExpressions)node).getExpressionText();
                                 if (!text_cache.validate(this)) return;
                                 String text_data = text_cache.getData();
-                                if (text_data != null) e = manager.newWatchExpression(text_data);
+                                if (text_data != null) {
+                                    for (final IExpression x : manager.getExpressions()) {
+                                        if (text_data.equals(x.getExpressionText())) {
+                                            done(null);
+                                            return;
+                                        }
+                                    }
+                                    e = manager.newWatchExpression(text_data);
+                                }
                             }
                             done(e);
                         }
@@ -61,30 +68,11 @@ public class WatchInExpressionsCommand extends AbstractActionDelegate {
     }
 
     private TCFNode[] getNodes() {
-        final TCFNode[] arr = getSelectedNodes();
-        return new TCFTask<TCFNode[]>(2000) {
-            public void run() {
-                for (TCFNode n : arr) {
-                    if (n instanceof IWatchInExpressions) {
-                        TCFDataCache<String> text_cache = ((IWatchInExpressions)n).getExpressionText();
-                        if (!text_cache.validate(this)) return;
-                        String text_data = text_cache.getData();
-                        if (text_data != null) {
-                            IExpressionManager m = DebugPlugin.getDefault().getExpressionManager();
-                            for (final IExpression e : m.getExpressions()) {
-                                if (text_data.equals(e.getExpressionText())) {
-                                    done(new TCFNode[0]);
-                                    return;
-                                }
-                            }
-                        }
-                        continue;
-                    }
-                    done(new TCFNode[0]);
-                    return;
-                }
-                done(arr);
-            }
-        }.getE();
+        TCFNode[] arr = getSelectedNodes();
+        for (TCFNode n : arr) {
+            if (n instanceof IWatchInExpressions) continue;
+            return new TCFNode[0];
+        }
+        return arr;
     }
 }
