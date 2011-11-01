@@ -49,7 +49,7 @@ public class ModelNodePersistableAdapter implements IPersistable {
 			if (node.getName() != null && !"".equals(node.getName().trim())) { //$NON-NLS-1$
 				// Get the node name and make it a valid file system name (no spaces etc).
 				IPath path = getRoot().append(makeValidFileSystemName(((IModelNode) data).getName().trim()));
-				if (!"ini".equals(path.getFileExtension())) path.addFileExtension("ini"); //$NON-NLS-1$ //$NON-NLS-2$
+				if (!"ini".equals(path.getFileExtension())) path = path.addFileExtension("ini"); //$NON-NLS-1$ //$NON-NLS-2$
 				uri = path.toFile().toURI();
 			}
 			// If the name is not set, check for "Path"
