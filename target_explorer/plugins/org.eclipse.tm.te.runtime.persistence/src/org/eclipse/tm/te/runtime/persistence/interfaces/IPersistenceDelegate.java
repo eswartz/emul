@@ -10,76 +10,56 @@
 package org.eclipse.tm.te.runtime.persistence.interfaces;
 
 import java.io.IOException;
+import java.net.URI;
+import java.util.Map;
 
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.tm.te.runtime.interfaces.extensions.IExecutableExtension;
-import org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer;
 
 /**
- * Target Explorer: Persistence delegate API declaration
+ * Interface to be implemented by persistence delegates.
  */
 public interface IPersistenceDelegate extends IExecutableExtension {
 
 	/**
-	 * Writes the given data to the persistence storage given by
-	 * the <code>&quot;path&quot;</code> parameter.
+	 * Writes the given data to the given persistence storage.
 	 * <p>
-	 * If the persistence delegate implements a file less storage,
-	 * the <code>&quot;path&quot;</code> parameter might be ignored or
-	 * set to <code>null</code>.
-	 * <p>
-	 * If the persistence delegate implements a file based storage,
-	 * the persistence delegate contributor defines the exact semantic
-	 * of the <code>&quot;path&quot;</code> parameter. If and how
-	 * relative path information are processed may differ between
-	 * the delegate implementations.
+	 * The persistence storage location is defined by the specified URI reference. The exact
+	 * interpretation and semantic of the URI reference is up to the persistence delegate
+	 * contributor.
 	 *
-	 * @param path The persistence storage path or <code>null</code>.
+	 * @param uri The persistence storage location URI reference. Must not be <code>null</code>.
 	 * @param data The data. Must not be <code>null</code>.
 	 *
 	 * @throws IOException - if the operation fails
 	 */
-	public void write(IPath path, IPropertiesContainer data) throws IOException;
+	public void write(URI uri, Map<String, Object> data) throws IOException;
 
 	/**
-	 * Reads the data from the persistence storage given by
-	 * the <code>&quot;path&quot;</code> parameter.
+	 * Reads the data from the given persistence storage.
 	 * <p>
-	 * If the persistence delegate implements a file less storage,
-	 * the <code>&quot;path&quot;</code> parameter might be ignored or
-	 * set to <code>null</code>.
-	 * <p>
-	 * If the persistence delegate implements a file based storage,
-	 * the persistence delegate contributor defines the exact semantic
-	 * of the <code>&quot;path&quot;</code> parameter. If and how
-	 * relative path information are processed may differ between
-	 * the delegate implementations.
+	 * The persistence storage location is defined by the specified URI reference. The exact
+	 * interpretation and semantic of the URI reference is up to the persistence delegate
+	 * contributor.
 	 *
-	 * @param path The persistence storage path or <code>null</code>.
+	 * @param uri The persistence storage location URI reference. Must not be <code>null</code>.
 	 * @return The data.
 	 *
 	 * @throws IOException - if the operation fails
 	 */
-	public IPropertiesContainer read(IPath path) throws IOException;
+	public Map<String, Object> read(URI uri) throws IOException;
 
 	/**
-	 * Deletes the persistence storage given by the <code>&quot;path&quot;</code>
-	 * parameter.
+	 * Deletes the given persistence storage.
 	 * <p>
-	 * If the persistence delegate implements a file less storage,
-	 * the <code>&quot;path&quot;</code> parameter might be ignored or
-	 * set to <code>null</code>.
-	 * <p>
-	 * If the persistence delegate implements a file based storage,
-	 * the persistence delegate contributor defines the exact semantic
-	 * of the <code>&quot;path&quot;</code> parameter. If and how
-	 * relative path information are processed may differ between
-	 * the delegate implementations.
+	 * The persistence storage location is defined by the specified URI reference. The exact
+	 * interpretation and semantic of the URI reference is up to the persistence delegate
+	 * contributor.
 	 *
-	 * @param path The persistence storage path or <code>null</code>.
-	 * @return <code>True</code> if the persistence storage is successfully deleted; <code>false</code> otherwise.
+	 * @param uri The persistence storage location URI reference. Must not be <code>null</code>.
+	 * @return <code>True</code> if the persistence storage is successfully deleted;
+	 *         <code>false</code> otherwise.
 	 *
 	 * @throws IOException - if the operation fails
 	 */
-	public boolean delete(IPath path) throws IOException;
+	public boolean delete(URI uri) throws IOException;
 }

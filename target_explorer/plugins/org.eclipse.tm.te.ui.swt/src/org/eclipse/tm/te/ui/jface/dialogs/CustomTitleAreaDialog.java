@@ -27,7 +27,7 @@ import org.eclipse.tm.te.ui.swt.activator.UIPlugin;
 import org.eclipse.ui.PlatformUI;
 
 /**
- * Target Explorer: Custom title area dialog implementation.
+ * Custom title area dialog implementation.
  */
 public class CustomTitleAreaDialog extends TitleAreaDialog implements IMessageProvider {
 	protected static final int comboHistoryLength = 10;

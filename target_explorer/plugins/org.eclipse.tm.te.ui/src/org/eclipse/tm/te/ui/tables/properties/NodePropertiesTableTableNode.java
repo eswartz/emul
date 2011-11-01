@@ -13,7 +13,7 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.PlatformObject;
 
 /**
- * Target Explorer: Immutable representation of a table node.
+ * Immutable representation of a table node.
  */
 public final class NodePropertiesTableTableNode extends PlatformObject {
 	/**

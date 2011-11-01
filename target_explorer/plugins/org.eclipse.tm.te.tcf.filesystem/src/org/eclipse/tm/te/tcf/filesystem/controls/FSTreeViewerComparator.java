@@ -16,7 +16,7 @@ import org.eclipse.tm.te.ui.trees.TreeViewerComparator;
 
 
 /**
- * Target Explorer: File system tree control viewer comparator implementation.
+ * File system tree control viewer comparator implementation.
  */
 public class FSTreeViewerComparator extends TreeViewerComparator {
 

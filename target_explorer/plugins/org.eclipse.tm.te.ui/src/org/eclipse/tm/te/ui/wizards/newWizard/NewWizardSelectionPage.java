@@ -53,7 +53,7 @@ import org.eclipse.ui.wizards.IWizardCategory;
 import org.eclipse.ui.wizards.IWizardDescriptor;
 
 /**
- * Target Explorer: The New Target creation wizard selection page implementation.
+ * The New Target creation wizard selection page implementation.
  */
 @SuppressWarnings("restriction")
 public class NewWizardSelectionPage extends WizardPage {

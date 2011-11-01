@@ -13,7 +13,7 @@ import org.eclipse.core.runtime.IExecutableExtension;
 import org.eclipse.ui.forms.editor.IFormPage;
 
 /**
- * Target Explorer: Details editor page public interface.
+ * Details editor page public interface.
  */
 public interface IEditorPage extends IFormPage, IExecutableExtension {
 

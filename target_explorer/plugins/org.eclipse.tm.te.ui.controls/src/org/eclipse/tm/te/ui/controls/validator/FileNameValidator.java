@@ -16,7 +16,7 @@ import java.util.List;
 
 
 /**
- * Target Explorer: Input validator for files.
+ * Input validator for files.
  */
 public class FileNameValidator extends Validator {
 

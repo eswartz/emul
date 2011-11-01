@@ -10,7 +10,7 @@
 package org.eclipse.tm.te.ui.controls.validator;
 
 /**
- * Target Explorer: Verify listener for text widgets to receive host names or IP addresses.
+ * Verify listener for text widgets to receive host names or IP addresses.
  */
 public class NameOrIPVerifyListener extends RegexVerifyListener {
 

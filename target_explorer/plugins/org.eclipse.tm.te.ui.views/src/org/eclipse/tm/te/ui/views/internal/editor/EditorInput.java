@@ -27,7 +27,7 @@ import org.eclipse.ui.navigator.CommonViewer;
 
 
 /**
- * Target Explorer: Details editor input implementation.
+ * Details editor input implementation.
  */
 public class EditorInput implements IEditorInput, IPersistableElement {
 	// The parent editor id

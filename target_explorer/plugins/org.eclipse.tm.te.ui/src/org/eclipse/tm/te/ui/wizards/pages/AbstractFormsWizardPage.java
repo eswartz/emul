@@ -17,7 +17,7 @@ import org.eclipse.tm.te.ui.forms.CustomFormToolkit;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 
 /**
- * Target Explorer: Abstract wizard page using forms.
+ * Abstract wizard page using forms.
  */
 public abstract class AbstractFormsWizardPage extends AbstractWizardPage {
 	// The forms toolkit instance

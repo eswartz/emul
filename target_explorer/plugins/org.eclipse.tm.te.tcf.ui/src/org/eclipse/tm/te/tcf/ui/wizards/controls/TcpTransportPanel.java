@@ -37,8 +37,6 @@ import org.eclipse.ui.forms.widgets.FormToolkit;
  */
 public class TcpTransportPanel extends AbstractWizardConfigurationPanel implements ISharedDataWizardPage {
 
-	public static final String TRANSPORT_TYPE_ID = "TCP"; //$NON-NLS-1$
-
 	private RemoteHostAddressControl addressControl = null;
 	private RemoteHostPortControl portControl = null;
 

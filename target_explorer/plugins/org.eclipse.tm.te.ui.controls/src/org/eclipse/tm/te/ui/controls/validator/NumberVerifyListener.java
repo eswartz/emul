@@ -12,7 +12,7 @@ package org.eclipse.tm.te.ui.controls.validator;
 import org.eclipse.swt.events.VerifyEvent;
 
 /**
- * Target Explorer: Verify listener for text widgets to receive numbers.
+ * Verify listener for text widgets to receive numbers.
  */
 public class NumberVerifyListener extends RegexVerifyListener {
 

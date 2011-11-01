@@ -14,7 +14,7 @@ import java.math.BigInteger;
 import org.eclipse.core.runtime.Assert;
 
 /**
- * Target Explorer: Validator for hex values.
+ * Validator for hex values.
  */
 public class HexValidator extends RegexValidator {
 

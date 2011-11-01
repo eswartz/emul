@@ -26,7 +26,7 @@ import org.eclipse.ui.forms.widgets.TableWrapData;
 
 
 /**
- * Target Explorer: File system editor page implementation.
+ * File system editor page implementation.
  */
 public class FSExplorerEditorPage extends AbstractCustomFormToolkitEditorPage {
 	// The references to the pages subcontrol's (needed for disposal)

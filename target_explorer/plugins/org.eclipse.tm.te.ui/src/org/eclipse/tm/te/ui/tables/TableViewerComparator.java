@@ -22,7 +22,7 @@ import org.eclipse.tm.te.ui.AbstractViewerComparator;
 
 
 /**
- * Target Explorer: Common table control viewer comparator implementation.
+ * Common table control viewer comparator implementation.
  */
 public class TableViewerComparator extends AbstractViewerComparator {
 	private final ITableLabelProvider labelProvider;

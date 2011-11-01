@@ -26,7 +26,7 @@ import org.eclipse.ui.internal.util.Util;
 import org.eclipse.ui.wizards.IWizardDescriptor;
 
 /**
- * Target Explorer: New wizard node implementation.
+ * New wizard node implementation.
  */
 @SuppressWarnings("restriction")
 /* default */ class NewWizardNode implements IWizardNode, IPluginContribution {

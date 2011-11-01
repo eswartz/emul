@@ -10,7 +10,7 @@
 package org.eclipse.tm.te.ui.controls.validator;
 
 /**
- * Target Explorer: Base class for verify listener.
+ * Base class for verify listener.
  */
 public abstract class VerifyListener implements org.eclipse.swt.events.VerifyListener {
 

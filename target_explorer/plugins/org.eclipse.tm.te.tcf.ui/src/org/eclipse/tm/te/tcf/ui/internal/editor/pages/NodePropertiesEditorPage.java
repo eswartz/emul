@@ -34,7 +34,7 @@ import org.eclipse.ui.forms.widgets.TableWrapData;
 
 
 /**
- * Target Explorer: TCF node properties details editor page implementation.
+ * TCF node properties details editor page implementation.
  */
 public class NodePropertiesEditorPage extends AbstractCustomFormToolkitEditorPage {
 	// The references to the pages subcontrol's (needed for disposal)

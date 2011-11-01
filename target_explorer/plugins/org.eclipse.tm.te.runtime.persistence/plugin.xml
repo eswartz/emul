@@ -14,4 +14,13 @@
       </delegate>
    </extension>
 
+<!-- Service contributions -->
+   <extension point="org.eclipse.tm.te.runtime.services.services">
+      <genericServices>
+         <service class="org.eclipse.tm.te.runtime.persistence.services.PersistenceService">
+            <serviceType class="org.eclipse.tm.te.runtime.persistence.interfaces.IPersistenceService"/>
+         </service>
+      </genericServices>
+   </extension>
+
 </plugin>

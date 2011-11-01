@@ -19,7 +19,7 @@ import org.eclipse.ui.IWorkbenchPart;
 
 
 /**
- * Target Explorer: Common workbench part control implementation.
+ * Common workbench part control implementation.
  */
 public class WorkbenchPartControl extends PlatformObject {
 	/**

@@ -93,9 +93,21 @@ public class UIPlugin extends AbstractUIPlugin {
 
 		url = UIPlugin.getDefault().getBundle().getEntry(ImageConsts.IMAGE_DIR_ROOT + ImageConsts.IMAGE_DIR_DLCL + "newtarget_wiz.gif"); //$NON-NLS-1$
 		registry.put(ImageConsts.NEW_TARGET_WIZARD_DISABLED, ImageDescriptor.createFromURL(url));
-
 		url = UIPlugin.getDefault().getBundle().getEntry(ImageConsts.IMAGE_DIR_ROOT + ImageConsts.IMAGE_DIR_ELCL + "newtarget_wiz.gif"); //$NON-NLS-1$
 		registry.put(ImageConsts.NEW_TARGET_WIZARD_ENABLED, ImageDescriptor.createFromURL(url));
+
+		url = UIPlugin.getDefault().getBundle().getEntry(ImageConsts.IMAGE_DIR_ROOT + ImageConsts.IMAGE_DIR_OVR + "gold_ovr.gif"); //$NON-NLS-1$
+		registry.put(ImageConsts.GOLD_OVR, ImageDescriptor.createFromURL(url));
+		url = UIPlugin.getDefault().getBundle().getEntry(ImageConsts.IMAGE_DIR_ROOT + ImageConsts.IMAGE_DIR_OVR + "green_ovr.gif"); //$NON-NLS-1$
+		registry.put(ImageConsts.GREEN_OVR, ImageDescriptor.createFromURL(url));
+		url = UIPlugin.getDefault().getBundle().getEntry(ImageConsts.IMAGE_DIR_ROOT + ImageConsts.IMAGE_DIR_OVR + "grey_ovr.gif"); //$NON-NLS-1$
+		registry.put(ImageConsts.GREY_OVR, ImageDescriptor.createFromURL(url));
+		url = UIPlugin.getDefault().getBundle().getEntry(ImageConsts.IMAGE_DIR_ROOT + ImageConsts.IMAGE_DIR_OVR + "red_ovr.gif"); //$NON-NLS-1$
+		registry.put(ImageConsts.RED_OVR, ImageDescriptor.createFromURL(url));
+		url = UIPlugin.getDefault().getBundle().getEntry(ImageConsts.IMAGE_DIR_ROOT + ImageConsts.IMAGE_DIR_OVR + "redX_ovr.gif"); //$NON-NLS-1$
+		registry.put(ImageConsts.RED_X_OVR, ImageDescriptor.createFromURL(url));
+		url = UIPlugin.getDefault().getBundle().getEntry(ImageConsts.IMAGE_DIR_ROOT + ImageConsts.IMAGE_DIR_OVR + "busy.gif"); //$NON-NLS-1$
+		registry.put(ImageConsts.BUSY_OVR, ImageDescriptor.createFromURL(url));
 	}
 
 	/**

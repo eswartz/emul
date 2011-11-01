@@ -31,7 +31,7 @@ import org.eclipse.ui.forms.widgets.Section;
 
 
 /**
- * Target Explorer: TCF node properties table content provider implementation.
+ * TCF node properties table content provider implementation.
  */
 public class NodePropertiesContentProvider implements IStructuredContentProvider {
 

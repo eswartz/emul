@@ -498,7 +498,7 @@ public class ProcessLauncher extends PlatformObject implements IProcessLauncher 
 				EventManager.getInstance().addEventListener(eventListener, DisposedEvent.class);
 
 				// Get the terminal service
-				ITerminalService terminal = (ITerminalService)ServiceManager.getInstance().getService(ITerminalService.class);
+				ITerminalService terminal = ServiceManager.getInstance().getService(ITerminalService.class);
 				// If not available, we cannot fulfill this request
 				if (terminal != null) {
 					// Create the terminal streams settings

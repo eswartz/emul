@@ -16,7 +16,7 @@ import org.eclipse.ui.IEditorInput;
 
 
 /**
- * Target Explorer: Details editor property tester implementation.
+ * Details editor property tester implementation.
  */
 public class EditorPropertyTester extends PropertyTester {
 

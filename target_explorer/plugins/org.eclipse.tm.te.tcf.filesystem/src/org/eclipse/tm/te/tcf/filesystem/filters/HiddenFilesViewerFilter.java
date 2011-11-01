@@ -14,7 +14,7 @@ import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode;
 
 /**
- * Target Explorer: A filter implementation filtering hidden files or directories.
+ * A filter implementation filtering hidden files or directories.
  */
 public class HiddenFilesViewerFilter extends ViewerFilter {
 

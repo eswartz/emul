@@ -19,7 +19,7 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.navigator.CommonNavigator;
 
 /**
- * Target Explorer: Utility methods to deal with views.
+ * Utility methods to deal with views.
  */
 public class ViewsUtil {
 

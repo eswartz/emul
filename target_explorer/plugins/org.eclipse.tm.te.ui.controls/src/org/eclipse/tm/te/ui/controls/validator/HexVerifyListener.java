@@ -13,7 +13,7 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.swt.events.VerifyEvent;
 
 /**
- * Target Explorer: Verify listener for text widgets to receive hex values.
+ * Verify listener for text widgets to receive hex values.
  */
 public class HexVerifyListener extends RegexVerifyListener {
 

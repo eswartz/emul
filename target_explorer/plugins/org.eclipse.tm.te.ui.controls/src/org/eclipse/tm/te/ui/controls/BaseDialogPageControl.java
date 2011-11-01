@@ -19,7 +19,7 @@ import org.eclipse.ui.forms.widgets.FormToolkit;
 
 
 /**
- * Target Explorer: Common UI control to be embedded within a dialog page.
+ * Common UI control to be embedded within a dialog page.
  */
 public class BaseDialogPageControl extends BaseControl implements IRunnableContextProvider {
 	// Reference to the parent page

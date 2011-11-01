@@ -12,7 +12,7 @@ package org.eclipse.tm.te.ui.interfaces;
 import org.eclipse.tm.te.ui.activator.UIPlugin;
 
 /**
- * Target Explorer: Common UI constants.
+ * Common UI constants.
  */
 public interface IUIConstants {
 

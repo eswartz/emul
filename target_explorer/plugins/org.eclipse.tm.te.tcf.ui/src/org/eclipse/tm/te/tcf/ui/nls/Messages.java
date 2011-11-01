@@ -14,7 +14,7 @@ import java.lang.reflect.Field;
 import org.eclipse.osgi.util.NLS;
 
 /**
- * Target Explorer: TCF UI Plug-in externalized strings management.
+ * TCF UI Plug-in externalized strings management.
  */
 public class Messages extends NLS {
 
@@ -96,6 +96,9 @@ public class Messages extends NLS {
 
 	public static String TransportTypeControl_label;
 	public static String TransportTypeControl_tcpType_label;
+	public static String TransportTypeControl_sslType_label;
+	public static String TransportTypeControl_pipeType_label;
+	public static String TransportTypeControl_customType_label;
 
 	public static String MyRemoteHostAddressControl_label;
 	public static String MyRemoteHostAddressControl_information_missingTargetNameAddress;
@@ -103,6 +106,14 @@ public class Messages extends NLS {
 	public static String MyRemoteHostAddressControl_error_invalidTargetIpAddress;
 	public static String MyRemoteHostAddressControl_error_targetNameNotResolveable;
 	public static String MyRemoteHostAddressControl_information_checkNameAddressUserInformation;
+
+	public static String PipeNameControl_label;
+	public static String PipeNameControl_information_missingValue;
+	public static String PipeNameControl_error_invalidValue;
+
+	public static String CustomTransportNameControl_label;
+	public static String CustomTransportNameControl_information_missingValue;
+	public static String CustomTransportNameControl_error_invalidValue;
 
 	public static String PeerAttributesTablePart_button_new;
 	public static String PeerAttributesTablePart_button_edit;
@@ -115,4 +126,7 @@ public class Messages extends NLS {
 	public static String PeerAttributesTablePart_edit_dialogTitle;
 	public static String PeerAttributesTablePart_edit_title;
 	public static String PeerAttributesTablePart_edit_message;
+
+	public static String DeleteCommandHandler_error_title;
+	public static String DeleteCommandHandler_error_deleteFailed;
 }

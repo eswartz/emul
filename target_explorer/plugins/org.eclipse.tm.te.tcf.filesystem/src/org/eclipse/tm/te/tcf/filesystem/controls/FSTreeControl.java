@@ -44,7 +44,7 @@ import org.eclipse.ui.part.MultiPageSelectionProvider;
 
 
 /**
- * Target Explorer: File system browser control.
+ * File system browser control.
  */
 public class FSTreeControl extends AbstractTreeControl implements ISelectionChangedListener, IDoubleClickListener {
 

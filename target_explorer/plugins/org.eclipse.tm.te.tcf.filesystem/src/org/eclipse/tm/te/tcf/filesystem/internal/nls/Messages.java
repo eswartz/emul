@@ -15,7 +15,7 @@ import java.lang.reflect.Field;
 import org.eclipse.osgi.util.NLS;
 
 /**
- * Target Explorer: File System plug-in externalized strings management.
+ * File System plug-in externalized strings management.
  */
 public class Messages extends NLS {
 

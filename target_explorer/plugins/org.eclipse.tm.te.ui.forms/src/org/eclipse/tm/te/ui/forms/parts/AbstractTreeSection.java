@@ -22,7 +22,7 @@ import org.eclipse.ui.forms.IManagedForm;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 
 /**
- * Target Explorer: Abstract tree section implementation.
+ * Abstract tree section implementation.
  */
 public abstract class AbstractTreeSection extends AbstractStructuredViewerSection implements ISelectionChangedListener, IDoubleClickListener {
 

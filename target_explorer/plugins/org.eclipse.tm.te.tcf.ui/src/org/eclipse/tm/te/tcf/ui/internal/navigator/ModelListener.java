@@ -22,7 +22,7 @@ import org.eclipse.ui.navigator.CommonViewer;
 
 
 /**
- * Target Explorer: TCF locator model listener implementation.
+ * TCF locator model listener implementation.
  */
 public class ModelListener extends ModelAdapter {
 	private final ILocatorModel parentModel;

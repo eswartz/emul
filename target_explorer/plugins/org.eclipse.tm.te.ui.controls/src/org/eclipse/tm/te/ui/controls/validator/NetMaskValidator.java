@@ -10,7 +10,7 @@
 package org.eclipse.tm.te.ui.controls.validator;
 
 /**
- * Target Explorer: Netmask validator.
+ * Netmask validator.
  */
 public class NetMaskValidator extends NameOrIPValidator {
 

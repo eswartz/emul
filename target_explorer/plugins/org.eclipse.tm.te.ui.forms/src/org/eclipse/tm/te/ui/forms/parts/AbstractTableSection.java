@@ -21,7 +21,7 @@ import org.eclipse.ui.forms.IManagedForm;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 
 /**
- * Target Explorer: Abstract table section implementation.
+ * Abstract table section implementation.
  */
 public abstract class AbstractTableSection extends AbstractStructuredViewerSection implements ISelectionChangedListener, IDoubleClickListener {
 

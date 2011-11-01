@@ -27,7 +27,7 @@ import org.eclipse.tm.te.runtime.extensions.ExecutableExtensionProxy;
 
 
 /**
- * Target Explorer: Status handler binding extension point manager implementation.
+ * Status handler binding extension point manager implementation.
  */
 public class StatusHandlerBindingExtensionPointManager extends AbstractExtensionPointManager<StatusHandlerBinding> {
 

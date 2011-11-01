@@ -12,7 +12,7 @@ package org.eclipse.tm.te.ui.controls.validator;
 import java.text.MessageFormat;
 
 /**
- * Target Explorer: Positive integer number validator for text widgets.
+ * Positive integer number validator for text widgets.
  */
 public class NumberValidator extends RegexValidator {
 

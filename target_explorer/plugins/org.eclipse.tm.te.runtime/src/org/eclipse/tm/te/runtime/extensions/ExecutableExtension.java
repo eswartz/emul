@@ -21,7 +21,7 @@ import org.eclipse.tm.te.runtime.interfaces.extensions.IExecutableExtension;
 import org.eclipse.tm.te.runtime.nls.Messages;
 
 /**
- * Target Explorer: Executable extension implementation.
+ * Executable extension implementation.
  */
 public class ExecutableExtension extends PlatformObject implements IExecutableExtension {
 	// The mandatory id of the extension

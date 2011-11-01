@@ -16,7 +16,7 @@ import org.eclipse.jface.dialogs.IMessageProvider;
 import org.eclipse.swt.widgets.Composite;
 
 /**
- * Target Explorer: Base implementation of a common UI control.
+ * Base implementation of a common UI control.
  * <p>
  * The control can be embedded into any UI container like dialogs,
  * wizard pages or preference pages.

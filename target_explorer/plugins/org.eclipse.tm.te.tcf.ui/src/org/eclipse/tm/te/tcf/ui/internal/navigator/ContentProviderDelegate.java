@@ -21,7 +21,7 @@ import org.eclipse.tm.te.ui.views.interfaces.IRoot;
 
 
 /**
- * Target Explorer: Content provider delegate implementation.
+ * Content provider delegate implementation.
  */
 public class ContentProviderDelegate implements ITreeContentProvider {
 	private final static Object[] NO_ELEMENTS = new Object[0];

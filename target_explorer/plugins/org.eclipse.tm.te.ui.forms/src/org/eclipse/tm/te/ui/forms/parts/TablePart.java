@@ -21,7 +21,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 
 /**
- * Target Explorer: Table part implementation.
+ * Table part implementation.
  */
 public class TablePart extends AbstractStructuredViewerPart implements ISelectionChangedListener, IDoubleClickListener {
 

@@ -60,8 +60,8 @@ public class ServiceManager extends AbstractServiceManager<IService> {
 	 * @param serviceType The service type the service should at least implement or extend.
 	 * @return The service or <code>null</code>.
 	 */
-	public IService getService(Class<? extends IService> serviceType, boolean unique) {
-		return super.getService("", serviceType, unique); //$NON-NLS-1$
+	public <V extends IService> V getService(Class<V> serviceType, boolean unique) {
+		return (V)super.getService("", serviceType, unique); //$NON-NLS-1$
 	}
 
 	/**
@@ -77,8 +77,8 @@ public class ServiceManager extends AbstractServiceManager<IService> {
 	 * @param serviceType The service type the service should at least implement or extend.
 	 * @return The service or <code>null</code>.
 	 */
-	public IService getService(Class<? extends IService> serviceType) {
-		return super.getService("", serviceType); //$NON-NLS-1$
+	public <V extends IService> V getService(Class<V> serviceType) {
+		return (V)super.getService("", serviceType); //$NON-NLS-1$
 	}
 
 	/* (non-Javadoc)

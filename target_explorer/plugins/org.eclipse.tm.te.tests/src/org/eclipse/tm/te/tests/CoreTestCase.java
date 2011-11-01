@@ -45,7 +45,7 @@ import org.eclipse.ui.WorkbenchException;
 import org.osgi.framework.Bundle;
 
 /**
- * Target Explorer: Core test case implementation.
+ * Core test case implementation.
  */
 public class CoreTestCase extends TestCase {
 	// Internal property id to store if or if not the views zoom state

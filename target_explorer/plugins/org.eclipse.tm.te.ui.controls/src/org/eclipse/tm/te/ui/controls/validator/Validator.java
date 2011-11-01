@@ -19,7 +19,7 @@ import org.eclipse.tm.te.ui.controls.nls.Messages;
 
 
 /**
- * Target Explorer: Input validator and message provider.
+ * Input validator and message provider.
  */
 public abstract class Validator implements IMessageProvider, ICellEditorValidator {
 

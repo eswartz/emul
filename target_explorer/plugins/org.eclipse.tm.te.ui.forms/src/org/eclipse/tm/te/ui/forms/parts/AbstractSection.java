@@ -28,7 +28,7 @@ import org.eclipse.ui.forms.widgets.FormToolkit;
 import org.eclipse.ui.forms.widgets.Section;
 
 /**
- * Target Explorer: Abstract section implementation.
+ * Abstract section implementation.
  */
 public abstract class AbstractSection extends SectionPart implements IAdaptable {
 

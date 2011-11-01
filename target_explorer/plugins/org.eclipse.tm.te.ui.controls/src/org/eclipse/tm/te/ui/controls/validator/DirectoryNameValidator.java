@@ -16,7 +16,7 @@ import org.eclipse.core.runtime.Path;
 
 
 /**
- * Target Explorer: Input validator for files or directories.
+ * Input validator for files or directories.
  */
 public class DirectoryNameValidator extends Validator {
 

@@ -12,7 +12,7 @@ package org.eclipse.tm.te.tcf.ui.internal.help;
 import org.eclipse.tm.te.tcf.ui.activator.UIPlugin;
 
 /**
- * Target Explorer: Context help id definitions.
+ * Context help id definitions.
  */
 public interface IContextHelpIds {
 
@@ -30,4 +30,9 @@ public interface IContextHelpIds {
 	 * Target Explorer details editor page: Node properties
 	 */
 	public final static String NODE_PROPERTIES_EDITOR_PAGE = PREFIX + "NodePropertiesEditorPage"; //$NON-NLS-1$
+
+	/**
+	 * Delete command handler: Delete operation failed.
+	 */
+	public final static String MESSAGE_DELETE_FAILED = PREFIX + ".status.messageDeleteFailed"; //$NON-NLS-1$
 }

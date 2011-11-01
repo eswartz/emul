@@ -25,11 +25,14 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer;
 import org.eclipse.tm.te.runtime.properties.PropertiesContainer;
+import org.eclipse.tm.te.tcf.core.interfaces.ITransportTypes;
 import org.eclipse.tm.te.tcf.ui.internal.help.IContextHelpIds;
 import org.eclipse.tm.te.tcf.ui.nls.Messages;
+import org.eclipse.tm.te.tcf.ui.wizards.controls.CustomTransportPanel;
 import org.eclipse.tm.te.tcf.ui.wizards.controls.PeerAttributesTablePart;
 import org.eclipse.tm.te.tcf.ui.wizards.controls.PeerIdControl;
 import org.eclipse.tm.te.tcf.ui.wizards.controls.PeerNameControl;
+import org.eclipse.tm.te.tcf.ui.wizards.controls.PipeTransportPanel;
 import org.eclipse.tm.te.tcf.ui.wizards.controls.TcpTransportPanel;
 import org.eclipse.tm.te.tcf.ui.wizards.controls.TransportTypeControl;
 import org.eclipse.tm.te.tcf.ui.wizards.controls.TransportTypePanelControl;
@@ -245,7 +248,11 @@ public class NewTargetWizardPage extends AbstractValidatableWizardPage {
 		transportTypePanelControl = new MyTransportTypePanelControl(this);
 
 		// Create and add the panels
-		transportTypePanelControl.addConfigurationPanel(TransportTypeControl.TRANSPORT_TYPES[0], new TcpTransportPanel(transportTypePanelControl));
+		TcpTransportPanel tcpTransportPanel = new TcpTransportPanel(transportTypePanelControl);
+		transportTypePanelControl.addConfigurationPanel(ITransportTypes.TRANSPORT_TYPE_TCP, tcpTransportPanel);
+		transportTypePanelControl.addConfigurationPanel(ITransportTypes.TRANSPORT_TYPE_SSL, tcpTransportPanel);
+		transportTypePanelControl.addConfigurationPanel(ITransportTypes.TRANSPORT_TYPE_PIPE, new PipeTransportPanel(transportTypePanelControl));
+		transportTypePanelControl.addConfigurationPanel(ITransportTypes.TRANSPORT_TYPE_CUSTOM, new CustomTransportPanel(transportTypePanelControl));
 
 		// Setup the panel control
 		transportTypePanelControl.setupPanel(transportTypeClient, TransportTypeControl.TRANSPORT_TYPES, toolkit);
@@ -290,7 +297,7 @@ public class NewTargetWizardPage extends AbstractValidatableWizardPage {
 
 		tablePart = new PeerAttributesTablePart();
 		tablePart.setMinSize(SWTControlUtil.convertWidthInCharsToPixels(client, 20), SWTControlUtil.convertHeightInCharsToPixels(client, 6));
-		tablePart.setBannedNames(new String[] { IPeer.ATTR_ID, IPeer.ATTR_AGENT_ID, IPeer.ATTR_SERVICE_MANGER_ID, IPeer.ATTR_NAME, IPeer.ATTR_TRANSPORT_NAME, IPeer.ATTR_IP_HOST, IPeer.ATTR_IP_PORT });
+		tablePart.setBannedNames(new String[] { IPeer.ATTR_ID, IPeer.ATTR_AGENT_ID, IPeer.ATTR_SERVICE_MANGER_ID, IPeer.ATTR_NAME, IPeer.ATTR_TRANSPORT_NAME, IPeer.ATTR_IP_HOST, IPeer.ATTR_IP_PORT, "PipeName" }); //$NON-NLS-1$
 		tablePart.createControl(client, SWT.SINGLE | SWT.FULL_SELECTION, 2, toolkit);
 	}
 
@@ -351,17 +358,20 @@ public class NewTargetWizardPage extends AbstractValidatableWizardPage {
 		if (value != null && !"".equals(value)) peerAttributes.put(IPeer.ATTR_NAME, value); //$NON-NLS-1$
 
 		value = transportTypeControl.getSelectedTransportType();
-		if (value != null && !"".equals(value)) peerAttributes.put(IPeer.ATTR_TRANSPORT_NAME, value); //$NON-NLS-1$
+		if (value != null && !"".equals(value) && !ITransportTypes.TRANSPORT_TYPE_CUSTOM.equals(value)) { //$NON-NLS-1$
+			peerAttributes.put(IPeer.ATTR_TRANSPORT_NAME, value);
+		}
 
 		IWizardConfigurationPanel panel = transportTypePanelControl.getConfigurationPanel(value);
 		if (panel instanceof ISharedDataWizardPage) {
 			IPropertiesContainer data = new PropertiesContainer();
 			((ISharedDataWizardPage)panel).extractData(data);
 
-			value = data.getStringProperty(IPeer.ATTR_IP_HOST);
-			if (value != null && !"".equals(value)) peerAttributes.put(IPeer.ATTR_IP_HOST, value); //$NON-NLS-1$
-			value = data.getStringProperty(IPeer.ATTR_IP_PORT);
-			if (value != null && !"".equals(value)) peerAttributes.put(IPeer.ATTR_IP_PORT, value); //$NON-NLS-1$
+			// Copy all string properties to the peer attributes map
+			for (String key : data.getProperties().keySet()) {
+				value = data.getStringProperty(key);
+				if (value != null && !"".equals(value)) peerAttributes.put(key, value); //$NON-NLS-1$
+			}
 		}
 
 		Map<String, String> additionalAttributes = tablePart.getAttributes();

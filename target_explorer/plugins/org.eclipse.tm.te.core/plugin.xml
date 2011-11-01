@@ -6,4 +6,28 @@
    <extension-point id="connectionTypes" name="Connection Type Contributions" schema="schema/connectionTypes.exsd"/>
    <extension-point id="connectionTypeBindings" name="Connection Type Bindings Contributions" schema="schema/connectionTypeBindings.exsd"/>
 
+<!-- Adapter factory contributions -->
+   <extension point="org.eclipse.core.runtime.adapters">
+      <factory
+            adaptableType="org.eclipse.tm.te.runtime.model.interfaces.IModelNode"
+            class="org.eclipse.tm.te.core.adapters.AdapterFactory">
+         <adapter type="org.eclipse.tm.te.runtime.persistence.interfaces.IPersistable"/>
+      </factory>
+   </extension>
+
+<!-- Reusable core expression fragments -->   
+   <extension point="org.eclipse.core.expressions.definitions">
+   
+      <!-- Expression to test if the selection contains only one element which
+           is an connectable model node -->
+      <definition id="te.core.expression.isConnectable">
+         <with variable="selection">
+            <count value="1"/>
+            <iterate operator="and" ifEmpty="false">
+               <instanceof value="org.eclipse.tm.te.core.model.interfaces.IConnectable"/>
+            </iterate>
+         </with>
+      </definition>
+   </extension>
+
 </plugin>

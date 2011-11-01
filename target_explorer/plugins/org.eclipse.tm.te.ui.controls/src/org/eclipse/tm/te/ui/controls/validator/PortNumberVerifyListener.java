@@ -10,7 +10,7 @@
 package org.eclipse.tm.te.ui.controls.validator;
 
 /**
- * Target Explorer: Verify listener for text widgets to receive port numbers.
+ * Verify listener for text widgets to receive port numbers.
  */
 public class PortNumberVerifyListener extends NumberVerifyListener {
 

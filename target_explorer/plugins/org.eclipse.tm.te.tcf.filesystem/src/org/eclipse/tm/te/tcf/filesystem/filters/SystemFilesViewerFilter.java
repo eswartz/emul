@@ -15,7 +15,7 @@ import org.eclipse.tm.te.tcf.filesystem.interfaces.IWindowsFileAttributes;
 import org.eclipse.tm.te.tcf.filesystem.model.FSTreeNode;
 
 /**
- * Target Explorer: A filter implementation filtering system files or directories.
+ * A filter implementation filtering system files or directories.
  */
 public class SystemFilesViewerFilter extends ViewerFilter {
 

@@ -10,17 +10,17 @@
 package org.eclipse.tm.te.tcf.locator.internal;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.net.URI;
+import java.util.Map;
 
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer;
 import org.eclipse.tm.te.runtime.persistence.AbstractPersistenceDelegate;
-import org.eclipse.tm.te.tcf.locator.activator.CoreBundleActivator;
-import org.eclipse.tm.te.tcf.locator.internal.nls.Messages;
 
 /**
  * Static peers persistence delegate implementation.
@@ -28,21 +28,28 @@ import org.eclipse.tm.te.tcf.locator.internal.nls.Messages;
 public class PeersPersistenceDelegate extends AbstractPersistenceDelegate {
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.runtime.persistence.interfaces.IPersistenceDelegate#write(org.eclipse.core.runtime.IPath, org.eclipse.tm.te.runtime.interfaces.nodes.IPropertiesContainer)
+	 * @see org.eclipse.tm.te.runtime.persistence.interfaces.IPersistenceDelegate#write(java.net.URI, java.util.Map)
 	 */
 	@Override
-	public void write(IPath path, IPropertiesContainer data) throws IOException {
-		Assert.isNotNull(path);
+	public void write(URI uri, Map<String, Object> data) throws IOException {
+		Assert.isNotNull(uri);
 		Assert.isNotNull(data);
 
-		// If the given path is relative, append it to the root path.
-		if (!path.isAbsolute()) {
-			IPath root = getRoot();
-			if (root == null) throw new IOException(Messages.PeersPersistenceDelegate_error_noRootLocation);
-			path = root.append(path);
+		// Only "file:" URIs are supported
+		if (!"file".equalsIgnoreCase(uri.getScheme())) { //$NON-NLS-1$
+			throw new IOException("Unsupported URI schema '" + uri.getScheme() + "'"); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+
+		// Create the file object from the given URI
+		File file = new File(uri.normalize());
+
+		// The file must be absolute
+		if (!file.isAbsolute()) {
+			throw new IOException("URI must denote an absolute file path."); //$NON-NLS-1$
 		}
 
 		// Check if the file extension is "ini" (otherwise it is not picked up)
+		IPath path = new Path(file.getCanonicalPath());
 		if (!"ini".equals(path.getFileExtension())) { //$NON-NLS-1$
 			path = path.addFileExtension("ini"); //$NON-NLS-1$
 		}
@@ -50,10 +57,10 @@ public class PeersPersistenceDelegate extends AbstractPersistenceDelegate {
 		BufferedWriter writer = null;
 		try {
 			writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(path.toFile()), "UTF-8")); //$NON-NLS-1$
-			for (String attribute : data.getProperties().keySet()) {
+			for (String attribute : data.keySet()) {
 				writer.write(attribute);
 				writer.write('=');
-				writer.write(data.getStringProperty(attribute));
+				writer.write(data.get(attribute).toString());
 				writer.newLine();
 			}
 		} finally {
@@ -62,20 +69,27 @@ public class PeersPersistenceDelegate extends AbstractPersistenceDelegate {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.runtime.persistence.interfaces.IPersistenceDelegate#delete(org.eclipse.core.runtime.IPath)
+	 * @see org.eclipse.tm.te.runtime.persistence.interfaces.IPersistenceDelegate#delete(java.net.URI)
 	 */
 	@Override
-	public boolean delete(IPath path) throws IOException {
-		Assert.isNotNull(path);
+	public boolean delete(URI uri) throws IOException {
+		Assert.isNotNull(uri);
 
-		// If the given path is relative, append it to the root path.
-		if (!path.isAbsolute()) {
-			IPath root = getRoot();
-			if (root == null) throw new IOException(Messages.PeersPersistenceDelegate_error_noRootLocation);
-			path = root.append(path);
+		// Only "file:" URIs are supported
+		if (!"file".equalsIgnoreCase(uri.getScheme())) { //$NON-NLS-1$
+			throw new IOException("Unsupported URI schema '" + uri.getScheme() + "'"); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+
+		// Create the file object from the given URI
+		File file = new File(uri.normalize());
+
+		// The file must be absolute
+		if (!file.isAbsolute()) {
+			throw new IOException("URI must denote an absolute file path."); //$NON-NLS-1$
 		}
 
 		// Check if the file extension is "ini" (otherwise it is not picked up)
+		IPath path = new Path(file.getCanonicalPath());
 		if (!"ini".equals(path.getFileExtension())) { //$NON-NLS-1$
 			path = path.addFileExtension("ini"); //$NON-NLS-1$
 		}
@@ -84,38 +98,25 @@ public class PeersPersistenceDelegate extends AbstractPersistenceDelegate {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.runtime.persistence.interfaces.IPersistenceDelegate#read(org.eclipse.core.runtime.IPath)
+	 * @see org.eclipse.tm.te.runtime.persistence.interfaces.IPersistenceDelegate#read(java.net.URI)
 	 */
 	@Override
-	public IPropertiesContainer read(IPath path) throws IOException {
-		return null;
-	}
+	public Map<String, Object> read(URI uri) throws IOException {
+		Assert.isNotNull(uri);
 
-	/**
-	 * Returns the root location of the peers storage.
-	 *
-	 * @return The root location or <code>null</code> if it cannot be determined.
-	 */
-	public IPath getRoot() {
-		IPath location = null;
-
-		// Try the bundles state location first (not available if launched with -data @none).
-		try {
-			IPath path = CoreBundleActivator.getDefault().getStateLocation().append(".peers"); //$NON-NLS-1$
-			if (!path.toFile().exists()) path.toFile().mkdirs();
-			if (path.toFile().canRead() && path.toFile().isDirectory()) {
-				location = path;
-			}
-		} catch (IllegalStateException e) {
-			// Workspace less environments (-data @none)
-			// The users local peers lookup directory is $HOME/.tcf/.peers.
-			IPath path = new Path(System.getProperty("user.home")).append(".tcf/.peers"); //$NON-NLS-1$ //$NON-NLS-2$
-			if (!path.toFile().exists()) path.toFile().mkdirs();
-			if (path.toFile().canRead() && path.toFile().isDirectory()) {
-				location = path;
-			}
+		// Only "file:" URIs are supported
+		if (!"file".equalsIgnoreCase(uri.getScheme())) { //$NON-NLS-1$
+			throw new IOException("Unsupported URI schema '" + uri.getScheme() + "'"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 
-		return location;
+		// Create the file object from the given URI
+		File file = new File(uri.normalize());
+
+		// The file must be absolute
+		if (!file.isAbsolute()) {
+			throw new IOException("URI must denote an absolute file path."); //$NON-NLS-1$
+		}
+
+		return null;
 	}
 }

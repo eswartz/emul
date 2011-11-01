@@ -26,7 +26,7 @@ import org.eclipse.tm.te.runtime.activator.CoreBundleActivator;
 import org.eclipse.tm.te.runtime.nls.Messages;
 
 /**
- * Target Explorer: Abstract extension point manager implementation.
+ * Abstract extension point manager implementation.
  */
 public abstract class AbstractExtensionPointManager<V> {
 	// Flag to mark the extension point manager initialized (extensions loaded).

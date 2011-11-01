@@ -13,7 +13,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.PlatformUI;
 
 /**
- * Target Explorer: Utility providing convenience methods to use the SWT Display.
+ * Utility providing convenience methods to use the SWT Display.
  */
 public class DisplayUtil {
 

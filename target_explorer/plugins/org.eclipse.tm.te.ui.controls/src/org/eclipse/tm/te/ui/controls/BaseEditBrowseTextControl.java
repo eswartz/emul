@@ -49,7 +49,7 @@ import org.eclipse.tm.te.ui.wizards.interfaces.IValidatableWizardPage;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 
 /**
- * Target Explorer: Base implementation of a common UI control providing an
+ * Base implementation of a common UI control providing an
  * editable field or combo box to the user with the additional capability
  * of browsing for the field value.
  */

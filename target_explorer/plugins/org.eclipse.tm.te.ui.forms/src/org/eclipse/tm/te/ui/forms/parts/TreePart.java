@@ -21,7 +21,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 
 /**
- * Target Explorer: Tree part implementation.
+ * Tree part implementation.
  */
 public class TreePart extends AbstractStructuredViewerPart implements ISelectionChangedListener, IDoubleClickListener {
 

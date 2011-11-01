@@ -16,6 +16,7 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.dialogs.IDialogPage;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.tm.te.tcf.core.interfaces.ITransportTypes;
 import org.eclipse.tm.te.tcf.ui.nls.Messages;
 import org.eclipse.tm.te.ui.controls.BaseEditBrowseTextControl;
 import org.eclipse.tm.te.ui.swt.SWTControlUtil;
@@ -26,7 +27,10 @@ import org.eclipse.tm.te.ui.swt.SWTControlUtil;
 public class TransportTypeControl extends BaseEditBrowseTextControl {
 
 	public final static String[] TRANSPORT_TYPES = new String[] {
-																	TcpTransportPanel.TRANSPORT_TYPE_ID
+																	ITransportTypes.TRANSPORT_TYPE_TCP,
+																	ITransportTypes.TRANSPORT_TYPE_SSL,
+																	ITransportTypes.TRANSPORT_TYPE_PIPE,
+																	ITransportTypes.TRANSPORT_TYPE_CUSTOM
 																};
 
 	/**
@@ -71,7 +75,10 @@ public class TransportTypeControl extends BaseEditBrowseTextControl {
 	protected String getTransportTypeLabel(String transportType) {
 		Assert.isNotNull(transportType);
 
-		if (TcpTransportPanel.TRANSPORT_TYPE_ID.equals(transportType)) return Messages.TransportTypeControl_tcpType_label;
+		if (ITransportTypes.TRANSPORT_TYPE_TCP.equals(transportType)) return Messages.TransportTypeControl_tcpType_label;
+		else if (ITransportTypes.TRANSPORT_TYPE_SSL.equals(transportType)) return Messages.TransportTypeControl_sslType_label;
+		else if (ITransportTypes.TRANSPORT_TYPE_PIPE.equals(transportType)) return Messages.TransportTypeControl_pipeType_label;
+		else if (ITransportTypes.TRANSPORT_TYPE_CUSTOM.equals(transportType)) return Messages.TransportTypeControl_customType_label;
 
 		return null;
 	}
@@ -84,7 +91,10 @@ public class TransportTypeControl extends BaseEditBrowseTextControl {
 	public String getSelectedTransportType() {
 		String type = getEditFieldControlText();
 
-		if (Messages.TransportTypeControl_tcpType_label.equals(type)) type = TcpTransportPanel.TRANSPORT_TYPE_ID;
+		if (Messages.TransportTypeControl_tcpType_label.equals(type)) type = ITransportTypes.TRANSPORT_TYPE_TCP;
+		else if (Messages.TransportTypeControl_sslType_label.equals(type)) type = ITransportTypes.TRANSPORT_TYPE_SSL;
+		else if (Messages.TransportTypeControl_pipeType_label.equals(type)) type = ITransportTypes.TRANSPORT_TYPE_PIPE;
+		else if (Messages.TransportTypeControl_customType_label.equals(type)) type = ITransportTypes.TRANSPORT_TYPE_CUSTOM;
 
 		return type;
 	}

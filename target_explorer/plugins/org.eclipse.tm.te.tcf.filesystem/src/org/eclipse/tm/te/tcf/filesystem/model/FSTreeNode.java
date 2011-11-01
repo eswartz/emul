@@ -32,7 +32,7 @@ import org.eclipse.tm.te.tcf.filesystem.internal.url.TcfURLConnection;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel;
 
 /**
- * Target Explorer: Representation of a file system tree node.
+ * Representation of a file system tree node.
  * <p>
  * <b>Note:</b> Node construction and child list access is limited to the TCF
  * event dispatch thread.

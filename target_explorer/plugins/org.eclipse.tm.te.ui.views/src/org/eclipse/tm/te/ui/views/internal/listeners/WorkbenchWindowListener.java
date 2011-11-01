@@ -14,7 +14,7 @@ import org.eclipse.ui.IWindowListener;
 import org.eclipse.ui.IWorkbenchWindow;
 
 /**
- * Target Explorer: The window listener implementation. Takes care of the
+ * The window listener implementation. Takes care of the
  *                  management of the global listeners per workbench window.
  */
 public class WorkbenchWindowListener implements IWindowListener {

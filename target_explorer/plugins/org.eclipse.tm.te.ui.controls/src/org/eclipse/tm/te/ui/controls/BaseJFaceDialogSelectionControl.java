@@ -15,7 +15,7 @@ import org.eclipse.jface.dialogs.IDialogPage;
 import org.eclipse.swt.widgets.Composite;
 
 /**
- * Target Explorer: Base implementation of a common control allowing to select
+ * Base implementation of a common control allowing to select
  * the content of the edit field control from a dialog. The dialog is associated
  * to the base edit browse text controls button.
  */

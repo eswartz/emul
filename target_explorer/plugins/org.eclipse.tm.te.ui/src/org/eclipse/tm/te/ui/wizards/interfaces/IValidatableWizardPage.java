@@ -12,7 +12,7 @@ package org.eclipse.tm.te.ui.wizards.interfaces;
 import org.eclipse.jface.wizard.WizardPage;
 
 /**
- * Target Explorer: Public interface for validatable wizard pages.
+ * Public interface for validatable wizard pages.
  */
 public interface IValidatableWizardPage {
 

@@ -50,7 +50,7 @@ import org.eclipse.ui.forms.widgets.Section;
 
 
 /**
- * Target Explorer: Abstract node properties table control implementation.
+ * Abstract node properties table control implementation.
  */
 public abstract class NodePropertiesTableControl extends WorkbenchPartControl {
 	// Reference to the table viewer

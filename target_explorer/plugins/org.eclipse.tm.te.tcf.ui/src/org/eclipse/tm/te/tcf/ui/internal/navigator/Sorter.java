@@ -23,7 +23,7 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Tree;
 
 /**
- * Target Explorer: Common sorter implementation.
+ * Common sorter implementation.
  */
 public class Sorter extends TreePathViewerSorter {
 	private final ILabelProvider labelProvider = new LabelProviderDelegate();

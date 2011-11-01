@@ -11,7 +11,7 @@ package org.eclipse.tm.te.tcf.log.core.interfaces;
 
 
 /**
- * Target Explorer: TCF logging bundle preference key identifiers.
+ * TCF logging bundle preference key identifiers.
  */
 public interface IPreferenceKeys {
 	/**

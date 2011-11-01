@@ -10,7 +10,7 @@
 package org.eclipse.tm.te.tcf.processes.ui.interfaces;
 
 /**
- * Target Explorer: Image registry constants.
+ * Image registry constants.
  */
 public interface ImageConsts {
 	// ***** The directory structure constants *****

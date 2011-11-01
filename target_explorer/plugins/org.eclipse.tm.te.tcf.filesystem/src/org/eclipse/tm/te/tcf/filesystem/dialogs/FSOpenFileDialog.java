@@ -31,7 +31,7 @@ import org.eclipse.ui.forms.widgets.FormToolkit;
 
 
 /**
- * Target Explorer: File system open file dialog.
+ * File system open file dialog.
  */
 public class FSOpenFileDialog extends CustomTrayDialog {
 	// Reference to the sub control

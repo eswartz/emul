@@ -24,7 +24,7 @@ import org.eclipse.ui.IWorkbenchWizard;
 import org.eclipse.ui.handlers.HandlerUtil;
 
 /**
- * Target Explorer: Abstract wizard command handler implementation.
+ * Abstract wizard command handler implementation.
  */
 public abstract class AbstractWizardCommandHandler extends AbstractHandler {
 	/**

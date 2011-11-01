@@ -14,7 +14,7 @@ import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerComparator;
 
 /**
- * Target Explorer: Common viewer comparator implementation.
+ * Common viewer comparator implementation.
  */
 public abstract class AbstractViewerComparator extends ViewerComparator {
 	// Reference to the viewer

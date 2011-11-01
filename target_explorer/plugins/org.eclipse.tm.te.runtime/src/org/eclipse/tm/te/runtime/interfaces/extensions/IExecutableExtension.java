@@ -11,7 +11,7 @@ package org.eclipse.tm.te.runtime.interfaces.extensions;
 
 
 /**
- * Target Explorer: Executable extension public interface declaration.
+ * Executable extension public interface declaration.
  */
 public interface IExecutableExtension extends org.eclipse.core.runtime.IExecutableExtension {
 

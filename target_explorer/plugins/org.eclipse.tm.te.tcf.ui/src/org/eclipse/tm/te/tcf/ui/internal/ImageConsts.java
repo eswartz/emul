@@ -10,7 +10,7 @@
 package org.eclipse.tm.te.tcf.ui.internal;
 
 /**
- * Target Explorer: TCF UI Plug-in Image registry constants.
+ * TCF UI Plug-in Image registry constants.
  */
 public interface ImageConsts {
 

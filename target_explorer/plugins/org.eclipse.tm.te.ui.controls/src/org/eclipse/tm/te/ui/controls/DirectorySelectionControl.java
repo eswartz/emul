@@ -22,7 +22,7 @@ import org.osgi.framework.Bundle;
 
 
 /**
- * Target Explorer: Base implementation of a simple directory selection control.
+ * Base implementation of a simple directory selection control.
  * <p>
  * The control supports direct editing by the user or browsing for the directory. By
  * default, the control has a history of recently selected directories.

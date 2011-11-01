@@ -13,7 +13,7 @@ import org.eclipse.tm.te.ui.wizards.newWizard.NewWizardSelectionPage;
 import org.eclipse.ui.wizards.IWizardDescriptor;
 
 /**
- * Target Explorer: Interface to be implemented optionally by new target wizards.
+ * Interface to be implemented optionally by new target wizards.
  */
 public interface INewTargetWizard {
 

@@ -19,11 +19,12 @@ import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.Protocol;
+import org.eclipse.tm.te.runtime.persistence.interfaces.IPersistenceService;
+import org.eclipse.tm.te.runtime.services.ServiceManager;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.ILocatorModel;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel;
 import org.eclipse.tm.te.tcf.locator.interfaces.services.ILocatorModelLookupService;
 import org.eclipse.tm.te.tcf.locator.interfaces.services.ILocatorModelRefreshService;
-import org.eclipse.tm.te.tcf.ui.internal.PeersPersistenceManager;
 import org.eclipse.tm.te.tcf.ui.internal.model.Model;
 import org.eclipse.tm.te.tcf.ui.nls.Messages;
 import org.eclipse.tm.te.tcf.ui.wizards.pages.NewTargetWizardPage;
@@ -70,7 +71,10 @@ public class NewTargetWizard extends AbstractWizard implements INewWizard {
 			if (peerAttributes != null) {
 				try {
 					// Save the new peer
-					PeersPersistenceManager.getInstance().write(peerAttributes);
+					IPersistenceService persistenceService = ServiceManager.getInstance().getService(IPersistenceService.class);
+					if (persistenceService == null) throw new IOException("Persistence service instance unavailable."); //$NON-NLS-1$
+					persistenceService.write(peerAttributes);
+
 					// Get the locator model
 					final ILocatorModel model = Model.getModel();
 					if (model != null) {
