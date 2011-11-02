@@ -110,66 +110,101 @@ public class TCFNumberFormat {
     }
 
     public static String toFPString(byte[] data, int offs, int size, boolean big_endian) {
-        switch (size) {
-        case 4:
-            return Float.toString(Float.intBitsToFloat(toBigInteger(
-                    data, offs, size, big_endian, true).intValue()));
-        case 8:
-            return Double.toString(Double.longBitsToDouble(toBigInteger(
-                    data, offs, size, big_endian, true).longValue()));
-        case 10:
-        case 16:
-            {
-                byte[] arr = new byte[size];
-                if (big_endian) {
-                    System.arraycopy(data, offs, arr, 0, size);
-                }
-                else {
-                    for (int i = 0; i < size; i++) {
-                        arr[arr.length - i - 1] = data[offs + i];
-                    }
-                }
-                boolean neg = (arr[0] & 0x80) != 0;
-                int exponent = ((arr[0] & 0x7f) << 8) | (arr[1] & 0xff);
-                if (exponent == 0x7fff) {
-                    for (int i = 2; i < arr.length; i++) {
-                        int n = arr[i] & 0xff;
-                        if (size == 10 && i == 2) n &= 0x7f;
-                        if (n != 0) return neg ? "-NaN" : "+NaN";
-                    }
-                    return neg ? "-Infinity" : "+Infinity";
-                }
-                arr[0] = arr[1] = 0;
-                if (size == 10) {
-                    exponent -= 63;
-                }
-                else {
-                    if (exponent == 0) exponent = 1;
-                    else arr[1] = 1;
-                    exponent -= size * 8 - 16;
-                }
-                exponent -= 16383;
-                BigDecimal a = new BigDecimal(new BigInteger(arr), 0);
-                if (a.signum() != 0 && exponent != 0) {
-                    BigDecimal p = new BigDecimal(BigInteger.valueOf(2), 0);
-                    if (exponent > 0) {
-                        a = a.multiply(p.pow(exponent));
-                    }
-                    else {
-                        BigDecimal b = p.pow(-exponent);
-                        a = a.divide(b, b.precision(), RoundingMode.HALF_DOWN);
-                    }
-                    if (a.precision() > size * 8 / 3) {
-                        int scale = a.scale() - a.precision() + size * 8 / 3;
-                        a = a.setScale(scale, RoundingMode.HALF_DOWN);
-                    }
-                }
-                String s = a.toString();
-                if (neg) s = "-" + s;
-                return s;
+        assert offs + size <= data.length;
+        byte[] arr = new byte[size];
+        if (big_endian) {
+            System.arraycopy(data, offs, arr, 0, size);
+        }
+        else {
+            for (int i = 0; i < size; i++) {
+                arr[arr.length - i - 1] = data[offs + i];
             }
         }
-        return null;
+
+        boolean neg = (arr[0] & 0x80) != 0;
+        arr[0] &= 0x7f;
+
+        int precision = 0;
+        int exponent = 0;
+        boolean nan = false;
+        switch (size) {
+        case 2:
+            precision = 3;
+            exponent = (arr[0] & 0x7c) >> 2;
+            nan = exponent == 0x1f;
+            arr[0] &= 0x03;
+            if (exponent == 0) exponent = 1;
+            else arr[0] |= 0x04;
+            exponent -= 10; // Significand
+            exponent -= 15; // Exponent bias
+            break;
+        case 4:
+            precision = 7;
+            exponent = ((arr[0] & 0x7f) << 1) | ((arr[1] & 0x80) >> 7);
+            nan = exponent == 0xff;
+            arr[0] = 0;
+            arr[1] &= 0x7f;
+            if (exponent == 0) exponent = 1;
+            else arr[1] |= 0x80;
+            exponent -= 23; // Significand
+            exponent -= 127; // Exponent bias
+            break;
+        case 8:
+            precision = 16;
+            exponent = ((arr[0] & 0x7f) << 4) | ((arr[1] & 0xf0) >> 4);
+            nan = exponent == 0x7ff;
+            arr[0] = 0;
+            arr[1] &= 0x0f;
+            if (exponent == 0) exponent = 1;
+            else arr[1] |= 0x10;
+            exponent -= 52; // Significand
+            exponent -= 1023; // Exponent bias
+            break;
+        case 10:
+        case 16:
+            precision = 34;
+            exponent = ((arr[0] & 0x7f) << 8) | (arr[1] & 0xff);
+            nan = exponent == 0x7fff;
+            arr[0] = arr[1] = 0;
+            if (size == 10) {
+                exponent -= 63; // Significand
+            }
+            else {
+                if (exponent == 0) exponent = 1;
+                else arr[1] = 1;
+                exponent -= 112; // Significand
+            }
+            exponent -= 16383; // Exponent bias
+            break;
+        default:
+            return null;
+        }
+        if (nan) {
+            for (int i = 0; i < arr.length; i++) {
+                int n = arr[i] & 0xff;
+                if (size == 10 && i == 2) n &= 0x7f;
+                if (n != 0) return neg ? "-NaN" : "+NaN";
+            }
+            return neg ? "-Infinity" : "+Infinity";
+        }
+        BigDecimal a = new BigDecimal(new BigInteger(arr), 0);
+        if (a.signum() != 0 && exponent != 0) {
+            BigDecimal p = new BigDecimal(BigInteger.valueOf(2), 0);
+            if (exponent > 0) {
+                a = a.multiply(p.pow(exponent));
+            }
+            else {
+                BigDecimal b = p.pow(-exponent);
+                a = a.divide(b, b.precision(), RoundingMode.HALF_DOWN);
+            }
+            if (precision != 0 && a.precision() > precision) {
+                int scale = a.scale() - a.precision() + precision;
+                a = a.setScale(scale, RoundingMode.HALF_DOWN);
+            }
+        }
+        String s = a.toString();
+        if (neg) s = "-" + s;
+        return s;
     }
 
     public static BigInteger toBigInteger(byte[] data, int offs, int size, boolean big_endian, boolean sign_extension) {
