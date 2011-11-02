@@ -137,7 +137,7 @@ public class TCFNumberFormat {
                         if (size == 10 && i == 2) n &= 0x7f;
                         if (n != 0) return neg ? "-NaN" : "+NaN";
                     }
-                    return neg ? "-Inf" : "+Inf";
+                    return neg ? "-Infinity" : "+Infinity";
                 }
                 arr[0] = arr[1] = 0;
                 if (size == 10) {
@@ -152,8 +152,17 @@ public class TCFNumberFormat {
                 BigDecimal a = new BigDecimal(new BigInteger(arr), 0);
                 if (a.signum() != 0 && exponent != 0) {
                     BigDecimal p = new BigDecimal(BigInteger.valueOf(2), 0);
-                    if (exponent > 0) a = a.multiply(p.pow(exponent));
-                    else a = a.divide(p.pow(-exponent), a.scale() - exponent / 3, RoundingMode.HALF_DOWN);
+                    if (exponent > 0) {
+                        a = a.multiply(p.pow(exponent));
+                    }
+                    else {
+                        BigDecimal b = p.pow(-exponent);
+                        a = a.divide(b, b.precision(), RoundingMode.HALF_DOWN);
+                    }
+                    if (a.precision() > size * 8 / 3) {
+                        int scale = a.scale() - a.precision() + size * 8 / 3;
+                        a = a.setScale(scale, RoundingMode.HALF_DOWN);
+                    }
                 }
                 String s = a.toString();
                 if (neg) s = "-" + s;
