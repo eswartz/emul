@@ -97,13 +97,13 @@ void get_byte_array_output_stream_data(ByteArrayOutputStream * buf, char ** data
 
 static int read_byte_array_input_stream(InputStream * inp) {
     ByteArrayInputStream * buf = (ByteArrayInputStream *)((char *)inp - offsetof(ByteArrayInputStream, inp));
-    if (buf->pos >= buf->max) return -1;
+    if (buf->pos >= buf->max) return MARKER_EOS;
     return ((unsigned char *)buf->buf)[buf->pos++];
 }
 
 static int peek_byte_array_input_stream(InputStream * inp) {
     ByteArrayInputStream * buf = (ByteArrayInputStream *)((char *)inp - offsetof(ByteArrayInputStream, inp));
-    if (buf->pos >= buf->max) return -1;
+    if (buf->pos >= buf->max) return MARKER_EOS;
     return ((unsigned char *)buf->buf)[buf->pos];
 }
 

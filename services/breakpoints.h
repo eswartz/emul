@@ -27,8 +27,54 @@
 #include <framework/protocol.h>
 
 typedef struct BreakpointInfo BreakpointInfo;
+typedef struct BreakpointAttribute BreakpointAttribute;
+
+struct BreakpointAttribute {
+    BreakpointAttribute * next;
+    char * name;        /* Attribute name */
+    char * value;       /* Attribute value as JSON string */
+};
 
 #if SERVICE_Breakpoints
+
+/*
+ * Breakpoint attribute names.
+ * Clients may define additional attributes.
+ */
+#define BREAKPOINT_ID               "ID"
+#define BREAKPOINT_ENABLED          "Enabled"
+#define BREAKPOINT_TYPE             "BreakpointType"
+#define BREAKPOINT_CONTEXTNAMES     "ContextNames"
+#define BREAKPOINT_CONTEXTIDS       "ContextIds"
+#define BREAKPOINT_EXECUTABLEPATHS  "ExecPaths"
+#define BREAKPOINT_LOCATION         "Location"
+#define BREAKPOINT_SIZE             "Size"
+#define BREAKPOINT_ACCESSMODE       "AccessMode"
+#define BREAKPOINT_FILE             "File"
+#define BREAKPOINT_LINE             "Line"
+#define BREAKPOINT_COLUMN           "Column"
+#define BREAKPOINT_PATTERN          "MaskValue"
+#define BREAKPOINT_MASK             "Mask"
+#define BREAKPOINT_STOP_GROUP       "StopGroup"
+#define BREAKPOINT_IGNORECOUNT      "IgnoreCount"
+#define BREAKPOINT_TIME             "Time"
+#define BREAKPOINT_SCALE            "TimeScale"
+#define BREAKPOINT_UNITS            "TimeUnits"
+#define BREAKPOINT_CONDITION        "Condition"
+#define BREAKPOINT_TEMPORARY        "Temporary"
+#define BREAKPOINT_CLIENT_DATA      "ClientData"
+
+
+/*
+ * Iterate all breakpoints known to the Breakpoints service.
+ */
+typedef void IterateBreakpointsCallBack(BreakpointInfo *, void *);
+extern void iterate_breakpoints(IterateBreakpointsCallBack * callback, void * args);
+
+/*
+ * Get the list of breakpoint attributes.
+ */
+extern BreakpointAttribute * get_breakpoint_attributes(BreakpointInfo * bp);
 
 /*
  * The function is called from context.c every time a context is stopped by breakpoint.

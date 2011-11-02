@@ -47,7 +47,6 @@
 #include <services/pathmap.h>
 
 typedef struct BreakpointRef BreakpointRef;
-typedef struct BreakpointAttribute BreakpointAttribute;
 typedef struct InstructionRef InstructionRef;
 typedef struct BreakInstruction BreakInstruction;
 typedef struct EvaluationArgs EvaluationArgs;
@@ -62,12 +61,6 @@ struct BreakpointRef {
     BreakpointInfo * bp;
 };
 
-struct BreakpointAttribute {
-    BreakpointAttribute * next;
-    char * name;
-    char * value;
-};
-
 struct BreakpointInfo {
     Context * ctx; /* NULL means all contexts */
     LINK link_all;
@@ -79,7 +72,6 @@ struct BreakpointInfo {
     int instruction_cnt;
     ErrorReport * error;
     char * address;
-    char * type;
     char * condition;
     char ** context_ids;
     char ** context_ids_prev;
@@ -94,6 +86,7 @@ struct BreakpointInfo {
     int column;
     int ignore_count;
     int hit_count;
+    BreakpointAttribute * attrs;
     BreakpointAttribute * unsupported;
 
     EventPointCallBack * event_callback;
@@ -724,7 +717,6 @@ static ConditionEvaluationRequest * add_condition_evaluation_request(EvaluationR
     ConditionEvaluationRequest * c = NULL;
 
     assert(bp->instruction_cnt);
-    assert(bp->unsupported == NULL);
     assert(bp->error == NULL);
 
     for (i = 0; i < req->bp_cnt; i++) {
@@ -832,7 +824,6 @@ static void free_bp(BreakpointInfo * bp) {
     if (bp->ctx) context_unlock(bp->ctx);
     release_error_report(bp->error);
     loc_free(bp->address);
-    loc_free(bp->type);
     loc_free(bp->context_ids);
     loc_free(bp->context_ids_prev);
     loc_free(bp->context_names);
@@ -841,12 +832,12 @@ static void free_bp(BreakpointInfo * bp) {
     loc_free(bp->file);
     loc_free(bp->condition);
     loc_free(bp->client_data);
-    while (bp->unsupported != NULL) {
-        BreakpointAttribute * u = bp->unsupported;
-        bp->unsupported = u->next;
-        loc_free(u->name);
-        loc_free(u->value);
-        loc_free(u);
+    while (bp->attrs != NULL) {
+        BreakpointAttribute * attr = bp->attrs;
+        bp->attrs = attr->next;
+        loc_free(attr->name);
+        loc_free(attr->value);
+        loc_free(attr);
     }
     assert(list_is_empty(&bp->link_clients));
     loc_free(bp);
@@ -875,7 +866,6 @@ static void notify_breakpoints_status(void) {
                 }
             }
             assert(bp->enabled || instruction_cnt == 0);
-            assert(bp->unsupported == NULL || instruction_cnt == 0);
             assert(bp->instruction_cnt == instruction_cnt);
             if (*bp->id) {
                 int i;
@@ -1269,13 +1259,6 @@ static void event_replant_breakpoints(void * arg) {
     done_evaluation();
 }
 
-static int str_equ(char * x, char * y) {
-    if (x == y) return 1;
-    if (x == NULL) return 0;
-    if (y == NULL) return 0;
-    return strcmp(x, y) == 0;
-}
-
 static char ** str_arr_dup(char ** x) {
     int n = 0;
     int l = 0;
@@ -1375,142 +1358,6 @@ static void replant_breakpoint(BreakpointInfo * bp) {
     }
 }
 
-static int copy_breakpoint_info(BreakpointInfo * dst, BreakpointInfo * src) {
-    int res = 0;
-
-    if (strcmp(dst->id, src->id) != 0) {
-        strcpy(dst->id, src->id);
-        res = 1;
-    }
-
-    if (!str_equ(dst->address, src->address)) {
-        loc_free(dst->address);
-        dst->address = src->address;
-        res = 1;
-    }
-    else {
-        loc_free(src->address);
-    }
-    src->address = NULL;
-
-    if (!str_equ(dst->type, src->type)) {
-        loc_free(dst->type);
-        dst->type = src->type;
-        res = 1;
-    }
-    else {
-        loc_free(src->type);
-    }
-    src->type = NULL;
-
-    if (dst->access_mode != src->access_mode) {
-        dst->access_mode = src->access_mode;
-        res = 1;
-    }
-
-    if (dst->access_size != src->access_size) {
-        dst->access_size = src->access_size;
-        res = 1;
-    }
-
-    if (!str_equ(dst->condition, src->condition)) {
-        loc_free(dst->condition);
-        dst->condition = src->condition;
-        res = 1;
-    }
-    else {
-        loc_free(src->condition);
-    }
-    src->condition = NULL;
-
-    if (!str_arr_equ(dst->context_ids, src->context_ids)) {
-        loc_free(dst->context_ids);
-        dst->context_ids = src->context_ids;
-        res = 1;
-    }
-    else {
-        loc_free(src->context_ids);
-    }
-    src->context_ids = NULL;
-
-    if (!str_arr_equ(dst->context_names, src->context_names)) {
-        loc_free(dst->context_names);
-        dst->context_names = src->context_names;
-        res = 1;
-    }
-    else {
-        loc_free(src->context_names);
-    }
-    src->context_names = NULL;
-
-    if (!str_arr_equ(dst->stop_group, src->stop_group)) {
-        loc_free(dst->stop_group);
-        dst->stop_group = src->stop_group;
-        res = 1;
-    }
-    else {
-        loc_free(src->stop_group);
-    }
-    src->stop_group = NULL;
-
-    if (!str_equ(dst->file, src->file)) {
-        loc_free(dst->file);
-        dst->file = src->file;
-        res = 1;
-    }
-    else {
-        loc_free(src->file);
-    }
-    src->file = NULL;
-
-    if (!str_equ(dst->client_data, src->client_data)) {
-        loc_free(dst->client_data);
-        dst->client_data = src->client_data;
-        res = 1;
-    }
-    else {
-        loc_free(src->client_data);
-    }
-    src->client_data = NULL;
-
-    if (dst->line != src->line) {
-        dst->line = src->line;
-        res = 1;
-    }
-
-    if (dst->column != src->column) {
-        dst->column = src->column;
-        res = 1;
-    }
-
-    if (dst->ignore_count != src->ignore_count) {
-        dst->ignore_count = src->ignore_count;
-        res = 1;
-    }
-
-    if (dst->enabled != src->enabled) {
-        dst->enabled = src->enabled;
-        res = 1;
-    }
-
-    if (dst->unsupported != src->unsupported) {
-        while (dst->unsupported != NULL) {
-            BreakpointAttribute * u = dst->unsupported;
-            dst->unsupported = u->next;
-            loc_free(u->name);
-            loc_free(u->value);
-            loc_free(u);
-        }
-        dst->unsupported = src->unsupported;
-        res = 1;
-    }
-    src->unsupported = NULL;
-
-    if (res) dst->status_changed = 1;
-
-    return res;
-}
-
 static BreakpointInfo * find_breakpoint(char * id) {
     int hash = id2bp_hash(id);
     LINK * l = id2bp[hash].next;
@@ -1535,210 +1382,240 @@ static BreakpointRef * find_breakpoint_ref(BreakpointInfo * bp, Channel * channe
     return NULL;
 }
 
-static void read_breakpoint_properties(InputStream * inp, BreakpointInfo * bp) {
-    memset(bp, 0, sizeof(BreakpointInfo));
+static BreakpointAttribute * read_breakpoint_properties(InputStream * inp) {
+    BreakpointAttribute * attrs = NULL;
     if (read_stream(inp) != '{') exception(ERR_JSON_SYNTAX);
     if (peek_stream(inp) == '}') {
         read_stream(inp);
     }
     else {
+        BreakpointAttribute ** p = &attrs;
         for (;;) {
             int ch;
             char name[256];
+            BreakpointAttribute * attr = (BreakpointAttribute *)loc_alloc(sizeof(BreakpointAttribute));
+
             json_read_string(inp, name, sizeof(name));
             if (read_stream(inp) != ':') exception(ERR_JSON_SYNTAX);
-            if (strcmp(name, "ID") == 0) {
-                json_read_string(inp, bp->id, sizeof(bp->id));
-            }
-            else if (strcmp(name, "Location") == 0) {
-                bp->address = json_read_alloc_string(inp);
-            }
-            else if (strcmp(name, "Type") == 0) {
-                bp->type = json_read_alloc_string(inp);
-            }
-            else if (strcmp(name, "AccessMode") == 0) {
-                bp->access_mode = json_read_long(inp);
-            }
-            else if (strcmp(name, "Size") == 0) {
-                bp->access_size = json_read_long(inp);
-            }
-            else if (strcmp(name, "Condition") == 0) {
-                bp->condition = json_read_alloc_string(inp);
-            }
-            else if (strcmp(name, "ContextIds") == 0) {
-                bp->context_ids = json_read_alloc_string_array(inp, NULL);
-            }
-            else if (strcmp(name, "ContextNames") == 0) {
-                bp->context_names = json_read_alloc_string_array(inp, NULL);
-            }
-            else if (strcmp(name, "StopGroup") == 0) {
-                bp->stop_group = json_read_alloc_string_array(inp, NULL);
-            }
-            else if (strcmp(name, "File") == 0) {
-                bp->file = json_read_alloc_string(inp);
-            }
-            else if (strcmp(name, "Line") == 0) {
-                bp->line = json_read_long(inp);
-            }
-            else if (strcmp(name, "Column") == 0) {
-                bp->column = json_read_long(inp);
-            }
-            else if (strcmp(name, "IgnoreCount") == 0) {
-                bp->ignore_count = json_read_long(inp);
-            }
-            else if (strcmp(name, "Enabled") == 0) {
-                bp->enabled = json_read_boolean(inp);
-            }
-            else if (strcmp(name, "ClientData") == 0) {
-                bp->client_data = json_read_object(inp);
-            }
-            else {
-                BreakpointAttribute * u = (BreakpointAttribute *)loc_alloc(sizeof(BreakpointAttribute));
-                u->name = loc_strdup(name);
-                u->value = json_read_object(inp);
-                u->next = bp->unsupported;
-                bp->unsupported = u;
-            }
+            attr->name = loc_strdup(name);
+            attr->value = json_read_object(inp);
+            *p = attr;
+            p = &attr->next;
+            attr->next = NULL;
+
             ch = read_stream(inp);
             if (ch == ',') continue;
             if (ch == '}') break;
             exception(ERR_JSON_SYNTAX);
         }
     }
+    return attrs;
+}
+
+static void read_id_attribute(BreakpointAttribute * attrs, char * id, size_t id_size) {
+    while (attrs != NULL) {
+        if (strcmp(attrs->name, BREAKPOINT_ID) == 0) {
+            ByteArrayInputStream buf;
+            InputStream * inp = create_byte_array_input_stream(&buf, attrs->value, strlen(attrs->value));
+            json_read_string(inp, id, id_size);
+            if (read_stream(inp) != MARKER_EOS) exception(ERR_JSON_SYNTAX);
+            return;
+        }
+        attrs = attrs->next;
+    }
+    str_exception(ERR_OTHER, "Breakpoint must have an ID");
+}
+
+static void set_breakpoint_attribute(BreakpointInfo * bp, const char * name, const char * value) {
+    BreakpointAttribute * attr = bp->attrs;
+    BreakpointAttribute ** ref = &bp->attrs;
+
+    while (attr != NULL) {
+        if (strcmp(attr->name, name) == 0) {
+            loc_free(attr->value);
+            attr->value = loc_strdup(value);
+            return;
+        }
+        ref = &attr->next;
+        attr = attr->next;
+    }
+    attr = (BreakpointAttribute *)loc_alloc_zero(sizeof(BreakpointAttribute));
+    attr->name = loc_strdup(name);
+    attr->value = loc_strdup(value);
+    *ref = attr;
+}
+
+static int set_breakpoint_attributes(BreakpointInfo * bp, BreakpointAttribute * new_attrs) {
+    int diff = 0;
+    BreakpointAttribute * old_attrs = bp->attrs;
+    BreakpointAttribute ** new_ref = &bp->attrs;
+    bp->attrs = NULL;
+
+    while (new_attrs != NULL) {
+        BreakpointAttribute * new_attr = new_attrs;
+        BreakpointAttribute * old_attr = old_attrs;
+        BreakpointAttribute ** old_ref = &old_attrs;
+        InputStream * buf_inp = NULL;
+        ByteArrayInputStream buf;
+        int unsupported_attr = 0;
+        char * name = new_attr->name;
+
+        new_attrs = new_attr->next;
+        new_attr->next = NULL;
+        while (old_attr && strcmp(old_attr->name, name)) {
+            old_ref = &old_attr->next;
+            old_attr = old_attr->next;
+        }
+
+        if (old_attr != NULL) {
+            assert(old_attr == *old_ref);
+            *old_ref = old_attr->next;
+            old_attr->next = NULL;
+            if (strcmp(old_attr->value, new_attr->value) == 0) {
+                *new_ref = old_attr;
+                new_ref = &old_attr->next;
+                loc_free(new_attr->value);
+                loc_free(new_attr->name);
+                loc_free(new_attr);
+                continue;
+            }
+            diff++;
+            loc_free(old_attr->value);
+            loc_free(old_attr->name);
+            loc_free(old_attr);
+            old_attr = NULL;
+        }
+
+        *new_ref = new_attr;
+        new_ref = &new_attr->next;
+
+        buf_inp = create_byte_array_input_stream(&buf, new_attr->value, strlen(new_attr->value));
+
+        if (strcmp(name, BREAKPOINT_ID) == 0) {
+            json_read_string(buf_inp, bp->id, sizeof(bp->id));
+        }
+        else if (strcmp(name, BREAKPOINT_LOCATION) == 0) {
+            loc_free(bp->address);
+            bp->address = json_read_alloc_string(buf_inp);
+        }
+        else if (strcmp(name, BREAKPOINT_ACCESSMODE) == 0) {
+            bp->access_mode = json_read_long(buf_inp);
+        }
+        else if (strcmp(name, BREAKPOINT_SIZE) == 0) {
+            bp->access_size = json_read_long(buf_inp);
+        }
+        else if (strcmp(name, BREAKPOINT_CONDITION) == 0) {
+            loc_free(bp->condition);
+            bp->condition = json_read_alloc_string(buf_inp);
+        }
+        else if (strcmp(name, BREAKPOINT_CONTEXTIDS) == 0) {
+            loc_free(bp->context_ids);
+            bp->context_ids = json_read_alloc_string_array(buf_inp, NULL);
+        }
+        else if (strcmp(name, BREAKPOINT_CONTEXTNAMES) == 0) {
+            loc_free(bp->context_names);
+            bp->context_names = json_read_alloc_string_array(buf_inp, NULL);
+        }
+        else if (strcmp(name, BREAKPOINT_STOP_GROUP) == 0) {
+            loc_free(bp->stop_group);
+            bp->stop_group = json_read_alloc_string_array(buf_inp, NULL);
+        }
+        else if (strcmp(name, BREAKPOINT_FILE) == 0) {
+            loc_free(bp->file);
+            bp->file = json_read_alloc_string(buf_inp);
+        }
+        else if (strcmp(name, BREAKPOINT_LINE) == 0) {
+            bp->line = json_read_long(buf_inp);
+        }
+        else if (strcmp(name, BREAKPOINT_COLUMN) == 0) {
+            bp->column = json_read_long(buf_inp);
+        }
+        else if (strcmp(name, BREAKPOINT_IGNORECOUNT) == 0) {
+            bp->ignore_count = json_read_long(buf_inp);
+        }
+        else if (strcmp(name, BREAKPOINT_ENABLED) == 0) {
+            bp->enabled = json_read_boolean(buf_inp);
+        }
+        else {
+            unsupported_attr = 1;
+        }
+
+        if (!unsupported_attr && read_stream(buf_inp) != MARKER_EOS) exception(ERR_JSON_SYNTAX);
+    }
+
+    while (old_attrs != NULL) {
+        BreakpointAttribute * old_attr = old_attrs;
+        char * name = old_attr->name;
+        old_attrs = old_attr->next;
+
+        if (strcmp(name, BREAKPOINT_ID) == 0) {
+            bp->id[0] = 0;
+        }
+        else if (strcmp(name, BREAKPOINT_LOCATION) == 0) {
+            loc_free(bp->address);
+            bp->address = NULL;
+        }
+        else if (strcmp(name, BREAKPOINT_ACCESSMODE) == 0) {
+            bp->access_mode = 0;
+        }
+        else if (strcmp(name, BREAKPOINT_SIZE) == 0) {
+            bp->access_size = 0;
+        }
+        else if (strcmp(name, BREAKPOINT_CONDITION) == 0) {
+            loc_free(bp->condition);
+            bp->condition = NULL;
+        }
+        else if (strcmp(name, BREAKPOINT_CONTEXTIDS) == 0) {
+            loc_free(bp->context_ids);
+            bp->context_ids = NULL;
+        }
+        else if (strcmp(name, BREAKPOINT_CONTEXTNAMES) == 0) {
+            loc_free(bp->context_names);
+            bp->context_names = NULL;
+        }
+        else if (strcmp(name, BREAKPOINT_STOP_GROUP) == 0) {
+            loc_free(bp->stop_group);
+            bp->stop_group = NULL;
+        }
+        else if (strcmp(name, BREAKPOINT_FILE) == 0) {
+            loc_free(bp->file);
+            bp->file = NULL;
+        }
+        else if (strcmp(name, BREAKPOINT_LINE) == 0) {
+            bp->line = 0;
+        }
+        else if (strcmp(name, BREAKPOINT_COLUMN) == 0) {
+            bp->column = 0;
+        }
+        else if (strcmp(name, BREAKPOINT_IGNORECOUNT) == 0) {
+            bp->ignore_count = 0;
+        }
+        else if (strcmp(name, BREAKPOINT_ENABLED) == 0) {
+            bp->enabled = 0;
+        }
+
+        loc_free(old_attr->value);
+        loc_free(old_attr->name);
+        loc_free(old_attr);
+        diff++;
+    }
+
+    return diff;
 }
 
 static void write_breakpoint_properties(OutputStream * out, BreakpointInfo * bp) {
-    BreakpointAttribute * u = bp->unsupported;
+    int cnt = 0;
+    BreakpointAttribute * attr = bp->attrs;
 
     write_stream(out, '{');
 
-    assert(*bp->id);
-    json_write_string(out, "ID");
-    write_stream(out, ':');
-    json_write_string(out, bp->id);
-
-    if (bp->address != NULL) {
-        write_stream(out, ',');
-        json_write_string(out, "Location");
+    while (attr != NULL) {
+        if (cnt > 0) write_stream(out, ',');
+        json_write_string(out, attr->name);
         write_stream(out, ':');
-        json_write_string(out, bp->address);
-    }
-
-    if (bp->type != NULL) {
-        write_stream(out, ',');
-        json_write_string(out, "Type");
-        write_stream(out, ':');
-        json_write_string(out, bp->type);
-    }
-
-    if (bp->access_mode != 0) {
-        write_stream(out, ',');
-        json_write_string(out, "AccessMode");
-        write_stream(out, ':');
-        json_write_long(out, bp->access_mode);
-    }
-
-    if (bp->access_size != 0) {
-        write_stream(out, ',');
-        json_write_string(out, "Size");
-        write_stream(out, ':');
-        json_write_long(out, bp->access_size);
-    }
-
-    if (bp->condition != NULL) {
-        write_stream(out, ',');
-        json_write_string(out, "Condition");
-        write_stream(out, ':');
-        json_write_string(out, bp->condition);
-    }
-
-    if (bp->context_ids != NULL) {
-        char ** ids = bp->context_ids;
-        write_stream(out, ',');
-        json_write_string(out, "ContextIds");
-        write_stream(out, ':');
-        write_stream(out, '[');
-        while (*ids != NULL) {
-            if (ids != bp->context_ids) write_stream(out, ',');
-            json_write_string(out, *ids++);
-        }
-        write_stream(out, ']');
-    }
-
-    if (bp->context_names != NULL) {
-        char ** names = bp->context_names;
-        write_stream(out, ',');
-        json_write_string(out, "ContextNames");
-        write_stream(out, ':');
-        write_stream(out, '[');
-        while (*names != NULL) {
-            if (names != bp->context_names) write_stream(out, ',');
-            json_write_string(out, *names++);
-        }
-        write_stream(out, ']');
-    }
-
-    if (bp->stop_group != NULL) {
-        char ** ids = bp->stop_group;
-        write_stream(out, ',');
-        json_write_string(out, "StopGroup");
-        write_stream(out, ':');
-        write_stream(out, '[');
-        while (*ids != NULL) {
-            if (ids != bp->stop_group) write_stream(out, ',');
-            json_write_string(out, *ids++);
-        }
-        write_stream(out, ']');
-    }
-
-    if (bp->file != NULL) {
-        write_stream(out, ',');
-        json_write_string(out, "File");
-        write_stream(out, ':');
-        json_write_string(out, bp->file);
-    }
-
-    if (bp->line > 0) {
-        write_stream(out, ',');
-        json_write_string(out, "Line");
-        write_stream(out, ':');
-        json_write_long(out, bp->line);
-    }
-
-    if (bp->column > 0) {
-        write_stream(out, ',');
-        json_write_string(out, "Column");
-        write_stream(out, ':');
-        json_write_long(out, bp->column);
-    }
-
-    if (bp->ignore_count > 0) {
-        write_stream(out, ',');
-        json_write_string(out, "IgnoreCount");
-        write_stream(out, ':');
-        json_write_long(out, bp->ignore_count);
-    }
-
-    if (bp->enabled) {
-        write_stream(out, ',');
-        json_write_string(out, "Enabled");
-        write_stream(out, ':');
-        json_write_boolean(out, bp->enabled);
-    }
-
-    if (bp->client_data) {
-        write_stream(out, ',');
-        json_write_string(out, "ClientData");
-        write_stream(out, ':');
-        write_string(out, bp->client_data);
-    }
-
-    while (u != NULL) {
-        write_stream(out, ',');
-        json_write_string(out, u->name);
-        write_stream(out, ':');
-        write_string(out, u->value);
-        u = u->next;
+        write_string(out, attr->value);
+        attr = attr->next;
+        cnt++;
     }
 
     write_stream(out, '}');
@@ -1784,38 +1661,39 @@ static void send_event_context_removed(BreakpointInfo * bp) {
     write_stream(out, MARKER_EOM);
 }
 
-static void add_breakpoint(Channel * c, BreakpointInfo * bp) {
+static void add_breakpoint(Channel * c, BreakpointAttribute * attrs) {
+    char id[256];
     BreakpointRef * r = NULL;
-    BreakpointInfo * p = NULL;
+    BreakpointInfo * bp = NULL;
     int added = 0;
     int chng = 0;
 
-    assert(*bp->id);
-    p = find_breakpoint(bp->id);
-    if (p == NULL) {
-        int hash = id2bp_hash(bp->id);
-        p = (BreakpointInfo *)loc_alloc_zero(sizeof(BreakpointInfo));
-        list_init(&p->link_clients);
-        list_add_last(&p->link_all, &breakpoints);
-        list_add_last(&p->link_id, id2bp + hash);
+    read_id_attribute(attrs, id, sizeof(id));
+    bp = find_breakpoint(id);
+    if (bp == NULL) {
+        int hash = id2bp_hash(id);
+        bp = (BreakpointInfo *)loc_alloc_zero(sizeof(BreakpointInfo));
+        list_init(&bp->link_clients);
+        list_add_last(&bp->link_all, &breakpoints);
+        list_add_last(&bp->link_id, id2bp + hash);
     }
-    chng = copy_breakpoint_info(p, bp);
-    if (list_is_empty(&p->link_clients)) added = 1;
-    else r = find_breakpoint_ref(p, c);
+    chng = set_breakpoint_attributes(bp, attrs);
+    if (list_is_empty(&bp->link_clients)) added = 1;
+    else r = find_breakpoint_ref(bp, c);
     if (r == NULL) {
         unsigned inp_hash = (unsigned)(uintptr_t)c / 16 % INP2BR_HASH_SIZE;
         r = (BreakpointRef *)loc_alloc_zero(sizeof(BreakpointRef));
         list_add_last(&r->link_inp, inp2br + inp_hash);
-        list_add_last(&r->link_bp, &p->link_clients);
+        list_add_last(&r->link_bp, &bp->link_clients);
         r->channel = c;
-        r->bp = p;
-        p->client_cnt++;
+        r->bp = bp;
+        bp->client_cnt++;
     }
-    assert(r->bp == p);
-    assert(!list_is_empty(&p->link_clients));
-    if (chng || added) replant_breakpoint(p);
-    if (added) send_event_context_added(&broadcast_group->out, p);
-    else if (chng) send_event_context_changed(p);
+    assert(r->bp == bp);
+    assert(!list_is_empty(&bp->link_clients));
+    if (chng || added) replant_breakpoint(bp);
+    if (added) send_event_context_added(&broadcast_group->out, bp);
+    else if (chng) send_event_context_changed(bp);
 }
 
 static void remove_ref(Channel * c, BreakpointRef * br) {
@@ -1874,9 +1752,7 @@ static void command_ini_bps(char * token, Channel * c) {
         else {
             for (;;) {
                 int ch;
-                BreakpointInfo bp;
-                read_breakpoint_properties(&c->inp, &bp);
-                add_breakpoint(c, &bp);
+                add_breakpoint(c, read_breakpoint_properties(&c->inp));
                 ch = read_stream(&c->inp);
                 if (ch == ',') continue;
                 if (ch == ']') break;
@@ -1969,12 +1845,11 @@ static void command_get_status(char * token, Channel * c) {
 }
 
 static void command_bp_add(char * token, Channel * c) {
-    BreakpointInfo bp;
-    read_breakpoint_properties(&c->inp, &bp);
+    BreakpointAttribute * props = read_breakpoint_properties(&c->inp);
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    add_breakpoint(c, &bp);
+    add_breakpoint(c, props);
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
@@ -1983,12 +1858,11 @@ static void command_bp_add(char * token, Channel * c) {
 }
 
 static void command_bp_change(char * token, Channel * c) {
-    BreakpointInfo bp;
-    read_breakpoint_properties(&c->inp, &bp);
+    BreakpointAttribute * props = read_breakpoint_properties(&c->inp);
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
-    add_breakpoint(c, &bp);
+    add_breakpoint(c, props);
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
@@ -2018,6 +1892,7 @@ static void command_bp_enable(char * token, Channel * c) {
                 if (bp != NULL && !list_is_empty(&bp->link_clients) && !bp->enabled) {
                     bp->enabled = 1;
                     bp->hit_count = 0;
+                    set_breakpoint_attribute(bp, BREAKPOINT_ENABLED, "true");
                     replant_breakpoint(bp);
                     send_event_context_changed(bp);
                 }
@@ -2058,6 +1933,7 @@ static void command_bp_disable(char * token, Channel * c) {
                 bp = find_breakpoint(id);
                 if (bp != NULL && !list_is_empty(&bp->link_clients) && bp->enabled) {
                     bp->enabled = 0;
+                    set_breakpoint_attribute(bp, BREAKPOINT_ENABLED, "false");
                     replant_breakpoint(bp);
                     send_event_context_changed(bp);
                 }
@@ -2179,6 +2055,19 @@ static void command_get_capabilities(char * token, Channel * c) {
     write_stream(&c->out, 0);
 
     write_stream(&c->out, MARKER_EOM);
+}
+
+void iterate_breakpoints(IterateBreakpointsCallBack * callback, void * args) {
+    LINK * l = breakpoints.next;
+    while (l != &breakpoints) {
+        BreakpointInfo * bp = link_all2bp(l);
+        l = l->next;
+        callback(bp, args);
+    }
+}
+
+BreakpointAttribute * get_breakpoint_attributes(BreakpointInfo * bp) {
+    return bp->attrs;
 }
 
 int is_breakpoint_address(Context * ctx, ContextAddress address) {
