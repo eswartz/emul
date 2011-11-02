@@ -50,12 +50,18 @@
                </property>
             </options>
       </viewer>
+
+      <viewerContentBinding viewerId="org.eclipse.tm.te.ui.views.TargetExplorer">
+         <includes>
+            <contentExtension pattern="org.eclipse.tm.te.ui.views.navigator.*"/>
+         </includes>
+      </viewerContentBinding>
       
       <viewerActionBinding
             viewerId="org.eclipse.tm.te.ui.views.TargetExplorer">
             <includes>
                <actionExtension
-                     pattern="org.eclipse.tm.te.ui.views.actions.*">
+                     pattern="org.eclipse.tm.te.ui.views.navigator.actions.*">
                </actionExtension>
             </includes>
       </viewerActionBinding>
@@ -64,10 +70,51 @@
    <extension point="org.eclipse.ui.navigator.navigatorContent">
       <actionProvider
             class="org.eclipse.tm.te.ui.views.internal.actions.NewActionProvider"
-            id="org.eclipse.tm.te.ui.views.actions.NewActionProvider">
+            id="org.eclipse.tm.te.ui.views.navigator.actions.NewActionProvider">
             <enablement>
             </enablement>
       </actionProvider>
+
+      <!-- Working Sets -->
+      <commonFilter
+            id="org.eclipse.tm.te.ui.views.navigator.filters.workingSet"
+            name="%filters.workingSet.name"
+            description="%filters.workingSet.description" 
+            class="org.eclipse.tm.te.ui.views.internal.workingsets.WorkingSetFilter" 
+            activeByDefault="false"
+            visibleInUI="false">
+      </commonFilter>
+      <actionProvider
+            class="org.eclipse.tm.te.ui.views.internal.actions.WorkingSetActionProvider"
+            id="org.eclipse.tm.te.ui.views.navigator.actions.WorkingSetActions">
+           <enablement>
+                <or>
+					<adapt type="java.lang.Object" />	 
+					<adapt type="java.util.Collection"> 
+						<count value="0" />
+					</adapt>
+				</or>
+           </enablement>            
+      </actionProvider>
+      <navigatorContent
+            activeByDefault="true"
+            contentProvider="org.eclipse.tm.te.ui.views.internal.workingsets.WorkingSetsContentProvider"
+            icon="icons/obj16/workingsets.gif"
+            id="org.eclipse.tm.te.ui.views.navigator.workingSets"
+            labelProvider="org.eclipse.tm.te.ui.views.internal.workingsets.WorkingSetsLabelProvider"
+            name="%workingsets.extension.name"
+            priority="higher">
+         <triggerPoints>
+            <instanceof value="org.eclipse.ui.IWorkingSet"/>
+         </triggerPoints>
+         <possibleChildren>
+            <instanceof value="java.lang.Object"/>
+         </possibleChildren>
+         <commonSorter
+               class="org.eclipse.tm.te.ui.views.internal.workingsets.WorkingSetSorter"
+               id="org.eclipse.tm.te.ui.views.workingSets.sorter"/>  
+      </navigatorContent>
+      
    </extension>
 
 <!-- View contributions -->

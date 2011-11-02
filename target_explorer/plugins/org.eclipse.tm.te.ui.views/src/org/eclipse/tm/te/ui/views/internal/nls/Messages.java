@@ -29,9 +29,20 @@ public class Messages extends NLS {
 
 	// **** Declare externalized string id's down here *****
 
+	public static String View_toolTip;
+	public static String View_toolTip2;
+	public static String View_toolTip3;
+	public static String View_workingSetModel;
+
 	public static String NewActionProvider_NewMenu_label;
 	public static String NewActionProvider_NewWizardCommandAction_label;
 	public static String NewActionProvider_NewWizardCommandAction_tooltip;
+
+	public static String WorkingSetActionProvider_multipleWorkingSets;
+
+	public static String WorkingSetRootModeActionGroup_Top_Level_Element;
+	public static String WorkingSetRootModeActionGroup_Target;
+	public static String WorkingSetRootModeActionGroup_Working_Set;
 
 	public static String PropertiesCommandHandler_error_initPartFailed;
 }
