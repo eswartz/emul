@@ -11,13 +11,20 @@
 package org.eclipse.tm.internal.tcf.debug.ui.model;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 
 import org.eclipse.debug.ui.IDetailPane;
 import org.eclipse.jface.text.Document;
+import org.eclipse.jface.text.ITextPresentationListener;
+import org.eclipse.jface.text.TextPresentation;
 import org.eclipse.jface.text.source.SourceViewer;
+import org.eclipse.jface.text.source.SourceViewerConfiguration;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.StyleRange;
+import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -41,12 +48,22 @@ public class TCFDetailPane implements IDetailPane {
     @SuppressWarnings("unused")
     private IWorkbenchPartSite part_site;
     private final Document document = new Document();
+    private final ArrayList<StyleRange> style_ranges = new ArrayList<StyleRange>();
+    private final HashMap<RGB,Color> colors = new HashMap<RGB,Color>();
+
+    private final ITextPresentationListener presentation_listener = new ITextPresentationListener() {
+        public void applyTextPresentation(TextPresentation presentation) {
+            for (StyleRange r : style_ranges) presentation.addStyleRange(r);
+        }
+    };
 
     public Control createControl(Composite parent) {
         assert source_viewer == null;
         source_viewer = new SourceViewer(parent, null, SWT.V_SCROLL | SWT.H_SCROLL);
+        source_viewer.configure(new SourceViewerConfiguration());
         source_viewer.setDocument(document);
         source_viewer.setEditable(false);
+        source_viewer.addTextPresentationListener(presentation_listener);
         Control control = source_viewer.getControl();
         GridData gd = new GridData(GridData.FILL_BOTH);
         control.setLayoutData(gd);
@@ -69,41 +86,46 @@ public class TCFDetailPane implements IDetailPane {
         Protocol.invokeLater(new Runnable() {
             public void run() {
                 if (g != generation) return;
-                final String s = getDetailText(nodes, this);
+                final StyledStringBuffer s = getDetailText(nodes, this);
                 if (s == null) return;
                 display.asyncExec(new Runnable() {
                     public void run() {
                         if (g != generation) return;
-                        document.set(s);
+                        document.set(getStyleRanges(s));
                     }
                 });
             }
         });
     }
 
-    private String getDetailText(ArrayList<TCFNode> nodes, Runnable done) {
-        StringBuffer bf = new StringBuffer();
+    private StyledStringBuffer getDetailText(ArrayList<TCFNode> nodes, Runnable done) {
+        StyledStringBuffer bf = new StyledStringBuffer();
         for (TCFNode n : nodes) {
-            if (n instanceof TCFNodeExpression) {
-                String s = ((TCFNodeExpression)n).getDetailText(done);
-                if (s == null) return null;
-                bf.append(s);
-            }
-            else if (n instanceof TCFNodeRegister) {
-                String s = ((TCFNodeRegister)n).getDetailText(done);
-                if (s == null) return null;
-                bf.append(s);
-            }
-            else if (n instanceof TCFNodeModule) {
-                String s = ((TCFNodeModule)n).getDetailText(done);
-                if (s == null) return null;
-                bf.append(s);
+            if (n instanceof IDetailsProvider) {
+                if (!((IDetailsProvider)n).getDetailText(bf, done)) return null;
             }
         }
-        return bf.toString();
+        return bf;
+    }
+
+    private String getStyleRanges(StyledStringBuffer s) {
+        style_ranges.clear();
+        for (StyledStringBuffer.Style x : s.getStyle()) {
+            style_ranges.add(new StyleRange(x.pos, x.len, getColor(x.fg), getColor(x.bg), x.font));
+        }
+        return s.toString();
+    }
+
+    private Color getColor(RGB rgb) {
+        if (rgb == null) return null;
+        Color c = colors.get(rgb);
+        if (c == null) colors.put(rgb, c = new Color(display, rgb));
+        return c;
     }
 
     public void dispose() {
+        for (Color c : colors.values()) c.dispose();
+        colors.clear();
         if (source_viewer == null) return;
         generation++;
         if (source_viewer.getControl() != null) {

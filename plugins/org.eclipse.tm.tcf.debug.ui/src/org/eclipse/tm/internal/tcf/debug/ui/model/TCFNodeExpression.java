@@ -29,6 +29,7 @@ import org.eclipse.debug.ui.IDebugUIConstants;
 import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.ICellModifier;
 import org.eclipse.jface.viewers.TextCellEditor;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
@@ -46,7 +47,7 @@ import org.eclipse.tm.tcf.services.ISymbols;
 import org.eclipse.tm.tcf.util.TCFDataCache;
 import org.eclipse.tm.tcf.util.TCFTask;
 
-public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastToType, IWatchInExpressions {
+public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastToType, IWatchInExpressions, IDetailsProvider {
 
     // TODO: User commands: Add Global Variables, Remove Global Variables
     // TODO: enable Change Value user command
@@ -69,6 +70,11 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
     private boolean enabled = true;
     private IExpressions.Value prev_value;
     private IExpressions.Value next_value;
+
+    private static final RGB
+        rgb_error = new RGB(192, 0, 0),
+        rgb_highlight = new RGB(255, 255, 128),
+        rgb_disabled = new RGB(127, 127, 127);
 
     private static int expr_cnt;
 
@@ -443,7 +449,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                         });
                         return false;
                     }
-                    StringBuffer bf = new StringBuffer();
+                    StyledStringBuffer bf = new StyledStringBuffer();
                     bf.append('{');
                     if (!appendCompositeValueText(bf, 1, base_type_data, buf, 0, size, mem.isBigEndian(), this)) return false;
                     bf.append('}');
@@ -969,7 +975,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
             String[] cols = result.getColumnIds();
             if (error != null) {
                 if (cols == null || cols.length <= 1) {
-                    result.setForeground(new RGB(255, 0, 0), 0);
+                    result.setForeground(rgb_error, 0);
                     result.setLabel(name + ": N/A", 0);
                 }
                 else {
@@ -983,7 +989,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                             result.setLabel(type_name.getData(), i);
                         }
                         else {
-                            result.setForeground(new RGB(255, 0, 0), i);
+                            result.setForeground(rgb_error, i);
                             result.setLabel("N/A", i);
                         }
                     }
@@ -1014,11 +1020,10 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
             }
             next_value = value.getData();
             if (isValueChanged(prev_value, next_value)) {
-                RGB c = new RGB(255, 255, 0);
-                result.setBackground(c, 0);
+                result.setBackground(rgb_highlight, 0);
                 if (cols != null) {
                     for (int i = 1; i < cols.length; i++) {
-                        result.setBackground(c, i);
+                        result.setBackground(rgb_highlight, i);
                     }
                 }
             }
@@ -1042,14 +1047,14 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         else {
             String[] cols = result.getColumnIds();
             if (cols == null || cols.length <= 1) {
-                result.setForeground(new RGB(127, 127, 127), 0);
+                result.setForeground(rgb_disabled, 0);
                 result.setLabel(script, 0);
             }
             else {
                 for (int i = 0; i < cols.length; i++) {
                     String c = cols[i];
                     if (c.equals(TCFColumnPresentationExpression.COL_NAME)) {
-                        result.setForeground(new RGB(127, 127, 127), i);
+                        result.setForeground(rgb_disabled, i);
                         result.setLabel(script, i);
                     }
                 }
@@ -1064,7 +1069,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         bf.append(TCFModel.getErrorMessage(error, true));
     }
 
-    private boolean appendArrayValueText(StringBuffer bf, int level, ISymbols.Symbol type,
+    private boolean appendArrayValueText(StyledStringBuffer bf, int level, ISymbols.Symbol type,
             byte[] data, int offs, int size, boolean big_endian, Runnable done) {
         assert offs + size <= data.length;
         int length = type.getLength();
@@ -1085,7 +1090,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         return true;
     }
 
-    private boolean appendCompositeValueText(StringBuffer bf, int level, ISymbols.Symbol type,
+    private boolean appendCompositeValueText(StyledStringBuffer bf, int level, ISymbols.Symbol type,
             byte[] data, int offs, int size, boolean big_endian, Runnable done) {
         TCFDataCache<String[]> children_cache = model.getSymbolChildrenCache(type.getID());
         if (children_cache == null) {
@@ -1118,7 +1123,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                     continue;
                 }
                 else {
-                    StringBuffer bf1 = new StringBuffer();
+                    StyledStringBuffer bf1 = new StyledStringBuffer();
                     if (!appendCompositeValueText(bf1, level, field_data, data,
                             offs + f_offs, f_size, big_endian, done)) return false;
                     if (bf1.length() > 0) {
@@ -1147,7 +1152,7 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         return false;
     }
 
-    private boolean appendValueText(StringBuffer bf, int level, String type_id,
+    private boolean appendValueText(StyledStringBuffer bf, int level, String type_id,
             byte[] data, int offs, int size, boolean big_endian, Runnable done) {
         if (data == null) return true;
         ISymbols.Symbol type_data = null;
@@ -1165,19 +1170,19 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                 assert size == data.length;
                 String s = getTypeName(type_class, size);
                 if (s == null) s = "not available";
-                bf.append("Type: ");
+                bf.append("Type: ", SWT.BOLD);
                 bf.append(s);
                 bf.append('\n');
-                bf.append("Size: ");
+                bf.append("Size: ", SWT.BOLD);
                 bf.append(size);
                 bf.append(size == 1 ? " byte\n" : " bytes\n");
                 if (size > 0) {
                     if (type_class == ISymbols.TypeClass.integer || type_class == ISymbols.TypeClass.real) {
-                        bf.append("Dec: ");
+                        bf.append("Dec: ", SWT.BOLD);
                         bf.append(toNumberString(10, type_class, data, offs, size, big_endian));
                         bf.append("\n");
                     }
-                    bf.append("Hex: ");
+                    bf.append("Hex: ", SWT.BOLD);
                     bf.append(toNumberString(16, type_class, data, offs, size, big_endian));
                     bf.append("\n");
                 }
@@ -1199,8 +1204,8 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
                 bf.append("\n");
             }
             else if (e != null) {
-                bf.append("Cannot read pointed value: ");
-                bf.append(TCFModel.getErrorMessage(e, true));
+                bf.append("Cannot read pointed value: ", SWT.BOLD, null, rgb_error);
+                bf.append(TCFModel.getErrorMessage(e, true), SWT.ITALIC, null, rgb_error);
             }
         }
         if (type_data.getSize() > 0) {
@@ -1211,13 +1216,13 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
             case cardinal:
             case real:
                 if (level == 0) {
-                    bf.append("Dec: ");
+                    bf.append("Dec: ", SWT.BOLD);
                     bf.append(toNumberString(10, type_class, data, offs, size, big_endian));
                     bf.append("\n");
-                    bf.append("Oct: ");
+                    bf.append("Oct: ", SWT.BOLD);
                     bf.append(toNumberString(8, type_class, data, offs, size, big_endian));
                     bf.append("\n");
-                    bf.append("Hex: ");
+                    bf.append("Hex: ", SWT.BOLD);
                     bf.append(toNumberString(16, type_class, data, offs, size, big_endian));
                     bf.append("\n");
                 }
@@ -1232,10 +1237,10 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
             case pointer:
             case function:
                 if (level == 0) {
-                    bf.append("Oct: ");
+                    bf.append("Oct: ", SWT.BOLD);
                     bf.append(toNumberString(8, type_class, data, offs, size, big_endian));
                     bf.append("\n");
-                    bf.append("Hex: ");
+                    bf.append("Hex: ", SWT.BOLD);
                     bf.append(toNumberString(16, type_class, data, offs, size, big_endian));
                     bf.append("\n");
                 }
@@ -1260,11 +1265,11 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
             if (!type_name.validate(done)) return false;
             String nm = type_name.getData();
             if (nm != null) {
-                bf.append("Type: ");
+                bf.append("Type: ", SWT.BOLD);
                 bf.append(nm);
                 bf.append("\n");
             }
-            bf.append("Size: ");
+            bf.append("Size: ", SWT.BOLD);
             bf.append(type_data.getSize());
             bf.append(type_data.getSize() == 1 ? " byte\n" : " bytes\n");
         }
@@ -1316,46 +1321,53 @@ public class TCFNodeExpression extends TCFNode implements IElementEditor, ICastT
         return name;
     }
 
-    public String getDetailText(Runnable done) {
-        if (!enabled) return "Disabled";
-        if (!expression.validate(done)) return null;
-        if (!value.validate(done)) return null;
-        StringBuffer bf = new StringBuffer();
-        appendErrorText(bf, expression.getError());
-        if (bf.length() == 0) appendErrorText(bf, value.getError());
-        if (bf.length() == 0) {
+    public boolean getDetailText(StyledStringBuffer bf, Runnable done) {
+        if (!enabled) {
+            bf.append("Disabled");
+            return true;
+        }
+        if (!expression.validate(done)) return false;
+        if (!value.validate(done)) return false;
+        int pos = bf.length();
+        appendErrorText(bf.getStringBuffer(), expression.getError());
+        if (bf.length() == pos) appendErrorText(bf.getStringBuffer(), value.getError());
+        if (bf.length() > pos) {
+            bf.append(pos, 0, null, rgb_error);
+        }
+        else {
             IExpressions.Value v = value.getData();
             if (v != null) {
                 byte[] data = v.getValue();
                 if (data != null) {
                     boolean big_endian = v.isBigEndian();
                     if (!appendValueText(bf, 0, v.getTypeID(),
-                            data, 0, data.length, big_endian, done)) return null;
+                            data, 0, data.length, big_endian, done)) return false;
                 }
                 String reg_id = v.getRegisterID();
                 if (reg_id != null) {
                     String nm = getRegisterName(reg_id, done);
-                    if (nm == null) return null;
-                    bf.append("Register: ");
+                    if (nm == null) return false;
+                    bf.append("Register: ", SWT.BOLD);
                     bf.append(nm);
                     bf.append('\n');
                 }
                 Number addr = v.getAddress();
                 if (addr != null) {
                     BigInteger i = JSON.toBigInteger(addr);
-                    bf.append("Address: 0x");
+                    bf.append("Address: ", SWT.BOLD);
+                    bf.append("0x");
                     bf.append(i.toString(16));
                     bf.append('\n');
                 }
             }
         }
-        return bf.toString();
+        return true;
     }
 
     public String getValueText(boolean add_error_text, Runnable done) {
         if (!expression.validate(done)) return null;
         if (!value.validate(done)) return null;
-        StringBuffer bf = new StringBuffer();
+        StyledStringBuffer bf = new StyledStringBuffer();
         IExpressions.Value v = value.getData();
         if (v != null) {
             byte[] data = v.getValue();

@@ -25,6 +25,7 @@ import org.eclipse.debug.ui.IDebugUIConstants;
 import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.ICellModifier;
 import org.eclipse.jface.viewers.TextCellEditor;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.tm.internal.tcf.debug.model.TCFContextState;
@@ -35,7 +36,7 @@ import org.eclipse.tm.tcf.util.TCFDataCache;
 import org.eclipse.tm.tcf.util.TCFTask;
 
 
-public class TCFNodeRegister extends TCFNode implements IElementEditor, IWatchInExpressions {
+public class TCFNodeRegister extends TCFNode implements IElementEditor, IWatchInExpressions, IDetailsProvider {
 
     private final TCFChildrenRegisters children;
     private final TCFData<IRegisters.RegistersContext> context;
@@ -47,8 +48,8 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor, IWatchIn
     private byte[] next_value;
 
     private static final RGB
-        rgb_error = new RGB(255, 0, 0),
-        rgb_highlight = new RGB(255, 255, 0);
+        rgb_error = new RGB(192, 0, 0),
+        rgb_highlight = new RGB(255, 255, 128);
 
     private int index;
 
@@ -204,15 +205,16 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor, IWatchIn
         bf.append(TCFModel.getErrorMessage(error, true));
     }
 
-    String getDetailText(Runnable done) {
-        if (!context.validate(done)) return null;
-        if (!value.validate(done)) return null;
-        StringBuffer bf = new StringBuffer();
-        appendErrorText(bf, context.getError());
-        if (bf.length() == 0) {
-            appendErrorText(bf, value.getError());
+    public boolean getDetailText(StyledStringBuffer bf, Runnable done) {
+        if (!context.validate(done)) return false;
+        if (!value.validate(done)) return false;
+        int pos = bf.length();
+        appendErrorText(bf.getStringBuffer(), context.getError());
+        if (bf.length() == 0) appendErrorText(bf.getStringBuffer(), value.getError());
+        if (bf.length() > pos) {
+            bf.append(pos, 0, null, rgb_error);
         }
-        if (bf.length() == 0) {
+        else {
             IRegisters.RegistersContext ctx = context.getData();
             if (ctx != null) {
                 if (ctx.getDescription() != null) {
@@ -243,21 +245,21 @@ public class TCFNodeRegister extends TCFNode implements IElementEditor, IWatchIn
             }
             byte[] v = value.getData();
             if (v != null) {
-                bf.append("Hex: ");
+                bf.append("Hex: ", SWT.BOLD);
                 bf.append(toNumberString(16));
                 bf.append(", ");
-                bf.append("Dec: ");
+                bf.append("Dec: ", SWT.BOLD);
                 bf.append(toNumberString(10));
                 bf.append(", ");
-                bf.append("Oct: ");
+                bf.append("Oct: ", SWT.BOLD);
                 bf.append(toNumberString(8));
                 bf.append('\n');
-                bf.append("Bin: ");
+                bf.append("Bin: ", SWT.BOLD);
                 bf.append(toNumberString(2));
                 bf.append('\n');
             }
         }
-        return bf.toString();
+        return true;
     }
 
     @Override

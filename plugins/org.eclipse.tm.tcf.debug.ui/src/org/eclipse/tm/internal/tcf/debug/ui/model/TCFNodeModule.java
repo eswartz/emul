@@ -13,6 +13,7 @@ package org.eclipse.tm.internal.tcf.debug.ui.model;
 import java.math.BigInteger;
 
 import org.eclipse.debug.internal.ui.viewers.model.provisional.ILabelUpdate;
+import org.eclipse.swt.SWT;
 import org.eclipse.tm.internal.tcf.debug.ui.ImageCache;
 import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.services.IMemoryMap;
@@ -20,7 +21,7 @@ import org.eclipse.tm.tcf.services.IMemoryMap;
 /**
  * A node representing a memory region (module).
  */
-public class TCFNodeModule extends TCFNode {
+public class TCFNodeModule extends TCFNode implements IDetailsProvider {
 
     private final IMemoryMap.MemoryRegion region;
 
@@ -63,16 +64,15 @@ public class TCFNodeModule extends TCFNode {
         return true;
     }
 
-    public String getDetailText(Runnable done) {
-        StringBuilder detail = new StringBuilder();
-        detail.append("File: ").append(region.getFileName()).append('\n');
-        detail.append("Address: ").append(toHexString(region.getAddress())).append('\n');
-        detail.append("Size: ").append(toHexString(region.getSize())).append('\n');
-        detail.append("Flags: ").append(getFlagsLabel(region.getFlags())).append('\n');
-        detail.append("Offset: ").append(toHexString(region.getOffset())).append('\n');
+    public boolean getDetailText(StyledStringBuffer bf, Runnable done) {
+        bf.append("File: ", SWT.BOLD).append(region.getFileName()).append('\n');
+        bf.append("Address: ", SWT.BOLD).append(toHexString(region.getAddress())).append('\n');
+        bf.append("Size: ", SWT.BOLD).append(toHexString(region.getSize())).append('\n');
+        bf.append("Flags: ", SWT.BOLD).append(getFlagsLabel(region.getFlags())).append('\n');
+        bf.append("Offset: ", SWT.BOLD).append(toHexString(region.getOffset())).append('\n');
         String sectionName = region.getSectionName();
-        detail.append("Section: ").append(sectionName != null ? sectionName : "<unknown>").append('\n');
-        return detail.toString();
+        bf.append("Section: ", SWT.BOLD).append(sectionName != null ? sectionName : "<unknown>").append('\n');
+        return true;
     }
 
     private String toHexString(Number address) {
