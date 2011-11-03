@@ -7,7 +7,7 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.ui.views.internal.actions;
+package org.eclipse.tm.te.ui.views.actions;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.ContributionItem;
@@ -23,8 +23,8 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.tm.te.ui.views.activator.UIPlugin;
 import org.eclipse.tm.te.ui.views.interfaces.ImageConsts;
-import org.eclipse.tm.te.ui.views.internal.nls.Messages;
-import org.eclipse.tm.te.ui.views.internal.workingsets.WorkingSetsContentProvider;
+import org.eclipse.tm.te.ui.views.nls.Messages;
+import org.eclipse.tm.te.ui.views.workingsets.WorkingSetsContentProvider;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.actions.ActionGroup;

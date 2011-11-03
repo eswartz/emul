@@ -15,7 +15,7 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.resource.ImageRegistry;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.tm.te.ui.views.interfaces.ImageConsts;
-import org.eclipse.tm.te.ui.views.internal.listeners.WorkbenchWindowListener;
+import org.eclipse.tm.te.ui.views.listeners.WorkbenchWindowListener;
 import org.eclipse.ui.IWindowListener;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.plugin.AbstractUIPlugin;

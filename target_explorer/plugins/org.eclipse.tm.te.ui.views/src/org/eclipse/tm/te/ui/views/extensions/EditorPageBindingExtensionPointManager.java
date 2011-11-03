@@ -7,7 +7,7 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.ui.views.internal.extensions;
+package org.eclipse.tm.te.ui.views.extensions;
 
 import java.util.ArrayList;
 import java.util.Collection;

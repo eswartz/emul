@@ -18,15 +18,16 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ActivationPolicy: lazy
 Bundle-Localization: plugin
 Export-Package: org.eclipse.tm.te.ui.views,
+ org.eclipse.tm.te.ui.views.actions,
  org.eclipse.tm.te.ui.views.activator;x-internal:=true,
  org.eclipse.tm.te.ui.views.editor,
+ org.eclipse.tm.te.ui.views.expressions,
+ org.eclipse.tm.te.ui.views.extensions,
+ org.eclipse.tm.te.ui.views.handler,
  org.eclipse.tm.te.ui.views.interfaces,
  org.eclipse.tm.te.ui.views.internal;x-internal:=true,
- org.eclipse.tm.te.ui.views.internal.actions;x-internal:=true,
  org.eclipse.tm.te.ui.views.internal.editor;x-internal:=true,
- org.eclipse.tm.te.ui.views.internal.expressions;x-internal:=true,
- org.eclipse.tm.te.ui.views.internal.extensions;x-internal:=true,
- org.eclipse.tm.te.ui.views.internal.handler;x-internal:=true,
- org.eclipse.tm.te.ui.views.internal.listeners;x-internal:=true,
- org.eclipse.tm.te.ui.views.internal.nls;x-internal:=true,
- org.eclipse.tm.te.ui.views.perspective
+ org.eclipse.tm.te.ui.views.listeners,
+ org.eclipse.tm.te.ui.views.nls;x-internal:=true,
+ org.eclipse.tm.te.ui.views.perspective,
+ org.eclipse.tm.te.ui.views.workingsets

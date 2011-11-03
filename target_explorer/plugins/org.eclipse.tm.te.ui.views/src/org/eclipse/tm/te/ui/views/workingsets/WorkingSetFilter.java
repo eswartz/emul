@@ -7,7 +7,7 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.ui.views.internal.workingsets;
+package org.eclipse.tm.te.ui.views.workingsets;
 
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.viewers.Viewer;

@@ -69,7 +69,7 @@
    
    <extension point="org.eclipse.ui.navigator.navigatorContent">
       <actionProvider
-            class="org.eclipse.tm.te.ui.views.internal.actions.NewActionProvider"
+            class="org.eclipse.tm.te.ui.views.actions.NewActionProvider"
             id="org.eclipse.tm.te.ui.views.navigator.actions.NewActionProvider">
             <enablement>
             </enablement>
@@ -80,12 +80,12 @@
             id="org.eclipse.tm.te.ui.views.navigator.filters.workingSet"
             name="%filters.workingSet.name"
             description="%filters.workingSet.description" 
-            class="org.eclipse.tm.te.ui.views.internal.workingsets.WorkingSetFilter" 
+            class="org.eclipse.tm.te.ui.views.workingsets.WorkingSetFilter" 
             activeByDefault="false"
             visibleInUI="false">
       </commonFilter>
       <actionProvider
-            class="org.eclipse.tm.te.ui.views.internal.actions.WorkingSetActionProvider"
+            class="org.eclipse.tm.te.ui.views.actions.WorkingSetActionProvider"
             id="org.eclipse.tm.te.ui.views.navigator.actions.WorkingSetActions">
            <enablement>
                 <or>
@@ -98,10 +98,10 @@
       </actionProvider>
       <navigatorContent
             activeByDefault="true"
-            contentProvider="org.eclipse.tm.te.ui.views.internal.workingsets.WorkingSetsContentProvider"
+            contentProvider="org.eclipse.tm.te.ui.views.workingsets.WorkingSetsContentProvider"
             icon="icons/obj16/workingsets.gif"
             id="org.eclipse.tm.te.ui.views.navigator.workingSets"
-            labelProvider="org.eclipse.tm.te.ui.views.internal.workingsets.WorkingSetsLabelProvider"
+            labelProvider="org.eclipse.tm.te.ui.views.workingsets.WorkingSetsLabelProvider"
             name="%workingsets.extension.name"
             priority="higher">
          <triggerPoints>
@@ -111,7 +111,7 @@
             <instanceof value="java.lang.Object"/>
          </possibleChildren>
          <commonSorter
-               class="org.eclipse.tm.te.ui.views.internal.workingsets.WorkingSetSorter"
+               class="org.eclipse.tm.te.ui.views.workingsets.WorkingSetSorter"
                id="org.eclipse.tm.te.ui.views.workingSets.sorter"/>  
       </navigatorContent>
       
@@ -164,6 +164,14 @@
       </editor>
    </extension>
 
+<!-- Working Set contributions -->
+   <extension point="org.eclipse.ui.workingSets">
+      <workingSet
+            id="org.eclipse.tm.te.ui.views.workingset"
+            name="%workingset.name">
+      </workingSet>
+   </extension>
+
 <!-- Target Explorer menu contributions -->
    <extension point="org.eclipse.ui.menus">
       <menuContribution locationURI="popup:org.eclipse.tm.te.ui.views.TargetExplorer#Popup?after=group.properties">
@@ -202,7 +210,7 @@
    <extension point="org.eclipse.ui.handlers">
       <handler
             commandId="org.eclipse.ui.file.properties"
-            class="org.eclipse.tm.te.ui.views.internal.handler.PropertiesCommandHandler">
+            class="org.eclipse.tm.te.ui.views.handler.PropertiesCommandHandler">
          <enabledWhen>
             <with variable="selection">
                <count value="1"/>
@@ -224,7 +232,7 @@
 
       <handler
             commandId="org.eclipse.ui.navigator.Open"
-            class="org.eclipse.tm.te.ui.views.internal.handler.OpenCommandHandler">
+            class="org.eclipse.tm.te.ui.views.handler.OpenCommandHandler">
           <enabledWhen>
             <with variable="selection">
                <count value="1"/>
@@ -241,7 +249,7 @@
 <!-- Eclipse core expressions property tester -->
    <extension point="org.eclipse.core.expressions.propertyTesters">
       <propertyTester
-            class="org.eclipse.tm.te.ui.views.internal.expressions.EditorPropertyTester"
+            class="org.eclipse.tm.te.ui.views.expressions.EditorPropertyTester"
             id="org.eclipse.tm.te.ui.views.EditorPropertyTester"
             namespace="org.eclipse.tm.te.ui.views"
             properties="hasApplicableEditorBindings"

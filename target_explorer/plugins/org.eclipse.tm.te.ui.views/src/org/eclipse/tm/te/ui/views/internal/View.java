@@ -29,7 +29,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.tm.te.ui.views.activator.UIPlugin;
 import org.eclipse.tm.te.ui.views.interfaces.IRoot;
 import org.eclipse.tm.te.ui.views.interfaces.IUIConstants;
-import org.eclipse.tm.te.ui.views.internal.nls.Messages;
+import org.eclipse.tm.te.ui.views.nls.Messages;
 import org.eclipse.ui.IAggregateWorkingSet;
 import org.eclipse.ui.ISources;
 import org.eclipse.ui.IWorkbenchActionConstants;

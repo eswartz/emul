@@ -7,7 +7,7 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.ui.views.internal.actions;
+package org.eclipse.tm.te.ui.views.actions;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -16,9 +16,9 @@ import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.tm.te.ui.views.activator.UIPlugin;
 import org.eclipse.tm.te.ui.views.internal.View;
-import org.eclipse.tm.te.ui.views.internal.nls.Messages;
-import org.eclipse.tm.te.ui.views.internal.workingsets.WorkingSetFilter;
-import org.eclipse.tm.te.ui.views.internal.workingsets.WorkingSetsContentProvider;
+import org.eclipse.tm.te.ui.views.nls.Messages;
+import org.eclipse.tm.te.ui.views.workingsets.WorkingSetFilter;
+import org.eclipse.tm.te.ui.views.workingsets.WorkingSetsContentProvider;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IAggregateWorkingSet;
 import org.eclipse.ui.IMemento;

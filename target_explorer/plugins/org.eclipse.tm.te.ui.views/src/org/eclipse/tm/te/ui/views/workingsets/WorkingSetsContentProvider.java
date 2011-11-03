@@ -7,7 +7,7 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.ui.views.internal.workingsets;
+package org.eclipse.tm.te.ui.views.workingsets;
 
 import java.util.Map;
 import java.util.WeakHashMap;

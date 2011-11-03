@@ -7,7 +7,7 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.ui.views.internal.nls;
+package org.eclipse.tm.te.ui.views.nls;
 
 import org.eclipse.osgi.util.NLS;
 
@@ -17,7 +17,7 @@ import org.eclipse.osgi.util.NLS;
 public class Messages extends NLS {
 
 	// The plug-in resource bundle name
-	private static final String BUNDLE_NAME = "org.eclipse.tm.te.ui.views.internal.nls.Messages"; //$NON-NLS-1$
+	private static final String BUNDLE_NAME = "org.eclipse.tm.te.ui.views.nls.Messages"; //$NON-NLS-1$
 
 	/**
 	 * Static constructor.

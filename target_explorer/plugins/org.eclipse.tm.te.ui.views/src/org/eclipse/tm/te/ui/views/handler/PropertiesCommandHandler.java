@@ -7,7 +7,7 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.ui.views.internal.handler;
+package org.eclipse.tm.te.ui.views.handler;
 
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
@@ -19,7 +19,7 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.tm.te.ui.views.activator.UIPlugin;
 import org.eclipse.tm.te.ui.views.interfaces.IUIConstants;
 import org.eclipse.tm.te.ui.views.internal.editor.EditorInput;
-import org.eclipse.tm.te.ui.views.internal.nls.Messages;
+import org.eclipse.tm.te.ui.views.nls.Messages;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorReference;
 import org.eclipse.ui.IWorkbenchPage;

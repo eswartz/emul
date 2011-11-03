@@ -7,7 +7,7 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.ui.views.internal.listeners;
+package org.eclipse.tm.te.ui.views.listeners;
 
 import java.util.HashMap;
 import java.util.Map;

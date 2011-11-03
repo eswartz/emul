@@ -11,10 +11,10 @@ package org.eclipse.tm.te.ui.views.internal.editor;
 
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.tm.te.ui.views.extensions.EditorPageBinding;
+import org.eclipse.tm.te.ui.views.extensions.EditorPageBindingExtensionPointManager;
+import org.eclipse.tm.te.ui.views.extensions.EditorPageExtensionPointManager;
 import org.eclipse.tm.te.ui.views.interfaces.IEditorPage;
-import org.eclipse.tm.te.ui.views.internal.extensions.EditorPageBinding;
-import org.eclipse.tm.te.ui.views.internal.extensions.EditorPageBindingExtensionPointManager;
-import org.eclipse.tm.te.ui.views.internal.extensions.EditorPageExtensionPointManager;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorSite;
 import org.eclipse.ui.IMemento;
