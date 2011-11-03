@@ -32,7 +32,7 @@ import org.eclipse.ui.navigator.IExtensionStateModel;
 
 /**
  * Provides the radio buttons at the top of the view menu that control the root of the Target
- * Explorer, which is either working sets of projects. When the state is changed through the
+ * Explorer, which is either working sets or targets. When the state is changed through the
  * actions, the WorkingSetsContentProvider.SHOW_TOP_LEVEL_WORKING_SETS property in the extension
  * state model is updated.
  *
@@ -44,7 +44,7 @@ import org.eclipse.ui.navigator.IExtensionStateModel;
 public class WorkingSetRootModeActionGroup extends ActionGroup {
 
 	/* default */ IExtensionStateModel stateModel;
-	/* default */ StructuredViewer structuredViewer;
+	/* default */ StructuredViewer viewer;
 
 	private boolean hasContributedToViewMenu = false;
 	private IAction workingSetsAction = null;
@@ -76,12 +76,12 @@ public class WorkingSetRootModeActionGroup extends ActionGroup {
 			if (stateModel.getBooleanProperty(WorkingSetsContentProvider.SHOW_TOP_LEVEL_WORKING_SETS) != groupWorkingSets) {
 				stateModel.setBooleanProperty(WorkingSetsContentProvider.SHOW_TOP_LEVEL_WORKING_SETS, groupWorkingSets);
 
-				structuredViewer.getControl().setRedraw(false);
+				viewer.getControl().setRedraw(false);
 				try {
-					structuredViewer.refresh();
+					viewer.refresh();
 				}
 				finally {
-					structuredViewer.getControl().setRedraw(true);
+					viewer.getControl().setRedraw(true);
 				}
 			}
 		}
@@ -91,13 +91,13 @@ public class WorkingSetRootModeActionGroup extends ActionGroup {
 	 * Create an action group that will listen to the stateModel and update the structuredViewer
 	 * when necessary.
 	 *
-	 * @param aStructuredViewer
-	 * @param aStateModel
+	 * @param viewer
+	 * @param stateModel
 	 */
-	public WorkingSetRootModeActionGroup(StructuredViewer aStructuredViewer, IExtensionStateModel aStateModel) {
+	public WorkingSetRootModeActionGroup(StructuredViewer viewer, IExtensionStateModel stateModel) {
 		super();
-		structuredViewer = aStructuredViewer;
-		stateModel = aStateModel;
+		this.viewer = viewer;
+		this.stateModel = stateModel;
 	}
 
 	/* (non-Javadoc)
@@ -108,8 +108,7 @@ public class WorkingSetRootModeActionGroup extends ActionGroup {
 		if (hasContributedToViewMenu) return;
 		IMenuManager topLevelSubMenu = new MenuManager(Messages.WorkingSetRootModeActionGroup_Top_Level_Element);
 		addActions(topLevelSubMenu);
-		actionBars.getMenuManager()
-		                .insertBefore(IWorkbenchActionConstants.MB_ADDITIONS, topLevelSubMenu);
+		actionBars.getMenuManager().insertBefore(IWorkbenchActionConstants.MB_ADDITIONS, topLevelSubMenu);
 		hasContributedToViewMenu = true;
 	}
 
