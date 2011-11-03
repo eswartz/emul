@@ -488,8 +488,20 @@ static void command_attach(char * token, Channel * c) {
 }
 
 static void command_detach(char * token, Channel * c) {
+    int err = 0;
+    char id[256];
+
+    json_read_string(&c->inp, id, sizeof(id));
+    if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
+    if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
+
     /* TODO: implement command_detach() */
-    exception(ERR_PROTOCOL);
+    err = set_errno(ERR_UNSUPPORTED, "Detach is not implemented yet");
+
+    write_stringz(&c->out, "R");
+    write_stringz(&c->out, token);
+    write_errno(&c->out, err);
+    write_stream(&c->out, MARKER_EOM);
 }
 
 static void command_get_signal_mask(char * token, Channel * c) {
