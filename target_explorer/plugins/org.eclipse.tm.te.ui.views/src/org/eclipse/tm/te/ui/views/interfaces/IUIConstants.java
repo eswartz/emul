@@ -23,4 +23,16 @@ public interface IUIConstants {
 	 * The target explorer editor id.
 	 */
 	public static final String ID_EDITOR = "org.eclipse.tm.te.ui.view.Editor"; //$NON-NLS-1$
+
+	// ***** Define the constants for the Target Explorer view root mode *****
+
+	/**
+	 * Root nodes are working sets.
+	 */
+	public static final int MODE_WORKING_SETS = 0;
+
+	/**
+	 * Root nodes are whatever is contributed to the view.
+	 */
+	public static final int MODE_NORMAL = 1;
 }

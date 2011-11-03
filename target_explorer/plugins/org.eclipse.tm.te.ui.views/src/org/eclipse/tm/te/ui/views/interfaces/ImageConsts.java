@@ -13,6 +13,9 @@ package org.eclipse.tm.te.ui.views.interfaces;
  * Image registry constants.
  */
 public interface ImageConsts {
+
+	// ***** The directory structure constants *****
+
 	/**
 	 * The root directory where to load the images from, relative to
 	 * the bundle directory.
@@ -26,7 +29,25 @@ public interface ImageConsts {
     public final static String  IMAGE_DIR_EVIEW = "eview16/"; //$NON-NLS-1$
 
     /**
+     * The directory where to load model object images from,
+     * relative to the image root directory.
+     */
+    public final static String  IMAGE_DIR_OBJ = "obj16/"; //$NON-NLS-1$
+
+    // ***** The image constants *****
+
+    /**
      * The key to access the Target Explorer editor image.
      */
     public static final String  EDITOR = "TargetExplorerEditor"; //$NON-NLS-1$
+
+    /**
+     * The key to access the Target Explorer view image.
+     */
+    public static final String  VIEW = "TargetExplorerView"; //$NON-NLS-1$
+
+    /**
+     * The key to access the Target Explorer working set image.
+     */
+    public static final String  WORKING_SET = "TargetExplorerWorkingSet"; //$NON-NLS-1$
 }

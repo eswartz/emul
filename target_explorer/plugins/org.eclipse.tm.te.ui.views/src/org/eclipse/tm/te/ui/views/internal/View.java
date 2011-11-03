@@ -14,6 +14,7 @@ import java.util.Collections;
 import org.eclipse.core.commands.Command;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.expressions.EvaluationContext;
+import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.PlatformObject;
@@ -23,13 +24,22 @@ import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.tm.te.ui.views.activator.UIPlugin;
 import org.eclipse.tm.te.ui.views.interfaces.IRoot;
+import org.eclipse.tm.te.ui.views.interfaces.IUIConstants;
+import org.eclipse.tm.te.ui.views.internal.nls.Messages;
+import org.eclipse.ui.IAggregateWorkingSet;
 import org.eclipse.ui.ISources;
 import org.eclipse.ui.IWorkbenchActionConstants;
+import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.commands.ICommandService;
+import org.eclipse.ui.internal.navigator.framelist.Frame;
+import org.eclipse.ui.internal.navigator.framelist.FrameList;
+import org.eclipse.ui.internal.navigator.framelist.TreeFrame;
+import org.eclipse.ui.model.IWorkbenchAdapter;
 import org.eclipse.ui.navigator.CommonNavigator;
 import org.eclipse.ui.navigator.ICommonActionConstants;
 
@@ -39,9 +49,19 @@ import org.eclipse.ui.navigator.ICommonActionConstants;
  * <p>
  * The view is based on the Eclipse Common Navigator framework.
  */
+@SuppressWarnings("restriction")
 public class View extends CommonNavigator {
 	// The root object instance associated with this view instance
 	private final IRoot root;
+
+	// The view root mode
+	private int rootMode = IUIConstants.MODE_NORMAL;
+
+	/**
+	 * Used only in the case of top level = MODE_NORMAL and only when some
+	 * working sets are selected.
+	 */
+	private String workingSetLabel;
 
 	/**
 	 * Target Explorer root node implementation
@@ -61,12 +81,63 @@ public class View extends CommonNavigator {
 		root = new Root();
 	}
 
+	/**
+	 * Returns the root object.
+	 *
+	 * @return The root object.
+	 */
+	public final IRoot getRoot() {
+		return root;
+	}
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.ui.navigator.CommonNavigator#getInitialInput()
 	 */
 	@Override
 	protected Object getInitialInput() {
 		return root;
+	}
+
+	/**
+	 * Sets the view's root mode.
+	 *
+	 * @param mode The root mode.
+	 * @see IUIConstants
+	 */
+	@Override
+    public void setRootMode(int mode) {
+		rootMode = mode;
+	}
+
+	/**
+	 * Returns the view's root mode.
+	 *
+	 * @return The root mode
+	 * @see IUIConstants
+	 */
+	@Override
+    public int getRootMode() {
+		return rootMode;
+	}
+
+	/**
+	 * Sets the working set label.
+	 *
+	 * @param label The working set label or <code>null</code>.
+	 */
+	@Override
+    public void setWorkingSetLabel(String label) {
+		workingSetLabel = label;
+	}
+
+	/**
+	 * Returns the working set label.
+	 *
+	 * @return The working set label or <code>null</code>.
+	 */
+	@Override
+    public String getWorkingSetLabel() {
+		return workingSetLabel;
 	}
 
 	/* (non-Javadoc)
@@ -133,5 +204,87 @@ public class View extends CommonNavigator {
 			// Fallback to the default implementation
 			super.handleDoubleClick(dblClickEvent);
 		}
+	}
+
+	/**
+	 * The superclass does not deal with the content description, handle it here.
+	 *
+	 * @noreference
+	 */
+	@Override
+    public void updateTitle() {
+		super.updateTitle();
+
+		// Get the input from the common viewer
+		Object input = getCommonViewer().getInput();
+
+		// The content description to set
+		String contentDescription = null;
+
+		if (input instanceof IAdaptable) {
+			IWorkbenchAdapter adapter = (IWorkbenchAdapter) ((IAdaptable) input).getAdapter(IWorkbenchAdapter.class);
+			if (adapter != null) contentDescription = adapter.getLabel(input);
+		}
+		else if (input instanceof IRoot) {
+			// The root node does not have a content description
+		}
+		else if (input != null && !(input instanceof IAggregateWorkingSet)) {
+			contentDescription = input.toString();
+		}
+
+		setContentDescription(contentDescription != null ? contentDescription : ""); //$NON-NLS-1$
+	}
+
+	/**
+	 * Returns the tool tip text for the given element.
+	 *
+	 * @param element The element or <code>null</code>.
+	 * @return The tooltip or <code>null</code>.
+	 */
+    @Override
+	public String getFrameToolTipText(Object element) {
+		String result;
+
+		if (element instanceof IAggregateWorkingSet) {
+			result = Messages.View_workingSetModel;
+		}
+		else if (element instanceof IWorkingSet) {
+			result = ((IWorkingSet) element).getLabel();
+		}
+		else {
+			result = super.getFrameToolTipText(element);
+		}
+
+		if (rootMode == IUIConstants.MODE_NORMAL) {
+			if (workingSetLabel == null) return result;
+			if (result.length() == 0) return NLS.bind(Messages.View_toolTip, workingSetLabel);
+			return NLS.bind(Messages.View_toolTip2, result, workingSetLabel);
+		}
+
+		// Working set mode. During initialization element and viewer can be null.
+		if (element != null && !(element instanceof IWorkingSet) && getCommonViewer() != null) {
+			FrameList frameList = getCommonViewer().getFrameList();
+			// Happens during initialization
+			if (frameList == null) return result;
+			int index = frameList.getCurrentIndex();
+			IWorkingSet ws = null;
+			while (index >= 0) {
+				Frame frame = frameList.getFrame(index);
+				if (frame instanceof TreeFrame) {
+					Object input = ((TreeFrame) frame).getInput();
+					if (input instanceof IWorkingSet && !(input instanceof IAggregateWorkingSet)) {
+						ws = (IWorkingSet) input;
+						break;
+					}
+				}
+				index--;
+			}
+			if (ws != null) {
+				return NLS.bind(Messages.View_toolTip3, ws.getLabel(), result);
+			}
+			return result;
+		}
+		return result;
+
 	}
 }
