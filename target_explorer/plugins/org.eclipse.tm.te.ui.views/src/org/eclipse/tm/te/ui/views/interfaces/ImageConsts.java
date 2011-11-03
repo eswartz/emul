@@ -47,6 +47,11 @@ public interface ImageConsts {
     public static final String  VIEW = "TargetExplorerView"; //$NON-NLS-1$
 
     /**
+     * The key to access the Target Explorer working sets image.
+     */
+    public static final String  WORKING_SETS = "TargetExplorerWorkingSets"; //$NON-NLS-1$
+
+    /**
      * The key to access the Target Explorer working set image.
      */
     public static final String  WORKING_SET = "TargetExplorerWorkingSet"; //$NON-NLS-1$

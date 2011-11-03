@@ -172,7 +172,7 @@ public class WorkingSetRootModeActionGroup extends ActionGroup {
 
 		workingSetsAction = new TopLevelContentAction(true);
 		workingSetsAction.setText(Messages.WorkingSetRootModeActionGroup_Working_Set);
-		workingSetsAction.setImageDescriptor(UIPlugin.getImageDescriptor(ImageConsts.WORKING_SET));
+		workingSetsAction.setImageDescriptor(UIPlugin.getImageDescriptor(ImageConsts.WORKING_SETS));
 
 		return new IAction[] { targetsAction, workingSetsAction };
 	}
