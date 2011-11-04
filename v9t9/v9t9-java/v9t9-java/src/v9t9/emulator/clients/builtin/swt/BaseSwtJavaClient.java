@@ -27,6 +27,11 @@ import v9t9.engine.VdpHandler;
  */
 public abstract class BaseSwtJavaClient implements Client {
 
+	static {
+		// set early for GNOME Shell
+		Display.setAppName("V9t9");
+	}
+	
 	protected VdpHandler video;
 	protected Machine machine;
 	protected KeyboardHandler keyboardHandler;
