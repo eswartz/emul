@@ -167,8 +167,10 @@
 <!-- Working Set contributions -->
    <extension point="org.eclipse.ui.workingSets">
       <workingSet
+            icon="icons/obj16/workingset.gif"
             id="org.eclipse.tm.te.ui.views.workingset"
-            name="%workingset.name">
+            name="%workingset.name"
+            pageClass="org.eclipse.tm.te.ui.views.workingsets.pages.TargetWorkingSetPage">
       </workingSet>
    </extension>
 

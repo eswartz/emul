@@ -45,4 +45,18 @@ public class Messages extends NLS {
 	public static String WorkingSetRootModeActionGroup_Working_Set;
 
 	public static String PropertiesCommandHandler_error_initPartFailed;
+
+	public static String TargetWorkingSetPage_workingSet_name;
+	public static String TargetWorkingSetPage_workspace_content;
+	public static String TargetWorkingSetPage_add_button;
+	public static String TargetWorkingSetPage_addAll_button;
+	public static String TargetWorkingSetPage_remove_button;
+	public static String TargetWorkingSetPage_removeAll_button;
+	public static String TargetWorkingSetPage_workingSet_content;
+	public static String TargetWorkingSetPage_warning_nameWhitespace;
+	public static String TargetWorkingSetPage_warning_nameMustNotBeEmpty;
+	public static String TargetWorkingSetPage_warning_workingSetExists;
+	public static String TargetWorkingSetPage_warning_resourceMustBeChecked;
+	public static String TargetWorkingSetPage_title;
+	public static String TargetWorkingSetPage_workingSet_description;
 }
