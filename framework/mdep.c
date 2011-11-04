@@ -20,6 +20,13 @@
  * agent code portable between Linux, Windows, VxWorks and potentially other OSes.
  */
 
+#if defined(__GNUC__) && _FILE_OFFSET_BITS != 64
+#  ifdef _FILE_OFFSET_BITS
+#    undef _FILE_OFFSET_BITS
+#  endif
+#  define _FILE_OFFSET_BITS 64
+#endif
+
 #include <config.h>
 #include <stdlib.h>
 #include <stdio.h>

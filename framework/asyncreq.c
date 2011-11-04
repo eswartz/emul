@@ -13,6 +13,13 @@
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
 
+#if defined(__GNUC__) && _FILE_OFFSET_BITS != 64
+#  ifdef _FILE_OFFSET_BITS
+#    undef _FILE_OFFSET_BITS
+#  endif
+#  define _FILE_OFFSET_BITS 64
+#endif
+
 #include <config.h>
 #include <assert.h>
 #include <stddef.h>
@@ -71,7 +78,7 @@ static void * worker_thread_handler(void * x) {
             break;
 
         case AsyncReqSeekRead:          /* File read at offset */
-            req->u.fio.rval = pread(req->u.fio.fd, req->u.fio.bufp, req->u.fio.bufsz, req->u.fio.offset);
+            req->u.fio.rval = pread(req->u.fio.fd, req->u.fio.bufp, req->u.fio.bufsz, (off_t)req->u.fio.offset);
             if (req->u.fio.rval == -1) {
                 req->error = errno;
                 assert(req->error);
@@ -79,7 +86,7 @@ static void * worker_thread_handler(void * x) {
             break;
 
         case AsyncReqSeekWrite:         /* File write at offset */
-            req->u.fio.rval = pwrite(req->u.fio.fd, req->u.fio.bufp, req->u.fio.bufsz, req->u.fio.offset);
+            req->u.fio.rval = pwrite(req->u.fio.fd, req->u.fio.bufp, req->u.fio.bufsz, (off_t)req->u.fio.offset);
             if (req->u.fio.rval == -1) {
                 req->error = errno;
                 assert(req->error);
@@ -226,7 +233,7 @@ void async_req_post(AsyncReqInfo * req) {
         case AsyncReqSeekWrite:
             memset(&req->u.fio.aio, 0, sizeof(req->u.fio.aio));
             req->u.fio.aio.aio_fildes = req->u.fio.fd;
-            req->u.fio.aio.aio_offset = req->u.fio.offset;
+            req->u.fio.aio.aio_offset = (off_t)req->u.fio.offset;
             req->u.fio.aio.aio_buf = req->u.fio.bufp;
             req->u.fio.aio.aio_nbytes = req->u.fio.bufsz;
             req->u.fio.aio.aio_sigevent.sigev_notify = SIGEV_THREAD;

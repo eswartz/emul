@@ -19,6 +19,10 @@
  * Implements input and output stream over TCP/IP transport.
  */
 
+#if defined(__GNUC__) && !defined(_GNU_SOURCE)
+#  define _GNU_SOURCE
+#endif
+
 #include <config.h>
 #include <fcntl.h>
 #include <stddef.h>
@@ -453,7 +457,7 @@ static void tcp_write_block_stream(OutputStream * out, const char * bytes, size_
     while (cnt < size) write_stream(out, (unsigned char)bytes[cnt++]);
 }
 
-static ssize_t tcp_splice_block_stream(OutputStream * out, int fd, size_t size, off_t * offset) {
+static ssize_t tcp_splice_block_stream(OutputStream * out, int fd, size_t size, int64_t * offset) {
     assert(is_dispatch_thread());
     if (size == 0) return 0;
 #if ENABLE_Splice
@@ -510,7 +514,7 @@ static ssize_t tcp_splice_block_stream(OutputStream * out, int fd, size_t size, 
         char buffer[BUF_SIZE];
         if (size > BUF_SIZE) size = BUF_SIZE;
         if (offset != NULL) {
-            rd = pread(fd, buffer, size, *offset);
+            rd = pread(fd, buffer, size, (off_t)*offset);
             if (rd > 0) *offset += rd;
         }
         else {

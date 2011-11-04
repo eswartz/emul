@@ -736,7 +736,7 @@ void json_splice_binary(OutputStream * out, int fd, size_t size) {
     json_splice_binary_offset(out, fd, size, NULL);
 }
 
-void json_splice_binary_offset(OutputStream * out, int fd, size_t size, off_t * offset) {
+void json_splice_binary_offset(OutputStream * out, int fd, size_t size, int64_t * offset) {
     if (out->supports_zero_copy && size > 0) {
         write_stream(out, '(');
         json_write_ulong(out, size);
@@ -756,7 +756,7 @@ void json_splice_binary_offset(OutputStream * out, int fd, size_t size, off_t * 
         while (size > 0) {
             ssize_t rd = 0;
             if (offset != NULL) {
-                rd = pread(fd, buffer, size < sizeof(buffer) ? size : sizeof(buffer), *offset);
+                rd = pread(fd, buffer, size < sizeof(buffer) ? size : sizeof(buffer), (off_t)*offset);
                 if (rd > 0) *offset += rd;
             }
             else {

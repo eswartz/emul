@@ -40,7 +40,7 @@ void (write_block_stream)(OutputStream * out, const char * bytes, size_t size) {
     out->write_block(out, bytes, size);
 }
 
-ssize_t (splice_block_stream)(OutputStream * out, int fd, size_t size, off_t * offset) {
+ssize_t (splice_block_stream)(OutputStream * out, int fd, size_t size, int64_t * offset) {
     return out->splice_block(out, fd, size, offset);
 }
 

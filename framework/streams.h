@@ -41,7 +41,7 @@ struct OutputStream {
     unsigned char * end;
     void (*write)(OutputStream * stream, int byte);
     void (*write_block)(OutputStream * stream, const char * bytes, size_t size);
-    ssize_t (*splice_block)(OutputStream * stream, int fd, size_t size, off_t * offset);
+    ssize_t (*splice_block)(OutputStream * stream, int fd, size_t size, int64_t * offset);
 };
 
 typedef struct InputStream InputStream;
@@ -69,7 +69,7 @@ extern int (read_stream)(InputStream * inp);
 extern int (peek_stream)(InputStream * inp);
 extern void (write_stream)(OutputStream * out, int b);
 extern void (write_block_stream)(OutputStream * out, const char * bytes, size_t size);
-extern ssize_t (splice_block_stream)(OutputStream * out, int fd, size_t size, off_t * offset);
+extern ssize_t (splice_block_stream)(OutputStream * out, int fd, size_t size, int64_t * offset);
 
 extern void write_string(OutputStream * out, const char * str);
 extern void write_stringz(OutputStream * out, const char * str);

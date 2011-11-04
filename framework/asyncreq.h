@@ -56,7 +56,7 @@ struct AsyncReqInfo {
         struct {
             /* In */
             int fd;
-            off_t offset;
+            int64_t offset;
             void * bufp;
             size_t bufsz;
 

@@ -23,6 +23,10 @@
 
 /* TODO: It should be possible to filter processes on a criteria (user, name, etc) */
 
+#if defined(__GNUC__) && !defined(_GNU_SOURCE)
+#  define _GNU_SOURCE
+#endif
+
 #include <config.h>
 
 #if SERVICE_Processes || SERVICE_Terminals

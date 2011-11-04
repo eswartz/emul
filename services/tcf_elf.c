@@ -17,6 +17,17 @@
  * This module implements reading and caching of ELF files.
  */
 
+#if defined(__GNUC__) && !defined(_GNU_SOURCE)
+#  define _GNU_SOURCE
+#endif
+
+#if defined(__GNUC__) && _FILE_OFFSET_BITS != 64
+#  ifdef _FILE_OFFSET_BITS
+#    undef _FILE_OFFSET_BITS
+#  endif
+#  define _FILE_OFFSET_BITS 64
+#endif
+
 #include <config.h>
 
 #if ENABLE_ELF

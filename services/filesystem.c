@@ -17,6 +17,17 @@
  * Target service implementation: file system access (TCF name FileSystem)
  */
 
+#if defined(__GNUC__) && !defined(_GNU_SOURCE)
+#  define _GNU_SOURCE
+#endif
+
+#if defined(__GNUC__) && _FILE_OFFSET_BITS != 64
+#  ifdef _FILE_OFFSET_BITS
+#    undef _FILE_OFFSET_BITS
+#  endif
+#  define _FILE_OFFSET_BITS 64
+#endif
+
 #include <config.h>
 
 #if SERVICE_FileSystem
@@ -728,7 +739,7 @@ static void command_read(char * token, Channel * c) {
         }
         else {
             req->info.type = AsyncReqSeekRead;
-            req->info.u.fio.offset = (off_t)offset;
+            req->info.u.fio.offset = offset;
         }
         req->info.u.fio.fd = h->file;
         req->info.u.fio.bufp = loc_alloc(len);
@@ -779,7 +790,7 @@ static void command_write(char * token, Channel * c) {
         }
         else {
             req->info.type = AsyncReqSeekWrite;
-            req->info.u.fio.offset = (off_t)offset;
+            req->info.u.fio.offset = offset;
         }
         req->info.u.fio.fd = h->file;
         req->info.u.fio.bufp = loc_alloc(len);

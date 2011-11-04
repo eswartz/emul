@@ -21,6 +21,10 @@
  * Plugins system.
  */
 
+#if defined(__GNUC__) && !defined(_GNU_SOURCE)
+#  define _GNU_SOURCE
+#endif
+
 #include <config.h>
 
 #if ENABLE_Plugins

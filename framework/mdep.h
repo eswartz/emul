@@ -89,14 +89,6 @@ typedef int socklen_t;
 
 #if defined(__CYGWIN__)
 
-#ifndef _LARGEFILE_SOURCE
-#error "Need CC command line option: -D_LARGEFILE_SOURCE"
-#endif
-
-#ifndef _GNU_SOURCE
-#error "Need CC command line option: -D_GNU_SOURCE"
-#endif
-
 #include <sys/unistd.h>
 
 #else /* not __CYGWIN__ */
@@ -312,14 +304,6 @@ extern int loc_clock_gettime(int, struct timespec *);
 
 #else
 /* Linux, BSD, MacOS, UNIX */
-
-#ifndef _LARGEFILE_SOURCE
-#error "Need CC command line option: -D_LARGEFILE_SOURCE"
-#endif
-
-#ifndef _GNU_SOURCE
-#error "Need CC command line option: -D_GNU_SOURCE"
-#endif
 
 #include <unistd.h>
 #include <memory.h>

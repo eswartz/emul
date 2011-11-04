@@ -259,14 +259,14 @@ static void pipe_write_block_stream(OutputStream * out, const char * bytes, size
     while (cnt < size) write_stream(out, (unsigned char)bytes[cnt++]);
 }
 
-static ssize_t pipe_splice_block_stream(OutputStream * out, int fd, size_t size, off_t * offset) {
+static ssize_t pipe_splice_block_stream(OutputStream * out, int fd, size_t size, int64_t * offset) {
     ssize_t rd = 0;
     char buffer[BUF_SIZE];
     assert(is_dispatch_thread());
     if (size == 0) return 0;
     if (size > BUF_SIZE) size = BUF_SIZE;
     if (offset != NULL) {
-        rd = pread(fd, buffer, size, *offset);
+        rd = pread(fd, buffer, size, (off_t)*offset);
         if (rd > 0) *offset += rd;
     }
     else {
