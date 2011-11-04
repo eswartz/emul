@@ -41,7 +41,7 @@ public class NodePropertiesContentProvider implements IStructuredContentProvider
 	protected final static String[] FILTERED_PROPERTIES = new String[] {
 		"name", "typeLabel", //$NON-NLS-1$ //$NON-NLS-2$
 		"instance", "childrenQueried", //$NON-NLS-1$ //$NON-NLS-2$
-		IPeerModelProperties.PROP_CHANNEL_REF_COUNTER,
+		IPeerModelProperties.PROP_CHANNEL_REF_COUNTER, "Path", //$NON-NLS-1$
 		"hasTabularProperties" //$NON-NLS-1$
 	};
 

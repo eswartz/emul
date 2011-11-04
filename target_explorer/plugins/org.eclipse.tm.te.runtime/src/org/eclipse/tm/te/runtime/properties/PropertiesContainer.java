@@ -20,8 +20,8 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.PlatformObject;
 import org.eclipse.tm.te.runtime.activator.CoreBundleActivator;
-import org.eclipse.tm.te.runtime.events.EventManager;
 import org.eclipse.tm.te.runtime.events.ChangeEvent;
+import org.eclipse.tm.te.runtime.events.EventManager;
 import org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer;
 import org.eclipse.tm.te.runtime.interfaces.tracing.ITraceIds;
 
@@ -349,9 +349,22 @@ public class PropertiesContainer extends PlatformObject implements IPropertiesCo
 		this.properties.clear();
 		this.properties.putAll(properties);
 
+		postSetProperties(properties);
+	}
+
+	/**
+	 * Method hook called by {@link #setProperties(Map)} just before the
+	 * method returns to the caller.
+	 *
+	 * @param properties The map of properties set. Must not be <code>null</code>.
+	 */
+	protected void postSetProperties(Map<String, Object> properties) {
+		Assert.isTrue(checkThreadAccess(), "Illegal Thread Access"); //$NON-NLS-1$
+		Assert.isNotNull(properties);
+
 		EventObject event = newEvent(this, "properties", null, properties); //$NON-NLS-1$
 		if (event != null) EventManager.getInstance().fireEvent(event);
-}
+	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.runtime.interfaces.IPropertiesContainer#setProperty(java.lang.String, boolean)
@@ -428,11 +441,26 @@ public class PropertiesContainer extends PlatformObject implements IPropertiesCo
 			} else {
 				properties.remove(key);
 			}
-			EventObject event = newEvent(this, key, oldValue, value);
-			if (event != null) EventManager.getInstance().fireEvent(event);
+			postSetProperty(key, value, oldValue);
 			return true;
 		}
 		return false;
+	}
+
+	/**
+	 * Method hook called by {@link #setProperty(String, Object)} in case the value
+	 * of the given property changed and just before the method returns to the caller.
+	 *
+	 * @param key The property key. Must not be <code>null</code>.
+	 * @param value The property value.
+	 * @param oldValue The old property value.
+	 */
+	public void postSetProperty(String key, Object value, Object oldValue) {
+		Assert.isTrue(checkThreadAccess(), "Illegal Thread Access"); //$NON-NLS-1$
+		Assert.isNotNull(key);
+
+		EventObject event = newEvent(this, key, oldValue, value);
+		if (event != null) EventManager.getInstance().fireEvent(event);
 	}
 
 	/* (non-Javadoc)
