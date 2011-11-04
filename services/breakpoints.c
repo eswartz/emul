@@ -57,7 +57,7 @@ typedef struct ContextExtensionBP ContextExtensionBP;
 struct BreakpointRef {
     LINK link_inp;
     LINK link_bp;
-    Channel * channel;
+    Channel * channel; /* NULL means API client */
     BreakpointInfo * bp;
 };
 
@@ -71,7 +71,7 @@ struct BreakpointInfo {
     int client_cnt;
     int instruction_cnt;
     ErrorReport * error;
-    char * address;
+    char * location;
     char * condition;
     char ** context_ids;
     char ** context_ids_prev;
@@ -153,6 +153,15 @@ struct ContextExtensionBP {
 static const char * BREAKPOINTS = "Breakpoints";
 
 static size_t context_extension_offset = 0;
+
+typedef struct Listener {
+    BreakpointsEventListener * func;
+    void * args;
+} Listener;
+
+static Listener * listeners = NULL;
+static unsigned listener_cnt = 0;
+static unsigned listener_max = 0;
 
 #define EXT(ctx) ((ContextExtensionBP *)((char *)(ctx) + context_extension_offset))
 
@@ -605,7 +614,10 @@ static void write_breakpoint_status(OutputStream * out, BreakpointInfo * bp) {
     write_stream(out, '}');
 }
 
-static void send_event_breakpoint_status(OutputStream * out, BreakpointInfo * bp) {
+static void send_event_breakpoint_status(Channel * channel, BreakpointInfo * bp) {
+    OutputStream * out = channel ? &channel->out : &broadcast_group->out;
+    unsigned i;
+
     write_stringz(out, "E");
     write_stringz(out, BREAKPOINTS);
     write_stringz(out, "status");
@@ -615,6 +627,13 @@ static void send_event_breakpoint_status(OutputStream * out, BreakpointInfo * bp
     write_breakpoint_status(out, bp);
     write_stream(out, 0);
     write_stream(out, MARKER_EOM);
+    if (channel) return;
+
+    for (i = 0; i < listener_cnt; i++) {
+        Listener * l = listeners + i;
+        if (l->func->breakpoint_status_changed == NULL) continue;
+        l->func->breakpoint_status_changed(bp, l->args);
+    }
 }
 
 static InstructionRef * link_breakpoint_instruction(BreakpointInfo * bp, Context * ctx,
@@ -799,10 +818,15 @@ static void expr_cache_enter(CacheClient * client, BreakpointInfo * bp, Context 
             BreakpointRef * br = link_bp2br(l);
             Channel * c = br->channel;
             assert(br->bp == bp);
-            assert(!is_channel_closed(c));
             cache_enter_cnt++;
             run_ctrl_lock();
-            cache_enter(client, c, &args, sizeof(args));
+            if (c == NULL) {
+                client(&args);
+            }
+            else {
+                assert(!is_channel_closed(c));
+                cache_enter(client, c, &args, sizeof(args));
+            }
             l = l->next;
         }
     }
@@ -823,7 +847,7 @@ static void free_bp(BreakpointInfo * bp) {
     if (*bp->id) list_remove(&bp->link_id);
     if (bp->ctx) context_unlock(bp->ctx);
     release_error_report(bp->error);
-    loc_free(bp->address);
+    loc_free(bp->location);
     loc_free(bp->context_ids);
     loc_free(bp->context_ids_prev);
     loc_free(bp->context_names);
@@ -887,7 +911,7 @@ static void notify_breakpoints_status(void) {
             if (bp->instruction_cnt == 0) free_bp(bp);
         }
         else if (bp->status_changed) {
-            if (*bp->id) send_event_breakpoint_status(&broadcast_group->out, bp);
+            if (*bp->id) send_event_breakpoint_status(NULL, bp);
             bp->status_changed = 0;
         }
     }
@@ -1012,7 +1036,7 @@ static void plant_at_address_expression(Context * ctx, ContextAddress ip, Breakp
     int error = 0;
     Value v;
 
-    if (evaluate_expression(ctx, STACK_NO_FRAME, ip, bp->address, 1, &v) < 0) error = errno;
+    if (evaluate_expression(ctx, STACK_NO_FRAME, ip, bp->location, 1, &v) < 0) error = errno;
     if (!error && value_to_address(&v, &addr) < 0) error = errno;
     if (bp->access_mode & (CTX_BP_ACCESS_DATA_READ | CTX_BP_ACCESS_DATA_WRITE)) {
         if (bp->access_size > 0) {
@@ -1051,7 +1075,7 @@ static ContextAddress bp_ip = 0;
 
 static void plant_breakpoint_address_iterator(CodeArea * area, void * x) {
     EvaluationArgs * args = (EvaluationArgs *)x;
-    if (args->bp->address == NULL) {
+    if (args->bp->location == NULL) {
         plant_breakpoint(args->ctx, args->bp, area->start_address, 1);
     }
     else {
@@ -1203,7 +1227,7 @@ static void evaluate_bp_location(BreakpointInfo * bp, Context * ctx) {
         address_expression_error(NULL, bp, errno);
 #endif
     }
-    else if (bp->address != NULL) {
+    else if (bp->location != NULL) {
         expr_cache_enter(evaluate_address_expression, bp, ctx);
     }
     else {
@@ -1495,8 +1519,8 @@ static int set_breakpoint_attributes(BreakpointInfo * bp, BreakpointAttribute * 
             json_read_string(buf_inp, bp->id, sizeof(bp->id));
         }
         else if (strcmp(name, BREAKPOINT_LOCATION) == 0) {
-            loc_free(bp->address);
-            bp->address = json_read_alloc_string(buf_inp);
+            loc_free(bp->location);
+            bp->location = json_read_alloc_string(buf_inp);
         }
         else if (strcmp(name, BREAKPOINT_ACCESSMODE) == 0) {
             bp->access_mode = json_read_long(buf_inp);
@@ -1552,8 +1576,8 @@ static int set_breakpoint_attributes(BreakpointInfo * bp, BreakpointAttribute * 
             bp->id[0] = 0;
         }
         else if (strcmp(name, BREAKPOINT_LOCATION) == 0) {
-            loc_free(bp->address);
-            bp->address = NULL;
+            loc_free(bp->location);
+            bp->location = NULL;
         }
         else if (strcmp(name, BREAKPOINT_ACCESSMODE) == 0) {
             bp->access_mode = 0;
@@ -1621,7 +1645,10 @@ static void write_breakpoint_properties(OutputStream * out, BreakpointInfo * bp)
     write_stream(out, '}');
 }
 
-static void send_event_context_added(OutputStream * out, BreakpointInfo * bp) {
+static void send_event_context_added(Channel * channel, BreakpointInfo * bp) {
+    OutputStream * out = channel ? &channel->out : &broadcast_group->out;
+    unsigned i;
+
     write_stringz(out, "E");
     write_stringz(out, BREAKPOINTS);
     write_stringz(out, "contextAdded");
@@ -1631,10 +1658,18 @@ static void send_event_context_added(OutputStream * out, BreakpointInfo * bp) {
     write_stream(out, ']');
     write_stream(out, 0);
     write_stream(out, MARKER_EOM);
+    if (channel) return;
+
+    for (i = 0; i < listener_cnt; i++) {
+        Listener * l = listeners + i;
+        if (l->func->breakpoint_created == NULL) continue;
+        l->func->breakpoint_created(bp, l->args);
+    }
 }
 
 static void send_event_context_changed(BreakpointInfo * bp) {
     OutputStream * out = &broadcast_group->out;
+    unsigned i;
 
     write_stringz(out, "E");
     write_stringz(out, BREAKPOINTS);
@@ -1645,10 +1680,17 @@ static void send_event_context_changed(BreakpointInfo * bp) {
     write_stream(out, ']');
     write_stream(out, 0);
     write_stream(out, MARKER_EOM);
+
+    for (i = 0; i < listener_cnt; i++) {
+        Listener * l = listeners + i;
+        if (l->func->breakpoint_changed == NULL) continue;
+        l->func->breakpoint_changed(bp, l->args);
+    }
 }
 
 static void send_event_context_removed(BreakpointInfo * bp) {
     OutputStream * out = &broadcast_group->out;
+    unsigned i;
 
     write_stringz(out, "E");
     write_stringz(out, BREAKPOINTS);
@@ -1659,9 +1701,15 @@ static void send_event_context_removed(BreakpointInfo * bp) {
     write_stream(out, ']');
     write_stream(out, 0);
     write_stream(out, MARKER_EOM);
+
+    for (i = 0; i < listener_cnt; i++) {
+        Listener * l = listeners + i;
+        if (l->func->breakpoint_deleted == NULL) continue;
+        l->func->breakpoint_deleted(bp, l->args);
+    }
 }
 
-static void add_breakpoint(Channel * c, BreakpointAttribute * attrs) {
+static BreakpointInfo * add_breakpoint(Channel * c, BreakpointAttribute * attrs) {
     char id[256];
     BreakpointRef * r = NULL;
     BreakpointInfo * bp = NULL;
@@ -1692,8 +1740,9 @@ static void add_breakpoint(Channel * c, BreakpointAttribute * attrs) {
     assert(r->bp == bp);
     assert(!list_is_empty(&bp->link_clients));
     if (chng || added) replant_breakpoint(bp);
-    if (added) send_event_context_added(&broadcast_group->out, bp);
+    if (added) send_event_context_added(NULL, bp);
     else if (chng) send_event_context_changed(bp);
+    return bp;
 }
 
 static void remove_ref(Channel * c, BreakpointRef * br) {
@@ -1733,8 +1782,8 @@ static void command_ini_bps(char * token, Channel * c) {
         l = l->next;
         if (list_is_empty(&bp->link_clients)) continue;
         assert(*bp->id);
-        send_event_context_added(&c->out, bp);
-        send_event_breakpoint_status(&c->out, bp);
+        send_event_context_added(c, bp);
+        send_event_breakpoint_status(c, bp);
     }
 
     /* Add breakpoints for this channel */
@@ -2057,6 +2106,30 @@ static void command_get_capabilities(char * token, Channel * c) {
     write_stream(&c->out, MARKER_EOM);
 }
 
+void add_breakpoint_event_listener(BreakpointsEventListener * listener, void * args) {
+    if (listener_cnt >= listener_max) {
+        listener_max += 8;
+        listeners = (Listener *)loc_realloc(listeners, listener_max * sizeof(Listener));
+    }
+    listeners[listener_cnt].func = listener;
+    listeners[listener_cnt].args = args;
+    listener_cnt++;
+}
+
+void rem_breakpoint_event_listener(BreakpointsEventListener * listener) {
+    unsigned i = 0;
+    while (i < listener_cnt) {
+        if (listeners[i++].func == listener) {
+            while (i < listener_cnt) {
+                listeners[i - 1] = listeners[i];
+                i++;
+            }
+            listener_cnt--;
+            break;
+        }
+    }
+}
+
 void iterate_breakpoints(IterateBreakpointsCallBack * callback, void * args) {
     LINK * l = breakpoints.next;
     while (l != &breakpoints) {
@@ -2068,6 +2141,25 @@ void iterate_breakpoints(IterateBreakpointsCallBack * callback, void * args) {
 
 BreakpointAttribute * get_breakpoint_attributes(BreakpointInfo * bp) {
     return bp->attrs;
+}
+
+BreakpointInfo * create_breakpoint(BreakpointAttribute * attrs) {
+    return add_breakpoint(NULL, attrs);
+}
+
+void change_breakpoint_attributes(BreakpointInfo * bp, BreakpointAttribute * attrs) {
+    int chng = set_breakpoint_attributes(bp, attrs);
+    assert(!list_is_empty(&bp->link_clients));
+    if (chng) {
+        replant_breakpoint(bp);
+        send_event_context_changed(bp);
+    }
+}
+
+void delete_breakpoint(BreakpointInfo * bp) {
+    BreakpointRef * br = find_breakpoint_ref(bp, NULL);
+    assert(br != NULL && br->channel == NULL);
+    remove_ref(NULL, br);
 }
 
 int is_breakpoint_address(Context * ctx, ContextAddress address) {
@@ -2252,13 +2344,37 @@ int skip_breakpoint(Context * ctx, int single_step) {
 }
 
 BreakpointInfo * create_eventpoint(const char * location, Context * ctx, EventPointCallBack * callback, void * callback_args) {
+    static const char * attr_list[] = { BREAKPOINT_ENABLED, BREAKPOINT_LOCATION };
     BreakpointInfo * bp = (BreakpointInfo *)loc_alloc_zero(sizeof(BreakpointInfo));
+    BreakpointAttribute ** ref = &bp->attrs;
+    unsigned i;
+
     bp->client_cnt = 1;
     bp->enabled = 1;
-    bp->address = loc_strdup(location);
+    if (location != NULL) bp->location = loc_strdup(location);
+    if (ctx != NULL) context_lock(bp->ctx = ctx);
+
+    /* Create attributes to allow get_breakpoint_attributes() and change_breakpoint_attributes() calls */
+    for (i = 0; i < sizeof(attr_list) / sizeof(char *); i++) {
+        ByteArrayOutputStream buf;
+        BreakpointAttribute * attr = (BreakpointAttribute *)loc_alloc_zero(sizeof(BreakpointAttribute));
+        OutputStream * out = create_byte_array_output_stream(&buf);
+        attr->name = loc_strdup(attr_list[i]);
+        switch (i) {
+        case 0:
+            json_write_boolean(out, bp->enabled);
+            break;
+        case 1:
+            json_write_string(out, bp->location);
+            break;
+        }
+        write_stream(out, 0);
+        get_byte_array_output_stream_data(&buf, &attr->value, NULL);
+        *ref = attr; ref = &attr->next;
+    }
+
     bp->event_callback = callback;
     bp->event_callback_args = callback_args;
-    if (ctx != NULL) context_lock(bp->ctx = ctx);
     list_init(&bp->link_clients);
     assert(breakpoints.next != NULL);
     list_add_last(&bp->link_all, &breakpoints);
@@ -2267,6 +2383,7 @@ BreakpointInfo * create_eventpoint(const char * location, Context * ctx, EventPo
 }
 
 void destroy_eventpoint(BreakpointInfo * bp) {
+    assert(bp->id[0] == 0);
     assert(bp->client_cnt == 1);
     assert(list_is_empty(&bp->link_clients));
     bp->client_cnt = 0;

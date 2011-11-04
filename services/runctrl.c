@@ -1677,7 +1677,9 @@ static void event_context_stopped(Context * ctx, void * client_data) {
         }
         ext->step_done = NULL;
     }
+#if SERVICE_Breakpoints
     if (ctx->stopped_by_bp || ctx->stopped_by_cb) evaluate_breakpoint(ctx);
+#endif
     if (ext->pending_safe_event) check_safe_events(ctx);
     if (ctx->stopped_by_exception) send_event_context_exception(ctx);
     if (run_ctrl_lock_cnt == 0 && run_safe_events_posted < 4) {

@@ -65,19 +65,64 @@ struct BreakpointAttribute {
 #define BREAKPOINT_CLIENT_DATA      "ClientData"
 
 
+/* Breakpoints event listener */
+typedef struct BreakpointsEventListener {
+    void (*breakpoint_created)(BreakpointInfo *, void *);
+    void (*breakpoint_changed)(BreakpointInfo *, void *);
+    void (*breakpoint_deleted)(BreakpointInfo *, void *);
+    void (*breakpoint_status_changed)(BreakpointInfo *, void *);
+} BreakpointsEventListener;
+
 /*
- * Iterate all breakpoints known to the Breakpoints service.
+ * Add a listener for Breakpoints service events.
+ */
+extern void add_breakpoint_event_listener(BreakpointsEventListener * listener, void * args);
+
+/*
+ * Remove a listener of Breakpoints service events.
+ */
+extern void rem_breakpoint_event_listener(BreakpointsEventListener * listener);
+
+/*
+ * Iterate all breakpoints known to the Breakpoints service,
+ * including breakpoints that are created by other (remote) clients.
  */
 typedef void IterateBreakpointsCallBack(BreakpointInfo *, void *);
 extern void iterate_breakpoints(IterateBreakpointsCallBack * callback, void * args);
 
 /*
- * Get the list of breakpoint attributes.
+ * Get breakpoint attributes.
  */
 extern BreakpointAttribute * get_breakpoint_attributes(BreakpointInfo * bp);
 
 /*
- * The function is called from context.c every time a context is stopped by breakpoint.
+ * Create new breakpoint with given attributes.
+ * Attributes must include, at least, BREAKPOINT_ID.
+ * If a breakpoint with such ID already exists, it will be modified to match
+ * new attributes instead of creating a new one.
+ * Caller should allocate attributes using myalloc.h functions.
+ * Breakpoints service will free attributes memory using loc_free().
+ */
+extern BreakpointInfo * create_breakpoint(BreakpointAttribute * attrs);
+
+/*
+ * Change breakpoint attributes to given attributes.
+ * Caller should allocate attributes using myalloc.h functions.
+ * Breakpoints service will free attributes memory using loc_free().
+ * The function compares existing attributes with new ones,
+ * and calls listeners only if attributes are different.
+ */
+extern void change_breakpoint_attributes(BreakpointInfo * bp, BreakpointAttribute * attrs);
+
+/*
+ * Delete a breakpoint.
+ * If other (remote) client also created a breakpoint with same ID,
+ * the breakpoint will be deleted when all clients have requested it to be deleted.
+ */
+extern void delete_breakpoint(BreakpointInfo * bp);
+
+/*
+ * The function is called from context.c every time a context is stopped by a breakpoint.
  * The function evaluates breakpoint condition and calls suspend_debug_context() if the condition is true.
  */
 extern void evaluate_breakpoint(Context * ctx);
@@ -132,7 +177,6 @@ extern void destroy_eventpoint(BreakpointInfo * eventpoint);
 
 #else /* SERVICE_Breakpoints */
 
-#define evaluate_breakpoint(ctx)
 #define skip_breakpoint(ctx, single_step) 0
 #define is_breakpoint_address(ctx, address) 0
 #define clone_breakpoints_on_process_fork(parent, child) 0
