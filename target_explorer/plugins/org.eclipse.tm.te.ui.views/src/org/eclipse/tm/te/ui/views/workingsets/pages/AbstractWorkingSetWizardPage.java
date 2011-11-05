@@ -327,12 +327,8 @@ public abstract class AbstractWorkingSetWizardPage extends WizardPage implements
 		});
 
 		addAllButton.addSelectionListener(new SelectionAdapter() {
-			/*
-			 * (non-Javadoc)
-			 *
-			 * @see
-			 * org.eclipse.swt.events.SelectionAdapter#widgetSelected(org.eclipse
-			 * .swt.events.SelectionEvent)
+			/* (non-Javadoc)
+			 * @see org.eclipse.swt.events.SelectionAdapter#widgetSelected(org.eclipse.swt.events.SelectionEvent)
 			 */
 			@Override
 			public void widgetSelected(SelectionEvent e) {
@@ -349,12 +345,8 @@ public abstract class AbstractWorkingSetWizardPage extends WizardPage implements
 		});
 
 		removeAllButton.addSelectionListener(new SelectionAdapter() {
-			/*
-			 * (non-Javadoc)
-			 *
-			 * @see
-			 * org.eclipse.swt.events.SelectionAdapter#widgetSelected(org.eclipse
-			 * .swt.events.SelectionEvent)
+			/* (non-Javadoc)
+			 * @see org.eclipse.swt.events.SelectionAdapter#widgetSelected(org.eclipse.swt.events.SelectionEvent)
 			 */
 			@Override
 			public void widgetSelected(SelectionEvent e) {
@@ -466,20 +458,15 @@ public abstract class AbstractWorkingSetWizardPage extends WizardPage implements
 	@Override
     public void finish() {
 		String workingSetName = fWorkingSetName.getText();
-		IAdaptable[] elements = null;
-//		IPeerModel[] peers = fSelectedElements.toArray(new IPeerModel[fSelectedElements.size()]);
-//		PeerHolder[] elements = new PeerHolder[peers.length];
-//		for (int i = 0; i < peers.length; i++) {
-//			elements[i] = new PeerHolder(workingSetName, peers[i].getPeer().getID());
-//		}
+		HashSet<Object> elements= fSelectedElements;
 
 		if (fWorkingSet == null) {
 			IWorkingSetManager workingSetManager = PlatformUI.getWorkbench().getWorkingSetManager();
-			fWorkingSet = workingSetManager.createWorkingSet(workingSetName, elements);
+			fWorkingSet = workingSetManager.createWorkingSet(workingSetName, new IAdaptable[elements.size()]);
 			fWorkingSet.setId(getPageId());
 		} else {
 			fWorkingSet.setName(workingSetName);
-			fWorkingSet.setElements(elements);
+			fWorkingSet.setElements(new IAdaptable[elements.size()]);
 		}
 	}
 

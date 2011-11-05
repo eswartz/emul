@@ -66,7 +66,7 @@ public class View extends CommonNavigator {
 	/**
 	 * Target Explorer root node implementation
 	 */
-	protected static class Root extends PlatformObject implements IRoot {
+	public static class Root extends PlatformObject implements IRoot {
 		/**
 		 * Constructor.
 		 */

@@ -14,9 +14,14 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.tm.te.ui.views.activator.UIPlugin;
+import org.eclipse.tm.te.ui.views.interfaces.IRoot;
+import org.eclipse.tm.te.ui.views.interfaces.IUIConstants;
 import org.eclipse.tm.te.ui.views.interfaces.ImageConsts;
+import org.eclipse.tm.te.ui.views.internal.View;
 import org.eclipse.tm.te.ui.views.nls.Messages;
 import org.eclipse.ui.IWorkingSet;
+import org.eclipse.ui.internal.navigator.NavigatorContentService;
+import org.eclipse.ui.navigator.INavigatorContentService;
 
 /**
  * A target working set page is a wizard page used to configure a custom defined
@@ -24,8 +29,12 @@ import org.eclipse.ui.IWorkingSet;
  * the working sets used in the working set viewer.
  *
  */
+@SuppressWarnings("restriction")
 public class TargetWorkingSetPage extends AbstractWorkingSetWizardPage {
-
+	// The common navigator content service
+	private INavigatorContentService contentService;
+	// The root node
+	private IRoot root;
 	// The initial selection
 	private IStructuredSelection initialSelection;
 
@@ -45,8 +54,7 @@ public class TargetWorkingSetPage extends AbstractWorkingSetWizardPage {
 		initialSelection = selection;
 	}
 
-	/*
-	 * (non-Javadoc)
+	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.ui.internal.workingsets.AbstractWorkingSetWizardPage#getPageId()
 	 */
 	@Override
@@ -54,47 +62,54 @@ public class TargetWorkingSetPage extends AbstractWorkingSetWizardPage {
 		return "org.eclipse.tm.te.tcf.ui.TargetWorkingSetPage"; //$NON-NLS-1$
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.eclipse.tm.te.tcf.ui.internal.workingsets.AbstractWorkingSetWizardPage#configureTree(org.eclipse.jface.viewers.TreeViewer)
+	/* (non-Javadoc)
+	 * @see org.eclipse.jface.dialogs.DialogPage#dispose()
 	 */
 	@Override
-	protected void configureTree(TreeViewer tree) {
-//		tree.setContentProvider(new PeerContentProvider());
-//		tree.setLabelProvider(new LabelProvider());
-//		tree.setInput(Model.getModel());
+	public void dispose() {
+		if (contentService != null) { contentService.dispose(); contentService = null; }
+		root = null;
+	    super.dispose();
 	}
 
-	/*
-	 * (non-Javadoc)
+	/* (non-Javadoc)
+	 * @see org.eclipse.tm.te.tcf.ui.internal.workingsets.AbstractWorkingSetWizardPage#configureTree(org.eclipse.jface.viewers.TreeViewer)
+	 */
+    @Override
+	protected void configureTree(TreeViewer tree) {
+		// Construct and associate the navigator content service.
+		// We have to simulate the common viewer here to get the content right.
+		contentService = new NavigatorContentService(IUIConstants.ID_EXPLORER, tree);
+
+		tree.setContentProvider(contentService.createCommonContentProvider());
+		tree.setLabelProvider(contentService.createCommonLabelProvider());
+
+		// Create the root node
+		root = new View.Root();
+		tree.setInput(root);
+	}
+
+	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.ui.internal.workingsets.AbstractWorkingSetWizardPage#configureTable(org.eclipse.jface.viewers.TableViewer)
 	 */
 	@Override
 	protected void configureTable(TableViewer table) {
-//		table.setLabelProvider(new LabelProvider());
+		table.setLabelProvider(contentService.createCommonLabelProvider());
 	}
 
-	/*
-	 * (non-Javadoc)
+	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.tcf.ui.internal.workingsets.AbstractWorkingSetWizardPage#getInitialWorkingSetElements(org.eclipse.ui.IWorkingSet)
 	 */
 	@Override
 	protected Object[] getInitialWorkingSetElements(IWorkingSet workingSet) {
-		Object[] elements = new Object[0];
+		Object[] elements;
 		if (workingSet == null) {
 			if (initialSelection == null)
 				return new IAdaptable[0];
-			elements = initialSelection.toArray();
+
+			elements= initialSelection.toArray();
 		} else {
-//			List<IPeerModel> result = new ArrayList<IPeerModel>();
-//			elements = workingSet.getElements();
-//			for (int i = 0; i < elements.length; i++) {
-//				PeerHolder holder = (PeerHolder) elements[i];
-//				IPeerModel peer = holder.getPeerModel();
-//				if (peer != null)
-//					result.add(peer);
-//			}
-//			elements = result.toArray();
+			elements= workingSet.getElements();
 		}
 		return elements;
 	}

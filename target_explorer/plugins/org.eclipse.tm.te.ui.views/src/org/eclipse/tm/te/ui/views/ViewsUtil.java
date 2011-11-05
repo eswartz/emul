@@ -24,6 +24,23 @@ import org.eclipse.ui.navigator.CommonNavigator;
 public class ViewsUtil {
 
 	/**
+	 * Returns the workbench part identified by the given id.
+	 *
+	 * @param id The view id. Must not be <code>null</code>.
+	 * @return The workbench part or <code>null</code>.
+	 */
+	public static IWorkbenchPart getPart(String id) {
+		// Check the active workbench window and active page instances
+		if (PlatformUI.getWorkbench().getActiveWorkbenchWindow() != null && PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage() != null) {
+			// Get the view reference
+			IViewReference reference = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().findViewReference(id);
+			// Return the view part from the reference, but do not restore it
+			return reference != null ? reference.getPart(false) : null;
+		}
+		return null;
+	}
+
+	/**
 	 * Asynchronously refresh the view identified by the given id.
 	 *
 	 * @param id The view id. Must not be <code>null</code>.
