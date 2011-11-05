@@ -16,6 +16,7 @@ import java.util.Map;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.Protocol;
+import org.eclipse.tm.te.runtime.interfaces.workingsets.IWorkingSetElement;
 import org.eclipse.tm.te.runtime.properties.PropertiesContainer;
 import org.eclipse.tm.te.tcf.locator.interfaces.IModelListener;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.ILocatorModel;
@@ -26,7 +27,7 @@ import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModelProperties;
 /**
  * Default peer model implementation.
  */
-public class PeerModel extends PropertiesContainer implements IPeerModel {
+public class PeerModel extends PropertiesContainer implements IPeerModel, IWorkingSetElement {
 	// Reference to the parent locator model
 	private final ILocatorModel parentModel;
 
