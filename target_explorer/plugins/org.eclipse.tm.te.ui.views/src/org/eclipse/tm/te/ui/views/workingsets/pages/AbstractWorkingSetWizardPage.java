@@ -11,8 +11,10 @@
  *******************************************************************************/
 package org.eclipse.tm.te.ui.views.workingsets.pages;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IAdaptable;
@@ -458,15 +460,21 @@ public abstract class AbstractWorkingSetWizardPage extends WizardPage implements
 	@Override
     public void finish() {
 		String workingSetName = fWorkingSetName.getText();
-		HashSet<Object> elements= fSelectedElements;
+
+		List<IAdaptable> elements = new ArrayList<IAdaptable>();
+		for (Object candidate : fSelectedElements) {
+			if (candidate instanceof IAdaptable) {
+				elements.add((IAdaptable)candidate);
+			}
+		}
 
 		if (fWorkingSet == null) {
 			IWorkingSetManager workingSetManager = PlatformUI.getWorkbench().getWorkingSetManager();
-			fWorkingSet = workingSetManager.createWorkingSet(workingSetName, new IAdaptable[elements.size()]);
+			fWorkingSet = workingSetManager.createWorkingSet(workingSetName, elements.toArray(new IAdaptable[elements.size()]));
 			fWorkingSet.setId(getPageId());
 		} else {
 			fWorkingSet.setName(workingSetName);
-			fWorkingSet.setElements(new IAdaptable[elements.size()]);
+			fWorkingSet.setElements(elements.toArray(new IAdaptable[elements.size()]));
 		}
 	}
 
