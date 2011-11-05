@@ -120,6 +120,8 @@ public class KeyboardState {
 	private long lastChangeTime;
 	private ArrayList<KeyDelta> currentGroup = null;
 
+	static public final SettingProperty settingUseMouseAsJoystick = new SettingProperty("UseMouseAsJoystick", new Boolean(false));
+
     /*  Map of ASCII codes and their direct CRU mapping
         (high nybble=row, low nybble=column), except for 0xff,
         which should be faked. */

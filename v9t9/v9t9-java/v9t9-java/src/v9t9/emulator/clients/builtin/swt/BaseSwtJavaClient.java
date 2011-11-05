@@ -3,6 +3,7 @@
  */
 package v9t9.emulator.clients.builtin.swt;
 
+import org.apache.bcel.generic.SWAP;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.SWTError;
 import org.eclipse.swt.SWTException;
@@ -10,6 +11,8 @@ import org.eclipse.swt.events.ShellAdapter;
 import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
+import org.ejs.coffee.core.properties.IProperty;
+import org.ejs.coffee.core.properties.IPropertyListener;
 
 import v9t9.emulator.clients.builtin.awt.AwtKeyboardHandler;
 import v9t9.emulator.clients.builtin.sound.JavaSoundHandler;
@@ -20,6 +23,7 @@ import v9t9.emulator.runtime.TerminatedException;
 import v9t9.engine.Client;
 import v9t9.engine.KeyboardHandler;
 import v9t9.engine.VdpHandler;
+import v9t9.keyboard.KeyboardState;
 
 /**
  * @author ejs
@@ -56,7 +60,7 @@ public abstract class BaseSwtJavaClient implements Client {
     	setupRenderer();
 
 
-        SwtWindow window = new SwtWindow(display, machine, (ISwtVideoRenderer) videoRenderer);
+        final SwtWindow window = new SwtWindow(display, machine, (ISwtVideoRenderer) videoRenderer);
         eventNotifier = window.getEventNotifier();
         
         if (keyboardHandler instanceof AwtKeyboardHandler)
@@ -66,6 +70,14 @@ public abstract class BaseSwtJavaClient implements Client {
 
         mouseJoystickHandler = new MouseJoystickHandler(videoRenderer, machine.getKeyboardState());
         window.setMouseJoystickHandler(mouseJoystickHandler);
+        
+        KeyboardState.settingUseMouseAsJoystick.addListener(new IPropertyListener() {
+			
+			@Override
+			public void propertyChanged(IProperty property) {
+				window.swapMouseDragDropForJoystick(false, property.getBoolean());
+			}
+		});
         
         expectedUpdateTime = QUANTUM;
         

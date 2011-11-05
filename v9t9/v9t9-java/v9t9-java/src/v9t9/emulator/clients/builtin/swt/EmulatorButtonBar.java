@@ -31,6 +31,7 @@ import v9t9.emulator.common.IEventNotifier.Level;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.runtime.cpu.Cpu9900;
 import v9t9.emulator.runtime.cpu.Executor;
+import v9t9.keyboard.KeyboardState;
 
 /**
  * @author ejs
@@ -95,11 +96,11 @@ public class EmulatorButtonBar extends EmulatorBar  {
 					}
 				});
 
-		createStateButton(Executor.settingDumpFullInstructions,
+		createToggleStateButton(Executor.settingDumpFullInstructions,
 				2, 
 				0, "Toggle CPU logging");
 
-		createStateButton(Machine.settingPauseMachine, 8,
+		createToggleStateButton(Machine.settingPauseMachine, 8,
 				0, "Pause machine");
 
 
@@ -147,6 +148,9 @@ public class EmulatorButtonBar extends EmulatorBar  {
 					}
 			});
 		
+		createTwoStateButton(KeyboardState.settingUseMouseAsJoystick, 19,
+				18, "Use mouse as joystick");
+		
 		createButton(6, "Load or save machine state",
 				new SelectionAdapter() {
 					@Override
@@ -158,7 +162,7 @@ public class EmulatorButtonBar extends EmulatorBar  {
 
 			});
 		
-		createStateButton(BaseEmulatorWindow.settingMonitorDrawing, 9,  
+		createToggleStateButton(BaseEmulatorWindow.settingMonitorDrawing, 9,  
 				0, "Apply monitor effect to video");
 
 		createButton(10, "Take screenshot",
@@ -212,14 +216,14 @@ public class EmulatorButtonBar extends EmulatorBar  {
 					}
 				});
 		*/
-		createStateButton(BaseEmulatorWindow.settingFullScreen, 
+		createToggleStateButton(BaseEmulatorWindow.settingFullScreen, 
 				11, 0, "Toggle fullscreen");
 
 		
 		final BasicButton soundButton = createStateButton(JavaSoundHandler.settingPlaySound, 
 				true, 
 				null, 13,
-				14, "Sound options");
+				14, true, "Sound options");
 	/*	soundButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {

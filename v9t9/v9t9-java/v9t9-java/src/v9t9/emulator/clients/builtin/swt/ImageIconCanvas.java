@@ -28,7 +28,7 @@ public abstract class ImageIconCanvas extends Canvas {
 		boolean isHorizontal();
 		void redrawAll();
 	}
-	protected final Rectangle bounds;
+	protected Rectangle bounds;
 	protected IImageBar parentDrawer;
 	protected final ImageProvider imageProvider;
 	
@@ -38,20 +38,8 @@ public abstract class ImageIconCanvas extends Canvas {
 		this.imageProvider = imageProvider;
 		
 		this.parentDrawer = parentDrawer;
-		
-		GridData data;
-		if (imageProvider != null) {
-			this.bounds = imageProvider.imageIndexToBounds(iconIndex);
-			data = new GridData(bounds.width, bounds.height);
-			//data.minimumHeight = 8;	// the minimums above override this
-			//data.minimumWidth = 8;	// the minimums above override this
-			data.grabExcessHorizontalSpace = false;
-			data.grabExcessVerticalSpace = false;
-		} else {
-			bounds = null;
-			data = GridDataFactory.fillDefaults().grab(true, false).create();
-		}
-		setLayoutData(data);
+
+		setIconIndex(iconIndex);
 		setLayout(new FillLayout());
 		
 		if (tooltip != null)
@@ -66,6 +54,25 @@ public abstract class ImageIconCanvas extends Canvas {
 		});
 	}
 
+
+	/**
+	 * @param iconIndex
+	 */
+	public void setIconIndex(int iconIndex) {
+		GridData data;
+		if (imageProvider != null) {
+			this.bounds = imageProvider.imageIndexToBounds(iconIndex);
+			data = new GridData(bounds.width, bounds.height);
+			//data.minimumHeight = 8;	// the minimums above override this
+			//data.minimumWidth = 8;	// the minimums above override this
+			data.grabExcessHorizontalSpace = false;
+			data.grabExcessVerticalSpace = false;
+		} else {
+			bounds = null;
+			data = GridDataFactory.fillDefaults().grab(true, false).create();
+		}
+		setLayoutData(data);
+	}
 
 	protected abstract void doPaint(PaintEvent e);
 	

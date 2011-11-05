@@ -8,6 +8,8 @@ import java.util.LinkedList;
 import java.util.Timer;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
@@ -220,52 +222,61 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler implements ISwtKeybo
 				
 
 			case SWT.KEYPAD_8:
-				keyboardState.setJoystick(joy,
-						KeyboardState.JOY_Y,
-						0, pressed ? -1 : 0, false, when);
+				if (!KeyboardState.settingUseMouseAsJoystick.getBoolean())
+					keyboardState.setJoystick(joy,
+							KeyboardState.JOY_Y,
+							0, pressed ? -1 : 0, false, when);
 				break;
 			case SWT.KEYPAD_2:
-				keyboardState.setJoystick(joy,
-						KeyboardState.JOY_Y,
-						 0, pressed ? 1 : 0, false, when);
+				if (!KeyboardState.settingUseMouseAsJoystick.getBoolean())
+					keyboardState.setJoystick(joy,
+							KeyboardState.JOY_Y,
+							 0, pressed ? 1 : 0, false, when);
 				break;
 			case SWT.KEYPAD_4:
-				keyboardState.setJoystick(joy,
-						KeyboardState.JOY_X,
-						pressed ? -1 : 0, 0, false, when);
+				if (!KeyboardState.settingUseMouseAsJoystick.getBoolean())
+					keyboardState.setJoystick(joy,
+							KeyboardState.JOY_X,
+							pressed ? -1 : 0, 0, false, when);
 				break;
 			case SWT.KEYPAD_6:
-				keyboardState.setJoystick(joy,
-						KeyboardState.JOY_X,
-						pressed ? 1 : 0, 0, false, when);
+				if (!KeyboardState.settingUseMouseAsJoystick.getBoolean())
+					keyboardState.setJoystick(joy,
+							KeyboardState.JOY_X,
+							pressed ? 1 : 0, 0, false, when);
 				break;
 				
 			case SWT.KEYPAD_7:
-				keyboardState.setJoystick(joy,
-						KeyboardState.JOY_Y | KeyboardState.JOY_X,
-						pressed ? -1 : 0, pressed ? -1 : 0, false, when);
+				if (!KeyboardState.settingUseMouseAsJoystick.getBoolean())
+					keyboardState.setJoystick(joy,
+							KeyboardState.JOY_Y | KeyboardState.JOY_X,
+							pressed ? -1 : 0, pressed ? -1 : 0, false, when);
 				break;
 				
 			case SWT.KEYPAD_0:
-				keyboardState.setJoystick(joy,
-						KeyboardState.JOY_B,
-						0, 0, pressed, when);
+				if (!KeyboardState.settingUseMouseAsJoystick.getBoolean())
+					keyboardState.setJoystick(joy,
+							KeyboardState.JOY_B,
+							0, 0, pressed, when);
 				break;
 				
 			case SWT.KEYPAD_9:
-				keyboardState.setJoystick(joy,
-						KeyboardState.JOY_Y | KeyboardState.JOY_X,
-						pressed ? 1 : 0, pressed ? -1 : 0, false, when);
+				if (!KeyboardState.settingUseMouseAsJoystick.getBoolean())
+					keyboardState.setJoystick(joy,
+							KeyboardState.JOY_Y | KeyboardState.JOY_X,
+							pressed ? 1 : 0, pressed ? -1 : 0, false, when);
 				break;
 			case SWT.KEYPAD_3:
-				keyboardState.setJoystick(joy,
-						KeyboardState.JOY_Y | KeyboardState.JOY_X,
-						pressed ? 1 : 0, pressed ? 1 : 0, false, when);
+				if (!KeyboardState.settingUseMouseAsJoystick.getBoolean())
+					keyboardState.setJoystick(joy,
+							KeyboardState.JOY_Y | KeyboardState.JOY_X,
+							pressed ? 1 : 0, pressed ? 1 : 0, false, when);
 				break;
 			case SWT.KEYPAD_1:
-				keyboardState.setJoystick(joy,
-						KeyboardState.JOY_Y | KeyboardState.JOY_X,
-						pressed ? -1 : 0, pressed ? 1 : 0, false, when);
+				if (!KeyboardState.settingUseMouseAsJoystick.getBoolean())
+					keyboardState.setJoystick(joy,
+							KeyboardState.JOY_Y | KeyboardState.JOY_X,
+							pressed ? -1 : 0, pressed ? 1 : 0, false, when);
 				break;
 				
 
@@ -311,6 +322,7 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler implements ISwtKeybo
 	private int lastKeyPressedCode = -1;
 	public void init(final Control control) {
 		Shell shell = control.getShell();
+		
 	 	shell.getDisplay().addFilter(SWT.KeyDown, new Listener() {
 
 
@@ -359,19 +371,17 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler implements ISwtKeybo
 	public static void main(String[] args) {
 		Display display = new Display();
 		Shell shell = new Shell(display);
-		/*
 		shell.addKeyListener(new KeyListener() {
 
 			public void keyPressed(KeyEvent e) {
-				System.out.println("PRESSED " + Utils.toHex4(e.keyCode) + " / " + Utils.toHex4(e.stateMask));
+				System.out.println("KEY PRESSED " + HexUtils.toHex4(e.keyCode) + " / " + HexUtils.toHex4(e.stateMask));
 			}
 
 			public void keyReleased(KeyEvent e) {
-				System.out.println("RELEASE " + Utils.toHex4(e.keyCode) + " / " + Utils.toHex4(e.stateMask));
+				System.out.println("KEY RELEASE " + HexUtils.toHex4(e.keyCode) + " / " + HexUtils.toHex4(e.stateMask));
 			}
 			
 		});
-		*/
 		display.addFilter(SWT.KeyUp, new Listener() {
 
 			public void handleEvent(Event e) {

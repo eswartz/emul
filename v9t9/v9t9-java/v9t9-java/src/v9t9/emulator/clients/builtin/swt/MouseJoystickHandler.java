@@ -23,7 +23,6 @@ public class MouseJoystickHandler {
 	private MouseAdapter mouseButtonListener;
 	private MouseMoveListener mouseMoveListener;
 	private final KeyboardState keyboardState;
-	private Point center;
 
 	/**
 	 * @param videoControl
@@ -40,7 +39,7 @@ public class MouseJoystickHandler {
 				if (e.button != 1)
 					return;
 
-				System.out.println("DOWN");
+				//System.out.println("DOWN");
 				int joy = (e.stateMask & SWT.SHIFT) != 0 ? 2 : 1;
 				button(e.button, joy, true);
 			}
@@ -51,7 +50,7 @@ public class MouseJoystickHandler {
 				if (e.button != 1)
 					return;
 
-				System.out.println("UP");
+				//System.out.println("UP");
 				int joy = (e.stateMask & SWT.SHIFT) != 0 ? 2 : 1;
 				button(e.button, joy, false);
 			}
@@ -88,12 +87,6 @@ public class MouseJoystickHandler {
 		//renderer.getControl().setCapture(enabled);
 		
 		keyboardState.resetJoystick();
-		
-		if (enabled) {
-			//center = renderer.getControl().getDisplay().getCursorLocation();
-			Point size = renderer.getControl().getSize();
-			center = new Point(size.x / 2, size.y / 2);
-		}
 	}
 
 	/**
@@ -111,9 +104,13 @@ public class MouseJoystickHandler {
 	protected void move(int joy, int x, int y) {
 		int dx = 0, dy = 0;
 		
+
+		//center = renderer.getControl().getDisplay().getCursorLocation();
+		Point size = renderer.getControl().getSize();
+		Point center = new Point(size.x / 2, size.y / 2);
+		
 		Point diff = new Point(x - center.x, y - center.y);
 		
-		Point size = renderer.getControl().getSize();
 		int dist = (diff.x * diff.x) + (diff.y * diff.y);
 		//System.out.println(dist + " / " + size.x + " + " + size.y);
 		if (dist / 8 >= size.x + size.y) {

@@ -37,6 +37,4 @@ class BasicButton extends ImageButton {
 
 		setFocusRestorer(buttonBar.getFocusRestorer());
 	}
-
-
 }

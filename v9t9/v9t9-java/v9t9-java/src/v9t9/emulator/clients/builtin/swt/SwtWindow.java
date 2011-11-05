@@ -58,6 +58,7 @@ import v9t9.emulator.common.Machine;
 import v9t9.emulator.common.NotifyEvent;
 import v9t9.emulator.runtime.cpu.Cpu;
 import v9t9.engine.Client;
+import v9t9.keyboard.KeyboardState;
 
 /**
  * Provide the emulator in an SWT window
@@ -67,6 +68,7 @@ import v9t9.engine.Client;
 public class SwtWindow extends BaseEmulatorWindow{
 	
 	private static final String EMULATOR_WINDOW_BOUNDS = "EmulatorWindowBounds";
+	
 	protected Shell shell;
 	protected Control videoControl;
 	private Map<String, ToolShell> toolShells;
@@ -348,12 +350,15 @@ public class SwtWindow extends BaseEmulatorWindow{
 
 	public void setMouseJoystickHandler(MouseJoystickHandler handler) {
 		boolean first = mouseJoystickHandler == null;
-		this.mouseJoystickHandler = handler; 
+		this.mouseJoystickHandler = handler;
+		
+		/*
 		((ISwtVideoRenderer)videoRenderer).addMouseEventListener(new MouseAdapter() {
 			public void mouseDoubleClick(MouseEvent e) {
 				swapMouseDragDropForJoystick(true, !mouseJoystickHandler.isEnabled());
 			}
 		});
+		*/
 		
 		swapMouseDragDropForJoystick(!first, false);
 	}
@@ -367,8 +372,10 @@ public class SwtWindow extends BaseEmulatorWindow{
 			dragDropHandler = null;
 			*/
 		} 
-		mouseJoystickHandler.setEnabled(enableJoystick);
-		if (notify && eventNotifier != null) {
+		if (mouseJoystickHandler != null)
+			mouseJoystickHandler.setEnabled(enableJoystick);
+		
+		if (mouseJoystickHandler != null && notify && eventNotifier != null) {
 			NotifyEvent event = new NotifyEvent(System.currentTimeMillis(), null, Level.INFO, 
 					mouseJoystickHandler.isEnabled() 
 					? "Using mouse as joystick" : "Releasing mouse as joystick");
@@ -637,6 +644,8 @@ public class SwtWindow extends BaseEmulatorWindow{
 				@Override
 				public void widgetSelected(SelectionEvent e) {
 					mouseJoystickHandler.setEnabled(!mouseJoystickHandler.isEnabled());
+					KeyboardState.settingUseMouseAsJoystick.setBoolean(mouseJoystickHandler.isEnabled());
+					focusRestorer.restoreFocus();
 				}
 			});
 		}

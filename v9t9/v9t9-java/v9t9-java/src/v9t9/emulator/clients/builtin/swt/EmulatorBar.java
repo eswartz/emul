@@ -8,6 +8,7 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.ejs.coffee.core.properties.IProperty;
@@ -61,8 +62,10 @@ public class EmulatorBar {
 		return button;
 	}
 
-	protected BasicButton createStateButton(final SettingProperty setting, final boolean inverted, final Point noClickCorner,
-			int iconIndex, final int overlayIndex, String tooltip) {
+	protected BasicButton createStateButton(final SettingProperty setting, final boolean inverted, 
+			final Point noClickCorner,
+			final int iconIndex, final int secondIconIndex, 
+			final boolean isSecondOverlay, String tooltip) {
 		final BasicButton button = new BasicButton(buttonBar, SWT.PUSH,
 				imageProvider, iconIndex, tooltip);
 		setting.addListener(new IPropertyListener() {
@@ -73,10 +76,17 @@ public class EmulatorBar {
 					public void run() {
 						if (button.isDisposed())
 							return;
-						if (setting.getBoolean() != inverted) {
-							button.setOverlayBounds(imageProvider.imageIndexToBounds(overlayIndex));
-						} else {
-							button.setOverlayBounds(null);
+						if (isSecondOverlay) {
+							if (setting.getBoolean() != inverted)
+								button.setOverlayBounds(imageProvider.imageIndexToBounds(secondIconIndex));
+							else
+								button.setOverlayBounds(null);
+						}
+						else {
+							if (setting.getBoolean() != inverted)
+								button.setIconIndex(secondIconIndex);
+							else
+								button.setIconIndex(iconIndex);
 						}
 						if (setting.getBoolean() != button.getSelection()) {
 							button.setSelection(setting.getBoolean());
@@ -104,16 +114,33 @@ public class EmulatorBar {
 			}
 		});
 		
-		if (setting.getBoolean() != inverted) {
-			button.setOverlayBounds(imageProvider.imageIndexToBounds(overlayIndex));
+		if (isSecondOverlay) {
+			if (setting.getBoolean() != inverted) {
+				button.setOverlayBounds(imageProvider.imageIndexToBounds(secondIconIndex));
+				button.setSelection(setting.getBoolean());
+			}
+		} else {
+			if (setting.getBoolean() != inverted) {
+				button.setIconIndex(secondIconIndex);
+				button.setOverlayBounds(new Rectangle(0, 0, 0, 0));
+			} else {
+				button.setIconIndex(iconIndex);
+				button.setOverlayBounds(new Rectangle(0, 0, 0, 0));
+			}
 			button.setSelection(setting.getBoolean());
 		}
 		return button;
 	}
 
-	protected BasicButton createStateButton(final SettingProperty setting, int iconIndex, int overlayIndex,
+	protected BasicButton createToggleStateButton(final SettingProperty setting, int iconIndex, int overlayIndex,
 			String tooltip) {
-		return createStateButton(setting, false, null, iconIndex, overlayIndex, tooltip);
+		return createStateButton(setting, false, null, iconIndex, overlayIndex, true, tooltip);
+	}
+
+
+	protected BasicButton createTwoStateButton(final SettingProperty setting, int iconIndex, int secondIconIndex,
+			String tooltip) {
+		return createStateButton(setting, false, null, iconIndex, secondIconIndex, false, tooltip);
 	}
 
 	/**
