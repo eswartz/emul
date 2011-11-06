@@ -18,4 +18,14 @@ import org.eclipse.core.runtime.IAdaptable;
  */
 public interface IWorkingSetElement extends IAdaptable {
 
+	/**
+	 * Returns the working set element id.
+	 * <p>
+	 * The working set element id must be unique and persisted through out multiple session. This id
+	 * is used to identify the working set element at restarting the Target Explorer after a session
+	 * shutdown.
+	 *
+	 * @return The working set element id.
+	 */
+	public String getElementId();
 }

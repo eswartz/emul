@@ -9,11 +9,11 @@
  *******************************************************************************/
 package org.eclipse.tm.te.ui.views.workingsets;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerFilter;
-import org.eclipse.tm.te.runtime.model.interfaces.IContainerModelNode;
-import org.eclipse.tm.te.runtime.model.interfaces.IModelNode;
+import org.eclipse.tm.te.runtime.interfaces.workingsets.IWorkingSetElement;
 import org.eclipse.ui.IContainmentAdapter;
 import org.eclipse.ui.IWorkingSet;
 
@@ -107,38 +107,28 @@ public class WorkingSetFilter extends ViewerFilter {
      * itself.
      *
      * @param element The element to test for enclosure by a working set element
-     * @param workingSetElement The working set element
+     * @param workingSetElement The working set element. Must be not <code>null</code>.
      *
      * @return true if element is enclosed by a working set element and false otherwise.
      */
     private boolean isEnclosedElement(Object element, IAdaptable workingSetElement) {
+    	Assert.isNotNull(workingSetElement);
+
         if (workingSetElement.equals(element)) {
 			return true;
 		}
 
-        if (element instanceof IModelNode) {
-        	IContainerModelNode parent = ((IModelNode)element).getParent();
-        	while (parent != null && !workingSetElement.equals(parent)) {
-        		parent = parent.getParent();
-        	}
-        	if (parent != null && workingSetElement.equals(parent)) {
-        		return true;
-        	}
-        }
-
-        if (element != null) {
-        	IModelNode adapter = (IModelNode)workingSetElement.getAdapter(IModelNode.class);
-        	if (adapter != null) {
-        		if (element.equals(adapter)) {
+        if (element instanceof IWorkingSetElement) {
+        	IWorkingSetElement wsElement = (IWorkingSetElement) element;
+        	WorkingSetElementHolder holder = (WorkingSetElementHolder) workingSetElement.getAdapter(WorkingSetElementHolder.class);
+        	if (holder != null) {
+        		if (wsElement.equals(holder.getElement())) {
         			return true;
         		}
-            	IContainerModelNode parent = adapter.getParent();
-            	while (parent != null && !element.equals(parent)) {
-            		parent = parent.getParent();
-            	}
-            	if (parent != null && element.equals(parent)) {
-            		return true;
-            	}
+        		if (wsElement.getElementId().equals(holder.getElementId())) {
+        			holder.setElement(wsElement);
+        			return true;
+        		}
         	}
         }
 

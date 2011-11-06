@@ -12,6 +12,7 @@ package org.eclipse.tm.te.tcf.locator.nodes;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.tm.tcf.protocol.IPeer;
@@ -86,13 +87,36 @@ public class PeerModel extends PropertiesContainer implements IPeerModel, IWorki
 	}
 
 	/* (non-Javadoc)
+	 * @see org.eclipse.tm.te.runtime.interfaces.workingsets.IWorkingSetElement#getElementId()
+	 */
+	@Override
+	public String getElementId() {
+		// NOTE: The getElementId() method can be invoked from many place and
+		//       many threads where we cannot control the calls. Therefore, this
+		//       method is allowed be called from any thread.
+		final AtomicReference<String> elementId = new AtomicReference<String>(null);
+		if (Protocol.isDispatchThread()) {
+			elementId.set(getPeer().getID());
+		} else {
+			Protocol.invokeAndWait(new Runnable() {
+				@Override
+				public void run() {
+					elementId.set(getPeer().getID());
+				}
+			});
+		}
+
+	    return elementId.get();
+	}
+
+	/* (non-Javadoc)
 	 * @see org.eclipse.core.runtime.PlatformObject#getAdapter(java.lang.Class)
 	 */
 	@Override
 	public Object getAdapter(final Class adapter) {
 		// NOTE: The getAdapter(...) method can be invoked from many place and
 		//       many threads where we cannot control the calls. Therefore, this
-		//       method is the only one which is allowed to call from any thread.
+		//       method is allowed be called from any thread.
 		final Object[] object = new Object[1];
 		if (Protocol.isDispatchThread()) {
 			object[0] = doGetAdapter(adapter);

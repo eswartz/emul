@@ -44,7 +44,9 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.TreeItem;
+import org.eclipse.tm.te.runtime.interfaces.workingsets.IWorkingSetElement;
 import org.eclipse.tm.te.ui.views.nls.Messages;
+import org.eclipse.tm.te.ui.views.workingsets.WorkingSetElementHolder;
 import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.IWorkingSetManager;
 import org.eclipse.ui.PlatformUI;
@@ -66,25 +68,32 @@ public abstract class AbstractWorkingSetWizardPage extends WizardPage implements
 		 */
 		@Override
 		public boolean select(Viewer viewer, Object parentElement, Object element) {
-			return !fSelectedElements.contains(element);
+			return !selectedElements.contains(element);
 		}
 
 	}
 
-	Text fWorkingSetName;
-	TreeViewer fTree;
-	TableViewer fTable;
-	ITreeContentProvider fTreeContentProvider;
+	/* default */ Text workingSetNameControl;
+	/* default */ TreeViewer tree;
+	/* default */ TableViewer table;
+	/* default */ ITreeContentProvider treeContentProvider;
 
-	boolean fFirstCheck;
-	final HashSet<Object> fSelectedElements;
-	IWorkingSet fWorkingSet;
+	/* default */ boolean firstCheck;
+	/* default */ final HashSet<Object> selectedElements;
+	/* default */ IWorkingSet workingSet;
 
+	/**
+	 * Constructor.
+	 *
+	 * @param pageName
+	 * @param title
+	 * @param titleImage
+	 */
 	protected AbstractWorkingSetWizardPage(String pageName, String title, ImageDescriptor titleImage) {
 		super(pageName, title, titleImage);
 
-		fSelectedElements = new HashSet<Object>();
-		fFirstCheck = true;
+		selectedElements = new HashSet<Object>();
+		firstCheck = true;
 	}
 
 	/**
@@ -169,9 +178,9 @@ public abstract class AbstractWorkingSetWizardPage extends WizardPage implements
 		GridData gd = new GridData(GridData.GRAB_HORIZONTAL | GridData.HORIZONTAL_ALIGN_FILL | GridData.VERTICAL_ALIGN_CENTER);
 		label.setLayoutData(gd);
 
-		fWorkingSetName = new Text(composite, SWT.SINGLE | SWT.BORDER);
-		fWorkingSetName.setLayoutData(new GridData(GridData.GRAB_HORIZONTAL | GridData.HORIZONTAL_ALIGN_FILL));
-		fWorkingSetName.addModifyListener(new ModifyListener() {
+		workingSetNameControl = new Text(composite, SWT.SINGLE | SWT.BORDER);
+		workingSetNameControl.setLayoutData(new GridData(GridData.GRAB_HORIZONTAL | GridData.HORIZONTAL_ALIGN_FILL));
+		workingSetNameControl.addModifyListener(new ModifyListener() {
 			@Override
             public void modifyText(ModifyEvent e) {
 				validateInput();
@@ -215,20 +224,20 @@ public abstract class AbstractWorkingSetWizardPage extends WizardPage implements
 		createTree(leftComposite);
 		createTable(rightComposite);
 
-		if (fWorkingSet != null)
-			fWorkingSetName.setText(fWorkingSet.getName());
+		if (workingSet != null)
+			workingSetNameControl.setText(workingSet.getName());
 
 		initializeSelectedElements();
 		validateInput();
 
-		fTable.setInput(fSelectedElements);
-		fTable.refresh(true);
-		fTree.refresh(true);
+		table.setInput(selectedElements);
+		table.refresh(true);
+		tree.refresh(true);
 
 		createButtonBar(centerComposite);
 
-		fWorkingSetName.setFocus();
-		fWorkingSetName.setSelection(0, fWorkingSetName.getText().length());
+		workingSetNameControl.setFocus();
+		workingSetNameControl.setSelection(0, workingSetNameControl.getText().length());
 
 		Dialog.applyDialogFont(composite);
 	}
@@ -239,15 +248,15 @@ public abstract class AbstractWorkingSetWizardPage extends WizardPage implements
 		label.setLayoutData(new GridData(SWT.LEAD, SWT.CENTER, false, false));
 		label.setText(Messages.TargetWorkingSetPage_workspace_content);
 
-		fTree = new TreeViewer(parent, SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL | SWT.MULTI);
-		fTree.getControl().setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+		tree = new TreeViewer(parent, SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL | SWT.MULTI);
+		tree.getControl().setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
-		fTree.addFilter(new AddedElementsFilter());
-		fTree.setUseHashlookup(true);
+		tree.addFilter(new AddedElementsFilter());
+		tree.setUseHashlookup(true);
 
-		configureTree(fTree);
+		configureTree(tree);
 
-		fTreeContentProvider = (ITreeContentProvider) fTree.getContentProvider();
+		treeContentProvider = (ITreeContentProvider) tree.getContentProvider();
 	}
 
 	private void createButtonBar(Composite parent) {
@@ -257,24 +266,24 @@ public abstract class AbstractWorkingSetWizardPage extends WizardPage implements
 		final Button addButton = new Button(parent, SWT.PUSH);
 		addButton.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		addButton.setText(Messages.TargetWorkingSetPage_add_button);
-		addButton.setEnabled(!fTree.getSelection().isEmpty());
+		addButton.setEnabled(!tree.getSelection().isEmpty());
 
 		final Button addAllButton = new Button(parent, SWT.PUSH);
 		addAllButton.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		addAllButton.setText(Messages.TargetWorkingSetPage_addAll_button);
-		addAllButton.setEnabled(fTree.getTree().getItems().length > 0);
+		addAllButton.setEnabled(tree.getTree().getItems().length > 0);
 
 		final Button removeButton = new Button(parent, SWT.PUSH);
 		removeButton.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		removeButton.setText(Messages.TargetWorkingSetPage_remove_button);
-		removeButton.setEnabled(!fTable.getSelection().isEmpty());
+		removeButton.setEnabled(!table.getSelection().isEmpty());
 
 		final Button removeAllButton = new Button(parent, SWT.PUSH);
 		removeAllButton.setLayoutData(new GridData(SWT.CENTER, SWT.TOP, false, false));
 		removeAllButton.setText(Messages.TargetWorkingSetPage_removeAll_button);
-		removeAllButton.setEnabled(!fSelectedElements.isEmpty());
+		removeAllButton.setEnabled(!selectedElements.isEmpty());
 
-		fTree.addSelectionChangedListener(new ISelectionChangedListener() {
+		tree.addSelectionChangedListener(new ISelectionChangedListener() {
 			@Override
             public void selectionChanged(SelectionChangedEvent event) {
 				addButton.setEnabled(!event.getSelection().isEmpty());
@@ -287,21 +296,21 @@ public abstract class AbstractWorkingSetWizardPage extends WizardPage implements
 				addTreeSelection();
 
 				removeAllButton.setEnabled(true);
-				addAllButton.setEnabled(fTree.getTree().getItems().length > 0);
+				addAllButton.setEnabled(tree.getTree().getItems().length > 0);
 			}
 		});
 
-		fTree.addDoubleClickListener(new IDoubleClickListener() {
+		tree.addDoubleClickListener(new IDoubleClickListener() {
 			@Override
             public void doubleClick(DoubleClickEvent event) {
 				addTreeSelection();
 
 				removeAllButton.setEnabled(true);
-				addAllButton.setEnabled(fTree.getTree().getItems().length > 0);
+				addAllButton.setEnabled(tree.getTree().getItems().length > 0);
 			}
 		});
 
-		fTable.addSelectionChangedListener(new ISelectionChangedListener() {
+		table.addSelectionChangedListener(new ISelectionChangedListener() {
 			@Override
             public void selectionChanged(SelectionChangedEvent event) {
 				removeButton.setEnabled(!event.getSelection().isEmpty());
@@ -314,17 +323,17 @@ public abstract class AbstractWorkingSetWizardPage extends WizardPage implements
 				removeTableSelection();
 
 				addAllButton.setEnabled(true);
-				removeAllButton.setEnabled(!fSelectedElements.isEmpty());
+				removeAllButton.setEnabled(!selectedElements.isEmpty());
 			}
 		});
 
-		fTable.addDoubleClickListener(new IDoubleClickListener() {
+		table.addDoubleClickListener(new IDoubleClickListener() {
 			@Override
             public void doubleClick(DoubleClickEvent event) {
 				removeTableSelection();
 
 				addAllButton.setEnabled(true);
-				removeAllButton.setEnabled(!fSelectedElements.isEmpty());
+				removeAllButton.setEnabled(!selectedElements.isEmpty());
 			}
 		});
 
@@ -334,12 +343,12 @@ public abstract class AbstractWorkingSetWizardPage extends WizardPage implements
 			 */
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				TreeItem[] items = fTree.getTree().getItems();
+				TreeItem[] items = tree.getTree().getItems();
 				for (int i = 0; i < items.length; i++) {
-					fSelectedElements.add(items[i].getData());
+					selectedElements.add(items[i].getData());
 				}
-				fTable.refresh();
-				fTree.refresh();
+				table.refresh();
+				tree.refresh();
 
 				addAllButton.setEnabled(false);
 				removeAllButton.setEnabled(true);
@@ -352,10 +361,10 @@ public abstract class AbstractWorkingSetWizardPage extends WizardPage implements
 			 */
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				fSelectedElements.clear();
+				selectedElements.clear();
 
-				fTable.refresh();
-				fTree.refresh();
+				table.refresh();
+				tree.refresh();
 
 				removeAllButton.setEnabled(false);
 				addAllButton.setEnabled(true);
@@ -368,13 +377,13 @@ public abstract class AbstractWorkingSetWizardPage extends WizardPage implements
 	 * Moves selected elements in the tree into the table
 	 */
 	void addTreeSelection() {
-		IStructuredSelection selection = (IStructuredSelection) fTree.getSelection();
-		fSelectedElements.addAll(selection.toList());
+		IStructuredSelection selection = (IStructuredSelection) tree.getSelection();
+		selectedElements.addAll(selection.toList());
 		Object[] selectedElements = selection.toArray();
-		fTable.add(selectedElements);
-		fTree.remove(selectedElements);
-		fTable.setSelection(selection);
-		fTable.getControl().setFocus();
+		table.add(selectedElements);
+		tree.remove(selectedElements);
+		table.setSelection(selection);
+		table.getControl().setFocus();
 		validateInput();
 	}
 
@@ -382,20 +391,20 @@ public abstract class AbstractWorkingSetWizardPage extends WizardPage implements
 	 * Moves the selected elements in the table into the tree
 	 */
 	void removeTableSelection() {
-		IStructuredSelection selection = (IStructuredSelection) fTable.getSelection();
-		fSelectedElements.removeAll(selection.toList());
+		IStructuredSelection selection = (IStructuredSelection) table.getSelection();
+		selectedElements.removeAll(selection.toList());
 		Object[] selectedElements = selection.toArray();
-		fTable.remove(selectedElements);
+		table.remove(selectedElements);
 		try {
-			fTree.getTree().setRedraw(false);
+			tree.getTree().setRedraw(false);
 			for (int i = 0; i < selectedElements.length; i++) {
-				fTree.refresh(fTreeContentProvider.getParent(selectedElements[i]), true);
+				tree.refresh(treeContentProvider.getParent(selectedElements[i]), true);
 			}
 		} finally {
-			fTree.getTree().setRedraw(true);
+			tree.getTree().setRedraw(true);
 		}
-		fTree.setSelection(selection);
-		fTree.getControl().setFocus();
+		tree.setSelection(selection);
+		tree.getControl().setFocus();
 		validateInput();
 	}
 
@@ -404,20 +413,20 @@ public abstract class AbstractWorkingSetWizardPage extends WizardPage implements
 		label.setText(Messages.TargetWorkingSetPage_workingSet_content);
 		label.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 
-		fTable = new TableViewer(parent, SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL | SWT.MULTI);
+		table = new TableViewer(parent, SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL | SWT.MULTI);
 
 		GridData gd = new GridData(SWT.FILL, SWT.FILL, true, true);
-		fTable.getControl().setLayoutData(gd);
+		table.getControl().setLayoutData(gd);
 
-		fTable.setUseHashlookup(true);
+		table.setUseHashlookup(true);
 
-		configureTable(fTable);
+		configureTable(table);
 
-		fTable.setContentProvider(new IStructuredContentProvider() {
+		table.setContentProvider(new IStructuredContentProvider() {
 
 			@Override
             public Object[] getElements(Object inputElement) {
-				return fSelectedElements.toArray();
+				return selectedElements.toArray();
 			}
 
 			@Override
@@ -436,7 +445,7 @@ public abstract class AbstractWorkingSetWizardPage extends WizardPage implements
 	 */
 	@Override
     public IWorkingSet getSelection() {
-		return fWorkingSet;
+		return workingSet;
 	}
 
 	/*
@@ -445,10 +454,10 @@ public abstract class AbstractWorkingSetWizardPage extends WizardPage implements
 	@Override
     public void setSelection(IWorkingSet workingSet) {
 		Assert.isNotNull(workingSet, "Working set must not be null"); //$NON-NLS-1$
-		fWorkingSet = workingSet;
-		if (getContainer() != null && getShell() != null && fWorkingSetName != null) {
-			fFirstCheck = false;
-			fWorkingSetName.setText(fWorkingSet.getName());
+		this.workingSet = workingSet;
+		if (getContainer() != null && getShell() != null && workingSetNameControl != null) {
+			firstCheck = false;
+			workingSetNameControl.setText(workingSet.getName());
 			initializeSelectedElements();
 			validateInput();
 		}
@@ -459,44 +468,46 @@ public abstract class AbstractWorkingSetWizardPage extends WizardPage implements
 	 */
 	@Override
     public void finish() {
-		String workingSetName = fWorkingSetName.getText();
+		String workingSetName = workingSetNameControl.getText();
 
 		List<IAdaptable> elements = new ArrayList<IAdaptable>();
-		for (Object candidate : fSelectedElements) {
-			if (candidate instanceof IAdaptable) {
-				elements.add((IAdaptable)candidate);
+		for (Object candidate : selectedElements) {
+			if (candidate instanceof IWorkingSetElement) {
+				WorkingSetElementHolder holder = new WorkingSetElementHolder(workingSetName, ((IWorkingSetElement)candidate).getElementId());
+				holder.setElement((IWorkingSetElement)candidate);
+				elements.add(holder);
 			}
 		}
 
-		if (fWorkingSet == null) {
+		if (workingSet == null) {
 			IWorkingSetManager workingSetManager = PlatformUI.getWorkbench().getWorkingSetManager();
-			fWorkingSet = workingSetManager.createWorkingSet(workingSetName, elements.toArray(new IAdaptable[elements.size()]));
-			fWorkingSet.setId(getPageId());
+			workingSet = workingSetManager.createWorkingSet(workingSetName, elements.toArray(new IAdaptable[elements.size()]));
+			workingSet.setId(getPageId());
 		} else {
-			fWorkingSet.setName(workingSetName);
-			fWorkingSet.setElements(elements.toArray(new IAdaptable[elements.size()]));
+			workingSet.setName(workingSetName);
+			workingSet.setElements(elements.toArray(new IAdaptable[elements.size()]));
 		}
 	}
 
 	void validateInput() {
 		String errorMessage = null;
 		String infoMessage = null;
-		String newText = fWorkingSetName.getText();
+		String newText = workingSetNameControl.getText();
 
 		if (newText.equals(newText.trim()) == false)
 			errorMessage = Messages.TargetWorkingSetPage_warning_nameWhitespace;
 		if (newText.equals("")) { //$NON-NLS-1$
-			if (fFirstCheck) {
+			if (firstCheck) {
 				setPageComplete(false);
-				fFirstCheck = false;
+				firstCheck = false;
 				return;
 			}
 			errorMessage = Messages.TargetWorkingSetPage_warning_nameMustNotBeEmpty;
 		}
 
-		fFirstCheck = false;
+		firstCheck = false;
 
-		if (errorMessage == null && (fWorkingSet == null || newText.equals(fWorkingSet.getName()) == false)) {
+		if (errorMessage == null && (workingSet == null || newText.equals(workingSet.getName()) == false)) {
 			IWorkingSet[] workingSets = PlatformUI.getWorkbench().getWorkingSetManager().getAllWorkingSets();
 			for (int i = 0; i < workingSets.length; i++) {
 				if (newText.equals(workingSets[i].getName())) {
@@ -514,11 +525,11 @@ public abstract class AbstractWorkingSetWizardPage extends WizardPage implements
 	}
 
 	private boolean hasSelectedElement() {
-		return !fSelectedElements.isEmpty();
+		return !selectedElements.isEmpty();
 	}
 
 	private void initializeSelectedElements() {
-		fSelectedElements.addAll(Arrays.asList(getInitialWorkingSetElements(fWorkingSet)));
+		selectedElements.addAll(Arrays.asList(getInitialWorkingSetElements(workingSet)));
 	}
 
 }

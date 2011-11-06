@@ -15,7 +15,7 @@ import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.tm.te.ui.views.activator.UIPlugin;
-import org.eclipse.tm.te.ui.views.internal.View;
+import org.eclipse.tm.te.ui.views.internal.ViewRoot;
 import org.eclipse.tm.te.ui.views.nls.Messages;
 import org.eclipse.tm.te.ui.views.workingsets.WorkingSetFilter;
 import org.eclipse.tm.te.ui.views.workingsets.WorkingSetsContentProvider;
@@ -212,7 +212,7 @@ public class WorkingSetActionProvider extends CommonActionProvider {
 		viewer = (CommonViewer) site.getStructuredViewer();
 		contentService = site.getContentService();
 		filterService = (NavigatorFilterService) contentService.getFilterService();
-		originalViewerInput = ((View)viewer.getCommonNavigator()).getRoot();
+		originalViewerInput = ViewRoot.getInstance();
 
 		extensionStateModel = contentService.findStateModel(WorkingSetsContentProvider.EXTENSION_ID);
 

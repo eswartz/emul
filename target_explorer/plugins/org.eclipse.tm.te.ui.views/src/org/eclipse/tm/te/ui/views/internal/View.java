@@ -17,7 +17,6 @@ import org.eclipse.core.expressions.EvaluationContext;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
-import org.eclipse.core.runtime.PlatformObject;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.action.GroupMarker;
 import org.eclipse.jface.action.IToolBarManager;
@@ -51,9 +50,6 @@ import org.eclipse.ui.navigator.ICommonActionConstants;
  */
 @SuppressWarnings("restriction")
 public class View extends CommonNavigator {
-	// The root object instance associated with this view instance
-	private final IRoot root;
-
 	// The view root mode
 	private int rootMode = IUIConstants.MODE_NORMAL;
 
@@ -64,30 +60,9 @@ public class View extends CommonNavigator {
 	private String workingSetLabel;
 
 	/**
-	 * Target Explorer root node implementation
-	 */
-	public static class Root extends PlatformObject implements IRoot {
-		/**
-		 * Constructor.
-		 */
-		public Root() {
-		}
-	}
-
-	/**
 	 * Constructor.
 	 */
 	public View() {
-		root = new Root();
-	}
-
-	/**
-	 * Returns the root object.
-	 *
-	 * @return The root object.
-	 */
-	public final IRoot getRoot() {
-		return root;
 	}
 
 	/* (non-Javadoc)
@@ -95,7 +70,7 @@ public class View extends CommonNavigator {
 	 */
 	@Override
 	protected Object getInitialInput() {
-		return root;
+		return ViewRoot.getInstance();
 	}
 
 	/**
