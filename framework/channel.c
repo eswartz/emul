@@ -20,6 +20,11 @@
 /* TODO: Somehow we should make it clear what needs to be done to add another transport layer.
  * Perhaps have a template or a readme file for it. */
 
+#if defined(__GNUC__) && !defined(_GNU_SOURCE)
+/* pread() need _GNU_SOURCE */
+#  define _GNU_SOURCE
+#endif
+
 #include <config.h>
 #include <stddef.h>
 #include <errno.h>

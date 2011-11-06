@@ -13,11 +13,9 @@
  *     Wind River Systems - initial API and implementation
  *******************************************************************************/
 
-#if defined(__GNUC__) && _FILE_OFFSET_BITS != 64
-#  ifdef _FILE_OFFSET_BITS
-#    undef _FILE_OFFSET_BITS
-#  endif
-#  define _FILE_OFFSET_BITS 64
+#if defined(__GNUC__) && !defined(_GNU_SOURCE)
+/* pread() and pwrite() need _GNU_SOURCE */
+#  define _GNU_SOURCE
 #endif
 
 #include <config.h>

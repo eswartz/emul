@@ -22,6 +22,11 @@
  * JSON is TCF preffered marshaling format.
  */
 
+#if defined(__GNUC__) && !defined(_GNU_SOURCE)
+/* pread() need _GNU_SOURCE */
+#  define _GNU_SOURCE
+#endif
+
 #include <config.h>
 #ifdef ENABLE_STREAM_MACROS
 #undef ENABLE_STREAM_MACROS

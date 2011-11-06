@@ -60,6 +60,7 @@ ifeq ($(OPSYS),GNU/Linux)
 endif
 
 ifneq ($(OPSYS),Windows)
+  OPTS += -D_FILE_OFFSET_BITS=64
   OPTS += -Wall
   ifneq ($(CC),g++)
     OPTS += -Wmissing-prototypes
