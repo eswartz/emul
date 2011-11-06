@@ -50,7 +50,6 @@ import org.ejs.coffee.core.utils.PrefUtils;
 
 import v9t9.emulator.Emulator;
 import v9t9.emulator.clients.builtin.BaseEmulatorWindow;
-import v9t9.emulator.clients.builtin.sound.JavaSoundHandler;
 import v9t9.emulator.common.EmulatorSettings;
 import v9t9.emulator.common.IEventNotifier;
 import v9t9.emulator.common.IEventNotifier.Level;
@@ -82,7 +81,11 @@ public class SwtWindow extends BaseEmulatorWindow{
 
 	private IPropertyListener fullScreenListener;
 	private boolean isHorizontal;
-	
+
+	private IndicatorCanvas indicatorCanvas;
+
+	private ImageProvider buttonImageProvider;
+	private ImageProvider statusImageProvider;
 	
 	class EmulatorWindowLayout extends Layout {
 
@@ -217,16 +220,20 @@ public class SwtWindow extends BaseEmulatorWindow{
 			shell.setMenuBar(bar);
 		}
 		
-		ImageProvider imageProvider;
 		if (false) {
 			// SLLLOOOOOOWWWW
 			SVGLoader svgIconLoader = new SVGLoader(Emulator.getDataURL("icons/icons.svg"));
-			imageProvider = new SVGImageProvider(mainIcons, svgIconLoader);
+			buttonImageProvider = new SVGImageProvider(mainIcons, svgIconLoader);
+			statusImageProvider = new SVGImageProvider(mainIcons, svgIconLoader);
 		} else {
-			imageProvider = new MultiImageSizeProvider(mainIcons);
+			buttonImageProvider = new MultiImageSizeProvider(mainIcons);
+			statusImageProvider = buttonImageProvider;
 		}
 		
 		isHorizontal = false;
+
+		indicatorCanvas = new IndicatorCanvas(toolUiTimer, videoRenderer);
+		videoRenderer.setIndicatorCanvas(indicatorCanvas);
 		
 		Composite mainComposite = shell;
 		
@@ -234,7 +241,7 @@ public class SwtWindow extends BaseEmulatorWindow{
 		
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(mainComposite);
 
-		statusBar = new EmulatorStatusBar(this, imageProvider, mainComposite, machine, 
+		statusBar = new EmulatorStatusBar(this, statusImageProvider, mainComposite, machine, 
 				new int[] { SWT.COLOR_DARK_GRAY, SWT.COLOR_GRAY, SWT.COLOR_BLACK },
 				0.25f,
 				isHorizontal);
@@ -254,13 +261,17 @@ public class SwtWindow extends BaseEmulatorWindow{
 
 		setVideoRenderer(videoRenderer);
 		
-		buttons = new EmulatorButtonBar(this, imageProvider, mainComposite, machine,
+		buttons = new EmulatorButtonBar(this, buttonImageProvider, mainComposite, machine,
 				new int[] { SWT.COLOR_BLACK, SWT.COLOR_GRAY, SWT.COLOR_DARK_GRAY },
 				0.75f,
 				isHorizontal);
 		
-
-		EmulatorSettings.INSTANCE.register(JavaSoundHandler.settingPlaySound);
+		if (buttonImageProvider instanceof SVGImageProvider) {
+			((SVGImageProvider) buttonImageProvider).setImageBar(buttons.getButtonBar());
+		}
+		if (statusImageProvider instanceof SVGImageProvider) {
+			((SVGImageProvider) statusImageProvider).setImageBar(statusBar.getButtonBar());
+		}
 		
 		this.videoControl = videoRenderer.createControl(videoRendererComposite, SWT.NONE);
 		
@@ -291,6 +302,7 @@ public class SwtWindow extends BaseEmulatorWindow{
 			}
 
 		});
+
 		
 		String boundsPref = EmulatorSettings.INSTANCE.getSettings().get(EMULATOR_WINDOW_BOUNDS);
 		final Rectangle rect = PrefUtils.readBoundsString(boundsPref);
@@ -877,6 +889,20 @@ public class SwtWindow extends BaseEmulatorWindow{
 	 */
 	public Client getClient() {
 		return machine.getClient();
+	}
+
+	/**
+	 * @return
+	 */
+	public ImageProvider getImageProvider() {
+		return buttonImageProvider;
+	}
+
+	/**
+	 * @return
+	 */
+	public IndicatorCanvas getIndicatorCanvas() {
+		return indicatorCanvas;
 	}
 
 }

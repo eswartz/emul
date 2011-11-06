@@ -8,11 +8,9 @@ import java.util.TreeMap;
 
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.ejs.coffee.core.utils.Pair;
 
-import v9t9.emulator.clients.builtin.swt.ImageIconCanvas.IImageBar;
 
 /**
  * Get an image which are available in multiple sizes
@@ -29,10 +27,10 @@ public class MultiImageSizeProvider implements ImageProvider {
 		this.iconMap = iconMap;
 	}
 	/**
-	 * @param imageBar  
 	 */
-	public Pair<Double, Image> getImage(Point size, IImageBar imageBar) {
-		SortedMap<Integer, Image> tailMap = iconMap.tailMap(size.x);
+	public Pair<Double, Image> getImage(final int sx, final int sy) {
+		int sz = Math.max(sx, sy);
+		SortedMap<Integer, Image> tailMap = iconMap.tailMap(sz);
 		Image icon;
 		if (tailMap.isEmpty())
 			icon = iconMap.lastEntry().getValue();
@@ -43,19 +41,15 @@ public class MultiImageSizeProvider implements ImageProvider {
 		return new Pair<Double, Image>(ratio, icon);
 	}
 
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.clients.builtin.swt.ImageButton.ImageProvider#drawImage(org.eclipse.swt.graphics.GC, org.eclipse.swt.graphics.Point, org.eclipse.swt.graphics.Rectangle, int, int, int)
-	 */
 	@Override
-	public void drawImage(GC gc, Point size, Rectangle bounds,
-			int xoffset, int yoffset, IImageBar imageBar) {
+	public void drawImage(GC gc, Rectangle drawRect, Rectangle imgRect) {
 		double ratio;
-		Pair<Double, Image> iconInfo = getImage(size, imageBar);
+		Pair<Double, Image> iconInfo = getImage(drawRect.width, drawRect.height);
 		ratio = iconInfo.first;
 		Image icon = iconInfo.second;
-		gc.drawImage(icon, (int)(bounds.x * ratio), (int)(bounds.y * ratio), 
-				(int)(bounds.width * ratio), (int) (bounds.height * ratio), 
-				xoffset, yoffset, size.x, size.y);
+		gc.drawImage(icon, (int)(imgRect.x * ratio), (int)(imgRect.y * ratio), 
+				(int)(imgRect.width * ratio), (int) (imgRect.height * ratio), 
+				drawRect.x, drawRect.y, drawRect.width, drawRect.height);
 	}
 
 	/**

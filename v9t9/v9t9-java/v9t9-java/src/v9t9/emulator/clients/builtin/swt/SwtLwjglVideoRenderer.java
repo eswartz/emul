@@ -141,7 +141,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 						compileLinkShaders();
 						glCanvas.redraw();
 						updateWidgetSizeForMode();
-						reblit();
+						reblitGL();
 					} catch (LWJGLException e) { 
 						e.printStackTrace(); 
 						return;
@@ -391,19 +391,27 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 
 	
 	protected void doRepaint(GC gc, Rectangle updateRect) {
-		reblit();
+		reblitGL();
 	}
 	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.swt.SwtVideoRenderer#doRedraw(org.eclipse.swt.graphics.Rectangle)
 	 */
 	@Override
-	protected void doTriggerRedraw(Rectangle redrawRect) {
-
-		reblit();
+	protected void doTriggerRedraw() {
+		reblitGL();
 	}
 	
-	private void reblit() {
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.swt.SwtVideoRenderer#reblit()
+	 */
+	@Override
+	public void reblit() {
+		reblitGL();
+		glFlush();
+		renderIndicators(glViewportRect, glCanvas);
+	}
+	private void reblitGL() {
 		MonitorEffect effect = getEffect();
 		MonitorParams params = effect.getParams();
 		
@@ -495,9 +503,9 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 			ARBShaderObjects.glUseProgramObjectARB(0); 
 		
 		}
-		
+
 		glCanvas.swapBuffers();
-		
+
 		// HACK for Intel Mobile Express Graphics --
 		// if shaders are compiled/linked BEFORE an initial render,
 		// the whole ig4icd[32|64].dll DLL crashes and burns
@@ -505,5 +513,4 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 			compileLinkShaders();
 		}
 	}
-
 }

@@ -33,7 +33,7 @@
      inkscape:pageshadow="2"
      inkscape:zoom="4.0000002"
      inkscape:cx="24.172971"
-     inkscape:cy="332.59431"
+     inkscape:cy="174.92237"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
@@ -47,7 +47,7 @@
      inkscape:snap-bbox="false"
      inkscape:object-nodes="true"
      inkscape:object-paths="true"
-     inkscape:snap-nodes="false">
+     inkscape:snap-nodes="true">
     <inkscape:grid
        empspacing="8"
        enabled="true"
@@ -89444,5 +89444,54 @@
        width="1"
        height="1"
        transform="translate(1.1431514,64.527615)" />
+    <use
+       height="1536"
+       width="64"
+       transform="translate(0,256)"
+       id="use40874"
+       xlink:href="#use41458"
+       y="0"
+       x="0" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#use41458"
+       id="use40876"
+       transform="translate(0,384)"
+       width="64"
+       height="1536" />
+    <path
+       style="fill:green;stroke:black;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;fill-opacity:1"
+       d="m 24,1336 0,-32 -16,0 24,-16 24,16 -16,0 0,32 z"
+       id="path40878"
+       inkscape:connector-curvature="0"
+       transform="translate(0,-512)" />
+    <g
+       id="g41673"
+       transform="translate(0,8)"
+       style="fill:maroon">
+      <path
+         id="path41662"
+         transform="translate(0,-512)"
+         d="m 32,1368 c -6.691996,0 -12.740987,1.3535 -17.09375,3.5625 L 8,1371.5 8,1380 c 0,6.6274 10.745166,12 24,12 13.254834,0 24,-5.3726 24,-12 l 0,-8 -6.25,-0.062 C 45.359731,1369.5223 39.041631,1368 32,1368 z"
+         style="color:black;fill:maroon;fill-opacity:1;fill-rule:nonzero;stroke:black;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+         inkscape:connector-curvature="0" />
+      <path
+         transform="translate(0,-512)"
+         d="m 56,1372 c 0,6.6274 -10.745166,12 -24,12 -13.254834,0 -24,-5.3726 -24,-12 0,-6.6274 10.745166,-12 24,-12 13.254834,0 24,5.3726 24,12 z"
+         sodipodi:ry="12"
+         sodipodi:rx="24"
+         sodipodi:cy="1372"
+         sodipodi:cx="32"
+         id="path40880"
+         style="color:black;fill:maroon;fill-opacity:1;fill-rule:nonzero;stroke:black;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+         sodipodi:type="arc" />
+    </g>
+    <path
+       style="fill:green;stroke:black;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 26,836 12,0 0,24 10,0 -16,12 -16,-12 10,0 z"
+       id="path41677"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cccccccc" />
   </g>
 </svg>

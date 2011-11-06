@@ -15,9 +15,9 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Layout;
 
-import v9t9.emulator.clients.builtin.swt.ImageIconCanvas.IImageBar;
 
 class ImageBar extends Composite implements IImageBar {
+	private static final Point ZERO_POINT = new Point(0, 0);
 	private static final int MIN_ICON_SIZE = 24;
 	private static final int MAX_ICON_SIZE = 64;
 
@@ -71,7 +71,7 @@ class ImageBar extends Composite implements IImageBar {
 		addPaintListener(new PaintListener() {
 
 			public void paintControl(PaintEvent e) {
-				paintButtonBar(e.gc, new Point(0, 0), getSize());
+				paintButtonBar(e.gc, ZERO_POINT, getSize());
 			}
 			
 		});
@@ -248,8 +248,8 @@ class ImageBar extends Composite implements IImageBar {
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.swt.ImageButton.ButtonParentDrawer#draw(org.eclipse.swt.graphics.GC, v9t9.emulator.clients.builtin.swt.ImageButton, org.eclipse.swt.graphics.Point, org.eclipse.swt.graphics.Point)
 	 */
-	public void drawBackground(GC gc, ImageIconCanvas imageButton, Point offset, Point size) {
-		paintButtonBar(gc, offset, size);
+	public void drawBackground(GC gc) {
+		paintButtonBar(gc, ZERO_POINT, getSize());
 	}
 
 	/**

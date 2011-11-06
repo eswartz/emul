@@ -98,7 +98,9 @@ public class JavaSoundHandler implements SoundHandler {
 				output.setVolume(setting.getInt() / 10.0);
 			}
 		});
+
 		EmulatorSettings.INSTANCE.register(JavaSoundHandler.settingSoundVolume);
+		EmulatorSettings.INSTANCE.register(JavaSoundHandler.settingPlaySound);
 		
 		soundRecordingHelper = new SoundRecordingHelper(output, settingRecordSoundOutputFile, "sound");
 		speechRecordingHelper = new SoundRecordingHelper(speechOutput, settingRecordSpeechOutputFile, "speech");
@@ -109,6 +111,9 @@ public class JavaSoundHandler implements SoundHandler {
 		//soundFramesPerTick = (int) ((soundFormat.getFrameRate()
 		//		+ machine.getCpuTicksPerSec() - 1) / machine.getCpuTicksPerSec());
 		soundFramesPerTick = output.getSamples((1000 + machine.getCpuTicksPerSec() - 1) / machine.getCpuTicksPerSec());
+		
+
+		
 		
 		settingPlaySound.addListener(new IPropertyListener() {
 

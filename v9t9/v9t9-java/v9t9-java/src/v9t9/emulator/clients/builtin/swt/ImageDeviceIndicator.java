@@ -6,7 +6,6 @@ package v9t9.emulator.clients.builtin.swt;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.ControlListener;
 import org.eclipse.swt.events.PaintEvent;
-import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Display;
 import org.ejs.coffee.core.properties.IProperty;
@@ -70,16 +69,16 @@ public class ImageDeviceIndicator extends ImageIconCanvas {
 	}
 
 	protected void doPaint(PaintEvent e) {
-		//Rectangle bounds = getClientArea();
 		//Point size = new Point(bounds.width, bounds.height);
-		Point size = getSize();
-		this.parentDrawer.drawBackground(e.gc, this, new Point(0, 0), size);
-		int offset = 0;
+		
+		Rectangle drawRect = getBounds();
+		drawRect.x = drawRect.y = 0;
+		this.parentDrawer.drawBackground(e.gc);
 		try {
 			//System.out.println(bounds);
-			imageProvider.drawImage(e.gc, size, bounds, offset, offset, parentDrawer);
+			imageProvider.drawImage(e.gc, drawRect, bounds);
 			if (overlayBounds != null && provider.getActiveProperty().getBoolean()) {
-				imageProvider.drawImage(e.gc, size, overlayBounds, offset, offset, parentDrawer);
+				imageProvider.drawImage(e.gc, drawRect, overlayBounds);
 			}
 		} catch (IllegalArgumentException e2) {
 			e2.printStackTrace();

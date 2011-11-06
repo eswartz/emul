@@ -11,7 +11,6 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Composite;
 import org.ejs.coffee.core.utils.Pair;
 
-import v9t9.emulator.clients.builtin.swt.ImageIconCanvas.IImageBar;
 
 /**
  * @author ejs
@@ -25,6 +24,7 @@ public class SVGImageProvider extends MultiImageSizeProvider {
 	private Point desiredSize;
 	private Image scaledImage;
 	private boolean svgFailed;
+	private IImageBar imageBar;
 	
 	/**
 	 * @param iconMap
@@ -33,14 +33,18 @@ public class SVGImageProvider extends MultiImageSizeProvider {
 		super(iconMap);
 		this.svgIcon = svgIcon;
 	}
-	
+
+	public void setImageBar(IImageBar imageBar) {
+		this.imageBar = imageBar;
+	}
 
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.swt.MultiImageSizeProvider#getImage(org.eclipse.swt.graphics.Point)
 	 */
 	@Override
-	public Pair<Double, Image> getImage(final Point size, final IImageBar imageBar) {
+	public Pair<Double, Image> getImage(final int sx, final int sy) {
 		boolean recreate = false;
+		final Point size = new Point(sx, sy);
 		if (scaledImage == null || !size.equals(desiredSize)) {
 			/*if (loadIconJob != null) {
 				loadIconJob.cancel();
@@ -70,10 +74,7 @@ public class SVGImageProvider extends MultiImageSizeProvider {
 						//int min = iconMap.values().iterator().next().getBounds().width;
 						Point scaledSize = new Point(size.x, size.y);
 						Point svgSize = svgIcon.getSize();
-						if (imageBar.isHorizontal())
-							scaledSize.y = size.y * svgSize.y / svgSize.x;
-						else
-							scaledSize.x = size.x * svgSize.x / svgSize.y;
+						scaledSize.y = size.y * svgSize.y / svgSize.x;
 						
 						long start = System.currentTimeMillis();
 						
@@ -106,7 +107,7 @@ public class SVGImageProvider extends MultiImageSizeProvider {
 			loadIconThread.start();
 		}
 		if (scaledImage == null) {
-			return super.getImage(size, imageBar);
+			return super.getImage(sx, sy);
 		}
 		else {
 			int min = iconMap.values().iterator().next().getBounds().width;

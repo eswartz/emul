@@ -131,29 +131,31 @@ public class ImageButton extends ImageIconCanvas {
 	}
 
 	protected void doPaint(PaintEvent e) {
-		Point size = getSize();
-		this.parentDrawer.drawBackground(e.gc, this, new Point(0, 0), size);
+		Rectangle drawRect = getBounds();
+		this.parentDrawer.drawBackground(e.gc);
 		//e.gc.setAntialias(SWT.ON);
 		int offset = 0;
 		if ((getStyle() & SWT.TOGGLE) != 0) {
 			if (pressed && overlayBounds == null) {
 				Color bg = e.gc.getBackground();
 				e.gc.setBackground(getDisplay().getSystemColor(SWT.COLOR_WIDGET_NORMAL_SHADOW));
-				e.gc.fillRectangle(0, 0, size.x, size.y);
+				e.gc.fillRectangle(0, 0, drawRect.width, drawRect.height);
 				e.gc.setBackground(bg);
 				offset = 2;
 			}
 		} else {
 		}
 		offset = pressed ? 2 : 0;
+		drawRect.x = drawRect.y = offset;
 		try {
 			
-			imageProvider.drawImage(e.gc, size, bounds, offset, offset, parentDrawer);
+			imageProvider.drawImage(e.gc, drawRect, bounds);
+			drawRect.x = drawRect.y = 0;
 			if (overlayBounds != null)
-				imageProvider.drawImage(e.gc, size, overlayBounds, 0, 0, parentDrawer);
+				imageProvider.drawImage(e.gc, drawRect, overlayBounds);
 			
 			if (menuOverlayBounds != null && isMenuHovering) {
-				imageProvider.drawImage(e.gc, size, menuOverlayBounds, 0, 0, parentDrawer);
+				imageProvider.drawImage(e.gc, drawRect, menuOverlayBounds);
 			}
 		} catch (IllegalArgumentException e2) {
 			e2.printStackTrace();
@@ -162,8 +164,8 @@ public class ImageButton extends ImageIconCanvas {
 		if (isHighlighted) {
 			e.gc.setForeground(getDisplay().getSystemColor(SWT.COLOR_BLACK));
 			//e.gc.setLineStyle(SWT.LINE_DOT);
-			//e.gc.drawRectangle(0, 0, size.x - 1, size.y - 1);
-			e.gc.drawFocus(0, 0, size.x - 1, size.y - 1);
+			//e.gc.drawRectangle(0, 0, imgRect.width - 1, imgRect.height - 1);
+			e.gc.drawFocus(0, 0, drawRect.width - 1, drawRect.height - 1);
 		}
 	}
 	

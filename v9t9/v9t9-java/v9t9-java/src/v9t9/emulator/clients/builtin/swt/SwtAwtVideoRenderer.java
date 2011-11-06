@@ -43,10 +43,12 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 	private List<org.eclipse.swt.events.MouseMoveListener> mouseMoveListeners = new ArrayList<org.eclipse.swt.events.MouseMoveListener>();
 	private FixedAspectLayout fixedAspectLayout;
 	
+	protected IndicatorCanvas indicatorCanvas;
+	
 	public SwtAwtVideoRenderer(Machine machine) {
 		super(machine.getVdp());
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.video.ISwtVideoRenderer#createControl(org.eclipse.swt.widgets.Composite)
 	 */
@@ -56,7 +58,7 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 		awtContainer = new Canvas(parent, flags | SWT.EMBEDDED | SWT.NO_MERGE_PAINTS | SWT.NO_BACKGROUND | SWT.NO_REDRAW_RESIZE);
 		frame = SWT_AWT.new_Frame(awtContainer);
 		frame.add(getAwtCanvas());
-		
+
 		Panel panel = new Panel();
 		panel.setLayout(new BorderLayout(0, 0));
 		panel.add(getAwtCanvas(), BorderLayout.CENTER);
@@ -304,5 +306,25 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 			}
 		});
 		return visible[0];
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.swt.ISwtVideoRenderer#setIndicatorCanvas(v9t9.emulator.clients.builtin.swt.IndicatorCanvas)
+	 */
+	@Override
+	public void setIndicatorCanvas(IndicatorCanvas indicatorCanvas) {
+		this.indicatorCanvas = indicatorCanvas;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.swt.ISwtVideoRenderer#reblit()
+	 */
+	@Override
+	public void reblit() {
+		getControl().getDisplay().syncExec(new Runnable() {
+			public void run() {
+				getControl().redraw();
+			}
+		});
 	}
 }

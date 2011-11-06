@@ -4,7 +4,6 @@
 package v9t9.emulator.clients.builtin.swt;
 
 import org.eclipse.swt.events.PaintEvent;
-import org.eclipse.swt.graphics.Point;
 
 /**
  * @author ejs
@@ -21,8 +20,7 @@ public class BlankIcon extends ImageIconCanvas {
 	 */
 	@Override
 	protected void doPaint(PaintEvent e) {
-		Point size = getSize();
-		this.parentDrawer.drawBackground(e.gc, this, new Point(0, 0), size);
+		this.parentDrawer.drawBackground(e.gc);
 	}
 
 }

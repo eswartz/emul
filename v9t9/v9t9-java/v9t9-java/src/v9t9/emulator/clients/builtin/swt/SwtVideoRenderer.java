@@ -25,6 +25,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
+import org.ejs.coffee.core.utils.Pair;
 
 import v9t9.emulator.clients.builtin.video.ICanvas;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
@@ -54,6 +55,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 	
 	protected FixedAspectLayout fixedAspectLayout;
 	private final VdpHandler vdp;
+	protected IndicatorCanvas indicatorCanvas;
 	
 	public SwtVideoRenderer(VdpHandler vdp) {
 		this.vdp = vdp;
@@ -83,10 +85,10 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 	final public Control createControl(Composite parent, int flags) {
 		this.shell = parent.getShell();
 		this.canvas = createCanvasControl(parent, flags);
-		
 		canvas.setLayout(fixedAspectLayout);	
 		
 		setCanvas(createVdpCanvas());
+		
 		this.updateRect = new Rectangle(0, 0, 0, 0);
 		
 		initWidgets();
@@ -107,6 +109,11 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 				//System.out.println(updateRect);
 				if (e.count == 0) {
 					//System.out.println(updateRect);
+					
+					Rectangle indicRect = indicatorCanvas.update(canvas.getBounds());
+					if (indicRect != null)
+						updateRect.add(indicRect);
+					
 					repaint(e.gc, updateRect);
 					updateRect.width = updateRect.height = 0;
 				}
@@ -174,8 +181,6 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 		if (!isDirty || canvas == null)
 			return;
 		
-		final Rectangle redrawRect = vdpCanvas.getDirtyRect();
-		
 		Display.getDefault().asyncExec(new Runnable() {
 
 			public void run() {
@@ -186,7 +191,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 					//updateWidgetSizeForMode();
 					
 					try {
-						doTriggerRedraw(redrawRect);
+						doTriggerRedraw();
 					} catch (Throwable t) {
 						t.printStackTrace();
 					}
@@ -198,12 +203,25 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 		});
 	}
 	
-	protected void doTriggerRedraw(final Rectangle redrawRect) {
-		Rectangle redrawPhys = logicalToPhysical(redrawRect);
-		canvas.redraw(redrawPhys.x, redrawPhys.y, 
-				redrawPhys.width, redrawPhys.height, false);
+	protected void doTriggerRedraw() {
+		if (vdpCanvas.getDirtyRect() != null) {
+			Rectangle redrawPhys = logicalToPhysical(vdpCanvas.getDirtyRect());
+			canvas.redraw(redrawPhys.x, redrawPhys.y, 
+					redrawPhys.width, redrawPhys.height, false);
+		}
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.swt.ISwtVideoRenderer#reblit()
+	 */
+	@Override
+	public void reblit() {
+		getControl().getDisplay().syncExec(new Runnable() {
+			public void run() {
+				getControl().redraw();
+			}
+		});
+	}
 	
 	/**
 	 * If the X or Y resolutions changed, ensure the widget can show it correctly.
@@ -261,6 +279,7 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 		busy = true;
 		long started = System.currentTimeMillis();
 		doRepaint(gc, updateRect);
+
 		lastUpdateTime = System.currentTimeMillis() - started;
 		vdpCanvas.clearDirty();
 		busy = false;
@@ -281,6 +300,8 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 				destRect = logicalToPhysical(imageRect);
 				
 				blitImageData(gc, imageData, destRect, imageRect);
+				
+				renderIndicators(canvas.getBounds(), canvas);
 			}
 		}
 	}
@@ -407,5 +428,28 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 		});
 		return visible[0];
 	}
-
+	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.swt.ISwtVideoRenderer#setIndicatorCanvas(v9t9.emulator.clients.builtin.swt.IndicatorCanvas)
+	 */
+	@Override
+	public void setIndicatorCanvas(IndicatorCanvas indicatorCanvas) {
+		this.indicatorCanvas = indicatorCanvas;
+	}
+	
+	protected void renderIndicators(Rectangle full, Control control) {
+		Pair<Rectangle, ImageIconInfo>[] indicators = indicatorCanvas.getIndicators(full);
+		GC gc = new GC(control);
+		//gc.setAlpha(128);
+		for (Pair<Rectangle, ImageIconInfo> info : indicators) {
+			ImageIconInfo imageIconInfo = info.second;
+			Rectangle bounds = info.first;
+			//System.out.println("Drawing indicator at " + bounds + " from " + imageIconInfo.getBounds());
+			imageIconInfo.getImageProvider().drawImage(gc, 
+					bounds,
+					imageIconInfo.getBounds());
+		}
+		gc.dispose();
+	}
+	
 }

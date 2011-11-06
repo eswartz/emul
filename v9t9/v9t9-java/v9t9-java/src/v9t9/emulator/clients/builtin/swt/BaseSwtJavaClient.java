@@ -68,7 +68,10 @@ public abstract class BaseSwtJavaClient implements Client {
         
         //window.setSwtVideoRenderer((ISwtVideoRenderer) videoRenderer);
 
-        mouseJoystickHandler = new MouseJoystickHandler(videoRenderer, machine.getKeyboardState());
+        mouseJoystickHandler = new MouseJoystickHandler(videoRenderer, 
+        		machine.getKeyboardState(), 
+        		window.getIndicatorCanvas(),
+        		window.getImageProvider());
         window.setMouseJoystickHandler(mouseJoystickHandler);
         
         KeyboardState.settingUseMouseAsJoystick.addListener(new IPropertyListener() {

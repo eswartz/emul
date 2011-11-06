@@ -254,6 +254,10 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler implements ISwtKeybo
 				break;
 				
 			case SWT.KEYPAD_0:
+			case SWT.KEYPAD_DIVIDE:
+			case SWT.KEYPAD_MULTIPLY:
+			case SWT.KEYPAD_ADD:
+			case SWT.KEYPAD_CR:
 				if (!KeyboardState.settingUseMouseAsJoystick.getBoolean())
 					keyboardState.setJoystick(joy,
 							KeyboardState.JOY_B,
