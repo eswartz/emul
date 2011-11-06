@@ -361,7 +361,7 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler implements ISwtKeybo
 			keyboardState.setKey(realKey, pressed, false, shift, ch, when);
 		else if (((keyboardState.getShiftMask() & KeyboardState.SHIFT) != 0) == !isNumLock())
 			keyboardState.setJoystick(joy,
-					joyRow, x, y, false, when);
+					joyRow, x, y, (joyRow & KeyboardState.JOY_B) != 0 && pressed, when);
 		else
 			keyboardState.setKey(realKey, pressed, false, keypadShift, keypadCh, when);
 		

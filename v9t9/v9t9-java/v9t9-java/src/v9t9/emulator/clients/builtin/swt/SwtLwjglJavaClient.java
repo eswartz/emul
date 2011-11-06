@@ -30,7 +30,7 @@ public class SwtLwjglJavaClient extends BaseSwtJavaClient implements Client {
 	protected void setupRenderer() {
 		videoRenderer = new SwtLwjglVideoRenderer(machine.getVdp());
 	
-		keyboardHandler = new SwtKeyboardHandler(
+		keyboardHandler = new SwtLwjglKeyboardHandler(
 				machine.getKeyboardState(), machine);
 	}
 
