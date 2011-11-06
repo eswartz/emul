@@ -25,7 +25,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
-import org.ejs.coffee.core.utils.Pair;
 
 import v9t9.emulator.clients.builtin.video.ICanvas;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
@@ -55,7 +54,6 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 	
 	protected FixedAspectLayout fixedAspectLayout;
 	private final VdpHandler vdp;
-	protected IndicatorCanvas indicatorCanvas;
 	
 	public SwtVideoRenderer(VdpHandler vdp) {
 		this.vdp = vdp;
@@ -109,11 +107,6 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 				//System.out.println(updateRect);
 				if (e.count == 0) {
 					//System.out.println(updateRect);
-					
-					Rectangle indicRect = indicatorCanvas.update(canvas.getBounds());
-					if (indicRect != null)
-						updateRect.add(indicRect);
-					
 					repaint(e.gc, updateRect);
 					updateRect.width = updateRect.height = 0;
 				}
@@ -300,8 +293,6 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 				destRect = logicalToPhysical(imageRect);
 				
 				blitImageData(gc, imageData, destRect, imageRect);
-				
-				renderIndicators(canvas.getBounds(), canvas);
 			}
 		}
 	}
@@ -428,28 +419,4 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 		});
 		return visible[0];
 	}
-	
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.clients.builtin.swt.ISwtVideoRenderer#setIndicatorCanvas(v9t9.emulator.clients.builtin.swt.IndicatorCanvas)
-	 */
-	@Override
-	public void setIndicatorCanvas(IndicatorCanvas indicatorCanvas) {
-		this.indicatorCanvas = indicatorCanvas;
-	}
-	
-	protected void renderIndicators(Rectangle full, Control control) {
-		Pair<Rectangle, ImageIconInfo>[] indicators = indicatorCanvas.getIndicators(full);
-		GC gc = new GC(control);
-		//gc.setAlpha(128);
-		for (Pair<Rectangle, ImageIconInfo> info : indicators) {
-			ImageIconInfo imageIconInfo = info.second;
-			Rectangle bounds = info.first;
-			//System.out.println("Drawing indicator at " + bounds + " from " + imageIconInfo.getBounds());
-			imageIconInfo.getImageProvider().drawImage(gc, 
-					bounds,
-					imageIconInfo.getBounds());
-		}
-		gc.dispose();
-	}
-	
 }

@@ -43,8 +43,6 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 	private List<org.eclipse.swt.events.MouseMoveListener> mouseMoveListeners = new ArrayList<org.eclipse.swt.events.MouseMoveListener>();
 	private FixedAspectLayout fixedAspectLayout;
 	
-	protected IndicatorCanvas indicatorCanvas;
-	
 	public SwtAwtVideoRenderer(Machine machine) {
 		super(machine.getVdp());
 	}
@@ -306,14 +304,6 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 			}
 		});
 		return visible[0];
-	}
-	
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.clients.builtin.swt.ISwtVideoRenderer#setIndicatorCanvas(v9t9.emulator.clients.builtin.swt.IndicatorCanvas)
-	 */
-	@Override
-	public void setIndicatorCanvas(IndicatorCanvas indicatorCanvas) {
-		this.indicatorCanvas = indicatorCanvas;
 	}
 	
 	/* (non-Javadoc)

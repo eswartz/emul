@@ -82,8 +82,6 @@ public class SwtWindow extends BaseEmulatorWindow{
 	private IPropertyListener fullScreenListener;
 	private boolean isHorizontal;
 
-	private IndicatorCanvas indicatorCanvas;
-
 	private ImageProvider buttonImageProvider;
 	private ImageProvider statusImageProvider;
 	
@@ -232,9 +230,6 @@ public class SwtWindow extends BaseEmulatorWindow{
 		
 		isHorizontal = false;
 
-		indicatorCanvas = new IndicatorCanvas(toolUiTimer, videoRenderer);
-		videoRenderer.setIndicatorCanvas(indicatorCanvas);
-		
 		Composite mainComposite = shell;
 		
 		mainComposite.setLayout(new EmulatorWindowLayout());
@@ -897,12 +892,4 @@ public class SwtWindow extends BaseEmulatorWindow{
 	public ImageProvider getImageProvider() {
 		return buttonImageProvider;
 	}
-
-	/**
-	 * @return
-	 */
-	public IndicatorCanvas getIndicatorCanvas() {
-		return indicatorCanvas;
-	}
-
 }

@@ -10,7 +10,6 @@ import org.eclipse.swt.events.MouseMoveListener;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Control;
 
-import v9t9.emulator.clients.builtin.swt.IndicatorCanvas.Indicator;
 import v9t9.keyboard.KeyboardState;
 
 /**
@@ -24,25 +23,13 @@ public class MouseJoystickHandler {
 	private MouseAdapter mouseButtonListener;
 	private MouseMoveListener mouseMoveListener;
 	private final KeyboardState keyboardState;
-	private final IndicatorCanvas indicatorCanvas;
-	private ImageIconInfo buttonInfo;
-	private ImageIconInfo arrowInfo;
-
-	private static final String BUTTON_ID = "mouse.button";
-	private static final String ARROW_ID = "mouse.arrow";
 	
 	/**
 	 */
 	public MouseJoystickHandler(final ISwtVideoRenderer renderer, 
-			KeyboardState keyboardState,
-			IndicatorCanvas indicatorCanvas_,
-			ImageProvider imageProvider) {
+			KeyboardState keyboardState) {
 		this.renderer = renderer;
 		this.keyboardState = keyboardState;
-		this.indicatorCanvas = indicatorCanvas_;
-		
-		buttonInfo = new ImageIconInfo(imageProvider, 21);
-		arrowInfo = new ImageIconInfo(imageProvider, 20);
 		
 		mouseButtonListener = new MouseAdapter() {
 			@Override
@@ -52,10 +39,6 @@ public class MouseJoystickHandler {
 				if (e.button != 1)
 					return;
 
-				indicatorCanvas.addIndicator(BUTTON_ID, 
-						new Indicator(buttonInfo, 0, 0, 0.125, 0.125), 
-						Integer.MAX_VALUE);
-				
 				System.out.println("DOWN");
 				int joy = (e.stateMask & SWT.SHIFT) != 0 ? 2 : 1;
 				button(e.button, joy, true);
@@ -66,8 +49,6 @@ public class MouseJoystickHandler {
 					return;
 				if (e.button != 1)
 					return;
-
-				indicatorCanvas.removeIndicator(BUTTON_ID);
 				
 				System.out.println("UP");
 				int joy = (e.stateMask & SWT.SHIFT) != 0 ? 2 : 1;
@@ -145,13 +126,6 @@ public class MouseJoystickHandler {
 				dx = 1; dy = 1; break;
 			}
 		}
-		
-		if (dx == 0 && dy == 0)
-			indicatorCanvas.removeIndicator(ARROW_ID);
-		else
-			indicatorCanvas.addIndicator(ARROW_ID, 
-					new Indicator(arrowInfo, 0.5 + (dx/2.0), 0.5 + (dy/2.0), 0.125, 0.125), 
-					Integer.MAX_VALUE);
 		
 		keyboardState.setJoystick(joy, KeyboardState.JOY_X | KeyboardState.JOY_Y, dx, dy, false, System.currentTimeMillis());
 	}

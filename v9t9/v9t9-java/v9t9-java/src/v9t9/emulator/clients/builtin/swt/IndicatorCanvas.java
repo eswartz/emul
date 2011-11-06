@@ -60,19 +60,17 @@ public class IndicatorCanvas {
 	private static final int INDENT = 8;
 	
 	private boolean dirty;
-	private Rectangle dirtyRect;
 	private final Timer timer;
 
 	private Map<String, Indicator> indicators;
 	private Map<String, TimerTask> indicatorTasks;
 
-	private final ISwtVideoRenderer videoRenderer;
+	final ISwtVideoRenderer videoRenderer;
 	
 	public IndicatorCanvas(Timer timer, ISwtVideoRenderer videoRenderer) {
 		this.timer = timer;
 		this.videoRenderer = videoRenderer;
 		dirty = false;
-		dirtyRect = null;
 		indicators = Collections.synchronizedMap(new LinkedHashMap<String, IndicatorCanvas.Indicator>());
 		indicatorTasks = Collections.synchronizedMap(new HashMap<String, TimerTask>());
 	}
@@ -117,7 +115,7 @@ public class IndicatorCanvas {
 	 */
 	public void markDirty() {
 		dirty = true;
-		videoRenderer.reblit();
+		//videoRenderer.reblit();
 	}
 
 

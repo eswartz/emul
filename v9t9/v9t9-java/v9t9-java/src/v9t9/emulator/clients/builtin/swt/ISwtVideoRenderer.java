@@ -37,11 +37,6 @@ public interface ISwtVideoRenderer extends VideoRenderer {
 	VdpHandler getVdpHandler();
 
 	/**
-	 * @param indicatorCanvas
-	 */
-	void setIndicatorCanvas(IndicatorCanvas indicatorCanvas);
-
-	/**
 	 * Reblit the screen (for indicator changes)
 	 */
 	void reblit();

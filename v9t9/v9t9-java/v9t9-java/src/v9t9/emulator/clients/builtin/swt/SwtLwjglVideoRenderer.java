@@ -409,8 +409,8 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	public void reblit() {
 		reblitGL();
 		glFlush();
-		renderIndicators(glViewportRect, glCanvas);
 	}
+	
 	private void reblitGL() {
 		MonitorEffect effect = getEffect();
 		MonitorParams params = effect.getParams();
