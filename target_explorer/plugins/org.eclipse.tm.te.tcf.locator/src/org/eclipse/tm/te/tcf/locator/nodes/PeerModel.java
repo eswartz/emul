@@ -12,7 +12,6 @@ package org.eclipse.tm.te.tcf.locator.nodes;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.tm.tcf.protocol.IPeer;
@@ -31,6 +30,8 @@ import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModelProperties;
 public class PeerModel extends PropertiesContainer implements IPeerModel, IWorkingSetElement {
 	// Reference to the parent locator model
 	private final ILocatorModel parentModel;
+	// Reference to the element id (cached for performance optimization)
+	private String elementId;
 
 	/**
 	 * Constructor.
@@ -57,6 +58,10 @@ public class PeerModel extends PropertiesContainer implements IPeerModel, IWorki
 		// The properties changed listeners should not be called from the
 		// constructor.
 		setProperty(IPeerModelProperties.PROP_INSTANCE, peer);
+
+		// Initialize the element id
+		elementId = peer.getID();
+		Assert.isNotNull(elementId);
 
 		// Enable change events
 		setChangeEventsEnabled(true);
@@ -91,22 +96,7 @@ public class PeerModel extends PropertiesContainer implements IPeerModel, IWorki
 	 */
 	@Override
 	public String getElementId() {
-		// NOTE: The getElementId() method can be invoked from many place and
-		//       many threads where we cannot control the calls. Therefore, this
-		//       method is allowed be called from any thread.
-		final AtomicReference<String> elementId = new AtomicReference<String>(null);
-		if (Protocol.isDispatchThread()) {
-			elementId.set(getPeer().getID());
-		} else {
-			Protocol.invokeAndWait(new Runnable() {
-				@Override
-				public void run() {
-					elementId.set(getPeer().getID());
-				}
-			});
-		}
-
-	    return elementId.get();
+		return elementId;
 	}
 
 	/* (non-Javadoc)
@@ -181,6 +171,25 @@ public class PeerModel extends PropertiesContainer implements IPeerModel, IWorki
 	}
 
 	/* (non-Javadoc)
+	 * @see org.eclipse.tm.te.runtime.properties.PropertiesContainer#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof PeerModel) {
+			return getElementId().equals(((PeerModel)obj).getElementId());
+		}
+	    return super.equals(obj);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.tm.te.runtime.properties.PropertiesContainer#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+	    return getElementId().hashCode();
+	}
+
+	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.runtime.properties.PropertiesContainer#getProperties()
 	 */
 	@Override
@@ -209,6 +218,11 @@ public class PeerModel extends PropertiesContainer implements IPeerModel, IWorki
 	protected void postSetProperties(Map<String, Object> properties) {
 		Assert.isTrue(checkThreadAccess(), "Illegal Thread Access"); //$NON-NLS-1$
 		Assert.isNotNull(properties);
+		Assert.isNotNull(getPeer());
+
+		// New properties applied. Update the element id
+		elementId = getPeer().getID();
+		Assert.isNotNull(elementId);
 
 		if (changeEventsEnabled()) {
 			final IModelListener[] listeners = parentModel.getListener();
@@ -233,6 +247,13 @@ public class PeerModel extends PropertiesContainer implements IPeerModel, IWorki
 	public void postSetProperty(String key, Object value, Object oldValue) {
 		Assert.isTrue(checkThreadAccess(), "Illegal Thread Access"); //$NON-NLS-1$
 		Assert.isNotNull(key);
+		Assert.isNotNull(getPeer());
+
+		// If the peer instance changed, update the element id
+		if (IPeerModelProperties.PROP_INSTANCE.equals(key)) {
+			elementId = getPeer().getID();
+			Assert.isNotNull(elementId);
+		}
 
 		// Notify registered listeners that the peer changed. Property
 		// changes for property slots ending with ".silent" are suppressed.
