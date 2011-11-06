@@ -8,6 +8,7 @@ import net.java.games.input.Component.Identifier;
 import net.java.games.input.Component.Identifier.Button;
 import net.java.games.input.Controller;
 import net.java.games.input.ControllerEnvironment;
+import net.java.games.input.Keyboard;
 
 import org.eclipse.swt.widgets.Control;
 
@@ -42,6 +43,8 @@ public class SwtLwjglKeyboardHandler implements KeyboardHandler, ISwtKeyboardHan
 		 */
 		public StupidControllerHandler(Controller controller) {
 			this.controller = controller;
+			for (Component c : controller.getComponents())
+				System.out.println(c);
 			leftXAxis = controller.getComponent(Identifier.Axis.X);
 			rightXAxis = controller.getComponent(Identifier.Axis.RX);
 			leftYAxis = controller.getComponent(Identifier.Axis.Y);
@@ -125,6 +128,11 @@ public class SwtLwjglKeyboardHandler implements KeyboardHandler, ISwtKeyboardHan
 			String name = controller.getName();
 			System.out.println("... controller: " + name);
 
+			if (controller.getComponent(Identifier.Axis.X) == null || 
+					controller.getComponent(Identifier.Axis.Y) == null ||
+					controller.getType() == Controller.Type.MOUSE)
+				continue;
+				
 			System.out.println("Using controller: " + name);
 			joystickHandler = new StupidControllerHandler(controller);
 			break;
