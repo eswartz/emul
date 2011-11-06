@@ -14,6 +14,7 @@ import v9t9.keyboard.KeyboardState;
 
 /**
  * @author ejs
+ * @deprecated
  *
  */
 public class MouseJoystickHandler {

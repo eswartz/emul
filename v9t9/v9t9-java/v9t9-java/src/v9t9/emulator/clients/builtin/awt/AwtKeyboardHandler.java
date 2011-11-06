@@ -170,25 +170,25 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 				break;
 				
 			case KeyEvent.VK_KP_UP:
-				if (!KeyboardState.settingUseMouseAsJoystick.getBoolean())
+				if (isKeypadForJoystick())
 					keyboardState.setJoystick(joy,
 							KeyboardState.JOY_Y,
 							0, pressed ? -1 : 0, false, when);
 				break;
 			case KeyEvent.VK_KP_DOWN:
-				if (!KeyboardState.settingUseMouseAsJoystick.getBoolean())
+				if (isKeypadForJoystick())
 					keyboardState.setJoystick(joy,
 							KeyboardState.JOY_Y,
 							 0, pressed ? 1 : 0, false, when);
 				break;
 			case KeyEvent.VK_KP_LEFT:
-				if (!KeyboardState.settingUseMouseAsJoystick.getBoolean())
+				if (isKeypadForJoystick())
 					keyboardState.setJoystick(joy,
 							KeyboardState.JOY_X,
 							pressed ? -1 : 0, 0, false, when);
 				break;
 			case KeyEvent.VK_KP_RIGHT:
-				if (!KeyboardState.settingUseMouseAsJoystick.getBoolean())
+				if (isKeypadForJoystick())
 					keyboardState.setJoystick(joy,
 							KeyboardState.JOY_X,
 							pressed ? 1 : 0, 0, false, when);
@@ -197,7 +197,7 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 			case KeyEvent.VK_HOME:
 				if (!numpad) {
 					keyboardState.setKey(realKey, pressed, synthetic, fctn, '5', when);		// BEGIN
-				} else if (!KeyboardState.settingUseMouseAsJoystick.getBoolean()) {
+				} else if (isKeypadForJoystick()) {
 					keyboardState.setJoystick(joy,
 							KeyboardState.JOY_Y | KeyboardState.JOY_X,
 							pressed ? -1 : 0, pressed ? -1 : 0, false, when);
@@ -207,7 +207,7 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 			case KeyEvent.VK_INSERT:
 				if (!numpad) {
 					keyboardState.setKey(realKey, pressed, synthetic, fctn, '2', when);
-				} else if (!KeyboardState.settingUseMouseAsJoystick.getBoolean()) {
+				} else if (isKeypadForJoystick()) {
 					keyboardState.setJoystick(joy,
 							KeyboardState.JOY_B,
 							0, 0, pressed, when);
@@ -217,7 +217,7 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 			case KeyEvent.VK_PAGE_UP:
 				if (!numpad) {
 					keyboardState.setKey(realKey, pressed, synthetic, fctn, '6', when); // (as per E/A and TI Writer)
-				} else if (!KeyboardState.settingUseMouseAsJoystick.getBoolean()) {
+				} else if (isKeypadForJoystick()) {
 					keyboardState.setJoystick(joy,
 							KeyboardState.JOY_Y | KeyboardState.JOY_X,
 							pressed ? 1 : 0, pressed ? -1 : 0, false, when);
@@ -226,7 +226,7 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 			case KeyEvent.VK_PAGE_DOWN:
 				if (!numpad) {
 					keyboardState.setKey(realKey, pressed, synthetic, fctn, '4', when); // (as per E/A and TI Writer)
-				} else if (!KeyboardState.settingUseMouseAsJoystick.getBoolean()) {
+				} else if (isKeypadForJoystick()) {
 					keyboardState.setJoystick(joy,
 							KeyboardState.JOY_Y | KeyboardState.JOY_X,
 							pressed ? 1 : 0, pressed ? 1 : 0, false, when);
@@ -235,7 +235,7 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 			case KeyEvent.VK_END:
 				if (!numpad) {
 					keyboardState.setKey(realKey, pressed, synthetic, fctn, '0', when);		// Fctn-0
-				} else if (!KeyboardState.settingUseMouseAsJoystick.getBoolean()) {
+				} else if (isKeypadForJoystick()) {
 					keyboardState.setJoystick(joy,
 							KeyboardState.JOY_Y | KeyboardState.JOY_X,
 							pressed ? -1 : 0, pressed ? 1 : 0, false, when);
@@ -263,6 +263,13 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 				System.out.println("Unhandled keycode: " + keyCode);
 			}
 		}
+	}
+
+	/**
+	 * @return
+	 */
+	private boolean isKeypadForJoystick() {
+		return true;
 	}
 
 	/* (non-Javadoc)

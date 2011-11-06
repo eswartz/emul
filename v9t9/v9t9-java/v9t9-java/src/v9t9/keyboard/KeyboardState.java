@@ -120,7 +120,7 @@ public class KeyboardState {
 	private long lastChangeTime;
 	private ArrayList<KeyDelta> currentGroup = null;
 
-	static public final SettingProperty settingUseMouseAsJoystick = new SettingProperty("UseMouseAsJoystick", new Boolean(false));
+	private boolean numLock;
 
     /*  Map of ASCII codes and their direct CRU mapping
         (high nybble=row, low nybble=column), except for 0xff,
@@ -962,5 +962,16 @@ public class KeyboardState {
 
 	public byte getShiftMask() {
 		return realshift;
+	}
+
+	
+	/**
+	 * @param numLock the numLock to set
+	 */
+	public void setNumLock(boolean numLock) {
+		this.numLock = numLock;
+	}
+	public boolean getNumLock() {
+		return numLock;
 	}
 }

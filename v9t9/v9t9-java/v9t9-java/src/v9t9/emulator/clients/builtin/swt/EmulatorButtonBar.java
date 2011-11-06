@@ -31,7 +31,6 @@ import v9t9.emulator.common.IEventNotifier.Level;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.runtime.cpu.Cpu9900;
 import v9t9.emulator.runtime.cpu.Executor;
-import v9t9.keyboard.KeyboardState;
 
 /**
  * @author ejs
@@ -147,9 +146,6 @@ public class EmulatorButtonBar extends EmulatorBar  {
 						swtWindow.pasteClipboardToKeyboard();
 					}
 			});
-		
-		createTwoStateButton(KeyboardState.settingUseMouseAsJoystick, 19,
-				18, "Use mouse as joystick");
 		
 		createButton(6, "Load or save machine state",
 				new SelectionAdapter() {

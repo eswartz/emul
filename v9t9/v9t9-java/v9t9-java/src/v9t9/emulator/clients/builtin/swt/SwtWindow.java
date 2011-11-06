@@ -54,10 +54,8 @@ import v9t9.emulator.common.EmulatorSettings;
 import v9t9.emulator.common.IEventNotifier;
 import v9t9.emulator.common.IEventNotifier.Level;
 import v9t9.emulator.common.Machine;
-import v9t9.emulator.common.NotifyEvent;
 import v9t9.emulator.runtime.cpu.Cpu;
 import v9t9.engine.Client;
-import v9t9.keyboard.KeyboardState;
 
 /**
  * Provide the emulator in an SWT window
@@ -75,7 +73,6 @@ public class SwtWindow extends BaseEmulatorWindow{
 	private IFocusRestorer focusRestorer;
 	private final IEventNotifier eventNotifier;
 	private Composite videoRendererComposite;
-	private MouseJoystickHandler mouseJoystickHandler;
 	EmulatorBar buttons;
 	private EmulatorStatusBar statusBar;
 
@@ -355,56 +352,6 @@ public class SwtWindow extends BaseEmulatorWindow{
 			rect.y = 0;
 	}
 
-	public void setMouseJoystickHandler(MouseJoystickHandler handler) {
-		boolean first = mouseJoystickHandler == null;
-		this.mouseJoystickHandler = handler;
-		
-		/*
-		((ISwtVideoRenderer)videoRenderer).addMouseEventListener(new MouseAdapter() {
-			public void mouseDoubleClick(MouseEvent e) {
-				swapMouseDragDropForJoystick(true, !mouseJoystickHandler.isEnabled());
-			}
-		});
-		*/
-		
-		swapMouseDragDropForJoystick(!first, false);
-	}
-	
-
-	protected void swapMouseDragDropForJoystick(boolean notify, boolean enableJoystick) {
-		if (enableJoystick) {
-			/*
-			if (dragDropHandler != null)
-				dragDropHandler.dispose();
-			dragDropHandler = null;
-			*/
-		} 
-		if (mouseJoystickHandler != null)
-			mouseJoystickHandler.setEnabled(enableJoystick);
-		
-		if (mouseJoystickHandler != null && notify && eventNotifier != null) {
-			NotifyEvent event = new NotifyEvent(System.currentTimeMillis(), null, Level.INFO, 
-					mouseJoystickHandler.isEnabled() 
-					? "Using mouse as joystick" : "Releasing mouse as joystick");
-			event.isPriority = true;
-			eventNotifier.notifyEvent(event);
-		}
-		/*
-		if (!enableJoystick) {
-			try {
-				dragDropHandler = new SwtDragDropHandler(this, 
-						videoControl, 
-						(ISwtVideoRenderer) videoRenderer,
-						eventNotifier);
-			} catch (SWTError e) {
-				e.printStackTrace();
-			}
-		}
-		*/
-	}
-	/**
-	 * 
-	 */
 	protected void showAppMenu(MouseEvent e) {
 		// we need this horrible hack or else the
 		// menu will disappear immediately because SWT and AWT
@@ -641,21 +588,6 @@ public class SwtWindow extends BaseEmulatorWindow{
 		populateAccelMenu(accelMenu);
 		accel.setMenu(accelMenu);
 		*/
-		
-		if (mouseJoystickHandler != null) {
-			MenuItem mouseJoystickItem = new MenuItem(appMenu, SWT.CHECK);
-			mouseJoystickItem.setText("Use mouse as joystick");
-			mouseJoystickItem.setAccelerator(SWT.CTRL | SWT.ALT | ' ');
-			mouseJoystickItem.setSelection(mouseJoystickHandler.isEnabled());
-			mouseJoystickItem.addSelectionListener(new SelectionAdapter() {
-				@Override
-				public void widgetSelected(SelectionEvent e) {
-					mouseJoystickHandler.setEnabled(!mouseJoystickHandler.isEnabled());
-					KeyboardState.settingUseMouseAsJoystick.setBoolean(mouseJoystickHandler.isEnabled());
-					focusRestorer.restoreFocus();
-				}
-			});
-		}
 		
 		return appMenu;
 	}
