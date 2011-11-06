@@ -244,8 +244,7 @@ public class WorkingSetActionProvider extends CommonActionProvider {
 		if (workingSetName != null && workingSetName.length() > 0) {
 			IWorkingSetManager workingSetManager = PlatformUI.getWorkbench().getWorkingSetManager();
 			workingSet = workingSetManager.getWorkingSet(workingSetName);
-		} else if (PlatformUI.getPreferenceStore().getBoolean(
-				IWorkbenchPreferenceConstants.USE_WINDOW_WORKING_SET_BY_DEFAULT)) {
+		} else if (PlatformUI.getPreferenceStore().getBoolean(IWorkbenchPreferenceConstants.USE_WINDOW_WORKING_SET_BY_DEFAULT)) {
 			// use the window set by default if the global preference is set
 			workingSet = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().getAggregateWorkingSet();
 		}
@@ -256,10 +255,8 @@ public class WorkingSetActionProvider extends CommonActionProvider {
 	}
 
 	/* default */ void setWorkingSetFilter(IWorkingSet workingSet) {
-		setWorkingSetFilter(workingSet, FIRST_TIME);
+		setWorkingSetFilter(workingSet, true);
 	}
-
-	private static final boolean FIRST_TIME = true;
 
     private void setWorkingSetFilter(IWorkingSet workingSet, boolean firstTime) {
     	WorkingSetFilter workingSetFilter = null;
@@ -274,7 +271,7 @@ public class WorkingSetActionProvider extends CommonActionProvider {
 			if (firstTime) {
 				filterService.addActiveFilterIds(new String[] { WORKING_SET_FILTER_ID });
 				filterService.updateViewer();
-				setWorkingSetFilter(workingSet, !FIRST_TIME);
+				setWorkingSetFilter(workingSet, false);
 				return;
 			}
 
@@ -284,7 +281,7 @@ public class WorkingSetActionProvider extends CommonActionProvider {
 			UIPlugin.getDefault().getLog().log(status);
 			return;
 		}
-		workingSetFilter.setWorkingSet(emptyWorkingSet ? null : workingSet);
+		workingSetFilter.setWorkingSet(emptyWorkingSet || !extensionStateModel.getBooleanProperty(WorkingSetsContentProvider.SHOW_TOP_LEVEL_WORKING_SETS) ? null : workingSet);
 	}
 
 	/**

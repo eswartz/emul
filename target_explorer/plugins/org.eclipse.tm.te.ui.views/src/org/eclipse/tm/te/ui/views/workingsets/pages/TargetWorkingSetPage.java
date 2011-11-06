@@ -21,15 +21,18 @@ import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.tm.te.runtime.interfaces.workingsets.IWorkingSetElement;
+import org.eclipse.tm.te.ui.views.ViewsUtil;
 import org.eclipse.tm.te.ui.views.activator.UIPlugin;
 import org.eclipse.tm.te.ui.views.interfaces.IUIConstants;
 import org.eclipse.tm.te.ui.views.interfaces.ImageConsts;
 import org.eclipse.tm.te.ui.views.internal.ViewRoot;
 import org.eclipse.tm.te.ui.views.nls.Messages;
 import org.eclipse.tm.te.ui.views.workingsets.WorkingSetElementHolder;
+import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.internal.navigator.NavigatorContentService;
 import org.eclipse.ui.internal.navigator.NavigatorContentServiceContentProvider;
+import org.eclipse.ui.navigator.CommonNavigator;
 import org.eclipse.ui.navigator.INavigatorContentService;
 
 /**
@@ -40,7 +43,7 @@ import org.eclipse.ui.navigator.INavigatorContentService;
  */
 @SuppressWarnings("restriction")
 public class TargetWorkingSetPage extends AbstractWorkingSetWizardPage {
-	// The common navigator content service
+	// The target explorer view content service
 	private INavigatorContentService contentService;
 	// The initial selection
 	private IStructuredSelection initialSelection;
@@ -83,31 +86,33 @@ public class TargetWorkingSetPage extends AbstractWorkingSetWizardPage {
 	 */
     @Override
 	protected void configureTree(TreeViewer tree) {
-		// Construct and associate the navigator content service.
-		// We have to simulate the common viewer here to get the content right.
-		contentService = new NavigatorContentService(IUIConstants.ID_EXPLORER, tree);
+    	// Get the content service from the Target Explorer view.
+    	IWorkbenchPart part = ViewsUtil.getPart(IUIConstants.ID_EXPLORER);
+    	if (part instanceof CommonNavigator) {
+    		contentService = ((CommonNavigator)part).getNavigatorContentService();
 
-		tree.setContentProvider(new NavigatorContentServiceContentProvider((NavigatorContentService)contentService) {
-			/* (non-Javadoc)
-			 * @see org.eclipse.ui.internal.navigator.NavigatorContentServiceContentProvider#hasChildren(java.lang.Object)
-			 */
-			@Override
-			public boolean hasChildren(Object anElementOrPath) {
-			    return false;
-			}
-		});
-		tree.setLabelProvider(contentService.createCommonLabelProvider());
+    		tree.setContentProvider(new NavigatorContentServiceContentProvider((NavigatorContentService)contentService) {
+    			/* (non-Javadoc)
+    			 * @see org.eclipse.ui.internal.navigator.NavigatorContentServiceContentProvider#hasChildren(java.lang.Object)
+    			 */
+    			@Override
+    			public boolean hasChildren(Object anElementOrPath) {
+    				return false;
+    			}
+    		});
+    		tree.setLabelProvider(contentService.createCommonLabelProvider());
 
-		// Filter out everything not implementing IWorkingSetElement
-		tree.addFilter(new ViewerFilter() {
-			@Override
-			public boolean select(Viewer viewer, Object parentElement, Object element) {
-				return element instanceof IWorkingSetElement;
-			}
-		});
+    		// Filter out everything not implementing IWorkingSetElement
+    		tree.addFilter(new ViewerFilter() {
+    			@Override
+    			public boolean select(Viewer viewer, Object parentElement, Object element) {
+    				return element instanceof IWorkingSetElement;
+    			}
+    		});
 
-		// Create the root node
-		tree.setInput(ViewRoot.getInstance());
+    		// Set the root node
+    		tree.setInput(ViewRoot.getInstance());
+    	}
 	}
 
 	/* (non-Javadoc)
