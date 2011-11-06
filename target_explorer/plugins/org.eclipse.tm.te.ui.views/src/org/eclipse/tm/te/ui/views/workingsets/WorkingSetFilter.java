@@ -9,11 +9,15 @@
  *******************************************************************************/
 package org.eclipse.tm.te.ui.views.workingsets;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.tm.te.runtime.interfaces.workingsets.IWorkingSetElement;
+import org.eclipse.ui.IAggregateWorkingSet;
 import org.eclipse.ui.IContainmentAdapter;
 import org.eclipse.ui.IWorkingSet;
 
@@ -53,6 +57,10 @@ public class WorkingSetFilter extends ViewerFilter {
     public boolean select(Viewer viewer, Object parentElement, Object element) {
         if (workingSet == null || (workingSet.isAggregateWorkingSet() && workingSet.isEmpty())) {
             return true;
+        }
+        if (parentElement instanceof IAggregateWorkingSet) {
+        	List<IWorkingSet> workingSets = Arrays.asList(((IAggregateWorkingSet)parentElement).getComponents());
+        	if (workingSets.contains(element)) return true;
         }
         if (element != null) {
             return isEnclosed(element);

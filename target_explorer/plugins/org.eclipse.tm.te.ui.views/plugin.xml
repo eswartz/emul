@@ -53,6 +53,9 @@
 
       <viewerContentBinding viewerId="org.eclipse.tm.te.ui.views.TargetExplorer">
          <includes>
+            <contentExtension
+                  isRoot="true"
+                  pattern="org.eclipse.tm.te.ui.views.navigator.workingSets"/>
             <contentExtension pattern="org.eclipse.tm.te.ui.views.navigator.*"/>
          </includes>
       </viewerContentBinding>
