@@ -14,6 +14,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.Socket;
@@ -56,17 +57,60 @@ public class TCFSecurityManager {
         return certs;
     }
 
+    public static File getSysCertificatesDirectory() {
+        File file = null;
+        String osname = System.getProperty("os.name", "");
+        if (osname.startsWith("Windows")) {
+            try {
+                String sys_root = "SystemRoot";
+                Process prs = Runtime.getRuntime().exec(new String[]{ "cmd", "/c", "set", sys_root }, null);
+                BufferedReader inp = new BufferedReader(new InputStreamReader(prs.getInputStream()));
+                for (;;) {
+                    String s = inp.readLine();
+                    if (s == null) break;
+                    int i = s.indexOf('=');
+                    if (i > 0) {
+                        String name = s.substring(0, i);
+                        if (name.equalsIgnoreCase(sys_root)) {
+                            File root = new File(s.substring(i + 1));
+                            if (root.exists()) file = new File(root, "TCF/ssl");
+                        }
+                    }
+                }
+                try {
+                    prs.getErrorStream().close();
+                    prs.getOutputStream().close();
+                    inp.close();
+                }
+                catch (IOException x) {
+                }
+                prs.waitFor();
+            }
+            catch (Throwable x) {
+            }
+        }
+        else {
+            file = new File("/etc/tcf/ssl");
+        }
+        if (file == null) return null;
+        if (!file.exists()) return null;
+        if (!file.isDirectory()) return null;
+        return file;
+    }
+
     public static SSLContext createSSLContext() {
         try {
-            final File certs = getCertificatesDirectory();
-            if (!certs.exists()) certs.mkdirs();
+            final File usr_certs = getCertificatesDirectory();
+            final File sys_certs = getSysCertificatesDirectory();
+            if (!usr_certs.exists()) usr_certs.mkdirs();
             final CertificateFactory cf = CertificateFactory.getInstance("X.509"); //$NON-NLS-1$
             SSLContext context = SSLContext.getInstance("TLS"); //$NON-NLS-1$
 
             X509ExtendedKeyManager km = new X509ExtendedKeyManager() {
 
                 public X509Certificate[] getCertificateChain(String alias) {
-                    File f = new File(certs, "Local.cert"); //$NON-NLS-1$
+                    File f = new File(usr_certs, "local.cert"); //$NON-NLS-1$
+                    if (!f.exists() && sys_certs != null) f = new File(sys_certs, "local.cert"); //$NON-NLS-1$
                     try {
                         InputStream inp = new BufferedInputStream(new FileInputStream(f));
                         X509Certificate cert = (X509Certificate)cf.generateCertificate(inp);
@@ -80,7 +124,8 @@ public class TCFSecurityManager {
                 }
 
                 public PrivateKey getPrivateKey(String alias) {
-                    File f = new File(certs, "Local.priv"); //$NON-NLS-1$
+                    File f = new File(usr_certs, "local.priv"); //$NON-NLS-1$
+                    if (!f.exists() && sys_certs != null) f = new File(sys_certs, "local.priv"); //$NON-NLS-1$
                     try {
                         BufferedReader r = new BufferedReader(new InputStreamReader(new FileInputStream(f), "ASCII")); //$NON-NLS-1$
                         StringBuffer bf = new StringBuffer();
@@ -142,16 +187,33 @@ public class TCFSecurityManager {
 
                 public X509Certificate[] getAcceptedIssuers() {
                     ArrayList<X509Certificate> list = new ArrayList<X509Certificate>();
-                    for (String fnm : certs.list()) {
+                    for (String fnm : usr_certs.list()) {
                         if (!fnm.endsWith(".cert")) continue; //$NON-NLS-1$
                         try {
-                            InputStream inp = new BufferedInputStream(new FileInputStream(new File(certs, fnm)));
+                            InputStream inp = new BufferedInputStream(new FileInputStream(new File(usr_certs, fnm)));
                             X509Certificate cert = (X509Certificate)cf.generateCertificate(inp);
                             inp.close();
                             list.add(cert);
                         }
                         catch (Throwable x) {
                             Protocol.log("Cannot load certificate: " + fnm, x); //$NON-NLS-1$
+                        }
+                    }
+                    if (sys_certs != null) {
+                        String[] arr = sys_certs.list();
+                        if (arr != null) {
+                            for (String fnm : arr) {
+                                if (!fnm.endsWith(".cert")) continue; //$NON-NLS-1$
+                                try {
+                                    InputStream inp = new BufferedInputStream(new FileInputStream(new File(sys_certs, fnm)));
+                                    X509Certificate cert = (X509Certificate)cf.generateCertificate(inp);
+                                    inp.close();
+                                    list.add(cert);
+                                }
+                                catch (Throwable x) {
+                                    Protocol.log("Cannot load certificate: " + fnm, x); //$NON-NLS-1$
+                                }
+                            }
                         }
                     }
                     return list.toArray(new X509Certificate[list.size()]);
