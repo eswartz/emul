@@ -24,6 +24,7 @@ import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.osgi.util.NLS;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.tm.te.ui.views.activator.UIPlugin;
 import org.eclipse.tm.te.ui.views.interfaces.IRoot;
@@ -40,6 +41,7 @@ import org.eclipse.ui.internal.navigator.framelist.FrameList;
 import org.eclipse.ui.internal.navigator.framelist.TreeFrame;
 import org.eclipse.ui.model.IWorkbenchAdapter;
 import org.eclipse.ui.navigator.CommonNavigator;
+import org.eclipse.ui.navigator.CommonViewer;
 import org.eclipse.ui.navigator.ICommonActionConstants;
 
 
@@ -113,6 +115,14 @@ public class View extends CommonNavigator {
 	@Override
     public String getWorkingSetLabel() {
 		return workingSetLabel;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.navigator.CommonNavigator#createCommonViewerObject(org.eclipse.swt.widgets.Composite)
+	 */
+	@Override
+	protected CommonViewer createCommonViewerObject(Composite parent) {
+		return new ViewViewer(getViewSite().getId(), parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
 	}
 
 	/* (non-Javadoc)
