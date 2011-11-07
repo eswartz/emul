@@ -22,7 +22,7 @@ import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel;
 import org.eclipse.tm.te.tcf.terminals.core.interfaces.launcher.ITerminalsLauncher;
 import org.eclipse.tm.te.tcf.terminals.core.launcher.TerminalsLauncher;
 import org.eclipse.tm.te.ui.controls.BaseDialogPageControl;
-import org.eclipse.tm.te.ui.controls.interfaces.IWizardConfigurationPanel;
+import org.eclipse.tm.te.ui.terminals.interfaces.IConfigurationPanel;
 import org.eclipse.tm.te.ui.terminals.launcher.AbstractLauncherDelegate;
 
 /**
@@ -34,7 +34,7 @@ public class LauncherDelegate extends AbstractLauncherDelegate {
 	 * @see org.eclipse.tm.te.ui.terminals.interfaces.ILauncherDelegate#getPanel(org.eclipse.tm.te.ui.controls.BaseDialogPageControl)
 	 */
 	@Override
-	public IWizardConfigurationPanel getPanel(BaseDialogPageControl parentControl) {
+	public IConfigurationPanel getPanel(BaseDialogPageControl parentControl) {
 	    return null;
 	}
 

@@ -36,13 +36,14 @@ import org.eclipse.tm.te.runtime.properties.PropertiesContainer;
 import org.eclipse.tm.te.ui.controls.BaseDialogPageControl;
 import org.eclipse.tm.te.ui.controls.BaseWizardConfigurationPanelControl;
 import org.eclipse.tm.te.ui.controls.interfaces.IWizardConfigurationPanel;
-import org.eclipse.tm.te.ui.controls.panels.AbstractWizardConfigurationPanel;
 import org.eclipse.tm.te.ui.jface.dialogs.CustomTrayDialog;
 import org.eclipse.tm.te.ui.swt.SWTControlUtil;
 import org.eclipse.tm.te.ui.terminals.help.IContextHelpIds;
+import org.eclipse.tm.te.ui.terminals.interfaces.IConfigurationPanel;
 import org.eclipse.tm.te.ui.terminals.interfaces.ILauncherDelegate;
 import org.eclipse.tm.te.ui.terminals.launcher.LauncherDelegateManager;
 import org.eclipse.tm.te.ui.terminals.nls.Messages;
+import org.eclipse.tm.te.ui.terminals.panels.AbstractConfigurationPanel;
 import org.eclipse.tm.te.ui.wizards.interfaces.ISharedDataWizardPage;
 import org.eclipse.ui.forms.widgets.FormToolkit;
 
@@ -91,7 +92,7 @@ public class LaunchTerminalSettingsDialog extends CustomTrayDialog {
 	/**
 	 * An empty terminal settings panel.
 	 */
-	protected class EmptySettingsPanel extends AbstractWizardConfigurationPanel {
+	protected class EmptySettingsPanel extends AbstractConfigurationPanel {
 
 		/**
 	     * Constructor.
@@ -198,8 +199,11 @@ public class LaunchTerminalSettingsDialog extends CustomTrayDialog {
         	ILauncherDelegate delegate = label2delegate.get(terminalLabel);
         	Assert.isNotNull(delegate);
         	// Get the wizard configuration panel instance
-        	IWizardConfigurationPanel configPanel = delegate.getPanel(settings);
+        	IConfigurationPanel configPanel = delegate.getPanel(settings);
         	if (configPanel == null) configPanel = new EmptySettingsPanel(settings);
+        	// Push the selection to the configuration panel
+        	Assert.isNotNull(configPanel);
+        	configPanel.setSelection(getSelection());
         	// Add it
         	settings.addConfigurationPanel(terminalLabel, configPanel);
         }
