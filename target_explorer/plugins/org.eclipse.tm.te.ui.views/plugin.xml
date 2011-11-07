@@ -170,6 +170,7 @@
 <!-- Working Set contributions -->
    <extension point="org.eclipse.ui.workingSets">
       <workingSet
+            elementAdapterClass="org.eclipse.tm.te.ui.views.workingsets.WorkingSetElementAdapter"
             icon="icons/obj16/workingset.gif"
             id="org.eclipse.tm.te.ui.views.workingset"
             name="%workingset.name"
