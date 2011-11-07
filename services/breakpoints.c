@@ -155,7 +155,7 @@ static const char * BREAKPOINTS = "Breakpoints";
 static size_t context_extension_offset = 0;
 
 typedef struct Listener {
-    BreakpointsEventListener * func;
+    BreakpointsEventListener * listener;
     void * args;
 } Listener;
 
@@ -631,8 +631,8 @@ static void send_event_breakpoint_status(Channel * channel, BreakpointInfo * bp)
 
     for (i = 0; i < listener_cnt; i++) {
         Listener * l = listeners + i;
-        if (l->func->breakpoint_status_changed == NULL) continue;
-        l->func->breakpoint_status_changed(bp, l->args);
+        if (l->listener->breakpoint_status_changed == NULL) continue;
+        l->listener->breakpoint_status_changed(bp, l->args);
     }
 }
 
@@ -1662,8 +1662,8 @@ static void send_event_context_added(Channel * channel, BreakpointInfo * bp) {
 
     for (i = 0; i < listener_cnt; i++) {
         Listener * l = listeners + i;
-        if (l->func->breakpoint_created == NULL) continue;
-        l->func->breakpoint_created(bp, l->args);
+        if (l->listener->breakpoint_created == NULL) continue;
+        l->listener->breakpoint_created(bp, l->args);
     }
 }
 
@@ -1683,8 +1683,8 @@ static void send_event_context_changed(BreakpointInfo * bp) {
 
     for (i = 0; i < listener_cnt; i++) {
         Listener * l = listeners + i;
-        if (l->func->breakpoint_changed == NULL) continue;
-        l->func->breakpoint_changed(bp, l->args);
+        if (l->listener->breakpoint_changed == NULL) continue;
+        l->listener->breakpoint_changed(bp, l->args);
     }
 }
 
@@ -1704,8 +1704,8 @@ static void send_event_context_removed(BreakpointInfo * bp) {
 
     for (i = 0; i < listener_cnt; i++) {
         Listener * l = listeners + i;
-        if (l->func->breakpoint_deleted == NULL) continue;
-        l->func->breakpoint_deleted(bp, l->args);
+        if (l->listener->breakpoint_deleted == NULL) continue;
+        l->listener->breakpoint_deleted(bp, l->args);
     }
 }
 
@@ -2111,7 +2111,7 @@ void add_breakpoint_event_listener(BreakpointsEventListener * listener, void * a
         listener_max += 8;
         listeners = (Listener *)loc_realloc(listeners, listener_max * sizeof(Listener));
     }
-    listeners[listener_cnt].func = listener;
+    listeners[listener_cnt].listener = listener;
     listeners[listener_cnt].args = args;
     listener_cnt++;
 }
@@ -2119,7 +2119,7 @@ void add_breakpoint_event_listener(BreakpointsEventListener * listener, void * a
 void rem_breakpoint_event_listener(BreakpointsEventListener * listener) {
     unsigned i = 0;
     while (i < listener_cnt) {
-        if (listeners[i++].func == listener) {
+        if (listeners[i++].listener == listener) {
             while (i < listener_cnt) {
                 listeners[i - 1] = listeners[i];
                 i++;

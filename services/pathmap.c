@@ -19,6 +19,7 @@
  */
 
 #include <config.h>
+#include <assert.h>
 #include <framework/mdep-inet.h>
 #include <framework/myalloc.h>
 #include <services/pathmap.h>
@@ -71,30 +72,30 @@ char * canonic_path_map_file_name(const char * fnm) {
 #include <framework/events.h>
 #include <framework/exceptions.h>
 
-typedef struct Listener {
+typedef struct Listener Listener;
+typedef struct PathMap PathMap;
+
+struct Listener {
     PathMapEventListener * listener;
     void * args;
-} Listener;
+};
 
-typedef struct PathMapRuleAttr {
-    char * name;
-    char * value;
-    char * json;
-} PathMapRuleAttr;
+struct PathMapRule {
+    PathMapRuleAttribute * attrs;
+    char * src;
+    char * dst;
+    char * host;
+    char * prot;
+    char * ctx;
+};
 
-typedef struct PathMapRule {
-    PathMapRuleAttr * attrs;
-    unsigned attrs_cnt;
-    unsigned attrs_max;
-} PathMapRule;
-
-typedef struct PathMap {
+struct PathMap {
     LINK maps;
     Channel * channel;
     PathMapRule * rules;
     unsigned rules_cnt;
     unsigned rules_max;
-} PathMap;
+};
 
 #define maps2map(x) ((PathMap *)((char *)(x) - offsetof(PathMap, maps)))
 
@@ -117,7 +118,7 @@ static void path_map_event_mapping_changed(Channel * c) {
     }
 }
 
-void add_path_map_event_listener(PathMapEventListener * listener, void * client_data) {
+void add_path_map_event_listener(PathMapEventListener * listener, void * args) {
     Listener * l = NULL;
     if (listener_cnt >= listener_max) {
         listener_max += 8;
@@ -125,7 +126,21 @@ void add_path_map_event_listener(PathMapEventListener * listener, void * client_
     }
     l = listeners + listener_cnt++;
     l->listener = listener;
-    l->args = client_data;
+    l->args = args;
+}
+
+void rem_path_map_event_listener(PathMapEventListener * listener) {
+    unsigned i = 0;
+    while (i < listener_cnt) {
+        if (listeners[i++].listener == listener) {
+            while (i < listener_cnt) {
+                listeners[i - 1] = listeners[i];
+                i++;
+            }
+            listener_cnt--;
+            break;
+        }
+    }
 }
 
 static PathMap * find_map(Channel * c) {
@@ -150,55 +165,145 @@ static int is_my_host(char * host) {
     return strcasecmp(host, host_name) == 0;
 }
 
+static int update_rule(PathMapRule * r, PathMapRuleAttribute * new_attrs) {
+    int diff = 0;
+    PathMapRuleAttribute * old_attrs = r->attrs;
+    PathMapRuleAttribute ** new_ref = &r->attrs;
+    r->attrs = NULL;
+
+    while (new_attrs != NULL) {
+        PathMapRuleAttribute * new_attr = new_attrs;
+        PathMapRuleAttribute * old_attr = old_attrs;
+        PathMapRuleAttribute ** old_ref = &old_attrs;
+        InputStream * buf_inp = NULL;
+        ByteArrayInputStream buf;
+        char * name = new_attr->name;
+
+        new_attrs = new_attr->next;
+        new_attr->next = NULL;
+        while (old_attr && strcmp(old_attr->name, name)) {
+            old_ref = &old_attr->next;
+            old_attr = old_attr->next;
+        }
+
+        if (old_attr != NULL) {
+            assert(old_attr == *old_ref);
+            *old_ref = old_attr->next;
+            old_attr->next = NULL;
+            if (strcmp(old_attr->value, new_attr->value) == 0) {
+                *new_ref = old_attr;
+                new_ref = &old_attr->next;
+                loc_free(new_attr->value);
+                loc_free(new_attr->name);
+                loc_free(new_attr);
+                continue;
+            }
+            diff++;
+            loc_free(old_attr->value);
+            loc_free(old_attr->name);
+            loc_free(old_attr);
+            old_attr = NULL;
+        }
+
+        *new_ref = new_attr;
+        new_ref = &new_attr->next;
+
+        buf_inp = create_byte_array_input_stream(&buf, new_attr->value, strlen(new_attr->value));
+
+        if (strcmp(name, PATH_MAP_SOURCE) == 0) {
+            loc_free(r->src);
+            r->src = json_read_alloc_string(buf_inp);
+        }
+        else if (strcmp(name, PATH_MAP_DESTINATION) == 0) {
+            loc_free(r->dst);
+            r->dst = json_read_alloc_string(buf_inp);
+        }
+        else if (strcmp(name, PATH_MAP_PROTOCOL) == 0) {
+            loc_free(r->prot);
+            r->prot = json_read_alloc_string(buf_inp);
+        }
+        else if (strcmp(name, PATH_MAP_HOST) == 0) {
+            loc_free(r->host);
+            r->host = json_read_alloc_string(buf_inp);
+        }
+        else if (strcmp(name, PATH_MAP_CONTEXT) == 0) {
+            loc_free(r->ctx);
+            r->ctx = json_read_alloc_string(buf_inp);
+        }
+    }
+
+    while (old_attrs != NULL) {
+        PathMapRuleAttribute * old_attr = old_attrs;
+        char * name = old_attr->name;
+        old_attrs = old_attr->next;
+
+        if (strcmp(name, PATH_MAP_SOURCE) == 0) {
+            loc_free(r->src);
+            r->src = NULL;
+        }
+        else if (strcmp(name, PATH_MAP_DESTINATION) == 0) {
+            loc_free(r->dst);
+            r->dst = NULL;
+        }
+        else if (strcmp(name, PATH_MAP_PROTOCOL) == 0) {
+            loc_free(r->prot);
+            r->prot = NULL;
+        }
+        else if (strcmp(name, PATH_MAP_HOST) == 0) {
+            loc_free(r->host);
+            r->host = NULL;
+        }
+        else if (strcmp(name, PATH_MAP_CONTEXT) == 0) {
+            loc_free(r->ctx);
+            r->ctx = NULL;
+        }
+
+        loc_free(old_attr->value);
+        loc_free(old_attr->name);
+        loc_free(old_attr);
+        diff++;
+    }
+
+    return diff;
+}
+
 static char * map_file_name(Context * ctx, PathMap * m, char * fnm, int mode) {
     unsigned i, j, k;
     static char buf[FILE_PATH_SIZE];
 
     for (i = 0; i < m->rules_cnt; i++) {
         PathMapRule * r = m->rules + i;
-        char * src = NULL;
-        char * dst = NULL;
-        char * host = NULL;
-        char * prot = NULL;
-        char * sctx = NULL;
+        char * src;
         struct stat st;
-        for (j = 0; j < r->attrs_cnt; j++) {
-            char * nm = r->attrs[j].name;
-            if (strcmp(nm, "Source") == 0) src = r->attrs[j].value;
-            else if (strcmp(nm, "Destination") == 0) dst = r->attrs[j].value;
-            else if (strcmp(nm, "Protocol") == 0) prot = r->attrs[j].value;
-            else if (strcmp(nm, "Host") == 0) host = r->attrs[j].value;
-            else if (strcmp(nm, "Context") == 0) sctx = r->attrs[j].value;
-        }
-        if (src == NULL || src[0] == 0) continue;
-        if (dst == NULL || dst[0] == 0) continue;
-        if (prot != NULL && prot[0] != 0 && strcasecmp(prot, "file")) continue;
+        if (r->src == NULL) continue;
+        if (r->dst == NULL) continue;
+        if (r->prot != NULL && strcasecmp(r->prot, "file")) continue;
         switch (mode) {
         case PATH_MAP_TO_LOCAL:
-            if (host && !is_my_host(host)) continue;
+            if (r->host != NULL && !is_my_host(r->host)) continue;
             break;
         }
-        if (sctx != NULL) {
+        if (r->ctx != NULL) {
             int ok = 0;
 #if ENABLE_DebugContext
             Context * syms = context_get_group(ctx, CONTEXT_GROUP_SYMBOLS);
             if (syms != NULL) {
-                ok = strcmp(sctx, syms->id) == 0;
+                ok = strcmp(r->ctx, syms->id) == 0;
                 if (!ok && syms->name != NULL) {
-                    ok = strcmp(sctx, syms->name) == 0;
-                    if (!ok) ok = strcmp(sctx, context_full_name(syms)) == 0;
+                    ok = strcmp(r->ctx, syms->name) == 0;
+                    if (!ok) ok = strcmp(r->ctx, context_full_name(syms)) == 0;
                 }
             }
 #endif
             if (!ok) continue;
         }
-        src = canonic_path_map_file_name(src);
+        src = canonic_path_map_file_name(r->src);
         k = strlen(src);
         if (strncmp(src, fnm, k)) continue;
         if (fnm[k] != 0 && fnm[k] != '/' && fnm[k] != '\\') continue;
-        j = strlen(dst) - 1;
-        if (fnm[k] != 0 && (dst[j] == '/' || dst[j] == '\\')) k++;
-        snprintf(buf, sizeof(buf), "%s%s", dst, fnm + k);
+        j = strlen(r->dst) - 1;
+        if (fnm[k] != 0 && (r->dst[j] == '/' || r->dst[j] == '\\')) k++;
+        snprintf(buf, sizeof(buf), "%s%s", r->dst, fnm + k);
         if (mode != PATH_MAP_TO_LOCAL || stat(buf, &st) == 0) return buf;
     }
 
@@ -223,41 +328,80 @@ char * apply_path_map(Channel * c, Context * ctx, char * fnm, int mode) {
     return fnm;
 }
 
+void iterate_path_map_rules(Channel * channel, IteratePathMapsCallBack * callback, void * args) {
+    PathMap * m = find_map(channel);
+    if (m != NULL) {
+        unsigned i;
+        for (i = 0; i < m->rules_cnt; i++) {
+            callback(m->rules + i, args);
+        }
+    }
+}
+
+PathMapRuleAttribute * get_path_mapping_attributes(PathMapRule * map) {
+    return map->attrs;
+}
+
+PathMapRule * create_path_mapping(PathMapRuleAttribute * attrs) {
+    PathMapRule * r = NULL;
+    PathMap * m = find_map(NULL);
+
+    if (m == NULL) {
+        m = (PathMap *)loc_alloc_zero(sizeof(PathMap));
+        list_add_first(&m->maps, &maps);
+    }
+    if (m->rules_cnt >= m->rules_max) {
+        m->rules_max = m->rules_max ? m->rules_max * 2 : 8;
+        m->rules = (PathMapRule *)loc_realloc(m->rules, m->rules_max * sizeof(*m->rules));
+    }
+
+    r = m->rules + m->rules_cnt++;
+    memset(r, 0, sizeof(*r));
+    if (update_rule(r, attrs)) path_map_event_mapping_changed(NULL);
+    return r;
+}
+
+void change_path_mapping_attributes(PathMapRule * r, PathMapRuleAttribute * attrs) {
+    if (update_rule(r, attrs)) path_map_event_mapping_changed(NULL);
+}
+
+/*
+ * Delete a path mapping rule.
+ */
+extern void delete_path_mapping(PathMapRule * bp);
+
 static void write_rule(OutputStream * out, PathMapRule * r) {
     unsigned i = 0;
+    PathMapRuleAttribute * attr = r->attrs;
 
     write_stream(out, '{');
-    for (i = 0; i < r->attrs_cnt; i++) {
+    while (attr != NULL) {
         if (i > 0) write_stream(out, ',');
-        json_write_string(out, r->attrs[i].name);
+        json_write_string(out, attr->name);
         write_stream(out, ':');
-        if (r->attrs[i].value) json_write_string(out, r->attrs[i].value);
-        else write_string(out, r->attrs[i].json);
+        write_string(out, attr->value);
+        attr = attr->next;
+        i++;
     }
     write_stream(out, '}');
 }
 
 static void read_rule_attrs(InputStream * inp, const char * name, void * args) {
-    PathMapRule * r = (PathMapRule *)args;
+    PathMapRuleAttribute *** list = (PathMapRuleAttribute ***)args;
+    PathMapRuleAttribute * attr = (PathMapRuleAttribute *)loc_alloc_zero(sizeof(PathMapRuleAttribute));
 
-    if (r->attrs_cnt >= r->attrs_max) {
-        r->attrs_max = r->attrs_max ? r->attrs_max * 2 : 4;
-        r->attrs = (PathMapRuleAttr *)loc_realloc(r->attrs, r->attrs_max * sizeof(*r->attrs));
-    }
-
-    memset(r->attrs + r->attrs_cnt, 0, sizeof(*r->attrs));
-    if (peek_stream(inp) == '"') {
-        r->attrs[r->attrs_cnt].value = json_read_alloc_string(inp);
-    }
-    else {
-        r->attrs[r->attrs_cnt].json = json_read_object(inp);
-    }
-    r->attrs[r->attrs_cnt++].name = loc_strdup(name);
+    attr->name = loc_strdup(name);
+    attr->value = json_read_object(inp);
+    **list = attr;
+    *list = &attr->next;
 }
 
 static void read_rule(InputStream * inp, void * args) {
     PathMap * m = (PathMap *)args;
     PathMapRule * r = NULL;
+    PathMapRuleAttribute * attrs = NULL;
+    PathMapRuleAttribute ** attr_list = &attrs;
+
 
     if (m->rules_cnt >= m->rules_max) {
         m->rules_max = m->rules_max ? m->rules_max * 2 : 8;
@@ -266,7 +410,24 @@ static void read_rule(InputStream * inp, void * args) {
 
     r = m->rules + m->rules_cnt;
     memset(r, 0, sizeof(*r));
-    if (json_read_struct(inp, read_rule_attrs, r)) m->rules_cnt++;
+    if (json_read_struct(inp, read_rule_attrs, &attr_list)) m->rules_cnt++;
+    update_rule(r, attrs);
+}
+
+static void free_rule(PathMapRule * r) {
+    loc_free(r->src);
+    loc_free(r->dst);
+    loc_free(r->host);
+    loc_free(r->prot);
+    loc_free(r->ctx);
+    while (r->attrs != NULL) {
+        PathMapRuleAttribute * attr = r->attrs;
+        r->attrs = attr->next;
+        loc_free(attr->name);
+        loc_free(attr->value);
+        loc_free(attr);
+    }
+    memset(r, 0, sizeof(PathMapRule));
 }
 
 void set_path_map(Channel * c, InputStream * inp) {
@@ -278,18 +439,8 @@ void set_path_map(Channel * c, InputStream * inp) {
         list_add_first(&m->maps, &maps);
     }
     else {
-        unsigned i, j;
-        for (i = 0; i < m->rules_cnt; i++) {
-            PathMapRule * r = m->rules + i;
-            for (j = 0; j < r->attrs_cnt; j++) {
-                loc_free(r->attrs[j].name);
-                loc_free(r->attrs[j].value);
-                loc_free(r->attrs[j].json);
-            }
-            loc_free(r->attrs);
-            r->attrs_cnt = 0;
-            r->attrs_max = 0;
-        }
+        unsigned i;
+        for (i = 0; i < m->rules_cnt; i++) free_rule(m->rules + i);
         m->rules_cnt = 0;
     }
     json_read_array(inp, read_rule, m);
@@ -334,22 +485,14 @@ static void command_set(char * token, Channel * c) {
 }
 
 static void channel_close_listener(Channel * c) {
-    unsigned i, j;
+    unsigned i;
     PathMap * m = NULL;
     /* Keep path map over channel redirection */
     if (c->state == ChannelStateHelloReceived) return;
     m = find_map(c);
     if (m == NULL) return;
     list_remove(&m->maps);
-    for (i = 0; i < m->rules_cnt; i++) {
-        PathMapRule * r = m->rules + i;
-        for (j = 0; j < r->attrs_cnt; j++) {
-            loc_free(r->attrs[j].name);
-            loc_free(r->attrs[j].value);
-            loc_free(r->attrs[j].json);
-        }
-        loc_free(r->attrs);
-    }
+    for (i = 0; i < m->rules_cnt; i++) free_rule(m->rules + i);
     loc_free(m->rules);
     loc_free(m);
 }
