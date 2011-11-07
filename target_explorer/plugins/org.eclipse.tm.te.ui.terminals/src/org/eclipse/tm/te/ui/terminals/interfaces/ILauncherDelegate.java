@@ -14,7 +14,6 @@ import org.eclipse.tm.te.runtime.interfaces.callback.ICallback;
 import org.eclipse.tm.te.runtime.interfaces.extensions.IExecutableExtension;
 import org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer;
 import org.eclipse.tm.te.ui.controls.BaseDialogPageControl;
-import org.eclipse.tm.te.ui.controls.interfaces.IWizardConfigurationPanel;
 
 /**
  * Terminal launcher delegate.
@@ -48,7 +47,7 @@ public interface ILauncherDelegate extends IExecutableExtension {
 	 * @param parentControl The parent control. Must not be <code>null</code>.
 	 * @return The configuration panel instance or <code>null</code>
 	 */
-	public IWizardConfigurationPanel getPanel(BaseDialogPageControl parentControl);
+	public IConfigurationPanel getPanel(BaseDialogPageControl parentControl);
 
 	/**
 	 * Execute the terminal launch.

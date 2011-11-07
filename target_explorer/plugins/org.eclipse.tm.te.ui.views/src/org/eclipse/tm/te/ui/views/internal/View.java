@@ -17,7 +17,6 @@ import org.eclipse.core.expressions.EvaluationContext;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
-import org.eclipse.core.runtime.PlatformObject;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.action.GroupMarker;
 import org.eclipse.jface.action.IToolBarManager;
@@ -25,6 +24,7 @@ import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.osgi.util.NLS;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.tm.te.ui.views.activator.UIPlugin;
 import org.eclipse.tm.te.ui.views.interfaces.IRoot;
@@ -41,6 +41,7 @@ import org.eclipse.ui.internal.navigator.framelist.FrameList;
 import org.eclipse.ui.internal.navigator.framelist.TreeFrame;
 import org.eclipse.ui.model.IWorkbenchAdapter;
 import org.eclipse.ui.navigator.CommonNavigator;
+import org.eclipse.ui.navigator.CommonViewer;
 import org.eclipse.ui.navigator.ICommonActionConstants;
 
 
@@ -51,9 +52,6 @@ import org.eclipse.ui.navigator.ICommonActionConstants;
  */
 @SuppressWarnings("restriction")
 public class View extends CommonNavigator {
-	// The root object instance associated with this view instance
-	private final IRoot root;
-
 	// The view root mode
 	private int rootMode = IUIConstants.MODE_NORMAL;
 
@@ -64,30 +62,9 @@ public class View extends CommonNavigator {
 	private String workingSetLabel;
 
 	/**
-	 * Target Explorer root node implementation
-	 */
-	public static class Root extends PlatformObject implements IRoot {
-		/**
-		 * Constructor.
-		 */
-		public Root() {
-		}
-	}
-
-	/**
 	 * Constructor.
 	 */
 	public View() {
-		root = new Root();
-	}
-
-	/**
-	 * Returns the root object.
-	 *
-	 * @return The root object.
-	 */
-	public final IRoot getRoot() {
-		return root;
 	}
 
 	/* (non-Javadoc)
@@ -95,7 +72,7 @@ public class View extends CommonNavigator {
 	 */
 	@Override
 	protected Object getInitialInput() {
-		return root;
+		return ViewRoot.getInstance();
 	}
 
 	/**
@@ -138,6 +115,14 @@ public class View extends CommonNavigator {
 	@Override
     public String getWorkingSetLabel() {
 		return workingSetLabel;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.navigator.CommonNavigator#createCommonViewerObject(org.eclipse.swt.widgets.Composite)
+	 */
+	@Override
+	protected CommonViewer createCommonViewerObject(Composite parent) {
+		return new ViewViewer(getViewSite().getId(), parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
 	}
 
 	/* (non-Javadoc)

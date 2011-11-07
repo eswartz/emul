@@ -9,14 +9,20 @@
  *******************************************************************************/
 package org.eclipse.tm.te.ui.views.workingsets;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
+import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.tm.te.runtime.interfaces.workingsets.IWorkingSetElement;
 import org.eclipse.tm.te.ui.views.interfaces.IUIConstants;
+import org.eclipse.tm.te.ui.views.internal.ViewRoot;
 import org.eclipse.ui.IAggregateWorkingSet;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.IWorkingSet;
@@ -119,8 +125,30 @@ public class WorkingSetsContentProvider implements ICommonContentProvider {
 		return NO_CHILDREN;
 	}
 
-	/* default */IAdaptable[] getWorkingSetElements(IWorkingSet workingSet) {
-		return workingSet.getElements();
+	/* default */ IAdaptable[] getWorkingSetElements(IWorkingSet workingSet) {
+		Assert.isNotNull(workingSet);
+		List<IAdaptable> elements = new ArrayList<IAdaptable>();
+		for (IAdaptable candidate : workingSet.getElements()) {
+			if (candidate instanceof WorkingSetElementHolder) {
+				WorkingSetElementHolder holder = (WorkingSetElementHolder)candidate;
+				IWorkingSetElement element = holder.getElement();
+				// If the element is null, try to look up the element through the content provider
+				if (element == null) {
+					ITreeContentProvider contentProvider = (ITreeContentProvider)viewer.getContentProvider();
+					for (Object elementCandidate : contentProvider.getElements(ViewRoot.getInstance())) {
+						if (elementCandidate instanceof IWorkingSetElement && ((IWorkingSetElement)elementCandidate).getElementId().equals(holder.getElementId())) {
+							holder.setElement((IWorkingSetElement)elementCandidate);
+							element = holder.getElement();
+							break;
+						}
+					}
+				}
+				if (element != null) elements.add(element);
+			} else {
+				elements.add(candidate);
+			}
+		}
+		return elements.toArray(new IAdaptable[elements.size()]);
 	}
 
 	/* (non-Javadoc)

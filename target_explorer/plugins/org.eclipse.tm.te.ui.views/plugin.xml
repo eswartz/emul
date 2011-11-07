@@ -53,6 +53,9 @@
 
       <viewerContentBinding viewerId="org.eclipse.tm.te.ui.views.TargetExplorer">
          <includes>
+            <contentExtension
+                  isRoot="true"
+                  pattern="org.eclipse.tm.te.ui.views.navigator.workingSets"/>
             <contentExtension pattern="org.eclipse.tm.te.ui.views.navigator.*"/>
          </includes>
       </viewerContentBinding>
@@ -167,12 +170,31 @@
 <!-- Working Set contributions -->
    <extension point="org.eclipse.ui.workingSets">
       <workingSet
+            elementAdapterClass="org.eclipse.tm.te.ui.views.workingsets.WorkingSetElementAdapter"
             icon="icons/obj16/workingset.gif"
             id="org.eclipse.tm.te.ui.views.workingset"
             name="%workingset.name"
-            pageClass="org.eclipse.tm.te.ui.views.workingsets.pages.TargetWorkingSetPage">
+            pageClass="org.eclipse.tm.te.ui.views.workingsets.pages.TargetWorkingSetPage"
+            updaterClass="org.eclipse.tm.te.ui.views.workingsets.WorkingSetElementUpdater">
       </workingSet>
    </extension>
+
+<!-- Element factories -->
+   <extension point="org.eclipse.ui.elementFactories">
+      <factory
+            class="org.eclipse.tm.te.ui.views.workingsets.WorkingSetElementHolderFactory"
+            id="org.eclipse.tm.te.ui.views.workingsets.WorkingSetElementHolderFactory">
+      </factory>
+   </extension>
+   
+<!-- Adapter factories -->
+   <extension point="org.eclipse.core.runtime.adapters">
+      <factory
+            adaptableType="org.eclipse.tm.te.ui.views.workingsets.WorkingSetElementHolder"
+            class="org.eclipse.tm.te.ui.views.workingsets.WorkingSetElementHolderAdapterFactory">
+         <adapter type="org.eclipse.tm.te.runtime.interfaces.workingsets.IWorkingSetElement"/>
+      </factory>
+   </extension>   
 
 <!-- Target Explorer menu contributions -->
    <extension point="org.eclipse.ui.menus">

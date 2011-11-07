@@ -15,7 +15,7 @@ import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.tm.te.ui.views.activator.UIPlugin;
-import org.eclipse.tm.te.ui.views.internal.View;
+import org.eclipse.tm.te.ui.views.internal.ViewRoot;
 import org.eclipse.tm.te.ui.views.nls.Messages;
 import org.eclipse.tm.te.ui.views.workingsets.WorkingSetFilter;
 import org.eclipse.tm.te.ui.views.workingsets.WorkingSetsContentProvider;
@@ -212,7 +212,7 @@ public class WorkingSetActionProvider extends CommonActionProvider {
 		viewer = (CommonViewer) site.getStructuredViewer();
 		contentService = site.getContentService();
 		filterService = (NavigatorFilterService) contentService.getFilterService();
-		originalViewerInput = ((View)viewer.getCommonNavigator()).getRoot();
+		originalViewerInput = ViewRoot.getInstance();
 
 		extensionStateModel = contentService.findStateModel(WorkingSetsContentProvider.EXTENSION_ID);
 
@@ -244,8 +244,7 @@ public class WorkingSetActionProvider extends CommonActionProvider {
 		if (workingSetName != null && workingSetName.length() > 0) {
 			IWorkingSetManager workingSetManager = PlatformUI.getWorkbench().getWorkingSetManager();
 			workingSet = workingSetManager.getWorkingSet(workingSetName);
-		} else if (PlatformUI.getPreferenceStore().getBoolean(
-				IWorkbenchPreferenceConstants.USE_WINDOW_WORKING_SET_BY_DEFAULT)) {
+		} else if (PlatformUI.getPreferenceStore().getBoolean(IWorkbenchPreferenceConstants.USE_WINDOW_WORKING_SET_BY_DEFAULT)) {
 			// use the window set by default if the global preference is set
 			workingSet = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().getAggregateWorkingSet();
 		}
@@ -256,10 +255,8 @@ public class WorkingSetActionProvider extends CommonActionProvider {
 	}
 
 	/* default */ void setWorkingSetFilter(IWorkingSet workingSet) {
-		setWorkingSetFilter(workingSet, FIRST_TIME);
+		setWorkingSetFilter(workingSet, true);
 	}
-
-	private static final boolean FIRST_TIME = true;
 
     private void setWorkingSetFilter(IWorkingSet workingSet, boolean firstTime) {
     	WorkingSetFilter workingSetFilter = null;
@@ -274,7 +271,7 @@ public class WorkingSetActionProvider extends CommonActionProvider {
 			if (firstTime) {
 				filterService.addActiveFilterIds(new String[] { WORKING_SET_FILTER_ID });
 				filterService.updateViewer();
-				setWorkingSetFilter(workingSet, !FIRST_TIME);
+				setWorkingSetFilter(workingSet, false);
 				return;
 			}
 
@@ -284,7 +281,7 @@ public class WorkingSetActionProvider extends CommonActionProvider {
 			UIPlugin.getDefault().getLog().log(status);
 			return;
 		}
-		workingSetFilter.setWorkingSet(emptyWorkingSet ? null : workingSet);
+		workingSetFilter.setWorkingSet(emptyWorkingSet || !extensionStateModel.getBooleanProperty(WorkingSetsContentProvider.SHOW_TOP_LEVEL_WORKING_SETS) ? null : workingSet);
 	}
 
 	/**
