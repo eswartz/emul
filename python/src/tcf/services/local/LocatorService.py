@@ -205,7 +205,7 @@ class LocatorService(locator.LocatorService):
                                         a.address = None
                                     else:
                                         a.address = InetAddress(a.host, addr)
-                                    a.time_stamp = time
+                                    a.time_stamp = msec
                                     a.used = False
                     except Exception as x:
                         service._log("Unhandled exception in TCF discovery DNS lookup thread", x)
