@@ -185,13 +185,13 @@ class LocatorService(locator.LocatorService):
                             if not LocatorService.addr_request:
                                 service._addr_cache_lock.wait(locator.DATA_RETENTION_PERIOD)
                             msec = int(time.time() * 1000)
-                            for a in LocatorService.addr_cache.values():
+                            for host, a in LocatorService.addr_cache.items():
                                 if a.time_stamp + locator.DATA_RETENTION_PERIOD * 10 < msec:
                                     if a.used:
                                         if itemSet is None: itemSet = set()
                                         itemSet.add(a)
                                     else:
-                                        LocatorService.addr_cache.remove(a)
+                                        del LocatorService.addr_cache[host]
                             LocatorService.addr_request = False
                         if itemSet is not None:
                             for a in itemSet:
