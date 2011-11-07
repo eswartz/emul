@@ -123,7 +123,7 @@ public class TargetWorkingSetPage extends AbstractWorkingSetWizardPage {
 				// If the element is null, try to look up the element through the content provider
 				if (element == null) {
 					ITreeContentProvider contentProvider = (ITreeContentProvider)tree.getContentProvider();
-					for (Object candidate : contentProvider.getElements(ViewRoot.getInstance())) {
+					for (Object candidate : contentProvider.getElements(tree.getInput())) {
 						if (candidate instanceof IWorkingSetElement && ((IWorkingSetElement)candidate).getElementId().equals(holder.getElementId())) {
 							holder.setElement((IWorkingSetElement)candidate);
 							element = holder.getElement();
