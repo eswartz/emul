@@ -107,6 +107,7 @@ struct InstructionRef {
 struct BreakInstruction {
     LINK link_all;
     LINK link_adr;
+    int virtual_addr;
     ContextBreakpoint cb;
     char saved_code[16];
     size_t saved_size;
@@ -215,6 +216,7 @@ static void get_bi_access_types(BreakInstruction * bi, unsigned * access_types, 
     int i;
     unsigned t = 0;
     ContextAddress sz = 0;
+    if (bi->virtual_addr) t |= CTX_BP_ACCESS_VIRTUAL;
     for (i = 0; i < bi->ref_cnt; i++) {
         if (bi->refs[i].cnt) {
             int md = bi->refs[i].bp->access_mode;
@@ -241,7 +243,7 @@ static void plant_instruction(BreakInstruction * bi) {
     assert(!bi->stepping_over_bp);
     assert(!bi->planted);
     assert(!bi->cb.ctx->exited);
-    assert(bi->valid);
+    assert(bi->valid || bi->virtual_addr);
     if (bi->cb.address == 0) return;
     assert(is_all_stopped(bi->cb.ctx));
 
@@ -307,28 +309,31 @@ static int is_canonical_addr(Context * ctx, ContextAddress address) {
 }
 #endif
 
-static BreakInstruction * find_instruction(Context * ctx, ContextAddress address) {
+static BreakInstruction * find_instruction(Context * ctx, int virtual_addr, ContextAddress address) {
     int hash = addr2instr_hash(ctx, address);
     LINK * l = addr2instr[hash].next;
     if (address == 0) return NULL;
-    assert(is_canonical_addr(ctx, address));
+    assert(virtual_addr || is_canonical_addr(ctx, address));
     while (l != addr2instr + hash) {
         BreakInstruction * bi = link_adr2bi(l);
-        if (bi->cb.ctx == ctx && bi->cb.address == address) return bi;
+        if (bi->cb.ctx == ctx &&
+            bi->cb.address == address &&
+            bi->virtual_addr == virtual_addr) return bi;
         l = l->next;
     }
     return NULL;
 }
 
-static BreakInstruction * add_instruction(Context * ctx, ContextAddress address) {
+static BreakInstruction * add_instruction(Context * ctx, int virtual_addr, ContextAddress address) {
     int hash = addr2instr_hash(ctx, address);
     BreakInstruction * bi = (BreakInstruction *)loc_alloc_zero(sizeof(BreakInstruction));
-    assert(find_instruction(ctx, address) == NULL);
+    assert(find_instruction(ctx, virtual_addr, address) == NULL);
     list_add_last(&bi->link_all, &instructions);
     list_add_last(&bi->link_adr, addr2instr + hash);
     context_lock(ctx);
     bi->cb.ctx = ctx;
     bi->cb.address = address;
+    bi->virtual_addr = virtual_addr;
     return bi;
 }
 
@@ -407,7 +412,7 @@ void clone_breakpoints_on_process_fork(Context * parent, Context * child) {
         if (!bi->planted) continue;
         if (!bi->saved_size) continue;
         if (bi->cb.ctx != mem) continue;
-        ci = add_instruction(child, bi->cb.address);
+        ci = add_instruction(child, bi->virtual_addr, bi->cb.address);
         ci->cb.length = bi->cb.length;
         ci->cb.access_types = bi->cb.access_types;
         memcpy(ci->saved_code, bi->saved_code, bi->saved_size);
@@ -564,6 +569,7 @@ static void write_breakpoint_status(OutputStream * out, BreakpointInfo * bp) {
             int i = 0;
             BreakInstruction * bi = link_all2bi(l);
             l = l->next;
+            if (bi->virtual_addr && bi->planting_error != NULL) continue;
             for (i = 0; i < bi->ref_cnt; i++) {
                 if (bi->refs[i].bp != bp) continue;
                 if (cnt > 0) write_stream(out, ',');
@@ -636,13 +642,18 @@ static void send_event_breakpoint_status(Channel * channel, BreakpointInfo * bp)
     }
 }
 
-static InstructionRef * link_breakpoint_instruction(BreakpointInfo * bp, Context * ctx,
-        ContextAddress ctx_addr, ContextAddress size, Context * mem, ContextAddress mem_addr) {
+static InstructionRef * link_breakpoint_instruction(
+        BreakpointInfo * bp, Context * ctx,
+        ContextAddress ctx_addr, ContextAddress size,
+        Context * mem, int virtual_addr, ContextAddress mem_addr,
+        BreakInstruction ** bi_ptr) {
+
     BreakInstruction * bi = NULL;
     InstructionRef * ref = NULL;
-    bi = find_instruction(mem, mem_addr);
+
+    bi = find_instruction(mem, virtual_addr, mem_addr);
     if (bi == NULL) {
-        bi = add_instruction(mem, mem_addr);
+        bi = add_instruction(mem, virtual_addr, mem_addr);
     }
     else {
         int i = 0;
@@ -653,6 +664,7 @@ static InstructionRef * link_breakpoint_instruction(BreakpointInfo * bp, Context
                 if (ref->size < size) ref->size = size;
                 ref->addr = ctx_addr;
                 ref->cnt++;
+                if (bi_ptr) *bi_ptr = bi;
                 return ref;
             }
             i++;
@@ -673,6 +685,7 @@ static InstructionRef * link_breakpoint_instruction(BreakpointInfo * bp, Context
     bi->valid = 0;
     bp->instruction_cnt++;
     bp->status_changed = 1;
+    if (bi_ptr) *bi_ptr = bi;
     return ref;
 }
 
@@ -684,7 +697,7 @@ static void address_expression_error(Context * ctx, BreakpointInfo * bp, int err
     rp = get_error_report(error);
     assert(rp != NULL);
     if (ctx != NULL) {
-        InstructionRef * ref = link_breakpoint_instruction(bp, ctx, 0, 0, ctx, 0);
+        InstructionRef * ref = link_breakpoint_instruction(bp, ctx, 0, 0, ctx, 1, 0, NULL);
         if (!compare_error_reports(rp, ref->address_error)) {
             release_error_report(ref->address_error);
             ref->address_error = rp;
@@ -706,12 +719,20 @@ static void address_expression_error(Context * ctx, BreakpointInfo * bp, int err
 
 static void plant_breakpoint(Context * ctx, BreakpointInfo * bp, ContextAddress addr, ContextAddress size) {
     Context * mem = NULL;
-    ContextAddress mem_addr;
+    ContextAddress mem_addr = 0;
+
+    if (context_get_supported_bp_access_types(ctx) & CTX_BP_ACCESS_VIRTUAL) {
+        BreakInstruction * bi = NULL;
+        link_breakpoint_instruction(bp, ctx, addr, size, ctx, 1, addr, &bi);
+        if (!bi->planted) plant_instruction(bi);
+        if (bi->planted) return;
+    }
+
     if (context_get_canonical_addr(ctx, addr, &mem, &mem_addr, NULL, NULL) < 0) {
         address_expression_error(ctx, bp, errno);
     }
     else {
-        link_breakpoint_instruction(bp, ctx, addr, size, mem, mem_addr);
+        link_breakpoint_instruction(bp, ctx, addr, size, mem, 0, mem_addr, NULL);
     }
 }
 
@@ -2167,7 +2188,7 @@ int is_breakpoint_address(Context * ctx, ContextAddress address) {
     ContextAddress mem_addr = 0;
     BreakInstruction * bi = NULL;
     if (context_get_canonical_addr(ctx, address, &mem, &mem_addr, NULL, NULL) < 0) return 0;
-    bi = find_instruction(mem, mem_addr);
+    bi = find_instruction(mem, 0, mem_addr);
     return bi != NULL && bi->planted;
 }
 
@@ -2188,7 +2209,7 @@ void evaluate_breakpoint(Context * ctx) {
 
     if (ctx->stopped_by_bp) {
         if (context_get_canonical_addr(ctx, get_regs_PC(ctx), &mem, &mem_addr, NULL, NULL) < 0) return;
-        bi = find_instruction(mem, mem_addr);
+        bi = find_instruction(mem, 0, mem_addr);
         if (bi != NULL && bi->planted) {
             assert(bi->valid);
             for (i = 0; i < bi->ref_cnt; i++) {
@@ -2253,7 +2274,7 @@ static void safe_restore_breakpoint(void * arg) {
     BreakInstruction * bi = ext->stepping_over_bp;
 
     assert(bi->stepping_over_bp > 0);
-    assert(find_instruction(bi->cb.ctx, bi->cb.address) == bi);
+    assert(find_instruction(bi->cb.ctx, 0, bi->cb.address) == bi);
     if (!ctx->exiting && ctx->stopped && !ctx->stopped_by_exception && get_regs_PC(ctx) == bi->cb.address) {
         if (ext->step_over_bp_cnt < 100) {
             ext->step_over_bp_cnt++;
@@ -2284,7 +2305,7 @@ static void safe_skip_breakpoint(void * arg) {
 
     assert(bi != NULL);
     assert(bi->stepping_over_bp > 0);
-    assert(find_instruction(bi->cb.ctx, bi->cb.address) == bi);
+    assert(find_instruction(bi->cb.ctx, 0, bi->cb.address) == bi);
 
     post_safe_event(ctx, safe_restore_breakpoint, ctx);
 
@@ -2332,7 +2353,7 @@ int skip_breakpoint(Context * ctx, int single_step) {
     if (ctx->exited || ctx->exiting || !ctx->stopped_by_bp) return 0;
 
     if (context_get_canonical_addr(ctx, get_regs_PC(ctx), &mem, &mem_addr, NULL, NULL) < 0) return -1;
-    bi = find_instruction(mem, mem_addr);
+    bi = find_instruction(mem, 0, mem_addr);
     if (bi == NULL || bi->planting_error) return 0;
     bi->stepping_over_bp++;
     ext->stepping_over_bp = bi;

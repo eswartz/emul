@@ -491,7 +491,7 @@ static int win32_resume(Context * ctx, int step) {
             ContextBreakpoint * bp = debug_state->hw_bps[i];
             if (bp != NULL &&
                     ext->skip_hw_bp_addr == bp->address &&
-                    bp->access_types == CTX_BP_ACCESS_INSTRUCTION) {
+                    (bp->access_types & CTX_BP_ACCESS_INSTRUCTION)) {
                 /* Skipping the breakpoint */
                 step_over_hw_bp = 1;
                 bp = NULL;
@@ -525,14 +525,14 @@ static int win32_resume(Context * ctx, int step) {
                     break;
                 }
                 Dr7 |= 1u << (i * 2);
-                if (bp->access_types == CTX_BP_ACCESS_INSTRUCTION) {
+                if (bp->access_types == (CTX_BP_ACCESS_INSTRUCTION | CTX_BP_ACCESS_VIRTUAL)) {
                     Dr7 &= ~(3u << (i * 4 + 16));
                 }
-                else if (bp->access_types == CTX_BP_ACCESS_DATA_WRITE) {
+                else if (bp->access_types == (CTX_BP_ACCESS_DATA_WRITE | CTX_BP_ACCESS_VIRTUAL)) {
                     Dr7 &= ~(3u << (i * 4 + 16));
                     Dr7 |= 1u << (i * 4 + 16);
                 }
-                else if (bp->access_types == (CTX_BP_ACCESS_DATA_READ | CTX_BP_ACCESS_DATA_WRITE)) {
+                else if (bp->access_types == (CTX_BP_ACCESS_DATA_READ | CTX_BP_ACCESS_DATA_WRITE | CTX_BP_ACCESS_VIRTUAL)) {
                     Dr7 |= 3u << (i * 4 + 16);
                 }
                 else {
@@ -1255,7 +1255,8 @@ int context_get_supported_bp_access_types(Context * ctx) {
     if (ctx->mem == ctx) return
         CTX_BP_ACCESS_DATA_READ |
         CTX_BP_ACCESS_DATA_WRITE |
-        CTX_BP_ACCESS_INSTRUCTION;
+        CTX_BP_ACCESS_INSTRUCTION |
+        CTX_BP_ACCESS_VIRTUAL;
 #endif
     return 0;
 }
@@ -1265,17 +1266,17 @@ int context_plant_breakpoint(ContextBreakpoint * bp) {
     int i;
     Context * ctx = bp->ctx;
     assert(bp->access_types);
-    if (ctx->mem == ctx) {
+    if (ctx->mem == ctx && (bp->access_types & CTX_BP_ACCESS_VIRTUAL)) {
         ContextExtensionWin32 * ext = EXT(ctx);
         DebugState * debug_state = ext->debug_state;
         if (debug_state->ok_to_use_hw_bp && bp->length <= 8 && ((1u << bp->length) & 0x116u)) {
-            if (bp->access_types == CTX_BP_ACCESS_INSTRUCTION) {
+            if (bp->access_types == (CTX_BP_ACCESS_INSTRUCTION | CTX_BP_ACCESS_VIRTUAL)) {
                 /* Don't use more then 2 HW slots for regular instruction breakpoints */
                 int cnt = 0;
                 for (i = 0; i < MAX_HW_BPS; i++) {
                     assert(debug_state->hw_bps[i] != bp);
                     if (debug_state->hw_bps[i] == NULL) continue;
-                    if (debug_state->hw_bps[i]->access_types != CTX_BP_ACCESS_INSTRUCTION) continue;
+                    if ((debug_state->hw_bps[i]->access_types & CTX_BP_ACCESS_INSTRUCTION) == 0) continue;
                     cnt++;
                 }
                 if (cnt >= MAX_HW_BPS / 2) {
@@ -1283,8 +1284,8 @@ int context_plant_breakpoint(ContextBreakpoint * bp) {
                     return -1;
                 }
             }
-            else if (bp->access_types != CTX_BP_ACCESS_DATA_WRITE &&
-                        bp->access_types != (CTX_BP_ACCESS_DATA_READ | CTX_BP_ACCESS_DATA_WRITE)) {
+            else if (bp->access_types != (CTX_BP_ACCESS_DATA_WRITE | CTX_BP_ACCESS_VIRTUAL) &&
+                        bp->access_types != (CTX_BP_ACCESS_DATA_READ | CTX_BP_ACCESS_DATA_WRITE | CTX_BP_ACCESS_VIRTUAL)) {
                 errno = ERR_UNSUPPORTED;
                 return -1;
             }

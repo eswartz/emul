@@ -450,6 +450,7 @@ struct ContextBreakpoint {
 #define CTX_BP_ACCESS_DATA_READ      0x01
 #define CTX_BP_ACCESS_DATA_WRITE     0x02
 #define CTX_BP_ACCESS_INSTRUCTION    0x04
+#define CTX_BP_ACCESS_VIRTUAL        0x08
 
 /*
  * Return bitmask of supported CTX_BP_ACCESS_* values.
