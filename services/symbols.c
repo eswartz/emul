@@ -339,6 +339,7 @@ static void command_find_by_name_cache_client(void * x) {
 static void command_find_by_name(char * token, Channel * c) {
     CommandFindByNameArgs args;
 
+    args.ip = 0;
     json_read_string(&c->inp, args.id, sizeof(args.id));
     if (read_stream(&c->inp) != 0) exception(ERR_JSON_SYNTAX);
     if (peek_stream(&c->inp) != '"' && peek_stream(&c->inp) != 'n') {
