@@ -281,7 +281,7 @@ public class WorkingSetActionProvider extends CommonActionProvider {
 			UIPlugin.getDefault().getLog().log(status);
 			return;
 		}
-		workingSetFilter.setWorkingSet(emptyWorkingSet || !extensionStateModel.getBooleanProperty(WorkingSetsContentProvider.SHOW_TOP_LEVEL_WORKING_SETS) ? null : workingSet);
+		workingSetFilter.setActive(extensionStateModel.getBooleanProperty(WorkingSetsContentProvider.SHOW_TOP_LEVEL_WORKING_SETS));
 	}
 
 	/**

@@ -10,6 +10,7 @@
 package org.eclipse.tm.te.ui.views.workingsets;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -20,12 +21,19 @@ import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.tm.te.runtime.events.EventManager;
 import org.eclipse.tm.te.runtime.interfaces.workingsets.IWorkingSetElement;
+import org.eclipse.tm.te.ui.views.events.ViewerContentChangeEvent;
 import org.eclipse.tm.te.ui.views.interfaces.IUIConstants;
+import org.eclipse.tm.te.ui.views.interfaces.workingsets.IWorkingSetIDs;
+import org.eclipse.tm.te.ui.views.internal.View;
 import org.eclipse.tm.te.ui.views.internal.ViewRoot;
+import org.eclipse.tm.te.ui.views.nls.Messages;
 import org.eclipse.ui.IAggregateWorkingSet;
+import org.eclipse.ui.ILocalWorkingSetManager;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.IWorkingSet;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.internal.navigator.NavigatorContentService;
 import org.eclipse.ui.navigator.CommonNavigator;
 import org.eclipse.ui.navigator.CommonViewer;
@@ -44,7 +52,7 @@ public class WorkingSetsContentProvider implements ICommonContentProvider {
 	/**
 	 * The extension id for the WorkingSet extension.
 	 */
-	public static final String EXTENSION_ID = "org.eclipse.tm.te.ui.views.navigator.workingSets"; //$NON-NLS-1$
+	public static final String EXTENSION_ID = "org.eclipse.tm.te.ui.views.navigator.content.workingSets"; //$NON-NLS-1$
 
 	/**
 	 * A key used by the Extension State Model to keep track of whether top level Working Sets or
@@ -59,6 +67,8 @@ public class WorkingSetsContentProvider implements ICommonContentProvider {
 	private IExtensionStateModel extensionStateModel;
 	private CommonNavigator targetExplorer;
 	private CommonViewer viewer;
+
+	private ILocalWorkingSetManager localWorkingSetManager;
 
 	private IPropertyChangeListener rootModeListener = new IPropertyChangeListener() {
 
@@ -84,25 +94,49 @@ public class WorkingSetsContentProvider implements ICommonContentProvider {
 		viewer = (CommonViewer) cs.getViewer();
 		targetExplorer = viewer.getCommonNavigator();
 
+		localWorkingSetManager = targetExplorer instanceof View ? ((View)targetExplorer).getLocalWorkingSetManager() : PlatformUI.getWorkbench().createLocalWorkingSetManager();
+
 		extensionStateModel = config.getExtensionStateModel();
 		extensionStateModel.addPropertyChangeListener(rootModeListener);
+
 		updateRootMode();
 	}
 
-	/*
-	 * (non-Javadoc)
+	/* (non-Javadoc)
 	 * @see org.eclipse.ui.navigator.IMementoAware#restoreState(org.eclipse.ui.IMemento)
 	 */
 	@Override
-	public void restoreState(IMemento aMemento) {
+	public void restoreState(IMemento memento) {
+		// We can call the local working set manager restoreState(memento) method
+		// only as long the working set manager is empty
+		if (localWorkingSetManager.getWorkingSets().length == 0) {
+			localWorkingSetManager.restoreState(memento);
+
+			IWorkingSet old = localWorkingSetManager.getWorkingSet("Others"); //$NON-NLS-1$
+			if (old != null) localWorkingSetManager.removeWorkingSet(old);
+
+			// Create the "Others" working set if not restored from the memento
+			IWorkingSet others = localWorkingSetManager.getWorkingSet(Messages.WorkingSetContentProvider_others_name);
+			if (others == null) {
+				others = localWorkingSetManager.createWorkingSet(Messages.WorkingSetContentProvider_others_name, new IAdaptable[0]);
+				others.setId(IWorkingSetIDs.ID_WS_OTHERS);
+				localWorkingSetManager.addWorkingSet(others);
+			} else {
+				others.setId(IWorkingSetIDs.ID_WS_OTHERS);
+			}
+		}
+
+		// Trigger an update of the "Others" working set
+		ViewerContentChangeEvent event = new ViewerContentChangeEvent(viewer, ViewerContentChangeEvent.REFRESH);
+		EventManager.getInstance().fireEvent(event);
 	}
 
-	/*
-	 * (non-Javadoc)
+	/* (non-Javadoc)
 	 * @see org.eclipse.ui.navigator.IMementoAware#saveState(org.eclipse.ui.IMemento)
 	 */
 	@Override
-	public void saveState(IMemento aMemento) {
+	public void saveState(IMemento memento) {
+		localWorkingSetManager.saveState(memento);
 	}
 
 	/* (non-Javadoc)
@@ -115,11 +149,15 @@ public class WorkingSetsContentProvider implements ICommonContentProvider {
 			if (workingSet.isAggregateWorkingSet() && targetExplorer != null) {
 				switch (targetExplorer.getRootMode()) {
 				case IUIConstants.MODE_WORKING_SETS:
-					return ((IAggregateWorkingSet) workingSet).getComponents();
+					List<IWorkingSet> allWorkingSets = new ArrayList<IWorkingSet>();
+					allWorkingSets.addAll(Arrays.asList(((IAggregateWorkingSet) workingSet).getComponents()));
+					allWorkingSets.addAll(Arrays.asList(localWorkingSetManager.getWorkingSets()));
+					return allWorkingSets.toArray(new IWorkingSet[allWorkingSets.size()]);
 				case IUIConstants.MODE_NORMAL:
 					return getWorkingSetElements(workingSet);
 				}
 			}
+
 			return getWorkingSetElements(workingSet);
 		}
 		return NO_CHILDREN;
@@ -183,6 +221,8 @@ public class WorkingSetsContentProvider implements ICommonContentProvider {
 	public void dispose() {
 		helper = null;
 		extensionStateModel.removePropertyChangeListener(rootModeListener);
+		// If we have create the local working set manager, we have to dispose it
+		if (!(targetExplorer instanceof View)) localWorkingSetManager.dispose();
 	}
 
 	/* (non-Javadoc)

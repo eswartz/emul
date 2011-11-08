@@ -13,18 +13,15 @@ import java.util.ArrayList;
 import java.util.EventObject;
 import java.util.List;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExecutableExtension;
 import org.eclipse.tm.te.runtime.events.EventManager;
 import org.eclipse.tm.te.ui.events.AbstractEventListener;
-import org.eclipse.tm.te.ui.views.ViewsUtil;
 import org.eclipse.tm.te.ui.views.events.ViewerContentChangeEvent;
-import org.eclipse.tm.te.ui.views.interfaces.IUIConstants;
-import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.IWorkingSetUpdater;
-import org.eclipse.ui.navigator.CommonNavigator;
 import org.eclipse.ui.navigator.CommonViewer;
 
 /**
@@ -33,20 +30,14 @@ import org.eclipse.ui.navigator.CommonViewer;
 public class WorkingSetElementUpdater extends AbstractEventListener implements IWorkingSetUpdater, IExecutableExtension {
 	// List of working sets managed by this updater
 	private final List<IWorkingSet> workingSets = new ArrayList<IWorkingSet>();
-	// The common viewer
-	private CommonViewer viewer = null;
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.core.runtime.IExecutableExtension#setInitializationData(org.eclipse.core.runtime.IConfigurationElement, java.lang.String, java.lang.Object)
 	 */
 	@Override
 	public void setInitializationData(IConfigurationElement config, String propertyName, Object data) throws CoreException {
-		// Get the target explorer view instance
-		IWorkbenchPart part = ViewsUtil.getPart(IUIConstants.ID_EXPLORER);
-		if (part instanceof CommonNavigator) viewer = ((CommonNavigator)part).getCommonViewer();
-
 		// Register ourself as ViewContentChangeEvent listener
-		EventManager.getInstance().addEventListener(this, ViewerContentChangeEvent.class, viewer);
+		EventManager.getInstance().addEventListener(this, ViewerContentChangeEvent.class);
 	}
 
 	/* (non-Javadoc)
@@ -97,8 +88,28 @@ public class WorkingSetElementUpdater extends AbstractEventListener implements I
 	 */
 	@Override
 	public void eventFired(EventObject event) {
-		if (!(event instanceof ViewerContentChangeEvent) && viewer.equals(((ViewerContentChangeEvent)event).getSource())) {
+		if (!(event instanceof ViewerContentChangeEvent) && !(((ViewerContentChangeEvent)event).getSource() instanceof CommonViewer)) {
 			return;
 		}
+
+		// Create a snapshot of the working sets
+		final IWorkingSet[] snapshot;
+		synchronized (workingSets) {
+			snapshot = workingSets.toArray(new IWorkingSet[workingSets.size()]);
+        }
+
+		// Update the working sets
+		onUpdateWorkingSets((CommonViewer)((ViewerContentChangeEvent)event).getSource(), snapshot);
+	}
+
+	/**
+	 * Update the managed working sets based on the content of the given viewer.
+	 *
+	 * @param viewer The viewer. Must not be <code>null</code>.
+	 * @param workingsets The working sets. Must not be <code>null</code>.
+	 */
+	protected void onUpdateWorkingSets(CommonViewer viewer, IWorkingSet[] workingsets) {
+		Assert.isNotNull(viewer);
+		Assert.isNotNull(workingsets);
 	}
 }

@@ -31,6 +31,7 @@ import org.eclipse.tm.te.ui.views.interfaces.IRoot;
 import org.eclipse.tm.te.ui.views.interfaces.IUIConstants;
 import org.eclipse.tm.te.ui.views.nls.Messages;
 import org.eclipse.ui.IAggregateWorkingSet;
+import org.eclipse.ui.ILocalWorkingSetManager;
 import org.eclipse.ui.ISources;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkingSet;
@@ -60,6 +61,11 @@ public class View extends CommonNavigator {
 	 * working sets are selected.
 	 */
 	private String workingSetLabel;
+
+	/**
+	 * The local working set manager instance.
+	 */
+	private final ILocalWorkingSetManager localWorkingSetManager = PlatformUI.getWorkbench().createLocalWorkingSetManager();
 
 	/**
 	 * Constructor.
@@ -115,6 +121,24 @@ public class View extends CommonNavigator {
 	@Override
     public String getWorkingSetLabel() {
 		return workingSetLabel;
+	}
+
+	/**
+	 * Returns the local working set manager instance.
+	 *
+	 * @return The local working set manager instance.
+	 */
+	public final ILocalWorkingSetManager getLocalWorkingSetManager() {
+		return localWorkingSetManager;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.navigator.CommonNavigator#dispose()
+	 */
+	@Override
+	public void dispose() {
+		localWorkingSetManager.dispose();
+	    super.dispose();
 	}
 
 	/* (non-Javadoc)
