@@ -124,6 +124,10 @@ public class TCFBreakpointStatusPage extends PropertyPage {
                                     BigInteger i = JSON.toBigInteger(addr);
                                     z.text = "Planted at 0x" + i.toString(16);
                                     z.planted_ok = true;
+                                    Number size = (Number)m.get(IBreakpoints.INSTANCE_SIZE);
+                                    if (size != null) z.text += "; Size " + size;
+                                    String type = (String)m.get(IBreakpoints.INSTANCE_TYPE);
+                                    if (type != null) z.text += "; Type: " + type;
                                 }
                             }
                             z.parent = y;

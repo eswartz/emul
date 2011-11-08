@@ -109,9 +109,11 @@ public interface IBreakpoints extends IService {
      * Breakpoint instance field names.
      */
     static final String
-        INSTANCE_ERROR = "Error",       // String
-        INSTANCE_CONTEXT = "LocationContext", // String
-        INSTANCE_ADDRESS = "Address";   // Number
+        INSTANCE_ERROR = "Error",               // String
+        INSTANCE_CONTEXT = "LocationContext",   // String
+        INSTANCE_ADDRESS = "Address",           // Number
+        INSTANCE_SIZE = "Size",                 // Number
+        INSTANCE_TYPE = "BreakpointType";       // String
 
     /**
      * Breakpoint service capabilities.
