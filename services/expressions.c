@@ -134,25 +134,33 @@ void set_value(Value * v, void * data, size_t size, int big_endian) {
 }
 
 static void set_int_value(Value * v, size_t size, uint64_t n) {
-    uint8_t buf[8];
+    union {
+        uint8_t  u8;
+        uint16_t u16;
+        uint32_t u32;
+        uint64_t u64;
+    } buf;
     switch (size) {
-    case 1: *(uint8_t *)buf = (uint8_t)n; break;
-    case 2: *(uint16_t *)buf = (uint16_t)n; break;
-    case 4: *(uint32_t *)buf = (uint32_t)n; break;
-    case 8: *(uint64_t *)buf = n; break;
+    case 1: buf.u8 = (uint8_t)n; break;
+    case 2: buf.u16 = (uint16_t)n; break;
+    case 4: buf.u32 = (uint32_t)n; break;
+    case 8: buf.u64 = n; break;
     default: assert(0);
     }
-    set_value(v, buf, size, big_endian);
+    set_value(v, &buf, size, big_endian);
 }
 
 static void set_fp_value(Value * v, size_t size, double n) {
-    uint8_t buf[8];
+    union {
+        float  f;
+        double d;
+    } buf;
     switch (size) {
-    case 4: *(float *)buf = (float)n; break;
-    case 8: *(double *)buf = n; break;
+    case 4: buf.f = (float)n; break;
+    case 8: buf.d = n; break;
     default: assert(0);
     }
-    set_value(v, buf, size, big_endian);
+    set_value(v, &buf, size, big_endian);
 }
 
 static void set_ctx_word_value(Value * v, ContextAddress data) {
