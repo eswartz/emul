@@ -44,6 +44,8 @@ public class Messages extends NLS {
 	public static String WorkingSetRootModeActionGroup_Target;
 	public static String WorkingSetRootModeActionGroup_Working_Set;
 
+	public static String WorkingSetContentProvider_others_name;
+
 	public static String PropertiesCommandHandler_error_initPartFailed;
 
 	public static String TargetWorkingSetPage_workingSet_name;

@@ -7,7 +7,7 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.tcf.ui.internal.navigator;
+package org.eclipse.tm.te.ui.trees;
 
 import java.util.Arrays;
 import java.util.regex.Matcher;
@@ -25,8 +25,7 @@ import org.eclipse.swt.widgets.Tree;
 /**
  * Common sorter implementation.
  */
-public class Sorter extends TreePathViewerSorter {
-	private final ILabelProvider labelProvider = new LabelProviderDelegate();
+public class TreeViewerSorter extends TreePathViewerSorter {
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.ViewerComparator#compare(org.eclipse.jface.viewers.Viewer, java.lang.Object, java.lang.Object)
@@ -34,7 +33,7 @@ public class Sorter extends TreePathViewerSorter {
 	@Override
 	public int compare(Viewer viewer, Object e1, Object e2) {
 		if (viewer != null && viewer.getControl() != null && !viewer.getControl().isDisposed()) {
-			return doCompare(e1, e2, doGetSortColumnLabel(viewer), doGetSortColumnIndex(viewer) , doDetermineInverter(viewer));
+			return doCompare(viewer, e1, e2, doGetSortColumnLabel(viewer), doGetSortColumnIndex(viewer) , doDetermineInverter(viewer));
 		}
 		return super.compare(viewer, e1, e2);
 	}
@@ -42,14 +41,15 @@ public class Sorter extends TreePathViewerSorter {
 	/**
 	 * Returns the text to compare for the given node and column index.
 	 *
+	 * @param viewer The viewer or <code>null</code>.
 	 * @param node The node or <code>null</code>.
 	 * @param index The column index or <code>-1</code>.
 	 *
 	 * @return The text for the given node and column index or <code>null</code>.
 	 */
-	protected String doGetText(Object node, int index) {
-		if (node != null) {
-			return labelProvider.getText(node);
+	protected String doGetText(Viewer viewer, Object node, int index) {
+		if (node != null && doGetLabelProvider(viewer) != null) {
+			return doGetLabelProvider(viewer).getText(node);
 		}
 		return null;
 	}
@@ -118,6 +118,7 @@ public class Sorter extends TreePathViewerSorter {
 	/**
 	 * Compare the given model nodes by the given sort column and inverter.
 	 *
+	 * @param viewer The viewer or <code>null</code>.
 	 * @param node1 The first node or <code>null</code>.
 	 * @param node2 The second node or <code>null</code>.
 	 * @param sortColumn The sort column text or <code>null</code>.
@@ -126,14 +127,14 @@ public class Sorter extends TreePathViewerSorter {
 	 *
 	 * @return The compare result.
 	 */
-	protected int doCompare(Object node1, Object node2, String sortColumn, int index, int inverter) {
+	protected int doCompare(Viewer viewer, Object node1, Object node2, String sortColumn, int index, int inverter) {
 		if (node1 == null && node2 == null) return 0;
 		if (node1 != null && node2 == null) return 1;
 		if (node1 == null && node2 != null) return -1;
 
 		// Get the labels
-		String text1 = doGetText(node1, index);
-		String text2 = doGetText(node2, index);
+		String text1 = doGetText(viewer, node1, index);
+		String text2 = doGetText(viewer, node2, index);
 
 		// The tree sorts not strictly alphabetical. First comes entries starting with numbers,
 		// second entries starting with uppercase and than all the rest. Additional, if a label contains

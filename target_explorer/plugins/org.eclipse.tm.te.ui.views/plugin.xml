@@ -55,8 +55,8 @@
          <includes>
             <contentExtension
                   isRoot="true"
-                  pattern="org.eclipse.tm.te.ui.views.navigator.workingSets"/>
-            <contentExtension pattern="org.eclipse.tm.te.ui.views.navigator.*"/>
+                  pattern="org.eclipse.tm.te.ui.views.navigator.content.workingSets"/>
+            <contentExtension pattern="org.eclipse.tm.te.ui.views.navigator.filters.*"/>
          </includes>
       </viewerContentBinding>
       
@@ -71,6 +71,7 @@
    </extension>
    
    <extension point="org.eclipse.ui.navigator.navigatorContent">
+<!-- Default navigator action contibutions -->
       <actionProvider
             class="org.eclipse.tm.te.ui.views.actions.NewActionProvider"
             id="org.eclipse.tm.te.ui.views.navigator.actions.NewActionProvider">
@@ -78,15 +79,7 @@
             </enablement>
       </actionProvider>
 
-      <!-- Working Sets -->
-      <commonFilter
-            id="org.eclipse.tm.te.ui.views.navigator.filters.workingSet"
-            name="%filters.workingSet.name"
-            description="%filters.workingSet.description" 
-            class="org.eclipse.tm.te.ui.views.workingsets.WorkingSetFilter" 
-            activeByDefault="false"
-            visibleInUI="false">
-      </commonFilter>
+<!-- Working Sets navigator action contributions -->
       <actionProvider
             class="org.eclipse.tm.te.ui.views.actions.WorkingSetActionProvider"
             id="org.eclipse.tm.te.ui.views.navigator.actions.WorkingSetActions">
@@ -99,11 +92,22 @@
 				</or>
            </enablement>            
       </actionProvider>
+
+<!-- Working Sets navigator content contributions -->
+      <commonFilter
+            id="org.eclipse.tm.te.ui.views.navigator.filters.workingSet"
+            name="%filters.workingSet.name"
+            description="%filters.workingSet.description" 
+            class="org.eclipse.tm.te.ui.views.workingsets.WorkingSetFilter" 
+            activeByDefault="false"
+            visibleInUI="false">
+      </commonFilter>
+
       <navigatorContent
             activeByDefault="true"
             contentProvider="org.eclipse.tm.te.ui.views.workingsets.WorkingSetsContentProvider"
             icon="icons/obj16/workingsets.gif"
-            id="org.eclipse.tm.te.ui.views.navigator.workingSets"
+            id="org.eclipse.tm.te.ui.views.navigator.content.workingSets"
             labelProvider="org.eclipse.tm.te.ui.views.workingsets.WorkingSetsLabelProvider"
             name="%workingsets.extension.name"
             priority="higher">
@@ -114,8 +118,9 @@
             <instanceof value="java.lang.Object"/>
          </possibleChildren>
          <commonSorter
-               class="org.eclipse.tm.te.ui.views.workingsets.WorkingSetSorter"
-               id="org.eclipse.tm.te.ui.views.workingSets.sorter"/>  
+               class="org.eclipse.tm.te.ui.views.workingsets.WorkingSetViewerSorter"
+               id="org.eclipse.tm.te.ui.views.navigator.content.workingSets.sorter">
+         </commonSorter>
       </navigatorContent>
       
    </extension>
@@ -170,12 +175,21 @@
 <!-- Working Set contributions -->
    <extension point="org.eclipse.ui.workingSets">
       <workingSet
+            description="%workingset.description"
             elementAdapterClass="org.eclipse.tm.te.ui.views.workingsets.WorkingSetElementAdapter"
             icon="icons/obj16/workingset.gif"
             id="org.eclipse.tm.te.ui.views.workingset"
             name="%workingset.name"
             pageClass="org.eclipse.tm.te.ui.views.workingsets.pages.TargetWorkingSetPage"
             updaterClass="org.eclipse.tm.te.ui.views.workingsets.WorkingSetElementUpdater">
+      </workingSet>
+
+      <workingSet
+            description="%workingset.others.description"
+            icon="icons/obj16/workingset.gif"
+            id="org.eclipse.tm.te.ui.views.workingset.others"
+            name="%workingset.others.name"
+            updaterClass="org.eclipse.tm.te.ui.views.workingsets.OthersWorkingSetElementUpdater">
       </workingSet>
    </extension>
 

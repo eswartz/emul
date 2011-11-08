@@ -17,6 +17,7 @@ import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.tm.te.runtime.interfaces.workingsets.IWorkingSetElement;
+import org.eclipse.tm.te.ui.views.interfaces.workingsets.IWorkingSetIDs;
 import org.eclipse.ui.IAggregateWorkingSet;
 import org.eclipse.ui.IContainmentAdapter;
 import org.eclipse.ui.IWorkingSet;
@@ -26,27 +27,16 @@ import org.eclipse.ui.IWorkingSet;
  * children of a working set element.
  */
 public class WorkingSetFilter extends ViewerFilter {
-    private IWorkingSet workingSet = null;
+	private boolean active = false;
 
-    private IAdaptable[] cachedWorkingSet = null;
-
-    /**
-     * Returns the active working set the filter is working with.
-     *
-     * @return the active working set
-     */
-    public IWorkingSet getWorkingSet() {
-        return workingSet;
-    }
-
-    /**
-     * Sets the active working set.
-     *
-     * @param workingSet the working set the filter should work with
-     */
-    public void setWorkingSet(IWorkingSet workingSet) {
-        this.workingSet = workingSet;
-    }
+	/**
+	 * Sets the working set filter active or inactive.
+	 *
+	 * @param active <code>True</code> to set the filter active, <code>false</code> to set the filter inactive.
+	 */
+	public final void setActive(boolean active) {
+		this.active = active;
+	}
 
     /**
      * Determines if an element should be filtered out.
@@ -55,16 +45,20 @@ public class WorkingSetFilter extends ViewerFilter {
      */
     @Override
     public boolean select(Viewer viewer, Object parentElement, Object element) {
-        if (workingSet == null || (workingSet.isAggregateWorkingSet() && workingSet.isEmpty())) {
-            return true;
-        }
-        if (parentElement instanceof IAggregateWorkingSet) {
-        	List<IWorkingSet> workingSets = Arrays.asList(((IAggregateWorkingSet)parentElement).getComponents());
-        	if (workingSets.contains(element)) return true;
-        }
-        if (element != null) {
-            return isEnclosed(element);
-        }
+    	if (active && parentElement instanceof IWorkingSet) {
+    		if (((IWorkingSet)parentElement).isEmpty()) {
+    			return true;
+    		}
+    		if (parentElement instanceof IAggregateWorkingSet) {
+    			List<IWorkingSet> workingSets = Arrays.asList(((IAggregateWorkingSet)parentElement).getComponents());
+    			if (workingSets.contains(element) || IWorkingSetIDs.ID_WS_OTHERS.equals(((IWorkingSet)element).getId())) {
+    				return true;
+    			}
+    		}
+    		if (element != null) {
+    			return isEnclosed((IWorkingSet)parentElement, element);
+    		}
+    	}
         return true;
     }
 
@@ -77,14 +71,8 @@ public class WorkingSetFilter extends ViewerFilter {
      * @param element The element to test for enclosure by a working set element
      * @return true if element is enclosed by a working set element and false otherwise.
      */
-    private boolean isEnclosed(Object element) {
-        IAdaptable[] workingSetElements = cachedWorkingSet;
-
-        // working set elements won't be cached if select is called
-        // directly, outside filter. fixes bug 14500.
-        if (workingSetElements == null) {
-			workingSetElements = workingSet.getElements();
-		}
+    private boolean isEnclosed(IWorkingSet workingSet, Object element) {
+        IAdaptable[] workingSetElements = workingSet.getElements();
 
         for (int i = 0; i < workingSetElements.length; i++) {
             IAdaptable workingSetElement = workingSetElements[i];
@@ -141,25 +129,5 @@ public class WorkingSetFilter extends ViewerFilter {
         }
 
         return false;
-    }
-
-    /**
-     * Filters out elements that are neither a parent nor a child of
-     * a working set element.
-     *
-     * @see ViewerFilter#filter(Viewer, Object, Object[])
-     */
-    @Override
-    public Object[] filter(Viewer viewer, Object parent, Object[] elements) {
-        Object[] result = null;
-        if (workingSet != null) {
-			cachedWorkingSet = workingSet.getElements();
-		}
-        try {
-            result = super.filter(viewer, parent, elements);
-        } finally {
-            cachedWorkingSet = null;
-        }
-        return result;
     }
 }
