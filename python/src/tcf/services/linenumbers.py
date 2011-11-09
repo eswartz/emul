@@ -46,7 +46,7 @@ class CodeArea(object):
         self.epilogue_begin = epilogue_begin
 
     def __eq__(self, o):
-        if self == o: return True
+        if self is o: return True
         if not isinstance(o, CodeArea): return False
         if self.start_line != o.start_line: return False
         if self.start_column != o.start_column: return False
@@ -81,12 +81,12 @@ class CodeArea(object):
         bf.write(str(self.start_line))
         if self.start_column:
             bf.write('.')
-            bf.write(self.start_column)
+            bf.write(str(self.start_column))
         bf.write("..")
-        bf.write(self.end_line)
+        bf.write(str(self.end_line))
         if self.end_column:
             bf.write('.')
-            bf.write(self.end_column)
+            bf.write(str(self.end_column))
         bf.write(" -> ")
         if self.start_address:
             bf.write("0x")
@@ -101,7 +101,7 @@ class CodeArea(object):
             bf.write('0')
         if self.isa:
             bf.write(",isa ")
-            bf.write(self.isa)
+            bf.write(str(self.isa))
         if self.is_statement:
             bf.write(",statement")
         if self.basic_block:
