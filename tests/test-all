@@ -209,7 +209,7 @@ function build_and_start_server()
     if [ $OPSYS = Windows ] ; then
       local SERVER_LFILE=`$SSH "cygpath -m $SERVER_LFILE"`
     fi
-    $SSH "$AGENT/server/obj/$OPSYS/$MACHINE/$CONF/server -s TCP::1535 -L$SERVER_LFILE -l0x800" >>logs/$LOGFILE 2>&1 &
+    $SSH -f "$AGENT/server/obj/$OPSYS/$MACHINE/$CONF/server -s TCP::1535 -L$SERVER_LFILE -l0x800" >>logs/$LOGFILE 2>&1
   else
     echo "<img src=\"../icons/cross.png\" title=\"Server build failed\"/>" >>$HTML
   fi
@@ -250,7 +250,7 @@ function build_and_test_agent()
     else
       local AGENT_L_OPT=-L$VMBUILD/logs/agent-$HOST.txt
     fi
-    $SSH "$AGENT/obj/$OPSYS/$MACHINE/$CONF/agent -s TCP::1534 $AGENT_L_OPT -l0" >>logs/$LOGFILE 2>&1 &
+    $SSH -f "$AGENT/obj/$OPSYS/$MACHINE/$CONF/agent -s TCP::1534 $AGENT_L_OPT -l0" >>logs/$LOGFILE 2>&1
     sleep 15
     TESTURL1=TransportName=TCP:Host=$HOST:Port=1534
     TESTURL2=TransportName=TCP:Host=$HOST:Port=1535
@@ -312,7 +312,7 @@ function build_and_test_agent()
           TESTURL1=TransportName=TCP:Host=localhost:Port=1534
           ;;
         esac
-        $SSH "$AGENT/obj/$OPSYS/$MACHINE/$CONF/agent -s $AGENT_S_OPT $AGENT_L_OPT -l0" >>logs/$LOGFILE 2>&1 &
+        $SSH -f "$AGENT/obj/$OPSYS/$MACHINE/$CONF/agent -s $AGENT_S_OPT $AGENT_L_OPT -l0" >>logs/$LOGFILE 2>&1
         sleep 25
         echo >>logs/$LOGFILE
         echo "Starting tests, target: $TESTURL2 $TESTURL1" >>logs/$LOGFILE

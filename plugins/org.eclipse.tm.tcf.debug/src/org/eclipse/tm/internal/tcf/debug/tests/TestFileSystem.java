@@ -12,6 +12,7 @@ package org.eclipse.tm.internal.tcf.debug.tests;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Random;
 
@@ -47,13 +48,20 @@ class TestFileSystem implements ITCFTest, IFileSystem.DoneStat,
 
     private final IFileSystem files;
     private final Random rnd = new Random();
-    private final byte[] data = new byte[0x1000];
     private final LinkedList<String> tmp_files = new LinkedList<String>();
+    private final HashMap<IToken,Object> cmds = new HashMap<IToken,Object>();
+    private byte[] data;
     private String root;
     private String tmp_path;
     private String file_name;
     private IFileHandle handle;
     private int state = STATE_PRE;
+    private boolean async_close;
+
+    private static class ReadCmd {
+        int offs;
+        int size;
+    }
 
     TestFileSystem(TCFTestSuite test_suite, IChannel channel, int channel_id) {
         this.test_suite = test_suite;
@@ -184,11 +192,48 @@ class TestFileSystem implements ITCFTest, IFileSystem.DoneStat,
         else {
             this.handle = handle;
             if (state == STATE_READ) {
-                files.read(handle, 0, data.length + 1, this);
+                for (int i = 0; i < rnd.nextInt(8); i++) {
+                    ReadCmd cmd = new ReadCmd();
+                    cmd.offs = rnd.nextInt(data.length);
+                    cmd.size = rnd.nextInt(data.length - cmd.offs) + 2;
+                    cmds.put(files.read(handle, cmd.offs, cmd.size, this), cmd);
+                }
+                if (rnd.nextBoolean()) {
+                    ReadCmd cmd = new ReadCmd();
+                    cmd.offs = 0;
+                    cmd.size = data.length + 1;
+                    cmds.put(files.read(handle, cmd.offs, cmd.size, this), cmd);
+                }
+                else {
+                    int pos = 0;
+                    while (pos < data.length) {
+                        int size = rnd.nextInt(data.length - pos) + 1;
+                        ReadCmd cmd = new ReadCmd();
+                        cmd.offs = pos;
+                        cmd.size = size + 1;
+                        cmds.put(files.read(handle, cmd.offs, cmd.size, this), cmd);
+                        pos += size;
+                    }
+                }
+                async_close = rnd.nextBoolean();
+                if (async_close) files.close(handle, this);
             }
             else if (state == STATE_WRITE) {
+                data = new byte[rnd.nextInt(0x1000) + 1];
                 rnd.nextBytes(data);
-                files.write(handle, 0, data, 0, data.length, this);
+                if (rnd.nextBoolean()) {
+                    cmds.put(files.write(handle, 0, data, 0, data.length, this), null);
+                }
+                else {
+                    int pos = 0;
+                    while (pos < data.length) {
+                        int size = rnd.nextInt(data.length - pos) + 1;
+                        cmds.put(files.write(handle, pos, data, pos, size, this), null);
+                        pos += size;
+                    }
+                }
+                async_close = rnd.nextBoolean();
+                if (async_close) files.close(handle, this);
             }
             else if (state == STATE_INP) {
                 Thread thread = new Thread() {
@@ -311,33 +356,39 @@ class TestFileSystem implements ITCFTest, IFileSystem.DoneStat,
     }
 
     public void doneWrite(IToken token, FileSystemException error) {
+        assert cmds.containsKey(token);
+        cmds.remove(token);
         if (error != null) {
             exit(error);
         }
-        else {
+        else if (cmds.size() == 0 && !async_close) {
             files.close(handle, this);
         }
     }
 
     public void doneRead(IToken token, FileSystemException error, byte[] data, boolean eof) {
+        assert cmds.containsKey(token);
+        ReadCmd cmd = (ReadCmd)cmds.remove(token);
         if (error != null) {
             exit(error);
         }
-        else if (!eof) {
-            exit(new Exception("Invalid FileSysrem.read responce: EOF expected"));
-        }
-        else if (data.length != this.data.length) {
-            exit(new Exception("Invalid FileSysrem.read responce: wrong data array size"));
-        }
         else {
-            for (int i = 0; i < data.length; i++) {
-                if (data[i] != this.data[i]) {
-                    exit(new Exception("Invalid FileSysrem.read responce: wrong data at offset " + i +
-                            ", expected " + this.data[i] + ", actual " + data[i]));
-                    return;
-                }
+            if (cmd.offs + cmd.size > this.data.length && !eof) {
+                exit(new Exception("Invalid FileSysrem.read responce: EOF expected"));
             }
-            files.fstat(handle, this);
+            else if (data.length != (eof ? cmd.size - 1 : cmd.size)) {
+                exit(new Exception("Invalid FileSysrem.read responce: wrong data array size"));
+            }
+            else {
+                for (int i = 0; i < data.length; i++) {
+                    if (data[i] != this.data[i + cmd.offs]) {
+                        exit(new Exception("Invalid FileSysrem.read responce: wrong data at offset " + i +
+                                ", expected " + this.data[i + cmd.offs] + ", actual " + data[i]));
+                        return;
+                    }
+                }
+                if (cmds.size() == 0 && !async_close) files.fstat(handle, this);
+            }
         }
     }
 
