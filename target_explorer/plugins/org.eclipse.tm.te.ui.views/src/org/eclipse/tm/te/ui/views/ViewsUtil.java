@@ -9,13 +9,20 @@
  *******************************************************************************/
 package org.eclipse.tm.te.ui.views;
 
+import java.util.Collections;
+
+import org.eclipse.core.commands.Command;
+import org.eclipse.core.commands.ExecutionEvent;
+import org.eclipse.core.expressions.EvaluationContext;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.ui.ISources;
 import org.eclipse.ui.IViewReference;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.commands.ICommandService;
 import org.eclipse.ui.navigator.CommonNavigator;
 
 /**
@@ -97,6 +104,45 @@ public class ViewsUtil {
 					ISelectionProvider selectionProvider = part != null && part.getSite() != null ? part.getSite().getSelectionProvider() : null;
 					// And apply the selection
 					if (selectionProvider != null) selectionProvider.setSelection(selection);
+				}
+			}
+		};
+
+		// Execute asynchronously
+		if (PlatformUI.isWorkbenchRunning()) {
+			PlatformUI.getWorkbench().getDisplay().asyncExec(runnable);
+		}
+	}
+
+	/**
+	 * Opens the properties editor or dialog on the given selection.
+	 *
+	 * @param selection The selection. Must be not <code>null</code>.
+	 */
+	public static void openProperties(final ISelection selection) {
+		Assert.isNotNull(selection);
+
+		// Create the runnable
+		Runnable runnable = new Runnable() {
+			@Override
+			public void run() {
+				ICommandService service = (ICommandService)PlatformUI.getWorkbench().getAdapter(ICommandService.class);
+				if (service != null) {
+					final Command command = service.getCommand("org.eclipse.ui.file.properties"); //$NON-NLS-1$
+					if (command != null && command.isDefined()) {
+						// Construct the application context
+						EvaluationContext context = new EvaluationContext(null, selection);
+						// Apply the selection to the "activeMenuSelection" and "selection" variable too
+						context.addVariable(ISources.ACTIVE_CURRENT_SELECTION_NAME, selection);
+						context.addVariable(ISources.ACTIVE_MENU_SELECTION_NAME, selection);
+						context.addVariable(ISources.ACTIVE_WORKBENCH_WINDOW_NAME, PlatformUI.getWorkbench().getActiveWorkbenchWindow());
+						// Construct the execution event
+						ExecutionEvent execEvent = new ExecutionEvent(command, Collections.EMPTY_MAP, this, context);
+						// And execute the event
+						try {
+							command.executeWithChecks(execEvent);
+						} catch (Exception e) { /* ignored on purpose */ }
+					}
 				}
 			}
 		};
