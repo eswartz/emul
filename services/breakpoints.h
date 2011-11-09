@@ -122,6 +122,17 @@ extern void change_breakpoint_attributes(BreakpointInfo * bp, BreakpointAttribut
 extern void delete_breakpoint(BreakpointInfo * bp);
 
 /*
+ * Iterate all breakpoints that are linked to context breakpoint 'cb' in the breakpoint address space
+ * associated with executable context 'ctx'. Breakpoint address space is the context returned by
+ * context_get_group(ctx, CONTEXT_GROUP_BREAKPOINT).
+ * Single 'cb' can be linked to multiple breakpoints if those breakpoint locations are evaluated
+ * to same address in same address space. Single breakpoint can be linked to multiple CBs if the
+ * breakpoint scope spawns multiple address spaces.
+ */
+typedef void IterateCBLinksCallBack(BreakpointInfo *, void *);
+extern void iterate_context_breakpoint_links(Context * ctx, ContextBreakpoint * cb, IterateCBLinksCallBack * callback, void * args);
+
+/*
  * The function is called from context.c every time a context is stopped by a breakpoint.
  * The function evaluates breakpoint condition and calls suspend_debug_context() if the condition is true.
  */

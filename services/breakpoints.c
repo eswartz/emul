@@ -2183,6 +2183,15 @@ void delete_breakpoint(BreakpointInfo * bp) {
     remove_ref(NULL, br);
 }
 
+void iterate_context_breakpoint_links(Context * ctx, ContextBreakpoint * cb, IterateCBLinksCallBack * callback, void * args) {
+    int i;
+    Context * grp = context_get_group(ctx, CONTEXT_GROUP_BREAKPOINT);
+    BreakInstruction * bi = (BreakInstruction *)((char *)cb - offsetof(BreakInstruction, cb));
+    for (i = 0; i < bi->ref_cnt; i++) {
+        if (bi->refs[i].ctx == grp) callback(bi->refs[i].bp, args);
+    }
+}
+
 int is_breakpoint_address(Context * ctx, ContextAddress address) {
     Context * mem = NULL;
     ContextAddress mem_addr = 0;
