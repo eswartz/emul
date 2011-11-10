@@ -25,6 +25,7 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ActivationPolicy: lazy
 Bundle-Localization: plugin
 Export-Package: org.eclipse.tm.te.tcf.ui.activator;x-internal:=true,
+ org.eclipse.tm.te.tcf.ui.dialogs,
  org.eclipse.tm.te.tcf.ui.internal;x-internal:=true,
  org.eclipse.tm.te.tcf.ui.internal.editor.pages;x-internal:=true,
  org.eclipse.tm.te.tcf.ui.internal.filter;x-internal:=true,
@@ -36,4 +37,5 @@ Export-Package: org.eclipse.tm.te.tcf.ui.activator;x-internal:=true,
  org.eclipse.tm.te.tcf.ui.nls;x-internal:=true,
  org.eclipse.tm.te.tcf.ui.tables,
  org.eclipse.tm.te.tcf.ui.wizards;x-internal:=true,
+ org.eclipse.tm.te.tcf.ui.wizards.controls,
  org.eclipse.tm.te.tcf.ui.wizards.pages;x-internal:=true

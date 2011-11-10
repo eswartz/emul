@@ -129,4 +129,8 @@ public class Messages extends NLS {
 
 	public static String DeleteCommandHandler_error_title;
 	public static String DeleteCommandHandler_error_deleteFailed;
+
+	public static String AgentSelectionDialog_dialogTitle;
+	public static String AgentSelectionDialog_title;
+	public static String AgentSelectionDialog_message;
 }

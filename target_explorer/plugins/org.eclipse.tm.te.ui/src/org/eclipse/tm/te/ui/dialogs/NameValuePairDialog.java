@@ -29,7 +29,6 @@ import org.eclipse.tm.te.ui.interfaces.IContextHelpIds;
 import org.eclipse.tm.te.ui.jface.dialogs.CustomTitleAreaDialog;
 import org.eclipse.tm.te.ui.nls.Messages;
 import org.eclipse.tm.te.ui.swt.SWTControlUtil;
-import org.eclipse.ui.PlatformUI;
 
 /**
  * Dialog implementation allowing to enter the data for name/value pairs.
@@ -61,7 +60,7 @@ public class NameValuePairDialog extends CustomTitleAreaDialog {
 	 * @param usedNames The list of used names. Must not be <code>null</code>.
 	 */
 	public NameValuePairDialog(Shell shell, String dialogTitle, String title, String message, String[] fieldLabels, String[] initialValues, Set<String> usedNames) {
-		super(shell);
+		super(shell, IContextHelpIds.NAME_VALUE_PAIR_DIALOG);
 
 		Assert.isNotNull(dialogTitle);
 		Assert.isNotNull(title);
@@ -84,7 +83,6 @@ public class NameValuePairDialog extends CustomTitleAreaDialog {
 	@Override
 	protected Control createDialogArea(Composite parent) {
 		Composite top = (Composite)super.createDialogArea(parent);
-		PlatformUI.getWorkbench().getHelpSystem().setHelp(top, IContextHelpIds.NAME_VALUE_PAIR_DIALOG);
 
 		setDialogTitle(dialogTitle);
 		setTitle(title);

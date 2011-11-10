@@ -57,7 +57,7 @@ public class CustomTitleAreaDialog extends TitleAreaDialog implements IMessagePr
 	/**
 	 * Constructor.
 	 *
-	 * @param parent The parent shell used to view the dialog.
+	 * @param parent The parent shell used to view the dialog, or <code>null</code>.
 	 * @param contextHelpId The dialog context help id or <code>null</code>.
 	 */
 	public CustomTitleAreaDialog(Shell parent, String contextHelpId) {
