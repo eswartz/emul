@@ -405,7 +405,7 @@ public class TerminalsLauncher extends PlatformObject implements ITerminalsLaunc
 		if (terminal != null) {
 			// Create the terminal streams settings
 			PropertiesContainer props = new PropertiesContainer();
-			props.setProperty(ITerminalsConnectorConstants.PROP_CONNECTOR_TYPE_ID, "org.eclipse.tm.te.ui.terminals.type.streams"); //$NON-NLS-1$
+			props.setProperty(ITerminalsConnectorConstants.PROP_CONNECTOR_TYPE_ID, "org.eclipse.tm.te.ui.terminals.type.terminals"); //$NON-NLS-1$
 			props.setProperty(ITerminalsConnectorConstants.PROP_ID, "org.eclipse.tm.te.ui.terminals.TerminalsView"); //$NON-NLS-1$
 			// Set the terminal tab title
 			String terminalTitle = getTerminalTitle();
