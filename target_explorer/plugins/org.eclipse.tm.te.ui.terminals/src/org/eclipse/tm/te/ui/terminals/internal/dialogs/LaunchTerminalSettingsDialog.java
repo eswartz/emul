@@ -6,6 +6,7 @@
  *
  * Contributors:
  * Wind River Systems - initial API and implementation
+ * Max Weninger (Wind River) - [361352] [TERMINALS][SSH] Add SSH terminal support
  *******************************************************************************/
 package org.eclipse.tm.te.ui.terminals.internal.dialogs;
 
@@ -30,7 +31,9 @@ import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.tm.internal.terminal.view.ViewMessages;
 import org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer;
 import org.eclipse.tm.te.runtime.properties.PropertiesContainer;
 import org.eclipse.tm.te.ui.controls.BaseDialogPageControl;
@@ -50,6 +53,7 @@ import org.eclipse.ui.forms.widgets.FormToolkit;
 /**
  * Launch terminal settings dialog implementation.
  */
+@SuppressWarnings("restriction")
 public class LaunchTerminalSettingsDialog extends CustomTrayDialog {
 	// The parent selection
 	private ISelection selection = null;
@@ -106,11 +110,18 @@ public class LaunchTerminalSettingsDialog extends CustomTrayDialog {
 		/* (non-Javadoc)
 	     * @see org.eclipse.tm.te.ui.controls.interfaces.IWizardConfigurationPanel#setupPanel(org.eclipse.swt.widgets.Composite, org.eclipse.tm.te.ui.controls.interfaces.FormToolkit)
 	     */
-	    @Override
+	    @SuppressWarnings("synthetic-access")
+        @Override
 	    public void setupPanel(Composite parent, FormToolkit toolkit) {
 	    	Composite panel = new Composite(parent, SWT.NONE);
 	    	panel.setLayout(new GridLayout());
 	    	panel.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+
+	    	Label label = new Label(panel, SWT.HORIZONTAL);
+	    	GridData layoutData = new GridData(SWT.FILL, SWT.FILL, true, true);
+			layoutData.widthHint = convertWidthInCharsToPixels(30);
+			layoutData.heightHint = convertHeightInCharsToPixels(5);
+			label.setLayoutData(layoutData);
 
 	    	setControl(panel);
 	    }
@@ -173,7 +184,7 @@ public class LaunchTerminalSettingsDialog extends CustomTrayDialog {
         GridLayout layout = new GridLayout(2, false);
         layout.marginHeight = 0; layout.marginWidth = 0;
         panel.setLayout(layout);
-        panel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+        panel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
 
         Label label = new Label(panel, SWT.HORIZONTAL);
         label.setText(Messages.LaunchTerminalSettingsDialog_combo_label);
@@ -212,8 +223,6 @@ public class LaunchTerminalSettingsDialog extends CustomTrayDialog {
 		settings.setupPanel(panel, terminals.getItems(), new FormToolkit(panel.getDisplay()));
 		GridData layoutData = new GridData(SWT.FILL, SWT.FILL, true, true);
 		layoutData.horizontalSpan = 2;
-		layoutData.widthHint = convertWidthInCharsToPixels(30);
-		layoutData.heightHint = convertHeightInCharsToPixels(5);
 		settings.getPanel().setLayoutData(layoutData);
 
 		// Preselect the first terminal launcher
@@ -286,6 +295,16 @@ public class LaunchTerminalSettingsDialog extends CustomTrayDialog {
      */
     @Override
     protected void okPressed() {
+    	IWizardConfigurationPanel panel = this.settings.getConfigurationPanel(terminals.getText());
+
+    	if(!panel.isValid()){
+			String strTitle = ViewMessages.TERMINALSETTINGS;
+			MessageBox mb = new MessageBox(getShell(), SWT.ICON_ERROR | SWT.OK);
+			mb.setText(strTitle);
+			mb.setMessage(ViewMessages.INVALID_SETTINGS);
+			mb.open();
+			return;
+    	}
     	data = new PropertiesContainer();
 
     	// Store the id of the selected delegate
@@ -294,7 +313,6 @@ public class LaunchTerminalSettingsDialog extends CustomTrayDialog {
     	data.setProperty("selection", selection); //$NON-NLS-1$
 
     	// Store the delegate specific settings
-    	IWizardConfigurationPanel panel = this.settings.getConfigurationPanel(terminals.getText());
     	if (panel instanceof ISharedDataWizardPage) {
     		((ISharedDataWizardPage)panel).extractData(data);
     	}

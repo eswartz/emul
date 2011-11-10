@@ -6,6 +6,7 @@
  *
  * Contributors:
  * Wind River Systems - initial API and implementation
+ * Max Weninger (Wind River) - [361352] [TERMINALS][SSH] Add SSH terminal support
  *******************************************************************************/
 package org.eclipse.tm.te.runtime.services.interfaces.constants;
 
@@ -127,4 +128,21 @@ public interface ITerminalsConnectorConstants {
 	 *           <p>Typical for streams terminals.
 	 */
 	public static final String PROP_STREAMS_STDERR = "streams.stderr"; //$NON-NLS-1$
+
+	// ****** Ssh specific properties ****
+
+	/**
+	 * Property: ssh keep alive value.
+	 */
+	public static final String PROP_SSH_KEEP_ALIVE = "ssh.keep_alive"; //$NON-NLS-1$
+
+	/**
+	 * Property: Ssh password.
+	 */
+	public static final String PROP_SSH_PASSWORD = "ssh.password"; //$NON-NLS-1$
+
+	/**
+	 * Property: Ssh user.
+	 */
+	public static final String PROP_SSH_USER = "ssh.user"; //$NON-NLS-1$
 }
