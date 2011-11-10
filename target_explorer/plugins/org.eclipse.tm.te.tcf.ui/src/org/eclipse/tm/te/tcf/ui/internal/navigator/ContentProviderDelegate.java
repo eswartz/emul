@@ -12,7 +12,6 @@ package org.eclipse.tm.te.tcf.ui.internal.navigator;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.tm.tcf.protocol.Protocol;
-import org.eclipse.tm.te.tcf.core.Tcf;
 import org.eclipse.tm.te.tcf.locator.interfaces.IModelListener;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.ILocatorModel;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel;
@@ -29,7 +28,7 @@ public class ContentProviderDelegate implements ITreeContentProvider {
 	private final static Object[] NO_ELEMENTS = new Object[0];
 
 	// The locator model listener instance
-	private IModelListener modelListener = null;
+	/* default */ IModelListener modelListener = null;
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.ITreeContentProvider#getChildren(java.lang.Object)
@@ -103,22 +102,22 @@ public class ContentProviderDelegate implements ITreeContentProvider {
 		// Create and attach the model listener if not yet done
 		if (modelListener == null && model != null && viewer instanceof CommonViewer) {
 			modelListener = new ModelListener(model, (CommonViewer)viewer);
-			model.addListener(modelListener);
+			Protocol.invokeLater(new Runnable() {
+				@Override
+				public void run() {
+					model.addListener(modelListener);
+				}
+			});
 		}
 
-		// Refresh the model
 		if (model != null && newInput instanceof IRoot) {
-			// If the TCF framework is not running yet, run the refresh asynchronous
-			if (Tcf.isRunning() && Protocol.isDispatchThread()) {
-				model.getService(ILocatorModelRefreshService.class).refresh();
-			} else {
-				Protocol.invokeLater(new Runnable() {
-					@Override
-					public void run() {
-						model.getService(ILocatorModelRefreshService.class).refresh();
-					}
-				});
-			}
+			// Refresh the model asynchronously
+			Protocol.invokeLater(new Runnable() {
+				@Override
+				public void run() {
+					model.getService(ILocatorModelRefreshService.class).refresh();
+				}
+			});
 		}
 	}
 }
