@@ -109,7 +109,7 @@ public class WorkingSetsContentProvider implements ICommonContentProvider {
 	public void restoreState(IMemento memento) {
 		// We can call the local working set manager restoreState(memento) method
 		// only as long the working set manager is empty
-		if (localWorkingSetManager.getWorkingSets().length == 0) {
+		if (memento != null && localWorkingSetManager.getWorkingSets().length == 0) {
 			localWorkingSetManager.restoreState(memento);
 
 			IWorkingSet old = localWorkingSetManager.getWorkingSet("Others"); //$NON-NLS-1$
@@ -136,7 +136,7 @@ public class WorkingSetsContentProvider implements ICommonContentProvider {
 	 */
 	@Override
 	public void saveState(IMemento memento) {
-		localWorkingSetManager.saveState(memento);
+		if (memento != null) localWorkingSetManager.saveState(memento);
 	}
 
 	/* (non-Javadoc)
