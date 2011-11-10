@@ -17,6 +17,7 @@ import org.eclipse.tm.tcf.protocol.IPeer;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.ILocatorModel;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel;
+import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModelProperties;
 import org.eclipse.tm.te.tcf.locator.interfaces.services.ILocatorModelLookupService;
 
 
@@ -40,7 +41,7 @@ public class LocatorModelLookupService extends AbstractLocatorModelService imple
 	@Override
 	public IPeerModel lkupPeerModelById(String id) {
 		Assert.isNotNull(id);
-		Assert.isTrue(Protocol.isDispatchThread());
+		Assert.isTrue(Protocol.isDispatchThread(), "Illegal Thread Access"); //$NON-NLS-1$
 
 		IPeerModel node = null;
 		for (IPeerModel candidate : getLocatorModel().getPeers()) {
@@ -60,7 +61,7 @@ public class LocatorModelLookupService extends AbstractLocatorModelService imple
 	@Override
 	public IPeerModel[] lkupPeerModelByAgentId(String agentId) {
 		Assert.isNotNull(agentId);
-		Assert.isTrue(Protocol.isDispatchThread());
+		Assert.isTrue(Protocol.isDispatchThread(), "Illegal Thread Access"); //$NON-NLS-1$
 
 		List<IPeerModel> nodes = new ArrayList<IPeerModel>();
 		for (IPeerModel candidate : getLocatorModel().getPeers()) {
@@ -68,6 +69,56 @@ public class LocatorModelLookupService extends AbstractLocatorModelService imple
 			if (agentId.equals(peer.getAgentID())) {
 				nodes.add(candidate);
 			}
+		}
+
+		return nodes.toArray(new IPeerModel[nodes.size()]);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.tm.te.tcf.locator.interfaces.services.ILocatorModelLookupService#lkupPeerModelBySupportedServices(java.lang.String[], java.lang.String[])
+	 */
+	@Override
+	public IPeerModel[] lkupPeerModelBySupportedServices(String[] expectedLocalServices, String[] expectedRemoteServices) {
+		Assert.isTrue(Protocol.isDispatchThread(), "Illegal Thread Access"); //$NON-NLS-1$
+
+		List<IPeerModel> nodes = new ArrayList<IPeerModel>();
+		for (IPeerModel candidate : getLocatorModel().getPeers()) {
+			String localServices = candidate.getStringProperty(IPeerModelProperties.PROP_LOCAL_SERVICES);
+			String remoteServices = candidate.getStringProperty(IPeerModelProperties.PROP_REMOTE_SERVICES);
+
+			boolean matchesExpectations = true;
+
+			// Ignore the local services if not expectations are set
+			if (expectedLocalServices != null && expectedLocalServices.length > 0) {
+				if (localServices != null) {
+					for (String service : expectedLocalServices) {
+						if (!localServices.contains(service)) {
+							matchesExpectations = false;
+							break;
+						}
+					}
+				} else {
+					matchesExpectations = false;
+				}
+			}
+
+			if (!matchesExpectations) continue;
+
+			// Ignore the remote services if not expectations are set
+			if (expectedRemoteServices != null && expectedRemoteServices.length > 0) {
+				if (remoteServices != null) {
+					for (String service : expectedRemoteServices) {
+						if (!remoteServices.contains(service)) {
+							matchesExpectations = false;
+							break;
+						}
+					}
+				} else {
+					matchesExpectations = false;
+				}
+			}
+
+			if (matchesExpectations) nodes.add(candidate);
 		}
 
 		return nodes.toArray(new IPeerModel[nodes.size()]);

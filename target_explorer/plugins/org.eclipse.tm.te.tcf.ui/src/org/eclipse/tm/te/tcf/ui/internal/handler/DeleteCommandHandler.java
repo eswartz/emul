@@ -32,7 +32,7 @@ import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel;
 import org.eclipse.tm.te.tcf.locator.interfaces.services.ILocatorModelRefreshService;
 import org.eclipse.tm.te.tcf.ui.activator.UIPlugin;
 import org.eclipse.tm.te.tcf.ui.internal.help.IContextHelpIds;
-import org.eclipse.tm.te.tcf.ui.internal.model.Model;
+import org.eclipse.tm.te.tcf.ui.model.Model;
 import org.eclipse.tm.te.tcf.ui.nls.Messages;
 import org.eclipse.ui.handlers.HandlerUtil;
 

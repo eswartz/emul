@@ -7,13 +7,12 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.tcf.ui.internal.model;
+package org.eclipse.tm.te.tcf.ui.model;
 
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.ILocatorModel;
 import org.eclipse.tm.te.tcf.locator.nodes.LocatorModel;
-import org.eclipse.tm.te.tcf.ui.internal.navigator.ModelListener;
 
 
 /**
@@ -24,10 +23,12 @@ public final class Model {
 	/* default */ static ILocatorModel locatorModel;
 
 	/**
-	 * Returns the locator model. If not yet initialized,
-	 * initialize the locator model.
+	 * Returns the shared locator model instance.
+	 * <p>
+	 * If the shared locator model instance has not been yet initialized,
+	 * the method does initialize the shared locator model instance.
 	 *
-	 * @return The locator model.
+	 * @return The shared locator model.
 	 */
 	public static ILocatorModel getModel() {
 		// Access to the locator model must happen in the TCF dispatch thread
@@ -54,7 +55,7 @@ public final class Model {
 
 		locatorModel = new LocatorModel();
 		// Register the model listener
-		locatorModel.addListener(new ModelListener(locatorModel));
+//		locatorModel.addListener(new ModelListener(locatorModel));
 		// Start the scanner
 		locatorModel.startScanner(5000, 120000);
 	}

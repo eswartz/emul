@@ -13,11 +13,7 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.ILocatorModel;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel;
 import org.eclipse.tm.te.tcf.locator.listener.ModelAdapter;
-import org.eclipse.tm.te.ui.views.interfaces.IUIConstants;
-import org.eclipse.ui.IViewPart;
-import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.navigator.CommonNavigator;
 import org.eclipse.ui.navigator.CommonViewer;
 
 
@@ -26,14 +22,20 @@ import org.eclipse.ui.navigator.CommonViewer;
  */
 public class ModelListener extends ModelAdapter {
 	private final ILocatorModel parentModel;
+	/* default */ final CommonViewer viewer;
 
 	/**
 	 * Constructor.
 	 *
+	 * @param parent The parent locator model. Must not be <code>null</code>.
+	 * @param viewer The common viewer instance. Must not be <code>null</code>.
 	 */
-	public ModelListener(ILocatorModel parent) {
+	public ModelListener(ILocatorModel parent, CommonViewer viewer) {
 		Assert.isNotNull(parent);
-		parentModel = parent;
+		Assert.isNotNull(viewer);
+
+		this.parentModel = parent;
+		this.viewer = viewer;
 	}
 
 	/* (non-Javadoc)
@@ -45,8 +47,7 @@ public class ModelListener extends ModelAdapter {
 			PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
 				@Override
 				public void run() {
-					CommonViewer viewer = getViewer();
-					if (viewer != null) viewer.refresh();
+					viewer.refresh();
 				}
 			});
 		}
@@ -61,28 +62,9 @@ public class ModelListener extends ModelAdapter {
 			PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
 				@Override
 				public void run() {
-					CommonViewer viewer = getViewer();
-					if (viewer != null) viewer.refresh(peer);
+					viewer.refresh(peer);
 				}
 			});
 		}
-	}
-
-	/**
-	 * Get the common viewer used by the Target Explorer view instance.
-	 *
-	 * @return The common viewer or <code>null</code>
-	 */
-	protected CommonViewer getViewer() {
-		if (PlatformUI.getWorkbench() != null && PlatformUI.getWorkbench().getActiveWorkbenchWindow() != null
-				&& PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage() != null) {
-			IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
-			IViewPart part = page.findView(IUIConstants.ID_EXPLORER);
-			if (part instanceof CommonNavigator) {
-				return ((CommonNavigator)part).getCommonViewer();
-			}
-		}
-
-		return null;
 	}
 }

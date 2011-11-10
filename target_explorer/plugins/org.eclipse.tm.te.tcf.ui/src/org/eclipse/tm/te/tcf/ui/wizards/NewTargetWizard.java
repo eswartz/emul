@@ -25,7 +25,7 @@ import org.eclipse.tm.te.tcf.locator.interfaces.nodes.ILocatorModel;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel;
 import org.eclipse.tm.te.tcf.locator.interfaces.services.ILocatorModelLookupService;
 import org.eclipse.tm.te.tcf.locator.interfaces.services.ILocatorModelRefreshService;
-import org.eclipse.tm.te.tcf.ui.internal.model.Model;
+import org.eclipse.tm.te.tcf.ui.model.Model;
 import org.eclipse.tm.te.tcf.ui.nls.Messages;
 import org.eclipse.tm.te.tcf.ui.wizards.pages.NewTargetWizardPage;
 import org.eclipse.tm.te.ui.views.ViewsUtil;

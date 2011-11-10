@@ -13,11 +13,13 @@ import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.te.tcf.core.Tcf;
+import org.eclipse.tm.te.tcf.locator.interfaces.IModelListener;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.ILocatorModel;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel;
 import org.eclipse.tm.te.tcf.locator.interfaces.services.ILocatorModelRefreshService;
-import org.eclipse.tm.te.tcf.ui.internal.model.Model;
+import org.eclipse.tm.te.tcf.ui.model.Model;
 import org.eclipse.tm.te.ui.views.interfaces.IRoot;
+import org.eclipse.ui.navigator.CommonViewer;
 
 
 /**
@@ -25,6 +27,9 @@ import org.eclipse.tm.te.ui.views.interfaces.IRoot;
  */
 public class ContentProviderDelegate implements ITreeContentProvider {
 	private final static Object[] NO_ELEMENTS = new Object[0];
+
+	// The locator model listener instance
+	private IModelListener modelListener = null;
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.ITreeContentProvider#getChildren(java.lang.Object)
@@ -93,8 +98,16 @@ public class ContentProviderDelegate implements ITreeContentProvider {
 	 */
 	@Override
 	public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
-		if (newInput instanceof IRoot) {
-			final ILocatorModel model = Model.getModel();
+		final ILocatorModel model = Model.getModel();
+
+		// Create and attach the model listener if not yet done
+		if (modelListener == null && model != null && viewer instanceof CommonViewer) {
+			modelListener = new ModelListener(model, (CommonViewer)viewer);
+			model.addListener(modelListener);
+		}
+
+		// Refresh the model
+		if (model != null && newInput instanceof IRoot) {
 			// If the TCF framework is not running yet, run the refresh asynchronous
 			if (Tcf.isRunning() && Protocol.isDispatchThread()) {
 				model.getService(ILocatorModelRefreshService.class).refresh();

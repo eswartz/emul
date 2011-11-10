@@ -11,11 +11,8 @@ package org.eclipse.tm.te.tcf.ui.dialogs;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
-import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.IMessageProvider;
 import org.eclipse.jface.viewers.ArrayContentProvider;
@@ -34,11 +31,12 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.tm.tcf.protocol.Protocol;
+import org.eclipse.tm.te.tcf.locator.interfaces.nodes.ILocatorModel;
 import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModel;
-import org.eclipse.tm.te.tcf.locator.interfaces.nodes.IPeerModelProperties;
+import org.eclipse.tm.te.tcf.locator.interfaces.services.ILocatorModelLookupService;
 import org.eclipse.tm.te.tcf.ui.internal.help.IContextHelpIds;
-import org.eclipse.tm.te.tcf.ui.internal.model.Model;
 import org.eclipse.tm.te.tcf.ui.internal.navigator.LabelProviderDelegate;
+import org.eclipse.tm.te.tcf.ui.model.Model;
 import org.eclipse.tm.te.tcf.ui.nls.Messages;
 import org.eclipse.tm.te.ui.jface.dialogs.CustomTitleAreaDialog;
 import org.eclipse.tm.te.ui.swt.SWTControlUtil;
@@ -126,15 +124,17 @@ public class AgentSelectionDialog extends CustomTitleAreaDialog {
 
 	    // The content to show is static. Do the filtering manually so that
 	    // we can disable the OK Button if the dialog would not show any content.
-	    List<IPeerModel> nodes = new ArrayList<IPeerModel>(Arrays.asList(Model.getModel().getPeers()));
-	    Iterator<IPeerModel> iterator = nodes.iterator();
-	    while (iterator.hasNext()) {
-	    	IPeerModel peerModel = iterator.next();
-	    	if (isFiltered(peerModel)) iterator.remove();
+	    final ILocatorModelLookupService service = getModel().getService(ILocatorModelLookupService.class);
+	    final List<IPeerModel> nodes = new ArrayList<IPeerModel>();
+	    if (service != null) {
+	    	Protocol.invokeAndWait(new Runnable() {
+	    		@Override
+	    		public void run() {
+	    			nodes.addAll(Arrays.asList(service.lkupPeerModelBySupportedServices(null, services)));
+	    		}
+	    	});
 	    }
-
-	    // Set the remaining nodes as input
-	    viewer.setInput(nodes.toArray(new IPeerModel[nodes.size()]));
+	    viewer.setInput(nodes.size() > 0 ? nodes.toArray(new IPeerModel[nodes.size()]) : null);
 
 	    return top;
 	}
@@ -148,7 +148,7 @@ public class AgentSelectionDialog extends CustomTitleAreaDialog {
 
 	    // Adjust the OK button enablement
 	    Button okButton = getButton(IDialogConstants.OK_ID);
-	    SWTControlUtil.setEnabled(okButton, ((IPeerModel[])viewer.getInput()).length > 0);
+	    SWTControlUtil.setEnabled(okButton, viewer.getInput() != null && ((IPeerModel[])viewer.getInput()).length > 0);
 
 	    return buttonBar;
 	}
@@ -180,33 +180,13 @@ public class AgentSelectionDialog extends CustomTitleAreaDialog {
 	}
 
 	/**
-	 * Returns if the given peer model node is filtered or not.
+	 * Returns the locator model instance to use for determining
+	 * the dialogs input.
 	 *
-	 * @param peerModel The peer model node. Must not be <code>null</code>.
-	 * @return
+	 * @return The locator model instance.
 	 */
-	protected boolean isFiltered(final IPeerModel peerModel) {
-		Assert.isNotNull(peerModel);
-
-		final AtomicReference<String> remoteServices = new AtomicReference<String>();
-		Protocol.invokeAndWait(new Runnable() {
-			@Override
-			public void run() {
-				remoteServices.set(peerModel.getStringProperty(IPeerModelProperties.PROP_REMOTE_SERVICES));
-			}
-		});
-
-		boolean matchedService = false;
-		if (remoteServices.get() != null) {
-			for (String service : services) {
-				if (remoteServices.get().contains(service)) {
-					matchedService = true;
-					break;
-				}
-			}
-		}
-
-		return !matchedService;
+	protected ILocatorModel getModel() {
+		return Model.getModel();
 	}
 
 	/**

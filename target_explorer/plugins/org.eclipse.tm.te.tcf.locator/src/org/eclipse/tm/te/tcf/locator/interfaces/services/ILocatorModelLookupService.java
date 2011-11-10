@@ -31,4 +31,14 @@ public interface ILocatorModelLookupService extends ILocatorModelService {
 	 * @return The peer model instances, or an empty list if the given agent id could not be matched.
 	 */
 	public IPeerModel[] lkupPeerModelByAgentId(String agentId);
+
+	/**
+	 * Lookup matching peer model instances which supports the listed local and remote services.
+	 *
+	 * @param expectedLocalServices The list of local service names to be supported, or <code>null</code>.
+	 * @param expectedRemoteServices The list of remote service names to be supported, or <code>null</code>.
+	 *
+	 * @return The peer model instances, or an empty list if the listed services are not supported by any of the peers.
+	 */
+	public IPeerModel[] lkupPeerModelBySupportedServices(String[] expectedLocalServices, String[] expectedRemoteServices);
 }
