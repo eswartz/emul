@@ -13,6 +13,7 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.tm.internal.terminal.provisional.api.ISettingsStore;
 import org.eclipse.tm.internal.terminal.provisional.api.ITerminalControl;
 import org.eclipse.tm.internal.terminal.provisional.api.TerminalState;
+import org.eclipse.tm.tcf.protocol.IToken;
 import org.eclipse.tm.tcf.protocol.Protocol;
 import org.eclipse.tm.tcf.services.ITerminals;
 import org.eclipse.tm.te.tcf.terminals.core.launcher.TerminalsLauncher;
@@ -96,15 +97,16 @@ public class TerminalsConnector extends AbstractStreamsConnector implements IDis
 	public void setTerminalSize(final int newWidth, final int newHeight) {
 		if (fControl.getState() == TerminalState.CONNECTED && settings.getTerminalsLauncher() instanceof TerminalsLauncher) {
 			final ITerminals service = ((TerminalsLauncher)settings.getTerminalsLauncher()).getSvcTerminals();
-			if (service != null) {
+			final ITerminals.TerminalContext context = (ITerminals.TerminalContext)settings.getTerminalsLauncher().getAdapter(ITerminals.TerminalContext.class);
+			if (service != null && context != null) {
 				Protocol.invokeLater(new Runnable() {
 					@Override
 					public void run() {
-//						service.setWinSize(context_id, newWidth, newHeight, new ITerminals.DoneCommand() {
-//							@Override
-//							public void doneCommand(IToken token, Exception error) {
-//							}
-//						});
+						service.setWinSize(context.getID(), newWidth, newHeight, new ITerminals.DoneCommand() {
+							@Override
+							public void doneCommand(IToken token, Exception error) {
+							}
+						});
 					}
 				});
 			}
