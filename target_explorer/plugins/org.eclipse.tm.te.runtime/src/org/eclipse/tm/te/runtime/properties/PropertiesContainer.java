@@ -157,7 +157,7 @@ public class PropertiesContainer extends PlatformObject implements IPropertiesCo
 	 *
 	 * @return The new property change notification event instance or <code>null</code>.
 	 */
-	protected final EventObject newEvent(Object source, String key, Object oldValue, Object newValue) {
+	public final EventObject newEvent(Object source, String key, Object oldValue, Object newValue) {
 		Assert.isNotNull(source);
 		Assert.isNotNull(key);
 
