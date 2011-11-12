@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: %pluginName
-Bundle-SymbolicName: org.eclipse.tm.te.runtime.stepper
+Bundle-SymbolicName: org.eclipse.tm.te.runtime.stepper;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Bundle-Activator: org.eclipse.tm.te.runtime.stepper.activator.CoreBundleActivator
 Bundle-Vendor: %providerName
@@ -13,6 +13,8 @@ Bundle-ActivationPolicy: lazy
 Bundle-Localization: plugin
 Export-Package: org.eclipse.tm.te.runtime.stepper,
  org.eclipse.tm.te.runtime.stepper.activator;x-internal:=true,
+ org.eclipse.tm.te.runtime.stepper.extensions,
  org.eclipse.tm.te.runtime.stepper.interfaces,
  org.eclipse.tm.te.runtime.stepper.interfaces.tracing,
+ org.eclipse.tm.te.runtime.stepper.internal.extensions;x-internal:=true,
  org.eclipse.tm.te.runtime.stepper.nls;x-internal:=true

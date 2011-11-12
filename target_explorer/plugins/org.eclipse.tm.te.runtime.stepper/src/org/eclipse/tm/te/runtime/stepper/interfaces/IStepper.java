@@ -14,6 +14,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.tm.te.runtime.interfaces.IConditionTester;
 import org.eclipse.tm.te.runtime.interfaces.extensions.IExecutableExtension;
+import org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer;
 
 
 /**
@@ -27,7 +28,7 @@ import org.eclipse.tm.te.runtime.interfaces.extensions.IExecutableExtension;
  * <p>
  * Stepper must run in worker threads.
  */
-public interface IStepper<Data extends Object> extends IExecutableExtension {
+public interface IStepper extends IExecutableExtension {
 
 	public static final String ID_TYPE_STEPPER_ID = "Stepper"; //$NON-NLS-1$
 	public static final String ID_TYPE_CONTEXT_ID = "Context"; //$NON-NLS-1$
@@ -39,14 +40,14 @@ public interface IStepper<Data extends Object> extends IExecutableExtension {
 	 * Condition Tester to test for finished execution of the associated stepper.
 	 */
 	public static class ExecutionFinishedConditionTester implements IConditionTester {
-		private final IStepper<?> stepper;
+		private final IStepper stepper;
 
 		/**
 		 * Constructor.
 		 *
 		 * @param stepper The stepper. Must not be <code>null</code>.
 		 */
-		public ExecutionFinishedConditionTester(IStepper<?> stepper) {
+		public ExecutionFinishedConditionTester(IStepper stepper) {
 			Assert.isNotNull(stepper);
 			this.stepper = stepper;
 		}
@@ -78,7 +79,7 @@ public interface IStepper<Data extends Object> extends IExecutableExtension {
 	 *
 	 * @throws IllegalStateException If called if the stepper is in initialized state already.
 	 */
-	public void initialize(Data data, IFullQualifiedId fullQualifiedId, IProgressMonitor monitor) throws IllegalStateException;
+	public void initialize(IPropertiesContainer data, IFullQualifiedId fullQualifiedId, IProgressMonitor monitor) throws IllegalStateException;
 
 	/**
 	 * Returns if or if not the stepper got initialized for a new run.

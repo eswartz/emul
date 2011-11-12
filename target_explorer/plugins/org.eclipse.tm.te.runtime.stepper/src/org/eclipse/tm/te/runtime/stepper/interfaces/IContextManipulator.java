@@ -13,7 +13,7 @@ package org.eclipse.tm.te.runtime.stepper.interfaces;
  * A step or step group capable of modifying the context the steps or step
  * groups are operating on.
  */
-public interface IContextManipulator<Data extends Object> {
+public interface IContextManipulator {
 
 	/**
 	 * The suffix to append to the full qualified step id to

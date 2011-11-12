@@ -16,8 +16,8 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.tm.te.core.connection.interfaces.IConnectStrategy;
 import org.eclipse.tm.te.core.connection.managers.ConnectStrategyExtensionPointManager;
 import org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer;
-import org.eclipse.tm.te.runtime.stepper.AbstractContextStepper;
 import org.eclipse.tm.te.runtime.stepper.activator.CoreBundleActivator;
+import org.eclipse.tm.te.runtime.stepper.extensions.AbstractContextStepper;
 import org.eclipse.tm.te.runtime.stepper.interfaces.IContext;
 import org.eclipse.tm.te.runtime.stepper.interfaces.IContextStep;
 import org.eclipse.tm.te.runtime.stepper.interfaces.IContextStepExecutor;
@@ -30,7 +30,7 @@ import org.eclipse.tm.te.runtime.stepper.interfaces.tracing.ITraceIds;
  * A connect strategy stepper.
  */
 @SuppressWarnings("restriction")
-public class ConnectStrategyStepper extends AbstractContextStepper<IPropertiesContainer> {
+public class ConnectStrategyStepper extends AbstractContextStepper {
 
 	public static final String PROPERTY_CONNECT_STRATEGY = "connectStrategy"; //$NON-NLS-1$
 
@@ -48,7 +48,7 @@ public class ConnectStrategyStepper extends AbstractContextStepper<IPropertiesCo
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.runtime.stepper.AbstractContextStepper#initialize(java.lang.Object, org.eclipse.tm.te.runtime.stepper.interfaces.IFullQualifiedId, org.eclipse.core.runtime.IProgressMonitor)
+	 * @see org.eclipse.tm.te.runtime.stepper.extensions.AbstractContextStepper#initialize(org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer, org.eclipse.tm.te.runtime.stepper.interfaces.IFullQualifiedId, org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	@Override
 	public void initialize(IPropertiesContainer data, IFullQualifiedId fullQualifiedId, IProgressMonitor monitor) throws IllegalStateException {
@@ -105,15 +105,15 @@ public class ConnectStrategyStepper extends AbstractContextStepper<IPropertiesCo
 	 * @see org.eclipse.tm.te.runtime.stepper.AbstractContextStepper#getVariantDelegate()
 	 */
 	@Override
-	protected IVariantDelegate<IPropertiesContainer> getVariantDelegate() throws CoreException {
+	protected IVariantDelegate getVariantDelegate() throws CoreException {
 		return null;
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.runtime.stepper.AbstractContextStepper#doCreateStepExecutor(org.eclipse.tm.te.runtime.stepper.interfaces.IContextStep, java.lang.String, org.eclipse.tm.te.runtime.stepper.interfaces.IFullQualifiedId)
+	 * @see org.eclipse.tm.te.runtime.stepper.extensions.AbstractContextStepper#doCreateStepExecutor(org.eclipse.tm.te.runtime.stepper.interfaces.IContextStep, java.lang.String, org.eclipse.tm.te.runtime.stepper.interfaces.IFullQualifiedId)
 	 */
 	@Override
-	protected IContextStepExecutor<IPropertiesContainer> doCreateStepExecutor(IContextStep<IPropertiesContainer> step, String secondaryId, IFullQualifiedId fullQualifiedStepId) {
+	protected IContextStepExecutor doCreateStepExecutor(IContextStep step, String secondaryId, IFullQualifiedId fullQualifiedStepId) {
 		return new ConnectStrategyStepExecutor();
 	}
 
@@ -121,7 +121,7 @@ public class ConnectStrategyStepper extends AbstractContextStepper<IPropertiesCo
 	 * @see org.eclipse.tm.te.runtime.stepper.AbstractContextStepper#getStepGroup(java.lang.String, java.lang.String, java.lang.String)
 	 */
     @Override
-	public IContextStepGroup<IPropertiesContainer> getStepGroup(String connectStrategyId, String stepGroupId, String variant) {
+	public IContextStepGroup getStepGroup(String connectStrategyId, String stepGroupId, String variant) {
 		CoreBundleActivator.getTraceHandler().trace("ConnectStrategyStepper#getStepGroup:" //$NON-NLS-1$
 														+ " connectStrategyId = '" + connectStrategyId + "'" //$NON-NLS-1$ //$NON-NLS-2$
 														+ ", stepGroupId = '" + stepGroupId + "'" //$NON-NLS-1$ //$NON-NLS-2$

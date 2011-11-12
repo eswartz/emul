@@ -13,6 +13,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.tm.te.runtime.interfaces.callback.ICallback;
 import org.eclipse.tm.te.runtime.interfaces.extensions.IExecutableExtension;
+import org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer;
 
 /**
  * A single step associated with a context.
@@ -26,7 +27,7 @@ import org.eclipse.tm.te.runtime.interfaces.extensions.IExecutableExtension;
  * The status object is mandatory and cannot be <code>null</code>. If the step
  * execution succeeds, an status with severity {@link IStatus#OK} is expected.
  */
-public interface IContextStep <Data extends Object> extends IExecutableExtension {
+public interface IContextStep extends IExecutableExtension {
 
 	/**
 	 * Additional data property for ICallback.
@@ -42,14 +43,14 @@ public interface IContextStep <Data extends Object> extends IExecutableExtension
 	 * @param monitor The progress monitor. Must not be <code>null</code>.
 	 * @param callback The callback to invoke if finished. Must not be <code>null</code>.
 	 */
-	public void execute(IContext context, Data data, IFullQualifiedId fullQualifiedId, IProgressMonitor monitor, ICallback callback);
+	public void execute(IContext context, IPropertiesContainer data, IFullQualifiedId fullQualifiedId, IProgressMonitor monitor, ICallback callback);
 
 	/**
 	 * Returns the number of total work the step is consuming.
 	 *
 	 * @return The number of total work or {@link IProgressMonitor#UNKNOWN}.
 	 */
-	public int getTotalWork(IContext context, Data data);
+	public int getTotalWork(IContext context, IPropertiesContainer data);
 
 	/**
 	 * Returns the list of required context step or context step group id's. The

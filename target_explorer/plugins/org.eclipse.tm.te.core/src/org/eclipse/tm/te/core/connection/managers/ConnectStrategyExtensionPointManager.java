@@ -18,7 +18,6 @@ import org.eclipse.tm.te.core.connection.interfaces.IConnectStrategy;
 import org.eclipse.tm.te.core.connection.strategy.ConnectStrategyStepGroup;
 import org.eclipse.tm.te.runtime.extensions.AbstractExtensionPointManager;
 import org.eclipse.tm.te.runtime.extensions.ExecutableExtensionProxy;
-import org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer;
 import org.eclipse.tm.te.runtime.stepper.interfaces.IContextStepGroup;
 
 /**
@@ -29,7 +28,7 @@ import org.eclipse.tm.te.runtime.stepper.interfaces.IContextStepGroup;
 public class ConnectStrategyExtensionPointManager extends AbstractExtensionPointManager<IConnectStrategy> {
 
 	protected class ConnectStrategyExtensionPointProxy extends ExecutableExtensionProxy<IConnectStrategy> {
-		private final Map<String, IContextStepGroup<IPropertiesContainer>> fStepGroups = new LinkedHashMap<String, IContextStepGroup<IPropertiesContainer>>();
+		private final Map<String, IContextStepGroup> stepGroups = new LinkedHashMap<String, IContextStepGroup>();
 
 		public ConnectStrategyExtensionPointProxy(IConfigurationElement element) throws CoreException {
 			super(element);
@@ -39,10 +38,10 @@ public class ConnectStrategyExtensionPointManager extends AbstractExtensionPoint
 		private void loadGroups(IConfigurationElement element) {
 			for (IConfigurationElement stepGroupsElement : element.getChildren("stepGroups")) { //$NON-NLS-1$
 				for (IConfigurationElement stepGroupElement : stepGroupsElement.getChildren("stepGroup")) { //$NON-NLS-1$
-					IContextStepGroup<IPropertiesContainer> stepGroup = new ConnectStrategyStepGroup();
+					IContextStepGroup stepGroup = new ConnectStrategyStepGroup();
 					try {
 						stepGroup.setInitializationData(stepGroupElement, stepGroupElement.getName(), null);
-						fStepGroups.put(stepGroup.getId(), stepGroup);
+						stepGroups.put(stepGroup.getId(), stepGroup);
 					}
 					catch (CoreException e) {
 					}
@@ -50,8 +49,8 @@ public class ConnectStrategyExtensionPointManager extends AbstractExtensionPoint
 			}
 		}
 
-		public IContextStepGroup<IPropertiesContainer> getStepGroup(String stepGroupId) {
-			return fStepGroups.get(stepGroupId);
+		public IContextStepGroup getStepGroup(String stepGroupId) {
+			return stepGroups.get(stepGroupId);
 		}
 	}
 
@@ -120,7 +119,7 @@ public class ConnectStrategyExtensionPointManager extends AbstractExtensionPoint
 		return connectStrategy;
 	}
 
-	public IContextStepGroup<IPropertiesContainer> getStepGroup(String connectStrategyId, String stepGroupId) {
+	public IContextStepGroup getStepGroup(String connectStrategyId, String stepGroupId) {
 		if (connectStrategyId == null || stepGroupId == null) {
 			return null;
 		}

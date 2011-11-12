@@ -13,11 +13,12 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.tm.te.runtime.interfaces.callback.ICallback;
+import org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer;
 
 /**
  * Extended single step providing additional life cycle methods.
  */
-public interface IExtendedContextStep<Data extends Object> extends IContextStep<Data> {
+public interface IExtendedContextStep extends IContextStep {
 
 	/**
 	 * Returns if or if not this step can have multiple references within step groups. If
@@ -39,7 +40,7 @@ public interface IExtendedContextStep<Data extends Object> extends IContextStep<
 	 * @param fullQualifiedId The full qualified id for this step. Must not be <code>null</code>.
 	 * @param monitor The progress monitor. Must not be <code>null</code>.
 	 */
-	public void initializeFrom(IContext context, Data data, IFullQualifiedId fullQualifiedId, IProgressMonitor monitor);
+	public void initializeFrom(IContext context, IPropertiesContainer data, IFullQualifiedId fullQualifiedId, IProgressMonitor monitor);
 
 	/**
 	 * Validate execution conditions.
@@ -56,7 +57,7 @@ public interface IExtendedContextStep<Data extends Object> extends IContextStep<
 	 *
 	 * @throws CoreException if the execution cannot be continue. The associated status should describe the failure cause.
 	 */
-	public void validateExecute(IContext context, Data data, IFullQualifiedId fullQualifiedId, IProgressMonitor monitor) throws CoreException;
+	public void validateExecute(IContext context, IPropertiesContainer data, IFullQualifiedId fullQualifiedId, IProgressMonitor monitor) throws CoreException;
 
 	/**
 	 * Cleanup intermediate data of the step.
@@ -68,7 +69,7 @@ public interface IExtendedContextStep<Data extends Object> extends IContextStep<
 	 * @param fullQualifiedId The full qualified id for this step. Must not be <code>null</code>.
 	 * @param monitor The progress monitor. Must not be <code>null</code>.
 	 */
-	public void cleanup(IContext context, Data data, IFullQualifiedId fullQualifiedId, IProgressMonitor monitor);
+	public void cleanup(IContext context, IPropertiesContainer data, IFullQualifiedId fullQualifiedId, IProgressMonitor monitor);
 
 	/**
 	 * Called from the stepper engine once an error occurred during the stepping. Gives
@@ -87,5 +88,5 @@ public interface IExtendedContextStep<Data extends Object> extends IContextStep<
 	 * @param monitor The progress monitor. Must not be <code>null</code>.
 	 * @param callback The callback to invoke if finished. Must not be <code>null</code>.
 	 */
-	public void rollback(IContext context, Data data, IStatus status, IFullQualifiedId fullQualifiedId, IProgressMonitor monitor, ICallback callback);
+	public void rollback(IContext context, IPropertiesContainer data, IStatus status, IFullQualifiedId fullQualifiedId, IProgressMonitor monitor, ICallback callback);
 }

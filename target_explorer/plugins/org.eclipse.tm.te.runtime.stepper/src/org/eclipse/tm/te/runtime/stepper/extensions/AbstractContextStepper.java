@@ -7,7 +7,7 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.runtime.stepper;
+package org.eclipse.tm.te.runtime.stepper.extensions;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -28,6 +28,7 @@ import org.eclipse.tm.te.runtime.concurrent.util.ExecutorsUtil;
 import org.eclipse.tm.te.runtime.extensions.ExecutableExtension;
 import org.eclipse.tm.te.runtime.interfaces.ISharedConstants;
 import org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer;
+import org.eclipse.tm.te.runtime.stepper.StepperAttributeUtil;
 import org.eclipse.tm.te.runtime.stepper.activator.CoreBundleActivator;
 import org.eclipse.tm.te.runtime.stepper.interfaces.IContext;
 import org.eclipse.tm.te.runtime.stepper.interfaces.IContextManipulator;
@@ -48,11 +49,11 @@ import org.eclipse.tm.te.runtime.utils.StatusHelper;
 /**
  * An abstract stepper implementation.
  */
-public abstract class AbstractContextStepper<Data extends Object> extends ExecutableExtension implements IStepper<Data>, IContextManipulator<Data> {
+public abstract class AbstractContextStepper extends ExecutableExtension implements IStepper, IContextManipulator {
 
 	private boolean initialized = false;
 	private boolean finished = false;
-	private Data data = null;
+	private IPropertiesContainer data = null;
 	private IFullQualifiedId fullQualifiedId = null;
 	private IProgressMonitor monitor = null;
 	private String activeContextId = null;
@@ -61,9 +62,9 @@ public abstract class AbstractContextStepper<Data extends Object> extends Execut
 
 	protected class ExecutedContextStep {
 		final IFullQualifiedId id;
-		final IContextStep<Data> step;
+		final IContextStep step;
 
-		public ExecutedContextStep(IFullQualifiedId id, IContextStep<Data> step) {
+		public ExecutedContextStep(IFullQualifiedId id, IContextStep step) {
 			this.id = id;
 			this.step = step;
 		}
@@ -99,23 +100,23 @@ public abstract class AbstractContextStepper<Data extends Object> extends Execut
 	/**
 	 * Returns the variant delegate to use or <code>null</code>.
 	 */
-	protected abstract IVariantDelegate<Data> getVariantDelegate() throws CoreException;
+	protected abstract IVariantDelegate getVariantDelegate() throws CoreException;
 
 	/**
 	 * Creates a new instance of the step executor to use for executing a step.
 	 */
-	protected abstract IContextStepExecutor<Data> doCreateStepExecutor(IContextStep<Data> step, String secondaryId, IFullQualifiedId fullQualifiedStepId);
+	protected abstract IContextStepExecutor doCreateStepExecutor(IContextStep step, String secondaryId, IFullQualifiedId fullQualifiedStepId);
 
 	/**
 	 * Returns the step group for the given arguments.
 	 */
-	protected abstract IContextStepGroup<Data> getStepGroup(String type, String subType, String variant);
+	protected abstract IContextStepGroup getStepGroup(String type, String subType, String variant);
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.runtime.stepper.interfaces.IStepper#initialize(java.lang.Object, org.eclipse.tm.te.runtime.stepper.interfaces.IFullQualifiedId, org.eclipse.core.runtime.IProgressMonitor)
+	 * @see org.eclipse.tm.te.runtime.stepper.interfaces.IStepper#initialize(org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer, org.eclipse.tm.te.runtime.stepper.interfaces.IFullQualifiedId, org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	@Override
-    public void initialize(Data data, IFullQualifiedId fullQualifiedId, IProgressMonitor monitor) throws IllegalStateException {
+    public void initialize(IPropertiesContainer data, IFullQualifiedId fullQualifiedId, IProgressMonitor monitor) throws IllegalStateException {
 		Assert.isNotNull(data);
 		Assert.isNotNull(fullQualifiedId);
 		Assert.isNotNull(monitor);
@@ -258,7 +259,7 @@ public abstract class AbstractContextStepper<Data extends Object> extends Execut
 	 *
 	 * @return The data or <code>null</code>
 	 */
-	protected final Data getData() {
+	protected final IPropertiesContainer getData() {
 		return isInitialized() ? data : null;
 	}
 
@@ -406,7 +407,7 @@ public abstract class AbstractContextStepper<Data extends Object> extends Execut
 		Assert.isNotNull(statusContainer);
 
 		// Get the variant delegate
-		IVariantDelegate<Data> variantDelegate = getVariantDelegate();
+		IVariantDelegate variantDelegate = getVariantDelegate();
 		String[] variants = null;
 		if (variantDelegate != null) {
 			// Determine the valid variants
@@ -414,7 +415,7 @@ public abstract class AbstractContextStepper<Data extends Object> extends Execut
 		}
 
 		// Get the step group
-		IContextStepGroup<Data> stepGroup = null;
+		IContextStepGroup stepGroup = null;
 		if (variants != null) {
 			for (String variant : variants) {
 				stepGroup = getStepGroup(getType(), getSubType(), variant);
@@ -452,7 +453,7 @@ public abstract class AbstractContextStepper<Data extends Object> extends Execut
 	 *
 	 * @throws CoreException If the execution fails.
 	 */
-	private void executeStepGroup(IContextStepGroup<Data> stepGroup, List<IStatus> statusContainer, List<ExecutedContextStep> executedSteps, IFullQualifiedId fullQualifiedGroupId) throws CoreException {
+	private void executeStepGroup(IContextStepGroup stepGroup, List<IStatus> statusContainer, List<ExecutedContextStep> executedSteps, IFullQualifiedId fullQualifiedGroupId) throws CoreException {
 		Assert.isNotNull(stepGroup);
 		Assert.isNotNull(statusContainer);
 		Assert.isNotNull(executedSteps);
@@ -467,7 +468,7 @@ public abstract class AbstractContextStepper<Data extends Object> extends Execut
 		CoreBundleActivator.getTraceHandler().trace("AbstractContextStepper#execute: step group: '" + stepGroup.getLabel() + "'", //$NON-NLS-1$ //$NON-NLS-2$
 													0, ITraceIds.TRACE_STEPPING, IStatus.WARNING, this);
 
-		IContextStepGroupIterator<Data> iterator = stepGroup.getStepGroupIterator();
+		IContextStepGroupIterator iterator = stepGroup.getStepGroupIterator();
 		IFullQualifiedId fullQualifiedIterationId = fullQualifiedGroupId;
 		int iteration = 0;
 
@@ -481,7 +482,7 @@ public abstract class AbstractContextStepper<Data extends Object> extends Execut
 				fullQualifiedIterationId = fullQualifiedGroupId.createChildId(ID_TYPE_STEP_GROUP_ITERATION_ID, iterator.getId(), ""+iteration); //$NON-NLS-1$
 				iterator.next(getActiveContext(), getData(), fullQualifiedIterationId, getMonitor());
 				// set the active context if the step has manipulated it
-				if (iterator instanceof IContextManipulator<?>) {
+				if (iterator instanceof IContextManipulator) {
 					IContext newContext =
 						(IContext)StepperAttributeUtil.getProperty(IContextManipulator.CONTEXT, fullQualifiedIterationId, getData());
 					String newContextId =
@@ -496,8 +497,8 @@ public abstract class AbstractContextStepper<Data extends Object> extends Execut
 				}
 			}
 			// Get the list of steps or step groups to execute.
-			IContextStepGroupable<Data>[] groupables = stepGroup.getSteps(getType(), getSubType());
-			for (IContextStepGroupable<Data> groupable : groupables) {
+			IContextStepGroupable[] groupables = stepGroup.getSteps(getType(), getSubType());
+			for (IContextStepGroupable groupable : groupables) {
 				executeGroupable(groupable, statusContainer, executedSteps, fullQualifiedIterationId);
 			}
 			iteration++;
@@ -516,7 +517,7 @@ public abstract class AbstractContextStepper<Data extends Object> extends Execut
 	 *
 	 * @throws CoreException If the execution failed.
 	 */
-	private void executeGroupable(IContextStepGroupable<Data> groupable, List<IStatus> statusContainer, List<ExecutedContextStep> executedSteps, IFullQualifiedId fullQualifiedParentId) throws CoreException {
+	private void executeGroupable(IContextStepGroupable groupable, List<IStatus> statusContainer, List<ExecutedContextStep> executedSteps, IFullQualifiedId fullQualifiedParentId) throws CoreException {
 		Assert.isNotNull(groupable);
 		Assert.isNotNull(statusContainer);
 		Assert.isNotNull(executedSteps);
@@ -539,22 +540,22 @@ public abstract class AbstractContextStepper<Data extends Object> extends Execut
 		// Check if all dependencies of the groupable have been executed before
 		checkForDependenciesExecuted(groupable, executedSteps);
 
-		if (groupable.getExtension() instanceof IContextStepGroup<?>) {
+		if (groupable.getExtension() instanceof IContextStepGroup) {
 			IFullQualifiedId id = fullQualifiedParentId.createChildId(ID_TYPE_STEP_GROUP_ID, groupable.getExtension().getId(), groupable.getSecondaryId());
 			// If the passed in groupable is associated with a step group
 			// -> get the groupable from that group and execute them
-			executeStepGroup((IContextStepGroup<Data>)groupable.getExtension(), statusContainer, executedSteps, id);
+			executeStepGroup((IContextStepGroup)groupable.getExtension(), statusContainer, executedSteps, id);
 		}
-		else if (groupable.getExtension() instanceof IContextStep<?>) {
+		else if (groupable.getExtension() instanceof IContextStep) {
 			// If the passed in groupable is associated with a step
 			// -> check if the required steps have been executed before,
 			//    create a step executor and invoke the executor.
-			IContextStep<Data> step = (IContextStep<Data>)groupable.getExtension();
+			IContextStep step = (IContextStep)groupable.getExtension();
 
 			IFullQualifiedId id = fullQualifiedParentId.createChildId(ID_TYPE_STEP_ID, step.getId(), groupable.getSecondaryId());
 
 			// Create the step executor now
-			IContextStepExecutor<Data> executor = doCreateStepExecutor(step, groupable.getSecondaryId(), id);
+			IContextStepExecutor executor = doCreateStepExecutor(step, groupable.getSecondaryId(), id);
 			Assert.isNotNull(executor);
 
 			try {
@@ -562,7 +563,7 @@ public abstract class AbstractContextStepper<Data extends Object> extends Execut
 				// Invoke the executor now
 				executor.execute(step, id, getActiveContext(), getData(), getMonitor());
 				// set the active context if the step has manipulated it
-				if (step instanceof IContextManipulator<?>) {
+				if (step instanceof IContextManipulator) {
 					IContext newContext = (IContext)StepperAttributeUtil.getProperty(IContextManipulator.CONTEXT, id, getData());
 					String newContextId = StepperAttributeUtil.getStringProperty(IContextManipulator.CONTEXT_ID, id, getData());
 					if (newContext != null) {
@@ -603,15 +604,15 @@ public abstract class AbstractContextStepper<Data extends Object> extends Execut
 	 *
 	 * @throws CoreException If a dependency has not been executed before.
 	 */
-	protected void checkForDependenciesExecuted(IContextStepGroupable<Data> groupable, List<ExecutedContextStep> executedSteps) throws CoreException {
+	protected void checkForDependenciesExecuted(IContextStepGroupable groupable, List<ExecutedContextStep> executedSteps) throws CoreException {
 		Assert.isNotNull(groupable);
 		Assert.isNotNull(executedSteps);
 
 		// Build up the complete list of dependencies.
 		List<String> dependencies = new ArrayList<String>(Arrays.asList(groupable.getDependencies()));
 		// If the groupable wraps a step, the step can have additional dependencies to check
-		if (groupable.getExtension() instanceof IContextStep<?>) {
-			dependencies.addAll(Arrays.asList(((IContextStep<?>)groupable.getExtension()).getDependencies()));
+		if (groupable.getExtension() instanceof IContextStep) {
+			dependencies.addAll(Arrays.asList(((IContextStep)groupable.getExtension()).getDependencies()));
 		}
 
 		// Check each dependency now.
@@ -633,7 +634,7 @@ public abstract class AbstractContextStepper<Data extends Object> extends Execut
 			if (!requiredStepExecuted) {
 				throw new CoreException(new Status(IStatus.ERROR, CoreBundleActivator.getUniqueIdentifier(),
 					MessageFormat.format(Messages.AbstractContextStepper_error_requiredStepNotExecuted,
-										 NLS.bind((groupable.getExtension() instanceof IContextStep<?>
+										 NLS.bind((groupable.getExtension() instanceof IContextStep
 										 				? Messages.AbstractContextStepper_error_step
 										 				: Messages.AbstractContextStepper_error_requiredStepOrGroup), dependency),
 										 NLS.bind(Messages.AbstractContextStepper_error_typeAndSubtype, getType(), getSubType()))));
@@ -667,7 +668,7 @@ public abstract class AbstractContextStepper<Data extends Object> extends Execut
 					setProperty(PROPERTY_IS_DONE, false);
 					ExecutedContextStep executedStep = executedSteps.remove(executedSteps.size()-1);
 					if (executedStep.step instanceof IExtendedContextStep) {
-						IExtendedContextStep<Data> step = (IExtendedContextStep<Data>)executedStep.step;
+						IExtendedContextStep step = (IExtendedContextStep)executedStep.step;
 						step.rollback(getActiveContext(), getData(), rollBackStatus, executedStep.id, rollbackProgress, this);
 					}
 					else {
@@ -695,18 +696,18 @@ public abstract class AbstractContextStepper<Data extends Object> extends Execut
 	 *
 	 * @throws CoreException If the total work of the step group cannot be determined.
 	 */
-	protected int calculateTotalWork(IContextStepGroup<Data> stepGroup) throws CoreException {
+	protected int calculateTotalWork(IContextStepGroup stepGroup) throws CoreException {
 		Assert.isNotNull(stepGroup);
 
 		int totalWork = 0;
 
 		// Loop the group steps and summarize the returned total work
-		IContextStepGroupable<Data>[] groupables = stepGroup.getSteps(getType(), getSubType());
-		for (IContextStepGroupable<Data> groupable : groupables) {
-			int work = groupable.getExtension() instanceof IContextStep<?>
-								? ((IContextStep<Data>)groupable.getExtension()).getTotalWork(getActiveContext(), getData())
-								: groupable.getExtension() instanceof IContextStepGroup<?>
-										? calculateTotalWork((IContextStepGroup<Data>)groupable.getExtension())
+		IContextStepGroupable[] groupables = stepGroup.getSteps(getType(), getSubType());
+		for (IContextStepGroupable groupable : groupables) {
+			int work = groupable.getExtension() instanceof IContextStep
+								? ((IContextStep)groupable.getExtension()).getTotalWork(getActiveContext(), getData())
+								: groupable.getExtension() instanceof IContextStepGroup
+										? calculateTotalWork((IContextStepGroup)groupable.getExtension())
 									    : IProgressMonitor.UNKNOWN;
 
 			if (work == IProgressMonitor.UNKNOWN) {

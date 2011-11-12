@@ -7,7 +7,7 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.runtime.stepper;
+package org.eclipse.tm.te.runtime.stepper.extensions;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
@@ -20,14 +20,14 @@ import org.eclipse.tm.te.runtime.stepper.interfaces.IContextStepGroupable;
 /**
  * Abstract context step group implementation.
  */
-public abstract class AbstractContextStepGroup<Data extends Object> extends ExecutableExtension implements IContextStepGroup<Data> {
+public abstract class AbstractContextStepGroup extends ExecutableExtension implements IContextStepGroup {
 
-	private ExecutableExtensionProxy<IContextStepGroupIterator<Data>> iteratorProxy = null;
+	private ExecutableExtensionProxy<IContextStepGroupIterator> iteratorProxy = null;
 
 	/**
 	 * Constant to be returned in case the step group contains no steps.
 	 */
-	protected final static IContextStepGroupable<?>[] NO_STEPS = new IContextStepGroupable<?>[0];
+	protected final static IContextStepGroupable[] NO_STEPS = new IContextStepGroupable[0];
 
 	/**
 	 * Constructor.
@@ -45,14 +45,14 @@ public abstract class AbstractContextStepGroup<Data extends Object> extends Exec
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.runtime.extensions.ExecutableExtension#setInitializationData(org.eclipse.core.runtime.IConfigurationElement, java.lang.String, java.lang.Object)
+	 * @see org.eclipse.tm.te.runtime.extensions.ExecutableExtension#doSetInitializationData(org.eclipse.core.runtime.IConfigurationElement, java.lang.String, java.lang.Object)
 	 */
 	@Override
-	public void setInitializationData(IConfigurationElement config, String propertyName, Object data) throws CoreException {
-	    super.setInitializationData(config, propertyName, data);
+	public void doSetInitializationData(IConfigurationElement config, String propertyName, Object data) throws CoreException {
+	    super.doSetInitializationData(config, propertyName, data);
 
 		if (iteratorProxy == null) {
-			iteratorProxy = new ExecutableExtensionProxy<IContextStepGroupIterator<Data>>(config) {
+			iteratorProxy = new ExecutableExtensionProxy<IContextStepGroupIterator>(config) {
 				@Override
 				protected String getExecutableExtensionAttributeName() {
 					return "iterator"; //$NON-NLS-1$
@@ -65,7 +65,7 @@ public abstract class AbstractContextStepGroup<Data extends Object> extends Exec
 	 * @see org.eclipse.tm.te.runtime.stepper.interfaces.IContextStepGroup#getStepGroupIterator()
 	 */
 	@Override
-    public IContextStepGroupIterator<Data> getStepGroupIterator() {
+    public IContextStepGroupIterator getStepGroupIterator() {
 		return iteratorProxy != null ? iteratorProxy.newInstance() : null;
 	}
 }

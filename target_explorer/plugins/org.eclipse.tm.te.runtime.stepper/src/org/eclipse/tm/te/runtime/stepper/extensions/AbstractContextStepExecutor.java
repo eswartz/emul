@@ -7,7 +7,7 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.runtime.stepper;
+package org.eclipse.tm.te.runtime.stepper.extensions;
 
 import java.util.Date;
 
@@ -20,6 +20,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.tm.te.runtime.callback.Callback;
 import org.eclipse.tm.te.runtime.concurrent.util.ExecutorsUtil;
 import org.eclipse.tm.te.runtime.interfaces.ISharedConstants;
+import org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer;
 import org.eclipse.tm.te.runtime.stepper.activator.CoreBundleActivator;
 import org.eclipse.tm.te.runtime.stepper.interfaces.IContext;
 import org.eclipse.tm.te.runtime.stepper.interfaces.IContextStep;
@@ -53,13 +54,13 @@ import org.eclipse.tm.te.runtime.utils.StatusHelper;
  * <li><i>org.eclipse.tm.te.runtime.stepper/profile/stepping</i></li>
  * </ul>
  */
-public abstract class AbstractContextStepExecutor<Data extends Object> implements IContextStepExecutor<Data> {
+public abstract class AbstractContextStepExecutor implements IContextStepExecutor {
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.runtime.stepper.interfaces.IContextStepExecutor#execute(org.eclipse.tm.te.runtime.stepper.interfaces.IContextStep, org.eclipse.tm.te.runtime.stepper.interfaces.IFullQualifiedId, org.eclipse.tm.te.runtime.stepper.interfaces.IContext, java.lang.Object, org.eclipse.core.runtime.IProgressMonitor)
+	 * @see org.eclipse.tm.te.runtime.stepper.interfaces.IContextStepExecutor#execute(org.eclipse.tm.te.runtime.stepper.interfaces.IContextStep, org.eclipse.tm.te.runtime.stepper.interfaces.IFullQualifiedId, org.eclipse.tm.te.runtime.stepper.interfaces.IContext, org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer, org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	@Override
-    public final void execute(IContextStep<Data> step, IFullQualifiedId id, final IContext context, final Data data, IProgressMonitor progress) throws CoreException {
+    public final void execute(IContextStep step, IFullQualifiedId id, final IContext context, final IPropertiesContainer data, IProgressMonitor progress) throws CoreException {
 		Assert.isNotNull(step);
 		Assert.isNotNull(id);
 		Assert.isNotNull(context);
@@ -74,7 +75,7 @@ public abstract class AbstractContextStepExecutor<Data extends Object> implement
 													+ " ***", //$NON-NLS-1$
 													0, ITraceIds.PROFILE_STEPPING, IStatus.WARNING, this);
 
-		int ticksToUse = (step instanceof IExtendedContextStep) ? ((IExtendedContextStep<Data>)step).getTotalWork(context, data) : IProgressMonitor.UNKNOWN;
+		int ticksToUse = (step instanceof IExtendedContextStep) ? ((IExtendedContextStep)step).getTotalWork(context, data) : IProgressMonitor.UNKNOWN;
 		progress = ProgressHelper.getProgressMonitor(progress, ticksToUse);
 		ProgressHelper.beginTask(progress, step.getLabel(), ticksToUse);
 
@@ -85,8 +86,8 @@ public abstract class AbstractContextStepExecutor<Data extends Object> implement
 		// Errors are passed through by definition.
 		try {
 			// Execute the step. Spawn to the dispatch thread if necessary.
-			if (step instanceof IExtendedContextStep<?>) {
-				IExtendedContextStep<Data> extendedStep = (IExtendedContextStep<Data>)step;
+			if (step instanceof IExtendedContextStep) {
+				IExtendedContextStep extendedStep = (IExtendedContextStep)step;
 
 				// IExtendedContextStep provides protocol for initialization and validation.
 				extendedStep.initializeFrom(context, data, id, progress);
@@ -131,8 +132,8 @@ public abstract class AbstractContextStepExecutor<Data extends Object> implement
 			}
 
 			// Give the step a chance for cleanup
-			if (step instanceof IExtendedContextStep<?>) {
-				((IExtendedContextStep<Data>)step).cleanup(context, data, id, progress);
+			if (step instanceof IExtendedContextStep) {
+				((IExtendedContextStep)step).cleanup(context, data, id, progress);
 			}
 
 			long endTime = System.currentTimeMillis();
@@ -145,7 +146,7 @@ public abstract class AbstractContextStepExecutor<Data extends Object> implement
 		}
 	}
 
-	private void normalizeStatus(IContextStep<Data> step, IFullQualifiedId id, IContext context , Data data, IStatus status) throws CoreException {
+	private void normalizeStatus(IContextStep step, IFullQualifiedId id, IContext context , IPropertiesContainer data, IStatus status) throws CoreException {
 		Assert.isNotNull(context);
 		Assert.isNotNull(data);
 		Assert.isNotNull(id);
@@ -184,6 +185,6 @@ public abstract class AbstractContextStepExecutor<Data extends Object> implement
 	 * @param data The step data.
 	 * @return Formatted message.
 	 */
-	protected abstract String formatMessage(String message, int severity, IContextStep<Data> step, IFullQualifiedId id, IContext context, Data data);
+	protected abstract String formatMessage(String message, int severity, IContextStep step, IFullQualifiedId id, IContext context, IPropertiesContainer data);
 
 }

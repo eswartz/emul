@@ -9,6 +9,8 @@
  *******************************************************************************/
 package org.eclipse.tm.te.runtime.extensions;
 
+import java.util.Hashtable;
+
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
@@ -26,9 +28,10 @@ import org.eclipse.tm.te.runtime.nls.Messages;
 public class ExecutableExtension extends PlatformObject implements IExecutableExtension {
 	// The mandatory id of the extension
 	private String id = null;
-
-	// The configuration element
-	private IConfigurationElement configElement = null;
+	// The label of the extension
+	private String label = null;
+	// The description of the extension
+	private String description = null;
 
 	/**
 	 * Clone the initialization data to the given executable extension instance.
@@ -38,7 +41,8 @@ public class ExecutableExtension extends PlatformObject implements IExecutableEx
 	public void cloneInitializationData(ExecutableExtension other) {
 		Assert.isNotNull(other);
 		other.id = id;
-		other.configElement = configElement;
+		other.label = label;
+		other.description = description;
 	}
 
 	/* (non-Javadoc)
@@ -46,14 +50,43 @@ public class ExecutableExtension extends PlatformObject implements IExecutableEx
 	 */
 	@Override
 	public void setInitializationData(IConfigurationElement config, String propertyName, Object data) throws CoreException {
-		// Remember the configuration element
-		configElement = config;
+		if (config != null) doSetInitializationData(config, propertyName, data);
+	}
+
+	/**
+	 * Executes the {@link #setInitializationData(IConfigurationElement, String, Object)}.
+	 *
+	 * @param config The configuration element. Must not be <code>null</code>.
+	 * @param propertyName The name of an attribute of the configuration element used on the <code>createExecutableExtension(String)<code> call.
+	 *                     This argument can be used in the cases where a single configuration element is used to define multiple
+	 *                     executable extensions.
+ 	 * @param data Adapter data in the form of a String, a {@link Hashtable}, or <code>null</code>.
+ 	 *
+	 * @throws CoreException - if error(s) detected during initialization processing
+	 */
+	public void doSetInitializationData(IConfigurationElement config, String propertyName, Object data) throws CoreException {
+		Assert.isNotNull(config);
 
 		// Initialize the id field by reading the <id> extension attribute.
 		// Throws an exception if the id is empty or null.
-		id = configElement != null ? configElement.getAttribute("id") : null; //$NON-NLS-1$
+		id = config != null ? config.getAttribute("id") : null; //$NON-NLS-1$
 		if (id == null || (id != null && "".equals(id.trim()))) { //$NON-NLS-1$
 			throw createMissingMandatoryAttributeException("id", config.getContributor().getName()); //$NON-NLS-1$
+		}
+
+		// Try the "label" attribute first
+		String label = config != null ? config.getAttribute("label") : null; //$NON-NLS-1$
+		// If "label" is not found or empty, try the "name" attribute as fallback
+		if (label == null || "".equals(label.trim())) { //$NON-NLS-1$
+			label = config != null ? config.getAttribute("name") : null; //$NON-NLS-1$
+		}
+
+		// Read the description text from the "<description>" child element
+		IConfigurationElement[] children = config != null ? config.getChildren("description") : null; //$NON-NLS-1$
+		// Only one description element is allow. All other will be ignored
+		if (children != null && children.length > 0) {
+			IConfigurationElement element = children[0];
+			description = element.getValue();
 		}
 	}
 
@@ -85,28 +118,11 @@ public class ExecutableExtension extends PlatformObject implements IExecutableEx
 		return id;
 	}
 
-	/**
-	 * Returns the configuration element of the extension. The method
-	 * does return <code>null</code> if {@link #setInitializationData(IConfigurationElement, String, Object)}
-	 * has not been called yet.
-	 *
-	 * @return The configuration element or <code>null</code> if none.
-	 */
-	protected final IConfigurationElement getConfigElement() {
-		return configElement;
-	}
-
 	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.runtime.interfaces.extensions.IExecutableExtension#getLabel()
 	 */
 	@Override
 	public String getLabel() {
-		// Try the "label" attribute first
-		String label = configElement != null ? configElement.getAttribute("label") : null; //$NON-NLS-1$
-		// If "label" is not found or empty, try the "name" attribute as fallback
-		if (label == null || "".equals(label.trim())) { //$NON-NLS-1$
-			label = configElement != null ? configElement.getAttribute("name") : null; //$NON-NLS-1$
-		}
 		return label != null ? label.trim() : ""; //$NON-NLS-1$
 	}
 
@@ -115,15 +131,6 @@ public class ExecutableExtension extends PlatformObject implements IExecutableEx
 	 */
 	@Override
 	public String getDescription() {
-		// Read the description text from the "<description>" child element
-		IConfigurationElement[] children = configElement != null ? configElement.getChildren("description") : null; //$NON-NLS-1$
-		// Only one description element is allow. All other will be ignored
-		if (children != null && children.length > 0) {
-			IConfigurationElement description = children[0];
-			String value = description.getValue();
-			return value != null ? value.trim() : ""; //$NON-NLS-1$
-		}
-
-		return ""; //$NON-NLS-1$
+		return description != null ? description.trim() : ""; //$NON-NLS-1$
 	}
 }

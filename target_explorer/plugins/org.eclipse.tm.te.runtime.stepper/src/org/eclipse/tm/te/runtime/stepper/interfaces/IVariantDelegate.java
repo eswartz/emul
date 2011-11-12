@@ -10,12 +10,13 @@
 package org.eclipse.tm.te.runtime.stepper.interfaces;
 
 import org.eclipse.tm.te.runtime.interfaces.extensions.IExecutableExtension;
+import org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer;
 
 /**
  * The variant delegate is providing variants to the main modes. Variants can influence the executed
  * steps or step groups.
  */
-public interface IVariantDelegate<Data extends Object> extends IExecutableExtension {
+public interface IVariantDelegate extends IExecutableExtension {
 
 	/**
 	 * Returns the valid mode variants for the current context The returned list of variants is
@@ -26,5 +27,5 @@ public interface IVariantDelegate<Data extends Object> extends IExecutableExtens
 	 *
 	 * @return The valid variants or an empty array.
 	 */
-	public String[] getValidVariants(IContext context, Data data);
+	public String[] getValidVariants(IContext context, IPropertiesContainer data);
 }

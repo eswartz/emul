@@ -21,15 +21,19 @@ import org.eclipse.tm.te.runtime.extensions.ExecutableExtension;
 public class EditorPageBinding extends ExecutableExtension {
 	// The mandatory page identifier
 	private String pageId;
+	// The insertBefore element
+	private String insertBefore;
+	// The insertAfter element
+	private String insertAfter;
 	// The converted expression
 	private Expression expression;
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.runtime.extensions.ExecutableExtension#setInitializationData(org.eclipse.core.runtime.IConfigurationElement, java.lang.String, java.lang.Object)
+	 * @see org.eclipse.tm.te.runtime.extensions.ExecutableExtension#doSetInitializationData(org.eclipse.core.runtime.IConfigurationElement, java.lang.String, java.lang.Object)
 	 */
 	@Override
-	public void setInitializationData(IConfigurationElement config, String propertyName, Object data) throws CoreException {
-		super.setInitializationData(config, propertyName, data);
+	public void doSetInitializationData(IConfigurationElement config, String propertyName, Object data) throws CoreException {
+	    super.doSetInitializationData(config, propertyName, data);
 
 		// Initialize the page id field by reading the <pageId> extension attribute.
 		// Throws an exception if the id is empty or null.
@@ -44,6 +48,11 @@ public class EditorPageBinding extends ExecutableExtension {
 		if (children != null && children.length > 0) {
 			expression = ExpressionConverter.getDefault().perform(children[0]);
 		}
+
+		// Read the "insertBefore" attribute
+		insertBefore = config != null ? config.getAttribute("insertBefore") : null; //$NON-NLS-1$
+		// Read the "insertAfter" attribute
+		insertAfter = config != null ? config.getAttribute("insertAfter") : null; //$NON-NLS-1$
 	}
 
 	/**
@@ -70,8 +79,6 @@ public class EditorPageBinding extends ExecutableExtension {
 	 * @return The &quot;insertBefore&quot; property or an empty string.
 	 */
 	public String getInsertBefore() {
-		// Read the "insertBefore" attribute
-		String insertBefore = getConfigElement() != null ? getConfigElement().getAttribute("insertBefore") : null; //$NON-NLS-1$
 		return insertBefore != null ? insertBefore.trim() : ""; //$NON-NLS-1$
 	}
 
@@ -81,8 +88,6 @@ public class EditorPageBinding extends ExecutableExtension {
 	 * @return The &quot;insertAfter&quot; property or an empty string.
 	 */
 	public String getInsertAfter() {
-		// Read the "insertAfter" attribute
-		String insertAfter = getConfigElement() != null ? getConfigElement().getAttribute("insertAfter") : null; //$NON-NLS-1$
 		return insertAfter != null ? insertAfter.trim() : ""; //$NON-NLS-1$
 	}
 }

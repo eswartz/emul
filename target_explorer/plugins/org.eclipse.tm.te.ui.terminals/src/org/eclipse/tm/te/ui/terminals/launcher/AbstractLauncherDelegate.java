@@ -24,11 +24,11 @@ public abstract class AbstractLauncherDelegate extends ExecutableExtension imple
 	private Expression expression;
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.runtime.extensions.ExecutableExtension#setInitializationData(org.eclipse.core.runtime.IConfigurationElement, java.lang.String, java.lang.Object)
+	 * @see org.eclipse.tm.te.runtime.extensions.ExecutableExtension#doSetInitializationData(org.eclipse.core.runtime.IConfigurationElement, java.lang.String, java.lang.Object)
 	 */
 	@Override
-	public void setInitializationData(IConfigurationElement config, String propertyName, Object data) throws CoreException {
-	    super.setInitializationData(config, propertyName, data);
+	public void doSetInitializationData(IConfigurationElement config, String propertyName, Object data) throws CoreException {
+	    super.doSetInitializationData(config, propertyName, data);
 
 		// Read the sub elements of the extension
 		IConfigurationElement[] children = config != null ? config.getChildren() : null;

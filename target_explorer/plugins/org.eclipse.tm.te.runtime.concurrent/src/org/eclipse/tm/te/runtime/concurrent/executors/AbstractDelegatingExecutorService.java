@@ -34,26 +34,19 @@ import org.eclipse.tm.te.runtime.extensions.ExecutableExtension;
 /**
  * Abstract delegating execution service implementation.
  */
-public abstract class AbstractDelegatingExecutorService extends
-		ExecutableExtension implements IExecutor, ExecutorService {
+public abstract class AbstractDelegatingExecutorService extends ExecutableExtension implements IExecutor, ExecutorService {
 	// The executor service to delegate the API calls to
 	private ExecutorService delegate;
 
 	// The thread pool name prefix
 	private String threadPoolNamePrefix;
 
-	/**
-	 * Constructor.
-	 */
-	public AbstractDelegatingExecutorService() {
-	}
-
 	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.runtime.extensions.ExecutableExtension#setInitializationData(org.eclipse.core.runtime.IConfigurationElement, java.lang.String, java.lang.Object)
+	 * @see org.eclipse.tm.te.runtime.extensions.ExecutableExtension#doSetInitializationData(org.eclipse.core.runtime.IConfigurationElement, java.lang.String, java.lang.Object)
 	 */
 	@Override
-	public void setInitializationData(IConfigurationElement config, String propertyName, Object data) throws CoreException {
-		super.setInitializationData(config, propertyName, data);
+	public void doSetInitializationData(IConfigurationElement config, String propertyName, Object data) throws CoreException {
+	    super.doSetInitializationData(config, propertyName, data);
 
 		if (config != null && data instanceof Map<?, ?>) {
 			Map<?, ?> params = (Map<?, ?>) data;

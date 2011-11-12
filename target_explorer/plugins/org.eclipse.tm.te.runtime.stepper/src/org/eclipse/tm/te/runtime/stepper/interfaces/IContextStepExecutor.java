@@ -11,22 +11,23 @@ package org.eclipse.tm.te.runtime.stepper.interfaces;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer;
 
 /**
  * A step executor.
  */
-public interface IContextStepExecutor<Data extends Object> {
+public interface IContextStepExecutor {
 
 	/**
-	 * Executes the associated launch step.
+	 * Executes the associated step.
 	 *
 	 * @param step The step to execute. Must not be <code>null</code>.
 	 * @param id The full qualified step id. Must not be <code>null</code>.
-	 * @param context The launch context. Must not be <code>null</code>.
+	 * @param context The context. Must not be <code>null</code>.
 	 * @param data The data. Must not be <code>null</code>.
 	 * @param monitor The progress monitor. Must not be <code>null</code>.
 	 *
 	 * @throws CoreException if the execution cannot be continue. The associated status should describe the failure cause.
 	 */
-	public void execute(IContextStep<Data> step, IFullQualifiedId id, IContext context, Data data, IProgressMonitor monitor) throws CoreException;
+	public void execute(IContextStep step, IFullQualifiedId id, IContext context, IPropertiesContainer data, IProgressMonitor monitor) throws CoreException;
 }

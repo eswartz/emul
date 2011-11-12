@@ -7,7 +7,7 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.runtime.stepper;
+package org.eclipse.tm.te.runtime.stepper.extensions;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +22,8 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.tm.te.runtime.extensions.ExecutableExtension;
 import org.eclipse.tm.te.runtime.interfaces.callback.ICallback;
+import org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer;
+import org.eclipse.tm.te.runtime.stepper.StepperAttributeUtil;
 import org.eclipse.tm.te.runtime.stepper.activator.CoreBundleActivator;
 import org.eclipse.tm.te.runtime.stepper.interfaces.IContext;
 import org.eclipse.tm.te.runtime.stepper.interfaces.IContextStep;
@@ -32,7 +34,7 @@ import org.eclipse.tm.te.runtime.stepper.nls.Messages;
 /**
  * An abstract step implementation.
  */
-public abstract class AbstractContextStep<Data extends Object> extends ExecutableExtension implements IExtendedContextStep<Data> {
+public abstract class AbstractContextStep extends ExecutableExtension implements IExtendedContextStep {
 	// List of string id's of the step dependencies.
 	private final List<String> dependencies = new ArrayList<String>();
 
@@ -63,11 +65,11 @@ public abstract class AbstractContextStep<Data extends Object> extends Executabl
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.runtime.extensions.ExecutableExtension#setInitializationData(org.eclipse.core.runtime.IConfigurationElement, java.lang.String, java.lang.Object)
+	 * @see org.eclipse.tm.te.runtime.extensions.ExecutableExtension#doSetInitializationData(org.eclipse.core.runtime.IConfigurationElement, java.lang.String, java.lang.Object)
 	 */
 	@Override
-	public void setInitializationData(IConfigurationElement config, String propertyName, Object data) throws CoreException {
-		super.setInitializationData(config, propertyName, data);
+	public void doSetInitializationData(IConfigurationElement config, String propertyName, Object data) throws CoreException {
+	    super.doSetInitializationData(config, propertyName, data);
 
 		// Read in the list of required step or step id's if specified.
 		dependencies.clear();
@@ -88,10 +90,10 @@ public abstract class AbstractContextStep<Data extends Object> extends Executabl
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.runtime.stepper.interfaces.IExtendedContextStep#initializeFrom(org.eclipse.tm.te.runtime.stepper.interfaces.IContext, java.lang.Object, org.eclipse.tm.te.runtime.stepper.interfaces.IFullQualifiedId, org.eclipse.core.runtime.IProgressMonitor)
+	 * @see org.eclipse.tm.te.runtime.stepper.interfaces.IExtendedContextStep#initializeFrom(org.eclipse.tm.te.runtime.stepper.interfaces.IContext, org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer, org.eclipse.tm.te.runtime.stepper.interfaces.IFullQualifiedId, org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	@Override
-    public void initializeFrom(IContext context, Data data, IFullQualifiedId fullQualifiedId, IProgressMonitor monitor) {
+    public void initializeFrom(IContext context, IPropertiesContainer data, IFullQualifiedId fullQualifiedId, IProgressMonitor monitor) {
 		Assert.isNotNull(context);
 		Assert.isNotNull(data);
 		Assert.isNotNull(fullQualifiedId);
@@ -102,27 +104,27 @@ public abstract class AbstractContextStep<Data extends Object> extends Executabl
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.runtime.stepper.interfaces.IExtendedContextStep#cleanup(org.eclipse.tm.te.runtime.stepper.interfaces.IContext, java.lang.Object, org.eclipse.tm.te.runtime.stepper.interfaces.IFullQualifiedId, org.eclipse.core.runtime.IProgressMonitor)
+	 * @see org.eclipse.tm.te.runtime.stepper.interfaces.IExtendedContextStep#cleanup(org.eclipse.tm.te.runtime.stepper.interfaces.IContext, org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer, org.eclipse.tm.te.runtime.stepper.interfaces.IFullQualifiedId, org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	@Override
-    public void cleanup(IContext context, Data data, IFullQualifiedId fullQualifiedId, IProgressMonitor monitor) {
+    public void cleanup(IContext context, IPropertiesContainer data, IFullQualifiedId fullQualifiedId, IProgressMonitor monitor) {
 		StepperAttributeUtil.setProperty(SUFFIX_DELAYED_STATUS, fullQualifiedId, data, false);
 		StepperAttributeUtil.setProperty(SUFFIX_OPERATIONAL, fullQualifiedId, data, false);
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.runtime.stepper.interfaces.IExtendedContextStep#rollback(org.eclipse.tm.te.runtime.stepper.interfaces.IContext, java.lang.Object, org.eclipse.core.runtime.IStatus, org.eclipse.tm.te.runtime.stepper.interfaces.IFullQualifiedId, org.eclipse.core.runtime.IProgressMonitor, org.eclipse.tm.te.runtime.interfaces.callback.ICallback)
+	 * @see org.eclipse.tm.te.runtime.stepper.interfaces.IExtendedContextStep#rollback(org.eclipse.tm.te.runtime.stepper.interfaces.IContext, org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer, org.eclipse.core.runtime.IStatus, org.eclipse.tm.te.runtime.stepper.interfaces.IFullQualifiedId, org.eclipse.core.runtime.IProgressMonitor, org.eclipse.tm.te.runtime.interfaces.callback.ICallback)
 	 */
 	@Override
-    public void rollback(IContext context, Data data, IStatus status, IFullQualifiedId fullQualifiedId, IProgressMonitor monitor, ICallback callback) {
+    public void rollback(IContext context, IPropertiesContainer data, IStatus status, IFullQualifiedId fullQualifiedId, IProgressMonitor monitor, ICallback callback) {
 		if (callback != null) callback.done(this, Status.OK_STATUS);
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.runtime.stepper.interfaces.IContextStep#getTotalWork(org.eclipse.tm.te.runtime.stepper.interfaces.IContext, java.lang.Object)
+	 * @see org.eclipse.tm.te.runtime.stepper.interfaces.IContextStep#getTotalWork(org.eclipse.tm.te.runtime.stepper.interfaces.IContext, org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer)
 	 */
 	@Override
-    public int getTotalWork(IContext context, Data data) {
+    public int getTotalWork(IContext context, IPropertiesContainer data) {
 		return 10;
 	}
 
@@ -143,7 +145,7 @@ public abstract class AbstractContextStep<Data extends Object> extends Executabl
 	 * @param status
 	 * @param data
 	 */
-	public final void callback(Data stepData, IFullQualifiedId fullQualifiedId, ICallback callback, IStatus status, Object data) {
+	public final void callback(IPropertiesContainer stepData, IFullQualifiedId fullQualifiedId, ICallback callback, IStatus status, Object data) {
 		Assert.isNotNull(stepData);
 		Assert.isNotNull(fullQualifiedId);
 		Assert.isNotNull(callback);
@@ -187,7 +189,7 @@ public abstract class AbstractContextStep<Data extends Object> extends Executabl
 	 *
 	 * @param status The status to delay. Must be not <code>null</code> and either a warning or info status.
 	 */
-	protected void delayStatus(Data data, IFullQualifiedId fullQualifiedId, IStatus status) {
+	protected void delayStatus(IPropertiesContainer data, IFullQualifiedId fullQualifiedId, IStatus status) {
 		Assert.isNotNull(status);
 		Assert.isTrue(status.getSeverity() == IStatus.WARNING || status.getSeverity() == IStatus.INFO);
 

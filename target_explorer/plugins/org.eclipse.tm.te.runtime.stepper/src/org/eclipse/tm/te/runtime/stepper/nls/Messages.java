@@ -45,4 +45,17 @@ public class Messages extends NLS {
 	public static String AbstractContextStepper_multiStatus_finishedWithErrors;
 	public static String AbstractContextStepper_error_missingRequiredStep;
 	public static String AbstractContextStepper_error_requiredStepNotExecuted;
+
+	public static String ContextStepGroup_error_missingBaseStepGroup;
+	public static String ContextStepGroup_error_missingReferencedStep;
+	public static String ContextStepGroup_error_missingRequiredStep;
+	public static String ContextStepGroup_error_invalidRequiredStep;
+	public static String ContextStepGroup_error_multipleSingletonOccurrences;
+	public static String ContextStepGroup_error_typeAndMode;
+	public static String ContextStepGroup_error_step;
+	public static String ContextStepGroup_error_stepGroup;
+	public static String ContextStepGroup_error_requiredStep;
+	public static String ContextStepGroup_error_referencedBaseGroup;
+	public static String ContextStepGroup_error_referencedStepOrGroup;
+	public static String ContextStepGroup_error_requiredStepOrGroup;
 }

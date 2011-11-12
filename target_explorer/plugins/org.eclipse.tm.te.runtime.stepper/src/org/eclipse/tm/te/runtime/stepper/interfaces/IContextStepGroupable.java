@@ -14,7 +14,7 @@ import org.eclipse.tm.te.runtime.interfaces.extensions.IExecutableExtension;
 /**
  * A step groupable.
  */
-public interface IContextStepGroupable<Data extends Object> {
+public interface IContextStepGroupable {
 
 	/**
 	 * Returns the grouped extension instance.

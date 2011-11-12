@@ -18,7 +18,7 @@ import org.eclipse.tm.te.runtime.interfaces.extensions.IExecutableExtension;
  * <p>
  * A step group is a set of single steps or other step groups.
  */
-public interface IContextStepGroup<Data extends Object> extends IExecutableExtension {
+public interface IContextStepGroup extends IExecutableExtension {
 
 	/**
 	 * Returns if or if not the step group is locked for user modifications.
@@ -38,11 +38,11 @@ public interface IContextStepGroup<Data extends Object> extends IExecutableExten
 	 *
 	 * @throws CoreException If the steps cannot be determined.
 	 */
-	public IContextStepGroupable<Data>[] getSteps(String type, String subType) throws CoreException;
+	public IContextStepGroupable[] getSteps(String type, String subType) throws CoreException;
 
 	/**
 	 * Return the step group iterator or <code>null</code>. The step group iterator can be used to
 	 * generate loops and conditions for a step group.
 	 */
-	public IContextStepGroupIterator<Data> getStepGroupIterator();
+	public IContextStepGroupIterator getStepGroupIterator();
 }

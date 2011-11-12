@@ -7,7 +7,7 @@
  * Contributors:
  * Wind River Systems - initial API and implementation
  *******************************************************************************/
-package org.eclipse.tm.te.runtime.stepper;
+package org.eclipse.tm.te.runtime.stepper.extensions;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,7 +20,7 @@ import org.eclipse.tm.te.runtime.stepper.interfaces.IContextStepGroupable;
 /**
  * Context step groupable implementation.
  */
-public class ContextStepGroupable<Data extends Object> implements IContextStepGroupable<Data> {
+public class ContextStepGroupable implements IContextStepGroupable {
 	private String secondaryId = null;
 	private boolean disabled = false;
 	private boolean hidden = false;
@@ -51,8 +51,7 @@ public class ContextStepGroupable<Data extends Object> implements IContextStepGr
 		setSecondaryId(secondaryId);
 	}
 
-	/*
-	 * (non-Javadoc)
+	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.runtime.stepper.interfaces.IContextStepGroupable#getExtension()
 	 */
 	@Override
@@ -70,8 +69,7 @@ public class ContextStepGroupable<Data extends Object> implements IContextStepGr
 		this.extension = extension;
 	}
 
-	/*
-	 * (non-Javadoc)
+	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.runtime.stepper.interfaces.IContextStepGroupable#getSecondaryId()
 	 */
 	@Override
@@ -88,8 +86,7 @@ public class ContextStepGroupable<Data extends Object> implements IContextStepGr
 		this.secondaryId = secondaryId;
 	}
 
-	/*
-	 * (non-Javadoc)
+	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.runtime.stepper.interfaces.IContextStepGroupable#isDisabled()
 	 */
 	@Override
@@ -110,8 +107,7 @@ public class ContextStepGroupable<Data extends Object> implements IContextStepGr
 		this.disabled = disabled;
 	}
 
-	/*
-	 * (non-Javadoc)
+	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.runtime.stepper.interfaces.IContextStepGroupable#isHidden()
 	 */
 	@Override
@@ -132,8 +128,7 @@ public class ContextStepGroupable<Data extends Object> implements IContextStepGr
 		this.hidden = hidden;
 	}
 
-	/*
-	 * (non-Javadoc)
+	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.runtime.stepper.interfaces.IContextStepGroupable#isRemovable()
 	 */
 	@Override
@@ -154,8 +149,7 @@ public class ContextStepGroupable<Data extends Object> implements IContextStepGr
 		this.removable = removable;
 	}
 
-	/*
-	 * (non-Javadoc)
+	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.runtime.stepper.interfaces.IContextStepGroupable#isSingleton()
 	 */
 	@Override
@@ -174,8 +168,7 @@ public class ContextStepGroupable<Data extends Object> implements IContextStepGr
 		this.singleton = singleton;
 	}
 
-	/*
-	 * (non-Javadoc)
+	/* (non-Javadoc)
 	 * @see org.eclipse.tm.te.runtime.stepper.interfaces.IContextStepGroupable#getDependencies()
 	 */
 	@Override
@@ -199,8 +192,7 @@ public class ContextStepGroupable<Data extends Object> implements IContextStepGr
 		this.dependencies.addAll(Arrays.asList(dependencies));
 	}
 
-	/*
-	 * (non-Javadoc)
+	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
 	@Override

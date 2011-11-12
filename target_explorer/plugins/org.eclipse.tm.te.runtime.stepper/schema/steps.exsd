@@ -1,0 +1,226 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Schema file written by PDE -->
+<schema targetNamespace="org.eclipse.tm.te.runtime.stepper" xmlns="http://www.w3.org/2001/XMLSchema">
+<annotation>
+      <appinfo>
+         <meta.schema plugin="org.eclipse.tm.te.runtime.stepper" id="steps" name="Steps"/>
+      </appinfo>
+      <documentation>
+         This extension point is used to contribute steps.
+&lt;p&gt;
+A step step defines a specific functionality to be executed during execution of a step group. Possible errors and warnings occuring during execution are passed to the parent stepper.
+      </documentation>
+   </annotation>
+
+   <element name="extension">
+      <annotation>
+         <appinfo>
+            <meta.element />
+         </appinfo>
+      </annotation>
+      <complexType>
+         <sequence>
+            <element ref="step" minOccurs="1" maxOccurs="unbounded"/>
+         </sequence>
+         <attribute name="point" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="id" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="name" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+               <appinfo>
+                  <meta.attribute translatable="true"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="step">
+      <annotation>
+         <documentation>
+            Declares a step contribution.
+         </documentation>
+      </annotation>
+      <complexType>
+         <choice>
+            <element ref="class" minOccurs="0" maxOccurs="1"/>
+            <element ref="description" minOccurs="0" maxOccurs="1"/>
+            <element ref="requires" minOccurs="0" maxOccurs="unbounded"/>
+         </choice>
+         <attribute name="id" type="string" use="required">
+            <annotation>
+               <documentation>
+                  The unique id of the step contribution.
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="label" type="string">
+            <annotation>
+               <documentation>
+                  The label representing the step within the UI.
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="class" type="string">
+            <annotation>
+               <documentation>
+                  The class that implements &lt;code&gt;org.eclipse.tm.te.runtime.stepper.interfaces.IContextStep&lt;/code&gt; or extends &lt;code&gt;org.eclipse.tm.te.runtime.stepper.AbstractContextStep&lt;/code&gt;.
+&lt;p&gt;
+The step implementation class must be specified either by the class attribute or the class child element!
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="java" basedOn="org.eclipse.tm.te.runtime.stepper.AbstractContextStep:org.eclipse.tm.te.runtime.stepper.interfaces.IContextStep"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="description" type="string">
+      <annotation>
+         <documentation>
+            A short description of the step to be presented in the UI.
+         </documentation>
+      </annotation>
+   </element>
+
+   <element name="class">
+      <annotation>
+         <documentation>
+            Used when creating an &lt;code&gt;IExecutableExtension&lt;/code&gt; with a named parameter, or more than one.
+         </documentation>
+      </annotation>
+      <complexType>
+         <sequence>
+            <element ref="parameter" minOccurs="0" maxOccurs="unbounded"/>
+         </sequence>
+         <attribute name="class" type="string">
+            <annotation>
+               <documentation>
+                  The class that implements &lt;code&gt;org.eclipse.tm.te.runtime.stepper.interfaces.IContextStep&lt;/code&gt; or extends &lt;code&gt;org.eclipse.tm.te.runtime.stepper.AbstractContextStep&lt;/code&gt;.
+&lt;p&gt;
+The step implementation class must be specified either by the class attribute or the class child element!
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="java" basedOn="org.eclipse.tm.te.runtime.stepper.AbstractContextStep:org.eclipse.tm.te.runtime.stepper.interfaces.IContextStep"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="parameter">
+      <annotation>
+         <documentation>
+            A parameter for an &lt;code&gt;IExecutableExtension&lt;/code&gt;.
+         </documentation>
+      </annotation>
+      <complexType>
+         <attribute name="name" type="string" use="required">
+            <annotation>
+               <documentation>
+                  &lt;p&gt;The parameter name.&lt;/p&gt;
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="value" type="string" use="required">
+            <annotation>
+               <documentation>
+                  &lt;p&gt;The parameter value.&lt;/p&gt;
+               </documentation>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="requires">
+      <annotation>
+         <documentation>
+            Declares a dependency to a required step or step group.
+         </documentation>
+      </annotation>
+      <complexType>
+         <attribute name="id" type="string" use="required">
+            <annotation>
+               <documentation>
+                  The unique id of the required step or step group.
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="identifier" basedOn="org.eclipse.tm.te.runtime.stepper.steps/step/@id"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="since"/>
+      </appinfo>
+      <documentation>
+         Target Explorer 1.0.0
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="examples"/>
+      </appinfo>
+      <documentation>
+         This is an example of the extension point usage:
+&lt;p&gt;
+&lt;pre&gt;
+&lt;extension point=&quot;org.eclipse.tm.te.runtime.stepper.steps&quot;&gt;
+   &lt;step
+      id=&quot;org.eclipse.tm.te.tcf.filesystem.copy&quot;
+      class=&quot;org.eclipse.tm.te.tcf.filesystem.steps.CopyStep&quot;
+      label=&quot;Copy Files between Host and Target&quot;&gt;
+      &lt;description&gt;
+         Copy one or more files between the host and the target in both directions.
+      &lt;/description&gt;
+   &lt;/step&gt;
+&lt;/extension&gt;
+&lt;/pre&gt;
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="apiinfo"/>
+      </appinfo>
+      <documentation>
+         The provider of a step must implement &lt;samp&gt;org.eclipse.tm.te.runtime.stepper.interfaces.IContextStep&lt;/samp&gt;.
+      </documentation>
+   </annotation>
+
+
+   <annotation>
+      <appinfo>
+         <meta.section type="copyright"/>
+      </appinfo>
+      <documentation>
+         Copyright (c) 2011 Wind River Systems, Inc. and others.
+
+All rights reserved.
+
+This program and the accompanying materials are made available under the terms
+of the Eclipse Public License v1.0 which accompanies this distribution, and is
+available at http://www.eclipse.org/legal/epl-v10.html.
+      </documentation>
+   </annotation>
+
+</schema>

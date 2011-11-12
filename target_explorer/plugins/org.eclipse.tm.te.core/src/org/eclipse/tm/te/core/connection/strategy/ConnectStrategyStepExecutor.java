@@ -15,7 +15,7 @@ import org.eclipse.osgi.util.NLS;
 import org.eclipse.tm.te.core.activator.CoreBundleActivator;
 import org.eclipse.tm.te.core.nls.Messages;
 import org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer;
-import org.eclipse.tm.te.runtime.stepper.AbstractContextStepExecutor;
+import org.eclipse.tm.te.runtime.stepper.extensions.AbstractContextStepExecutor;
 import org.eclipse.tm.te.runtime.stepper.interfaces.IContext;
 import org.eclipse.tm.te.runtime.stepper.interfaces.IContextStep;
 import org.eclipse.tm.te.runtime.stepper.interfaces.IFullQualifiedId;
@@ -23,13 +23,13 @@ import org.eclipse.tm.te.runtime.stepper.interfaces.IFullQualifiedId;
 /**
  * Connect strategy step executor implementation.
  */
-public class ConnectStrategyStepExecutor extends AbstractContextStepExecutor<IPropertiesContainer> {
+public class ConnectStrategyStepExecutor extends AbstractContextStepExecutor {
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.runtime.stepper.AbstractContextStepExecutor#formatMessage(java.lang.String, int, org.eclipse.tm.te.runtime.stepper.interfaces.IContextStep, org.eclipse.tm.te.runtime.stepper.interfaces.IFullQualifiedId, org.eclipse.tm.te.runtime.stepper.interfaces.IContext, java.lang.Object)
+	 * @see org.eclipse.tm.te.runtime.stepper.extensions.AbstractContextStepExecutor#formatMessage(java.lang.String, int, org.eclipse.tm.te.runtime.stepper.interfaces.IContextStep, org.eclipse.tm.te.runtime.stepper.interfaces.IFullQualifiedId, org.eclipse.tm.te.runtime.stepper.interfaces.IContext, org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer)
 	 */
 	@Override
-	protected String formatMessage(String message, int severity, IContextStep<IPropertiesContainer> step, IFullQualifiedId id, IContext context, IPropertiesContainer data) {
+	protected String formatMessage(String message, int severity, IContextStep step, IFullQualifiedId id, IContext context, IPropertiesContainer data) {
 		String template = null;
 
 		switch (severity) {

@@ -1,0 +1,362 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Schema file written by PDE -->
+<schema targetNamespace="org.eclipse.tm.te.runtime.stepper" xmlns="http://www.w3.org/2001/XMLSchema">
+<annotation>
+      <appinfo>
+         <meta.schema plugin="org.eclipse.tm.te.runtime.stepper" id="stepGroups" name="Step Groups"/>
+      </appinfo>
+      <documentation>
+         This extension point is used to contribute step groups.
+&lt;p&gt;
+A step group bundles a set of single steps and/or other step groups into a more complex functionality group.
+      </documentation>
+   </annotation>
+
+   <element name="extension">
+      <annotation>
+         <appinfo>
+            <meta.element />
+         </appinfo>
+      </annotation>
+      <complexType>
+         <sequence>
+            <element ref="stepGroup" minOccurs="1" maxOccurs="unbounded"/>
+         </sequence>
+         <attribute name="point" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="id" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="name" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+               <appinfo>
+                  <meta.attribute translatable="true"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="stepGroup">
+      <annotation>
+         <documentation>
+            Declares a step group contribution.
+         </documentation>
+      </annotation>
+      <complexType>
+         <choice>
+            <element ref="iterator" minOccurs="0" maxOccurs="1"/>
+            <element ref="description" minOccurs="0" maxOccurs="1"/>
+            <element ref="references" minOccurs="0" maxOccurs="1"/>
+         </choice>
+         <attribute name="id" type="string" use="required">
+            <annotation>
+               <documentation>
+                  The unique id of the step group contribution.
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="label" type="string">
+            <annotation>
+               <documentation>
+                  The label representing the step group within the UI.
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="locked" type="boolean" use="default" value="false">
+            <annotation>
+               <documentation>
+                  If set to &quot;true&quot;, the whole step group is marked non-modifyable to the user. Once a contribution marked a step group non-modifyable, the state cannot be changed anymore and will stay non-modifyable. Multiple contributions to a locked step group are possible to allow modifications by 3rdParty contributors.
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="baseOn" type="string">
+            <annotation>
+               <documentation>
+                  Specify an unique step group id to virtually copy the references section from. None of the other step group attributes are inherited.
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="identifier" basedOn="org.eclipse.tm.te.runtime.stepper.stepGroups/stepGroup/@id"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+         <attribute name="iterator" type="string">
+            <annotation>
+               <documentation>
+                  The class that implements &lt;code&gt;org.eclipse.tm.te.runtime.stepper.interfaces.IContextStepGroupIterator&lt;/code&gt;.
+&lt;p&gt;
+The step group iterator implementation class can be specified either by the iterator attribute or the iterator child element!
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="java" basedOn=":org.eclipse.tm.te.runtime.stepper.interfaces.IContextStepGroupIterator"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="description" type="string">
+      <annotation>
+         <documentation>
+            A short description of the step group to be presented in the UI.
+         </documentation>
+      </annotation>
+   </element>
+
+   <element name="iterator">
+      <annotation>
+         <documentation>
+            Used when creating an &lt;code&gt;IExecutableExtension&lt;/code&gt; with a named parameter, or more than one.
+         </documentation>
+      </annotation>
+      <complexType>
+         <sequence>
+            <element ref="parameter" minOccurs="0" maxOccurs="unbounded"/>
+         </sequence>
+         <attribute name="class" type="string">
+            <annotation>
+               <documentation>
+                  The class that implements &lt;code&gt;org.eclipse.tm.te.runtime.stepper.interfaces.IContextStepGroupIterator&lt;/code&gt;.
+&lt;p&gt;
+The step group iterator implementation class can be specified either by the iterator attribute or the iterator child element!
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="java" basedOn=":org.eclipse.tm.te.runtime.stepper.interfaces.IContextStepGroupIterator"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="parameter">
+      <annotation>
+         <documentation>
+            A parameter for an &lt;code&gt;IExecutableExtension&lt;/code&gt;.
+         </documentation>
+      </annotation>
+      <complexType>
+         <attribute name="name" type="string" use="required">
+            <annotation>
+               <documentation>
+                  &lt;p&gt;The parameter name.&lt;/p&gt;
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="value" type="string" use="required">
+            <annotation>
+               <documentation>
+                  &lt;p&gt;The parameter value.&lt;/p&gt;
+               </documentation>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="references">
+      <annotation>
+         <documentation>
+            The set of steps or step groups to combine.
+         </documentation>
+      </annotation>
+      <complexType>
+         <sequence>
+            <element ref="reference" minOccurs="1" maxOccurs="unbounded"/>
+         </sequence>
+      </complexType>
+   </element>
+
+   <element name="reference">
+      <annotation>
+         <appinfo>
+            <meta.element labelAttribute="id"/>
+         </appinfo>
+         <documentation>
+            Reference to a step or step group.
+         </documentation>
+      </annotation>
+      <complexType>
+         <sequence minOccurs="0" maxOccurs="unbounded">
+            <element ref="requires"/>
+         </sequence>
+         <attribute name="id" type="string" use="required">
+            <annotation>
+               <documentation>
+                  The unique id of the referenced step or step group. This id must exactly match the id of the step or step group definition. If the id is invalid, the whole step group will become invalid and fails execution.
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="secondaryId" type="string">
+            <annotation>
+               <documentation>
+                  An optional attribute used to distinct between multiple occurrences of the same step or step group. If not set explicitly and multiple occurrences of the same step or step group is detected, the number of occurrence will be automatically used as &lt;i&gt;secondaryId&lt;/i&gt;. The counting of the occurrences starts with &lt;b&gt;1&lt;/b&gt; and each occurrence is counted including the occurrences with explicit set &lt;i&gt;secondaryId&lt;/i&gt;.
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="insertBefore" type="string">
+            <annotation>
+               <documentation>
+                  The unique id of the step or step group the step is inserted before. The step is added to the end if the referenced id does not exist.
+&lt;p&gt;
+The attribute will have no effect if the attribute &lt;i&gt;overwrite&lt;/i&gt; is set.
+&lt;p&gt;
+Only one of &lt;i&gt;insertBefore&lt;/i&gt; or &lt;i&gt;insertAfter&lt;/i&gt; can be specified. If &lt;i&gt;insertBefore&lt;/i&gt; is set, &lt;i&gt;insertAfter&lt;/i&gt; is ignored.
+&lt;p&gt;
+Use the form &lt;i&gt;&amp;quot;id##secondaryId&amp;quot;&lt;/i&gt; to identify a specific step or step group if multiple occurrences of this step or step groups exist. If the &lt;i&gt;secondaryId&lt;/i&gt; is not explicitly specified and multiple occurrences of the referenced step or step group exist, the first instance found is effected.
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="insertAfter" type="string">
+            <annotation>
+               <documentation>
+                  The unique id of the step or step group the step is inserted after. The step is added to the end if the referenced id does not exist.
+&lt;p&gt;
+The attribute will have no effect if the attribute &lt;i&gt;overwrite&lt;/i&gt; is set.
+&lt;p&gt;
+Only one of &lt;i&gt;insertBefore&lt;/i&gt; or &lt;i&gt;insertAfter&lt;/i&gt; can be specified. If &lt;i&gt;insertBefore&lt;/i&gt; is set, &lt;i&gt;insertAfter&lt;/i&gt; is ignored.
+&lt;p&gt;
+Use the form &lt;i&gt;&amp;quot;id##secondaryId&amp;quot;&lt;/i&gt; to identify a specific step or step group if multiple occurrences of this step or step groups exist. If the &lt;i&gt;secondaryId&lt;/i&gt; is not explicitly specified and multiple occurrences of the referenced step or step group exist, the first instance found is effected.
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="overwrite" type="string">
+            <annotation>
+               <documentation>
+                  The unique id of a step or step group to overwrite. Ignored if the referenced id does not exist.
+&lt;p&gt;
+If set, the attributes &lt;i&gt;insertBefore&lt;/i&gt; and &lt;i&gt;insertAfter&lt;/i&gt; are ignored.
+&lt;p&gt;
+Use the form &lt;i&gt;&amp;quot;id##secondaryId&amp;quot;&lt;/i&gt; to identify a specific step or step group if multiple occurrences of this step or step groups exist. If the &lt;i&gt;secondaryId&lt;/i&gt; is not explicitly specified and multiple occurrences of the referenced step or step group exist, the first instance found is effected.
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="removable" type="boolean" use="default" value="true">
+            <annotation>
+               <documentation>
+                  If set to &quot;false&quot;, the user cannot remove this step from the step group via the UI. Once set to non-removable, other contributions cannot change the state again.
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="hidden" type="boolean" use="default" value="false">
+            <annotation>
+               <documentation>
+                  If set to &quot;true&quot;, the step is not visible to the user within the UI. Once set to hidden, other contributions cannot change the state again.
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="disable" type="boolean" use="default" value="false">
+            <annotation>
+               <documentation>
+                  If set to &quot;true&quot;, the referenced step or step group is disabled. Disabled steps or step groups are neither visible to the user within the UI nor will be executed. Once a contribution disabled a step or step group, it cannot be re-enabled by other contributions.
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="singleton" type="boolean" use="default" value="false">
+            <annotation>
+               <documentation>
+                  Marks the referenced step or step group as singleton. Singleton references can appear only once within a resolved set of steps.
+               </documentation>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="requires">
+      <annotation>
+         <appinfo>
+            <meta.element labelAttribute="id"/>
+         </appinfo>
+         <documentation>
+            Declares a dependency to a required step or step group.
+         </documentation>
+      </annotation>
+      <complexType>
+         <attribute name="id" type="string" use="required">
+            <annotation>
+               <documentation>
+                  The unique id of the required step or step group.
+&lt;p&gt;
+Use the form &lt;i&gt;&amp;quot;id##secondaryId&amp;quot;&lt;/i&gt; to identify a specific step or step group if multiple occurrences of this step or step groups exist. If the &lt;i&gt;secondaryId&lt;/i&gt; is not explicitly specified and multiple occurrences of the referenced step or step group exist, the first instance found is effected.
+               </documentation>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="since"/>
+      </appinfo>
+      <documentation>
+         Target Explorer 1.0.0
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="examples"/>
+      </appinfo>
+      <documentation>
+         This is an example of the extension point usage:
+&lt;p&gt;
+&lt;pre&gt;
+&lt;extension point=&quot;org.eclipse.tm.te.runtime.stepper.stepGroups&quot;&gt;
+   &lt;stepGroup 
+      locked=&quot;false&quot;
+      id=&quot;org.eclipse.tm.te.tcf.processes.group.launchProcess&quot;
+      label=&quot;Launch Process on a Target&quot;&gt;
+      &lt;description&gt;
+         Transfer a process image to a target and initiate the process execution.
+      &lt;/description&gt;
+      &lt;references&gt;
+         &lt;reference
+            id=&quot;org.eclipse.tm.te.tcf.filesystem.copy&quot;
+            removable=&quot;true&quot; hidden=&quot;false&quot; disable=&quot;false&quot;
+            singleton=&quot;true&quot;/&gt;
+         &lt;reference
+            id=&quot;org.eclipse.tm.te.tcf.processes.steps.startProcess&quot;
+            removable=&quot;false&quot; hidden=&quot;true&quot; disable=&quot;false&quot;
+            singleton=&quot;false&quot;/&gt;
+      &lt;/stepGroup&gt;
+   &lt;/extension&gt;
+&lt;/pre&gt;
+      </documentation>
+   </annotation>
+
+   <annotation>
+      <appinfo>
+         <meta.section type="apiinfo"/>
+      </appinfo>
+      <documentation>
+         The provider of a step group must implement &lt;samp&gt;org.eclipse.tm.te.runtime.stepper.interfaces.IContextStepGroup&lt;/samp&gt;.
+      </documentation>
+   </annotation>
+
+
+   <annotation>
+      <appinfo>
+         <meta.section type="copyright"/>
+      </appinfo>
+      <documentation>
+         Copyright (c) 2011 Wind River Systems, Inc. and others.
+
+All rights reserved.
+
+This program and the accompanying materials are made available under the terms
+of the Eclipse Public License v1.0 which accompanies this distribution, and is
+available at http://www.eclipse.org/legal/epl-v10.html.
+      </documentation>
+   </annotation>
+
+</schema>

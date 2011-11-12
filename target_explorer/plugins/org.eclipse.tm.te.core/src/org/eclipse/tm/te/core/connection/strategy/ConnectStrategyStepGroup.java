@@ -15,35 +15,28 @@ import java.util.List;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.tm.te.runtime.extensions.ExecutableExtensionProxy;
-import org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer;
-import org.eclipse.tm.te.runtime.stepper.AbstractContextStepGroup;
-import org.eclipse.tm.te.runtime.stepper.ContextStepGroupable;
+import org.eclipse.tm.te.runtime.stepper.extensions.AbstractContextStepGroup;
+import org.eclipse.tm.te.runtime.stepper.extensions.ContextStepGroupable;
 import org.eclipse.tm.te.runtime.stepper.interfaces.IContextStep;
 import org.eclipse.tm.te.runtime.stepper.interfaces.IContextStepGroupable;
 
 /**
  * Connect strategy step group implementation.
  */
-public class ConnectStrategyStepGroup extends AbstractContextStepGroup<IPropertiesContainer> {
+public class ConnectStrategyStepGroup extends AbstractContextStepGroup {
 
-	private final List<ExecutableExtensionProxy<IContextStep<IPropertiesContainer>>> steps = new ArrayList<ExecutableExtensionProxy<IContextStep<IPropertiesContainer>>>();
+	private final List<ExecutableExtensionProxy<IContextStep>> steps = new ArrayList<ExecutableExtensionProxy<IContextStep>>();
 
-	/**
-	 * Constructor.
-	 */
-	public ConnectStrategyStepGroup() {
-		super();
-	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.tm.te.runtime.stepper.AbstractContextStepGroup#setInitializationData(org.eclipse.core.runtime.IConfigurationElement, java.lang.String, java.lang.Object)
+	 * @see org.eclipse.tm.te.runtime.stepper.extensions.AbstractContextStepGroup#doSetInitializationData(org.eclipse.core.runtime.IConfigurationElement, java.lang.String, java.lang.Object)
 	 */
 	@Override
-	public void setInitializationData(IConfigurationElement config, String propertyName, Object data) throws CoreException {
-		super.setInitializationData(config, propertyName, data);
+	public void doSetInitializationData(IConfigurationElement config, String propertyName, Object data) throws CoreException {
+	    super.doSetInitializationData(config, propertyName, data);
 
 		for (IConfigurationElement stepElement : config.getChildren("step")) { //$NON-NLS-1$
-			ExecutableExtensionProxy<IContextStep<IPropertiesContainer>> step = new ExecutableExtensionProxy<IContextStep<IPropertiesContainer>>(stepElement);
+			ExecutableExtensionProxy<IContextStep> step = new ExecutableExtensionProxy<IContextStep>(stepElement);
 			steps.add(step);
 		}
 	}
@@ -52,12 +45,12 @@ public class ConnectStrategyStepGroup extends AbstractContextStepGroup<IProperti
 	 * @see org.eclipse.tm.te.runtime.stepper.interfaces.IContextStepGroup#getSteps(java.lang.String, java.lang.String)
 	 */
 	@Override
-    public IContextStepGroupable<IPropertiesContainer>[] getSteps(String type, String subType) throws CoreException {
-		List<IContextStepGroupable<IPropertiesContainer>> steps = new ArrayList<IContextStepGroupable<IPropertiesContainer>>();
-		for (ExecutableExtensionProxy<IContextStep<IPropertiesContainer>> stepProxy : this.steps) {
-			IContextStep<IPropertiesContainer> step = stepProxy.newInstance();
+    public IContextStepGroupable[] getSteps(String type, String subType) throws CoreException {
+		List<IContextStepGroupable> steps = new ArrayList<IContextStepGroupable>();
+		for (ExecutableExtensionProxy<IContextStep> stepProxy : this.steps) {
+			IContextStep step = stepProxy.newInstance();
 			if (step != null) {
-				IContextStepGroupable<IPropertiesContainer> groupable = new ContextStepGroupable<IPropertiesContainer>(step);
+				IContextStepGroupable groupable = new ContextStepGroupable(step);
 				steps.add(groupable);
 			}
 		}

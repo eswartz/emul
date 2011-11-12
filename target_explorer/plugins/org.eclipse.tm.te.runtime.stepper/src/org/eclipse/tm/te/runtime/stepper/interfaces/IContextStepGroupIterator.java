@@ -12,11 +12,12 @@ package org.eclipse.tm.te.runtime.stepper.interfaces;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.tm.te.runtime.interfaces.extensions.IExecutableExtension;
+import org.eclipse.tm.te.runtime.interfaces.properties.IPropertiesContainer;
 
 /**
  * A step group iterator.
  */
-public interface IContextStepGroupIterator<Data extends Object> extends IExecutableExtension {
+public interface IContextStepGroupIterator extends IExecutableExtension {
 
 	/**
 	 * Initialize the iterator.
@@ -26,7 +27,7 @@ public interface IContextStepGroupIterator<Data extends Object> extends IExecuta
 	 * @param fullQualifiedId The full qualified id for this step. Must be not <code>null</code>.
 	 * @param monitor The progress monitor. Must be not <code>null</code>.
 	 */
-	public void initialize(IContext context, Data data, IFullQualifiedId fullQualifiedId, IProgressMonitor monitor);
+	public void initialize(IContext context, IPropertiesContainer data, IFullQualifiedId fullQualifiedId, IProgressMonitor monitor);
 
 	/**
 	 * Return the number of calculated iterations. If the iterator was not initialized,
@@ -43,7 +44,7 @@ public interface IContextStepGroupIterator<Data extends Object> extends IExecuta
 	 * @param monitor The progress monitor. Must be not <code>null</code>.
 	 * @return <code>true</code> if another iteration is possible.
 	 */
-	public boolean hasNext(IContext context, Data data, IFullQualifiedId fullQualifiedId, IProgressMonitor monitor);
+	public boolean hasNext(IContext context, IPropertiesContainer data, IFullQualifiedId fullQualifiedId, IProgressMonitor monitor);
 
 	/**
 	 * Set the next iteration to the data using the full qualified id.
@@ -54,5 +55,5 @@ public interface IContextStepGroupIterator<Data extends Object> extends IExecuta
 	 * @param monitor The progress monitor. Must be not <code>null</code>.
 	 * @throws CoreException
 	 */
-	public void next(IContext context, Data data, IFullQualifiedId fullQualifiedId, IProgressMonitor monitor) throws CoreException;
+	public void next(IContext context, IPropertiesContainer data, IFullQualifiedId fullQualifiedId, IProgressMonitor monitor) throws CoreException;
 }
