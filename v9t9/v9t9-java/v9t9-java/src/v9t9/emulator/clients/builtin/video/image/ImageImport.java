@@ -27,7 +27,7 @@ import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
 import v9t9.emulator.clients.builtin.video.VdpColorManager;
 import v9t9.emulator.clients.builtin.video.VdpCanvas.Format;
 import v9t9.emulator.clients.builtin.video.image.ColorOctree.LeafNode;
-import v9t9.emulator.clients.builtin.video.image.ImportOptions.Dither;
+import v9t9.emulator.clients.builtin.video.image.ImageImportOptions.Dither;
 import v9t9.engine.VdpHandler;
 
 /**
@@ -499,21 +499,7 @@ public class ImageImport implements IBitmapPixelAccess {
 			} else {
 				boolean isStandardPalette = false;
 				if (!useColorMappedGreyScale) {
-					for (byte[][] palette : VdpColorManager.allPalettes()) {
-						if (palette.length == thePalette.length) {
-							boolean match = true;
-							for (int i = 0; i < palette.length; i++) {
-								if (!Arrays.equals(palette[i], thePalette[i])) {
-									match = false;
-									break;
-								}
-							}
-							if (match) {
-								isStandardPalette = true;
-								break;
-							}
-						}
-					}
+					isStandardPalette = canvas.getColorMgr().isStandardPalette();
 				}
 				
 				if (isStandardPalette) {
@@ -558,6 +544,7 @@ public class ImageImport implements IBitmapPixelAccess {
 			ditherNone(img, mapColor);
 		}
 	}
+
 
 	void createOptimalPaletteWithHSV(BufferedImage image, int colorCount) {
 		int toAllocate = colorCount - firstColor;
@@ -1303,7 +1290,7 @@ public class ImageImport implements IBitmapPixelAccess {
 	 * @param image
 	 * @param isLowColor if the image is known to have a small number of colors -- don't scale
 	 */
-	public void importImage(ImportOptions options) {
+	public void importImage(ImageImportOptions options) {
 		BufferedImage image = options.getImage();
 		if (image == null)
 			return;

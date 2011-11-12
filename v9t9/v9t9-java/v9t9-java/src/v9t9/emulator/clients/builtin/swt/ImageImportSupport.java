@@ -14,7 +14,7 @@ import org.ejs.coffee.core.properties.IPropertyListener;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
 import v9t9.emulator.clients.builtin.video.VideoRenderer;
 import v9t9.emulator.clients.builtin.video.image.ImageImport;
-import v9t9.emulator.clients.builtin.video.image.ImportOptions;
+import v9t9.emulator.clients.builtin.video.image.ImageImportOptions;
 import v9t9.emulator.common.IEventNotifier;
 import v9t9.engine.VdpHandler;
 
@@ -24,7 +24,7 @@ import v9t9.engine.VdpHandler;
  */
 public class ImageImportSupport implements IImageImportHandler {
 
-	private ImportOptions imageImportOptions;
+	private ImageImportOptions imageImportOptions;
 	private IPropertyListener importPropertyListener;
 	private Control imageDndControl;
 	private VideoRenderer videoRenderer;
@@ -48,7 +48,7 @@ public class ImageImportSupport implements IImageImportHandler {
 		this.imageDndControl = control;
 		if (getVideoRenderer() != null) {
 			final ISwtVideoRenderer renderer = (ISwtVideoRenderer) getVideoRenderer();
-			imageImportOptions = new ImportOptions();
+			imageImportOptions = new ImageImportOptions();
 			importPropertyListener = new IPropertyListener() {
 
 				@Override

@@ -17,7 +17,7 @@ import org.ejs.coffee.core.properties.IProperty;
 import org.ejs.coffee.core.properties.IPropertyListener;
 import org.ejs.coffee.core.properties.IPropertySource;
 
-import v9t9.emulator.clients.builtin.video.image.ImportOptions;
+import v9t9.emulator.clients.builtin.video.image.ImageImportOptions;
 
 /**
  * Select and set up disks
@@ -36,7 +36,7 @@ public class ImageImportDialog extends Composite {
 	 * @param importer
 	 * @param options
 	 */
-	public ImageImportDialog(final Shell shell, int style, final ImportOptions options, final IPropertyListener listener) {
+	public ImageImportDialog(final Shell shell, int style, final ImageImportOptions options, final IPropertyListener listener) {
 		super(shell, style);
 		
 		shell.setText("Image Importer");

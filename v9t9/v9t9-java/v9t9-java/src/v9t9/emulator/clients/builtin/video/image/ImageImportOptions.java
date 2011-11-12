@@ -11,6 +11,7 @@ import org.ejs.coffee.core.properties.IPropertySource;
 import org.ejs.coffee.core.properties.PropertySource;
 
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
+import v9t9.emulator.clients.builtin.video.VdpColorManager;
 import v9t9.emulator.clients.builtin.video.VdpCanvas.Format;
 import v9t9.emulator.clients.builtin.video.tms9918a.BitmapModeRedrawHandler;
 import v9t9.emulator.clients.builtin.video.v9938.VdpV9938;
@@ -20,7 +21,7 @@ import v9t9.engine.VdpHandler;
  * @author ejs
  *
  */
-public class ImportOptions {
+public class ImageImportOptions {
 
 	public enum Dither {
 		NONE("None"),
@@ -66,7 +67,7 @@ public class ImportOptions {
 	/**
 	 * 
 	 */
-	public ImportOptions() {
+	public ImageImportOptions() {
 		scaleSmoothProperty = new FieldProperty(this, "scaleSmooth", "Smooth Scaling");
 		keepAspectProperty = new FieldProperty(this, "keepAspect", "Keep Aspect Ratio");
 		asGreyScaleProperty = new FieldProperty(this, "asGreyScale", "Convert To Greyscale");
@@ -146,6 +147,23 @@ public class ImportOptions {
 	 */
 	public void updateFrom(VdpCanvas canvas, VdpHandler vdp, BufferedImage image, boolean isLowColor) {
 		setImage(image);
+		
+		boolean canSetPalette;
+		if (vdp instanceof VdpV9938) {
+			// hack: graphics mode 2 allows setting the palette too, 
+			// but for comparison shopping, pretend we can't.
+			if (format == Format.COLOR16_8x1 && (vdp.readVdpReg(0) & 0x6) == 0x2) {
+				canSetPalette = false;
+			} else {
+				canSetPalette = format != Format.COLOR256_1x1;
+			}
+		} else {
+			canSetPalette = false;
+		}
+		
+		boolean newFormat = getFormat() != canvas.getFormat() 
+			|| (!canSetPalette && !canvas.getColorMgr().isStandardPalette());
+		
 		setFormat(canvas.getFormat());
 		
 		///////
@@ -161,28 +179,20 @@ public class ImportOptions {
 		setScaleSmooth(!isLowColor);
 		
 		////
-
-		boolean canSetPalette;
-		if (vdp instanceof VdpV9938) {
-			// hack: graphics mode 2 allows setting the palette too, 
-			// but for comparison shopping, pretend we can't.
-			if (format == Format.COLOR16_8x1 && (vdp.readVdpReg(0) & 0x6) == 0x2) {
-				canSetPalette = false;
-			} else {
-				canSetPalette = format != Format.COLOR256_1x1;
-			}
-		} else {
-			canSetPalette = false;
+		
+		if (newFormat) {
+			setOptimizePalette(canSetPalette);
+			
+			/////
+			boolean isMonoMode = (vdp.getVdpModeRedrawHandler() instanceof BitmapModeRedrawHandler &&
+					((BitmapModeRedrawHandler) vdp.getVdpModeRedrawHandler()).isMono());
+			
+			setDitherType(isMonoMode ? Dither.MONO :  canSetPalette ? Dither.FS : Dither.FS_LOW);
+			
+			if (!canSetPalette)
+				setOrigPalette(VdpColorManager.getStandardPalette(vdp));
+			else
+				setOrigPalette(canvas.getColorMgr().getPalette());
 		}
-		
-		setOptimizePalette(canSetPalette);
-		
-		/////
-		boolean isMonoMode = (vdp.getVdpModeRedrawHandler() instanceof BitmapModeRedrawHandler &&
-				((BitmapModeRedrawHandler) vdp.getVdpModeRedrawHandler()).isMono());
-		
-		setDitherType(isMonoMode ? Dither.MONO :  canSetPalette ? Dither.FS : Dither.FS_LOW);
-		
-		setOrigPalette(canvas.getColorMgr().getPalette());
 	}
 }

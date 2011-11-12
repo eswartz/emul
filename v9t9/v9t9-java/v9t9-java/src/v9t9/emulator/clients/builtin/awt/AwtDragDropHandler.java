@@ -41,7 +41,7 @@ import v9t9.emulator.clients.builtin.video.ICanvas;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
 import v9t9.emulator.clients.builtin.video.image.AwtImageUtils;
 import v9t9.emulator.clients.builtin.video.image.ImageImport;
-import v9t9.emulator.clients.builtin.video.image.ImportOptions;
+import v9t9.emulator.clients.builtin.video.image.ImageImportOptions;
 import v9t9.engine.VdpHandler;
 
 /**
@@ -246,7 +246,7 @@ public class AwtDragDropHandler implements DragGestureListener, DropTargetListen
 		VdpHandler vdp = renderer.getVdpHandler();
 		ImageImport importer = new ImageImport(canvas, vdp);
 		
-		ImportOptions options = new ImportOptions();
+		ImageImportOptions options = new ImageImportOptions();
 		options.updateFrom(canvas, vdp, image, false);
 		importer.importImage(options);
 	}

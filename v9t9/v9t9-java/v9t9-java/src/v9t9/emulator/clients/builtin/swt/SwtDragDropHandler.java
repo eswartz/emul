@@ -342,7 +342,9 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 			}
 			
 			if (info != null) {
-				importImage(info.first, info.second);
+				importHandler.importImage(info.first, info.second);
+				
+				renderer.setFocus();
 			}
 		} catch (Throwable t) {
 			t.printStackTrace();
@@ -473,15 +475,6 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 
 		return new Pair<BufferedImage, Boolean>(img, !data.palette.isDirect);
 		
-	}
-
-	/**
-	 * @param image
-	 * @param isLowColor 
-	 */
-	protected void importImage(BufferedImage image, boolean isLowColor) {
-		
-		importHandler.importImage(image, isLowColor);
 	}
 
 
