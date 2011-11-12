@@ -333,7 +333,7 @@ public class ColorOctree {
 		}
 
 		// bias towards extremes so dark and light are not lost
-		if (maxLeafCount < 8 && depth == 0) {
+		if (/*maxLeafCount < 8 &&*/ depth == 0) {
 			if (index == 0) {
 				newLeaf.reds = (newLeaf.reds * 1) / 3; 
 				newLeaf.greens = (newLeaf.greens * 1) / 3; 
