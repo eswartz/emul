@@ -9,7 +9,11 @@
  *******************************************************************************/
 package org.eclipse.tm.te.runtime.extensions;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.runtime.Assert;
@@ -33,6 +37,8 @@ public abstract class AbstractExtensionPointManager<V> {
 	private boolean initialized = false;
 	// The map of loaded extension listed by their unique id's
 	private Map<String, ExecutableExtensionProxy<V>> extensionsMap = new LinkedHashMap<String, ExecutableExtensionProxy<V>>();
+	// The extension point comparator
+	private ExtensionPointComparator comparator = null;
 
 	/**
 	 * Constructor.
@@ -75,6 +81,47 @@ public abstract class AbstractExtensionPointManager<V> {
 			if (!isInitialized()) { loadExtensions(); setInitialized(true); }
 		}
 		return extensionsMap;
+	}
+
+	/**
+	 * Returns the extensions of the specified extension point sorted.
+	 * <p>
+	 * For the order of the extensions, see {@link ExtensionPointComparator}.
+	 *
+	 * @param point The extension point. Must be not <code>null</code>.
+	 * @return The extensions in sorted order or an empty array if the extension point has no extensions.
+	 */
+	protected IExtension[] getExtensionsSorted(IExtensionPoint point) {
+		assert point != null;
+
+		List<IExtension> extensions = new ArrayList<IExtension>(Arrays.asList(point.getExtensions()));
+		if (extensions.size() > 0) {
+			Collections.sort(extensions, getExtensionPointComparator());
+		}
+
+		return extensions.toArray(new IExtension[extensions.size()]);
+	}
+
+	/**
+	 * Returns the extension point comparator instance. If not available,
+	 * {@link #doCreateExtensionPointComparator()} is called to create a new instance.
+	 *
+	 * @return The extension point comparator or <code>null</code> if the instance creation fails.
+	 */
+	protected final ExtensionPointComparator getExtensionPointComparator() {
+		if (comparator == null) {
+			comparator = doCreateExtensionPointComparator();
+		}
+		return comparator;
+	}
+
+	/**
+	 * Creates a new extension point comparator instance.
+	 *
+	 * @return The extension point comparator instance.
+	 */
+	protected ExtensionPointComparator doCreateExtensionPointComparator() {
+		return new ExtensionPointComparator();
 	}
 
 	/**
@@ -144,7 +191,7 @@ public abstract class AbstractExtensionPointManager<V> {
 		IExtensionRegistry registry = Platform.getExtensionRegistry();
 		IExtensionPoint point = registry.getExtensionPoint(getExtensionPointId());
 		if (point != null) {
-			IExtension[] extensions = point.getExtensions();
+			IExtension[] extensions = getExtensionsSorted(point);
 			for (IExtension extension : extensions) {
 				IConfigurationElement[] elements = extension.getConfigurationElements();
 				for (IConfigurationElement element : elements) {
