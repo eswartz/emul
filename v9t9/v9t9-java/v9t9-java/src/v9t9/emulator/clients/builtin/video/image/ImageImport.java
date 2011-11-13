@@ -39,12 +39,14 @@ import v9t9.engine.VdpHandler;
 public class ImageImport implements IBitmapPixelAccess {
 	private boolean DEBUG = false;
 
+	private final ImageImportOptions options;
 	private ImageData canvasImageData;
 	private Format format;
 	private byte[][] thePalette;
 
 	private boolean useColorMappedGreyScale;
 	private Dither ditherType;
+	private boolean ditherMono;
 	private boolean canSetPalette;
 
 	private final ImageDataCanvas canvas;
@@ -115,8 +117,9 @@ public class ImageImport implements IBitmapPixelAccess {
 		/* 15 */ { (byte) 0xff, (byte) 0xff, (byte) 0xff }, 
 	};
 
-	public ImageImport(ImageDataCanvas canvas, VdpHandler vdp) {
+	public ImageImport(ImageDataCanvas canvas, VdpHandler vdp, ImageImportOptions imageImportOptions) {
 		this.canvas = canvas;
+		this.options = imageImportOptions;
 		this.colorMgr = canvas.getColorMgr();
 		this.vdp = vdp;
 		this.canvasImageData = canvas.getImageData();
@@ -129,7 +132,7 @@ public class ImageImport implements IBitmapPixelAccess {
 		
 	}
 	
-	private void ditherRGB(BufferedImage img, int x, int y, int sixteenths, int r_error, int g_error, int b_error) {
+	private void ditherFSApplyError(BufferedImage img, int x, int y, int sixteenths, int r_error, int g_error, int b_error) {
 		int pixel = img.getRGB(x, y);
 		int r = clamp(((pixel >> 16) & 0xff) + (sixteenths * r_error / 16));
 		int g = clamp(((pixel >> 8) & 0xff) + (sixteenths * g_error / 16));
@@ -141,7 +144,7 @@ public class ImageImport implements IBitmapPixelAccess {
 		return i < 0 ? 0 : i > 255 ? 255 : i;
 	}
 
-	private void ditherize(BufferedImage img, IPaletteColorMapper mapColor,
+	private void ditherFSPixel(BufferedImage img, IPaletteColorMapper mapColor,
 			Histogram hist, int x, int y, boolean limit8) {
 
 		
@@ -156,7 +159,7 @@ public class ImageImport implements IBitmapPixelAccess {
 		
 		boolean skipped = false;
 		
-		if (!useColorMappedGreyScale && ditherType != Dither.MONO && prevC != -1) {
+		if (!useColorMappedGreyScale && !ditherMono && prevC != -1) {
 			if (newC == prevC) {
 				// was not dithered away, but palette may have changed,
 				// so update color but ignore dithering
@@ -187,7 +190,7 @@ public class ImageImport implements IBitmapPixelAccess {
 			int lum = (299 * r_error + 587 * g_error + 114 * b_error) / 1000;
 			r_error = g_error = b_error = lum;
 		}
-		else if (ditherType != Dither.MONO) {
+		else if (!ditherMono) {
 			if (limit8) {
 				if (!skipped) {
 					if (Math.abs(r_error) < 0x20 && Math.abs(g_error) < 0x20 && Math.abs(b_error) < 0x20) {
@@ -226,30 +229,74 @@ public class ImageImport implements IBitmapPixelAccess {
 		if ((r_error | g_error | b_error) != 0) {
 			if (x + 1 < img.getWidth()) {
 				// x+1, y
-				ditherRGB(img, x + 1, y,  
+				ditherFSApplyError(img, x + 1, y,  
 						7, r_error, g_error, b_error);
 			}
 			if (y + 1 < img.getHeight()) {
 				if (x > 0)
-					ditherRGB(img, x - 1, y + 1, 
+					ditherFSApplyError(img, x - 1, y + 1, 
 							3, r_error, g_error, b_error);
-				ditherRGB(img, x, y + 1, 
+				ditherFSApplyError(img, x, y + 1, 
 						5, r_error, g_error, b_error);
 				if (x + 1 < img.getWidth())
-					ditherRGB(img, x + 1, y + 1, 
+					ditherFSApplyError(img, x + 1, y + 1, 
 							1, r_error, g_error, b_error);
 			}
 		}
 	}
 	
-	private void dither(BufferedImage img, IPaletteMapper mapColor, Histogram hist, boolean limitDither) {
+	private void ditherFloydSteinberg(BufferedImage img, IPaletteMapper mapColor, Histogram hist, boolean limitDither) {
 		for (int y = 0; y < img.getHeight(); y++) {
 			for (int x = 0; x < img.getWidth(); x++) {
-				ditherize(img, mapColor, hist, x, y, limitDither);
+				ditherFSPixel(img, mapColor, hist, x, y, limitDither);
 			}
 		}
 		
 	}
+	
+	// http://en.wikipedia.org/wiki/Ordered_dithering
+	// http://upload.wikimedia.org/wikipedia/en/math/5/3/1/531fd7f88bac5f6482c465d1de15e16f.png
+	
+	final static byte[][] thresholdMap8x8 = {
+		{  1, 49, 13, 61,  4, 52, 16, 61 },
+		{ 33, 17, 45, 29, 36, 20, 48, 32 },
+		{  9, 57,  5, 53, 12, 60,  8, 56 },
+		{ 41, 25, 37, 21, 44, 28, 40, 24 },
+		{  3, 51, 15, 63,  2, 50, 14, 62 },
+		{ 35, 19, 47, 31, 34, 18, 46, 30 },
+		{ 11, 59,  7, 55, 10, 58,  6, 54 },
+		{ 43, 27, 39, 23, 42, 26, 38, 22 }
+	};
+
+	private void ditherOrderedPixel(BufferedImage img, IPaletteColorMapper mapColor,
+			int x, int y, int[] prgb) {
+
+		
+		int pixel = img.getRGB(x, y);
+		ColorMapUtils.pixelToRGB(pixel, prgb);
+
+		int threshold = thresholdMap8x8[x & 7][y & 7];
+		prgb[0] = (prgb[0] + threshold - 32);
+		prgb[1] = (prgb[1] + threshold - 32);
+		prgb[2] = (prgb[2] + threshold - 32);
+		
+		int newC = mapColor.getClosestPaletteEntry(x, y, ColorMapUtils.rgb8ToPixel(prgb));
+		
+		int newPixel = mapColor.getPalettePixel(newC);
+		
+		img.setRGB(x, y, newPixel | 0xff000000);
+	}
+	
+	private void ditherOrdered(BufferedImage img, IPaletteMapper mapColor) {
+		int[] prgb = { 0, 0, 0 };
+		for (int y = 0; y < img.getHeight(); y++) {
+			for (int x = 0; x < img.getWidth(); x++) {
+				ditherOrderedPixel(img, mapColor, x, y, prgb);
+			}
+		}
+		
+	}
+	
 	
 	private void ditherNone(BufferedImage img, IPaletteMapper mapColor) {
 		for (int y = 0; y < img.getHeight(); y++) {
@@ -326,11 +373,11 @@ public class ImageImport implements IBitmapPixelAccess {
 		flatten(img);
 		
 		if (!importDirectMappedImage(img)) {
-			equalize(img);
+			int midLum = equalize(img);
 			
 			//reduceNoise(img);
 			
-			convertImageToColorMap(img);
+			convertImageToColorMap(img, midLum);
 		}
 	
 		if (false) {
@@ -387,7 +434,7 @@ public class ImageImport implements IBitmapPixelAccess {
 	 * @return
 	 */
 	private boolean importDirectMappedImage(BufferedImage img) {
-		if (format == Format.COLOR256_1x1 || ditherType == Dither.MONO)
+		if (format == Format.COLOR256_1x1 || ditherMono)
 			return false;
 		
 		int numColors = format == Format.COLOR4_1x1 ? 4
@@ -427,16 +474,19 @@ public class ImageImport implements IBitmapPixelAccess {
 		return false;
 	}
 
-	private void convertImageToColorMap(BufferedImage img) {
+	private void convertImageToColorMap(BufferedImage img, int midLum) {
 		IPaletteMapper mapColor;
 
-		if (ditherType == Dither.MONO) {
+		if (ditherMono) {
 			int reg = vdp.readVdpReg(7);
-			mapColor = new MonoMapColor((reg >> 4) & 0xf, reg & 0xf);
+			mapColor = new MonoMapColor((reg >> 4) & 0xf, reg & 0xf, midLum);
 			firstColor = 0;
 		} else if (format == Format.COLOR16_8x1 || format == Format.COLOR16_4x4) {
 			if (canSetPalette) {
-				createOptimalPalette(img, 16);
+				if (true)
+					createOptimalPaletteWithHSV(img, 16);
+				else
+					createOptimalPalette(img, 16);
 				mapColor = new UserPaletteMapColor(thePalette, firstColor, 16, useColorMappedGreyScale);
 			} else {
 				boolean isStandardPalette = false;
@@ -476,8 +526,10 @@ public class ImageImport implements IBitmapPixelAccess {
 		
 		updatePaletteMapping();
 
-		if (ditherType != Dither.NONE) {
-			dither(img, mapColor, hist, false);
+		if (ditherType == Dither.FS) {
+			ditherFloydSteinberg(img, mapColor, hist, false);
+		} else if (ditherType == Dither.ORDERED) {
+			ditherOrdered(img, mapColor);
 		} else {
 			ditherNone(img, mapColor);
 		}
@@ -524,11 +576,6 @@ public class ImageImport implements IBitmapPixelAccess {
 					+ Integer.toHexString(repr[1]) + "/" 
 					+ Integer.toHexString(repr[2]));
 			
-			/*
-			colorMgr.setGRB333(index, Math.min(255, (repr[1] * 0xff / 0xdf)) >> 5, 
-				Math.min(255, (repr[0] * 0xff / 0xdf)) >> 5, 
-				Math.min(255, (repr[2] * 0xff / 0xdf)) >> 5);
-			*/
 			thePalette[index][0] = (byte) repr[0];
 			thePalette[index][1] = (byte) repr[1];
 			thePalette[index][2] = (byte) repr[2];
@@ -569,11 +616,6 @@ public class ImageImport implements IBitmapPixelAccess {
 					+ Integer.toHexString(repr[1]) + "/" 
 					+ Integer.toHexString(repr[2]));
 			
-			/*
-			colorMgr.setGRB333(index, Math.min(255, (repr[1] * 0xff / 0xe0)) >> 5, 
-				Math.min(255, (repr[0] * 0xff / 0xe0)) >> 5, 
-				Math.min(255, (repr[2] * 0xff / 0xe0)) >> 5);
-			*/
 			thePalette[index][0] = (byte) repr[0];
 			thePalette[index][1] = (byte) repr[1];
 			thePalette[index][2] = (byte) repr[2];
@@ -641,7 +683,15 @@ public class ImageImport implements IBitmapPixelAccess {
 			yoffs = (canvas.getVisibleHeight() - img.getHeight() + canvas.getYOffset()) / 2;
 		}
 	
-		if (format == Format.COLOR16_8x1 && ditherType != Dither.MONO) {
+		if (format == Format.COLOR16_8x1) {
+			// be sure we select the 8 pixel groups sensibly
+			if ((xoffs & 7) > 3)
+				xoffs = (xoffs + 7) & ~7;
+			else
+				xoffs = xoffs & ~7;
+		}
+		
+		if (format == Format.COLOR16_8x1 && !ditherMono) {
 			
 			reduceBitmapMode(img, xoffs, yoffs);
 	
@@ -658,8 +708,9 @@ public class ImageImport implements IBitmapPixelAccess {
 	/**
 	 * Equalize an image so it has a full range of 
 	 * saturation and value
+	 * @return middle luminance
 	 */
-	private void equalize(BufferedImage img) {
+	private int equalize(BufferedImage img) {
 		float minSat = Float.MAX_VALUE, maxSat = Float.MIN_VALUE;
 		float minVal = Float.MAX_VALUE, maxVal = Float.MIN_VALUE;
 		
@@ -714,6 +765,8 @@ public class ImageImport implements IBitmapPixelAccess {
 				}
 			}
 		}
+		
+		return (int) ((minVal + maxVal) / 2);
 	}
 
 
@@ -906,15 +959,7 @@ public class ImageImport implements IBitmapPixelAccess {
 	 * @param xoffs
 	 * @param yoffs
 	 */
-	protected void reduceBitmapMode(final BufferedImage img, int xoffs_, final int yoffs) {
-
-		// be sure we select the 8 pixel groups sensibly
-		final int xoffs;
-		if ((xoffs_ & 7) > 3)
-			xoffs = (xoffs_ + 7) & ~7;
-		else
-			xoffs = xoffs_ & ~7;
-		
+	protected void reduceBitmapMode(final BufferedImage img, final int xoffs, final int yoffs) {
 		analyzeBitmap(img, true, new IBitmapColorUser() {
 			
 			@Override
@@ -1003,7 +1048,7 @@ public class ImageImport implements IBitmapPixelAccess {
 				
 			}
 			
-			if (ditherType == Dither.MONO) {
+			if (ditherMono) {
 				byte reg = vdp.readVdpReg(7);
 				paletteToIndex.put(0x0, (reg >> 4) & 0xf);
 				paletteToIndex.put(0xffffff, (reg >> 0) & 0xf);
@@ -1058,7 +1103,7 @@ public class ImageImport implements IBitmapPixelAccess {
 	 * @param image
 	 * @param isLowColor if the image is known to have a small number of colors -- don't scale
 	 */
-	public void importImage(ImageImportOptions options) {
+	public void importImage() {
 		BufferedImage image = options.getImage();
 		if (image == null)
 			return;
@@ -1066,13 +1111,13 @@ public class ImageImport implements IBitmapPixelAccess {
 		int targWidth = canvas.getVisibleWidth();
 		int targHeight = canvas.getVisibleHeight();
 
+		if (canvas.getFormat() == Format.COLOR16_4x4) {
+			targWidth = 64;
+			targHeight = 48;
+		}
+		
 		if (options.isKeepAspect()) {
 			float aspect = (float) targWidth / targHeight / 256.f * 192.f;
-			if (canvas.getFormat() == Format.COLOR16_4x4) {
-				targWidth = 64;
-				targHeight = 48;
-				aspect = 1.0f;
-			}
 			int realWidth = image.getWidth(null);
 			int realHeight = image.getHeight(null);
 			if (realWidth < 0 || realHeight < 0) {
@@ -1110,6 +1155,7 @@ public class ImageImport implements IBitmapPixelAccess {
 		
 		canSetPalette = options.isOptimizePalette();
 		ditherType = options.getDitherType();
+		ditherMono = options.isDitherMono();
 
 		firstColor = (canSetPalette && colorMgr.isClearFromPalette() ? 0 : 1);
 

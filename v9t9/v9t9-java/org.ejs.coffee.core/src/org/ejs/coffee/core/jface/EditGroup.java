@@ -3,21 +3,27 @@
  */
 package org.ejs.coffee.core.jface;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Group;
+import org.ejs.coffee.core.properties.IProperty;
+import org.ejs.coffee.core.properties.IPropertyEditorControl;
 
 /**
  * @author ejs
  *
  */
-public class EditGroup extends Composite {
+public class EditGroup extends Composite implements IPropertyEditorControl {
 
 	private Group group;
 	private Composite subgroup;
+	private HashMap<IProperty, IPropertyEditorControl> propertyMap;
 
 	/**
 	 * @param parent
@@ -36,8 +42,14 @@ public class EditGroup extends Composite {
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(group);
 		GridLayoutFactory.fillDefaults().numColumns(1).margins(6, 6).applyTo(group);
 
+		propertyMap = new HashMap<IProperty, IPropertyEditorControl>();
 	}
 
+	@Override
+	public Control getControl() {
+		return group;
+	}
+	
 	/**
 	 * @return
 	 */
@@ -55,6 +67,9 @@ public class EditGroup extends Composite {
 		return subgroup;
 	}
 
+	public void registerControl(IProperty property, IPropertyEditorControl control) {
+		propertyMap.put(property, control);
+	}
 	/**
 	 * 
 	 */
@@ -64,5 +79,11 @@ public class EditGroup extends Composite {
 		}
 		subgroup = null;
 	}
-	
+
+	@Override
+	public void reset() {
+		for (Map.Entry<IProperty, IPropertyEditorControl> entry : propertyMap.entrySet()) {
+			entry.getValue().reset();
+		}
+	}
 }

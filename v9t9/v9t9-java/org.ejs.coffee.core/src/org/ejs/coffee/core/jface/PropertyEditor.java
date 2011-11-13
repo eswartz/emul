@@ -16,6 +16,7 @@ import org.eclipse.swt.widgets.MenuItem;
 import org.ejs.coffee.core.properties.IClassPropertyFactory;
 import org.ejs.coffee.core.properties.IProperty;
 import org.ejs.coffee.core.properties.IPropertyEditor;
+import org.ejs.coffee.core.properties.IPropertyEditorControl;
 import org.ejs.coffee.core.properties.IPropertyProvider;
 
 /**
@@ -25,7 +26,7 @@ import org.ejs.coffee.core.properties.IPropertyProvider;
 public class PropertyEditor  {
 
 	private final IProperty property;
-	private Control theControl;
+	private IPropertyEditorControl theFieldEditorControl;
 
 	/* (non-Javadoc)
 	 * @see org.ejs.chiprocksynth.editor.model.IPropertyEditor#createEditor(org.eclipse.swt.widgets.Composite)
@@ -39,17 +40,17 @@ public class PropertyEditor  {
 		// TODO Auto-generated constructor stub
 	}
 
-	public Control createEditor(EditGroup group) {
+	public IPropertyEditorControl createEditor(EditGroup group) {
 		if (!(property.getValue() instanceof IPropertyProvider)) {
-			return createFormattedEditor(group.getContainer(), property);
+			return createFormattedEditor(group, group.getContainer(), property);
 		}
 		else {
-			return createFormattedEditor(group.getSubcontainer(), property);
+			return createFormattedEditor(group, group.getSubcontainer(), property);
 		}
 	}
 	
-	protected Control createFormattedEditor(final Composite parent, final IProperty property) {
-		final Composite holder = new Composite(parent, SWT.NONE);
+	protected IPropertyEditorControl createFormattedEditor(final EditGroup group, Composite composite, final IProperty property) {
+		final Composite holder = new Composite(composite, SWT.NONE);
 		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(holder);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(holder);
 		
@@ -70,7 +71,7 @@ public class PropertyEditor  {
 		}
 		
 		
-		Control editor = setupEditor(holder, property);
+		IPropertyEditorControl editor = setupEditor(holder, property);
 		return editor;
 	}
 
@@ -78,21 +79,22 @@ public class PropertyEditor  {
 	 * @param parent
 	 * @param property
 	 */
-	private Control setupEditor(Composite parent, IProperty property) {
-		if(theControl != null) {
-			theControl.dispose();
+	private IPropertyEditorControl setupEditor(Composite parent, IProperty property) {
+		if(theFieldEditorControl != null) {
+			theFieldEditorControl.getControl().dispose();
+			theFieldEditorControl = null;
 		}
 		IPropertyEditor editor = property.createEditor();
 		if (editor == null) {
 			return null;
 		}
-		Control control = editor.createEditor(parent);
+		IPropertyEditorControl control = editor.createEditor(parent);
 		if (control == null) {
 			return null;
 		}
-		GridDataFactory.fillDefaults().grab(true, false).minSize(50, -1).applyTo(control);
+		GridDataFactory.fillDefaults().grab(true, false).minSize(50, -1).applyTo(control.getControl());
 		
-		theControl = control;
+		theFieldEditorControl = control;
 		
 		return control;		
 	}
@@ -126,8 +128,10 @@ public class PropertyEditor  {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				property.setValue(null);
-				if (theControl != null)
-					theControl.dispose();
+				if (theFieldEditorControl != null) {
+					theFieldEditorControl.getControl().dispose();
+					theFieldEditorControl = null;
+				}
 				parent.getShell().pack();
 			}
 		});

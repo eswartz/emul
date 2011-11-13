@@ -16,6 +16,7 @@ import org.eclipse.swt.widgets.Text;
 import org.ejs.coffee.core.properties.FieldProperty;
 import org.ejs.coffee.core.properties.FieldUtils;
 import org.ejs.coffee.core.properties.IPropertyEditor;
+import org.ejs.coffee.core.properties.IPropertyEditorControl;
 import org.ejs.coffee.core.properties.IPropertyEditorProvider;
 
 /**
@@ -34,7 +35,7 @@ public class FieldPropertyEditor implements
 	/* (non-Javadoc)
 	 * @see org.ejs.chiprocksynth.generator.IPropertySource#createEditor(org.eclipse.swt.widgets.Composite, java.lang.String)
 	 */
-	public Control createEditor(Composite parent) {
+	public IPropertyEditorControl createEditor(Composite parent) {
 		if (property == null)
 			return null;
 		
@@ -52,27 +53,70 @@ public class FieldPropertyEditor implements
 		if (Number.class.isInstance(value)) {
 			final Text text = new Text(parent, SWT.BORDER);
 			text.setText("" + value);
-			text.addModifyListener(new ModifyListener() {
+			final ModifyListener modifyListener = new ModifyListener() {
 
 				public void modifyText(ModifyEvent e) {
-					setValueFromString(text.getText());
+					try {
+						setValueFromString(text.getText());
+					} catch (Throwable t) {
+						t.printStackTrace();
+					}
 				}
 				
-			});
-			return text;
+			};
+			text.addModifyListener(modifyListener);
+			return new IPropertyEditorControl() {
+
+				@Override
+				public Control getControl() {
+					return text;
+				}
+
+				@Override
+				public void reset() {
+					text.removeModifyListener(modifyListener);
+					
+					text.setText(property.getString());
+
+					text.addModifyListener(modifyListener);
+				}
+				
+			};
 		} else if (Boolean.class.isInstance(value)) {
 			final Button check = new Button(parent, SWT.CHECK);
 			check.setSelection(Boolean.TRUE.equals(value));
-			check.addSelectionListener(new SelectionAdapter() {
+			final SelectionAdapter selectionListener = new SelectionAdapter() {
 				/* (non-Javadoc)
 				 * @see org.eclipse.swt.events.SelectionAdapter#widgetSelected(org.eclipse.swt.events.SelectionEvent)
 				 */
 				@Override
 				public void widgetSelected(SelectionEvent e) {
-					setValue(check.getSelection());
+					try {
+						setValue(check.getSelection());
+					} catch (Throwable t) {
+						t.printStackTrace();
+					}
 				}
-			});
-			return check;
+			};
+			check.addSelectionListener(selectionListener);
+
+			return new IPropertyEditorControl() {
+
+				@Override
+				public Control getControl() {
+					return check;
+				}
+
+				@Override
+				public void reset() {
+					check.removeSelectionListener(selectionListener);
+					
+					check.setSelection(property.getBoolean());
+
+					check.addSelectionListener(selectionListener);
+				}
+				
+			};
 		} else if (Enum.class.isAssignableFrom(klass)) {
 			final Combo combo = new Combo(parent, SWT.READ_ONLY);
 			final Enum<?>[] enumFields= (Enum<?>[]) klass.getEnumConstants();
@@ -84,7 +128,7 @@ public class FieldPropertyEditor implements
 				}
 				combo.setItems(values);
 				combo.setText(value.toString());
-				combo.addSelectionListener(new SelectionAdapter() {
+				final SelectionAdapter selectionListener = new SelectionAdapter() {
 					/* (non-Javadoc)
 					 * @see org.eclipse.swt.events.SelectionAdapter#widgetSelected(org.eclipse.swt.events.SelectionEvent)
 					 */
@@ -96,8 +140,32 @@ public class FieldPropertyEditor implements
 							e1.printStackTrace();
 						}
 					}
-				});
-				return combo;
+				};
+				combo.addSelectionListener(selectionListener);
+
+				return new IPropertyEditorControl() {
+
+					@Override
+					public Control getControl() {
+						return combo;
+					}
+
+					@Override
+					public void reset() {
+						combo.removeSelectionListener(selectionListener);
+						
+						for (int i = 0; i < values.length; i++) {
+							Enum<?> ef = enumFields[i];
+							if (property.getValue() == ef) {
+								combo.select(i);
+								break;
+							}
+						}
+
+						combo.addSelectionListener(selectionListener);
+					}
+					
+				};
 			}
 		}
 			

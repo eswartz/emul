@@ -3,12 +3,15 @@
  */
 package v9t9.emulator.clients.builtin.swt;
 
-import java.awt.image.BufferedImage;
+import v9t9.emulator.clients.builtin.video.image.ImageImport;
+import v9t9.emulator.clients.builtin.video.image.ImageImportOptions;
 
 /**
  * @author ejs
  *
  */
 public interface IImageImportHandler {
-	void importImage(BufferedImage image, boolean isLowColor);
+	ImageImport createImageImport();
+	ImageImportOptions getImageImportOptions();
+	void resetOptions();
 }

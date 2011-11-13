@@ -76,7 +76,7 @@ public class PropertyCellEditor extends CellEditor {
 			editor = property.createEditor();
 			if (editor == null)
 				return;
-			editorControl = editor.createEditor(holder);
+			editorControl = editor.createEditor(holder).getControl();
 		}
 	}
 

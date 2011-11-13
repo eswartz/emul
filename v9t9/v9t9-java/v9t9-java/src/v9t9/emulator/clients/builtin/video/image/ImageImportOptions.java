@@ -25,7 +25,7 @@ public class ImageImportOptions {
 
 	public enum Dither {
 		NONE("None"),
-		MONO("Monochrome"),
+		ORDERED("Ordered"),
 		FS("Floyd-Steinberg");
 		
 		private final String label;
@@ -51,17 +51,18 @@ public class ImageImportOptions {
 	private boolean keepAspect = true;
 	private boolean asGreyScale;
 	private boolean optimizePalette = true;
-	private Dither ditherType;
+	private boolean ditherMono;
+	private Dither ditherType = Dither.NONE;
 	
 	private byte[][] origPalette;
 	private BufferedImage image;
-	private Format format;
 	
 	private FieldProperty scaleSmoothProperty;
 	private FieldProperty keepAspectProperty;
 	private FieldProperty asGreyScaleProperty;
 	private FieldProperty optimizePaletteProperty;
 	private FieldProperty ditheringProperty;
+	private FieldProperty ditherMonoProperty;
 	
 	/**
 	 * 
@@ -72,6 +73,7 @@ public class ImageImportOptions {
 		asGreyScaleProperty = new FieldProperty(this, "asGreyScale", "Convert To Greyscale");
 		optimizePaletteProperty = new FieldProperty(this, "optimizePalette", "Optimize Palette");
 		ditheringProperty = new FieldProperty(this, "ditherType", "Dithering");
+		ditherMonoProperty = new FieldProperty(this, "ditherMono", "Dither Monochrome");
 	}
 	/**
 	 * @return
@@ -83,6 +85,7 @@ public class ImageImportOptions {
 		ps.addProperty(asGreyScaleProperty);
 		ps.addProperty(optimizePaletteProperty);
 		ps.addProperty(ditheringProperty);
+		ps.addProperty(ditherMonoProperty);
 		return ps;
 	}
 	
@@ -116,6 +119,13 @@ public class ImageImportOptions {
 	public void setDitherType(Dither dither) {
 		this.ditherType = dither;
 	}
+	
+	public boolean isDitherMono() {
+		return ditherMono;
+	}
+	public void setDitherMono(boolean ditherMono) {
+		this.ditherMono = ditherMono;
+	}
 	public void setImage(BufferedImage image) {
 		this.image = image;
 	}
@@ -133,21 +143,22 @@ public class ImageImportOptions {
 	public byte[][] getOrigPalette() {
 		return origPalette;
 	}
-	public Format getFormat() {
-		return format;
-	}
-	public void setFormat(Format format) {
-		this.format = format;
-	}
 	/**
 	 * Use this when the image has been dragged/dropped.
-	 * @param image2
-	 * @param isLowColor
 	 */
-	public void updateFrom(VdpCanvas canvas, VdpHandler vdp, BufferedImage image, boolean isLowColor) {
+	public void updateFrom(BufferedImage image) {
 		setImage(image);
-		
+	}
+	
+	/**
+	 * Call to reset options to the presumed best ones for the
+	 * current video mode.
+	 */
+	public void resetOptions(VdpCanvas canvas, VdpHandler vdp) {
 		boolean canSetPalette;
+		
+		Format format = canvas.getFormat();
+		
 		if (vdp instanceof VdpV9938) {
 			// hack: graphics mode 2 allows setting the palette too, 
 			// but for comparison shopping, pretend we can't.
@@ -160,38 +171,31 @@ public class ImageImportOptions {
 			canSetPalette = false;
 		}
 		
-		boolean newFormat = getFormat() != canvas.getFormat() 
-			|| (!canSetPalette && !canvas.getColorMgr().isStandardPalette());
-		
-		setFormat(canvas.getFormat());
-		
 		///////
+		
+		boolean isLowColor = false;
+		
 		if (format == Format.COLOR16_8x1) {
 			if (!canvas.getColorMgr().isGreyscale())
 				isLowColor = true;
-		}
-		
-		if (image.getColorModel().getPixelSize() <= 8) {
-			isLowColor = true;
 		}
 		
 		setScaleSmooth(!isLowColor);
 		
 		////
 		
-		if (newFormat) {
-			setOptimizePalette(canSetPalette);
-			
-			/////
-			boolean isMonoMode = (vdp.getVdpModeRedrawHandler() instanceof BitmapModeRedrawHandler &&
-					((BitmapModeRedrawHandler) vdp.getVdpModeRedrawHandler()).isMono());
-			
-			setDitherType(isMonoMode ? Dither.MONO : Dither.FS);
-			
-			if (!canSetPalette)
-				setOrigPalette(VdpColorManager.getStandardPalette(vdp));
-			else
-				setOrigPalette(canvas.getColorMgr().getPalette());
-		}
+		setOptimizePalette(canSetPalette);
+		
+		/////
+		boolean isMonoMode = (vdp.getVdpModeRedrawHandler() instanceof BitmapModeRedrawHandler &&
+				((BitmapModeRedrawHandler) vdp.getVdpModeRedrawHandler()).isMono());
+		
+		setDitherMono(isMonoMode);
+		setDitherType(format == Format.COLOR16_8x1 && !canSetPalette ? Dither.ORDERED : Dither.FS);
+		
+		if (!canSetPalette)
+			setOrigPalette(VdpColorManager.getStandardPalette(vdp));
+		else
+			setOrigPalette(canvas.getColorMgr().getPalette());
 	}
 }

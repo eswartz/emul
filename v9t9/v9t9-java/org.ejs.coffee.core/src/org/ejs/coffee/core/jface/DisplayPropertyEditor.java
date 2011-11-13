@@ -9,6 +9,7 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
 import org.ejs.coffee.core.properties.IProperty;
 import org.ejs.coffee.core.properties.IPropertyEditor;
+import org.ejs.coffee.core.properties.IPropertyEditorControl;
 
 /**
  * @author ejs
@@ -28,10 +29,21 @@ public class DisplayPropertyEditor implements IPropertyEditor {
 		this.property = property;
 	}
 
-	public Control createEditor(Composite parent) {
-		Label label = new Label(parent, SWT.NONE);
+	public IPropertyEditorControl createEditor(Composite parent) {
+		final Label label = new Label(parent, SWT.NONE);
 		label.setText(property.getValue().toString());
-		return label;
+		return new IPropertyEditorControl() {
+
+			@Override
+			public Control getControl() {
+				return label;
+			}
+
+			@Override
+			public void reset() {
+			}
+			
+		};
 	}
 
 }
