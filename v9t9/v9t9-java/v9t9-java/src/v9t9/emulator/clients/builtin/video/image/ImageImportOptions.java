@@ -26,8 +26,7 @@ public class ImageImportOptions {
 	public enum Dither {
 		NONE("None"),
 		MONO("Monochrome"),
-		FS("Floyd-Steinberg"),
-		FS_LOW("Floyd-Steinberg Low Bleed");
+		FS("Floyd-Steinberg");
 		
 		private final String label;
 
@@ -187,7 +186,7 @@ public class ImageImportOptions {
 			boolean isMonoMode = (vdp.getVdpModeRedrawHandler() instanceof BitmapModeRedrawHandler &&
 					((BitmapModeRedrawHandler) vdp.getVdpModeRedrawHandler()).isMono());
 			
-			setDitherType(isMonoMode ? Dither.MONO :  canSetPalette ? Dither.FS : Dither.FS_LOW);
+			setDitherType(isMonoMode ? Dither.MONO : Dither.FS);
 			
 			if (!canSetPalette)
 				setOrigPalette(VdpColorManager.getStandardPalette(vdp));

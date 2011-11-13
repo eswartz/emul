@@ -103,9 +103,16 @@ public class ColorOctree {
 
 	private LinkedList<InnerNode>[] reducibleLists;
 	private Comparator<InnerNode> comparator;
+	private final boolean willDither;
+	private int minRed;
+	private int minGreen;
+	private int minBlue;
+	private int maxRed;
+	private int maxGreen;
+	private int maxBlue;
 
 	@SuppressWarnings("unchecked")
-	public ColorOctree(int maxDepth, int maxLeafCount, boolean removeDetail) {
+	public ColorOctree(int maxDepth, int maxLeafCount, boolean removeDetail, boolean willDither) {
 		if (maxDepth < 2 || maxLeafCount < 1)
 			throw new IllegalArgumentException();
 		
@@ -114,10 +121,14 @@ public class ColorOctree {
 		root = new InnerNode(null);
 		comparator = (removeDetail ?
 				createLeastUsedFirstComparator() : createMostUsedFirstComparator());
+		this.willDither = willDither;
 		
 		reducibleLists = new LinkedList[maxDepth];
 		for (int i = 0; i < maxDepth; i++)
 			reducibleLists[i] = new LinkedList<ColorOctree.InnerNode>();
+		
+		minRed = minGreen = minBlue = Integer.MAX_VALUE;
+		maxRed = maxGreen = maxBlue = Integer.MIN_VALUE;
 	}
 
 	private Comparator<InnerNode> createMostUsedFirstComparator() {
@@ -145,6 +156,16 @@ public class ColorOctree {
 			depth++;
 		}
 		
+		if (prgb[0] < minRed && prgb[1] < minGreen && prgb[2] < minBlue) {
+			minRed = prgb[0];
+			minGreen = prgb[1];
+			minBlue = prgb[2];
+		}
+		if (prgb[0] > maxRed && prgb[1] > maxGreen && prgb[2] > maxBlue) {
+			maxRed = prgb[0];
+			maxGreen = prgb[1];
+			maxBlue = prgb[2];
+		}
 		// don't reduce serially; loses detail at bottom of image
 		//if (leafCount > maxLeafCount * maxLeafCount)
 		//reduceTree();
@@ -333,15 +354,15 @@ public class ColorOctree {
 		}
 
 		// bias towards extremes so dark and light are not lost
-		if (/*maxLeafCount < 8 &&*/ depth == 0) {
+		if (willDither && depth == 0) {
 			if (index == 0) {
-				newLeaf.reds = (newLeaf.reds * 1) / 3; 
-				newLeaf.greens = (newLeaf.greens * 1) / 3; 
-				newLeaf.blues = (newLeaf.blues * 1) / 3; 
+				newLeaf.reds = (minRed * newLeaf.pixelCount + newLeaf.reds) / 2; 
+				newLeaf.greens = (minGreen * newLeaf.pixelCount + newLeaf.greens) / 2; 
+				newLeaf.blues = (minBlue * newLeaf.pixelCount + newLeaf.blues) / 2; 
 			} else if (index == 7) {
-				newLeaf.reds = Math.min(255 * newLeaf.pixelCount, (newLeaf.reds * 3) / 2); 
-				newLeaf.greens = Math.min(255 * newLeaf.pixelCount, (newLeaf.greens * 3) / 2); 
-				newLeaf.blues = Math.min(255 * newLeaf.pixelCount, (newLeaf.blues * 3) / 2); 
+				newLeaf.reds = (maxRed * newLeaf.pixelCount + newLeaf.reds) / 2; 
+				newLeaf.greens = (maxGreen * newLeaf.pixelCount + newLeaf.greens) / 2; 
+				newLeaf.blues = (maxBlue * newLeaf.pixelCount + newLeaf.blues) / 2; 
 			}
 		}
 
