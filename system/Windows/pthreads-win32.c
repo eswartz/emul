@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Wind River Systems, Inc. and others.
+ * Copyright (c) 2010, 2011 Wind River Systems, Inc. and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * and Eclipse Distribution License v1.0 which accompany this distribution.
@@ -289,6 +289,10 @@ int pthread_join(pthread_t thread_id, void ** value_ptr) {
     if (!error && value_ptr != NULL && !GetExitCodeThread(thread, (LPDWORD)value_ptr)) error = set_win32_errno(GetLastError());
     if (!CloseHandle(thread) && !error) error = set_win32_errno(GetLastError());
     return error;
+}
+
+int pthread_detach(pthread_t thread_id) {
+    return 0;
 }
 
 pthread_t pthread_self(void) {
