@@ -75,7 +75,7 @@ public class ExecutableExtension extends PlatformObject implements IExecutableEx
 		}
 
 		// Try the "label" attribute first
-		String label = config != null ? config.getAttribute("label") : null; //$NON-NLS-1$
+		label = config != null ? config.getAttribute("label") : null; //$NON-NLS-1$
 		// If "label" is not found or empty, try the "name" attribute as fallback
 		if (label == null || "".equals(label.trim())) { //$NON-NLS-1$
 			label = config != null ? config.getAttribute("name") : null; //$NON-NLS-1$
