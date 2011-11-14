@@ -116,6 +116,6 @@ class SymbolsProxy(symbols.SymbolsService):
                 if not error:
                     assert len(args) == 5
                     error = self.toError(args[0])
-                    address, size, fp_cmds, reg_cmds = args[1:4]
+                    address, size, fp_cmds, reg_cmds = args[1:5]
                 done.doneFindFrameInfo(self.token, error, address, size, fp_cmds, reg_cmds)
         return FindFrameInfoCommand().token
