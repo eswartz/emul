@@ -17,7 +17,7 @@ import org.eclipse.core.runtime.jobs.IJobManager;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.tm.te.core.async.interfaces.IAsyncExecutable;
 import org.eclipse.tm.te.runtime.callback.Callback;
-import org.eclipse.tm.te.runtime.concurrent.util.ExecutorsUtil;
+import org.eclipse.tm.te.runtime.interfaces.IConditionTester;
 import org.eclipse.tm.te.runtime.interfaces.callback.ICallback;
 import org.eclipse.tm.te.runtime.utils.ProgressHelper;
 
@@ -186,6 +186,16 @@ public abstract class AbstractAsyncExecutableJob extends Job implements IAsyncEx
 	 */
 	protected abstract void internalExecute(final IProgressMonitor monitor, final ICallback callback);
 
+	/**
+	 * Hold the execution of {@link #run(IProgressMonitor)} until the asynchronous executable
+	 * has completed the execution and invoked the callback.
+	 *
+	 * @param timeout The timeout in milliseconds. <code>0</code> means wait forever.
+	 * @param conditionTester The condition tester which condition must be fulfilled until
+	 *                        the execution hold of {@link #run(IProgressMonitor)} can be released.
+	 */
+	protected abstract void waitAndExecute(long timeout, IConditionTester conditionTester);
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.core.runtime.jobs.Job#run(org.eclipse.core.runtime.IProgressMonitor)
 	 */
@@ -196,7 +206,7 @@ public abstract class AbstractAsyncExecutableJob extends Job implements IAsyncEx
 		ProgressHelper.beginTask(monitor, "", jobTicks); //$NON-NLS-1$
 		final Callback callback = new Callback(monitor, ProgressHelper.PROGRESS_DONE, getJobCallback());
 		internalExecute(monitor, callback);
-		ExecutorsUtil.waitAndExecute(0, callback.getDoneConditionTester(isCancelable() ? monitor : null));
+		waitAndExecute(0, callback.getDoneConditionTester(isCancelable() ? monitor : null));
 		finished = true;
 
 		if (getRescheduleDelay() >= 0 && Platform.isRunning() && (!isCancelable() || !monitor.isCanceled())) {

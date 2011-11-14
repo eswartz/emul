@@ -16,7 +16,6 @@ import java.util.Map;
 import java.util.Vector;
 
 import org.eclipse.core.runtime.Platform;
-import org.eclipse.tm.te.runtime.concurrent.util.ExecutorsUtil;
 import org.eclipse.tm.te.runtime.interfaces.IConditionTester;
 import org.eclipse.tm.te.runtime.interfaces.callback.ICallback;
 
@@ -26,7 +25,6 @@ import org.eclipse.tm.te.runtime.interfaces.callback.ICallback;
 public class AsyncCallbackHandler {
 	private final List<ICallback> callbacks = new Vector<ICallback>();
 	private final IConditionTester conditionTester;
-	private boolean timeoutOccurred;
 	private Throwable error;
 
 	private final static boolean TRACING_ENABLED = Boolean.parseBoolean(Platform.getDebugOption("org.eclipse.tm.te.runtime/trace/callbacks")); //$NON-NLS-1$
@@ -47,7 +45,6 @@ public class AsyncCallbackHandler {
 	 */
 	public AsyncCallbackHandler(IConditionTester tester) {
 		super();
-		timeoutOccurred = false;
 		error = null;
 		conditionTester = new AsyncCallbackConditionTester(tester);
 	}
@@ -147,11 +144,14 @@ public class AsyncCallbackHandler {
 	}
 
 	/**
-	 * Returns <code>true</code> if the <code>wait</code> methods have been left because of timeout
-	 * and not because the waiting condition has been fulfilled.
+	 * Returns the condition tester to use for waiting for the callback handler
+	 * until all callbacks have been invoked and the external condition tester
+	 * is fulfilled too.
+	 *
+	 * @return The condition tester instance.
 	 */
-	public boolean isTimeoutOccurred() {
-		return timeoutOccurred;
+	public IConditionTester getConditionTester() {
+		return conditionTester;
 	}
 
 	final class AsyncCallbackConditionTester implements IConditionTester {
@@ -170,8 +170,7 @@ public class AsyncCallbackHandler {
 			externalTester = tester;
 		}
 
-		/*
-		 * (non-Javadoc)
+		/* (non-Javadoc)
 		 * @see org.eclipse.tm.te.runtime.interfaces.IConditionTester#cleanup()
 		 */
 		@Override
@@ -181,8 +180,7 @@ public class AsyncCallbackHandler {
 			}
 		}
 
-		/*
-		 * (non-Javadoc)
+		/* (non-Javadoc)
 		 * @see org.eclipse.tm.te.runtime.interfaces.IConditionTester#isConditionFulfilled()
 		 */
 		@Override
@@ -190,15 +188,5 @@ public class AsyncCallbackHandler {
 			// the condition is fulfilled if no remaining callback's are registered!
 			return isEmpty() || (externalTester != null && externalTester.isConditionFulfilled());
 		}
-	}
-
-	/**
-	 * Wait for all associated callback's to finish or the specified timeout has been occurred.
-	 *
-	 * @param timeout The timeout in milliseconds. If <code>0</code>, the method waits forever till
-	 *            all callback's have been returned.
-	 */
-	public final void waitForFinishOrTimeout(long timeout) {
-		timeoutOccurred = ExecutorsUtil.waitAndExecute(timeout, conditionTester);
 	}
 }

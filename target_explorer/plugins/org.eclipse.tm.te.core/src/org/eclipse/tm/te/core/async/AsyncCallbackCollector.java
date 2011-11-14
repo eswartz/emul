@@ -17,7 +17,6 @@ import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.tm.te.core.activator.CoreBundleActivator;
 import org.eclipse.tm.te.runtime.callback.Callback;
-import org.eclipse.tm.te.runtime.concurrent.util.ExecutorsUtil;
 import org.eclipse.tm.te.runtime.interfaces.callback.ICallback;
 
 /**
@@ -39,6 +38,23 @@ public class AsyncCallbackCollector extends AsyncCallbackHandler {
 	// Once the master callback has been fired, the collector is marked finish.
 	private boolean isFinished;
 	private boolean initDone;
+
+	// The reference to the callback invocation delegate
+	private ICallbackInvocationDelegate delegate = null;
+
+	/**
+	 * Delegation interfaces used by the asynchronous callback collector to
+	 * invoke the final callback.
+	 */
+	public static interface ICallbackInvocationDelegate {
+
+		/**
+		 * Invokes the given runnable.
+		 *
+		 * @param runnable The runnable. Must not be <code>null</code>.
+		 */
+		public void invoke(Runnable runnable);
+	}
 
 	/**
 	 * Simple target callback handling an asynchronous callback collector parent itself and remove
@@ -90,21 +106,25 @@ public class AsyncCallbackCollector extends AsyncCallbackHandler {
 	 * Constructor.
 	 */
 	public AsyncCallbackCollector() {
-		this(null);
+		this(null, null);
 	}
 
 	/**
 	 * Constructor.
 	 *
 	 * @param callback The final callback to invoke if the collector enters the finished state.
+	 * @param delegate The callback invocation delegate. Must not be <code>null</code> if the callback is not <code>null</code>.
 	 */
-	public AsyncCallbackCollector(ICallback callback) {
+	public AsyncCallbackCollector(ICallback callback, ICallbackInvocationDelegate delegate) {
 		super();
+
+		if (callback != null) Assert.isNotNull(delegate);
 
 		// We have to add our master callback to the list of callback to avoid that
 		// the collector is running empty to early!
 		addCallback(callback);
 		this.callback = callback;
+		this.delegate = delegate;
 
 		// We are not finished yet.
 		isFinished = false;
@@ -141,7 +161,8 @@ public class AsyncCallbackCollector extends AsyncCallbackHandler {
 	 */
 	protected void onCollectorFinished() {
 		if (callback != null) {
-			ExecutorsUtil.execute(new Runnable() {
+			Assert.isNotNull(delegate);
+			delegate.invoke(new Runnable() {
 				@Override
 				public void run() {
 					Throwable error = getError();

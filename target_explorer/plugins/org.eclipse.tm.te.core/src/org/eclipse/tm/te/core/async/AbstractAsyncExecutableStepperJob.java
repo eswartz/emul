@@ -19,12 +19,12 @@ import org.eclipse.tm.te.runtime.interfaces.callback.ICallback;
 import org.eclipse.tm.te.runtime.utils.ProgressHelper;
 
 /**
- * Asynchronous executable stepper job.
+ * Abstract asynchronous executable stepper job.
  * <p>
  * The job executes a list of actions. If any action returns with an error, the whole job will be
  * aborted.
  */
-public class AsyncExecutableStepperJob extends AbstractAsyncExecutableJob {
+public abstract class AbstractAsyncExecutableStepperJob extends AbstractAsyncExecutableJob {
 	private final IAsyncExecutable[] actions;
 
 	/**
@@ -33,7 +33,7 @@ public class AsyncExecutableStepperJob extends AbstractAsyncExecutableJob {
 	 * @param name The job name. Must not be <code>null</code>
 	 * @param actions The actions to execute. Must not be <code>null</code>.
 	 */
-	public AsyncExecutableStepperJob(String name, IAsyncExecutable[] actions) {
+	public AbstractAsyncExecutableStepperJob(String name, IAsyncExecutable[] actions) {
 		super(name);
 
 		Assert.isNotNull(actions);

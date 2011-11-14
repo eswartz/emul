@@ -646,6 +646,16 @@ public class ProcessStreamsListener implements IStreams.StreamsListener, IProces
 			dataReceiver.clear();
 		}
 
+		// Create the callback invocation delegate
+		AsyncCallbackCollector.ICallbackInvocationDelegate delegate = new AsyncCallbackCollector.ICallbackInvocationDelegate() {
+			@Override
+			public void invoke(Runnable runnable) {
+				Assert.isNotNull(runnable);
+				if (Protocol.isDispatchThread()) runnable.run();
+				else Protocol.invokeLater(runnable);
+			}
+		};
+
 		// Create a new collector to catch all runnable stop callback's
 		AsyncCallbackCollector collector = new AsyncCallbackCollector(new Callback() {
 			/* (non-Javadoc)
@@ -653,6 +663,7 @@ public class ProcessStreamsListener implements IStreams.StreamsListener, IProces
 			 */
 			@Override
 			protected void internalDone(final Object caller, final IStatus status) {
+				Assert.isTrue(Protocol.isDispatchThread(), "Illegal Thread Access"); //$NON-NLS-1$
 				// Get the service instance from the parent
 				IStreams svcStreams = getParent().getSvcStreams();
 				// Unsubscribe the streams listener from the service
@@ -666,7 +677,7 @@ public class ProcessStreamsListener implements IStreams.StreamsListener, IProces
 					}
 				});
 			}
-		});
+		}, delegate);
 
 		// Loop all runnable's and force them to stop
 		synchronized (runnables) {

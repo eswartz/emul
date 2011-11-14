@@ -112,22 +112,25 @@ public class TerminalsLauncher extends PlatformObject implements ITerminalsLaunc
 			eventListener = null;
 		}
 
+		// Create the callback invocation delegate
+		AsyncCallbackCollector.ICallbackInvocationDelegate delegate = new AsyncCallbackCollector.ICallbackInvocationDelegate() {
+			@Override
+			public void invoke(Runnable runnable) {
+				Assert.isNotNull(runnable);
+				if (Protocol.isDispatchThread()) runnable.run();
+				else Protocol.invokeLater(runnable);
+			}
+		};
+
 		// Create the callback collector
 		final AsyncCallbackCollector collector = new AsyncCallbackCollector(new Callback() {
 			@Override
 			protected void internalDone(Object caller, IStatus status) {
+				Assert.isTrue(Protocol.isDispatchThread(), "Illegal Thread Access"); //$NON-NLS-1$
 				// Close the channel as all disposal is done
-				if (finChannel != null) {
-					if (Protocol.isDispatchThread()) finChannel.close();
-					else Protocol.invokeAndWait(new Runnable() {
-						@Override
-						public void run() {
-							finChannel.close();
-						}
-					});
-				}
+				if (finChannel != null) finChannel.close();
 			}
-		});
+		}, delegate);
 
 		if (streamsListener != null) {
 			// Dispose the streams listener
