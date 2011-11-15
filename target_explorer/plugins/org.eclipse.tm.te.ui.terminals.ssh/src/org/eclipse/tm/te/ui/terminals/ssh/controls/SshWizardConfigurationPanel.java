@@ -206,7 +206,9 @@ public class SshWizardConfigurationPanel extends AbstractConfigurationPanel impl
 		settings.put(getSettingsKeyWithPrefix(host, ITerminalsConnectorConstants.PROP_SSH_KEEP_ALIVE), sshSettings.getKeepalive());
 		settings.put(getSettingsKeyWithPrefix(host, ITerminalsConnectorConstants.PROP_SSH_USER), sshSettings.getUser());
 
-		saveSecurePassword(sshSettings.getHost(), sshSettings.getPassword());
+		if(sshSettings.getPassword()!=null && sshSettings.getPassword().length()!=0){
+			saveSecurePassword(host, sshSettings.getPassword());
+		}
 	}
 
 	/**

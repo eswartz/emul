@@ -74,10 +74,12 @@ public class SshLauncherDelegate extends AbstractLauncherDelegate {
 	 */
 	private String getTerminalTitle(IPropertiesContainer properties) {
 		String host = properties.getStringProperty(ITerminalsConnectorConstants.PROP_IP_HOST);
-		if (host != null) {
+		String user = properties.getStringProperty(ITerminalsConnectorConstants.PROP_SSH_USER);
+
+		if (host != null && user!= null) {
 			DateFormat format = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG);
 			String date = format.format(new Date(System.currentTimeMillis()));
-			return NLS.bind(Messages.SshLauncherDelegate_terminalTitle, host, date);
+			return NLS.bind(Messages.SshLauncherDelegate_terminalTitle, new String[]{user, host, date});
 		}
 		return Messages.SshLauncherDelegate_terminalTitle_default;
 	}
