@@ -28,6 +28,10 @@ public class TerminalsConnector extends AbstractStreamsConnector implements IDis
 	// Reference to the terminals settings
 	private final TerminalsSettings settings;
 
+	// Remember the last set window size
+	private int width = -1;
+	private int height = -1;
+
 	/**
 	 * Constructor.
 	 */
@@ -99,16 +103,21 @@ public class TerminalsConnector extends AbstractStreamsConnector implements IDis
 			final ITerminals service = ((TerminalsLauncher)settings.getTerminalsLauncher()).getSvcTerminals();
 			final ITerminals.TerminalContext context = (ITerminals.TerminalContext)settings.getTerminalsLauncher().getAdapter(ITerminals.TerminalContext.class);
 			if (service != null && context != null) {
-				Protocol.invokeLater(new Runnable() {
-					@Override
-					public void run() {
-						service.setWinSize(context.getID(), newWidth, newHeight, new ITerminals.DoneCommand() {
-							@Override
-							public void doneCommand(IToken token, Exception error) {
-							}
-						});
-					}
-				});
+				if (width == -1 || height == -1 || newWidth != width || newHeight != height) {
+					width = newWidth;
+					height = newHeight;
+
+					Protocol.invokeLater(new Runnable() {
+						@Override
+						public void run() {
+							service.setWinSize(context.getID(), newWidth, newHeight, new ITerminals.DoneCommand() {
+								@Override
+								public void doneCommand(IToken token, Exception error) {
+								}
+							});
+						}
+					});
+				}
 			}
 		}
 	}
