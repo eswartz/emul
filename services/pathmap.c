@@ -109,8 +109,21 @@ static Listener * listeners = NULL;
 static unsigned listener_cnt = 0;
 static unsigned listener_max = 0;
 
+static TCFBroadcastGroup * broadcast_group = NULL;
+
+static void event_path_map_changed(void) {
+    OutputStream * out = &broadcast_group->out;
+
+    write_stringz(out, "E");
+    write_stringz(out, PATH_MAP);
+    write_stringz(out, "changed");
+
+    write_stream(out, MARKER_EOM);
+}
+
 static void path_map_event_mapping_changed(Channel * c) {
     unsigned i;
+    event_path_map_changed();
     for (i = 0; i < listener_cnt; i++) {
         Listener * l = listeners + i;
         if (l->listener->mapping_changed == NULL) continue;
@@ -365,10 +378,8 @@ void change_path_mapping_attributes(PathMapRule * r, PathMapRuleAttribute * attr
     if (update_rule(r, attrs)) path_map_event_mapping_changed(NULL);
 }
 
-/*
- * Delete a path mapping rule.
- */
-extern void delete_path_mapping(PathMapRule * bp);
+void delete_path_mapping(PathMapRule * r) {
+}
 
 static void write_rule(OutputStream * out, PathMapRule * r) {
     unsigned i = 0;
@@ -497,12 +508,13 @@ static void channel_close_listener(Channel * c) {
     loc_free(m);
 }
 
-void ini_path_map_service(Protocol * proto) {
+void ini_path_map_service(Protocol * proto, TCFBroadcastGroup * bcg) {
     if (!ini_done) {
         ini_done = 1;
         list_init(&maps);
         add_channel_close_listener(channel_close_listener);
     }
+    broadcast_group = bcg;
     add_command_handler(proto, PATH_MAP, "get", command_get);
     add_command_handler(proto, PATH_MAP, "set", command_set);
 }

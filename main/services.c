@@ -91,7 +91,7 @@ void ini_services(Protocol * proto, TCFBroadcastGroup * bcg) {
     ini_streams_service(proto);
 #endif
 #if SERVICE_PathMap
-    ini_path_map_service(proto);
+    ini_path_map_service(proto, bcg);
 #endif
 #if SERVICE_Terminals
     ini_terminals_service(proto);

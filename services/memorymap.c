@@ -195,7 +195,7 @@ static void update_all_context_client_maps(void) {
     }
 }
 
-static void event_memory_map_changed(Context * ctx, void * args) {
+static void event_memory_map_changed(Context * ctx) {
     OutputStream * out;
     ContextExtensionMM * ext = EXT(ctx);
 
@@ -270,7 +270,7 @@ void memory_map_event_module_loaded(Context * ctx) {
     unsigned i;
     assert(ctx->ref_count > 0);
     assert(ctx == get_mem_context(ctx));
-    event_memory_map_changed(ctx, NULL);
+    event_memory_map_changed(ctx);
     for (i = 0; i < listener_cnt; i++) {
         Listener * l = listeners + i;
         if (l->listener->module_loaded == NULL) continue;
@@ -282,7 +282,7 @@ void memory_map_event_code_section_ummapped(Context * ctx, ContextAddress addr, 
     unsigned i;
     assert(ctx->ref_count > 0);
     assert(ctx == get_mem_context(ctx));
-    event_memory_map_changed(ctx, NULL);
+    event_memory_map_changed(ctx);
     for (i = 0; i < listener_cnt; i++) {
         Listener * l = listeners + i;
         if (l->listener->code_section_ummapped == NULL) continue;
@@ -294,7 +294,7 @@ void memory_map_event_module_unloaded(Context * ctx) {
     unsigned i;
     assert(ctx->ref_count > 0);
     assert(ctx == get_mem_context(ctx));
-    event_memory_map_changed(ctx, NULL);
+    event_memory_map_changed(ctx);
     for (i = 0; i < listener_cnt; i++) {
         Listener * l = listeners + i;
         if (l->listener->module_unloaded == NULL) continue;
@@ -306,7 +306,7 @@ void memory_map_event_mapping_changed(Context * ctx) {
     unsigned i;
     assert(ctx->ref_count > 0);
     assert(ctx == get_mem_context(ctx));
-    event_memory_map_changed(ctx, NULL);
+    event_memory_map_changed(ctx);
     for (i = 0; i < listener_cnt; i++) {
         Listener * l = listeners + i;
         if (l->listener->mapping_changed == NULL) continue;
