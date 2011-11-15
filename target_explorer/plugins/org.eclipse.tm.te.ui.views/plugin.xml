@@ -71,7 +71,10 @@
    </extension>
    
    <extension point="org.eclipse.ui.navigator.navigatorContent">
-<!-- Default navigator action contibutions -->
+
+<!-- Default navigator sorter contribution -->
+
+<!-- Default navigator action contributions -->
       <actionProvider
             class="org.eclipse.tm.te.ui.views.actions.NewActionProvider"
             id="org.eclipse.tm.te.ui.views.navigator.actions.NewActionProvider">

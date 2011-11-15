@@ -9,10 +9,12 @@
  *******************************************************************************/
 package org.eclipse.tm.te.ui.views.internal;
 
+import org.eclipse.jface.viewers.ViewerSorter;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.tm.te.runtime.events.EventManager;
 import org.eclipse.tm.te.ui.views.events.ViewerContentChangeEvent;
 import org.eclipse.ui.navigator.CommonViewer;
+import org.eclipse.ui.navigator.CommonViewerSorter;
 
 /**
  * Target Explorer common viewer implementation.
@@ -88,5 +90,17 @@ public class ViewViewer extends CommonViewer {
 
 	    ViewerContentChangeEvent event = new ViewerContentChangeEvent(this, ViewerContentChangeEvent.REFRESH);
 	    EventManager.getInstance().fireEvent(event);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.navigator.CommonViewer#setSorter(org.eclipse.jface.viewers.ViewerSorter)
+	 */
+	@Override
+	public void setSorter(ViewerSorter sorter) {
+		if (sorter instanceof CommonViewerSorter) {
+			sorter = new ViewViewerSorter((CommonViewerSorter)sorter);
+			((ViewViewerSorter)sorter).setContentService(getNavigatorContentService());
+		}
+	    super.setSorter(sorter);
 	}
 }
