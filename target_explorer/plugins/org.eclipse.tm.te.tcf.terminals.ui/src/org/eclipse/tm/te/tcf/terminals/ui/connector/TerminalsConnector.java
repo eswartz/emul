@@ -99,11 +99,11 @@ public class TerminalsConnector extends AbstractStreamsConnector implements IDis
 	 */
 	@Override
 	public void setTerminalSize(final int newWidth, final int newHeight) {
-		if (fControl.getState() == TerminalState.CONNECTED && settings.getTerminalsLauncher() instanceof TerminalsLauncher) {
-			final ITerminals service = ((TerminalsLauncher)settings.getTerminalsLauncher()).getSvcTerminals();
-			final ITerminals.TerminalContext context = (ITerminals.TerminalContext)settings.getTerminalsLauncher().getAdapter(ITerminals.TerminalContext.class);
-			if (service != null && context != null) {
-				if (width == -1 || height == -1 || newWidth != width || newHeight != height) {
+		if (width == -1 || height == -1 || newWidth != width || newHeight != height) {
+			if (fControl.getState() == TerminalState.CONNECTED && settings.getTerminalsLauncher() instanceof TerminalsLauncher) {
+				final ITerminals service = ((TerminalsLauncher)settings.getTerminalsLauncher()).getSvcTerminals();
+				final ITerminals.TerminalContext context = (ITerminals.TerminalContext)settings.getTerminalsLauncher().getAdapter(ITerminals.TerminalContext.class);
+				if (service != null && context != null) {
 					width = newWidth;
 					height = newHeight;
 
