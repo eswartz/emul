@@ -19,6 +19,9 @@
       <binding
             handlerId="org.eclipse.tm.te.tests.handler1"
             id="org.eclipse.tm.te.tests.binding1">
+            <enablement>
+               <instanceof value="org.eclipse.tm.te.tests.CoreTestCase"/>
+            </enablement>
       </binding>
       
       <binding

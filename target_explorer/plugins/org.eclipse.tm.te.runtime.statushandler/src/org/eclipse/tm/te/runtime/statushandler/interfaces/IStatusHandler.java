@@ -27,7 +27,7 @@ public interface IStatusHandler extends IExecutableExtension {
 	 *
 	 * @param status The status. Must not be <code>null</code>.
 	 * @param data The custom status data object, or <code>null</code> if none.
-	 * @param done The callback. Must not be <code>null</code>.
+	 * @param done The callback, or <code>null</code>.
 	 */
 	public void handleStatus(IStatus status, IPropertiesContainer data, DoneHandleStatus done);
 

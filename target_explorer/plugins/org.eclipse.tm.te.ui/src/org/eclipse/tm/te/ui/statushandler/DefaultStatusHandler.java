@@ -44,7 +44,6 @@ public class DefaultStatusHandler extends AbstractStatusHandler {
 	@Override
 	public void handleStatus(final IStatus status, final IPropertiesContainer data, final DoneHandleStatus done) {
 		Assert.isNotNull(status);
-		Assert.isNotNull(done);
 
 		// If the platform UI is not longer running or the display does not
 		// exist or is disposed already, don't do anything.
@@ -63,7 +62,11 @@ public class DefaultStatusHandler extends AbstractStatusHandler {
 			display.asyncExec(new Runnable() {
 				@Override
 				public void run() {
-					doHandleStatus(status, data, done);
+					doHandleStatus(status, data, done != null ? done : new DoneHandleStatus() {
+						@Override
+						public void doneHandleStatus(Throwable error, IPropertiesContainer data) {
+						}
+					});
 				}
 			});
 		}
