@@ -178,6 +178,22 @@ static int is_my_host(char * host) {
     return strcasecmp(host, host_name) == 0;
 }
 
+static void free_rule(PathMapRule * r) {
+    loc_free(r->src);
+    loc_free(r->dst);
+    loc_free(r->host);
+    loc_free(r->prot);
+    loc_free(r->ctx);
+    while (r->attrs != NULL) {
+        PathMapRuleAttribute * attr = r->attrs;
+        r->attrs = attr->next;
+        loc_free(attr->name);
+        loc_free(attr->value);
+        loc_free(attr);
+    }
+    memset(r, 0, sizeof(PathMapRule));
+}
+
 static int update_rule(PathMapRule * r, PathMapRuleAttribute * new_attrs) {
     int diff = 0;
     PathMapRuleAttribute * old_attrs = r->attrs;
@@ -379,6 +395,17 @@ void change_path_mapping_attributes(PathMapRule * r, PathMapRuleAttribute * attr
 }
 
 void delete_path_mapping(PathMapRule * r) {
+    LINK * l;
+    for (l = maps.next; l != &maps; l = l->next) {
+        PathMap * m = maps2map(l);
+        if (m->channel == NULL && r >= m->rules && r < m->rules + m->rules_cnt) {
+            free_rule(r);
+            memmove(r, r + 1, (m->rules_cnt - (r - m->rules) - 1) * sizeof(PathMapRule));
+            m->rules_cnt--;
+            path_map_event_mapping_changed(NULL);
+            break;
+        }
+    }
 }
 
 static void write_rule(OutputStream * out, PathMapRule * r) {
@@ -423,22 +450,6 @@ static void read_rule(InputStream * inp, void * args) {
     memset(r, 0, sizeof(*r));
     if (json_read_struct(inp, read_rule_attrs, &attr_list)) m->rules_cnt++;
     update_rule(r, attrs);
-}
-
-static void free_rule(PathMapRule * r) {
-    loc_free(r->src);
-    loc_free(r->dst);
-    loc_free(r->host);
-    loc_free(r->prot);
-    loc_free(r->ctx);
-    while (r->attrs != NULL) {
-        PathMapRuleAttribute * attr = r->attrs;
-        r->attrs = attr->next;
-        loc_free(attr->name);
-        loc_free(attr->value);
-        loc_free(attr);
-    }
-    memset(r, 0, sizeof(PathMapRule));
 }
 
 void set_path_map(Channel * c, InputStream * inp) {
