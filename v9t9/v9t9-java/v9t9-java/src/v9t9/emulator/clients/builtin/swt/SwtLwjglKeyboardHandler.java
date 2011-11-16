@@ -8,7 +8,6 @@ import net.java.games.input.Component.Identifier;
 import net.java.games.input.Component.Identifier.Button;
 import net.java.games.input.Controller;
 import net.java.games.input.ControllerEnvironment;
-import net.java.games.input.Keyboard;
 
 import org.eclipse.swt.widgets.Control;
 

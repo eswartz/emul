@@ -131,6 +131,9 @@ public class MouseJoystickHandler {
 		keyboardState.setJoystick(joy, KeyboardState.JOY_X | KeyboardState.JOY_Y, dx, dy, false, System.currentTimeMillis());
 	}
 
+	/**
+	 * @param button  
+	 */
 	protected void button(int button, int joy, boolean pressed) {
 		//System.out.println(button +"/"+ joy + "/" + pressed);
 		keyboardState.setJoystick(joy, KeyboardState.JOY_B, 0, 0, pressed, System.currentTimeMillis());
