@@ -459,27 +459,27 @@ void set_path_map(Channel * c, InputStream * inp) {
 }
 
 static void command_get(char * token, Channel * c) {
-    PathMap * m = (PathMap *)find_map(c);
+    unsigned n = 0;
+    LINK * l = maps.next;
 
     if (read_stream(&c->inp) != MARKER_EOM) exception(ERR_JSON_SYNTAX);
 
     write_stringz(&c->out, "R");
     write_stringz(&c->out, token);
     write_errno(&c->out, 0);
-    if (m == NULL) {
-        write_stringz(&c->out, "null");
-    }
-    else {
+    write_stream(&c->out, '[');
+    while (l != &maps) {
         unsigned i;
-        write_stream(&c->out, '[');
+        PathMap * m = maps2map(l);
         for (i = 0; i < m->rules_cnt; i++) {
             PathMapRule * r = m->rules + i;
-            if (i > 0) write_stream(&c->out, ',');
+            if (n++ > 0) write_stream(&c->out, ',');
             write_rule(&c->out, r);
         }
-        write_stream(&c->out, ']');
-        write_stream(&c->out, 0);
+        l = l->next;
     }
+    write_stream(&c->out, ']');
+    write_stream(&c->out, 0);
     write_stream(&c->out, MARKER_EOM);
 }
 
@@ -503,6 +503,7 @@ static void channel_close_listener(Channel * c) {
     m = find_map(c);
     if (m == NULL) return;
     list_remove(&m->maps);
+    if (m->rules_cnt > 0) path_map_event_mapping_changed(c);
     for (i = 0; i < m->rules_cnt; i++) free_rule(m->rules + i);
     loc_free(m->rules);
     loc_free(m);
