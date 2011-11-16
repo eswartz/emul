@@ -3,7 +3,10 @@
  */
 package v9t9.emulator.clients.builtin.video.image;
 
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
+import java.awt.image.WritableRaster;
 import java.util.Arrays;
 
 import org.ejs.coffee.core.properties.FieldProperty;
@@ -11,8 +14,8 @@ import org.ejs.coffee.core.properties.IPropertySource;
 import org.ejs.coffee.core.properties.PropertySource;
 
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
-import v9t9.emulator.clients.builtin.video.VdpColorManager;
 import v9t9.emulator.clients.builtin.video.VdpCanvas.Format;
+import v9t9.emulator.clients.builtin.video.VdpColorManager;
 import v9t9.emulator.clients.builtin.video.tms9918a.BitmapModeRedrawHandler;
 import v9t9.emulator.clients.builtin.video.v9938.VdpV9938;
 import v9t9.engine.VdpHandler;
@@ -56,6 +59,7 @@ public class ImageImportOptions {
 	
 	private byte[][] origPalette;
 	private BufferedImage image;
+	private Rectangle clip;
 	
 	private FieldProperty scaleSmoothProperty;
 	private FieldProperty keepAspectProperty;
@@ -63,6 +67,8 @@ public class ImageImportOptions {
 	private FieldProperty optimizePaletteProperty;
 	private FieldProperty ditheringProperty;
 	private FieldProperty ditherMonoProperty;
+	private FieldProperty imageProperty;
+	private FieldProperty clipProperty;
 	
 	/**
 	 * 
@@ -74,6 +80,9 @@ public class ImageImportOptions {
 		optimizePaletteProperty = new FieldProperty(this, "optimizePalette", "Optimize Palette");
 		ditheringProperty = new FieldProperty(this, "ditherType", "Dithering");
 		ditherMonoProperty = new FieldProperty(this, "ditherMono", "Dither Monochrome");
+		imageProperty = new FieldProperty(this, "image", "Last Image");
+		clipProperty = new FieldProperty(this, "clip", "Clip Region");
+		clipProperty.setHidden(true);
 	}
 	/**
 	 * @return
@@ -86,6 +95,8 @@ public class ImageImportOptions {
 		ps.addProperty(optimizePaletteProperty);
 		ps.addProperty(ditheringProperty);
 		ps.addProperty(ditherMonoProperty);
+		ps.addProperty(imageProperty);
+		ps.addProperty(clipProperty);
 		return ps;
 	}
 	
@@ -127,12 +138,34 @@ public class ImageImportOptions {
 		this.ditherMono = ditherMono;
 	}
 	public void setImage(BufferedImage image) {
-		this.image = image;
+		if (image != this.image) {
+			if (clip != null && !clip.isEmpty()) {
+				clip = null;
+				clipProperty.firePropertyChange();
+			}
+			this.image = image;
+			imageProperty.firePropertyChange();
+		}
 	}
 	public BufferedImage getImage() {
-		return image;
+		if (image == null || clip == null || clip.isEmpty())
+			return image;
+		
+        ColorModel cm = image.getColorModel();
+        WritableRaster wr = image.getRaster().createCompatibleWritableRaster(clip.width, clip.height);
+        wr.setRect(-clip.x, -clip.y, image.getRaster());
+
+        return new BufferedImage(cm, wr, cm.isAlphaPremultiplied(), null);
+
 	}
 
+	
+	public Rectangle getClip() {
+		return clip;
+	}
+	public void setClip(Rectangle clip) {
+		this.clip = clip;
+	}
 	public void setOrigPalette(byte[][] thePalette) {
 		byte[][] newP = new byte[thePalette.length][];
 		for (int i = 0; i < thePalette.length; i++) {

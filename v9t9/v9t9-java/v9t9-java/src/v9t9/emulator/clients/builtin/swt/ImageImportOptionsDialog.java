@@ -3,11 +3,16 @@
  */
 package v9t9.emulator.clients.builtin.swt;
 
+import java.awt.image.BufferedImage;
+
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Shell;
@@ -24,6 +29,49 @@ import org.ejs.coffee.core.properties.IPropertySource;
  */
 public class ImageImportOptionsDialog extends Composite {
 	
+	private final class ImagePropertyListener implements
+			IPropertyListener {
+		private final IProperty imageProperty;
+		private final ImageLabel imageLabel;
+		private Image img;
+		private BufferedImage bufImg;
+
+		private ImagePropertyListener(IProperty imageProperty,
+				ImageLabel imageLabel) {
+			this.imageProperty = imageProperty;
+			this.imageLabel = imageLabel;
+		}
+
+		@Override
+		public void propertyChanged(IProperty property) {
+			updateImage();
+		}
+
+		public void updateImage() {
+			if (img != null) {
+				img.dispose();
+				img = null;
+			}
+			bufImg = (BufferedImage) imageProperty.getValue();
+			
+			if (bufImg != null && !imageLabel.isDisposed()) {
+				if (img == null) { 
+					img = ImageUtils.convertAwtImage(getDisplay(), bufImg);
+				}
+				imageLabel.setImage(img);
+			}
+		}
+		
+		public void dispose() {
+			if (img != null)
+				img.dispose();
+			if (img != null)
+				img.dispose();
+			img = null;
+			img = null;
+		}
+	}
+
 	private IPropertySource propertySource;
 
 	/**
@@ -50,39 +98,26 @@ public class ImageImportOptionsDialog extends Composite {
 		
 		editGroup.setToolTipText("Drag an image onto or out of this dialog");
 
-		/*
 		final IProperty imageProperty = propertySource.getProperty("image");
-		button.setEnabled(imageProperty.getString() != null);
 
-		imgPropListener = new IPropertyListener() {
-			
-			@Override
-			public void propertyChanged(final IProperty property) {
-				shell.getDisplay().asyncExec(new Runnable() {
-					public void run() {
-						button.setEnabled(property.getString() != null);
-					}
-				});
-			}
-		};
+		final ImageLabel imageLabel = new ImageLabel(editGroup.getContainer(), SWT.BORDER);
+		/*final ImageClipDecorator clipDecorator = */ new ImageClipDecorator(
+				imageLabel, imageImportHandler.getImageImportOptions(), listener);
 		
-		imageProperty.addListener(imgPropListener);
+		//imageLabel.setClip((Rectangle) propertySource.getProperty("clip").getValue());
 		
-		button.addDisposeListener(new DisposeListener() {
-			
-			@Override
-			public void widgetDisposed(DisposeEvent e) {
-				imageProperty.removeListener(imgPropListener);
-			}
-		});
-		*/
+		final ImagePropertyListener imagePropertyListener = 
+			new ImagePropertyListener(imageProperty, imageLabel);
+		imageProperty.addListener(imagePropertyListener);
+		
+		GridDataFactory.fillDefaults().grab(true, true).
+			minSize(64, 64).applyTo(imageLabel);
 		
 		for (IProperty prop : propertySource.getProperties()) {
-			prop.addListener(listener);
+			if (listener != imageProperty) 
+				prop.addListener(listener);
 		}
 		
-		
-
 		final Button reset = new Button(editGroup.getContainer(), SWT.PUSH);
 		reset.setText("Reset Options");
 		reset.setToolTipText("Select best options for current video settings");
@@ -114,5 +149,21 @@ public class ImageImportOptionsDialog extends Composite {
 		
 		
 		this.pack();
+		
+		imageProperty.firePropertyChange();
+		
+		this.addDisposeListener(new DisposeListener() {
+			
+			@Override
+			public void widgetDisposed(DisposeEvent e) {
+				imagePropertyListener.dispose();
+				imageProperty.removeListener(imagePropertyListener);
+				
+				for (IProperty prop : propertySource.getProperties()) {
+					if (listener != imageProperty) 
+						prop.removeListener(listener);
+				}
+			}
+		});
 	}
 }

@@ -542,7 +542,36 @@ public abstract class ImageUtils {
         return new Point(iw, ih);
     }
 
-    /**
+    public static Rectangle scaleRectToSize(Rectangle inrect, Point size, Point insize) {
+    	if (size.x == 0 || size.y == 0)
+            return new Rectangle(0, 0, 0, 0);
+        
+        if (inrect.width == 0 || inrect.height == 0)
+            return new Rectangle(0, 0, 0, 0);
+        
+        int ix, iy;
+        int iw, ih;
+        
+        if (size.x > size.y) {
+            iw = inrect.width * size.y / insize.y;
+            if (iw == 0)
+            	iw = 1;
+            ih = inrect.height * size.y / insize.y;
+            ix = inrect.x * size.y / insize.y;
+            iy = inrect.y * size.y / insize.y;
+        } else {
+            iw = inrect.width * size.x / insize.x;
+            ih = inrect.height * size.x / insize.x;
+            if (ih == 0)
+            	ih = 1;
+            ix = inrect.x * size.x / insize.x;
+            iy = inrect.y * size.x / insize.x;
+        }
+        
+        return new Rectangle(ix, iy, iw, ih);
+	}
+
+	/**
      * Determine the bit depth of the image.
      * @param image incoming image
      * @return bit depth (may be larger than actual represented depth0

@@ -83,7 +83,9 @@ public class EditGroup extends Composite implements IPropertyEditorControl {
 	@Override
 	public void reset() {
 		for (Map.Entry<IProperty, IPropertyEditorControl> entry : propertyMap.entrySet()) {
-			entry.getValue().reset();
+			IPropertyEditorControl ctrl = entry.getValue();
+			if (ctrl != null) 
+				ctrl.reset();
 		}
 	}
 }
