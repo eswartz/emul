@@ -58,7 +58,7 @@ static void channel_redirection_listener(Channel * host, Channel * target) {
             if (strcmp(nm, "PathMap") == 0) service_pm = 1;
         }
         if (!service_pm || !service_ln || !service_sm) {
-            ini_path_map_service(host->protocol);
+            ini_path_map_service(host->protocol, bcg);
             if (service_pm) forward_pm = 1;
         }
         if (service_mm) {
