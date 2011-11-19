@@ -12,6 +12,7 @@ import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.ejs.coffee.core.properties.FieldProperty;
+import org.ejs.coffee.core.properties.IPropertyEditorControl;
 
 /**
  * @author ejs
@@ -33,7 +34,7 @@ public class ComboFieldEditor extends FieldPropertyEditor {
 	/* (non-Javadoc)
 	 * @see org.ejs.chiprocksynth.generator.IPropertyEditorProvider#createEditor(org.eclipse.swt.widgets.Composite)
 	 */
-	public Control createEditor(Composite parent) {
+	public IPropertyEditorControl createEditor(Composite parent) {
 		combo = new Combo(parent, SWT.BORDER);
 		combo.setItems(strings);
 		try {
@@ -41,7 +42,7 @@ public class ComboFieldEditor extends FieldPropertyEditor {
 		} catch (Exception e2) {
 			e2.printStackTrace();
 		}
-		combo.addSelectionListener(new SelectionAdapter() {
+		final SelectionAdapter selectionListener = new SelectionAdapter() {
 			/* (non-Javadoc)
 			 * @see org.eclipse.swt.events.SelectionAdapter#widgetDefaultSelected(org.eclipse.swt.events.SelectionEvent)
 			 */
@@ -57,17 +58,38 @@ public class ComboFieldEditor extends FieldPropertyEditor {
 			public void widgetSelected(SelectionEvent e) {
 				change();
 			}
-		});
+		};
+		combo.addSelectionListener(selectionListener);
 		
-		combo.addModifyListener(new ModifyListener() {
+		final ModifyListener modifyListener = new ModifyListener() {
 
 			public void modifyText(ModifyEvent e) {
 				change();
 			}
 			
-		});
+		};
+		combo.addModifyListener(modifyListener);
 		
-		return combo;
+		return new IPropertyEditorControl() {
+
+			@Override
+			public Control getControl() {
+				return combo;
+			}
+
+			@Override
+			public void reset() {
+				combo.removeSelectionListener(selectionListener);
+				combo.removeModifyListener(modifyListener);
+				
+				combo.select(property.getInt());
+
+				combo.addSelectionListener(selectionListener);
+				combo.addModifyListener(modifyListener);
+			}
+			
+		};
+		
 	}
 	private void change() {
 		int index = combo.getSelectionIndex();

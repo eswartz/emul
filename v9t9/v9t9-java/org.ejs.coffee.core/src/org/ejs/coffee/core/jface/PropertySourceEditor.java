@@ -8,6 +8,7 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
 import org.ejs.coffee.core.properties.IProperty;
 import org.ejs.coffee.core.properties.IPropertyEditor;
+import org.ejs.coffee.core.properties.IPropertyEditorControl;
 import org.ejs.coffee.core.properties.IPropertySource;
 
 /**
@@ -32,7 +33,8 @@ public class PropertySourceEditor implements IPropertyEditor {
 			if (property.isHidden())
 				continue;
 			PropertyEditor editor = new PropertyEditor(property);
-			editor.createEditor(group);
+			IPropertyEditorControl editorControl = editor.createEditor(group);
+			group.registerControl(property, editorControl);
 		}
 		
 		return group;

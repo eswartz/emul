@@ -6,10 +6,12 @@ class MonoMapColor implements IPaletteMapper {
 	private final int fg;
 	private final int bg;
 	private byte[][] palette;
+	private final int midLum;
 	
-	public MonoMapColor(int fg, int bg) {
+	public MonoMapColor(int fg, int bg, int midLum) {
 		this.fg = fg;
 		this.bg = bg;
+		this.midLum = midLum;
 		this.palette = createMonoPalette(fg, bg);
 	}
 	
@@ -32,7 +34,7 @@ class MonoMapColor implements IPaletteMapper {
 	public int mapColor(int pixel, int[] distA) {
 		int lum = ColorMapUtils.getPixelLum(pixel);
 		distA[0] = lum;
-		return lum <= 128 ? 0 : 1;
+		return lum <= midLum ? 0 : 1;
 	}
 	
 	/* (non-Javadoc)
@@ -41,7 +43,7 @@ class MonoMapColor implements IPaletteMapper {
 	@Override
 	public int getClosestPaletteEntry(int x, int y, int pixel) {
 		int lum = ColorMapUtils.getPixelLum(pixel);
-		return lum <= 128 ? fg : bg;
+		return lum <= midLum ? fg : bg;
 	}
 	
 	/* (non-Javadoc)
@@ -50,7 +52,7 @@ class MonoMapColor implements IPaletteMapper {
 	@Override
 	public int getClosestPalettePixel(int x, int y, int pixel) {
 		int lum = ColorMapUtils.getPixelLum(pixel);
-		return lum <= 128 ?  0 : -1;
+		return lum <= midLum ?  0 : -1;
 	}
 	
 	/* (non-Javadoc)

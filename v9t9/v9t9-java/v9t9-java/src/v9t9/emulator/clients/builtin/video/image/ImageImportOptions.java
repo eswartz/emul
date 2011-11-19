@@ -3,7 +3,10 @@
  */
 package v9t9.emulator.clients.builtin.video.image;
 
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
+import java.awt.image.WritableRaster;
 import java.util.Arrays;
 
 import org.ejs.coffee.core.properties.FieldProperty;
@@ -12,6 +15,7 @@ import org.ejs.coffee.core.properties.PropertySource;
 
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VdpCanvas.Format;
+import v9t9.emulator.clients.builtin.video.VdpColorManager;
 import v9t9.emulator.clients.builtin.video.tms9918a.BitmapModeRedrawHandler;
 import v9t9.emulator.clients.builtin.video.v9938.VdpV9938;
 import v9t9.engine.VdpHandler;
@@ -20,13 +24,12 @@ import v9t9.engine.VdpHandler;
  * @author ejs
  *
  */
-public class ImportOptions {
+public class ImageImportOptions {
 
 	public enum Dither {
 		NONE("None"),
-		MONO("Monochrome"),
-		FS("Floyd-Steinberg"),
-		FS_LOW("Floyd-Steinberg Low Bleed");
+		ORDERED("Ordered"),
+		FS("Floyd-Steinberg");
 		
 		private final String label;
 
@@ -51,27 +54,35 @@ public class ImportOptions {
 	private boolean keepAspect = true;
 	private boolean asGreyScale;
 	private boolean optimizePalette = true;
-	private Dither ditherType;
+	private boolean ditherMono;
+	private Dither ditherType = Dither.NONE;
 	
 	private byte[][] origPalette;
 	private BufferedImage image;
-	private Format format;
+	private Rectangle clip;
 	
 	private FieldProperty scaleSmoothProperty;
 	private FieldProperty keepAspectProperty;
 	private FieldProperty asGreyScaleProperty;
 	private FieldProperty optimizePaletteProperty;
 	private FieldProperty ditheringProperty;
+	private FieldProperty ditherMonoProperty;
+	private FieldProperty imageProperty;
+	private FieldProperty clipProperty;
 	
 	/**
 	 * 
 	 */
-	public ImportOptions() {
+	public ImageImportOptions() {
 		scaleSmoothProperty = new FieldProperty(this, "scaleSmooth", "Smooth Scaling");
 		keepAspectProperty = new FieldProperty(this, "keepAspect", "Keep Aspect Ratio");
 		asGreyScaleProperty = new FieldProperty(this, "asGreyScale", "Convert To Greyscale");
 		optimizePaletteProperty = new FieldProperty(this, "optimizePalette", "Optimize Palette");
 		ditheringProperty = new FieldProperty(this, "ditherType", "Dithering");
+		ditherMonoProperty = new FieldProperty(this, "ditherMono", "Dither Monochrome");
+		imageProperty = new FieldProperty(this, "image", "Last Image");
+		clipProperty = new FieldProperty(this, "clip", "Clip Region");
+		clipProperty.setHidden(true);
 	}
 	/**
 	 * @return
@@ -83,6 +94,9 @@ public class ImportOptions {
 		ps.addProperty(asGreyScaleProperty);
 		ps.addProperty(optimizePaletteProperty);
 		ps.addProperty(ditheringProperty);
+		ps.addProperty(ditherMonoProperty);
+		ps.addProperty(imageProperty);
+		ps.addProperty(clipProperty);
 		return ps;
 	}
 	
@@ -116,13 +130,42 @@ public class ImportOptions {
 	public void setDitherType(Dither dither) {
 		this.ditherType = dither;
 	}
+	
+	public boolean isDitherMono() {
+		return ditherMono;
+	}
+	public void setDitherMono(boolean ditherMono) {
+		this.ditherMono = ditherMono;
+	}
 	public void setImage(BufferedImage image) {
-		this.image = image;
+		if (image != this.image) {
+			if (clip != null && !clip.isEmpty()) {
+				clip = null;
+				clipProperty.firePropertyChange();
+			}
+			this.image = image;
+			imageProperty.firePropertyChange();
+		}
 	}
 	public BufferedImage getImage() {
-		return image;
+		if (image == null || clip == null || clip.isEmpty())
+			return image;
+		
+        ColorModel cm = image.getColorModel();
+        WritableRaster wr = image.getRaster().createCompatibleWritableRaster(clip.width, clip.height);
+        wr.setRect(-clip.x, -clip.y, image.getRaster());
+
+        return new BufferedImage(cm, wr, cm.isAlphaPremultiplied(), null);
+
 	}
 
+	
+	public Rectangle getClip() {
+		return clip;
+	}
+	public void setClip(Rectangle clip) {
+		this.clip = clip;
+	}
 	public void setOrigPalette(byte[][] thePalette) {
 		byte[][] newP = new byte[thePalette.length][];
 		for (int i = 0; i < thePalette.length; i++) {
@@ -133,36 +176,22 @@ public class ImportOptions {
 	public byte[][] getOrigPalette() {
 		return origPalette;
 	}
-	public Format getFormat() {
-		return format;
-	}
-	public void setFormat(Format format) {
-		this.format = format;
-	}
 	/**
 	 * Use this when the image has been dragged/dropped.
-	 * @param image2
-	 * @param isLowColor
 	 */
-	public void updateFrom(VdpCanvas canvas, VdpHandler vdp, BufferedImage image, boolean isLowColor) {
+	public void updateFrom(BufferedImage image) {
 		setImage(image);
-		setFormat(canvas.getFormat());
-		
-		///////
-		if (format == Format.COLOR16_8x1) {
-			if (!canvas.getColorMgr().isGreyscale())
-				isLowColor = true;
-		}
-		
-		if (image.getColorModel().getPixelSize() <= 8) {
-			isLowColor = true;
-		}
-		
-		setScaleSmooth(!isLowColor);
-		
-		////
-
+	}
+	
+	/**
+	 * Call to reset options to the presumed best ones for the
+	 * current video mode.
+	 */
+	public void resetOptions(VdpCanvas canvas, VdpHandler vdp) {
 		boolean canSetPalette;
+		
+		Format format = canvas.getFormat();
+		
 		if (vdp instanceof VdpV9938) {
 			// hack: graphics mode 2 allows setting the palette too, 
 			// but for comparison shopping, pretend we can't.
@@ -175,14 +204,31 @@ public class ImportOptions {
 			canSetPalette = false;
 		}
 		
+		///////
+		
+		boolean isLowColor = false;
+		
+		if (format == Format.COLOR16_8x1) {
+			if (!canvas.getColorMgr().isGreyscale())
+				isLowColor = true;
+		}
+		
+		setScaleSmooth(!isLowColor);
+		
+		////
+		
 		setOptimizePalette(canSetPalette);
 		
 		/////
 		boolean isMonoMode = (vdp.getVdpModeRedrawHandler() instanceof BitmapModeRedrawHandler &&
 				((BitmapModeRedrawHandler) vdp.getVdpModeRedrawHandler()).isMono());
 		
-		setDitherType(isMonoMode ? Dither.MONO :  canSetPalette ? Dither.FS : Dither.FS_LOW);
+		setDitherMono(isMonoMode);
+		setDitherType(format == Format.COLOR16_8x1 && !canSetPalette ? Dither.ORDERED : Dither.FS);
 		
-		setOrigPalette(canvas.getColorMgr().getPalette());
+		if (!canSetPalette)
+			setOrigPalette(VdpColorManager.getStandardPalette(vdp));
+		else
+			setOrigPalette(canvas.getColorMgr().getPalette());
 	}
 }

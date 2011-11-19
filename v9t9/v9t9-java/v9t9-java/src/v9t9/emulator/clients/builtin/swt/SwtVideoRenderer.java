@@ -226,12 +226,12 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 	protected void updateWidgetSizeForMode() {
 		int visibleWidth = getCanvas().getVisibleWidth();
 		int visibleHeight = getCanvas().getVisibleHeight();
-		fixedAspectLayout.setSize(visibleWidth, visibleHeight);
+		fixedAspectLayout.setAspect((double) visibleWidth / visibleHeight);
 		if (visibleWidth > 256)
 			visibleWidth /= 2;
 		if (vdpCanvas.isInterlacedEvenOdd())
 			visibleHeight /= 2;
-		fixedAspectLayout.setAspect((double) visibleWidth / visibleHeight);
+		fixedAspectLayout.setSize(visibleWidth, visibleHeight);
 		if (canvas != null)
 			canvas.getParent().layout(true);
 	}

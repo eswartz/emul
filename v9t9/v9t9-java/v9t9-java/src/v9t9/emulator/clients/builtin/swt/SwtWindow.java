@@ -313,8 +313,6 @@ public class SwtWindow extends BaseEmulatorWindow{
 			public void propertyChanged(final IProperty setting) {
 				Display.getDefault().syncExec(new Runnable() {
 					public void run() {
-						//((GridData) buttons.getButtonBar().getLayoutData()).exclude = setting.getBoolean();
-						//((GridData) statusBar.getImageBar().getLayoutData()).exclude = setting.getBoolean();
 						shell.setFullScreen(setting.getBoolean());
 					}
 				});

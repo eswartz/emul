@@ -11,5 +11,5 @@ import org.eclipse.swt.widgets.Control;
  *
  */
 public interface IPropertyEditor {
-	Control createEditor(Composite parent);
+	IPropertyEditorControl createEditor(Composite parent);
 }

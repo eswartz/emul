@@ -56,7 +56,8 @@ public class FieldUtils {
 			
 		} catch (Exception e) {
 			if  (value != null)
-				new Exception("Setting " + field.getName() + " in " + obj + " with " + value).printStackTrace();
+				new Exception("Setting " + field.getName() + " in " + obj + " with " + value,
+						e).printStackTrace();
 		}
 	}
 

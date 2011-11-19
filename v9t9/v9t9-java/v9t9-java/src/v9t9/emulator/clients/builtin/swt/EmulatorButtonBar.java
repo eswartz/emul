@@ -173,7 +173,7 @@ public class EmulatorButtonBar extends EmulatorBar  {
 			});
 	
 
-		final ImageImportSupport imageSupport = new ImageImportSupport(swtWindow.getEventNotifier(), swtWindow.getVideoRenderer());
+		final SwtImageImportSupport imageSupport = new SwtImageImportSupport(swtWindow.getEventNotifier(), swtWindow.getVideoRenderer());
 		BasicButton imageImportButton = createButton(17, "Import image (drag onto icon!)",
 			new SelectionAdapter() {
 				@Override
@@ -187,7 +187,7 @@ public class EmulatorButtonBar extends EmulatorBar  {
 							behavior.dismissOnClickOutside = true;
 						}
 						public Control createContents(Shell shell) {
-							ImageImportDialog dialog = imageSupport.createImageImportDialog(shell);
+							ImageImportOptionsDialog dialog = imageSupport.createImageImportDialog(shell);
 							imageSupport.addImageImportDnDControl(dialog);
 							return dialog;
 						}

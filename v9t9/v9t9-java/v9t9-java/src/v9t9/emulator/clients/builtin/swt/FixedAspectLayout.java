@@ -74,9 +74,8 @@ public class FixedAspectLayout extends Layout {
 	@Override
 	protected Point computeSize(Composite composite, int wHint, int hHint,
 			boolean flushCache) {
-		Rectangle area = composite.getClientArea();
 		Rectangle bounds = composite.getParent().getClientArea();
-		//System.out.println("cursize: " + area + " vs " +bounds);
+		//System.out.println("bounds: " +bounds);
 		
 		int neww, newh;
 		if (composite.getShell().getFullScreen()) {
@@ -85,14 +84,14 @@ public class FixedAspectLayout extends Layout {
 		}
 		else {
 			if (wHint == SWT.DEFAULT) {
-				neww = fixup(area.width, bounds.width, w);
+				neww = fixup(bounds.width, w);
 			} else {
-				neww = fixup(wHint, wHint, w);
+				neww = fixup(wHint, w);
 			}
 			if (hHint == SWT.DEFAULT) {
-				newh = fixup(area.height, bounds.height, h);
+				newh = fixup(bounds.height, h);
 			} else {
-				newh = fixup(hHint, hHint, h);
+				newh = fixup(hHint, h);
 			}
 		}
 		
@@ -110,7 +109,7 @@ public class FixedAspectLayout extends Layout {
 		return desired;
 	}
 
-	private int fixup(@SuppressWarnings("unused") int hint, int max, int base) {
+	private int fixup(int max, int base) {
 		// get the hint close to a multiple of base
 		int q = base;
 		if (max / base <= maxforquantum)
@@ -124,7 +123,7 @@ public class FixedAspectLayout extends Layout {
 	
 	@Override
 	protected void layout(Composite composite, boolean flushCache) {
-		Rectangle area = composite.getClientArea();
+		Rectangle area = composite.getBounds();
 		//System.out.println("layout at " + area);
 		zoomx = (double) area.width / w;
 		if (zoomx < 1)

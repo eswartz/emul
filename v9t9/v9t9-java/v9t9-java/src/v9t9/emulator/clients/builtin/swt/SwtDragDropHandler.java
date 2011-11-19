@@ -44,6 +44,7 @@ import v9t9.emulator.clients.builtin.video.ICanvas;
 import v9t9.emulator.clients.builtin.video.ImageDataCanvas;
 import v9t9.emulator.clients.builtin.video.VdpCanvas.Format;
 import v9t9.emulator.clients.builtin.video.image.ImageImport;
+import v9t9.emulator.clients.builtin.video.image.ImageImportOptions;
 import v9t9.emulator.common.IEventNotifier;
 import v9t9.emulator.common.IEventNotifier.Level;
 
@@ -342,7 +343,14 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 			}
 			
 			if (info != null) {
-				importImage(info.first, info.second);
+
+				ImageImport importer = importHandler.createImageImport();
+				ImageImportOptions imageImportOptions = importHandler.getImageImportOptions();
+				imageImportOptions.updateFrom(info.first);
+				imageImportOptions.setScaleSmooth(!info.second);
+				importer.importImage();
+				
+				renderer.setFocus();
 			}
 		} catch (Throwable t) {
 			t.printStackTrace();
@@ -473,15 +481,6 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 
 		return new Pair<BufferedImage, Boolean>(img, !data.palette.isDirect);
 		
-	}
-
-	/**
-	 * @param image
-	 * @param isLowColor 
-	 */
-	protected void importImage(BufferedImage image, boolean isLowColor) {
-		
-		importHandler.importImage(image, isLowColor);
 	}
 
 

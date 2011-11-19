@@ -5,6 +5,9 @@ package v9t9.emulator.clients.builtin.video;
 
 import java.util.Arrays;
 
+import v9t9.emulator.clients.builtin.video.v9938.VdpV9938;
+import v9t9.engine.VdpHandler;
+
 /**
  * Handle all the needs of the VDP color model -- stock palettes,
  * greyscale handling, V9938 4-color mode & sprite palette handling, etc.
@@ -143,17 +146,19 @@ public class VdpColorManager {
 	}
 	
 	/**
+	 * @param vdp 
 	 * 
 	 */
 	public VdpColorManager() {
 
 		colorPalette = new byte[16][];
-    	for (int i = 0; i < 16; i++)
-    		colorPalette[i] = Arrays.copyOf(stockPalette[i], 3); 
+    	byte[][] stockpalette = stockPalette;
+		for (int i = 0; i < 16; i++)
+    		colorPalette[i] = Arrays.copyOf(stockpalette[i], 3); 
 
     	greyPalette = new byte[16][];
     	for (int i = 0; i < 16; i++)
-    		greyPalette[i] = ColorMapUtils.rgbToGrey(stockPalette[i]);
+    		greyPalette[i] = ColorMapUtils.rgbToGrey(stockpalette[i]);
     	
     	altSpritePalette = new byte[16][];
     	altSpritePaletteGrey = new byte[16][];
@@ -295,4 +300,29 @@ public class VdpColorManager {
 		useAltSpritePalette = b;
 		setGreyscale(isGreyscale());	// reset sprite palette		
 	}
+	
+	public boolean isStandardPalette() {
+		boolean isStandardPalette = false;
+		for (byte[][] palette : VdpColorManager.allPalettes()) {
+			if (palette.length == thePalette.length) {
+				boolean match = true;
+				for (int i = 0; i < palette.length; i++) {
+					if (!Arrays.equals(palette[i], thePalette[i])) {
+						match = false;
+						break;
+					}
+				}
+				if (match) {
+					isStandardPalette = true;
+					break;
+				}
+			}
+		}
+		return isStandardPalette;
+	}
+
+	public static byte[][] getStandardPalette(VdpHandler vdp) {
+		return vdp instanceof VdpV9938 ? stockPaletteV9938 : stockPalette;
+	}
+
 }

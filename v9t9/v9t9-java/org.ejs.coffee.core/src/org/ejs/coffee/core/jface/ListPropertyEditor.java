@@ -32,6 +32,7 @@ import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 import org.ejs.coffee.core.properties.IClassPropertyFactory;
 import org.ejs.coffee.core.properties.IPropertyEditor;
+import org.ejs.coffee.core.properties.IPropertyEditorControl;
 import org.ejs.coffee.core.properties.IPropertyEditorProvider;
 import org.ejs.coffee.core.properties.ListFieldProperty;
 import org.ejs.coffee.core.utils.CompatUtils;
@@ -57,8 +58,8 @@ public class ListPropertyEditor implements IPropertyEditor {
 	/* (non-Javadoc)
 	 * @see org.ejs.chiprocksynth.editor.IPropertyEditor#createEditor(org.eclipse.swt.widgets.Composite)
 	 */
-	public Control createEditor(Composite parent) {
-		Composite composite = new Composite(parent, SWT.BORDER);
+	public IPropertyEditorControl createEditor(Composite parent) {
+		final Composite composite = new Composite(parent, SWT.BORDER);
 		GridLayoutFactory.fillDefaults().numColumns(2).applyTo(composite);
 		
 		// first column: the items
@@ -75,7 +76,20 @@ public class ListPropertyEditor implements IPropertyEditor {
 				((Shell)e.widget).removeShellListener(this);
 			}
 		});
-		return composite;
+		
+		return new IPropertyEditorControl() {
+
+			@Override
+			public Control getControl() {
+				return composite;
+			}
+
+			@Override
+			public void reset() {
+				System.err.println(getClass() + " : TODO");
+			}
+			
+		};
 	}
 
 	/**
@@ -236,8 +250,9 @@ public class ListPropertyEditor implements IPropertyEditor {
 					IPropertyEditorProvider pep = (IPropertyEditorProvider) currentElement;
 					IPropertyEditor editor = pep.createEditor(property);
 					if (editor != null) {
-						Control control = editor.createEditor(editorHolder);
-						GridDataFactory.fillDefaults().grab(true, true).applyTo(control);
+						IPropertyEditorControl control = editor.createEditor(editorHolder);
+						GridDataFactory.fillDefaults().grab(true, true).applyTo(control.getControl());
+						// TODO: save editor control somewhere
 						editorHolder.getShell().layout(true, true);
 						//editorHolder.getShell().pack();
 					}
