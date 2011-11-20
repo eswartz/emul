@@ -3,6 +3,7 @@
  */
 package v9t9.emulator.clients.builtin.swt;
 
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.Image;
@@ -28,7 +29,7 @@ public class ImageLabel extends Composite implements PaintListener {
 	 * @param style
 	 */
 	public ImageLabel(Composite parent, int style) {
-		super(parent, style);
+		super(parent, style | SWT.DOUBLE_BUFFERED);
 		
 		addPaintListener(this);
 	}
