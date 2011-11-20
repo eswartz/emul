@@ -4,6 +4,7 @@
 package v9t9.emulator.clients.builtin.swt;
 
 import org.eclipse.jface.layout.GridDataFactory;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.DisposeEvent;
@@ -39,11 +40,11 @@ public class ToolShell {
 	private final boolean isHorizontal;
 	private Control toolControl;
 	
-	public ToolShell(Shell shell_, 
+	public ToolShell(Shell parentShell, 
 			IFocusRestorer focusRestorer_,
 			boolean isHorizontal,
 			Behavior behavior) {
-		this.shell = shell_;
+		this.shell = new Shell(parentShell, SWT.TOOL | SWT.RESIZE | SWT.CLOSE | SWT.TITLE);
 		this.focusRestorer = focusRestorer_;
 		this.behavior = behavior;
 		this.isHorizontal = isHorizontal;

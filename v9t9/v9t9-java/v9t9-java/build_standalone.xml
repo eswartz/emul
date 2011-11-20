@@ -44,5 +44,19 @@
             <zipfileset dir="${base.v9t9}/libs/orbit/plugins" includes="org.apache.batik.util.gui_1.7.0.v200903091627.jar"/>
             <zipfileset dir="${base.v9t9}/libs/orbit/plugins" includes="org.apache.batik.xml_1.7.0.v201011041433.jar"/>
         </jar>
+
+    	<copy file="${base.v9t9}/data/release/v9t9.bat" tofile="${bin.dir}/v9t9.bat"/>
+    	<copy file="${base.v9t9}/data/release/v9t9.sh" tofile="${bin.dir}/v9t9.sh"/>
+
+    	<copy todir="${bin.dir}/lwjgl">
+    	    <fileset dir="${base.v9t9}/libs/lwjgl/native">
+    	      <include name="**/**"/>
+    	    </fileset>
+    	    <fileset dir="${base}/libv9t9render">
+    	      <include name="v9t9render**.dll"/>
+    	      <include name="libv9t9render**.so"/>
+    	    </fileset>
+  	    </copy>
+    		
     </target>
 </project>
