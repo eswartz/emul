@@ -423,9 +423,8 @@ public class SwtWindow extends BaseEmulatorWindow{
 	 */
 	protected ToolShell createToolShell(String toolId, IToolShellFactory toolShellFactory) {
 		ToolShell toolShell;
-		Shell shell = new Shell(getShell(), SWT.RESIZE | SWT.TOOL | SWT.TITLE);
-		toolShell = new ToolShell(shell, focusRestorer, isHorizontal, toolShellFactory.getBehavior());  
-		Control tool = toolShellFactory.createContents(shell);
+		toolShell = new ToolShell(getShell(), focusRestorer, isHorizontal, toolShellFactory.getBehavior());  
+		Control tool = toolShellFactory.createContents(toolShell.getShell());
 		toolShell.init(tool);
 		addToolShell(toolId, toolShell);
 		return toolShell;
