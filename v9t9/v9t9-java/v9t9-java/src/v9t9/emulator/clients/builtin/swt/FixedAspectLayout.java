@@ -9,6 +9,8 @@ import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Layout;
 
+import v9t9.emulator.clients.builtin.BaseEmulatorWindow;
+
 /**
  * This layout ensures that the aspect ratio remains consistent with the provided
  * width and height, allowing for zoom.
@@ -78,7 +80,7 @@ public class FixedAspectLayout extends Layout {
 		//System.out.println("bounds: " +bounds);
 		
 		int neww, newh;
-		if (composite.getShell().getFullScreen()) {
+		if (BaseEmulatorWindow.settingFullScreen.getBoolean()) {		// don't check current shell's fullscreen state -- may be async!
 			neww = bounds.width;
 			newh = bounds.height;
 		}
