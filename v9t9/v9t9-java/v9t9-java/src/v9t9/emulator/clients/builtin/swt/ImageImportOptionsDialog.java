@@ -104,8 +104,6 @@ public class ImageImportOptionsDialog extends Composite {
 		/*final ImageClipDecorator clipDecorator = */ new ImageClipDecorator(
 				imageLabel, imageImportHandler.getImageImportOptions(), listener);
 		
-		//imageLabel.setClip((Rectangle) propertySource.getProperty("clip").getValue());
-		
 		final ImagePropertyListener imagePropertyListener = 
 			new ImagePropertyListener(imageProperty, imageLabel);
 		imageProperty.addListener(imagePropertyListener);
@@ -150,7 +148,8 @@ public class ImageImportOptionsDialog extends Composite {
 		
 		this.pack();
 		
-		imageProperty.firePropertyChange();
+		//imageProperty.firePropertyChange();
+		imagePropertyListener.propertyChanged(imageProperty);
 		
 		this.addDisposeListener(new DisposeListener() {
 			
