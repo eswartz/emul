@@ -3,7 +3,6 @@
  */
 package v9t9.emulator.clients.builtin.swt;
 
-import java.awt.Toolkit;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Timer;
@@ -77,9 +76,15 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler implements ISwtKeybo
 		int keyCode = keyEvent.keyCode;
 		boolean keyPad = keyEvent.keyLocation == SWT.KEYPAD;
 		
-		if (pasteTimer != null && pressed && keyCode == SWT.ESC) {
-			cancelPaste();
-			return;
+		if (keyCode == SWT.ESC) {
+			if (pasteTimer != null && pressed) {
+				cancelPaste();
+				return;
+			}
+			else {
+				keyboardState.resetKeyboard();
+				keyboardState.resetJoystick();
+			}
 		}
 		
 		//System.out.println("recordKey: pressed="+pressed+"; statemask="+Integer.toHexString(stateMask)
@@ -369,11 +374,12 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler implements ISwtKeybo
 
 	private boolean isNumLock() {
 		boolean on;
-		try {
-			on = Toolkit.getDefaultToolkit().getLockingKeyState(java.awt.event.KeyEvent.VK_NUM_LOCK);
-		} catch (UnsupportedOperationException e) {
+		// hmm, seems either unavailable or plain wrong
+		//try {
+		//	on = Toolkit.getDefaultToolkit().getLockingKeyState(java.awt.event.KeyEvent.VK_NUM_LOCK);
+		//} catch (UnsupportedOperationException e) {
 			on = keyboardState.getNumLock();
-		}
+		//}
 		return on;
 	}
 
