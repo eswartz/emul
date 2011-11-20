@@ -8,6 +8,10 @@
     <property name="build.dir"   value="${base}/../build"/>
     <property name="bin.dir"     value="${build.dir}/bin"/>
 	
+    <property name="target.os"     value="win32"/>
+    <property name="target.ws"     value="win32"/>
+    <property name="target.arch"     value="x86"/>
+	
 	<!-- NOTE: ugly hack - there is no 'c' build for Linux, but I dunno how to conditionalize that,
 	so the jar file is renamed on disk -->
     <property name="swt.native.jar"     
@@ -19,7 +23,7 @@
                 <attribute name="Main-Class" value="org.eclipse.jdt.internal.jarinjarloader.JarRsrcLoader"/>
                 <attribute name="Rsrc-Main-Class" value="v9t9.emulator.Emulator"/>
                 <attribute name="Class-Path" value="."/>
-                <attribute name="Rsrc-Class-Path" value="./ jna.jar ${swt.native.jar} org.eclipse.swt_3.6.2.v3659c.jar org.eclipse.jface_3.6.2.M20110210-1200.jar org.eclipse.core.commands_3.6.0.I20100512-1500.jar org.eclipse.core.runtime_3.6.0.v20100505.jar org.eclipse.equinox.common_3.6.0.v20100503.jar junit.jar gnu-getopt-1.0.11.jar jinput.jar lwjgl_util.jar lwjgl.jar antlr-runtime-3.2.jar antlr-3.2.jar bcel-5.2.jar org.apache.batik.bridge_1.7.0.v201011041433.jar org.apache.batik.bridge.source_1.7.0.v201011041433.jar org.apache.batik.css_1.7.0.v201011041433.jar org.apache.batik.css.source_1.7.0.v201011041433.jar org.apache.batik.dom_1.7.0.v201011041433.jar org.apache.batik.dom.source_1.7.0.v201011041433.jar org.apache.batik.dom.svg_1.7.0.v201011041433.jar org.apache.batik.dom.svg.source_1.7.0.v201011041433.jar org.apache.batik.ext.awt_1.7.0.v201011041433.jar org.apache.batik.ext.awt.source_1.7.0.v201011041433.jar org.apache.batik.extension_1.7.0.v201011041433.jar org.apache.batik.extension.source_1.7.0.v201011041433.jar org.apache.batik.parser_1.7.0.v201011041433.jar org.apache.batik.parser.source_1.7.0.v201011041433.jar org.apache.batik.svggen_1.7.0.v201011041433.jar org.apache.batik.svggen.source_1.7.0.v201011041433.jar org.apache.batik.swing_1.7.0.v201011041433.jar org.apache.batik.swing.source_1.7.0.v201011041433.jar org.apache.batik.transcoder_1.7.0.v201011041433.jar org.apache.batik.transcoder.source_1.7.0.v201011041433.jar org.apache.batik.util_1.7.0.v201011041433.jar org.apache.batik.util.gui_1.7.0.v200903091627.jar org.apache.batik.util.gui.source_1.7.0.v200903091627.jar org.apache.batik.util.source_1.7.0.v201011041433.jar org.apache.batik.xml_1.7.0.v201011041433.jar org.apache.batik.xml.source_1.7.0.v201011041433.jar"/>
+                <attribute name="Rsrc-Class-Path" value="./ jna.jar org.eclipse.swt_3.6.2.v3659c.jar ${swt.native.jar} org.eclipse.jface_3.6.2.M20110210-1200.jar org.eclipse.core.commands_3.6.0.I20100512-1500.jar org.eclipse.core.runtime_3.6.0.v20100505.jar org.eclipse.equinox.common_3.6.0.v20100503.jar junit.jar gnu-getopt-1.0.11.jar jinput.jar lwjgl_util.jar lwjgl.jar antlr-runtime-3.2.jar antlr-3.2.jar bcel-5.2.jar org.apache.batik.bridge_1.7.0.v201011041433.jar org.apache.batik.bridge.source_1.7.0.v201011041433.jar org.apache.batik.css_1.7.0.v201011041433.jar org.apache.batik.css.source_1.7.0.v201011041433.jar org.apache.batik.dom_1.7.0.v201011041433.jar org.apache.batik.dom.source_1.7.0.v201011041433.jar org.apache.batik.dom.svg_1.7.0.v201011041433.jar org.apache.batik.dom.svg.source_1.7.0.v201011041433.jar org.apache.batik.ext.awt_1.7.0.v201011041433.jar org.apache.batik.ext.awt.source_1.7.0.v201011041433.jar org.apache.batik.extension_1.7.0.v201011041433.jar org.apache.batik.extension.source_1.7.0.v201011041433.jar org.apache.batik.parser_1.7.0.v201011041433.jar org.apache.batik.parser.source_1.7.0.v201011041433.jar org.apache.batik.svggen_1.7.0.v201011041433.jar org.apache.batik.svggen.source_1.7.0.v201011041433.jar org.apache.batik.swing_1.7.0.v201011041433.jar org.apache.batik.swing.source_1.7.0.v201011041433.jar org.apache.batik.transcoder_1.7.0.v201011041433.jar org.apache.batik.transcoder.source_1.7.0.v201011041433.jar org.apache.batik.util_1.7.0.v201011041433.jar org.apache.batik.util.gui_1.7.0.v200903091627.jar org.apache.batik.util.gui.source_1.7.0.v200903091627.jar org.apache.batik.util.source_1.7.0.v201011041433.jar org.apache.batik.xml_1.7.0.v201011041433.jar org.apache.batik.xml.source_1.7.0.v201011041433.jar"/>
             </manifest>
         	
             <zipfileset src="jar-in-jar-loader.zip"/>
@@ -58,6 +62,8 @@
     	    <fileset dir="${base.v9t9}/libs/lwjgl/native">
     	      <include name="**/**"/>
     	    </fileset>
+  	    </copy>
+    	<copy todir="${bin.dir}">
     	    <fileset dir="${base}/libv9t9render">
     	      <include name="v9t9render**.dll"/>
     	      <include name="libv9t9render**.so"/>
