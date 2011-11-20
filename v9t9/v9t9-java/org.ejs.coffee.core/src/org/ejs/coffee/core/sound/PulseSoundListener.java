@@ -159,14 +159,14 @@ public class PulseSoundListener implements ISoundListener {
 		//soundSamplesPerTick = soundFormat.getFrameSize() * soundFramesPerTick / 2;
 	}
 
-	public void dispose() {
+	public synchronized void dispose() {
 		waitUntilSilent();
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.ejs.chiprocksynth.SoundListener#played(org.ejs.chiprocksynth.AudioChunk)
 	 */
-	public void played(SoundChunk chunk) {
+	public synchronized void played(SoundChunk chunk) {
 		try {
 			if (soundWritingThread == null) {
 				if (soundQueue.remainingCapacity() == 0)
@@ -185,14 +185,14 @@ public class PulseSoundListener implements ISoundListener {
 	/* (non-Javadoc)
 	 * @see org.ejs.coffee.core.sound.ISoundListener#setVolume(double)
 	 */
-	public void setVolume(double loudness) {
+	public synchronized void setVolume(double loudness) {
 		this.volume = Math.max(0.0, Math.min(1.0, loudness));
 	}
 	
 	/**
 	 * 
 	 */
-	public void waitUntilEmpty() {
+	public synchronized void waitUntilEmpty() {
 		if (simple != null)
 			soundQueue.clear();
 		while (!soundQueue.isEmpty()) {
@@ -208,7 +208,7 @@ public class PulseSoundListener implements ISoundListener {
 	/**
 	 * 
 	 */
-	public void waitUntilSilent() {
+	public synchronized void waitUntilSilent() {
 		if (simple == null)
 			return;
 		IntByReference error = new IntByReference();
