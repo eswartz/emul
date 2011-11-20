@@ -20,8 +20,9 @@ public class SoundFactory {
 	}
 	
 	public static ISoundListener createAudioListener() {
-		if (System.getProperty("os.name").equals("Linux")) 
-			if (isPulseRunning())
+		if (System.getProperty("os.name").equals("Linux"))
+			// TODO: fix crashes using pulse....
+			if (false && isPulseRunning())
 				return new PulseSoundListener(100);
 			else
 				return new AlsaSoundListener(null);
