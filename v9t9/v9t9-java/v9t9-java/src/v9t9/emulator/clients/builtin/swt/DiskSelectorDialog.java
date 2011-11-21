@@ -27,6 +27,7 @@ import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
@@ -58,7 +59,7 @@ import v9t9.engine.files.CatalogEntry;
  * @author ejs
  *
  */
-public class DiskSelector extends Composite {
+public class DiskSelectorDialog extends Composite {
 
 	private final Machine machine;
 	
@@ -110,8 +111,13 @@ public class DiskSelector extends Composite {
 			SettingEntry.this.setVisible(enabled);
 			GridData data = (GridData) SettingEntry.this.getLayoutData();
 			data.exclude = !enabled;
-			SettingEntry.this.getShell().layout(true, true);
 			
+			SettingEntry.this.getShell().layout(true, true);
+			Point cursz = SettingEntry.this.getShell().getSize();
+			Point sz = SettingEntry.this.getShell().computeSize(SWT.DEFAULT, 500, true);
+			SettingEntry.this.getShell().setSize(Math.max(cursz.x, sz.x),
+					Math.max(cursz.y, sz.y));
+					
 		}
 
 		abstract protected void createControls(Composite parent);
@@ -337,7 +343,7 @@ public class DiskSelector extends Composite {
 	/**
 	 * 
 	 */
-	public DiskSelector(Shell shell, Machine machine) {
+	public DiskSelectorDialog(Shell shell, Machine machine) {
 		
 		super(shell, SWT.NONE);
 		

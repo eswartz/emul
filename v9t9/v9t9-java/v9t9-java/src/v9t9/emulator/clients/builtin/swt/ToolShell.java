@@ -4,6 +4,7 @@
 package v9t9.emulator.clients.builtin.swt;
 
 import org.eclipse.jface.layout.GridDataFactory;
+import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
@@ -12,7 +13,6 @@ import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
@@ -54,7 +54,7 @@ public class ToolShell {
 	public void init(Control tool) {
 		this.toolControl = tool;
 		shell.setImage(((Shell)shell.getParent()).getImage());
-		shell.setLayout(new GridLayout(1, false));
+		shell.setLayout(GridLayoutFactory.fillDefaults().create());
 		
 		final GridData data = GridDataFactory.fillDefaults().grab(true, true).hint(400, 300).create();
 		toolControl.setLayoutData(data);

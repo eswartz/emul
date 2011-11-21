@@ -90,7 +90,7 @@ public class EmulatorStatusBar extends EmulatorBar {
 							behavior.dismissOnClickOutside = true;
 						}
 						public Control createContents(Shell shell) {
-							return new DiskSelector(shell, machine);
+							return new DiskSelectorDialog(shell, machine);
 						}
 						public Behavior getBehavior() {
 							return behavior;
