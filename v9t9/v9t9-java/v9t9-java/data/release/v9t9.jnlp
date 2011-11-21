@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- from http://www.eclipse.org/swt/jws/ -->
 <jnlp spec="1.0+"
-	codebase="$HOST" href="v9t9-$TARGET.jnlp">
+	codebase="$HOST$ROOT" href="v9t9-$TARGET.jnlp">
 	<information>
   		<title>V9t9</title>
   		<vendor>Ed Swartz</vendor>

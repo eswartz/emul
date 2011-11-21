@@ -12,7 +12,7 @@ class MyResource(Resource):
 root = MyResource()
 v9t9 = static.File(os.path.split(os.path.realpath(__file__))[0])
 
-root.putChild("v9t9", v9t9)
+root.putChild("$v9t9.root", v9t9)
 
 application = service.Application('web')
 site = server.Site(root)
