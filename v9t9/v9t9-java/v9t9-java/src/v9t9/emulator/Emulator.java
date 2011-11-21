@@ -48,8 +48,10 @@ import v9t9.engine.memory.MemoryModel;
 
 public class Emulator {
 
+	private static boolean sIsHosted = System.getProperty("javawebstart.version") != null;
+	
 	static {
-		if (System.getProperty("javawebstart.version") != null) {
+		if (sIsHosted) {
 			String path = Native.getWebStartLibraryPath("v9t9render");
 			System.out.println("Native libs at " + path);
 			if (path != null)
@@ -60,9 +62,8 @@ public class Emulator {
 			
 			@Override
 			public void propertyChanged(IProperty setting) {
-				if (setting.getList().isEmpty())
+				if (!setting.getList().isEmpty())
 					addDefaultPaths();
-				//DataFiles.settingBootRomsPath.saveState(EmulatorSettings.getInstance().getApplicationSettings());
 			}
 
 		});
@@ -71,7 +72,9 @@ public class Emulator {
 	}
 	
 	private static void addDefaultPaths() {
-		DataFiles.addSearchPath("../../build/roms");		
+		if (!sIsHosted) {
+			DataFiles.addSearchPath("../../build/roms");
+		}
 	}
 
 
