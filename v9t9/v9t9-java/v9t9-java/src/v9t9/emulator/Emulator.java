@@ -172,7 +172,11 @@ public class Emulator {
 	
     public static void main(String args[]) throws IOException {
     	
-    	EmulatorSettings.INSTANCE.load();
+    	try {
+    		EmulatorSettings.INSTANCE.load();
+    	} catch (IOException e) {
+    		System.err.println("Setting up new instance");
+    	}
 
 		WorkspaceSettings.CURRENT.register(ModuleManager.settingLastLoadedModule);
 
