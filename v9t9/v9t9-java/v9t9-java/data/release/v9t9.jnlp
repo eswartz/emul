@@ -7,14 +7,13 @@
   		<vendor>Ed Swartz</vendor>
   		<homepage href="http://github.com/eswartz/emul/" />
   		<description>V9t9 - TI-99/4A + more emulator</description>
+		<offline-allowed/>
 	</information>
 
 	<security>
 		<all-permissions />
 	</security>
 
-	<offline-allowed/>
-	
 	<resources>
 		<jar href="v9t9j.jar" main="true" />
 		<jar href="libs/jna.jar"/>	
