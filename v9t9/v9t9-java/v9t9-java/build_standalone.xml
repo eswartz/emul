@@ -145,7 +145,7 @@
     	       <include name="**"/>
     	    </fileset>
     	    <fileset dir="${base}/libv9t9render">
-    	      <include name="v9t9render.dll"/>
+    	      <include name="v9t9render32.dll"/>
     	    </fileset>
   	    </jar>    	
     	
@@ -158,13 +158,14 @@
     	       <include name="**"/>
     	    </fileset>
     	    <fileset dir="${base}/libv9t9render">
-    	      <include name="v9t9render.dll"/>
+    	      <include name="v9t9render64.dll"/>
     	    </fileset>
   	    </jar>    
 
 		<copy todir="${bin.v9t9.dir}/libs">
 			<fileset dir="${base.coff}/libs/swt">
 				<include name="**/org.eclipse.swt.**.jar"/>
+				<exclude name="**/*source*.jar"/>
 			</fileset>
 		</copy>    	
     	<signjar
