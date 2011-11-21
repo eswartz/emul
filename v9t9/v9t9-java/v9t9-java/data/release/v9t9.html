@@ -1,0 +1,19 @@
+<html>
+<head>
+	<title>V9t9 Web Launcher</title>
+
+</head>
+<body>
+<h1>V9t9 Web Launcher</h1>
+
+<script src="http://www.java.com/js/deployJava.js"></script>
+<script>
+    var dir = location.href.substring(0, location.href.lastIndexOf('/')+1);
+    var url = dir + "v9t9.jnlp";
+    deployJava.createWebStartLaunchButton(url, '1.6.0');
+</script>
+<noscript>This page requires JavaScript.</noscript>
+
+</body>
+
+</html>

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- from http://www.eclipse.org/swt/jws/ -->
+<jnlp spec="1.0+"
+	codebase="" href="v9t9.jnlp">
+	<information>
+  		<title>V9t9</title>
+  		<vendor>Ed Swartz</vendor>
+  		<homepage href="http://github.com/eswartz/emul/" />
+  		<description>V9t9 - TI-99/4A + more emulator</description>
+	</information>
+
+	<security>
+		<all-permissions />
+	</security>
+
+	<resources>
+		<jar href="v9t9j.jar" main="true" />
+		<jar href="libs/jna.jar"/>	
+		<jar href="libs/org.eclipse.swt.jar"/>
+		<jar href="libs/org.eclipse.jface_3.6.2.M20110210-1200.jar"/>
+		<jar href="libs/org.eclipse.core.commands_3.6.0.I20100512-1500.jar"/>
+		<jar href="libs/org.eclipse.core.runtime_3.6.0.v20100505.jar"/>
+		<jar href="libs/org.eclipse.equinox.common_3.6.0.v20100503.jar"/>
+		<jar href="libs/gnu-getopt-1.0.11.jar"/>
+		<jar href="libs/bcel-5.2.jar"/>
+		<jar href="libs/jinput.jar"/>
+		<jar href="libs/lwjgl_util.jar"/>
+		<jar href="libs/lwjgl.jar"/>
+		<jar href="libs/org.apache.batik.bridge_1.7.0.v201011041433.jar"/>
+		<jar href="libs/org.apache.batik.css_1.7.0.v201011041433.jar"/>
+		<jar href="libs/org.apache.batik.dom_1.7.0.v201011041433.jar"/>
+		<jar href="libs/org.apache.batik.dom.svg_1.7.0.v201011041433.jar"/>
+		<jar href="libs/org.apache.batik.ext.awt_1.7.0.v201011041433.jar"/>
+		<jar href="libs/org.apache.batik.extension_1.7.0.v201011041433.jar"/>
+		<jar href="libs/org.apache.batik.parser_1.7.0.v201011041433.jar"/>
+		<jar href="libs/org.apache.batik.svggen_1.7.0.v201011041433.jar"/>
+		<jar href="libs/org.apache.batik.swing_1.7.0.v201011041433.jar"/>
+		<jar href="libs/org.apache.batik.transcoder_1.7.0.v201011041433.jar"/>
+		<jar href="libs/org.apache.batik.util_1.7.0.v201011041433.jar"/>
+		<jar href="libs/org.apache.batik.util.gui_1.7.0.v200903091627.jar"/>
+		<jar href="libs/org.apache.batik.xml_1.7.0.v201011041433.jar"/>		
+	</resources>
+
+	<resources>
+		<j2se version="1.6+" 
+			java-vm-args="-ea -Xmx256M">
+		</j2se>
+	</resources>
+	
+	<resources os="Windows" arch="x86">
+		<jar href="org.eclipse.swt.win32.windows.x86.jar" />
+		<nativelib href="v9t9j-natives-win32-x86.jar" download="eager"/>
+	</resources>
+
+	<resources os="Windows" arch="x86_64">
+		<jar href="org.eclipse.swt.win32.windows.x86_64.jar" />
+		<nativelib href="v9t9j-natives-win32-x86_64.jar" download="eager"/>
+	</resources>
+
+	<resources os="Windows" arch="amd64">
+		<jar href="org.eclipse.swt.win32.win32.x86_64.jar" />
+		<nativelib href="v9t9j-natives-win32-x86_64.jar" download="eager"/>
+	</resources>
+
+	<resources os="Linux" arch="x86_64">
+		<jar href="org.eclipse.swt.gtk.linux.x86_64.jar" />
+		<nativelib href="v9t9j-natives-linux-x86_64.jar" download="eager"/>
+	</resources>
+
+	<resources os="Linux" arch="amd64">
+		<jar href="org.eclipse.swt.gtk.linux.x86_64.jar" />
+		<nativelib href="v9t9j-natives-linux-x86_64.jar" download="eager"/>
+	</resources>
+
+	<resources os="Linux">
+		<jar href="org.eclipse.swt.gtk.linux.x86.jar" />
+		<nativelib href="v9t9j-natives-linux-x86.jar" download="eager"/>
+	</resources>
+
+	<application-desc 
+		main-class="v9t9.emulator.Emulator">
+		<argument>--swtgl</argument>
+    </application-desc>
+    
+</jnlp>
