@@ -28,7 +28,7 @@ import v9t9.engine.memory.MemoryEntry;
  * @author ejs
  *
  */
-public class StandardDiskImageDsr extends BaseDiskImageDsr implements DsrHandler9900 {
+public class RealDiskImageDsr extends BaseDiskImageDsr implements DsrHandler9900 {
 	private DiskMemoryEntry romMemoryEntry;
 	
 
@@ -130,7 +130,7 @@ public class StandardDiskImageDsr extends BaseDiskImageDsr implements DsrHandler
 	private List<IDeviceIndicatorProvider> deviceIndicatorProviders;
 	
 	
-	public StandardDiskImageDsr(TI99Machine machine, short base) {
+	public RealDiskImageDsr(TI99Machine machine, short base) {
 		super(machine);
 		this.base = base;
 

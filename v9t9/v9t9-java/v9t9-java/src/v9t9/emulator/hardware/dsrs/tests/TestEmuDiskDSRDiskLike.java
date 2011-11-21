@@ -14,7 +14,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import v9t9.emulator.hardware.dsrs.emudisk.EmuDiskDsr;
-import v9t9.emulator.hardware.dsrs.realdisk.StandardDiskImageDsr;
+import v9t9.emulator.hardware.dsrs.realdisk.RealDiskImageDsr;
 import v9t9.engine.files.V9t9FDR;
 
 
@@ -34,13 +34,13 @@ public class TestEmuDiskDSRDiskLike extends BaseEmuDiskDSRTest {
 
 	@Before
 	public void setupEmuDisk() {
-		wasRealDisk = StandardDiskImageDsr.diskImageDsrEnabled.getBoolean();
-		StandardDiskImageDsr.diskImageDsrEnabled.setBoolean(false);
+		wasRealDisk = RealDiskImageDsr.diskImageDsrEnabled.getBoolean();
+		RealDiskImageDsr.diskImageDsrEnabled.setBoolean(false);
 	}
 	
 	@After
 	public void resetRealDisk() {
-		StandardDiskImageDsr.diskImageDsrEnabled.setBoolean(wasRealDisk);
+		RealDiskImageDsr.diskImageDsrEnabled.setBoolean(wasRealDisk);
 	}
 	
 	private String getString(int addr, int cnt) {

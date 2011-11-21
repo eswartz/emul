@@ -18,7 +18,7 @@ import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.settings.ISettingSection;
 
 import v9t9.emulator.clients.builtin.IconSetting;
-import v9t9.emulator.hardware.dsrs.realdisk.StandardDiskImageDsr;
+import v9t9.emulator.hardware.dsrs.realdisk.RealDiskImageDsr;
 
 
 public class DiskDirectoryMapper implements IFileMapper, IPersistable {
@@ -35,7 +35,7 @@ public class DiskDirectoryMapper implements IFileMapper, IPersistable {
 					storage, iconPath);
 			
 			addEnablementDependency(EmuDiskDsr.emuDiskDsrEnabled);
-			addEnablementDependency(StandardDiskImageDsr.diskImageDsrEnabled);
+			addEnablementDependency(RealDiskImageDsr.diskImageDsrEnabled);
 		}
 		
 		/* (non-Javadoc)
@@ -45,7 +45,7 @@ public class DiskDirectoryMapper implements IFileMapper, IPersistable {
 		public boolean isEnabled() {
 			if (!EmuDiskDsr.emuDiskDsrEnabled.getBoolean())
 				return false;
-			if (!StandardDiskImageDsr.diskImageDsrEnabled.getBoolean())
+			if (!RealDiskImageDsr.diskImageDsrEnabled.getBoolean())
 				return true;
 			
 			// only DSK3 + are real disks if emu disk also enabled

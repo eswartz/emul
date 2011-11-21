@@ -10,7 +10,7 @@ import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.dsrs.emudisk.DiskDirectoryMapper;
 import v9t9.emulator.hardware.dsrs.emudisk.EmuDiskDsr;
 import v9t9.emulator.hardware.dsrs.pcode.PCodeDsr;
-import v9t9.emulator.hardware.dsrs.realdisk.StandardDiskImageDsr;
+import v9t9.emulator.hardware.dsrs.realdisk.RealDiskImageDsr;
 import v9t9.emulator.hardware.memory.ExpRamArea;
 import v9t9.emulator.hardware.memory.TI994AStandardConsoleMemoryModel;
 import v9t9.emulator.hardware.memory.mmio.Vdp9918AMmio;
@@ -73,7 +73,7 @@ public class StandardMachineModel extends BaseTI99MachineModel {
 			
 			EmuDiskDsr emudsr = new EmuDiskDsr(DiskDirectoryMapper.INSTANCE);
 			machine.getDsrManager().registerDsr(emudsr);
-			StandardDiskImageDsr diskdsr = new StandardDiskImageDsr(machine, (short) 0x1100);
+			RealDiskImageDsr diskdsr = new RealDiskImageDsr(machine, (short) 0x1100);
 			machine.getDsrManager().registerDsr(diskdsr);
 			
 			PCodeDsr pcodedsr = new PCodeDsr(machine);
