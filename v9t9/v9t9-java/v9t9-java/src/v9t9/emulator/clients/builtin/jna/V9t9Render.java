@@ -14,7 +14,9 @@ import com.sun.jna.Structure;
  *
  */
 public interface V9t9Render extends Library {
-	V9t9Render INSTANCE = (V9t9Render) Native.loadLibrary("v9t9render", V9t9Render.class);
+	V9t9Render INSTANCE = (V9t9Render) Native.loadLibrary(
+			"v9t9render" + (System.getProperty("os.arch").matches("x86_64|amd64") ? "64" : "32"), 
+			V9t9Render.class);
 	
 	void        scaleImage(
 			byte[] out,

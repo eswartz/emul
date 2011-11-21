@@ -13,7 +13,7 @@ JAR="$(JAVAPATH)/bin/jar.exe"
 CFLAGS=-DGETTIMEOFDAY_TWO_ARGS
 JAVAINC=-I"$(JAVAPATH)/include" -I"$(JAVAPATH)/include/win32"
 LDFLAGS=
-SOEXT=dll
+SOEXT=64.dll
 else
 
 
@@ -23,13 +23,19 @@ JAVAINC=-I/usr/lib/jvm/java-6-sun/include/ \
 	-I/usr/lib/jvm/java-6-sun/include/linux
 LDFLAGS=-fPIC  -Wl,-zdefs 
 CFLAGS=-fPIC -DGETTIMEOFDAY_TWO_ARGS
-SOEXT=so
 
+ARCH=$(shell /bin/uname -m)
+
+ifeq "$(ARCH)" "i686"
+SOEXT=32.so
+else
+SOEXT=64.so
+endif
 endif
 
 CFLAGS+=-g  -I. $(JAVAINC) -O6 
 
-all: swig libanalogtv.$(SOEXT) libanalogtv.jar
+all: swig libanalogtv$(SOEXT) libanalogtv.jar
 
 clean:
 	rm -f libanalogtv.jar libanalogtv.so analogtv.o yarandom.o analogtv_wrap.o analogtv_wrap.c
@@ -38,7 +44,7 @@ analogtv_wrap.c swig: analogtv.i $(wildcard *.h)
 	rm -rf swig; mkdir -p swig/org/xorg/analogtv
 	swig -I. -java -outdir swig/org/xorg/analogtv -package org.xorg.analogtv analogtv.i
 	
-libanalogtv.$(SOEXT): analogtv.o yarandom.o analogtv_wrap.o
+libanalogtv$(SOEXT): analogtv.o yarandom.o analogtv_wrap.o
 	gcc $(LDFLAGS) -shared -o $@ $^ -lm
 
 %.o: %.c  $(wildcard *.h)

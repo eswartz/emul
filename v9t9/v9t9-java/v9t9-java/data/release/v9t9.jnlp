@@ -45,7 +45,7 @@
 
 	<resources>
 		<j2se version="1.6+" 
-			java-vm-args="-ea -Xmx256M">
+			java-vm-args="-Xmx256M">
 		</j2se>
 	</resources>
 	
@@ -75,7 +75,7 @@
 	</resources>
 
 	<resources os="Linux">
-		<jar href="libs/libs/org.eclipse.swt.gtk.linux.x86.jar" />
+		<jar href="libs/org.eclipse.swt.gtk.linux.x86.jar" />
 		<nativelib href="v9t9j-natives-linux-x86.jar" download="eager"/>
 	</resources>
 

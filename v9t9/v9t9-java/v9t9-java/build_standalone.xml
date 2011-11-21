@@ -117,11 +117,11 @@
             <manifest>
                 <attribute name="Class-Path" value="."/>
             </manifest>
-        	<fileset dir="${base.v9t9}/libs/lwjgl/native">
-    	       <include name="linux/**"/>
+        	<fileset dir="${base.v9t9}/libs/lwjgl/native/linux">
+    	       <include name="**"/>
     	    </fileset>
     	    <fileset dir="${base}/libv9t9render">
-    	      <include name="libv9t9render**.so"/>
+    	      <include name="libv9t9render32.so"/>
     	    </fileset>
   	    </jar>
 
@@ -129,11 +129,11 @@
             <manifest>
                 <attribute name="Class-Path" value="."/>
             </manifest>
-        	<fileset dir="${base.v9t9}/libs/lwjgl/native">
-    	       <include name="linux/**"/>
+        	<fileset dir="${base.v9t9}/libs/lwjgl/native/linux">
+    	       <include name="**"/>
     	    </fileset>
     	    <fileset dir="${base}/libv9t9render">
-    	      <include name="libv9t9render**.so"/>
+    	      <include name="libv9t9render64.so"/>
     	    </fileset>
   	    </jar>
     	
@@ -141,11 +141,11 @@
             <manifest>
                 <attribute name="Class-Path" value="."/>
             </manifest>
-        	<fileset dir="${base.v9t9}/libs/lwjgl/native">
-    	       <include name="win32/**"/>
+        	<fileset dir="${base.v9t9}/libs/lwjgl/native/win32">
+    	       <include name="**"/>
     	    </fileset>
     	    <fileset dir="${base}/libv9t9render">
-    	      <include name="v9t9render**.dll"/>
+    	      <include name="v9t9render.dll"/>
     	    </fileset>
   	    </jar>    	
     	
@@ -154,11 +154,11 @@
             <manifest>
                 <attribute name="Class-Path" value="."/>
             </manifest>
-        	<fileset dir="${base.v9t9}/libs/lwjgl/native">
-    	       <include name="win32/**"/>
+        	<fileset dir="${base.v9t9}/libs/lwjgl/native/win32">
+    	       <include name="**"/>
     	    </fileset>
     	    <fileset dir="${base}/libv9t9render">
-    	      <include name="v9t9render**.dll"/>
+    	      <include name="v9t9render.dll"/>
     	    </fileset>
   	    </jar>    
 

@@ -1,0 +1,10 @@
+
+Go into the <yourApplication> folder, execute "keytool -genkey -keystore $HOME/.keystore.v9t9 -alias v9t9", 
+and enter all required information.
+
+Execute "jarsigner -keystore keystore <yourApplication>.jar v9t9"
+
+
+http://www.eclipse.org/swt/jws/
+http://download.oracle.com/javase/1.5.0/docs/guide/javaws/developersguide/syntax.html
+http://docs.oracle.com/javase/tutorial/deployment/deploymentInDepth/jnlpFileSyntax.html
