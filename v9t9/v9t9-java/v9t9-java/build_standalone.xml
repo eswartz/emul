@@ -90,10 +90,11 @@
               <include name="org.apache.batik.xml_1.7.0.v201011041433.jar"/>
     	    </fileset>
       	</copy>
-      		
+
+	<!--      		
     	<copy file="${base.v9t9}/data/release/v9t9.bat" tofile="${bin.v9t9.dir}/v9t9.bat"/>
     	<copy file="${base.v9t9}/data/release/v9t9.sh" tofile="${bin.v9t9.dir}/v9t9.sh"/>
-    	
+	-->
     	<copy file="${base.v9t9}/data/release/v9t9.html" tofile="${bin.v9t9.dir}/v9t9.html"/>
     	<copy file="${base.v9t9}/data/release/v9t9.jnlp" tofile="${bin.v9t9.dir}/v9t9.jnlp"/>
 
@@ -160,9 +161,14 @@
     	      <include name="v9t9render**.dll"/>
     	    </fileset>
   	    </jar>    
-    	
+
+		<copy todir="${bin.v9t9.dir}/libs">
+			<fileset dir="${base.coff}/libs/swt">
+				<include name="**/org.eclipse.swt.**.jar"/>
+			</fileset>
+		</copy>    	
     	<signjar
-    	    alias="myself" 
+    	    alias="v9t9" 
     		keystore="${keystore}"
     	    storepass="${storepass}"
     	    lazy="true"

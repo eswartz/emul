@@ -13,6 +13,8 @@
 		<all-permissions />
 	</security>
 
+	<offline-allowed/>
+	
 	<resources>
 		<jar href="v9t9j.jar" main="true" />
 		<jar href="libs/jna.jar"/>	
@@ -48,32 +50,32 @@
 	</resources>
 	
 	<resources os="Windows" arch="x86">
-		<jar href="org.eclipse.swt.win32.windows.x86.jar" />
+		<jar href="libs/org.eclipse.swt.win32.windows.x86.jar" />
 		<nativelib href="v9t9j-natives-win32-x86.jar" download="eager"/>
 	</resources>
 
 	<resources os="Windows" arch="x86_64">
-		<jar href="org.eclipse.swt.win32.windows.x86_64.jar" />
+		<jar href="libs/org.eclipse.swt.win32.windows.x86_64.jar" />
 		<nativelib href="v9t9j-natives-win32-x86_64.jar" download="eager"/>
 	</resources>
 
 	<resources os="Windows" arch="amd64">
-		<jar href="org.eclipse.swt.win32.win32.x86_64.jar" />
+		<jar href="libs/org.eclipse.swt.win32.win32.x86_64.jar" />
 		<nativelib href="v9t9j-natives-win32-x86_64.jar" download="eager"/>
 	</resources>
 
 	<resources os="Linux" arch="x86_64">
-		<jar href="org.eclipse.swt.gtk.linux.x86_64.jar" />
+		<jar href="libs/org.eclipse.swt.gtk.linux.x86_64.jar" />
 		<nativelib href="v9t9j-natives-linux-x86_64.jar" download="eager"/>
 	</resources>
 
 	<resources os="Linux" arch="amd64">
-		<jar href="org.eclipse.swt.gtk.linux.x86_64.jar" />
+		<jar href="libs/org.eclipse.swt.gtk.linux.x86_64.jar" />
 		<nativelib href="v9t9j-natives-linux-x86_64.jar" download="eager"/>
 	</resources>
 
 	<resources os="Linux">
-		<jar href="org.eclipse.swt.gtk.linux.x86.jar" />
+		<jar href="libs/libs/org.eclipse.swt.gtk.linux.x86.jar" />
 		<nativelib href="v9t9j-natives-linux-x86.jar" download="eager"/>
 	</resources>
 

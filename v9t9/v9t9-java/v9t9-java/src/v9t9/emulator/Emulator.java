@@ -51,6 +51,8 @@ import v9t9.engine.memory.MemoryModel;
 public class Emulator {
 
 	static {
+		System.out.println("*** V9t9 STARTING ***");
+		
 		Properties p = System.getProperties();
 		for (Map.Entry<Object, Object> e : p.entrySet()) {
 			if (e.getKey().toString().contains("library"))
