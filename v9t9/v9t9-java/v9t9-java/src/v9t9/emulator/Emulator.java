@@ -9,8 +9,6 @@ package v9t9.emulator;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Map;
-import java.util.Properties;
 
 import org.ejs.coffee.core.properties.IProperty;
 import org.ejs.coffee.core.properties.IPropertyListener;
@@ -51,14 +49,6 @@ import v9t9.engine.memory.MemoryModel;
 public class Emulator {
 
 	static {
-		System.out.println("*** V9t9 STARTING ***");
-		
-		Properties p = System.getProperties();
-		for (Map.Entry<Object, Object> e : p.entrySet()) {
-			if (e.getKey().toString().contains("library"))
-				System.out.println(e.getKey() + " = " + e.getValue());
-		}
-		
 		if (System.getProperty("javawebstart.version") != null) {
 			String path = Native.getWebStartLibraryPath("v9t9render");
 			System.out.println("Native libs at " + path);
