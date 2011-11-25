@@ -966,21 +966,43 @@ public class ImageImport implements IBitmapPixelAccess {
 			public void useColor(int x, int maxx, int y, List<Pair<Integer,Integer>> sorted) {
 
 				int fpixel, bpixel;
-				if (sorted.size() >= 2) {
+				if (sorted.size() == 2) {
 					fpixel = sorted.get(0).first;
 					bpixel = sorted.get(1).first;
-					int fbDist = useColorMappedGreyScale ? ColorMapUtils.getPixelLumDistance(fpixel, bpixel) 
-							: ColorMapUtils.getPixelDistance(fpixel, bpixel);
-					if (fbDist < (useColorMappedGreyScale ? 0x1f*0x1f : 0x1f*0x1f * 3)) {
-						int left = sorted.get(0).second - sorted.get(1).second;
-						for (int sidx = 2; left > 0 && sidx < sorted.size(); sidx++) { 
-							int dist = useColorMappedGreyScale ? ColorMapUtils.getPixelLumDistance(fpixel, sorted.get(sidx).first) 
-									: ColorMapUtils.getPixelDistance(fpixel, sorted.get(sidx).first);
-							if (dist > fbDist) {
-								bpixel = sorted.get(sidx).first;
-								fbDist = dist;
+				} else if (sorted.size() > 2) {
+					fpixel = sorted.get(0).first;
+					bpixel = sorted.get(1).first;
+					if (true) {
+						int fbDist = useColorMappedGreyScale ? ColorMapUtils.getPixelLumDistance(fpixel, bpixel) 
+								: ColorMapUtils.getPixelDistance(fpixel, bpixel);
+						if (true||fbDist < (useColorMappedGreyScale ? 0x1f*0x1f : 0x1f*0x1f * 3)) {
+							int left = sorted.get(0).second - sorted.get(1).second;
+							for (int sidx = 2; left > 0 && sidx < sorted.size(); sidx++) { 
+								int dist = useColorMappedGreyScale ? ColorMapUtils.getPixelLumDistance(fpixel, sorted.get(sidx).first) 
+										: ColorMapUtils.getPixelDistance(fpixel, sorted.get(sidx).first);
+								if (dist > fbDist) {
+									bpixel = sorted.get(sidx).first;
+									fbDist = dist;
+								}
+								left -= sorted.get(sidx).second;
 							}
-							left -= sorted.get(sidx).second;
+						}
+					} else {
+						int blackDist = Integer.MAX_VALUE / 10, whiteDist = Integer.MAX_VALUE / 10;
+						for (int sidx = 0; sidx < sorted.size(); sidx++) { 
+							
+							int dist = useColorMappedGreyScale ? ColorMapUtils.getPixelLumDistance(0, sorted.get(sidx).first) 
+									: ColorMapUtils.getPixelDistance(0, sorted.get(sidx).first);
+							if (dist < blackDist) {
+								fpixel = sorted.get(sidx).first;
+								blackDist = dist;
+							}
+							dist = useColorMappedGreyScale ? ColorMapUtils.getPixelLumDistance(-1, sorted.get(sidx).first) 
+									: ColorMapUtils.getPixelDistance(-1, sorted.get(sidx).first);
+							if (dist < whiteDist) {
+								bpixel = sorted.get(sidx).first;
+								whiteDist = dist;
+							}
 						}
 					}
 				} else {
