@@ -1099,12 +1099,11 @@ public class ImageImport implements IBitmapPixelAccess {
 					fpixel = sorted.get(0).first;
 					bpixel = sorted.get(1).first;
 					boolean dither = false;
-					if (ditherType != Dither.NONE) {
+					if (true) {
 						int fbDist = useColorMappedGreyScale ? ColorMapUtils.getPixelLumDistance(fpixel, bpixel) 
 								: ColorMapUtils.getPixelDistance(fpixel, bpixel);
 						int wantDist = useColorMappedGreyScale ? 0x1f*0x1f : 0x3f*0x3f * 3;
 						if (fbDist < wantDist) {
-							//int left = sorted.get(0).second - sorted.get(1).second;
 							for (int sidx = 2; sidx < sorted.size(); sidx++) { 
 								Pair<Integer, Integer> ent = sorted.get(sidx);
 								if (ent.second < 2)
@@ -1115,11 +1114,28 @@ public class ImageImport implements IBitmapPixelAccess {
 									bpixel = ent.first;
 									fbDist = dist;
 								}
-								//left -= sorted.get(sidx).second;
 							}
 						}
-						if (fbDist > wantDist)
+						if (ditherType != Dither.NONE && fbDist > wantDist)
 							dither = true; 
+
+					} else {
+						int blackDist = Integer.MAX_VALUE / 10, whiteDist = Integer.MAX_VALUE / 10;
+						for (int sidx = 0; sidx < sorted.size(); sidx++) { 
+							
+							int dist = useColorMappedGreyScale ? ColorMapUtils.getPixelLumDistance(0, sorted.get(sidx).first) 
+									: ColorMapUtils.getPixelDistance(0, sorted.get(sidx).first);
+							if (dist < blackDist) {
+								fpixel = sorted.get(sidx).first;
+								blackDist = dist;
+							}
+							dist = useColorMappedGreyScale ? ColorMapUtils.getPixelLumDistance(-1, sorted.get(sidx).first) 
+									: ColorMapUtils.getPixelDistance(-1, sorted.get(sidx).first);
+							if (dist < whiteDist) {
+								bpixel = sorted.get(sidx).first;
+								whiteDist = dist;
+							}
+						}
 					}
 					
 					int[] prgb = { 0, 0, 0 };
@@ -1133,7 +1149,7 @@ public class ImageImport implements IBitmapPixelAccess {
 						
 						int newPixel = origPixel;
 						
-						if (dither||prgb[0] == -1) {
+						if (dither) {
 							ColorMapUtils.pixelToRGB(origPixel, prgb);
 							
 							int threshold = thresholdMap8x8[xd & 7][y & 7];
@@ -1156,33 +1172,6 @@ public class ImageImport implements IBitmapPixelAccess {
 						}
 						
 						canvasImageData.setPixel(xd + xoffs, y + yoffs, newPixel); 
-						
-						if (prgb[0] == -1) {
-							// dither error
-							
-							int r_error;
-							int g_error;
-							int b_error;
-							
-							r_error = ((origPixel >> 16) & 0xff) - ((newPixel >> 16) & 0xff);
-							g_error = ((origPixel >> 8) & 0xff) - ((newPixel >> 8) & 0xff);
-							b_error = ((origPixel >> 0) & 0xff) - ((newPixel >> 0) & 0xff);
-	
-	
-							if (useColorMappedGreyScale) {
-								int lum = (299 * r_error + 587 * g_error + 114 * b_error) / 1000;
-								r_error = g_error = b_error = lum;
-							}
-							
-							//r_error=g_error=b_error=0;
-							if ((r_error | g_error | b_error) != 0) {
-								if (xd + 1 < img.getWidth()) {
-									// x+1, y
-									ditherFSApplyError(img, xd + 1, y,  
-											16, r_error, g_error, b_error);
-								}
-							}
-						}
 					}
 				}
 				
