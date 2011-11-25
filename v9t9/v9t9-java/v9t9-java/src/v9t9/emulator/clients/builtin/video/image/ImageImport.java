@@ -1099,44 +1099,24 @@ public class ImageImport implements IBitmapPixelAccess {
 					fpixel = sorted.get(0).first;
 					bpixel = sorted.get(1).first;
 					boolean dither = false;
-					if (true) {
-						int fbDist = useColorMappedGreyScale ? ColorMapUtils.getPixelLumDistance(fpixel, bpixel) 
-								: ColorMapUtils.getPixelDistance(fpixel, bpixel);
-						int wantDist = useColorMappedGreyScale ? 0x1f*0x1f : 0x3f*0x3f * 3;
-						if (fbDist < wantDist) {
-							for (int sidx = 2; sidx < sorted.size(); sidx++) { 
-								Pair<Integer, Integer> ent = sorted.get(sidx);
-								if (ent.second < 2)
-									break;
-								int dist = useColorMappedGreyScale ? ColorMapUtils.getPixelLumDistance(fpixel, ent.first) 
-										: ColorMapUtils.getPixelDistance(fpixel, ent.first);
-								if (dist > wantDist / 4 && dist > fbDist) {
-									bpixel = ent.first;
-									fbDist = dist;
-								}
-							}
-						}
-						if (ditherType != Dither.NONE && fbDist > wantDist)
-							dither = true; 
-
-					} else {
-						int blackDist = Integer.MAX_VALUE / 10, whiteDist = Integer.MAX_VALUE / 10;
-						for (int sidx = 0; sidx < sorted.size(); sidx++) { 
-							
-							int dist = useColorMappedGreyScale ? ColorMapUtils.getPixelLumDistance(0, sorted.get(sidx).first) 
-									: ColorMapUtils.getPixelDistance(0, sorted.get(sidx).first);
-							if (dist < blackDist) {
-								fpixel = sorted.get(sidx).first;
-								blackDist = dist;
-							}
-							dist = useColorMappedGreyScale ? ColorMapUtils.getPixelLumDistance(-1, sorted.get(sidx).first) 
-									: ColorMapUtils.getPixelDistance(-1, sorted.get(sidx).first);
-							if (dist < whiteDist) {
-								bpixel = sorted.get(sidx).first;
-								whiteDist = dist;
+					int fbDist = useColorMappedGreyScale ? ColorMapUtils.getPixelLumDistance(fpixel, bpixel) 
+							: ColorMapUtils.getPixelDistance(fpixel, bpixel);
+					int wantDist = useColorMappedGreyScale ? 0x1f*0x1f : 0x3f*0x3f * 3;
+					if (fbDist < wantDist) {
+						for (int sidx = 2; sidx < sorted.size(); sidx++) { 
+							Pair<Integer, Integer> ent = sorted.get(sidx);
+							if (ent.second < 2)
+								break;
+							int dist = useColorMappedGreyScale ? ColorMapUtils.getPixelLumDistance(fpixel, ent.first) 
+									: ColorMapUtils.getPixelDistance(fpixel, ent.first);
+							if (dist > wantDist / 4 && dist > fbDist) {
+								bpixel = ent.first;
+								fbDist = dist;
 							}
 						}
 					}
+					if (ditherType != Dither.NONE && fbDist > wantDist)
+						dither = true; 
 					
 					int[] prgb = { 0, 0, 0 };
 					int origPixel = 0;
