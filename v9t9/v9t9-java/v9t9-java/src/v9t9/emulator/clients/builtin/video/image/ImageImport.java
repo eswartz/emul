@@ -1312,7 +1312,8 @@ public class ImageImport implements IBitmapPixelAccess {
 					int fpixel = iterator.next().getKey();
 					int bpixel = iterator.hasNext() ? iterator.next().getKey() : fpixel;
 					
-					System.out.println("at "+y+"/"+x+": " + Integer.toHexString(fpixel) + "/"+Integer.toHexString(bpixel));
+					if (DEBUG)
+						System.out.println("at "+y+"/"+x+": " + Integer.toHexString(fpixel) + "/"+Integer.toHexString(bpixel));
 					bitmapColors[y][x / 8] = new Pair<Integer, Integer>(fpixel, bpixel);
 				}
 			}
