@@ -12,6 +12,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -59,6 +61,8 @@ public class ImageImport implements IBitmapPixelAccess {
 
 	/** mapping from RGB-32 pixel to each palette index */
 	protected TreeMap<Integer, Integer> paletteToIndex;
+
+	private Pair<Integer,Integer>[][] bitmapColors;
 	
 
 	/* 
@@ -245,7 +249,7 @@ public class ImageImport implements IBitmapPixelAccess {
 		}
 	}
 	
-	private void ditherFloydSteinberg(BufferedImage img, IPaletteMapper mapColor, Histogram hist, boolean limitDither) {
+	private void ditherFloydSteinberg(BufferedImage img, IPaletteColorMapper mapColor, Histogram hist, boolean limitDither) {
 		for (int y = 0; y < img.getHeight(); y++) {
 			for (int x = 0; x < img.getWidth(); x++) {
 				ditherFSPixel(img, mapColor, hist, x, y, limitDither);
@@ -287,7 +291,7 @@ public class ImageImport implements IBitmapPixelAccess {
 		img.setRGB(x, y, newPixel | 0xff000000);
 	}
 	
-	private void ditherOrdered(BufferedImage img, IPaletteMapper mapColor) {
+	private void ditherOrdered(BufferedImage img, IPaletteColorMapper mapColor) {
 		int[] prgb = { 0, 0, 0 };
 		for (int y = 0; y < img.getHeight(); y++) {
 			for (int x = 0; x < img.getWidth(); x++) {
@@ -298,7 +302,7 @@ public class ImageImport implements IBitmapPixelAccess {
 	}
 	
 	
-	private void ditherNone(BufferedImage img, IPaletteMapper mapColor) {
+	private void ditherNone(BufferedImage img, IPaletteColorMapper mapColor) {
 		for (int y = 0; y < img.getHeight(); y++) {
 			for (int x = 0; x < img.getWidth(); x++) {
 				int pixel = img.getRGB(x, y);
@@ -526,12 +530,18 @@ public class ImageImport implements IBitmapPixelAccess {
 		
 		updatePaletteMapping();
 
+		IPaletteColorMapper colorMapper = mapColor;
+		
+		if (false && ditherType != Dither.NONE && format == Format.COLOR16_8x1) {
+			prepareBitmapModeColors(img, mapColor);
+			colorMapper = new BitmapDitherColorMapper(mapColor);
+		}
 		if (ditherType == Dither.FS) {
-			ditherFloydSteinberg(img, mapColor, hist, false);
+			ditherFloydSteinberg(img, colorMapper, hist, false);
 		} else if (ditherType == Dither.ORDERED) {
-			ditherOrdered(img, mapColor);
+			ditherOrdered(img, colorMapper);
 		} else {
-			ditherNone(img, mapColor);
+			ditherNone(img, colorMapper);
 		}
 	}
 
@@ -957,11 +967,12 @@ public class ImageImport implements IBitmapPixelAccess {
 	 * to enhance the odds.
 	 * @param img
 	 */
-	protected void analyzeBitmap(BufferedImage img, boolean includeSides, IBitmapColorUser colorUser) {
+	protected void analyzeBitmap(BufferedImage img, int includeSides, IBitmapColorUser colorUser) {
 		@SuppressWarnings("unchecked")
 		Map<Integer, Integer>[] histograms = new Map[(img.getWidth() + 7) / 8];
 		@SuppressWarnings("unchecked")
 		Map<Integer, Integer>[] histogramSides = new Map[(img.getWidth() + 7) / 8];
+		Map<Integer, Integer>[] histogramsAbove = null;
 		
 		int width = img.getWidth();
 		for (int y = 0; y < img.getHeight(); y++) {
@@ -981,9 +992,9 @@ public class ImageImport implements IBitmapPixelAccess {
 				
 				// scan outside the 8 pixels to get a broader
 				// idea of what colors are important
-				if (includeSides) {
-					scmn = Math.max(0, x - 2);
-					scmx = Math.min(width, maxx + 2);
+				if (includeSides > 0) {
+					scmn = Math.max(0, x - includeSides);
+					scmx = Math.min(width, maxx + includeSides);
 				} else {
 					scmn = x;
 					scmx = maxx;
@@ -992,7 +1003,7 @@ public class ImageImport implements IBitmapPixelAccess {
 				int pixel = 0;
 				for (int xd = scmn; xd < scmx; xd++) {
 					if (xd < width) {
-						pixel = img.getRGB(xd, y);
+						pixel = img.getRGB(xd, y) & 0xffffff;
 						if (useColorMappedGreyScale) {
 							pixel = ColorMapUtils.getPixelForGreyscaleMode(pixel);
 						}
@@ -1014,6 +1025,7 @@ public class ImageImport implements IBitmapPixelAccess {
 			for (int x = 0; x < width; x += 8) {
 				Map<Integer, Integer> histogram = histograms[x / 8];
 				Map<Integer, Integer> histogramSide = histogramSides[x / 8];
+				Map<Integer, Integer> histogramAbove = histogramsAbove != null ? histogramsAbove[x / 8] : null;
 				
 				int maxx = x + 8 < width ? x + 8 : width;
 				
@@ -1023,16 +1035,25 @@ public class ImageImport implements IBitmapPixelAccess {
 				for (Map.Entry<Integer, Integer> entry : histogram.entrySet()) {
 					Integer c = entry.getKey();
 					int cnt = entry.getValue();
-					if (includeSides) {
+					if (includeSides > 0) {
 						cnt *= 4;
 						
 						int minDist = Integer.MAX_VALUE;
 						int minCnt = 0;
 						for(Map.Entry<Integer, Integer> sideEntry : histogramSide.entrySet()) {
 							int dist = ColorMapUtils.getPixelDistance(c, sideEntry.getKey());
-							if (dist < minDist && dist < 0x1f*0x1f*3) {
+							if (dist < minDist && dist < 0x1f*0x1f*3 && sideEntry.getValue() > minCnt) {
 								minDist = dist;
 								minCnt = sideEntry.getValue();
+							}
+						}
+						if (histogramAbove != null) {
+							for(Map.Entry<Integer, Integer> aboveEntry : histogramAbove.entrySet()) {
+								int dist = ColorMapUtils.getPixelDistance(c, aboveEntry.getKey());
+								if (dist < minDist && dist < 0x1f*0x1f*3 && aboveEntry.getValue() > minCnt) {
+									minDist = dist;
+									minCnt = aboveEntry.getValue();
+								}
 							}
 						}
 						cnt += minCnt;
@@ -1051,8 +1072,277 @@ public class ImageImport implements IBitmapPixelAccess {
 				
 				colorUser.useColor(x, maxx, y, sorted);
 			}
+			histogramsAbove = histograms;
 		}
 	}
+	
+
+	class BitmapDitherColorMapper implements IPaletteColorMapper {
+		
+		private final IPaletteMapper paletteMapper;
+		private final boolean isGreyScale = colorMgr.isGreyscale();
+		
+		public BitmapDitherColorMapper(IPaletteMapper paletteMapper) {
+			this.paletteMapper = paletteMapper;
+		}
+		@Override
+		public int getClosestPaletteEntry(int x, int y, int pixel) {
+			if (bitmapColors != null && bitmapColors[y] != null) {
+				Pair<Integer, Integer> fgbg = bitmapColors[y][x / 8];
+				
+				if (fgbg != null) {
+					int fgdist = isGreyScale ? ColorMapUtils.getPixelLumDistance(fgbg.first, pixel) 
+							: ColorMapUtils.getPixelDistance(fgbg.first, pixel);
+					int bgdist = isGreyScale ? ColorMapUtils.getPixelLumDistance(fgbg.second, pixel) 
+							: ColorMapUtils.getPixelDistance(fgbg.second, pixel);
+					int cand = fgdist <= bgdist ? fgbg.first : fgbg.second;
+					//if (DEBUG) System.out.println("y="+y+"; x="+x+" = " + Integer.toHexString(cand));
+					return paletteMapper.getClosestPaletteEntry(x, y, cand);
+				}
+			}
+			return paletteMapper.getClosestPaletteEntry(x, y, pixel);
+		}
+		
+		/* (non-Javadoc)
+		 * @see v9t9.emulator.clients.builtin.video.image.IPaletteColorMapper#getClosestPalettePixel(int, int, int)
+		 */
+		@Override
+		public int getClosestPalettePixel(int x, int y, int pixel) {
+			return getPalettePixel(getClosestPaletteEntry(x, y, pixel));
+		}
+		
+		/* (non-Javadoc)
+		 * @see v9t9.emulator.clients.builtin.video.image.IPaletteColorMapper#getPalettePixel(int)
+		 */
+		@Override
+		public int getPalettePixel(int c) {
+			return paletteMapper.getPalettePixel(c);
+		}
+	}
+
+
+	/**
+	 * @author ejs
+	 *
+	 */
+	final class PrepareClosestLuminances implements IBitmapColorUser {
+		/**
+		 * 
+		 */
+		private final BufferedImage img;
+		/**
+		 * 
+		 */
+		private final IPaletteMapper mapColor;
+	
+		/**
+		 * @param img
+		 * @param mapColor
+		 */
+		private PrepareClosestLuminances(BufferedImage img, IPaletteMapper mapColor) {
+			this.img = img;
+			this.mapColor = mapColor;
+		}
+	
+		@SuppressWarnings("unchecked")
+		@Override
+		public void useColor(int x, int maxx, int y, List<Pair<Integer,Integer>> sorted) {
+	
+			if (sorted.size() >= 2) {
+				if (sorted.get(0).second + sorted.get(1).second < 4) {
+					// eek, need to pick dominant colors
+					int min = 255;
+					int max = 0;
+					int avg = 0;
+					
+					for (int i = 0; i < sorted.size(); i++) {
+						Pair<Integer, Integer> ent = sorted.get(i);
+						int lum = ColorMapUtils.getPixelLum(ent.first);
+						avg += ent.second * lum;
+						if (lum < min) min = lum;
+						if (lum > max) max = lum;
+					}
+					
+					avg /= 8;
+					
+					int lowa = (avg+min*3) / 4;
+					int higha = (avg+max*3) / 4;
+					
+					int low = ColorMapUtils.rgb8ToPixel(new int[] { lowa, lowa, lowa });
+					int high = ColorMapUtils.rgb8ToPixel(new int[] { higha, higha, higha });
+					
+					int fpixel = mapColor.getClosestPalettePixel(x, y, low);
+					int bpixel = mapColor.getClosestPalettePixel(x, y, high);
+					
+					int dist = ColorMapUtils.getPixelLumDistance(fpixel, bpixel);
+					if (dist > 0x5f*0x5f) {
+	
+						if (fpixel != bpixel) {
+							if (bitmapColors[y] == null)
+								bitmapColors[y] = new Pair[(img.getWidth() + 7) / 8];
+							
+							bitmapColors[y][x / 8] = new Pair<Integer, Integer>(fpixel, bpixel);
+						}
+					}
+				}
+			}
+			
+		}
+	}
+
+	/**
+	 * @author ejs
+	 *
+	 */
+	private final class PrepareClosestColors implements IBitmapColorUser {
+		/**
+		 * 
+		 */
+		private final BufferedImage img;
+		/**
+		 * 
+		 */
+		private final IPaletteMapper mapColor;
+	
+		/**
+		 * @param img
+		 * @param mapColor
+		 */
+		private PrepareClosestColors(BufferedImage img, IPaletteMapper mapColor) {
+			this.img = img;
+			this.mapColor = mapColor;
+		}
+	
+		@SuppressWarnings("unchecked")
+		@Override
+		public void useColor(int x, int maxx, int y, List<Pair<Integer,Integer>> sorted) {
+	
+			if (sorted.size() > 2) {
+				int total = 0;
+				for (int i = 0; i < sorted.size(); i++) {
+					Pair<Integer, Integer> ent = sorted.get(i);
+					total += ent.second;
+				}
+				
+				/*
+				if (sorted.get(0).second + sorted.get(1).second < total / 2) {
+					// eek, need to pick dominant colors
+					int[] min = { 255, 255, 255 };
+					int[] max = { 0, 0, 0 };
+					int[] avg = { 0, 0, 0 };
+					
+					int[] prgb = { 0, 0, 0 };
+					for (int i = 0; i < sorted.size(); i++) {
+						Pair<Integer, Integer> ent = sorted.get(i);
+						ColorMapUtils.pixelToRGB(ent.first, prgb);
+						avg[0] += ent.second * prgb[0];
+						avg[1] += ent.second * prgb[1];
+						avg[2] += ent.second * prgb[2];
+						if (prgb[0] < min[0]) min[0] = prgb[0];
+						if (prgb[1] < min[1]) min[1] = prgb[1];
+						if (prgb[2] < min[2]) min[2] = prgb[2];
+						if (prgb[0] > max[0]) max[0] = prgb[0];
+						if (prgb[1] > max[1]) max[1] = prgb[1];
+						if (prgb[2] > max[2]) max[2] = prgb[2];
+					}
+					
+					avg[0] /= total;
+					avg[1] /= total;
+					avg[2] /= total;
+					
+					int[] lowa = { (avg[0]+min[0]*3) / 4, (avg[1]+min[1]*3)/4, (avg[2]+min[2]*3)/4 };
+					int[] higha = { (avg[0]+max[0]*3) / 4, (avg[1]+max[1]*3)/4, (avg[2]+max[2]*3)/4 };
+					
+					int low = ColorMapUtils.rgb8ToPixel(lowa);
+					int high = ColorMapUtils.rgb8ToPixel(higha);
+					
+					int fpixel = mapColor.getClosestPalettePixel(x, y, low);
+					int bpixel = mapColor.getClosestPalettePixel(x, y, high);
+					
+					int dist = ColorMapUtils.getPixelDistance(fpixel, bpixel);
+					if (dist > 0x1f*0x1f*3) {
+	
+						if (bitmapColors[y] == null)
+							bitmapColors[y] = new Pair[(img.getWidth() + 7) / 8];
+						
+						System.out.println("at "+y+"/"+x+": " + Integer.toHexString(fpixel) + "/"+Integer.toHexString(bpixel));
+						bitmapColors[y][x / 8] = new Pair<Integer, Integer>(fpixel, bpixel);
+					}
+				}*/
+				
+				int[] prgb = { 0, 0, 0 };
+				int[] prgb0 = { 0, 0, 0 };
+				int[] prgb1 = { 0, 0, 0 };
+				Map<Integer, Integer> matches = new HashMap<Integer, Integer>();
+				int loss;
+				for (loss = 0; loss < 8; loss++) {
+					matches.clear();
+					for (int i = 0; i < sorted.size(); i++) {
+						Pair<Integer, Integer> ent = sorted.get(i);
+						ColorMapUtils.pixelToRGB(ent.first, prgb);
+						prgb[0] &= 0xff << loss;
+						prgb[1] &= 0xff << loss;
+						prgb[2] &= 0xff << loss;
+						
+						int pixel = ColorMapUtils.rgb8ToPixel(prgb);
+						int color = mapColor.getClosestPalettePixel(x, y, pixel);
+						
+						Integer cur = matches.get(color);
+						if (cur == null)
+							cur = ent.first;
+						else {
+							ColorMapUtils.pixelToRGB(ent.first, prgb0);
+							ColorMapUtils.pixelToRGB(cur, prgb1);
+							prgb0[0] = (prgb0[0] + prgb1[0]) / 2;
+							prgb0[1] = (prgb0[1] + prgb1[1]) / 2;
+							prgb0[2] = (prgb0[2] + prgb1[2]) / 2;
+							cur = ColorMapUtils.rgb8ToPixel(prgb0);
+						}
+						matches.put(color, cur);
+					}
+					if (matches.size() <= 2)
+						break;
+				}
+				
+				if (matches.size() == 2) {
+					if (bitmapColors[y] == null)
+						bitmapColors[y] = new Pair[(img.getWidth() + 7) / 8];
+					
+					Iterator<Map.Entry<Integer, Integer>> iterator = matches.entrySet().iterator();
+					int fpixel = iterator.next().getKey();
+					int bpixel = iterator.hasNext() ? iterator.next().getKey() : fpixel;
+					
+					System.out.println("at "+y+"/"+x+": " + Integer.toHexString(fpixel) + "/"+Integer.toHexString(bpixel));
+					bitmapColors[y][x / 8] = new Pair<Integer, Integer>(fpixel, bpixel);
+				}
+			}
+			
+		}
+	}
+
+	/**
+	 * Find the two dominant colors per each 8x1 block, so dithering
+	 * will only use those colors.
+	 * Use information from neighbors
+	 * to enhance the odds.
+	 * 
+	 * @param img
+	 * @param xoffs
+	 * @param yoffs
+	 */
+	@SuppressWarnings("unchecked")
+	protected void prepareBitmapModeColors(final BufferedImage img, final IPaletteMapper mapColor) {
+		bitmapColors = new Pair[img.getHeight()][];
+		
+		if (!colorMgr.isGreyscale()) {
+			analyzeBitmap(img, 4, new PrepareClosestColors(img, mapColor));
+		} else {
+			// doesn't help any in greyscale since we pick totally
+			// random colors
+			//analyzeBitmap(img, false, new PrepareClosestLuminances(img, mapColor));
+		}
+	}
+
 
 	/**
 	 * Only two colors can exist per 8x1 pixels, so find those colors.
@@ -1063,15 +1353,17 @@ public class ImageImport implements IBitmapPixelAccess {
 	 * @param yoffs
 	 */
 	protected void reduceBitmapMode(final BufferedImage img, final int xoffs, final int yoffs) {
-		analyzeBitmap(img, true, new IBitmapColorUser() {
+		analyzeBitmap(img, 4, new IBitmapColorUser() {
 			
 			@Override
-			public void useColor(int x, int maxx, int y, List<Pair<Integer,Integer>> sorted) {
+			public void useColor(int x, int maxx, int y, 
+					List<Pair<Integer,Integer>> sorted) {
 
 				int fpixel, bpixel;
 				if (sorted.size() <= 2) {
+					// ok, only two different colors to care about -- fast path
 					fpixel = sorted.get(0).first;
-					bpixel = sorted.size() == 2 ? sorted.get(1).first : fpixel;
+					bpixel = sorted.size() > 1 ? sorted.get(1).first : fpixel;
 					
 					int origPixel = 0;
 					for (int xd = x; xd < maxx; xd++) {
@@ -1096,27 +1388,74 @@ public class ImageImport implements IBitmapPixelAccess {
 						canvasImageData.setPixel(xd + xoffs, y + yoffs, newPixel);
 					}
 				} else {
-					fpixel = sorted.get(0).first;
-					bpixel = sorted.get(1).first;
+					// there are more than 2 significant colors:  
+					// since only two will appear in this 8 pixels,
+					// find the 
+					int total = 0;
+					for (Pair<Integer, Integer> ent : sorted) {
+						total += ent.second;
+					}
+					
 					boolean dither = false;
-					int fbDist = useColorMappedGreyScale ? ColorMapUtils.getPixelLumDistance(fpixel, bpixel) 
-							: ColorMapUtils.getPixelDistance(fpixel, bpixel);
-					int wantDist = useColorMappedGreyScale ? 0x1f*0x1f : 0x3f*0x3f * 3;
-					if (fbDist < wantDist) {
-						for (int sidx = 2; sidx < sorted.size(); sidx++) { 
-							Pair<Integer, Integer> ent = sorted.get(sidx);
-							if (ent.second < 2)
-								break;
-							int dist = useColorMappedGreyScale ? ColorMapUtils.getPixelLumDistance(fpixel, ent.first) 
-									: ColorMapUtils.getPixelDistance(fpixel, ent.first);
-							if (dist > wantDist / 4 && dist > fbDist) {
-								bpixel = ent.first;
-								fbDist = dist;
+					if (true) {
+						fpixel = sorted.get(0).first;
+						int fcnt = sorted.get(0).second;
+						bpixel = sorted.get(1).first;
+						int bcnt = sorted.get(1).second;
+						
+						int fbDist = useColorMappedGreyScale ? ColorMapUtils.getPixelLumDistance(fpixel, bpixel) 
+								: ColorMapUtils.getPixelDistance(fpixel, bpixel);
+						int wantDist = useColorMappedGreyScale ? 0x3f*0x3f : 0x3f*0x3f * 3;
+						
+						if (fcnt + bcnt < total * 8 / 10 && fbDist < wantDist) {
+							for (int sidx = 2; sidx < sorted.size(); sidx++) { 
+								Pair<Integer, Integer> ent = sorted.get(sidx);
+								if (ent.second < 2)
+									break;
+								int dist = useColorMappedGreyScale ? ColorMapUtils.getPixelLumDistance(fpixel, ent.first) 
+										: ColorMapUtils.getPixelDistance(fpixel, ent.first);
+								if (dist > fbDist && dist > wantDist) {
+									bpixel = ent.first;
+									fbDist = dist;
+								}
 							}
 						}
+						if (ditherType != Dither.NONE && fbDist > wantDist)
+							dither = true; 
+					} else {
+
+						IPaletteColorMapper mapColor = new FixedPaletteMapColor(thePalette, firstColor, 16); 
+						int[] prgb = { 0, 0, 0 };
+						Map<Integer, Integer> matches = new LinkedHashMap<Integer, Integer>();
+						int loss;
+						for (loss = 0; loss < 8; loss++) {
+							matches.clear();
+							for (int i = 0; i < sorted.size(); i++) {
+								Pair<Integer, Integer> ent = sorted.get(i);
+								ColorMapUtils.pixelToRGB(ent.first, prgb);
+								prgb[0] &= 0xff << loss;
+								prgb[1] &= 0xff << loss;
+								prgb[2] &= 0xff << loss;
+								
+								int pixel = ColorMapUtils.rgb8ToPixel(prgb);
+								int color = mapColor.getClosestPalettePixel(x, y, pixel);
+								
+								Integer cur = matches.get(pixel);
+								if (cur == null) {
+									cur = ent.first;
+									matches.put(color, cur);
+								}
+							}
+							if (matches.size() <= 2)
+								break;
+						}
+						
+						Iterator<Map.Entry<Integer, Integer>> iterator = matches.entrySet().iterator();
+						fpixel = iterator.next().getValue();
+						bpixel = iterator.hasNext() ? iterator.next().getValue() : fpixel;
+						
+						dither = loss >= 4;
 					}
-					if (ditherType != Dither.NONE && fbDist > wantDist)
-						dither = true; 
 					
 					int[] prgb = { 0, 0, 0 };
 					int origPixel = 0;
