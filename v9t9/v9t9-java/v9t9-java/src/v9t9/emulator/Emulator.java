@@ -6,8 +6,10 @@
  */
 package v9t9.emulator;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 
 import org.ejs.coffee.core.properties.IProperty;
@@ -48,10 +50,69 @@ import v9t9.engine.memory.MemoryModel;
 
 public class Emulator {
 
-	private static boolean sIsHosted = System.getProperty("javawebstart.version") != null;
+	private static final boolean sIsWebStarted = System.getProperty("javawebstart.version") != null;
+	private static final boolean sIsDevBuild;
+	
+	private static final URL sBaseV9t9URL;
+	private static final URL sBaseDataURL;
+	static {
+		URL url = Emulator.class.getClassLoader().getResource(".");
+		URL burl = Emulator.class.getClassLoader().getResource(
+				Emulator.class.getName().replace(".", "/") + ".class");
+		System.out.println("\n\n\n\n");
+		System.out.println("/ URL = " + url);
+		System.out.println("Emulator.class URL = " + burl);
+		System.out.flush();
+		if (url != null) {
+			// "." will be under "bin", go to parent of tree
+			try {
+				url = new URL(url, "..");
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+			}
+			
+		}
+		else {
+			try {
+				// get out of sources to build dir
+				File cwdParentParent = new File(System.getProperty("user.dir"), "/../..");
+				url = new URL("file", null, cwdParentParent.getAbsolutePath());
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+				try {
+					url = URI.create(".").toURL();
+				} catch (MalformedURLException e1) {
+					e1.printStackTrace();
+					System.exit(123);
+				}
+			}
+		}
+		
+		if (burl != null) {
+			// "." will be under "bin", go to parent of tree
+			try {
+				String burlString = burl.toString();
+				if (!burlString.contains("!/")) {
+					burl = new URL(burlString.substring(0, burlString.indexOf("bin/v9t9")));
+					burl = new URL(burl, "data/");
+				} else {
+					burl = new URL(burlString.substring(0, burlString.indexOf(Emulator.class.getName().replace(".", "/"))));
+				}
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+			}
+			
+		}
+		sBaseV9t9URL = url;
+		sBaseDataURL = burl;
+		System.out.println("sBaseV9t9URL = " + sBaseV9t9URL);
+		System.out.println("sBaseBuildURL = " + sBaseDataURL);
+		
+		sIsDevBuild = sBaseV9t9URL != null && sBaseV9t9URL.getProtocol().equals("file");
+	}
 	
 	static {
-		if (sIsHosted) {
+		if (sIsWebStarted && System.getProperty("jna.library.path") == null) {
 			String path = Native.getWebStartLibraryPath("v9t9render");
 			System.out.println("Native libs at " + path);
 			if (path != null)
@@ -62,7 +123,7 @@ public class Emulator {
 			
 			@Override
 			public void propertyChanged(IProperty setting) {
-				if (!setting.getList().isEmpty())
+				if (setting.getList().isEmpty())
 					addDefaultPaths();
 			}
 
@@ -72,7 +133,7 @@ public class Emulator {
 	}
 	
 	private static void addDefaultPaths() {
-		if (!sIsHosted) {
+		if (sIsDevBuild) {
 			DataFiles.addSearchPath("../../build/roms");
 		}
 	}
@@ -305,15 +366,26 @@ public class Emulator {
 		}
 		*/
 		
+		/*
 		URL url = Emulator.class.getClassLoader().getResource(string);
 		        
 		if (url != null) {
 			return url;
 		}
 	        
+		if (sIsDevBuild) {
+			try {
+				return new URL("file", null, "../v9t9-java/data/" + string);
+			} catch (MalformedURLException e) {
+				return null;
+			}
+		}
+		*/
+		
 		try {
-			return new URL("file", null, "../v9t9-java/data/" + string);
+			return new URL(sBaseDataURL, string);
 		} catch (MalformedURLException e) {
+			e.printStackTrace();
 			return null;
 		}
 	}

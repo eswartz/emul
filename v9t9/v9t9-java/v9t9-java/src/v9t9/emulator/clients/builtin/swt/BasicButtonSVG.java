@@ -29,7 +29,7 @@ import org.eclipse.swt.widgets.Event;
 class BasicButtonSVG extends Canvas {
 
 	private final Rectangle bounds;
-	private SVGLoader icon;
+	private ISVGLoader icon;
 	private Rectangle overlayBounds;
 	private List<SelectionListener> listeners;
 	private boolean selected;
@@ -38,7 +38,7 @@ class BasicButtonSVG extends Canvas {
 	private Image overlayImage;
 	private Image image;
 	
-	public BasicButtonSVG(ImageBar buttonBar, SVGLoader icon_, Rectangle bounds_, String tooltip) {
+	public BasicButtonSVG(ImageBar buttonBar, ISVGLoader icon_, Rectangle bounds_, String tooltip) {
 		super(buttonBar.getComposite(), SWT.NO_FOCUS | SWT.NO_RADIO_GROUP /*| SWT.NO_BACKGROUND*/);
 		
 		this.buttonBar = buttonBar;

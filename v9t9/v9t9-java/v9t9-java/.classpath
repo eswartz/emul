@@ -58,6 +58,7 @@
 	<classpathentry kind="lib" path="libs/orbit/plugins/org.w3c.dom.smil.source_1.0.1.v200903091627.jar"/>
 	<classpathentry kind="lib" path="libs/orbit/plugins/org.w3c.dom.svg_1.1.0.v201011041433.jar"/>
 	<classpathentry kind="lib" path="libs/orbit/plugins/org.w3c.dom.svg.source_1.1.0.v201011041433.jar"/>
+	<classpathentry kind="lib" path="libs/svgSalamander.jar" sourcepath="libs/svg-core"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/SWT"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

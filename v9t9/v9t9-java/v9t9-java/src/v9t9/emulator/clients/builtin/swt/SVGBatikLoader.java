@@ -1,6 +1,5 @@
 package v9t9.emulator.clients.builtin.swt;
 
-import java.io.File;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.regex.Matcher;
@@ -12,8 +11,6 @@ import org.apache.batik.transcoder.TranscoderInput;
 import org.apache.batik.transcoder.TranscoderOutput;
 import org.apache.batik.transcoder.image.ImageTranscoder;
 import org.apache.batik.util.XMLResourceDescriptor;
-import org.eclipse.swt.graphics.Device;
-import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
@@ -26,7 +23,7 @@ import org.w3c.dom.Element;
  * @author eswartz
  *
  */
-public class SVGLoader {
+public class SVGBatikLoader implements ISVGLoader {
 
 	/** Pattern to match sizes which convert roughly to pixels */
 	private static Pattern sizePattern = Pattern.compile("(\\d+)(pt|px)?"); //$NON-NLS-1$
@@ -35,16 +32,9 @@ public class SVGLoader {
     private Document document;
     private String uri;
 
-	private Device device;
-
 	private TranscoderInput transcoderInput;
 
-    public SVGLoader(File file) {
-    	this.uri = file.toURI().toString();
-    }
-    
-    
-    public SVGLoader(URL url) {
+    public SVGBatikLoader(URL url) {
     	try {
 			this.uri = url.toURI().toString();
 		} catch (URISyntaxException e) {
@@ -72,7 +62,7 @@ public class SVGLoader {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		final SVGLoader other = (SVGLoader) obj;
+		final SVGBatikLoader other = (SVGBatikLoader) obj;
 		if (uri == null) {
 			if (other.uri != null)
 				return false;
@@ -82,15 +72,14 @@ public class SVGLoader {
 	}
 
 
-
-	/**
-     * @deprecated 
-     */
-    public SVGLoader(Device device, File file) {
-    	this(file);
-    	this.device = device;
-    }
-
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.swt.ISVGLoader#isSlow()
+	 */
+	@Override
+	public boolean isSlow() {
+		return true;
+	}
+	
     /**
      * Create an SVG document from an absolute file. 
      * @return SVG XML DOM
@@ -102,22 +91,11 @@ public class SVGLoader {
         mydoc = f.createDocument(uri);
         return mydoc;
     }
-
-    /**
-     * @deprecated
-     */
-    public Image getImage(Point size) throws SVGException {
-    	ImageData imageData = getImageData(size);
-    	if (device == null || imageData == null)
-    		return null;
-		return new Image(device, imageData);
-    }
     
-    /**
-     * Transcode and create an image from the SVG.
-     * @param size the size to scale to, or null
-     * @return new ImageData
-     */
+    /* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.swt.ISVGLoader#getImageData(org.eclipse.swt.graphics.Point)
+	 */
+	@Override
 	public ImageData getImageData(Point size) throws SVGException {
 		try {
 			if (document == null) {
@@ -135,12 +113,10 @@ public class SVGLoader {
 			throw new SVGException("Failed to read SVG image from " + uri, e);
 		}
 	}
-	/**
-	 * Transcode and create an image from the SVG.
-	 * @param aoi area of interest
-	 * @param size the size to scale to, or null
-	 * @return new ImageData
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.swt.ISVGLoader#getImageData(org.eclipse.swt.graphics.Rectangle, org.eclipse.swt.graphics.Point)
 	 */
+	@Override
 	public ImageData getImageData(Rectangle aoi, Point size) throws SVGException {
 		try {
 			if (document == null) {
@@ -161,6 +137,10 @@ public class SVGLoader {
 		}
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.swt.ISVGLoader#getSize()
+	 */
+	@Override
 	public Point getSize() {
 		try {
 			if (document == null) {
@@ -370,10 +350,11 @@ public class SVGLoader {
 
 
 
-	/**
-	 * @return
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.swt.ISVGLoader#getURI()
 	 */
-	public String getFileName() {
+	@Override
+	public String getURI() {
 		return uri;
 	}
 

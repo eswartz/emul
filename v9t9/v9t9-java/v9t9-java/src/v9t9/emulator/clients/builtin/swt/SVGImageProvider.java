@@ -18,7 +18,7 @@ import org.ejs.coffee.core.utils.Pair;
  */
 public class SVGImageProvider extends MultiImageSizeProvider {
 
-	private final SVGLoader svgIcon;
+	private final ISVGLoader svgLoader;
 	private Thread loadIconThread;
 	
 	private Point desiredSize;
@@ -29,9 +29,9 @@ public class SVGImageProvider extends MultiImageSizeProvider {
 	/**
 	 * @param iconMap
 	 */
-	public SVGImageProvider(TreeMap<Integer, Image> iconMap, SVGLoader svgIcon) {
+	public SVGImageProvider(TreeMap<Integer, Image> iconMap, ISVGLoader svgIcon) {
 		super(iconMap);
-		this.svgIcon = svgIcon;
+		this.svgLoader = svgIcon;
 	}
 
 	public void setImageBar(IImageBar imageBar) {
@@ -42,69 +42,40 @@ public class SVGImageProvider extends MultiImageSizeProvider {
 	 * @see v9t9.emulator.clients.builtin.swt.MultiImageSizeProvider#getImage(org.eclipse.swt.graphics.Point)
 	 */
 	@Override
-	public Pair<Double, Image> getImage(final int sx, final int sy) {
+	public synchronized Pair<Double, Image> getImage(final int sx, final int sy) {
 		boolean recreate = false;
 		final Point size = new Point(sx, sy);
 		if (scaledImage == null || !size.equals(desiredSize)) {
-			/*if (loadIconJob != null) {
-				loadIconJob.cancel();
-				try {
-					loadIconJob.join();
-				} catch (InterruptedException e) {
-				}
-			}*/
-			if (loadIconThread == null)
+			if (loadIconThread == null || !svgLoader.isSlow()) {
 				recreate = true;
+			}
 		}
 		if (!svgFailed && recreate) {
 			desiredSize = size;
 			if (scaledImage != null)
 				scaledImage.dispose();
 			scaledImage = null;
-			loadIconThread = new Thread("Scaling icon") {
+			
+			if (svgLoader.isSlow()) {
+				loadIconThread = new Thread("Scaling icon") {
 
-				public void run() {
-					try {
-						Thread.sleep(100);
-					} catch (InterruptedException e1) {
-						return;
-					}
-					final ImageData scaledImageData;
-					try {
-						//int min = iconMap.values().iterator().next().getBounds().width;
-						Point scaledSize = new Point(size.x, size.y);
-						Point svgSize = svgIcon.getSize();
-						scaledSize.y = size.y * svgSize.y / svgSize.x;
-						
-						long start = System.currentTimeMillis();
-						
-						scaledImageData = svgIcon.getImageData(scaledSize);
-						long end = System.currentTimeMillis();
-						System.out.println("Loaded " + svgIcon.getFileName() + " @ " + scaledSize + ": " + (end - start) + " ms");
-						svgFailed = false;
-						
-						final Composite composite = imageBar.getComposite();
-						
-						if (!composite.isDisposed()) {
-							composite.getDisplay().asyncExec(new Runnable() {
-								public void run() {
-									if (!composite.isDisposed()) {
-										scaledImage = new Image(composite.getDisplay(), scaledImageData);
-										System.out.println("Got image " + scaledImage.getBounds());
-										imageBar.redrawAll();
-									}
-								}
-							});
+					public void run() {
+						try {
+							Thread.sleep(100);
+						} catch (InterruptedException e1) {
+							return;
 						}
-					} catch (SVGException e) {
-						svgFailed = true;
+						fetchImage(desiredSize);
+						loadIconThread = null;
 					}
-					loadIconThread = null;
 					
-				}
+				};
 				
-			};
-			loadIconThread.start();
+				loadIconThread.start();
+			}
+			else {
+				fetchImage(size);
+			}
 		}
 		if (scaledImage == null) {
 			return super.getImage(sx, sy);
@@ -116,5 +87,46 @@ public class SVGImageProvider extends MultiImageSizeProvider {
 			return new Pair<Double, Image>(ratio, scaledImage);
 		}
 		
+	}
+
+	/**
+	 * @param size
+	 */
+	protected void fetchImage(final Point size) {
+		final ImageData scaledImageData;
+		try {
+			//int min = iconMap.values().iterator().next().getBounds().width;
+			Point scaledSize = new Point(size.x, size.y);
+			Point svgSize = svgLoader.getSize();
+			scaledSize.y = size.y * svgSize.y / svgSize.x;
+			
+			long start = System.currentTimeMillis();
+			
+			scaledImageData = svgLoader.getImageData(scaledSize);
+			long end = System.currentTimeMillis();
+			System.out.println("Loaded " + svgLoader.getURI() + " @ " + scaledSize + ": " + (end - start) + " ms");
+			svgFailed = false;
+			
+			final Composite composite = imageBar.getComposite();
+			
+			if (composite != null && !composite.isDisposed() && scaledImageData != null) {
+				Runnable runnable = new Runnable() {
+					public void run() {
+						if (!composite.isDisposed()) {
+							scaledImage = new Image(composite.getDisplay(), scaledImageData);
+							System.out.println("Got image " + scaledImage.getBounds());
+							imageBar.redrawAll();
+						}
+					}
+				};
+				if (svgLoader.isSlow())
+					composite.getDisplay().asyncExec(runnable);
+				else
+					composite.getDisplay().syncExec(runnable);
+			}
+		} catch (SVGException e) {
+			e.printStackTrace();
+			svgFailed = true;
+		}
 	}
 }
