@@ -40,6 +40,7 @@
 		<jar href="libs/org.apache.batik.util_1.7.0.v201011041433.jar"/>
 		<jar href="libs/org.apache.batik.util.gui_1.7.0.v200903091627.jar"/>
 		<jar href="libs/org.apache.batik.xml_1.7.0.v201011041433.jar"/>		
+		<jar href="libs/svgSalamander.jar"/>
 	</resources>
 
 	<resources>

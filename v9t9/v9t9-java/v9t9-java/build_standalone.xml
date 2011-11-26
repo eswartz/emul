@@ -12,6 +12,13 @@
     <property name="v9t9.host"     value="http://192.168.24.9:8080"/>
     <property name="v9t9.root"     value="v9t9"/>
 	
+    <!-- 
+    <property name="batik"     value="true"/>
+    <property name="svg.libs"     value="libs/org.apache.batik.bridge_1.7.0.v201011041433.jar libs/org.apache.batik.bridge.source_1.7.0.v201011041433.jar libs/org.apache.batik.css_1.7.0.v201011041433.jar libs/org.apache.batik.css.source_1.7.0.v201011041433.jar libs/org.apache.batik.dom_1.7.0.v201011041433.jar libs/org.apache.batik.dom.source_1.7.0.v201011041433.jar libs/org.apache.batik.dom.svg_1.7.0.v201011041433.jar libs/org.apache.batik.dom.svg.source_1.7.0.v201011041433.jar libs/org.apache.batik.ext.awt_1.7.0.v201011041433.jar libs/org.apache.batik.ext.awt.source_1.7.0.v201011041433.jar libs/org.apache.batik.extension_1.7.0.v201011041433.jar libs/org.apache.batik.extension.source_1.7.0.v201011041433.jar libs/org.apache.batik.parser_1.7.0.v201011041433.jar libs/org.apache.batik.parser.source_1.7.0.v201011041433.jar libs/org.apache.batik.svggen_1.7.0.v201011041433.jar libs/org.apache.batik.svggen.source_1.7.0.v201011041433.jar libs/org.apache.batik.swing_1.7.0.v201011041433.jar libs/org.apache.batik.swing.source_1.7.0.v201011041433.jar libs/org.apache.batik.transcoder_1.7.0.v201011041433.jar libs/org.apache.batik.transcoder.source_1.7.0.v201011041433.jar libs/org.apache.batik.util_1.7.0.v201011041433.jar libs/org.apache.batik.util.gui_1.7.0.v200903091627.jar libs/org.apache.batik.util.gui.source_1.7.0.v200903091627.jar libs/org.apache.batik.util.source_1.7.0.v201011041433.jar libs/org.apache.batik.xml_1.7.0.v201011041433.jar libs/org.apache.batik.xml.source_1.7.0.v201011041433.jar"/> 
+	-->
+    <property name="svgSalamander"     value="true"/>
+    <property name="svg.libs"     value="libs/svgSalamander.jar" />
+	
     <target name="create_run_jar">
 
     	<!-- <delete dir="${bin.v9t9.dir}" /> -->
@@ -23,39 +30,12 @@
                 <attribute name="Main-Class" value="org.eclipse.jdt.internal.jarinjarloader.JarRsrcLoader"/>
                 <attribute name="Rsrc-Main-Class" value="v9t9.emulator.Emulator"/>
                 <attribute name="Class-Path" value="."/>
-                <!-- <attribute name="Rsrc-Class-Path" value="./ jna.jar org.eclipse.swt.jar org.eclipse.jface_3.6.2.M20110210-1200.jar org.eclipse.core.commands_3.6.0.I20100512-1500.jar org.eclipse.core.runtime_3.6.0.v20100505.jar org.eclipse.equinox.common_3.6.0.v20100503.jar junit.jar gnu-getopt-1.0.11.jar jinput.jar lwjgl_util.jar lwjgl.jar antlr-runtime-3.2.jar antlr-3.2.jar bcel-5.2.jar org.apache.batik.bridge_1.7.0.v201011041433.jar org.apache.batik.bridge.source_1.7.0.v201011041433.jar org.apache.batik.css_1.7.0.v201011041433.jar org.apache.batik.css.source_1.7.0.v201011041433.jar org.apache.batik.dom_1.7.0.v201011041433.jar org.apache.batik.dom.source_1.7.0.v201011041433.jar org.apache.batik.dom.svg_1.7.0.v201011041433.jar org.apache.batik.dom.svg.source_1.7.0.v201011041433.jar org.apache.batik.ext.awt_1.7.0.v201011041433.jar org.apache.batik.ext.awt.source_1.7.0.v201011041433.jar org.apache.batik.extension_1.7.0.v201011041433.jar org.apache.batik.extension.source_1.7.0.v201011041433.jar org.apache.batik.parser_1.7.0.v201011041433.jar org.apache.batik.parser.source_1.7.0.v201011041433.jar org.apache.batik.svggen_1.7.0.v201011041433.jar org.apache.batik.svggen.source_1.7.0.v201011041433.jar org.apache.batik.swing_1.7.0.v201011041433.jar org.apache.batik.swing.source_1.7.0.v201011041433.jar org.apache.batik.transcoder_1.7.0.v201011041433.jar org.apache.batik.transcoder.source_1.7.0.v201011041433.jar org.apache.batik.util_1.7.0.v201011041433.jar org.apache.batik.util.gui_1.7.0.v200903091627.jar org.apache.batik.util.gui.source_1.7.0.v200903091627.jar org.apache.batik.util.source_1.7.0.v201011041433.jar org.apache.batik.xml_1.7.0.v201011041433.jar org.apache.batik.xml.source_1.7.0.v201011041433.jar"/> -->
-                <attribute name="Rsrc-Class-Path" value="./ libs/jna.jar libs/org.eclipse.swt.jar libs/org.eclipse.jface_3.6.2.M20110210-1200.jar libs/org.eclipse.core.commands_3.6.0.I20100512-1500.jar libs/org.eclipse.core.runtime_3.6.0.v20100505.jar libs/org.eclipse.equinox.common_3.6.0.v20100503.jar libs/junit.jar libs/gnu-getopt-1.0.11.jar libs/jinput.jar libs/lwjgl_util.jar libs/lwjgl.jar libs/antlr-runtime-3.2.jar libs/antlr-3.2.jar libs/bcel-5.2.jar libs/org.apache.batik.bridge_1.7.0.v201011041433.jar libs/org.apache.batik.bridge.source_1.7.0.v201011041433.jar libs/org.apache.batik.css_1.7.0.v201011041433.jar libs/org.apache.batik.css.source_1.7.0.v201011041433.jar libs/org.apache.batik.dom_1.7.0.v201011041433.jar libs/org.apache.batik.dom.source_1.7.0.v201011041433.jar libs/org.apache.batik.dom.svg_1.7.0.v201011041433.jar libs/org.apache.batik.dom.svg.source_1.7.0.v201011041433.jar libs/org.apache.batik.ext.awt_1.7.0.v201011041433.jar libs/org.apache.batik.ext.awt.source_1.7.0.v201011041433.jar libs/org.apache.batik.extension_1.7.0.v201011041433.jar libs/org.apache.batik.extension.source_1.7.0.v201011041433.jar libs/org.apache.batik.parser_1.7.0.v201011041433.jar libs/org.apache.batik.parser.source_1.7.0.v201011041433.jar libs/org.apache.batik.svggen_1.7.0.v201011041433.jar libs/org.apache.batik.svggen.source_1.7.0.v201011041433.jar libs/org.apache.batik.swing_1.7.0.v201011041433.jar libs/org.apache.batik.swing.source_1.7.0.v201011041433.jar libs/org.apache.batik.transcoder_1.7.0.v201011041433.jar libs/org.apache.batik.transcoder.source_1.7.0.v201011041433.jar libs/org.apache.batik.util_1.7.0.v201011041433.jar libs/org.apache.batik.util.gui_1.7.0.v200903091627.jar libs/org.apache.batik.util.gui.source_1.7.0.v200903091627.jar libs/org.apache.batik.util.source_1.7.0.v201011041433.jar libs/org.apache.batik.xml_1.7.0.v201011041433.jar libs/org.apache.batik.xml.source_1.7.0.v201011041433.jar"/>
+                <attribute name="Rsrc-Class-Path" value="./ libs/jna.jar libs/org.eclipse.swt.jar libs/org.eclipse.jface_3.6.2.M20110210-1200.jar libs/org.eclipse.core.commands_3.6.0.I20100512-1500.jar libs/org.eclipse.core.runtime_3.6.0.v20100505.jar libs/org.eclipse.equinox.common_3.6.0.v20100503.jar libs/junit.jar libs/gnu-getopt-1.0.11.jar libs/jinput.jar libs/lwjgl_util.jar libs/lwjgl.jar libs/antlr-runtime-3.2.jar libs/antlr-3.2.jar libs/bcel-5.2.jar ${svg.libs}"/>
             </manifest>
         	
             <zipfileset src="jar-in-jar-loader.zip"/>
             <fileset dir="${base.v9t9}/bin"/>
             <fileset dir="${base}/org.ejs.coffee.core/bin"/>
-        	<!--
-            <zipfileset dir="${base}/org.ejs.coffee.core/libs" includes="jna.jar"/>
-            <zipfileset dir="${base}/org.ejs.coffee.core/libs/swt" includes="org.eclipse.swt.jar"/>
-            <zipfileset dir="${base}/org.ejs.coffee.core/libs/swt" includes="org.eclipse.jface_3.6.2.M20110210-1200.jar"/>
-            <zipfileset dir="${base}/org.ejs.coffee.core/libs/swt" includes="org.eclipse.core.commands_3.6.0.I20100512-1500.jar"/>
-            <zipfileset dir="${base}/org.ejs.coffee.core/libs/swt" includes="org.eclipse.core.runtime_3.6.0.v20100505.jar"/>
-            <zipfileset dir="${base}/org.ejs.coffee.core/libs/swt" includes="org.eclipse.equinox.common_3.6.0.v20100503.jar"/>
-            <zipfileset dir="${base.v9t9}/libs" includes="gnu-getopt-1.0.11.jar"/>
-            <zipfileset dir="${base.v9t9}/libs/lwjgl" includes="jinput.jar"/>
-            <zipfileset dir="${base.v9t9}/libs/lwjgl" includes="lwjgl_util.jar"/>
-            <zipfileset dir="${base.v9t9}/libs/lwjgl" includes="lwjgl.jar"/>
-            <zipfileset dir="${base.v9t9}/libs" includes="bcel-5.2.jar"/>
-            <zipfileset dir="${base.v9t9}/libs/orbit/plugins" includes="org.apache.batik.bridge_1.7.0.v201011041433.jar"/>
-            <zipfileset dir="${base.v9t9}/libs/orbit/plugins" includes="org.apache.batik.css_1.7.0.v201011041433.jar"/>
-            <zipfileset dir="${base.v9t9}/libs/orbit/plugins" includes="org.apache.batik.dom_1.7.0.v201011041433.jar"/>
-            <zipfileset dir="${base.v9t9}/libs/orbit/plugins" includes="org.apache.batik.dom.svg_1.7.0.v201011041433.jar"/>
-            <zipfileset dir="${base.v9t9}/libs/orbit/plugins" includes="org.apache.batik.ext.awt_1.7.0.v201011041433.jar"/>
-            <zipfileset dir="${base.v9t9}/libs/orbit/plugins" includes="org.apache.batik.extension_1.7.0.v201011041433.jar"/>
-            <zipfileset dir="${base.v9t9}/libs/orbit/plugins" includes="org.apache.batik.parser_1.7.0.v201011041433.jar"/>
-            <zipfileset dir="${base.v9t9}/libs/orbit/plugins" includes="org.apache.batik.svggen_1.7.0.v201011041433.jar"/>
-            <zipfileset dir="${base.v9t9}/libs/orbit/plugins" includes="org.apache.batik.swing_1.7.0.v201011041433.jar"/>
-            <zipfileset dir="${base.v9t9}/libs/orbit/plugins" includes="org.apache.batik.transcoder_1.7.0.v201011041433.jar"/>
-            <zipfileset dir="${base.v9t9}/libs/orbit/plugins" includes="org.apache.batik.util_1.7.0.v201011041433.jar"/>
-            <zipfileset dir="${base.v9t9}/libs/orbit/plugins" includes="org.apache.batik.util.gui_1.7.0.v200903091627.jar"/>
-            <zipfileset dir="${base.v9t9}/libs/orbit/plugins" includes="org.apache.batik.xml_1.7.0.v201011041433.jar"/>
-            -->
         </jar>
 
     	<copy todir="${bin.v9t9.dir}/libs">
@@ -72,6 +52,7 @@
     		<fileset dir="${base.v9t9}/libs">
               <include name="gnu-getopt-1.0.11.jar"/>
               <include name="bcel-5.2.jar"/>
+              <include if="svgSalamander" name="svgSalamander.jar"/>
     	    </fileset>
     		<fileset dir="${base.v9t9}/libs/lwjgl">
               <include name="jinput.jar"/>
@@ -79,19 +60,19 @@
               <include name="lwjgl.jar"/>
     	    </fileset>
     		<fileset dir="${base.v9t9}/libs/orbit/plugins">
-              <include name="org.apache.batik.bridge_1.7.0.v201011041433.jar"/>
-              <include name="org.apache.batik.css_1.7.0.v201011041433.jar"/>
-              <include name="org.apache.batik.dom_1.7.0.v201011041433.jar"/>
-              <include name="org.apache.batik.dom.svg_1.7.0.v201011041433.jar"/>
-              <include name="org.apache.batik.ext.awt_1.7.0.v201011041433.jar"/>
-              <include name="org.apache.batik.extension_1.7.0.v201011041433.jar"/>
-              <include name="org.apache.batik.parser_1.7.0.v201011041433.jar"/>
-              <include name="org.apache.batik.svggen_1.7.0.v201011041433.jar"/>
-              <include name="org.apache.batik.swing_1.7.0.v201011041433.jar"/>
-              <include name="org.apache.batik.transcoder_1.7.0.v201011041433.jar"/>
-              <include name="org.apache.batik.util_1.7.0.v201011041433.jar"/>
-              <include name="org.apache.batik.util.gui_1.7.0.v200903091627.jar"/>
-              <include name="org.apache.batik.xml_1.7.0.v201011041433.jar"/>
+              <include if="batik" name="org.apache.batik.bridge_1.7.0.v201011041433.jar"/>
+              <include if="batik" name="org.apache.batik.css_1.7.0.v201011041433.jar"/>
+              <include if="batik" name="org.apache.batik.dom_1.7.0.v201011041433.jar"/>
+              <include if="batik" name="org.apache.batik.dom.svg_1.7.0.v201011041433.jar"/>
+              <include if="batik" name="org.apache.batik.ext.awt_1.7.0.v201011041433.jar"/>
+              <include if="batik" name="org.apache.batik.extension_1.7.0.v201011041433.jar"/>
+              <include if="batik" name="org.apache.batik.parser_1.7.0.v201011041433.jar"/>
+              <include if="batik" name="org.apache.batik.svggen_1.7.0.v201011041433.jar"/>
+              <include if="batik" name="org.apache.batik.swing_1.7.0.v201011041433.jar"/>
+              <include if="batik" name="org.apache.batik.transcoder_1.7.0.v201011041433.jar"/>
+              <include if="batik" name="org.apache.batik.util_1.7.0.v201011041433.jar"/>
+              <include if="batik" name="org.apache.batik.util.gui_1.7.0.v200903091627.jar"/>
+              <include if="batik" name="org.apache.batik.xml_1.7.0.v201011041433.jar"/>
     	    </fileset>
       	</copy>
 
