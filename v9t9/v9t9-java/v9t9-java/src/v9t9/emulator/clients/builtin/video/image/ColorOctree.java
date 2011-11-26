@@ -359,13 +359,13 @@ public class ColorOctree {
 				newLeaf.reds = (minRed * newLeaf.pixelCount + newLeaf.reds) / 2; 
 				newLeaf.greens = (minGreen * newLeaf.pixelCount + newLeaf.greens) / 2; 
 				newLeaf.blues = (minBlue * newLeaf.pixelCount + newLeaf.blues) / 2; 
-			} else if (index == 7) {
+			} else if (false && index == 7) {   // this introduces bogus colors
 				newLeaf.reds = (maxRed * newLeaf.pixelCount + newLeaf.reds) / 2; 
 				newLeaf.greens = (maxGreen * newLeaf.pixelCount + newLeaf.greens) / 2; 
 				newLeaf.blues = (maxBlue * newLeaf.pixelCount + newLeaf.blues) / 2; 
 			}
 		}
-
+		
 		parent.parent.kids[index] = newLeaf;
 
 		leafCount++;
