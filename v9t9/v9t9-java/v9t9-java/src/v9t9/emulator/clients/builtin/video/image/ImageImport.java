@@ -63,6 +63,8 @@ public class ImageImport implements IBitmapPixelAccess {
 	protected TreeMap<Integer, Integer> paletteToIndex;
 
 	private Pair<Integer,Integer>[][] bitmapColors;
+
+	private BufferedImage theImage;
 	
 
 	/* 
@@ -321,7 +323,7 @@ public class ImageImport implements IBitmapPixelAccess {
 	 * @return
 	 */
 	public static boolean isModeSupported(Format format) {
-		if (format == null || format == Format.TEXT || format == Format.COLOR16_8x8) 
+		if (format == null || format == Format.TEXT) 
 			return false;
 			
 		return true;
@@ -371,7 +373,7 @@ public class ImageImport implements IBitmapPixelAccess {
 	 * with colors from the current palette and in a configuration
 	 * legal for the current mode. */
 	protected void setImageData(BufferedImage img) {
-		if (format == null || format == Format.TEXT || format == Format.COLOR16_8x8)
+		if (format == null || format == Format.TEXT)
 			return;
 		
 		flatten(img);
@@ -438,7 +440,7 @@ public class ImageImport implements IBitmapPixelAccess {
 	 * @return
 	 */
 	private boolean importDirectMappedImage(BufferedImage img) {
-		if (format == Format.COLOR256_1x1 || ditherMono)
+		if (format == Format.COLOR256_1x1 || ditherMono || format == Format.COLOR16_8x8)
 			return false;
 		
 		int numColors = format == Format.COLOR4_1x1 ? 4
@@ -487,7 +489,7 @@ public class ImageImport implements IBitmapPixelAccess {
 			firstColor = 0;
 		} else if (format == Format.COLOR16_8x1 || format == Format.COLOR16_4x4) {
 			if (canSetPalette) {
-				if (true)
+				if (false)
 					createOptimalPaletteWithHSV(img, 16);
 				else
 					createOptimalPalette(img, 16);
@@ -523,9 +525,13 @@ public class ImageImport implements IBitmapPixelAccess {
 		else if (format == Format.COLOR256_1x1) {
 			mapColor = new RGB332MapColor(useColorMappedGreyScale);
 		}
+		else if (format == Format.COLOR16_8x8) {
+			mapColor = new TI16MapColor(thePalette);
+		}
 		else {
 			return;
 		}
+		
 		Histogram hist = optimizeForNColors(img, mapColor);
 		
 		updatePaletteMapping();
@@ -536,6 +542,7 @@ public class ImageImport implements IBitmapPixelAccess {
 			prepareBitmapModeColors(img, mapColor);
 			colorMapper = new BitmapDitherColorMapper(mapColor);
 		}
+		
 		if (ditherType == Dither.FS) {
 			ditherFloydSteinberg(img, colorMapper, hist, false);
 		} else if (ditherType == Dither.ORDERED) {
@@ -549,7 +556,7 @@ public class ImageImport implements IBitmapPixelAccess {
 	void createOptimalPaletteWithHSV(BufferedImage image, int colorCount) {
 		int toAllocate = colorCount - firstColor;
 			
-		ColorOctree octree = new ColorOctree(3, toAllocate, true, ditherType != Dither.NONE);
+		ColorOctree octree = new ColorOctree(4, toAllocate, true, ditherType != Dither.NONE);
 		int[] prgb = { 0, 0, 0 };
 		float[] hsv = { 0, 0, 0 };
 		int[] rgbs = new int[image.getWidth()];
@@ -1499,12 +1506,12 @@ public class ImageImport implements IBitmapPixelAccess {
 		});
 	}
 
-
 	protected void updatePaletteMapping() {
 		int ncols;
 		if (format == Format.COLOR16_1x1 
 				|| format == Format.COLOR16_8x1 
-				|| format == Format.COLOR16_4x4) {
+				|| format == Format.COLOR16_4x4
+				|| format == Format.COLOR16_8x8) {
 			ncols = 16;
 		}
 		else if (format == Format.COLOR4_1x1) {
@@ -1567,6 +1574,20 @@ public class ImageImport implements IBitmapPixelAccess {
 		paletteMappingDirty = false;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.video.IBitmapPixelAccess#getHeight()
+	 */
+	@Override
+	public int getHeight() {
+		return theImage.getHeight();
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.clients.builtin.video.IBitmapPixelAccess#getWidth()
+	 */
+	@Override
+	public int getWidth() {
+		return theImage.getWidth();
+	}
 	public byte getPixel(int x, int y) {
 		if (paletteMappingDirty) {
 			updatePaletteMapping();
@@ -1604,10 +1625,11 @@ public class ImageImport implements IBitmapPixelAccess {
 			targHeight = 48;
 		}
 		
+		float aspect = (float) targWidth / targHeight / 256.f * 192.f;
+		int realWidth = image.getWidth(null);
+		int realHeight = image.getHeight(null);
+		
 		if (options.isKeepAspect()) {
-			float aspect = (float) targWidth / targHeight / 256.f * 192.f;
-			int realWidth = image.getWidth(null);
-			int realHeight = image.getHeight(null);
 			if (realWidth < 0 || realHeight < 0) {
 				throw new IllegalArgumentException("image has zero or negative size");
 			}
@@ -1626,6 +1648,21 @@ public class ImageImport implements IBitmapPixelAccess {
 					}
 				}
 			}
+		}
+		
+		if (canvas.getFormat() == Format.COLOR16_8x8) {
+			// make a maximum of 256 blocks  (256*64 = 16384)
+			// Reduces total screen real estate down by sqr(3)
+			//targWidth = (int) (targWidth / 1.732) & ~7;
+			//targHeight = (int) (targHeight / 1.732) & ~7;
+			while ((targWidth & ~0x7) * 
+					 (((int)(targWidth * realHeight / realWidth / aspect) + 7) & ~0x7) > 16384) {
+				targWidth *= 0.99;
+				targHeight *= 0.99;
+			}
+			targWidth &= ~0x7;
+			targHeight = (int) (targWidth * realHeight / realWidth / aspect);
+			if (DEBUG) System.out.println("Graphics mode: " + targWidth*((targHeight+7)&~0x7));
 		}
 		
 		Object hint = options.isScaleSmooth() ? RenderingHints.VALUE_INTERPOLATION_BILINEAR
@@ -1647,6 +1684,12 @@ public class ImageImport implements IBitmapPixelAccess {
 
 		firstColor = (canSetPalette && colorMgr.isClearFromPalette() ? 0 : 1);
 
+
+		if (canvas.getFormat() == Format.COLOR16_8x8) {
+			canSetPalette = false;
+			ditherMono = true;
+		}
+		
 		byte[][] orig = options.getOrigPalette();
 		if (orig != null) {
 			for (int i = 0; i < thePalette.length; i++) {
@@ -1654,6 +1697,8 @@ public class ImageImport implements IBitmapPixelAccess {
 			}
 		}
 		updatePaletteMapping();
+		
+		this.theImage = scaled;
 		
 		setImageData(scaled);
 

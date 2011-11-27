@@ -155,7 +155,7 @@ public class SVGSalamanderLoader implements ISVGLoader {
 	    	//icon.setPreferredSize(new Dimension(size.x, size.y));
 	    	//icon.setScaleToFit(true);
 	    	try {
-	    		System.out.println("rendering...");
+	    		//System.out.println("rendering...");
 				diagram.render(g);
 			} catch (com.kitfox.svg.SVGException e) {
 				e.printStackTrace();
