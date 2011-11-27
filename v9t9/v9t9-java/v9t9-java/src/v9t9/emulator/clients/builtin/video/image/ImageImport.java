@@ -334,7 +334,7 @@ public class ImageImport implements IBitmapPixelAccess {
 		int[] rgbs = new int[width];
 		int[] prgb = { 0, 0, 0 };
 
-		ColorOctree octree = new ColorOctree(3, 8*8*8, false, ditherType != Dither.NONE);
+		ColorOctree octree = new ColorOctree(3, 8*8*8, false, false);
 
 		int total = 0;
 		for (int y = 0; y < img.getHeight(); y++) {
@@ -556,7 +556,7 @@ public class ImageImport implements IBitmapPixelAccess {
 	void createOptimalPaletteWithHSV(BufferedImage image, int colorCount) {
 		int toAllocate = colorCount - firstColor;
 			
-		ColorOctree octree = new ColorOctree(4, toAllocate, true, ditherType != Dither.NONE);
+		ColorOctree octree = new ColorOctree(3, toAllocate, true, false);
 		int[] prgb = { 0, 0, 0 };
 		float[] hsv = { 0, 0, 0 };
 		int[] rgbs = new int[image.getWidth()];
@@ -606,7 +606,18 @@ public class ImageImport implements IBitmapPixelAccess {
 	private void createOptimalPalette(BufferedImage image, int colorCount) {
 		int toAllocate = colorCount - firstColor;
 		
-		ColorOctree octree = new ColorOctree(4, toAllocate, true, ditherType != Dither.NONE);
+		if (format == Format.COLOR16_8x1) {
+			// we will not be able to allocate more than two colors
+			// per 8 pixels anyway, so fit the palette as if each
+			// 8 pixel block were only two pixels.
+			image = AwtImageUtils.getScaledInstance(
+					image, image.getWidth() / 4, image.getHeight(), 
+					RenderingHints.VALUE_INTERPOLATION_BICUBIC,
+					false);
+
+		}
+		
+		ColorOctree octree = new ColorOctree(4, toAllocate, true, false);
 		int[] prgb = { 0, 0, 0 };
 		int[] rgbs = new int[image.getWidth()];
 		for (int y = 0; y < image.getHeight(); y++) {
@@ -625,7 +636,7 @@ public class ImageImport implements IBitmapPixelAccess {
 		
 		List<LeafNode> leaves = octree.gatherLeaves();
 		
-		for (ColorOctree.LeafNode node : leaves) {
+		for (ColorOctree.LeafNode node :  leaves) {
 			int[] repr = node.reprRGB();
 			
 			if (DEBUG) System.out.println("palette[" + index +"] = " 
@@ -1398,7 +1409,7 @@ public class ImageImport implements IBitmapPixelAccess {
 				} else {
 					// there are more than 2 significant colors:  
 					// since only two will appear in this 8 pixels,
-					// find the 
+					// find the most representative
 					int total = 0;
 					for (Pair<Integer, Integer> ent : sorted) {
 						total += ent.second;

@@ -103,7 +103,7 @@ public class ColorOctree {
 
 	private LinkedList<InnerNode>[] reducibleLists;
 	private Comparator<InnerNode> comparator;
-	private final boolean willDither;
+	private final boolean usingHSV;
 	private int minRed;
 	private int minGreen;
 	private int minBlue;
@@ -112,7 +112,7 @@ public class ColorOctree {
 	private int maxBlue;
 
 	@SuppressWarnings("unchecked")
-	public ColorOctree(int maxDepth, int maxLeafCount, boolean removeDetail, boolean willDither) {
+	public ColorOctree(int maxDepth, int maxLeafCount, boolean removeDetail, boolean usingHSV) {
 		if (maxDepth < 2 || maxLeafCount < 1)
 			throw new IllegalArgumentException();
 		
@@ -121,7 +121,7 @@ public class ColorOctree {
 		root = new InnerNode(null);
 		comparator = (removeDetail ?
 				createLeastUsedFirstComparator() : createMostUsedFirstComparator());
-		this.willDither = willDither;
+		this.usingHSV = usingHSV;
 		
 		reducibleLists = new LinkedList[maxDepth];
 		for (int i = 0; i < maxDepth; i++)
@@ -354,13 +354,13 @@ public class ColorOctree {
 		}
 
 		// bias towards extremes so dark and light are not lost
-		if (willDither && depth == 0) {
+		if (usingHSV && depth == 0) {
 			if (index == 0) {
-				newLeaf.reds = (minRed * newLeaf.pixelCount + newLeaf.reds) / 2; 
+				//newLeaf.reds = (minRed * newLeaf.pixelCount + newLeaf.reds) / 2; 
 				newLeaf.greens = (minGreen * newLeaf.pixelCount + newLeaf.greens) / 2; 
 				newLeaf.blues = (minBlue * newLeaf.pixelCount + newLeaf.blues) / 2; 
-			} else if (false && index == 7) {   // this introduces bogus colors
-				newLeaf.reds = (maxRed * newLeaf.pixelCount + newLeaf.reds) / 2; 
+			} else if (index == 7) {  
+				//newLeaf.reds = (maxRed * newLeaf.pixelCount + newLeaf.reds) / 2; 
 				newLeaf.greens = (maxGreen * newLeaf.pixelCount + newLeaf.greens) / 2; 
 				newLeaf.blues = (maxBlue * newLeaf.pixelCount + newLeaf.blues) / 2; 
 			}
