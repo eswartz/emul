@@ -363,7 +363,7 @@ public class ImageImport implements IBitmapPixelAccess {
 			img.getRGB(0, y, width, 1, rgbs, 0, width);
 			for (int x = 0; x < width; x++) {
 				ColorMapUtils.pixelToRGB(rgbs[x], prgb);
-				prgb = ColorMapUtils.mapForRGB333(prgb);
+				ColorMapUtils.mapForRGB333(prgb);
 				rgbs[x] = ColorMapUtils.rgb8ToPixel(prgb);
 			}
 			img.setRGB(0, y, width, 1, rgbs, 0, width);
@@ -606,7 +606,7 @@ public class ImageImport implements IBitmapPixelAccess {
 	private void createOptimalPalette(BufferedImage image, int colorCount) {
 		int toAllocate = colorCount - firstColor;
 		
-		if (format == Format.COLOR16_8x1) {
+		if (false && format == Format.COLOR16_8x1) {
 			// we will not be able to allocate more than two colors
 			// per 8 pixels anyway, so fit the palette as if each
 			// 8 pixel block were only two pixels.
@@ -643,6 +643,11 @@ public class ImageImport implements IBitmapPixelAccess {
 					+ Integer.toHexString(repr[0]) + "/" 
 					+ Integer.toHexString(repr[1]) + "/" 
 					+ Integer.toHexString(repr[2]));
+
+			if (useColorMappedGreyScale)
+				ColorMapUtils.rgbToGreyForGreyscaleMode(prgb, prgb);
+			else
+				ColorMapUtils.mapForRGB555(repr);
 			
 			thePalette[index][0] = (byte) repr[0];
 			thePalette[index][1] = (byte) repr[1];
@@ -1439,7 +1444,7 @@ public class ImageImport implements IBitmapPixelAccess {
 								}
 							}
 						}
-						if (ditherType != Dither.NONE && fbDist > wantDist)
+						if (ditherType != Dither.NONE && fbDist > wantDist && !useColorMappedGreyScale)
 							dither = true; 
 					} else {
 
@@ -1473,7 +1478,7 @@ public class ImageImport implements IBitmapPixelAccess {
 						fpixel = iterator.next().getValue();
 						bpixel = iterator.hasNext() ? iterator.next().getValue() : fpixel;
 						
-						dither = loss >= 4;
+						dither = loss >= 4 && !useColorMappedGreyScale;
 					}
 					
 					int[] prgb = { 0, 0, 0 };

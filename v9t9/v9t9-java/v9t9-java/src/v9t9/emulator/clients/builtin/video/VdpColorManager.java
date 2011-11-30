@@ -199,7 +199,7 @@ public class VdpColorManager {
 	}
 
 	public void setRGB333(int idx, byte[] rgb) {
-		byte[] low = ColorMapUtils.mapForRGB333(rgb);
+		byte[] low = ColorMapUtils.getMapForRGB333(rgb);
 		setGRB333(idx, low[1] >> 5, low[0] >> 5, low[2] >> 5); 
 	}
 	
