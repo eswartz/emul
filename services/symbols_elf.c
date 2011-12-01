@@ -641,7 +641,7 @@ int find_symbol_by_name(Context * ctx, int frame, ContextAddress ip, char * name
     }
 #endif
 
-    if (error == 0 && !found && sym_ip == 0) {
+    if (error == 0 && !found) {
         /* Search all compilation units */
         ELF_File * file = elf_list_first(sym_ctx, 0, ~(ContextAddress)0);
         if (file == NULL) error = errno;
