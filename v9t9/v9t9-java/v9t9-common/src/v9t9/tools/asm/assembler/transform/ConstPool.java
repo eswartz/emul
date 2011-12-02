@@ -6,10 +6,7 @@ package v9t9.tools.asm.assembler.transform;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import v9t9.engine.cpu.RawInstruction;
 import v9t9.tools.asm.assembler.IAssembler;
-import v9t9.tools.asm.assembler.LLInstruction;
-import v9t9.tools.asm.assembler.ResolveException;
 import v9t9.tools.asm.assembler.Symbol;
 import v9t9.tools.asm.assembler.operand.hl.AddrOperand;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;

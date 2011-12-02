@@ -15,7 +15,6 @@ import v9t9.engine.VdpHandler;
  */
 public class StandardMachineV9938Model extends StandardMachineModel {
 
-	@SuppressWarnings("hiding")
 	public static final String ID = "StandardTI994AwithV9938";
 	
 	public StandardMachineV9938Model() {

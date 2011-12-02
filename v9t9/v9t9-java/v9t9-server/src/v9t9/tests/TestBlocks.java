@@ -4,7 +4,6 @@
 package v9t9.tests;
 
 import v9t9.tools.asm.decomp.Block;
-import v9t9.tools.asm.decomp.HighLevelInstruction;
 import v9t9.tools.asm.decomp.IHighLevelInstruction;
 
 /**

@@ -2,11 +2,12 @@ package v9t9.emulator.hardware.memory;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 
+import v9t9.emulator.EmulatorServer;
 import v9t9.emulator.common.IBaseMachine;
 import v9t9.emulator.common.IEventNotifier;
 import v9t9.emulator.common.IEventNotifier.Level;
-import v9t9.emulator.common.IMachine;
 import v9t9.engine.files.DataFiles;
 import v9t9.engine.memory.ByteMemoryArea;
 import v9t9.engine.memory.DiskMemoryEntry;
@@ -28,6 +29,8 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 	@Override
 	protected void initSettings() {
 		DataFiles.addSearchPath("../../build/forth99");
+		URL dataURL = EmulatorServer.getDataURL("../../../build/forth99");
+		DataFiles.addSearchPath(dataURL.getPath());
 	}
 
 

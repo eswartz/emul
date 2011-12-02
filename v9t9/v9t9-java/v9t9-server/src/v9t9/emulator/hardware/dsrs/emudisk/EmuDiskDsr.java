@@ -17,7 +17,7 @@ import java.util.Map;
 import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.settings.ISettingSection;
 
-import v9t9.emulator.Emulator;
+import v9t9.emulator.EmulatorServer;
 import v9t9.emulator.clients.builtin.IconSetting;
 import v9t9.emulator.common.WorkspaceSettings;
 import v9t9.emulator.hardware.IDeviceIndicatorProvider;
@@ -48,7 +48,7 @@ import v9t9.engine.memory.MemoryDomain;
  *
  */
 public class EmuDiskDsr implements DsrHandler9900 {
-	private static URL diskDirectoryIconPath = Emulator.getDataURL("icons/disk_directory.png");
+	private static URL diskDirectoryIconPath = EmulatorServer.getDataURL("icons/disk_directory.png");
 	
 	public static final SettingProperty emuDiskDsrEnabled = new IconSetting("EmuDiskDSREnabled", 
 			"Disk Directory Support",

@@ -3,24 +3,14 @@
  */
 package v9t9.emulator.common;
 
-import java.io.IOException;
-import java.util.Timer;
-
 import org.ejs.coffee.core.properties.SettingProperty;
-import org.ejs.coffee.core.settings.ISettingSection;
 
 import v9t9.emulator.clients.builtin.SoundProvider;
 import v9t9.emulator.hardware.MachineModel;
 import v9t9.emulator.hardware.dsrs.IDsrManager;
-import v9t9.emulator.runtime.cpu.Cpu;
-import v9t9.emulator.runtime.cpu.CpuMetrics;
 import v9t9.emulator.runtime.cpu.Executor;
 import v9t9.engine.Client;
 import v9t9.engine.VdpHandler;
-import v9t9.engine.cpu.IRawInstructionFactory;
-import v9t9.engine.memory.Memory;
-import v9t9.engine.memory.MemoryDomain;
-import v9t9.engine.memory.MemoryModel;
 import v9t9.keyboard.KeyboardState;
 
 /**

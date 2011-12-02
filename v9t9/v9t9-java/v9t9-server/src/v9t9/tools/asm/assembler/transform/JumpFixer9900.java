@@ -85,7 +85,7 @@ public class JumpFixer9900 {
 		invert(Inst9900.Ijl, Inst9900.Ijhe);
 		invert(Inst9900.Ijoc, Inst9900.Ijnc);
 	}
-	private boolean convertJump(LLInstruction jump, AssemblerOperand assemblerOperand, @SuppressWarnings("unused") int targetAddr,
+	private boolean convertJump(LLInstruction jump, AssemblerOperand assemblerOperand, int targetAddr,
 			ListIterator<IInstruction> iterator) {
 		
 		// easy

@@ -4,7 +4,6 @@
 package v9t9.emulator.hardware.memory;
 
 import v9t9.emulator.common.IBaseMachine;
-import v9t9.emulator.common.IMachine;
 import v9t9.emulator.hardware.InternalCruF99;
 import v9t9.emulator.hardware.memory.mmio.ConsoleMmioArea;
 import v9t9.engine.memory.MemoryEntry;

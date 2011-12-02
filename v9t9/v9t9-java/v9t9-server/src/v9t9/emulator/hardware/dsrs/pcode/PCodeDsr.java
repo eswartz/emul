@@ -13,7 +13,7 @@ import java.util.Map;
 import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.settings.ISettingSection;
 
-import v9t9.emulator.Emulator;
+import v9t9.emulator.EmulatorServer;
 import v9t9.emulator.clients.builtin.IconSetting;
 import v9t9.emulator.common.IEventNotifier.Level;
 import v9t9.emulator.common.WorkspaceSettings;
@@ -36,7 +36,7 @@ import v9t9.engine.memory.MemoryEntry;
  *
  */
 public class PCodeDsr implements DsrHandler9900 {
-	private static URL pcodeIconPath = Emulator.getDataURL("icons/pcode_system.png");
+	private static URL pcodeIconPath = EmulatorServer.getDataURL("icons/pcode_system.png");
 
 	static public final IconSetting settingPCodeCardEnabled = new IconSetting(
 			"PCodeCardEnabled", "Enable P-Code Card", 

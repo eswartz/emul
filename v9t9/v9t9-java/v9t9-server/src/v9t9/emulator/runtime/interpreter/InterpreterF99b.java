@@ -105,7 +105,6 @@ import org.ejs.coffee.core.utils.HexUtils;
 import org.ejs.coffee.core.utils.Pair;
 
 import v9t9.emulator.common.IBaseMachine;
-import v9t9.emulator.common.IMachine;
 import v9t9.emulator.runtime.InstructionListener;
 import v9t9.emulator.runtime.cpu.Cpu;
 import v9t9.emulator.runtime.cpu.CpuF99b;

@@ -44,7 +44,6 @@ import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.common.EmulatorSettings;
 import v9t9.emulator.common.IBaseMachine;
-import v9t9.emulator.common.IMachine;
 import v9t9.emulator.hardware.memory.mmio.GplMmio;
 import v9t9.emulator.hardware.memory.mmio.VdpMmio;
 import v9t9.emulator.runtime.cpu.Cpu9900;

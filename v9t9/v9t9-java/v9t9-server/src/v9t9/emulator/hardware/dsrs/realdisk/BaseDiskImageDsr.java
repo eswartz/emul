@@ -22,7 +22,7 @@ import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.settings.ISettingSection;
 import org.ejs.coffee.core.utils.HexUtils;
 
-import v9t9.emulator.Emulator;
+import v9t9.emulator.EmulatorServer;
 import v9t9.emulator.clients.builtin.IconSetting;
 import v9t9.emulator.common.IMachine;
 import v9t9.emulator.common.WorkspaceSettings;
@@ -42,7 +42,7 @@ import v9t9.emulator.runtime.cpu.Executor;
  *
  */
 public abstract class BaseDiskImageDsr implements FDC1771Constants, DsrSettings {
-	private static final URL diskImageIconPath = Emulator.getDataURL("icons/disk_image.png");
+	private static final URL diskImageIconPath = EmulatorServer.getDataURL("icons/disk_image.png");
 
 
 	public static final SettingProperty diskImageDebug = new SettingProperty("DiskImageDebug",

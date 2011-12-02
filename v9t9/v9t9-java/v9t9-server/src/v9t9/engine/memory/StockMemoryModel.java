@@ -8,7 +8,6 @@ import java.util.List;
 
 import v9t9.emulator.common.IBaseMachine;
 import v9t9.emulator.common.IEventNotifier;
-import v9t9.emulator.common.IMachine;
 import v9t9.emulator.hardware.memory.mmio.GplMmio;
 import v9t9.emulator.hardware.memory.mmio.SoundMmio;
 import v9t9.emulator.hardware.memory.mmio.SpeechMmio;

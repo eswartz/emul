@@ -9,7 +9,6 @@ package v9t9.engine.cpu;
 import org.ejs.coffee.core.utils.Check;
 
 import v9t9.engine.memory.MemoryDomain;
-import v9t9.tools.asm.assembler.Assembler;
 import v9t9.tools.asm.assembler.IAssembler;
 import v9t9.tools.asm.assembler.ResolveException;
 import v9t9.tools.asm.assembler.Symbol;

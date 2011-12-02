@@ -656,7 +656,7 @@ public class VdpV9938 extends VdpTMS9918A {
 		vdpMmio.setMemoryAccessCycles(2);
 	}
 
-	private Sprite2RedrawHandler createSprite2RedrawHandler(@SuppressWarnings("unused") boolean wide) {
+	private Sprite2RedrawHandler createSprite2RedrawHandler(boolean wide) {
 		
 		return new Sprite2RedrawHandler(vdpRedrawInfo, createSpriteModeInfo());
 	}

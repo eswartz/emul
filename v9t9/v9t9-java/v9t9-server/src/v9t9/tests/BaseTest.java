@@ -9,8 +9,8 @@ import java.util.TreeSet;
 
 import junit.framework.TestCase;
 import v9t9.engine.cpu.IInstruction;
-import v9t9.engine.cpu.Instruction9900;
 import v9t9.engine.cpu.InstTable9900;
+import v9t9.engine.cpu.Instruction9900;
 import v9t9.engine.cpu.RawInstruction;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryDomain;
