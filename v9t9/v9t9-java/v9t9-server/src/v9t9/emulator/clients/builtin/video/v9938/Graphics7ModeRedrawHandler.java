@@ -43,7 +43,7 @@ public class Graphics7ModeRedrawHandler extends PackedBitmapGraphicsModeRedrawHa
 	public void clear() {
 		byte [] rgb = { 0, 0, 0 };
 		info.canvas.getColorMgr().getGRB332(rgb, (byte) info.canvas.getColorMgr().getClearColor());
-		info.canvas.clear(rgb);
+		info.canvas.clear();
 	}
 	
 	@Override

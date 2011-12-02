@@ -3,8 +3,6 @@
  */
 package v9t9.emulator.clients.builtin.video;
 
-import org.eclipse.swt.graphics.Rectangle;
-
 import v9t9.engine.memory.ByteMemoryAccess;
 
 /**
@@ -54,9 +52,8 @@ public abstract class VdpCanvas extends BaseVdpCanvas implements ISpriteCanvas {
 	}
 	
 	/** Clear the canvas to the clear color, if the rgb is not used.  
-	 * @param rgb preferred color
 	 */
-	public abstract void clear(byte[] rgb);
+	public abstract void clear();
 	private boolean isBlank;
 
 
@@ -120,17 +117,6 @@ public abstract class VdpCanvas extends BaseVdpCanvas implements ISpriteCanvas {
 	}
 
 
-	/** Get the dirty rectangle in pixels */
-	public Rectangle getDirtyRect() {
-		if (dx1 >= dx2 || dy1 >= dy2)
-			return null;
-
-		if (isInterlacedEvenOdd()) {
-			return new Rectangle(dx1, dy1 * 2, (dx2 - dx1), (dy2 - dy1) * 2);
-		}
-		return new Rectangle(dx1, dy1, (dx2 - dx1), (dy2 - dy1));
-	}
-	
 	public void setBlank(boolean b) {
 		if (b != isBlank) {
 			isBlank = b;

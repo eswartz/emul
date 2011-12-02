@@ -15,10 +15,14 @@ import v9t9.emulator.clients.builtin.awt.AwtJavaClient;
 import v9t9.emulator.clients.builtin.swt.SwtAwtJavaClient;
 import v9t9.emulator.clients.builtin.swt.SwtJavaClient;
 import v9t9.emulator.clients.builtin.swt.SwtLwjglJavaClient;
+import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
+import v9t9.emulator.hardware.EnhancedCompatibleMachineModel;
 import v9t9.emulator.hardware.EnhancedMachineModel;
 import v9t9.emulator.hardware.F99bMachineModel;
+import v9t9.emulator.hardware.MachineModelFactory;
 import v9t9.emulator.hardware.StandardMachineModel;
 import v9t9.emulator.hardware.StandardMachineV9938Model;
+import v9t9.emulator.hardware.memory.mmio.GplMmio;
 import v9t9.engine.Client;
 
 import com.sun.jna.Native;
@@ -28,14 +32,33 @@ import com.sun.jna.Native;
  *
  */
 public class Emulator {
+	private static final boolean sIsWebStarted = System.getProperty("javawebstart.version") != null;
 
-
+	static {
+		if (sIsWebStarted && System.getProperty("jna.library.path") == null) {
+			String path = Native.getWebStartLibraryPath("v9t9render");
+			System.out.println("Native libs at " + path);
+			if (path != null)
+				System.setProperty("jna.library.path", path);
+		}		
+		
+	}
 	static {
 		ClientFactory.register(SwtJavaClient.ID, SwtJavaClient.class);
 		ClientFactory.register(SwtAwtJavaClient.ID, SwtAwtJavaClient.class);
 		ClientFactory.register(AwtJavaClient.ID, AwtJavaClient.class);
 		ClientFactory.register(SwtLwjglJavaClient.ID, SwtLwjglJavaClient.class);
 	}
+	
+
+	static {
+		MachineModelFactory.register(StandardMachineModel.ID, StandardMachineModel.class);
+		MachineModelFactory.register(StandardMachineV9938Model.ID, StandardMachineV9938Model.class);
+		MachineModelFactory.register(EnhancedCompatibleMachineModel.ID, EnhancedCompatibleMachineModel.class);
+		MachineModelFactory.register(EnhancedMachineModel.ID, EnhancedMachineModel.class);
+		MachineModelFactory.register(F99bMachineModel.ID, F99bMachineModel.class);
+	}
+	
 	
  	private static boolean findArgument(String[] args, String string) {
     	for (String arg : args)
@@ -44,8 +67,6 @@ public class Emulator {
 		return false;
 	}
  	
-
-	private static final boolean sIsWebStarted = System.getProperty("javawebstart.version") != null;
 	static final boolean sIsDevBuild;
 	
 	private static final URL sBaseDataURL;
@@ -107,12 +128,25 @@ public class Emulator {
 	}
 	
 	static {
-		if (sIsWebStarted && System.getProperty("jna.library.path") == null) {
-			String path = Native.getWebStartLibraryPath("v9t9render");
-			System.out.println("Native libs at " + path);
-			if (path != null)
-				System.setProperty("jna.library.path", path);
-		}		
+		if (System.getProperty("jna.library.path") == null) {
+			if (sIsWebStarted) {
+				String path = Native.getWebStartLibraryPath("v9t9render");
+				System.out.println("Native libs at " + path);
+				if (path != null)
+					System.setProperty("jna.library.path", path);
+			}
+			else {
+				String path;
+				try {
+					path = new URL(sBaseV9t9URL, "../libv9t9render").getPath().substring(1);
+					System.out.println("Native libs at " + path);
+					if (path != null)
+						System.setProperty("jna.library.path", path);
+				} catch (MalformedURLException e) {
+					e.printStackTrace();
+				}
+			}
+		}
 	}
 	
 	public static URL getDataURL(String string) {
@@ -129,10 +163,13 @@ public class Emulator {
 	 * @param args
 	 */
 	public static void main(String[] args) {
+		VdpTMS9918A.settingDumpVdpAccess.setBoolean(true);
+		GplMmio.settingDumpGplAccess.setBoolean(true);
 		
 		String modelId = getModelId(args);
 		String clientId = getClientId(args);
 		
+
 		createAndRun(modelId, clientId);
 	}
 

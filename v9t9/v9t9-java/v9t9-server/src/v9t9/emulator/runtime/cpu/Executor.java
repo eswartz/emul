@@ -9,9 +9,7 @@ package v9t9.emulator.runtime.cpu;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.ejs.coffee.core.properties.IProperty;
 import org.ejs.coffee.core.properties.IPropertyListener;
@@ -26,9 +24,6 @@ import v9t9.emulator.runtime.compiler.ICompiledCode;
 import v9t9.emulator.runtime.compiler.ICompilerStrategy;
 import v9t9.emulator.runtime.cpu.CpuMetrics.MetricEntry;
 import v9t9.emulator.runtime.interpreter.Interpreter;
-import v9t9.engine.HighLevelCodeInfo;
-import v9t9.engine.memory.MemoryArea;
-import v9t9.engine.memory.MemoryEntry;
 
 
 /**
@@ -40,7 +35,6 @@ public class Executor {
 
     public Cpu cpu;
 
-    public Map<MemoryArea, HighLevelCodeInfo> highLevelCodeInfoMap;
     public Interpreter interp;
     ICompilerStrategy compilerStrategy;
 
@@ -76,7 +70,6 @@ public class Executor {
         this.interp = interpreter;
         this.compilerStrategy = compilerStrategy;
         compilerStrategy.setExecutor(this);
-        this.highLevelCodeInfoMap = new HashMap<MemoryArea, HighLevelCodeInfo>();
         
         final Object lock = Executor.this.cpu.getMachine().getExecutionLock();
         Cpu.settingDumpFullInstructions.addListener(new IPropertyListener() {
@@ -243,19 +236,6 @@ public class Executor {
     	return Logging.getLog(Cpu.settingDumpFullInstructions);
     }
  
-    /** Currently, only gather high-level info for one memory entry at a time */
-    public HighLevelCodeInfo getHighLevelCode(MemoryEntry entry) {
-    	MemoryArea area = entry.getArea();
-    	HighLevelCodeInfo highLevel = highLevelCodeInfoMap.get(area);
-    	if (highLevel == null) {
-    		System.out.println("Initializing high level info for " + entry + " / " + area);
-    		highLevel = new HighLevelCodeInfo(cpu);
-    		highLevel.disassemble(entry.addr, entry.size);
-    		highLevelCodeInfoMap.put(area, highLevel);
-    	}
-    	return highLevel;
-    }
-
 	public void recordMetrics() {
 		MetricEntry entry = cpuMetrics.log(nInstructions,
 				cpu.getTotalCycleCount(), Cpu.settingCyclesPerSecond.getInt(),

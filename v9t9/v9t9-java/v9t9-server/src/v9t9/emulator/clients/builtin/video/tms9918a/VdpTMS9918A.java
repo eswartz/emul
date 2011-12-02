@@ -15,7 +15,7 @@ import org.ejs.coffee.core.settings.ISettingSection;
 import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.clients.builtin.video.BlankModeRedrawHandler;
-import v9t9.emulator.clients.builtin.video.ImageDataCanvasPaletted;
+import v9t9.emulator.clients.builtin.video.MemoryCanvas;
 import v9t9.emulator.clients.builtin.video.RedrawBlock;
 import v9t9.emulator.clients.builtin.video.VdpCanvas;
 import v9t9.emulator.clients.builtin.video.VdpChanges;
@@ -151,7 +151,7 @@ public class VdpTMS9918A implements VdpHandler {
 		});
 		
 		this.vdpMemory = machine.getMemory().getDomain(MemoryDomain.NAME_VIDEO);
-		this.vdpCanvas = new ImageDataCanvasPaletted();
+		this.vdpCanvas = new MemoryCanvas();	 // placeholder
 		this.vdpregs = allocVdpRegs();
 		vdpCanvas.setSize(256, 192);
 		

@@ -12,7 +12,6 @@ import v9t9.emulator.clients.builtin.video.VdpColorManager;
 import v9t9.emulator.clients.builtin.video.VdpModeInfo;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.common.IMachine;
-import v9t9.emulator.hardware.memory.mmio.Vdp9938Mmio;
 import v9t9.emulator.runtime.cpu.Cpu;
 import v9t9.engine.memory.BankedMemoryEntry;
 
@@ -458,24 +457,24 @@ public class VdpV9938 extends VdpTMS9918A {
 	}
 
 	private void switchBank() {
-		if (getVdpMmio() instanceof Vdp9938Mmio) {
-			Vdp9938Mmio vdp9938Mmio = (Vdp9938Mmio) getVdpMmio();
-			BankedMemoryEntry memoryBank = vdp9938Mmio.getMemoryBank();
-			int vdpbank = (vdpregs[14] & 0x7);
-			
-			// 16k mode?
-			if (/*(vdpregs[8] & R8_VR) == 0 ||*/ memoryBank.getBankCount() == 1) {
-				vdpbank = 0;
-			} else {
-				// expansion RAM?
-				if ((vdpregs[45] & R45_MXC) != 0 && memoryBank.getBankCount() >= 8) {
-					vdpbank = (vdpbank & 0x3) | 0x8;
-				}
+		BankedMemoryEntry memoryBank = getVdpMmio().getMemoryBank();
+		if (memoryBank == null)
+			return;
+		
+		int vdpbank = (vdpregs[14] & 0x7);
+		
+		// 16k mode?
+		if (/*(vdpregs[8] & R8_VR) == 0 ||*/ memoryBank.getBankCount() == 1) {
+			vdpbank = 0;
+		} else {
+			// expansion RAM?
+			if ((vdpregs[45] & R45_MXC) != 0 && memoryBank.getBankCount() >= 8) {
+				vdpbank = (vdpbank & 0x3) | 0x8;
 			}
-			
-			memoryBank.selectBank(vdpbank);
-			//System.out.println("-->vdpbank " + vdpbank);
 		}
+		
+		memoryBank.selectBank(vdpbank);
+		//System.out.println("-->vdpbank " + vdpbank);
 	}
 
 	public void writeColorData(byte val) {
@@ -593,9 +592,10 @@ public class VdpV9938 extends VdpTMS9918A {
 			vdpCanvas.clearToEvenOddClearColors();
 		} else if (modeNumber == MODE_GRAPHICS7) {
 			// an GRB 332 value is here
-			byte[] rgb = { 0, 0, 0 };
-			vdpCanvas.getColorMgr().getGRB332(rgb, vdpregs[7]);
-			vdpCanvas.clear(rgb);
+			//byte[] rgb = { 0, 0, 0 };
+			///vdpCanvas.getColorMgr().getGRB332(rgb, vdpregs[7]);
+			vdpCanvas.getColorMgr().setClearColor(vdpregs[7] & 0xff);
+			vdpCanvas.clear();
 		} else {
 			super.setupBackdrop();
 		}

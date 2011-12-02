@@ -3,7 +3,6 @@
  */
 package v9t9.emulator.clients.builtin.video;
 
-import org.eclipse.swt.graphics.Rectangle;
 
 /**
  * @author ejs
@@ -87,15 +86,6 @@ public abstract class BaseVdpCanvas implements ICanvas {
 		dy1 = height; 
 		dx2 = dy2 = 0;
 	}
-
-	/** Get the dirty rectangle in pixels */
-	public Rectangle getDirtyRect() {
-		if (dx1 >= dx2 || dy1 >= dy2)
-			return null;
-
-		return new Rectangle(dx1, dy1, (dx2 - dx1), (dy2 - dy1));
-	}
-	
 	
 	public BaseVdpCanvas() {
 		colorMgr = new VdpColorManager();

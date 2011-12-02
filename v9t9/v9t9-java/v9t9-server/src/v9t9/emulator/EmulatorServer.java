@@ -17,31 +17,21 @@ import org.ejs.coffee.core.properties.IPropertyListener;
 import org.ejs.coffee.core.utils.Check;
 
 import v9t9.emulator.clients.builtin.NotifyException;
-import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.common.EmulatorSettings;
 import v9t9.emulator.common.IEventNotifier;
 import v9t9.emulator.common.IMachine;
 import v9t9.emulator.common.ModuleManager;
 import v9t9.emulator.common.WorkspaceSettings;
-import v9t9.emulator.hardware.EnhancedCompatibleMachineModel;
-import v9t9.emulator.hardware.EnhancedMachineModel;
-import v9t9.emulator.hardware.F99bMachineModel;
 import v9t9.emulator.hardware.MachineModel;
 import v9t9.emulator.hardware.MachineModelFactory;
-import v9t9.emulator.hardware.StandardMachineModel;
-import v9t9.emulator.hardware.StandardMachineV9938Model;
-import v9t9.emulator.hardware.memory.mmio.GplMmio;
 import v9t9.emulator.runtime.cpu.Cpu;
 import v9t9.engine.Client;
 import v9t9.engine.files.DataFiles;
 import v9t9.engine.memory.Memory;
 import v9t9.engine.memory.MemoryModel;
 
-import com.sun.jna.Native;
-
 public class EmulatorServer {
 
-	private static final boolean sIsWebStarted = System.getProperty("javawebstart.version") != null;
 	private static final boolean sIsDevBuild;
 	
 	private static final URL sBaseV9t9URL;
@@ -103,13 +93,6 @@ public class EmulatorServer {
 	}
 	
 	static {
-		if (sIsWebStarted && System.getProperty("jna.library.path") == null) {
-			String path = Native.getWebStartLibraryPath("v9t9render");
-			System.out.println("Native libs at " + path);
-			if (path != null)
-				System.setProperty("jna.library.path", path);
-		}		
-		
 		DataFiles.settingBootRomsPath.addListener(new IPropertyListener() {
 			
 			@Override
@@ -130,14 +113,6 @@ public class EmulatorServer {
 	}
 
 
-	static {
-		MachineModelFactory.register(StandardMachineModel.ID, StandardMachineModel.class);
-		MachineModelFactory.register(StandardMachineV9938Model.ID, StandardMachineV9938Model.class);
-		MachineModelFactory.register(EnhancedCompatibleMachineModel.ID, EnhancedCompatibleMachineModel.class);
-		MachineModelFactory.register(EnhancedMachineModel.ID, EnhancedMachineModel.class);
-		MachineModelFactory.register(F99bMachineModel.ID, F99bMachineModel.class);
-	}
-	
 	private Memory memory;
 	private IMachine machine;
 	private MemoryModel memoryModel;
@@ -239,9 +214,6 @@ public class EmulatorServer {
         assert (model != null);
         
         machine = model.createMachine();
-
-        VdpTMS9918A.settingDumpVdpAccess.setBoolean(true);
-        GplMmio.settingDumpGplAccess.setBoolean(true);
     }
 
 	/**

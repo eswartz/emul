@@ -8,7 +8,6 @@ import org.ejs.coffee.core.settings.ISettingSection;
 
 import v9t9.emulator.common.IMachine;
 import v9t9.emulator.runtime.cpu.Cpu;
-import v9t9.emulator.runtime.cpu.Cpu9900;
 import v9t9.keyboard.KeyboardState;
 
 /**
@@ -127,7 +126,7 @@ public class BaseCruAccess implements CruAccess {
 
 				this.intreq = true;
 				this.ic = ((byte) intlevel);
-				cpu.setPin(Cpu9900.PIN_INTREQ);
+				cpu.irq();
 			}
 		}
 	}

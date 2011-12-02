@@ -10,7 +10,6 @@ import org.ejs.coffee.core.settings.ISettingSection;
 import v9t9.emulator.common.IBaseMachine;
 import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.CruAccess;
-import v9t9.engine.VdpHandler;
 import v9t9.engine.cpu.Status;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryDomain.MemoryAccessListener;
@@ -55,7 +54,6 @@ public abstract class CpuBase  implements MemoryAccessListener, IPersistable, Cp
 	/** total # current cycles executed */
 	protected long totalcurrentcycles;
 	protected int interruptTick;
-	protected final VdpHandler vdp;
 	/** State of the pins above  */
 	protected int pins;
 	
@@ -77,9 +75,8 @@ public abstract class CpuBase  implements MemoryAccessListener, IPersistable, Cp
 
 	protected CpuState state;
 
-	public CpuBase(Machine machine, CpuState state, int interruptTick, VdpHandler vdp) {
+	public CpuBase(Machine machine, CpuState state, int interruptTick) {
 		 this.machine = machine;
-		this.vdp = vdp;
 		this.state = state;
         this.state.getConsole().setAccessListener(this);
         this.interruptTick = interruptTick;
@@ -130,7 +127,6 @@ public abstract class CpuBase  implements MemoryAccessListener, IPersistable, Cp
 	public synchronized void addCycles(int cycles) {
 		if (cycles != 0) {
 			this.currentcycles += cycles; 
-			vdp.addCpuCycles(cycles);
 		}
 	}
 

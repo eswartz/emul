@@ -42,7 +42,7 @@ import v9t9.engine.VdpHandler;
 public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVideoRenderer {
 	
 	protected Canvas canvas;
-	protected VdpCanvas vdpCanvas;
+	protected ImageDataCanvas vdpCanvas;
 	protected Color bg;
 
 	protected Image image;
@@ -358,7 +358,10 @@ public class SwtVideoRenderer implements VideoRenderer, ICanvasListener, ISwtVid
 	}
 
 	public void setCanvas(VdpCanvas vdpCanvas) {
-		this.vdpCanvas = vdpCanvas;
+		if (!(vdpCanvas instanceof ImageDataCanvas))
+			throw new IllegalArgumentException();
+		
+		this.vdpCanvas = (ImageDataCanvas) vdpCanvas;
 		this.vdpCanvas.setListener(this);
 		updateWidgetSizeForMode();
 	}

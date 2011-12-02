@@ -4,6 +4,7 @@ import v9t9.emulator.common.Machine.ConsoleMmioReader;
 import v9t9.emulator.common.Machine.ConsoleMmioWriter;
 import v9t9.emulator.hardware.memory.VdpRamArea;
 import v9t9.engine.VdpHandler;
+import v9t9.engine.memory.BankedMemoryEntry;
 import v9t9.engine.memory.ByteMemoryAccess;
 
 public abstract class VdpMmio implements ConsoleMmioReader, ConsoleMmioWriter {
@@ -60,4 +61,5 @@ public abstract class VdpMmio implements ConsoleMmioReader, ConsoleMmioWriter {
 	}
 
 
+	abstract public BankedMemoryEntry getMemoryBank();
 }

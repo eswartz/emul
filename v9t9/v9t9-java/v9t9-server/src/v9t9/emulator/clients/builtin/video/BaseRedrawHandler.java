@@ -96,7 +96,7 @@ public abstract class BaseRedrawHandler implements VdpModeRedrawHandler {
 	}
 	
 	public void clear() {
-		info.canvas.clear(info.canvas.getRGB(info.canvas.getColorMgr().getClearColor()));
+		info.canvas.clear();
 	}
 	
 	/* (non-Javadoc)

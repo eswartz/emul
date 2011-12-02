@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/org.ejs.coffee.core"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-common"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-server"/>
+	<classpathentry kind="lib" path="/org.ejs.coffee.core/libs/org.junit_4.8.1.v4_8_1_v20100427-1100/junit.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/SWT"/>
+	<classpathentry kind="lib" path="/org.ejs.coffee.core/libs/swt/org.eclipse.jface_3.6.2.M20110210-1200.jar" sourcepath="/org.ejs.coffee.core/libs/swt/org.eclipse.jface.source_3.6.2.M20110210-1200.jar"/>
+	<classpathentry kind="lib" path="/org.ejs.coffee.core/libs/orbit/plugins/org.w3c.dom.events_3.0.0.draft20060413_v200905140418.jar"/>
+	<classpathentry kind="lib" path="/org.ejs.coffee.core/libs/orbit/plugins/org.w3c.dom.smil_1.0.1.v200903091627.jar"/>
+	<classpathentry kind="lib" path="/org.ejs.coffee.core/libs/bcel-5.2.jar"/>
+	<classpathentry kind="lib" path="/org.ejs.coffee.core/libs/gnu-getopt-1.0.11.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

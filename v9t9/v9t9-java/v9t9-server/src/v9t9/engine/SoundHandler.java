@@ -6,6 +6,8 @@
  */
 package v9t9.engine;
 
+import org.ejs.coffee.core.properties.SettingProperty;
+
 
 
 /**
@@ -14,6 +16,10 @@ package v9t9.engine;
  */
 public interface SoundHandler {
 	
+	public static SettingProperty settingPlaySound = new SettingProperty("PlaySound", new Boolean(true));
+	public static SettingProperty settingSoundVolume = new SettingProperty("SoundVolume", new Integer(10));
+
+
 	/**
 	 * Dispose sound and turn off audio
 	 */

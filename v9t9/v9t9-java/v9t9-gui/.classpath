@@ -22,23 +22,26 @@
 	<classpathentry kind="lib" path="libs/lwjgl/lwjgl_util.jar"/>
 	<classpathentry kind="lib" path="libs/lwjgl/lwjgl.jar"/>
 	<classpathentry kind="lib" path="libs/svgSalamander.jar"/>
-	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.bridge_1.7.0.v201011041433.jar"/>
-	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.css_1.7.0.v201011041433.jar"/>
-	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.dom_1.7.0.v201011041433.jar"/>
-	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.dom.svg_1.7.0.v201011041433.jar"/>
-	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.ext.awt_1.7.0.v201011041433.jar"/>
-	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.extension_1.7.0.v201011041433.jar"/>
-	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.parser_1.7.0.v201011041433.jar"/>
-	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.svggen_1.7.0.v201011041433.jar"/>
-	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.transcoder_1.7.0.v201011041433.jar"/>
-	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.util_1.7.0.v201011041433.jar"/>
-	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.util.gui.source_1.7.0.v200903091627.jar"/>
-	<classpathentry kind="lib" path="libs/orbit/plugins/org.apache.batik.xml_1.7.0.v201011041433.jar"/>
-	<classpathentry kind="lib" path="libs/orbit/plugins/org.w3c.css.sac_1.3.1.v200903091627.jar"/>
-	<classpathentry kind="lib" path="libs/orbit/plugins/org.w3c.css.sac.source_1.3.1.v200903091627.jar"/>
-	<classpathentry kind="lib" path="libs/orbit/plugins/org.w3c.dom.events_3.0.0.draft20060413_v200905140418.jar"/>
-	<classpathentry kind="lib" path="libs/orbit/plugins/org.w3c.dom.smil_1.0.0.v200806040011.jar"/>
-	<classpathentry kind="lib" path="libs/orbit/plugins/org.w3c.dom.svg_1.1.0.v201011041433.jar"/>
 	<classpathentry kind="src" path="data"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-machines"/>
+	<classpathentry kind="lib" path="/org.ejs.coffee.core/libs/orbit/plugins/org.apache.batik.bridge_1.7.0.v201011041433.jar"/>
+	<classpathentry kind="lib" path="/org.ejs.coffee.core/libs/orbit/plugins/org.apache.batik.css_1.7.0.v201011041433.jar"/>
+	<classpathentry kind="lib" path="/org.ejs.coffee.core/libs/orbit/plugins/org.apache.batik.dom_1.7.0.v201011041433.jar"/>
+	<classpathentry kind="lib" path="/org.ejs.coffee.core/libs/orbit/plugins/org.apache.batik.dom.svg_1.7.0.v201011041433.jar"/>
+	<classpathentry kind="lib" path="/org.ejs.coffee.core/libs/orbit/plugins/org.apache.batik.ext.awt_1.7.0.v201011041433.jar"/>
+	<classpathentry kind="lib" path="/org.ejs.coffee.core/libs/orbit/plugins/org.apache.batik.extension_1.7.0.v201011041433.jar"/>
+	<classpathentry kind="lib" path="/org.ejs.coffee.core/libs/orbit/plugins/org.apache.batik.parser_1.7.0.v201011041433.jar"/>
+	<classpathentry kind="lib" path="/org.ejs.coffee.core/libs/orbit/plugins/org.apache.batik.svggen_1.7.0.v201011041433.jar"/>
+	<classpathentry kind="lib" path="/org.ejs.coffee.core/libs/orbit/plugins/org.apache.batik.swing_1.7.0.v201011041433.jar"/>
+	<classpathentry kind="lib" path="/org.ejs.coffee.core/libs/orbit/plugins/org.apache.batik.swing.source_1.7.0.v201011041433.jar"/>
+	<classpathentry kind="lib" path="/org.ejs.coffee.core/libs/orbit/plugins/org.apache.batik.transcoder_1.7.0.v201011041433.jar"/>
+	<classpathentry kind="lib" path="/org.ejs.coffee.core/libs/orbit/plugins/org.apache.batik.util_1.7.0.v201011041433.jar"/>
+	<classpathentry kind="lib" path="/org.ejs.coffee.core/libs/orbit/plugins/org.apache.batik.util.gui_1.7.0.v200903091627.jar"/>
+	<classpathentry kind="lib" path="/org.ejs.coffee.core/libs/orbit/plugins/org.apache.batik.xml_1.7.0.v201011041433.jar"/>
+	<classpathentry kind="lib" path="/org.ejs.coffee.core/libs/orbit/plugins/org.w3c.css.sac_1.3.1.v200903091627.jar"/>
+	<classpathentry kind="lib" path="/org.ejs.coffee.core/libs/orbit/plugins/org.w3c.dom.events_3.0.0.draft20060413_v200905140418.jar"/>
+	<classpathentry kind="lib" path="/org.ejs.coffee.core/libs/orbit/plugins/org.w3c.dom.smil_1.0.0.v200806040011.jar"/>
+	<classpathentry kind="lib" path="/org.ejs.coffee.core/libs/orbit/plugins/org.w3c.dom.smil_1.0.1.v200903091627.jar"/>
+	<classpathentry kind="lib" path="/org.ejs.coffee.core/libs/orbit/plugins/org.w3c.dom.svg_1.1.0.v201011041433.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

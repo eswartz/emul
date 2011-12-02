@@ -104,7 +104,12 @@ public interface Cpu extends IPersistable, CpuState {
 	boolean isIdle();
 
 	/**
-	 * 
+	 * Set NMI interrupt line
 	 */
 	void nmi();
+
+	/**
+	 * Set interrupt request interrupt line
+	 */
+	void irq();
 }

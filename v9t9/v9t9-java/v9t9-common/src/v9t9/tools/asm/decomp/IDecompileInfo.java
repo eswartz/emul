@@ -58,5 +58,10 @@ public interface IDecompileInfo {
 
 	public Label getLabel(int pc);
 
+	/**
+	 * 
+	 */
+	public void analyze();
+
 
 }

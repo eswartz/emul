@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.ejs.coffee.core.settings.ISettingSection;
 
-import v9t9.engine.cpu.InstructionWorkBlock;
+import v9t9.engine.cpu.BaseInstructionWorkBlock;
 
 public interface IDsrManager {
 
@@ -27,6 +27,6 @@ public interface IDsrManager {
 	 *	handles those opcodes by calling the DSR module 'filehandler'
 	 *	callback.
 	 */
-	void handleDSR(InstructionWorkBlock instructionWorkBlock);
+	void handleDSR(BaseInstructionWorkBlock instructionWorkBlock);
 
 }
