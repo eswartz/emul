@@ -2,7 +2,7 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="/org.ejs.coffee.core/libs/jna.jar"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/org.ejs.coffee.core"/>
+	<classpathentry kind="lib" path="/v9t9-base/libs/jna.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-base"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
