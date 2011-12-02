@@ -1,0 +1,67 @@
+
+ 
+At the highest user level, the memory manager supports an externally
+configurable memory configuration.  The most obvious of these is
+the way cartridges can be swapped out.  Less obvious but also 
+important are the way ROMs can be swapped with others and the
+way RAM size and speed can be configured.
+
+At the emulation level, a memory controller imitates the behavior of 
+the various memory buses and address decoders and their interactions.  
+Based on various features of the emulated system and the current 
+program state, reading and writing to that bus will dynamically 
+invoke the memory handler active on that bus for that address.  
+
+A memory module corrals all the effects one combined unit has on the 
+memory controller.  A traditional "cartridge" would be
+a module, usually providing ROM or RAM on the CPU and GROM memory
+buses.  But also, a VDP controller would provide MMIO on the
+CPU bus and RAM on the VDP RAM bus.  And a device controller would
+decode addresses on the CRU bus (permanently) and addresses on the
+CPU bus in the DSR ROM area (transiently).  So a module can
+decode a range of addresses on any of the CPU, GROM, VDP RAM, speech, 
+or CRU buses.  And which addresses it chooses to encode can 
+dynamically change.
+
+From the picture above, especially the device example, we can see 
+how the memory controller really does present a dynamic map of the 
+active memory.  In previous incarnations, the map was changed in a
+non-reversible way, since it was assumed that we "knew" how to restore
+memory (i.e. when a DSR ROM is turned off, zeroes remain).  
+
+But a few particular examples inspired following the memory bus concept 
+more closely.  
+
+First, supporting the V9938 revealed that it was designed with a
+concept of "ports" and memory, not the 99/4-centric "special addresses"
+and memory.  This showed that *something* has to exist between the
+CPU and the VDP to implement that mapping.
+
+Second, introducing memory latency revealed the limitations of the 
+former model, in that latency was really tied to various interactions 
+between buses, not the addresses themselves, so we need to keep the 
+concept of the bus in place. 
+
+Third, the idea of dynamically mapping VDP RAM into the CPU address place 
+revealed that we had no good way to restore the "underlying" memory,
+when in reality this dynamic mapping should have been done by 
+a change in address on bus interpretation, not "changing" memory
+into video memory for a time.
+
+
+MemoryManager:  allows adding/removing memory modules and accessing
+    memory controller
+
+MemoryModule:  a contained set of functionality which provides a 
+    a set of MemoryHandlers which can be individually mapped in 
+    and out of the memory controller. 
+    
+MemoryController:  main interface to emulator, managing the current
+    state of memory buses and handlers
+    
+MemoryBus:  controller for a range of addresses of the same type,
+    address writes and memory reads/writes to
+    the appropriate handlers
+    
+MemoryHandler:  the specific handling reads and writes of various
+    sizes on a bus.        

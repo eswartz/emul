@@ -63,4 +63,7 @@ v9t9/v9t9-c/v9t9/source/vdpdrawrowtext.c
 v9t9/v9t9-c/v9t9/source/vdpdrawrow.c
 .cproject
 .project
+v9t9/v9t9-java/v9t9-common/bin/*
+v9t9/v9t9-java/v9t9-server/bin/*
+*.class
 
