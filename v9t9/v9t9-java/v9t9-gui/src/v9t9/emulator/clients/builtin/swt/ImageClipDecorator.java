@@ -176,8 +176,11 @@ public class ImageClipDecorator implements PaintListener {
 	public Rectangle getSourceClip(Rectangle clip) {
 		Image image = imageLabel.getImage();
 		
+		if (image == null)
+			return null;
+		
 		Rectangle imageBounds = image.getBounds();
-		if (clip == null || image == null || imageBounds.isEmpty())
+		if (clip == null || imageBounds.isEmpty())
 			return null;
 
 		Rectangle imageClientArea = imageLabel.getBounds();
