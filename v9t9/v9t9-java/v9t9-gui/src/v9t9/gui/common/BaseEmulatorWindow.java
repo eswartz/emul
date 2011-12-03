@@ -24,6 +24,7 @@ import v9t9.engine.machine.Machine;
 import v9t9.engine.machine.TerminatedException;
 import v9t9.engine.settings.WorkspaceSettings;
 import v9t9.gui.Emulator;
+import v9t9.server.EmulatorServer;
 
 public abstract class BaseEmulatorWindow {
 
@@ -156,7 +157,7 @@ public abstract class BaseEmulatorWindow {
 			        		t.printStackTrace();
 			        	}
 			        	
-			        	Emulator.createAndRun(modelId, clientId);
+			        	Emulator.createAndRun(new EmulatorServer(), modelId, clientId);
 
 			        	// $NOTREACHED$
 			        	return;

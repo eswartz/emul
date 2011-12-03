@@ -88,7 +88,7 @@ public class JavaSoundHandler implements ISoundHandler {
 		
 		speechVoice = new SpeechVoice();
 		
-		ISoundHandler.settingSoundVolume.addListener(new IPropertyListener() {
+		EmulatorSettings.settingSoundVolume.addListener(new IPropertyListener() {
 			
 			@Override
 			public void propertyChanged(IProperty setting) {
@@ -96,8 +96,8 @@ public class JavaSoundHandler implements ISoundHandler {
 			}
 		});
 
-		EmulatorSettings.INSTANCE.register(ISoundHandler.settingSoundVolume);
-		EmulatorSettings.INSTANCE.register(ISoundHandler.settingPlaySound);
+		EmulatorSettings.INSTANCE.register(EmulatorSettings.settingSoundVolume);
+		EmulatorSettings.INSTANCE.register(EmulatorSettings.settingPlaySound);
 		
 		soundRecordingHelper = new SoundRecordingHelper(output, settingRecordSoundOutputFile, "sound");
 		speechRecordingHelper = new SoundRecordingHelper(speechOutput, settingRecordSpeechOutputFile, "speech");
@@ -112,7 +112,7 @@ public class JavaSoundHandler implements ISoundHandler {
 
 		
 		
-		ISoundHandler.settingPlaySound.addListener(new IPropertyListener() {
+		EmulatorSettings.settingPlaySound.addListener(new IPropertyListener() {
 
 			public void propertyChanged(IProperty setting) {
 				toggleSound(setting.getBoolean());
@@ -120,7 +120,7 @@ public class JavaSoundHandler implements ISoundHandler {
 			
 		});
 		
-		toggleSound(ISoundHandler.settingPlaySound.getBoolean());
+		toggleSound(EmulatorSettings.settingPlaySound.getBoolean());
 	}
 
 	public void toggleSound(boolean enabled) {

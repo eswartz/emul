@@ -3,10 +3,12 @@ package v9t9.machine.ti99.memory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.URL;
 
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.memory.BankedMemoryEntry;
 import v9t9.common.memory.MemoryEntry;
+import v9t9.engine.EmulatorData;
 import v9t9.engine.files.DataFiles;
 import v9t9.engine.machine.IMachine;
 import v9t9.engine.memory.DiskMemoryEntry;
@@ -39,7 +41,9 @@ public class V9t9EnhancedConsoleMemoryModel extends TI994AStandardConsoleMemoryM
 		// enhanced model can only load FORTH for now
 		DiskMemoryEntry entry;
 		
-		DataFiles.addSearchPath("../../tools/Forth");
+		URL dataURL = EmulatorData.getDataURL("../../../build/forth");
+		DataFiles.addSearchPath(dataURL.getPath());
+		
 		loadEnhancedBankedConsoleRom(eventNotifier, "nforthA.rom", "nforthB.rom");
 		loadConsoleGrom(eventNotifier, "nforth.grm");
 		entry = loadModuleGrom(eventNotifier, "FORTH", "nforthg.bin");

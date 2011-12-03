@@ -3,6 +3,8 @@
  */
 package v9t9.machine.ti99.cpu;
 
+import v9t9.common.asm.IMachineOperand;
+import v9t9.common.asm.IOperand;
 import v9t9.common.cpu.ICpuState;
 import v9t9.common.cpu.InstructionWorkBlock;
 
@@ -30,4 +32,34 @@ public final class InstructionWorkBlock9900 extends InstructionWorkBlock {
     	copy.val3 = val2;
     	copy.wp = wp;
     }
+    
+	public InstructionWorkBlock copy() {
+		InstructionWorkBlock block = new InstructionWorkBlock9900(cpu);
+		this.copyTo(block);
+		return block;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.InstructionWorkBlock#formatOpChange(int)
+	 */
+	@Override
+	public String formatOpChange(int i, InstructionWorkBlock after) {
+		StringBuilder builder = new StringBuilder();
+		IMachineOperand op = (IMachineOperand) (i == 1 ? inst.getOp1() : (i == 2 ? inst.getOp2() : inst.getOp3()));
+		int dest = ((MachineOperand9900) op).dest;
+		if (dest != IOperand.OP_DEST_KILLED) {
+			builder.append(op.valueString(
+					ea1, 
+					val1));
+		}
+		if (dest != IOperand.OP_DEST_FALSE) {
+			if (builder.length() > 0)
+				builder.append(" => ");
+			builder.append(op.valueString(
+					((InstructionWorkBlock9900)after).ea1, 
+					((InstructionWorkBlock9900) after).val1));
+		}
+		return builder.toString();
+
+	}
 }

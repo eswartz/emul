@@ -9,7 +9,6 @@ package v9t9.server;
 import java.io.IOException;
 
 
-import v9t9.base.utils.Check;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyException;
@@ -24,20 +23,32 @@ import v9t9.engine.machine.MachineModel;
 import v9t9.engine.machine.MachineModelFactory;
 import v9t9.engine.machine.ModuleManager;
 import v9t9.engine.settings.WorkspaceSettings;
+import v9t9.machine.f99b.machine.F99bMachineModel;
+import v9t9.machine.ti99.machine.Enhanced48KForthTI994AMachineModel;
+import v9t9.machine.ti99.machine.StandardMachineModel;
+import v9t9.machine.ti99.machine.EnhancedTI994AMachineModel;
 
 public class EmulatorServer {
 
+	static {
+		MachineModelFactory.INSTANCE.register(
+				StandardMachineModel.ID, StandardMachineModel.class);
+		MachineModelFactory.INSTANCE.register(
+				EnhancedTI994AMachineModel.ID, EnhancedTI994AMachineModel.class);
+		MachineModelFactory.INSTANCE.register(
+				Enhanced48KForthTI994AMachineModel.ID, Enhanced48KForthTI994AMachineModel.class);
+		MachineModelFactory.INSTANCE.register(
+				F99bMachineModel.ID, F99bMachineModel.class);
+	}
+	
+	
 	private Memory memory;
 	private IMachine machine;
 	private MemoryModel memoryModel;
 	private IClient client;
 	private boolean inited;
 
-    public EmulatorServer(String modelId) throws IOException {
-    	Check.checkArg(modelId);
-    	init(modelId);
-    	this.memory = machine.getMemory();
-    	this.memoryModel = memory.getModel();
+    public EmulatorServer() {
     }
     
     /**
@@ -118,10 +129,14 @@ public class EmulatorServer {
     		System.err.println("Setting up new configuration");
     	}
     	
-        MachineModel model = MachineModelFactory.createModel(modelId);
+        MachineModel model = MachineModelFactory.INSTANCE.createModel(modelId);
         assert (model != null);
         
         machine = model.createMachine();
+        
+    	this.memory = machine.getMemory();
+    	this.memoryModel = memory.getModel();
+
     }
 
 	public void setClient(IClient client) {
@@ -164,6 +179,13 @@ public class EmulatorServer {
 			} catch (InterruptedException e) {
 			}
         }
+	}
+
+	/**
+	 * @return
+	 */
+	public MachineModelFactory getMachineModelFactory() {
+		return MachineModelFactory.INSTANCE;
 	}
 
 }

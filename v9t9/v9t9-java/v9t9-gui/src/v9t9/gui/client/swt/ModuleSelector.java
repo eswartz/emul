@@ -42,7 +42,6 @@ import v9t9.common.events.IEventNotifier.Level;
 import v9t9.engine.machine.Machine;
 import v9t9.engine.modules.IModule;
 import v9t9.engine.modules.MemoryEntryInfo;
-import v9t9.machine.ti99.cpu.Cpu9900;
 
 /**
  * @author ejs
@@ -225,7 +224,7 @@ public class ModuleSelector extends Composite {
 	protected void switchModule() {
 		try {
 			machine.getModuleManager().switchModule(selectedModule);
-			machine.getCpu().setPin(Cpu9900.PIN_RESET);
+			machine.getCpu().reset();
 
 			getShell().dispose();
 		} catch (NotifyException e) {

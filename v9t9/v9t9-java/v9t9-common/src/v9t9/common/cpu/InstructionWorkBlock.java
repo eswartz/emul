@@ -40,4 +40,18 @@ public class InstructionWorkBlock  {
     	copy.st = st;
     	copy.cycles = cycles;
     }
+
+	public InstructionWorkBlock copy() {
+		InstructionWorkBlock block = new InstructionWorkBlock(cpu);
+		this.copyTo(block);
+		return block;
+	}
+
+	/**
+	 * @param i
+	 * @return
+	 */
+	public String formatOpChange(int i, InstructionWorkBlock after) {
+		return "";
+	}
 }

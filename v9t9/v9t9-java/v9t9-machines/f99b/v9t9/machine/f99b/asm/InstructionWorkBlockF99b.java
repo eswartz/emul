@@ -3,8 +3,8 @@
  */
 package v9t9.machine.f99b.asm;
 
+import v9t9.common.cpu.ICpuState;
 import v9t9.common.cpu.InstructionWorkBlock;
-import v9t9.machine.f99b.cpu.CpuF99b;
 import v9t9.machine.f99b.cpu.CpuStateF99b;
 
 public final class InstructionWorkBlockF99b extends InstructionWorkBlock {
@@ -18,8 +18,8 @@ public final class InstructionWorkBlockF99b extends InstructionWorkBlock {
 	public short[] inStack = new short[6];
 	public short[] inReturnStack = new short[6];
 
-	public InstructionWorkBlockF99b(CpuF99b cpu) {
-    	super(cpu.getState());
+	public InstructionWorkBlockF99b(ICpuState cpuState) {
+    	super(cpuState);
 	}
     
     public void copyTo(InstructionWorkBlockF99b copy) {
@@ -33,6 +33,16 @@ public final class InstructionWorkBlockF99b extends InstructionWorkBlock {
     	//copy.inReturnStack = Arrays.copyOf(inReturnStack, inReturnStack.length);
     	System.arraycopy(inStack, 0, copy.inStack, 0, copy.inStack.length);
     	System.arraycopy(inReturnStack, 0, copy.inReturnStack, 0, copy.inReturnStack.length);
+    }
+    
+    /* (non-Javadoc)
+     * @see v9t9.common.cpu.InstructionWorkBlock#copy()
+     */
+    @Override
+    public InstructionWorkBlock copy() {
+    	InstructionWorkBlock block = new InstructionWorkBlockF99b(cpu);
+		this.copyTo(block);
+		return block;
     }
 
 	public short getStackEntry(int i) {

@@ -4,25 +4,37 @@
 package v9t9.machine.ti99.machine;
 
 
+import v9t9.common.memory.MemoryModel;
 import v9t9.engine.hardware.VdpChip;
 import v9t9.engine.machine.IMachine;
 import v9t9.engine.memory.Vdp9938Mmio;
 import v9t9.engine.video.v9938.VdpV9938;
+import v9t9.machine.ti99.memory.EnhancedTI994AMemoryModel;
 
 /**
  * @author ejs
  *
  */
-public class StandardMachineV9938Model extends StandardMachineModel {
+public class EnhancedTI994AMachineModel extends StandardMachineModel {
 
-	public static final String ID = "StandardTI994AwithV9938";
+	public static final String ID = "EnhancedTI994A";
 	
-	public StandardMachineV9938Model() {
+	public EnhancedTI994AMachineModel() {
 	}
 	
 	@Override
 	public String getIdentifier() {
 		return ID;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.emulator.hardware.MachineModel#getMemoryModel()
+	 */
+	public MemoryModel getMemoryModel() {
+		if (memoryModel == null) {
+			memoryModel = new EnhancedTI994AMemoryModel();
+		}
+		return memoryModel;
 	}
 
 	/* (non-Javadoc)

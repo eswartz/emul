@@ -43,9 +43,9 @@ import v9t9.base.properties.IPropertyListener;
 import v9t9.base.properties.SettingProperty;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.engine.EmulatorSettings;
+import v9t9.engine.dsr.IDiskDsr;
 import v9t9.engine.dsr.IDsrHandler;
 import v9t9.engine.dsr.IDsrSettings;
-import v9t9.engine.dsr.emudisk.FileDirectory;
 import v9t9.engine.dsr.realdisk.BaseDiskImage;
 import v9t9.engine.dsr.realdisk.DiskImageFactory;
 import v9t9.engine.files.Catalog;
@@ -53,7 +53,6 @@ import v9t9.engine.files.CatalogEntry;
 import v9t9.engine.machine.Machine;
 import v9t9.engine.settings.ISettingDecorator;
 import v9t9.engine.settings.IconSettingProperty;
-import v9t9.machine.common.dsr.emudisk.EmuDiskDsr;
 
 /**
  * Select and set up disks
@@ -245,11 +244,8 @@ public class DiskSelectorDialog extends Composite {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
 						for (IDsrHandler dsr : machine.getDsrManager().getDsrs()) {
-							if (dsr instanceof EmuDiskDsr) {
-								FileDirectory fileDir = new FileDirectory(
-										new File(setting.getString()), 
-												((EmuDiskDsr) dsr).getMapper());
-								Catalog catalog = fileDir.readCatalog();
+							if (dsr instanceof IDiskDsr) {
+								Catalog catalog = ((IDiskDsr) dsr).getCatalog(setting);
 								
 								showCatalogDialog(setting, catalog);
 								break;

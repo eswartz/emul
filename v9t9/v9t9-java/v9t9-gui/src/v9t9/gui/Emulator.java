@@ -8,9 +8,9 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.util.Collection;
 
 import v9t9.engine.client.IClient;
-import v9t9.engine.machine.MachineModelFactory;
 import v9t9.engine.memory.GplMmio;
 import v9t9.engine.video.tms9918a.VdpTMS9918A;
 import v9t9.gui.client.ClientFactory;
@@ -18,11 +18,6 @@ import v9t9.gui.client.awt.AwtJavaClient;
 import v9t9.gui.client.swt.SwtAwtJavaClient;
 import v9t9.gui.client.swt.SwtJavaClient;
 import v9t9.gui.client.swt.SwtLwjglJavaClient;
-import v9t9.machine.f99b.machine.F99bMachineModel;
-import v9t9.machine.ti99.machine.EnhancedCompatibleMachineModel;
-import v9t9.machine.ti99.machine.EnhancedMachineModel;
-import v9t9.machine.ti99.machine.StandardMachineModel;
-import v9t9.machine.ti99.machine.StandardMachineV9938Model;
 import v9t9.server.EmulatorServer;
 
 import com.sun.jna.Native;
@@ -49,16 +44,6 @@ public class Emulator {
 		ClientFactory.register(AwtJavaClient.ID, AwtJavaClient.class);
 		ClientFactory.register(SwtLwjglJavaClient.ID, SwtLwjglJavaClient.class);
 	}
-	
-
-	static {
-		MachineModelFactory.register(StandardMachineModel.ID, StandardMachineModel.class);
-		MachineModelFactory.register(StandardMachineV9938Model.ID, StandardMachineV9938Model.class);
-		MachineModelFactory.register(EnhancedCompatibleMachineModel.ID, EnhancedCompatibleMachineModel.class);
-		MachineModelFactory.register(EnhancedMachineModel.ID, EnhancedMachineModel.class);
-		MachineModelFactory.register(F99bMachineModel.ID, F99bMachineModel.class);
-	}
-	
 	
  	private static boolean findArgument(String[] args, String string) {
     	for (String arg : args)
@@ -166,18 +151,19 @@ public class Emulator {
 		VdpTMS9918A.settingDumpVdpAccess.setBoolean(true);
 		GplMmio.settingDumpGplAccess.setBoolean(true);
 		
-		String modelId = getModelId(args);
+		EmulatorServer server = new EmulatorServer();
+		
+		String modelId = getModelId(server, args);
 		String clientId = getClientId(args);
 		
 
-		createAndRun(modelId, clientId);
+		createAndRun(server, modelId, clientId);
 	}
 
 
-	public static void createAndRun(String modelId, String clientId) {
-		EmulatorServer server = null;
+	public static void createAndRun(EmulatorServer server, String modelId, String clientId) {
 		try {
-			server = findOrCreateServer(modelId);
+			server.init(modelId);
 		} catch (IOException e) {
 			System.err.println("Failed to contact or create server:" + modelId);
 			e.printStackTrace();
@@ -229,36 +215,19 @@ public class Emulator {
 
 
 	/**
+	 * @param server 
 	 * @param args
 	 * @return
 	 */
-	private static String getModelId(String[] args) {
+	private static String getModelId(EmulatorServer server, String[] args) {
 
-        String modelId = StandardMachineModel.ID;
-        if (findArgument(args, "--f99b")) {
-        	modelId = F99bMachineModel.ID;
-        } else if (findArgument(args, "--enhanced")) {
-        	modelId = EnhancedMachineModel.ID;
-        } else if (findArgument(args, "--v9938")) {
-        	modelId = StandardMachineV9938Model.ID;
-        } else {
-        	modelId = StandardMachineModel.ID;
-        }
+		Collection<String> models = server.getMachineModelFactory().getRegisteredModels();
+		for (String arg : args) {
+			if (models.contains(arg))
+				return arg;
+		}
         
-        return modelId;
+        return server.getMachineModelFactory().getDefaultModel();
 	}
-
-
-	/**
-	 * @param args
-	 * @return
-	 * @throws IOException 
-	 */
-	public static EmulatorServer findOrCreateServer(String modelId) throws IOException {
-
-		EmulatorServer server = new EmulatorServer(modelId);
-		return server;
-	}
-
 
 }

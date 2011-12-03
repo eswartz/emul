@@ -24,14 +24,13 @@ import org.eclipse.swt.widgets.Shell;
 
 import v9t9.common.cpu.ICpu;
 import v9t9.common.events.IEventNotifier.Level;
-import v9t9.engine.client.ISoundHandler;
+import v9t9.engine.EmulatorSettings;
 import v9t9.engine.machine.Machine;
 import v9t9.gui.client.swt.ToolShell.Behavior;
 import v9t9.gui.client.swt.ToolShell.Centering;
 import v9t9.gui.client.swt.debugger.DebuggerWindow;
 import v9t9.gui.common.BaseEmulatorWindow;
 import v9t9.gui.sound.JavaSoundHandler;
-import v9t9.machine.ti99.cpu.Cpu9900;
 
 /**
  * @author ejs
@@ -84,7 +83,7 @@ public class EmulatorButtonBar extends EmulatorBar  {
 				new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
-						machine.getCpu().setPin(Cpu9900.PIN_LOAD);
+						machine.getCpu().nmi();
 					}
 				});
 
@@ -92,7 +91,7 @@ public class EmulatorButtonBar extends EmulatorBar  {
 				new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
-						machine.getCpu().setPin(Cpu9900.PIN_RESET);
+						machine.getCpu().reset();
 					}
 				});
 
@@ -217,7 +216,7 @@ public class EmulatorButtonBar extends EmulatorBar  {
 				11, 0, "Toggle fullscreen");
 
 		
-		final BasicButton soundButton = createStateButton(ISoundHandler.settingPlaySound, 
+		final BasicButton soundButton = createStateButton(EmulatorSettings.settingPlaySound, 
 				true, 
 				null, 13,
 				14, true, "Sound options");
@@ -246,7 +245,7 @@ public class EmulatorButtonBar extends EmulatorBar  {
 				
 				final Menu volumeMenu = new Menu(vitem);
 
-				int curVol = ISoundHandler.settingSoundVolume.getInt();
+				int curVol = EmulatorSettings.settingSoundVolume.getInt();
 				int[] vols = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 				for (final int vol : vols) {
 					MenuItem item = new MenuItem(volumeMenu, SWT.RADIO);
@@ -256,7 +255,7 @@ public class EmulatorButtonBar extends EmulatorBar  {
 					item.addSelectionListener(new SelectionAdapter() {
 						@Override
 						public void widgetSelected(SelectionEvent e) {
-							ISoundHandler.settingSoundVolume.setInt(vol);
+							EmulatorSettings.settingSoundVolume.setInt(vol);
 						}
 
 					});

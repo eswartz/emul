@@ -7,6 +7,7 @@ package v9t9.engine.sound;
 
 import v9t9.base.settings.ISettingSection;
 import v9t9.common.cpu.ICpu;
+import v9t9.engine.EmulatorSettings;
 import v9t9.engine.client.ISoundHandler;
 import v9t9.engine.hardware.SoundChip;
 import v9t9.engine.machine.IMachine;
@@ -178,7 +179,7 @@ public class SoundTMS9919 implements SoundChip {
 	}
 	
 	public void saveState(ISettingSection settings) {
-		ISoundHandler.settingPlaySound.saveState(settings);
+		EmulatorSettings.settingPlaySound.saveState(settings);
 		for (int vn = 0; vn < sound_voices.length; vn++) {
 			SoundVoice v = sound_voices[vn];
 			v.saveState(settings.addSection(v.getName()));
@@ -187,7 +188,7 @@ public class SoundTMS9919 implements SoundChip {
 	}
 	public void loadState(ISettingSection settings) {
 		if (settings == null) return;
-		ISoundHandler.settingPlaySound.loadState(settings);
+		EmulatorSettings.settingPlaySound.loadState(settings);
 		for (int vn = 0; vn < sound_voices.length; vn++) {
 			SoundVoice v = sound_voices[vn];
 			String name = v.getName();

@@ -153,7 +153,7 @@ public class InterpreterF99b implements Interpreter {
         this.cpu = (CpuF99b) machine.getCpu();
         this.memory = machine.getCpu().getConsole();
         instructionFactory = machine.getInstructionFactory();
-        iblock = new InstructionWorkBlockF99b(cpu);
+        iblock = new InstructionWorkBlockF99b(cpu.getState());
         iblock.domain = memory;
         iblock.showSymbol = true;
         

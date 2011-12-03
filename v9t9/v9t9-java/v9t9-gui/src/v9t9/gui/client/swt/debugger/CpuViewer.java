@@ -39,7 +39,6 @@ import v9t9.engine.cpu.InstructionListener;
 import v9t9.engine.machine.Machine;
 import v9t9.gui.Emulator;
 import v9t9.gui.client.swt.FontUtils;
-import v9t9.machine.ti99.cpu.InstructionWorkBlock9900;
 
 /**
  * @author ejs
@@ -395,7 +394,7 @@ public class CpuViewer extends Composite implements InstructionListener {
 			return;
 		
 		if (isWatching || showNextInstruction) {
-			InstructionWorkBlock9900 after= new InstructionWorkBlock9900(machine.getCpu());
+			InstructionWorkBlock after = after_.copy();
 	        after_.copyTo(after);
 	        
 	        changed = true;
@@ -437,7 +436,7 @@ public class CpuViewer extends Composite implements InstructionListener {
 						RawInstruction inst = machine.getInstructionFactory().decodeInstruction(
 								machine.getCpu().getPC(), machine.getConsole());
 						
-						InstructionWorkBlock9900 before = new InstructionWorkBlock9900(machine.getCpu());
+						InstructionWorkBlock before = new InstructionWorkBlock(machine.getCpu());
 						before.inst = inst;
 						before.pc = (short) (machine.getCpu().getPC() + inst.getSize());
 						

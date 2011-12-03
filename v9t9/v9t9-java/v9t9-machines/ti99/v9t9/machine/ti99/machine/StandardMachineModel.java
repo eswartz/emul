@@ -16,7 +16,6 @@ import v9t9.machine.common.dsr.emudisk.DiskDirectoryMapper;
 import v9t9.machine.common.dsr.emudisk.EmuDiskDsr;
 import v9t9.machine.common.dsr.pcode.PCodeDsr;
 import v9t9.machine.common.dsr.realdisk.RealDiskImageDsr;
-import v9t9.machine.ti99.memory.ExpRamArea;
 import v9t9.machine.ti99.memory.TI994AStandardConsoleMemoryModel;
 
 /**
@@ -26,14 +25,11 @@ import v9t9.machine.ti99.memory.TI994AStandardConsoleMemoryModel;
 public class StandardMachineModel extends BaseTI99MachineModel {
 
 	public static final String ID = "StandardTI994A";
-	
-	private TI994AStandardConsoleMemoryModel memoryModel;
+	protected MemoryModel memoryModel;
 
 	public StandardMachineModel() {
-		memoryModel = new TI994AStandardConsoleMemoryModel();
-		ExpRamArea.settingExpRam.setBoolean(true);
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.MachineModel#getIdentifier()
 	 */
@@ -41,6 +37,7 @@ public class StandardMachineModel extends BaseTI99MachineModel {
 	public String getIdentifier() {
 		return ID;
 	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.MachineModel#createMachine()
 	 */
@@ -52,6 +49,9 @@ public class StandardMachineModel extends BaseTI99MachineModel {
 	 * @see v9t9.emulator.hardware.MachineModel#getMemoryModel()
 	 */
 	public MemoryModel getMemoryModel() {
+		if (memoryModel == null) {
+			memoryModel = new TI994AStandardConsoleMemoryModel();
+		}
 		return memoryModel;
 	}
 

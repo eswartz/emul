@@ -21,15 +21,18 @@ import v9t9.engine.dsr.DeviceIndicatorProvider;
 import v9t9.engine.dsr.DsrException;
 import v9t9.engine.dsr.IDevIcons;
 import v9t9.engine.dsr.IDeviceIndicatorProvider;
+import v9t9.engine.dsr.IDiskDsr;
 import v9t9.engine.dsr.IDsrHandler;
 import v9t9.engine.dsr.IMemoryTransfer;
 import v9t9.engine.dsr.emudisk.DirectDiskHandler;
 import v9t9.engine.dsr.emudisk.EmuDiskConsts;
 import v9t9.engine.dsr.emudisk.EmuDiskDsrSettings;
 import v9t9.engine.dsr.emudisk.EmuDiskPabHandler;
+import v9t9.engine.dsr.emudisk.FileDirectory;
 import v9t9.engine.dsr.emudisk.IFileMapper;
 import v9t9.engine.dsr.emudisk.PabInfoBlock;
 import v9t9.engine.dsr.realdisk.RealDiskDsrSettings;
+import v9t9.engine.files.Catalog;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.settings.WorkspaceSettings;
 import v9t9.machine.common.dsr.emudisk.DiskDirectoryMapper.EmuDiskSetting;
@@ -42,7 +45,7 @@ import v9t9.machine.ti99.dsr.DsrHandler9900;
  * @author ejs
  *
  */
-public class EmuDiskDsr implements IDsrHandler, DsrHandler9900 {
+public class EmuDiskDsr implements IDsrHandler, DsrHandler9900, IDiskDsr {
 	private DiskMemoryEntry memoryEntry;
 	private short vdpNameCompareBuffer;
 	private final IFileMapper mapper;
@@ -386,11 +389,19 @@ public class EmuDiskDsr implements IDsrHandler, DsrHandler9900 {
 	public List<IDeviceIndicatorProvider> getDeviceIndicatorProviders() {
 		return deviceIndicatorProviders;
 	}
-	
-	/**
-	 * @return the mapper
+
+	/* (non-Javadoc)
+	 * @see v9t9.engine.dsr.IDiskDsr#getCatalog(v9t9.base.properties.SettingProperty)
 	 */
-	public IFileMapper getMapper() {
-		return mapper;
+	@Override
+	public Catalog getCatalog(SettingProperty diskSetting) {
+		FileDirectory fileDir = new FileDirectory(
+				new File(diskSetting.getString()), 
+						mapper);
+		Catalog catalog = fileDir.readCatalog();
+
+		return catalog;
 	}
+	
+	
 }

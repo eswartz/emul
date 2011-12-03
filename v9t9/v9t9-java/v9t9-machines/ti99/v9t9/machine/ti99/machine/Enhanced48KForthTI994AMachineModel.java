@@ -9,21 +9,23 @@ import v9t9.common.memory.WindowBankedMemoryEntry;
 import v9t9.engine.hardware.ICruWriter;
 import v9t9.engine.hardware.SoundChip;
 import v9t9.engine.hardware.VdpChip;
+import v9t9.engine.keyboard.KeyboardState;
 import v9t9.engine.machine.IMachine;
 import v9t9.engine.memory.Vdp9938Mmio;
-import v9t9.engine.sound.SoundTMS9919;
+import v9t9.engine.sound.MultiSoundTMS9919B;
 import v9t9.engine.video.v9938.VdpV9938;
 import v9t9.machine.common.dsr.emudisk.DiskDirectoryMapper;
 import v9t9.machine.common.dsr.emudisk.EmuDiskDsr;
 import v9t9.machine.ti99.memory.V9t9EnhancedConsoleMemoryModel;
 
 /**
+ * This is an enhanced machine model that has a more regular memory model as well.
  * @author ejs
  *
  */
-public class EnhancedCompatibleMachineModel extends BaseTI99MachineModel {
+public class Enhanced48KForthTI994AMachineModel extends BaseTI99MachineModel {
 
-	public static final String ID = "EnhancedCompatibleTI994A";
+	public static final String ID = "Enhanced48KForthTI994A";
 	
 	private V9t9EnhancedConsoleMemoryModel memoryModel;
 	private Vdp9938Mmio vdpMmio;
@@ -32,7 +34,7 @@ public class EnhancedCompatibleMachineModel extends BaseTI99MachineModel {
 	private boolean vdpCpuBanked;
 	//protected MemoryEntry currentMemory;
 	
-	public EnhancedCompatibleMachineModel() {
+	public Enhanced48KForthTI994AMachineModel() {
 		memoryModel = new V9t9EnhancedConsoleMemoryModel();
 	}
 	
@@ -43,7 +45,6 @@ public class EnhancedCompatibleMachineModel extends BaseTI99MachineModel {
 	public String getIdentifier() {
 		return ID;
 	}
-	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.MachineModel#createMachine()
 	 */
@@ -51,7 +52,6 @@ public class EnhancedCompatibleMachineModel extends BaseTI99MachineModel {
 	public IMachine createMachine() {
 		return new TI994A(this);
 	}
-	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.MachineModel#getMemoryModel()
 	 */
@@ -67,12 +67,14 @@ public class EnhancedCompatibleMachineModel extends BaseTI99MachineModel {
 		vdpMmio = new Vdp9938Mmio(machine.getMemory(), vdp, 0x20000);
 		return vdp;
 	}
-	
-	public SoundChip createSoundProvider(IMachine machine) {
-		return new SoundTMS9919(machine, null);
-	}
 
+	public SoundChip createSoundProvider(IMachine machine) {
+		return new MultiSoundTMS9919B(machine);
+	}
+	
 	public void defineDevices(final IMachine machine_) {
+		KeyboardState.backspaceIsCtrlH.setBoolean(true);
+		
 		if (machine_ instanceof TI99Machine) {
 			TI99Machine machine = (TI99Machine) machine_;
 			machine.setCruAccess(new InternalCru9901(machine, machine.getKeyboardState()));
@@ -89,7 +91,7 @@ public class EnhancedCompatibleMachineModel extends BaseTI99MachineModel {
 		cpuBankedVideo = new WindowBankedMemoryEntry(machine.getMemory(),
 				"CPU VDP Bank", 
 				machine.getConsole(),
-				0xC000,
+				0xA000,
 				0x4000,
 				vdpMmio.getMemoryArea()) {
 			@Override

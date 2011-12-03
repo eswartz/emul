@@ -3,6 +3,8 @@
  */
 package v9t9.engine.machine;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,14 +14,20 @@ import java.util.Map;
  */
 public class MachineModelFactory {
 
-	private static Map<String, Class<? extends MachineModel>> classMap = new HashMap<String, Class<? extends MachineModel>>();
+	public static final MachineModelFactory INSTANCE = new MachineModelFactory();
+	
+	private Map<String, Class<? extends MachineModel>> classMap = new HashMap<String, Class<? extends MachineModel>>();
 
-	public static void register(String id, Class<? extends MachineModel> klass) {
+	private String defaultModel;
+
+	public void register(String id, Class<? extends MachineModel> klass) {
 		assert !classMap.containsKey(id);
 		classMap.put(id, klass);
+		if (defaultModel == null)
+			defaultModel = id;
 	}
 	
-	public static MachineModel createModel(String id) {
+	public MachineModel createModel(String id) {
 		Class<? extends MachineModel> klass = classMap.get(id);
 		if (klass == null)
 			return null;
@@ -31,6 +39,17 @@ public class MachineModelFactory {
 			assert false : e.getMessage();
 		}
 		return null;
+	}
+
+	public Collection<String> getRegisteredModels() {
+		return Collections.unmodifiableCollection(classMap.keySet());
+	}
+
+	/**
+	 * @return
+	 */
+	public String getDefaultModel() {
+		return defaultModel;
 	}
 	
 }
