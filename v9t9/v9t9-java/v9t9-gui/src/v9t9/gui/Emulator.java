@@ -138,7 +138,7 @@ public class Emulator {
 			else {
 				String path;
 				try {
-					path = new URL(sBaseV9t9URL, "../libv9t9render").getPath().substring(1);
+					path = new URL(sBaseV9t9URL, "../libv9t9render").getPath();
 					System.out.println("Native libs at " + path);
 					if (path != null)
 						System.setProperty("jna.library.path", path);

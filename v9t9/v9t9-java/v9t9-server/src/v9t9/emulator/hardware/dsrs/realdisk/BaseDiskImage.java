@@ -14,6 +14,8 @@ import org.ejs.coffee.core.properties.IPersistable;
 import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.settings.ISettingSection;
 
+import v9t9.emulator.runtime.cpu.Cpu;
+import v9t9.emulator.runtime.cpu.Executor;
 import v9t9.engine.files.Catalog;
 import v9t9.engine.files.CatalogEntry;
 import v9t9.engine.files.FDR;
@@ -26,6 +28,30 @@ import v9t9.engine.files.VDR;
  *
  */
 public abstract class BaseDiskImage implements IPersistable, IDiskImage {
+
+	public static void error(String fmt, Object... args) {
+		error(MessageFormat.format(fmt, args));
+	}
+
+	public static void info(String string) {
+		if (Cpu.settingDumpFullInstructions.getBoolean())
+			Executor.getDumpfull().println(string);
+		if (RealDiskUtils.diskImageDebug.getBoolean())
+			System.out.println(string);
+		
+	}
+
+	public static void info(String fmt, Object... args) {
+		info(MessageFormat.format(fmt, args));
+		
+	}
+
+	public static void error(String string) {
+		if (Cpu.settingDumpFullInstructions.getBoolean())
+			Executor.getDumpfull().println(string);
+		System.err.println(string);
+		
+	}
 
 	static class DSKheader
 	{
@@ -53,7 +79,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	private SettingProperty inUseSetting;
 	
 	protected boolean trackFetched;
-	protected byte trackBuffer[] = new byte[RealDiskImageDsr.DSKbuffersize];
+	protected byte trackBuffer[] = new byte[RealDiskConsts.DSKbuffersize];
 	protected DSKheader hdr = new DSKheader();
 	protected boolean readonly;
 	int trackoffset;
@@ -70,7 +96,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		this.name = name;
 		this.spec = spec;
 		inUseSetting = new SettingProperty(name, Boolean.FALSE);
-		inUseSetting.addEnablementDependency(BaseDiskImageDsr.diskImageDsrEnabled);
+		inUseSetting.addEnablementDependency(RealDiskUtils.diskImageDsrEnabled);
 	}
 
 	/**
@@ -159,7 +185,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		
 		trackFetched = false;
 		
-		RealDiskImageDsr.info("Opened {0} disk ''{1}'' {2},\n#tracks={3}, tracksize={4}, sides={5}",
+		BaseDiskImage.info("Opened {0} disk ''{1}'' {2},\n#tracks={3}, tracksize={4}, sides={5}",
 					  getDiskType(),
 					  spec,
 			 name, hdr.tracks, hdr.tracksize, hdr.sides);
@@ -168,7 +194,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 
 	public void createDiskImage() throws IOException
 	{
-		RealDiskImageDsr.info("Creating new {2} disk image at {0} ({1})", name, spec, getDiskType());
+		BaseDiskImage.info("Creating new {2} disk image at {0} ({1})", name, spec, getDiskType());
 
 		/* defaults */
 		hdr.tracks = 40;
@@ -193,7 +219,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		if (!trackFetched) {
 			long diskoffs = getTrackDiskOffset();
 			
-			RealDiskImageDsr.info("Reading {0} bytes of data on track {1}, trackoffset = {2}, offset = >{3}", 
+			BaseDiskImage.info("Reading {0} bytes of data on track {1}, trackoffset = {2}, offset = >{3}", 
 					hdr.tracksize, seektrack, trackoffset, Long.toHexString(diskoffs));
 	
 			handle.seek(diskoffs);
@@ -286,7 +312,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		int size = getTrackSize();
 		long diskoffs = getTrackDiskOffset();
 	
-		RealDiskImageDsr.info("Writing {0} bytes of data on track {1}, trackoffset = {2}, offset = >{3}", 
+		BaseDiskImage.info("Writing {0} bytes of data on track {1}, trackoffset = {2}, offset = >{3}", 
 				size, seektrack, trackoffset, Long.toHexString(diskoffs));
 	
 	
@@ -322,7 +348,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	}
 
 	public void loadState(ISettingSection section) {
-		spec = RealDiskImageDsr.getDefaultDiskImage(name);
+		spec = RealDiskUtils.getDefaultDiskImage(name);
 		if (section == null)
 			return;
 		String path = section.get("FilePath");
@@ -357,7 +383,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 			} catch (ArrayIndexOutOfBoundsException e) {
 				System.err.println("Possible bogus sector size: " + buflen);
 			}
-			RealDiskImageDsr.dumpBuffer(rwBuffer, 0, 256);
+			RealDiskUtils.dumpBuffer(rwBuffer, 0, 256);
 		}
 	}
 

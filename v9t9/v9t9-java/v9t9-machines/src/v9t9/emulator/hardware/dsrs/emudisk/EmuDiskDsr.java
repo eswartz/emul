@@ -27,16 +27,8 @@ import v9t9.emulator.hardware.dsrs.DsrHandler;
 import v9t9.emulator.hardware.dsrs.DsrHandler9900;
 import v9t9.emulator.hardware.dsrs.IDevIcons;
 import v9t9.emulator.hardware.dsrs.MemoryTransfer;
-import v9t9.emulator.hardware.dsrs.PabConstants;
 import v9t9.emulator.hardware.dsrs.emudisk.DiskDirectoryMapper.EmuDiskSetting;
-import v9t9.emulator.hardware.dsrs.emudisk.EmuDiskPabHandler.PabInfoBlock;
-import v9t9.emulator.hardware.dsrs.realdisk.BaseDiskImageDsr;
-import v9t9.emulator.hardware.dsrs.realdisk.RealDiskImageDsr;
-import v9t9.emulator.runtime.cpu.Cpu;
-import v9t9.emulator.runtime.cpu.Executor;
-import v9t9.engine.files.Catalog;
-import v9t9.engine.files.FDR;
-import v9t9.engine.files.V9t9FDR;
+import v9t9.emulator.hardware.dsrs.realdisk.RealDiskUtils;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.MemoryDomain;
 
@@ -55,39 +47,6 @@ public class EmuDiskDsr implements DsrHandler, DsrHandler9900 {
 			"This implements a drive (like DSK1) in a single directory level on your host.",
 			Boolean.FALSE,
 			diskDirectoryIconPath);
-	
-	/* emudisk.dsr */
-	/* this first group doubles as device codes */
-	public static final int D_DSK = 0; 	// standard file operation on DSK.XXXX.[YYYY]
-	public static final int D_DSK1 = 1;	// standard file operation on DSK1.[YYYY]
-	public static final int D_DSK2 = 2;	// ...
-	public static final int D_DSK3 = 3;	// ...
-	public static final int D_DSK4 = 4;	// ...
-	public static final int D_DSK5 = 5;	// ...
-
-	public static final int MAXDRIVE = 5;
-	public static final int D_INIT = 6;		// initialize disk DSR
-	public static final int D_DSKSUB = 7;	// subroutines
-
-	public static final int D_SECRW = 7;	// sector read/write    (10)
-	public static final int D_FMTDISK = 8;	// format disk          (11)
-	public static final int D_PROT = 9;		// file protection      (12)
-	public static final int D_RENAME = 10;	// rename file          (13)
-	public static final int D_DINPUT = 11;	// direct input file    (14)
-	public static final int D_DOUTPUT = 12;	// direct output file   (15)
-	public static final int D_FILES = 13;		// set the number of file buffers (16)
-
-	public static final int D_CALL_FILES = 14;	// BASIC entry point for FILES
-			
-	/*	Error codes for subroutines */
-	public static final byte es_okay = 0;
-	public static final byte es_outofspace = 0x4;
-	public static final byte es_cantopenfile = 0x1;
-	public static final byte es_filenotfound = 0x1;
-	public static final byte es_badfuncerr = 0x7;
-	public static final byte es_fileexists = 0x7;
-	public static final byte es_badvalerr = 0x1;
-	public static final byte es_hardware = 0x6;
 	
 	private DiskMemoryEntry memoryEntry;
 	private short vdpNameCompareBuffer;
@@ -197,20 +156,20 @@ public class EmuDiskDsr implements DsrHandler, DsrHandler9900 {
 	private boolean doHandleDSR(MemoryTransfer xfer, short code) {
 		switch (code) {
 		// PAB file operation on DSKx 
-		case D_DSK:
+		case EmuDiskConsts.D_DSK:
 			// find disk
-		case D_DSK1:
-		case D_DSK2:
-		case D_DSK3:
-		case D_DSK4:
-		case D_DSK5:
+		case EmuDiskConsts.D_DSK1:
+		case EmuDiskConsts.D_DSK2:
+		case EmuDiskConsts.D_DSK3:
+		case EmuDiskConsts.D_DSK4:
+		case EmuDiskConsts.D_DSK5:
 		{
 			EmuDiskPabHandler handler = new EmuDiskPabHandler(getCruBase(), xfer, mapper, 
 					(short) (vdpNameCompareBuffer + 1));
 			
 			if (handler.devname.equals("DSK1")
 					|| handler.devname.equals("DSK2")) {
-				if (RealDiskImageDsr.diskImageDsrEnabled.getBoolean())
+				if (RealDiskUtils.diskImageDsrEnabled.getBoolean())
 					return false;
 			}
 			
@@ -218,7 +177,7 @@ public class EmuDiskDsr implements DsrHandler, DsrHandler9900 {
 			if (settingProperty != null)
 				settingProperty.setBoolean(true);
 			
-			info(handler.toString());
+			EmuDiskPabHandler.info(handler.toString());
 			try {
 				handler.run();
 			} catch (DsrException e) {
@@ -233,7 +192,7 @@ public class EmuDiskDsr implements DsrHandler, DsrHandler9900 {
 			return true;
 		}
 			/* init disk dsr */
-		case D_INIT:
+		case EmuDiskConsts.D_INIT:
 		{
 			for (SettingProperty property : diskActivitySettings.values()) {
 				property.setBoolean(true);
@@ -244,7 +203,7 @@ public class EmuDiskDsr implements DsrHandler, DsrHandler9900 {
 			
 			// steal some RAM for the name compare buffer,
 			// so dependent programs can function
-			if (!BaseDiskImageDsr.diskImageDsrEnabled.getBoolean())
+			if (!RealDiskUtils.diskImageDsrEnabled.getBoolean())
 				vdpNameCompareBuffer = (short) (xfer.readParamWord(0x70) - 11);
 			else
 				vdpNameCompareBuffer = (short) 0x3ff5;
@@ -262,14 +221,14 @@ public class EmuDiskDsr implements DsrHandler, DsrHandler9900 {
 		}
 	
 			/* # of files */
-		case D_FILES:
+		case EmuDiskConsts.D_FILES:
 		{
 			subAllocFiles(xfer);
 			return true;
 		}
 	
 			/* call files(x) from BASIC */
-		case D_CALL_FILES:
+		case EmuDiskConsts.D_CALL_FILES:
 			// 0x50 is 0xffff ?
 			// 0x52 points to BASIC tokenization of argument
 			int argptr = xfer.readParamWord(0x2c) + 7;
@@ -294,20 +253,20 @@ public class EmuDiskDsr implements DsrHandler, DsrHandler9900 {
 			return true;
 	
 		//case D_FMTDISK:
-		case D_PROT:
-		case D_RENAME:
-		case D_DINPUT:
-		case D_DOUTPUT:
-		case D_SECRW:
+		case EmuDiskConsts.D_PROT:
+		case EmuDiskConsts.D_RENAME:
+		case EmuDiskConsts.D_DINPUT:
+		case EmuDiskConsts.D_DOUTPUT:
+		case EmuDiskConsts.D_SECRW:
 		{
 			DirectDiskHandler handler = new DirectDiskHandler(getCruBase(), xfer, mapper, code);
 	
-			if (handler.dev <= 2 && RealDiskImageDsr.diskImageDsrEnabled.getBoolean()) {
+			if (handler.dev <= 2 && RealDiskUtils.diskImageDsrEnabled.getBoolean()) {
 				//Executor.settingDumpFullInstructions.setBoolean(true);
 				return false;
 			}
 			
-			if (handler.getDevice() <= MAXDRIVE) {
+			if (handler.getDevice() <= EmuDiskConsts.MAXDRIVE) {
 				
 				SettingProperty activity = diskActivitySettings.get(getEmuDiskSetting(handler.dev));
 				if (activity != null)
@@ -329,14 +288,14 @@ public class EmuDiskDsr implements DsrHandler, DsrHandler9900 {
 		}
 	
 		default:
-			info("EmuDiskDSR: ignoring code = " + code);
+			EmuDiskPabHandler.info("EmuDiskDSR: ignoring code = " + code);
 			return false;
 		}
 	}
 
 	private void subAllocFiles(MemoryTransfer xfer) {
 		// let real disk allocate space
-		if (BaseDiskImageDsr.diskImageDsrEnabled.getBoolean())
+		if (RealDiskUtils.diskImageDsrEnabled.getBoolean())
 			return;
 		
 		int cnt = xfer.readParamByte(0x4c);
@@ -402,27 +361,7 @@ public class EmuDiskDsr implements DsrHandler, DsrHandler9900 {
 		}
 	}
 
-	/**
-	 * @param string
-	 */
-	static void info(String string) {
-		if (Cpu.settingDumpFullInstructions.getBoolean())
-			Executor.getDumpfull().println(string);
-		System.out.println(string);
-		
-	}
 
-	public static FDR createNewFDR(String dsrFile) throws DsrException {
-		// make a FDR file for it
-		V9t9FDR fdr = new V9t9FDR();
-		try {
-			fdr.setFileName(dsrFile);
-		} catch (IOException e2) {
-			throw new DsrException(PabConstants.e_badfiletype, e2);
-		}
-		return fdr;
-	}
-	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.dsrs.DsrHandler#getEditableSettingGroups()
 	 */
@@ -457,14 +396,10 @@ public class EmuDiskDsr implements DsrHandler, DsrHandler9900 {
 		return deviceIndicatorProviders;
 	}
 	
-
-	public Catalog readCatalog(File file) {
-		File dir = file.isDirectory() ? file : file.getParentFile();
-		FileLikeDirectoryInfo info = new FileLikeDirectoryInfo(dir, mapper);
-		long total = dir.getTotalSpace();
-		long used = total - dir.getFreeSpace();
-		return new Catalog(dir.getName().toUpperCase(), (int)(total / 256) & 0xffff, 
-				(int)((total - used) / 256) & 0xffff,
-				info.readCatalog());
+	/**
+	 * @return the mapper
+	 */
+	public IFileMapper getMapper() {
+		return mapper;
 	}
 }

@@ -19,6 +19,7 @@ import v9t9.emulator.hardware.dsrs.DsrException;
 import v9t9.emulator.hardware.dsrs.MemoryTransfer;
 import v9t9.emulator.hardware.dsrs.PabStruct;
 import v9t9.emulator.hardware.dsrs.emudisk.DiskDirectoryMapper;
+import v9t9.emulator.hardware.dsrs.emudisk.EmuDiskConsts;
 import v9t9.emulator.hardware.dsrs.emudisk.EmuDiskDsr;
 import v9t9.emulator.hardware.dsrs.emudisk.EmuDiskPabHandler;
 import v9t9.engine.files.FDR;
@@ -139,7 +140,7 @@ public class BaseEmuDiskDSRTest {
 	}
 	protected EmuDiskDsr dsr = new EmuDiskDsr(mymapper);
 	{
-		dsr.handleDSR(xfer, (short) EmuDiskDsr.D_INIT);
+		dsr.handleDSR(xfer, (short) EmuDiskConsts.D_INIT);
 	}
 	
 	protected EmuDiskPabHandler runCase(PabStruct pab) throws DsrException {

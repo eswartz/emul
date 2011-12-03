@@ -13,8 +13,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import v9t9.emulator.hardware.dsrs.emudisk.EmuDiskDsr;
-import v9t9.emulator.hardware.dsrs.realdisk.RealDiskImageDsr;
+import v9t9.emulator.hardware.dsrs.emudisk.EmuDiskConsts;
+import v9t9.emulator.hardware.dsrs.realdisk.RealDiskUtils;
 import v9t9.engine.files.V9t9FDR;
 
 
@@ -34,13 +34,13 @@ public class TestEmuDiskDSRDiskLike extends BaseEmuDiskDSRTest {
 
 	@Before
 	public void setupEmuDisk() {
-		wasRealDisk = RealDiskImageDsr.diskImageDsrEnabled.getBoolean();
-		RealDiskImageDsr.diskImageDsrEnabled.setBoolean(false);
+		wasRealDisk = RealDiskUtils.diskImageDsrEnabled.getBoolean();
+		RealDiskUtils.diskImageDsrEnabled.setBoolean(false);
 	}
 	
 	@After
 	public void resetRealDisk() {
-		RealDiskImageDsr.diskImageDsrEnabled.setBoolean(wasRealDisk);
+		RealDiskUtils.diskImageDsrEnabled.setBoolean(wasRealDisk);
 	}
 	
 	private String getString(int addr, int cnt) {
@@ -57,7 +57,7 @@ public class TestEmuDiskDSRDiskLike extends BaseEmuDiskDSRTest {
 		xfer.writeParamWord(0x4c, (short) 0x01ff);
 		xfer.writeParamWord(0x4e, (short) 0x1000);
 		xfer.writeParamWord(0x50, (short) 0x0);
-		dsr.handleDSR(xfer, (short) EmuDiskDsr.D_SECRW);
+		dsr.handleDSR(xfer, (short) EmuDiskConsts.D_SECRW);
 		assertEquals(0, xfer.readParamByte(0x50));
 	
 		String dskName = mymapper.getDsrFileName(dsk1Path.getName());
@@ -70,7 +70,7 @@ public class TestEmuDiskDSRDiskLike extends BaseEmuDiskDSRTest {
 		xfer.writeParamWord(0x4c, (short) 0x01ff);
 		xfer.writeParamWord(0x4e, (short) 0x1000);
 		xfer.writeParamWord(0x50, (short) 0x1);
-		dsr.handleDSR(xfer, (short) EmuDiskDsr.D_SECRW);
+		dsr.handleDSR(xfer, (short) EmuDiskConsts.D_SECRW);
 		assertEquals(0, xfer.readParamByte(0x50));
 
 		boolean atEnd = false;
@@ -90,7 +90,7 @@ public class TestEmuDiskDSRDiskLike extends BaseEmuDiskDSRTest {
 			xfer.writeParamWord(0x4c, (short) 0x01ff);
 			xfer.writeParamWord(0x4e, (short) 0x1100);
 			xfer.writeParamWord(0x50, (short) sec);
-			dsr.handleDSR(xfer, (short) EmuDiskDsr.D_SECRW);
+			dsr.handleDSR(xfer, (short) EmuDiskConsts.D_SECRW);
 			assertEquals(0, xfer.readParamByte(0x50));
 
 			V9t9FDR fdr = V9t9FDR.createFDR(xfer.vdp, 0x1100);

@@ -55,7 +55,7 @@ public class OpenFile {
 	}
 	
 	public void create(int fdrflags, int reclen) throws DsrException {
-		FDR fdr = EmuDiskDsr.createNewFDR(fileName);
+		FDR fdr = EmuDiskPabHandler.createNewFDR(fileName);
 		fdr.setFlags(fdrflags);
 		fdr.setRecordLength(reclen);
 		

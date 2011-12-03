@@ -43,7 +43,7 @@ public abstract class BaseTrackDiskImage extends BaseDiskImage  {
 		// write new ID field
 		int offs = idoffset;
 		if (trackBuffer[offs] != (byte) 0xfe)
-			RealDiskImageDsr.error("Inconsistent idoffset ({0})", idoffset);
+			BaseDiskImage.error("Inconsistent idoffset ({0})", idoffset);
 
 		trackBuffer[offs+0] = (byte) 0xfe;
 		trackBuffer[offs+1] = marker.trackid;
@@ -55,7 +55,7 @@ public abstract class BaseTrackDiskImage extends BaseDiskImage  {
 
 		// write data with new CRC
 		if (trackBuffer[dataoffset] != (byte) 0xfb)
-			RealDiskImageDsr.error("Inconsistent dataoffset ({0})", dataoffset);
+			BaseDiskImage.error("Inconsistent dataoffset ({0})", dataoffset);
 		trackBuffer[dataoffset] = (byte) 0xfb;
 		
 		offs = dataoffset;
@@ -70,7 +70,7 @@ public abstract class BaseTrackDiskImage extends BaseDiskImage  {
 			System.arraycopy(rwBuffer, 0, trackBuffer, ptr, tocopy);
 			
 			while (tocopy-- > 0) {
-				marker.crcid = RealDiskImageDsr.calc_crc(marker.crcid, trackBuffer[ptr++]);
+				marker.crcid = RealDiskUtils.calc_crc(marker.crcid, trackBuffer[ptr++]);
 				size--;
 			}
 			if (ptr >= trackBuffer.length)
@@ -81,7 +81,7 @@ public abstract class BaseTrackDiskImage extends BaseDiskImage  {
 		trackBuffer[ptr++] = (byte) (marker.crcid & 0xff);
 		
 		// dump contents
-		RealDiskImageDsr.dumpBuffer(rwBuffer, start, buflen);
+		RealDiskUtils.dumpBuffer(rwBuffer, start, buflen);
 		
 	}
 
@@ -104,7 +104,7 @@ public abstract class BaseTrackDiskImage extends BaseDiskImage  {
 		trackFetched = true;
 
 		// dump contents
-		RealDiskImageDsr.dumpBuffer(rwBuffer, i, buflen);
+		RealDiskUtils.dumpBuffer(rwBuffer, i, buflen);
 	}
 	
 	/**
@@ -118,7 +118,7 @@ public abstract class BaseTrackDiskImage extends BaseDiskImage  {
 		try {
 			readCurrentTrackData();
 		} catch (IOException e) {
-			RealDiskImageDsr.error(e.getMessage());
+			BaseDiskImage.error(e.getMessage());
 			return markers;
 		}
 		
@@ -139,7 +139,7 @@ public abstract class BaseTrackDiskImage extends BaseDiskImage  {
 			// reset CRC
 			short crc;
 			crc = (short) 0xffff;
-			crc = RealDiskImageDsr.calc_crc(crc, iter.next());
+			crc = RealDiskUtils.calc_crc(crc, iter.next());
 
 			// get ID
 			marker.trackid = iter.next();
@@ -148,15 +148,15 @@ public abstract class BaseTrackDiskImage extends BaseDiskImage  {
 			marker.sizeid = iter.next();
 			marker.crcid = (short) (iter.next()<<8); marker.crcid |= iter.next() & 0xff;
 			
-			crc = RealDiskImageDsr.calc_crc(crc, marker.trackid);
-			crc = RealDiskImageDsr.calc_crc(crc, marker.sideid);
-			crc = RealDiskImageDsr.calc_crc(crc, marker.sectorid);
-			crc = RealDiskImageDsr.calc_crc(crc, marker.sizeid);
+			crc = RealDiskUtils.calc_crc(crc, marker.trackid);
+			crc = RealDiskUtils.calc_crc(crc, marker.sideid);
+			crc = RealDiskUtils.calc_crc(crc, marker.sectorid);
+			crc = RealDiskUtils.calc_crc(crc, marker.sizeid);
 
 			// this algorithm does NOT WORK
 			if (false && crc != marker.crcid)
 			{
-				RealDiskImageDsr.info("FDCfindIDmarker: failed ID CRC check (>{0} != >{1})",
+				BaseDiskImage.info("FDCfindIDmarker: failed ID CRC check (>{0} != >{1})",
 						HexUtils.toHex4(marker.crcid), HexUtils.toHex4(crc));
 				continue;
 			}

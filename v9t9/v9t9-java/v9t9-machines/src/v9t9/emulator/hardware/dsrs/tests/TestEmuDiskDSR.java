@@ -20,11 +20,11 @@ import org.junit.Test;
 import v9t9.emulator.hardware.dsrs.DsrException;
 import v9t9.emulator.hardware.dsrs.PabConstants;
 import v9t9.emulator.hardware.dsrs.PabStruct;
-import v9t9.emulator.hardware.dsrs.emudisk.EmuDiskDsr;
+import v9t9.emulator.hardware.dsrs.emudisk.EmuDiskConsts;
 import v9t9.emulator.hardware.dsrs.emudisk.EmuDiskPabHandler;
-import v9t9.emulator.hardware.dsrs.emudisk.EmuDiskPabHandler.PabInfoBlock;
 import v9t9.emulator.hardware.dsrs.emudisk.IFileMapper;
 import v9t9.emulator.hardware.dsrs.emudisk.OpenFile;
+import v9t9.emulator.hardware.dsrs.emudisk.PabInfoBlock;
 import v9t9.engine.files.NativeFDRFile;
 import v9t9.engine.files.NativeFile;
 import v9t9.engine.files.NativeFileFactory;
@@ -804,7 +804,7 @@ public class TestEmuDiskDSR extends BaseEmuDiskDSRTest {
 	@Test
 	public void testFileCount() throws Exception {
 		xfer.writeParamByte(0x4c, (byte) 1);
-		dsr.handleDSR(xfer, (short) EmuDiskDsr.D_FILES);
+		dsr.handleDSR(xfer, (short) EmuDiskConsts.D_FILES);
 		assertEquals(0, xfer.readParamByte(0x50));
 		
 		PabStruct pab1 = createOpenPab(PabConstants.m_input, PabConstants.fp_variable, 0x1000, 0, "DSK1.DV80");

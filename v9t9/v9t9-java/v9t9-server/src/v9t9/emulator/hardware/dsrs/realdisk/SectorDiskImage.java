@@ -69,7 +69,7 @@ public class SectorDiskImage extends BaseDiskImage  {
 	
 		trackFetched = false;
 		
-		RealDiskImageDsr.info(
+		BaseDiskImage.info(
 			"Opened sector-image disk ''{0}'' {1},\n#tracks={2}, tracksize={3}, sides={4}",
 			spec, name, hdr.tracks, hdr.tracksize, hdr.sides);
 	}
@@ -131,9 +131,9 @@ public class SectorDiskImage extends BaseDiskImage  {
 			}
 		}
 
-		if (hdr.tracksize > RealDiskImageDsr.DSKbuffersize) {
+		if (hdr.tracksize > RealDiskConsts.DSKbuffersize) {
 			throw new IOException(MessageFormat.format("Disk image has too large track size ({0} > {1})",
-						  hdr.tracksize, RealDiskImageDsr.DSKbuffersize));
+						  hdr.tracksize, RealDiskConsts.DSKbuffersize));
 		}
 	}
 	
@@ -167,7 +167,7 @@ public class SectorDiskImage extends BaseDiskImage  {
 		System.arraycopy(rwBuffer, 0, trackBuffer, marker.dataoffset + 1, buflen);
 		
 		// dump contents
-		RealDiskImageDsr.dumpBuffer(rwBuffer, start, buflen);
+		RealDiskUtils.dumpBuffer(rwBuffer, start, buflen);
 		
 	}
 
@@ -188,7 +188,7 @@ public class SectorDiskImage extends BaseDiskImage  {
 		formatSectorTrack(rwBuffer, i, buflen);
 
 		// dump contents
-		RealDiskImageDsr.dumpBuffer(rwBuffer, i, buflen);
+		RealDiskUtils.dumpBuffer(rwBuffer, i, buflen);
 	}
 	
 
@@ -209,11 +209,11 @@ public class SectorDiskImage extends BaseDiskImage  {
 				// ID marker
 				is++;
 
-				crc = RealDiskImageDsr.calc_crc(crc, 0xfe);
-				track = buffer[is++]; crc = RealDiskImageDsr.calc_crc(crc, track);
-				side = buffer[is++]; crc = RealDiskImageDsr.calc_crc(crc, side);
-				sector = buffer[is++]; crc = RealDiskImageDsr.calc_crc(crc, sector);
-				size = buffer[is++]; crc = RealDiskImageDsr.calc_crc(crc, size);
+				crc = RealDiskUtils.calc_crc(crc, 0xfe);
+				track = buffer[is++]; crc = RealDiskUtils.calc_crc(crc, track);
+				side = buffer[is++]; crc = RealDiskUtils.calc_crc(crc, side);
+				sector = buffer[is++]; crc = RealDiskUtils.calc_crc(crc, sector);
+				size = buffer[is++]; crc = RealDiskUtils.calc_crc(crc, size);
 				crcid = (short) (buffer[is++]<<8); crcid += buffer[is++]&0xff;
 
 				if (crcid == (short) 0xf7ff) crcid = crc;
@@ -224,12 +224,12 @@ public class SectorDiskImage extends BaseDiskImage  {
 					goto retry;
 				}*/
 
-				RealDiskImageDsr.info("Formatting sector track:{0}, side:{1}, sector:{2}, size:{3}, crc={4}", track, side, sector, size, crc);
+				BaseDiskImage.info("Formatting sector track:{0}, side:{1}, sector:{2}, size:{3}, crc={4}", track, side, sector, size, crc);
 
 				sz = 128 << size;
 				offs = sector * sz;
 				if (offs >= hdr.tracksize) {
-					RealDiskImageDsr.error("Program is formatting track on ''{0}'' with non-ordinary sectors; " +
+					BaseDiskImage.error("Program is formatting track on ''{0}'' with non-ordinary sectors; " +
 									"this does not work with sector-image disks", spec);
 					offs = 0;
 				}
@@ -239,10 +239,10 @@ public class SectorDiskImage extends BaseDiskImage  {
 				crc = (short) 0xffff;
 
 				if (is + sz + 2 < length) {
-					crc = RealDiskImageDsr.calc_crc(crc, 0xfb);
+					crc = RealDiskUtils.calc_crc(crc, 0xfb);
 					int cnt = 0;
 					for (cnt=0; cnt < sz; cnt++) {
-						crc = RealDiskImageDsr.calc_crc(crc, buffer[cnt + is]);
+						crc = RealDiskUtils.calc_crc(crc, buffer[cnt + is]);
 					}
 					crcid = (short) (buffer[cnt++]<<8); crcid += buffer[cnt++]&0xff;
 					if (crcid == (short) 0xf7ff) crcid = crc;
@@ -259,7 +259,7 @@ public class SectorDiskImage extends BaseDiskImage  {
 					
 					is += sz + 2; // + crc
 				} else {
-					RealDiskImageDsr.error("Lost sector data in format of sector-image disk ''{0}''", spec);
+					BaseDiskImage.error("Lost sector data in format of sector-image disk ''{0}''", spec);
 					break;
 				}
 			}
@@ -277,7 +277,7 @@ public class SectorDiskImage extends BaseDiskImage  {
 		try {
 			readCurrentTrackData();
 		} catch (IOException e) {
-			RealDiskImageDsr.error(e.getMessage());
+			BaseDiskImage.error(e.getMessage());
 			return markers;
 		}
 		
@@ -312,7 +312,7 @@ public class SectorDiskImage extends BaseDiskImage  {
 	public void readSectorData(IdMarker currentMarker, byte[] rwBuffer,
 			int i, int buflen) {
 		System.arraycopy(trackBuffer, currentMarker.dataoffset + 1, rwBuffer, 0, buflen);
-		RealDiskImageDsr.dumpBuffer(rwBuffer, 0, 256);
+		RealDiskUtils.dumpBuffer(rwBuffer, 0, 256);
 		
 	}
 	

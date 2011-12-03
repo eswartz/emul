@@ -130,7 +130,7 @@ public class MemoryDiskImageDsr extends BaseDiskImageDsr implements IMemoryIOHan
 	 */
 	@Override
 	public boolean handlesAddress(int addr) {
-		return diskImageDsrEnabled.getBoolean() && addr >= baseAddr && addr <= baseAddr + DSK;
+		return RealDiskUtils.diskImageDsrEnabled.getBoolean() && addr >= baseAddr && addr <= baseAddr + DSK;
 	}
 
 	/**

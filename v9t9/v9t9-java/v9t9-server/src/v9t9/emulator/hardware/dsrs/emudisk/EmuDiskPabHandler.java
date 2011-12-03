@@ -15,105 +15,33 @@ import v9t9.emulator.hardware.dsrs.MemoryTransfer;
 import v9t9.emulator.hardware.dsrs.PabConstants;
 import v9t9.emulator.hardware.dsrs.PabHandler;
 import v9t9.emulator.hardware.dsrs.PabStruct;
+import v9t9.emulator.runtime.cpu.Cpu;
+import v9t9.emulator.runtime.cpu.Executor;
 import v9t9.engine.files.FDR;
 import v9t9.engine.files.NativeFDRFile;
 import v9t9.engine.files.NativeFile;
 import v9t9.engine.files.NativeFileFactory;
 import v9t9.engine.files.NativeTextFile;
+import v9t9.engine.files.V9t9FDR;
 import v9t9.engine.memory.ByteMemoryAccess;
 
 public class EmuDiskPabHandler extends PabHandler {
 
-	public static class PabInfoBlock {
-		Map<Short, OpenFile> openFiles = new HashMap<Short, OpenFile>();
-		Map<Short, FileLikeDirectoryInfo> openDirectories = new HashMap<Short, FileLikeDirectoryInfo>();
-		int maxOpenFileCount;
-		int openFileCount;
+	private static final boolean DEBUG = false;
+
+
+	public static void info(String string) {
+		if (Cpu.settingDumpFullInstructions.getBoolean())
+			Executor.getDumpfull().println(string);
+		if (DEBUG)
+			System.out.println(string);
 		
-		public PabInfoBlock() {
-			reset();
-		}
-		
-		/**
-		 * 
-		 */
-		public void reset() {
-			maxOpenFileCount = 3;
-			openFileCount = 0;
-			for (OpenFile file : openFiles.values())
-				try {
-					file.close();
-				} catch (DsrException e) {
-					e.printStackTrace();
-				}
-			openFiles.clear();
-			openDirectories.clear();
-		}
-
-		protected OpenFile allocOpenFile(short pabaddr, File file, String devName, String fileName) throws DsrException {
-			OpenFile pabfile = openFiles.get(pabaddr);
-			if (pabfile != null) {
-				pabfile.close();
-			} else {
-				if (openFileCount >= maxOpenFileCount)
-					throw new DsrException(PabConstants.e_outofspace, null, "Too many open files");
-				openFileCount++;
-			}
-			pabfile = new OpenFile(file, devName, fileName);
-			openFiles.put(pabaddr, pabfile);
-			return pabfile;
-		}
-
-		public OpenFile findOpenFile(short pabaddr) {
-			return openFiles.get(pabaddr);
-		}
-
-		/**
-		 * @param pabaddr
-		 */
-		public void removeOpenFile(short pabaddr) {
-			openFiles.remove(pabaddr);
-			openFileCount--;
-		}
-
-		/**
-		 * @param pabaddr
-		 * @param file
-		 * @param dskName 
-		 * @throws DsrException 
-		 */
-		public void openDirectory(short pabaddr, File file, IFileMapper mapper) throws DsrException {
-			if (openFileCount >= maxOpenFileCount) {
-				throw new DsrException(PabConstants.e_outofspace, null, "Too many open files");
-			}
-			FileLikeDirectoryInfo info = new FileLikeDirectoryInfo(file, mapper);
-			openDirectories.put(pabaddr, info);
-			openFileCount++;
-		}
-
-		/**
-		 * @param pabaddr
-		 */
-		public void closeDirectory(short pabaddr) {
-			openDirectories.remove(pabaddr);
-			openFileCount--;
-		}
-
-		/**
-		 * @param pabaddr
-		 * @return
-		 */
-		public FileLikeDirectoryInfo getDirectory(short pabaddr) {
-			return openDirectories.get(pabaddr);
-		}
-
-
 	}
 	
-	private static Map<Short, EmuDiskPabHandler.PabInfoBlock> pabInfoBlocks = new HashMap<Short, EmuDiskPabHandler.PabInfoBlock>();
+	private static Map<Short, PabInfoBlock> pabInfoBlocks = new HashMap<Short, PabInfoBlock>();
 	
-	public static EmuDiskPabHandler.PabInfoBlock getPabInfoBlock(short cru) {
-		EmuDiskPabHandler.PabInfoBlock block = pabInfoBlocks.get(cru);
+	public static PabInfoBlock getPabInfoBlock(short cru) {
+		PabInfoBlock block = pabInfoBlocks.get(cru);
 		if (block == null) {
 			block = new PabInfoBlock();
 			pabInfoBlocks.put(cru, block);
@@ -122,7 +50,7 @@ public class EmuDiskPabHandler extends PabHandler {
 	}
 
 	IFileMapper mapper;
-	private EmuDiskPabHandler.PabInfoBlock block;
+	private PabInfoBlock block;
 
 	public EmuDiskPabHandler(short cruaddr, MemoryTransfer xfer, IFileMapper mapper, short vdpNameCompareBuffer) {
 		super(xfer);
@@ -286,7 +214,8 @@ public class EmuDiskPabHandler extends PabHandler {
 			else if (i % 4 == 3)
 				hexbuilder.append(' ');
 		}
-		EmuDiskDsr.info("Read: " + builder + "\n | " + hexbuilder);
+		
+		EmuDiskPabHandler.info("Read: " + builder + "\n | " + hexbuilder);
 		
 	}
 
@@ -433,7 +362,7 @@ public class EmuDiskPabHandler extends PabHandler {
 		pab.charcount = openFile.readRecord(access, pab.preclen);
 		xfer.dirtyVdpMemory(pab.bufaddr, pab.charcount);
 		
-		if (false) {
+		if (DEBUG) {
 			dump(pab.bufaddr, pab.charcount);
 		}
 	}
@@ -484,7 +413,7 @@ public class EmuDiskPabHandler extends PabHandler {
 		
 		pab.recnum++;
 		
-		if (false) {
+		if (DEBUG) {
 			dump(pab.bufaddr, pab.charcount);
 		}
 	}
@@ -548,7 +477,7 @@ public class EmuDiskPabHandler extends PabHandler {
 					0, pab.recnum);
 			xfer.dirtyVdpMemory(pab.bufaddr, read);
 			
-			if (false)
+			if (DEBUG)
 				dump(pab.bufaddr, Math.min(read, 32));
 			
 			if (read >= 0) {
@@ -597,7 +526,7 @@ public class EmuDiskPabHandler extends PabHandler {
 		}
 		
 		// make a FDR file for it
-		FDR fdr = EmuDiskDsr.createNewFDR(fname);
+		FDR fdr = EmuDiskPabHandler.createNewFDR(fname);
 		fdr.setFlags(FDR.ff_program);
 		
 		// and a native file
@@ -681,6 +610,16 @@ public class EmuDiskPabHandler extends PabHandler {
 		
 		//System.out.printf("Status: %02X\n", status);
 		pab.scrnoffs = status;
+	}
+	public static FDR createNewFDR(String dsrFile) throws DsrException {
+		// make a FDR file for it
+		V9t9FDR fdr = new V9t9FDR();
+		try {
+			fdr.setFileName(dsrFile);
+		} catch (IOException e2) {
+			throw new DsrException(PabConstants.e_badfiletype, e2);
+		}
+		return fdr;
 	}
 	
 }

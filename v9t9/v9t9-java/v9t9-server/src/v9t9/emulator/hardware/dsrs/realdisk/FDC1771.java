@@ -17,7 +17,7 @@ public class FDC1771 implements IPersistable {
 	
 	boolean hold; /* holding for data? */
 	byte lastbyte; /* last byte written to WDDATA when hold off */
-	byte rwBuffer[] = new byte[RealDiskImageDsr.DSKbuffersize]; /* read/write contents */
+	byte rwBuffer[] = new byte[RealDiskConsts.DSKbuffersize]; /* read/write contents */
 	int buflen; /* max length of data expected for a write/read */
 	int bufpos; /* offset into buffer */
 
@@ -75,7 +75,7 @@ public class FDC1771 implements IPersistable {
 			status.set(StatusBit.DRQ_PIN);
 		} else {
 			// info("FDChold off");
-			if (hold && (command == RealDiskImageDsr.FDC_writesector || command == RealDiskImageDsr.FDC_writetrack)) {
+			if (hold && (command == RealDiskConsts.FDC_writesector || command == RealDiskConsts.FDC_writetrack)) {
 				FDCflush();
 			}
 		}
@@ -102,9 +102,9 @@ public class FDC1771 implements IPersistable {
 			status.reset(StatusBit.LOST_DATA);
 			status.reset(StatusBit.CRC_ERROR);
 
-			if (command == RealDiskImageDsr.FDC_writesector)
+			if (command == RealDiskConsts.FDC_writesector)
 				image.writeSectorData(rwBuffer, 0, buflen, currentMarker, status);
-			else if (command == RealDiskImageDsr.FDC_writetrack)
+			else if (command == RealDiskConsts.FDC_writetrack)
 				image.writeTrackData(rwBuffer, 0, buflen, status);
 			
 			image.commitTrack(status);
@@ -138,7 +138,7 @@ public class FDC1771 implements IPersistable {
 			}
 			if (trackMarkerIter.hasNext()) {
 				currentMarker = trackMarkerIter.next();
-				if (command != RealDiskImageDsr.FDC_readIDmarker || currentMarker.sideid == sideReg)
+				if (command != RealDiskConsts.FDC_readIDmarker || currentMarker.sideid == sideReg)
 					return true;
 			}
 		}
@@ -151,7 +151,7 @@ public class FDC1771 implements IPersistable {
 	/*	Match the current ID with the desired track/sector id */
 	private boolean
 	FDCmatchIDmarker() {
-		RealDiskImageDsr.info("FDC match ID marker: looking for T{0}, S{1}", trackReg, sectorReg);
+		BaseDiskImage.info("FDC match ID marker: looking for T{0}, S{1}", trackReg, sectorReg);
 		
 		status.reset(StatusBit.REC_NOT_FOUND);
 		status.reset(StatusBit.CRC_ERROR);
@@ -181,12 +181,12 @@ public class FDC1771 implements IPersistable {
 		}
 
 		if (!found) {
-			RealDiskImageDsr.error("FDCmatchIDmarker failed");
+			BaseDiskImage.error("FDCmatchIDmarker failed");
 			status.set(StatusBit.REC_NOT_FOUND);
 			return false;
 		}
 		
-		RealDiskImageDsr.info("FDCmatchIDmarker succeeded: track {0}, sector {1}, side {2}, size {3} (sector #{4})",
+		BaseDiskImage.info("FDCmatchIDmarker succeeded: track {0}, sector {1}, side {2}, size {3} (sector #{4})",
 				currentMarker.trackid, currentMarker.sectorid, 
 				currentMarker.sideid, currentMarker.sizeid, 
 				currentMarker.trackid * 9 + currentMarker.sectorid);
@@ -199,7 +199,7 @@ public class FDC1771 implements IPersistable {
 			// so we can fetch the hidden sectors with the same id as normal ones
 			
 			int stepTime = 0;
-			switch (flags & FDC1771Constants.fl_step_rate) {
+			switch (flags & RealDiskConsts.fl_step_rate) {
 			case 0x00:
 			case 0x01:
 				stepTime = 6;
@@ -237,7 +237,7 @@ public class FDC1771 implements IPersistable {
 	}
 
 	public void FDCrestore() throws IOException {
-		RealDiskImageDsr.info("FDC restore");
+		BaseDiskImage.info("FDC restore");
 		
 		trackReg = 0;
 		updateSeek(trackReg, sideReg);
@@ -247,14 +247,14 @@ public class FDC1771 implements IPersistable {
 		status.reset(StatusBit.CRC_ERROR);
 		status.reset(StatusBit.SEEK_ERROR);
 		
-		if ((flags & RealDiskImageDsr.fl_verify_track) != 0) {
+		if ((flags & RealDiskConsts.fl_verify_track) != 0) {
 			verifyTrack(trackReg);
 		}
 		
 	}
 
 	public void FDCseek() throws IOException {
-		RealDiskImageDsr.info("FDC seek, T{0} s{1}", lastbyte, sideReg);
+		BaseDiskImage.info("FDC seek, T{0} s{1}", lastbyte, sideReg);
 
 		while (trackReg < lastbyte) {
 			trackReg++;
@@ -274,7 +274,7 @@ public class FDC1771 implements IPersistable {
 		if (trackReg == 0)
 			status.set(StatusBit.TRACK_0);
 
-		if ((flags & RealDiskImageDsr.fl_verify_track) != 0) {
+		if ((flags & RealDiskConsts.fl_verify_track) != 0) {
 			verifyTrack(trackReg);
 		}
 		
@@ -299,7 +299,7 @@ public class FDC1771 implements IPersistable {
 		
 		if (!found) {
 			status.set(StatusBit.SEEK_ERROR);
-		   	RealDiskImageDsr.error("FDC seek, could not find marker for track {0}", track);
+		   	BaseDiskImage.error("FDC seek, could not find marker for track {0}", track);
 		}
 
 	}
@@ -311,10 +311,10 @@ public class FDC1771 implements IPersistable {
 	public void FDCstep() throws IOException {
 
 		byte newtrack = (byte) (seektrack + (stepout ? -1 : 1));
-		if ((flags & RealDiskImageDsr.fl_update_track) != 0)
+		if ((flags & RealDiskConsts.fl_update_track) != 0)
 			trackReg = newtrack;
 		
-		RealDiskImageDsr.info("FDC step {2}, T{0} s{1}", newtrack, sideReg,
+		BaseDiskImage.info("FDC step {2}, T{0} s{1}", newtrack, sideReg,
 				stepout ? "out" : "in");
 		
 		status.reset(StatusBit.TRACK_0);
@@ -323,7 +323,7 @@ public class FDC1771 implements IPersistable {
 		
 		updateSeek(newtrack, sideReg);
 		
-		if ((flags & RealDiskImageDsr.fl_verify_track) != 0) {
+		if ((flags & RealDiskConsts.fl_verify_track) != 0) {
 			verifyTrack(newtrack);
 		}
 	}
@@ -333,7 +333,7 @@ public class FDC1771 implements IPersistable {
 	 * 
 	 */
 	public void FDCreadsector() throws IOException {
-		RealDiskImageDsr.info("FDC read sector, T{0} S{1} s{2}", trackReg, sectorReg, sideReg);
+		BaseDiskImage.info("FDC read sector, T{0} S{1} s{2}", trackReg, sectorReg, sideReg);
 		
 		status.reset(StatusBit.LOST_DATA);
 		status.reset(StatusBit.DRQ_PIN);
@@ -368,7 +368,7 @@ public class FDC1771 implements IPersistable {
 	 * 
 	 */
 	public void FDCwritesector() throws IOException {
-		RealDiskImageDsr.info("FDC write sector, T{0} S{1} s{2}", trackReg, sectorReg, sideReg);
+		BaseDiskImage.info("FDC write sector, T{0} S{1} s{2}", trackReg, sectorReg, sideReg);
 
 		status.reset(StatusBit.LOST_DATA);
 		status.reset(StatusBit.DRQ_PIN);
@@ -383,7 +383,7 @@ public class FDC1771 implements IPersistable {
 		
 		// not sure this is true
 		// http://nouspikel.group.shef.ac.uk//ti99/disks.htm#Sector%20size%20code
-		if (true || (flags & RealDiskImageDsr.fl_length_coding) == 0)
+		if (true || (flags & RealDiskConsts.fl_length_coding) == 0)
 			buflen = 128 << currentMarker.sizeid;
 		else
 			buflen = currentMarker.sizeid != 0 ? (currentMarker.sizeid & 0xff) * 16 : 4096;
@@ -424,7 +424,7 @@ public class FDC1771 implements IPersistable {
 		// the detected track is copied into the sector register (!)
 		sectorReg = currentMarker.trackid;
 		
-		RealDiskImageDsr.info("FDC read ID marker: track={0} sector={1} side={2} size={3}",
+		BaseDiskImage.info("FDC read ID marker: track={0} sector={1} side={2} size={3}",
 				currentMarker.trackid, currentMarker.sectorid, currentMarker.sideid, currentMarker.sizeid);
 
 		
@@ -435,7 +435,7 @@ public class FDC1771 implements IPersistable {
 	 * 
 	 */
 	public void FDCinterrupt() throws IOException {
-		RealDiskImageDsr.info("FDC interrupt");
+		BaseDiskImage.info("FDC interrupt");
 		
 		if (image != null)
 			image.motorTimeout = 0;
@@ -448,11 +448,11 @@ public class FDC1771 implements IPersistable {
 	}
 
 	public void FDCwritetrack() {
-		RealDiskImageDsr.info("FDC write track, #{0}", seektrack);
+		BaseDiskImage.info("FDC write track, #{0}", seektrack);
 
 		status.reset(StatusBit.LOST_DATA);
 		
-		buflen = RealDiskImageDsr.DSKbuffersize;  
+		buflen = RealDiskConsts.DSKbuffersize;  
 			
 		bufpos = 0;
 		
@@ -463,7 +463,7 @@ public class FDC1771 implements IPersistable {
 	}
 
 	public void FDCreadtrack() throws IOException {
-		RealDiskImageDsr.info("FDC read track, #{0}", seektrack);
+		BaseDiskImage.info("FDC read track, #{0}", seektrack);
 
 		status.reset(StatusBit.LOST_DATA);
 		
@@ -489,7 +489,7 @@ public class FDC1771 implements IPersistable {
 			try {
 				image.closeDiskImage();
 			} catch (IOException e) {
-				RealDiskImageDsr.error(e.getMessage());
+				BaseDiskImage.error(e.getMessage());
 			}
 		}
 		image = null;
@@ -503,7 +503,7 @@ public class FDC1771 implements IPersistable {
 
 		if (hold && image != null && image.motorRunning && buflen != 0) {
 			ret = rwBuffer[bufpos++];
-			crc = RealDiskImageDsr.calc_crc(crc, ret & 0xff);
+			crc = RealDiskUtils.calc_crc(crc, ret & 0xff);
 			if (bufpos >= buflen) {
 				status.reset(StatusBit.DRQ_PIN);
 			}
@@ -521,10 +521,10 @@ public class FDC1771 implements IPersistable {
 			/* fill circular buffer */
 			if (bufpos < buflen) {
 				rwBuffer[bufpos++] = val;
-				crc = RealDiskImageDsr.calc_crc(crc, val);
+				crc = RealDiskUtils.calc_crc(crc, val);
 			} else {
 				status.reset(StatusBit.DRQ_PIN);
-				RealDiskImageDsr.error("Tossing extra byte >{0}", Integer.toHexString(val & 0xff));
+				BaseDiskImage.error("Tossing extra byte >{0}", Integer.toHexString(val & 0xff));
 			}
 		}	
 	}
@@ -534,7 +534,7 @@ public class FDC1771 implements IPersistable {
 	 * @throws IOException 
 	 */
 	public void setSide(byte side) throws IOException {
-		RealDiskImageDsr.info("Select side {0}", side);
+		BaseDiskImage.info("Select side {0}", side);
 		updateSeek(seektrack, side);
 		sideReg = side;
 	}

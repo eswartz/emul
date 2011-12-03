@@ -117,7 +117,7 @@ class DiskLikeDirectoryInfo extends DirectoryInfo {
 		
 		File localFile = mapper.getLocalFile(devname, null);
 		if (localFile == null)
-			throw new DsrException(EmuDiskDsr.es_hardware, "No directory for " + devname);
+			throw new DsrException(EmuDiskConsts.es_hardware, "No directory for " + devname);
 		
 		String diskname = mapper.getDsrFileName(localFile.getName());
 		for (int i = 0; i < 10; i++) {

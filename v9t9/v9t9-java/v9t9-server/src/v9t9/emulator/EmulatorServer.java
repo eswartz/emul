@@ -119,7 +119,16 @@ public class EmulatorServer {
 	private Client client;
 	private boolean inited;
 
-    public EmulatorServer(String modelId) throws IOException {
+    public static URL getDataURL(String string) {
+		try {
+			return new URL(sBaseDataURL, string);
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	public EmulatorServer(String modelId) throws IOException {
     	Check.checkArg(modelId);
     	init(modelId);
     	this.memory = machine.getMemory();
@@ -198,23 +207,29 @@ public class EmulatorServer {
 
 		WorkspaceSettings.CURRENT.register(ModuleManager.settingLastLoadedModule);
 
-    	try {
-    		WorkspaceSettings.loadFrom(WorkspaceSettings.currentWorkspace.getString());
-    	} catch (IOException e) {
-    		System.err.println("Setting up new configuration");
-    	}
-    	
 		EmulatorSettings.INSTANCE.register(DataFiles.settingBootRomsPath,
 				EmulatorSettings.INSTANCE.getConfigDirectory() + "roms");
 		EmulatorSettings.INSTANCE.register(DataFiles.settingStoredRamPath,
 				EmulatorSettings.INSTANCE.getConfigDirectory() + "module_ram");
 		DataFiles.addSearchPath(DataFiles.settingStoredRamPath.getString());
     	
+    	try {
+    		WorkspaceSettings.loadFrom(WorkspaceSettings.currentWorkspace.getString());
+    	} catch (IOException e) {
+    		System.err.println("Setting up new configuration");
+    	}
+    	
         MachineModel model = MachineModelFactory.createModel(modelId);
         assert (model != null);
         
         machine = model.createMachine();
     }
+
+	public void setClient(Client client) {
+		this.client = client;
+		machine.setClient(client);
+		
+	}
 
 	/**
 	 * @throws IOException 
@@ -250,49 +265,6 @@ public class EmulatorServer {
 			} catch (InterruptedException e) {
 			}
         }
-	}
-
-	public static URL getDataURL(String string) {
-		/*
-		Bundle bundle = Platform.getBundle("v9t9-java");
-		if (bundle != null) {
-			URL url = FileLocator.find(bundle, new Path(string), Collections.emptyMap());
-			if (url != null)
-				return url;
-		}
-		*/
-		
-		/*
-		URL url = Emulator.class.getClassLoader().getResource(string);
-		        
-		if (url != null) {
-			return url;
-		}
-	        
-		if (sIsDevBuild) {
-			try {
-				return new URL("file", null, "../v9t9-java/data/" + string);
-			} catch (MalformedURLException e) {
-				return null;
-			}
-		}
-		*/
-		
-		try {
-			return new URL(sBaseDataURL, string);
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
-
-	/**
-	 * @param client2
-	 */
-	public void setClient(Client client) {
-		this.client = client;
-		machine.setClient(client);
-		
 	}
 
 }

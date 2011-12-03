@@ -43,13 +43,13 @@ public class FDCStatus {
 	public byte calculate(int command, StringBuilder status) {
 		StatusBit[] bits = COMMON_STATUS;
 		switch (command) {
-		case RealDiskImageDsr.FDC_readIDmarker:
-		case RealDiskImageDsr.FDC_readsector:
-		case RealDiskImageDsr.FDC_readtrack:
+		case RealDiskConsts.FDC_readIDmarker:
+		case RealDiskConsts.FDC_readsector:
+		case RealDiskConsts.FDC_readtrack:
 			bits = R_STATUS;
 			break;
-		case RealDiskImageDsr.FDC_writesector:
-		case RealDiskImageDsr.FDC_writetrack:
+		case RealDiskConsts.FDC_writesector:
+		case RealDiskConsts.FDC_writetrack:
 			bits = W_STATUS;
 			break;
 		}

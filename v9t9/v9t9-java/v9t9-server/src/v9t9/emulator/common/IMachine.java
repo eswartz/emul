@@ -3,8 +3,6 @@
  */
 package v9t9.emulator.common;
 
-import org.ejs.coffee.core.properties.SettingProperty;
-
 import v9t9.emulator.clients.builtin.SoundProvider;
 import v9t9.emulator.hardware.MachineModel;
 import v9t9.emulator.hardware.dsrs.IDsrManager;
@@ -18,14 +16,6 @@ import v9t9.keyboard.KeyboardState;
  *
  */
 public interface IMachine extends IBaseMachine {
-
-	static public final SettingProperty settingPauseMachine = new SettingProperty(
-			"PauseMachine", new Boolean(false));
-	static public final SettingProperty settingThrottleInterrupts = new SettingProperty(
-			"ThrottleVDPInterrupts", new Boolean(false));
-	static public final SettingProperty settingModuleList = new SettingProperty(
-			"ModuleListFile", new String("modules.xml"));
-
 
 	Client getClient();
 

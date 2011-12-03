@@ -73,9 +73,9 @@ public class RawTrackDiskImage extends BaseTrackDiskImage  {
 					  spec, hdr.tracksize));
 		}
 
-		if (hdr.tracksize > RealDiskImageDsr.DSKbuffersize) {
+		if (hdr.tracksize > RealDiskConsts.DSKbuffersize) {
 			throw new IOException(MessageFormat.format("RawTrackDiskImage: disk image ''{0}'' has too large track size ({1} > {2})",
-					spec, hdr.tracksize, RealDiskImageDsr.DSKbuffersize));
+					spec, hdr.tracksize, RealDiskConsts.DSKbuffersize));
 		}
 	}
 	

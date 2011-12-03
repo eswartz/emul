@@ -101,9 +101,9 @@ public class V9t9TrackDiskImage extends BaseTrackDiskImage  {
 					  spec, hdr.tracksize));
 		}
 
-		if (hdr.tracksize > RealDiskImageDsr.DSKbuffersize) {
+		if (hdr.tracksize > RealDiskConsts.DSKbuffersize) {
 			throw new IOException(MessageFormat.format("Disk image has too large track size ({0} > {1})",
-						  hdr.tracksize, RealDiskImageDsr.DSKbuffersize));
+						  hdr.tracksize, RealDiskConsts.DSKbuffersize));
 		}
 	}
 	

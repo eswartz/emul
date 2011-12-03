@@ -16,7 +16,7 @@
 	<classpathentry kind="lib" path="/v9t9-base/libs/jna.jar"/>
 	<classpathentry kind="lib" path="libs/lwjgl/jinput.jar">
 		<attributes>
-			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="v9t9-gui/libs/lwjgl/native/win32"/>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="v9t9-gui/libs/lwjgl/native/${target.os}"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="libs/lwjgl/lwjgl_util.jar"/>
