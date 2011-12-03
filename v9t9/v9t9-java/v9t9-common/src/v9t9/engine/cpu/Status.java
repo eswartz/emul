@@ -2,6 +2,11 @@ package v9t9.engine.cpu;
 
 public interface Status {
 
+	// Status setting flags
+	public static final int stset_NONE = 0; // status not affected
+	public static final int stset_ALL = 1; // all bits changed
+	public static final int stset_INT = 2; // interrupt mask
+
 	String toString();
 
 	void copyTo(Status copy);

@@ -12,19 +12,19 @@ public class InstInfo {
 	 */
 	public short cycles;
 	/**
-	 * bit mask from StatusMFP201.ST_xxx
+	 * bit mask from Status.ST_xxx
 	 */
 	public int stsetBefore;
 	/**
-	 * bit mask from StatusMFP201.ST_xxx
+	 * bit mask from Status.ST_xxx
 	 */
 	public int stsetAfter;
 	/**
-	 * bit mask from StatusMFP201.ST_xxx
+	 * bit mask from Status.ST_xxx
 	 */
 	public int stReads;
 	/**
-	 * bit mask from StatusMFP201.ST_xxx
+	 * bit mask from Status.ST_xxx
 	 */
 	public int stWrites;
 	/** operand is a jump (INST_JUMP_COND = conditional) */
@@ -45,7 +45,7 @@ public class InstInfo {
 	/** Instruction jumps conditionally */
 	public static final int INST_JUMP_COND = 2;
 	public static final int INST_RSRC_PC = 1;	// program counter
-	public static final int INST_RSRC_WP = 2;	// workspace pointer
+	public static final int INST_RSRC_WP = 2;	// workspace pointer (9900)
 	public static final int INST_RSRC_ST = 4;	// status
 	public static final int INST_RSRC_IO = 8;	// I/O
 	public static final int INST_RSRC_EMU = 16; // emulator itself (builtin)

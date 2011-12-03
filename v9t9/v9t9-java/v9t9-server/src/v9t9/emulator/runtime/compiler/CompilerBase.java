@@ -63,7 +63,9 @@ public abstract class CompilerBase {
 	 */
 	abstract public boolean validCpuState();
 
-
+	abstract public void generateInstruction(int pc, RawInstruction rawins,
+            CompileInfo info, CompiledInstInfo ii);
+	
     /** Currently, only gather high-level info for one memory entry at a time */
     public IDecompileInfo getHighLevelCode(MemoryEntry entry) {
     	MemoryArea area = entry.getArea();

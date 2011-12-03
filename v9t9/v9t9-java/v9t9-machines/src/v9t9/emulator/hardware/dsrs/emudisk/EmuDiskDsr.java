@@ -5,7 +5,6 @@ package v9t9.emulator.hardware.dsrs.emudisk;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -17,8 +16,6 @@ import java.util.Map;
 import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.settings.ISettingSection;
 
-import v9t9.emulator.EmulatorServer;
-import v9t9.emulator.clients.builtin.IconSetting;
 import v9t9.emulator.common.WorkspaceSettings;
 import v9t9.emulator.hardware.IDeviceIndicatorProvider;
 import v9t9.emulator.hardware.dsrs.DeviceIndicatorProvider;
@@ -28,7 +25,7 @@ import v9t9.emulator.hardware.dsrs.DsrHandler9900;
 import v9t9.emulator.hardware.dsrs.IDevIcons;
 import v9t9.emulator.hardware.dsrs.MemoryTransfer;
 import v9t9.emulator.hardware.dsrs.emudisk.DiskDirectoryMapper.EmuDiskSetting;
-import v9t9.emulator.hardware.dsrs.realdisk.RealDiskUtils;
+import v9t9.emulator.hardware.dsrs.realdisk.RealDiskDsrSettings;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.MemoryDomain;
 
@@ -40,14 +37,6 @@ import v9t9.engine.memory.MemoryDomain;
  *
  */
 public class EmuDiskDsr implements DsrHandler, DsrHandler9900 {
-	private static URL diskDirectoryIconPath = EmulatorServer.getDataURL("icons/disk_directory.png");
-	
-	public static final SettingProperty emuDiskDsrEnabled = new IconSetting("EmuDiskDSREnabled", 
-			"Disk Directory Support",
-			"This implements a drive (like DSK1) in a single directory level on your host.",
-			Boolean.FALSE,
-			diskDirectoryIconPath);
-	
 	private DiskMemoryEntry memoryEntry;
 	private short vdpNameCompareBuffer;
 	private final IFileMapper mapper;
@@ -57,13 +46,9 @@ public class EmuDiskDsr implements DsrHandler, DsrHandler9900 {
 
 	private SettingProperty emuDiskDsrActiveSetting;
 
-	public static String getEmuDiskSetting(int i) {
-		return "DSK" + i;
-	}
-
 	public EmuDiskDsr(IFileMapper mapper) {
 		//emuDiskDsrEnabled.setBoolean(true);
-		WorkspaceSettings.CURRENT.register(emuDiskDsrEnabled);
+		WorkspaceSettings.CURRENT.register(EmuDiskDsrSettings.emuDiskDsrEnabled);
 		
 		this.mapper = mapper;
 		
@@ -78,7 +63,7 @@ public class EmuDiskDsr implements DsrHandler, DsrHandler9900 {
 
     	// one setting for entire DSR
 		emuDiskDsrActiveSetting = new SettingProperty(getName(), Boolean.FALSE);
-		emuDiskDsrActiveSetting.addEnablementDependency(emuDiskDsrEnabled);
+		emuDiskDsrActiveSetting.addEnablementDependency(EmuDiskDsrSettings.emuDiskDsrEnabled);
 		DeviceIndicatorProvider deviceIndicatorProvider = new DeviceIndicatorProvider(
 				emuDiskDsrActiveSetting, 
 				"Disk directory activity",
@@ -87,17 +72,17 @@ public class EmuDiskDsr implements DsrHandler, DsrHandler9900 {
 
 		
     	for (int dev = 1; dev <= 5; dev++) {
-    		String devname = getEmuDiskSetting(dev);
+    		String devname = EmuDiskDsrSettings.getEmuDiskSetting(dev);
     		
     		EmuDiskSetting diskSetting = new EmuDiskSetting(devname, dskdefault.getAbsolutePath(),
-    				diskDirectoryIconPath);
+    				EmuDiskDsrSettings.diskDirectoryIconPath);
     		WorkspaceSettings.CURRENT.register(diskSetting);
 			
 			DiskDirectoryMapper.INSTANCE.registerDiskSetting(devname, diskSetting);
 
 			// one setting per disk
 			SettingProperty diskActiveSetting = new SettingProperty(devname, Boolean.FALSE);
-			diskActiveSetting.addEnablementDependency(emuDiskDsrEnabled);
+			diskActiveSetting.addEnablementDependency(EmuDiskDsrSettings.emuDiskDsrEnabled);
 			diskActivitySettings.put(devname, diskActiveSetting);
 			/*
 			deviceIndicatorProvider = new DeviceIndicatorProvider(
@@ -124,7 +109,7 @@ public class EmuDiskDsr implements DsrHandler, DsrHandler9900 {
 		return 0x1000;
 	}
 	public void activate(MemoryDomain console) throws IOException {
-		if (!emuDiskDsrEnabled.getBoolean())
+		if (!EmuDiskDsrSettings.emuDiskDsrEnabled.getBoolean())
 			return;
 		
 		emuDiskDsrActiveSetting.setBoolean(true);
@@ -143,7 +128,7 @@ public class EmuDiskDsr implements DsrHandler, DsrHandler9900 {
 	}
 
 	public boolean handleDSR(MemoryTransfer xfer, short code) {
-		if (!emuDiskDsrEnabled.getBoolean())
+		if (!EmuDiskDsrSettings.emuDiskDsrEnabled.getBoolean())
 			return false;
 		
 		try {
@@ -169,7 +154,7 @@ public class EmuDiskDsr implements DsrHandler, DsrHandler9900 {
 			
 			if (handler.devname.equals("DSK1")
 					|| handler.devname.equals("DSK2")) {
-				if (RealDiskUtils.diskImageDsrEnabled.getBoolean())
+				if (RealDiskDsrSettings.diskImageDsrEnabled.getBoolean())
 					return false;
 			}
 			
@@ -203,7 +188,7 @@ public class EmuDiskDsr implements DsrHandler, DsrHandler9900 {
 			
 			// steal some RAM for the name compare buffer,
 			// so dependent programs can function
-			if (!RealDiskUtils.diskImageDsrEnabled.getBoolean())
+			if (!RealDiskDsrSettings.diskImageDsrEnabled.getBoolean())
 				vdpNameCompareBuffer = (short) (xfer.readParamWord(0x70) - 11);
 			else
 				vdpNameCompareBuffer = (short) 0x3ff5;
@@ -261,14 +246,14 @@ public class EmuDiskDsr implements DsrHandler, DsrHandler9900 {
 		{
 			DirectDiskHandler handler = new DirectDiskHandler(getCruBase(), xfer, mapper, code);
 	
-			if (handler.dev <= 2 && RealDiskUtils.diskImageDsrEnabled.getBoolean()) {
+			if (handler.dev <= 2 && RealDiskDsrSettings.diskImageDsrEnabled.getBoolean()) {
 				//Executor.settingDumpFullInstructions.setBoolean(true);
 				return false;
 			}
 			
 			if (handler.getDevice() <= EmuDiskConsts.MAXDRIVE) {
 				
-				SettingProperty activity = diskActivitySettings.get(getEmuDiskSetting(handler.dev));
+				SettingProperty activity = diskActivitySettings.get(EmuDiskDsrSettings.getEmuDiskSetting(handler.dev));
 				if (activity != null)
 					activity.setBoolean(true);
 				
@@ -295,7 +280,7 @@ public class EmuDiskDsr implements DsrHandler, DsrHandler9900 {
 
 	private void subAllocFiles(MemoryTransfer xfer) {
 		// let real disk allocate space
-		if (RealDiskUtils.diskImageDsrEnabled.getBoolean())
+		if (RealDiskDsrSettings.diskImageDsrEnabled.getBoolean())
 			return;
 		
 		int cnt = xfer.readParamByte(0x4c);
@@ -369,7 +354,7 @@ public class EmuDiskDsr implements DsrHandler, DsrHandler9900 {
 		Map<String, Collection<SettingProperty>> map = new LinkedHashMap<String, Collection<SettingProperty>>();
 		
 		Collection<SettingProperty> settings = new ArrayList<SettingProperty>();
-		settings.add(emuDiskDsrEnabled);
+		settings.add(EmuDiskDsrSettings.emuDiskDsrEnabled);
 		map.put(DsrHandler.GROUP_DSR_SELECTION, settings);
 		
 		settings = Arrays.asList(mapper.getSettings());
@@ -378,13 +363,13 @@ public class EmuDiskDsr implements DsrHandler, DsrHandler9900 {
 		return map;
 	}
 	public void saveState(ISettingSection section) {
-		emuDiskDsrEnabled.saveState(section);
+		EmuDiskDsrSettings.emuDiskDsrEnabled.saveState(section);
 		mapper.saveState(section.addSection("Mappings"));
 	}
 	
 	public void loadState(ISettingSection section) {
 		if (section == null) return;
-		emuDiskDsrEnabled.loadState(section);
+		EmuDiskDsrSettings.emuDiskDsrEnabled.loadState(section);
 		mapper.loadState(section.getSection("Mappings"));
 	}
 

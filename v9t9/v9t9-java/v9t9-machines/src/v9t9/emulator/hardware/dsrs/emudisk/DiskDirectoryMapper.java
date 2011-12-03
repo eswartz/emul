@@ -18,7 +18,7 @@ import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.settings.ISettingSection;
 
 import v9t9.emulator.clients.builtin.IconSetting;
-import v9t9.emulator.hardware.dsrs.realdisk.RealDiskUtils;
+import v9t9.emulator.hardware.dsrs.realdisk.RealDiskDsrSettings;
 
 
 public class DiskDirectoryMapper implements IFileMapper, IPersistable {
@@ -34,8 +34,8 @@ public class DiskDirectoryMapper implements IFileMapper, IPersistable {
 					"Specify the full path of the directory representing this disk.",
 					storage, iconPath);
 			
-			addEnablementDependency(EmuDiskDsr.emuDiskDsrEnabled);
-			addEnablementDependency(RealDiskUtils.diskImageDsrEnabled);
+			addEnablementDependency(EmuDiskDsrSettings.emuDiskDsrEnabled);
+			addEnablementDependency(RealDiskDsrSettings.diskImageDsrEnabled);
 		}
 		
 		/* (non-Javadoc)
@@ -43,13 +43,13 @@ public class DiskDirectoryMapper implements IFileMapper, IPersistable {
 		 */
 		@Override
 		public boolean isEnabled() {
-			if (!EmuDiskDsr.emuDiskDsrEnabled.getBoolean())
+			if (!EmuDiskDsrSettings.emuDiskDsrEnabled.getBoolean())
 				return false;
-			if (!RealDiskUtils.diskImageDsrEnabled.getBoolean())
+			if (!RealDiskDsrSettings.diskImageDsrEnabled.getBoolean())
 				return true;
 			
 			// only DSK3 + are real disks if emu disk also enabled
-			return getName().compareTo(EmuDiskDsr.getEmuDiskSetting(3)) >= 0;
+			return getName().compareTo(EmuDiskDsrSettings.getEmuDiskSetting(3)) >= 0;
 		}
 	}
 	

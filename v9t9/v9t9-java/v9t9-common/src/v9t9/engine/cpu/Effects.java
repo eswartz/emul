@@ -4,9 +4,9 @@
 package v9t9.engine.cpu;
 
 public class Effects {
-	/** method status is set after operands parsed, before execution (st_xxx) */
+	/** method status is set after operands parsed, before execution (Status.stset_xxx) */
     public int stsetBefore; // 
-    /** method status is set after execution (st_xxx) */
+    /** method status is set after execution (Status.stset_xxx) */
     public int stsetAfter; // 
     /** bits read by instruction (Status.ST_xxx mask) */
     public int stReads;     // 

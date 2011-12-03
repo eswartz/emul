@@ -108,7 +108,7 @@ abstract public class Machine implements IMachine {
     	
     	runnableList = Collections.synchronizedList(new LinkedList<Runnable>());
     	this.memoryModel = machineModel.getMemoryModel();
-    	this.memory = memoryModel.createMemory();
+    	this.memory = memoryModel.getMemory();
     	this.console = memoryModel.getConsole();
     	
     	timer = new Timer();

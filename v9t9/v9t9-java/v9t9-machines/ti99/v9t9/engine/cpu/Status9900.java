@@ -26,6 +26,50 @@ public class Status9900 implements Status {
     
     short bits; /* other bits: ST_O|ST_X|ST_C|ST_INTLEVEL */
 
+	public static final int stset_XOP = 3; // xop bits changed
+
+	public static final int stset_CMP = 4; // comparison
+
+	public static final int stset_BYTE_CMP = 5; // with bytes
+
+	public static final int stset_LAE = 6; // arithmetic...
+
+	public static final int stset_LAEO = 7;
+
+	public static final int stset_O = 8;
+
+	public static final int stset_E = 11;
+
+	public static final int stset_BYTE_LAEP = 12;
+
+	public static final int stset_SUB_LAECO = 13;
+
+	public static final int stset_SUB_BYTE_LAECOP = 14;
+
+	public static final int stset_ADD_LAECO = 15;
+
+	public static final int stset_ADD_BYTE_LAECOP = 16;
+
+	public static final int stset_SHIFT_RIGHT_C = 17;
+
+	public static final int stset_SHIFT_LEFT_CO = 18;
+
+	public static final int stset_DIV_O = 19;
+
+	public static final int stset_LAE_1 = 20;
+
+	public static final int stset_BYTE_LAEP_1 = 21;
+
+	public static final int stset_ADD_LAECO_REV = 22;
+
+	public static final int stset_ADD_LAECO_REV_1 = 23;
+
+	public static final int stset_ADD_LAECO_REV_2 = 24;
+
+	public static final int stset_ADD_LAECO_REV_N1 = 25;
+
+	public static final int stset_ADD_LAECO_REV_N2 = 26;
+
     /* status bits */
     public static final short ST_L = (short)0x8000;
 
@@ -379,6 +423,39 @@ public class Status9900 implements Status {
     public int getIntMask() {
         return bits & ST_INTLEVEL;
     }
+
+	/** Get the status bits that 'st' (st_XXX) modifies */
+	public static int getStatusBits(int st) {
+	    switch (st) {
+	    case Status.stset_NONE: return 0;
+	    case Status.stset_ALL: return 0xffff;
+	    case Status.stset_INT: return ST_INTLEVEL;
+	    case stset_XOP: return ST_X;
+	    case stset_CMP: return ST_L + ST_A + ST_E;
+	    case stset_BYTE_CMP: return ST_L + ST_A + ST_E + ST_P;
+	    case stset_LAE: return ST_L + ST_A + ST_E;
+	    case stset_LAEO: return ST_L + ST_A + ST_E + ST_O;
+	    case stset_O: return ST_O;
+	    case stset_E: return ST_E;
+	    case stset_BYTE_LAEP: return ST_L + ST_A + ST_E + ST_P;
+	    case stset_SUB_LAECO: return ST_L + ST_A + ST_E + ST_C + ST_O;
+	    case stset_SUB_BYTE_LAECOP: return ST_L + ST_A + ST_E + ST_C + ST_O + ST_P;
+	    case stset_ADD_LAECO: return ST_L + ST_A + ST_E + ST_C + ST_O;
+	    case stset_ADD_BYTE_LAECOP: return ST_L + ST_A + ST_E + ST_C + ST_O + ST_P;
+	    case stset_SHIFT_RIGHT_C: return ST_C;
+	    case stset_SHIFT_LEFT_CO: return ST_C + ST_O;
+	    case stset_DIV_O: return ST_O;
+	    case stset_LAE_1: return ST_L + ST_A + ST_E;
+	    case stset_BYTE_LAEP_1: return ST_L + ST_A + ST_E + ST_P;
+	    case stset_ADD_LAECO_REV: 
+	    case stset_ADD_LAECO_REV_1: 
+	    case stset_ADD_LAECO_REV_2: 
+	    case stset_ADD_LAECO_REV_N1: 
+	    case stset_ADD_LAECO_REV_N2: 
+	    	return ST_L + ST_A + ST_E + ST_C + ST_O;
+	    default: throw new AssertionError("bad st_XXX value");
+	    }
+	}
 
     
 }

@@ -24,89 +24,7 @@ import static v9t9.tools.asm.decomp.IHighLevelInstruction.*;
  * @author ejs
  */
 public class Instruction9900 extends RawInstruction implements IInstruction {
-    // Status setting flags
-    public static final int st_NONE = 0; // status not affected
-
-    public static final int st_ALL = 1; // all bits changed
-
-    public static final int st_INT = 2; // interrupt mask
-
-    public static final int st_XOP = 3; // xop bits changed
-
-    public static final int st_CMP = 4; // comparison
-
-    public static final int st_BYTE_CMP = 5; // with bytes
-
-    public static final int st_LAE = 6; // arithmetic...
-
-    public static final int st_LAEO = 7;
-
-    public static final int st_O = 8;
-
-    public static final int st_E = 11;
-
-    public static final int st_BYTE_LAEP = 12;
-
-    public static final int st_SUB_LAECO = 13;
-
-    public static final int st_SUB_BYTE_LAECOP = 14;
-
-    public static final int st_ADD_LAECO = 15;
-
-    public static final int st_ADD_BYTE_LAECOP = 16;
-
-    public static final int st_SHIFT_RIGHT_C = 17;
-
-    public static final int st_SHIFT_LEFT_CO = 18;
-
-    public static final int st_DIV_O = 19;
-
-    public static final int st_LAE_1 = 20;
-
-    public static final int st_BYTE_LAEP_1 = 21;
-
-    public static final int st_ADD_LAECO_REV = 22;
-    public static final int st_ADD_LAECO_REV_1 = 23;
-    public static final int st_ADD_LAECO_REV_2 = 24;
-    public static final int st_ADD_LAECO_REV_N1 = 25;
-    public static final int st_ADD_LAECO_REV_N2 = 26;
-
-    /** Get the status bits that 'st' (st_XXX) modifies */
-    public static int getStatusBits(int st) {
-        switch (st) {
-        case st_NONE: return 0;
-        case st_ALL: return 0xffff;
-        case st_INT: return Status9900.ST_INTLEVEL;
-        case st_XOP: return Status9900.ST_X;
-        case st_CMP: return Status9900.ST_L + Status9900.ST_A + Status9900.ST_E;
-        case st_BYTE_CMP: return Status9900.ST_L + Status9900.ST_A + Status9900.ST_E + Status9900.ST_P;
-        case st_LAE: return Status9900.ST_L + Status9900.ST_A + Status9900.ST_E;
-        case st_LAEO: return Status9900.ST_L + Status9900.ST_A + Status9900.ST_E + Status9900.ST_O;
-        case st_O: return Status9900.ST_O;
-        case st_E: return Status9900.ST_E;
-        case st_BYTE_LAEP: return Status9900.ST_L + Status9900.ST_A + Status9900.ST_E + Status9900.ST_P;
-        case st_SUB_LAECO: return Status9900.ST_L + Status9900.ST_A + Status9900.ST_E + Status9900.ST_C + Status9900.ST_O;
-        case st_SUB_BYTE_LAECOP: return Status9900.ST_L + Status9900.ST_A + Status9900.ST_E + Status9900.ST_C + Status9900.ST_O + Status9900.ST_P;
-        case st_ADD_LAECO: return Status9900.ST_L + Status9900.ST_A + Status9900.ST_E + Status9900.ST_C + Status9900.ST_O;
-        case st_ADD_BYTE_LAECOP: return Status9900.ST_L + Status9900.ST_A + Status9900.ST_E + Status9900.ST_C + Status9900.ST_O + Status9900.ST_P;
-        case st_SHIFT_RIGHT_C: return Status9900.ST_C;
-        case st_SHIFT_LEFT_CO: return Status9900.ST_C + Status9900.ST_O;
-        case st_DIV_O: return Status9900.ST_O;
-        case st_LAE_1: return Status9900.ST_L + Status9900.ST_A + Status9900.ST_E;
-        case st_BYTE_LAEP_1: return Status9900.ST_L + Status9900.ST_A + Status9900.ST_E + Status9900.ST_P;
-        case st_ADD_LAECO_REV: 
-        case st_ADD_LAECO_REV_1: 
-        case st_ADD_LAECO_REV_2: 
-        case st_ADD_LAECO_REV_N1: 
-        case st_ADD_LAECO_REV_N2: 
-        	return Status9900.ST_L + Status9900.ST_A + Status9900.ST_E + Status9900.ST_C + Status9900.ST_O;
-        default: throw new AssertionError("bad st_XXX value");
-        }
-    }
-    
-    // instruction jump flags
-
-	public String toString() {
+    public String toString() {
         StringBuffer buffer = new StringBuffer();
         buffer.append(getName());
         String opstring;
@@ -155,8 +73,8 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
     public void completeInstruction(int Pc) {
     	InstInfo info = getInfo();
     	
-	    info.stsetBefore = Instruction9900.st_NONE;
-	    info.stsetAfter = Instruction9900.st_NONE;
+	    info.stsetBefore = Status.stset_NONE;
+	    info.stsetAfter = Status.stset_NONE;
 	    info.stReads = 0;
 	    info.stWrites = 0;
 	    info.jump = InstInfo.INST_JUMP_FALSE;
@@ -185,24 +103,24 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	        mop1.dest = Operand.OP_DEST_TRUE;
 	        switch (getInst()) {
 	        case Inst9900.Ili:
-	            info.stsetAfter = Instruction9900.st_LAE_1;
+	            info.stsetAfter = Status9900.stset_LAE_1;
 	            mop1.dest = Operand.OP_DEST_KILLED;
 	            info.cycles += 12;
 	            break;
 	        case Inst9900.Iai:
-	            info.stsetBefore = Instruction9900.st_ADD_LAECO_REV;
+	            info.stsetBefore = Status9900.stset_ADD_LAECO_REV;
 	            info.cycles += 14;
 	            break;
 	        case Inst9900.Iandi:
-	            info.stsetAfter = Instruction9900.st_LAE_1;
+	            info.stsetAfter = Status9900.stset_LAE_1;
 	            info.cycles += 14;
 	            break;
 	        case Inst9900.Iori:
-	            info.stsetAfter = Instruction9900.st_LAE_1;
+	            info.stsetAfter = Status9900.stset_LAE_1;
 	            info.cycles += 14;
 	            break;
 	        case Inst9900.Ici:
-	            info.stsetAfter = Instruction9900.st_CMP;
+	            info.stsetAfter = Status9900.stset_CMP;
 	            mop1.dest = Operand.OP_DEST_FALSE;
 	            info.cycles += 14;
 	            break;
@@ -231,7 +149,7 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	    } else if (getInst() == Inst9900.Ilimi) {
 	        Check.checkArg((mop1.type == MachineOperand9900.OP_IMMED));
 	        Check.checkArg((mop2.type == MachineOperand.OP_NONE));
-	        info.stsetAfter = Instruction9900.st_INT;
+	        info.stsetAfter = Status.stset_INT;
 	        info.cycles += 16;
 	    } else if (getInst() >= Inst9900.Iidle && getInst() <= Inst9900.Ilrex) {
 	        Check.checkArg((mop1.type == MachineOperand.OP_NONE));
@@ -242,12 +160,12 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	            info.cycles += 12;
 	            break;
 	        case Inst9900.Irset:
-	            info.stsetAfter = Instruction9900.st_INT;
+	            info.stsetAfter = Status.stset_INT;
 	            info.writes |= InstInfo.INST_RSRC_IO;
 	            info.cycles += 12;
 	            break;
 	        case Inst9900.Irtwp:
-	            info.stsetAfter = Instruction9900.st_ALL;
+	            info.stsetAfter = Status.stset_ALL;
 	            info.writes |= InstInfo.INST_RSRC_WP + InstInfo.INST_RSRC_ST + InstInfo.INST_RSRC_PC;
 	            mop1.type = MachineOperand9900.OP_STATUS;
 	            //mop1.dest = Operand.OP_DEST_KILLED;	// compiler doesn't seem to depend on this
@@ -304,27 +222,27 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	            info.cycles += 10;
 	            break;
 	        case Inst9900.Ineg:
-	            info.stsetAfter = Instruction9900.st_LAEO;
+	            info.stsetAfter = Status9900.stset_LAEO;
 	            info.cycles += 12;
 	            break;
 	        case Inst9900.Iinv:
-	            info.stsetAfter = Instruction9900.st_LAE_1;
+	            info.stsetAfter = Status9900.stset_LAE_1;
 	            info.cycles += 10;
 	            break;
 	        case Inst9900.Iinc:
-	            info.stsetBefore = Instruction9900.st_ADD_LAECO_REV_1;
+	            info.stsetBefore = Status9900.stset_ADD_LAECO_REV_1;
 	            info.cycles += 10;
 	            break;
 	        case Inst9900.Iinct:
-	            info.stsetBefore = Instruction9900.st_ADD_LAECO_REV_2;
+	            info.stsetBefore = Status9900.stset_ADD_LAECO_REV_2;
 	            info.cycles += 10;
 	            break;
 	        case Inst9900.Idec:
-	            info.stsetBefore = Instruction9900.st_ADD_LAECO_REV_N1;
+	            info.stsetBefore = Status9900.stset_ADD_LAECO_REV_N1;
 	            info.cycles += 10;
 	            break;
 	        case Inst9900.Idect:
-	            info.stsetBefore = Instruction9900.st_ADD_LAECO_REV_N2;
+	            info.stsetBefore = Status9900.stset_ADD_LAECO_REV_N2;
 	            info.cycles += 10;
 	            break;
 	        case Inst9900.Ibl:
@@ -341,7 +259,7 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	            info.cycles += 10;
 	            break;
 	        case Inst9900.Iabs:
-	            info.stsetBefore = Instruction9900.st_LAEO;
+	            info.stsetBefore = Status9900.stset_LAEO;
 	            info.cycles += 12;
 	            break;
 	        default:
@@ -365,20 +283,20 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	
 	        switch (getInst()) {
 	        case Inst9900.Isra:
-	            info.stsetBefore = Instruction9900.st_SHIFT_RIGHT_C;
-	            info.stsetAfter = Instruction9900.st_LAE_1;
+	            info.stsetBefore = Status9900.stset_SHIFT_RIGHT_C;
+	            info.stsetAfter = Status9900.stset_LAE_1;
 	            break;
 	        case Inst9900.Isrl:
-	            info.stsetBefore = Instruction9900.st_SHIFT_RIGHT_C;
-	            info.stsetAfter = Instruction9900.st_LAE_1;
+	            info.stsetBefore = Status9900.stset_SHIFT_RIGHT_C;
+	            info.stsetAfter = Status9900.stset_LAE_1;
 	            break;
 	        case Inst9900.Isla:
-	            info.stsetBefore = Instruction9900.st_SHIFT_LEFT_CO;
-	            info.stsetAfter = Instruction9900.st_LAE_1;
+	            info.stsetBefore = Status9900.stset_SHIFT_LEFT_CO;
+	            info.stsetAfter = Status9900.stset_LAE_1;
 	            break;
 	        case Inst9900.Isrc:
-	            info.stsetBefore = Instruction9900.st_SHIFT_RIGHT_C;
-	            info.stsetAfter = Instruction9900.st_LAE_1;
+	            info.stsetBefore = Status9900.stset_SHIFT_RIGHT_C;
+	            info.stsetAfter = Status9900.stset_LAE_1;
 	            break;
 	        }
 	
@@ -454,7 +372,7 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	            info.writes |= InstInfo.INST_RSRC_IO;
 	            break;
 	        case Inst9900.Itb:
-	            info.stsetAfter = Instruction9900.st_CMP;
+	            info.stsetAfter = Status9900.stset_CMP;
 	            info.reads |= InstInfo.INST_RSRC_IO;
 	            break;
 	        }
@@ -468,17 +386,17 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	
 	        switch (getInst()) {
 	        case Inst9900.Icoc:
-	            info.stsetAfter = Instruction9900.st_CMP;
+	            info.stsetAfter = Status9900.stset_CMP;
 	            mop2.dest = Operand.OP_DEST_FALSE;
 	            info.cycles += 14;
 	            break;
 	        case Inst9900.Iczc:
-	            info.stsetAfter = Instruction9900.st_CMP;
+	            info.stsetAfter = Status9900.stset_CMP;
 	            mop2.dest = Operand.OP_DEST_FALSE;
 	            info.cycles += 14;
 	            break;
 	        case Inst9900.Ixor:
-	            info.stsetAfter = Instruction9900.st_LAE;
+	            info.stsetAfter = Status9900.stset_LAE;
 	            info.cycles += 14;
 	            break;
 	        case Inst9900.Ixop:
@@ -488,7 +406,7 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	            mop2.bIsReference = true;
 	            mop2.type = MachineOperand9900.OP_CNT;
 	            mop2.dest = Operand.OP_DEST_FALSE;
-	            info.stsetAfter = Instruction9900.st_XOP;
+	            info.stsetAfter = Status9900.stset_XOP;
 	            info.jump = InstInfo.INST_JUMP_TRUE;
 	            info.cycles += 36;
 	            break;
@@ -497,7 +415,7 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	            info.cycles += 52;
 	            break;
 	        case Inst9900.Idiv:
-	            info.stsetBefore = Instruction9900.st_DIV_O;
+	            info.stsetBefore = Status9900.stset_DIV_O;
 	            //              ((MachineOperand) this.op2).type = MachineOperand.OP_DIV;
 	            info.cycles += 124;
 	            break;
@@ -514,14 +432,14 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	        mop1.byteop = mop2.val <= 8;
 	
 	        if (getInst() == Inst9900.Ildcr) {
-	            info.stsetBefore = mop1.byteop ? Instruction9900.st_BYTE_LAEP_1
-	                    : Instruction9900.st_LAE_1;
+	            info.stsetBefore = mop1.byteop ? Status9900.stset_BYTE_LAEP_1
+	                    : Status9900.stset_LAE_1;
 	            mop1.dest = Operand.OP_DEST_FALSE;
 	            info.cycles += (20 + 2 * mop1.val);
 	            info.writes |= InstInfo.INST_RSRC_IO;
 	        } else {
-	            info.stsetAfter = mop1.byteop ? Instruction9900.st_BYTE_LAEP_1
-	                    : Instruction9900.st_LAE_1;
+	            info.stsetAfter = mop1.byteop ? Status9900.stset_BYTE_LAEP_1
+	                    : Status9900.stset_LAE_1;
 	            mop1.dest = Operand.OP_DEST_TRUE;
 	            info.cycles += (mop1.val < 8 ? 42
 				: mop1.val == 8 ? 44 : 58);
@@ -544,69 +462,69 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	
 	        switch (getInst()) {
 	        case Inst9900.Iszc:
-	            info.stsetAfter = Instruction9900.st_LAE;
+	            info.stsetAfter = Status9900.stset_LAE;
 	            info.cycles += 14;
 	            break;
 	        case Inst9900.Iszcb:
-	            info.stsetAfter = Instruction9900.st_BYTE_LAEP;
+	            info.stsetAfter = Status9900.stset_BYTE_LAEP;
 	            info.cycles += 14;
 	            break;
 	        case Inst9900.Is:
-	            info.stsetBefore = Instruction9900.st_SUB_LAECO;
+	            info.stsetBefore = Status9900.stset_SUB_LAECO;
 	            info.cycles += 14;
 	            break;
 	        case Inst9900.Isb:
-	            info.stsetBefore = Instruction9900.st_SUB_BYTE_LAECOP;
+	            info.stsetBefore = Status9900.stset_SUB_BYTE_LAECOP;
 	            info.cycles += 14;
 	            break;
 	        case Inst9900.Ic:
-	            info.stsetAfter = Instruction9900.st_CMP;
+	            info.stsetAfter = Status9900.stset_CMP;
 	            mop2.dest = Operand.OP_DEST_FALSE;
 	            info.cycles += 14;
 	            break;
 	        case Inst9900.Icb:
-	            info.stsetAfter = Instruction9900.st_BYTE_CMP;
+	            info.stsetAfter = Status9900.stset_BYTE_CMP;
 	            mop2.dest = Operand.OP_DEST_FALSE;
 	            info.cycles += 14;
 	            break;
 	        case Inst9900.Ia:
-	            info.stsetBefore = Instruction9900.st_ADD_LAECO;
+	            info.stsetBefore = Status9900.stset_ADD_LAECO;
 	            info.cycles += 14;
 	            break;
 	        case Inst9900.Iab:
-	            info.stsetBefore = Instruction9900.st_ADD_BYTE_LAECOP;
+	            info.stsetBefore = Status9900.stset_ADD_BYTE_LAECOP;
 	            info.cycles += 14;
 	            break;
 	        case Inst9900.Imov:
-	            info.stsetAfter = Instruction9900.st_LAE;
+	            info.stsetAfter = Status9900.stset_LAE;
 	            mop2.dest = Operand.OP_DEST_KILLED;
 	            info.cycles += 14;
 	            break;
 	        case Inst9900.Imovb:
-	            info.stsetAfter = Instruction9900.st_BYTE_LAEP;
+	            info.stsetAfter = Status9900.stset_BYTE_LAEP;
 	            mop2.dest = Operand.OP_DEST_KILLED;
 	            info.cycles += 14;
 	            break;
 	        case Inst9900.Isoc:
-	            info.stsetAfter = Instruction9900.st_LAE;
+	            info.stsetAfter = Status9900.stset_LAE;
 	            info.cycles += 14;
 	            break;
 	        case Inst9900.Isocb:
-	            info.stsetAfter = Instruction9900.st_BYTE_LAEP;
+	            info.stsetAfter = Status9900.stset_BYTE_LAEP;
 	            info.cycles += 14;
 	            break;
 	        }
 	    }
 	
-	    info.stWrites = Instruction9900.getStatusBits(info.stsetBefore)
-        	| Instruction9900.getStatusBits(info.stsetAfter);
+	    info.stWrites = Status9900.getStatusBits(info.stsetBefore)
+        	| Status9900.getStatusBits(info.stsetAfter);
     
 	    // synthesize bits from other info
 	    if (info.jump != InstInfo.INST_JUMP_FALSE) {
 	        info.writes |= InstInfo.INST_RSRC_PC;
 	        info.reads |= InstInfo.INST_RSRC_PC;
 	    }
-	    if (getInfo().stsetBefore != st_NONE || getInfo().stsetAfter != st_NONE) {
+	    if (getInfo().stsetBefore != Status.stset_NONE || getInfo().stsetAfter != Status.stset_NONE) {
 	        info.writes |= InstInfo.INST_RSRC_ST;
 	    }
 	    if (mop1.isRegisterReference() || mop2.isRegisterReference()) {
@@ -632,8 +550,8 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
     public static Effects getInstructionEffects(int inst) {
     	Effects fx = new Effects();
     	
-	    fx.stsetBefore = Instruction9900.st_NONE;
-	    fx.stsetAfter = Instruction9900.st_NONE;
+	    fx.stsetBefore = Status.stset_NONE;
+	    fx.stsetAfter = Status.stset_NONE;
 	    fx.stReads = 0;
 	    fx.jump = InstInfo.INST_JUMP_FALSE;
 	    fx.reads = 0;
@@ -645,20 +563,20 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	        fx.mop1_dest = Operand.OP_DEST_TRUE;
 	        switch (inst) {
 	        case Inst9900.Ili:
-	            fx.stsetAfter = Instruction9900.st_LAE_1;
+	            fx.stsetAfter = Status9900.stset_LAE_1;
 	            fx.mop1_dest = Operand.OP_DEST_KILLED;
 	            break;
 	        case Inst9900.Iai:
-	            fx.stsetBefore = Instruction9900.st_ADD_LAECO_REV;
+	            fx.stsetBefore = Status9900.stset_ADD_LAECO_REV;
 	            break;
 	        case Inst9900.Iandi:
-	            fx.stsetAfter = Instruction9900.st_LAE_1;
+	            fx.stsetAfter = Status9900.stset_LAE_1;
 	            break;
 	        case Inst9900.Iori:
-	            fx.stsetAfter = Instruction9900.st_LAE_1;
+	            fx.stsetAfter = Status9900.stset_LAE_1;
 	            break;
 	        case Inst9900.Ici:
-	            fx.stsetAfter = Instruction9900.st_CMP;
+	            fx.stsetAfter = Status9900.stset_CMP;
 	            fx.mop1_dest = Operand.OP_DEST_FALSE;
 	            break;
 	        }
@@ -673,18 +591,18 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	    } else if (inst == Inst9900.Ilwpi) {
 	        fx.writes |= InstInfo.INST_RSRC_WP;
 	    } else if (inst == Inst9900.Ilimi) {
-	        fx.stsetAfter = Instruction9900.st_INT;
+	        fx.stsetAfter = Status.stset_INT;
 	    } else if (inst >= Inst9900.Iidle && inst <= Inst9900.Ilrex) {
 	        switch (inst) {
 	        case Inst9900.Iidle:
 	            fx.writes |= InstInfo.INST_RSRC_IO;
 	            break;
 	        case Inst9900.Irset:
-	            fx.stsetAfter = Instruction9900.st_INT;
+	            fx.stsetAfter = Status.stset_INT;
 	            fx.writes |= InstInfo.INST_RSRC_IO;
 	            break;
 	        case Inst9900.Irtwp:
-	            fx.stsetAfter = Instruction9900.st_ALL;
+	            fx.stsetAfter = Status.stset_ALL;
 	            fx.writes |= InstInfo.INST_RSRC_WP + InstInfo.INST_RSRC_ST + InstInfo.INST_RSRC_PC;
 	            //fx.mop1_dest = Operand.OP_DEST_KILLED;	// compiler doesn't seem to depend on this
 	            fx.jump = InstInfo.INST_JUMP_TRUE;
@@ -729,22 +647,22 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	            fx.mop1_dest = Operand.OP_DEST_KILLED;
 	            break;
 	        case Inst9900.Ineg:
-	            fx.stsetAfter = Instruction9900.st_LAEO;
+	            fx.stsetAfter = Status9900.stset_LAEO;
 	            break;
 	        case Inst9900.Iinv:
-	            fx.stsetAfter = Instruction9900.st_LAE_1;
+	            fx.stsetAfter = Status9900.stset_LAE_1;
 	            break;
 	        case Inst9900.Iinc:
-	            fx.stsetBefore = Instruction9900.st_ADD_LAECO_REV_1;
+	            fx.stsetBefore = Status9900.stset_ADD_LAECO_REV_1;
 	            break;
 	        case Inst9900.Iinct:
-	            fx.stsetBefore = Instruction9900.st_ADD_LAECO_REV_2;
+	            fx.stsetBefore = Status9900.stset_ADD_LAECO_REV_2;
 	            break;
 	        case Inst9900.Idec:
-	            fx.stsetBefore = Instruction9900.st_ADD_LAECO_REV_N1;
+	            fx.stsetBefore = Status9900.stset_ADD_LAECO_REV_N1;
 	            break;
 	        case Inst9900.Idect:
-	            fx.stsetBefore = Instruction9900.st_ADD_LAECO_REV_N2;
+	            fx.stsetBefore = Status9900.stset_ADD_LAECO_REV_N2;
 	            break;
 	        case Inst9900.Ibl:
 	            fx.mop1_dest = Operand.OP_DEST_FALSE;
@@ -757,7 +675,7 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	            fx.mop1_dest = Operand.OP_DEST_KILLED;
 	            break;
 	        case Inst9900.Iabs:
-	            fx.stsetBefore = Instruction9900.st_LAEO;
+	            fx.stsetBefore = Status9900.stset_LAEO;
 	            break;
 	        default:
 	            fx.mop1_dest = Operand.OP_DEST_FALSE;
@@ -769,20 +687,20 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	
 	        switch (inst) {
 	        case Inst9900.Isra:
-	            fx.stsetBefore = Instruction9900.st_SHIFT_RIGHT_C;
-	            fx.stsetAfter = Instruction9900.st_LAE_1;
+	            fx.stsetBefore = Status9900.stset_SHIFT_RIGHT_C;
+	            fx.stsetAfter = Status9900.stset_LAE_1;
 	            break;
 	        case Inst9900.Isrl:
-	            fx.stsetBefore = Instruction9900.st_SHIFT_RIGHT_C;
-	            fx.stsetAfter = Instruction9900.st_LAE_1;
+	            fx.stsetBefore = Status9900.stset_SHIFT_RIGHT_C;
+	            fx.stsetAfter = Status9900.stset_LAE_1;
 	            break;
 	        case Inst9900.Isla:
-	            fx.stsetBefore = Instruction9900.st_SHIFT_LEFT_CO;
-	            fx.stsetAfter = Instruction9900.st_LAE_1;
+	            fx.stsetBefore = Status9900.stset_SHIFT_LEFT_CO;
+	            fx.stsetAfter = Status9900.stset_LAE_1;
 	            break;
 	        case Inst9900.Isrc:
-	            fx.stsetBefore = Instruction9900.st_SHIFT_RIGHT_C;
-	            fx.stsetAfter = Instruction9900.st_LAE_1;
+	            fx.stsetBefore = Status9900.stset_SHIFT_RIGHT_C;
+	            fx.stsetAfter = Status9900.stset_LAE_1;
 	            break;
 	        }
 	
@@ -842,7 +760,7 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	            fx.writes |= InstInfo.INST_RSRC_IO;
 	            break;
 	        case Inst9900.Itb:
-	            fx.stsetAfter = Instruction9900.st_CMP;
+	            fx.stsetAfter = Status9900.stset_CMP;
 	            fx.reads |= InstInfo.INST_RSRC_IO;
 	            break;
 	        }
@@ -853,15 +771,15 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	
 	        switch (inst) {
 	        case Inst9900.Icoc:
-	            fx.stsetAfter = Instruction9900.st_CMP;
+	            fx.stsetAfter = Status9900.stset_CMP;
 	            fx.mop2_dest = Operand.OP_DEST_FALSE;
 	            break;
 	        case Inst9900.Iczc:
-	            fx.stsetAfter = Instruction9900.st_CMP;
+	            fx.stsetAfter = Status9900.stset_CMP;
 	            fx.mop2_dest = Operand.OP_DEST_FALSE;
 	            break;
 	        case Inst9900.Ixor:
-	            fx.stsetAfter = Instruction9900.st_LAE;
+	            fx.stsetAfter = Status9900.stset_LAE;
 	            break;
 	        case Inst9900.Ixop:
 	        	fx.stReads = 0xffff;
@@ -869,27 +787,27 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	            fx.writes |= InstInfo.INST_RSRC_WP + InstInfo.INST_RSRC_PC + InstInfo.INST_RSRC_CTX;
 	            //mop2.bIsCodeDest = true;
 	            fx.mop2_dest = Operand.OP_DEST_FALSE;
-	            fx.stsetAfter = Instruction9900.st_XOP;
+	            fx.stsetAfter = Status9900.stset_XOP;
 	            fx.jump = InstInfo.INST_JUMP_TRUE;
 	            break;
 	        case Inst9900.Impy:
 	        	fx.mop3_dest = Operand.OP_DEST_KILLED;
 	            break;
 	        case Inst9900.Idiv:
-	            fx.stsetBefore = Instruction9900.st_DIV_O;
+	            fx.stsetBefore = Status9900.stset_DIV_O;
 	            fx.mop3_dest = Operand.OP_DEST_KILLED;
 	            break;
 	        }
 	
 	    } else if (inst == Inst9900.Ildcr || inst == Inst9900.Istcr) {
 	        if (inst == Inst9900.Ildcr) {
-	            fx.stsetBefore = true /*mop1.byteop*/ ? Instruction9900.st_BYTE_LAEP_1
-	                    : Instruction9900.st_LAE_1;
+	            fx.stsetBefore = true /*mop1.byteop*/ ? Status9900.stset_BYTE_LAEP_1
+	                    : Status9900.stset_LAE_1;
 	            fx.mop1_dest = Operand.OP_DEST_FALSE;
 	            fx.writes |= InstInfo.INST_RSRC_IO;
 	        } else {
-	            fx.stsetAfter = true /*mop1.byteop*/ ? Instruction9900.st_BYTE_LAEP_1
-	                    : Instruction9900.st_LAE_1;
+	            fx.stsetAfter = true /*mop1.byteop*/ ? Status9900.stset_BYTE_LAEP_1
+	                    : Status9900.stset_LAE_1;
 	            fx.mop1_dest = Operand.OP_DEST_TRUE;
 	            fx.reads |= InstInfo.INST_RSRC_IO;
 	        }
@@ -904,49 +822,49 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	
 	        switch (inst) {
 	        case Inst9900.Iszc:
-	            fx.stsetAfter = Instruction9900.st_LAE;
+	            fx.stsetAfter = Status9900.stset_LAE;
 	            break;
 	        case Inst9900.Iszcb:
-	            fx.stsetAfter = Instruction9900.st_BYTE_LAEP;
+	            fx.stsetAfter = Status9900.stset_BYTE_LAEP;
 	            fx.byteop = true;
 	            break;
 	        case Inst9900.Is:
-	            fx.stsetBefore = Instruction9900.st_SUB_LAECO;
+	            fx.stsetBefore = Status9900.stset_SUB_LAECO;
 	            break;
 	        case Inst9900.Isb:
-	            fx.stsetBefore = Instruction9900.st_SUB_BYTE_LAECOP;
+	            fx.stsetBefore = Status9900.stset_SUB_BYTE_LAECOP;
 	            fx.byteop = true;
 	            break;
 	        case Inst9900.Ic:
-	            fx.stsetAfter = Instruction9900.st_CMP;
+	            fx.stsetAfter = Status9900.stset_CMP;
 	            fx.mop2_dest = Operand.OP_DEST_FALSE;
 	            break;
 	        case Inst9900.Icb:
-	            fx.stsetAfter = Instruction9900.st_BYTE_CMP;
+	            fx.stsetAfter = Status9900.stset_BYTE_CMP;
 	            fx.mop2_dest = Operand.OP_DEST_FALSE;
 	            fx.byteop = true;
 	            break;
 	        case Inst9900.Ia:
-	            fx.stsetBefore = Instruction9900.st_ADD_LAECO;
+	            fx.stsetBefore = Status9900.stset_ADD_LAECO;
 	            break;
 	        case Inst9900.Iab:
-	            fx.stsetBefore = Instruction9900.st_ADD_BYTE_LAECOP;
+	            fx.stsetBefore = Status9900.stset_ADD_BYTE_LAECOP;
 	            fx.byteop = true;
 	            break;
 	        case Inst9900.Imov:
-	            fx.stsetAfter = Instruction9900.st_LAE;
+	            fx.stsetAfter = Status9900.stset_LAE;
 	            fx.mop2_dest = Operand.OP_DEST_KILLED;
 	            break;
 	        case Inst9900.Imovb:
-	            fx.stsetAfter = Instruction9900.st_BYTE_LAEP;
+	            fx.stsetAfter = Status9900.stset_BYTE_LAEP;
 	            fx.mop2_dest = Operand.OP_DEST_KILLED;
 	            fx.byteop = true;
 	            break;
 	        case Inst9900.Isoc:
-	            fx.stsetAfter = Instruction9900.st_LAE;
+	            fx.stsetAfter = Status9900.stset_LAE;
 	            break;
 	        case Inst9900.Isocb:
-	            fx.stsetAfter = Instruction9900.st_BYTE_LAEP;
+	            fx.stsetAfter = Status9900.stset_BYTE_LAEP;
 	            fx.byteop = true;
 	            break;
 	        }
@@ -959,7 +877,7 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	        fx.writes |= InstInfo.INST_RSRC_PC;
 	        fx.reads |= InstInfo.INST_RSRC_PC;
 	    }
-	    if (fx.stsetBefore != st_NONE || fx.stsetAfter != st_NONE) {
+	    if (fx.stsetBefore != Status.stset_NONE || fx.stsetAfter != Status.stset_NONE) {
 	        fx.writes |= InstInfo.INST_RSRC_ST;
 	    }
 	    //if (mop1.isRegisterReference() || mop2.isRegisterReference()) {

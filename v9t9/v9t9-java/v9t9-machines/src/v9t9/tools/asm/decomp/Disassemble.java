@@ -13,7 +13,6 @@ import java.util.Collection;
 
 import org.ejs.coffee.core.utils.HexUtils;
 
-import v9t9.tools.asm.assembler.Assembler;
 import v9t9.tools.asm.common.MemoryRange;
 
 public class Disassemble {
@@ -24,32 +23,22 @@ public class Disassemble {
      * @param args
      */
     public static void main(String[] args) throws IOException {
-    	String proc = null;
-    	String[] procArgs = args.clone();
-        Getopt getopt = new Getopt(PROGNAME, procArgs, "9");
-        getopt.setOpterr(false);
+        Getopt getopt;
         int opt;
-        while ((opt = getopt.getopt()) != -1) {
-			switch (opt) {
-            case '9':
-            	proc = Assembler.PROC_9900;
-            	break;
-            }
-        }
         
-        
-        Decompiler dc = new Decompiler(proc);
+        Decompiler dc = new Decompiler9900();
         
         int baseAddr = 0;
         
-        getopt = new Getopt(PROGNAME, args, "?o:nb:a:r:d:hcv92");
-        while ((opt = getopt.getopt()) != -1) {
+        getopt = new Getopt(PROGNAME, args, "?o:a:b:r:d:");
+        String outfilename = null;
+		while ((opt = getopt.getopt()) != -1) {
 			switch (opt) {
             case '?':
                 help();
                 break;
             case 'o':
-                dc.outfilename = getopt.getOptarg();
+            	outfilename = getopt.getOptarg();
                 break;
             case 'b':
                 baseAddr = HexUtils.parseInt(getopt.getOptarg()) & 0xfffe;
@@ -63,22 +52,6 @@ public class Disassemble {
             case 'd':
                 dc.addRangeFromArgv(getopt.getOptarg(), false /* code */);
                 break;
-            case 'h':
-                dc.showOpcodeAddr = true;
-                break;
-            case 'c':
-                dc.showComments = true;
-                break;
-            case 'v':
-                dc.verbose++;
-                break;
-            case 'n':
-                dc.nativeFile = true;
-                break;
-            case '9':
-            case '2':
-            	// handled above
-            	break;
             default:
                 throw new AssertionError();
     
@@ -99,16 +72,16 @@ public class Disassemble {
         Collection<MemoryRange> ranges = llp.disassemble();
         
         
-        PrintStream os = dc.outfilename != null ? new PrintStream(new File(dc.outfilename)) : System.out;
+        PrintStream os = outfilename != null ? new PrintStream(new File(outfilename)) : System.out;
         llp.dumpInstructions(os, ranges);
-        if (dc.outfilename != null)
+        if (outfilename != null)
         	os.close();
     }
 
     private static void help() {
         System.out
                 .println("\n"
-                        + "tidisasm 9900 Disassembler v1.0\n"
+                        + "tidisasm Disassembler v1.0\n"
                         + "\n"
                         + "Usage:   " + PROGNAME + " [options] { -b <addr> -a <file> } { -r from:to -d from:to }\n"
                         + "\n"
@@ -121,9 +94,6 @@ public class Disassemble {
                         + "\t\t-a <file> -- specify file to incorporate\n"
                         + "\t\t-r <addr>:<addr> -- specify range to disassemble\n"
                         + "\t\t-d <addr>:<addr> -- specify range to treat as data\n"
-                        + "\t\t-h        -- show opcode and address\n"
-                        + "\t\t-c        -- show comments\n"
-                        + "\t\t-v        -- verbose output\n"
                         + "\n");
 
     }

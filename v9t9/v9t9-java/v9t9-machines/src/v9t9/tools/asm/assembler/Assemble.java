@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 
 import v9t9.engine.memory.DiskMemoryEntry;
+import v9t9.tools.asm.assembler.inst9900.Assembler9900;
 
 public class Assemble {
 
@@ -22,7 +23,7 @@ public class Assemble {
      * @param args
      */
     public static void main(String[] args) throws IOException {
-        Assembler assembler = new Assembler();
+        Assembler9900 assembler = new Assembler9900();
         
         assembler.setList(null);
         

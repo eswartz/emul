@@ -36,7 +36,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	public static void info(String string) {
 		if (Cpu.settingDumpFullInstructions.getBoolean())
 			Executor.getDumpfull().println(string);
-		if (RealDiskUtils.diskImageDebug.getBoolean())
+		if (RealDiskDsrSettings.diskImageDebug.getBoolean())
 			System.out.println(string);
 		
 	}
@@ -96,7 +96,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		this.name = name;
 		this.spec = spec;
 		inUseSetting = new SettingProperty(name, Boolean.FALSE);
-		inUseSetting.addEnablementDependency(RealDiskUtils.diskImageDsrEnabled);
+		inUseSetting.addEnablementDependency(RealDiskDsrSettings.diskImageDsrEnabled);
 	}
 
 	/**
@@ -348,7 +348,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	}
 
 	public void loadState(ISettingSection section) {
-		spec = RealDiskUtils.getDefaultDiskImage(name);
+		spec = RealDiskDsrSettings.getDefaultDiskImage(name);
 		if (section == null)
 			return;
 		String path = section.get("FilePath");

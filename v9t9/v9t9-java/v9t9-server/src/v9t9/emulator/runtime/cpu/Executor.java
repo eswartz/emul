@@ -15,7 +15,6 @@ import org.ejs.coffee.core.properties.IProperty;
 import org.ejs.coffee.core.properties.IPropertyListener;
 import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.settings.Logging;
-import org.ejs.coffee.core.utils.HexUtils;
 import v9t9.emulator.runtime.compiler.CompilerBase;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.common.IMachine;
@@ -212,7 +211,7 @@ public class Executor {
 			    	// Returns false if an instruction couldn't be executed
 			    	// because it did not look like real code (or was not expected to be directly invoked).
 			    	// Returns true if fell out of the code block.
-			    	System.out.println("Switch  branching to >" + HexUtils.toHex4(cpu.getPC()));
+			    	//System.out.println("Switch  branching to >" + HexUtils.toHex4(cpu.getPC()));
 			    	interpreting = true;
 			    	nSwitches++;
 				}

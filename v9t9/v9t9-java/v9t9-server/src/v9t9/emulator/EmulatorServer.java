@@ -157,8 +157,8 @@ public class EmulatorServer {
     	Cpu.settingRealTime.setBoolean(true);
     	
     	// compile?
-    	if (false) {
-    		Cpu.settingRealTime.setBoolean(false);
+    	if (true) {
+    		//Cpu.settingRealTime.setBoolean(false);
 	    	Executor.settingCompile.setBoolean(true);
 	    	//Compiler.settingDebugInstructions.setBoolean(true);
 	    	//Compiler.settingOptimize.setBoolean(true);

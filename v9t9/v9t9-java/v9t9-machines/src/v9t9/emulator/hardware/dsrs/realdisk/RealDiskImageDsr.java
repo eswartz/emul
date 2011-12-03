@@ -140,7 +140,7 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements DsrHandler9900
 			
 			// one setting for entire DSR
 			realDiskDsrActiveSetting = new SettingProperty(getName(), Boolean.FALSE);
-			realDiskDsrActiveSetting.addEnablementDependency(RealDiskUtils.diskImageDsrEnabled);
+			realDiskDsrActiveSetting.addEnablementDependency(RealDiskDsrSettings.diskImageDsrEnabled);
 			DeviceIndicatorProvider deviceIndicatorProvider = new DeviceIndicatorProvider(
 					realDiskDsrActiveSetting, 
 					"Disk image activity",
@@ -189,7 +189,7 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements DsrHandler9900
 
 			byte ret = 0;
 
-			if (!RealDiskUtils.diskImageDsrEnabled.getBoolean())
+			if (!RealDiskDsrSettings.diskImageDsrEnabled.getBoolean())
 				return ret;
 
 
@@ -231,7 +231,7 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements DsrHandler9900
 				return;
 			}
 			
-			if (!RealDiskUtils.diskImageDsrEnabled.getBoolean())
+			if (!RealDiskDsrSettings.diskImageDsrEnabled.getBoolean())
 				return;
 
 			val = (byte) ~val;
@@ -293,7 +293,7 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements DsrHandler9900
 
 
 	public void activate(MemoryDomain console) throws IOException {
-		if (!RealDiskUtils.diskImageDsrEnabled.getBoolean())
+		if (!RealDiskDsrSettings.diskImageDsrEnabled.getBoolean())
 			return;
 		
 		realDiskDsrActiveSetting.setBoolean(true);

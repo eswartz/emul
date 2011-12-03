@@ -21,118 +21,91 @@ import java.util.regex.Pattern;
 import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.engine.cpu.IInstruction;
-import v9t9.engine.cpu.InstTable9900;
 import v9t9.engine.cpu.RawInstruction;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.StockRamArea;
+import v9t9.tools.asm.assembler.AssemblerError;
+import v9t9.tools.asm.assembler.BaseAssemblerInstruction;
+import v9t9.tools.asm.assembler.ConditionalInstructionParserStage;
+import v9t9.tools.asm.assembler.ContentEntry;
+import v9t9.tools.asm.assembler.DirectiveInstructionParserStage;
+import v9t9.tools.asm.assembler.Equate;
+import v9t9.tools.asm.assembler.FileContentEntry;
+import v9t9.tools.asm.assembler.IAssembler;
+import v9t9.tools.asm.assembler.IInstructionFactory;
+import v9t9.tools.asm.assembler.IInstructionParserStage;
+import v9t9.tools.asm.assembler.InstructionParser;
+import v9t9.tools.asm.assembler.LLInstruction;
+import v9t9.tools.asm.assembler.MacroInstructionParserStage;
+import v9t9.tools.asm.assembler.OperandParser;
+import v9t9.tools.asm.assembler.ParseException;
+import v9t9.tools.asm.assembler.ResolveException;
+import v9t9.tools.asm.assembler.Symbol;
+import v9t9.tools.asm.assembler.SymbolTable;
 import v9t9.tools.asm.assembler.directive.DescrDirective;
 import v9t9.tools.asm.assembler.directive.LabelDirective;
 import v9t9.tools.asm.assembler.transform.ConstPool;
-import v9t9.tools.asm.assembler.transform.JumpFixer9900;
-import v9t9.tools.asm.assembler.transform.Simplifier9900;
 import v9t9.tools.asm.common.MemoryRanges;
 
 /**
  * @author ejs
  *
  */
-public class Assembler implements IAssembler {
-	private int DEBUG = 0;
-	
-	/** memory domain for area-sensitive view of the world */
-    private MemoryDomain StdCPU = new MemoryDomain("CPU Std");
-    
-    /** memory domain for the assembler's view of the world */
-    private MemoryDomain CPUFullRAM = new MemoryDomain("CPU Write");
-    private MemoryEntry CPUFullRAMEntry = new MemoryEntry("Assembler RAM",
-    		CPUFullRAM, 0, 0x10000, new StockRamArea(0x10000));
-    
-	private List<DiskMemoryEntry> memoryEntries = new ArrayList<DiskMemoryEntry>();
+public abstract class Assembler implements IAssembler {
 
+	private int DEBUG = 0;
+
+	public abstract List<IInstruction> fixupJumps(List<IInstruction> insts);
+
+	public abstract List<IInstruction> optimize(List<IInstruction> insts);
+
+	public abstract void setProcessor(String proc);
+
+	/** memory domain for area-sensitive view of the world */
+	protected MemoryDomain StdCPU = new MemoryDomain("CPU Std");
+	/** memory domain for the assembler's view of the world */
+	protected MemoryDomain CPUFullRAM = new MemoryDomain("CPU Write");
+	protected MemoryEntry CPUFullRAMEntry = new MemoryEntry("Assembler RAM",
+	    		CPUFullRAM, 0, 0x10000, new StockRamArea(0x10000));
+	private List<DiskMemoryEntry> memoryEntries = new ArrayList<DiskMemoryEntry>();
 	private PrintStream log = System.out;
 	private PrintStream errlog = System.err;
-	
-    private MemoryRanges memoryRanges = new MemoryRanges();
-    
-    private Stack<ContentEntry> contentStack = new Stack<ContentEntry>();
-    private int pc;
+	private MemoryRanges memoryRanges = new MemoryRanges();
+	private Stack<ContentEntry> contentStack = new Stack<ContentEntry>();
+	private int pc;
 	private InstructionParser instructionParser = new InstructionParser();
-	private SymbolTable symbolTable;
-	private IdentityHashMap<Symbol, LabelDirective> labelTable;
-	
+	protected SymbolTable symbolTable;
+	protected IdentityHashMap<Symbol, LabelDirective> labelTable;
 	private ArrayList<RawInstruction> insts;
-	//private HashMap<IInstruction, String> instDescrMap;
 	/** Map of raw inst to the asm inst */
 	private LinkedHashMap<IInstruction, IInstruction> resolvedToAsmInstMap;
-
-	private ArrayList<AssemblerError> errorList;
-
+	protected ArrayList<AssemblerError> errorList;
 	private ConstPool constPool = new ConstPool(this);
-
-	private IInstructionFactory instructionFactory;
-
-	private int basicSize;
-    
+	protected IInstructionFactory instructionFactory;
+	protected int basicSize;
 	private static final Pattern INCL_LINE = Pattern.compile(
-			"\\s*incl\\s+(\\S+).*", Pattern.CASE_INSENSITIVE);
-	
-	/**
-	 * @param proc
-	 */
-	public void setProcessor(String proc) {
-		if (instructionFactory != null) {
-			throw new IllegalStateException("already set the processor");
-		}
-		if (PROC_9900.equals(proc)) {
-		    MemoryEntry StdCPURAM = new MemoryEntry("Std CPU RAM",
-		    		StdCPU, 0x8000, 0x400, new StockRamArea(0x400));
-		    MemoryEntry StdCPUExpLoRAM = new MemoryEntry("Std CPU Low Exp RAM",
-		    		StdCPU, 0x2000, 0x2000, new StockRamArea(0x2000));
-		    MemoryEntry StdCPUExpHiRAM = new MemoryEntry("Std CPU Hi Exp RAM",
-		    		StdCPU, 0xA000, 0x6000, new StockRamArea(0x6000));
-		    
-			StdCPU.mapEntry(StdCPURAM);
-			StdCPU.mapEntry(StdCPUExpHiRAM);
-			StdCPU.mapEntry(StdCPUExpLoRAM);
-			
-			instructionFactory = new InstructionFactory9900();
-			
-	    	OperandParser operandParser = new OperandParser();
-			operandParser.appendStage(new AssemblerOperandParserStage9900(this));
-			
-			configureParser(
-					operandParser,
-					new StandardInstructionParserStage9900(operandParser));
+				"\\s*incl\\s+(\\S+).*", Pattern.CASE_INSENSITIVE);
+	private static final Pattern ASM_LINE = Pattern.compile("(?:((?:[A-Za-z_][A-Za-z0-9_]*)|(?:\\$[0-9])):?(?:\\s*)(.*))|(?:\\s+(.*))");
 
-			for (int i = 0; i < 16; i++) {
-				symbolTable.addSymbol(new Equate(symbolTable, "R" + i, i));
-			}
-			
-			basicSize = 2;
-		}
-		else {
-			throw new IllegalArgumentException("unknown processor: "+ proc);
-		}
-	}
-    /**
-     * @param operandParserStage 
-     * @param instStage 
+	/**
+	 * @param operandParserStage 
+	 * @param instStage 
 	 * 
 	 */
-	private void configureParser(OperandParser operandParser, IInstructionParserStage instStage) {
-
-
-    	// handle directives first to trap DATA and BYTE
-    	instructionParser.appendStage(new ConditionalInstructionParserStage(this, operandParser));
-    	instructionParser.appendStage(new DirectiveInstructionParserStage(operandParser));
-    	instructionParser.appendStage(instStage);
-    	instructionParser.appendStage(new MacroInstructionParserStage(
-    			this, operandParser));
-
-    	instructionParser.appendStage(new IInstructionParserStage() {
-
+	protected void configureParser(OperandParser operandParser, IInstructionParserStage instStage) {
+	
+	
+		// handle directives first to trap DATA and BYTE
+		instructionParser.appendStage(new ConditionalInstructionParserStage(this, operandParser));
+		instructionParser.appendStage(new DirectiveInstructionParserStage(operandParser));
+		instructionParser.appendStage(instStage);
+		instructionParser.appendStage(new MacroInstructionParserStage(
+				this, operandParser));
+	
+		instructionParser.appendStage(new IInstructionParserStage() {
+	
 			public IInstruction[] parse(String descr, String string)
 					throws ParseException {
 				Matcher matcher = INCL_LINE.matcher(string);
@@ -147,19 +120,9 @@ public class Assembler implements IAssembler {
 				}
 				return null;
 			}
-    		
-    	});
-    			
-	}
-	public Assembler() {
-		CPUFullRAM.mapEntry(CPUFullRAMEntry);
-
-    	//instDescrMap = new HashMap<IInstruction, String>();
-    	
-    	symbolTable = new SymbolTable();
-    	
-    	labelTable = new IdentityHashMap<Symbol, LabelDirective>();
-    	errorList = new ArrayList<AssemblerError>();
+			
+		});
+				
 	}
 
 	public void setList(PrintStream stream) {
@@ -167,12 +130,13 @@ public class Assembler implements IAssembler {
 			stream = new PrintStream(new ByteArrayOutputStream());
 		log = stream;
 	}
+
 	public void setError(PrintStream stream) {
 		if (stream == null)
 			stream = new PrintStream(new ByteArrayOutputStream());
 		errlog = stream;
 	}
-	
+
 	public File findFile(String filename) {
 		for (ContentEntry entry : contentStack) {
 			if (entry instanceof FileContentEntry) {
@@ -183,6 +147,7 @@ public class Assembler implements IAssembler {
 		}
 		return new File(filename);
 	}
+
 	public void pushContentEntry(ContentEntry entry) {
 		contentStack.push(entry);
 	}
@@ -190,7 +155,7 @@ public class Assembler implements IAssembler {
 	public Stack<ContentEntry> getContentEntryStack() {
 		return contentStack;
 	}
-	
+
 	public boolean assemble() {
 		labelTable.clear();
 		errorList.clear();
@@ -222,7 +187,7 @@ public class Assembler implements IAssembler {
 		
 		return true;
 	}
-	
+
 	public List<AssemblerError> getErrorList() {
 		return errorList;
 	}
@@ -260,66 +225,75 @@ public class Assembler implements IAssembler {
 		}
 		return null;
 	}
-	
+
 	/** Get the context for the previously read line */
 	public ContentEntry getLineFileContentEntry() {
 		return contentStack.peek();
 	}
-	
-	private static final Pattern ASM_LINE = 
-		Pattern.compile("(?:((?:[A-Za-z_][A-Za-z0-9_]*)|(?:\\$[0-9])):?(?:\\s*)(.*))|(?:\\s+(.*))");
 
 	public static final String PROC_9900 = "9900";
 	public static final String PROC_MFP201 = "MFP201";
-	
-	private void assembleInst(List<IInstruction> asmInsts, String line_, String filename, int lineno) throws ParseException {
-		//if (DEBUG>0) log.println(descr+" " +line);
-		
-		// remove comments
-		String line = line_.replaceAll(";.*", "");
-		
-		Matcher matcher = ASM_LINE.matcher(line);
-		if (!matcher.matches())
-			return;
-		
-		DescrDirective descr = new DescrDirective(filename, lineno, line_);
-		asmInsts.add(descr);
-		
-		if (matcher.group(1) != null) {
-			// label
-			Symbol label = parseLabel(matcher.group(1));
-			LabelDirective labelDir = new LabelDirective(label);
-			labelTable.put(label, labelDir);
-			asmInsts.add(labelDir);
-			//instDescrMap.put(labelDir, descr);
-			line = matcher.group(2);
-		} else {
-			line = matcher.group(3);
-		}
-		
-		// check for an instruction
-		line = line.trim();
-		if (line.length() == 0)
-			return;
-			
-		IInstruction[] instArray = instructionParser.parse(descr.toString(), line);
-		/*
-		for (IInstruction inst : instArray) {
-			instDescrMap.put(inst, descr);
-			if (DEBUG>0) log.println(inst);
-		}
-		*/
-		asmInsts.addAll(Arrays.asList(instArray));
+
+	/**
+	 * 
+	 */
+	public Assembler() {
+		super();
 	}
 
-	public void reportError(Exception e, String file, int lineno, String line, String message) {
-		errorList.add(new AssemblerError(e, file, lineno, line));
-		errlog.println(file + ":" + lineno + ": " + message + "\nin " + line);
-	}
-	public void reportError(Exception e, DescrDirective descr, String line, String message) {
-		errorList.add(new AssemblerError(e, descr.getFilename(), descr.getLine(), line));
-		errlog.println(descr.toString() + ": " + message + "\nin " + line);
-	}
+	private void assembleInst(List<IInstruction> asmInsts, String line_, String filename,
+			int lineno) throws ParseException {
+				//if (DEBUG>0) log.println(descr+" " +line);
+				
+				// remove comments
+				String line = line_.replaceAll(";.*", "");
+				
+				Matcher matcher = ASM_LINE.matcher(line);
+				if (!matcher.matches())
+					return;
+				
+				DescrDirective descr = new DescrDirective(filename, lineno, line_);
+				asmInsts.add(descr);
+				
+				if (matcher.group(1) != null) {
+					// label
+					Symbol label = parseLabel(matcher.group(1));
+					LabelDirective labelDir = new LabelDirective(label);
+					labelTable.put(label, labelDir);
+					asmInsts.add(labelDir);
+					//instDescrMap.put(labelDir, descr);
+					line = matcher.group(2);
+				} else {
+					line = matcher.group(3);
+				}
+				
+				// check for an instruction
+				line = line.trim();
+				if (line.length() == 0)
+					return;
+					
+				IInstruction[] instArray = instructionParser.parse(descr.toString(), line);
+				/*
+				for (IInstruction inst : instArray) {
+					instDescrMap.put(inst, descr);
+					if (DEBUG>0) log.println(inst);
+				}
+				*/
+				asmInsts.addAll(Arrays.asList(instArray));
+			}
+
+	public void reportError(Exception e, String file, int lineno,
+			String line, String message) {
+				errorList.add(new AssemblerError(e, file, lineno, line));
+				errlog.println(file + ":" + lineno + ": " + message + "\nin " + line);
+			}
+
+	public void reportError(Exception e, DescrDirective descr, String line,
+			String message) {
+				errorList.add(new AssemblerError(e, descr.getFilename(), descr.getLine(), line));
+				errlog.println(descr.toString() + ": " + message + "\nin " + line);
+			}
+
 	public void reportError(Exception e) {
 		errorList.add(new AssemblerError(e, null, 0, null));
 		errlog.println(e.getMessage());
@@ -440,7 +414,7 @@ public class Assembler implements IAssembler {
 		
 		if (anyErrors)
 			return insts;
-
+	
 		// define the const table if used
 		Symbol constTableAddr = constPool.getTableAddr();
 		if (constTableAddr != null && !constTableAddr.isDefined()) {
@@ -487,38 +461,8 @@ public class Assembler implements IAssembler {
 	}
 
 	/** Add the opcode from the instruction to the const pool */
-	private void injectInstruction(LLInstruction inst) {
-		try {
-			RawInstruction rawInst = getInstructionFactory().createRawInstruction(inst);
-			int pc = rawInst.getPc();
-			
-			// Obviously, RAM can change.  Also, jump instructions may be moved
-			// (there is a bug here too)
-			if (getConsole().hasRamAccess(pc) || 
-					getInstructionFactory().isJumpInst(rawInst.getInst()))
-				return;
-			
-			if (getInstructionFactory() instanceof InstructionFactory9900) {
-				short[] words = InstTable9900.encode(rawInst);
-				
-				for (int i = 0; i < words.length; i++) {
-					short word = words[i];
-					if (i == 0 || (i == 1 && inst.getOp1().isConstant())
-							|| (((i == 1 && inst.getOp1().getSize() == 0) || i == 2) && inst.getOp2()!=null && inst.getOp2().isConstant())) {
-						Integer ipc = constPool.getInstWordMap().get(word & 0xffff);
-						if (ipc == null) {
-							constPool.getInstWordMap().put(word & 0xffff, pc + i * 2);
-						}
-					}
-				}
-			}
-		} catch (IllegalArgumentException e) {
-			// some unresolved jump insts
-		} catch (ResolveException e) {
-			// unresolved inst
-		}
-	}
-	
+	abstract protected void injectInstruction(LLInstruction inst);
+
 	public int getPc() {
 		return pc;
 	}
@@ -527,28 +471,6 @@ public class Assembler implements IAssembler {
 		this.pc = immed & 0xffff;
 	}
 
-	/**
-	 * Optimize instructions
-	 * @param insts
-	 */
-	public List<IInstruction> optimize(List<IInstruction> insts) {
-		new Simplifier9900(insts).run();
-		return resolve(insts);
-	}
-	
-	/**
-	 * Fix up any jumps that go too far
-	 * @param insts
-	 * @return
-	 */
-	public List<IInstruction> fixupJumps(List<IInstruction> insts) {
-		try {
-			return new JumpFixer9900(this, insts).run();
-		} catch (ResolveException e) {
-			reportError(e);
-			return insts;
-		}
-	}
 	/**
 	 * Compile the final list of instructions to memory and
 	 * product a listing
@@ -604,73 +526,74 @@ public class Assembler implements IAssembler {
 	 * @param pc
 	 * @param mem
 	 */
-	private void dumpLine(DescrDirective prev, DescrDirective cur, boolean showDescr, int pc, byte[] mem) {
-		StringBuilder curLines = new StringBuilder();
-		for (int offs = 0; showDescr || offs < mem.length; ) {
-			if (showDescr) {
-				if (prev == null || !prev.getFilename().equals(cur.getFilename())) {
-					curLines.append("*** " + cur.getFilename() + "\n");
-				}
-				curLines.append(HexUtils.padString(("" + cur.getLine()),5) + " ");
-			} else {
-				curLines.append(HexUtils.padString("",6));
-			}
-			
-			if (pc >= 0) {
-				curLines.append('>');
-				curLines.append(HexUtils.toHex4((pc + offs)));
-				
-				curLines.append(offs < mem.length ? '=' : ' ');
-			} else {
-				curLines.append("      ");
-			}
-			
-			int cnt = 6;
-			while (cnt-- >= 0) {
-				if (offs < mem.length) {
-					if (basicSize == 2) {
-						// eat a word if we're aligned on a word
-						if (((pc + offs) & 1) == 0 && offs + 1 < mem.length) {
-							curLines.append('>');
-							curLines.append(HexUtils.toHex4((((mem[offs] & 0xff) << 8) | (mem[offs + 1] & 0xff))));
-							offs += 2;
-							cnt -= 2;
-						} else {
-							if (offs + 1 < mem.length)
-								curLines.append("  ");
-							curLines.append('>');
-							curLines.append(HexUtils.toHex2((mem[offs] & 0xff)));
-								
-							offs++;
-							cnt--;
+	private void dumpLine(DescrDirective prev, DescrDirective cur, boolean showDescr,
+			int pc, byte[] mem) {
+				StringBuilder curLines = new StringBuilder();
+				for (int offs = 0; showDescr || offs < mem.length; ) {
+					if (showDescr) {
+						if (prev == null || !prev.getFilename().equals(cur.getFilename())) {
+							curLines.append("*** " + cur.getFilename() + "\n");
 						}
+						curLines.append(HexUtils.padString(("" + cur.getLine()),5) + " ");
 					} else {
+						curLines.append(HexUtils.padString("",6));
+					}
+					
+					if (pc >= 0) {
 						curLines.append('>');
-						curLines.append(HexUtils.toHex2(mem[offs]));
-						offs++;
-						cnt--;
-					}
-					curLines.append(' ');
-				} else {
-					if (basicSize == 2) {
-						curLines.append("      ");
-						cnt -= 2;
+						curLines.append(HexUtils.toHex4((pc + offs)));
+						
+						curLines.append(offs < mem.length ? '=' : ' ');
 					} else {
-						curLines.append("    ");
-						cnt --;
+						curLines.append("      ");
 					}
+					
+					int cnt = 6;
+					while (cnt-- >= 0) {
+						if (offs < mem.length) {
+							if (basicSize == 2) {
+								// eat a word if we're aligned on a word
+								if (((pc + offs) & 1) == 0 && offs + 1 < mem.length) {
+									curLines.append('>');
+									curLines.append(HexUtils.toHex4((((mem[offs] & 0xff) << 8) | (mem[offs + 1] & 0xff))));
+									offs += 2;
+									cnt -= 2;
+								} else {
+									if (offs + 1 < mem.length)
+										curLines.append("  ");
+									curLines.append('>');
+									curLines.append(HexUtils.toHex2((mem[offs] & 0xff)));
+										
+									offs++;
+									cnt--;
+								}
+							} else {
+								curLines.append('>');
+								curLines.append(HexUtils.toHex2(mem[offs]));
+								offs++;
+								cnt--;
+							}
+							curLines.append(' ');
+						} else {
+							if (basicSize == 2) {
+								curLines.append("      ");
+								cnt -= 2;
+							} else {
+								curLines.append("    ");
+								cnt --;
+							}
+						}
+					}
+					
+					if (showDescr) {
+						curLines.append(cur.getContent());
+						showDescr = false;
+					}
+					
+					curLines.append('\n');
 				}
+				log.print(curLines);
 			}
-			
-			if (showDescr) {
-				curLines.append(cur.getContent());
-				showDescr = false;
-			}
-			
-			curLines.append('\n');
-		}
-		log.print(curLines);
-	}
 
 	public MemoryRanges getMemoryRanges() {
 		return this.memoryRanges;
@@ -683,7 +606,7 @@ public class Assembler implements IAssembler {
 	public MemoryDomain getWritableConsole() {
 		return CPUFullRAM;
 	}
-	
+
 	public void addMemoryEntry(DiskMemoryEntry entry) {
 		memoryRanges.addRange(entry.addr, entry.size, true);
 		memoryEntries.add(entry);
@@ -729,15 +652,15 @@ public class Assembler implements IAssembler {
 	}
 
 	public void defineEquate(String equ) {
-    	int val = 1;
-    	int idx = equ.indexOf('=');
-    	if (idx > 0) {
-    		val = Integer.parseInt(equ.substring(idx+1));
-    		equ = equ.substring(0, idx);
-    	}
-    	Equate equate = new Equate(getSymbolTable(), equ, val);
-    	equate.setDefined(true);
-    	getSymbolTable().addSymbol(equate);
+		int val = 1;
+		int idx = equ.indexOf('=');
+		if (idx > 0) {
+			val = Integer.parseInt(equ.substring(idx+1));
+			equ = equ.substring(0, idx);
+		}
+		Equate equate = new Equate(getSymbolTable(), equ, val);
+		equate.setDefined(true);
+		getSymbolTable().addSymbol(equate);
 	}
 
 	/**
@@ -746,6 +669,7 @@ public class Assembler implements IAssembler {
 	public IInstructionFactory getInstructionFactory() {
 		return instructionFactory;
 	}
+
 	/**
 	 * @return
 	 */
@@ -753,5 +677,4 @@ public class Assembler implements IAssembler {
 		return basicSize;
 	}
 
-	
 }

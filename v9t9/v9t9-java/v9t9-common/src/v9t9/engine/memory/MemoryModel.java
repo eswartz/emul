@@ -15,7 +15,7 @@ public interface MemoryModel {
 	/**
 	 * Get the memory defined by the model.
 	 */
-	Memory createMemory();
+	Memory getMemory();
 	
 	/**
 	 * Initialize the memory for this machine
