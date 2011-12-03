@@ -9,9 +9,6 @@ package v9t9.engine.cpu;
 import org.ejs.coffee.core.utils.Check;
 
 import v9t9.engine.memory.MemoryDomain;
-import v9t9.tools.asm.assembler.IAssembler;
-import v9t9.tools.asm.assembler.ResolveException;
-import v9t9.tools.asm.assembler.Symbol;
 
 /**
  * A machine operand, as parsed from the instruction.
@@ -117,11 +114,6 @@ public class MachineOperand9900 extends BaseMachineOperand {
     @Override
 	public String toString() {
     	String basic = basicString();
-    	if (symbol != null && !symbolResolved) {
-    		if (basic == null)
-    			basic = "";
-    		basic += "{" + symbol +"}";
-    	}
     	return basic;
     }
 
@@ -476,34 +468,6 @@ public class MachineOperand9900 extends BaseMachineOperand {
 		return type;
 	}
 
-	/* (non-Javadoc)
-	 * @see v9t9.engine.cpu.MachineOperand#resolve(v9t9.tools.asm.assembler.Assembler, v9t9.engine.cpu.IInstruction)
-	 */
-	public MachineOperand resolve(IAssembler assembler, IInstruction inst)
-			throws ResolveException {
-		if (symbol != null && !symbolResolved) {
-			if (!symbol.isDefined())
-				throw new ResolveException(this, "Undefined symbol " + symbol);
-			
-			short theVal;
-			if (type == MachineOperand9900.OP_JUMP || type == MachineOperand9900.OP_OFFS_R12) {
-				theVal = (short) (symbol.getAddr() - inst.getPc());
-				/*
-				 * check this later
-				if (theVal < -256 || theVal >= 256)
-					throw new OutOfRangeException(inst, this, symbol, theVal);
-					*/
-				val = theVal + immed;
-				immed = 0;
-			} else {
-				theVal = (short) symbol.getAddr();
-				immed += theVal;
-			}
-			symbolResolved = true;
-		}
-		return this;
-	}
-
 	public static MachineOperand9900 createImmediate(int i) {
 		MachineOperand9900 op = new MachineOperand9900(MachineOperand9900.OP_IMMED);
 		op.immed = (short) (op.val = i);
@@ -520,16 +484,6 @@ public class MachineOperand9900 extends BaseMachineOperand {
 		MachineOperand9900 op = new MachineOperand9900(type);
 		op.val = val;
 		op.immed = immed;
-		return op;
-	}
-
-	public static MachineOperand createSymbolImmediate(Symbol symbol) {
-		MachineOperand9900 op = new MachineOperand9900(MachineOperand9900.OP_IMMED);
-		if (symbol.isDefined()) {
-			op.immed = (short) (op.val = symbol.getAddr());
-			op.symbolResolved = true;
-		}
-		op.symbol = symbol;
 		return op;
 	}
 

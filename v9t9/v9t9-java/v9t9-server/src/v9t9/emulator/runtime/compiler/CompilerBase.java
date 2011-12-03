@@ -9,11 +9,11 @@ import java.util.Map;
 import org.ejs.coffee.core.properties.SettingProperty;
 
 import v9t9.emulator.runtime.cpu.CpuState;
+import v9t9.engine.asm.IDecompileInfo;
+import v9t9.engine.asm.IInstructionFactory;
 import v9t9.engine.cpu.RawInstruction;
 import v9t9.engine.memory.MemoryArea;
 import v9t9.engine.memory.MemoryEntry;
-import v9t9.tools.asm.assembler.IInstructionFactory;
-import v9t9.tools.asm.decomp.IDecompileInfo;
 
 /**
  * @author Ed

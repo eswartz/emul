@@ -8,10 +8,10 @@ import org.apache.bcel.generic.InstructionConstants;
 import org.apache.bcel.generic.InstructionHandle;
 import org.apache.bcel.generic.InstructionList;
 
+import v9t9.engine.asm.Block;
+import v9t9.engine.asm.IDecompileInfo;
+import v9t9.engine.asm.IHighLevelInstruction;
 import v9t9.engine.cpu.RawInstruction;
-import v9t9.tools.asm.decomp.Block;
-import v9t9.tools.asm.decomp.IDecompileInfo;
-import v9t9.tools.asm.decomp.IHighLevelInstruction;
 
 /**
  * Compile lists of instructions per discovered functions, assuming only a few

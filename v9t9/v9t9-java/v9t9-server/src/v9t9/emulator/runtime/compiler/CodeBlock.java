@@ -7,11 +7,11 @@ import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.runtime.cpu.AbortedException;
 import v9t9.emulator.runtime.cpu.Executor;
+import v9t9.engine.asm.IDecompileInfo;
+import v9t9.engine.asm.IHighLevelInstruction;
 import v9t9.engine.cpu.InstTableCommon;
 import v9t9.engine.cpu.RawInstruction;
 import v9t9.engine.memory.MemoryEntry;
-import v9t9.tools.asm.decomp.IDecompileInfo;
-import v9t9.tools.asm.decomp.IHighLevelInstruction;
 
 /** This represents a compiled block of code. */
 public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListener {

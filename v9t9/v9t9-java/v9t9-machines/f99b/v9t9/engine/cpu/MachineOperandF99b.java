@@ -9,10 +9,6 @@ import static v9t9.engine.cpu.InstF99b.syscallStrings;
 import org.ejs.coffee.core.utils.Check;
 import org.ejs.coffee.core.utils.HexUtils;
 
-import v9t9.tools.asm.assembler.IAssembler;
-import v9t9.tools.asm.assembler.ResolveException;
-import v9t9.tools.asm.assembler.Symbol;
-
 /**
  * A machine operand, as parsed from an instruction or converted from an
  * assembler.
@@ -120,11 +116,6 @@ public class MachineOperandF99b extends BaseMachineOperand {
     @Override
 	public String toString() {
     	String basic = basicString();
-    	if (symbol != null && !symbolResolved) {
-    		if (basic == null)
-    			basic = "";
-    		basic += "{" + symbol +"}";
-    	}
     	return basic;
     }
 
@@ -287,29 +278,6 @@ public class MachineOperandF99b extends BaseMachineOperand {
 		return true;
 	}
 
-	/* (non-Javadoc)
-	 * @see v9t9.engine.cpu.MachineOperand#resolve(v9t9.tools.asm.assembler.Assembler, v9t9.engine.cpu.IInstruction)
-	 */
-	public MachineOperand resolve(IAssembler assembler, IInstruction inst)
-			throws ResolveException {
-		if (symbol != null && !symbolResolved) {
-			if (!symbol.isDefined())
-				throw new ResolveException(this, "Undefined symbol " + symbol);
-			
-			short theVal;
-			if (type == OP_PCREL) {
-				theVal = (short) (symbol.getAddr() - inst.getPc());
-				val = theVal + immed;
-				immed = 0;
-			} else {
-				theVal = (short) symbol.getAddr();
-				immed += theVal;
-			}
-			symbolResolved = true;
-		}
-		return this;
-	}
-
 	public static MachineOperandF99b createImmediateOperand(int i, int enc) {
 		MachineOperandF99b op = new MachineOperandF99b(OP_IMM);
 		op.encoding = enc;
@@ -318,16 +286,6 @@ public class MachineOperandF99b extends BaseMachineOperand {
 	}
 	public static MachineOperandF99b createImmediate(int i) {
 		return createImmediateOperand(i, OP_IMM);
-	}
-
-	public static MachineOperandF99b createSymbolImmediate(Symbol symbol) {
-		MachineOperandF99b op = new MachineOperandF99b(OP_IMM);
-		if (symbol.isDefined()) {
-			op.immed = (short) (op.val = symbol.getAddr());
-			op.symbolResolved = true;
-		}
-		op.symbol = symbol;
-		return op;
 	}
 
 	public static MachineOperandF99b createEmptyOperand() {

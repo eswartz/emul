@@ -1,8 +1,5 @@
 package v9t9.engine.cpu;
 
-import v9t9.tools.asm.assembler.IAssembler;
-import v9t9.tools.asm.assembler.ResolveException;
-
 public interface MachineOperand extends Operand {
 
 	public static final int OP_NONE = -1;
@@ -75,11 +72,5 @@ public interface MachineOperand extends Operand {
 	int hashCode();
 
 	boolean equals(Object obj);
-
-	/**
-	 * @param assembler  
-	 */
-	MachineOperand resolve(IAssembler assembler, IInstruction inst)
-			throws ResolveException;
 
 }

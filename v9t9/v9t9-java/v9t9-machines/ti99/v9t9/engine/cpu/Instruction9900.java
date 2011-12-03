@@ -12,7 +12,7 @@ import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.engine.memory.MemoryDomain;
 
-import static v9t9.tools.asm.decomp.IHighLevelInstruction.*;
+import static v9t9.engine.asm.IHighLevelInstruction.*;
 
 /**
  * Implementation of a 9900 instruction which handles most details except executing it.

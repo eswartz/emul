@@ -10,17 +10,17 @@ import java.util.TreeMap;
 import org.ejs.coffee.core.utils.Check;
 
 import v9t9.emulator.runtime.cpu.CpuState;
+import v9t9.engine.asm.Block;
+import v9t9.engine.asm.HighLevelInstruction;
+import v9t9.engine.asm.IDecompileInfo;
+import v9t9.engine.asm.IHighLevelInstruction;
+import v9t9.engine.asm.IInstructionFactory;
+import v9t9.engine.asm.Label;
+import v9t9.engine.asm.MemoryRanges;
+import v9t9.engine.asm.Routine;
+import v9t9.engine.asm.TopDownPhase;
 import v9t9.engine.cpu.RawInstruction;
 import v9t9.engine.memory.MemoryDomain;
-import v9t9.tools.asm.assembler.IInstructionFactory;
-import v9t9.tools.asm.common.MemoryRanges;
-import v9t9.tools.asm.decomp.Block;
-import v9t9.tools.asm.decomp.HighLevelInstruction;
-import v9t9.tools.asm.decomp.IDecompileInfo;
-import v9t9.tools.asm.decomp.IHighLevelInstruction;
-import v9t9.tools.asm.decomp.Label;
-import v9t9.tools.asm.decomp.Routine;
-import v9t9.tools.asm.decomp.TopDownPhase;
 
 /**
  * An instance of this class stores all the known information 
@@ -183,14 +183,14 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 		return llInstructions;
 	}
 
-	public HighLevelInstruction disassemble(int startAddr, int size) {
+	public IHighLevelInstruction disassemble(int startAddr, int size) {
 		memoryRanges.addRange(startAddr, size, true);
 		
-		HighLevelInstruction first = null;
-		HighLevelInstruction prev = null;
+		IHighLevelInstruction first = null;
+		IHighLevelInstruction prev = null;
 		for (int addr = startAddr; addr < startAddr + size; addr += 2) {
 			RawInstruction rawInst = instructionFactory.decodeInstruction(addr, domain);
-			HighLevelInstruction inst = new HighLevelInstruction(0,
+			IHighLevelInstruction inst = new HighLevelInstruction(0,
 					rawInst,
 					instructionFactory.getInstructionFlags(rawInst));
 			getLLInstructions().put(new Integer(inst.getInst().pc), inst);
@@ -262,7 +262,7 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 			llInstructions.put(addr, inst);
 		}
 		Check.checkState((inst != null));
-		inst.setFlags(inst.getFlags() | HighLevelInstruction.fStartsBlock);
+		inst.setFlags(inst.getFlags() | IHighLevelInstruction.fStartsBlock);
 		
 		Block block = inst.getBlock();
 		if (block == null) {

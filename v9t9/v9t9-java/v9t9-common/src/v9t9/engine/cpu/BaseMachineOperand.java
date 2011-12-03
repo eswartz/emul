@@ -3,8 +3,6 @@
  */
 package v9t9.engine.cpu;
 
-import v9t9.tools.asm.assembler.Symbol;
-
 /**
  * @author Ed
  *
@@ -18,6 +16,4 @@ public abstract class BaseMachineOperand implements MachineOperand {
 	public short immed = 0;
 	public int dest = OP_DEST_FALSE;
 	public boolean bIsReference = false;
-	public Symbol symbol;
-	public boolean symbolResolved;
 }

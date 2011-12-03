@@ -50,6 +50,8 @@ import v9t9.emulator.hardware.memory.mmio.GplMmio;
 import v9t9.emulator.hardware.memory.mmio.VdpMmio;
 import v9t9.emulator.runtime.cpu.Cpu9900;
 import v9t9.emulator.runtime.cpu.Executor;
+import v9t9.engine.asm.IDecompileInfo;
+import v9t9.engine.asm.InstructionFactory9900;
 import v9t9.engine.cpu.BaseMachineOperand;
 import v9t9.engine.cpu.Inst9900;
 import v9t9.engine.cpu.InstTable9900;
@@ -61,8 +63,6 @@ import v9t9.engine.cpu.Status;
 import v9t9.engine.cpu.Status9900;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
-import v9t9.tools.asm.assembler.inst9900.InstructionFactory9900;
-import v9t9.tools.asm.decomp.IDecompileInfo;
 
 /**
  * This class compiles 9900 code into Java bytecode. 
