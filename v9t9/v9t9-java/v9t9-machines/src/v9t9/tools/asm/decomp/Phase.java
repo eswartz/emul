@@ -21,7 +21,7 @@ import org.ejs.coffee.core.utils.HexUtils;
 import v9t9.emulator.runtime.cpu.CpuState;
 import v9t9.engine.cpu.Inst9900;
 import v9t9.engine.cpu.InstTableCommon;
-import v9t9.engine.cpu.InstructionWorkBlock;
+import v9t9.engine.cpu.InstructionWorkBlock9900;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.MachineOperand9900;
 import v9t9.engine.cpu.RawInstruction;
@@ -331,7 +331,7 @@ public abstract class Phase {
 	}
 
 	public short operandEffectiveAddress(IHighLevelInstruction inst, MachineOperand mop) {
-		InstructionWorkBlock block = new InstructionWorkBlock(state);
+		InstructionWorkBlock9900 block = new InstructionWorkBlock9900(state);
 		block.inst = inst.getInst();
 		return mop.getEA(block);
 	}

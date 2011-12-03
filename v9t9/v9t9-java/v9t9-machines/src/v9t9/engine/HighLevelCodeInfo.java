@@ -10,9 +10,9 @@ import java.util.TreeMap;
 import org.ejs.coffee.core.utils.Check;
 
 import v9t9.emulator.runtime.cpu.CpuState;
-import v9t9.engine.cpu.InstTable9900;
 import v9t9.engine.cpu.RawInstruction;
 import v9t9.engine.memory.MemoryDomain;
+import v9t9.tools.asm.assembler.IInstructionFactory;
 import v9t9.tools.asm.common.MemoryRanges;
 import v9t9.tools.asm.decomp.Block;
 import v9t9.tools.asm.decomp.HighLevelInstruction;
@@ -46,9 +46,11 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 	private TopDownPhase phase;
 	private boolean scanned;
 	private CpuState state;
+	private final IInstructionFactory instructionFactory;
 
-	public HighLevelCodeInfo(CpuState state) {
+	public HighLevelCodeInfo(CpuState state, IInstructionFactory instructionFactory) {
 		this.state = state;
+		this.instructionFactory = instructionFactory;
 		this.domain = state.getConsole();
 		//this.ent = entry;
 		//this.addr = addr;
@@ -70,8 +72,8 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 		pc &= 0xfffe;
 		RawInstruction ins = instructions.get(pc);
 		if (ins == null) {
-			short op = domain.readWord(pc);
-			ins = new RawInstruction(InstTable9900.decodeInstruction(op, pc, domain));
+			ins = new RawInstruction(instructionFactory.decodeInstruction(
+					pc, domain));
 			instructions.put(pc, ins);
 		}
 		return ins;
@@ -187,9 +189,10 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 		HighLevelInstruction first = null;
 		HighLevelInstruction prev = null;
 		for (int addr = startAddr; addr < startAddr + size; addr += 2) {
-			short op = domain.readWord(addr);
-			HighLevelInstruction inst = new HighLevelInstruction(0, 
-					new RawInstruction(InstTable9900.decodeInstruction(op, addr, domain)));
+			RawInstruction rawInst = instructionFactory.decodeInstruction(addr, domain);
+			HighLevelInstruction inst = new HighLevelInstruction(0,
+					rawInst,
+					instructionFactory.getInstructionFlags(rawInst));
 			getLLInstructions().put(new Integer(inst.getInst().pc), inst);
 			if (prev != null) {
 				prev.setNext(inst);
@@ -236,7 +239,8 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 		addr &= 0xfffe;
 		IHighLevelInstruction inst = getLLInstructions().get(addr);
 		if (inst == null) {
-			inst = new HighLevelInstruction(0, getInstruction(addr));
+			RawInstruction rawInst = getInstruction(addr);
+			inst = new HighLevelInstruction(0, rawInst, instructionFactory.getInstructionFlags(rawInst));
 			llInstructions.put(addr, inst);
 		}
 		Check.checkState((inst != null));
@@ -253,7 +257,8 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 		addr &= 0xfffe;
 		IHighLevelInstruction inst = getLLInstructions().get(addr);
 		if (inst == null) {
-			inst = new HighLevelInstruction(0, getInstruction(addr));
+			RawInstruction rawInst = getInstruction(addr);
+			inst = new HighLevelInstruction(0, getInstruction(addr), instructionFactory.getInstructionFlags(rawInst));
 			llInstructions.put(addr, inst);
 		}
 		Check.checkState((inst != null));

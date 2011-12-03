@@ -22,6 +22,7 @@ import org.apache.bcel.generic.PUSH;
 import org.apache.bcel.generic.Type;
 
 import v9t9.emulator.runtime.cpu.Cpu;
+import v9t9.emulator.runtime.cpu.Cpu9900;
 import v9t9.engine.cpu.BaseMachineOperand;
 import v9t9.engine.cpu.Inst9900;
 import v9t9.engine.cpu.InstTableCommon;
@@ -101,36 +102,10 @@ public class Convert9900ToByteCode {
 	        ilist.append(info.ifact.createGetField(CompiledCode.class.getName(), "cpu",
 	                new ObjectType(Cpu.class.getName())));
 	        ilist.append(info.ifact.createInvoke(Cpu.class.getName(), "checkInterrupts",
-	                Type.VOID, Type.NO_ARGS, Constants.INVOKEVIRTUAL));
+	                Type.VOID, Type.NO_ARGS, Constants.INVOKEINTERFACE));
 	        break;
 	        //return null;
-	    /*
-	     * ilist.append(InstructionConstants.THIS); ilist.append(new
-	     * GETFIELD(info.cpuIndex));
-	     * ilist.append(info.ifact.createInvoke(v9t9.cpu.Cpu.class.getName(),
-	     * "ping", Type.VOID, Type.NO_ARGS, Constants.INVOKEVIRTUAL));
-	     * 
-	     * ilist.append(InstructionConstants.THIS); ilist.append(new
-	     * GETFIELD(info.cpuIndex));
-	     * 
-	     * ilist.append(InstructionConstants.DUP);
-	     * ilist.append(info.ifact.createInvoke(v9t9.cpu.Cpu.class.getName(),
-	     * "getPC", Type.SHORT, Type.NO_ARGS, Constants.INVOKEVIRTUAL));
-	     * ilist.append(new ISTORE(info.localPc));
-	     * 
-	     * ilist.append(InstructionConstants.DUP);
-	     * ilist.append(info.ifact.createInvoke(v9t9.cpu.Cpu.class.getName(),
-	     * "getWP", Type.SHORT, Type.NO_ARGS, Constants.INVOKEVIRTUAL));
-	     * ilist.append(new ISTORE(info.localWp));
-	     * 
-	     * ilist.append(InstructionConstants.DUP);
-	     * ilist.append(info.ifact.createInvoke(v9t9.cpu.Cpu.class.getName(),
-	     * "getStatus", new ObjectType(v9t9.cpu.Status.class.getName()),
-	     * Type.NO_ARGS, Constants.INVOKEVIRTUAL)); ilist.append(new
-	     * ASTORE(info.localStatus));
-	     * 
-	     * ilist.append(InstructionConstants.POP); // cpu break;
-	     */
+	    
 	
 	    case Inst9900.Iidle:
 	    	return null;
@@ -640,13 +615,15 @@ public class Convert9900ToByteCode {
         /* update WP */
         ilist.append(InstructionConstants.THIS);
         ilist.append(new GETFIELD(info.cpuIndex));
+	    ilist.append(info.ifact.createCheckCast(new ObjectType(Cpu9900.class.getName())));
+
         ilist.append(new ILOAD(info.localWp));
         ilist.append(info.ifact.createInvoke(v9t9.emulator.runtime.cpu.Cpu9900.class.getName(),
                 "setWP", Type.VOID, new Type[] { Type.SHORT },
                 Constants.INVOKEVIRTUAL));
 
-	    if (Compiler.settingOptimize.getBoolean()
-	            && Compiler.settingOptimizeRegAccess.getBoolean()) {
+	    if (CompilerBase.settingOptimize.getBoolean()
+	            && CompilerBase.settingOptimizeRegAccess.getBoolean()) {
 	        // get the wp memory...
 	        ilist.append(new ALOAD(info.localMemory));
 	        // ... entry

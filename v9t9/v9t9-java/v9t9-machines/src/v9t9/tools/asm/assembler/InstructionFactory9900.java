@@ -3,9 +3,12 @@
  */
 package v9t9.tools.asm.assembler;
 
+import v9t9.emulator.runtime.cpu.CpuState;
+import v9t9.engine.HighLevelCodeInfo;
 import v9t9.engine.cpu.InstPattern9900;
 import v9t9.engine.cpu.InstTable9900;
 import v9t9.engine.cpu.InstTableCommon;
+import v9t9.engine.cpu.Instruction9900;
 import v9t9.engine.cpu.MachineOperand9900;
 import v9t9.engine.cpu.RawInstruction;
 import v9t9.engine.memory.MemoryDomain;
@@ -14,6 +17,7 @@ import v9t9.tools.asm.assembler.operand.hl.IRegisterOperand;
 import v9t9.tools.asm.assembler.operand.hl.NumberOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLPCRelativeOperand;
+import v9t9.tools.asm.decomp.IDecompileInfo;
 
 /**
  * @author Ed
@@ -159,5 +163,21 @@ public class InstructionFactory9900 implements IInstructionFactory {
 			size = 2;
 		}
 		return size;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.IInstructionFactory#getInstructionFlags(v9t9.engine.cpu.RawInstruction)
+	 */
+	@Override
+	public int getInstructionFlags(RawInstruction inst) {
+		return Instruction9900.getInstructionFlags(inst);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.tools.asm.assembler.IInstructionFactory#createDecompileInfo(v9t9.emulator.runtime.cpu.CpuState)
+	 */
+	@Override
+	public IDecompileInfo createDecompileInfo(CpuState cpuState) {
+		return new HighLevelCodeInfo(cpuState, this);
 	}
 }

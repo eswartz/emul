@@ -16,6 +16,7 @@ import org.ejs.coffee.core.properties.IProperty;
 import org.ejs.coffee.core.properties.IPropertyListener;
 import org.ejs.coffee.core.utils.Check;
 
+import v9t9.emulator.runtime.compiler.CompilerBase;
 import v9t9.emulator.clients.builtin.NotifyException;
 import v9t9.emulator.common.EmulatorSettings;
 import v9t9.emulator.common.IEventNotifier;
@@ -25,6 +26,7 @@ import v9t9.emulator.common.WorkspaceSettings;
 import v9t9.emulator.hardware.MachineModel;
 import v9t9.emulator.hardware.MachineModelFactory;
 import v9t9.emulator.runtime.cpu.Cpu;
+import v9t9.emulator.runtime.cpu.Executor;
 import v9t9.engine.Client;
 import v9t9.engine.files.DataFiles;
 import v9t9.engine.memory.Memory;
@@ -154,19 +156,17 @@ public class EmulatorServer {
 		
     	Cpu.settingRealTime.setBoolean(true);
     	
-    	/*
-    	// compile?  and waste a lot of effort to get nothing done?
+    	// compile?
     	if (false) {
     		Cpu.settingRealTime.setBoolean(false);
 	    	Executor.settingCompile.setBoolean(true);
 	    	//Compiler.settingDebugInstructions.setBoolean(true);
 	    	//Compiler.settingOptimize.setBoolean(true);
-	        Compiler.settingOptimizeRegAccess.setBoolean(true);
-	        Compiler.settingOptimizeStatus.setBoolean(true);
+	        CompilerBase.settingOptimizeRegAccess.setBoolean(true);
+	        CompilerBase.settingOptimizeStatus.setBoolean(true);
 	        //Compiler.settingCompileOptimizeCallsWithData.setBoolean(true);
 	        //Compiler.settingCompileFunctions.setBoolean(true);
     	}
-    	*/
     }
     
 	protected void loadState() {

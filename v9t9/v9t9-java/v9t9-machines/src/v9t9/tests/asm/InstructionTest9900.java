@@ -10,7 +10,7 @@ import junit.framework.TestCase;
 import v9t9.emulator.runtime.cpu.CpuState9900;
 import v9t9.engine.cpu.Inst9900;
 import v9t9.engine.cpu.InstTable9900;
-import v9t9.engine.cpu.InstructionWorkBlock;
+import v9t9.engine.cpu.InstructionWorkBlock9900;
 import v9t9.engine.cpu.MachineOperand9900;
 import v9t9.engine.cpu.RawInstruction;
 import v9t9.engine.memory.MemoryDomain;
@@ -49,7 +49,7 @@ public class InstructionTest9900 extends TestCase {
         CpuState9900 state = new CpuState9900(domain);
         state.setWP((short) 0x83e0);
         
-        InstructionWorkBlock block = new InstructionWorkBlock(state);
+        InstructionWorkBlock9900 block = new InstructionWorkBlock9900(state);
         
       	RawInstruction inst;
       	MachineOperand9900 mop1;

@@ -19,7 +19,7 @@ import v9t9.engine.cpu.InstInfo;
 import v9t9.engine.cpu.InstTable9900;
 import v9t9.engine.cpu.InstTableCommon;
 import v9t9.engine.cpu.Instruction9900;
-import v9t9.engine.cpu.InstructionWorkBlock;
+import v9t9.engine.cpu.InstructionWorkBlock9900;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.MachineOperand9900;
 import v9t9.engine.cpu.Operand;
@@ -42,7 +42,7 @@ public class Interpreter9900 implements Interpreter {
     Map<MemoryArea, Instruction9900[]> parsedInstructions; 
     //Instruction[] instructions; 
     
-    InstructionWorkBlock iblock;
+    InstructionWorkBlock9900 iblock;
 
 	private Cpu9900 cpu;
 
@@ -54,7 +54,7 @@ public class Interpreter9900 implements Interpreter {
         this.memory = machine.getCpu().getConsole();
         //instructions = new Instruction[65536/2];// HashMap<Integer, Instruction>();
         parsedInstructions = new HashMap<MemoryArea, Instruction9900[]>();
-        iblock = new InstructionWorkBlock(cpu);
+        iblock = new InstructionWorkBlock9900(cpu);
         iblock.domain = memory;
         status = (Status9900) cpu.createStatus();
      }
@@ -155,7 +155,7 @@ public class Interpreter9900 implements Interpreter {
         /* get current operand values and instruction timings */
         fetchOperands(ins, op_x != null);
 
-        InstructionWorkBlock block = new InstructionWorkBlock(cpu);
+        InstructionWorkBlock9900 block = new InstructionWorkBlock9900(cpu);
         this.iblock.copyTo(block);
 
         /* do pre-instruction status word updates */

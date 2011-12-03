@@ -10,7 +10,6 @@ import org.ejs.coffee.core.utils.Pair;
 
 import v9t9.emulator.runtime.cpu.Cpu;
 import v9t9.emulator.runtime.cpu.Cpu9900;
-import v9t9.emulator.runtime.cpu.CpuState9900;
 import v9t9.emulator.runtime.cpu.Executor;
 import v9t9.engine.memory.MemoryArea;
 import v9t9.engine.memory.MemoryEntry;
@@ -31,7 +30,7 @@ public class CodeBlockCompilerStrategy implements ICompilerStrategy {
 
 	private Executor executor;
 
-	private Compiler9900 compiler;
+	private CompilerBase compiler;
 
 	public CodeBlockCompilerStrategy() {
 		
@@ -40,16 +39,17 @@ public class CodeBlockCompilerStrategy implements ICompilerStrategy {
 
 	}
 
-	public void setExecutor(Executor executor) {
+	public void setup(Executor executor, CompilerBase compiler) {
 		this.executor = executor;
-		this.compiler = new Compiler9900((Cpu9900)executor.cpu);
+		this.compiler = compiler;
 	}
-	public ICompiledCode getCompiledCode(Cpu cpu) {
+	public ICompiledCode getCompiledCode() {
+		Cpu cpu = executor.getCpu();
 		if (cpu.shouldDebugCompiledCode(cpu.getPC())) {
 			Cpu.settingDumpInstructions.setBoolean(true);
 			Cpu.settingDumpFullInstructions.setBoolean(true);
 		}
-        CodeBlock cb = getCodeBlock(((CpuState9900) cpu).getPC(), ((CpuState9900)cpu).getWP());
+        CodeBlock cb = getCodeBlock(cpu.getPC(), (short) (cpu instanceof Cpu9900 ? ((Cpu9900) cpu).getWP() : 0));
 		return cb;
 	}
 	
@@ -72,7 +72,7 @@ public class CodeBlockCompilerStrategy implements ICompilerStrategy {
 	 * @return code block or null if not compilable
 	 */
 	private CodeBlock getCodeBlock(int pc, short wp) {
-	    MemoryEntry ent = executor.cpu.getConsole().getEntryAt(pc);
+	    MemoryEntry ent = executor.getCpu().getConsole().getEntryAt(pc);
 	    if (!isCompilable(ent)) {
 			return null;
 		}
@@ -82,7 +82,8 @@ public class CodeBlockCompilerStrategy implements ICompilerStrategy {
 	    CodeBlock cb;
 	    if ((cb = codeblocks.get(key)) == null
 	            || !cb.matches(ent)) {
-	        cb = new CodeBlock(compiler, executor, loader, ent, blockaddr.shortValue(), BLOCKSIZE);
+	        cb = new CodeBlock(compiler, executor,  
+	        		loader, ent, blockaddr.shortValue(), BLOCKSIZE);
 	        cb.build();
 	        executor.nCompiles++;
 	        codeblocks.put(key, cb);

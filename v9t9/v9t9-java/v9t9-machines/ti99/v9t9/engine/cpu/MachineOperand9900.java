@@ -241,7 +241,7 @@ public class MachineOperand9900 extends BaseMachineOperand {
 	 * @see v9t9.engine.cpu.MachineOperand#getEA(v9t9.engine.memory.MemoryDomain, int, short)
 	 */
     public short getEA(BaseInstructionWorkBlock block) {
-    	short wp = ((InstructionWorkBlock) block).wp;
+    	short wp = ((InstructionWorkBlock9900) block).wp;
         short ea = 0;
     	switch (type) {
     	case MachineOperand.OP_NONE:

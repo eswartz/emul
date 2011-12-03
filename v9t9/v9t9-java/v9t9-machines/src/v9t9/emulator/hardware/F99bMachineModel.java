@@ -139,6 +139,7 @@ public class F99bMachineModel implements MachineModel {
 	public Executor createExecutor(Cpu cpu, CpuMetrics metrics) {
 		return new Executor(cpu, metrics, 
 				new InterpreterF99b(cpu.getMachine()),
+				null,
 				new NullCompilerStrategy(),
 				new DumpFullReporterF99b((CpuF99b) cpu, null),
 				new DumpReporterF99b((CpuF99b) cpu));

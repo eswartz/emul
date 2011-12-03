@@ -18,6 +18,7 @@ import v9t9.engine.cpu.RawInstruction;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.StockRamArea;
+import v9t9.tools.asm.assembler.InstructionFactory9900;
 import v9t9.tools.asm.assembler.ParseException;
 import v9t9.tools.asm.common.MemoryRanges;
 import v9t9.tools.asm.decomp.ICodeProvider;
@@ -44,7 +45,7 @@ public abstract class BaseTopDownPhaseTest extends BaseTest implements ICodeProv
                 new StockRamArea(0x400)
                 ));
         state = new CpuState9900(CPU);
-        highLevel = new HighLevelCodeInfo(state);
+        highLevel = new HighLevelCodeInfo(state, InstructionFactory9900.INSTANCE);
         highLevel.getMemoryRanges().addRange(0, 0x2000, true);
         highLevel.getMemoryRanges().addRange(0x8300, 0x100, true);
         

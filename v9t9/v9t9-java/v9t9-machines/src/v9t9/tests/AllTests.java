@@ -17,6 +17,7 @@ public class AllTests {
 		//$JUnit-BEGIN$
 		suite.addTestSuite(TestBlocks.class);
 		suite.addTestSuite(StatusTest.class);
+		suite.addTestSuite(TestMemoryRanges.class);
 		suite.addTestSuite(MemoryTest.class);
 		suite.addTestSuite(MemoryEntryTest.class);
 		suite.addTestSuite(TestTopDown1.class);

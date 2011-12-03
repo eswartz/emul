@@ -39,10 +39,10 @@ abstract public class CompiledCode {
     
     public CompiledCode(Executor exec) {
         this.exec = exec;
-        this.cpu = exec.cpu;
-        this.memory = exec.cpu.getConsole();
-        if (exec.cpu.getMachine() instanceof TI99Machine) {
-        	TI99Machine ti99Machine = (TI99Machine) exec.cpu.getMachine();
+        this.cpu = exec.getCpu();
+        this.memory = exec.getCpu().getConsole();
+        if (exec.getCpu().getMachine() instanceof TI99Machine) {
+        	TI99Machine ti99Machine = (TI99Machine) exec.getCpu().getMachine();
 			this.cru = ti99Machine.getCruManager();
         	this.vdpMmio = ti99Machine.getVdpMmio();
         	this.gplMmio = ti99Machine.getGplMmio();

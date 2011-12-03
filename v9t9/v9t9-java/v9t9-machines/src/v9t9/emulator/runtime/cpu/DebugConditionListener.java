@@ -10,7 +10,7 @@ import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.runtime.InstructionListener;
 import v9t9.engine.cpu.BaseInstructionWorkBlock;
-import v9t9.engine.cpu.InstructionWorkBlock;
+import v9t9.engine.cpu.InstructionWorkBlock9900;
 import v9t9.engine.cpu.MachineOperand9900;
 
 /**
@@ -19,7 +19,7 @@ import v9t9.engine.cpu.MachineOperand9900;
  */
 public class DebugConditionListener implements InstructionListener {
 
-	private LinkedList<InstructionWorkBlock> blocks = new LinkedList<InstructionWorkBlock>();
+	private LinkedList<InstructionWorkBlock9900> blocks = new LinkedList<InstructionWorkBlock9900>();
 	private Cpu cpu;
 	
 	public DebugConditionListener(Cpu cpu)  {
@@ -30,8 +30,8 @@ public class DebugConditionListener implements InstructionListener {
 	 */
 	@Override
 	public void executed(BaseInstructionWorkBlock before_, BaseInstructionWorkBlock after_) {
-		InstructionWorkBlock before = (InstructionWorkBlock) before_;
-		InstructionWorkBlock after = (InstructionWorkBlock) after_;
+		InstructionWorkBlock9900 before = (InstructionWorkBlock9900) before_;
+		InstructionWorkBlock9900 after = (InstructionWorkBlock9900) after_;
 		if (blocks.size() > 1024)
 			blocks.remove(0);
 		blocks.add(before);
@@ -41,7 +41,7 @@ public class DebugConditionListener implements InstructionListener {
 				sp < 0xf740 - 0x40) {
 			DumpFullReporter9900 dfp = new DumpFullReporter9900((Cpu9900) cpu);
 			PrintWriter pw = new PrintWriter(System.err);
-			for (InstructionWorkBlock block : blocks) {
+			for (InstructionWorkBlock9900 block : blocks) {
 				dfp.dumpFullStart(block, block.inst, pw);
 				pw.println();
 			}

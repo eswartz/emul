@@ -73,7 +73,7 @@ public class SerialInstructionRangeCompiler implements InstructionRangeCompiler 
 	            	chunks[i] = null;
 	            
 	            // lifetime calculations
-	            if (Compiler.settingOptimize.getBoolean() && chunks[i] != null) {
+	            if (CompilerBase.settingOptimize.getBoolean() && chunks[i] != null) {
 	            	BytecodeOptimizer.peephole(info, chunks[i]);
 				}
 	        }

@@ -12,7 +12,7 @@ import v9t9.emulator.hardware.CruWriter;
 import v9t9.emulator.hardware.TI99Machine;
 import v9t9.engine.cpu.BaseInstructionWorkBlock;
 import v9t9.engine.cpu.BaseMachineOperand;
-import v9t9.engine.cpu.InstructionWorkBlock;
+import v9t9.engine.cpu.InstructionWorkBlock9900;
 
 /**
  * @author ejs
@@ -55,7 +55,7 @@ public class DsrManager9900 extends DsrManager implements IPersistable, IDsrMana
 	
 	
 	public void handleDSR(BaseInstructionWorkBlock instructionWorkBlock_) {
-		InstructionWorkBlock instructionWorkBlock = (InstructionWorkBlock) instructionWorkBlock_;
+		InstructionWorkBlock9900 instructionWorkBlock = (InstructionWorkBlock9900) instructionWorkBlock_;
 		short callpc = (short) (instructionWorkBlock.pc - 2);
 		short rambase = (short) (instructionWorkBlock.wp - 0xe0);
 		short crubase = instructionWorkBlock.domain.readWord(instructionWorkBlock.wp + 12 * 2);

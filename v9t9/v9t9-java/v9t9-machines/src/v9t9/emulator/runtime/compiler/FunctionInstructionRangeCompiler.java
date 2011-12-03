@@ -69,7 +69,7 @@ public class FunctionInstructionRangeCompiler implements
 		            
 		        }
 		    	
-		    	if (Compiler.settingOptimize.getBoolean() && chunks[i] != null) {
+		    	if (CompilerBase.settingOptimize.getBoolean() && chunks[i] != null) {
 		    		// TODO: buggy
 		    		//BytecodeOptimizer.peephole(info, chunks[i]);
 		    	}

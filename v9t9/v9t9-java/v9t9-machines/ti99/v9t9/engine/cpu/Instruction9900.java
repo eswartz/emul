@@ -12,6 +12,8 @@ import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.engine.memory.MemoryDomain;
 
+import static v9t9.tools.asm.decomp.IHighLevelInstruction.*;
+
 /**
  * Implementation of a 9900 instruction which handles most details except executing it.
  * The basic number of cycles to execute an instruction is stored in 'cycles',
@@ -1067,4 +1069,37 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 		return true;
 	}
 
+
+	public static int getInstructionFlags(RawInstruction inst) {
+		int flags = 0;
+        if (inst.getInfo().jump != 0) {
+        	flags |=  fEndsBlock;
+            if (inst.getInst() == Inst9900.Ibl || inst.getInst() == Inst9900.Iblwp) {
+				flags |= fIsCall+fIsBranch;
+			} else if (inst.getInst() == Inst9900.Irtwp) {
+				flags |= fIsReturn+fIsBranch+fNotFallThrough; /* B *R11 detected later */
+			} else if (inst.getInfo().jump == InstInfo.INST_JUMP_COND) {
+				flags |= fIsCondBranch+fIsBranch;
+			} else {
+				//if (inst == Ib && op1 instanceof MachineOperand 
+                 //       && ((MachineOperand)op1).type == MachineOperand.OP_ADDR) {
+			//		flags |= fIsBranch+fCheckLater+fNotFallThrough;
+				flags |= fIsBranch+fNotFallThrough;
+			}
+        }
+        if (inst.getInst() == Inst9900.Imovb || inst.getInst() == Inst9900.Isocb || inst.getInst() == Inst9900.Iab || inst.getInst() == Inst9900.Isb
+        		|| inst.getInst() == Inst9900.Icb || inst.getInst() == Inst9900.Iszcb) {
+        	flags |= fByteOp;
+        } else if ((inst.getInst() == Inst9900.Istcr || inst.getInst() == Inst9900.Ildcr)
+        		&& inst.getOp2() instanceof MachineOperand
+        		&& ((BaseMachineOperand) inst.getOp2()).val <= 8) {
+        	flags |= fByteOp;
+        } else if (inst.getInst() == Inst9900.Ilimi) {
+        	if (((BaseMachineOperand) inst.getOp1()).immed != 0) {
+        		// likely block end
+        		flags |= fEndsBlock;
+        	}
+        }
+        return flags;
+    }
 }

@@ -1,4 +1,4 @@
-package org.ejs.eulang.ext;
+package org.ejs.coffee.core.launch;
 
 import java.io.File;
 import java.io.IOException;

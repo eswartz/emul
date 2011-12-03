@@ -11,6 +11,7 @@ import v9t9.emulator.common.Machine;
 import v9t9.emulator.hardware.dsrs.DsrHandler;
 import v9t9.emulator.hardware.dsrs.DsrSettings;
 import v9t9.emulator.runtime.compiler.CodeBlockCompilerStrategy;
+import v9t9.emulator.runtime.compiler.Compiler9900;
 import v9t9.emulator.runtime.cpu.Cpu;
 import v9t9.emulator.runtime.cpu.Cpu9900;
 import v9t9.emulator.runtime.cpu.CpuMetrics;
@@ -47,6 +48,7 @@ public abstract class BaseTI99MachineModel implements MachineModel {
 	public Executor createExecutor(Cpu cpu, CpuMetrics metrics) {
 		return new Executor(cpu, metrics, 
 				new Interpreter9900((TI99Machine) cpu.getMachine()),
+				new Compiler9900((Cpu9900) cpu),
 				new CodeBlockCompilerStrategy(),
 				new DumpFullReporter9900((Cpu9900) cpu),
 				new DumpReporter9900((Cpu9900) cpu));

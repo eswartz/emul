@@ -16,7 +16,7 @@ import org.ejs.coffee.core.properties.IPropertyListener;
 import org.ejs.coffee.core.properties.SettingProperty;
 import org.ejs.coffee.core.settings.Logging;
 import org.ejs.coffee.core.utils.HexUtils;
-
+import v9t9.emulator.runtime.compiler.CompilerBase;
 import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
 import v9t9.emulator.common.IMachine;
 import v9t9.emulator.runtime.InstructionListener;
@@ -33,7 +33,7 @@ import v9t9.emulator.runtime.interpreter.Interpreter;
  */
 public class Executor {
 
-    public Cpu cpu;
+    private Cpu cpu;
 
     public Interpreter interp;
     ICompilerStrategy compilerStrategy;
@@ -61,7 +61,7 @@ public class Executor {
 	private final CpuMetrics cpuMetrics;
 	
     public Executor(Cpu cpu, CpuMetrics cpuMetrics, 
-    		Interpreter interpreter,
+    		Interpreter interpreter, CompilerBase compiler, 
     		ICompilerStrategy compilerStrategy,
     		final InstructionListener dumpFullReporter,
     		final InstructionListener dumpReporter) {
@@ -69,7 +69,7 @@ public class Executor {
 		this.cpuMetrics = cpuMetrics;
         this.interp = interpreter;
         this.compilerStrategy = compilerStrategy;
-        compilerStrategy.setExecutor(this);
+        compilerStrategy.setup(this, compiler);
         
         final Object lock = Executor.this.cpu.getMachine().getExecutionLock();
         Cpu.settingDumpFullInstructions.addListener(new IPropertyListener() {
@@ -207,7 +207,7 @@ public class Executor {
 	    	boolean interpreting = false;
 			if (settingCompile.getBoolean()) {
 				/* try to make or run native code, which may fail */
-				ICompiledCode code = compilerStrategy.getCompiledCode(cpu);
+				ICompiledCode code = compilerStrategy.getCompiledCode();
 			    if (code == null || !code.run()) {
 			    	// Returns false if an instruction couldn't be executed
 			    	// because it did not look like real code (or was not expected to be directly invoked).
@@ -287,6 +287,20 @@ public class Executor {
 	 */
 	public ICompilerStrategy getCompilerStrategy() {
 		return compilerStrategy;
+	}
+
+	/**
+	 * @param cpu the cpu to set
+	 */
+	public void setCpu(Cpu cpu) {
+		this.cpu = cpu;
+	}
+
+	/**
+	 * @return the cpu
+	 */
+	public Cpu getCpu() {
+		return cpu;
 	}
 
 }

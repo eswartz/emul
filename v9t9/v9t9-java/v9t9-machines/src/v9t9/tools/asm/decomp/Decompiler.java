@@ -25,6 +25,7 @@ import v9t9.engine.memory.MemoryModel;
 import v9t9.engine.memory.NativeFileMemoryEntry;
 import v9t9.engine.memory.StockMemoryModel;
 import v9t9.tools.asm.assembler.Assembler;
+import v9t9.tools.asm.assembler.InstructionFactory9900;
 
 public class Decompiler implements ICodeProvider {
     static final String DEFAULT_EXT = ".dump";
@@ -52,7 +53,7 @@ public class Decompiler implements ICodeProvider {
 			memory = model.createMemory();
 			consoleMemory = model.getConsole();
 			state = new CpuState9900(consoleMemory);
-			highLevel = new HighLevelCodeInfo(state);
+			highLevel = new HighLevelCodeInfo(state, InstructionFactory9900.INSTANCE);
 		} else {
 			throw new IllegalStateException("unknown processor: " + proc);
 		}

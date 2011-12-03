@@ -9,7 +9,7 @@ import org.ejs.coffee.core.utils.HexUtils;
 
 import v9t9.emulator.runtime.InstructionListener;
 import v9t9.engine.cpu.BaseInstructionWorkBlock;
-import v9t9.engine.cpu.InstructionWorkBlock;
+import v9t9.engine.cpu.InstructionWorkBlock9900;
 import v9t9.engine.cpu.MachineOperand;
 import v9t9.engine.cpu.MachineOperand9900;
 import v9t9.engine.cpu.Operand;
@@ -37,14 +37,14 @@ public class DumpFullReporter9900 implements InstructionListener {
 		PrintWriter dumpfull = Executor.getDumpfull();
 		if (dumpfull == null) return;
 		
-		InstructionWorkBlock before = (InstructionWorkBlock) before_;
-		InstructionWorkBlock after = (InstructionWorkBlock) after_;
+		InstructionWorkBlock9900 before = (InstructionWorkBlock9900) before_;
+		InstructionWorkBlock9900 after = (InstructionWorkBlock9900) after_;
 		dumpFullStart(before, before.inst, dumpfull);
 		dumpFullMid(before, (MachineOperand9900)before.inst.getOp1(), (MachineOperand9900)before.inst.getOp2(), dumpfull);
 		dumpFullEnd(after, before.cycles, (MachineOperand9900)after.inst.getOp1(), (MachineOperand9900)after.inst.getOp2(), dumpfull);
 	}
 
-	public void dumpFullStart(InstructionWorkBlock iinstructionWorkBlock,
+	public void dumpFullStart(InstructionWorkBlock9900 iinstructionWorkBlock,
 			RawInstruction ins, PrintWriter dumpfull) {
 		MemoryEntry entry = iinstructionWorkBlock.domain.getEntryAt(ins.pc);
 		String name = null;
@@ -55,7 +55,7 @@ public class DumpFullReporter9900 implements InstructionListener {
 		dumpfull.print(HexUtils.toHex4(ins.pc) + ": "
 		        + ins.toString() + " ==> ");
 	}
-	private void dumpFullMid(InstructionWorkBlock iinstructionWorkBlock,
+	private void dumpFullMid(InstructionWorkBlock9900 iinstructionWorkBlock,
 			MachineOperand9900 mop1, MachineOperand9900 mop2,
 			PrintWriter dumpfull) {
 		String str;
@@ -75,7 +75,7 @@ public class DumpFullReporter9900 implements InstructionListener {
 		}
 		dumpfull.print(" || ");
 	}
-	public void dumpFullEnd(InstructionWorkBlock iinstructionWorkBlock, 
+	public void dumpFullEnd(InstructionWorkBlock9900 iinstructionWorkBlock, 
 			int origCycleCount, MachineOperand9900 mop1,
 			MachineOperand9900 mop2, PrintWriter dumpfull) {
 		String str;

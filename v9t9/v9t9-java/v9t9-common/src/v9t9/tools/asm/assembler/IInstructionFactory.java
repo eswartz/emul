@@ -3,9 +3,11 @@
  */
 package v9t9.tools.asm.assembler;
 
+import v9t9.emulator.runtime.cpu.CpuState;
 import v9t9.engine.cpu.RawInstruction;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
+import v9t9.tools.asm.decomp.IDecompileInfo;
 
 /**
  * @author Ed
@@ -32,4 +34,9 @@ public interface IInstructionFactory {
 	int getInstSize(LLInstruction ins);
 	
 	RawInstruction decodeInstruction(int pc, MemoryDomain domain);
+	
+	int getInstructionFlags(RawInstruction inst);
+
+	IDecompileInfo createDecompileInfo(CpuState cpuState);
+	
 }

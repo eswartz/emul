@@ -36,12 +36,11 @@ public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListen
 	int addr;
 	int size;
 	MemoryEntry ent;
-	private Compiler compiler;
-	private AbortedException gAbortedException = new AbortedException();
+	private CompilerBase compiler;
     
     static int uniqueClassSuffix;
 
-    public CodeBlock(Compiler compiler, Executor exec, DirectLoader loader, MemoryEntry ent, int addr, int size) {
+    public CodeBlock(CompilerBase compiler, Executor exec, DirectLoader loader, MemoryEntry ent, int addr, int size) {
         this.compiler = compiler;
 		this.exec = exec;
         this.loader = loader;
@@ -50,8 +49,9 @@ public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListen
         this.size = size;
         this.baseName = createBaseIdentifier(ent.getUniqueName()); 
         this.className = this.getClass().getName() + "$" + baseName + "_";
-        exec.cpu.getMachine().getMemory().addListener(this);
-        this.highLevel = compiler.getHighLevelCode(ent, exec.cpu);
+        //this.className = baseName;
+        exec.getCpu().getMachine().getMemory().addListener(this);
+        this.highLevel = compiler.getHighLevelCode(ent);
     }
     
 
@@ -59,13 +59,13 @@ public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListen
         if (entName == null) {
             return HexUtils.toHex4(addr);
         }
-        String copy = new String();
+        StringBuilder copy = new StringBuilder();
         for (int i = 0; i < entName.length(); i++) {
             char c = entName.charAt(i);
             if (Character.isJavaIdentifierPart(c)) {
-				copy += c;
+				copy.append(c);
 			} else {
-				copy += '_';
+				copy.append('_');
 			}
         }
         return copy + HexUtils.toHex4(addr);
@@ -123,8 +123,8 @@ public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListen
         	    	insts[i] = highLevel.getInstruction(addr + i * 2);
         	    }
         	    
-        	    if (Compiler.settingOptimize.getBoolean() 
-        	    		&& Compiler.settingOptimizeStatus.getBoolean()) {
+        	    if (CompilerBase.settingOptimize.getBoolean() 
+        	    		&& CompilerBase.settingOptimizeStatus.getBoolean()) {
         	    	HLInstructionOptimizer.peephole_status(insts, numinsts);
         	    }
         	    
@@ -186,13 +186,13 @@ public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListen
 	        	}
 		        exec.nInstructions += code.nInstructions;
 		        exec.nCompiledInstructions += code.nInstructions;
-		        exec.cpu.addCycles(code.nCycles);
+		        exec.getCpu().addCycles(code.nCycles);
 	        }
 	        //System.out.println("invoked "+code.nInstructions+" at "+Utils.toHex4(origpc)+" to "+Utils.toHex4(exec.cpu.getPC()));
 	        
 	        if (abort == null && !ret) {
         		// target the PC later
-        		int pc = exec.cpu.getPC() & 0xffff;
+        		int pc = exec.getCpu().getPC() & 0xffff;
         		IHighLevelInstruction inst = highLevel.getLLInstructions().get(pc);
         		if (inst != null && inst.getInst().getInst() != InstTableCommon.Idata) {
         			if ((inst.getFlags() & HighLevelInstruction.fStartsBlock) == 0) {
@@ -258,14 +258,14 @@ public class CodeBlock implements ICompiledCode, v9t9.engine.memory.MemoryListen
     	//System.out.println("Memory map changed");
         //clear();
         if (running) {
-			throw gAbortedException;
+			throw new AbortedException();
 		} 
     }
     public void physicalMemoryMapChanged(MemoryEntry entry) {
     	//System.out.println("Memory map changed");
     	//clear();
     	if (running) {
-    		throw gAbortedException;
+    		throw new AbortedException();
     	} 
     }
 
