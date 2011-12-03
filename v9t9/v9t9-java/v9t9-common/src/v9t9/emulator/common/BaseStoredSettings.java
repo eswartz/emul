@@ -3,9 +3,15 @@
  */
 package v9t9.emulator.common;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.ejs.coffee.core.properties.IProperty;
@@ -54,14 +60,20 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 	}
 	
 	public synchronized void load() throws IOException {
+		File settingsConfigurationFile = new File(getConfigFilePath());
+		InputStream fis = null;
 		try {
 			ISettingStorage storage = new XMLSettingStorage(ROOT);
-			File settingsConfigurationFile = new File(getConfigFilePath());
-			section = storage.load(settingsConfigurationFile);
+			fis = new BufferedInputStream(new FileInputStream(settingsConfigurationFile));
+			section = storage.load(fis);
 		} catch (IOException e) {
 			needsSave = true;
 			section = new SettingsSection();
 			throw e;
+		} finally {
+			if (fis != null) {
+				fis.close();
+			}
 		}
 			
 		isLoaded = true;
@@ -81,9 +93,6 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 		//if (file.exists() && !needsSave)
 		//	return;
 		
-		File backup = new File(path + "~");
-		file.renameTo(backup);
-		
 		ISettingSection saveSection = section;
 		
 		// toss unrecognized keys
@@ -93,7 +102,47 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 		save(saveSection);
 		
 		ISettingStorage storage = new XMLSettingStorage(ROOT);
-		storage.save(file, saveSection);
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		storage.save(bos, saveSection);
+		
+		// see if contents changed
+		boolean shouldWrite = true;
+		if (file.exists()) {
+			InputStream fis = null;
+			try {
+				int size = (int) file.length();
+				if (size == bos.size()) {
+					ByteArrayOutputStream bosold = new ByteArrayOutputStream(size);
+					byte[] arr = new byte[size];
+					fis = new BufferedInputStream(new FileInputStream(file));
+					fis.read(arr);
+					bosold.write(arr);
+					if (Arrays.equals(bos.toByteArray(), bosold.toByteArray())) {
+						shouldWrite = false;
+					}
+				}
+			} catch (IOException e) {
+				// ignore
+			} finally {
+				if (fis != null) {
+					try {
+						fis.close();
+					} catch (IOException e) {
+						// ignore
+					}
+				}
+			}
+		}
+
+		if (shouldWrite) {
+			File backup = new File(path + "~");
+			file.renameTo(backup);
+			
+			FileOutputStream fos = new FileOutputStream(file);
+			fos.write(bos.toByteArray());
+			fos.close();
+		}
+		
 		needsSave = false;
 	}
 	

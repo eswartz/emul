@@ -3,12 +3,13 @@
  */
 package org.ejs.coffee.core.settings;
 
-import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 import org.ejs.coffee.core.settings.ISettingSection.Type;
-import org.ejs.coffee.core.utils.FileXMLStorage;
 import org.ejs.coffee.core.utils.StorageException;
+import org.ejs.coffee.core.utils.StreamXMLStorage;
 import org.ejs.coffee.core.utils.XMLUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -45,8 +46,9 @@ public class XMLSettingStorage implements ISettingStorage {
 	/* (non-Javadoc)
 	 * @see org.ejs.coffee.core.settings.ISettingStorage#load(java.io.File)
 	 */
-	public ISettingSection load(File file) throws IOException {
-		FileXMLStorage storage = new FileXMLStorage(file);
+	public ISettingSection load(InputStream inputStream) throws IOException {
+		StreamXMLStorage storage = new StreamXMLStorage();
+		storage.setInputStream(inputStream);
 		ISettingSection root = new SettingsSection();
 		try {
 			storage.load(rootElement);
@@ -170,8 +172,9 @@ public class XMLSettingStorage implements ISettingStorage {
 	/* (non-Javadoc)
 	 * @see org.ejs.coffee.core.settings.ISettingStorage#save(java.io.File)
 	 */
-	public void save(File file, ISettingSection section) throws IOException {
-		FileXMLStorage storage = new FileXMLStorage(file);
+	public void save(OutputStream outputStream, ISettingSection section) throws IOException {
+		StreamXMLStorage storage = new StreamXMLStorage();
+		storage.setOutputStream(outputStream);
 		try {
 			storage.create(rootElement);
 			saveSection(storage.getDocumentElement(), section);

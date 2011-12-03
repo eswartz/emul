@@ -1,8 +1,14 @@
 package v9t9.emulator.clients.builtin;
 
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 import org.ejs.coffee.core.properties.IProperty;
 import org.ejs.coffee.core.properties.SettingProperty;
@@ -129,9 +135,11 @@ public abstract class BaseEmulatorWindow {
 				null, false, false, MACHINE_SAVE_FILE_EXTENSIONS);
 		
 		if (filename != null) {
+			InputStream fis = null;
 			try {
 				ISettingStorage storage = new XMLSettingStorage(STATE);
-				ISettingSection settings = storage.load(new File(filename));
+				fis = new BufferedInputStream(new FileInputStream(filename));
+				ISettingSection settings = storage.load(fis);
 				
 				String modelId = settings.get("MachineModel");
 
@@ -160,6 +168,14 @@ public abstract class BaseEmulatorWindow {
 				machine.getClient().getEventNotifier().notifyEvent(null, Level.ERROR, 
 						"Failed to load machine state:\n\n" + e1.getMessage());
 			
+			} finally {
+				if (fis != null) {
+					try {
+						fis.close();
+					} catch (IOException e) {
+						// ignore
+					}
+				}
 			}
 		}
 	}
@@ -177,12 +193,22 @@ public abstract class BaseEmulatorWindow {
 				"saves", "save0.sav", true, false, MACHINE_SAVE_FILE_EXTENSIONS);
 		
 		if (filename != null) {
+			OutputStream fos = null;
 			try {
 				ISettingStorage storage = new XMLSettingStorage(STATE);
-				storage.save(new File(filename), settings);
+				fos = new BufferedOutputStream(new FileOutputStream(filename));
+				storage.save(fos, settings);
 			} catch (Throwable e1) {
 				showErrorMessage("Save error", 
 						"Failed to save machine state:\n\n" + e1.getMessage());
+			} finally {
+				if (fos != null) {
+					try {
+						fos.close();
+					} catch (IOException e) {
+						// ignore
+					}
+				}
 			}
 		}
 	}

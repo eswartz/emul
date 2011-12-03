@@ -3,8 +3,9 @@
  */
 package org.ejs.coffee.core.settings;
 
-import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * Interface for reading and writing settings to files
@@ -14,6 +15,6 @@ import java.io.IOException;
 public interface ISettingStorage {
 	void setObjectHandler(ISettingStorageObjectHandler handler);
 	
-	ISettingSection load(File file) throws IOException;
-	void save(File file, ISettingSection section) throws IOException;
+	ISettingSection load(InputStream inputStream) throws IOException;
+	void save(OutputStream outputStream, ISettingSection section) throws IOException;
 }
