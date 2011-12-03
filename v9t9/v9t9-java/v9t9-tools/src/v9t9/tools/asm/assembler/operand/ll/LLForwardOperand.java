@@ -3,9 +3,9 @@
  */
 package v9t9.tools.asm.assembler.operand.ll;
 
-import v9t9.engine.asm.ResolveException;
-import v9t9.engine.cpu.IInstruction;
-import v9t9.engine.cpu.MachineOperand;
+import v9t9.common.asm.IInstruction;
+import v9t9.common.asm.IMachineOperand;
+import v9t9.common.asm.ResolveException;
 import v9t9.tools.asm.assembler.IAssembler;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 
@@ -58,7 +58,7 @@ public class LLForwardOperand extends LLOperand {
 	 * @see v9t9.tools.asm.operand.ll.LLOperand#createMachineOperand()
 	 */
 	@Override
-	public MachineOperand createMachineOperand(IAsmMachineOperandFactory opFactory) throws ResolveException {
+	public IMachineOperand createMachineOperand(IAsmMachineOperandFactory opFactory) throws ResolveException {
 		throw new ResolveException(this, "Unresolved forward reference: " + getOriginal());
 	}
 	

@@ -8,9 +8,9 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 
-import v9t9.engine.asm.ResolveException;
-import v9t9.engine.cpu.IInstruction;
-import v9t9.engine.cpu.Inst9900;
+import v9t9.common.asm.IInstruction;
+import v9t9.common.asm.ResolveException;
+import v9t9.machine.ti99.cpu.Inst9900;
 import v9t9.tools.asm.assembler.Assembler;
 import v9t9.tools.asm.assembler.HLInstruction;
 import v9t9.tools.asm.assembler.LLInstruction;

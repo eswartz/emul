@@ -3,7 +3,7 @@
  */
 package v9t9.tools.asm.assembler;
 
-import org.ejs.coffee.core.utils.HexUtils;
+import v9t9.base.utils.HexUtils;
 
 /**
  * @author ejs

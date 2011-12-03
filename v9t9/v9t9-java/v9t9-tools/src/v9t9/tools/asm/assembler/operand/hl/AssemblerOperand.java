@@ -3,9 +3,9 @@
  */
 package v9t9.tools.asm.assembler.operand.hl;
 
-import v9t9.engine.asm.ResolveException;
-import v9t9.engine.cpu.IInstruction;
-import v9t9.engine.cpu.Operand;
+import v9t9.common.asm.IInstruction;
+import v9t9.common.asm.IOperand;
+import v9t9.common.asm.ResolveException;
 import v9t9.tools.asm.assembler.IAssembler;
 import v9t9.tools.asm.assembler.operand.ll.LLOperand;
 
@@ -14,7 +14,7 @@ import v9t9.tools.asm.assembler.operand.ll.LLOperand;
  * @author ejs
  *
  */
-public interface AssemblerOperand extends Operand {
+public interface AssemblerOperand extends IOperand {
 	/** 
 	 * Resolve self to an LLOperand
 	 * @param inst

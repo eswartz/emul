@@ -2,9 +2,9 @@ package v9t9.tests.inst9900;
 
 import java.util.Collection;
 
-import v9t9.engine.asm.Block;
-import v9t9.engine.asm.Routine;
-import v9t9.engine.asm.TopDownPhase;
+import v9t9.common.asm.Block;
+import v9t9.common.asm.Routine;
+import v9t9.machine.ti99.asm.TopDownPhase;
 import v9t9.tools.asm.assembler.ParseException;
 
 public class BaseTopDownTest9900 extends BaseTopDownPhaseTest9900 {

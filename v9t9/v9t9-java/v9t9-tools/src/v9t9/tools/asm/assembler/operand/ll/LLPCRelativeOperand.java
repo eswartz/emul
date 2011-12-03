@@ -3,18 +3,18 @@
  */
 package v9t9.tools.asm.assembler.operand.ll;
 
-import org.ejs.coffee.core.utils.HexUtils;
 
-import v9t9.engine.asm.ResolveException;
-import v9t9.engine.cpu.MachineOperand;
-import v9t9.engine.cpu.Operand;
+import v9t9.base.utils.HexUtils;
+import v9t9.common.asm.IMachineOperand;
+import v9t9.common.asm.IOperand;
+import v9t9.common.asm.ResolveException;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 
 /**
  * @author Ed
  *
  */
-public class LLPCRelativeOperand extends LLNonImmediateOperand implements Operand {
+public class LLPCRelativeOperand extends LLNonImmediateOperand implements IOperand {
 
 	int offset;
 	
@@ -78,7 +78,7 @@ public class LLPCRelativeOperand extends LLNonImmediateOperand implements Operan
 	}
 
 	@Override
-	public MachineOperand createMachineOperand(IAsmMachineOperandFactory opFactory) throws ResolveException {
+	public IMachineOperand createMachineOperand(IAsmMachineOperandFactory opFactory) throws ResolveException {
 		return opFactory.createPCRelativeOperand(this);
 	}
 }

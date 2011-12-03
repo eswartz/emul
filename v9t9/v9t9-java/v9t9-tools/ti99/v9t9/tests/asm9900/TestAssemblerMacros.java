@@ -2,7 +2,7 @@ package v9t9.tests.asm9900;
 
 import java.util.List;
 
-import v9t9.engine.cpu.IInstruction;
+import v9t9.common.asm.IInstruction;
 import v9t9.tests.inst9900.BaseTest9900;
 import v9t9.tools.asm.assembler.ContentEntry;
 import v9t9.tools.asm.assembler.Equate;

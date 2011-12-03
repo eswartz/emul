@@ -6,7 +6,7 @@ package v9t9.tools.asm.assembler;
 import java.util.ArrayList;
 import java.util.List;
 
-import v9t9.engine.cpu.IInstruction;
+import v9t9.common.asm.IInstruction;
 
 /**
  * This class parses instructions one at a time.

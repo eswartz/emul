@@ -8,19 +8,19 @@ package v9t9.tests.inst9900;
 
 import java.util.Set;
 
-import v9t9.engine.asm.Block;
-import v9t9.engine.asm.ContextSwitchRoutine;
-import v9t9.engine.asm.HighLevelInstruction;
-import v9t9.engine.asm.IHighLevelInstruction;
-import v9t9.engine.asm.LabelListOperand;
-import v9t9.engine.asm.LinkedRoutine;
-import v9t9.engine.asm.Routine;
-import v9t9.engine.asm.RoutineOperand;
-import v9t9.engine.cpu.BaseMachineOperand;
-import v9t9.engine.cpu.Inst9900;
-import v9t9.engine.cpu.MachineOperand;
-import v9t9.engine.cpu.MachineOperand9900;
+import v9t9.common.asm.BaseMachineOperand;
+import v9t9.common.asm.Block;
+import v9t9.common.asm.IHighLevelInstruction;
+import v9t9.common.asm.IMachineOperand;
+import v9t9.common.asm.LabelListOperand;
+import v9t9.common.asm.Routine;
+import v9t9.common.asm.RoutineOperand;
 import v9t9.engine.memory.DiskMemoryEntry;
+import v9t9.machine.ti99.asm.ContextSwitchRoutine;
+import v9t9.machine.ti99.asm.HighLevelInstruction;
+import v9t9.machine.ti99.asm.LinkedRoutine;
+import v9t9.machine.ti99.cpu.Inst9900;
+import v9t9.machine.ti99.cpu.MachineOperand9900;
 import v9t9.tools.asm.assembler.ParseException;
 
 
@@ -323,7 +323,7 @@ public class TestTopDown1_9900 extends BaseTopDownTest9900
         phase.run();
         assertEquals(1, routine.getSpannedBlocks().size());
         
-        assertTrue(getSingleEntry(routine).getLast().getInst().getOp1() instanceof MachineOperand);
+        assertTrue(getSingleEntry(routine).getLast().getInst().getOp1() instanceof IMachineOperand);
         validateBlocks(routine.getSpannedBlocks());
     }
     public void testJumpTable0b() throws Exception {

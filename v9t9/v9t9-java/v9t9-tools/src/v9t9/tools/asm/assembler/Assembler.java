@@ -18,16 +18,16 @@ import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.ejs.coffee.core.utils.HexUtils;
 
-import v9t9.engine.asm.MemoryRanges;
-import v9t9.engine.asm.ResolveException;
-import v9t9.engine.cpu.IInstruction;
-import v9t9.engine.cpu.RawInstruction;
+import v9t9.base.utils.HexUtils;
+import v9t9.common.asm.IInstruction;
+import v9t9.common.asm.MemoryRanges;
+import v9t9.common.asm.RawInstruction;
+import v9t9.common.asm.ResolveException;
+import v9t9.common.memory.MemoryDomain;
+import v9t9.common.memory.MemoryEntry;
+import v9t9.common.memory.StockRamArea;
 import v9t9.engine.memory.DiskMemoryEntry;
-import v9t9.engine.memory.MemoryDomain;
-import v9t9.engine.memory.MemoryEntry;
-import v9t9.engine.memory.StockRamArea;
 import v9t9.tools.asm.assembler.AssemblerError;
 import v9t9.tools.asm.assembler.BaseAssemblerInstruction;
 import v9t9.tools.asm.assembler.ConditionalInstructionParserStage;

@@ -8,9 +8,9 @@ package v9t9.tools.asm.decomp;
 
 
 
-import v9t9.emulator.runtime.cpu.CpuState9900;
-import v9t9.engine.memory.MemoryDomain;
+import v9t9.common.memory.MemoryDomain;
 import v9t9.engine.memory.StockMemoryModel;
+import v9t9.machine.ti99.cpu.CpuState9900;
 import v9t9.tools.asm.assembler.inst9900.AsmInstructionFactory9900;
 
 public class Decompiler9900 extends Decompiler {

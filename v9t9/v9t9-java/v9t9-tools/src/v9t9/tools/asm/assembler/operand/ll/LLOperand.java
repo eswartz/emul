@@ -3,9 +3,9 @@
  */
 package v9t9.tools.asm.assembler.operand.ll;
 
-import v9t9.engine.asm.ResolveException;
-import v9t9.engine.cpu.IInstruction;
-import v9t9.engine.cpu.MachineOperand;
+import v9t9.common.asm.IInstruction;
+import v9t9.common.asm.IMachineOperand;
+import v9t9.common.asm.ResolveException;
 import v9t9.tools.asm.assembler.IAssembler;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.hl.ConstPoolRefOperand;
@@ -68,7 +68,7 @@ public abstract class LLOperand implements AssemblerOperand {
      * @param opFactory TODO
      * @throws ResolveException if the operand cannot be resolved.
      */
-	public abstract MachineOperand createMachineOperand(IAsmMachineOperandFactory opFactory) throws ResolveException;
+	public abstract IMachineOperand createMachineOperand(IAsmMachineOperandFactory opFactory) throws ResolveException;
 	
 	public LLOperand resolve(IAssembler assembler, IInstruction inst) throws ResolveException {
 		if (original != null)

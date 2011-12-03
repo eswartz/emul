@@ -62,11 +62,11 @@ POTFILES
 v9t9/v9t9-c/v9t9/source/vdpdrawrowtext.c
 v9t9/v9t9-c/v9t9/source/vdpdrawrow.c
 .cproject
-.project
 v9t9/v9t9-java/v9t9-common/bin
 v9t9/v9t9-java/v9t9-server/bin
 v9t9/v9t9-java/v9t9-gui/bin
 v9t9/v9t9-java/v9t9-base/bin
 v9t9/v9t9-java/v9t9-machines/bin
+v9t9/v9t9-java/v9t9-tools/bin
 *.class
 

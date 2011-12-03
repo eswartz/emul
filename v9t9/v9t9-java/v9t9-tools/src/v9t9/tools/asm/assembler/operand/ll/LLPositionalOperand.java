@@ -3,8 +3,8 @@
  */
 package v9t9.tools.asm.assembler.operand.ll;
 
-import v9t9.engine.asm.ResolveException;
-import v9t9.engine.cpu.MachineOperand;
+import v9t9.common.asm.IMachineOperand;
+import v9t9.common.asm.ResolveException;
 
 final class LLPositionalOperand extends LLOperand {
 	private final int position;
@@ -48,7 +48,7 @@ final class LLPositionalOperand extends LLOperand {
 
 
 	@Override
-	public MachineOperand createMachineOperand(
+	public IMachineOperand createMachineOperand(
 			IAsmMachineOperandFactory opFactory) throws ResolveException {
 		throw new ResolveException(this, "should be replaced");
 	}

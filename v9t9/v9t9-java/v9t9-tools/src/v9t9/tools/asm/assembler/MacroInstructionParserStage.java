@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
-import v9t9.engine.cpu.IInstruction;
+import v9t9.common.asm.IInstruction;
 
 /**
  * Parse macro uses

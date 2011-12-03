@@ -11,10 +11,10 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Collection;
 
-import org.ejs.coffee.core.utils.HexUtils;
 
-import v9t9.engine.asm.MemoryRange;
-import v9t9.engine.asm.TopDownPhase;
+import v9t9.base.utils.HexUtils;
+import v9t9.common.asm.MemoryRange;
+import v9t9.machine.ti99.asm.TopDownPhase;
 
 public class Disassemble {
 

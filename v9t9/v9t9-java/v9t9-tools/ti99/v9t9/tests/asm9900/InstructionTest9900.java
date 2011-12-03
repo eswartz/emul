@@ -7,13 +7,13 @@
 package v9t9.tests.asm9900;
 
 import junit.framework.TestCase;
-import v9t9.emulator.runtime.cpu.CpuState9900;
-import v9t9.engine.cpu.Inst9900;
-import v9t9.engine.cpu.InstTable9900;
-import v9t9.engine.cpu.InstructionWorkBlock9900;
-import v9t9.engine.cpu.MachineOperand9900;
-import v9t9.engine.cpu.RawInstruction;
-import v9t9.engine.memory.MemoryDomain;
+import v9t9.common.asm.RawInstruction;
+import v9t9.common.memory.MemoryDomain;
+import v9t9.machine.ti99.cpu.CpuState9900;
+import v9t9.machine.ti99.cpu.Inst9900;
+import v9t9.machine.ti99.cpu.InstTable9900;
+import v9t9.machine.ti99.cpu.InstructionWorkBlock9900;
+import v9t9.machine.ti99.cpu.MachineOperand9900;
 
 /**
  * @author ejs

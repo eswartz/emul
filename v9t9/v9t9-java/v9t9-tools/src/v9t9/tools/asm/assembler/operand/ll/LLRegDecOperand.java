@@ -3,15 +3,15 @@
  */
 package v9t9.tools.asm.assembler.operand.ll;
 
-import v9t9.engine.asm.ResolveException;
-import v9t9.engine.cpu.MachineOperand;
-import v9t9.engine.cpu.Operand;
+import v9t9.common.asm.IMachineOperand;
+import v9t9.common.asm.IOperand;
+import v9t9.common.asm.ResolveException;
 
 /**
  * @author Ed
  *
  */
-public class LLRegDecOperand extends LLNonImmediateOperand implements Operand {
+public class LLRegDecOperand extends LLNonImmediateOperand implements IOperand {
 
 	int register;
 	
@@ -70,7 +70,7 @@ public class LLRegDecOperand extends LLNonImmediateOperand implements Operand {
 	}
 
 	@Override
-	public MachineOperand createMachineOperand(IAsmMachineOperandFactory opFactory) throws ResolveException {
+	public IMachineOperand createMachineOperand(IAsmMachineOperandFactory opFactory) throws ResolveException {
 		return opFactory.createRegDecOperand(this);
 	}
 }

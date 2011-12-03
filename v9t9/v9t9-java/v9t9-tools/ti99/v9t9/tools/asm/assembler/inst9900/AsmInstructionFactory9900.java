@@ -3,13 +3,13 @@
  */
 package v9t9.tools.asm.assembler.inst9900;
 
-import v9t9.engine.asm.InstructionFactory9900;
-import v9t9.engine.asm.ResolveException;
-import v9t9.engine.cpu.InstPattern9900;
-import v9t9.engine.cpu.InstTable9900;
-import v9t9.engine.cpu.InstTableCommon;
-import v9t9.engine.cpu.MachineOperand9900;
-import v9t9.engine.cpu.RawInstruction;
+import v9t9.common.asm.InstTableCommon;
+import v9t9.common.asm.RawInstruction;
+import v9t9.common.asm.ResolveException;
+import v9t9.machine.ti99.asm.InstructionFactory9900;
+import v9t9.machine.ti99.cpu.InstPattern9900;
+import v9t9.machine.ti99.cpu.InstTable9900;
+import v9t9.machine.ti99.cpu.MachineOperand9900;
 import v9t9.tools.asm.assembler.IAsmInstructionFactory;
 import v9t9.tools.asm.assembler.LLInstruction;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;

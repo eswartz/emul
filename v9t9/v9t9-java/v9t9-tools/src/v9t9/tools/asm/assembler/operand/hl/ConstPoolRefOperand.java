@@ -3,9 +3,9 @@
  */
 package v9t9.tools.asm.assembler.operand.hl;
 
-import v9t9.engine.asm.ResolveException;
-import v9t9.engine.cpu.ICPUInstruction;
-import v9t9.engine.cpu.IInstruction;
+import v9t9.common.asm.ICpuInstruction;
+import v9t9.common.asm.IInstruction;
+import v9t9.common.asm.ResolveException;
 import v9t9.tools.asm.assembler.IAssembler;
 import v9t9.tools.asm.assembler.operand.ll.LLForwardOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLImmedOperand;
@@ -54,8 +54,8 @@ public class ConstPoolRefOperand extends ImmediateOperand {
 		
 		int value = op.getImmediate();
 		AssemblerOperand addr;
-		boolean isByte = inst instanceof ICPUInstruction &&
-			assembler.getInstructionFactory().isByteInst(((ICPUInstruction) inst).getInst());
+		boolean isByte = inst instanceof ICpuInstruction &&
+			assembler.getInstructionFactory().isByteInst(((ICpuInstruction) inst).getInst());
 		if (isByte) {
 			addr = assembler.getConstPool().allocateByte(value);
 		} else {

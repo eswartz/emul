@@ -8,12 +8,12 @@ import java.util.IdentityHashMap;
 import java.util.List;
 
 
-import v9t9.engine.asm.ResolveException;
-import v9t9.engine.cpu.IInstruction;
-import v9t9.engine.cpu.InstTable9900;
-import v9t9.engine.cpu.RawInstruction;
-import v9t9.engine.memory.MemoryEntry;
-import v9t9.engine.memory.StockRamArea;
+import v9t9.common.asm.IInstruction;
+import v9t9.common.asm.RawInstruction;
+import v9t9.common.asm.ResolveException;
+import v9t9.common.memory.MemoryEntry;
+import v9t9.common.memory.StockRamArea;
+import v9t9.machine.ti99.cpu.InstTable9900;
 import v9t9.tools.asm.assembler.Assembler;
 import v9t9.tools.asm.assembler.AssemblerError;
 import v9t9.tools.asm.assembler.Equate;

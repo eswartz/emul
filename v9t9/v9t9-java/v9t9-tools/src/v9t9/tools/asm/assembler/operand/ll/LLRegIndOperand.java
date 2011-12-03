@@ -3,16 +3,16 @@
  */
 package v9t9.tools.asm.assembler.operand.ll;
 
-import v9t9.engine.asm.ResolveException;
-import v9t9.engine.cpu.MachineOperand;
-import v9t9.engine.cpu.Operand;
+import v9t9.common.asm.IMachineOperand;
+import v9t9.common.asm.IOperand;
+import v9t9.common.asm.ResolveException;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 
 /**
  * @author Ed
  *
  */
-public class LLRegIndOperand extends LLOperand implements Operand {
+public class LLRegIndOperand extends LLOperand implements IOperand {
 
 	int register;
 	
@@ -94,7 +94,7 @@ public class LLRegIndOperand extends LLOperand implements Operand {
 	}
 	
 	@Override
-	public MachineOperand createMachineOperand(IAsmMachineOperandFactory opFactory) throws ResolveException {
+	public IMachineOperand createMachineOperand(IAsmMachineOperandFactory opFactory) throws ResolveException {
 		return opFactory.createRegIndOperand(this);
 	}
 }

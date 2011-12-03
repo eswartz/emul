@@ -7,9 +7,9 @@
 package v9t9.tests.asm9900;
 
 import junit.framework.TestCase;
-import v9t9.engine.asm.ResolveException;
-import v9t9.engine.cpu.BaseMachineOperand;
-import v9t9.engine.cpu.MachineOperand9900;
+import v9t9.common.asm.BaseMachineOperand;
+import v9t9.common.asm.ResolveException;
+import v9t9.machine.ti99.cpu.MachineOperand9900;
 import v9t9.tools.asm.assembler.AssemblerTokenizer;
 import v9t9.tools.asm.assembler.ParseException;
 import v9t9.tools.asm.assembler.inst9900.MachineOperandFactory9900;

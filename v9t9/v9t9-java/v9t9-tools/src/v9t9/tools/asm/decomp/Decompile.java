@@ -14,9 +14,9 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.ejs.coffee.core.utils.HexUtils;
 
-import v9t9.engine.asm.Phase;
+import v9t9.base.utils.HexUtils;
+import v9t9.machine.ti99.asm.Phase;
 
 public class Decompile {
 

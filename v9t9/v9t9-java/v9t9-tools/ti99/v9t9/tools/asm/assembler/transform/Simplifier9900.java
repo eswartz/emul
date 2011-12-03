@@ -6,9 +6,9 @@ package v9t9.tools.asm.assembler.transform;
 import java.util.List;
 import java.util.ListIterator;
 
-import v9t9.engine.cpu.IInstruction;
-import v9t9.engine.cpu.Inst9900;
-import v9t9.engine.cpu.InstTableCommon;
+import v9t9.common.asm.IInstruction;
+import v9t9.common.asm.InstTableCommon;
+import v9t9.machine.ti99.cpu.Inst9900;
 import v9t9.tools.asm.assembler.LLInstruction;
 import v9t9.tools.asm.assembler.operand.ll.LLOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLRegIndOperand;

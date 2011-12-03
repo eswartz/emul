@@ -3,8 +3,8 @@
  */
 package v9t9.tools.asm.assembler.operand.ll;
 
-import v9t9.engine.asm.ResolveException;
-import v9t9.engine.cpu.MachineOperand;
+import v9t9.common.asm.IMachineOperand;
+import v9t9.common.asm.ResolveException;
 
 
 /**
@@ -70,7 +70,7 @@ public class LLRegisterOperand extends LLNonImmediateOperand {
 
 
 	@Override
-	public MachineOperand createMachineOperand(IAsmMachineOperandFactory opFactory) throws ResolveException {
+	public IMachineOperand createMachineOperand(IAsmMachineOperandFactory opFactory) throws ResolveException {
 		return opFactory.createRegisterOperand(this);
 	}
 

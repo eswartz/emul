@@ -3,18 +3,18 @@
  */
 package v9t9.tools.asm.assembler;
 
-import v9t9.engine.asm.IInstructionFactory;
-import v9t9.engine.asm.ResolveException;
-import v9t9.engine.cpu.ICPUInstruction;
-import v9t9.engine.cpu.IInstruction;
-import v9t9.engine.cpu.RawInstruction;
+import v9t9.common.asm.ICpuInstruction;
+import v9t9.common.asm.IInstruction;
+import v9t9.common.asm.IInstructionFactory;
+import v9t9.common.asm.RawInstruction;
+import v9t9.common.asm.ResolveException;
 import v9t9.tools.asm.assembler.operand.ll.LLOperand;
 
 /**
  * @author Ed
  *
  */
-public class LLInstruction extends BaseAssemblerInstruction implements ICPUInstruction {
+public class LLInstruction extends BaseAssemblerInstruction implements ICpuInstruction {
 	private final IInstructionFactory factory;
 
 	public LLInstruction(IInstructionFactory factory) {

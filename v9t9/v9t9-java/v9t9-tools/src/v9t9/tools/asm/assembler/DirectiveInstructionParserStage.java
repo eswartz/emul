@@ -9,8 +9,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import v9t9.engine.cpu.IInstruction;
-import v9t9.engine.cpu.Operand;
+import v9t9.common.asm.IInstruction;
+import v9t9.common.asm.IOperand;
 import v9t9.tools.asm.assembler.directive.AorgDirective;
 import v9t9.tools.asm.assembler.directive.BssDirective;
 import v9t9.tools.asm.assembler.directive.ConstPoolDirective;
@@ -69,9 +69,9 @@ public class DirectiveInstructionParserStage implements IInstructionParserStage 
 			return null;
 		
 		int cnt = info.argNum;
-		List<Operand> ops = new ArrayList<Operand>();
+		List<IOperand> ops = new ArrayList<IOperand>();
 		while (cnt != 0) {
-			Operand op = operandParser.parse(tokenizer);
+			IOperand op = operandParser.parse(tokenizer);
 			ops.add(op);
 			if (cnt > 0) {
 				cnt--;

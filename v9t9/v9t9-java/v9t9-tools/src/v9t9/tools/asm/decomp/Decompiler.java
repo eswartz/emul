@@ -8,21 +8,21 @@ import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.ejs.coffee.core.utils.HexUtils;
 
-import v9t9.emulator.runtime.cpu.CpuState;
-import v9t9.engine.HighLevelCodeInfo;
-import v9t9.engine.asm.ICodeProvider;
-import v9t9.engine.asm.IInstructionFactory;
-import v9t9.engine.asm.Phase;
-import v9t9.engine.asm.TopDownPhase;
+import v9t9.base.utils.HexUtils;
+import v9t9.common.asm.ICodeProvider;
+import v9t9.common.asm.IInstructionFactory;
+import v9t9.common.cpu.ICpuState;
+import v9t9.common.memory.Memory;
+import v9t9.common.memory.MemoryDomain;
+import v9t9.common.memory.MemoryEntry;
+import v9t9.common.memory.MemoryModel;
 import v9t9.engine.files.NativeFile;
 import v9t9.engine.files.NativeFileFactory;
-import v9t9.engine.memory.Memory;
-import v9t9.engine.memory.MemoryDomain;
-import v9t9.engine.memory.MemoryEntry;
-import v9t9.engine.memory.MemoryModel;
 import v9t9.engine.memory.NativeFileMemoryEntry;
+import v9t9.machine.ti99.asm.HighLevelCodeInfo;
+import v9t9.machine.ti99.asm.Phase;
+import v9t9.machine.ti99.asm.TopDownPhase;
 
 /**
  * @author ejs
@@ -35,12 +35,12 @@ public class Decompiler implements ICodeProvider {
 	protected MemoryDomain consoleMemory;
 	protected DecompileOptions options;
 	protected HighLevelCodeInfo highLevel;
-	protected CpuState state;
+	protected ICpuState state;
 
 	/**
 	 * 
 	 */
-	public Decompiler(MemoryModel model, IInstructionFactory instructionFactory, CpuState state) {
+	public Decompiler(MemoryModel model, IInstructionFactory instructionFactory, ICpuState state) {
 		super();
 		this.model = model;
 		this.state = state;

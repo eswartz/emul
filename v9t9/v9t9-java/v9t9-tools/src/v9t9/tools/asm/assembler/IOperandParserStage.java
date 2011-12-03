@@ -3,7 +3,7 @@
  */
 package v9t9.tools.asm.assembler;
 
-import v9t9.engine.cpu.Operand;
+import v9t9.common.asm.IOperand;
 
 /**
  * Implement an operand parser attempt.  
@@ -19,5 +19,5 @@ public interface IOperandParserStage {
 	 * @return an operand
 	 * @throws ParseException
 	 */
-	Operand parse(AssemblerTokenizer tokenizer) throws ParseException;
+	IOperand parse(AssemblerTokenizer tokenizer) throws ParseException;
 }

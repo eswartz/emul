@@ -6,7 +6,7 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-base"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-machines"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-server"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-engine"/>
 	<classpathentry kind="lib" path="/v9t9-base/libs/gnu-getopt-1.0.11.jar"/>
 	<classpathentry kind="lib" path="/v9t9-base/libs/org.junit_4.8.1.v4_8_1_v20100427-1100/junit.jar"/>
 	<classpathentry kind="output" path="bin"/>

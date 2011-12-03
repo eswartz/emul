@@ -3,7 +3,7 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-common"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-server"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-engine"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/SWT"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-base"/>
 	<classpathentry kind="lib" path="/v9t9-base/libs/swt/org.eclipse.core.commands_3.6.0.I20100512-1500.jar"/>
@@ -43,5 +43,6 @@
 	<classpathentry kind="lib" path="/v9t9-base/libs/orbit/plugins/org.w3c.dom.smil_1.0.0.v200806040011.jar"/>
 	<classpathentry kind="lib" path="/v9t9-base/libs/orbit/plugins/org.w3c.dom.smil_1.0.1.v200903091627.jar"/>
 	<classpathentry kind="lib" path="/v9t9-base/libs/orbit/plugins/org.w3c.dom.svg_1.1.0.v201011041433.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-server"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

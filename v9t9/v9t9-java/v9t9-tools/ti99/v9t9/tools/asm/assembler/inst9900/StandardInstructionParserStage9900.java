@@ -3,16 +3,16 @@
  */
 package v9t9.tools.asm.assembler.inst9900;
 
-import static v9t9.engine.cpu.InstPattern9900.CNT;
-import static v9t9.engine.cpu.InstPattern9900.GEN;
-import static v9t9.engine.cpu.InstPattern9900.IMM;
-import static v9t9.engine.cpu.InstPattern9900.NONE;
-import static v9t9.engine.cpu.InstPattern9900.OFF;
-import static v9t9.engine.cpu.InstPattern9900.REG;
-import v9t9.engine.cpu.IInstruction;
-import v9t9.engine.cpu.Inst9900;
-import v9t9.engine.cpu.InstPattern9900;
-import v9t9.engine.cpu.InstTable9900;
+import static v9t9.machine.ti99.cpu.InstPattern9900.CNT;
+import static v9t9.machine.ti99.cpu.InstPattern9900.GEN;
+import static v9t9.machine.ti99.cpu.InstPattern9900.IMM;
+import static v9t9.machine.ti99.cpu.InstPattern9900.NONE;
+import static v9t9.machine.ti99.cpu.InstPattern9900.OFF;
+import static v9t9.machine.ti99.cpu.InstPattern9900.REG;
+import v9t9.common.asm.IInstruction;
+import v9t9.machine.ti99.cpu.Inst9900;
+import v9t9.machine.ti99.cpu.InstPattern9900;
+import v9t9.machine.ti99.cpu.InstTable9900;
 import v9t9.tools.asm.assembler.AssemblerInstruction;
 import v9t9.tools.asm.assembler.AssemblerTokenizer;
 import v9t9.tools.asm.assembler.HLInstruction;

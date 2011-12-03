@@ -6,7 +6,7 @@ package v9t9.tools.asm.assembler.inst9900;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import v9t9.engine.cpu.Operand;
+import v9t9.common.asm.IOperand;
 import v9t9.tools.asm.assembler.AssemblerTokenizer;
 import v9t9.tools.asm.assembler.IOperandParserStage;
 import v9t9.tools.asm.assembler.ParseException;
@@ -43,7 +43,7 @@ public class MachineOperandParserStage9900 implements IOperandParserStage {
             "\\$(?:([+-])" + IMMED + ")?"
             );
 
-    public Operand parse(AssemblerTokenizer tokenizer) throws ParseException {
+    public IOperand parse(AssemblerTokenizer tokenizer) throws ParseException {
     	StringBuilder builder = new StringBuilder();
     	int t ;
     	while ((t = tokenizer.nextToken()) != AssemblerTokenizer.EOF && t != ',') {
@@ -53,7 +53,7 @@ public class MachineOperandParserStage9900 implements IOperandParserStage {
     		tokenizer.pushBack();
     	return parse(builder.toString());
     }
-	private Operand parse(String string) throws ParseException {
+	private IOperand parse(String string) throws ParseException {
 		//int type = 0;
 		int val = 0;
 		short immed = 0;

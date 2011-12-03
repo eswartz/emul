@@ -5,8 +5,8 @@ package v9t9.tools.asm.assembler.directive;
 
 import java.util.List;
 
-import v9t9.engine.asm.ResolveException;
-import v9t9.engine.cpu.IInstruction;
+import v9t9.common.asm.IInstruction;
+import v9t9.common.asm.ResolveException;
 import v9t9.tools.asm.assembler.IAsmInstructionFactory;
 import v9t9.tools.asm.assembler.IAssembler;
 import v9t9.tools.asm.assembler.Symbol;

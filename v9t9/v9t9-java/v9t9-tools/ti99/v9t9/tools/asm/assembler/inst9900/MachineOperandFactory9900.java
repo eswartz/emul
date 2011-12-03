@@ -3,9 +3,9 @@
  */
 package v9t9.tools.asm.assembler.inst9900;
 
-import v9t9.engine.asm.ResolveException;
-import v9t9.engine.cpu.MachineOperand;
-import v9t9.engine.cpu.MachineOperand9900;
+import v9t9.common.asm.IMachineOperand;
+import v9t9.common.asm.ResolveException;
+import v9t9.machine.ti99.cpu.MachineOperand9900;
 import v9t9.tools.asm.assembler.operand.ll.IAsmMachineOperandFactory;
 import v9t9.tools.asm.assembler.operand.ll.LLAddrOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLCountOperand;
@@ -29,7 +29,7 @@ public class MachineOperandFactory9900 implements IAsmMachineOperandFactory {
 	 * @see v9t9.tools.asm.assembler.operand.ll.IMachineOperandFactory#createAddressOperand(v9t9.tools.asm.assembler.operand.ll.LLAddrOperand)
 	 */
 	@Override
-	public MachineOperand createAddressOperand(LLAddrOperand op)
+	public IMachineOperand createAddressOperand(LLAddrOperand op)
 			throws ResolveException {
 		return MachineOperand9900.createGeneralOperand(
 				MachineOperand9900.OP_ADDR, (short) 0, 
@@ -40,7 +40,7 @@ public class MachineOperandFactory9900 implements IAsmMachineOperandFactory {
 	 * @see v9t9.tools.asm.assembler.operand.ll.IMachineOperandFactory#createCountOperand(v9t9.tools.asm.assembler.operand.ll.LLCountOperand)
 	 */
 	@Override
-	public MachineOperand createCountOperand(LLCountOperand op)
+	public IMachineOperand createCountOperand(LLCountOperand op)
 			throws ResolveException {
 		return MachineOperand9900.createGeneralOperand(MachineOperand9900.OP_CNT, 
 				(short) op.getCount());
@@ -50,7 +50,7 @@ public class MachineOperandFactory9900 implements IAsmMachineOperandFactory {
 	 * @see v9t9.tools.asm.assembler.operand.ll.IMachineOperandFactory#createEmptyOperand()
 	 */
 	@Override
-	public MachineOperand createEmptyOperand() {
+	public IMachineOperand createEmptyOperand() {
 		return MachineOperand9900.createEmptyOperand();
 	}
 	
@@ -58,7 +58,7 @@ public class MachineOperandFactory9900 implements IAsmMachineOperandFactory {
 	 * @see v9t9.tools.asm.assembler.operand.ll.IMachineOperandFactory#createRegisterOperand(v9t9.tools.asm.assembler.operand.ll.LLRegisterOperand)
 	 */
 	@Override
-	public MachineOperand createRegisterOperand(LLRegisterOperand op)
+	public IMachineOperand createRegisterOperand(LLRegisterOperand op)
 			throws ResolveException {
 		return MachineOperand9900.createGeneralOperand(MachineOperand9900.OP_REG, 
 				(short) op.getRegister());
@@ -68,7 +68,7 @@ public class MachineOperandFactory9900 implements IAsmMachineOperandFactory {
 	 * @see v9t9.tools.asm.assembler.operand.ll.IMachineOperandFactory#createRegIndOperand(v9t9.tools.asm.assembler.operand.ll.LLRegIndOperand)
 	 */
 	@Override
-	public MachineOperand createRegIndOperand(LLRegIndOperand op)
+	public IMachineOperand createRegIndOperand(LLRegIndOperand op)
 			throws ResolveException {
 		return MachineOperand9900.createGeneralOperand(MachineOperand9900.OP_IND, 
 					(short) op.getRegister());
@@ -78,7 +78,7 @@ public class MachineOperandFactory9900 implements IAsmMachineOperandFactory {
 	 * @see v9t9.tools.asm.assembler.operand.ll.IMachineOperandFactory#createRegIndOperand(v9t9.tools.asm.assembler.operand.ll.LLRegIndOperand)
 	 */
 	@Override
-	public MachineOperand createRegOffsOperand(LLRegOffsOperand op)
+	public IMachineOperand createRegOffsOperand(LLRegOffsOperand op)
 			throws ResolveException {
 		return MachineOperand9900.createGeneralOperand(MachineOperand9900.OP_ADDR, 
 				(short) op.getRegister(), (short) op.getOffset());
@@ -88,14 +88,14 @@ public class MachineOperandFactory9900 implements IAsmMachineOperandFactory {
 	 * @see v9t9.tools.asm.assembler.operand.ll.IMachineOperandFactory#createRegIncOperand(v9t9.tools.asm.assembler.operand.ll.LLRegIncOperand)
 	 */
 	@Override
-	public MachineOperand createRegIncOperand(LLRegIncOperand op)
+	public IMachineOperand createRegIncOperand(LLRegIncOperand op)
 			throws ResolveException {
 		return MachineOperand9900.createGeneralOperand(MachineOperand9900.OP_INC, 
 				(short) op.getRegister());
 	}
 	
 	@Override
-	public MachineOperand createRegDecOperand(LLRegDecOperand op)
+	public IMachineOperand createRegDecOperand(LLRegDecOperand op)
 			throws ResolveException {
 		throw new ResolveException(op, "register decrement not supported");
 	}
@@ -104,7 +104,7 @@ public class MachineOperandFactory9900 implements IAsmMachineOperandFactory {
 	 * @see v9t9.tools.asm.assembler.operand.ll.IMachineOperandFactory#createOffsetOperand(v9t9.tools.asm.assembler.operand.ll.LLOffsetOperand)
 	 */
 	@Override
-	public MachineOperand createOffsetOperand(LLOffsetOperand op)
+	public IMachineOperand createOffsetOperand(LLOffsetOperand op)
 			throws ResolveException {
 		return MachineOperand9900.createGeneralOperand(MachineOperand9900.OP_OFFS_R12, 
 				(short) op.getOffset());
@@ -114,7 +114,7 @@ public class MachineOperandFactory9900 implements IAsmMachineOperandFactory {
 	 * @see v9t9.tools.asm.assembler.operand.ll.IMachineOperandFactory#createJumpOperand(v9t9.tools.asm.assembler.operand.ll.LLJumpOperand)
 	 */
 	@Override
-	public MachineOperand createPCRelativeOperand(LLPCRelativeOperand op)
+	public IMachineOperand createPCRelativeOperand(LLPCRelativeOperand op)
 			throws ResolveException {
 		//MachineOperand9900 mop = MachineOperand9900.createGeneralOperand(
 		//		MachineOperand9900.OP_ADDR, MachineOperand9900.PCREL, (short)op.getOffset());
@@ -127,7 +127,7 @@ public class MachineOperandFactory9900 implements IAsmMachineOperandFactory {
 	 * @see v9t9.tools.asm.assembler.operand.ll.IMachineOperandFactory#createImmedOperand(v9t9.tools.asm.assembler.operand.ll.LLImmedOperand)
 	 */
 	@Override
-	public MachineOperand createImmedOperand(LLImmedOperand op)
+	public IMachineOperand createImmedOperand(LLImmedOperand op)
 			throws ResolveException {
 		return MachineOperand9900.createImmediate(op.getValue());
 	}
@@ -136,7 +136,7 @@ public class MachineOperandFactory9900 implements IAsmMachineOperandFactory {
 	 * @see v9t9.tools.asm.assembler.operand.ll.IMachineOperandFactory#createScaledRegOffsOperand(v9t9.tools.asm.assembler.operand.ll.LLScaledRegOffsOperand)
 	 */
 	@Override
-	public MachineOperand createScaledRegOffsOperand(LLScaledRegOffsOperand op)
+	public IMachineOperand createScaledRegOffsOperand(LLScaledRegOffsOperand op)
 			throws ResolveException {
 		throw new ResolveException(op, "scaled register offset not supported");
 	}

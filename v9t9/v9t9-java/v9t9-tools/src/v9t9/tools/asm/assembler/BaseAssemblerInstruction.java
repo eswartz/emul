@@ -3,11 +3,11 @@
  */
 package v9t9.tools.asm.assembler;
 
-import org.ejs.coffee.core.utils.HexUtils;
 
-import v9t9.engine.asm.ResolveException;
-import v9t9.engine.cpu.BaseInstruction;
-import v9t9.engine.cpu.IInstruction;
+import v9t9.base.utils.HexUtils;
+import v9t9.common.asm.BaseInstruction;
+import v9t9.common.asm.IInstruction;
+import v9t9.common.asm.ResolveException;
 
 /**
  * @author Ed

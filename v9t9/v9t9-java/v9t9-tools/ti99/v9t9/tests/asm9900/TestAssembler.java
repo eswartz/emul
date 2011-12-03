@@ -2,7 +2,7 @@ package v9t9.tests.asm9900;
 
 import java.io.IOException;
 
-import v9t9.engine.cpu.Operand;
+import v9t9.common.asm.IOperand;
 import v9t9.tests.inst9900.BaseTest9900;
 import v9t9.tools.asm.assembler.Assembler;
 import v9t9.tools.asm.assembler.AssemblerOperandParserStage;
@@ -82,9 +82,9 @@ public class TestAssembler extends BaseTest9900 {
 	}
 
 
-	private Operand parseOperand(IOperandParserStage opStage, String string) throws ParseException {
+	private IOperand parseOperand(IOperandParserStage opStage, String string) throws ParseException {
 		AssemblerTokenizer tokenizer = new AssemblerTokenizer(string);
-		Operand op = opStage.parse(tokenizer);
+		IOperand op = opStage.parse(tokenizer);
 		int t = tokenizer.nextToken();
 		if (t != AssemblerTokenizer.EOF)
 			throw new ParseException("Unterminated operand: " + tokenizer.currentToken());
@@ -94,17 +94,17 @@ public class TestAssembler extends BaseTest9900 {
 	private void testBadAsmOp(String string) {
 		try {
 			AssemblerOperandParserStage opStage = new AssemblerOperandParserStage9900(assembler);
-			Operand op = parseOperand(opStage, string);
+			IOperand op = parseOperand(opStage, string);
 			fail("Expected error, got " + op);
 		} catch (ParseException e) {
 			
 		}
 	}
 
-	private void testAsmOp(String string, Operand expOp) throws ParseException, IOException {
+	private void testAsmOp(String string, IOperand expOp) throws ParseException, IOException {
 		AssemblerOperandParserStage opStage = new AssemblerOperandParserStage9900(assembler);
 		System.out.println("AsmOp: " + string);
-		Operand op = parseOperand(opStage, string);
+		IOperand op = parseOperand(opStage, string);
 		assertEquals(expOp, op);
 	}
 }

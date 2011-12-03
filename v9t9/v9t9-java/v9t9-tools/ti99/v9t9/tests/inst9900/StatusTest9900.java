@@ -7,7 +7,7 @@
 package v9t9.tests.inst9900;
 
 import junit.framework.TestCase;
-import v9t9.engine.cpu.Status9900;
+import v9t9.machine.ti99.cpu.Status9900;
 
 /**
  * @author ejs

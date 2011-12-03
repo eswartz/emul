@@ -3,11 +3,11 @@
  */
 package v9t9.tools.asm.assembler;
 
-import v9t9.engine.asm.IInstructionFactory;
-import v9t9.engine.asm.ResolveException;
-import v9t9.engine.cpu.ICPUInstruction;
-import v9t9.engine.cpu.IInstruction;
-import v9t9.engine.cpu.InstTableCommon;
+import v9t9.common.asm.ICpuInstruction;
+import v9t9.common.asm.IInstruction;
+import v9t9.common.asm.IInstructionFactory;
+import v9t9.common.asm.InstTableCommon;
+import v9t9.common.asm.ResolveException;
 import v9t9.tools.asm.assembler.directive.LabelDirective;
 import v9t9.tools.asm.assembler.operand.hl.AssemblerOperand;
 import v9t9.tools.asm.assembler.operand.ll.LLOperand;
@@ -16,7 +16,7 @@ import v9t9.tools.asm.assembler.operand.ll.LLOperand;
  * @author Ed
  *
  */
-public abstract class AssemblerInstruction extends BaseAssemblerInstruction implements ICPUInstruction {
+public abstract class AssemblerInstruction extends BaseAssemblerInstruction implements ICpuInstruction {
 
 	private static final AssemblerOperand[] NO_OPS = new AssemblerOperand[0];
 	private int inst;

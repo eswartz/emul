@@ -6,14 +6,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-import org.ejs.coffee.core.utils.HexUtils;
 
-import v9t9.engine.asm.ResolveException;
-import v9t9.engine.cpu.IInstruction;
-import v9t9.engine.cpu.InstTable9900;
-import v9t9.engine.cpu.MachineOperand9900;
-import v9t9.engine.cpu.Operand;
-import v9t9.engine.cpu.RawInstruction;
+import v9t9.base.utils.HexUtils;
+import v9t9.common.asm.IInstruction;
+import v9t9.common.asm.IOperand;
+import v9t9.common.asm.RawInstruction;
+import v9t9.common.asm.ResolveException;
+import v9t9.machine.ti99.cpu.InstTable9900;
+import v9t9.machine.ti99.cpu.MachineOperand9900;
 import v9t9.tests.inst9900.BaseTest9900;
 import v9t9.tools.asm.assembler.Assembler;
 import v9t9.tools.asm.assembler.AssemblerInstruction;
@@ -332,7 +332,7 @@ public class TestAssembler9900 extends BaseTest9900 {
 	public void testAsmSymbols() throws Exception {
 		AssemblerOperandParserStage opStage = new AssemblerOperandParserStage9900(assembler);
 
-		Operand op = parseOperand(opStage, "@BUFFER(R5)");
+		IOperand op = parseOperand(opStage, "@BUFFER(R5)");
 		Symbol sym = assembler.getSymbolTable().findSymbol("BUFFER");
 		assertNotNull(sym);
 		assertEquals(new RegOffsOperand(new SymbolOperand(sym),
@@ -344,23 +344,23 @@ public class TestAssembler9900 extends BaseTest9900 {
 	private void testBadAsmOp(String string) {
 		try {
 			AssemblerOperandParserStage opStage = new AssemblerOperandParserStage9900(assembler);
-			Operand op = parseOperand(opStage, string);
+			IOperand op = parseOperand(opStage, string);
 			fail("Expected error, got " + op);
 		} catch (ParseException e) {
 			
 		}
 	}
 
-	private void testAsmOp(String string, Operand expOp) throws ParseException, IOException {
+	private void testAsmOp(String string, IOperand expOp) throws ParseException, IOException {
 		AssemblerOperandParserStage opStage = new AssemblerOperandParserStage9900(assembler);
 		System.out.println("AsmOp: " + string);
-		Operand op = parseOperand(opStage, string);
+		IOperand op = parseOperand(opStage, string);
 		assertEquals(expOp, op);
 	}
 
-	private Operand parseOperand(IOperandParserStage opStage, String string) throws ParseException {
+	private IOperand parseOperand(IOperandParserStage opStage, String string) throws ParseException {
 		AssemblerTokenizer tokenizer = new AssemblerTokenizer(string);
-		Operand op = opStage.parse(tokenizer);
+		IOperand op = opStage.parse(tokenizer);
 		int t = tokenizer.nextToken();
 		if (t != AssemblerTokenizer.EOF)
 			throw new ParseException("Unterminated operand: " + tokenizer.currentToken());

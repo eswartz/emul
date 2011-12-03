@@ -9,20 +9,20 @@ package v9t9.tests.inst9900;
 import java.util.Collection;
 import java.util.Map;
 
-import v9t9.emulator.runtime.cpu.CpuState9900;
-import v9t9.engine.HighLevelCodeInfo;
-import v9t9.engine.asm.ICodeProvider;
-import v9t9.engine.asm.IDecompileInfo;
-import v9t9.engine.asm.IHighLevelInstruction;
-import v9t9.engine.asm.MemoryRanges;
-import v9t9.engine.asm.Routine;
-import v9t9.engine.cpu.BaseMachineOperand;
-import v9t9.engine.cpu.InstTableCommon;
-import v9t9.engine.cpu.MachineOperand;
-import v9t9.engine.cpu.RawInstruction;
-import v9t9.engine.memory.MemoryDomain;
-import v9t9.engine.memory.MemoryEntry;
-import v9t9.engine.memory.StockRamArea;
+import v9t9.common.asm.BaseMachineOperand;
+import v9t9.common.asm.ICodeProvider;
+import v9t9.common.asm.IDecompileInfo;
+import v9t9.common.asm.IHighLevelInstruction;
+import v9t9.common.asm.IMachineOperand;
+import v9t9.common.asm.InstTableCommon;
+import v9t9.common.asm.MemoryRanges;
+import v9t9.common.asm.RawInstruction;
+import v9t9.common.asm.Routine;
+import v9t9.common.memory.MemoryDomain;
+import v9t9.common.memory.MemoryEntry;
+import v9t9.common.memory.StockRamArea;
+import v9t9.machine.ti99.asm.HighLevelCodeInfo;
+import v9t9.machine.ti99.cpu.CpuState9900;
 import v9t9.tools.asm.assembler.ParseException;
 import v9t9.tools.asm.assembler.inst9900.AsmInstructionFactory9900;
 
@@ -64,11 +64,11 @@ public abstract class BaseTopDownPhaseTest9900 extends BaseTest9900 implements I
 	        if (inst.getInst() != InstTableCommon.Idata) {
 				pc += 2;
 			}
-	        if (((MachineOperand) inst.getOp1()).hasImmediate()) {
+	        if (((IMachineOperand) inst.getOp1()).hasImmediate()) {
 	            cpu.flatWriteWord(pc, ((BaseMachineOperand) inst.getOp1()).immed);
 	            pc += 2;
 	        }
-	        if (((MachineOperand) inst.getOp2()).hasImmediate()) {
+	        if (((IMachineOperand) inst.getOp2()).hasImmediate()) {
 	            cpu.flatWriteWord(pc, ((BaseMachineOperand) inst.getOp2()).immed);
 	            pc += 2;
 	        }

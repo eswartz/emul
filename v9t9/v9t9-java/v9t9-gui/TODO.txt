@@ -1,0 +1,6 @@
+
+
+-- Dig Dug fails to compile properly
+
+-- Loading *.sav for different machine crashes in SWT
+

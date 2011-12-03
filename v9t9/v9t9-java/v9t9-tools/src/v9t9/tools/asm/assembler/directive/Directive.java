@@ -3,8 +3,8 @@
  */
 package v9t9.tools.asm.assembler.directive;
 
-import v9t9.engine.asm.ResolveException;
-import v9t9.engine.cpu.RawInstruction;
+import v9t9.common.asm.RawInstruction;
+import v9t9.common.asm.ResolveException;
 import v9t9.tools.asm.assembler.BaseAssemblerInstruction;
 import v9t9.tools.asm.assembler.IAsmInstructionFactory;
 

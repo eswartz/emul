@@ -3,8 +3,8 @@
  */
 package v9t9.tools.asm.assembler;
 
-import v9t9.engine.cpu.RawInstruction;
-import v9t9.engine.memory.MemoryDomain;
+import v9t9.common.asm.RawInstruction;
+import v9t9.common.memory.MemoryDomain;
 
 /**
  * @author Ed

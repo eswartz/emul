@@ -9,21 +9,21 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 
-import v9t9.emulator.EmulatorServer;
-import v9t9.emulator.clients.builtin.ClientFactory;
-import v9t9.emulator.clients.builtin.awt.AwtJavaClient;
-import v9t9.emulator.clients.builtin.swt.SwtAwtJavaClient;
-import v9t9.emulator.clients.builtin.swt.SwtJavaClient;
-import v9t9.emulator.clients.builtin.swt.SwtLwjglJavaClient;
-import v9t9.emulator.clients.builtin.video.tms9918a.VdpTMS9918A;
-import v9t9.emulator.hardware.EnhancedCompatibleMachineModel;
-import v9t9.emulator.hardware.EnhancedMachineModel;
-import v9t9.emulator.hardware.F99bMachineModel;
-import v9t9.emulator.hardware.MachineModelFactory;
-import v9t9.emulator.hardware.StandardMachineModel;
-import v9t9.emulator.hardware.StandardMachineV9938Model;
-import v9t9.emulator.hardware.memory.mmio.GplMmio;
-import v9t9.engine.Client;
+import v9t9.engine.client.IClient;
+import v9t9.engine.machine.MachineModelFactory;
+import v9t9.engine.memory.GplMmio;
+import v9t9.engine.video.tms9918a.VdpTMS9918A;
+import v9t9.gui.client.ClientFactory;
+import v9t9.gui.client.awt.AwtJavaClient;
+import v9t9.gui.client.swt.SwtAwtJavaClient;
+import v9t9.gui.client.swt.SwtJavaClient;
+import v9t9.gui.client.swt.SwtLwjglJavaClient;
+import v9t9.machine.f99b.machine.F99bMachineModel;
+import v9t9.machine.ti99.machine.EnhancedCompatibleMachineModel;
+import v9t9.machine.ti99.machine.EnhancedMachineModel;
+import v9t9.machine.ti99.machine.StandardMachineModel;
+import v9t9.machine.ti99.machine.StandardMachineV9938Model;
+import v9t9.server.EmulatorServer;
 
 import com.sun.jna.Native;
 
@@ -112,7 +112,7 @@ public class Emulator {
 					burl = new URL(burlString.substring(0, burlString.indexOf("bin/v9t9")));
 					burl = new URL(burl, "data/");
 				} else {
-					burl = new URL(burlString.substring(0, burlString.indexOf(EmulatorServer.class.getName().replace(".", "/"))));
+					burl = new URL(burlString.substring(0, burlString.indexOf(Emulator.class.getName().replace(".", "/"))));
 				}
 			} catch (MalformedURLException e) {
 				e.printStackTrace();
@@ -185,7 +185,7 @@ public class Emulator {
 			return;
 		}
 		
-		Client client = null;
+		IClient client = null;
 		client = ClientFactory.createClient(
     			clientId, server.getMachine());
 

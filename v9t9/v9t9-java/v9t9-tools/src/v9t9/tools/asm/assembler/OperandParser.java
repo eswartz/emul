@@ -6,7 +6,7 @@ package v9t9.tools.asm.assembler;
 import java.util.ArrayList;
 import java.util.List;
 
-import v9t9.engine.cpu.Operand;
+import v9t9.common.asm.IOperand;
 
 /**
  * Parse a 9900 operand.
@@ -30,10 +30,10 @@ public class OperandParser {
 		stages.add(stage);
 	}
 
-	public Operand parse(AssemblerTokenizer tokenizer) throws ParseException {
+	public IOperand parse(AssemblerTokenizer tokenizer) throws ParseException {
 		TokenizerState state = tokenizer.getState();
 		for (IOperandParserStage stage : stages) {
-			Operand op = stage.parse(tokenizer);
+			IOperand op = stage.parse(tokenizer);
 			if (op != null)
 				return op;
 			tokenizer.setState(state);

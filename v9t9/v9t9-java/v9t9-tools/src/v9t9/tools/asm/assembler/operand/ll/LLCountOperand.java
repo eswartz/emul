@@ -3,10 +3,10 @@
  */
 package v9t9.tools.asm.assembler.operand.ll;
 
-import org.ejs.coffee.core.utils.HexUtils;
 
-import v9t9.engine.asm.ResolveException;
-import v9t9.engine.cpu.MachineOperand;
+import v9t9.base.utils.HexUtils;
+import v9t9.common.asm.IMachineOperand;
+import v9t9.common.asm.ResolveException;
 
 /**
  * A shift count
@@ -80,7 +80,7 @@ public class LLCountOperand extends LLNonImmediateOperand {
 	 * @see v9t9.tools.asm.assembler.operand.ll.LLOperand#createMachineOperand(v9t9.tools.asm.assembler.operand.ll.IMachineOperandFactory)
 	 */
 	@Override
-	public MachineOperand createMachineOperand(IAsmMachineOperandFactory opFactory)
+	public IMachineOperand createMachineOperand(IAsmMachineOperandFactory opFactory)
 			throws ResolveException {
 		return opFactory.createCountOperand(this);
 	}
