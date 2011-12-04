@@ -8,11 +8,11 @@ import v9t9.base.properties.SettingProperty;
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.utils.HexUtils;
 import v9t9.common.cpu.ICpu;
+import v9t9.common.machine.IMachine;
 import v9t9.common.video.VdpColorManager;
+import v9t9.common.video.VdpModeInfo;
 import v9t9.engine.memory.BankedMemoryEntry;
-import v9t9.engine.memory.IMachine;
 import v9t9.engine.video.VdpCanvas;
-import v9t9.engine.video.VdpModeInfo;
 import v9t9.engine.video.tms9918a.VdpTMS9918A;
 
 /**
@@ -591,9 +591,6 @@ public class VdpV9938 extends VdpTMS9918A {
 			vdpCanvas.getColorMgr().setClearColor1((vdpbg) & 0x3);
 			vdpCanvas.clearToEvenOddClearColors();
 		} else if (modeNumber == MODE_GRAPHICS7) {
-			// an GRB 332 value is here
-			//byte[] rgb = { 0, 0, 0 };
-			///vdpCanvas.getColorMgr().getGRB332(rgb, vdpregs[7]);
 			vdpCanvas.getColorMgr().setClearColor(vdpregs[7] & 0xff);
 			vdpCanvas.clear();
 		} else {

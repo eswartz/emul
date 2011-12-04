@@ -7,8 +7,8 @@ package v9t9.engine.sound;
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.sound.ISoundVoice;
 import v9t9.common.client.ISoundHandler;
-import v9t9.engine.hardware.ISoundChip;
-import v9t9.engine.memory.IMachine;
+import v9t9.common.hardware.ISoundChip;
+import v9t9.common.machine.IMachine;
 
 /**
  * Multiple packed TMS9919 chips.  This provides four TMS9919Bs, 

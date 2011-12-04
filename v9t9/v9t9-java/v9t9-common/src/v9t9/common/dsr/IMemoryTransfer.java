@@ -1,9 +1,9 @@
 /**
  * 
  */
-package v9t9.engine.dsr;
+package v9t9.common.dsr;
 
-import v9t9.engine.memory.ByteMemoryAccess;
+import v9t9.common.memory.ByteMemoryAccess;
 
 /**
  * This interface encapsulates the kinds of memory access a DSR may perform.

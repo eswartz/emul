@@ -3,8 +3,8 @@
  */
 package v9t9.machine.ti99.compiler;
 
+import v9t9.common.cpu.IExecutor;
 import v9t9.engine.compiler.CompiledCode;
-import v9t9.engine.cpu.IExecutor;
 import v9t9.engine.memory.GplMmio;
 import v9t9.engine.memory.VdpMmio;
 import v9t9.machine.ti99.machine.TI99Machine;

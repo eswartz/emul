@@ -3,6 +3,8 @@
  */
 package v9t9.engine.dsr;
 
+import v9t9.common.dsr.IMemoryTransfer;
+
 public abstract class PabHandler {
 	protected Short pabaddr;
 	

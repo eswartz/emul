@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.engine.video;
+package v9t9.common.video;
 
 public class VdpChanges
 {

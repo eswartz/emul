@@ -3,6 +3,9 @@
  */
 package v9t9.engine.video;
 
+import v9t9.common.video.RedrawBlock;
+import v9t9.common.video.VdpModeInfo;
+
 
 
 /**
@@ -10,7 +13,7 @@ package v9t9.engine.video;
  *
  */
 public class BlankModeRedrawHandler extends BaseRedrawHandler implements
-		VdpModeRedrawHandler {
+		IVdpModeRedrawHandler {
 
 	public BlankModeRedrawHandler(VdpRedrawInfo info, VdpModeInfo modeInfo) {
 		super(info, modeInfo);
@@ -24,7 +27,7 @@ public class BlankModeRedrawHandler extends BaseRedrawHandler implements
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.InternalVdp.VdpModeRedrawHandler#propagateTouches()
 	 */
-	public void propagateTouches() {
+	public void prepareUpdate() {
 		
 	}
 

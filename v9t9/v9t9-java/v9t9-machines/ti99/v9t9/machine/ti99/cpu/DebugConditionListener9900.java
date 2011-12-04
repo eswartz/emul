@@ -9,8 +9,8 @@ import java.util.LinkedList;
 
 import v9t9.base.utils.HexUtils;
 import v9t9.common.cpu.ICpu;
+import v9t9.common.cpu.IInstructionListener;
 import v9t9.common.cpu.InstructionWorkBlock;
-import v9t9.engine.cpu.IInstructionListener;
 
 /**
  * @author ejs

@@ -3,12 +3,10 @@
  */
 package v9t9.tools.forthcomp.test;
 
-import static v9t9.machine.f99b.asm.InstF99b.*;
 import static org.junit.Assert.assertTrue;
 
 import java.io.PrintWriter;
 
-import sun.org.mozilla.javascript.internal.Interpreter;
 import v9t9.engine.interpreter.IInterpreter;
 import v9t9.machine.f99b.cpu.CpuF99b;
 import v9t9.machine.f99b.cpu.CpuStateF99b;

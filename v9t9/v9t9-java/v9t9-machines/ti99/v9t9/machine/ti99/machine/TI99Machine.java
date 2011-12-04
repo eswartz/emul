@@ -2,11 +2,11 @@ package v9t9.machine.ti99.machine;
 
 
 import v9t9.base.settings.ISettingSection;
+import v9t9.common.machine.IMachineModel;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.engine.hardware.CruManager;
 import v9t9.engine.machine.MachineBase;
 import v9t9.engine.memory.GplMmio;
-import v9t9.engine.memory.IMachineModel;
 import v9t9.engine.memory.SpeechMmio;
 import v9t9.engine.memory.TIMemoryModel;
 import v9t9.engine.memory.VdpMmio;
@@ -64,7 +64,7 @@ public class TI99Machine extends MachineBase {
 	 * @see v9t9.emulator.hardware.TI99Machine#getVdpMmio()
 	 */
 	public VdpMmio getVdpMmio() {
-	    return getVdp().getVdpMmio();
+	    return ((BaseTI994AMemoryModel) memoryModel).vdpMmio;
 	}
 
 	/* (non-Javadoc)

@@ -13,11 +13,10 @@ import java.util.Arrays;
 import v9t9.base.properties.FieldProperty;
 import v9t9.base.properties.IPropertySource;
 import v9t9.base.properties.PropertySource;
+import v9t9.common.hardware.IVdpChip;
 import v9t9.common.video.VdpColorManager;
-import v9t9.engine.hardware.IVdpChip;
 import v9t9.engine.video.VdpCanvas;
 import v9t9.engine.video.VdpCanvas.Format;
-import v9t9.engine.video.tms9918a.BitmapModeRedrawHandler;
 import v9t9.engine.video.v9938.VdpV9938;
 
 /**
@@ -220,8 +219,7 @@ public class ImageImportOptions {
 		setOptimizePalette(canSetPalette);
 		
 		/////
-		boolean isMonoMode = (vdp.getVdpModeRedrawHandler() instanceof BitmapModeRedrawHandler &&
-				((BitmapModeRedrawHandler) vdp.getVdpModeRedrawHandler()).isMono());
+		boolean isMonoMode = canvas.isMono();
 		
 		setDitherMono(isMonoMode);
 		setDitherType(format == Format.COLOR16_8x1 && !canSetPalette ? Dither.ORDERED : Dither.FS);

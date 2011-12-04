@@ -3,12 +3,12 @@
  */
 package v9t9.engine.video.v9938;
 
-import v9t9.engine.memory.ByteMemoryAccess;
+import v9t9.common.memory.ByteMemoryAccess;
+import v9t9.common.video.RedrawBlock;
+import v9t9.common.video.VdpChanges;
+import v9t9.common.video.VdpModeInfo;
 import v9t9.engine.video.BaseRedrawHandler;
-import v9t9.engine.video.RedrawBlock;
-import v9t9.engine.video.VdpChanges;
-import v9t9.engine.video.VdpModeInfo;
-import v9t9.engine.video.VdpModeRedrawHandler;
+import v9t9.engine.video.IVdpModeRedrawHandler;
 import v9t9.engine.video.VdpRedrawInfo;
 import v9t9.engine.video.VdpTouchHandler;
 
@@ -18,7 +18,7 @@ import v9t9.engine.video.VdpTouchHandler;
  *
  */
 public class Text2ModeRedrawHandler extends BaseRedrawHandler implements
-		VdpModeRedrawHandler {
+		IVdpModeRedrawHandler {
 
 	protected VdpTouchHandler modify_color_text2 = new VdpTouchHandler() {
 		
@@ -39,7 +39,7 @@ public class Text2ModeRedrawHandler extends BaseRedrawHandler implements
 		info.touch.color = modify_color_text2;
 	}
 
-	public void propagateTouches() {
+	public void prepareUpdate() {
 		propagatePatternTouches();
 		
 		// propagate blink changes

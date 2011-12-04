@@ -1,7 +1,7 @@
 package v9t9.engine.interpreter;
 
+import v9t9.common.cpu.IExecutor;
 import v9t9.engine.cpu.Executor;
-import v9t9.engine.cpu.IExecutor;
 
 public interface IInterpreter {
 	/**

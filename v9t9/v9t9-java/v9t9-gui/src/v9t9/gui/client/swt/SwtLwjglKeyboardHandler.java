@@ -13,7 +13,7 @@ import org.eclipse.swt.widgets.Control;
 
 import v9t9.common.client.IKeyboardHandler;
 import v9t9.common.keyboard.IKeyboardState;
-import v9t9.engine.memory.IMachine;
+import v9t9.common.machine.IMachine;
 
 /**
  * @author ejs

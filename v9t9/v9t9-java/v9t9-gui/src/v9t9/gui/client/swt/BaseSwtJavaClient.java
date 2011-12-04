@@ -15,9 +15,9 @@ import v9t9.common.client.IClient;
 import v9t9.common.client.IKeyboardHandler;
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.events.IEventNotifier;
-import v9t9.engine.hardware.IVdpChip;
-import v9t9.engine.memory.IMachine;
-import v9t9.engine.memory.TerminatedException;
+import v9t9.common.hardware.IVdpChip;
+import v9t9.common.machine.IMachine;
+import v9t9.common.machine.TerminatedException;
 import v9t9.gui.client.awt.AwtKeyboardHandler;
 import v9t9.gui.sound.JavaSoundHandler;
 
@@ -143,11 +143,11 @@ public abstract class BaseSwtJavaClient implements IClient {
 			videoRenderer.dispose();
 	}
 
-	public v9t9.engine.hardware.IVdpChip getVideoHandler() {
+	public v9t9.common.hardware.IVdpChip getVideoHandler() {
 	    return video;
 	}
 
-	public void setVideoHandler(v9t9.engine.hardware.IVdpChip video) {
+	public void setVideoHandler(v9t9.common.hardware.IVdpChip video) {
 	    this.video = video;
 	}
 

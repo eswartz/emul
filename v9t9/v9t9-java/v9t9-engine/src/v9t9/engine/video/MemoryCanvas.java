@@ -5,7 +5,7 @@ package v9t9.engine.video;
 
 import java.util.Arrays;
 
-import v9t9.engine.memory.ByteMemoryAccess;
+import v9t9.common.memory.ByteMemoryAccess;
 
 /**
  * This class holds the low-level bitmap containing the image

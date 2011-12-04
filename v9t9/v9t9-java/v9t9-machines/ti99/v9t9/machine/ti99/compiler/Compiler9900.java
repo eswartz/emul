@@ -48,6 +48,8 @@ import v9t9.common.asm.BaseMachineOperand;
 import v9t9.common.asm.IDecompileInfo;
 import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.RawInstruction;
+import v9t9.common.compiler.ICompiler;
+import v9t9.common.cpu.IExecutor;
 import v9t9.common.cpu.IStatus;
 import v9t9.common.machine.IBaseMachine;
 import v9t9.common.memory.IMemoryDomain;
@@ -60,7 +62,6 @@ import v9t9.engine.compiler.CompilerBase;
 import v9t9.engine.compiler.FunctionInstructionRangeCompiler;
 import v9t9.engine.compiler.InstructionRangeCompiler;
 import v9t9.engine.compiler.SerialInstructionRangeCompiler;
-import v9t9.engine.cpu.IExecutor;
 import v9t9.engine.memory.GplMmio;
 import v9t9.engine.memory.VdpMmio;
 import v9t9.machine.ti99.asm.InstructionFactory9900;
@@ -392,7 +393,7 @@ public class Compiler9900 extends CompilerBase {
                 + ins.toString()));
         ilist.append(InstructionConstants.POP);
 
-        if (CompilerBase.settingDebugInstructions.getBoolean()) {
+        if (ICompiler.settingDebugInstructions.getBoolean()) {
             ilist.append(InstructionConstants.THIS);
             ilist.append(new PUSH(info.pgen, pc));
             ilist.append(new ILOAD(info.localWp));
@@ -438,7 +439,7 @@ public class Compiler9900 extends CompilerBase {
         ilist.append(new IINC(info.localCycles, ins.getInfo().cycles
         		+ ((MachineOperand9900) ins.getOp1()).cycles + ((MachineOperand9900) ins.getOp2()).cycles));
 
-        if (CompilerBase.settingDebugInstructions.getBoolean()) {
+        if (ICompiler.settingDebugInstructions.getBoolean()) {
             dumpFull(info, ilist, ins, "dumpBefore", ins.toString());
         }
 
@@ -461,7 +462,7 @@ public class Compiler9900 extends CompilerBase {
         /* save any operands */
         flushOperands(ins, info);
 
-        if (CompilerBase.settingDebugInstructions.getBoolean()) {
+        if (ICompiler.settingDebugInstructions.getBoolean()) {
             dumpFull(info, ilist, ins, "dumpAfter", null);
         }
 
@@ -809,7 +810,7 @@ public class Compiler9900 extends CompilerBase {
     	// where any jump instr comes back to the switch, serial instructions
     	// jump to their next logical instruction, and the last instruction returns true;
     	// any switch() not handled returns false so the interpreter can have a look
-        if (CompilerBase.settingCompileFunctions.getBoolean()) {
+        if (ICompiler.settingCompileFunctions.getBoolean()) {
         	instructionRangeCompiler = new FunctionInstructionRangeCompiler();
         } else {
         	instructionRangeCompiler = new SerialInstructionRangeCompiler();
@@ -896,8 +897,8 @@ public class Compiler9900 extends CompilerBase {
         lg = mgen.addLocalVariable("nCycles", Type.INT, null, null);
         info.localCycles = lg.getIndex();
 
-        if (CompilerBase.settingOptimize.getBoolean()
-                && CompilerBase.settingOptimizeRegAccess.getBoolean()) {
+        if (ICompiler.settingOptimize.getBoolean()
+                && ICompiler.settingOptimizeRegAccess.getBoolean()) {
             lg = mgen.addLocalVariable("wpWordMemory", new ArrayType(
                     Type.SHORT, 1), null, null);
             info.localWpWordMemory = lg.getIndex();
@@ -977,7 +978,7 @@ public class Compiler9900 extends CompilerBase {
 	    ilist.append(InstructionConstants.ICONST_0);
 	    ilist.append(new ISTORE(info.localEa2));
 	    
-	    if (CompilerBase.settingOptimize.getBoolean() && CompilerBase.settingOptimizeRegAccess.getBoolean()) {
+	    if (ICompiler.settingOptimize.getBoolean() && ICompiler.settingOptimizeRegAccess.getBoolean()) {
 	    	// localWpOffset and localWpMemory will be established
 	    	// by Convert9900ToByteCode.updateWorkspaceVariables
 		    ilist.append(InstructionConstants.ICONST_0);

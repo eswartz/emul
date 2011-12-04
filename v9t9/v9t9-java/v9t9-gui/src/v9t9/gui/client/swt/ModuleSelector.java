@@ -39,9 +39,10 @@ import org.eclipse.swt.widgets.TableColumn;
 
 import v9t9.common.events.NotifyException;
 import v9t9.common.events.IEventNotifier.Level;
-import v9t9.engine.memory.IMachine;
-import v9t9.engine.modules.IModule;
-import v9t9.engine.modules.MemoryEntryInfo;
+import v9t9.common.machine.IMachine;
+import v9t9.common.modules.IModule;
+import v9t9.common.modules.IModuleManager;
+import v9t9.common.modules.MemoryEntryInfo;
 
 /**
  * @author ejs
@@ -57,12 +58,14 @@ public class ModuleSelector extends Composite {
 	private Button switchButton;
 	private TableColumn fileColumn;
 	private Font tableFont;
+	private final IModuleManager moduleManager;
 
 	/**
 	 * 
 	 */
-	public ModuleSelector(Shell shell, IMachine machine) {
+	public ModuleSelector(Shell shell, IMachine machine, IModuleManager moduleManager) {
 		super(shell, SWT.NONE);
+		this.moduleManager = moduleManager;
 		
 		shell.setText("Module Selector");
 		
@@ -108,7 +111,7 @@ public class ModuleSelector extends Composite {
 		viewer.setLabelProvider(new ModuleTableLabelProvider());
 		
 		selectedModule = null;
-		final IModule[] realModules = machine.getModuleManager().getModules();
+		final IModule[] realModules = moduleManager.getModules();
 		
 		viewer.addSelectionChangedListener(new ISelectionChangedListener() {
 			
@@ -204,7 +207,7 @@ public class ModuleSelector extends Composite {
 		modulesPlusEmpty[0] = "<No module>";
 		System.arraycopy(realModules, 0, modulesPlusEmpty, 1, realModules.length);
 		viewer.setInput(modulesPlusEmpty);
-		final IModule[] loadedModules = machine.getModuleManager().getLoadedModules();
+		final IModule[] loadedModules = moduleManager.getLoadedModules();
 		viewer.setSelection(new StructuredSelection(loadedModules));
 		if (loadedModules.length > 0) {
 			Display.getDefault().asyncExec(new Runnable() {
@@ -224,7 +227,7 @@ public class ModuleSelector extends Composite {
 	 */
 	protected void switchModule(boolean softReset) {
 		try {
-			machine.getModuleManager().switchModule(selectedModule);
+			moduleManager.switchModule(selectedModule);
 			if (softReset)
 				machine.getCpu().reset();
 			else

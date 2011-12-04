@@ -3,6 +3,8 @@
  */
 package v9t9.engine.video;
 
+import v9t9.common.video.RedrawBlock;
+
 /**
  * The redraw handler manages the efficient update of the
  * VDP canvas ("background") given changes made to the VDP
@@ -23,7 +25,7 @@ package v9t9.engine.video;
  * @author Ed
  *
  */
-public interface VdpModeRedrawHandler {
+public interface IVdpModeRedrawHandler {
 	/**
 	 * Record that the VDP memory at addr was changed.
 	 * @param addr
@@ -35,7 +37,7 @@ public interface VdpModeRedrawHandler {
 	 * Update the changed blocks (on the screen) according to relationships
 	 * between the various update areas.
 	 */
-	void propagateTouches();
+	void prepareUpdate();
 
 	/** 
 	 * Given the touched blocks, redraw the bitmap,

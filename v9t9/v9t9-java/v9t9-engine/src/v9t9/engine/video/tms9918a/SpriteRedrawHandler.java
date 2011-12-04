@@ -5,10 +5,10 @@ package v9t9.engine.video.tms9918a;
 
 import java.util.Arrays;
 
-import v9t9.engine.memory.ByteMemoryAccess;
+import v9t9.common.memory.ByteMemoryAccess;
+import v9t9.common.video.RedrawBlock;
+import v9t9.common.video.VdpModeInfo;
 import v9t9.engine.video.BaseRedrawHandler;
-import v9t9.engine.video.RedrawBlock;
-import v9t9.engine.video.VdpModeInfo;
 import v9t9.engine.video.VdpRedrawInfo;
 import v9t9.engine.video.VdpSprite;
 import v9t9.engine.video.VdpTouchHandler;
@@ -238,7 +238,7 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 	}
 
 	/* not done for sprites */
-	public void propagateTouches() {
+	public void prepareUpdate() {
 		
 	}
 

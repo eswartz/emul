@@ -17,7 +17,7 @@ import v9t9.base.properties.SettingProperty;
 import v9t9.base.utils.HexUtils;
 import v9t9.common.keyboard.IKeyboardState;
 import v9t9.common.machine.IBaseMachine;
-import v9t9.engine.memory.IMachine;
+import v9t9.common.machine.IMachine;
 
 /**
  * This class tracks the state of the keyboard as exposed to the 99/4A CRU, in a

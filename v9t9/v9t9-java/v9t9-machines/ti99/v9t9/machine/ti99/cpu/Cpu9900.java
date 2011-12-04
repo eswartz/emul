@@ -12,11 +12,11 @@ import java.io.PrintWriter;
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.utils.HexUtils;
 import v9t9.common.cpu.IStatus;
+import v9t9.common.hardware.ICruChip;
+import v9t9.common.hardware.IVdpChip;
+import v9t9.common.machine.IMachine;
 import v9t9.engine.cpu.CpuBase;
 import v9t9.engine.cpu.Executor;
-import v9t9.engine.hardware.ICruChip;
-import v9t9.engine.hardware.IVdpChip;
-import v9t9.engine.memory.IMachine;
 import v9t9.machine.ti99.compiler.Compiler9900;
 
 /**

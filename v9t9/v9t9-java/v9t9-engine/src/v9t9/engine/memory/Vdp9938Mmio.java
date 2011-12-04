@@ -37,9 +37,6 @@ public class Vdp9938Mmio extends Vdp9918AMmio {
 		return memorySize;
 	}
 
-    public ByteMemoryArea getMemoryArea() {
-    	return fullRamArea;
-    }
 	protected void initMemory(IMemory memory, int memorySize) {
 		memoryBank = new WindowBankedMemoryEntry(
 				memory, "VDP RAM",

@@ -3,7 +3,8 @@
  */
 package v9t9.engine.video;
 
-import v9t9.engine.hardware.IVdpChip;
+import v9t9.common.hardware.IVdpChip;
+import v9t9.common.video.VdpChanges;
 
 /**
  * @author ejs

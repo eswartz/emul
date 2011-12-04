@@ -13,10 +13,10 @@ import v9t9.base.utils.HexUtils;
 import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.IOperand;
 import v9t9.common.cpu.ICpu;
+import v9t9.common.cpu.IExecutor;
 import v9t9.common.cpu.IStatus;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.engine.cpu.Executor;
-import v9t9.engine.cpu.IExecutor;
 import v9t9.engine.hardware.ICruHandler;
 
 /** This is the interface to the runtime-generated class. */

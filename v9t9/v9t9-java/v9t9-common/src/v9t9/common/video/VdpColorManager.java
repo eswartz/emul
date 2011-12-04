@@ -27,6 +27,7 @@ public class VdpColorManager {
 	protected boolean clearFromPalette;
 	protected boolean useAltSpritePalette;
 	private boolean isGreyscale;
+
 	protected static final byte[][] stockPaletteEd = {
 		/* 0 */ { 0x00, 0x00, 0x00 }, 
 		/* 1 */ { 0x00, 0x00, 0x00 },

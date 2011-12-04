@@ -12,7 +12,7 @@ import org.eclipse.swt.widgets.Shell;
 import v9t9.base.utils.HexUtils;
 import v9t9.common.client.IKeyboardHandler;
 import v9t9.common.keyboard.IKeyboardState;
-import v9t9.engine.memory.IMachine;
+import v9t9.common.machine.IMachine;
 
 /**
  * @author ejs

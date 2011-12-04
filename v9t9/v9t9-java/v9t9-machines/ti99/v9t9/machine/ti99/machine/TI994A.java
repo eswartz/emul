@@ -1,6 +1,6 @@
 package v9t9.machine.ti99.machine;
 
-import v9t9.engine.memory.IMachineModel;
+import v9t9.common.machine.IMachineModel;
 
 
 

@@ -7,8 +7,9 @@ package v9t9.engine.hardware;
 
 import v9t9.base.settings.ISettingSection;
 import v9t9.common.cpu.ICpu;
+import v9t9.common.hardware.ICruChip;
 import v9t9.common.keyboard.IKeyboardState;
-import v9t9.engine.memory.IMachine;
+import v9t9.common.machine.IMachine;
 
 /**
  * CRU handlers for the F99 machine.

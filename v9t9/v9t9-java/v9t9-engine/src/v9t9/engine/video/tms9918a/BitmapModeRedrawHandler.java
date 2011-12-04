@@ -3,13 +3,13 @@
  */
 package v9t9.engine.video.tms9918a;
 
-import v9t9.engine.memory.ByteMemoryAccess;
+import v9t9.common.memory.ByteMemoryAccess;
+import v9t9.common.video.RedrawBlock;
+import v9t9.common.video.VdpChanges;
+import v9t9.common.video.VdpModeInfo;
 import v9t9.engine.video.BaseRedrawHandler;
 import v9t9.engine.video.IBitmapPixelAccess;
-import v9t9.engine.video.RedrawBlock;
-import v9t9.engine.video.VdpChanges;
-import v9t9.engine.video.VdpModeInfo;
-import v9t9.engine.video.VdpModeRedrawHandler;
+import v9t9.engine.video.IVdpModeRedrawHandler;
 import v9t9.engine.video.VdpRedrawInfo;
 import v9t9.engine.video.VdpTouchHandler;
 
@@ -18,7 +18,7 @@ import v9t9.engine.video.VdpTouchHandler;
  *
  */
 public class BitmapModeRedrawHandler extends BaseRedrawHandler implements
-		VdpModeRedrawHandler {
+		IVdpModeRedrawHandler {
 
 	short bitpattmask;
 	short bitcolormask;
@@ -62,7 +62,7 @@ public class BitmapModeRedrawHandler extends BaseRedrawHandler implements
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.InternalVdp.VdpModeRedrawHandler#propagateTouches()
 	 */
-	public void propagateTouches() {
+	public void prepareUpdate() {
 		/*  Set pattern or color changes in chars */
 		
 		int bpm = bitpattmask >> 3;
@@ -136,7 +136,12 @@ public class BitmapModeRedrawHandler extends BaseRedrawHandler implements
 			for (int x = 0; x < 256; x += 8) {
 				
 				int choffs = ((y >> 6) << 8) + ((y & 0x3f) >> 3) * 32 + (x >> 3);
-				int ch = screen.memory[screen.offset + choffs] & 0xff;
+				int ch = choffs & 0xff;
+				
+				if ((y & 7) == 0) {
+					screen.memory[screen.offset + choffs] = (byte) ch;
+					touch(screen.offset + choffs);
+				}
 
 				int poffs = (y >> 6) * 0x800 + (ch << 3) + (y & 7);
 				
@@ -182,68 +187,6 @@ public class BitmapModeRedrawHandler extends BaseRedrawHandler implements
 
 				patt.memory[patt.offset + poffs] = p;
 				touch(patt.offset + poffs);
-			}
-		}
-		
-	}
-
-	void __importImageData(IBitmapPixelAccess access) {
-		boolean isMono = isMono();
-		
-		ByteMemoryAccess screen = info.vdp.getByteReadMemoryAccess(modeInfo.screen.base);
-		ByteMemoryAccess patt = info.vdp.getByteReadMemoryAccess(modeInfo.patt.base);
-		ByteMemoryAccess color = info.vdp.getByteReadMemoryAccess(modeInfo.color.base);
-		
-		byte f = 0, b = 0;
-		
-		for (int y = 0; y < 192; y++) {
-			for (int x = 0; x < 256; x += 8) {
-				byte p = 0;
-				
-				// for the benefit of mono pictures or mono modes, 
-				// always select the lesser color as foreground.
-				f = access.getPixel(x, y);
-				p = (byte) 0x80;
-				
-				boolean gotBG = false;
-				for (int xo = 1; xo < 8; xo++) {
-					byte c = access.getPixel(x + xo, y);
-					if (c == f) {
-						p |= 0x80 >> xo;
-					} else {
-						if (!gotBG) {
-							gotBG = true;
-							b = c;
-							if (b < f) {
-								b = f;
-								f = c;
-								p ^= 0xff << (8 - xo);
-								p |= 0x80 >> xo;
-							}
-						}
-					}
-				}
-				
-				int choffs = ((y >> 6) << 8) + ((y & 0x3f) >> 3) * 32 + (x >> 3);
-				int ch = screen.memory[screen.offset + choffs] & 0xff;
-
-				int poffs = (y >> 6) * 0x800 + (ch << 3) + (y & 7);
-
-				if (!gotBG) {
-					// use 0 instead of 1 for solid
-					p = 0;
-					byte c = f;
-					f = b;
-					b = c;
-				}
-
-				patt.memory[patt.offset + poffs] = p;
-				touch(patt.offset + poffs);
-				
-				if (!isMono) {
-					color.memory[color.offset + poffs] = (byte) ((f << 4) | (b));
-					touch(color.offset + poffs);
-				}
 			}
 		}
 		

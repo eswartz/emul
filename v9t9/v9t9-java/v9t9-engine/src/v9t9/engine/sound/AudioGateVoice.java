@@ -7,7 +7,7 @@ import java.util.Arrays;
 
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.sound.IFlushableSoundVoice;
-import v9t9.engine.memory.IMachine;
+import v9t9.common.machine.IMachine;
 
 public class AudioGateVoice extends SoundVoice implements IFlushableSoundVoice {
 

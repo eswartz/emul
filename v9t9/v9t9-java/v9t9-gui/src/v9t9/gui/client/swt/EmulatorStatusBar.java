@@ -21,8 +21,8 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.Shell;
 
-import v9t9.engine.dsr.IDeviceIndicatorProvider;
-import v9t9.engine.memory.IMachine;
+import v9t9.common.dsr.IDeviceIndicatorProvider;
+import v9t9.common.machine.IMachine;
 import v9t9.gui.Emulator;
 import v9t9.gui.client.swt.ToolShell.Behavior;
 import v9t9.gui.client.swt.ToolShell.Centering;
@@ -50,7 +50,6 @@ public class EmulatorStatusBar extends EmulatorBar {
 		
 		deviceImageProvider = createDeviceImageProvider(swtWindow.getShell());
 
-
 		if (machine.getModuleManager() != null) {
 			createButton(16,
 				"Switch module", new SelectionAdapter() {
@@ -65,7 +64,7 @@ public class EmulatorStatusBar extends EmulatorBar {
 								behavior.dismissOnClickOutside = true;
 							}
 							public Control createContents(Shell shell) {
-								return new ModuleSelector(shell, machine);
+								return new ModuleSelector(shell, machine, machine.getModuleManager());
 							}
 							public Behavior getBehavior() {
 								return behavior;
@@ -76,7 +75,6 @@ public class EmulatorStatusBar extends EmulatorBar {
 			);
 			new BlankIcon(buttonBar, SWT.NONE);
 		}
-		
 		
 		createButton(5,
 			"Setup disks", new SelectionAdapter() {

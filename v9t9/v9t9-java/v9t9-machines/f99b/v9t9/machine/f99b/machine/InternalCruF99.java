@@ -8,9 +8,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import v9t9.common.keyboard.IKeyboardState;
+import v9t9.common.machine.IMachine;
 import v9t9.engine.dsr.IMemoryIOHandler;
 import v9t9.engine.hardware.BaseCruChip;
-import v9t9.engine.memory.IMachine;
 import v9t9.machine.f99b.cpu.CpuF99b;
 
 /**

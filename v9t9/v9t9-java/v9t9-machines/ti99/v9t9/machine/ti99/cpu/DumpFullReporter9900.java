@@ -10,10 +10,10 @@ import v9t9.base.utils.HexUtils;
 import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.IOperand;
 import v9t9.common.asm.RawInstruction;
+import v9t9.common.cpu.IInstructionListener;
 import v9t9.common.cpu.InstructionWorkBlock;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.engine.cpu.Executor;
-import v9t9.engine.cpu.IInstructionListener;
 
 /**
  * @author ejs

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.engine.machine;
+package v9t9.engine.modules;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -18,22 +18,23 @@ import v9t9.common.cpu.AbortedException;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyException;
 import v9t9.common.files.DataFiles;
+import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
+import v9t9.common.modules.IModule;
+import v9t9.common.modules.IModuleManager;
+import v9t9.common.modules.MemoryEntryInfo;
+import v9t9.engine.EmulatorSettings;
 import v9t9.engine.memory.BankedMemoryEntry;
 import v9t9.engine.memory.DiskMemoryEntry;
-import v9t9.engine.memory.IMachine;
-import v9t9.engine.modules.IModule;
-import v9t9.engine.modules.MemoryEntryInfo;
-import v9t9.engine.modules.ModuleLoader;
 import v9t9.engine.settings.WorkspaceSettings;
 
 /**
  * @author ejs
  *
  */
-public class ModuleManager implements IPersistable {
+public class ModuleManager implements IPersistable, IModuleManager {
 	private List<IModule> modules;
 	private final IMachine machine;
 	
@@ -49,7 +50,11 @@ public class ModuleManager implements IPersistable {
 	}
 	
 
-    public void loadModules(String[] files, IEventNotifier notifier) {
+    /* (non-Javadoc)
+	 * @see v9t9.engine.modules.IModuleManager#loadModules(java.lang.String[], v9t9.common.events.IEventNotifier)
+	 */
+    @Override
+	public void loadModules(String[] files, IEventNotifier notifier) {
     	if (modules.isEmpty()) {
 
 			for (String dbName : files) {
@@ -75,15 +80,27 @@ public class ModuleManager implements IPersistable {
     	}
     }
 
+	/* (non-Javadoc)
+	 * @see v9t9.engine.modules.IModuleManager#getModules()
+	 */
+	@Override
 	public IModule[] getModules() {
 		return (IModule[]) modules.toArray(new IModule[modules.size()]);
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.engine.modules.IModuleManager#switchModule(v9t9.common.modules.IModule)
+	 */
+	@Override
 	public void switchModule(IModule module) throws NotifyException {
 		unloadAllModules();
 		
 		loadModule(module);
 	}
+	/* (non-Javadoc)
+	 * @see v9t9.engine.modules.IModuleManager#unloadAllModules()
+	 */
+	@Override
 	public void unloadAllModules() {
 		for (IModule loaded : (IModule[]) loadedModules.toArray(new IModule[loadedModules.size()])) {
 			try {
@@ -96,6 +113,10 @@ public class ModuleManager implements IPersistable {
 		settingLastLoadedModule.setString(null);
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.modules.IModuleManager#loadModule(v9t9.common.modules.IModule)
+	 */
+	@Override
 	public void loadModule(IModule module) throws NotifyException {
 		if (module != null) {
 			if (loadedModules.contains(module))
@@ -125,6 +146,10 @@ public class ModuleManager implements IPersistable {
 		
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.engine.modules.IModuleManager#unloadModule(v9t9.common.modules.IModule)
+	 */
+	@Override
 	public void unloadModule(IModule loaded) {
 		if (loaded == null)
 			return;
@@ -143,10 +168,18 @@ public class ModuleManager implements IPersistable {
 		settingLastLoadedModule.setString(null);
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.modules.IModuleManager#switchModule(java.lang.String)
+	 */
+	@Override
 	public void switchModule(String name) throws NotifyException {
 		switchModule(findModuleByName(name, true));
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.modules.IModuleManager#findModuleByName(java.lang.String, boolean)
+	 */
+	@Override
 	public IModule findModuleByName(String string, boolean exact) {
 		for (IModule module : modules) {
 			if (exact) {
@@ -159,9 +192,10 @@ public class ModuleManager implements IPersistable {
 		}
 		return null;
 	}
-	/**
-	 * @return
+	/* (non-Javadoc)
+	 * @see v9t9.engine.modules.IModuleManager#getLoadedModules()
 	 */
+	@Override
 	public IModule[] getLoadedModules() {
 		return (IModule[]) loadedModules.toArray(new IModule[loadedModules.size()]);
 	}
@@ -194,6 +228,8 @@ public class ModuleManager implements IPersistable {
 	@SuppressWarnings("unchecked")
 	public IMemoryEntry createMemoryEntry(MemoryEntryInfo info, IMemory memory) throws NotifyException {
 		try {
+			String base = EmulatorSettings.INSTANCE.getConfigDirectory();
+
 			IMemoryEntry entry = null;
 			Map<String, Object> properties = info.getProperties();
 			if (properties.containsKey(MemoryEntryInfo.FILENAME2)) {
@@ -205,9 +241,9 @@ public class ModuleManager implements IPersistable {
 							memory,
 							info.getString(MemoryEntryInfo.NAME),
 							memory.getDomain(info.getString(MemoryEntryInfo.DOMAIN)),
-							info.getFilePath(info.getString(MemoryEntryInfo.FILENAME), info.getBool(MemoryEntryInfo.STORED)),
+							info.getFilePath(base, info.getString(MemoryEntryInfo.FILENAME), info.getBool(MemoryEntryInfo.STORED)),
 							info.getInt(MemoryEntryInfo.OFFSET),
-							info.getFilePath(info.getString(MemoryEntryInfo.FILENAME2), info.getBool(MemoryEntryInfo.STORED)),
+							info.getFilePath(base, info.getString(MemoryEntryInfo.FILENAME2), info.getBool(MemoryEntryInfo.STORED)),
 							info.getInt(MemoryEntryInfo.OFFSET2));
 				} catch (IOException e) {
 					String filename = info.getString(MemoryEntryInfo.FILENAME); 
@@ -223,7 +259,7 @@ public class ModuleManager implements IPersistable {
 						info.getInt(MemoryEntryInfo.SIZE),
 						info.getString(MemoryEntryInfo.NAME),
 						memory.getDomain(info.getString(MemoryEntryInfo.DOMAIN)),
-						info.getFilePath(info.getString(MemoryEntryInfo.FILENAME), info.getBool(MemoryEntryInfo.STORED)),
+						info.getFilePath(base, info.getString(MemoryEntryInfo.FILENAME), info.getBool(MemoryEntryInfo.STORED)),
 						info.getInt(MemoryEntryInfo.OFFSET),
 						info.getBool(MemoryEntryInfo.STORED));
 			} else {
@@ -232,7 +268,7 @@ public class ModuleManager implements IPersistable {
 						info.getInt(MemoryEntryInfo.SIZE),
 						info.getString(MemoryEntryInfo.NAME),
 						memory.getDomain(info.getString(MemoryEntryInfo.DOMAIN)),
-						info.getFilePath(info.getString(MemoryEntryInfo.FILENAME), info.getBool(MemoryEntryInfo.STORED)),
+						info.getFilePath(base, info.getString(MemoryEntryInfo.FILENAME), info.getBool(MemoryEntryInfo.STORED)),
 						info.getInt(MemoryEntryInfo.OFFSET),
 						info.getBool(MemoryEntryInfo.STORED));
 			}

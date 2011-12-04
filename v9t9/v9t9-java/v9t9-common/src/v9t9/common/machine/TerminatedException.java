@@ -4,7 +4,7 @@
  * Created on Jan 20, 2005
  *
  */
-package v9t9.engine.memory;
+package v9t9.common.machine;
 
 import v9t9.common.cpu.AbortedException;
 

@@ -3,10 +3,10 @@
  */
 package v9t9.machine.ti99.memory;
 
+import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryListener;
-import v9t9.engine.memory.IMachine;
 import v9t9.engine.memory.MultiBankedMemoryEntry;
 import v9t9.engine.memory.TIMemoryModel;
 import v9t9.machine.ti99.memory.mmio.ConsoleMmioArea;

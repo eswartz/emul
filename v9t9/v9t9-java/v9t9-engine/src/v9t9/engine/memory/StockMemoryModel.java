@@ -11,7 +11,7 @@ import v9t9.common.machine.IBaseMachine;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryModel;
-import v9t9.engine.modules.IModule;
+import v9t9.common.modules.IModule;
 
 /**
  * @author ejs

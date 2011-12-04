@@ -3,11 +3,11 @@
  */
 package v9t9.engine.video.tms9918a;
 
+import v9t9.common.video.RedrawBlock;
+import v9t9.common.video.VdpChanges;
+import v9t9.common.video.VdpModeInfo;
 import v9t9.engine.video.BaseRedrawHandler;
-import v9t9.engine.video.RedrawBlock;
-import v9t9.engine.video.VdpChanges;
-import v9t9.engine.video.VdpModeInfo;
-import v9t9.engine.video.VdpModeRedrawHandler;
+import v9t9.engine.video.IVdpModeRedrawHandler;
 import v9t9.engine.video.VdpRedrawInfo;
 
 /**
@@ -15,7 +15,7 @@ import v9t9.engine.video.VdpRedrawInfo;
  *
  */
 public class TextModeRedrawHandler extends BaseRedrawHandler implements
-		VdpModeRedrawHandler {
+		IVdpModeRedrawHandler {
 
 	public TextModeRedrawHandler(VdpRedrawInfo info, VdpModeInfo modeInfo) {
 		super(info, modeInfo);
@@ -26,7 +26,7 @@ public class TextModeRedrawHandler extends BaseRedrawHandler implements
 		info.touch.color = null;
 	}
 
-	public void propagateTouches() {
+	public void prepareUpdate() {
 		propagatePatternTouches();
 	}
 

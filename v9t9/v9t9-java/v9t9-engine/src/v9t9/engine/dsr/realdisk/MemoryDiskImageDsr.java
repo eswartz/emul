@@ -9,9 +9,9 @@ import java.util.Map;
 
 
 import v9t9.base.properties.SettingProperty;
-import v9t9.engine.dsr.IDeviceIndicatorProvider;
+import v9t9.common.dsr.IDeviceIndicatorProvider;
+import v9t9.common.machine.IMachine;
 import v9t9.engine.dsr.IMemoryIOHandler;
-import v9t9.engine.memory.IMachine;
 
 /**
  * This disk DSR assumes all control and ports are in MMIO.

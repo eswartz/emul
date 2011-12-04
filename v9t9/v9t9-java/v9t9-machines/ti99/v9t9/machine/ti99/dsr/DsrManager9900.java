@@ -10,12 +10,13 @@ import v9t9.base.properties.IPersistable;
 import v9t9.base.utils.HexUtils;
 import v9t9.common.asm.BaseMachineOperand;
 import v9t9.common.cpu.InstructionWorkBlock;
+import v9t9.common.dsr.IDsrHandler;
+import v9t9.common.dsr.IDsrManager;
+import v9t9.common.dsr.IMemoryTransfer;
 import v9t9.engine.dsr.ConsoleMemoryTransfer;
 import v9t9.engine.dsr.DsrManager;
-import v9t9.engine.dsr.IDsrHandler;
-import v9t9.engine.dsr.IDsrManager;
-import v9t9.engine.dsr.IMemoryTransfer;
 import v9t9.engine.hardware.ICruWriter;
+import v9t9.engine.video.tms9918a.VdpTMS9918A;
 import v9t9.machine.ti99.cpu.InstructionWorkBlock9900;
 import v9t9.machine.ti99.machine.TI99Machine;
 
@@ -78,7 +79,9 @@ public class DsrManager9900 extends DsrManager implements IPersistable, IDsrMana
 				
 				IMemoryTransfer xfer = new ConsoleMemoryTransfer(
 						instructionWorkBlock.domain,
-						machine.getVdp(), rambase);
+						machine.getVdp(),
+						((VdpTMS9918A) machine.getVdp()).getVdpMmio(),
+						rambase);
 				
 				int retreg = instructionWorkBlock.wp + 11 * 2;
 				short ret = instructionWorkBlock.domain.readWord(retreg);

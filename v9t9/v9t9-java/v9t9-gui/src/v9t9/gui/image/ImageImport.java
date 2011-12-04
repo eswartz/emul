@@ -23,11 +23,12 @@ import javax.imageio.ImageIO;
 import org.eclipse.swt.graphics.ImageData;
 
 import v9t9.base.utils.Pair;
+import v9t9.common.hardware.IVdpChip;
 import v9t9.common.video.ColorMapUtils;
 import v9t9.common.video.VdpColorManager;
-import v9t9.engine.hardware.IVdpChip;
 import v9t9.engine.video.IBitmapPixelAccess;
 import v9t9.engine.video.VdpCanvas.Format;
+import v9t9.engine.video.tms9918a.VdpTMS9918A;
 import v9t9.gui.image.ColorOctree.LeafNode;
 import v9t9.gui.image.ImageImportOptions.Dither;
 import v9t9.gui.video.ImageDataCanvas;
@@ -1719,7 +1720,7 @@ public class ImageImport implements IBitmapPixelAccess {
 		setImageData(scaled);
 
 		synchronized (vdp) {
-			vdp.getVdpModeRedrawHandler().importImageData(this);
+			((VdpTMS9918A) vdp).getVdpModeRedrawHandler().importImageData(this);
 			canvas.markDirty();
 		}
 

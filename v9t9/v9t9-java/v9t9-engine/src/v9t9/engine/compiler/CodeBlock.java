@@ -9,9 +9,11 @@ import v9t9.common.asm.IDecompileInfo;
 import v9t9.common.asm.IHighLevelInstruction;
 import v9t9.common.asm.InstTableCommon;
 import v9t9.common.asm.RawInstruction;
+import v9t9.common.compiler.ICompiledCode;
+import v9t9.common.compiler.ICompiler;
 import v9t9.common.cpu.AbortedException;
+import v9t9.common.cpu.IExecutor;
 import v9t9.common.memory.IMemoryEntry;
-import v9t9.engine.cpu.IExecutor;
 
 /** This represents a compiled block of code. */
 public class CodeBlock implements ICompiledCode, v9t9.common.memory.IMemoryListener {
@@ -35,11 +37,11 @@ public class CodeBlock implements ICompiledCode, v9t9.common.memory.IMemoryListe
 	int addr;
 	int size;
 	IMemoryEntry ent;
-	private CompilerBase compiler;
+	private ICompiler compiler;
     
     static int uniqueClassSuffix;
 
-    public CodeBlock(CompilerBase compiler, IExecutor exec, DirectLoader loader, IMemoryEntry ent, int addr, int size) {
+    public CodeBlock(ICompiler compiler, IExecutor exec, DirectLoader loader, IMemoryEntry ent, int addr, int size) {
         this.compiler = compiler;
 		this.exec = exec;
         this.loader = loader;
@@ -122,8 +124,8 @@ public class CodeBlock implements ICompiledCode, v9t9.common.memory.IMemoryListe
         	    	insts[i] = highLevel.getInstruction(addr + i * 2);
         	    }
         	    
-        	    if (CompilerBase.settingOptimize.getBoolean() 
-        	    		&& CompilerBase.settingOptimizeStatus.getBoolean()) {
+        	    if (ICompiler.settingOptimize.getBoolean() 
+        	    		&& ICompiler.settingOptimizeStatus.getBoolean()) {
         	    	HLInstructionOptimizer.peephole_status(insts, numinsts);
         	    }
         	    

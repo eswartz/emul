@@ -4,10 +4,9 @@
 package v9t9.machine.ti99.machine;
 
 
+import v9t9.common.hardware.IVdpChip;
+import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryModel;
-import v9t9.engine.hardware.IVdpChip;
-import v9t9.engine.memory.IMachine;
-import v9t9.engine.memory.Vdp9938Mmio;
 import v9t9.engine.video.v9938.VdpV9938;
 import v9t9.machine.ti99.memory.EnhancedTI994AMemoryModel;
 
@@ -41,8 +40,6 @@ public class EnhancedTI994AMachineModel extends StandardMachineModel {
 	 * @see v9t9.emulator.hardware.MachineModel#getVdp()
 	 */
 	public IVdpChip createVdp(IMachine machine) {
-		VdpV9938 vdp = new VdpV9938(machine);
-		new Vdp9938Mmio(machine.getMemory(), vdp, 0x10000);
-		return vdp;
+		return new VdpV9938(machine);
 	}
 }

@@ -1,4 +1,4 @@
-package v9t9.engine.video;
+package v9t9.common.video;
 
 /** 
  * This class represents a single block which needs to be

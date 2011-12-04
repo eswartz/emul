@@ -3,12 +3,12 @@
  */
 package v9t9.engine.video.v9938;
 
-import v9t9.engine.memory.ByteMemoryAccess;
+import v9t9.common.memory.ByteMemoryAccess;
+import v9t9.common.video.RedrawBlock;
+import v9t9.common.video.VdpModeInfo;
 import v9t9.engine.video.BaseRedrawHandler;
 import v9t9.engine.video.IBitmapPixelAccess;
-import v9t9.engine.video.RedrawBlock;
-import v9t9.engine.video.VdpModeInfo;
-import v9t9.engine.video.VdpModeRedrawHandler;
+import v9t9.engine.video.IVdpModeRedrawHandler;
 import v9t9.engine.video.VdpRedrawInfo;
 import v9t9.engine.video.VdpTouchHandler;
 
@@ -21,7 +21,7 @@ import v9t9.engine.video.VdpTouchHandler;
  * @author ejs
  *
  */
-public abstract class PackedBitmapGraphicsModeRedrawHandler extends BaseRedrawHandler implements VdpModeRedrawHandler {
+public abstract class PackedBitmapGraphicsModeRedrawHandler extends BaseRedrawHandler implements IVdpModeRedrawHandler {
 
 	protected int rowstride;
 	protected int blockshift;
@@ -62,7 +62,7 @@ public abstract class PackedBitmapGraphicsModeRedrawHandler extends BaseRedrawHa
 			
 		return super.touch(addr) | visible;
 	}
-	public void propagateTouches() {
+	public void prepareUpdate() {
 		// we directly detect screen changes already
 	}
 	

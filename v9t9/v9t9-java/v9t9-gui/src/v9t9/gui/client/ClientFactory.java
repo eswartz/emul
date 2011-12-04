@@ -8,8 +8,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import v9t9.common.client.IClient;
+import v9t9.common.machine.IMachine;
 import v9t9.engine.machine.MachineBase;
-import v9t9.engine.memory.IMachine;
 
 /**
  * @author ejs

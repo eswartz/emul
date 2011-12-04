@@ -20,12 +20,12 @@ import v9t9.base.properties.IPropertyListener;
 import v9t9.base.properties.SettingProperty;
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.utils.HexUtils;
+import v9t9.common.dsr.IDeviceIndicatorProvider;
+import v9t9.common.dsr.IDsrHandler;
+import v9t9.common.dsr.IDsrSettings;
+import v9t9.common.dsr.IMemoryTransfer;
+import v9t9.common.machine.IMachine;
 import v9t9.engine.dsr.IDevIcons;
-import v9t9.engine.dsr.IDeviceIndicatorProvider;
-import v9t9.engine.dsr.IDsrHandler;
-import v9t9.engine.dsr.IDsrSettings;
-import v9t9.engine.dsr.IMemoryTransfer;
-import v9t9.engine.memory.IMachine;
 import v9t9.engine.settings.WorkspaceSettings;
 
 /**

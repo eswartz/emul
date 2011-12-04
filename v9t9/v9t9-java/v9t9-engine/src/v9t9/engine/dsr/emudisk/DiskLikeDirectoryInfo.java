@@ -11,8 +11,8 @@ import java.util.Map;
 
 import v9t9.common.files.NativeFile;
 import v9t9.common.files.NativeFileFactory;
+import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.engine.dsr.DsrException;
-import v9t9.engine.memory.ByteMemoryAccess;
 
 class DiskLikeDirectoryInfo extends DirectoryInfo {
 

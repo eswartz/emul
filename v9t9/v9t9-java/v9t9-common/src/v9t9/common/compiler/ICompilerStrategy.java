@@ -1,9 +1,9 @@
 /**
  * 
  */
-package v9t9.engine.compiler;
+package v9t9.common.compiler;
 
-import v9t9.engine.cpu.IExecutor;
+import v9t9.common.cpu.IExecutor;
 
 /**
  * Strategy for compiling code
@@ -19,7 +19,7 @@ public interface ICompilerStrategy {
 	 */
 	ICompiledCode getCompiledCode();
 	
-	void setup(IExecutor exec, CompilerBase compiler);
+	void setup(IExecutor exec, ICompiler compiler);
 
 	/**
 	 * 

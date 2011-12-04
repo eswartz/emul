@@ -8,7 +8,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import v9t9.engine.memory.IMachineModel;
+import v9t9.common.machine.IMachineModel;
 
 /**
  * @author ejs

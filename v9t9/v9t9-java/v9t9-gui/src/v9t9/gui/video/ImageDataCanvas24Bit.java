@@ -8,7 +8,8 @@ import java.util.Arrays;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.PaletteData;
 
-import v9t9.engine.memory.ByteMemoryAccess;
+import v9t9.common.memory.ByteMemoryAccess;
+import v9t9.common.video.ColorMapUtils;
 import v9t9.engine.video.Sprite2Canvas;
 
 /**
@@ -53,7 +54,13 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 	 */
 	@Override
 	public void clear() {
-		byte[] rgb = getColorMgr().getRGB(getColorMgr().getClearColor());
+		byte[] rgb;
+		if (getFormat() == Format.COLOR256_1x1) {
+			rgb = new byte[] { 0, 0, 0};
+			ColorMapUtils.getGRB332(rgb, (byte) getColorMgr().getClearColor(), getColorMgr().isGreyscale());
+		} else {
+			rgb = getColorMgr().getRGB(getColorMgr().getClearColor());
+		}
 		
 		int bpp = imageData.depth >> 3;
 		for (int i = 0; i < imageData.data.length; i += bpp) {

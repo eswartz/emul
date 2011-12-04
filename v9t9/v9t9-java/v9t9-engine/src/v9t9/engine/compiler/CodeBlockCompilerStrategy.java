@@ -8,10 +8,13 @@ import java.util.TreeMap;
 
 
 import v9t9.base.utils.Pair;
+import v9t9.common.compiler.ICompiledCode;
+import v9t9.common.compiler.ICompiler;
+import v9t9.common.compiler.ICompilerStrategy;
 import v9t9.common.cpu.ICpu;
+import v9t9.common.cpu.IExecutor;
 import v9t9.common.memory.IMemoryArea;
 import v9t9.common.memory.IMemoryEntry;
-import v9t9.engine.cpu.IExecutor;
 
 /**
  * @author ejs
@@ -29,7 +32,7 @@ public class CodeBlockCompilerStrategy implements ICompilerStrategy {
 
 	private IExecutor executor;
 
-	private CompilerBase compiler;
+	private ICompiler compiler;
 
 	public CodeBlockCompilerStrategy() {
 		
@@ -46,7 +49,7 @@ public class CodeBlockCompilerStrategy implements ICompilerStrategy {
 		return true;
 	}
 	
-	public void setup(IExecutor executor, CompilerBase compiler) {
+	public void setup(IExecutor executor, ICompiler compiler) {
 		this.executor = executor;
 		this.compiler = compiler;
 	}

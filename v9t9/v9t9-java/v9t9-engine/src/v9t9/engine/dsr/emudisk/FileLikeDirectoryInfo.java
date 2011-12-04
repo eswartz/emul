@@ -15,9 +15,9 @@ import v9t9.common.files.NativeFDRFile;
 import v9t9.common.files.NativeFile;
 import v9t9.common.files.NativeFileFactory;
 import v9t9.common.files.NativeTextFile;
+import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.engine.dsr.DsrException;
 import v9t9.engine.dsr.PabConstants;
-import v9t9.engine.memory.ByteMemoryAccess;
 
 public class FileLikeDirectoryInfo extends DirectoryInfo {
 

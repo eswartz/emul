@@ -14,15 +14,17 @@ import java.util.List;
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
 import v9t9.base.settings.Logging;
+import v9t9.common.compiler.ICompiledCode;
+import v9t9.common.compiler.ICompiler;
+import v9t9.common.compiler.ICompilerStrategy;
 import v9t9.common.cpu.AbortedException;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuMetrics;
+import v9t9.common.cpu.IExecutor;
+import v9t9.common.cpu.IInstructionListener;
 import v9t9.common.cpu.MetricEntry;
-import v9t9.engine.compiler.CompilerBase;
-import v9t9.engine.compiler.ICompiledCode;
-import v9t9.engine.compiler.ICompilerStrategy;
+import v9t9.common.machine.IMachine;
 import v9t9.engine.interpreter.IInterpreter;
-import v9t9.engine.memory.IMachine;
 import v9t9.engine.video.tms9918a.VdpTMS9918A;
 
 
@@ -59,7 +61,7 @@ public class Executor implements IExecutor {
 	private final ICpuMetrics cpuMetrics;
 
     public Executor(ICpu cpu, ICpuMetrics cpuMetrics, 
-    		IInterpreter interpreter, CompilerBase compiler, 
+    		IInterpreter interpreter, ICompiler compiler, 
     		ICompilerStrategy compilerStrategy,
     		final IInstructionListener dumpFullReporter, final IInstructionListener dumpReporter) {
         this.cpu = cpu;

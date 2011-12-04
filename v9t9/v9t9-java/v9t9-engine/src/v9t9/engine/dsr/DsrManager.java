@@ -5,7 +5,9 @@ import java.util.List;
 
 
 import v9t9.base.settings.ISettingSection;
-import v9t9.engine.memory.IMachine;
+import v9t9.common.dsr.IDsrHandler;
+import v9t9.common.dsr.IDsrManager;
+import v9t9.common.machine.IMachine;
 
 public abstract class DsrManager implements IDsrManager {
 

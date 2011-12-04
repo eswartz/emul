@@ -12,8 +12,8 @@ import v9t9.base.settings.Logging;
 import v9t9.base.sound.ISoundVoice;
 import v9t9.base.utils.BinaryUtils;
 import v9t9.base.utils.HexUtils;
+import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.memory.IMemoryDomain;
-import v9t9.engine.hardware.ISpeechChip;
 import v9t9.engine.memory.DiskMemoryEntry;
 
 /**

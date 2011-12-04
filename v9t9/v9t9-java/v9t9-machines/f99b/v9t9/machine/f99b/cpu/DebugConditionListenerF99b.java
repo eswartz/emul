@@ -8,8 +8,8 @@ import java.util.LinkedList;
 
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.cpu.ICpu;
+import v9t9.common.cpu.IInstructionListener;
 import v9t9.common.cpu.InstructionWorkBlock;
-import v9t9.engine.cpu.IInstructionListener;
 import v9t9.machine.f99b.asm.InstF99b;
 import v9t9.machine.f99b.asm.InstructionWorkBlockF99b;
 

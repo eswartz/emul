@@ -4,11 +4,11 @@
 package v9t9.machine.ti99.machine;
 
 
+import v9t9.common.hardware.ISoundChip;
+import v9t9.common.hardware.IVdpChip;
+import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryModel;
-import v9t9.engine.hardware.ISoundChip;
-import v9t9.engine.hardware.IVdpChip;
 import v9t9.engine.keyboard.KeyboardState;
-import v9t9.engine.memory.IMachine;
 import v9t9.engine.memory.Vdp9918AMmio;
 import v9t9.engine.sound.SoundTMS9919;
 import v9t9.engine.video.tms9918a.VdpTMS9918A;

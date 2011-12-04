@@ -3,7 +3,7 @@
  */
 package v9t9.engine.video;
 
-import v9t9.engine.memory.ByteMemoryAccess;
+import v9t9.common.memory.ByteMemoryAccess;
 
 public class VdpSprite extends SpriteBase {
 	private byte color;

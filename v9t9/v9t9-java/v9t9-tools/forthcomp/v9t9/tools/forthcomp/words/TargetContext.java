@@ -823,7 +823,7 @@ public abstract class TargetContext extends Context {
 	abstract public void compileDoes(HostContext hostContext, DictEntry dictEntry, int targetDP) throws AbortException;
 
 
-	public void compileString(@SuppressWarnings("unused") HostContext hostContext, String string) throws AbortException {
+	public void compileString(HostContext hostContext, String string) throws AbortException {
 		IWord parenString = require("(s\")");
 		compileCall((ITargetWord) parenString);
 		Pair<Integer, Integer> info = writeLengthPrefixedString(string);

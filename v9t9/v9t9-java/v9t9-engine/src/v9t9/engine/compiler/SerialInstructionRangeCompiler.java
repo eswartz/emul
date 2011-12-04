@@ -10,6 +10,7 @@ import org.apache.bcel.generic.InstructionList;
 
 import v9t9.common.asm.IDecompileInfo;
 import v9t9.common.asm.RawInstruction;
+import v9t9.common.compiler.ICompiler;
 
 /**
  * Compile each instruction, assuming every one is an entry point.
@@ -21,7 +22,7 @@ public class SerialInstructionRangeCompiler implements InstructionRangeCompiler 
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.Compiler.InstructionRangeCompiler#compileInstructionRange(v9t9.emulator.runtime.Compiler, int, int, v9t9.emulator.runtime.HighLevelCodeInfo, org.apache.bcel.generic.InstructionList, v9t9.emulator.runtime.CompileInfo)
 	 */
-	public void compileInstructionRange(CompilerBase compiler, RawInstruction[] insts,
+	public void compileInstructionRange(ICompiler compiler, RawInstruction[] insts,
 			IDecompileInfo highLevel, InstructionList ilist, CompileInfo info) {
 	    // discover the instructions for the block
 		int numinsts = insts.length;
@@ -63,7 +64,7 @@ public class SerialInstructionRangeCompiler implements InstructionRangeCompiler 
 	        if (insts[i] != null) {
 	            chunks[i] = new CompiledInstInfo();
 	            info.ilist = new InstructionList();
-	            compiler.generateInstruction((short) (addr + i * 2),
+	            ((CompilerBase) compiler).generateInstruction((short) (addr + i * 2),
 	                    insts[i], info, chunks[i]);
 	
 	            // not compiled?
@@ -71,7 +72,7 @@ public class SerialInstructionRangeCompiler implements InstructionRangeCompiler 
 	            	chunks[i] = null;
 	            
 	            // lifetime calculations
-	            if (CompilerBase.settingOptimize.getBoolean() && chunks[i] != null) {
+	            if (ICompiler.settingOptimize.getBoolean() && chunks[i] != null) {
 	            	BytecodeOptimizer.peephole(info, chunks[i]);
 				}
 	        }

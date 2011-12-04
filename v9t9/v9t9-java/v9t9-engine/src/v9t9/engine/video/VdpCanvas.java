@@ -3,8 +3,8 @@
  */
 package v9t9.engine.video;
 
+import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.video.VdpColorManager;
-import v9t9.engine.memory.ByteMemoryAccess;
 
 /**
  * This class implements rendering of video contents.
@@ -47,6 +47,7 @@ public abstract class VdpCanvas extends BaseVdpCanvas implements ISpriteCanvas {
 	public void setFormat(Format format) {
 		this.format = format;
 		getColorMgr().useAltSpritePalette(format == Format.COLOR256_1x1);
+		setMono(false);
 	}
 	public Format getFormat() {
 		return format;
@@ -56,6 +57,8 @@ public abstract class VdpCanvas extends BaseVdpCanvas implements ISpriteCanvas {
 	 */
 	public abstract void clear();
 	private boolean isBlank;
+
+	private boolean isMono;
 
 
 	public final void setSize(int x, int y) {
@@ -246,5 +249,19 @@ public abstract class VdpCanvas extends BaseVdpCanvas implements ISpriteCanvas {
 			fourColorMap[0][i] = (byte) cc.getFourColorModeColor(i, true);
 			fourColorMap[1][i] = (byte) cc.getFourColorModeColor(i, false);
 		}
+	}
+
+	/**
+	 * @return
+	 */
+	public boolean isMono() {
+		return isMono;
+	}
+	
+	/**
+	 * @param isMono the isMono to set
+	 */
+	public void setMono(boolean isMono) {
+		this.isMono = isMono;
 	}
 }

@@ -1,6 +1,6 @@
 package v9t9.gui.client.swt;
 
-import v9t9.engine.hardware.IVdpChip;
+import v9t9.common.hardware.IVdpChip;
 import v9t9.gui.image.ImageImport;
 import v9t9.gui.image.ImageImportOptions;
 import v9t9.gui.video.ImageDataCanvas;

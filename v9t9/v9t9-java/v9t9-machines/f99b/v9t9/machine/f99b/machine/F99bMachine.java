@@ -2,11 +2,11 @@ package v9t9.machine.f99b.machine;
 
 
 import v9t9.base.settings.ISettingSection;
+import v9t9.common.hardware.ICruChip;
+import v9t9.common.machine.IMachineModel;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.engine.hardware.BaseCruChip;
-import v9t9.engine.hardware.ICruChip;
 import v9t9.engine.machine.MachineBase;
-import v9t9.engine.memory.IMachineModel;
 import v9t9.engine.memory.TIMemoryModel;
 import v9t9.machine.f99b.cpu.CpuF99b;
 

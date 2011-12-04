@@ -24,11 +24,11 @@ import org.apache.bcel.generic.Type;
 import v9t9.common.asm.BaseMachineOperand;
 import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.InstTableCommon;
+import v9t9.common.compiler.ICompiler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.memory.IMemoryArea;
 import v9t9.engine.compiler.CompileInfo;
 import v9t9.engine.compiler.CompiledCode;
-import v9t9.engine.compiler.CompilerBase;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.WordMemoryArea;
@@ -625,8 +625,8 @@ public class Convert9900ToByteCode {
                 "setWP", Type.VOID, new Type[] { Type.SHORT },
                 Constants.INVOKEVIRTUAL));
 
-	    if (CompilerBase.settingOptimize.getBoolean()
-	            && CompilerBase.settingOptimizeRegAccess.getBoolean()) {
+	    if (ICompiler.settingOptimize.getBoolean()
+	            && ICompiler.settingOptimizeRegAccess.getBoolean()) {
 	        // get the wp memory...
 	        ilist.append(new ALOAD(info.localMemory));
 	        // ... entry

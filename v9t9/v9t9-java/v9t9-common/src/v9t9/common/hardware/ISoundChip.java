@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.engine.hardware;
+package v9t9.common.hardware;
 
 
 import v9t9.base.properties.IPersistable;

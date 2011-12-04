@@ -49,11 +49,11 @@ import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
 import v9t9.common.client.IClient;
 import v9t9.common.cpu.ICpu;
+import v9t9.common.cpu.IExecutor;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.IEventNotifier.Level;
+import v9t9.common.machine.IMachine;
 import v9t9.engine.EmulatorSettings;
-import v9t9.engine.cpu.IExecutor;
-import v9t9.engine.memory.IMachine;
 import v9t9.gui.Emulator;
 import v9t9.gui.common.BaseEmulatorWindow;
 

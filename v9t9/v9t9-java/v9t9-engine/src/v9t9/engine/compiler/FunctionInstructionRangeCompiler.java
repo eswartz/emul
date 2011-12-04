@@ -12,6 +12,7 @@ import v9t9.common.asm.Block;
 import v9t9.common.asm.IDecompileInfo;
 import v9t9.common.asm.IHighLevelInstruction;
 import v9t9.common.asm.RawInstruction;
+import v9t9.common.compiler.ICompiler;
 
 /**
  * Compile lists of instructions per discovered functions, assuming only a few
@@ -26,7 +27,7 @@ public class FunctionInstructionRangeCompiler implements
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.Compiler.InstructionRangeCompiler#compileInstructionRange(v9t9.emulator.runtime.Compiler, int, int, v9t9.emulator.runtime.HighLevelCodeInfo, org.apache.bcel.generic.InstructionList, v9t9.emulator.runtime.CompileInfo)
 	 */
-	public void compileInstructionRange(final CompilerBase compiler, RawInstruction[] insts,
+	public void compileInstructionRange(final ICompiler compiler, RawInstruction[] insts,
 			final IDecompileInfo highLevel, InstructionList ilist, CompileInfo info) {
 
 		int numinsts = insts.length;
@@ -47,7 +48,7 @@ public class FunctionInstructionRangeCompiler implements
 		    	int j = i;
 		    	while (inst != null) {
 		    		// note: need low-level instr here (insts[j])
-		    		compiler.generateInstruction(inst.getInst().pc, insts[j], info, chunks[i]);
+		    		((CompilerBase) compiler).generateInstruction(inst.getInst().pc, insts[j], info, chunks[i]);
 		            
 		    		// not compiled?
 		            if (chunks[i].chunk == null) {
@@ -67,7 +68,7 @@ public class FunctionInstructionRangeCompiler implements
 		            
 		        }
 		    	
-		    	if (CompilerBase.settingOptimize.getBoolean() && chunks[i] != null) {
+		    	if (ICompiler.settingOptimize.getBoolean() && chunks[i] != null) {
 		    		// TODO: buggy
 		    		//BytecodeOptimizer.peephole(info, chunks[i]);
 		    	}

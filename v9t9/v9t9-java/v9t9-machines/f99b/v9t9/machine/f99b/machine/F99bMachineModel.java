@@ -9,20 +9,19 @@ import java.util.List;
 import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuMetrics;
+import v9t9.common.dsr.IDeviceIndicatorProvider;
+import v9t9.common.dsr.IDsrSettings;
+import v9t9.common.hardware.ISoundChip;
+import v9t9.common.hardware.ISpeechChip;
+import v9t9.common.hardware.IVdpChip;
+import v9t9.common.machine.IMachine;
+import v9t9.common.machine.IMachineModel;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryModel;
 import v9t9.engine.compiler.NullCompilerStrategy;
 import v9t9.engine.cpu.Executor;
-import v9t9.engine.dsr.IDeviceIndicatorProvider;
-import v9t9.engine.dsr.IDsrSettings;
 import v9t9.engine.dsr.realdisk.MemoryDiskImageDsr;
-import v9t9.engine.hardware.ISoundChip;
-import v9t9.engine.hardware.ISpeechChip;
-import v9t9.engine.hardware.IVdpChip;
 import v9t9.engine.keyboard.KeyboardState;
-import v9t9.engine.memory.IMachine;
-import v9t9.engine.memory.IMachineModel;
-import v9t9.engine.memory.Vdp9938Mmio;
 import v9t9.engine.sound.MultiSoundTMS9919B;
 import v9t9.engine.speech.TMS5220;
 import v9t9.engine.video.v9938.VdpV9938;
@@ -43,7 +42,6 @@ public class F99bMachineModel implements IMachineModel {
 	public static final String ID = "Forth99B";
 	
 	private F99bMemoryModel memoryModel;
-	private VdpV9938 vdp;
 
 	private MemoryDiskImageDsr memoryDiskDsr;
 	
@@ -76,10 +74,7 @@ public class F99bMachineModel implements IMachineModel {
 	 * @see v9t9.emulator.hardware.MachineModel#getVdp()
 	 */
 	public IVdpChip createVdp(IMachine machine) {
-		//VdpV9938.settingMsxClockDivisor.setInt(1);
-		vdp = new VdpV9938(machine);
-		new Vdp9938Mmio(machine.getMemory(), vdp, 0x20000);
-		return vdp;
+		return new VdpV9938(machine);
 	}
 
 	public ISoundChip createSoundChip(IMachine machine) {

@@ -15,22 +15,23 @@ import v9t9.base.properties.SettingProperty;
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.utils.HexUtils;
 import v9t9.common.cpu.ICpu;
+import v9t9.common.hardware.ICruChip;
+import v9t9.common.hardware.IVdpChip;
+import v9t9.common.machine.IMachine;
+import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.memory.IMemoryDomain;
+import v9t9.common.video.ICanvas;
+import v9t9.common.video.RedrawBlock;
+import v9t9.common.video.VdpChanges;
+import v9t9.common.video.VdpModeInfo;
 import v9t9.engine.cpu.Executor;
 import v9t9.engine.hardware.BaseCruChip;
-import v9t9.engine.hardware.ICruChip;
-import v9t9.engine.hardware.IVdpChip;
-import v9t9.engine.memory.ByteMemoryAccess;
-import v9t9.engine.memory.IMachine;
 import v9t9.engine.memory.VdpMmio;
 import v9t9.engine.settings.WorkspaceSettings;
 import v9t9.engine.video.BlankModeRedrawHandler;
 import v9t9.engine.video.MemoryCanvas;
-import v9t9.engine.video.RedrawBlock;
 import v9t9.engine.video.VdpCanvas;
-import v9t9.engine.video.VdpChanges;
-import v9t9.engine.video.VdpModeInfo;
-import v9t9.engine.video.VdpModeRedrawHandler;
+import v9t9.engine.video.IVdpModeRedrawHandler;
 import v9t9.engine.video.VdpRedrawInfo;
 
 /**
@@ -66,7 +67,7 @@ public class VdpTMS9918A implements IVdpChip {
 	protected boolean vdpchanged;
 
 	protected VdpCanvas vdpCanvas;
-	protected VdpModeRedrawHandler vdpModeRedrawHandler;
+	protected IVdpModeRedrawHandler vdpModeRedrawHandler;
 	protected SpriteRedrawHandler spriteRedrawHandler;
 	protected final VdpChanges vdpChanges = new VdpChanges(getMaxRedrawblocks());
 	protected byte vdpStatus;
@@ -493,6 +494,7 @@ public class VdpTMS9918A implements IVdpChip {
 		vdpCanvas.setSize(256, 192);
 		vdpModeInfo = createBitmapModeInfo();
 		vdpModeRedrawHandler = new BitmapModeRedrawHandler(vdpRedrawInfo, vdpModeInfo);
+		vdpCanvas.setMono(((BitmapModeRedrawHandler) vdpModeRedrawHandler).isMono());
 		spriteRedrawHandler = createSpriteRedrawHandler();
 		vdpMmio.setMemoryAccessCycles(8);
 		initUpdateBlocks(8);
@@ -633,7 +635,7 @@ public class VdpTMS9918A implements IVdpChip {
 			synchronized (vdpCanvas) {
 				vdpCanvas.syncColors();
 				
-				vdpModeRedrawHandler.propagateTouches();
+				vdpModeRedrawHandler.prepareUpdate();
 				
 				if (vdpChanges.fullRedraw) {
 					// clear for the actual mode (not blank mode)
@@ -750,9 +752,9 @@ public class VdpTMS9918A implements IVdpChip {
 		
 	}
 
-	public void setCanvas(VdpCanvas canvas) {
-		this.vdpCanvas = canvas;
-		canvas.markDirty();
+	public void setCanvas(ICanvas canvas) {
+		this.vdpCanvas = (VdpCanvas) canvas;
+		vdpCanvas.markDirty();
 		
 		vdpRedrawInfo = new VdpRedrawInfo(vdpregs, this, vdpChanges, vdpCanvas);
 		blankModeRedrawHandler = new BlankModeRedrawHandler(vdpRedrawInfo, createBlankModeInfo());
@@ -812,7 +814,7 @@ public class VdpTMS9918A implements IVdpChip {
 	/**
 	 * @return the vdpModeRedrawHandler
 	 */
-	public VdpModeRedrawHandler getVdpModeRedrawHandler() {
+	public IVdpModeRedrawHandler getVdpModeRedrawHandler() {
 		return vdpModeRedrawHandler;
 	}
 

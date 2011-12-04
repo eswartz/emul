@@ -1,6 +1,7 @@
 package v9t9.engine.memory;
 
-import v9t9.engine.hardware.IVdpChip;
+import v9t9.common.hardware.IVdpChip;
+import v9t9.common.memory.ByteMemoryAccess;
 
 public abstract class VdpMmio implements IConsoleMmioReader, IConsoleMmioWriter {
 
@@ -15,6 +16,10 @@ public abstract class VdpMmio implements IConsoleMmioReader, IConsoleMmioWriter 
 		fullRamMask |= (fullRamMask >> 1) | (fullRamMask >> 2) | (fullRamMask >> 3);
 	}
 
+
+    public ByteMemoryArea getMemoryArea() {
+    	return fullRamArea;
+    }
 	abstract public int getAddr();
 
 	public int getMemoryAccessCycles() {

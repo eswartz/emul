@@ -12,7 +12,7 @@ import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.events.IEventNotifier;
-import v9t9.engine.hardware.IVdpChip;
+import v9t9.common.hardware.IVdpChip;
 import v9t9.gui.image.ImageImport;
 import v9t9.gui.video.ImageDataCanvas;
 

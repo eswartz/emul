@@ -29,7 +29,7 @@ import v9t9.base.properties.SettingProperty;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.files.Catalog;
 import v9t9.common.files.CatalogEntry;
-import v9t9.engine.memory.IMachine;
+import v9t9.common.machine.IMachine;
 
 final class CatalogDialog extends Dialog {
 	private static final int COLUMN_NAME = 0;

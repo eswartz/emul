@@ -12,7 +12,6 @@ import v9t9.base.properties.SettingProperty;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.machine.IBaseMachine;
 import v9t9.common.memory.IMemoryEntry;
-import v9t9.engine.memory.IMachine;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.settings.WorkspaceSettings;
 import v9t9.machine.ti99.memory.mmio.ConsoleGramWriteArea;
@@ -89,9 +88,9 @@ public class TI994AStandardConsoleMemoryModel extends BaseTI994AMemoryModel {
         this.memory.addAndMap(new MemoryEntry("Sound MMIO", CPU, 0x8400, 0x0400,
                 new ConsoleSoundArea(soundMmio)));
         this.memory.addAndMap(new MemoryEntry("VDP Read MMIO", CPU, 0x8800, 0x0400,
-                new ConsoleVdpReadArea(((IMachine) machine).getVdp().getVdpMmio())));
+                new ConsoleVdpReadArea(vdpMmio)));
         this.memory.addAndMap(new MemoryEntry("VDP Write MMIO", CPU, 0x8C00, 0x0400,
-                new ConsoleVdpWriteArea(((IMachine) machine).getVdp().getVdpMmio())));
+                new ConsoleVdpWriteArea(vdpMmio)));
         this.memory.addAndMap(new MemoryEntry("Speech Read MMIO", CPU, 0x9000, 0x0400,
                 new ConsoleSpeechReadArea(speechMmio)));
         this.memory.addAndMap(new MemoryEntry("Speech Write MMIO", CPU, 0x9400, 0x0400,

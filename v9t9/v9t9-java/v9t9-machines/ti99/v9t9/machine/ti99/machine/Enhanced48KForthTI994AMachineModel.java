@@ -3,19 +3,20 @@
  */
 package v9t9.machine.ti99.machine;
 
+import v9t9.common.hardware.ISoundChip;
+import v9t9.common.hardware.IVdpChip;
+import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryModel;
 import v9t9.engine.hardware.ICruWriter;
-import v9t9.engine.hardware.ISoundChip;
-import v9t9.engine.hardware.IVdpChip;
 import v9t9.engine.keyboard.KeyboardState;
 import v9t9.engine.memory.BankedMemoryEntry;
-import v9t9.engine.memory.IMachine;
-import v9t9.engine.memory.Vdp9938Mmio;
+import v9t9.engine.memory.VdpMmio;
 import v9t9.engine.memory.WindowBankedMemoryEntry;
 import v9t9.engine.sound.MultiSoundTMS9919B;
 import v9t9.engine.video.v9938.VdpV9938;
 import v9t9.machine.common.dsr.emudisk.DiskDirectoryMapper;
 import v9t9.machine.common.dsr.emudisk.EmuDiskDsr;
+import v9t9.machine.ti99.memory.TI994AStandardConsoleMemoryModel;
 import v9t9.machine.ti99.memory.V9t9EnhancedConsoleMemoryModel;
 
 /**
@@ -28,9 +29,7 @@ public class Enhanced48KForthTI994AMachineModel extends BaseTI99MachineModel {
 	public static final String ID = "Enhanced48KForthTI994A";
 	
 	private V9t9EnhancedConsoleMemoryModel memoryModel;
-	private Vdp9938Mmio vdpMmio;
 	private BankedMemoryEntry cpuBankedVideo;
-	private VdpV9938 vdp;
 	private boolean vdpCpuBanked;
 	//protected MemoryEntry currentMemory;
 	
@@ -63,9 +62,7 @@ public class Enhanced48KForthTI994AMachineModel extends BaseTI99MachineModel {
 	 * @see v9t9.emulator.hardware.MachineModel#getVdp()
 	 */
 	public IVdpChip createVdp(IMachine machine) {
-		vdp = new VdpV9938(machine);
-		vdpMmio = new Vdp9938Mmio(machine.getMemory(), vdp, 0x20000);
-		return vdp;
+		return new VdpV9938(machine);
 	}
 
 	public ISoundChip createSoundChip(IMachine machine) {
@@ -87,6 +84,8 @@ public class Enhanced48KForthTI994AMachineModel extends BaseTI99MachineModel {
 	}
 	
 	private void defineCpuVdpBanks(final TI99Machine machine) {
+		final IVdpChip vdp = machine.getVdp();
+		VdpMmio vdpMmio = ((TI994AStandardConsoleMemoryModel) machine.getMemory().getModel()).getVdpMmio();
 		
 		cpuBankedVideo = new WindowBankedMemoryEntry(machine.getMemory(),
 				"CPU VDP Bank", 

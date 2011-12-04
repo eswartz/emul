@@ -4,16 +4,14 @@
  * Created on Dec 18, 2004
  *
  */
-package v9t9.engine.hardware;
+package v9t9.common.hardware;
 
 
 import v9t9.base.properties.IPersistable;
+import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.memory.IMemoryDomain;
-import v9t9.engine.memory.ByteMemoryAccess;
-import v9t9.engine.memory.IMachine;
-import v9t9.engine.memory.VdpMmio;
-import v9t9.engine.video.VdpCanvas;
-import v9t9.engine.video.VdpModeRedrawHandler;
+import v9t9.common.machine.IMachine;
+import v9t9.common.video.ICanvas;
 
 /** 
  * Handle the work of a VDP chip.  This maintains the memory,
@@ -53,8 +51,8 @@ public interface IVdpChip extends IPersistable {
     /** Update video canvas periodically */
     boolean update();
 
-	VdpMmio getVdpMmio();
-	void setVdpMmio(VdpMmio mmio);
+	//VdpMmio getVdpMmio();
+	//void setVdpMmio(VdpMmio mmio);
 
 	IMemoryDomain getVideoMemory();
 
@@ -65,8 +63,8 @@ public interface IVdpChip extends IPersistable {
 	boolean isThrottled();
 	void work();
 	
-	void setCanvas(VdpCanvas canvas);
-	VdpCanvas getCanvas();
+	void setCanvas(ICanvas canvas);
+	ICanvas getCanvas();
 
 	/** This is called regularly from the CPU and should trigger the VDP
 	 * interrupt according to the desired frequency. 
@@ -77,7 +75,7 @@ public interface IVdpChip extends IPersistable {
 	void addCpuCycles(int cycles);
 	
 	/** Get the handler for video-mode specific handling */
-	VdpModeRedrawHandler getVdpModeRedrawHandler();
+	//VdpModeRedrawHandler getVdpModeRedrawHandler();
 
 	int getRegisterCount();
 	String getRegisterName(int reg);

@@ -3,13 +3,13 @@
  */
 package v9t9.engine.video.tms9918a;
 
-import v9t9.engine.memory.ByteMemoryAccess;
+import v9t9.common.memory.ByteMemoryAccess;
+import v9t9.common.video.RedrawBlock;
+import v9t9.common.video.VdpChanges;
+import v9t9.common.video.VdpModeInfo;
 import v9t9.engine.video.BaseRedrawHandler;
 import v9t9.engine.video.IBitmapPixelAccess;
-import v9t9.engine.video.RedrawBlock;
-import v9t9.engine.video.VdpChanges;
-import v9t9.engine.video.VdpModeInfo;
-import v9t9.engine.video.VdpModeRedrawHandler;
+import v9t9.engine.video.IVdpModeRedrawHandler;
 import v9t9.engine.video.VdpRedrawInfo;
 
 /**
@@ -17,7 +17,7 @@ import v9t9.engine.video.VdpRedrawInfo;
  *
  */
 public class MulticolorModeRedrawHandler extends BaseRedrawHandler implements
-		VdpModeRedrawHandler {
+		IVdpModeRedrawHandler {
 
 	public MulticolorModeRedrawHandler(VdpRedrawInfo info, VdpModeInfo modeInfo) {
 		super(info, modeInfo);
@@ -34,7 +34,7 @@ public class MulticolorModeRedrawHandler extends BaseRedrawHandler implements
 	static final ByteMemoryAccess multiBlockPattern = 
 		new ByteMemoryAccess(stockMultiBlockPattern, 0);
 
-	public void propagateTouches() {
+	public void prepareUpdate() {
 		propagatePatternTouches();
 	}
 

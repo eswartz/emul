@@ -1,14 +1,13 @@
 /**
  * 
  */
-package v9t9.engine.modules;
+package v9t9.common.modules;
 
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
 import v9t9.common.files.DataFiles;
-import v9t9.engine.EmulatorSettings;
 
 /**
  * @author ejs
@@ -57,14 +56,13 @@ public class MemoryEntryInfo {
 	 * @param filename
 	 * @return
 	 */
-	public String getFilePath(String filename, boolean isStored) {
+	public String getFilePath(String baseStoredDir, String filename, boolean isStored) {
 		if (isStored) {
 			File existing = DataFiles.resolveFile(filename);
 			if (existing != null && existing.exists())
 				return existing.getAbsolutePath();
 			
-			String base = EmulatorSettings.INSTANCE.getConfigDirectory();
-			File storedMemory = new File(new File(base), "module_ram");
+			File storedMemory = new File(new File(baseStoredDir), "module_ram");
 			storedMemory.mkdirs();
 		
 			return new File(storedMemory, filename).getAbsolutePath();

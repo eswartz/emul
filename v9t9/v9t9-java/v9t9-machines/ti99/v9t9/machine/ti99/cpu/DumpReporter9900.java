@@ -8,9 +8,9 @@ import java.io.PrintWriter;
 
 import v9t9.base.utils.HexUtils;
 import v9t9.common.asm.RawInstruction;
+import v9t9.common.cpu.IInstructionListener;
 import v9t9.common.cpu.InstructionWorkBlock;
 import v9t9.engine.cpu.Executor;
-import v9t9.engine.cpu.IInstructionListener;
 import v9t9.machine.ti99.machine.TI99Machine;
 
 /**

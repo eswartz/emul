@@ -14,6 +14,7 @@ import v9t9.base.utils.StorageException;
 import v9t9.base.utils.XMLUtils;
 import v9t9.common.events.NotifyException;
 import v9t9.common.files.DataFiles;
+import v9t9.common.modules.IModule;
 import v9t9.engine.EmulatorSettings;
 
 /**

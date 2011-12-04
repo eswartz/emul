@@ -25,27 +25,29 @@ import v9t9.common.cpu.AbortedException;
 import v9t9.common.cpu.CpuMetrics;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuMetrics;
+import v9t9.common.cpu.IExecutor;
+import v9t9.common.dsr.IDsrManager;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyEvent;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.files.DataFiles;
+import v9t9.common.hardware.ICruChip;
+import v9t9.common.hardware.ISoundChip;
+import v9t9.common.hardware.ISpeechChip;
+import v9t9.common.hardware.IVdpChip;
 import v9t9.common.keyboard.IKeyboardState;
+import v9t9.common.machine.IMachine;
+import v9t9.common.machine.IMachineModel;
+import v9t9.common.machine.TerminatedException;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryModel;
-import v9t9.engine.cpu.IExecutor;
+import v9t9.common.modules.IModuleManager;
 import v9t9.engine.dsr.DsrManager;
-import v9t9.engine.dsr.IDsrManager;
 import v9t9.engine.events.RecordingEventNotifier;
-import v9t9.engine.hardware.ICruChip;
-import v9t9.engine.hardware.ISoundChip;
-import v9t9.engine.hardware.ISpeechChip;
-import v9t9.engine.hardware.IVdpChip;
 import v9t9.engine.keyboard.KeyboardState;
-import v9t9.engine.memory.IMachine;
-import v9t9.engine.memory.IMachineModel;
-import v9t9.engine.memory.TerminatedException;
+import v9t9.engine.modules.ModuleManager;
 import v9t9.engine.settings.WorkspaceSettings;
 
 /** Encapsulate all the information about a running emulated machine.
@@ -141,7 +143,7 @@ abstract public class MachineBase implements IMachine {
 
 
 	protected void init(IMachineModel machineModel) {
-    	this.vdp = machineModel.createVdp(this);
+    	vdp = machineModel.createVdp(this);
     	sound = machineModel.createSoundChip(this);
     	speech = machineModel.createSpeechChip(this);
     	memoryModel.initMemory(this);
@@ -702,8 +704,7 @@ abstract public class MachineBase implements IMachine {
 		return cpuMetrics;
 	}
 
-	@Override
-	public ModuleManager getModuleManager() {
+	public IModuleManager getModuleManager() {
 		return moduleManager;
 	}
 

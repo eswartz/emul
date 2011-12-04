@@ -3,9 +3,11 @@
  */
 package v9t9.engine.dsr;
 
+import v9t9.common.dsr.IMemoryTransfer;
+import v9t9.common.hardware.IVdpChip;
+import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.memory.IMemoryDomain;
-import v9t9.engine.hardware.IVdpChip;
-import v9t9.engine.memory.ByteMemoryAccess;
+import v9t9.engine.memory.VdpMmio;
 
 /**
  * @author ejs
@@ -16,10 +18,12 @@ public class ConsoleMemoryTransfer implements IMemoryTransfer {
 	private final IVdpChip vdpHandler;
 	private final IMemoryDomain console;
 	private final short rambase;
+	private final VdpMmio vdpMmio;
 
-	public ConsoleMemoryTransfer(IMemoryDomain console, IVdpChip vdpHandler, short rambase) {
+	public ConsoleMemoryTransfer(IMemoryDomain console, IVdpChip vdpHandler, VdpMmio vdpMmio, short rambase) {
 		this.console = console;
 		this.vdpHandler = vdpHandler;
+		this.vdpMmio = vdpMmio;
 		this.rambase = rambase;
 		
 	}
@@ -54,7 +58,7 @@ public class ConsoleMemoryTransfer implements IMemoryTransfer {
 	 * @param read
 	 */
 	public void dirtyVdpMemory(int vaddr, int read) {
-		int base = vdpHandler.getVdpMmio().getBankAddr();
+		int base = vdpMmio.getBankAddr();
 		while (read-- > 0) {
 			vdpHandler.touchAbsoluteVdpMemory(
 					base + vaddr, 
@@ -70,7 +74,7 @@ public class ConsoleMemoryTransfer implements IMemoryTransfer {
 	 */
 	public ByteMemoryAccess getVdpMemory(int vaddr) {
 		return vdpHandler.getByteReadMemoryAccess(
-				vdpHandler.getVdpMmio().getBankAddr() + vaddr);
+				vdpMmio.getBankAddr() + vaddr);
 	}
 	
 	/**
@@ -79,7 +83,7 @@ public class ConsoleMemoryTransfer implements IMemoryTransfer {
 	 * @return byte
 	 */
 	public byte readVdpByte(int vaddr) {
-		int base = vdpHandler.getVdpMmio().getBankAddr();
+		int base = vdpMmio.getBankAddr();
 		return vdpHandler.readAbsoluteVdpMemory(base + vaddr);
 	}
 	
@@ -89,7 +93,7 @@ public class ConsoleMemoryTransfer implements IMemoryTransfer {
 	 * @return byte
 	 */
 	public short readVdpShort(int vaddr) {
-		int base = vdpHandler.getVdpMmio().getBankAddr();
+		int base = vdpMmio.getBankAddr();
 		return (short) ((vdpHandler.readAbsoluteVdpMemory(base + vaddr) << 8)
 			| (vdpHandler.readAbsoluteVdpMemory(base + vaddr + 1) & 0xff));
 	}
@@ -100,7 +104,7 @@ public class ConsoleMemoryTransfer implements IMemoryTransfer {
 	 * @return byte
 	 */
 	public void writeVdpByte(int vaddr, byte byt) {
-		int base = vdpHandler.getVdpMmio().getBankAddr();
+		int base = vdpMmio.getBankAddr();
 		vdpHandler.writeAbsoluteVdpMemory(base + vaddr, byt);
 	}
 

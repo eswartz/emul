@@ -3,8 +3,8 @@
  */
 package v9t9.engine.memory;
 
+import v9t9.common.hardware.IVdpChip;
 import v9t9.common.memory.IMemoryEntry;
-import v9t9.engine.hardware.IVdpChip;
 
 public class VdpRamArea extends ByteMemoryArea {
     private IVdpChip handler;

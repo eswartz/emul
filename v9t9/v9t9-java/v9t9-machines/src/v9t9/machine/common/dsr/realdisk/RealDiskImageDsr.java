@@ -9,11 +9,11 @@ import java.util.List;
 
 
 import v9t9.base.properties.SettingProperty;
+import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.engine.dsr.DeviceIndicatorProvider;
 import v9t9.engine.dsr.IDevIcons;
-import v9t9.engine.dsr.IDeviceIndicatorProvider;
 import v9t9.engine.dsr.realdisk.BaseDiskImageDsr;
 import v9t9.engine.dsr.realdisk.RealDiskDsrSettings;
 import v9t9.engine.hardware.CruManager;

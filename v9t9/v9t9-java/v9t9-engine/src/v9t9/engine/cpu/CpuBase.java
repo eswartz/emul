@@ -12,10 +12,10 @@ import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuState;
 import v9t9.common.cpu.IStatus;
 import v9t9.common.machine.IBaseMachine;
+import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryAccessListener;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
-import v9t9.engine.memory.IMachine;
 
 public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, ICpu {
 

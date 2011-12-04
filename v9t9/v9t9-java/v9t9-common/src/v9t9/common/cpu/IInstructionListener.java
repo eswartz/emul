@@ -1,9 +1,8 @@
 /**
  * 
  */
-package v9t9.engine.cpu;
+package v9t9.common.cpu;
 
-import v9t9.common.cpu.InstructionWorkBlock;
 
 /**
  * This interface receives details about an instruction's effects

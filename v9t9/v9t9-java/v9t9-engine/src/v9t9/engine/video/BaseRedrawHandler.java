@@ -3,6 +3,9 @@
  */
 package v9t9.engine.video;
 
+import v9t9.common.video.VdpChanges;
+import v9t9.common.video.VdpModeInfo;
+
 
 
 /**
@@ -19,7 +22,7 @@ package v9t9.engine.video;
  * @author ejs
  *
  */
-public abstract class BaseRedrawHandler implements VdpModeRedrawHandler {
+public abstract class BaseRedrawHandler implements IVdpModeRedrawHandler {
 	
 	protected final VdpRedrawInfo info;
 	protected final VdpModeInfo modeInfo;

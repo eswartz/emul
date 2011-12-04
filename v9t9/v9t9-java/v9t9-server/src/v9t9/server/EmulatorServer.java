@@ -10,18 +10,18 @@ import java.io.IOException;
 
 
 import v9t9.common.client.IClient;
+import v9t9.common.compiler.ICompiler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyException;
 import v9t9.common.files.DataFiles;
+import v9t9.common.machine.IMachine;
+import v9t9.common.machine.IMachineModel;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryModel;
 import v9t9.engine.EmulatorSettings;
-import v9t9.engine.compiler.CompilerBase;
 import v9t9.engine.machine.MachineModelFactory;
-import v9t9.engine.machine.ModuleManager;
-import v9t9.engine.memory.IMachine;
-import v9t9.engine.memory.IMachineModel;
+import v9t9.engine.modules.ModuleManager;
 import v9t9.engine.settings.WorkspaceSettings;
 import v9t9.machine.f99b.machine.F99bMachineModel;
 import v9t9.machine.ti99.machine.Enhanced48KForthTI994AMachineModel;
@@ -73,8 +73,8 @@ public class EmulatorServer {
     	// compile defaults
     	//CompilerBase.settingDebugInstructions.setBoolean(true);
     	//CompilerBase.settingOptimize.setBoolean(true);
-        CompilerBase.settingOptimizeRegAccess.setBoolean(true);
-        CompilerBase.settingOptimizeStatus.setBoolean(true);
+        ICompiler.settingOptimizeRegAccess.setBoolean(true);
+        ICompiler.settingOptimizeStatus.setBoolean(true);
         //CompilerBase.settingCompileOptimizeCallsWithData.setBoolean(true);
         //CompilerBase.settingCompileFunctions.setBoolean(true);
     }

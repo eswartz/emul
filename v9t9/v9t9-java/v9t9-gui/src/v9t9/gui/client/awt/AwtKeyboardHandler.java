@@ -14,7 +14,7 @@ import v9t9.common.cpu.ICpu;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.keyboard.IKeyboardState;
-import v9t9.engine.memory.IMachine;
+import v9t9.common.machine.IMachine;
 import v9t9.gui.common.BaseKeyboardHandler;
 
 /**

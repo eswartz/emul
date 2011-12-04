@@ -7,9 +7,10 @@ import org.apache.bcel.generic.InstructionList;
 
 import v9t9.common.asm.IDecompileInfo;
 import v9t9.common.asm.RawInstruction;
+import v9t9.common.compiler.ICompiler;
 
 public interface InstructionRangeCompiler {
-	void compileInstructionRange(CompilerBase compiler, RawInstruction[] insts,
+	void compileInstructionRange(ICompiler compiler, RawInstruction[] insts,
 			IDecompileInfo highLevel,  
 			InstructionList ilist, CompileInfo info);
 }

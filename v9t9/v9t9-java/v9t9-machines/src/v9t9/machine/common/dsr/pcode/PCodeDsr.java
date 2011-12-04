@@ -13,6 +13,8 @@ import java.util.Map;
 
 import v9t9.base.properties.SettingProperty;
 import v9t9.base.settings.ISettingSection;
+import v9t9.common.dsr.IDeviceIndicatorProvider;
+import v9t9.common.dsr.IMemoryTransfer;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
@@ -20,8 +22,6 @@ import v9t9.common.memory.IMemoryEntry;
 import v9t9.engine.EmulatorData;
 import v9t9.engine.dsr.DeviceIndicatorProvider;
 import v9t9.engine.dsr.IDevIcons;
-import v9t9.engine.dsr.IDeviceIndicatorProvider;
-import v9t9.engine.dsr.IMemoryTransfer;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.GplMmio;
 import v9t9.engine.memory.MemoryDomain;

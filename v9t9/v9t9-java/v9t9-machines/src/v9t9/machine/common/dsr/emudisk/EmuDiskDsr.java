@@ -16,15 +16,15 @@ import java.util.Map;
 
 import v9t9.base.properties.SettingProperty;
 import v9t9.base.settings.ISettingSection;
+import v9t9.common.dsr.IDeviceIndicatorProvider;
+import v9t9.common.dsr.IDsrHandler;
+import v9t9.common.dsr.IMemoryTransfer;
 import v9t9.common.files.Catalog;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.engine.dsr.DeviceIndicatorProvider;
 import v9t9.engine.dsr.DsrException;
 import v9t9.engine.dsr.IDevIcons;
-import v9t9.engine.dsr.IDeviceIndicatorProvider;
 import v9t9.engine.dsr.IDiskDsr;
-import v9t9.engine.dsr.IDsrHandler;
-import v9t9.engine.dsr.IMemoryTransfer;
 import v9t9.engine.dsr.emudisk.DirectDiskHandler;
 import v9t9.engine.dsr.emudisk.EmuDiskConsts;
 import v9t9.engine.dsr.emudisk.EmuDiskDsrSettings;
