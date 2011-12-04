@@ -96,7 +96,8 @@ public class ModuleManager implements IPersistable {
 			Memory memory = machine.getMemory();
 			for (MemoryEntryInfo info : module.getMemoryEntryInfos()) {
 				MemoryEntry entry = info.createMemoryEntry(memory);
-				entries.add(entry);
+				if (entry != null)
+					entries.add(entry);
 			}
 			for (MemoryEntry entry : entries) {
 				memory.addAndMap(entry);
