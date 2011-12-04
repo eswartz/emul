@@ -13,7 +13,7 @@ import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.IOperand;
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.cpu.InstructionWorkBlock;
-import v9t9.common.memory.MemoryDomain;
+import v9t9.common.memory.IMemoryDomain;
 
 /**
  * A machine operand, as parsed from the instruction.
@@ -197,7 +197,7 @@ public class MachineOperand9900 extends BaseMachineOperand {
 	 *            workspace pointer
 	 * @return new address
 	 */
-    public short fetchOperandImmediates(MemoryDomain domain, short addr) {
+    public short fetchOperandImmediates(IMemoryDomain domain, short addr) {
     	switch (type) {
     	case MachineOperand9900.OP_ADDR:	// @>xxxx or @>xxxx(Rx)
     		immed = domain.readWord(addr); 

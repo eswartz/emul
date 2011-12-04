@@ -12,7 +12,7 @@ import org.apache.bcel.generic.InstructionHandle;
 import org.apache.bcel.generic.InstructionList;
 import org.apache.bcel.generic.TABLESWITCH;
 
-import v9t9.common.memory.MemoryDomain;
+import v9t9.common.memory.IMemoryDomain;
 
 
 public class CompileInfo {
@@ -49,5 +49,5 @@ public class CompileInfo {
     public int localTemp; // 16-bit
     
     //v9t9.memory.Memory memory;
-    public MemoryDomain memory;
+    public IMemoryDomain memory;
 }

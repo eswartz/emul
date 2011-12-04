@@ -19,65 +19,33 @@ import v9t9.base.utils.ListenerList;
 /**
  * @author ejs
  */
-public class MemoryDomain implements IMemoryAccess, IPersistable {
-    /*
-     * This must remain 64K, even if mega-memory expansion is emulated. All the
-     * public routines expect to be passed 16-bit addresses.
-     */
-    public static final int PHYSMEMORYSIZE = 65536;
-	/**
-	 * An area is the smallest unit of memory which has the same essential
-	 * behavior, as far as we know. We choose 1k because the TI-99/4A memory
-	 * mapped areas for VDP, GROM, etc are accessed 1k apart from each other.
-	 */
-	static public final int AREASIZE = 1024;
-
-	static public final int AREASHIFT = 10;
-
+public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain {
     static final int NUMAREAS = PHYSMEMORYSIZE >> AREASHIFT;
     
-	public static final String NAME_GRAPHICS = "GRAPHICS";
-	public static final String NAME_SPEECH = "SPEECH";
-	public static final String NAME_VIDEO = "VIDEO";
-	public static final String NAME_CPU = "CPU";
+	public IMemoryAccessListener nullMemoryAccessListener = new IMemoryAccessListener() {
 
-    /** Listener for noticing memory accesses. */
-    public interface MemoryAccessListener {
-    	/** Indicate that a memory entry was accessed.
-    	 * @param entry
-    	 */
-    	void access(MemoryEntry entry);
-    }
-    
-    /** Listener for noticing memory writes. */
-    public interface MemoryWriteListener {
-    	void changed(MemoryEntry entry, int addr, boolean isByte);
-    }
-    
-    public MemoryAccessListener nullMemoryAccessListener = new MemoryAccessListener() {
-
-		public void access(MemoryEntry entry) {
+		public void access(IMemoryEntry entry) {
 		}
     	
     };
     
-    public MemoryWriteListener nullMemoryWriteListener = new MemoryWriteListener() {
+    public IMemoryWriteListener nullMemoryWriteListener = new IMemoryWriteListener() {
 
-		public void changed(MemoryEntry entry, int addr, boolean isByte) {
+		public void changed(IMemoryEntry entry, int addr, boolean isByte) {
 		}
     	
     };
     
     
-    private MemoryAccessListener accessListener = nullMemoryAccessListener;
-    private ListenerList<MemoryWriteListener> writeListeners = new ListenerList<MemoryDomain.MemoryWriteListener>();
+    private IMemoryAccessListener accessListener = nullMemoryAccessListener;
+    private ListenerList<IMemoryWriteListener> writeListeners = new ListenerList<IMemoryWriteListener>();
     
-    private MemoryEntry entries[] = new MemoryEntry[NUMAREAS];
+    private IMemoryEntry entries[] = new IMemoryEntry[NUMAREAS];
     
-    private Stack<MemoryEntry> mappedEntries = new Stack<MemoryEntry>();
-	private MemoryEntry zeroMemoryEntry;
+    private Stack<IMemoryEntry> mappedEntries = new Stack<IMemoryEntry>();
+	private IMemoryEntry zeroMemoryEntry;
 	private final String name;
-	public Memory memory;
+	public IMemory memory;
     
 	
     public MemoryDomain(String name, int latency) {
@@ -102,36 +70,40 @@ public class MemoryDomain implements IMemoryAccess, IPersistable {
      * @return
      */
     public static MemoryDomain newFromArray(short[] data, boolean bWordAccess) {
-        MemoryDomain domain = new MemoryDomain(MemoryDomain.NAME_CPU);
+        MemoryDomain domain = new MemoryDomain(IMemoryDomain.NAME_CPU);
         WordMemoryArea area = WordMemoryArea.newDefaultArea();
         area.bWordAccess = bWordAccess;
         area.memory = data;
         area.read = data;
         area.write = data;
-        MemoryEntry entry = new MemoryEntry("Test Entry",
+        IMemoryEntry entry = new MemoryEntry("Test Entry",
         		domain, 0, data.length * 2,
         		area);
         domain.mapEntry(entry);
         return domain;
     }    
 
-    public static MemoryDomain newFromArray(byte[] data) {
-        MemoryDomain domain = new MemoryDomain(MemoryDomain.NAME_CPU);
+    public static IMemoryDomain newFromArray(byte[] data) {
+        IMemoryDomain domain = new MemoryDomain(IMemoryDomain.NAME_CPU);
         ByteMemoryArea area = new ByteMemoryArea();
         area.memory = data;
         area.read = data;
         area.write = data;
-        MemoryEntry entry = new MemoryEntry("Test Entry",
+        IMemoryEntry entry = new MemoryEntry("Test Entry",
         		domain, 0, data.length,
         		area);
         domain.mapEntry(entry);
         return domain;
     }  
-    public final MemoryEntry getEntryAt(int addr) {
+    /* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#getEntryAt(int)
+	 */
+    @Override
+	public final IMemoryEntry getEntryAt(int addr) {
         return entries[(addr & PHYSMEMORYSIZE - 1) >> AREASHIFT];
     }
 
-    void mapEntryAreas(int addr, int size, MemoryEntry entry) {
+    void mapEntryAreas(int addr, int size, IMemoryEntry entry) {
         if (size == 0)
         	return;
         	
@@ -158,144 +130,205 @@ public class MemoryDomain implements IMemoryAccess, IPersistable {
         }
     }
 
-    public final short flatReadWord(int addr) {
-        MemoryEntry entry = getEntryAt(addr);
+    /* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#flatReadWord(int)
+	 */
+    @Override
+	public final short flatReadWord(int addr) {
+        IMemoryEntry entry = getEntryAt(addr);
         accessListener.access(entry);
         return entry.flatReadWord(addr);
     }
 
-    public final byte flatReadByte(int addr) {
-    	MemoryEntry entry = getEntryAt(addr);
+    /* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#flatReadByte(int)
+	 */
+    @Override
+	public final byte flatReadByte(int addr) {
+    	IMemoryEntry entry = getEntryAt(addr);
         accessListener.access(entry);
         return entry.flatReadByte(addr);
     }
 
-    public final void flatWriteByte(int addr, byte val) {
-    	MemoryEntry entry = getEntryAt(addr);
+    /* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#flatWriteByte(int, byte)
+	 */
+    @Override
+	public final void flatWriteByte(int addr, byte val) {
+    	IMemoryEntry entry = getEntryAt(addr);
         accessListener.access(entry);
         entry.flatWriteByte(addr, val);
     }
 
-    public final void flatWriteWord(int addr, short val) {
-    	MemoryEntry entry = getEntryAt(addr);
+    /* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#flatWriteWord(int, short)
+	 */
+    @Override
+	public final void flatWriteWord(int addr, short val) {
+    	IMemoryEntry entry = getEntryAt(addr);
         accessListener.access(entry);
         entry.flatWriteWord(addr, val);
     }
 
-    public final byte readByte(int addr) {
-    	MemoryEntry entry = getEntryAt(addr);
+    /* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#readByte(int)
+	 */
+    @Override
+	public final byte readByte(int addr) {
+    	IMemoryEntry entry = getEntryAt(addr);
         accessListener.access(entry);
         return entry.readByte(addr);
     }
 
-    public final short readWord(int addr) {
-    	MemoryEntry entry = getEntryAt(addr);
+    /* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#readWord(int)
+	 */
+    @Override
+	public final short readWord(int addr) {
+    	IMemoryEntry entry = getEntryAt(addr);
         accessListener.access(entry);
         return entry.readWord(addr);
     }
 
-    public final void writeByte(int addr, byte val) {
-    	MemoryEntry entry = getEntryAt(addr);
+    /* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#writeByte(int, byte)
+	 */
+    @Override
+	public final void writeByte(int addr, byte val) {
+    	IMemoryEntry entry = getEntryAt(addr);
         accessListener.access(entry);
         entry.writeByte(addr, val);
         if (!writeListeners.isEmpty())
         	fireWriteEvent(entry, addr & 0xffff, true);
     }
 
-    private void fireWriteEvent(final MemoryEntry entry, final int addr, final boolean isByte) {
+    private void fireWriteEvent(final IMemoryEntry entry, final int addr, final boolean isByte) {
     	for (Object listenerObj : writeListeners.toArray()) {
-    		((MemoryWriteListener) listenerObj).changed(entry, addr, isByte);
+    		((IMemoryWriteListener) listenerObj).changed(entry, addr, isByte);
     	}
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#writeWord(int, short)
+	 */
+	@Override
 	public final void writeWord(int addr, short val) {
-        MemoryEntry entry = getEntryAt(addr);
+        IMemoryEntry entry = getEntryAt(addr);
         accessListener.access(entry);
         entry.writeWord(addr, val);
         if (!writeListeners.isEmpty())
         	fireWriteEvent(entry, addr & 0xfffe, false);
     }
 
-    public final boolean hasRamAccess(int addr) {
-    	MemoryEntry entry = getEntryAt(addr);
+    /* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#hasRamAccess(int)
+	 */
+    @Override
+	public final boolean hasRamAccess(int addr) {
+    	IMemoryEntry entry = getEntryAt(addr);
         return entry != null && entry.hasWriteAccess();
     }
 
-    public final boolean hasRomAccess(int addr) {
-        MemoryEntry entry = getEntryAt(addr);
+    /* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#hasRomAccess(int)
+	 */
+    @Override
+	public final boolean hasRomAccess(int addr) {
+        IMemoryEntry entry = getEntryAt(addr);
         return entry != null && entry.hasReadAccess();
     }
 
-    public final boolean isVolatile(int addr) {
-    	MemoryEntry entry = getEntryAt(addr);
+    /* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#isVolatile(int)
+	 */
+    @Override
+	public final boolean isVolatile(int addr) {
+    	IMemoryEntry entry = getEntryAt(addr);
         return entry != null && entry.isVolatile();
     }
 
 
-    public final boolean isStatic(int addr) {
-    	MemoryEntry entry = getEntryAt(addr);
+    /* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#isStatic(int)
+	 */
+    @Override
+	public final boolean isStatic(int addr) {
+    	IMemoryEntry entry = getEntryAt(addr);
         return entry != null && entry.isStatic();
     }
 
-    /** Zero out the memory areas, setting them to zeroed-out ROM.
-     *	 
-     */
-    public void zero() {
+    /* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#zero()
+	 */
+    @Override
+	public void zero() {
         for (int i = 0; i < entries.length; i++) {
             entries[i] = zeroMemoryEntry;
         }
     }
 
-	public void setAccessListener(MemoryAccessListener listener) {
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#setAccessListener(v9t9.common.memory.IMemoryAccessListener)
+	 */
+	@Override
+	public void setAccessListener(IMemoryAccessListener listener) {
 		if (listener == null)
 			listener = nullMemoryAccessListener;
 		this.accessListener = listener;
 	}
 	
-	public synchronized void addWriteListener(MemoryWriteListener listener) {
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#addWriteListener(v9t9.common.memory.IMemoryWriteListener)
+	 */
+	@Override
+	public synchronized void addWriteListener(IMemoryWriteListener listener) {
 		writeListeners.add(listener);
 	}
-	public synchronized void removeWriteListener(MemoryWriteListener listener) {
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#removeWriteListener(v9t9.common.memory.IMemoryWriteListener)
+	 */
+	@Override
+	public synchronized void removeWriteListener(IMemoryWriteListener listener) {
 		writeListeners.remove(listener);
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#getLatency(int)
+	 */
+	@Override
 	public int getLatency(int addr) {
-		MemoryEntry entry = getEntryAt(addr);
+		IMemoryEntry entry = getEntryAt(addr);
 		return entry.getLatency();
 	}
 
-	/**
-	 * Tell if the entry has been mapped at all -- though it may
-	 * have been obscured in the meantime.
-	 * @param memoryEntry
-	 * @return true if the entry has been mapped
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#isEntryMapped(v9t9.common.memory.IMemoryEntry)
 	 */
-	public boolean isEntryMapped(MemoryEntry memoryEntry) {
+	@Override
+	public boolean isEntryMapped(IMemoryEntry memoryEntry) {
 		return mappedEntries.contains(memoryEntry);
 	}
 	
-	/**
-	 * Tell if the entry has been mapped and is fully visible
-	 * @param memoryEntry
-	 * @return true if all MemoryAreas for the entry are visible
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#isEntryFullyMapped(v9t9.common.memory.IMemoryEntry)
 	 */
-	public boolean isEntryFullyMapped(MemoryEntry memoryEntry) {
-		for (int addr = memoryEntry.addr; addr < memoryEntry.addr + memoryEntry.size; addr += AREASIZE) {
-			MemoryEntry theEntry = getEntryAt(addr);
+	@Override
+	public boolean isEntryFullyMapped(IMemoryEntry memoryEntry) {
+		for (int addr = memoryEntry.getAddr(); addr < memoryEntry.getAddr() + memoryEntry.getSize(); addr += AREASIZE) {
+			IMemoryEntry theEntry = getEntryAt(addr);
 			if (theEntry != memoryEntry)
 				return false;
 		}
         return true;
 	}
 	
-	/**
-	 * Tell if the entry has been mapped but is fully obscured
-	 * @param memoryEntry
-	 * @return true if all MemoryAreas for the entry are covered
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#isEntryFullyUnmapped(v9t9.common.memory.IMemoryEntry)
 	 */
-	public boolean isEntryFullyUnmapped(MemoryEntry memoryEntry) {
-		for (int addr = memoryEntry.addr; addr < memoryEntry.addr + memoryEntry.size; addr += AREASIZE) {
-			MemoryEntry theEntry = getEntryAt(addr);
+	@Override
+	public boolean isEntryFullyUnmapped(IMemoryEntry memoryEntry) {
+		for (int addr = memoryEntry.getAddr(); addr < memoryEntry.getAddr() + memoryEntry.getSize(); addr += AREASIZE) {
+			IMemoryEntry theEntry = getEntryAt(addr);
 			if (theEntry == memoryEntry)
 				return false;
 		}
@@ -303,47 +336,45 @@ public class MemoryDomain implements IMemoryAccess, IPersistable {
 	}
 
 
-	/**
-	 * Map a memory entry, so that its range of addresses
-	 * replace any handled by existing entries.
-	 * @param memoryEntry
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#mapEntry(v9t9.common.memory.IMemoryEntry)
 	 */
-	public void mapEntry(MemoryEntry memoryEntry) {
+	@Override
+	public void mapEntry(IMemoryEntry memoryEntry) {
 		if (!mappedEntries.contains(memoryEntry))
 			mappedEntries.add(memoryEntry);
-		memoryEntry.memory = memory;
+		((MemoryEntry) memoryEntry).memory = memory;
 		mapEntryAreas(memoryEntry);
 		memoryEntry.onMap();
 	}
 
-	private void mapEntryAreas(MemoryEntry memoryEntry) {
-		mapEntryAreas(memoryEntry.addr, memoryEntry.size, memoryEntry);
+	private void mapEntryAreas(IMemoryEntry memoryEntry) {
+		mapEntryAreas(memoryEntry.getAddr(), memoryEntry.getSize(), memoryEntry);
 	}
 
-	/**
-	 * Unmap a memory entry, exposing any entries previously mapped.
-	 * @param memoryEntry
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#unmapEntry(v9t9.common.memory.IMemoryEntry)
 	 */
-	public void unmapEntry(MemoryEntry memoryEntry) {
+	@Override
+	public void unmapEntry(IMemoryEntry memoryEntry) {
 		if (memoryEntry == null)
 			return;
 		
 		// TODO: remove from end?
 		mappedEntries.remove(memoryEntry);
 		
-		for (MemoryEntry entry : mappedEntries) {
-			mapEntryAreas(entry.addr, entry.size, entry);
+		for (IMemoryEntry entry : mappedEntries) {
+			mapEntryAreas(entry.getAddr(), entry.getSize(), entry);
 		}
 		memoryEntry.onUnmap();
 	}
 
-	/**
-	 * Quickly swap banked entries. 
-	 * @param currentBank
-	 * @param newBankEntry
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#switchBankedEntry(v9t9.common.memory.IMemoryEntry, v9t9.common.memory.IMemoryEntry)
 	 */
-	public void switchBankedEntry(MemoryEntry currentBank,
-			MemoryEntry newBankEntry) {
+	@Override
+	public void switchBankedEntry(IMemoryEntry currentBank,
+			IMemoryEntry newBankEntry) {
 		if (currentBank != null && newBankEntry != null && isEntryMapped(currentBank)) {
 			if (currentBank != newBankEntry) {
 				mappedEntries.remove(currentBank);
@@ -360,9 +391,13 @@ public class MemoryDomain implements IMemoryAccess, IPersistable {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#saveState(v9t9.base.settings.ISettingSection)
+	 */
+	@Override
 	public void saveState(ISettingSection section) {
 		int idx = 0;
-		for (MemoryEntry entry : mappedEntries) {
+		for (IMemoryEntry entry : mappedEntries) {
 			if (entry != zeroMemoryEntry && !isEntryFullyUnmapped(entry)) {
 				entry.saveState(section.addSection(""+ idx));
 				idx++;
@@ -370,6 +405,10 @@ public class MemoryDomain implements IMemoryAccess, IPersistable {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#loadState(v9t9.base.settings.ISettingSection)
+	 */
+	@Override
 	public void loadState(ISettingSection section) {
 		//unmapAll();
 		if (section == null) {
@@ -378,7 +417,7 @@ public class MemoryDomain implements IMemoryAccess, IPersistable {
 
 		for (ISettingSection entryStore : section.getSections()) {
 			String name = entryStore.get("Name");
-			MemoryEntry entry = findMappedEntry(name);
+			IMemoryEntry entry = findMappedEntry(name);
 			if (entry != null) {
 				entry.loadState(entryStore);
 			} else {
@@ -393,8 +432,12 @@ public class MemoryDomain implements IMemoryAccess, IPersistable {
 	}
 
 
-	public MemoryEntry findFullyMappedEntry(String name) {
-		for (MemoryEntry entry : mappedEntries) {
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#findFullyMappedEntry(java.lang.String)
+	 */
+	@Override
+	public IMemoryEntry findFullyMappedEntry(String name) {
+		for (IMemoryEntry entry : mappedEntries) {
 			if (entry.getName().equals(name) && isEntryFullyMapped(entry)) {
 				return entry;
 			}
@@ -402,8 +445,12 @@ public class MemoryDomain implements IMemoryAccess, IPersistable {
 		return null;
 	}
 
-	public MemoryEntry findMappedEntry(String name) {
-		for (MemoryEntry entry : mappedEntries) {
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#findMappedEntry(java.lang.String)
+	 */
+	@Override
+	public IMemoryEntry findMappedEntry(String name) {
+		for (IMemoryEntry entry : mappedEntries) {
 			if (entry.getName().equals(name) && !isEntryFullyUnmapped(entry)) {
 				return entry;
 			}
@@ -411,22 +458,30 @@ public class MemoryDomain implements IMemoryAccess, IPersistable {
 		return null;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#unmapAll()
+	 */
+	@Override
 	public void unmapAll() {
 		mappedEntries.clear();
 		mapEntry(zeroMemoryEntry);
 	}
 	
-	public MemoryEntry[] getMemoryEntries() {
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#getMemoryEntries()
+	 */
+	@Override
+	public IMemoryEntry[] getMemoryEntries() {
 		return entries;
 	}
 
-	/**
-	 * Get all the memory entries, with individual banks expanded
-	 * @return
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#getFlattenedMemoryEntries()
 	 */
-	public MemoryEntry[] getFlattenedMemoryEntries() {
-		List<MemoryEntry> entryList = new ArrayList<MemoryEntry>();
-		for (MemoryEntry entry : mappedEntries) {
+	@Override
+	public IMemoryEntry[] getFlattenedMemoryEntries() {
+		List<IMemoryEntry> entryList = new ArrayList<IMemoryEntry>();
+		for (IMemoryEntry entry : mappedEntries) {
 			if (entry == zeroMemoryEntry  || !isEntryMapped(entry))
 				continue;
 			if (entry instanceof MultiBankedMemoryEntry) {
@@ -441,24 +496,32 @@ public class MemoryDomain implements IMemoryAccess, IPersistable {
 				entryList.add(entry);
 			}
 		}
-		return (MemoryEntry[]) entryList.toArray(new MemoryEntry[entryList.size()]);
+		return (IMemoryEntry[]) entryList.toArray(new IMemoryEntry[entryList.size()]);
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#writeMemory(int)
+	 */
+	@Override
 	public void writeMemory(int addr) {
 		if (!writeListeners.isEmpty())
 			fireWriteEvent(getEntryAt(addr), addr, true);
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#getName()
+	 */
+	@Override
 	public String getName() {
 		return name;
 	}
 
-	/**
-	 * @throws IOException 
-	 * 
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#save()
 	 */
+	@Override
 	public void save() {
-		for (MemoryEntry entry : mappedEntries) {
+		for (IMemoryEntry entry : mappedEntries) {
 			try {
 				entry.save();
 			} catch (IOException e) {
@@ -467,4 +530,11 @@ public class MemoryDomain implements IMemoryAccess, IPersistable {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#getMemory()
+	 */
+	@Override
+	public IMemory getMemory() {
+		return memory;
+	}
 }

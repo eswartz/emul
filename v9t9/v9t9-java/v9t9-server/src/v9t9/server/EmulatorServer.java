@@ -12,7 +12,7 @@ import java.io.IOException;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyException;
-import v9t9.common.memory.Memory;
+import v9t9.common.memory.IMemory;
 import v9t9.common.memory.MemoryModel;
 import v9t9.engine.EmulatorSettings;
 import v9t9.engine.client.IClient;
@@ -42,7 +42,7 @@ public class EmulatorServer {
 	}
 	
 	
-	private Memory memory;
+	private IMemory memory;
 	private IMachine machine;
 	private MemoryModel memoryModel;
 	private IClient client;

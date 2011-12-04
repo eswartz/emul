@@ -112,10 +112,10 @@ public class Enhanced48KForthTI994AMachineModel extends BaseTI99MachineModel {
 				if (data == 1) {
 					vdpCpuBanked = true;
 					//currentMemory = machine.getMemory().map.lookupEntry(machine.getConsole(), 0xc000);
-					cpuBankedVideo.domain.mapEntry(cpuBankedVideo);
+					cpuBankedVideo.getDomain().mapEntry(cpuBankedVideo);
 				} else {
 					vdpCpuBanked = false;
-					cpuBankedVideo.domain.unmapEntry(cpuBankedVideo);
+					cpuBankedVideo.getDomain().unmapEntry(cpuBankedVideo);
 					//if (currentMemory != null)
 					//	currentMemory.map();
 				}

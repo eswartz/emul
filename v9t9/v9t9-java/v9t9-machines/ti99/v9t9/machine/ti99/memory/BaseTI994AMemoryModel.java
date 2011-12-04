@@ -7,6 +7,7 @@ import java.io.IOException;
 
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.machine.IBaseMachine;
+import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.Memory;
 import v9t9.common.memory.MemoryDomain;
 import v9t9.engine.machine.IMachine;
@@ -57,10 +58,10 @@ public abstract class BaseTI994AMemoryModel implements TIMemoryModel {
 	        VIDEO = new MemoryDomain("VDP");
 	        SPEECH = new MemoryDomain("Speech");
 	        
-	        memory.addDomain(MemoryDomain.NAME_CPU, CPU);
-	        memory.addDomain(MemoryDomain.NAME_GRAPHICS, GRAPHICS);
-	        memory.addDomain(MemoryDomain.NAME_VIDEO, VIDEO);
-	        memory.addDomain(MemoryDomain.NAME_SPEECH, SPEECH);
+	        memory.addDomain(IMemoryDomain.NAME_CPU, CPU);
+	        memory.addDomain(IMemoryDomain.NAME_GRAPHICS, GRAPHICS);
+	        memory.addDomain(IMemoryDomain.NAME_VIDEO, VIDEO);
+	        memory.addDomain(IMemoryDomain.NAME_SPEECH, SPEECH);
     	}
         return memory;
         

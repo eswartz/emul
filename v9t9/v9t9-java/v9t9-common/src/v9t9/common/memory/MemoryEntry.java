@@ -39,49 +39,45 @@ import v9t9.base.utils.Pair;
  * 
  * @author ejs
  */
-public class MemoryEntry implements IMemoryAccess, Comparable<MemoryEntry>, IPersistable {
+public class MemoryEntry implements IPersistable, IMemoryEntry {
     /** start address */
-    public int addr;
+    private int addr;
 
     /** size in bytes */
-    public int size;
+    private int size;
 
     /** name of entry for debugging */
-    public String name;
+    private String name;
 
     /** where the memory lives */
-    public MemoryDomain domain;
+    private IMemoryDomain domain;
 
     /** how the memory acts */
     protected MemoryArea area;
     
     /** is the memory accessed as words or as bytes? */
-    public boolean bWordAccess = true;
+    private boolean bWordAccess = true;
 
 	private TreeMap<Short, String> symbols;
 
-	public int addrOffset = 0;
-
-	/** Tell if this came from a module */
-	//public IModule moduleLoaded;
-
-	public Memory memory;
+	protected int addrOffset = 0;
+	protected IMemory memory;
 
 	private boolean isVolatile;
 	
-    public MemoryEntry(String name, MemoryDomain domain, int addr,
+    public MemoryEntry(String name, IMemoryDomain domain, int addr,
             int size, MemoryArea area) {
         if (size < 0 || addr < 0 /*|| addr + size > MemoryDomain.PHYSMEMORYSIZE*/) {
 			throw new AssertionError("illegal address range");
 		}
-        if ((addr & MemoryDomain.AREASIZE-1) != 0) {
-			throw new AssertionError("illegal address: must live on " + MemoryDomain.AREASIZE + " byte boundary");
+        if ((addr & IMemoryDomain.AREASIZE-1) != 0) {
+			throw new AssertionError("illegal address: must live on " + IMemoryDomain.AREASIZE + " byte boundary");
 		}
         if (domain == null) {
 			throw new NullPointerException();
 		}
-        if ((size & MemoryDomain.AREASIZE-1) != 0) {
-        	size += MemoryDomain.AREASIZE - (size & MemoryDomain.AREASIZE-1);
+        if ((size & IMemoryDomain.AREASIZE-1) != 0) {
+        	size += IMemoryDomain.AREASIZE - (size & IMemoryDomain.AREASIZE-1);
         }
         
         this.addr = addr;
@@ -159,7 +155,10 @@ public class MemoryEntry implements IMemoryAccess, Comparable<MemoryEntry>, IPer
 		return true;
 	}
     
-    @Override
+    /* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#toString()
+	 */
+	@Override
 	public String toString() {
         if (name != null) {
 			return name;
@@ -167,19 +166,35 @@ public class MemoryEntry implements IMemoryAccess, Comparable<MemoryEntry>, IPer
         return "[memory entry >" + HexUtils.toHex4(addr) + "..." + HexUtils.toHex4((addr+size)) + "]";
     }
 
-    public boolean isVolatile() {
+    /* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#isVolatile()
+	 */
+    @Override
+	public boolean isVolatile() {
     	return isVolatile;
     }
     
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#setVolatile(boolean)
+	 */
+	@Override
 	public void setVolatile(boolean isVolatile) {
 		this.isVolatile = isVolatile;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#isStatic()
+	 */
+	@Override
 	public boolean isStatic() {
 		return !hasWriteAccess();
 	}
     
-    public void setArea(MemoryArea area) {
+    /* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#setArea(v9t9.common.memory.MemoryArea)
+	 */
+    @Override
+	public void setArea(MemoryArea area) {
     	if (this.area == null && area != null)
     		isVolatile = area.hasWriteAccess();
     	this.area = area;
@@ -203,28 +218,35 @@ public class MemoryEntry implements IMemoryAccess, Comparable<MemoryEntry>, IPer
         //domain.setArea(addr, size, new WordMemoryArea());
     }
 
-    /** Save entry, if applicable 
-     * @throws IOException */
-    public void save() throws IOException {
+    /* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#save()
+	 */
+    @Override
+	public void save() throws IOException {
         /* nothing */
     }
 
-    /** Load entry, if applicable */
-    public void load() {
+    /* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#load()
+	 */
+    @Override
+	public void load() {
         /* nothing */
     }
 
-    /** Unload entry, if applicable */
-    public void unload() {
+    /* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#unload()
+	 */
+    @Override
+	public void unload() {
         /* nothing */
     }
 
-    /** Load symbols from file in the form:
-     * 
-     * &lt;addr&gt; &lt;name&gt;
-     * @throws IOException 
-     */
-    public void loadSymbols(InputStream is) throws IOException {
+    /* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#loadSymbols(java.io.InputStream)
+	 */
+    @Override
+	public void loadSymbols(InputStream is) throws IOException {
     	try {
     		BufferedReader reader = new BufferedReader(new InputStreamReader(is));
     		String line;
@@ -247,15 +269,20 @@ public class MemoryEntry implements IMemoryAccess, Comparable<MemoryEntry>, IPer
     }
     
 
-	/**
-	 * @param fos
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#writeSymbols(java.io.PrintStream)
 	 */
+	@Override
 	public void writeSymbols(PrintStream os) {
 		for (Map.Entry<Short, String> entry : symbols.entrySet()) {
 			os.println(HexUtils.toHex4(entry.getKey()) + " " + entry.getValue());
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#defineSymbol(int, java.lang.String)
+	 */
+	@Override
 	public void defineSymbol(int addr, String name) {
 		if (addr < this.addr || addr >= this.addr + this.size) {
 			return;
@@ -266,20 +293,29 @@ public class MemoryEntry implements IMemoryAccess, Comparable<MemoryEntry>, IPer
 		symbols.put((short) addr, name);
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#lookupSymbol(short)
+	 */
+	@Override
 	public String lookupSymbol(short addr) {
 		if (symbols == null) return null;
 		return symbols.get(addr);
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#clearSymbols()
+	 */
+	@Override
 	public void clearSymbols() {
 		symbols = null;
 	}
 
 
-	/**
-	 * @param domain
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#copySymbols(v9t9.common.memory.MemoryDomain)
 	 */
-	public void copySymbols(MemoryDomain domain) {
+	@Override
+	public void copySymbols(IMemoryDomain domain) {
 		if (symbols != null) {
 			for (Map.Entry<Short, String> entry : symbols.entrySet()) {
 				domain.getEntryAt(entry.getKey()).defineSymbol(entry.getKey(), entry.getValue());
@@ -287,6 +323,10 @@ public class MemoryEntry implements IMemoryAccess, Comparable<MemoryEntry>, IPer
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#lookupSymbolNear(short, int)
+	 */
+	@Override
 	public Pair<String,Short> lookupSymbolNear(short addr, int range) {
 		if (symbols == null) return null;
 		SortedMap<Short, String> headMap = symbols.headMap(addr, true);
@@ -299,76 +339,131 @@ public class MemoryEntry implements IMemoryAccess, Comparable<MemoryEntry>, IPer
 	}
 	
 
-	public MemoryDomain getDomain() {
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#getDomain()
+	 */
+	@Override
+	final public IMemoryDomain getDomain() {
 		return domain;
 	}
 	
-	/**
-	 * Get the active area.
-	 * @return
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#getArea()
 	 */
-	public final MemoryArea getArea() {
+	@Override
+	public final IMemoryArea getArea() {
 		return area;
 	}
 	
-	/**
-	 * Get the mapping for the address
-	 * @param addr
-	 * @return
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#mapAddress(int)
 	 */
+	@Override
 	public final int mapAddress(int addr) {
 		return (addr & 0xffff) + addrOffset;
 	}
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#flatReadByte(int)
+	 */
+	@Override
 	public byte flatReadByte(int addr) {
 		return area.flatReadByte(this, mapAddress(addr));
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#flatReadWord(int)
+	 */
+	@Override
 	public short flatReadWord(int addr) {
 		return area.flatReadWord(this, mapAddress(addr));
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#flatWriteByte(int, byte)
+	 */
+	@Override
 	public void flatWriteByte(int addr, byte val) {
 		area.flatWriteByte(this, mapAddress(addr), val);
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#flatWriteWord(int, short)
+	 */
+	@Override
 	public void flatWriteWord(int addr, short val) {
 		area.flatWriteWord(this, mapAddress(addr), val);
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#hasReadAccess()
+	 */
+	@Override
 	public boolean hasReadAccess() {
 		return area.hasReadAccess();
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#hasWriteAccess()
+	 */
+	@Override
 	public boolean hasWriteAccess() {
 		return area.hasWriteAccess();
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#readByte(int)
+	 */
+	@Override
 	public byte readByte(int addr) {
 		return area.readByte(this, mapAddress(addr));
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#readWord(int)
+	 */
+	@Override
 	public short readWord(int addr) {
 		return area.readWord(this, mapAddress(addr));
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#writeByte(int, byte)
+	 */
+	@Override
 	public void writeByte(int addr, byte val) {
 		area.writeByte(this, mapAddress(addr), val);
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#writeWord(int, short)
+	 */
+	@Override
 	public void writeWord(int addr, short val) {
 		area.writeWord(this, mapAddress(addr), val);
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#getLatency()
+	 */
+	@Override
 	public final byte getLatency() {
 		return area.getLatency();
 	}
 
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#getName()
+	 */
+	@Override
 	public String getName() {
 		return name;
 	}
 
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#saveState(v9t9.base.settings.ISettingSection)
+	 */
+	@Override
 	public void saveState(ISettingSection section) {
 		section.put("Class", getClass().getCanonicalName());
 		section.put("Name", getName());
@@ -385,6 +480,10 @@ public class MemoryEntry implements IMemoryAccess, Comparable<MemoryEntry>, IPer
 	}
 
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#loadState(v9t9.base.settings.ISettingSection)
+	 */
+	@Override
 	public void loadState(ISettingSection section) {
 		loadFields(section);
 		loadMemoryContents(section);
@@ -405,19 +504,27 @@ public class MemoryEntry implements IMemoryAccess, Comparable<MemoryEntry>, IPer
 	}
 
 
-	public int compareTo(MemoryEntry o) {
-		int diff = domain.hashCode() - o.domain.hashCode();
+	public int compareTo(IMemoryEntry o) {
+		int diff = domain.hashCode() - o.getDomain().hashCode();
 		if (diff != 0) return diff;
-		diff = addr - o.addr; 
+		diff = addr - o.getAddr(); 
 		return diff;
 	}
 
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#getUniqueName()
+	 */
+	@Override
 	public String getUniqueName() {
 		return name;
 	}
 
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#contains(int)
+	 */
+	@Override
 	public boolean contains(int addr) {
 		return addr >= this.addr + this.addrOffset && addr < this.addr + this.addrOffset + this.size;
 	}
@@ -451,6 +558,47 @@ public class MemoryEntry implements IMemoryAccess, Comparable<MemoryEntry>, IPer
 			entry.loadState(entryStore);
 		}
 		return entry;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#getMemory()
+	 */
+	@Override
+	final public IMemory getMemory() {
+		return memory;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#getAddr()
+	 */
+	@Override
+	final public int getAddr() {
+		return addr;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#getSize()
+	 */
+	@Override
+	final public int getSize() {
+		return size;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#isWordAccess()
+	 */
+	@Override
+	final public boolean isWordAccess() {
+		return bWordAccess;
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryEntry#getAddrOffset()
+	 */
+	@Override
+	final public int getAddrOffset() {
+		return addrOffset;
 	}
 
 }

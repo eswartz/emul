@@ -29,7 +29,7 @@ import v9t9.base.properties.SettingProperty;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.engine.files.Catalog;
 import v9t9.engine.files.CatalogEntry;
-import v9t9.engine.machine.Machine;
+import v9t9.engine.machine.IMachine;
 
 final class CatalogDialog extends Dialog {
 	private static final int COLUMN_NAME = 0;
@@ -134,13 +134,13 @@ final class CatalogDialog extends Dialog {
 	private final List<CatalogEntry> entries;
 	private final Catalog catalog;
 	private final SettingProperty setting;
-	private final Machine machine;
+	private final IMachine machine;
 	{
 		setShellStyle(getShellStyle() | SWT.RESIZE | SWT.MODELESS);
 	}
 
 	public CatalogDialog(Shell parentShell,
-			Machine machine,
+			IMachine machine,
 			List<CatalogEntry> entries, 
 			Catalog catalog, SettingProperty setting) {
 		super(parentShell);

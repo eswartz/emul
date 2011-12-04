@@ -2,10 +2,11 @@ package v9t9.machine.ti99.machine;
 
 
 import v9t9.base.settings.ISettingSection;
+import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.MemoryDomain;
 import v9t9.engine.hardware.CruManager;
 import v9t9.engine.hardware.ICruChip;
-import v9t9.engine.machine.Machine;
+import v9t9.engine.machine.MachineBase;
 import v9t9.engine.machine.MachineModel;
 import v9t9.engine.memory.GplMmio;
 import v9t9.engine.memory.SpeechMmio;
@@ -14,7 +15,7 @@ import v9t9.engine.memory.VdpMmio;
 import v9t9.machine.ti99.dsr.DsrManager9900;
 import v9t9.machine.ti99.memory.BaseTI994AMemoryModel;
 
-public class TI99Machine extends Machine {
+public class TI99Machine extends MachineBase {
 
 	private CruManager cruManager;
 
@@ -86,21 +87,21 @@ public class TI99Machine extends Machine {
 	 * @see v9t9.emulator.hardware.TI99Machine#getGplMemoryDomain()
 	 */
 	public MemoryDomain getGplMemoryDomain() {
-		return memory.getDomain(MemoryDomain.NAME_GRAPHICS);
+		return memory.getDomain(IMemoryDomain.NAME_GRAPHICS);
 	}
 
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.TI99Machine#getSpeechMemoryDomain()
 	 */
 	public MemoryDomain getSpeechMemoryDomain() {
-		return memory.getDomain(MemoryDomain.NAME_SPEECH);
+		return memory.getDomain(IMemoryDomain.NAME_SPEECH);
 	}
 
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.TI99Machine#getVdpMemoryDomain()
 	 */
 	public MemoryDomain getVdpMemoryDomain() {
-		return memory.getDomain(MemoryDomain.NAME_VIDEO);
+		return memory.getDomain(IMemoryDomain.NAME_VIDEO);
 	}
 
 	public CruManager getCruManager() {

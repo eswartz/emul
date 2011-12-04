@@ -20,7 +20,7 @@ import v9t9.base.settings.XMLSettingStorage;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.engine.EmulatorSettings;
 import v9t9.engine.client.IVideoRenderer;
-import v9t9.engine.machine.Machine;
+import v9t9.engine.machine.IMachine;
 import v9t9.engine.machine.TerminatedException;
 import v9t9.engine.settings.WorkspaceSettings;
 import v9t9.gui.Emulator;
@@ -37,7 +37,7 @@ public abstract class BaseEmulatorWindow {
 	 */
 	private static final String[] MACHINE_SAVE_FILE_EXTENSIONS = new String[] { ".sav|V9t9 machine save file" };
 	protected IVideoRenderer videoRenderer;
-	protected final  Machine machine;
+	protected final IMachine machine;
 	static public final SettingProperty settingMonitorDrawing = new SettingProperty("MonitorDrawing", new Boolean(true));
 	static public final SettingProperty settingZoomLevel = new SettingProperty("ZoomLevel", new Integer(3));
 	static public final SettingProperty settingFullScreen = new SettingProperty("FullScreen", new Boolean(false));
@@ -46,7 +46,7 @@ public abstract class BaseEmulatorWindow {
 	static public final SettingProperty settingMachineStatePath = new SettingProperty("MachineStatePath", "");
 	static public final SettingProperty settingScreenShotsBase = new SettingProperty("ScreenShotsBase", "");
 	
-	public BaseEmulatorWindow(Machine machine) {
+	public BaseEmulatorWindow(IMachine machine) {
 		this.machine = machine;
 		//EmulatorSettings.INSTANCE.load();
 	}

@@ -499,9 +499,9 @@ public class OperandCompiler9900 {
 	public static void compileReadWord(CompileInfo info, InstructionList ilist) {
 	    ilist.append(new ALOAD(info.localMemory));
 	    ilist.append(InstructionConstants.SWAP);
-	    ilist.append(info.ifact.createInvoke(v9t9.common.memory.MemoryDomain.class
+	    ilist.append(info.ifact.createInvoke(v9t9.common.memory.IMemoryDomain.class
 	            .getName(), "readWord", Type.SHORT, new Type[] { Type.INT },
-	            Constants.INVOKEVIRTUAL));
+	            Constants.INVOKEINTERFACE));
 	}
 
 	/**
@@ -510,9 +510,9 @@ public class OperandCompiler9900 {
 	public static void compileReadByte(CompileInfo info, InstructionList ilist) {
 	    ilist.append(new ALOAD(info.localMemory));
 	    ilist.append(InstructionConstants.SWAP);
-	    ilist.append(info.ifact.createInvoke(v9t9.common.memory.MemoryDomain.class
+	    ilist.append(info.ifact.createInvoke(v9t9.common.memory.IMemoryDomain.class
 	            .getName(), "readByte", Type.BYTE, new Type[] { Type.INT },
-	            Constants.INVOKEVIRTUAL));
+	            Constants.INVOKEINTERFACE));
 	
 	}
 
@@ -533,9 +533,9 @@ public class OperandCompiler9900 {
 	
 	    ilist.append(InstructionConstants.DUP_X2);
 	    ilist.append(InstructionConstants.POP);
-	    ilist.append(info.ifact.createInvoke(v9t9.common.memory.MemoryDomain.class
+	    ilist.append(info.ifact.createInvoke(v9t9.common.memory.IMemoryDomain.class
 	            .getName(), "writeWord", Type.VOID, new Type[] { Type.INT,
-	            Type.SHORT }, Constants.INVOKEVIRTUAL));
+	            Type.SHORT }, Constants.INVOKEINTERFACE));
 	
 	}
 
@@ -546,9 +546,9 @@ public class OperandCompiler9900 {
 	    ilist.append(new ALOAD(info.localMemory));
 	    ilist.append(InstructionConstants.DUP_X2);
 	    ilist.append(InstructionConstants.POP);
-	    ilist.append(info.ifact.createInvoke(v9t9.common.memory.MemoryDomain.class
+	    ilist.append(info.ifact.createInvoke(v9t9.common.memory.IMemoryDomain.class
 	            .getName(), "writeByte", Type.VOID, new Type[] { Type.INT,
-	            Type.BYTE }, Constants.INVOKEVIRTUAL));
+	            Type.BYTE }, Constants.INVOKEINTERFACE));
 	}
 
 }

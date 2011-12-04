@@ -3,8 +3,8 @@
  */
 package v9t9.machine.ti99.memory;
 
-import v9t9.common.memory.MemoryDomain;
-import v9t9.common.memory.MemoryEntry;
+import v9t9.common.memory.IMemoryDomain;
+import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.MemoryListener;
 import v9t9.common.memory.MultiBankedMemoryEntry;
 import v9t9.engine.machine.IMachine;
@@ -62,7 +62,7 @@ public class V9t9EnhancedConsoleMmioArea extends ConsoleMmioArea implements Memo
 	public static final int NMI = 0xFFFC;
 	
 	private final IMachine machine;
-	private MemoryEntry underlyingMemory;
+	private IMemoryEntry underlyingMemory;
 	private MultiBankedMemoryEntry romMemory;
 		
 	V9t9EnhancedConsoleMmioArea(IMachine machine) {
@@ -83,22 +83,22 @@ public class V9t9EnhancedConsoleMmioArea extends ConsoleMmioArea implements Memo
 
 
     
-    public void physicalMemoryMapChanged(MemoryEntry entry) {
-		if ((entry.addr >= 0x10000 - MemoryDomain.AREASIZE || entry.addr + entry.size < 0x10000)
-				|| (entry.addr < 0x4000)) {
+    public void physicalMemoryMapChanged(IMemoryEntry entry) {
+		if ((entry.getAddr() >= 0x10000 - IMemoryDomain.AREASIZE || entry.getAddr() + entry.getSize() < 0x10000)
+				|| (entry.getAddr() < 0x4000)) {
 			findUnderlyingMemory();
 		}
 	}
-    public void logicalMemoryMapChanged(MemoryEntry entry) {
+    public void logicalMemoryMapChanged(IMemoryEntry entry) {
     	physicalMemoryMapChanged(entry);
     }
 
     private void findUnderlyingMemory() {
-    	for (MemoryEntry entry : machine.getMemory().getDomain(MemoryDomain.NAME_CPU).getMemoryEntries()) {
-    		if (entry.addr < MMIO_BASE && entry.addr + entry.size >= 0x10000 && entry.getArea() != this) {
+    	for (IMemoryEntry entry : machine.getMemory().getDomain(IMemoryDomain.NAME_CPU).getMemoryEntries()) {
+    		if (entry.getAddr() < MMIO_BASE && entry.getAddr() + entry.getSize() >= 0x10000 && entry.getArea() != this) {
     			underlyingMemory = entry;
     		}
-    		else if (entry.addr < 0x4000) {
+    		else if (entry.getAddr() < 0x4000) {
     			if (entry instanceof MultiBankedMemoryEntry) {
 					romMemory = (MultiBankedMemoryEntry) entry;
 				} else {
@@ -111,7 +111,7 @@ public class V9t9EnhancedConsoleMmioArea extends ConsoleMmioArea implements Memo
 	}
 
     @Override
-    public void writeByte(MemoryEntry entry, int addr, byte val) {
+    public void writeByte(IMemoryEntry entry, int addr, byte val) {
     	if (isRAMAddr(addr)) {
     		underlyingMemory.getArea().flatWriteByte(underlyingMemory, addr, val);
     		return;
@@ -127,7 +127,7 @@ public class V9t9EnhancedConsoleMmioArea extends ConsoleMmioArea implements Memo
 	}
     
 	@Override
-    public void writeWord(MemoryEntry entry, int addr, short val) {
+    public void writeWord(IMemoryEntry entry, int addr, short val) {
     	if (isRAMAddr(addr)) {
     		underlyingMemory.getArea().flatWriteWord(underlyingMemory, addr, val);
     		return;
@@ -137,7 +137,7 @@ public class V9t9EnhancedConsoleMmioArea extends ConsoleMmioArea implements Memo
 
 
 	@Override
-	public byte readByte(MemoryEntry entry, int addr) {
+	public byte readByte(IMemoryEntry entry, int addr) {
 		if (isRAMAddr(addr))
 			return underlyingMemory.getArea().flatReadByte(underlyingMemory, addr);
     	if ((addr & 1) != 0)
@@ -146,7 +146,7 @@ public class V9t9EnhancedConsoleMmioArea extends ConsoleMmioArea implements Memo
 	}
 	
 	@Override
-	public short readWord(MemoryEntry entry, int addr) {
+	public short readWord(IMemoryEntry entry, int addr) {
 		if (isRAMAddr(addr))
 			return underlyingMemory.getArea().flatReadWord(underlyingMemory, addr);
 		return (short) (readByte(entry, addr) << 8);
@@ -202,27 +202,27 @@ public class V9t9EnhancedConsoleMmioArea extends ConsoleMmioArea implements Memo
 	}
 
 	@Override
-	public byte flatReadByte(MemoryEntry entry, int addr) {
+	public byte flatReadByte(IMemoryEntry entry, int addr) {
 		if (isRAMAddr(addr))
 			return super.flatReadByte(entry, addr);
 		return 0;
 	}
 	
 	@Override
-	public short flatReadWord(MemoryEntry entry, int addr) {
+	public short flatReadWord(IMemoryEntry entry, int addr) {
 		if (isRAMAddr(addr))
 			return super.flatReadWord(entry, addr);
 		return 0;
 	}
 	
 	@Override
-	public void flatWriteByte(MemoryEntry entry, int addr, byte val) {
+	public void flatWriteByte(IMemoryEntry entry, int addr, byte val) {
 		if (isRAMAddr(addr))
 			super.flatWriteByte(entry, addr, val);
 	}
 
 	@Override
-	public void flatWriteWord(MemoryEntry entry, int addr, short val) {
+	public void flatWriteWord(IMemoryEntry entry, int addr, short val) {
 		if (isRAMAddr(addr))
 			super.flatWriteWord(entry, addr, val);
 	}

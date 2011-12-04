@@ -12,8 +12,8 @@ import v9t9.common.asm.IDecompileInfo;
 import v9t9.common.asm.IInstructionFactory;
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.cpu.ICpuState;
-import v9t9.common.memory.MemoryArea;
-import v9t9.common.memory.MemoryEntry;
+import v9t9.common.memory.IMemoryArea;
+import v9t9.common.memory.IMemoryEntry;
 
 /**
  * @author Ed
@@ -35,7 +35,7 @@ public abstract class CompilerBase {
 	"CompilerCompileFunctions", new Boolean(false));
 	
 
-    public Map<MemoryArea, IDecompileInfo> highLevelCodeInfoMap = new HashMap<MemoryArea, IDecompileInfo>();
+    public Map<IMemoryArea, IDecompileInfo> highLevelCodeInfoMap = new HashMap<IMemoryArea, IDecompileInfo>();
 	private IInstructionFactory instructionFactory;
 	private ICpuState cpuState;
 
@@ -67,13 +67,13 @@ public abstract class CompilerBase {
             CompileInfo info, CompiledInstInfo ii);
 	
     /** Currently, only gather high-level info for one memory entry at a time */
-    public IDecompileInfo getHighLevelCode(MemoryEntry entry) {
-    	MemoryArea area = entry.getArea();
+    public IDecompileInfo getHighLevelCode(IMemoryEntry entry) {
+    	IMemoryArea area = entry.getArea();
     	IDecompileInfo highLevel = highLevelCodeInfoMap.get(area);
     	if (highLevel == null) {
     		System.out.println("Initializing high level info for " + entry + " / " + area);
     		highLevel = instructionFactory.createDecompileInfo(cpuState);
-    		highLevel.disassemble(entry.addr, entry.size);
+    		highLevel.disassemble(entry.getAddr(), entry.getSize());
     		highLevelCodeInfoMap.put(area, highLevel);
     	}
     	return highLevel;

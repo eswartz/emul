@@ -23,8 +23,8 @@ public class StdMultiBankedMemoryEntry extends
 	 * @param name
 	 * @param banks
 	 */
-	public StdMultiBankedMemoryEntry(Memory memory, String name,
-			MemoryEntry[] banks) {
+	public StdMultiBankedMemoryEntry(IMemory memory, String name,
+			IMemoryEntry[] banks) {
 		super(memory, name, banks);
 	}
 

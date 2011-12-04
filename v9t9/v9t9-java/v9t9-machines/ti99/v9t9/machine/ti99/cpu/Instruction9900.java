@@ -18,7 +18,7 @@ import v9t9.common.asm.InstInfo;
 import v9t9.common.asm.InstTableCommon;
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.cpu.IStatus;
-import v9t9.common.memory.MemoryDomain;
+import v9t9.common.memory.IMemoryDomain;
 
 import static v9t9.common.asm.IHighLevelInstruction.*;
 
@@ -907,7 +907,7 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
      * @param wp2
      * @param status2
      */
-    public Instruction9900 update(short op, int thePc, MemoryDomain domain) {
+    public Instruction9900 update(short op, int thePc, IMemoryDomain domain) {
     	boolean isSame = true;
     	// obvious changes: this usually happens due to an X instruction and its generated instruction
         if (this.opcode != op || this.pc != thePc) {

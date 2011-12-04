@@ -8,7 +8,7 @@ import java.util.List;
 
 
 import v9t9.base.properties.IPersistable;
-import v9t9.common.memory.MemoryDomain;
+import v9t9.common.memory.IMemoryDomain;
 
 /**
  * Java code that handles the work of a DSR through the Idsr instruction.
@@ -32,10 +32,10 @@ public interface IDsrHandler extends IPersistable, IDsrSettings {
 	/** Activate the DSR (should be called when the ROM memory entry is mapped) 
 	 * @param console
 	 * @throws IOException */
-	void activate(MemoryDomain console) throws IOException;
+	void activate(IMemoryDomain console) throws IOException;
 	/** Dectivate the DSR (should be called when the ROM memory entry is unmapped) 
 	 * @param console */
-	void deactivate(MemoryDomain console);
+	void deactivate(IMemoryDomain console);
 
 	String getName();
 	

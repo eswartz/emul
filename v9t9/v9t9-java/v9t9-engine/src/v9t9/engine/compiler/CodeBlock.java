@@ -10,7 +10,7 @@ import v9t9.common.asm.IHighLevelInstruction;
 import v9t9.common.asm.InstTableCommon;
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.cpu.AbortedException;
-import v9t9.common.memory.MemoryEntry;
+import v9t9.common.memory.IMemoryEntry;
 import v9t9.engine.cpu.Executor;
 
 /** This represents a compiled block of code. */
@@ -34,12 +34,12 @@ public class CodeBlock implements ICompiledCode, v9t9.common.memory.MemoryListen
 	private DirectLoader loader;
 	int addr;
 	int size;
-	MemoryEntry ent;
+	IMemoryEntry ent;
 	private CompilerBase compiler;
     
     static int uniqueClassSuffix;
 
-    public CodeBlock(CompilerBase compiler, Executor exec, DirectLoader loader, MemoryEntry ent, int addr, int size) {
+    public CodeBlock(CompilerBase compiler, Executor exec, DirectLoader loader, IMemoryEntry ent, int addr, int size) {
         this.compiler = compiler;
 		this.exec = exec;
         this.loader = loader;
@@ -70,7 +70,7 @@ public class CodeBlock implements ICompiledCode, v9t9.common.memory.MemoryListen
         return copy + HexUtils.toHex4(addr);
     }
 
-    public boolean matches(MemoryEntry ent_) {
+    public boolean matches(IMemoryEntry ent_) {
         return this.ent == ent_;
     }
 
@@ -253,14 +253,14 @@ public class CodeBlock implements ICompiledCode, v9t9.common.memory.MemoryListen
     /* (non-Javadoc)
      * @see v9t9.Memory.Listener#notifyMemoryChanged(v9t9.MemoryEntry)
      */
-    public void logicalMemoryMapChanged(MemoryEntry entry) {
+    public void logicalMemoryMapChanged(IMemoryEntry entry) {
     	//System.out.println("Memory map changed");
         //clear();
         if (running) {
 			throw new AbortedException();
 		} 
     }
-    public void physicalMemoryMapChanged(MemoryEntry entry) {
+    public void physicalMemoryMapChanged(IMemoryEntry entry) {
     	//System.out.println("Memory map changed");
     	//clear();
     	if (running) {

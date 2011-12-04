@@ -50,8 +50,8 @@ import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.cpu.IStatus;
 import v9t9.common.machine.IBaseMachine;
-import v9t9.common.memory.MemoryDomain;
-import v9t9.common.memory.MemoryEntry;
+import v9t9.common.memory.IMemoryDomain;
+import v9t9.common.memory.IMemoryEntry;
 import v9t9.engine.EmulatorSettings;
 import v9t9.engine.compiler.CompileInfo;
 import v9t9.engine.compiler.CompiledCode;
@@ -81,7 +81,7 @@ public class Compiler9900 extends CompilerBase {
 
     IBaseMachine machine;
 
-    MemoryDomain memory;
+    IMemoryDomain memory;
 
     static public final SettingProperty settingDumpModuleRomInstructions = new SettingProperty(
     		"CompilerDumpModuleRomInstructions", new Boolean(false));
@@ -859,7 +859,7 @@ public class Compiler9900 extends CompilerBase {
         info.cpuIndex = pgen.addFieldref(v9t9.engine.compiler.CompiledCode.class.getName(), // className,
                 "cpu", Utility.getSignature(v9t9.common.cpu.ICpu.class.getName()));
         info.memoryIndex = pgen.addFieldref(v9t9.engine.compiler.CompiledCode.class.getName(), // className,
-                "memory", Utility.getSignature(v9t9.common.memory.MemoryDomain.class.getName()));
+                "memory", Utility.getSignature(v9t9.common.memory.IMemoryDomain.class.getName()));
         info.cruIndex = pgen.addFieldref(v9t9.engine.compiler.CompiledCode.class.getName(), // className,
                 "cru", Utility.getSignature(v9t9.engine.hardware.ICruChip.class.getName()));
         info.nInstructionsIndex = pgen.addFieldref(v9t9.engine.compiler.CompiledCode.class.getName(), // className,
@@ -889,7 +889,7 @@ public class Compiler9900 extends CompilerBase {
         info.localVal3 = lg.getIndex();
         lg = mgen.addLocalVariable("status", new ObjectType(Status9900.class.getName()), null, null);
         info.localStatus = lg.getIndex();
-        lg = mgen.addLocalVariable("memory", new ObjectType(v9t9.common.memory.MemoryDomain.class.getName()), null, null);
+        lg = mgen.addLocalVariable("memory", new ObjectType(v9t9.common.memory.IMemoryDomain.class.getName()), null, null);
         info.localMemory = lg.getIndex();
         lg = mgen.addLocalVariable("nInsts", Type.INT, null, null);
         info.localInsts = lg.getIndex();
@@ -1033,8 +1033,8 @@ public class Compiler9900 extends CompilerBase {
     	if ((cpu.getWP() & 1) == 1) {
     		return false;
     	}
-    	MemoryEntry wpEntry = memory.getEntryAt(cpu.getWP());
-    	MemoryEntry wpEndEntry = memory.getEntryAt(cpu.getWP() + 31);
+    	IMemoryEntry wpEntry = memory.getEntryAt(cpu.getWP());
+    	IMemoryEntry wpEndEntry = memory.getEntryAt(cpu.getWP() + 31);
         if (wpEntry != wpEndEntry) {
 			return false;
 		}

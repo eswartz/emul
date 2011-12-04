@@ -9,7 +9,7 @@ import java.util.List;
 import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuMetrics;
-import v9t9.common.memory.MemoryDomain;
+import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.MemoryModel;
 import v9t9.engine.compiler.NullCompilerStrategy;
 import v9t9.engine.cpu.Executor;
@@ -21,7 +21,6 @@ import v9t9.engine.hardware.ISpeechChip;
 import v9t9.engine.hardware.IVdpChip;
 import v9t9.engine.keyboard.KeyboardState;
 import v9t9.engine.machine.IMachine;
-import v9t9.engine.machine.Machine;
 import v9t9.engine.machine.MachineModel;
 import v9t9.engine.memory.Vdp9938Mmio;
 import v9t9.engine.sound.MultiSoundTMS9919B;
@@ -92,7 +91,7 @@ public class F99bMachineModel implements MachineModel {
 	 */
 	@Override
 	public ISpeechChip createSpeechChip(IMachine machine) {
-		return new TMS5220(machine.getMemory().getDomain(MemoryDomain.NAME_SPEECH));
+		return new TMS5220(machine.getMemory().getDomain(IMemoryDomain.NAME_SPEECH));
 	}
 	
 	public void defineDevices(final IMachine machine_) {
@@ -135,7 +134,7 @@ public class F99bMachineModel implements MachineModel {
 	 * @see v9t9.emulator.hardware.MachineModel#getCPU()
 	 */
 	@Override
-	public ICpu createCPU(Machine machine) {
+	public ICpu createCPU(IMachine machine) {
 		return new CpuF99b(machine, 1000 / machine.getCpuTicksPerSec(), machine.getVdp());
 	}
 	

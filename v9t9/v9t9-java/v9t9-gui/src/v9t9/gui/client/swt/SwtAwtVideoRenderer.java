@@ -24,7 +24,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Shell;
 
-import v9t9.engine.machine.Machine;
+import v9t9.engine.machine.IMachine;
 import v9t9.gui.client.awt.AwtVideoRenderer;
 
 /**
@@ -43,7 +43,7 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 	private List<org.eclipse.swt.events.MouseMoveListener> mouseMoveListeners = new ArrayList<org.eclipse.swt.events.MouseMoveListener>();
 	private FixedAspectLayout fixedAspectLayout;
 	
-	public SwtAwtVideoRenderer(Machine machine) {
+	public SwtAwtVideoRenderer(IMachine machine) {
 		super(machine.getVdp());
 	}
 	

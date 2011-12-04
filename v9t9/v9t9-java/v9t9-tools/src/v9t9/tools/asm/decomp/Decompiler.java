@@ -13,8 +13,8 @@ import v9t9.base.utils.HexUtils;
 import v9t9.common.asm.ICodeProvider;
 import v9t9.common.asm.IInstructionFactory;
 import v9t9.common.cpu.ICpuState;
-import v9t9.common.memory.Memory;
-import v9t9.common.memory.MemoryDomain;
+import v9t9.common.memory.IMemory;
+import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.MemoryEntry;
 import v9t9.common.memory.MemoryModel;
 import v9t9.engine.files.NativeFile;
@@ -31,8 +31,8 @@ import v9t9.machine.ti99.asm.TopDownPhase;
 public class Decompiler implements ICodeProvider {
 
 	protected MemoryModel model;
-	protected Memory memory;
-	protected MemoryDomain consoleMemory;
+	protected IMemory memory;
+	protected IMemoryDomain consoleMemory;
 	protected DecompileOptions options;
 	protected HighLevelCodeInfo highLevel;
 	protected ICpuState state;
@@ -72,7 +72,7 @@ public class Decompiler implements ICodeProvider {
 	    MemoryEntry entry = NativeFileMemoryEntry.newWordMemoryFromFile(baseAddr, filename, 
 	            consoleMemory, file, 0x0);
 	    memory.addAndMap(entry);
-	    highLevel.getMemoryRanges().addRange(baseAddr, entry.size, true);
+	    highLevel.getMemoryRanges().addRange(baseAddr, entry.getSize(), true);
 	}
 
 	public Phase decompile() {
@@ -90,7 +90,7 @@ public class Decompiler implements ICodeProvider {
 	    return options;
 	}
 
-	public MemoryDomain getCPUMemory() {
+	public IMemoryDomain getCPUMemory() {
 	    return consoleMemory;
 	}
 

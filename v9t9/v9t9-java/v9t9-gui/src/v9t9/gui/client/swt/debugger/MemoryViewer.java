@@ -52,8 +52,9 @@ import org.eclipse.swt.widgets.TableItem;
 
 import v9t9.base.utils.HexUtils;
 import v9t9.base.utils.Pair;
-import v9t9.common.memory.Memory;
-import v9t9.common.memory.MemoryDomain;
+import v9t9.common.memory.IMemory;
+import v9t9.common.memory.IMemoryDomain;
+import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.MemoryEntry;
 import v9t9.common.memory.MemoryListener;
 import v9t9.gui.Emulator;
@@ -67,7 +68,7 @@ public class MemoryViewer extends Composite {
 
 	private TableViewer byteTableViewer;
 	private ComboViewer entryViewer;
-	private final Memory memory;
+	private final IMemory memory;
 	private TimerTask refreshTask;
 	protected MemoryRange currentRange;
 	private Button refreshButton;
@@ -78,7 +79,7 @@ public class MemoryViewer extends Composite {
 	private boolean filterMemory;
 	private Font tableFont;
 
-	public MemoryViewer(Composite parent, int style, Memory memory, final Timer timer) {
+	public MemoryViewer(Composite parent, int style, IMemory memory, final Timer timer) {
 		super(parent, style);
 		this.memory = memory;
 
@@ -88,7 +89,7 @@ public class MemoryViewer extends Composite {
 		
 		memory.addListener(new MemoryListener() {
 
-			public void physicalMemoryMapChanged(MemoryEntry entry) {
+			public void physicalMemoryMapChanged(IMemoryEntry entry) {
 				Display.getDefault().asyncExec(new Runnable() {
 					public void run() {
 						refreshEntryCombo();
@@ -96,7 +97,7 @@ public class MemoryViewer extends Composite {
 					}
 				});
 			}
-			public void logicalMemoryMapChanged(MemoryEntry entry) {
+			public void logicalMemoryMapChanged(IMemoryEntry entry) {
 				
 			}
 			
@@ -169,9 +170,9 @@ public class MemoryViewer extends Composite {
 	static class MemoryEntryLabelProvider extends LabelProvider {
 		@Override
 		public String getText(Object element) {
-			MemoryEntry entry = (MemoryEntry) element;
+			IMemoryEntry entry = (IMemoryEntry) element;
 			return entry.getName() + " (" 
-				+ entry.getDomain().getName() + " >" + HexUtils.toHex4((entry.addr + entry.addrOffset)) + ")";
+				+ entry.getDomain().getName() + " >" + HexUtils.toHex4((entry.getAddr() + entry.getAddrOffset())) + ")";
 		}
 	}
 	protected void createTable() {
@@ -184,7 +185,7 @@ public class MemoryViewer extends Composite {
 				@Override
 				public boolean select(Viewer viewer, Object parentElement,
 						Object element) {
-					MemoryEntry entry = (MemoryEntry) element;
+					IMemoryEntry entry = (IMemoryEntry) element;
 					if (!entry.hasReadAccess())
 						return false;
 					if (filterMemory && !entry.hasWriteAccess())
@@ -199,7 +200,7 @@ public class MemoryViewer extends Composite {
 			public void selectionChanged(SelectionChangedEvent event) {
 				Object element = ((IStructuredSelection) event.getSelection()).getFirstElement();
 				MemoryRange range;
-				if (element instanceof MemoryEntry) {
+				if (element instanceof IMemoryEntry) {
 					range = new MemoryRange((MemoryEntry) element);
 				} else if (element instanceof MemoryRange) {
 					range = (MemoryRange) element;
@@ -368,15 +369,15 @@ public class MemoryViewer extends Composite {
 			}
 
 			private String getSymbolFor(MemoryRange range, int addr) {
-				MemoryEntry entry = range.getEntry();
-				if (entry.addr <= addr && entry.addr + entry.size > addr) {
+				IMemoryEntry entry = range.getEntry();
+				if (entry.getAddr() <= addr && entry.getAddr() + entry.getSize() > addr) {
 					Pair<String, Short> info = entry.lookupSymbolNear((short) addr, 0x1000);
 					if (info != null) {
 						return info.first + (info.second == addr ? "" : " + " + HexUtils.toHex4(addr - info.second));
 					}
 				}
 				String symbols = null;
-				for (MemoryEntry e : entry.getDomain().getFlattenedMemoryEntries()) {
+				for (IMemoryEntry e : entry.getDomain().getFlattenedMemoryEntries()) {
 					Pair<String, Short> info = e.lookupSymbolNear((short) addr, 0x100);
 					if (info != null) {
 						String sym = info.first + (info.second == addr ? "" : " + " + HexUtils.toHex4(addr - info.second));
@@ -462,8 +463,8 @@ public class MemoryViewer extends Composite {
 
 	private void refreshEntryCombo() {
 		if (!entryViewer.getControl().isDisposed()) {
-			List<MemoryEntry> allEntries = new ArrayList<MemoryEntry>();
-			for (MemoryDomain domain : memory.getDomains()) {
+			List<IMemoryEntry> allEntries = new ArrayList<IMemoryEntry>();
+			for (IMemoryDomain domain : memory.getDomains()) {
 				allEntries.addAll(Arrays.asList(domain.getFlattenedMemoryEntries()));
 			}
 			entryViewer.setInput(allEntries.toArray());

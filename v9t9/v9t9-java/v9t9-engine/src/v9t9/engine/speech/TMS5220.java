@@ -12,7 +12,7 @@ import v9t9.base.settings.Logging;
 import v9t9.base.sound.ISoundVoice;
 import v9t9.base.utils.BinaryUtils;
 import v9t9.base.utils.HexUtils;
-import v9t9.common.memory.MemoryDomain;
+import v9t9.common.memory.IMemoryDomain;
 import v9t9.engine.hardware.ISpeechChip;
 import v9t9.engine.memory.DiskMemoryEntry;
 
@@ -73,7 +73,7 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 
 	private boolean speechOn;
 	
-	public TMS5220(MemoryDomain speech) {
+	public TMS5220(IMemoryDomain speech) {
 		speechVoices = new SpeechVoice[1];
 		speechVoices[0] = new SpeechVoice();
 		
@@ -180,7 +180,7 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 	private int readMemory()
 	{
 		addr_pos = 0;
-		if (speechRom == null || addr >= speechRom.size)
+		if (speechRom == null || addr >= speechRom.getSize())
 			data = 0;
 		else
 			data = speechRom.readByte(addr);
@@ -194,7 +194,7 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 	private int peek()
 	{
 		addr_pos = 0;
-		if (speechRom == null || addr >= speechRom.size)
+		if (speechRom == null || addr >= speechRom.getSize())
 			data = 0;
 		else
 			data = speechRom.readByte(addr);

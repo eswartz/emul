@@ -8,7 +8,7 @@ import v9t9.base.utils.HexUtils;
 import v9t9.common.asm.BaseMachineOperand;
 import v9t9.common.asm.IMachineOperand;
 import v9t9.common.cpu.InstructionWorkBlock;
-import v9t9.common.memory.MemoryEntry;
+import v9t9.common.memory.IMemoryEntry;
 
 /**
  * @author ejs
@@ -35,7 +35,7 @@ public class InstRow {
 	public String getAddress() {
 		String addr = ">" + HexUtils.toHex4(before.pc);
 		
-		MemoryEntry entry = before.domain.getEntryAt(before.pc);
+		IMemoryEntry entry = before.domain.getEntryAt(before.pc);
 		if (entry != null) { 
 			String name = entry.lookupSymbol((short) (before.pc & 0xfffe));
 			if (name != null) {

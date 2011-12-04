@@ -12,14 +12,14 @@ import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuState;
 import v9t9.common.cpu.IStatus;
 import v9t9.common.machine.IBaseMachine;
-import v9t9.common.memory.MemoryDomain;
-import v9t9.common.memory.MemoryEntry;
-import v9t9.common.memory.MemoryDomain.MemoryAccessListener;
-import v9t9.engine.machine.Machine;
+import v9t9.common.memory.IMemoryAccessListener;
+import v9t9.common.memory.IMemoryDomain;
+import v9t9.common.memory.IMemoryEntry;
+import v9t9.engine.machine.IMachine;
 
-public abstract class CpuBase  implements MemoryAccessListener, IPersistable, ICpu {
+public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, ICpu {
 
-	protected Machine machine;
+	protected IMachine machine;
 
 	public void loadState(ISettingSection section) {
 		settingRealTime.loadState(section);
@@ -73,8 +73,8 @@ public abstract class CpuBase  implements MemoryAccessListener, IPersistable, IC
 
 	protected ICpuState state;
 
-	public CpuBase(Machine machine, ICpuState state, int interruptTick) {
-		 this.machine = machine;
+	public CpuBase(IMachine machine, ICpuState state, int interruptTick) {
+		this.machine = machine;
 		this.state = state;
         this.state.getConsole().setAccessListener(this);
         this.interruptTick = interruptTick;
@@ -108,7 +108,7 @@ public abstract class CpuBase  implements MemoryAccessListener, IPersistable, IC
 	    return machine;
 	}
 
-	public final MemoryDomain getConsole() {
+	public final IMemoryDomain getConsole() {
 		return state.getConsole();
 	}
 
@@ -158,7 +158,7 @@ public abstract class CpuBase  implements MemoryAccessListener, IPersistable, IC
 		return (currentcycles >= currenttargetcycles);
 	}
 
-	public void access(MemoryEntry entry) {
+	public void access(IMemoryEntry entry) {
 		addCycles(entry.getLatency());
 	}
 

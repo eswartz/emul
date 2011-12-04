@@ -4,7 +4,7 @@
 package v9t9.common.cpu;
 
 import v9t9.common.asm.RawInstruction;
-import v9t9.common.memory.MemoryDomain;
+import v9t9.common.memory.IMemoryDomain;
 
 /**
  * This block contains variables being modified
@@ -15,9 +15,9 @@ import v9t9.common.memory.MemoryDomain;
  */
 public class InstructionWorkBlock  {
 	/** the CPU */
-	public ICpuState cpu;
+	final public ICpuState cpu;
     /** our CPU memory */
-    public MemoryDomain domain;
+    final public IMemoryDomain domain;
     /** the instruction (in) */
     public RawInstruction inst;	
     /** values (in: original, out: changed, if needed) */
@@ -33,8 +33,6 @@ public class InstructionWorkBlock  {
 	}
     
     public void copyTo(InstructionWorkBlock copy) {
-    	copy.cpu = cpu;
-    	copy.domain = domain;
     	copy.inst = inst;
     	copy.pc = pc;
     	copy.st = st;

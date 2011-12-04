@@ -16,7 +16,7 @@ import v9t9.engine.client.IClient;
 import v9t9.engine.client.IKeyboardHandler;
 import v9t9.engine.client.IVideoRenderer;
 import v9t9.engine.hardware.IVdpChip;
-import v9t9.engine.machine.Machine;
+import v9t9.engine.machine.IMachine;
 import v9t9.engine.machine.TerminatedException;
 import v9t9.gui.client.awt.AwtKeyboardHandler;
 import v9t9.gui.sound.JavaSoundHandler;
@@ -33,7 +33,7 @@ public abstract class BaseSwtJavaClient implements IClient {
 	}
 	
 	protected IVdpChip video;
-	protected Machine machine;
+	protected IMachine machine;
 	protected IKeyboardHandler keyboardHandler;
 	protected ISwtVideoRenderer videoRenderer;
 	protected Display display;
@@ -47,7 +47,7 @@ public abstract class BaseSwtJavaClient implements IClient {
 	 * @param machine 
 	 * 
 	 */
-	public BaseSwtJavaClient(final Machine machine) {
+	public BaseSwtJavaClient(final IMachine machine) {
 		this.display = Display.getDefault();
     	this.video = machine.getVdp();
     	this.machine = machine;

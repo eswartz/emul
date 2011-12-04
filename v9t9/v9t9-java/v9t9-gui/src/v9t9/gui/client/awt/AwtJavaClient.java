@@ -14,7 +14,7 @@ import v9t9.engine.client.IClient;
 import v9t9.engine.client.IKeyboardHandler;
 import v9t9.engine.client.IVideoRenderer;
 import v9t9.engine.hardware.IVdpChip;
-import v9t9.engine.machine.Machine;
+import v9t9.engine.machine.IMachine;
 import v9t9.engine.machine.TerminatedException;
 import v9t9.gui.sound.JavaSoundHandler;
 
@@ -26,12 +26,12 @@ public class AwtJavaClient implements IClient {
 	public static String ID = "AWT";
 	
     IVdpChip video;
-    private Machine machine;
+    private IMachine machine;
 	private AwtKeyboardHandler keyboardHandler;
 	private AwtVideoRenderer videoRenderer;
 	private AwtWindow window;
 
-    public AwtJavaClient(final Machine machine) {
+    public AwtJavaClient(final IMachine machine) {
     	this.machine = machine;
         video = machine.getVdp();
         

@@ -15,9 +15,10 @@ import java.util.Arrays;
 import v9t9.base.settings.ISettingSection;
 import v9t9.common.memory.BankedMemoryEntry;
 import v9t9.common.memory.ByteMemoryArea;
-import v9t9.common.memory.Memory;
+import v9t9.common.memory.IMemory;
+import v9t9.common.memory.IMemoryDomain;
+import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.MemoryArea;
-import v9t9.common.memory.MemoryDomain;
 import v9t9.common.memory.MemoryEntry;
 import v9t9.common.memory.MultiBankedMemoryEntry;
 import v9t9.common.memory.StdMultiBankedMemoryEntry;
@@ -29,22 +30,22 @@ import v9t9.engine.files.DataFiles;
  */
 public class DiskMemoryEntry extends MemoryEntry {
 
-    /*	file path */
+    /**	file path */
     private String filepath;
     
-    /*	file offset in bytes */
-    public int fileoffs;
+    /**	file offset in bytes */
+    private int fileoffs;
     
-    /*	actual size of file */
-    public int filesize;
+    /**	actual size of file */
+    private int filesize;
     
-    /*	is this nonvolatile RAM? */
-    public boolean bStorable;
+    /**	is this nonvolatile RAM which should be saved back to disk? */
+    private boolean bStorable;
 
-    /*	is the file loaded yet? */
-    public boolean bLoaded;
+    /**	is the file loaded yet? */
+    private boolean bLoaded;
     
-    /*	is the data dirty? */
+    /**	is the data dirty? */
     private boolean bDirty;
     
     /**
@@ -62,7 +63,7 @@ public class DiskMemoryEntry extends MemoryEntry {
      */
     static public DiskMemoryEntry newWordMemoryFromFile(
             int addr, int size, String name, 
-            MemoryDomain domain, String filepath, int fileoffs,
+            IMemoryDomain domain, String filepath, int fileoffs,
             boolean isStored) throws IOException {
     	
     	WordMemoryArea area;
@@ -72,11 +73,11 @@ public class DiskMemoryEntry extends MemoryEntry {
     	
         DiskMemoryEntry entry = newFromFile(area, addr, size, name, domain, filepath, fileoffs, isStored);
         
-        entry.area = createWordMemoryArea(domain, addr, entry.size, isStored);
+        entry.area = createWordMemoryArea(domain, addr, entry.getSize(), isStored);
         return entry;
     }
 
-	private static WordMemoryArea createWordMemoryArea(MemoryDomain domain, int addr,
+	private static WordMemoryArea createWordMemoryArea(IMemoryDomain domain, int addr,
 			int size, boolean isStored) {
 		WordMemoryArea area;
         
@@ -84,12 +85,12 @@ public class DiskMemoryEntry extends MemoryEntry {
 			area = new WordMemoryArea();
 		} else {
 			area = new WordMemoryArea() {
-	    		public void writeByte(MemoryEntry entry, int addr, byte val) {
+	    		public void writeByte(IMemoryEntry entry, int addr, byte val) {
 	    			super.writeByte(entry, addr, val);
 	    			((DiskMemoryEntry) entry).setDirty(true);
 	    		}
 	    		@Override
-	    		public void writeWord(MemoryEntry entry, int addr, short val) {
+	    		public void writeWord(IMemoryEntry entry, int addr, short val) {
 	    			super.writeWord(entry, addr, val);
 	    			((DiskMemoryEntry) entry).setDirty(true);
 	    		}
@@ -122,7 +123,7 @@ public class DiskMemoryEntry extends MemoryEntry {
      */
     static public DiskMemoryEntry newByteMemoryFromFile(
             int addr, int size, String name, 
-            MemoryDomain domain, String filepath, int fileoffs,
+            IMemoryDomain domain, String filepath, int fileoffs,
             boolean isStored) throws IOException {
     	
     	if (domain == null)
@@ -132,13 +133,13 @@ public class DiskMemoryEntry extends MemoryEntry {
     	
         DiskMemoryEntry entry = newFromFile(area, addr, size, name, domain, filepath, fileoffs, isStored);
         
-        entry.area = createByteMemoryArea(domain, addr, entry.size, isStored);
+        entry.area = createByteMemoryArea(domain, addr, entry.getSize(), isStored);
        
         return entry;
     }
 
 
-	private static ByteMemoryArea createByteMemoryArea(MemoryDomain domain, int addr,
+	private static ByteMemoryArea createByteMemoryArea(IMemoryDomain domain, int addr,
 			int size, boolean isStored) {
 		ByteMemoryArea area;
         
@@ -146,7 +147,7 @@ public class DiskMemoryEntry extends MemoryEntry {
 			area = new ByteMemoryArea();
 		} else {
 			area = new ByteMemoryArea() {
-	    		public void writeByte(MemoryEntry entry, int addr, byte val) {
+	    		public void writeByte(IMemoryEntry entry, int addr, byte val) {
 	    			super.writeByte(entry, addr, val);
 	    			((DiskMemoryEntry) entry).setDirty(true);
 	    		}
@@ -172,10 +173,10 @@ public class DiskMemoryEntry extends MemoryEntry {
      */
     static private DiskMemoryEntry newFromFile(
             MemoryArea area, int addr, int size, String name, 
-            MemoryDomain domain, String filepath, int fileoffs,
+            IMemoryDomain domain, String filepath, int fileoffs,
             boolean isStored) throws IOException {
 
-        if (size < -MemoryDomain.PHYSMEMORYSIZE
+        if (size < -IMemoryDomain.PHYSMEMORYSIZE
                 || isStored && size <= 0
                 || isStored && fileoffs != 0
                 ) {
@@ -221,7 +222,7 @@ public class DiskMemoryEntry extends MemoryEntry {
     	super();
     }
     DiskMemoryEntry(MemoryArea area, int addr, int size, String name,
-            MemoryDomain domain, 
+            IMemoryDomain domain, 
             String filepath, int fileoffs, int filesize,
             boolean isStorable) {
         super(name, domain, addr, size, area);
@@ -336,8 +337,8 @@ public class DiskMemoryEntry extends MemoryEntry {
 			Class<? extends BankedMemoryEntry> klass,
 			int addr,
 	        int size, 
-	        Memory memory, 
-	        String name, MemoryDomain domain,
+	        IMemory memory, 
+	        String name, IMemoryDomain domain,
 	        String filepath, int fileoffs,
 	        String filepath2, int fileoffs2) throws IOException {
 		DiskMemoryEntry bank0 = newWordMemoryFromFile(
@@ -345,12 +346,15 @@ public class DiskMemoryEntry extends MemoryEntry {
 		DiskMemoryEntry bank1 = newWordMemoryFromFile(
 				addr, size, name + " (bank 1)", domain, filepath2, fileoffs2, false);
 		
-		MemoryEntry[] entries = new MemoryEntry[] { bank0, bank1 };
+		IMemoryEntry[] entries = new IMemoryEntry[] { bank0, bank1 };
 		BankedMemoryEntry bankedMemoryEntry;
 		try {
 			bankedMemoryEntry = klass.getConstructor(
-					Memory.class, String.class, entries.getClass()).newInstance(
+					IMemory.class, String.class, entries.getClass()).newInstance(
 							memory, name, entries);
+		} catch (NoSuchMethodException e) {
+			e.printStackTrace();
+			throw (IOException) new IOException().initCause(e);
 		} catch (Exception e) {
 			throw (IOException) new IOException().initCause(e);
 		}
@@ -374,8 +378,8 @@ public class DiskMemoryEntry extends MemoryEntry {
 	static public BankedMemoryEntry newBankedWordMemoryFromFile(
 			int addr,
 	        int size, 
-	        Memory memory, 
-	        String name, MemoryDomain domain,
+	        IMemory memory, 
+	        String name, IMemoryDomain domain,
 	        String filepath, int fileoffs,
 	        String filepath2, int fileoffs2) throws IOException {
 		DiskMemoryEntry bank0 = newWordMemoryFromFile(
@@ -384,7 +388,7 @@ public class DiskMemoryEntry extends MemoryEntry {
 				addr, size, name + " (bank 1)", domain, filepath2, fileoffs2, false);
 		
 		BankedMemoryEntry bankedMemoryEntry = new MultiBankedMemoryEntry(
-				memory, name, new MemoryEntry[] { bank0, bank1 });
+				memory, name, new IMemoryEntry[] { bank0, bank1 });
 		return bankedMemoryEntry;
 	}
 
@@ -406,8 +410,8 @@ public class DiskMemoryEntry extends MemoryEntry {
 	static public BankedMemoryEntry newWriteTogglingBankedWordMemoryFromFile(
 			int addr,
 	        int size, 
-	        Memory memory, 
-	        String name, MemoryDomain domain,
+	        IMemory memory, 
+	        String name, IMemoryDomain domain,
 	        String filepath, int fileoffs,
 	        String filepath2, int fileoffs2) throws IOException {
 		DiskMemoryEntry bank0 = newWordMemoryFromFile(
@@ -415,7 +419,7 @@ public class DiskMemoryEntry extends MemoryEntry {
 		DiskMemoryEntry bank1 = newWordMemoryFromFile(
 				addr, size, name + " (bank 1)", domain, filepath2, fileoffs2, false);
 		
-		BankedMemoryEntry bankedMemoryEntry = new StdMultiBankedMemoryEntry(memory, name, new MemoryEntry[] { bank0, bank1 });
+		BankedMemoryEntry bankedMemoryEntry = new StdMultiBankedMemoryEntry(memory, name, new IMemoryEntry[] { bank0, bank1 });
 		
 		return bankedMemoryEntry;
 	}
@@ -468,10 +472,10 @@ public class DiskMemoryEntry extends MemoryEntry {
 	 * @param section  
 	 */
 	protected void loadMemoryContents(ISettingSection section) {
-		if (bWordAccess)
-			area = createWordMemoryArea(domain, addr, size, bStorable);
+		if (isWordAccess())
+			area = createWordMemoryArea(getDomain(), getAddr(), getSize(), bStorable);
 		else
-			area = createByteMemoryArea(domain, addr, size, bStorable);
+			area = createByteMemoryArea(getDomain(), getAddr(), getSize(), bStorable);
 		
 		bLoaded = false;
 		load();
@@ -479,6 +483,31 @@ public class DiskMemoryEntry extends MemoryEntry {
 	@Override
 	public String getUniqueName() {
 		return filepath;
+	}
+	
+	/**
+	 * @return the fileoffs
+	 */
+	public int getFileOffs() {
+		return fileoffs;
+	}
+	/**
+	 * @return the filesize
+	 */
+	public int getFileSize() {
+		return filesize;
+	}
+	/**
+	 * @return the bLoaded
+	 */
+	public boolean isLoaded() {
+		return bLoaded;
+	}
+	/**
+	 * @return the bStorable
+	 */
+	public boolean isStorable() {
+		return bStorable;
 	}
 }
 

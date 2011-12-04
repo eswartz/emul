@@ -14,8 +14,8 @@ import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuMetrics;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyEvent;
-import v9t9.common.memory.Memory;
-import v9t9.common.memory.MemoryDomain;
+import v9t9.common.memory.IMemory;
+import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.MemoryModel;
 
 /**
@@ -35,7 +35,7 @@ public interface IBaseMachine {
 
 	void notifyEvent(NotifyEvent event);
 
-	Memory getMemory();
+	IMemory getMemory();
 
 	boolean isAlive();
 
@@ -53,7 +53,7 @@ public interface IBaseMachine {
 	void setCpu(ICpu cpu);
 
 	/** Get the primary memory */
-	MemoryDomain getConsole();
+	IMemoryDomain getConsole();
 
 	MemoryModel getMemoryModel();
 

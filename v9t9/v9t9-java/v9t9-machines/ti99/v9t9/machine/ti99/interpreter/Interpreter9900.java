@@ -15,9 +15,9 @@ import v9t9.common.asm.InstInfo;
 import v9t9.common.asm.InstTableCommon;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.IStatus;
-import v9t9.common.memory.MemoryArea;
-import v9t9.common.memory.MemoryDomain;
-import v9t9.common.memory.MemoryEntry;
+import v9t9.common.memory.IMemoryArea;
+import v9t9.common.memory.IMemoryDomain;
+import v9t9.common.memory.IMemoryEntry;
 import v9t9.engine.cpu.Executor;
 import v9t9.engine.cpu.InstructionListener;
 import v9t9.engine.interpreter.Interpreter;
@@ -38,10 +38,10 @@ import v9t9.machine.ti99.machine.TI99Machine;
 public class Interpreter9900 implements Interpreter {
 	TI99Machine machine;
 
-    MemoryDomain memory;
+    IMemoryDomain memory;
 
     // per-PC prebuilt instructions
-    Map<MemoryArea, Instruction9900[]> parsedInstructions; 
+    Map<IMemoryArea, Instruction9900[]> parsedInstructions; 
     //Instruction[] instructions; 
     
     InstructionWorkBlock9900 iblock;
@@ -55,9 +55,8 @@ public class Interpreter9900 implements Interpreter {
         this.cpu = (Cpu9900) machine.getCpu();
         this.memory = machine.getCpu().getConsole();
         //instructions = new Instruction[65536/2];// HashMap<Integer, Instruction>();
-        parsedInstructions = new HashMap<MemoryArea, Instruction9900[]>();
+        parsedInstructions = new HashMap<IMemoryArea, Instruction9900[]>();
         iblock = new InstructionWorkBlock9900(cpu);
-        iblock.domain = memory;
         status = (Status9900) cpu.createStatus();
      }
 
@@ -157,8 +156,7 @@ public class Interpreter9900 implements Interpreter {
         /* get current operand values and instruction timings */
         fetchOperands(ins, op_x != null);
 
-        InstructionWorkBlock9900 block = new InstructionWorkBlock9900(cpu);
-        this.iblock.copyTo(block);
+        InstructionWorkBlock9900 block = this.iblock.copy();
 
         /* do pre-instruction status word updates */
         if (ins.getInfo().stsetBefore != IStatus.stset_NONE) {
@@ -193,14 +191,14 @@ public class Interpreter9900 implements Interpreter {
 	    int pc = cpu.getPC() & 0xfffe;
 	    
 	    short op;
-	    MemoryDomain console = cpu.getConsole();
+	    IMemoryDomain console = cpu.getConsole();
 		if (op_x != null) {
 	    	op = op_x;
 	    	ins = new Instruction9900(InstTable9900.decodeInstruction(op, pc, console));
 	    } else {
-	    	MemoryEntry entry = console.getEntryAt(pc);
+	    	IMemoryEntry entry = console.getEntryAt(pc);
 	    	op = entry.readWord(pc);
-	    	MemoryArea area = entry.getArea();
+	    	IMemoryArea area = entry.getArea();
 	    	Instruction9900[] instructions = parsedInstructions.get(area);
 	    	if (instructions == null) {
 	    		instructions = new Instruction9900[65536/2];

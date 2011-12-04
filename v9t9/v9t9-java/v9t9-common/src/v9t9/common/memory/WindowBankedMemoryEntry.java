@@ -13,8 +13,8 @@ import v9t9.base.settings.ISettingSection;
  */
 public class WindowBankedMemoryEntry extends BankedMemoryEntry {
 
-	public WindowBankedMemoryEntry(Memory memory, String name,
-			MemoryDomain domain, int addr, int size,
+	public WindowBankedMemoryEntry(IMemory memory, String name,
+			IMemoryDomain domain, int addr, int size,
 			MemoryArea area) {
 		super(memory, name, domain, addr, size, area.getSize() / size);
 		selectBank(0);
@@ -26,7 +26,7 @@ public class WindowBankedMemoryEntry extends BankedMemoryEntry {
 	 */
 	@Override
 	protected void doSwitchBank(int bank) {
-		addrOffset = bank * getBankSize();
+		addrOffset = (bank * getBankSize());
 	}
 
 	//@Override
@@ -35,18 +35,18 @@ public class WindowBankedMemoryEntry extends BankedMemoryEntry {
 	//}
 	
 	public int getBankOffset() {
-		return addrOffset;
+		return getAddrOffset();
 	}
 	
 	@Override
 	protected void doSaveBankEntries(ISettingSection section) {
-		getArea().saveContents(section, this);
+		area.saveContents(section, this);
 	}
 	
 	@Override
 	protected void doLoadBankEntries(ISettingSection section) {
 		if (section == null) return;
-		getArea().loadContents(section, this);
+		area.loadContents(section, this);
 	}
 	
 	@Override

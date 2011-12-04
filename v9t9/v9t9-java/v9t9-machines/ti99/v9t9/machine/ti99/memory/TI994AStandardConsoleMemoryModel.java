@@ -11,6 +11,7 @@ package v9t9.machine.ti99.memory;
 import v9t9.base.properties.SettingProperty;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.machine.IBaseMachine;
+import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.MemoryEntry;
 import v9t9.engine.machine.IMachine;
 import v9t9.engine.settings.WorkspaceSettings;
@@ -48,12 +49,12 @@ public class TI994AStandardConsoleMemoryModel extends BaseTI994AMemoryModel {
      */
 	@Override
     public void resetMemory() {
-    	for (MemoryEntry entry : CPU.getMemoryEntries()) {
-    		if (entry.addr == 0x4000 || entry.addr == 0x6000)
+    	for (IMemoryEntry entry : CPU.getMemoryEntries()) {
+    		if (entry.getAddr() == 0x4000 || entry.getAddr() == 0x6000)
     			CPU.unmapEntry(entry);
     	}
-    	for (MemoryEntry entry : GRAPHICS.getMemoryEntries()) {
-    		if (entry.addr >= 0x6000)
+    	for (IMemoryEntry entry : GRAPHICS.getMemoryEntries()) {
+    		if (entry.getAddr() >= 0x6000)
     			GRAPHICS.unmapEntry(entry);
     	}
     }

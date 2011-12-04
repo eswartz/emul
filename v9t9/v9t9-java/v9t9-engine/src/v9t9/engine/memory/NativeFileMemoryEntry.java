@@ -11,8 +11,8 @@ import java.io.IOException;
 
 import v9t9.base.utils.Check;
 import v9t9.common.memory.ByteMemoryArea;
+import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.MemoryArea;
-import v9t9.common.memory.MemoryDomain;
 import v9t9.common.memory.MemoryEntry;
 import v9t9.common.memory.WordMemoryArea;
 import v9t9.engine.files.NativeFile;
@@ -27,7 +27,7 @@ public class NativeFileMemoryEntry extends MemoryEntry {
 
     public NativeFileMemoryEntry(
             MemoryArea area, int addr, int size, String name,
-            MemoryDomain domain, 
+            IMemoryDomain domain, 
             NativeFile file, int fileoffs, int filesize) {
         super(name, domain, addr, size, area);
         Check.checkArg(file);
@@ -36,7 +36,7 @@ public class NativeFileMemoryEntry extends MemoryEntry {
         this.filesize = filesize;
     }
 
-    public static MemoryEntry newWordMemoryFromFile(int addr, String name, MemoryDomain domain, 
+    public static MemoryEntry newWordMemoryFromFile(int addr, String name, IMemoryDomain domain, 
             NativeFile file, int fileoffs) throws IOException {
         int filesize = file.getFileSize();
         NativeFileMemoryEntry entry = new NativeFileMemoryEntry(
@@ -54,11 +54,11 @@ public class NativeFileMemoryEntry extends MemoryEntry {
     private void updateMemoryArea() {
         if (area instanceof ByteMemoryArea) {
             ByteMemoryArea bArea = (ByteMemoryArea) area;
-            bArea.memory = new byte[size];
+            bArea.memory = new byte[getSize()];
             bArea.read = bArea.memory;
         } else {
             WordMemoryArea wArea = (WordMemoryArea) area;
-            wArea.memory = new short[size/2];
+            wArea.memory = new short[getSize()/2];
             wArea.read = wArea.memory;
         }
     }

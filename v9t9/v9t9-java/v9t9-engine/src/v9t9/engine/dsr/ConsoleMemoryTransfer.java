@@ -4,7 +4,7 @@
 package v9t9.engine.dsr;
 
 import v9t9.common.memory.ByteMemoryAccess;
-import v9t9.common.memory.MemoryDomain;
+import v9t9.common.memory.IMemoryDomain;
 import v9t9.engine.hardware.IVdpChip;
 
 /**
@@ -14,10 +14,10 @@ import v9t9.engine.hardware.IVdpChip;
 public class ConsoleMemoryTransfer implements IMemoryTransfer {
 
 	private final IVdpChip vdpHandler;
-	private final MemoryDomain console;
+	private final IMemoryDomain console;
 	private final short rambase;
 
-	public ConsoleMemoryTransfer(MemoryDomain console, IVdpChip vdpHandler, short rambase) {
+	public ConsoleMemoryTransfer(IMemoryDomain console, IVdpChip vdpHandler, short rambase) {
 		this.console = console;
 		this.vdpHandler = vdpHandler;
 		this.rambase = rambase;

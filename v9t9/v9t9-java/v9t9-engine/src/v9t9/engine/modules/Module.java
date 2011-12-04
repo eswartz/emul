@@ -12,7 +12,7 @@ import org.w3c.dom.Element;
 import v9t9.base.utils.HexUtils;
 import v9t9.base.utils.XMLUtils;
 import v9t9.common.memory.BankedMemoryEntry;
-import v9t9.common.memory.MemoryDomain;
+import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.MemoryEntry;
 import v9t9.common.memory.StdMultiBankedMemoryEntry;
 
@@ -61,17 +61,17 @@ public class Module implements IModule {
 				
 				// helpers
 				if (el.getNodeName().equals("romModuleEntry")) {
-					properties.put(MemoryEntryInfo.DOMAIN, MemoryDomain.NAME_CPU);
+					properties.put(MemoryEntryInfo.DOMAIN, IMemoryDomain.NAME_CPU);
 					properties.put(MemoryEntryInfo.ADDRESS, 0x6000);
 					properties.put(MemoryEntryInfo.SIZE, 0x2000);
 				}
 				if (el.getNodeName().equals("gromModuleEntry")) {
-					properties.put(MemoryEntryInfo.DOMAIN, MemoryDomain.NAME_GRAPHICS);
+					properties.put(MemoryEntryInfo.DOMAIN, IMemoryDomain.NAME_GRAPHICS);
 					properties.put(MemoryEntryInfo.ADDRESS, 0x6000);
 					properties.put(MemoryEntryInfo.SIZE, 0x0);
 				}
 				if (el.getNodeName().equals("bankedModuleEntry")) {
-					properties.put(MemoryEntryInfo.DOMAIN, MemoryDomain.NAME_CPU);
+					properties.put(MemoryEntryInfo.DOMAIN, IMemoryDomain.NAME_CPU);
 					properties.put(MemoryEntryInfo.ADDRESS, 0x6000);
 					
 					if ("true".equals(el.getAttribute("custom"))) {

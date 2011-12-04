@@ -39,7 +39,7 @@ import org.eclipse.swt.widgets.TableColumn;
 
 import v9t9.common.events.NotifyException;
 import v9t9.common.events.IEventNotifier.Level;
-import v9t9.engine.machine.Machine;
+import v9t9.engine.machine.IMachine;
 import v9t9.engine.modules.IModule;
 import v9t9.engine.modules.MemoryEntryInfo;
 
@@ -53,7 +53,7 @@ public class ModuleSelector extends Composite {
 	private TableColumn nameColumn;
 	private IModule selectedModule;
 	private Composite buttonBar;
-	private final Machine machine;
+	private final IMachine machine;
 	private Button switchButton;
 	private TableColumn fileColumn;
 	private Font tableFont;
@@ -61,7 +61,7 @@ public class ModuleSelector extends Composite {
 	/**
 	 * 
 	 */
-	public ModuleSelector(Shell shell, Machine machine) {
+	public ModuleSelector(Shell shell, IMachine machine) {
 		super(shell, SWT.NONE);
 		
 		shell.setText("Module Selector");

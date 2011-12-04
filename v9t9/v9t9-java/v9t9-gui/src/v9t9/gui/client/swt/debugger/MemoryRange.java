@@ -6,10 +6,10 @@ package v9t9.gui.client.swt.debugger;
 import java.util.Set;
 import java.util.TreeSet;
 
-import v9t9.common.memory.MemoryDomain;
+import v9t9.common.memory.IMemoryEntry;
+import v9t9.common.memory.IMemoryWriteListener;
 import v9t9.common.memory.MemoryEntry;
 import v9t9.common.memory.WordMemoryArea;
-import v9t9.common.memory.MemoryDomain.MemoryWriteListener;
 
 /**
  * A range of viewable memory
@@ -21,7 +21,7 @@ public class MemoryRange {
 	final int addr;
 	final int len;
 	Set<Integer> changedMemory = new TreeSet<Integer>();
-	private MemoryWriteListener memoryWriteListener;
+	private IMemoryWriteListener memoryWriteListener;
 	protected int lowRange;
 	protected int hiRange;
 	
@@ -29,20 +29,20 @@ public class MemoryRange {
 		this.entry = entry;
 		int lo = addr;
 		int hi = addr + len;
-		if (entry.addr > lo)
-			lo = entry.addr;
-		if (entry.addr + entry.size < hi)
-			hi = entry.addr + entry.size - lo; 
+		if (entry.getAddr() > lo)
+			lo = entry.getAddr();
+		if (entry.getAddr() + entry.getSize() < hi)
+			hi = entry.getAddr() + entry.getSize() - lo; 
 		this.addr = lo;
 		this.len = hi - lo;
 	}
 	public MemoryRange(MemoryEntry entry) {
 		this.entry = entry;
-		this.addr = entry.addr;
-		this.len = entry.size;
+		this.addr = entry.getAddr();
+		this.len = entry.getSize();
 	}
-	public boolean contains(MemoryEntry entry, int addr) {
-		return this.entry.domain == entry.domain &&
+	public boolean contains(IMemoryEntry entry, int addr) {
+		return this.entry.getDomain() == entry.getDomain() &&
 			this.entry.contains(addr) &&
 			addr >= this.addr && addr < this.addr + this.len;
 	}
@@ -50,9 +50,9 @@ public class MemoryRange {
 		return entry.getArea() instanceof WordMemoryArea;
 	}
 	public void attachMemoryListener() {
-		memoryWriteListener = new MemoryDomain.MemoryWriteListener() {
+		memoryWriteListener = new IMemoryWriteListener() {
 
-			public void changed(MemoryEntry entry, int addr, boolean isByte) {
+			public void changed(IMemoryEntry entry, int addr, boolean isByte) {
 				synchronized (MemoryRange.this) {
 					if (contains(entry, addr)) {
 						lowRange = Math.min(lowRange, addr);
@@ -74,7 +74,7 @@ public class MemoryRange {
 		synchronized (changedMemory) {
 			changedMemory.clear();
 		}
-		entry.domain.addWriteListener(memoryWriteListener);
+		entry.getDomain().addWriteListener(memoryWriteListener);
 	}
 	public int getAddress() {
 		return addr;
@@ -106,7 +106,7 @@ public class MemoryRange {
 		hiRange = 0;
 	}
 	public void removeMemoryListener() {
-		entry.domain.removeWriteListener(memoryWriteListener);
+		entry.getDomain().removeWriteListener(memoryWriteListener);
 	}
 	public int getSize() {
 		return len;

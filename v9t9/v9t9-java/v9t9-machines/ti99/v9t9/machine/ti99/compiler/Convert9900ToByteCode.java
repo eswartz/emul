@@ -25,7 +25,7 @@ import v9t9.common.asm.BaseMachineOperand;
 import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.InstTableCommon;
 import v9t9.common.cpu.ICpu;
-import v9t9.common.memory.MemoryArea;
+import v9t9.common.memory.IMemoryArea;
 import v9t9.common.memory.MemoryDomain;
 import v9t9.common.memory.MemoryEntry;
 import v9t9.common.memory.WordMemoryArea;
@@ -633,13 +633,13 @@ public class Convert9900ToByteCode {
 	        ilist.append(new ILOAD(info.localWp));
 	        ilist.append(ifact.createInvoke(MemoryDomain.class.getName(),
 	                "getEntryAt", new ObjectType(MemoryEntry.class.getName()),
-	                new Type[] { Type.INT }, Constants.INVOKEVIRTUAL));
+	                new Type[] { Type.INT }, Constants.INVOKEINTERFACE));
 	        ilist.append(ifact.createInvoke(MemoryEntry.class.getName(),
-	                "getArea", new ObjectType(MemoryArea.class.getName()),
-	                new Type[] { }, Constants.INVOKEVIRTUAL));
+	                "getArea", new ObjectType(IMemoryArea.class.getName()),
+	                new Type[] { }, Constants.INVOKEINTERFACE));
 	        // ... as a WordMemoryArea
 	        ilist.append(ifact
-	                .createCast(new ObjectType(MemoryArea.class.getName()),
+	                .createCast(new ObjectType(IMemoryArea.class.getName()),
 	                        new ObjectType(WordMemoryArea.class.getName())));
 	
 	        // ... and get the memory

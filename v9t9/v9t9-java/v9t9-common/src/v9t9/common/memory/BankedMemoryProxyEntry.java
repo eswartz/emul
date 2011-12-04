@@ -17,13 +17,13 @@ public class BankedMemoryProxyEntry extends MemoryEntry {
 
 	public BankedMemoryProxyEntry(BankedMemoryEntry banked, int bank) {
 		super(banked.getName() + " #" +bank,
-				banked.domain,
-				banked.addr,
-				banked.size,
+				banked.getDomain(),
+				banked.getAddr(),
+				banked.getSize(),
 				banked.area);
 		this.banked = banked;
 		this.bank = bank;
-		addrOffset = bank * banked.getBankSize();
+		addrOffset = (bank * banked.getBankSize());
 	}
 	
 	@Override

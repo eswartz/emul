@@ -3,8 +3,8 @@
  */
 package v9t9.machine.common.dsr.pcode;
 
-import v9t9.common.memory.Memory;
-import v9t9.common.memory.MemoryEntry;
+import v9t9.common.memory.IMemory;
+import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.MultiBankedMemoryEntry;
 import v9t9.engine.hardware.ICruWriter;
 import v9t9.engine.memory.GplMmio;
@@ -20,8 +20,8 @@ public class PCodeDsrRomBankedMemoryEntry extends MultiBankedMemoryEntry {
 
 	public PCodeDsrRomBankedMemoryEntry() {
 	}
-	public PCodeDsrRomBankedMemoryEntry(Memory memory, String name,
-			MemoryEntry[] banks) {
+	public PCodeDsrRomBankedMemoryEntry(IMemory memory, String name,
+			IMemoryEntry[] banks) {
 		super(memory, name, banks);
 		
 

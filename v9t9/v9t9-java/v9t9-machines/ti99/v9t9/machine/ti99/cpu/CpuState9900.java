@@ -5,7 +5,7 @@ package v9t9.machine.ti99.cpu;
 
 import v9t9.common.cpu.ICpuState;
 import v9t9.common.cpu.IStatus;
-import v9t9.common.memory.MemoryDomain;
+import v9t9.common.memory.IMemoryDomain;
 
 /**
  * @author Ed
@@ -17,10 +17,10 @@ public class CpuState9900 implements ICpuState {
 	protected short PC;
 	/** workspace pointer */
 	protected short WP;
-	private MemoryDomain console;
+	private IMemoryDomain console;
 	private IStatus status;
 
-	public CpuState9900(MemoryDomain console) {
+	public CpuState9900(IMemoryDomain console) {
 		this.console = console;
 		this.status = createStatus();
 	}
@@ -80,7 +80,7 @@ public class CpuState9900 implements ICpuState {
 	 * @see v9t9.emulator.runtime.cpu.CpuState#getConsole()
 	 */
 	@Override
-	public MemoryDomain getConsole() {
+	public IMemoryDomain getConsole() {
 		return console;
 	}
 

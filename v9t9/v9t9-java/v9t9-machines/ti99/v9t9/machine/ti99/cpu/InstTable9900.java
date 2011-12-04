@@ -17,7 +17,7 @@ import v9t9.common.asm.BaseMachineOperand;
 import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.InstTableCommon;
 import v9t9.common.asm.RawInstruction;
-import v9t9.common.memory.MemoryDomain;
+import v9t9.common.memory.IMemoryDomain;
 
 /**
  * This class takes an Instruction and generates its opcode.
@@ -431,7 +431,7 @@ public class InstTable9900 {
      *            provides read access to memory, to decode registers and
      *            instructions
      */
-    public static RawInstruction decodeInstruction(int op, int pc, MemoryDomain domain) {
+    public static RawInstruction decodeInstruction(int op, int pc, IMemoryDomain domain) {
     	RawInstruction inst = new RawInstruction();
     	inst.pc = pc;
     	

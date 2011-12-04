@@ -12,7 +12,7 @@ import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Shell;
 
-import v9t9.engine.machine.Machine;
+import v9t9.engine.machine.MachineBase;
 
 /**
  * @author Ed
@@ -21,12 +21,12 @@ import v9t9.engine.machine.Machine;
 public class DebuggerWindow extends Composite {
 
 	private SashForm horizSash;
-	/*private*/ final Machine machine;
+	/*private*/ final MachineBase machine;
 	/*private*/ CpuViewer cpuViewer;
 	private SashForm vertSash;
 	private RegisterViews regViewer;
 
-	public DebuggerWindow(Shell parent, int style, Machine machine, Timer timer) {
+	public DebuggerWindow(Shell parent, int style, MachineBase machine, Timer timer) {
 		super(parent, style);
 		this.machine = machine;
 		GridLayoutFactory.fillDefaults().applyTo(this);

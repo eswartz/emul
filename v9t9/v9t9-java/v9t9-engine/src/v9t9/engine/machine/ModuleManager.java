@@ -3,6 +3,7 @@
  */
 package v9t9.engine.machine;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -16,10 +17,12 @@ import v9t9.base.settings.ISettingSection;
 import v9t9.common.cpu.AbortedException;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyException;
-import v9t9.common.memory.Memory;
-import v9t9.common.memory.MemoryDomain;
-import v9t9.common.memory.MemoryEntry;
+import v9t9.common.memory.BankedMemoryEntry;
+import v9t9.common.memory.IMemory;
+import v9t9.common.memory.IMemoryDomain;
+import v9t9.common.memory.IMemoryEntry;
 import v9t9.engine.files.DataFiles;
+import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.modules.IModule;
 import v9t9.engine.modules.MemoryEntryInfo;
 import v9t9.engine.modules.ModuleLoader;
@@ -37,7 +40,7 @@ public class ModuleManager implements IPersistable {
 	
 	public static SettingProperty settingLastLoadedModule = new SettingProperty("LastLoadedModule", "");
 	
-	private Map<MemoryEntry, IModule> memoryEntryModules = new HashMap<MemoryEntry, IModule>();
+	private Map<IMemoryEntry, IModule> memoryEntryModules = new HashMap<IMemoryEntry, IModule>();
 	
 	public ModuleManager(IMachine machine) {
 		this.machine = machine;
@@ -97,14 +100,14 @@ public class ModuleManager implements IPersistable {
 			if (loadedModules.contains(module))
 				return;
 			
-			List<MemoryEntry> entries = new ArrayList<MemoryEntry>();
-			Memory memory = machine.getMemory();
+			List<IMemoryEntry> entries = new ArrayList<IMemoryEntry>();
+			IMemory memory = machine.getMemory();
 			for (MemoryEntryInfo info : module.getMemoryEntryInfos()) {
-				MemoryEntry entry = info.createMemoryEntry(memory);
+				IMemoryEntry entry = createMemoryEntry(info, memory);
 				if (entry != null)
 					entries.add(entry);
 			}
-			for (MemoryEntry entry : entries) {
+			for (IMemoryEntry entry : entries) {
 				memory.addAndMap(entry);
 				memoryEntryModules.put(entry, module);
 			}
@@ -121,10 +124,10 @@ public class ModuleManager implements IPersistable {
 		if (loaded == null)
 			return;
 		
-		Memory memory = machine.getMemory();
+		IMemory memory = machine.getMemory();
 		
-		for (MemoryDomain domain : memory.getDomains())
-			for (MemoryEntry entry : domain.getMemoryEntries()) {
+		for (IMemoryDomain domain : memory.getDomains())
+			for (IMemoryEntry entry : domain.getMemoryEntries()) {
 				if (memoryEntryModules.get(entry) == loaded) {
 					domain.unmapEntry(entry);
 					memoryEntryModules.remove(entry);
@@ -180,5 +183,58 @@ public class ModuleManager implements IPersistable {
 			}
 		}
 		
+	}
+
+
+	@SuppressWarnings("unchecked")
+	public IMemoryEntry createMemoryEntry(MemoryEntryInfo info, IMemory memory) throws NotifyException {
+		try {
+			IMemoryEntry entry = null;
+			Map<String, Object> properties = info.getProperties();
+			if (properties.containsKey(MemoryEntryInfo.FILENAME2)) {
+				try {
+					entry = DiskMemoryEntry.newBankedWordMemoryFromFile(
+							(Class<BankedMemoryEntry>) properties.get(MemoryEntryInfo.CLASS),
+							info.getInt(MemoryEntryInfo.ADDRESS),
+							info.getInt(MemoryEntryInfo.SIZE),
+							memory,
+							info.getString(MemoryEntryInfo.NAME),
+							memory.getDomain(info.getString(MemoryEntryInfo.DOMAIN)),
+							info.getFilePath(info.getString(MemoryEntryInfo.FILENAME), info.getBool(MemoryEntryInfo.STORED)),
+							info.getInt(MemoryEntryInfo.OFFSET),
+							info.getFilePath(info.getString(MemoryEntryInfo.FILENAME2), info.getBool(MemoryEntryInfo.STORED)),
+							info.getInt(MemoryEntryInfo.OFFSET2));
+				} catch (IOException e) {
+					String filename = info.getString(MemoryEntryInfo.FILENAME); 
+					String filename2 = info.getString(MemoryEntryInfo.FILENAME2); 
+					if (filename2 == null)
+					throw new NotifyException(null, 
+							"Failed to load file(s) '" + filename + "' and/or '"+ filename2 + "' for '" + info.getString(MemoryEntryInfo.NAME) + "'",
+							e);
+				}
+			} else if (IMemoryDomain.NAME_CPU.equals(properties.get(MemoryEntryInfo.DOMAIN))) {
+				entry = DiskMemoryEntry.newWordMemoryFromFile(
+						info.getInt(MemoryEntryInfo.ADDRESS),
+						info.getInt(MemoryEntryInfo.SIZE),
+						info.getString(MemoryEntryInfo.NAME),
+						memory.getDomain(info.getString(MemoryEntryInfo.DOMAIN)),
+						info.getFilePath(info.getString(MemoryEntryInfo.FILENAME), info.getBool(MemoryEntryInfo.STORED)),
+						info.getInt(MemoryEntryInfo.OFFSET),
+						info.getBool(MemoryEntryInfo.STORED));
+			} else {
+				entry = DiskMemoryEntry.newByteMemoryFromFile(
+						info.getInt(MemoryEntryInfo.ADDRESS),
+						info.getInt(MemoryEntryInfo.SIZE),
+						info.getString(MemoryEntryInfo.NAME),
+						memory.getDomain(info.getString(MemoryEntryInfo.DOMAIN)),
+						info.getFilePath(info.getString(MemoryEntryInfo.FILENAME), info.getBool(MemoryEntryInfo.STORED)),
+						info.getInt(MemoryEntryInfo.OFFSET),
+						info.getBool(MemoryEntryInfo.STORED));
+			}
+			return entry;
+		} catch (IOException e) {
+			String filename = info.getString(MemoryEntryInfo.FILENAME); 
+			throw new NotifyException(null, "Failed to load file '" + filename + "' for '" + info.getString(MemoryEntryInfo.NAME) +"'", e);
+		}
 	}
 }

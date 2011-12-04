@@ -107,9 +107,10 @@ import v9t9.base.utils.Pair;
 import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.machine.IBaseMachine;
+import v9t9.common.memory.IMemoryDomain;
+import v9t9.common.memory.IMemoryEntry;
+import v9t9.common.memory.IMemoryWriteListener;
 import v9t9.common.memory.MemoryDomain;
-import v9t9.common.memory.MemoryEntry;
-import v9t9.common.memory.MemoryDomain.MemoryWriteListener;
 import v9t9.engine.cpu.Executor;
 import v9t9.engine.cpu.InstructionListener;
 import v9t9.engine.interpreter.Interpreter;
@@ -131,7 +132,7 @@ public class InterpreterF99b implements Interpreter {
 	
 	IBaseMachine machine;
 
-    MemoryDomain memory;
+    IMemoryDomain memory;
     
     InstructionWorkBlockF99b iblock;
 
@@ -140,7 +141,7 @@ public class InterpreterF99b implements Interpreter {
 	//private TreeMap<Integer, InstructionF99b> cachedInstrs = new TreeMap<Integer, InstructionF99b>();
 	private InstructionF99b[] cachedInstrs = new InstructionF99b[65536];
 	private int cachedInstrCount;
-	private MemoryWriteListener memoryWriteListener;
+	private IMemoryWriteListener memoryWriteListener;
 
 	private BitSet instrMap;
 
@@ -154,15 +155,14 @@ public class InterpreterF99b implements Interpreter {
         this.memory = machine.getCpu().getConsole();
         instructionFactory = machine.getInstructionFactory();
         iblock = new InstructionWorkBlockF99b(cpu.getState());
-        iblock.domain = memory;
         iblock.showSymbol = true;
         
         instrMap = new BitSet();
         
-        memoryWriteListener = new MemoryWriteListener() {
+        memoryWriteListener = new IMemoryWriteListener() {
 			
 			@Override
-			public void changed(MemoryEntry entry, int addr, boolean isByte) {
+			public void changed(IMemoryEntry entry, int addr, boolean isByte) {
 				invalidateInstructionCache(addr);
 			}
 		};
@@ -897,7 +897,7 @@ public class InterpreterF99b implements Interpreter {
 		// we want to find the LAST entry with the name, but cannot search
 		// backwards, because the compressed LFA-less nature of the dictionary
 		// doesn't afford reliable backward scanning.
-		MemoryDomain grom = cpu.getMachine().getMemory().getDomain(MemoryDomain.NAME_GRAPHICS);
+		MemoryDomain grom = cpu.getMachine().getMemory().getDomain(IMemoryDomain.NAME_GRAPHICS);
 		while (gromDict < gromDictEnd) {
 			cpu.addCycles(3);
 			if (nameMatches(grom, caddr, gromDict, after)) {
@@ -923,7 +923,7 @@ public class InterpreterF99b implements Interpreter {
 	 * @param caddr
 	 * @return
 	 */
-	private String readCountedString(MemoryDomain domain, int caddr) {
+	private String readCountedString(IMemoryDomain domain, int caddr) {
 		StringBuilder sb = new StringBuilder();
 		int len = domain.readByte(caddr++) & 0x1f;
 		while (len-- > 0) { 
@@ -1044,7 +1044,7 @@ public class InterpreterF99b implements Interpreter {
 	 * @param nfa
 	 * @return
 	 */
-	private boolean nameMatches(MemoryDomain domain, int caddr_, short nfa_, int[] after) {
+	private boolean nameMatches(IMemoryDomain domain, int caddr_, short nfa_, int[] after) {
 		if (DEBUG) {
 			String name = readCountedString(domain, nfa_);
 			System.out.println("... >"+name+"< ?");

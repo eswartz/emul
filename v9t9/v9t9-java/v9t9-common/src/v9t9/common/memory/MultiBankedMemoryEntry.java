@@ -17,16 +17,16 @@ import v9t9.base.settings.ISettingSection;
 public class MultiBankedMemoryEntry extends BankedMemoryEntry {
 	
 	private MemoryEntry banks[];
-	private MemoryEntry currentBank;
+	private IMemoryEntry currentBank;
 
 	/**
 	 * Only to be used when reconstructing 
 	 */
 	public MultiBankedMemoryEntry() {
 	}
-	public MultiBankedMemoryEntry(Memory memory,
-			String name, MemoryEntry[] banks) {
-		super(memory, name, banks[0].domain, banks[0].addr, banks[0].size, banks.length);
+	public MultiBankedMemoryEntry(IMemory memory,
+			String name, IMemoryEntry[] banks) {
+		super(memory, name, banks[0].getDomain(), banks[0].getAddr(), banks[0].getSize(), banks.length);
 		
 		this.banks = new MemoryEntry[banks.length];
 		System.arraycopy(banks, 0, this.banks, 0, banks.length);
@@ -38,12 +38,12 @@ public class MultiBankedMemoryEntry extends BankedMemoryEntry {
 	@Override
 	protected void doSwitchBank(int bank) {
 		currentBank = banks[bank % bankCount];
-		setArea(currentBank.getArea());
+		setArea((MemoryArea) currentBank.getArea());
 	}
 	
 	@Override
 	public void load() {
-		for (MemoryEntry bank : banks)
+		for (IMemoryEntry bank : banks)
 			bank.load();
 	}
 
@@ -80,7 +80,7 @@ public class MultiBankedMemoryEntry extends BankedMemoryEntry {
 			if (entry != null) {
 				entry.loadState(entryStore);
 			} else {
-				entry = MemoryEntry.createEntry(domain, entryStore);
+				entry = MemoryEntry.createEntry((MemoryDomain) getDomain(), entryStore);
 				banks[idx] = entry;
 			}
 		}		

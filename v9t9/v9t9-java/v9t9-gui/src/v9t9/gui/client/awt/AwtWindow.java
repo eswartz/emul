@@ -48,7 +48,7 @@ import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyEvent;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.engine.events.BaseEventNotifier;
-import v9t9.engine.machine.Machine;
+import v9t9.engine.machine.IMachine;
 import v9t9.gui.Emulator;
 import v9t9.gui.common.BaseEmulatorWindow;
 
@@ -68,7 +68,7 @@ public class AwtWindow extends BaseEmulatorWindow implements
 	private GridBagLayout controlsLayout;
 	private IEventNotifier eventNotifier;
 
-	public AwtWindow(final Machine machine) {
+	public AwtWindow(final IMachine machine) {
 		super(machine);
 
 		GraphicsEnvironment env = GraphicsEnvironment
@@ -246,7 +246,7 @@ public class AwtWindow extends BaseEmulatorWindow implements
 				64 * controlsContainer.getComponentCount()));
 
 		// controlsContainer.add(Box.createVerHorizontalStrut(64));
-		createStateButton(Machine.settingPauseMachine, new Rectangle(0, 512,
+		createStateButton(IMachine.settingPauseMachine, new Rectangle(0, 512,
 				64, 64), new Rectangle(0, 0, 64, 64), "Pause machine");
 
 		createStateButton(BaseEmulatorWindow.settingMonitorDrawing,

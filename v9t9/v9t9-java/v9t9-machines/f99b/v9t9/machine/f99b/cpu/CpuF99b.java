@@ -11,7 +11,7 @@ import v9t9.engine.cpu.CpuBase;
 import v9t9.engine.cpu.Executor;
 import v9t9.engine.hardware.ICruAccess;
 import v9t9.engine.hardware.IVdpChip;
-import v9t9.engine.machine.Machine;
+import v9t9.engine.machine.IMachine;
 import v9t9.machine.f99b.asm.StatusF99b;
 
 /**
@@ -58,7 +58,7 @@ public class CpuF99b extends CpuBase {
 
 	private final IVdpChip vdp;
 	
-	public CpuF99b(Machine machine, int interruptTick, IVdpChip vdp) {
+	public CpuF99b(IMachine machine, int interruptTick, IVdpChip vdp) {
 		super(machine, new CpuStateF99b(machine.getConsole()), interruptTick);
 		this.vdp = vdp;
 		stateF99b = (CpuStateF99b) state;

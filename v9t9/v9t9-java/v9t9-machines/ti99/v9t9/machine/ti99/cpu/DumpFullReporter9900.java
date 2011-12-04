@@ -11,7 +11,7 @@ import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.IOperand;
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.cpu.InstructionWorkBlock;
-import v9t9.common.memory.MemoryEntry;
+import v9t9.common.memory.IMemoryEntry;
 import v9t9.engine.cpu.Executor;
 import v9t9.engine.cpu.InstructionListener;
 
@@ -45,7 +45,7 @@ public class DumpFullReporter9900 implements InstructionListener {
 
 	public void dumpFullStart(InstructionWorkBlock9900 iinstructionWorkBlock,
 			RawInstruction ins, PrintWriter dumpfull) {
-		MemoryEntry entry = iinstructionWorkBlock.domain.getEntryAt(ins.pc);
+		IMemoryEntry entry = iinstructionWorkBlock.domain.getEntryAt(ins.pc);
 		String name = null;
 		if (entry != null) 
 			name = entry.lookupSymbol((short) ins.pc);

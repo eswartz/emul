@@ -27,9 +27,11 @@ import v9t9.common.cpu.ICpuMetrics;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyEvent;
 import v9t9.common.events.IEventNotifier.Level;
+import v9t9.common.memory.IMemory;
+import v9t9.common.memory.IMemoryDomain;
+import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.Memory;
 import v9t9.common.memory.MemoryDomain;
-import v9t9.common.memory.MemoryEntry;
 import v9t9.common.memory.MemoryModel;
 import v9t9.engine.client.IClient;
 import v9t9.engine.cpu.Executor;
@@ -47,7 +49,7 @@ import v9t9.engine.settings.WorkspaceSettings;
 /** Encapsulate all the information about a running emulated machine.
  * @author ejs
  */
-abstract public class Machine implements IMachine {
+abstract public class MachineBase implements IMachine {
     protected Memory memory;
     protected MemoryDomain console;
     protected  ICpu cpu;
@@ -97,7 +99,7 @@ abstract public class Machine implements IMachine {
 	private IPropertyListener pauseListener;
 	private Runnable speechTimerTask;
 	
-    public Machine(MachineModel machineModel) {
+    public MachineBase(MachineModel machineModel) {
     	pauseListener = new IPropertyListener() {
     		
     		public void propertyChanged(IProperty setting) {
@@ -197,7 +199,7 @@ abstract public class Machine implements IMachine {
 	 * @see v9t9.emulator.common.IMachine#getMemory()
 	 */
     @Override
-	public Memory getMemory() {
+	public IMemory getMemory() {
         return memory;
     }
     
@@ -272,7 +274,7 @@ abstract public class Machine implements IMachine {
         videoRunner = new Thread("Video Runner") {
         	@Override
         	public void run() {
-        		while (Machine.this.isAlive()) {
+        		while (MachineBase.this.isAlive()) {
 	        		// delay if going too fast
 	    			while (vdp.isThrottled() && bAlive) {
 	    				// Just sleep.  Another timer thread will reset the throttle.
@@ -329,7 +331,7 @@ abstract public class Machine implements IMachine {
 		machineRunner = new Thread("Machine Runner") {
         	@Override
         	public void run() {
-    	        while (Machine.this.isAlive()) {
+    	        while (MachineBase.this.isAlive()) {
             		Runnable runnable;
             		while (runnableList.size() > 0) {
             			runnable = runnableList.remove(0);
@@ -367,7 +369,7 @@ abstract public class Machine implements IMachine {
       	              	break;
     	            } catch (Throwable t) {
     	            	t.printStackTrace();
-    	            	Machine.this.setNotRunning();
+    	            	MachineBase.this.setNotRunning();
     	            	break;
     	            }
     	        }
@@ -425,12 +427,12 @@ abstract public class Machine implements IMachine {
 	@Override
 	public void reset() {
 
-		MemoryDomain domain = getMemory().getDomain(MemoryDomain.NAME_CPU);
-		for (MemoryEntry entry : domain.getFlattenedMemoryEntries()) {
+		MemoryDomain domain = getMemory().getDomain(IMemoryDomain.NAME_CPU);
+		for (IMemoryEntry entry : domain.getFlattenedMemoryEntries()) {
 			if (entry.isVolatile()) {
-				int addr = entry.mapAddress(entry.addr);
+				int addr = entry.mapAddress(entry.getAddr());
 				//System.out.println("Wiping " + entry +  "@" + HexUtils.toHex4(addr));
-				for (int i = 0; i < entry.size; i+= 2)
+				for (int i = 0; i < entry.getSize(); i+= 2)
 					domain.writeWord(i + addr, (short) 0);
 			}
 		}
@@ -696,9 +698,6 @@ abstract public class Machine implements IMachine {
 		return cpuMetrics;
 	}
 
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.common.IMachine#getModuleManager()
-	 */
 	@Override
 	public ModuleManager getModuleManager() {
 		return moduleManager;

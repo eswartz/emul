@@ -28,14 +28,14 @@ import v9t9.common.asm.MemoryRange;
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.asm.Routine;
 import v9t9.common.cpu.ICpuState;
-import v9t9.common.memory.MemoryDomain;
+import v9t9.common.memory.IMemoryDomain;
 import v9t9.machine.ti99.cpu.Inst9900;
 import v9t9.machine.ti99.cpu.InstructionWorkBlock9900;
 import v9t9.machine.ti99.cpu.MachineOperand9900;
 
 public abstract class Phase {
 	protected Map<Integer, Block> blocks;
-	protected MemoryDomain mainMemory;
+	protected IMemoryDomain mainMemory;
 	public IDecompileInfo decompileInfo;
 	protected Map<Block, Label> labels;
 	protected Map<Label, Routine> routines;

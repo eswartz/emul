@@ -7,7 +7,7 @@ import v9t9.common.asm.IDecompileInfo;
 import v9t9.common.asm.IInstructionFactory;
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.cpu.ICpuState;
-import v9t9.common.memory.MemoryDomain;
+import v9t9.common.memory.IMemoryDomain;
 import v9t9.machine.ti99.cpu.InstTable9900;
 import v9t9.machine.ti99.cpu.Instruction9900;
 
@@ -38,7 +38,7 @@ public class InstructionFactory9900 implements IInstructionFactory {
 	}
 
 	@Override
-	public RawInstruction decodeInstruction(int pc, MemoryDomain domain) {
+	public RawInstruction decodeInstruction(int pc, IMemoryDomain domain) {
 		return InstTable9900.decodeInstruction(domain.flatReadWord(pc), pc, domain);
 	}
 

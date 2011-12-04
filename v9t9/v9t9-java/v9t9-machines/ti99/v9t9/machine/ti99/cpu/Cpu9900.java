@@ -16,7 +16,7 @@ import v9t9.engine.cpu.CpuBase;
 import v9t9.engine.cpu.Executor;
 import v9t9.engine.hardware.ICruAccess;
 import v9t9.engine.hardware.IVdpChip;
-import v9t9.engine.machine.Machine;
+import v9t9.engine.machine.IMachine;
 import v9t9.machine.ti99.compiler.Compiler9900;
 
 /**
@@ -32,7 +32,7 @@ public class Cpu9900 extends CpuBase {
 	public static final int INTLEVEL_INTREQ = 2;
 	private final IVdpChip vdp;
 	
-    public Cpu9900(Machine machine, int interruptTick, IVdpChip vdp) {
+    public Cpu9900(IMachine machine, int interruptTick, IVdpChip vdp) {
     	super(machine, new CpuState9900(machine.getConsole()), interruptTick);
 		this.vdp = vdp;
     	

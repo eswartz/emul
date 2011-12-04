@@ -34,7 +34,7 @@ import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 
 import v9t9.base.utils.HexUtils;
-import v9t9.engine.machine.Machine;
+import v9t9.engine.machine.MachineBase;
 import v9t9.gui.client.swt.FontUtils;
 
 /**
@@ -86,7 +86,7 @@ public class RegisterViewer extends Composite {
 	 * @param machine 
 	 * @param style
 	 */
-	public RegisterViewer(Composite parent, Machine machine, final IRegisterProvider regProvider, int perColumn) {
+	public RegisterViewer(Composite parent, MachineBase machine, final IRegisterProvider regProvider, int perColumn) {
 		super(parent, SWT.NONE);
 		
 		setLayout(new GridLayout());

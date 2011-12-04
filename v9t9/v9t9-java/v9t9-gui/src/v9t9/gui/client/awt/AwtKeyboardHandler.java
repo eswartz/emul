@@ -14,7 +14,7 @@ import v9t9.common.cpu.ICpu;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.engine.keyboard.KeyboardState;
-import v9t9.engine.machine.Machine;
+import v9t9.engine.machine.IMachine;
 import v9t9.gui.common.BaseKeyboardHandler;
 
 /**
@@ -27,7 +27,7 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 	private IEventNotifier eventNotifier;
 	private static Pattern rawCodePattern = Pattern.compile(".*,rawCode=(\\d+),.*");
 
-	public AwtKeyboardHandler(Component component, final KeyboardState keyboardState, Machine machine) {
+	public AwtKeyboardHandler(Component component, final KeyboardState keyboardState, IMachine machine) {
 		super(keyboardState, machine);
 		component.addKeyListener(new KeyListener() {
 

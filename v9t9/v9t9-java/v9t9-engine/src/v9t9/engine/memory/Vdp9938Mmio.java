@@ -8,7 +8,7 @@ package v9t9.engine.memory;
 
 import v9t9.common.memory.BankedMemoryEntry;
 import v9t9.common.memory.ByteMemoryArea;
-import v9t9.common.memory.Memory;
+import v9t9.common.memory.IMemory;
 import v9t9.common.memory.WindowBankedMemoryEntry;
 import v9t9.engine.video.v9938.VdpV9938;
 
@@ -25,7 +25,7 @@ public class Vdp9938Mmio extends Vdp9918AMmio {
 
 	private VdpV9938 v9938;
 
-    public Vdp9938Mmio(Memory memory, VdpV9938 vdp, int memSize) {
+    public Vdp9938Mmio(IMemory memory, VdpV9938 vdp, int memSize) {
     	super(memory, vdp, adjustMemorySize(memSize));
     	this.v9938 = vdp;
     }
@@ -43,7 +43,7 @@ public class Vdp9938Mmio extends Vdp9918AMmio {
     public ByteMemoryArea getMemoryArea() {
     	return fullRamArea;
     }
-	protected void initMemory(Memory memory, int memorySize) {
+	protected void initMemory(IMemory memory, int memorySize) {
 		memoryBank = new WindowBankedMemoryEntry(
 				memory, "VDP RAM",
 				videoMemory,

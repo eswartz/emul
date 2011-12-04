@@ -40,7 +40,7 @@ public interface MachineModel {
 
 	IRawInstructionFactory getInstructionFactory();
 
-	ICpu createCPU(Machine machine);
+	ICpu createCPU(IMachine machine);
 
 	List<IDsrSettings> getDsrSettings(IMachine machine);
 

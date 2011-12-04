@@ -3,7 +3,7 @@
  */
 package v9t9.common.cpu;
 
-import v9t9.common.memory.MemoryDomain;
+import v9t9.common.memory.IMemoryDomain;
 
 /**
  * @author Ed
@@ -27,7 +27,7 @@ public interface ICpuState {
 	String getRegisterName(int reg);
 	String getRegisterTooltip(int reg);
 
-	MemoryDomain getConsole();
+	IMemoryDomain getConsole();
 
 	IStatus createStatus();
 

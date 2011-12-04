@@ -3,7 +3,7 @@
  */
 package v9t9.machine.f99b.memory;
 
-import v9t9.common.memory.MemoryEntry;
+import v9t9.common.memory.IMemoryEntry;
 import v9t9.engine.machine.IMachine;
 import v9t9.engine.memory.TIMemoryModel;
 import v9t9.machine.f99b.machine.InternalCruF99;
@@ -57,12 +57,12 @@ public class F99bConsoleMmioArea extends ConsoleMmioArea  {
 	}
 
     @Override
-    public void writeByte(MemoryEntry entry, int addr, byte val) {
+    public void writeByte(IMemoryEntry entry, int addr, byte val) {
     	writeMmio(addr, val);
     }
 
 	@Override
-    public void writeWord(MemoryEntry entry, int addr, short val) {
+    public void writeWord(IMemoryEntry entry, int addr, short val) {
 		if (addr == VDPWA) {
 			writeByte(entry, VDPWA, (byte) (val & 0xff));
 			writeByte(entry, VDPWA, (byte) (val >> 8));
@@ -76,12 +76,12 @@ public class F99bConsoleMmioArea extends ConsoleMmioArea  {
 
 
 	@Override
-	public byte readByte(MemoryEntry entry, int addr) {
+	public byte readByte(IMemoryEntry entry, int addr) {
 		return readMmio(addr);
 	}
 	
 	@Override
-	public short readWord(MemoryEntry entry, int addr) {
+	public short readWord(IMemoryEntry entry, int addr) {
 		if (addr == GPLRA) {
 			byte hi = readByte(entry, addr);
 			byte lo = readByte(entry, addr);

@@ -63,7 +63,7 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 			cpuRomEntry.copySymbols(CPU);
 			
 			// shrink RAM accordingly
-			int st = cpuRomEntry.addr + 0x400 * ((cpuRomEntry.size + 0x3ff) / 0x400);
+			int st = cpuRomEntry.getAddr() + 0x400 * ((cpuRomEntry.getSize() + 0x3ff) / 0x400);
 			int sz = 0x10000 - st;
 			memory.removeAndUnmap(consoleEntry);
 			consoleEntry = new MemoryEntry("64K RAM", CPU, 

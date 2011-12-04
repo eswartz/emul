@@ -9,7 +9,8 @@ import java.util.List;
 
 
 import v9t9.base.properties.SettingProperty;
-import v9t9.common.memory.MemoryDomain;
+import v9t9.common.memory.IMemoryDomain;
+import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.MemoryEntry;
 import v9t9.engine.dsr.DeviceIndicatorProvider;
 import v9t9.engine.dsr.IDevIcons;
@@ -184,7 +185,7 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements DsrHandler9900
 		 * @see v9t9.engine.memory.WordMemoryArea#readByte(v9t9.engine.memory.MemoryEntry, int)
 		 */
 		@Override
-		public byte readByte(MemoryEntry entry, int addr) {
+		public byte readByte(IMemoryEntry entry, int addr) {
 			
 			if (addr < 0x5ff0)
 				return romMemoryEntry.getArea().flatReadByte(romMemoryEntry, addr);
@@ -227,7 +228,7 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements DsrHandler9900
 		 * @see v9t9.engine.memory.WordMemoryArea#writeByte(v9t9.engine.memory.MemoryEntry, int, byte)
 		 */
 		@Override
-		public void writeByte(MemoryEntry entry, int addr, byte val) {
+		public void writeByte(IMemoryEntry entry, int addr, byte val) {
 			if (addr < 0x5ff0) {
 				romMemoryEntry.getArea().flatWriteByte(romMemoryEntry, addr, val);
 				return;
@@ -269,7 +270,7 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements DsrHandler9900
 		 * @see v9t9.engine.memory.WordMemoryArea#readWord(v9t9.engine.memory.MemoryEntry, int)
 		 */
 		@Override
-		public short readWord(MemoryEntry entry, int addr) {
+		public short readWord(IMemoryEntry entry, int addr) {
 			return (short) ((readByte(entry, (addr & ~1)) << 8) 
 			| (readByte(entry, (addr | 1)) & 0xff));
 		}
@@ -278,7 +279,7 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements DsrHandler9900
 		 * @see v9t9.engine.memory.WordMemoryArea#writeWord(v9t9.engine.memory.MemoryEntry, int, short)
 		 */
 		@Override
-		public void writeWord(MemoryEntry entry, int addr, short val) {
+		public void writeWord(IMemoryEntry entry, int addr, short val) {
 			writeByte(entry, (addr & ~1), (byte) (val >> 8));
 			writeByte(entry, (addr | 1), (byte) (val & 0xff));
 		}
@@ -294,7 +295,7 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements DsrHandler9900
 	}
 
 
-	public void activate(MemoryDomain console) throws IOException {
+	public void activate(IMemoryDomain console) throws IOException {
 		if (!RealDiskDsrSettings.diskImageDsrEnabled.getBoolean())
 			return;
 		
@@ -314,7 +315,7 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements DsrHandler9900
 		
 	}
 	
-	public void deactivate(MemoryDomain console) {
+	public void deactivate(IMemoryDomain console) {
 		console.unmapEntry(ioMemoryEntry);
 		console.unmapEntry(romMemoryEntry);
 		

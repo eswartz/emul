@@ -27,10 +27,10 @@ import org.eclipse.swt.widgets.Shell;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.engine.EmulatorSettings;
-import v9t9.engine.machine.Machine;
+import v9t9.engine.machine.IMachine;
+import v9t9.engine.machine.MachineBase;
 import v9t9.gui.client.swt.ToolShell.Behavior;
 import v9t9.gui.client.swt.ToolShell.Centering;
-import v9t9.gui.client.swt.debugger.DebuggerWindow;
 import v9t9.gui.common.BaseEmulatorWindow;
 import v9t9.gui.sound.JavaSoundHandler;
 
@@ -48,7 +48,7 @@ public class EmulatorButtonBar extends EmulatorBar  {
 	 * @param smoothResize
 	 */
 	public EmulatorButtonBar(SwtWindow window, ImageProvider imageProvider, Composite parent, 
-			final Machine machine, 
+			final IMachine machine, 
 			int[] colors, float midPoint, boolean isHorizontal) {
 		super(window, imageProvider, parent, machine, colors, midPoint, isHorizontal);
 		
@@ -107,10 +107,10 @@ public class EmulatorButtonBar extends EmulatorBar  {
 				2, 
 				0, "Toggle CPU logging");
 
-		createToggleStateButton(Machine.settingPauseMachine, 8,
+		createToggleStateButton(MachineBase.settingPauseMachine, 8,
 				0, "Pause machine");
 
-
+/*
 		createButton(7,
 				"Create debugger window", new SelectionAdapter() {
 					@Override
@@ -132,6 +132,7 @@ public class EmulatorButtonBar extends EmulatorBar  {
 					}
 			}
 		);
+		*/
 		
 		/*
 		createButton(buttonBar,

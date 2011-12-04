@@ -12,6 +12,7 @@ import javax.sound.sampled.DataLine;
 import javax.sound.sampled.Line;
 import javax.sound.sampled.SourceDataLine;
 
+import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.MemoryDomain;
 import v9t9.engine.files.DataFiles;
 import v9t9.engine.speech.LPCSpeech;
@@ -52,7 +53,7 @@ public class ManualTestSpeech {
 		speechWaveForm = new byte[200 * 2];
 		speechIdx = 0;
 		
-		MemoryDomain speechMem = new MemoryDomain("Speech");
+		IMemoryDomain speechMem = new MemoryDomain("Speech");
 		DataFiles.addSearchPath("/usr/local/src/v9t9-data/roms");
 		DataFiles.addSearchPath("l:/src/v9t9-data/roms");
 		TMS5220 tms5220 = new TMS5220(speechMem);

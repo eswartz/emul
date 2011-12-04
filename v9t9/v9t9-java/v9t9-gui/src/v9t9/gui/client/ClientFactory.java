@@ -9,7 +9,7 @@ import java.util.Map;
 
 import v9t9.engine.client.IClient;
 import v9t9.engine.machine.IMachine;
-import v9t9.engine.machine.Machine;
+import v9t9.engine.machine.MachineBase;
 
 /**
  * @author ejs
@@ -29,7 +29,7 @@ public class ClientFactory {
 		if (klass == null)
 			return null;
 		try {
-			return klass.getConstructor(Machine.class).newInstance(machine);
+			return klass.getConstructor(MachineBase.class).newInstance(machine);
 		} catch (InvocationTargetException e) {
 			e.getCause().printStackTrace();
 		} catch (Exception e) {

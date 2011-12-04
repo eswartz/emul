@@ -6,13 +6,13 @@
  */
 package v9t9.common.asm;
 
-import v9t9.common.memory.MemoryDomain;
+import v9t9.common.memory.IMemoryDomain;
 
 public interface ICodeProvider {
     /**
      * Get CPU memory
      */
-    public MemoryDomain getCPUMemory();
+    public IMemoryDomain getCPUMemory();
     
     /**
      * Add a new instruction

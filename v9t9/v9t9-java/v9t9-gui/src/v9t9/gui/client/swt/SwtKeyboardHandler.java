@@ -18,7 +18,7 @@ import org.eclipse.swt.widgets.Shell;
 
 import v9t9.base.utils.HexUtils;
 import v9t9.engine.keyboard.KeyboardState;
-import v9t9.engine.machine.Machine;
+import v9t9.engine.machine.IMachine;
 import v9t9.gui.common.BaseKeyboardHandler;
 
 /**
@@ -58,7 +58,7 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler implements ISwtKeybo
 	
 	private Timer pasteTimer;
 
-	public SwtKeyboardHandler(KeyboardState keyboardState, Machine machine) {
+	public SwtKeyboardHandler(KeyboardState keyboardState, IMachine machine) {
 		super(keyboardState, machine);
 		
 	}

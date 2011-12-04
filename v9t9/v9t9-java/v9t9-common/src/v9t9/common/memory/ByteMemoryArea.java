@@ -82,37 +82,37 @@ public class ByteMemoryArea extends MemoryArea {
     }
 
     @Override
-	public short readWord(MemoryEntry entry, int addr) {
-		if (addr + 1 - entry.addr < entry.size)
+	public short readWord(IMemoryEntry entry, int addr) {
+		if (addr + 1 - entry.getAddr() < entry.getSize())
 			return (short) ((readByte(entry, addr) << 8) | (readByte(entry, (addr + 1) & 0xffff) & 0xff));
 		else
 			return (short) ((readByte(entry, addr) << 8));
     }
 
     @Override
-	public byte readByte(MemoryEntry entry, int addr) {
+	public byte readByte(IMemoryEntry entry, int addr) {
         if (read != null) {
-			return read[addr - entry.addr];
+			return read[addr - entry.getAddr()];
 		} else {
 			return 0;
 		}
     }
 
     @Override
-	public void writeWord(MemoryEntry entry, int addr, short val) {
+	public void writeWord(IMemoryEntry entry, int addr, short val) {
     	writeByte(entry, addr, (byte) (val >> 8));
-    	if (addr + 1 - entry.addr < entry.size)
+    	if (addr + 1 - entry.getAddr() < entry.getSize())
     		writeByte(entry, addr + 1, (byte) (val & 0xff));
     }
 
     @Override
-	public void writeByte(MemoryEntry entry, int addr, byte val) {
+	public void writeByte(IMemoryEntry entry, int addr, byte val) {
         if (write != null) {
-			write[addr - entry.addr] = val;
+			write[addr - entry.getAddr()] = val;
 		}
     }
 
-    public ByteMemoryAccess getReadMemoryAccess(MemoryEntry entry, int addr) {
-    	return new ByteMemoryAccess(read, addr - entry.addr);
+    public ByteMemoryAccess getReadMemoryAccess(IMemoryEntry entry, int addr) {
+    	return new ByteMemoryAccess(read, addr - entry.getAddr());
     }
 }

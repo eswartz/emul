@@ -9,7 +9,7 @@ import java.util.List;
 import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuMetrics;
-import v9t9.common.memory.MemoryDomain;
+import v9t9.common.memory.IMemoryDomain;
 import v9t9.engine.client.ISoundHandler;
 import v9t9.engine.compiler.CodeBlockCompilerStrategy;
 import v9t9.engine.cpu.Executor;
@@ -18,7 +18,6 @@ import v9t9.engine.dsr.IDsrHandler;
 import v9t9.engine.dsr.IDsrSettings;
 import v9t9.engine.hardware.ISpeechChip;
 import v9t9.engine.machine.IMachine;
-import v9t9.engine.machine.Machine;
 import v9t9.engine.machine.MachineModel;
 import v9t9.engine.speech.ISpeechDataSender;
 import v9t9.engine.speech.SpeechVoice;
@@ -40,7 +39,7 @@ public abstract class BaseTI99MachineModel implements MachineModel {
 	 * @see v9t9.emulator.hardware.MachineModel#getCPU()
 	 */
 	@Override
-	public ICpu createCPU(Machine machine) {
+	public ICpu createCPU(IMachine machine) {
 		return new Cpu9900(machine, 1000 / machine.getCpuTicksPerSec(), machine.getVdp());
 	}
 	
@@ -97,7 +96,7 @@ public abstract class BaseTI99MachineModel implements MachineModel {
 	 */
 	@Override
 	public ISpeechChip createSpeechChip(final IMachine machine) {
-		MemoryDomain domain = machine.getMemory().getDomain(MemoryDomain.NAME_SPEECH);
+		IMemoryDomain domain = machine.getMemory().getDomain(IMemoryDomain.NAME_SPEECH);
 		if (domain == null)
 			return null;
 		final TMS5220 speech = new TMS5220(domain);

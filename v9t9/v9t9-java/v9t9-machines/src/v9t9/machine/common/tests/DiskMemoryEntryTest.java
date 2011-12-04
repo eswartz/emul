@@ -40,19 +40,19 @@ public class DiskMemoryEntryTest extends TestCase {
         DiskMemoryEntry ent = DiskMemoryEntry.newWordMemoryFromFile(0x000, 0x2000, "rom", CPU,
                 basedir+"994arom.bin", 0, false);
         assertTrue(ent != null);
-        assertEquals(ent.size, 8192);
-        assertEquals(ent.fileoffs, 0);
-        assertEquals(ent.filesize, 8192);
-        assertEquals(ent.bLoaded, false);
-        assertEquals(ent.bStorable, false);
+        assertEquals(ent.getSize(), 8192);
+        assertEquals(ent.getFileOffs(), 0);
+        assertEquals(ent.getFileSize(), 8192);
+        assertEquals(ent.isLoaded(), false);
+        assertEquals(ent.isStorable(), false);
         
         CPU.mapEntry(ent);
         
-        assertEquals(ent.bLoaded, true);
+        assertEquals(ent.isLoaded(), true);
         assertEquals(Integer.toHexString(CPU.readWord(0)), Integer.toHexString((short)0x83e0));
         
         CPU.unmapEntry(ent);
-        assertEquals(ent.bLoaded, false);
+        assertEquals(ent.isLoaded(), false);
         assertEquals(CPU.readWord(0), (short)0);
     }
 

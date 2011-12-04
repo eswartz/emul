@@ -18,6 +18,7 @@ import v9t9.common.asm.InstTableCommon;
 import v9t9.common.asm.MemoryRanges;
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.asm.Routine;
+import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.MemoryDomain;
 import v9t9.common.memory.MemoryEntry;
 import v9t9.common.memory.StockRamArea;
@@ -86,7 +87,7 @@ public abstract class BaseTopDownPhaseTest9900 extends BaseTest9900 implements I
 	    }
 	}
     
- 	public MemoryDomain getCPUMemory() {
+ 	public IMemoryDomain getCPUMemory() {
         return CPU;
     }
 

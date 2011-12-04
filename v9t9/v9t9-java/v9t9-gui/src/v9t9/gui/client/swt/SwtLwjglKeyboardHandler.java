@@ -13,7 +13,7 @@ import org.eclipse.swt.widgets.Control;
 
 import v9t9.engine.client.IKeyboardHandler;
 import v9t9.engine.keyboard.KeyboardState;
-import v9t9.engine.machine.Machine;
+import v9t9.engine.machine.IMachine;
 
 /**
  * @author ejs
@@ -120,7 +120,7 @@ public class SwtLwjglKeyboardHandler implements IKeyboardHandler, ISwtKeyboardHa
 	private ControllerHandler joystickHandler;
 	private boolean failedLast;
 	
-	public SwtLwjglKeyboardHandler(KeyboardState keyboardState, Machine machine) {
+	public SwtLwjglKeyboardHandler(KeyboardState keyboardState, IMachine machine) {
 		this.swtKeyboardHandler = new SwtKeyboardHandler(keyboardState, machine);
 		
 		for (Controller controller : ControllerEnvironment.getDefaultEnvironment().getControllers()) {

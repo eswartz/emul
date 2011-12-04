@@ -9,7 +9,7 @@ import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 
-import v9t9.engine.machine.Machine;
+import v9t9.engine.machine.MachineBase;
 import v9t9.gui.client.swt.debugger.CpuViewer.ICpuTracker;
 
 /**
@@ -22,7 +22,7 @@ public class RegisterViews extends SashForm implements ICpuTracker {
 	private RegisterViewer cpuRegisterViewer;
 	private RegisterViewer vdpRegisterViewer;
 	
-	public RegisterViews(Composite parent, int style, final Machine machine) {
+	public RegisterViews(Composite parent, int style, final MachineBase machine) {
 		super(parent, style | SWT.VERTICAL);
 		
 		setLayout(new GridLayout());

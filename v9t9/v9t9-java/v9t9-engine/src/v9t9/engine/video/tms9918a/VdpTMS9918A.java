@@ -16,6 +16,7 @@ import v9t9.base.settings.ISettingSection;
 import v9t9.base.utils.HexUtils;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.memory.ByteMemoryAccess;
+import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.MemoryDomain;
 import v9t9.engine.cpu.Executor;
 import v9t9.engine.hardware.BaseCruAccess;
@@ -150,7 +151,7 @@ public class VdpTMS9918A implements IVdpChip {
 			}
 		});
 		
-		this.vdpMemory = machine.getMemory().getDomain(MemoryDomain.NAME_VIDEO);
+		this.vdpMemory = machine.getMemory().getDomain(IMemoryDomain.NAME_VIDEO);
 		this.vdpCanvas = new MemoryCanvas();	 // placeholder
 		this.vdpregs = allocVdpRegs();
 		vdpCanvas.setSize(256, 192);

@@ -10,7 +10,7 @@ import v9t9.base.utils.HexUtils;
 import v9t9.base.utils.Pair;
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.cpu.InstructionWorkBlock;
-import v9t9.common.memory.MemoryEntry;
+import v9t9.common.memory.IMemoryEntry;
 import v9t9.engine.cpu.Executor;
 import v9t9.engine.cpu.InstructionListener;
 import v9t9.machine.f99b.asm.InstF99b;
@@ -53,7 +53,7 @@ public class DumpFullReporterF99b implements InstructionListener {
 
 	private void dumpFullStart(InstructionWorkBlockF99b iblock,
 			RawInstruction ins, PrintWriter dumpfull) {
-		MemoryEntry entry = iblock.domain.getEntryAt(ins.pc);
+		IMemoryEntry entry = iblock.domain.getEntryAt(ins.pc);
 		String name = null;
 		if (entry != null) { 
 			name = entry.lookupSymbol((short) ins.pc);

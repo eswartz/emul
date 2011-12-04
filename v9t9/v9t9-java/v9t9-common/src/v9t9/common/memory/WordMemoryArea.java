@@ -93,9 +93,9 @@ public class WordMemoryArea extends MemoryArea {
     }
     
 	@Override
-	public short readWord(MemoryEntry entry, int addr) {
+	public short readWord(IMemoryEntry entry, int addr) {
 		if (read != null) {
-			int addr1 = addr - entry.addr;
+			int addr1 = addr - entry.getAddr();
 			/*
 			 * processor ignores word access on odd boundaries, and stores in
 			 * big-endian format
@@ -108,9 +108,9 @@ public class WordMemoryArea extends MemoryArea {
 	}
 
     @Override
-	public byte readByte(MemoryEntry entry, int addr) {
+	public byte readByte(IMemoryEntry entry, int addr) {
 		if (read != null) {
-            int addr1 = addr - entry.addr;
+            int addr1 = addr - entry.getAddr();
 			/*
 			 * processor ignores word access on odd boundaries, and stores in
 			 * big-endian format
@@ -128,9 +128,9 @@ public class WordMemoryArea extends MemoryArea {
 	}
 
     @Override
-	public void writeWord(MemoryEntry entry, int addr, short val) {
+	public void writeWord(IMemoryEntry entry, int addr, short val) {
 		if (write != null) {
-			int addr1 = addr - entry.addr;
+			int addr1 = addr - entry.getAddr();
 			/*
 			 * processor ignores word access on odd boundaries, and stores in
 			 * big-endian format
@@ -141,10 +141,10 @@ public class WordMemoryArea extends MemoryArea {
 	}
 
     @Override
-	public void writeByte(MemoryEntry entry, int addr, byte val) {
+	public void writeByte(IMemoryEntry entry, int addr, byte val) {
 		if (write != null) {
             
-            int addr1 = addr - entry.addr;
+            int addr1 = addr - entry.getAddr();
 			/*
 			 * processor ignores word access on odd boundaries, and stores in
 			 * big-endian format

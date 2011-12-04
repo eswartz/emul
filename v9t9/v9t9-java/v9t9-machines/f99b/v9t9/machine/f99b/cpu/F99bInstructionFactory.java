@@ -29,7 +29,7 @@ import static v9t9.machine.f99b.asm.InstF99b.ItoContext;
 import static v9t9.machine.f99b.asm.InstF99b.Iupidx;
 import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.asm.RawInstruction;
-import v9t9.common.memory.MemoryDomain;
+import v9t9.common.memory.IMemoryDomain;
 import v9t9.machine.f99b.asm.InstructionF99b;
 import v9t9.machine.f99b.asm.MachineOperandF99b;
 
@@ -41,10 +41,10 @@ public class F99bInstructionFactory implements IRawInstructionFactory {
 	static class WorkBlock {
 		public short pc;
 		
-		public MemoryDomain domain;
+		public IMemoryDomain domain;
 		
 		
-		public WorkBlock(short pc, MemoryDomain domain) {
+		public WorkBlock(short pc, IMemoryDomain domain) {
 			super();
 			this.pc = pc;
 			this.domain = domain;
@@ -67,7 +67,7 @@ public class F99bInstructionFactory implements IRawInstructionFactory {
 	 * @see v9t9.tools.asm.assembler.IInstructionFactory#decodeInstruction(int, v9t9.engine.memory.MemoryDomain)
 	 */
 	@Override
-	public RawInstruction decodeInstruction(int pc, MemoryDomain memory) {
+	public RawInstruction decodeInstruction(int pc, IMemoryDomain memory) {
 		short thisPc = (short) pc;
 		
 		WorkBlock iblock = new WorkBlock((short) pc, memory);

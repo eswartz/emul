@@ -14,7 +14,8 @@ import java.util.Map;
 import v9t9.base.properties.SettingProperty;
 import v9t9.base.settings.ISettingSection;
 import v9t9.common.events.IEventNotifier.Level;
-import v9t9.common.memory.Memory;
+import v9t9.common.memory.IMemory;
+import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.MemoryDomain;
 import v9t9.common.memory.MemoryEntry;
 import v9t9.engine.EmulatorData;
@@ -75,14 +76,14 @@ public class PCodeDsr implements DsrHandler9900 {
 	 * @see v9t9.emulator.hardware.dsrs.DsrHandler#activate(v9t9.engine.memory.MemoryDomain)
 	 */
 	@Override
-	public void activate(MemoryDomain console) throws IOException {
+	public void activate(IMemoryDomain console) throws IOException {
 		// DSR ROM
 		if (!settingPCodeCardEnabled.getBoolean())
 			return;
 		
 		pcodeActive.setBoolean(true);
 		
-		Memory memory = console.memory;
+		IMemory memory = console.getMemory();
 
 		ensureSetup();
 		
@@ -99,8 +100,8 @@ public class PCodeDsr implements DsrHandler9900 {
 	 * 
 	 */
 	private void ensureSetup() throws IOException {
-		Memory memory = machine.getMemory();
-		MemoryDomain console = machine.getConsole();
+		IMemory memory = machine.getMemory();
+		IMemoryDomain console = machine.getConsole();
 
 		if (console.getEntryAt(0x4000) instanceof PCodeDsrRomBankedMemoryEntry)
 			dsrMemoryEntry = (PCodeDsrRomBankedMemoryEntry) console.getEntryAt(0x4000);
@@ -145,8 +146,8 @@ public class PCodeDsr implements DsrHandler9900 {
 	 * @see v9t9.emulator.hardware.dsrs.DsrHandler#deactivate(v9t9.engine.memory.MemoryDomain)
 	 */
 	@Override
-	public void deactivate(MemoryDomain console) {
-		Memory memory = console.memory;
+	public void deactivate(IMemoryDomain console) {
+		IMemory memory = console.getMemory();
 		
 		if (dsrMemoryEntry != null) {
 			memory.removeAndUnmap(gromMemoryEntry);

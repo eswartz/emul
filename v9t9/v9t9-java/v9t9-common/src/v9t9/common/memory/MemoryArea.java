@@ -21,7 +21,7 @@ import v9t9.base.settings.ISettingSection;
  *
  * @author ejs
  */
-public abstract class MemoryArea implements Comparable<MemoryArea> {
+public abstract class MemoryArea implements IMemoryArea {
 	private static int gIdentity;
     private int identity = gIdentity++;
 
@@ -43,43 +43,47 @@ public abstract class MemoryArea implements Comparable<MemoryArea> {
     
     abstract protected int getSize();
     
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryArea#hasWriteAccess()
+	 */
+	@Override
 	abstract public boolean hasWriteAccess();
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryArea#hasReadAccess()
+	 */
+	@Override
 	abstract public boolean hasReadAccess();
 
-	/**
-	 * Read a word at the given 16-bit address, without side effects.
-	 * @param entry
-	 * @param addr address
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryArea#flatReadWord(v9t9.common.memory.MemoryEntry, int)
 	 */
-	public short flatReadWord(MemoryEntry entry, int addr) {
+	@Override
+	public short flatReadWord(IMemoryEntry entry, int addr) {
 		return readWord(entry, addr);
 	}
 
-	/**
-	 * Read a byte at the given 16-bit address, without side effects.
-	 * @param entry
-	 * @param addr address
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryArea#flatReadByte(v9t9.common.memory.MemoryEntry, int)
 	 */
-    public byte flatReadByte(MemoryEntry entry, int addr) {
+    @Override
+	public byte flatReadByte(IMemoryEntry entry, int addr) {
     	return readByte(entry, addr);
     }
 
-	/**
-	 * Write a word at the given 16-bit address, without side effects.
-	 * @param entry
-	 * @param addr address
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryArea#flatWriteWord(v9t9.common.memory.MemoryEntry, int, short)
 	 */
-    public void flatWriteWord(MemoryEntry entry, int addr, short val) {
+    @Override
+	public void flatWriteWord(IMemoryEntry entry, int addr, short val) {
     	writeWord(entry, addr, val);
     }
 
-	/**
-	 * Write a byte at the given 16-bit address, without side effects.
-	 * @param entry
-	 * @param addr address
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryArea#flatWriteByte(v9t9.common.memory.MemoryEntry, int, byte)
 	 */
-    public void flatWriteByte(MemoryEntry entry, int addr, byte val) {
+    @Override
+	public void flatWriteByte(IMemoryEntry entry, int addr, byte val) {
     	writeByte(entry, addr, val);
     }
 
@@ -88,40 +92,30 @@ public abstract class MemoryArea implements Comparable<MemoryArea> {
 	 * @param entry
 	 * @param addr address
 	 */
-    protected abstract short readWord(MemoryEntry entry, int addr);
+    protected abstract short readWord(IMemoryEntry entry, int addr);
 
 	/**
 	 * Read a byte at the given 16-bit address.
 	 * @param entry
 	 * @param addr address
 	 */
-    protected abstract byte readByte(MemoryEntry entry, int addr);
+    protected abstract byte readByte(IMemoryEntry entry, int addr);
 
 	/**
 	 * Write a word at the given 16-bit address.
 	 * @param entry
 	 * @param addr address
 	 */
-    protected abstract void writeWord(MemoryEntry entry, int addr, short val);
+    protected abstract void writeWord(IMemoryEntry entry, int addr, short val);
 
 	/**
 	 * Write a byte at the given 16-bit address.
 	 * @param entry
 	 * @param addr address
 	 */
-    protected abstract void writeByte(MemoryEntry entry, int addr, byte val);
+    protected abstract void writeByte(IMemoryEntry entry, int addr, byte val);
 
-    /**
-     * Save the content of the memory the given array (sized based on the entry)
-     * @param array
-     */
-    public abstract void copyToBytes(byte[] array);
-    /**
-     * Read the content of the memory the given array (sized based on the entry)
-     * @param array
-     */
-    public abstract void copyFromBytes(byte[] array);
-
+	@Override
 	public void setLatency(int latency) {
 		this.latency = (byte) latency;
 	}
@@ -134,11 +128,11 @@ public abstract class MemoryArea implements Comparable<MemoryArea> {
 		return latency;
 	}
 
-	public void saveContents(ISettingSection section, MemoryEntry entry) {
+	public void saveContents(ISettingSection section, IMemoryEntry entry) {
 		ISettingSection contents = section.addSection("Contents");
-		int endAddr = entry.addr + getSize();
+		int endAddr = entry.getAddr() + getSize();
 		byte[] chunk = new byte[256];
-		for(int saveAddr = entry.addr; saveAddr < endAddr; saveAddr += 256) {
+		for(int saveAddr = entry.getAddr(); saveAddr < endAddr; saveAddr += 256) {
 			int perLine = saveAddr + 256 < endAddr ? 256 : endAddr - saveAddr;
 			boolean allZero = true;
 			try {
@@ -157,7 +151,7 @@ public abstract class MemoryArea implements Comparable<MemoryArea> {
 		}
 	}
 
-	public void loadContents(ISettingSection section, MemoryEntry memoryEntry) {
+	public void loadContents(ISettingSection section, IMemoryEntry memoryEntry) {
 		ISettingSection contents = section.getSection("Contents");
 		if (contents != null) {
 			for (ISettingSection.SettingEntry entry : contents) {
@@ -195,7 +189,7 @@ public abstract class MemoryArea implements Comparable<MemoryArea> {
 		}
 	}
 
-	public int compareTo(MemoryArea o) {
+	public int compareTo(IMemoryArea o) {
 		return hashCode() - o.hashCode();
 	}
 }

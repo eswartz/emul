@@ -33,8 +33,8 @@ public final class InstructionWorkBlock9900 extends InstructionWorkBlock {
     	copy.wp = wp;
     }
     
-	public InstructionWorkBlock copy() {
-		InstructionWorkBlock block = new InstructionWorkBlock9900(cpu);
+	public InstructionWorkBlock9900 copy() {
+		InstructionWorkBlock9900 block = new InstructionWorkBlock9900(cpu);
 		this.copyTo(block);
 		return block;
 	}

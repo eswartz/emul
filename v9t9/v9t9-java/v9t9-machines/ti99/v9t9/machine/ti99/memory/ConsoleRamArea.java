@@ -5,7 +5,7 @@ package v9t9.machine.ti99.memory;
 
 
 import v9t9.base.properties.SettingProperty;
-import v9t9.common.memory.MemoryEntry;
+import v9t9.common.memory.IMemoryEntry;
 
 /** Builtin console RAM: 256 bytes */
 public class ConsoleRamArea extends ConsoleMemoryArea {
@@ -26,17 +26,17 @@ public class ConsoleRamArea extends ConsoleMemoryArea {
 		return addr;
 	}
 
-	public byte readByte(MemoryEntry entry, int addr) {
+	public byte readByte(IMemoryEntry entry, int addr) {
 		 return super.readByte(entry, maskAddress(addr));
      }
 
-	public short readWord(MemoryEntry entry, int addr) {
+	public short readWord(IMemoryEntry entry, int addr) {
 		 return super.readWord(entry, maskAddress(addr));
      }
-     public void writeByte(MemoryEntry entry, int addr, byte val) {
+     public void writeByte(IMemoryEntry entry, int addr, byte val) {
 		 super.writeByte(entry, maskAddress(addr), val);
      }
-     public void writeWord(MemoryEntry entry, int addr, short val) {
+     public void writeWord(IMemoryEntry entry, int addr, short val) {
 		 super.writeWord(entry, maskAddress(addr), val);
      }
      

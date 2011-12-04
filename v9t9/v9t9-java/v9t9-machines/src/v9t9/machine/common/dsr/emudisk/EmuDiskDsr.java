@@ -16,7 +16,7 @@ import java.util.Map;
 
 import v9t9.base.properties.SettingProperty;
 import v9t9.base.settings.ISettingSection;
-import v9t9.common.memory.MemoryDomain;
+import v9t9.common.memory.IMemoryDomain;
 import v9t9.engine.dsr.DeviceIndicatorProvider;
 import v9t9.engine.dsr.DsrException;
 import v9t9.engine.dsr.IDevIcons;
@@ -117,7 +117,7 @@ public class EmuDiskDsr implements IDsrHandler, DsrHandler9900, IDiskDsr {
 	public short getCruBase() {
 		return 0x1000;
 	}
-	public void activate(MemoryDomain console) throws IOException {
+	public void activate(IMemoryDomain console) throws IOException {
 		if (!EmuDiskDsrSettings.emuDiskDsrEnabled.getBoolean())
 			return;
 		
@@ -131,7 +131,7 @@ public class EmuDiskDsr implements IDsrHandler, DsrHandler9900, IDiskDsr {
 		console.mapEntry(memoryEntry);
 	}
 	
-	public void deactivate(MemoryDomain console) {
+	public void deactivate(IMemoryDomain console) {
 		console.unmapEntry(memoryEntry);
 		emuDiskDsrActiveSetting.setBoolean(false);
 	}

@@ -7,7 +7,7 @@ package v9t9.machine.f99b.cpu;
 import v9t9.base.utils.HexUtils;
 import v9t9.common.cpu.ICpuState;
 import v9t9.common.cpu.IStatus;
-import v9t9.common.memory.MemoryDomain;
+import v9t9.common.memory.IMemoryDomain;
 import v9t9.machine.f99b.asm.StatusF99b;
 
 /**
@@ -24,12 +24,12 @@ public class CpuStateF99b implements ICpuState {
 							| (1 << CpuF99b.UP) | (1 << CpuF99b.UP0)
 							| (1 << CpuF99b.LP));
 	
-	private final MemoryDomain console;
+	private final IMemoryDomain console;
 	private IStatus status;
 
 	private short regs[] = new short[16];
 	
-	public CpuStateF99b(MemoryDomain console) {
+	public CpuStateF99b(IMemoryDomain console) {
 		this.console = console;
 		this.status = createStatus();
 	}
@@ -169,7 +169,7 @@ public class CpuStateF99b implements ICpuState {
 	 * @see v9t9.emulator.runtime.cpu.CpuState#getConsole()
 	 */
 	@Override
-	public final MemoryDomain getConsole() {
+	public final IMemoryDomain getConsole() {
 		return console;
 	}
 

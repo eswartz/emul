@@ -15,7 +15,7 @@ import org.eclipse.swt.widgets.Display;
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
 import v9t9.base.properties.SettingProperty;
-import v9t9.engine.machine.Machine;
+import v9t9.engine.machine.IMachine;
 
 /**
  * @author ejs
@@ -30,7 +30,7 @@ public class EmulatorBar {
 
 	protected final SwtWindow swtWindow;
 	protected ImageBar buttonBar;
-	protected final Machine machine;
+	protected final IMachine machine;
 	protected final ImageProvider imageProvider;
 
 	/**
@@ -43,7 +43,7 @@ public class EmulatorBar {
 	 * @param window 
 	 * 
 	 */
-	public EmulatorBar(SwtWindow window, ImageProvider imageProvider, Composite parent, Machine machine, int[] colors, float midPoint, boolean isHorizontal) {
+	public EmulatorBar(SwtWindow window, ImageProvider imageProvider, Composite parent, IMachine machine, int[] colors, float midPoint, boolean isHorizontal) {
 		this.swtWindow = window;
 		this.imageProvider = imageProvider;
 		this.machine = machine;

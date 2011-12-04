@@ -18,7 +18,7 @@ import v9t9.common.asm.MemoryRanges;
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.asm.Routine;
 import v9t9.common.cpu.ICpuState;
-import v9t9.common.memory.MemoryDomain;
+import v9t9.common.memory.IMemoryDomain;
 
 /**
  * An instance of this class stores all the known information 
@@ -28,7 +28,7 @@ import v9t9.common.memory.MemoryDomain;
  */
 public class HighLevelCodeInfo implements IDecompileInfo {
 	//Cpu cpu;
-	MemoryDomain domain;
+	IMemoryDomain domain;
     /** dimensions */
     //int addr;
     //int size;

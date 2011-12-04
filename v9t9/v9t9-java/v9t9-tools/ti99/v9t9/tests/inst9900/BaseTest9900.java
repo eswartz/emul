@@ -14,7 +14,7 @@ import v9t9.common.asm.IInstruction;
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.asm.ResolveException;
 import v9t9.common.asm.Routine;
-import v9t9.common.memory.Memory;
+import v9t9.common.memory.IMemory;
 import v9t9.common.memory.MemoryDomain;
 import v9t9.common.memory.MemoryEntry;
 import v9t9.common.memory.MemoryModel;
@@ -36,7 +36,7 @@ import v9t9.tools.asm.assembler.inst9900.StandardInstructionParserStage9900;
 public abstract class BaseTest9900 extends TestCase {
 
 	protected MemoryDomain CPU;
-	protected Memory memory;
+	protected IMemory memory;
 	private MemoryModel memoryModel;
 
 

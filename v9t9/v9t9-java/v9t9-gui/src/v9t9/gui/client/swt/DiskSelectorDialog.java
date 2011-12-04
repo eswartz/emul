@@ -50,7 +50,7 @@ import v9t9.engine.dsr.realdisk.BaseDiskImage;
 import v9t9.engine.dsr.realdisk.DiskImageFactory;
 import v9t9.engine.files.Catalog;
 import v9t9.engine.files.CatalogEntry;
-import v9t9.engine.machine.Machine;
+import v9t9.engine.machine.IMachine;
 import v9t9.engine.settings.ISettingDecorator;
 import v9t9.engine.settings.IconSettingProperty;
 
@@ -61,7 +61,7 @@ import v9t9.engine.settings.IconSettingProperty;
  */
 public class DiskSelectorDialog extends Composite {
 
-	private final Machine machine;
+	private final IMachine machine;
 	
 	abstract class SettingEntry extends Composite {
 		protected final SettingProperty setting;
@@ -342,7 +342,7 @@ public class DiskSelectorDialog extends Composite {
 	/**
 	 * 
 	 */
-	public DiskSelectorDialog(Shell shell, Machine machine) {
+	public DiskSelectorDialog(Shell shell, IMachine machine) {
 		
 		super(shell, SWT.NONE);
 		

@@ -4,7 +4,7 @@
 package v9t9.engine.memory;
 
 import v9t9.common.memory.ByteMemoryArea;
-import v9t9.common.memory.MemoryEntry;
+import v9t9.common.memory.IMemoryEntry;
 import v9t9.engine.hardware.IVdpChip;
 
 public class VdpRamArea extends ByteMemoryArea {
@@ -24,7 +24,7 @@ public class VdpRamArea extends ByteMemoryArea {
 	}
     
     @Override
-    public void writeByte(MemoryEntry entry, int addr, byte val) {
+    public void writeByte(IMemoryEntry entry, int addr, byte val) {
     	byte old = readByte(entry, addr);
     	if (old != val) {
     		super.writeByte(entry, addr, val);
@@ -36,7 +36,7 @@ public class VdpRamArea extends ByteMemoryArea {
     }
     
     @Override
-    public byte readByte(MemoryEntry entry, int addr) {
+    public byte readByte(IMemoryEntry entry, int addr) {
     	return super.readByte(entry, addr);
     }
 }

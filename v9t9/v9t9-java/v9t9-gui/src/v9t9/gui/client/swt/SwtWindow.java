@@ -53,7 +53,7 @@ import v9t9.common.events.IEventNotifier.Level;
 import v9t9.engine.EmulatorSettings;
 import v9t9.engine.client.IClient;
 import v9t9.engine.cpu.Executor;
-import v9t9.engine.machine.Machine;
+import v9t9.engine.machine.IMachine;
 import v9t9.gui.Emulator;
 import v9t9.gui.common.BaseEmulatorWindow;
 
@@ -156,7 +156,7 @@ public class SwtWindow extends BaseEmulatorWindow{
 		
 	}
 	
-	public SwtWindow(Display display, final Machine machine, final ISwtVideoRenderer videoRenderer) {
+	public SwtWindow(Display display, final IMachine machine, final ISwtVideoRenderer videoRenderer) {
 		super(machine);
 				
 		toolShells = new HashMap<String, ToolShell>();

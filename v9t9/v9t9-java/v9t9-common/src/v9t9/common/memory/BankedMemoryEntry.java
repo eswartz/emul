@@ -26,9 +26,9 @@ public abstract class BankedMemoryEntry extends MemoryEntry {
 	 */
 	public BankedMemoryEntry() {
 	}
-	public BankedMemoryEntry(Memory memory,
+	public BankedMemoryEntry(IMemory memory,
 			String name,
-			MemoryDomain domain,
+			IMemoryDomain domain,
 			int addr,
 			int size,
 			int bankCount) {
@@ -55,7 +55,7 @@ public abstract class BankedMemoryEntry extends MemoryEntry {
 	protected void doSelectBank(int bank) {
 		doSwitchBank(bank);
 		currentBankIndex = bank;
-		memory.notifyListenersOfLogicalChange(this);
+		getMemory().notifyListenersOfLogicalChange(this);
 		currentBankIndex = bank;
 	}
 	
@@ -86,7 +86,7 @@ public abstract class BankedMemoryEntry extends MemoryEntry {
 	*/
 	
 	public int getBankSize() {
-		return size;
+		return getSize();
 	}
 	
 	@Override

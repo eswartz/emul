@@ -14,14 +14,14 @@ import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.IOperand;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.IStatus;
-import v9t9.common.memory.MemoryDomain;
+import v9t9.common.memory.IMemoryDomain;
 import v9t9.engine.cpu.Executor;
 import v9t9.engine.hardware.ICruChip;
 
 /** This is the interface to the runtime-generated class. */
 abstract public class CompiledCode {
     protected ICpu cpu;
-    protected MemoryDomain memory;
+    protected IMemoryDomain memory;
     protected Executor exec;
     protected ICruChip cru;
     protected int nInstructions, nCycles;

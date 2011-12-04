@@ -8,6 +8,8 @@ package v9t9.machine.common.tests;
 
 import junit.framework.TestCase;
 import v9t9.common.memory.ByteMemoryArea;
+import v9t9.common.memory.IMemoryDomain;
+import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.MemoryArea;
 import v9t9.common.memory.MemoryDomain;
 import v9t9.common.memory.MemoryEntry;
@@ -31,7 +33,7 @@ public class MemoryEntryTest extends TestCase {
     @Override
 	protected void setUp() throws Exception {
         super.setUp();
-        CPU = new MemoryDomain(MemoryDomain.NAME_CPU);
+        CPU = new MemoryDomain(IMemoryDomain.NAME_CPU);
    }
 
     /*
@@ -44,14 +46,14 @@ public class MemoryEntryTest extends TestCase {
 
     public void testMemoryEntry() {
         MemoryArea anArea = new ZeroWordMemoryArea(); 
-        MemoryEntry ent = new MemoryEntry("most mem", CPU, 2048, MemoryDomain.PHYSMEMORYSIZE-2048, 
+        IMemoryEntry ent = new MemoryEntry("most mem", CPU, 2048, IMemoryDomain.PHYSMEMORYSIZE-2048, 
                 anArea);
         assertTrue(ent != null);
-        assertEquals(ent.name, "most mem");
+        assertEquals(ent.getName(), "most mem");
         //assertTrue(!ent.isMapped());
-        assertTrue(ent.addr == 2048);
-        assertTrue(ent.size == MemoryDomain.PHYSMEMORYSIZE-2048);
-        assertTrue(ent.domain == CPU);
+        assertTrue(ent.getAddr() == 2048);
+        assertTrue(ent.getSize() == IMemoryDomain.PHYSMEMORYSIZE-2048);
+        assertTrue(ent.getDomain() == CPU);
 
         boolean bCaught;
         
@@ -85,7 +87,7 @@ public class MemoryEntryTest extends TestCase {
 
     public void testIsMapped() {
         MemoryArea anArea = new ZeroWordMemoryArea(); 
-        MemoryEntry ent = new MemoryEntry("most mem", CPU, 2048, MemoryDomain.PHYSMEMORYSIZE-2048, 
+        MemoryEntry ent = new MemoryEntry("most mem", CPU, 2048, IMemoryDomain.PHYSMEMORYSIZE-2048, 
                 anArea);
         CPU.mapEntry(ent);
         assertTrue(CPU.isEntryFullyMapped(ent));
@@ -94,7 +96,7 @@ public class MemoryEntryTest extends TestCase {
 
     public void testMapAndUnmap() {
         MemoryArea zArea = new ZeroWordMemoryArea(); 
-        MemoryEntry zEnt = new MemoryEntry("all mem", CPU, 0, MemoryDomain.PHYSMEMORYSIZE, 
+        MemoryEntry zEnt = new MemoryEntry("all mem", CPU, 0, IMemoryDomain.PHYSMEMORYSIZE, 
                 zArea);
         assertTrue(zEnt != null);
         CPU.mapEntry(zEnt);

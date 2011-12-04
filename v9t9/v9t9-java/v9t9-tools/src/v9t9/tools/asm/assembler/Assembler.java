@@ -24,6 +24,7 @@ import v9t9.common.asm.IInstruction;
 import v9t9.common.asm.MemoryRanges;
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.asm.ResolveException;
+import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.MemoryDomain;
 import v9t9.common.memory.MemoryEntry;
 import v9t9.common.memory.StockRamArea;
@@ -61,7 +62,7 @@ public abstract class Assembler implements IAssembler {
 	public abstract void setProcessor(String proc);
 
 	/** memory domain for area-sensitive view of the world */
-	protected MemoryDomain StdCPU = new MemoryDomain("CPU Std");
+	protected IMemoryDomain StdCPU = new MemoryDomain("CPU Std");
 	/** memory domain for the assembler's view of the world */
 	protected MemoryDomain CPUFullRAM = new MemoryDomain("CPU Write");
 	protected MemoryEntry CPUFullRAMEntry = new MemoryEntry("Assembler RAM",
@@ -596,16 +597,16 @@ public abstract class Assembler implements IAssembler {
 		return this.memoryRanges;
 	}
 
-	public MemoryDomain getConsole() {
+	public IMemoryDomain getConsole() {
 		return StdCPU;
 	}
 
-	public MemoryDomain getWritableConsole() {
+	public IMemoryDomain getWritableConsole() {
 		return CPUFullRAM;
 	}
 
 	public void addMemoryEntry(DiskMemoryEntry entry) {
-		memoryRanges.addRange(entry.addr, entry.size, true);
+		memoryRanges.addRange(entry.getAddr(), entry.getSize(), true);
 		memoryEntries.add(entry);
 		getWritableConsole().mapEntry(entry);
 	}
