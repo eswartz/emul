@@ -71,12 +71,12 @@ public class EmulatorServer {
     	ICpu.settingRealTime.setBoolean(true);
     	
     	// compile defaults
-    	//Compiler.settingDebugInstructions.setBoolean(true);
-    	//Compiler.settingOptimize.setBoolean(true);
+    	//CompilerBase.settingDebugInstructions.setBoolean(true);
+    	//CompilerBase.settingOptimize.setBoolean(true);
         CompilerBase.settingOptimizeRegAccess.setBoolean(true);
         CompilerBase.settingOptimizeStatus.setBoolean(true);
-        //Compiler.settingCompileOptimizeCallsWithData.setBoolean(true);
-        //Compiler.settingCompileFunctions.setBoolean(true);
+        //CompilerBase.settingCompileOptimizeCallsWithData.setBoolean(true);
+        //CompilerBase.settingCompileFunctions.setBoolean(true);
     }
     
 	protected void loadState() {
