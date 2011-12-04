@@ -35,6 +35,7 @@ public class JavaSoundHandler implements ISoundHandler {
 	private ISoundOutput output;
 	private int lastUpdatedPos;
 	private int soundFramesPerTick;
+	private int speechFramesPerTick;
 	private AudioFormat speechFormat;
 	private ISoundOutput speechOutput;
 	private ISoundListener audio;
@@ -45,7 +46,10 @@ public class JavaSoundHandler implements ISoundHandler {
 
 		this.machine = machine;
 		soundFormat = new AudioFormat(55930, 16, 2, true, false);
-		speechFormat = new AudioFormat(8000, 16, 1, true, false);
+		
+		speechFramesPerTick = 6;
+
+		speechFormat = new AudioFormat(speechFramesPerTick * 8000, 16, 1, true, false);
 		
 		output = SoundFactory.createSoundOutput(soundFormat, machine.getCpuTicksPerSec());
 		speechOutput = SoundFactory.createSoundOutput(speechFormat, machine.getCpuTicksPerSec());
@@ -158,7 +162,10 @@ public class JavaSoundHandler implements ISoundHandler {
 			return;
 
 		ISoundVoice[] vs = speech.getSpeechVoices();
-		speechOutput.generate(vs, 1);
+		
+		int samples = speechFramesPerTick * speechFormat.getChannels();
+
+		speechOutput.generate(vs, samples);
 	}
 
 	public synchronized void flushAudio() {

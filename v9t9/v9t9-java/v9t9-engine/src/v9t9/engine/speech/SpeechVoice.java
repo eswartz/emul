@@ -7,6 +7,7 @@ import v9t9.base.sound.ISoundVoice;
 
 public class SpeechVoice implements ISoundVoice {
 	
+	private short lastSample;
 	private short sample;
 
 	public void setSoundClock(int soundClock) {
@@ -14,6 +15,7 @@ public class SpeechVoice implements ISoundVoice {
 	
 	public void reset() {
 		sample = 0;
+		lastSample = 0;
 	}
 	
 	public boolean isActive() {
@@ -21,11 +23,27 @@ public class SpeechVoice implements ISoundVoice {
 	}
 	
 	public boolean generate(float[] soundGeneratorWorkBuffer, int from, int to) {
-		if (sample == 0)
+		if (sample == 0 && lastSample == 0)
 			return false;
-		float delta = sample / 32768.f;
-		while (from < to)
-			soundGeneratorWorkBuffer[from++] += delta;
+		
+		if (true) {
+			// smoothly alter voltage
+			float delta = (sample - lastSample) / 32768.f / (to - from);
+			float samp = lastSample / 32768.f;
+			
+			while (from < to) {
+				soundGeneratorWorkBuffer[from++] += samp;
+				samp += delta;
+			}
+		} else {
+			float delta = sample / 32768.f;
+			
+			while (from < to) {
+				soundGeneratorWorkBuffer[from++] += delta;
+			}
+		}
+		
+		this.lastSample = this.sample;
 		return true;
 	}
 	
