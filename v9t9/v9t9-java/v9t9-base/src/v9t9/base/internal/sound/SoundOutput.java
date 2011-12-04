@@ -8,6 +8,7 @@ import javax.sound.sampled.AudioFormat;
 import v9t9.base.sound.ISoundListener;
 import v9t9.base.sound.ISoundOutput;
 import v9t9.base.sound.ISoundVoice;
+import v9t9.base.sound.ITimeAdjustSoundVoice;
 import v9t9.base.sound.SoundChunk;
 
 
@@ -138,7 +139,7 @@ public class SoundOutput implements ISoundOutput {
 	/**
 	 * Generate samples
 	 */
-	public  void generate(ISoundVoice[] voices, int samples) {
+	public void generate(ISoundVoice[] voices, int samples) {
 		if (samples <= 0)
 			return;
 		
@@ -169,7 +170,7 @@ public class SoundOutput implements ISoundOutput {
 			}
 			//System.out.println(generated);
 			if (samples > 0)
-				flushAudio();
+				flushAudio(voices, 0);
 		}
 	}
 
@@ -177,20 +178,27 @@ public class SoundOutput implements ISoundOutput {
 
 	}
 
-	public void flushAudio() {
+	public void flushAudio(ISoundVoice[] voices, int scale) {
 		SoundChunk chunk;
-		chunk = createChunk();
+		chunk = createChunk(voices, scale);
 		if (chunk != null)
 			fireListeners(chunk);
 	}
 
-	private SoundChunk createChunk() {
+	private SoundChunk createChunk(ISoundVoice[] voices, int scale) {
 		SoundChunk chunk;
 		synchronized (this) {
 			if (soundGeneratorWorkBuffer == null || soundGeneratorWorkBuffer.length == 0 || lastUpdatedPos == 0)
 				return null;
 	
 			if (anyChanged) {
+				for (ISoundVoice voice : voices) {
+					if (voice instanceof ITimeAdjustSoundVoice) {
+						((ITimeAdjustSoundVoice) voice).flushAudio(
+								soundGeneratorWorkBuffer, 0, lastUpdatedPos, scale);
+					}
+				}
+
 				if (lastUpdatedPos < soundGeneratorWorkBuffer.length) {
 					chunk = new SoundChunk(soundGeneratorWorkBuffer, lastUpdatedPos, format);
 					soundGeneratorWorkBuffer = new float[bufferSize];

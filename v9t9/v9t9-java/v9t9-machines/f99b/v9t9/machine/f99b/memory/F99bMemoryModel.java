@@ -6,9 +6,9 @@ import java.net.URL;
 
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.IEventNotifier.Level;
+import v9t9.common.machine.IBaseMachine;
 import v9t9.common.memory.ByteMemoryArea;
 import v9t9.common.memory.MemoryEntry;
-import v9t9.common.settings.IBaseMachine;
 import v9t9.engine.EmulatorData;
 import v9t9.engine.files.DataFiles;
 import v9t9.engine.machine.IMachine;

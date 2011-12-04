@@ -8,6 +8,7 @@ import v9t9.base.settings.ISettingSection;
 import v9t9.base.sound.ISoundVoice;
 import v9t9.engine.client.ISoundHandler;
 import v9t9.engine.hardware.ISoundChip;
+import v9t9.engine.machine.IMachine;
 
 /**
  * Multiple packed TMS9919 chips.  This provides four TMS9919Bs, 
@@ -34,15 +35,18 @@ public class MultiSoundTMS9919B implements ISoundChip {
 	private SoundTMS9919[] chips;
 	private ISoundVoice[] voices;
 	private ISoundHandler soundHandler;
+	private AudioGateVoice audioGateVoice;
+	private final IMachine machine;
 	
-	public MultiSoundTMS9919B() {
+	public MultiSoundTMS9919B(IMachine machine) {
 		// 5 chips: the original TMS9919 on the console and 4 extra on the card
 		
+		this.machine = machine;
 		this.chips = new SoundTMS9919[5];
-		chips[0] = new SoundTMS9919("Console Chip");
+		chips[0] = new SoundTMS9919(machine, "Console Chip");
 		//chips[0] = new SoundTMS9919B(machine, "Console Chip");
 		for (int i = 0; i < 4; i++) {
-			chips[i + 1] = new SoundTMS9919B("Chip #" + i);
+			chips[i + 1] = new SoundTMS9919B(machine, "Chip #" + i);
 			
 			/*byte balance = (byte) ((i & 1) == 0 ? -128 : 127); 
 			for (SoundVoice voice : chips[i + 1].getSoundVoices()) {
@@ -62,7 +66,7 @@ public class MultiSoundTMS9919B implements ISoundChip {
 				System.arraycopy(chipVoices, 0, voices, idx, 4);
 				idx += 4;
 			}
-			voices[idx++] = chips[0].getSoundVoices()[SoundTMS9919.VOICE_AUDIO];
+			voices[idx++] = audioGateVoice = new AudioGateVoice(null);
 		}
 		return voices;
 	}
@@ -90,8 +94,10 @@ public class MultiSoundTMS9919B implements ISoundChip {
 	}
 	
 	public void setAudioGate(int addr, boolean b) {
-		// Only the console chip has audio gate.
-		chips[0].setAudioGate(addr, b);
+		audioGateVoice.setState(machine, b);
+		audioGateVoice.setupVoice();
+		if (soundHandler != null)
+			soundHandler.generateSound();
 	}
 
 	public ISoundHandler getSoundHandler() {

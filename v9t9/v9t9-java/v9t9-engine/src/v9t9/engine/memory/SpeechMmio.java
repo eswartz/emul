@@ -7,12 +7,7 @@
 package v9t9.engine.memory;
 
 import v9t9.base.utils.Check;
-import v9t9.common.memory.MemoryDomain;
-import v9t9.engine.client.ISoundHandler;
 import v9t9.engine.hardware.ISpeechChip;
-import v9t9.engine.machine.IMachine;
-import v9t9.engine.speech.ISpeechDataSender;
-import v9t9.engine.speech.TMS5220;
 
 /** 
  * Speech chip

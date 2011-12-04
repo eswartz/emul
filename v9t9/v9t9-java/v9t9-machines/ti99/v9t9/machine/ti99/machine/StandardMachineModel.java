@@ -82,6 +82,6 @@ public class StandardMachineModel extends BaseTI99MachineModel {
 	}
 
 	public ISoundChip createSoundChip(IMachine machine) {
-		return new SoundTMS9919(null);
+		return new SoundTMS9919(machine, null);
 	}
 }

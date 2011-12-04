@@ -3,7 +3,7 @@ package v9t9.common.cpu;
 
 import v9t9.base.properties.IPersistable;
 import v9t9.base.properties.SettingProperty;
-import v9t9.common.settings.IBaseMachine;
+import v9t9.common.machine.IBaseMachine;
 
 public interface ICpu extends IPersistable, ICpuState {
 	static public final String sDumpInstructions = "DumpInstructions";

@@ -3,6 +3,8 @@
  */
 package v9t9.engine.sound;
 
+import v9t9.engine.machine.IMachine;
+
 
 /**
  * Controller for the TMS9919(B) sound chip.
@@ -127,8 +129,8 @@ public class SoundTMS9919B extends SoundTMS9919 {
 
 	private int cmdVoice;
 	
-	public SoundTMS9919B(String name) {
-		super(name);
+	public SoundTMS9919B(IMachine machine, String name) {
+		super(machine, name);
 	}
 	
 	protected void init(String name) {

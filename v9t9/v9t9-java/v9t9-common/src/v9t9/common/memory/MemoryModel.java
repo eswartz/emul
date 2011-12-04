@@ -4,7 +4,7 @@
 package v9t9.common.memory;
 
 import v9t9.common.events.IEventNotifier;
-import v9t9.common.settings.IBaseMachine;
+import v9t9.common.machine.IBaseMachine;
 
 /**
  * This defines the model for memory in the emulator.

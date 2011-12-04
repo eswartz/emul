@@ -7,10 +7,10 @@ import java.util.Collections;
 import java.util.List;
 
 import v9t9.common.events.IEventNotifier;
+import v9t9.common.machine.IBaseMachine;
 import v9t9.common.memory.Memory;
 import v9t9.common.memory.MemoryDomain;
 import v9t9.common.memory.MemoryModel;
-import v9t9.common.settings.IBaseMachine;
 import v9t9.engine.modules.IModule;
 
 /**

@@ -11,10 +11,10 @@ import v9t9.common.cpu.AbortedException;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuState;
 import v9t9.common.cpu.IStatus;
+import v9t9.common.machine.IBaseMachine;
 import v9t9.common.memory.MemoryDomain;
 import v9t9.common.memory.MemoryEntry;
 import v9t9.common.memory.MemoryDomain.MemoryAccessListener;
-import v9t9.common.settings.IBaseMachine;
 import v9t9.engine.machine.Machine;
 
 public abstract class CpuBase  implements MemoryAccessListener, IPersistable, ICpu {

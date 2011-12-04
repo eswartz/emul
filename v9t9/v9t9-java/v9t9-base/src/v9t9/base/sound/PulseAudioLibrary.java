@@ -38,8 +38,10 @@ public interface PulseAudioLibrary extends Library {
 	public static class pa_buffer_attr extends Structure {
 	}
 
-	PulseAudioLibrary INSTANCE = (PulseAudioLibrary) Native.loadLibrary("pulse-simple",
-			PulseAudioLibrary.class);
+	PulseAudioLibrary INSTANCE = (PulseAudioLibrary) Native.synchronizedLibrary(
+			(Library) Native.loadLibrary("pulse-simple",
+					PulseAudioLibrary.class));
+	
 	public static final int PA_SAMPLE_U8 = 0;
 	public static final int PA_SAMPLE_S16LE = 3;
 	public static final int PA_SAMPLE_S16BE = 4;

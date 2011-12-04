@@ -3,7 +3,7 @@
  */
 package v9t9.engine.machine;
 
-import v9t9.common.settings.IBaseMachine;
+import v9t9.common.machine.IBaseMachine;
 import v9t9.engine.client.IClient;
 import v9t9.engine.cpu.Executor;
 import v9t9.engine.dsr.IDsrManager;

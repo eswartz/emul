@@ -95,7 +95,6 @@ abstract public class Machine implements IMachine {
 	private IRawInstructionFactory instructionFactory;
 	private final MachineModel machineModel;
 	private IPropertyListener pauseListener;
-	private Runnable soundTimingTask;
 	private Runnable speechTimerTask;
 	
     public Machine(MachineModel machineModel) {
@@ -242,7 +241,9 @@ abstract public class Machine implements IMachine {
 	    				//vdpInterruptDelta = 0;
 	    			}
 	    			
-	    			//sound.tick();
+	    			if (sound != null)
+	    				sound.tick();
+	    			
 	    			cpu.tick();
 	
 	    			vdp.tick();
@@ -250,20 +251,6 @@ abstract public class Machine implements IMachine {
         	}
         };
         fastTimer.scheduleTask(cpuTimingTask, cpuTicksPerSec);
-        
-        if (sound != null) {
-	        soundTimingTask = new Runnable() {
-	
-				@Override
-	        	public void run() {
-					if (!bExecuting)
-						return;
-				
-	    			sound.tick();
-	        	}
-	        };
-	        fastTimer.scheduleTask(soundTimingTask, cpuTicksPerSec);
-        }
         
         if (speech != null) {
     		int hz;

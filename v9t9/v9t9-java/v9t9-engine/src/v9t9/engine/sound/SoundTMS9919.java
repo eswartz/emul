@@ -10,6 +10,7 @@ import v9t9.base.sound.ISoundVoice;
 import v9t9.engine.EmulatorSettings;
 import v9t9.engine.client.ISoundHandler;
 import v9t9.engine.hardware.ISoundChip;
+import v9t9.engine.machine.IMachine;
 
 /**
  * Controller for the TMS9919 sound chip
@@ -76,7 +77,10 @@ public class SoundTMS9919 implements ISoundChip {
 
 	protected int active;
 
-	public SoundTMS9919(String name) {
+	protected final IMachine machine;
+
+	public SoundTMS9919(IMachine machine, String name) {
+		this.machine = machine;
 		init(name);
 	}
 	
@@ -195,11 +199,12 @@ public class SoundTMS9919 implements ISoundChip {
 	}
 
 	public void setAudioGate(int addr, boolean b) {
-		AudioGateVoice v = (AudioGateVoice) sound_voices[VOICE_AUDIO];
-		v.setState(b);
-		v.setupVoice();
-		if (soundHandler != null)
+		if (soundHandler != null) {
+			AudioGateVoice v = (AudioGateVoice) sound_voices[VOICE_AUDIO];
+			v.setState(machine, b);
+			v.setupVoice();
 			soundHandler.generateSound();
+		}
 
 	}
 	

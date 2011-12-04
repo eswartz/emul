@@ -5,7 +5,6 @@ package v9t9.gui.sound;
 
 import javax.sound.sampled.AudioFormat;
 
-
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
 import v9t9.base.properties.SettingProperty;
@@ -16,7 +15,6 @@ import v9t9.base.sound.ISoundVoice;
 import v9t9.base.sound.SoundFactory;
 import v9t9.engine.EmulatorSettings;
 import v9t9.engine.client.ISoundHandler;
-import v9t9.engine.hardware.ISoundChip;
 import v9t9.engine.hardware.ISpeechChip;
 import v9t9.engine.machine.IMachine;
 
@@ -94,45 +92,7 @@ public class JavaSoundHandler implements ISoundHandler {
 		
 		toggleSound(EmulatorSettings.settingPlaySound.getBoolean());
 	}
-
-	public void toggleSound(boolean enabled) {
-		if (enabled) {
-			output.start();
-			speechOutput.start();
-		} else {
-			output.stop();
-			speechOutput.stop();
-		}
-	}
-
-	public synchronized void generateSound() {
-		int pos = machine.getCpu().getCurrentCycleCount();
-		int total = machine.getCpu().getCurrentTargetCycleCount();
-		
-		if (total == 0)
-			return;
-		
-		int currentPos = (int) ((long) (pos * soundFramesPerTick * soundFormat.getChannels() + total - 1 ) / total);
-		if (currentPos < 0)
-			currentPos = 0;
-		updateSoundGenerator(lastUpdatedPos, currentPos);
-		lastUpdatedPos = currentPos;
-	}
-
-	protected synchronized void updateSoundGenerator(int from, int to) {
-		ISoundChip sound = machine.getSound();
-		if (sound == null)
-			return;
-		
-		if (to > soundFramesPerTick)
-			to = soundFramesPerTick;
-		if (from >= to)
-			return;
-
-		ISoundVoice[] vs = sound.getSoundVoices();
-
-		output.generate(vs, to - from);
-	}
+	
 
 	public void dispose() {
 		toggleSound(false);
@@ -156,6 +116,45 @@ public class JavaSoundHandler implements ISoundHandler {
 		}
 	}
 
+
+	public void toggleSound(boolean enabled) {
+		if (enabled) {
+			output.start();
+			speechOutput.start();
+		} else {
+			output.stop();
+			speechOutput.stop();
+		}
+	}
+
+	public synchronized void generateSound() {
+		if (machine.getSound() == null)
+			return;
+
+		int pos = machine.getCpu().getCurrentCycleCount();
+		int total = machine.getCpu().getCurrentTargetCycleCount();
+		
+		if (total == 0)
+			return;
+		
+		int currentPos = (int) ((long) (pos * soundFramesPerTick * soundFormat.getChannels() + total - 1 ) / total);
+		if (currentPos < 0)
+			currentPos = 0;
+		updateSoundGenerator(lastUpdatedPos, currentPos);
+		lastUpdatedPos = currentPos;
+	}
+
+	protected synchronized void updateSoundGenerator(int from, int to) {
+		if (to > soundFramesPerTick)
+			to = soundFramesPerTick;
+		if (from >= to)
+			return;
+
+		ISoundVoice[] vs = machine.getSound().getSoundVoices();
+
+		output.generate(vs, to - from);
+	}
+
 	public synchronized void speech() {
 		ISpeechChip speech = machine.getSpeech();
 		if (speech == null)
@@ -169,29 +168,19 @@ public class JavaSoundHandler implements ISoundHandler {
 	}
 
 	public synchronized void flushAudio() {
-		if (output != null) {
-			// hmm, it would be nice if the audio gate could work perfectly,
-			// but the calculations of its data have assumed the "limit" would
-			// match reality, when sometimes the tick comes earlier or later.
-			// int length = lastUpdatedPos;
-			/*
-			 * int length = (int) ((long)pos soundGeneratorWaveForm.length / limit);
-			 * if (length < lastUpdatedPos) length = lastUpdatedPos; if (length >
-			 * soundGeneratorWaveForm.length) length =
-			 * soundGeneratorWaveForm.length; byte[] part = new byte[length];
-			 * System.arraycopy(soundGeneratorWaveForm, 0, part, 0, length);
-			 * Arrays.fill(soundGeneratorWaveForm, (byte) 0); soundQueue.add(new
-			 * AudioChunk(part, null, null));
-			 */
-	
+		int currentCycleCount = machine.getCpu().getCurrentCycleCount();
+		if (output != null && machine.getSound() != null && currentCycleCount > 0) {
 			updateSoundGenerator(lastUpdatedPos, soundFramesPerTick);
+			
 			lastUpdatedPos = 0;
 	
-			output.flushAudio();
+			ISoundVoice[] vs = machine.getSound().getSoundVoices();
+			output.flushAudio(vs, currentCycleCount);
 		}
 		
-		if (speechOutput != null) {
-			speechOutput.flushAudio();
+		if (speechOutput != null && machine.getSpeech() != null) {
+			speechOutput.flushAudio(machine.getSpeech().getSpeechVoices(),
+					currentCycleCount);
 		}
 	}
 

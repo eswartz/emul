@@ -22,16 +22,19 @@ public class MultiSoundTMS9919 implements ISoundChip {
 	private SoundTMS9919[] chips;
 	private ISoundVoice[] voices;
 	private ISoundHandler soundHandler;
+	private AudioGateVoice audioGateVoice;
+	private final IMachine machine;
 	
 	public MultiSoundTMS9919(IMachine machine) {
 		// 5 chips: the original TMS9919 on the console and 4 extra on the card
 		
+		this.machine = machine;
 		// Prolly in the card, the console chip is ignored, because it
 		// borks the intended use of stereo on the other chips.
 		// So we ignore it.
 		this.chips = new SoundTMS9919[5];
 		for (int i = 0; i < 5; i++) {
-			chips[i] = new SoundTMS9919("Chip #" + i);
+			chips[i] = new SoundTMS9919(machine, "Chip #" + i);
 			
 			/*byte balance = (byte) (i == 0 ? 0 : ((i & 1) != 0 ? -128 : 128)); 
 			for (SoundVoice voice : chips[i].getSoundVoices()) {
@@ -51,7 +54,7 @@ public class MultiSoundTMS9919 implements ISoundChip {
 				System.arraycopy(chipVoices, 0, voices, idx, 4);
 				idx += 4;
 			}
-			voices[idx++] = chips[0].getSoundVoices()[SoundTMS9919.VOICE_AUDIO];
+			voices[idx++] = audioGateVoice = new AudioGateVoice(null);
 		}
 		return voices;
 	}
@@ -77,8 +80,10 @@ public class MultiSoundTMS9919 implements ISoundChip {
 	}
 	
 	public void setAudioGate(int addr, boolean b) {
-		// assume it's the first one... I don't think the audio gates are wired to the chips
-		chips[0].setAudioGate(addr, b);
+		audioGateVoice.setState(machine, b);
+		audioGateVoice.setupVoice();
+		if (soundHandler != null)
+			soundHandler.generateSound();
 	}
 
 	public ISoundHandler getSoundHandler() {

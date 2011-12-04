@@ -106,10 +106,10 @@ import v9t9.base.utils.HexUtils;
 import v9t9.base.utils.Pair;
 import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.cpu.ICpu;
+import v9t9.common.machine.IBaseMachine;
 import v9t9.common.memory.MemoryDomain;
 import v9t9.common.memory.MemoryEntry;
 import v9t9.common.memory.MemoryDomain.MemoryWriteListener;
-import v9t9.common.settings.IBaseMachine;
 import v9t9.engine.cpu.Executor;
 import v9t9.engine.cpu.InstructionListener;
 import v9t9.engine.interpreter.Interpreter;
@@ -360,7 +360,11 @@ public class InterpreterF99b implements Interpreter {
      * @return true if jumped
      */
     private final boolean interpret(InstructionF99b ins) {
-    	cpu.addCycles(ins.getSize());
+    	if (ins.getInst() < InstF99b.Iimm_start || ins.getInst() >= InstF99b.Iimm_start + 8)
+    		cpu.addCycles(ins.getSize());
+    	else
+    		cpu.addCycles(1);
+    	
 		if (ins.getInst() < 256) {
 			return interpretShort(ins);
 		} else if ((ins.getInst() >> 8) ==  Idouble) {

@@ -84,7 +84,7 @@ public class F99bMachineModel implements MachineModel {
 	}
 
 	public ISoundChip createSoundChip(IMachine machine) {
-		return new MultiSoundTMS9919B();
+		return new MultiSoundTMS9919B(machine);
 	}
 	
 	/* (non-Javadoc)

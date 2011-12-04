@@ -69,7 +69,7 @@ public class Enhanced48KForthTI994AMachineModel extends BaseTI99MachineModel {
 	}
 
 	public ISoundChip createSoundChip(IMachine machine) {
-		return new MultiSoundTMS9919B();
+		return new MultiSoundTMS9919B(machine);
 	}
 	
 	public void defineDevices(final IMachine machine_) {
