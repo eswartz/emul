@@ -1,6 +1,13 @@
 
-
--- Dig Dug fails to compile properly
-
 -- Loading *.sav for different machine crashes in SWT
+
+-- *.sav loading not reliable
+
+===============
+
+-- unify logging
+
+-- recompile code when full dump toggled
+
+-- make RnD toolbar and move absurd commands there
 

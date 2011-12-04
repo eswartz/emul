@@ -175,6 +175,9 @@ public class MemoryEntry implements IMemoryAccess, Comparable<MemoryEntry>, IPer
 		this.isVolatile = isVolatile;
 	}
 
+	public boolean isStatic() {
+		return !hasWriteAccess();
+	}
     
     public void setArea(MemoryArea area) {
     	if (this.area == null && area != null)

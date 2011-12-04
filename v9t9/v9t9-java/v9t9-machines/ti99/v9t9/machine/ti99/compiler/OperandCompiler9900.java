@@ -41,7 +41,8 @@ public class OperandCompiler9900 {
         return op.type == MachineOperand9900.OP_ADDR && op.val == 0 
                 && !op.bIsReference 
                 && info.memory.hasRomAccess(op.immed)
-                && !info.memory.hasRamAccess(op.immed);
+                && !info.memory.hasRamAccess(op.immed)
+                && info.memory.isStatic(op.immed);
     }
     
     /**

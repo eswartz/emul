@@ -226,6 +226,17 @@ public class MemoryDomain implements IMemoryAccess, IPersistable {
         return entry != null && entry.hasReadAccess();
     }
 
+    public final boolean isVolatile(int addr) {
+    	MemoryEntry entry = getEntryAt(addr);
+        return entry != null && entry.isVolatile();
+    }
+
+
+    public final boolean isStatic(int addr) {
+    	MemoryEntry entry = getEntryAt(addr);
+        return entry != null && entry.isStatic();
+    }
+
     /** Zero out the memory areas, setting them to zeroed-out ROM.
      *	 
      */

@@ -29,6 +29,11 @@ public class StdMultiBankedMemoryEntry extends
 	}
 
 	@Override
+	public boolean isStatic() {
+		return false;
+	}
+	
+	@Override
 	public void writeByte(int addr, byte val) {
 		int bank = (addr & 2) >> 1;
 		if (selectBank(bank)) {
