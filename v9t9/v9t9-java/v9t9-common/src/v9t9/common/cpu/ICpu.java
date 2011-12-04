@@ -6,10 +6,10 @@ import v9t9.base.properties.SettingProperty;
 import v9t9.common.machine.IBaseMachine;
 
 public interface ICpu extends IPersistable, ICpuState {
-	static public final String sDumpInstructions = "DumpInstructions";
-	static public final SettingProperty settingDumpInstructions = new SettingProperty(sDumpInstructions, new Boolean(false));
-	static public final String sDumpFullInstructions = "DumpFullInstructions";
-	static public final SettingProperty settingDumpFullInstructions = new SettingProperty(sDumpFullInstructions, new Boolean(false));
+	static public final SettingProperty settingDumpInstructions = new SettingProperty(
+			"DumpInstructions", new Boolean(false));
+	static public final SettingProperty settingDumpFullInstructions = new SettingProperty(
+			"DumpFullInstructions", new Boolean(false));
 
 	void resetInterruptRequest();
 	
