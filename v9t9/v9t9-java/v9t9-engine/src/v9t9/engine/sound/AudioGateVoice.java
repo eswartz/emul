@@ -6,10 +6,10 @@ package v9t9.engine.sound;
 import java.util.Arrays;
 
 import v9t9.base.settings.ISettingSection;
-import v9t9.base.sound.ITimeAdjustSoundVoice;
+import v9t9.base.sound.IFlushableSoundVoice;
 import v9t9.engine.machine.IMachine;
 
-public class AudioGateVoice extends SoundVoice implements ITimeAdjustSoundVoice {
+public class AudioGateVoice extends SoundVoice implements IFlushableSoundVoice {
 
 	private boolean wasSet;
 	private boolean state;
@@ -44,6 +44,13 @@ public class AudioGateVoice extends SoundVoice implements ITimeAdjustSoundVoice 
 		deltaIdx = 0;
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.sound.SoundVoice#isActive()
+	 */
+	@Override
+	public boolean isActive() {
+		return super.isActive();
+	}
 	public synchronized void setState(IMachine machine, boolean b) {
 		if (state != b) {
 			state = b;
@@ -73,7 +80,8 @@ public class AudioGateVoice extends SoundVoice implements ITimeAdjustSoundVoice 
 
 	public boolean generate(float[] soundGeneratorWorkBuffer, int from,
 			int to) {
-		// postpone until flush
+		
+		//appendPos(state ? totalCount : -totalCount-1);
 		return wasSet;
 	}
 

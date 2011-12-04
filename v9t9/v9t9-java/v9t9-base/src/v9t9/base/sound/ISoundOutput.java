@@ -19,7 +19,7 @@ public interface ISoundOutput {
 	
 	void generate(ISoundVoice[] voices, int samples);
 	
-	void flushAudio(ISoundVoice[] voices, int scale);
+	void flushAudio(ISoundVoice[] voices, int totalCount);
 	
 	void dispose();
 	

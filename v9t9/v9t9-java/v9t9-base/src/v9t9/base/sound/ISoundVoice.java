@@ -12,8 +12,8 @@ public interface ISoundVoice {
 	/** Generate samples from 'from' to 'to' in 'soundGeneratorWorkBuffer' 
 	 * @return true if sound generated
 	 */
-	boolean generate(float[] soundGeneratorWorkBuffer, int from,
-			int to);
+	boolean generate(float[] soundGeneratorWorkBuffer,
+			int from, int to);
 
 	/** Tell if the voice is active (i.e. producing sound, not muted) */
 	boolean isActive();

@@ -137,14 +137,16 @@ public class JavaSoundHandler implements ISoundHandler {
 		if (total == 0)
 			return;
 		
+		int totalCount = pos;
+		
 		int currentPos = (int) ((long) (pos * soundFramesPerTick * soundFormat.getChannels() + total - 1 ) / total);
 		if (currentPos < 0)
 			currentPos = 0;
-		updateSoundGenerator(lastUpdatedPos, currentPos);
+		updateSoundGenerator(lastUpdatedPos, currentPos, totalCount);
 		lastUpdatedPos = currentPos;
 	}
 
-	protected synchronized void updateSoundGenerator(int from, int to) {
+	protected synchronized void updateSoundGenerator(int from, int to, int totalCount) {
 		if (to > soundFramesPerTick)
 			to = soundFramesPerTick;
 		if (from >= to)
@@ -170,7 +172,9 @@ public class JavaSoundHandler implements ISoundHandler {
 	public synchronized void flushAudio() {
 		int currentCycleCount = machine.getCpu().getCurrentCycleCount();
 		if (output != null && machine.getSound() != null && currentCycleCount > 0) {
-			updateSoundGenerator(lastUpdatedPos, soundFramesPerTick);
+			updateSoundGenerator(lastUpdatedPos, soundFramesPerTick, 
+					currentCycleCount * (soundFramesPerTick - lastUpdatedPos) /
+					machine.getCpu().getCurrentTargetCycleCount());
 			
 			lastUpdatedPos = 0;
 	
@@ -180,7 +184,7 @@ public class JavaSoundHandler implements ISoundHandler {
 		
 		if (speechOutput != null && machine.getSpeech() != null) {
 			speechOutput.flushAudio(machine.getSpeech().getSpeechVoices(),
-					currentCycleCount);
+					(int)(speechFormat.getSampleRate() / speechFramesPerTick));
 		}
 	}
 

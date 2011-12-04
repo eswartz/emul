@@ -8,7 +8,7 @@ import javax.sound.sampled.AudioFormat;
 import v9t9.base.sound.ISoundListener;
 import v9t9.base.sound.ISoundOutput;
 import v9t9.base.sound.ISoundVoice;
-import v9t9.base.sound.ITimeAdjustSoundVoice;
+import v9t9.base.sound.IFlushableSoundVoice;
 import v9t9.base.sound.SoundChunk;
 
 
@@ -159,7 +159,8 @@ public class SoundOutput implements ISoundOutput {
 					for (ISoundVoice v : voices) {
 						if (v != null && v.isActive()) {
 							//Arrays.fill(soundGeneratorWorkBuffer2, 0);
-							anyChanged |= v.generate(soundGeneratorWorkBuffer, lastUpdatedPos, to);
+							anyChanged |= v.generate(soundGeneratorWorkBuffer, 
+									lastUpdatedPos, to);
 							active++;
 						}
 					}
@@ -178,14 +179,14 @@ public class SoundOutput implements ISoundOutput {
 
 	}
 
-	public void flushAudio(ISoundVoice[] voices, int scale) {
+	public void flushAudio(ISoundVoice[] voices, int totalCount) {
 		SoundChunk chunk;
-		chunk = createChunk(voices, scale);
+		chunk = createChunk(voices, totalCount);
 		if (chunk != null)
 			fireListeners(chunk);
 	}
 
-	private SoundChunk createChunk(ISoundVoice[] voices, int scale) {
+	private SoundChunk createChunk(ISoundVoice[] voices, int totalCount) {
 		SoundChunk chunk;
 		synchronized (this) {
 			if (soundGeneratorWorkBuffer == null || soundGeneratorWorkBuffer.length == 0 || lastUpdatedPos == 0)
@@ -193,9 +194,9 @@ public class SoundOutput implements ISoundOutput {
 	
 			if (anyChanged) {
 				for (ISoundVoice voice : voices) {
-					if (voice instanceof ITimeAdjustSoundVoice) {
-						((ITimeAdjustSoundVoice) voice).flushAudio(
-								soundGeneratorWorkBuffer, 0, lastUpdatedPos, scale);
+					if (voice instanceof IFlushableSoundVoice) {
+						((IFlushableSoundVoice) voice).flushAudio(
+								soundGeneratorWorkBuffer, 0, lastUpdatedPos, totalCount);
 					}
 				}
 
