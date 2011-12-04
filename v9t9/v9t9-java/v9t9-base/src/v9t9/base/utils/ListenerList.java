@@ -98,4 +98,15 @@ public class ListenerList<T> implements Iterable<T> {
 			listenerArray = NO_LISTENERS;
 		}
 	}
+
+	/**
+	 * @return
+	 */
+	public boolean isEmpty() {
+		return listenerArray == NO_LISTENERS;
+	}
+
+	public Object[] toArray() {
+		return listenerArray;
+	}
 }

@@ -14,6 +14,7 @@ import java.util.Stack;
 
 import v9t9.base.properties.IPersistable;
 import v9t9.base.settings.ISettingSection;
+import v9t9.base.utils.ListenerList;
 
 /**
  * @author ejs
@@ -69,7 +70,7 @@ public class MemoryDomain implements IMemoryAccess, IPersistable {
     
     
     private MemoryAccessListener accessListener = nullMemoryAccessListener;
-    private MemoryWriteListener[] writeListeners = null;
+    private ListenerList<MemoryWriteListener> writeListeners = new ListenerList<MemoryDomain.MemoryWriteListener>();
     
     private MemoryEntry entries[] = new MemoryEntry[NUMAREAS];
     
@@ -197,13 +198,13 @@ public class MemoryDomain implements IMemoryAccess, IPersistable {
     	MemoryEntry entry = getEntryAt(addr);
         accessListener.access(entry);
         entry.writeByte(addr, val);
-        if (writeListeners != null)
+        if (!writeListeners.isEmpty())
         	fireWriteEvent(entry, addr & 0xffff, true);
     }
 
-    private void fireWriteEvent(MemoryEntry entry, int addr, boolean isByte) {
-    	for (MemoryWriteListener listener : writeListeners) {
-    		listener.changed(entry, addr, isByte);
+    private void fireWriteEvent(final MemoryEntry entry, final int addr, final boolean isByte) {
+    	for (Object listenerObj : writeListeners.toArray()) {
+    		((MemoryWriteListener) listenerObj).changed(entry, addr, isByte);
     	}
 	}
 
@@ -211,7 +212,7 @@ public class MemoryDomain implements IMemoryAccess, IPersistable {
         MemoryEntry entry = getEntryAt(addr);
         accessListener.access(entry);
         entry.writeWord(addr, val);
-        if (writeListeners != null)
+        if (!writeListeners.isEmpty())
         	fireWriteEvent(entry, addr & 0xfffe, false);
     }
 
@@ -241,23 +242,10 @@ public class MemoryDomain implements IMemoryAccess, IPersistable {
 	}
 	
 	public synchronized void addWriteListener(MemoryWriteListener listener) {
-		List<MemoryWriteListener> newListeners = new ArrayList<MemoryWriteListener>();
-		if (writeListeners != null)
-			newListeners.addAll(Arrays.asList(writeListeners));
-		if (!newListeners.contains(listener))
-			newListeners.add(listener);
-		writeListeners = newListeners.toArray(new MemoryWriteListener[newListeners.size()]);
+		writeListeners.add(listener);
 	}
 	public synchronized void removeWriteListener(MemoryWriteListener listener) {
-		if (writeListeners == null)
-			return;
-		List<MemoryWriteListener> newListeners = new ArrayList<MemoryWriteListener>();
-		newListeners.addAll(Arrays.asList(writeListeners));
-		newListeners.remove(listener);
-		if (newListeners.size() == 0)
-			writeListeners = null;
-		else
-			writeListeners = newListeners.toArray(new MemoryWriteListener[newListeners.size()]);
+		writeListeners.remove(listener);
 	}
 	
 	public int getLatency(int addr) {
@@ -446,7 +434,7 @@ public class MemoryDomain implements IMemoryAccess, IPersistable {
 	}
 
 	public void writeMemory(int addr) {
-		if (writeListeners != null)
+		if (!writeListeners.isEmpty())
 			fireWriteEvent(getEntryAt(addr), addr, true);
 	}
 
