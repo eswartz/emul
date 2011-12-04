@@ -15,7 +15,6 @@ import v9t9.common.memory.MemoryDomain;
 import v9t9.common.memory.MemoryEntry;
 import v9t9.common.memory.MemoryDomain.MemoryAccessListener;
 import v9t9.common.settings.IBaseMachine;
-import v9t9.engine.hardware.ICruAccess;
 import v9t9.engine.machine.Machine;
 
 public abstract class CpuBase  implements MemoryAccessListener, IPersistable, ICpu {
@@ -25,13 +24,11 @@ public abstract class CpuBase  implements MemoryAccessListener, IPersistable, IC
 	public void loadState(ISettingSection section) {
 		settingRealTime.loadState(section);
 		settingCyclesPerSecond.loadState(section);
-		cruAccess.loadState(section.getSection("CRU"));
 	}
 
 	public void saveState(ISettingSection section) {
 		settingRealTime.saveState(section);
 		settingCyclesPerSecond.saveState(section);
-		cruAccess.saveState(section.addSection("CRU"));
 	}
 
 	public abstract boolean doCheckInterrupts();
@@ -59,8 +56,6 @@ public abstract class CpuBase  implements MemoryAccessListener, IPersistable, IC
 	protected int interruptTick;
 	/** State of the pins above  */
 	protected int pins;
-	
-	protected ICruAccess cruAccess;
 	
 	protected volatile boolean idle;
 	protected Semaphore interruptWaiting;

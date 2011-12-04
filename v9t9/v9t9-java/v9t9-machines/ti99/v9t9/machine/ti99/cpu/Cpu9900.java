@@ -205,14 +205,6 @@ public class Cpu9900 extends CpuBase {
         }
     }
 
-	public void setCruAccess(ICruAccess access) {
-		this.cruAccess = access;
-	}
-
-	public ICruAccess getCruAccess() {
-		return cruAccess;
-	}
-
 	public void saveState(ISettingSection section) {
 		super.saveState(section);
 		section.put("PC", state.getPC());

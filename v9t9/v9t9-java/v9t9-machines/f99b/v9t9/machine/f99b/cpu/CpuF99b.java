@@ -139,6 +139,8 @@ public class CpuF99b extends CpuBase {
 	    
 	    vdp.syncVdpInterrupt(machine);
 	    
+	    ICruAccess cruAccess = machine.getCruAccess();
+	    
 	    if (cruAccess != null) {
 	    	//pins &= ~PIN_INTREQ;
 	    	cruAccess.pollForPins(this);
@@ -219,14 +221,6 @@ public class CpuF99b extends CpuBase {
 	public int getRegister(int reg) {
         return state.getRegister(reg);
     }
-
-	public void setCruAccess(ICruAccess access) {
-		this.cruAccess = access;
-	}
-
-	public ICruAccess getCruAccess() {
-		return cruAccess;
-	}
 
 	@Override
 	public void saveState(ISettingSection section) {

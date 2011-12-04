@@ -573,6 +573,10 @@ abstract public class Machine implements IMachine {
 			moduleManager.saveState(settings.addSection("Modules"));
 		if (dsrManager != null)
 			dsrManager.saveState(settings.addSection("DSRs"));
+
+		if (cruAccess != null)
+			cruAccess.saveState(settings.addSection("CRU"));
+
 	}
 
 	/* (non-Javadoc)
@@ -640,6 +644,8 @@ abstract public class Machine implements IMachine {
 		keyboardState.resetJoystick();
 		if (dsrManager != null)
 			dsrManager.loadState(section.getSection("DSRs"));
+		if (cruAccess != null)
+			cruAccess.loadState(section.getSection("CRU"));
 	}
 
 	/* (non-Javadoc)
