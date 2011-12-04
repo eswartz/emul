@@ -13,7 +13,7 @@ import v9t9.common.memory.BankedMemoryEntry;
 import v9t9.common.memory.Memory;
 import v9t9.common.memory.MemoryDomain;
 import v9t9.common.memory.MemoryEntry;
-import v9t9.engine.hardware.VdpChip;
+import v9t9.engine.hardware.IVdpChip;
 import v9t9.engine.video.tms9918a.VdpTMS9918A;
 
 
@@ -29,7 +29,7 @@ public class Vdp9918AMmio extends VdpMmio {
 	/**
      * @param machine
      */
-    public Vdp9918AMmio(Memory memory, VdpChip vdp, int memorySize) {
+    public Vdp9918AMmio(Memory memory, IVdpChip vdp, int memorySize) {
     	super(new VdpRamArea(memorySize));
     	fullRamArea.setHandler(vdp);
 		this.videoMemory = vdp.getVideoMemory();

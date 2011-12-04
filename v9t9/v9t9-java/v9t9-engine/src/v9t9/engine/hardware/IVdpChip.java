@@ -20,7 +20,7 @@ import v9t9.engine.video.VdpModeRedrawHandler;
  * register state, and  behavior of the VDP.
  * @author ejs
  */
-public interface VdpChip extends IPersistable {
+public interface IVdpChip extends IPersistable {
     /** Write a VDP register. 
     */
     void writeVdpReg(int reg, byte val);

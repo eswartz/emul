@@ -10,7 +10,8 @@ package v9t9.base.sound;
 public interface ISoundVoice {
 
 	/** Generate samples from 'from' to 'to' in 'soundGeneratorWorkBuffer' 
-	 * @return TODO*/
+	 * @return true if sound generated
+	 */
 	boolean generate(float[] soundGeneratorWorkBuffer, int from,
 			int to);
 

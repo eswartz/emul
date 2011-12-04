@@ -13,7 +13,7 @@ import v9t9.common.events.IEventNotifier;
 import v9t9.engine.client.IClient;
 import v9t9.engine.client.IKeyboardHandler;
 import v9t9.engine.client.IVideoRenderer;
-import v9t9.engine.hardware.VdpChip;
+import v9t9.engine.hardware.IVdpChip;
 import v9t9.engine.machine.Machine;
 import v9t9.engine.machine.TerminatedException;
 import v9t9.gui.sound.JavaSoundHandler;
@@ -25,7 +25,7 @@ import v9t9.gui.sound.JavaSoundHandler;
 public class AwtJavaClient implements IClient {
 	public static String ID = "AWT";
 	
-    VdpChip video;
+    IVdpChip video;
     private Machine machine;
 	private AwtKeyboardHandler keyboardHandler;
 	private AwtVideoRenderer videoRenderer;
@@ -95,7 +95,7 @@ public class AwtJavaClient implements IClient {
      * 
      * @see v9t9.Client#getVideo()
      */
-    public v9t9.engine.hardware.VdpChip getVideoHandler() {
+    public v9t9.engine.hardware.IVdpChip getVideoHandler() {
         return video;
     }
 
@@ -104,7 +104,7 @@ public class AwtJavaClient implements IClient {
      * 
      * @see v9t9.Client#setVideo(vdp.Handler)
      */
-    public void setVideoHandler(v9t9.engine.hardware.VdpChip video) {
+    public void setVideoHandler(v9t9.engine.hardware.IVdpChip video) {
         this.video = video;
     }
 

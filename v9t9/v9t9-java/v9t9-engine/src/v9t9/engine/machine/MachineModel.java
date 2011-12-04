@@ -12,8 +12,9 @@ import v9t9.common.memory.MemoryModel;
 import v9t9.engine.cpu.Executor;
 import v9t9.engine.dsr.IDeviceIndicatorProvider;
 import v9t9.engine.dsr.IDsrSettings;
-import v9t9.engine.hardware.SoundChip;
-import v9t9.engine.hardware.VdpChip;
+import v9t9.engine.hardware.ISoundChip;
+import v9t9.engine.hardware.ISpeechChip;
+import v9t9.engine.hardware.IVdpChip;
 
 /**
  * The model for a machine, which controls how its hardware is fit together.
@@ -27,11 +28,13 @@ public interface MachineModel {
 
 	MemoryModel getMemoryModel();
 	
-	VdpChip createVdp(IMachine machine);
+	IVdpChip createVdp(IMachine machine);
 	
 	void defineDevices(IMachine machine);
 
-	SoundChip createSoundProvider(IMachine machine);
+	ISoundChip createSoundChip(IMachine machine);
+	
+	ISpeechChip createSpeechChip(IMachine machine);
 	
 	Executor createExecutor(ICpu cpu, ICpuMetrics metrics);
 
@@ -42,4 +45,5 @@ public interface MachineModel {
 	List<IDsrSettings> getDsrSettings(IMachine machine);
 
 	List<IDeviceIndicatorProvider> getDeviceIndicatorProviders(IMachine machine);
+
 }

@@ -5,9 +5,9 @@ package v9t9.engine.sound;
 
 
 import v9t9.base.settings.ISettingSection;
-import v9t9.common.cpu.ICpu;
+import v9t9.base.sound.ISoundVoice;
 import v9t9.engine.client.ISoundHandler;
-import v9t9.engine.hardware.SoundChip;
+import v9t9.engine.hardware.ISoundChip;
 import v9t9.engine.machine.IMachine;
 
 /**
@@ -17,23 +17,21 @@ import v9t9.engine.machine.IMachine;
  * @author ejs
  *
  */
-public class MultiSoundTMS9919 implements SoundChip {
+public class MultiSoundTMS9919 implements ISoundChip {
 
 	private SoundTMS9919[] chips;
-	private SoundVoice[] voices;
+	private ISoundVoice[] voices;
 	private ISoundHandler soundHandler;
-	private final IMachine machine;
 	
 	public MultiSoundTMS9919(IMachine machine) {
 		// 5 chips: the original TMS9919 on the console and 4 extra on the card
 		
-		this.machine = machine;
 		// Prolly in the card, the console chip is ignored, because it
 		// borks the intended use of stereo on the other chips.
 		// So we ignore it.
 		this.chips = new SoundTMS9919[5];
 		for (int i = 0; i < 5; i++) {
-			chips[i] = new SoundTMS9919(machine, "Chip #" + i);
+			chips[i] = new SoundTMS9919("Chip #" + i);
 			
 			/*byte balance = (byte) (i == 0 ? 0 : ((i & 1) != 0 ? -128 : 128)); 
 			for (SoundVoice voice : chips[i].getSoundVoices()) {
@@ -43,13 +41,13 @@ public class MultiSoundTMS9919 implements SoundChip {
 		voices = null;
 	}
 
-	public synchronized SoundVoice[] getSoundVoices() {
+	public synchronized ISoundVoice[] getSoundVoices() {
 		if (voices == null) {
 			voices = new SoundVoice[4 * 4 + 1];
 			int idx = 0;
 			for (int i = 0; i < 4; i++) {
 				SoundTMS9919 chip = chips[i + 1];
-				SoundVoice[] chipVoices = chip.getSoundVoices();
+				ISoundVoice[] chipVoices = chip.getSoundVoices();
 				System.arraycopy(chipVoices, 0, voices, idx, 4);
 				idx += 4;
 			}
@@ -74,7 +72,7 @@ public class MultiSoundTMS9919 implements SoundChip {
 				}
 				chip++;
 			}
-			soundHandler.generateSound(machine.getCpu().getCurrentCycleCount(), machine.getCpu().getCurrentTargetCycleCount());
+			soundHandler.generateSound();
 		}
 	}
 	
@@ -120,11 +118,8 @@ public class MultiSoundTMS9919 implements SoundChip {
 		for (SoundTMS9919 chip : chips) {
 			chip.tick();
 		}		
-		ISoundHandler handler = getSoundHandler();
-		if (handler != null) {
-			ICpu cpu = machine.getCpu();
-			handler.flushAudio(cpu.getCurrentCycleCount(), 
-					cpu.getCurrentTargetCycleCount());
+		if (soundHandler != null) {
+			soundHandler.flushAudio();
 		}
 	}
 }

@@ -13,7 +13,7 @@ import java.util.Arrays;
 import v9t9.base.properties.FieldProperty;
 import v9t9.base.properties.IPropertySource;
 import v9t9.base.properties.PropertySource;
-import v9t9.engine.hardware.VdpChip;
+import v9t9.engine.hardware.IVdpChip;
 import v9t9.engine.video.VdpCanvas;
 import v9t9.engine.video.VdpColorManager;
 import v9t9.engine.video.VdpCanvas.Format;
@@ -187,7 +187,7 @@ public class ImageImportOptions {
 	 * Call to reset options to the presumed best ones for the
 	 * current video mode.
 	 */
-	public void resetOptions(VdpCanvas canvas, VdpChip vdp) {
+	public void resetOptions(VdpCanvas canvas, IVdpChip vdp) {
 		boolean canSetPalette;
 		
 		Format format = canvas.getFormat();

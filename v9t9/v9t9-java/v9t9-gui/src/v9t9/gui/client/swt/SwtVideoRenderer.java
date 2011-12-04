@@ -27,7 +27,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
 import v9t9.engine.client.IVideoRenderer;
-import v9t9.engine.hardware.VdpChip;
+import v9t9.engine.hardware.IVdpChip;
 import v9t9.engine.video.ICanvas;
 import v9t9.engine.video.VdpCanvas;
 import v9t9.engine.video.BaseVdpCanvas.ICanvasListener;
@@ -53,9 +53,9 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	private Shell shell;
 	
 	protected FixedAspectLayout fixedAspectLayout;
-	private final VdpChip vdp;
+	private final IVdpChip vdp;
 	
-	public SwtVideoRenderer(VdpChip vdp) {
+	public SwtVideoRenderer(IVdpChip vdp) {
 		this.vdp = vdp;
 		fixedAspectLayout = new FixedAspectLayout(256, 192, 3.0, 3.0, 1., 5);
 	}
@@ -64,7 +64,7 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	 * @see v9t9.emulator.clients.builtin.swt.ISwtVideoRenderer#getVdpHandler()
 	 */
 	@Override
-	public VdpChip getVdpHandler() {
+	public IVdpChip getVdpHandler() {
 		return vdp;
 	}
 	

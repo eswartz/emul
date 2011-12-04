@@ -20,7 +20,7 @@ import v9t9.common.memory.MemoryDomain;
 import v9t9.engine.cpu.Executor;
 import v9t9.engine.hardware.BaseCruAccess;
 import v9t9.engine.hardware.ICruAccess;
-import v9t9.engine.hardware.VdpChip;
+import v9t9.engine.hardware.IVdpChip;
 import v9t9.engine.machine.IMachine;
 import v9t9.engine.memory.VdpMmio;
 import v9t9.engine.settings.WorkspaceSettings;
@@ -50,7 +50,7 @@ import v9t9.engine.video.VdpRedrawInfo;
  * </pre>
  * @author ejs
  */
-public class VdpTMS9918A implements VdpChip {
+public class VdpTMS9918A implements IVdpChip {
 	private RedrawBlock[] blocks;
 	protected MemoryDomain vdpMemory;
 

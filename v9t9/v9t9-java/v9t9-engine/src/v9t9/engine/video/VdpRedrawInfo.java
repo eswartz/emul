@@ -3,7 +3,7 @@
  */
 package v9t9.engine.video;
 
-import v9t9.engine.hardware.VdpChip;
+import v9t9.engine.hardware.IVdpChip;
 
 /**
  * @author ejs
@@ -11,14 +11,14 @@ import v9t9.engine.hardware.VdpChip;
  */
 public class VdpRedrawInfo {
 
-	public final VdpChip vdp;
+	public final IVdpChip vdp;
 	public final VdpChanges changes;
 	public final VdpCanvas canvas;
 	public final VdpTouchHandlerBlock touch;
 	
 	public final byte[] vdpregs;
 	
-	public VdpRedrawInfo(byte[] vdpregs, VdpChip vdp, 
+	public VdpRedrawInfo(byte[] vdpregs, IVdpChip vdp, 
 			VdpChanges changed, VdpCanvas vdpCanvas) {
 		this.vdpregs = vdpregs;
 		this.vdp = vdp;

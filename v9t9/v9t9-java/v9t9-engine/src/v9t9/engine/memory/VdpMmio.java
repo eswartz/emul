@@ -2,12 +2,12 @@ package v9t9.engine.memory;
 
 import v9t9.common.memory.BankedMemoryEntry;
 import v9t9.common.memory.ByteMemoryAccess;
-import v9t9.engine.hardware.VdpChip;
+import v9t9.engine.hardware.IVdpChip;
 
 public abstract class VdpMmio implements IConsoleMmioReader, IConsoleMmioWriter {
 
 	protected int currentaccesscycles;
-	protected VdpChip vdpHandler;
+	protected IVdpChip vdpHandler;
 	protected VdpRamArea fullRamArea;
 	private int fullRamMask;
 
@@ -28,7 +28,7 @@ public abstract class VdpMmio implements IConsoleMmioReader, IConsoleMmioWriter 
 		currentaccesscycles = i;
 	}
 
-	public void setVdpHandler(VdpChip vdp) {
+	public void setVdpHandler(IVdpChip vdp) {
 		this.vdpHandler = vdp;
 	}
 

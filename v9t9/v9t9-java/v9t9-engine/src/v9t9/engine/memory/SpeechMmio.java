@@ -6,10 +6,13 @@
  */
 package v9t9.engine.memory;
 
+import v9t9.base.utils.Check;
+import v9t9.common.memory.MemoryDomain;
 import v9t9.engine.client.ISoundHandler;
+import v9t9.engine.hardware.ISpeechChip;
 import v9t9.engine.machine.IMachine;
+import v9t9.engine.speech.ISpeechDataSender;
 import v9t9.engine.speech.TMS5220;
-import v9t9.engine.speech.LPCSpeech.Sender;
 
 /** 
  * Speech chip
@@ -17,46 +20,23 @@ import v9t9.engine.speech.LPCSpeech.Sender;
  */
 public class SpeechMmio implements IConsoleMmioWriter, IConsoleMmioReader {
 
-	private TMS5220 sp;
 
-	public SpeechMmio(final IMachine machine) {
-		sp = new TMS5220(machine.getMemory().getDomain("SPEECH"));
-		sp.setSender(new Sender() {
+	private final ISpeechChip speech;
 
-			private ISoundHandler soundHandler;
-
-			public void send(short val, int pos, int length) {
-				if (soundHandler == null)
-					soundHandler = machine.getSound().getSoundHandler();
-				if (soundHandler != null)
-					soundHandler.speech(val);
-			}
-			
-		});
-		sp.setMachine(machine);
+	public SpeechMmio(final ISpeechChip speech) {
+		Check.checkArg(speech);
+		this.speech = speech;
     }
 
     public byte read(int addrMask) {
-    	return sp.read();
+    	return speech.read();
     }
     
     /**
      * @see v9t9.common.memory.Memory.IConsoleMmioWriter#write 
      */
     public void write(int addr, byte val) {
-        sp.write(val);
+        speech.write(val);
     }
 
-    public int getAddr() {
-    	return sp.getAddr();
-    }
-    
-    public void setAddr(int addr) {
-    	sp.setAddr(addr);
-    }
-    
-    public boolean isAddrComplete() {
-    	return sp.getAddrPos() == 0 || sp.getAddrPos() == 5;
-    }
-    
 }

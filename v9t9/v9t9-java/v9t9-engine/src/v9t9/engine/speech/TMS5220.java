@@ -7,22 +7,20 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 
-import v9t9.base.properties.SettingProperty;
+import v9t9.base.settings.ISettingSection;
 import v9t9.base.settings.Logging;
-import v9t9.base.timer.FastTimer;
+import v9t9.base.sound.ISoundVoice;
 import v9t9.base.utils.BinaryUtils;
 import v9t9.base.utils.HexUtils;
 import v9t9.common.memory.MemoryDomain;
-import v9t9.engine.machine.IMachine;
+import v9t9.engine.hardware.ISpeechChip;
 import v9t9.engine.memory.DiskMemoryEntry;
-import v9t9.engine.speech.LPCSpeech.Fetcher;
-import v9t9.engine.speech.LPCSpeech.Sender;
 
 /**
  * @author ejs
  *
  */
-public class TMS5220 implements Fetcher, Sender {
+public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender {
 
 	private final int SPEECH_TIMEOUT = 25+9;
 	
@@ -64,25 +62,22 @@ public class TMS5220 implements Fetcher, Sender {
 
 	private DiskMemoryEntry speechRom;
 
-	int speech_hertz = 8000;
-	int speech_length = speech_hertz / 40;
-
-	private FastTimer speechTimer;
-
-	private Runnable speechTimerTask;
+	final int speech_hertz = 8000;
+	final int speech_length = speech_hertz / 40;
 
 	private LPCSpeech lpc;
 	
-	public static final SettingProperty settingLogSpeech = new SettingProperty("LogSpeech",
-			new Integer(0));
+	private ISpeechDataSender sender;
 
-	private Sender sender;
+	private SpeechVoice[] speechVoices;
 
-	private IMachine machine;
+	private boolean speechOn;
 	
 	public TMS5220(MemoryDomain speech) {
+		speechVoices = new SpeechVoice[1];
+		speechVoices[0] = new SpeechVoice();
 		
-		Logging.registerLog(settingLogSpeech, 
+		Logging.registerLog(LPCSpeech.settingLogSpeech, 
 				new PrintWriter(System.out, true));
 		
 		try {
@@ -97,6 +92,21 @@ public class TMS5220 implements Fetcher, Sender {
 		reset();
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.hardware.ISpeechChip#getSpeechVoices()
+	 */
+	@Override
+	public ISoundVoice[] getSpeechVoices() {
+		return speechVoices;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.hardware.ISpeechChip#getGenerateRate()
+	 */
+	@Override
+	public int getGenerateRate() {
+		return speech_hertz / speech_length;
+	}
 	public int getAddr() {
 		return addr;
 	}
@@ -111,7 +121,7 @@ public class TMS5220 implements Fetcher, Sender {
 	}
 
 	public void write(byte val) {
-		Logging.writeLogLine(2, settingLogSpeech, "speech write: " + HexUtils.toHex2((val&0xff)));
+		Logging.writeLogLine(2, LPCSpeech.settingLogSpeech, "speech write: " + HexUtils.toHex2((val&0xff)));
 		if ((gate & GT_WCMD) != 0)
 			command(val);
 		else
@@ -128,14 +138,14 @@ public class TMS5220 implements Fetcher, Sender {
 			gate = (gate & ~GT_RDAT) | GT_RSTAT;
 			ret = data;
 		}
-		Logging.writeLogLine(3, settingLogSpeech, "Speech read: " + HexUtils.toHex2(ret));
+		Logging.writeLogLine(3, LPCSpeech.settingLogSpeech, "Speech read: " + HexUtils.toHex2(ret));
 		return ret;
 	}
 
 	public void command(byte cmd) {
 		command = (byte) (cmd & 0x70);
-		if (Logging.getLog(3, settingLogSpeech) != null) {
-			Logging.writeLogLine(3, settingLogSpeech,
+		if (Logging.getLog(3, LPCSpeech.settingLogSpeech) != null) {
+			Logging.writeLogLine(3, LPCSpeech.settingLogSpeech,
 				"Cmd="+HexUtils.toHex2(cmd)+"  Status: " + 
 				HexUtils.toHex2(status));
 		}
@@ -176,7 +186,7 @@ public class TMS5220 implements Fetcher, Sender {
 			data = speechRom.readByte(addr);
 		addr++;
 		//
-		Logging.writeLogLine(2, settingLogSpeech,
+		Logging.writeLogLine(2, LPCSpeech.settingLogSpeech,
 				"Speech memory "+HexUtils.toHex4(addr)+" = " + HexUtils.toHex2(data));
 		return data;
 	}
@@ -196,7 +206,7 @@ public class TMS5220 implements Fetcher, Sender {
 	{
 		addr_pos = (addr_pos + 1) % 5;
 		addr = (addr >> 4) | (nybble << 16);
-		Logging.writeLogLine(3, settingLogSpeech,
+		Logging.writeLogLine(3, LPCSpeech.settingLogSpeech,
 				"Speech addr: "+HexUtils.toHex4(addr));
 	}
 
@@ -222,7 +232,7 @@ public class TMS5220 implements Fetcher, Sender {
 
 	private void speak()
 	{
-		Logging.writeLogLine(1, settingLogSpeech,
+		Logging.writeLogLine(1, LPCSpeech.settingLogSpeech,
 				"Speaking phrase at "+HexUtils.toHex4(addr));
 
 		//demo_record_event(demo_type_speech, demo_speech_starting);
@@ -248,7 +258,7 @@ public class TMS5220 implements Fetcher, Sender {
 	
 	private void speakExternal()
 	{
-		Logging.writeLogLine(1, settingLogSpeech,
+		Logging.writeLogLine(1, LPCSpeech.settingLogSpeech,
 				"Speaking external data");
 		//demo_record_event(demo_type_speech, demo_speech_starting);
 
@@ -263,7 +273,7 @@ public class TMS5220 implements Fetcher, Sender {
 	private void writeFIFO(byte val) {
 		fifo[in] = BinaryUtils.swapbits(val);
 		in = (byte) ((in + 1) & 15);
-		Logging.writeLogLine(3, settingLogSpeech,
+		Logging.writeLogLine(3, LPCSpeech.settingLogSpeech,
 				"FIFO write: "+HexUtils.toHex2(val)+"; len = " +len);
 
 		//System.err.println("FIFO write: "+val+"  len="+len);
@@ -282,7 +292,7 @@ public class TMS5220 implements Fetcher, Sender {
 	{
 		int         ret = fifo[out] & 0xff;
 
-		Logging.writeLogLine(3, settingLogSpeech,
+		Logging.writeLogLine(3, LPCSpeech.settingLogSpeech,
 				"FIFO read: "+HexUtils.toHex2(ret)+"; len = " + len);
 
 		if (len == 0) {
@@ -290,7 +300,7 @@ public class TMS5220 implements Fetcher, Sender {
 			status &= ~SS_TS;
 			reset();
 			SpeechOff();
-			Logging.writeLogLine(1, settingLogSpeech,
+			Logging.writeLogLine(1, LPCSpeech.settingLogSpeech,
 					"Speech timed out");
 		}
 
@@ -342,7 +352,7 @@ public class TMS5220 implements Fetcher, Sender {
 
 	private void reset()
 	{
-		Logging.writeLogLine(1, settingLogSpeech, "Speech reset");
+		Logging.writeLogLine(1, LPCSpeech.settingLogSpeech, "Speech reset");
 		status = SS_BE | SS_BL;
 		purgeFIFO();
 		command = 0x70;
@@ -361,34 +371,16 @@ public class TMS5220 implements Fetcher, Sender {
 	
 	private void SpeechOn()
 	{
-		int hz;
-
-		if (speechTimer == null) {
-			speechTimer = new FastTimer();
-
-			hz = speech_hertz / speech_length;
-			speechTimerTask = new Runnable() {
-	
-				@Override
-				public void run() {
-					if (machine != null) {
-						if (!machine.isAlive())
-							SpeechDone();
-						if (IMachine.settingPauseMachine.getBoolean())
-							return;
-					}
-					generateSpeech();
-				}
-				
-			};
-			speechTimer.scheduleTask(speechTimerTask, hz);
-		}
+		speechOn = true;
 	}
 
-	protected void generateSpeech() {
+	public void generateSpeech() {
+		if (!speechOn)
+			return;
+		
 		boolean do_frame = false;
 
-		Logging.writeLogLine(2, settingLogSpeech,
+		Logging.writeLogLine(2, LPCSpeech.settingLogSpeech,
 				"Speech generating");
 		//logger(_L | L_2, _("Speech Interrupt\n"));
 
@@ -405,7 +397,7 @@ public class TMS5220 implements Fetcher, Sender {
 						//demo_record_event(demo_type_speech, demo_speech_terminating);
 
 						// this apparently happens in normal cases
-						Logging.writeLogLine(1, settingLogSpeech,
+						Logging.writeLogLine(1, LPCSpeech.settingLogSpeech,
 							"Speech timed out");
 					}
 				}
@@ -419,7 +411,7 @@ public class TMS5220 implements Fetcher, Sender {
 						//demo_record_event(demo_type_speech, demo_speech_terminating);
 
 						// this apparently happens in normal cases
-						Logging.writeLogLine(1, settingLogSpeech,
+						Logging.writeLogLine(1, LPCSpeech.settingLogSpeech,
 							"Speech timed out");
 					}
 				}
@@ -448,7 +440,7 @@ public class TMS5220 implements Fetcher, Sender {
 	}
 
 	private void SpeechDone() {
-		Logging.writeLogLine(1, settingLogSpeech,
+		Logging.writeLogLine(1, LPCSpeech.settingLogSpeech,
 				"Done with speech phrase");
 		SpeechOff();			/* stop interrupting */
 		//demo_record_event(demo_type_speech, demo_speech_stopping);
@@ -460,9 +452,7 @@ public class TMS5220 implements Fetcher, Sender {
 
 	private void SpeechOff()
 	{
-		if (speechTimer != null)
-			speechTimer.cancel();
-		speechTimer = null;
+		speechOn = false;
 	}
 	
 	/*
@@ -510,18 +500,37 @@ public class TMS5220 implements Fetcher, Sender {
 		return cur;
 	}
 
-	public void send(short val, int pos, int length) {
-		if (sender != null)
-			sender.send(val, pos, length);
-	}
-	
-	public void setSender(Sender sender) {
+	public void setSender(ISpeechDataSender sender) {
 		this.sender = sender;
 		
 	}
-
-	public void setMachine(IMachine machine) {
-		this.machine = machine;
+	
+	/* (non-Javadoc)
+	 * @see v9t9.base.properties.IPersistable#loadState(v9t9.base.settings.ISettingSection)
+	 */
+	@Override
+	public void loadState(ISettingSection section) {
+		// TODO Auto-generated method stub
 		
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.base.properties.IPersistable#saveState(v9t9.base.settings.ISettingSection)
+	 */
+	@Override
+	public void saveState(ISettingSection section) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.engine.speech.ISpeechDataSender#send(short, int, int)
+	 */
+	@Override
+	public void send(short val, int pos, int length) {
+		if (sender != null) {
+			speechVoices[0].setSample(val);
+			sender.send(val, pos, length);
+		}
 	}
 }

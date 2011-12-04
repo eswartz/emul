@@ -1,21 +1,21 @@
 package v9t9.gui.client.awt;
 
-import v9t9.engine.hardware.VdpChip;
+import v9t9.engine.hardware.IVdpChip;
 import v9t9.gui.client.swt.ImageImportHandler;
 import v9t9.gui.video.ImageDataCanvas;
 
 public class AwtImageImportSupport extends ImageImportHandler {
 
 	private final ImageDataCanvas canvas;
-	private final VdpChip vdp;
+	private final IVdpChip vdp;
 
-	public AwtImageImportSupport(ImageDataCanvas canvas, VdpChip vdp) {
+	public AwtImageImportSupport(ImageDataCanvas canvas, IVdpChip vdp) {
 		this.canvas = canvas;
 		this.vdp = vdp;
 	}
 
 	@Override
-	protected VdpChip getVdpHandler() {
+	protected IVdpChip getVdpHandler() {
 		return vdp;
 	}
 

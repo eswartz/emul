@@ -18,7 +18,7 @@ import v9t9.base.settings.ISettingSection;
 /**
  * @author ejs
  */
-public class MemoryDomain implements MemoryAccess, IPersistable {
+public class MemoryDomain implements IMemoryAccess, IPersistable {
     /*
      * This must remain 64K, even if mega-memory expansion is emulated. All the
      * public routines expect to be passed 16-bit addresses.

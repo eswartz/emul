@@ -137,7 +137,7 @@ public class ModuleSelector extends Composite {
 				else if (obj instanceof IModule) {
 					selectedModule = (IModule) obj;
 					switchButton.setEnabled(true);
-					switchModule();
+					switchModule(false);
 				} else {
 					switchButton.setEnabled(false);
 				}
@@ -152,7 +152,7 @@ public class ModuleSelector extends Composite {
 		switchButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				switchModule();
+				switchModule((e.stateMask & SWT.SHIFT) != 0);
 			}
 		});
 		switchButton.setEnabled(false);
@@ -175,7 +175,7 @@ public class ModuleSelector extends Composite {
 						e.doit = false;
 					}
 					else if (e.keyCode == '\r' || e.keyCode == '\n') {
-						switchModule();
+						switchModule(false);
 						e.doit = false;
 						return;
 					}
@@ -218,13 +218,17 @@ public class ModuleSelector extends Composite {
 		fileColumn.pack();
 	}
 
-	/** 
+	/**
+	 * @param softReset TODO 
 	 * 
 	 */
-	protected void switchModule() {
+	protected void switchModule(boolean softReset) {
 		try {
 			machine.getModuleManager().switchModule(selectedModule);
-			machine.getCpu().reset();
+			if (softReset)
+				machine.getCpu().reset();
+			else
+				machine.reset();
 
 			getShell().dispose();
 		} catch (NotifyException e) {

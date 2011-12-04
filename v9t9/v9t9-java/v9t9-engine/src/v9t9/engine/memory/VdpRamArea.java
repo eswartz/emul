@@ -5,10 +5,10 @@ package v9t9.engine.memory;
 
 import v9t9.common.memory.ByteMemoryArea;
 import v9t9.common.memory.MemoryEntry;
-import v9t9.engine.hardware.VdpChip;
+import v9t9.engine.hardware.IVdpChip;
 
 public class VdpRamArea extends ByteMemoryArea {
-    private VdpChip handler;
+    private IVdpChip handler;
 
 	public VdpRamArea(int size) {
     	// latency is counted in the CPU side;
@@ -19,7 +19,7 @@ public class VdpRamArea extends ByteMemoryArea {
         write = memory;
     }
 	
-	public void setHandler(VdpChip handler) {
+	public void setHandler(IVdpChip handler) {
 		this.handler = handler;
 	}
     

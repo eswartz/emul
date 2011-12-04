@@ -6,19 +6,22 @@
  */
 package v9t9.engine.memory;
 
-import v9t9.engine.hardware.SoundChip;
+import v9t9.base.utils.Check;
+import v9t9.engine.hardware.ISoundChip;
 
 /** Sound chip entry
  * @author ejs
  */
 public class SoundMmio implements IConsoleMmioWriter {
 
-	private final SoundChip sound;
+	private final ISoundChip sound;
 
     /**
      * @param machine
      */
-    public SoundMmio(SoundChip sound) {
+    public SoundMmio(ISoundChip sound) {
+    	Check.checkArg(sound);
+    	
 		this.sound = sound;
     }
 

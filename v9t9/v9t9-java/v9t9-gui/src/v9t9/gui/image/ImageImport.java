@@ -23,7 +23,7 @@ import javax.imageio.ImageIO;
 import org.eclipse.swt.graphics.ImageData;
 
 import v9t9.base.utils.Pair;
-import v9t9.engine.hardware.VdpChip;
+import v9t9.engine.hardware.IVdpChip;
 import v9t9.engine.video.ColorMapUtils;
 import v9t9.engine.video.IBitmapPixelAccess;
 import v9t9.engine.video.VdpColorManager;
@@ -54,7 +54,7 @@ public class ImageImport implements IBitmapPixelAccess {
 	private final ImageDataCanvas canvas;
 	private final VdpColorManager colorMgr;
 	private boolean paletteMappingDirty;
-	private final VdpChip vdp;
+	private final IVdpChip vdp;
 	private int firstColor;
 	private int[] rgbs;
 
@@ -123,7 +123,7 @@ public class ImageImport implements IBitmapPixelAccess {
 		/* 15 */ { (byte) 0xff, (byte) 0xff, (byte) 0xff }, 
 	};
 
-	public ImageImport(ImageDataCanvas canvas, VdpChip vdp, ImageImportOptions imageImportOptions) {
+	public ImageImport(ImageDataCanvas canvas, IVdpChip vdp, ImageImportOptions imageImportOptions) {
 		this.canvas = canvas;
 		this.options = imageImportOptions;
 		this.colorMgr = canvas.getColorMgr();

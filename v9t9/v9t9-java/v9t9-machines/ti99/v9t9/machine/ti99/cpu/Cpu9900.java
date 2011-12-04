@@ -15,7 +15,7 @@ import v9t9.common.cpu.IStatus;
 import v9t9.engine.cpu.CpuBase;
 import v9t9.engine.cpu.Executor;
 import v9t9.engine.hardware.ICruAccess;
-import v9t9.engine.hardware.VdpChip;
+import v9t9.engine.hardware.IVdpChip;
 import v9t9.engine.machine.Machine;
 import v9t9.machine.ti99.compiler.Compiler9900;
 
@@ -30,9 +30,9 @@ public class Cpu9900 extends CpuBase {
 	public static final int INTLEVEL_RESET = 0;
 	public static final int INTLEVEL_LOAD = 1;
 	public static final int INTLEVEL_INTREQ = 2;
-	private final VdpChip vdp;
+	private final IVdpChip vdp;
 	
-    public Cpu9900(Machine machine, int interruptTick, VdpChip vdp) {
+    public Cpu9900(Machine machine, int interruptTick, IVdpChip vdp) {
     	super(machine, new CpuState9900(machine.getConsole()), interruptTick);
 		this.vdp = vdp;
     	
@@ -242,6 +242,9 @@ public class Cpu9900 extends CpuBase {
 		+ "\t\tST=" +getStatus();
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.ICpu#reset()
+	 */
 	@Override
 	public void reset() {
 		contextSwitch(0);		

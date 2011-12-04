@@ -8,8 +8,9 @@ import v9t9.engine.client.IClient;
 import v9t9.engine.cpu.Executor;
 import v9t9.engine.dsr.IDsrManager;
 import v9t9.engine.hardware.ICruAccess;
-import v9t9.engine.hardware.SoundChip;
-import v9t9.engine.hardware.VdpChip;
+import v9t9.engine.hardware.ISoundChip;
+import v9t9.engine.hardware.ISpeechChip;
+import v9t9.engine.hardware.IVdpChip;
 import v9t9.engine.keyboard.KeyboardState;
 
 /**
@@ -28,14 +29,15 @@ public interface IMachine extends IBaseMachine {
 
 	KeyboardState getKeyboardState();
 
-	SoundChip getSound();
+	ISoundChip getSound();
+	ISpeechChip getSpeech();
 
 	/**
 	 * @return the moduleManager
 	 */
 	ModuleManager getModuleManager();
 
-	VdpChip getVdp();
+	IVdpChip getVdp();
 
 	IDsrManager getDsrManager();
 

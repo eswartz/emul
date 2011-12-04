@@ -16,9 +16,9 @@ import v9t9.base.sound.ISoundVoice;
 import v9t9.base.sound.SoundFactory;
 import v9t9.engine.EmulatorSettings;
 import v9t9.engine.client.ISoundHandler;
-import v9t9.engine.hardware.SoundChip;
+import v9t9.engine.hardware.ISoundChip;
+import v9t9.engine.hardware.ISpeechChip;
 import v9t9.engine.machine.IMachine;
-import v9t9.engine.sound.SoundVoice;
 
 /**
  * Handle sound generation for output with Java APIs
@@ -33,45 +33,17 @@ public class JavaSoundHandler implements ISoundHandler {
 	private SoundRecordingHelper speechRecordingHelper;
 	private AudioFormat soundFormat;
 	private ISoundOutput output;
-	private SoundChip sound;
 	private int lastUpdatedPos;
 	private int soundFramesPerTick;
 	private AudioFormat speechFormat;
 	private ISoundOutput speechOutput;
-	private SpeechVoice speechVoice;
 	private ISoundListener audio;
 	private ISoundListener speechAudio;
+	private final IMachine machine;
 	
-	static class SpeechVoice implements ISoundVoice {
-		
-		private short sample;
-
-		public void setSoundClock(int soundClock) {
-		}
-		
-		public void reset() {
-			sample = 0;
-		}
-		
-		public boolean isActive() {
-			return true;
-		}
-		
-		public boolean generate(float[] soundGeneratorWorkBuffer, int from, int to) {
-			if (sample == 0)
-				return false;
-			float delta = sample / 32768.f;
-			while (from < to)
-				soundGeneratorWorkBuffer[from++] += delta;
-			return true;
-		}
-		
-		public void setSample(short sample) {
-			this.sample = sample;
-		}
-	}
 	public JavaSoundHandler(final IMachine machine) {
 
+		this.machine = machine;
 		soundFormat = new AudioFormat(55930, 16, 2, true, false);
 		speechFormat = new AudioFormat(8000, 16, 1, true, false);
 		
@@ -85,8 +57,6 @@ public class JavaSoundHandler implements ISoundHandler {
 		speechAudio = SoundFactory.createAudioListener();
 		output.addListener(audio);
 		speechOutput.addListener(speechAudio);
-		
-		speechVoice = new SpeechVoice();
 		
 		EmulatorSettings.settingSoundVolume.addListener(new IPropertyListener() {
 			
@@ -102,8 +72,6 @@ public class JavaSoundHandler implements ISoundHandler {
 		soundRecordingHelper = new SoundRecordingHelper(output, settingRecordSoundOutputFile, "sound");
 		speechRecordingHelper = new SoundRecordingHelper(speechOutput, settingRecordSpeechOutputFile, "speech");
 		
-		sound = machine.getSound();
-
 		// frames in ALSA means samples per channel, but raw freq in javax
 		//soundFramesPerTick = (int) ((soundFormat.getFrameRate()
 		//		+ machine.getCpuTicksPerSec() - 1) / machine.getCpuTicksPerSec());
@@ -133,7 +101,10 @@ public class JavaSoundHandler implements ISoundHandler {
 		}
 	}
 
-	public synchronized void generateSound(int pos, int total) {
+	public synchronized void generateSound() {
+		int pos = machine.getCpu().getCurrentCycleCount();
+		int total = machine.getCpu().getCurrentTargetCycleCount();
+		
 		if (total == 0)
 			return;
 		
@@ -145,15 +116,17 @@ public class JavaSoundHandler implements ISoundHandler {
 	}
 
 	protected synchronized void updateSoundGenerator(int from, int to) {
+		ISoundChip sound = machine.getSound();
+		if (sound == null)
+			return;
+		
 		if (to > soundFramesPerTick)
 			to = soundFramesPerTick;
 		if (from >= to)
 			return;
 
-		SoundVoice[] vs = sound.getSoundVoices();
+		ISoundVoice[] vs = sound.getSoundVoices();
 
-		int samples = to - from;
-		samples -= samples % soundFormat.getChannels();
 		output.generate(vs, to - from);
 	}
 
@@ -179,12 +152,16 @@ public class JavaSoundHandler implements ISoundHandler {
 		}
 	}
 
-	public synchronized void speech(short sample) {
-		speechVoice.setSample(sample);
-		speechOutput.generate(new ISoundVoice[] { speechVoice }, 1);
+	public synchronized void speech() {
+		ISpeechChip speech = machine.getSpeech();
+		if (speech == null)
+			return;
+
+		ISoundVoice[] vs = speech.getSpeechVoices();
+		speechOutput.generate(vs, 1);
 	}
 
-	public synchronized void flushAudio(int pos, int limit) {
+	public synchronized void flushAudio() {
 		if (output != null) {
 			// hmm, it would be nice if the audio gate could work perfectly,
 			// but the calculations of its data have assumed the "limit" would

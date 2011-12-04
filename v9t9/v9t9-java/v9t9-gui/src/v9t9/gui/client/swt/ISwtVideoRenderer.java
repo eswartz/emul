@@ -9,7 +9,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 
 import v9t9.engine.client.IVideoRenderer;
-import v9t9.engine.hardware.VdpChip;
+import v9t9.engine.hardware.IVdpChip;
 import v9t9.engine.video.VdpCanvas;
 
 /**
@@ -34,7 +34,7 @@ public interface ISwtVideoRenderer extends IVideoRenderer {
 
 	void setFocus();
 
-	VdpChip getVdpHandler();
+	IVdpChip getVdpHandler();
 
 	/**
 	 * Reblit the screen (for indicator changes)

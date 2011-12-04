@@ -6,11 +6,10 @@ package v9t9.engine.sound;
 
 
 import v9t9.base.settings.ISettingSection;
-import v9t9.common.cpu.ICpu;
+import v9t9.base.sound.ISoundVoice;
 import v9t9.engine.EmulatorSettings;
 import v9t9.engine.client.ISoundHandler;
-import v9t9.engine.hardware.SoundChip;
-import v9t9.engine.machine.IMachine;
+import v9t9.engine.hardware.ISoundChip;
 
 /**
  * Controller for the TMS9919 sound chip
@@ -19,7 +18,7 @@ import v9t9.engine.machine.IMachine;
  * @author ejs
  *
  */
-public class SoundTMS9919 implements SoundChip {
+public class SoundTMS9919 implements ISoundChip {
 
 	/* These are used as an index into the operation[] field */
 	final static int OPERATION_FREQUENCY_LO = 0,		/* low 4 bits [1vv0yyyy] */
@@ -74,12 +73,10 @@ public class SoundTMS9919 implements SoundChip {
 
 	protected ISoundHandler soundHandler;
 
-	protected  final IMachine machine;
 
 	protected int active;
 
-	public SoundTMS9919(IMachine machine, String name) {
-		this.machine = machine;
+	public SoundTMS9919(String name) {
 		init(name);
 	}
 	
@@ -135,7 +132,7 @@ public class SoundTMS9919 implements SoundChip {
 		updateVoice(v, val);
 		
 		if (soundHandler != null)
-			soundHandler.generateSound(machine.getCpu().getCurrentCycleCount(), machine.getCpu().getCurrentTargetCycleCount());
+			soundHandler.generateSound();
 	}
 
 	/**
@@ -174,7 +171,7 @@ public class SoundTMS9919 implements SoundChip {
 	}
 
 
-	public SoundVoice[] getSoundVoices() {
+	public ISoundVoice[] getSoundVoices() {
 		return sound_voices;
 	}
 	
@@ -202,16 +199,13 @@ public class SoundTMS9919 implements SoundChip {
 		v.setState(b);
 		v.setupVoice();
 		if (soundHandler != null)
-			soundHandler.generateSound(machine.getCpu().getCurrentCycleCount(), machine.getCpu().getCurrentTargetCycleCount());
+			soundHandler.generateSound();
 
 	}
 	
 	public void tick() {
-		ISoundHandler handler = getSoundHandler();
-		if (handler != null) {
-			ICpu cpu = machine.getCpu();
-			handler.flushAudio(cpu.getCurrentCycleCount(), 
-					cpu.getCurrentTargetCycleCount());
+		if (soundHandler != null) {
+			soundHandler.flushAudio();
 		}
 	}
 }

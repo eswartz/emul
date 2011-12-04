@@ -61,6 +61,8 @@ public interface IBaseMachine {
 
 	void loadState(ISettingSection section) throws IOException;
 
+	void reset();
+	
 	int getCpuTicksPerSec();
 
 	Object getExecutionLock();

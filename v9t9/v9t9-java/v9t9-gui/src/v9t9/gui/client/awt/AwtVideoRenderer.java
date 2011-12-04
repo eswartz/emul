@@ -24,7 +24,7 @@ import javax.imageio.ImageIO;
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
 import v9t9.engine.client.IVideoRenderer;
-import v9t9.engine.hardware.VdpChip;
+import v9t9.engine.hardware.IVdpChip;
 import v9t9.engine.video.ICanvas;
 import v9t9.engine.video.VdpCanvas;
 import v9t9.engine.video.BaseVdpCanvas.ICanvasListener;
@@ -70,9 +70,9 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 
 	private IPropertyListener monitorSettingListener;
 
-	private final VdpChip vdp;
+	private final IVdpChip vdp;
 	
-	public AwtVideoRenderer(VdpChip vdp) {
+	public AwtVideoRenderer(IVdpChip vdp) {
 		this.vdp = vdp;
 		// init outside locks
 		V9t9Render.INSTANCE.hashCode();
@@ -115,7 +115,7 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 	}
 	
 
-	public VdpChip getVdpHandler() {
+	public IVdpChip getVdpHandler() {
 		return vdp;
 	}
 

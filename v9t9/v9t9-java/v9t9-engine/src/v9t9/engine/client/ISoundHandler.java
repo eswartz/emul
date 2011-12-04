@@ -22,24 +22,19 @@ public interface ISoundHandler {
 	
 	/**
 	 * Generate the sound for the given range of time.
-	 * @param pos current cycle
-	 * @param total total cycles per tick
 	 */
-	void generateSound(int pos, int total);
+	void generateSound();
 	
 	/**
 	 * Fill out and flush the sound accumulated for this tick
-	 * @param pos current cycle
-	 * @param total total cycles per tick
 	 */
-	void flushAudio(int pos, int total);
+	void flushAudio();
 	
 
 	/**
 	 * Handle one sample (signed 16-bit) of speech data.
-	 * @param sample
 	 */
-	void speech(short sample);
+	void speech();
 	
 }
 

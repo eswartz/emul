@@ -9,7 +9,7 @@ package v9t9.common.memory;
  * @author ejs
  *
  */
-public interface MemoryAccess {
+public interface IMemoryAccess {
 	/**
 	 * Read a word at the given 16-bit address, without side effects.
 	 * @param addr address

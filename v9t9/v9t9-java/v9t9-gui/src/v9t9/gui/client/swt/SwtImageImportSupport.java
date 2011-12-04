@@ -12,7 +12,7 @@ import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
 import v9t9.common.events.IEventNotifier;
 import v9t9.engine.client.IVideoRenderer;
-import v9t9.engine.hardware.VdpChip;
+import v9t9.engine.hardware.IVdpChip;
 import v9t9.gui.image.ImageImport;
 import v9t9.gui.video.ImageDataCanvas;
 
@@ -98,9 +98,9 @@ public class SwtImageImportSupport extends ImageImportHandler {
 		return canvas;
 	}
 	@Override
-	protected VdpChip getVdpHandler() {
+	protected IVdpChip getVdpHandler() {
 		ISwtVideoRenderer renderer = (ISwtVideoRenderer) getVideoRenderer();
-		final VdpChip vdp = renderer.getVdpHandler();
+		final IVdpChip vdp = renderer.getVdpHandler();
 		return vdp;
 	}
 }

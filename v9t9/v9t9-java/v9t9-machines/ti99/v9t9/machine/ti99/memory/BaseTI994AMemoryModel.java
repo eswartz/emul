@@ -73,7 +73,7 @@ public abstract class BaseTI994AMemoryModel implements TIMemoryModel {
      
         soundMmio = new SoundMmio(((IMachine) machine).getSound());
         gplMmio = new GplMmio(GRAPHICS);
-        speechMmio = new SpeechMmio(((IMachine) machine));
+        speechMmio = new SpeechMmio(((IMachine) machine).getSpeech());
         
         vdpMmio = ((IMachine) machine).getVdp().getVdpMmio();
         defineMmioMemory(machine);

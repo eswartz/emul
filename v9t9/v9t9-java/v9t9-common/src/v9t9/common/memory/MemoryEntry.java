@@ -39,7 +39,7 @@ import v9t9.base.utils.Pair;
  * 
  * @author ejs
  */
-public class MemoryEntry implements MemoryAccess, Comparable<MemoryEntry>, IPersistable {
+public class MemoryEntry implements IMemoryAccess, Comparable<MemoryEntry>, IPersistable {
     /** start address */
     public int addr;
 
@@ -66,6 +66,8 @@ public class MemoryEntry implements MemoryAccess, Comparable<MemoryEntry>, IPers
 	//public IModule moduleLoaded;
 
 	public Memory memory;
+
+	private boolean isVolatile;
 	
     public MemoryEntry(String name, MemoryDomain domain, int addr,
             int size, MemoryArea area) {
@@ -87,6 +89,7 @@ public class MemoryEntry implements MemoryAccess, Comparable<MemoryEntry>, IPers
         this.name = name;
         this.domain = domain;
         this.area = area;
+        this.isVolatile = area != null && area.hasWriteAccess();
     }
 
     
@@ -164,7 +167,18 @@ public class MemoryEntry implements MemoryAccess, Comparable<MemoryEntry>, IPers
         return "[memory entry >" + HexUtils.toHex4(addr) + "..." + HexUtils.toHex4((addr+size)) + "]";
     }
 
+    public boolean isVolatile() {
+    	return isVolatile;
+    }
+    
+	public void setVolatile(boolean isVolatile) {
+		this.isVolatile = isVolatile;
+	}
+
+    
     public void setArea(MemoryArea area) {
+    	if (this.area == null && area != null)
+    		isVolatile = area.hasWriteAccess();
     	this.area = area;
     }
     
@@ -299,7 +313,7 @@ public class MemoryEntry implements MemoryAccess, Comparable<MemoryEntry>, IPers
 	 * @param addr
 	 * @return
 	 */
-	protected final int mapAddress(int addr) {
+	public final int mapAddress(int addr) {
 		return (addr & 0xffff) + addrOffset;
 	}
 	public byte flatReadByte(int addr) {
@@ -435,7 +449,5 @@ public class MemoryEntry implements MemoryAccess, Comparable<MemoryEntry>, IPers
 		}
 		return entry;
 	}
-
-
 
 }

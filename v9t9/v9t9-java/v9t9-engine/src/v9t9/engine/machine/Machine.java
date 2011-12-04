@@ -29,6 +29,7 @@ import v9t9.common.events.NotifyEvent;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.memory.Memory;
 import v9t9.common.memory.MemoryDomain;
+import v9t9.common.memory.MemoryEntry;
 import v9t9.common.memory.MemoryModel;
 import v9t9.engine.client.IClient;
 import v9t9.engine.cpu.Executor;
@@ -37,8 +38,9 @@ import v9t9.engine.dsr.IDsrManager;
 import v9t9.engine.events.RecordingEventNotifier;
 import v9t9.engine.files.DataFiles;
 import v9t9.engine.hardware.ICruAccess;
-import v9t9.engine.hardware.SoundChip;
-import v9t9.engine.hardware.VdpChip;
+import v9t9.engine.hardware.ISoundChip;
+import v9t9.engine.hardware.ISpeechChip;
+import v9t9.engine.hardware.IVdpChip;
 import v9t9.engine.keyboard.KeyboardState;
 import v9t9.engine.settings.WorkspaceSettings;
 
@@ -56,7 +58,7 @@ abstract public class Machine implements IMachine {
     protected FastTimer fastTimer;
     //Timer cpuTimer;
     //protected Timer videoTimer;
-	private VdpChip vdp;
+	private IVdpChip vdp;
 	protected DsrManager dsrManager;
 
     protected long lastInterrupt = System.currentTimeMillis();
@@ -79,7 +81,8 @@ abstract public class Machine implements IMachine {
 	protected  KeyboardState keyboardState;
 	private Object executionLock = new Object();
 	volatile protected boolean bExecuting;
-	protected  SoundChip sound;
+	protected  ISoundChip sound;
+	protected  ISpeechChip speech;
 	private List<Runnable> runnableList;
 	private ICpuMetrics cpuMetrics;
 	
@@ -93,6 +96,7 @@ abstract public class Machine implements IMachine {
 	private final MachineModel machineModel;
 	private IPropertyListener pauseListener;
 	private Runnable soundTimingTask;
+	private Runnable speechTimerTask;
 	
     public Machine(MachineModel machineModel) {
     	pauseListener = new IPropertyListener() {
@@ -134,8 +138,9 @@ abstract public class Machine implements IMachine {
 
 
 	protected void init(MachineModel machineModel) {
-		sound = machineModel.createSoundProvider(this);
     	this.vdp = machineModel.createVdp(this);
+    	sound = machineModel.createSoundChip(this);
+    	speech = machineModel.createSpeechChip(this);
     	memoryModel.initMemory(this);
     	
     	if (!settingModuleList.getString().isEmpty()) {
@@ -246,18 +251,36 @@ abstract public class Machine implements IMachine {
         };
         fastTimer.scheduleTask(cpuTimingTask, cpuTicksPerSec);
         
-        soundTimingTask = new Runnable() {
+        if (sound != null) {
+	        soundTimingTask = new Runnable() {
+	
+				@Override
+	        	public void run() {
+					if (!bExecuting)
+						return;
+				
+	    			sound.tick();
+	        	}
+	        };
+	        fastTimer.scheduleTask(soundTimingTask, cpuTicksPerSec);
+        }
+        
+        if (speech != null) {
+    		int hz;
 
-			@Override
-        	public void run() {
-				if (!bExecuting)
-					return;
-			
-    			sound.tick();
-        	}
-        };
-        fastTimer.scheduleTask(soundTimingTask, cpuTicksPerSec);
-
+			hz = speech.getGenerateRate();
+			speechTimerTask = new Runnable() {
+	
+				@Override
+				public void run() {
+					if (IMachine.settingPauseMachine.getBoolean())
+						return;
+					speech.generateSpeech();
+				}
+				
+			};
+			fastTimer.scheduleTask(speechTimerTask, hz);
+        }
         
         videoRunner = new Thread("Video Runner") {
         	@Override
@@ -410,6 +433,28 @@ abstract public class Machine implements IMachine {
 	}
     
 	/* (non-Javadoc)
+	 * @see v9t9.common.settings.IBaseMachine#reset()
+	 */
+	@Override
+	public void reset() {
+
+		MemoryDomain domain = getMemory().getDomain(MemoryDomain.NAME_CPU);
+		for (MemoryEntry entry : domain.getFlattenedMemoryEntries()) {
+			if (entry.isVolatile()) {
+				int addr = entry.mapAddress(entry.addr);
+				//System.out.println("Wiping " + entry +  "@" + HexUtils.toHex4(addr));
+				for (int i = 0; i < entry.size; i+= 2)
+					domain.writeWord(i + addr, (short) 0);
+			}
+		}
+		
+		if (cruAccess != null)
+			cruAccess.reset();
+				
+		cpu.reset();
+	}
+	
+	/* (non-Javadoc)
 	 * @see v9t9.emulator.common.IMachine#getCpu()
 	 */
 	@Override
@@ -520,7 +565,10 @@ abstract public class Machine implements IMachine {
 		cpu.saveState(settings.addSection("CPU"));
 		memory.saveState(settings.addSection("Memory"));
 		vdp.saveState(settings.addSection("VDP"));
-		sound.saveState(settings.addSection("Sound"));
+		if (sound != null)
+			sound.saveState(settings.addSection("Sound"));
+		if (speech != null)
+			speech.saveState(settings.addSection("Speech"));
 		if (moduleManager != null)
 			moduleManager.saveState(settings.addSection("Modules"));
 		if (dsrManager != null)
@@ -584,7 +632,10 @@ abstract public class Machine implements IMachine {
 		memory.loadState(section.getSection("Memory"));
 		cpu.loadState(section.getSection("CPU"));
 		vdp.loadState(section.getSection("VDP"));
-		sound.loadState(section.getSection("Sound"));
+		if (sound != null)
+			sound.loadState(section.getSection("Sound"));
+		if (speech != null)
+			speech.loadState(section.getSection("Speech"));
 		keyboardState.resetKeyboard();
 		keyboardState.resetJoystick();
 		if (dsrManager != null)
@@ -595,8 +646,16 @@ abstract public class Machine implements IMachine {
 	 * @see v9t9.emulator.common.IMachine#getSound()
 	 */
 	@Override
-	public SoundChip getSound() {
+	public ISoundChip getSound() {
 		return sound;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.machine.IMachine#getSpeech()
+	 */
+	@Override
+	public ISpeechChip getSpeech() {
+		return speech;
 	}
 
 	/* (non-Javadoc)
@@ -656,7 +715,7 @@ abstract public class Machine implements IMachine {
 	 * @see v9t9.emulator.common.IMachine#getVdp()
 	 */
 	@Override
-	public VdpChip getVdp() {
+	public IVdpChip getVdp() {
 		return vdp;
 	}
 

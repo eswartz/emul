@@ -10,6 +10,8 @@ import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.MenuDetectEvent;
 import org.eclipse.swt.events.MenuDetectListener;
+import org.eclipse.swt.events.MouseAdapter;
+import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Point;
@@ -87,13 +89,19 @@ public class EmulatorButtonBar extends EmulatorBar  {
 					}
 				});
 
-		createButton(4, "Reset the computer",
+		BasicButton reset = createButton(4, "Reset the computer",
 				new SelectionAdapter() {
 					@Override
 					public void widgetSelected(SelectionEvent e) {
 						machine.getCpu().reset();
 					}
 				});
+		reset.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseDoubleClick(MouseEvent e) {
+				machine.reset();
+			}
+		});
 
 		createToggleStateButton(ICpu.settingDumpFullInstructions,
 				2, 

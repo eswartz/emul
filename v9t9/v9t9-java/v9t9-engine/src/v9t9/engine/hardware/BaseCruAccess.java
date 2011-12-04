@@ -57,7 +57,7 @@ public class BaseCruAccess implements ICruAccess {
         reset();
     }
 
-    protected void reset() {
+    public void reset() {
         enabledIntMask = 0;
         intreq = false;
         ic = 0xf;
@@ -194,4 +194,5 @@ public class BaseCruAccess implements ICruAccess {
 	public IMachine getMachine() {
 		return machine;
 	}
+
 }

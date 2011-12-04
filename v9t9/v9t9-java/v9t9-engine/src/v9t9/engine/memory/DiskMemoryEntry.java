@@ -240,6 +240,15 @@ public class DiskMemoryEntry extends MemoryEntry {
     }
     
     /* (non-Javadoc)
+     * @see v9t9.common.memory.MemoryEntry#isVolatile()
+     */
+    @Override
+    public boolean isVolatile() {
+    	// don't destroy, ever
+    	return false;
+    }
+    
+    /* (non-Javadoc)
      * @see v9t9.MemoryEntry#load()
      */
     @Override

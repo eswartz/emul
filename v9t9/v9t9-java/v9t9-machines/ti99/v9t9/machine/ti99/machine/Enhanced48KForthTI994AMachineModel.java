@@ -7,8 +7,8 @@ import v9t9.common.memory.BankedMemoryEntry;
 import v9t9.common.memory.MemoryModel;
 import v9t9.common.memory.WindowBankedMemoryEntry;
 import v9t9.engine.hardware.ICruWriter;
-import v9t9.engine.hardware.SoundChip;
-import v9t9.engine.hardware.VdpChip;
+import v9t9.engine.hardware.ISoundChip;
+import v9t9.engine.hardware.IVdpChip;
 import v9t9.engine.keyboard.KeyboardState;
 import v9t9.engine.machine.IMachine;
 import v9t9.engine.memory.Vdp9938Mmio;
@@ -62,14 +62,14 @@ public class Enhanced48KForthTI994AMachineModel extends BaseTI99MachineModel {
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.MachineModel#getVdp()
 	 */
-	public VdpChip createVdp(IMachine machine) {
+	public IVdpChip createVdp(IMachine machine) {
 		vdp = new VdpV9938(machine);
 		vdpMmio = new Vdp9938Mmio(machine.getMemory(), vdp, 0x20000);
 		return vdp;
 	}
 
-	public SoundChip createSoundProvider(IMachine machine) {
-		return new MultiSoundTMS9919B(machine);
+	public ISoundChip createSoundChip(IMachine machine) {
+		return new MultiSoundTMS9919B();
 	}
 	
 	public void defineDevices(final IMachine machine_) {

@@ -5,7 +5,7 @@ package v9t9.engine.video;
 
 import java.util.Arrays;
 
-import v9t9.engine.hardware.VdpChip;
+import v9t9.engine.hardware.IVdpChip;
 import v9t9.engine.video.v9938.VdpV9938;
 
 /**
@@ -321,7 +321,7 @@ public class VdpColorManager {
 		return isStandardPalette;
 	}
 
-	public static byte[][] getStandardPalette(VdpChip vdp) {
+	public static byte[][] getStandardPalette(IVdpChip vdp) {
 		return vdp instanceof VdpV9938 ? stockPaletteV9938 : stockPalette;
 	}
 

@@ -5,8 +5,8 @@ package v9t9.machine.ti99.machine;
 
 
 import v9t9.common.memory.MemoryModel;
-import v9t9.engine.hardware.SoundChip;
-import v9t9.engine.hardware.VdpChip;
+import v9t9.engine.hardware.ISoundChip;
+import v9t9.engine.hardware.IVdpChip;
 import v9t9.engine.keyboard.KeyboardState;
 import v9t9.engine.machine.IMachine;
 import v9t9.engine.memory.Vdp9918AMmio;
@@ -58,7 +58,7 @@ public class StandardMachineModel extends BaseTI99MachineModel {
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.MachineModel#getVdp()
 	 */
-	public VdpChip createVdp(IMachine machine) {
+	public IVdpChip createVdp(IMachine machine) {
 		VdpTMS9918A vdp = new VdpTMS9918A(machine);
 		new Vdp9918AMmio(machine.getMemory(), vdp, 0x4000);
 		return vdp;
@@ -81,7 +81,7 @@ public class StandardMachineModel extends BaseTI99MachineModel {
 		}
 	}
 
-	public SoundChip createSoundProvider(IMachine machine) {
-		return new SoundTMS9919(machine, null);
+	public ISoundChip createSoundChip(IMachine machine) {
+		return new SoundTMS9919(null);
 	}
 }

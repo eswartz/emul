@@ -79,7 +79,7 @@ import org.lwjgl.util.glu.GLU;
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
 import v9t9.engine.files.DataFiles;
-import v9t9.engine.hardware.VdpChip;
+import v9t9.engine.hardware.IVdpChip;
 import v9t9.engine.video.ICanvas;
 import v9t9.engine.video.VdpCanvas;
 import v9t9.gui.client.swt.gl.MonitorEffect;
@@ -145,7 +145,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	private TextureLoader textureLoader = new TextureLoader();
 	private Map<MonitorEffect, Integer> displayListMap = new HashMap<MonitorEffect, Integer>();
 
-	public SwtLwjglVideoRenderer(VdpChip vdp) {
+	public SwtLwjglVideoRenderer(IVdpChip vdp) {
 		super(vdp);
 	}
 

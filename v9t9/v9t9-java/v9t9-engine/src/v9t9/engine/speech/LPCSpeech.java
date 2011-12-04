@@ -5,6 +5,7 @@ package v9t9.engine.speech;
 
 import java.util.Arrays;
 
+import v9t9.base.properties.SettingProperty;
 import v9t9.base.settings.Logging;
 
 
@@ -14,6 +15,8 @@ import v9t9.base.settings.Logging;
  *
  */
 public class LPCSpeech {
+	public static final SettingProperty settingLogSpeech = new SettingProperty("LogSpeech",
+			new Integer(0));
 
 	boolean	rpt;				/* repeat */
 	int		pnv,env;			/* pitch, energy new value */
@@ -29,14 +32,6 @@ final static int FL_last	= 8;		/* stop frame seen */
 	int		b[],y[];		/* lattice filter */
 	int		ns1,ns2;		/* unvoiced hiss registers */
 	int		ppctr;			/* pitch counter */
-	
-	public interface Fetcher {
-		int fetch(int bits);
-	}
-
-	public interface Sender {
-		void send(short val, int pos, int length);
-	}
 	
 	public LPCSpeech() {
 		knv = new int[12];
@@ -108,7 +103,7 @@ final static int FL_last	= 8;		/* stop frame seen */
 	/**
 	 *	Read an equation from the bit source.
 	 */
-	private void readEquation(Fetcher fetcher, boolean forceUnvoiced)
+	private void readEquation(ILPCDataFetcher fetcher, boolean forceUnvoiced)
 	{
 		StringBuilder builder = new StringBuilder();
 
@@ -238,10 +233,10 @@ final static int FL_last	= 8;		/* stop frame seen */
 			knv[9] = 0;
 		}
 
-		Logging.writeLogLine(2, TMS5220.settingLogSpeech,
+		Logging.writeLogLine(2, LPCSpeech.settingLogSpeech,
 				"Equation: " + builder);
 
-		Logging.writeLogLine(3, TMS5220.settingLogSpeech,
+		Logging.writeLogLine(3, LPCSpeech.settingLogSpeech,
 				"ebf="+ebf+", pbf="+pbf+", env="+env+", pnv="+pnv);
 	}
 
@@ -268,7 +263,7 @@ final static int FL_last	= 8;		/* stop frame seen */
 	 *	Generate PCM data for one LPC frame.
 	 *
 	 */
-	private void calc(Sender sender, int length) {
+	private void calc(ISpeechDataSender sender, int length) {
 		int         frame, framesize;
 		int			stage;
 		int			U;
@@ -364,7 +359,7 @@ final static int FL_last	= 8;		/* stop frame seen */
 		If we're here, we have enough data to form any one equation.
 		@return 1 to continue, 0 if end of frame
 	*/
-	public synchronized boolean frame(Fetcher fetcher, Sender sender, int length)
+	public synchronized boolean frame(ILPCDataFetcher fetcher, ISpeechDataSender sender, int length)
 	{
 		if ((decode & FL_last) == 0) {
 			readEquation(fetcher, false);

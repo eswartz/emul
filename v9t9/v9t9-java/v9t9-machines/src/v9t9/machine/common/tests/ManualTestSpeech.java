@@ -15,8 +15,8 @@ import javax.sound.sampled.SourceDataLine;
 import v9t9.common.memory.MemoryDomain;
 import v9t9.engine.files.DataFiles;
 import v9t9.engine.speech.LPCSpeech;
+import v9t9.engine.speech.ISpeechDataSender;
 import v9t9.engine.speech.TMS5220;
-import v9t9.engine.speech.LPCSpeech.Sender;
 
 /**
  * @author ejs
@@ -57,13 +57,13 @@ public class ManualTestSpeech {
 		DataFiles.addSearchPath("l:/src/v9t9-data/roms");
 		TMS5220 tms5220 = new TMS5220(speechMem);
 		
-		TMS5220.settingLogSpeech.setInt(1);
+		LPCSpeech.settingLogSpeech.setInt(1);
 		LPCSpeech speech = new LPCSpeech();
 		speech.init();
 		
 		final FileOutputStream fos = new FileOutputStream("/tmp/speech.raw");
 		
-		Sender sender = new Sender() {
+		ISpeechDataSender sender = new ISpeechDataSender() {
 
 			public void send(short val, int pos, int length) {
 				

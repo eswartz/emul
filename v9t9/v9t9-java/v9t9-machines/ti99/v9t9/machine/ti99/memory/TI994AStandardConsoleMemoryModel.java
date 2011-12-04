@@ -69,12 +69,16 @@ public class TI994AStandardConsoleMemoryModel extends BaseTI994AMemoryModel {
  
 	@Override
 	protected void defineConsoleMemory(IBaseMachine machine) {
-	    memory.addAndMap(new MemoryEntry("Low 8K expansion RAM", CPU, 0x2000,
-	            0x2000, new ExpRamArea(0x2000)));
-	    memory.addAndMap(new MemoryEntry("Console RAM", CPU, 0x8000, 0x0400,
-	            new ConsoleRamArea()));
-	    memory.addAndMap(new MemoryEntry("High 24K expansion RAM", CPU, 0xA000,
-	            0x6000, new ExpRamArea(0x6000)));
+		memory.addAndMap(new MemoryEntry("Console RAM", CPU, 0x8000, 0x0400,
+				new ConsoleRamArea()));
+	    MemoryEntry lowRam = new MemoryEntry("Low 8K expansion RAM", CPU, 0x2000,
+	            0x2000, new ExpRamArea(0x2000));
+	    lowRam.setVolatile(false);
+		memory.addAndMap(lowRam);
+	    MemoryEntry highRam = new MemoryEntry("High 24K expansion RAM", CPU, 0xA000,
+	            0x6000, new ExpRamArea(0x6000));
+	    highRam.setVolatile(false);
+		memory.addAndMap(highRam);
 		
 	}
 

@@ -32,4 +32,9 @@ public interface ICruAccess extends IPersistable {
 	void triggerInterrupt(int level);
 
 	boolean isInterruptWaiting();
+
+	/**
+	 * 
+	 */
+	void reset();
 }

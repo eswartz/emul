@@ -15,7 +15,7 @@ import v9t9.common.events.IEventNotifier;
 import v9t9.engine.client.IClient;
 import v9t9.engine.client.IKeyboardHandler;
 import v9t9.engine.client.IVideoRenderer;
-import v9t9.engine.hardware.VdpChip;
+import v9t9.engine.hardware.IVdpChip;
 import v9t9.engine.machine.Machine;
 import v9t9.engine.machine.TerminatedException;
 import v9t9.gui.client.awt.AwtKeyboardHandler;
@@ -32,7 +32,7 @@ public abstract class BaseSwtJavaClient implements IClient {
 		Display.setAppName("V9t9");
 	}
 	
-	protected VdpChip video;
+	protected IVdpChip video;
 	protected Machine machine;
 	protected IKeyboardHandler keyboardHandler;
 	protected ISwtVideoRenderer videoRenderer;
@@ -143,11 +143,11 @@ public abstract class BaseSwtJavaClient implements IClient {
 			videoRenderer.dispose();
 	}
 
-	public v9t9.engine.hardware.VdpChip getVideoHandler() {
+	public v9t9.engine.hardware.IVdpChip getVideoHandler() {
 	    return video;
 	}
 
-	public void setVideoHandler(v9t9.engine.hardware.VdpChip video) {
+	public void setVideoHandler(v9t9.engine.hardware.IVdpChip video) {
 	    this.video = video;
 	}
 

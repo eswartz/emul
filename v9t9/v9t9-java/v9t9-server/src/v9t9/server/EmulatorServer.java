@@ -162,9 +162,9 @@ public class EmulatorServer {
 			inited = true;
 	        setupDefaults();
 	        loadState();
-	        
 		}
-		machine.getCpu().reset();
+		
+		machine.reset();
         machine.start();
         
         while (client.isAlive()) {
