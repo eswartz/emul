@@ -110,7 +110,6 @@ import v9t9.common.machine.IBaseMachine;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryWriteListener;
-import v9t9.common.memory.MemoryDomain;
 import v9t9.engine.cpu.Executor;
 import v9t9.engine.cpu.InstructionListener;
 import v9t9.engine.interpreter.Interpreter;
@@ -897,7 +896,7 @@ public class InterpreterF99b implements Interpreter {
 		// we want to find the LAST entry with the name, but cannot search
 		// backwards, because the compressed LFA-less nature of the dictionary
 		// doesn't afford reliable backward scanning.
-		MemoryDomain grom = cpu.getMachine().getMemory().getDomain(IMemoryDomain.NAME_GRAPHICS);
+		IMemoryDomain grom = cpu.getMachine().getMemory().getDomain(IMemoryDomain.NAME_GRAPHICS);
 		while (gromDict < gromDictEnd) {
 			cpu.addCycles(3);
 			if (nameMatches(grom, caddr, gromDict, after)) {

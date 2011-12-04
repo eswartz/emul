@@ -17,11 +17,11 @@ import v9t9.base.settings.ISettingSection;
 import v9t9.common.cpu.AbortedException;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyException;
-import v9t9.common.memory.BankedMemoryEntry;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.engine.files.DataFiles;
+import v9t9.engine.memory.BankedMemoryEntry;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.modules.IModule;
 import v9t9.engine.modules.MemoryEntryInfo;
@@ -108,7 +108,11 @@ public class ModuleManager implements IPersistable {
 					entries.add(entry);
 			}
 			for (IMemoryEntry entry : entries) {
-				memory.addAndMap(entry);
+				try {
+					memory.addAndMap(entry);
+				} catch (AbortedException e) {
+					// ignore
+				}
 				memoryEntryModules.put(entry, module);
 			}
 			loadedModules.add(module);

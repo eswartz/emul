@@ -4,7 +4,7 @@
  * Created on Dec 15, 2004
  *  
  */
-package v9t9.common.memory;
+package v9t9.engine.memory;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -13,25 +13,29 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import v9t9.base.properties.IPersistable;
 import v9t9.base.settings.ISettingSection;
+import v9t9.common.memory.IMemory;
+import v9t9.common.memory.IMemoryDomain;
+import v9t9.common.memory.IMemoryEntry;
+import v9t9.common.memory.IMemoryListener;
+import v9t9.common.memory.IMemoryModel;
 
 /*
  * @author ejs
  */
-public class Memory implements IPersistable, IMemory {
+public class Memory implements IMemory {
 
-    private List<MemoryListener> listeners;
+    private List<IMemoryListener> listeners;
 
-	private final MemoryModel model;
+	private final IMemoryModel model;
 
-	private Map<String, MemoryDomain> domains = new HashMap<String, MemoryDomain>();
+	private Map<String, IMemoryDomain> domains = new HashMap<String, IMemoryDomain>();
 
     /* (non-Javadoc)
 	 * @see v9t9.common.memory.IMemory#addListener(v9t9.common.memory.MemoryListener)
 	 */
     @Override
-	public void addListener(MemoryListener listener) {
+	public void addListener(IMemoryListener listener) {
 		listeners.add(listener);
 	}
 
@@ -39,7 +43,7 @@ public class Memory implements IPersistable, IMemory {
 	 * @see v9t9.common.memory.IMemory#removeListener(v9t9.common.memory.MemoryListener)
 	 */
 	@Override
-	public void removeListener(MemoryListener listener) {
+	public void removeListener(IMemoryListener listener) {
 		listeners.remove(listener);
 	}
 
@@ -49,9 +53,9 @@ public class Memory implements IPersistable, IMemory {
 	@Override
 	public void notifyListenersOfPhysicalChange(IMemoryEntry entry) {
 		if (listeners != null) {
-			for (Iterator<MemoryListener> iter = listeners.iterator(); iter
+			for (Iterator<IMemoryListener> iter = listeners.iterator(); iter
 					.hasNext();) {
-				MemoryListener element = iter.next();
+				IMemoryListener element = iter.next();
 				element.physicalMemoryMapChanged(entry);
 			}
 		}
@@ -63,9 +67,9 @@ public class Memory implements IPersistable, IMemory {
 	@Override
 	public void notifyListenersOfLogicalChange(IMemoryEntry entry) {
 		if (listeners != null) {
-			for (Iterator<MemoryListener> iter = listeners.iterator(); iter
+			for (Iterator<IMemoryListener> iter = listeners.iterator(); iter
 					.hasNext();) {
-				MemoryListener element = iter.next();
+				IMemoryListener element = iter.next();
 				element.logicalMemoryMapChanged(entry);
 			}
 		}
@@ -75,16 +79,16 @@ public class Memory implements IPersistable, IMemory {
 	 * @see v9t9.common.memory.IMemory#addDomain(java.lang.String, v9t9.common.memory.MemoryDomain)
 	 */
 	@Override
-	public void addDomain(String key, MemoryDomain domain) {
+	public void addDomain(String key, IMemoryDomain domain) {
 		this.domains.put(key, domain);
-		domain.memory = this;
+		((MemoryDomain) domain).memory = this;
 	}
 	
 	/* (non-Javadoc)
 	 * @see v9t9.common.memory.IMemory#getDomain(java.lang.String)
 	 */
 	@Override
-	public MemoryDomain getDomain(String key) {
+	public IMemoryDomain getDomain(String key) {
 		return domains.get(key);
 	}
 	
@@ -101,21 +105,21 @@ public class Memory implements IPersistable, IMemory {
 	 * @see v9t9.common.memory.IMemory#removeAndUnmap(v9t9.common.memory.MemoryEntry)
 	 */
     @Override
-	public void removeAndUnmap(MemoryEntry entry) {
+	public void removeAndUnmap(IMemoryEntry entry) {
     	entry.getDomain().unmapEntry(entry);
     	notifyListenersOfPhysicalChange(entry);
     }
     
-    public Memory(MemoryModel model) {
+    public Memory(IMemoryModel model) {
         this.model = model;
-		listeners = new java.util.ArrayList<MemoryListener>();
+		listeners = new java.util.ArrayList<IMemoryListener>();
     }
 
 	/* (non-Javadoc)
 	 * @see v9t9.common.memory.IMemory#getModel()
 	 */
 	@Override
-	public MemoryModel getModel() {
+	public IMemoryModel getModel() {
 		return model;
 	}
 
@@ -124,7 +128,7 @@ public class Memory implements IPersistable, IMemory {
 	 */
 	@Override
 	public void saveState(ISettingSection section) {
-		for (Map.Entry<String, MemoryDomain> entry : domains.entrySet()) {
+		for (Map.Entry<String, IMemoryDomain> entry : domains.entrySet()) {
 			entry.getValue().saveState(section.addSection(entry.getKey()));
 		}
 	}
@@ -140,7 +144,7 @@ public class Memory implements IPersistable, IMemory {
 		Set<String> notSaved = new HashSet<String>(domains.keySet()); 
 		
 		for (String domainName : section.getSectionNames()) {
-			MemoryDomain domain = getDomain(domainName);
+			IMemoryDomain domain = getDomain(domainName);
 			if (domain != null) {
 				notSaved.remove(domainName);
 			} else {
@@ -164,7 +168,7 @@ public class Memory implements IPersistable, IMemory {
 	 */
 	@Override
 	public IMemoryDomain[] getDomains() {
-		return (IMemoryDomain[]) domains.values().toArray(new MemoryDomain[domains.values().size()]);
+		return (IMemoryDomain[]) domains.values().toArray(new IMemoryDomain[domains.values().size()]);
 	}
 
 	/* (non-Javadoc)

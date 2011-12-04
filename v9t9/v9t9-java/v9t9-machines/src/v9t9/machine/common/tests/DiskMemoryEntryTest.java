@@ -7,7 +7,7 @@
 package v9t9.machine.common.tests;
 
 import junit.framework.TestCase;
-import v9t9.common.memory.MemoryDomain;
+import v9t9.common.memory.IMemoryDomain;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.machine.ti99.machine.TI994A;
 
@@ -16,7 +16,7 @@ import v9t9.machine.ti99.machine.TI994A;
  */
 public class DiskMemoryEntryTest extends TestCase {
     private TI994A machine;
-    private MemoryDomain CPU;
+    private IMemoryDomain CPU;
     
     String basedir = "/usr/local/src/v9t9-data/roms/";
 

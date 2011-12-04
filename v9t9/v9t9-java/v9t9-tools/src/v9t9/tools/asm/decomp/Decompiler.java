@@ -15,10 +15,10 @@ import v9t9.common.asm.IInstructionFactory;
 import v9t9.common.cpu.ICpuState;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
-import v9t9.common.memory.MemoryEntry;
-import v9t9.common.memory.MemoryModel;
+import v9t9.common.memory.IMemoryModel;
 import v9t9.engine.files.NativeFile;
 import v9t9.engine.files.NativeFileFactory;
+import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.NativeFileMemoryEntry;
 import v9t9.machine.ti99.asm.HighLevelCodeInfo;
 import v9t9.machine.ti99.asm.Phase;
@@ -30,7 +30,7 @@ import v9t9.machine.ti99.asm.TopDownPhase;
  */
 public class Decompiler implements ICodeProvider {
 
-	protected MemoryModel model;
+	protected IMemoryModel model;
 	protected IMemory memory;
 	protected IMemoryDomain consoleMemory;
 	protected DecompileOptions options;
@@ -40,7 +40,7 @@ public class Decompiler implements ICodeProvider {
 	/**
 	 * 
 	 */
-	public Decompiler(MemoryModel model, IInstructionFactory instructionFactory, ICpuState state) {
+	public Decompiler(IMemoryModel model, IInstructionFactory instructionFactory, ICpuState state) {
 		super();
 		this.model = model;
 		this.state = state;

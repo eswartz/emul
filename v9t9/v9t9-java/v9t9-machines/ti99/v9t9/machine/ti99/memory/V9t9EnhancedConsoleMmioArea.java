@@ -5,9 +5,9 @@ package v9t9.machine.ti99.memory;
 
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
-import v9t9.common.memory.MemoryListener;
-import v9t9.common.memory.MultiBankedMemoryEntry;
+import v9t9.common.memory.IMemoryListener;
 import v9t9.engine.machine.IMachine;
+import v9t9.engine.memory.MultiBankedMemoryEntry;
 import v9t9.engine.memory.TIMemoryModel;
 import v9t9.machine.ti99.memory.mmio.ConsoleMmioArea;
 
@@ -41,7 +41,7 @@ import v9t9.machine.ti99.memory.mmio.ConsoleMmioArea;
  * @author ejs
  *
  */
-public class V9t9EnhancedConsoleMmioArea extends ConsoleMmioArea implements MemoryListener {
+public class V9t9EnhancedConsoleMmioArea extends ConsoleMmioArea implements IMemoryListener {
 
 	private static final int MMIO_BASE = 0xFF80;
 	public static final int VDPRD = 0xFF80;

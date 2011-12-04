@@ -50,7 +50,7 @@ public class CodeBlockCompilerStrategy implements ICompilerStrategy {
 		this.executor = executor;
 		this.compiler = compiler;
 	}
-	public ICompiledCode getCompiledCode() {
+	public synchronized ICompiledCode getCompiledCode() {
 		ICpu cpu = executor.getCpu();
 		if (cpu.shouldDebugCompiledCode(cpu.getPC())) {
 			ICpu.settingDumpInstructions.setBoolean(true);
@@ -99,4 +99,11 @@ public class CodeBlockCompilerStrategy implements ICompilerStrategy {
 	    return cb;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.engine.compiler.ICompilerStrategy#reset()
+	 */
+	@Override
+	public synchronized void reset() {
+		codeblocks.clear();
+	}
 }

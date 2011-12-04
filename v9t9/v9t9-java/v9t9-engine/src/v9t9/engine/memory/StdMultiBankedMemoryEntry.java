@@ -1,10 +1,12 @@
-package v9t9.common.memory;
+package v9t9.engine.memory;
 
 import java.io.PrintWriter;
 
 
 import v9t9.base.settings.Logging;
 import v9t9.common.cpu.ICpu;
+import v9t9.common.memory.IMemory;
+import v9t9.common.memory.IMemoryEntry;
 
 /**
  * This is a standard TI-99/4A style banked memory entry.

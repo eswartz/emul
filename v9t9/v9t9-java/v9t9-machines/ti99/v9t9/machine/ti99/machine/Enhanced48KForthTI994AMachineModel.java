@@ -3,15 +3,15 @@
  */
 package v9t9.machine.ti99.machine;
 
-import v9t9.common.memory.BankedMemoryEntry;
-import v9t9.common.memory.MemoryModel;
-import v9t9.common.memory.WindowBankedMemoryEntry;
+import v9t9.common.memory.IMemoryModel;
 import v9t9.engine.hardware.ICruWriter;
 import v9t9.engine.hardware.ISoundChip;
 import v9t9.engine.hardware.IVdpChip;
 import v9t9.engine.keyboard.KeyboardState;
 import v9t9.engine.machine.IMachine;
+import v9t9.engine.memory.BankedMemoryEntry;
 import v9t9.engine.memory.Vdp9938Mmio;
+import v9t9.engine.memory.WindowBankedMemoryEntry;
 import v9t9.engine.sound.MultiSoundTMS9919B;
 import v9t9.engine.video.v9938.VdpV9938;
 import v9t9.machine.common.dsr.emudisk.DiskDirectoryMapper;
@@ -55,7 +55,7 @@ public class Enhanced48KForthTI994AMachineModel extends BaseTI99MachineModel {
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.MachineModel#getMemoryModel()
 	 */
-	public MemoryModel getMemoryModel() {
+	public IMemoryModel getMemoryModel() {
 		return memoryModel;
 	}
 

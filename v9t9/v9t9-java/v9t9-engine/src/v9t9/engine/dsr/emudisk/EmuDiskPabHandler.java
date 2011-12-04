@@ -11,7 +11,6 @@ import java.util.Map;
 
 import v9t9.base.utils.HexUtils;
 import v9t9.common.cpu.ICpu;
-import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.engine.cpu.Executor;
 import v9t9.engine.dsr.DsrException;
 import v9t9.engine.dsr.IMemoryTransfer;
@@ -24,6 +23,7 @@ import v9t9.engine.files.NativeFile;
 import v9t9.engine.files.NativeFileFactory;
 import v9t9.engine.files.NativeTextFile;
 import v9t9.engine.files.V9t9FDR;
+import v9t9.engine.memory.ByteMemoryAccess;
 
 public class EmuDiskPabHandler extends PabHandler {
 

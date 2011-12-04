@@ -55,8 +55,8 @@ import v9t9.base.utils.Pair;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
-import v9t9.common.memory.MemoryEntry;
-import v9t9.common.memory.MemoryListener;
+import v9t9.common.memory.IMemoryListener;
+import v9t9.engine.memory.MemoryEntry;
 import v9t9.gui.Emulator;
 import v9t9.gui.client.swt.FontUtils;
 
@@ -87,7 +87,7 @@ public class MemoryViewer extends Composite {
 		
 		createTable();
 		
-		memory.addListener(new MemoryListener() {
+		memory.addListener(new IMemoryListener() {
 
 			public void physicalMemoryMapChanged(IMemoryEntry entry) {
 				Display.getDefault().asyncExec(new Runnable() {

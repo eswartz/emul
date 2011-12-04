@@ -7,12 +7,13 @@ import java.io.IOException;
 
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.machine.IBaseMachine;
+import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
-import v9t9.common.memory.Memory;
-import v9t9.common.memory.MemoryDomain;
 import v9t9.engine.machine.IMachine;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.GplMmio;
+import v9t9.engine.memory.Memory;
+import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.SoundMmio;
 import v9t9.engine.memory.SpeechMmio;
 import v9t9.engine.memory.TIMemoryModel;
@@ -49,7 +50,7 @@ public abstract class BaseTI994AMemoryModel implements TIMemoryModel {
 
 	abstract protected void initSettings();
 
-    public Memory getMemory() {
+    public IMemory getMemory() {
     	if (memory == null) {
 	    	this.memory = new Memory(this);
 	    	
@@ -132,7 +133,7 @@ public abstract class BaseTI994AMemoryModel implements TIMemoryModel {
 		return entry;
 	}
 
-	public MemoryDomain getConsole() {
+	public IMemoryDomain getConsole() {
 		return CPU;
 	}
 

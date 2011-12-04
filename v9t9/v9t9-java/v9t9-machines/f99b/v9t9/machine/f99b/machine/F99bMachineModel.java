@@ -10,7 +10,7 @@ import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuMetrics;
 import v9t9.common.memory.IMemoryDomain;
-import v9t9.common.memory.MemoryModel;
+import v9t9.common.memory.IMemoryModel;
 import v9t9.engine.compiler.NullCompilerStrategy;
 import v9t9.engine.cpu.Executor;
 import v9t9.engine.dsr.IDeviceIndicatorProvider;
@@ -68,7 +68,7 @@ public class F99bMachineModel implements MachineModel {
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.MachineModel#getMemoryModel()
 	 */
-	public MemoryModel getMemoryModel() {
+	public IMemoryModel getMemoryModel() {
 		return memoryModel;
 	}
 

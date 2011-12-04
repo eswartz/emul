@@ -4,7 +4,9 @@
  * Created on Dec 15, 2004
  *
  */
-package v9t9.common.memory;
+package v9t9.engine.memory;
+
+import v9t9.common.memory.IMemoryEntry;
 
 /**
  * Byte memory decomposes word accesses into two byte accesses in big-endian order.

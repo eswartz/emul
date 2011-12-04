@@ -4,7 +4,7 @@
  * Created on Dec 16, 2004
  *
  */
-package v9t9.common.memory;
+package v9t9.engine.memory;
 
 /**
  * @author ejs

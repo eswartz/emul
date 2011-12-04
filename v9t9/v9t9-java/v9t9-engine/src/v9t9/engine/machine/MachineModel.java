@@ -8,7 +8,7 @@ import java.util.List;
 import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuMetrics;
-import v9t9.common.memory.MemoryModel;
+import v9t9.common.memory.IMemoryModel;
 import v9t9.engine.cpu.Executor;
 import v9t9.engine.dsr.IDeviceIndicatorProvider;
 import v9t9.engine.dsr.IDsrSettings;
@@ -26,7 +26,7 @@ public interface MachineModel {
 	
 	IMachine createMachine();
 
-	MemoryModel getMemoryModel();
+	IMemoryModel getMemoryModel();
 	
 	IVdpChip createVdp(IMachine machine);
 	

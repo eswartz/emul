@@ -89,8 +89,8 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 	    info.reads = 0;
 	    info.writes = 0;
 	
-	    MachineOperand9900 mop1 = (MachineOperand9900) getOp1();
-	    MachineOperand9900 mop2 = (MachineOperand9900) getOp2();
+	    MachineOperand9900 mop1 = new MachineOperand9900((MachineOperand9900) getOp1());
+	    MachineOperand9900 mop2 = new MachineOperand9900((MachineOperand9900) getOp2());
 	    
 	    // Initially, this.op?.val is incomplete, and is whatever
 	    // raw data from the opcode we can decode;
@@ -547,6 +547,8 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
 		    this.setSize((Pc & 0xffff) - (this.pc & 0xffff));		
 	    }
 	    
+	    this.setOp1(mop1);
+	    this.setOp2(mop2);
 	    //super.completeInstruction(Pc);
 	   
 	}

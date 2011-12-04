@@ -15,14 +15,13 @@ import v9t9.base.properties.SettingProperty;
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.utils.HexUtils;
 import v9t9.common.cpu.ICpu;
-import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.memory.IMemoryDomain;
-import v9t9.common.memory.MemoryDomain;
 import v9t9.engine.cpu.Executor;
 import v9t9.engine.hardware.BaseCruAccess;
 import v9t9.engine.hardware.ICruAccess;
 import v9t9.engine.hardware.IVdpChip;
 import v9t9.engine.machine.IMachine;
+import v9t9.engine.memory.ByteMemoryAccess;
 import v9t9.engine.memory.VdpMmio;
 import v9t9.engine.settings.WorkspaceSettings;
 import v9t9.engine.video.BlankModeRedrawHandler;
@@ -53,7 +52,7 @@ import v9t9.engine.video.VdpRedrawInfo;
  */
 public class VdpTMS9918A implements IVdpChip {
 	private RedrawBlock[] blocks;
-	protected MemoryDomain vdpMemory;
+	protected IMemoryDomain vdpMemory;
 
 	protected byte vdpregs[];
 	protected byte vdpbg;
@@ -178,7 +177,7 @@ public class VdpTMS9918A implements IVdpChip {
 			Executor.getDumpfull().println("[VDP] " + msg);
 	}
 	
-	public MemoryDomain getVideoMemory() {
+	public IMemoryDomain getVideoMemory() {
 		return vdpMemory;
 	}
 	 

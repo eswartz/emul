@@ -3,9 +3,9 @@
  */
 package v9t9.engine.dsr;
 
-import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.engine.hardware.IVdpChip;
+import v9t9.engine.memory.ByteMemoryAccess;
 
 /**
  * @author ejs

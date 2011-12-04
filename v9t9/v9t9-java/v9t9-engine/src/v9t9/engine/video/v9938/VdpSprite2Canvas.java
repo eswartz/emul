@@ -3,7 +3,7 @@
  */
 package v9t9.engine.video.v9938;
 
-import v9t9.common.memory.ByteMemoryAccess;
+import v9t9.engine.memory.ByteMemoryAccess;
 import v9t9.engine.video.ICanvas;
 import v9t9.engine.video.ISpriteCanvas;
 import v9t9.engine.video.Sprite2Canvas;

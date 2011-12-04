@@ -3,7 +3,6 @@ package v9t9.machine.ti99.machine;
 
 import v9t9.base.settings.ISettingSection;
 import v9t9.common.memory.IMemoryDomain;
-import v9t9.common.memory.MemoryDomain;
 import v9t9.engine.hardware.CruManager;
 import v9t9.engine.hardware.ICruChip;
 import v9t9.engine.machine.MachineBase;
@@ -86,21 +85,21 @@ public class TI99Machine extends MachineBase {
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.TI99Machine#getGplMemoryDomain()
 	 */
-	public MemoryDomain getGplMemoryDomain() {
+	public IMemoryDomain getGplMemoryDomain() {
 		return memory.getDomain(IMemoryDomain.NAME_GRAPHICS);
 	}
 
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.TI99Machine#getSpeechMemoryDomain()
 	 */
-	public MemoryDomain getSpeechMemoryDomain() {
+	public IMemoryDomain getSpeechMemoryDomain() {
 		return memory.getDomain(IMemoryDomain.NAME_SPEECH);
 	}
 
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.TI99Machine#getVdpMemoryDomain()
 	 */
-	public MemoryDomain getVdpMemoryDomain() {
+	public IMemoryDomain getVdpMemoryDomain() {
 		return memory.getDomain(IMemoryDomain.NAME_VIDEO);
 	}
 

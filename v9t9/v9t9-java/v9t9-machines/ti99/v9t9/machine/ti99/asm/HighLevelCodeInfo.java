@@ -70,8 +70,7 @@ public class HighLevelCodeInfo implements IDecompileInfo {
 		pc &= 0xfffe;
 		RawInstruction ins = instructions.get(pc);
 		if (ins == null) {
-			ins = new RawInstruction(instructionFactory.decodeInstruction(
-					pc, domain));
+			ins = instructionFactory.decodeInstruction(pc, domain);
 			instructions.put(pc, ins);
 		}
 		return ins;

@@ -15,11 +15,11 @@ import v9t9.common.asm.RawInstruction;
 import v9t9.common.asm.ResolveException;
 import v9t9.common.asm.Routine;
 import v9t9.common.memory.IMemory;
-import v9t9.common.memory.MemoryDomain;
-import v9t9.common.memory.MemoryEntry;
-import v9t9.common.memory.MemoryModel;
-import v9t9.common.memory.StockRamArea;
+import v9t9.common.memory.IMemoryDomain;
+import v9t9.common.memory.IMemoryModel;
+import v9t9.engine.memory.MemoryEntry;
 import v9t9.engine.memory.StockMemoryModel;
+import v9t9.engine.memory.StockRamArea;
 import v9t9.machine.ti99.asm.HighLevelInstruction;
 import v9t9.machine.ti99.cpu.InstTable9900;
 import v9t9.machine.ti99.cpu.Instruction9900;
@@ -35,9 +35,9 @@ import v9t9.tools.asm.assembler.inst9900.StandardInstructionParserStage9900;
 
 public abstract class BaseTest9900 extends TestCase {
 
-	protected MemoryDomain CPU;
+	protected IMemoryDomain CPU;
 	protected IMemory memory;
-	private MemoryModel memoryModel;
+	private IMemoryModel memoryModel;
 
 
 	protected StandardInstructionParserStage9900 stdInstStage = new StandardInstructionParserStage9900();

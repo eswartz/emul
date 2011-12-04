@@ -9,11 +9,9 @@ package v9t9.engine.memory;
 
 import v9t9.base.utils.HexUtils;
 import v9t9.common.cpu.ICpu;
-import v9t9.common.memory.BankedMemoryEntry;
 import v9t9.common.memory.IMemory;
+import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
-import v9t9.common.memory.MemoryDomain;
-import v9t9.common.memory.MemoryEntry;
 import v9t9.engine.hardware.IVdpChip;
 import v9t9.engine.video.tms9918a.VdpTMS9918A;
 
@@ -25,7 +23,7 @@ import v9t9.engine.video.tms9918a.VdpTMS9918A;
 public class Vdp9918AMmio extends VdpMmio {
 
 	protected IMemoryEntry memoryEntry;
-	protected final MemoryDomain videoMemory;
+	protected final IMemoryDomain videoMemory;
 
 	/**
      * @param machine

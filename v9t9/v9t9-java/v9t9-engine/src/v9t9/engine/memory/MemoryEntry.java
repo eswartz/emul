@@ -4,7 +4,7 @@
  * Created on Dec 16, 2004
  *
  */
-package v9t9.common.memory;
+package v9t9.engine.memory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -19,6 +19,10 @@ import v9t9.base.properties.IPersistable;
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.utils.HexUtils;
 import v9t9.base.utils.Pair;
+import v9t9.common.memory.IMemory;
+import v9t9.common.memory.IMemoryArea;
+import v9t9.common.memory.IMemoryDomain;
+import v9t9.common.memory.IMemoryEntry;
 
 //import v9t9.engine.modules.IModule;
 
@@ -194,10 +198,10 @@ public class MemoryEntry implements IPersistable, IMemoryEntry {
 	 * @see v9t9.common.memory.IMemoryEntry#setArea(v9t9.common.memory.MemoryArea)
 	 */
     @Override
-	public void setArea(MemoryArea area) {
+	public void setArea(IMemoryArea area) {
     	if (this.area == null && area != null)
     		isVolatile = area.hasWriteAccess();
-    	this.area = area;
+    	this.area = (MemoryArea) area;
     }
     
     /** Map entry into address space */

@@ -14,7 +14,7 @@ import v9t9.common.memory.IMemoryEntry;
 import v9t9.engine.cpu.Executor;
 
 /** This represents a compiled block of code. */
-public class CodeBlock implements ICompiledCode, v9t9.common.memory.MemoryListener {
+public class CodeBlock implements ICompiledCode, v9t9.common.memory.IMemoryListener {
 	IDecompileInfo highLevel;
     /** basic class name */
     String className;

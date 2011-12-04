@@ -24,7 +24,7 @@ public interface IMemoryEntry extends IMemoryAccess, Comparable<IMemoryEntry>, I
 
 	boolean isStatic();
 
-	void setArea(MemoryArea area);
+	void setArea(IMemoryArea area);
 
 	/** Save entry, if applicable 
 	 * @throws IOException */

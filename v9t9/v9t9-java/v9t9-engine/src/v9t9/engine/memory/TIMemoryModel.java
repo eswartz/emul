@@ -3,13 +3,13 @@
  */
 package v9t9.engine.memory;
 
-import v9t9.common.memory.MemoryModel;
+import v9t9.common.memory.IMemoryModel;
 
 /**
  * @author ejs
  *
  */
-public interface TIMemoryModel extends MemoryModel {
+public interface TIMemoryModel extends IMemoryModel {
 
 	/**
 	 * Get the VDP MMIO. 

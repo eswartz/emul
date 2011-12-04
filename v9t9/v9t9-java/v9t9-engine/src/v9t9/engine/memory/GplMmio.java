@@ -13,7 +13,7 @@ import v9t9.base.settings.ISettingSection;
 import v9t9.base.settings.Logging;
 import v9t9.base.utils.HexUtils;
 import v9t9.common.cpu.ICpu;
-import v9t9.common.memory.MemoryDomain;
+import v9t9.common.memory.IMemoryDomain;
 import v9t9.engine.cpu.Executor;
 
 /** GPL chip entry
@@ -22,7 +22,7 @@ import v9t9.engine.cpu.Executor;
 public class GplMmio implements IConsoleMmioReader, IConsoleMmioWriter, IPersistable {
 	static public final SettingProperty settingDumpGplAccess = new SettingProperty("DumpGplAccess", new Boolean(false));
     
-    private MemoryDomain domain;
+    private IMemoryDomain domain;
     
     short gromaddr;
     boolean gromwaddrflag, gromraddrflag;
@@ -31,7 +31,7 @@ public class GplMmio implements IConsoleMmioReader, IConsoleMmioWriter, IPersist
     /**
      * @param machine
      */
-    public GplMmio(MemoryDomain domain) {
+    public GplMmio(IMemoryDomain domain) {
         if (domain == null) {
 			throw new IllegalArgumentException();
 		}

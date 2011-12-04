@@ -1,7 +1,5 @@
 package v9t9.engine.memory;
 
-import v9t9.common.memory.BankedMemoryEntry;
-import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.engine.hardware.IVdpChip;
 
 public abstract class VdpMmio implements IConsoleMmioReader, IConsoleMmioWriter {

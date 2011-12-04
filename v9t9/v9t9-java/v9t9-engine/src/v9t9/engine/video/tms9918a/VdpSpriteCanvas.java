@@ -5,7 +5,7 @@ package v9t9.engine.video.tms9918a;
 
 import java.util.Arrays;
 
-import v9t9.common.memory.ByteMemoryAccess;
+import v9t9.engine.memory.ByteMemoryAccess;
 import v9t9.engine.video.BaseVdpCanvas;
 import v9t9.engine.video.ICanvas;
 import v9t9.engine.video.ISpriteCanvas;

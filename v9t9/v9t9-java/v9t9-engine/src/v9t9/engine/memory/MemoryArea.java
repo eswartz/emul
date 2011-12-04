@@ -4,11 +4,13 @@
  * Created on Dec 15, 2004
  *
  */
-package v9t9.common.memory;
+package v9t9.engine.memory;
 
 import net.iHarder.Base64;
 
 import v9t9.base.settings.ISettingSection;
+import v9t9.common.memory.IMemoryArea;
+import v9t9.common.memory.IMemoryEntry;
 
 /**
  * A memory area is the smallest unit of contiguous memory which has the

@@ -20,7 +20,7 @@ import java.util.List;
 import v9t9.base.properties.SettingProperty;
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.utils.CompatUtils;
-import v9t9.common.memory.MemoryDomain;
+import v9t9.common.memory.IMemoryDomain;
 
 
 /**
@@ -159,7 +159,7 @@ public class DataFiles {
      * @param memory
      * @return File written
      */
-    public static File writeMemoryImage(String filepath, int addr, int size, MemoryDomain memory)
+    public static File writeMemoryImage(String filepath, int addr, int size, IMemoryDomain memory)
     throws FileNotFoundException, IOException 
 	{
         File file = new File(filepath);

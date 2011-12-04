@@ -16,7 +16,7 @@ import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyEvent;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
-import v9t9.common.memory.MemoryModel;
+import v9t9.common.memory.IMemoryModel;
 
 /**
  * @author ejs
@@ -55,7 +55,7 @@ public interface IBaseMachine {
 	/** Get the primary memory */
 	IMemoryDomain getConsole();
 
-	MemoryModel getMemoryModel();
+	IMemoryModel getMemoryModel();
 
 	void saveState(ISettingSection settings);
 

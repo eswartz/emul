@@ -20,4 +20,9 @@ public interface ICompilerStrategy {
 	ICompiledCode getCompiledCode();
 	
 	void setup(Executor exec, CompilerBase compiler);
+
+	/**
+	 * 
+	 */
+	void reset();
 }

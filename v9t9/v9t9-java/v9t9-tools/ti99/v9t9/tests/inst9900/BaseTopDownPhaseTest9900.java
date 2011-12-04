@@ -19,9 +19,8 @@ import v9t9.common.asm.MemoryRanges;
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.asm.Routine;
 import v9t9.common.memory.IMemoryDomain;
-import v9t9.common.memory.MemoryDomain;
-import v9t9.common.memory.MemoryEntry;
-import v9t9.common.memory.StockRamArea;
+import v9t9.engine.memory.MemoryEntry;
+import v9t9.engine.memory.StockRamArea;
 import v9t9.machine.ti99.asm.HighLevelCodeInfo;
 import v9t9.machine.ti99.cpu.CpuState9900;
 import v9t9.tools.asm.assembler.ParseException;
@@ -53,7 +52,7 @@ public abstract class BaseTopDownPhaseTest9900 extends BaseTest9900 implements I
         decompileInfo = highLevel.getDecompileInfo();
     }
     
-    protected void parse(MemoryDomain cpu, int pc, int wp, String[] insts) throws ParseException {
+    protected void parse(IMemoryDomain cpu, int pc, int wp, String[] insts) throws ParseException {
 	    IHighLevelInstruction first = null;
 	    IHighLevelInstruction prev = null;
 	    for (String element : insts) {

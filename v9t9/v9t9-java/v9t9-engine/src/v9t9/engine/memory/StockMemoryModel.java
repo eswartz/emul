@@ -8,16 +8,16 @@ import java.util.List;
 
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.machine.IBaseMachine;
-import v9t9.common.memory.Memory;
-import v9t9.common.memory.MemoryDomain;
-import v9t9.common.memory.MemoryModel;
+import v9t9.common.memory.IMemory;
+import v9t9.common.memory.IMemoryDomain;
+import v9t9.common.memory.IMemoryModel;
 import v9t9.engine.modules.IModule;
 
 /**
  * @author ejs
  *
  */
-public class StockMemoryModel implements MemoryModel {
+public class StockMemoryModel implements IMemoryModel {
 
 	private Memory memory;
 	private MemoryDomain CPU;
@@ -37,7 +37,7 @@ public class StockMemoryModel implements MemoryModel {
 	/* (non-Javadoc)
 	 * @see v9t9.engine.memory.MemoryModel#getConsole()
 	 */
-	public MemoryDomain getConsole() {
+	public IMemoryDomain getConsole() {
 		return CPU;
 	}
 
@@ -54,7 +54,7 @@ public class StockMemoryModel implements MemoryModel {
 	/* (non-Javadoc)
 	 * @see v9t9.engine.memory.MemoryModel#getMemory()
 	 */
-	public Memory getMemory() {
+	public IMemory getMemory() {
 		return memory;
 	}
 

@@ -3,8 +3,8 @@
  */
 package v9t9.machine.ti99.memory.mmio;
 
-import v9t9.common.memory.WordMemoryArea;
-import v9t9.common.memory.ZeroWordMemoryArea;
+import v9t9.engine.memory.WordMemoryArea;
+import v9t9.engine.memory.ZeroWordMemoryArea;
 
 public class ConsoleMmioArea extends WordMemoryArea {
     public ConsoleMmioArea() {

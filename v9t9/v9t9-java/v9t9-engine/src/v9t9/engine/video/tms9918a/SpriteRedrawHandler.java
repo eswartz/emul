@@ -5,7 +5,7 @@ package v9t9.engine.video.tms9918a;
 
 import java.util.Arrays;
 
-import v9t9.common.memory.ByteMemoryAccess;
+import v9t9.engine.memory.ByteMemoryAccess;
 import v9t9.engine.video.BaseRedrawHandler;
 import v9t9.engine.video.RedrawBlock;
 import v9t9.engine.video.VdpModeInfo;

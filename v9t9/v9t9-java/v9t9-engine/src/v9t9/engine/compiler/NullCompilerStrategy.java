@@ -24,4 +24,12 @@ public class NullCompilerStrategy implements ICompilerStrategy {
 	public void setup(Executor exec, CompilerBase compiler) {
 		
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.compiler.ICompilerStrategy#reset()
+	 */
+	@Override
+	public void reset() {
+		
+	}
 }

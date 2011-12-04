@@ -9,7 +9,7 @@ package v9t9.machine.common.tests;
 import java.util.Random;
 
 import junit.framework.TestCase;
-import v9t9.common.memory.MemoryDomain;
+import v9t9.common.memory.IMemoryDomain;
 import v9t9.machine.ti99.machine.TI994A;
 import v9t9.machine.ti99.memory.ConsoleRamArea;
 import v9t9.machine.ti99.memory.ExpRamArea;
@@ -24,7 +24,7 @@ public class MemoryTest extends TestCase {
     }
 
     private TI994A machine;
-    private MemoryDomain CPU;
+    private IMemoryDomain CPU;
 
     /**
      * Constructor for MemoryTest.

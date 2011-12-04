@@ -54,7 +54,20 @@ public class MachineOperand9900 extends BaseMachineOperand {
         this.type = type;
     }
 
-    /* (non-Javadoc)
+    /**
+	 * @param op1
+	 */
+	public MachineOperand9900(MachineOperand9900 op) {
+		this.type = op.type;
+		this.bIsReference = op.bIsReference;
+		this.byteop = op.byteop;
+		this.cycles = op.cycles;
+		this.dest = op.dest;
+		this.immed = op.immed;
+		this.val = op.val;
+	}
+
+	/* (non-Javadoc)
 	 * @see v9t9.engine.cpu.MachineOperand#isMemory()
 	 */
     public boolean isMemory() {

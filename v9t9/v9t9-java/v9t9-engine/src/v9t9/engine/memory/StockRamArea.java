@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.common.memory;
+package v9t9.engine.memory;
 
 /**
  * This is RAM intended for testing purposes.  Its latency is 0 and it allows

@@ -3,29 +3,31 @@
  */
 package v9t9.common.memory;
 
+import v9t9.base.properties.IPersistable;
+
 /**
  * @author ejs
  *
  */
-public interface IMemory {
+public interface IMemory extends IPersistable {
 
-	void addListener(MemoryListener listener);
+	void addListener(IMemoryListener listener);
 
-	void removeListener(MemoryListener listener);
+	void removeListener(IMemoryListener listener);
 
 	void notifyListenersOfPhysicalChange(IMemoryEntry entry);
 
 	void notifyListenersOfLogicalChange(IMemoryEntry entry);
 
-	void addDomain(String key, MemoryDomain domain);
+	void addDomain(String key, IMemoryDomain domain);
 
-	MemoryDomain getDomain(String key);
+	IMemoryDomain getDomain(String key);
 
 	void addAndMap(IMemoryEntry entry);
 
-	void removeAndUnmap(MemoryEntry entry);
+	void removeAndUnmap(IMemoryEntry entry);
 
-	MemoryModel getModel();
+	IMemoryModel getModel();
 
 	IMemoryDomain[] getDomains();
 

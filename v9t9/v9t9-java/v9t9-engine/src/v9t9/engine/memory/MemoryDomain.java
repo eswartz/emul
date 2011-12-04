@@ -4,7 +4,7 @@
  * Created on Dec 15, 2004
  *
  */
-package v9t9.common.memory;
+package v9t9.engine.memory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -15,6 +15,12 @@ import java.util.Stack;
 import v9t9.base.properties.IPersistable;
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.utils.ListenerList;
+import v9t9.common.memory.IMemory;
+import v9t9.common.memory.IMemoryAccess;
+import v9t9.common.memory.IMemoryAccessListener;
+import v9t9.common.memory.IMemoryDomain;
+import v9t9.common.memory.IMemoryEntry;
+import v9t9.common.memory.IMemoryWriteListener;
 
 /**
  * @author ejs

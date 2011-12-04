@@ -11,11 +11,11 @@ import v9t9.common.machine.IBaseMachine;
  * @author ejs
  *
  */
-public interface MemoryModel {
+public interface IMemoryModel {
 	/**
 	 * Get the memory defined by the model.
 	 */
-	Memory getMemory();
+	IMemory getMemory();
 	
 	/**
 	 * Initialize the memory for this machine
@@ -25,7 +25,7 @@ public interface MemoryModel {
 	/**
 	 * Get the console memory.
 	 */
-	MemoryDomain getConsole();
+	IMemoryDomain getConsole();
 
 	/**
 	 * Load memory

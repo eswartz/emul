@@ -15,7 +15,6 @@ import java.util.Arrays;
 import org.junit.BeforeClass;
 
 import v9t9.base.utils.HexUtils;
-import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.engine.dsr.DsrException;
 import v9t9.engine.dsr.IMemoryTransfer;
 import v9t9.engine.dsr.PabStruct;
@@ -24,6 +23,7 @@ import v9t9.engine.dsr.emudisk.EmuDiskDsrSettings;
 import v9t9.engine.dsr.emudisk.EmuDiskPabHandler;
 import v9t9.engine.files.FDR;
 import v9t9.engine.files.FDRFactory;
+import v9t9.engine.memory.ByteMemoryAccess;
 import v9t9.machine.common.dsr.emudisk.DiskDirectoryMapper;
 import v9t9.machine.common.dsr.emudisk.EmuDiskDsr;
 

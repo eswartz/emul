@@ -4,7 +4,7 @@
 package v9t9.machine.ti99.machine;
 
 
-import v9t9.common.memory.MemoryModel;
+import v9t9.common.memory.IMemoryModel;
 import v9t9.engine.hardware.ISoundChip;
 import v9t9.engine.hardware.IVdpChip;
 import v9t9.engine.keyboard.KeyboardState;
@@ -25,7 +25,7 @@ import v9t9.machine.ti99.memory.TI994AStandardConsoleMemoryModel;
 public class StandardMachineModel extends BaseTI99MachineModel {
 
 	public static final String ID = "StandardTI994A";
-	protected MemoryModel memoryModel;
+	protected IMemoryModel memoryModel;
 
 	public StandardMachineModel() {
 	}
@@ -48,7 +48,7 @@ public class StandardMachineModel extends BaseTI99MachineModel {
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.MachineModel#getMemoryModel()
 	 */
-	public MemoryModel getMemoryModel() {
+	public IMemoryModel getMemoryModel() {
 		if (memoryModel == null) {
 			memoryModel = new TI994AStandardConsoleMemoryModel();
 		}

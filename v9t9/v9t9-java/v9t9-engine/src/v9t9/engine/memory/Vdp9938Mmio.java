@@ -6,10 +6,7 @@
  */
 package v9t9.engine.memory;
 
-import v9t9.common.memory.BankedMemoryEntry;
-import v9t9.common.memory.ByteMemoryArea;
 import v9t9.common.memory.IMemory;
-import v9t9.common.memory.WindowBankedMemoryEntry;
 import v9t9.engine.video.v9938.VdpV9938;
 
 

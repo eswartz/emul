@@ -30,9 +30,7 @@ import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
-import v9t9.common.memory.Memory;
-import v9t9.common.memory.MemoryDomain;
-import v9t9.common.memory.MemoryModel;
+import v9t9.common.memory.IMemoryModel;
 import v9t9.engine.client.IClient;
 import v9t9.engine.cpu.Executor;
 import v9t9.engine.dsr.DsrManager;
@@ -50,8 +48,8 @@ import v9t9.engine.settings.WorkspaceSettings;
  * @author ejs
  */
 abstract public class MachineBase implements IMachine {
-    protected Memory memory;
-    protected MemoryDomain console;
+    protected IMemory memory;
+    protected IMemoryDomain console;
     protected  ICpu cpu;
     protected  Executor executor;
     protected IClient client;
@@ -75,7 +73,7 @@ abstract public class MachineBase implements IMachine {
     //private TimerTask vdpInterruptTask;
     protected  TimerTask clientTask;
     protected  Runnable cpuTimingTask;
-	protected MemoryModel memoryModel;
+	protected IMemoryModel memoryModel;
 	protected  TimerTask videoUpdateTask;
 	protected  Thread machineRunner;
 	protected  Thread videoRunner;
@@ -427,7 +425,9 @@ abstract public class MachineBase implements IMachine {
 	@Override
 	public void reset() {
 
-		MemoryDomain domain = getMemory().getDomain(IMemoryDomain.NAME_CPU);
+		executor.getCompilerStrategy().reset();
+		
+		IMemoryDomain domain = getMemory().getDomain(IMemoryDomain.NAME_CPU);
 		for (IMemoryEntry entry : domain.getFlattenedMemoryEntries()) {
 			if (entry.isVolatile()) {
 				int addr = entry.mapAddress(entry.getAddr());
@@ -501,7 +501,7 @@ abstract public class MachineBase implements IMachine {
 	 * @see v9t9.emulator.common.IMachine#getConsole()
 	 */
     @Override
-	public MemoryDomain getConsole() {
+	public IMemoryDomain getConsole() {
 		return console;
 	}
     
@@ -509,7 +509,7 @@ abstract public class MachineBase implements IMachine {
 	 * @see v9t9.emulator.common.IMachine#getMemoryModel()
 	 */
     @Override
-	public MemoryModel getMemoryModel() {
+	public IMemoryModel getMemoryModel() {
         return memoryModel;
     }
 

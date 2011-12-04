@@ -13,8 +13,8 @@ import javax.sound.sampled.Line;
 import javax.sound.sampled.SourceDataLine;
 
 import v9t9.common.memory.IMemoryDomain;
-import v9t9.common.memory.MemoryDomain;
 import v9t9.engine.files.DataFiles;
+import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.speech.LPCSpeech;
 import v9t9.engine.speech.ISpeechDataSender;
 import v9t9.engine.speech.TMS5220;

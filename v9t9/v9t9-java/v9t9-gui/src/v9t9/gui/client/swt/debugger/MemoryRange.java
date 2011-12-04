@@ -8,8 +8,8 @@ import java.util.TreeSet;
 
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryWriteListener;
-import v9t9.common.memory.MemoryEntry;
-import v9t9.common.memory.WordMemoryArea;
+import v9t9.engine.memory.MemoryEntry;
+import v9t9.engine.memory.WordMemoryArea;
 
 /**
  * A range of viewable memory

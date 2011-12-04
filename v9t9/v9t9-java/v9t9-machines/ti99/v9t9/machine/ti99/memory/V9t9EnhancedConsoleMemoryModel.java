@@ -6,12 +6,12 @@ import java.io.IOException;
 import java.net.URL;
 
 import v9t9.common.events.IEventNotifier;
-import v9t9.common.memory.BankedMemoryEntry;
-import v9t9.common.memory.MemoryEntry;
 import v9t9.engine.EmulatorData;
 import v9t9.engine.files.DataFiles;
 import v9t9.engine.machine.IMachine;
+import v9t9.engine.memory.BankedMemoryEntry;
 import v9t9.engine.memory.DiskMemoryEntry;
+import v9t9.engine.memory.MemoryEntry;
 import v9t9.machine.common.dsr.emudisk.DiskDirectoryMapper;
 
 

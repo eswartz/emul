@@ -8,7 +8,7 @@ package v9t9.tests.asm9900;
 
 import junit.framework.TestCase;
 import v9t9.common.asm.RawInstruction;
-import v9t9.common.memory.MemoryDomain;
+import v9t9.engine.memory.MemoryDomain;
 import v9t9.machine.ti99.cpu.CpuState9900;
 import v9t9.machine.ti99.cpu.Inst9900;
 import v9t9.machine.ti99.cpu.InstTable9900;
