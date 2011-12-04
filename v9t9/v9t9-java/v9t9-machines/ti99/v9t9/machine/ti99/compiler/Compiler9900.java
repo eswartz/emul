@@ -60,7 +60,7 @@ import v9t9.engine.compiler.CompilerBase;
 import v9t9.engine.compiler.FunctionInstructionRangeCompiler;
 import v9t9.engine.compiler.InstructionRangeCompiler;
 import v9t9.engine.compiler.SerialInstructionRangeCompiler;
-import v9t9.engine.cpu.Executor;
+import v9t9.engine.cpu.IExecutor;
 import v9t9.engine.memory.GplMmio;
 import v9t9.engine.memory.VdpMmio;
 import v9t9.machine.ti99.asm.InstructionFactory9900;
@@ -734,13 +734,13 @@ public class Compiler9900 extends CompilerBase {
         ilist.append(InstructionConstants.ALOAD_1);
         ilist.append(ifact.createInvoke(CompiledCode9900.class.getName(),
                 "<init>", Type.VOID, new Type[] { new ObjectType(
-                        Executor.class.getName()) },
+                        IExecutor.class.getName()) },
                 Constants.INVOKESPECIAL));
         ilist.append(InstructionFactory.createReturn(Type.VOID));
 
         // add constructor method to class
         mgen = new MethodGen(Constants.ACC_PUBLIC, Type.VOID,
-                new Type[] { new ObjectType(Executor.class
+                new Type[] { new ObjectType(IExecutor.class
                         .getName()) }, new String[] { "exec" }, "<init>",
                 className, ilist, pgen);
         addMethod(mgen, cgen);
@@ -861,7 +861,7 @@ public class Compiler9900 extends CompilerBase {
         info.memoryIndex = pgen.addFieldref(v9t9.engine.compiler.CompiledCode.class.getName(), // className,
                 "memory", Utility.getSignature(v9t9.common.memory.IMemoryDomain.class.getName()));
         info.cruIndex = pgen.addFieldref(v9t9.engine.compiler.CompiledCode.class.getName(), // className,
-                "cru", Utility.getSignature(v9t9.engine.hardware.ICruChip.class.getName()));
+                "cru", Utility.getSignature(v9t9.engine.hardware.ICruHandler.class.getName()));
         info.nInstructionsIndex = pgen.addFieldref(v9t9.engine.compiler.CompiledCode.class.getName(), // className,
                 "nInstructions", Utility.getSignature("int"));
         info.nCyclesIndex = pgen.addFieldref(v9t9.engine.compiler.CompiledCode.class.getName(), // className,

@@ -9,8 +9,8 @@ package v9t9.engine.hardware;
 
 import v9t9.base.properties.IPersistable;
 import v9t9.common.memory.IMemoryDomain;
-import v9t9.engine.machine.IMachine;
 import v9t9.engine.memory.ByteMemoryAccess;
+import v9t9.engine.memory.IMachine;
 import v9t9.engine.memory.VdpMmio;
 import v9t9.engine.video.VdpCanvas;
 import v9t9.engine.video.VdpModeRedrawHandler;

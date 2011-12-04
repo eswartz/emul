@@ -10,13 +10,13 @@ import java.util.LinkedList;
 import v9t9.base.utils.HexUtils;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.InstructionWorkBlock;
-import v9t9.engine.cpu.InstructionListener;
+import v9t9.engine.cpu.IInstructionListener;
 
 /**
  * @author ejs
  *
  */
-public class DebugConditionListener9900 implements InstructionListener {
+public class DebugConditionListener9900 implements IInstructionListener {
 
 	private LinkedList<InstructionWorkBlock9900> blocks = new LinkedList<InstructionWorkBlock9900>();
 	private ICpu cpu;

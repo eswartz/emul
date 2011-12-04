@@ -20,8 +20,8 @@ import v9t9.engine.hardware.ISoundChip;
 import v9t9.engine.hardware.ISpeechChip;
 import v9t9.engine.hardware.IVdpChip;
 import v9t9.engine.keyboard.KeyboardState;
-import v9t9.engine.machine.IMachine;
-import v9t9.engine.machine.MachineModel;
+import v9t9.engine.memory.IMachine;
+import v9t9.engine.memory.IMachineModel;
 import v9t9.engine.memory.Vdp9938Mmio;
 import v9t9.engine.sound.MultiSoundTMS9919B;
 import v9t9.engine.speech.TMS5220;
@@ -38,7 +38,7 @@ import v9t9.machine.f99b.memory.F99bMemoryModel;
  * @author ejs
  *
  */
-public class F99bMachineModel implements MachineModel {
+public class F99bMachineModel implements IMachineModel {
 
 	public static final String ID = "Forth99B";
 	
@@ -102,7 +102,7 @@ public class F99bMachineModel implements MachineModel {
 		InternalCruF99 cruAccess = new InternalCruF99(machine_, machine_.getKeyboardState());
 		cruAccess.addIOHandler(memoryDiskDsr);
 
-		machine_.setCruAccess(cruAccess);
+		machine_.setCru(cruAccess);
 		//machine_.getDsrManager().registerDsr(dsr);
 		/*
 		if (machine_ instanceof TI99Machine) {
@@ -150,7 +150,7 @@ public class F99bMachineModel implements MachineModel {
 	@Override
 	public Executor createExecutor(ICpu cpu, ICpuMetrics metrics) {
 		return new Executor(cpu, metrics, 
-				new InterpreterF99b(cpu.getMachine()),
+				new InterpreterF99b((IMachine) cpu.getMachine()),
 				null,
 				new NullCompilerStrategy(),
 				new DumpFullReporterF99b((CpuF99b) cpu, null), new DumpReporterF99b((CpuF99b) cpu));

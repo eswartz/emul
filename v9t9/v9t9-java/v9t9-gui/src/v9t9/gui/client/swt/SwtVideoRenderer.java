@@ -26,9 +26,9 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
-import v9t9.engine.client.IVideoRenderer;
+import v9t9.common.client.IVideoRenderer;
+import v9t9.common.video.ICanvas;
 import v9t9.engine.hardware.IVdpChip;
-import v9t9.engine.video.ICanvas;
 import v9t9.engine.video.VdpCanvas;
 import v9t9.engine.video.BaseVdpCanvas.ICanvasListener;
 import v9t9.gui.video.ImageDataCanvas;

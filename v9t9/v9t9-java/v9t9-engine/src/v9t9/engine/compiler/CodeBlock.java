@@ -11,7 +11,7 @@ import v9t9.common.asm.InstTableCommon;
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.cpu.AbortedException;
 import v9t9.common.memory.IMemoryEntry;
-import v9t9.engine.cpu.Executor;
+import v9t9.engine.cpu.IExecutor;
 
 /** This represents a compiled block of code. */
 public class CodeBlock implements ICompiledCode, v9t9.common.memory.IMemoryListener {
@@ -30,7 +30,7 @@ public class CodeBlock implements ICompiledCode, v9t9.common.memory.IMemoryListe
     CompiledCode code;
     String baseName;
     private boolean running;
-	private Executor exec;
+	private IExecutor exec;
 	private DirectLoader loader;
 	int addr;
 	int size;
@@ -39,7 +39,7 @@ public class CodeBlock implements ICompiledCode, v9t9.common.memory.IMemoryListe
     
     static int uniqueClassSuffix;
 
-    public CodeBlock(CompilerBase compiler, Executor exec, DirectLoader loader, IMemoryEntry ent, int addr, int size) {
+    public CodeBlock(CompilerBase compiler, IExecutor exec, DirectLoader loader, IMemoryEntry ent, int addr, int size) {
         this.compiler = compiler;
 		this.exec = exec;
         this.loader = loader;
@@ -172,7 +172,7 @@ public class CodeBlock implements ICompiledCode, v9t9.common.memory.IMemoryListe
             ret = code.run();
         }
         catch (AbortedException e) {
-        	exec.nSwitches++;
+        	exec.recordSwitch();
         	abort = e;
         }
         finally {
@@ -183,9 +183,7 @@ public class CodeBlock implements ICompiledCode, v9t9.common.memory.IMemoryListe
 	        	if (code.nInstructions == 0 && abort == null) {
 	        		ret = false;
 	        	}
-		        exec.nInstructions += code.nInstructions;
-		        exec.nCompiledInstructions += code.nInstructions;
-		        exec.getCpu().addCycles(code.nCycles);
+	        	exec.recordCompileRun(code.nInstructions, code.nCycles);
 	        }
 	        //System.out.println("invoked "+code.nInstructions+" at "+Utils.toHex4(origpc)+" to "+Utils.toHex4(exec.cpu.getPC()));
 	        
@@ -228,7 +226,7 @@ public class CodeBlock implements ICompiledCode, v9t9.common.memory.IMemoryListe
         // load and construct an instance of the class
         Class<?> clas = loader.load(uniqueClassName, bytecode);
         try {
-            Constructor<?> cons = clas.getConstructor(new Class[] { Executor.class });
+            Constructor<?> cons = clas.getConstructor(new Class[] { IExecutor.class });
             code = (CompiledCode)cons.newInstance(new Object[] { exec });
             return true;
         } catch (InvocationTargetException ex) {

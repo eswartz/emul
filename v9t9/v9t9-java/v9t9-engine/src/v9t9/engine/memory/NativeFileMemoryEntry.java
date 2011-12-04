@@ -10,8 +10,8 @@ import java.io.IOException;
 
 
 import v9t9.base.utils.Check;
+import v9t9.common.files.NativeFile;
 import v9t9.common.memory.IMemoryDomain;
-import v9t9.engine.files.NativeFile;
 
 public class NativeFileMemoryEntry extends MemoryEntry {
 

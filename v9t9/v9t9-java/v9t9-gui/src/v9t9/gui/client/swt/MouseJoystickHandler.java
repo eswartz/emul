@@ -10,7 +10,7 @@ import org.eclipse.swt.events.MouseMoveListener;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Control;
 
-import v9t9.engine.keyboard.KeyboardState;
+import v9t9.common.keyboard.IKeyboardState;
 
 /**
  * @author ejs
@@ -23,12 +23,12 @@ public class MouseJoystickHandler {
 	private boolean enabled;
 	private MouseAdapter mouseButtonListener;
 	private MouseMoveListener mouseMoveListener;
-	private final KeyboardState keyboardState;
+	private final IKeyboardState keyboardState;
 	
 	/**
 	 */
 	public MouseJoystickHandler(final ISwtVideoRenderer renderer, 
-			KeyboardState keyboardState) {
+			IKeyboardState keyboardState) {
 		this.renderer = renderer;
 		this.keyboardState = keyboardState;
 		
@@ -128,7 +128,7 @@ public class MouseJoystickHandler {
 			}
 		}
 		
-		keyboardState.setJoystick(joy, KeyboardState.JOY_X | KeyboardState.JOY_Y, dx, dy, false, System.currentTimeMillis());
+		keyboardState.setJoystick(joy, IKeyboardState.JOY_X | IKeyboardState.JOY_Y, dx, dy, false, System.currentTimeMillis());
 	}
 
 	/**
@@ -136,7 +136,7 @@ public class MouseJoystickHandler {
 	 */
 	protected void button(int button, int joy, boolean pressed) {
 		//System.out.println(button +"/"+ joy + "/" + pressed);
-		keyboardState.setJoystick(joy, KeyboardState.JOY_B, 0, 0, pressed, System.currentTimeMillis());
+		keyboardState.setJoystick(joy, IKeyboardState.JOY_B, 0, 0, pressed, System.currentTimeMillis());
 	}
 
 

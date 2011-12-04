@@ -8,7 +8,7 @@ import org.eclipse.swt.events.MouseMoveListener;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 
-import v9t9.engine.client.IVideoRenderer;
+import v9t9.common.client.IVideoRenderer;
 import v9t9.engine.hardware.IVdpChip;
 import v9t9.engine.video.VdpCanvas;
 

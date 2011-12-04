@@ -4,10 +4,9 @@ package v9t9.machine.ti99.machine;
 import v9t9.base.settings.ISettingSection;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.engine.hardware.CruManager;
-import v9t9.engine.hardware.ICruChip;
 import v9t9.engine.machine.MachineBase;
-import v9t9.engine.machine.MachineModel;
 import v9t9.engine.memory.GplMmio;
+import v9t9.engine.memory.IMachineModel;
 import v9t9.engine.memory.SpeechMmio;
 import v9t9.engine.memory.TIMemoryModel;
 import v9t9.engine.memory.VdpMmio;
@@ -18,12 +17,12 @@ public class TI99Machine extends MachineBase {
 
 	private CruManager cruManager;
 
-	public TI99Machine(MachineModel machineModel) {
+	public TI99Machine(IMachineModel machineModel) {
 		super(machineModel);
 	}
 
 	@Override
-	protected void init(MachineModel machineModel) {
+	protected void init(IMachineModel machineModel) {
 		super.init(machineModel);
 
 		cruManager = new CruManager();
@@ -106,10 +105,4 @@ public class TI99Machine extends MachineBase {
 	public CruManager getCruManager() {
 		return cruManager;
 	}
-
-
-	public ICruChip getCru() {
-		return cruManager;
-	}
-
 }

@@ -9,9 +9,9 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import v9t9.common.files.NativeFile;
+import v9t9.common.files.NativeFileFactory;
 import v9t9.engine.dsr.DsrException;
-import v9t9.engine.files.NativeFile;
-import v9t9.engine.files.NativeFileFactory;
 import v9t9.engine.memory.ByteMemoryAccess;
 
 class DiskLikeDirectoryInfo extends DirectoryInfo {

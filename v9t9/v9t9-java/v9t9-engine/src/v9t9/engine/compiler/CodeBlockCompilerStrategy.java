@@ -11,7 +11,7 @@ import v9t9.base.utils.Pair;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.memory.IMemoryArea;
 import v9t9.common.memory.IMemoryEntry;
-import v9t9.engine.cpu.Executor;
+import v9t9.engine.cpu.IExecutor;
 
 /**
  * @author ejs
@@ -27,7 +27,7 @@ public class CodeBlockCompilerStrategy implements ICompilerStrategy {
     Map<Pair<IMemoryArea, Integer>, CodeBlock> codeblocks;
     DirectLoader loader;
 
-	private Executor executor;
+	private IExecutor executor;
 
 	private CompilerBase compiler;
 
@@ -46,7 +46,7 @@ public class CodeBlockCompilerStrategy implements ICompilerStrategy {
 		return true;
 	}
 	
-	public void setup(Executor executor, CompilerBase compiler) {
+	public void setup(IExecutor executor, CompilerBase compiler) {
 		this.executor = executor;
 		this.compiler = compiler;
 	}
@@ -93,7 +93,7 @@ public class CodeBlockCompilerStrategy implements ICompilerStrategy {
 	        cb = new CodeBlock(compiler, executor,  
 	        		loader, ent, blockaddr.shortValue(), BLOCKSIZE);
 	        cb.build();
-	        executor.nCompiles++;
+	        executor.recordCompilation();
 	        codeblocks.put(key, cb);
 	    }
 	    return cb;

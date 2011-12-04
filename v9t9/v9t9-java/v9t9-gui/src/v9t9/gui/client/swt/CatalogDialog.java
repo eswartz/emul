@@ -27,9 +27,9 @@ import org.eclipse.swt.widgets.TableItem;
 
 import v9t9.base.properties.SettingProperty;
 import v9t9.common.events.IEventNotifier.Level;
-import v9t9.engine.files.Catalog;
-import v9t9.engine.files.CatalogEntry;
-import v9t9.engine.machine.IMachine;
+import v9t9.common.files.Catalog;
+import v9t9.common.files.CatalogEntry;
+import v9t9.engine.memory.IMachine;
 
 final class CatalogDialog extends Dialog {
 	private static final int COLUMN_NAME = 0;

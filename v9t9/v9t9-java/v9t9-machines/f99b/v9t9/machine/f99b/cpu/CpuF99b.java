@@ -9,9 +9,9 @@ import v9t9.common.cpu.AbortedException;
 import v9t9.common.cpu.IStatus;
 import v9t9.engine.cpu.CpuBase;
 import v9t9.engine.cpu.Executor;
-import v9t9.engine.hardware.ICruAccess;
+import v9t9.engine.hardware.ICruChip;
 import v9t9.engine.hardware.IVdpChip;
-import v9t9.engine.machine.IMachine;
+import v9t9.engine.memory.IMachine;
 import v9t9.machine.f99b.asm.StatusF99b;
 
 /**
@@ -139,7 +139,7 @@ public class CpuF99b extends CpuBase {
 	    
 	    vdp.syncVdpInterrupt(machine);
 	    
-	    ICruAccess cruAccess = machine.getCruAccess();
+	    ICruChip cruAccess = machine.getCru();
 	    
 	    if (cruAccess != null) {
 	    	//pins &= ~PIN_INTREQ;

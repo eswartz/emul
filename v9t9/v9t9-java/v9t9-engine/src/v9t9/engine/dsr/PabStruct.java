@@ -3,8 +3,8 @@
  */
 package v9t9.engine.dsr;
 
-import v9t9.engine.files.FDR;
-import v9t9.engine.files.V9t9FDR;
+import v9t9.common.files.FDR;
+import v9t9.common.files.V9t9FDR;
 
 import static v9t9.engine.dsr.PabConstants.*;
 

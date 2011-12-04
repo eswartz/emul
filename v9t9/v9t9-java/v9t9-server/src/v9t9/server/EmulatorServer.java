@@ -9,19 +9,19 @@ package v9t9.server;
 import java.io.IOException;
 
 
+import v9t9.common.client.IClient;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyException;
+import v9t9.common.files.DataFiles;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryModel;
 import v9t9.engine.EmulatorSettings;
-import v9t9.engine.client.IClient;
 import v9t9.engine.compiler.CompilerBase;
-import v9t9.engine.files.DataFiles;
-import v9t9.engine.machine.IMachine;
-import v9t9.engine.machine.MachineModel;
 import v9t9.engine.machine.MachineModelFactory;
 import v9t9.engine.machine.ModuleManager;
+import v9t9.engine.memory.IMachine;
+import v9t9.engine.memory.IMachineModel;
 import v9t9.engine.settings.WorkspaceSettings;
 import v9t9.machine.f99b.machine.F99bMachineModel;
 import v9t9.machine.ti99.machine.Enhanced48KForthTI994AMachineModel;
@@ -129,7 +129,7 @@ public class EmulatorServer {
     		System.err.println("Setting up new configuration");
     	}
     	
-        MachineModel model = MachineModelFactory.INSTANCE.createModel(modelId);
+        IMachineModel model = MachineModelFactory.INSTANCE.createModel(modelId);
         assert (model != null);
         
         machine = model.createMachine();

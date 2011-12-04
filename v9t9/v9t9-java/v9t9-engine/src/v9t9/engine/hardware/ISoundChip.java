@@ -6,7 +6,7 @@ package v9t9.engine.hardware;
 
 import v9t9.base.properties.IPersistable;
 import v9t9.base.sound.ISoundVoice;
-import v9t9.engine.client.ISoundHandler;
+import v9t9.common.client.ISoundHandler;
 
 /**
  * This interface is used to hook up a sound chip to a {@link ISoundHandler}.

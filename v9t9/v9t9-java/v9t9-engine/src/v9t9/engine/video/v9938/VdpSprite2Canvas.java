@@ -3,12 +3,12 @@
  */
 package v9t9.engine.video.v9938;
 
+import v9t9.common.video.ICanvas;
+import v9t9.common.video.VdpColorManager;
 import v9t9.engine.memory.ByteMemoryAccess;
-import v9t9.engine.video.ICanvas;
 import v9t9.engine.video.ISpriteCanvas;
 import v9t9.engine.video.Sprite2Canvas;
 import v9t9.engine.video.VdpCanvas;
-import v9t9.engine.video.VdpColorManager;
 import v9t9.engine.video.VdpSprite;
 import v9t9.engine.video.tms9918a.VdpSpriteCanvas;
 

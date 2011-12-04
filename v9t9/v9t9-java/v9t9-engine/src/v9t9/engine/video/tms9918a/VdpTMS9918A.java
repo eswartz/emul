@@ -17,11 +17,11 @@ import v9t9.base.utils.HexUtils;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.engine.cpu.Executor;
-import v9t9.engine.hardware.BaseCruAccess;
-import v9t9.engine.hardware.ICruAccess;
+import v9t9.engine.hardware.BaseCruChip;
+import v9t9.engine.hardware.ICruChip;
 import v9t9.engine.hardware.IVdpChip;
-import v9t9.engine.machine.IMachine;
 import v9t9.engine.memory.ByteMemoryAccess;
+import v9t9.engine.memory.IMachine;
 import v9t9.engine.memory.VdpMmio;
 import v9t9.engine.settings.WorkspaceSettings;
 import v9t9.engine.video.BlankModeRedrawHandler;
@@ -715,7 +715,7 @@ public class VdpTMS9918A implements IVdpChip {
 	 * 
 	 */
 	protected void doTick() {
-		if (true || machine.getExecutor().nVdpInterrupts < settingVdpInterruptRate.getInt()) {
+		if (true /*|| machine.getExecutor().nVdpInterrupts < settingVdpInterruptRate.getInt()*/) {
     		if (IMachine.settingThrottleInterrupts.getBoolean()) {
     			if (throttleCount-- < 0) {
     				throttleCount = 6;
@@ -728,12 +728,12 @@ public class VdpTMS9918A implements IVdpChip {
     		if ((readVdpReg(1) & VdpTMS9918A.R1_INT) != 0) {
     			if ((vdpStatus & VDP_INTERRUPT) == 0) {
     				vdpStatus |= VDP_INTERRUPT;
-    				machine.getExecutor().nVdpInterrupts++;
+    				machine.getExecutor().vdpInterrupt();
     			}
     			
-    			ICruAccess cru = machine.getCruAccess();
-				if (cru instanceof BaseCruAccess)
-    				cru.triggerInterrupt(((BaseCruAccess) cru).intVdp);
+    			ICruChip cru = machine.getCru();
+				if (cru instanceof BaseCruChip)
+    				cru.triggerInterrupt(((BaseCruChip) cru).intVdp);
 				
 				//machine.getCpu().setIdle(false);
     		}

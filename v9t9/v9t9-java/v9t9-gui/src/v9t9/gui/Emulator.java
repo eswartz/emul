@@ -10,7 +10,7 @@ import java.net.URI;
 import java.net.URL;
 import java.util.Collection;
 
-import v9t9.engine.client.IClient;
+import v9t9.common.client.IClient;
 import v9t9.engine.memory.GplMmio;
 import v9t9.engine.video.tms9918a.VdpTMS9918A;
 import v9t9.gui.client.ClientFactory;

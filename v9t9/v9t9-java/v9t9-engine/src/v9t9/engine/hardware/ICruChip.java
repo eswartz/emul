@@ -1,18 +1,40 @@
-package v9t9.engine.hardware;
-/*
- * (c) Ed Swartz, 2005
+/**
  * 
- * Created on Dec 24, 2004
- *
  */
+package v9t9.engine.hardware;
 
+
+import v9t9.base.properties.IPersistable;
+import v9t9.common.cpu.ICpu;
 
 /**
- * Handle the behavior of the CRU.
- * 
+ * This is the interface for CRU access from the CPU.
  * @author ejs
+ *
  */
-public interface ICruChip {
-    public void writeBits(int addr, int val, int num);
-    public int readBits(int addr, int num);
+public interface ICruChip extends IPersistable {
+	/**
+	 * Poll the CRU for interrupts, pins, etc. which influence the CPU,
+	 * and set any pins on the CPU.
+	 * @param cpu
+	 */
+	void pollForPins(ICpu cpu);
+	
+	/**
+	 * Get the active interrupt level
+	 * @return
+	 */
+	byte getInterruptLevel();
+	
+	/**
+	 * Trigger an interrupt from hardware
+	 */
+	void triggerInterrupt(int level);
+
+	boolean isInterruptWaiting();
+
+	/**
+	 * 
+	 */
+	void reset();
 }

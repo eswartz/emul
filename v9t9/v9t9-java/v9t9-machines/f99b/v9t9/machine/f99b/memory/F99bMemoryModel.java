@@ -6,12 +6,12 @@ import java.net.URL;
 
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.IEventNotifier.Level;
+import v9t9.common.files.DataFiles;
 import v9t9.common.machine.IBaseMachine;
 import v9t9.engine.EmulatorData;
-import v9t9.engine.files.DataFiles;
-import v9t9.engine.machine.IMachine;
 import v9t9.engine.memory.ByteMemoryArea;
 import v9t9.engine.memory.DiskMemoryEntry;
+import v9t9.engine.memory.IMachine;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.machine.ti99.memory.BaseTI994AMemoryModel;
 

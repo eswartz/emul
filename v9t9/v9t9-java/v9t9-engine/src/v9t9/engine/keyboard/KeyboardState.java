@@ -15,7 +15,9 @@ import java.util.Queue;
 
 import v9t9.base.properties.SettingProperty;
 import v9t9.base.utils.HexUtils;
-import v9t9.engine.machine.IMachine;
+import v9t9.common.keyboard.IKeyboardState;
+import v9t9.common.machine.IBaseMachine;
+import v9t9.engine.memory.IMachine;
 
 /**
  * This class tracks the state of the keyboard as exposed to the 99/4A CRU, in a
@@ -71,16 +73,11 @@ import v9t9.engine.machine.IMachine;
  * 
  */
 @SuppressWarnings("unused")
-public class KeyboardState {
+public class KeyboardState implements IKeyboardState {
 	public static SettingProperty backspaceIsCtrlH = new SettingProperty("SettingIsControlH", Boolean.FALSE);
 	
 	public static boolean DEBUG = false;
 	
-    /* Masks, corresponding to column 0 */
-    public static final byte SHIFT = 0x20;
-    public static final byte FCTN = 0x10;
-    public static final byte CTRL = 0x40;
-    
     /* CRU rows and columns */
     private static final byte SHIFT_R = 2;
     private static final byte SHIFT_C = 0;
@@ -163,7 +160,11 @@ public class KeyboardState {
     allows us to know the unshifted value of a pressed key.)
      */
 
-    public boolean isAsciiDirectKey(char x) { 
+    /* (non-Javadoc)
+	 * @see v9t9.engine.keyboard.IKeyboardState#isAsciiDirectKey(char)
+	 */
+    @Override
+	public boolean isAsciiDirectKey(char x) { 
     	return (latinto9901[x] != -1 && (x) != '/');
     }
 
@@ -172,11 +173,19 @@ public class KeyboardState {
         
     }
     
-    public void setPasteKeyDelay(int times) {
+    /* (non-Javadoc)
+	 * @see v9t9.engine.keyboard.IKeyboardState#setPasteKeyDelay(int)
+	 */
+    @Override
+	public void setPasteKeyDelay(int times) {
     	this.pasteKeyDelay = times;
     }
     
-    public synchronized void resetKeyboard() {
+    /* (non-Javadoc)
+	 * @see v9t9.engine.keyboard.IKeyboardState#resetKeyboard()
+	 */
+    @Override
+	public synchronized void resetKeyboard() {
     	queuedKeys.clear();
         Arrays.fill(crukeyboardmap, 0, 6, (byte)0);
         Arrays.fill(lastcrukeyboardmap, 0, 6, (byte)0);
@@ -187,7 +196,11 @@ public class KeyboardState {
     }
     
 
-    public synchronized void resetJoystick() {
+    /* (non-Javadoc)
+	 * @see v9t9.engine.keyboard.IKeyboardState#resetJoystick()
+	 */
+    @Override
+	public synchronized void resetJoystick() {
         Arrays.fill(crukeyboardmap, 6, 8, (byte)0);
         Arrays.fill(lastcrukeyboardmap, 6, 8, (byte)0);
     }
@@ -204,7 +217,7 @@ public class KeyboardState {
      * @param ch
      * @return true if we could represent it as ASCII
      */
-    public synchronized boolean postCharacter(IMachine machine, int realKey, boolean pressed, boolean synthetic, byte shift, char ch, long when) {
+    public synchronized boolean postCharacter(IBaseMachine machine, int realKey, boolean pressed, boolean synthetic, byte shift, char ch, long when) {
     	if (DEBUG) System.out.println("post: ch=" + ch + "; shift="+ HexUtils.toHex2(shift)+"; pressed="+pressed);
     	if (isAsciiDirectKey(ch)) {
     		setKey(realKey, pressed, synthetic, shift, ch, when);
@@ -232,51 +245,51 @@ public class KeyboardState {
 			
 			// shifted keys
 		case '!':
-			setKey(realKey, pressed, synthetic, shift | KeyboardState.SHIFT, '1', when);
+			setKey(realKey, pressed, synthetic, shift | IKeyboardState.SHIFT, '1', when);
 			break;
 		case '@':
-			setKey(realKey, pressed, synthetic, shift | KeyboardState.SHIFT, '2', when);
+			setKey(realKey, pressed, synthetic, shift | IKeyboardState.SHIFT, '2', when);
 			break;
 		case '#':
-			setKey(realKey, pressed, synthetic, shift | KeyboardState.SHIFT, '3', when);
+			setKey(realKey, pressed, synthetic, shift | IKeyboardState.SHIFT, '3', when);
 			break;
 		case '$':
-			setKey(realKey, pressed, synthetic, shift | KeyboardState.SHIFT, '4', when);
+			setKey(realKey, pressed, synthetic, shift | IKeyboardState.SHIFT, '4', when);
 			break;
 		case '%':
-			setKey(realKey, pressed, synthetic, shift | KeyboardState.SHIFT, '5', when);
+			setKey(realKey, pressed, synthetic, shift | IKeyboardState.SHIFT, '5', when);
 			break;
 		case '^':
-			setKey(realKey, pressed, synthetic, shift | KeyboardState.SHIFT, '6', when);
+			setKey(realKey, pressed, synthetic, shift | IKeyboardState.SHIFT, '6', when);
 			break;
 		case '&':
-			setKey(realKey, pressed, synthetic, shift | KeyboardState.SHIFT, '7', when);
+			setKey(realKey, pressed, synthetic, shift | IKeyboardState.SHIFT, '7', when);
 			break;
 		case '*':
-			setKey(realKey, pressed, synthetic, shift | KeyboardState.SHIFT, '8', when);
+			setKey(realKey, pressed, synthetic, shift | IKeyboardState.SHIFT, '8', when);
 			break;
 		case '(':
-			setKey(realKey, pressed, synthetic, shift | KeyboardState.SHIFT, '9', when);
+			setKey(realKey, pressed, synthetic, shift | IKeyboardState.SHIFT, '9', when);
 			break;
 		case ')':
-			setKey(realKey, pressed, synthetic, shift | KeyboardState.SHIFT, '0', when);
+			setKey(realKey, pressed, synthetic, shift | IKeyboardState.SHIFT, '0', when);
 			break;
 		case '+':
-			setKey(realKey, pressed, synthetic, shift | KeyboardState.SHIFT, '=', when);
+			setKey(realKey, pressed, synthetic, shift | IKeyboardState.SHIFT, '=', when);
 			break;
 		case '<':
-			setKey(realKey, pressed, synthetic, shift | KeyboardState.SHIFT, ',', when);
+			setKey(realKey, pressed, synthetic, shift | IKeyboardState.SHIFT, ',', when);
 			break;
 		case '>':
-			setKey(realKey, pressed, synthetic, shift | KeyboardState.SHIFT, '.', when);
+			setKey(realKey, pressed, synthetic, shift | IKeyboardState.SHIFT, '.', when);
 			break;
 		case ':':
-			setKey(realKey, pressed, synthetic, shift | KeyboardState.SHIFT, ';', when);
+			setKey(realKey, pressed, synthetic, shift | IKeyboardState.SHIFT, ';', when);
 			break;
 			
 			// faked keys
 		case '`':
-			if (0 == (realshift & KeyboardState.SHIFT) && !isSet(KeyboardState.FCTN, 'W'))
+			if (0 == (realshift & IKeyboardState.SHIFT) && !isSet(IKeyboardState.FCTN, 'W'))
 				setKey(realKey, pressed, synthetic, fctnShifted, 'C', when);	/* ` */
 			else
 				setKey(realKey, pressed, synthetic, fctnShifted, 'W', when);	/* ~ */
@@ -285,8 +298,8 @@ public class KeyboardState {
 			setKey(realKey, pressed, synthetic, fctnShifted, 'W', when);
 			break;
 		case '-':
-			if (0 == (realshift & KeyboardState.SHIFT) && !isSet(KeyboardState.FCTN, 'U'))
-				setKey(realKey, pressed, synthetic, KeyboardState.SHIFT, '/', when);	/* - */
+			if (0 == (realshift & IKeyboardState.SHIFT) && !isSet(IKeyboardState.FCTN, 'U'))
+				setKey(realKey, pressed, synthetic, IKeyboardState.SHIFT, '/', when);	/* - */
 			else
 				setKey(realKey, pressed, synthetic, fctnShifted, 'U', when);	/* _ */
 			break;
@@ -294,7 +307,7 @@ public class KeyboardState {
 			setKey(realKey, pressed, synthetic, fctnShifted, 'U', when);
 			break;
 		case '[':
-			if (0 == (realshift & KeyboardState.SHIFT) && !isSet(KeyboardState.FCTN, 'F'))
+			if (0 == (realshift & IKeyboardState.SHIFT) && !isSet(IKeyboardState.FCTN, 'F'))
 				setKey(realKey, pressed, synthetic, fctnShifted, 'R', when);	/* [ */
 			else
 				setKey(realKey, pressed, synthetic, fctnShifted, 'F', when);	/* { */
@@ -303,7 +316,7 @@ public class KeyboardState {
 			setKey(realKey, pressed, synthetic, fctnShifted, 'F', when);
 			break;
 		case ']':
-			if (0 == (realshift & KeyboardState.SHIFT) && !isSet(KeyboardState.FCTN, 'G'))
+			if (0 == (realshift & IKeyboardState.SHIFT) && !isSet(IKeyboardState.FCTN, 'G'))
 				setKey(realKey, pressed, synthetic, fctnShifted, 'T', when);	/* ] */
 			else
 				setKey(realKey, pressed, synthetic, fctnShifted, 'G', when);	/* } */
@@ -313,7 +326,7 @@ public class KeyboardState {
 			break;
 			
 		case '\'':
-			if (0 == (realshift & KeyboardState.SHIFT) && !isSet(KeyboardState.FCTN, 'P'))
+			if (0 == (realshift & IKeyboardState.SHIFT) && !isSet(IKeyboardState.FCTN, 'P'))
 				setKey(realKey, pressed, synthetic, fctnShifted, 'O', when);	/* ' */
 			else
 				setKey(realKey, pressed, synthetic, fctnShifted, 'P', when);	/* " */
@@ -322,7 +335,7 @@ public class KeyboardState {
 			setKey(realKey, pressed, synthetic, fctnShifted, 'P', when);
 			break;
 		case '/':
-			if (0 == (realshift & KeyboardState.SHIFT) && !isSet(KeyboardState.FCTN, 'I'))
+			if (0 == (realshift & IKeyboardState.SHIFT) && !isSet(IKeyboardState.FCTN, 'I'))
 				setKey(realKey, pressed, synthetic, (byte)0, '/', when);	/* / */
 			else
 				setKey(realKey, pressed, synthetic, fctnShifted, 'I', when);	/* ? */
@@ -331,7 +344,7 @@ public class KeyboardState {
 			setKey(realKey, pressed, synthetic, fctnShifted, 'I', when);
 			break;
 		case '\\':
-			if (0 == (realshift & KeyboardState.SHIFT) && !isSet(KeyboardState.FCTN, 'A'))
+			if (0 == (realshift & IKeyboardState.SHIFT) && !isSet(IKeyboardState.FCTN, 'A'))
 				setKey(realKey, pressed, synthetic, fctnShifted, 'Z', when);	/* \\ */
 			else
 				setKey(realKey, pressed, synthetic, fctnShifted, 'A', when);	/* | */
@@ -412,9 +425,9 @@ public class KeyboardState {
 
 					if (Character.isLowerCase(ch)) {
 			    		ch = Character.toUpperCase(ch);
-			    		shift &= ~ KeyboardState.SHIFT;
+			    		shift &= ~ IKeyboardState.SHIFT;
 			    	} else if (Character.isUpperCase(ch)) {
-			    		shift |= KeyboardState.SHIFT;
+			    		shift |= IKeyboardState.SHIFT;
 			    	}
 			    	
 					//System.out.println("ch="+ch+"; prevCh="+prevCh);
@@ -513,17 +526,11 @@ public class KeyboardState {
 		}
 		
 	}
-	/**
-     * Set a key in the map.
-	 * @param realKey TODO
-	 * @param onoff true: pressed, false: released
-	 * @param synthetic if true, the shift + key are sent together from a synthetic
-     * event; else, shifts are sent in separate events from keys, so track them
-	 * @param shift FCTN, SHIFT, CTRL mask
-	 * @param key normalized ASCII key: no lowercase or shifted characters
-	 * @param when time in ms when key was detected
-     */
-    public synchronized void setKey(int realKey, boolean onoff, boolean synthetic, int shift, int key, long when) {
+	/* (non-Javadoc)
+	 * @see v9t9.engine.keyboard.IKeyboardState#setKey(int, boolean, boolean, int, int, long)
+	 */
+    @Override
+	public synchronized void setKey(int realKey, boolean onoff, boolean synthetic, int shift, int key, long when) {
         key &= 0xff;
         shift &= 0xff;
 
@@ -592,6 +599,10 @@ public class KeyboardState {
         fireListeners();
     }
     
+	/* (non-Javadoc)
+	 * @see v9t9.engine.keyboard.IKeyboardState#pushQueuedKey()
+	 */
+	@Override
 	public synchronized void pushQueuedKey() {
 		long now = System.currentTimeMillis();
 		if (queuedKeys.isEmpty() && currentGroup == null) {
@@ -813,7 +824,11 @@ public class KeyboardState {
     	crukeyboardmap[c] |= (0x80 >> r);
     }
 
-    public synchronized boolean isSet(byte shift, int key) {
+    /* (non-Javadoc)
+	 * @see v9t9.engine.keyboard.IKeyboardState#isSet(byte, int)
+	 */
+    @Override
+	public synchronized boolean isSet(byte shift, int key) {
         byte b, r, c;
         boolean res = false;
 
@@ -838,17 +853,7 @@ public class KeyboardState {
     }
 
 
-    public static final int JOY_X = 1,	// set X-axis
-		JOY_Y = 2,	// set Y-axis
-		JOY_B = 4	// set buttons
-	;
-    
-	public static final int JOY_FIRE_R = 7;
-	public static final int JOY_LEFT_R = 6;
-	public static final int JOY_RIGHT_R = 5;
-	public static final int JOY_DOWN_R = 4;
-	public static final int JOY_UP_R = 3;
-	private static final long MAX_KEY_DELAY_MS = 100;
+    private static final long MAX_KEY_DELAY_MS = 100;
 
 
 	//	j=1 or 2
@@ -856,16 +861,11 @@ public class KeyboardState {
 		changeKbdMatrix((byte) r, (byte)(JOY1_C+(j)-1), v);
 	}
 	
-	/**
-	 * 
-	 * @param joy 1 or 2
-	 * @param mask JOY_X, JOY_Y, JOY_B
-	 * @param x neg or pos or 0
-	 * @param y neg or pos or 0
-	 * @param fire boolean
-	 * @param when TODO
+	/* (non-Javadoc)
+	 * @see v9t9.engine.keyboard.IKeyboardState#setJoystick(int, int, int, int, boolean, long)
 	 */
-    public synchronized void setJoystick(int joy, int mask, int x, int y, boolean fire, long when) {
+    @Override
+	public synchronized void setJoystick(int joy, int mask, int x, int y, boolean fire, long when) {
     	if ((mask & JOY_X) != 0) {
     		//logger(_L | L_1, _("changing JOY_X (%d)\n\n"), x);
     		changeJoyMatrix(joy, JOY_LEFT_R, x < 0);
@@ -889,24 +889,44 @@ public class KeyboardState {
     	fireListeners();
     }
     
+	/* (non-Javadoc)
+	 * @see v9t9.engine.keyboard.IKeyboardState#setAlpha(boolean)
+	 */
+	@Override
 	public synchronized void setAlpha(boolean on) {
 		System.out.println("Alpha lock is " + (on ? "ON" : "OFF"));
 		this.alphaLock = on;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.engine.keyboard.IKeyboardState#getAlpha()
+	 */
+	@Override
 	public synchronized boolean getAlpha() {
 		return lastAlphaLock;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.engine.keyboard.IKeyboardState#getKeyboardRow(int)
+	 */
+	@Override
 	public synchronized int getKeyboardRow(int column) {
 		probedColumns |= (1 << column);
 		return lastcrukeyboardmap[column];
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.keyboard.IKeyboardState#wasKeyboardProbed()
+	 */
+	@Override
 	public synchronized boolean wasKeyboardProbed() {
 		return probedColumns == 0x3f;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.engine.keyboard.IKeyboardState#resetProbe()
+	 */
+	@Override
 	public synchronized void resetProbe() {
 		probedColumns = 0;
 		if (isPasting())
@@ -915,20 +935,28 @@ public class KeyboardState {
 		pasteNext = true;
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.keyboard.IKeyboardState#setProbe()
+	 */
+	@Override
 	public synchronized void setProbe() {
 		pasteNext = true;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.engine.keyboard.IKeyboardState#cancelPaste()
+	 */
+	@Override
 	public void cancelPaste() {
 		resetKeyboard();
 		pasteTask = null;
 		
 	}
 	
-	/**
-	 * Paste text into the clipboard
-	 * @param contents
+	/* (non-Javadoc)
+	 * @see v9t9.engine.keyboard.IKeyboardState#pasteText(java.lang.String)
 	 */
+	@Override
 	public void pasteText(String contents) {
 
 		contents = contents.replaceAll("(\r\n|\r|\n)", "\r");
@@ -939,11 +967,19 @@ public class KeyboardState {
 		pasteTask = new PasteTask(chs);
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.engine.keyboard.IKeyboardState#isPasting()
+	 */
+	@Override
 	public boolean isPasting() {
 		return pasteTask != null;
 	}
 
 
+	/* (non-Javadoc)
+	 * @see v9t9.engine.keyboard.IKeyboardState#anyKeyPressed()
+	 */
+	@Override
 	public boolean anyKeyPressed() {
 		if (!queuedKeys.isEmpty())
 			return true;
@@ -960,17 +996,26 @@ public class KeyboardState {
 		return any;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.engine.keyboard.IKeyboardState#getShiftMask()
+	 */
+	@Override
 	public byte getShiftMask() {
 		return realshift;
 	}
 
 	
-	/**
-	 * @param numLock the numLock to set
+	/* (non-Javadoc)
+	 * @see v9t9.engine.keyboard.IKeyboardState#setNumLock(boolean)
 	 */
+	@Override
 	public void setNumLock(boolean numLock) {
 		this.numLock = numLock;
 	}
+	/* (non-Javadoc)
+	 * @see v9t9.engine.keyboard.IKeyboardState#getNumLock()
+	 */
+	@Override
 	public boolean getNumLock() {
 		return numLock;
 	}

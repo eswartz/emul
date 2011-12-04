@@ -11,13 +11,13 @@ import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
+import v9t9.common.client.IClient;
+import v9t9.common.client.IKeyboardHandler;
+import v9t9.common.client.IVideoRenderer;
 import v9t9.common.events.IEventNotifier;
-import v9t9.engine.client.IClient;
-import v9t9.engine.client.IKeyboardHandler;
-import v9t9.engine.client.IVideoRenderer;
 import v9t9.engine.hardware.IVdpChip;
-import v9t9.engine.machine.IMachine;
-import v9t9.engine.machine.TerminatedException;
+import v9t9.engine.memory.IMachine;
+import v9t9.engine.memory.TerminatedException;
 import v9t9.gui.client.awt.AwtKeyboardHandler;
 import v9t9.gui.sound.JavaSoundHandler;
 

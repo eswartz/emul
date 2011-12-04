@@ -25,7 +25,7 @@ import v9t9.engine.dsr.IDeviceIndicatorProvider;
 import v9t9.engine.dsr.IDsrHandler;
 import v9t9.engine.dsr.IDsrSettings;
 import v9t9.engine.dsr.IMemoryTransfer;
-import v9t9.engine.machine.IMachine;
+import v9t9.engine.memory.IMachine;
 import v9t9.engine.settings.WorkspaceSettings;
 
 /**

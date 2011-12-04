@@ -3,7 +3,7 @@
  */
 package v9t9.engine.sound;
 
-import v9t9.engine.machine.IMachine;
+import v9t9.engine.memory.IMachine;
 
 
 /**

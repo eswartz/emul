@@ -4,7 +4,7 @@
 package v9t9.machine.ti99.compiler;
 
 import v9t9.engine.compiler.CompiledCode;
-import v9t9.engine.cpu.Executor;
+import v9t9.engine.cpu.IExecutor;
 import v9t9.engine.memory.GplMmio;
 import v9t9.engine.memory.VdpMmio;
 import v9t9.machine.ti99.machine.TI99Machine;
@@ -28,7 +28,7 @@ public class CompiledCode9900 extends CompiledCode {
 	/**
 	 * @param exec
 	 */
-	public CompiledCode9900(Executor exec) {
+	public CompiledCode9900(IExecutor exec) {
 		super(exec);
 		
 		TI99Machine ti99Machine = (TI99Machine) exec.getCpu().getMachine();

@@ -24,7 +24,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Shell;
 
-import v9t9.engine.machine.IMachine;
+import v9t9.engine.memory.IMachine;
 import v9t9.gui.client.awt.AwtVideoRenderer;
 
 /**

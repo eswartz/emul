@@ -105,14 +105,13 @@ import java.util.Set;
 import v9t9.base.utils.HexUtils;
 import v9t9.base.utils.Pair;
 import v9t9.common.asm.IRawInstructionFactory;
-import v9t9.common.cpu.ICpu;
-import v9t9.common.machine.IBaseMachine;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryWriteListener;
-import v9t9.engine.cpu.Executor;
-import v9t9.engine.cpu.InstructionListener;
-import v9t9.engine.interpreter.Interpreter;
+import v9t9.engine.cpu.IExecutor;
+import v9t9.engine.cpu.IInstructionListener;
+import v9t9.engine.interpreter.IInterpreter;
+import v9t9.engine.memory.IMachine;
 import v9t9.machine.f99b.asm.InstF99b;
 import v9t9.machine.f99b.asm.InstructionF99b;
 import v9t9.machine.f99b.asm.InstructionWorkBlockF99b;
@@ -126,10 +125,10 @@ import v9t9.machine.f99b.cpu.CpuStateF99b;
  * 
  * @author ejs
  */
-public class InterpreterF99b implements Interpreter {
+public class InterpreterF99b implements IInterpreter {
 	public static boolean DEBUG = false;
 	
-	IBaseMachine machine;
+	IMachine machine;
 
     IMemoryDomain memory;
     
@@ -145,10 +144,8 @@ public class InterpreterF99b implements Interpreter {
 	private BitSet instrMap;
 
 	private IRawInstructionFactory instructionFactory;
-
-	private Executor executor;
 	
-    public InterpreterF99b(IBaseMachine machine) {
+    public InterpreterF99b(IMachine machine) {
         this.machine = machine;
         this.cpu = (CpuF99b) machine.getCpu();
         this.memory = machine.getCpu().getConsole();
@@ -174,41 +171,38 @@ public class InterpreterF99b implements Interpreter {
     	instrMap.clear();
     	memory.removeWriteListener(memoryWriteListener);
     }
+	
     /* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.interpreter.Interpreter#execute(java.lang.Short)
 	 */
     public final void execute() {
-    	InstructionListener[] instructionListeners = executor.getInstructionListeners();
+    	IInstructionListener[] instructionListeners = machine.getExecutor().getInstructionListeners();
     	executeAndListen(instructionListeners);
     }
 
+    
     /* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.interpreter.Interpreter#executeChunk(int, v9t9.emulator.runtime.cpu.Executor)
 	 */
 	@Override
-	public void executeChunk(int numinsts, Executor executor) {
-    	this.executor = executor;
+	public void executeChunk(int numinsts, IExecutor executor) {
 		int i;
 		for (i = numinsts; i > 4; i -= 4) {
 			execute();
 			execute();
 			execute();
 			execute();
-			executor.nInstructions += 4;
-			cpu.checkAndHandleInterrupts();
-			if (executor.interruptExecution || cpu.isIdle())
+			if (executor.breakAfterExecution(4) || cpu.isIdle()) 
 				return;
 		}
 		while (i-- > 0) {
 			execute();
-			executor.nInstructions++;
-			cpu.checkAndHandleInterrupts();
-			if (executor.interruptExecution || cpu.isIdle())
+			if (executor.breakAfterExecution(1) || cpu.isIdle()) 
 				break;
 		}
 	}
 
-	private final void executeAndListen(InstructionListener[] instructionListeners) {
+	private final void executeAndListen(IInstructionListener[] instructionListeners) {
 		iblock.pc = cpu.getPC();
 		
 		if ((iblock.pc & 0xffff) < 0x400) {
@@ -275,7 +269,7 @@ public class InterpreterF99b implements Interpreter {
 		    iblock.lp = ((CpuStateF99b)cpu.getState()).getLP();
 		
 			iblock.cycles = cpu.getCurrentCycleCount();
-			for (InstructionListener listener : instructionListeners) {
+			for (IInstructionListener listener : instructionListeners) {
 				listener.executed(block, iblock);
 			}
 			
@@ -784,17 +778,11 @@ public class InterpreterF99b implements Interpreter {
         case Isyscall:
         	switch (mop1.immed) {
 	        	case SYSCALL_DEBUG_OFF: {
-	            	int oldCount = executor.debugCount; 
-	            	executor.debugCount++;
-	            	if ((oldCount == 0) != (executor.debugCount == 0))
-	            		ICpu.settingDumpFullInstructions.setBoolean(false);
+	        		machine.getExecutor().debugCount(-1);
 	            	break;
 	        	}
 	        	case SYSCALL_DEBUG_ON: {
-	        		int oldCount = executor.debugCount; 
-	        		executor.debugCount--;
-	        		if ((oldCount == 0) != (executor.debugCount == 0))
-	        			ICpu.settingDumpFullInstructions.setBoolean(true);
+	        		machine.getExecutor().debugCount(1);
 	        		break;
 	        	}
 	        	

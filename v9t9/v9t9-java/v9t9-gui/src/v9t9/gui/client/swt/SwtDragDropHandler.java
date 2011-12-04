@@ -42,7 +42,7 @@ import v9t9.base.properties.IPropertyListener;
 import v9t9.base.utils.Pair;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.IEventNotifier.Level;
-import v9t9.engine.video.ICanvas;
+import v9t9.common.video.ICanvas;
 import v9t9.engine.video.VdpCanvas.Format;
 import v9t9.gui.image.ImageImport;
 import v9t9.gui.image.ImageImportOptions;

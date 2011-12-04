@@ -16,21 +16,22 @@ import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.IStatus;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.engine.cpu.Executor;
-import v9t9.engine.hardware.ICruChip;
+import v9t9.engine.cpu.IExecutor;
+import v9t9.engine.hardware.ICruHandler;
 
 /** This is the interface to the runtime-generated class. */
 abstract public class CompiledCode {
     protected ICpu cpu;
     protected IMemoryDomain memory;
-    protected Executor exec;
-    protected ICruChip cru;
+    protected IExecutor exec;
+    protected ICruHandler cru;
     protected int nInstructions, nCycles;
     
     public CompiledCode() {
         
     }
     
-    public CompiledCode(Executor exec) {
+    public CompiledCode(IExecutor exec) {
         this.exec = exec;
         this.cpu = exec.getCpu();
         this.memory = exec.getCpu().getConsole();

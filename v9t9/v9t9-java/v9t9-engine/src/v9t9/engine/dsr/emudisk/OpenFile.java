@@ -4,14 +4,14 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
+import v9t9.common.files.FDR;
+import v9t9.common.files.InvalidFDRException;
+import v9t9.common.files.NativeFDRFile;
+import v9t9.common.files.NativeFile;
+import v9t9.common.files.NativeFileFactory;
+import v9t9.common.files.NativeTextFile;
 import v9t9.engine.dsr.DsrException;
 import v9t9.engine.dsr.PabConstants;
-import v9t9.engine.files.FDR;
-import v9t9.engine.files.InvalidFDRException;
-import v9t9.engine.files.NativeFDRFile;
-import v9t9.engine.files.NativeFile;
-import v9t9.engine.files.NativeFileFactory;
-import v9t9.engine.files.NativeTextFile;
 import v9t9.engine.memory.ByteMemoryAccess;
 
 /** Information about an open file. */

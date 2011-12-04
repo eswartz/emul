@@ -1,6 +1,6 @@
 package v9t9.gui.image;
 
-import v9t9.engine.video.ColorMapUtils;
+import v9t9.common.video.ColorMapUtils;
 
 class RGB333MapColor extends BasePaletteMapper {
 	/**

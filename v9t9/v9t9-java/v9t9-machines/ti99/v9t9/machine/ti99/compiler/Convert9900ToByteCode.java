@@ -366,7 +366,7 @@ public class Convert9900ToByteCode {
 	        ilist.append(new ILOAD(info.localVal1));
 	        ilist.append(new PUSH(info.pgen, 1));
 	        ilist.append(new PUSH(info.pgen, 1));
-	        ilist.append(info.ifact.createInvoke(v9t9.engine.hardware.ICruChip.class
+	        ilist.append(info.ifact.createInvoke(v9t9.engine.hardware.ICruHandler.class
 	                .getName(), "writeBits", Type.VOID, new Type[] { Type.INT,
 	                Type.INT, Type.INT }, Constants.INVOKEINTERFACE));
 	        break;
@@ -377,7 +377,7 @@ public class Convert9900ToByteCode {
 	        ilist.append(new ILOAD(info.localVal1));
 	        ilist.append(new PUSH(info.pgen, 0));
 	        ilist.append(new PUSH(info.pgen, 1));
-	        ilist.append(info.ifact.createInvoke(v9t9.engine.hardware.ICruChip.class
+	        ilist.append(info.ifact.createInvoke(v9t9.engine.hardware.ICruHandler.class
 	                .getName(), "writeBits", Type.VOID, new Type[] { Type.INT,
 	                Type.INT, Type.INT }, Constants.INVOKEINTERFACE));
 	        break;
@@ -387,7 +387,7 @@ public class Convert9900ToByteCode {
 	        ilist.append(new GETFIELD(info.cruIndex));
 	        ilist.append(new ILOAD(info.localVal1));
 	        ilist.append(new PUSH(info.pgen, 1));
-	        ilist.append(info.ifact.createInvoke(v9t9.engine.hardware.ICruChip.class
+	        ilist.append(info.ifact.createInvoke(v9t9.engine.hardware.ICruHandler.class
 	                .getName(), "readBits", Type.INT, new Type[] { Type.INT,
 	                Type.INT }, Constants.INVOKEINTERFACE));
 	        ilist.append(InstructionConstants.I2S);
@@ -512,7 +512,7 @@ public class Convert9900ToByteCode {
 	        OperandCompiler9900.compileReadWord(info, ilist);
 	        ilist.append(new ILOAD(info.localVal1));
 	        ilist.append(new ILOAD(info.localVal2));
-	        ilist.append(info.ifact.createInvoke(v9t9.engine.hardware.ICruChip.class
+	        ilist.append(info.ifact.createInvoke(v9t9.engine.hardware.ICruHandler.class
 	                .getName(), "writeBits", Type.VOID, new Type[] { Type.INT,
 	                Type.INT, Type.INT }, Constants.INVOKEINTERFACE));
 	        break;
@@ -525,7 +525,7 @@ public class Convert9900ToByteCode {
 	        ilist.append(InstructionConstants.IADD);
 	        OperandCompiler9900.compileReadWord(info, ilist);
 	        ilist.append(new ILOAD(info.localVal2));
-	        ilist.append(info.ifact.createInvoke(v9t9.engine.hardware.ICruChip.class
+	        ilist.append(info.ifact.createInvoke(v9t9.engine.hardware.ICruHandler.class
 	                .getName(), "readBits", Type.INT, new Type[] { Type.INT,
 	                Type.INT }, Constants.INVOKEINTERFACE));
 	        ilist.append(InstructionConstants.I2S);

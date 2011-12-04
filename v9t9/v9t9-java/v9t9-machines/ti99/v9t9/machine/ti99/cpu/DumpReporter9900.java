@@ -10,14 +10,14 @@ import v9t9.base.utils.HexUtils;
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.cpu.InstructionWorkBlock;
 import v9t9.engine.cpu.Executor;
-import v9t9.engine.cpu.InstructionListener;
+import v9t9.engine.cpu.IInstructionListener;
 import v9t9.machine.ti99.machine.TI99Machine;
 
 /**
  * @author ejs
  *
  */
-public class DumpReporter9900 implements InstructionListener {
+public class DumpReporter9900 implements IInstructionListener {
 	private final Cpu9900 cpu;
 
 	/**

@@ -8,8 +8,8 @@ import v9t9.engine.hardware.ICruWriter;
 import v9t9.engine.hardware.ISoundChip;
 import v9t9.engine.hardware.IVdpChip;
 import v9t9.engine.keyboard.KeyboardState;
-import v9t9.engine.machine.IMachine;
 import v9t9.engine.memory.BankedMemoryEntry;
+import v9t9.engine.memory.IMachine;
 import v9t9.engine.memory.Vdp9938Mmio;
 import v9t9.engine.memory.WindowBankedMemoryEntry;
 import v9t9.engine.sound.MultiSoundTMS9919B;
@@ -77,7 +77,7 @@ public class Enhanced48KForthTI994AMachineModel extends BaseTI99MachineModel {
 		
 		if (machine_ instanceof TI99Machine) {
 			TI99Machine machine = (TI99Machine) machine_;
-			machine.setCruAccess(new InternalCru9901(machine, machine.getKeyboardState()));
+			machine.setCru(new InternalCru9901(machine, machine.getKeyboardState()));
 			
 			EmuDiskDsr dsr = new EmuDiskDsr(DiskDirectoryMapper.INSTANCE);
 			machine.getDsrManager().registerDsr(dsr);

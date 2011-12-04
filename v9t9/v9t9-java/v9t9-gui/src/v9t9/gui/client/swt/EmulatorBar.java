@@ -15,7 +15,7 @@ import org.eclipse.swt.widgets.Display;
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
 import v9t9.base.properties.SettingProperty;
-import v9t9.engine.machine.IMachine;
+import v9t9.engine.memory.IMachine;
 
 /**
  * @author ejs

@@ -6,9 +6,9 @@ package v9t9.engine.sound;
 
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.sound.ISoundVoice;
-import v9t9.engine.client.ISoundHandler;
+import v9t9.common.client.ISoundHandler;
 import v9t9.engine.hardware.ISoundChip;
-import v9t9.engine.machine.IMachine;
+import v9t9.engine.memory.IMachine;
 
 /**
  * Multiple packed TMS9919 chips.  This provides four TMS9919Bs, 
@@ -94,10 +94,12 @@ public class MultiSoundTMS9919B implements ISoundChip {
 	}
 	
 	public void setAudioGate(int addr, boolean b) {
-		audioGateVoice.setState(machine, b);
-		audioGateVoice.setupVoice();
-		if (soundHandler != null)
-			soundHandler.generateSound();
+		if (audioGateVoice != null) {
+			audioGateVoice.setState(machine, b);
+			audioGateVoice.setupVoice();
+			if (soundHandler != null)
+				soundHandler.generateSound();
+		}
 	}
 
 	public ISoundHandler getSoundHandler() {

@@ -78,9 +78,9 @@ import org.lwjgl.util.glu.GLU;
 
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
-import v9t9.engine.files.DataFiles;
+import v9t9.common.files.DataFiles;
+import v9t9.common.video.ICanvas;
 import v9t9.engine.hardware.IVdpChip;
-import v9t9.engine.video.ICanvas;
 import v9t9.engine.video.VdpCanvas;
 import v9t9.gui.client.swt.gl.MonitorEffect;
 import v9t9.gui.client.swt.gl.MonitorParams;

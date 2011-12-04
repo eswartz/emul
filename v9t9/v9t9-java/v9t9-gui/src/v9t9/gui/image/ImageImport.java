@@ -23,10 +23,10 @@ import javax.imageio.ImageIO;
 import org.eclipse.swt.graphics.ImageData;
 
 import v9t9.base.utils.Pair;
+import v9t9.common.video.ColorMapUtils;
+import v9t9.common.video.VdpColorManager;
 import v9t9.engine.hardware.IVdpChip;
-import v9t9.engine.video.ColorMapUtils;
 import v9t9.engine.video.IBitmapPixelAccess;
-import v9t9.engine.video.VdpColorManager;
 import v9t9.engine.video.VdpCanvas.Format;
 import v9t9.gui.image.ColorOctree.LeafNode;
 import v9t9.gui.image.ImageImportOptions.Dither;

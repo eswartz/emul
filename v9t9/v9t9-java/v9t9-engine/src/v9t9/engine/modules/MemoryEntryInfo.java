@@ -7,8 +7,8 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
+import v9t9.common.files.DataFiles;
 import v9t9.engine.EmulatorSettings;
-import v9t9.engine.files.DataFiles;
 
 /**
  * @author ejs

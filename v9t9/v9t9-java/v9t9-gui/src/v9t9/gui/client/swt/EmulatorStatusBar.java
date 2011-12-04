@@ -22,7 +22,7 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.Shell;
 
 import v9t9.engine.dsr.IDeviceIndicatorProvider;
-import v9t9.engine.machine.IMachine;
+import v9t9.engine.memory.IMachine;
 import v9t9.gui.Emulator;
 import v9t9.gui.client.swt.ToolShell.Behavior;
 import v9t9.gui.client.swt.ToolShell.Centering;

@@ -4,7 +4,7 @@
 package v9t9.machine.f99b.memory;
 
 import v9t9.common.memory.IMemoryEntry;
-import v9t9.engine.machine.IMachine;
+import v9t9.engine.memory.IMachine;
 import v9t9.engine.memory.TIMemoryModel;
 import v9t9.machine.f99b.machine.InternalCruF99;
 import v9t9.machine.ti99.memory.mmio.ConsoleMmioArea;
@@ -118,7 +118,7 @@ public class F99bConsoleMmioArea extends ConsoleMmioArea  {
 	    		break;
     		default:
     			if (addr >= CRU_BASE && addr < CRU_END) {
-    				((InternalCruF99) machine.getCruAccess()).handleWrite(addr, val);
+    				((InternalCruF99) machine.getCru()).handleWrite(addr, val);
     			}
     			break;
 	    	}
@@ -141,7 +141,7 @@ public class F99bConsoleMmioArea extends ConsoleMmioArea  {
     		return getTIMemoryModel().getSpeechMmio().read(addr);
     	default:
 			if (addr >= CRU_BASE && addr < CRU_END) {
-				return ((InternalCruF99) machine.getCruAccess()).handleRead(addr);
+				return ((InternalCruF99) machine.getCru()).handleRead(addr);
 			}
 			break;
     	}

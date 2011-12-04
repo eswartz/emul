@@ -13,8 +13,8 @@ import java.util.regex.Pattern;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.IEventNotifier.Level;
-import v9t9.engine.keyboard.KeyboardState;
-import v9t9.engine.machine.IMachine;
+import v9t9.common.keyboard.IKeyboardState;
+import v9t9.engine.memory.IMachine;
 import v9t9.gui.common.BaseKeyboardHandler;
 
 /**
@@ -27,7 +27,7 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 	private IEventNotifier eventNotifier;
 	private static Pattern rawCodePattern = Pattern.compile(".*,rawCode=(\\d+),.*");
 
-	public AwtKeyboardHandler(Component component, final KeyboardState keyboardState, IMachine machine) {
+	public AwtKeyboardHandler(Component component, final IKeyboardState keyboardState, IMachine machine) {
 		super(keyboardState, machine);
 		component.addKeyListener(new KeyListener() {
 
@@ -87,43 +87,43 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 		
 		// backspace?
 		if (ascii == 8 && modifiers == 0) {
-			keyboardState.setKey(realKey, pressed, true, KeyboardState.SHIFT + KeyboardState.FCTN, 'S', when);
+			keyboardState.setKey(realKey, pressed, true, IKeyboardState.SHIFT + IKeyboardState.FCTN, 'S', when);
 			return;
 		}
 		
 		byte shift = 0;
 		if ((modifiers & KeyEvent.SHIFT_DOWN_MASK + KeyEvent.SHIFT_MASK) != 0)
-			shift |= KeyboardState.SHIFT;
+			shift |= IKeyboardState.SHIFT;
 		if ((modifiers & KeyEvent.CTRL_DOWN_MASK + KeyEvent.CTRL_MASK) != 0)
-			shift |= KeyboardState.CTRL;
+			shift |= IKeyboardState.CTRL;
 		if ((modifiers & KeyEvent.ALT_DOWN_MASK + KeyEvent.META_DOWN_MASK + KeyEvent.ALT_MASK + KeyEvent.META_MASK) != 0)
-			shift |= KeyboardState.FCTN;
+			shift |= IKeyboardState.FCTN;
 		
 		boolean synthetic = true;
 		
-		int joy = (shift & KeyboardState.SHIFT) != 0 ? 2 : 1;
+		int joy = (shift & IKeyboardState.SHIFT) != 0 ? 2 : 1;
 		
 		if ((ascii == 0 || ascii == 0xffff) || 
 				!keyboardState.postCharacter(machine, realKey, pressed, synthetic, shift, ascii, when)) {
-			byte fctn = (byte) (KeyboardState.FCTN | shift);
+			byte fctn = (byte) (IKeyboardState.FCTN | shift);
 			//System.out.println("??? " + keyCode + " : " + pressed);
 			switch (keyCode) {
 			case KeyEvent.VK_SHIFT:
-				keyboardState.setKey(realKey, pressed, synthetic, KeyboardState.SHIFT, 0, when);
+				keyboardState.setKey(realKey, pressed, synthetic, IKeyboardState.SHIFT, 0, when);
 				break;
 			case KeyEvent.VK_CONTROL:
-				keyboardState.setKey(realKey, pressed, synthetic, KeyboardState.CTRL, 0, when);
+				keyboardState.setKey(realKey, pressed, synthetic, IKeyboardState.CTRL, 0, when);
 				break;
 			case KeyEvent.VK_ALT:
 			case KeyEvent.VK_META:
-				keyboardState.setKey(realKey, pressed, synthetic, KeyboardState.FCTN, 0, when);
+				keyboardState.setKey(realKey, pressed, synthetic, IKeyboardState.FCTN, 0, when);
 				break;
 			case KeyEvent.VK_ENTER:
 				keyboardState.setKey(realKey, pressed, synthetic, shift, '\r', when);
 				break;
 				
 			case KeyEvent.VK_ESCAPE:
-				keyboardState.setKey(realKey, pressed, synthetic, KeyboardState.FCTN, '9', when);
+				keyboardState.setKey(realKey, pressed, synthetic, IKeyboardState.FCTN, '9', when);
 				break;
 				
 			case KeyEvent.VK_CAPS_LOCK:
@@ -141,7 +141,7 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 				machine.getClient().close();
 				break;
 			case KeyEvent.VK_PAUSE:
-				if (pressed && (shift & KeyboardState.CTRL) != 0)
+				if (pressed && (shift & IKeyboardState.CTRL) != 0)
 					machine.getClient().close();
 				break;
 			case KeyEvent.VK_F1:
@@ -172,25 +172,25 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 			case KeyEvent.VK_KP_UP:
 				if (isKeypadForJoystick())
 					keyboardState.setJoystick(joy,
-							KeyboardState.JOY_Y,
+							IKeyboardState.JOY_Y,
 							0, pressed ? -1 : 0, false, when);
 				break;
 			case KeyEvent.VK_KP_DOWN:
 				if (isKeypadForJoystick())
 					keyboardState.setJoystick(joy,
-							KeyboardState.JOY_Y,
+							IKeyboardState.JOY_Y,
 							 0, pressed ? 1 : 0, false, when);
 				break;
 			case KeyEvent.VK_KP_LEFT:
 				if (isKeypadForJoystick())
 					keyboardState.setJoystick(joy,
-							KeyboardState.JOY_X,
+							IKeyboardState.JOY_X,
 							pressed ? -1 : 0, 0, false, when);
 				break;
 			case KeyEvent.VK_KP_RIGHT:
 				if (isKeypadForJoystick())
 					keyboardState.setJoystick(joy,
-							KeyboardState.JOY_X,
+							IKeyboardState.JOY_X,
 							pressed ? 1 : 0, 0, false, when);
 				break;
 				
@@ -199,7 +199,7 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 					keyboardState.setKey(realKey, pressed, synthetic, fctn, '5', when);		// BEGIN
 				} else if (isKeypadForJoystick()) {
 					keyboardState.setJoystick(joy,
-							KeyboardState.JOY_Y | KeyboardState.JOY_X,
+							IKeyboardState.JOY_Y | IKeyboardState.JOY_X,
 							pressed ? -1 : 0, pressed ? -1 : 0, false, when);
 				}
 				break;
@@ -209,7 +209,7 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 					keyboardState.setKey(realKey, pressed, synthetic, fctn, '2', when);
 				} else if (isKeypadForJoystick()) {
 					keyboardState.setJoystick(joy,
-							KeyboardState.JOY_B,
+							IKeyboardState.JOY_B,
 							0, 0, pressed, when);
 				}
 				break;
@@ -219,7 +219,7 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 					keyboardState.setKey(realKey, pressed, synthetic, fctn, '6', when); // (as per E/A and TI Writer)
 				} else if (isKeypadForJoystick()) {
 					keyboardState.setJoystick(joy,
-							KeyboardState.JOY_Y | KeyboardState.JOY_X,
+							IKeyboardState.JOY_Y | IKeyboardState.JOY_X,
 							pressed ? 1 : 0, pressed ? -1 : 0, false, when);
 				}
 				break;
@@ -228,7 +228,7 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 					keyboardState.setKey(realKey, pressed, synthetic, fctn, '4', when); // (as per E/A and TI Writer)
 				} else if (isKeypadForJoystick()) {
 					keyboardState.setJoystick(joy,
-							KeyboardState.JOY_Y | KeyboardState.JOY_X,
+							IKeyboardState.JOY_Y | IKeyboardState.JOY_X,
 							pressed ? 1 : 0, pressed ? 1 : 0, false, when);
 				}
 				break;
@@ -237,7 +237,7 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 					keyboardState.setKey(realKey, pressed, synthetic, fctn, '0', when);		// Fctn-0
 				} else if (isKeypadForJoystick()) {
 					keyboardState.setJoystick(joy,
-							KeyboardState.JOY_Y | KeyboardState.JOY_X,
+							IKeyboardState.JOY_Y | IKeyboardState.JOY_X,
 							pressed ? -1 : 0, pressed ? 1 : 0, false, when);
 				}
 				break;
@@ -275,7 +275,7 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 	/* (non-Javadoc)
 	 * @see v9t9.engine.KeyboardHandler#scan(v9t9.keyboard.KeyboardState)
 	 */
-	public void scan(KeyboardState state) {
+	public void scan(IKeyboardState state) {
 		// all handled incrementally, but just in case something goes goofy...
 		if (!state.isPasting()) {
 			if (lastKeystrokeTime + 500 < System.currentTimeMillis()) {

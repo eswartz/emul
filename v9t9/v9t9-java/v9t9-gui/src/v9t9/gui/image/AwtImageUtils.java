@@ -8,7 +8,7 @@ import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 
-import v9t9.engine.video.ColorMapUtils;
+import v9t9.common.video.ColorMapUtils;
 
 /**
  * @author ejs

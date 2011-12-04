@@ -3,7 +3,7 @@
  */
 package v9t9.engine.compiler;
 
-import v9t9.engine.cpu.Executor;
+import v9t9.engine.cpu.IExecutor;
 
 /**
  * Strategy for compiling code
@@ -19,7 +19,7 @@ public interface ICompilerStrategy {
 	 */
 	ICompiledCode getCompiledCode();
 	
-	void setup(Executor exec, CompilerBase compiler);
+	void setup(IExecutor exec, CompilerBase compiler);
 
 	/**
 	 * 

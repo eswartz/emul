@@ -3,22 +3,22 @@ package v9t9.machine.f99b.machine;
 
 import v9t9.base.settings.ISettingSection;
 import v9t9.common.memory.IMemoryDomain;
-import v9t9.engine.hardware.BaseCruAccess;
-import v9t9.engine.hardware.ICruAccess;
+import v9t9.engine.hardware.BaseCruChip;
+import v9t9.engine.hardware.ICruChip;
 import v9t9.engine.machine.MachineBase;
-import v9t9.engine.machine.MachineModel;
+import v9t9.engine.memory.IMachineModel;
 import v9t9.engine.memory.TIMemoryModel;
 import v9t9.machine.f99b.cpu.CpuF99b;
 
 public class F99bMachine extends MachineBase {
 
-	public F99bMachine(MachineModel machineModel) {
+	public F99bMachine(IMachineModel machineModel) {
 		super(machineModel);
 		keyboardState.setPasteKeyDelay(6);
 	}
 
 	@Override
-	protected void init(MachineModel machineModel) {
+	protected void init(IMachineModel machineModel) {
 		settingModuleList.setString("");
 		
 		super.init(machineModel);
@@ -76,8 +76,8 @@ public class F99bMachine extends MachineBase {
 	public void keyStateChanged() {
 		super.keyStateChanged();
 		if (keyboardState.anyKeyPressed()) {
-			ICruAccess cru = getCruAccess();
-			if (cru instanceof BaseCruAccess) {
+			ICruChip cru = getCru();
+			if (cru instanceof BaseCruChip) {
 				cru.triggerInterrupt(CpuF99b.INT_KBD);
 			}
 		}

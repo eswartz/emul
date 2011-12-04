@@ -12,7 +12,7 @@ import v9t9.common.asm.RawInstruction;
 import v9t9.common.cpu.InstructionWorkBlock;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.engine.cpu.Executor;
-import v9t9.engine.cpu.InstructionListener;
+import v9t9.engine.cpu.IInstructionListener;
 import v9t9.machine.f99b.asm.InstF99b;
 import v9t9.machine.f99b.asm.InstructionWorkBlockF99b;
 
@@ -20,7 +20,7 @@ import v9t9.machine.f99b.asm.InstructionWorkBlockF99b;
  * @author ejs
  *
  */
-public class DumpFullReporterF99b implements InstructionListener {
+public class DumpFullReporterF99b implements IInstructionListener {
 
 	private final PrintWriter dump;
 

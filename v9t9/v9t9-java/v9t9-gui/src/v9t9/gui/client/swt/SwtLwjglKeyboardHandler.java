@@ -11,9 +11,9 @@ import net.java.games.input.ControllerEnvironment;
 
 import org.eclipse.swt.widgets.Control;
 
-import v9t9.engine.client.IKeyboardHandler;
-import v9t9.engine.keyboard.KeyboardState;
-import v9t9.engine.machine.IMachine;
+import v9t9.common.client.IKeyboardHandler;
+import v9t9.common.keyboard.IKeyboardState;
+import v9t9.engine.memory.IMachine;
 
 /**
  * @author ejs
@@ -28,7 +28,7 @@ public class SwtLwjglKeyboardHandler implements IKeyboardHandler, ISwtKeyboardHa
 	 */
 	public interface ControllerHandler {
 		Controller getController();
-		void setJoystick(int joy, KeyboardState state);
+		void setJoystick(int joy, IKeyboardState state);
 	}
 	
 	static public class StupidControllerHandler implements ControllerHandler {
@@ -65,13 +65,13 @@ public class SwtLwjglKeyboardHandler implements IKeyboardHandler, ISwtKeyboardHa
 		 * @see v9t9.emulator.clients.builtin.swt.SwtLwjglKeyboardHandler.ControllerHandler#setJoystick(int, v9t9.keyboard.KeyboardState)
 		 */
 		@Override
-		public void setJoystick(int joy, KeyboardState state) {
+		public void setJoystick(int joy, IKeyboardState state) {
 			int x = (int) Math.signum(getXAxis(joy));
 			int y = (int) Math.signum(getYAxis(joy));
 			boolean fire = getButton(joy);
 			
 			state.setJoystick(joy, 
-					KeyboardState.JOY_X | KeyboardState.JOY_Y | KeyboardState.JOY_B, 
+					IKeyboardState.JOY_X | IKeyboardState.JOY_Y | IKeyboardState.JOY_B, 
 					x, y, fire, 
 					System.currentTimeMillis());
 		}
@@ -120,7 +120,7 @@ public class SwtLwjglKeyboardHandler implements IKeyboardHandler, ISwtKeyboardHa
 	private ControllerHandler joystickHandler;
 	private boolean failedLast;
 	
-	public SwtLwjglKeyboardHandler(KeyboardState keyboardState, IMachine machine) {
+	public SwtLwjglKeyboardHandler(IKeyboardState keyboardState, IMachine machine) {
 		this.swtKeyboardHandler = new SwtKeyboardHandler(keyboardState, machine);
 		
 		for (Controller controller : ControllerEnvironment.getDefaultEnvironment().getControllers()) {
@@ -142,7 +142,7 @@ public class SwtLwjglKeyboardHandler implements IKeyboardHandler, ISwtKeyboardHa
 	 * @see v9t9.engine.KeyboardHandler#scan(v9t9.keyboard.KeyboardState)
 	 */
 	@Override
-	public void scan(KeyboardState state) {
+	public void scan(IKeyboardState state) {
 		swtKeyboardHandler.scan(state);
 		
 		if (joystickHandler != null) {
@@ -155,7 +155,7 @@ public class SwtLwjglKeyboardHandler implements IKeyboardHandler, ISwtKeyboardHa
 			} else {
 				if (!failedLast) {
 					// maybe unplugged?
-					state.setJoystick(1, KeyboardState.JOY_X | KeyboardState.JOY_Y | KeyboardState.JOY_B, 
+					state.setJoystick(1, IKeyboardState.JOY_X | IKeyboardState.JOY_Y | IKeyboardState.JOY_B, 
 							0, 0, false, System.currentTimeMillis());
 					failedLast = true;
 				}

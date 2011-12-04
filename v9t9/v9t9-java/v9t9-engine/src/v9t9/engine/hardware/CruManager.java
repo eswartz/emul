@@ -15,7 +15,7 @@ import java.util.TreeMap;
  * This class handles a set of CRU handlers
  * @author ejs
  */
-public class CruManager implements ICruChip {
+public class CruManager implements ICruHandler {
     
     public CruManager() {
         readers = new TreeMap<Integer, ICruReader>();

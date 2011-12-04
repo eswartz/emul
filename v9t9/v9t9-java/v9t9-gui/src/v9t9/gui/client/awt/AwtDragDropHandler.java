@@ -37,7 +37,7 @@ import javax.imageio.ImageIO;
 import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.graphics.ImageData;
 
-import v9t9.engine.video.ICanvas;
+import v9t9.common.video.ICanvas;
 import v9t9.gui.image.AwtImageUtils;
 import v9t9.gui.image.ImageImport;
 import v9t9.gui.image.ImageImportOptions;

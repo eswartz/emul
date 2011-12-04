@@ -16,6 +16,7 @@ import java.util.Map;
 
 import v9t9.base.properties.SettingProperty;
 import v9t9.base.settings.ISettingSection;
+import v9t9.common.files.Catalog;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.engine.dsr.DeviceIndicatorProvider;
 import v9t9.engine.dsr.DsrException;
@@ -32,7 +33,6 @@ import v9t9.engine.dsr.emudisk.FileDirectory;
 import v9t9.engine.dsr.emudisk.IFileMapper;
 import v9t9.engine.dsr.emudisk.PabInfoBlock;
 import v9t9.engine.dsr.realdisk.RealDiskDsrSettings;
-import v9t9.engine.files.Catalog;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.settings.WorkspaceSettings;
 import v9t9.machine.common.dsr.emudisk.DiskDirectoryMapper.EmuDiskSetting;

@@ -39,7 +39,7 @@ import org.eclipse.swt.widgets.TableColumn;
 
 import v9t9.common.events.NotifyException;
 import v9t9.common.events.IEventNotifier.Level;
-import v9t9.engine.machine.IMachine;
+import v9t9.engine.memory.IMachine;
 import v9t9.engine.modules.IModule;
 import v9t9.engine.modules.MemoryEntryInfo;
 

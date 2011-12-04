@@ -47,13 +47,13 @@ import org.eclipse.swt.widgets.Shell;
 
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
+import v9t9.common.client.IClient;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.engine.EmulatorSettings;
-import v9t9.engine.client.IClient;
-import v9t9.engine.cpu.Executor;
-import v9t9.engine.machine.IMachine;
+import v9t9.engine.cpu.IExecutor;
+import v9t9.engine.memory.IMachine;
 import v9t9.gui.Emulator;
 import v9t9.gui.common.BaseEmulatorWindow;
 
@@ -767,13 +767,13 @@ public class SwtWindow extends BaseEmulatorWindow{
 			new MenuItem(menu, SWT.SEPARATOR);
 			item = new MenuItem(menu, SWT.CHECK);
 			item.setText("Compile to Bytecode");
-			if (Executor.settingCompile.getBoolean()) {
+			if (IExecutor.settingCompile.getBoolean()) {
 				item.setSelection(true);
 			}
 			item.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
-					Executor.settingCompile.setBoolean(!Executor.settingCompile.getBoolean());
+					IExecutor.settingCompile.setBoolean(!IExecutor.settingCompile.getBoolean());
 				}
 			});
 		}

@@ -13,9 +13,9 @@ import java.util.Arrays;
 import v9t9.base.properties.FieldProperty;
 import v9t9.base.properties.IPropertySource;
 import v9t9.base.properties.PropertySource;
+import v9t9.common.video.VdpColorManager;
 import v9t9.engine.hardware.IVdpChip;
 import v9t9.engine.video.VdpCanvas;
-import v9t9.engine.video.VdpColorManager;
 import v9t9.engine.video.VdpCanvas.Format;
 import v9t9.engine.video.tms9918a.BitmapModeRedrawHandler;
 import v9t9.engine.video.v9938.VdpV9938;
@@ -226,8 +226,9 @@ public class ImageImportOptions {
 		setDitherMono(isMonoMode);
 		setDitherType(format == Format.COLOR16_8x1 && !canSetPalette ? Dither.ORDERED : Dither.FS);
 		
-		if (!canSetPalette)
-			setOrigPalette(VdpColorManager.getStandardPalette(vdp));
+		if (!canSetPalette) {
+			setOrigPalette(vdp.getRegisterCount() > 8 ? VdpColorManager.stockPaletteV9938 : VdpColorManager.stockPalette);
+		}
 		else
 			setOrigPalette(canvas.getColorMgr().getPalette());
 	}

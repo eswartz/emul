@@ -4,7 +4,7 @@
  */
 package v9t9.gui.client.swt;
 
-import v9t9.engine.client.IClient;
+import v9t9.common.client.IClient;
 import v9t9.engine.machine.MachineBase;
 
 /**

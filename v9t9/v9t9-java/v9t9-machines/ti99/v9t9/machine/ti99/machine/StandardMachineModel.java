@@ -8,7 +8,7 @@ import v9t9.common.memory.IMemoryModel;
 import v9t9.engine.hardware.ISoundChip;
 import v9t9.engine.hardware.IVdpChip;
 import v9t9.engine.keyboard.KeyboardState;
-import v9t9.engine.machine.IMachine;
+import v9t9.engine.memory.IMachine;
 import v9t9.engine.memory.Vdp9918AMmio;
 import v9t9.engine.sound.SoundTMS9919;
 import v9t9.engine.video.tms9918a.VdpTMS9918A;
@@ -69,7 +69,7 @@ public class StandardMachineModel extends BaseTI99MachineModel {
 		
 		if (machine_ instanceof TI99Machine) {
 			TI99Machine machine = (TI99Machine) machine_;
-			machine.setCruAccess(new InternalCru9901(machine, machine.getKeyboardState()));
+			machine.setCru(new InternalCru9901(machine, machine.getKeyboardState()));
 			
 			EmuDiskDsr emudsr = new EmuDiskDsr(DiskDirectoryMapper.INSTANCE);
 			machine.getDsrManager().registerDsr(emudsr);

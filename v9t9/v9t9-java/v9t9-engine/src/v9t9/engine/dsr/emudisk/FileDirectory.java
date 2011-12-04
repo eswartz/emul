@@ -5,7 +5,7 @@ package v9t9.engine.dsr.emudisk;
 
 import java.io.File;
 
-import v9t9.engine.files.Catalog;
+import v9t9.common.files.Catalog;
 
 /**
  * @author ejs

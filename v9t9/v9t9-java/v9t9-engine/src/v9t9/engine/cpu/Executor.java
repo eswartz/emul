@@ -13,7 +13,6 @@ import java.util.List;
 
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
-import v9t9.base.properties.SettingProperty;
 import v9t9.base.settings.Logging;
 import v9t9.common.cpu.AbortedException;
 import v9t9.common.cpu.ICpu;
@@ -22,8 +21,8 @@ import v9t9.common.cpu.MetricEntry;
 import v9t9.engine.compiler.CompilerBase;
 import v9t9.engine.compiler.ICompiledCode;
 import v9t9.engine.compiler.ICompilerStrategy;
-import v9t9.engine.interpreter.Interpreter;
-import v9t9.engine.machine.IMachine;
+import v9t9.engine.interpreter.IInterpreter;
+import v9t9.engine.memory.IMachine;
 import v9t9.engine.video.tms9918a.VdpTMS9918A;
 
 
@@ -32,11 +31,11 @@ import v9t9.engine.video.tms9918a.VdpTMS9918A;
  * 
  * @author ejs
  */
-public class Executor {
+public class Executor implements IExecutor {
 
     private ICpu cpu;
 
-    public Interpreter interp;
+    public IInterpreter interp;
     ICompilerStrategy compilerStrategy;
 
     public long nInstructions;
@@ -48,25 +47,21 @@ public class Executor {
 
 	public int nVdpInterrupts;
 
-	static public final String sCompile = "Compile";
-    static public final SettingProperty settingCompile = new SettingProperty(sCompile, new Boolean(false));
-    static public final SettingProperty settingSingleStep = new SettingProperty("SingleStep", new Boolean(false));
-
-    /** counter for DBG/DBGF instructions */
+	/** counter for DBG/DBGF instructions */
     public int debugCount;
 
 	public volatile Boolean interruptExecution;
     
-	private InstructionListener[] instructionListeners;
+	private IInstructionListener[] instructionListeners;
 
 	private long lastCycleCount;
 
 	private final ICpuMetrics cpuMetrics;
 
     public Executor(ICpu cpu, ICpuMetrics cpuMetrics, 
-    		Interpreter interpreter, CompilerBase compiler, 
+    		IInterpreter interpreter, CompilerBase compiler, 
     		ICompilerStrategy compilerStrategy,
-    		final InstructionListener dumpFullReporter, final InstructionListener dumpReporter) {
+    		final IInstructionListener dumpFullReporter, final IInstructionListener dumpReporter) {
         this.cpu = cpu;
 		this.cpuMetrics = cpuMetrics;
         this.interp = interpreter;
@@ -148,17 +143,19 @@ public class Executor {
         Logging.registerLog(ICpu.settingDumpFullInstructions, "instrs_full.txt");
     }
 
-    public synchronized void interpretOneInstruction() {
+    /* (non-Javadoc)
+	 * @see v9t9.engine.cpu.IExecutor#interpretOneInstruction()
+	 */
+    @Override
+	public synchronized void interpretOneInstruction() {
         interp.executeChunk(1, this);
     }
 
-    /** 
-     * Run an unbounded amount of code.  Some external factor
-     * tells the execution unit when to stop.  The interpret/compile
-     * setting is sticky until execution is interrupted.
-     * @throws AbortedException when interrupt or other machine event stops execution
-     */
-    public void execute() {
+    /* (non-Javadoc)
+	 * @see v9t9.engine.cpu.IExecutor#execute()
+	 */
+    @Override
+	public void execute() {
     	if (cpu.isIdle() && ICpu.settingRealTime.getBoolean()) {
     		if (cpu.isThrottled())
     			return;
@@ -240,7 +237,11 @@ public class Executor {
     	return Logging.getLog(ICpu.settingDumpFullInstructions);
     }
  
-	public void recordMetrics() {
+	/* (non-Javadoc)
+	 * @see v9t9.engine.cpu.IExecutor#recordMetrics()
+	 */
+	@Override
+	public final void recordMetrics() {
 		
 		long totalCycleCount = cpu.getTotalCycleCount();
 		if (totalCycleCount == lastCycleCount)
@@ -263,56 +264,140 @@ public class Executor {
         lastCycleCount = totalCycleCount;
 	}
 
-	/**
-	 * @return
+	/* (non-Javadoc)
+	 * @see v9t9.engine.cpu.IExecutor#getInstructionListeners()
 	 */
-	public InstructionListener[] getInstructionListeners() {
+	@Override
+	public final IInstructionListener[] getInstructionListeners() {
 		return instructionListeners;
 	}
 	
-	public void addInstructionListener(InstructionListener listener) {
-		List<InstructionListener> newListeners;
+	/* (non-Javadoc)
+	 * @see v9t9.engine.cpu.IExecutor#addInstructionListener(v9t9.engine.cpu.InstructionListener)
+	 */
+	@Override
+	public void addInstructionListener(IInstructionListener listener) {
+		List<IInstructionListener> newListeners;
 		if (instructionListeners == null) {
-			newListeners = new ArrayList<InstructionListener>();
+			newListeners = new ArrayList<IInstructionListener>();
 		} else {
-			newListeners = new ArrayList<InstructionListener>(Arrays.asList(instructionListeners));
+			newListeners = new ArrayList<IInstructionListener>(Arrays.asList(instructionListeners));
 		}
 		if (!newListeners.contains(listener))
 			newListeners.add(listener);
-		instructionListeners = (InstructionListener[]) newListeners
-				.toArray(new InstructionListener[newListeners.size()]);
+		instructionListeners = (IInstructionListener[]) newListeners
+				.toArray(new IInstructionListener[newListeners.size()]);
 	}
-	public void removeInstructionListener(InstructionListener listener) {
+	/* (non-Javadoc)
+	 * @see v9t9.engine.cpu.IExecutor#removeInstructionListener(v9t9.engine.cpu.InstructionListener)
+	 */
+	@Override
+	public void removeInstructionListener(IInstructionListener listener) {
 		if (instructionListeners == null)
 			return;
-		List<InstructionListener> newListeners = new ArrayList<InstructionListener>(Arrays.asList(instructionListeners));
+		List<IInstructionListener> newListeners = new ArrayList<IInstructionListener>(Arrays.asList(instructionListeners));
 		newListeners.remove(listener);
 		if (newListeners.size() == 0)
 			instructionListeners = null;
 		else
-			instructionListeners = (InstructionListener[]) newListeners
-				.toArray(new InstructionListener[newListeners.size()]);
+			instructionListeners = (IInstructionListener[]) newListeners
+				.toArray(new IInstructionListener[newListeners.size()]);
 	}
 
-	/**
-	 * @return
+	/* (non-Javadoc)
+	 * @see v9t9.engine.cpu.IExecutor#getCompilerStrategy()
 	 */
-	public ICompilerStrategy getCompilerStrategy() {
+	@Override
+	public final ICompilerStrategy getCompilerStrategy() {
 		return compilerStrategy;
 	}
 
-	/**
-	 * @param cpu the cpu to set
+	/* (non-Javadoc)
+	 * @see v9t9.engine.cpu.IExecutor#setCpu(v9t9.common.cpu.ICpu)
 	 */
+	@Override
 	public void setCpu(ICpu cpu) {
 		this.cpu = cpu;
 	}
 
-	/**
-	 * @return the cpu
+	/* (non-Javadoc)
+	 * @see v9t9.engine.cpu.IExecutor#getCpu()
 	 */
-	public ICpu getCpu() {
+	@Override
+	public final ICpu getCpu() {
 		return cpu;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.cpu.IExecutor#recordSwitch()
+	 */
+	@Override
+	public final void recordSwitch() {
+		nSwitches++;		
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.cpu.IExecutor#recordCompileRun(int, int)
+	 */
+	@Override
+	public final void recordCompileRun(int nInstructions, int nCycles) {
+        this.nInstructions += nInstructions;
+        nCompiledInstructions += nInstructions;
+        getCpu().addCycles(nCycles);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.cpu.IExecutor#recordCompilation()
+	 */
+	@Override
+	public final void recordCompilation() {
+		 nCompiles++;		
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.cpu.IExecutor#breakAfterExecution()
+	 */
+	@Override
+	public final boolean breakAfterExecution(int count) {
+		nInstructions += count;
+		cpu.checkAndHandleInterrupts();
+		return interruptExecution;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.cpu.IExecutor#debugCount(int)
+	 */
+	@Override
+	public final void debugCount(int i) {
+    	int oldCount = debugCount; 
+    	debugCount += i;
+    	if ((oldCount == 0) != (debugCount == 0))
+    		ICpu.settingDumpFullInstructions.setBoolean(i > 0);
+		
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.cpu.IExecutor#vdpInterrupt()
+	 */
+	@Override
+	public final void vdpInterrupt() {
+		nVdpInterrupts++;		
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.cpu.IExecutor#resetVdpInterrupts()
+	 */
+	@Override
+	public final void resetVdpInterrupts() {
+		nVdpInterrupts = 0;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.cpu.IExecutor#interruptExecution()
+	 */
+	@Override
+	public final void interruptExecution() {
+		interruptExecution = Boolean.TRUE;		
 	}
 
 }

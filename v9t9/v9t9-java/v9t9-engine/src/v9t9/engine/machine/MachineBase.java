@@ -20,6 +20,7 @@ import v9t9.base.properties.IPropertyListener;
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.timer.FastTimer;
 import v9t9.common.asm.IRawInstructionFactory;
+import v9t9.common.client.IClient;
 import v9t9.common.cpu.AbortedException;
 import v9t9.common.cpu.CpuMetrics;
 import v9t9.common.cpu.ICpu;
@@ -27,21 +28,24 @@ import v9t9.common.cpu.ICpuMetrics;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyEvent;
 import v9t9.common.events.IEventNotifier.Level;
+import v9t9.common.files.DataFiles;
+import v9t9.common.keyboard.IKeyboardState;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryModel;
-import v9t9.engine.client.IClient;
-import v9t9.engine.cpu.Executor;
+import v9t9.engine.cpu.IExecutor;
 import v9t9.engine.dsr.DsrManager;
 import v9t9.engine.dsr.IDsrManager;
 import v9t9.engine.events.RecordingEventNotifier;
-import v9t9.engine.files.DataFiles;
-import v9t9.engine.hardware.ICruAccess;
+import v9t9.engine.hardware.ICruChip;
 import v9t9.engine.hardware.ISoundChip;
 import v9t9.engine.hardware.ISpeechChip;
 import v9t9.engine.hardware.IVdpChip;
 import v9t9.engine.keyboard.KeyboardState;
+import v9t9.engine.memory.IMachine;
+import v9t9.engine.memory.IMachineModel;
+import v9t9.engine.memory.TerminatedException;
 import v9t9.engine.settings.WorkspaceSettings;
 
 /** Encapsulate all the information about a running emulated machine.
@@ -51,7 +55,7 @@ abstract public class MachineBase implements IMachine {
     protected IMemory memory;
     protected IMemoryDomain console;
     protected  ICpu cpu;
-    protected  Executor executor;
+    protected IExecutor executor;
     protected IClient client;
     protected  volatile boolean bAlive;
     protected Timer timer;
@@ -78,7 +82,7 @@ abstract public class MachineBase implements IMachine {
 	protected  Thread machineRunner;
 	protected  Thread videoRunner;
 	protected int throttleCount;
-	protected  KeyboardState keyboardState;
+	protected  IKeyboardState keyboardState;
 	private Object executionLock = new Object();
 	volatile protected boolean bExecuting;
 	protected  ISoundChip sound;
@@ -89,20 +93,20 @@ abstract public class MachineBase implements IMachine {
 	protected  TimerTask memorySaverTask;
 	protected  ModuleManager moduleManager;
 	
-	private ICruAccess cruAccess;
+	private ICruChip cru;
 	
 	protected  RecordingEventNotifier recordingNotifier = new RecordingEventNotifier();
 	private IRawInstructionFactory instructionFactory;
-	private final MachineModel machineModel;
+	private final IMachineModel machineModel;
 	private IPropertyListener pauseListener;
 	private Runnable speechTimerTask;
 	
-    public MachineBase(MachineModel machineModel) {
+    public MachineBase(IMachineModel machineModel) {
     	pauseListener = new IPropertyListener() {
     		
     		public void propertyChanged(IProperty setting) {
     			synchronized (executionLock) {
-    				executor.interruptExecution = true;
+    				executor.interruptExecution();
     				cpu.resetCycleCounts();
     				bExecuting = !setting.getBoolean();
     				executionLock.notifyAll();
@@ -136,7 +140,7 @@ abstract public class MachineBase implements IMachine {
 	}
 
 
-	protected void init(MachineModel machineModel) {
+	protected void init(IMachineModel machineModel) {
     	this.vdp = machineModel.createVdp(this);
     	sound = machineModel.createSoundChip(this);
     	speech = machineModel.createSpeechChip(this);
@@ -236,7 +240,7 @@ abstract public class MachineBase implements IMachine {
 	    			if (now >= lastInfo + 1000) {
 	    				upTime += now - lastInfo;
 	    				executor.recordMetrics();
-	    				executor.nVdpInterrupts = 0;
+	    				executor.resetVdpInterrupts();
 	    				lastInfo = now;
 	    				//vdpInterruptDelta = 0;
 	    			}
@@ -398,7 +402,7 @@ abstract public class MachineBase implements IMachine {
 	@Override
 	public void setNotRunning() {
 		bAlive = false;
-		executor.interruptExecution = true;
+		executor.interruptExecution();
 		synchronized (executionLock) {
 			bExecuting = false;
 			executionLock.notifyAll();
@@ -437,8 +441,8 @@ abstract public class MachineBase implements IMachine {
 			}
 		}
 		
-		if (cruAccess != null)
-			cruAccess.reset();
+		if (cru != null)
+			cru.reset();
 				
 		cpu.reset();
 	}
@@ -486,14 +490,14 @@ abstract public class MachineBase implements IMachine {
 	 * @see v9t9.emulator.common.IMachine#getExecutor()
 	 */
     @Override
-	public Executor getExecutor() {
+	public IExecutor getExecutor() {
         return executor;
     }
     /* (non-Javadoc)
 	 * @see v9t9.emulator.common.IMachine#setExecutor(v9t9.emulator.runtime.cpu.Executor)
 	 */
     @Override
-	public void setExecutor(Executor executor) {
+	public void setExecutor(IExecutor executor) {
         this.executor = executor;
     }
     
@@ -517,7 +521,7 @@ abstract public class MachineBase implements IMachine {
 	 * @see v9t9.emulator.common.IMachine#getKeyboardState()
 	 */
     @Override
-	public KeyboardState getKeyboardState() {
+	public IKeyboardState getKeyboardState() {
 		return keyboardState;
 	}
 
@@ -563,8 +567,8 @@ abstract public class MachineBase implements IMachine {
 		if (dsrManager != null)
 			dsrManager.saveState(settings.addSection("DSRs"));
 
-		if (cruAccess != null)
-			cruAccess.saveState(settings.addSection("CRU"));
+		if (cru != null)
+			cru.saveState(settings.addSection("CRU"));
 
 	}
 
@@ -633,8 +637,8 @@ abstract public class MachineBase implements IMachine {
 		keyboardState.resetJoystick();
 		if (dsrManager != null)
 			dsrManager.loadState(section.getSection("DSRs"));
-		if (cruAccess != null)
-			cruAccess.loadState(section.getSection("CRU"));
+		if (cru != null)
+			cru.loadState(section.getSection("CRU"));
 	}
 
 	/* (non-Javadoc)
@@ -733,7 +737,7 @@ abstract public class MachineBase implements IMachine {
 	 * @see v9t9.emulator.common.IMachine#getModel()
 	 */
 	@Override
-	public MachineModel getModel() {
+	public IMachineModel getModel() {
 		return machineModel;
 	}
 
@@ -758,20 +762,20 @@ abstract public class MachineBase implements IMachine {
 	 */
 	@Override
 	public void interrupt() {
-		executor.interruptExecution = Boolean.TRUE;
+		executor.interruptExecution();
 	}
 
 	/**
 	 * @return the cruAccess
 	 */
-	public ICruAccess getCruAccess() {
-		return cruAccess;
+	public ICruChip getCru() {
+		return cru;
 	}
 	/**
-	 * @param cruAccess the cruAccess to set
+	 * @param cru the cruAccess to set
 	 */
-	public void setCruAccess(ICruAccess cruAccess) {
-		this.cruAccess = cruAccess;
+	public void setCru(ICruChip cru) {
+		this.cru = cru;
 	}
 }
 

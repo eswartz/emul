@@ -7,17 +7,17 @@ package v9t9.machine.f99b.machine;
 import java.util.ArrayList;
 import java.util.List;
 
+import v9t9.common.keyboard.IKeyboardState;
 import v9t9.engine.dsr.IMemoryIOHandler;
-import v9t9.engine.hardware.BaseCruAccess;
-import v9t9.engine.keyboard.KeyboardState;
-import v9t9.engine.machine.IMachine;
+import v9t9.engine.hardware.BaseCruChip;
+import v9t9.engine.memory.IMachine;
 import v9t9.machine.f99b.cpu.CpuF99b;
 
 /**
  * CRU handlers for the F99 machine.
  * @author ejs
  */
-public class InternalCruF99 extends BaseCruAccess {
+public class InternalCruF99 extends BaseCruChip {
 
 	public final static int CRU_BASE = 0x80;
 	
@@ -40,7 +40,7 @@ public class InternalCruF99 extends BaseCruAccess {
 	 * @param machine
 	 * @param keyboardState
 	 */
-	public InternalCruF99(IMachine machine, KeyboardState keyboardState) {
+	public InternalCruF99(IMachine machine, IKeyboardState keyboardState) {
 		super(machine, keyboardState, 8);
 		
     	intExt = -1;

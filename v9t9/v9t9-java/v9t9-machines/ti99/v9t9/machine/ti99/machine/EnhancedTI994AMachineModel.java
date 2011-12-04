@@ -6,7 +6,7 @@ package v9t9.machine.ti99.machine;
 
 import v9t9.common.memory.IMemoryModel;
 import v9t9.engine.hardware.IVdpChip;
-import v9t9.engine.machine.IMachine;
+import v9t9.engine.memory.IMachine;
 import v9t9.engine.memory.Vdp9938Mmio;
 import v9t9.engine.video.v9938.VdpV9938;
 import v9t9.machine.ti99.memory.EnhancedTI994AMemoryModel;

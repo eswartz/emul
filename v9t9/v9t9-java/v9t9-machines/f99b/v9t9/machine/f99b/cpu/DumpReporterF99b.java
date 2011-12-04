@@ -10,13 +10,13 @@ import v9t9.base.utils.HexUtils;
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.cpu.InstructionWorkBlock;
 import v9t9.engine.cpu.Executor;
-import v9t9.engine.cpu.InstructionListener;
+import v9t9.engine.cpu.IInstructionListener;
 
 /**
  * @author ejs
  *
  */
-public class DumpReporterF99b implements InstructionListener {
+public class DumpReporterF99b implements IInstructionListener {
 	private final CpuF99b cpu;
 
 	/**

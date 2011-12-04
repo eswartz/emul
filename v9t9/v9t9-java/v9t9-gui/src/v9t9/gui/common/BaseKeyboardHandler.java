@@ -10,9 +10,9 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 
 import v9t9.base.utils.HexUtils;
-import v9t9.engine.client.IKeyboardHandler;
-import v9t9.engine.keyboard.KeyboardState;
-import v9t9.engine.machine.IMachine;
+import v9t9.common.client.IKeyboardHandler;
+import v9t9.common.keyboard.IKeyboardState;
+import v9t9.engine.memory.IMachine;
 
 /**
  * @author ejs
@@ -23,9 +23,9 @@ public abstract class BaseKeyboardHandler implements IKeyboardHandler {
 
 	protected final IMachine machine;
 
-	protected KeyboardState keyboardState;
+	protected IKeyboardState keyboardState;
 	
-	public BaseKeyboardHandler(KeyboardState keyboardState, IMachine machine) {
+	public BaseKeyboardHandler(IKeyboardState keyboardState, IMachine machine) {
 		this.keyboardState = keyboardState;
 		this.machine = machine;
 	}

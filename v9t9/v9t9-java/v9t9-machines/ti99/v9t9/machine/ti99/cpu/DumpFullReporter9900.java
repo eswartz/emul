@@ -13,13 +13,13 @@ import v9t9.common.asm.RawInstruction;
 import v9t9.common.cpu.InstructionWorkBlock;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.engine.cpu.Executor;
-import v9t9.engine.cpu.InstructionListener;
+import v9t9.engine.cpu.IInstructionListener;
 
 /**
  * @author ejs
  *
  */
-public class DumpFullReporter9900 implements InstructionListener {
+public class DumpFullReporter9900 implements IInstructionListener {
 
 	private final Cpu9900 cpu;
 

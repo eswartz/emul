@@ -34,8 +34,8 @@ import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.cpu.InstructionWorkBlock;
-import v9t9.engine.cpu.Executor;
-import v9t9.engine.cpu.InstructionListener;
+import v9t9.engine.cpu.IExecutor;
+import v9t9.engine.cpu.IInstructionListener;
 import v9t9.engine.machine.MachineBase;
 import v9t9.gui.Emulator;
 import v9t9.gui.client.swt.FontUtils;
@@ -44,7 +44,7 @@ import v9t9.gui.client.swt.FontUtils;
  * @author ejs
  *
  */
-public class CpuViewer extends Composite implements InstructionListener {
+public class CpuViewer extends Composite implements IInstructionListener {
 	public interface ICpuTracker {
 		void updateForInstruction();
 	}
@@ -159,7 +159,7 @@ public class CpuViewer extends Composite implements InstructionListener {
 					public void run() {
 						//if (!Machine.settingPauseMachine.getBoolean())
 						//	resizeTable();
-						Executor.settingSingleStep.setBoolean(true);
+						IExecutor.settingSingleStep.setBoolean(true);
 						showNextInstruction = true;
 						MachineBase.settingPauseMachine.setBoolean(false);
 					}
@@ -413,10 +413,10 @@ public class CpuViewer extends Composite implements InstructionListener {
 			});
 			showNextInstruction = false;
 		}
-		if (Executor.settingSingleStep.getBoolean()) {
-			Executor.settingSingleStep.setBoolean(false);
+		if (IExecutor.settingSingleStep.getBoolean()) {
+			IExecutor.settingSingleStep.setBoolean(false);
 			MachineBase.settingPauseMachine.setBoolean(true);
-			machine.getExecutor().interruptExecution = true;
+			machine.getExecutor().interruptExecution();
 			if (tracker != null)
 				tracker.updateForInstruction();
 		}

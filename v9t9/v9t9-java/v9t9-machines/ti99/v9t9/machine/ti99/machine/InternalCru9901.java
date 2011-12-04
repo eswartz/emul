@@ -6,17 +6,17 @@
  */
 package v9t9.machine.ti99.machine;
 
-import v9t9.engine.hardware.BaseCruAccess;
+import v9t9.common.keyboard.IKeyboardState;
+import v9t9.engine.hardware.BaseCruChip;
 import v9t9.engine.hardware.CruManager;
 import v9t9.engine.hardware.ICruReader;
 import v9t9.engine.hardware.ICruWriter;
-import v9t9.engine.keyboard.KeyboardState;
 
 /**
  * CRU handlers for the TMS9901 (as attached to a TI-99/4A).
  * @author ejs
  */
-public class InternalCru9901 extends BaseCruAccess {
+public class InternalCru9901 extends BaseCruChip {
 	private CruManager manager;
 
 	private ICruWriter cruw9901_0 = new ICruWriter() {
@@ -212,7 +212,7 @@ public class InternalCru9901 extends BaseCruAccess {
 		
 	};
 	
-    public InternalCru9901(TI99Machine machine, KeyboardState keyboardState) {
+    public InternalCru9901(TI99Machine machine, IKeyboardState keyboardState) {
     	super(machine, keyboardState, 15);
     	
     	intExt = 1;

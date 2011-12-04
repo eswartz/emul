@@ -13,14 +13,13 @@ import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.IOperand;
 import v9t9.common.asm.InstInfo;
 import v9t9.common.asm.InstTableCommon;
-import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.IStatus;
 import v9t9.common.memory.IMemoryArea;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
-import v9t9.engine.cpu.Executor;
-import v9t9.engine.cpu.InstructionListener;
-import v9t9.engine.interpreter.Interpreter;
+import v9t9.engine.cpu.IExecutor;
+import v9t9.engine.cpu.IInstructionListener;
+import v9t9.engine.interpreter.IInterpreter;
 import v9t9.machine.ti99.cpu.Cpu9900;
 import v9t9.machine.ti99.cpu.Inst9900;
 import v9t9.machine.ti99.cpu.InstTable9900;
@@ -35,7 +34,7 @@ import v9t9.machine.ti99.machine.TI99Machine;
  * 
  * @author ejs
  */
-public class Interpreter9900 implements Interpreter {
+public class Interpreter9900 implements IInterpreter {
 	TI99Machine machine;
 
     IMemoryDomain memory;
@@ -67,11 +66,12 @@ public class Interpreter9900 implements Interpreter {
     public void dispose() {
     	
     }
+    
     /* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.interpreter.Interpreter#execute(java.lang.Short)
 	 */
     public void execute(Short op_x) {
-    	InstructionListener[] instructionListeners = machine.getExecutor().getInstructionListeners();
+    	IInstructionListener[] instructionListeners = machine.getExecutor().getInstructionListeners();
     	if (instructionListeners != null) {
     		executeAndListen(op_x, instructionListeners);
     	} else {
@@ -124,28 +124,25 @@ public class Interpreter9900 implements Interpreter {
      * @see v9t9.emulator.runtime.interpreter.Interpreter#executeChunk(int, v9t9.emulator.runtime.cpu.Executor)
      */
     @Override
-    public void executeChunk(int numinsts, Executor executor) {
+    public void executeChunk(int numinsts, IExecutor executor) {
     	// pretend the realtime and instructionListeners settings don't change often
 		if (executor.getInstructionListeners() == null) {
 			for (int i = 0; i < numinsts; i++) {
 				executeFast(null);
-				executor.nInstructions++;
-				cpu.checkAndHandleInterrupts();
-				if (executor.interruptExecution)
+				if (executor.breakAfterExecution(1)) 
 					break;
+				
 			}
 		} else {
 			for (int i = 0; i < numinsts; i++) {
 				execute(null);
-				executor.nInstructions++;
-				cpu.checkAndHandleInterrupts();
-				if (executor.interruptExecution)
+				if (executor.breakAfterExecution(1)) 
 					break;
 			}
 		}    	
     }
 
-	private void executeAndListen(Short op_x, InstructionListener[] instructionListeners) { 
+	private void executeAndListen(Short op_x, IInstructionListener[] instructionListeners) { 
         Instruction9900 ins = getInstruction(op_x);
         
         MachineOperand9900 mop1 = (MachineOperand9900) ins.getOp1();
@@ -180,7 +177,7 @@ public class Interpreter9900 implements Interpreter {
         
         /* notify listeners */
         if (instructionListeners != null) {
-        	for (InstructionListener listener : instructionListeners) {
+        	for (IInstructionListener listener : instructionListeners) {
         		listener.executed(block, iblock);
         	}
         }
@@ -710,13 +707,7 @@ public class Interpreter9900 implements Interpreter {
         	break;
         }
         case InstTableCommon.Idbg:
-        	int oldCount = machine.getExecutor().debugCount; 
-        	if (iblock.val1 == 0)
-        		machine.getExecutor().debugCount++;
-        	else
-        		machine.getExecutor().debugCount--;
-        	if ((oldCount == 0) != (machine.getExecutor().debugCount == 0))
-        		ICpu.settingDumpFullInstructions.setBoolean(iblock.val1 == 0);
+        	machine.getExecutor().debugCount(iblock.val1 == 0 ? 1 : -1);
         	break;
         	
         	

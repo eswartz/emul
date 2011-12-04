@@ -17,6 +17,10 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import v9t9.common.files.NativeFDRFile;
+import v9t9.common.files.NativeFile;
+import v9t9.common.files.NativeFileFactory;
+import v9t9.common.files.NativeTextFile;
 import v9t9.engine.dsr.DsrException;
 import v9t9.engine.dsr.PabConstants;
 import v9t9.engine.dsr.PabStruct;
@@ -25,10 +29,6 @@ import v9t9.engine.dsr.emudisk.EmuDiskPabHandler;
 import v9t9.engine.dsr.emudisk.IFileMapper;
 import v9t9.engine.dsr.emudisk.OpenFile;
 import v9t9.engine.dsr.emudisk.PabInfoBlock;
-import v9t9.engine.files.NativeFDRFile;
-import v9t9.engine.files.NativeFile;
-import v9t9.engine.files.NativeFileFactory;
-import v9t9.engine.files.NativeTextFile;
 
 
 /**

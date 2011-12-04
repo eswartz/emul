@@ -7,18 +7,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 import v9t9.common.asm.IRawInstructionFactory;
+import v9t9.common.client.ISoundHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuMetrics;
 import v9t9.common.memory.IMemoryDomain;
-import v9t9.engine.client.ISoundHandler;
 import v9t9.engine.compiler.CodeBlockCompilerStrategy;
 import v9t9.engine.cpu.Executor;
 import v9t9.engine.dsr.IDeviceIndicatorProvider;
 import v9t9.engine.dsr.IDsrHandler;
 import v9t9.engine.dsr.IDsrSettings;
 import v9t9.engine.hardware.ISpeechChip;
-import v9t9.engine.machine.IMachine;
-import v9t9.engine.machine.MachineModel;
+import v9t9.engine.memory.IMachine;
+import v9t9.engine.memory.IMachineModel;
 import v9t9.engine.speech.ISpeechDataSender;
 import v9t9.engine.speech.SpeechVoice;
 import v9t9.engine.speech.TMS5220;
@@ -33,7 +33,7 @@ import v9t9.machine.ti99.interpreter.Interpreter9900;
  * @author ejs
  *
  */
-public abstract class BaseTI99MachineModel implements MachineModel {
+public abstract class BaseTI99MachineModel implements IMachineModel {
 	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.MachineModel#getCPU()

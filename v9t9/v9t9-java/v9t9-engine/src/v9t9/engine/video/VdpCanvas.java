@@ -3,6 +3,7 @@
  */
 package v9t9.engine.video;
 
+import v9t9.common.video.VdpColorManager;
 import v9t9.engine.memory.ByteMemoryAccess;
 
 /**
