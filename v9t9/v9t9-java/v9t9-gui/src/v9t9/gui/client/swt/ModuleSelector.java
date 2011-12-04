@@ -219,7 +219,7 @@ public class ModuleSelector extends Composite {
 	}
 
 	/**
-	 * @param softReset TODO 
+	 * @param softReset if true, just reset CPU, else if false, reset whole machine 
 	 * 
 	 */
 	protected void switchModule(boolean softReset) {
@@ -236,6 +236,8 @@ public class ModuleSelector extends Composite {
 					selectedModule, Level.ERROR,
 					MessageFormat.format("Failed to load all the entries from the module ''{0}''\n\n{1}",
 							selectedModule.getName(), e.getMessage()));
+		} catch (Throwable e) {
+			e.printStackTrace();
 		}
 	}
 
