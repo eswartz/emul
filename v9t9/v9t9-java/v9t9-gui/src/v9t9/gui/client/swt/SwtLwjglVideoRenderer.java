@@ -453,7 +453,12 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	 */
 	@Override
 	public void reblit() {
-		reblitGL();
+		try {
+			reblitGL();
+		} catch (Throwable t) {
+			t.printStackTrace();
+		}
+		
 		glFlush();
 	}
 	
