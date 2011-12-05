@@ -43,6 +43,9 @@
 #include <framework/link.h>
 #include <framework/json.h>
 
+LINK channel_root = TCF_LIST_INIT(channel_root);
+LINK channel_server_root = TCF_LIST_INIT(channel_server_root);
+
 #define BCAST_MAGIC 0x1463e328
 
 #define out2bcast(A)    ((TCFBroadcastGroup *)((char *)(A) - offsetof(TCFBroadcastGroup, out)))

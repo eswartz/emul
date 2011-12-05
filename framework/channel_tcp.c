@@ -239,6 +239,7 @@ static void delete_channel(ChannelTCP * c) {
         closesocket(c->socket);
         c->socket = -1;
     }
+    list_remove(&c->chan.chanlink);
     c->magic = 0;
 #if ENABLE_OutputQueue
     output_queue_clear(&c->out_queue);
@@ -847,6 +848,7 @@ static ChannelTCP * create_channel(int sock, int en_ssl, int server, int unix_do
     c->chan.out.write = tcp_write_stream;
     c->chan.out.write_block = tcp_write_block_stream;
     c->chan.out.splice_block = tcp_splice_block_stream;
+    list_add_last(&c->chan.chanlink, &channel_root);
     c->chan.state = ChannelStateStartWait;
     c->chan.start_comm = start_channel;
     c->chan.check_pending = channel_check_pending;
@@ -1012,6 +1014,7 @@ static void server_close(ChannelServer * serv) {
 
     assert(is_dispatch_thread());
     if (s->sock < 0) return;
+    list_remove(&s->serv.servlink);
     list_remove(&s->servlink);
     peer_server_free(s->ps);
     closesocket(s->sock);
@@ -1043,6 +1046,7 @@ static ChannelServer * channel_server_create(PeerServer * ps, int sock) {
         list_init(&server_list);
         post_event_with_delay(refresh_all_peer_servers, NULL, PEER_DATA_REFRESH_PERIOD * 1000000);
     }
+    list_add_last(&si->serv.servlink, &channel_server_root);
     list_add_last(&si->servlink, &server_list);
     refresh_peer_server(sock, ps);
 

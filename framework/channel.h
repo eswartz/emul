@@ -24,6 +24,12 @@
 #include <framework/link.h>
 #include <framework/peer.h>
 
+extern LINK channel_root;
+extern LINK channel_server_root;
+
+#define chanlink2channelp(A) ((Channel *)((char *)(A) - offsetof(Channel, chanlink)))
+#define servlink2channelserverp(A) ((ChannelServer *)((char *)(A) - offsetof(ChannelServer, servlink)))
+
 struct Protocol;
 typedef struct TCFBroadcastGroup TCFBroadcastGroup;
 typedef struct ChannelServer ChannelServer;
@@ -55,6 +61,7 @@ struct Channel {
     char * peer_name;                   /* A human readable remote peer name */
     int peer_service_cnt;               /* Number of remote peer service names */
     char ** peer_service_list;          /* List of remote peer service names */
+    LINK chanlink;                      /* Channel list */
     LINK bclink;                        /* Broadcast list */
     LINK susplink;                      /* Suspend list */
     int congestion_level;               /* Congestion level */
@@ -78,6 +85,7 @@ struct Channel {
 };
 
 struct ChannelServer {
+    LINK servlink;                      /* Channel server list */
     void * client_data;                 /* Client data */
     void (*new_conn)(ChannelServer *, Channel *); /* New connection call back */
     void (*close)(ChannelServer *);     /* Close channel server */
