@@ -218,59 +218,6 @@ PeerServer * channel_peer_from_url(const char * url) {
     return ps;
 }
 
-static int hex_digit(unsigned n) {
-    n &= 0xf;
-    if (n < 10) return '0' + n;
-    return 'A' + (n - 10);
-}
-
-static void write_url_string(OutputStream * out, const char * str, const char *quote) {
-    int c;
-    while ((c = *str++) != '\0') {
-        if (c == '%' || strchr(quote, c)) {
-            write_stream(out, '%');
-            write_stream(out, hex_digit(c >> 4));
-            write_stream(out, hex_digit(c));
-        } else
-            write_stream(out, c & 0xff);
-    }
-}
-
-char * channel_peer_to_url(PeerServer * ps) {
-    int i;
-    char *rval;
-    const char * host;
-    const char * port;
-    const char * transportname = peer_server_getprop(ps, "TransportName", NULL);
-    ByteArrayOutputStream buf;
-    OutputStream * out;
-
-    out = create_byte_array_output_stream(&buf);
-    if (transportname != NULL) {
-        write_url_string(out, transportname, ":");
-        write_stream(out, ':');
-    }
-    host = peer_server_getprop(ps, "Host", NULL);
-    if (host)
-        write_url_string(out, host, ":;");
-    port = peer_server_getprop(ps, "Port", NULL);
-    if (port) {
-        write_stream(out, ':');
-        write_url_string(out, port, ":;");
-    }
-    for (i = 0; i < ps->ind; i++) {
-        if (ps->list[i].value == host || ps->list[i].value == port)
-            continue;
-        write_stream(out, ';');
-        write_url_string(out, ps->list[i].name, ":;=");
-        write_stream(out, '=');
-        write_url_string(out, ps->list[i].value, ":;=");
-    }
-    write_stream(out, '\0');
-    get_byte_array_output_stream_data(&buf, &rval, NULL);
-    return rval;
-}
-
 /*
  * Start TCF channel server
  */

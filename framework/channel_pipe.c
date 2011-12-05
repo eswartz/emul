@@ -86,6 +86,7 @@ struct ServerInstance {
 
 struct ServerPIPE {
     ChannelServer serv;
+    PeerServer * ps;
     LINK servlink;
     ServerInstance arr[SERVER_INSTANCE_CNT];
 };
@@ -568,7 +569,7 @@ static void pipe_client_connected(void * args) {
         HANDLE h = NULL;
         OVERLAPPED overlap;
         char inp_path[FILE_PATH_SIZE];
-        const char * path = peer_server_getprop(ins->server->serv.ps, attr_pipe_name, def_pipe_name);
+        const char * path = peer_server_getprop(ins->server->ps, attr_pipe_name, def_pipe_name);
         static unsigned pipe_cnt = 0;
 
         memset(&overlap, 0, sizeof(overlap));
@@ -660,7 +661,7 @@ static void close_output_pipe(ChannelPIPE * c) {
 
 static void register_server(ServerPIPE * s) {
     int i;
-    PeerServer * ps = s->serv.ps;
+    PeerServer * ps = s->ps;
     PeerServer * ps2 = peer_server_alloc();
     const char * transport = peer_server_getprop(ps, "TransportName", NULL);
     const char * path = peer_server_getprop(ps, attr_pipe_name, def_pipe_name);
@@ -699,7 +700,7 @@ static void server_close(ChannelServer * serv) {
     assert(is_dispatch_thread());
     list_remove(&s->serv.servlink);
     list_remove(&s->servlink);
-    peer_server_free(s->serv.ps);
+    peer_server_free(s->ps);
     for (i = 0; i < SERVER_INSTANCE_CNT; i++) {
         ServerInstance * ins = s->arr + i;
         if (ins->fd_inp >= 0 && close(ins->fd_inp) < 0) check_error(errno);
@@ -733,7 +734,7 @@ ChannelServer * channel_pipe_server(PeerServer * ps) {
             ins->fd_inp = -1;
             ins->fd_out = _open_osfhandle((intptr_t)ins->pipe, O_BINARY | O_WRONLY);
         }
-        s->serv.ps = ps;
+        s->ps = ps;
         s->serv.close = server_close;
         list_add_last(&s->serv.servlink, &channel_server_root);
         list_add_last(&s->servlink, &server_list);

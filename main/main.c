@@ -30,7 +30,6 @@
 #include <framework/trace.h>
 #include <framework/channel_tcp.h>
 #include <framework/plugins.h>
-#include <framework/myalloc.h>
 #include <services/discovery.h>
 #include <main/test.h>
 #include <main/cmdline.h>
@@ -141,7 +140,6 @@ int main(int argc, char ** argv) {
     int ind;
     int daemon = 0;
     int interactive = 0;
-    int print_server_url = 0;
     const char * log_name = NULL;
     const char * url = "TCP:";
     Protocol * proto = NULL;
@@ -189,10 +187,6 @@ int main(int argc, char ** argv) {
             case 'c':
                 generate_ssl_certificate();
                 exit(0);
-                break;
-
-            case 'S':
-                print_server_url = 1;
                 break;
 
             case 'I':
@@ -264,17 +258,6 @@ int main(int argc, char ** argv) {
         exit(1);
     }
     discovery_start();
-
-    if (print_server_url) {
-        ChannelServer *s;
-        char *server_url;
-        assert(!list_is_empty(&channel_server_root));
-        s = servlink2channelserverp(channel_server_root.next);
-        server_url = channel_peer_to_url(s->ps);
-        printf("Server-URL: %s\n", server_url);
-        trace(LOG_ALWAYS, "Server-URL: %s", server_url);
-        loc_free(server_url);
-    }
 
     signal(SIGABRT, signal_handler);
     signal(SIGILL, signal_handler);
