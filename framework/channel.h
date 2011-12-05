@@ -85,6 +85,7 @@ struct Channel {
 };
 
 struct ChannelServer {
+    PeerServer * ps;                    /* Server peer address information */
     LINK servlink;                      /* Channel server list */
     void * client_data;                 /* Client data */
     void (*new_conn)(ChannelServer *, Channel *); /* New connection call back */
@@ -175,8 +176,13 @@ extern int is_channel_closed(Channel *);
 #define is_stream_closed(channel) is_channel_closed(channel)
 
 /*
- * Create and return PeerServer object with attribute values taken fron given URL.
+ * Create and return PeerServer object with attribute values taken from given URL.
  */
 extern PeerServer * channel_peer_from_url(const char *);
+
+/*
+ * Create and return URL string with attribute values taken from given PeerServer.
+ */
+extern char * channel_peer_to_url(PeerServer * ps);
 
 #endif /* D_channel */
