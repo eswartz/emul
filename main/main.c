@@ -38,6 +38,26 @@
 #include <main/server.h>
 
 static const char * progname;
+static unsigned int idle_timeout;
+static unsigned int idle_count;
+
+static void check_idle_timeout(void * args) {
+    if (list_is_empty(&channel_root)) {
+        idle_count++;
+        if (idle_count == idle_timeout) {
+            trace(LOG_ALWAYS, "No connections for %d seconds, shutting down", idle_timeout);
+            discovery_stop();
+            cancel_event_loop();
+            return;
+        }
+    }
+    post_event_with_delay(check_idle_timeout, NULL, 1000000);
+}
+
+static void channel_closed(Channel *c) {
+    /* Reset idle_count if there are short lived connections */
+    idle_count = 0;
+}
 
 static void shutdown_event(void * args) {
     discovery_stop();
@@ -175,6 +195,7 @@ int main(int argc, char ** argv) {
                 print_server_url = 1;
                 break;
 
+            case 'I':
             case 'l':
             case 'L':
             case 's':
@@ -189,6 +210,10 @@ int main(int argc, char ** argv) {
                     s = argv[ind];
                 }
                 switch (c) {
+                case 'I':
+                    idle_timeout = strtol(s, 0, 0);
+                    break;
+
                 case 'l':
                     log_mode = strtol(s, 0, 0);
                     break;
@@ -259,6 +284,11 @@ int main(int argc, char ** argv) {
 #if defined(WIN32)
     SetConsoleCtrlHandler((PHANDLER_ROUTINE)CtrlHandler, TRUE);
 #endif
+
+    if (idle_timeout != 0) {
+        add_channel_close_listener(channel_closed);
+        check_idle_timeout(NULL);
+    }
 
     /* Process events - must run on the initial thread since ptrace()
      * returns ECHILD otherwise, thinking we are not the owner. */
