@@ -5,12 +5,12 @@ package v9t9.engine.video.v9938;
 
 import java.util.Arrays;
 
+import v9t9.common.hardware.IVdpChip;
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.video.VdpModeInfo;
+import v9t9.common.video.VdpSprite;
 import v9t9.engine.video.VdpRedrawInfo;
-import v9t9.engine.video.VdpSprite;
 import v9t9.engine.video.tms9918a.SpriteRedrawHandler;
-import v9t9.engine.video.tms9918a.VdpTMS9918A;
 
 /**
  * Sprite mode 2
@@ -44,7 +44,7 @@ public class Sprite2RedrawHandler extends SpriteRedrawHandler {
 		info.touch.sprpat = modify_sprpat_default;
 		
 		spriteCanvas = new VdpSprite2Canvas(info.canvas, 8, 
-				(((VdpV9938)info.vdp).getModeNumber() == VdpV9938.MODE_GRAPHICS5));
+				(((VdpV9938)info.vdp).getModeNumber() == IVdpChip.MODE_GRAPHICS5));
 	}
 
 	@Override
@@ -98,23 +98,23 @@ public class Sprite2RedrawHandler extends SpriteRedrawHandler {
 		boolean isMag = false;
 		int size = 8;
 		int numchars = 1;
-		switch (info.vdpregs[1] & (VdpTMS9918A.R1_SPRMAG + VdpTMS9918A.R1_SPR4)) {
+		switch (info.vdpregs[1] & (IVdpChip.R1_SPRMAG + IVdpChip.R1_SPR4)) {
 		case 0:
 			size = 8;
 			numchars = 1;
 			isMag = false;
 			break;
-		case VdpTMS9918A.R1_SPRMAG:
+		case IVdpChip.R1_SPRMAG:
 			size = 16;
 			numchars = 1;
 			isMag = true;
 			break;
-		case VdpTMS9918A.R1_SPR4:
+		case IVdpChip.R1_SPR4:
 			size = 16;
 			numchars = 4;
 			isMag = false;
 			break;
-		case VdpTMS9918A.R1_SPR4 + VdpTMS9918A.R1_SPRMAG:
+		case IVdpChip.R1_SPR4 + IVdpChip.R1_SPRMAG:
 			size = 32;
 			numchars = 4;
 			isMag = true;
@@ -191,10 +191,10 @@ public class Sprite2RedrawHandler extends SpriteRedrawHandler {
 
 		if (nth_sprite != -1) {
 			vdpStatus = (byte) (vdpStatus
-					& ~(VdpTMS9918A.VDP_FIVE_SPRITES | VdpTMS9918A.VDP_FIFTH_SPRITE) 
-					| (VdpTMS9918A.VDP_FIVE_SPRITES | nth_sprite));
+					& ~(IVdpChip.VDP_FIVE_SPRITES | IVdpChip.VDP_FIFTH_SPRITE) 
+					| (IVdpChip.VDP_FIVE_SPRITES | nth_sprite));
 		} else {
-			vdpStatus &= ~(VdpTMS9918A.VDP_FIVE_SPRITES | VdpTMS9918A.VDP_FIFTH_SPRITE);
+			vdpStatus &= ~(IVdpChip.VDP_FIVE_SPRITES | IVdpChip.VDP_FIFTH_SPRITE);
 		}
 
 

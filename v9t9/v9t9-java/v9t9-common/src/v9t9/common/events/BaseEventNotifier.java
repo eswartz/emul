@@ -1,13 +1,11 @@
 /**
  * 
  */
-package v9t9.engine.events;
+package v9t9.common.events;
 
 import java.util.Collection;
 import java.util.concurrent.PriorityBlockingQueue;
 
-import v9t9.common.events.IEventNotifier;
-import v9t9.common.events.NotifyEvent;
 
 
 /**

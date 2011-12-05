@@ -36,21 +36,21 @@ public class V9t9TrackDiskImage extends BaseTrackDiskImage  {
 	
 	@Override
 	public void writeImageHeader() throws IOException {
-		if (handle == null || readonly) {
+		if (getHandle() == null || readonly) {
 			return;
 		}
 
 		/* byteswap header for export */
-		handle.seek(0);
-		handle.write(TRACK_MAGIC.getBytes());
-		handle.write(TRACK_VERSION);
-		handle.write(hdr.tracks);
-		handle.write(hdr.sides);
-		handle.write(0); // unused
-		handle.write(hdr.tracksize >> 8);
-		handle.write(hdr.tracksize & 0xff);
-		handle.write(hdr.track0offs >> 8);
-		handle.write(hdr.track0offs & 0xff);
+		getHandle().seek(0);
+		getHandle().write(TRACK_MAGIC.getBytes());
+		getHandle().write(TRACK_VERSION);
+		getHandle().write(hdr.tracks);
+		getHandle().write(hdr.sides);
+		getHandle().write(0); // unused
+		getHandle().write(hdr.tracksize >> 8);
+		getHandle().write(hdr.tracksize & 0xff);
+		getHandle().write(hdr.track0offs >> 8);
+		getHandle().write(hdr.track0offs & 0xff);
 
 		/* maintain invariants */
 		growImageForContent(); 
@@ -66,22 +66,22 @@ public class V9t9TrackDiskImage extends BaseTrackDiskImage  {
 	
 	@Override
 	public void readImageHeader() throws IOException {
-		if (handle == null)
+		if (getHandle() == null)
 			return;
 		
 		readonly = !spec.canWrite();
 
-		handle.seek(0);
+		getHandle().seek(0);
 		
 		/* byteswap imported header */
 		byte[] magic = new byte[TRACK_MAGIC.length()];
-		handle.read(magic);
-		byte version = handle.readByte();
-		hdr.tracks = handle.readByte();
-		hdr.sides = handle.readByte();
-		handle.readByte(); // unused
-		hdr.tracksize =  (short) (((handle.read() & 0xff) << 8) | (handle.read() & 0xff));
-		hdr.track0offs = (((handle.read() & 0xff) << 8) | (handle.read() & 0xff));
+		getHandle().read(magic);
+		byte version = getHandle().readByte();
+		hdr.tracks = getHandle().readByte();
+		hdr.sides = getHandle().readByte();
+		getHandle().readByte(); // unused
+		hdr.tracksize =  (short) (((getHandle().read() & 0xff) << 8) | (getHandle().read() & 0xff));
+		hdr.track0offs = (((getHandle().read() & 0xff) << 8) | (getHandle().read() & 0xff));
 
 		/* verify */
 		if (!Arrays.equals(TRACK_MAGIC.getBytes(), magic)) {

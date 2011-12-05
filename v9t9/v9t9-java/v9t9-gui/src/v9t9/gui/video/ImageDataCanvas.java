@@ -7,6 +7,7 @@ import org.eclipse.swt.graphics.Rectangle;
 
 import v9t9.engine.video.BitmapVdpCanvas;
 
+
 public abstract class ImageDataCanvas extends BitmapVdpCanvas {
 
 	protected ImageData imageData;

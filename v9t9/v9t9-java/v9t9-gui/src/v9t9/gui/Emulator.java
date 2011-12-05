@@ -11,8 +11,6 @@ import java.net.URL;
 import java.util.Collection;
 
 import v9t9.common.client.IClient;
-import v9t9.engine.memory.GplMmio;
-import v9t9.engine.video.tms9918a.VdpTMS9918A;
 import v9t9.gui.client.ClientFactory;
 import v9t9.gui.client.awt.AwtJavaClient;
 import v9t9.gui.client.swt.SwtAwtJavaClient;
@@ -148,9 +146,6 @@ public class Emulator {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		VdpTMS9918A.settingDumpVdpAccess.setBoolean(true);
-		GplMmio.settingDumpGplAccess.setBoolean(true);
-		
 		EmulatorServer server = new EmulatorServer();
 		
 		String modelId = getModelId(server, args);

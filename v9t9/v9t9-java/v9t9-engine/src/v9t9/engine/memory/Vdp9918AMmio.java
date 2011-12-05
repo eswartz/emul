@@ -104,7 +104,7 @@ public class Vdp9918AMmio extends VdpMmio {
 		
 		if ((vdpaddr & 0xf) == 0 
 				&& ICpu.settingDumpFullInstructions.getBoolean()
-				&& VdpTMS9918A.settingDumpVdpAccess.getBoolean()) {
+				&& IVdpChip.settingDumpVdpAccess.getBoolean()) {
 			VdpTMS9918A.log("Address: " + HexUtils.toHex4(vdpaddr));
 		}
 		
@@ -132,7 +132,7 @@ public class Vdp9918AMmio extends VdpMmio {
 		}
 		if ((vdpaddrflag = !vdpaddrflag) == false) {
 			if (ICpu.settingDumpFullInstructions.getBoolean()
-					&& VdpTMS9918A.settingDumpVdpAccess.getBoolean()) {
+					&& IVdpChip.settingDumpVdpAccess.getBoolean()) {
 				VdpTMS9918A.log("Address: " + HexUtils.toHex4(vdpaddr));
 			}
 			if ((vdpaddr & 0x8000) != 0) {

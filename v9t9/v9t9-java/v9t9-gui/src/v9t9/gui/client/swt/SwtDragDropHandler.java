@@ -43,7 +43,7 @@ import v9t9.base.utils.Pair;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.video.ICanvas;
-import v9t9.engine.video.VdpCanvas.Format;
+import v9t9.common.video.VdpFormat;
 import v9t9.gui.image.ImageImport;
 import v9t9.gui.image.ImageImportOptions;
 import v9t9.gui.video.ImageDataCanvas;
@@ -259,7 +259,7 @@ public class SwtDragDropHandler implements DragSourceListener, DropTargetListene
 	public void dragEnter(DropTargetEvent event) {
 		// set DND.DROP_NONE if not supported
 		
-		Format format = renderer.getCanvas().getFormat();
+		VdpFormat format = renderer.getCanvas().getFormat();
 		if (!ImageImport.isModeSupported(format)) {
 			System.out.println("Unsupported format: " + format);
 			event.detail = DND.DROP_NONE;

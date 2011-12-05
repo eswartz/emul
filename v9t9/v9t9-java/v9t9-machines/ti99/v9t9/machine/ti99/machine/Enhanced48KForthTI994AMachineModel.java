@@ -96,12 +96,12 @@ public class Enhanced48KForthTI994AMachineModel extends BaseTI99MachineModel {
 			@Override
 			public void writeByte(int addr, byte val) {
 				super.writeByte(addr, val);
-				vdp.touchAbsoluteVdpMemory((addr & 0x3fff) + getBankOffset(), val);
+				vdp.touchAbsoluteVdpMemory((addr & 0x3fff) + getBankOffset());
 			}
 			@Override
 			public void writeWord(int addr, short val) {
 				super.writeWord(addr, val);
-				vdp.touchAbsoluteVdpMemory((addr & 0x3fff) + getBankOffset(), (byte) (val >> 8));
+				vdp.touchAbsoluteVdpMemory((addr & 0x3fff) + getBankOffset());
 			}
 		};
 

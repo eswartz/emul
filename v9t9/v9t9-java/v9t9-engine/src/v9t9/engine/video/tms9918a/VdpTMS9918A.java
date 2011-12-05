@@ -11,7 +11,6 @@ import java.util.Arrays;
 
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
-import v9t9.base.properties.SettingProperty;
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.utils.HexUtils;
 import v9t9.common.cpu.ICpu;
@@ -20,9 +19,10 @@ import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.memory.IMemoryDomain;
-import v9t9.common.video.ICanvas;
+import v9t9.common.video.IVdpCanvas;
 import v9t9.common.video.RedrawBlock;
 import v9t9.common.video.VdpChanges;
+import v9t9.common.video.VdpFormat;
 import v9t9.common.video.VdpModeInfo;
 import v9t9.engine.cpu.Executor;
 import v9t9.engine.hardware.BaseCruChip;
@@ -30,7 +30,6 @@ import v9t9.engine.memory.VdpMmio;
 import v9t9.engine.settings.WorkspaceSettings;
 import v9t9.engine.video.BlankModeRedrawHandler;
 import v9t9.engine.video.MemoryCanvas;
-import v9t9.engine.video.VdpCanvas;
 import v9t9.engine.video.IVdpModeRedrawHandler;
 import v9t9.engine.video.VdpRedrawInfo;
 
@@ -66,7 +65,7 @@ public class VdpTMS9918A implements IVdpChip {
 	protected final static int REDRAW_PALETTE = 16;
 	protected boolean vdpchanged;
 
-	protected VdpCanvas vdpCanvas;
+	protected IVdpCanvas vdpCanvas;
 	protected IVdpModeRedrawHandler vdpModeRedrawHandler;
 	protected SpriteRedrawHandler spriteRedrawHandler;
 	protected final VdpChanges vdpChanges = new VdpChanges(getMaxRedrawblocks());
@@ -78,36 +77,7 @@ public class VdpTMS9918A implements IVdpChip {
 	protected VdpRedrawInfo vdpRedrawInfo;
 	
 	protected int modeNumber;
-	public final static int VDP_INTERRUPT = 0x80;
-	public final static int VDP_COINC = 0x40;
-	public final static int VDP_FIVE_SPRITES = 0x20;
-	public final static int VDP_FIFTH_SPRITE = 0x1f;
-	
-	final public static int R0_M3 = 0x2; // bitmap
-	public final static int R0_EXTERNAL = 1;
-	public final static int R1_RAMSIZE = 128;
-	public final static int R1_NOBLANK = 64;
-	public final static int R1_INT = 32;
-	final public static int R1_M1 = 0x10; // text
-	final public static int R1_M2 = 0x8; // multi
-	
-	public final static int R1_SPR4 = 2;
-	public final static int R1_SPRMAG = 1;
-
-	public final static int MODE_TEXT = 1;
-	public final static int MODE_GRAPHICS = 0;
-	public final static int MODE_BITMAP = 4;
-	public final static int MODE_MULTI = 2;
-	
-    static public final SettingProperty settingDumpVdpAccess = new SettingProperty("DumpVdpAccess", new Boolean(false));
-    static public final SettingProperty settingVdpInterruptRate = new SettingProperty("VdpInterruptRate", new Integer(60));
-
-    // this should pretty much stay on
-    static public final SettingProperty settingCpuSynchedVdpInterrupt = new SettingProperty("CpuSynchedVdpInterrupt",
-    		new Boolean(true));
-    
-    
-    public static final int REG_ST = 0;
+	public static final int REG_ST = 0;
 	private static final int REG_COUNT = 8 + 1;
 
 	/** The circular counter for VDP interrupt timing. */
@@ -123,9 +93,9 @@ public class VdpTMS9918A implements IVdpChip {
 	public VdpTMS9918A(IMachine machine) {
 		this.machine = machine;
 		
-		vdpStatus = (byte) VDP_INTERRUPT;
+		vdpStatus = (byte) IVdpChip.VDP_INTERRUPT;
 		
-		settingVdpInterruptRate.addListener(new IPropertyListener() {
+		IVdpChip.settingVdpInterruptRate.addListener(new IPropertyListener() {
 
 			public void propertyChanged(IProperty setting) {
 				recalcInterruptTiming();
@@ -133,7 +103,7 @@ public class VdpTMS9918A implements IVdpChip {
 			
 		});
 		
-		WorkspaceSettings.CURRENT.register(settingVdpInterruptRate);
+		WorkspaceSettings.CURRENT.register(IVdpChip.settingVdpInterruptRate);
 		
 		ICpu.settingCyclesPerSecond.addListener(new IPropertyListener() {
 
@@ -147,7 +117,7 @@ public class VdpTMS9918A implements IVdpChip {
 		
 		ICpu.settingRealTime.addListener(new IPropertyListener() {
 			public void propertyChanged(IProperty setting) {
-				VdpTMS9918A.settingCpuSynchedVdpInterrupt.setBoolean(setting.getBoolean());				
+				IVdpChip.settingCpuSynchedVdpInterrupt.setBoolean(setting.getBoolean());				
 			}
 		});
 		
@@ -167,14 +137,14 @@ public class VdpTMS9918A implements IVdpChip {
 	}
 
 	protected void recalcInterruptTiming() {
-        vdpInterruptLimit = ICpu.settingCyclesPerSecond.getInt() / settingVdpInterruptRate.getInt();
+        vdpInterruptLimit = ICpu.settingCyclesPerSecond.getInt() / IVdpChip.settingVdpInterruptRate.getInt();
         vdpInterruptFrac = 0;
-        fixedTimeVdpInterruptDelta = (int) ((long) settingVdpInterruptRate.getInt() * 65536 / machine.getCpuTicksPerSec());
+        fixedTimeVdpInterruptDelta = (int) ((long) IVdpChip.settingVdpInterruptRate.getInt() * 65536 / machine.getCpuTicksPerSec());
         //System.out.println("VDP interrupt target: " + Cpu.settingCyclesPerSecond.getInt() + " /  " + settingVdpInterruptRate.getInt() + " = " + vdpInterruptLimit);		
 	}
 
 	public static void log(String msg) {
-		if (settingDumpVdpAccess.getBoolean() && ICpu.settingDumpFullInstructions.getBoolean())
+		if (IVdpChip.settingDumpVdpAccess.getBoolean() && ICpu.settingDumpFullInstructions.getBoolean())
 			Executor.getDumpfull().println("[VDP] " + msg);
 	}
 	
@@ -209,7 +179,7 @@ public class VdpTMS9918A implements IVdpChip {
     	byte old = vdpregs[reg];
     	vdpregs[reg] = val;
     	
-    	if (ICpu.settingDumpFullInstructions.getBoolean() && settingDumpVdpAccess.getBoolean())
+    	if (ICpu.settingDumpFullInstructions.getBoolean() && IVdpChip.settingDumpVdpAccess.getBoolean())
     		log("register " + reg + " " + HexUtils.toHex2(old) + " -> " + HexUtils.toHex2(val));
     	
     	int         redraw = doWriteVdpReg(reg, old, val);
@@ -235,7 +205,7 @@ public class VdpTMS9918A implements IVdpChip {
 		 	}
 		
 		 	if ((redraw & REDRAW_BLANK) != 0) {
-		 		if ((vdpregs[1] & VdpTMS9918A.R1_NOBLANK) == 0) {
+		 		if ((vdpregs[1] & IVdpChip.R1_NOBLANK) == 0) {
 		 			vdpCanvas.setBlank(true);
 		 			dirtyAll();
 		 			//update();
@@ -264,28 +234,28 @@ public class VdpTMS9918A implements IVdpChip {
  
     	switch (reg) {
     	case 0:					/* bitmap/video-in */
-    		if (CHANGED(old, val, VdpTMS9918A.R0_M3+VdpTMS9918A.R0_EXTERNAL)) {
+    		if (CHANGED(old, val, IVdpChip.R0_M3+IVdpChip.R0_EXTERNAL)) {
     			redraw |= REDRAW_MODE;
     		}
     		break;
 
     	case 1:					/* various modes, sprite stuff */
-    		if (CHANGED(old, val, VdpTMS9918A.R1_NOBLANK)) {
+    		if (CHANGED(old, val, IVdpChip.R1_NOBLANK)) {
     			redraw |= REDRAW_BLANK | REDRAW_MODE;
     		}
 
-    		if (CHANGED(old, val, VdpTMS9918A.R1_SPRMAG + VdpTMS9918A.R1_SPR4)) {
+    		if (CHANGED(old, val, IVdpChip.R1_SPRMAG + IVdpChip.R1_SPR4)) {
     			redraw |= REDRAW_SPRITES;
     		}
 
-    		if (CHANGED(old, val, VdpTMS9918A.R1_M1 | VdpTMS9918A.R1_M2)) {
+    		if (CHANGED(old, val, IVdpChip.R1_M1 | IVdpChip.R1_M2)) {
     			redraw |= REDRAW_MODE;
     		}
 
     		/* if interrupts enabled, and interrupt was pending, trigger it */
-    		if ((val & VdpTMS9918A.R1_INT) != 0 
-    		&& 	(old & VdpTMS9918A.R1_INT) == 0 
-    		&&	(vdpStatus & VdpTMS9918A.VDP_INTERRUPT) != 0) 
+    		if ((val & IVdpChip.R1_INT) != 0 
+    		&& 	(old & IVdpChip.R1_INT) == 0 
+    		&&	(vdpStatus & IVdpChip.VDP_INTERRUPT) != 0) 
     		{
     			
     			//trigger9901int( M_INT_VDP);	// TODO
@@ -316,22 +286,22 @@ public class VdpTMS9918A implements IVdpChip {
 
     /** Tell if the registers indicate a blank screen. */
     protected boolean isBlank() {
-    	return (vdpregs[1] & VdpTMS9918A.R1_NOBLANK) == 0;
+    	return (vdpregs[1] & IVdpChip.R1_NOBLANK) == 0;
     }
     
     public int calculateModeNumber() {
-		int reg0 = vdpregs[0] & R0_M3;
-		int reg1 = vdpregs[1] & R1_M1 + R1_M2;
+		int reg0 = vdpregs[0] & IVdpChip.R0_M3;
+		int reg1 = vdpregs[1] & IVdpChip.R1_M1 + IVdpChip.R1_M2;
     	
-    	if (reg0 == R0_M3) {
+    	if (reg0 == IVdpChip.R0_M3) {
     		// can support multi+bitmap or text+bitmap modes too... but not now
-    		return MODE_BITMAP;
+    		return IVdpChip.MODE_BITMAP;
     	}
-    	if (reg1 == R1_M2)
-    		return MODE_MULTI;
-    	if (reg1 == R1_M1)
-    		return MODE_TEXT;
-    	return MODE_GRAPHICS;
+    	if (reg1 == IVdpChip.R1_M2)
+    		return IVdpChip.MODE_MULTI;
+    	if (reg1 == IVdpChip.R1_M1)
+    		return IVdpChip.MODE_TEXT;
+    	return IVdpChip.MODE_GRAPHICS;
 	}
     
     /**
@@ -357,17 +327,17 @@ public class VdpTMS9918A implements IVdpChip {
     protected void establishVideoMode() {
     	modeNumber = calculateModeNumber();
 		switch (modeNumber) {
-		case MODE_TEXT:
+		case IVdpChip.MODE_TEXT:
 			setTextMode();
 			dirtyAll();	// for border
 			break;
-		case MODE_MULTI:
+		case IVdpChip.MODE_MULTI:
 			setMultiMode();
 			break;
-		case MODE_BITMAP:
+		case IVdpChip.MODE_BITMAP:
 			setBitmapMode();
 			break;
-		case MODE_GRAPHICS:
+		case IVdpChip.MODE_GRAPHICS:
 		default:
 			setGraphicsMode();
 			break;
@@ -398,7 +368,7 @@ public class VdpTMS9918A implements IVdpChip {
 	}
 
 	protected void setGraphicsMode() {
-		vdpCanvas.setFormat(VdpCanvas.Format.COLOR16_8x8);
+		vdpCanvas.setFormat(VdpFormat.COLOR16_8x8);
 		vdpCanvas.setSize(256, 192);
 		vdpModeInfo = createGraphicsModeInfo();
 		vdpModeRedrawHandler = new GraphicsModeRedrawHandler(vdpRedrawInfo, vdpModeInfo);
@@ -437,7 +407,7 @@ public class VdpTMS9918A implements IVdpChip {
 	}
 
 	protected void setMultiMode() {
-		vdpCanvas.setFormat(VdpCanvas.Format.COLOR16_4x4);
+		vdpCanvas.setFormat(VdpFormat.COLOR16_4x4);
 		vdpCanvas.setSize(256, 192);
 		vdpModeInfo = createMultiModeInfo();
 		vdpModeRedrawHandler = new MulticolorModeRedrawHandler(vdpRedrawInfo, vdpModeInfo);
@@ -463,7 +433,7 @@ public class VdpTMS9918A implements IVdpChip {
 	}
 
 	protected void setTextMode() {
-		vdpCanvas.setFormat(VdpCanvas.Format.TEXT);
+		vdpCanvas.setFormat(VdpFormat.TEXT);
 		vdpCanvas.setSize(256, 192);
 		vdpModeInfo = createTextModeInfo();
 		vdpModeRedrawHandler = new TextModeRedrawHandler(vdpRedrawInfo, vdpModeInfo);
@@ -490,7 +460,7 @@ public class VdpTMS9918A implements IVdpChip {
 	}
 
 	protected void setBitmapMode() {
-		vdpCanvas.setFormat(VdpCanvas.Format.COLOR16_8x1);
+		vdpCanvas.setFormat(VdpFormat.COLOR16_8x1);
 		vdpCanvas.setSize(256, 192);
 		vdpModeInfo = createBitmapModeInfo();
 		vdpModeRedrawHandler = new BitmapModeRedrawHandler(vdpRedrawInfo, vdpModeInfo);
@@ -578,13 +548,13 @@ public class VdpTMS9918A implements IVdpChip {
     public byte readVdpStatus() {
 		/* >8802, status read and acknowledge interrupt */
     	byte ret = vdpStatus;
-		vdpStatus &= ~VDP_INTERRUPT;
+		vdpStatus &= ~IVdpChip.VDP_INTERRUPT;
 		// TODO machine.getCpu().reset9901int(v9t9.cpu.Cpu.M_INT_VDP);
 
         return ret;
     }
 
-    public synchronized void touchAbsoluteVdpMemory(int vdpaddr, byte val) {
+    public synchronized void touchAbsoluteVdpMemory(int vdpaddr) {
     	try {
     		vdpMemory.writeMemory(vdpaddr & 0x3fff);
 			if (vdpModeRedrawHandler != null) {
@@ -674,12 +644,12 @@ public class VdpTMS9918A implements IVdpChip {
 		return true;
 	}
 
-	public synchronized VdpCanvas getCanvas() {
+	public synchronized IVdpCanvas getCanvas() {
 		return vdpCanvas;
 	}
 
 	public void tick() {
-		 if (VdpTMS9918A.settingCpuSynchedVdpInterrupt.getBoolean())
+		 if (IVdpChip.settingCpuSynchedVdpInterrupt.getBoolean())
 			 return;
 		 
 		 // in this model, we use the system clock to ensure reliable VDP
@@ -700,7 +670,7 @@ public class VdpTMS9918A implements IVdpChip {
 	
 
 	public void syncVdpInterrupt(IMachine machine) {
-		if (!settingCpuSynchedVdpInterrupt.getBoolean())
+		if (!IVdpChip.settingCpuSynchedVdpInterrupt.getBoolean())
 			return;
 
 		// in this model, the CPU is running at a fixed rate,
@@ -727,9 +697,9 @@ public class VdpTMS9918A implements IVdpChip {
     		}
     		
     		// a real interrupt only occurs if wanted
-    		if ((readVdpReg(1) & VdpTMS9918A.R1_INT) != 0) {
-    			if ((vdpStatus & VDP_INTERRUPT) == 0) {
-    				vdpStatus |= VDP_INTERRUPT;
+    		if ((readVdpReg(1) & IVdpChip.R1_INT) != 0) {
+    			if ((vdpStatus & IVdpChip.VDP_INTERRUPT) == 0) {
+    				vdpStatus |= IVdpChip.VDP_INTERRUPT;
     				machine.getExecutor().vdpInterrupt();
     			}
     			
@@ -752,8 +722,8 @@ public class VdpTMS9918A implements IVdpChip {
 		
 	}
 
-	public void setCanvas(ICanvas canvas) {
-		this.vdpCanvas = (VdpCanvas) canvas;
+	public void setCanvas(IVdpCanvas canvas) {
+		this.vdpCanvas = canvas;
 		vdpCanvas.markDirty();
 		
 		vdpRedrawInfo = new VdpRedrawInfo(vdpregs, this, vdpChanges, vdpCanvas);
@@ -776,8 +746,8 @@ public class VdpTMS9918A implements IVdpChip {
 		}
 		section.put("Registers", regState);
 		//settingDumpVdpAccess.saveState(section);
-		settingCpuSynchedVdpInterrupt.saveState(section);
-		settingVdpInterruptRate.saveState(section);
+		IVdpChip.settingCpuSynchedVdpInterrupt.saveState(section);
+		IVdpChip.settingVdpInterruptRate.saveState(section);
 	}
 	
 	public void loadState(ISettingSection section) {
@@ -793,8 +763,8 @@ public class VdpTMS9918A implements IVdpChip {
 		}
 		
 		//settingDumpVdpAccess.loadState(section);
-		settingCpuSynchedVdpInterrupt.loadState(section);
-		settingVdpInterruptRate.loadState(section);
+		IVdpChip.settingCpuSynchedVdpInterrupt.loadState(section);
+		IVdpChip.settingVdpInterruptRate.loadState(section);
 	}
 	
 	
@@ -931,11 +901,35 @@ public class VdpTMS9918A implements IVdpChip {
 	 */
 	public String getModeName() {
 		switch (modeNumber) {
-		case MODE_BITMAP: return "Bitmap";
-		case MODE_GRAPHICS: return "Graphics";
-		case MODE_MULTI: return "MultiColor";
-		case MODE_TEXT: return "Text";
+		case IVdpChip.MODE_BITMAP: return "Bitmap";
+		case IVdpChip.MODE_GRAPHICS: return "Graphics";
+		case IVdpChip.MODE_MULTI: return "MultiColor";
+		case IVdpChip.MODE_TEXT: return "Text";
 		}
 		return null;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.hardware.IVdpChip#getModeInfo()
+	 */
+	@Override
+	public VdpModeInfo getModeInfo() {
+		return vdpModeInfo;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.hardware.IVdpChip#isInterlacedEvenOdd()
+	 */
+	@Override
+	public boolean isInterlacedEvenOdd() {
+		return false;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.hardware.IVdpChip#getGraphicsPageSize()
+	 */
+	@Override
+	public int getGraphicsPageSize() {
+		return 0;
 	}
 }

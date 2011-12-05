@@ -18,6 +18,7 @@ import v9t9.common.cpu.ICpu;
 import v9t9.common.files.Catalog;
 import v9t9.common.files.CatalogEntry;
 import v9t9.common.files.FDR;
+import v9t9.common.files.IDiskImage;
 import v9t9.common.files.V9t9FDR;
 import v9t9.common.files.VDR;
 import v9t9.engine.cpu.Executor;
@@ -72,9 +73,9 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		}
 	};
 	
-	protected String name;
+	private String name;
 	protected File spec;
-	protected RandomAccessFile handle;
+	private RandomAccessFile handle;
 	
 	private SettingProperty inUseSetting;
 	
@@ -85,8 +86,8 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	int trackoffset;
 	protected byte seektrack;
 	protected byte sideReg;
-	protected boolean motorRunning;
-	protected long motorTimeout;
+	private boolean motorRunning;
+	private long motorTimeout;
 
 	/**
 	 * @param name 
@@ -387,6 +388,14 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		}
 	}
 
+	protected abstract List<IdMarker> getTrackMarkers();
+
+	protected abstract void writeTrackData(byte[] rwBuffer, int i,
+			int buflen, FDCStatus status);
+
+	protected abstract void writeSectorData(byte[] rwBuffer, int start,
+			int buflen, IdMarker marker, FDCStatus status);
+
 	public void readSector(int sector, byte[] rwBuffer, int start, int buflen) throws IOException {
 		int secsPerTrack = 9;
 		byte track = (byte) (sector / secsPerTrack);
@@ -436,5 +445,61 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 			}
 		}
 		return new Catalog(volume, total, used, entries);
+	}
+
+	/**
+	 * @param motorTimeout the motorTimeout to set
+	 */
+	public void setMotorTimeout(long motorTimeout) {
+		this.motorTimeout = motorTimeout;
+	}
+
+	/**
+	 * @return the motorTimeout
+	 */
+	public long getMotorTimeout() {
+		return motorTimeout;
+	}
+
+	/**
+	 * @param motorRunning the motorRunning to set
+	 */
+	public void setMotorRunning(boolean motorRunning) {
+		this.motorRunning = motorRunning;
+	}
+
+	/**
+	 * @return the motorRunning
+	 */
+	public boolean isMotorRunning() {
+		return motorRunning;
+	}
+
+	/**
+	 * @param handle the handle to set
+	 */
+	public void setHandle(RandomAccessFile handle) {
+		this.handle = handle;
+	}
+
+	/**
+	 * @return the handle
+	 */
+	public RandomAccessFile getHandle() {
+		return handle;
+	}
+
+	/**
+	 * @param name the name to set
+	 */
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	/**
+	 * @return the name
+	 */
+	public String getName() {
+		return name;
 	}
 }

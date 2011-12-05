@@ -38,9 +38,6 @@ public class AwtJavaClient implements IClient {
         init();
     }
     
-    /* (non-Javadoc)
-     * @see v9t9.engine.Client#getIdentifier()
-     */
     @Override
     public String getIdentifier() {
     	return ID;
@@ -68,9 +65,6 @@ public class AwtJavaClient implements IClient {
         keyboardHandler.setEventNotifier(window.getEventNotifier());
     }
     
-    /* (non-Javadoc)
-     * @see v9t9.engine.Client#getEventNotifier()
-     */
     @Override
     public IEventNotifier getEventNotifier() {
     	return window.getEventNotifier();
@@ -151,9 +145,6 @@ public class AwtJavaClient implements IClient {
     	return true;
     }
     
-    /* (non-Javadoc)
-     * @see v9t9.engine.Client#getVideoRenderer()
-     */
     @Override
     public IVideoRenderer getVideoRenderer() {
     	return videoRenderer;

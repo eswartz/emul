@@ -138,9 +138,6 @@ public class SwtLwjglKeyboardHandler implements IKeyboardHandler, ISwtKeyboardHa
 		}
 	}
 	
-	/* (non-Javadoc)
-	 * @see v9t9.engine.KeyboardHandler#scan(v9t9.keyboard.KeyboardState)
-	 */
 	@Override
 	public void scan(IKeyboardState state) {
 		swtKeyboardHandler.scan(state);

@@ -23,9 +23,9 @@ import v9t9.common.cpu.ICpuMetrics;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.cpu.IInstructionListener;
 import v9t9.common.cpu.MetricEntry;
+import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
 import v9t9.engine.interpreter.IInterpreter;
-import v9t9.engine.video.tms9918a.VdpTMS9918A;
 
 
 /**
@@ -173,7 +173,7 @@ public class Executor implements IExecutor {
 			cpu.addCycles(cpu.getBaseCyclesPerSec() * (int)(end - start + 500) / 1000);
     		cpu.checkAndHandleInterrupts();
 			*/
-    		while (!cpu.isThrottled() && nVdpInterrupts < VdpTMS9918A.settingVdpInterruptRate.getInt()) {
+    		while (!cpu.isThrottled() && nVdpInterrupts < IVdpChip.settingVdpInterruptRate.getInt()) {
     			try {
     				//long start = System.currentTimeMillis();
     				Thread.yield();

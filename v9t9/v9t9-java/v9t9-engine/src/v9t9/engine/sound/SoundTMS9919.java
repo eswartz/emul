@@ -10,7 +10,7 @@ import v9t9.base.sound.ISoundVoice;
 import v9t9.common.client.ISoundHandler;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.machine.IMachine;
-import v9t9.engine.EmulatorSettings;
+import v9t9.engine.settings.EmulatorSettings;
 
 /**
  * Controller for the TMS9919 sound chip

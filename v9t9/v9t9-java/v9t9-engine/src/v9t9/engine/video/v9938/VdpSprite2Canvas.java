@@ -5,11 +5,11 @@ package v9t9.engine.video.v9938;
 
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.video.ICanvas;
+import v9t9.common.video.ISprite2Canvas;
+import v9t9.common.video.IVdpCanvas;
 import v9t9.common.video.VdpColorManager;
-import v9t9.engine.video.ISpriteCanvas;
+import v9t9.common.video.VdpSprite;
 import v9t9.engine.video.Sprite2Canvas;
-import v9t9.engine.video.VdpCanvas;
-import v9t9.engine.video.VdpSprite;
 import v9t9.engine.video.tms9918a.VdpSpriteCanvas;
 
 /**
@@ -52,12 +52,12 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 	public static boolean EARLY = true;
 	public static boolean OR = true;
 	
-	private Sprite2Canvas spriteCanvas;
+	private ISprite2Canvas spriteCanvas;
 	/** which screen changes there were, requiring sprite reblits */
 	private byte[] screenSpriteChanges;
 	private final boolean evenOddColors;
 
-	public VdpSprite2Canvas(VdpCanvas canvas, int maxPerLine, boolean evenOddColors) {
+	public VdpSprite2Canvas(IVdpCanvas canvas, int maxPerLine, boolean evenOddColors) {
 		super(canvas, maxPerLine);
 		this.evenOddColors = evenOddColors;
 		this.spriteCanvas = new Sprite2Canvas();
@@ -74,7 +74,7 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 	}
 
 	@Override
-	public void drawSprites(ISpriteCanvas canvas) {
+	public void drawSprites(IVdpCanvas canvas) {
 		//spriteCanvas.clear(null);
 		// clear the blocks where the sprites are moving
 		//int cleared = 0;
@@ -86,9 +86,9 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 			}
 		}
 		//System.out.print(cleared +" cleared; ");
-		super.drawSprites(spriteCanvas);
+		super.drawSprites(canvas);
 		
-		blitSpriteCanvas((VdpCanvas) canvas, evenOddColors);
+		blitSpriteCanvas(canvas, evenOddColors);
 	}
 
 	
@@ -103,7 +103,7 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 	 * @param attr the row attribute table
 	 * @param doubleWidth is the sprite drawn double-wide?
 	 */
-	private void drawUnmagnifiedSpriteChar(ISpriteCanvas canvas, int y, int x, int rowbitmap, ByteMemoryAccess pattern,
+	private void drawUnmagnifiedSpriteChar(IVdpCanvas canvas, int y, int x, int rowbitmap, ByteMemoryAccess pattern,
 			ByteMemoryAccess attr, boolean doubleWidth) {
 		
 		VdpColorManager colorMgr = canvas.getColorMgr();
@@ -120,14 +120,13 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 				continue;
 			
 			byte bitmask = -1;
-			/*
 			if (x + shift + 8 <= 0)
 				continue;
 			if (x + shift < 0) {
-				bitmask &= 0xff >> (x + shift);
+				bitmask &= 0xff >> -(x + shift);
 			} else if (x + shift + 8 > 256) {
 				bitmask &= 0xff << ((x + shift + 8) - 256);
-			}*/
+			}
 			
 			boolean isLogicalOr = OR && (attrb & 0x40) != 0;
 			byte patt = 0;
@@ -162,7 +161,7 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 	 * @param attr the row attribute table
 	 * @param doubleWidth is the sprite drawn double-wide?
 	 */
-	private void drawMagnifiedSpriteChar(ISpriteCanvas canvas, int y, int x, int rowbitmap, ByteMemoryAccess pattern,
+	private void drawMagnifiedSpriteChar(IVdpCanvas canvas, int y, int x, int rowbitmap, ByteMemoryAccess pattern,
 			ByteMemoryAccess attr, boolean doubleWidth) {
 		
 		VdpColorManager colorMgr = canvas.getColorMgr();
@@ -179,14 +178,13 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 				continue;
 			
 			short bitmask = -1;
-			/*
 			if (x + shift + 16 <= 0)
 				continue;
 			if (x + shift < 0) {
-				bitmask &= 0xffff >> (x + shift);
+				bitmask &= 0xffff >> -(x + shift);
 			} else if (x + shift + 16 > 256) {
 				bitmask &= 0xffff << ((x + shift + 16) - 256);
-			}*/
+			}
 			
 			boolean isLogicalOr = OR && (attrb & 0x40) != 0;
 			byte patt = 0;
@@ -212,11 +210,11 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 	}
 
 	@Override
-	protected void drawSprite(ISpriteCanvas canvas, VdpSprite sprite, int sprrowbitmap) {
+	protected void drawSprite(IVdpCanvas canvas, VdpSprite sprite, int sprrowbitmap) {
 		// sprite color 0 does not imply invisibility since this only
 		// applies to the color 0 in the color stripe
 		
-		boolean doubleWidth = canvas.getVisibleWidth() == 512;
+		boolean doubleWidth = canvas.getWidth() == 512;
 		
 		int x = sprite.getX();
 		int y = sprite.getY();
@@ -239,12 +237,12 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 		}
 	}
 	
-	protected void blitSpriteCanvas(VdpCanvas screenCanvas, boolean fourColorMode) {
+	protected void blitSpriteCanvas(IVdpCanvas canvas, boolean fourColorMode) {
 		// where the screen changed, we need to draw our sprite blocks
-		int blockStride = screenCanvas.getVisibleWidth() / 8;
+		int blockStride = canvas.getVisibleWidth() / 8;
 		// 1 or 2 if 256 or 512 mode
 		int blockMag = blockStride / 32;
-		int blockCount = screenCanvas.getHeight() / 8;
+		int blockCount = canvas.getHeight() / 8;
 		int screenOffs = 0;
 		for (int yblock = 0; yblock < blockCount; yblock++) {
 			for (int xblock = 0; xblock < 32; xblock++) {
@@ -252,9 +250,9 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 					|| (blockMag > 1 && screenSpriteChanges[screenOffs + xblock * blockMag + 1] != 0)) {
 					
 					if (!fourColorMode)
-						screenCanvas.blitSpriteBlock(spriteCanvas, xblock * 8, yblock * 8, blockMag);
+						canvas.blitSpriteBlock(spriteCanvas, xblock * 8, yblock * 8, blockMag);
 					else
-						screenCanvas.blitFourColorSpriteBlock(spriteCanvas, xblock * 8, yblock * 8, blockMag);
+						canvas.blitFourColorSpriteBlock(spriteCanvas, xblock * 8, yblock * 8, blockMag);
 				}
 			}
 			screenOffs += blockStride;

@@ -5,7 +5,6 @@ package v9t9.engine.video.v9938;
 
 import v9t9.common.video.RedrawBlock;
 import v9t9.common.video.VdpModeInfo;
-import v9t9.engine.video.IBitmapPixelAccess;
 import v9t9.engine.video.VdpRedrawInfo;
 
 /**
@@ -39,13 +38,5 @@ public class Graphics6ModeRedrawHandler extends PackedBitmapGraphicsModeRedrawHa
 			 info.vdp.getByteReadMemoryAccess(
 					(modeInfo.patt.base + rowstride * block.r + (block.c >> 1)) ^ pageOffset),
 			rowstride);
-	}
-
-	@Override
-	protected byte createImageDataByte(IBitmapPixelAccess access, int x, int y) {
-		byte f = access.getPixel(x, y);
-		byte b = access.getPixel(x + 1, y);
-		
-		return (byte) ((f << 4) | b);
 	}
 }

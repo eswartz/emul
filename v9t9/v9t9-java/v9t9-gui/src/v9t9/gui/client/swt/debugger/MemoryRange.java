@@ -8,8 +8,6 @@ import java.util.TreeSet;
 
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryWriteListener;
-import v9t9.engine.memory.MemoryEntry;
-import v9t9.engine.memory.WordMemoryArea;
 
 /**
  * A range of viewable memory
@@ -17,7 +15,7 @@ import v9t9.engine.memory.WordMemoryArea;
  *
  */
 public class MemoryRange {
-	final MemoryEntry entry;
+	final IMemoryEntry entry;
 	final int addr;
 	final int len;
 	Set<Integer> changedMemory = new TreeSet<Integer>();
@@ -25,7 +23,7 @@ public class MemoryRange {
 	protected int lowRange;
 	protected int hiRange;
 	
-	public MemoryRange(MemoryEntry entry, int addr, int len) {
+	public MemoryRange(IMemoryEntry entry, int addr, int len) {
 		this.entry = entry;
 		int lo = addr;
 		int hi = addr + len;
@@ -36,10 +34,10 @@ public class MemoryRange {
 		this.addr = lo;
 		this.len = hi - lo;
 	}
-	public MemoryRange(MemoryEntry entry) {
-		this.entry = entry;
-		this.addr = entry.getAddr();
-		this.len = entry.getSize();
+	public MemoryRange(IMemoryEntry element) {
+		this.entry = element;
+		this.addr = element.getAddr();
+		this.len = element.getSize();
 	}
 	public boolean contains(IMemoryEntry entry, int addr) {
 		return this.entry.getDomain() == entry.getDomain() &&
@@ -47,7 +45,7 @@ public class MemoryRange {
 			addr >= this.addr && addr < this.addr + this.len;
 	}
 	public boolean isWordMemory() {
-		return entry.getArea() instanceof WordMemoryArea;
+		return entry.isWordAccess();
 	}
 	public void attachMemoryListener() {
 		memoryWriteListener = new IMemoryWriteListener() {
@@ -117,7 +115,7 @@ public class MemoryRange {
 	public boolean canModify(int i) {
 		return entry.hasWriteAccess();
 	}
-	public MemoryEntry getEntry() {
+	public IMemoryEntry getEntry() {
 		return entry;
 	}
 	

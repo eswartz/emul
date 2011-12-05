@@ -7,8 +7,8 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.ToolTip;
 
+import v9t9.common.events.BaseEventNotifier;
 import v9t9.common.events.NotifyEvent;
-import v9t9.engine.events.BaseEventNotifier;
 
 /**
  * @author ejs

@@ -25,9 +25,9 @@ import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.modules.IModule;
 import v9t9.common.modules.IModuleManager;
 import v9t9.common.modules.MemoryEntryInfo;
-import v9t9.engine.EmulatorSettings;
 import v9t9.engine.memory.BankedMemoryEntry;
 import v9t9.engine.memory.DiskMemoryEntry;
+import v9t9.engine.settings.EmulatorSettings;
 import v9t9.engine.settings.WorkspaceSettings;
 
 /**

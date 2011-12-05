@@ -4,6 +4,7 @@
 package v9t9.engine.video;
 
 import v9t9.common.video.ICanvas;
+import v9t9.common.video.ICanvasListener;
 import v9t9.common.video.RedrawBlock;
 import v9t9.common.video.VdpColorManager;
 
@@ -13,10 +14,6 @@ import v9t9.common.video.VdpColorManager;
  *
  */
 public abstract class BaseVdpCanvas implements ICanvas {
-	public interface ICanvasListener {
-		void canvasDirtied(ICanvas canvas);
-		void canvasResized(ICanvas canvas);
-	}
 	protected int dx1;
 	protected int dy1;
 	protected int dx2;

@@ -56,7 +56,6 @@ import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryListener;
-import v9t9.engine.memory.MemoryEntry;
 import v9t9.gui.Emulator;
 import v9t9.gui.client.swt.FontUtils;
 
@@ -201,7 +200,7 @@ public class MemoryViewer extends Composite {
 				Object element = ((IStructuredSelection) event.getSelection()).getFirstElement();
 				MemoryRange range;
 				if (element instanceof IMemoryEntry) {
-					range = new MemoryRange((MemoryEntry) element);
+					range = new MemoryRange((IMemoryEntry) element);
 				} else if (element instanceof MemoryRange) {
 					range = (MemoryRange) element;
 				} else {

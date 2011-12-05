@@ -7,7 +7,7 @@ import java.util.ArrayList;
 
 
 import v9t9.base.utils.HexUtils;
-import v9t9.engine.machine.MachineBase;
+import v9t9.common.machine.IMachine;
 
 /**
  * @author ejs
@@ -16,7 +16,7 @@ import v9t9.engine.machine.MachineBase;
 public class VdpRegisterProvider implements IRegisterProvider {
 
 	private static final IRegister[] NO_REGS = new IRegister[0];
-	private final MachineBase machine;
+	private final IMachine machine;
 	private ArrayList<IRegister> regList;
 
 	class VdpRegister implements IRegister {
@@ -67,7 +67,7 @@ public class VdpRegisterProvider implements IRegisterProvider {
 	/**
 	 * @param machine
 	 */
-	public VdpRegisterProvider(MachineBase machine) {
+	public VdpRegisterProvider(IMachine machine) {
 		this.machine = machine;
 		int cnt = machine.getVdp().getRegisterCount();
 		regList = new ArrayList<IRegister>();

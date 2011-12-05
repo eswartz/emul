@@ -5,7 +5,6 @@ package v9t9.engine.video.v9938;
 
 import v9t9.common.video.RedrawBlock;
 import v9t9.common.video.VdpModeInfo;
-import v9t9.engine.video.IBitmapPixelAccess;
 import v9t9.engine.video.VdpRedrawInfo;
 
 /**
@@ -42,14 +41,4 @@ public class Graphics4ModeRedrawHandler extends PackedBitmapGraphicsModeRedrawHa
 	}
 
 
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.clients.builtin.video.v9938.PackedBitmapGraphicsModeRedrawHandler#importImageDataByte(v9t9.emulator.clients.builtin.video.IBitmapPixelAccess, int, int)
-	 */
-	@Override
-	protected byte createImageDataByte(IBitmapPixelAccess access, int x, int row) {
-
-		byte f = access.getPixel(x, row);
-		byte b = access.getPixel(x + 1, row);
-		return (byte) ((f << 4) | b);
-	}
 }

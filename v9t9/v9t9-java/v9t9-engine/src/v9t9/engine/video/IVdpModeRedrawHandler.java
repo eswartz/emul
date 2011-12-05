@@ -54,9 +54,4 @@ public interface IVdpModeRedrawHandler {
 	 */
 	void clear();
 
-	/**
-	 * Import data from the image data into video memory
-	 * @param access 
-	 */
-	void importImageData(IBitmapPixelAccess access);
 }

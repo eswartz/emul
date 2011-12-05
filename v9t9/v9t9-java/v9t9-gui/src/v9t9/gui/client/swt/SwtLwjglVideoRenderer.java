@@ -81,7 +81,7 @@ import v9t9.base.properties.IPropertyListener;
 import v9t9.common.files.DataFiles;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.video.ICanvas;
-import v9t9.engine.video.VdpCanvas;
+import v9t9.common.video.IVdpCanvas;
 import v9t9.gui.client.swt.gl.MonitorEffect;
 import v9t9.gui.client.swt.gl.MonitorParams;
 import v9t9.gui.client.swt.gl.SimpleCurvedCrtMonitorRender;
@@ -149,7 +149,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		super(vdp);
 	}
 
-	protected VdpCanvas createVdpCanvas() {
+	protected IVdpCanvas createVdpCanvas() {
 		imageCanvas = new ImageDataCanvas24Bit();
 		vdpCanvasBuffer = ByteBuffer.allocateDirect(imageCanvas.getImageData().bytesPerLine * imageCanvas.getImageData().height);
 		imageCanvasFormat = GL_RGB; 

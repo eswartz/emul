@@ -29,7 +29,7 @@ public class RawTrackDiskImage extends BaseTrackDiskImage  {
 	
 	@Override
 	public void writeImageHeader() throws IOException {
-		if (handle == null || readonly) {
+		if (getHandle() == null || readonly) {
 			return;
 		}
 
@@ -47,13 +47,13 @@ public class RawTrackDiskImage extends BaseTrackDiskImage  {
 	
 	@Override
 	public void readImageHeader() throws IOException {
-		if (handle == null)
+		if (getHandle() == null)
 			return;
 		
 		readonly = !spec.canWrite();
 
 		// try to get sector 0
-		byte[] sector = readSector0(handle);
+		byte[] sector = readSector0(getHandle());
 
 		if (sector == null)
 			throw new IOException(MessageFormat.format("RawTrackDiskImage:  disk image ''{0}'' does not appear to be a raw track image",
@@ -61,7 +61,7 @@ public class RawTrackDiskImage extends BaseTrackDiskImage  {
 		
 		hdr.sides = sector[0x12];
 		hdr.tracks = sector[0x11];
-		hdr.tracksize = (short) (handle.length() / hdr.tracks / hdr.sides);
+		hdr.tracksize = (short) (getHandle().length() / hdr.tracks / hdr.sides);
 		if (hdr.sides == 1 && hdr.tracksize > 5000) {
 			hdr.tracksize /= 2;
 			hdr.sides++;

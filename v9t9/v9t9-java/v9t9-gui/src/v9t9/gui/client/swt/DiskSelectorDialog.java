@@ -41,16 +41,14 @@ import org.eclipse.swt.widgets.Shell;
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
 import v9t9.base.properties.SettingProperty;
+import v9t9.common.dsr.IDiskDsr;
 import v9t9.common.dsr.IDsrHandler;
 import v9t9.common.dsr.IDsrSettings;
-import v9t9.common.events.IEventNotifier.Level;
+import v9t9.common.events.IEventNotifier;
 import v9t9.common.files.Catalog;
 import v9t9.common.files.CatalogEntry;
 import v9t9.common.machine.IMachine;
-import v9t9.engine.EmulatorSettings;
-import v9t9.engine.dsr.IDiskDsr;
-import v9t9.engine.dsr.realdisk.BaseDiskImage;
-import v9t9.engine.dsr.realdisk.DiskImageFactory;
+import v9t9.engine.settings.EmulatorSettings;
 import v9t9.engine.settings.ISettingDecorator;
 import v9t9.engine.settings.IconSettingProperty;
 
@@ -216,44 +214,27 @@ public class DiskSelectorDialog extends Composite {
 			catalog = new Button(parent, SWT.PUSH);
 			GridDataFactory.fillDefaults().grab(false, false).applyTo(catalog);
 			catalog.setText("Catalog...");
-			if (isDiskImage()) {
-				catalog.addSelectionListener(new SelectionAdapter() {
-					@Override
-					public void widgetSelected(SelectionEvent e) {
-						BaseDiskImage image = DiskImageFactory.createDiskImage(setting.getName(), new File(setting.getString()));
-						try {
-							image.openDiskImage();
-							
-							Catalog catalog = image.readCatalog();
-							
-							image.closeDiskImage();
-							
-							showCatalogDialog(setting, catalog);
-							
-						} catch (IOException e2) {
-							machine.getClient().getEventNotifier().notifyEvent(
-									image, Level.ERROR,
-									MessageFormat.format("Could not read catalog for disk image ''{0}''\n\n{1}",
-											setting.getString(), e2.getMessage()));
-						}
-					}
-				});
-			}
-			else {
-				catalog.addSelectionListener(new SelectionAdapter() {
-					@Override
-					public void widgetSelected(SelectionEvent e) {
-						for (IDsrHandler dsr : machine.getDsrManager().getDsrs()) {
-							if (dsr instanceof IDiskDsr) {
-								Catalog catalog = ((IDiskDsr) dsr).getCatalog(setting);
-								
+			catalog.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					for (IDsrHandler dsr : machine.getDsrManager().getDsrs()) {
+						if (dsr instanceof IDiskDsr && ((IDiskDsr) dsr).isImageBased() == isDiskImage()) {
+							Catalog catalog;
+							try {
+								catalog = ((IDiskDsr) dsr).getCatalog(setting);
 								showCatalogDialog(setting, catalog);
-								break;
+							} catch (IOException e1) {
+								machine.getClient().getEventNotifier().notifyEvent(
+										setting, IEventNotifier.Level.ERROR,
+										MessageFormat.format("Could not read catalog for disk image ''{0}''\n\n{1}",
+												setting.getString(), e1.getMessage()));
 							}
+							
+							break;
 						}
 					}
-				});
-			}
+				}
+			});
 		}
 		
 

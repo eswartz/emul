@@ -17,7 +17,7 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
-import v9t9.engine.EmulatorSettings;
+import v9t9.engine.settings.EmulatorSettings;
 
 public class ToolShell {
 	public enum Centering {

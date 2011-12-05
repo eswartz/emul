@@ -438,7 +438,7 @@ public class FDC1771 implements IPersistable {
 		BaseDiskImage.info("FDC interrupt");
 		
 		if (image != null)
-			image.motorTimeout = 0;
+			image.setMotorTimeout(0);
 		commandBusyExpiration = 0;
 		status.clear();
 		
@@ -470,7 +470,7 @@ public class FDC1771 implements IPersistable {
 		bufpos = 0;
 		if (image != null) {
 			buflen = image.getTrackSize();
-			if (!image.motorRunning)
+			if (!image.isMotorRunning())
 				status.set(StatusBit.BUSY);
 			image.readTrackData(rwBuffer, 0, buflen);
 		} else {
@@ -501,7 +501,7 @@ public class FDC1771 implements IPersistable {
 	public byte readByte() {
 		byte ret = 0;
 
-		if (hold && image != null && image.motorRunning && buflen != 0) {
+		if (hold && image != null && image.isMotorRunning() && buflen != 0) {
 			ret = rwBuffer[bufpos++];
 			crc = RealDiskUtils.calc_crc(crc, ret & 0xff);
 			if (bufpos >= buflen) {
@@ -517,7 +517,7 @@ public class FDC1771 implements IPersistable {
 	 * @param val
 	 */
 	public void writeByte(byte val) {
-		if (buflen != 0 && image != null && image.motorRunning) {
+		if (buflen != 0 && image != null && image.isMotorRunning()) {
 			/* fill circular buffer */
 			if (bufpos < buflen) {
 				rwBuffer[bufpos++] = val;

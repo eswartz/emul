@@ -61,8 +61,7 @@ public class ConsoleMemoryTransfer implements IMemoryTransfer {
 		int base = vdpMmio.getBankAddr();
 		while (read-- > 0) {
 			vdpHandler.touchAbsoluteVdpMemory(
-					base + vaddr, 
-					(byte) vdpHandler.readAbsoluteVdpMemory(base + vaddr));
+					base + vaddr);
 			vaddr++;
 		}
 	}

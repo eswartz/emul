@@ -8,7 +8,6 @@ import v9t9.common.video.RedrawBlock;
 import v9t9.common.video.VdpChanges;
 import v9t9.common.video.VdpModeInfo;
 import v9t9.engine.video.BaseRedrawHandler;
-import v9t9.engine.video.IBitmapPixelAccess;
 import v9t9.engine.video.IVdpModeRedrawHandler;
 import v9t9.engine.video.VdpRedrawInfo;
 
@@ -71,26 +70,5 @@ public class MulticolorModeRedrawHandler extends BaseRedrawHandler implements
 		}
 
 		return count;
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.clients.builtin.video.BaseRedrawHandler#importImageData()
-	 */
-	@Override
-	public void importImageData(IBitmapPixelAccess access) {
-		ByteMemoryAccess patt = info.vdp.getByteReadMemoryAccess(modeInfo.patt.base);
-		
-		for (int y = 0; y < 48; y++) {
-			for (int x = 0; x < 64; x += 2) {
-				
-				byte f = access.getPixel(x, y);
-				byte b = access.getPixel(x + 1, y);
-				
-				int poffs = ((y >> 3) << 8) + (y & 7) + ((x >> 1) << 3);  
-				//System.out.println("("+y+","+x+") = "+ poffs);
-				patt.memory[patt.offset + poffs] = (byte) ((f << 4) | b);
-				touch(patt.offset + poffs);
-			}
-		}
 	}
 }

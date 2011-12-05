@@ -9,7 +9,6 @@ import java.util.List;
 
 import v9t9.base.properties.SettingProperty;
 import v9t9.common.settings.BaseStoredSettings;
-import v9t9.engine.EmulatorSettings;
 
 
 /**

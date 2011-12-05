@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.engine;
+package v9t9.engine.settings;
 
 import v9t9.base.properties.SettingProperty;
 import v9t9.common.settings.BaseStoredSettings;

@@ -26,8 +26,8 @@ import v9t9.base.properties.IPropertyListener;
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.video.ICanvas;
-import v9t9.engine.video.VdpCanvas;
-import v9t9.engine.video.BaseVdpCanvas.ICanvasListener;
+import v9t9.common.video.ICanvasListener;
+import v9t9.common.video.IVdpCanvas;
 import v9t9.gui.common.BaseEmulatorWindow;
 import v9t9.gui.jna.V9t9Render;
 import v9t9.gui.jna.V9t9Render.AnalogTV;
@@ -157,14 +157,14 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.video.VideoRenderer#getCanvas()
 	 */
-	public VdpCanvas getCanvas() {
+	public IVdpCanvas getCanvas() {
 		return vdpCanvas;
 	}
 
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.video.VideoRenderer#setCanvas(v9t9.emulator.clients.builtin.video.VdpCanvas)
 	 */
-	public void setCanvas(VdpCanvas vdpCanvas) {
+	public void setCanvas(IVdpCanvas vdpCanvas) {
 		this.vdpCanvas = (ImageDataCanvas) vdpCanvas;
 		this.vdpCanvas.setListener(this);
 	}

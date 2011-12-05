@@ -8,11 +8,12 @@ import v9t9.base.properties.SettingProperty;
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.utils.HexUtils;
 import v9t9.common.cpu.ICpu;
+import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.video.VdpColorManager;
+import v9t9.common.video.VdpFormat;
 import v9t9.common.video.VdpModeInfo;
 import v9t9.engine.memory.BankedMemoryEntry;
-import v9t9.engine.video.VdpCanvas;
 import v9t9.engine.video.tms9918a.VdpTMS9918A;
 
 /**
@@ -279,13 +280,6 @@ public class VdpV9938 extends VdpTMS9918A {
 	final public static int S8_BOR_HI = 8;
 	final public static int S9_BOR_LO = 9;
 	
-	public final static int MODE_TEXT2 = 9;
-	public final static int MODE_GRAPHICS3 = 8;
-	public final static int MODE_GRAPHICS4 = 12;
-	public final static int MODE_GRAPHICS5 = 16;
-	public final static int MODE_GRAPHICS6 = 20;
-	public final static int MODE_GRAPHICS7 = 28;
-	
 	private static final int REG_SR0 = 48;
 	private static final int REG_COUNT = 48 + 9;
 	
@@ -517,34 +511,34 @@ public class VdpV9938 extends VdpTMS9918A {
 	 * @return
 	 */
 	public int calculateModeNumber() {
-		int reg0 = vdpregs[0] & R0_M3 + R0_M4 + R0_M5;
-		int reg1 = vdpregs[1] & R1_M1 + R1_M2;
+		int reg0 = vdpregs[0] & IVdpChip.R0_M3 + R0_M4 + R0_M5;
+		int reg1 = vdpregs[1] & IVdpChip.R1_M1 + IVdpChip.R1_M2;
 		
 		if (reg1 == 0) {
 			if (reg0 == R0_M4)
-				return MODE_GRAPHICS3;
-			if (reg0 == R0_M3 + R0_M4)
-				return MODE_GRAPHICS4;
+				return IVdpChip.MODE_GRAPHICS3;
+			if (reg0 == IVdpChip.R0_M3 + R0_M4)
+				return IVdpChip.MODE_GRAPHICS4;
 			if (reg0 == R0_M5)
-				return MODE_GRAPHICS5;
-			if (reg0 == R0_M3 + R0_M5)
-				return MODE_GRAPHICS6;
-			if (reg0 == R0_M3 + R0_M4 + R0_M5)
-				return MODE_GRAPHICS7;
-		} else if (reg1 == R1_M1 && reg0 == R0_M4) {
-			return MODE_TEXT2;
+				return IVdpChip.MODE_GRAPHICS5;
+			if (reg0 == IVdpChip.R0_M3 + R0_M5)
+				return IVdpChip.MODE_GRAPHICS6;
+			if (reg0 == IVdpChip.R0_M3 + R0_M4 + R0_M5)
+				return IVdpChip.MODE_GRAPHICS7;
+		} else if (reg1 == IVdpChip.R1_M1 && reg0 == R0_M4) {
+			return IVdpChip.MODE_TEXT2;
 		}
 		return super.calculateModeNumber();
 	}
 	
 	public String getModeName() {
 		switch (modeNumber) {
-		case MODE_GRAPHICS3: return "Graphics 3";
-		case MODE_GRAPHICS4: return "Graphics 4";
-		case MODE_GRAPHICS5: return "Graphics 5";
-		case MODE_GRAPHICS6: return "Graphics 6";
-		case MODE_GRAPHICS7: return "Graphics 7";
-		case MODE_TEXT2: return "Text 2";
+		case IVdpChip.MODE_GRAPHICS3: return "Graphics 3";
+		case IVdpChip.MODE_GRAPHICS4: return "Graphics 4";
+		case IVdpChip.MODE_GRAPHICS5: return "Graphics 5";
+		case IVdpChip.MODE_GRAPHICS6: return "Graphics 6";
+		case IVdpChip.MODE_GRAPHICS7: return "Graphics 7";
+		case IVdpChip.MODE_TEXT2: return "Text 2";
 		}
 		return super.getModeName();
 	}
@@ -555,24 +549,24 @@ public class VdpV9938 extends VdpTMS9918A {
 		isEnhancedMode = true;
 		pageSize = 0x8000;
 		switch (modeNumber) {
-		case MODE_TEXT2:
+		case IVdpChip.MODE_TEXT2:
 			setText2Mode();
 			dirtyAll();	// for border
 			break;
-		case MODE_GRAPHICS3:
+		case IVdpChip.MODE_GRAPHICS3:
 			setGraphics3Mode();
 			break;
-		case MODE_GRAPHICS4:
+		case IVdpChip.MODE_GRAPHICS4:
 			setGraphics4Mode();
 			break;
-		case MODE_GRAPHICS5:
+		case IVdpChip.MODE_GRAPHICS5:
 			setGraphics5Mode();
 			break;
-		case MODE_GRAPHICS6:
+		case IVdpChip.MODE_GRAPHICS6:
 			setGraphics6Mode();
 			pageSize = 0x10000;
 			break;
-		case MODE_GRAPHICS7:
+		case IVdpChip.MODE_GRAPHICS7:
 			setGraphics7Mode();
 			pageSize = 0x10000;
 			break;
@@ -585,12 +579,12 @@ public class VdpV9938 extends VdpTMS9918A {
 	
 	@Override
 	protected void setupBackdrop() {
-		if (modeNumber == MODE_GRAPHICS5) {
+		if (modeNumber == IVdpChip.MODE_GRAPHICS5) {
 			// even-odd tiling function
 			vdpCanvas.getColorMgr().setClearColor((vdpbg >> 2) & 0x3);
 			vdpCanvas.getColorMgr().setClearColor1((vdpbg) & 0x3);
 			vdpCanvas.clearToEvenOddClearColors();
-		} else if (modeNumber == MODE_GRAPHICS7) {
+		} else if (modeNumber == IVdpChip.MODE_GRAPHICS7) {
 			vdpCanvas.getColorMgr().setClearColor(vdpregs[7] & 0xff);
 			vdpCanvas.clear();
 		} else {
@@ -614,7 +608,7 @@ public class VdpV9938 extends VdpTMS9918A {
 
 	
 	protected void setText2Mode() {
-		vdpCanvas.setFormat(VdpCanvas.Format.TEXT);
+		vdpCanvas.setFormat(VdpFormat.TEXT);
 		vdpCanvas.setSize(512, getVideoHeight());
 		vdpModeInfo = createText2ModeInfo();
 		vdpModeRedrawHandler = new Text2ModeRedrawHandler(vdpRedrawInfo, vdpModeInfo);
@@ -659,7 +653,7 @@ public class VdpV9938 extends VdpTMS9918A {
 	}
 	
 	protected void setGraphics4Mode() {
-		vdpCanvas.setFormat(VdpCanvas.Format.COLOR16_1x1);
+		vdpCanvas.setFormat(VdpFormat.COLOR16_1x1);
 		vdpCanvas.setSize(256, getVideoHeight(), isInterlacedEvenOdd());
 		vdpModeInfo = createGraphics45ModeInfo();
 		vdpModeRedrawHandler = new Graphics4ModeRedrawHandler(vdpRedrawInfo, vdpModeInfo);
@@ -694,7 +688,7 @@ public class VdpV9938 extends VdpTMS9918A {
 	}
 	
 	protected void setGraphics5Mode() {
-		vdpCanvas.setFormat(VdpCanvas.Format.COLOR4_1x1);
+		vdpCanvas.setFormat(VdpFormat.COLOR4_1x1);
 		vdpCanvas.setSize(512, getVideoHeight(), isInterlacedEvenOdd());
 		vdpModeInfo = createGraphics45ModeInfo();
 		vdpModeRedrawHandler = new Graphics5ModeRedrawHandler(vdpRedrawInfo, vdpModeInfo);
@@ -708,7 +702,7 @@ public class VdpV9938 extends VdpTMS9918A {
 	}
 
 	protected void setGraphics6Mode() {
-		vdpCanvas.setFormat(VdpCanvas.Format.COLOR16_1x1);
+		vdpCanvas.setFormat(VdpFormat.COLOR16_1x1);
 		vdpCanvas.setSize(512, getVideoHeight(), isInterlacedEvenOdd());
 		vdpModeInfo = createGraphics67ModeInfo();
 		vdpModeRedrawHandler = new Graphics6ModeRedrawHandler(vdpRedrawInfo, vdpModeInfo);
@@ -743,7 +737,7 @@ public class VdpV9938 extends VdpTMS9918A {
 	}
 	
 	protected void setGraphics7Mode() {
-		vdpCanvas.setFormat(VdpCanvas.Format.COLOR256_1x1);
+		vdpCanvas.setFormat(VdpFormat.COLOR256_1x1);
 		vdpCanvas.setSize(256, getVideoHeight(), isInterlacedEvenOdd());
 		vdpModeInfo = createGraphics67ModeInfo();
 		vdpModeRedrawHandler = new Graphics7ModeRedrawHandler(vdpRedrawInfo, vdpModeInfo);
@@ -790,7 +784,7 @@ public class VdpV9938 extends VdpTMS9918A {
 		int prevPageOffset = pageOffset;
 		pageOffset = 0;
 		if (isEnhancedMode && vdpregs[13] != 0) {
-			boolean isBlinking = modeNumber == MODE_TEXT2;
+			boolean isBlinking = modeNumber == IVdpChip.MODE_TEXT2;
 			boolean isPageFlipping = (vdpregs[2] & 0x20) != 0 && !isBlinking;
 			
 			boolean isAltMode = System.currentTimeMillis() % blinkPeriod >= blinkOffPeriod;
@@ -813,7 +807,7 @@ public class VdpV9938 extends VdpTMS9918A {
 			
 		}
 		
-		int targetRate = CLOCK_RATE / settingMsxClockDivisor.getInt() / settingVdpInterruptRate.getInt();
+		int targetRate = CLOCK_RATE / settingMsxClockDivisor.getInt() / IVdpChip.settingVdpInterruptRate.getInt();
 		
 		if (/*!Cpu.settingRealTime.getBoolean() ||*/ currentcycles < 0)
 			currentcycles += targetRate;
@@ -843,7 +837,7 @@ public class VdpV9938 extends VdpTMS9918A {
 			statusvec[2] &= ~S2_CE;
 			cmdState.cmd = 0;
 			cmdState.isDataMoveCommand = false;
-			if (ICpu.settingDumpFullInstructions.getBoolean() && settingDumpVdpAccess.getBoolean())
+			if (ICpu.settingDumpFullInstructions.getBoolean() && IVdpChip.settingDumpVdpAccess.getBoolean())
 				log("MSX command done");
 		}
 	}
@@ -865,7 +859,7 @@ public class VdpV9938 extends VdpTMS9918A {
 			// in line mode, X/Y are biased into 16:16
 			int maj = readMaj();
 			int min = readMin();
-			if (ICpu.settingDumpFullInstructions.getBoolean() && settingDumpVdpAccess.getBoolean())
+			if (ICpu.settingDumpFullInstructions.getBoolean() && IVdpChip.settingDumpVdpAccess.getBoolean())
 				log("Line: x="+cmdState.dx+",y="+cmdState.dy+",dix="+cmdState.dix+",diy="+cmdState.diy
 						+",maj="+maj+",min="+min+",axis="+(vdpregs[45]&R45_MAJ));
 			int frac = maj != 0 ? min * 0x10000 / maj : 0;
@@ -915,7 +909,7 @@ public class VdpV9938 extends VdpTMS9918A {
 		// all clear
 		statusvec[2] = 0;
 		
-		if (ICpu.settingDumpFullInstructions.getBoolean() && settingDumpVdpAccess.getBoolean())
+		if (ICpu.settingDumpFullInstructions.getBoolean() && IVdpChip.settingDumpVdpAccess.getBoolean())
 			log("MSX command " + HexUtils.toHex2(cmdState.cmd)
 					+ " arg=" + HexUtils.toHex2(cmdState.arg) 
 					+ " op=" + HexUtils.toHex2(cmdState.op)
@@ -1332,13 +1326,13 @@ public class VdpV9938 extends VdpTMS9918A {
 		case 0:
 			return caten(yOrN("DG", val & 0x40), yOrN("IE2", val & 0x40),
 					yOrN("IE1", val & 0x20), yOrN("M5", val & R0_M5),
-					yOrN("M4", val & R0_M4), yOrN("M3", val & R0_M3))
+					yOrN("M4", val & R0_M4), yOrN("M3", val & IVdpChip.R0_M3))
 					+ " (" + getModeName() + ")";
 		case 1:
-			return caten((val & R1_NOBLANK) != 0 ? "Show" : "Blank",
-					yOrN("IE0", val & R1_INT), yOrN("M1", val & R1_M1),
-					yOrN("M2", val & R1_M2),
-					yOrN("Size 4", val & R1_SPR4), yOrN("Mag", val & R1_SPRMAG))
+			return caten((val & IVdpChip.R1_NOBLANK) != 0 ? "Show" : "Blank",
+					yOrN("IE0", val & IVdpChip.R1_INT), yOrN("M1", val & IVdpChip.R1_M1),
+					yOrN("M2", val & IVdpChip.R1_M2),
+					yOrN("Size 4", val & IVdpChip.R1_SPR4), yOrN("Mag", val & IVdpChip.R1_SPRMAG))
 					+ " (" + getModeName() + ")";
 		case 8:
 			return caten(yOrN("Mouse", val & 0x80), yOrN("Light Pen", val & 0x40),
@@ -1460,4 +1454,5 @@ public class VdpV9938 extends VdpTMS9918A {
 		
 		return super.getRegisterTooltip(reg);
 	}
+	
 }

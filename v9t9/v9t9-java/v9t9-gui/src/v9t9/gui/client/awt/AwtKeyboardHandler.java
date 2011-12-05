@@ -272,9 +272,6 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 		return true;
 	}
 
-	/* (non-Javadoc)
-	 * @see v9t9.engine.KeyboardHandler#scan(v9t9.keyboard.KeyboardState)
-	 */
 	public void scan(IKeyboardState state) {
 		// all handled incrementally, but just in case something goes goofy...
 		if (!state.isPasting()) {

@@ -85,7 +85,7 @@ public abstract class BaseTI994AMemoryModel implements TIMemoryModel {
         if (vdp instanceof VdpV9938)
         	vdpMmio = new Vdp9938Mmio(machine.getMemory(), (VdpV9938) vdp, 0x20000);
         else
-        	vdpMmio = new Vdp9918AMmio(machine.getMemory(), vdp, 0x1000);
+        	vdpMmio = new Vdp9918AMmio(machine.getMemory(), vdp, 0x4000);
 
         defineMmioMemory(machine);
     }

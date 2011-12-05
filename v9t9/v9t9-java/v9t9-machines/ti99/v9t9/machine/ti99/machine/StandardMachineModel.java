@@ -9,7 +9,6 @@ import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryModel;
 import v9t9.engine.keyboard.KeyboardState;
-import v9t9.engine.memory.Vdp9918AMmio;
 import v9t9.engine.sound.SoundTMS9919;
 import v9t9.engine.video.tms9918a.VdpTMS9918A;
 import v9t9.machine.common.dsr.emudisk.DiskDirectoryMapper;
@@ -60,7 +59,6 @@ public class StandardMachineModel extends BaseTI99MachineModel {
 	 */
 	public IVdpChip createVdp(IMachine machine) {
 		VdpTMS9918A vdp = new VdpTMS9918A(machine);
-		new Vdp9918AMmio(machine.getMemory(), vdp, 0x4000);
 		return vdp;
 	}
 	

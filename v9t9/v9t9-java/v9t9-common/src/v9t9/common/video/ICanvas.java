@@ -25,9 +25,5 @@ public interface ICanvas {
 	int getVisibleHeight();
 	int getLineStride();
 	
-	/**
-	 * @return
-	 */
 	VdpColorManager getColorMgr();
-
 }

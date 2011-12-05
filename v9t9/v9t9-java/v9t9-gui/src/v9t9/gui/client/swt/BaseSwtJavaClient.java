@@ -221,9 +221,6 @@ public abstract class BaseSwtJavaClient implements IClient {
 		return !display.isDisposed();
 	}
 	
-	/* (non-Javadoc)
-	 * @see v9t9.engine.Client#getVideoRenderer()
-	 */
 	@Override
 	public IVideoRenderer getVideoRenderer() {
 		return videoRenderer;

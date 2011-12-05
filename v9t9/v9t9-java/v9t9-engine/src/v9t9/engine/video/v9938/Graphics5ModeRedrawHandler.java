@@ -5,7 +5,6 @@ package v9t9.engine.video.v9938;
 
 import v9t9.common.video.RedrawBlock;
 import v9t9.common.video.VdpModeInfo;
-import v9t9.engine.video.IBitmapPixelAccess;
 import v9t9.engine.video.VdpRedrawInfo;
 
 /**
@@ -48,13 +47,4 @@ public class Graphics5ModeRedrawHandler extends PackedBitmapGraphicsModeRedrawHa
 		info.canvas.clearToEvenOddClearColors();
 	}
 
-	@Override
-	protected byte createImageDataByte(IBitmapPixelAccess access, int x, int y) {
-		byte p = 0;
-		for (int xo = 0; xo < 4; xo++) {
-			byte c = access.getPixel(x + xo, y);
-			p |= c << ((3 - xo) * 2);
-		}
-		return p;
-	}
 }

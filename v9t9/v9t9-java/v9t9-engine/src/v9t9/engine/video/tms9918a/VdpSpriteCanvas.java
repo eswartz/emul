@@ -7,13 +7,13 @@ import java.util.Arrays;
 
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.video.ICanvas;
-import v9t9.engine.video.BaseVdpCanvas;
-import v9t9.engine.video.ISpriteCanvas;
-import v9t9.engine.video.SpriteBase;
-import v9t9.engine.video.VdpSprite;
+import v9t9.common.video.ISpriteCanvas;
+import v9t9.common.video.IVdpCanvas;
+import v9t9.common.video.SpriteBase;
+import v9t9.common.video.VdpSprite;
 
 
-public class VdpSpriteCanvas {
+public class VdpSpriteCanvas implements ISpriteCanvas {
 	protected static final int NUMSPRITES = 32;
 	/** map, per screen block, of which sprites are here */
 	protected int[] oldspritebitmap;
@@ -30,7 +30,7 @@ public class VdpSpriteCanvas {
 	private boolean isMagnified;
 
 
-	public VdpSpriteCanvas(BaseVdpCanvas vdpCanvas, int maxPerLine) {
+	public VdpSpriteCanvas(IVdpCanvas vdpCanvas, int maxPerLine) {
 		this.maxPerLine = maxPerLine;
 		this.oldspritebitmap = new int[vdpCanvas.getBlockCount()];
 		this.spritebitmap = new int[vdpCanvas.getBlockCount()];
@@ -272,7 +272,7 @@ public class VdpSpriteCanvas {
 	 * Draw sprites, after any modified screen blocks have been restored.
 	 * @param canvas the canvas to modify
 	 */
-	public void drawSprites(ISpriteCanvas canvas) {
+	public void drawSprites(IVdpCanvas canvas) {
 		for (int n = sprites.length; --n >= 0; ) {
 			VdpSprite sprite = sprites[n];
 			if (sprite.isBitmapDirty() && !sprite.isDeleted() && sprrowbitmaps[n] != 0) {
@@ -292,7 +292,7 @@ public class VdpSpriteCanvas {
 	 * @param pattern the sprite's pattern
 	 * @param color the color for "on" bits on the sprite; will not be 0
 	 */
-	protected void drawUnmagnifiedSpriteChar(ISpriteCanvas canvas, int y, int x, int shift, byte color, 
+	protected void drawUnmagnifiedSpriteChar(IVdpCanvas canvas, int y, int x, int shift, byte color, 
 			int rowbitmap, ByteMemoryAccess pattern) {
 		if (x + shift + 8 <= 0 || x + shift >= 256)
 			return;
@@ -328,7 +328,7 @@ public class VdpSpriteCanvas {
 	 * @param pattern the sprite's pattern
 	 * @param color the color for "on" bits on the sprite; will not be 0
 	 */
-	protected void drawMagnifiedSpriteChar(ISpriteCanvas canvas, int y, int x, int shift, byte color, 
+	protected void drawMagnifiedSpriteChar(IVdpCanvas canvas, int y, int x, int shift, byte color, 
 			int rowbitmap, ByteMemoryAccess pattern) {
 		if (x + shift + 16 <= 0 || x + shift >= 256)
 			return;
@@ -357,7 +357,7 @@ public class VdpSpriteCanvas {
 	/** y,x */
 	protected static final int[] charshifts = { 0, 0, 8, 0, 0, 8, 8, 8 };
 	
-	protected void drawSprite(ISpriteCanvas canvas, VdpSprite sprite, int sprrowbitmap) {
+	protected void drawSprite(IVdpCanvas canvas, VdpSprite sprite, int sprrowbitmap) {
 		// color 0 is transparent and always invisible
 		if (sprite.getColor() == 0)
 			return;

@@ -21,7 +21,7 @@ import v9t9.common.client.IVideoRenderer;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.TerminatedException;
-import v9t9.engine.EmulatorSettings;
+import v9t9.engine.settings.EmulatorSettings;
 import v9t9.engine.settings.WorkspaceSettings;
 import v9t9.gui.Emulator;
 import v9t9.server.EmulatorServer;

@@ -14,10 +14,9 @@ import v9t9.base.properties.FieldProperty;
 import v9t9.base.properties.IPropertySource;
 import v9t9.base.properties.PropertySource;
 import v9t9.common.hardware.IVdpChip;
+import v9t9.common.video.IVdpCanvas;
 import v9t9.common.video.VdpColorManager;
-import v9t9.engine.video.VdpCanvas;
-import v9t9.engine.video.VdpCanvas.Format;
-import v9t9.engine.video.v9938.VdpV9938;
+import v9t9.common.video.VdpFormat;
 
 /**
  * @author ejs
@@ -186,18 +185,18 @@ public class ImageImportOptions {
 	 * Call to reset options to the presumed best ones for the
 	 * current video mode.
 	 */
-	public void resetOptions(VdpCanvas canvas, IVdpChip vdp) {
+	public void resetOptions(IVdpCanvas canvas, IVdpChip vdp) {
 		boolean canSetPalette;
 		
-		Format format = canvas.getFormat();
+		VdpFormat format = canvas.getFormat();
 		
-		if (vdp instanceof VdpV9938) {
+		if (vdp.getRegisterCount() > 10) {
 			// hack: graphics mode 2 allows setting the palette too, 
 			// but for comparison shopping, pretend we can't.
-			if (format == Format.COLOR16_8x1 && (vdp.readVdpReg(0) & 0x6) == 0x2) {
+			if (format == VdpFormat.COLOR16_8x1 && (vdp.readVdpReg(0) & 0x6) == 0x2) {
 				canSetPalette = false;
 			} else {
-				canSetPalette = format != Format.COLOR256_1x1;
+				canSetPalette = format != VdpFormat.COLOR256_1x1;
 			}
 		} else {
 			canSetPalette = false;
@@ -207,7 +206,7 @@ public class ImageImportOptions {
 		
 		boolean isLowColor = false;
 		
-		if (format == Format.COLOR16_8x1) {
+		if (format == VdpFormat.COLOR16_8x1) {
 			if (!canvas.getColorMgr().isGreyscale())
 				isLowColor = true;
 		}
@@ -222,10 +221,10 @@ public class ImageImportOptions {
 		boolean isMonoMode = canvas.isMono();
 		
 		setDitherMono(isMonoMode);
-		setDitherType(format == Format.COLOR16_8x1 && !canSetPalette ? Dither.ORDERED : Dither.FS);
+		setDitherType(format == VdpFormat.COLOR16_8x1 && !canSetPalette ? Dither.ORDERED : Dither.FS);
 		
 		if (!canSetPalette) {
-			setOrigPalette(vdp.getRegisterCount() > 8 ? VdpColorManager.stockPaletteV9938 : VdpColorManager.stockPalette);
+			setOrigPalette(vdp.getRegisterCount() > 10 ? VdpColorManager.stockPaletteV9938 : VdpColorManager.stockPalette);
 		}
 		else
 			setOrigPalette(canvas.getColorMgr().getPalette());

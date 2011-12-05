@@ -1,10 +1,9 @@
 /**
  * Mar 1, 2011
  */
-package v9t9.engine.dsr.realdisk;
+package v9t9.common.files;
 
 import java.io.IOException;
-import java.util.List;
 
 
 public interface IDiskImage {
@@ -18,14 +17,5 @@ public interface IDiskImage {
 	
 
 	String getDiskType();
-	
-	List<IdMarker> getTrackMarkers();
-
-	void writeTrackData(byte[] rwBuffer, int i,
-			int buflen, FDCStatus status);
-
-	void writeSectorData(byte[] rwBuffer, int start,
-			int buflen, IdMarker marker, FDCStatus status);
-
 	int getHeaderSize();
 }

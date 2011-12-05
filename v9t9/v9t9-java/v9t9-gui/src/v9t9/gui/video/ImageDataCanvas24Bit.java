@@ -10,7 +10,8 @@ import org.eclipse.swt.graphics.PaletteData;
 
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.video.ColorMapUtils;
-import v9t9.engine.video.Sprite2Canvas;
+import v9t9.common.video.ISprite2Canvas;
+import v9t9.common.video.VdpFormat;
 
 /**
  * Render video content into an ImageData
@@ -55,7 +56,7 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 	@Override
 	public void clear() {
 		byte[] rgb;
-		if (getFormat() == Format.COLOR256_1x1) {
+		if (getFormat() == VdpFormat.COLOR256_1x1) {
 			rgb = new byte[] { 0, 0, 0};
 			ColorMapUtils.getGRB332(rgb, (byte) getColorMgr().getClearColor(), getColorMgr().isGreyscale());
 		} else {
@@ -318,7 +319,7 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 	}
 	
 	@Override
-	public void blitSpriteBlock(Sprite2Canvas spriteCanvas, int x, int y,
+	public void blitSpriteBlock(ISprite2Canvas spriteCanvas, int x, int y,
 			int blockMag) {
 		int sprOffset = spriteCanvas.getBitmapOffset(x, y);
 		int bitmapOffset = getBitmapOffset(x * blockMag, y);
@@ -348,7 +349,7 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 	}
 	
 	@Override
-	public void blitFourColorSpriteBlock(Sprite2Canvas spriteCanvas, int x, int y,
+	public void blitFourColorSpriteBlock(ISprite2Canvas spriteCanvas, int x, int y,
 			int blockMag) {
 		int sprOffset = spriteCanvas.getBitmapOffset(x, y);
 		int bitmapOffset = getBitmapOffset(x * blockMag, y);

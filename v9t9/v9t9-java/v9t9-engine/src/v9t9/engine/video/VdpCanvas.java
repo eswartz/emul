@@ -3,34 +3,19 @@
  */
 package v9t9.engine.video;
 
-import v9t9.common.memory.ByteMemoryAccess;
+import v9t9.common.video.ICanvasListener;
+import v9t9.common.video.ISprite2Canvas;
+import v9t9.common.video.IVdpCanvas;
 import v9t9.common.video.VdpColorManager;
+import v9t9.common.video.VdpFormat;
 
 /**
  * This class implements rendering of video contents.
  * @author ejs
  *
  */
-public abstract class VdpCanvas extends BaseVdpCanvas implements ISpriteCanvas {
-	public enum Format {
-		/** Text mode */
-		TEXT,
-		/** Graphics mode, one color set per 8x8 block */
-		COLOR16_8x8,
-		/** Bitmap mode, one color set per 8x1 block */
-		COLOR16_8x1,
-		/** Multicolor mode, one color set per 4x4 block */
-		COLOR16_4x4,
-		/** V9938 16-color mode */
-		COLOR16_1x1,
-		/** V9938 4-color mode */
-		COLOR4_1x1,
-		/** V9938 256-color mode */
-		COLOR256_1x1,
-	}
-	
-
-	protected Format format;
+public abstract class VdpCanvas extends BaseVdpCanvas implements IVdpCanvas {
+	protected VdpFormat format;
 
 	boolean isInterlacedEvenOdd;
 	private int xoffs;
@@ -44,18 +29,19 @@ public abstract class VdpCanvas extends BaseVdpCanvas implements ISpriteCanvas {
     	setSize(256, 192);
     }
 
-	public void setFormat(Format format) {
+	public void setFormat(VdpFormat format) {
 		this.format = format;
-		getColorMgr().useAltSpritePalette(format == Format.COLOR256_1x1);
+		getColorMgr().useAltSpritePalette(format == VdpFormat.COLOR256_1x1);
 		setMono(false);
 	}
-	public Format getFormat() {
+	/* (non-Javadoc)
+	 * @see v9t9.engine.video.IVdpCanvas#getFormat()
+	 */
+	@Override
+	public VdpFormat getFormat() {
 		return format;
 	}
 	
-	/** Clear the canvas to the clear color, if the rgb is not used.  
-	 */
-	public abstract void clear();
 	private boolean isBlank;
 
 	private boolean isMono;
@@ -84,38 +70,6 @@ public abstract class VdpCanvas extends BaseVdpCanvas implements ISpriteCanvas {
 		}
 	}
 	
-	/**
-	 * Blit an 8x8 block defined by a pattern and a foreground/background color to the bitmap
-	 * @param r
-	 * @param c
-	 * @param pattern
-	 * @param fg foreground; use 16 for the vdpreg[7] fg 
-	 * @param bg background; use 0 for the vdpreg[7] bg
-	 */
-	abstract public void draw8x8TwoColorBlock(int r, int c, ByteMemoryAccess pattern,
-			byte fg, byte bg);
-
-	/**
-	 * Blit an 8x6 block defined by a pattern and a foreground/background color to the bitmap
-	 * @param r
-	 * @param c
-	 * @param pattern
-	 * @param fg foreground; use 16 for the vdpreg[7] fg 
-	 * @param bg background; use 0 for the vdpreg[7] bg
-	 */
-	abstract public void draw8x6TwoColorBlock(int r, int c, ByteMemoryAccess pattern,
-			byte fg, byte bg);
-
-	/**
-	 * Blit an 8x8 block defined by a pattern and colors to the bitmap
-	 * @param r
-	 * @param c
-	 * @param pattern
-	 * @param colors array of 0x&lt;fg&gt;&lt;bg&gt; pixels; bg may be 0 for vdpreg[7] bg
-	 */
-	abstract public void draw8x8MultiColorBlock(int r, int c,
-			ByteMemoryAccess pattern, ByteMemoryAccess colors);
-
 	public boolean isBlank() {
 		return isBlank;
 	}
@@ -128,45 +82,6 @@ public abstract class VdpCanvas extends BaseVdpCanvas implements ISpriteCanvas {
 		}
 	}
 
-	public void setListener(ICanvasListener listener) {
-		this.listener = listener;
-	}
-	
-	/**
-	 * Draw an 8x8 block of pixels from the given memory, arranged as
-	 * &lt;color;&gt;&lt;color&gt; in nybbles. 
-	 * @param offs
-	 * @param offs
-	 * @param access
-	 * @param rowstride access stride between rows
-	 */
-	public abstract void draw8x8BitmapTwoColorBlock(
-			int x, int y,
-			ByteMemoryAccess access,
-			int rowstride);
-
-	/**
-	 * Draw an 8x8 block of pixels from the given memory, arranged as
-	 * &lt;color;&gt;&lt;color&gt;&lt;color;&gt;&lt;color&gt; in two-bit pieces. 
-	 * @param offs
-	 * @param access
-	 * @param rowstride access stride between rows
-	 */
-	public abstract void draw8x8BitmapFourColorBlock(int x, int y,
-			ByteMemoryAccess access, int rowstride);
-
-	/**
-	 * Draw an 8x8 block of pixels from the given memory, arranged as
-	 * RGB 3-3-2 pixels. 
-	 * @param offset
-	 * @param rowstride access stride between rows
-	 * @param access
-	 */
-	public abstract void draw8x8BitmapRGB332ColorBlock(int x, int y,
-			ByteMemoryAccess byteReadMemoryAccess, int rowstride);
-
-
-	abstract public void clearToEvenOddClearColors();
 
 	/** 
 	 * Compose the block from the sprite canvas onto your canvas. 
@@ -176,7 +91,7 @@ public abstract class VdpCanvas extends BaseVdpCanvas implements ISpriteCanvas {
 	 * @param blockMag if 1, x/y map to the receiver, else x is doubled in the receiver
 	 * and the block is magnified 2x horizontally
 	 */
-	abstract public void blitSpriteBlock(Sprite2Canvas spriteCanvas, int x, int y,
+	abstract public void blitSpriteBlock(ISprite2Canvas spriteCanvas, int x, int y,
 			int blockMag);
 
 	/** 
@@ -187,13 +102,21 @@ public abstract class VdpCanvas extends BaseVdpCanvas implements ISpriteCanvas {
 	 * @param blockMag if 1, x/y map to the receiver, else x is doubled in the receiver
 	 * and the block is magnified 2x horizontally
 	 */
-	abstract public void blitFourColorSpriteBlock(Sprite2Canvas spriteCanvas, int x,
+	abstract public void blitFourColorSpriteBlock(ISprite2Canvas spriteCanvas, int x,
 			int y, int blockMag);
 
+	public void setListener(ICanvasListener listener) {
+		this.listener = listener;
+	}
+	
 	public void setInterlacedEvenOdd(boolean isInterlacedEvenOdd) {
 		this.isInterlacedEvenOdd = isInterlacedEvenOdd;
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.engine.video.IVdpCanvas#isInterlacedEvenOdd()
+	 */
+	@Override
 	public boolean isInterlacedEvenOdd() {
 		return isInterlacedEvenOdd;
 	}

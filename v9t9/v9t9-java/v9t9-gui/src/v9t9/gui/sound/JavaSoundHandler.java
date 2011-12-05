@@ -16,7 +16,7 @@ import v9t9.base.sound.SoundFactory;
 import v9t9.common.client.ISoundHandler;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.machine.IMachine;
-import v9t9.engine.EmulatorSettings;
+import v9t9.engine.settings.EmulatorSettings;
 
 /**
  * Handle sound generation for output with Java APIs

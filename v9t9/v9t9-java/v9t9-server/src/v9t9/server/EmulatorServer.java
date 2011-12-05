@@ -15,13 +15,15 @@ import v9t9.common.cpu.ICpu;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyException;
 import v9t9.common.files.DataFiles;
+import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IMachineModel;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryModel;
-import v9t9.engine.EmulatorSettings;
 import v9t9.engine.machine.MachineModelFactory;
+import v9t9.engine.memory.GplMmio;
 import v9t9.engine.modules.ModuleManager;
+import v9t9.engine.settings.EmulatorSettings;
 import v9t9.engine.settings.WorkspaceSettings;
 import v9t9.machine.f99b.machine.F99bMachineModel;
 import v9t9.machine.ti99.machine.Enhanced48KForthTI994AMachineModel;
@@ -49,6 +51,8 @@ public class EmulatorServer {
 	private boolean inited;
 
     public EmulatorServer() {
+		IVdpChip.settingDumpVdpAccess.setBoolean(true);
+		GplMmio.settingDumpGplAccess.setBoolean(true);
     }
     
     /**

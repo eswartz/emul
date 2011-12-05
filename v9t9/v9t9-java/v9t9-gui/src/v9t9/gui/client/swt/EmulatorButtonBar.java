@@ -27,8 +27,7 @@ import org.eclipse.swt.widgets.Shell;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.machine.IMachine;
-import v9t9.engine.EmulatorSettings;
-import v9t9.engine.machine.MachineBase;
+import v9t9.engine.settings.EmulatorSettings;
 import v9t9.gui.client.swt.ToolShell.Behavior;
 import v9t9.gui.client.swt.ToolShell.Centering;
 import v9t9.gui.common.BaseEmulatorWindow;
@@ -107,7 +106,7 @@ public class EmulatorButtonBar extends EmulatorBar  {
 				2, 
 				0, "Toggle CPU logging");
 
-		createToggleStateButton(MachineBase.settingPauseMachine, 8,
+		createToggleStateButton(IMachine.settingPauseMachine, 8,
 				0, "Pause machine");
 
 /*

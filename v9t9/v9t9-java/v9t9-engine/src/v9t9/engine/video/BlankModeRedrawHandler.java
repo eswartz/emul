@@ -44,12 +44,4 @@ public class BlankModeRedrawHandler extends BaseRedrawHandler implements
 		}*/
 		return 0;
 	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.clients.builtin.video.VdpModeRedrawHandler#importImageData()
-	 */
-	@Override
-	public void importImageData(IBitmapPixelAccess access) {
-		
-	}
 }

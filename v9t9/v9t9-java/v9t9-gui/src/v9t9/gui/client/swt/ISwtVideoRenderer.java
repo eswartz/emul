@@ -10,7 +10,7 @@ import org.eclipse.swt.widgets.Control;
 
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.hardware.IVdpChip;
-import v9t9.engine.video.VdpCanvas;
+import v9t9.common.video.IVdpCanvas;
 
 /**
  * Interface implemented by SWT-compatible video renderers.
@@ -28,9 +28,9 @@ public interface ISwtVideoRenderer extends IVideoRenderer {
 	boolean isVisible();
 	
     /** Get the basic canvas, before rendering */
-	VdpCanvas getCanvas();
+	IVdpCanvas getCanvas();
 	
-	void setCanvas(VdpCanvas vdpCanvas);
+	void setCanvas(IVdpCanvas vdpCanvas);
 
 	void setFocus();
 

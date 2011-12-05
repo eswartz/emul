@@ -36,7 +36,7 @@ import v9t9.common.asm.RawInstruction;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.cpu.IInstructionListener;
 import v9t9.common.cpu.InstructionWorkBlock;
-import v9t9.engine.machine.MachineBase;
+import v9t9.common.machine.IMachine;
 import v9t9.gui.Emulator;
 import v9t9.gui.client.swt.FontUtils;
 
@@ -54,7 +54,7 @@ public class CpuViewer extends Composite implements IInstructionListener {
 	private Image stepImage;
 	private Button stepButton;
 	private IPropertyListener pauseListener;
-	private final MachineBase machine;
+	private final IMachine machine;
 
 	private TableViewer instTableViewer;
 	private InstContentProvider instContentProvider;
@@ -73,7 +73,7 @@ public class CpuViewer extends Composite implements IInstructionListener {
 	private boolean changed;
 	private boolean isVisible;
 	
-	public CpuViewer(Composite parent, int style, final MachineBase machine, Timer timer) {
+	public CpuViewer(Composite parent, int style, final IMachine machine, Timer timer) {
 		super(parent, style);
 		this.machine = machine;
 		
@@ -99,14 +99,14 @@ public class CpuViewer extends Composite implements IInstructionListener {
 		playPauseButton.setToolTipText("Run or pause the machine");
 		
 		updatePlayPauseButtonImage();
-		playPauseButton.setSelection(MachineBase.settingPauseMachine.getBoolean());
+		playPauseButton.setSelection(IMachine.settingPauseMachine.getBoolean());
 		playPauseButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				machine.asyncExec(new Runnable() {
 					public void run() {
 						partialInst = null;
-						MachineBase.settingPauseMachine.setBoolean(!MachineBase.settingPauseMachine.getBoolean());
+						IMachine.settingPauseMachine.setBoolean(!IMachine.settingPauseMachine.getBoolean());
 						//resizeTable();
 					}
 				});
@@ -161,7 +161,7 @@ public class CpuViewer extends Composite implements IInstructionListener {
 						//	resizeTable();
 						IExecutor.settingSingleStep.setBoolean(true);
 						showNextInstruction = true;
-						MachineBase.settingPauseMachine.setBoolean(false);
+						IMachine.settingPauseMachine.setBoolean(false);
 					}
 				});
 				
@@ -221,12 +221,12 @@ public class CpuViewer extends Composite implements IInstructionListener {
 				isVisible = event.type == SWT.Show;
 				if (isVisible) {
 					machine.getExecutor().addInstructionListener(CpuViewer.this);
-					MachineBase.settingPauseMachine.addListener(pauseListener);
-					MachineBase.settingPauseMachine.setBoolean(true);
+					IMachine.settingPauseMachine.addListener(pauseListener);
+					IMachine.settingPauseMachine.setBoolean(true);
 				} else {
 					machine.getExecutor().removeInstructionListener(CpuViewer.this);
-					MachineBase.settingPauseMachine.removeListener(pauseListener);
-					MachineBase.settingPauseMachine.setBoolean(false);
+					IMachine.settingPauseMachine.removeListener(pauseListener);
+					IMachine.settingPauseMachine.setBoolean(false);
 				}
 			}
 		};
@@ -327,26 +327,26 @@ public class CpuViewer extends Composite implements IInstructionListener {
 				}
 				tableFont.dispose();
 				smallerFont.dispose();
-				MachineBase.settingPauseMachine.removeListener(pauseListener);
+				IMachine.settingPauseMachine.removeListener(pauseListener);
 				playImage.dispose();
 				pauseImage.dispose();
 				stepImage.dispose();
 				watchImage.dispose();
 				clearImage.dispose();
-				MachineBase.settingPauseMachine.setBoolean(false);				
+				IMachine.settingPauseMachine.setBoolean(false);				
 			}
 			
 		});
 		
 		machine.getExecutor().addInstructionListener(CpuViewer.this);
-		MachineBase.settingPauseMachine.addListener(pauseListener);
-		MachineBase.settingPauseMachine.setBoolean(true);
+		IMachine.settingPauseMachine.addListener(pauseListener);
+		IMachine.settingPauseMachine.setBoolean(true);
 	}
 
 
 
 	private void updatePlayPauseButtonImage() {
-		if (MachineBase.settingPauseMachine.getBoolean()) {
+		if (IMachine.settingPauseMachine.getBoolean()) {
 			playPauseButton.setImage(pauseImage);
 		} else {
 			playPauseButton.setImage(playImage);
@@ -386,9 +386,6 @@ public class CpuViewer extends Composite implements IInstructionListener {
 
 
 
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.runtime.InstructionListener#executed(v9t9.engine.cpu.InstructionWorkBlock, v9t9.engine.cpu.InstructionWorkBlock)
-	 */
 	public void executed(final InstructionWorkBlock before, InstructionWorkBlock after_) {
 		if (!isVisible)
 			return;
@@ -415,7 +412,7 @@ public class CpuViewer extends Composite implements IInstructionListener {
 		}
 		if (IExecutor.settingSingleStep.getBoolean()) {
 			IExecutor.settingSingleStep.setBoolean(false);
-			MachineBase.settingPauseMachine.setBoolean(true);
+			IMachine.settingPauseMachine.setBoolean(true);
 			machine.getExecutor().interruptExecution();
 			if (tracker != null)
 				tracker.updateForInstruction();

@@ -29,8 +29,8 @@ import org.eclipse.swt.widgets.Shell;
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.video.ICanvas;
-import v9t9.engine.video.VdpCanvas;
-import v9t9.engine.video.BaseVdpCanvas.ICanvasListener;
+import v9t9.common.video.ICanvasListener;
+import v9t9.common.video.IVdpCanvas;
 import v9t9.gui.video.ImageDataCanvas;
 import v9t9.gui.video.ImageDataCanvas24Bit;
 
@@ -141,7 +141,7 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 		return SWT.NO_BACKGROUND;
 	}
 
-	protected VdpCanvas createVdpCanvas() {
+	protected IVdpCanvas createVdpCanvas() {
 		return new ImageDataCanvas24Bit();
 	}
 
@@ -316,9 +316,21 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 				destRect.width, destRect.height);
 	}
 
-	public VdpCanvas getCanvas() {
+	public IVdpCanvas getCanvas() {
 		return vdpCanvas;
 	}
+	
+
+	public void setCanvas(IVdpCanvas vdpCanvas) {
+		if (!(vdpCanvas instanceof ImageDataCanvas))
+			throw new IllegalArgumentException();
+		
+		this.vdpCanvas = (ImageDataCanvas) vdpCanvas;
+		this.vdpCanvas.setListener(this);
+		updateWidgetSizeForMode();
+	}
+	
+
 
 	public synchronized void setZoom(int zoom) {
 		synchronized (vdpCanvas) {
@@ -356,16 +368,6 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	public boolean isIdle() {
 		return !busy;
 	}
-
-	public void setCanvas(VdpCanvas vdpCanvas) {
-		if (!(vdpCanvas instanceof ImageDataCanvas))
-			throw new IllegalArgumentException();
-		
-		this.vdpCanvas = (ImageDataCanvas) vdpCanvas;
-		this.vdpCanvas.setListener(this);
-		updateWidgetSizeForMode();
-	}
-	
 
 	public void setFocus() {
 		if (!canvas.isDisposed()) {

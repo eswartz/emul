@@ -9,7 +9,6 @@ import java.util.Map;
 
 import v9t9.common.client.IClient;
 import v9t9.common.machine.IMachine;
-import v9t9.engine.machine.MachineBase;
 
 /**
  * @author ejs
@@ -29,7 +28,7 @@ public class ClientFactory {
 		if (klass == null)
 			return null;
 		try {
-			return klass.getConstructor(MachineBase.class).newInstance(machine);
+			return klass.getConstructor(IMachine.class).newInstance(machine);
 		} catch (InvocationTargetException e) {
 			e.getCause().printStackTrace();
 		} catch (Exception e) {

@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
+
 public class SectorDiskImage extends BaseDiskImage  {
 	public SectorDiskImage(String name, File file) {
 		super(name, file);
@@ -36,15 +37,15 @@ public class SectorDiskImage extends BaseDiskImage  {
 	 * 
 	 */
 	public void openDiskImage() throws IOException {
-		if (handle != null)
+		if (getHandle() != null)
 			closeDiskImage();
 	
 		if (spec.exists()) {
 			try {
-				handle = new RandomAccessFile(spec, "rw");
+				setHandle(new RandomAccessFile(spec, "rw"));
 				readonly = false;
 			} catch (IOException e) {
-				handle = new RandomAccessFile(spec, "r");
+				setHandle(new RandomAccessFile(spec, "r"));
 				readonly = true;
 			}
 		} else {
@@ -71,12 +72,12 @@ public class SectorDiskImage extends BaseDiskImage  {
 		
 		BaseDiskImage.info(
 			"Opened sector-image disk ''{0}'' {1},\n#tracks={2}, tracksize={3}, sides={4}",
-			spec, name, hdr.tracks, hdr.tracksize, hdr.sides);
+			spec, getName(), hdr.tracks, hdr.tracksize, hdr.sides);
 	}
 
 	@Override
 	public void writeImageHeader() throws IOException {
-		if (handle == null || readonly) {
+		if (getHandle() == null || readonly) {
 			return;
 		}
 
@@ -92,19 +93,19 @@ public class SectorDiskImage extends BaseDiskImage  {
 		long sz;
 		byte sector[] = new byte[256];
 
-		if (handle == null)
+		if (getHandle() == null)
 			return;
 		
 		readonly = !spec.canWrite();
 
 		/* no header: guess */
-		sz = handle.length();
+		sz = getHandle().length();
 		if (sz < 256)
 			throw new IOException("Disk size for '" + spec + "' is too small to be a disk file");
 
 		/* read sector 0 */
-		handle.seek(0);
-		handle.read(sector);
+		getHandle().seek(0);
+		getHandle().read(sector);
 
 		hdr.tracks = sector[17];
 		hdr.sides = sector[18];

@@ -21,9 +21,11 @@ import v9t9.base.properties.SettingProperty;
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.utils.HexUtils;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
+import v9t9.common.dsr.IDiskDsr;
 import v9t9.common.dsr.IDsrHandler;
 import v9t9.common.dsr.IDsrSettings;
 import v9t9.common.dsr.IMemoryTransfer;
+import v9t9.common.files.Catalog;
 import v9t9.common.machine.IMachine;
 import v9t9.engine.dsr.IDevIcons;
 import v9t9.engine.settings.WorkspaceSettings;
@@ -34,7 +36,7 @@ import v9t9.engine.settings.WorkspaceSettings;
  * @author ejs
  *
  */
-public abstract class BaseDiskImageDsr implements IDsrSettings {
+public abstract class BaseDiskImageDsr implements IDsrSettings, IDiskDsr {
 	/** setting name (DSKImage1) to setting */
 	protected Map<String, SettingProperty> diskSettingsMap = new LinkedHashMap<String, SettingProperty>();
 	
@@ -143,20 +145,20 @@ public abstract class BaseDiskImageDsr implements IDsrSettings {
 				for (Map.Entry<String, BaseDiskImage> entry : entrySet) {
 					String name = "DSK" + entry.getKey().charAt(entry.getKey().length() - 1);
 					BaseDiskImage info = entry.getValue();
-					if (info.motorTimeout != 0) {
-						if (!info.motorRunning) {
-							if (now >= info.motorTimeout) {
+					if (info.getMotorTimeout() != 0) {
+						if (!info.isMotorRunning()) {
+							if (now >= info.getMotorTimeout()) {
 								//info.motorTimeout = 0;
-								info.motorRunning = true;
+								info.setMotorRunning(true);
 								BaseDiskImage.info("{0}: motor on", name);
 								
 								fdc.status.reset(StatusBit.BUSY);
-								info.motorTimeout = System.currentTimeMillis() + 4320;
+								info.setMotorTimeout(System.currentTimeMillis() + 4320);
 							}
 						} else {
-							if (now >= info.motorTimeout) {
-								info.motorTimeout = 0;
-								info.motorRunning = false;
+							if (now >= info.getMotorTimeout()) {
+								info.setMotorTimeout(0);
+								info.setMotorRunning(false);
 								//fdc.status.set(StatusBit.BUSY);
 								BaseDiskImage.info("{0}: motor off", name);
 								info.getInUseSetting().setBoolean(false);
@@ -214,7 +216,7 @@ public abstract class BaseDiskImageDsr implements IDsrSettings {
 				}
 			}
 			if (info != null) {
-				if (info.handle == null) {
+				if (info.getHandle() == null) {
 					try {
 						info.openDiskImage();
 					} catch (IOException e) {
@@ -251,20 +253,20 @@ public abstract class BaseDiskImageDsr implements IDsrSettings {
 		if (info != null) {
 			// strobe the motor (this doesn't turn it off, which happens via timeout)
 			if (on) {
-				if (!info.motorRunning) {
+				if (!info.isMotorRunning()) {
 					if (RealDiskDsrSettings.diskImageRealTime.getBoolean()) {
 						BaseDiskImage.info("DSK{0}: motor starting", selectedDisk);
-						info.motorTimeout = System.currentTimeMillis() + 1500;
+						info.setMotorTimeout(System.currentTimeMillis() + 1500);
 						//fdc.status.set(StatusBit.BUSY);
 					} else {
 						BaseDiskImage.info("DSK{0}: motor on", selectedDisk);
-						info.motorTimeout = System.currentTimeMillis();
-						info.motorRunning = true;
+						info.setMotorTimeout(System.currentTimeMillis());
+						info.setMotorRunning(true);
 						
 					}
 					info.getInUseSetting().setBoolean(true);
 				} else {
-					info.motorTimeout = System.currentTimeMillis() + 4230;
+					info.setMotorTimeout(System.currentTimeMillis() + 4230);
 				}
 			}
 		}
@@ -274,7 +276,7 @@ public abstract class BaseDiskImageDsr implements IDsrSettings {
 	public boolean isMotorRunning() {
 		BaseDiskImage info = getSelectedDiskImage();
 		if (info != null)
-			return info.motorRunning;
+			return info.isMotorRunning();
 		else
 			return false;
 	}
@@ -313,7 +315,7 @@ public abstract class BaseDiskImageDsr implements IDsrSettings {
 		byte ret = fdc.status.calculate(fdc.command, status);
 		
 		BaseDiskImage image = getSelectedDiskImage();
-		if ((image != null && !image.motorRunning && (!RealDiskDsrSettings.diskImageRealTime.getBoolean() || image.motorTimeout > 0))
+		if ((image != null && !image.isMotorRunning() && (!RealDiskDsrSettings.diskImageRealTime.getBoolean() || image.getMotorTimeout() > 0))
 				|| (RealDiskDsrSettings.diskImageRealTime.getBoolean() && fdc.commandBusyExpiration > System.currentTimeMillis()))
 			ret |= 0x1;
 		
@@ -550,7 +552,7 @@ public abstract class BaseDiskImageDsr implements IDsrSettings {
 
 		@Override
 		public String getToolTip() {
-			return image.name + " activity";
+			return image.getName() + " activity";
 		}
 		
 		@Override
@@ -569,4 +571,26 @@ public abstract class BaseDiskImageDsr implements IDsrSettings {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.dsr.IDiskDsr#isImageBased()
+	 */
+	@Override
+	public boolean isImageBased() {
+		return true;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.dsr.IDiskDsr#getCatalog(v9t9.base.properties.SettingProperty)
+	 */
+	@Override
+	public Catalog getCatalog(SettingProperty diskSetting) throws IOException {
+		BaseDiskImage image = DiskImageFactory.createDiskImage(diskSetting.getName(), 
+				new File(diskSetting.getString()));
+		image.openDiskImage();
+		
+		Catalog catalog = image.readCatalog();
+		
+		image.closeDiskImage();
+		return catalog;
+	}
 }

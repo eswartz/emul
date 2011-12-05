@@ -3,11 +3,9 @@
  */
 package v9t9.engine.video.v9938;
 
-import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.video.RedrawBlock;
 import v9t9.common.video.VdpModeInfo;
 import v9t9.engine.video.BaseRedrawHandler;
-import v9t9.engine.video.IBitmapPixelAccess;
 import v9t9.engine.video.IVdpModeRedrawHandler;
 import v9t9.engine.video.VdpRedrawInfo;
 import v9t9.engine.video.VdpTouchHandler;
@@ -100,33 +98,4 @@ public abstract class PackedBitmapGraphicsModeRedrawHandler extends BaseRedrawHa
 	abstract protected void drawBlock(RedrawBlock block, int pageOffset, boolean interlaced);
 
 
-	abstract protected byte createImageDataByte(IBitmapPixelAccess access, int x, int row);
-	
-	@Override
-	public void importImageData(IBitmapPixelAccess access) {
-		
-		int ystep = info.canvas.isInterlacedEvenOdd() ? 2 : 1;
-		int my =  (info.vdpregs[9] & 0x80) != 0 ? 212 : 192;
-		int mx = info.canvas.getVisibleWidth();
-		int graphicsPageSize = ((VdpV9938) info.vdp).getGraphicsPageSize();
-		
-		int colstride = 1 << colshift;
-		
-		for (int eo = 0; eo < ystep; eo++) {
-			ByteMemoryAccess patt = info.vdp.getByteReadMemoryAccess(modeInfo.patt.base 
-					^ (eo != 0 ? graphicsPageSize : 0));
-			for (int y = 0; y < my; y++) {
-				int row = y * ystep + eo;
-				for (int x = 0; x < mx; x += colstride) {
-					
-					byte byt = createImageDataByte(access, x, row);
-					
-					int poffs = y * rowstride + (x / colstride); 
-					patt.memory[patt.offset + poffs] = byt;
-					touch(patt.offset + poffs);
-				}
-			}
-		}
-		
-	}
 }

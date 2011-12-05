@@ -7,7 +7,7 @@ import java.util.ArrayList;
 
 
 import v9t9.base.utils.HexUtils;
-import v9t9.engine.machine.MachineBase;
+import v9t9.common.machine.IBaseMachine;
 
 /**
  * @author ejs
@@ -16,7 +16,7 @@ import v9t9.engine.machine.MachineBase;
 public class CpuRegisterProvider implements IRegisterProvider {
 
 	private static final IRegister[] NO_REGS = new IRegister[0];
-	private final MachineBase machine;
+	private final IBaseMachine machine;
 	private ArrayList<IRegister> regList;
 
 	class CpuRegister implements IRegister {
@@ -67,7 +67,7 @@ public class CpuRegisterProvider implements IRegisterProvider {
 	/**
 	 * @param machine
 	 */
-	public CpuRegisterProvider(MachineBase machine) {
+	public CpuRegisterProvider(IBaseMachine machine) {
 		this.machine = machine;
 		int cnt = machine.getCpu().getRegisterCount();
 		regList = new ArrayList<IRegister>();
