@@ -5,8 +5,8 @@ package v9t9.engine.dsr.realdisk;
 
 import java.net.URL;
 
+import v9t9.common.settings.IconSettingProperty;
 import v9t9.engine.dsr.emudisk.EmuDiskDsrSettings;
-import v9t9.engine.settings.IconSettingProperty;
 
 public class DiskImageSetting extends IconSettingProperty {
 	public DiskImageSetting(String name, Object storage, URL iconPath) {

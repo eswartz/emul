@@ -167,8 +167,9 @@ public class Emulator {
 		}
 		
 		IClient client = null;
-		client = ClientFactory.createClient(
-    			clientId, server.getMachine());
+		client = ClientFactory.createClient(clientId, 
+				server.getSettingsHandler(),
+				server.getMachine());
 
 		if (client == null) {
 			System.err.println("Failed to contact or create client: " + clientId);

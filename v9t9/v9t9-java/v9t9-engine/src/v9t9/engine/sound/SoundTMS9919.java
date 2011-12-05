@@ -10,7 +10,6 @@ import v9t9.base.sound.ISoundVoice;
 import v9t9.common.client.ISoundHandler;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.machine.IMachine;
-import v9t9.engine.settings.EmulatorSettings;
 
 /**
  * Controller for the TMS9919 sound chip
@@ -180,7 +179,7 @@ public class SoundTMS9919 implements ISoundChip {
 	}
 	
 	public void saveState(ISettingSection settings) {
-		EmulatorSettings.settingPlaySound.saveState(settings);
+		ISoundHandler.settingPlaySound.saveState(settings);
 		for (int vn = 0; vn < sound_voices.length; vn++) {
 			SoundVoice v = sound_voices[vn];
 			v.saveState(settings.addSection(v.getName()));
@@ -189,7 +188,7 @@ public class SoundTMS9919 implements ISoundChip {
 	}
 	public void loadState(ISettingSection settings) {
 		if (settings == null) return;
-		EmulatorSettings.settingPlaySound.loadState(settings);
+		ISoundHandler.settingPlaySound.loadState(settings);
 		for (int vn = 0; vn < sound_voices.length; vn++) {
 			SoundVoice v = sound_voices[vn];
 			String name = v.getName();

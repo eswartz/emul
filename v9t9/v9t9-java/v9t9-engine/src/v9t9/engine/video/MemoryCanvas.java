@@ -6,6 +6,7 @@ package v9t9.engine.video;
 import java.util.Arrays;
 
 import v9t9.common.memory.ByteMemoryAccess;
+import v9t9.common.video.BitmapVdpCanvas;
 import v9t9.common.video.ISprite2Canvas;
 
 /**

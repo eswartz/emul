@@ -1,13 +1,8 @@
 /**
  * 
  */
-package v9t9.engine.video;
+package v9t9.common.video;
 
-import v9t9.common.video.ICanvasListener;
-import v9t9.common.video.ISprite2Canvas;
-import v9t9.common.video.IVdpCanvas;
-import v9t9.common.video.VdpColorManager;
-import v9t9.common.video.VdpFormat;
 
 /**
  * This class implements rendering of video contents.

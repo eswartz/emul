@@ -17,10 +17,10 @@ import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
 import v9t9.base.properties.SettingProperty;
 import v9t9.base.settings.ISettingSection;
+import v9t9.common.settings.IconSettingProperty;
 import v9t9.engine.dsr.emudisk.EmuDiskDsrSettings;
 import v9t9.engine.dsr.emudisk.IFileMapper;
 import v9t9.engine.dsr.realdisk.RealDiskDsrSettings;
-import v9t9.engine.settings.IconSettingProperty;
 
 
 public class DiskDirectoryMapper implements IFileMapper, IPersistable {

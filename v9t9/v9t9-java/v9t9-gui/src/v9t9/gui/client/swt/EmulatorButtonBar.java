@@ -24,10 +24,10 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 
+import v9t9.common.client.ISoundHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.machine.IMachine;
-import v9t9.engine.settings.EmulatorSettings;
 import v9t9.gui.client.swt.ToolShell.Behavior;
 import v9t9.gui.client.swt.ToolShell.Centering;
 import v9t9.gui.common.BaseEmulatorWindow;
@@ -224,7 +224,7 @@ public class EmulatorButtonBar extends EmulatorBar  {
 				11, 0, "Toggle fullscreen");
 
 		
-		final BasicButton soundButton = createStateButton(EmulatorSettings.settingPlaySound, 
+		final BasicButton soundButton = createStateButton(ISoundHandler.settingPlaySound, 
 				true, 
 				null, 13,
 				14, true, "Sound options");
@@ -253,7 +253,7 @@ public class EmulatorButtonBar extends EmulatorBar  {
 				
 				final Menu volumeMenu = new Menu(vitem);
 
-				int curVol = EmulatorSettings.settingSoundVolume.getInt();
+				int curVol = ISoundHandler.settingSoundVolume.getInt();
 				int[] vols = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 				for (final int vol : vols) {
 					MenuItem item = new MenuItem(volumeMenu, SWT.RADIO);
@@ -263,7 +263,7 @@ public class EmulatorButtonBar extends EmulatorBar  {
 					item.addSelectionListener(new SelectionAdapter() {
 						@Override
 						public void widgetSelected(SelectionEvent e) {
-							EmulatorSettings.settingSoundVolume.setInt(vol);
+							ISoundHandler.settingSoundVolume.setInt(vol);
 						}
 
 					});

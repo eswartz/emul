@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.engine.settings;
+package v9t9.common.settings;
 
 import java.net.URL;
 

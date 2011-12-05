@@ -21,6 +21,8 @@ public interface IClient {
 	
     void close();
     
+    ISettingsHandler getSettingsHandler();
+    
     /**
      * Handle one timer tick (nominally 1/60 second).  
      *

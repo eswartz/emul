@@ -21,8 +21,7 @@ import v9t9.common.client.IVideoRenderer;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.TerminatedException;
-import v9t9.engine.settings.EmulatorSettings;
-import v9t9.engine.settings.WorkspaceSettings;
+import v9t9.common.settings.IStoredSettings;
 import v9t9.gui.Emulator;
 import v9t9.server.EmulatorServer;
 
@@ -71,11 +70,13 @@ public abstract class BaseEmulatorWindow {
 			String fileName, boolean isSave, boolean ifUndefined, String[] extensions) {
 		
 		boolean isUndefined = false;
-		ISettingSection settings = WorkspaceSettings.CURRENT.getSettings();
+		IStoredSettings workspace = machine.getClient().getSettingsHandler().
+			getWorkspaceSettings();
+		ISettingSection settings = workspace.getSettings();
 		configVar.loadState(settings);
 		String configPath = configVar.getString();
 		if (configPath == null || configPath.length() == 0) {
-			configPath = WorkspaceSettings.CURRENT.getConfigDirectory() + defaultSubdir + File.separatorChar + fileName;
+			configPath = workspace.getConfigDirectory() + defaultSubdir + File.separatorChar + fileName;
 			isUndefined = true;
 			File saveDir = new File(configPath);
 			saveDir.getParentFile().mkdirs();
@@ -98,11 +99,13 @@ public abstract class BaseEmulatorWindow {
 	protected String selectDirectory(String title, IProperty configVar, String defaultSubdir,
 			boolean ifUndefined) {
 		boolean isUndefined = false;
-		ISettingSection settings = WorkspaceSettings.CURRENT.getSettings();
+		IStoredSettings workspace = machine.getClient().getSettingsHandler().
+			getWorkspaceSettings();
+		ISettingSection settings = workspace.getSettings();
 		configVar.loadState(settings);
 		String configDir = configVar.getString();
 		if (configDir == null || configDir.length() == 0) {
-			configDir = WorkspaceSettings.CURRENT.getConfigDirectory() + File.separatorChar + defaultSubdir + File.separatorChar;
+			configDir = workspace.getConfigDirectory() + File.separatorChar + defaultSubdir + File.separatorChar;
 			File saveDir = new File(configDir);
 			saveDir.mkdirs();
 			isUndefined = true;
@@ -224,7 +227,8 @@ public abstract class BaseEmulatorWindow {
 			if (saveFile == null) {
 				machine.getClient().getEventNotifier().notifyEvent(null, Level.ERROR, 
 						"Too many screenshots here!");
-				EmulatorSettings.INSTANCE.clearConfigVar("ScreenShotsBase");
+				machine.getClient().getSettingsHandler().
+					getInstanceSettings().clearConfigVar("ScreenShotsBase");
 				return screenshot();
 			} else {
 				try {

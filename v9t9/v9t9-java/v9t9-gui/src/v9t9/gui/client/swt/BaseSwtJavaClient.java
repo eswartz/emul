@@ -13,6 +13,7 @@ import org.eclipse.swt.widgets.Shell;
 
 import v9t9.common.client.IClient;
 import v9t9.common.client.IKeyboardHandler;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.hardware.IVdpChip;
@@ -42,12 +43,14 @@ public abstract class BaseSwtJavaClient implements IClient {
 	private int displaySkips;
 	protected final int QUANTUM = 1000 / 60;
 	protected IEventNotifier eventNotifier;
+	private final ISettingsHandler settingsHandler;
 
 	/**
 	 * @param machine 
 	 * 
 	 */
-	public BaseSwtJavaClient(final IMachine machine) {
+	public BaseSwtJavaClient(ISettingsHandler settingsHandler, final IMachine machine) {
+		this.settingsHandler = settingsHandler;
 		this.display = Display.getDefault();
     	this.video = machine.getVdp();
     	this.machine = machine;
@@ -55,7 +58,7 @@ public abstract class BaseSwtJavaClient implements IClient {
     	setupRenderer();
 
 
-        final SwtWindow window = new SwtWindow(display, machine, (ISwtVideoRenderer) videoRenderer);
+        final SwtWindow window = new SwtWindow(display, machine, (ISwtVideoRenderer) videoRenderer, settingsHandler);
         eventNotifier = window.getEventNotifier();
         
         if (keyboardHandler instanceof AwtKeyboardHandler)
@@ -77,11 +80,20 @@ public abstract class BaseSwtJavaClient implements IClient {
 			}
 		});
 		
-        machine.getSound().setSoundHandler(new JavaSoundHandler(machine));
+        machine.getSound().setSoundHandler(new JavaSoundHandler(machine, settingsHandler));
         
         if (keyboardHandler instanceof ISwtKeyboardHandler)
         	((ISwtKeyboardHandler) keyboardHandler).init(((ISwtVideoRenderer) videoRenderer).getControl());
 	}
+	
+
+    /* (non-Javadoc)
+     * @see v9t9.common.client.IClient#getSettings()
+     */
+    @Override
+    public ISettingsHandler getSettingsHandler() {
+    	return settingsHandler;
+    }
 
 	abstract protected void setupRenderer();
 

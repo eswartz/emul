@@ -17,7 +17,7 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
-import v9t9.engine.settings.EmulatorSettings;
+import v9t9.common.settings.IStoredSettings;
 
 public class ToolShell {
 	public enum Centering {
@@ -38,11 +38,14 @@ public class ToolShell {
 	private long clickOutsideCheckTime;
 	private final boolean isHorizontal;
 	private Control toolControl;
+	private final IStoredSettings settings;
 	
-	public ToolShell(Shell parentShell, 
+	public ToolShell(Shell parentShell,
+			IStoredSettings settings,
 			IFocusRestorer focusRestorer_,
 			boolean isHorizontal,
 			Behavior behavior) {
+		this.settings = settings;
 		this.shell = new Shell(parentShell, SWT.TOOL | SWT.RESIZE | SWT.CLOSE | SWT.TITLE);
 		this.focusRestorer = focusRestorer_;
 		this.behavior = behavior;
@@ -69,7 +72,7 @@ public class ToolShell {
 			}
 		});
 
-		String boundsStr = EmulatorSettings.INSTANCE.getSettings().get(behavior.boundsPref);
+		String boundsStr = settings.getSettings().get(behavior.boundsPref);
 		if (boundsStr != null) {
 			final Rectangle savedBounds = PrefUtils.readBoundsString(boundsStr);
 			if (savedBounds != null) {
@@ -138,7 +141,7 @@ public class ToolShell {
 			public void widgetDisposed(DisposeEvent e) {
 				Rectangle bounds = shell.getBounds();
 				String boundsStr = PrefUtils.writeBoundsString(bounds);
-				EmulatorSettings.INSTANCE.getSettings().put(behavior.boundsPref, boundsStr);
+				settings.getSettings().put(behavior.boundsPref, boundsStr);
 			}
 		});
 	}

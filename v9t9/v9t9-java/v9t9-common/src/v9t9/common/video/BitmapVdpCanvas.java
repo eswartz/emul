@@ -1,7 +1,7 @@
 /**
  * May 22, 2011
  */
-package v9t9.engine.video;
+package v9t9.common.video;
 
 import v9t9.common.memory.ByteMemoryAccess;
 

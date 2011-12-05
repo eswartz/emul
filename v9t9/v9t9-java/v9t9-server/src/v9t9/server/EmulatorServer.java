@@ -10,6 +10,7 @@ import java.io.IOException;
 
 
 import v9t9.common.client.IClient;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.compiler.ICompiler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.events.IEventNotifier;
@@ -20,7 +21,7 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IMachineModel;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryModel;
-import v9t9.engine.machine.MachineModelFactory;
+import v9t9.common.settings.IStoredSettings;
 import v9t9.engine.memory.GplMmio;
 import v9t9.engine.modules.ModuleManager;
 import v9t9.engine.settings.EmulatorSettings;
@@ -49,8 +50,21 @@ public class EmulatorServer {
 	private IMemoryModel memoryModel;
 	private IClient client;
 	private boolean inited;
+	private ISettingsHandler settingsHandler;
 
     public EmulatorServer() {
+    	settingsHandler = new ISettingsHandler() {
+			
+			@Override
+			public IStoredSettings getWorkspaceSettings() {
+				return WorkspaceSettings.CURRENT;
+			}
+			
+			@Override
+			public IStoredSettings getInstanceSettings() {
+				return EmulatorSettings.INSTANCE;
+			}
+		}; 
 		IVdpChip.settingDumpVdpAccess.setBoolean(true);
 		GplMmio.settingDumpGplAccess.setBoolean(true);
     }
@@ -190,6 +204,13 @@ public class EmulatorServer {
 	 */
 	public MachineModelFactory getMachineModelFactory() {
 		return MachineModelFactory.INSTANCE;
+	}
+
+	/**
+	 * @return
+	 */
+	public ISettingsHandler getSettingsHandler() {
+		return settingsHandler;
 	}
 
 }

@@ -13,10 +13,10 @@ import v9t9.base.sound.ISoundListener;
 import v9t9.base.sound.ISoundOutput;
 import v9t9.base.sound.ISoundVoice;
 import v9t9.base.sound.SoundFactory;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.ISoundHandler;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.machine.IMachine;
-import v9t9.engine.settings.EmulatorSettings;
 
 /**
  * Handle sound generation for output with Java APIs
@@ -40,7 +40,7 @@ public class JavaSoundHandler implements ISoundHandler {
 	private ISoundListener speechAudio;
 	private final IMachine machine;
 	
-	public JavaSoundHandler(final IMachine machine) {
+	public JavaSoundHandler(final IMachine machine, ISettingsHandler settingsHandler) {
 
 		this.machine = machine;
 		soundFormat = new AudioFormat(55930, 16, 2, true, false);
@@ -60,7 +60,7 @@ public class JavaSoundHandler implements ISoundHandler {
 		output.addListener(audio);
 		speechOutput.addListener(speechAudio);
 		
-		EmulatorSettings.settingSoundVolume.addListener(new IPropertyListener() {
+		ISoundHandler.settingSoundVolume.addListener(new IPropertyListener() {
 			
 			@Override
 			public void propertyChanged(IProperty setting) {
@@ -68,8 +68,8 @@ public class JavaSoundHandler implements ISoundHandler {
 			}
 		});
 
-		EmulatorSettings.INSTANCE.register(EmulatorSettings.settingSoundVolume);
-		EmulatorSettings.INSTANCE.register(EmulatorSettings.settingPlaySound);
+		settingsHandler.getInstanceSettings().register(ISoundHandler.settingSoundVolume);
+		settingsHandler.getInstanceSettings().register(ISoundHandler.settingPlaySound);
 		
 		soundRecordingHelper = new SoundRecordingHelper(output, settingRecordSoundOutputFile, "sound");
 		speechRecordingHelper = new SoundRecordingHelper(speechOutput, settingRecordSpeechOutputFile, "speech");
@@ -82,7 +82,7 @@ public class JavaSoundHandler implements ISoundHandler {
 
 		
 		
-		EmulatorSettings.settingPlaySound.addListener(new IPropertyListener() {
+		ISoundHandler.settingPlaySound.addListener(new IPropertyListener() {
 
 			public void propertyChanged(IProperty setting) {
 				toggleSound(setting.getBoolean());
@@ -90,7 +90,7 @@ public class JavaSoundHandler implements ISoundHandler {
 			
 		});
 		
-		toggleSound(EmulatorSettings.settingPlaySound.getBoolean());
+		toggleSound(ISoundHandler.settingPlaySound.getBoolean());
 	}
 	
 

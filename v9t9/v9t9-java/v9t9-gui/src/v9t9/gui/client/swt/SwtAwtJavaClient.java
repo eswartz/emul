@@ -7,6 +7,7 @@
 package v9t9.gui.client.swt;
 
 import v9t9.common.client.IClient;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.machine.IMachine;
 import v9t9.gui.client.awt.AwtKeyboardHandler;
 
@@ -17,8 +18,8 @@ import v9t9.gui.client.awt.AwtKeyboardHandler;
 public class SwtAwtJavaClient extends BaseSwtJavaClient implements IClient {
 	public static String ID = "SWTAWT";
 	
-    public SwtAwtJavaClient(final IMachine machine) {
-    	super(machine);
+    public SwtAwtJavaClient(ISettingsHandler settingsHandler, IMachine machine) {
+    	super(settingsHandler, machine);
     }
 
     @Override

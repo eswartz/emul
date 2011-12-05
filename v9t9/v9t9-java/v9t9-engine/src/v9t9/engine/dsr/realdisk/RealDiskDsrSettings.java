@@ -7,8 +7,8 @@ import java.io.File;
 import java.net.URL;
 
 import v9t9.base.properties.SettingProperty;
+import v9t9.common.settings.IconSettingProperty;
 import v9t9.engine.EmulatorData;
-import v9t9.engine.settings.IconSettingProperty;
 
 /**
  * @author ejs

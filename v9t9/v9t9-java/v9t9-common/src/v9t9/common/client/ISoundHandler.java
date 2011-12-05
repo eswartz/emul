@@ -6,6 +6,8 @@
  */
 package v9t9.common.client;
 
+import v9t9.base.properties.SettingProperty;
+
 
 
 
@@ -15,6 +17,10 @@ package v9t9.common.client;
  */
 public interface ISoundHandler {
 	
+	public static final SettingProperty settingPlaySound = new SettingProperty("PlaySound", new Boolean(true));
+	public static final SettingProperty settingSoundVolume = new SettingProperty("SoundVolume", new Integer(10));
+
+
 	/**
 	 * Dispose sound and turn off audio
 	 */

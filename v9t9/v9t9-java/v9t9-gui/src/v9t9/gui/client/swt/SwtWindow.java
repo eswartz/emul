@@ -48,12 +48,12 @@ import org.eclipse.swt.widgets.Shell;
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
 import v9t9.common.client.IClient;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.machine.IMachine;
-import v9t9.engine.settings.EmulatorSettings;
 import v9t9.gui.Emulator;
 import v9t9.gui.common.BaseEmulatorWindow;
 
@@ -81,7 +81,7 @@ public class SwtWindow extends BaseEmulatorWindow{
 
 	private ImageProvider buttonImageProvider;
 	private ImageProvider statusImageProvider;
-	
+
 	class EmulatorWindowLayout extends Layout {
 
 		private Point vidSz;
@@ -156,7 +156,7 @@ public class SwtWindow extends BaseEmulatorWindow{
 		
 	}
 	
-	public SwtWindow(Display display, final IMachine machine, final ISwtVideoRenderer videoRenderer) {
+	public SwtWindow(Display display, final IMachine machine, final ISwtVideoRenderer videoRenderer, final ISettingsHandler settingsHandler) {
 		super(machine);
 				
 		toolShells = new HashMap<String, ToolShell>();
@@ -196,7 +196,7 @@ public class SwtWindow extends BaseEmulatorWindow{
 
 			public void widgetDisposed(DisposeEvent e) {
 				String boundsPref = PrefUtils.writeBoundsString(shell.getBounds());
-				EmulatorSettings.INSTANCE.getSettings().put(EMULATOR_WINDOW_BOUNDS, boundsPref);
+				settingsHandler.getInstanceSettings().getSettings().put(EMULATOR_WINDOW_BOUNDS, boundsPref);
 				dispose();
 			}
 			
@@ -295,7 +295,8 @@ public class SwtWindow extends BaseEmulatorWindow{
 		});
 
 		
-		String boundsPref = EmulatorSettings.INSTANCE.getSettings().get(EMULATOR_WINDOW_BOUNDS);
+		String boundsPref = settingsHandler.getInstanceSettings().
+			getSettings().get(EMULATOR_WINDOW_BOUNDS);
 		final Rectangle rect = PrefUtils.readBoundsString(boundsPref);
 		if (rect != null) {
 			Display.getDefault().asyncExec(new Runnable() {
@@ -422,7 +423,9 @@ public class SwtWindow extends BaseEmulatorWindow{
 	 */
 	protected ToolShell createToolShell(String toolId, IToolShellFactory toolShellFactory) {
 		ToolShell toolShell;
-		toolShell = new ToolShell(getShell(), focusRestorer, isHorizontal, toolShellFactory.getBehavior());  
+		toolShell = new ToolShell(getShell(), 
+				machine.getClient().getSettingsHandler().getInstanceSettings(),
+				focusRestorer, isHorizontal, toolShellFactory.getBehavior());  
 		Control tool = toolShellFactory.createContents(toolShell.getShell());
 		toolShell.init(tool);
 		addToolShell(toolId, toolShell);

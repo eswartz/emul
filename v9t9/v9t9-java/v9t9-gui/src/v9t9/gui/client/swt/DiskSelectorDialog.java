@@ -48,9 +48,8 @@ import v9t9.common.events.IEventNotifier;
 import v9t9.common.files.Catalog;
 import v9t9.common.files.CatalogEntry;
 import v9t9.common.machine.IMachine;
-import v9t9.engine.settings.EmulatorSettings;
-import v9t9.engine.settings.ISettingDecorator;
-import v9t9.engine.settings.IconSettingProperty;
+import v9t9.common.settings.ISettingDecorator;
+import v9t9.common.settings.IconSettingProperty;
 
 /**
  * Select and set up disks
@@ -314,10 +313,12 @@ public class DiskSelectorDialog extends Composite {
 
 
 	private String[] getHistory(String name) {
-		return EmulatorSettings.INSTANCE.getHistorySettings().getArray("DiskSelector." + name);
+		return machine.getClient().getSettingsHandler().getInstanceSettings().
+			getHistorySettings().getArray("DiskSelector." + name);
 	}
 	private void setHistory(String name, String[] history) {
-		EmulatorSettings.INSTANCE.getHistorySettings().put("DiskSelector." + name, history);
+		machine.getClient().getSettingsHandler().getInstanceSettings().
+			getHistorySettings().put("DiskSelector." + name, history);
 		//EmulatorSettings.INSTANCE.save();
 	}
 	/**

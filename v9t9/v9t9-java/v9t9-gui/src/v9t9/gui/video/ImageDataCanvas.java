@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.Rectangle;
 
-import v9t9.engine.video.BitmapVdpCanvas;
+import v9t9.common.video.BitmapVdpCanvas;
 
 
 public abstract class ImageDataCanvas extends BitmapVdpCanvas {
