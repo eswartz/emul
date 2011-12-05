@@ -42,7 +42,7 @@ import org.apache.bcel.generic.Type;
 
 import v9t9.base.launch.CommandLauncher;
 import v9t9.base.launch.ProcessClosure;
-import v9t9.base.properties.SettingProperty;
+import v9t9.base.settings.SettingProperty;
 import v9t9.base.utils.HexUtils;
 import v9t9.common.asm.BaseMachineOperand;
 import v9t9.common.asm.IDecompileInfo;

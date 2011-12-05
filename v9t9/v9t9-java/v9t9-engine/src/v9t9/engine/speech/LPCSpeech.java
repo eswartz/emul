@@ -5,8 +5,8 @@ package v9t9.engine.speech;
 
 import java.util.Arrays;
 
-import v9t9.base.properties.SettingProperty;
 import v9t9.base.settings.Logging;
+import v9t9.base.settings.SettingProperty;
 
 
 /**

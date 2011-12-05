@@ -19,6 +19,7 @@ import v9t9.common.files.NativeFileFactory;
 import v9t9.common.files.V9t9FDR;
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.engine.dsr.DsrException;
+import v9t9.engine.dsr.realdisk.Dumper;
 
 public class DirectDiskHandler {
 	public static class DirectDiskInfo {
@@ -46,6 +47,8 @@ public class DirectDiskHandler {
 	/** option from >8350 -- usually filename #2 */
 	private short addr2;
 
+	private final Dumper dumper;
+
 	
 	public static DirectDiskHandler.DirectDiskInfo getDiskInfoBlock(short cru) {
 		DirectDiskHandler.DirectDiskInfo block = diskInfoBlocks.get(cru);
@@ -56,7 +59,8 @@ public class DirectDiskHandler {
 		return block;
 	}
 	
-	public DirectDiskHandler(short cru, IMemoryTransfer xfer, IFileMapper mapper, short code) {
+	public DirectDiskHandler(Dumper dumper, short cru, IMemoryTransfer xfer, IFileMapper mapper, short code) {
+		this.dumper = dumper;
 		this.cru = cru;
 		this.xfer = xfer;
 		this.mapper = mapper;
@@ -101,7 +105,7 @@ public class DirectDiskHandler {
 	public void error(DsrException e) {
 		xfer.writeParamByte(0x50, (byte) e.getErrorCode());
 		if (e != null)
-			EmuDiskPabHandler.info(e.getMessage());
+			dumper.info(e.getMessage());
 	}
 
 
@@ -158,7 +162,7 @@ public class DirectDiskHandler {
 			short   vaddr = xfer.readParamWord(parms);
 			short	secnum = xfer.readParamWord(parms + 2);
 
-			EmuDiskPabHandler.info("reading "+secs+" sectors from sector #"+secnum+
+			dumper.info("reading "+secs+" sectors from sector #"+secnum+
 					" in " + file + ", storing to >"+HexUtils.toHex4(vaddr));
 
 			ByteMemoryAccess access = xfer.getVdpMemory(vaddr);
@@ -248,7 +252,7 @@ public class DirectDiskHandler {
 			short   vaddr = xfer.readParamWord(parms);
 			short	secnum = xfer.readParamWord(parms + 2);
 
-			EmuDiskPabHandler.info("writing "+secs+" sectors to sector #"+secnum+
+			dumper.info("writing "+secs+" sectors to sector #"+secnum+
 					" in " + file + ", reading from >"+HexUtils.toHex4(vaddr));
 
 			ByteMemoryAccess access = xfer.getVdpMemory(vaddr);
@@ -335,7 +339,7 @@ public class DirectDiskHandler {
 			throw new DsrException(EmuDiskConsts.es_filenotfound, e);
 		}
 		
-		EmuDiskPabHandler.info("Changing protection for " + file + " to " 
+		dumper.info("Changing protection for " + file + " to " 
 				+ (protect ? "enabled" : "disabled"));
 		
 		if (file instanceof NativeFDRFile) {
@@ -373,7 +377,7 @@ public class DirectDiskHandler {
 			throw new DsrException(EmuDiskConsts.es_filenotfound, e);
 		}
 		
-		EmuDiskPabHandler.info("Renaming " + file + " to " + toFilename); 
+		dumper.info("Renaming " + file + " to " + toFilename); 
 
 		// check real file first
 		File toFile = new File(file.getFile().getParentFile(),

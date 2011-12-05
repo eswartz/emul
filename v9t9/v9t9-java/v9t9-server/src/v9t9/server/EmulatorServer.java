@@ -21,7 +21,7 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IMachineModel;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryModel;
-import v9t9.common.settings.IStoredSettings;
+import v9t9.common.settings.SettingsSchema;
 import v9t9.engine.memory.GplMmio;
 import v9t9.engine.modules.ModuleManager;
 import v9t9.engine.settings.EmulatorSettings;
@@ -53,18 +53,8 @@ public class EmulatorServer {
 	private ISettingsHandler settingsHandler;
 
     public EmulatorServer() {
-    	settingsHandler = new ISettingsHandler() {
-			
-			@Override
-			public IStoredSettings getWorkspaceSettings() {
-				return WorkspaceSettings.CURRENT;
-			}
-			
-			@Override
-			public IStoredSettings getInstanceSettings() {
-				return EmulatorSettings.INSTANCE;
-			}
-		}; 
+    	settingsHandler = new SettingsHandler(); 
+		
 		IVdpChip.settingDumpVdpAccess.setBoolean(true);
 		GplMmio.settingDumpGplAccess.setBoolean(true);
     }

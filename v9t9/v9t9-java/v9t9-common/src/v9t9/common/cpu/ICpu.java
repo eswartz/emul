@@ -2,14 +2,30 @@ package v9t9.common.cpu;
 
 
 import v9t9.base.properties.IPersistable;
-import v9t9.base.properties.SettingProperty;
+import v9t9.base.settings.SettingProperty;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.machine.IBaseMachine;
+import v9t9.common.settings.SettingDefinition;
 
 public interface ICpu extends IPersistable, ICpuState {
-	static public final SettingProperty settingDumpInstructions = new SettingProperty(
+	static public final SettingDefinition settingDumpInstructions = new SettingDefinition(
+			ISettingsHandler.TRANSIENT,
 			"DumpInstructions", new Boolean(false));
-	static public final SettingProperty settingDumpFullInstructions = new SettingProperty(
+	static public final SettingDefinition settingDumpFullInstructions = new SettingDefinition(
+			ISettingsHandler.TRANSIENT,
 			"DumpFullInstructions", new Boolean(false));
+
+	static public final SettingDefinition settingRealTime = new SettingDefinition(
+			ISettingsHandler.WORKSPACE,
+			"RealTime", new Boolean(false));
+	static public final SettingDefinition settingCyclesPerSecond = new SettingDefinition(
+			ISettingsHandler.WORKSPACE,
+			"CyclesPerSecond", new Integer(0));
+
+	SettingProperty settingRealTime();
+	SettingProperty settingCyclesPerSecond();
+	SettingProperty settingDumpInstructions();
+	SettingProperty settingDumpFullInstructions();
 
 	void resetInterruptRequest();
 	
@@ -18,11 +34,6 @@ public interface ICpu extends IPersistable, ICpuState {
 	 * @param level
 	 */
 	void setInterruptRequest(byte level);
-
-	static public final SettingProperty settingRealTime = new SettingProperty(
-			"RealTime", new Boolean(false));
-	static public final SettingProperty settingCyclesPerSecond = new SettingProperty(
-			"CyclesPerSecond", new Integer(0));
 
 	/**
 	 * @return

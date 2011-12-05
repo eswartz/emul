@@ -4,6 +4,7 @@ import java.io.PrintWriter;
 
 
 import v9t9.base.settings.ISettingSection;
+import v9t9.base.settings.Logging;
 import v9t9.base.utils.HexUtils;
 import v9t9.common.cpu.AbortedException;
 import v9t9.common.cpu.IStatus;
@@ -62,7 +63,7 @@ public class CpuF99b extends CpuBase {
 		super(machine, new CpuStateF99b(machine.getConsole()), interruptTick);
 		this.vdp = vdp;
 		stateF99b = (CpuStateF99b) state;
-        settingCyclesPerSecond.setInt(BASE_CYCLES_PER_SEC);
+        cyclesPerSecond.setInt(BASE_CYCLES_PER_SEC);
     }
 	
 	/* (non-Javadoc)
@@ -167,11 +168,11 @@ public class CpuF99b extends CpuBase {
 	 */
     @Override
 	public final void handleInterrupts() {
-    	PrintWriter dumpfull = Executor.getDumpfull();
+    	PrintWriter dumpfull = Logging.getLog(settingDumpFullInstructions());
 		if (dumpfull != null) {
     		dumpfull.println("*** Aborted");
 		}
-        PrintWriter dump = Executor.getDump();
+        PrintWriter dump = Logging.getLog(settingDumpInstructions());
 		if (dump != null) {
         	dump.println("*** Aborted");
 		}

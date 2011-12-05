@@ -17,8 +17,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-import v9t9.base.properties.SettingProperty;
 import v9t9.base.settings.ISettingSection;
+import v9t9.base.settings.SettingProperty;
 import v9t9.base.utils.CompatUtils;
 import v9t9.common.memory.IMemoryDomain;
 

@@ -25,7 +25,7 @@ import org.apache.bcel.generic.POP;
 import org.apache.bcel.generic.PUSH;
 import org.apache.bcel.generic.Type;
 
-import v9t9.base.properties.SettingProperty;
+import v9t9.base.settings.SettingProperty;
 import v9t9.common.asm.BaseMachineOperand;
 import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.IOperand;
@@ -59,8 +59,7 @@ public class OperandCompiler9900 {
                     && !(ins.getInst() == Inst9900.Idiv /*&& ins.op2 == this*/)
                     && ICompiler.settingOptimize.getBoolean()
                     && ICompiler.settingOptimizeRegAccess.getBoolean()
-                    && !new SettingProperty(
-					        "DebugInstructions", new Boolean(false)).getBoolean()) {
+                    && false) {
 				return false;
 			}
             // slow mode: treat this as normal memory access

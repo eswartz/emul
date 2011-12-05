@@ -6,9 +6,9 @@ package v9t9.machine.ti99.machine;
 
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.IVdpChip;
+import v9t9.common.keyboard.IKeyboardState;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryModel;
-import v9t9.engine.keyboard.KeyboardState;
 import v9t9.engine.sound.SoundTMS9919;
 import v9t9.engine.video.tms9918a.VdpTMS9918A;
 import v9t9.machine.common.dsr.emudisk.DiskDirectoryMapper;
@@ -63,7 +63,7 @@ public class StandardMachineModel extends BaseTI99MachineModel {
 	}
 	
 	public void defineDevices(IMachine machine_) {
-		KeyboardState.backspaceIsCtrlH.setBoolean(false);
+		IKeyboardState.settingBackspaceIsCtrlH.setBoolean(false);
 		
 		if (machine_ instanceof TI99Machine) {
 			TI99Machine machine = (TI99Machine) machine_;

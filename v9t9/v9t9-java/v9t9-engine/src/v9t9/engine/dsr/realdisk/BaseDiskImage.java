@@ -12,8 +12,9 @@ import java.util.List;
 
 
 import v9t9.base.properties.IPersistable;
-import v9t9.base.properties.SettingProperty;
 import v9t9.base.settings.ISettingSection;
+import v9t9.base.settings.SettingProperty;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.files.Catalog;
 import v9t9.common.files.CatalogEntry;
@@ -29,30 +30,6 @@ import v9t9.engine.cpu.Executor;
  *
  */
 public abstract class BaseDiskImage implements IPersistable, IDiskImage {
-
-	public static void error(String fmt, Object... args) {
-		error(MessageFormat.format(fmt, args));
-	}
-
-	public static void info(String string) {
-		if (ICpu.settingDumpFullInstructions.getBoolean())
-			Executor.getDumpfull().println(string);
-		if (RealDiskDsrSettings.diskImageDebug.getBoolean())
-			System.out.println(string);
-		
-	}
-
-	public static void info(String fmt, Object... args) {
-		info(MessageFormat.format(fmt, args));
-		
-	}
-
-	public static void error(String string) {
-		if (ICpu.settingDumpFullInstructions.getBoolean())
-			Executor.getDumpfull().println(string);
-		System.err.println(string);
-		
-	}
 
 	static class DSKheader
 	{
@@ -88,16 +65,25 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	protected byte sideReg;
 	private boolean motorRunning;
 	private long motorTimeout;
+	private SettingProperty settingDsrEnabled;
+	
+	protected Dumper dumper;
 
 	/**
 	 * @param name 
+	 * @param settings 
 	 * 
 	 */
-	public BaseDiskImage(String name, File spec) {
+	public BaseDiskImage( String name, File spec, ISettingsHandler settings) {
 		this.name = name;
 		this.spec = spec;
+		
+		dumper = new Dumper(settings);
+		settingDsrEnabled = settings.get(RealDiskDsrSettings.diskImageDsrEnabled);
+		
 		inUseSetting = new SettingProperty(name, Boolean.FALSE);
-		inUseSetting.addEnablementDependency(RealDiskDsrSettings.diskImageDsrEnabled);
+		inUseSetting.addEnablementDependency(settingDsrEnabled);
+		
 	}
 
 	/**
@@ -186,7 +172,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		
 		trackFetched = false;
 		
-		BaseDiskImage.info("Opened {0} disk ''{1}'' {2},\n#tracks={3}, tracksize={4}, sides={5}",
+		dumper.info("Opened {0} disk ''{1}'' {2},\n#tracks={3}, tracksize={4}, sides={5}",
 					  getDiskType(),
 					  spec,
 			 name, hdr.tracks, hdr.tracksize, hdr.sides);
@@ -195,7 +181,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 
 	public void createDiskImage() throws IOException
 	{
-		BaseDiskImage.info("Creating new {2} disk image at {0} ({1})", name, spec, getDiskType());
+		dumper.info("Creating new {2} disk image at {0} ({1})", name, spec, getDiskType());
 
 		/* defaults */
 		hdr.tracks = 40;
@@ -220,7 +206,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		if (!trackFetched) {
 			long diskoffs = getTrackDiskOffset();
 			
-			BaseDiskImage.info("Reading {0} bytes of data on track {1}, trackoffset = {2}, offset = >{3}", 
+			dumper.info("Reading {0} bytes of data on track {1}, trackoffset = {2}, offset = >{3}", 
 					hdr.tracksize, seektrack, trackoffset, Long.toHexString(diskoffs));
 	
 			handle.seek(diskoffs);
@@ -313,7 +299,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		int size = getTrackSize();
 		long diskoffs = getTrackDiskOffset();
 	
-		BaseDiskImage.info("Writing {0} bytes of data on track {1}, trackoffset = {2}, offset = >{3}", 
+		dumper.info("Writing {0} bytes of data on track {1}, trackoffset = {2}, offset = >{3}", 
 				size, seektrack, trackoffset, Long.toHexString(diskoffs));
 	
 	

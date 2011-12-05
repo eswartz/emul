@@ -11,8 +11,8 @@ import java.util.List;
 import java.util.Map;
 
 
-import v9t9.base.properties.SettingProperty;
 import v9t9.base.settings.ISettingSection;
+import v9t9.base.settings.SettingProperty;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.dsr.IMemoryTransfer;
 import v9t9.common.events.IEventNotifier.Level;

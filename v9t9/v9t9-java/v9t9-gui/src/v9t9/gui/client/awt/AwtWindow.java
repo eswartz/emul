@@ -42,7 +42,7 @@ import javax.swing.PopupFactory;
 
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
-import v9t9.base.properties.SettingProperty;
+import v9t9.base.settings.SettingProperty;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.events.BaseEventNotifier;
 import v9t9.common.events.IEventNotifier;

@@ -10,11 +10,13 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
+import v9t9.common.client.ISettingsHandler;
+
 
 
 public class SectorDiskImage extends BaseDiskImage  {
-	public SectorDiskImage(String name, File file) {
-		super(name, file);
+	public SectorDiskImage(String name, File file, ISettingsHandler settings) {
+		super(name, file, settings);
 	}
 	
 	/* (non-Javadoc)
@@ -70,7 +72,7 @@ public class SectorDiskImage extends BaseDiskImage  {
 	
 		trackFetched = false;
 		
-		BaseDiskImage.info(
+		dumper.info(
 			"Opened sector-image disk ''{0}'' {1},\n#tracks={2}, tracksize={3}, sides={4}",
 			spec, getName(), hdr.tracks, hdr.tracksize, hdr.sides);
 	}
@@ -225,12 +227,12 @@ public class SectorDiskImage extends BaseDiskImage  {
 					goto retry;
 				}*/
 
-				BaseDiskImage.info("Formatting sector track:{0}, side:{1}, sector:{2}, size:{3}, crc={4}", track, side, sector, size, crc);
+				dumper.info("Formatting sector track:{0}, side:{1}, sector:{2}, size:{3}, crc={4}", track, side, sector, size, crc);
 
 				sz = 128 << size;
 				offs = sector * sz;
 				if (offs >= hdr.tracksize) {
-					BaseDiskImage.error("Program is formatting track on ''{0}'' with non-ordinary sectors; " +
+					dumper.error("Program is formatting track on ''{0}'' with non-ordinary sectors; " +
 									"this does not work with sector-image disks", spec);
 					offs = 0;
 				}
@@ -260,7 +262,7 @@ public class SectorDiskImage extends BaseDiskImage  {
 					
 					is += sz + 2; // + crc
 				} else {
-					BaseDiskImage.error("Lost sector data in format of sector-image disk ''{0}''", spec);
+					dumper.error("Lost sector data in format of sector-image disk ''{0}''", spec);
 					break;
 				}
 			}
@@ -278,7 +280,7 @@ public class SectorDiskImage extends BaseDiskImage  {
 		try {
 			readCurrentTrackData();
 		} catch (IOException e) {
-			BaseDiskImage.error(e.getMessage());
+			dumper.error(e.getMessage());
 			return markers;
 		}
 		

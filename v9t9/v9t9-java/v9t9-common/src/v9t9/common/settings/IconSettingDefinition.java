@@ -13,7 +13,7 @@ import v9t9.base.settings.SettingProperty;
  * @author ejs
  *
  */
-public class IconSettingProperty extends SettingProperty implements ISettingDecorator {
+public class IconSettingDefinition extends SettingDefinition {
 
 	private final URL iconPath;
 
@@ -21,8 +21,8 @@ public class IconSettingProperty extends SettingProperty implements ISettingDeco
 	 * @param name
 	 * @param storage
 	 */
-	public IconSettingProperty(String name, String label, String description, Object storage, URL iconPath) {
-		super(name, label, description, storage);
+	public IconSettingDefinition(String context, String name, String label, String description, Object storage, URL iconPath) {
+		super(context, name, label, description, storage);
 		this.iconPath = iconPath;
 	}
 

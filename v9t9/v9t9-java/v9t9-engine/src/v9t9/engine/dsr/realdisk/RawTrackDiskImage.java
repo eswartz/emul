@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.text.MessageFormat;
 
+import v9t9.common.client.ISettingsHandler;
+
 /**
  * Raw track image which has no header
  * @author ejs
@@ -15,8 +17,8 @@ import java.text.MessageFormat;
  */
 public class RawTrackDiskImage extends BaseTrackDiskImage  {
 	
-	public RawTrackDiskImage(String name, File file) {
-		super(name, file);
+	public RawTrackDiskImage(String name, File file, ISettingsHandler settings) {
+		super(name, file, settings);
 	}
 	
 	/* (non-Javadoc)

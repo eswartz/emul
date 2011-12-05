@@ -6,7 +6,7 @@ package v9t9.common.dsr;
 import java.util.Collection;
 import java.util.Map;
 
-import v9t9.base.properties.SettingProperty;
+import v9t9.base.settings.SettingProperty;
 
 /**
  * @author ejs

@@ -12,9 +12,9 @@ import java.io.OutputStream;
 
 
 import v9t9.base.properties.IProperty;
-import v9t9.base.properties.SettingProperty;
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.settings.ISettingStorage;
+import v9t9.base.settings.SettingProperty;
 import v9t9.base.settings.SettingsSection;
 import v9t9.base.settings.XMLSettingStorage;
 import v9t9.common.client.IVideoRenderer;

@@ -9,12 +9,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import v9t9.base.utils.HexUtils;
+import v9t9.common.client.ISettingsHandler;
 
 
 public abstract class BaseTrackDiskImage extends BaseDiskImage  {
 	
-	public BaseTrackDiskImage(String name, File file) {
-		super(name, file);
+	public BaseTrackDiskImage(String name, File file, ISettingsHandler settings) {
+		super(name, file, settings);
 	}
 	
 	@Override
@@ -43,7 +44,7 @@ public abstract class BaseTrackDiskImage extends BaseDiskImage  {
 		// write new ID field
 		int offs = idoffset;
 		if (trackBuffer[offs] != (byte) 0xfe)
-			BaseDiskImage.error("Inconsistent idoffset ({0})", idoffset);
+			dumper.error("Inconsistent idoffset ({0})", idoffset);
 
 		trackBuffer[offs+0] = (byte) 0xfe;
 		trackBuffer[offs+1] = marker.trackid;
@@ -55,7 +56,7 @@ public abstract class BaseTrackDiskImage extends BaseDiskImage  {
 
 		// write data with new CRC
 		if (trackBuffer[dataoffset] != (byte) 0xfb)
-			BaseDiskImage.error("Inconsistent dataoffset ({0})", dataoffset);
+			dumper.error("Inconsistent dataoffset ({0})", dataoffset);
 		trackBuffer[dataoffset] = (byte) 0xfb;
 		
 		offs = dataoffset;
@@ -118,7 +119,7 @@ public abstract class BaseTrackDiskImage extends BaseDiskImage  {
 		try {
 			readCurrentTrackData();
 		} catch (IOException e) {
-			BaseDiskImage.error(e.getMessage());
+			dumper.error(e.getMessage());
 			return markers;
 		}
 		
@@ -156,7 +157,7 @@ public abstract class BaseTrackDiskImage extends BaseDiskImage  {
 			// this algorithm does NOT WORK
 			if (false && crc != marker.crcid)
 			{
-				BaseDiskImage.info("FDCfindIDmarker: failed ID CRC check (>{0} != >{1})",
+				dumper.info("FDCfindIDmarker: failed ID CRC check (>{0} != >{1})",
 						HexUtils.toHex4(marker.crcid), HexUtils.toHex4(crc));
 				continue;
 			}

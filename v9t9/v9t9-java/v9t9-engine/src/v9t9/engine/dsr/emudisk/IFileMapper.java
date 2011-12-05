@@ -3,7 +3,7 @@ package v9t9.engine.dsr.emudisk;
 import java.io.File;
 
 import v9t9.base.properties.IPersistable;
-import v9t9.base.properties.SettingProperty;
+import v9t9.base.settings.SettingProperty;
 
 /**
  * This maps DSR device+filenames back and forth to disk ones

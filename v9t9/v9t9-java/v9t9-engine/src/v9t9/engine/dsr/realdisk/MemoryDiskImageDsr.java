@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 
-import v9t9.base.properties.SettingProperty;
+import v9t9.base.settings.SettingProperty;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.machine.IMachine;
 import v9t9.engine.dsr.IMemoryIOHandler;
@@ -130,7 +130,7 @@ public class MemoryDiskImageDsr extends BaseDiskImageDsr implements IMemoryIOHan
 	 */
 	@Override
 	public boolean handlesAddress(int addr) {
-		return RealDiskDsrSettings.diskImageDsrEnabled.getBoolean() && addr >= baseAddr && addr <= baseAddr + DSK;
+		return settingDsrEnabled.getBoolean() && addr >= baseAddr && addr <= baseAddr + DSK;
 	}
 
 	/**

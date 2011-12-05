@@ -36,7 +36,7 @@ public class Cpu9900 extends CpuBase {
     	super(machine, new CpuState9900(machine.getConsole()), interruptTick);
 		this.vdp = vdp;
     	
-        settingCyclesPerSecond.setInt(TMS_9900_BASE_CYCLES_PER_SEC);
+        cyclesPerSecond.setInt(TMS_9900_BASE_CYCLES_PER_SEC);
 
     }
     

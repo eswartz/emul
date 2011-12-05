@@ -14,6 +14,7 @@ import v9t9.common.dsr.IDsrSettings;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.hardware.IVdpChip;
+import v9t9.common.keyboard.IKeyboardState;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IMachineModel;
 import v9t9.common.memory.IMemoryDomain;
@@ -21,7 +22,6 @@ import v9t9.common.memory.IMemoryModel;
 import v9t9.engine.compiler.NullCompilerStrategy;
 import v9t9.engine.cpu.Executor;
 import v9t9.engine.dsr.realdisk.MemoryDiskImageDsr;
-import v9t9.engine.keyboard.KeyboardState;
 import v9t9.engine.sound.MultiSoundTMS9919B;
 import v9t9.engine.speech.TMS5220;
 import v9t9.engine.video.v9938.VdpV9938;
@@ -90,7 +90,7 @@ public class F99bMachineModel implements IMachineModel {
 	}
 	
 	public void defineDevices(final IMachine machine_) {
-		KeyboardState.backspaceIsCtrlH.setBoolean(true);
+		IKeyboardState.settingBackspaceIsCtrlH.setBoolean(true);
 		
 		memoryDiskDsr = new MemoryDiskImageDsr(machine_, InternalCruF99.DISK_BASE);
 

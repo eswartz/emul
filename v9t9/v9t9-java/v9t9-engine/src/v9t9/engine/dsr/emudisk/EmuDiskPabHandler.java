@@ -24,20 +24,10 @@ import v9t9.engine.dsr.DsrException;
 import v9t9.engine.dsr.PabConstants;
 import v9t9.engine.dsr.PabHandler;
 import v9t9.engine.dsr.PabStruct;
+import v9t9.engine.dsr.realdisk.Dumper;
 
 public class EmuDiskPabHandler extends PabHandler {
 
-	private static final boolean DEBUG = false;
-
-
-	public static void info(String string) {
-		if (ICpu.settingDumpFullInstructions.getBoolean())
-			Executor.getDumpfull().println(string);
-		if (DEBUG)
-			System.out.println(string);
-		
-	}
-	
 	private static Map<Short, PabInfoBlock> pabInfoBlocks = new HashMap<Short, PabInfoBlock>();
 	
 	public static PabInfoBlock getPabInfoBlock(short cru) {
@@ -51,13 +41,16 @@ public class EmuDiskPabHandler extends PabHandler {
 
 	IFileMapper mapper;
 	private PabInfoBlock block;
+	private Dumper dumper;
 
-	public EmuDiskPabHandler(short cruaddr, IMemoryTransfer xfer, IFileMapper mapper, short vdpNameCompareBuffer) {
+	public EmuDiskPabHandler(Dumper dumper, short cruaddr, IMemoryTransfer xfer, IFileMapper mapper, short vdpNameCompareBuffer) {
 		super(xfer);
+		this.dumper = dumper;
 		init(cruaddr, mapper, vdpNameCompareBuffer);
 	}
-	public EmuDiskPabHandler(short cruaddr, IMemoryTransfer xfer, IFileMapper mapper, PabStruct pab, short vdpNameCompareBuffer) {
+	public EmuDiskPabHandler(Dumper dumper, short cruaddr, IMemoryTransfer xfer, IFileMapper mapper, PabStruct pab, short vdpNameCompareBuffer) {
 		super(xfer, pab);
+		this.dumper = dumper;
 		init(cruaddr, mapper, vdpNameCompareBuffer);
 	}
 
@@ -215,7 +208,7 @@ public class EmuDiskPabHandler extends PabHandler {
 				hexbuilder.append(' ');
 		}
 		
-		EmuDiskPabHandler.info("Read: " + builder + "\n | " + hexbuilder);
+		dumper.info("Read: " + builder + "\n | " + hexbuilder);
 		
 	}
 
@@ -362,7 +355,7 @@ public class EmuDiskPabHandler extends PabHandler {
 		pab.charcount = openFile.readRecord(access, pab.preclen);
 		xfer.dirtyVdpMemory(pab.bufaddr, pab.charcount);
 		
-		if (DEBUG) {
+		if (dumper.isEnabled()) {
 			dump(pab.bufaddr, pab.charcount);
 		}
 	}
@@ -413,7 +406,7 @@ public class EmuDiskPabHandler extends PabHandler {
 		
 		pab.recnum++;
 		
-		if (DEBUG) {
+		if (dumper.isEnabled()) {
 			dump(pab.bufaddr, pab.charcount);
 		}
 	}
@@ -477,7 +470,7 @@ public class EmuDiskPabHandler extends PabHandler {
 					0, pab.recnum);
 			xfer.dirtyVdpMemory(pab.bufaddr, read);
 			
-			if (DEBUG)
+			if (dumper.isEnabled())
 				dump(pab.bufaddr, Math.min(read, 32));
 			
 			if (read >= 0) {

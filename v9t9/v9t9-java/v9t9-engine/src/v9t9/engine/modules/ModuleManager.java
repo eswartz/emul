@@ -12,8 +12,8 @@ import java.util.Map;
 
 
 import v9t9.base.properties.IPersistable;
-import v9t9.base.properties.SettingProperty;
 import v9t9.base.settings.ISettingSection;
+import v9t9.base.settings.SettingProperty;
 import v9t9.common.cpu.AbortedException;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyException;

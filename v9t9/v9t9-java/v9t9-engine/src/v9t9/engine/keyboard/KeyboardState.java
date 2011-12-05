@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Queue;
 
 
-import v9t9.base.properties.SettingProperty;
 import v9t9.base.utils.HexUtils;
 import v9t9.common.keyboard.IKeyboardState;
 import v9t9.common.machine.IBaseMachine;
@@ -74,8 +73,6 @@ import v9t9.common.machine.IMachine;
  */
 @SuppressWarnings("unused")
 public class KeyboardState implements IKeyboardState {
-	public static SettingProperty backspaceIsCtrlH = new SettingProperty("SettingIsControlH", Boolean.FALSE);
-	
 	public static boolean DEBUG = false;
 	
     /* CRU rows and columns */
@@ -230,7 +227,7 @@ public class KeyboardState implements IKeyboardState {
 		switch (ch) {
 		
 		case 8:
-			if (backspaceIsCtrlH.getBoolean())
+			if (IKeyboardState.settingBackspaceIsCtrlH.getBoolean())
 				setKey(realKey, pressed, synthetic, ctrlShifted, 'H', when);	/* BKSP */
 			else
 				setKey(realKey, pressed, synthetic, fctnShifted, 'S', when);	/* FCTN-S */

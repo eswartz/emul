@@ -7,6 +7,8 @@ import v9t9.base.properties.IPersistable;
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
 import v9t9.base.settings.ISettingSection;
+import v9t9.base.settings.SettingProperty;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.AbortedException;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuState;
@@ -22,13 +24,13 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 	protected IMachine machine;
 
 	public void loadState(ISettingSection section) {
-		settingRealTime.loadState(section);
-		settingCyclesPerSecond.loadState(section);
+		realTime.loadState(section);
+		cyclesPerSecond.loadState(section);
 	}
 
 	public void saveState(ISettingSection section) {
-		settingRealTime.saveState(section);
-		settingCyclesPerSecond.saveState(section);
+		realTime.saveState(section);
+		cyclesPerSecond.saveState(section);
 	}
 
 	public abstract boolean doCheckInterrupts();
@@ -73,14 +75,31 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 
 	protected ICpuState state;
 
+	protected ISettingsHandler settings;
+
+	protected SettingProperty cyclesPerSecond;
+
+	protected SettingProperty realTime;
+
+	private SettingProperty dumpInstructions;
+
+	private SettingProperty dumpFullInstructions;
+
 	public CpuBase(IMachine machine, ICpuState state, int interruptTick) {
 		this.machine = machine;
+		this.settings = machine.getClient().getSettingsHandler();
 		this.state = state;
         this.state.getConsole().setAccessListener(this);
         this.interruptTick = interruptTick;
         
         interruptWaiting = new Semaphore(0);
-        settingCyclesPerSecond.addListener(new IPropertyListener() {
+        
+        cyclesPerSecond = settings.get(ICpu.settingCyclesPerSecond);
+        realTime = settings.get(ICpu.settingRealTime);
+        dumpFullInstructions = settings.get(ICpu.settingDumpFullInstructions);
+        dumpInstructions = settings.get(ICpu.settingDumpInstructions);
+        
+        cyclesPerSecond.addListener(new IPropertyListener() {
 
 			public void propertyChanged(IProperty setting) {
 				baseclockhz = setting.getInt();
@@ -91,19 +110,48 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
         	
         });
         
-        settingRealTime.addListener(new IPropertyListener() {
+        realTime.addListener(new IPropertyListener() {
 
 			public void propertyChanged(IProperty setting) {
 				tick();
 				if (setting.getBoolean()) {
 					totalcurrentcycles = totaltargetcycles;
-					currenttargetcycles = settingCyclesPerSecond.getInt() * CpuBase.this.interruptTick / 1000;
+					currenttargetcycles = cyclesPerSecond.getInt() * CpuBase.this.interruptTick / 1000;
 				}
 			}
         	
         });
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.ICpu#settingCyclesPerSecond()
+	 */
+	@Override
+	public SettingProperty settingCyclesPerSecond() {
+		return cyclesPerSecond;
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.ICpu#settingRealTime()
+	 */
+	@Override
+	public SettingProperty settingRealTime() {
+		return realTime;
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.ICpu#settingDumpFullInstructions()
+	 */
+	@Override
+	public SettingProperty settingDumpFullInstructions() {
+		return dumpFullInstructions;
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.ICpu#settingDumpInstructions()
+	 */
+	@Override
+	public SettingProperty settingDumpInstructions() {
+		return dumpInstructions;
+	}
+	
 	public IBaseMachine getMachine() {
 	    return machine;
 	}
@@ -137,7 +185,7 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 		// If really fast speeds are demanded, and/or the system is otherwise busy,
 		// we can fall behind the target.  But if we fall too far behind,
 		// we'll never catch up.
-		if (currenttargetcycles > settingCyclesPerSecond.getInt() / 10) {
+		if (currenttargetcycles > cyclesPerSecond.getInt() / 10) {
 			// something really threw us off -- just start over
 			totalcurrentcycles = totaltargetcycles;
 			currenttargetcycles = targetcycles;

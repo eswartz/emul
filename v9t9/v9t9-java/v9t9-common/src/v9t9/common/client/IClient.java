@@ -6,6 +6,7 @@
  */
 package v9t9.common.client;
 
+import v9t9.base.settings.SettingProperty;
 import v9t9.common.events.IEventNotifier;
 
 
@@ -22,6 +23,7 @@ public interface IClient {
     void close();
     
     ISettingsHandler getSettingsHandler();
+    SettingProperty getSetting(String name);
     
     /**
      * Handle one timer tick (nominally 1/60 second).  
@@ -40,4 +42,5 @@ public interface IClient {
 	IKeyboardHandler getKeyboardHandler();
 	
 	IEventNotifier getEventNotifier();
+
 }

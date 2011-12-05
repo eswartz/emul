@@ -5,7 +5,7 @@ package v9t9.machine.ti99.memory;
 
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
-import v9t9.base.properties.SettingProperty;
+import v9t9.base.settings.SettingProperty;
 
 /** 99/4A expansion RAM, accessed over the peripheral bus */
 public class ExpRamArea extends ConsoleMemoryArea {

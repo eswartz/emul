@@ -5,10 +5,10 @@ package v9t9.machine.ti99.machine;
 
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.IVdpChip;
+import v9t9.common.keyboard.IKeyboardState;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryModel;
 import v9t9.engine.hardware.ICruWriter;
-import v9t9.engine.keyboard.KeyboardState;
 import v9t9.engine.memory.BankedMemoryEntry;
 import v9t9.engine.memory.VdpMmio;
 import v9t9.engine.memory.WindowBankedMemoryEntry;
@@ -70,7 +70,7 @@ public class Enhanced48KForthTI994AMachineModel extends BaseTI99MachineModel {
 	}
 	
 	public void defineDevices(final IMachine machine_) {
-		KeyboardState.backspaceIsCtrlH.setBoolean(true);
+		IKeyboardState.settingBackspaceIsCtrlH.setBoolean(true);
 		
 		if (machine_ instanceof TI99Machine) {
 			TI99Machine machine = (TI99Machine) machine_;

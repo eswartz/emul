@@ -3,7 +3,7 @@
  */
 package v9t9.common.cpu;
 
-import v9t9.base.properties.SettingProperty;
+import v9t9.base.settings.SettingProperty;
 import v9t9.common.compiler.ICompilerStrategy;
 
 /**
@@ -12,12 +12,14 @@ import v9t9.common.compiler.ICompilerStrategy;
  */
 public interface IExecutor {
 
-	static public final String sCompile = "Compile";
 	static public final SettingProperty settingCompile = new SettingProperty(
-			sCompile, new Boolean(false));
+			"Compile", new Boolean(false));
 	static public final SettingProperty settingSingleStep = new SettingProperty(
 			"SingleStep", new Boolean(false));
 
+	SettingProperty settingCompile();
+	SettingProperty settingSingleStep();
+	
 	void interpretOneInstruction();
 
 	/** 

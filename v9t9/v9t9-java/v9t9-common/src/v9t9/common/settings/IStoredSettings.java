@@ -5,8 +5,8 @@ package v9t9.common.settings;
 
 import java.io.IOException;
 
-import v9t9.base.properties.SettingProperty;
 import v9t9.base.settings.ISettingSection;
+import v9t9.base.settings.SettingProperty;
 
 /**
  * @author ejs
@@ -20,7 +20,9 @@ public interface IStoredSettings {
 	void save() throws IOException;
 	void save(ISettingSection settings);
 
-	void register(SettingProperty setting);
+	//void register(SettingProperty setting);
+	SettingProperty findOrCreate(SettingDefinition def);
+	<T extends SettingProperty> T findOrCreate(T defaultProperty);
 
 	void clearConfigVar(String configVar);
 

@@ -7,9 +7,10 @@ import java.io.IOException;
 import java.util.Timer;
 
 
-import v9t9.base.properties.SettingProperty;
 import v9t9.base.settings.ISettingSection;
+import v9t9.base.settings.SettingProperty;
 import v9t9.common.asm.IRawInstructionFactory;
+import v9t9.common.client.IClient;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuMetrics;
 import v9t9.common.events.IEventNotifier;
@@ -31,6 +32,11 @@ public interface IBaseMachine {
 	static public final SettingProperty settingModuleList = new SettingProperty(
 			"ModuleListFile", new String("modules.xml"));
 
+
+	IClient getClient();
+
+	void setClient(IClient client);
+	
 	void notifyEvent(IEventNotifier.Level level, String string);
 
 	void notifyEvent(NotifyEvent event);

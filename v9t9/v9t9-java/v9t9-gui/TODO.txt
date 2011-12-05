@@ -7,7 +7,5 @@
 
 -- unify logging
 
--- recompile code when full dump toggled
-
 -- make RnD toolbar and move absurd commands there
 

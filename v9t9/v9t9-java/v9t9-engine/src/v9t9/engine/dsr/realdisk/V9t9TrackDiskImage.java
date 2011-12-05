@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.Arrays;
 
+import v9t9.common.client.ISettingsHandler;
+
 public class V9t9TrackDiskImage extends BaseTrackDiskImage  {
 	
 
@@ -22,8 +24,8 @@ public class V9t9TrackDiskImage extends BaseTrackDiskImage  {
 
 	public static final short TRACK_HEADER_SIZE = 12;
 
-	public V9t9TrackDiskImage(String name, File file) {
-		super(name, file);
+	public V9t9TrackDiskImage(String name, File file, ISettingsHandler settings) {
+		super(name, file, settings);
 	}
 	
 	/* (non-Javadoc)

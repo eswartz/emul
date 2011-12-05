@@ -5,21 +5,28 @@ package v9t9.engine.dsr.realdisk;
 
 import java.net.URL;
 
+import v9t9.base.settings.SettingProperty;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.settings.IconSettingProperty;
 import v9t9.engine.dsr.emudisk.EmuDiskDsrSettings;
 
 public class DiskImageSetting extends IconSettingProperty {
-	public DiskImageSetting(String name, Object storage, URL iconPath) {
+	private SettingProperty realDsrEnabled;
+	private SettingProperty emuDsrEnabled;
+
+	public DiskImageSetting(ISettingsHandler settings, String name, Object storage, URL iconPath) {
 		super(name, 
 				"DSK" + name.charAt(name.length() - 1) + " Image",
 				"Specify the full path of the image for this disk.\n\n"+
 				"The extension selects the image type when creating a new image.\n\nUse *.dsk for sector-image disks and *.trk for track image disks.",
 				storage, iconPath);
 		
-		addEnablementDependency(EmuDiskDsrSettings.emuDiskDsrEnabled);
-		addEnablementDependency(RealDiskDsrSettings.diskImageDsrEnabled);
-		addEnablementDependency(RealDiskDsrSettings.diskImageRealTime);
-		addEnablementDependency(RealDiskDsrSettings.diskImageDebug);
+		realDsrEnabled = settings.get(RealDiskDsrSettings.diskImageDsrEnabled);
+		emuDsrEnabled = settings.get(EmuDiskDsrSettings.emuDiskDsrEnabled);
+		addEnablementDependency(emuDsrEnabled);
+		addEnablementDependency(realDsrEnabled);
+		addEnablementDependency(settings.get(RealDiskDsrSettings.diskImageRealTime));
+		addEnablementDependency(settings.get(RealDiskDsrSettings.diskImageDebug));
 	}
 
 	/* (non-Javadoc)
@@ -27,9 +34,9 @@ public class DiskImageSetting extends IconSettingProperty {
 	 */
 	@Override
 	public boolean isEnabled() {
-		if (!RealDiskDsrSettings.diskImageDsrEnabled.getBoolean())
+		if (!realDsrEnabled.getBoolean())
 			return false;
-		if (!EmuDiskDsrSettings.emuDiskDsrEnabled.getBoolean())
+		if (!emuDsrEnabled.getBoolean())
 			return true;
 		
 		// only DSK1 and DSK2 are real disks if emu disk also enabled

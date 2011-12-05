@@ -3,7 +3,7 @@
  */
 package v9t9.common.compiler;
 
-import v9t9.base.properties.SettingProperty;
+import v9t9.base.settings.SettingProperty;
 import v9t9.common.asm.IDecompileInfo;
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.memory.IMemoryEntry;

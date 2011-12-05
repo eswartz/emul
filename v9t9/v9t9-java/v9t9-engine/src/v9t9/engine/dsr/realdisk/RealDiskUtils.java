@@ -4,6 +4,7 @@
 package v9t9.engine.dsr.realdisk;
 
 import v9t9.base.utils.HexUtils;
+import v9t9.engine.cpu.Executor;
 
 /**
  * @author ejs
@@ -34,7 +35,9 @@ public class RealDiskUtils {
 			}
 			builder.append('\n');
 		}
-		BaseDiskImage.info(builder.toString());
+		
+		Executor.getDumpfull().println(builder);
+		System.out.println(builder);
 	
 	}
 

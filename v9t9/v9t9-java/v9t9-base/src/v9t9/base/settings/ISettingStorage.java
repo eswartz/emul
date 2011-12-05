@@ -13,8 +13,6 @@ import java.io.OutputStream;
  *
  */
 public interface ISettingStorage {
-	void setObjectHandler(ISettingStorageObjectHandler handler);
-	
 	ISettingSection load(InputStream inputStream) throws IOException;
 	void save(OutputStream outputStream, ISettingSection section) throws IOException;
 }

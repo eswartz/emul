@@ -40,7 +40,7 @@ import org.eclipse.swt.widgets.Shell;
 
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
-import v9t9.base.properties.SettingProperty;
+import v9t9.base.settings.SettingProperty;
 import v9t9.common.dsr.IDiskDsr;
 import v9t9.common.dsr.IDsrHandler;
 import v9t9.common.dsr.IDsrSettings;

@@ -14,6 +14,7 @@ import java.util.List;
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
 import v9t9.base.settings.Logging;
+import v9t9.base.settings.SettingProperty;
 import v9t9.common.compiler.ICompiledCode;
 import v9t9.common.compiler.ICompiler;
 import v9t9.common.compiler.ICompilerStrategy;
@@ -60,18 +61,27 @@ public class Executor implements IExecutor {
 
 	private final ICpuMetrics cpuMetrics;
 
+	private SettingProperty compile;
+
+	private SettingProperty singleStep;
+
     public Executor(ICpu cpu, ICpuMetrics cpuMetrics, 
     		IInterpreter interpreter, ICompiler compiler, 
     		ICompilerStrategy compilerStrategy,
     		final IInstructionListener dumpFullReporter, final IInstructionListener dumpReporter) {
+    	
+    	compile = cpu.getMachine().getClient().getSettingsHandler().get(settingCompile);
+    	singleStep = cpu.getMachine().getClient().getSettingsHandler().get(settingSingleStep);
+    	
         this.cpu = cpu;
 		this.cpuMetrics = cpuMetrics;
         this.interp = interpreter;
         this.compilerStrategy = compilerStrategy;
+        
         compilerStrategy.setup(this, compiler);
         
         final Object lock = Executor.this.cpu.getMachine().getExecutionLock();
-        ICpu.settingDumpFullInstructions.addListener(new IPropertyListener() {
+        cpu.settingDumpFullInstructions().addListener(new IPropertyListener() {
 
 			public void propertyChanged(IProperty setting) {
 				synchronized (lock) {
@@ -88,7 +98,7 @@ public class Executor implements IExecutor {
 			}
         	
         });
-        ICpu.settingDumpInstructions.addListener(new IPropertyListener() {
+        cpu.settingDumpInstructions().addListener(new IPropertyListener() {
 			public void propertyChanged(IProperty setting) {
 				synchronized (lock) {
 					if (setting.getBoolean()) {
@@ -120,7 +130,7 @@ public class Executor implements IExecutor {
         	}
         	
         });
-        ICpu.settingRealTime.addListener(new IPropertyListener() {
+        cpu.settingRealTime().addListener(new IPropertyListener() {
 
 			public void propertyChanged(IProperty setting) {
 				interruptExecution = Boolean.TRUE;
@@ -141,9 +151,16 @@ public class Executor implements IExecutor {
         	
         });
         
-        Logging.registerLog(ICpu.settingDumpInstructions, "instrs.txt");
-        Logging.registerLog(ICpu.settingDumpFullInstructions, "instrs_full.txt");
+        Logging.registerLog(cpu.settingDumpInstructions(), "instrs.txt");
+        Logging.registerLog(cpu.settingDumpFullInstructions(), "instrs_full.txt");
     }
+
+	public SettingProperty settingCompile() {
+		return compile;
+	}
+	public SettingProperty settingSingleStep() {
+		return singleStep;
+	}
 
     /* (non-Javadoc)
 	 * @see v9t9.engine.cpu.IExecutor#interpretOneInstruction()
@@ -158,7 +175,7 @@ public class Executor implements IExecutor {
 	 */
     @Override
 	public void execute() {
-    	if (cpu.isIdle() && ICpu.settingRealTime.getBoolean()) {
+    	if (cpu.isIdle() && cpu.settingRealTime().getBoolean()) {
     		if (cpu.isThrottled())
     			return;
     		/*
@@ -193,7 +210,7 @@ public class Executor implements IExecutor {
 				interpretOneInstruction();
 			} else {
 				interruptExecution = Boolean.FALSE;
-				if (ICpu.settingRealTime.getBoolean()) {
+				if (cpu.settingRealTime().getBoolean()) {
 					while (!cpu.isThrottled() && !interruptExecution) {
 						interp.executeChunk(10, this);
 					}
@@ -231,13 +248,6 @@ public class Executor implements IExecutor {
             cpu.handleInterrupts();
 		}
 	}
-	public static PrintWriter getDump() {
-        return Logging.getLog(ICpu.settingDumpInstructions);
-    }
-
-    public static PrintWriter getDumpfull() {
-    	return Logging.getLog(ICpu.settingDumpFullInstructions);
-    }
  
 	/* (non-Javadoc)
 	 * @see v9t9.engine.cpu.IExecutor#recordMetrics()
@@ -252,7 +262,7 @@ public class Executor implements IExecutor {
 		MetricEntry entry = new MetricEntry(
 				(int) nInstructions,
 				(int) (totalCycleCount - lastCycleCount), 
-				(int) ICpu.settingCyclesPerSecond.getInt(),
+				(int) cpu.settingCyclesPerSecond().getInt(),
 				nVdpInterrupts, cpu.getAndResetInterruptCount(), 
 				nCompiledInstructions, (int) nSwitches, (int) nCompiles);
 
@@ -374,7 +384,7 @@ public class Executor implements IExecutor {
     	int oldCount = debugCount; 
     	debugCount += i;
     	if ((oldCount == 0) != (debugCount == 0))
-    		ICpu.settingDumpFullInstructions.setBoolean(i > 0);
+    		cpu.settingDumpFullInstructions().setBoolean(i > 0);
 		
 	}
 	

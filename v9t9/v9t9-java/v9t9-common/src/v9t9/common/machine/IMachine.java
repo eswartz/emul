@@ -19,9 +19,6 @@ import v9t9.common.modules.IModuleManager;
  */
 public interface IMachine extends IBaseMachine {
 
-	IClient getClient();
-
-	void setClient(IClient client);
 
 	IExecutor getExecutor();
 

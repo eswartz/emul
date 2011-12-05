@@ -12,13 +12,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
-import v9t9.base.properties.SettingProperty;
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.settings.ISettingStorage;
+import v9t9.base.settings.SettingProperty;
 import v9t9.base.settings.SettingsSection;
 import v9t9.base.settings.XMLSettingStorage;
 
@@ -28,8 +30,12 @@ import v9t9.base.settings.XMLSettingStorage;
  */
 public abstract class BaseStoredSettings implements IStoredSettings {
 
+	protected Map<String, SettingProperty> registeredSettings;
+	
 	private static final String ROOT = "root";
 	protected ISettingSection section;
+	
+	
 	protected List<SettingProperty> trackedSettings;
 	protected boolean isLoading;
 	protected IPropertyListener trackedSettingListener;
@@ -38,6 +44,7 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 
 	public BaseStoredSettings() {
 		section = new SettingsSection();
+		registeredSettings = new HashMap<String, SettingProperty>();
 		trackedSettings = new ArrayList<SettingProperty>();
 		trackedSettingListener = new IPropertyListener() {
 			
@@ -156,7 +163,35 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.settings.IStoredSettings#register(v9t9.common.settings.SettingDefinition)
+	 */
+	@Override
+	public SettingProperty findOrCreate(SettingDefinition def) {
+		SettingProperty prop = registeredSettings.get(def.getName());
+		if (prop == null) {
+			prop = def.createSetting();
+			registeredSettings.put(def.getName(), prop);
+		}
+		return prop;
+	}
+	/* (non-Javadoc)
+	 * @see v9t9.common.settings.IStoredSettings#register(v9t9.common.settings.SettingDefinition)
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T extends SettingProperty> T findOrCreate(T defaultProperty) {
+		SettingProperty prop = registeredSettings.get(defaultProperty.getName());
+		if (prop == null) {
+			prop = defaultProperty;
+			registeredSettings.put(defaultProperty.getName(), prop);
+		}
+		return (T) prop;
+	}
+
+	/*
 	public void register(SettingProperty setting) {
+		registeredSettings.put(setting.getName(), setting);
 		if (!trackedSettings.contains(setting)) {
 			trackedSettings.add(setting);
 			setting.addListener(trackedSettingListener);
@@ -167,16 +202,11 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 	}
 
 	public void register(SettingProperty setting, String custom) {
-		if (!trackedSettings.contains(setting)) {
-			trackedSettings.add(setting);
-			setting.addListener(trackedSettingListener);
-			if (isLoaded) {
-				setting.loadState(section);
-			}
-		}
+		register(setting);
 		if (custom != null && setting.isDefault() && setting.getValue() instanceof String)
 			setting.setString(custom);
 	}
+	*/
 	
 	public void clearConfigVar(String configVar) {
 		section.put(configVar, (String) null);

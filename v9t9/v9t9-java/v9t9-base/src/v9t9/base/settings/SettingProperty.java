@@ -1,7 +1,10 @@
 /**
  * 
  */
-package v9t9.base.properties;
+package v9t9.base.settings;
+
+import v9t9.base.properties.AbstractProperty;
+import v9t9.base.properties.PropertyUtils;
 
 /**
  * @author ejs
@@ -18,6 +21,7 @@ public class SettingProperty extends AbstractProperty {
 		this.label = label;
 		this.defaultValue = value;
 		this.value = value;
+		setDescription(description);
 	}
 	public SettingProperty(String name, Class<?> klass, Object value) {
 		super(null, klass, name);
