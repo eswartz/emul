@@ -13,13 +13,15 @@ import java.util.Map;
 
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.settings.SettingProperty;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.dsr.IMemoryTransfer;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
-import v9t9.common.settings.IconSettingProperty;
+import v9t9.common.settings.IconSettingSchema;
+import v9t9.common.settings.Settings;
 import v9t9.engine.EmulatorData;
 import v9t9.engine.dsr.DeviceIndicatorProvider;
 import v9t9.engine.dsr.IDevIcons;
@@ -27,7 +29,6 @@ import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.GplMmio;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
-import v9t9.engine.settings.WorkspaceSettings;
 import v9t9.machine.ti99.dsr.DsrHandler9900;
 import v9t9.machine.ti99.machine.TI99Machine;
 import v9t9.machine.ti99.memory.mmio.ConsoleGramWriteArea;
@@ -40,7 +41,8 @@ import v9t9.machine.ti99.memory.mmio.ConsoleGromReadArea;
 public class PCodeDsr implements DsrHandler9900 {
 	private static URL pcodeIconPath = EmulatorData.getDataURL("icons/pcode_system.png");
 
-	static public final IconSettingProperty settingPCodeCardEnabled = new IconSettingProperty(
+	static public final IconSettingSchema settingPcodeCardEnabled = new IconSettingSchema(
+			ISettingsHandler.WORKSPACE,
 			"PCodeCardEnabled", "Enable P-Code Card", 
 			"Enables the UCSD Pascal P-Code card.",
 			new Boolean(false),
@@ -54,15 +56,17 @@ public class PCodeDsr implements DsrHandler9900 {
 	private DiskMemoryEntry gromMemoryEntry;
 	private SettingProperty pcodeActive;
 
+	private SettingProperty pcodeCardEnabled;
+
 	public static final String PCODE = "PCODE";
 	/**
 	 * @param machine
 	 */
 	public PCodeDsr(TI99Machine machine) {
-		WorkspaceSettings.CURRENT.register(settingPCodeCardEnabled);
 		this.machine = machine;
 		pcodeActive = new SettingProperty("pcodeActive", Boolean.FALSE);
-		pcodeActive.addEnablementDependency(settingPCodeCardEnabled);
+		pcodeCardEnabled = Settings.get(machine, settingPcodeCardEnabled);
+		pcodeActive.addEnablementDependency(pcodeCardEnabled);
 	}
 
 	/* (non-Javadoc)
@@ -79,7 +83,7 @@ public class PCodeDsr implements DsrHandler9900 {
 	@Override
 	public void activate(IMemoryDomain console) throws IOException {
 		// DSR ROM
-		if (!settingPCodeCardEnabled.getBoolean())
+		if (!pcodeCardEnabled.getBoolean())
 			return;
 		
 		pcodeActive.setBoolean(true);
@@ -109,6 +113,7 @@ public class PCodeDsr implements DsrHandler9900 {
 		
 		if (dsrMemoryEntry == null) {
 			this.dsrMemoryEntry = (PCodeDsrRomBankedMemoryEntry) DiskMemoryEntry.newBankedWordMemoryFromFile(
+					Settings.getSettings(machine),
 					PCodeDsrRomBankedMemoryEntry.class,
 					0x4000, 0x2000, memory, 
 					"P-Code DSR ROM", console,
@@ -127,7 +132,7 @@ public class PCodeDsr implements DsrHandler9900 {
 		}
 		
 		if (pcodeGromMmio == null) {
-			pcodeGromMmio = new GplMmio(pcodeDomain);
+			pcodeGromMmio = new GplMmio(machine, pcodeDomain);
 			readMmioEntry = null;
 			writeMmioEntry = null;
 		}
@@ -174,7 +179,7 @@ public class PCodeDsr implements DsrHandler9900 {
 	@Override
 	public Map<String, Collection<SettingProperty>> getEditableSettingGroups() {
 		return Collections.<String, Collection<SettingProperty>>singletonMap("UCSD P-System",
-				Collections.<SettingProperty>singletonList(settingPCodeCardEnabled));
+				Collections.<SettingProperty>singletonList(pcodeCardEnabled));
 	}
 
 	/* (non-Javadoc)
@@ -205,7 +210,7 @@ public class PCodeDsr implements DsrHandler9900 {
 		if (sub == null)
 			return;
 		
-		settingPCodeCardEnabled.loadState(sub);
+		pcodeCardEnabled.loadState(sub);
 		
 		try {
 			ensureSetup();
@@ -220,7 +225,7 @@ public class PCodeDsr implements DsrHandler9900 {
 	@Override
 	public void saveState(ISettingSection section) {
 		ISettingSection sub = section.addSection("P-Code");
-		settingPCodeCardEnabled.saveState(sub);
+		pcodeCardEnabled.saveState(sub);
 	}
 
 	/* (non-Javadoc)

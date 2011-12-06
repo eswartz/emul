@@ -9,9 +9,11 @@ import java.io.PrintWriter;
 
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.settings.Logging;
+import v9t9.base.settings.SettingProperty;
 import v9t9.base.sound.ISoundVoice;
 import v9t9.base.utils.BinaryUtils;
 import v9t9.base.utils.HexUtils;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.engine.memory.DiskMemoryEntry;
@@ -72,12 +74,15 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 	private SpeechVoice[] speechVoices;
 
 	private boolean speechOn;
+
+	private SettingProperty logSpeech;
 	
-	public TMS5220(IMemoryDomain speech) {
+	public TMS5220(ISettingsHandler settings, IMemoryDomain speech) {
 		speechVoices = new SpeechVoice[1];
 		speechVoices[0] = new SpeechVoice();
 		
-		Logging.registerLog(LPCSpeech.settingLogSpeech, 
+		logSpeech = settings.get(LPCSpeech.settingLogSpeech);
+		Logging.registerLog(logSpeech, 
 				new PrintWriter(System.out, true));
 		
 		try {
@@ -88,10 +93,10 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 			System.err.println("Failed to load: " + e.getMessage());
 		}
 		fifo = new byte[16];
-		lpc = new LPCSpeech();
+		lpc = new LPCSpeech(settings);
 		reset();
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see v9t9.engine.hardware.ISpeechChip#getSpeechVoices()
 	 */
@@ -121,7 +126,7 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 	}
 
 	public void write(byte val) {
-		Logging.writeLogLine(2, LPCSpeech.settingLogSpeech, "speech write: " + HexUtils.toHex2((val&0xff)));
+		Logging.writeLogLine(2, logSpeech, "speech write: " + HexUtils.toHex2((val&0xff)));
 		if ((gate & GT_WCMD) != 0)
 			command(val);
 		else
@@ -138,14 +143,14 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 			gate = (gate & ~GT_RDAT) | GT_RSTAT;
 			ret = data;
 		}
-		Logging.writeLogLine(3, LPCSpeech.settingLogSpeech, "Speech read: " + HexUtils.toHex2(ret));
+		Logging.writeLogLine(3, logSpeech, "Speech read: " + HexUtils.toHex2(ret));
 		return ret;
 	}
 
 	public void command(byte cmd) {
 		command = (byte) (cmd & 0x70);
-		if (Logging.getLog(3, LPCSpeech.settingLogSpeech) != null) {
-			Logging.writeLogLine(3, LPCSpeech.settingLogSpeech,
+		if (Logging.getLog(3, logSpeech) != null) {
+			Logging.writeLogLine(3, logSpeech,
 				"Cmd="+HexUtils.toHex2(cmd)+"  Status: " + 
 				HexUtils.toHex2(status));
 		}
@@ -186,7 +191,7 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 			data = speechRom.readByte(addr);
 		addr++;
 		//
-		Logging.writeLogLine(2, LPCSpeech.settingLogSpeech,
+		Logging.writeLogLine(2, logSpeech,
 				"Speech memory "+HexUtils.toHex4(addr)+" = " + HexUtils.toHex2(data));
 		return data;
 	}
@@ -206,7 +211,7 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 	{
 		addr_pos = (addr_pos + 1) % 5;
 		addr = (addr >> 4) | (nybble << 16);
-		Logging.writeLogLine(3, LPCSpeech.settingLogSpeech,
+		Logging.writeLogLine(3, logSpeech,
 				"Speech addr: "+HexUtils.toHex4(addr));
 	}
 
@@ -232,7 +237,7 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 
 	private void speak()
 	{
-		Logging.writeLogLine(1, LPCSpeech.settingLogSpeech,
+		Logging.writeLogLine(1, logSpeech,
 				"Speaking phrase at "+HexUtils.toHex4(addr));
 
 		//demo_record_event(demo_type_speech, demo_speech_starting);
@@ -258,7 +263,7 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 	
 	private void speakExternal()
 	{
-		Logging.writeLogLine(1, LPCSpeech.settingLogSpeech,
+		Logging.writeLogLine(1, logSpeech,
 				"Speaking external data");
 		//demo_record_event(demo_type_speech, demo_speech_starting);
 
@@ -273,7 +278,7 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 	private void writeFIFO(byte val) {
 		fifo[in] = BinaryUtils.swapbits(val);
 		in = (byte) ((in + 1) & 15);
-		Logging.writeLogLine(3, LPCSpeech.settingLogSpeech,
+		Logging.writeLogLine(3, logSpeech,
 				"FIFO write: "+HexUtils.toHex2(val)+"; len = " +len);
 
 		//System.err.println("FIFO write: "+val+"  len="+len);
@@ -292,7 +297,7 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 	{
 		int         ret = fifo[out] & 0xff;
 
-		Logging.writeLogLine(3, LPCSpeech.settingLogSpeech,
+		Logging.writeLogLine(3, logSpeech,
 				"FIFO read: "+HexUtils.toHex2(ret)+"; len = " + len);
 
 		if (len == 0) {
@@ -300,7 +305,7 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 			status &= ~SS_TS;
 			reset();
 			SpeechOff();
-			Logging.writeLogLine(1, LPCSpeech.settingLogSpeech,
+			Logging.writeLogLine(1, logSpeech,
 					"Speech timed out");
 		}
 
@@ -352,7 +357,7 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 
 	private void reset()
 	{
-		Logging.writeLogLine(1, LPCSpeech.settingLogSpeech, "Speech reset");
+		Logging.writeLogLine(1, logSpeech, "Speech reset");
 		status = SS_BE | SS_BL;
 		purgeFIFO();
 		command = 0x70;
@@ -380,7 +385,7 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 		
 		boolean do_frame = false;
 
-		Logging.writeLogLine(2, LPCSpeech.settingLogSpeech,
+		Logging.writeLogLine(2, logSpeech,
 				"Speech generating");
 		//logger(_L | L_2, _("Speech Interrupt\n"));
 
@@ -397,7 +402,7 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 						//demo_record_event(demo_type_speech, demo_speech_terminating);
 
 						// this apparently happens in normal cases
-						Logging.writeLogLine(1, LPCSpeech.settingLogSpeech,
+						Logging.writeLogLine(1, logSpeech,
 							"Speech timed out");
 					}
 				}
@@ -411,7 +416,7 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 						//demo_record_event(demo_type_speech, demo_speech_terminating);
 
 						// this apparently happens in normal cases
-						Logging.writeLogLine(1, LPCSpeech.settingLogSpeech,
+						Logging.writeLogLine(1, logSpeech,
 							"Speech timed out");
 					}
 				}
@@ -440,7 +445,7 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 	}
 
 	private void SpeechDone() {
-		Logging.writeLogLine(1, LPCSpeech.settingLogSpeech,
+		Logging.writeLogLine(1, logSpeech,
 				"Done with speech phrase");
 		SpeechOff();			/* stop interrupting */
 		//demo_record_event(demo_type_speech, demo_speech_stopping);

@@ -7,7 +7,6 @@
 package v9t9.engine.machine;
 
 import java.io.IOException;
-import java.text.MessageFormat;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -18,9 +17,11 @@ import java.util.TimerTask;
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
 import v9t9.base.settings.ISettingSection;
+import v9t9.base.settings.SettingProperty;
 import v9t9.base.timer.FastTimer;
 import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.client.IClient;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.AbortedException;
 import v9t9.common.cpu.CpuMetrics;
 import v9t9.common.cpu.ICpu;
@@ -29,7 +30,6 @@ import v9t9.common.cpu.IExecutor;
 import v9t9.common.dsr.IDsrManager;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyEvent;
-import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.files.DataFiles;
 import v9t9.common.hardware.ICruChip;
 import v9t9.common.hardware.ISoundChip;
@@ -48,7 +48,6 @@ import v9t9.engine.dsr.DsrManager;
 import v9t9.engine.events.RecordingEventNotifier;
 import v9t9.engine.keyboard.KeyboardState;
 import v9t9.engine.modules.ModuleManager;
-import v9t9.engine.settings.WorkspaceSettings;
 
 /** Encapsulate all the information about a running emulated machine.
  * @author ejs
@@ -103,7 +102,17 @@ abstract public class MachineBase implements IMachine {
 	private IPropertyListener pauseListener;
 	private Runnable speechTimerTask;
 	
-    public MachineBase(IMachineModel machineModel) {
+	protected SettingProperty pauseMachine;
+	protected SettingProperty moduleList;
+	protected SettingProperty realTime;
+	private final ISettingsHandler settings;
+	
+    public MachineBase(ISettingsHandler settings, IMachineModel machineModel) {
+    	this.settings = settings;
+		pauseMachine = settings.get(settingPauseMachine);
+    	realTime = settings.get(ICpu.settingRealTime);
+    	moduleList = settings.get(settingModuleList);
+    	
     	pauseListener = new IPropertyListener() {
     		
     		public void propertyChanged(IProperty setting) {
@@ -116,12 +125,12 @@ abstract public class MachineBase implements IMachine {
     		}
     		
     	};
-		settingPauseMachine.addListener(pauseListener);
+		settings.get(settingPauseMachine).addListener(pauseListener);
     	
     	this.machineModel = machineModel;
     	
     	runnableList = Collections.synchronizedList(new LinkedList<Runnable>());
-    	this.memoryModel = machineModel.getMemoryModel();
+    	this.memoryModel = machineModel.createMemoryModel(this);
     	this.memory = memoryModel.getMemory();
     	this.console = memoryModel.getConsole();
     	
@@ -141,6 +150,12 @@ abstract public class MachineBase implements IMachine {
 
 	}
 
+    /**
+	 * @return the settings
+	 */
+	public ISettingsHandler getSettings() {
+		return settings;
+	}
 
 	protected void init(IMachineModel machineModel) {
     	vdp = machineModel.createVdp(this);
@@ -148,7 +163,7 @@ abstract public class MachineBase implements IMachine {
     	speech = machineModel.createSpeechChip(this);
     	memoryModel.initMemory(this);
     	
-    	if (!settingModuleList.getString().isEmpty()) {
+    	if (!moduleList.getString().isEmpty()) {
     		moduleManager = new ModuleManager(this);
     	}
     	
@@ -185,7 +200,7 @@ abstract public class MachineBase implements IMachine {
      */
     @Override
 	protected void finalize() throws Throwable {
-    	settingPauseMachine.removeListener(pauseListener);
+    	pauseMachine.removeListener(pauseListener);
     	
     	if (recordingNotifier != null) {
     		NotifyEvent event;
@@ -266,7 +281,7 @@ abstract public class MachineBase implements IMachine {
 	
 				@Override
 				public void run() {
-					if (IMachine.settingPauseMachine.getBoolean())
+					if (pauseMachine.getBoolean())
 						return;
 					speech.generateSpeech();
 				}
@@ -344,7 +359,7 @@ abstract public class MachineBase implements IMachine {
 	            	
     	        	
     	        	// delay if going too fast
-    				if (ICpu.settingRealTime.getBoolean()) {
+    				if (realTime.getBoolean()) {
     					if (cpu.isThrottled() && cpu.getMachine().isAlive()) {
     						// Just sleep.  Another timer thread will reset the throttle.
     						try {
@@ -544,7 +559,7 @@ abstract public class MachineBase implements IMachine {
 		DataFiles.saveState(settings);
 		
 		ISettingSection workspace = settings.addSection("Workspace");
-		WorkspaceSettings.CURRENT.save(workspace);
+		this.settings.getWorkspaceSettings().save(workspace);
 		//WorkspaceSettings.CURRENT.saveState(settings);
 		
 		synchronized (executionLock) {
@@ -590,23 +605,6 @@ abstract public class MachineBase implements IMachine {
 		synchronized (executionLock) {
 			executionLock.notifyAll();
 		}
-
-		String origWorkspace = section.get(WorkspaceSettings.currentWorkspace.getName());
-		if (origWorkspace != null) {
-			try {
-				WorkspaceSettings.loadFrom(origWorkspace);
-			} catch (IOException e) {
-				notifyEvent(Level.WARNING, 
-						MessageFormat.format(
-								"Could not find the workspace ''{0}'' referenced in the saved state",
-								origWorkspace));
-			}
-		}
-		
-		ISettingSection workspace = section.getSection("Workspace");
-		if (workspace != null) {
-			WorkspaceSettings.CURRENT.load(workspace);
-		}
 		
 		DataFiles.loadState(section);
 		
@@ -625,7 +623,6 @@ abstract public class MachineBase implements IMachine {
 
 	protected void doLoadState(ISettingSection section) {
 		memory.getModel().resetMemory();
-		//machineModel.getMemoryModel().initMemory(this);
 		if (moduleManager != null)
 			moduleManager.loadState(section.getSection("Modules"));
 		memory.loadState(section.getSection("Memory"));

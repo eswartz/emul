@@ -12,15 +12,20 @@ import v9t9.base.settings.ISettingSection;
 import v9t9.base.settings.Logging;
 import v9t9.base.settings.SettingProperty;
 import v9t9.base.utils.HexUtils;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
+import v9t9.common.machine.IBaseMachine;
 import v9t9.common.memory.IMemoryDomain;
-import v9t9.engine.cpu.Executor;
+import v9t9.common.settings.SettingSchema;
+import v9t9.common.settings.Settings;
 
 /** GPL chip entry
  * @author ejs
  */
 public class GplMmio implements IConsoleMmioReader, IConsoleMmioWriter, IPersistable {
-	static public final SettingProperty settingDumpGplAccess = new SettingProperty("DumpGplAccess", new Boolean(false));
+	static public final SettingSchema settingDumpGplAccess = new SettingSchema(
+			ISettingsHandler.TRANSIENT,
+			"DumpGplAccess", new Boolean(false));
     
     private IMemoryDomain domain;
     
@@ -28,17 +33,25 @@ public class GplMmio implements IConsoleMmioReader, IConsoleMmioWriter, IPersist
     boolean gromwaddrflag, gromraddrflag;
     byte buf;
 
+	private SettingProperty dumpGplAccess;
+
+	private SettingProperty dumpFullInstructions;
+
     /**
+     * @param machine TODO
      * @param machine
      */
-    public GplMmio(IMemoryDomain domain) {
+    public GplMmio(IBaseMachine machine, IMemoryDomain domain) {
         if (domain == null) {
 			throw new IllegalArgumentException();
 		}
         this.domain = domain;
         
+        dumpFullInstructions = Settings.get(machine, ICpu.settingDumpFullInstructions);
+        dumpGplAccess = Settings.get(machine, settingDumpGplAccess);
+        
 		// interleave with CPU log
-		Logging.registerLog(settingDumpGplAccess, "instrs_full.txt");
+		Logging.registerLog(dumpGplAccess, "instrs_full.txt");
 
      }
 
@@ -73,9 +86,6 @@ public class GplMmio implements IConsoleMmioReader, IConsoleMmioWriter, IPersist
     	
     	if ((addr & 2) != 0) {
     	    /* >9802, address read */
-    	    //temp = getNextAddr(gromaddr);
-    	    //ret = getAddrByte();
-    	    //gromaddr = (short) (temp << 8);
     		gromwaddrflag = false;
     		if (gromraddrflag)
     			ret = (byte) (gromaddr & 0xff);
@@ -84,9 +94,9 @@ public class GplMmio implements IConsoleMmioReader, IConsoleMmioWriter, IPersist
     	    gromraddrflag = !gromraddrflag;
     	} else {
     	    /* >9800, memory read */
-    	    //gromaddrflag = false;
-    		if (ICpu.settingDumpFullInstructions.getBoolean())
-    			Executor.getDumpfull().println("Read GPL >" + HexUtils.toHex4(gromaddr - 1) + " = >" + HexUtils.toHex2(buf));
+    		if (dumpGplAccess.getBoolean() && dumpFullInstructions.getBoolean())
+    			Logging.getLog(dumpFullInstructions).println(
+    					"Read GPL >" + HexUtils.toHex4(gromaddr - 1) + " = >" + HexUtils.toHex2(buf));
 
     	    ret = readGrom();
     	}

@@ -78,6 +78,8 @@ import org.lwjgl.util.glu.GLU;
 
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
+import v9t9.base.settings.SettingProperty;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.files.DataFiles;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.video.ICanvas;
@@ -145,8 +147,11 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	private TextureLoader textureLoader = new TextureLoader();
 	private Map<MonitorEffect, Integer> displayListMap = new HashMap<MonitorEffect, Integer>();
 
-	public SwtLwjglVideoRenderer(IVdpChip vdp) {
-		super(vdp);
+	private SettingProperty monitorDrawing;
+
+	public SwtLwjglVideoRenderer(ISettingsHandler settings, IVdpChip vdp) {
+		super(settings, vdp);
+		monitorDrawing = settings.get(BaseEmulatorWindow.settingMonitorDrawing);
 	}
 
 	protected IVdpCanvas createVdpCanvas() {
@@ -162,7 +167,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	 */
 	@Override
 	public void dispose() {
-		BaseEmulatorWindow.settingMonitorDrawing.removeListener(this);
+		monitorDrawing.removeListener(this);
 		glCanvas.getParent().removeListener(SWT.Resize, resizeListener);
 		super.dispose();
 	}
@@ -204,7 +209,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 		glData.depthSize = 0;
 		glCanvas = new GLCanvas(parent, flags | getStyleBits(), glData);
 		
-		BaseEmulatorWindow.settingMonitorDrawing.addListener(this);
+		monitorDrawing.addListener(this);
 
 		
 		resizeListener = new Listener() {
@@ -275,8 +280,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	}
 	
 	private MonitorEffect getEffect() {
-		return BaseEmulatorWindow.settingMonitorDrawing.getBoolean() 
-			? CRT : STANDARD;
+		return monitorDrawing.getBoolean() ? CRT : STANDARD;
 	}
 	
 	private void compileLinkShaders() {

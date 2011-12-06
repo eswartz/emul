@@ -4,6 +4,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
 
+import v9t9.base.settings.SettingProperty;
 import v9t9.base.utils.HexUtils;
 import v9t9.common.asm.IDecompileInfo;
 import v9t9.common.asm.IHighLevelInstruction;
@@ -14,6 +15,7 @@ import v9t9.common.compiler.ICompiler;
 import v9t9.common.cpu.AbortedException;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.memory.IMemoryEntry;
+import v9t9.common.settings.Settings;
 
 /** This represents a compiled block of code. */
 public class CodeBlock implements ICompiledCode, v9t9.common.memory.IMemoryListener {
@@ -40,6 +42,8 @@ public class CodeBlock implements ICompiledCode, v9t9.common.memory.IMemoryListe
 	private ICompiler compiler;
     
     static int uniqueClassSuffix;
+	private SettingProperty optimize;
+	private SettingProperty optimizeStatus;
 
     public CodeBlock(ICompiler compiler, IExecutor exec, DirectLoader loader, IMemoryEntry ent, int addr, int size) {
         this.compiler = compiler;
@@ -53,6 +57,10 @@ public class CodeBlock implements ICompiledCode, v9t9.common.memory.IMemoryListe
         //this.className = baseName;
         exec.getCpu().getMachine().getMemory().addListener(this);
         this.highLevel = compiler.getHighLevelCode(ent);
+        
+	    optimize = Settings.get(exec.getCpu(), ICompiler.settingOptimize);
+		optimizeStatus = Settings.get(exec.getCpu(), ICompiler.settingOptimizeStatus);
+
     }
     
 
@@ -124,8 +132,8 @@ public class CodeBlock implements ICompiledCode, v9t9.common.memory.IMemoryListe
         	    	insts[i] = highLevel.getInstruction(addr + i * 2);
         	    }
         	    
-        	    if (ICompiler.settingOptimize.getBoolean() 
-        	    		&& ICompiler.settingOptimizeStatus.getBoolean()) {
+				if (optimize.getBoolean() 
+        	    		&& optimizeStatus.getBoolean()) {
         	    	HLInstructionOptimizer.peephole_status(insts, numinsts);
         	    }
         	    

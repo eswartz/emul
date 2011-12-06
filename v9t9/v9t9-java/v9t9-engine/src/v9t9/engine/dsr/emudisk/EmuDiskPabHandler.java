@@ -10,7 +10,6 @@ import java.util.Map;
 
 
 import v9t9.base.utils.HexUtils;
-import v9t9.common.cpu.ICpu;
 import v9t9.common.dsr.IMemoryTransfer;
 import v9t9.common.files.FDR;
 import v9t9.common.files.NativeFDRFile;
@@ -19,7 +18,6 @@ import v9t9.common.files.NativeFileFactory;
 import v9t9.common.files.NativeTextFile;
 import v9t9.common.files.V9t9FDR;
 import v9t9.common.memory.ByteMemoryAccess;
-import v9t9.engine.cpu.Executor;
 import v9t9.engine.dsr.DsrException;
 import v9t9.engine.dsr.PabConstants;
 import v9t9.engine.dsr.PabHandler;
@@ -45,17 +43,16 @@ public class EmuDiskPabHandler extends PabHandler {
 
 	public EmuDiskPabHandler(Dumper dumper, short cruaddr, IMemoryTransfer xfer, IFileMapper mapper, short vdpNameCompareBuffer) {
 		super(xfer);
-		this.dumper = dumper;
-		init(cruaddr, mapper, vdpNameCompareBuffer);
+		init(dumper, cruaddr, mapper, vdpNameCompareBuffer);
 	}
 	public EmuDiskPabHandler(Dumper dumper, short cruaddr, IMemoryTransfer xfer, IFileMapper mapper, PabStruct pab, short vdpNameCompareBuffer) {
 		super(xfer, pab);
-		this.dumper = dumper;
-		init(cruaddr, mapper, vdpNameCompareBuffer);
+		init(dumper, cruaddr, mapper, vdpNameCompareBuffer);
 	}
 
-	private void init(short cruaddr, IFileMapper mapper,
+	private void init(Dumper dumper, short cruaddr, IFileMapper mapper,
 			short vdpNameCompareBuffer) {
+		this.dumper = dumper;
 		this.block = getPabInfoBlock(cruaddr);
 		this.mapper = mapper;
 

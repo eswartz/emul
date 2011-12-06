@@ -3,7 +3,6 @@
  */
 package v9t9.common.machine;
 
-import v9t9.common.client.IClient;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.dsr.IDsrManager;
 import v9t9.common.hardware.ICruChip;

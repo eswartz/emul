@@ -8,6 +8,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.PrintWriter;
 
 import v9t9.engine.interpreter.IInterpreter;
+import v9t9.machine.common.tests.TestSettingsHandler;
 import v9t9.machine.f99b.cpu.CpuF99b;
 import v9t9.machine.f99b.cpu.CpuStateF99b;
 import v9t9.machine.f99b.cpu.DumpFullReporterF99b;
@@ -50,6 +51,8 @@ public class BaseF99bTest extends BaseForthCompTest {
 
 		": compile, 1 urshift $8000 OR postpone LITERAL ;\n"+
 		"";
+
+	private TestSettingsHandler settings;
 	
 	/* (non-Javadoc)
 	 * @see v9t9.forthcomp.test.BaseForthCompTest#initCpu()
@@ -57,7 +60,8 @@ public class BaseF99bTest extends BaseForthCompTest {
 	@Override
 	protected void initCpu() {
 		f99bMachineModel = new F99bMachineModel();
-		f99Machine = (F99bMachine) f99bMachineModel.createMachine();
+		settings = new TestSettingsHandler();
+		f99Machine = (F99bMachine) f99bMachineModel.createMachine(settings);
 		cpu = (CpuF99b) f99Machine.getCpu();
 	
 		DumpFullReporterF99b dump = new DumpFullReporterF99b((CpuF99b) cpu,  new PrintWriter(System.out));

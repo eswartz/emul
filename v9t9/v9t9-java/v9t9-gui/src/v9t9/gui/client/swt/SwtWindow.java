@@ -47,6 +47,7 @@ import org.eclipse.swt.widgets.Shell;
 
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
+import v9t9.base.settings.SettingProperty;
 import v9t9.common.client.IClient;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
@@ -54,6 +55,7 @@ import v9t9.common.cpu.IExecutor;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.machine.IMachine;
+import v9t9.common.settings.Settings;
 import v9t9.gui.Emulator;
 import v9t9.gui.common.BaseEmulatorWindow;
 
@@ -81,6 +83,11 @@ public class SwtWindow extends BaseEmulatorWindow{
 
 	private ImageProvider buttonImageProvider;
 	private ImageProvider statusImageProvider;
+
+	private SettingProperty fullScreen;
+	private SettingProperty realTime;
+	private SettingProperty compile;
+	private SettingProperty cyclesPerSecond;
 
 	class EmulatorWindowLayout extends Layout {
 
@@ -158,7 +165,13 @@ public class SwtWindow extends BaseEmulatorWindow{
 	
 	public SwtWindow(Display display, final IMachine machine, final ISwtVideoRenderer videoRenderer, final ISettingsHandler settingsHandler) {
 		super(machine);
-				
+		
+		fullScreen = Settings.get(machine, settingFullScreen);
+		realTime = Settings.get(machine, ICpu.settingRealTime);
+		compile = Settings.get(machine, IExecutor.settingCompile);
+		cyclesPerSecond = Settings.get(machine, ICpu.settingCyclesPerSecond);
+		
+		
 		toolShells = new HashMap<String, ToolShell>();
 		toolUiTimer = new Timer(true);
 		
@@ -319,7 +332,7 @@ public class SwtWindow extends BaseEmulatorWindow{
 			}
 			
 		};
-		BaseEmulatorWindow.settingFullScreen.addListener(fullScreenListener);
+		fullScreen.addListener(fullScreenListener);
 		
 		shell.open();
 		
@@ -551,13 +564,13 @@ public class SwtWindow extends BaseEmulatorWindow{
 			viewMenuHeader.setMenu(viewMenu);
 		}
 
-		final MenuItem fullScreen = new MenuItem(viewMenu, SWT.CHECK);
-		fullScreen.setSelection(settingFullScreen.getBoolean());
-		fullScreen.setText("&Full Screen");
-		fullScreen.addSelectionListener(new SelectionAdapter() {
+		final MenuItem fullScreenI = new MenuItem(viewMenu, SWT.CHECK);
+		fullScreenI.setSelection(fullScreen.getBoolean());
+		fullScreenI.setText("&Full Screen");
+		fullScreenI.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				settingFullScreen.setBoolean(fullScreen.getSelection());
+				fullScreen.setBoolean(fullScreenI.getSelection());
 			}
 		});
 
@@ -749,14 +762,14 @@ public class SwtWindow extends BaseEmulatorWindow{
 		
 		MenuItem item = new MenuItem(menu, SWT.CHECK);
 		item.setText("Unbounded");
-		if (!ICpu.settingRealTime.getBoolean()) {
+		if (!realTime.getBoolean()) {
 			item.setSelection(true);
 		}
 		item.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				boolean setting = false;
-				ICpu.settingRealTime.setBoolean(setting);
+				realTime.setBoolean(setting);
 			}
 		});
 
@@ -770,13 +783,13 @@ public class SwtWindow extends BaseEmulatorWindow{
 			new MenuItem(menu, SWT.SEPARATOR);
 			item = new MenuItem(menu, SWT.CHECK);
 			item.setText("Compile to Bytecode");
-			if (IExecutor.settingCompile.getBoolean()) {
+			if (compile.getBoolean()) {
 				item.setSelection(true);
 			}
 			item.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
-					IExecutor.settingCompile.setBoolean(!IExecutor.settingCompile.getBoolean());
+					compile.setBoolean(!compile.getBoolean());
 				}
 			});
 		}
@@ -785,8 +798,8 @@ public class SwtWindow extends BaseEmulatorWindow{
 	}
 
 	private void createAccelMenuItem(final Menu menu, double factor, String label) {
-		boolean isRealTime = ICpu.settingRealTime.getBoolean();
-		int curCycles = ICpu.settingCyclesPerSecond.getInt();
+		boolean isRealTime = realTime.getBoolean();
+		int curCycles = cyclesPerSecond.getInt();
 		MenuItem item = new MenuItem(menu, SWT.RADIO);
 		final int cycles = (int) (machine.getCpu().getBaseCyclesPerSec() * factor);
 		item.setText(((factor >= 1 && factor < 10) ? "&" : "") + label + " (" + cycles + ")");
@@ -796,8 +809,8 @@ public class SwtWindow extends BaseEmulatorWindow{
 		item.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				ICpu.settingRealTime.setBoolean(true);
-				ICpu.settingCyclesPerSecond.setInt(cycles);
+				realTime.setBoolean(true);
+				cyclesPerSecond.setInt(cycles);
 			}
 		});
 	}

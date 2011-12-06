@@ -17,6 +17,7 @@ import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.settings.SettingProperty;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.settings.IconSettingProperty;
 import v9t9.engine.dsr.emudisk.EmuDiskDsrSettings;
 import v9t9.engine.dsr.emudisk.IFileMapper;
@@ -30,14 +31,19 @@ public class DiskDirectoryMapper implements IFileMapper, IPersistable {
 	public static final DiskDirectoryMapper INSTANCE = new DiskDirectoryMapper();
 	
 	static class EmuDiskSetting extends IconSettingProperty {
-		public EmuDiskSetting(String name, Object storage, URL iconPath) {
+		private SettingProperty emuDiskDsrEnabled;
+		private SettingProperty diskImageDsrEnabled;
+
+		public EmuDiskSetting(ISettingsHandler settings, String name, Object storage, URL iconPath) {
 			super(name, 
 					"DSK" + name.charAt(name.length() - 1) + " Directory",
 					"Specify the full path of the directory representing this disk.",
 					storage, iconPath);
 			
-			addEnablementDependency(EmuDiskDsrSettings.emuDiskDsrEnabled);
-			addEnablementDependency(RealDiskDsrSettings.diskImageDsrEnabled);
+			emuDiskDsrEnabled = settings.get(EmuDiskDsrSettings.emuDiskDsrEnabled);
+			addEnablementDependency(emuDiskDsrEnabled);
+			diskImageDsrEnabled = settings.get(RealDiskDsrSettings.diskImageDsrEnabled);
+			addEnablementDependency(diskImageDsrEnabled);
 		}
 		
 		/* (non-Javadoc)
@@ -45,9 +51,9 @@ public class DiskDirectoryMapper implements IFileMapper, IPersistable {
 		 */
 		@Override
 		public boolean isEnabled() {
-			if (!EmuDiskDsrSettings.emuDiskDsrEnabled.getBoolean())
+			if (!emuDiskDsrEnabled.getBoolean())
 				return false;
-			if (!RealDiskDsrSettings.diskImageDsrEnabled.getBoolean())
+			if (!diskImageDsrEnabled.getBoolean())
 				return true;
 			
 			// only DSK3 + are real disks if emu disk also enabled

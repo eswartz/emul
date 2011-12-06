@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.files.DataFiles;
@@ -24,12 +25,12 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 
 	private MemoryEntry consoleEntry;
 
-	public F99bMemoryModel() {
-		super();
+	public F99bMemoryModel(IMachine machine) {
+		super(machine);
 	}
 
 	@Override
-	protected void initSettings() {
+	protected void initSettings(ISettingsHandler settings) {
 		URL dataURL = EmulatorData.getDataURL("../../../build/forth99");
 		DataFiles.addSearchPath(dataURL.getPath());
 	}

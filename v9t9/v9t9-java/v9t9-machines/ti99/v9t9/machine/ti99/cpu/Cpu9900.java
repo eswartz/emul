@@ -6,17 +6,15 @@
  */
 package v9t9.machine.ti99.cpu;
 
-import java.io.PrintWriter;
-
-
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.utils.HexUtils;
 import v9t9.common.cpu.IStatus;
 import v9t9.common.hardware.ICruChip;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
+import v9t9.common.settings.Settings;
 import v9t9.engine.cpu.CpuBase;
-import v9t9.engine.cpu.Executor;
+import v9t9.engine.dsr.realdisk.Dumper;
 import v9t9.machine.ti99.compiler.Compiler9900;
 
 /**
@@ -31,11 +29,15 @@ public class Cpu9900 extends CpuBase {
 	public static final int INTLEVEL_LOAD = 1;
 	public static final int INTLEVEL_INTREQ = 2;
 	private final IVdpChip vdp;
+	private Dumper dumper;
 	
     public Cpu9900(IMachine machine, int interruptTick, IVdpChip vdp) {
     	super(machine, new CpuState9900(machine.getConsole()), interruptTick);
 		this.vdp = vdp;
     	
+		this.dumper = new Dumper(Settings.getSettings(machine),
+			settingDumpInstructions, settingDumpFullInstructions);
+		
         cyclesPerSecond.setInt(TMS_9900_BASE_CYCLES_PER_SEC);
 
     }
@@ -152,14 +154,7 @@ public class Cpu9900 extends CpuBase {
 	 * @see v9t9.emulator.runtime.Cpu#handleInterrupts()
 	 */
     public final void handleInterrupts() {
-    	PrintWriter dumpfull = Executor.getDumpfull();
-		if (dumpfull != null) {
-    		dumpfull.println("*** Aborted");
-		}
-        PrintWriter dump = Executor.getDump();
-		if (dump != null) {
-        	dump.println("*** Aborted");
-		}
+    	dumper.info("*** Aborted");
         
     	// non-maskable
     	if ((pins & PIN_LOAD) != 0) {
@@ -261,7 +256,7 @@ public class Cpu9900 extends CpuBase {
 	@Override
 	public boolean shouldDebugCompiledCode(short pc) {
 		return ((pc >= 0x6000 && pc < 0x8000) 
-				&& Compiler9900.settingDumpModuleRomInstructions.getBoolean());
+				&& Settings.get(this, Compiler9900.settingDumpModuleRomInstructions).getBoolean());
 	}
 
 	/**

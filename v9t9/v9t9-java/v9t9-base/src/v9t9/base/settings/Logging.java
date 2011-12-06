@@ -112,7 +112,7 @@ public class Logging {
 	 * @return PrintWriter or <code>null</code>
 	 */
 	public static PrintWriter getLog(int level, IProperty setting) {
-		boolean enabled = isSettingEnabled(level, setting);
+		boolean enabled = setting != null && isSettingEnabled(level, setting);
 		if (enabled)
 			return settingToPrintwriterMap.get(setting);
 		else
@@ -134,7 +134,7 @@ public class Logging {
 	 * @return PrintWriter or <code>null</code>
 	 */
 	public static PrintWriter getLog(IProperty setting) {
-		return getLog(1, setting);
+		return setting != null ? getLog(1, setting) : null;
 	}
 	
 	/**

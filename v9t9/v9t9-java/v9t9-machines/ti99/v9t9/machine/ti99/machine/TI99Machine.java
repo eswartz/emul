@@ -2,6 +2,7 @@ package v9t9.machine.ti99.machine;
 
 
 import v9t9.base.settings.ISettingSection;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.machine.IMachineModel;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.engine.hardware.CruManager;
@@ -17,8 +18,8 @@ public class TI99Machine extends MachineBase {
 
 	private CruManager cruManager;
 
-	public TI99Machine(IMachineModel machineModel) {
-		super(machineModel);
+	public TI99Machine(ISettingsHandler settings, IMachineModel machineModel) {
+		super(settings, machineModel);
 	}
 
 	@Override

@@ -82,7 +82,7 @@ public abstract class BaseTrackDiskImage extends BaseDiskImage  {
 		trackBuffer[ptr++] = (byte) (marker.crcid & 0xff);
 		
 		// dump contents
-		RealDiskUtils.dumpBuffer(rwBuffer, start, buflen);
+		RealDiskUtils.dumpBuffer(dumper, rwBuffer, start, buflen);
 		
 	}
 
@@ -105,7 +105,7 @@ public abstract class BaseTrackDiskImage extends BaseDiskImage  {
 		trackFetched = true;
 
 		// dump contents
-		RealDiskUtils.dumpBuffer(rwBuffer, i, buflen);
+		RealDiskUtils.dumpBuffer(dumper, rwBuffer, i, buflen);
 	}
 	
 	/**

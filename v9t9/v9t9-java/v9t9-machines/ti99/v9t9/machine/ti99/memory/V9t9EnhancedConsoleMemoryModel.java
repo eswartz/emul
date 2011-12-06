@@ -5,8 +5,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URL;
 
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.files.DataFiles;
+import v9t9.common.machine.IBaseMachine;
 import v9t9.common.machine.IMachine;
 import v9t9.engine.EmulatorData;
 import v9t9.engine.memory.BankedMemoryEntry;
@@ -23,12 +25,12 @@ import v9t9.machine.common.dsr.emudisk.DiskDirectoryMapper;
  */
 public class V9t9EnhancedConsoleMemoryModel extends TI994AStandardConsoleMemoryModel {
 
-	public V9t9EnhancedConsoleMemoryModel() {
-		super();
+	public V9t9EnhancedConsoleMemoryModel(IBaseMachine machine) {
+		super(machine);
 	}
 
 	@Override
-	protected void initSettings() {
+	protected void initSettings(ISettingsHandler settings) {
 		//ConsoleRamArea.settingEnhRam.setBoolean(true);
 	}
 

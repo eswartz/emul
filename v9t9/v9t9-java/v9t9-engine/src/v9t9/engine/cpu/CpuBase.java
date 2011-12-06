@@ -8,7 +8,6 @@ import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.settings.SettingProperty;
-import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.AbortedException;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuState;
@@ -18,6 +17,7 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryAccessListener;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
+import v9t9.common.settings.Settings;
 
 public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, ICpu {
 
@@ -75,8 +75,6 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 
 	protected ICpuState state;
 
-	protected ISettingsHandler settings;
-
 	protected SettingProperty cyclesPerSecond;
 
 	protected SettingProperty realTime;
@@ -87,17 +85,16 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 
 	public CpuBase(IMachine machine, ICpuState state, int interruptTick) {
 		this.machine = machine;
-		this.settings = machine.getClient().getSettingsHandler();
 		this.state = state;
         this.state.getConsole().setAccessListener(this);
         this.interruptTick = interruptTick;
         
         interruptWaiting = new Semaphore(0);
         
-        cyclesPerSecond = settings.get(ICpu.settingCyclesPerSecond);
-        realTime = settings.get(ICpu.settingRealTime);
-        dumpFullInstructions = settings.get(ICpu.settingDumpFullInstructions);
-        dumpInstructions = settings.get(ICpu.settingDumpInstructions);
+        cyclesPerSecond = Settings.get(this, ICpu.settingCyclesPerSecond);
+        realTime = Settings.get(this, ICpu.settingRealTime);
+        dumpFullInstructions = Settings.get(this, ICpu.settingDumpFullInstructions);
+        dumpInstructions = Settings.get(this, ICpu.settingDumpInstructions);
         
         cyclesPerSecond.addListener(new IPropertyListener() {
 

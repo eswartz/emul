@@ -43,7 +43,7 @@ public abstract class BaseSwtJavaClient implements IClient {
 	private int displaySkips;
 	protected final int QUANTUM = 1000 / 60;
 	protected IEventNotifier eventNotifier;
-	private final ISettingsHandler settingsHandler;
+	protected final ISettingsHandler settingsHandler;
 
 	/**
 	 * @param machine 
@@ -136,7 +136,7 @@ public abstract class BaseSwtJavaClient implements IClient {
 	    	}
 	    }*/
 	    if (videoRenderer == null)
-	    	videoRenderer = new SwtVideoRenderer(video);
+	    	videoRenderer = new SwtVideoRenderer(settingsHandler, video);
 	    return videoRenderer;
 	}
 

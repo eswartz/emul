@@ -17,6 +17,7 @@ import v9t9.base.utils.HexUtils;
 import v9t9.common.keyboard.IKeyboardState;
 import v9t9.common.machine.IBaseMachine;
 import v9t9.common.machine.IMachine;
+import v9t9.common.settings.Settings;
 
 /**
  * This class tracks the state of the keyboard as exposed to the 99/4A CRU, in a
@@ -227,7 +228,7 @@ public class KeyboardState implements IKeyboardState {
 		switch (ch) {
 		
 		case 8:
-			if (IKeyboardState.settingBackspaceIsCtrlH.getBoolean())
+			if (Settings.get(machine, IKeyboardState.settingBackspaceIsCtrlH).getBoolean())
 				setKey(realKey, pressed, synthetic, ctrlShifted, 'H', when);	/* BKSP */
 			else
 				setKey(realKey, pressed, synthetic, fctnShifted, 'S', when);	/* FCTN-S */
@@ -397,7 +398,7 @@ public class KeyboardState implements IKeyboardState {
 			if (!machine.isAlive())
 				cancelPaste();
 			
-			if (IMachine.settingPauseMachine.getBoolean())
+			if (Settings.get(machine, IMachine.settingPauseMachine).getBoolean())
 				return;
 			
 			if (runDelay > 0) {

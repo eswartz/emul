@@ -8,10 +8,11 @@ package v9t9.common.hardware;
 
 
 import v9t9.base.properties.IPersistable;
-import v9t9.base.settings.SettingProperty;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.machine.IMachine;
+import v9t9.common.settings.SettingSchema;
 import v9t9.common.video.IVdpCanvas;
 import v9t9.common.video.VdpModeInfo;
 
@@ -21,10 +22,16 @@ import v9t9.common.video.VdpModeInfo;
  * @author ejs
  */
 public interface IVdpChip extends IPersistable {
-	static public final SettingProperty settingDumpVdpAccess = new SettingProperty("DumpVdpAccess", new Boolean(false));
-	static public final SettingProperty settingVdpInterruptRate = new SettingProperty("VdpInterruptRate", new Integer(60));
+	static public final SettingSchema settingDumpVdpAccess = new SettingSchema(
+			ISettingsHandler.TRANSIENT,
+			"DumpVdpAccess", new Boolean(false));
+	static public final SettingSchema settingVdpInterruptRate = new SettingSchema(
+			ISettingsHandler.INSTANCE,
+			"VdpInterruptRate", new Integer(60));
 	// this should pretty much stay on
-	static public final SettingProperty settingCpuSynchedVdpInterrupt = new SettingProperty("CpuSynchedVdpInterrupt",
+	static public final SettingSchema settingCpuSynchedVdpInterrupt = new SettingSchema(
+			ISettingsHandler.INSTANCE,
+			"CpuSynchedVdpInterrupt",
 			new Boolean(true));
 
 	public final static int VDP_INTERRUPT = 0x80;

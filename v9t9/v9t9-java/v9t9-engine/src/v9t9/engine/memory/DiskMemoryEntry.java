@@ -13,6 +13,7 @@ import java.util.Arrays;
 
 
 import v9t9.base.settings.ISettingSection;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.files.DataFiles;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
@@ -326,7 +327,7 @@ public class DiskMemoryEntry extends MemoryEntry {
      * @return
      * @throws IOException
      */
-	static public BankedMemoryEntry newBankedWordMemoryFromFile(
+	static public BankedMemoryEntry newBankedWordMemoryFromFile(ISettingsHandler settings,
 			Class<? extends BankedMemoryEntry> klass,
 			int addr,
 	        int size, 
@@ -343,8 +344,9 @@ public class DiskMemoryEntry extends MemoryEntry {
 		BankedMemoryEntry bankedMemoryEntry;
 		try {
 			bankedMemoryEntry = klass.getConstructor(
+					ISettingsHandler.class,
 					IMemory.class, String.class, entries.getClass()).newInstance(
-							memory, name, entries);
+							settings, memory, name, entries);
 		} catch (NoSuchMethodException e) {
 			e.printStackTrace();
 			throw (IOException) new IOException().initCause(e);
@@ -382,38 +384,6 @@ public class DiskMemoryEntry extends MemoryEntry {
 		
 		BankedMemoryEntry bankedMemoryEntry = new MultiBankedMemoryEntry(
 				memory, name, new IMemoryEntry[] { bank0, bank1 });
-		return bankedMemoryEntry;
-	}
-
-    /**
-     * Create a memory entry for banked (ROM) memory that toggles based
-     * on the address written.
-     * @param addr
-     * @param size
-     * @param memory
-     * @param name
-     * @param domain
-     * @param filepath
-     * @param fileoffs
-     * @param filepath2
-     * @param fileoffs2
-     * @return
-     * @throws IOException
-     */
-	static public BankedMemoryEntry newWriteTogglingBankedWordMemoryFromFile(
-			int addr,
-	        int size, 
-	        IMemory memory, 
-	        String name, IMemoryDomain domain,
-	        String filepath, int fileoffs,
-	        String filepath2, int fileoffs2) throws IOException {
-		DiskMemoryEntry bank0 = newWordMemoryFromFile(
-				addr, size, name + " (bank 0)", domain, filepath, fileoffs, false);
-		DiskMemoryEntry bank1 = newWordMemoryFromFile(
-				addr, size, name + " (bank 1)", domain, filepath2, fileoffs2, false);
-		
-		BankedMemoryEntry bankedMemoryEntry = new StdMultiBankedMemoryEntry(memory, name, new IMemoryEntry[] { bank0, bank1 });
-		
 		return bankedMemoryEntry;
 	}
 

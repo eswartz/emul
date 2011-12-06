@@ -9,7 +9,6 @@ package v9t9.gui.client.awt;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-import v9t9.base.settings.SettingProperty;
 import v9t9.common.client.IClient;
 import v9t9.common.client.IKeyboardHandler;
 import v9t9.common.client.ISettingsHandler;
@@ -54,14 +53,6 @@ public class AwtJavaClient implements IClient {
     @Override
     public ISettingsHandler getSettingsHandler() {
     	return settingsHandler;
-    }
-    
-    /* (non-Javadoc)
-     * @see v9t9.common.client.IClient#getSetting(java.lang.String)
-     */
-    @Override
-    public SettingProperty getSetting(String name) {
-    	return settingsHandler.getInstanceSettings().findOrCreate(name);
     }
     
     protected void init() {

@@ -9,6 +9,8 @@ package v9t9.machine.common.tests;
 import java.util.Random;
 
 import junit.framework.TestCase;
+import v9t9.base.settings.SettingProperty;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.machine.ti99.machine.TI994A;
 import v9t9.machine.ti99.memory.ConsoleRamArea;
@@ -23,6 +25,7 @@ public class MemoryTest extends TestCase {
         junit.textui.TestRunner.run(MemoryTest.class);
     }
 
+    private ISettingsHandler settings;
     private TI994A machine;
     private IMemoryDomain CPU;
 
@@ -43,7 +46,8 @@ public class MemoryTest extends TestCase {
     @Override
 	protected void setUp() throws Exception {
         super.setUp();
-        machine = new TI994A();
+        settings = new TestSettingsHandler();
+        machine = new TI994A(settings);
         CPU = machine.getConsole();
     }
 
@@ -60,8 +64,10 @@ public class MemoryTest extends TestCase {
             CPU.writeByte(i, (byte) 0);
         }
 
-        ExpRamArea.settingExpRam.setBoolean(true);
-        ConsoleRamArea.settingEnhRam.setBoolean(true);
+        SettingProperty expRam = settings.get(ExpRamArea.settingExpRam);
+        expRam.setBoolean(true);
+        SettingProperty enhRam = settings.get(ConsoleRamArea.settingEnhRam);
+        enhRam.setBoolean(true);
 
         int firstRAM = 0;
         Random rand = new Random();
@@ -99,7 +105,7 @@ public class MemoryTest extends TestCase {
         assertEquals(CPU.readWord(firstRAM + 1), 0x1234);
 
         /* turn off expansion RAM, shouldn't get anything from it... */
-        ExpRamArea.settingExpRam.setBoolean(false);
+        expRam.setBoolean(false);
         for (i = 0x2000; i < 0x4000; i++) {
             byte red = CPU.readByte(i);
             if (red != 0) {
@@ -114,7 +120,7 @@ public class MemoryTest extends TestCase {
         }
 
         /* without enhanced ram, 0x8000 mirrors 0x8100 through 0x8300 */
-        ConsoleRamArea.settingEnhRam.setBoolean(false);
+        enhRam.setBoolean(false);
         rand.setSeed(0);
         for (i = 0x8000; i < 0x8400; i++) {
             byte byt = (byte) rand.nextInt();

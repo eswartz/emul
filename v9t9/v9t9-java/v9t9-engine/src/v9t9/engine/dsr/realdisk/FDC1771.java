@@ -4,17 +4,12 @@
 package v9t9.engine.dsr.realdisk;
 
 import java.io.IOException;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 import v9t9.base.properties.IPersistable;
 import v9t9.base.settings.ISettingSection;
-import v9t9.base.settings.SettingProperty;
-import v9t9.common.client.ISettingsHandler;
-import v9t9.common.cpu.ICpu;
-import v9t9.engine.cpu.Executor;
 
 
 public class FDC1771 implements IPersistable {
@@ -49,38 +44,14 @@ public class FDC1771 implements IPersistable {
 	public boolean heads;
 
 	public long commandBusyExpiration;
-	private SettingProperty settingDebug;
-	private SettingProperty settingDumpFull;
+	
+	private Dumper dumper;
 
-
-	private void error(String fmt, Object... args) {
-		error(MessageFormat.format(fmt, args));
-	}
-
-	private void info(String string) {
-		if (settingDumpFull.getBoolean())
-			Executor.getDumpfull().println(string);
-		if (settingDebug.getBoolean())
-			System.out.println(string);
-		
-	}
-
-	private void info(String fmt, Object... args) {
-		info(MessageFormat.format(fmt, args));
-		
-	}
-
-	private void error(String string) {
-		if (settingDumpFull.getBoolean())
-			Executor.getDumpfull().println(string);
-		System.err.println(string);
-	}
 	/**
 	 * 
 	 */
-	public FDC1771(ISettingsHandler settings) {
-		settingDebug = settings.get(RealDiskDsrSettings.diskImageDebug);
-		settingDumpFull = settings.get(ICpu.settingDumpFullInstructions);
+	public FDC1771(Dumper dumper) {
+		this.dumper = dumper;
 	}
 	
 	/**
@@ -183,7 +154,7 @@ public class FDC1771 implements IPersistable {
 	/*	Match the current ID with the desired track/sector id */
 	private boolean
 	FDCmatchIDmarker() {
-		info("FDC match ID marker: looking for T{0}, S{1}", trackReg, sectorReg);
+		dumper.info("FDC match ID marker: looking for T{0}, S{1}", trackReg, sectorReg);
 		
 		status.reset(StatusBit.REC_NOT_FOUND);
 		status.reset(StatusBit.CRC_ERROR);
@@ -213,12 +184,12 @@ public class FDC1771 implements IPersistable {
 		}
 
 		if (!found) {
-			error("FDCmatchIDmarker failed");
+			dumper.error("FDCmatchIDmarker failed");
 			status.set(StatusBit.REC_NOT_FOUND);
 			return false;
 		}
 		
-		info("FDCmatchIDmarker succeeded: track {0}, sector {1}, side {2}, size {3} (sector #{4})",
+		dumper.info("FDCmatchIDmarker succeeded: track {0}, sector {1}, side {2}, size {3} (sector #{4})",
 				currentMarker.trackid, currentMarker.sectorid, 
 				currentMarker.sideid, currentMarker.sizeid, 
 				currentMarker.trackid * 9 + currentMarker.sectorid);
@@ -269,7 +240,7 @@ public class FDC1771 implements IPersistable {
 	}
 
 	public void FDCrestore() throws IOException {
-		info("FDC restore");
+		dumper.info("FDC restore");
 		
 		trackReg = 0;
 		updateSeek(trackReg, sideReg);
@@ -286,7 +257,7 @@ public class FDC1771 implements IPersistable {
 	}
 
 	public void FDCseek() throws IOException {
-		info("FDC seek, T{0} s{1}", lastbyte, sideReg);
+		dumper.info("FDC seek, T{0} s{1}", lastbyte, sideReg);
 
 		while (trackReg < lastbyte) {
 			trackReg++;
@@ -331,7 +302,7 @@ public class FDC1771 implements IPersistable {
 		
 		if (!found) {
 			status.set(StatusBit.SEEK_ERROR);
-		   	error("FDC seek, could not find marker for track {0}", track);
+			dumper.error("FDC seek, could not find marker for track {0}", track);
 		}
 
 	}
@@ -346,7 +317,7 @@ public class FDC1771 implements IPersistable {
 		if ((flags & RealDiskConsts.fl_update_track) != 0)
 			trackReg = newtrack;
 		
-		info("FDC step {2}, T{0} s{1}", newtrack, sideReg,
+		dumper.info("FDC step {2}, T{0} s{1}", newtrack, sideReg,
 				stepout ? "out" : "in");
 		
 		status.reset(StatusBit.TRACK_0);
@@ -365,7 +336,7 @@ public class FDC1771 implements IPersistable {
 	 * 
 	 */
 	public void FDCreadsector() throws IOException {
-		info("FDC read sector, T{0} S{1} s{2}", trackReg, sectorReg, sideReg);
+		dumper.info("FDC read sector, T{0} S{1} s{2}", trackReg, sectorReg, sideReg);
 		
 		status.reset(StatusBit.LOST_DATA);
 		status.reset(StatusBit.DRQ_PIN);
@@ -400,7 +371,7 @@ public class FDC1771 implements IPersistable {
 	 * 
 	 */
 	public void FDCwritesector() throws IOException {
-		info("FDC write sector, T{0} S{1} s{2}", trackReg, sectorReg, sideReg);
+		dumper.info("FDC write sector, T{0} S{1} s{2}", trackReg, sectorReg, sideReg);
 
 		status.reset(StatusBit.LOST_DATA);
 		status.reset(StatusBit.DRQ_PIN);
@@ -456,7 +427,7 @@ public class FDC1771 implements IPersistable {
 		// the detected track is copied into the sector register (!)
 		sectorReg = currentMarker.trackid;
 		
-		info("FDC read ID marker: track={0} sector={1} side={2} size={3}",
+		dumper.info("FDC read ID marker: track={0} sector={1} side={2} size={3}",
 				currentMarker.trackid, currentMarker.sectorid, currentMarker.sideid, currentMarker.sizeid);
 
 		
@@ -467,7 +438,7 @@ public class FDC1771 implements IPersistable {
 	 * 
 	 */
 	public void FDCinterrupt() throws IOException {
-		info("FDC interrupt");
+		dumper.info("FDC interrupt");
 		
 		if (image != null)
 			image.setMotorTimeout(0);
@@ -480,7 +451,7 @@ public class FDC1771 implements IPersistable {
 	}
 
 	public void FDCwritetrack() {
-		info("FDC write track, #{0}", seektrack);
+		dumper.info("FDC write track, #{0}", seektrack);
 
 		status.reset(StatusBit.LOST_DATA);
 		
@@ -495,7 +466,7 @@ public class FDC1771 implements IPersistable {
 	}
 
 	public void FDCreadtrack() throws IOException {
-		info("FDC read track, #{0}", seektrack);
+		dumper.info("FDC read track, #{0}", seektrack);
 
 		status.reset(StatusBit.LOST_DATA);
 		
@@ -521,7 +492,7 @@ public class FDC1771 implements IPersistable {
 			try {
 				image.closeDiskImage();
 			} catch (IOException e) {
-				error(e.getMessage());
+				dumper.error(e.getMessage());
 			}
 		}
 		image = null;
@@ -556,7 +527,7 @@ public class FDC1771 implements IPersistable {
 				crc = RealDiskUtils.calc_crc(crc, val);
 			} else {
 				status.reset(StatusBit.DRQ_PIN);
-				error("Tossing extra byte >{0}", Integer.toHexString(val & 0xff));
+				dumper.error("Tossing extra byte >{0}", Integer.toHexString(val & 0xff));
 			}
 		}	
 	}
@@ -566,7 +537,7 @@ public class FDC1771 implements IPersistable {
 	 * @throws IOException 
 	 */
 	public void setSide(byte side) throws IOException {
-		info("Select side {0}", side);
+		dumper.info("Select side {0}", side);
 		updateSeek(seektrack, side);
 		sideReg = side;
 	}

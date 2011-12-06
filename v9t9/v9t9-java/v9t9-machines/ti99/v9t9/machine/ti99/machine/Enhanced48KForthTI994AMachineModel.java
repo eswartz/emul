@@ -3,11 +3,13 @@
  */
 package v9t9.machine.ti99.machine;
 
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.keyboard.IKeyboardState;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryModel;
+import v9t9.common.settings.Settings;
 import v9t9.engine.hardware.ICruWriter;
 import v9t9.engine.memory.BankedMemoryEntry;
 import v9t9.engine.memory.VdpMmio;
@@ -28,13 +30,11 @@ public class Enhanced48KForthTI994AMachineModel extends BaseTI99MachineModel {
 
 	public static final String ID = "Enhanced48KForthTI994A";
 	
-	private V9t9EnhancedConsoleMemoryModel memoryModel;
 	private BankedMemoryEntry cpuBankedVideo;
 	private boolean vdpCpuBanked;
 	//protected MemoryEntry currentMemory;
 	
 	public Enhanced48KForthTI994AMachineModel() {
-		memoryModel = new V9t9EnhancedConsoleMemoryModel();
 	}
 	
 	/* (non-Javadoc)
@@ -48,14 +48,11 @@ public class Enhanced48KForthTI994AMachineModel extends BaseTI99MachineModel {
 	 * @see v9t9.emulator.hardware.MachineModel#createMachine()
 	 */
 	@Override
-	public IMachine createMachine() {
-		return new TI994A(this);
+	public IMachine createMachine(ISettingsHandler settings) {
+		return new TI994A(settings, this);
 	}
-	/* (non-Javadoc)
-	 * @see v9t9.emulator.hardware.MachineModel#getMemoryModel()
-	 */
-	public IMemoryModel getMemoryModel() {
-		return memoryModel;
+	public IMemoryModel createMemoryModel(IMachine machine) {
+		return new V9t9EnhancedConsoleMemoryModel(machine);
 	}
 
 	/* (non-Javadoc)
@@ -70,13 +67,14 @@ public class Enhanced48KForthTI994AMachineModel extends BaseTI99MachineModel {
 	}
 	
 	public void defineDevices(final IMachine machine_) {
-		IKeyboardState.settingBackspaceIsCtrlH.setBoolean(true);
+		Settings.get(machine_, IKeyboardState.settingBackspaceIsCtrlH).setBoolean(true);
 		
 		if (machine_ instanceof TI99Machine) {
 			TI99Machine machine = (TI99Machine) machine_;
 			machine.setCru(new InternalCru9901(machine, machine.getKeyboardState()));
 			
-			EmuDiskDsr dsr = new EmuDiskDsr(DiskDirectoryMapper.INSTANCE);
+			EmuDiskDsr dsr = new EmuDiskDsr(Settings.getSettings(machine_),
+					DiskDirectoryMapper.INSTANCE);
 			machine.getDsrManager().registerDsr(dsr);
 			
 			defineCpuVdpBanks(machine);

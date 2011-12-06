@@ -7,9 +7,11 @@ package v9t9.engine.video.v9938;
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.settings.SettingProperty;
 import v9t9.base.utils.HexUtils;
-import v9t9.common.cpu.ICpu;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
+import v9t9.common.settings.SettingSchema;
+import v9t9.common.settings.Settings;
 import v9t9.common.video.VdpColorManager;
 import v9t9.common.video.VdpFormat;
 import v9t9.common.video.VdpModeInfo;
@@ -103,12 +105,14 @@ public class VdpV9938 extends VdpTMS9918A {
 	
 	// cycles for commands execute in 3579545 Hz (from blueMSX)
 	/* 3579545 / 60 target # cycles to be executed per tick */
-    static public final SettingProperty settingMsxClockDivisor = 
-    	new SettingProperty("MsxClockDivisor", new Integer(6));
+    static public final SettingSchema settingMsxClockDivisor = new SettingSchema(
+    		ISettingsHandler.INSTANCE,
+    		"MsxClockDivisor", new Integer(6));
 
 	private int currentcycles = 0; // current cycles left
 	private int pageOffset;
 	private int pageSize;
+	private SettingProperty msxClockDivisor;
 	
 	/* from mame and blueMSX:
 	 * 
@@ -138,6 +142,8 @@ public class VdpV9938 extends VdpTMS9918A {
 
 	public VdpV9938(IMachine machine) {
 		super(machine);
+		
+		msxClockDivisor = Settings.get(machine, settingMsxClockDivisor); 
 	}
 
 	protected byte[] allocVdpRegs() {
@@ -807,7 +813,7 @@ public class VdpV9938 extends VdpTMS9918A {
 			
 		}
 		
-		int targetRate = CLOCK_RATE / settingMsxClockDivisor.getInt() / IVdpChip.settingVdpInterruptRate.getInt();
+		int targetRate = CLOCK_RATE / msxClockDivisor.getInt() / vdpInterruptRate.getInt();
 		
 		if (/*!Cpu.settingRealTime.getBoolean() ||*/ currentcycles < 0)
 			currentcycles += targetRate;
@@ -837,8 +843,7 @@ public class VdpV9938 extends VdpTMS9918A {
 			statusvec[2] &= ~S2_CE;
 			cmdState.cmd = 0;
 			cmdState.isDataMoveCommand = false;
-			if (ICpu.settingDumpFullInstructions.getBoolean() && IVdpChip.settingDumpVdpAccess.getBoolean())
-				log("MSX command done");
+			log("MSX command done");
 		}
 	}
 
@@ -859,7 +864,7 @@ public class VdpV9938 extends VdpTMS9918A {
 			// in line mode, X/Y are biased into 16:16
 			int maj = readMaj();
 			int min = readMin();
-			if (ICpu.settingDumpFullInstructions.getBoolean() && IVdpChip.settingDumpVdpAccess.getBoolean())
+			if (dumpFullInstructions.getBoolean() && dumpVdpAccess.getBoolean())
 				log("Line: x="+cmdState.dx+",y="+cmdState.dy+",dix="+cmdState.dix+",diy="+cmdState.diy
 						+",maj="+maj+",min="+min+",axis="+(vdpregs[45]&R45_MAJ));
 			int frac = maj != 0 ? min * 0x10000 / maj : 0;
@@ -909,7 +914,7 @@ public class VdpV9938 extends VdpTMS9918A {
 		// all clear
 		statusvec[2] = 0;
 		
-		if (ICpu.settingDumpFullInstructions.getBoolean() && IVdpChip.settingDumpVdpAccess.getBoolean())
+		if (dumpFullInstructions.getBoolean() && dumpVdpAccess.getBoolean())
 			log("MSX command " + HexUtils.toHex2(cmdState.cmd)
 					+ " arg=" + HexUtils.toHex2(cmdState.arg) 
 					+ " op=" + HexUtils.toHex2(cmdState.op)

@@ -6,7 +6,7 @@
  */
 package v9t9.common.client;
 
-import v9t9.base.settings.SettingProperty;
+import v9t9.common.settings.SettingSchema;
 
 
 
@@ -17,8 +17,12 @@ import v9t9.base.settings.SettingProperty;
  */
 public interface ISoundHandler {
 	
-	public static final SettingProperty settingPlaySound = new SettingProperty("PlaySound", new Boolean(true));
-	public static final SettingProperty settingSoundVolume = new SettingProperty("SoundVolume", new Integer(10));
+	SettingSchema settingPlaySound = new SettingSchema(
+			ISettingsHandler.WORKSPACE,
+			"PlaySound", new Boolean(true));
+	SettingSchema settingSoundVolume = new SettingSchema(
+			ISettingsHandler.WORKSPACE,
+			"SoundVolume", new Integer(10));
 
 
 	/**

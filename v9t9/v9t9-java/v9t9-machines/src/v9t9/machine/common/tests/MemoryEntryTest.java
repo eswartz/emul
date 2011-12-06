@@ -7,6 +7,8 @@
 package v9t9.machine.common.tests;
 
 import junit.framework.TestCase;
+import v9t9.base.settings.SettingProperty;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.engine.memory.ByteMemoryArea;
@@ -22,6 +24,7 @@ import v9t9.machine.ti99.memory.ConsoleRamArea;
  */
 public class MemoryEntryTest extends TestCase {
     private MemoryDomain CPU;
+	private ISettingsHandler settings;
     
     public static void main(String[] args) {
         junit.textui.TestRunner.run(MemoryEntryTest.class);
@@ -33,6 +36,8 @@ public class MemoryEntryTest extends TestCase {
     @Override
 	protected void setUp() throws Exception {
         super.setUp();
+        settings = new TestSettingsHandler();
+        
         CPU = new MemoryDomain(IMemoryDomain.NAME_CPU);
    }
 
@@ -147,18 +152,19 @@ public class MemoryEntryTest extends TestCase {
     			CPU,
     			0x8000,
     			0x400,
-    			new ConsoleRamArea());
-    	if (ConsoleRamArea.settingEnhRam.getBoolean()) {
+    			new ConsoleRamArea(settings));
+    	SettingProperty enhRam = settings.get(ConsoleRamArea.settingEnhRam);
+		if (enhRam.getBoolean()) {
     		entry.writeWord(0x8000, (short) 0x1234);
     		entry.writeWord(0x8300, (short) 0x5678);
     		assertEquals(0x1234, entry.readWord(0x8000));
     		assertEquals(0x5678, entry.readWord(0x8000));
     	}
 
-    	ConsoleRamArea.settingEnhRam.setBoolean(false);
+    	enhRam.setBoolean(false);
     	_testCPURamNonEnhanced(entry);
     	
-    	ConsoleRamArea.settingEnhRam.setBoolean(true);
+    	enhRam.setBoolean(true);
     	_testCPURamEnhanced(entry);
     	
     }

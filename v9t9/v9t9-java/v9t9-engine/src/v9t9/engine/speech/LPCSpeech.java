@@ -6,7 +6,8 @@ package v9t9.engine.speech;
 import java.util.Arrays;
 
 import v9t9.base.settings.Logging;
-import v9t9.base.settings.SettingProperty;
+import v9t9.common.client.ISettingsHandler;
+import v9t9.common.settings.SettingSchema;
 
 
 /**
@@ -15,7 +16,9 @@ import v9t9.base.settings.SettingProperty;
  *
  */
 public class LPCSpeech {
-	public static final SettingProperty settingLogSpeech = new SettingProperty("LogSpeech",
+	public static final SettingSchema settingLogSpeech = new SettingSchema(
+			ISettingsHandler.TRANSIENT,
+			"LogSpeech",
 			new Integer(0));
 
 	boolean	rpt;				/* repeat */
@@ -32,8 +35,11 @@ final static int FL_last	= 8;		/* stop frame seen */
 	int		b[],y[];		/* lattice filter */
 	int		ns1,ns2;		/* unvoiced hiss registers */
 	int		ppctr;			/* pitch counter */
+
+	private final ISettingsHandler settings;
 	
-	public LPCSpeech() {
+	public LPCSpeech(ISettingsHandler settings) {
+		this.settings = settings;
 		knv = new int[12];
 		kbf = new int[12];
 		b = new int[12];
@@ -233,10 +239,10 @@ final static int FL_last	= 8;		/* stop frame seen */
 			knv[9] = 0;
 		}
 
-		Logging.writeLogLine(2, LPCSpeech.settingLogSpeech,
+		Logging.writeLogLine(2, settings.get(LPCSpeech.settingLogSpeech),
 				"Equation: " + builder);
 
-		Logging.writeLogLine(3, LPCSpeech.settingLogSpeech,
+		Logging.writeLogLine(3, settings.get(LPCSpeech.settingLogSpeech),
 				"ebf="+ebf+", pbf="+pbf+", env="+env+", pnv="+pnv);
 	}
 

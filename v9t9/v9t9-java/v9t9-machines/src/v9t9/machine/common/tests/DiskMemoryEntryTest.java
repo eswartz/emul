@@ -7,6 +7,7 @@
 package v9t9.machine.common.tests;
 
 import junit.framework.TestCase;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.machine.ti99.machine.TI994A;
@@ -19,6 +20,7 @@ public class DiskMemoryEntryTest extends TestCase {
     private IMemoryDomain CPU;
     
     String basedir = "/usr/local/src/v9t9-data/roms/";
+	private ISettingsHandler settings;
 
     public static void main(String[] args) {
         junit.textui.TestRunner.run(DiskMemoryEntryTest.class);
@@ -30,7 +32,8 @@ public class DiskMemoryEntryTest extends TestCase {
 	protected void setUp() throws Exception {
 	    // TODO Auto-generated method stub
 	    super.setUp();
-	    machine = new TI994A();
+	    settings = new TestSettingsHandler();
+	    machine = new TI994A(settings);
         CPU = machine.getConsole();
 	    CPU.zero();
 	}

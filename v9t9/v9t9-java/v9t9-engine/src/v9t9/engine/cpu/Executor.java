@@ -6,7 +6,6 @@
  */
 package v9t9.engine.cpu;
 
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -26,6 +25,7 @@ import v9t9.common.cpu.IInstructionListener;
 import v9t9.common.cpu.MetricEntry;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
+import v9t9.common.settings.Settings;
 import v9t9.engine.interpreter.IInterpreter;
 
 
@@ -65,13 +65,19 @@ public class Executor implements IExecutor {
 
 	private SettingProperty singleStep;
 
+	private SettingProperty vdpInterruptRate;
+
+	private SettingProperty pauseMachine;
+
     public Executor(ICpu cpu, ICpuMetrics cpuMetrics, 
     		IInterpreter interpreter, ICompiler compiler, 
     		ICompilerStrategy compilerStrategy,
     		final IInstructionListener dumpFullReporter, final IInstructionListener dumpReporter) {
     	
-    	compile = cpu.getMachine().getClient().getSettingsHandler().get(settingCompile);
-    	singleStep = cpu.getMachine().getClient().getSettingsHandler().get(settingSingleStep);
+    	compile = Settings.get(cpu, settingCompile);
+    	singleStep = Settings.get(cpu, settingSingleStep);
+    	pauseMachine = Settings.get(cpu, IMachine.settingPauseMachine);
+    	vdpInterruptRate = Settings.get(cpu, IVdpChip.settingVdpInterruptRate);
     	
         this.cpu = cpu;
 		this.cpuMetrics = cpuMetrics;
@@ -85,7 +91,8 @@ public class Executor implements IExecutor {
 
 			public void propertyChanged(IProperty setting) {
 				synchronized (lock) {
-					IMachine.settingThrottleInterrupts.setBoolean(setting.getBoolean());
+					Settings.get(Executor.this.cpu, 
+							IMachine.settingThrottleInterrupts).setBoolean(setting.getBoolean());
 					
 					if (setting.getBoolean()) {
 						Executor.this.addInstructionListener(dumpFullReporter);
@@ -120,7 +127,7 @@ public class Executor implements IExecutor {
 			}
         	
         });*/
-        settingSingleStep.addListener(new IPropertyListener() {
+        singleStep.addListener(new IPropertyListener() {
         	
         	public void propertyChanged(IProperty setting) {
         		synchronized (lock) {
@@ -143,7 +150,7 @@ public class Executor implements IExecutor {
         
 
 
-        IMachine.settingPauseMachine.addListener(new IPropertyListener() {
+        pauseMachine.addListener(new IPropertyListener() {
 
 			public void propertyChanged(IProperty setting) {
 				lastCycleCount = 0;				
@@ -190,7 +197,7 @@ public class Executor implements IExecutor {
 			cpu.addCycles(cpu.getBaseCyclesPerSec() * (int)(end - start + 500) / 1000);
     		cpu.checkAndHandleInterrupts();
 			*/
-    		while (!cpu.isThrottled() && nVdpInterrupts < IVdpChip.settingVdpInterruptRate.getInt()) {
+    		while (!cpu.isThrottled() && nVdpInterrupts < vdpInterruptRate.getInt()) {
     			try {
     				//long start = System.currentTimeMillis();
     				Thread.yield();
@@ -204,9 +211,9 @@ public class Executor implements IExecutor {
     			}
     		}
     	} else {
-			if (settingCompile.getBoolean()) {
+			if (compile.getBoolean()) {
 				executeCompilableCode();
-			} else if (settingSingleStep.getBoolean()){
+			} else if (singleStep.getBoolean()){
 				interpretOneInstruction();
 			} else {
 				interruptExecution = Boolean.FALSE;
@@ -225,7 +232,7 @@ public class Executor implements IExecutor {
     private void executeCompilableCode() {
     	try {
 	    	boolean interpreting = false;
-			if (settingCompile.getBoolean()) {
+			if (compile.getBoolean()) {
 				/* try to make or run native code, which may fail */
 				ICompiledCode code = compilerStrategy.getCompiledCode();
 			    if (code == null || !code.run()) {

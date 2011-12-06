@@ -7,7 +7,12 @@
 package v9t9.engine.memory;
 
 
+import java.io.PrintWriter;
+
+import v9t9.base.settings.Logging;
+import v9t9.base.settings.SettingProperty;
 import v9t9.base.utils.HexUtils;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.memory.IMemory;
@@ -24,12 +29,18 @@ public class Vdp9918AMmio extends VdpMmio {
 
 	protected IMemoryEntry memoryEntry;
 	protected final IMemoryDomain videoMemory;
+	private SettingProperty dumpFullInstructions;
+	private SettingProperty dumpVdpAccess;
 
 	/**
      * @param machine
      */
-    public Vdp9918AMmio(IMemory memory, IVdpChip vdp, int memorySize) {
+    public Vdp9918AMmio(ISettingsHandler settings, IMemory memory, IVdpChip vdp, int memorySize) {
     	super(new VdpRamArea(memorySize));
+    	
+    	dumpFullInstructions = settings.get(ICpu.settingDumpFullInstructions);
+    	dumpVdpAccess = settings.get(IVdpChip.settingDumpVdpAccess);
+    	
     	fullRamArea.setHandler(vdp);
 		this.videoMemory = vdp.getVideoMemory();
 		initMemory(memory, memorySize);
@@ -102,10 +113,10 @@ public class Vdp9918AMmio extends VdpMmio {
 		//byte oldval = videoMemory.flatReadByte(vdpaddr);
 		videoMemory.writeByte(vdpaddr, val);
 		
-		if ((vdpaddr & 0xf) == 0 
-				&& ICpu.settingDumpFullInstructions.getBoolean()
-				&& IVdpChip.settingDumpVdpAccess.getBoolean()) {
-			VdpTMS9918A.log("Address: " + HexUtils.toHex4(vdpaddr));
+		if ((vdpaddr & 0xf) == 0 && dumpVdpAccess.getBoolean()) {
+			PrintWriter pw = Logging.getLog(dumpFullInstructions);
+			if (pw != null)
+				pw.println("Address: " + HexUtils.toHex4(vdpaddr));
 		}
 		
 		autoIncrementAddr();
@@ -131,9 +142,10 @@ public class Vdp9918AMmio extends VdpMmio {
 			vdpaddr = (vdpaddr & 0xff00) | (val & 0xff);
 		}
 		if ((vdpaddrflag = !vdpaddrflag) == false) {
-			if (ICpu.settingDumpFullInstructions.getBoolean()
-					&& IVdpChip.settingDumpVdpAccess.getBoolean()) {
-				VdpTMS9918A.log("Address: " + HexUtils.toHex4(vdpaddr));
+			if (dumpVdpAccess.getBoolean()) {
+				PrintWriter pw = Logging.getLog(dumpFullInstructions);
+				if (pw != null)
+					pw.println("Address: " + HexUtils.toHex4(vdpaddr));
 			}
 			if ((vdpaddr & 0x8000) != 0) {
 				writeRegAddr(vdpaddr);

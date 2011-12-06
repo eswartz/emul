@@ -6,14 +6,17 @@ package v9t9.machine.ti99.cpu;
 import java.io.PrintWriter;
 
 
+import v9t9.base.settings.Logging;
+import v9t9.base.settings.SettingProperty;
 import v9t9.base.utils.HexUtils;
 import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.IOperand;
 import v9t9.common.asm.RawInstruction;
+import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.IInstructionListener;
 import v9t9.common.cpu.InstructionWorkBlock;
 import v9t9.common.memory.IMemoryEntry;
-import v9t9.engine.cpu.Executor;
+import v9t9.common.settings.Settings;
 
 /**
  * @author ejs
@@ -22,18 +25,21 @@ import v9t9.engine.cpu.Executor;
 public class DumpFullReporter9900 implements IInstructionListener {
 
 	private final Cpu9900 cpu;
+	private SettingProperty dumpSetting;
 
 	/**
 	 * 
 	 */
 	public DumpFullReporter9900(Cpu9900 cpu) {
 		this.cpu = cpu;
+		dumpSetting = Settings.get(cpu, ICpu.settingDumpFullInstructions);
+
 	}
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.InstructionListener#executed(v9t9.engine.cpu.InstructionAction.Block, v9t9.engine.cpu.InstructionAction.Block)
 	 */
 	public void executed(InstructionWorkBlock before_, InstructionWorkBlock after_) {
-		PrintWriter dumpfull = Executor.getDumpfull();
+		PrintWriter dumpfull = Logging.getLog(dumpSetting);
 		if (dumpfull == null) return;
 		
 		InstructionWorkBlock9900 before = (InstructionWorkBlock9900) before_;

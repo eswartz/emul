@@ -21,6 +21,7 @@ import v9t9.base.settings.ISettingSection;
 import v9t9.base.settings.SettingProperty;
 import v9t9.base.utils.HexUtils;
 import v9t9.common.client.ISettingsHandler;
+import v9t9.common.cpu.ICpu;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.dsr.IDiskDsr;
 import v9t9.common.dsr.IDsrHandler;
@@ -28,8 +29,8 @@ import v9t9.common.dsr.IDsrSettings;
 import v9t9.common.dsr.IMemoryTransfer;
 import v9t9.common.files.Catalog;
 import v9t9.common.machine.IMachine;
+import v9t9.common.settings.Settings;
 import v9t9.engine.dsr.IDevIcons;
-import v9t9.engine.settings.WorkspaceSettings;
 
 /**
  * This is a device handler which allows accessing disks as flat sector files
@@ -118,27 +119,28 @@ public abstract class BaseDiskImageDsr implements IDsrSettings, IDiskDsr {
 
 
 	protected SettingProperty realDiskDsrActiveSetting;
-
 	private SettingProperty settingRealTime;
-
 	protected SettingProperty settingDsrEnabled;
-
-	protected ISettingsHandler settings;
+	private SettingProperty settingDebug;
 
 	protected Dumper dumper;
 
-	public BaseDiskImageDsr(IMachine machine) {
-		settings = machine.getClient().getSettingsHandler();
+	private ISettingsHandler settings;
 
-		dumper = new Dumper(settings);
-		
+
+	public BaseDiskImageDsr(IMachine machine) {
+		settings = Settings.getSettings(machine);
+		dumper = new Dumper(settings,
+				RealDiskDsrSettings.diskImageDebug, ICpu.settingDumpFullInstructions);
+
 		// register
 		settingDsrEnabled = settings.get(RealDiskDsrSettings.diskImageDsrEnabled);
 		settingRealTime = settings.get(RealDiskDsrSettings.diskImageRealTime);
+		settingDebug = settings.get(RealDiskDsrSettings.diskImageDebug);
 		
-		fdc = new FDC1771(settings);
+		fdc = new FDC1771(dumper);
 		
-    	String diskImageRootPath = WorkspaceSettings.CURRENT.getConfigDirectory() + "disks";
+    	String diskImageRootPath = settings.getWorkspaceSettings().getConfigDirectory() + "disks";
     	RealDiskDsrSettings.defaultDiskRootDir = new File(diskImageRootPath);
     	RealDiskDsrSettings.defaultDiskRootDir.mkdirs();
     	
@@ -543,7 +545,7 @@ public abstract class BaseDiskImageDsr implements IDsrSettings, IDiskDsr {
 		
 		settings = new ArrayList<SettingProperty>(diskSettingsMap.values());
 		settings.add(settingRealTime);
-		settings.add(this.settings.get(RealDiskDsrSettings.diskImageDebug));
+		settings.add(settingDebug);
 		map.put(IDsrHandler.GROUP_DISK_CONFIGURATION, settings);
 		
 		return map;

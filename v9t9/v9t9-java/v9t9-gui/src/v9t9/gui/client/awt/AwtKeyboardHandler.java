@@ -10,7 +10,6 @@ import java.awt.event.KeyListener;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import v9t9.common.cpu.ICpu;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.keyboard.IKeyboardState;
@@ -249,9 +248,9 @@ public class AwtKeyboardHandler extends BaseKeyboardHandler {
 						speedy = Toolkit.getDefaultToolkit().getLockingKeyState(keyCode);
 					} catch (UnsupportedOperationException e) {
 						// hmm
-						speedy = ICpu.settingRealTime.getBoolean();
+						speedy = machine.getCpu().settingRealTime().getBoolean();
 					}
-					ICpu.settingRealTime.setBoolean(!speedy);
+					machine.getCpu().settingRealTime().setBoolean(!speedy);
 					if(eventNotifier != null)
 						eventNotifier.notifyEvent(null, Level.INFO, 
 								speedy ? "Scroll Lock: Executing at maximum speed" : 

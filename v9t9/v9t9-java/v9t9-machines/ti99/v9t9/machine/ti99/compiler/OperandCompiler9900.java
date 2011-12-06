@@ -25,11 +25,9 @@ import org.apache.bcel.generic.POP;
 import org.apache.bcel.generic.PUSH;
 import org.apache.bcel.generic.Type;
 
-import v9t9.base.settings.SettingProperty;
 import v9t9.common.asm.BaseMachineOperand;
 import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.IOperand;
-import v9t9.common.compiler.ICompiler;
 import v9t9.engine.compiler.CompileInfo;
 import v9t9.machine.ti99.cpu.Inst9900;
 import v9t9.machine.ti99.cpu.Instruction9900;
@@ -57,8 +55,7 @@ public class OperandCompiler9900 {
             // (short) ((val<<1) + wp);
             if (!(ins.getInst() == Inst9900.Impy /*&& ins.op2 == this*/)
                     && !(ins.getInst() == Inst9900.Idiv /*&& ins.op2 == this*/)
-                    && ICompiler.settingOptimize.getBoolean()
-                    && ICompiler.settingOptimizeRegAccess.getBoolean()
+                    && info.optimizeRegAccess
                     && false) {
 				return false;
 			}
@@ -67,8 +64,7 @@ public class OperandCompiler9900 {
             break;
         case MachineOperand9900.OP_IND: {  // *Rx
             //short ad = (short)((val<<1) + wp);
-            if (ICompiler.settingOptimize.getBoolean()
-                    && ICompiler.settingOptimizeRegAccess.getBoolean()) {
+            if (info.optimizeRegAccess) {
                 OperandCompiler9900.compileReadRegWord(info, ilist, op.val);
             } else {
                 OperandCompiler9900.compileGetRegEA(info, op.val);
@@ -77,8 +73,7 @@ public class OperandCompiler9900 {
             break;
         }
         case MachineOperand9900.OP_INC: {   // *Rx+
-            if (ICompiler.settingOptimize.getBoolean()
-                    && ICompiler.settingOptimizeRegAccess.getBoolean()) {
+            if (info.optimizeRegAccess) {
 
             	OperandCompiler9900.compileReadRegWordAndInc(info, ilist, op.val, op.byteop ? 1 : 2, false);
                 
@@ -113,8 +108,7 @@ public class OperandCompiler9900 {
                 //ad = (short)((val<<1) + wp);
 //              OperandCompiler.compileGetRegEA(info, val);
   //            Compiler.compileReadWord(info, ilist);  // &Rxx, immed, regval
-                if (ICompiler.settingOptimize.getBoolean()
-                        && ICompiler.settingOptimizeRegAccess.getBoolean()) {
+                if (info.optimizeRegAccess) {
                 	OperandCompiler9900.compileReadRegWord(info, ilist, op.val);
                 } else {
                     OperandCompiler9900.compileGetRegEA(info, op.val);
@@ -128,15 +122,13 @@ public class OperandCompiler9900 {
             break;
         }
         case MachineOperand9900.OP_OFFS_R12:   // offset from R12
-            if (ICompiler.settingOptimize.getBoolean()
-                    &&ICompiler.settingOptimizeRegAccess.getBoolean()) {
+            if (info.optimizeRegAccess) {
                 return false;
             }
             OperandCompiler9900.compileGetRegEA(info, 12);
             break;
         case MachineOperand9900.OP_REG0_SHIFT_COUNT: // shift count from R0
-            if (ICompiler.settingOptimize.getBoolean()
-                    && ICompiler.settingOptimizeRegAccess.getBoolean()) {
+            if (info.optimizeRegAccess) {
                 return false;
             }
             OperandCompiler9900.compileGetRegEA(info, 0);
@@ -167,9 +159,7 @@ public class OperandCompiler9900 {
         switch (op.type)
         {
         case MachineOperand9900.OP_REG:    // Rx
-            if (ICompiler.settingOptimize.getBoolean()
-                    && ICompiler.settingOptimizeRegAccess.getBoolean() 
-                    ) {
+            if (info.optimizeRegAccess) {
                 // when optimizing, read directly from WP memory
                 if (op.byteop) {
 					OperandCompiler9900.compileReadRegByte(info, ilist, op.val, op.dest == IOperand.OP_DEST_TRUE);
@@ -207,8 +197,7 @@ public class OperandCompiler9900 {
             ilist.append(new PUSH(info.pgen, op.val));
             break;
         case MachineOperand9900.OP_OFFS_R12:   // offset from R12
-            if (ICompiler.settingOptimize.getBoolean()
-                    && ICompiler.settingOptimizeRegAccess.getBoolean()) {
+            if (info.optimizeRegAccess) {
                 OperandCompiler9900.compileReadRegWord(info, ilist, 12);
             } else {
                 ilist.append(new ILOAD(eaIndex));
@@ -221,8 +210,7 @@ public class OperandCompiler9900 {
             }
             break;
         case MachineOperand9900.OP_REG0_SHIFT_COUNT: // shift count from R0
-            if (ICompiler.settingOptimize.getBoolean()
-                    && ICompiler.settingOptimizeRegAccess.getBoolean()) {
+            if (info.optimizeRegAccess) {
                 OperandCompiler9900.compileReadRegWord(info, ilist, 0);
             } else {
                 ilist.append(new ILOAD(eaIndex));
@@ -264,9 +252,7 @@ public class OperandCompiler9900 {
     public static void compilePutValue(MachineOperand9900 op, int valIndex, int eaIndex, CompileInfo info) {
         switch (op.type) {
         case MachineOperand9900.OP_REG:
-            if (ICompiler.settingOptimize.getBoolean()
-                    && ICompiler.settingOptimizeRegAccess.getBoolean() 
-                    ) {
+            if (info.optimizeRegAccess) {
                 // write directly to WP memory 
                 info.ilist.append(new ILOAD(valIndex));
                 if (op.byteop) {

@@ -3,10 +3,11 @@
  */
 package v9t9.common.compiler;
 
-import v9t9.base.settings.SettingProperty;
 import v9t9.common.asm.IDecompileInfo;
 import v9t9.common.asm.RawInstruction;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.memory.IMemoryEntry;
+import v9t9.common.settings.SettingSchema;
 
 /**
  * @author ejs
@@ -14,17 +15,23 @@ import v9t9.common.memory.IMemoryEntry;
  */
 public interface ICompiler {
 
-	static public final SettingProperty settingOptimize = new SettingProperty(
+	static public final SettingSchema settingOptimize = new SettingSchema(
+			ISettingsHandler.WORKSPACE,
 			"CompilerOptimize", new Boolean(false));
-	static public final SettingProperty settingOptimizeRegAccess = new SettingProperty(
+	static public final SettingSchema settingOptimizeRegAccess = new SettingSchema(
+			ISettingsHandler.TRANSIENT,
 			"CompilerOptimizeRegAccess", new Boolean(false));
-	static public final SettingProperty settingOptimizeStatus = new SettingProperty(
+	static public final SettingSchema settingOptimizeStatus = new SettingSchema(
+			ISettingsHandler.TRANSIENT,
 			"CompilerOptimizeStatus", new Boolean(false));
-	static public final SettingProperty settingCompileOptimizeCallsWithData = new SettingProperty(
+	static public final SettingSchema settingCompileOptimizeCallsWithData = new SettingSchema(
+			ISettingsHandler.TRANSIENT,
 			"CompilerOptmizeCallsWithData", new Boolean(false));
-	static public final SettingProperty settingDebugInstructions = new SettingProperty(
+	static public final SettingSchema settingDebugInstructions = new SettingSchema(
+			ISettingsHandler.TRANSIENT,
 			"DebugInstructions", new Boolean(false));
-	static public final SettingProperty settingCompileFunctions = new SettingProperty(
+	static public final SettingSchema settingCompileFunctions = new SettingSchema(
+			ISettingsHandler.TRANSIENT,
 			"CompilerCompileFunctions", new Boolean(false));
 
 	/**

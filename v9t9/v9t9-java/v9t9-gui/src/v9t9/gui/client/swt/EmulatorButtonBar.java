@@ -24,12 +24,15 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 
+import v9t9.base.settings.SettingProperty;
 import v9t9.common.client.ISoundHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.machine.IMachine;
+import v9t9.common.settings.Settings;
 import v9t9.gui.client.swt.ToolShell.Behavior;
 import v9t9.gui.client.swt.ToolShell.Centering;
+import v9t9.gui.client.swt.debugger.DebuggerWindow;
 import v9t9.gui.common.BaseEmulatorWindow;
 import v9t9.gui.sound.JavaSoundHandler;
 
@@ -109,7 +112,6 @@ public class EmulatorButtonBar extends EmulatorBar  {
 		createToggleStateButton(IMachine.settingPauseMachine, 8,
 				0, "Pause machine");
 
-/*
 		createButton(7,
 				"Create debugger window", new SelectionAdapter() {
 					@Override
@@ -131,7 +133,6 @@ public class EmulatorButtonBar extends EmulatorBar  {
 					}
 			}
 		);
-		*/
 		
 		/*
 		createButton(buttonBar,
@@ -253,7 +254,8 @@ public class EmulatorButtonBar extends EmulatorBar  {
 				
 				final Menu volumeMenu = new Menu(vitem);
 
-				int curVol = ISoundHandler.settingSoundVolume.getInt();
+				final SettingProperty soundVolume = Settings.get(machine, ISoundHandler.settingSoundVolume);
+				int curVol = soundVolume.getInt();
 				int[] vols = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 				for (final int vol : vols) {
 					MenuItem item = new MenuItem(volumeMenu, SWT.RADIO);
@@ -263,7 +265,7 @@ public class EmulatorButtonBar extends EmulatorBar  {
 					item.addSelectionListener(new SelectionAdapter() {
 						@Override
 						public void widgetSelected(SelectionEvent e) {
-							ISoundHandler.settingSoundVolume.setInt(vol);
+							soundVolume.setInt(vol);
 						}
 
 					});

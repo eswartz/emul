@@ -22,7 +22,6 @@ import v9t9.common.files.FDR;
 import v9t9.common.files.IDiskImage;
 import v9t9.common.files.V9t9FDR;
 import v9t9.common.files.VDR;
-import v9t9.engine.cpu.Executor;
 
 
 /**
@@ -78,7 +77,9 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 		this.name = name;
 		this.spec = spec;
 		
-		dumper = new Dumper(settings);
+		dumper = new Dumper(settings,
+				RealDiskDsrSettings.diskImageDebug, ICpu.settingDumpFullInstructions);
+
 		settingDsrEnabled = settings.get(RealDiskDsrSettings.diskImageDsrEnabled);
 		
 		inUseSetting = new SettingProperty(name, Boolean.FALSE);
@@ -370,7 +371,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 			} catch (ArrayIndexOutOfBoundsException e) {
 				System.err.println("Possible bogus sector size: " + buflen);
 			}
-			RealDiskUtils.dumpBuffer(rwBuffer, 0, 256);
+			RealDiskUtils.dumpBuffer(dumper, rwBuffer, 0, 256);
 		}
 	}
 

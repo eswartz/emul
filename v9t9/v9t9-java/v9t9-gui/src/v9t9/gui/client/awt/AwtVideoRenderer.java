@@ -23,8 +23,12 @@ import javax.imageio.ImageIO;
 
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
+import v9t9.base.settings.SettingProperty;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.hardware.IVdpChip;
+import v9t9.common.machine.IMachine;
+import v9t9.common.settings.Settings;
 import v9t9.common.video.ICanvas;
 import v9t9.common.video.ICanvasListener;
 import v9t9.common.video.IVdpCanvas;
@@ -71,9 +75,20 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 	private IPropertyListener monitorSettingListener;
 
 	private final IVdpChip vdp;
+
+	protected final ISettingsHandler settings;
+
+	protected final IMachine machine;
+
+	private SettingProperty monitorDrawing;
 	
-	public AwtVideoRenderer(IVdpChip vdp) {
-		this.vdp = vdp;
+	public AwtVideoRenderer(IMachine machine) {
+		this.machine = machine;
+		this.settings = machine.getSettings();
+		this.vdp = machine.getVdp();
+		
+		monitorDrawing = Settings.get(machine, BaseEmulatorWindow.settingMonitorDrawing);
+
 		// init outside locks
 		V9t9Render.INSTANCE.hashCode();
 		
@@ -111,9 +126,9 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 			}
 			
 		};
-		BaseEmulatorWindow.settingMonitorDrawing.addListener(monitorSettingListener);
+		monitorDrawing.addListener(monitorSettingListener);
 	}
-	
+
 
 	public IVdpChip getVdpHandler() {
 		return vdp;
@@ -124,7 +139,7 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 	 */
 	@Override
 	public void dispose() {
-		BaseEmulatorWindow.settingMonitorDrawing.removeListener(monitorSettingListener);
+		monitorDrawing.removeListener(monitorSettingListener);
 	}
 	private void doResizeToFit()  {
 		
@@ -389,7 +404,7 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 				}
 				
 			}
-			if (BaseEmulatorWindow.settingMonitorDrawing.getBoolean() && 
+			if (monitorDrawing.getBoolean() && 
 					(noisySurface == null || noisySurface.getWidth() != desiredWidth || noisySurface.getHeight() != desiredHeight)) {
 				noisySurface = new BufferedImage(desiredWidth, desiredHeight, BufferedImage.TYPE_INT_BGR);
 			}
@@ -491,7 +506,7 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 					
 					
 					//System.out.println("scaled");
-					if (BaseEmulatorWindow.settingMonitorDrawing.getBoolean() && zoom > 1) {
+					if (monitorDrawing.getBoolean() && zoom > 1) {
 						// modify the original area
 						//if (logRect.x > 0) { logRect.x--; logRect.width++; }
 						//if (logRect.y > 0) { logRect.y--; logRect.height++; }

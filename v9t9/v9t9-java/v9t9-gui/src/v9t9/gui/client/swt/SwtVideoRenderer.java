@@ -26,6 +26,7 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.video.ICanvas;
@@ -54,8 +55,10 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	
 	protected FixedAspectLayout fixedAspectLayout;
 	private final IVdpChip vdp;
+	protected final ISettingsHandler settings;
 	
-	public SwtVideoRenderer(IVdpChip vdp) {
+	public SwtVideoRenderer(ISettingsHandler settings, IVdpChip vdp) {
+		this.settings = settings;
 		this.vdp = vdp;
 		fixedAspectLayout = new FixedAspectLayout(256, 192, 3.0, 3.0, 1., 5);
 	}

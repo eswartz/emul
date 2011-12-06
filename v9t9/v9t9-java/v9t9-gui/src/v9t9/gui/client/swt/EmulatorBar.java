@@ -16,6 +16,8 @@ import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
 import v9t9.base.settings.SettingProperty;
 import v9t9.common.machine.IMachine;
+import v9t9.common.settings.SettingSchema;
+import v9t9.common.settings.Settings;
 
 /**
  * @author ejs
@@ -62,12 +64,13 @@ public class EmulatorBar {
 		return button;
 	}
 
-	protected BasicButton createStateButton(final SettingProperty setting, final boolean inverted, 
+	protected BasicButton createStateButton(final SettingSchema schema, final boolean inverted, 
 			final Point noClickCorner,
 			final int iconIndex, final int secondIconIndex, 
 			final boolean isSecondOverlay, String tooltip) {
 		final BasicButton button = new BasicButton(buttonBar, SWT.PUSH,
 				imageProvider, iconIndex, tooltip);
+		final SettingProperty setting = Settings.get(machine, schema);
 		setting.addListener(new IPropertyListener() {
 	
 			public void propertyChanged(final IProperty setting) {
@@ -132,15 +135,15 @@ public class EmulatorBar {
 		return button;
 	}
 
-	protected BasicButton createToggleStateButton(final SettingProperty setting, int iconIndex, int overlayIndex,
+	protected BasicButton createToggleStateButton(final SettingSchema schema, int iconIndex, int overlayIndex,
 			String tooltip) {
-		return createStateButton(setting, false, null, iconIndex, overlayIndex, true, tooltip);
+		return createStateButton(schema, false, null, iconIndex, overlayIndex, true, tooltip);
 	}
 
 
-	protected BasicButton createTwoStateButton(final SettingProperty setting, int iconIndex, int secondIconIndex,
+	protected BasicButton createTwoStateButton(final SettingSchema schema, int iconIndex, int secondIconIndex,
 			String tooltip) {
-		return createStateButton(setting, false, null, iconIndex, secondIconIndex, false, tooltip);
+		return createStateButton(schema, false, null, iconIndex, secondIconIndex, false, tooltip);
 	}
 
 	/**

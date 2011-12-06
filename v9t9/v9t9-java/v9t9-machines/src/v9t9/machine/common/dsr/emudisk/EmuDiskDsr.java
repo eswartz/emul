@@ -17,6 +17,7 @@ import java.util.Map;
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.settings.SettingProperty;
 import v9t9.common.client.ISettingsHandler;
+import v9t9.common.cpu.ICpu;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.dsr.IDiskDsr;
 import v9t9.common.dsr.IDsrHandler;
@@ -36,7 +37,6 @@ import v9t9.engine.dsr.emudisk.PabInfoBlock;
 import v9t9.engine.dsr.realdisk.Dumper;
 import v9t9.engine.dsr.realdisk.RealDiskDsrSettings;
 import v9t9.engine.memory.DiskMemoryEntry;
-import v9t9.engine.settings.WorkspaceSettings;
 import v9t9.machine.common.dsr.emudisk.DiskDirectoryMapper.EmuDiskSetting;
 import v9t9.machine.ti99.dsr.DsrHandler9900;
 
@@ -65,12 +65,12 @@ public class EmuDiskDsr implements IDsrHandler, DsrHandler9900, IDiskDsr {
 		settingDsrEnabled = settings.get(EmuDiskDsrSettings.emuDiskDsrEnabled);
 		settingRealDsrEnabled = settings.get(RealDiskDsrSettings.diskImageDsrEnabled);
 		
-		this.dumper = new Dumper(settings);
+		this.dumper = new Dumper(settings, RealDiskDsrSettings.diskImageDebug, ICpu.settingDumpFullInstructions);
 		
 		this.mapper = mapper;
 		
 		
-    	String diskRootPath = WorkspaceSettings.CURRENT.getConfigDirectory() + "disks";
+    	String diskRootPath = settings.getWorkspaceSettings().getConfigDirectory() + "disks";
     	File diskRootDir = new File(diskRootPath);
     	File dskdefault = new File(diskRootDir, "default");
     	dskdefault.mkdirs();
@@ -92,7 +92,7 @@ public class EmuDiskDsr implements IDsrHandler, DsrHandler9900, IDiskDsr {
     		String devname = EmuDiskDsrSettings.getEmuDiskSetting(dev);
     		
     		EmuDiskSetting diskSetting = settings.get(ISettingsHandler.WORKSPACE,
-    				new EmuDiskSetting(devname, dskdefault.getAbsolutePath(),
+    				new EmuDiskSetting(settings, devname, dskdefault.getAbsolutePath(),
     						EmuDiskDsrSettings.diskDirectoryIconPath));
 			
 			DiskDirectoryMapper.INSTANCE.registerDiskSetting(devname, diskSetting);

@@ -8,12 +8,13 @@ package v9t9.machine.ti99.memory;
 
 
 
-import v9t9.base.settings.SettingProperty;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.machine.IBaseMachine;
 import v9t9.common.memory.IMemoryEntry;
+import v9t9.common.settings.SettingSchema;
+import v9t9.common.settings.Settings;
 import v9t9.engine.memory.MemoryEntry;
-import v9t9.engine.settings.WorkspaceSettings;
 import v9t9.machine.ti99.memory.mmio.ConsoleGramWriteArea;
 import v9t9.machine.ti99.memory.mmio.ConsoleGromReadArea;
 import v9t9.machine.ti99.memory.mmio.ConsoleSoundArea;
@@ -27,10 +28,12 @@ import v9t9.machine.ti99.memory.mmio.ConsoleVdpWriteArea;
  * @author ejs
  */
 public class TI994AStandardConsoleMemoryModel extends BaseTI994AMemoryModel {
-    static public final SettingProperty settingExpRam = new SettingProperty("MemoryExpansion32K", new Boolean(false));
+    static public final SettingSchema settingExpRam = new SettingSchema(
+    		ISettingsHandler.WORKSPACE,
+    		"MemoryExpansion32K", new Boolean(false));
 
-    public TI994AStandardConsoleMemoryModel() {
-    	super();
+    public TI994AStandardConsoleMemoryModel(IBaseMachine machine) {
+    	super(machine);
     }
     
     
@@ -59,24 +62,22 @@ public class TI994AStandardConsoleMemoryModel extends BaseTI994AMemoryModel {
     }
     
 
-    protected void initSettings() {
-		WorkspaceSettings.CURRENT.register(ExpRamArea.settingExpRam);
-		WorkspaceSettings.CURRENT.register(ConsoleRamArea.settingEnhRam);
-
-		ExpRamArea.settingExpRam.setBoolean(true);
-		ConsoleRamArea.settingEnhRam.setBoolean(false);
+    protected void initSettings(ISettingsHandler settings) {
+		settings.get(ExpRamArea.settingExpRam).setBoolean(true);
+		settings.get(ConsoleRamArea.settingEnhRam).setBoolean(false);
 	}
  
 	@Override
 	protected void defineConsoleMemory(IBaseMachine machine) {
+		ISettingsHandler settings = Settings.getSettings(machine);
 		memory.addAndMap(new MemoryEntry("Console RAM", CPU, 0x8000, 0x0400,
-				new ConsoleRamArea()));
+				new ConsoleRamArea(settings)));
 	    MemoryEntry lowRam = new MemoryEntry("Low 8K expansion RAM", CPU, 0x2000,
-	            0x2000, new ExpRamArea(0x2000));
+	            0x2000, new ExpRamArea(settings, 0x2000));
 	    lowRam.setVolatile(false);
 		memory.addAndMap(lowRam);
 	    MemoryEntry highRam = new MemoryEntry("High 24K expansion RAM", CPU, 0xA000,
-	            0x6000, new ExpRamArea(0x6000));
+	            0x6000, new ExpRamArea(settings, 0x6000));
 	    highRam.setVolatile(false);
 		memory.addAndMap(highRam);
 		

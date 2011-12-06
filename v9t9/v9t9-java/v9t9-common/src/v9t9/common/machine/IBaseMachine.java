@@ -8,9 +8,9 @@ import java.util.Timer;
 
 
 import v9t9.base.settings.ISettingSection;
-import v9t9.base.settings.SettingProperty;
 import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.client.IClient;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuMetrics;
 import v9t9.common.events.IEventNotifier;
@@ -18,6 +18,7 @@ import v9t9.common.events.NotifyEvent;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryModel;
+import v9t9.common.settings.SettingSchema;
 
 /**
  * @author ejs
@@ -25,13 +26,17 @@ import v9t9.common.memory.IMemoryModel;
  */
 public interface IBaseMachine {
 
-	static public final SettingProperty settingPauseMachine = new SettingProperty(
+	static public final SettingSchema settingPauseMachine = new SettingSchema(
+			ISettingsHandler.INSTANCE,
 			"PauseMachine", new Boolean(false));
-	static public final SettingProperty settingThrottleInterrupts = new SettingProperty(
+	static public final SettingSchema settingThrottleInterrupts = new SettingSchema(
+			ISettingsHandler.WORKSPACE,
 			"ThrottleVDPInterrupts", new Boolean(false));
-	static public final SettingProperty settingModuleList = new SettingProperty(
+	static public final SettingSchema settingModuleList = new SettingSchema(
+			ISettingsHandler.WORKSPACE,
 			"ModuleListFile", new String("modules.xml"));
 
+	ISettingsHandler getSettings();
 
 	IClient getClient();
 

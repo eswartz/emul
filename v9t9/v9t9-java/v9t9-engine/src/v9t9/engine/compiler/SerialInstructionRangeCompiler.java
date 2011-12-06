@@ -10,6 +10,7 @@ import org.apache.bcel.generic.InstructionList;
 
 import v9t9.common.asm.IDecompileInfo;
 import v9t9.common.asm.RawInstruction;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.compiler.ICompiler;
 
 /**
@@ -19,6 +20,13 @@ import v9t9.common.compiler.ICompiler;
  *
  */
 public class SerialInstructionRangeCompiler implements InstructionRangeCompiler {
+
+	private ISettingsHandler settings;
+
+	public SerialInstructionRangeCompiler(ISettingsHandler settings) {
+		this.settings = settings;
+	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.Compiler.InstructionRangeCompiler#compileInstructionRange(v9t9.emulator.runtime.Compiler, int, int, v9t9.emulator.runtime.HighLevelCodeInfo, org.apache.bcel.generic.InstructionList, v9t9.emulator.runtime.CompileInfo)
 	 */
@@ -72,7 +80,7 @@ public class SerialInstructionRangeCompiler implements InstructionRangeCompiler 
 	            	chunks[i] = null;
 	            
 	            // lifetime calculations
-	            if (ICompiler.settingOptimize.getBoolean() && chunks[i] != null) {
+	            if (settings.get(ICompiler.settingOptimize).getBoolean() && chunks[i] != null) {
 	            	BytecodeOptimizer.peephole(info, chunks[i]);
 				}
 	        }

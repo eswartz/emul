@@ -8,7 +8,6 @@ import java.util.TreeMap;
 
 
 import v9t9.base.utils.Pair;
-import v9t9.common.client.ISettingsHandler;
 import v9t9.common.compiler.ICompiledCode;
 import v9t9.common.compiler.ICompiler;
 import v9t9.common.compiler.ICompilerStrategy;
@@ -16,6 +15,7 @@ import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.memory.IMemoryArea;
 import v9t9.common.memory.IMemoryEntry;
+import v9t9.common.settings.Settings;
 
 /**
  * @author ejs
@@ -57,9 +57,8 @@ public class CodeBlockCompilerStrategy implements ICompilerStrategy {
 	public synchronized ICompiledCode getCompiledCode() {
 		ICpu cpu = executor.getCpu();
 		if (cpu.shouldDebugCompiledCode(cpu.getPC())) {
-			ISettingsHandler settings = executor.getCpu().getMachine().getClient().getSettingsHandler();
-			settings.get(ICpu.settingDumpInstructions).setBoolean(true);
-			settings.get(ICpu.settingDumpFullInstructions).setBoolean(true);
+			Settings.get(cpu, ICpu.settingDumpInstructions).setBoolean(true);
+			Settings.get(cpu, ICpu.settingDumpFullInstructions).setBoolean(true);
 		}
         CodeBlock cb = getCodeBlock(cpu.getPC());
 		return cb;

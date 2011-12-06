@@ -17,6 +17,7 @@ import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IMachineModel;
 import v9t9.common.memory.IMemoryDomain;
+import v9t9.common.settings.Settings;
 import v9t9.engine.compiler.CodeBlockCompilerStrategy;
 import v9t9.engine.cpu.Executor;
 import v9t9.engine.speech.ISpeechDataSender;
@@ -99,7 +100,7 @@ public abstract class BaseTI99MachineModel implements IMachineModel {
 		IMemoryDomain domain = machine.getMemory().getDomain(IMemoryDomain.NAME_SPEECH);
 		if (domain == null)
 			return null;
-		final TMS5220 speech = new TMS5220(domain);
+		final TMS5220 speech = new TMS5220(Settings.getSettings(machine), domain);
 		
 		speech.setSender(new ISpeechDataSender() {
 

@@ -9,8 +9,7 @@ import java.text.MessageFormat;
 import v9t9.base.settings.Logging;
 import v9t9.base.settings.SettingProperty;
 import v9t9.common.client.ISettingsHandler;
-import v9t9.common.cpu.ICpu;
-import v9t9.engine.cpu.Executor;
+import v9t9.common.settings.SettingSchema;
 
 /**
  * @author ejs
@@ -18,15 +17,15 @@ import v9t9.engine.cpu.Executor;
  */
 public class Dumper {
 	private SettingProperty settingDumpFull;
-	private SettingProperty settingDebug;
+	private SettingProperty settingDump;
 
-	/**
-	 * @param settings
-	 */
-	public Dumper(ISettingsHandler settings) {
-		settingDebug = settings.get(RealDiskDsrSettings.diskImageDebug);
-		settingDumpFull = settings.get(ICpu.settingDumpFullInstructions);
-
+	public Dumper(SettingProperty dump, SettingProperty dumpFull) {
+		settingDump = dump;
+		settingDumpFull = dumpFull;
+	}
+	public Dumper(ISettingsHandler settings, SettingSchema dump, SettingSchema dumpFull) {
+		settingDump = settings.get(dump);
+		settingDumpFull = settings.get(dumpFull);
 	}
 
 	public void error(String fmt, Object... args) {
@@ -37,8 +36,9 @@ public class Dumper {
 		PrintWriter full = Logging.getLog(settingDumpFull);
 		if (full != null)
 			full.println(string);
-		if (settingDebug.getBoolean())
-			System.out.println(string);
+		PrintWriter dump = Logging.getLog(settingDump);
+		if (dump != null)
+			dump.println(string);
 		
 	}
 
@@ -59,7 +59,7 @@ public class Dumper {
 	 * @return
 	 */
 	public boolean isEnabled() {
-		return settingDebug.getBoolean() || settingDumpFull.getBoolean();
+		return settingDump.getBoolean() || settingDumpFull.getBoolean();
 	}
 
 }

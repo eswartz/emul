@@ -3,15 +3,18 @@
  */
 package v9t9.common.keyboard;
 
-import v9t9.base.settings.SettingProperty;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.machine.IBaseMachine;
+import v9t9.common.settings.SettingSchema;
 
 /**
  * @author ejs
  *
  */
 public interface IKeyboardState {
-	public static String settingBackspaceIsCtrlH = "SettingIsControlH";
+	public static SettingSchema settingBackspaceIsCtrlH = new SettingSchema(
+			ISettingsHandler.WORKSPACE, 
+			"BackspaceIsControlH", Boolean.FALSE);
 
 	/* Masks, corresponding to column 0 */
 	public static final byte SHIFT = 0x20;

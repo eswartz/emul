@@ -4,15 +4,17 @@
 package v9t9.engine.dsr.realdisk;
 
 import v9t9.base.utils.HexUtils;
-import v9t9.engine.cpu.Executor;
 
 /**
  * @author ejs
  *
  */
 public class RealDiskUtils {
-	static void dumpBuffer(byte[] buffer, int offs, int len)
+	static void dumpBuffer(Dumper dumper, byte[] buffer, int offs, int len)
 	{
+		if (!dumper.isEnabled())
+			return;
+		
 		StringBuilder builder = new StringBuilder();
 		int rowLength = 32;
 		int x;
@@ -36,8 +38,7 @@ public class RealDiskUtils {
 			builder.append('\n');
 		}
 		
-		Executor.getDumpfull().println(builder);
-		System.out.println(builder);
+		dumper.info(builder.toString());
 	
 	}
 

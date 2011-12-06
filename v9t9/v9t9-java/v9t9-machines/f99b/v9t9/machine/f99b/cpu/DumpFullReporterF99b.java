@@ -6,13 +6,16 @@ package v9t9.machine.f99b.cpu;
 import java.io.PrintWriter;
 
 
+import v9t9.base.settings.Logging;
+import v9t9.base.settings.SettingProperty;
 import v9t9.base.utils.HexUtils;
 import v9t9.base.utils.Pair;
 import v9t9.common.asm.RawInstruction;
+import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.IInstructionListener;
 import v9t9.common.cpu.InstructionWorkBlock;
 import v9t9.common.memory.IMemoryEntry;
-import v9t9.engine.cpu.Executor;
+import v9t9.common.settings.Settings;
 import v9t9.machine.f99b.asm.InstF99b;
 import v9t9.machine.f99b.asm.InstructionWorkBlockF99b;
 
@@ -23,6 +26,7 @@ import v9t9.machine.f99b.asm.InstructionWorkBlockF99b;
 public class DumpFullReporterF99b implements IInstructionListener {
 
 	private final PrintWriter dump;
+	private SettingProperty dumpSetting;
 
 	/**
 	 * @param cpu 
@@ -30,12 +34,14 @@ public class DumpFullReporterF99b implements IInstructionListener {
 	 */
 	public DumpFullReporterF99b(CpuF99b cpu, PrintWriter dump) {
 		this.dump = dump;
+		dumpSetting = Settings.get(cpu, ICpu.settingDumpFullInstructions);
 	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.InstructionListener#executed(v9t9.engine.cpu.InstructionAction.Block, v9t9.engine.cpu.InstructionAction.Block)
 	 */
 	public void executed(InstructionWorkBlock before_, InstructionWorkBlock after_) {
-		PrintWriter dumpfull = dump != null ? dump : Executor.getDumpfull();
+		PrintWriter dumpfull = dump != null ? dump : Logging.getLog(dumpSetting);
 		if (dumpfull == null) return;
 		InstructionWorkBlockF99b before = (InstructionWorkBlockF99b) before_;
 		InstructionWorkBlockF99b after = (InstructionWorkBlockF99b) after_;

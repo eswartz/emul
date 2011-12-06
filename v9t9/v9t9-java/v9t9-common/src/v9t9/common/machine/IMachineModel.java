@@ -6,6 +6,7 @@ package v9t9.common.machine;
 import java.util.List;
 
 import v9t9.common.asm.IRawInstructionFactory;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuMetrics;
 import v9t9.common.cpu.IExecutor;
@@ -25,9 +26,9 @@ import v9t9.common.machine.IMachine;
 public interface IMachineModel {
 	String getIdentifier();
 	
-	IMachine createMachine();
+	IMachine createMachine(ISettingsHandler settings);
 
-	IMemoryModel getMemoryModel();
+	IMemoryModel createMemoryModel(IMachine machine);
 	
 	IVdpChip createVdp(IMachine machine);
 	

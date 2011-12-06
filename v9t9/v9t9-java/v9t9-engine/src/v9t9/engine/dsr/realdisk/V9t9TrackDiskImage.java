@@ -24,7 +24,7 @@ public class V9t9TrackDiskImage extends BaseTrackDiskImage  {
 
 	public static final short TRACK_HEADER_SIZE = 12;
 
-	public V9t9TrackDiskImage(String name, File file, ISettingsHandler settings) {
+	public V9t9TrackDiskImage(ISettingsHandler settings, String name, File file) {
 		super(name, file, settings);
 	}
 	

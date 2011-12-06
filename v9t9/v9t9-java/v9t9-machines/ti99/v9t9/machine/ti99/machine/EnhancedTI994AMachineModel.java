@@ -29,11 +29,8 @@ public class EnhancedTI994AMachineModel extends StandardMachineModel {
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.MachineModel#getMemoryModel()
 	 */
-	public IMemoryModel getMemoryModel() {
-		if (memoryModel == null) {
-			memoryModel = new EnhancedTI994AMemoryModel();
-		}
-		return memoryModel;
+	public IMemoryModel createMemoryModel(IMachine machine) {
+		return new EnhancedTI994AMemoryModel(machine);
 	}
 
 	/* (non-Javadoc)

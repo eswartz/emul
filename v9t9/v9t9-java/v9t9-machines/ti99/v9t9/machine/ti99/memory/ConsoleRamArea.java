@@ -5,15 +5,20 @@ package v9t9.machine.ti99.memory;
 
 
 import v9t9.base.settings.SettingProperty;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.memory.IMemoryEntry;
+import v9t9.common.settings.SettingSchema;
 
 /** Builtin console RAM: 256 bytes */
 public class ConsoleRamArea extends ConsoleMemoryArea {
-    static public final String sEnhRam = "ExtraConsoleRAM";
-	static public final SettingProperty settingEnhRam = new SettingProperty(sEnhRam, new Boolean(false));
+    static public final SettingSchema settingEnhRam = new SettingSchema(
+    		ISettingsHandler.WORKSPACE,
+    		"ExtraConsoleRAM", new Boolean(false));
+	private final SettingProperty enhRam;
 
-	public ConsoleRamArea() {
+	public ConsoleRamArea(ISettingsHandler settings) {
     	super(0);
+		this.enhRam = settings.get(ConsoleRamArea.settingEnhRam);
     	
         memory = new short[0x400/2];
         read = memory;
@@ -21,7 +26,7 @@ public class ConsoleRamArea extends ConsoleMemoryArea {
     }
 	
 	private int maskAddress(int addr) {
-		if (!ConsoleRamArea.settingEnhRam.getBoolean())
+		if (!enhRam.getBoolean())
 			 addr = (addr & 0xff) + 0x8300;
 		return addr;
 	}

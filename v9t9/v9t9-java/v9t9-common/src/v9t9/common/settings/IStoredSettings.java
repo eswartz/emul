@@ -21,7 +21,9 @@ public interface IStoredSettings {
 	void save(ISettingSection settings);
 
 	//void register(SettingProperty setting);
-	SettingProperty findOrCreate(SettingDefinition def);
+	SettingProperty findOrCreate(SettingSchema schema);
+	SettingProperty findOrCreate(SettingSchema schema, Object defaultOverride);
+
 	<T extends SettingProperty> T findOrCreate(T defaultProperty);
 
 	void clearConfigVar(String configVar);
@@ -41,5 +43,9 @@ public interface IStoredSettings {
 	 * @return
 	 */
 	ISettingSection getHistorySettings();
+	
+
+	void setDirty(boolean b);
+	boolean isDirty();
 
 }

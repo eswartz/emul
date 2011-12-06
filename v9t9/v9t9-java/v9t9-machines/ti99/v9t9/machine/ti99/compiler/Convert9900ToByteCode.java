@@ -24,7 +24,6 @@ import org.apache.bcel.generic.Type;
 import v9t9.common.asm.BaseMachineOperand;
 import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.InstTableCommon;
-import v9t9.common.compiler.ICompiler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.memory.IMemoryArea;
 import v9t9.engine.compiler.CompileInfo;
@@ -625,8 +624,7 @@ public class Convert9900ToByteCode {
                 "setWP", Type.VOID, new Type[] { Type.SHORT },
                 Constants.INVOKEVIRTUAL));
 
-	    if (ICompiler.settingOptimize.getBoolean()
-	            && ICompiler.settingOptimizeRegAccess.getBoolean()) {
+	    if (info.optimizeRegAccess) {
 	        // get the wp memory...
 	        ilist.append(new ALOAD(info.localMemory));
 	        // ... entry

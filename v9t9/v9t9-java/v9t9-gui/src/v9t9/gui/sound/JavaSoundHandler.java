@@ -39,10 +39,16 @@ public class JavaSoundHandler implements ISoundHandler {
 	private ISoundListener audio;
 	private ISoundListener speechAudio;
 	private final IMachine machine;
+	private SettingProperty soundVolume;
+	private SettingProperty playSound;
 	
 	public JavaSoundHandler(final IMachine machine, ISettingsHandler settingsHandler) {
 
 		this.machine = machine;
+		
+		soundVolume = settingsHandler.get(ISoundHandler.settingSoundVolume);
+		playSound = settingsHandler.get(ISoundHandler.settingPlaySound);
+		
 		soundFormat = new AudioFormat(55930, 16, 2, true, false);
 		
 		speechFramesPerTick = 6;
@@ -60,7 +66,7 @@ public class JavaSoundHandler implements ISoundHandler {
 		output.addListener(audio);
 		speechOutput.addListener(speechAudio);
 		
-		ISoundHandler.settingSoundVolume.addListener(new IPropertyListener() {
+		soundVolume.addListener(new IPropertyListener() {
 			
 			@Override
 			public void propertyChanged(IProperty setting) {
@@ -68,9 +74,6 @@ public class JavaSoundHandler implements ISoundHandler {
 			}
 		});
 
-		settingsHandler.getInstanceSettings().register(ISoundHandler.settingSoundVolume);
-		settingsHandler.getInstanceSettings().register(ISoundHandler.settingPlaySound);
-		
 		soundRecordingHelper = new SoundRecordingHelper(output, settingRecordSoundOutputFile, "sound");
 		speechRecordingHelper = new SoundRecordingHelper(speechOutput, settingRecordSpeechOutputFile, "speech");
 		
@@ -82,7 +85,7 @@ public class JavaSoundHandler implements ISoundHandler {
 
 		
 		
-		ISoundHandler.settingPlaySound.addListener(new IPropertyListener() {
+		playSound.addListener(new IPropertyListener() {
 
 			public void propertyChanged(IProperty setting) {
 				toggleSound(setting.getBoolean());
@@ -90,7 +93,7 @@ public class JavaSoundHandler implements ISoundHandler {
 			
 		});
 		
-		toggleSound(ISoundHandler.settingPlaySound.getBoolean());
+		toggleSound(playSound.getBoolean());
 	}
 	
 

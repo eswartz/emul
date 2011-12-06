@@ -14,7 +14,10 @@ import java.util.Arrays;
 
 import org.junit.BeforeClass;
 
+import v9t9.base.settings.SettingProperty;
 import v9t9.base.utils.HexUtils;
+import v9t9.common.client.ISettingsHandler;
+import v9t9.common.cpu.ICpu;
 import v9t9.common.dsr.IMemoryTransfer;
 import v9t9.common.files.FDR;
 import v9t9.common.files.FDRFactory;
@@ -24,6 +27,8 @@ import v9t9.engine.dsr.PabStruct;
 import v9t9.engine.dsr.emudisk.EmuDiskConsts;
 import v9t9.engine.dsr.emudisk.EmuDiskDsrSettings;
 import v9t9.engine.dsr.emudisk.EmuDiskPabHandler;
+import v9t9.engine.dsr.realdisk.Dumper;
+import v9t9.engine.dsr.realdisk.RealDiskDsrSettings;
 import v9t9.machine.common.dsr.emudisk.DiskDirectoryMapper;
 import v9t9.machine.common.dsr.emudisk.EmuDiskDsr;
 
@@ -35,6 +40,9 @@ public class BaseEmuDiskDSRTest {
 
 	protected static DiskDirectoryMapper mymapper = new DiskDirectoryMapper();
 	protected static File dsk1Path;
+	
+	protected static ISettingsHandler settings;
+	protected static SettingProperty diskImageDsrEnabled;
 	
 	@BeforeClass
 	public static void setupSearch() {
@@ -49,7 +57,10 @@ public class BaseEmuDiskDSRTest {
 		dir = new File(dir.getParentFile(), mymapper.getLocalFileName("EXTRA/LALA"));
 		mymapper.setDiskPath("DSK2", dir);
 
-		EmuDiskDsrSettings.emuDiskDsrEnabled.setBoolean(true);
+		diskImageDsrEnabled = settings.get(RealDiskDsrSettings.diskImageDsrEnabled);
+
+		emuDiskDsrEnabled = settings.get(EmuDiskDsrSettings.emuDiskDsrEnabled);
+		emuDiskDsrEnabled.setBoolean(true);
 	}
 	
 	static class FakeMemory implements IMemoryTransfer {
@@ -139,13 +150,18 @@ public class BaseEmuDiskDSRTest {
 	{
 		xfer.writeParamWord(0x70, (short) 0x3fff);
 	}
-	protected EmuDiskDsr dsr = new EmuDiskDsr(mymapper);
+	protected EmuDiskDsr dsr = new EmuDiskDsr(settings, mymapper);
+	private Dumper dumper;
+	private static SettingProperty emuDiskDsrEnabled;
 	{
+		dumper = new Dumper(settings, RealDiskDsrSettings.diskImageDebug, ICpu.settingDumpFullInstructions); 
 		dsr.handleDSR(xfer, (short) EmuDiskConsts.D_INIT);
 	}
 	
 	protected EmuDiskPabHandler runCase(PabStruct pab) throws DsrException {
-		EmuDiskPabHandler handler = new EmuDiskPabHandler((short)0x1000, xfer, mymapper, pab, (short) 0x3ff5);
+		EmuDiskPabHandler handler = new EmuDiskPabHandler(
+				dumper,
+				(short)0x1000, xfer, mymapper, pab, (short) 0x3ff5);
 		xfer.reset();
 		handler.run();
 		return handler;

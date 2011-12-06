@@ -6,28 +6,31 @@
  */
 package v9t9.engine.video.tms9918a;
 
+import java.io.PrintWriter;
 import java.util.Arrays;
 
 
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
 import v9t9.base.settings.ISettingSection;
+import v9t9.base.settings.Logging;
+import v9t9.base.settings.SettingProperty;
 import v9t9.base.utils.HexUtils;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.hardware.ICruChip;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.memory.IMemoryDomain;
+import v9t9.common.settings.Settings;
 import v9t9.common.video.IVdpCanvas;
 import v9t9.common.video.RedrawBlock;
 import v9t9.common.video.VdpChanges;
 import v9t9.common.video.VdpFormat;
 import v9t9.common.video.VdpModeInfo;
-import v9t9.engine.cpu.Executor;
 import v9t9.engine.hardware.BaseCruChip;
 import v9t9.engine.memory.VdpMmio;
-import v9t9.engine.settings.WorkspaceSettings;
 import v9t9.engine.video.BlankModeRedrawHandler;
 import v9t9.engine.video.MemoryCanvas;
 import v9t9.engine.video.IVdpModeRedrawHandler;
@@ -89,13 +92,30 @@ public class VdpTMS9918A implements IVdpChip {
 	private int throttleCount;
 	private final IMachine machine;
 	private int fixedTimeVdpInterruptDelta;
+	private SettingProperty cyclesPerSecond;
+	protected SettingProperty vdpInterruptRate;
+	private SettingProperty realTime;
+	private SettingProperty cpuSynchedVdpInterrupt;
+	protected SettingProperty dumpVdpAccess;
+	protected SettingProperty dumpFullInstructions;
+	private SettingProperty throttleInterrupts;
 
 	public VdpTMS9918A(IMachine machine) {
 		this.machine = machine;
 		
+		ISettingsHandler settings = Settings.getSettings(machine);
+		
+		cyclesPerSecond = settings.get(ICpu.settingCyclesPerSecond);
+		vdpInterruptRate = settings.get(settingVdpInterruptRate);
+		realTime = settings.get(ICpu.settingRealTime);
+		cpuSynchedVdpInterrupt = settings.get(settingCpuSynchedVdpInterrupt);
+		throttleInterrupts = settings.get(IMachine.settingThrottleInterrupts);
+		dumpFullInstructions = settings.get(ICpu.settingDumpFullInstructions);
+		dumpVdpAccess = settings.get(settingDumpVdpAccess);
+		
 		vdpStatus = (byte) IVdpChip.VDP_INTERRUPT;
 		
-		IVdpChip.settingVdpInterruptRate.addListener(new IPropertyListener() {
+		vdpInterruptRate.addListener(new IPropertyListener() {
 
 			public void propertyChanged(IProperty setting) {
 				recalcInterruptTiming();
@@ -103,9 +123,7 @@ public class VdpTMS9918A implements IVdpChip {
 			
 		});
 		
-		WorkspaceSettings.CURRENT.register(IVdpChip.settingVdpInterruptRate);
-		
-		ICpu.settingCyclesPerSecond.addListener(new IPropertyListener() {
+		cyclesPerSecond.addListener(new IPropertyListener() {
 
 			public void propertyChanged(IProperty setting) {
 				recalcInterruptTiming();
@@ -115,9 +133,9 @@ public class VdpTMS9918A implements IVdpChip {
 		
 		recalcInterruptTiming();
 		
-		ICpu.settingRealTime.addListener(new IPropertyListener() {
+		realTime.addListener(new IPropertyListener() {
 			public void propertyChanged(IProperty setting) {
-				IVdpChip.settingCpuSynchedVdpInterrupt.setBoolean(setting.getBoolean());				
+				cpuSynchedVdpInterrupt.setBoolean(setting.getBoolean());				
 			}
 		});
 		
@@ -137,15 +155,18 @@ public class VdpTMS9918A implements IVdpChip {
 	}
 
 	protected void recalcInterruptTiming() {
-        vdpInterruptLimit = ICpu.settingCyclesPerSecond.getInt() / IVdpChip.settingVdpInterruptRate.getInt();
+        vdpInterruptLimit = cyclesPerSecond.getInt() / vdpInterruptRate.getInt();
         vdpInterruptFrac = 0;
-        fixedTimeVdpInterruptDelta = (int) ((long) IVdpChip.settingVdpInterruptRate.getInt() * 65536 / machine.getCpuTicksPerSec());
+        fixedTimeVdpInterruptDelta = (int) ((long) vdpInterruptRate.getInt() * 65536 / machine.getCpuTicksPerSec());
         //System.out.println("VDP interrupt target: " + Cpu.settingCyclesPerSecond.getInt() + " /  " + settingVdpInterruptRate.getInt() + " = " + vdpInterruptLimit);		
 	}
 
-	public static void log(String msg) {
-		if (IVdpChip.settingDumpVdpAccess.getBoolean() && ICpu.settingDumpFullInstructions.getBoolean())
-			Executor.getDumpfull().println("[VDP] " + msg);
+	public void log(String msg) {
+		if (dumpVdpAccess.getBoolean()) {
+			PrintWriter pw = Logging.getLog(dumpFullInstructions);
+			if (pw != null)
+				pw.println("[VDP] " + msg);
+		}
 	}
 	
 	public IMemoryDomain getVideoMemory() {
@@ -179,7 +200,7 @@ public class VdpTMS9918A implements IVdpChip {
     	byte old = vdpregs[reg];
     	vdpregs[reg] = val;
     	
-    	if (ICpu.settingDumpFullInstructions.getBoolean() && IVdpChip.settingDumpVdpAccess.getBoolean())
+    	if (dumpFullInstructions.getBoolean() && dumpVdpAccess.getBoolean())
     		log("register " + reg + " " + HexUtils.toHex2(old) + " -> " + HexUtils.toHex2(val));
     	
     	int         redraw = doWriteVdpReg(reg, old, val);
@@ -649,7 +670,7 @@ public class VdpTMS9918A implements IVdpChip {
 	}
 
 	public void tick() {
-		 if (IVdpChip.settingCpuSynchedVdpInterrupt.getBoolean())
+		 if (cpuSynchedVdpInterrupt.getBoolean())
 			 return;
 		 
 		 // in this model, we use the system clock to ensure reliable VDP
@@ -670,7 +691,7 @@ public class VdpTMS9918A implements IVdpChip {
 	
 
 	public void syncVdpInterrupt(IMachine machine) {
-		if (!IVdpChip.settingCpuSynchedVdpInterrupt.getBoolean())
+		if (!cpuSynchedVdpInterrupt.getBoolean())
 			return;
 
 		// in this model, the CPU is running at a fixed rate,
@@ -688,7 +709,7 @@ public class VdpTMS9918A implements IVdpChip {
 	 */
 	protected void doTick() {
 		if (true /*|| machine.getExecutor().nVdpInterrupts < settingVdpInterruptRate.getInt()*/) {
-    		if (IMachine.settingThrottleInterrupts.getBoolean()) {
+    		if (throttleInterrupts.getBoolean()) {
     			if (throttleCount-- < 0) {
     				throttleCount = 6;
     			} else {
@@ -746,8 +767,8 @@ public class VdpTMS9918A implements IVdpChip {
 		}
 		section.put("Registers", regState);
 		//settingDumpVdpAccess.saveState(section);
-		IVdpChip.settingCpuSynchedVdpInterrupt.saveState(section);
-		IVdpChip.settingVdpInterruptRate.saveState(section);
+		cpuSynchedVdpInterrupt.saveState(section);
+		vdpInterruptRate.saveState(section);
 	}
 	
 	public void loadState(ISettingSection section) {
@@ -763,8 +784,8 @@ public class VdpTMS9918A implements IVdpChip {
 		}
 		
 		//settingDumpVdpAccess.loadState(section);
-		IVdpChip.settingCpuSynchedVdpInterrupt.loadState(section);
-		IVdpChip.settingVdpInterruptRate.loadState(section);
+		cpuSynchedVdpInterrupt.loadState(section);
+		vdpInterruptRate.loadState(section);
 	}
 	
 	

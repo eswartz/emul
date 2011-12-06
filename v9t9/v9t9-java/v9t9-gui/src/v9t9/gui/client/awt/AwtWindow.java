@@ -49,6 +49,8 @@ import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyEvent;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.machine.IMachine;
+import v9t9.common.settings.SettingSchema;
+import v9t9.common.settings.Settings;
 import v9t9.gui.Emulator;
 import v9t9.gui.common.BaseEmulatorWindow;
 
@@ -77,7 +79,7 @@ public class AwtWindow extends BaseEmulatorWindow implements
 		GraphicsConfiguration gc = device.getDefaultConfiguration();
 		frame = new Frame(gc);
 
-		AwtVideoRenderer renderer = new AwtVideoRenderer(machine.getVdp());
+		AwtVideoRenderer renderer = new AwtVideoRenderer(machine);
 		setVideoRenderer(renderer);
 
 		// frame.setIgnoreRepaint(true);
@@ -352,9 +354,10 @@ public class AwtWindow extends BaseEmulatorWindow implements
 		return button;
 	}
 
-	private BasicButton createStateButton(final SettingProperty setting,
+	private BasicButton createStateButton(SettingSchema schema,
 			Rectangle bounds, final Rectangle checkBounds, String tooltip) {
 
+		final SettingProperty setting = Settings.get(machine, schema);
 		final BasicButton button = createButton(icons, bounds, tooltip,
 				new ButtonPressHandler() {
 

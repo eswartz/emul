@@ -5,20 +5,20 @@ import v9t9.base.properties.IPersistable;
 import v9t9.base.settings.SettingProperty;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.machine.IBaseMachine;
-import v9t9.common.settings.SettingDefinition;
+import v9t9.common.settings.SettingSchema;
 
 public interface ICpu extends IPersistable, ICpuState {
-	static public final SettingDefinition settingDumpInstructions = new SettingDefinition(
+	static public final SettingSchema settingDumpInstructions = new SettingSchema(
 			ISettingsHandler.TRANSIENT,
 			"DumpInstructions", new Boolean(false));
-	static public final SettingDefinition settingDumpFullInstructions = new SettingDefinition(
+	static public final SettingSchema settingDumpFullInstructions = new SettingSchema(
 			ISettingsHandler.TRANSIENT,
 			"DumpFullInstructions", new Boolean(false));
 
-	static public final SettingDefinition settingRealTime = new SettingDefinition(
+	static public final SettingSchema settingRealTime = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
 			"RealTime", new Boolean(false));
-	static public final SettingDefinition settingCyclesPerSecond = new SettingDefinition(
+	static public final SettingSchema settingCyclesPerSecond = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
 			"CyclesPerSecond", new Integer(0));
 

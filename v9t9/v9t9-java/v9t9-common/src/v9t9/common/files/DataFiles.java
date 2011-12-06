@@ -28,9 +28,12 @@ import v9t9.common.memory.IMemoryDomain;
  * @author ejs
  */
 public class DataFiles {
-	static public final SettingProperty settingBootRomsPath = new SettingProperty("BootRomsPath", String.class, new ArrayList<String>());
-	static public final SettingProperty settingUserRomsPath = new SettingProperty("UserRomsPath", String.class, new ArrayList<String>());
-	static public final SettingProperty settingStoredRamPath = new SettingProperty("StoredRamPath", ".");
+	static public final SettingProperty settingBootRomsPath = 
+		new SettingProperty("BootRomsPath", String.class, new ArrayList<String>());
+	static public final SettingProperty settingUserRomsPath = 
+		new SettingProperty("UserRomsPath", String.class, new ArrayList<String>());
+	static public final SettingProperty settingStoredRamPath = 
+		new SettingProperty("StoredRamPath", ".");
 	
 	public static void addSearchPath(String filepath) {
 		List<String> list = settingBootRomsPath.getList();

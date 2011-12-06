@@ -12,6 +12,7 @@ import v9t9.common.asm.Block;
 import v9t9.common.asm.IDecompileInfo;
 import v9t9.common.asm.IHighLevelInstruction;
 import v9t9.common.asm.RawInstruction;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.compiler.ICompiler;
 
 /**
@@ -24,6 +25,12 @@ import v9t9.common.compiler.ICompiler;
 public class FunctionInstructionRangeCompiler implements
 		InstructionRangeCompiler {
 
+	private ISettingsHandler settings;
+
+	public FunctionInstructionRangeCompiler(ISettingsHandler settings) {
+		this.settings = settings;
+	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.runtime.Compiler.InstructionRangeCompiler#compileInstructionRange(v9t9.emulator.runtime.Compiler, int, int, v9t9.emulator.runtime.HighLevelCodeInfo, org.apache.bcel.generic.InstructionList, v9t9.emulator.runtime.CompileInfo)
 	 */
@@ -68,7 +75,8 @@ public class FunctionInstructionRangeCompiler implements
 		            
 		        }
 		    	
-		    	if (ICompiler.settingOptimize.getBoolean() && chunks[i] != null) {
+		    	if (settings.get(ICompiler.settingOptimize).getBoolean() 
+		    			&& chunks[i] != null) {
 		    		// TODO: buggy
 		    		//BytecodeOptimizer.peephole(info, chunks[i]);
 		    	}

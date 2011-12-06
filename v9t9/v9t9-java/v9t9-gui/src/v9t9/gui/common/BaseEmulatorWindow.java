@@ -9,21 +9,25 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.text.MessageFormat;
 
 
 import v9t9.base.properties.IProperty;
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.settings.ISettingStorage;
-import v9t9.base.settings.SettingProperty;
 import v9t9.base.settings.SettingsSection;
 import v9t9.base.settings.XMLSettingStorage;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.IVideoRenderer;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.TerminatedException;
 import v9t9.common.settings.IStoredSettings;
+import v9t9.common.settings.SettingSchema;
+import v9t9.common.settings.Settings;
 import v9t9.gui.Emulator;
 import v9t9.server.EmulatorServer;
+import v9t9.server.WorkspaceSettings;
 
 public abstract class BaseEmulatorWindow {
 
@@ -37,13 +41,23 @@ public abstract class BaseEmulatorWindow {
 	private static final String[] MACHINE_SAVE_FILE_EXTENSIONS = new String[] { ".sav|V9t9 machine save file" };
 	protected IVideoRenderer videoRenderer;
 	protected final IMachine machine;
-	static public final SettingProperty settingMonitorDrawing = new SettingProperty("MonitorDrawing", new Boolean(true));
-	static public final SettingProperty settingZoomLevel = new SettingProperty("ZoomLevel", new Integer(3));
-	static public final SettingProperty settingFullScreen = new SettingProperty("FullScreen", new Boolean(false));
+	static public final SettingSchema settingMonitorDrawing = new SettingSchema(
+			ISettingsHandler.WORKSPACE,
+			"MonitorDrawing", new Boolean(true));
+	static public final SettingSchema settingZoomLevel = new SettingSchema(
+			ISettingsHandler.WORKSPACE,
+			"ZoomLevel", new Integer(3));
+	static public final SettingSchema settingFullScreen = new SettingSchema(
+			ISettingsHandler.WORKSPACE,
+			"FullScreen", new Boolean(false));
 
 	// not persisted
-	static public final SettingProperty settingMachineStatePath = new SettingProperty("MachineStatePath", "");
-	static public final SettingProperty settingScreenShotsBase = new SettingProperty("ScreenShotsBase", "");
+	static public final SettingSchema settingMachineStatePath = new SettingSchema(
+			ISettingsHandler.TRANSIENT,
+			"MachineStatePath", "");
+	static public final SettingSchema settingScreenShotsBase = new SettingSchema(
+			ISettingsHandler.TRANSIENT,
+			"ScreenShotsBase", "");
 	
 	public BaseEmulatorWindow(IMachine machine) {
 		this.machine = machine;
@@ -66,8 +80,10 @@ public abstract class BaseEmulatorWindow {
 		return videoRenderer;
 	}
 
-	protected String selectFile(String title, IProperty configVar, String defaultSubdir,
+	protected String selectFile(String title, SettingSchema configVarSchema, String defaultSubdir,
 			String fileName, boolean isSave, boolean ifUndefined, String[] extensions) {
+		
+		IProperty configVar = Settings.get(machine, configVarSchema);
 		
 		boolean isUndefined = false;
 		IStoredSettings workspace = machine.getClient().getSettingsHandler().
@@ -167,6 +183,27 @@ public abstract class BaseEmulatorWindow {
 			        }
 				}
 		        
+				String origWorkspace = settings.get(WorkspaceSettings.currentWorkspace.getName());
+				if (origWorkspace != null) {
+					try {
+						WorkspaceSettings.loadFrom(
+								Settings.getSettings(machine).getWorkspaceSettings(), 
+								origWorkspace);
+					} catch (IOException e) {
+						machine.getClient().getEventNotifier().notifyEvent(
+								machine,
+								Level.WARNING, 
+								MessageFormat.format(
+										"Could not find the workspace ''{0}'' referenced in the saved state",
+										origWorkspace));
+					}
+				}
+				
+				ISettingSection workspace = settings.getSection("Workspace");
+				if (workspace != null) {
+					Settings.getSettings(machine).getWorkspaceSettings().load(workspace);
+				}
+				
 				machine.loadState(settings);
 			} catch (Throwable e1) {
 				machine.getClient().getEventNotifier().notifyEvent(null, Level.ERROR, 

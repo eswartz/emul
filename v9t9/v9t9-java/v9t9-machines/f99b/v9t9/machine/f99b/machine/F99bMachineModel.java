@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.List;
 
 import v9t9.common.asm.IRawInstructionFactory;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuMetrics;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
@@ -19,6 +20,7 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IMachineModel;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryModel;
+import v9t9.common.settings.Settings;
 import v9t9.engine.compiler.NullCompilerStrategy;
 import v9t9.engine.cpu.Executor;
 import v9t9.engine.dsr.realdisk.MemoryDiskImageDsr;
@@ -41,12 +43,9 @@ public class F99bMachineModel implements IMachineModel {
 
 	public static final String ID = "Forth99B";
 	
-	private F99bMemoryModel memoryModel;
-
 	private MemoryDiskImageDsr memoryDiskDsr;
 	
 	public F99bMachineModel() {
-		memoryModel = new F99bMemoryModel();
 	}
 	
 	/* (non-Javadoc)
@@ -60,14 +59,14 @@ public class F99bMachineModel implements IMachineModel {
 	 * @see v9t9.emulator.hardware.MachineModel#createMachine()
 	 */
 	@Override
-	public IMachine createMachine() {
-		return new F99bMachine(this);
+	public IMachine createMachine(ISettingsHandler settings) {
+		return new F99bMachine(settings, this);
 	}
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.MachineModel#getMemoryModel()
 	 */
-	public IMemoryModel getMemoryModel() {
-		return memoryModel;
+	public IMemoryModel createMemoryModel(IMachine machine) {
+		return new F99bMemoryModel(machine);
 	}
 
 	/* (non-Javadoc)
@@ -86,11 +85,12 @@ public class F99bMachineModel implements IMachineModel {
 	 */
 	@Override
 	public ISpeechChip createSpeechChip(IMachine machine) {
-		return new TMS5220(machine.getMemory().getDomain(IMemoryDomain.NAME_SPEECH));
+		return new TMS5220(Settings.getSettings(machine), 
+				machine.getMemory().getDomain(IMemoryDomain.NAME_SPEECH));
 	}
 	
 	public void defineDevices(final IMachine machine_) {
-		IKeyboardState.settingBackspaceIsCtrlH.setBoolean(true);
+		Settings.get(machine_, IKeyboardState.settingBackspaceIsCtrlH).setBoolean(true);
 		
 		memoryDiskDsr = new MemoryDiskImageDsr(machine_, InternalCruF99.DISK_BASE);
 

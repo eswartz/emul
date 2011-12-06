@@ -4,7 +4,9 @@
 package v9t9.common.cpu;
 
 import v9t9.base.settings.SettingProperty;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.compiler.ICompilerStrategy;
+import v9t9.common.settings.SettingSchema;
 
 /**
  * @author ejs
@@ -12,9 +14,11 @@ import v9t9.common.compiler.ICompilerStrategy;
  */
 public interface IExecutor {
 
-	static public final SettingProperty settingCompile = new SettingProperty(
+	static public final SettingSchema settingCompile = new SettingSchema(
+			ISettingsHandler.INSTANCE,
 			"Compile", new Boolean(false));
-	static public final SettingProperty settingSingleStep = new SettingProperty(
+	static public final SettingSchema settingSingleStep = new SettingSchema(
+			ISettingsHandler.TRANSIENT,
 			"SingleStep", new Boolean(false));
 
 	SettingProperty settingCompile();

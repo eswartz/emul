@@ -12,7 +12,6 @@ import v9t9.common.hardware.ICruChip;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
 import v9t9.engine.cpu.CpuBase;
-import v9t9.engine.cpu.Executor;
 import v9t9.machine.f99b.asm.StatusF99b;
 
 /**
@@ -304,7 +303,7 @@ public class CpuF99b extends CpuBase {
 		int currentInt = ((StatusF99b) stateF99b.getStatus()).getCurrentInt();
 		boolean doubleFault = currentInt == INT_FAULT || currentInt == INT_NMI;
 		
-    	PrintWriter dumpfull = Executor.getDumpfull();
+    	PrintWriter dumpfull = Logging.getLog(this.settingDumpFullInstructions());
 		if (dumpfull != null) {
 			dumpfull.println("*** FAULT");
 		}

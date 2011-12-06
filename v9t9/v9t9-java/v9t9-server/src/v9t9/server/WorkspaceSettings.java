@@ -1,14 +1,15 @@
 /**
  * 
  */
-package v9t9.engine.settings;
+package v9t9.server;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 
 import v9t9.base.settings.SettingProperty;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.settings.BaseStoredSettings;
+import v9t9.common.settings.IStoredSettings;
 
 
 /**
@@ -20,16 +21,18 @@ import v9t9.common.settings.BaseStoredSettings;
  */
 public class WorkspaceSettings extends BaseStoredSettings {
 
-	public static SettingProperty currentWorkspace = new SettingProperty("CurrentWorkspace", "workspace");
+	public static SettingProperty currentWorkspace = new SettingProperty(
+			//ISettingsHandler.GLOBAL,
+			"CurrentWorkspace", "workspace");
 
-	public static WorkspaceSettings CURRENT = new WorkspaceSettings(currentWorkspace.getString());
+	//public static WorkspaceSettings CURRENT = new WorkspaceSettings(currentWorkspace.getString());
 	
 	private String workspaceName;
 
 	private String workspacePath;
 
 	public WorkspaceSettings(String workspaceName) {
-		super();
+		super(ISettingsHandler.WORKSPACE);
 		File file = new File(workspaceName);
 		if (file.isAbsolute()) {
 			this.workspaceName = file.getName();
@@ -39,7 +42,7 @@ public class WorkspaceSettings extends BaseStoredSettings {
 			this.workspacePath = super.getConfigDirectory();
 		}
 		currentWorkspace.setString(getConfigFileName());
-		EmulatorSettings.INSTANCE.register(currentWorkspace);
+		//EmulatorSettings.INSTANCE.register(currentWorkspace);
 	}
 	
 	/* (non-Javadoc)
@@ -62,23 +65,19 @@ public class WorkspaceSettings extends BaseStoredSettings {
 	 * @param file
 	 * @throws IOException 
 	 */
-	public static void loadFrom(String file) throws IOException {
+	public static void loadFrom(IStoredSettings current, String file) throws IOException {
 		File destFile = new File(file);
 		if (!destFile.isAbsolute())
-			destFile = new File(CURRENT.getConfigDirectory(), file);
-		if (CURRENT.needsSave && !destFile.equals(new File(CURRENT.getConfigFilePath())))
-			CURRENT.save();
+			destFile = new File(current.getConfigDirectory(), file);
+		if (current.isDirty() && !destFile.equals(new File(current.getConfigFilePath())))
+			current.save();
 		
-		List<SettingProperty> props = CURRENT.trackedSettings;
-		CURRENT = new WorkspaceSettings(file);
-		CURRENT.trackedSettings.addAll(props);
-		CURRENT.load();
+		/*
+		List<SettingProperty> props = current.trackedSettings;
+		current = new WorkspaceSettings(file);
+		current.trackedSettings.addAll(props);
+		*/
+		current.load();
 	}
 
-	/**
-	 * @param b
-	 */
-	public void setDirty(boolean b) {
-		needsSave = b;
-	}
 }

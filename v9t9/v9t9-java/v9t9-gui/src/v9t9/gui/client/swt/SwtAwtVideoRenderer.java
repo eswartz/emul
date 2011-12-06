@@ -24,8 +24,13 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Shell;
 
+import v9t9.base.properties.IProperty;
+import v9t9.base.properties.IPropertyListener;
+import v9t9.base.settings.SettingProperty;
 import v9t9.common.machine.IMachine;
+import v9t9.common.settings.Settings;
 import v9t9.gui.client.awt.AwtVideoRenderer;
+import v9t9.gui.common.BaseEmulatorWindow;
 
 /**
  * AWT blitting is much faster than SWT's. 
@@ -42,9 +47,10 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 	private List<org.eclipse.swt.events.MouseListener> mouseListeners = new ArrayList<org.eclipse.swt.events.MouseListener>();
 	private List<org.eclipse.swt.events.MouseMoveListener> mouseMoveListeners = new ArrayList<org.eclipse.swt.events.MouseMoveListener>();
 	private FixedAspectLayout fixedAspectLayout;
+	private SettingProperty fullScreen;
 	
 	public SwtAwtVideoRenderer(IMachine machine) {
-		super(machine.getVdp());
+		super(machine);
 	}
 	
 	/* (non-Javadoc)
@@ -119,6 +125,15 @@ public class SwtAwtVideoRenderer extends AwtVideoRenderer implements ISwtVideoRe
 		
 		fixedAspectLayout = new FixedAspectLayout(256, 192, 3.0, 3.0, 1., 5);
 		awtContainer.setLayout(fixedAspectLayout);
+		
+		fullScreen = Settings.get(machine, BaseEmulatorWindow.settingFullScreen);
+		fullScreen.addListener(new IPropertyListener() {
+			
+			@Override
+			public void propertyChanged(IProperty property) {
+				fixedAspectLayout.setFullScreen(property.getBoolean());
+			}
+		});
 		
 		awtContainer.addControlListener(new ControlAdapter() {
 			@Override

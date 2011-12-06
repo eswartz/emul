@@ -17,7 +17,7 @@ import v9t9.common.client.ISettingsHandler;
  */
 public class RawTrackDiskImage extends BaseTrackDiskImage  {
 	
-	public RawTrackDiskImage(String name, File file, ISettingsHandler settings) {
+	public RawTrackDiskImage(ISettingsHandler settings, String name, File file) {
 		super(name, file, settings);
 	}
 	

@@ -4,11 +4,13 @@
 package v9t9.machine.ti99.machine;
 
 
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.keyboard.IKeyboardState;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryModel;
+import v9t9.common.settings.Settings;
 import v9t9.engine.sound.SoundTMS9919;
 import v9t9.engine.video.tms9918a.VdpTMS9918A;
 import v9t9.machine.common.dsr.emudisk.DiskDirectoryMapper;
@@ -24,7 +26,6 @@ import v9t9.machine.ti99.memory.TI994AStandardConsoleMemoryModel;
 public class StandardMachineModel extends BaseTI99MachineModel {
 
 	public static final String ID = "StandardTI994A";
-	protected IMemoryModel memoryModel;
 
 	public StandardMachineModel() {
 	}
@@ -41,17 +42,14 @@ public class StandardMachineModel extends BaseTI99MachineModel {
 	 * @see v9t9.emulator.hardware.MachineModel#createMachine()
 	 */
 	@Override
-	public IMachine createMachine() {
-		return new TI994A(this);
+	public IMachine createMachine(ISettingsHandler settings) {
+		return new TI994A(settings, this);
 	}
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.MachineModel#getMemoryModel()
 	 */
-	public IMemoryModel getMemoryModel() {
-		if (memoryModel == null) {
-			memoryModel = new TI994AStandardConsoleMemoryModel();
-		}
-		return memoryModel;
+	public IMemoryModel createMemoryModel(IMachine machine) {
+		return new TI994AStandardConsoleMemoryModel(machine);
 	}
 
 	/* (non-Javadoc)
@@ -63,13 +61,14 @@ public class StandardMachineModel extends BaseTI99MachineModel {
 	}
 	
 	public void defineDevices(IMachine machine_) {
-		IKeyboardState.settingBackspaceIsCtrlH.setBoolean(false);
+		Settings.get(machine_, IKeyboardState.settingBackspaceIsCtrlH).setBoolean(false);
 		
 		if (machine_ instanceof TI99Machine) {
 			TI99Machine machine = (TI99Machine) machine_;
 			machine.setCru(new InternalCru9901(machine, machine.getKeyboardState()));
 			
-			EmuDiskDsr emudsr = new EmuDiskDsr(DiskDirectoryMapper.INSTANCE);
+			EmuDiskDsr emudsr = new EmuDiskDsr(Settings.getSettings(machine_), 
+					DiskDirectoryMapper.INSTANCE);
 			machine.getDsrManager().registerDsr(emudsr);
 			RealDiskImageDsr diskdsr = new RealDiskImageDsr(machine, (short) 0x1100);
 			machine.getDsrManager().registerDsr(diskdsr);

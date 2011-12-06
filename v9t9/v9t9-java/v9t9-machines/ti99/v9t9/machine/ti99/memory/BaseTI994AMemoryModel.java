@@ -5,12 +5,14 @@ package v9t9.machine.ti99.memory;
 
 import java.io.IOException;
 
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IBaseMachine;
 import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryDomain;
+import v9t9.common.settings.Settings;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.GplMmio;
 import v9t9.engine.memory.Memory;
@@ -45,14 +47,15 @@ public abstract class BaseTI994AMemoryModel implements TIMemoryModel {
 	public VdpMmio vdpMmio;
 
 	/**
+	 * @param machine 
 	 * 
 	 */
-	public BaseTI994AMemoryModel() {
+	public BaseTI994AMemoryModel(IBaseMachine machine) {
 		super();
-		initSettings();
+		initSettings(Settings.getSettings(machine));
 	}
 
-	abstract protected void initSettings();
+	abstract protected void initSettings(ISettingsHandler settings);
 
     public IMemory getMemory() {
     	if (memory == null) {
@@ -78,14 +81,15 @@ public abstract class BaseTI994AMemoryModel implements TIMemoryModel {
         defineConsoleMemory(machine);
      
         soundMmio = new SoundMmio(((IMachine) machine).getSound());
-        gplMmio = new GplMmio(GRAPHICS);
+        gplMmio = new GplMmio(machine, GRAPHICS);
         speechMmio = new SpeechMmio(((IMachine) machine).getSpeech());
         
+        ISettingsHandler settings = Settings.getSettings(machine);
         IVdpChip vdp = ((IMachine) machine).getVdp();
         if (vdp instanceof VdpV9938)
-        	vdpMmio = new Vdp9938Mmio(machine.getMemory(), (VdpV9938) vdp, 0x20000);
+        	vdpMmio = new Vdp9938Mmio(settings, machine.getMemory(), (VdpV9938) vdp, 0x20000);
         else
-        	vdpMmio = new Vdp9918AMmio(machine.getMemory(), vdp, 0x4000);
+        	vdpMmio = new Vdp9918AMmio(settings, machine.getMemory(), vdp, 0x4000);
 
         defineMmioMemory(machine);
     }

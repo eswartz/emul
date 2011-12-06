@@ -9,6 +9,7 @@ package v9t9.server;
 import java.io.IOException;
 
 
+import v9t9.base.settings.SettingProperty;
 import v9t9.common.client.IClient;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.compiler.ICompiler;
@@ -21,11 +22,8 @@ import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IMachineModel;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryModel;
-import v9t9.common.settings.SettingsSchema;
 import v9t9.engine.memory.GplMmio;
 import v9t9.engine.modules.ModuleManager;
-import v9t9.engine.settings.EmulatorSettings;
-import v9t9.engine.settings.WorkspaceSettings;
 import v9t9.machine.f99b.machine.F99bMachineModel;
 import v9t9.machine.ti99.machine.Enhanced48KForthTI994AMachineModel;
 import v9t9.machine.ti99.machine.StandardMachineModel;
@@ -53,10 +51,10 @@ public class EmulatorServer {
 	private ISettingsHandler settingsHandler;
 
     public EmulatorServer() {
-    	settingsHandler = new SettingsHandler(); 
+    	settingsHandler = new SettingsHandler(WorkspaceSettings.currentWorkspace.getString()); 
 		
-		IVdpChip.settingDumpVdpAccess.setBoolean(true);
-		GplMmio.settingDumpGplAccess.setBoolean(true);
+    	settingsHandler.get(IVdpChip.settingDumpVdpAccess).setBoolean(true);
+		settingsHandler.get(GplMmio.settingDumpGplAccess).setBoolean(true);
     }
     
     /**
@@ -66,40 +64,41 @@ public class EmulatorServer {
 		return machine;
 	}
 	protected void setupDefaults() {
-    	WorkspaceSettings.CURRENT.register(IMachine.settingModuleList);
-		WorkspaceSettings.CURRENT.register(ICpu.settingCyclesPerSecond);
-		WorkspaceSettings.CURRENT.register(ICpu.settingRealTime);
-		
 		try {
-			WorkspaceSettings.CURRENT.setDirty(false);
-			WorkspaceSettings.loadFrom("workspace." + machine.getModel().getIdentifier());
+			settingsHandler.getWorkspaceSettings().setDirty(false);
+			WorkspaceSettings.loadFrom(settingsHandler.getWorkspaceSettings(),
+					"workspace." + machine.getModel().getIdentifier());
 		} catch (IOException e) {
 		}
 		
-    	ICpu.settingRealTime.setBoolean(true);
+    	settingsHandler.get(ICpu.settingRealTime).setBoolean(true);
     	
     	// compile defaults
     	//CompilerBase.settingDebugInstructions.setBoolean(true);
     	//CompilerBase.settingOptimize.setBoolean(true);
-        ICompiler.settingOptimizeRegAccess.setBoolean(true);
-        ICompiler.settingOptimizeStatus.setBoolean(true);
+        settingsHandler.get(ICompiler.settingOptimizeRegAccess).setBoolean(true);
+        settingsHandler.get(ICompiler.settingOptimizeStatus).setBoolean(true);
         //CompilerBase.settingCompileOptimizeCallsWithData.setBoolean(true);
         //CompilerBase.settingCompileFunctions.setBoolean(true);
     }
     
 	protected void loadState() {
+		SettingProperty lastLoadedModule = settingsHandler.get(ModuleManager.settingLastLoadedModule);
+		SettingProperty moduleList = settingsHandler.get(IMachine.settingModuleList);
+		
 		int barrier = client.getEventNotifier().getErrorCount();
 		memoryModel.loadMemory(client.getEventNotifier());
 		
 		if (machine.getModuleManager() != null) {
 			try {
-	    		String dbNameList = IMachine.settingModuleList.getString();
+				String dbNameList = moduleList.getString();
 	    		if (dbNameList.length() > 0) {
 	    			String[] dbNames = dbNameList.split(";");
 	    			machine.getModuleManager().loadModules(dbNames, client.getEventNotifier());
 	    		}
-	        	if (ModuleManager.settingLastLoadedModule.getString().length() > 0)
-	        		machine.getModuleManager().switchModule(ModuleManager.settingLastLoadedModule.getString());
+				if (lastLoadedModule.getString().length() > 0)
+	        		machine.getModuleManager().switchModule(
+	        				lastLoadedModule.getString());
 	        	
 	        } catch (NotifyException e) {
 	        	machine.notifyEvent(e.getEvent());
@@ -110,38 +109,47 @@ public class EmulatorServer {
 		if (client.getEventNotifier().getErrorCount() > barrier) {
 			machine.notifyEvent(IEventNotifier.Level.ERROR,
 					"Failed to load startup ROMs; please edit your " + DataFiles.settingBootRomsPath.getName() + " in the file "
-					+ WorkspaceSettings.CURRENT.getConfigFilePath());
+					+ settingsHandler.getWorkspaceSettings().getConfigFilePath());
 			//EmulatorSettings.INSTANCE.save();
 		}
 	}
 	
     public void init(String modelId) throws IOException {
     	
-    	try {
-    		EmulatorSettings.INSTANCE.load();
-    	} catch (IOException e) {
-    		System.err.println("Setting up new instance");
-    	}
 
-		WorkspaceSettings.CURRENT.register(ModuleManager.settingLastLoadedModule);
+		//WorkspaceSettings.CURRENT.register(ModuleManager.settingLastLoadedModule);
 
-		EmulatorSettings.INSTANCE.register(DataFiles.settingBootRomsPath,
-				EmulatorSettings.INSTANCE.getConfigDirectory() + "roms");
-		EmulatorSettings.INSTANCE.register(DataFiles.settingStoredRamPath,
-				EmulatorSettings.INSTANCE.getConfigDirectory() + "module_ram");
+    	//settingsHandler.getInstanceSettings().findOrCreate(
+    	if (DataFiles.settingBootRomsPath.getList().isEmpty())
+			DataFiles.settingBootRomsPath.getList().add(
+    			settingsHandler.getInstanceSettings().getConfigDirectory() + "roms");
+    	//settingsHandler.getInstanceSettings().findOrCreate(
+    	if (".".equals(DataFiles.settingStoredRamPath.getString()))
+    		DataFiles.settingStoredRamPath.setString(
+				settingsHandler.getInstanceSettings().getConfigDirectory() + "module_ram");
 		DataFiles.addSearchPath(DataFiles.settingStoredRamPath.getString());
-    	
-    	try {
-    		WorkspaceSettings.loadFrom(WorkspaceSettings.currentWorkspace.getString());
-    	} catch (IOException e) {
-    		System.err.println("Setting up new configuration");
-    	}
     	
         IMachineModel model = MachineModelFactory.INSTANCE.createModel(modelId);
         assert (model != null);
         
-        machine = model.createMachine();
+        machine = model.createMachine(settingsHandler);
         
+
+    	try {
+    		WorkspaceSettings.loadFrom(settingsHandler.getWorkspaceSettings(),
+    				WorkspaceSettings.currentWorkspace.getString());
+    				
+    	} catch (IOException e) {
+    		System.err.println("Setting up new configuration");
+    	}
+    	
+
+    	try {
+    		settingsHandler.getInstanceSettings().load();
+    	} catch (IOException e) {
+    		System.err.println("Setting up new instance");
+    	}
+    	
     	this.memory = machine.getMemory();
     	this.memoryModel = memory.getModel();
 
@@ -160,8 +168,8 @@ public class EmulatorServer {
 	public void dispose() throws IOException {
 		machine.getMemory().save();
 		
-		WorkspaceSettings.CURRENT.save();        	
-    	EmulatorSettings.INSTANCE.save();   
+		settingsHandler.getWorkspaceSettings().save();        	
+    	settingsHandler.getInstanceSettings().save();   
 	}
 
 	public void run() {

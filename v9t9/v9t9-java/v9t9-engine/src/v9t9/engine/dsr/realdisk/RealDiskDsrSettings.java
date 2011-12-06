@@ -6,11 +6,9 @@ package v9t9.engine.dsr.realdisk;
 import java.io.File;
 import java.net.URL;
 
-import v9t9.base.settings.SettingProperty;
 import v9t9.common.client.ISettingsHandler;
-import v9t9.common.settings.IconSettingDefinition;
-import v9t9.common.settings.IconSettingProperty;
-import v9t9.common.settings.SettingDefinition;
+import v9t9.common.settings.IconSettingSchema;
+import v9t9.common.settings.SettingSchema;
 import v9t9.engine.EmulatorData;
 
 /**
@@ -20,14 +18,14 @@ import v9t9.engine.EmulatorData;
 public class RealDiskDsrSettings {
 
 
-	public static final SettingDefinition diskImageDebug = new SettingDefinition(
+	public static final SettingSchema diskImageDebug = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
 			"DiskImageDebug",
 			"Debug Disk Image Support",
 			"When set, log disk operation information to the console.",
 			Boolean.FALSE
 			);
-	public static final SettingDefinition diskImageRealTime = new SettingDefinition(
+	public static final SettingSchema diskImageRealTime = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
 			"DiskImageRealTime",
 			"Real-Time Disk Images",
@@ -36,7 +34,7 @@ public class RealDiskDsrSettings {
 			);
 	
 	static final URL diskImageIconPath = EmulatorData.getDataURL("icons/disk_image.png");
-	public static final SettingDefinition diskImageDsrEnabled = new IconSettingDefinition(
+	public static final SettingSchema diskImageDsrEnabled = new IconSettingSchema(
 			ISettingsHandler.WORKSPACE,
 			"DiskImageDSREnabled",
 			"Disk Image Support",

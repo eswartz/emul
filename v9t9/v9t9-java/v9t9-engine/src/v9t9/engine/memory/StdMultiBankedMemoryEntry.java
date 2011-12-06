@@ -4,6 +4,8 @@ import java.io.PrintWriter;
 
 
 import v9t9.base.settings.Logging;
+import v9t9.base.settings.SettingProperty;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryEntry;
@@ -15,6 +17,8 @@ import v9t9.common.memory.IMemoryEntry;
  */
 public class StdMultiBankedMemoryEntry extends
 		MultiBankedMemoryEntry {
+	private SettingProperty dumpFullInstructions;
+
 	/**
 	 * Only to be used when reconstructing 
 	 */
@@ -25,9 +29,10 @@ public class StdMultiBankedMemoryEntry extends
 	 * @param name
 	 * @param banks
 	 */
-	public StdMultiBankedMemoryEntry(IMemory memory, String name,
+	public StdMultiBankedMemoryEntry(ISettingsHandler settings, IMemory memory, String name,
 			IMemoryEntry[] banks) {
 		super(memory, name, banks);
+		dumpFullInstructions = settings.get(ICpu.settingDumpFullInstructions);
 	}
 
 	@Override
@@ -40,7 +45,7 @@ public class StdMultiBankedMemoryEntry extends
 		int bank = (addr & 2) >> 1;
 		if (selectBank(bank)) {
 			
-			PrintWriter log = Logging.getLog(ICpu.settingDumpFullInstructions);
+			PrintWriter log = Logging.getLog(dumpFullInstructions);
 			if (log != null) {
 				log.println("=== Switched to bank " + bank);
 			}
@@ -52,7 +57,7 @@ public class StdMultiBankedMemoryEntry extends
 	public void writeWord(int addr, short val) {
 		int bank = (addr & 2) >> 1;
 		if (selectBank(bank)) {
-			PrintWriter log = Logging.getLog(ICpu.settingDumpFullInstructions);
+			PrintWriter log = Logging.getLog(dumpFullInstructions);
 			if (log != null) {
 				log.println("=== Switched to bank " + bank);
 			}

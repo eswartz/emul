@@ -9,8 +9,6 @@ import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Layout;
 
-import v9t9.gui.common.BaseEmulatorWindow;
-
 /**
  * This layout ensures that the aspect ratio remains consistent with the provided
  * width and height, allowing for zoom.
@@ -26,6 +24,7 @@ public class FixedAspectLayout extends Layout {
 	private double aspect;
 	private final double quantum;
 	private final double maxforquantum;
+	private boolean fullScreen;
 
 	public FixedAspectLayout(int w, int h, double zoomx, double zoomy, double quantum, double max) {
 		this.w = w;
@@ -42,8 +41,19 @@ public class FixedAspectLayout extends Layout {
 	 */
 	@Override
 	public String toString() {
-		return String.format("Layout for %d x %d is zoom %g x %g", w, h, zoomx, zoomy);
+		return String.format("Layout for %d x %d is zoom %g x %g; fullscreen=%s", w, h, zoomx, zoomy, fullScreen);
 	}
+
+	
+	
+	public boolean isFullScreen() {
+		return fullScreen;
+	}
+
+	public void setFullScreen(boolean fullScreen) {
+		this.fullScreen = fullScreen;
+	}
+
 	public int getHeight() {
 		return h;
 	}
@@ -80,7 +90,7 @@ public class FixedAspectLayout extends Layout {
 		//System.out.println("bounds: " +bounds);
 		
 		int neww, newh;
-		if (BaseEmulatorWindow.settingFullScreen.getBoolean()) {		// don't check current shell's fullscreen state -- may be async!
+		if (fullScreen) {		// don't check current shell's fullscreen state -- may be async!
 			neww = bounds.width;
 			newh = bounds.height;
 		}

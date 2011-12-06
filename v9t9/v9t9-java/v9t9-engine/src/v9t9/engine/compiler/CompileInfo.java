@@ -12,12 +12,23 @@ import org.apache.bcel.generic.InstructionHandle;
 import org.apache.bcel.generic.InstructionList;
 import org.apache.bcel.generic.TABLESWITCH;
 
+import v9t9.common.client.ISettingsHandler;
+import v9t9.common.compiler.ICompiler;
 import v9t9.common.memory.IMemoryDomain;
 
 
 public class CompileInfo {
+	public boolean optimize;
+	public boolean optimizeRegAccess;
+	
 	public InstructionFactory ifact;
-    public CompileInfo(ConstantPoolGen pgen, InstructionFactory ifact) {
+	public ISettingsHandler settings;
+	
+    public CompileInfo(ISettingsHandler settings, ConstantPoolGen pgen, InstructionFactory ifact) {
+    	this.settings = settings;
+    	this.optimize = settings.get(ICompiler.settingOptimize).getBoolean();
+    	this.optimizeRegAccess = settings.get(ICompiler.settingOptimizeRegAccess).getBoolean();
+    	
         this.pgen = pgen;
         this.ifact = ifact;
     }

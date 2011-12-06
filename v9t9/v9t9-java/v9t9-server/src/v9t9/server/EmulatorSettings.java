@@ -1,9 +1,10 @@
 /**
  * 
  */
-package v9t9.engine.settings;
+package v9t9.server;
 
-import v9t9.common.settings.BaseStoredSettings;
+import v9t9.common.client.ISettingsHandler;
+import v9t9.common.settings.StaticStoredSettings;
 
 
 /**
@@ -13,17 +14,13 @@ import v9t9.common.settings.BaseStoredSettings;
  * @author ejs
  *
  */
-public class EmulatorSettings extends BaseStoredSettings {
-	public static final EmulatorSettings INSTANCE = new EmulatorSettings();
+public class EmulatorSettings extends StaticStoredSettings {
+	//public static final EmulatorSettings INSTANCE = new EmulatorSettings();
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.common.BaseStoredSettings#getConfigFileName()
 	 */
-	@Override
-	public String getConfigFileName() {
-		return "config";
-	}
 	
 	protected EmulatorSettings() {
-		super();
+		super(ISettingsHandler.INSTANCE, "config");
 	}
 }

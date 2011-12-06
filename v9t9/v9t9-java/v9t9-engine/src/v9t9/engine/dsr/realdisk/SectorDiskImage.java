@@ -15,7 +15,7 @@ import v9t9.common.client.ISettingsHandler;
 
 
 public class SectorDiskImage extends BaseDiskImage  {
-	public SectorDiskImage(String name, File file, ISettingsHandler settings) {
+	public SectorDiskImage(ISettingsHandler settings, String name, File file) {
 		super(name, file, settings);
 	}
 	
@@ -170,7 +170,7 @@ public class SectorDiskImage extends BaseDiskImage  {
 		System.arraycopy(rwBuffer, 0, trackBuffer, marker.dataoffset + 1, buflen);
 		
 		// dump contents
-		RealDiskUtils.dumpBuffer(rwBuffer, start, buflen);
+		RealDiskUtils.dumpBuffer(dumper, rwBuffer, start, buflen);
 		
 	}
 
@@ -191,7 +191,7 @@ public class SectorDiskImage extends BaseDiskImage  {
 		formatSectorTrack(rwBuffer, i, buflen);
 
 		// dump contents
-		RealDiskUtils.dumpBuffer(rwBuffer, i, buflen);
+		RealDiskUtils.dumpBuffer(dumper, rwBuffer, i, buflen);
 	}
 	
 
@@ -315,7 +315,7 @@ public class SectorDiskImage extends BaseDiskImage  {
 	public void readSectorData(IdMarker currentMarker, byte[] rwBuffer,
 			int i, int buflen) {
 		System.arraycopy(trackBuffer, currentMarker.dataoffset + 1, rwBuffer, 0, buflen);
-		RealDiskUtils.dumpBuffer(rwBuffer, 0, 256);
+		RealDiskUtils.dumpBuffer(dumper, rwBuffer, 0, 256);
 		
 	}
 	
