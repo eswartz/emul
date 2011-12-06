@@ -16,7 +16,6 @@ import v9t9.base.properties.IPersistable;
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
 import v9t9.base.settings.ISettingSection;
-import v9t9.base.settings.SettingProperty;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.settings.IconSettingProperty;
 import v9t9.engine.dsr.emudisk.EmuDiskDsrSettings;
@@ -26,13 +25,13 @@ import v9t9.engine.dsr.realdisk.RealDiskDsrSettings;
 
 public class DiskDirectoryMapper implements IFileMapper, IPersistable {
 	private Map<String, File> diskMap = new HashMap<String, File>();
-	private Map<String, SettingProperty> diskSettingsMap = new HashMap<String, SettingProperty>();
+	private Map<String, IProperty> diskSettingsMap = new HashMap<String, IProperty>();
 	
 	public static final DiskDirectoryMapper INSTANCE = new DiskDirectoryMapper();
 	
 	static class EmuDiskSetting extends IconSettingProperty {
-		private SettingProperty emuDiskDsrEnabled;
-		private SettingProperty diskImageDsrEnabled;
+		private IProperty emuDiskDsrEnabled;
+		private IProperty diskImageDsrEnabled;
 
 		public EmuDiskSetting(ISettingsHandler settings, String name, Object storage, URL iconPath) {
 			super(name, 
@@ -65,7 +64,7 @@ public class DiskDirectoryMapper implements IFileMapper, IPersistable {
 	}
 	
 
-	public void registerDiskSetting(String device, SettingProperty diskSetting) {
+	public void registerDiskSetting(String device, IProperty diskSetting) {
 		diskMap.put(device, new File(diskSetting.getString()));
 		diskSettingsMap.put(device, diskSetting); 
 		diskSetting.addListener(new IPropertyListener() {
@@ -77,7 +76,7 @@ public class DiskDirectoryMapper implements IFileMapper, IPersistable {
 	}
 	public void setDiskPath(String device, File dir) {
 		diskMap.put(device, dir);
-		SettingProperty diskSetting = diskSettingsMap.get(device);
+		IProperty diskSetting = diskSettingsMap.get(device);
 		if (diskSetting != null) {
 			try {
 				diskSetting.setString(dir.getCanonicalPath());
@@ -90,22 +89,22 @@ public class DiskDirectoryMapper implements IFileMapper, IPersistable {
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.dsrs.EmuDiskDsr.IFileMapper#getSetting()
 	 */
-	public SettingProperty[] getSettings() {
-		ArrayList<? extends SettingProperty> list = new ArrayList<SettingProperty>(diskSettingsMap.values());
+	public IProperty[] getSettings() {
+		ArrayList<? extends IProperty> list = new ArrayList<IProperty>(diskSettingsMap.values());
 		Collections.sort(list);
-		return (SettingProperty[]) list.toArray(new SettingProperty[list.size()]);
+		return (IProperty[]) list.toArray(new IProperty[list.size()]);
 	}
 	
 
 	public synchronized void saveState(ISettingSection settings) {
-		for (Map.Entry<String, SettingProperty> entry : diskSettingsMap.entrySet()) {
+		for (Map.Entry<String, IProperty> entry : diskSettingsMap.entrySet()) {
 			entry.getValue().saveState(settings);
 		}
 	}
 
 	public synchronized void loadState(ISettingSection settings) {
 		if (settings == null) return;
-		for (Map.Entry<String, SettingProperty> entry : diskSettingsMap.entrySet()) {
+		for (Map.Entry<String, IProperty> entry : diskSettingsMap.entrySet()) {
 			entry.getValue().loadState(settings);
 		}
 	}

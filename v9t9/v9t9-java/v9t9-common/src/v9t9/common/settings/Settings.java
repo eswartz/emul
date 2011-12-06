@@ -3,7 +3,7 @@
  */
 package v9t9.common.settings;
 
-import v9t9.base.settings.SettingProperty;
+import v9t9.base.properties.IProperty;
 import v9t9.common.client.IClient;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
@@ -24,14 +24,14 @@ public class Settings {
 	public static ISettingsHandler getSettings(IClient client) {
 		return client.getSettingsHandler();
 	}
-	public static SettingProperty get(ICpu cpu, SettingSchema schema) {
+	public static IProperty get(ICpu cpu, SettingSchema schema) {
 		return getSettings(cpu).get(schema);
 	}
-	public static SettingProperty get(IBaseMachine machine,
+	public static IProperty get(IBaseMachine machine,
 			SettingSchema schema) {
 		return getSettings(machine).get(schema);
 	}
-	public static SettingProperty get(IClient client, SettingSchema schema) {
+	public static IProperty get(IClient client, SettingSchema schema) {
 		return getSettings(client).get(schema);
 	}
 }

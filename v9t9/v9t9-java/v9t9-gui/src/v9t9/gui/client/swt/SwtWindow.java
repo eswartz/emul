@@ -84,10 +84,10 @@ public class SwtWindow extends BaseEmulatorWindow{
 	private ImageProvider buttonImageProvider;
 	private ImageProvider statusImageProvider;
 
-	private SettingProperty fullScreen;
-	private SettingProperty realTime;
-	private SettingProperty compile;
-	private SettingProperty cyclesPerSecond;
+	private IProperty fullScreen;
+	private IProperty realTime;
+	private IProperty compile;
+	private IProperty cyclesPerSecond;
 
 	class EmulatorWindowLayout extends Layout {
 

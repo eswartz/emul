@@ -75,13 +75,13 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 
 	protected ICpuState state;
 
-	protected SettingProperty cyclesPerSecond;
+	protected IProperty cyclesPerSecond;
 
-	protected SettingProperty realTime;
+	protected IProperty realTime;
 
-	private SettingProperty dumpInstructions;
+	private IProperty dumpInstructions;
 
-	private SettingProperty dumpFullInstructions;
+	private IProperty dumpFullInstructions;
 
 	public CpuBase(IMachine machine, ICpuState state, int interruptTick) {
 		this.machine = machine;
@@ -124,28 +124,28 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
 	 * @see v9t9.common.cpu.ICpu#settingCyclesPerSecond()
 	 */
 	@Override
-	public SettingProperty settingCyclesPerSecond() {
+	public IProperty settingCyclesPerSecond() {
 		return cyclesPerSecond;
 	}
 	/* (non-Javadoc)
 	 * @see v9t9.common.cpu.ICpu#settingRealTime()
 	 */
 	@Override
-	public SettingProperty settingRealTime() {
+	public IProperty settingRealTime() {
 		return realTime;
 	}
 	/* (non-Javadoc)
 	 * @see v9t9.common.cpu.ICpu#settingDumpFullInstructions()
 	 */
 	@Override
-	public SettingProperty settingDumpFullInstructions() {
+	public IProperty settingDumpFullInstructions() {
 		return dumpFullInstructions;
 	}
 	/* (non-Javadoc)
 	 * @see v9t9.common.cpu.ICpu#settingDumpInstructions()
 	 */
 	@Override
-	public SettingProperty settingDumpInstructions() {
+	public IProperty settingDumpInstructions() {
 		return dumpInstructions;
 	}
 	

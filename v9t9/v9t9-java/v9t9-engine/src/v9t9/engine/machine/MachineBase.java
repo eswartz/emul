@@ -102,9 +102,9 @@ abstract public class MachineBase implements IMachine {
 	private IPropertyListener pauseListener;
 	private Runnable speechTimerTask;
 	
-	protected SettingProperty pauseMachine;
-	protected SettingProperty moduleList;
-	protected SettingProperty realTime;
+	protected IProperty pauseMachine;
+	protected IProperty moduleList;
+	protected IProperty realTime;
 	private final ISettingsHandler settings;
 	
     public MachineBase(ISettingsHandler settings, IMachineModel machineModel) {

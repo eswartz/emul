@@ -51,7 +51,7 @@ public class CpuViewer extends Composite implements IInstructionListener {
 		void updateForInstruction();
 	}
 	
-	private SettingProperty pauseMachine;
+	private IProperty pauseMachine;
 	
 	private Button playPauseButton;
 	private Image playImage;
@@ -78,7 +78,7 @@ public class CpuViewer extends Composite implements IInstructionListener {
 	private boolean changed;
 	private boolean isVisible;
 
-	private SettingProperty singleStep;
+	private IProperty singleStep;
 	
 	public CpuViewer(Composite parent, int style, final IMachine machine, Timer timer) {
 		super(parent, style);

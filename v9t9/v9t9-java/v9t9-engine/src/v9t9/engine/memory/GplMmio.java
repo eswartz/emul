@@ -8,6 +8,7 @@ package v9t9.engine.memory;
 
 
 import v9t9.base.properties.IPersistable;
+import v9t9.base.properties.IProperty;
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.settings.Logging;
 import v9t9.base.settings.SettingProperty;
@@ -33,9 +34,9 @@ public class GplMmio implements IConsoleMmioReader, IConsoleMmioWriter, IPersist
     boolean gromwaddrflag, gromraddrflag;
     byte buf;
 
-	private SettingProperty dumpGplAccess;
+	private IProperty dumpGplAccess;
 
-	private SettingProperty dumpFullInstructions;
+	private IProperty dumpFullInstructions;
 
     /**
      * @param machine TODO

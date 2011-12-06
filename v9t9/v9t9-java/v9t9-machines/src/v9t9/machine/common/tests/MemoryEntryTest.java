@@ -7,7 +7,7 @@
 package v9t9.machine.common.tests;
 
 import junit.framework.TestCase;
-import v9t9.base.settings.SettingProperty;
+import v9t9.base.properties.IProperty;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
@@ -153,7 +153,7 @@ public class MemoryEntryTest extends TestCase {
     			0x8000,
     			0x400,
     			new ConsoleRamArea(settings));
-    	SettingProperty enhRam = settings.get(ConsoleRamArea.settingEnhRam);
+    	IProperty enhRam = settings.get(ConsoleRamArea.settingEnhRam);
 		if (enhRam.getBoolean()) {
     		entry.writeWord(0x8000, (short) 0x1234);
     		entry.writeWord(0x8300, (short) 0x5678);

@@ -147,7 +147,7 @@ public class SwtLwjglVideoRenderer extends SwtVideoRenderer implements IProperty
 	private TextureLoader textureLoader = new TextureLoader();
 	private Map<MonitorEffect, Integer> displayListMap = new HashMap<MonitorEffect, Integer>();
 
-	private SettingProperty monitorDrawing;
+	private IProperty monitorDrawing;
 
 	public SwtLwjglVideoRenderer(ISettingsHandler settings, IVdpChip vdp) {
 		super(settings, vdp);

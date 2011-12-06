@@ -14,7 +14,7 @@ import java.util.Arrays;
 
 import org.junit.BeforeClass;
 
-import v9t9.base.settings.SettingProperty;
+import v9t9.base.properties.IProperty;
 import v9t9.base.utils.HexUtils;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
@@ -42,7 +42,7 @@ public class BaseEmuDiskDSRTest {
 	protected static File dsk1Path;
 	
 	protected static ISettingsHandler settings;
-	protected static SettingProperty diskImageDsrEnabled;
+	protected static IProperty diskImageDsrEnabled;
 	
 	@BeforeClass
 	public static void setupSearch() {
@@ -152,7 +152,7 @@ public class BaseEmuDiskDSRTest {
 	}
 	protected EmuDiskDsr dsr = new EmuDiskDsr(settings, mymapper);
 	private Dumper dumper;
-	private static SettingProperty emuDiskDsrEnabled;
+	private static IProperty emuDiskDsrEnabled;
 	{
 		dumper = new Dumper(settings, RealDiskDsrSettings.diskImageDebug, ICpu.settingDumpFullInstructions); 
 		dsr.handleDSR(xfer, (short) EmuDiskConsts.D_INIT);

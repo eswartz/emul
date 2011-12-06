@@ -4,6 +4,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
 
+import v9t9.base.properties.IProperty;
 import v9t9.base.settings.SettingProperty;
 import v9t9.base.utils.HexUtils;
 import v9t9.common.asm.IDecompileInfo;
@@ -42,8 +43,8 @@ public class CodeBlock implements ICompiledCode, v9t9.common.memory.IMemoryListe
 	private ICompiler compiler;
     
     static int uniqueClassSuffix;
-	private SettingProperty optimize;
-	private SettingProperty optimizeStatus;
+	private IProperty optimize;
+	private IProperty optimizeStatus;
 
     public CodeBlock(ICompiler compiler, IExecutor exec, DirectLoader loader, IMemoryEntry ent, int addr, int size) {
         this.compiler = compiler;

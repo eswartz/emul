@@ -9,6 +9,7 @@ package v9t9.engine.memory;
 
 import java.io.PrintWriter;
 
+import v9t9.base.properties.IProperty;
 import v9t9.base.settings.Logging;
 import v9t9.base.settings.SettingProperty;
 import v9t9.base.utils.HexUtils;
@@ -29,8 +30,8 @@ public class Vdp9918AMmio extends VdpMmio {
 
 	protected IMemoryEntry memoryEntry;
 	protected final IMemoryDomain videoMemory;
-	private SettingProperty dumpFullInstructions;
-	private SettingProperty dumpVdpAccess;
+	private IProperty dumpFullInstructions;
+	private IProperty dumpVdpAccess;
 
 	/**
      * @param machine

@@ -3,6 +3,7 @@
  */
 package v9t9.common.settings;
 
+import v9t9.base.properties.IProperty;
 import v9t9.base.settings.SettingProperty;
 
 /**
@@ -51,15 +52,8 @@ public class SettingSchema {
 		return context;
 	}
 	
-	public SettingProperty createSetting() {
-		SettingProperty prop;
-		if (klass != null) {
-			// FIXME
-			prop = new SettingProperty(name, klass, defaultValue);
-			prop.setDescription(description);
-		}
-		else
-			prop = new SettingProperty(name, label, description, defaultValue);
+	public IProperty createSetting() {
+		IProperty prop = new SettingProperty(name, label, description, klass, defaultValue);
 		return prop;
 	}
 

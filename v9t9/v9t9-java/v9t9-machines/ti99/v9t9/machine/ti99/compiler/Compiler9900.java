@@ -42,7 +42,7 @@ import org.apache.bcel.generic.Type;
 
 import v9t9.base.launch.CommandLauncher;
 import v9t9.base.launch.ProcessClosure;
-import v9t9.base.settings.SettingProperty;
+import v9t9.base.properties.IProperty;
 import v9t9.base.utils.HexUtils;
 import v9t9.common.asm.BaseMachineOperand;
 import v9t9.common.asm.IDecompileInfo;
@@ -87,13 +87,13 @@ public class Compiler9900 extends CompilerBase {
 
 	private ISettingsHandler settings;
 
-	private SettingProperty compileFunctions;
+	private IProperty compileFunctions;
 
-	private SettingProperty debugInstructions;
+	private IProperty debugInstructions;
 
-	private SettingProperty optimize;
+	private IProperty optimize;
 
-	private SettingProperty optimizeRegAccess;
+	private IProperty optimizeRegAccess;
 
     static public final SettingSchema settingDumpModuleRomInstructions = new SettingSchema(
     		ISettingsHandler.TRANSIENT,

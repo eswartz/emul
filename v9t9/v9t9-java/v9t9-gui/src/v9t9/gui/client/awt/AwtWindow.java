@@ -357,7 +357,7 @@ public class AwtWindow extends BaseEmulatorWindow implements
 	private BasicButton createStateButton(SettingSchema schema,
 			Rectangle bounds, final Rectangle checkBounds, String tooltip) {
 
-		final SettingProperty setting = Settings.get(machine, schema);
+		final IProperty setting = Settings.get(machine, schema);
 		final BasicButton button = createButton(icons, bounds, tooltip,
 				new ButtonPressHandler() {
 

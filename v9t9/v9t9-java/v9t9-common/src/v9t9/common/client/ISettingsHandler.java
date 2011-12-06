@@ -3,7 +3,7 @@
  */
 package v9t9.common.client;
 
-import v9t9.base.settings.SettingProperty;
+import v9t9.base.properties.IProperty;
 import v9t9.common.settings.IStoredSettings;
 import v9t9.common.settings.SettingSchema;
 
@@ -17,8 +17,8 @@ public interface ISettingsHandler {
 	String INSTANCE = "Instance";
 	String TRANSIENT = "Transient";
 	
-	SettingProperty get(SettingSchema schema);
-	<T extends SettingProperty> T get(String context, T defaultProperty);
+	IProperty get(SettingSchema schema);
+	<T extends IProperty> T get(String context, T defaultProperty);
 	
 	IStoredSettings getWorkspaceSettings();
 	IStoredSettings getInstanceSettings();

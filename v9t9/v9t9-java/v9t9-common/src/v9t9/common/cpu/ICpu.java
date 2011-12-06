@@ -2,7 +2,7 @@ package v9t9.common.cpu;
 
 
 import v9t9.base.properties.IPersistable;
-import v9t9.base.settings.SettingProperty;
+import v9t9.base.properties.IProperty;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.machine.IBaseMachine;
 import v9t9.common.settings.SettingSchema;
@@ -22,10 +22,10 @@ public interface ICpu extends IPersistable, ICpuState {
 			ISettingsHandler.WORKSPACE,
 			"CyclesPerSecond", new Integer(0));
 
-	SettingProperty settingRealTime();
-	SettingProperty settingCyclesPerSecond();
-	SettingProperty settingDumpInstructions();
-	SettingProperty settingDumpFullInstructions();
+	IProperty settingRealTime();
+	IProperty settingCyclesPerSecond();
+	IProperty settingDumpInstructions();
+	IProperty settingDumpFullInstructions();
 
 	void resetInterruptRequest();
 	

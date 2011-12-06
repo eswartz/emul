@@ -3,7 +3,7 @@
  */
 package v9t9.common.settings;
 
-import v9t9.base.settings.SettingProperty;
+import v9t9.base.properties.IProperty;
 import v9t9.common.client.ISettingsHandler;
 
 /**
@@ -40,12 +40,12 @@ public class BaseSettingsHandler implements ISettingsHandler {
 	}
 
 	@Override
-	public SettingProperty get(SettingSchema schema) {
+	public IProperty get(SettingSchema schema) {
 		return getSettings(schema.getContext()).findOrCreate(schema);
 	}
 
 	@Override
-	public <T extends SettingProperty> T get(String context, T defaultProperty) {
+	public <T extends IProperty> T get(String context, T defaultProperty) {
 		return getSettings(context).findOrCreate(defaultProperty);
 	}
 

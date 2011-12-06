@@ -92,13 +92,13 @@ public class VdpTMS9918A implements IVdpChip {
 	private int throttleCount;
 	private final IMachine machine;
 	private int fixedTimeVdpInterruptDelta;
-	private SettingProperty cyclesPerSecond;
-	protected SettingProperty vdpInterruptRate;
-	private SettingProperty realTime;
-	private SettingProperty cpuSynchedVdpInterrupt;
-	protected SettingProperty dumpVdpAccess;
-	protected SettingProperty dumpFullInstructions;
-	private SettingProperty throttleInterrupts;
+	private IProperty cyclesPerSecond;
+	protected IProperty vdpInterruptRate;
+	private IProperty realTime;
+	private IProperty cpuSynchedVdpInterrupt;
+	protected IProperty dumpVdpAccess;
+	protected IProperty dumpFullInstructions;
+	private IProperty throttleInterrupts;
 
 	public VdpTMS9918A(IMachine machine) {
 		this.machine = machine;

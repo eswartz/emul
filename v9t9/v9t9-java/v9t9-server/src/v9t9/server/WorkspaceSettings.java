@@ -6,6 +6,7 @@ package v9t9.server;
 import java.io.File;
 import java.io.IOException;
 
+import v9t9.base.properties.IProperty;
 import v9t9.base.settings.SettingProperty;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.settings.BaseStoredSettings;
@@ -21,7 +22,7 @@ import v9t9.common.settings.IStoredSettings;
  */
 public class WorkspaceSettings extends BaseStoredSettings {
 
-	public static SettingProperty currentWorkspace = new SettingProperty(
+	public static IProperty currentWorkspace = new SettingProperty(
 			//ISettingsHandler.GLOBAL,
 			"CurrentWorkspace", "workspace");
 

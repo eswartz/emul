@@ -3,6 +3,7 @@ package v9t9.engine.memory;
 import java.io.PrintWriter;
 
 
+import v9t9.base.properties.IProperty;
 import v9t9.base.settings.Logging;
 import v9t9.base.settings.SettingProperty;
 import v9t9.common.client.ISettingsHandler;
@@ -17,7 +18,7 @@ import v9t9.common.memory.IMemoryEntry;
  */
 public class StdMultiBankedMemoryEntry extends
 		MultiBankedMemoryEntry {
-	private SettingProperty dumpFullInstructions;
+	private IProperty dumpFullInstructions;
 
 	/**
 	 * Only to be used when reconstructing 

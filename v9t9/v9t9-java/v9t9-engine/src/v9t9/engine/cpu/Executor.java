@@ -61,13 +61,13 @@ public class Executor implements IExecutor {
 
 	private final ICpuMetrics cpuMetrics;
 
-	private SettingProperty compile;
+	private IProperty compile;
 
-	private SettingProperty singleStep;
+	private IProperty singleStep;
 
-	private SettingProperty vdpInterruptRate;
+	private IProperty vdpInterruptRate;
 
-	private SettingProperty pauseMachine;
+	private IProperty pauseMachine;
 
     public Executor(ICpu cpu, ICpuMetrics cpuMetrics, 
     		IInterpreter interpreter, ICompiler compiler, 
@@ -162,10 +162,10 @@ public class Executor implements IExecutor {
         Logging.registerLog(cpu.settingDumpFullInstructions(), "instrs_full.txt");
     }
 
-	public SettingProperty settingCompile() {
+	public IProperty settingCompile() {
 		return compile;
 	}
-	public SettingProperty settingSingleStep() {
+	public IProperty settingSingleStep() {
 		return singleStep;
 	}
 

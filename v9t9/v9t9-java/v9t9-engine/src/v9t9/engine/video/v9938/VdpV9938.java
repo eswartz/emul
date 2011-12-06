@@ -4,6 +4,7 @@
 package v9t9.engine.video.v9938;
 
 
+import v9t9.base.properties.IProperty;
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.settings.SettingProperty;
 import v9t9.base.utils.HexUtils;
@@ -112,7 +113,7 @@ public class VdpV9938 extends VdpTMS9918A {
 	private int currentcycles = 0; // current cycles left
 	private int pageOffset;
 	private int pageSize;
-	private SettingProperty msxClockDivisor;
+	private IProperty msxClockDivisor;
 	
 	/* from mame and blueMSX:
 	 * 

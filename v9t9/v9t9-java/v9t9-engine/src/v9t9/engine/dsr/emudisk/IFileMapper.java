@@ -3,7 +3,7 @@ package v9t9.engine.dsr.emudisk;
 import java.io.File;
 
 import v9t9.base.properties.IPersistable;
-import v9t9.base.settings.SettingProperty;
+import v9t9.base.properties.IProperty;
 
 /**
  * This maps DSR device+filenames back and forth to disk ones
@@ -14,7 +14,7 @@ public interface IFileMapper extends IPersistable {
 	/**
 	 * Get all the registered settings (String)
 	 */
-	SettingProperty[] getSettings();
+	IProperty[] getSettings();
 	
 	/**
 	 * Get the candidate file for the given device.filename

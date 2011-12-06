@@ -6,8 +6,8 @@ package v9t9.machine.ti99.cpu;
 import java.io.PrintWriter;
 
 
+import v9t9.base.properties.IProperty;
 import v9t9.base.settings.Logging;
-import v9t9.base.settings.SettingProperty;
 import v9t9.base.utils.HexUtils;
 import v9t9.common.asm.IMachineOperand;
 import v9t9.common.asm.IOperand;
@@ -25,7 +25,7 @@ import v9t9.common.settings.Settings;
 public class DumpFullReporter9900 implements IInstructionListener {
 
 	private final Cpu9900 cpu;
-	private SettingProperty dumpSetting;
+	private IProperty dumpSetting;
 
 	/**
 	 * 

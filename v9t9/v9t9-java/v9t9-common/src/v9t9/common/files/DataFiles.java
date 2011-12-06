@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
+import v9t9.base.properties.IProperty;
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.settings.SettingProperty;
 import v9t9.base.utils.CompatUtils;
@@ -28,11 +29,11 @@ import v9t9.common.memory.IMemoryDomain;
  * @author ejs
  */
 public class DataFiles {
-	static public final SettingProperty settingBootRomsPath = 
+	static public final IProperty settingBootRomsPath = 
 		new SettingProperty("BootRomsPath", String.class, new ArrayList<String>());
-	static public final SettingProperty settingUserRomsPath = 
+	static public final IProperty settingUserRomsPath = 
 		new SettingProperty("UserRomsPath", String.class, new ArrayList<String>());
-	static public final SettingProperty settingStoredRamPath = 
+	static public final IProperty settingStoredRamPath = 
 		new SettingProperty("StoredRamPath", ".");
 	
 	public static void addSearchPath(String filepath) {
@@ -52,7 +53,7 @@ public class DataFiles {
 		File file = new File(filepath);
 		if (file.isAbsolute())
 			return file;
-		for (SettingProperty setting : new SettingProperty[] { settingBootRomsPath, settingUserRomsPath }) {
+		for (IProperty setting : new IProperty[] { settingBootRomsPath, settingUserRomsPath }) {
 			for (Object pathObj : setting.getList()) {
 				file = resolveFileAtPath(pathObj.toString(), filepath);
 				if (file != null)

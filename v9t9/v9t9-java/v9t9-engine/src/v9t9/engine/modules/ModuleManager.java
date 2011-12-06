@@ -12,6 +12,7 @@ import java.util.Map;
 
 
 import v9t9.base.properties.IPersistable;
+import v9t9.base.properties.IProperty;
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.settings.SettingProperty;
 import v9t9.common.client.ISettingsHandler;
@@ -46,7 +47,7 @@ public class ModuleManager implements IPersistable, IModuleManager {
 			"LastLoadedModule", "");
 	
 	private Map<IMemoryEntry, IModule> memoryEntryModules = new HashMap<IMemoryEntry, IModule>();
-	private SettingProperty lastLoadedModule;
+	private IProperty lastLoadedModule;
 	
 	public ModuleManager(IMachine machine) {
 		this.machine = machine;

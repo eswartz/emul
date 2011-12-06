@@ -4,7 +4,7 @@
 package v9t9.machine.ti99.memory;
 
 
-import v9t9.base.settings.SettingProperty;
+import v9t9.base.properties.IProperty;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.settings.SettingSchema;
@@ -14,7 +14,7 @@ public class ConsoleRamArea extends ConsoleMemoryArea {
     static public final SettingSchema settingEnhRam = new SettingSchema(
     		ISettingsHandler.WORKSPACE,
     		"ExtraConsoleRAM", new Boolean(false));
-	private final SettingProperty enhRam;
+	private final IProperty enhRam;
 
 	public ConsoleRamArea(ISettingsHandler settings) {
     	super(0);

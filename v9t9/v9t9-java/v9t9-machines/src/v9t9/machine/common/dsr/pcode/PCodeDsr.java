@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 
+import v9t9.base.properties.IProperty;
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.settings.SettingProperty;
 import v9t9.common.client.ISettingsHandler;
@@ -54,9 +55,9 @@ public class PCodeDsr implements DsrHandler9900 {
 	private IMemoryEntry readMmioEntry;
 	private IMemoryEntry writeMmioEntry;
 	private DiskMemoryEntry gromMemoryEntry;
-	private SettingProperty pcodeActive;
+	private IProperty pcodeActive;
 
-	private SettingProperty pcodeCardEnabled;
+	private IProperty pcodeCardEnabled;
 
 	public static final String PCODE = "PCODE";
 	/**
@@ -177,9 +178,9 @@ public class PCodeDsr implements DsrHandler9900 {
 	 * @see v9t9.emulator.hardware.dsrs.DsrHandler#getEditableSettingGroups()
 	 */
 	@Override
-	public Map<String, Collection<SettingProperty>> getEditableSettingGroups() {
-		return Collections.<String, Collection<SettingProperty>>singletonMap("UCSD P-System",
-				Collections.<SettingProperty>singletonList(pcodeCardEnabled));
+	public Map<String, Collection<IProperty>> getEditableSettingGroups() {
+		return Collections.<String, Collection<IProperty>>singletonMap("UCSD P-System",
+				Collections.<IProperty>singletonList(pcodeCardEnabled));
 	}
 
 	/* (non-Javadoc)

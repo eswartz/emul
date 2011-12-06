@@ -20,7 +20,7 @@ import v9t9.base.utils.XMLUtils;
  * @author ejs
  *
  */
-public abstract class AbstractProperty implements IProperty, Comparable<IProperty>, Comparator<IProperty> {
+public abstract class AbstractProperty implements IProperty {
 
 	
 	protected final String name;

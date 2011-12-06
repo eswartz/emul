@@ -9,7 +9,7 @@ package v9t9.machine.common.tests;
 import java.util.Random;
 
 import junit.framework.TestCase;
-import v9t9.base.settings.SettingProperty;
+import v9t9.base.properties.IProperty;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.machine.ti99.machine.TI994A;
@@ -64,9 +64,9 @@ public class MemoryTest extends TestCase {
             CPU.writeByte(i, (byte) 0);
         }
 
-        SettingProperty expRam = settings.get(ExpRamArea.settingExpRam);
+        IProperty expRam = settings.get(ExpRamArea.settingExpRam);
         expRam.setBoolean(true);
-        SettingProperty enhRam = settings.get(ConsoleRamArea.settingEnhRam);
+        IProperty enhRam = settings.get(ConsoleRamArea.settingEnhRam);
         enhRam.setBoolean(true);
 
         int firstRAM = 0;

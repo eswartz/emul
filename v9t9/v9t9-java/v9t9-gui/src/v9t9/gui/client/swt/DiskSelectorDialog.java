@@ -40,6 +40,7 @@ import org.eclipse.swt.widgets.Shell;
 
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
+import v9t9.base.settings.ISettingProperty;
 import v9t9.base.settings.SettingProperty;
 import v9t9.common.dsr.IDiskDsr;
 import v9t9.common.dsr.IDsrHandler;
@@ -61,10 +62,10 @@ public class DiskSelectorDialog extends Composite {
 	private final IMachine machine;
 	
 	abstract class SettingEntry extends Composite {
-		protected final SettingProperty setting;
+		protected final IProperty setting;
 		private IPropertyListener enableListener;
 		
-		public SettingEntry(final Composite parent, SettingProperty setting_, int style) {
+		public SettingEntry(final Composite parent, IProperty setting_, int style) {
 			super(parent, style);
 			
 			this.setting = setting_;
@@ -104,7 +105,8 @@ public class DiskSelectorDialog extends Composite {
 		}
 		
 		protected void updateSetting() {
-			boolean enabled = setting.isEnabled();
+			boolean enabled = !(setting instanceof ISettingProperty) || 
+				((ISettingProperty) setting).isEnabled();
 			SettingEntry.this.setVisible(enabled);
 			GridData data = (GridData) SettingEntry.this.getLayoutData();
 			data.exclude = !enabled;
@@ -126,7 +128,7 @@ public class DiskSelectorDialog extends Composite {
 		private Button browse;
 		private Button catalog;
 		
-		public DiskEntry(final Composite parent, SettingProperty setting_) {
+		public DiskEntry(final Composite parent, IProperty setting_) {
 			super(parent, setting_, SWT.NONE);
 			
 		}
@@ -241,7 +243,7 @@ public class DiskSelectorDialog extends Composite {
 		 * @param setting
 		 * @param entries
 		 */
-		protected void showCatalogDialog(final SettingProperty setting,
+		protected void showCatalogDialog(final IProperty setting,
 				final Catalog catalog) {
 			final List<CatalogEntry> entries = catalog.getEntries();
 			Dialog dialog = new CatalogDialog(getShell(), machine, entries, catalog, setting);
@@ -280,7 +282,7 @@ public class DiskSelectorDialog extends Composite {
 
 
 	class BooleanEntry extends SettingEntry {
-		public BooleanEntry(final Composite parent, SettingProperty setting_) {
+		public BooleanEntry(final Composite parent, IProperty setting_) {
 			super(parent, setting_, SWT.NONE);
 		}
 
@@ -336,30 +338,30 @@ public class DiskSelectorDialog extends Composite {
 		GridLayoutFactory.fillDefaults().applyTo(this);
 
 		Map<String, Group> groups = new HashMap<String, Group>();
-		Map<String, List<SettingProperty>> allSettings = new LinkedHashMap<String, List<SettingProperty>>();
+		Map<String, List<IProperty>> allSettings = new LinkedHashMap<String, List<IProperty>>();
 		
 
 		for (IDsrSettings setting : list) {
-			Map<String, Collection<SettingProperty>> settings = setting.getEditableSettingGroups();
-			for (Map.Entry<String, Collection<SettingProperty>> entry : settings.entrySet()) {
-				List<SettingProperty> groupSettings = allSettings.get(entry.getKey());
+			Map<String, Collection<IProperty>> settings = setting.getEditableSettingGroups();
+			for (Map.Entry<String, Collection<IProperty>> entry : settings.entrySet()) {
+				List<IProperty> groupSettings = allSettings.get(entry.getKey());
 				if (groupSettings == null) {
-					groupSettings = new ArrayList<SettingProperty>();
+					groupSettings = new ArrayList<IProperty>();
 					allSettings.put(entry.getKey(), groupSettings);
 				}
 				groupSettings.addAll(entry.getValue());
 			}
 		}
 		
-		for (Map.Entry<String, List<SettingProperty>> entry : allSettings.entrySet()) {
+		for (Map.Entry<String, List<IProperty>> entry : allSettings.entrySet()) {
 			String name = entry.getKey();
 			Group group = groups.get(name);
 			
-			List<SettingProperty> groupSettings = entry.getValue();
+			List<IProperty> groupSettings = entry.getValue();
 			Collections.sort(groupSettings,
-					new Comparator<SettingProperty>() {
+					new Comparator<IProperty>() {
 
-						public int compare(SettingProperty o1, SettingProperty o2) {
+						public int compare(IProperty o1, IProperty o2) {
 							if (o1 instanceof IconSettingProperty && o2 instanceof IconSettingProperty)
 								return o1.getLabel().compareTo(o2.getLabel());
 							else
@@ -384,7 +386,7 @@ public class DiskSelectorDialog extends Composite {
 				groups.put(name, group);
 			}
 			
-			for (SettingProperty setting : groupSettings) {
+			for (IProperty setting : groupSettings) {
 				SettingEntry comp = null;
 				if (setting.getValue() instanceof String) {
 					comp = new DiskEntry(group, setting);

@@ -70,7 +70,7 @@ public class EmulatorBar {
 			final boolean isSecondOverlay, String tooltip) {
 		final BasicButton button = new BasicButton(buttonBar, SWT.PUSH,
 				imageProvider, iconIndex, tooltip);
-		final SettingProperty setting = Settings.get(machine, schema);
+		final IProperty setting = Settings.get(machine, schema);
 		setting.addListener(new IPropertyListener() {
 	
 			public void propertyChanged(final IProperty setting) {

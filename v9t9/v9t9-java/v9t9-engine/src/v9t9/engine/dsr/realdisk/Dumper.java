@@ -6,6 +6,7 @@ package v9t9.engine.dsr.realdisk;
 import java.io.PrintWriter;
 import java.text.MessageFormat;
 
+import v9t9.base.properties.IProperty;
 import v9t9.base.settings.Logging;
 import v9t9.base.settings.SettingProperty;
 import v9t9.common.client.ISettingsHandler;
@@ -16,10 +17,10 @@ import v9t9.common.settings.SettingSchema;
  *
  */
 public class Dumper {
-	private SettingProperty settingDumpFull;
-	private SettingProperty settingDump;
+	private IProperty settingDumpFull;
+	private IProperty settingDump;
 
-	public Dumper(SettingProperty dump, SettingProperty dumpFull) {
+	public Dumper(IProperty dump, IProperty dumpFull) {
 		settingDump = dump;
 		settingDumpFull = dumpFull;
 	}

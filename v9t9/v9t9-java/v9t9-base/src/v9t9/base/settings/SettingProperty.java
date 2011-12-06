@@ -10,12 +10,19 @@ import v9t9.base.properties.PropertyUtils;
  * @author ejs
  *
  */
-public class SettingProperty extends AbstractProperty {
+public class SettingProperty extends AbstractProperty implements ISettingProperty {
 
 	private Object value;
 	private final Object defaultValue;
 	private String label;
 	
+	public SettingProperty(String name, String label, String description, Class<?> klass, Object value) {
+		super(null, klass, name);
+		this.label = label;
+		this.defaultValue = value;
+		this.value = value;
+		setDescription(description);
+	}
 	public SettingProperty(String name, String label, String description, Object value) {
 		super(null, value.getClass(), name);
 		this.label = label;
@@ -49,6 +56,10 @@ public class SettingProperty extends AbstractProperty {
 		return value;
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.base.settings.ISettingProperty#isEnabled()
+	 */
+	@Override
 	public boolean isEnabled() {
 		return true;
 	}
@@ -84,9 +95,10 @@ public class SettingProperty extends AbstractProperty {
 		}
 		setValue(obj);
 	}
-	/**
-	 * @return
+	/* (non-Javadoc)
+	 * @see v9t9.base.settings.ISettingProperty#isDefault()
 	 */
+	@Override
 	public boolean isDefault() {
 		return value == null || value.equals(defaultValue);
 	}

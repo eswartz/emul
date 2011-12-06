@@ -4,7 +4,7 @@
 package v9t9.engine.dsr;
 
 
-import v9t9.base.settings.SettingProperty;
+import v9t9.base.properties.IProperty;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 
 /**
@@ -15,10 +15,10 @@ public class DeviceIndicatorProvider implements IDeviceIndicatorProvider {
 
 	private final int baseIconIndex;
 	private final int activeIconIndex;
-	private final SettingProperty activeProperty;
+	private final IProperty activeProperty;
 	private final String tooltip;
 
-	public DeviceIndicatorProvider(SettingProperty activeProperty, String tooltip, 
+	public DeviceIndicatorProvider(IProperty activeProperty, String tooltip, 
 			int baseIconIndex, int activeIconIndex) {
 		this.activeProperty = activeProperty;
 		this.tooltip = tooltip;
@@ -54,7 +54,7 @@ public class DeviceIndicatorProvider implements IDeviceIndicatorProvider {
 	 * @see v9t9.emulator.clients.builtin.swt.IDeviceIndicatorProvider#getActiveProperty()
 	 */
 	@Override
-	public SettingProperty getActiveProperty() {
+	public IProperty getActiveProperty() {
 		return activeProperty;
 	}
 

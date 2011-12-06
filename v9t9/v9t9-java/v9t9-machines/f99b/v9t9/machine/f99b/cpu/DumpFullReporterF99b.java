@@ -6,8 +6,8 @@ package v9t9.machine.f99b.cpu;
 import java.io.PrintWriter;
 
 
+import v9t9.base.properties.IProperty;
 import v9t9.base.settings.Logging;
-import v9t9.base.settings.SettingProperty;
 import v9t9.base.utils.HexUtils;
 import v9t9.base.utils.Pair;
 import v9t9.common.asm.RawInstruction;
@@ -26,7 +26,7 @@ import v9t9.machine.f99b.asm.InstructionWorkBlockF99b;
 public class DumpFullReporterF99b implements IInstructionListener {
 
 	private final PrintWriter dump;
-	private SettingProperty dumpSetting;
+	private IProperty dumpSetting;
 
 	/**
 	 * @param cpu 

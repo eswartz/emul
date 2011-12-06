@@ -24,6 +24,7 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 
+import v9t9.base.properties.IProperty;
 import v9t9.base.settings.SettingProperty;
 import v9t9.common.client.ISoundHandler;
 import v9t9.common.cpu.ICpu;
@@ -254,7 +255,7 @@ public class EmulatorButtonBar extends EmulatorBar  {
 				
 				final Menu volumeMenu = new Menu(vitem);
 
-				final SettingProperty soundVolume = Settings.get(machine, ISoundHandler.settingSoundVolume);
+				final IProperty soundVolume = Settings.get(machine, ISoundHandler.settingSoundVolume);
 				int curVol = soundVolume.getInt();
 				int[] vols = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 				for (final int vol : vols) {

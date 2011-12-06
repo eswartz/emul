@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 
+import v9t9.base.properties.IProperty;
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.settings.Logging;
 import v9t9.base.settings.SettingProperty;
@@ -75,7 +76,7 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 
 	private boolean speechOn;
 
-	private SettingProperty logSpeech;
+	private IProperty logSpeech;
 	
 	public TMS5220(ISettingsHandler settings, IMemoryDomain speech) {
 		speechVoices = new SpeechVoice[1];

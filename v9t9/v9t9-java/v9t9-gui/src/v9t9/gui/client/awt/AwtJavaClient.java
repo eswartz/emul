@@ -20,7 +20,7 @@ import v9t9.common.machine.TerminatedException;
 import v9t9.gui.sound.JavaSoundHandler;
 
 /**
- * This client uses SDL for the video and keyboard.
+ * This client uses AWT for the video and keyboard.
  * @author ejs
  */
 public class AwtJavaClient implements IClient {
@@ -70,7 +70,7 @@ public class AwtJavaClient implements IClient {
         
         video.setCanvas(videoRenderer.getCanvas());
 
-        machine.getSound().setSoundHandler(new JavaSoundHandler(machine, settingsHandler));
+        machine.getSound().setSoundHandler(new JavaSoundHandler(machine));
         
         keyboardHandler = new AwtKeyboardHandler(
         		videoRenderer.getAwtCanvas(),

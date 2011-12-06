@@ -17,6 +17,8 @@ import v9t9.common.client.ISettingsHandler;
 import v9t9.common.client.ISoundHandler;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.machine.IMachine;
+import v9t9.common.settings.SettingSchema;
+import v9t9.common.settings.Settings;
 
 /**
  * Handle sound generation for output with Java APIs
@@ -24,8 +26,12 @@ import v9t9.common.machine.IMachine;
  *
  */
 public class JavaSoundHandler implements ISoundHandler {
-	public static SettingProperty settingRecordSoundOutputFile = new SettingProperty("RecordSoundOutputFile", String.class, null);
-	public static SettingProperty settingRecordSpeechOutputFile = new SettingProperty("RecordSpeechOutputFile", String.class, null);
+	public static SettingSchema settingRecordSoundOutputFile = new SettingSchema(
+			ISettingsHandler.INSTANCE,
+			"RecordSoundOutputFile", String.class, null);
+	public static SettingSchema settingRecordSpeechOutputFile = new SettingSchema(
+			ISettingsHandler.INSTANCE,
+			"RecordSpeechOutputFile", String.class, null);
 
 	private SoundRecordingHelper soundRecordingHelper;
 	private SoundRecordingHelper speechRecordingHelper;
@@ -39,15 +45,15 @@ public class JavaSoundHandler implements ISoundHandler {
 	private ISoundListener audio;
 	private ISoundListener speechAudio;
 	private final IMachine machine;
-	private SettingProperty soundVolume;
-	private SettingProperty playSound;
+	private IProperty soundVolume;
+	private IProperty playSound;
 	
-	public JavaSoundHandler(final IMachine machine, ISettingsHandler settingsHandler) {
+	public JavaSoundHandler(final IMachine machine) {
 
 		this.machine = machine;
 		
-		soundVolume = settingsHandler.get(ISoundHandler.settingSoundVolume);
-		playSound = settingsHandler.get(ISoundHandler.settingPlaySound);
+		soundVolume = Settings.get(machine, ISoundHandler.settingSoundVolume);
+		playSound = Settings.get(machine, ISoundHandler.settingPlaySound);
 		
 		soundFormat = new AudioFormat(55930, 16, 2, true, false);
 		
@@ -74,8 +80,12 @@ public class JavaSoundHandler implements ISoundHandler {
 			}
 		});
 
-		soundRecordingHelper = new SoundRecordingHelper(output, settingRecordSoundOutputFile, "sound");
-		speechRecordingHelper = new SoundRecordingHelper(speechOutput, settingRecordSpeechOutputFile, "speech");
+		soundRecordingHelper = new SoundRecordingHelper(output, 
+				Settings.get(machine, settingRecordSoundOutputFile), 
+				"sound");
+		speechRecordingHelper = new SoundRecordingHelper(speechOutput, 
+				Settings.get(machine, settingRecordSpeechOutputFile), 
+				"speech");
 		
 		// frames in ALSA means samples per channel, but raw freq in javax
 		//soundFramesPerTick = (int) ((soundFormat.getFrameRate()

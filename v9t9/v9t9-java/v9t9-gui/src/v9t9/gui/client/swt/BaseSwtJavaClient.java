@@ -80,7 +80,7 @@ public abstract class BaseSwtJavaClient implements IClient {
 			}
 		});
 		
-        machine.getSound().setSoundHandler(new JavaSoundHandler(machine, settingsHandler));
+        machine.getSound().setSoundHandler(new JavaSoundHandler(machine));
         
         if (keyboardHandler instanceof ISwtKeyboardHandler)
         	((ISwtKeyboardHandler) keyboardHandler).init(((ISwtVideoRenderer) videoRenderer).getControl());

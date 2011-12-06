@@ -3,6 +3,7 @@
  */
 package v9t9.base.properties;
 
+import java.util.Comparator;
 import java.util.List;
 
 
@@ -11,7 +12,8 @@ import java.util.List;
  * @author ejs
  *
  */
-public interface IProperty extends IXMLPersistable, IPersistable {
+public interface IProperty extends IXMLPersistable, IPersistable,
+	Comparable<IProperty>, Comparator<IProperty> {
 	String getName();
 	String getLabel();
 	String getDescription();
@@ -56,4 +58,6 @@ public interface IProperty extends IXMLPersistable, IPersistable {
 	 * @return
 	 */
 	boolean isHidden();
+	
+	void addEnablementDependency(IProperty other);
 }

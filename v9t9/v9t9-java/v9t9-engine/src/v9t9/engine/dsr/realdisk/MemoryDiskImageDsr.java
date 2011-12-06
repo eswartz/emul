@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 
+import v9t9.base.properties.IProperty;
 import v9t9.base.settings.SettingProperty;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.machine.IMachine;
@@ -153,7 +154,7 @@ public class MemoryDiskImageDsr extends BaseDiskImageDsr implements IMemoryIOHan
 			memoryDeviceIndicatorProviderList.add(deviceIndicatorProvider);
 			 */
 			
-			for (Map.Entry<String, SettingProperty> entry : diskSettingsMap.entrySet()) {
+			for (Map.Entry<String, IProperty> entry : diskSettingsMap.entrySet()) {
 				BaseDiskImage image = getDiskImage(entry.getValue().getName());
 				DiskImageDeviceIndicatorProvider provider = new DiskImageDeviceIndicatorProvider(image);
 				memoryDeviceIndicatorProviderList.add(provider);

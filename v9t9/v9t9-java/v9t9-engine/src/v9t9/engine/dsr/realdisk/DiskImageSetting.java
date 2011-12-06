@@ -5,14 +5,15 @@ package v9t9.engine.dsr.realdisk;
 
 import java.net.URL;
 
+import v9t9.base.properties.IProperty;
 import v9t9.base.settings.SettingProperty;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.settings.IconSettingProperty;
 import v9t9.engine.dsr.emudisk.EmuDiskDsrSettings;
 
 public class DiskImageSetting extends IconSettingProperty {
-	private SettingProperty realDsrEnabled;
-	private SettingProperty emuDsrEnabled;
+	private IProperty realDsrEnabled;
+	private IProperty emuDsrEnabled;
 
 	public DiskImageSetting(ISettingsHandler settings, String name, Object storage, URL iconPath) {
 		super(name, 
@@ -29,9 +30,6 @@ public class DiskImageSetting extends IconSettingProperty {
 		addEnablementDependency(settings.get(RealDiskDsrSettings.diskImageDebug));
 	}
 
-	/* (non-Javadoc)
-	 * @see v9t9.base.core.utils.SettingProperty#isAvailable()
-	 */
 	@Override
 	public boolean isEnabled() {
 		if (!realDsrEnabled.getBoolean())

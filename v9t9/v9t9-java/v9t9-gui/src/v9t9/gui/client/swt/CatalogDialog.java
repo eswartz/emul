@@ -25,6 +25,7 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 
+import v9t9.base.properties.IProperty;
 import v9t9.base.settings.SettingProperty;
 import v9t9.common.events.IEventNotifier.Level;
 import v9t9.common.files.Catalog;
@@ -133,7 +134,7 @@ final class CatalogDialog extends Dialog {
 
 	private final List<CatalogEntry> entries;
 	private final Catalog catalog;
-	private final SettingProperty setting;
+	private final IProperty setting;
 	private final IMachine machine;
 	{
 		setShellStyle(getShellStyle() | SWT.RESIZE | SWT.MODELESS);
@@ -142,7 +143,7 @@ final class CatalogDialog extends Dialog {
 	public CatalogDialog(Shell parentShell,
 			IMachine machine,
 			List<CatalogEntry> entries, 
-			Catalog catalog, SettingProperty setting) {
+			Catalog catalog, IProperty setting) {
 		super(parentShell);
 		this.machine = machine;
 		this.entries = entries;

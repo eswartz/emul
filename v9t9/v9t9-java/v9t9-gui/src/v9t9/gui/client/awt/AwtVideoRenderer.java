@@ -80,7 +80,7 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 
 	protected final IMachine machine;
 
-	private SettingProperty monitorDrawing;
+	private IProperty monitorDrawing;
 	
 	public AwtVideoRenderer(IMachine machine) {
 		this.machine = machine;

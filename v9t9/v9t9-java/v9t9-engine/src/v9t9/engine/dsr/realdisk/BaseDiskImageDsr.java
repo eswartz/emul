@@ -17,8 +17,8 @@ import java.util.TimerTask;
 
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
+import v9t9.base.settings.ISettingProperty;
 import v9t9.base.settings.ISettingSection;
-import v9t9.base.settings.SettingProperty;
 import v9t9.base.utils.HexUtils;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
@@ -40,7 +40,7 @@ import v9t9.engine.dsr.IDevIcons;
  */
 public abstract class BaseDiskImageDsr implements IDsrSettings, IDiskDsr {
 	/** setting name (DSKImage1) to setting */
-	protected Map<String, SettingProperty> diskSettingsMap = new LinkedHashMap<String, SettingProperty>();
+	protected Map<String, IProperty> diskSettingsMap = new LinkedHashMap<String, IProperty>();
 	
 	FDC1771 fdc;
 	
@@ -70,7 +70,7 @@ public abstract class BaseDiskImageDsr implements IDsrSettings, IDiskDsr {
 	protected BaseDiskImage getDiskImage(String name) {
 		BaseDiskImage info = disks.get(name);
 		if (info == null) {
-			SettingProperty setting = diskSettingsMap.get(name);
+			IProperty setting = diskSettingsMap.get(name);
 			if (setting == null)
 				return null;
 			info = DiskImageFactory.createDiskImage(settings, name, new File(setting.getString()));
@@ -118,10 +118,10 @@ public abstract class BaseDiskImageDsr implements IDsrSettings, IDiskDsr {
 	private byte lastStatus;
 
 
-	protected SettingProperty realDiskDsrActiveSetting;
-	private SettingProperty settingRealTime;
-	protected SettingProperty settingDsrEnabled;
-	private SettingProperty settingDebug;
+	protected IProperty realDiskDsrActiveSetting;
+	private IProperty settingRealTime;
+	protected IProperty settingDsrEnabled;
+	private IProperty settingDebug;
 
 	protected Dumper dumper;
 
@@ -536,14 +536,14 @@ public abstract class BaseDiskImageDsr implements IDsrSettings, IDiskDsr {
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.dsrs.DsrHandler#getEditableSettingGroups()
 	 */
-	public Map<String, Collection<SettingProperty>> getEditableSettingGroups() {
-		Map<String, Collection<SettingProperty>> map = new LinkedHashMap<String, Collection<SettingProperty>>();
+	public Map<String, Collection<IProperty>> getEditableSettingGroups() {
+		Map<String, Collection<IProperty>> map = new LinkedHashMap<String, Collection<IProperty>>();
 		
-		Collection<SettingProperty> settings = new ArrayList<SettingProperty>();
+		Collection<IProperty> settings = new ArrayList<IProperty>();
 		settings.add(settingDsrEnabled);
 		map.put(IDsrHandler.GROUP_DSR_SELECTION, settings);
 		
-		settings = new ArrayList<SettingProperty>(diskSettingsMap.values());
+		settings = new ArrayList<IProperty>(diskSettingsMap.values());
 		settings.add(settingRealTime);
 		settings.add(settingDebug);
 		map.put(IDsrHandler.GROUP_DISK_CONFIGURATION, settings);
@@ -590,7 +590,7 @@ public abstract class BaseDiskImageDsr implements IDsrSettings, IDiskDsr {
 		}
 		
 		@Override
-		public SettingProperty getActiveProperty() {
+		public IProperty getActiveProperty() {
 			return image.getInUseSetting();
 		}
 	}
@@ -607,7 +607,7 @@ public abstract class BaseDiskImageDsr implements IDsrSettings, IDiskDsr {
 	 * @see v9t9.common.dsr.IDiskDsr#getCatalog(v9t9.base.properties.SettingProperty)
 	 */
 	@Override
-	public Catalog getCatalog(SettingProperty diskSetting) throws IOException {
+	public Catalog getCatalog(IProperty diskSetting) throws IOException {
 		BaseDiskImage image = DiskImageFactory.createDiskImage(
 				settings, diskSetting.getName(), 
 				new File(diskSetting.getString()));

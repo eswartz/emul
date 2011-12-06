@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 
+import v9t9.base.properties.IProperty;
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.settings.SettingProperty;
 import v9t9.common.client.ISettingsHandler;
@@ -52,12 +53,12 @@ public class EmuDiskDsr implements IDsrHandler, DsrHandler9900, IDiskDsr {
 	private short vdpNameCompareBuffer;
 	private final IFileMapper mapper;
 
-	private Map<String, SettingProperty> diskActivitySettings;
+	private Map<String, IProperty> diskActivitySettings;
 	private List<IDeviceIndicatorProvider> deviceIndicatorProviders;
 
-	private SettingProperty emuDiskDsrActiveSetting;
-	private SettingProperty settingDsrEnabled;
-	private SettingProperty settingRealDsrEnabled;
+	private IProperty emuDiskDsrActiveSetting;
+	private IProperty settingDsrEnabled;
+	private IProperty settingRealDsrEnabled;
 	private Dumper dumper;
 
 	public EmuDiskDsr(ISettingsHandler settings, IFileMapper mapper) {
@@ -76,7 +77,7 @@ public class EmuDiskDsr implements IDsrHandler, DsrHandler9900, IDiskDsr {
     	dskdefault.mkdirs();
     	
     	deviceIndicatorProviders = new ArrayList<IDeviceIndicatorProvider>();
-    	diskActivitySettings = new HashMap<String, SettingProperty>();
+    	diskActivitySettings = new HashMap<String, IProperty>();
 
     	// one setting for entire DSR
 		emuDiskDsrActiveSetting = new SettingProperty(getName(), Boolean.FALSE);
@@ -98,7 +99,7 @@ public class EmuDiskDsr implements IDsrHandler, DsrHandler9900, IDiskDsr {
 			DiskDirectoryMapper.INSTANCE.registerDiskSetting(devname, diskSetting);
 
 			// one setting per disk
-			SettingProperty diskActiveSetting = new SettingProperty(devname, Boolean.FALSE);
+			IProperty diskActiveSetting = new SettingProperty(devname, Boolean.FALSE);
 			diskActiveSetting.addEnablementDependency(settingDsrEnabled);
 			diskActivitySettings.put(devname, diskActiveSetting);
 			/*
@@ -177,7 +178,7 @@ public class EmuDiskDsr implements IDsrHandler, DsrHandler9900, IDiskDsr {
 					return false;
 			}
 			
-			SettingProperty settingProperty = diskActivitySettings.get(handler.devname);
+			IProperty settingProperty = diskActivitySettings.get(handler.devname);
 			if (settingProperty != null)
 				settingProperty.setBoolean(true);
 			
@@ -198,7 +199,7 @@ public class EmuDiskDsr implements IDsrHandler, DsrHandler9900, IDiskDsr {
 			/* init disk dsr */
 		case EmuDiskConsts.D_INIT:
 		{
-			for (SettingProperty property : diskActivitySettings.values()) {
+			for (IProperty property : diskActivitySettings.values()) {
 				property.setBoolean(true);
 			}
 			
@@ -217,7 +218,7 @@ public class EmuDiskDsr implements IDsrHandler, DsrHandler9900, IDiskDsr {
 			// ???
 			//xfer.writeParamWord(0x6c, (short) 0x404);
 			
-			for (SettingProperty property : diskActivitySettings.values()) {
+			for (IProperty property : diskActivitySettings.values()) {
 				property.setBoolean(false);
 			}
 			
@@ -273,7 +274,7 @@ public class EmuDiskDsr implements IDsrHandler, DsrHandler9900, IDiskDsr {
 			
 			if (handler.getDevice() <= EmuDiskConsts.MAXDRIVE) {
 				
-				SettingProperty activity = diskActivitySettings.get(EmuDiskDsrSettings.getEmuDiskSetting(handler.getDevice()));
+				IProperty activity = diskActivitySettings.get(EmuDiskDsrSettings.getEmuDiskSetting(handler.getDevice()));
 				if (activity != null)
 					activity.setBoolean(true);
 				
@@ -370,10 +371,10 @@ public class EmuDiskDsr implements IDsrHandler, DsrHandler9900, IDiskDsr {
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.hardware.dsrs.DsrHandler#getEditableSettingGroups()
 	 */
-	public Map<String, Collection<SettingProperty>> getEditableSettingGroups() {
-		Map<String, Collection<SettingProperty>> map = new LinkedHashMap<String, Collection<SettingProperty>>();
+	public Map<String, Collection<IProperty>> getEditableSettingGroups() {
+		Map<String, Collection<IProperty>> map = new LinkedHashMap<String, Collection<IProperty>>();
 		
-		Collection<SettingProperty> settings = new ArrayList<SettingProperty>();
+		Collection<IProperty> settings = new ArrayList<IProperty>();
 		settings.add(settingDsrEnabled);
 		map.put(IDsrHandler.GROUP_DSR_SELECTION, settings);
 		
@@ -413,7 +414,7 @@ public class EmuDiskDsr implements IDsrHandler, DsrHandler9900, IDiskDsr {
 	 * @see v9t9.engine.dsr.IDiskDsr#getCatalog(v9t9.base.properties.SettingProperty)
 	 */
 	@Override
-	public Catalog getCatalog(SettingProperty diskSetting) {
+	public Catalog getCatalog(IProperty diskSetting) {
 		FileDirectory fileDir = new FileDirectory(
 				new File(diskSetting.getString()), 
 						mapper);

@@ -5,7 +5,6 @@ package v9t9.machine.ti99.memory;
 
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
-import v9t9.base.settings.SettingProperty;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.settings.SettingSchema;
 
@@ -14,7 +13,7 @@ public class ExpRamArea extends ConsoleMemoryArea {
     static public final SettingSchema settingExpRam = new SettingSchema(
     		ISettingsHandler.WORKSPACE,
     		"MemoryExpansion32K", new Boolean(false));
-	private SettingProperty expRam;
+	private IProperty expRam;
 
 
     public ExpRamArea(ISettingsHandler settings, int size) {

@@ -9,6 +9,7 @@ package v9t9.server;
 import java.io.IOException;
 
 
+import v9t9.base.properties.IProperty;
 import v9t9.base.settings.SettingProperty;
 import v9t9.common.client.IClient;
 import v9t9.common.client.ISettingsHandler;
@@ -83,8 +84,8 @@ public class EmulatorServer {
     }
     
 	protected void loadState() {
-		SettingProperty lastLoadedModule = settingsHandler.get(ModuleManager.settingLastLoadedModule);
-		SettingProperty moduleList = settingsHandler.get(IMachine.settingModuleList);
+		IProperty lastLoadedModule = settingsHandler.get(ModuleManager.settingLastLoadedModule);
+		IProperty moduleList = settingsHandler.get(IMachine.settingModuleList);
 		
 		int barrier = client.getEventNotifier().getErrorCount();
 		memoryModel.loadMemory(client.getEventNotifier());

@@ -12,6 +12,7 @@ import java.util.List;
 
 
 import v9t9.base.properties.IPersistable;
+import v9t9.base.properties.IProperty;
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.settings.SettingProperty;
 import v9t9.common.client.ISettingsHandler;
@@ -53,7 +54,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	protected File spec;
 	private RandomAccessFile handle;
 	
-	private SettingProperty inUseSetting;
+	private IProperty inUseSetting;
 	
 	protected boolean trackFetched;
 	protected byte trackBuffer[] = new byte[RealDiskConsts.DSKbuffersize];
@@ -64,7 +65,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	protected byte sideReg;
 	private boolean motorRunning;
 	private long motorTimeout;
-	private SettingProperty settingDsrEnabled;
+	private IProperty settingDsrEnabled;
 	
 	protected Dumper dumper;
 
@@ -90,7 +91,7 @@ public abstract class BaseDiskImage implements IPersistable, IDiskImage {
 	/**
 	 * @return the inUseSetting
 	 */
-	public SettingProperty getInUseSetting() {
+	public IProperty getInUseSetting() {
 		return inUseSetting;
 	}
 	
