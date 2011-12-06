@@ -195,16 +195,18 @@ public class Emulator {
 	 * @return
 	 */
 	private static String getClientId(String[] args) {
-		String clientID;
+		String clientID = SwtLwjglJavaClient.ID;
         if (findArgument(args, "--awt")) {
         	clientID = AwtJavaClient.ID;
 		} 
+        else if (findArgument(args, "--awt")) {
+        	clientID = SwtJavaClient.ID;
+		} 
+        else if (findArgument(args, "--swtawt")) {
+        	clientID = SwtAwtJavaClient.ID;
+        } 
         else if (findArgument(args, "--swtgl")) {
         	clientID = SwtLwjglJavaClient.ID;
-		} 
-        else /*if (findArgument(args, "--swtawt"))*/ {
-        	boolean awtRenderer = !findArgument(args, "--swt");
-        	clientID = awtRenderer? SwtAwtJavaClient.ID : SwtJavaClient.ID;
 		} 
         return clientID;
 	}
