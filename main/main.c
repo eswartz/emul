@@ -44,7 +44,7 @@ static unsigned int idle_count;
 static void check_idle_timeout(void * args) {
     if (list_is_empty(&channel_root)) {
         idle_count++;
-        if (idle_count == idle_timeout) {
+        if (idle_count > idle_timeout) {
             trace(LOG_ALWAYS, "No connections for %d seconds, shutting down", idle_timeout);
             discovery_stop();
             cancel_event_loop();
@@ -118,6 +118,7 @@ static const char * help_text[] = {
     "       0x4000          plugins",
     "  -s<url>          set agent listening port and protocol, default is TCP::1534",
     "  -S               print server properties in Json format to stdout",
+    "  -I<idle-seconds> exit if are no connections for the specified time",
 #if ENABLE_Plugins
     "  -P<dir>          set agent plugins directory name",
 #endif
