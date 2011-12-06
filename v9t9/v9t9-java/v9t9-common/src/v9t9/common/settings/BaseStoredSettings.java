@@ -346,7 +346,7 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 	public ISettingSection getHistorySettings() {
 		ISettingSection historySection = section.findOrAddSection(HISTORY);
 		IProperty history = registeredSettings.get(HISTORY);
-		if (history != null && !(history.getValue() instanceof ISettingSection)) {
+		if (history != null) {
 			registeredSettings.remove(HISTORY);
 			syntheticSettings.remove(HISTORY);
 			//history = new SettingProperty(HISTORY, historySection);

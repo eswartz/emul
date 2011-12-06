@@ -91,8 +91,8 @@ public abstract class BaseDiskImageDsr implements IDeviceSettings {
 	}
 
 
-	public void registerDiskImagePath(String device, File dskfile) {
-		DiskImageSetting diskSetting = settings.getWorkspaceSettings().findOrCreate(
+	private void registerDiskImagePath(String device, File dskfile) {
+		DiskImageSetting diskSetting = settings.get(ISettingsHandler.WORKSPACE,
 				new DiskImageSetting(settings, 
 						device, dskfile.getAbsolutePath(),
 						RealDiskDsrSettings.diskImageIconPath));
