@@ -30,6 +30,7 @@
 #include <framework/trace.h>
 #include <framework/channel_tcp.h>
 #include <framework/plugins.h>
+#include <framework/myalloc.h>
 #include <services/discovery.h>
 #include <main/test.h>
 #include <main/cmdline.h>
@@ -116,6 +117,7 @@ static const char * help_text[] = {
     "       0x2000          stack trace service",
     "       0x4000          plugins",
     "  -s<url>          set agent listening port and protocol, default is TCP::1534",
+    "  -S               print server properties in Json format to stdout",
 #if ENABLE_Plugins
     "  -P<dir>          set agent plugins directory name",
 #endif
@@ -140,6 +142,7 @@ int main(int argc, char ** argv) {
     int ind;
     int daemon = 0;
     int interactive = 0;
+    int print_server_properties = 0;
     const char * log_name = NULL;
     const char * url = "TCP:";
     Protocol * proto = NULL;
@@ -187,6 +190,10 @@ int main(int argc, char ** argv) {
             case 'c':
                 generate_ssl_certificate();
                 exit(0);
+                break;
+
+            case 'S':
+                print_server_properties = 1;
                 break;
 
             case 'I':
@@ -258,6 +265,17 @@ int main(int argc, char ** argv) {
         exit(1);
     }
     discovery_start();
+
+    if (print_server_properties) {
+        ChannelServer *s;
+        char *server_properties;
+        assert(!list_is_empty(&channel_server_root));
+        s = servlink2channelserverp(channel_server_root.next);
+        server_properties = channel_peer_to_json(s->ps);
+        printf("Server-Properties: %s\n", server_properties);
+        trace(LOG_ALWAYS, "Server-Properties: %s", server_properties);
+        loc_free(server_properties);
+    }
 
     signal(SIGABRT, signal_handler);
     signal(SIGILL, signal_handler);

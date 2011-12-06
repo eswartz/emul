@@ -218,6 +218,26 @@ PeerServer * channel_peer_from_url(const char * url) {
     return ps;
 }
 
+char * channel_peer_to_json(PeerServer * ps) {
+    int i;
+    char *rval;
+    ByteArrayOutputStream buf;
+    OutputStream * out;
+
+    out = create_byte_array_output_stream(&buf);
+    write_stream(out, '{');
+    for (i = 0; i < ps->ind; i++) {
+        if (i > 0) write_stream(out, ',');
+        json_write_string(out, ps->list[i].name);
+        write_stream(out, ':');
+        json_write_string(out, ps->list[i].value);
+    }
+    write_stream(out, '}');
+    write_stream(out, '\0');
+    get_byte_array_output_stream_data(&buf, &rval, NULL);
+    return rval;
+}
+
 /*
  * Start TCF channel server
  */
