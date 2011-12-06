@@ -17,7 +17,7 @@ public class SettingProperty extends AbstractProperty implements ISettingPropert
 	private String label;
 	
 	public SettingProperty(String name, String label, String description, Class<?> klass, Object value) {
-		super(null, klass, name);
+		super(null, klass != null ? klass : value.getClass(), name);
 		this.label = label;
 		this.defaultValue = value;
 		this.value = value;

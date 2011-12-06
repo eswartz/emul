@@ -12,6 +12,7 @@ import java.util.List;
 import org.w3c.dom.Element;
 
 import v9t9.base.settings.ISettingSection;
+import v9t9.base.utils.Check;
 import v9t9.base.utils.XMLUtils;
 
 
@@ -35,6 +36,7 @@ public abstract class AbstractProperty implements IProperty {
 	 * 
 	 */
 	public AbstractProperty(IClassPropertyFactory factory, Class<?> type, String name) {
+		Check.checkArg(type);
 		this.listenerArray = null;
 		this.listeners = new LinkedList<IPropertyListener>();
 		//this.editorProvider = editorProvider;
