@@ -30,7 +30,7 @@ import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.GplMmio;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
-import v9t9.machine.ti99.dsr.DsrHandler9900;
+import v9t9.machine.ti99.dsr.IDsrHandler9900;
 import v9t9.machine.ti99.machine.TI99Machine;
 import v9t9.machine.ti99.memory.mmio.ConsoleGramWriteArea;
 import v9t9.machine.ti99.memory.mmio.ConsoleGromReadArea;
@@ -39,7 +39,7 @@ import v9t9.machine.ti99.memory.mmio.ConsoleGromReadArea;
  * @author ejs
  *
  */
-public class PCodeDsr implements DsrHandler9900 {
+public class PCodeDsr implements IDsrHandler9900 {
 	private static URL pcodeIconPath = EmulatorData.getDataURL("icons/pcode_system.png");
 
 	static public final IconSettingSchema settingPcodeCardEnabled = new IconSettingSchema(
@@ -112,9 +112,10 @@ public class PCodeDsr implements DsrHandler9900 {
 		if (console.getEntryAt(0x4000) instanceof PCodeDsrRomBankedMemoryEntry)
 			dsrMemoryEntry = (PCodeDsrRomBankedMemoryEntry) console.getEntryAt(0x4000);
 		
+		ISettingsHandler settings = Settings.getSettings(machine);
 		if (dsrMemoryEntry == null) {
 			this.dsrMemoryEntry = (PCodeDsrRomBankedMemoryEntry) DiskMemoryEntry.newBankedWordMemoryFromFile(
-					Settings.getSettings(machine),
+					settings,
 					PCodeDsrRomBankedMemoryEntry.class,
 					0x4000, 0x2000, memory, 
 					"P-Code DSR ROM", console,
@@ -128,7 +129,8 @@ public class PCodeDsr implements DsrHandler9900 {
 			memory.addDomain(PCODE, pcodeDomain);
 		}
 		if (gromMemoryEntry == null) {
-			gromMemoryEntry = DiskMemoryEntry.newByteMemoryFromFile(0, 0x10000, "PCode GROM",
+			gromMemoryEntry = DiskMemoryEntry.newByteMemoryFromFile(
+					settings, 0, 0x10000, "PCode GROM",
 					pcodeDomain, "pCodeGroms.bin", 0, false);
 		}
 		

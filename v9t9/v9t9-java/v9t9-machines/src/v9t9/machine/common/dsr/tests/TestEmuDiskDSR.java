@@ -24,11 +24,11 @@ import v9t9.common.files.NativeTextFile;
 import v9t9.engine.dsr.DsrException;
 import v9t9.engine.dsr.PabConstants;
 import v9t9.engine.dsr.PabStruct;
-import v9t9.engine.dsr.emudisk.EmuDiskConsts;
-import v9t9.engine.dsr.emudisk.EmuDiskPabHandler;
-import v9t9.engine.dsr.emudisk.IFileMapper;
-import v9t9.engine.dsr.emudisk.OpenFile;
-import v9t9.engine.dsr.emudisk.PabInfoBlock;
+import v9t9.engine.files.directory.EmuDiskConsts;
+import v9t9.engine.files.directory.EmuDiskPabHandler;
+import v9t9.engine.files.directory.IFileMapper;
+import v9t9.engine.files.directory.OpenFile;
+import v9t9.engine.files.directory.PabInfoBlock;
 
 
 /**

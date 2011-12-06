@@ -13,11 +13,9 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
 import v9t9.base.settings.ISettingSection;
-import v9t9.base.settings.SettingProperty;
 import v9t9.base.timer.FastTimer;
 import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.client.IClient;
@@ -27,10 +25,10 @@ import v9t9.common.cpu.CpuMetrics;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuMetrics;
 import v9t9.common.cpu.IExecutor;
-import v9t9.common.dsr.IDsrManager;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyEvent;
 import v9t9.common.files.DataFiles;
+import v9t9.common.files.IFileHandler;
 import v9t9.common.hardware.ICruChip;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.ISpeechChip;
@@ -44,8 +42,8 @@ import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryModel;
 import v9t9.common.modules.IModuleManager;
-import v9t9.engine.dsr.DsrManager;
 import v9t9.engine.events.RecordingEventNotifier;
+import v9t9.engine.files.FileHandler;
 import v9t9.engine.keyboard.KeyboardState;
 import v9t9.engine.modules.ModuleManager;
 
@@ -64,8 +62,8 @@ abstract public class MachineBase implements IMachine {
     //Timer cpuTimer;
     //protected Timer videoTimer;
 	private IVdpChip vdp;
-	protected DsrManager dsrManager;
-
+	private IFileHandler fileHandler;
+	
     protected long lastInterrupt = System.currentTimeMillis();
     protected long lastInfo = lastInterrupt;
     protected long upTime = 0;
@@ -144,6 +142,8 @@ abstract public class MachineBase implements IMachine {
     	
     	cpuMetrics = new CpuMetrics();
     	executor = machineModel.createExecutor(cpu, cpuMetrics);
+    	
+    	fileHandler = new FileHandler(settings);
     	
     	//executor.addInstructionListener(new DebugConditionListener(cpu));
     	//executor.addInstructionListener(new DebugConditionListenerF99b(cpu));
@@ -436,8 +436,6 @@ abstract public class MachineBase implements IMachine {
 		
 		memory.save();        
         getSound().getSoundHandler().dispose();
-        if (dsrManager != null)
-			dsrManager.dispose();
 	}
     
 	/* (non-Javadoc)
@@ -556,7 +554,7 @@ abstract public class MachineBase implements IMachine {
 		
 		doSaveState(settings);
 		
-		DataFiles.saveState(settings);
+		DataFiles.saveState(this.settings, settings);
 		
 		ISettingSection workspace = settings.addSection("Workspace");
 		this.settings.getWorkspaceSettings().save(workspace);
@@ -581,8 +579,6 @@ abstract public class MachineBase implements IMachine {
 			speech.saveState(settings.addSection("Speech"));
 		if (moduleManager != null)
 			moduleManager.saveState(settings.addSection("Modules"));
-		if (dsrManager != null)
-			dsrManager.saveState(settings.addSection("DSRs"));
 
 		if (cru != null)
 			cru.saveState(settings.addSection("CRU"));
@@ -606,7 +602,7 @@ abstract public class MachineBase implements IMachine {
 			executionLock.notifyAll();
 		}
 		
-		DataFiles.loadState(section);
+		DataFiles.loadState(settings, section);
 		
 		doLoadState(section);
 		
@@ -634,8 +630,6 @@ abstract public class MachineBase implements IMachine {
 			speech.loadState(section.getSection("Speech"));
 		keyboardState.resetKeyboard();
 		keyboardState.resetJoystick();
-		if (dsrManager != null)
-			dsrManager.loadState(section.getSection("DSRs"));
 		if (cru != null)
 			cru.loadState(section.getSection("CRU"));
 	}
@@ -714,15 +708,6 @@ abstract public class MachineBase implements IMachine {
 	}
 
 	/* (non-Javadoc)
-	 * @see v9t9.emulator.common.IMachine#getDsrManager()
-	 */
-	@Override
-	public IDsrManager getDsrManager() {
-		return dsrManager;
-	}
-
-
-	/* (non-Javadoc)
 	 * @see v9t9.emulator.common.IMachine#getInstructionFactory()
 	 */
 	@Override
@@ -774,6 +759,18 @@ abstract public class MachineBase implements IMachine {
 	 */
 	public void setCru(ICruChip cru) {
 		this.cru = cru;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.machine.IMachine#getFileHandler()
+	 */
+	@Override
+	public IFileHandler getFileHandler() {
+		return fileHandler;
+	}
+	
+	public void setFileHandler(IFileHandler fileHandler) {
+		this.fileHandler = fileHandler;
 	}
 }
 

@@ -10,7 +10,6 @@ import java.io.PrintWriter;
 import v9t9.base.properties.IProperty;
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.settings.Logging;
-import v9t9.base.settings.SettingProperty;
 import v9t9.base.sound.ISoundVoice;
 import v9t9.base.utils.BinaryUtils;
 import v9t9.base.utils.HexUtils;
@@ -87,7 +86,9 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 				new PrintWriter(System.out, true));
 		
 		try {
-			speechRom = DiskMemoryEntry.newByteMemoryFromFile(0, 0x8000, "Speech ROM",
+			speechRom = DiskMemoryEntry.newByteMemoryFromFile(
+					settings,
+					0, 0x8000, "Speech ROM",
 					speech, "spchrom.bin", 0, false);
 			speechRom.load();
 		} catch (IOException e) {

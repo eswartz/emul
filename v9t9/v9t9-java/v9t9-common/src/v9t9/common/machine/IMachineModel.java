@@ -11,7 +11,7 @@ import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuMetrics;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
-import v9t9.common.dsr.IDsrSettings;
+import v9t9.common.dsr.IDeviceSettings;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.hardware.IVdpChip;
@@ -44,7 +44,7 @@ public interface IMachineModel {
 
 	ICpu createCPU(IMachine machine);
 
-	List<IDsrSettings> getDsrSettings(IMachine machine);
+	List<IDeviceSettings> getDeviceSettings(IMachine machine);
 
 	List<IDeviceIndicatorProvider> getDeviceIndicatorProviders(IMachine machine);
 

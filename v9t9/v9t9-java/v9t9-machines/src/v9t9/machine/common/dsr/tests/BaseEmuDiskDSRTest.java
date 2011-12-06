@@ -24,12 +24,12 @@ import v9t9.common.files.FDRFactory;
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.engine.dsr.DsrException;
 import v9t9.engine.dsr.PabStruct;
-import v9t9.engine.dsr.emudisk.EmuDiskConsts;
-import v9t9.engine.dsr.emudisk.EmuDiskDsrSettings;
-import v9t9.engine.dsr.emudisk.EmuDiskPabHandler;
-import v9t9.engine.dsr.realdisk.Dumper;
-import v9t9.engine.dsr.realdisk.RealDiskDsrSettings;
-import v9t9.machine.common.dsr.emudisk.DiskDirectoryMapper;
+import v9t9.engine.files.directory.DiskDirectoryMapper;
+import v9t9.engine.files.directory.EmuDiskConsts;
+import v9t9.engine.files.directory.EmuDiskSettings;
+import v9t9.engine.files.directory.EmuDiskPabHandler;
+import v9t9.engine.files.image.Dumper;
+import v9t9.engine.files.image.RealDiskDsrSettings;
 import v9t9.machine.common.dsr.emudisk.EmuDiskDsr;
 
 /**
@@ -38,7 +38,7 @@ import v9t9.machine.common.dsr.emudisk.EmuDiskDsr;
  */
 public class BaseEmuDiskDSRTest {
 
-	protected static DiskDirectoryMapper mymapper = new DiskDirectoryMapper();
+	protected static DiskDirectoryMapper mymapper = DiskDirectoryMapper.INSTANCE;
 	protected static File dsk1Path;
 	
 	protected static ISettingsHandler settings;
@@ -59,7 +59,7 @@ public class BaseEmuDiskDSRTest {
 
 		diskImageDsrEnabled = settings.get(RealDiskDsrSettings.diskImageDsrEnabled);
 
-		emuDiskDsrEnabled = settings.get(EmuDiskDsrSettings.emuDiskDsrEnabled);
+		emuDiskDsrEnabled = settings.get(EmuDiskSettings.emuDiskDsrEnabled);
 		emuDiskDsrEnabled.setBoolean(true);
 	}
 	

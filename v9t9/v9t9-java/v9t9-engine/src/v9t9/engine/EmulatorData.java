@@ -8,10 +8,6 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 
-import v9t9.base.properties.IProperty;
-import v9t9.base.properties.IPropertyListener;
-import v9t9.common.files.DataFiles;
-
 /**
  * @author ejs
  *
@@ -78,6 +74,8 @@ public class EmulatorData {
 		sIsDevBuild = sBaseV9t9URL != null && sBaseV9t9URL.getProtocol().equals("file");
 	}
 
+	// FIXME
+	/*
 	static {
 		DataFiles.settingBootRomsPath.addListener(new IPropertyListener() {
 			
@@ -94,10 +92,11 @@ public class EmulatorData {
 
 	private static void addDefaultPaths() {
 		if (sIsDevBuild) {
-			DataFiles.addSearchPath("../../build/roms");
+			DataFiles.addSearchPath(settings, "../../build/roms");
 		}
 	}
-
+*/
+	
 	public static URL getDataURL(String string) {
 		try {
 			return new URL(sBaseDataURL, string);

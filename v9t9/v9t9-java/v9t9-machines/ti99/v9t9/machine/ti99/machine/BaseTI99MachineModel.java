@@ -12,7 +12,8 @@ import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuMetrics;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.dsr.IDsrHandler;
-import v9t9.common.dsr.IDsrSettings;
+import v9t9.common.dsr.IDeviceSettings;
+import v9t9.common.dsr.IDsrManager;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.machine.IMachineModel;
@@ -67,10 +68,11 @@ public abstract class BaseTI99MachineModel implements IMachineModel {
 	 * @see v9t9.emulator.hardware.MachineModel#getDsrSettings()
 	 */
 	@Override
-	public List<IDsrSettings> getDsrSettings(IMachine machine) {
-		List<IDsrSettings> settings = new ArrayList<IDsrSettings>();
-		if (machine.getDsrManager() != null)  {
-			for (IDsrHandler handler : machine.getDsrManager().getDsrs()) {
+	public List<IDeviceSettings> getDeviceSettings(IMachine machine) {
+		List<IDeviceSettings> settings = new ArrayList<IDeviceSettings>();
+		IDsrManager dsrManager = machine instanceof TI99Machine ? ((TI99Machine) machine).getDsrManager() : null;
+		if (dsrManager != null)  {
+			for (IDsrHandler handler : dsrManager.getDsrs()) {
 				settings.add(handler);
 			}
 		}
@@ -83,8 +85,9 @@ public abstract class BaseTI99MachineModel implements IMachineModel {
 	@Override
 	public List<IDeviceIndicatorProvider> getDeviceIndicatorProviders(IMachine machine) {
 		List<IDeviceIndicatorProvider> list = new ArrayList<IDeviceIndicatorProvider>();
-		if (machine.getDsrManager() != null)  {
-			for (IDsrHandler handler : machine.getDsrManager().getDsrs()) {
+		IDsrManager dsrManager = machine instanceof TI99Machine ? ((TI99Machine) machine).getDsrManager() : null;
+		if (dsrManager != null)  {
+			for (IDsrHandler handler : dsrManager.getDsrs()) {
 				list.addAll(handler.getDeviceIndicatorProviders());
 			}
 		}

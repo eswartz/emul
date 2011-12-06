@@ -25,7 +25,6 @@ import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 
 import v9t9.base.properties.IProperty;
-import v9t9.base.settings.SettingProperty;
 import v9t9.common.client.ISoundHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.events.IEventNotifier.Level;

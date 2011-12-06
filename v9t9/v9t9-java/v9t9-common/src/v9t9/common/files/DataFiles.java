@@ -21,7 +21,9 @@ import v9t9.base.properties.IProperty;
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.settings.SettingProperty;
 import v9t9.base.utils.CompatUtils;
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.memory.IMemoryDomain;
+import v9t9.common.settings.SettingSchema;
 
 
 /**
@@ -29,31 +31,40 @@ import v9t9.common.memory.IMemoryDomain;
  * @author ejs
  */
 public class DataFiles {
-	static public final IProperty settingBootRomsPath = 
-		new SettingProperty("BootRomsPath", String.class, new ArrayList<String>());
-	static public final IProperty settingUserRomsPath = 
-		new SettingProperty("UserRomsPath", String.class, new ArrayList<String>());
-	static public final IProperty settingStoredRamPath = 
-		new SettingProperty("StoredRamPath", ".");
+	static public final SettingSchema settingBootRomsPath = 
+		new SettingSchema(
+				ISettingsHandler.INSTANCE,
+				"BootRomsPath", String.class, new ArrayList<String>());
+	static public final SettingSchema settingUserRomsPath = 
+		new SettingSchema(
+				ISettingsHandler.INSTANCE,
+				"UserRomsPath", String.class, new ArrayList<String>());
+	static public final SettingSchema settingStoredRamPath = 
+		new SettingSchema(
+				ISettingsHandler.INSTANCE,
+				"StoredRamPath", ".");
 	
-	public static void addSearchPath(String filepath) {
-		List<String> list = settingBootRomsPath.getList();
+	public static void addSearchPath(ISettingsHandler settings, String filepath) {
+		List<String> list = settings.get(settingBootRomsPath).getList();
 		if (!list.contains(filepath)) {
 			list.add(filepath);
-			settingBootRomsPath.firePropertyChange();
+			settings.get(settingBootRomsPath).firePropertyChange();
 		}
 	}
 
 	/**
 	 * Look for a file along the search paths with the given name, using case-insensitive match
+	 * @param settings TODO
 	 * @param filepath file name or relative path
 	 * @return File where it exists or a default location
 	 */
-	public static File resolveFile(String filepath) {
+	public static File resolveFile(ISettingsHandler settings, String filepath) {
 		File file = new File(filepath);
 		if (file.isAbsolute())
 			return file;
-		for (IProperty setting : new IProperty[] { settingBootRomsPath, settingUserRomsPath }) {
+		for (IProperty setting : new IProperty[] { 
+				settings.get(settingBootRomsPath), 
+				settings.get(settingUserRomsPath) }) {
 			for (Object pathObj : setting.getList()) {
 				file = resolveFileAtPath(pathObj.toString(), filepath);
 				if (file != null)
@@ -81,12 +92,13 @@ public class DataFiles {
 	}
 	
     /** Get the size of an image file on disk
+     * @param settings TODO
      * @param filepath
      * @return
      * @throws IOException
      */
-    public static int getImageSize(String filepath) throws IOException {
-        File file = resolveFile(filepath);
+    public static int getImageSize(ISettingsHandler settings, String filepath) throws IOException {
+        File file = resolveFile(settings, filepath);
         if (!file.exists())
         	throw new FileNotFoundException(filepath);
         long sz = file.length();
@@ -97,6 +109,7 @@ public class DataFiles {
     }
 
     /**
+     * @param settings TODO
      * @param filepath
      * @param offset offset in bytes into file
      * @param size maximum size to read
@@ -104,10 +117,10 @@ public class DataFiles {
      * @return File located
      * @throws FileNotFoundException
      */
-    public static File readMemoryImage(String filepath, int offset, int size, byte[] result) 
+    public static File readMemoryImage(ISettingsHandler settings, String filepath, int offset, int size, byte[] result) 
     	throws FileNotFoundException, IOException 
 	{
-        File file = resolveFile(filepath);
+        File file = resolveFile(settings, filepath);
         if (file == null)
         	throw new FileNotFoundException(filepath);
         
@@ -134,17 +147,18 @@ public class DataFiles {
     }
 
     /**
+     * @param settings TODO
      * @param filepath
-     * @param realsize
      * @param memory
+     * @param realsize
      * @return File written
      */
-    public static File writeMemoryImage(String filepath, int size, byte[] memory)
+    public static File writeMemoryImage(ISettingsHandler settings, String filepath, int size, byte[] memory)
     throws FileNotFoundException, IOException 
 	{
         File file = new File(filepath);
         if (!file.isAbsolute()) {
-        	File dir = new File(settingStoredRamPath.getString());
+        	File dir = new File(settings.get(settingStoredRamPath).getString());
         	dir.mkdirs();
         	file = new File(dir, filepath);
         }
@@ -158,17 +172,18 @@ public class DataFiles {
     }
 
     /**
+     * @param settings TODO
      * @param filepath
-     * @param realsize
      * @param memory
+     * @param realsize
      * @return File written
      */
-    public static File writeMemoryImage(String filepath, int addr, int size, IMemoryDomain memory)
+    public static File writeMemoryImage(ISettingsHandler settings, String filepath, int addr, int size, IMemoryDomain memory)
     throws FileNotFoundException, IOException 
 	{
         File file = new File(filepath);
         if (!file.isAbsolute()) {
-        	File dir = new File(settingStoredRamPath.getString());
+        	File dir = new File(settings.get(settingStoredRamPath).getString());
         	dir.mkdirs();
         	file = new File(dir, filepath);
         }
@@ -183,17 +198,19 @@ public class DataFiles {
         return file;
     }
 	/**
+	 * @param settings TODO
 	 * @param section
 	 */
-	public static void loadState(ISettingSection section) {
-		settingUserRomsPath.loadState(section);
+	public static void loadState(ISettingsHandler settings, ISettingSection section) {
+		settings.get(settingUserRomsPath).loadState(section);
 	}
 
 	/**
+	 * @param settings TODO
 	 * @param section
 	 */
-	public static void saveState(ISettingSection section) {
-		settingUserRomsPath.saveState(section);
+	public static void saveState(ISettingsHandler settings, ISettingSection section) {
+		settings.get(settingUserRomsPath).saveState(section);
 		
 	}
 

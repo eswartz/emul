@@ -47,6 +47,7 @@ public class Assemble {
             	}
             	assembler.addMemoryEntry(
             			DiskMemoryEntry.newWordMemoryFromFile(
+            					null,
             					romStart, size, "CPU ROM",
             					assembler.getWritableConsole(),
             					file,
@@ -57,6 +58,7 @@ public class Assemble {
             case 'e': {
             	assembler.addMemoryEntry(
             			DiskMemoryEntry.newWordMemoryFromFile(
+            					null,
             					romStart, romSize * 2, "CPU ROM",
             					assembler.getWritableConsole(),
             					getopt.getOptarg(),
@@ -67,6 +69,7 @@ public class Assemble {
             case 'm': {
             	assembler.addMemoryEntry(
             			DiskMemoryEntry.newWordMemoryFromFile(
+            					null,
             					0x6000, 0x2000, "Module ROM", 
             					assembler.getWritableConsole(),
             					getopt.getOptarg(),
@@ -77,6 +80,7 @@ public class Assemble {
             case 'd': {
             	assembler.addMemoryEntry(
             			DiskMemoryEntry.newWordMemoryFromFile(
+            					null,
             					0x4000, 0x2000, "DSR ROM", 
             					assembler.getWritableConsole(),
             					getopt.getOptarg(),
@@ -94,6 +98,7 @@ public class Assemble {
             	}
             	assembler.addMemoryEntry(
             			DiskMemoryEntry.newWordMemoryFromFile(
+            					null,
             					0x0000, size, "GROM", 
             					assembler.getWritableConsole(),
             					file,

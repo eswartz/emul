@@ -4,7 +4,7 @@
 package v9t9.common.machine;
 
 import v9t9.common.cpu.IExecutor;
-import v9t9.common.dsr.IDsrManager;
+import v9t9.common.files.IFileHandler;
 import v9t9.common.hardware.ICruChip;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.ISpeechChip;
@@ -35,8 +35,6 @@ public interface IMachine extends IBaseMachine {
 
 	IVdpChip getVdp();
 
-	IDsrManager getDsrManager();
-
 	/**
 	 * @return
 	 */
@@ -51,4 +49,5 @@ public interface IMachine extends IBaseMachine {
 	ICruChip getCru();
 	void setCru(ICruChip cru);
 
+	IFileHandler getFileHandler();
 }

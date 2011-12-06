@@ -78,6 +78,7 @@ public class WorkspaceSettings extends BaseStoredSettings {
 		current = new WorkspaceSettings(file);
 		current.trackedSettings.addAll(props);
 		*/
+		current = new WorkspaceSettings(file);
 		current.load();
 	}
 

@@ -3,12 +3,11 @@
  */
 package v9t9.base.settings;
 
-
 /**
  * @author ejs
  *
  */
-public interface ISettingSection extends Iterable<ISettingSection.SettingEntry>{
+public interface ISettingSection extends Iterable<ISettingSection.SettingEntry> {
 	enum Type {
 		/** ISettingStorage */
 		Section("section"),
@@ -37,6 +36,8 @@ public interface ISettingSection extends Iterable<ISettingSection.SettingEntry>{
 		public Object value;
 	}
 
+	String getName();
+	
 	/** Get the existing section with this name, or <code>null</code> */ 
 	ISettingSection getSection(String sectionName);
 	/** Add a section with the given name, <b>erasing</b> any existing section */

@@ -11,10 +11,10 @@ import v9t9.common.files.DataFiles;
 import v9t9.common.machine.IBaseMachine;
 import v9t9.common.machine.IMachine;
 import v9t9.engine.EmulatorData;
+import v9t9.engine.files.directory.DiskDirectoryMapper;
 import v9t9.engine.memory.BankedMemoryEntry;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.MemoryEntry;
-import v9t9.machine.common.dsr.emudisk.DiskDirectoryMapper;
 
 
 /**
@@ -44,7 +44,7 @@ public class V9t9EnhancedConsoleMemoryModel extends TI994AStandardConsoleMemoryM
 		DiskMemoryEntry entry;
 		
 		URL dataURL = EmulatorData.getDataURL("../../../build/forth");
-		DataFiles.addSearchPath(dataURL.getPath());
+		DataFiles.addSearchPath(settings, dataURL.getPath());
 		
 		loadEnhancedBankedConsoleRom(eventNotifier, "nforthA.rom", "nforthB.rom");
 		loadConsoleGrom(eventNotifier, "nforth.grm");
@@ -54,7 +54,7 @@ public class V9t9EnhancedConsoleMemoryModel extends TI994AStandardConsoleMemoryM
 			// the high-GROM code is copied into RAM here
 			try {
 	    		CPU.getEntryAt(0x6000).loadSymbols(
-	    				new FileInputStream(DataFiles.resolveFile(entry.getSymbolFilepath())));
+	    				new FileInputStream(DataFiles.resolveFile(settings, entry.getSymbolFilepath())));
 			} catch (IOException e) {
 				
 			}
@@ -72,11 +72,11 @@ public class V9t9EnhancedConsoleMemoryModel extends TI994AStandardConsoleMemoryM
     	BankedMemoryEntry cpuRomEntry;
     	try {
 			cpuRomEntry = DiskMemoryEntry.newBankedWordMemoryFromFile(
+	    			settings,
 	    			0x0000,
 	    			0x4000,
-	    			memory,
-	    			"CPU ROM (enhanced)", CPU,
-	    			filename1, 0x0, filename2, 0x0);
+	    			memory, "CPU ROM (enhanced)",
+	    			CPU, filename1, 0x0, filename2, 0x0);
     	} catch (IOException e) {
     		reportLoadError(eventNotifier, filename1 + " or " + filename2, e);
     		return null;

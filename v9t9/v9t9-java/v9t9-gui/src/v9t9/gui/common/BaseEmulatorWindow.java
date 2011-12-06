@@ -226,7 +226,7 @@ public abstract class BaseEmulatorWindow {
 	public void saveMachineState() {
 		
 		// get immediately
-		ISettingSection settings = new SettingsSection();
+		ISettingSection settings = new SettingsSection(null);
 		machine.saveState(settings);
 		
 		String filename = selectFile(

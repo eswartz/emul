@@ -7,7 +7,6 @@ import v9t9.base.properties.IPersistable;
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
 import v9t9.base.settings.ISettingSection;
-import v9t9.base.settings.SettingProperty;
 import v9t9.common.cpu.AbortedException;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuState;

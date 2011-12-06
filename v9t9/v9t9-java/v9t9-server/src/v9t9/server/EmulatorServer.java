@@ -10,7 +10,6 @@ import java.io.IOException;
 
 
 import v9t9.base.properties.IProperty;
-import v9t9.base.settings.SettingProperty;
 import v9t9.common.client.IClient;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.compiler.ICompiler;
@@ -49,13 +48,18 @@ public class EmulatorServer {
 	private IMemoryModel memoryModel;
 	private IClient client;
 	private boolean inited;
-	private ISettingsHandler settingsHandler;
+	private ISettingsHandler settings;
+	private IProperty bootRomsPath;
+	private IProperty storedRamPath;
 
     public EmulatorServer() {
-    	settingsHandler = new SettingsHandler(WorkspaceSettings.currentWorkspace.getString()); 
+    	settings = new SettingsHandler(WorkspaceSettings.currentWorkspace.getString()); 
 		
-    	settingsHandler.get(IVdpChip.settingDumpVdpAccess).setBoolean(true);
-		settingsHandler.get(GplMmio.settingDumpGplAccess).setBoolean(true);
+    	settings.get(IVdpChip.settingDumpVdpAccess).setBoolean(true);
+		settings.get(GplMmio.settingDumpGplAccess).setBoolean(true);
+		
+		bootRomsPath = settings.get(DataFiles.settingBootRomsPath);
+		storedRamPath = settings.get(DataFiles.settingStoredRamPath);
     }
     
     /**
@@ -66,26 +70,26 @@ public class EmulatorServer {
 	}
 	protected void setupDefaults() {
 		try {
-			settingsHandler.getWorkspaceSettings().setDirty(false);
-			WorkspaceSettings.loadFrom(settingsHandler.getWorkspaceSettings(),
+			settings.getWorkspaceSettings().setDirty(false);
+			WorkspaceSettings.loadFrom(settings.getWorkspaceSettings(),
 					"workspace." + machine.getModel().getIdentifier());
 		} catch (IOException e) {
 		}
 		
-    	settingsHandler.get(ICpu.settingRealTime).setBoolean(true);
+    	settings.get(ICpu.settingRealTime).setBoolean(true);
     	
     	// compile defaults
     	//CompilerBase.settingDebugInstructions.setBoolean(true);
     	//CompilerBase.settingOptimize.setBoolean(true);
-        settingsHandler.get(ICompiler.settingOptimizeRegAccess).setBoolean(true);
-        settingsHandler.get(ICompiler.settingOptimizeStatus).setBoolean(true);
+        settings.get(ICompiler.settingOptimizeRegAccess).setBoolean(true);
+        settings.get(ICompiler.settingOptimizeStatus).setBoolean(true);
         //CompilerBase.settingCompileOptimizeCallsWithData.setBoolean(true);
         //CompilerBase.settingCompileFunctions.setBoolean(true);
     }
     
 	protected void loadState() {
-		IProperty lastLoadedModule = settingsHandler.get(ModuleManager.settingLastLoadedModule);
-		IProperty moduleList = settingsHandler.get(IMachine.settingModuleList);
+		IProperty lastLoadedModule = settings.get(ModuleManager.settingLastLoadedModule);
+		IProperty moduleList = settings.get(IMachine.settingModuleList);
 		
 		int barrier = client.getEventNotifier().getErrorCount();
 		memoryModel.loadMemory(client.getEventNotifier());
@@ -109,8 +113,8 @@ public class EmulatorServer {
 		
 		if (client.getEventNotifier().getErrorCount() > barrier) {
 			machine.notifyEvent(IEventNotifier.Level.ERROR,
-					"Failed to load startup ROMs; please edit your " + DataFiles.settingBootRomsPath.getName() + " in the file "
-					+ settingsHandler.getWorkspaceSettings().getConfigFilePath());
+					"Failed to load startup ROMs; please edit your " + bootRomsPath.getName() + " in the file "
+					+ settings.getWorkspaceSettings().getConfigFilePath());
 			//EmulatorSettings.INSTANCE.save();
 		}
 	}
@@ -121,23 +125,23 @@ public class EmulatorServer {
 		//WorkspaceSettings.CURRENT.register(ModuleManager.settingLastLoadedModule);
 
     	//settingsHandler.getInstanceSettings().findOrCreate(
-    	if (DataFiles.settingBootRomsPath.getList().isEmpty())
-			DataFiles.settingBootRomsPath.getList().add(
-    			settingsHandler.getInstanceSettings().getConfigDirectory() + "roms");
+    	if (bootRomsPath.getList().isEmpty())
+    		bootRomsPath.getList().add(
+    			settings.getInstanceSettings().getConfigDirectory() + "roms");
     	//settingsHandler.getInstanceSettings().findOrCreate(
-    	if (".".equals(DataFiles.settingStoredRamPath.getString()))
-    		DataFiles.settingStoredRamPath.setString(
-				settingsHandler.getInstanceSettings().getConfigDirectory() + "module_ram");
-		DataFiles.addSearchPath(DataFiles.settingStoredRamPath.getString());
+    	if (".".equals(storedRamPath.getString()))
+    		storedRamPath.setString(
+				settings.getInstanceSettings().getConfigDirectory() + "module_ram");
+		DataFiles.addSearchPath(settings, storedRamPath.getString());
     	
         IMachineModel model = MachineModelFactory.INSTANCE.createModel(modelId);
         assert (model != null);
         
-        machine = model.createMachine(settingsHandler);
+        machine = model.createMachine(settings);
         
 
     	try {
-    		WorkspaceSettings.loadFrom(settingsHandler.getWorkspaceSettings(),
+    		WorkspaceSettings.loadFrom(settings.getWorkspaceSettings(),
     				WorkspaceSettings.currentWorkspace.getString());
     				
     	} catch (IOException e) {
@@ -146,7 +150,7 @@ public class EmulatorServer {
     	
 
     	try {
-    		settingsHandler.getInstanceSettings().load();
+    		settings.getInstanceSettings().load();
     	} catch (IOException e) {
     		System.err.println("Setting up new instance");
     	}
@@ -169,8 +173,8 @@ public class EmulatorServer {
 	public void dispose() throws IOException {
 		machine.getMemory().save();
 		
-		settingsHandler.getWorkspaceSettings().save();        	
-    	settingsHandler.getInstanceSettings().save();   
+		settings.getWorkspaceSettings().save();        	
+    	settings.getInstanceSettings().save();   
 	}
 
 	public void run() {
@@ -209,7 +213,7 @@ public class EmulatorServer {
 	 * @return
 	 */
 	public ISettingsHandler getSettingsHandler() {
-		return settingsHandler;
+		return settings;
 	}
 
 }

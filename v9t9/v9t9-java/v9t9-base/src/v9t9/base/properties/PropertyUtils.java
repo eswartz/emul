@@ -10,10 +10,7 @@ import java.lang.reflect.Array;
  *
  */
 public class PropertyUtils {
-	/**
-	 * @param field2
-	 * @param text
-	 */
+	
 	public static void setValueFromString(IProperty property, String txt) {
 		Class<?> klass = property.getType();
 		Object v = convertStringToValue(txt, klass);

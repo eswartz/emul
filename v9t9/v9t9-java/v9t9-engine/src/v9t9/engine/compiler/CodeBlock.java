@@ -5,7 +5,6 @@ import java.lang.reflect.InvocationTargetException;
 
 
 import v9t9.base.properties.IProperty;
-import v9t9.base.settings.SettingProperty;
 import v9t9.base.utils.HexUtils;
 import v9t9.common.asm.IDecompileInfo;
 import v9t9.common.asm.IHighLevelInstruction;

@@ -13,7 +13,6 @@ import java.util.List;
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
 import v9t9.base.settings.Logging;
-import v9t9.base.settings.SettingProperty;
 import v9t9.common.compiler.ICompiledCode;
 import v9t9.common.compiler.ICompiler;
 import v9t9.common.compiler.ICompilerStrategy;

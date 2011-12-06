@@ -32,7 +32,6 @@ import org.eclipse.swt.widgets.TableColumn;
 
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
-import v9t9.base.settings.SettingProperty;
 import v9t9.common.asm.RawInstruction;
 import v9t9.common.cpu.IExecutor;
 import v9t9.common.cpu.IInstructionListener;

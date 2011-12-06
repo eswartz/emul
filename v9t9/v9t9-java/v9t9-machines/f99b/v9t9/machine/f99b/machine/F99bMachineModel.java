@@ -11,7 +11,7 @@ import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.cpu.ICpuMetrics;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
-import v9t9.common.dsr.IDsrSettings;
+import v9t9.common.dsr.IDeviceSettings;
 import v9t9.common.hardware.ISoundChip;
 import v9t9.common.hardware.ISpeechChip;
 import v9t9.common.hardware.IVdpChip;
@@ -116,8 +116,8 @@ public class F99bMachineModel implements IMachineModel {
 	 * @see v9t9.emulator.hardware.MachineModel#getDsrSettings()
 	 */
 	@Override
-	public List<IDsrSettings> getDsrSettings(IMachine machine) {
-		return Collections.singletonList((IDsrSettings) memoryDiskDsr);
+	public List<IDeviceSettings> getDeviceSettings(IMachine machine) {
+		return Collections.singletonList((IDeviceSettings) memoryDiskDsr);
 	}
 
 	@Override

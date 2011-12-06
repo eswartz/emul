@@ -17,20 +17,25 @@ import java.util.TimerTask;
 
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
-import v9t9.base.settings.ISettingProperty;
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.utils.HexUtils;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
-import v9t9.common.dsr.IDiskDsr;
 import v9t9.common.dsr.IDsrHandler;
-import v9t9.common.dsr.IDsrSettings;
+import v9t9.common.dsr.IDeviceSettings;
 import v9t9.common.dsr.IMemoryTransfer;
-import v9t9.common.files.Catalog;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
 import v9t9.engine.dsr.IDevIcons;
+import v9t9.engine.files.image.BaseDiskImage;
+import v9t9.engine.files.image.DiskImageFactory;
+import v9t9.engine.files.image.DiskImageSetting;
+import v9t9.engine.files.image.Dumper;
+import v9t9.engine.files.image.FDC1771;
+import v9t9.engine.files.image.RealDiskConsts;
+import v9t9.engine.files.image.RealDiskDsrSettings;
+import v9t9.engine.files.image.StatusBit;
 
 /**
  * This is a device handler which allows accessing disks as flat sector files
@@ -38,7 +43,7 @@ import v9t9.engine.dsr.IDevIcons;
  * @author ejs
  *
  */
-public abstract class BaseDiskImageDsr implements IDsrSettings, IDiskDsr {
+public abstract class BaseDiskImageDsr implements IDeviceSettings {
 	/** setting name (DSKImage1) to setting */
 	protected Map<String, IProperty> diskSettingsMap = new LinkedHashMap<String, IProperty>();
 	
@@ -125,7 +130,7 @@ public abstract class BaseDiskImageDsr implements IDsrSettings, IDiskDsr {
 
 	protected Dumper dumper;
 
-	private ISettingsHandler settings;
+	protected ISettingsHandler settings;
 
 
 	public BaseDiskImageDsr(IMachine machine) {
@@ -171,7 +176,7 @@ public abstract class BaseDiskImageDsr implements IDsrSettings, IDiskDsr {
 								Object[] args = { name };
 								dumper.info("{0}: motor on", args);
 								
-								fdc.status.reset(StatusBit.BUSY);
+								fdc.getStatus().reset(StatusBit.BUSY);
 								info.setMotorTimeout(System.currentTimeMillis() + 4320);
 							}
 						} else {
@@ -309,7 +314,7 @@ public abstract class BaseDiskImageDsr implements IDsrSettings, IDiskDsr {
 	}
 
 	public void setDiskHeads(boolean b) {
-		fdc.heads = b;
+		fdc.setHeads(b);
 	}
 
 	public void setDiskHold(boolean b) {
@@ -318,7 +323,7 @@ public abstract class BaseDiskImageDsr implements IDsrSettings, IDiskDsr {
 		} catch (IOException e) {
 			dumper.error(e.getMessage());
 		}
-		fdc.hold = b;
+		fdc.setHold(b);
 		
 	}
 	public int getSide() {
@@ -326,15 +331,15 @@ public abstract class BaseDiskImageDsr implements IDsrSettings, IDiskDsr {
 	}
 
 	public boolean isDiskHeads() {
-		return fdc.heads;
+		return fdc.isHeads();
 	}
 	public boolean isDiskHold() {
-		return fdc.hold;
+		return fdc.isHold();
 	}
 	
 	public byte readStatus() {
 		StringBuilder status = new StringBuilder();
-		byte ret = fdc.status.calculate(fdc.command, status);
+		byte ret = fdc.getStatus().calculate(fdc.getCommand(), status);
 		
 		BaseDiskImage image = getSelectedDiskImage();
 		boolean realTime = settingRealTime.getBoolean();
@@ -353,7 +358,7 @@ public abstract class BaseDiskImageDsr implements IDsrSettings, IDiskDsr {
 
 
 	public void writeTrackAddr(byte val) {
-		fdc.trackReg = val;
+		fdc.setTrackReg(val);
 		//DSK.status &= ~fdc_LOSTDATA;
 		dumper.info(("FDC write track addr " + val + " >" + HexUtils.toHex2(val)));
 		//module_logger(&realDiskDSR, _L|L_1, _("FDC write track addr >%04X, >%02X\n"), addr, val);
@@ -366,7 +371,7 @@ public abstract class BaseDiskImageDsr implements IDsrSettings, IDiskDsr {
 	 * @param val
 	 */
 	public void writeSectorAddr(byte val) {
-		fdc.sectorReg = val;
+		fdc.setSectorReg(val);
 		//DSK.status &= ~fdc_LOSTDATA;
 		dumper.info(("FDC write sector addr " + val + " >" + HexUtils.toHex2(val)));
 		//module_logger(&realDiskDSR, _L|L_1, _("FDC write sector addr >%04X, >%02X\n"), addr, val);
@@ -380,7 +385,7 @@ public abstract class BaseDiskImageDsr implements IDsrSettings, IDiskDsr {
 	 * @return
 	 */
 	public byte readTrackAddr() {
-		byte ret = fdc.trackReg;
+		byte ret = fdc.getTrackReg();
 		dumper.info(("FDC read track " + ret + " >" + HexUtils.toHex2(ret)));
 		return ret;
 	}
@@ -392,7 +397,7 @@ public abstract class BaseDiskImageDsr implements IDsrSettings, IDiskDsr {
 	 * @return
 	 */
 	public byte readSectorAddr() {
-		byte ret = fdc.sectorReg;
+		byte ret = fdc.getSectorReg();
 		dumper.info(("FDC read sector " + ret + " >" + HexUtils.toHex2(ret)));
 		return ret;
 	}
@@ -415,30 +420,30 @@ public abstract class BaseDiskImageDsr implements IDsrSettings, IDiskDsr {
 	}
 	
 	public void writeData(byte val) {
-		if (!fdc.hold)
-			dumper.info(("FDC write data ("+fdc.bufpos+") >"+HexUtils.toHex2(val))); 
+		if (!fdc.isHold())
+			dumper.info(("FDC write data ("+fdc.getBufpos()+") >"+HexUtils.toHex2(val))); 
 		//			   (u8) val);
-		if (!fdc.hold) {
-			fdc.lastbyte = val;
+		if (!fdc.isHold()) {
+			fdc.setLastbyte(val);
 		} else {
-			fdc.status.set(StatusBit.DRQ_PIN);;
+			fdc.getStatus().set(StatusBit.DRQ_PIN);;
 			
-			if (fdc.command == RealDiskConsts.FDC_writesector) {
+			if (fdc.getCommand() == RealDiskConsts.FDC_writesector) {
 				// normal write
 				fdc.writeByte(val);
 				
 
-			} else if (fdc.command == RealDiskConsts.FDC_writetrack) {
+			} else if (fdc.getCommand() == RealDiskConsts.FDC_writetrack) {
 				if (true /* is FM */) {
 					// for FM write, >F5 through >FE are special
 					if (val == (byte) 0xf5 || val == (byte) 0xf6) {
-						fdc.status.reset(StatusBit.REC_NOT_FOUND);;
+						fdc.getStatus().reset(StatusBit.REC_NOT_FOUND);;
 					} else if (val == (byte) 0xf7) {
 						// write CRC
-						fdc.writeByte((byte) (fdc.crc >> 8));
-						fdc.writeByte((byte) (fdc.crc & 0xff));
+						fdc.writeByte((byte) (fdc.getCrc() >> 8));
+						fdc.writeByte((byte) (fdc.getCrc() & 0xff));
 					} else if (val >= (byte) 0xf8 && val <= (byte) 0xfb) {
-						fdc.crc = -1;
+						fdc.setCrc((short) -1);
 						fdc.writeByte(val);
 					} else {
 						fdc.writeByte(val);
@@ -447,38 +452,38 @@ public abstract class BaseDiskImageDsr implements IDsrSettings, IDiskDsr {
 					fdc.writeByte(val);
 				}
 			} else {
-				dumper.info(("Unexpected data write >" + HexUtils.toHex2(val) + " for command >" + HexUtils.toHex2(fdc.command)));
+				dumper.info(("Unexpected data write >" + HexUtils.toHex2(val) + " for command >" + HexUtils.toHex2(fdc.getCommand())));
 			}
 		}
 	}
 	
 	public void writeCommand(byte val)  {
 		try {
-			if (fdc.status.is(StatusBit.BUSY) && (val & 0xf0) != 0xf0) {
+			if (fdc.getStatus().is(StatusBit.BUSY) && (val & 0xf0) != 0xf0) {
 				dumper.info(("FDC writing command >" + HexUtils.toHex2(val) + " while busy!"));
 				//return;
 			}
 			
 			fdc.FDCflush();
-			fdc.buflen = fdc.bufpos = 0;
+			fdc.setBuflen(fdc.setBufpos(0));
 			
 			dumper.info(("FDC command >" + HexUtils.toHex2(val)));
 			//module_logger(&realDiskDSR, _L|L_1, _("FDC command >%02X\n"), val);
 			
-			fdc.command = val & 0xF0;
+			fdc.setCommand(val & 0xF0);
 			
 			// standardize commands
-			if (fdc.command == 0x30 || fdc.command == 0x50 || fdc.command == 0x70
-					|| fdc.command == (byte)0x90 || fdc.command == (byte)0xA0)
-				fdc.command &= ~0x10;
+			if (fdc.getCommand() == 0x30 || fdc.getCommand() == 0x50 || fdc.getCommand() == 0x70
+					|| fdc.getCommand() == (byte)0x90 || fdc.getCommand() == (byte)0xA0)
+				fdc.setCommand(fdc.getCommand() & (~0x10));
 			
-			fdc.flags = (byte) (val & 0x1F);
+			fdc.setFlags((byte) (val & 0x1F));
 		
 			// stock execution time
 			fdc.commandBusyExpiration = System.currentTimeMillis() + 1;
-			fdc.status.reset(StatusBit.BUSY);
+			fdc.getStatus().reset(StatusBit.BUSY);
 			
-			switch (fdc.command) {
+			switch (fdc.getCommand()) {
 			case RealDiskConsts.FDC_restore:
 				fdc.FDCrestore();
 				break;
@@ -489,11 +494,11 @@ public abstract class BaseDiskImageDsr implements IDsrSettings, IDiskDsr {
 				fdc.FDCstep();
 				break;
 			case RealDiskConsts.FDC_stepin:
-				fdc.stepout = false;
+				fdc.setStepout(false);
 				fdc.FDCstep();
 				break;
 			case RealDiskConsts.FDC_stepout:
-				fdc.stepout = true;
+				fdc.setStepout(true);
 				fdc.FDCstep();
 				break;
 			case RealDiskConsts.FDC_readsector:
@@ -594,29 +599,4 @@ public abstract class BaseDiskImageDsr implements IDsrSettings, IDiskDsr {
 			return image.getInUseSetting();
 		}
 	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.common.dsr.IDiskDsr#isImageBased()
-	 */
-	@Override
-	public boolean isImageBased() {
-		return true;
-	}
-	
-	/* (non-Javadoc)
-	 * @see v9t9.common.dsr.IDiskDsr#getCatalog(v9t9.base.properties.SettingProperty)
-	 */
-	@Override
-	public Catalog getCatalog(IProperty diskSetting) throws IOException {
-		BaseDiskImage image = DiskImageFactory.createDiskImage(
-				settings, diskSetting.getName(), 
-				new File(diskSetting.getString()));
-		image.openDiskImage();
-		
-		Catalog catalog = image.readCatalog();
-		
-		image.closeDiskImage();
-		return catalog;
-	}
-
 }

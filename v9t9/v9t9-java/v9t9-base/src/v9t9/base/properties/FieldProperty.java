@@ -17,7 +17,7 @@ public class FieldProperty extends AbstractProperty {
 	protected Field field;
 
 	public FieldProperty(IClassPropertyFactory factory, Object obj, String fieldName, String name) {
-		super(factory, null, name); 
+		super(factory, obj.getClass(), name); 
 				//editorProvider != null ? editorProvider : new FieldPropertyEditorProvider());
 		this.obj = obj;
 		this.fieldName = fieldName;

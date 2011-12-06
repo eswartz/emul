@@ -78,7 +78,6 @@ import org.lwjgl.util.glu.GLU;
 
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
-import v9t9.base.settings.SettingProperty;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.files.DataFiles;
 import v9t9.common.hardware.IVdpChip;

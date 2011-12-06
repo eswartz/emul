@@ -45,6 +45,7 @@ public abstract class BaseTI994AMemoryModel implements TIMemoryModel {
 	public GplMmio gplMmio;
 	protected Memory memory;
 	public VdpMmio vdpMmio;
+	protected ISettingsHandler settings;
 
 	/**
 	 * @param machine 
@@ -52,7 +53,8 @@ public abstract class BaseTI994AMemoryModel implements TIMemoryModel {
 	 */
 	public BaseTI994AMemoryModel(IBaseMachine machine) {
 		super();
-		initSettings(Settings.getSettings(machine));
+		settings = Settings.getSettings(machine);
+		initSettings(settings);
 	}
 
 	abstract protected void initSettings(ISettingsHandler settings);
@@ -104,6 +106,7 @@ public abstract class BaseTI994AMemoryModel implements TIMemoryModel {
 		DiskMemoryEntry cpuRomEntry;
 		try {
 			cpuRomEntry = DiskMemoryEntry.newWordMemoryFromFile(
+					settings,
 	    			0x0, 0x2000, "CPU ROM",
 	        		CPU,
 	                filename, 0x0, false);
@@ -120,6 +123,7 @@ public abstract class BaseTI994AMemoryModel implements TIMemoryModel {
 		DiskMemoryEntry entry;
 		try {
 			entry = DiskMemoryEntry.newByteMemoryFromFile(
+					settings,
 	    			0x0, 0x6000, "CPU GROM", 
 	    			GRAPHICS,
 	    			filename, 0x0, false);
@@ -135,6 +139,7 @@ public abstract class BaseTI994AMemoryModel implements TIMemoryModel {
 		DiskMemoryEntry entry;
 		try {
 			entry = DiskMemoryEntry.newByteMemoryFromFile(
+					settings,
 	    			0x6000, 0, name, 
 	    			GRAPHICS,
 	    			filename, 0x0, false);

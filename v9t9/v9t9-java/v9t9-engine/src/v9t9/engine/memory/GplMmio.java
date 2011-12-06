@@ -11,7 +11,6 @@ import v9t9.base.properties.IPersistable;
 import v9t9.base.properties.IProperty;
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.settings.Logging;
-import v9t9.base.settings.SettingProperty;
 import v9t9.base.utils.HexUtils;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;

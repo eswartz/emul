@@ -28,6 +28,10 @@ import v9t9.base.settings.XMLSettingStorage;
  */
 public abstract class BaseStoredSettings implements IStoredSettings {
 
+	/**
+	 * 
+	 */
+	private static final String HISTORY = "History";
 	private static class SyntheticProperty extends AbstractProperty {
 
 		private Object value;
@@ -69,7 +73,7 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 
 	public BaseStoredSettings(String context) {
 		this.context = context;
-		section = new SettingsSection();
+		section = new SettingsSection(null);
 		syntheticSettings = new HashMap<String, SyntheticProperty>();
 		registeredSettings = new HashMap<String, IProperty>();
 		//trackedSettings = new ArrayList<SettingProperty>();
@@ -95,12 +99,7 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 			IProperty property = registeredSettings.get(name);
 			if (property == null) {
 				System.out.println("Synthesizing: " + context + "::" + name + " = " + settings.get(name));
-				Object value;
-				try {
-					value = settings.getInt(name);
-				} catch (NumberFormatException e) {
-					value = settings.getObject(name);
-				}
+				Object value = deduceObject(settings.getObject(name));
 				SyntheticProperty synProperty = findOrCreate(new SyntheticProperty(name, value));
 				syntheticSettings.put(name, synProperty);
 			} else {
@@ -110,8 +109,43 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 		}
 	}
 	
+	/**
+	 * @param object
+	 * @return
+	 */
+	private Object deduceObject(Object val) {
+		if (val == null)
+			return null;
+		
+		String valStr = val.toString();
+		
+		if ("true".equals(valStr)) {
+			return Boolean.TRUE;
+		}
+		if ("false".equals(valStr)) {
+			return Boolean.FALSE;
+		}
+		try {
+			return Integer.parseInt(valStr);
+		} catch (NumberFormatException e) {
+			try {
+				return Long.parseLong(valStr);
+			} catch (NumberFormatException e2) {
+				try {
+					return Double.parseDouble(valStr);
+				}
+				catch (NumberFormatException e3) {
+				
+				}
+				return val;
+			}
+		}
+	}
+
 	public synchronized void load() throws IOException {
 		File settingsConfigurationFile = new File(getConfigFilePath());
+		System.out.println("*** Loading from " + settingsConfigurationFile);
+		
 		InputStream fis = null;
 		try {
 			ISettingStorage storage = new XMLSettingStorage(ROOT);
@@ -119,7 +153,7 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 			section = storage.load(fis);
 		} catch (IOException e) {
 			needsSave = true;
-			section = new SettingsSection();
+			section = new SettingsSection(null);
 			throw e;
 		} finally {
 			if (fis != null) {
@@ -310,7 +344,15 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 	}
 
 	public ISettingSection getHistorySettings() {
-		ISettingSection historySection = section.findOrAddSection("History");
+		ISettingSection historySection = section.findOrAddSection(HISTORY);
+		IProperty history = registeredSettings.get(HISTORY);
+		if (history != null && !(history.getValue() instanceof ISettingSection)) {
+			registeredSettings.remove(HISTORY);
+			syntheticSettings.remove(HISTORY);
+			//history = new SettingProperty(HISTORY, historySection);
+			//registeredSettings.put(HISTORY, history);
+			setDirty(true);
+		}
 		return historySection;
 	}
 	public void setDirty(boolean b) {
@@ -323,5 +365,4 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 	public boolean isDirty() {
 		return needsSave;
 	}
-
 }

@@ -74,17 +74,19 @@ public class PrefUtils  {
 		if (boundsStr == null)
 			return null;
 		String[] parts = boundsStr.split("\\|");
-		try {
-			savedBounds = new Rectangle(
-					Integer.parseInt(parts[0]),
-					Integer.parseInt(parts[1]),
-					Integer.parseInt(parts[2]),
-					Integer.parseInt(parts[3]));
-			
-		} catch (ArrayIndexOutOfBoundsException e) {
-			
-		} catch (NumberFormatException e) {
-			
+		if (parts.length == 4) {
+			try {
+				savedBounds = new Rectangle(
+						Integer.parseInt(parts[0]),
+						Integer.parseInt(parts[1]),
+						Integer.parseInt(parts[2]),
+						Integer.parseInt(parts[3]));
+				
+			} catch (ArrayIndexOutOfBoundsException e) {
+				
+			} catch (NumberFormatException e) {
+				
+			}
 		}
 		return savedBounds;
 	}

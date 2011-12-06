@@ -20,26 +20,23 @@ import v9t9.base.settings.SettingProperty;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
-import v9t9.common.dsr.IDiskDsr;
 import v9t9.common.dsr.IDsrHandler;
 import v9t9.common.dsr.IMemoryTransfer;
-import v9t9.common.files.Catalog;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.engine.dsr.DeviceIndicatorProvider;
 import v9t9.engine.dsr.DsrException;
 import v9t9.engine.dsr.IDevIcons;
-import v9t9.engine.dsr.emudisk.DirectDiskHandler;
-import v9t9.engine.dsr.emudisk.EmuDiskConsts;
-import v9t9.engine.dsr.emudisk.EmuDiskDsrSettings;
-import v9t9.engine.dsr.emudisk.EmuDiskPabHandler;
-import v9t9.engine.dsr.emudisk.FileDirectory;
-import v9t9.engine.dsr.emudisk.IFileMapper;
-import v9t9.engine.dsr.emudisk.PabInfoBlock;
-import v9t9.engine.dsr.realdisk.Dumper;
-import v9t9.engine.dsr.realdisk.RealDiskDsrSettings;
+import v9t9.engine.files.directory.DirectDiskHandler;
+import v9t9.engine.files.directory.DiskDirectoryMapper;
+import v9t9.engine.files.directory.EmuDiskConsts;
+import v9t9.engine.files.directory.EmuDiskSettings;
+import v9t9.engine.files.directory.EmuDiskPabHandler;
+import v9t9.engine.files.directory.IFileMapper;
+import v9t9.engine.files.directory.PabInfoBlock;
+import v9t9.engine.files.image.Dumper;
+import v9t9.engine.files.image.RealDiskDsrSettings;
 import v9t9.engine.memory.DiskMemoryEntry;
-import v9t9.machine.common.dsr.emudisk.DiskDirectoryMapper.EmuDiskSetting;
-import v9t9.machine.ti99.dsr.DsrHandler9900;
+import v9t9.machine.ti99.dsr.IDsrHandler9900;
 
 /**
  * This is a device handler which allows accessing files on the local filesystem.
@@ -48,7 +45,7 @@ import v9t9.machine.ti99.dsr.DsrHandler9900;
  * @author ejs
  *
  */
-public class EmuDiskDsr implements IDsrHandler, DsrHandler9900, IDiskDsr {
+public class EmuDiskDsr implements IDsrHandler, IDsrHandler9900 {
 	private DiskMemoryEntry memoryEntry;
 	private short vdpNameCompareBuffer;
 	private final IFileMapper mapper;
@@ -60,10 +57,12 @@ public class EmuDiskDsr implements IDsrHandler, DsrHandler9900, IDiskDsr {
 	private IProperty settingDsrEnabled;
 	private IProperty settingRealDsrEnabled;
 	private Dumper dumper;
+	private final ISettingsHandler settings;
 
 	public EmuDiskDsr(ISettingsHandler settings, IFileMapper mapper) {
+		this.settings = settings;
 		//emuDiskDsrEnabled.setBoolean(true);
-		settingDsrEnabled = settings.get(EmuDiskDsrSettings.emuDiskDsrEnabled);
+		settingDsrEnabled = settings.get(EmuDiskSettings.emuDiskDsrEnabled);
 		settingRealDsrEnabled = settings.get(RealDiskDsrSettings.diskImageDsrEnabled);
 		
 		this.dumper = new Dumper(settings, RealDiskDsrSettings.diskImageDebug, ICpu.settingDumpFullInstructions);
@@ -90,11 +89,11 @@ public class EmuDiskDsr implements IDsrHandler, DsrHandler9900, IDiskDsr {
 
 		
     	for (int dev = 1; dev <= 5; dev++) {
-    		String devname = EmuDiskDsrSettings.getEmuDiskSetting(dev);
+    		String devname = EmuDiskSettings.getEmuDiskSetting(dev);
     		
     		EmuDiskSetting diskSetting = settings.get(ISettingsHandler.WORKSPACE,
     				new EmuDiskSetting(settings, devname, dskdefault.getAbsolutePath(),
-    						EmuDiskDsrSettings.diskDirectoryIconPath));
+    						EmuDiskSettings.diskDirectoryIconPath));
 			
 			DiskDirectoryMapper.INSTANCE.registerDiskSetting(devname, diskSetting);
 
@@ -134,6 +133,7 @@ public class EmuDiskDsr implements IDsrHandler, DsrHandler9900, IDiskDsr {
 
 		if (memoryEntry == null)
 			this.memoryEntry = DiskMemoryEntry.newWordMemoryFromFile(
+					settings,
 					0x4000, 0x2000, "File Stream DSR ROM", console,
 					"emudisk.bin", 0, false);
 		
@@ -274,7 +274,7 @@ public class EmuDiskDsr implements IDsrHandler, DsrHandler9900, IDiskDsr {
 			
 			if (handler.getDevice() <= EmuDiskConsts.MAXDRIVE) {
 				
-				IProperty activity = diskActivitySettings.get(EmuDiskDsrSettings.getEmuDiskSetting(handler.getDevice()));
+				IProperty activity = diskActivitySettings.get(EmuDiskSettings.getEmuDiskSetting(handler.getDevice()));
 				if (activity != null)
 					activity.setBoolean(true);
 				
@@ -401,27 +401,4 @@ public class EmuDiskDsr implements IDsrHandler, DsrHandler9900, IDiskDsr {
 	public List<IDeviceIndicatorProvider> getDeviceIndicatorProviders() {
 		return deviceIndicatorProviders;
 	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.common.dsr.IDiskDsr#isImageBased()
-	 */
-	@Override
-	public boolean isImageBased() {
-		return false;
-	}
-	
-	/* (non-Javadoc)
-	 * @see v9t9.engine.dsr.IDiskDsr#getCatalog(v9t9.base.properties.SettingProperty)
-	 */
-	@Override
-	public Catalog getCatalog(IProperty diskSetting) {
-		FileDirectory fileDir = new FileDirectory(
-				new File(diskSetting.getString()), 
-						mapper);
-		Catalog catalog = fileDir.readCatalog();
-
-		return catalog;
-	}
-	
-	
 }

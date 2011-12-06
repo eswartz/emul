@@ -7,6 +7,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
+import v9t9.common.client.ISettingsHandler;
 import v9t9.common.files.DataFiles;
 
 /**
@@ -53,12 +54,13 @@ public class MemoryEntryInfo {
 	}
 
 	/**
+	 * @param settings TODO
 	 * @param filename
 	 * @return
 	 */
-	public String getFilePath(String baseStoredDir, String filename, boolean isStored) {
+	public String getFilePath(ISettingsHandler settings, String baseStoredDir, String filename, boolean isStored) {
 		if (isStored) {
-			File existing = DataFiles.resolveFile(filename);
+			File existing = DataFiles.resolveFile(settings, filename);
 			if (existing != null && existing.exists())
 				return existing.getAbsolutePath();
 			

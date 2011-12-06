@@ -32,7 +32,7 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 	@Override
 	protected void initSettings(ISettingsHandler settings) {
 		URL dataURL = EmulatorData.getDataURL("../../../build/forth99");
-		DataFiles.addSearchPath(dataURL.getPath());
+		DataFiles.addSearchPath(settings, dataURL.getPath());
 	}
 
 
@@ -56,6 +56,7 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 		String filename = "f99brom.bin";
     	try {
 			cpuRomEntry = DiskMemoryEntry.newByteMemoryFromFile(
+					settings,
 	    			0x400, 0, "CPU ROM",
 	        		CPU,
 	                filename, 
@@ -81,8 +82,8 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
     	String GROM_DICT = "f99bgromdict.bin";
     	File dictFile = null;
 
-    	File gromFile = DataFiles.resolveFile(FORTH_GROM);
-    	dictFile = DataFiles.resolveFile(GROM_DICT);
+    	File gromFile = DataFiles.resolveFile(settings, FORTH_GROM);
+    	dictFile = DataFiles.resolveFile(settings, GROM_DICT);
     	if (gromFile.exists() && dictFile.exists() && dictFile.lastModified() > gromFile.lastModified()) {
 
     		byte[] grom = new byte[(int) gromFile.length()];
@@ -90,7 +91,7 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 			int gromDictSize = (int) dictFile.length();
 
 			try {
-				DataFiles.readMemoryImage(FORTH_GROM, 0, grom.length, grom);
+				DataFiles.readMemoryImage(settings, FORTH_GROM, 0, grom.length, grom);
 				int gromDictBase = (grom[2] << 8) | (grom[3] & 0xff);
 				
 				if (gromDictSize + gromDictBase > 16 * 1024) {
@@ -98,7 +99,7 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 				}
 				
 				byte[] gromDict = new byte[gromDictSize];
-				DataFiles.readMemoryImage(GROM_DICT, 0, gromDictSize, gromDict);
+				DataFiles.readMemoryImage(settings, GROM_DICT, 0, gromDictSize, gromDict);
 				
 				for (int i = 0; i < gromDictSize; i++) {
 					grom[i + gromDictBase] = gromDict[i];
@@ -108,7 +109,7 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 				grom[4] = (byte) (end >> 8);
 				grom[5] = (byte) (end & 0xff);
 				
-				DataFiles.writeMemoryImage(gromFile.getAbsolutePath(), grom.length, grom);
+				DataFiles.writeMemoryImage(settings, gromFile.getAbsolutePath(), grom.length, grom);
 				
 				eventNotifier.notifyEvent(null, Level.INFO, "Merged dictionary into GROM, changed " + gromFile);
 			} catch (IOException e) {
@@ -131,10 +132,11 @@ public class F99bMemoryModel extends BaseTI994AMemoryModel {
 		// then 32k of GRAM storage
 		try {
 			DiskMemoryEntry entry = DiskMemoryEntry.newByteMemoryFromFile(
+					settings,
 	    			0x8000, 0x8000, "GRAM", 
 	    			GRAPHICS,
 	    			// use full path so changes are saved 
-	    			DataFiles.resolveFile("f99bgram.bin").getAbsolutePath(), 
+	    			DataFiles.resolveFile(settings, "f99bgram.bin").getAbsolutePath(), 
 	    			0x0, true);
 			memory.addAndMap(entry);
 		} catch (IOException e) {

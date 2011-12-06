@@ -12,39 +12,6 @@ import java.lang.reflect.Field;
  */
 public class FieldUtils {
 	/**
-	 * @param field2
-	 * @param text
-	 */
-	public static void setValueFromString(Field field, Object obj, String txt) {
-		Class<?> klass = field.getType();
-		Object v = convertStringToValue(txt, klass);
-		setValue(field, obj, v);
-		
-	}
-
-	public static Object convertStringToValue(String txt, Class<?> klass) {
-		Object v;
-		try {
-			if (klass.equals(Double.class) || klass.equals(Double.TYPE))
-				v = Double.parseDouble(txt);
-			else if (klass.equals(Float.class) || klass.equals(Float.TYPE))
-				v = Float.parseFloat(txt);
-			else if (klass.equals(Integer.class) || klass.equals(Integer.TYPE))
-				v = Integer.parseInt(txt);
-			else if (klass.equals(String.class))
-				v = txt;
-			else if (klass.equals(Boolean.class) || klass.equals(Boolean.TYPE))
-				v = Boolean.parseBoolean(txt);
-			else {
-				throw new IllegalStateException("not handled: " + klass);
-			}
-			return v;
-		} catch (NumberFormatException e2) {
-			return null;
-		}
-	}
-	
-	/**
 	 * @param text
 	 */
 	public static void setValue(Field field, Object obj, Object value) {
@@ -69,6 +36,13 @@ public class FieldUtils {
 			e.printStackTrace();
 			return null;
 		}
+	}
+
+	public static void setValueFromString(Field field, Object obj, String txt) {
+		Class<?> klass = field.getType();
+		Object v = PropertyUtils.convertStringToValue(txt, klass);
+		setValue(field, obj, v);
+		
 	}
 
 	public static Object getArrayValue(Field field, int index, Object obj) {
@@ -102,6 +76,7 @@ public class FieldUtils {
 		}
 	}
 
+	
 	/**
 	 * @param field
 	 * @param index
@@ -114,7 +89,7 @@ public class FieldUtils {
 			throw new IllegalArgumentException();
 		}
 		Class<?> arrayType = field.getType();
-		Object value = convertStringToValue(txt, arrayType.getComponentType());
+		Object value = PropertyUtils.convertStringToValue(txt, arrayType.getComponentType());
 		setArrayValue(field, index, obj, value);
 	}
 	

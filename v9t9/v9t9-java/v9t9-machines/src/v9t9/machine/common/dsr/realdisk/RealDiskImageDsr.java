@@ -20,7 +20,7 @@ import v9t9.engine.hardware.ICruReader;
 import v9t9.engine.hardware.ICruWriter;
 import v9t9.engine.memory.DiskMemoryEntry;
 import v9t9.engine.memory.MemoryEntry;
-import v9t9.machine.ti99.dsr.DsrHandler9900;
+import v9t9.machine.ti99.dsr.IDsrHandler9900;
 import v9t9.machine.ti99.machine.TI99Machine;
 import v9t9.machine.ti99.memory.mmio.ConsoleMmioArea;
 
@@ -30,7 +30,7 @@ import v9t9.machine.ti99.memory.mmio.ConsoleMmioArea;
  * @author ejs
  *
  */
-public class RealDiskImageDsr extends BaseDiskImageDsr implements DsrHandler9900 {
+public class RealDiskImageDsr extends BaseDiskImageDsr implements IDsrHandler9900 {
 	private DiskMemoryEntry romMemoryEntry;
 	
 
@@ -302,6 +302,7 @@ public class RealDiskImageDsr extends BaseDiskImageDsr implements DsrHandler9900
 		
 		if (romMemoryEntry == null)
 			this.romMemoryEntry = DiskMemoryEntry.newWordMemoryFromFile(
+					settings,
 					0x4000, 0x2000, "TI Disk DSR ROM", console,
 					"disk.bin", 0, false);
 		if (ioMemoryEntry == null) {

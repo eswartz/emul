@@ -14,7 +14,6 @@ import org.eclipse.swt.widgets.Display;
 
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
-import v9t9.base.settings.SettingProperty;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.SettingSchema;
 import v9t9.common.settings.Settings;

@@ -41,13 +41,11 @@ import org.eclipse.swt.widgets.Shell;
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
 import v9t9.base.settings.ISettingProperty;
-import v9t9.base.settings.SettingProperty;
-import v9t9.common.dsr.IDiskDsr;
-import v9t9.common.dsr.IDsrHandler;
-import v9t9.common.dsr.IDsrSettings;
+import v9t9.common.dsr.IDeviceSettings;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.files.Catalog;
 import v9t9.common.files.CatalogEntry;
+import v9t9.common.files.IFileHandler;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.ISettingDecorator;
 import v9t9.common.settings.IconSettingProperty;
@@ -212,30 +210,27 @@ public class DiskSelectorDialog extends Composite {
 				}
 			});			
 			
-			catalog = new Button(parent, SWT.PUSH);
-			GridDataFactory.fillDefaults().grab(false, false).applyTo(catalog);
-			catalog.setText("Catalog...");
-			catalog.addSelectionListener(new SelectionAdapter() {
-				@Override
-				public void widgetSelected(SelectionEvent e) {
-					for (IDsrHandler dsr : machine.getDsrManager().getDsrs()) {
-						if (dsr instanceof IDiskDsr && ((IDiskDsr) dsr).isImageBased() == isDiskImage()) {
-							Catalog catalog;
-							try {
-								catalog = ((IDiskDsr) dsr).getCatalog(setting);
-								showCatalogDialog(setting, catalog);
-							} catch (IOException e1) {
-								machine.getClient().getEventNotifier().notifyEvent(
-										setting, IEventNotifier.Level.ERROR,
-										MessageFormat.format("Could not read catalog for disk image ''{0}''\n\n{1}",
-												setting.getString(), e1.getMessage()));
-							}
-							
-							break;
+			final IFileHandler fileHandler = machine.getFileHandler();
+			if (fileHandler != null) {
+				catalog = new Button(parent, SWT.PUSH);
+				GridDataFactory.fillDefaults().grab(false, false).applyTo(catalog);
+				catalog.setText("Catalog...");
+				catalog.addSelectionListener(new SelectionAdapter() {
+					@Override
+					public void widgetSelected(SelectionEvent e) {
+						Catalog catalog;
+						try {
+							catalog = fileHandler.createCatalog(setting, isDiskImage());
+							showCatalogDialog(setting, catalog);
+						} catch (IOException e1) {
+							machine.getClient().getEventNotifier().notifyEvent(
+									setting, IEventNotifier.Level.ERROR,
+									MessageFormat.format("Could not read catalog for disk image ''{0}''\n\n{1}",
+											setting.getString(), e1.getMessage()));
 						}
 					}
-				}
-			});
+				});
+			}
 		}
 		
 
@@ -331,7 +326,7 @@ public class DiskSelectorDialog extends Composite {
 		super(shell, SWT.NONE);
 		
 		this.machine = machine;
-		List<IDsrSettings> list = machine.getModel().getDsrSettings(machine);
+		List<IDeviceSettings> list = machine.getModel().getDeviceSettings(machine);
 		
 		shell.setText("Disk Selector");
 
@@ -341,7 +336,7 @@ public class DiskSelectorDialog extends Composite {
 		Map<String, List<IProperty>> allSettings = new LinkedHashMap<String, List<IProperty>>();
 		
 
-		for (IDsrSettings setting : list) {
+		for (IDeviceSettings setting : list) {
 			Map<String, Collection<IProperty>> settings = setting.getEditableSettingGroups();
 			for (Map.Entry<String, Collection<IProperty>> entry : settings.entrySet()) {
 				List<IProperty> groupSettings = allSettings.get(entry.getKey());

@@ -7,7 +7,6 @@ import javax.sound.sampled.AudioFormat;
 
 import v9t9.base.properties.IProperty;
 import v9t9.base.properties.IPropertyListener;
-import v9t9.base.settings.SettingProperty;
 import v9t9.base.sound.AlsaSoundListener;
 import v9t9.base.sound.ISoundListener;
 import v9t9.base.sound.ISoundOutput;

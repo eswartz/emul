@@ -5,7 +5,6 @@ import java.io.PrintWriter;
 
 import v9t9.base.properties.IProperty;
 import v9t9.base.settings.Logging;
-import v9t9.base.settings.SettingProperty;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.memory.IMemory;

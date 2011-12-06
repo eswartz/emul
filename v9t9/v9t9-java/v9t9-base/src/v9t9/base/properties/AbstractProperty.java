@@ -5,7 +5,6 @@ package v9t9.base.properties;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 

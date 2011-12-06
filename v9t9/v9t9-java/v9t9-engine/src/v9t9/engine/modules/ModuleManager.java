@@ -14,7 +14,6 @@ import java.util.Map;
 import v9t9.base.properties.IPersistable;
 import v9t9.base.properties.IProperty;
 import v9t9.base.settings.ISettingSection;
-import v9t9.base.settings.SettingProperty;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.AbortedException;
 import v9t9.common.events.IEventNotifier;
@@ -236,23 +235,24 @@ public class ModuleManager implements IPersistable, IModuleManager {
 	@SuppressWarnings("unchecked")
 	public IMemoryEntry createMemoryEntry(MemoryEntryInfo info, IMemory memory) throws NotifyException {
 		try {
-			String base = Settings.getSettings(machine).getInstanceSettings().getConfigDirectory();
+			ISettingsHandler settings = Settings.getSettings(machine);
+			String base = settings.getInstanceSettings().getConfigDirectory();
 
 			IMemoryEntry entry = null;
 			Map<String, Object> properties = info.getProperties();
 			if (properties.containsKey(MemoryEntryInfo.FILENAME2)) {
 				try {
 					entry = DiskMemoryEntry.newBankedWordMemoryFromFile(
-							Settings.getSettings(machine),
+							settings,
 							(Class<BankedMemoryEntry>) properties.get(MemoryEntryInfo.CLASS),
 							info.getInt(MemoryEntryInfo.ADDRESS),
 							info.getInt(MemoryEntryInfo.SIZE),
 							memory,
 							info.getString(MemoryEntryInfo.NAME),
 							memory.getDomain(info.getString(MemoryEntryInfo.DOMAIN)),
-							info.getFilePath(base, info.getString(MemoryEntryInfo.FILENAME), info.getBool(MemoryEntryInfo.STORED)),
+							info.getFilePath(settings, base, info.getString(MemoryEntryInfo.FILENAME), info.getBool(MemoryEntryInfo.STORED)),
 							info.getInt(MemoryEntryInfo.OFFSET),
-							info.getFilePath(base, info.getString(MemoryEntryInfo.FILENAME2), info.getBool(MemoryEntryInfo.STORED)),
+							info.getFilePath(settings, base, info.getString(MemoryEntryInfo.FILENAME2), info.getBool(MemoryEntryInfo.STORED)),
 							info.getInt(MemoryEntryInfo.OFFSET2));
 				} catch (IOException e) {
 					String filename = info.getString(MemoryEntryInfo.FILENAME); 
@@ -264,20 +264,22 @@ public class ModuleManager implements IPersistable, IModuleManager {
 				}
 			} else if (IMemoryDomain.NAME_CPU.equals(properties.get(MemoryEntryInfo.DOMAIN))) {
 				entry = DiskMemoryEntry.newWordMemoryFromFile(
+						settings,
 						info.getInt(MemoryEntryInfo.ADDRESS),
 						info.getInt(MemoryEntryInfo.SIZE),
 						info.getString(MemoryEntryInfo.NAME),
 						memory.getDomain(info.getString(MemoryEntryInfo.DOMAIN)),
-						info.getFilePath(base, info.getString(MemoryEntryInfo.FILENAME), info.getBool(MemoryEntryInfo.STORED)),
+						info.getFilePath(settings, base, info.getString(MemoryEntryInfo.FILENAME), info.getBool(MemoryEntryInfo.STORED)),
 						info.getInt(MemoryEntryInfo.OFFSET),
 						info.getBool(MemoryEntryInfo.STORED));
 			} else {
 				entry = DiskMemoryEntry.newByteMemoryFromFile(
+						settings,
 						info.getInt(MemoryEntryInfo.ADDRESS),
 						info.getInt(MemoryEntryInfo.SIZE),
 						info.getString(MemoryEntryInfo.NAME),
 						memory.getDomain(info.getString(MemoryEntryInfo.DOMAIN)),
-						info.getFilePath(base, info.getString(MemoryEntryInfo.FILENAME), info.getBool(MemoryEntryInfo.STORED)),
+						info.getFilePath(settings, base, info.getString(MemoryEntryInfo.FILENAME), info.getBool(MemoryEntryInfo.STORED)),
 						info.getInt(MemoryEntryInfo.OFFSET),
 						info.getBool(MemoryEntryInfo.STORED));
 			}

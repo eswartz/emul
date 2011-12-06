@@ -33,7 +33,7 @@ public class ModuleLoader {
 		
 		file = DataFiles.resolveFileAtPath(settings.getInstanceSettings().getConfigDirectory(), name);
 		if (file == null) {
-			file = DataFiles.resolveFile(name);
+			file = DataFiles.resolveFile(settings, name);
 			if (file == null)
 				throw new NotifyException(null, "Cannot locate module list " + name);
 		}

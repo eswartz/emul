@@ -50,7 +50,7 @@ public class XMLSettingStorage implements ISettingStorage {
 	public ISettingSection load(InputStream inputStream) throws IOException {
 		StreamXMLStorage storage = new StreamXMLStorage();
 		storage.setInputStream(inputStream);
-		ISettingSection root = new SettingsSection();
+		ISettingSection root = new SettingsSection(null);
 		try {
 			storage.load(rootElement);
 
@@ -116,7 +116,7 @@ public class XMLSettingStorage implements ISettingStorage {
 					}
 					value = strings;
 				} else if (type.equals(Type.Section.getXmlName())) {
-					ISettingSection subSection = new SettingsSection();
+					ISettingSection subSection = new SettingsSection(name);
 					loadSection(subSection, element);
 					value = subSection;
 				} else {
@@ -163,7 +163,7 @@ public class XMLSettingStorage implements ISettingStorage {
 			if (name.length() == 0)
 				continue;
 			
-			ISettingSection subSection = new SettingsSection();
+			ISettingSection subSection = new SettingsSection(name);
 			loadDialogSettingsSection(subSection, subSectionElement);
 			
 			section.put(name, subSection);

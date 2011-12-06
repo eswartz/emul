@@ -3,6 +3,7 @@ package v9t9.machine.ti99.machine;
 
 import v9t9.base.settings.ISettingSection;
 import v9t9.common.client.ISettingsHandler;
+import v9t9.common.dsr.IDsrManager;
 import v9t9.common.machine.IMachineModel;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.engine.hardware.CruManager;
@@ -11,13 +12,14 @@ import v9t9.engine.memory.GplMmio;
 import v9t9.engine.memory.SpeechMmio;
 import v9t9.engine.memory.TIMemoryModel;
 import v9t9.engine.memory.VdpMmio;
-import v9t9.machine.ti99.dsr.DsrManager9900;
+import v9t9.machine.ti99.dsr.DsrManager;
 import v9t9.machine.ti99.memory.BaseTI994AMemoryModel;
 
 public class TI99Machine extends MachineBase {
 
 	private CruManager cruManager;
-
+	protected DsrManager dsrManager;
+	
 	public TI99Machine(ISettingsHandler settings, IMachineModel machineModel) {
 		super(settings, machineModel);
 	}
@@ -27,9 +29,18 @@ public class TI99Machine extends MachineBase {
 		super.init(machineModel);
 
 		cruManager = new CruManager();
-		dsrManager = new DsrManager9900(this);
+		dsrManager = new DsrManager(this);
 	}
 	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.machine.MachineBase#setNotRunning()
+	 */
+	@Override
+	public void setNotRunning() {
+		super.setNotRunning();
+		 if (dsrManager != null)
+				dsrManager.dispose();
+	}
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.common.Machine#getMemoryModel()
 	 */
@@ -44,6 +55,8 @@ public class TI99Machine extends MachineBase {
 	protected void doLoadState(ISettingSection section) {
 		super.doLoadState(section);
 		getMemoryModel().getGplMmio().loadState(section.getSection("GPL"));
+		if (dsrManager != null)
+			dsrManager.loadState(section.getSection("DSRs"));
 	}
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.common.Machine#doSaveState(v9t9.base.core.settings.ISettingSection)
@@ -52,6 +65,9 @@ public class TI99Machine extends MachineBase {
 	protected void doSaveState(ISettingSection settings) {
 		super.doSaveState(settings);
 		getMemoryModel().getGplMmio().saveState(settings.addSection("GPL"));
+		if (dsrManager != null)
+			dsrManager.saveState(settings.addSection("DSRs"));
+
 	}
 
 	/* (non-Javadoc)
@@ -105,5 +121,9 @@ public class TI99Machine extends MachineBase {
 
 	public CruManager getCruManager() {
 		return cruManager;
+	}
+	
+	public IDsrManager getDsrManager() {
+		return dsrManager;
 	}
 }

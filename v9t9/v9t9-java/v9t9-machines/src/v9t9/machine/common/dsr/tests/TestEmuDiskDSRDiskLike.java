@@ -14,7 +14,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import v9t9.common.files.V9t9FDR;
-import v9t9.engine.dsr.emudisk.EmuDiskConsts;
+import v9t9.engine.files.directory.EmuDiskConsts;
 
 
 /**

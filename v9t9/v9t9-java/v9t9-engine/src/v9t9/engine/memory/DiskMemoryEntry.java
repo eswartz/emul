@@ -41,6 +41,8 @@ public class DiskMemoryEntry extends MemoryEntry {
     
     /**	is the data dirty? */
     private boolean bDirty;
+
+	private ISettingsHandler settings;
     
     /**
      * Read memory and create a memory entry with CPU byte ordering.
@@ -56,6 +58,7 @@ public class DiskMemoryEntry extends MemoryEntry {
      * @throws IOException if file cannot be read, and is not stored
      */
     static public DiskMemoryEntry newWordMemoryFromFile(
+    		ISettingsHandler settings,
             int addr, int size, String name, 
             IMemoryDomain domain, String filepath, int fileoffs,
             boolean isStored) throws IOException {
@@ -65,7 +68,7 @@ public class DiskMemoryEntry extends MemoryEntry {
     	// placeholder
     	area = new WordMemoryArea();
     	
-        DiskMemoryEntry entry = newFromFile(area, addr, size, name, domain, filepath, fileoffs, isStored);
+        DiskMemoryEntry entry = newFromFile(settings, area, addr, size, name, domain, filepath, fileoffs, isStored);
         
         entry.area = createWordMemoryArea(domain, addr, entry.getSize(), isStored);
         return entry;
@@ -116,6 +119,7 @@ public class DiskMemoryEntry extends MemoryEntry {
      * @throws IOException if the memory cannot be read and is not stored
      */
     static public DiskMemoryEntry newByteMemoryFromFile(
+    		ISettingsHandler settings,
             int addr, int size, String name, 
             IMemoryDomain domain, String filepath, int fileoffs,
             boolean isStored) throws IOException {
@@ -125,7 +129,7 @@ public class DiskMemoryEntry extends MemoryEntry {
     	
     	ByteMemoryArea area = new ByteMemoryArea();
     	
-        DiskMemoryEntry entry = newFromFile(area, addr, size, name, domain, filepath, fileoffs, isStored);
+        DiskMemoryEntry entry = newFromFile(settings, area, addr, size, name, domain, filepath, fileoffs, isStored);
         
         entry.area = createByteMemoryArea(domain, addr, entry.getSize(), isStored);
        
@@ -158,6 +162,7 @@ public class DiskMemoryEntry extends MemoryEntry {
 	}
 
     /** Construct a DiskMemoryEntry based on the file length.
+     * @param settings TODO
      * @param size if not isRam, the maximum acceptable size,
      * else the fixed size for a RAM file.  May be 0 to use
      * file size directly.
@@ -166,9 +171,9 @@ public class DiskMemoryEntry extends MemoryEntry {
      * @throws IOException if the memory cannot be read and is not stored
      */
     static private DiskMemoryEntry newFromFile(
-            MemoryArea area, int addr, int size, String name, 
-            IMemoryDomain domain, String filepath, int fileoffs,
-            boolean isStored) throws IOException {
+            ISettingsHandler settings, MemoryArea area, int addr, int size, 
+            String name, IMemoryDomain domain, String filepath,
+            int fileoffs, boolean isStored) throws IOException {
 
         if (size < -IMemoryDomain.PHYSMEMORYSIZE
                 || isStored && size <= 0
@@ -179,7 +184,7 @@ public class DiskMemoryEntry extends MemoryEntry {
         
         int filesize = 0;	
         try {
-	        filesize = DataFiles.getImageSize(filepath);
+	        filesize = DataFiles.getImageSize(settings, filepath);
 	        
 			/* for large files selected, e.g., by accident */
 			if (size > 0 && filesize > size) {
@@ -206,7 +211,7 @@ public class DiskMemoryEntry extends MemoryEntry {
         if (size == 0)
         	size = filesize - fileoffs;
         
-        DiskMemoryEntry entry = new DiskMemoryEntry(area, addr, size, name, domain, filepath, fileoffs, filesize, isStored);
+        DiskMemoryEntry entry = new DiskMemoryEntry(settings, area, addr, size, name, domain, filepath, fileoffs, filesize, isStored);
         
         return entry;
     }
@@ -215,11 +220,12 @@ public class DiskMemoryEntry extends MemoryEntry {
     	// only to be used when reconstructing
     	super();
     }
-    DiskMemoryEntry(MemoryArea area, int addr, int size, String name,
-            IMemoryDomain domain, 
-            String filepath, int fileoffs, int filesize,
-            boolean isStorable) {
+    DiskMemoryEntry(ISettingsHandler settings, MemoryArea area, int addr, int size,
+            String name, 
+            IMemoryDomain domain, String filepath, int fileoffs,
+            int filesize, boolean isStorable) {
         super(name, domain, addr, size, area);
+		this.settings = settings;
         
         /* this should be set up already */
         if (area == null) {
@@ -252,13 +258,13 @@ public class DiskMemoryEntry extends MemoryEntry {
         if (!bLoaded) {
             try {
                 byte[] data = new byte[filesize];
-                DataFiles.readMemoryImage(filepath, fileoffs, filesize, data);
+                DataFiles.readMemoryImage(settings, filepath, fileoffs, filesize, data);
                 area.copyFromBytes(data);
                
                 
                 // see if it has symbols
                 String symbolfilepath = getSymbolFilepath();
-                File symfile = DataFiles.resolveFile(symbolfilepath);
+                File symfile = DataFiles.resolveFile(settings, symbolfilepath);
             	if (symfile.exists()) {
             		loadSymbols(new FileInputStream(symfile));
             	}
@@ -282,14 +288,14 @@ public class DiskMemoryEntry extends MemoryEntry {
         if (bStorable && bDirty) {
             byte[] data = new byte[filesize];
             area.copyToBytes(data);
-            File old = DataFiles.resolveFile(filepath);
-            File backup = DataFiles.resolveFile(filepath + "~");
+            File old = DataFiles.resolveFile(settings, filepath);
+            File backup = DataFiles.resolveFile(settings, filepath + "~");
             boolean isNew = true;
             if (old.exists()) {
             	if (backup.exists()) {
             		byte[] origData = new byte[(int) backup.length()];
             		try {
-            			DataFiles.readMemoryImage(backup.getAbsolutePath(), 0, filesize, origData);
+            			DataFiles.readMemoryImage(settings, backup.getAbsolutePath(), 0, filesize, origData);
             			isNew = !Arrays.equals(data, origData);
             		} catch (IOException e) {
             			// ignore
@@ -300,7 +306,7 @@ public class DiskMemoryEntry extends MemoryEntry {
             	backup.delete();
             	old.renameTo(backup);
             }
-            DataFiles.writeMemoryImage(filepath, filesize, data);
+            DataFiles.writeMemoryImage(settings, filepath, filesize, data);
             bDirty = false;
         }
         super.save();
@@ -335,9 +341,9 @@ public class DiskMemoryEntry extends MemoryEntry {
 	        String name, IMemoryDomain domain,
 	        String filepath, int fileoffs,
 	        String filepath2, int fileoffs2) throws IOException {
-		DiskMemoryEntry bank0 = newWordMemoryFromFile(
+		DiskMemoryEntry bank0 = newWordMemoryFromFile(settings,
 				addr, size, name + " (bank 0)", domain, filepath, fileoffs, false);
-		DiskMemoryEntry bank1 = newWordMemoryFromFile(
+		DiskMemoryEntry bank1 = newWordMemoryFromFile(settings,
 				addr, size, name + " (bank 1)", domain, filepath2, fileoffs2, false);
 		
 		IMemoryEntry[] entries = new IMemoryEntry[] { bank0, bank1 };
@@ -358,6 +364,7 @@ public class DiskMemoryEntry extends MemoryEntry {
 
     /**
      * Create a memory entry for banked (ROM) memory.
+     * @param settings TODO
      * @param addr
      * @param size
      * @param memory
@@ -371,15 +378,15 @@ public class DiskMemoryEntry extends MemoryEntry {
      * @throws IOException
      */
 	static public BankedMemoryEntry newBankedWordMemoryFromFile(
-			int addr,
+			ISettingsHandler settings,
+	        int addr, 
 	        int size, 
-	        IMemory memory, 
-	        String name, IMemoryDomain domain,
-	        String filepath, int fileoffs,
-	        String filepath2, int fileoffs2) throws IOException {
-		DiskMemoryEntry bank0 = newWordMemoryFromFile(
+	        IMemory memory, String name,
+	        IMemoryDomain domain, String filepath,
+	        int fileoffs, String filepath2, int fileoffs2) throws IOException {
+		DiskMemoryEntry bank0 = newWordMemoryFromFile(settings,
 				addr, size, name + " (bank 0)", domain, filepath, fileoffs, false);
-		DiskMemoryEntry bank1 = newWordMemoryFromFile(
+		DiskMemoryEntry bank1 = newWordMemoryFromFile(settings,
 				addr, size, name + " (bank 1)", domain, filepath2, fileoffs2, false);
 		
 		BankedMemoryEntry bankedMemoryEntry = new MultiBankedMemoryEntry(

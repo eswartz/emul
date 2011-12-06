@@ -4,7 +4,7 @@
 package v9t9.gui.properties;
 
 import v9t9.base.properties.FieldProperty;
-import v9t9.base.properties.FieldUtils;
+import v9t9.base.properties.PropertyUtils;
 
 
 /**
@@ -24,7 +24,7 @@ public class ArrayFieldPropertyEditor extends FieldPropertyEditor {
 	@Override
 	protected void setValueFromString(String txt) {
 		Class<?> arrayType = property.getField().getType();
-		Object value = FieldUtils.convertStringToValue(txt,
+		Object value = PropertyUtils.convertStringToValue(txt,
 				arrayType.getComponentType());
 		setValue(value);
 	}

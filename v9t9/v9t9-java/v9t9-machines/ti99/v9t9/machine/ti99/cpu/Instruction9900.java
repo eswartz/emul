@@ -943,7 +943,9 @@ public class Instruction9900 extends RawInstruction implements IInstruction {
         	return this;
         }
         
-        System.out.println("need to regenerate instruction: >" + HexUtils.toHex4(thePc) + " "+ this);
+        if (false) 
+        	System.out.println("need to regenerate instruction: >" + HexUtils.toHex4(thePc) + " "+ this);
+        
         return new Instruction9900(InstTable9900.decodeInstruction(op, thePc, domain));
 
     }

@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import v9t9.base.properties.IProperty;
+
 /**
  * @author ejs
  *
@@ -16,12 +18,22 @@ import java.util.TreeMap;
 public class SettingsSection implements ISettingSection {
 
 	private Map<String, Object> data;
+	private final String name;
 
 	/**
 	 * 
 	 */
-	public SettingsSection() {
+	public SettingsSection(String name) {
+		this.name = name;
 		data = new TreeMap<String, Object>();
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.base.settings.ISettingSection#getName()
+	 */
+	@Override
+	public String getName() {
+		return name;
 	}
 	
 	/* (non-Javadoc)
@@ -35,7 +47,7 @@ public class SettingsSection implements ISettingSection {
 	 * @see v9t9.base.core.properties.IPropertyStorage#addNewSection(java.lang.String)
 	 */
 	public ISettingSection addSection(String name) {
-		SettingsSection newSection = new SettingsSection();
+		SettingsSection newSection = new SettingsSection(name);
 		data.put(name, newSection);
 		return newSection;
 	}
@@ -224,6 +236,9 @@ public class SettingsSection implements ISettingSection {
 				SettingEntry entry = new SettingEntry();
 				entry.name = e.getKey();
 				entry.value = e.getValue();
+				if (entry.value instanceof IProperty)
+					entry.value = ((IProperty) entry.value).getValue();
+
 				if (entry.value instanceof Boolean)
 					entry.type = Type.Boolean;
 				else if (entry.value instanceof Integer)
@@ -248,4 +263,5 @@ public class SettingsSection implements ISettingSection {
 			
 		};
 	}
+	
 }

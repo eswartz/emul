@@ -14,7 +14,7 @@ import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
 import v9t9.engine.cpu.CpuBase;
-import v9t9.engine.dsr.realdisk.Dumper;
+import v9t9.engine.files.image.Dumper;
 import v9t9.machine.ti99.compiler.Compiler9900;
 
 /**

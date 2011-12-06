@@ -392,9 +392,9 @@ public class ForthComp {
 		if (consoleOutFile != null) {
 			System.out.println("Writing " + consoleOutFile);
 			
-			DataFiles.writeMemoryImage(new File(consoleOutFile).getAbsolutePath(), 
-					0, targetContext.getDP(), 
-					console);
+			DataFiles.writeMemoryImage(null, 
+					new File(consoleOutFile).getAbsolutePath(), 0, 
+					targetContext.getDP(), console);
 			
 			File symfile;
 			int didx = consoleOutFile.lastIndexOf('.');
@@ -416,9 +416,9 @@ public class ForthComp {
 			
 			System.out.println("Writing " + gromOutFile);
 			
-			DataFiles.writeMemoryImage(new File(gromOutFile).getAbsolutePath(), 
-					0, f99bCtx.getGP(), 
-					gromMemory);
+			DataFiles.writeMemoryImage(null, 
+					new File(gromOutFile).getAbsolutePath(), 0, 
+					f99bCtx.getGP(), gromMemory);
 
 		}
 	}
