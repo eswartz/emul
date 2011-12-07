@@ -3,7 +3,7 @@
  */
 package v9t9.machine.ti99.memory;
 
-import v9t9.common.machine.IMachine;
+import v9t9.common.machine.IBaseMachine;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.common.memory.IMemoryEntry;
 import v9t9.common.memory.IMemoryListener;
@@ -61,11 +61,11 @@ public class V9t9EnhancedConsoleMmioArea extends ConsoleMmioArea implements IMem
 	public static final int BANKB = 0xFFC2;
 	public static final int NMI = 0xFFFC;
 	
-	private final IMachine machine;
+	private final IBaseMachine machine;
 	private IMemoryEntry underlyingMemory;
 	private MultiBankedMemoryEntry romMemory;
 		
-	V9t9EnhancedConsoleMmioArea(IMachine machine) {
+	V9t9EnhancedConsoleMmioArea(IBaseMachine machine) {
 		super(0);
 		this.machine = machine;
 		machine.getMemory().addListener(this);

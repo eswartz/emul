@@ -9,7 +9,6 @@ import v9t9.common.client.ISettingsHandler;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.files.DataFiles;
 import v9t9.common.machine.IBaseMachine;
-import v9t9.common.machine.IMachine;
 import v9t9.engine.EmulatorData;
 import v9t9.engine.files.directory.DiskDirectoryMapper;
 import v9t9.engine.memory.BankedMemoryEntry;
@@ -86,14 +85,16 @@ public class V9t9EnhancedConsoleMemoryModel extends TI994AStandardConsoleMemoryM
     	return cpuRomEntry;
     }
 
-	protected void defineConsoleMemory(IMachine machine) {
+    @Override
+	protected void defineConsoleMemory(IBaseMachine machine) {
 	    MemoryEntry entry = new MemoryEntry("Super 48K expansion RAM", CPU, 
 	    		0x4000, 0xC000, new EnhancedRamArea(0, 0xC000));
 	    entry.getArea().setLatency(0);
 		memory.addAndMap(entry);
 	}
 	
-	protected void defineMmioMemory(IMachine machine) {
+	@Override
+	protected void defineMmioMemory(IBaseMachine machine) {
 		this.memory.addAndMap(new MemoryEntry("MMIO", CPU, 0xFC00, 0x0400,
                 new V9t9EnhancedConsoleMmioArea(machine)));
 	}
