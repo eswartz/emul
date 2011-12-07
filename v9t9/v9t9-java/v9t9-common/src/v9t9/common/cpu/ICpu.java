@@ -17,7 +17,7 @@ public interface ICpu extends IPersistable, ICpuState {
 
 	static public final SettingSchema settingRealTime = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
-			"RealTime", new Boolean(false));
+			"RealTime", new Boolean(true));
 	static public final SettingSchema settingCyclesPerSecond = new SettingSchema(
 			ISettingsHandler.WORKSPACE,
 			"CyclesPerSecond", new Integer(0));
