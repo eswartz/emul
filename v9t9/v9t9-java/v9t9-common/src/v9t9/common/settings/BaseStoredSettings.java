@@ -28,7 +28,8 @@ import v9t9.common.client.ISettingsHandler;
  *
  */
 public abstract class BaseStoredSettings implements IStoredSettings {
-
+	private static boolean DEBUG = false;
+	
 	/**
 	 * 
 	 */
@@ -60,6 +61,7 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 	}
 	private Map<String, SyntheticProperty> syntheticSettings;
 	protected Map<String, IProperty> registeredSettings;
+	protected Map<String, SettingSchema> settingSchemas;
 	
 	private static final String ROOT = "root";
 	protected ISettingSection section;
@@ -78,6 +80,7 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 		section = new SettingsSection(null);
 		syntheticSettings = new HashMap<String, SyntheticProperty>();
 		registeredSettings = new HashMap<String, IProperty>();
+		settingSchemas = new HashMap<String, SettingSchema>();
 		//trackedSettings = new ArrayList<SettingProperty>();
 		trackedSettingListener = new IPropertyListener() {
 			
@@ -104,6 +107,35 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 		return owner;
 	}
 	
+	public synchronized void load() throws IOException {
+		File settingsConfigurationFile = new File(getConfigFilePath());
+		if (DEBUG) System.out.println("*** Loading from " + settingsConfigurationFile);
+		
+		InputStream fis = null;
+		try {
+			ISettingStorage storage = new XMLSettingStorage(ROOT);
+			fis = new BufferedInputStream(new FileInputStream(settingsConfigurationFile));
+			section = storage.load(fis);
+		} catch (IOException e) {
+			needsSave = true;
+			section = new SettingsSection(null);
+			throw e;
+		} finally {
+			if (fis != null) {
+				fis.close();
+			}
+		}
+			
+		isLoaded = true;
+		needsSave = false;
+		isLoading = true;
+		try {
+			load(section);
+		} finally {
+			isLoading = false;
+		}
+	}
+
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.common.IStoredSettings#load(v9t9.base.core.settings.ISettingSection)
 	 */
@@ -115,31 +147,29 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 		for (String name : settings.getSettingNames()) {
 			IProperty property = registeredSettings.get(name);
 			
-			/*
-			if (property == null && getOwner() != null) {
+			if (getOwner() != null) {
 				IStoredSettings store = getOwner().findSettingStorage(name);
 				if (store != this && store != null) {
-					System.out.println("*** Tossing: " + context + "::" + name + " which lives in " + store.getConfigFileName());
+					if (DEBUG) System.out.println("*** Tossing: " + context + "::" + name + " which lives in " + store.getConfigFileName());
 					property = null;
 					remove(name);
 					continue;
 				}
 			}
-			*/
 			
 			if (property == null || property instanceof SyntheticProperty) {
-				System.out.println("Synthesizing: " + context + "::" + name + " = " + settings.get(name));
+				if (DEBUG) System.out.println("Synthesizing: " + context + "::" + name + " = " + settings.get(name));
 				Object value = deduceObject(settings.getObject(name));
 				SyntheticProperty synProperty = new SyntheticProperty(name, value);
 				registeredSettings.put(name, synProperty);
 				syntheticSettings.put(name, synProperty);
 			} else {
-				System.out.println("Loading: "+ context + "::"  + name + " = " + settings.get(name));
+				if (DEBUG) System.out.println("Loading: "+ context + "::"  + name + " = " + settings.get(name));
 				property.loadState(settings);
 			}
 		}
 	}
-	
+
 	/**
 	 * @param object
 	 * @return
@@ -170,35 +200,6 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 				}
 				return val;
 			}
-		}
-	}
-
-	public synchronized void load() throws IOException {
-		File settingsConfigurationFile = new File(getConfigFilePath());
-		System.out.println("*** Loading from " + settingsConfigurationFile);
-		
-		InputStream fis = null;
-		try {
-			ISettingStorage storage = new XMLSettingStorage(ROOT);
-			fis = new BufferedInputStream(new FileInputStream(settingsConfigurationFile));
-			section = storage.load(fis);
-		} catch (IOException e) {
-			needsSave = true;
-			section = new SettingsSection(null);
-			throw e;
-		} finally {
-			if (fis != null) {
-				fis.close();
-			}
-		}
-			
-		isLoaded = true;
-		needsSave = false;
-		isLoading = true;
-		try {
-			load(section);
-		} finally {
-			isLoading = false;
 		}
 	}
 
@@ -268,6 +269,18 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 	@Override
 	public void save(ISettingSection settings) {
 		for (IProperty setting : registeredSettings.values()) {
+			if (setting instanceof SyntheticProperty) {
+				if (DEBUG) System.out.println("*** Still unknown " + context + "::" + setting.getName());
+			}
+			SettingSchema schema = settingSchemas.get(setting.getName());
+			if (schema != null) {
+				Object cur = setting.getValue();
+				Object def = schema.getDefaultValue();
+				if (cur == def || (cur != null && cur.equals(def)))
+					continue;
+			} else {
+				if (DEBUG) System.out.println("*** No schema for " + context + "::" + setting.getName());
+			}
 			setting.saveState(settings);
 		}
 	}
@@ -277,15 +290,26 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 	 * @return
 	 */
 	private IProperty findOrRealize(SettingSchema schema) {
-		IProperty prop = registeredSettings.get(schema.getName());
+		IProperty prop = getRealSetting(schema.getName(), schema, null);
+		syntheticSettings.remove(schema.getName());
+		settingSchemas.put(schema.getName(), schema);
+		return prop;
+	}
+
+	/**
+	 * @param name
+	 * @return
+	 */
+	private IProperty getRealSetting(String name, SettingSchema schema, IProperty actual) {
+		IProperty prop = registeredSettings.get(name);
 		if (prop instanceof SyntheticProperty) {
-			System.out.println("*** Replacing synthetic " + context + "::" + schema.getName() + " with actual");
+			if (DEBUG) System.out.println("*** Replacing synthetic " + context + "::" + name + " with actual");
 			SyntheticProperty synProp = (SyntheticProperty) prop;
-			prop = schema.createSetting();
+			prop = schema != null ? schema.createSetting() : actual;
 			prop.setValue(synProp.getValue());
-			registeredSettings.put(schema.getName(), prop);
-			syntheticSettings.remove(schema.getName());
+			registeredSettings.put(name, prop);
 		}
+
 		return prop;
 	}
 
@@ -297,7 +321,7 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 		IProperty prop = findOrRealize(schema);
 		if (prop == null) {
 			prop = schema.createSetting();
-			System.out.println("Creating: "+ context + "::" + prop.getName() + " = " + prop.getValue());
+			if (DEBUG) System.out.println("Creating: "+ context + "::" + prop.getName() + " = " + prop.getValue());
 			registeredSettings.put(schema.getName(), prop);
 		}
 		return prop;
@@ -311,7 +335,7 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 	public IProperty findOrCreate(SettingSchema schema, Object defaultOverride) {
 		IProperty prop = findOrRealize(schema);
 		if (prop == null) {
-			System.out.println("Creating: "+ context + "::" + schema.getName());
+			if (DEBUG) System.out.println("Creating: "+ context + "::" + schema.getName());
 			prop = schema.createSetting();
 			prop.setValue(defaultOverride);
 			registeredSettings.put(schema.getName(), prop);
@@ -325,35 +349,19 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends IProperty> T findOrCreate(T defaultProperty) {
-		IProperty prop = registeredSettings.get(defaultProperty.getName());
+		IProperty prop = getRealSetting(defaultProperty.getName(), null, defaultProperty);
 		if (prop == null) {
-			System.out.println("Creating default: "+ context + "::" + defaultProperty.getName());
+			if (DEBUG) System.out.println("Creating default: "+ context + "::" + defaultProperty.getName());
 
 			prop = defaultProperty;
 			registeredSettings.put(defaultProperty.getName(), prop);
+			settingSchemas.remove(defaultProperty.getName());
+		} else if (prop instanceof SyntheticProperty) {
+			
 		}
 		return (T) prop;
 	}
 
-	/*
-	public void register(IProperty setting) {
-		registeredSettings.put(setting.getName(), setting);
-		if (!trackedSettings.contains(setting)) {
-			trackedSettings.add(setting);
-			setting.addListener(trackedSettingListener);
-			if (isLoaded) {
-				setting.loadState(section);
-			}
-		}
-	}
-
-	public void register(IProperty setting, String custom) {
-		register(setting);
-		if (custom != null && setting.isDefault() && setting.getValue() instanceof String)
-			setting.setString(custom);
-	}
-	*/
-	
 	public void clearConfigVar(String configVar) {
 		section.put(configVar, (String) null);
 	}
@@ -383,8 +391,6 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 		if (history != null) {
 			registeredSettings.remove(HISTORY);
 			syntheticSettings.remove(HISTORY);
-			//history = new SettingProperty(HISTORY, historySection);
-			//registeredSettings.put(HISTORY, history);
 			setDirty(true);
 		}
 		return historySection;
@@ -418,8 +424,11 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 	 */
 	@Override
 	public void remove(String name) {
-		if (registeredSettings.remove(name) != null)
+		if (registeredSettings.remove(name) != null) {
+			if (DEBUG) System.out.println("*** Removed setting " + context + "::" + name);
 			setDirty(true);
+		}
+		settingSchemas.remove(name);
 		syntheticSettings.remove(name);
 		getSettings().put(name, (Object) null);
 	}

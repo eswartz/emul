@@ -27,7 +27,8 @@ public class CompileInfo {
     public CompileInfo(ISettingsHandler settings, ConstantPoolGen pgen, InstructionFactory ifact) {
     	this.settings = settings;
     	this.optimize = settings.get(ICompiler.settingOptimize).getBoolean();
-    	this.optimizeRegAccess = settings.get(ICompiler.settingOptimizeRegAccess).getBoolean();
+    	this.optimizeRegAccess = optimize && 
+    		settings.get(ICompiler.settingOptimizeRegAccess).getBoolean();
     	
         this.pgen = pgen;
         this.ifact = ifact;

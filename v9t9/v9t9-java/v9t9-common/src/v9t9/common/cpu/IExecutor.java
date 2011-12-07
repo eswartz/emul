@@ -15,7 +15,7 @@ import v9t9.common.settings.SettingSchema;
 public interface IExecutor {
 
 	static public final SettingSchema settingCompile = new SettingSchema(
-			ISettingsHandler.INSTANCE,
+			ISettingsHandler.WORKSPACE,
 			"Compile", new Boolean(false));
 	static public final SettingSchema settingSingleStep = new SettingSchema(
 			ISettingsHandler.TRANSIENT,

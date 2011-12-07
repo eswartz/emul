@@ -20,6 +20,8 @@ import v9t9.common.memory.IMemoryEntry;
  *
  */
 public abstract class CompilerBase implements ICompiler {
+	public static final boolean DEBUG = false;
+	
 
 	public Map<IMemoryArea, IDecompileInfo> highLevelCodeInfoMap = new HashMap<IMemoryArea, IDecompileInfo>();
 	private IInstructionFactory instructionFactory;

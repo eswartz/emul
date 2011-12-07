@@ -19,19 +19,19 @@ public interface ICompiler {
 			ISettingsHandler.WORKSPACE,
 			"CompilerOptimize", new Boolean(false));
 	static public final SettingSchema settingOptimizeRegAccess = new SettingSchema(
-			ISettingsHandler.TRANSIENT,
-			"CompilerOptimizeRegAccess", new Boolean(false));
+			ISettingsHandler.WORKSPACE,
+			"CompilerOptimizeRegAccess", new Boolean(true));
 	static public final SettingSchema settingOptimizeStatus = new SettingSchema(
-			ISettingsHandler.TRANSIENT,
+			ISettingsHandler.WORKSPACE,
 			"CompilerOptimizeStatus", new Boolean(false));
 	static public final SettingSchema settingCompileOptimizeCallsWithData = new SettingSchema(
-			ISettingsHandler.TRANSIENT,
+			ISettingsHandler.WORKSPACE,
 			"CompilerOptmizeCallsWithData", new Boolean(false));
 	static public final SettingSchema settingDebugInstructions = new SettingSchema(
 			ISettingsHandler.TRANSIENT,
 			"DebugInstructions", new Boolean(false));
 	static public final SettingSchema settingCompileFunctions = new SettingSchema(
-			ISettingsHandler.TRANSIENT,
+			ISettingsHandler.WORKSPACE,
 			"CompilerCompileFunctions", new Boolean(false));
 
 	/**

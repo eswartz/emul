@@ -65,5 +65,12 @@ public class SettingSchema {
 		return prop;
 	}
 
+	/**
+	 * @return
+	 */
+	public Object getDefaultValue() {
+		return defaultValue;
+	}
+
 	
 }

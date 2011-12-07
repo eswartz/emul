@@ -702,7 +702,7 @@ public class Compiler9900 extends CompilerBase {
             	System.err.println("Could not write class file to " + test + ": " + e);
             }
             
-            if (false) {
+            if (DEBUG) {
 	        	try {
 	        		CommandLauncher launch = new CommandLauncher();
 	        		launch.showCommand(true);
@@ -710,7 +710,7 @@ public class Compiler9900 extends CompilerBase {
 						+ ":" + dir.getAbsolutePath();
 	        		System.out.println(classPath+"\n"+cgen.getClassName());
 	        		Process execute = launch.execute("java", new String[] {
-	        				"-classpath",
+	        				"-cp",
 	        				classPath,
 	        				"org.apache.bcel.verifier.Verifier",
 									cgen.getClassName() + ".class" },

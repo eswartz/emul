@@ -53,8 +53,10 @@ public class CodeBlock implements ICompiledCode, v9t9.common.memory.IMemoryListe
         this.addr = addr;
         this.size = size;
         this.baseName = createBaseIdentifier(ent.getUniqueName()); 
-        this.className = this.getClass().getName() + "$" + baseName + "_";
-        //this.className = baseName;
+        if (CompilerBase.DEBUG)
+        	this.className = baseName;
+        else
+        	this.className = this.getClass().getName() + "$" + baseName + "_";
         exec.getCpu().getMachine().getMemory().addListener(this);
         this.highLevel = compiler.getHighLevelCode(ent);
         

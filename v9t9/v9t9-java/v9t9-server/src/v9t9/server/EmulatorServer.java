@@ -12,7 +12,6 @@ import java.io.IOException;
 import v9t9.base.properties.IProperty;
 import v9t9.common.client.IClient;
 import v9t9.common.client.ISettingsHandler;
-import v9t9.common.compiler.ICompiler;
 import v9t9.common.cpu.ICpu;
 import v9t9.common.events.IEventNotifier;
 import v9t9.common.events.NotifyException;
@@ -78,13 +77,6 @@ public class EmulatorServer {
 		
     	settings.get(ICpu.settingRealTime).setBoolean(true);
     	
-    	// compile defaults
-    	//CompilerBase.settingDebugInstructions.setBoolean(true);
-    	//CompilerBase.settingOptimize.setBoolean(true);
-        settings.get(ICompiler.settingOptimizeRegAccess).setBoolean(true);
-        settings.get(ICompiler.settingOptimizeStatus).setBoolean(true);
-        //CompilerBase.settingCompileOptimizeCallsWithData.setBoolean(true);
-        //CompilerBase.settingCompileFunctions.setBoolean(true);
     }
     
 	protected void loadState() {
