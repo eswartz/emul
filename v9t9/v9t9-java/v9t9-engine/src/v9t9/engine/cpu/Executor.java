@@ -86,7 +86,7 @@ public class Executor implements IExecutor {
         compilerStrategy.setup(this, compiler);
         
         final Object lock = Executor.this.cpu.getMachine().getExecutionLock();
-        cpu.settingDumpFullInstructions().addListener(new IPropertyListener() {
+        cpu.settingDumpFullInstructions().addListenerAndFire(new IPropertyListener() {
 
 			public void propertyChanged(IProperty setting) {
 				synchronized (lock) {
@@ -104,7 +104,7 @@ public class Executor implements IExecutor {
 			}
         	
         });
-        cpu.settingDumpInstructions().addListener(new IPropertyListener() {
+        cpu.settingDumpInstructions().addListenerAndFire(new IPropertyListener() {
 			public void propertyChanged(IProperty setting) {
 				synchronized (lock) {
 					if (setting.getBoolean()) {

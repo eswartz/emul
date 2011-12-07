@@ -43,6 +43,14 @@ public class SettingSchema {
 		this(context, name, null, null, defaultValue);
 	}
 	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "SettingSchema: " + getName();
+	}
+	
 	
 	public String getName() {
 		return name;

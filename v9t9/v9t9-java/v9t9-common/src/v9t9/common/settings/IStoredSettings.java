@@ -7,6 +7,7 @@ import java.io.IOException;
 
 import v9t9.base.properties.IProperty;
 import v9t9.base.settings.ISettingSection;
+import v9t9.common.client.ISettingsHandler;
 
 /**
  * @author ejs
@@ -14,12 +15,18 @@ import v9t9.base.settings.ISettingSection;
  */
 public interface IStoredSettings {
 
+	ISettingsHandler getOwner();
+	void setOwner(ISettingsHandler settingsHandler);
+	
 	void load() throws IOException;
 	void load(ISettingSection settings);
 
 	void save() throws IOException;
 	void save(ISettingSection settings);
 
+
+	IProperty find(String settingsName);
+	
 	//void register(IProperty setting);
 	IProperty findOrCreate(SettingSchema schema);
 	IProperty findOrCreate(SettingSchema schema, Object defaultOverride);
@@ -47,5 +54,7 @@ public interface IStoredSettings {
 
 	void setDirty(boolean b);
 	boolean isDirty();
+	
+	void remove(String name);
 
 }

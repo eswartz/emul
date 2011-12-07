@@ -22,4 +22,6 @@ public interface ISettingsHandler {
 	
 	IStoredSettings getWorkspaceSettings();
 	IStoredSettings getInstanceSettings();
+	
+	IStoredSettings findSettingStorage(String settingsName);
 }

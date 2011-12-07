@@ -14,9 +14,11 @@ import v9t9.common.settings.StaticStoredSettings;
 public class TestSettingsHandler extends BaseSettingsHandler {
 
 	public TestSettingsHandler() {
-		super(new StaticStoredSettings(ISettingsHandler.WORKSPACE,
+		super(new StaticStoredSettings(
+				ISettingsHandler.WORKSPACE,
 					"workspace"), 
-			new StaticStoredSettings(ISettingsHandler.INSTANCE, 
+			new StaticStoredSettings(
+					ISettingsHandler.INSTANCE, 
 					"instance"));
 	}
 

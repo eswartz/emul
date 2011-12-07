@@ -21,6 +21,7 @@ import v9t9.base.settings.ISettingSection;
 import v9t9.base.settings.ISettingStorage;
 import v9t9.base.settings.SettingsSection;
 import v9t9.base.settings.XMLSettingStorage;
+import v9t9.common.client.ISettingsHandler;
 
 /**
  * @author ejs
@@ -70,6 +71,7 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 	protected boolean isLoaded;
 	protected boolean needsSave;
 	private final String context;
+	private ISettingsHandler owner;
 
 	public BaseStoredSettings(String context) {
 		this.context = context;
@@ -87,6 +89,21 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 		};
 	}
 
+	/**
+	 * @param owner the owner to set
+	 */
+	public void setOwner(ISettingsHandler owner) {
+		this.owner = owner;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.settings.IStoredSettings#getOwner()
+	 */
+	@Override
+	public ISettingsHandler getOwner() {
+		return owner;
+	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.common.IStoredSettings#load(v9t9.base.core.settings.ISettingSection)
 	 */
@@ -97,10 +114,24 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 		//}
 		for (String name : settings.getSettingNames()) {
 			IProperty property = registeredSettings.get(name);
-			if (property == null) {
+			
+			/*
+			if (property == null && getOwner() != null) {
+				IStoredSettings store = getOwner().findSettingStorage(name);
+				if (store != this && store != null) {
+					System.out.println("*** Tossing: " + context + "::" + name + " which lives in " + store.getConfigFileName());
+					property = null;
+					remove(name);
+					continue;
+				}
+			}
+			*/
+			
+			if (property == null || property instanceof SyntheticProperty) {
 				System.out.println("Synthesizing: " + context + "::" + name + " = " + settings.get(name));
 				Object value = deduceObject(settings.getObject(name));
-				SyntheticProperty synProperty = findOrCreate(new SyntheticProperty(name, value));
+				SyntheticProperty synProperty = new SyntheticProperty(name, value);
+				registeredSettings.put(name, synProperty);
 				syntheticSettings.put(name, synProperty);
 			} else {
 				System.out.println("Loading: "+ context + "::"  + name + " = " + settings.get(name));
@@ -265,8 +296,8 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 	public IProperty findOrCreate(SettingSchema schema) {
 		IProperty prop = findOrRealize(schema);
 		if (prop == null) {
-			System.out.println("Creating: "+ context + "::" + schema.getName());
 			prop = schema.createSetting();
+			System.out.println("Creating: "+ context + "::" + prop.getName() + " = " + prop.getValue());
 			registeredSettings.put(schema.getName(), prop);
 		}
 		return prop;
@@ -280,6 +311,7 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 	public IProperty findOrCreate(SettingSchema schema, Object defaultOverride) {
 		IProperty prop = findOrRealize(schema);
 		if (prop == null) {
+			System.out.println("Creating: "+ context + "::" + schema.getName());
 			prop = schema.createSetting();
 			prop.setValue(defaultOverride);
 			registeredSettings.put(schema.getName(), prop);
@@ -295,6 +327,8 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 	public <T extends IProperty> T findOrCreate(T defaultProperty) {
 		IProperty prop = registeredSettings.get(defaultProperty.getName());
 		if (prop == null) {
+			System.out.println("Creating default: "+ context + "::" + defaultProperty.getName());
+
 			prop = defaultProperty;
 			registeredSettings.put(defaultProperty.getName(), prop);
 		}
@@ -364,5 +398,29 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 	@Override
 	public boolean isDirty() {
 		return needsSave;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.settings.IStoredSettings#find(java.lang.String)
+	 */
+	@Override
+	public IProperty find(String settingsName) {
+		IProperty property = registeredSettings.get(settingsName);
+		if (property != null) {
+			if (syntheticSettings.containsKey(settingsName))
+				return null;
+		}
+		return property;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.settings.IStoredSettings#remove(java.lang.String)
+	 */
+	@Override
+	public void remove(String name) {
+		if (registeredSettings.remove(name) != null)
+			setDirty(true);
+		syntheticSettings.remove(name);
+		getSettings().put(name, (Object) null);
 	}
 }

@@ -407,6 +407,16 @@ public abstract class AbstractProperty implements IProperty {
 			listenerArray = (IPropertyListener[]) listeners.toArray(new IPropertyListener[listeners.size()]);
 		}
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.base.properties.IProperty#addListenerAndFire(v9t9.base.properties.IPropertyListener)
+	 */
+	@Override
+	public void addListenerAndFire(IPropertyListener listener) {
+		addListener(listener);
+		listener.propertyChanged(this);
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.ejs.chiprocksynth.model.IProperty#removeListener(org.ejs.chiprocksynth.model.IPropertyListener)
 	 */

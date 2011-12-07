@@ -263,5 +263,4 @@ public class SettingsSection implements ISettingSection {
 			
 		};
 	}
-	
 }

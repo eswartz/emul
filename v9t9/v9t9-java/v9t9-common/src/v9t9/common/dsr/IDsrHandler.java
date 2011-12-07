@@ -3,12 +3,10 @@
  */
 package v9t9.common.dsr;
 
-import java.io.IOException;
 import java.util.List;
 
 
 import v9t9.base.properties.IPersistable;
-import v9t9.common.memory.IMemoryDomain;
 
 /**
  * Java code that handles the work of a DSR through the Idsr instruction.

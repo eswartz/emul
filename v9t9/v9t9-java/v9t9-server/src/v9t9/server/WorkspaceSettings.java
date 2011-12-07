@@ -34,6 +34,11 @@ public class WorkspaceSettings extends BaseStoredSettings {
 
 	public WorkspaceSettings(String workspaceName) {
 		super(ISettingsHandler.WORKSPACE);
+		setWorkspaceName(workspaceName);
+		//EmulatorSettings.INSTANCE.register(currentWorkspace);
+	}
+	
+	public void setWorkspaceName(String workspaceName) {
 		File file = new File(workspaceName);
 		if (file.isAbsolute()) {
 			this.workspaceName = file.getName();
@@ -43,9 +48,7 @@ public class WorkspaceSettings extends BaseStoredSettings {
 			this.workspacePath = super.getConfigDirectory();
 		}
 		currentWorkspace.setString(getConfigFileName());
-		//EmulatorSettings.INSTANCE.register(currentWorkspace);
 	}
-	
 	/* (non-Javadoc)
 	 * @see v9t9.emulator.common.BaseStoredSettings#getConfigDirectory()
 	 */
@@ -78,7 +81,8 @@ public class WorkspaceSettings extends BaseStoredSettings {
 		current = new WorkspaceSettings(file);
 		current.trackedSettings.addAll(props);
 		*/
-		current = new WorkspaceSettings(file);
+		if (current instanceof WorkspaceSettings)
+			((WorkspaceSettings) current).setWorkspaceName(file);
 		current.load();
 	}
 

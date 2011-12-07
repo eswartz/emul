@@ -71,7 +71,7 @@ public class JavaSoundHandler implements ISoundHandler {
 		output.addListener(audio);
 		speechOutput.addListener(speechAudio);
 		
-		soundVolume.addListener(new IPropertyListener() {
+		soundVolume.addListenerAndFire(new IPropertyListener() {
 			
 			@Override
 			public void propertyChanged(IProperty setting) {
@@ -94,15 +94,13 @@ public class JavaSoundHandler implements ISoundHandler {
 
 		
 		
-		playSound.addListener(new IPropertyListener() {
+		playSound.addListenerAndFire(new IPropertyListener() {
 
 			public void propertyChanged(IProperty setting) {
 				toggleSound(setting.getBoolean());
 			}
 			
 		});
-		
-		toggleSound(playSound.getBoolean());
 	}
 	
 

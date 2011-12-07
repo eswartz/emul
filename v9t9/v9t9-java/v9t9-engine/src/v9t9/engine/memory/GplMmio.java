@@ -7,6 +7,8 @@
 package v9t9.engine.memory;
 
 
+import java.io.PrintWriter;
+
 import v9t9.base.properties.IPersistable;
 import v9t9.base.properties.IProperty;
 import v9t9.base.settings.ISettingSection;
@@ -49,10 +51,6 @@ public class GplMmio implements IConsoleMmioReader, IConsoleMmioWriter, IPersist
         
         dumpFullInstructions = Settings.get(machine, ICpu.settingDumpFullInstructions);
         dumpGplAccess = Settings.get(machine, settingDumpGplAccess);
-        
-		// interleave with CPU log
-		Logging.registerLog(dumpGplAccess, "instrs_full.txt");
-
      }
 
     /*	GROM has a strange banking scheme where the upper portion
@@ -94,9 +92,12 @@ public class GplMmio implements IConsoleMmioReader, IConsoleMmioWriter, IPersist
     	    gromraddrflag = !gromraddrflag;
     	} else {
     	    /* >9800, memory read */
-    		if (dumpGplAccess.getBoolean() && dumpFullInstructions.getBoolean())
-    			Logging.getLog(dumpFullInstructions).println(
+    		if (dumpGplAccess.getBoolean() && dumpFullInstructions.getBoolean()) {
+    			PrintWriter pw = Logging.getLog(dumpFullInstructions);
+				if (pw != null)
+					pw.println(
     					"Read GPL >" + HexUtils.toHex4(gromaddr - 1) + " = >" + HexUtils.toHex2(buf));
+    		}
 
     	    ret = readGrom();
     	}

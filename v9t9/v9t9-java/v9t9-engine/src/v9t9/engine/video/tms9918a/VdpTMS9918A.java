@@ -122,15 +122,13 @@ public class VdpTMS9918A implements IVdpChip {
 			
 		});
 		
-		cyclesPerSecond.addListener(new IPropertyListener() {
+		cyclesPerSecond.addListenerAndFire(new IPropertyListener() {
 
 			public void propertyChanged(IProperty setting) {
 				recalcInterruptTiming();
 			}
 			
 		});
-		
-		recalcInterruptTiming();
 		
 		realTime.addListener(new IPropertyListener() {
 			public void propertyChanged(IProperty setting) {

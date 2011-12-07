@@ -33,47 +33,61 @@ public class Logging {
 	 * unless absolute
 	 */
 	public static void registerLog(IProperty setting, String logFileName) {
+		if (settingToFilenameMap.containsKey(setting))
+			return;
+			
 		File file = new File(logFileName);
 		if (!file.isAbsolute()) {
 			logFileName = TMPDIR + logFileName;
 			file = new File(logFileName);
 		}
 		
+		if (!settingToFilenameMap.values().contains(file)) {
+			// delete upon registration and append when opening to allow
+			// multiple settings to share the same file
+			file.delete();
+		}
+		
 		settingToFilenameMap.put(setting, file);
 		
-		// delete upon registration and append when opening to allow
-		// multiple settings to share the same file
-		file.delete();
-		
-		setting.addListener(new IPropertyListener() {
+		setting.addListenerAndFire(new IPropertyListener() {
 
             public void propertyChanged(IProperty setting) {
             	PrintWriter dump = settingToPrintwriterMap.get(setting);
             	
             	boolean enabled = isSettingEnabled(1, setting);
                 if (enabled && dump == null) {
-                    File file = settingToFilenameMap.get(setting);
-                    try {
-                        dump = fileToStreamMap.get(file);
-                        if (dump != null) {
-                        	dump.println("Enabling " + setting.getName());
-                        	// might be an error
-                        }
-                        if (dump == null || dump.checkError()) {
-                        	dump = new PrintWriter(new FileOutputStream(file, true));
-                        	fileToStreamMap.put(file, dump);
-                        	dump.println("Enabling " + setting.getName());
-                        }
-                        settingToPrintwriterMap.put(setting, dump);
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                    }
+                    createDump(setting);
                 } else if (!setting.getBoolean() && dump != null) {
                 	dump.close();
                 	settingToPrintwriterMap.remove(setting);
                 }
-            }});
-		
+            }
+		});
+	}
+	
+
+	/**
+	 * @param setting
+	 */
+	protected static void createDump(IProperty setting) {
+		PrintWriter dump;
+		File file = settingToFilenameMap.get(setting);
+		try {
+		    dump = fileToStreamMap.get(file);
+		    if (dump != null) {
+		    	dump.println("Enabling " + setting.getName());
+		    	// might be an error
+		    }
+		    if (dump == null || dump.checkError()) {
+		    	dump = new PrintWriter(new FileOutputStream(file, true));
+		    	fileToStreamMap.put(file, dump);
+		    	dump.println("Enabling " + setting.getName());
+		    }
+		    settingToPrintwriterMap.put(setting, dump);
+		} catch (FileNotFoundException e) {
+		    e.printStackTrace();
+		}
 	}
 	
 	/**
@@ -88,7 +102,7 @@ public class Logging {
 				|| setting.getBoolean())
 			settingToPrintwriterMap.put(setting, writer);
 		
-		setting.addListener(new IPropertyListener() {
+		setting.addListenerAndFire(new IPropertyListener() {
 
             public void propertyChanged(IProperty setting) {
             	PrintWriter dump = settingToPrintwriterMap.get(setting);

@@ -95,7 +95,7 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
         dumpFullInstructions = Settings.get(this, ICpu.settingDumpFullInstructions);
         dumpInstructions = Settings.get(this, ICpu.settingDumpInstructions);
         
-        cyclesPerSecond.addListener(new IPropertyListener() {
+        cyclesPerSecond.addListenerAndFire(new IPropertyListener() {
 
 			public void propertyChanged(IProperty setting) {
 				baseclockhz = setting.getInt();
@@ -106,7 +106,7 @@ public abstract class CpuBase  implements IMemoryAccessListener, IPersistable, I
         	
         });
         
-        realTime.addListener(new IPropertyListener() {
+        realTime.addListenerAndFire(new IPropertyListener() {
 
 			public void propertyChanged(IProperty setting) {
 				tick();

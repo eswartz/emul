@@ -30,10 +30,8 @@ public class ExpRamArea extends ConsoleMemoryArea {
         this.expRam = settings.get(ExpRamArea.settingExpRam); 
 
         memory = new short[size/2];
-        read = expRam.getBoolean() ? memory : null;
-        write = expRam.getBoolean() ? memory : null;
 
-        expRam.addListener(new IPropertyListener() {
+        expRam.addListenerAndFire(new IPropertyListener() {
 
 			public void propertyChanged(IProperty setting) {
 				if (setting.getBoolean()) {

@@ -12,7 +12,8 @@ import v9t9.common.client.ISettingsHandler;
  */
 public class BaseSettingsHandler implements ISettingsHandler {
 
-	private IStoredSettings transientSettings = new BaseStoredSettings(ISettingsHandler.TRANSIENT) {
+	private IStoredSettings transientSettings = new BaseStoredSettings(
+			ISettingsHandler.TRANSIENT) {
 	
 			@Override
 			public String getConfigFileName() {
@@ -27,6 +28,10 @@ public class BaseSettingsHandler implements ISettingsHandler {
 			IStoredSettings instanceSettings) {
 		this.workspaceSettings = workspaceSettings;
 		this.instanceSettings = instanceSettings;
+		
+		workspaceSettings.setOwner(this);
+		instanceSettings.setOwner(this);
+		transientSettings.setOwner(this);
 	}
 
 	@Override
@@ -64,6 +69,20 @@ public class BaseSettingsHandler implements ISettingsHandler {
 		else
 			throw new IllegalArgumentException("unknown settings context: " + context);
 		return settings;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.client.ISettingsHandler#findSettingStorage(java.lang.String)
+	 */
+	@Override
+	public IStoredSettings findSettingStorage(String settingsName) {
+		if (workspaceSettings.find(settingsName) != null)
+			return workspaceSettings;
+		if (instanceSettings.find(settingsName) != null)
+			return instanceSettings;
+		if (transientSettings.find(settingsName) != null)
+			return transientSettings;
+		return null;
 	}
 
 }

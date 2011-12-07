@@ -50,6 +50,7 @@ public interface IProperty extends IXMLPersistable, IPersistable,
 	Class<?> getType();
 	
 	void addListener(IPropertyListener listener);
+	void addListenerAndFire(IPropertyListener listener);
 	void removeListener(IPropertyListener listener);
 	void firePropertyChange();
 	
