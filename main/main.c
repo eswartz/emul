@@ -274,6 +274,7 @@ int main(int argc, char ** argv) {
         s = servlink2channelserverp(channel_server_root.next);
         server_properties = channel_peer_to_json(s->ps);
         printf("Server-Properties: %s\n", server_properties);
+        fflush(stdout);
         trace(LOG_ALWAYS, "Server-Properties: %s", server_properties);
         loc_free(server_properties);
     }
