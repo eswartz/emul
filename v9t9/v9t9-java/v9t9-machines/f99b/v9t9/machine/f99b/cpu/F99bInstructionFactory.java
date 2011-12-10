@@ -38,6 +38,8 @@ import v9t9.machine.f99b.asm.MachineOperandF99b;
  *
  */
 public class F99bInstructionFactory implements IRawInstructionFactory {
+	public static final F99bInstructionFactory INSTANCE = new F99bInstructionFactory();
+	
 	static class WorkBlock {
 		public short pc;
 		

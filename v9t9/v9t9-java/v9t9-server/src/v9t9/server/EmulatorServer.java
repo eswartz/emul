@@ -1,9 +1,3 @@
-/*
- * (c) Ed Swartz, 2008
- * 
- * Created on Feb 19, 2006
- *
- */
 package v9t9.server;
 
 import v9t9.client.EmulatorClientBase;

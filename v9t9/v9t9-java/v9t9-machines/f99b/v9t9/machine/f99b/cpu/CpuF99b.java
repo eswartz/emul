@@ -6,13 +6,19 @@ import java.io.PrintWriter;
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.settings.Logging;
 import v9t9.base.utils.HexUtils;
+import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.cpu.AbortedException;
+import v9t9.common.cpu.ICpuMetrics;
+import v9t9.common.cpu.IExecutor;
 import v9t9.common.cpu.IStatus;
 import v9t9.common.hardware.ICruChip;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
+import v9t9.engine.compiler.NullCompilerStrategy;
 import v9t9.engine.cpu.CpuBase;
+import v9t9.engine.cpu.Executor;
 import v9t9.machine.f99b.asm.StatusF99b;
+import v9t9.machine.f99b.interpreter.InterpreterF99b;
 
 /**
  * The F99b engine.
@@ -445,6 +451,27 @@ public class CpuF99b extends CpuBase {
 			super.addCycles(cycles);
 			vdp.addCpuCycles(cycles);
 		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.ICpu#getInstructionFactory()
+	 */
+	@Override
+	public IRawInstructionFactory getInstructionFactory() {
+		return F99bInstructionFactory.INSTANCE;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.ICpu#createExecutor(v9t9.common.cpu.ICpuMetrics)
+	 */
+	@Override
+	public IExecutor createExecutor(ICpuMetrics metrics) {
+		return new Executor(this, metrics, 
+				new InterpreterF99b(machine),
+				null,
+				new NullCompilerStrategy(),
+				new DumpFullReporterF99b(this, null), 
+				new DumpReporterF99b(this));
 	}
 	
 }

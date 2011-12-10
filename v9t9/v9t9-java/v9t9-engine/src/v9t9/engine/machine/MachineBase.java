@@ -141,7 +141,7 @@ abstract public class MachineBase implements IMachine {
     	machineModel.defineDevices(this);
     	
     	cpuMetrics = new CpuMetrics();
-    	executor = machineModel.createExecutor(cpu, cpuMetrics);
+    	executor = cpu.createExecutor(cpuMetrics);
     	
     	fileHandler = new FileHandler(settings);
     	
@@ -170,7 +170,7 @@ abstract public class MachineBase implements IMachine {
     	cpu = machineModel.createCPU(this); 
 		keyboardState = new KeyboardState(this);
 
-    	this.instructionFactory = machineModel.getInstructionFactory();
+    	this.instructionFactory = cpu.getInstructionFactory();
 	}
     
 	/* (non-Javadoc)

@@ -8,14 +8,22 @@ package v9t9.machine.ti99.cpu;
 
 import v9t9.base.settings.ISettingSection;
 import v9t9.base.utils.HexUtils;
+import v9t9.common.asm.IRawInstructionFactory;
+import v9t9.common.cpu.ICpuMetrics;
+import v9t9.common.cpu.IExecutor;
 import v9t9.common.cpu.IStatus;
 import v9t9.common.hardware.ICruChip;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.Settings;
+import v9t9.engine.compiler.CodeBlockCompilerStrategy;
 import v9t9.engine.cpu.CpuBase;
+import v9t9.engine.cpu.Executor;
 import v9t9.engine.files.image.Dumper;
+import v9t9.machine.ti99.asm.RawInstructionFactory9900;
 import v9t9.machine.ti99.compiler.Compiler9900;
+import v9t9.machine.ti99.interpreter.Interpreter9900;
+import v9t9.machine.ti99.machine.TI99Machine;
 
 /**
  * The 9900 engine.
@@ -340,7 +348,25 @@ public class Cpu9900 extends CpuBase {
 			super.addCycles(cycles);
 			vdp.addCpuCycles(cycles);
 		}
-			
-		
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.ICpu#getInstructionFactory()
+	 */
+	@Override
+	public IRawInstructionFactory getInstructionFactory() {
+		return RawInstructionFactory9900.INSTANCE;
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.cpu.ICpu#createExecutor(v9t9.common.cpu.ICpuMetrics)
+	 */
+	@Override
+	public IExecutor createExecutor(ICpuMetrics metrics) {
+		return new Executor(this, metrics, 
+				new Interpreter9900((TI99Machine) getMachine()),
+				new Compiler9900(this),
+				new CodeBlockCompilerStrategy(),
+				new DumpFullReporter9900(this), new DumpReporter9900(this));
 	}
 }

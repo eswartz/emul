@@ -5,11 +5,8 @@ package v9t9.common.machine;
 
 import java.util.List;
 
-import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
-import v9t9.common.cpu.ICpuMetrics;
-import v9t9.common.cpu.IExecutor;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.dsr.IDeviceSettings;
 import v9t9.common.hardware.ISoundChip;
@@ -30,19 +27,15 @@ public interface IMachineModel {
 
 	IMemoryModel createMemoryModel(IMachine machine);
 	
-	IVdpChip createVdp(IMachine machine);
-	
 	void defineDevices(IMachine machine);
+	
+	ICpu createCPU(IMachine machine);
+	
+	IVdpChip createVdp(IMachine machine);
 
 	ISoundChip createSoundChip(IMachine machine);
 	
 	ISpeechChip createSpeechChip(IMachine machine);
-	
-	IExecutor createExecutor(ICpu cpu, ICpuMetrics metrics);
-
-	IRawInstructionFactory getInstructionFactory();
-
-	ICpu createCPU(IMachine machine);
 
 	List<IDeviceSettings> getDeviceSettings(IMachine machine);
 

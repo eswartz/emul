@@ -3,6 +3,7 @@ package v9t9.common.cpu;
 
 import v9t9.base.properties.IPersistable;
 import v9t9.base.properties.IProperty;
+import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.machine.IBaseMachine;
 import v9t9.common.settings.SettingSchema;
@@ -119,4 +120,12 @@ public interface ICpu extends IPersistable, ICpuState {
 	 * Set interrupt request interrupt line
 	 */
 	void irq();
+	/**
+	 * @return
+	 */
+	IRawInstructionFactory getInstructionFactory();
+	
+
+	IExecutor createExecutor(ICpuMetrics metrics);
+
 }

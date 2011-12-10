@@ -5,11 +5,8 @@ package v9t9.client;
 
 import java.util.List;
 
-import v9t9.common.asm.IRawInstructionFactory;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.cpu.ICpu;
-import v9t9.common.cpu.ICpuMetrics;
-import v9t9.common.cpu.IExecutor;
 import v9t9.common.dsr.IDeviceIndicatorProvider;
 import v9t9.common.dsr.IDeviceSettings;
 import v9t9.common.hardware.ISoundChip;
@@ -91,24 +88,6 @@ public class MachineModelProxy implements IMachineModel {
 	 */
 	@Override
 	public ISpeechChip createSpeechChip(IMachine machine) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.common.machine.IMachineModel#createExecutor(v9t9.common.cpu.ICpu, v9t9.common.cpu.ICpuMetrics)
-	 */
-	@Override
-	public IExecutor createExecutor(ICpu cpu, ICpuMetrics metrics) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	/* (non-Javadoc)
-	 * @see v9t9.common.machine.IMachineModel#getInstructionFactory()
-	 */
-	@Override
-	public IRawInstructionFactory getInstructionFactory() {
 		// TODO Auto-generated method stub
 		return null;
 	}
