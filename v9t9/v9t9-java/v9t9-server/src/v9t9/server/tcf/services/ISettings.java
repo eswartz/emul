@@ -12,7 +12,7 @@ import org.eclipse.tm.tcf.protocol.IToken;
  * @author ejs
  *
  */
-public interface ISettingsService extends IService {
+public interface ISettings extends IService {
 
 	String NAME = "Settings";
 	

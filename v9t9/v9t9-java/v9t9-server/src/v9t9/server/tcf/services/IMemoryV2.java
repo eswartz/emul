@@ -10,6 +10,9 @@ import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.services.IMemory;
 
 /**
+ * This service extends the standard TCF IMemory service
+ * with support for guaranteed memory change tracking.
+ * 
  * @author ejs
  *
  */

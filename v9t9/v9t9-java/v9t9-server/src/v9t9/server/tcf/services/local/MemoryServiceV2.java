@@ -26,6 +26,7 @@ import v9t9.server.tcf.MemoryWriteTracker;
 import v9t9.server.tcf.services.IMemoryV2;
 
 /**
+ * Implementation of the target-side IMemoryV2 service.
  * @author ejs
  *
  */
@@ -34,20 +35,16 @@ public class MemoryServiceV2 extends MemoryService {
 	class ListenerInfo {
 		private final IMemoryDomain domain;
 
-		/**
-		 * @param domain
-		 * @param delay
-		 */
 		public ListenerInfo(final IMemoryDomain domain, int delay, int granularity) {
 			this.domain = domain;
 			tracker = new MemoryWriteTracker(domain);
 			period = delay;
 			this.granularity = granularity;
 		}
-		MemoryWriteTracker tracker;
-		TimerTask task;
-		int granularity;
-		long period;
+		private MemoryWriteTracker tracker;
+		private TimerTask task;
+		private int granularity;
+		private long period;
 		
 		public synchronized void start() {
 			if (task == null) {

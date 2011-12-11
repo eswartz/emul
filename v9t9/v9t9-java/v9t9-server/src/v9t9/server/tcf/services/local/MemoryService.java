@@ -21,6 +21,7 @@ import v9t9.common.memory.IMemoryEntry;
 import v9t9.server.tcf.services.IMemoryV2;
 
 /**
+ * Implementation of the target-side IMemory service.
  * @author ejs
  *
  */

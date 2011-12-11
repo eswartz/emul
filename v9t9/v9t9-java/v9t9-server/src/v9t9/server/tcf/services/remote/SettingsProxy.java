@@ -9,13 +9,13 @@ import org.eclipse.tm.tcf.core.Command;
 import org.eclipse.tm.tcf.protocol.IChannel;
 import org.eclipse.tm.tcf.protocol.IToken;
 
-import v9t9.server.tcf.services.ISettingsService;
+import v9t9.server.tcf.services.ISettings;
 
 /**
  * @author ejs
  *
  */
-public class SettingsProxy implements ISettingsService {
+public class SettingsProxy implements ISettings {
 
 	private final IChannel channel;
 	

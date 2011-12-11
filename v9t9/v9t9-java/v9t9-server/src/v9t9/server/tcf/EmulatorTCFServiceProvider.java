@@ -23,7 +23,7 @@ import v9t9.common.client.ISettingsHandler;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.SettingSchema;
 import v9t9.server.tcf.services.IMemoryV2;
-import v9t9.server.tcf.services.ISettingsService;
+import v9t9.server.tcf.services.ISettings;
 import v9t9.server.tcf.services.local.MemoryService;
 import v9t9.server.tcf.services.local.MemoryServiceV2;
 import v9t9.server.tcf.services.local.SettingsService;
@@ -66,7 +66,7 @@ public class EmulatorTCFServiceProvider implements IServiceProvider {
 		this.machine = machine;
 		serviceMap.put("ZeroCopy", null);
 		
-		registerService(ISettingsService.NAME, SettingsService.class);
+		registerService(ISettings.NAME, SettingsService.class);
         registerService(IMemory.NAME, MemoryService.class);
         registerService(IMemoryV2.NAME, MemoryServiceV2.class);
 	}

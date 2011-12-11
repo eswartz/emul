@@ -19,6 +19,8 @@ import v9t9.base.utils.Pair;
 import v9t9.common.machine.IMachine;
 
 /**
+ * Base implementation of the target-side services, with a convenient
+ * abstraction to reduce the rote typing around command parsing.
  * @author ejs
  *
  */
