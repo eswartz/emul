@@ -15,14 +15,14 @@ import v9t9.server.tcf.services.ISettingsService;
  * @author ejs
  *
  */
-public class SettingsServiceProxy implements ISettingsService {
+public class SettingsProxy implements ISettingsService {
 
 	private final IChannel channel;
 	
 	/**
 	 * 
 	 */
-	public SettingsServiceProxy(IChannel channel) {
+	public SettingsProxy(IChannel channel) {
 		this.channel = channel;
 	}
 	

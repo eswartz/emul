@@ -17,10 +17,17 @@ import org.eclipse.tm.tcf.protocol.IServiceProvider;
 import org.eclipse.tm.tcf.protocol.JSON;
 import org.eclipse.tm.tcf.protocol.JSON.ObjectWriter;
 import org.eclipse.tm.tcf.protocol.Protocol;
+import org.eclipse.tm.tcf.services.IMemory;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.SettingSchema;
+import v9t9.server.tcf.services.IMemoryV2;
+import v9t9.server.tcf.services.ISettingsService;
+import v9t9.server.tcf.services.local.MemoryService;
+import v9t9.server.tcf.services.local.MemoryServiceV2;
+import v9t9.server.tcf.services.local.SettingsService;
+import v9t9.server.tcf.services.remote.SettingsProxy;
 
 /**
  * This class manages TCF servers for remote access and control of a running
@@ -58,6 +65,10 @@ public class EmulatorTCFServiceProvider implements IServiceProvider {
 	public EmulatorTCFServiceProvider(IMachine machine) {
 		this.machine = machine;
 		serviceMap.put("ZeroCopy", null);
+		
+		registerService(ISettingsService.NAME, SettingsService.class);
+        registerService(IMemory.NAME, MemoryService.class);
+        registerService(IMemoryV2.NAME, MemoryServiceV2.class);
 	}
 	
 	public void registerService(String name, Class<? extends IService> serviceKlass) {
@@ -71,6 +82,9 @@ public class EmulatorTCFServiceProvider implements IServiceProvider {
 	 */
 	@Override
 	public IService[] getLocalService(IChannel channel) {
+		if (machine == null)
+			return null;
+		
 		final List<IService> services = new ArrayList<IService>(serviceMap.size());
 		for (Map.Entry<String, Class<? extends IService>> entry : serviceMap.entrySet()) {
 			if (entry.getValue() != null) {
@@ -95,7 +109,7 @@ public class EmulatorTCFServiceProvider implements IServiceProvider {
 		 IService service = null;
 		 if (serviceMap.get(service_name) != null) {
 	         try {
-	             String packageName = EmulatorTCFServiceProvider.class.getName();
+	             String packageName = SettingsProxy.class.getPackage().getName();
 	             Class<?> cls = Class.forName(MessageFormat.format("{0}.{1}Proxy", packageName, service_name));
 	             service = (IService)cls.getConstructor(IChannel.class).newInstance(channel);
 	             assert service_name.equals(service.getName());

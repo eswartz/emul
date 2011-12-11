@@ -9,17 +9,12 @@ import java.io.PrintWriter;
 import org.eclipse.tm.tcf.core.ServerTCP;
 import org.eclipse.tm.tcf.protocol.ILogger;
 import org.eclipse.tm.tcf.protocol.Protocol;
-import org.eclipse.tm.tcf.services.IMemory;
-
 import v9t9.base.properties.IProperty;
 import v9t9.base.settings.Logging;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.machine.IMachine;
 import v9t9.common.settings.SettingSchema;
 import v9t9.common.settings.Settings;
-import v9t9.server.tcf.services.ISettingsService;
-import v9t9.server.tcf.services.local.MemoryService;
-import v9t9.server.tcf.services.local.SettingsService;
 
 /**
  * This class manages TCF servers for remote access and control of a running
@@ -60,9 +55,6 @@ public class EmulatorTCFServer {
         Protocol.setEventQueue(queue);
         
         serviceProvider = new EmulatorTCFServiceProvider(machine);
-        
-        serviceProvider.registerService(ISettingsService.NAME, SettingsService.class);
-        serviceProvider.registerService(IMemory.NAME, MemoryService.class);
 	}
 	
 	private void setupLogging() {

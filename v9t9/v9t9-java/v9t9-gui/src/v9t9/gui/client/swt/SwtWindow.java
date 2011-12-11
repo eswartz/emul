@@ -200,7 +200,7 @@ public class SwtWindow extends BaseEmulatorWindow {
 				try {
 					mainIcons.put(size, new Image(getShell().getDisplay(), 
 							iconsFile.openStream()));
-				} catch (IOException e1) {
+				} catch (Exception e1) {
 					e1.printStackTrace();
 				}
 			}

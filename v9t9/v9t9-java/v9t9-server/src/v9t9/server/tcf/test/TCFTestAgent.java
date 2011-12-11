@@ -34,7 +34,6 @@ public class TCFTestAgent {
 	protected IChannel channel;
 	protected Map<IService, IChannel.IEventListener> serviceListeners = new HashMap<IService, IChannel.IEventListener>();
 	private static IServiceProvider sServiceProvider;
-	protected int seq;
 
 	static {
 		NAME = "TCF Test Agent";
@@ -455,12 +454,6 @@ public class TCFTestAgent {
 			this.serviceListeners.put(remoteService, listener);
 		}
 		return remoteService;
-	}
-
-	private static class ServerPeer extends AbstractPeer {
-		ServerPeer(Map<String, String> attrs) {
-			super(attrs);
-		}
 	}
 
 	private class TestCommandListener implements IChannel.ICommandListener {

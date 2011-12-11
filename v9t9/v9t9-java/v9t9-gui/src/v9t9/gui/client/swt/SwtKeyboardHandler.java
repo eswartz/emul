@@ -424,6 +424,12 @@ public class SwtKeyboardHandler extends BaseKeyboardHandler implements ISwtKeybo
 				if (!control.isFocusControl())
 					return;
 				
+				if (keyboardState.isPasting() && event.keyCode == SWT.ESC) {
+					keyboardState.cancelPaste();
+					event.doit = false;
+					return;
+				}
+
 		        // System.out.println("keyPressed(" + SwtKey.findByCode(event.keyCode) + ")");
 		        if (event.keyCode == lastKeyPressedCode) {
 		            // ignore if this is a repeat event

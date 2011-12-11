@@ -105,7 +105,7 @@ public abstract class BaseServiceImpl implements IService, IChannel.ICommandServ
             channel.sendResult(token, JSON.toJSONSequence(result, true));
             
         } catch (ErrorReport e) {
-        	Object[] results = new Object[inOut.second + 1];
+        	Object[] results = new Object[inOut.second];
         	results[0] = e;
         	
             channel.sendResult(token, JSON.toJSONSequence(results));  

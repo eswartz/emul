@@ -33,9 +33,9 @@ public class SettingsService extends BaseServiceImpl {
 		
 		settings = Settings.getSettings(machine);
 		
-		registerCommand(ISettingsService.COMMAND_QUERY_ALL, 0, 1);
-		registerCommand(ISettingsService.COMMAND_SET, 2, 1);
-		registerCommand(ISettingsService.COMMAND_GET, 1, 1);
+		registerCommand(ISettingsService.COMMAND_QUERY_ALL, 0, 2);
+		registerCommand(ISettingsService.COMMAND_SET, 2, 2);
+		registerCommand(ISettingsService.COMMAND_GET, 1, 2);
 	}
 	
 	/* (non-Javadoc)
@@ -96,7 +96,7 @@ public class SettingsService extends BaseServiceImpl {
 				
 				propsList.add(props);
 			}
-			return new Object[] { propsList };
+			return new Object[] { null, propsList };
 		} else if (ISettingsService.COMMAND_GET.equals(name)) {
 			String propName = args[0].toString();
 			IProperty prop = null;
@@ -104,7 +104,7 @@ public class SettingsService extends BaseServiceImpl {
 			prop = storage != null ? storage.find(propName) : null;
 			if (storage == null || prop == null)
 				throw new ErrorReport("unknown setting: " + propName, IErrorReport.TCF_ERROR_INV_CONTEXT);
-			return new Object[] { prop.getValue() };
+			return new Object[] { null, prop.getValue() };
 		} else if (ISettingsService.COMMAND_SET.equals(name)) {
 			String propName = args[0].toString();
 			IProperty prop = null;
@@ -114,7 +114,7 @@ public class SettingsService extends BaseServiceImpl {
 				throw new ErrorReport("unknown setting: " + propName, IErrorReport.TCF_ERROR_INV_CONTEXT);
 			Object oldValue = prop.getValue();
 			prop.setValue(args[1]);
-			return new Object[] { oldValue };
+			return new Object[] { null, oldValue };
 		}
 		throw new UnsupportedOperationException();
 	}

@@ -22,6 +22,21 @@ public class VdpRamArea extends ByteMemoryArea {
 		this.handler = handler;
 	}
     
+	/* (non-Javadoc)
+	 * @see v9t9.engine.memory.MemoryArea#flatWriteByte(v9t9.common.memory.IMemoryEntry, int, byte)
+	 */
+	@Override
+	public void flatWriteByte(IMemoryEntry entry, int addr, byte val) {
+		super.writeByte(entry, addr, val);
+	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.engine.memory.MemoryArea#flatWriteWord(v9t9.common.memory.IMemoryEntry, int, short)
+	 */
+	@Override
+	public void flatWriteWord(IMemoryEntry entry, int addr, short val) {
+		super.writeWord(entry, addr, val);
+	}
     @Override
     public void writeByte(IMemoryEntry entry, int addr, byte val) {
     	byte old = readByte(entry, addr);
