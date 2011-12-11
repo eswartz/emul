@@ -8,6 +8,7 @@ import java.util.Arrays;
 import v9t9.common.hardware.IVdpChip;
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.video.ISpriteCanvas;
+import v9t9.common.video.ISpriteDrawingCanvas;
 import v9t9.common.video.RedrawBlock;
 import v9t9.common.video.VdpModeInfo;
 import v9t9.common.video.VdpSprite;
@@ -229,7 +230,7 @@ public class SpriteRedrawHandler extends BaseRedrawHandler {
 	 * @param force
 	 */
 	public void updateCanvas(boolean force) {
-		spriteCanvas.drawSprites(info.canvas);
+		spriteCanvas.drawSprites((ISpriteDrawingCanvas) info.canvas);
 	}
 
 	public void redrawCanvas() {

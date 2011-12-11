@@ -371,18 +371,6 @@ public class AwtVideoRenderer implements IVideoRenderer, ICanvasListener {
 	}
 	
 	/* (non-Javadoc)
-	 * @see v9t9.emulator.clients.builtin.video.VideoRenderer#setZoom(int)
-	 */
-	public void setZoom(int zoom) {
-		isDirty = true;
-		this.zoom = zoom;
-	}
-	
-	public int getZoom() {
-		return (int) zoom;
-	}
-
-	/* (non-Javadoc)
 	 * @see v9t9.emulator.clients.builtin.video.VideoRenderer#sync()
 	 */
 	public void sync() {

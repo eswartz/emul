@@ -8,7 +8,7 @@ package v9t9.common.video;
  * @author ejs
  *
  */
-public interface ISprite2Canvas extends ICanvas {
+public interface ISprite2Canvas extends ICanvas, ISpriteDrawingCanvas {
 
 	void clear8x8Block(int offset);
 
@@ -42,10 +42,6 @@ public interface ISprite2Canvas extends ICanvas {
 	 */
 	//void blitFourColorSpriteBlock(ISprite2Canvas spriteCanvas, int i, int j,
 	//		int blockMag);
-
-	public void drawEightDoubleMagnifiedSpritePixels(int x, int y, byte mem, byte fg, short bitmask, boolean isLogicalOr);
-	public void drawEightMagnifiedSpritePixels(int x, int y, byte mem, byte fg, short bitmask, boolean isLogicalOr);
-	public void drawEightSpritePixels(int x, int y, byte mem, byte fg, byte bitmask, boolean isLogicalOr);
 
 
 

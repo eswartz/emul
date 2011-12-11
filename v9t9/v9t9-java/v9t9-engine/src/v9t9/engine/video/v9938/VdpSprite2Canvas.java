@@ -6,6 +6,7 @@ package v9t9.engine.video.v9938;
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.video.ICanvas;
 import v9t9.common.video.ISprite2Canvas;
+import v9t9.common.video.ISpriteDrawingCanvas;
 import v9t9.common.video.IVdpCanvas;
 import v9t9.common.video.VdpColorManager;
 import v9t9.common.video.VdpSprite;
@@ -74,7 +75,7 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 	}
 
 	@Override
-	public void drawSprites(IVdpCanvas canvas) {
+	public void drawSprites(ISpriteDrawingCanvas canvas) {
 		//spriteCanvas.clear(null);
 		// clear the blocks where the sprites are moving
 		//int cleared = 0;
@@ -86,9 +87,9 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 			}
 		}
 		//System.out.print(cleared +" cleared; ");
-		super.drawSprites(canvas);
+		super.drawSprites((ISpriteDrawingCanvas) spriteCanvas);
 		
-		blitSpriteCanvas(canvas, evenOddColors);
+		blitSpriteCanvas((IVdpCanvas) canvas, evenOddColors);
 	}
 
 	
@@ -103,7 +104,7 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 	 * @param attr the row attribute table
 	 * @param doubleWidth is the sprite drawn double-wide?
 	 */
-	private void drawUnmagnifiedSpriteChar(IVdpCanvas canvas, int y, int x, int rowbitmap, ByteMemoryAccess pattern,
+	private void drawUnmagnifiedSpriteChar(ISpriteDrawingCanvas canvas, int y, int x, int rowbitmap, ByteMemoryAccess pattern,
 			ByteMemoryAccess attr, boolean doubleWidth) {
 		
 		VdpColorManager colorMgr = canvas.getColorMgr();
@@ -161,7 +162,7 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 	 * @param attr the row attribute table
 	 * @param doubleWidth is the sprite drawn double-wide?
 	 */
-	private void drawMagnifiedSpriteChar(IVdpCanvas canvas, int y, int x, int rowbitmap, ByteMemoryAccess pattern,
+	private void drawMagnifiedSpriteChar(ISpriteDrawingCanvas canvas, int y, int x, int rowbitmap, ByteMemoryAccess pattern,
 			ByteMemoryAccess attr, boolean doubleWidth) {
 		
 		VdpColorManager colorMgr = canvas.getColorMgr();
@@ -210,7 +211,7 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 	}
 
 	@Override
-	protected void drawSprite(IVdpCanvas canvas, VdpSprite sprite, int sprrowbitmap) {
+	protected void drawSprite(ISpriteDrawingCanvas canvas, VdpSprite sprite, int sprrowbitmap) {
 		// sprite color 0 does not imply invisibility since this only
 		// applies to the color 0 in the color stripe
 		

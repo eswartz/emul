@@ -128,4 +128,6 @@ public class Sprite2Canvas extends BaseVdpCanvas implements ISprite2Canvas {
 	public int getBitmapOffset(int x, int y) {
 		return UPDPTR(y, x);
 	}
+
+
 }

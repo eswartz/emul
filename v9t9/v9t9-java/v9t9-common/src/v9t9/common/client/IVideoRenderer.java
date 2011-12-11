@@ -29,9 +29,6 @@ public interface IVideoRenderer {
 	
 	boolean isIdle();
 
-	void setZoom(int zoom);
-	int getZoom();
-
 	void saveScreenShot(File file) throws IOException;
 
 	/**

@@ -28,5 +28,5 @@ public interface ISpriteCanvas {
 	/**
 	 * @param canvas
 	 */
-	void drawSprites(IVdpCanvas canvas);
+	void drawSprites(ISpriteDrawingCanvas canvas);
 }

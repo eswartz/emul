@@ -335,20 +335,6 @@ public class SwtVideoRenderer implements IVideoRenderer, ICanvasListener, ISwtVi
 	
 
 
-	public synchronized void setZoom(int zoom) {
-		synchronized (vdpCanvas) {
-			fixedAspectLayout.setZoomX(zoom);
-			fixedAspectLayout.setZoomY(zoom);
-			isDirty = true;
-			updateWidgetSizeForMode();
-			redraw();
-		}
-	}
-	
-	public int getZoom() {
-		return (int) fixedAspectLayout.getZoomX();
-	}
-
 	public void canvasDirtied(ICanvas canvas) {
 		//redraw();
 		//System.out.println("!");

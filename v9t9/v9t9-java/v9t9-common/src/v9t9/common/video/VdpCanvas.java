@@ -9,7 +9,7 @@ package v9t9.common.video;
  * @author ejs
  *
  */
-public abstract class VdpCanvas extends BaseVdpCanvas implements IVdpCanvas {
+public abstract class VdpCanvas extends BaseVdpCanvas implements IVdpCanvas, ISpriteDrawingCanvas {
 	protected VdpFormat format;
 
 	boolean isInterlacedEvenOdd;
