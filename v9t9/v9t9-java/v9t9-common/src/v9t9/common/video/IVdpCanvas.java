@@ -175,7 +175,7 @@ public interface IVdpCanvas extends ICanvas {
 	 * @param j
 	 * @param blockMag
 	 */
-	void blitSpriteBlock(ISprite2Canvas spriteCanvas, int i, int j, int blockMag);
+	void blitSpriteBlock(ISprite2VdpCanvas spriteCanvas, int i, int j, int blockMag);
 
 	/**
 	 * @param spriteCanvas
@@ -183,7 +183,7 @@ public interface IVdpCanvas extends ICanvas {
 	 * @param j
 	 * @param blockMag
 	 */
-	void blitFourColorSpriteBlock(ISprite2Canvas spriteCanvas, int i, int j,
+	void blitFourColorSpriteBlock(ISprite2VdpCanvas spriteCanvas, int i, int j,
 			int blockMag);
 
 

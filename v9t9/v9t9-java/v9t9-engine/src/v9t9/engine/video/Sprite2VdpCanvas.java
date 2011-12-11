@@ -6,7 +6,7 @@ package v9t9.engine.video;
 import java.util.Arrays;
 
 import v9t9.common.video.BaseVdpCanvas;
-import v9t9.common.video.ISprite2Canvas;
+import v9t9.common.video.ISprite2VdpCanvas;
 
 /**
  * This class is used for sprite 2 sprite drawing (since due to the
@@ -16,12 +16,12 @@ import v9t9.common.video.ISprite2Canvas;
  * @author ejs
  *
  */
-public class Sprite2Canvas extends BaseVdpCanvas implements ISprite2Canvas {
+public class Sprite2VdpCanvas extends BaseVdpCanvas implements ISprite2VdpCanvas {
 	private final int UPDATEBLOCK_ROW_STRIDE = (256+64);
 	private final byte[] bitmap = new byte[UPDATEBLOCK_ROW_STRIDE * 256];
 	private final int UPDPTR(int y,int x) { return ((y)*UPDATEBLOCK_ROW_STRIDE)+(x)+32; }
 
-    public Sprite2Canvas() {
+    public Sprite2VdpCanvas() {
     	setSize(256, 192);
     }
 

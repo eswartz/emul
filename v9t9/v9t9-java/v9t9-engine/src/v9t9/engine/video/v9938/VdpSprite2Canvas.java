@@ -5,12 +5,12 @@ package v9t9.engine.video.v9938;
 
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.video.ICanvas;
-import v9t9.common.video.ISprite2Canvas;
+import v9t9.common.video.ISprite2VdpCanvas;
 import v9t9.common.video.ISpriteDrawingCanvas;
 import v9t9.common.video.IVdpCanvas;
 import v9t9.common.video.VdpColorManager;
 import v9t9.common.video.VdpSprite;
-import v9t9.engine.video.Sprite2Canvas;
+import v9t9.engine.video.Sprite2VdpCanvas;
 import v9t9.engine.video.tms9918a.VdpSpriteCanvas;
 
 /**
@@ -53,7 +53,7 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 	public static boolean EARLY = true;
 	public static boolean OR = true;
 	
-	private ISprite2Canvas spriteCanvas;
+	private ISprite2VdpCanvas spriteCanvas;
 	/** which screen changes there were, requiring sprite reblits */
 	private byte[] screenSpriteChanges;
 	private final boolean evenOddColors;
@@ -61,7 +61,7 @@ public class VdpSprite2Canvas extends VdpSpriteCanvas {
 	public VdpSprite2Canvas(IVdpCanvas canvas, int maxPerLine, boolean evenOddColors) {
 		super(canvas, maxPerLine);
 		this.evenOddColors = evenOddColors;
-		this.spriteCanvas = new Sprite2Canvas();
+		this.spriteCanvas = new Sprite2VdpCanvas();
 		spriteCanvas.setClearColor(0);
 		spriteCanvas.setSize(256, canvas.getHeight());
 		screenSpriteChanges = null;

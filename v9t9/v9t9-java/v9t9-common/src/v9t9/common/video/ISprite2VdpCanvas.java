@@ -8,7 +8,7 @@ package v9t9.common.video;
  * @author ejs
  *
  */
-public interface ISprite2Canvas extends ICanvas, ISpriteDrawingCanvas {
+public interface ISprite2VdpCanvas extends ICanvas, ISpriteDrawingCanvas {
 
 	void clear8x8Block(int offset);
 
