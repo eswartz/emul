@@ -9,3 +9,23 @@
 
 -- make RnD toolbar and move absurd commands there
 
+================
+
+
+
+-- vdpCanvas used when writing palette data
+-- when blanking
+-- when updating mode
+-- when setting x/y offset
+
+IVdpChip --> IVideoRender data flow:
+
+-- VDP register updates
+-- palette register updates
+
+
+Must be retained... ?
+
+-- VDP status has record of the sprite coverage...?
+
+
