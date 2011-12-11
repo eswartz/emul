@@ -12,10 +12,10 @@
 	<classpathentry kind="lib" path="/v9t9-base/libs/swt/org.eclipse.jface_3.6.2.M20110210-1200.jar" sourcepath="/v9t9-base/libs/swt/org.eclipse.jface.source_3.6.2.M20110210-1200.jar"/>
 	<classpathentry kind="lib" path="/v9t9-base/libs/swt/org.eclipse.jface.source_3.6.2.M20110210-1200.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-common"/>
-	<classpathentry kind="lib" path="/v9t9-base/libs/org.junit_4.8.1.v4_8_1_v20100427-1100/junit.jar"/>
 	<classpathentry kind="lib" path="/v9t9-base/libs/org.hamcrest.core_1.1.0.v20090501071000.jar"/>
 	<classpathentry kind="lib" path="/v9t9-base/libs/gnu-getopt-1.0.11.jar"/>
 	<classpathentry kind="lib" path="/v9t9-base/libs/bcel-5.2.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/SWT"/>
+	<classpathentry kind="lib" path="/v9t9-base/libs/junit/junit-4.8.1.jar" sourcepath="/v9t9-base/libs/junit/junit-4.8.1-source.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
