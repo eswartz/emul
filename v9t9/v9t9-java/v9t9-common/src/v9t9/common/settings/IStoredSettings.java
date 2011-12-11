@@ -4,6 +4,7 @@
 package v9t9.common.settings;
 
 import java.io.IOException;
+import java.util.Map;
 
 import v9t9.base.properties.IProperty;
 import v9t9.base.settings.ISettingSection;
@@ -26,6 +27,8 @@ public interface IStoredSettings {
 
 
 	IProperty find(String settingsName);
+	
+	Map<IProperty, SettingSchema> getAll();
 	
 	//void register(IProperty setting);
 	IProperty findOrCreate(SettingSchema schema);

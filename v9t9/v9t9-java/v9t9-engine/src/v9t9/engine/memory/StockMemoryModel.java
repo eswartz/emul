@@ -24,7 +24,7 @@ public class StockMemoryModel implements IMemoryModel {
 
 	public StockMemoryModel() {
 		memory = new Memory(this);
-		CPU = new MemoryDomain("Console");
+		CPU = new MemoryDomain(IMemoryDomain.NAME_CPU);
 	}
 
 	/* (non-Javadoc)

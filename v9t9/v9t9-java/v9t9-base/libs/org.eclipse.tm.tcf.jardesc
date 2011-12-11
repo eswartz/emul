@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<jardesc>
+    <jar path="v9t9-base/libs/org.eclipse.tm.tcf.jar"/>
+    <options buildIfNeeded="true" compress="true" descriptionLocation="/v9t9-base/libs/org.eclipse.tm.tcf.jardesc" exportErrors="true" exportWarnings="true" includeDirectoryEntries="false" overwrite="false" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
+    <storedRefactorings deprecationInfo="true" structuralOnly="false"/>
+    <selectedProjects/>
+    <manifest generateManifest="true" manifestLocation="" manifestVersion="1.0" reuseManifest="false" saveManifest="false" usesManifest="true">
+        <sealing sealJar="false">
+            <packagesToSeal/>
+            <packagesToUnSeal/>
+        </sealing>
+    </manifest>
+    <selectedElements exportClassFiles="true" exportJavaFiles="true" exportOutputFolder="false">
+        <file path="/org.eclipse.tm.tcf/plugin.xml"/>
+        <folder path="/org.eclipse.tm.tcf/schema"/>
+        <file path="/org.eclipse.tm.tcf/plugin.properties"/>
+        <javaElement handleIdentifier="=org.eclipse.tm.tcf/src"/>
+        <file path="/org.eclipse.tm.tcf/.classpath"/>
+        <file path="/org.eclipse.tm.tcf/pom.xml"/>
+        <file path="/org.eclipse.tm.tcf/build.properties"/>
+        <file path="/org.eclipse.tm.tcf/.project"/>
+        <file path="/org.eclipse.tm.tcf/about.html"/>
+        <javaElement handleIdentifier="=org.eclipse.tm.tcf.core"/>
+        <file path="/org.eclipse.tm.tcf/.options"/>
+        <folder path="/org.eclipse.tm.tcf/META-INF"/>
+    </selectedElements>
+</jardesc>

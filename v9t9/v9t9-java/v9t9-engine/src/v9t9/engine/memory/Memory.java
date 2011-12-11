@@ -148,7 +148,7 @@ public class Memory implements IMemory {
 			if (domain != null) {
 				notSaved.remove(domainName);
 			} else {
-				domain = new MemoryDomain(domainName);
+				domain = new MemoryDomain(domainName, domainName);
 				addDomain(domainName, domain);
 			}
 			ISettingSection dSection = section.getSection(domainName);

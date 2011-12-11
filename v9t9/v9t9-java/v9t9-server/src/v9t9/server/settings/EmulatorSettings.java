@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.server;
+package v9t9.server.settings;
 
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.settings.StaticStoredSettings;

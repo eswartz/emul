@@ -62,9 +62,9 @@ public abstract class Assembler implements IAssembler {
 	public abstract void setProcessor(String proc);
 
 	/** memory domain for area-sensitive view of the world */
-	protected IMemoryDomain StdCPU = new MemoryDomain("CPU Std");
+	protected IMemoryDomain StdCPU = new MemoryDomain(IMemoryDomain.NAME_CPU, "CPU Std");
 	/** memory domain for the assembler's view of the world */
-	protected MemoryDomain CPUFullRAM = new MemoryDomain("CPU Write");
+	protected MemoryDomain CPUFullRAM = new MemoryDomain(IMemoryDomain.NAME_CPU, "CPU Write");
 	protected MemoryEntry CPUFullRAMEntry = new MemoryEntry("Assembler RAM",
 	    		CPUFullRAM, 0, 0x10000, new StockRamArea(0x10000));
 	private List<DiskMemoryEntry> memoryEntries = new ArrayList<DiskMemoryEntry>();

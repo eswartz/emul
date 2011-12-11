@@ -26,7 +26,8 @@ import v9t9.common.memory.IMemoryWriteListener;
  * @author ejs
  */
 public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain {
-    static final int NUMAREAS = PHYSMEMORYSIZE >> AREASHIFT;
+
+	static final int NUMAREAS = PHYSMEMORYSIZE >> AREASHIFT;
     
 	public IMemoryAccessListener nullMemoryAccessListener = new IMemoryAccessListener() {
 
@@ -52,11 +53,14 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
 	private IMemoryEntry zeroMemoryEntry;
 	private final String name;
 	public IMemory memory;
+
+	private final String id;
     
 	
-    public MemoryDomain(String name, int latency) {
-    	this.name = name;
-		zeroMemoryEntry = new MemoryEntry("Unmapped memory",
+    public MemoryDomain(String id, String name, int latency) {
+    	this.id = id;
+		this.name = name;
+		zeroMemoryEntry = new MemoryEntry(UNMAPPED_MEMORY_ID,
     			this,
     			0,
     			PHYSMEMORYSIZE,
@@ -66,17 +70,20 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
     	mapEntry(zeroMemoryEntry);
     }
     
-	public MemoryDomain(String name) {
-    	this(name, 0);
+	public MemoryDomain(String id, String name) {
+    	this(id, name, 0);
     }
-    
+
+	public MemoryDomain(String id) {
+    	this(id, id, 0);
+    }
     /** For testing, create a RAM-accessible memory domain which spans
      * the size of data.
      * @param data populating data, length on AREASIZE boundary 
      * @return
      */
     public static MemoryDomain newFromArray(short[] data, boolean bWordAccess) {
-        MemoryDomain domain = new MemoryDomain(IMemoryDomain.NAME_CPU);
+        MemoryDomain domain = new MemoryDomain(IMemoryDomain.NAME_CPU, IMemoryDomain.NAME_CPU);
         WordMemoryArea area = WordMemoryArea.newDefaultArea();
         area.bWordAccess = bWordAccess;
         area.memory = data;
@@ -90,7 +97,7 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
     }    
 
     public static IMemoryDomain newFromArray(byte[] data) {
-        IMemoryDomain domain = new MemoryDomain(IMemoryDomain.NAME_CPU);
+        IMemoryDomain domain = new MemoryDomain(IMemoryDomain.NAME_CPU, IMemoryDomain.NAME_CPU);
         ByteMemoryArea area = new ByteMemoryArea();
         area.memory = data;
         area.read = data;
@@ -514,6 +521,14 @@ public class MemoryDomain implements IMemoryAccess, IPersistable, IMemoryDomain 
 			fireWriteEvent(getEntryAt(addr), addr, true);
 	}
 
+	/* (non-Javadoc)
+	 * @see v9t9.common.memory.IMemoryDomain#getIdentifier()
+	 */
+	@Override
+	public String getIdentifier() {
+		return id;
+	}
+	
 	/* (non-Javadoc)
 	 * @see v9t9.common.memory.IMemoryDomain#getName()
 	 */

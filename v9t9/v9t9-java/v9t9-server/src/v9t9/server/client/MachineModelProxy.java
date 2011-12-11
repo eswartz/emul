@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.client;
+package v9t9.server.client;
 
 import java.util.List;
 

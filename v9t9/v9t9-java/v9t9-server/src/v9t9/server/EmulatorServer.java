@@ -1,11 +1,11 @@
 package v9t9.server;
 
-import v9t9.client.EmulatorClientBase;
 import v9t9.common.machine.IMachineModel;
 import v9t9.machine.f99b.machine.F99bMachineModel;
 import v9t9.machine.ti99.machine.Enhanced48KForthTI994AMachineModel;
 import v9t9.machine.ti99.machine.EnhancedTI994AMachineModel;
 import v9t9.machine.ti99.machine.StandardMachineModel;
+import v9t9.server.client.EmulatorClientBase;
 
 public class EmulatorServer extends EmulatorClientBase {
 

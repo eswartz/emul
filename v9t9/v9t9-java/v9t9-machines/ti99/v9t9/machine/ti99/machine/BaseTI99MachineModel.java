@@ -75,7 +75,7 @@ public abstract class BaseTI99MachineModel implements IMachineModel {
 		IMemoryDomain domain = machine.getMemory().getDomain(IMemoryDomain.NAME_SPEECH);
 		if (domain == null)
 			return null;
-		final TMS5220 speech = new TMS5220(Settings.getSettings(machine), domain);
+		final TMS5220 speech = new TMS5220(machine, Settings.getSettings(machine), domain);
 		
 		speech.setSender(new ISpeechDataSender() {
 

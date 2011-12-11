@@ -3,6 +3,8 @@
  */
 package v9t9.common.client;
 
+import java.util.Map;
+
 import v9t9.base.properties.IProperty;
 import v9t9.common.settings.IStoredSettings;
 import v9t9.common.settings.SettingSchema;
@@ -19,6 +21,8 @@ public interface ISettingsHandler {
 	
 	IProperty get(SettingSchema schema);
 	<T extends IProperty> T get(String context, T defaultProperty);
+	
+	Map<IProperty, SettingSchema> getAllSettings();
 	
 	IStoredSettings getWorkspaceSettings();
 	IStoredSettings getInstanceSettings();

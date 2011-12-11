@@ -77,7 +77,7 @@ public class F99bMachineModel implements IMachineModel {
 	 */
 	@Override
 	public ISpeechChip createSpeechChip(IMachine machine) {
-		return new TMS5220(Settings.getSettings(machine), 
+		return new TMS5220(machine, Settings.getSettings(machine), 
 				machine.getMemory().getDomain(IMemoryDomain.NAME_SPEECH));
 	}
 	

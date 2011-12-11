@@ -12,6 +12,10 @@ import v9t9.base.settings.ISettingSection;
  *
  */
 public interface IMemoryDomain {
+    /**
+	 * 
+	 */
+	String UNMAPPED_MEMORY_ID = "Unmapped memory";
 
 	/*
 	 * This must remain 64K, even if mega-memory expansion is emulated. All the
@@ -131,6 +135,7 @@ public interface IMemoryDomain {
 
 	void writeMemory(int addr);
 
+	String getIdentifier();
 	String getName();
 
 	/**

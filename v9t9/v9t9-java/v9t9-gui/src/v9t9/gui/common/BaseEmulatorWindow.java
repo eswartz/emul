@@ -27,7 +27,7 @@ import v9t9.common.settings.SettingSchema;
 import v9t9.common.settings.Settings;
 import v9t9.gui.Emulator;
 import v9t9.server.EmulatorServer;
-import v9t9.server.WorkspaceSettings;
+import v9t9.server.settings.WorkspaceSettings;
 
 public abstract class BaseEmulatorWindow {
 

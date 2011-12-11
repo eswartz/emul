@@ -63,10 +63,10 @@ public abstract class BaseTI994AMemoryModel implements TIMemoryModel {
     	if (memory == null) {
 	    	this.memory = new Memory(this);
 	    	
-	        CPU = new MemoryDomain("Console", 4);
-	        GRAPHICS = new MemoryDomain("GROM/GRAM");
-	        VIDEO = new MemoryDomain("VDP");
-	        SPEECH = new MemoryDomain("Speech");
+	        CPU = new MemoryDomain(IMemoryDomain.NAME_CPU, "Console", 4);
+	        GRAPHICS = new MemoryDomain(IMemoryDomain.NAME_GRAPHICS, "GROM/GRAM");
+	        VIDEO = new MemoryDomain(IMemoryDomain.NAME_VIDEO, "VDP");
+	        SPEECH = new MemoryDomain(IMemoryDomain.NAME_SPEECH, "Speech");
 	        
 	        memory.addDomain(IMemoryDomain.NAME_CPU, CPU);
 	        memory.addDomain(IMemoryDomain.NAME_GRAPHICS, GRAPHICS);

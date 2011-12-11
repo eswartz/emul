@@ -6,5 +6,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-engine"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/v9t9-machines"/>
+	<classpathentry kind="lib" path="/v9t9-base/libs/org.eclipse.tm.tcf.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

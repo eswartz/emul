@@ -3,6 +3,9 @@
  */
 package v9t9.common.settings;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import v9t9.base.properties.IProperty;
 import v9t9.common.client.ISettingsHandler;
 
@@ -32,6 +35,18 @@ public class BaseSettingsHandler implements ISettingsHandler {
 		workspaceSettings.setOwner(this);
 		instanceSettings.setOwner(this);
 		transientSettings.setOwner(this);
+	}
+
+	/* (non-Javadoc)
+	 * @see v9t9.common.client.ISettingsHandler#getRegisteredSettings()
+	 */
+	@Override
+	public Map<IProperty, SettingSchema> getAllSettings() {
+		Map<IProperty, SettingSchema> ret = new HashMap<IProperty, SettingSchema>();
+		ret.putAll(transientSettings.getAll());
+		ret.putAll(instanceSettings.getAll());
+		ret.putAll(workspaceSettings.getAll());
+		return ret;
 	}
 
 	@Override

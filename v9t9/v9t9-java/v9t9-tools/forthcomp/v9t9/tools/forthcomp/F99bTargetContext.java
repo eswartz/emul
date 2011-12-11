@@ -11,6 +11,7 @@ import java.util.Stack;
 
 import v9t9.base.utils.HexUtils;
 import v9t9.common.machine.IBaseMachine;
+import v9t9.common.memory.IMemoryDomain;
 import v9t9.engine.memory.MemoryDomain;
 import v9t9.engine.memory.MemoryEntry;
 import v9t9.machine.f99b.cpu.CpuF99b;
@@ -947,7 +948,7 @@ public class F99bTargetContext extends TargetContext {
 	 */
 	@Override
 	public MemoryDomain createMemory() {
-		MemoryDomain console = new MemoryDomain("CONSOLE");
+		MemoryDomain console = new MemoryDomain(IMemoryDomain.NAME_CPU);
 		EnhancedRamByteArea bigRamArea = new EnhancedRamByteArea(0, 0x10000); 
 		MemoryEntry bigRamEntry = new MemoryEntry("RAM", console, 0, MemoryDomain.PHYSMEMORYSIZE, 
 				bigRamArea);

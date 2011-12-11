@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.server;
+package v9t9.server.settings;
 
 import java.io.File;
 import java.io.IOException;

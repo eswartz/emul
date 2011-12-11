@@ -432,4 +432,19 @@ public abstract class BaseStoredSettings implements IStoredSettings {
 		syntheticSettings.remove(name);
 		getSettings().put(name, (Object) null);
 	}
+	
+	/* (non-Javadoc)
+	 * @see v9t9.common.settings.IStoredSettings#getAll()
+	 */
+	@Override
+	public Map<IProperty, SettingSchema> getAll() {
+		Map<IProperty, SettingSchema> ret = new HashMap<IProperty, SettingSchema>();
+		for (Map.Entry<String, SettingSchema> entry : settingSchemas.entrySet()) {
+			ret.put(registeredSettings.get(entry.getKey()), entry.getValue());
+		}
+		for (Map.Entry<String, SyntheticProperty> entry : syntheticSettings.entrySet()) {
+			ret.put(syntheticSettings.get(entry.getKey()), null);
+		}
+		return ret;
+	}
 }

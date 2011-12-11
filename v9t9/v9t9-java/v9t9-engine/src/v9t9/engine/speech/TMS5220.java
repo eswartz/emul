@@ -15,6 +15,7 @@ import v9t9.base.utils.BinaryUtils;
 import v9t9.base.utils.HexUtils;
 import v9t9.common.client.ISettingsHandler;
 import v9t9.common.hardware.ISpeechChip;
+import v9t9.common.machine.IMachine;
 import v9t9.common.memory.IMemoryDomain;
 import v9t9.engine.memory.DiskMemoryEntry;
 
@@ -77,7 +78,7 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 
 	private IProperty logSpeech;
 	
-	public TMS5220(ISettingsHandler settings, IMemoryDomain speech) {
+	public TMS5220(IMachine machine, final ISettingsHandler settings, final IMemoryDomain speech) {
 		speechVoices = new SpeechVoice[1];
 		speechVoices[0] = new SpeechVoice();
 		
@@ -85,15 +86,26 @@ public class TMS5220 implements ISpeechChip, ILPCDataFetcher, ISpeechDataSender 
 		Logging.registerLog(logSpeech, 
 				new PrintWriter(System.out, true));
 		
-		try {
-			speechRom = DiskMemoryEntry.newByteMemoryFromFile(
-					settings,
-					0, 0x8000, "Speech ROM",
-					speech, "spchrom.bin", 0, false);
-			speechRom.load();
-		} catch (IOException e) {
-			System.err.println("Failed to load: " + e.getMessage());
-		}
+		Runnable runnable = new Runnable() {
+			public void run() {
+				try {
+					speechRom = DiskMemoryEntry.newByteMemoryFromFile(
+							settings,
+							0, 0x8000, "Speech ROM",
+							speech, "spchrom.bin", 0, false);
+					speechRom.load();
+					speechRom.getDomain().mapEntry(speechRom);
+				} catch (IOException e) {
+					System.err.println("Failed to load: " + e.getMessage());
+				}
+				
+			}
+		};
+		if (machine != null)
+			machine.asyncExec(runnable);
+		else
+			runnable.run();
+		
 		fifo = new byte[16];
 		lpc = new LPCSpeech(settings);
 		reset();

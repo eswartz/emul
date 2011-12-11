@@ -1,7 +1,7 @@
 /**
  * 
  */
-package v9t9.client;
+package v9t9.server.client;
 
 import v9t9.common.machine.IMachineModel;
 

@@ -1,9 +1,11 @@
 /**
  * 
  */
-package v9t9.client;
+package v9t9.server.client;
 
 import java.io.IOException;
+
+import org.eclipse.tm.tcf.protocol.Protocol;
 
 import v9t9.base.properties.IProperty;
 import v9t9.common.client.IClient;
@@ -18,8 +20,9 @@ import v9t9.common.memory.IMemory;
 import v9t9.common.memory.IMemoryModel;
 import v9t9.engine.memory.GplMmio;
 import v9t9.engine.modules.ModuleManager;
-import v9t9.server.SettingsHandler;
-import v9t9.server.WorkspaceSettings;
+import v9t9.server.settings.SettingsHandler;
+import v9t9.server.settings.WorkspaceSettings;
+import v9t9.server.tcf.EmulatorTCFServer;
 
 /**
  * @author ejs
@@ -35,6 +38,7 @@ public abstract class EmulatorClientBase {
 	private ISettingsHandler settings;
 	private IProperty bootRomsPath;
 	private IProperty storedRamPath;
+	private EmulatorTCFServer server;
 
     public EmulatorClientBase() {
     	settings = new SettingsHandler(WorkspaceSettings.currentWorkspace.getString()); 
@@ -132,6 +136,7 @@ public abstract class EmulatorClientBase {
     	this.memory = machine.getMemory();
     	this.memoryModel = memory.getModel();
 
+    	this.server = new EmulatorTCFServer(machine);
     }
 
 	abstract protected IMachineModel createModel(String modelId);
@@ -164,6 +169,8 @@ public abstract class EmulatorClientBase {
 		machine.reset();
         machine.start();
         
+        server.run();
+        
         while (client.isAlive()) {
         	client.handleEvents();
 	    	
@@ -176,6 +183,12 @@ public abstract class EmulatorClientBase {
 			} catch (InterruptedException e) {
 			}
         }
+        
+        Protocol.invokeLater(new Runnable() {
+			public void run() {
+				server.stop();
+			}
+        });
 	}
 
 	/**

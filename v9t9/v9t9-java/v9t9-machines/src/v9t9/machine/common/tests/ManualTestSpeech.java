@@ -56,10 +56,10 @@ public class ManualTestSpeech {
 		
 		ISettingsHandler settings = new TestSettingsHandler();
 		
-		IMemoryDomain speechMem = new MemoryDomain("Speech");
+		IMemoryDomain speechMem = new MemoryDomain(IMemoryDomain.NAME_SPEECH);
 		DataFiles.addSearchPath(settings, "/usr/local/src/v9t9-data/roms");
 		DataFiles.addSearchPath(settings, "l:/src/v9t9-data/roms");
-		TMS5220 tms5220 = new TMS5220(settings, speechMem);
+		TMS5220 tms5220 = new TMS5220(null, settings, speechMem);
 		
 		settings.get(LPCSpeech.settingLogSpeech).setInt(1);
 		LPCSpeech speech = new LPCSpeech(settings);
