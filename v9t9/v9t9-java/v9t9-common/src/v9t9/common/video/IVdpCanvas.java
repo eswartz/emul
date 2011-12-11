@@ -129,11 +129,6 @@ public interface IVdpCanvas extends ICanvas {
 	void setBlank(boolean b);
 
 	/**
-	 * @param i
-	 */
-	void setClearColor(int i);
-
-	/**
 	 * 
 	 */
 	void syncColors();
@@ -175,7 +170,7 @@ public interface IVdpCanvas extends ICanvas {
 	 * @param j
 	 * @param blockMag
 	 */
-	void blitSpriteBlock(ISprite2VdpCanvas spriteCanvas, int i, int j, int blockMag);
+	void blitSpriteBlock(ISpriteVdpCanvas spriteCanvas, int i, int j, int blockMag);
 
 	/**
 	 * @param spriteCanvas
@@ -183,8 +178,11 @@ public interface IVdpCanvas extends ICanvas {
 	 * @param j
 	 * @param blockMag
 	 */
-	void blitFourColorSpriteBlock(ISprite2VdpCanvas spriteCanvas, int i, int j,
+	void blitFourColorSpriteBlock(ISpriteVdpCanvas spriteCanvas, int i, int j,
 			int blockMag);
 
+
+	VdpColorManager getColorMgr();
+	void setClearColor(int c);
 
 }

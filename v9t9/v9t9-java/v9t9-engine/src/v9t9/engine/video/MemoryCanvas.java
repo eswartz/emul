@@ -7,7 +7,7 @@ import java.util.Arrays;
 
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.video.BitmapVdpCanvas;
-import v9t9.common.video.ISprite2VdpCanvas;
+import v9t9.common.video.ISpriteVdpCanvas;
 
 /**
  * This class holds the low-level bitmap containing the image
@@ -213,13 +213,13 @@ public class MemoryCanvas extends BitmapVdpCanvas {
 	
 
 	@Override
-	public void blitSpriteBlock(ISprite2VdpCanvas spriteCanvas, int x, int y,
+	public void blitSpriteBlock(ISpriteVdpCanvas spriteCanvas, int x, int y,
 			int blockMag) {
 		throw new IllegalArgumentException();
 	}
 	
 	@Override
-	public void blitFourColorSpriteBlock(ISprite2VdpCanvas spriteCanvas, int x,
+	public void blitFourColorSpriteBlock(ISpriteVdpCanvas spriteCanvas, int x,
 			int y, int blockMag) {
 		throw new IllegalArgumentException();
 	}

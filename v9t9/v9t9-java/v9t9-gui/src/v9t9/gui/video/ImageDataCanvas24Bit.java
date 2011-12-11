@@ -10,7 +10,7 @@ import org.eclipse.swt.graphics.PaletteData;
 
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.video.ColorMapUtils;
-import v9t9.common.video.ISprite2VdpCanvas;
+import v9t9.common.video.ISpriteVdpCanvas;
 import v9t9.common.video.VdpFormat;
 
 /**
@@ -319,7 +319,7 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 	}
 	
 	@Override
-	public void blitSpriteBlock(ISprite2VdpCanvas spriteCanvas, int x, int y,
+	public void blitSpriteBlock(ISpriteVdpCanvas spriteCanvas, int x, int y,
 			int blockMag) {
 		int sprOffset = spriteCanvas.getBitmapOffset(x, y);
 		int bitmapOffset = getBitmapOffset(x * blockMag, y);
@@ -349,7 +349,7 @@ public class ImageDataCanvas24Bit extends ImageDataCanvas {
 	}
 	
 	@Override
-	public void blitFourColorSpriteBlock(ISprite2VdpCanvas spriteCanvas, int x, int y,
+	public void blitFourColorSpriteBlock(ISpriteVdpCanvas spriteCanvas, int x, int y,
 			int blockMag) {
 		int sprOffset = spriteCanvas.getBitmapOffset(x, y);
 		int bitmapOffset = getBitmapOffset(x * blockMag, y);

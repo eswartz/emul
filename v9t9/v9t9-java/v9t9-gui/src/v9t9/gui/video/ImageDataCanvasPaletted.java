@@ -11,7 +11,7 @@ import org.eclipse.swt.graphics.RGB;
 
 import v9t9.common.memory.ByteMemoryAccess;
 import v9t9.common.video.ColorMapUtils;
-import v9t9.common.video.ISprite2VdpCanvas;
+import v9t9.common.video.ISpriteVdpCanvas;
 
 /**
  * Render video content into an ImageData using a palette
@@ -213,13 +213,13 @@ public class ImageDataCanvasPaletted extends ImageDataCanvas {
 	}
 	
 	@Override
-	public void blitSpriteBlock(ISprite2VdpCanvas spriteCanvas, int x, int y,
+	public void blitSpriteBlock(ISpriteVdpCanvas spriteCanvas, int x, int y,
 			int blockMag) {
 		throw new IllegalArgumentException();
 	}
 	
 	@Override
-	public void blitFourColorSpriteBlock(ISprite2VdpCanvas spriteCanvas, int x,
+	public void blitFourColorSpriteBlock(ISpriteVdpCanvas spriteCanvas, int x,
 			int y, int blockMag) {
 		throw new IllegalArgumentException();
 	}

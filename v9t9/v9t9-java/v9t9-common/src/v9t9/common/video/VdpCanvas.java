@@ -86,7 +86,7 @@ public abstract class VdpCanvas extends BaseVdpCanvas implements IVdpCanvas, ISp
 	 * @param blockMag if 1, x/y map to the receiver, else x is doubled in the receiver
 	 * and the block is magnified 2x horizontally
 	 */
-	abstract public void blitSpriteBlock(ISprite2VdpCanvas spriteCanvas, int x, int y,
+	abstract public void blitSpriteBlock(ISpriteVdpCanvas spriteCanvas, int x, int y,
 			int blockMag);
 
 	/** 
@@ -97,7 +97,7 @@ public abstract class VdpCanvas extends BaseVdpCanvas implements IVdpCanvas, ISp
 	 * @param blockMag if 1, x/y map to the receiver, else x is doubled in the receiver
 	 * and the block is magnified 2x horizontally
 	 */
-	abstract public void blitFourColorSpriteBlock(ISprite2VdpCanvas spriteCanvas, int x,
+	abstract public void blitFourColorSpriteBlock(ISpriteVdpCanvas spriteCanvas, int x,
 			int y, int blockMag);
 
 	public void setListener(ICanvasListener listener) {
