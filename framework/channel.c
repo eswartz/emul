@@ -43,6 +43,9 @@
 #include <framework/link.h>
 #include <framework/json.h>
 
+LINK channel_root = TCF_LIST_INIT(channel_root);
+LINK channel_server_root = TCF_LIST_INIT(channel_server_root);
+
 #define BCAST_MAGIC 0x1463e328
 
 #define out2bcast(A)    ((TCFBroadcastGroup *)((char *)(A) - offsetof(TCFBroadcastGroup, out)))
@@ -213,6 +216,26 @@ PeerServer * channel_peer_from_url(const char * url) {
         return NULL;
     }
     return ps;
+}
+
+char * channel_peer_to_json(PeerServer * ps) {
+    int i;
+    char *rval;
+    ByteArrayOutputStream buf;
+    OutputStream * out;
+
+    out = create_byte_array_output_stream(&buf);
+    write_stream(out, '{');
+    for (i = 0; i < ps->ind; i++) {
+        if (i > 0) write_stream(out, ',');
+        json_write_string(out, ps->list[i].name);
+        write_stream(out, ':');
+        json_write_string(out, ps->list[i].value);
+    }
+    write_stream(out, '}');
+    write_stream(out, '\0');
+    get_byte_array_output_stream_data(&buf, &rval, NULL);
+    return rval;
 }
 
 /*

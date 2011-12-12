@@ -140,7 +140,6 @@ struct ServerTCP {
     int sock;
     struct sockaddr * addr_buf;
     int addr_len;
-    PeerServer * ps;
     LINK servlink;
     AsyncReqInfo accreq;
 };
@@ -239,6 +238,7 @@ static void delete_channel(ChannelTCP * c) {
         closesocket(c->socket);
         c->socket = -1;
     }
+    list_remove(&c->chan.chanlink);
     c->magic = 0;
 #if ENABLE_OutputQueue
     output_queue_clear(&c->out_queue);
@@ -847,6 +847,7 @@ static ChannelTCP * create_channel(int sock, int en_ssl, int server, int unix_do
     c->chan.out.write = tcp_write_stream;
     c->chan.out.write_block = tcp_write_block_stream;
     c->chan.out.splice_block = tcp_splice_block_stream;
+    list_add_last(&c->chan.chanlink, &channel_root);
     c->chan.state = ChannelStateStartWait;
     c->chan.start_comm = start_channel;
     c->chan.check_pending = channel_check_pending;
@@ -908,6 +909,7 @@ static void refresh_peer_server(int sock, PeerServer * ps) {
 #else
         socklen_t sinlen;
 #endif
+        const char *str_port = peer_server_getprop(ps, "Port", NULL);
         int ifcind;
         struct in_addr src_addr;
         ip_ifc_info ifclist[MAX_IFC];
@@ -918,7 +920,6 @@ static void refresh_peer_server(int sock, PeerServer * ps) {
         }
         ifcind = build_ifclist(sock, MAX_IFC, ifclist);
         while (ifcind-- > 0) {
-            char str_port[32];
             char str_host[64];
             char str_id[64];
             PeerServer * ps2;
@@ -933,7 +934,6 @@ static void refresh_peer_server(int sock, PeerServer * ps) {
             for (i = 0; i < ps->ind; i++) {
                 peer_server_addprop(ps2, loc_strdup(ps->list[i].name), loc_strdup(ps->list[i].value));
             }
-            snprintf(str_port, sizeof(str_port), "%d", ntohs(sin.sin_port));
             inet_ntop(AF_INET, &src_addr, str_host, sizeof(str_host));
             snprintf(str_id, sizeof(str_id), "%s:%s:%s", transport, str_host, str_port);
             peer_server_addprop(ps2, loc_strdup("ID"), loc_strdup(str_id));
@@ -948,7 +948,7 @@ static void refresh_all_peer_servers(void * x) {
     LINK * l = server_list.next;
     while (l != &server_list) {
         ServerTCP * si = servlink2tcp(l);
-        refresh_peer_server(si->sock, si->ps);
+        refresh_peer_server(si->sock, si->serv.ps);
         l = l->next;
     }
     post_event_with_delay(refresh_all_peer_servers, NULL, PEER_DATA_REFRESH_PERIOD * 1000000);
@@ -991,7 +991,7 @@ static void tcp_server_accept_done(void * x) {
         trace(LOG_ALWAYS, "Socket accept failed: %s", errno_to_str(req->error));
     }
     else {
-        int ssl = strcmp(peer_server_getprop(si->ps, "TransportName", ""), "SSL") == 0;
+        int ssl = strcmp(peer_server_getprop(si->serv.ps, "TransportName", ""), "SSL") == 0;
         int unix_domain = si->addr_buf->sa_family == AF_UNIX;
         ChannelTCP * c = create_channel(req->u.acc.rval, ssl, 1, unix_domain);
         if (c == NULL) {
@@ -1012,8 +1012,9 @@ static void server_close(ChannelServer * serv) {
 
     assert(is_dispatch_thread());
     if (s->sock < 0) return;
+    list_remove(&s->serv.servlink);
     list_remove(&s->servlink);
-    peer_server_free(s->ps);
+    peer_server_free(s->serv.ps);
     closesocket(s->sock);
     s->sock = -1;
     /* TODO: free server struct */
@@ -1038,11 +1039,12 @@ static ChannelServer * channel_server_create(PeerServer * ps, int sock) {
     si->addr_buf = (struct sockaddr *)loc_alloc(si->addr_len);
     si->serv.close = server_close;
     si->sock = sock;
-    si->ps = ps;
+    si->serv.ps = ps;
     if (server_list.next == NULL) {
         list_init(&server_list);
         post_event_with_delay(refresh_all_peer_servers, NULL, PEER_DATA_REFRESH_PERIOD * 1000000);
     }
+    list_add_last(&si->serv.servlink, &channel_server_root);
     list_add_last(&si->servlink, &server_list);
     refresh_peer_server(sock, ps);
 
@@ -1219,6 +1221,24 @@ ChannelServer * channel_tcp_server(PeerServer * ps) {
         trace(LOG_ALWAYS, "Socket %s error: %s", reason, errno_to_str(error));
         errno = error;
         return NULL;
+    }
+    if (def_port) {
+        struct sockaddr_in sin;
+#if defined(_WRS_KERNEL)
+        int sinlen;
+#else
+        socklen_t sinlen;
+#endif
+        char str_port[32];
+
+        sinlen = sizeof sin;
+        if (getsockname(sock, (struct sockaddr *)&sin, &sinlen) != 0) {
+            trace(LOG_ALWAYS, "getsockname error: %s", errno_to_str(errno));
+            closesocket(sock);
+            return NULL;
+        }
+        snprintf(str_port, sizeof(str_port), "%d", ntohs(sin.sin_port));
+        peer_server_addprop(ps, loc_strdup("Port"), loc_strdup(str_port));
     }
 
     return channel_server_create(ps, sock);
